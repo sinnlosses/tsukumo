@@ -18,9 +18,9 @@ import { contextUsage, readyContextUsage } from "../../../fixture/context-usage.
 import { reportEvent } from "../../../fixture/report-event.ts"
 import { knownRestored } from "../../../fixture/restored-event.ts"
 import { createStubDriver } from "../../../fixture/session-driver.ts"
+import { CHARACTER_EVENT, requestEvent } from "../../../fixture/session-event.ts"
 import { collector, launchWith, sessionInfo } from "../../../fixture/session-manager-record.ts"
 import {
-  CHARACTER_EVENT,
   createSessionManager,
   FICTIONAL_PROJECT,
   RESTORED_REPLAY,
@@ -133,7 +133,7 @@ describe("createSessionManager", () => {
       await waitForBatch()
 
       stub.emit(SESSION_INFO)
-      stub.emit({ kind: "request", text: "依頼", images: [] })
+      stub.emit(requestEvent("依頼"))
       stub.emit({ kind: "token-usage", cumulative: cumulative(100, 20, 0.5) })
       stub.emit({ kind: "turn-finished", outcome: { kind: "completed" } })
       await waitForBatch()
@@ -266,7 +266,7 @@ describe("createSessionManager", () => {
         "架空の本文",
       ]
       stub.emit(SESSION_INFO)
-      stub.emit({ kind: "request", text: secrets[0] ?? "", images: [] })
+      stub.emit(requestEvent(secrets[0] ?? ""))
       stub.emit({
         kind: "tool-started",
         toolUseId: "t-1",
@@ -479,7 +479,7 @@ describe("createSessionManager", () => {
 
     expect(written.slice(before)).toEqual([])
 
-    stub.emit({ kind: "request", text: "新しい依頼", images: [] })
+    stub.emit(requestEvent("新しい依頼"))
     await waitForBatch()
 
     expect(written.slice(before).filter((call) => call.log === "chat")).toEqual([

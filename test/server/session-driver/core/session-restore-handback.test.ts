@@ -4,12 +4,14 @@ import { EMPTY_INPUT_LEDGER } from "../../../../src/server/session-driver/core/i
 import { toRestoredEvents } from "../../../../src/server/session-driver/core/session-restore.ts"
 import { applyRestoredEvents } from "../../../../src/shared/session/restored-event.ts"
 import { INITIAL_SESSION_STATE } from "../../../../src/shared/session/session-state.ts"
+import { EXPRESSIONS } from "../../../fixture/sdk-assistant-message.ts"
 import {
   assistantMessage,
   userMessage,
   WORK_PLAN_TOOL_FULL_NAME,
 } from "../../../fixture/sdk-message.ts"
-import { EXPRESSIONS, eventsOf, stamped } from "../../../fixture/session-restore.ts"
+import { requestEvent } from "../../../fixture/session-event.ts"
+import { eventsOf, stamped } from "../../../fixture/session-restore.ts"
 
 describe("toRestoredEvents（委譲の返却）", () => {
   // transcript の返却は is_meta の user メッセージで、origin.body は字下げの無い前置きの行のあとに返却の各行が2字下げで入る
@@ -32,7 +34,7 @@ describe("toRestoredEvents（委譲の返却）", () => {
     ]
 
     expect(eventsOf(messages)).toEqual([
-      { kind: "request", text: "架空の依頼", images: [] },
+      requestEvent(),
       { kind: "turn-finished", outcome: { kind: "completed" } },
     ])
   })

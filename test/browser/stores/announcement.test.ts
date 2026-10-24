@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it } from "vitest"
 import { useAnnouncement } from "../../../src/browser/stores/announcement.ts"
 import { useSession } from "../../../src/browser/stores/session.ts"
 import { INITIAL_SESSION_STATE } from "../../../src/shared/session/session-state.ts"
+import { requestEvent } from "../../fixture/session-event.ts"
 import { putSession, putState } from "../session-store.ts"
 
 afterEach(() => {
@@ -16,7 +17,7 @@ function receiveRequest(): void {
   act(() => {
     useSession.getState().receive({
       type: "events",
-      events: [{ at: 0, event: { kind: "request", text: "架空の依頼", images: [] } }],
+      events: [{ at: 0, event: requestEvent() }],
     })
   })
 }

@@ -20,7 +20,7 @@ import {
   FIGURE,
   REMAINING,
   SHORT_TYPE_WORK_MODE,
-  SUMMARY,
+  SESSION_SUMMARY,
   WAITING_LINE,
   WORK_MODE,
   workServer,
@@ -53,7 +53,7 @@ describe("short-type の report の受理", () => {
     conclusion: ["架空の結論"],
     closing: CLOSING,
     figure: FIGURE,
-    sessionSummary: SUMMARY,
+    sessionSummary: SESSION_SUMMARY,
     sessionRemaining: REMAINING,
     waitingLine: WAITING_LINE,
   }

@@ -12,7 +12,7 @@ import {
   CLOSING,
   FIGURE,
   REMAINING,
-  SUMMARY,
+  SESSION_SUMMARY,
   WAITING_LINE,
   workServer,
 } from "../../../fixture/sdk-tool.ts"
@@ -23,7 +23,7 @@ describe("report でターンを閉じる", () => {
       conclusion: ["架空の結論"],
       closing: CLOSING,
       figure: FIGURE,
-      sessionSummary: SUMMARY,
+      sessionSummary: SESSION_SUMMARY,
       sessionRemaining: REMAINING,
       waitingLine: WAITING_LINE,
     })
@@ -45,7 +45,7 @@ describe("report でターンを閉じる", () => {
       conclusion,
       closing: CLOSING,
       figure: FIGURE,
-      sessionSummary: SUMMARY,
+      sessionSummary: SESSION_SUMMARY,
       sessionRemaining: REMAINING,
       waitingLine: WAITING_LINE,
     })
@@ -59,7 +59,7 @@ describe("report でターンを閉じる", () => {
       conclusion: ["架空の一文目。", "架空の二文目。", "架空の三文目。"],
       closing: CLOSING,
       figure: FIGURE,
-      sessionSummary: SUMMARY,
+      sessionSummary: SESSION_SUMMARY,
       sessionRemaining: REMAINING,
       waitingLine: WAITING_LINE,
     })
@@ -74,7 +74,7 @@ describe("report でターンを閉じる", () => {
       sections: [{ blocks: [{ kind: "mermaid", source }] }],
       closing: CLOSING,
       figure: FIGURE,
-      sessionSummary: SUMMARY,
+      sessionSummary: SESSION_SUMMARY,
       sessionRemaining: REMAINING,
       waitingLine: WAITING_LINE,
     })
@@ -102,7 +102,7 @@ describe("report でターンを閉じる", () => {
       figure: { kind: "mermaid", source: "sequenceDiagram\n  A->>B: hi; there" },
       sections: [{ blocks: [{ kind: "mermaid", source: "sequenceDiagram\n  A->>B: hi" }] }],
       closing: CLOSING,
-      sessionSummary: SUMMARY,
+      sessionSummary: SESSION_SUMMARY,
       sessionRemaining: REMAINING,
       waitingLine: WAITING_LINE,
     })
@@ -125,7 +125,7 @@ describe("report でターンを閉じる", () => {
       conclusion: "架空の結論",
       closing: CLOSING,
       figure: FIGURE,
-      sessionSummary: SUMMARY,
+      sessionSummary: SESSION_SUMMARY,
       sessionRemaining: REMAINING,
       waitingLine: WAITING_LINE,
     })
@@ -158,7 +158,7 @@ describe("report でターンを閉じる", () => {
       conclusion: ["架空の結論"],
       closing: CLOSING,
       figure: FIGURE,
-      sessionSummary: SUMMARY,
+      sessionSummary: SESSION_SUMMARY,
       sessionRemaining: REMAINING,
       waitingLine: { text: "架空の待ちの一言", expression: "架空の表情" },
     })
@@ -173,7 +173,7 @@ describe("report でターンを閉じる", () => {
       figure: FIGURE,
       closing: CLOSING,
       waitingLine: WAITING_LINE,
-      sessionSummary: SUMMARY,
+      sessionSummary: SESSION_SUMMARY,
       sessionRemaining: REMAINING,
     }
     const { waitingLine: _waitingLine, ...noWaitingLine } = complete
@@ -197,7 +197,7 @@ describe("report でターンを閉じる", () => {
       conclusion: ["架空の結論"],
       ...(figure === undefined ? {} : { figure }),
       closing: CLOSING,
-      sessionSummary: SUMMARY,
+      sessionSummary: SESSION_SUMMARY,
       sessionRemaining: REMAINING,
       waitingLine: WAITING_LINE,
     })
@@ -285,7 +285,7 @@ describe("report の本文（sections）", () => {
       ],
       closing: CLOSING,
       figure: FIGURE,
-      sessionSummary: SUMMARY,
+      sessionSummary: SESSION_SUMMARY,
       sessionRemaining: REMAINING,
       waitingLine: WAITING_LINE,
     })
@@ -325,7 +325,7 @@ describe("report の本文（sections）", () => {
       ],
       closing: CLOSING,
       figure: FIGURE,
-      sessionSummary: SUMMARY,
+      sessionSummary: SESSION_SUMMARY,
       sessionRemaining: REMAINING,
       waitingLine: WAITING_LINE,
     })
@@ -334,7 +334,7 @@ describe("report の本文（sections）", () => {
       sections: [{ blocks: [{ kind: "markdown", markdown: "- 架空の項目" }] }],
       closing: CLOSING,
       figure: FIGURE,
-      sessionSummary: SUMMARY,
+      sessionSummary: SESSION_SUMMARY,
       sessionRemaining: REMAINING,
       waitingLine: WAITING_LINE,
     })
@@ -350,7 +350,7 @@ describe("report の差し戻しの記録", () => {
     conclusion: ["架空の結論"],
     closing: CLOSING,
     figure: FIGURE,
-    sessionSummary: SUMMARY,
+    sessionSummary: SESSION_SUMMARY,
     sessionRemaining: REMAINING,
     waitingLine: WAITING_LINE,
   }
@@ -375,7 +375,7 @@ describe("report の title", () => {
       conclusion: ["架空の結論"],
       closing: CLOSING,
       figure: FIGURE,
-      sessionSummary: SUMMARY,
+      sessionSummary: SESSION_SUMMARY,
       sessionRemaining: REMAINING,
       waitingLine: WAITING_LINE,
       title: "架空の題",
@@ -392,7 +392,7 @@ describe("report の title", () => {
       conclusion: ["架空の結論"],
       closing: CLOSING,
       figure: FIGURE,
-      sessionSummary: SUMMARY,
+      sessionSummary: SESSION_SUMMARY,
       sessionRemaining: REMAINING,
       waitingLine: WAITING_LINE,
     })
@@ -408,7 +408,7 @@ describe("report の title", () => {
       conclusion: ["架空の一文目。", "架空の二文目。", "架空の三文目。"],
       closing: CLOSING,
       figure: FIGURE,
-      sessionSummary: SUMMARY,
+      sessionSummary: SESSION_SUMMARY,
       sessionRemaining: REMAINING,
       waitingLine: WAITING_LINE,
       title: "架空の題",

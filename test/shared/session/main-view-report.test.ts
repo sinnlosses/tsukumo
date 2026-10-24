@@ -30,10 +30,11 @@ import {
   finished,
   report,
   shownReports,
-  text,
   turnOf,
+  utteranceEvent,
 } from "../../fixture/main-view-report.ts"
 import { reportEvent } from "../../fixture/report-event.ts"
+import { requestEvent } from "../../fixture/session-event.ts"
 
 describe("mainViewTurns（締めの speak → レポートで終える並び）", () => {
   // 締めの `speak` のあとに本文で終える並びを、SDK から届くイベントの形で流す。締めの `speak` は
@@ -58,7 +59,7 @@ describe("mainViewTurns（締めの speak → レポートで終える並び）"
   /** 架空のやり取りを1ターン流し終えたときのメインビュー（確定したやり取りとして描く）。 */
   function settledSteps(events: readonly SessionEvent[]): readonly MainViewStep[] {
     const state = [
-      { kind: "request", text: "架空の依頼", images: [] } satisfies SessionEvent,
+      requestEvent(),
       ...events,
       { kind: "turn-finished", outcome: { kind: "completed" } } satisfies SessionEvent,
     ].reduce((current, event) => applySessionEvent(current, event, 0), INITIAL_SESSION_STATE)
@@ -225,7 +226,11 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
   })
 
   it("report が呼ばれなかったターンの本文には整形を掛けない", () => {
-    const turn = turnOf([ask, text("架空の答え。\n\n以上です。"), finished], SETTLED, true)
+    const turn = turnOf(
+      [ask, utteranceEvent("架空の答え。\n\n以上です。"), finished],
+      SETTLED,
+      true,
+    )
 
     expect(shownReports(turn)).toEqual(["架空の答え。\n\n以上です。"])
   })

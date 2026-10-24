@@ -5,8 +5,8 @@ import { FRAME_ERROR_REASON, type ServerFrame } from "../../../../src/shared/fra
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import { INITIAL_SESSION_STATE } from "../../../../src/shared/session/session-state.ts"
 import { createStubDriver, type StubDriver } from "../../../fixture/session-driver.ts"
+import { CHARACTER_EVENT } from "../../../fixture/session-event.ts"
 import {
-  CHARACTER_EVENT,
   createSessionManager,
   startManagerWithStub,
   waitForBatch,

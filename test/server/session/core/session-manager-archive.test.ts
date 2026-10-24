@@ -12,9 +12,9 @@ import { characterChangedEvent } from "../../../fixture/character.ts"
 import { NOOP_CHAT_ARCHIVE } from "../../../fixture/chat.ts"
 import { reportEvent } from "../../../fixture/report-event.ts"
 import { createStubDriver } from "../../../fixture/session-driver.ts"
+import { CHARACTER_EVENT, requestEvent } from "../../../fixture/session-event.ts"
 import { launchWith } from "../../../fixture/session-manager-record.ts"
 import {
-  CHARACTER_EVENT,
   createSessionManager,
   FICTIONAL_PROJECT,
   waitForBatch,
@@ -78,7 +78,7 @@ describe("createSessionManager", () => {
 
       stub.emit(CHARACTER_EVENT)
       stub.emit({ kind: "chat-mode-changed", chat: true })
-      stub.emit({ kind: "request", text: "架空の依頼", images: [] })
+      stub.emit(requestEvent())
       stub.emit({ kind: "speech", text: "架空のセリフ", expression: "proud" })
       await waitForBatch()
 
@@ -111,7 +111,7 @@ describe("createSessionManager", () => {
       await waitForBatch()
 
       stub.emit(CHARACTER_EVENT)
-      stub.emit({ kind: "request", text: "架空の依頼", images: [] })
+      stub.emit(requestEvent())
       stub.emit({ kind: "speech", text: "架空のセリフ", expression: "default" })
       await waitForBatch()
 
@@ -217,11 +217,10 @@ describe("createSessionManager", () => {
         },
         launchSession: launchWith(stub),
       })
-      const request: SessionEvent = {
-        kind: "request",
-        text: "架空の依頼",
-        images: shelved === undefined ? [] : [{ id: shelved.id, thumbnail: shelved.thumbnail }],
-      }
+      const request = requestEvent(
+        "架空の依頼",
+        shelved === undefined ? [] : [{ id: shelved.id, thumbnail: shelved.thumbnail }],
+      )
       return { stub, request, shelvedId: shelved?.id, writes, archiveCalls, diagnostics }
     }
 
@@ -341,7 +340,7 @@ describe("createSessionManager", () => {
     function emitTurns(stub: ReturnType<typeof createStubDriver>): void {
       for (const chat of [true, false]) {
         stub.emit({ kind: "chat-mode-changed", chat })
-        stub.emit({ kind: "request", text: "架空の依頼", images: [] })
+        stub.emit(requestEvent())
         stub.emit({ kind: "speech", text: "架空のセリフ", expression: "proud" })
         stub.emit(reportEvent({ toolUseId: "toolu_r1", conclusion: "架空の結論" }))
         stub.emit({ kind: "turn-finished", outcome: { kind: "completed" } })

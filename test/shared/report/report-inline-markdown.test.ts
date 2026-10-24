@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest"
 
-import { fencedFigureCaptioned, markdownOf, text } from "../../fixture/report-markdown.ts"
+import {
+  fencedFigureCaptioned,
+  markdownOf,
+  reportMarkdownText,
+} from "../../fixture/report-markdown.ts"
 
 describe("reportSectionsMarkdown", () => {
   it("コードと mermaid はフェンスで囲み、中のバッククォートより長いフェンスにする", () => {
@@ -67,7 +71,7 @@ describe("reportSectionsMarkdown", () => {
         "```x``` と書く",
       ],
     ])("%s", (_, source, expected) => {
-      expect(markdownOf(text(source))).toBe(expected)
+      expect(markdownOf(reportMarkdownText(source))).toBe(expected)
     })
 
     it("箇条書きの項目の行頭も逃がす", () => {

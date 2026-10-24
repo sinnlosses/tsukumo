@@ -9,14 +9,15 @@ import { callTool } from "../../../fixture/mcp-server.ts"
 import {
   CHAT_MODE,
   CLOSING,
-  EXPRESSIONS,
+  TOOL_EXPRESSIONS,
   FAKE_CWD,
   FIGURE,
   REMAINING,
-  SUMMARY,
+  SESSION_SUMMARY,
   WAITING_LINE,
   workServer,
 } from "../../../fixture/sdk-tool.ts"
+import { requestEvent } from "../../../fixture/session-event.ts"
 
 describe("speak の差し戻し", () => {
   it("仕事のときは、描いたセリフのあとに新しい事実の無い speak を差し戻しの一文で返す", async () => {
@@ -32,7 +33,7 @@ describe("speak の差し戻し", () => {
   it("雑談のときは差し戻さない", async () => {
     const reply = await callTool(
       tsukumoServer(
-        EXPRESSIONS,
+        TOOL_EXPRESSIONS,
         CHAT_MODE,
         spokenReview(),
         () => {},
@@ -63,7 +64,7 @@ function spokenReview(): CallReview {
 
 function rangedReview(): CallReview {
   const review = createCallReview()
-  review.pass({ kind: "request", text: "架空の依頼", images: [] })
+  review.pass(requestEvent())
   review.judgeWorkPlan({
     phases: ["架空の計画", "架空の実装A", "架空の実装B", "架空の受け入れ"],
     current: 0,
@@ -109,7 +110,7 @@ describe("speak の phase の差し戻し", () => {
         workPlanClosing: "stopped",
         closing: { text: "段9まで済んだ", expression: "default" },
         figure: FIGURE,
-        sessionSummary: SUMMARY,
+        sessionSummary: SESSION_SUMMARY,
         sessionRemaining: REMAINING,
         waitingLine: WAITING_LINE,
       }),

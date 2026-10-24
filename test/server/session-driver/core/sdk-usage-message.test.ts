@@ -1,13 +1,13 @@
 import { expect, it } from "vitest"
 
 import { toSessionEvents } from "../../../../src/server/session-driver/core/sdk-message.ts"
-import { assistantMessage, EXPRESSIONS } from "../../../fixture/sdk-assistant-message.ts"
+import { assistantMessageWithoutUuid, EXPRESSIONS } from "../../../fixture/sdk-assistant-message.ts"
 
 // ステップごとの使用量。ターンの中を持ち場ごとに割れるのはこの経路だけなので、
 // `message.id` と持ち場が付いて出ることを固定する。
 it("assistant の usage を message.id 付きのステップの使用量にする", () => {
   const message = {
-    ...assistantMessage([{ type: "text", text: "ダミーの本文です。" }]),
+    ...assistantMessageWithoutUuid([{ type: "text", text: "ダミーの本文です。" }]),
     message: {
       role: "assistant",
       id: "msg_fictional_1",
@@ -68,11 +68,11 @@ it("parent_tool_use_id のある assistant のステップはサブエージェ�
 
 it("id や usage を持たない assistant はステップの使用量を出さない", () => {
   const withoutUsage = {
-    ...assistantMessage([]),
+    ...assistantMessageWithoutUuid([]),
     message: { role: "assistant", id: "msg_fictional_3", content: [] },
   }
   const withoutId = {
-    ...assistantMessage([]),
+    ...assistantMessageWithoutUuid([]),
     message: { role: "assistant", content: [], usage: { input_tokens: 10 } },
   }
 

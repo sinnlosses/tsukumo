@@ -11,6 +11,7 @@ import { useSession } from "../../../src/browser/stores/session.ts"
 import { PROTOCOL_VERSION } from "../../../src/shared/frame.ts"
 import type { StampedPendingAsk } from "../../../src/shared/session-driver/pending-ask.ts"
 import { INITIAL_SESSION_STATE } from "../../../src/shared/session/session-state.ts"
+import { requestEvent } from "../../fixture/session-event.ts"
 import { putSession } from "../session-store.ts"
 
 const FIXTURE_PERMISSION: StampedPendingAsk = {
@@ -59,7 +60,7 @@ describe("姿の store の購読", () => {
     act(() => {
       useSession.getState().receive({
         type: "events",
-        events: [{ at: 0, event: { kind: "request", text: "架空の依頼", images: [] } }],
+        events: [{ at: 0, event: requestEvent() }],
       })
     })
 
@@ -94,7 +95,7 @@ describe("姿の store の購読", () => {
     act(() => {
       useSession.getState().receive({
         type: "events",
-        events: [{ at: 0, event: { kind: "request", text: "架空の依頼", images: [] } }],
+        events: [{ at: 0, event: requestEvent() }],
       })
     })
 
@@ -126,7 +127,7 @@ describe("`hello` を受けた回数", () => {
     act(() => {
       useSession.getState().receive({
         type: "events",
-        events: [{ at: 0, event: { kind: "request", text: "架空の依頼", images: [] } }],
+        events: [{ at: 0, event: requestEvent() }],
       })
     })
     expect(useSession.getState().generation).toBe(afterHello)
@@ -145,7 +146,7 @@ describe("`hello` を受けた回数", () => {
 describe("サーバと版が合わないとき（docs/architecture.md「ServerFrame」）", () => {
   const REQUEST_EVENTS = {
     type: "events",
-    events: [{ at: 0, event: { kind: "request", text: "架空の依頼", images: [] } }],
+    events: [{ at: 0, event: requestEvent() }],
   } as const
 
   it("`hello` の版が違えば `mismatched` になり、そのあとの `events` を畳まない", () => {

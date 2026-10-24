@@ -5,6 +5,7 @@ import { applySessionEvent } from "../../../src/shared/session/session-fold.ts"
 import { INITIAL_SESSION_STATE } from "../../../src/shared/session/session-state.ts"
 import { answeringAsideOf, reportDraftingOf } from "../../../src/shared/session/turn-progress.ts"
 import { reportEvent } from "../../fixture/report-event.ts"
+import { requestEvent } from "../../fixture/session-event.ts"
 import { apply } from "../../fixture/session-state.ts"
 
 describe("applySessionEvent", () => {
@@ -24,10 +25,11 @@ describe("applySessionEvent", () => {
   })
 
   it("turn-started はターンを始めるが、記録を1件も積まない（話しかけてもらった一言を残さない）", () => {
-    const spoken = apply(
-      { kind: "request", text: "ダミーの依頼", images: [] },
-      { kind: "speech", text: "いくよ！", expression: "proud" },
-    )
+    const spoken = apply(requestEvent("ダミーの依頼"), {
+      kind: "speech",
+      text: "いくよ！",
+      expression: "proud",
+    })
 
     const started = applySessionEvent(spoken, { kind: "turn-started" }, 700)
 
@@ -44,11 +46,7 @@ describe("applySessionEvent", () => {
   it("request で起点を打ち、turn-finished で終わった時刻が止まる（入力欄の経過時間表示に使う）", () => {
     expect(INITIAL_SESSION_STATE.turn).toEqual({ kind: "idle" })
 
-    const started = applySessionEvent(
-      INITIAL_SESSION_STATE,
-      { kind: "request", text: "ダミーの依頼", images: [] },
-      100,
-    )
+    const started = applySessionEvent(INITIAL_SESSION_STATE, requestEvent("ダミーの依頼"), 100)
     expect(started.turn).toEqual({ kind: "running", startedAt: 100 })
 
     const finished = applySessionEvent(
@@ -64,18 +62,14 @@ describe("applySessionEvent", () => {
     })
 
     // 次の依頼で0から数え直す（`running` に戻るので、終わった時刻はもう持たない）。
-    const restarted = applySessionEvent(
-      finished,
-      { kind: "request", text: "次の依頼", images: [] },
-      400,
-    )
+    const restarted = applySessionEvent(finished, requestEvent("次の依頼"), 400)
     expect(restarted.turn).toEqual({ kind: "running", startedAt: 400 })
   })
 
   it("turn-resumed は始まった時刻を付け直さない（バックグラウンドタスクを挟んだ続きのターンでも、入力欄の経過時間が依頼を送った時刻から数え続ける）", () => {
     const started = applySessionEvent(
       INITIAL_SESSION_STATE,
-      { kind: "request", text: "背景へ委譲する依頼", images: [] },
+      requestEvent("背景へ委譲する依頼"),
       100,
     )
     expect(started.turn).toEqual({ kind: "running", startedAt: 100 })
@@ -131,7 +125,7 @@ describe("applySessionEvent", () => {
 
   it("aside はターンの通し番号も始まった時刻も進めず、吹き出しを残して答えを後ろに足し、そのターンのセリフに答えの印を付ける", () => {
     const delegated = [
-      [{ kind: "request", text: "架空の依頼", images: [] }, 100],
+      [requestEvent(), 100],
       [{ kind: "speech", text: "架空の着手のセリフ", expression: "default" }, 150],
       [{ kind: "turn-finished", outcome: { kind: "completed" } }, 300],
     ] as const satisfies readonly (readonly [SessionEvent, number])[]
@@ -190,11 +184,7 @@ describe("applySessionEvent", () => {
 
     // 時刻はすべて同じにする（凍らせたサーバの時計の下でもターンごとに違う値になること）。
     const at = 300
-    const started = applySessionEvent(
-      INITIAL_SESSION_STATE,
-      { kind: "request", text: "ダミーの依頼", images: [] },
-      at,
-    )
+    const started = applySessionEvent(INITIAL_SESSION_STATE, requestEvent("ダミーの依頼"), at)
     const finished = applySessionEvent(
       started,
       { kind: "turn-finished", outcome: { kind: "completed" } },
@@ -216,11 +206,7 @@ describe("applySessionEvent", () => {
     )
     expect(endedAfterFinish.finishedTurnCount).toBe(1)
 
-    const restarted = applySessionEvent(
-      finished,
-      { kind: "request", text: "次の依頼", images: [] },
-      at,
-    )
+    const restarted = applySessionEvent(finished, requestEvent("次の依頼"), at)
     expect(restarted.turn.kind).toBe("running")
     expect(restarted.finishedTurnCount).toBe(1)
 
@@ -244,11 +230,7 @@ describe("applySessionEvent", () => {
   })
 
   it("session-ended でも終わった時刻を打つ（中断・異常終了でも経過時間表示が止まる）", () => {
-    const started = applySessionEvent(
-      INITIAL_SESSION_STATE,
-      { kind: "request", text: "ダミーの依頼", images: [] },
-      100,
-    )
+    const started = applySessionEvent(INITIAL_SESSION_STATE, requestEvent("ダミーの依頼"), 100)
 
     const ended = applySessionEvent(
       started,
@@ -267,7 +249,7 @@ describe("applySessionEvent", () => {
 
 describe("applySessionEvent（report を書いている間）", () => {
   // 立ち絵の「書いている」の材料（`resolvePortraitMotion`）。
-  const REQUEST: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
+  const REQUEST = requestEvent()
   const DRAFTING: SessionEvent = { kind: "report-drafting", toolUseId: "toolu_r1" }
 
   it("report-drafting で書いている途中になり、同じ呼び出しの report で下りる", () => {

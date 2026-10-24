@@ -3,7 +3,7 @@ import type { Expression } from "../../src/shared/character-pack/expression.ts"
 // フィクスチャはすべて手で書いた架空のやり取り。実物の会話は使わない
 export const EXPRESSIONS: readonly Expression[] = ["default", "thinking", "proud"]
 
-export function assistantMessage(
+export function assistantMessageWithoutUuid(
   content: readonly unknown[],
   parentToolUseId?: string,
 ): Record<string, unknown> {

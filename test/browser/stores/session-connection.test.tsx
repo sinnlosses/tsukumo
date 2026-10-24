@@ -15,6 +15,7 @@ import type { SessionEvent } from "../../../src/shared/session/session-event.ts"
 import { applySessionEvent } from "../../../src/shared/session/session-fold.ts"
 import { INITIAL_SESSION_STATE } from "../../../src/shared/session/session-state.ts"
 import { reportEvent } from "../../fixture/report-event.ts"
+import { requestEvent } from "../../fixture/session-event.ts"
 import { putSession, stateWith } from "../session-store.ts"
 
 type SessionSocketHandlers = Parameters<typeof connectSessionSocket>[1]
@@ -113,7 +114,7 @@ function recordKinds(): readonly string[] {
   return useSession.getState().state.records.map((record) => record.kind)
 }
 
-const REQUEST: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
+const REQUEST = requestEvent()
 const SPEECH: SessionEvent = { kind: "speech", text: "架空のセリフ", expression: "default" }
 const PERMISSION: StampedPendingAsk = {
   kind: "permission",
@@ -195,7 +196,7 @@ describe("useSessionConnection（届くフレームの束ね方）", () => {
     const before = useSession.getState().state
     const report = reportEvent({ toolUseId: "toolu_r1" })
     const finished: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
-    const next: SessionEvent = { kind: "request", text: "架空の次の依頼", images: [] }
+    const next = requestEvent("架空の次の依頼")
 
     connected.onFrame(eventsFrame(report))
     connected.onFrame(eventsFrame(finished))
@@ -237,7 +238,7 @@ describe("useSessionConnection（ページが隠れている間）", () => {
     const before = useSession.getState().state
     const report = reportEvent({ toolUseId: "toolu_r1" })
     const finished: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
-    const next: SessionEvent = { kind: "request", text: "架空の次の依頼", images: [] }
+    const next = requestEvent("架空の次の依頼")
 
     setPageHidden(true)
     connected.onFrame(eventsFrame(report))

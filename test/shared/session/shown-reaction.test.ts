@@ -16,11 +16,12 @@ import {
 import { shownReaction, waitingLineDueAt } from "../../../src/shared/session/shown-reaction.ts"
 import { characterChangedEvent } from "../../fixture/character.ts"
 import { reportEvent } from "../../fixture/report-event.ts"
+import { requestEvent } from "../../fixture/session-event.ts"
 
 /** ターンが閉じてから待ちの一言を出すまでの間（2分）。 */
 const WAITING_LINE_DELAY_MS = 120_000
 
-const REQUEST = { kind: "request", text: "架空の依頼", images: [] } as const satisfies SessionEvent
+const REQUEST = requestEvent()
 
 const ASIDE = { kind: "aside", text: "架空の問い", images: [] } as const satisfies SessionEvent
 

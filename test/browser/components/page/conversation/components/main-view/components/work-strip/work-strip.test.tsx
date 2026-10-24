@@ -9,6 +9,7 @@ import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../../../../../../../src/shared/session/session-state.ts"
+import { requestEvent } from "../../../../../../../../fixture/session-event.ts"
 import { putSession } from "../../../../../../../session-store.ts"
 
 afterEach(() => {
@@ -17,7 +18,7 @@ afterEach(() => {
   useWorkStripSteps.setState(useWorkStripSteps.getInitialState(), true)
 })
 
-const REQUEST: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
+const REQUEST = requestEvent()
 
 function plan(
   current: number,

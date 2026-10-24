@@ -9,8 +9,9 @@ import type {
 import { createReportChangeCounter } from "../../../../src/server/session/core/report-change-count.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import { reportEvent } from "../../../fixture/report-event.ts"
+import { requestEvent } from "../../../fixture/session-event.ts"
 
-const REQUEST: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
+const REQUEST = requestEvent()
 
 const TASK_REPORT = reportEvent({
   toolUseId: "fictional-task-report",

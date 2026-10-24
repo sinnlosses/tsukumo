@@ -12,6 +12,7 @@ import {
   type SessionState,
 } from "../../../src/shared/session/session-state.ts"
 import { reportEvent } from "../../fixture/report-event.ts"
+import { requestEvent } from "../../fixture/session-event.ts"
 
 const FIXTURE_STATE: SessionState = {
   ...INITIAL_SESSION_STATE,
@@ -82,7 +83,7 @@ describe("mainViewTurnsOf", () => {
 describe("mainViewTurnsOf（claude が自分で始めた続きのターン）", () => {
   const fold = (events: readonly SessionEvent[]) =>
     events.reduce((current, event) => applySessionEvent(current, event, 0), INITIAL_SESSION_STATE)
-  const ask: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
+  const ask = requestEvent()
   const report = (conclusion: string): SessionEvent =>
     reportEvent({ toolUseId: "toolu_r1", conclusion })
   const finished: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
@@ -162,7 +163,7 @@ describe("mainViewTurnsOf（claude が自分で始めた続きのターン）", 
 describe("mainViewTurnsOf（最終レポートの札は、やり取りが閉じてから）", () => {
   const fold = (events: readonly SessionEvent[]) =>
     events.reduce((current, event) => applySessionEvent(current, event, 0), INITIAL_SESSION_STATE)
-  const ask: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
+  const ask = requestEvent()
   const report = (toolUseId: string, conclusion: string): SessionEvent =>
     reportEvent({ toolUseId, conclusion })
   const finished: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
@@ -190,7 +191,7 @@ describe("mainViewTurnsOf（最終レポートの札は、やり取りが閉じ�
 // 1件ずつ畳みながら確かめる。合図（turn-resumed）が届くたびに出ていたレポートが伏せられないことと、
 // 続きのターンが吹き出しを空に戻さないことの両方を、途中の姿で見る。
 describe("mainViewTurnsOf（続きのターンを2回以上含む並びを1件ずつ畳む）", () => {
-  const request: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
+  const request = requestEvent()
   const interimReport: SessionEvent = reportEvent({
     toolUseId: "toolu_r1",
     conclusion: "架空の中間レポート",
@@ -268,7 +269,7 @@ describe("mainViewTurnsOf（続きのターンを2回以上含む並びを1件�
 describe("mainViewTurnsOf（変わらないターンとステップの参照）", () => {
   const fold = (events: readonly SessionEvent[]) =>
     events.reduce((current, event) => applySessionEvent(current, event, 0), INITIAL_SESSION_STATE)
-  const ask: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
+  const ask = requestEvent()
   const report: SessionEvent = reportEvent({ toolUseId: "toolu_r1" })
   const finished: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
   const reported = fold([ask, report, finished])

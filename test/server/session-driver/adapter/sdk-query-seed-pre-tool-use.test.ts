@@ -8,6 +8,7 @@ import {
   type ExternalToolMark,
 } from "../../../../src/server/session-driver/core/external-tool-mark.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
+import { requestEvent } from "../../../fixture/session-event.ts"
 
 async function runPreToolUse(
   toolName: string,
@@ -127,7 +128,7 @@ describe("preToolUseHooks（Agent を背景に固定し、委譲ゲートで作�
       phaseSummary: "",
       delegatedRange: { first: 0, count: 2 },
     }
-    review.pass({ kind: "request", text: "架空の依頼", images: [] })
+    review.pass(requestEvent())
     review.judgeWorkPlan(plan)
     review.pass({ kind: "delegate-handed-back", delegate: "toolu_delegate" })
 
@@ -224,13 +225,13 @@ describe("preToolUseHooks（work_plan の前に Edit・Write を拒む）", () =
         () => Promise.resolve(undefined),
         review.planMissing,
       )
-    review.pass({ kind: "request", text: "架空の依頼", images: [] })
+    review.pass(requestEvent())
     expect(await runWith()).toEqual(DENIED)
 
     review.judgeWorkPlan({ phases: ["架空の段A", "架空の段B"], current: 0, phaseSummary: "" })
     expect(await runWith()).toEqual({})
 
-    review.pass({ kind: "request", text: "架空の次の依頼", images: [] })
+    review.pass(requestEvent("架空の次の依頼"))
     expect(await runWith()).toEqual(DENIED)
   })
 })

@@ -7,7 +7,14 @@ import {
 import { reportViolations } from "../../../../src/server/report/core/report-violation-check.ts"
 import type { ReportDraft } from "../../../../src/server/report/core/report-violation.ts"
 import type { ReportBlock, ReportSection } from "../../../../src/shared/report/report-block.ts"
-import { code, draft, kinds, markdown, mermaid, text } from "../../../fixture/report-draft-block.ts"
+import {
+  code,
+  draft,
+  kinds,
+  markdown,
+  mermaid,
+  reportDraftText,
+} from "../../../fixture/report-draft-block.ts"
 
 describe("reportRejectionText", () => {
   it("違反した条と直し方を1行ずつ並べ、直す欄だけで呼び直せることを末尾に添え、レポートの文面は写さない", () => {
@@ -287,7 +294,11 @@ describe("reportRejectionText", () => {
           {
             heading: "",
             shapeTag: "unspecified",
-            blocks: [flow, mermaid("sequenceDiagram\n  a ->> b: x"), text("架空の秘密の根拠。")],
+            blocks: [
+              flow,
+              mermaid("sequenceDiagram\n  a ->> b: x"),
+              reportDraftText("架空の秘密の根拠。"),
+            ],
           },
         ]),
       )
@@ -306,8 +317,16 @@ describe("reportRejectionText", () => {
 
     it("short-answer なのに節が2つ以上あれば違反になる", () => {
       const twoSections = withReason("short-answer", [
-        { heading: "架空の節1", shapeTag: "unspecified", blocks: [text("架空の根拠。")] },
-        { heading: "架空の節2", shapeTag: "unspecified", blocks: [text("架空の根拠。")] },
+        {
+          heading: "架空の節1",
+          shapeTag: "unspecified",
+          blocks: [reportDraftText("架空の根拠。")],
+        },
+        {
+          heading: "架空の節2",
+          shapeTag: "unspecified",
+          blocks: [reportDraftText("架空の根拠。")],
+        },
       ])
       expect(reportViolations(twoSections)).toEqual([
         { kind: "figure-contradiction", count: 2, reason: "short-answer" },
@@ -322,7 +341,7 @@ describe("reportRejectionText", () => {
             {
               heading: "",
               shapeTag: "unspecified",
-              blocks: [text("架空の1文目。2文目。3文目。4文目。")],
+              blocks: [reportDraftText("架空の1文目。2文目。3文目。4文目。")],
             },
           ]),
         ),

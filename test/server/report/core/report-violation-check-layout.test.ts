@@ -3,7 +3,13 @@ import { describe, expect, it } from "vitest"
 import { reportRejectionText } from "../../../../src/server/report/core/report-rejection.ts"
 import { reportViolations } from "../../../../src/server/report/core/report-violation-check.ts"
 import type { ReportBlock, ReportSection } from "../../../../src/shared/report/report-block.ts"
-import { draft, kinds, markdown, note, text } from "../../../fixture/report-draft-block.ts"
+import {
+  draft,
+  kinds,
+  markdown,
+  note,
+  reportDraftText,
+} from "../../../fixture/report-draft-block.ts"
 
 describe("reportViolations", () => {
   describe("note の塊は1〜2個まで", () => {
@@ -34,7 +40,7 @@ describe("reportViolations", () => {
     })
 
     it("間に別の塊があれば通る", () => {
-      expect(kinds(draft([info(), text("架空の段落。"), info()]))).toEqual([])
+      expect(kinds(draft([info(), reportDraftText("架空の段落。"), info()]))).toEqual([])
     })
 
     it("見出しのある節の先頭の note は違反、見出しの無い節の先頭は通る", () => {

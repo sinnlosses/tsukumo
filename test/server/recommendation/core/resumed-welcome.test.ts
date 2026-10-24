@@ -5,13 +5,14 @@ import type { ReportWaitingLine } from "../../../../src/shared/session/session-e
 import type { RestoredEvent, SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import { reportEvent } from "../../../fixture/report-event.ts"
 import { knownRestored, unknownRestored } from "../../../fixture/restored-event.ts"
+import { requestEvent } from "../../../fixture/session-event.ts"
 
 // すべて手で書いた架空の履歴。
 
 const NOW = 1_800_000_000_000
 const HOUR_MS = 3_600_000
 
-const REQUEST: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
+const REQUEST = requestEvent()
 const FINISHED: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
 const WAITING_LINE = {
   kind: "speech",

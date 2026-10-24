@@ -5,12 +5,19 @@ import { reportViolations } from "../../../../src/server/report/core/report-viol
 import type { ReportDraft } from "../../../../src/server/report/core/report-violation.ts"
 import type { TableCell } from "../../../../src/shared/report/report-block-comparison.ts"
 import type { ReportBlock, ReportSection } from "../../../../src/shared/report/report-block.ts"
-import { draft, kinds, markdown, mermaid, note, text } from "../../../fixture/report-draft-block.ts"
+import {
+  draft,
+  kinds,
+  markdown,
+  mermaid,
+  note,
+  reportDraftText,
+} from "../../../fixture/report-draft-block.ts"
 
 describe("reportViolations", () => {
   it("規約どおりのレポートには違反が無い", () => {
     const blocks: readonly ReportBlock[] = [
-      text("架空の段落の1文目。2文目。3文目。"),
+      reportDraftText("架空の段落の1文目。2文目。3文目。"),
       {
         kind: "table",
         title: "架空の表（作り物の値）",
@@ -39,12 +46,12 @@ describe("reportViolations", () => {
     })
     const withHeading = (heading: string): ReportDraft =>
       draft([], "架空の結論。", [
-        { heading, shapeTag: "unspecified", blocks: [text("架空の本文。")] },
+        { heading, shapeTag: "unspecified", blocks: [reportDraftText("架空の本文。")] },
       ])
 
     it("1要素目が全角50字なら通り、51字なら差し戻す", () => {
-      expect(kinds(draft([text("架空。")], `${"あ".repeat(50)}。`))).toEqual([])
-      expect(kinds(draft([text("架空。")], `${"あ".repeat(51)}。`))).toEqual([
+      expect(kinds(draft([reportDraftText("架空。")], `${"あ".repeat(50)}。`))).toEqual([])
+      expect(kinds(draft([reportDraftText("架空。")], `${"あ".repeat(51)}。`))).toEqual([
         "long-first-sentence",
       ])
     })
@@ -53,20 +60,24 @@ describe("reportViolations", () => {
       [51, "。"],
       [63, "！"],
     ])("1要素目が%i字の差し戻しは、実測の字数を値と文面に持つ", (length, end) => {
-      const violations = reportViolations(draft([text("架空。")], `${"あ".repeat(length)}${end}`))
+      const violations = reportViolations(
+        draft([reportDraftText("架空。")], `${"あ".repeat(length)}${end}`),
+      )
       expect(violations).toEqual([{ kind: "long-first-sentence", count: 1, length }])
       expect(reportRejectionText(violations)).toContain(`いま${String(length)}字`)
     })
 
     it("2要素目が長くても1要素目が短ければ通る", () => {
-      expect(kinds(draft([text("架空。")], ["短い。", `${"あ".repeat(60)}。`]))).toEqual([])
+      expect(kinds(draft([reportDraftText("架空。")], ["短い。", `${"あ".repeat(60)}。`]))).toEqual(
+        [],
+      )
     })
 
     it.each([
       ["「」の中の句点", "画面に「保存しました。」と出るようにした。"],
       ["英語のピリオド", "Fixed the parser. Tests pass."],
     ])("%sを含む1要素は割らずに1文と数える", (_, sentence) => {
-      expect(kinds(draft([text("架空。")], [sentence, "架空の2文目。"]))).toEqual([])
+      expect(kinds(draft([reportDraftText("架空。")], [sentence, "架空の2文目。"]))).toEqual([])
     })
 
     it("見出しが30字なら通り、31字か疑問文なら差し戻す", () => {
@@ -78,7 +89,7 @@ describe("reportViolations", () => {
 
     it("figure は分数に見える書き方や日付も差し戻さない", () => {
       const withFigure = (figure: string): ReportDraft => ({
-        ...draft([text("架空。")]),
+        ...draft([reportDraftText("架空。")]),
         checks: [check(figure)],
       })
       expect(kinds(withFigure("2849 / 56"))).toEqual([])
@@ -90,7 +101,7 @@ describe("reportViolations", () => {
 
     it("unverified の行の確かめ方が空なら差し戻し、ok・ng の空は通す", () => {
       const withCheck = (status: "ok" | "ng" | "unverified", howToVerify: string): ReportDraft => ({
-        ...draft([text("架空。")]),
+        ...draft([reportDraftText("架空。")]),
         checks: [{ ...check(""), status, howToVerify }],
       })
       expect(kinds(withCheck("unverified", ""))).toEqual(["unverified-without-how"])
@@ -123,22 +134,26 @@ describe("reportViolations", () => {
     })
 
     it("地の文と表のセルの A → B は差し戻す", () => {
-      expect(kinds(draft([text("架空の旧 → 架空の新に変わる。")]))).toEqual(["arrow-in-prose"])
+      expect(kinds(draft([reportDraftText("架空の旧 → 架空の新に変わる。")]))).toEqual([
+        "arrow-in-prose",
+      ])
       expect(kinds(draft([table("架空の旧 → 架空の新")]))).toEqual(["arrow-in-prose"])
     })
 
     it("インラインコードの中・from/to・flow の項目・矢印の無い文は通る", () => {
-      expect(kinds(draft([text("`a → b` と書く。")]))).toEqual([])
+      expect(kinds(draft([reportDraftText("`a → b` と書く。")]))).toEqual([])
       expect(kinds(draft([table({ from: "架空の旧", to: "架空の新" })]))).toEqual([])
       expect(
         kinds(draft([list([{ text: "架空の段" }, { text: "架空の次の段" }], "flow")])),
       ).toEqual([])
-      expect(kinds(draft([text("架空の-->と=>は対象外。")]))).toEqual([])
+      expect(kinds(draft([reportDraftText("架空の-->と=>は対象外。")]))).toEqual([])
     })
 
     it("二重のバッククォートのインラインコードを取り違えない", () => {
-      expect(kinds(draft([text("架空の ``a ` → ` b`` と書く。")]))).toEqual([])
-      expect(kinds(draft([text("架空の ``a`b`` → `c` に変わる。")]))).toEqual(["arrow-in-prose"])
+      expect(kinds(draft([reportDraftText("架空の ``a ` → ` b`` と書く。")]))).toEqual([])
+      expect(kinds(draft([reportDraftText("架空の ``a`b`` → `c` に変わる。")]))).toEqual([
+        "arrow-in-prose",
+      ])
     })
 
     it("項目の頭の「名前: 説明」は差し戻す", () => {
@@ -199,7 +214,9 @@ describe("reportViolations", () => {
       expect(kinds(draft([cards(cardItems(5))]))).toEqual(["bad-cards"])
       expect(kinds(draft([cards(cardItems(3, ""))]))).toEqual(["bad-cards"])
 
-      const violations = reportViolations(draft([text("架空の段落。"), cards(cardItems(5))]))
+      const violations = reportViolations(
+        draft([reportDraftText("架空の段落。"), cards(cardItems(5))]),
+      )
       expect(reportRejectionText(violations)).toContain("2個目の塊は5項目")
     })
 
@@ -217,35 +234,43 @@ describe("reportViolations", () => {
 
   describe("日本語でない地の文・見出し", () => {
     it("仮名も漢字も無い英語の文は text の塊なら差し戻し、見出しは差し戻さない", () => {
-      expect(kinds(draft([text("Fixed the bug in the parser.")]))).toEqual(["non-japanese"])
+      expect(kinds(draft([reportDraftText("Fixed the bug in the parser.")]))).toEqual([
+        "non-japanese",
+      ])
       expect(
         kinds(
           draft([], "架空の結論。", [
-            { heading: "Claude Agent SDK", shapeTag: "unspecified", blocks: [text("架空。")] },
+            {
+              heading: "Claude Agent SDK",
+              shapeTag: "unspecified",
+              blocks: [reportDraftText("架空。")],
+            },
           ]),
         ),
       ).toEqual([])
     })
 
     it("日本語を含む文・コードやパスだけの文・語の少ない見出しは通る", () => {
-      expect(kinds(draft([text("`parser.ts` の bug を直した。")]))).toEqual([])
-      expect(kinds(draft([text("`Fixed the bug in the parser` と `src/a.ts`")]))).toEqual([])
-      expect(kinds(draft([text("src/server/a.ts and src/server/b.ts")]))).toEqual([])
-      expect(kinds(draft([text("[Fixed the bug in the parser](https://example.com/a)")]))).toEqual(
-        [],
-      )
+      expect(kinds(draft([reportDraftText("`parser.ts` の bug を直した。")]))).toEqual([])
+      expect(
+        kinds(draft([reportDraftText("`Fixed the bug in the parser` と `src/a.ts`")])),
+      ).toEqual([])
+      expect(kinds(draft([reportDraftText("src/server/a.ts and src/server/b.ts")]))).toEqual([])
+      expect(
+        kinds(draft([reportDraftText("[Fixed the bug in the parser](https://example.com/a)")])),
+      ).toEqual([])
       expect(
         kinds(
           draft([], "架空の結論。", [
-            { heading: "Parser", shapeTag: "unspecified", blocks: [text("架空。")] },
+            { heading: "Parser", shapeTag: "unspecified", blocks: [reportDraftText("架空。")] },
           ]),
         ),
       ).toEqual([])
-      expect(kinds(draft([text("OK")]))).toEqual([])
+      expect(kinds(draft([reportDraftText("OK")]))).toEqual([])
     })
 
     it("二重のバッククォートの中の英語は数えない", () => {
-      expect(kinds(draft([text("``use the ` thing here`` ok")]))).toEqual([])
+      expect(kinds(draft([reportDraftText("``use the ` thing here`` ok")]))).toEqual([])
     })
   })
 
@@ -263,7 +288,7 @@ describe("reportViolations", () => {
 
   describe("地の文の長さ", () => {
     it("4文以上の text の塊・markdown の段落は違反にしない", () => {
-      expect(kinds(draft([text("架空の1文目。2文目。3文目。4文目。")]))).toEqual([])
+      expect(kinds(draft([reportDraftText("架空の1文目。2文目。3文目。4文目。")]))).toEqual([])
       expect(kinds(draft([markdown("架空の1文目。2文目。3文目。4文目。")]))).toEqual([])
     })
   })
@@ -271,8 +296,8 @@ describe("reportViolations", () => {
   describe("節が2つ以上なら全部に見出し", () => {
     it("見出しの無い節があれば違反", () => {
       const sections: readonly ReportSection[] = [
-        { heading: "架空の節", shapeTag: "unspecified", blocks: [text("架空の一。")] },
-        { heading: " ", shapeTag: "unspecified", blocks: [text("架空の二。")] },
+        { heading: "架空の節", shapeTag: "unspecified", blocks: [reportDraftText("架空の一。")] },
+        { heading: " ", shapeTag: "unspecified", blocks: [reportDraftText("架空の二。")] },
       ]
       expect(reportViolations(draft([], "架空の結論。", sections))).toEqual([
         { kind: "untitled-section", count: 1 },
@@ -280,7 +305,7 @@ describe("reportViolations", () => {
     })
 
     it("節が1つなら見出しが無くてもよい", () => {
-      expect(kinds(draft([text("架空の一。")]))).toEqual([])
+      expect(kinds(draft([reportDraftText("架空の一。")]))).toEqual([])
     })
   })
 

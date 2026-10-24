@@ -3,12 +3,12 @@ import { describe, expect, it } from "vitest"
 import { toSessionEvents } from "../../../../src/server/session-driver/core/sdk-message.ts"
 import { reportArgumentCharsOf } from "../../../../src/shared/report/report-argument-size.ts"
 import { reportEvent } from "../../../fixture/report-event.ts"
-import { assistantMessage, EXPRESSIONS } from "../../../fixture/sdk-assistant-message.ts"
+import { assistantMessageWithoutUuid, EXPRESSIONS } from "../../../fixture/sdk-assistant-message.ts"
 import { REPORT_TOOL_FULL_NAME } from "../../../fixture/sdk-message.ts"
 
 describe("toSessionEvents（report ツール）", () => {
   it("メインの report の呼び出しはレポートにする（ツールの開始にはしない。文字列の body は逃げ道の塊1つの節に畳む）", () => {
-    const message = assistantMessage([
+    const message = assistantMessageWithoutUuid([
       {
         type: "tool_use",
         id: "toolu_r1",
@@ -58,7 +58,7 @@ describe("toSessionEvents（report ツール）", () => {
   it("report の workPlanClosing はイベントに乗せ、形の崩れは none に畳む", () => {
     const closings = ["finished", "stopped", "架空の閉じ方"].map((workPlanClosing) => {
       const [event] = toSessionEvents(
-        assistantMessage([
+        assistantMessageWithoutUuid([
           {
             type: "tool_use",
             id: "toolu_r1",
@@ -78,7 +78,7 @@ describe("toSessionEvents（report ツール）", () => {
     const waitingLines = [{ text: "   ", expression: "default" }, "架空の文字列だけ"].map(
       (waitingLine) => {
         const [event] = toSessionEvents(
-          assistantMessage([
+          assistantMessageWithoutUuid([
             {
               type: "tool_use",
               id: "toolu_r1",
@@ -111,7 +111,7 @@ describe("toSessionEvents（report ツール）", () => {
       { kind: "table", title: "架空の表", columns: ["a", "b"], rows: [["1", "2"]] },
     ].map((figure) => {
       const [event] = toSessionEvents(
-        assistantMessage([
+        assistantMessageWithoutUuid([
           {
             type: "tool_use",
             id: "toolu_r1",
@@ -146,7 +146,7 @@ describe("toSessionEvents（report ツール）", () => {
   it("report の sessionSummary が文字列でない・空白だけなら無いものとして畳む", () => {
     const summaries = [42, "   "].map((sessionSummary) => {
       const [event] = toSessionEvents(
-        assistantMessage([
+        assistantMessageWithoutUuid([
           {
             type: "tool_use",
             id: "toolu_r1",
@@ -165,7 +165,7 @@ describe("toSessionEvents（report ツール）", () => {
   it("report の sessionRemaining は文字列なら残り、空白だけなら none、無い（古い transcript）・文字列でないなら unrecorded に畳む", () => {
     const remainings = ["架空の残り", "   ", undefined, 42].map((sessionRemaining) => {
       const [event] = toSessionEvents(
-        assistantMessage([
+        assistantMessageWithoutUuid([
           {
             type: "tool_use",
             id: "toolu_r1",
@@ -190,7 +190,7 @@ describe("toSessionEvents（report ツール）", () => {
   })
 
   it("sections は塊ごとに検証し、崩れた塊・知らない種類の塊と、塊の残らない節を落とす（省いた欄は既定で埋める）", () => {
-    const message = assistantMessage([
+    const message = assistantMessageWithoutUuid([
       {
         type: "tool_use",
         id: "toolu_r1",
@@ -234,7 +234,7 @@ describe("toSessionEvents（report ツール）", () => {
   })
 
   it("sections も body も無いときは節を空に、favor が無いときは空の文字列に、checks が無いときは空の配列に、closing と task が無いときは none に畳む", () => {
-    const message = assistantMessage([
+    const message = assistantMessageWithoutUuid([
       {
         type: "tool_use",
         id: "toolu_r1",
@@ -259,7 +259,7 @@ describe("toSessionEvents（report ツール）", () => {
       { id: "X-7", outcome: "finished" },
     ].map((task) => {
       const [event] = toSessionEvents(
-        assistantMessage([
+        assistantMessageWithoutUuid([
           {
             type: "tool_use",
             id: "toolu_r1",
@@ -280,7 +280,7 @@ describe("toSessionEvents（report ツール）", () => {
   })
 
   it("サブエージェントの report の呼び出しは捨てる（レポートにもツールの開始にもしない）", () => {
-    const message = assistantMessage(
+    const message = assistantMessageWithoutUuid(
       [
         {
           type: "tool_use",
@@ -299,7 +299,7 @@ describe("toSessionEvents（report ツール）", () => {
     "conclusion が文字列・文字列の配列・省略のどれでもない report（%j）はレポートにせず、字数だけの report-malformed にする",
     (conclusion) => {
       const input = { conclusion, body: "架空の本文" }
-      const message = assistantMessage([
+      const message = assistantMessageWithoutUuid([
         { type: "tool_use", id: "toolu_r1", name: REPORT_TOOL_FULL_NAME, input },
       ])
 
@@ -329,7 +329,7 @@ describe("toSessionEvents（report ツール）", () => {
     "conclusion の配列は連結し、要素ごとの字数を持つ。文字列（古い transcript）は1要素として読む: $joined",
     ({ conclusion, joined, chars }) => {
       const [event] = toSessionEvents(
-        assistantMessage([
+        assistantMessageWithoutUuid([
           { type: "tool_use", id: "toolu_r1", name: REPORT_TOOL_FULL_NAME, input: { conclusion } },
         ]),
         EXPRESSIONS,
@@ -344,7 +344,7 @@ describe("toSessionEvents（report ツール）", () => {
   )
 
   it("conclusion を省いた report は、結論が空のレポートにする（引き継ぎは後ろの段が埋める）", () => {
-    const message = assistantMessage([
+    const message = assistantMessageWithoutUuid([
       {
         type: "tool_use",
         id: "toolu_r1",

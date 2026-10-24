@@ -5,6 +5,7 @@ import { useMainViewContent } from "../../../src/browser/stores/main-view-conten
 import { useSession } from "../../../src/browser/stores/session.ts"
 import type { SessionEvent } from "../../../src/shared/session/session-event.ts"
 import { INITIAL_SESSION_STATE } from "../../../src/shared/session/session-state.ts"
+import { requestEvent } from "../../fixture/session-event.ts"
 import { requestRecord } from "../../fixture/session-record.ts"
 import { putSession } from "../session-store.ts"
 
@@ -24,7 +25,7 @@ function receive(...events: readonly SessionEvent[]): void {
 }
 
 function send(text = "架空の依頼"): void {
-  receive({ kind: "request", text, images: [] })
+  receive(requestEvent(text))
 }
 
 function finish(): void {

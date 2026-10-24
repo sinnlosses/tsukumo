@@ -8,6 +8,7 @@ import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../src/shared/session/session-state.ts"
+import { requestEvent } from "../../fixture/session-event.ts"
 import { apply } from "../../fixture/session-state.ts"
 
 describe("applySessionEvent（最近の話題）", () => {
@@ -59,15 +60,12 @@ describe("applySessionEvent（質問の記録）", () => {
   }
 
   it("質問に答えると、そのやり取りの記録に質問1件が残る", () => {
-    const entries = questionEntries(
-      { kind: "request", text: "架空の依頼", images: [] },
-      {
-        kind: "question-answered",
-        toolUseId: "toolu_q",
-        questions: [singleQuestion],
-        answers: [["案B"]],
-      },
-    )
+    const entries = questionEntries(requestEvent(), {
+      kind: "question-answered",
+      toolUseId: "toolu_q",
+      questions: [singleQuestion],
+      answers: [["案B"]],
+    })
 
     expect(entries).toEqual([
       { kind: "question", toolUseId: "toolu_q", questions: [singleQuestion], answers: [["案B"]] },
@@ -75,15 +73,12 @@ describe("applySessionEvent（質問の記録）", () => {
   })
 
   it("複数選択の答えは1つの文字列に畳まれず、選んだぶんだけ並ぶ", () => {
-    const entries = questionEntries(
-      { kind: "request", text: "架空の依頼", images: [] },
-      {
-        kind: "question-answered",
-        toolUseId: "toolu_q",
-        questions: [multiQuestion],
-        answers: [["案A", "案C"]],
-      },
-    )
+    const entries = questionEntries(requestEvent(), {
+      kind: "question-answered",
+      toolUseId: "toolu_q",
+      questions: [multiQuestion],
+      answers: [["案A", "案C"]],
+    })
 
     expect(entries).toEqual([
       {
@@ -96,36 +91,33 @@ describe("applySessionEvent（質問の記録）", () => {
   })
 
   it("答えていない質問（pending-changed だけ）は記録に残らない", () => {
-    const entries = questionEntries(
-      { kind: "request", text: "架空の依頼", images: [] },
-      {
-        kind: "pending-changed",
-        pending: [
-          {
-            kind: "question",
-            id: "toolu_q",
-            questions: [singleQuestion],
-            briefs: [],
-            imageSizes: [],
-            unshelvedImages: [],
-          },
-        ],
-      },
-    )
+    const entries = questionEntries(requestEvent(), {
+      kind: "pending-changed",
+      pending: [
+        {
+          kind: "question",
+          id: "toolu_q",
+          questions: [singleQuestion],
+          briefs: [],
+          imageSizes: [],
+          unshelvedImages: [],
+        },
+      ],
+    })
 
     expect(entries).toEqual([])
   })
 
   it("記録は前のやり取りに残り、次の依頼で消えない", () => {
     const view = apply(
-      { kind: "request", text: "架空の依頼1", images: [] },
+      requestEvent("架空の依頼1"),
       {
         kind: "question-answered",
         toolUseId: "toolu_q",
         questions: [singleQuestion],
         answers: [["案A"]],
       },
-      { kind: "request", text: "架空の依頼2", images: [] },
+      requestEvent("架空の依頼2"),
     )
 
     expect(mainViewEntries(view).map((entry) => entry.kind)).toEqual([
@@ -156,7 +148,7 @@ describe("applySessionEvent（見直し）", () => {
   /** 会話のターンが 100 で始まって進行中のところへ、見直しを 300 で始めて段を 500 で渡した姿。 */
   function running(): SessionState {
     const events: readonly StampedEvent[] = [
-      { at: 100, event: { kind: "request", text: "架空の依頼", images: [] } },
+      { at: 100, event: requestEvent() },
       { at: 300, event: { kind: "usage-review-started" } },
       { at: 500, event: { kind: "usage-review-stage", stage: "cache", days: 7 } },
     ]
@@ -167,11 +159,7 @@ describe("applySessionEvent（見直し）", () => {
   }
 
   it("見直しのイベントは見直しの欄だけを動かし、セッションの記録（records）とターンを動かさない", () => {
-    const before = applySessionEvent(
-      INITIAL_SESSION_STATE,
-      { kind: "request", text: "架空の依頼", images: [] },
-      100,
-    )
+    const before = applySessionEvent(INITIAL_SESSION_STATE, requestEvent(), 100)
     const events: readonly SessionEvent[] = [
       { kind: "usage-review-started" },
       { kind: "usage-review-stage", stage: "model", days: 7 },
@@ -241,7 +229,7 @@ describe("applySessionEvent（成果の日記書き）", () => {
 })
 
 describe("applySessionEvent（API の不調と失敗）", () => {
-  const REQUEST = { kind: "request", text: "架空の依頼", images: [] } satisfies SessionEvent
+  const REQUEST = requestEvent()
   const RETRY = {
     kind: "api-retry",
     retry: {

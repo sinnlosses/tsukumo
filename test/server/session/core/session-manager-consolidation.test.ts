@@ -11,11 +11,8 @@ import type { ServerFrame } from "../../../../src/shared/frame.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import { characterChangedEvent } from "../../../fixture/character.ts"
 import { createStubDriver } from "../../../fixture/session-driver.ts"
-import {
-  CHARACTER_EVENT,
-  createSessionManager,
-  waitForBatch,
-} from "../../../fixture/session-manager.ts"
+import { CHARACTER_EVENT } from "../../../fixture/session-event.ts"
+import { createSessionManager, waitForBatch } from "../../../fixture/session-manager.ts"
 
 describe("createSessionManager", () => {
   describe("定着", () => {

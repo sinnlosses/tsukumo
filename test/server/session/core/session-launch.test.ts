@@ -9,11 +9,11 @@ import {
 } from "../../../../src/server/session/core/session-launch.ts"
 import type { RestoredEvent, SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import { knownRestored } from "../../../fixture/restored-event.ts"
+import { createStubDriver } from "../../../fixture/session-driver.ts"
 import {
   CHAT_TOPICS,
   CHOICES,
   createHarness,
-  createStubDriver,
   modeOf,
   type Pack,
   PREVIOUS_WORK,
@@ -98,7 +98,7 @@ describe("createSessionLaunch", () => {
       "session-default-changed",
       "sessions-changed",
     ])
-    expect(harness.stub.calls).toEqual(["prompt:架空の依頼"])
+    expect(harness.stub.calls).toEqual(["prompt:request:架空の依頼"])
     expect(harness.diagnosticEntries).toEqual([
       {
         flow: "swallowed-failure",

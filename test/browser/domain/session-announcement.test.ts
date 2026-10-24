@@ -7,12 +7,13 @@ import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../src/shared/session/session-state.ts"
+import { requestEvent } from "../../fixture/session-event.ts"
 
 function fold(from: SessionState, ...events: readonly SessionEvent[]): SessionState {
   return events.reduce((state, event) => applySessionEvent(state, event, 0), from)
 }
 
-const REQUEST = { kind: "request", text: "架空の依頼", images: [] } as const satisfies SessionEvent
+const REQUEST = requestEvent()
 const FINISH = {
   kind: "turn-finished",
   outcome: { kind: "completed" },

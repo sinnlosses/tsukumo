@@ -10,12 +10,14 @@ import { mainViewTurns } from "../../../../src/shared/session/main-view.ts"
 import { applyRestoredEvents } from "../../../../src/shared/session/restored-event.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import { INITIAL_SESSION_STATE } from "../../../../src/shared/session/session-state.ts"
+import { EXPRESSIONS } from "../../../fixture/sdk-assistant-message.ts"
 import {
   assistantMessage,
   SPEAK_TOOL_FULL_NAME,
   userMessage,
 } from "../../../fixture/sdk-message.ts"
-import { EXPRESSIONS, eventsOf } from "../../../fixture/session-restore.ts"
+import { requestEvent } from "../../../fixture/session-event.ts"
+import { eventsOf } from "../../../fixture/session-restore.ts"
 
 /** `getSessionMessages` がメッセージに載せる出自の欄（`is_meta`・`origin`・`isCompletedLocalCommand`）を足す。 */
 function withFields(message: unknown, fields: Readonly<Record<string, unknown>>): unknown {
@@ -35,7 +37,7 @@ describe("toRestoredEvents", () => {
     ]
 
     expect(eventsOf(messages)).toEqual([
-      { kind: "request", text: "/架空コマンド", images: [] },
+      requestEvent("/架空コマンド"),
       { kind: "turn-finished", outcome: { kind: "completed" } },
     ])
   })
@@ -48,7 +50,7 @@ describe("toRestoredEvents", () => {
     ]
 
     expect(eventsOf(messages)).toEqual([
-      { kind: "request", text: "/架空コマンド 架空の引数", images: [] },
+      requestEvent("/架空コマンド 架空の引数"),
       { kind: "turn-finished", outcome: { kind: "completed" } },
     ])
   })
@@ -69,7 +71,7 @@ describe("toRestoredEvents", () => {
     ]
 
     expect(eventsOf(messages)).toEqual([
-      { kind: "request", text: "架空の依頼", images: [] },
+      requestEvent(),
       { kind: "turn-finished", outcome: { kind: "completed" } },
     ])
   })
@@ -98,7 +100,7 @@ describe("toRestoredEvents", () => {
     const messages = [withFields(userMessage("架空の依頼"), { origin: { kind: "human" } })]
 
     expect(eventsOf(messages)).toEqual([
-      { kind: "request", text: "架空の依頼", images: [] },
+      requestEvent(),
       { kind: "turn-finished", outcome: { kind: "completed" } },
     ])
   })
@@ -109,7 +111,7 @@ describe("toRestoredEvents", () => {
     ]
 
     expect(eventsOf(messages)).toEqual([
-      { kind: "request", text: "架空の依頼", images: [] },
+      requestEvent(),
       { kind: "turn-finished", outcome: { kind: "completed" } },
     ])
   })
@@ -130,7 +132,7 @@ describe("toRestoredEvents", () => {
     ]
 
     expect(eventsOf(messages)).toEqual([
-      { kind: "request", text: "/架空コマンド", images: [] },
+      requestEvent("/架空コマンド"),
       { kind: "utterance", text: "架空の本文" },
       { kind: "turn-finished", outcome: { kind: "completed" } },
     ])
@@ -163,7 +165,7 @@ describe("toRestoredEvents", () => {
     ]
 
     expect(eventsOf(messages)).toEqual([
-      { kind: "request", text: "架空の依頼", images: [] },
+      requestEvent(),
       { kind: "turn-finished", outcome: { kind: "completed" } },
     ])
   })
@@ -178,11 +180,11 @@ describe("toRestoredEvents", () => {
     expect(
       eventsOf([userMessage(notification), userMessage(reminder), userMessage(stdout)]),
     ).toEqual([
-      { kind: "request", text: notification, images: [] },
+      requestEvent(notification),
       finished,
-      { kind: "request", text: reminder, images: [] },
+      requestEvent(reminder),
       finished,
-      { kind: "request", text: stdout, images: [] },
+      requestEvent(stdout),
       finished,
     ])
   })
@@ -202,7 +204,7 @@ describe("toRestoredEvents", () => {
     ]
 
     expect(eventsOf(messages)).toEqual([
-      { kind: "request", text: "/架空コマンド", images: [] },
+      requestEvent("/架空コマンド"),
       { kind: "utterance", text: "架空の本文" },
       { kind: "turn-finished", outcome: { kind: "completed" } },
     ])

@@ -25,11 +25,12 @@ import {
   fold,
   report,
   shownReports,
-  text,
   toolRun,
   turnOf,
+  utteranceEvent,
 } from "../../fixture/main-view-report.ts"
 import { reportEvent } from "../../fixture/report-event.ts"
+import { requestEvent } from "../../fixture/session-event.ts"
 
 /** 段ごとの所要時間も振り返りもお願いも無い `report` の欄（頭と最終のときの頭が同じ）。 */
 const regionsOf = (
@@ -406,11 +407,11 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     const turn = turnOf(
       [
         ask,
-        text(materialReport("テキストで書いた資料")),
+        utteranceEvent(materialReport("テキストで書いた資料")),
         ...toolRun("toolu_1"),
         report("架空の結論。"),
         { kind: "speech", text: "書けたよ", expression: "default" },
-        text("完了"),
+        utteranceEvent("完了"),
         finished,
       ],
       SETTLED,
@@ -481,8 +482,8 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
           ask,
           report("前のターンの結論。"),
           finished,
-          { kind: "request", text: "次の架空の依頼", images: [] },
-          text("テキストで書いた答え"),
+          requestEvent("次の架空の依頼"),
+          utteranceEvent("テキストで書いた答え"),
           finished,
         ]),
       ),

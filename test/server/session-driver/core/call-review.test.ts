@@ -14,6 +14,7 @@ import type { BackgroundTask } from "../../../../src/shared/session-driver/backg
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import { reportDraft, reportEvent } from "../../../fixture/report-event.ts"
 import { REJECTION_PHRASE } from "../../../fixture/report-review.ts"
+import { requestEvent } from "../../../fixture/session-event.ts"
 
 type SpeechEvent = Extract<SessionEvent, { kind: "speech" }>
 type ReportCalled = Extract<SessionEvent, { kind: "report" }>
@@ -29,7 +30,7 @@ const SESSION_INFO: SessionEvent = {
   agentNames: [],
 }
 const FINISHED: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
-const REQUEST: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
+const REQUEST = requestEvent()
 const TURN_STARTED: SessionEvent = { kind: "turn-started" }
 const ASIDE: SessionEvent = { kind: "aside", text: "架空の問い", images: [] }
 const SPEECH_REJECTED = {
@@ -111,7 +112,7 @@ const planOf = (current: number): SessionEvent => {
   return called.kind === "work-plan-called" ? { kind: "work-plan", ...called.plan } : called
 }
 
-/** handler の判定から結果まで、本物の駆動と同じ順に流す。`pass` が流したイベントを返す。 */
+/** handler の判定から結果まで、駆動と同じ順に流す。`pass` が流したイベントを返す。 */
 function speak(review: CallReview, toolUseId: string, text: string): readonly SessionEvent[] {
   const verdict = review.judgeSpeak()
   return [

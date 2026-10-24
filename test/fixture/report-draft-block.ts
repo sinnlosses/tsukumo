@@ -16,7 +16,7 @@ export const draft = (
       blocks.length === 0 ? sections.filter((section) => section.blocks.length > 0) : sections,
   })
 
-export const text = (value: string, fold = ""): ReportBlock => ({
+export const reportDraftText = (value: string, fold = ""): ReportBlock => ({
   kind: "text",
   text: value,
   fold,

@@ -1,14 +1,12 @@
 import type { CharacterSelection } from "../../src/server/character-pack/core/character-selection.ts"
-import type { SessionDriver } from "../../src/server/session-driver/core/session-driver.ts"
 import type { SessionLaunchPorts } from "../../src/server/session/core/session-launch.ts"
-import { UNAVAILABLE_CONTEXT_USAGE } from "../../src/shared/context-usage/context-usage.ts"
 import type { DiagnosticEntry } from "../../src/shared/diagnostic/diagnostic-record.ts"
-import { UNAVAILABLE_PLAN_USAGE } from "../../src/shared/plan-usage/plan-usage.ts"
 import { BUILTIN_SESSION_DEFAULT } from "../../src/shared/session/session-default.ts"
-import { UNAVAILABLE_SESSION_DIGEST } from "../../src/shared/session/session-digest.ts"
 import type { RestoredEvent, SessionEvent } from "../../src/shared/session/session-event.ts"
 import { characterChangedEvent, characterPackEntry, shownPortraits } from "./character.ts"
 import { knownRestored } from "./restored-event.ts"
+import { createStubDriver, type StubDriver } from "./session-driver.ts"
+import { ITEMS_EVENT } from "./session-event.ts"
 
 // 本物の claude は起こさない（駆動は下の偽物）。
 export type Pack = { readonly name: string }
@@ -39,40 +37,11 @@ export const CHOICES = [
 ] as const
 
 /** 切り替え画面から前の仕事のセッションを選んだときの決め方。 */
-/** 起こすたびに流す `items-changed`（空の一覧）。 */
-export const ITEMS_EVENT: SessionEvent = { kind: "items-changed", items: [], seats: {} }
-
 export const PREVIOUS_WORK = { by: "id", sessionId: "prev-work-session" } as const
 
 export const CHAT_TOPICS = ["架空の話題その1", "架空の話題その2"] as const
 
 export const REMEMBERED_LINES = ["架空の覚えたことその1"] as const
-
-/** 起こされたことと閉じられたことだけを覚える fake driver 相当のスタブ。 */
-export function createStubDriver(): {
-  readonly driver: SessionDriver
-  readonly calls: string[]
-} {
-  const calls: string[] = []
-  return {
-    calls,
-    driver: {
-      prompt: (text: string) => calls.push(`prompt:${text}`),
-      promptWithoutRecord: (text: string) => calls.push(`promptWithoutRecord:${text}`),
-      interrupt: () => Promise.resolve(),
-      answer: () => true,
-      pending: () => [],
-      readContextUsage: () => Promise.resolve(UNAVAILABLE_CONTEXT_USAGE),
-      readPlanUsage: () => Promise.resolve(UNAVAILABLE_PLAN_USAGE),
-      readSessionDigest: () => Promise.resolve(UNAVAILABLE_SESSION_DIGEST),
-      setModel: () => Promise.resolve(),
-      setEffort: () => Promise.resolve(),
-      setPermissionMode: () => Promise.resolve(),
-      ended: () => false,
-      close: () => calls.push("close"),
-    },
-  }
-}
 
 type Harness = {
   readonly ports: SessionLaunchPorts<Pack>
@@ -87,7 +56,7 @@ type Harness = {
   readonly calls: string[]
   /** 診断ログへ積まれた足跡。 */
   readonly diagnosticEntries: DiagnosticEntry[]
-  readonly stub: ReturnType<typeof createStubDriver>
+  readonly stub: StubDriver
   readonly receive: (event: SessionEvent) => boolean
   readonly receiveRestored: (events: readonly RestoredEvent[]) => void
 }

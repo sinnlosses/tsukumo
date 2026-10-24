@@ -5,12 +5,12 @@ import {
   toSessionEvents,
 } from "../../../../src/server/session-driver/core/sdk-message.ts"
 import { MAX_TOOL_TEXT_LENGTH } from "../../../../src/shared/session/session-record.ts"
-import { assistantMessage, EXPRESSIONS } from "../../../fixture/sdk-assistant-message.ts"
+import { assistantMessageWithoutUuid, EXPRESSIONS } from "../../../fixture/sdk-assistant-message.ts"
 import { WORK_PLAN_TOOL_FULL_NAME } from "../../../fixture/sdk-message.ts"
 
 describe("toSessionEvents", () => {
   it("assistant のテキストをターンの本文にする", () => {
-    const message = assistantMessage([{ type: "text", text: "ダミーの本文です。" }])
+    const message = assistantMessageWithoutUuid([{ type: "text", text: "ダミーの本文です。" }])
 
     expect(toSessionEvents(message, EXPRESSIONS)).toEqual([
       { kind: "utterance", text: "ダミーの本文です。" },
@@ -18,19 +18,19 @@ describe("toSessionEvents", () => {
   })
 
   it("空白だけのテキストは本文にしない", () => {
-    const message = assistantMessage([{ type: "text", text: "   \n" }])
+    const message = assistantMessageWithoutUuid([{ type: "text", text: "   \n" }])
 
     expect(toSessionEvents(message, EXPRESSIONS)).toEqual([])
   })
 
   it("ゼロ幅スペースのような見えない文字だけのテキストも本文にしない", () => {
-    const message = assistantMessage([{ type: "text", text: "​\n﻿" }])
+    const message = assistantMessageWithoutUuid([{ type: "text", text: "​\n﻿" }])
 
     expect(toSessionEvents(message, EXPRESSIONS)).toEqual([])
   })
 
   it("thinking は変換しない（内部の型にも入れない）", () => {
-    const message = assistantMessage([
+    const message = assistantMessageWithoutUuid([
       { type: "thinking", thinking: "ダミーの思考" },
       { type: "text", text: "ダミーの本文です。" },
     ])
@@ -41,7 +41,7 @@ describe("toSessionEvents", () => {
   })
 
   it("サブエージェントの中のテキストは本文にしない（委譲先の独り言をメインビューに出さない）", () => {
-    const message = assistantMessage(
+    const message = assistantMessageWithoutUuid(
       [{ type: "text", text: "Dummy progress note." }],
       "toolu_sub_1",
     )
@@ -50,7 +50,7 @@ describe("toSessionEvents", () => {
   })
 
   it("tool_use をツールの開始にする", () => {
-    const message = assistantMessage([
+    const message = assistantMessageWithoutUuid([
       { type: "tool_use", id: "toolu_1", name: "Read", input: { file_path: "/tmp/dummy.txt" } },
     ])
 
@@ -68,7 +68,7 @@ describe("toSessionEvents", () => {
   describe("ツールの引数の文字列", () => {
     const inputOf = (input: unknown): unknown => {
       const events = toSessionEvents(
-        assistantMessage([{ type: "tool_use", id: "toolu_1", name: "Write", input }]),
+        assistantMessageWithoutUuid([{ type: "tool_use", id: "toolu_1", name: "Write", input }]),
         EXPRESSIONS,
       )
       return events[0]?.kind === "tool-started" ? events[0].input : undefined
@@ -103,7 +103,7 @@ describe("toSessionEvents", () => {
   })
 
   it("1つの assistant メッセージに本文とツールが並んでいても両方拾う", () => {
-    const message = assistantMessage([
+    const message = assistantMessageWithoutUuid([
       { type: "text", text: "ダミーの本文です。" },
       { type: "tool_use", id: "toolu_1", name: "Read", input: {} },
     ])
@@ -121,7 +121,7 @@ describe("toSessionEvents", () => {
   })
 
   it("サブエージェントの中の tool_use は parent_tool_use_id を parentToolUseId に乗せる", () => {
-    const message = assistantMessage(
+    const message = assistantMessageWithoutUuid(
       [{ type: "tool_use", id: "toolu_1", name: "Bash", input: { command: "echo dummy" } }],
       "toolu_agent",
     )
@@ -139,7 +139,7 @@ describe("toSessionEvents", () => {
 
   it("local_command_run が /model のときモデル変更のイベントを出す（2026-09-17 実測）", () => {
     const message = {
-      ...assistantMessage([{ type: "text", text: "ダミーの本文です。" }]),
+      ...assistantMessageWithoutUuid([{ type: "text", text: "ダミーの本文です。" }]),
       local_command_run: { command: "model", args: "haiku" },
     }
 
@@ -151,7 +151,7 @@ describe("toSessionEvents", () => {
 
   it("local_command_run の args の前後の空白は除く", () => {
     const message = {
-      ...assistantMessage([]),
+      ...assistantMessageWithoutUuid([]),
       local_command_run: { command: "model", args: "  opus  " },
     }
 
@@ -165,13 +165,13 @@ describe("toSessionEvents", () => {
     ["args が無い", { command: "model" }],
     ["引数なしの /model（args が空白）", { command: "model", args: " " }],
   ])("local_command_run は %s のとき何も出さない", (_name, localCommandRun) => {
-    const message = { ...assistantMessage([]), local_command_run: localCommandRun }
+    const message = { ...assistantMessageWithoutUuid([]), local_command_run: localCommandRun }
 
     expect(toSessionEvents(message, EXPRESSIONS)).toEqual([])
   })
 
   it("メインの work_plan の呼び出しは、呼び出しの id を付けたワークプランにする（ツールの開始にはしない）", () => {
-    const message = assistantMessage([
+    const message = assistantMessageWithoutUuid([
       {
         type: "tool_use",
         id: "toolu_3",
@@ -198,7 +198,7 @@ describe("toSessionEvents", () => {
   })
 
   it("phases の無い work_plan はワークプランにしない", () => {
-    const message = assistantMessage([
+    const message = assistantMessageWithoutUuid([
       {
         type: "tool_use",
         id: "toolu_3",
@@ -211,7 +211,7 @@ describe("toSessionEvents", () => {
   })
 
   it("段が途中の位置で段のまとめの無い work_plan もワークプランにする（まとめの要否は WorkPlanReview が決める）", () => {
-    const message = assistantMessage([
+    const message = assistantMessageWithoutUuid([
       {
         type: "tool_use",
         id: "toolu_3",
@@ -234,8 +234,10 @@ describe("toSessionEvents", () => {
     }
     const overflow = { ...block, input: { phases: ["架空の段A", "架空の段B"], current: 3 } }
 
-    expect(toSessionEvents(assistantMessage([block], "toolu_sub_1"), EXPRESSIONS)).toEqual([])
-    expect(toSessionEvents(assistantMessage([overflow]), EXPRESSIONS)).toEqual([])
+    expect(
+      toSessionEvents(assistantMessageWithoutUuid([block], "toolu_sub_1"), EXPRESSIONS),
+    ).toEqual([])
+    expect(toSessionEvents(assistantMessageWithoutUuid([overflow]), EXPRESSIONS)).toEqual([])
   })
 
   it("init の知らない許可モードは unknown のまま運び、見届けの合図にはしない", () => {
@@ -475,7 +477,10 @@ describe("toSessionEvents（委譲の返却）", () => {
     input: unknown,
     parentToolUseId?: string,
   ): Record<string, unknown> {
-    return assistantMessage([{ type: "tool_use", id: "toolu_back", name, input }], parentToolUseId)
+    return assistantMessageWithoutUuid(
+      [{ type: "tool_use", id: "toolu_back", name, input }],
+      parentToolUseId,
+    )
   }
 
   it("委譲先の SubagentHandback は、本文が何であっても委譲先を見分ける鍵の delegate-handed-back だけを出す", () => {
@@ -514,7 +519,7 @@ describe("toSessionEvents（委譲の返却）", () => {
 
   describe("委譲先の返却", () => {
     it("メイン自身の SubagentHandback は返却にしない", () => {
-      const message = assistantMessage([
+      const message = assistantMessageWithoutUuid([
         { type: "tool_use", id: "t3", name: "SubagentHandback", input: { message: "段 1/2 | x" } },
       ])
 

@@ -6,6 +6,7 @@ import type { SessionEvent } from "../../../src/shared/session/session-event.ts"
 import { applySessionEvent } from "../../../src/shared/session/session-fold.ts"
 import { MAX_SESSION_STATE_TURNS } from "../../../src/shared/session/session-record.ts"
 import { reportEvent } from "../../fixture/report-event.ts"
+import { requestEvent } from "../../fixture/session-event.ts"
 import { apply } from "../../fixture/session-state.ts"
 
 /** メインビューに出すやり取りの数（仕事の記録の窓と同じ）。 */
@@ -15,7 +16,7 @@ describe("applySessionEvent", () => {
   it("記録はターン数の窓（直近20ターン）だけを残し、古いターンは落とす", () => {
     const events: SessionEvent[] = []
     for (let turn = 0; turn < 25; turn += 1) {
-      events.push({ kind: "request", text: `依頼${String(turn)}`, images: [] })
+      events.push(requestEvent(`依頼${String(turn)}`))
       events.push({ kind: "utterance", text: `レポート${String(turn)}` })
     }
 
@@ -32,7 +33,7 @@ describe("applySessionEvent", () => {
   it("雑談モードでは窓が100ターンに広がる（仕事の20ターンより後ろまで残る）", () => {
     const events: SessionEvent[] = [{ kind: "chat-mode-changed", chat: true }]
     for (let turn = 0; turn < 105; turn += 1) {
-      events.push({ kind: "request", text: `依頼${String(turn)}`, images: [] })
+      events.push(requestEvent(`依頼${String(turn)}`))
       events.push({ kind: "utterance", text: `雑談${String(turn)}` })
     }
 
@@ -52,7 +53,7 @@ describe("applySessionEvent", () => {
     // 二度と起動しなかった（`useReportReveal`）。
     const events: SessionEvent[] = []
     for (let turn = 0; turn < 25; turn += 1) {
-      events.push({ kind: "request", text: `依頼${String(turn)}`, images: [] })
+      events.push(requestEvent(`依頼${String(turn)}`))
       events.push({ kind: "utterance", text: `本文${String(turn)}` })
       events.push({ kind: "turn-finished", outcome: { kind: "completed" } })
     }
@@ -69,7 +70,7 @@ describe("applySessionEvent", () => {
   it("圧縮の区切り（compact-boundary）を挟んでも、窓の数え方（request の数）は変わらない", () => {
     const events: SessionEvent[] = []
     for (let turn = 0; turn < 25; turn += 1) {
-      events.push({ kind: "request", text: `依頼${String(turn)}`, images: [] })
+      events.push(requestEvent(`依頼${String(turn)}`))
       if (turn === 10) {
         events.push({ kind: "compact-boundary" })
       }
@@ -87,7 +88,7 @@ describe("applySessionEvent", () => {
 })
 
 describe("applySessionEvent（変更の札）", () => {
-  const REQUEST: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
+  const REQUEST = requestEvent()
   const COUNTED: SessionEvent = {
     kind: "report-change-summary",
     toolUseId: "toolu_r1",

@@ -3,7 +3,13 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { callTool } from "../../../fixture/mcp-server.ts"
-import { CLOSING, FIGURE, REMAINING, SUMMARY, WAITING_LINE } from "../../../fixture/sdk-tool.ts"
+import {
+  CLOSING,
+  FIGURE,
+  REMAINING,
+  SESSION_SUMMARY,
+  WAITING_LINE,
+} from "../../../fixture/sdk-tool.ts"
 
 describe("report の検査の並び", () => {
   afterEach(() => {
@@ -35,7 +41,7 @@ describe("report の検査の並び", () => {
       sections: [{ blocks: [{ kind: "mermaid", source: "sequenceDiagram\n  A->>B: hi" }] }],
       closing: CLOSING,
       figure: FIGURE,
-      sessionSummary: SUMMARY,
+      sessionSummary: SESSION_SUMMARY,
       sessionRemaining: REMAINING,
       waitingLine: WAITING_LINE,
     })

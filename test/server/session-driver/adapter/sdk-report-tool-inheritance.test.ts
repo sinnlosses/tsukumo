@@ -17,7 +17,7 @@ import {
   CLOSING,
   FIGURE,
   REMAINING,
-  SUMMARY,
+  SESSION_SUMMARY,
   WAITING_LINE,
   workServer,
 } from "../../../fixture/sdk-tool.ts"
@@ -29,7 +29,7 @@ const COMPLETE = {
   figure: FIGURE,
   favor: "架空のお願い",
   closing: CLOSING,
-  sessionSummary: SUMMARY,
+  sessionSummary: SESSION_SUMMARY,
   sessionRemaining: REMAINING,
   waitingLine: WAITING_LINE,
   title: "架空の題",
@@ -171,7 +171,7 @@ describe("report の差し戻しのあとの出し直し", () => {
     const resent = await live.call({
       figure: FIGURE,
       closing: CLOSING,
-      sessionSummary: SUMMARY,
+      sessionSummary: SESSION_SUMMARY,
       sessionRemaining: REMAINING,
       waitingLine: WAITING_LINE,
     })

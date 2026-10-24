@@ -20,6 +20,7 @@ import {
   tick,
 } from "../../../fixture/fake-driver.ts"
 import { reportEvent } from "../../../fixture/report-event.ts"
+import { requestEvent } from "../../../fixture/session-event.ts"
 
 describe("startFakeSession", () => {
   it.each([
@@ -54,7 +55,7 @@ describe("startFakeSession", () => {
     [
       "prompt で request を流してから、次の場面を流す",
       (driver: SessionDriver) => driver.prompt("架空の依頼", [], "request"),
-      { kind: "request", text: "架空の依頼", images: [] },
+      requestEvent(),
     ],
     [
       // 送った文面はどのイベントにも乗らない（docs/architecture/screen-design.md「雑談モードの画面」）。

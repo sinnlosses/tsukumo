@@ -12,7 +12,7 @@ import { applySessionEvent } from "../../../../../../../../../../src/shared/sess
 import type { SessionState } from "../../../../../../../../../../src/shared/session/session-state.ts"
 import {
   foldTimed,
-  request,
+  workRequest,
   START,
   stripAt,
 } from "../../../../../../../../../fixture/work-strip.ts"
@@ -49,7 +49,7 @@ describe("useWorkStrip（段の吹き出し）", () => {
 
   /** 段A を 1分40秒で済ませてまとめを渡し、段B をまとめ無しで済ませ、段C が 1分56秒 走っている。 */
   const progressed = foldTimed([
-    [request, START],
+    [workRequest, START],
     [fourPlan(0, ""), START + 1_000],
     [fourPlan(1, "架空の段Aのまとめ。"), START + 101_000],
     [fourPlan(2, ""), START + 130_000],
@@ -146,7 +146,7 @@ describe("useWorkStrip（段の吹き出し）", () => {
 
   it("記録が途中から始まって所要が引けない済んだ段は「所要 不明」", () => {
     const midway = foldTimed([
-      [request, START],
+      [workRequest, START],
       [fourPlan(1, "架空のまとめ。"), START + 1_000],
     ])
 
@@ -155,7 +155,7 @@ describe("useWorkStrip（段の吹き出し）", () => {
 
   it("並列の段の中の丸も押せて、同じ形の吹き出しが出る", () => {
     const grouped = foldTimed([
-      [request, START],
+      [workRequest, START],
       [workPlan(["架空の段A", ["架空の段B", "架空の段C"]], 0, ""), START + 1_000],
       [
         workPlan(["架空の段A", ["架空の段B", "架空の段C"]], 1, "架空の段Aのまとめ。"),
@@ -209,7 +209,7 @@ describe("useWorkStrip（段の吹き出し）", () => {
 
     act(() => {
       putState(
-        [request, fourPlan(1, "架空のまとめ。")].reduce(
+        [workRequest, fourPlan(1, "架空のまとめ。")].reduce(
           (state, event) => applySessionEvent(state, event, START + 240_000),
           progressed,
         ),

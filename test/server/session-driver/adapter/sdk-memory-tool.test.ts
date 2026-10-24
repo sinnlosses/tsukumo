@@ -15,7 +15,12 @@ import type {
 } from "../../../../src/server/session-driver/core/session-driver.ts"
 import { fixedChatSummary } from "../../../fixture/chat.ts"
 import { callTool } from "../../../fixture/mcp-server.ts"
-import { CHAT_MODE, EXPRESSIONS, FAKE_CWD, NOT_FOUND_RECALL } from "../../../fixture/sdk-tool.ts"
+import {
+  CHAT_MODE,
+  TOOL_EXPRESSIONS,
+  FAKE_CWD,
+  NOT_FOUND_RECALL,
+} from "../../../fixture/sdk-tool.ts"
 
 describe("remember / forget ツール", () => {
   /** 渡す行（手で書いた架空のもの）。応答に混ざらないことを確かめる目印にもする。 */
@@ -27,7 +32,7 @@ describe("remember / forget ツール", () => {
   ): () => McpSdkServerConfigWithInstance {
     return () =>
       tsukumoServer(
-        EXPRESSIONS,
+        TOOL_EXPRESSIONS,
         {
           kind: "chat",
           personaMemory: memory,
@@ -197,7 +202,7 @@ describe("recall / recall_episode ツール", () => {
     // 呼び出しごとにサーバを作り直す（`callTool` が繋いで閉じる。他のテストと同じ手）。
     const server = (): McpSdkServerConfigWithInstance =>
       tsukumoServer(
-        EXPRESSIONS,
+        TOOL_EXPRESSIONS,
         chatMode,
         createCallReview(),
         () => {},
@@ -239,7 +244,7 @@ describe("recall / recall_episode ツール", () => {
 
     const reply = await callTool(
       tsukumoServer(
-        EXPRESSIONS,
+        TOOL_EXPRESSIONS,
         workMode,
         createCallReview(),
         () => {},
@@ -266,7 +271,7 @@ describe("recall / recall_episode ツール", () => {
     }
     const server = (): McpSdkServerConfigWithInstance =>
       tsukumoServer(
-        EXPRESSIONS,
+        TOOL_EXPRESSIONS,
         chatMode,
         createCallReview(),
         () => {},

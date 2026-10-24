@@ -18,10 +18,10 @@ import {
   type PreviousUsageReview,
   usageProposalKey,
 } from "../../src/shared/usage-review/usage-review.ts"
-import { characterChangedEvent, shownPortraits } from "./character.ts"
 import { NOOP_CHAT_ARCHIVE } from "./chat.ts"
 import { createCommandClient } from "./command-client.ts"
 import { createStubDriver } from "./session-driver.ts"
+import { CHARACTER_EVENT, requestEvent } from "./session-event.ts"
 
 const BATCH_MS = 5
 
@@ -59,14 +59,6 @@ const NO_CHAT_CONSOLIDATION: ChatConsolidationSource = { kind: "dont-consolidate
 
 /** 振り返りの書き手を気にしないテストに渡す出どころ（起こさない）。 */
 const NO_DIARY_WRITER: DiaryWriterSource = { kind: "dont-write" }
-
-/**
- * 見た目の編集で流し直す `character-changed`（手で書いた架空のパック）。書き込みそのものは
- * 配線層の仕事なので、ここでは「書けた/書けなかった」だけを差し替える。
- */
-export const CHARACTER_EVENT: SessionEvent = characterChangedEvent({
-  ...shownPortraits({ default: "/character/default.png?v=fictional@2" }),
-})
 
 /** コマンドの受け手の口（機能ごとの `ports` を平らに並べたもの。棚は `SessionManagerOptions` と共有する）。 */
 type FlatCommandPorts = Omit<
@@ -204,7 +196,7 @@ export function waitForBatch(): Promise<void> {
 
 /** 前のセッションを組み直した再生（架空の1ターン）。 */
 export const RESTORED_REPLAY: readonly SessionEvent[] = [
-  { kind: "request", text: "前のセッションの架空の依頼", images: [] },
+  requestEvent("前のセッションの架空の依頼"),
   {
     kind: "tool-started",
     toolUseId: "t-restored",

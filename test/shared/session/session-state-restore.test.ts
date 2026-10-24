@@ -7,6 +7,7 @@ import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../src/shared/session/session-state.ts"
+import { requestEvent } from "../../fixture/session-event.ts"
 
 describe("applySessionEvent（答え待ちの届いた時刻）", () => {
   const permission = (
@@ -57,7 +58,7 @@ describe("applyRestoredEvents（transcript の時刻）", () => {
     time: { kind: "known", at },
   })
   const unknown = (event: SessionEvent): RestoredEvent => ({ event, time: { kind: "unknown" } })
-  const request: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
+  const request = requestEvent()
   const bashStarted: SessionEvent = {
     kind: "tool-started",
     toolUseId: "toolu_1",

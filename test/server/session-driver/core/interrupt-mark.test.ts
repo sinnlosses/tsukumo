@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import { createInterruptMark } from "../../../../src/server/session-driver/core/interrupt-mark.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
+import { requestEvent } from "../../../fixture/session-event.ts"
 
 const TURN_FINISHED: SessionEvent = { kind: "turn-finished", outcome: { kind: "interrupted" } }
 
@@ -17,7 +18,7 @@ describe("createInterruptMark", () => {
   })
 
   it.each<SessionEvent>([
-    { kind: "request", text: "依頼", images: [] },
+    requestEvent("依頼"),
     { kind: "aside", text: "脇の話", images: [] },
     { kind: "turn-started" },
     { kind: "progress-nudged" },

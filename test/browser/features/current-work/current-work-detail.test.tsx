@@ -9,6 +9,7 @@ import {
   type SessionState,
 } from "../../../../src/shared/session/session-state.ts"
 import { renderScreenNav, workToggle } from "../../../fixture/current-work.tsx"
+import { requestEvent } from "../../../fixture/session-event.ts"
 import {
   finishedToolStatus,
   requestRecord,
@@ -388,7 +389,7 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
 
   it("上限を超える失敗の出力は、先頭 8000 字と落とした字数で出る", () => {
     const events: readonly SessionEvent[] = [
-      { kind: "request", text: "架空の依頼", images: [] },
+      requestEvent(),
       {
         kind: "tool-started",
         toolUseId: "toolu_1",

@@ -11,6 +11,7 @@ import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../../src/shared/session/session-state.ts"
+import { requestEvent } from "../../../fixture/session-event.ts"
 
 /** 依頼の文面に入れる目印。記録の行に出てはいけない。 */
 const REQUEST_MARK = "架空の依頼の目印・青い傘"
@@ -26,7 +27,7 @@ const SESSION_INFO: SessionEvent = {
   agentNames: [],
 }
 
-const REQUEST: SessionEvent = { kind: "request", text: REQUEST_MARK, images: [] }
+const REQUEST = requestEvent(REQUEST_MARK)
 const COMPLETED: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
 const FAILED: SessionEvent = {
   kind: "turn-finished",

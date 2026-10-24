@@ -4,6 +4,7 @@ import { asidePromptText } from "../../../../src/server/session-driver/core/asid
 import { inputLedgerOf } from "../../../../src/server/session-driver/core/input-ledger.ts"
 import { progressNudgePromptText } from "../../../../src/server/session-driver/core/progress-nudge.ts"
 import { assistantMessage, userMessage } from "../../../fixture/sdk-message.ts"
+import { requestEvent } from "../../../fixture/session-event.ts"
 import { eventsOf } from "../../../fixture/session-restore.ts"
 
 const FIRST = "00000000-0000-4000-8000-000000000001"
@@ -30,9 +31,9 @@ describe("toRestoredEvents（入力の控えのあるセッション）", () => 
     ])
 
     expect(eventsOf([sent(aside, FIRST), sent(progress, SECOND)], ledger)).toEqual([
-      { kind: "request", text: aside, images: [] },
+      requestEvent(aside),
       { kind: "turn-finished", outcome: { kind: "completed" } },
-      { kind: "request", text: progress, images: [] },
+      requestEvent(progress),
       { kind: "turn-finished", outcome: { kind: "completed" } },
     ])
   })
@@ -97,12 +98,12 @@ describe("toRestoredEvents（入力の控えのあるセッション）", () => 
         ledger,
       ),
     ).toEqual([
-      { kind: "request", text: "架空の依頼", images: [] },
+      requestEvent(),
       { kind: "turn-finished", outcome: { kind: "interrupted" } },
       { kind: "turn-resumed" },
       { kind: "utterance", text: "架空の続き" },
       { kind: "turn-finished", outcome: { kind: "failed", cause: { kind: "max-turns" } } },
-      { kind: "request", text: "架空の次の依頼", images: [] },
+      requestEvent("架空の次の依頼"),
       { kind: "turn-finished", outcome: { kind: "completed" } },
     ])
   })

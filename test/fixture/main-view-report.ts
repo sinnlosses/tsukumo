@@ -9,13 +9,17 @@ import { INITIAL_SESSION_STATE } from "../../src/shared/session/session-state.ts
 import type { TurnBodies } from "../../src/shared/session/turn-progress.ts"
 import { reportOf } from "./main-view-entry.ts"
 import { reportEvent } from "./report-event.ts"
+import { requestEvent } from "./session-event.ts"
 
 export const fold = (events: readonly SessionEvent[]) =>
   events.reduce((current, event) => applySessionEvent(current, event, 0), INITIAL_SESSION_STATE)
 export const turnOf = (events: readonly SessionEvent[], unsettled: TurnBodies, closed: boolean) =>
   mainViewTurns(mainViewEntries(fold(events)), unsettled, closed).at(-1)
-export const ask: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
-export const text = (markdown: string): SessionEvent => ({ kind: "utterance", text: markdown })
+export const ask = requestEvent()
+export const utteranceEvent = (markdown: string): SessionEvent => ({
+  kind: "utterance",
+  text: markdown,
+})
 export const report = (
   conclusion: string,
   body = "",

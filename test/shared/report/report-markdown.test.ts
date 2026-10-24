@@ -8,8 +8,8 @@ import {
   captionNumbers,
   markdownOf,
   section,
+  reportMarkdownText,
   statItem,
-  text,
 } from "../../fixture/report-markdown.ts"
 
 describe("reportSectionsMarkdown", () => {
@@ -22,9 +22,9 @@ describe("reportSectionsMarkdown", () => {
 
   it("節の見出しは ## で出し、塊と節は空行で区切る。空の見出し・空の塊は置かない", () => {
     const sections = [
-      section([text("架空の一。"), text(" ")], "架空の節"),
+      section([reportMarkdownText("架空の一。"), reportMarkdownText(" ")], "架空の節"),
       section([{ kind: "markdown", markdown: "", fold: "", aside: "" }], ""),
-      section([text("架空の二。")], "架空の次の節"),
+      section([reportMarkdownText("架空の二。")], "架空の次の節"),
     ]
 
     expect(reportSectionsMarkdown(sections, NO_IMAGES)).toBe(
@@ -33,7 +33,10 @@ describe("reportSectionsMarkdown", () => {
   })
 
   it("見出しの無い節どうしも空行で区切る", () => {
-    const sections = [section([text("架空の一。")]), section([text("架空の二。")])]
+    const sections = [
+      section([reportMarkdownText("架空の一。")]),
+      section([reportMarkdownText("架空の二。")]),
+    ]
 
     expect(reportSectionsMarkdown(sections, NO_IMAGES)).toBe("架空の一。\n\n架空の二。")
   })
@@ -188,14 +191,20 @@ describe("reportSectionsMarkdown", () => {
       ].join("\n\n")
 
     it("aside のある塊は包みの中で、塊のあとに傍注が出る", () => {
-      expect(markdownOf({ ...text("架空の本文。"), aside: "出どころ: 架空の `a.ts:3`" })).toBe(
-        withGutter("架空の本文。", [asideNote("出どころ: 架空の `a.ts:3`")]),
-      )
+      expect(
+        markdownOf({ ...reportMarkdownText("架空の本文。"), aside: "出どころ: 架空の `a.ts:3`" }),
+      ).toBe(withGutter("架空の本文。", [asideNote("出どころ: 架空の `a.ts:3`")]))
     })
 
     it("memo の note は直前の塊の傍注になり、本文の位置に note-memo が残らない", () => {
       const markdown = reportSectionsMarkdown(
-        [section([text("架空の本文。"), memo("架空の覚え書き。"), text("架空の次の段落。")])],
+        [
+          section([
+            reportMarkdownText("架空の本文。"),
+            memo("架空の覚え書き。"),
+            reportMarkdownText("架空の次の段落。"),
+          ]),
+        ],
         NO_IMAGES,
       )
 
@@ -210,7 +219,12 @@ describe("reportSectionsMarkdown", () => {
     it("塊の aside と続く memo は1つの傍注の並びに、書いた順で並ぶ", () => {
       expect(
         reportSectionsMarkdown(
-          [section([{ ...text("架空の本文。"), aside: "架空の出典" }, memo("架空の覚え書き。")])],
+          [
+            section([
+              { ...reportMarkdownText("架空の本文。"), aside: "架空の出典" },
+              memo("架空の覚え書き。"),
+            ]),
+          ],
           NO_IMAGES,
         ),
       ).toBe(withGutter("架空の本文。", [asideNote("架空の出典"), memoNote("架空の覚え書き。")]))
@@ -219,7 +233,10 @@ describe("reportSectionsMarkdown", () => {
     it("節の最初の memo は塊の無い包みになり、前の節の塊には付かない", () => {
       expect(
         reportSectionsMarkdown(
-          [section([text("架空の前の節。")]), section([memo("架空の覚え書き。")], "架空の見出し")],
+          [
+            section([reportMarkdownText("架空の前の節。")]),
+            section([memo("架空の覚え書き。")], "架空の見出し"),
+          ],
           NO_IMAGES,
         ),
       ).toBe(
@@ -230,7 +247,13 @@ describe("reportSectionsMarkdown", () => {
     })
 
     it("fold のある塊は details ごと包み、傍注は details の外に置く", () => {
-      expect(markdownOf({ ...text("架空の脇道。"), fold: "架空の畳み", aside: "架空の出典" })).toBe(
+      expect(
+        markdownOf({
+          ...reportMarkdownText("架空の脇道。"),
+          fold: "架空の畳み",
+          aside: "架空の出典",
+        }),
+      ).toBe(
         withGutter("<details><summary>架空の畳み</summary>\n\n架空の脇道。\n\n</details>", [
           asideNote("架空の出典"),
         ]),
@@ -238,12 +261,12 @@ describe("reportSectionsMarkdown", () => {
     })
 
     it("傍注の文字は逃がし、空白だけの aside と空の memo は傍注にしない", () => {
-      expect(markdownOf({ ...text("架空の本文。"), aside: "架空の<b>出典</b>" })).toBe(
-        withGutter("架空の本文。", [asideNote("架空の&lt;b>出典&lt;/b>")]),
-      )
+      expect(
+        markdownOf({ ...reportMarkdownText("架空の本文。"), aside: "架空の<b>出典</b>" }),
+      ).toBe(withGutter("架空の本文。", [asideNote("架空の&lt;b>出典&lt;/b>")]))
       expect(
         reportSectionsMarkdown(
-          [section([{ ...text("架空の本文。"), aside: "  " }, memo(" ")])],
+          [section([{ ...reportMarkdownText("架空の本文。"), aside: "  " }, memo(" ")])],
           NO_IMAGES,
         ),
       ).toBe("架空の本文。")

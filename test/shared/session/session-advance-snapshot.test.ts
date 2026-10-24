@@ -7,6 +7,7 @@ import type { SessionEvent } from "../../../src/shared/session/session-event.ts"
 import { applySessionEvent } from "../../../src/shared/session/session-fold.ts"
 import { INITIAL_SESSION_STATE } from "../../../src/shared/session/session-state.ts"
 import { characterChangedEvent, characterInfo, shownPortraits } from "../../fixture/character.ts"
+import { requestEvent } from "../../fixture/session-event.ts"
 import { apply, runningSession, sessionIdOf } from "../../fixture/session-state.ts"
 
 /** 架空のキャラクターパックが決まったところ。 */
@@ -45,10 +46,10 @@ describe("applySessionEvent", () => {
         },
       },
       { kind: "reactions-written", reactions: WRITTEN_REACTIONS },
-      { kind: "request", text: "架空の依頼", images: [] },
+      requestEvent(),
       { kind: "speech", text: "架空のセリフ", expression: "proud" },
       { kind: "utterance", text: "架空のレポート" },
-      { kind: "request", text: "/clear", images: [] },
+      requestEvent("/clear"),
     )
     // "/clear" 自体も request なので、この時点で吹き出しはすでに空（record は残る）。
     expect(before.speeches).toEqual([])

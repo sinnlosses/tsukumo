@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest"
 import { tsukumoServer } from "../../../../src/server/session-driver/adapter/sdk-tool.ts"
 import { createCallReview } from "../../../../src/server/session-driver/core/call-review.ts"
 import { listedToolNames } from "../../../fixture/mcp-server.ts"
-import { CHAT_MODE, EXPRESSIONS, FAKE_CWD, workServer } from "../../../fixture/sdk-tool.ts"
+import { CHAT_MODE, TOOL_EXPRESSIONS, FAKE_CWD, workServer } from "../../../fixture/sdk-tool.ts"
 
 // どのツールが載るか・呼ぶと何が返るかを、モデルが見るのと同じ MCP の `tools/list` /
 // `tools/call` で確かめる（サーバの中身を覗かず、公開された口だけを通す）。
@@ -26,7 +26,7 @@ describe("tsukumoServer", () => {
   it("雑談のときは recall と recall_episode の2段階が載り、keep と index はもう載らない", async () => {
     const names = await listedToolNames(
       tsukumoServer(
-        EXPRESSIONS,
+        TOOL_EXPRESSIONS,
         CHAT_MODE,
         createCallReview(),
         () => {},

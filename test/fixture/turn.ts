@@ -10,7 +10,7 @@ import type {
 export const TURN_ID = 5
 
 /** 本文を持つステップの `body`。先頭行は本文そのもの（1行の本文しか使わないため）。 */
-export function text(report: string): MainViewStepBody {
+export function turnBodyText(report: string): MainViewStepBody {
   return {
     kind: "text",
     report: { kind: "markdown", markdown: report },

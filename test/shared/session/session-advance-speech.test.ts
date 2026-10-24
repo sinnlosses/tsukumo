@@ -4,12 +4,13 @@ import { mainViewEntries } from "../../../src/shared/session/main-view-entry.ts"
 import type { StampedEvent } from "../../../src/shared/session/session-event.ts"
 import { applySessionEvent } from "../../../src/shared/session/session-fold.ts"
 import { INITIAL_SESSION_STATE } from "../../../src/shared/session/session-state.ts"
+import { requestEvent } from "../../fixture/session-event.ts"
 import { apply } from "../../fixture/session-state.ts"
 
 describe("applySessionEvent", () => {
   it("書きかけの本文をつなぎ、完成した本文が来たら置き換える（二重に積まない）", () => {
     const streaming = apply(
-      { kind: "request", text: "ダミーの依頼", images: [] },
+      requestEvent("ダミーの依頼"),
       { kind: "partial-utterance", text: "ダミ" },
       { kind: "partial-utterance", text: "ーの本文" },
     )
@@ -45,7 +46,7 @@ describe("applySessionEvent", () => {
 
   it("見えない文字だけの本文は積まず、その前の本文を締めの本文から外さない", () => {
     const view = apply(
-      { kind: "request", text: "ダミーの依頼", images: [] },
+      requestEvent("ダミーの依頼"),
       { kind: "utterance", text: "ダミーのレポート" },
       { kind: "speech", text: "できたよ！", expression: "proud" },
       { kind: "partial-utterance", text: "​" },
@@ -61,10 +62,7 @@ describe("applySessionEvent", () => {
   })
 
   it("書きかけの本文が見えない文字だけのあいだは、メインビューに出さない", () => {
-    const streaming = apply(
-      { kind: "request", text: "ダミーの依頼", images: [] },
-      { kind: "partial-utterance", text: "​" },
-    )
+    const streaming = apply(requestEvent("ダミーの依頼"), { kind: "partial-utterance", text: "​" })
 
     expect(mainViewEntries(streaming)).toEqual([
       { kind: "request", turnId: 0, text: "ダミーの依頼", images: [] },
@@ -85,7 +83,7 @@ describe("applySessionEvent", () => {
 
   it("セリフは記録にも積むが、レポート（mainViewEntries）には出さない", () => {
     const view = apply(
-      { kind: "request", text: "ダミーの依頼", images: [] },
+      requestEvent("ダミーの依頼"),
       { kind: "speech", text: "いくよ！", expression: "proud" },
       { kind: "utterance", text: "ダミーのレポート" },
     )
@@ -118,10 +116,10 @@ describe("applySessionEvent", () => {
 
   it("圧縮の区切り（compact-boundary）は記録に積むが、レポート（mainViewEntries）には出さない", () => {
     const view = apply(
-      { kind: "request", text: "ダミーの依頼", images: [] },
+      requestEvent("ダミーの依頼"),
       { kind: "speech", text: "いくよ！", expression: "proud" },
       { kind: "compact-boundary" },
-      { kind: "request", text: "2つめの依頼", images: [] },
+      requestEvent("2つめの依頼"),
     )
 
     // 記録には積む（雑談のログ側 `chatLogRows` が読む）。
@@ -158,7 +156,7 @@ describe("applySessionEvent", () => {
 
   it("依頼とセリフの記録は、そのイベントに打たれた時刻を持つ", () => {
     const events: readonly StampedEvent[] = [
-      { at: 1_000, event: { kind: "request", text: "架空の依頼", images: [] } },
+      { at: 1_000, event: requestEvent() },
       { at: 2_000, event: { kind: "speech", text: "架空のセリフ", expression: "default" } },
     ]
     const view = events.reduce(
@@ -174,16 +172,12 @@ describe("applySessionEvent", () => {
 
   it("新しいターンの request の直後は吹き出しを空にして表情を既定に戻し、次の speak でそのターンのものだけになる", () => {
     const firstTurn = apply(
-      { kind: "request", text: "1つめの依頼", images: [] },
+      requestEvent("1つめの依頼"),
       { kind: "speech", text: "1つめのセリフ", expression: "default" },
       { kind: "speech", text: "1つめの2つめのセリフ", expression: "proud" },
     )
 
-    const secondTurnStarted = applySessionEvent(
-      firstTurn,
-      { kind: "request", text: "2つめの依頼", images: [] },
-      0,
-    )
+    const secondTurnStarted = applySessionEvent(firstTurn, requestEvent("2つめの依頼"), 0)
     // 送信した時点で前のターンの一言は残さず空にする（次のターンに移ったことが画面から
     // 分かるように）。
     expect(secondTurnStarted.speeches).toEqual([])

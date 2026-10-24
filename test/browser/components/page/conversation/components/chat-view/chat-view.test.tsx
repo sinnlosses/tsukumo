@@ -14,6 +14,7 @@ import {
   type SessionState,
 } from "../../../../../../../src/shared/session/session-state.ts"
 import { characterInfo, shownPortraits } from "../../../../../../fixture/character.ts"
+import { requestEvent } from "../../../../../../fixture/session-event.ts"
 import {
   detailRecord,
   requestRecord,
@@ -290,7 +291,7 @@ describe("ChatView のセリフを遡る", () => {
     act(() => {
       useSession.getState().receive({
         type: "events",
-        events: [{ at: 0, event: { kind: "request", text: "3つめの依頼", images: [] } }],
+        events: [{ at: 0, event: requestEvent("3つめの依頼") }],
       })
     })
 

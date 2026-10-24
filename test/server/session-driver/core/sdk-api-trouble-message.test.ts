@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import { toSessionEvents } from "../../../../src/server/session-driver/core/sdk-message.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
-import { assistantMessage, EXPRESSIONS } from "../../../fixture/sdk-assistant-message.ts"
+import { assistantMessageWithoutUuid, EXPRESSIONS } from "../../../fixture/sdk-assistant-message.ts"
 
 describe("API の不調と失敗（docs/requirements.md 4.1）", () => {
   it("result の success でも is_error が true なら API のエラーの失敗にする", () => {
@@ -143,7 +143,7 @@ describe("API の不調と失敗（docs/requirements.md 4.1）", () => {
 
   it("メインの assistant の error を api-error にし、ステップの使用量より後ろに並べる", () => {
     const message = {
-      ...assistantMessage([{ type: "text", text: "架空の API エラーの文面" }]),
+      ...assistantMessageWithoutUuid([{ type: "text", text: "架空の API エラーの文面" }]),
       message: {
         id: "msg_error",
         role: "assistant",
@@ -165,8 +165,8 @@ describe("API の不調と失敗（docs/requirements.md 4.1）", () => {
   })
 
   it("知らない綴りの error は unknown に畳み、サブエージェントの error は捨てる", () => {
-    const main = { ...assistantMessage([]), error: "架空の未知のエラー" }
-    const subagent = { ...assistantMessage([], "toolu_agent"), error: "overloaded" }
+    const main = { ...assistantMessageWithoutUuid([]), error: "架空の未知のエラー" }
+    const subagent = { ...assistantMessageWithoutUuid([], "toolu_agent"), error: "overloaded" }
 
     expect(toSessionEvents(main, EXPRESSIONS)).toEqual([{ kind: "api-error", error: "unknown" }])
     expect(toSessionEvents(subagent, EXPRESSIONS)).toEqual([])

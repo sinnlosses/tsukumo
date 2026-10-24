@@ -6,6 +6,7 @@ import {
 } from "../../../../src/server/session-driver/core/progress-nudge.ts"
 import type { BackgroundTaskKind } from "../../../../src/shared/session-driver/background-task.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
+import { requestEvent } from "../../../fixture/session-event.ts"
 
 /** 黙っているとみなす長さ（5分）。 */
 const PROGRESS_NUDGE_SILENCE_MS = 5 * 60 * 1000
@@ -32,7 +33,7 @@ type Scene = readonly (readonly [SessionEvent, number])[]
 
 /** 委譲を始め、着手のセリフを描いてメインのターンが終わったところ。 */
 const DELEGATING: Scene = [
-  [{ kind: "request", text: "架空の依頼", images: [] }, 0],
+  [requestEvent(), 0],
   [tasks("agent"), 0],
   [speech, SPOKEN_AT],
   [turnFinished, SPOKEN_AT],
@@ -49,7 +50,7 @@ describe("ProgressNudge", () => {
     [
       "委譲していないときは差し込まない",
       [
-        [{ kind: "request", text: "架空の依頼", images: [] }, 0],
+        [requestEvent(), 0],
         [speech, SPOKEN_AT],
         [turnFinished, SPOKEN_AT],
         [progress("架空の進み"), 2_000],
@@ -61,7 +62,7 @@ describe("ProgressNudge", () => {
     [
       "委譲先でないタスク（背景の mcp_task など）の要約は拾わない",
       [
-        [{ kind: "request", text: "架空の依頼", images: [] }, 0],
+        [requestEvent(), 0],
         [tasks("other"), 0],
         [speech, SPOKEN_AT],
         [turnFinished, SPOKEN_AT],
@@ -73,7 +74,7 @@ describe("ProgressNudge", () => {
     [
       "セリフより前に届いた要約は数えない",
       [
-        [{ kind: "request", text: "架空の依頼", images: [] }, 0],
+        [requestEvent(), 0],
         [tasks("agent"), 0],
         [progress("架空の進み"), 500],
         [speech, SPOKEN_AT],

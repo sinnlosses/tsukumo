@@ -17,6 +17,7 @@ import { MAX_SESSION_STATE_TURNS } from "../../../../src/shared/session/session-
 import { reportEvent } from "../../../fixture/report-event.ts"
 import { knownRestored } from "../../../fixture/restored-event.ts"
 import { createStubDriver } from "../../../fixture/session-driver.ts"
+import { requestEvent } from "../../../fixture/session-event.ts"
 import { createSessionManager, waitForBatch } from "../../../fixture/session-manager.ts"
 
 describe("依頼に添えた画像の棚", () => {
@@ -45,7 +46,7 @@ describe("依頼に添えた画像の棚", () => {
           ...stub.driver,
           prompt: (text: string, images: readonly ShelvedPromptImage[]) => {
             prompted.push([...images])
-            onEvent({ kind: "request", text, images: recordedPromptImages(images) })
+            onEvent(requestEvent(text, recordedPromptImages(images)))
             onEvent({ kind: "turn-finished", outcome: { kind: "completed" } })
           },
         })
@@ -188,7 +189,7 @@ describe("レポートの画像の棚", () => {
     await waitForBatch()
     const recent = NOW - DAY
     const turn = (text: string): RestoredEvent => ({
-      event: { kind: "request", text, images: [] },
+      event: requestEvent(text),
       time: { kind: "known", at: recent },
     })
     const report = (id: string, time: RestoredEvent["time"]): RestoredEvent => ({
@@ -310,12 +311,7 @@ describe("レポートの画像の棚", () => {
     const { manager, stub } = startManagerWithReportImageShelf(0, SIZED_IMAGE)
     await waitForBatch()
 
-    stub.emitRestored(
-      knownRestored(
-        [{ kind: "request", text: "架空の依頼", images: [] }, imageReportEvent("toolu_restored")],
-        NOW - 1,
-      ),
-    )
+    stub.emitRestored(knownRestored([requestEvent(), imageReportEvent("toolu_restored")], NOW - 1))
     await waitForBatch()
 
     expect(manager.commandSession.state().records.at(-1)).toMatchObject({

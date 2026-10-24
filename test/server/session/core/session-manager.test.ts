@@ -15,6 +15,7 @@ import {
   FAKE_SESSION_DIGEST,
   type StubDriver,
 } from "../../../fixture/session-driver.ts"
+import { requestEvent } from "../../../fixture/session-event.ts"
 import {
   createSessionManager,
   RESTORED_REPLAY,
@@ -403,7 +404,7 @@ describe("createSessionManager", () => {
           frame.type === "events" ? frame.events.map(({ event }) => event.kind) : [],
         )
 
-      stub.emit({ kind: "request", text: "架空の依頼", images: [] })
+      stub.emit(requestEvent())
       stub.emit(
         reportEvent({
           toolUseId: "fictional-task-report",

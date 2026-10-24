@@ -19,6 +19,7 @@ import {
 } from "../../../../../../fixture/character-view.tsx"
 import { characterInfo, shownPortraits } from "../../../../../../fixture/character.ts"
 import { reportEvent } from "../../../../../../fixture/report-event.ts"
+import { requestEvent } from "../../../../../../fixture/session-event.ts"
 import {
   reactionRecord,
   requestRecord,
@@ -176,11 +177,7 @@ describe("CharacterView", () => {
 })
 
 describe("CharacterView（反応の吹き出し）", () => {
-  const REQUEST = {
-    kind: "request",
-    text: "架空の依頼",
-    images: [],
-  } as const satisfies SessionEvent
+  const REQUEST = requestEvent()
   const SPEECH = {
     kind: "speech",
     text: "架空のセリフ",

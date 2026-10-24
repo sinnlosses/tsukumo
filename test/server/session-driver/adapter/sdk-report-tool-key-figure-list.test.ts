@@ -12,7 +12,7 @@ import {
   FIGURE,
   REMAINING,
   SHORT_TYPE_WORK_MODE,
-  SUMMARY,
+  SESSION_SUMMARY,
   WAITING_LINE,
   WORK_MODE,
   workServer,
@@ -24,7 +24,7 @@ const COMPLETE = {
   conclusion: ["架空の結論"],
   figure: FIGURE,
   closing: CLOSING,
-  sessionSummary: SUMMARY,
+  sessionSummary: SESSION_SUMMARY,
   sessionRemaining: REMAINING,
   waitingLine: WAITING_LINE,
 }

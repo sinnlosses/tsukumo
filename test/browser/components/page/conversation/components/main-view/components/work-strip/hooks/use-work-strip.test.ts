@@ -8,10 +8,11 @@ import {
   type ReadingSection,
 } from "../../../../../../../../../../src/browser/stores/reading-section.ts"
 import type { SessionEvent } from "../../../../../../../../../../src/shared/session/session-event.ts"
+import { requestEvent } from "../../../../../../../../../fixture/session-event.ts"
 import {
   foldTimed,
   plan,
-  request,
+  workRequest,
   START,
   stripAt,
 } from "../../../../../../../../../fixture/work-strip.ts"
@@ -35,7 +36,7 @@ function bashStarted(id: string): SessionEvent {
 describe("useWorkStrip（時刻に依るもの）", () => {
   it("走っている手順の要約に、その手順が始まってからの秒を添え、右端は依頼からの経過", () => {
     const state = foldTimed([
-      [request, START],
+      [workRequest, START],
       [plan, START + 1_000],
       [bashStarted("toolu_1"), START + 60_000],
     ])
@@ -49,7 +50,7 @@ describe("useWorkStrip（時刻に依るもの）", () => {
 
   it("答え待ちの秒は、答え待ちが届いた時刻から数える", () => {
     const state = foldTimed([
-      [request, START],
+      [workRequest, START],
       [plan, START + 1_000],
       [bashStarted("toolu_ask"), START + 10_000],
       [
@@ -81,7 +82,7 @@ describe("useWorkStrip（時刻に依るもの）", () => {
 
   it("答え待ちと同じ id の手順が無くても、届いた時刻から秒を添える", () => {
     const state = foldTimed([
-      [request, START],
+      [workRequest, START],
       [plan, START + 1_000],
       [
         {
@@ -108,7 +109,7 @@ describe("useWorkStrip（時刻に依るもの）", () => {
 
   it("ターンが終わってレポートに入れ替わると、右端は終わった時刻で止まった所要", () => {
     const state = foldTimed([
-      [request, START],
+      [workRequest, START],
       [plan, START + 1_000],
       [{ ...plan, current: 2 }, START + 100_000],
       [{ kind: "turn-finished", outcome: { kind: "completed" } }, START + 125_000],
@@ -131,7 +132,7 @@ describe("useWorkStrip（時刻に依るもの）", () => {
     }
     const strip = stripAt(
       foldTimed([
-        [request, START],
+        [workRequest, START],
         [pending, START + 1_000],
       ]),
       START + 5_000,
@@ -159,7 +160,7 @@ describe("useWorkStrip（時刻に依るもの）", () => {
     }
     const strip = stripAt(
       foldTimed([
-        [request, START],
+        [workRequest, START],
         [ranged, START + 1_000],
       ]),
       START + 5_000,
@@ -188,7 +189,7 @@ describe("useWorkStrip（時刻に依るもの）", () => {
     const closed = (current: number) =>
       stripAt(
         foldTimed([
-          [request, START],
+          [workRequest, START],
           [{ ...ranged, current }, START + 1_000],
           [{ kind: "turn-finished", outcome: { kind: "completed" } }, START + 5_000],
         ]),
@@ -205,7 +206,7 @@ describe("useWorkStrip（時刻に依るもの）", () => {
     )
     putSession(
       foldTimed([
-        [request, START],
+        [workRequest, START],
         [{ ...plan, current: 1 }, START + 1_000],
         [{ kind: "turn-finished", outcome: { kind: "completed" } }, START + 5_000],
         [{ kind: "turn-resumed" }, START + 6_000],
@@ -221,7 +222,7 @@ describe("useWorkStrip（時刻に依るもの）", () => {
 
   it("委譲中に送った脇の話のあいだも、親のワークプラン・今の段・依頼からの経過を出し続ける", () => {
     const state = foldTimed([
-      [request, START],
+      [workRequest, START],
       [plan, START + 1_000],
       [{ ...plan, current: 1, phaseSummary: "架空のまとめ。" }, START + 2_000],
       [
@@ -264,7 +265,7 @@ describe("useWorkStrip（並列の段）", () => {
 
   it("並列の段は中の段の丸を1つにまとめ、今の段が2つなら頭の字と位置をつなぐ", () => {
     const state = foldTimed([
-      [request, START],
+      [workRequest, START],
       [groupedPlan(1, []), START + 1_000],
     ])
 
@@ -290,7 +291,7 @@ describe("useWorkStrip（並列の段）", () => {
 
   it("後ろの段から済ませると、済んだ丸だけが ✓ になり、今の段は残った1つ", () => {
     const state = foldTimed([
-      [request, START],
+      [workRequest, START],
       [groupedPlan(1, []), START + 1_000],
       [groupedPlan(1, ["架空の段C"]), START + 2_000],
     ])
@@ -308,7 +309,7 @@ describe("useWorkStrip（並列の段）", () => {
 
   it("重なって走った段があっても、右端の所要は段の和ではなく依頼の壁時計", () => {
     const state = foldTimed([
-      [request, START],
+      [workRequest, START],
       [groupedPlan(0, []), START + 1_000],
       [groupedPlan(1, []), START + 10_000],
       [groupedPlan(1, ["架空の段C"]), START + 40_000],
@@ -326,7 +327,7 @@ describe("useWorkStrip（並列の段）", () => {
 
 describe("useWorkStrip（`/clear` の依頼）", () => {
   it("依頼の先頭トークンがちょうど `/clear` なら、2行目は「会話を片付けている」", () => {
-    const state = foldTimed([[{ kind: "request", text: "/clear", images: [] }, START]])
+    const state = foldTimed([[requestEvent("/clear"), START]])
 
     const strip = stripAt(state, START + 5_000)
 
@@ -334,7 +335,7 @@ describe("useWorkStrip（`/clear` の依頼）", () => {
   })
 
   it("`/clear-foo` のような別名では、2行目は「考えている」のまま", () => {
-    const state = foldTimed([[{ kind: "request", text: "/clear-foo", images: [] }, START]])
+    const state = foldTimed([[requestEvent("/clear-foo"), START]])
 
     const strip = stripAt(state, START + 5_000)
 
@@ -352,7 +353,7 @@ describe("useWorkStrip（読んでいる節）", () => {
     outlineCollapsed: boolean,
   ): string | undefined {
     useReadingSection.setState({ section, outlineCollapsed })
-    const state = foldTimed([[request, START]])
+    const state = foldTimed([[workRequest, START]])
     const strip = stripAt(state, START + 5_000)
     return strip.kind === "none" ? undefined : strip.readingLabel
   }
@@ -374,7 +375,7 @@ describe("useWorkStrip（読んでいる節）", () => {
 
 describe("useWorkStrip（ワークプランが届く前）", () => {
   it("送った直後から、段の丸も見出しの字も無い帯を作業中の状態で出す", () => {
-    const state = foldTimed([[request, START]])
+    const state = foldTimed([[workRequest, START]])
 
     const strip = stripAt(state, START + 12_000)
 
@@ -389,7 +390,7 @@ describe("useWorkStrip（ワークプランが届く前）", () => {
 
   it("本文が1つも無いまま閉じたら、帯ごと消す", () => {
     const state = foldTimed([
-      [request, START],
+      [workRequest, START],
       [{ kind: "turn-finished", outcome: { kind: "completed" } }, START + 5_000],
     ])
 

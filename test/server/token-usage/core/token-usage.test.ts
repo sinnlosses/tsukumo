@@ -11,6 +11,7 @@ import type {
   ModelTokenUsage,
   TurnUsageScope,
 } from "../../../../src/shared/token-usage/token-usage.ts"
+import { requestEvent } from "../../../fixture/session-event.ts"
 
 function usage(model: string, input: number, output: number, cost: number): ModelTokenUsage {
   return {
@@ -251,7 +252,7 @@ describe("createTokenUsageRecorder の内訳", () => {
 
   it("本文・セリフ・依頼の文面は内訳に積まない（ツールの呼び出しと usage だけを見る）", () => {
     const { breakdown } = writtenRowOf([
-      { kind: "request", text: "架空の依頼の文面", images: [] },
+      requestEvent("架空の依頼の文面"),
       { kind: "utterance", text: "架空の本文" },
       { kind: "speech", text: "架空のセリフ", expression: "default" },
       { kind: "turn-finished", outcome: { kind: "completed" } },

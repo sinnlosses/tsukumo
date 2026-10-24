@@ -18,17 +18,9 @@ import type { SessionEvent } from "../../src/shared/session/session-event.ts"
 import { applySessionEvent } from "../../src/shared/session/session-fold.ts"
 import { INITIAL_SESSION_STATE, type SessionState } from "../../src/shared/session/session-state.ts"
 import { usageProposalKey } from "../../src/shared/usage-review/usage-review.ts"
-import { characterChangedEvent, shownPortraits } from "./character.ts"
 import { createCommandClient } from "./command-client.ts"
 import { createStubDriver, type StubDriver } from "./session-driver.ts"
-
-/** 見た目の編集・作る・消すが書けたときに流し直す `character-changed`（手で書いた架空のパック）。 */
-export const CHARACTER_EVENT: SessionEvent = characterChangedEvent({
-  ...shownPortraits({ default: "/character/default.png?v=fictional@2" }),
-})
-
-/** アイテムの一覧・席を変えられたときに流し直す `items-changed`（空の一覧）。 */
-export const ITEMS_EVENT: SessionEvent = { kind: "items-changed", items: [], seats: {} }
+import { CHARACTER_EVENT, ITEMS_EVENT, requestEvent } from "./session-event.ts"
 
 /** 立ち絵から生成できたときに口が返す欄の値（手で書いた架空のキャラクター）。 */
 export const GENERATED_CHARACTER = {
@@ -42,11 +34,7 @@ export const GENERATED_CHARACTER = {
 /** 振り返りの書き手を気にしないテストに渡す出どころ（起こさない）。 */
 export const NO_DIARY_WRITER: DiaryWriterSource = { kind: "dont-write" }
 
-export const REQUEST_EVENT = {
-  kind: "request",
-  text: "架空の依頼",
-  images: [],
-} satisfies SessionEvent
+export const REQUEST_EVENT = requestEvent()
 export const CHAT_MODE_EVENT = { kind: "chat-mode-changed", chat: true } satisfies SessionEvent
 
 export function createFakeSession(

@@ -9,6 +9,7 @@ import type {
   WorkPlanEntry,
 } from "../../src/shared/session/work-plan.ts"
 import { reportEvent } from "./report-event.ts"
+import { requestEvent } from "./session-event.ts"
 
 export type WorkPlanScene = {
   readonly name: string
@@ -26,7 +27,7 @@ const RANGE = { kind: "range", first: 1, count: 2 } as const
 const TAIL_RANGE = { kind: "range", first: 2, count: 2 } as const
 const PENDING = { kind: "pending", first: 1 } as const
 const NO_RANGE = { kind: "none" } as const
-const REQUEST: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
+const REQUEST = requestEvent()
 const TURN_STARTED: SessionEvent = { kind: "turn-started" }
 const NONE: LatestWorkPlan = { kind: "none" }
 

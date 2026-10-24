@@ -11,7 +11,7 @@ import { reportEvent } from "../../../../../../../../../fixture/report-event.ts"
 import {
   foldTimed,
   plan,
-  request,
+  workRequest,
   START,
   stripAt,
 } from "../../../../../../../../../fixture/work-strip.ts"
@@ -49,8 +49,8 @@ function resultAfter(events: readonly SessionEvent[]): string | undefined {
 
 describe("useWorkStrip（状態）", () => {
   it("働いているあいだは作業中、答え待ちが届けば答え待ち", () => {
-    expect(resultAfter([request, plan])).toBe("working")
-    expect(resultAfter([request, plan, askedPending()])).toBe("awaiting-answer")
+    expect(resultAfter([workRequest, plan])).toBe("working")
+    expect(resultAfter([workRequest, plan, askedPending()])).toBe("awaiting-answer")
   })
 
   it("ターンが終わってバックグラウンドタスクだけ残るあいだは背景で作業中、答え待ちがあれば答え待ち、背景が無ければ今までどおり", () => {
@@ -58,23 +58,25 @@ describe("useWorkStrip（状態）", () => {
       kind: "background-tasks-changed",
       tasks: [{ taskId: "fake-bg-1", kind: "shell", description: "架空の待ち" }],
     }
-    expect(resultAfter([request, plan, left])).toBe("working")
-    expect(resultAfter([request, plan, left, completed])).toBe("background")
-    expect(resultAfter([request, plan, left, askedPending(), completed])).toBe("awaiting-answer")
-    expect(resultAfter([request, plan, taskOf("finished"), completed])).toBe("done")
+    expect(resultAfter([workRequest, plan, left])).toBe("working")
+    expect(resultAfter([workRequest, plan, left, completed])).toBe("background")
+    expect(resultAfter([workRequest, plan, left, askedPending(), completed])).toBe(
+      "awaiting-answer",
+    )
+    expect(resultAfter([workRequest, plan, taskOf("finished"), completed])).toBe("done")
   })
 
   it("閉じたあとは、最後の本文の終わり方で完了・答え待ち・止めたを区別する", () => {
-    expect(resultAfter([request, plan, taskOf("finished"), completed])).toBe("done")
-    expect(resultAfter([request, plan, taskOf("awaiting-answer"), completed])).toBe(
+    expect(resultAfter([workRequest, plan, taskOf("finished"), completed])).toBe("done")
+    expect(resultAfter([workRequest, plan, taskOf("awaiting-answer"), completed])).toBe(
       "awaiting-answer",
     )
-    expect(resultAfter([request, plan, taskOf("stopped"), completed])).toBe("stopped")
+    expect(resultAfter([workRequest, plan, taskOf("stopped"), completed])).toBe("stopped")
   })
 
   it("レポートに入れ替わったあとで同じやり取りの続きが動き出したら、本文の終わり方ではなく作業中", () => {
     const closed = foldTimed([
-      [request, START],
+      [workRequest, START],
       [plan, START + 1_000],
       [reportEvent(), START + 2_000],
       [completed, START + 3_000],
@@ -105,12 +107,12 @@ describe("useWorkStrip（状態）", () => {
       outcome: { kind: "failed", cause: { kind: "max-turns" } },
     }
 
-    expect(resultAfter([request, plan, failed])).toBe("failed")
-    expect(resultAfter([request, failed])).toBe("failed")
+    expect(resultAfter([workRequest, plan, failed])).toBe("failed")
+    expect(resultAfter([workRequest, failed])).toBe("failed")
     expect(
       stripAt(
         foldTimed([
-          [request, START],
+          [workRequest, START],
           [failed, START + 7_000],
         ]),
         START + 8_000,
@@ -121,7 +123,7 @@ describe("useWorkStrip（状態）", () => {
   it("ワークプランの無いまま本文を出して閉じたら、段の丸の無い完了の帯を残す", () => {
     const strip = stripAt(
       foldTimed([
-        [request, START],
+        [workRequest, START],
         [reportEvent(), START + 1_000],
         [completed, START + 5_000],
       ]),
@@ -152,7 +154,7 @@ describe("useWorkStrip（回る弧）", () => {
   it("作業中は今の段の丸だけが回る", () => {
     const strip = stripAt(
       foldTimed([
-        [request, START],
+        [workRequest, START],
         [plan, START + 1_000],
       ]),
       START + 5_000,
@@ -165,7 +167,7 @@ describe("useWorkStrip（回る弧）", () => {
   it("済んだ段とまだの段は回らない", () => {
     const strip = stripAt(
       foldTimed([
-        [request, START],
+        [workRequest, START],
         [{ ...plan, phases: ["架空の段A", "架空の段B", "架空の段C"], current: 1 }, START + 1_000],
       ]),
       START + 5_000,
@@ -177,7 +179,7 @@ describe("useWorkStrip（回る弧）", () => {
   it("答え待ちのあいだは今の段の丸も回らない", () => {
     const strip = stripAt(
       foldTimed([
-        [request, START],
+        [workRequest, START],
         [plan, START + 1_000],
         [
           {
@@ -203,7 +205,7 @@ describe("useWorkStrip（回る弧）", () => {
   it("レポートに入れ替わった済んだ姿では回らない", () => {
     const strip = stripAt(
       foldTimed([
-        [request, START],
+        [workRequest, START],
         [plan, START + 1_000],
         [reportEvent(), START + 2_000],
         [completed, START + 3_000],
@@ -218,7 +220,7 @@ describe("useWorkStrip（回る弧）", () => {
   it("背景で作業中のあいだも今の段の丸だけが回る", () => {
     const strip = stripAt(
       foldTimed([
-        [request, START],
+        [workRequest, START],
         [plan, START + 1_000],
         [
           {
@@ -237,7 +239,7 @@ describe("useWorkStrip（回る弧）", () => {
   })
 
   it("ワークプランが届く前は丸が無い", () => {
-    expect(spinningOf(stripAt(foldTimed([[request, START]]), START + 5_000))).toEqual([])
+    expect(spinningOf(stripAt(foldTimed([[workRequest, START]]), START + 5_000))).toEqual([])
   })
 
   it("並列の段で今の段が複数なら、今の段の丸がすべて回る", () => {
@@ -254,7 +256,7 @@ describe("useWorkStrip（回る弧）", () => {
 
     const strip = stripAt(
       foldTimed([
-        [request, START],
+        [workRequest, START],
         [grouped, START + 1_000],
       ]),
       START + 5_000,

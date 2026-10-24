@@ -4,6 +4,7 @@ import { createReportInheritance } from "../../../../src/server/report/core/repo
 import type { ReportArgumentField } from "../../../../src/shared/report/report-argument-size.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import { reportEvent } from "../../../fixture/report-event.ts"
+import { requestEvent } from "../../../fixture/session-event.ts"
 
 type ReportCalled = Extract<SessionEvent, { kind: "report" }>
 
@@ -141,7 +142,7 @@ describe("ReportInheritance", () => {
     "ターンの頭（turn-started）": { kind: "turn-started" },
     "ターンの頭（turn-resumed）": { kind: "turn-resumed" },
     "ターンの終わり（turn-finished）": { kind: "turn-finished", outcome: { kind: "completed" } },
-    "利用者の依頼（request）": { kind: "request", text: "架空の依頼", images: [] },
+    "利用者の依頼（request）": requestEvent(),
     "脇の話（aside）": { kind: "aside", text: "架空の問い", images: [] },
   }
 

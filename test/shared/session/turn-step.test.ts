@@ -9,6 +9,7 @@ import {
   type TurnStep,
 } from "../../../src/shared/session/turn-step.ts"
 import { reportEvent } from "../../fixture/report-event.ts"
+import { requestEvent } from "../../fixture/session-event.ts"
 import {
   asideRecord,
   finishedToolStatus,
@@ -216,10 +217,7 @@ describe("toolDuration（所要時間。tool-started / tool-finished の at か�
 
 describe("currentTurnSteps（report ツール）", () => {
   it("report の呼び出しは依頼の手順に出ない（speak と同じく tool-started にならない）", () => {
-    const events: readonly SessionEvent[] = [
-      { kind: "request", text: "架空の依頼", images: [] },
-      reportEvent({ toolUseId: "toolu_r1" }),
-    ]
+    const events: readonly SessionEvent[] = [requestEvent(), reportEvent({ toolUseId: "toolu_r1" })]
     const state = events.reduce(
       (current, event) => applySessionEvent(current, event, 0),
       INITIAL_SESSION_STATE,

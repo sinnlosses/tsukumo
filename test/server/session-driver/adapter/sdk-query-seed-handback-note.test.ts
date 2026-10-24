@@ -6,6 +6,7 @@ import {
   type CallReview,
   createCallReview,
 } from "../../../../src/server/session-driver/core/call-review.ts"
+import { requestEvent } from "../../../fixture/session-event.ts"
 
 describe("handbackNoteHooks（返却を運ぶ入力に注記を添える）", () => {
   const HANDBACK_PROMPT =
@@ -35,7 +36,7 @@ describe("handbackNoteHooks（返却を運ぶ入力に注記を添える）", ()
 
   const plannedReview = () => {
     const review = createCallReview()
-    review.pass({ kind: "request", text: "架空の依頼", images: [] })
+    review.pass(requestEvent())
     review.judgeWorkPlan({
       phases: ["架空の計画", "架空の実装A", "架空の実装B", "架空の受け入れ"],
       current: 1,

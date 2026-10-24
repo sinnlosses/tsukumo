@@ -13,7 +13,7 @@ import type { QuestionBrief } from "../../src/shared/session-driver/question-bri
 import type { SessionEvent } from "../../src/shared/session/session-event.ts"
 import { fixedChatSummary } from "./chat.ts"
 
-export const EXPRESSIONS = [{ name: "default", label: "通常" }] as const
+export const TOOL_EXPRESSIONS = [{ name: "default", label: "通常" }] as const
 export const FAKE_CWD = "/tmp/tsukumo-架空のcwd"
 
 export const NOT_FOUND_RECALL = {
@@ -43,7 +43,7 @@ export const CLOSING = { text: "架空の締めの一言", expression: "default"
 
 /** `report` に渡す待ちの一言とセッションの要約（架空）。どちらも組んだ値に欠かせない。 */
 export const WAITING_LINE = { text: "架空の待ちの一言", expression: "default" }
-export const SUMMARY = "架空の要約"
+export const SESSION_SUMMARY = "架空の要約"
 export const REMAINING = "架空の残り"
 
 /** `report` に渡す図の欄（組んだ値に欠かせない）。図を置かない理由を言う形。 */
@@ -61,7 +61,7 @@ export function workServer(
   mode: SessionMode = WORK_MODE,
 ): McpSdkServerConfigWithInstance {
   return tsukumoServer(
-    EXPRESSIONS,
+    TOOL_EXPRESSIONS,
     mode,
     callReview,
     (title) => {

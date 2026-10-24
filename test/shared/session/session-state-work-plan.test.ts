@@ -11,10 +11,11 @@ import {
 import { currentWorkPlan } from "../../../src/shared/session/work-plan-fold.ts"
 import type { WorkPlan, WorkPlanClosing } from "../../../src/shared/session/work-plan.ts"
 import { reportEvent } from "../../fixture/report-event.ts"
+import { requestEvent } from "../../fixture/session-event.ts"
 import { apply } from "../../fixture/session-state.ts"
 
 describe("applySessionEvent（委譲とワークプラン）", () => {
-  const request: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
+  const request = requestEvent()
   const PHASES = ["架空の計画", "架空の段1", "架空の段2", "架空の受け入れ"]
   const mainPlan = (current: number, phaseSummary = ""): SessionEvent => ({
     kind: "work-plan",
@@ -58,7 +59,7 @@ describe("applySessionEvent（委譲とワークプラン）", () => {
 })
 
 describe("applySessionEvent（委譲の返却で進むワークプラン）", () => {
-  const request: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
+  const request = requestEvent()
   const PHASES = ["架空の計画", "架空の実装A", "架空の実装B", "架空の受け入れ"]
   const plan = (current: number, delegatedRange: WorkPlan["delegatedRange"]): SessionEvent => ({
     kind: "work-plan",
@@ -137,7 +138,7 @@ describe("applySessionEvent（委譲の返却で進むワークプラン）", ()
 })
 
 describe("applySessionEvent（report の段の閉じ方とワークプラン）", () => {
-  const request: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
+  const request = requestEvent()
   const PHASES = ["架空の段A", "架空の段B", "架空の段C"]
   const mainPlan = (current: number): SessionEvent => ({
     kind: "work-plan",
@@ -191,7 +192,7 @@ describe("applySessionEvent（report の段の閉じ方とワークプラン）"
 })
 
 describe("applySessionEvent（ワークプランとレポートの時刻）", () => {
-  const request: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
+  const request = requestEvent()
   const mainPlan = (current: number): SessionEvent => ({
     kind: "work-plan",
     delegatedRange: { kind: "none" },

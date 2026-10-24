@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 import { createExternalToolMark } from "../../../../src/server/session-driver/core/external-tool-mark.ts"
 import { withSelfStartedTurns } from "../../../../src/server/session-driver/core/self-started-turn.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
+import { requestEvent } from "../../../fixture/session-event.ts"
 
 const INIT: SessionEvent = {
   kind: "session-info",
@@ -14,7 +15,7 @@ const INIT: SessionEvent = {
   skillNames: [],
   agentNames: [],
 }
-const REQUEST: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
+const REQUEST = requestEvent()
 const FINISHED: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
 
 describe("createExternalToolMark", () => {

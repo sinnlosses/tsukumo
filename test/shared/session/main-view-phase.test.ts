@@ -9,13 +9,14 @@ import { INITIAL_SESSION_STATE } from "../../../src/shared/session/session-state
 import type { TurnBodies } from "../../../src/shared/session/turn-progress.ts"
 import { lead, reportOf, SETTLED, WRITING } from "../../fixture/main-view-entry.ts"
 import { reportEvent } from "../../fixture/report-event.ts"
+import { requestEvent } from "../../fixture/session-event.ts"
 
 describe("mainViewTurns（段が移ったときの中間レポート）", () => {
   const fold = (events: readonly SessionEvent[]) =>
     events.reduce((current, event) => applySessionEvent(current, event, 0), INITIAL_SESSION_STATE)
   const turnOf = (events: readonly SessionEvent[], unsettled: TurnBodies, closed: boolean) =>
     mainViewTurns(mainViewEntries(fold(events)), unsettled, closed).at(-1)
-  const ask: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
+  const ask = requestEvent()
   const phases = ["架空の段A", "架空の段B"]
   const plan = (current: number, phaseSummary = "", names = phases): SessionEvent => ({
     kind: "work-plan",

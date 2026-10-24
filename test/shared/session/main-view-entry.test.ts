@@ -20,12 +20,13 @@ import {
   SETTLED,
 } from "../../fixture/main-view-entry.ts"
 import { reportEvent } from "../../fixture/report-event.ts"
+import { requestEvent } from "../../fixture/session-event.ts"
 
 describe("mainViewEntries（記録ごとの結果の持ち回し）", () => {
   type Timed = readonly [SessionEvent, number]
   const foldTimed = (events: readonly Timed[], from: SessionState = INITIAL_SESSION_STATE) =>
     events.reduce((current, [event, at]) => applySessionEvent(current, event, at), from)
-  const ask: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
+  const ask = requestEvent()
   const plan = (current: number, phaseSummary = ""): SessionEvent => ({
     kind: "work-plan",
     delegatedRange: { kind: "none" },
@@ -168,7 +169,7 @@ describe("mainViewEntries（記録ごとの結果の持ち回し）", () => {
 describe("mainViewTurns（失敗で終わったターン）", () => {
   it("失敗の記録はメインビューのステップに入らず、やり取りの failure に移る", () => {
     const events: readonly SessionEvent[] = [
-      { kind: "request", text: "架空の依頼", images: [] },
+      requestEvent(),
       { kind: "utterance", text: "架空の本文" },
       { kind: "api-error", error: "overloaded" },
       { kind: "turn-finished", outcome: { kind: "failed", cause: { kind: "api-error" } } },
@@ -199,7 +200,7 @@ describe("mainViewTurns（脇の話）", () => {
     phaseSummary,
   })
   const delegating: readonly SessionEvent[] = [
-    { kind: "request", text: "架空の依頼", images: [] },
+    requestEvent(),
     plan(0, ""),
     plan(1, "架空のまとめ。"),
     {
@@ -272,10 +273,7 @@ describe("mainViewTurns（脇の話）", () => {
   })
 
   it("何も出ていない依頼の直後の脇の話は、本文なしのステップに入る", () => {
-    const turns = turnsOf([
-      { kind: "request", text: "架空の依頼", images: [] },
-      { kind: "aside", text: "架空の問い", images: [] },
-    ])
+    const turns = turnsOf([requestEvent(), { kind: "aside", text: "架空の問い", images: [] }])
 
     expect(turns[0]?.steps).toHaveLength(1)
     expect(turns[0]?.steps[0]?.body).toEqual({ kind: "none" })
@@ -303,7 +301,7 @@ describe("mainViewTurns（脇の話）", () => {
 
   it("次のステップが始まったあとに届いた答えも、最後の脇の話につながる", () => {
     const turns = turnsOf([
-      { kind: "request", text: "架空の依頼", images: [] },
+      requestEvent(),
       { kind: "aside", text: "架空の問い", images: [] },
       plan(1, "架空のまとめ。"),
       { kind: "speech", text: "架空の答え。", expression: "default" },

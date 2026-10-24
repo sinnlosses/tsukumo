@@ -7,6 +7,7 @@ import type {
   SwallowedFailurePlace,
 } from "../../../../src/shared/diagnostic/swallowed-failure.ts"
 import { createStubDriver } from "../../../fixture/session-driver.ts"
+import { requestEvent } from "../../../fixture/session-event.ts"
 import { launchWith } from "../../../fixture/session-manager-record.ts"
 import { createSessionManager, waitForBatch } from "../../../fixture/session-manager.ts"
 
@@ -60,7 +61,7 @@ describe("createSessionManager", () => {
       const { stub, entries, advance } = startDiagnosticManagerWithStub()
       await waitForBatch()
 
-      stub.emit({ kind: "request", text: "架空の依頼", images: [] })
+      stub.emit(requestEvent())
       advance(10)
       stub.emit({ kind: "speech", text: "架空のセリフ", expression: "proud" })
       await waitForBatch()

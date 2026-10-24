@@ -11,7 +11,7 @@ export const section = (blocks: readonly ReportBlock[], heading = ""): ReportSec
 })
 export const markdownOf = (block: ReportBlock): string =>
   reportSectionsMarkdown([section([block])], NO_IMAGES)
-export const text = (value: string): ReportBlock => ({
+export const reportMarkdownText = (value: string): ReportBlock => ({
   kind: "text",
   text: value,
   fold: "",

@@ -6,12 +6,13 @@ import {
   judgePhaseResultCaller,
 } from "../../../../src/server/session-driver/core/phase-result-tool.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
+import { requestEvent } from "../../../fixture/session-event.ts"
 
 const PHASES = ["架空の計画", "架空の実装A", "架空の実装B", "架空の受け入れ"]
 
 function plannedReview() {
   const review = createCallReview()
-  review.pass({ kind: "request", text: "架空の依頼", images: [] })
+  review.pass(requestEvent())
   review.judgeWorkPlan({
     phases: PHASES,
     current: 1,

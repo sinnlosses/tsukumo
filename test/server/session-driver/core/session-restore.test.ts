@@ -7,6 +7,7 @@ import { applyRestoredEvents } from "../../../../src/shared/session/restored-eve
 import { applySessionEvent } from "../../../../src/shared/session/session-fold.ts"
 import { INITIAL_SESSION_STATE } from "../../../../src/shared/session/session-state.ts"
 import { reportEvent } from "../../../fixture/report-event.ts"
+import { EXPRESSIONS } from "../../../fixture/sdk-assistant-message.ts"
 import {
   assistantMessage,
   REPORT_TOOL_FULL_NAME,
@@ -14,7 +15,8 @@ import {
   userMessage,
   WORK_PLAN_TOOL_FULL_NAME,
 } from "../../../fixture/sdk-message.ts"
-import { EXPRESSIONS, eventsOf, stamped } from "../../../fixture/session-restore.ts"
+import { requestEvent } from "../../../fixture/session-event.ts"
+import { eventsOf, stamped } from "../../../fixture/session-restore.ts"
 
 describe("toRestoredEvents", () => {
   it("組み直せたものが無ければ空", () => {
@@ -94,7 +96,7 @@ describe("toRestoredEvents", () => {
     ]
 
     expect(eventsOf(messages)).toEqual([
-      { kind: "request", text: "架空の依頼その1", images: [] },
+      requestEvent("架空の依頼その1"),
       { kind: "utterance", text: "架空の本文その1" },
       {
         kind: "tool-started",
@@ -106,7 +108,7 @@ describe("toRestoredEvents", () => {
       { kind: "tool-finished", toolUseId: "t-1", content: "架空の結果", isError: false },
       { kind: "speech", text: "できたよ", expression: "proud" },
       { kind: "turn-finished", outcome: { kind: "completed" } },
-      { kind: "request", text: "架空の依頼その2", images: [] },
+      requestEvent("架空の依頼その2"),
       { kind: "utterance", text: "架空の本文その2" },
       { kind: "turn-finished", outcome: { kind: "completed" } },
     ])
@@ -245,7 +247,7 @@ describe("toRestoredEvents", () => {
     ]
 
     expect(eventsOf(messages)).toEqual([
-      { kind: "request", text: "架空の依頼", images: [] },
+      requestEvent(),
       { kind: "speech", text: "架空の通ったセリフ", expression: "default" },
       { kind: "tool-finished", toolUseId: "s-1", content: "ok", isError: false },
       { kind: "tool-finished", toolUseId: "s-2", content: "架空の差し戻し", isError: true },
@@ -340,10 +342,10 @@ describe("toRestoredEvents", () => {
 
     expect(eventsOf(messages)).toEqual([
       { kind: "utterance", text: "架空の前置き" },
-      { kind: "request", text: "架空の依頼その1", images: [] },
+      requestEvent("架空の依頼その1"),
       { kind: "utterance", text: "架空の本文その1" },
       { kind: "turn-finished", outcome: { kind: "completed" } },
-      { kind: "request", text: "架空の依頼その2", images: [] },
+      requestEvent("架空の依頼その2"),
       { kind: "turn-finished", outcome: { kind: "completed" } },
     ])
   })
@@ -362,7 +364,7 @@ describe("toRestoredEvents", () => {
     ]
 
     expect(eventsOf(messages)).toEqual([
-      { kind: "request", text: "架空の依頼", images: [] },
+      requestEvent(),
       { kind: "utterance", text: "架空の本文" },
       { kind: "turn-finished", outcome: { kind: "completed" } },
     ])
@@ -380,7 +382,7 @@ describe("toRestoredEvents", () => {
 
     expect(eventsOf(messages)).toEqual([
       { kind: "compact-boundary" },
-      { kind: "request", text: "架空の依頼", images: [] },
+      requestEvent(),
       { kind: "utterance", text: "架空の本文" },
       { kind: "turn-finished", outcome: { kind: "completed" } },
     ])
