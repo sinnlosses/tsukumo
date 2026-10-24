@@ -21,6 +21,7 @@ describe("reportSectionsMarkdown", () => {
         kind: "shelved",
         toolUseId: "toolu_fictional",
         sizes: [],
+        unshelved: [],
       }),
     ).toBe(
       figureCaptioned(
@@ -44,6 +45,7 @@ describe("reportSectionsMarkdown", () => {
       kind: "shelved",
       toolUseId: "toolu_fictional",
       sizes: [{ path: "架空/a.png", width: 320, height: 180 }],
+      unshelved: [],
     })
 
     expect(markdown).toContain(

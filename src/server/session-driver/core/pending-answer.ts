@@ -215,7 +215,14 @@ function toPendingAsk(
 ): PendingAsk {
   return questions === undefined
     ? { kind: "permission", id: request.id, toolName: request.toolName, input: request.input }
-    : { kind: "question", id: request.id, questions, briefs }
+    : {
+        kind: "question",
+        id: request.id,
+        questions,
+        briefs,
+        imageSizes: [],
+        unshelvedImages: [],
+      }
 }
 
 /**

@@ -88,6 +88,7 @@ export function reportEvents(
       sessionSummary: nonBlankString(input.sessionSummary),
       sessionRemaining: sessionRemainingOf(input.sessionRemaining),
       imageSizes: [],
+      unshelvedImages: [],
     },
   ]
 }

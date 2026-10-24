@@ -8,6 +8,7 @@ import { htmlAttribute, htmlInlineWithCode } from "./report-inline-markdown.ts"
 /**
  * `image` の塊の画像をどこから読むか。
  * `shelved` は描いた `report` の呼び出しの id で棚を引く。`sizes` はサーバが棚に置いたときに測れた画像の寸法で、無いパスの画像は寸法を付けない。
+ * `unshelved` はサーバが棚に置けなかった・寸法を測れなかったパスで、その画像は `src` を付けず最初から「出せない」の札になる。
  * `none` は棚に置いていない本文で、画像は「出せない」の札になる。
  */
 export type ReportImageSource =
@@ -15,6 +16,7 @@ export type ReportImageSource =
       readonly kind: "shelved"
       readonly toolUseId: string
       readonly sizes: readonly ReportImageSize[]
+      readonly unshelved: readonly string[]
     }
   | { readonly kind: "none" }
 
@@ -48,7 +50,7 @@ export function imageMarkdown(
  * 棚に置いていない本文では空にし、描く側が「出せない」の札にする。
  */
 export function reportImageAttributes(imageSource: ReportImageSource, path: string): string {
-  if (imageSource.kind === "none") {
+  if (imageSource.kind === "none" || imageSource.unshelved.includes(path)) {
     return ""
   }
   const src = ` src="${htmlAttribute(reportImagePath(imageSource.toolUseId, path))}"`

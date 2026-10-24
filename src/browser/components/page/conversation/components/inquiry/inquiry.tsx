@@ -10,6 +10,7 @@
 import clsx from "clsx"
 import type { KeyboardEvent, ReactElement } from "react"
 
+import type { ReportImageSource } from "../../../../../../shared/report/report-image-markdown.ts"
 import { reportSectionsMarkdown } from "../../../../../../shared/report/report-markdown.ts"
 import { truncateForDisplay } from "../../../../../features/current-work/domain/current-work-step.ts"
 import { usePhoneWidth } from "../../../../../hooks/use-phone-width.ts"
@@ -28,6 +29,8 @@ import { detailBlockClassName, Markdown, QuestionPreviewMarkdown } from "../mark
 import { useInquiryScroll } from "./hooks/use-inquiry-scroll.ts"
 import { useInquiryVisibility } from "./hooks/use-inquiry-visibility.ts"
 import styles from "./inquiry.module.css"
+
+type ShelvedSource = Extract<ReportImageSource, { readonly kind: "shelved" }>
 
 const INQUIRY_CHIP = "お伺い"
 const KIND_LABEL = {
@@ -190,13 +193,21 @@ export function InquiryCard(props: { readonly actions: "inline" | "none" }): Rea
             ))}
           </ul>
           {focused !== undefined && hasDetail(focused) && (
-            <InquiryDetail askId={inquiry.id} option={focused} />
+            <InquiryDetail
+              askId={inquiry.id}
+              imageSource={imageSourceOf(inquiry)}
+              option={focused}
+            />
           )}
         </div>
         {inquiry.kind === "question" &&
           inquiry.brief !== undefined &&
           inquiry.brief.axes.length > 0 && (
-            <InquiryCompare askId={inquiry.id} brief={inquiry.brief} options={inquiry.options} />
+            <InquiryCompare
+              imageSource={imageSourceOf(inquiry)}
+              brief={inquiry.brief}
+              options={inquiry.options}
+            />
           )}
         {inquiry.kind === "question" && inquiry.writtenAnswer !== "" && (
           <Text
@@ -325,20 +336,29 @@ function hasDetail(option: InquiryOptionRow): boolean {
   )
 }
 
+function imageSourceOf(inquiry: Exclude<InquiryModel, { readonly kind: "none" }>): ShelvedSource {
+  return {
+    kind: "shelved",
+    toolUseId: inquiry.id,
+    sizes: inquiry.kind === "question" ? inquiry.imageSizes : [],
+    unshelved: inquiry.kind === "question" ? inquiry.unshelvedImages : [],
+  }
+}
+
 /** フォーカスした選択肢の詳細の面。高さは切らず、札の本文が内側で転がる。 */
 function InquiryDetail(props: {
   readonly askId: string
+  readonly imageSource: ShelvedSource
   readonly option: InquiryOptionRow
 }): ReactElement {
   const { option } = props
   const figures =
     option.figures.length === 0
       ? ""
-      : reportSectionsMarkdown([{ heading: "", shapeTag: "unspecified", blocks: option.figures }], {
-          kind: "shelved",
-          toolUseId: props.askId,
-          sizes: [],
-        })
+      : reportSectionsMarkdown(
+          [{ heading: "", shapeTag: "unspecified", blocks: option.figures }],
+          props.imageSource,
+        )
 
   return (
     <div
@@ -413,7 +433,7 @@ function InquiryPoints(props: {
 }
 
 function InquiryCompare(props: {
-  readonly askId: string
+  readonly imageSource: ShelvedSource
   readonly brief: InquiryBriefModel
   readonly options: readonly InquiryOptionRow[]
 }): ReactElement {
@@ -438,7 +458,7 @@ function InquiryCompare(props: {
         ],
       },
     ],
-    { kind: "shelved", toolUseId: props.askId, sizes: [] },
+    props.imageSource,
   )
 
   return (

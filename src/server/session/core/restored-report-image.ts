@@ -1,10 +1,9 @@
 // 続きから復元した再生のうち、記録の窓に残った24時間以内の `report` の画像を棚へ置き直す。
 
 import { sectionsWithFigure } from "../../../shared/report/report-block.ts"
-import type { ReportImageSize } from "../../../shared/report/report-image.ts"
 import type { RestoredEvent } from "../../../shared/session/session-event.ts"
 import type { SessionState } from "../../../shared/session/session-state.ts"
-import { reportImagePaths } from "../../report/core/report-image-shelf.ts"
+import { reportImagePaths, type ShelvedImages } from "../../report/core/report-image-shelf.ts"
 import type { SessionManagerOptions } from "./session-manager-port.ts"
 
 /** 続きから復元した report の画像を読み直す、復元した時点からの遡り幅。 */
@@ -23,7 +22,7 @@ export function shelveRestoredReportImages(
   const kept = new Set(
     state.records.flatMap((record) => (record.kind === "report" ? [record.toolUseId] : [])),
   )
-  const sizes = new Map<string, readonly ReportImageSize[]>()
+  const shelvings = new Map<string, ShelvedImages>()
   for (const { event, time } of events) {
     if (
       event.kind === "report" &&
@@ -31,7 +30,7 @@ export function shelveRestoredReportImages(
       time.kind === "known" &&
       restoredAt - time.at <= RESTORED_REPORT_IMAGE_WINDOW_MS
     ) {
-      sizes.set(
+      shelvings.set(
         event.toolUseId,
         options.reportImageShelf.shelve(
           event.toolUseId,
@@ -41,7 +40,11 @@ export function shelveRestoredReportImages(
       )
     }
   }
-  if (![...sizes.values()].some((measured) => measured.length > 0)) {
+  if (
+    ![...shelvings.values()].some(
+      ({ sizes, unshelved }) => sizes.length > 0 || unshelved.length > 0,
+    )
+  ) {
     return state
   }
   return {
@@ -50,8 +53,10 @@ export function shelveRestoredReportImages(
       if (record.kind !== "report") {
         return record
       }
-      const imageSizes = sizes.get(record.toolUseId) ?? []
-      return imageSizes.length === 0 ? record : { ...record, imageSizes }
+      const shelving = shelvings.get(record.toolUseId)
+      return shelving === undefined
+        ? record
+        : { ...record, imageSizes: shelving.sizes, unshelvedImages: shelving.unshelved }
     }),
   }
 }

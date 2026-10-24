@@ -12,6 +12,7 @@
 import { create } from "zustand"
 
 import type { FigureBlock } from "../../shared/report/report-block.ts"
+import type { ReportImageSize } from "../../shared/report/report-image.ts"
 import type { StampedPendingAsk } from "../../shared/session-driver/pending-ask.ts"
 import type { QuestionBrief } from "../../shared/session-driver/question-brief.ts"
 import {
@@ -94,6 +95,8 @@ export type InquiryModel =
       readonly kind: "question"
       readonly header: string
       readonly brief: InquiryBrief | undefined
+      readonly imageSizes: readonly ReportImageSize[]
+      readonly unshelvedImages: readonly string[]
       readonly text: string
       /** この問に対して入力欄に書いて記録した答え（まだ送っていない。無ければ空文字）。 */
       readonly writtenAnswer: string
@@ -276,6 +279,8 @@ function questionModel(
     askedAt: pending.askedAt,
     header: question.header,
     brief: brief === undefined ? undefined : { background: brief.background, axes: brief.axes },
+    imageSizes: pending.imageSizes,
+    unshelvedImages: pending.unshelvedImages,
     text: question.text,
     multiSelect: question.multiSelect,
     progressLabel: `${String(index + 1)} / ${String(questions.length)}`,

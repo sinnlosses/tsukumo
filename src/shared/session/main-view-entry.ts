@@ -167,6 +167,7 @@ function reportRegionsOf(
     kind: "shelved",
     toolUseId: report.toolUseId,
     sizes: report.imageSizes,
+    unshelved: report.unshelvedImages,
   })
   return {
     kind: "regions",

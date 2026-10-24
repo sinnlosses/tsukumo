@@ -41,7 +41,15 @@ function question(overrides: Partial<Question> = {}): Question {
 }
 
 function questionPending(questions: readonly Question[]): StampedPendingAsk {
-  return { kind: "question", id: "ask-1", questions, briefs: [], askedAt: 0 }
+  return {
+    kind: "question",
+    id: "ask-1",
+    questions,
+    briefs: [],
+    imageSizes: [],
+    unshelvedImages: [],
+    askedAt: 0,
+  }
 }
 
 const PERMISSION_PENDING = {
@@ -303,7 +311,17 @@ describe("Inquiry の添え書きと詳細の面", () => {
   function renderBriefed(briefs: readonly QuestionBrief[]): void {
     putSession({
       ...INITIAL_SESSION_STATE,
-      pending: [{ kind: "question", id: "ask-1", questions: [question()], briefs, askedAt: 0 }],
+      pending: [
+        {
+          kind: "question",
+          id: "ask-1",
+          questions: [question()],
+          briefs,
+          imageSizes: [],
+          unshelvedImages: [],
+          askedAt: 0,
+        },
+      ],
     })
     render(<Inquiry />)
   }

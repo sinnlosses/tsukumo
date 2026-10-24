@@ -42,7 +42,15 @@ function questionRecord(toolUseId: string): SessionRecord {
 }
 
 function pendingQuestion(id: string): StampedPendingAsk {
-  return { kind: "question", id, questions: [], briefs: [], askedAt: 0 }
+  return {
+    kind: "question",
+    id,
+    questions: [],
+    briefs: [],
+    imageSizes: [],
+    unshelvedImages: [],
+    askedAt: 0,
+  }
 }
 
 describe("createReportImageShelf", () => {

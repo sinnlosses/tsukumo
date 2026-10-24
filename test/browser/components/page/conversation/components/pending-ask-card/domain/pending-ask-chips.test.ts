@@ -45,6 +45,8 @@ function question(figures: Parameters<typeof row>[0]): InquiryModel {
     kind: "question",
     header: "h",
     brief: undefined,
+    imageSizes: [],
+    unshelvedImages: [],
     text: "t",
     writtenAnswer: "",
     onAnswerWithText: () => {},

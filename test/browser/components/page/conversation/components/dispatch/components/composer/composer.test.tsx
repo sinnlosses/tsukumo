@@ -39,6 +39,8 @@ const QUESTION_PENDING = {
     },
   ],
   briefs: [],
+  imageSizes: [],
+  unshelvedImages: [],
   askedAt: 0,
 } satisfies StampedPendingAsk
 

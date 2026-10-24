@@ -244,6 +244,7 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
             waitingLine: event.waitingLine,
             changeSummary: NO_REPORT_CHANGE_SUMMARY,
             imageSizes: event.imageSizes,
+            unshelvedImages: event.unshelvedImages,
             time: { kind: "stamped", at },
           },
         ],

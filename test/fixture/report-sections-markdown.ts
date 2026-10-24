@@ -7,5 +7,6 @@ export function reportSectionsMarkdown(sections: readonly ReportSection[]): stri
     kind: "shelved",
     toolUseId: "fictional-report",
     sizes: [],
+    unshelved: [],
   })
 }

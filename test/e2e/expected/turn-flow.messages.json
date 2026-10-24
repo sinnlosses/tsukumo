@@ -159,7 +159,8 @@
       "sessionRemaining": {
         "kind": "unrecorded"
       },
-      "imageSizes": []
+      "imageSizes": [],
+      "unshelvedImages": []
     }
   },
   {
@@ -391,7 +392,8 @@
       "sessionRemaining": {
         "kind": "unrecorded"
       },
-      "imageSizes": []
+      "imageSizes": [],
+      "unshelvedImages": []
     }
   },
   {

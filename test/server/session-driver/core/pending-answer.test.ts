@@ -149,6 +149,8 @@ describe("createPendingAnswerQueue", () => {
           },
         ],
         briefs: [BRIEF],
+        imageSizes: [],
+        unshelvedImages: [],
       },
     ])
   })

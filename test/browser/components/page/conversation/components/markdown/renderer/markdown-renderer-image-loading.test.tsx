@@ -32,6 +32,7 @@ describe("Markdown（image の塊の画像の読み方）", () => {
         kind: "shelved",
         toolUseId: "fictional-report",
         sizes: [{ path: "架空/a.png", width: 320, height: 180 }],
+        unshelved: [],
       },
     )
     const { container } = render(<Markdown text={text} />)
@@ -46,5 +47,42 @@ describe("Markdown（image の塊の画像の読み方）", () => {
     }
     expect(attributes("架空/a.png")).toEqual(["320", "180", "lazy", "async"])
     expect(attributes("架空/b.png")).toEqual([null, null, "lazy", "async"])
+  })
+
+  it("棚に無いと運ばれたパスの画像は img を出さず、最初から「画像を出せない」の札で描く", () => {
+    const text = reportSectionsMarkdown(
+      [
+        {
+          heading: "",
+          shapeTag: "unspecified",
+          blocks: [
+            {
+              kind: "image",
+              path: "架空/missing.png",
+              caption: "架空の置いていない画像",
+              notes: [],
+              fold: "",
+              aside: "",
+            },
+          ],
+        },
+      ],
+      {
+        kind: "shelved",
+        toolUseId: "fictional-report",
+        sizes: [],
+        unshelved: ["架空/missing.png"],
+      },
+    )
+    const { container } = render(<Markdown text={text} />)
+
+    expect(container.querySelector("img")).toBeNull()
+    const label = typedElement(
+      container.querySelector('[role="img"]'),
+      HTMLElement,
+      "画像を出せない札",
+    )
+    expect(label.getAttribute("aria-label")).toBe("架空の置いていない画像")
+    expect(label.textContent).toContain("画像を出せない")
   })
 })

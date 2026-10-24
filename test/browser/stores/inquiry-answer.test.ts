@@ -48,7 +48,15 @@ function question(overrides: Partial<Question> = {}): Question {
 }
 
 function questionPending(questions: readonly Question[]): StampedPendingAsk {
-  return { kind: "question", id: "ask-1", questions, briefs: [], askedAt: 0 }
+  return {
+    kind: "question",
+    id: "ask-1",
+    questions,
+    briefs: [],
+    imageSizes: [],
+    unshelvedImages: [],
+    askedAt: 0,
+  }
 }
 
 function renderModel(
@@ -385,7 +393,15 @@ describe("useInquiryAnswer の添え書き", () => {
   } satisfies QuestionBrief
 
   function briefedPending(briefs: readonly QuestionBrief[]): StampedPendingAsk {
-    return { kind: "question", id: "ask-1", questions: [question()], briefs, askedAt: 0 }
+    return {
+      kind: "question",
+      id: "ask-1",
+      questions: [question()],
+      briefs,
+      imageSizes: [],
+      unshelvedImages: [],
+      askedAt: 0,
+    }
   }
 
   it("header が合う添え書きを、背景と軸は質問に、良い点・悪い点・戻せない印は選択肢の行に載せる", () => {

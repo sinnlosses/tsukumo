@@ -104,7 +104,16 @@ describe("applySessionEvent（質問の記録）", () => {
       { kind: "request", text: "架空の依頼", images: [] },
       {
         kind: "pending-changed",
-        pending: [{ kind: "question", id: "toolu_q", questions: [singleQuestion], briefs: [] }],
+        pending: [
+          {
+            kind: "question",
+            id: "toolu_q",
+            questions: [singleQuestion],
+            briefs: [],
+            imageSizes: [],
+            unshelvedImages: [],
+          },
+        ],
       },
     )
 

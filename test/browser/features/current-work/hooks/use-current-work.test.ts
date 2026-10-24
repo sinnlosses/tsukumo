@@ -41,7 +41,15 @@ function questionPending(headers: readonly string[]): StampedPendingAsk {
     multiSelect: false,
     options: [],
   }))
-  return { kind: "question", id: "ask-1", questions, briefs: [], askedAt: 0 }
+  return {
+    kind: "question",
+    id: "ask-1",
+    questions,
+    briefs: [],
+    imageSizes: [],
+    unshelvedImages: [],
+    askedAt: 0,
+  }
 }
 
 const SHELL_TASK = {

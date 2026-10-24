@@ -8,7 +8,8 @@ import { type ReadReportImagePath, reportImagePaths } from "../../report/core/re
 import type { SessionManagerOptions } from "./session-manager-port.ts"
 
 /**
- * 画像を置いて、畳むイベントを返す。`report` は測れた寸法を `imageSizes` に載せたもの、ほかは受けたまま。
+ * 画像を置いて、畳むイベントを返す。`report` は測れた寸法と置けなかったパスを `imageSizes`・`unshelvedImages` に載せたもの、
+ * `pending-changed` は積まれた質問に同じ2つを載せたもの、ほかは受けたまま。
  * 寸法は同じ `report` のイベントに載せる（別のイベントにすると、束の先頭の1件だけが先に配られ、寸法の無いレポートが描かれる）。
  * `state` は畳む前の姿で、答え待ちに既にある質問は置き直さない。
  */
@@ -20,21 +21,36 @@ export function shelveEventImages(
   const read: ReadReportImagePath = (path) =>
     options.readReportImage(path, Number.POSITIVE_INFINITY)
   if (event.kind === "report") {
-    return {
-      ...event,
-      imageSizes: options.reportImageShelf.shelve(
-        event.toolUseId,
-        reportImagePaths(sectionsWithFigure(event.figure, event.sections)),
-        read,
-      ),
-    }
+    const { sizes, unshelved } = options.reportImageShelf.shelve(
+      event.toolUseId,
+      reportImagePaths(sectionsWithFigure(event.figure, event.sections)),
+      read,
+    )
+    return { ...event, imageSizes: sizes, unshelvedImages: unshelved }
   }
   if (event.kind === "pending-changed") {
-    const known = new Set(state.pending.map((ask) => ask.id))
-    for (const ask of event.pending) {
-      if (ask.kind === "question" && !known.has(ask.id)) {
-        options.reportImageShelf.shelve(ask.id, questionImagePaths(ask), read)
-      }
+    const shelvedAsks = new Map(state.pending.map((ask) => [ask.id, ask]))
+    return {
+      ...event,
+      pending: event.pending.map((ask) => {
+        if (ask.kind !== "question") {
+          return ask
+        }
+        const earlier = shelvedAsks.get(ask.id)
+        if (earlier?.kind === "question") {
+          return {
+            ...ask,
+            imageSizes: earlier.imageSizes,
+            unshelvedImages: earlier.unshelvedImages,
+          }
+        }
+        const { sizes, unshelved } = options.reportImageShelf.shelve(
+          ask.id,
+          questionImagePaths(ask),
+          read,
+        )
+        return { ...ask, imageSizes: sizes, unshelvedImages: unshelved }
+      }),
     }
   }
   return event

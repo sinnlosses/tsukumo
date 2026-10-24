@@ -45,7 +45,7 @@ export type ReportEvent =
    * `conclusionSentenceChars` は `conclusion` の要素ごとの字数で、記法の検査だけが読む。
    * `conclusionFirstSentence` は `conclusion` の1要素目で、通った `report` のツール結果の文になる。
    * `title`（セッション一覧の見出し）は書かれていなければ undefined。画面の状態は読まず、差し戻しのあとの出し直しで引き継ぐためだけに持つ（書き込むのは handler）。
-   * `imageSizes` は `report` の引数ではなく、サーバが画像を棚に置いたときに測った寸法。駆動は空で渡し、セッションの管理が畳む前に埋める。
+   * `imageSizes` と `unshelvedImages` は `report` の引数ではなく、サーバが画像を棚に置いたときに測った寸法と、棚に置けなかった・寸法を測れなかったパス。駆動は空で渡し、セッションの管理が畳む前に埋める。
    */
   | {
       readonly kind: "report"
@@ -70,6 +70,7 @@ export type ReportEvent =
       readonly sessionSummary: string | undefined
       readonly sessionRemaining: SessionRemaining
       readonly imageSizes: readonly ReportImageSize[]
+      readonly unshelvedImages: readonly string[]
     }
   /**
    * 引数が読めず（`conclusion` が文字列・文字列の配列・省略のどれでもない）`report` にならなかったメインの呼び出し。サーバの中だけで流れる。

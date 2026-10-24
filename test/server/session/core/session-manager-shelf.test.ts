@@ -226,6 +226,44 @@ describe("レポートの画像の棚", () => {
     expect(shelf.find("toolu_rewritten", "fictional/after.png")).toBeUndefined()
   })
 
+  it("棚に置けなかった・寸法を測れなかった画像のパスを、配る report と記録に載せる", async () => {
+    const { manager, stub } = startManagerWithReportImageShelf()
+    await waitForBatch()
+    const frames: ServerFrame[] = []
+    manager.subscribe((frame) => frames.push(frame))
+
+    stub.emit(imageReportEvent("toolu_unmeasured"))
+    await waitForBatch()
+
+    const delivered = frames.flatMap((frame) =>
+      frame.type === "events" ? frame.events.map(({ event }) => event) : [],
+    )
+    expect(delivered).toContainEqual(
+      expect.objectContaining({
+        kind: "report",
+        imageSizes: [],
+        unshelvedImages: ["fictional/after.png"],
+      }),
+    )
+    expect(manager.commandSession.state().records.at(-1)).toMatchObject({
+      kind: "report",
+      unshelvedImages: ["fictional/after.png"],
+    })
+  })
+
+  it("復元した report の、読み直せなかった画像のパスも記録に載せる", async () => {
+    const { manager, stub } = startManagerWithReportImageShelf(NOW - 1)
+    await waitForBatch()
+
+    stub.emitRestored(knownRestored([imageReportEvent("toolu_rewritten")], NOW - 2))
+    await waitForBatch()
+
+    expect(manager.commandSession.state().records.at(-1)).toMatchObject({
+      kind: "report",
+      unshelvedImages: ["fictional/after.png"],
+    })
+  })
+
   it("report の figure に置いた画像も棚に置く", async () => {
     const { stub, shelf } = startManagerWithReportImageShelf()
     await waitForBatch()
@@ -318,6 +356,8 @@ describe("レポートの画像の棚", () => {
           },
         ],
         briefs: [],
+        imageSizes: [],
+        unshelvedImages: [],
       })),
     }
   }
@@ -342,6 +382,22 @@ describe("レポートの画像の棚", () => {
     expect(readPaths).toEqual(["fictional/after.png", "fictional/after.png"])
     expect(shelf.find("toolu_q1", "fictional/after.png")).toEqual(FICTIONAL_IMAGE)
     expect(shelf.find("toolu_q2", "fictional/after.png")).toEqual(FICTIONAL_IMAGE)
+  })
+
+  it("質問の画像に棚に置いたときに測れた寸法を載せ、積み直しても引き継ぐ", async () => {
+    const { manager, stub } = startManagerWithReportImageShelf(0, SIZED_IMAGE)
+    await waitForBatch()
+
+    stub.emit(imageQuestionPending("toolu_q1"))
+    await waitForBatch()
+    stub.emit(imageQuestionPending("toolu_q1", "toolu_q2"))
+    await waitForBatch()
+
+    const sizes = [{ path: "fictional/after.png", width: 320, height: 180 }]
+    expect(manager.commandSession.state().pending).toMatchObject([
+      { id: "toolu_q1", imageSizes: sizes, unshelvedImages: [] },
+      { id: "toolu_q2", imageSizes: sizes, unshelvedImages: [] },
+    ])
   })
 
   it("答えずに答え待ちから抜けた質問の画像は棚から捨てる", async () => {

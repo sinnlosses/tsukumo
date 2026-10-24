@@ -37,17 +37,23 @@ export type ReadReportImagePath = (path: string) => ReportImage | undefined
  */
 export type ReadReportImage = (path: string, notModifiedAfter: number) => ReportImage | undefined
 
+/** `shelve` の結果。`unshelved` は、描く側が最初から「出せない」の札にするパス。 */
+export type ShelvedImages = {
+  readonly sizes: readonly ReportImageSize[]
+  readonly unshelved: readonly string[]
+}
+
 export type ReportImageShelf = {
   /**
    * 1つの tool use id が指す画像を読んで置く（同じパスは1回だけ読む）。
    * 合計が上限を超えるあいだ、いま置いた id を除いて古く置いたものから捨てる。
-   * 返すのは、読めた画像のうち寸法を測れたものの寸法。
+   * 返すのは、読めた画像のうち寸法を測れたものの寸法と、読めなかった・寸法を測れなかったパス。
    */
   readonly shelve: (
     toolUseId: string,
     paths: readonly string[],
     read: ReadReportImagePath,
-  ) => readonly ReportImageSize[]
+  ) => ShelvedImages
   /** 鍵が指す画像。棚に無ければ undefined（配る側が 404 にする）。 */
   readonly find: (toolUseId: string, path: string) => ReportImage | undefined
   /** id ごとの画像をまとめて捨てる（棚に無い id は黙って無視する）。 */
@@ -67,7 +73,7 @@ export function createReportImageShelf(): ReportImageShelf {
         }),
       )
       if (images.size === 0) {
-        return []
+        return { sizes: [], unshelved: [...new Set(paths)] }
       }
       shelved.delete(toolUseId)
       shelved.set(toolUseId, images)
@@ -79,10 +85,12 @@ export function createReportImageShelf(): ReportImageShelf {
         shelved.delete(id)
         total -= shelfBytes(older)
       }
-      return [...images].flatMap(([path, image]) => {
+      const sizes = [...images].flatMap(([path, image]) => {
         const size = imageSizeOf(image.mediaType, image.content)
         return size.kind === "measured" ? [{ path, width: size.width, height: size.height }] : []
       })
+      const measured = new Set(sizes.map((size) => size.path))
+      return { sizes, unshelved: [...new Set(paths)].filter((path) => !measured.has(path)) }
     },
     find: (toolUseId, path) => shelved.get(toolUseId)?.get(path),
     release: (toolUseIds) => {

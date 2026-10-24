@@ -129,6 +129,8 @@ export type SessionRecord =
       readonly changeSummary: ReportChangeSummary
       /** サーバが棚に置いたときに測れた画像の寸法。続きから復元した記録では、棚に置き直したときに埋まる。 */
       readonly imageSizes: readonly ReportImageSize[]
+      /** サーバが棚に置けなかった・寸法を測れなかった画像のパス。描く側は最初から「出せない」の札にする。復元では置き直したときに埋まる。 */
+      readonly unshelvedImages: readonly string[]
       /** 受け付けた時刻。最後の段の所要時間を閉じる端になる。 */
       readonly time: RecordTime
     }

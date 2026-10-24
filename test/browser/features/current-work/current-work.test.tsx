@@ -47,6 +47,8 @@ const FIXTURE_QUESTION: StampedPendingAsk = {
     } satisfies Question,
   ],
   briefs: [],
+  imageSizes: [],
+  unshelvedImages: [],
   askedAt: 0,
 }
 

@@ -35,6 +35,7 @@ export function reportEvent(
     sessionSummary: undefined,
     sessionRemaining: { kind: "unrecorded" },
     imageSizes: [],
+    unshelvedImages: [],
     ...overrides,
   }
 }

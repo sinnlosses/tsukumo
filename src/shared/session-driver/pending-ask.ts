@@ -4,6 +4,7 @@
 
 import { z } from "zod"
 
+import type { ReportImageSize } from "../report/report-image.ts"
 import type { QuestionBrief } from "./question-brief.ts"
 import type { Question, QuestionAnswer } from "./question.ts"
 
@@ -21,6 +22,9 @@ export type PendingAsk =
       readonly questions: readonly Question[]
       /** 質問と突き合わせが合った添え書き。各件の `header` は `questions` のどれか1つだけを指す。無ければ空。 */
       readonly briefs: readonly QuestionBrief[]
+      /** サーバが画像を棚に置いたときに測った寸法と、置けなかった・測れなかったパス。駆動は空で渡し、セッションの管理が埋める。 */
+      readonly imageSizes: readonly ReportImageSize[]
+      readonly unshelvedImages: readonly string[]
     }
 
 /** 状態に積んだ答え待ち1件。`askedAt` は届いた時刻（エポックミリ秒。サーバがイベントに打った時刻）。 */
