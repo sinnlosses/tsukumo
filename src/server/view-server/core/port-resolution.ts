@@ -4,9 +4,6 @@
 // listen そのもの（node:http）は adapter 側の責務のまま。
 // ここは「どのポートで試すか」の決定と、その決定に沿って `start` を呼び直すことだけを持つ。
 
-// ビューを配るポートを上書きするための環境変数。実際の `process.env` の読み取りは呼び出し側の配線に残る。
-export const VIEW_PORT_ENV_NAME = "TSUKUMO_VIEW_PORT"
-
 // ビューを配る既定のポート。
 // 固定にしてあるのは、開き直したブラウザタブが同じ URL のまま使えるように（docs/architecture/adr/0017-serve-from-local-http.md）。
 export const DEFAULT_VIEW_PORT = 7327

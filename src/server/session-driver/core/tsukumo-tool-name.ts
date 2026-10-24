@@ -26,7 +26,7 @@ export function tsukumoToolFullName(toolName: string): string {
 
 /** モデルから見えるツール名が、tsukumo の MCP サーバのツールか。 */
 export function isTsukumoTool(fullName: string): boolean {
-  return fullName.startsWith(TSUKUMO_TOOL_PREFIX)
+  return fullName.startsWith(TOOL_NAME_PREFIX)
 }
 
-const TSUKUMO_TOOL_PREFIX = tsukumoToolFullName("")
+const TOOL_NAME_PREFIX = tsukumoToolFullName("")

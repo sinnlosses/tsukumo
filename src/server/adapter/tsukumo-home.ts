@@ -10,7 +10,7 @@ import { homedir } from "node:os"
 import { join, resolve } from "node:path"
 import process from "node:process"
 
-import { HOME_ENV_NAME } from "../core/config.ts"
+import { ENV_NAMES } from "../core/config.ts"
 
 const HOME_DIR_NAME = ".tsukumo"
 const CLAUDE_CONFIG_DIR_NAME = ".claude"
@@ -23,7 +23,7 @@ const CLAUDE_CONFIG_DIR_NAME = ".claude"
  * `~` は展開しない。自前で展開すると `TSUKUMO_CHARACTER` と規則が食い違う。
  */
 export function tsukumoHomeDir(): string {
-  const raw = process.env[HOME_ENV_NAME]?.trim()
+  const raw = process.env[ENV_NAMES.home.name]?.trim()
   return raw === undefined || raw === "" ? join(userHomeDir(), HOME_DIR_NAME) : resolve(raw)
 }
 

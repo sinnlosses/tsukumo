@@ -3,15 +3,7 @@ import { createServer as createNetServer, type Server as NetServer } from "node:
 
 import { describe, expect, it } from "vitest"
 
-import {
-  CHARACTER_ENV_NAME,
-  DRIVER_ENV_NAME,
-  FAKE_SCENE_ENV_NAME,
-  FAKE_SESSION_ENV_NAME,
-  OPEN_VIEW_ENV_NAME,
-  VIEW_PORT_ENV_NAME,
-  VIEW_PORT_FALLBACK_BASE_ENV_NAME,
-} from "../src/server/core/config.ts"
+import { ENV_NAMES } from "../src/server/core/config.ts"
 import {
   MAX_PORT_NUMBER,
   VIEW_PORT_FALLBACK_ATTEMPTS,
@@ -38,13 +30,13 @@ const ENTRY = new URL("../src/cli.ts", import.meta.url).pathname
  * 下のテストが「明示指定」の経路に落ちて20秒待たされた）。渡すのは各テストが明示した分だけ。
  */
 const CLI_ENV_NAMES: ReadonlySet<string> = new Set([
-  VIEW_PORT_ENV_NAME,
-  VIEW_PORT_FALLBACK_BASE_ENV_NAME,
-  CHARACTER_ENV_NAME,
-  OPEN_VIEW_ENV_NAME,
-  DRIVER_ENV_NAME,
-  FAKE_SCENE_ENV_NAME,
-  FAKE_SESSION_ENV_NAME,
+  ENV_NAMES.viewPort.name,
+  ENV_NAMES.viewPortFallbackBase.name,
+  ENV_NAMES.character.name,
+  ENV_NAMES.openView.name,
+  ENV_NAMES.driver.name,
+  ENV_NAMES.fakeScene.name,
+  ENV_NAMES.fakeSession.name,
 ])
 
 function runCliToExit(

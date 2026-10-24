@@ -29,6 +29,7 @@ export const DOCUMENT_CHECK_TEST_FILES = [
   "test/comment-reference.test.ts",
   "test/e2e-reference.test.ts",
   "test/scripts/document/document-index-repository.test.ts",
+  "test/scripts/document/lib/environment-variable-repository.test.ts",
   "test/achievement-scene-reference.test.ts",
 ] as const
 

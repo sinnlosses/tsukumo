@@ -14,7 +14,7 @@ import {
   todayLocalDateKey,
 } from "./server/adapter/local-time.ts"
 import { pruneChatImages } from "./server/chat/adapter/chat-archive.ts"
-import { type Config, type ConfigDriver, VIEW_PORT_ENV_NAME } from "./server/core/config.ts"
+import { type Config, type ConfigDriver, ENV_NAMES } from "./server/core/config.ts"
 import {
   createDiagnosticLog,
   pruneDiagnosticFiles,
@@ -71,7 +71,7 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
     resolveViewPortFallbackBase(config.rawViewPortFallbackBase),
   )
   if (portResolution.kind === "invalid") {
-    process.stderr.write(`tsukumo: ${VIEW_PORT_ENV_NAME} がポート番号として読めない\n`)
+    process.stderr.write(`tsukumo: ${ENV_NAMES.viewPort.name} がポート番号として読めない\n`)
     return 1
   }
 

@@ -9,6 +9,7 @@ import { tsukumoHomeDir } from "../../../src/server/adapter/tsukumo-home.ts"
 import { homeCharacterDir } from "../../../src/server/character-pack/adapter/character-pack.ts"
 import { chatArchiveDir } from "../../../src/server/chat/adapter/chat-archive.ts"
 import { createChatSummary } from "../../../src/server/chat/adapter/chat-summary.ts"
+import { ENV_NAMES } from "../../../src/server/core/config.ts"
 import { readRememberedCharacter } from "../../../src/server/session/adapter/remembered-default.ts"
 import { tokenUsageDir } from "../../../src/server/token-usage/adapter/token-usage-log.ts"
 import { characterPackName } from "../../fixture/character.ts"
@@ -19,32 +20,30 @@ import { useTempDir } from "../../fixture/temp-dir.ts"
 // 漏れない）。本物の `~/.tsukumo/` には触らない — 渡さないときの検査はパスの組み立てだけを
 // 見て、ファイルは読み書きしない。
 
-const HOME_ENV_NAME = "TSUKUMO_HOME"
-
 const dir = useTempDir("home")
 let original: string | undefined
 
 beforeEach(() => {
-  original = process.env[HOME_ENV_NAME]
-  delete process.env[HOME_ENV_NAME]
+  original = process.env[ENV_NAMES.home.name]
+  delete process.env[ENV_NAMES.home.name]
 })
 
 afterEach(() => {
   if (original === undefined) {
-    delete process.env[HOME_ENV_NAME]
+    delete process.env[ENV_NAMES.home.name]
   } else {
-    process.env[HOME_ENV_NAME] = original
+    process.env[ENV_NAMES.home.name] = original
   }
 })
 
 describe("TSUKUMO_HOME を渡すとホームがそこへ移る", () => {
   it("ホームそのものが渡した絶対パスになる", () => {
-    process.env[HOME_ENV_NAME] = dir()
+    process.env[ENV_NAMES.home.name] = dir()
     expect(tsukumoHomeDir()).toBe(dir())
   })
 
   it("ホームの下に並ぶ置き場（パック・あらすじ・会話のアーカイブ・トークンの記録）が揃って移る", () => {
-    process.env[HOME_ENV_NAME] = dir()
+    process.env[ENV_NAMES.home.name] = dir()
 
     expect(homeCharacterDir()).toBe(join(dir(), "characters"))
     expect(chatArchiveDir()).toBe(join(dir(), "chat-archive"))
@@ -52,7 +51,7 @@ describe("TSUKUMO_HOME を渡すとホームがそこへ移る", () => {
   })
 
   it("あらすじは移った先の chat-summary の下へ書かれる", () => {
-    process.env[HOME_ENV_NAME] = dir()
+    process.env[ENV_NAMES.home.name] = dir()
 
     createChatSummary(characterPackName("moved-pack")).write(
       "架空の要約",
@@ -64,19 +63,19 @@ describe("TSUKUMO_HOME を渡すとホームがそこへ移る", () => {
   })
 
   it("覚えたキャラクター（state.json）も移った先から読まれる", () => {
-    process.env[HOME_ENV_NAME] = dir()
+    process.env[ENV_NAMES.home.name] = dir()
     writeFileSync(join(dir(), "state.json"), JSON.stringify({ character: "moved-pack" }))
 
     expect(readRememberedCharacter()).toBe("moved-pack")
   })
 
   it("相対パスは cwd 相対、絶対パスはそのまま（TSUKUMO_CHARACTER と同じ規則）", () => {
-    process.env[HOME_ENV_NAME] = "tmp/home"
+    process.env[ENV_NAMES.home.name] = "tmp/home"
     expect(tsukumoHomeDir()).toBe(join(process.cwd(), "tmp", "home"))
   })
 
   it("`~` は展開しない（展開するのはシェルの仕事）", () => {
-    process.env[HOME_ENV_NAME] = "~/elsewhere"
+    process.env[ENV_NAMES.home.name] = "~/elsewhere"
     expect(tsukumoHomeDir()).toBe(join(process.cwd(), "~", "elsewhere"))
   })
 })
@@ -92,10 +91,10 @@ describe("TSUKUMO_HOME を渡さないときの置き場は今までと同じ", 
   })
 
   it("空文字・空白だけのときも既定へ倒す（resolveViewPort と同じ扱い）", () => {
-    process.env[HOME_ENV_NAME] = ""
+    process.env[ENV_NAMES.home.name] = ""
     expect(tsukumoHomeDir()).toBe(join(homedir(), ".tsukumo"))
 
-    process.env[HOME_ENV_NAME] = "   "
+    process.env[ENV_NAMES.home.name] = "   "
     expect(tsukumoHomeDir()).toBe(join(homedir(), ".tsukumo"))
   })
 })

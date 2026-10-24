@@ -8,7 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { createCurrentCharacter } from "../src/current-character.ts"
 import { bundledFilePath } from "../src/server/adapter/bundled-path.ts"
 import { DEFAULT_CHARACTER_DIR_RELATIVE_PATH } from "../src/server/character-pack/adapter/character-pack.ts"
-import { HOME_ENV_NAME, readConfig } from "../src/server/core/config.ts"
+import { ENV_NAMES, readConfig } from "../src/server/core/config.ts"
 import { useTempDir } from "./fixture/temp-dir.ts"
 
 const HOME_COPY_LABEL = "ホームの写しの精霊"
@@ -17,7 +17,7 @@ const HOME_COPY_PERSONA = "# 写し\n\n語尾に「なのじゃ」と付ける�
 const dir = useTempDir("current-character")
 
 beforeEach(() => {
-  vi.stubEnv(HOME_ENV_NAME, join(dir(), "home"))
+  vi.stubEnv(ENV_NAMES.home.name, join(dir(), "home"))
 })
 
 afterEach(() => {
