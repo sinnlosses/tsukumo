@@ -1,5 +1,5 @@
 // レポートの ```mermaid フェンスの中身を図として描く。
-// mermaid は tsukumo 自身のサーバから配り、その図が窓の少し手前に見えたときだけ `<script>` で読み込む。
+// mermaid は tsukumo 自身のサーバから配り、図が現れたら手すきに `<script>` を読み込み、描くのは窓の少し手前に見えたときだけ。
 //
 // 1つのレポートに複数の図があっても、描くのは1つずつ（`drawing` の鎖）。
 // 同じソースの図は描いた SVG を覚え、2回目以降は描かずに差し込む（失敗は覚えない）。
@@ -17,8 +17,9 @@ import { Text } from "../../../../../ui/text/text.tsx"
 import { figureZoomTriggerProps, SvgZoom } from "./figure-zoom.tsx"
 import { useSeenOnce } from "./hooks/use-seen-once.ts"
 import styles from "./mermaid-block.module.css"
+import { mermaidFrameHeight } from "./mermaid-frame-height.ts"
 import { resolveHex } from "./theme-color.ts"
-import { loadVendorScript } from "./vendor-script.ts"
+import { loadVendorScript, preloadVendorScript } from "./vendor-script.ts"
 
 const MERMAID_SRC = vendorAssetPath("mermaid.min.js")
 
@@ -55,6 +56,10 @@ export function MermaidBlock(props: MermaidBlockProps): ReactElement {
   const seen = useSeenOnce(nodeRef)
 
   const { code } = props
+
+  useEffect(() => {
+    preloadVendorScript(MERMAID_SRC)
+  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -128,7 +133,7 @@ export function MermaidBlock(props: MermaidBlockProps): ReactElement {
         ref={nodeRef}
         className={clsx("mermaid", styles["figure-frame"])}
         data-pending={seen ? undefined : "unseen"}
-        style={{ [FRAME_LINES_PROPERTY]: pendingLines(props.code) }}
+        style={{ [FRAME_HEIGHT_PROPERTY]: `${mermaidFrameHeight(props.code)}px` }}
         {...figureZoomTriggerProps(setZoomed)}
       />
       {zoomed !== undefined && <SvgZoom svg={zoomed} onClose={() => setZoomed(undefined)} />}
@@ -136,12 +141,7 @@ export function MermaidBlock(props: MermaidBlockProps): ReactElement {
   )
 }
 
-const FRAME_LINES_PROPERTY = "--frame-lines"
-
-/** 描き終わるまでの枠の高さを決めるソースの行数（`.figure-frame` が行数から高さを作る）。 */
-function pendingLines(code: string): number {
-  return code.split("\n").length
-}
+const FRAME_HEIGHT_PROPERTY = "--frame-height"
 
 function newDiagramId(): string {
   return `mermaid-block-${nextId++}`

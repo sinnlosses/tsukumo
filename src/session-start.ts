@@ -14,6 +14,7 @@ import type { DiagnosticLog } from "./server/diagnostic/core/diagnostic.ts"
 import { createExperienceMetricLog } from "./server/experience-metric/adapter/experience-metric-log.ts"
 import type { Host } from "./server/host/core/host.ts"
 import { readReportImageFile } from "./server/report/adapter/report-image-file.ts"
+import { warmUpMermaidChecker } from "./server/report/adapter/report-mermaid-syntax.ts"
 import { createReportUsageLog } from "./server/report/adapter/report-usage-log.ts"
 import type { ReportImageShelf } from "./server/report/core/report-image-shelf.ts"
 import type { BeadsStamp } from "./server/repository/adapter/beads.ts"
@@ -147,6 +148,9 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
     ...usageReview.manager,
     ...repository.manager,
   })
+  if (config.driver === "sdk") {
+    setImmediate(warmUpMermaidChecker)
+  }
   const socketRouter = createSocketRouter({
     session: {
       promptImageShelf,

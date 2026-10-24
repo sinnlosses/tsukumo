@@ -37,6 +37,13 @@ export function checkMermaidSyntax(sources: readonly string[]): Promise<readonly
   return result
 }
 
+/** worker を先に起こす。最初の検査は worker を起こし直さずに済む（読み込みの途中に来た検査は ready を待つ）。失敗は次の検査が拾う。 */
+export function warmUpMermaidChecker(): void {
+  try {
+    ensureWorker()
+  } catch {}
+}
+
 /** worker を止める。次の検査で起こし直す。 */
 async function stopMermaidChecker(): Promise<void> {
   const current = running

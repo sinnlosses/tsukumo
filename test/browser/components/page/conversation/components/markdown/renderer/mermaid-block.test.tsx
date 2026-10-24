@@ -136,7 +136,9 @@ describe("MermaidBlock の描いた SVG の使い回し", () => {
 })
 
 describe("MermaidBlock の見えてから描く", () => {
-  it("見えるまでは読み込みも描画も始めず、ソースの字なしの高さのある枠を出す", async () => {
+  it("見えるまでは描画を始めず、手すきまで読み込みも待ち、ソースの字なしの高さのある枠を出す", async () => {
+    const idle: (() => void)[] = []
+    vi.stubGlobal("requestIdleCallback", (callback: () => void) => idle.push(callback))
     const intersection = stubIntersectionObserver(false)
     const view = render(<MermaidBlock code={"graph A\nA --> B\nB --> C"} />)
     await finishLoading()
@@ -146,7 +148,15 @@ describe("MermaidBlock の見えてから描く", () => {
     expect(renderDiagram).not.toHaveBeenCalled()
     expect(pre?.getAttribute("data-pending")).toBe("unseen")
     expect(pre?.textContent).toBe("")
-    expect(pre instanceof HTMLElement && pre.style.getPropertyValue("--frame-lines")).toBe("3")
+    expect(pre instanceof HTMLElement && pre.style.getPropertyValue("--frame-height")).toBe("268px")
+
+    act(() => {
+      for (const callback of idle) {
+        callback()
+      }
+    })
+    expect(scripts).toHaveLength(1)
+    expect(renderDiagram).not.toHaveBeenCalled()
 
     act(() => {
       intersection.intersect()

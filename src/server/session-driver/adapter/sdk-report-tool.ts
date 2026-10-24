@@ -95,10 +95,12 @@ export function reportTool(
         isError: true,
       }
     }
-    const fileContents = await readReportBlockFiles(cwd, report.sections)
-    const mermaidFaults = await checkMermaidSyntax(
-      mermaidSourcesInSections(sectionsWithFigure(report.figure, report.sections)),
-    )
+    const [fileContents, mermaidFaults] = await Promise.all([
+      readReportBlockFiles(cwd, report.sections),
+      checkMermaidSyntax(
+        mermaidSourcesInSections(sectionsWithFigure(report.figure, report.sections)),
+      ),
+    ])
     const verdict = review.judgeReport({
       conclusion: report.conclusion,
       conclusionSentenceChars: report.conclusionSentenceChars,

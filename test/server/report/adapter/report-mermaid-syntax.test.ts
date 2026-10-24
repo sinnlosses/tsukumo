@@ -112,4 +112,35 @@ describe("読み込みに時間がかかるとき", () => {
 
     expect(await pending).toEqual([fault])
   })
+
+  it("warmUp のあとの最初の検査は worker を起こし直さず、warmUp が起こした worker の読み込みを待つ", async () => {
+    let constructed = 0
+    class SlowWorker extends EventEmitter {
+      constructor() {
+        super()
+        constructed++
+        setTimeout(() => this.emit("message", { ready: true }), 8000)
+      }
+      postMessage(request: { id: number }): void {
+        setTimeout(() => this.emit("message", { id: request.id, ok: true, faults: [] }), 100)
+      }
+      unref(): void {}
+      terminate(): Promise<number> {
+        return Promise.resolve(0)
+      }
+    }
+    vi.useFakeTimers()
+    vi.resetModules()
+    vi.doMock("node:worker_threads", () => ({ Worker: SlowWorker }))
+    const { checkMermaidSyntax: check, warmUpMermaidChecker } =
+      await import("../../../../src/server/report/adapter/report-mermaid-syntax.ts")
+
+    warmUpMermaidChecker()
+    await vi.advanceTimersByTimeAsync(5000)
+    const pending = check(["x"])
+    await vi.advanceTimersByTimeAsync(3200)
+
+    expect(await pending).toEqual([])
+    expect(constructed).toBe(1)
+  })
 })

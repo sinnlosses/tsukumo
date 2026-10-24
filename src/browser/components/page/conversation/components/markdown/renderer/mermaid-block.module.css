@@ -1,8 +1,15 @@
-/* 描き終わる（data-processed が付く）まで、ソースの行数から見積もった高さの枠を保つ。SVG に替わるとこの高さは外れる。 */
+/* 描き終わる（data-processed が付く）まで、ソースから見積もった高さの枠を保つ。SVG に替わるとこの高さは外れる。 */
 .figure-frame:not([data-processed]) {
-  min-height: calc(var(--frame-lines) * 1.5em);
+  min-height: var(--frame-height);
   outline: 1px dashed var(--rule-quiet);
   outline-offset: -1px;
+}
+
+/* 窓に入ってから描き終わるまでの間だけ、枠に文言を出す（data-pending="unseen" の間は出さない）。 */
+.figure-frame:not([data-processed]):not([data-pending])::before {
+  content: "図を描いています";
+  color: var(--ink-quiet);
+  font-size: 0.85em;
 }
 
 /* mermaid の構文エラー（MermaidBlock）。
