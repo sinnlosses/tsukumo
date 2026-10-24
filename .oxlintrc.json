@@ -371,6 +371,19 @@
         // E2E の確かめは画面の撮影の比較（settleAndMatch）が持ち、it の直下に expect が現れない
         "vitest/expect-expect": "off"
       }
+    },
+    {
+      "files": ["scripts/**", "src/shared/**", "src/server/core/**", "src/server/*/core/**"],
+      "rules": {
+        "typescript/no-restricted-types": [
+          "error",
+          {
+            "types": {
+              "null": "null は自前の型に出さない（docs/coding-standards/error-input-and-absent-value.md「null は自前の型に出さない」）"
+            }
+          }
+        ]
+      }
     }
   ]
 }
