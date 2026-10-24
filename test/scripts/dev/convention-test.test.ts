@@ -3,7 +3,10 @@
 import { describe, expect, test } from "vitest"
 
 import { DOCUMENT_CHECK_TEST_FILES } from "../../../scripts/dev/lib/check-stage.ts"
-import { withConventionTests } from "../../../scripts/dev/lib/convention-test.ts"
+import {
+  withConventionTests,
+  withRelatedConventionTests,
+} from "../../../scripts/dev/lib/convention-test.ts"
 
 const CONVENTION_TEST_PATHS = [
   "test/architecture/",
@@ -45,5 +48,24 @@ describe("withConventionTests", () => {
       "test/a.test.ts",
       ...CONVENTION_TEST_PATHS,
     ])
+  })
+})
+
+describe("withRelatedConventionTests", () => {
+  const architectureTests = ["test/architecture/a.test.ts", "test/architecture/b.test.ts"]
+
+  test("test/architecture/ はディレクトリでなく、テストファイルを1本ずつ足す", () => {
+    const result = withRelatedConventionTests(["src/a.ts"], architectureTests)
+    expect(result).not.toContain("test/architecture/")
+    expect(result).toEqual([
+      "src/a.ts",
+      ...architectureTests,
+      ...CONVENTION_TEST_PATHS.filter((path) => path !== "test/architecture/"),
+    ])
+  })
+
+  test("渡したテストファイルは重ねない", () => {
+    const result = withRelatedConventionTests(["test/architecture/a.test.ts"], architectureTests)
+    expect(result.filter((arg) => arg === "test/architecture/a.test.ts")).toHaveLength(1)
   })
 })

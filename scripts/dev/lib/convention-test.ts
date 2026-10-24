@@ -2,8 +2,10 @@
 
 import { DOCUMENT_CHECK_TEST_FILES } from "./check-stage.ts"
 
+export const ARCHITECTURE_TEST_DIRECTORY = "test/architecture/"
+
 const CONVENTION_TEST_PATHS = [
-  "test/architecture/",
+  ARCHITECTURE_TEST_DIRECTORY,
   "test/function-order.test.ts",
   ...DOCUMENT_CHECK_TEST_FILES,
 ] as const
@@ -19,10 +21,24 @@ export function withConventionTests(args: readonly string[]): readonly string[] 
   if (!hasFilter) {
     return args
   }
-  return withRelatedConventionTests(args)
+  return appendMissing(args, CONVENTION_TEST_PATHS)
 }
 
-/** `vitest related` に渡す引数。絞り込みの有無に関わらず、未指定の規約のテストを足す。 */
-export function withRelatedConventionTests(args: readonly string[]): readonly string[] {
-  return [...args, ...CONVENTION_TEST_PATHS.filter((file) => !args.includes(file))]
+/**
+ * `vitest related` に渡す引数。絞り込みの有無に関わらず、未指定の規約のテストを足す。
+ * `related` の引数は変えたファイルとして読まれ、ディレクトリは展開されないので、
+ * `test/architecture/` は列挙済みのテストファイル（`architectureTests`）に置き換えて足す。
+ */
+export function withRelatedConventionTests(
+  args: readonly string[],
+  architectureTests: readonly string[],
+): readonly string[] {
+  return appendMissing(args, [
+    ...architectureTests,
+    ...CONVENTION_TEST_PATHS.filter((path) => path !== ARCHITECTURE_TEST_DIRECTORY),
+  ])
+}
+
+function appendMissing(args: readonly string[], paths: readonly string[]): readonly string[] {
+  return [...args, ...paths.filter((file) => !args.includes(file))]
 }
