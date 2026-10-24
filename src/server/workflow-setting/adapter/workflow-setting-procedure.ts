@@ -6,6 +6,7 @@ import {
   workflowSettingContract,
 } from "../../../shared/contract/workflow-setting.ts"
 import type {
+  WorkflowEntry,
   WorkflowSettingChange,
   WorkflowSettingView,
 } from "../../../shared/workflow-setting/workflow-setting.ts"
@@ -13,15 +14,17 @@ import type {
 /** この機能の手続きが使う口（中身は配線が渡す）。どちらも例外を投げない。 */
 export type WorkflowSettingProcedurePorts = {
   readonly readWorkflowSetting: () => Promise<WorkflowSettingView>
+  readonly readWorkflowEntries: () => Promise<readonly WorkflowEntry[]>
   readonly changeWorkflowSetting: (key: string, value: string) => Promise<WorkflowSettingChange>
 }
 
 export function workflowSettingProcedure(
-  ports: Pick<WorkflowSettingProcedurePorts, "readWorkflowSetting">,
+  ports: Pick<WorkflowSettingProcedurePorts, "readWorkflowSetting" | "readWorkflowEntries">,
 ) {
   const procedure = implement(workflowSettingContract)
   return procedure.router({
     read: procedure.read.handler(() => ports.readWorkflowSetting()),
+    entries: procedure.entries.handler(() => ports.readWorkflowEntries()),
   })
 }
 

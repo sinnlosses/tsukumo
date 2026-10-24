@@ -157,6 +157,7 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
     devServer: launch.devServer,
     cwd: launch.cwd,
     readWorkflowSetting: workflowSetting.readWorkflowSetting,
+    readWorkflowEntries: workflowSetting.readWorkflowEntries,
   })
   if (!view.ok) {
     process.stderr.write(`tsukumo: ビューを配れない: ${view.reason}\n`)

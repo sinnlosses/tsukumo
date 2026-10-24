@@ -79,7 +79,7 @@ export type RpcRouterPorts = RepositoryProcedurePorts &
   SessionClaimProcedurePorts &
   DiagnosticProcedurePorts &
   ExperienceMetricProcedurePorts &
-  Pick<WorkflowSettingProcedurePorts, "readWorkflowSetting">
+  Pick<WorkflowSettingProcedurePorts, "readWorkflowSetting" | "readWorkflowEntries">
 
 /** 読み取りの手続きを束ね、照合のミドルウェアを全部の前に掛ける（`/rpc` に載る）。 */
 export function createRpcRouter(ports: RpcRouterPorts) {

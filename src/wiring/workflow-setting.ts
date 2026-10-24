@@ -10,6 +10,7 @@ import { twConfigPort } from "../server/workflow-setting/adapter/tw-config.ts"
 import type { WorkflowSettingProcedurePorts } from "../server/workflow-setting/adapter/workflow-setting-procedure.ts"
 import {
   changeWorkflowSetting,
+  readWorkflowEntries,
   readWorkflowSetting,
   type WorkflowSettingPlace,
 } from "../server/workflow-setting/core/workflow-setting-reading.ts"
@@ -30,6 +31,7 @@ export function wireWorkflowSetting(
   }
   return {
     readWorkflowSetting: () => readWorkflowSetting(port, place),
+    readWorkflowEntries: () => readWorkflowEntries(port),
     changeWorkflowSetting: (key, value) => changeWorkflowSetting(port, place, key, value),
   }
 }

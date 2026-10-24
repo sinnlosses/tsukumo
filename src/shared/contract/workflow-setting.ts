@@ -4,6 +4,7 @@ import { z } from "zod"
 
 import { commandBase } from "../command.ts"
 import {
+  workflowEntriesSchema,
   workflowSettingChangeSchema,
   workflowSettingViewSchema,
 } from "../workflow-setting/workflow-setting.ts"
@@ -28,6 +29,8 @@ const settingValueSchema = z
 export const workflowSettingContract = {
   /** いまの欄と値。`tw` が無い・設定コマンドが無い・`.tw/config.toml` が無い・読めないときは `unavailable`。 */
   read: oc.output(workflowSettingViewSchema),
+  /** 起動できる入口のスキル（`tw config --entries`）。`tw` が無い・古い・読めないときは空。 */
+  entries: oc.output(workflowEntriesSchema),
 }
 
 export const workflowSettingCommandContract = {

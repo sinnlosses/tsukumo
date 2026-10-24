@@ -101,6 +101,17 @@ export const workflowSettingViewSchema = z.discriminatedUnion("kind", [
   }),
 ])
 
+/** 入口のスキル1つ。`value` は保存して送る名前、`title` は画面に出す名前。 */
+export type WorkflowEntry = {
+  readonly value: string
+  readonly title: string
+}
+
+/** 配る形そのもの（{@link WorkflowEntry} の並び）。読めないときは空。 */
+export const workflowEntriesSchema = z
+  .array(z.object({ value: z.string(), title: z.string() }))
+  .readonly()
+
 /** 配る形そのもの（{@link WorkflowSettingChange} と同じ鍵）。 */
 export const workflowSettingChangeSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("view"), view: workflowSettingViewSchema }),

@@ -19,8 +19,8 @@ import {
 } from "../../../../features/run-setting/components/run-setting-select.tsx"
 import { Button } from "../../../ui/button/button.tsx"
 import { HStack } from "../../../ui/h-stack/h-stack.tsx"
-import { TextField } from "../../../ui/text-field/text-field.tsx"
 import { Text } from "../../../ui/text/text.tsx"
+import { useLaunchSkillOptions } from "../hooks/use-launch-skill-setting.ts"
 import type { ScreenNavSettings } from "../hooks/use-settings.ts"
 import styles from "./screen-nav-settings.module.css"
 
@@ -300,10 +300,11 @@ export function ScreenNavSettingsRevealFace(
   )
 }
 
-/** タスクの実行の面（見出しなし）。起動スキルの名前を1行で書く。 */
+/** タスクの実行の面（見出しなし）。起動スキルを入口のスキルの一覧から選ぶ。 */
 export function ScreenNavSettingsLaunchSkillFace(props: ScreenNavSettingsProps): ReactElement {
   const { settings } = props
   const fieldId = useId()
+  const options = useLaunchSkillOptions(settings.launchSkill.value)
 
   return (
     <>
@@ -318,13 +319,24 @@ export function ScreenNavSettingsLaunchSkillFace(props: ScreenNavSettingsProps):
         className={styles["screen-nav-settings-row"]}
       >
         <label htmlFor={`${fieldId}-launch-skill`}>起動するスキル</label>
-        <TextField
-          element="input"
+        <RunSettingSelect
           id={`${fieldId}-launch-skill`}
-          className={styles["screen-nav-settings-text-field"]}
+          ariaLabel="起動するスキル"
+          heading="起動するスキル"
           value={settings.launchSkill.value}
-          maxLength={64}
-          placeholder="スキル名（空なら固定の文面）"
+          options={options.map((option): RunSettingSelectOption => ({
+            value: option.value,
+            disabled: false,
+            icon: undefined,
+            row: <RunSettingName danger={false}>{option.label}</RunSettingName>,
+          }))}
+          disabled={false}
+          danger={false}
+          rail={false}
+          layout="list"
+          mouth="field"
+          title={undefined}
+          dot="none"
           onChange={settings.launchSkill.onChange}
         />
       </HStack>
@@ -335,7 +347,7 @@ export function ScreenNavSettingsLaunchSkillFace(props: ScreenNavSettingsProps):
         weight="inherit"
         className={styles["screen-nav-settings-notice"]}
       >
-        タスクの実行で呼ぶスキル。空なら「タスク GH-xxxx を進めて」と送る。
+        タスクの実行で呼ぶスキル。未設定なら「タスク GH-xxxx を進めて」と送る。
       </Text>
     </>
   )

@@ -46,6 +46,7 @@ export const EMPTY_RPC_PORTS = {
   readAchievementCalendar: () => Promise.resolve({ kind: "ok", calendar: { kind: "unknown" } }),
   reportBrowserError: () => {},
   recordSplit: () => {},
+  readWorkflowEntries: () => Promise.resolve([]),
   readWorkflowSetting: () =>
     Promise.resolve({
       kind: "unavailable",

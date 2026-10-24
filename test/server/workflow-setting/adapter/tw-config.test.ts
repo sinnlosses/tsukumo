@@ -33,6 +33,16 @@ describe("twConfigPort", () => {
     })
   })
 
+  it("entries は config --entries だけを打つ", async () => {
+    const script = join(dir, "tw")
+    await writeFile(script, ["#!/bin/sh", 'printf "%s|" "$@"', ""].join("\n"))
+    await chmod(script, 0o755)
+
+    expect(await twConfigPort(script, dir).entries()).toMatchObject({
+      stdout: "config|--entries|",
+    })
+  })
+
   it("引数をそのまま渡し、終了コード・stdout・stderr を受け取る", async () => {
     const script = join(dir, "tw")
     await writeFile(

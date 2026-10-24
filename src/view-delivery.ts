@@ -49,7 +49,10 @@ import { swallowedFailureFootprint } from "./shared/diagnostic/swallowed-failure
 import type { RefreshTarget, ServerFrame } from "./shared/frame.ts"
 import { type PlanUsageReport, UNAVAILABLE_PLAN_USAGE } from "./shared/plan-usage/plan-usage.ts"
 import { type SessionDigest, UNAVAILABLE_SESSION_DIGEST } from "./shared/session/session-digest.ts"
-import type { WorkflowSettingView } from "./shared/workflow-setting/workflow-setting.ts"
+import type {
+  WorkflowEntry,
+  WorkflowSettingView,
+} from "./shared/workflow-setting/workflow-setting.ts"
 
 export type ViewDeliveryOptions = {
   /** どのポートで試すか（決めるのは `resolveViewPort`）。 */
@@ -87,6 +90,8 @@ export type ViewDeliveryOptions = {
   readonly devServer: boolean
   /** ワークフローの設定を読む口（`wireWorkflowSetting`）。 */
   readonly readWorkflowSetting: () => Promise<WorkflowSettingView>
+  /** 起動できる入口のスキルを読む口（`wireWorkflowSetting`）。 */
+  readonly readWorkflowEntries: () => Promise<readonly WorkflowEntry[]>
 }
 
 /** 配り始めた結果。失敗は起動時の前提不足なので、理由だけを返して呼び出し側が即時終了する。 */
@@ -174,6 +179,7 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
       recordSplit(release)
     },
     readWorkflowSetting: options.readWorkflowSetting,
+    readWorkflowEntries: options.readWorkflowEntries,
   })
 
   const started = await startOnResolvedPort(options.portResolution, (port) =>

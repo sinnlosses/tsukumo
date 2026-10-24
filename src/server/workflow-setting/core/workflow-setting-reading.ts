@@ -3,12 +3,14 @@
 
 import { z } from "zod"
 
-import type {
-  WorkflowSettingChange,
-  WorkflowSettingField,
-  WorkflowSettingRepository,
-  WorkflowSettingUnavailableReason,
-  WorkflowSettingView,
+import {
+  workflowEntriesSchema,
+  type WorkflowEntry,
+  type WorkflowSettingChange,
+  type WorkflowSettingField,
+  type WorkflowSettingRepository,
+  type WorkflowSettingUnavailableReason,
+  type WorkflowSettingView,
 } from "../../../shared/workflow-setting/workflow-setting.ts"
 
 /** `tw` を1回起こした結果。起動できなかった（ENOENT）ときだけ `missing`。 */
@@ -25,6 +27,7 @@ export type TwOutcome =
 export type TwConfigPort = {
   readonly schema: () => Promise<TwOutcome>
   readonly config: () => Promise<TwOutcome>
+  readonly entries: () => Promise<TwOutcome>
   readonly set: (key: string, value: string) => Promise<TwOutcome>
 }
 
@@ -71,6 +74,8 @@ const configSchemaSchema = z.object({
   keys: z.array(stepsEntrySchema),
 })
 
+const entriesOutputSchema = z.object({ entries: workflowEntriesSchema })
+
 type ConfigSchema = z.infer<typeof configSchemaSchema>
 
 type SchemaEntry = ConfigSchema["keys"][number]
@@ -89,6 +94,16 @@ export async function readWorkflowSetting(
     return unavailable(place, "schema-unsupported", "")
   }
   return foldConfig(await port.config(), schema, place)
+}
+
+/** 起動できる入口のスキルを読む。`tw` が無い・古い・出力が読めないときは空で、例外を投げない。 */
+export async function readWorkflowEntries(port: TwConfigPort): Promise<readonly WorkflowEntry[]> {
+  const outcome = await port.entries()
+  if (outcome.kind === "missing" || outcome.exitCode !== 0) {
+    return []
+  }
+  const parsed = parseJsonAs(entriesOutputSchema, outcome.stdout)
+  return parsed === undefined ? [] : parsed.entries
 }
 
 /** 欄1つを書き、読み直した面か、ワークフローが断った理由を返す。例外を投げない。 */

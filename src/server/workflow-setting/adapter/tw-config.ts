@@ -12,6 +12,7 @@ const MAX_OUTPUT_BYTES = 1024 * 1024
 export function twConfigPort(tw: string, cwd: string): TwConfigPort {
   return {
     schema: () => runTw(tw, cwd, ["config", "--schema"]),
+    entries: () => runTw(tw, cwd, ["config", "--entries"]),
     config: () => runTw(tw, cwd, ["config", "--json"]),
     set: (key, value) => runTw(tw, cwd, ["config", "set", key, value]),
   }

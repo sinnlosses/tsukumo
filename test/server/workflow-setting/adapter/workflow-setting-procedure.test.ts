@@ -25,10 +25,14 @@ const VIEW: WorkflowSettingView = {
 describe("workflowSetting の手続き", () => {
   it("read は口が畳んだ面をそのまま返す", async () => {
     const client = createRouterClient(
-      workflowSettingProcedure({ readWorkflowSetting: () => Promise.resolve(VIEW) }),
+      workflowSettingProcedure({
+        readWorkflowSetting: () => Promise.resolve(VIEW),
+        readWorkflowEntries: () => Promise.resolve([{ value: "架空の入口", title: "架空の題" }]),
+      }),
     )
 
     expect(await client.read()).toEqual(VIEW)
+    expect(await client.entries()).toEqual([{ value: "架空の入口", title: "架空の題" }])
   })
 
   it("set は欄と値を口へ渡し、口が畳んだ結果をそのまま返す", async () => {

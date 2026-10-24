@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import {
   changeWorkflowSetting,
+  readWorkflowEntries,
   readWorkflowSetting,
   type TwConfigPort,
   type TwOutcome,
@@ -65,24 +66,62 @@ const CONFIG_JSON = configJson([
   { key: "steps", value: ["架空:二つ目"] },
 ])
 
+const ENTRIES_JSON = JSON.stringify({
+  entries: [
+    { value: "架空の入口", label: "入口", title: "架空の入口の題", description: "説明" },
+    { value: "架空の別口", label: "別口", title: "架空の別口の題", description: "" },
+  ],
+})
+
 function ran(exitCode: number, stdout: string, stderr = ""): TwOutcome {
   return { kind: "ran", exitCode, stdout, stderr }
 }
 
 function portOf(
-  outcomes: Partial<Record<"schema" | "config" | "set", TwOutcome>>,
+  outcomes: Partial<Record<"schema" | "config" | "set" | "entries", TwOutcome>>,
 ): TwConfigPort & { readonly sets: (readonly [string, string])[] } {
   const sets: (readonly [string, string])[] = []
   return {
     sets,
     schema: () => Promise.resolve(outcomes.schema ?? ran(0, JSON.stringify(SCHEMA))),
     config: () => Promise.resolve(outcomes.config ?? ran(0, CONFIG_JSON)),
+    entries: () => Promise.resolve(outcomes.entries ?? ran(0, ENTRIES_JSON)),
     set: (key, value) => {
       sets.push([key, value])
       return Promise.resolve(outcomes.set ?? ran(0, `SET\t${key}\t${value}`))
     },
   }
 }
+
+describe("readWorkflowEntries", () => {
+  it("entries を value と title に畳む", async () => {
+    expect(await readWorkflowEntries(portOf({}))).toEqual([
+      { value: "架空の入口", title: "架空の入口の題" },
+      { value: "架空の別口", title: "架空の別口の題" },
+    ])
+  })
+
+  it("空の一覧は空", async () => {
+    const port = portOf({ entries: ran(0, JSON.stringify({ entries: [] })) })
+
+    expect(await readWorkflowEntries(port)).toEqual([])
+  })
+
+  it("tw が無い・古い（終了コード2）・壊れた JSON・形違いは空", async () => {
+    const outcomes: TwOutcome[] = [
+      { kind: "missing" },
+      ran(2, "", "unrecognized arguments: --entries"),
+      ran(0, "JSON でない"),
+      ran(0, JSON.stringify({ entries: [{ value: 1 }] })),
+    ]
+
+    const results = await Promise.all(
+      outcomes.map((entries) => readWorkflowEntries(portOf({ entries }))),
+    )
+
+    expect(results).toEqual([[], [], [], []])
+  })
+})
 
 describe("readWorkflowSetting", () => {
   it("tw が起動できなければ tw-missing で、探した場所を添える", async () => {
