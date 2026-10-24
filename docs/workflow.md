@@ -84,5 +84,4 @@
   当時の記述は `docs/history/decision.md`「workflow.md「`doing` をコミットする」「アーカイブも
   `main` へ単独で送る」」に残してある
 - 運用の正典: `~/.claude/skills/task-model/WORKFLOW.md`
-- 完了タスク・過去セッションの記録: `docs/history/tasks.md` /
-  `docs/history/progress.md`
+- 過去の判断の経緯: `docs/history/decision.md`。完了タスクは `tw show <ID>`（`docs/history/tasks.md`・`progress.md` は凍結済み）

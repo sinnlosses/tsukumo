@@ -31,7 +31,7 @@ tsukumo は Agent SDK（`@anthropic-ai/claude-agent-sdk`）で Claude Code を�
   `pnpm run build` を打つ（`dist/browser/` は `.gitignore`。無いと起動が前提不足で止まる）
 - `tsukumo` コマンドは `mise run setup`（`pnpm add --global "link:<リポジトリ>"`）で入っている（`docs/requirements.md` 4.6）
 - ホストに依存する操作は1つの抽象の裏に置く（`docs/architecture/adr/0015-single-host-port.md`）。
-  **`orca`・`open`・`bd`・`dolt`・`gh`・`python3`・`taskpolicy`・`rtk` 以外の外部コマンド依存を増やすときはユーザーの承認を得る**
+  **起こしてよい外部コマンドは `test/architecture/outside-world.test.ts` の `ALLOWED_COMMANDS` が正典。足すときはユーザーの承認を得る**
 - 環境の実測値は `docs/requirements.md`「5. 実行環境・非機能要件」。時間が経つと変わるので、
   前提にする前にその場で確かめる
 
@@ -41,10 +41,7 @@ tsukumo は Agent SDK（`@anthropic-ai/claude-agent-sdk`）で Claude Code を�
 
 ```bash
 pnpm run check                 # typecheck + lint + format:check + token-limit + test + test:e2e（変更後は必ずこれを通す。
-                              #   単体と E2E は変えたファイルから選んだものだけ（単体は import で辿れる関連のテスト＋規約のテスト）。
-                              #   --full で6段とも単体・E2E 全件。全件は main へ送る直前に打つ。
-                              #   文書だけの変更は --full でも format:check・token-limit と文書の検査だけ。
-                              #   同じ木で打ち直すと前回通った段を1回だけ飛ばし、E2E は落ちたファイルだけ）
+                              #   段の選び方・飛ばし方は scripts/dev/check.ts の冒頭。--full の全件は main へ送る直前に打つ）
 pnpm run format                # 整形（oxfmt。prettier は入っていない）
 pnpm run test                  # 単体テスト（Vitest）。ファイルを渡すと規約のテストも一緒に走る
 pnpm run build                 # src/browser/ を直したら打つ（起動時には組み立てない）
@@ -63,14 +60,13 @@ node scripts/runtime/stop.ts   # 動いている tsukumo の一覧（--port <n> 
 
 - **原則1**: **Claude Code の TUI を使わない**（上の IMPORTANT）
 - **原則2**: `shared` / `server` / `browser` の3層。サーバは機能ごとに
-  `src/server/<機能>/{core,adapter}/` で、**`core → adapter` は禁止**（`docs/architecture.md`
-  「サーバの機能と、機能どうしの辺」。許した辺以外は `test/architecture/` が落とす）
+  `src/server/<機能>/{core,adapter}/`（辺は `layer.test.ts` が検査。正典は `docs/architecture.md`
+  「サーバの機能と、機能どうしの辺」）
 - **原則3**: ホスト・外部コマンド・OS に触るものは **`adapter/` の1ファイルに閉じ込める**。
   Agent SDK だけは機能の `adapter/` の `sdk-` で始まるファイル群に閉じ込める
 - **原則4**: **キャラクターの中身をコードに書かない**（素材と表情の対応は定義ファイル側）
-- **原則5**: 「**ファイル名が概念になっているか**」で分ける。`helpers.ts` / `utils.ts` /
-  `common.ts` のような置き場所を名前にしたファイルは作らない。**ファイルは単数形**
-  （置き場所のディレクトリの名前と、`src/browser/` の置き場所の基準は `docs/architecture.md`「全体構成」）
+- **原則5**: 「**ファイル名が概念になっているか**」で分ける（`file-name.test.ts` が検査）。
+  置き場所のディレクトリの名前と、`src/browser/` の置き場所の基準は `docs/architecture.md`「全体構成」
 
 ## テスト方針
 
@@ -80,7 +76,7 @@ node scripts/runtime/stop.ts   # 動いている tsukumo の一覧（--port <n> 
 `docs/architecture/testing.md`「テスト」、E2E は `docs/architecture/testing.md`「E2E の走らせ方」、目視は
 `docs/architecture/testing.md`「手で確かめること」）。
 
-**IMPORTANT**: 変更後は必ず `pnpm run check` を通してから完了を報告する。テスト件数などの根拠なしに
+**IMPORTANT**: 変更後は必ず `pnpm run check` を通してから完了を報告する（着手中の作業ツリーでは `tw verify`。中身は `.tw/config.toml` の verify）。テスト件数などの根拠なしに
 「完了しました」と言わない。**描画に関わる変更は、加えて何をどう確かめたか**（何が見えたか）を添える。
 
 ## コーディング規約・レビュー方針
@@ -93,9 +89,8 @@ node scripts/runtime/stop.ts   # 動いている tsukumo の一覧（--port <n> 
 外部に送らない・複製しない・ログに全文を出さない・テストのフィクスチャに実物を使わない
 （`docs/coding-standards.md`「会話内容の扱い」）。この規約は他のどの規約よりも優先する。
 
-- 作業ツリーのファイルは Edit / Write で書く。Bash の `sed -i`・`perl -i`・リダイレクト・`tee`・Python / node のコードでの書き込みは hook が拒む（`docs/workflow.md`）
-  レビュー観点は `/code-review` の Standards 軸（`.claude/rules/`＋`docs/coding-standards.md`＋
-  `docs/architecture.md`）と Spec 軸（`docs/requirements.md`）。
+レビュー観点は `/code-review` の Standards 軸（`.claude/rules/`＋`docs/coding-standards.md`＋
+`docs/architecture.md`）と Spec 軸（`docs/requirements.md`）。
 
 ## Git運用
 
@@ -103,7 +98,6 @@ node scripts/runtime/stop.ts   # 動いている tsukumo の一覧（--port <n> 
 
 - **自分でブランチを切らない。** コミットはいま居るブランチへ積む。自分の作業ツリーの中は
   `git restore <file>` で戻してよい
-- **`git add -A` を使わず、触ったファイルを個別に足す**（`node_modules` などの symlink が入る）
 - **検証が済んだら、聞かずにコミットして `main` まで送る**（未コミットのまま待つと別のセッションに
   消される）。タスクは `tw ship`、タスクに紐付かない作業は `node scripts/dev/ship.ts`
   （`pnpm run ship`。手順は `docs/workflow.md`「タスクに紐付かない作業を main へ送る」）
@@ -119,7 +113,7 @@ node scripts/runtime/stop.ts   # 動いている tsukumo の一覧（--port <n> 
 `~/.claude/skills/task-model/WORKFLOW.md` が正典で、このリポジトリの上乗せは
 `docs/workflow.md`。**委譲先のモデルは `difficulty` と上の正典「分業」で決め**、判断が
 想定より要ると分かったら押し切らず `difficulty` を上げて再開する。完了は検証できる証拠で判定する。
-新しい作業ツリーの立ち上げ（`pnpm install`。組み立てまで `prepare` が済ませる）は人がやる。
+新しい作業ツリーの立ち上げは人がやる。
 
 **IMPORTANT**: 次は必ず人間の承認を得てから行う — 外部への公開・送信（`tw` が行う GitHub の
 `sinnlosses/tsukumo` の Issue・label と Project 1 への書き込みは除く）、破壊的な git 操作、
@@ -154,4 +148,5 @@ node scripts/runtime/stop.ts   # 動いている tsukumo の一覧（--port <n> 
 | タスクを書く・受け入れる・作業ツリーを並行させる・tsukumo を起こす                              | `docs/workflow.md`                                                            |
 | コマンドの全体・環境変数・構成                                                                  | `README.md`                                                                   |
 | スキル（`~/.claude/skills/`。共通なのでこのリポジトリの事情はここと `docs/workflow.md` が補う） | 毎セッションのスキル案内                                                      |
-| 過去の判断の経緯（通読しない。`grep` で節を当てる）                                             | `docs/history/tasks.md` / `docs/history/progress.md`                          |
+| シェルでの書き換え・`git add -A` などを拒まれた                                                 | hook（`tw commit-guard`）の文面に従う。`docs/workflow.md`                     |
+| 過去の判断の経緯（通読しない。`grep` で節を当てる）                                             | `docs/history/decision.md` / `tw show <ID>`                                   |
