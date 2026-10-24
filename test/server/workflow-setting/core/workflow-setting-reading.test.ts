@@ -239,6 +239,39 @@ describe("readWorkflowSetting", () => {
 
     expect(currents).toEqual([["架空:一つ目"], ["架空:一つ目"]])
   })
+
+  it("steps でない kind の欄は読み飛ばし、steps の欄だけを描く", async () => {
+    const choice = { key: "架空の選択", label: "選択", kind: "choice", values: [] }
+    const mixed = { ...SCHEMA, keys: [...SCHEMA.keys, choice] }
+
+    const view = await readWorkflowSetting(portOf({ schema: ran(0, JSON.stringify(mixed)) }), PLACE)
+
+    expect(view.kind === "available" ? view.fields.map((field) => field.key) : view.kind).toEqual([
+      "steps",
+    ])
+  })
+
+  it("steps の欄が無ければ欄は空で、schema-unsupported にしない", async () => {
+    const onlyChoice = { schema: 2, keys: [{ key: "架空の選択", kind: "choice" }] }
+
+    const view = await readWorkflowSetting(
+      portOf({ schema: ran(0, JSON.stringify(onlyChoice)) }),
+      PLACE,
+    )
+
+    expect(view).toEqual({ kind: "available", repository: REPOSITORY, fields: [] })
+  })
+
+  it("kind が steps で形の崩れた欄は schema-unsupported のまま", async () => {
+    const broken = { schema: 2, keys: [{ key: "steps", kind: "steps" }] }
+
+    const view = await readWorkflowSetting(
+      portOf({ schema: ran(0, JSON.stringify(broken)) }),
+      PLACE,
+    )
+
+    expect(view.kind === "unavailable" ? view.reason : view.kind).toBe("schema-unsupported")
+  })
 })
 
 describe("changeWorkflowSetting", () => {

@@ -35,7 +35,7 @@
 `docs/architecture/adr/0024-no-skill-dependency.md`・`docs/architecture/adr/0025-no-project-settings.md` の「2026-10-14 の改訂」と
 `docs/architecture/adr/0030-workflow-as-skill-sequence.md`。
 
-欄の形は `schema: 2`（並び `steps` の1欄）だけ。引数なしの `tw config --schema` が schema 2 を返す。
+欄の形は `schema: 2`（並び `steps` の欄を描く。`kind` が `steps` でない欄は tsukumo が読み飛ばす）。引数なしの `tw config --schema` が schema 2 を返す。
 
 ワークフローが持つもの（どちらも作業先の作業ツリーで打つ）:
 
@@ -63,7 +63,7 @@
   `tw config --json` の `value` には同じ内容を配列で出す。`.tw/config.toml` では最上位の文字列の配列 `steps = ["…", "…"]` で、並びの順がそのまま実行の順
 - tsukumo は `values` に無い名前が今の値にあっても消さずに並べる（スキルを外したあとの並びを失わない）
 
-`schema` は欄を消す・意味を変えるときだけ上がる。tsukumo は `schema` が 2 の形だけを描き、それ以外は「描ける版でない」として扱う。
+`schema` は欄を消す・意味を変えるときだけ上がる。tsukumo は `schema` が 2 の形だけを描き、それ以外は「描ける版でない」として扱う。`schema` が 2 でも `kind` が `steps` でない欄は描かず読み飛ばす（欄を足しても `schema` は上げない）。
 
 tsukumo がすること:
 

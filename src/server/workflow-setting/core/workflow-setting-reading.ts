@@ -69,16 +69,26 @@ const stepsEntrySchema = z.object({
   ),
 })
 
-const configSchemaSchema = z.object({
-  schema: z.literal(2),
-  keys: z.array(stepsEntrySchema),
-})
+type SchemaEntry = z.infer<typeof stepsEntrySchema>
+
+// `steps` 以外の `kind` の欄は描けないので、中身を見ずに読み飛ばす。
+const otherKindEntrySchema = z
+  .object({ kind: z.string().refine((kind) => kind !== "steps") })
+  .transform(() => undefined)
+
+const configSchemaSchema = z
+  .object({
+    schema: z.literal(2),
+    keys: z.array(z.union([stepsEntrySchema, otherKindEntrySchema])),
+  })
+  .transform((parsed) => ({
+    schema: parsed.schema,
+    keys: parsed.keys.filter((entry): entry is SchemaEntry => entry !== undefined),
+  }))
 
 const entriesOutputSchema = z.object({ entries: workflowEntriesSchema })
 
 type ConfigSchema = z.infer<typeof configSchemaSchema>
-
-type SchemaEntry = ConfigSchema["keys"][number]
 
 /** 欄の形と今の値を読み、面に出すものを返す。例外を投げない。 */
 export async function readWorkflowSetting(
