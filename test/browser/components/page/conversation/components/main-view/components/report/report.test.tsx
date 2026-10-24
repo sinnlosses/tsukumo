@@ -116,4 +116,16 @@ describe("Report（空行で塊に割り、塊ごとに memo）", () => {
 
     expect(calls).toEqual(["可変の段落2"])
   })
+
+  it("同じ文字列の塊が2つあっても key の警告が出ない", () => {
+    const error = vi.spyOn(console, "error").mockImplementation(() => undefined)
+
+    render(
+      <Report reveal={false} turnId={1} className="" body={markdownBody("同じ段落\n\n同じ段落")} />,
+    )
+
+    expect(calls).toEqual(["同じ段落", "同じ段落"])
+    expect(error).not.toHaveBeenCalled()
+    error.mockRestore()
+  })
 })

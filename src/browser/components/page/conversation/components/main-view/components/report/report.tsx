@@ -85,11 +85,21 @@ function ReportRegion(props: { readonly region: MainViewReportRegion }): ReactEl
       data-report-section={region.kind === "section" ? String(region.id) : undefined}
       id={region.kind === "favor" ? region.id : undefined}
     >
-      {splitReportBlocks(region.markdown).map((block) => (
-        <ReportBlock key={block} text={block} />
+      {keyedBlocks(splitReportBlocks(region.markdown)).map((block) => (
+        <ReportBlock key={block.key} text={block.text} />
       ))}
     </div>
   )
+}
+
+/** 同じ文字列の塊が欄に複数あっても `key` が重ならないよう、文字列に何個目かを添える。 */
+function keyedBlocks(
+  blocks: readonly string[],
+): readonly { readonly key: string; readonly text: string }[] {
+  return blocks.map((text, index) => ({
+    key: `${blocks.slice(0, index).filter((earlier) => earlier === text).length}:${text}`,
+    text,
+  }))
 }
 
 /**
