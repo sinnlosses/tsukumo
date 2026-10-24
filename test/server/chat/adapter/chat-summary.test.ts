@@ -35,12 +35,6 @@ function root(): string {
   return join(dir(), "chat-summary")
 }
 
-/** 旧い形の本文のファイルを置く（1行目が印、2行目から本文）。 */
-function writeLegacy(body: string, mark: string = "delivered"): void {
-  mkdirSync(root(), { recursive: true })
-  writeFileSync(join(root(), "fictional-pack.md"), `${mark}\n${body}`)
-}
-
 describe("createChatSummary", () => {
   it("write すると読める。写しが無かったときの印は「未渡し」", () => {
     const chatSummary = createChatSummary(PACK, root())
@@ -207,159 +201,6 @@ describe("createChatSummary", () => {
     })
   })
 
-  describe("旧い形（<パック名>.md と <パック名>.topics.json）", () => {
-    it("旧い形だけのときは読め、取り込んだところは unknown", () => {
-      writeLegacy("架空の旧いあらすじ")
-      writeFileSync(join(root(), "fictional-pack.topics.json"), JSON.stringify(["架空の旧い話題"]))
-      const chatSummary = createChatSummary(PACK, root())
-
-      expect(chatSummary.read()).toEqual({ summary: "架空の旧いあらすじ", delivered: true })
-      expect(chatSummary.readTopics()).toEqual(["架空の旧い話題"])
-      expect(chatSummary.readFold()).toEqual({ kind: "unknown" })
-    })
-
-    it("次の write で新しい形へ移し、旧いファイルを消す", () => {
-      writeLegacy("架空の旧いあらすじ")
-      writeFileSync(join(root(), "fictional-pack.topics.json"), JSON.stringify(["架空の旧い話題"]))
-      const chatSummary = createChatSummary(PACK, root())
-
-      chatSummary.write(SUMMARY, ["架空の見出し"], FOLDED_AT)
-
-      expect(readdirSync(root())).toEqual(["fictional-pack.summary.json"])
-      expect(chatSummary.read()).toEqual({ summary: SUMMARY, delivered: true })
-      expect(chatSummary.readTopics()).toEqual(["架空の見出し"])
-    })
-
-    it("印だけを書き換えても新しい形へ移り、本文と話題を保つ", () => {
-      writeLegacy("架空のあらすじ\n<topics>\n- 架空の話題\n</topics>")
-      const chatSummary = createChatSummary(PACK, root())
-
-      chatSummary.markUndelivered()
-
-      expect(readdirSync(root())).toEqual(["fictional-pack.summary.json"])
-      expect(chatSummary.readTopics()).toEqual(["架空の話題"])
-      expect(chatSummary.read()).toEqual({ summary: "架空のあらすじ", delivered: false })
-      expect(chatSummary.readFold()).toEqual({ kind: "unknown" })
-    })
-
-    it("両方あるときは新しい形を読み、旧いファイルは次の書き込みで消す", () => {
-      const chatSummary = createChatSummary(PACK, root())
-      chatSummary.write(SUMMARY, ["架空の見出し"], FOLDED_AT)
-      writeLegacy("あとから書かれた架空の旧いあらすじ", "undelivered")
-
-      expect(chatSummary.read()).toEqual({ summary: SUMMARY, delivered: false })
-      expect(chatSummary.readTopics()).toEqual(["架空の見出し"])
-
-      chatSummary.markDelivered()
-
-      expect(readdirSync(root())).toEqual(["fictional-pack.summary.json"])
-    })
-
-    it("新しい形が読めないときは旧い形を読み、旧い形も無ければ写しは無い", () => {
-      mkdirSync(root(), { recursive: true })
-      writeFileSync(join(root(), "fictional-pack.summary.json"), "{壊れた")
-      const chatSummary = createChatSummary(PACK, root())
-
-      expect(chatSummary.read()).toBeUndefined()
-      expect(chatSummary.readFold()).toEqual({ kind: "unknown" })
-
-      writeLegacy("架空の旧いあらすじ")
-
-      expect(chatSummary.read()?.summary).toBe("架空の旧いあらすじ")
-    })
-
-    it("印の1行目が既定の文字列と違うファイルは「未渡し」扱いになる", () => {
-      writeLegacy(SUMMARY, "????")
-
-      expect(createChatSummary(PACK, root()).read()).toEqual({ summary: SUMMARY, delivered: false })
-    })
-
-    it("見出しが0件でも書く（古い形の埋め込みを読み戻さない）", () => {
-      writeLegacy("架空の古い形\n<topics>\n- 架空の古い話題\n</topics>", "undelivered")
-      const chatSummary = createChatSummary(PACK, root())
-
-      chatSummary.write(SUMMARY, [], FOLDED_AT)
-
-      expect(chatSummary.readTopics()).toEqual([])
-    })
-  })
-
-  describe("話題を本文に埋め込んでいた古い形（読みだけ）", () => {
-    function legacy(body: string): ReturnType<typeof createChatSummary> {
-      writeLegacy(body)
-      return createChatSummary(PACK, root())
-    }
-
-    it("組の間の行を、書かれた順のまま取り出し、本文からは組を除く", () => {
-      const chatSummary = legacy(
-        [
-          "架空のあらすじ。",
-          "<topics>",
-          "- 架空の新しい話題",
-          "- 架空の二番目の話題",
-          "</topics>",
-        ].join("\n"),
-      )
-
-      expect(chatSummary.readTopics()).toEqual(["架空の新しい話題", "架空の二番目の話題"])
-      expect(chatSummary.read()).toEqual({ summary: "架空のあらすじ。", delivered: true })
-    })
-
-    it("箇条の印（- * ・ 1.）を落とし、空行は数えない", () => {
-      const chatSummary = legacy(
-        ["<topics>", "* 架空A", "", "・架空B", "2. 架空C", "</topics>"].join("\n"),
-      )
-
-      expect(chatSummary.readTopics()).toEqual(["架空A", "架空B", "架空C"])
-    })
-
-    it("同じ行に閉じまで書かれていても取り出す", () => {
-      expect(legacy("<topics>- 架空の話題</topics>").readTopics()).toEqual(["架空の話題"])
-    })
-
-    it("組が2つあるときは最後の組を読む", () => {
-      const chatSummary = legacy(
-        [
-          "<analysis>",
-          "<topics>",
-          "- 下書きの架空の話題",
-          "</topics>",
-          "</analysis>",
-          "<summary>",
-          "<topics>",
-          "- 本文の架空の話題",
-          "</topics>",
-          "</summary>",
-        ].join("\n"),
-      )
-
-      expect(chatSummary.readTopics()).toEqual(["本文の架空の話題"])
-    })
-
-    it("印が無い・閉じが無いときは何も出さず、閉じの無い組は本文に残す", () => {
-      expect(legacy("架空の要約。話題の節は無い。").readTopics()).toEqual([])
-
-      const unclosed = legacy("架空の要約。\n<topics>\n- 架空の話題\n")
-      expect(unclosed.readTopics()).toEqual([])
-      expect(unclosed.read()?.summary).toContain("<topics>")
-    })
-
-    it("話題のファイルが壊れているときも、埋め込みから読む", () => {
-      const chatSummary = legacy("架空のあらすじ\n<topics>\n- 架空の話題\n</topics>")
-      writeFileSync(join(root(), "fictional-pack.topics.json"), "{壊れた")
-
-      expect(chatSummary.readTopics()).toEqual(["架空の話題"])
-    })
-
-    it("話題のファイルがあれば、そちらを優先する", () => {
-      const chatSummary = legacy("架空のあらすじ\n<topics>\n- 埋め込みの話題\n</topics>")
-      writeFileSync(join(root(), "fictional-pack.topics.json"), JSON.stringify(["別の欄の話題"]))
-
-      expect(chatSummary.readTopics()).toEqual(["別の欄の話題"])
-      expect(chatSummary.read()?.summary).toContain("<topics>")
-    })
-  })
-
   describe("8 KiB の上限", () => {
     it("本文が超えたら古いほうの行から落ちる。行の途中では切らない", () => {
       const chatSummary = createChatSummary(PACK, root())
@@ -415,14 +256,9 @@ describe("discardChatSummary", () => {
     expect(createChatSummary(FICTIONAL_PACK, root()).read()?.summary).toBe(SUMMARY)
   })
 
-  it("旧い形のファイルと、書きかけで残った一時ファイルも消す", () => {
+  it("書きかけで残った一時ファイルも消す", () => {
     mkdirSync(root(), { recursive: true })
-    for (const name of [
-      "fictional.summary.json",
-      "fictional.summary.json.0123456789ab.tmp",
-      "fictional.md",
-      "fictional.topics.json",
-    ]) {
+    for (const name of ["fictional.summary.json", "fictional.summary.json.0123456789ab.tmp"]) {
       writeFileSync(join(root(), name), "")
     }
 

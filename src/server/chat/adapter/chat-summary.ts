@@ -8,9 +8,6 @@
 // 一時ファイルからの rename で丸ごと置き換える（書きかけの状態を読ませない）。
 // 読めない JSON は無いものとして扱い、倒れる方向を「同じ要約が2度載る」側にする（印は「未渡し」）。
 //
-// 旧い形（`<パック名>.md` の1行目が印・2行目から本文、話題は `<パック名>.topics.json`、さらに古い写しは本文の `<topics>` の組）は、
-// 新しい形が無い・読めないときだけ読む。新しい形を書けたら旧いファイルを消す（消せなくても新しい形が正）。
-//
 // 書けなくても例外を投げない（書く口は書けたかどうかを返す）。
 
 import { mkdirSync, readdirSync, rmSync } from "node:fs"
@@ -23,18 +20,10 @@ import { CHAT_MEMORY_BUDGET } from "../../../shared/chat/chat-memory-budget.ts"
 import { byteLength } from "../../../shared/utils/byte-length.ts"
 import { writeFileAtomic } from "../../adapter/lib/atomic-file.ts"
 import { readJsonFile } from "../../adapter/lib/json-file.ts"
-import { readOptionalFile } from "../../adapter/lib/optional-file.ts"
 import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
 import type { ChatSummary, ChatSummaryFold, ChatSummaryRecord } from "../core/chat-memory.ts"
 
-/**
- * 新しい形のファイル名の後ろ。
- * パック名はドットを含めるので、`<パック名>.json` だと別のパックの旧い `<パック名>.topics.json` と重なりうる。
- */
 const SUMMARY_FILE_SUFFIX = ".summary.json"
-
-/** 旧い形の1行目の印。この1行だけが「渡し済み」で、それ以外は「未渡し」。 */
-const LEGACY_DELIVERED_MARK = "delivered"
 
 const SUMMARY_FORMAT_VERSION = 1 satisfies number
 
@@ -87,7 +76,7 @@ export function createChatSummary(
 }
 
 /**
- * パック1つぶんの写しを消す（新しい形・旧い形・書きかけで残った一時ファイル）。
+ * パック1つぶんの写しを消す（写しと、書きかけで残った一時ファイル）。
  * 同じ名前で作り直したパックが、消したパックの要約を黙って拾わないため。
  * 無い・消せないときも何もせず続ける。
  */
@@ -100,12 +89,7 @@ export function discardChatSummary(
   const temps = entryNames(root).filter(
     (name) => name.startsWith(tempPrefix) && TEMP_SUFFIX.test(name.slice(tempPrefix.length)),
   )
-  for (const path of [
-    paths.current,
-    paths.legacyBody,
-    paths.legacyTopics,
-    ...temps.map((name) => join(root, name)),
-  ]) {
+  for (const path of [paths.current, ...temps.map((name) => join(root, name))]) {
     try {
       rmSync(path, { force: true })
     } catch {
@@ -125,16 +109,12 @@ const TEMP_SUFFIX = /^[0-9a-f]{12}\.tmp$/
 type SummaryPaths = {
   readonly root: string
   readonly current: string
-  readonly legacyBody: string
-  readonly legacyTopics: string
 }
 
 function summaryPaths(root: string, packName: CharacterPackName): SummaryPaths {
   return {
     root,
     current: join(root, `${packName}${SUMMARY_FILE_SUFFIX}`),
-    legacyBody: join(root, `${packName}.md`),
-    legacyTopics: join(root, `${packName}.topics.json`),
   }
 }
 
@@ -175,19 +155,15 @@ function recordOf(stored: StoredSummary | undefined): ChatSummaryRecord | undefi
     : { summary: stored.synopsis, delivered: stored.delivered }
 }
 
-/** 新しい形を読み、無い・読めないときは旧い形を読む。どちらも無ければ undefined。 */
 function readStored(paths: SummaryPaths): StoredSummary | undefined {
   const parsed = storedSchema.safeParse(readJsonFile(paths.current))
-  if (parsed.success) {
-    const { delivered, synopsis, topics, fold } = parsed.data
-    return { delivered, synopsis, topics, fold }
+  if (!parsed.success) {
+    return undefined
   }
-  return readLegacy(paths)
+  const { delivered, synopsis, topics, fold } = parsed.data
+  return { delivered, synopsis, topics, fold }
 }
 
-/**
- * 新しい形の JSON を丸ごと書き、書けたら旧いファイルを消す。書けたら true。失敗しても例外を投げない。
- */
 function store(paths: SummaryPaths, stored: StoredSummary): boolean {
   try {
     mkdirSync(paths.root, { recursive: true })
@@ -195,83 +171,7 @@ function store(paths: SummaryPaths, stored: StoredSummary): boolean {
   } catch {
     return false
   }
-  for (const legacy of [paths.legacyBody, paths.legacyTopics]) {
-    try {
-      rmSync(legacy, { force: true })
-    } catch {
-      // 新しい形が正なので、残っても読まれない。
-    }
-  }
   return true
-}
-
-/**
- * 旧い形を読む。本文のファイルが無い・読めないときは undefined。
- * 話題は `<パック名>.topics.json` を読み、無い・読めない・文字列の配列でないときは本文に埋め込んだ組から読んで、本文からは組を除く。
- */
-function readLegacy(paths: SummaryPaths): StoredSummary | undefined {
-  const content = readOptionalFile(paths.legacyBody)
-  if (content === undefined) {
-    return undefined
-  }
-
-  const newline = content.indexOf("\n")
-  const mark = newline === -1 ? content : content.slice(0, newline)
-  const body = newline === -1 ? "" : content.slice(newline + 1)
-  const delivered = mark === LEGACY_DELIVERED_MARK
-  const stored = readLegacyTopics(paths.legacyTopics)
-  if (stored !== undefined) {
-    return { delivered, synopsis: body, topics: stored, fold: UNKNOWN_FOLD }
-  }
-  return {
-    delivered,
-    synopsis: withoutEmbeddedTopics(body),
-    topics: embeddedTopics(body),
-    fold: UNKNOWN_FOLD,
-  }
-}
-
-/** 旧い形の話題のファイルを読む。無い・JSON でない・文字列の配列でないときは undefined。 */
-function readLegacyTopics(topicsPath: string): readonly string[] | undefined {
-  const parsed = z.array(z.string()).safeParse(readJsonFile(topicsPath))
-  return parsed.success ? parsed.data : undefined
-}
-
-/** 話題を本文に埋め込んでいた古い形の組（`<topics>` から次の `</topics>` まで）。 */
-const EMBEDDED_TOPICS_BLOCK = /<topics>[\s\S]*?<\/topics>/gu
-
-const EMBEDDED_TOPICS_OPEN = "<topics>"
-const EMBEDDED_TOPICS_CLOSE = "</topics>"
-
-/** 見出しの行の頭に付いた箇条の印（`- ` `* ` `・` `1. `）。 */
-const LIST_MARKER = /^(?:[-*・•]|\d+[.)])\s*/u
-
-/** 古い形の本文から話題の組をすべて除いた、あらすじの地の文。閉じの無い組は組と見なさず残す。 */
-function withoutEmbeddedTopics(body: string): string {
-  return body.replaceAll(EMBEDDED_TOPICS_BLOCK, "").trim()
-}
-
-/**
- * 古い形の本文から、最後の `<topics>` とその後ろの最初の `</topics>` の間の行を取り出す。
- * 閉じが無い・印が無いときは空。箇条の印を落とし、空行を飛ばすだけで、中身の良し悪しは判定しない。
- */
-function embeddedTopics(body: string): readonly string[] {
-  const open = body.lastIndexOf(EMBEDDED_TOPICS_OPEN)
-  if (open === -1) {
-    return []
-  }
-
-  const start = open + EMBEDDED_TOPICS_OPEN.length
-  const close = body.indexOf(EMBEDDED_TOPICS_CLOSE, start)
-  if (close === -1) {
-    return []
-  }
-
-  return body
-    .slice(start, close)
-    .split("\n")
-    .map((line) => line.trim().replace(LIST_MARKER, "").trim())
-    .filter((topic) => topic !== "")
 }
 
 /** ディレクトリの中の名前（読めなければ空）。 */

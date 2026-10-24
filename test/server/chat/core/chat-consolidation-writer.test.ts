@@ -291,7 +291,7 @@ describe("createChatConsolidationWriter", () => {
 
   it.each([
     ["まだ1行も畳んでいない", { kind: "none" }, { kind: "none" }],
-    ["印を持たない写し（無い・旧い形）", { kind: "unknown" }, { kind: "none" }],
+    ["印を持たない写し", { kind: "unknown" }, { kind: "none" }],
   ] as const)("あらすじが%sときはアーカイブの最初から読む", async (_name, fold, after) => {
     const ports = createPorts(DUE_BATCH, () => Promise.resolve(VALID_OUTPUT), true, true, 0, fold)
 

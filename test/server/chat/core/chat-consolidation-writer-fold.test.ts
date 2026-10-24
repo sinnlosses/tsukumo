@@ -145,10 +145,19 @@ describe("あらすじの印から畳み進める定着", () => {
     expect(retried).toEqual(crashed)
   })
 
-  it("取り込んだところの分からない写し（旧い形）は、アーカイブの最初から畳み、新しい形で印を持つ", async () => {
+  it("取り込んだところの分からない写しは、アーカイブの最初から畳み、印を持つ写しに書き直す", async () => {
     const harness = createHarness()
     mkdirSync(harness.summaryRoot, { recursive: true })
-    writeFileSync(join(harness.summaryRoot, "fictional.md"), "delivered\n架空の旧いあらすじ")
+    writeFileSync(
+      join(harness.summaryRoot, "fictional.summary.json"),
+      JSON.stringify({
+        v: 1,
+        delivered: true,
+        synopsis: "架空の旧いあらすじ",
+        topics: [],
+        fold: { kind: "unknown" },
+      }),
+    )
 
     expect((await harness.run()).kind).toBe("written")
 

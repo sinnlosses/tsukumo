@@ -53,7 +53,7 @@
   出してよいのは長さ・件数まで）、テストのフィクスチャに実物を使わない（アーカイブのフィクスチャも
   手で書いた架空の会話）
 - 組み替える前の「残す」旗（`kept.jsonl`）、キャラクターが書いていた見出し（`index.jsonl`）、
-  定着が書いていたエピソード索引（`episode.jsonl`）と思い出した記録（`recalled.jsonl`）はもう書かず読まない（消さずに残る。`docs/architecture/chat-mode.md` 4.9
+  定着が書いていたエピソード索引（`episode.jsonl`）と思い出した記録（`recalled.jsonl`）はもう書かず読まない（残ったファイルは `scripts/runtime/migrate-chat-summary.ts --prune` で消す。`docs/architecture/chat-mode.md` 4.9
   「窓から溢れた会話は定着で畳む」）
 - **おすすめの札の問い合わせには会話を渡さない**（`docs/architecture/screen-design.md` 13.13
   「おすすめの札の中身」）。前のセッションの `sessionSummary` と残り（`sessionRemaining`）は会話から書いた要約なので、

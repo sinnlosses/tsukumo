@@ -42,7 +42,7 @@ export type ChatSummary = {
   readonly read: () => ChatSummaryRecord | undefined
   /** 最近の話題の見出しを、新しい順のまま読む（写しがまだ無い・読めないときは空）。 */
   readonly readTopics: () => readonly string[]
-  /** あらすじがアーカイブのどの行まで取り込んだか（写しが無い・旧い形は `unknown`）。 */
+  /** あらすじがアーカイブのどの行まで取り込んだか（写しが無い・印を持たない写しは `unknown`）。 */
   readonly readFold: () => ChatSummaryFold
   /**
    * 定着が書き直したあらすじの本文と、最近の話題の見出し（新しい順）と、取り込んだ最後の行の時刻を上書きする。
@@ -74,7 +74,7 @@ export type ChatFoldPoint =
   | { readonly kind: "none" }
   | { readonly kind: "through"; readonly at: string }
 
-/** あらすじが取り込んだところ。印をまだ持たない写し（無い・旧い形）は `unknown`。 */
+/** あらすじが取り込んだところ。写しが無い・印を持たない写しは `unknown`。 */
 export type ChatSummaryFold = ChatFoldPoint | { readonly kind: "unknown" }
 
 /** {@link ChatSummary.read} が返す1件。`delivered` が渡し済みの印。 */

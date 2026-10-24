@@ -317,7 +317,7 @@ const BATCH_LIMITS = {
   maxBytes: CHAT_MEMORY_BUDGET.consolidateEveryBytes * 2,
 } as const satisfies ChatUnconsolidatedLimits
 
-/** 印を持たない写し（無い・旧い形）は、まだ1行も畳んでいないものとしてアーカイブの最初から読む。 */
+/** 印を持たない写しは、まだ1行も畳んでいないものとしてアーカイブの最初から読む。 */
 function foldPointOf(fold: ChatSummaryFold): ChatFoldPoint {
   return fold.kind === "unknown" ? { kind: "none" } : fold
 }

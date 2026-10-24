@@ -251,6 +251,10 @@ pnpm run grid                  # 待ち受けていてタブもある部屋を i
                               #   あるあいだ常駐し、再読み込みのたびに並べ直す。タブを閉じると終わる
 node scripts/runtime/stop.ts   # 動いている tsukumo を一覧する（--port <n> でそれ1つだけ止める。pkill / killall は
                               #   hook が拒否する。並べて動かすとどれも `node src/cli.ts` に見えて区別できないため）
+node scripts/runtime/migrate-chat-summary.ts --dry-run  # 旧形のあらすじ（<パック>.md）を新形（<パック>.summary.json）へ移す下見。1回だけ打つ使い捨て。
+                              #   手順: tsukumo を止める → --dry-run → 本番（--dry-run を外す）→ --prune --dry-run → --prune
+                              #   （本番の前に旧形のパックで雑談を起こすと、空の新形が旧形を覆って移せなくなる）
+                              #   （--prune は kept.jsonl・index.jsonl・recalled.jsonl・visual/ と、新形のあるパックの旧形・episode.jsonl を消す。出力は件数と日付だけ）
 node scripts/capture/mockup-font-floor.ts <見本の HTML かディレクトリ>  # 見本の font-size のうち 12px 未満を一覧する（あれば終了コード1）
 node scripts/runtime/experience-metric.ts  # 進行の計測値（依頼から結論まで・答え待ち・立ち直るまでの手数・仕切りを離した比率）を集計する
                               #   （--days <n> で期間、--split <YYYY-MM-DD> でその日の前後に分ける）
