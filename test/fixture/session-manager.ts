@@ -8,7 +8,6 @@ import type { ExperienceMetricLog } from "../../src/server/experience-metric/cor
 import { createReportImageShelf } from "../../src/server/report/core/report-image-shelf.ts"
 import type { ReportUsageLog } from "../../src/server/report/core/report-usage.ts"
 import { createPromptImageShelf } from "../../src/server/session-driver/core/prompt-image-shelf.ts"
-import type { QuestionUsageLog } from "../../src/server/session-driver/core/question-usage.ts"
 import type { SessionManagerOptions } from "../../src/server/session/core/session-manager-port.ts"
 import { createSessionManager as createSessionManagerWithoutCommands } from "../../src/server/session/core/session-manager.ts"
 import type { TokenUsageLog } from "../../src/server/token-usage/core/token-usage.ts"
@@ -47,9 +46,6 @@ const NOOP_CONTEXT_USAGE_LOG: ContextUsageLog = { append: () => {} }
 
 /** `report` の塊の使われ方の記録を気にしないテストに渡す、何もしない書き込み口。 */
 const NOOP_REPORT_USAGE_LOG: ReportUsageLog = { append: () => {}, appendRejection: () => {} }
-
-/** 質問の使われ方の記録を気にしないテストに渡す、何もしない書き込み口。 */
-const NOOP_QUESTION_USAGE_LOG: QuestionUsageLog = { append: () => {} }
 
 /** タスク一覧を気にしないテストに渡す見張り（何も流さない）。 */
 const NO_TASK_WATCH: SessionManagerOptions["watchTasks"] = () => ({
@@ -99,7 +95,6 @@ function defaultSessionManagerOptions() {
     diagnosticLog: NOOP_DIAGNOSTIC_LOG,
     contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
     reportUsageLog: NOOP_REPORT_USAGE_LOG,
-    questionUsageLog: NOOP_QUESTION_USAGE_LOG,
     promptImageShelf: createPromptImageShelf(),
     reportImageShelf: createReportImageShelf(),
     readReportImage: () => undefined,

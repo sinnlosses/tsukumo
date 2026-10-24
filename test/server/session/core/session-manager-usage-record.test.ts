@@ -4,9 +4,7 @@ import type {
   ReportRejectionEntry,
   ReportUsageEntry,
 } from "../../../../src/server/report/core/report-usage.ts"
-import type { QuestionUsageEntry } from "../../../../src/server/session-driver/core/question-usage.ts"
 import type { ReportSection } from "../../../../src/shared/report/report-block.ts"
-import type { Question } from "../../../../src/shared/session-driver/question.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import { reportEvent } from "../../../fixture/report-event.ts"
 import { createStubDriver } from "../../../fixture/session-driver.ts"
@@ -187,87 +185,6 @@ describe("createSessionManager", () => {
           inheritedFields: ["favor"],
         },
       ])
-      expect(entries).toEqual([])
-    })
-  })
-
-  // 質問（AskUserQuestion）の使われ方の記録。答えが確定した質問ごとに1行、選択肢の数と
-  // preview の付いた数だけを書く（会話の文面は入らない）。
-  describe("質問の使われ方の記録", () => {
-    /** 答えが確定した質問の `SessionEvent`（中身はすべて手で書いた架空のもの）。 */
-    function questionAnsweredEvent(
-      questions: readonly Question[],
-      briefed: readonly boolean[] = questions.map(() => false),
-      sentBack = 0,
-    ): SessionEvent {
-      return {
-        kind: "question-answered",
-        toolUseId: "toolu_fictional",
-        questions,
-        answers: questions.map(() => ["架空の答え"]),
-        briefed,
-        sentBack,
-      }
-    }
-
-    function question(optionCount: number, previewCount: number): Question {
-      return {
-        header: "架空の見出し",
-        text: "架空の質問文",
-        multiSelect: false,
-        options: Array.from({ length: optionCount }, (_, index) => ({
-          label: `架空の選択肢${index}`,
-          description: "",
-          preview: index < previewCount ? "架空のpreview" : undefined,
-        })),
-      }
-    }
-
-    function startQuestionUsageManagerWithStub() {
-      const stub = createStubDriver()
-      const { entries, append } = collector<QuestionUsageEntry>()
-      const manager = createSessionManager({
-        questionUsageLog: { append },
-        launchSession: launchWith(stub),
-      })
-      return { manager, stub, entries }
-    }
-
-    it("答えが確定した質問ごとに、選択肢の数・preview の付いた数・添え書きの有無・断った回数を1行書く", async () => {
-      const { stub, entries } = startQuestionUsageManagerWithStub()
-      await waitForBatch()
-
-      stub.emit(sessionInfo("claude-session-1"))
-      stub.emit(questionAnsweredEvent([question(3, 1), question(2, 0)], [true, false], 2))
-      await waitForBatch()
-
-      expect(entries).toEqual([
-        {
-          at: 1_000,
-          sessionId: "claude-session-1",
-          optionCount: 3,
-          previewCount: 1,
-          briefed: true,
-          sentBack: 2,
-        },
-        {
-          at: 1_000,
-          sessionId: "claude-session-1",
-          optionCount: 2,
-          previewCount: 0,
-          briefed: false,
-          sentBack: 0,
-        },
-      ])
-    })
-
-    it("claude 側のセッションIDが分からないうちは書かない", async () => {
-      const { stub, entries } = startQuestionUsageManagerWithStub()
-      await waitForBatch()
-
-      stub.emit(questionAnsweredEvent([question(2, 0)]))
-      await waitForBatch()
-
       expect(entries).toEqual([])
     })
   })

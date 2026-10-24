@@ -15,18 +15,12 @@ import type { ChatArchiveOrder } from "../../chat/core/chat-archive-order.ts"
 import type { ContextUsageRecorder } from "../../context-usage/core/context-usage.ts"
 import type { DiagnosticBuffer } from "../../diagnostic/core/diagnostic.ts"
 import { isMainImageFileRead, reportUsageEntryOf } from "../../report/core/report-usage.ts"
-import { questionUsageEntriesOf } from "../../session-driver/core/question-usage.ts"
 import type { GenerationTally } from "./session-generation.ts"
 import type { SessionManagerOptions } from "./session-manager-port.ts"
 
 type EventRecordPorts = Pick<
   SessionManagerOptions,
-  | "chatArchive"
-  | "project"
-  | "reportUsageLog"
-  | "questionUsageLog"
-  | "promptImageShelf"
-  | "tokenUsageLog"
+  "chatArchive" | "project" | "reportUsageLog" | "promptImageShelf" | "tokenUsageLog"
 > & {
   readonly contextUsage: ContextUsageRecorder
   readonly diagnostic: DiagnosticBuffer
@@ -88,11 +82,6 @@ export function recordSessionEvent(
       argumentChars: event.argumentChars,
       inheritedFields: event.inheritedFields,
     })
-  }
-  if (event.kind === "question-answered" && state.session.kind !== "starting") {
-    for (const entry of questionUsageEntriesOf(event, state.session.sessionId, at)) {
-      ports.questionUsageLog.append(entry)
-    }
   }
   if (event.kind === "turn-finished") {
     tally.turnImageRead.clear()

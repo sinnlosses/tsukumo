@@ -1,11 +1,10 @@
-// 使用量の記録（context-usage・experience-metric・report-usage・question-usage）の書き込み口の配線。
+// 使用量の記録（context-usage・experience-metric・report-usage）の書き込み口の配線。
 // 疑似セッションの走りは本物の使用量に混ぜないので、何も書かない口を渡す。
 
 import { createContextUsageLog } from "../server/context-usage/adapter/context-usage-log.ts"
 import type { Config } from "../server/core/config.ts"
 import { createExperienceMetricLog } from "../server/experience-metric/adapter/experience-metric-log.ts"
 import { createReportUsageLog } from "../server/report/adapter/report-usage-log.ts"
-import { createQuestionUsageLog } from "../server/session-driver/adapter/question-usage-log.ts"
 import type { WiringContext } from "./wiring-context.ts"
 
 type Closable = { readonly close: () => Promise<void> }
@@ -14,7 +13,6 @@ export type UsageLogs = {
   readonly context: ReturnType<typeof createContextUsageLog>
   readonly experienceMetric: ReturnType<typeof createExperienceMetricLog>
   readonly report: ReturnType<typeof createReportUsageLog>
-  readonly question: ReturnType<typeof createQuestionUsageLog>
 }
 
 export function wireUsageLogs(
@@ -22,12 +20,7 @@ export function wireUsageLogs(
   reportSchema: Config["reportSchema"],
 ): UsageLogs & { readonly closeAll: () => Promise<void> } {
   const logs: UsageLogs = context.fakeSession === undefined ? realLogs(reportSchema) : silentLogs()
-  const closables: readonly Closable[] = [
-    logs.context,
-    logs.experienceMetric,
-    logs.report,
-    logs.question,
-  ]
+  const closables: readonly Closable[] = [logs.context, logs.experienceMetric, logs.report]
   return {
     ...logs,
     closeAll: async () => {
@@ -45,7 +38,6 @@ function realLogs(reportSchema: Config["reportSchema"]): UsageLogs {
     context: createContextUsageLog(),
     experienceMetric: createExperienceMetricLog(),
     report: createReportUsageLog(reportSchema),
-    question: createQuestionUsageLog(),
   }
 }
 
@@ -60,6 +52,5 @@ function silentLogs(): UsageLogs {
       readRange: () => [],
     },
     report: { append: () => undefined, appendRejection: () => undefined, flush: done, close: done },
-    question: { append: () => undefined, flush: done, close: done },
   }
 }

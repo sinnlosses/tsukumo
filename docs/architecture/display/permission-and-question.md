@@ -93,19 +93,14 @@
       軸ごとの評価・戻せない印・図**で、軸 × 選択肢の表はモデルに書かせず、軸と軸ごとの評価から画面が組む。
       おすすめは今までどおりラベル末尾の印から出す。札の形は見本
       `docs/history/mockup/inquiry-brief-2026-10-08.svg`（利用者承認済み）
-    - **答えたあとの記録には残さない**（使われ方の記録には「質問の書き方は tsukumo が教える」の欄だけを足す）
+    - **答えたあとの記録には残さない**
     - 添え書きの付いた質問（2問のうち1問だけに添え書き）は、疑似セッションの場面 `question-brief` で出せる
   - **質問の書き方は tsukumo が教える**（2026-10-04 決定）。`src/server/session-driver/core/question-notation.ts` の条を
     仕事モードのときだけ `systemPrompt` の append に足し、`AskUserQuestion` の直前に `question_brief` で
     添え書き（背景・判断の軸・選択肢ごとの良い点と悪い点・軸ごとの評価・戻せない印）を渡して質問文には何を決めるかだけを書く・
     選択肢のラベルは選んだあと何が起きるかを言う語にする・おすすめはラベル末尾に `(推奨)` を付けて理由を `description` の頭に書く・
     見た目や画面の形やデータやコードの構造を選ばせるときは添え書きの各選択肢の `figures` に図を必ず付ける、
-    の4条を渡す（`report` は受け付けた時点でターンを閉じるので質問の前には書けない。`preview` は今も描くが、条では求めない）。**答えが確定した質問ごとに、選択肢の数・`preview` の付いた選択肢の数・合う添え書きが付いたか
-    （`briefed`）・その答えまでに断った回数（`sentBack`。1回の呼び出しに質問が複数なら先頭の行にだけ入れる）だけを
-    `~/.tsukumo/question-usage/<YYYY-MM-DD>.jsonl` に1行記録する**（質問文・ラベル・`description`・添え書きの字は
-    持たない。`docs/coding-standards.md`「会話内容の扱い」）。書くのは
-    `src/server/session-driver/adapter/question-usage-log.ts`、何を1行にするかは
-    `src/server/session-driver/core/question-usage.ts` が持つ
+    の4条を渡す（`report` は受け付けた時点でターンを閉じるので質問の前には書けない。`preview` は今も描くが、条では求めない）。
   - **複数選択はチェックボックス**（単一選択は radio）。選んだぶんすべてに印が付き、
     入力欄に書いた答えは選んだラベルの末尾に足す。SDK へ返すときに1つの文字列へ畳むのは
     `src/server/session-driver/core/pending-answer.ts` だけの仕事にした

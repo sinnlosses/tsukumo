@@ -134,7 +134,6 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
     experienceMetricLog: usageLogs.experienceMetric,
     diagnosticLog: options.diagnosticLog,
     reportUsageLog: usageLogs.report,
-    questionUsageLog: usageLogs.question,
     promptImageShelf,
     reportImageShelf: options.reportImageShelf,
     readReportImage: (path, notModifiedAfter) =>

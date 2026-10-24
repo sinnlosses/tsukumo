@@ -419,7 +419,6 @@ describe("createSessionManager", () => {
       },
       contextUsageLog: { append: record("context") },
       reportUsageLog: { append: record("report"), appendRejection: record("report-rejection") },
-      questionUsageLog: { append: record("question") },
       diagnosticLog: { append: record("diagnostic"), readRange: () => [] },
       launchSession: (onEvent, onRestoredEvents) => {
         stub.attach(onEvent)

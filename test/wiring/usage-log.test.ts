@@ -11,7 +11,7 @@ import { useTempDir } from "../fixture/temp-dir.ts"
 
 const home = useTempDir("usage-log-wiring")
 
-const USAGE_DIR_NAMES = ["context-usage", "experience-metric", "report-usage", "question-usage"]
+const USAGE_DIR_NAMES = ["context-usage", "experience-metric", "report-usage"]
 
 afterEach(() => {
   vi.unstubAllEnvs()
@@ -33,19 +33,11 @@ async function appendOneOfEach(fakeSession: ReturnType<typeof bundledFakeSession
     askCount: 0,
   })
   logs.report.append(reportUsageEntry(at, sessionId))
-  logs.question.append({
-    at,
-    sessionId,
-    optionCount: 2,
-    previewCount: 0,
-    briefed: false,
-    sentBack: 0,
-  })
   await logs.closeAll()
 }
 
 describe("wireUsageLogs", () => {
-  it("疑似セッションのときは4つの記録のどこにもファイルを作らない", async () => {
+  it("疑似セッションのときは3つの記録のどこにもファイルを作らない", async () => {
     await appendOneOfEach(bundledFakeSession())
 
     for (const name of USAGE_DIR_NAMES) {
@@ -53,7 +45,7 @@ describe("wireUsageLogs", () => {
     }
   })
 
-  it("疑似セッションでないときは4つの記録に書く", async () => {
+  it("疑似セッションでないときは3つの記録に書く", async () => {
     await appendOneOfEach(undefined)
 
     for (const name of USAGE_DIR_NAMES) {
