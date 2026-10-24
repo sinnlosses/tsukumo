@@ -1,5 +1,5 @@
 // ファイルを書き換える `sed -i`・`perl -pi` / `perl -i`・Python の書き込みを止める判定を、関数で確かめる。
-// PreToolUse hook の契約（終了コード 2 で実行を止め、stderr で Edit を促す）は、スクリプトを実際に起こして確かめる。
+// hook の契約（終了コード 2 で止め、stderr で Edit を促す）は、入口を実際に起こして確かめる。
 
 import { mkdirSync, writeFileSync } from "node:fs"
 import { dirname, join } from "node:path"
@@ -7,11 +7,11 @@ import process from "node:process"
 
 import { describe, expect, test } from "vitest"
 
-import { findDeniedBashRule } from "../../../scripts/hook/lib/bash-write-denial.ts"
-import { runSubprocess } from "../../fixture/subprocess.ts"
-import { useTempDir } from "../../fixture/temp-dir.ts"
+import { findDeniedBashRule } from "../../../../scripts/hook/lib/shell-write-rule.ts"
+import { runSubprocess } from "../../../fixture/subprocess.ts"
+import { useTempDir } from "../../../fixture/temp-dir.ts"
 
-const HOOK_PATH = "scripts/hook/deny-sed-in-place.ts"
+const HOOK_PATH = "scripts/hook/bash-guard.ts"
 const WORK_ROOT = "/work/tree"
 const NO_PROJECT_DIR = Symbol("no CLAUDE_PROJECT_DIR")
 

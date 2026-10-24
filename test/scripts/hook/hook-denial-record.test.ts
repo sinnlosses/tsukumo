@@ -28,7 +28,7 @@ describe("拒否の記録", () => {
       { command: "tw verify", agent: true, background: true },
     ],
   ])("%s が拒むと、時刻・hook・規則のキー・actor だけの1行が増える", async (hook, rule, call) => {
-    const result = await runBashHook(hook, call)
+    const result = await runBashHook(call)
     expect(result.exitCode).toBe(2)
 
     const [line, ...rest] = readDenialLines()
@@ -42,19 +42,17 @@ describe("拒否の記録", () => {
   })
 
   test("拒まない呼び出しでは増えない", async () => {
-    expect((await runBashHook("deny-broad-kill", { command: "kill 123" })).exitCode).toBe(0)
-    expect(
-      (await runBashHook("deny-sed-in-place", { command: "sed -n 1p notes.txt" })).exitCode,
-    ).toBe(0)
+    expect((await runBashHook({ command: "kill 123" })).exitCode).toBe(0)
+    expect((await runBashHook({ command: "sed -n 1p notes.txt" })).exitCode).toBe(0)
     expect(readDenialLines()).toEqual([])
   })
 
   test("置き場に書けなくても、終了コードと stderr は書けるときと同じ", async () => {
     const call = { command: "pkill -f vitest" }
-    const writable = await runBashHook("deny-broad-kill", call)
+    const writable = await runBashHook(call)
     rmSync(join(repoDir, ".git", "hook-denials"), { recursive: true })
     writeFileSync(join(repoDir, ".git", "hook-denials"), "")
-    const unwritable = await runBashHook("deny-broad-kill", call)
+    const unwritable = await runBashHook(call)
     expect(unwritable.exitCode).toBe(writable.exitCode)
     expect(unwritable.stderr).toBe(writable.stderr)
   })
@@ -63,12 +61,23 @@ describe("拒否の記録", () => {
 describe("集計", () => {
   test("登録された hook を、0件のものも含めて全部並べる", async () => {
     writeRegistration()
-    await runBashHook("deny-broad-kill", { command: "pkill -f vitest" })
+    await runBashHook({ command: "pkill -f vitest" })
 
     const result = await runHook(["scripts/hook/hook-denial-tally.ts"], "")
     expect(result.exitCode).toBe(0)
     expect(result.stdout).toContain("deny-broad-kill: 1\n  pkill-killall: 1")
     expect(result.stdout).toContain("deny-sed-in-place: 0")
+    expect(result.stdout).toContain("deny-background-verify: 0")
+    expect(result.stdout).toContain("deny-stdin-wait-cat: 0")
+    expect(result.stdout).not.toContain("（未登録）")
+  })
+
+  test("単独の deny-* の入口で登録されていても、その名前を並べる", async () => {
+    writeRegistration(['node "$CLAUDE_PROJECT_DIR/scripts/hook/deny-broad-kill.ts"'])
+
+    const result = await runHook(["scripts/hook/hook-denial-tally.ts"], "")
+    expect(result.stdout).toContain("deny-broad-kill: 0")
+    expect(result.stdout).not.toContain("deny-sed-in-place")
   })
 
   test("hook ではなく E2E の入口が拒んだ記録も、未登録とせずに数える", async () => {
@@ -142,21 +151,14 @@ describe("集計", () => {
   })
 })
 
-function writeRegistration(): void {
+const BASH_GUARD_COMMAND = 'node "$CLAUDE_PROJECT_DIR/scripts/hook/bash-guard.ts"'
+
+function writeRegistration(commands: readonly string[] = [BASH_GUARD_COMMAND]): void {
   mkdirSync(join(repoDir, ".claude"))
   writeFileSync(
     join(repoDir, ".claude", "settings.json"),
     JSON.stringify({
-      hooks: {
-        PreToolUse: [
-          {
-            hooks: [
-              { command: 'node "$CLAUDE_PROJECT_DIR/scripts/hook/deny-broad-kill.ts"' },
-              { command: 'node "$CLAUDE_PROJECT_DIR/scripts/hook/deny-sed-in-place.ts"' },
-            ],
-          },
-        ],
-      },
+      hooks: { PreToolUse: [{ hooks: commands.map((command) => ({ command })) }] },
     }),
   )
 }
@@ -167,14 +169,14 @@ type Call = {
   readonly background?: boolean
 }
 
-function runBashHook(hook: string, call: Call) {
+function runBashHook(call: Call) {
   const input = JSON.stringify({
     tool_name: "Bash",
     tool_input: { command: call.command, run_in_background: call.background === true },
     cwd: repoDir,
     ...(call.agent === true ? { agent_id: "subagent-1" } : {}),
   })
-  return runHook([`scripts/hook/${hook}.ts`], input)
+  return runHook(["scripts/hook/bash-guard.ts"], input)
 }
 
 function runHook(args: readonly string[], input: string) {

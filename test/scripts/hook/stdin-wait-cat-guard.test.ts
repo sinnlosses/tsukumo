@@ -7,7 +7,7 @@ import { describe, expect, test } from "vitest"
 
 import { runSubprocess } from "../../fixture/subprocess.ts"
 
-const HOOK_PATH = "scripts/hook/deny-stdin-wait-cat.ts"
+const HOOK_PATH = "scripts/hook/bash-guard.ts"
 
 describe("入力を与えない cat を拒否する hook", () => {
   test.each([

@@ -9,23 +9,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/hook/deny-broad-kill.ts\""
-          },
-          {
-            "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/hook/deny-sed-in-place.ts\""
-          },
-          {
-            "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/hook/deny-background-verify.ts\""
-          },
-          {
-            "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/hook/mark-subagent-bash.ts\""
-          },
-          {
-            "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/hook/deny-stdin-wait-cat.ts\""
+            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/hook/bash-guard.ts\""
           }
         ]
       }

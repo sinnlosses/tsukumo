@@ -134,4 +134,4 @@ Network タブで `/ws` の upgrade が101を返し、`hello` フレーム（購
 node /tmp/<名前>/make-png.mjs > /tmp/<名前>/band.png
 ```
 
-止まった形は、書き先を変数で決める形（`OUT=/tmp/<名前>/band.png; node /tmp/<名前>/make-png.mjs > "$OUT"`）。`deny-sed-in-place` の hook が、展開しないと書き先が分からないものを作業ツリーへの書き込みとみなして `Bash` の段で止める。書き先を絶対パスで書けば通る。`cd <作業ツリー> && node …` の前置きは、書き先が絶対パスなら止まらない。
+止まった形は、書き先を変数で決める形（`OUT=/tmp/<名前>/band.png; node /tmp/<名前>/make-png.mjs > "$OUT"`）。Bash の入口 `bash-guard.ts` の書き込みの判定が、展開しないと書き先が分からないものを作業ツリーへの書き込みとみなして `Bash` の段で止める。書き先を絶対パスで書けば通る。`cd <作業ツリー> && node …` の前置きは、書き先が絶対パスなら止まらない。

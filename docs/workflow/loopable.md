@@ -41,7 +41,7 @@
 **起こすときの作法**: `TSUKUMO_VIEW_PORT` を既定（7327）以外に変え、**止めるのは
 `node scripts/runtime/stop.ts --port <ポート>`** にする（一覧は引数なし。名指しした1つにだけ
 SIGTERM が行く）。`pkill` / `killall` で名前やパターンから止めようとすると、
-**PreToolUse hook（`.claude/settings.json` → `scripts/hook/deny-broad-kill.ts`）が実行される前に
+**PreToolUse hook（`.claude/settings.json` → `scripts/hook/bash-guard.ts` の `findBroadKillDenial`）が実行される前に
 拒否する**——並べて動かした tsukumo はどれも `node src/cli.ts` に見えるので、
 パターンでは利用者が使っている本体と区別できない。狙う語によらず、`bash -c`・`env`・`xargs`・`nice`・
 `timeout`・`pnpm exec`・パス付き（`/usr/bin/pkill`）越しの `pkill` / `killall` と、
@@ -53,7 +53,7 @@ enum・キャラクターパックの読み込み）は起こし直さないと�
 
 同じ形で、作業ツリーの中のファイルへ書き込む Bash のコマンド（`sed -i`・`perl -i`、
 リダイレクトと `tee`、作業ツリーの外からの `cp` / `mv`、Python・node のコードでの書き込み）も
-PreToolUse hook（`scripts/hook/deny-sed-in-place.ts`）が拒否する。ファイルの書き換えは Edit / Write で行う。
+PreToolUse hook（`scripts/hook/bash-guard.ts` の `findWorktreeShellWriteDenial`）が拒否する。ファイルの書き換えは Edit / Write で行う。
 `tw edit --body-file` に渡す下書きは、作業ツリーの外のパス（`/tmp/<名前>/plan.md`）に Write で書いて
 `--body-file` でそのパスを渡すか、`--body-file -` へ heredoc を渡す。作業ツリーの中のパスには書かない。
 `pnpm`・`git`・作業ツリーの中のスクリプトのように、ツールの中で書くものは止めない。
@@ -61,7 +61,7 @@ hook は書き込みの形を事前に列挙して拒む。Bash の前後の作�
 同じ作業ツリーで並行する書き手（並列の段・背景のコマンド）の変更と区別できないので置かない。
 
 委譲先（サブエージェント）が `tw verify`（検査の全段。3〜4分）を `run_in_background: true` で
-打つと PreToolUse hook（`scripts/hook/deny-background-verify.ts`）が拒否し、前景で `timeout` 引数
+打つと PreToolUse hook（`scripts/hook/bash-guard.ts` の `findBackgroundVerifyDenial`）が拒否し、前景で `timeout` 引数
 （最大 600000）を付けて打つよう案内する。`nice`・`timeout`・`env`・`pnpm exec`・`bash -c`・パス付きの
 `tw` 越しの `tw verify` も同じ。メインの呼び出し（`agent_id` が無い）は対象にしない。
 
@@ -82,7 +82,7 @@ E2E のファイル単位の実行（`pnpm run test:e2e test/e2e/<ファイル>.
 数はその作業ツリー固有の git dir の `e2e-full-runs` に、`{key, count}` の JSON（一時ファイルへ書いてから名前を変える）で置く。
 鍵は `tw status --claims` が返す着手の `claim`（作業ツリーをまたいで混ざらない）。
 着手が1件でないとき・口が打てない／読めないときは数えない。**着手し直すと鍵が変わり0に戻る。**
-委譲先の呼び出しかどうかは hook（`scripts/hook/mark-subagent-bash.ts`）が渡す。
+委譲先の呼び出しかどうかは hook（`scripts/hook/bash-guard.ts` が Pre で置き、`scripts/hook/mark-subagent-bash.ts` が Post で消す印）が渡す。
 入力に `agent_id` がある Bash の PreToolUse で git dir の `subagent-bash/<tool_use_id>` に印を置き、
 PostToolUse・PostToolUseFailure で消す（背景の呼び出しは消さない）。10分より古い印は無いものとみなし、
 印が1つも無ければ数えない（メインの呼び出しは対象にしない）。この印には2つの限界がある。

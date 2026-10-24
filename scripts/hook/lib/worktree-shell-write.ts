@@ -1,14 +1,11 @@
-// 作業ツリーの中のファイルへ書き込む Bash のコマンドを、実行される前に止める
-// Claude Code の PreToolUse hook（`.claude/settings.json` から Bash ツールに掛かる）。
-//
-// 終了コード 2 で Bash の実行を止め、stderr の中身がモデルへ返る。
-// それ以外の終了コードでは実行を止めない（判定に失敗したときは通す）。
+// 作業ツリーの中のファイルへ Bash のコマンドで書き込むことを止める判定。何が書き込みに当たるかは `findDeniedBashRule`。
 
 import { isAbsolute } from "node:path"
 import process from "node:process"
 
-import { findDeniedBashRule } from "./lib/bash-write-denial.ts"
-import { denyBashCall, readBashHookCall } from "./lib/hook-input.ts"
+import type { BashDenial } from "./bash-denial.ts"
+import type { BashHookCall } from "./bash-hook-call.ts"
+import { findDeniedBashRule } from "./shell-write-rule.ts"
 
 const REFUSAL = `作業ツリー（CLAUDE_PROJECT_DIR）の中のファイルを Bash のコマンドで書き換えない。
 止める形: \`sed -i\`・\`perl -i\`、リダイレクト（\`>\`・\`>>\`）と \`tee\` での書き込み、作業ツリーの外からの \`cp\` / \`mv\`、Python・node のコードやスクリプトでの書き込み。
@@ -21,16 +18,17 @@ const REFUSAL = `作業ツリー（CLAUDE_PROJECT_DIR）の中のファイルを
 別の git 作業ツリーにある Python スクリプトは、その作業ツリーへ \`cd\` してから走らせる（\`cd <作業ツリー> && python3 x.py\`）。
 読むだけなら \`sed -n '1,5p' <file>\` は使える。生成物は \`pnpm run format\`・\`pnpm run build\` などプロジェクトのコマンドで作り直す。`
 
-const call = await readBashHookCall()
-if (call !== undefined) {
-  const rule = findDeniedBashRule(call.command, call.cwd, readWorkRoot(call.cwd))
-  if (rule !== undefined) {
-    denyBashCall(call, { hook: "deny-sed-in-place", rule, refusal: REFUSAL })
-  }
+/** 作業ツリーへのシェルでの書き込みなら拒否を返す。記録の hook 名は集計の継続のため `deny-sed-in-place` のまま。 */
+export function findWorktreeShellWriteDenial(
+  call: BashHookCall,
+  workRoot: string | undefined,
+): BashDenial | undefined {
+  const rule = findDeniedBashRule(call.command, call.cwd, workRoot)
+  return rule === undefined ? undefined : { hook: "deny-sed-in-place", rule, refusal: REFUSAL }
 }
 
 /** 作業ツリーの根。`CLAUDE_PROJECT_DIR`、無ければ hook の入力の `cwd`。絶対パスでなければ `undefined`。 */
-function readWorkRoot(cwd: string | undefined): string | undefined {
+export function readWorkRoot(cwd: string | undefined): string | undefined {
   const candidate = process.env["CLAUDE_PROJECT_DIR"] || cwd
   return candidate !== undefined && isAbsolute(candidate) ? candidate : undefined
 }

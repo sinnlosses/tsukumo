@@ -60,7 +60,7 @@
 
 本文は `docs/workflow/worktree-and-ship.md`「作業ツリーを並行させるとき」。
 
-シェルでの書き込みの拒否は tsukumo の hook（`scripts/hook/deny-sed-in-place.ts`）が持ち主で、`.tw/config.toml` の `shell_write_guard = "project"` により tw は `SHELL_WRITE` を見ない。
+シェルでの書き込みの拒否は tsukumo の hook（`scripts/hook/bash-guard.ts` の `findWorktreeShellWriteDenial`。記録の hook 名は `deny-sed-in-place`）が持ち主で、`.tw/config.toml` の `shell_write_guard = "project"` により tw は `SHELL_WRITE` を見ない。
 
 ## タスクに紐付かない作業を main へ送る
 

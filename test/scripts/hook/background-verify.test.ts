@@ -2,7 +2,13 @@
 
 import { describe, expect, test } from "vitest"
 
-import { runsTwVerify } from "../../../scripts/hook/lib/background-verify.ts"
+import { findBackgroundVerifyDenial } from "../../../scripts/hook/lib/background-verify.ts"
+import { bashCall } from "../../fixture/bash-hook-call.ts"
+
+function runsTwVerify(command: string): boolean {
+  const call = bashCall(command, { fromSubagent: true, runsInBackground: true })
+  return findBackgroundVerifyDenial(call) !== undefined
+}
 
 describe("runsTwVerify", () => {
   test.each([

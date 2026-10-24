@@ -56,7 +56,7 @@ export function formatTokenLimitRefusal(oversized: readonly OversizedFile[]): st
     "",
     "- 増やす分だけ、同じコミットで同じファイルの別の部分を減らす（別のファイルへ移す）。純増にならなければ通ります。",
     "- 分けたら `git add` し直してもう一度コミットする。`--no-verify` は使わない。",
-    "- どうしても分けられない生成物なら、除外の定数（`scripts/hook/lib/token-limit.ts` の `EXEMPT_PATH_PATTERNS`）へ足すことを人に相談する。",
+    "- どうしても分けられない生成物なら、除外の定数（`scripts/shared/token-limit.ts` の `EXEMPT_PATH_PATTERNS`）へ足すことを人に相談する。",
   ].join("\n")
 }
 

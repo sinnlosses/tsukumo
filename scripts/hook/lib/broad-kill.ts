@@ -1,6 +1,8 @@
 // 名前やパターンでプロセスを薙ぎ払う `kill` の形を、構文解析した argv から見つける。
 // 辿れない形（変数の pid・読めない入れ子）は通す。拒むのは、辿れた argv が確かに該当するものだけ。
 
+import type { BashDenial } from "./bash-denial.ts"
+import type { BashHookCall } from "./bash-hook-call.ts"
 import { baseName, parseShellCommand, stripPrefixes } from "./shell-command.ts"
 import type { ShellWord, SimpleCommand } from "./shell-command.ts"
 
@@ -27,8 +29,26 @@ type Launched = {
   readonly viaXargs: boolean
 }
 
+const REFUSAL = `この作業ツリーでは複数の tsukumo が同時に動いている。どれも \`node src/cli.ts\` として見えるので、
+名前やパターンで止めると利用者が使っている本体まで落ちる（docs/workflow.md「起こすときの作法」）。
+
+代わりに、止める相手を1つに絞ること:
+
+  node scripts/runtime/stop.ts                 # いま動いている tsukumo を一覧する（止めない）
+  node scripts/runtime/stop.ts --port 7398     # そのポートで待っているものだけ止める
+
+背景シェルで起こしたなら、そのシェルごと止める（KillShell）のがいちばん確実。
+pid が分かっているなら kill <pid> はそのまま使える。
+分からなければ ps で PID を確かめてから kill <PID> で止める。`
+
+/** 名前やパターンで薙ぎ払う `kill` なら拒否を返す。pid を名指しする `kill` は通す。 */
+export function findBroadKillDenial(call: BashHookCall): BashDenial | undefined {
+  const rule = findBroadKillRule(call.command)
+  return rule === undefined ? undefined : { hook: "deny-broad-kill", rule, refusal: REFUSAL }
+}
+
 /** 規則のキー。`pkill` / `killall` はコマンドの位置にあるだけで拒み、`kill` は pid を名前から引くときだけ拒む。 */
-export function findBroadKillRule(bashCommand: string): string | undefined {
+function findBroadKillRule(bashCommand: string): string | undefined {
   const commands = parseShellCommand(bashCommand)
   for (const [index, simple] of commands.entries()) {
     const launched = unwrapLauncher(simple.argv)

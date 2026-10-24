@@ -63,7 +63,7 @@ Claude Code の hook は `tw finish` や `tw ship` が子プロセスで打つ `
   `--no-verify` は使わない
 - 増やす場合は、同じコミットで同じファイルの別の部分を減らす・別のファイルへ移して、純増にならないようにする
 - 検査から外すのは、ロックファイル・生成物・取り込んだ履歴・submodule・疑似セッションの台本・バイナリ。
-  外すパターンは `scripts/hook/lib/token-limit.ts` の `EXEMPT_PATH_PATTERNS` 1 か所にある。
+  外すパターンは `scripts/shared/token-limit.ts` の `EXEMPT_PATH_PATTERNS` 1 か所にある。
   分けられない生成物は、ここへ足すことを人に相談する
 - git が失敗して判定できないときは、コミットを巻き込まずに通す
 - 検査は `mise run setup`（または `node scripts/dev/install-git-hook.ts`）が共有の `.git/hooks/pre-commit` に置く。

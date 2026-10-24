@@ -2,7 +2,7 @@
 
 import { describe, expect, test } from "vitest"
 
-import { findDeniedBashRule } from "../../../../scripts/hook/lib/bash-write-denial.ts"
+import { findDeniedBashRule } from "../../../../scripts/hook/lib/shell-write-rule.ts"
 
 const WORK_ROOT = "/work/tree"
 

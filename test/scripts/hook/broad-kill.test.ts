@@ -3,7 +3,12 @@
 
 import { describe, expect, test } from "vitest"
 
-import { findBroadKillRule } from "../../../scripts/hook/lib/broad-kill.ts"
+import { findBroadKillDenial } from "../../../scripts/hook/lib/broad-kill.ts"
+import { bashCall } from "../../fixture/bash-hook-call.ts"
+
+function findBroadKillRule(command: string): string | undefined {
+  return findBroadKillDenial(bashCall(command))?.rule
+}
 
 describe("findBroadKillRule", () => {
   test.each([

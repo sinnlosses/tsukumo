@@ -4,7 +4,7 @@ import {
   findOversizedFiles,
   formatTokenLimitRefusal,
   type StagedChange,
-} from "../../../../scripts/hook/lib/token-limit.ts"
+} from "../../../scripts/shared/token-limit.ts"
 
 const EXEMPT_PATH_PATTERNS = [
   "pnpm-lock.yaml",
