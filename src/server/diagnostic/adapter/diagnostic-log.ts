@@ -23,9 +23,9 @@ import { swallowedFailureFootprintSchema } from "../../../shared/diagnostic/swal
 import { synopsisTrimFootprintSchema } from "../../../shared/diagnostic/synopsis-trim.ts"
 import { welcomeWritingFootprintSchema } from "../../../shared/diagnostic/welcome-writing.ts"
 import {
-  appendJsonLines,
+  createJsonLinesAppender,
   dateFileNames,
-  dateFilePath,
+  type JsonLinesAppender,
   readValidLines,
 } from "../../adapter/lib/jsonl.ts"
 import { localDateKey } from "../../adapter/local-time.ts"
@@ -60,14 +60,19 @@ export function diagnosticDir(): string {
  * 記録の読み書き口を作る。`root` は置き場（既定は {@link diagnosticDir}）。
  * 1つの口を日をまたいで使い回せる（件ごとに `at` から行き先を組み立てる）。
  */
-export function createDiagnosticLog(root: string = diagnosticDir()): DiagnosticLog {
+export function createDiagnosticLog(
+  root: string = diagnosticDir(),
+): DiagnosticLog & Pick<JsonLinesAppender, "flush" | "close"> {
+  const appender = createJsonLinesAppender(root)
   return {
     append: (entries) => {
       const byDate = groupBy(entries, (entry) => localDateKey(entry.at))
       for (const [date, dated] of Object.entries(byDate)) {
-        appendJsonLines(dateFilePath(root, date), dated.map(toRecord))
+        appender.append(date, dated.map(toRecord))
       }
     },
+    flush: appender.flush,
+    close: appender.close,
     readRange: (range) => readEntriesInRange(root, range),
   }
 }

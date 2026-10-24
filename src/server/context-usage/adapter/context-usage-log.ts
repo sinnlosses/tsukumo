@@ -16,7 +16,7 @@ import {
   CONTEXT_USAGE_FORMAT_VERSION,
   type ContextUsageRecord,
 } from "../../../shared/context-usage/context-usage-record.ts"
-import { appendJsonLine, dateFilePath } from "../../adapter/lib/jsonl.ts"
+import { createJsonLinesAppender, type JsonLinesAppender } from "../../adapter/lib/jsonl.ts"
 import { isoWithOffset, localDateKey } from "../../adapter/local-time.ts"
 import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
 import type { ContextUsageEntry, ContextUsageLog } from "../core/context-usage.ts"
@@ -33,11 +33,16 @@ export function contextUsageDir(): string {
  * 記録の書き込み口を作る。`root` は置き場（既定は {@link contextUsageDir}）。
  * 1つの口を日をまたいで使い回せる（`append` のたびに `entry.at` から行き先を組み立てる）。
  */
-export function createContextUsageLog(root: string = contextUsageDir()): ContextUsageLog {
+export function createContextUsageLog(
+  root: string = contextUsageDir(),
+): ContextUsageLog & Pick<JsonLinesAppender, "flush" | "close"> {
+  const appender = createJsonLinesAppender(root)
   return {
     append: (entry) => {
-      appendJsonLine(dateFilePath(root, localDateKey(entry.at)), toRecord(entry))
+      appender.append(localDateKey(entry.at), [toRecord(entry)])
     },
+    flush: appender.flush,
+    close: appender.close,
   }
 }
 

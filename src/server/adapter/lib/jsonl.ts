@@ -9,12 +9,14 @@
 import {
   appendFileSync,
   closeSync,
+  createWriteStream,
   fstatSync,
   mkdirSync,
   openSync,
   readdirSync,
   readFileSync,
   readSync,
+  type WriteStream,
 } from "node:fs"
 import { dirname, join } from "node:path"
 
@@ -43,6 +45,90 @@ export function appendJsonLines(path: string, records: readonly unknown[]): bool
     return true
   } catch {
     return false
+  }
+}
+
+/** 日付のファイルへ開いたまま追記する口。 */
+export type JsonLinesAppender = {
+  /** 日付キー（`YYYY-MM-DD`）の日のファイルへ追記する。失敗したその回は諦める。 */
+  readonly append: (dateKey: string, records: readonly unknown[]) => void
+  /** ここまでの追記がファイルへ渡るのを待つ。 */
+  readonly flush: () => Promise<void>
+  /** 開いているファイルを閉じる。閉じたあとの追記は開き直す。 */
+  readonly close: () => Promise<void>
+}
+
+type OpenFile = {
+  readonly dateKey: string
+  readonly stream: WriteStream
+  readonly failed: { value: boolean }
+}
+
+/**
+ * `root` の下の日付ファイルへ、追記用のストリームを開いたまま書く。
+ * 末尾の改行の確認は開いたときの1回だけで、日付が変わったら前のストリームを閉じて開き直す。
+ * 書けなくても例外を投げない（失敗したストリームは捨て、次の追記で開き直す）。
+ */
+export function createJsonLinesAppender(root: string): JsonLinesAppender {
+  let current: OpenFile | undefined
+  const closing = new Set<Promise<void>>()
+
+  const retire = (file: OpenFile): void => {
+    const done = endStream(file.stream).then(() => {
+      closing.delete(done)
+    })
+    closing.add(done)
+  }
+
+  const openFile = (dateKey: string): OpenFile | undefined => {
+    try {
+      mkdirSync(root, { recursive: true })
+      const path = dateFilePath(root, dateKey)
+      const needsNewline = endsWithoutNewline(path)
+      const stream = createWriteStream(path, { flags: "a" })
+      const failed = { value: false }
+      stream.on("error", () => {
+        failed.value = true
+      })
+      if (needsNewline) {
+        stream.write("\n")
+      }
+      return { dateKey, stream, failed }
+    } catch {
+      return undefined
+    }
+  }
+
+  return {
+    append: (dateKey, records) => {
+      if (records.length === 0) {
+        return
+      }
+      if (current !== undefined && (current.dateKey !== dateKey || current.failed.value)) {
+        retire(current)
+        current = undefined
+      }
+      current ??= openFile(dateKey)
+      current?.stream.write(records.map((record) => `${JSON.stringify(record)}\n`).join(""))
+    },
+    flush: async () => {
+      const file = current
+      if (file !== undefined) {
+        await new Promise<void>((resolve) => {
+          file.stream.write("", () => {
+            resolve()
+          })
+        })
+      }
+      await Promise.all(closing)
+    },
+    close: async () => {
+      if (current !== undefined) {
+        retire(current)
+        current = undefined
+      }
+      await Promise.all(closing)
+    },
   }
 }
 
@@ -96,6 +182,20 @@ export function readValidLines<T>(
   return readJsonLines(path).flatMap((raw) => {
     const parsed = schema.safeParse(raw)
     return parsed.success ? [parsed.data] : []
+  })
+}
+
+/** ストリームを閉じ、閉じ終わるまで待つ（失敗しても解決する）。 */
+function endStream(stream: WriteStream): Promise<void> {
+  return new Promise((resolve) => {
+    if (stream.closed) {
+      resolve()
+      return
+    }
+    stream.once("close", () => {
+      resolve()
+    })
+    stream.end()
   })
 }
 

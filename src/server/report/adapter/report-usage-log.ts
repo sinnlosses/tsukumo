@@ -10,7 +10,7 @@ import {
   type ReportUsageRecord,
 } from "../../../shared/report/report-usage-record.ts"
 import type { ReportSchemaVariant } from "../../../shared/report/schema-variant.ts"
-import { appendJsonLine, dateFilePath } from "../../adapter/lib/jsonl.ts"
+import { createJsonLinesAppender, type JsonLinesAppender } from "../../adapter/lib/jsonl.ts"
 import { isoWithOffset, localDateKey } from "../../adapter/local-time.ts"
 import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
 import type {
@@ -34,20 +34,17 @@ export function createReportUsageLog(
   reportSchema: ReportSchemaVariant,
   driver: ReportUsageDriver,
   root: string = reportUsageDir(),
-): ReportUsageLog {
+): ReportUsageLog & Pick<JsonLinesAppender, "flush" | "close"> {
+  const appender = createJsonLinesAppender(root)
   return {
     append: (entry) => {
-      appendJsonLine(
-        dateFilePath(root, localDateKey(entry.at)),
-        toRecord(entry, reportSchema, driver),
-      )
+      appender.append(localDateKey(entry.at), [toRecord(entry, reportSchema, driver)])
     },
     appendRejection: (entry) => {
-      appendJsonLine(
-        dateFilePath(root, localDateKey(entry.at)),
-        toRejectionRecord(entry, reportSchema, driver),
-      )
+      appender.append(localDateKey(entry.at), [toRejectionRecord(entry, reportSchema, driver)])
     },
+    flush: appender.flush,
+    close: appender.close,
   }
 }
 

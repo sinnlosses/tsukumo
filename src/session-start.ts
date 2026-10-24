@@ -71,6 +71,8 @@ export type StartedSession = {
   readonly manager: SessionManager
   /** `/ws` に載せるルータ。書き込み口の中身はここで選んで渡す。 */
   readonly socketRouter: SocketRouter
+  /** ここで作った追記の口を閉じ、書き残しがファイルに渡るのを待つ。プロセスを終える前に待つ。 */
+  readonly closeLogs: () => Promise<void>
 }
 
 /** セッションを1つ起こし、開いたタブから触れる窓口を返す。 */
@@ -91,6 +93,11 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
   void context.achievementCache.readBeads()
   // 最初のタブが繋がったら解ける約束。
   const firstViewer = Promise.withResolvers<void>()
+
+  const contextUsageLog = createContextUsageLog()
+  const experienceMetricLog = createExperienceMetricLog()
+  const reportUsageLog = createReportUsageLog(config.reportSchema, config.driver)
+  const questionUsageLog = createQuestionUsageLog()
 
   const diary = wireDiary(context)
   const welcomeGreeting = wireWelcomeGreeting(context, options.diagnosticLog)
@@ -126,11 +133,11 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
     // 会話のアーカイブに仕事の行として書く `project`。起動時に1回だけ取る。
     project: await resolveArchiveProjectName(context.cwd),
     tokenUsageLog: options.tokenUsageLog,
-    contextUsageLog: createContextUsageLog(),
-    experienceMetricLog: createExperienceMetricLog(),
+    contextUsageLog,
+    experienceMetricLog,
     diagnosticLog: options.diagnosticLog,
-    reportUsageLog: createReportUsageLog(config.reportSchema, config.driver),
-    questionUsageLog: createQuestionUsageLog(),
+    reportUsageLog,
+    questionUsageLog,
     promptImageShelf,
     reportImageShelf: options.reportImageShelf,
     readReportImage: (path, notModifiedAfter) =>
@@ -169,6 +176,14 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
       },
     },
     socketRouter,
+    closeLogs: async () => {
+      await Promise.all([
+        contextUsageLog.close(),
+        experienceMetricLog.close(),
+        reportUsageLog.close(),
+        questionUsageLog.close(),
+      ])
+    },
   }
 }
 

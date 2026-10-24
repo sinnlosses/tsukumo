@@ -111,22 +111,24 @@ function claimsRunner(claims: readonly Claim[]): { run: TwClaimsRunner; calls: (
 }
 
 describe("createTokenUsageLog", () => {
-  it("日付ごとのファイルに1行ずつ追記する", () => {
+  it("日付ごとのファイルに1行ずつ追記する", async () => {
     const log = createTokenUsageLog(NO_TASK, root())
 
     log.append(entry(at(10, 30)))
     log.append(entry(at(10, 31)))
     log.append(entry(at(1, 5, 23)))
+    await log.flush()
 
     expect(readdirSync(root()).toSorted()).toEqual(["2026-09-22.jsonl", "2026-09-23.jsonl"])
     expect(readLines("2026-09-22.jsonl").length).toBe(2)
     expect(readLines("2026-09-23.jsonl").length).toBe(1)
   })
 
-  it("1行の鍵は版・日時・セッションID・モード・モデルごとの数・内訳で、日時は ISO 8601（オフセット付き）", () => {
+  it("1行の鍵は版・日時・セッションID・モード・モデルごとの数・内訳で、日時は ISO 8601（オフセット付き）", async () => {
     const log = createTokenUsageLog(NO_TASK, root())
 
     log.append(entry(at(10, 30)))
+    await log.flush()
 
     const [record] = readLines("2026-09-22.jsonl")
     expect(keysOf(record)).toEqual(["v", "at", "sessionId", "mode", "models", "breakdown"])
@@ -144,10 +146,11 @@ describe("createTokenUsageLog", () => {
   // 文字列で入るのは時刻・セッションID・モード・鍵の名前・モデルの名前だけ
   // （docs/coding-standards.md「会話内容の扱い」）。会話の文面が混ざる余地が無いことを、
   // 行に出てくる文字列を数え上げて固定する。
-  it("行に出てくる文字列は、鍵の名前とモデル・ツールの名前・セッションID・モード・時刻だけ", () => {
+  it("行に出てくる文字列は、鍵の名前とモデル・ツールの名前・セッションID・モード・時刻だけ", async () => {
     const log = createTokenUsageLog(NO_TASK, root())
 
     log.append(entry(at(10, 30)))
+    await log.flush()
 
     const [line] = readFileSync(join(root(), "2026-09-22.jsonl"), "utf8").trimEnd().split("\n")
     const strings = [...(line ?? "").matchAll(/"([^"]*)"/g)].flatMap(([, value]) => value ?? [])
@@ -190,13 +193,14 @@ describe("createTokenUsageLog", () => {
 })
 
 describe("着手中のタスクとの結び付き", () => {
-  it("口が着手中のタスクを返せば、行にタスクIDと段が入る", () => {
+  it("口が着手中のタスクを返せば、行にタスクIDと段が入る", async () => {
     const log = createTokenUsageLog(
       createOpenTaskReader(claimsRunner([{ task: "job-7", stage: "accept" }]).run),
       root(),
     )
 
     log.append(entry(at(10, 30)))
+    await log.flush()
 
     const [record] = readLines("2026-09-22.jsonl")
     expect(record).toMatchObject({ v: 3, taskId: "job-7", stage: "accept" })
@@ -212,30 +216,32 @@ describe("着手中のタスクとの結び付き", () => {
     ])
   })
 
-  it("段が null なら、タスクIDだけが入る", () => {
+  it("段が null なら、タスクIDだけが入る", async () => {
     const log = createTokenUsageLog(
       createOpenTaskReader(claimsRunner([{ task: "job-7", stage: null }]).run),
       root(),
     )
 
     log.append(entry(at(10, 30)))
+    await log.flush()
 
     const [record] = readLines("2026-09-22.jsonl")
     expect(record).toMatchObject({ taskId: "job-7" })
     expect(keysOf(record)).not.toContain("stage")
   })
 
-  it("着手中のタスクが無ければ、どちらの欄も入らない", () => {
+  it("着手中のタスクが無ければ、どちらの欄も入らない", async () => {
     const log = createTokenUsageLog(createOpenTaskReader(claimsRunner([]).run), root())
 
     log.append(entry(at(10, 30)))
+    await log.flush()
 
     const [record] = readLines("2026-09-22.jsonl")
     expect(keysOf(record)).not.toContain("taskId")
     expect(keysOf(record)).not.toContain("stage")
   })
 
-  it("着手中が2件あるときは、どのタスクか決められないので入れない", () => {
+  it("着手中が2件あるときは、どのタスクか決められないので入れない", async () => {
     const log = createTokenUsageLog(
       createOpenTaskReader(
         claimsRunner([
@@ -247,16 +253,25 @@ describe("着手中のタスクとの結び付き", () => {
     )
 
     log.append(entry(at(10, 30)))
+    await log.flush()
 
     expect(keysOf(readLines("2026-09-22.jsonl")[0])).not.toContain("taskId")
   })
 
-  it("口が打てない・JSON が読めないときは、どちらの欄も入らない", () => {
-    const broken = createOpenTaskReader(() => "not json")
-    const unavailable = createOpenTaskReader(() => undefined)
+  it("口が打てない・JSON が読めないときは、どちらの欄も入らない", async () => {
+    const broken = createTokenUsageLog(
+      createOpenTaskReader(() => "not json"),
+      root(),
+    )
+    const unavailable = createTokenUsageLog(
+      createOpenTaskReader(() => undefined),
+      root(),
+    )
 
-    createTokenUsageLog(broken, root()).append(entry(at(10, 30)))
-    createTokenUsageLog(unavailable, root()).append(entry(at(10, 31)))
+    broken.append(entry(at(10, 30)))
+    await broken.flush()
+    unavailable.append(entry(at(10, 31)))
+    await unavailable.flush()
 
     for (const record of readLines("2026-09-22.jsonl")) {
       expect(keysOf(record)).not.toContain("taskId")
@@ -291,11 +306,12 @@ describe("着手中のタスクとの結び付き", () => {
 })
 
 describe("readRange", () => {
-  it("日またぎの境界: 期間に入る日のファイルだけを読む", () => {
+  it("日またぎの境界: 期間に入る日のファイルだけを読む", async () => {
     const log = createTokenUsageLog(NO_TASK, root())
     log.append(entry(at(23, 59, 21)))
     log.append(entry(at(0, 0, 22)))
     log.append(entry(at(0, 0, 23)))
+    await log.flush()
 
     const records = log.readRange({ startDate: "2026-09-22", endDate: "2026-09-22" })
 
@@ -303,11 +319,12 @@ describe("readRange", () => {
     expect(records[0]?.at.slice(0, 10)).toBe("2026-09-22")
   })
 
-  it("複数日にまたがる期間は、古い→新しい順に日をまたいで返す", () => {
+  it("複数日にまたがる期間は、古い→新しい順に日をまたいで返す", async () => {
     const log = createTokenUsageLog(NO_TASK, root())
     log.append(entry(at(9, 0, 23)))
     log.append(entry(at(9, 0, 21)))
     log.append(entry(at(9, 0, 22)))
+    await log.flush()
 
     const records = log.readRange({ startDate: "2026-09-21", endDate: "2026-09-23" })
 
@@ -319,10 +336,11 @@ describe("readRange", () => {
   })
 
   // 中身だけを差し替えて mtime と size を戻す。開き直せば差し替えた中身が見え、開かなければ前の中身のまま。
-  it("2回目の読みで (mtime, size) が同じファイルは開かず、変わったファイルは読み直す", () => {
+  it("2回目の読みで (mtime, size) が同じファイルは開かず、変わったファイルは読み直す", async () => {
     const log = createTokenUsageLog(NO_TASK, root())
     log.append(entry(at(9, 0, 21)))
     log.append(entry(at(9, 0, 22)))
+    await log.flush()
     const period = { startDate: "2026-09-21", endDate: "2026-09-22" }
     const unchangedPath = join(root(), "2026-09-21.jsonl")
     // 秒に丸めた時刻にしておくと、書き戻した mtime が桁落ちで食い違わない。
@@ -339,6 +357,7 @@ describe("readRange", () => {
     expect(log.readRange(period).map((record) => record.mode)).toEqual(["work", "work"])
 
     log.append(entry(at(9, 1, 22)))
+    await log.flush()
     expect(log.readRange(period).length).toBe(3)
   })
 

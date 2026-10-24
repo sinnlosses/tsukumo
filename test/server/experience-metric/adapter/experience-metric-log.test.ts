@@ -60,22 +60,24 @@ function readLines(fileName: string): unknown[] {
 }
 
 describe("createExperienceMetricLog", () => {
-  it("日付ごとのファイルに1行ずつ追記する", () => {
+  it("日付ごとのファイルに1行ずつ追記する", async () => {
     const log = createExperienceMetricLog(root())
 
     log.append(conclusion(at(9, 0)))
     log.append(recovery(at(23, 30)))
     log.append(conclusion(at(1, 15, 23)))
+    await log.flush()
 
     expect(readdirSync(root()).toSorted()).toEqual(["2026-09-22.jsonl", "2026-09-23.jsonl"])
     expect(readLines("2026-09-22.jsonl").length).toBe(2)
     expect(readLines("2026-09-23.jsonl").length).toBe(1)
   })
 
-  it("閉じた依頼の行の鍵は、版・日時・セッションID・種類・局面・3つの数", () => {
+  it("閉じた依頼の行の鍵は、版・日時・セッションID・種類・局面・3つの数", async () => {
     const log = createExperienceMetricLog(root())
 
     log.append(conclusion(at(9, 0)))
+    await log.flush()
 
     const [record] = readLines("2026-09-22.jsonl")
     expect(keysOf(record)).toEqual([
@@ -92,20 +94,22 @@ describe("createExperienceMetricLog", () => {
     expect(JSON.stringify(record)).toMatch(/"at":"2026-09-22T09:00:00[+-]\d{2}:\d{2}"/)
   })
 
-  it("立ち直りの行の鍵は、版・日時・セッションID・種類・手数・時間", () => {
+  it("立ち直りの行の鍵は、版・日時・セッションID・種類・手数・時間", async () => {
     const log = createExperienceMetricLog(root())
 
     log.append(recovery(at(9, 0)))
+    await log.flush()
 
     const [record] = readLines("2026-09-22.jsonl")
     expect(keysOf(record)).toEqual(["v", "at", "sessionId", "kind", "hands", "untilRecoveryMs"])
   })
 
-  it("行に出てくる文字列は、鍵の名前・時刻・セッションID・種類・局面の名前だけ", () => {
+  it("行に出てくる文字列は、鍵の名前・時刻・セッションID・種類・局面の名前だけ", async () => {
     const log = createExperienceMetricLog(root())
 
     log.append(conclusion(at(9, 0)))
     log.append(recovery(at(9, 5)))
+    await log.flush()
 
     const text = readFileSync(join(root(), "2026-09-22.jsonl"), "utf8")
     const strings = [...text.matchAll(/"([^"]*)"/g)].flatMap(([, value]) => value ?? [])
@@ -132,11 +136,12 @@ describe("createExperienceMetricLog", () => {
 })
 
 describe("readRange", () => {
-  it("期間に入る日の行だけを、書いた件の形に戻して古い順に返す", () => {
+  it("期間に入る日の行だけを、書いた件の形に戻して古い順に返す", async () => {
     const log = createExperienceMetricLog(root())
     log.append(conclusion(at(23, 59, 21)))
     log.append(recovery(at(9, 0, 22)))
     log.append(conclusion(at(0, 0, 23)))
+    await log.flush()
 
     expect(log.readRange({ startDate: "2026-09-22", endDate: "2026-09-23" })).toEqual([
       recovery(at(9, 0, 22)),
@@ -144,7 +149,7 @@ describe("readRange", () => {
     ])
   })
 
-  it("仕切りを離した1回を版2の行に書き、読み戻す", () => {
+  it("仕切りを離した1回を版2の行に書き、読み戻す", async () => {
     const log = createExperienceMetricLog(root())
     const entry = splitEntry(
       { divider: "rowTop", releasedPercent: 62, previousPercent: 55 },
@@ -153,6 +158,7 @@ describe("readRange", () => {
     )
 
     log.append(entry)
+    await log.flush()
 
     expect(readLines("2026-09-22.jsonl")).toMatchObject([
       { v: 2, kind: "split", divider: "rowTop", releasedPercent: 62, previousPercent: 55 },
@@ -160,9 +166,10 @@ describe("readRange", () => {
     expect(log.readRange({ startDate: "2026-09-22", endDate: "2026-09-22" })).toEqual([entry])
   })
 
-  it("知らない仕切りの名前の行は読まずに落とす", () => {
+  it("知らない仕切りの名前の行は読まずに落とす", async () => {
     const log = createExperienceMetricLog(root())
     log.append(conclusion(at(9, 0)))
+    await log.flush()
     const unknownDivider = {
       v: 2,
       at: "2026-09-22T10:00:00+09:00",
@@ -179,9 +186,10 @@ describe("readRange", () => {
     ])
   })
 
-  it("版1の行も読む", () => {
+  it("版1の行も読む", async () => {
     const log = createExperienceMetricLog(root())
     log.append(conclusion(at(9, 0)))
+    await log.flush()
     const versionOne = {
       v: 1,
       at: "2026-09-22T10:00:00+09:00",
@@ -203,9 +211,10 @@ describe("readRange", () => {
     expect(log.readRange({ startDate: "2026-09-01", endDate: "2026-09-30" })).toEqual([])
   })
 
-  it("壊れた行・版が違う行は落とし、正しい行は残す", () => {
+  it("壊れた行・版が違う行は落とし、正しい行は残す", async () => {
     const log = createExperienceMetricLog(root())
     log.append(conclusion(at(9, 0)))
+    await log.flush()
     const otherVersion = {
       v: 999,
       at: "2026-09-22T10:00:00+09:00",

@@ -14,9 +14,9 @@ import {
   SPLIT_DIVIDERS,
 } from "../../../shared/experience-metric/experience-metric-record.ts"
 import {
-  appendJsonLine,
+  createJsonLinesAppender,
   dateFileNamesBetween,
-  dateFilePath,
+  type JsonLinesAppender,
   readValidLines,
 } from "../../adapter/lib/jsonl.ts"
 import { isoWithOffset, localDateKey } from "../../adapter/local-time.ts"
@@ -75,11 +75,14 @@ export function experienceMetricDir(): string {
  */
 export function createExperienceMetricLog(
   root: string = experienceMetricDir(),
-): ExperienceMetricLog {
+): ExperienceMetricLog & Pick<JsonLinesAppender, "flush" | "close"> {
+  const appender = createJsonLinesAppender(root)
   return {
     append: (entry) => {
-      appendJsonLine(dateFilePath(root, localDateKey(entry.at)), toRecord(entry))
+      appender.append(localDateKey(entry.at), [toRecord(entry)])
     },
+    flush: appender.flush,
+    close: appender.close,
     readRange: (period) => readEntriesInRange(root, period),
   }
 }

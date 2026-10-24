@@ -24,9 +24,9 @@ import {
   type TokenUsageRecord,
 } from "../../../shared/token-usage/token-usage.ts"
 import {
-  appendJsonLine,
+  createJsonLinesAppender,
   dateFileNamesBetween,
-  dateFilePath,
+  type JsonLinesAppender,
   readValidLines,
 } from "../../adapter/lib/jsonl.ts"
 import { isoWithOffset, localDateKey } from "../../adapter/local-time.ts"
@@ -100,12 +100,15 @@ export function tokenUsageDir(): string {
 export function createTokenUsageLog(
   openTask: OpenTaskReader,
   root: string = tokenUsageDir(),
-): TokenUsageLog {
+): TokenUsageLog & Pick<JsonLinesAppender, "flush" | "close"> {
   const cache: ReadCache = new Map()
+  const appender = createJsonLinesAppender(root)
   return {
     append: (entry) => {
-      appendJsonLine(dateFilePath(root, localDateKey(entry.at)), toRecord(entry, openTask))
+      appender.append(localDateKey(entry.at), [toRecord(entry, openTask)])
     },
+    flush: appender.flush,
+    close: appender.close,
     readRange: (period) => readRecordsInRange(root, period, cache),
   }
 }

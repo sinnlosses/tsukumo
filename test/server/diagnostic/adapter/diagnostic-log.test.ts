@@ -61,10 +61,11 @@ function failureFootprint(when: number): DiagnosticEntry {
 }
 
 describe("createDiagnosticLog", () => {
-  it("日付ごとのファイルに、版を付けて1件1行で追記する", () => {
+  it("日付ごとのファイルに、版を付けて1件1行で追記する", async () => {
     const log = createDiagnosticLog(root())
 
     log.append([footprint(at(9, 0)), footprint(at(23, 30)), footprint(at(1, 15, 23))])
+    await log.flush()
 
     expect(readdirSync(root()).toSorted()).toEqual(["2026-09-22.jsonl", "2026-09-23.jsonl"])
     expect(readJsonLines(join(root(), "2026-09-22.jsonl"))).toEqual([
@@ -73,10 +74,11 @@ describe("createDiagnosticLog", () => {
     ])
   })
 
-  it("範囲に入る件だけを、日をまたいで時刻の順に読み戻す", () => {
+  it("範囲に入る件だけを、日をまたいで時刻の順に読み戻す", async () => {
     const log = createDiagnosticLog(root())
     log.append([footprint(at(23, 30)), footprint(at(9, 0))])
     log.append([footprint(at(1, 15, 23), 2), footprint(at(8, 0, 23), 2)])
+    await log.flush()
 
     expect(log.readRange({ startAt: at(9, 0), endAt: at(8, 0, 23) })).toEqual([
       footprint(at(9, 0)),
@@ -85,27 +87,29 @@ describe("createDiagnosticLog", () => {
     ])
   })
 
-  it("`browser-error` の流れも1件1行で往復する", () => {
+  it("`browser-error` の流れも1件1行で往復する", async () => {
     const log = createDiagnosticLog(root())
 
     log.append([browserErrorFootprint(at(9, 0))])
+    await log.flush()
 
     expect(log.readRange({ startAt: at(0, 0), endAt: at(0, 0, 23) })).toEqual([
       browserErrorFootprint(at(9, 0)),
     ])
   })
 
-  it("握りつぶしていた失敗（swallowed-failure）も、場所の名前と error.name・code で往復する", () => {
+  it("握りつぶしていた失敗（swallowed-failure）も、場所の名前と error.name・code で往復する", async () => {
     const log = createDiagnosticLog(root())
 
     log.append([failureFootprint(at(10, 0))])
+    await log.flush()
 
     expect(log.readRange({ startAt: at(0, 0), endAt: at(0, 0, 23) })).toEqual([
       failureFootprint(at(10, 0)),
     ])
   })
 
-  it("依頼の遅れ（prompt-delay）も区間のミリ秒で往復する", () => {
+  it("依頼の遅れ（prompt-delay）も区間のミリ秒で往復する", async () => {
     const log = createDiagnosticLog(root())
     const delay: DiagnosticEntry = {
       flow: "prompt-delay",
@@ -117,11 +121,12 @@ describe("createDiagnosticLog", () => {
     }
 
     log.append([delay])
+    await log.flush()
 
     expect(log.readRange({ startAt: at(0, 0), endAt: at(0, 0, 23) })).toEqual([delay])
   })
 
-  it("準備の区間を持たない古い依頼の遅れも読める", () => {
+  it("準備の区間を持たない古い依頼の遅れも読める", async () => {
     const log = createDiagnosticLog(root())
     const delay: DiagnosticEntry = {
       flow: "prompt-delay",
@@ -132,11 +137,12 @@ describe("createDiagnosticLog", () => {
     }
 
     log.append([delay])
+    await log.flush()
 
     expect(log.readRange({ startAt: at(0, 0), endAt: at(0, 0, 23) })).toEqual([delay])
   })
 
-  it("迎えの挨拶の書き込み（welcome-writing）も各回の結果と所要で往復する", () => {
+  it("迎えの挨拶の書き込み（welcome-writing）も各回の結果と所要で往復する", async () => {
     const log = createDiagnosticLog(root())
     const writing: DiagnosticEntry = {
       flow: "welcome-writing",
@@ -151,29 +157,32 @@ describe("createDiagnosticLog", () => {
     }
 
     log.append([writing])
+    await log.flush()
 
     expect(log.readRange({ startAt: at(0, 0), endAt: at(0, 0, 23) })).toEqual([writing])
   })
 
-  it("あらすじの古い行を落としたこと（synopsis-trim）も往復する", () => {
+  it("あらすじの古い行を落としたこと（synopsis-trim）も往復する", async () => {
     const log = createDiagnosticLog(root())
     const trim: DiagnosticEntry = { flow: "synopsis-trim", at: at(10, 0), droppedLines: 4 }
 
     log.append([trim])
+    await log.flush()
 
     expect(log.readRange({ startAt: at(0, 0), endAt: at(0, 0, 23) })).toEqual([trim])
   })
 
-  it("report の関所が止めたこと（report-gate-block）も往復する", () => {
+  it("report の関所が止めたこと（report-gate-block）も往復する", async () => {
     const log = createDiagnosticLog(root())
     const block: DiagnosticEntry = { flow: "report-gate-block", at: at(10, 0) }
 
     log.append([block])
+    await log.flush()
 
     expect(log.readRange({ startAt: at(0, 0), endAt: at(0, 0, 23) })).toEqual([block])
   })
 
-  it("壊れた行・版が違う行・知らない種類の行は読み飛ばす", () => {
+  it("壊れた行・版が違う行・知らない種類の行は読み飛ばす", async () => {
     const path = join(root(), "2026-09-22.jsonl")
     mkdirSync(root(), { recursive: true })
     appendFileSync(path, "{壊れた行\n")
@@ -184,6 +193,7 @@ describe("createDiagnosticLog", () => {
     )
     const log = createDiagnosticLog(root())
     log.append([footprint(at(9, 2))])
+    await log.flush()
 
     expect(log.readRange({ startAt: at(0, 0), endAt: at(0, 0, 23) })).toEqual([footprint(at(9, 2))])
   })

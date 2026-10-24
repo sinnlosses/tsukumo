@@ -6,7 +6,7 @@ import {
   QUESTION_USAGE_FORMAT_VERSION,
   type QuestionUsageRecord,
 } from "../../../shared/session-driver/question-usage-record.ts"
-import { appendJsonLine, dateFilePath } from "../../adapter/lib/jsonl.ts"
+import { createJsonLinesAppender, type JsonLinesAppender } from "../../adapter/lib/jsonl.ts"
 import { isoWithOffset, localDateKey } from "../../adapter/local-time.ts"
 import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
 import type { QuestionUsageEntry, QuestionUsageLog } from "../core/question-usage.ts"
@@ -18,11 +18,16 @@ export function questionUsageDir(): string {
 }
 
 /** `root` はテストがホームを汚さないために差し替える。 */
-export function createQuestionUsageLog(root: string = questionUsageDir()): QuestionUsageLog {
+export function createQuestionUsageLog(
+  root: string = questionUsageDir(),
+): QuestionUsageLog & Pick<JsonLinesAppender, "flush" | "close"> {
+  const appender = createJsonLinesAppender(root)
   return {
     append: (entry) => {
-      appendJsonLine(dateFilePath(root, localDateKey(entry.at)), toRecord(entry))
+      appender.append(localDateKey(entry.at), [toRecord(entry)])
     },
+    flush: appender.flush,
+    close: appender.close,
   }
 }
 

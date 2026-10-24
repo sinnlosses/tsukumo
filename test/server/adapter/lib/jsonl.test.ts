@@ -1,11 +1,13 @@
-import { readFileSync, writeFileSync } from "node:fs"
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs"
+import type * as NodeFs from "node:fs"
 import { join } from "node:path"
 
-import { describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 import { z } from "zod"
 
 import {
   appendJsonLine,
+  createJsonLinesAppender,
   dateFileNames,
   dateFileNamesBetween,
   dateFilePath,
@@ -14,7 +16,122 @@ import {
 } from "../../../../src/server/adapter/lib/jsonl.ts"
 import { useTempDir } from "../../../fixture/temp-dir.ts"
 
+/** `node:fs` の呼び出しを数える状態で JSONL の口を読み込み直す（モジュールの記憶は共有なので、あとで戻す）。 */
+async function loadCountingAppender(): Promise<{
+  readonly createJsonLinesAppender: typeof createJsonLinesAppender
+  readonly fsCalls: () => Record<string, number>
+}> {
+  vi.resetModules()
+  const actual = await vi.importActual<typeof NodeFs>("node:fs")
+  const spies = {
+    mkdirSync: vi.fn<typeof actual.mkdirSync>(actual.mkdirSync),
+    openSync: vi.fn<typeof actual.openSync>(actual.openSync),
+    fstatSync: vi.fn<typeof actual.fstatSync>(actual.fstatSync),
+    readSync: vi.fn<typeof actual.readSync>(actual.readSync),
+    createWriteStream: vi.fn<typeof actual.createWriteStream>(actual.createWriteStream),
+  }
+  vi.doMock("node:fs", () => ({ ...actual, ...spies }))
+  const loaded = await import("../../../../src/server/adapter/lib/jsonl.ts")
+  return {
+    createJsonLinesAppender: loaded.createJsonLinesAppender,
+    fsCalls: () => ({
+      mkdirSync: spies.mkdirSync.mock.calls.length,
+      openSync: spies.openSync.mock.calls.length,
+      fstatSync: spies.fstatSync.mock.calls.length,
+      readSync: spies.readSync.mock.calls.length,
+      createWriteStream: spies.createWriteStream.mock.calls.length,
+    }),
+  }
+}
+
 const dir = useTempDir("jsonl")
+
+describe("createJsonLinesAppender", () => {
+  afterEach(() => {
+    vi.doUnmock("node:fs")
+    vi.resetModules()
+  })
+
+  it("同じ日付への2回目以降は、ディレクトリ作成・開き直し・末尾の確認を打たない", async () => {
+    const { createJsonLinesAppender: createCounted, fsCalls } = await loadCountingAppender()
+    const appender = createCounted(join(dir(), "log"))
+
+    appender.append("2026-01-01", [{ seq: 1 }])
+    const afterFirst = fsCalls()
+    appender.append("2026-01-01", [{ seq: 2 }, { seq: 3 }])
+    appender.append("2026-01-01", [{ seq: 4 }])
+    await appender.close()
+
+    expect(afterFirst["createWriteStream"]).toBe(1)
+    expect(fsCalls()).toEqual(afterFirst)
+    expect(readJsonLines(join(dir(), "log", "2026-01-01.jsonl"))).toEqual([
+      { seq: 1 },
+      { seq: 2 },
+      { seq: 3 },
+      { seq: 4 },
+    ])
+  })
+
+  it("日付が変わると前のファイルを閉じ、新しい日のファイルへ書く", async () => {
+    const { createJsonLinesAppender: createCounted, fsCalls } = await loadCountingAppender()
+    const root = join(dir(), "log")
+    const appender = createCounted(root)
+
+    appender.append("2026-01-01", [{ day: 1 }])
+    appender.append("2026-01-02", [{ day: 2 }])
+    await appender.flush()
+    appender.append("2026-01-02", [{ day: 3 }])
+    await appender.close()
+
+    expect(fsCalls()["createWriteStream"]).toBe(2)
+    expect(readJsonLines(join(root, "2026-01-01.jsonl"))).toEqual([{ day: 1 }])
+    expect(readJsonLines(join(root, "2026-01-02.jsonl"))).toEqual([{ day: 2 }, { day: 3 }])
+  })
+
+  it("末尾が改行で終わっていないファイルには、開いたときに改行を補う", async () => {
+    const root = join(dir(), "log")
+    const path = dateFilePath(root, "2026-01-01")
+    const appender = createJsonLinesAppender(root)
+    writeFileSyncCreatingDir(root, path, '{"seq":1}\n{"se')
+
+    appender.append("2026-01-01", [{ seq: 2 }])
+    await appender.close()
+
+    expect(readJsonLines(path)).toEqual([{ seq: 1 }, { seq: 2 }])
+  })
+
+  it("置き場を作れなくても例外を投げず、障害が消えた次の追記で書ける", async () => {
+    const blocked = join(dir(), "blocked")
+    writeFileSync(blocked, "")
+    const appender = createJsonLinesAppender(blocked)
+
+    expect(() => {
+      appender.append("2026-01-01", [{ seq: 1 }])
+    }).not.toThrow()
+    rmSync(blocked)
+    appender.append("2026-01-01", [{ seq: 2 }])
+    await appender.close()
+
+    expect(readJsonLines(join(blocked, "2026-01-01.jsonl"))).toEqual([{ seq: 2 }])
+  })
+
+  it("閉じたあとの追記は開き直して書く", async () => {
+    const root = join(dir(), "log")
+    const appender = createJsonLinesAppender(root)
+
+    appender.append("2026-01-01", [{ seq: 1 }])
+    await appender.close()
+    appender.append("2026-01-01", [{ seq: 2 }])
+    await appender.close()
+
+    expect(readJsonLines(dateFilePath(root, "2026-01-01"))).toEqual([{ seq: 1 }, { seq: 2 }])
+  })
+})
+
+function writeFileSyncCreatingDir(root: string, path: string, content: string): void {
+  mkdirSync(root, { recursive: true })
+  writeFileSync(path, content)
+}
 
 describe("appendJsonLine", () => {
   it("ディレクトリが無ければ作り、JSON を1行追記する", () => {

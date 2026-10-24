@@ -4,6 +4,7 @@
 // 即時終了する前提不足は `run` の1つに集めてある（ポート・ブラウザ側の成果物・取り込んだプラグイン・疑似セッションの4つ）。
 
 import process from "node:process"
+import { setTimeout as delay } from "node:timers/promises"
 
 import { createCurrentCharacter } from "./current-character.ts"
 import { createAchievementCache } from "./server/achievement/adapter/closed-issue.ts"
@@ -208,10 +209,21 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
     ? await openLayoutView(host, config.driver, view.url)
     : { tracked: false as const }
 
-  stopSessionOnExit(session.manager.close, removeInstanceLocation, openedView, reportFailure)
+  stopSessionOnExit(
+    session.manager.close,
+    async () => {
+      await Promise.all([diagnosticLog.close(), tokenUsageLog.close(), session.closeLogs()])
+    },
+    removeInstanceLocation,
+    openedView,
+    reportFailure,
+  )
 
   return 0
 }
+
+/** 終了のとき、記録の口を閉じ終えるのを待つ上限。これを過ぎたら待たずに抜ける。 */
+const CLOSE_LOGS_TIMEOUT_MS = 2_000
 
 /** 起動時に開いた疑似セッションのビュー。これが無ければ終了時にビューを閉じない。 */
 type OpenedFakeView =
@@ -247,6 +259,7 @@ async function checkWorkflowPlugin(
  */
 function stopSessionOnExit(
   closeSessions: () => void,
+  closeLogs: () => Promise<void>,
   removeInstanceLocation: () => void,
   openedView: OpenedFakeView,
   reportFailure: (place: SwallowedFailurePlace, error: unknown) => void,
@@ -261,6 +274,7 @@ function stopSessionOnExit(
     try {
       removeInstanceLocation()
       closeSessions()
+      await Promise.race([closeLogs(), delay(CLOSE_LOGS_TIMEOUT_MS)])
       if (openedView.tracked) {
         await openedView.close()
       }

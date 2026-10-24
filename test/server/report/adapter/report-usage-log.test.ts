@@ -78,22 +78,24 @@ function readLines(fileName: string): unknown[] {
 }
 
 describe("createReportUsageLog", () => {
-  it("日付ごとのファイルに1行ずつ追記する", () => {
+  it("日付ごとのファイルに1行ずつ追記する", async () => {
     const log = createReportUsageLog("json-schema", "sdk", root())
 
     log.append(entry(at(9, 0), "claude-session-1"))
     log.append(entry(at(23, 30), "claude-session-2"))
     log.append(entry(at(1, 15, 23), "claude-session-3"))
+    await log.flush()
 
     expect(readdirSync(root()).toSorted()).toEqual(["2026-09-22.jsonl", "2026-09-23.jsonl"])
     expect(readLines("2026-09-22.jsonl").length).toBe(2)
     expect(readLines("2026-09-23.jsonl").length).toBe(1)
   })
 
-  it("1行の鍵は版・日時・セッションID・figure の種類と理由・節の札と許さない塊の数・塊の種類と欄・逃げ道の記法（外・容れ物の中・塊の無いもの）・知らない種類の数で、日時は ISO 8601（オフセット付き）", () => {
+  it("1行の鍵は版・日時・セッションID・figure の種類と理由・節の札と許さない塊の数・塊の種類と欄・逃げ道の記法（外・容れ物の中・塊の無いもの）・知らない種類の数で、日時は ISO 8601（オフセット付き）", async () => {
     const log = createReportUsageLog("json-schema", "sdk", root())
 
     log.append(entry(at(9, 0)))
+    await log.flush()
 
     const [record] = readLines("2026-09-22.jsonl")
     expect(keysOf(record)).toEqual([
@@ -171,17 +173,18 @@ describe("createReportUsageLog", () => {
     expect(JSON.stringify(record)).toMatch(/"at":"2026-09-22T09:00:00[+-]\d{2}:\d{2}"/)
   })
 
-  it("figure に図を置いた行は figureKind だけを持ち、noneReason を持たない", () => {
+  it("figure に図を置いた行は figureKind だけを持ち、noneReason を持たない", async () => {
     const log = createReportUsageLog("json-schema", "sdk", root())
 
     log.append(entry(at(9, 0), "claude-session-1", { figureKind: "graph" }))
+    await log.flush()
 
     const [record] = readLines("2026-09-22.jsonl")
     expect(record).toMatchObject({ figureKind: "graph" })
     expect(keysOf(record)).not.toContain("noneReason")
   })
 
-  it("差し戻しの行は同じ日付ファイルに入り、鍵は版・種類・日時・セッションID・差し戻しの名前・引数の字数・引き継いだ欄の名前・型の渡し方だけ", () => {
+  it("差し戻しの行は同じ日付ファイルに入り、鍵は版・種類・日時・セッションID・差し戻しの名前・引数の字数・引き継いだ欄の名前・型の渡し方だけ", async () => {
     const log = createReportUsageLog("json-schema", "sdk", root())
 
     log.appendRejection({
@@ -191,6 +194,7 @@ describe("createReportUsageLog", () => {
       argumentChars: { total: 800, fields: { conclusion: 50 } },
       inheritedFields: ["sections"],
     })
+    await log.flush()
 
     const [record] = readLines("2026-09-22.jsonl")
     expect(keysOf(record)).toEqual([
@@ -215,7 +219,7 @@ describe("createReportUsageLog", () => {
     })
   })
 
-  it("短い型の表記で起こした記録は、受け付けと差し戻しの両方の行にそれを書く", () => {
+  it("短い型の表記で起こした記録は、受け付けと差し戻しの両方の行にそれを書く", async () => {
     const log = createReportUsageLog("short-type", "sdk", root())
 
     log.append(entry(at(9, 0)))
@@ -226,6 +230,7 @@ describe("createReportUsageLog", () => {
       argumentChars: { total: 800, fields: { conclusion: 50 } },
       inheritedFields: [],
     })
+    await log.flush()
 
     expect(readLines("2026-09-22.jsonl")).toMatchObject([
       { reportSchema: "short-type" },

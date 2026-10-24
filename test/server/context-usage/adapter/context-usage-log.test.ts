@@ -39,22 +39,24 @@ function readLines(fileName: string): unknown[] {
 }
 
 describe("createContextUsageLog", () => {
-  it("日付ごとのファイルに1行ずつ追記する", () => {
+  it("日付ごとのファイルに1行ずつ追記する", async () => {
     const log = createContextUsageLog(root())
 
     log.append(entry(at(9, 0), "claude-session-1"))
     log.append(entry(at(23, 30), "claude-session-2"))
     log.append(entry(at(1, 15, 23), "claude-session-3"))
+    await log.flush()
 
     expect(readdirSync(root()).toSorted()).toEqual(["2026-09-22.jsonl", "2026-09-23.jsonl"])
     expect(readLines("2026-09-22.jsonl").length).toBe(2)
     expect(readLines("2026-09-23.jsonl").length).toBe(1)
   })
 
-  it("1行の鍵は版・日時・セッションID・モード・内訳で、日時は ISO 8601（オフセット付き）", () => {
+  it("1行の鍵は版・日時・セッションID・モード・内訳で、日時は ISO 8601（オフセット付き）", async () => {
     const log = createContextUsageLog(root())
 
     log.append(entry(at(9, 0)))
+    await log.flush()
 
     const [record] = readLines("2026-09-22.jsonl")
     expect(keysOf(record)).toEqual(["v", "at", "sessionId", "mode", "usage"])
@@ -71,10 +73,11 @@ describe("createContextUsageLog", () => {
   // ターンごとの記録より広い線（`CONTEXT_USAGE_FORMAT_VERSION`）——分類の表示名・
   // MCP ツール名・メモリファイルのパス・スキル名まで入る。広がったのはそこまでで、
   // 会話の文面が混ざる余地が無いことを、行に出てくる文字列を数え上げて固定する。
-  it("行に出てくる文字列は、鍵の名前と内訳の名前・セッションID・モード・時刻だけ", () => {
+  it("行に出てくる文字列は、鍵の名前と内訳の名前・セッションID・モード・時刻だけ", async () => {
     const log = createContextUsageLog(root())
 
     log.append(entry(at(9, 0)))
+    await log.flush()
 
     const [line] = readFileSync(join(root(), "2026-09-22.jsonl"), "utf8").trimEnd().split("\n")
     const strings = [...(line ?? "").matchAll(/"([^"]*)"/g)].flatMap(([, value]) => value ?? [])
