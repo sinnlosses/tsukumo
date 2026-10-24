@@ -10,6 +10,13 @@
 import process from "node:process"
 
 import { buildUiBundle, builtUiDir } from "../../src/server/view-server/adapter/bundle.ts"
+import { REPOSITORY_ROOT } from "../shared/repository-root.ts"
+import { isBuiltUiCurrent, recordBuildInputs } from "./lib/build-ui-skip.ts"
+
+if (await isBuiltUiCurrent(builtUiDir(), REPOSITORY_ROOT)) {
+  process.stdout.write("UI は前回と同じ入力なので組み立てを飛ばした\n")
+  process.exit(0)
+}
 
 process.stdout.write("Building UI... ")
 const started = performance.now()
@@ -20,5 +27,6 @@ if (!result.ok) {
   process.exit(1)
 }
 
+await recordBuildInputs(builtUiDir(), REPOSITORY_ROOT)
 const seconds = ((performance.now() - started) / 1000).toFixed(1)
 process.stdout.write(`done (${seconds}s)\n`)

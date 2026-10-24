@@ -1,7 +1,7 @@
 // `pnpm run check` の入口。`test:e2e` は変えたファイルから選んだ E2E のファイルだけを流し
 // （選び方は `selectE2eFiles`）、何を選んだかを1行で出す。
-// 重い段（`test`・`test:e2e`）は、軽い段のあとに単体と E2E を並べて走らせる。
-// 並べた2段の出力は段ごとに溜め、両方が終わってから段の順に出し、落ちた段は最後の行で名指しする。
+// 軽い段と重い段（`test`・`test:e2e`）は全部同時に起こす。
+// 出力は段ごとに溜め、全段が終わってから段の順に出し、落ちた段は最後の行で名指しする。
 //
 // 変えたファイルが `docs/`・`.tw/` の Markdown と直下の `README.md`・`AGENTS.md` だけのときは、
 // `--full` の有無に関わらず `format:check`・`token-limit` と文書の検査（`DOCUMENT_CHECK_TEST_FILES`）だけを打つ。
@@ -16,7 +16,7 @@
 //   node scripts/dev/check.ts --full  # 文書だけの変更でなければ、6段すべてを、E2E は全件で走らせる
 //                                 # （変えたファイルを集められないときも6段すべて）
 
-import { type ChildProcess, spawn, spawnSync } from "node:child_process"
+import { type ChildProcess, spawn } from "node:child_process"
 import { readFileSync, rmSync } from "node:fs"
 import { availableParallelism, tmpdir } from "node:os"
 import { join } from "node:path"
@@ -82,25 +82,9 @@ const activeStages = rerunPlan.stages.flatMap((entry) =>
   entry.kind === "skip" ? [] : [entry.kind === "narrowed" ? entry.run : entry.planned],
 )
 
-const lightResults: StageRunResult[] = []
-for (const stage of activeStages.filter((candidate) => !candidate.heavy)) {
-  const { command, args } = stageCommand(stage.name, stage.args, priorityTool)
-  const result = spawnSync(command, args, {
-    cwd: ROOT,
-    stdio: "inherit",
-  })
-  const status = result.status ?? 1
-  lightResults.push({ name: stage.name, status, stopped: false, failed: NO_FAILED_FILES })
-  if (status !== 0) {
-    saveRecord(lightResults)
-    process.exit(status)
-  }
-}
-
-const heavyStages = activeStages.filter((stage) => stage.heavy)
-const stageWorkers = heavyStages.length > 0 ? markRunningAndShareWorkers() : 0
-const heavyResults = heavyStages.length > 0 ? await runConcurrently(heavyStages) : []
-saveRecord([...lightResults, ...heavyResults])
+const stageWorkers = activeStages.some((stage) => stage.heavy) ? markRunningAndShareWorkers() : 0
+const stageResults = activeStages.length > 0 ? await runConcurrently(activeStages) : []
+saveRecord(stageResults)
 
 /**
  * 走っている検証の印を置き（終了・`SIGTERM`・`SIGINT` で消す）、その時点の本数で
@@ -321,7 +305,7 @@ function runBuffered(stage: Stage, control: StopControl): Promise<BufferedResult
   return new Promise((resolve) => {
     const { command, args } = stageCommand(
       stage.name,
-      [...stage.args, `--maxWorkers=${stageWorkers}`, ...reporterArgs],
+      stage.heavy ? [...stage.args, `--maxWorkers=${stageWorkers}`, ...reporterArgs] : stage.args,
       priorityTool,
     )
     const child = spawn(command, args, {

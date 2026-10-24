@@ -238,7 +238,7 @@ pnpm run test:e2e:update       # E2E の期待値（test/e2e/expected/）を書�
 pnpm run typecheck             # css-types のあと tsc --noEmit
 pnpm run lint                  # oxlint（--fix は lint:fix）
 pnpm run format                # ADR の一覧表と用語集の索引を見出しから書き直し、oxfmt で自動整形（--check は format:check）
-pnpm run build                 # ブラウザ側（src/browser/）を dist/browser/ に組み立てる。起動時には組み立てない
+pnpm run build                 # ブラウザ側（src/browser/）を dist/browser/ に組み立てる（入力が前回と同じなら飛ばす）。起動時には組み立てない
                               #   ので、pnpm install のあとと src/browser/ を直したあとに打つ
 pnpm run start                 # セッションを起こし、ページをホスト（Orca か既定のブラウザ）に開く（`tsukumo` コマンドと同じ。
                               #   TSUKUMO_OPEN_VIEW=0 で自動オープンを止める。本物の claude を子プロセスで起こす。

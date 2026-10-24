@@ -25,8 +25,8 @@
   振る舞いではないので、`src/` の写しの構成には従わない）
 - **`pnpm run check` の中の別の段にする**（`pnpm run test` は既定の設定が `test/e2e/` を外し、E2E は
   `pnpm run test:e2e` が E2E 専用の設定で走らせる）。時間切れの既定を E2E の段だけ延ばし、単体テストを
-  1ファイル走らせるときに Chrome を要らないままにするため。`pnpm run check` は軽い段のあとに重い段（単体と E2E）を
-  並べて走らせる。**`--full` でない `check` の単体の段は、変えた `src/`・`test/`・`scripts/` のファイルに関連するテスト
+  1ファイル走らせるときに Chrome を要らないままにするため。`pnpm run check` は軽い段（typecheck・lint・format:check・token-limit）と
+  重い段（単体と E2E）を全部同時に起こし、1つが落ちると残りを止める。**`--full` でない `check` の単体の段は、変えた `src/`・`test/`・`scripts/` のファイルに関連するテスト
   （`vitest related`）と規約のテストだけ**（設定だけの変更と `--full` は全件。`vitest.config.ts` の `globalSetup`・`setupFiles` に挙がるファイルはどのテストからも import されず辿れないので、変えたときも全件）。**`--full` の E2E の段だけ、作業ツリーをまたぐ錠を取ってから走らせる**
   （`scripts/dev/lib/e2e-full-lock.ts`。共有の git dir の `e2e-full-lock` に持ち主の pid を書き、
   持ち主が死んでいれば奪う。待っている間は1分ごとに1行出し、15 分を超えたら理由と錠のパスを出して落とす。単体や lint は待たせない）。

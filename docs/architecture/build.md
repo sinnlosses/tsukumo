@@ -22,6 +22,7 @@
 ### 事前の組み立てと配布
 
 本文は `docs/architecture/build/prebuild-and-hmr.md`「事前の組み立てと配布」。
+`pnpm run build` は入力（ソース・vite 設定・依存・tsconfig）が前回と同じなら組み立てを飛ばす。
 
 ### 作り直しを押す仕組み
 

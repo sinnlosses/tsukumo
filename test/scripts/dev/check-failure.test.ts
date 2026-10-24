@@ -68,6 +68,10 @@ describe("shouldStopRunningStages", () => {
     expect(shouldStopRunningStages([outcome("test", 0), outcome("test:e2e", 1)])).toBe(true)
   })
 
+  test("軽い段が落ちたら、走っている重い段を止める", () => {
+    expect(shouldStopRunningStages([outcome("lint", 1)])).toBe(true)
+  })
+
   test("止められただけの段では、ほかを止めない", () => {
     expect(shouldStopRunningStages([outcome("test", 143, [], true)])).toBe(false)
   })
