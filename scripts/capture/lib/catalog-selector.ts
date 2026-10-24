@@ -46,9 +46,6 @@ export const DIFF_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="code-file_"]`
 /** 結論のすぐ下の合図の行（`mainViewTurns` が組む。総括行・問題の項目・通った項目の畳みを含む検証結果の塊）。 */
 export const VERDICT_SELECTOR = `${MAIN_REGION_SELECTOR} [role="group"][aria-label="検証結果"]`
 
-/** 目次の節の行の右端の「新」の印（`report-new-section` 場面）。目次は本文の領域の外の列。 */
-export const NEW_SECTION_MARK_SELECTOR = '[class*="outline-row-new"]'
-
 /** 最終レポートの器。最終 `report` が届くまで現れず、中間レポートの器（`is-interim`）とは別。 */
 export const WORK_PLAN_FINAL_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="is-final_"]`
 

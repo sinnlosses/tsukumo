@@ -20,7 +20,6 @@ describe("ReportOutline のやり取りの行", () => {
             title: "架空の前の依頼",
             result: "done",
             asideCount: 0,
-            newSectionIds: [],
             headedSectionIds: [],
           },
           {
@@ -28,7 +27,6 @@ describe("ReportOutline のやり取りの行", () => {
             title: "架空の委譲の依頼",
             result: "working",
             asideCount: 2,
-            newSectionIds: [],
             headedSectionIds: [],
           },
         ]}

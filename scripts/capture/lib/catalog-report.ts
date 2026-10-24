@@ -1,12 +1,7 @@
 // 状態のカタログのうち、レポートの基本の表示（検証結果・diff・合図の行）とターンの並びの場面。
 
 import { MAIN_REGION_SELECTOR } from "./capture-page.ts"
-import {
-  CHECKS_SELECTOR,
-  DIFF_SELECTOR,
-  NEW_SECTION_MARK_SELECTOR,
-  VERDICT_SELECTOR,
-} from "./catalog-selector.ts"
+import { CHECKS_SELECTOR, DIFF_SELECTOR, VERDICT_SELECTOR } from "./catalog-selector.ts"
 import { SCENE_END_SETTLE, type CatalogEntry } from "./catalog-type.ts"
 
 export const REPORT_ENTRIES: readonly CatalogEntry[] = [
@@ -40,16 +35,6 @@ export const REPORT_ENTRIES: readonly CatalogEntry[] = [
     prepare: [{ kind: "scroll", selector: DIFF_SELECTOR }],
     skipReveal: true,
     settle: { kind: "selector", selector: DIFF_SELECTOR, phase: "before-prepare" },
-  },
-  {
-    name: "report-new-section",
-    scene: "report-new-section",
-    label: "目次の「新」の印（最終レポートで増えた節の行）",
-    homeSetup: { kind: "default" },
-    workspaceSetup: { kind: "repository" },
-    prepare: [],
-    skipReveal: true,
-    settle: { kind: "selector", selector: NEW_SECTION_MARK_SELECTOR, phase: "before-prepare" },
   },
   {
     name: "report-task-finished",

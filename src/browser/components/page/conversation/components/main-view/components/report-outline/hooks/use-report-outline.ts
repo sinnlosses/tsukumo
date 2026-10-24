@@ -19,17 +19,12 @@ import { isDeepEqual } from "remeda"
 
 import type { TurnResult } from "../../../../../../../../../shared/session/turn-result.ts"
 import { REVEAL_PENDING_ATTRIBUTE } from "../../../../../../../../domain/reveal/paint.ts"
-import { useInterimViewing } from "../../../../../../../../stores/interim-viewing.ts"
 import {
   useReadingSection,
   type HeadingStep,
 } from "../../../../../../../../stores/reading-section.ts"
 import type { HeadNotice, HeadNoticeAction } from "../../../domain/head-notice.ts"
-import {
-  readableOutlineItems,
-  type OutlineItem,
-  type OutlineSectionKey,
-} from "../../../domain/report-heading.ts"
+import { readableOutlineItems, type OutlineItem } from "../../../domain/report-heading.ts"
 import { subscribeScrollFrame } from "../../../hooks/scroll-frame.ts"
 import {
   activeLineOf,
@@ -46,11 +41,10 @@ import {
 } from "../domain/outline-panel.ts"
 import { isScrolledToEnd, readHeadingIndexOf, readingSectionOf } from "../domain/reading-section.ts"
 
-/** 見出し1つ。`section` は `##`、`sub` は `###`。`sectionKey` は結びつく節の欄の ID。 */
+/** 見出し1つ。`section` は `##`、`sub` は `###`。 */
 export type ReportOutlineEntry = {
   readonly level: "section" | "sub"
   readonly text: string
-  readonly sectionKey: OutlineSectionKey
 }
 
 /** 上の段に並べるやり取り1件。 */
@@ -59,8 +53,6 @@ type ReportOutlineTurn = {
   readonly title: string
   readonly result: TurnResult
   readonly asideCount: number
-  /** 最終レポートに足された節の欄の ID（中間を見たやり取りだけ。無ければ空）。 */
-  readonly newSectionIds: readonly number[]
   /** 本文に見出しのある節の欄の ID。 */
   readonly headedSectionIds: readonly number[]
 }
@@ -87,8 +79,6 @@ export type ReportOutlineRow = ReportOutlineEntry & {
   readonly isActive: boolean
   /** いま読んでいる見出しと同じ節（`section` の見出しとその下の `sub`）か。 */
   readonly inActiveSection: boolean
-  /** 中間レポートに無かった節で、まだ押していないか。 */
-  readonly isNew: boolean
 }
 
 /** `<ReportOutline>` が画面に出す形。 */
@@ -250,7 +240,6 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
       const next = items.map((item): ReportOutlineEntry => ({
         level: item.level,
         text: item.text,
-        sectionKey: item.sectionKey,
       }))
       setEntries((previous) => (isDeepEqual(previous, next) ? previous : next))
       observeHeadings(false)
@@ -317,19 +306,6 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
     setReached(true)
   }
 
-  const readSections = useInterimViewing((state) => state.read[props.activeTurnId])
-  const markRead = useInterimViewing((state) => state.markRead)
-  function pressHeading(index: number): void {
-    selectHeading(index)
-    const sectionKey = entries[index]?.sectionKey
-    if (sectionKey?.kind === "headed") {
-      markRead(props.activeTurnId, sectionKey.id)
-    }
-  }
-  const newSectionIds = (
-    props.turns.find((turn) => turn.id === props.activeTurnId)?.newSectionIds ?? []
-  ).filter((sectionId) => !(readSections ?? []).includes(sectionId))
-
   const section = readingSectionOf(entries, activeIndex, reached)
   const publish = useReadingSection((state) => state.publish)
   const setMover = useReadingSection((state) => state.setMover)
@@ -391,7 +367,7 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
         props.onNotice(props.notice.action)
       }
     },
-    rows: outlineRows(entries, activeIndex, newSectionIds),
+    rows: outlineRows(entries, activeIndex),
     frameRef,
     contentRef,
     navRef,
@@ -402,7 +378,7 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
         focusRow(event.key === "ArrowDown" ? 1 : -1)
       }
     },
-    onSelect: pressHeading,
+    onSelect: selectHeading,
     collapsed,
     onToggleCollapse: () => {
       commitPanel((current) => ({ ...current, collapse: collapsed ? "open" : "collapsed" }))
@@ -425,7 +401,6 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
 function outlineRows(
   entries: readonly ReportOutlineEntry[],
   activeIndex: number,
-  newSectionIds: readonly number[],
 ): readonly ReportOutlineRow[] {
   const sectionOf = (index: number): number =>
     entries.findLastIndex((entry, at) => at <= index && entry.level === "section")
@@ -435,6 +410,5 @@ function outlineRows(
     isActive: index === activeIndex,
     inActiveSection:
       index === activeIndex || (activeSection !== -1 && sectionOf(index) === activeSection),
-    isNew: entry.sectionKey.kind === "headed" && newSectionIds.includes(entry.sectionKey.id),
   }))
 }

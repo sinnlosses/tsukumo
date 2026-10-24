@@ -31,9 +31,6 @@ const TURN_STEP_KEY_HINT = "前後のやり取りへは [ ] キー"
 
 const ACTIVE_TURN_MARK = "●"
 
-const NEW_SECTION_MARK = "新"
-const NEW_SECTION_LABEL = "中間レポートに無かった節"
-
 type PresentationalReportOutlineProps = ReportOutlineModel & {
   readonly children: ReactNode
 }
@@ -221,11 +218,6 @@ function HeadingRows(props: {
           >
             <span className={styles["outline-row-mark"]} aria-hidden="true" />
             <span className={styles["outline-row-text"]}>{row.text}</span>
-            {row.isNew && (
-              <span className={styles["outline-row-new"]} aria-label={NEW_SECTION_LABEL}>
-                {NEW_SECTION_MARK}
-              </span>
-            )}
           </button>
         ),
       )}

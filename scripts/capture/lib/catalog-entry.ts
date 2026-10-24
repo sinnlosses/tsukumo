@@ -39,13 +39,11 @@ const SIZES = [
 export type CatalogSize = (typeof SIZES)[number]
 
 /**
- * 広い窓だけで撮る件。狭い窓は選択肢が角丸のボタンの縦並びで preview の面が出ず、
- * 目次の列も窓の幅が約 870px 未満では出ない。
+ * 広い窓だけで撮る件。狭い窓は選択肢が角丸のボタンの縦並びで preview の面が出ない。
  */
 const WIDE_ONLY_NAMES: ReadonlySet<string> = new Set([
   "question-preview-image",
   "question-preview-image-missing",
-  "report-new-section",
 ])
 
 export function sizesOf(entry: CatalogEntry): readonly CatalogSize[] {

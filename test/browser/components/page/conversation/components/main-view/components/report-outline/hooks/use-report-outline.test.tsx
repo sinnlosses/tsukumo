@@ -18,7 +18,6 @@ const ONE_TURN = {
       title: "架空の依頼",
       result: "done",
       asideCount: 0,
-      newSectionIds: [],
       headedSectionIds: [],
     },
   ],
