@@ -43,8 +43,8 @@ const SERVER_FEATURE_IMPORTS: Readonly<Record<ServerFeature, ReadonlySet<ServerF
   "character-pack": new Set([]),
   item: new Set([]),
   diary: new Set(["repository", "session-driver"]),
-  chat: new Set(["character-pack", "session-driver"]),
-  "session-driver": new Set(["report", "view-server"]),
+  chat: new Set(["character-pack"]),
+  "session-driver": new Set(["report", "view-server", "chat"]),
   session: new Set([
     "session-driver",
     "chat",

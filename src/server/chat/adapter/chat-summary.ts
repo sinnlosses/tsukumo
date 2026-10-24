@@ -25,11 +25,7 @@ import { writeFileAtomic } from "../../adapter/lib/atomic-file.ts"
 import { readJsonFile } from "../../adapter/lib/json-file.ts"
 import { readOptionalFile } from "../../adapter/lib/optional-file.ts"
 import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
-import type {
-  ChatSummary,
-  ChatSummaryFold,
-  ChatSummaryRecord,
-} from "../../session-driver/core/session-driver.ts"
+import type { ChatSummary, ChatSummaryFold, ChatSummaryRecord } from "../core/chat-memory.ts"
 
 /**
  * 新しい形のファイル名の後ろ。

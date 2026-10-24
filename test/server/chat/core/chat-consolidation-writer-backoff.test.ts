@@ -6,7 +6,7 @@ import {
   ChatConsolidationResultError,
   createChatConsolidationWriter,
 } from "../../../../src/server/chat/core/chat-consolidation-writer.ts"
-import type { ChatSummary } from "../../../../src/server/session-driver/core/session-driver.ts"
+import type { ChatSummary } from "../../../../src/server/chat/core/chat-memory.ts"
 import type { CharacterPackName } from "../../../../src/shared/character-pack/character.ts"
 import { CHAT_MEMORY_BUDGET } from "../../../../src/shared/chat/chat-memory-budget.ts"
 import { characterPackName } from "../../../fixture/character.ts"

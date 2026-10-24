@@ -6,7 +6,7 @@ import type {
   ChatSummary,
   ChatSummaryFold,
   ChatSummaryRecord,
-} from "../../src/server/session-driver/core/session-driver.ts"
+} from "../../src/server/chat/core/chat-memory.ts"
 
 /** 何も書かず（画像は書けなかったと返す）、読むと空を返し、定着の錠はいつでも取れる `ChatArchive`。 */
 export const NOOP_CHAT_ARCHIVE = {

@@ -2,7 +2,7 @@
 // 返す文は結果の種類だけで決まり、渡された行・覚えた行・画面の状態を埋めない。
 
 import { MAX_REMEMBERED_LINE_LENGTH } from "../../../shared/chat/persona-memory.ts"
-import type { PersonaForgetResult, PersonaRememberResult } from "./session-driver.ts"
+import type { PersonaForgetResult, PersonaRememberResult } from "../../chat/core/chat-memory.ts"
 
 /** ツールの応答の文と、エラーとして返すか。 */
 export type PersonaMemoryReply = { readonly text: string; readonly isError: boolean }

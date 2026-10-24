@@ -3,12 +3,12 @@
 import { tool } from "@anthropic-ai/claude-agent-sdk"
 import { z } from "zod"
 
+import type { PersonaMemory } from "../../chat/core/chat-memory.ts"
 import {
   forgetReply,
   type PersonaMemoryReply,
   rememberReply,
 } from "../core/persona-memory-reply.ts"
-import type { PersonaMemory } from "../core/session-driver.ts"
 import { FORGET_TOOL_NAME, REMEMBER_TOOL_NAME } from "../core/tsukumo-tool-name.ts"
 
 /**

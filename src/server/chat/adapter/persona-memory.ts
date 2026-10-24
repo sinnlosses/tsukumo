@@ -27,7 +27,7 @@ import {
   isEditableCharacterPack,
   PERSONA_FILE_NAME,
 } from "../../character-pack/adapter/character-pack.ts"
-import type { PersonaMemory } from "../../session-driver/core/session-driver.ts"
+import type { PersonaMemory } from "../core/chat-memory.ts"
 
 /** 節が持てる行数（超えたらいちばん古い行を落とす）。 */
 const MAX_REMEMBERED_LINES = 20

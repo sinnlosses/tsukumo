@@ -9,9 +9,9 @@ import { z } from "zod"
 import { CHAT_MEMORY_BUDGET } from "../../../shared/chat/chat-memory-budget.ts"
 import { byteLength } from "../../../shared/utils/byte-length.ts"
 import { structuredOutputSchema } from "../../core/structured-output-schema.ts"
-import type { ChatSummary } from "../../session-driver/core/session-driver.ts"
 import type { ChatUnconsolidatedEntry } from "./chat-archive-port.ts"
 import { chatLineText } from "./chat-memory-prompt.ts"
+import type { ChatSummary } from "./chat-memory.ts"
 
 /** サイドバーの「最近の話題」に出す見出しの件数の上限。 */
 const CHAT_TOPIC_LIMIT = 3

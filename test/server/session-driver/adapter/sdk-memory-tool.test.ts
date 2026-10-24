@@ -1,17 +1,17 @@
 import type { McpSdkServerConfigWithInstance } from "@anthropic-ai/claude-agent-sdk"
 import { describe, expect, it } from "vitest"
 
+import type {
+  PersonaForgetResult,
+  PersonaMemory,
+  PersonaRememberResult,
+} from "../../../../src/server/chat/core/chat-memory.ts"
 import { tsukumoServer } from "../../../../src/server/session-driver/adapter/sdk-tool.ts"
 import { createCallReview } from "../../../../src/server/session-driver/core/call-review.ts"
 import {
   forgetReply,
   rememberReply,
 } from "../../../../src/server/session-driver/core/persona-memory-reply.ts"
-import type {
-  PersonaForgetResult,
-  PersonaMemory,
-  PersonaRememberResult,
-} from "../../../../src/server/session-driver/core/session-driver.ts"
 import { fixedChatSummary } from "../../../fixture/chat.ts"
 import { callTool } from "../../../fixture/mcp-server.ts"
 import { TOOL_EXPRESSIONS, FAKE_CWD } from "../../../fixture/sdk-tool.ts"

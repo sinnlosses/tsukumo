@@ -37,7 +37,6 @@ import {
 import { isMissingFileError } from "../../adapter/lib/missing-file-error.ts"
 import { isoWithOffset, localDateKey } from "../../adapter/local-time.ts"
 import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
-import type { ChatFoldPoint } from "../../session-driver/core/session-driver.ts"
 import type {
   ChatArchive,
   ChatArchiveEntry,
@@ -51,6 +50,7 @@ import type {
 } from "../core/chat-archive-port.ts"
 import { takeWithinBytes } from "../core/chat-byte-budget.ts"
 import { isAfterAt, isBeforeAt } from "../core/chat-instant-order.ts"
+import type { ChatFoldPoint } from "../core/chat-memory.ts"
 import { CHAT_IMAGE_DIR_NAME, writeChatImage } from "./chat-archive-image.ts"
 
 /** 雑談の画像を残す日数。名前の先頭の日付がこれより古いファイルは消す。 */

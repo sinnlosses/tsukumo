@@ -7,13 +7,10 @@ import {
   takeChatMemoryPromptParts,
   workMemoryPromptParts,
 } from "../../../../src/server/chat/core/chat-memory-prompt.ts"
+import type { ChatSummary } from "../../../../src/server/chat/core/chat-memory.ts"
 import { REPORT_NOTATION_PROMPT } from "../../../../src/server/report/core/report-notation.ts"
 import { QUESTION_NOTATION_PROMPT } from "../../../../src/server/session-driver/core/question-notation.ts"
-import type {
-  ChatSummary,
-  SessionMode,
-  SessionStart,
-} from "../../../../src/server/session-driver/core/session-driver.ts"
+import type { SessionMode } from "../../../../src/server/session-driver/core/session-driver.ts"
 import { WORK_PLAN_PROMPT } from "../../../../src/server/session-driver/core/work-plan-tool.ts"
 import { SPEECH_CADENCE_PROMPT } from "../../../../src/server/system-prompt/core/speech-cadence.ts"
 import {
@@ -86,7 +83,7 @@ describe("takeSystemPromptAppend", () => {
   it("雑談のときは 人格 → 雑談の作法 → 雑談の記憶 の順でつながる（仕事の2つは載らない）", () => {
     const summary = inMemoryChatSummary({ summary: SUMMARY, delivered: false })
     const expectedMemory = takeChatMemoryPromptParts({
-      start: { kind: "new" },
+      resumed: false,
       chatSummary: inMemoryChatSummary({ summary: SUMMARY, delivered: false }),
       readRecent: READ_RECENT,
       readbackLimits: { recentBytes: CHAT_MEMORY_BUDGET.recentBytes },
@@ -94,7 +91,7 @@ describe("takeSystemPromptAppend", () => {
 
     const append = takeSystemPromptAppend({
       persona: PERSONA,
-      mode: chatMode({ kind: "new" }, summary, READ_RECENT),
+      mode: chatMode(false, summary, READ_RECENT),
     })
 
     expect(append).toBe([PERSONA, CHAT_MANNER_PROMPT, ...expectedMemory].join("\n\n"))
@@ -109,7 +106,7 @@ describe("takeSystemPromptAppend", () => {
 
     const append = takeSystemPromptAppend({
       persona: PERSONA,
-      mode: chatMode({ kind: "resume", sessionId: "fictional" }, summary, READ_RECENT),
+      mode: chatMode(true, summary, READ_RECENT),
     })
 
     expect(append).toBe(`${PERSONA}\n\n${CHAT_MANNER_PROMPT}`)
@@ -138,7 +135,7 @@ describe("toSystemPromptMode", () => {
     expect(mode).toEqual({
       kind: "chat",
       memory: {
-        start: { kind: "new" },
+        resumed: false,
         chatSummary,
         readRecent: READ_RECENT,
         readbackLimits: { recentBytes: CHAT_MEMORY_BUDGET.recentBytes },
@@ -186,14 +183,14 @@ function workMode(
 
 /** 雑談のモード（記憶の口は呼ぶたびに作る。読む量は本物の配線と同じ値）。 */
 function chatMode(
-  start: SessionStart,
+  resumed: boolean,
   chatSummary: ChatSummary,
   readRecent: ReadRecent,
 ): SystemPromptMode {
   return {
     kind: "chat",
     memory: {
-      start,
+      resumed,
       chatSummary,
       readRecent,
       readbackLimits: { recentBytes: CHAT_MEMORY_BUDGET.recentBytes },

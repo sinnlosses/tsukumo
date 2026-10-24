@@ -14,7 +14,7 @@ import {
   createChatConsolidationWriter,
 } from "../../../../src/server/chat/core/chat-consolidation-writer.ts"
 import type { ChatConsolidationQuery } from "../../../../src/server/chat/core/chat-consolidation.ts"
-import type { ChatSummary } from "../../../../src/server/session-driver/core/session-driver.ts"
+import type { ChatSummary } from "../../../../src/server/chat/core/chat-memory.ts"
 import { characterPackName } from "../../../fixture/character.ts"
 import { useTempDir } from "../../../fixture/temp-dir.ts"
 

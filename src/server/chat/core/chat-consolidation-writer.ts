@@ -14,11 +14,6 @@
 import type { CharacterPackName } from "../../../shared/character-pack/character.ts"
 import { CHAT_MEMORY_BUDGET } from "../../../shared/chat/chat-memory-budget.ts"
 import type {
-  ChatFoldPoint,
-  ChatSummary,
-  ChatSummaryFold,
-} from "../../session-driver/core/session-driver.ts"
-import type {
   ChatArchive,
   ChatUnconsolidatedEntry,
   ChatUnconsolidatedLimits,
@@ -38,6 +33,7 @@ import {
   parseChatConsolidationResult,
   readChatTopics,
 } from "./chat-consolidation.ts"
+import type { ChatFoldPoint, ChatSummary, ChatSummaryFold } from "./chat-memory.ts"
 
 /**
  * 1回ぶんの結果。

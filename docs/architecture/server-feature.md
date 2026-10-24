@@ -85,9 +85,9 @@
 | `session`             | `session-driver` `chat` `diary` `token-usage` `context-usage` `experience-metric` `diagnostic` `character-pack` `report`                                                   |
 | `system-prompt`       | `session-driver` `chat` `report`                                                                                                                                           |
 | `view-server`         | `session`                                                                                                                                                                  |
-| `chat`                | `session-driver` `character-pack`                                                                                                                                          |
+| `chat`                | `character-pack`                                                                                                                                                           |
 | `context-usage`       | `session-driver`                                                                                                                                                           |
-| `session-driver`      | `report` `view-server`                                                                                                                                                     |
+| `session-driver`      | `report` `view-server` `chat`                                                                                                                                              |
 | `diary`               | `repository` `session-driver`                                                                                                                                              |
 | `usage-review`        | `session-driver`                                                                                                                                                           |
 | `achievement`         | `repository`                                                                                                                                                               |

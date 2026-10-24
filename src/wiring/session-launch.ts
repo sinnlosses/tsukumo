@@ -8,6 +8,7 @@ import { createChatSummary, UNAVAILABLE_CHAT_SUMMARY } from "../server/chat/adap
 import { createPersonaMemory, readRememberedLines } from "../server/chat/adapter/persona-memory.ts"
 import { readChatTopics } from "../server/chat/core/chat-consolidation.ts"
 import type { ReadRecent } from "../server/chat/core/chat-memory-prompt.ts"
+import type { ChatSummary } from "../server/chat/core/chat-memory.ts"
 import type { Config } from "../server/core/config.ts"
 import type { DiagnosticLog } from "../server/diagnostic/core/diagnostic.ts"
 import { startFakeSession } from "../server/session-driver/adapter/fake-driver.ts"
@@ -29,11 +30,7 @@ import {
   type SessionCatalog,
 } from "../server/session-driver/core/session-catalog.ts"
 import { createSessionClaim } from "../server/session-driver/core/session-claim.ts"
-import type {
-  ChatSummary,
-  SessionDriver,
-  SessionMode,
-} from "../server/session-driver/core/session-driver.ts"
+import type { SessionDriver, SessionMode } from "../server/session-driver/core/session-driver.ts"
 import { sessionTag } from "../server/session-driver/core/session-mark.ts"
 import {
   readRememberedSessionDefault,

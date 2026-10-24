@@ -12,7 +12,7 @@ import {
 import type {
   ChatSummary,
   ChatSummaryRecord,
-} from "../../../../src/server/session-driver/core/session-driver.ts"
+} from "../../../../src/server/chat/core/chat-memory.ts"
 import { CHAT_MEMORY_BUDGET } from "../../../../src/shared/chat/chat-memory-budget.ts"
 import { characterPackName } from "../../../fixture/character.ts"
 import { inMemoryChatSummary, NOOP_CHAT_ARCHIVE } from "../../../fixture/chat.ts"
@@ -83,7 +83,7 @@ function take(
   chatArchive: ChatArchive,
 ): readonly string[] {
   return takeChatMemoryPromptParts({
-    start: resume === undefined ? { kind: "new" } : { kind: "resume", sessionId: resume },
+    resumed: resume !== undefined,
     chatSummary,
     readRecent: (limits) => chatArchive.readRecent(PACK_NAME, limits),
     readbackLimits: LIMITS,
