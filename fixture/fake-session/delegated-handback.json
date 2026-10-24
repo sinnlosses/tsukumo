@@ -1,0 +1,65 @@
+{
+  "name": "delegated-handback",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "架空のタスクを委譲先の2段で進めたい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 100,
+      "event": {
+        "kind": "work-plan",
+        "phases": ["計画を確かめる", "委譲先の段1", "委譲先の段2", "受け入れる"],
+        "current": 1,
+        "finishedInGroup": [],
+        "phaseSummary": "架空の計画は2段で、委譲先にそのまま渡せる形だった。",
+        "delegatedRange": {
+          "kind": "range",
+          "first": 1,
+          "count": 2
+        },
+        "skippedPhases": [],
+        "awaitingSummary": {
+          "kind": "none"
+        }
+      }
+    },
+    {
+      "afterMs": 200,
+      "event": {
+        "kind": "delegate-returned",
+        "handback": {
+          "kind": "phase-done",
+          "phase": 1,
+          "count": 2,
+          "summary": "架空の1つ目の段を済ませた。"
+        }
+      }
+    },
+    {
+      "afterMs": 300,
+      "event": {
+        "kind": "delegate-returned",
+        "handback": {
+          "kind": "phase-done",
+          "phase": 2,
+          "count": 2,
+          "summary": "架空の2つ目の段を済ませた。"
+        }
+      }
+    },
+    {
+      "afterMs": 400,
+      "event": {
+        "kind": "turn-finished",
+        "outcome": {
+          "kind": "completed"
+        }
+      }
+    }
+  ]
+}

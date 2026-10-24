@@ -27,7 +27,7 @@
 押せる要素（`button`・リンク・クリックの的）を足す・変えたら、撮影の前に `pnpm run test:e2e test/e2e/target-size.test.ts` を単独で流す（下限の中身は「E2E のシナリオの一覧」の表の「会話の画面の押す的と字」の行を見る）。
 
 **状態ごとの画面を並べて見るときは `node scripts/capture/capture-catalog.ts`。** 疑似セッションの場面
-（`test/fixture/fake-session.json` の `turns[].name`）ごとに tsukumo を1件ずつ空きポートで起こし、
+（`fixture/fake-session/index.json` の `turns` の名前）ごとに tsukumo を1件ずつ空きポートで起こし、
 広い窓（1400x900）と狭い窓（720x900・縦に積み替わるのでページ全体）で撮る。**同じ場面を別の
 操作で何枚も撮る件があるので、名指しは場面の名前ではなく件の名前**（`--only notation-figure`
 のように。`--only` に使える名前の一覧は `--help` で出る。**オプション無しで実行すると

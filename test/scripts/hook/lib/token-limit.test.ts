@@ -11,7 +11,6 @@ const EXEMPT_PATH_PATTERNS = [
   "test/e2e/expected/",
   "docs/history/",
   "vendor/",
-  "test/fixture/fake-session.json",
 ] as const
 
 function change(overrides: Partial<StagedChange>): StagedChange {

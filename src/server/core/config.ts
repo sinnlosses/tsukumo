@@ -41,7 +41,7 @@ export const ENV_NAMES = {
   /** fake driver で、名指しした場面の手を先頭から何個まで流すか（正の整数）。 */
   fakeSceneUntil: { name: "TSUKUMO_FAKE_SCENE_UNTIL", audience: "test" },
   /**
-   * fake driver が読む疑似セッションのファイルのパス（相対は cwd 相対。既定は同梱の `test/fixture/fake-session.json`）。
+   * fake driver が読む疑似セッションの索引のファイルのパス（相対は cwd 相対。既定は同梱の `fixture/fake-session/index.json`）。
    * 読ませるのは架空の会話だけで、利用者と Claude の実物の会話（transcript・SDK のイベント）を渡さない。
    */
   fakeSession: { name: "TSUKUMO_FAKE_SESSION", audience: "test" },

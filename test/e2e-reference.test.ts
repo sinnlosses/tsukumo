@@ -4,8 +4,6 @@ import { fileURLToPath } from "node:url"
 
 import { describe, expect, it } from "vitest"
 
-import { bundledFakeSession } from "./fixture/bundled-fake-session.ts"
-
 // E2E の期待値・`DOM_ROOT_SELECTORS` の口・疑似セッションの場面が、使い手のいないまま残らないことを見る。
 // 使い手は名前の文字列で数える。E2E を走らせず、ソースと文書を読むだけで判定する。
 
@@ -97,7 +95,9 @@ describe("DOM_ROOT_SELECTORS の口", () => {
 })
 
 describe("疑似セッションの場面", () => {
-  const sceneNames = bundledFakeSession().turns.map((turn) => turn.name)
+  const sceneNames = readdirSync(join(REPOSITORY_ROOT, "fixture/fake-session"))
+    .filter((file) => file.endsWith(".json") && file !== "index.json")
+    .map((file) => file.replace(/\.json$/, ""))
 
   const codeTexts = ["test", "scripts", "src"]
     .flatMap((directory) => listFiles(directory, [".ts", ".tsx"]))

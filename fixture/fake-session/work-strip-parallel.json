@@ -1,0 +1,51 @@
+{
+  "name": "work-strip-parallel",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "サーバと画面を同時に直したい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 100,
+      "event": {
+        "kind": "work-plan",
+        "delegatedRange": {
+          "kind": "none"
+        },
+        "skippedPhases": [],
+        "awaitingSummary": {
+          "kind": "none"
+        },
+        "phases": ["今の形を調べる", ["サーバの口を直す", "画面を直す"], "文書と検証を揃える"],
+        "current": 1,
+        "finishedInGroup": [],
+        "phaseSummary": "架空の口は1か所で読んでいた。"
+      }
+    },
+    {
+      "afterMs": 200,
+      "event": {
+        "kind": "tool-started",
+        "toolUseId": "fake-strip-parallel-1",
+        "name": "Agent",
+        "input": {
+          "prompt": "架空の委譲。",
+          "run_in_background": true
+        }
+      }
+    },
+    {
+      "afterMs": 20000,
+      "event": {
+        "kind": "turn-finished",
+        "outcome": {
+          "kind": "completed"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,97 @@
+{
+  "name": "work-strip-question",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "形をどちらに揃えるか決めたい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 100,
+      "event": {
+        "kind": "work-plan",
+        "delegatedRange": {
+          "kind": "none"
+        },
+        "skippedPhases": [],
+        "awaitingSummary": {
+          "kind": "none"
+        },
+        "phases": ["今の形を調べる", "形を揃える", "文書と検証を揃える"],
+        "current": 1,
+        "finishedInGroup": [],
+        "phaseSummary": "架空の形が2つ並んでいた。"
+      }
+    },
+    {
+      "afterMs": 200,
+      "event": {
+        "kind": "tool-started",
+        "toolUseId": "fake-strip-question-1",
+        "name": "AskUserQuestion",
+        "input": {}
+      }
+    },
+    {
+      "afterMs": 300,
+      "event": {
+        "kind": "pending-changed",
+        "pending": [
+          {
+            "kind": "question",
+            "id": "fake-strip-question-1",
+            "briefs": [],
+            "questions": [
+              {
+                "header": "揃える形",
+                "text": "架空の質問：どちらの形に揃える？",
+                "multiSelect": false,
+                "options": [
+                  {
+                    "label": "新しい形",
+                    "description": "架空の説明。新しい形に寄せ、古い形を読む口だけ残す。"
+                  },
+                  {
+                    "label": "古い形",
+                    "description": "架空の説明。古い形に寄せ、新しい形の呼び出しを書き直す。"
+                  },
+                  {
+                    "label": "両方",
+                    "description": "架空の説明。両方を受け付け、書き出しだけ新しい形にする。"
+                  }
+                ]
+              },
+              {
+                "header": "文書",
+                "text": "架空の質問：文書も直す？",
+                "multiSelect": false,
+                "options": [
+                  {
+                    "label": "直す",
+                    "description": "架空の説明A"
+                  },
+                  {
+                    "label": "あとで",
+                    "description": "架空の説明B"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "afterMs": 20000,
+      "event": {
+        "kind": "turn-finished",
+        "outcome": {
+          "kind": "completed"
+        }
+      }
+    }
+  ]
+}

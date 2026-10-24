@@ -1,0 +1,293 @@
+{
+  "name": "turn-outline-many",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "1件目の依頼（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 20,
+      "event": {
+        "kind": "utterance",
+        "text": "## 1件目の報告（架空）\n\n架空の本文。\n\n## 1件目の補足（架空）\n\n架空の本文。"
+      }
+    },
+    {
+      "afterMs": 40,
+      "event": {
+        "kind": "turn-finished",
+        "outcome": {
+          "kind": "completed"
+        }
+      }
+    },
+    {
+      "afterMs": 60,
+      "event": {
+        "kind": "request",
+        "text": "2件目の依頼（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 80,
+      "event": {
+        "kind": "utterance",
+        "text": "## 2件目の報告（架空）\n\n架空の本文。\n\n## 2件目の補足（架空）\n\n架空の本文。"
+      }
+    },
+    {
+      "afterMs": 100,
+      "event": {
+        "kind": "turn-finished",
+        "outcome": {
+          "kind": "completed"
+        }
+      }
+    },
+    {
+      "afterMs": 120,
+      "event": {
+        "kind": "request",
+        "text": "3件目の依頼（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 140,
+      "event": {
+        "kind": "utterance",
+        "text": "## 3件目の報告（架空）\n\n架空の本文。\n\n## 3件目の補足（架空）\n\n架空の本文。"
+      }
+    },
+    {
+      "afterMs": 160,
+      "event": {
+        "kind": "turn-finished",
+        "outcome": {
+          "kind": "completed"
+        }
+      }
+    },
+    {
+      "afterMs": 180,
+      "event": {
+        "kind": "request",
+        "text": "4件目の依頼（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 200,
+      "event": {
+        "kind": "utterance",
+        "text": "## 4件目の報告（架空）\n\n架空の本文。\n\n## 4件目の補足（架空）\n\n架空の本文。"
+      }
+    },
+    {
+      "afterMs": 220,
+      "event": {
+        "kind": "turn-finished",
+        "outcome": {
+          "kind": "completed"
+        }
+      }
+    },
+    {
+      "afterMs": 240,
+      "event": {
+        "kind": "request",
+        "text": "5件目の依頼（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 260,
+      "event": {
+        "kind": "utterance",
+        "text": "## 5件目の報告（架空）\n\n架空の本文。\n\n## 5件目の補足（架空）\n\n架空の本文。"
+      }
+    },
+    {
+      "afterMs": 280,
+      "event": {
+        "kind": "turn-finished",
+        "outcome": {
+          "kind": "completed"
+        }
+      }
+    },
+    {
+      "afterMs": 300,
+      "event": {
+        "kind": "request",
+        "text": "6件目の依頼（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 320,
+      "event": {
+        "kind": "utterance",
+        "text": "## 6件目の報告（架空）\n\n架空の本文。\n\n## 6件目の補足（架空）\n\n架空の本文。"
+      }
+    },
+    {
+      "afterMs": 340,
+      "event": {
+        "kind": "turn-finished",
+        "outcome": {
+          "kind": "completed"
+        }
+      }
+    },
+    {
+      "afterMs": 360,
+      "event": {
+        "kind": "request",
+        "text": "7件目の依頼（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 380,
+      "event": {
+        "kind": "utterance",
+        "text": "## 7件目の報告（架空）\n\n架空の本文。\n\n## 7件目の補足（架空）\n\n架空の本文。"
+      }
+    },
+    {
+      "afterMs": 400,
+      "event": {
+        "kind": "turn-finished",
+        "outcome": {
+          "kind": "completed"
+        }
+      }
+    },
+    {
+      "afterMs": 420,
+      "event": {
+        "kind": "request",
+        "text": "8件目の依頼（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 440,
+      "event": {
+        "kind": "utterance",
+        "text": "## 8件目の報告（架空）\n\n架空の本文。\n\n## 8件目の補足（架空）\n\n架空の本文。"
+      }
+    },
+    {
+      "afterMs": 460,
+      "event": {
+        "kind": "turn-finished",
+        "outcome": {
+          "kind": "completed"
+        }
+      }
+    },
+    {
+      "afterMs": 480,
+      "event": {
+        "kind": "request",
+        "text": "9件目の依頼（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 500,
+      "event": {
+        "kind": "utterance",
+        "text": "## 9件目の報告（架空）\n\n架空の本文。\n\n## 9件目の補足（架空）\n\n架空の本文。"
+      }
+    },
+    {
+      "afterMs": 520,
+      "event": {
+        "kind": "turn-finished",
+        "outcome": {
+          "kind": "completed"
+        }
+      }
+    },
+    {
+      "afterMs": 540,
+      "event": {
+        "kind": "request",
+        "text": "10件目の依頼（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 560,
+      "event": {
+        "kind": "utterance",
+        "text": "## 10件目の報告（架空）\n\n架空の本文。\n\n## 10件目の補足（架空）\n\n架空の本文。"
+      }
+    },
+    {
+      "afterMs": 580,
+      "event": {
+        "kind": "turn-finished",
+        "outcome": {
+          "kind": "completed"
+        }
+      }
+    },
+    {
+      "afterMs": 600,
+      "event": {
+        "kind": "request",
+        "text": "11件目の依頼（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 620,
+      "event": {
+        "kind": "utterance",
+        "text": "## 11件目の報告（架空）\n\n架空の本文。\n\n## 11件目の補足（架空）\n\n架空の本文。"
+      }
+    },
+    {
+      "afterMs": 640,
+      "event": {
+        "kind": "turn-finished",
+        "outcome": {
+          "kind": "completed"
+        }
+      }
+    },
+    {
+      "afterMs": 660,
+      "event": {
+        "kind": "request",
+        "text": "12件目の依頼（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 680,
+      "event": {
+        "kind": "utterance",
+        "text": "## 12件目の報告（架空）\n\n架空の本文。\n\n## 12件目の補足（架空）\n\n架空の本文。"
+      }
+    },
+    {
+      "afterMs": 700,
+      "event": {
+        "kind": "turn-finished",
+        "outcome": {
+          "kind": "completed"
+        }
+      }
+    }
+  ]
+}

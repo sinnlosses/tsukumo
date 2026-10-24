@@ -256,7 +256,7 @@ export function collapseCommandCatalog(entries: readonly unknown[]): readonly un
 
 /**
  * 連なる `partial-utterance` を1件に畳む（`joinPartialUtterances` と同じ
- * 畳み方だが、束の切れ目そのもの——サーバ側の束ねと `test/fixture/fake-session.json` の
+ * 畳み方だが、束の切れ目そのもの——サーバ側の束ねと `fixture/fake-session/` の
  * `afterMs` が同じ時刻に重なると、どちらのタイマーが先に走るかで束の切れ目が走らせるたびに
  * 変わる（`docs/architecture/testing.md`「E2E の成果物と再現」）——を比べる前に消すためにここでも行う。
  * 消えるのは切れ目の位置だけで、他の種別との並びは変えない。

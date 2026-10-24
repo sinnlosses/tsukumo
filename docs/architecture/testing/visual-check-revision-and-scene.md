@@ -106,7 +106,7 @@ Network タブで `/ws` の upgrade が101を返し、`hello` フレーム（購
 日記帳の見開きは、`capture-catalog.ts` に専用の件があるのでそれぞれ手で操作を当てなくてよい**
 （`--only <名前>` で1件だけ撮れる）。`current-work-running` / `current-work-failed` は、
 名指しで直接起こしても状態が出るよう**自分の `request` を持つ場面**
-（`test/fixture/fake-session.json` の同名の場面）を使う——`request` の無い場面は
+（`fixture/fake-session/` の同名の場面のファイル）を使う——`request` の無い場面は
 `src/shared/session/turn-step.ts` の `currentTurnSteps` が「依頼が一度も無い」に畳んで、途中の
 `tool-started` があっても帯の一覧に出ない。`current-work-background` は既存の `background-task`
 場面をそのまま使う。`portrait-clear-confirm` / `character-delete-confirm` /
@@ -114,10 +114,10 @@ Network タブで `/ws` の upgrade が101を返し、`hello` フレーム（購
 （`scripts/capture/capture-catalog.ts`）が、消せるキャラクターパック（同梱の `chou` を別名でコピー）や
 架空の日記を、撮る前にそこへ書く。**既定のホーム（利用者の `~/.tsukumo/`）には触らない。**
 
-**撮りたい場面が疑似セッションに無いときは、`test/fixture/fake-session.json` に場面を足さず、
-会話ファイルを差し替えて撮る。** 同梱のファイルを写した架空の会話を作業ツリーの外（スクラッチパッドや
-`/tmp/<名前>/`）に置き、`node scripts/capture/capture-view.ts --scene <場面> --session <ファイル>` で撮る
-（`--list-scenes` も同じファイルを読む。起こす tsukumo には `TSUKUMO_FAKE_SESSION` で渡る）。同梱のファイルに
+**撮りたい場面が疑似セッションに無いときは、`fixture/fake-session/` に場面を足さず、
+会話ファイルを差し替えて撮る。** 同梱のディレクトリを写した架空の会話（索引と場面のファイル）を作業ツリーの外（スクラッチパッドや
+`/tmp/<名前>/`）に置き、`node scripts/capture/capture-view.ts --scene <場面> --session <索引のファイル>` で撮る
+（`--list-scenes` も同じ索引を読む。起こす tsukumo には `TSUKUMO_FAKE_SESSION` で渡る）。同梱のファイルに
 場面を足すと E2E の期待値に波及するが、この形なら作業ツリーを変えない。**読ませるのは架空の会話だけで、
 利用者と Claude の実物の会話（transcript・SDK のイベント）を渡さない**（`docs/coding-standards.md`「会話内容の扱い」）。
 `capture-catalog.ts` の件は同梱のファイルを読み続ける。

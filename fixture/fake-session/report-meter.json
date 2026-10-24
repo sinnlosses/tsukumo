@@ -1,0 +1,109 @@
+{
+  "name": "report-meter",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "割合の帯と数の棒の見え方を確かめたい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 300,
+      "event": {
+        "kind": "speech",
+        "text": "帯と棒を並べて書くね。",
+        "expression": "default"
+      }
+    },
+    {
+      "afterMs": 1000,
+      "event": {
+        "kind": "report",
+        "task": {
+          "kind": "none"
+        },
+        "closing": {
+          "kind": "speech",
+          "text": "書けたよ！",
+          "expression": "proud"
+        },
+        "toolUseId": "fake-report-meter-1",
+        "conclusion": "架空の結論: 架空の検査 48 件のうち 36 件が通った。",
+        "sections": [
+          {
+            "heading": "架空の割合の帯（stat-meter）",
+            "blocks": [
+              {
+                "kind": "stats",
+                "items": [
+                  {
+                    "before": "",
+                    "value": "36",
+                    "total": "48",
+                    "label": "架空の通った件数",
+                    "series": [20, 28, 31, 36]
+                  },
+                  {
+                    "before": "12",
+                    "value": "9",
+                    "total": "48",
+                    "label": "架空の落ちた件数",
+                    "series": [14, 12, 13, 9],
+                    "better": "down"
+                  },
+                  {
+                    "before": "",
+                    "value": "3",
+                    "total": "",
+                    "label": "架空の帯の無い数"
+                  }
+                ],
+                "fold": "",
+                "aside": ""
+              }
+            ]
+          },
+          {
+            "heading": "架空の数の棒（cell-bar）",
+            "blocks": [
+              {
+                "kind": "table",
+                "title": "架空の領域ごとの件数",
+                "columns": ["領域", "件数", "割合"],
+                "rows": [
+                  ["架空の表示", "24", "50%"],
+                  ["架空の配信", "16", "33%"],
+                  ["架空の設定", "8", "17%"]
+                ],
+                "fold": "",
+                "aside": ""
+              }
+            ]
+          }
+        ],
+        "favor": "",
+        "checks": []
+      }
+    },
+    {
+      "afterMs": 1050,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-report-meter-1",
+        "content": "ok",
+        "isError": false
+      }
+    },
+    {
+      "afterMs": 2300,
+      "event": {
+        "kind": "turn-finished",
+        "outcome": {
+          "kind": "completed"
+        }
+      }
+    }
+  ]
+}

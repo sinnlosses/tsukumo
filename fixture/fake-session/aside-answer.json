@@ -1,0 +1,22 @@
+{
+  "name": "aside-answer",
+  "steps": [
+    {
+      "afterMs": 300,
+      "event": {
+        "kind": "speech",
+        "text": "いまは委譲先が段2を進めているところ。落ちたものはまだ無いよ。",
+        "expression": "default"
+      }
+    },
+    {
+      "afterMs": 500,
+      "event": {
+        "kind": "turn-finished",
+        "outcome": {
+          "kind": "completed"
+        }
+      }
+    }
+  ]
+}

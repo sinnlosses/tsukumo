@@ -1,0 +1,66 @@
+{
+  "name": "work-strip-ask",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "一時のディレクトリを片付けたい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 100,
+      "event": {
+        "kind": "work-plan",
+        "delegatedRange": {
+          "kind": "none"
+        },
+        "skippedPhases": [],
+        "awaitingSummary": {
+          "kind": "none"
+        },
+        "phases": ["片付ける場所を調べる", "片付ける"],
+        "current": 1,
+        "finishedInGroup": [],
+        "phaseSummary": "架空の一時のディレクトリが1つ残っていた。"
+      }
+    },
+    {
+      "afterMs": 200,
+      "event": {
+        "kind": "tool-started",
+        "toolUseId": "fake-strip-ask-1",
+        "name": "Bash",
+        "input": {
+          "command": "rm -rf /tmp/dummy/fake-home"
+        }
+      }
+    },
+    {
+      "afterMs": 300,
+      "event": {
+        "kind": "pending-changed",
+        "pending": [
+          {
+            "kind": "permission",
+            "id": "fake-strip-ask-1",
+            "toolName": "Bash",
+            "input": {
+              "command": "rm -rf /tmp/dummy/fake-home"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "afterMs": 20000,
+      "event": {
+        "kind": "turn-finished",
+        "outcome": {
+          "kind": "completed"
+        }
+      }
+    }
+  ]
+}

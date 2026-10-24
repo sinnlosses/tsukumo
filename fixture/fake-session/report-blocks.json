@@ -1,0 +1,261 @@
+{
+  "name": "report-blocks",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "候補の比較とファイルの一覧の見え方を確かめたい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 300,
+      "event": {
+        "kind": "speech",
+        "text": "並べて書くね。",
+        "expression": "default"
+      }
+    },
+    {
+      "afterMs": 1000,
+      "event": {
+        "kind": "report",
+        "task": {
+          "kind": "none"
+        },
+        "closing": {
+          "kind": "speech",
+          "text": "書けたよ！",
+          "expression": "proud"
+        },
+        "toolUseId": "fake-report-blocks-1",
+        "conclusion": "架空の結論: 目盛りは設定ファイルへ移す案を採る。",
+        "sections": [
+          {
+            "heading": "目盛りの置き場所は設定ファイル（架空）",
+            "shapeTag": "choice",
+            "blocks": [
+              {
+                "kind": "options",
+                "title": "目盛りをどこに置くか（架空の比較）",
+                "items": [
+                  {
+                    "name": "定数のまま",
+                    "verdict": "reject",
+                    "reason": "変えるたびに組み立て直しが要る（架空）。"
+                  },
+                  {
+                    "name": "設定ファイル",
+                    "verdict": "adopt",
+                    "reason": "起こし直すだけで変わり、`a.ts` の読み口が1つで済む（架空）。"
+                  },
+                  {
+                    "name": "環境変数",
+                    "verdict": "consider",
+                    "reason": "設定ファイルの上書きとしてなら足せる（架空）。"
+                  }
+                ],
+                "fold": "",
+                "aside": ""
+              },
+              {
+                "kind": "note",
+                "tone": "warn",
+                "text": "設定ファイルを増やすなら、読み込む順番を1箇所に決めておかないと事故る（架空）。",
+                "fold": "",
+                "aside": ""
+              },
+              {
+                "kind": "text",
+                "text": "設定ファイルで目盛りを切り替える作りは一般的（架空）。[example.com](https://example.com/ticks) と [Www.Example.org](https://example.org/a) が出典で、[詳しい解説](https://example.net/b) は札にならない。",
+                "fold": "",
+                "aside": ""
+              },
+              {
+                "kind": "list",
+                "style": "cards",
+                "items": [
+                  {
+                    "label": "変えたもの",
+                    "text": "目盛りの読み口を `ticks.ts` の1つに寄せた（架空）。起こし直すと読み直す。"
+                  },
+                  {
+                    "label": "変えていないもの",
+                    "text": "既存の定数は残した（架空）。呼ぶ側の書き方も同じまま。"
+                  },
+                  {
+                    "label": "確かめていないこと",
+                    "text": "環境変数での上書きは試していない（架空）。必要になってから足す。"
+                  }
+                ],
+                "fold": "",
+                "aside": ""
+              },
+              {
+                "kind": "text",
+                "text": "読み口は `ticks.ts` の1つに寄せ、起こし直すと新しい目盛りを読み直す（架空）。",
+                "fold": "",
+                "aside": "出どころ: 架空の計測ログ `notes/dummy/ticks.md:12` の3回ぶん"
+              },
+              {
+                "kind": "note",
+                "tone": "memo",
+                "text": "環境変数での上書きは今回は入れていない。設定ファイルの読み口が落ち着いてから、同じ口に足す見込み（架空）。",
+                "fold": "",
+                "aside": ""
+              }
+            ]
+          },
+          {
+            "heading": "目盛りの読み替えは2点が未確定（架空）",
+            "shapeTag": "parallel",
+            "blocks": [
+              {
+                "kind": "claims",
+                "items": [
+                  {
+                    "claim": "目盛りは起こし直したときだけ読み直す（架空）",
+                    "certainty": "confirmed",
+                    "basis": "`src/dummy/ticks.ts:12`",
+                    "howToVerify": ""
+                  },
+                  {
+                    "claim": "設定ファイルの読み込みは起動を 10ms ほど遅らせる（架空）",
+                    "certainty": "inferred",
+                    "basis": "[example.com](https://example.com/dummy)",
+                    "howToVerify": "架空の計測スクリプトで起動の前後を10回ずつ測り、中央値を比べる"
+                  },
+                  {
+                    "claim": "古い目盛りのファイルを読む口がほかに残っていない（架空）",
+                    "certainty": "unverified",
+                    "basis": "",
+                    "howToVerify": "`old-ticks` でリポジトリ全体を検索し、当たりが無いことを見る"
+                  }
+                ],
+                "fold": "",
+                "aside": ""
+              }
+            ]
+          },
+          {
+            "heading": "触ったファイルは4つ（架空）",
+            "blocks": [
+              {
+                "kind": "files",
+                "items": [
+                  {
+                    "path": "src/dummy/ticks.ts",
+                    "change": "added",
+                    "note": "+42 目盛りを読む口（架空）"
+                  },
+                  {
+                    "path": "src/dummy/a.ts",
+                    "change": "modified",
+                    "note": "+9 −1 定数を `ticks.ts` の読みに替えた（架空）"
+                  },
+                  {
+                    "path": "src/dummy/old-ticks.ts",
+                    "change": "deleted",
+                    "note": ""
+                  },
+                  {
+                    "path": "notes/dummy/ticks.md",
+                    "change": "read",
+                    "note": "目盛りの決め方（架空）"
+                  }
+                ],
+                "title": "架空の触ったファイルの一覧",
+                "fold": "",
+                "aside": ""
+              },
+              {
+                "kind": "files",
+                "items": [
+                  {
+                    "path": "out/dummy/a.txt",
+                    "change": "added",
+                    "note": "架空の説明"
+                  },
+                  {
+                    "path": "out/dummy/b.png",
+                    "change": "added",
+                    "note": ""
+                  }
+                ],
+                "title": "架空の構成図のファイル",
+                "fold": "",
+                "aside": "どこを見るか: `out/dummy/b.png` が構成図の画（架空）"
+              }
+            ]
+          },
+          {
+            "heading": "架空のコードの印と shell の塊",
+            "blocks": [
+              {
+                "kind": "code",
+                "language": "ts",
+                "path": "",
+                "source": "export function pickTicks(values: number[]): number[] {\n  const sorted = [...values].sort((a, b) => a - b)\n  const step = niceStep(sorted)\n  return sorted.filter((v) => v % step === 0)\n  // 架空の補足の行 5\n  // 架空の補足の行 6\n  // 架空の補足の行 7\n  // 架空の補足の行 8\n  // 架空の補足の行 9\n  // 架空の補足の行 10\n  // 架空の補足の行 11\n  // 架空の補足の行 12\n  // 架空の補足の行 13\n  // 架空の補足の行 14\n  // 架空の補足の行 15\n  // 架空の補足の行 16\n  // 架空の補足の行 17\n  // 架空の補足の行 18\n  // 架空の補足の行 19\n  // 架空の補足の行 20\n  // 架空の補足の行 21\n  // 架空の補足の行 22\n  // 架空の補足の行 23\n  // 架空の補足の行 24\n  // 架空の補足の行 25\n  // 架空の補足の行 26\n  // 架空の補足の行 27\n  // 架空の補足の行 28\n  // 架空の補足の行 29\n}\n",
+                "marks": [
+                  {
+                    "lines": "3",
+                    "label": "刻みを決める"
+                  },
+                  {
+                    "lines": "4",
+                    "label": "刻みの倍数だけ残す"
+                  }
+                ],
+                "fold": "",
+                "aside": ""
+              },
+              {
+                "kind": "code",
+                "language": "bash",
+                "path": "",
+                "source": "$ pnpm run check src/dummy/ticks.ts\ntypecheck  ok   6.1s\nlint       ok   2.3s\ntest       ok   5.5s  (31 files)\ne2e        skipped (変更なし)\n",
+                "marks": [],
+                "fold": "",
+                "aside": ""
+              },
+              {
+                "kind": "code",
+                "language": "diff",
+                "path": "",
+                "source": "-  const step = niceStep(sorted)\n+  const step = niceStep(sorted, 2)\n   return sorted.filter((v) => v % step === 0)\n-const LIMIT = 12\n-const NAME = \"ticks\"\n+const LIMIT = 24\n-export default pickTicks\n+export { pickTicks as default }\n",
+                "marks": [],
+                "fold": "",
+                "aside": ""
+              }
+            ]
+          }
+        ],
+        "retrospective": {
+          "summary": "架空の振り返り: 検査の重複を1件見つけた。",
+          "drafts": ["架空-1", "架空-2"]
+        },
+        "favor": "架空のお願い: 目盛りの置き場所を決めてください。",
+        "checks": []
+      }
+    },
+    {
+      "afterMs": 1050,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-report-blocks-1",
+        "content": "ok",
+        "isError": false
+      }
+    },
+    {
+      "afterMs": 2300,
+      "event": {
+        "kind": "turn-finished",
+        "outcome": {
+          "kind": "completed"
+        }
+      }
+    }
+  ]
+}

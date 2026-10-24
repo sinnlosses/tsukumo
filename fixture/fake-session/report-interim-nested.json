@@ -1,0 +1,147 @@
+{
+  "name": "report-interim-nested",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "中間レポートの箱の入れ子を確かめたい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 600,
+      "event": {
+        "kind": "report",
+        "task": {
+          "kind": "none"
+        },
+        "closing": {
+          "kind": "none"
+        },
+        "toolUseId": "fake-report-interim-nested-1",
+        "conclusion": "架空の結論: 中間レポートの中の塊が箱の中で二重の枠にならない。",
+        "sections": [
+          {
+            "heading": "架空の数と候補と見比べ",
+            "blocks": [
+              {
+                "kind": "stats",
+                "items": [
+                  {
+                    "before": "",
+                    "value": "36",
+                    "total": "48",
+                    "label": "架空の通った件数"
+                  },
+                  {
+                    "before": "12",
+                    "value": "9",
+                    "total": "",
+                    "label": "架空の落ちた件数"
+                  },
+                  {
+                    "before": "",
+                    "value": "3",
+                    "total": "",
+                    "label": "架空の帯の無い数"
+                  }
+                ],
+                "fold": "",
+                "aside": ""
+              },
+              {
+                "kind": "options",
+                "title": "架空の候補の比較",
+                "items": [
+                  {
+                    "name": "架空の案A",
+                    "verdict": "adopt",
+                    "reason": "架空の理由"
+                  },
+                  {
+                    "name": "架空の案B",
+                    "verdict": "reject",
+                    "reason": "架空の理由"
+                  }
+                ],
+                "fold": "",
+                "aside": ""
+              },
+              {
+                "kind": "compare",
+                "title": "",
+                "sides": [
+                  {
+                    "heading": "変更前",
+                    "points": ["架空の一行目", "架空の二行目"]
+                  },
+                  {
+                    "heading": "変更後",
+                    "points": ["架空の一行目", "架空の二行目"]
+                  }
+                ],
+                "fold": "",
+                "aside": ""
+              },
+              {
+                "kind": "text",
+                "text": "架空の畳んだ補足。",
+                "fold": "架空の畳み",
+                "aside": ""
+              }
+            ]
+          }
+        ],
+        "favor": "",
+        "checks": []
+      }
+    },
+    {
+      "afterMs": 650,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-report-interim-nested-1",
+        "content": "ok",
+        "isError": false
+      }
+    },
+    {
+      "afterMs": 1500,
+      "event": {
+        "kind": "report",
+        "task": {
+          "kind": "none"
+        },
+        "closing": {
+          "kind": "speech",
+          "text": "終わったよ！",
+          "expression": "proud"
+        },
+        "toolUseId": "fake-report-interim-nested-2",
+        "conclusion": "架空の結論: 最後の本文。",
+        "sections": [],
+        "favor": "",
+        "checks": []
+      }
+    },
+    {
+      "afterMs": 1550,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-report-interim-nested-2",
+        "content": "ok",
+        "isError": false
+      }
+    },
+    {
+      "afterMs": 2300,
+      "event": {
+        "kind": "turn-finished",
+        "outcome": {
+          "kind": "completed"
+        }
+      }
+    }
+  ]
+}

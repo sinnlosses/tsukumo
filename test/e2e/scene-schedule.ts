@@ -65,7 +65,7 @@ export function assertNextStepGap(
 /**
  * 疑似セッションの予定で、次の手までこれ以上空いた時点を静かな区切りと見なす。
  * `open` は最初の区切りまでの手を待つので、渡したあとの操作が場面のタイマーと競わない。
- * 場面の中の手の間隔（`test/fixture/fake-session.json` では 100ms 刻み）より長く、場面の区切り以下にする。
+ * 場面の中の手の間隔（`fixture/fake-session/` では 100ms 刻み）より長く、場面の区切り以下にする。
  */
 const QUIET_GAP_MS = 500
 

@@ -4,7 +4,7 @@ import { useScenarioRun } from "./scenario-run.ts"
 import { openReportTaskRoom } from "./task-room.ts"
 
 // タスクの作業のレポート（`report` の `task`）の結論部。疑似セッションの場面
-// `report-task-finished` は、架空のタスクを終えた終わり方で閉じる（`test/fixture/fake-session.json`）。
+// `report-task-finished` は、架空のタスクを終えた終わり方で閉じる（`fixture/fake-session/report-task-finished.json`）。
 
 const run = useScenarioRun()
 

@@ -1,0 +1,92 @@
+{
+  "name": "report-inline-code",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "キー・出力・コード・長いパスの見え方を確かめたい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 300,
+      "event": {
+        "kind": "speech",
+        "text": "並べて書くね。",
+        "expression": "default"
+      }
+    },
+    {
+      "afterMs": 1000,
+      "event": {
+        "kind": "report",
+        "task": {
+          "kind": "none"
+        },
+        "closing": {
+          "kind": "speech",
+          "text": "書けたよ！",
+          "expression": "proud"
+        },
+        "toolUseId": "fake-report-inline-code-1",
+        "conclusion": "架空の結論: キーと出力とコードとパスを同じ文に並べた。",
+        "sections": [
+          {
+            "heading": "架空の機械の側の文字",
+            "blocks": [
+              {
+                "kind": "markdown",
+                "markdown": "保存は <kbd>Ctrl</kbd> + <kbd>S</kbd>、検証は `pnpm run check` を打つと <samp>checked 1234 files, no errors</samp> と返る（架空）。\n\n押せる長いパスは `src/browser/components/page/conversation/components/markdown/renderer/report-notation.module.css` で、`/` の後で折れる。",
+                "fold": "",
+                "aside": ""
+              }
+            ]
+          },
+          {
+            "heading": "架空のファイルの塊",
+            "blocks": [
+              {
+                "kind": "files",
+                "items": [
+                  {
+                    "path": "src/browser/components/page/conversation/components/markdown/renderer/report-notation.module.css",
+                    "change": "modified",
+                    "note": "架空の変更"
+                  },
+                  {
+                    "path": "src/browser/components/page/conversation/components/repository-link/repository-link.tsx",
+                    "change": "modified",
+                    "note": "架空の変更"
+                  }
+                ],
+                "fold": "",
+                "aside": ""
+              }
+            ]
+          }
+        ],
+        "favor": "",
+        "checks": []
+      }
+    },
+    {
+      "afterMs": 1050,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-report-inline-code-1",
+        "content": "ok",
+        "isError": false
+      }
+    },
+    {
+      "afterMs": 2300,
+      "event": {
+        "kind": "turn-finished",
+        "outcome": {
+          "kind": "completed"
+        }
+      }
+    }
+  ]
+}

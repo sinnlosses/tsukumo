@@ -1,0 +1,63 @@
+{
+  "name": "chat-restored-history",
+  "resume": "fake-past-chat-session",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "chat-mode-changed",
+        "chat": true
+      }
+    },
+    {
+      "afterMs": 400,
+      "event": {
+        "kind": "request",
+        "text": "いまの架空の雑談その1",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 500,
+      "event": {
+        "kind": "speech",
+        "text": "いまの架空のセリフその1だよ。",
+        "expression": "proud"
+      }
+    },
+    {
+      "afterMs": 600,
+      "event": {
+        "kind": "turn-finished",
+        "outcome": {
+          "kind": "completed"
+        }
+      }
+    },
+    {
+      "afterMs": 700,
+      "event": {
+        "kind": "request",
+        "text": "いまの架空の雑談その2",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 800,
+      "event": {
+        "kind": "speech",
+        "text": "いまの架空のセリフその2だよ。",
+        "expression": "default"
+      }
+    },
+    {
+      "afterMs": 900,
+      "event": {
+        "kind": "turn-finished",
+        "outcome": {
+          "kind": "completed"
+        }
+      }
+    }
+  ]
+}

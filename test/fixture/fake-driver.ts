@@ -12,7 +12,7 @@ import type { SessionDriver } from "../../src/server/session-driver/core/session
 import { BUILTIN_SESSION_DEFAULT } from "../../src/shared/session/session-default.ts"
 import type { SessionEvent } from "../../src/shared/session/session-event.ts"
 
-// 疑似セッションは手で書いた架空の会話（test/fixture/fake-session.json）。実物の transcript は
+// 疑似セッションは手で書いた架空の会話（fixture/fake-session/）。実物の transcript は
 export const FAKE_SESSION = {
   opening: [
     {

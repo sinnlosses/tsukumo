@@ -100,6 +100,6 @@
 
 - **英語識別子**: `fakeSession`
 - **定義**: fake driver（`src/server/session-driver/adapter/fake-driver.ts`）が流すために手で書いた架空のイベント列
-  （`test/fixture/fake-session.json`）。claude を起こさずに画面全体を動かすための材料
+  （`fixture/fake-session/`。索引の `index.json` と、場面1つにつき `<場面名>.json`）。claude を起こさずに画面全体を動かすための材料
 - **注記**: 疑似セッションは**架空の会話だけ**（`docs/coding-standards.md`「会話内容の扱い」）
 - **避ける言い方**: シナリオ、スクリプト（脚本という含みが強すぎる）

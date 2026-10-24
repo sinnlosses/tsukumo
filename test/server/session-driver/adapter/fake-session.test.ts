@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs"
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import path from "node:path"
 
@@ -33,8 +33,12 @@ describe("readFakeSession", () => {
       return { afterMs, event: { kind: "utterance", text: "架空の本文" } }
     }
 
-    function sessionJson(opening: readonly unknown[], steps: readonly unknown[]): string {
-      return JSON.stringify({ opening, turns: [{ name: "架空の場面", steps }] })
+    function readScene(
+      opening: readonly unknown[],
+      steps: readonly unknown[],
+    ): ReturnType<typeof readFakeSession> {
+      writeFileSync(path.join(directory, "scene.json"), JSON.stringify({ name: "scene", steps }))
+      return readWritten(JSON.stringify({ opening, turns: ["scene"] }))
     }
 
     it("無いファイルは unreadable", () => {
@@ -46,15 +50,55 @@ describe("readFakeSession", () => {
       expect(readWritten("{}").kind).toBe("unreadable")
     })
 
-    it("場面の中で afterMs が手の並びの順に減ると、場面名と手の位置つきで拒む", () => {
-      const reading = readWritten(sessionJson([], [step(0), step(300), step(100)]))
+    it("索引の場面のファイルが無いと、場面のパスつきで unreadable", () => {
+      const reading = readWritten(JSON.stringify({ opening: [], turns: ["missing"] }))
 
       expect(reading.kind).toBe("unreadable")
-      expect(reading.kind === "unreadable" ? reading.reason : "").toMatch(/場面 架空の場面 の手 2/)
+      expect(reading.kind === "unreadable" ? reading.reason : "").toContain("missing.json")
+    })
+
+    it("場面のファイルの name がファイル名と違うと unreadable", () => {
+      writeFileSync(
+        path.join(directory, "scene.json"),
+        JSON.stringify({ name: "other", steps: [] }),
+      )
+
+      expect(readWritten(JSON.stringify({ opening: [], turns: ["scene"] })).kind).toBe("unreadable")
+    })
+
+    it("索引の場面名がディレクトリの外を指すと unreadable", () => {
+      const inner = path.join(directory, "inner")
+      mkdirSync(inner)
+      writeFileSync(
+        path.join(directory, "outside.json"),
+        JSON.stringify({ name: "../outside", steps: [] }),
+      )
+      const index = path.join(inner, "session.json")
+      writeFileSync(index, JSON.stringify({ opening: [], turns: ["../outside"] }))
+
+      expect(readFakeSession(index).kind).toBe("unreadable")
+    })
+
+    it("索引と場面のファイルが正しければ、turns は索引の並びで読める", () => {
+      for (const name of ["second", "first"]) {
+        writeFileSync(path.join(directory, `${name}.json`), JSON.stringify({ name, steps: [] }))
+      }
+      const reading = readWritten(JSON.stringify({ opening: [], turns: ["second", "first"] }))
+
+      expect(reading.kind === "read" ? reading.session.turns.map((turn) => turn.name) : []).toEqual(
+        ["second", "first"],
+      )
+    })
+
+    it("場面の中で afterMs が手の並びの順に減ると、場面名と手の位置つきで拒む", () => {
+      const reading = readScene([], [step(0), step(300), step(100)])
+
+      expect(reading.kind).toBe("unreadable")
+      expect(reading.kind === "unreadable" ? reading.reason : "").toMatch(/場面 scene の手 2/)
     })
 
     it("opening の中で afterMs が減ると、opening と手の位置つきで拒む", () => {
-      const reading = readWritten(sessionJson([step(200), step(100)], []))
+      const reading = readScene([step(200), step(100)], [])
 
       expect(reading.kind).toBe("unreadable")
       expect(reading.kind === "unreadable" ? reading.reason : "").toMatch(/opening の手 1/)
@@ -67,16 +111,12 @@ describe("readFakeSession", () => {
         event: { kind: "utterance", text: "架空の本文" },
       }
 
-      expect(readWritten(sessionJson([], [step(0), step(300), waiting, step(200)])).kind).toBe(
-        "read",
-      )
+      expect(readScene([], [step(0), step(300), waiting, step(200)]).kind).toBe("read")
     })
 
     it("afterMs が同じ値で続く場面と、手が0本・1本の場面は読める", () => {
-      expect(readWritten(sessionJson([], [step(0), step(0), step(200), step(200)])).kind).toBe(
-        "read",
-      )
-      expect(readWritten(sessionJson([step(5)], [])).kind).toBe("read")
+      expect(readScene([], [step(0), step(0), step(200), step(200)]).kind).toBe("read")
+      expect(readScene([step(5)], []).kind).toBe("read")
     })
   })
 })

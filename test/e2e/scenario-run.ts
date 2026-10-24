@@ -10,7 +10,7 @@
 //   食い違った回と `E2E_UPDATE=1` のときだけ撮る
 // - `open` は疑似セッションの予定の最初の静かな区切りまでが届いてから部屋を渡す
 //
-// 成果物に入るのは疑似セッション（`test/fixture/fake-session.json`）の手書きの会話だけ。
+// 成果物に入るのは疑似セッション（`fixture/fake-session/`）の手書きの会話だけ。
 // 起動トークンと絶対パスは置き換えてから書く。
 
 import { mkdirSync, rmSync } from "node:fs"

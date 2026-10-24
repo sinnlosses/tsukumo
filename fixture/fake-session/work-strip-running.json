@@ -1,0 +1,146 @@
+{
+  "name": "work-strip-running",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "集計の関数とスクリプトを足したい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 100,
+      "event": {
+        "kind": "work-plan",
+        "delegatedRange": {
+          "kind": "none"
+        },
+        "skippedPhases": [],
+        "awaitingSummary": {
+          "kind": "none"
+        },
+        "phases": [
+          "今の形を調べる",
+          "集計の関数とスクリプト",
+          "画面につなぐ",
+          "文書と検証を揃える"
+        ],
+        "current": 0,
+        "finishedInGroup": [],
+        "phaseSummary": ""
+      }
+    },
+    {
+      "afterMs": 200,
+      "event": {
+        "kind": "tool-started",
+        "toolUseId": "fake-strip-1",
+        "name": "Read",
+        "input": {
+          "file_path": "/tmp/dummy/metric.ts"
+        }
+      }
+    },
+    {
+      "afterMs": 8500,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-strip-1",
+        "content": "ダミーの読み取り結果",
+        "isError": false
+      }
+    },
+    {
+      "afterMs": 8600,
+      "event": {
+        "kind": "work-plan",
+        "delegatedRange": {
+          "kind": "none"
+        },
+        "skippedPhases": [],
+        "awaitingSummary": {
+          "kind": "none"
+        },
+        "phases": [
+          "今の形を調べる",
+          "集計の関数とスクリプト",
+          "画面につなぐ",
+          "文書と検証を揃える"
+        ],
+        "current": 1,
+        "finishedInGroup": [],
+        "phaseSummary": "架空の数は1か所で数えていた。"
+      }
+    },
+    {
+      "afterMs": 8700,
+      "event": {
+        "kind": "tool-started",
+        "toolUseId": "fake-strip-2",
+        "name": "Write",
+        "input": {
+          "file_path": "/tmp/dummy/metric-summary.ts"
+        }
+      }
+    },
+    {
+      "afterMs": 8900,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-strip-2",
+        "content": "ダミーの書き込み結果",
+        "isError": false
+      }
+    },
+    {
+      "afterMs": 9000,
+      "event": {
+        "kind": "tool-started",
+        "toolUseId": "fake-strip-3",
+        "name": "Bash",
+        "input": {
+          "command": "pnpm exec prettier --write /tmp/dummy"
+        }
+      }
+    },
+    {
+      "afterMs": 9200,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-strip-3",
+        "content": "ダミーの失敗の出力",
+        "isError": true
+      }
+    },
+    {
+      "afterMs": 9300,
+      "event": {
+        "kind": "tool-started",
+        "toolUseId": "fake-strip-4",
+        "name": "Bash",
+        "input": {
+          "command": "pnpm exec vitest run /tmp/dummy/metric"
+        }
+      }
+    },
+    {
+      "afterMs": 23000,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-strip-4",
+        "content": "ダミーのテスト結果",
+        "isError": false
+      }
+    },
+    {
+      "afterMs": 23100,
+      "event": {
+        "kind": "turn-finished",
+        "outcome": {
+          "kind": "completed"
+        }
+      }
+    }
+  ]
+}

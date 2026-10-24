@@ -10,7 +10,6 @@ const EXEMPT_PATH_PATTERNS = [
   "test/e2e/expected/",
   "docs/history/",
   "vendor/",
-  "test/fixture/fake-session.json",
 ] as const satisfies readonly string[]
 
 export type StagedChange = {

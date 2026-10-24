@@ -94,7 +94,7 @@ shared の手続き応答に乗る型や DOM の構造を変える計画には�
    部品を足したときにそれを選ぶ場面が無くても、この3場面のどれかの差分に出る。**特定の部品を
    守りたくなったら `page` の場面を増やさず、部品の名前を表に足して場面で選ぶ**
 
-**どこからも引かれずに残ったものは単体の `test/e2e-reference.test.ts` が落とす。** 落とすのは、同じ場面の `*.dom.json` の無い `*.messages.json`・どの E2E のシナリオ名も指さない期待値のファイルと、どの E2E も `domRoots` に渡さない表の名前と、テスト・`scripts/`・`src/`・`docs/architecture/` のどこからも名前で引かれない `fake-session.json` の場面。場面は `turns` の並びで流れることを使い手と数えないので、並びに頼るなら名前で引く形にする。
+**どこからも引かれずに残ったものは単体の `test/e2e-reference.test.ts` が落とす。** 落とすのは、同じ場面の `*.dom.json` の無い `*.messages.json`・どの E2E のシナリオ名も指さない期待値のファイルと、どの E2E も `domRoots` に渡さない表の名前と、テスト・`scripts/`・`src/`・`docs/architecture/` のどこからも名前で引かれない `fixture/fake-session/` の場面（場面のファイル名で数える）。場面は `turns` の並びで流れることを使い手と数えないので、並びに頼るなら名前で引く形にする。
 
 **E2E の足場（`test/e2e/` の `.test.ts` 以外）が export する場面を開く入口は、`test/e2e/task-room.ts` に置く `open…Room` の名前の関数だけにする。** 期待値の持ち主の判定（`scenarioOwners`）は場面名の位置の式を辿れるときだけ辿るので、名前が `ROOM_OPENER` に合わない入口や `task-room.ts` 以外の足場が export する入口を足すと、単体の `test/scripts/shared/e2e-scenario.test.ts`「場面を開く入口」が落ちる。export しない入口とテストファイルの中の局所の入口はこのテストの外で、名前は縛らない（局所の関数は呼び出しの引数と `scenario:` の値から辿る）。
 

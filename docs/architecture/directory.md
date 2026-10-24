@@ -29,6 +29,7 @@ src/                          配線（composition root）。cli.ts（入口）�
     <機能>/core/ adapter/     機能の判断・境界（上の「サーバの機能と、機能どうしの辺」）
   browser/                    React の部品・hooks・CSS（下の「`src/browser/` の箱と、置く基準」）
 test/                         src/<相対パス>.ts → test/<相対パス>.test.ts
+fixture/fake-session/         疑似セッション（索引 index.json と、場面1つにつき <場面名>.json。TSUKUMO_FAKE_SESSION の既定）
 story/                        src/<相対パス>.tsx → story/<相対パス>.story.tsx（Storybook。設定は .storybook/）
 characters/<name>/            character.json・persona.md・素材
 plugin/                       セッションに載せる同梱のプラグイン（`token-usage-diet` だけを持つ。`buildQuerySeedOptions` が渡す）

@@ -1,0 +1,42 @@
+{
+  "name": "work-strip-plan-pending",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "手順5を並べ替えたい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 100,
+      "event": {
+        "kind": "work-plan",
+        "phases": ["計画を書き直す", "委譲先の段", "受け入れる"],
+        "current": 0,
+        "finishedInGroup": [],
+        "phaseSummary": "",
+        "delegatedRange": {
+          "kind": "pending",
+          "first": 1
+        },
+        "skippedPhases": [],
+        "awaitingSummary": {
+          "kind": "none"
+        }
+      }
+    },
+    {
+      "afterMs": 200,
+      "event": {
+        "kind": "tool-started",
+        "toolUseId": "fake-pending-1",
+        "name": "Read",
+        "input": {
+          "file_path": "/tmp/dummy/plan.md"
+        }
+      }
+    }
+  ]
+}

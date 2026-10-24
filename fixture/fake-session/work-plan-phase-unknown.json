@@ -1,0 +1,92 @@
+{
+  "name": "work-plan-phase-unknown",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "ID の変換を両方の形に対応させたい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 200,
+      "event": {
+        "kind": "work-plan",
+        "delegatedRange": {
+          "kind": "none"
+        },
+        "skippedPhases": [],
+        "awaitingSummary": {
+          "kind": "none"
+        },
+        "phases": ["今の形を調べる", "ID の変換を両方の形に対応させる", "文書と検証を揃える"],
+        "current": 0,
+        "finishedInGroup": [],
+        "phaseSummary": ""
+      }
+    },
+    {
+      "afterMs": 1300,
+      "event": {
+        "kind": "work-plan",
+        "delegatedRange": {
+          "kind": "none"
+        },
+        "skippedPhases": [],
+        "awaitingSummary": {
+          "kind": "none"
+        },
+        "phases": ["今の形を調べる", "ID の変換を両方の形に対応させる", "文書と検証を揃える"],
+        "current": 2,
+        "finishedInGroup": [],
+        "phaseSummary": "段2は段1の調べで済んだので飛ばした（架空）。"
+      }
+    },
+    {
+      "afterMs": 2000,
+      "event": {
+        "kind": "report-drafting",
+        "toolUseId": "fake-work-plan-unknown-report"
+      }
+    },
+    {
+      "afterMs": 2400,
+      "event": {
+        "kind": "report",
+        "task": {
+          "kind": "none"
+        },
+        "workPlanClosing": "finished",
+        "closing": {
+          "kind": "speech",
+          "text": "3つの段を終えたよ。",
+          "expression": "proud"
+        },
+        "toolUseId": "fake-work-plan-unknown-report",
+        "conclusion": "架空の結論: 変換は既に両方の形を受け付けていたので、文書だけ揃えた。",
+        "sections": [],
+        "favor": "",
+        "checks": []
+      }
+    },
+    {
+      "afterMs": 2450,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-work-plan-unknown-report",
+        "content": "ok",
+        "isError": false
+      }
+    },
+    {
+      "afterMs": 2900,
+      "event": {
+        "kind": "turn-finished",
+        "outcome": {
+          "kind": "completed"
+        }
+      }
+    }
+  ]
+}

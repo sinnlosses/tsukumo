@@ -1,0 +1,271 @@
+{
+  "name": "report-chart",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "グラフの見え方を確かめたい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 300,
+      "event": {
+        "kind": "speech",
+        "text": "7種を並べて書くね。",
+        "expression": "default"
+      }
+    },
+    {
+      "afterMs": 1000,
+      "event": {
+        "kind": "report",
+        "task": {
+          "kind": "none"
+        },
+        "closing": {
+          "kind": "speech",
+          "text": "書けたよ！",
+          "expression": "proud"
+        },
+        "toolUseId": "fake-report-chart-1",
+        "conclusion": "架空の結論: 7種のグラフの見え方を確かめた。",
+        "sections": [
+          {
+            "heading": "架空の件数の推移",
+            "shapeTag": "quantity",
+            "blocks": [
+              {
+                "kind": "chart",
+                "chartKind": "bar",
+                "labels": ["架空1月", "架空2月", "架空3月"],
+                "series": [
+                  {
+                    "name": "架空系列A",
+                    "values": [12, 18, 9]
+                  }
+                ],
+                "horizontal": false,
+                "fold": "",
+                "aside": ""
+              },
+              {
+                "kind": "chart",
+                "chartKind": "bar",
+                "labels": ["架空案A", "架空案B", "架空案C"],
+                "series": [
+                  {
+                    "name": "架空の横棒",
+                    "values": [30, 55, 15]
+                  }
+                ],
+                "horizontal": true,
+                "fold": "",
+                "aside": ""
+              },
+              {
+                "kind": "chart",
+                "chartKind": "line",
+                "labels": ["架空1週", "架空2週", "架空3週", "架空4週"],
+                "series": [
+                  {
+                    "name": "架空系列A",
+                    "values": [4, 7, 5, 9]
+                  },
+                  {
+                    "name": "架空系列B",
+                    "values": [2, 3, 6, 4]
+                  }
+                ],
+                "horizontal": false,
+                "fold": "",
+                "aside": ""
+              },
+              {
+                "kind": "chart",
+                "chartKind": "pie",
+                "labels": ["架空内訳A", "架空内訳B", "架空内訳C"],
+                "series": [
+                  {
+                    "name": "架空系列A",
+                    "values": [50, 30, 20]
+                  }
+                ],
+                "horizontal": false,
+                "fold": "",
+                "aside": ""
+              },
+              {
+                "kind": "chart",
+                "chartKind": "arrow",
+                "labels": [
+                  "架空項目A",
+                  "架空の長い項目名B",
+                  "架空C",
+                  "架空項目D",
+                  "架空E",
+                  "架空項目F"
+                ],
+                "series": [
+                  {
+                    "name": "架空の前",
+                    "values": [9594, 9783, 1057, 35532, 7494, 30046]
+                  },
+                  {
+                    "name": "架空の後",
+                    "values": [1415, 817, 375, 22129, 4552, 22643]
+                  }
+                ],
+                "horizontal": false,
+                "fold": "",
+                "aside": ""
+              },
+              {
+                "kind": "chart",
+                "chartKind": "slope",
+                "labels": ["架空店A", "架空店B", "架空店C", "架空店D"],
+                "series": [
+                  {
+                    "name": "架空の前期",
+                    "values": [40, 42, 25, 10]
+                  },
+                  {
+                    "name": "架空の後期",
+                    "values": [55, 41, 20, 18]
+                  }
+                ],
+                "horizontal": false,
+                "fold": "",
+                "aside": ""
+              },
+              {
+                "kind": "chart",
+                "chartKind": "span",
+                "labels": [
+                  "架空の取得",
+                  "架空の長い名前の変換処理",
+                  "架空の確認",
+                  "架空の書き出し"
+                ],
+                "series": [
+                  {
+                    "name": "架空の始まり",
+                    "values": [0, 12, 14, 95]
+                  },
+                  {
+                    "name": "架空の終わり",
+                    "values": [30, 80, 15, 120]
+                  }
+                ],
+                "horizontal": false,
+                "fold": "",
+                "aside": ""
+              },
+              {
+                "kind": "chart",
+                "chartKind": "share",
+                "labels": ["架空A", "架空の長い部分名B", "架空C", "架空D", "架空E"],
+                "series": [
+                  {
+                    "name": "架空の件数",
+                    "values": [62, 25, 6, 4, 3]
+                  }
+                ],
+                "horizontal": false,
+                "fold": "",
+                "aside": ""
+              },
+              {
+                "kind": "chart",
+                "chartKind": "bar",
+                "title": "架空の振り返りが最も多い",
+                "labels": [
+                  "架空の振り返り",
+                  "架空の実装",
+                  "架空の受け入れ",
+                  "架空の計画",
+                  "架空の送り出し",
+                  "架空の検証",
+                  "架空のレビュー",
+                  "架空の文書",
+                  "架空の調査",
+                  "架空の整理",
+                  "架空の相談"
+                ],
+                "series": [
+                  {
+                    "name": "架空の件数",
+                    "values": [35, 28, 22, 20, 18, 15, 12, 10, 8, 6, 3]
+                  }
+                ],
+                "horizontal": true,
+                "emphasis": ["架空の振り返り"],
+                "fold": "",
+                "aside": ""
+              },
+              {
+                "kind": "chart",
+                "chartKind": "share",
+                "title": "架空の内訳は振り返りが 35%",
+                "labels": [
+                  "架空の振り返り",
+                  "架空の実装",
+                  "架空の受け入れ",
+                  "架空の計画",
+                  "架空の相談"
+                ],
+                "series": [
+                  {
+                    "name": "架空の件数",
+                    "values": [35, 28, 22, 10, 5]
+                  }
+                ],
+                "horizontal": false,
+                "emphasis": ["架空の振り返り"],
+                "fold": "",
+                "aside": ""
+              },
+              {
+                "kind": "chart",
+                "chartKind": "bar",
+                "title": "架空の3月が最も多い",
+                "labels": ["架空1月", "架空2月", "架空3月", "架空4月"],
+                "series": [
+                  {
+                    "name": "架空の件数",
+                    "values": [12, 18, 24, 9]
+                  }
+                ],
+                "horizontal": false,
+                "emphasis": ["架空3月"],
+                "fold": "",
+                "aside": ""
+              }
+            ]
+          }
+        ],
+        "favor": "",
+        "checks": []
+      }
+    },
+    {
+      "afterMs": 1050,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-report-chart-1",
+        "content": "ok",
+        "isError": false
+      }
+    },
+    {
+      "afterMs": 2300,
+      "event": {
+        "kind": "turn-finished",
+        "outcome": {
+          "kind": "completed"
+        }
+      }
+    }
+  ]
+}

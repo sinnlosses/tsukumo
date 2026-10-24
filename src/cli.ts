@@ -51,9 +51,10 @@ const USAGE = `tsukumo — キャラクターと一緒に仕事をするため�
                       scripts/capture/capture-catalog.ts が使う）
   TSUKUMO_FAKE_SCENE_UNTIL  名指しした場面の手を先頭から何個まで流すか（正の整数。既定は全部。
                       場面の途中の画を撮る scripts/capture/capture-view.ts の --until-step が使う）
-  TSUKUMO_FAKE_SESSION  fake のとき読む疑似セッションのファイル（既定は同梱の
-                      test/fixture/fake-session.json。相対パスは cwd 相対）。架空の会話だけを
-                      読ませ、実物の会話（transcript・SDK のイベント）は渡さない
+  TSUKUMO_FAKE_SESSION  fake のとき読む疑似セッションの索引のファイル（既定は同梱の
+                      fixture/fake-session/index.json。場面は同じディレクトリの <場面名>.json。
+                      相対パスは cwd 相対）。架空の会話だけを読ませ、
+                      実物の会話（transcript・SDK のイベント）は渡さない
   TSUKUMO_TW          ワークフローの設定の読み書きと hook（lap-hook・ask-guard）で呼ぶ tw のパス
                       （既定は取り込みの bin/tw。取り込みを載せないときは PATH の tw）。疑似セッションの撮影や
                       自動テストで、取り込みを書き換えずに偽の tw へ差し替えるための口

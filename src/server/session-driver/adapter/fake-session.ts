@@ -2,6 +2,7 @@
 // 疑似セッションは手で書いた架空の会話だけで、実物の transcript は使わない。
 
 import { readFileSync } from "node:fs"
+import path from "node:path"
 import { fileURLToPath } from "node:url"
 
 import { z } from "zod"
@@ -9,8 +10,14 @@ import { z } from "zod"
 import { type SessionDigest, sessionDigestSchema } from "../../../shared/session/session-digest.ts"
 import { type SessionEvent, sessionEventSchema } from "../../../shared/session/session-event.ts"
 
-/** 既定の疑似セッション。tsukumo 自身の場所から解く（cwd に依存させない）。 */
-const DEFAULT_SESSION_URL = new URL("../../../../test/fixture/fake-session.json", import.meta.url)
+/** 既定の疑似セッションの索引。tsukumo 自身の場所から解く（cwd に依存させない）。 */
+const DEFAULT_SESSION_URL = new URL("../../../../fixture/fake-session/index.json", import.meta.url)
+
+/** 場面のファイル名（拡張子を除く）。索引と同じディレクトリの外や索引そのものを指せない形にする。 */
+const sceneNameSchema = z
+  .string()
+  .regex(/^[a-z][a-z0-9-]*$/)
+  .refine((name) => name !== "index")
 
 /**
  * 疑似セッションの1手。`afterMs` はその場面の始まりからの経過（前の手からの差分ではない）。
@@ -40,14 +47,15 @@ const fakePastSessionSchema = z.object({
 })
 
 /**
- * 疑似セッション。`opening` は起こした直後に流す場面、`turns` は依頼を受けるたびに順に流す場面。
+ * 疑似セッションの索引。`opening` は起こした直後に流す場面、`turns` は依頼を受けるたびに順に流す場面の名前
+ * （場面の中身は索引と同じディレクトリの `<名前>.json`）。
  * 依頼が場面の数を超えたら先頭に戻って繰り返す（起こしっぱなしで何度でも試せるように）。
  */
-const fakeSessionSchema = z.object({
+const fakeSessionIndexSchema = z.object({
   opening: z
     .array(fakeSessionStepSchema)
     .superRefine((steps, ctx) => rejectDescendingSteps(steps, "opening", ctx)),
-  turns: z.array(fakeSessionSceneSchema),
+  turns: z.array(sceneNameSchema),
   pastSessions: z.array(fakePastSessionSchema).default([]),
   sessionDigests: z.record(z.string(), sessionDigestSchema).default({}),
   usageReview: z
@@ -111,34 +119,48 @@ export type FakeSessionReading =
   | { readonly kind: "unreadable"; readonly reason: string }
 
 /**
- * 疑似セッションを読む。読めない・JSON でない・形が違うときは `unreadable`。
+ * 疑似セッションを読む。`indexPath` は索引のファイルで、場面は同じディレクトリの `<場面名>.json` から読む。
+ * 読めない・JSON でない・形が違う・場面のファイルの `name` がファイル名と違うときは `unreadable`。
  * 呼び出し側は起動を止めてよい（疑似セッションが無ければ fake driver には意味が無いので、起動時の前提不足として扱う）。
  */
 export function readFakeSession(
-  path: string = fileURLToPath(DEFAULT_SESSION_URL),
+  indexPath: string = fileURLToPath(DEFAULT_SESSION_URL),
 ): FakeSessionReading {
-  let content: string
-  try {
-    content = readFileSync(path, "utf8")
-  } catch {
-    return { kind: "unreadable", reason: `ファイルを読めない（${path}）` }
+  const indexJson = readJsonFile(indexPath)
+  if (indexJson.kind === "unreadable") {
+    return indexJson
   }
-
-  let parsed: unknown
-  try {
-    parsed = JSON.parse(content)
-  } catch {
-    return { kind: "unreadable", reason: `JSON として読めない（${path}）` }
-  }
-
-  const session = fakeSessionSchema.safeParse(parsed)
-  if (!session.success) {
+  const index = fakeSessionIndexSchema.safeParse(indexJson.value)
+  if (!index.success) {
     return {
       kind: "unreadable",
-      reason: session.error.issues.map((issue) => issue.message).join(" / "),
+      reason: index.error.issues.map((issue) => issue.message).join(" / "),
     }
   }
-  return { kind: "read", session: session.data }
+
+  const turns: FakeSessionScene[] = []
+  for (const name of index.data.turns) {
+    const scenePath = path.join(path.dirname(indexPath), `${name}.json`)
+    const sceneJson = readJsonFile(scenePath)
+    if (sceneJson.kind === "unreadable") {
+      return sceneJson
+    }
+    const scene = fakeSessionSceneSchema.safeParse(sceneJson.value)
+    if (!scene.success) {
+      return {
+        kind: "unreadable",
+        reason: scene.error.issues.map((issue) => issue.message).join(" / "),
+      }
+    }
+    if (scene.data.name !== name) {
+      return {
+        kind: "unreadable",
+        reason: `場面のファイルの name（${scene.data.name}）がファイル名と違う（${scenePath}）`,
+      }
+    }
+    turns.push(scene.data)
+  }
+  return { kind: "read", session: { ...index.data, turns } }
 }
 
 /**
@@ -179,4 +201,22 @@ function rejectDescendingSteps(
     code: "custom",
     message: `${where} の手 ${String(index)}（0始まり）の afterMs ${String(steps[index]?.afterMs)} が前の手の ${String(steps[index - 1]?.afterMs)} より小さい（afterMs は場面の始まりからの経過で、手の並びの順に増える）`,
   })
+}
+
+type JsonFileReading =
+  | { readonly kind: "read"; readonly value: unknown }
+  | { readonly kind: "unreadable"; readonly reason: string }
+
+function readJsonFile(filePath: string): JsonFileReading {
+  let content: string
+  try {
+    content = readFileSync(filePath, "utf8")
+  } catch {
+    return { kind: "unreadable", reason: `ファイルを読めない（${filePath}）` }
+  }
+  try {
+    return { kind: "read", value: JSON.parse(content) }
+  } catch {
+    return { kind: "unreadable", reason: `JSON として読めない（${filePath}）` }
+  }
 }

@@ -1,0 +1,80 @@
+{
+  "name": "work-strip-long-report-quick",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "ワークプランのある作業の長いレポートを見たい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 50,
+      "event": {
+        "kind": "work-plan",
+        "delegatedRange": {
+          "kind": "none"
+        },
+        "skippedPhases": [],
+        "awaitingSummary": {
+          "kind": "none"
+        },
+        "phases": ["調べる", "書く"],
+        "current": 0,
+        "finishedInGroup": [],
+        "phaseSummary": ""
+      }
+    },
+    {
+      "afterMs": 100,
+      "event": {
+        "kind": "work-plan",
+        "delegatedRange": {
+          "kind": "none"
+        },
+        "skippedPhases": [],
+        "awaitingSummary": {
+          "kind": "none"
+        },
+        "phases": ["調べる", "書く"],
+        "current": 1,
+        "finishedInGroup": [],
+        "phaseSummary": "架空の材料がそろった。"
+      }
+    },
+    {
+      "afterMs": 150,
+      "event": {
+        "kind": "work-plan",
+        "delegatedRange": {
+          "kind": "none"
+        },
+        "skippedPhases": [],
+        "awaitingSummary": {
+          "kind": "none"
+        },
+        "phases": ["調べる", "書く"],
+        "current": 2,
+        "finishedInGroup": [],
+        "phaseSummary": ""
+      }
+    },
+    {
+      "afterMs": 200,
+      "event": {
+        "kind": "utterance",
+        "text": "## 長いレポートの疑似セッション（架空）\n\n- これは架空の本文で、実物の会話ではない\n- 帯が本文の末尾を覆わないかを測る\n\n### 1. 一つ目の塊\n\n架空の段落。架空の段落。架空の段落。架空の段落。架空の段落。架空の段落。架空の段落。\n架空の段落。架空の段落。架空の段落。架空の段落。架空の段落。架空の段落。架空の段落。\n\n### 2. 二つ目の塊\n\n架空の段落。架空の段落。架空の段落。架空の段落。架空の段落。架空の段落。架空の段落。\n架空の段落。架空の段落。架空の段落。架空の段落。架空の段落。架空の段落。架空の段落。\n\n### 3. 三つ目の塊\n\n架空の段落。架空の段落。架空の段落。架空の段落。架空の段落。架空の段落。架空の段落。\n架空の段落。架空の段落。架空の段落。架空の段落。架空の段落。架空の段落。架空の段落。\n\n### 4. 四つ目の塊\n\n架空の段落。架空の段落。架空の段落。架空の段落。架空の段落。架空の段落。架空の段落。\n架空の段落。架空の段落。架空の段落。架空の段落。架空の段落。架空の段落。架空の段落。\n\nこれが本文の最後の段落（架空）。\n"
+      }
+    },
+    {
+      "afterMs": 300,
+      "event": {
+        "kind": "turn-finished",
+        "outcome": {
+          "kind": "completed"
+        }
+      }
+    }
+  ]
+}

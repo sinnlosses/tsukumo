@@ -60,7 +60,7 @@ export type Settle =
 export const SCENE_END_SETTLE = { kind: "scene-end" } satisfies Settle
 
 /**
- * カタログの1件。`scene` は疑似セッション（test/fixture/fake-session.json）の場面の名前で、`name` は
+ * カタログの1件。`scene` は疑似セッション（fixture/fake-session/）の場面の名前で、`name` は
  * 画像のファイル名と `--only` の名指しに使う一意の名前（同じ場面を別の操作で何枚も撮るので、
  * 場面の名前では足りない）。
  *

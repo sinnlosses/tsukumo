@@ -49,7 +49,7 @@
   テスト環境の DOM は不正な CSS・属性値を CSSOM に入れる段で捨てるので、サニタイザが素通ししても
   DOM 上の `style` は null になり、抜け道の入力を足しても緑のまま空振りする。
   手本は `test/browser/components/page/conversation/components/markdown/renderer/sanitize-schema.test.ts`
-- **サニタイザの許可を変えたときの目視には、疑似セッションの `report-meter` 場面（`test/fixture/fake-session.json`）で
+- **サニタイザの許可を変えたときの目視には、疑似セッションの `report-meter` 場面（`fixture/fake-session/report-meter.json`）で
   割合の帯（`stat-meter`）と数の棒（`cell-bar`）を撮る。** 例: `node scripts/capture/capture-view.ts --scene report-meter --size 1200x1400 --wait-for '[class*="stat-meter"]' --measure '[class*="cell-bar"]'`。
   場面は名前を指して起こすので、足しても名前を指さない既存の E2E の期待値は変わらない
 - **インラインの `kbd`・`samp`・コードと、`/` の後で折れる長いパスの目視には、`report-inline-code` 場面を撮る。**

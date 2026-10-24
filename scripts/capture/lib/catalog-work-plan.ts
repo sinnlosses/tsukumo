@@ -8,7 +8,7 @@ export const WORK_PLAN_ENTRIES: readonly CatalogEntry[] = [
   // `WORK_TOGGLE_SELECTOR` を押して一覧を開く。
   {
     name: "current-work-running",
-    // 自分の `request` を持つ場面（`test/fixture/fake-session.json`）なので、名指しで
+    // 自分の `request` を持つ場面（`fixture/fake-session/`）なので、名指しで
     // 直接起こしてもターンが進行中のまま20秒続く——その間に撮れば「作業中」と実行中の手順が出る。
     scene: "current-work-running",
     label: "帯の「いまの作業」（実行中）",

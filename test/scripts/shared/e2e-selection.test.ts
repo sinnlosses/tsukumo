@@ -102,7 +102,7 @@ describe("selectE2eFiles が全件に倒す変更", () => {
     ["src/shared/frame.ts", "サーバが読むファイル"],
     ["src/browser/app.tsx", "どの領域の根からも届かないファイル"],
     ["test/e2e/expected/unknown.dom.json", "持ち主の E2E が見つからない期待値"],
-    ["test/fixture/fake-session.json", "E2E が実行時に読みうるファイル"],
+    ["fixture/fake-session/index.json", "E2E が実行時に読みうるファイル"],
     ["bin/tsukumo", "選べないパス"],
   ])("%s（%s）", (path, reason) => {
     expect(select(path)).toEqual({ kind: "all", path, reason })

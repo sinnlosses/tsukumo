@@ -3,7 +3,7 @@
 // 索引 HTML を書き出す。描画に関わる変更の `evidence`（`docs/architecture/testing.md`
 // 「手で確かめること」）を作るための道具で、tsukumo 本体からは呼ばれないので scripts/ に置く。
 //
-// 依頼を手で送らずに、狙った状態が出る。 場面の名前は疑似セッション（test/fixture/fake-session.json）の
+// 依頼を手で送らずに、狙った状態が出る。 場面の名前は疑似セッション（fixture/fake-session/）の
 // `turns[].name` で、`TSUKUMO_FAKE_SCENE` で名指しすると起こした直後に流れる。
 //
 // 手を動かさないと出ない状態は、撮る前に操作を当てて出す（`Preparation`）。
@@ -98,7 +98,7 @@ async function main(argv: readonly string[]): Promise<number> {
 
   const reading = readFakeSession()
   if (reading.kind === "unreadable") {
-    process.stderr.write(`test/fixture/fake-session.json が読めない: ${reading.reason}\n`)
+    process.stderr.write(`fixture/fake-session/index.json が読めない: ${reading.reason}\n`)
     return 1
   }
 

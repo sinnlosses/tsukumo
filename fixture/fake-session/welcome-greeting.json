@@ -1,0 +1,25 @@
+{
+  "name": "welcome-greeting",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "conversation-cleared"
+      }
+    },
+    {
+      "afterMs": 100,
+      "event": {
+        "kind": "welcome-greeting-changed",
+        "state": {
+          "kind": "written",
+          "greeting": {
+            "withCard": "架空の挨拶、{札} からどう？",
+            "withoutCard": "架空の挨拶。",
+            "expression": "excited"
+          }
+        }
+      }
+    }
+  ]
+}

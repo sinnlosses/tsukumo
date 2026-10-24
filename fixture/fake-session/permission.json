@@ -1,0 +1,45 @@
+{
+  "name": "permission",
+  "steps": [
+    {
+      "afterMs": 100,
+      "event": {
+        "kind": "pending-changed",
+        "pending": [
+          {
+            "kind": "permission",
+            "id": "fake-ask-1",
+            "toolName": "Bash",
+            "input": {
+              "command": "echo 架空の確認"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "afterMs": 200,
+      "event": {
+        "kind": "speech",
+        "text": "許可がほしいところ。答えてみて。",
+        "expression": "flustered"
+      }
+    },
+    {
+      "afterMs": 1200,
+      "event": {
+        "kind": "utterance",
+        "text": "答え待ちの箱を出す場面（架空）。答えると箱が消える。\n"
+      }
+    },
+    {
+      "afterMs": 1300,
+      "event": {
+        "kind": "turn-finished",
+        "outcome": {
+          "kind": "completed"
+        }
+      }
+    }
+  ]
+}

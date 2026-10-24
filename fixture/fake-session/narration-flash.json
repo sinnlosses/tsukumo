@@ -1,0 +1,65 @@
+{
+  "name": "narration-flash",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "実況が一瞬だけ本文に出る並びを見たい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 6000,
+      "event": {
+        "kind": "utterance",
+        "text": "さいしょに疑似セッションを読むね。"
+      }
+    },
+    {
+      "afterMs": 9000,
+      "event": {
+        "kind": "turn-finished",
+        "outcome": {
+          "kind": "completed"
+        }
+      }
+    },
+    {
+      "afterMs": 10200,
+      "event": {
+        "kind": "tool-started",
+        "toolUseId": "fake-tool-flash-1",
+        "name": "Read",
+        "input": {
+          "file_path": "/tmp/dummy/script.json"
+        }
+      }
+    },
+    {
+      "afterMs": 10700,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-tool-flash-1",
+        "content": "ダミーの読み取り結果（3行）",
+        "isError": false
+      }
+    },
+    {
+      "afterMs": 11700,
+      "event": {
+        "kind": "utterance",
+        "text": "## 実況が 1.2 秒だけ出て消える\n\nこれは架空の本文で、実物の会話ではない。**ターンの途中で `turn-finished` が挟まると**\n`hideUnsettledReport` が効かなくなり、1つめの実況が本文に出る。次の `tool-started` が届くと\n`keepOnlyInterimReports` が同じ本文を落とすので、出ていた時間はその2つの間隔ぶんだけになる。"
+      }
+    },
+    {
+      "afterMs": 12200,
+      "event": {
+        "kind": "turn-finished",
+        "outcome": {
+          "kind": "completed"
+        }
+      }
+    }
+  ]
+}

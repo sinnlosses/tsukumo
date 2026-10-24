@@ -1,0 +1,541 @@
+{
+  "opening": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "session-info",
+        "sessionId": "fake-session",
+        "model": "opus",
+        "permissionMode": "auto",
+        "slashCommands": ["clear", "compact", "doctor", "next-task"],
+        "terminalSlashCommands": ["doctor"],
+        "skillNames": ["tsukumo-workflow:next-task", "fable-review"],
+        "agentNames": ["tsukumo-workflow:acceptor", "fable-acceptor"]
+      }
+    },
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "command-descriptions",
+        "descriptions": [
+          {
+            "name": "clear",
+            "description": "会話を消して始め直す（架空の説明）"
+          },
+          {
+            "name": "compact",
+            "description": "会話を要約してまとめる（架空の説明）"
+          }
+        ]
+      }
+    },
+    {
+      "afterMs": 200,
+      "event": {
+        "kind": "speech",
+        "text": "疑似セッションの駆動で立ち上がったよ。ここはぜんぶ作り物の会話。",
+        "expression": "default"
+      }
+    }
+  ],
+  "turns": [
+    "report",
+    "permission",
+    "question-multi",
+    "question-pair",
+    "question-long",
+    "question-preview",
+    "question-brief",
+    "question-preview-image",
+    "notation",
+    "interim-flicker",
+    "chat-compact-boundary",
+    "chat-speech-gap",
+    "chat-restored-history",
+    "narration-stuck",
+    "narration-flash",
+    "turn-outline",
+    "turn-rail-notice",
+    "turn-history",
+    "turn-outline-many",
+    "report-tool",
+    "report-blocks",
+    "report-chart",
+    "report-board",
+    "report-svg",
+    "report-svg-tone",
+    "report-graph-tone",
+    "report-graph-wide",
+    "report-graph-scroll",
+    "report-flow-row",
+    "report-matrix",
+    "report-before-after",
+    "report-dimension",
+    "report-image",
+    "report-tall-figure",
+    "report-interim-nested",
+    "report-caption",
+    "report-figure",
+    "report-timeline",
+    "report-figure-none",
+    "report-mermaid-rejected",
+    "background-task",
+    "background-task-short",
+    "aside-delegating",
+    "aside-answer",
+    "current-work-running",
+    "current-work-failed",
+    "resumed-report",
+    "reaction-accepted",
+    "api-failure",
+    "rate-limit",
+    "diary-written",
+    "session-list",
+    "welcome-recommendation",
+    "chat-remembered-lines",
+    "work-plan",
+    "work-plan-skipped",
+    "work-plan-stopped",
+    "work-plan-phase-unknown",
+    "work-plan-quick",
+    "work-strip-running",
+    "phone-inquiry-pick",
+    "phone-layout",
+    "phone-phases",
+    "work-strip-ask",
+    "inquiry-below-body",
+    "work-strip-parallel",
+    "work-strip-parallel-ask",
+    "work-plan-parallel",
+    "work-strip-question",
+    "work-strip-long-report-quick",
+    "report-tool-quick",
+    "long-report-quick",
+    "reading-position",
+    "closing-narration-quick",
+    "report-task-finished",
+    "report-task-verdict",
+    "session-resume",
+    "ended-ready",
+    "session-ended",
+    "waiting-idle",
+    "delegated-handback",
+    "work-strip-plan-pending",
+    "delegated-range",
+    "delegated-range-outside",
+    "delegated-range-trail",
+    "welcome-greeting",
+    "welcome-greeting-cleared",
+    "report-meter",
+    "report-inline-code",
+    "report-file-peek",
+    "report-question-mixed",
+    "turn-headings",
+    "turn-running-report"
+  ],
+  "pastSessions": [
+    {
+      "sessionId": "fake-past-chat-session",
+      "messages": [
+        {
+          "type": "user",
+          "uuid": "past-chat-u-1",
+          "session_id": "fake-past-chat-session",
+          "timestamp": "2026-01-02T03:00:00.000Z",
+          "message": {
+            "role": "user",
+            "content": "前のセッションの架空の雑談（組み直したもの）"
+          },
+          "parent_tool_use_id": null
+        },
+        {
+          "type": "assistant",
+          "uuid": "past-chat-a-1",
+          "session_id": "fake-past-chat-session",
+          "timestamp": "2026-01-02T03:00:05.000Z",
+          "message": {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "tool_use",
+                "id": "past-chat-speak-1",
+                "name": "mcp__tsukumo__speak",
+                "input": {
+                  "text": "前のセッションの架空のセリフだよ。",
+                  "expression": "default"
+                }
+              }
+            ]
+          },
+          "parent_tool_use_id": null
+        }
+      ]
+    },
+    {
+      "sessionId": "fake-past-session",
+      "messages": [
+        {
+          "type": "user",
+          "uuid": "past-u-1",
+          "session_id": "fake-past-session",
+          "timestamp": "2026-01-02T03:00:00.000Z",
+          "message": {
+            "role": "user",
+            "content": "前のセッションの架空の依頼その1"
+          },
+          "parent_tool_use_id": null
+        },
+        {
+          "type": "assistant",
+          "uuid": "past-a-1",
+          "session_id": "fake-past-session",
+          "timestamp": "2026-01-02T03:00:05.000Z",
+          "message": {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "tool_use",
+                "id": "past-speak-1",
+                "name": "mcp__tsukumo__speak",
+                "input": {
+                  "text": "前のセッションの架空のセリフだよ。",
+                  "expression": "default"
+                }
+              }
+            ]
+          },
+          "parent_tool_use_id": null
+        },
+        {
+          "type": "user",
+          "uuid": "past-u-2",
+          "session_id": "fake-past-session",
+          "timestamp": "2026-01-02T03:10:00.000Z",
+          "message": {
+            "role": "user",
+            "content": "前のセッションの架空の依頼その2"
+          },
+          "parent_tool_use_id": null
+        },
+        {
+          "type": "assistant",
+          "uuid": "past-a-2",
+          "session_id": "fake-past-session",
+          "timestamp": "2026-01-02T03:10:20.000Z",
+          "message": {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "tool_use",
+                "id": "past-report-1",
+                "name": "mcp__tsukumo__report",
+                "input": {
+                  "conclusion": "前のセッションの架空の結論",
+                  "body": "前のセッションの架空の本文。"
+                }
+              }
+            ]
+          },
+          "parent_tool_use_id": null
+        },
+        {
+          "type": "user",
+          "uuid": "past-u-3",
+          "session_id": "fake-past-session",
+          "timestamp": "2026-01-02T03:20:00.000Z",
+          "message": {
+            "role": "user",
+            "content": "前のセッションの架空の依頼その3（ワークプランつき）"
+          },
+          "parent_tool_use_id": null
+        },
+        {
+          "type": "assistant",
+          "uuid": "past-a-3",
+          "session_id": "fake-past-session",
+          "timestamp": "2026-01-02T03:20:02.000Z",
+          "message": {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "tool_use",
+                "id": "past-plan-1",
+                "name": "mcp__tsukumo__work_plan",
+                "input": {
+                  "phases": ["架空の調べ", "架空の直し"],
+                  "current": 0,
+                  "phaseSummary": ""
+                }
+              }
+            ]
+          },
+          "parent_tool_use_id": null
+        },
+        {
+          "type": "user",
+          "uuid": "past-u-4",
+          "session_id": "fake-past-session",
+          "timestamp": "2026-01-02T03:20:03.000Z",
+          "message": {
+            "role": "user",
+            "content": [
+              {
+                "type": "tool_result",
+                "tool_use_id": "past-plan-1",
+                "content": "ok"
+              }
+            ]
+          },
+          "parent_tool_use_id": null
+        },
+        {
+          "type": "assistant",
+          "uuid": "past-a-4",
+          "session_id": "fake-past-session",
+          "timestamp": "2026-01-02T03:20:10.000Z",
+          "message": {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "tool_use",
+                "id": "past-bash-1",
+                "name": "Bash",
+                "input": {
+                  "command": "架空の検査コマンド"
+                }
+              }
+            ]
+          },
+          "parent_tool_use_id": null
+        },
+        {
+          "type": "user",
+          "uuid": "past-u-5",
+          "session_id": "fake-past-session",
+          "timestamp": "2026-01-02T03:21:40.000Z",
+          "message": {
+            "role": "user",
+            "content": [
+              {
+                "type": "tool_result",
+                "tool_use_id": "past-bash-1",
+                "content": "架空の出力"
+              }
+            ]
+          },
+          "parent_tool_use_id": null
+        },
+        {
+          "type": "assistant",
+          "uuid": "past-a-5",
+          "session_id": "fake-past-session",
+          "timestamp": "2026-01-02T03:22:00.000Z",
+          "message": {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "tool_use",
+                "id": "past-plan-2",
+                "name": "mcp__tsukumo__work_plan",
+                "input": {
+                  "phases": ["架空の調べ", "架空の直し"],
+                  "current": 1,
+                  "phaseSummary": "架空の調べを終えた。"
+                }
+              }
+            ]
+          },
+          "parent_tool_use_id": null
+        },
+        {
+          "type": "user",
+          "uuid": "past-u-6",
+          "session_id": "fake-past-session",
+          "timestamp": "2026-01-02T03:22:01.000Z",
+          "message": {
+            "role": "user",
+            "content": [
+              {
+                "type": "tool_result",
+                "tool_use_id": "past-plan-2",
+                "content": "ok"
+              }
+            ]
+          },
+          "parent_tool_use_id": null
+        },
+        {
+          "type": "assistant",
+          "uuid": "past-a-6",
+          "session_id": "fake-past-session",
+          "timestamp": "2026-01-02T03:23:30.000Z",
+          "message": {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "tool_use",
+                "id": "past-report-2",
+                "name": "mcp__tsukumo__report",
+                "input": {
+                  "conclusion": "前のセッションの架空の結論その3",
+                  "checks": [
+                    {
+                      "status": "ok",
+                      "label": "架空の検査",
+                      "figure": "架空 3 件",
+                      "command": "架空の検査コマンド",
+                      "detail": ""
+                    }
+                  ],
+                  "workPlanClosing": "finished"
+                }
+              }
+            ]
+          },
+          "parent_tool_use_id": null
+        },
+        {
+          "type": "user",
+          "uuid": "past-u-7",
+          "session_id": "fake-past-session",
+          "timestamp": "2026-01-02T03:23:31.000Z",
+          "message": {
+            "role": "user",
+            "content": [
+              {
+                "type": "tool_result",
+                "tool_use_id": "past-report-2",
+                "content": "ok"
+              }
+            ]
+          },
+          "parent_tool_use_id": null
+        }
+      ]
+    }
+  ],
+  "sessionDigests": {
+    "fake-session": {
+      "kind": "known",
+      "requestCount": 3,
+      "summary": "架空のいまのセッション。入力欄の送信ボタンの位置を直している途中。",
+      "lastLine": "いま直してるとこだよ。"
+    },
+    "7b3f0000-0000-4000-8000-000000000001": {
+      "kind": "known",
+      "requestCount": 12,
+      "summary": "架空の成果の画面の土台づくり。帯に成果の口を足し、日ごとの数を集めてブラウザへ渡すところまで進めた。\n\n途中で呼び出しが遅いことに気づき、互いに依存しない呼び出しを同時に走らせる形に直した。",
+      "remaining": "数が0の日の見せ方は、次のセッションで決める。",
+      "lastLine": "ボタン置いといたぞ。押したら会話のほうでボクが振り返る！"
+    },
+    "c3a10000-0000-4000-8000-000000000002": {
+      "kind": "known",
+      "requestCount": 1,
+      "lastLine": "振り返りはここまで。"
+    }
+  },
+  "usageReview": {
+    "review": [
+      {
+        "afterMs": 300,
+        "event": {
+          "kind": "usage-review-speech",
+          "text": "架空の一言。順に見ていくね。"
+        }
+      },
+      {
+        "afterMs": 400,
+        "event": {
+          "kind": "usage-review-stage",
+          "stage": "model",
+          "days": 7
+        }
+      },
+      {
+        "afterMs": 800,
+        "event": {
+          "kind": "usage-review-stage",
+          "stage": "cache",
+          "days": 7
+        }
+      },
+      {
+        "afterMs": 1200,
+        "event": {
+          "kind": "usage-review-stage",
+          "stage": "tool",
+          "days": 7
+        }
+      },
+      {
+        "afterMs": 1600,
+        "event": {
+          "kind": "usage-review-stage",
+          "stage": "context",
+          "days": 7
+        }
+      },
+      {
+        "afterMs": 2000,
+        "event": {
+          "kind": "usage-review-stage",
+          "stage": "proposal",
+          "days": 7
+        }
+      },
+      {
+        "afterMs": 2200,
+        "event": {
+          "kind": "usage-review-speech",
+          "text": "架空の一言。大きいのは1つだけだったよ。"
+        }
+      },
+      {
+        "afterMs": 2400,
+        "event": {
+          "kind": "usage-review-result",
+          "findings": {
+            "days": 7,
+            "headline": "架空の一言。大きいのは1つだけだったよ。",
+            "proposals": [
+              {
+                "kind": "tool-result",
+                "target": "ExampleTool",
+                "impact": "large",
+                "title": "架空のツールの結果が大きい",
+                "basis": "架空の根拠。1回の結果が数万字になっている。",
+                "action": "架空のやること。結果を絞る。",
+                "followUp": "delegate"
+              },
+              {
+                "kind": "session-length",
+                "target": "",
+                "impact": "small",
+                "title": "架空の会話が長い",
+                "basis": "架空の根拠。",
+                "action": "架空のやること。",
+                "followUp": "task"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "proposal": [
+      {
+        "afterMs": 300,
+        "event": {
+          "kind": "usage-review-speech",
+          "text": "架空の一言。やってみるね。"
+        }
+      },
+      {
+        "afterMs": 1500,
+        "event": {
+          "kind": "usage-review-speech",
+          "text": "架空の一言。終わったよ。"
+        }
+      }
+    ]
+  }
+}

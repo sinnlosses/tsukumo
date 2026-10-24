@@ -1,0 +1,73 @@
+{
+  "name": "report-graph-wide",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "節点の多い流れ図の幅の選び方を確かめたい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 300,
+      "event": {
+        "kind": "speech",
+        "text": "12個の節点を3つの囲みに分けて書くね。",
+        "expression": "default"
+      }
+    },
+    {
+      "afterMs": 1000,
+      "event": {
+        "kind": "report",
+        "task": {
+          "kind": "none"
+        },
+        "closing": {
+          "kind": "speech",
+          "text": "書けたよ！",
+          "expression": "proud"
+        },
+        "toolUseId": "fake-report-graph-wide-1",
+        "conclusion": "架空の結論: 節点の多い流れ図でも文字が読める大きさで描かれる。",
+        "sections": [
+          {
+            "heading": "架空の流れ図",
+            "blocks": [
+              {
+                "kind": "graph",
+                "title": "架空の3つの工程と12の節点",
+                "direction": "LR",
+                "source": "[架空の受付の工程] @a\n架空の受付\n架空の確認\n架空の振り分け\n[]\n[架空の処理の工程] @b\n架空の下ごしらえ\n架空の本処理\n架空の見直し\n架空の記録\n[]\n[架空の届けの工程] @c\n架空の梱包\n架空の発送\n架空の通知\n架空の完了\n[]\n架空の受付 -> 架空の確認: 渡す\n架空の確認 -> 架空の振り分け: 通す\n架空の振り分け -> 架空の下ごしらえ: 回す\n架空の下ごしらえ -> 架空の本処理: 進める\n架空の本処理 -> 架空の見直し: 確かめる\n架空の見直し -> 架空の記録: 残す\n架空の見直し -> 架空の本処理: 戻す\n架空の記録 -> 架空の梱包: 送る\n架空の梱包 -> 架空の発送: 出す\n架空の発送 -> 架空の通知: 知らせる\n架空の通知 -> 架空の完了: 閉じる",
+                "legend": [],
+                "fold": "",
+                "aside": ""
+              }
+            ]
+          }
+        ],
+        "favor": "",
+        "checks": []
+      }
+    },
+    {
+      "afterMs": 1050,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-report-graph-wide-1",
+        "content": "ok",
+        "isError": false
+      }
+    },
+    {
+      "afterMs": 2300,
+      "event": {
+        "kind": "turn-finished",
+        "outcome": {
+          "kind": "completed"
+        }
+      }
+    }
+  ]
+}

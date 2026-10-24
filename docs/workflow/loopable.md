@@ -22,7 +22,7 @@
 
 | 道具                                                                                              | 何ができるか                                                                                                |
 | ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `TSUKUMO_DRIVER=fake` ＋ `test/fixture/fake-session.json`                                         | **`claude` を起こさずに**画面全体を出す（架空の疑似セッション。API を使わない）                             |
+| `TSUKUMO_DRIVER=fake` ＋ `fixture/fake-session/`                                                  | **`claude` を起こさずに**画面全体を出す（架空の疑似セッション。API を使わない）                             |
 | `node scripts/capture/capture-view.ts <URL> --measure <selector>`                                 | 画像に撮り、指定した要素の位置と大きさを**数値で**出す                                                      |
 | `node scripts/capture/capture-view.ts --scene <場面> --type <selector> <文字> --click <selector>` | 打つ・押す・触れる・hash を書くを並べた順に当ててから撮る（当たらなければ失敗）                             |
 | `playwright-core`（devDependency）＋ headless shell                                               | ページを操作する（キーを打つ、タブを押す、`<select>` を変える）・`getComputedStyle` や `scrollWidth` を読む |

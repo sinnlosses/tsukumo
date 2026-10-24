@@ -58,7 +58,7 @@ const UNRELATED_DIRECTORIES = [
 ]
 
 /** 実行時に読まれて import に出ないことがあるディレクトリ。 */
-const RUNTIME_READ_DIRECTORIES = ["test/e2e/", "test/fixture/"]
+const RUNTIME_READ_DIRECTORIES = ["test/e2e/", "test/fixture/", "fixture/"]
 
 export function selectE2eFiles(
   changedPaths: readonly string[],

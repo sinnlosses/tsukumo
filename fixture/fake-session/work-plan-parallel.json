@@ -1,0 +1,158 @@
+{
+  "name": "work-plan-parallel",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "サーバと画面を同時に直したい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 200,
+      "event": {
+        "kind": "work-plan",
+        "delegatedRange": {
+          "kind": "none"
+        },
+        "skippedPhases": [],
+        "awaitingSummary": {
+          "kind": "none"
+        },
+        "phases": ["今の形を調べる", ["サーバの口を直す", "画面を直す"], "文書と検証を揃える"],
+        "current": 0,
+        "finishedInGroup": [],
+        "phaseSummary": ""
+      }
+    },
+    {
+      "afterMs": 1200,
+      "event": {
+        "kind": "work-plan",
+        "delegatedRange": {
+          "kind": "none"
+        },
+        "skippedPhases": [],
+        "awaitingSummary": {
+          "kind": "none"
+        },
+        "phases": ["今の形を調べる", ["サーバの口を直す", "画面を直す"], "文書と検証を揃える"],
+        "current": 1,
+        "finishedInGroup": [],
+        "phaseSummary": "架空の口は1か所で読んでいた。"
+      }
+    },
+    {
+      "afterMs": 2400,
+      "event": {
+        "kind": "work-plan",
+        "delegatedRange": {
+          "kind": "none"
+        },
+        "skippedPhases": [],
+        "awaitingSummary": {
+          "kind": "none"
+        },
+        "phases": ["今の形を調べる", ["サーバの口を直す", "画面を直す"], "文書と検証を揃える"],
+        "current": 1,
+        "finishedInGroup": ["画面を直す"],
+        "phaseSummary": "架空の画面が新しい口を読むようになった。"
+      }
+    },
+    {
+      "afterMs": 4200,
+      "event": {
+        "kind": "work-plan",
+        "delegatedRange": {
+          "kind": "none"
+        },
+        "skippedPhases": [],
+        "awaitingSummary": {
+          "kind": "none"
+        },
+        "phases": ["今の形を調べる", ["サーバの口を直す", "画面を直す"], "文書と検証を揃える"],
+        "current": 2,
+        "finishedInGroup": [],
+        "phaseSummary": "架空のサーバの口が新旧どちらの形も返すようになった。"
+      }
+    },
+    {
+      "afterMs": 5100,
+      "event": {
+        "kind": "report-drafting",
+        "toolUseId": "fake-work-plan-parallel-report"
+      }
+    },
+    {
+      "afterMs": 5200,
+      "event": {
+        "kind": "report",
+        "task": {
+          "kind": "none"
+        },
+        "workPlanClosing": "finished",
+        "closing": {
+          "kind": "speech",
+          "text": "同時に走らせた2つの段も終えたよ。",
+          "expression": "proud"
+        },
+        "toolUseId": "fake-work-plan-parallel-report",
+        "conclusion": "架空の結論: サーバと画面の両方が新しい口に揃った。",
+        "sections": [
+          {
+            "heading": "",
+            "blocks": [
+              {
+                "kind": "list",
+                "style": "bullet",
+                "items": [
+                  {
+                    "label": "",
+                    "text": "サーバの口が新旧2つの形を返す（架空）",
+                    "done": false
+                  },
+                  {
+                    "label": "",
+                    "text": "画面が新しい口を読む（架空）",
+                    "done": false
+                  }
+                ],
+                "fold": "",
+                "aside": ""
+              }
+            ]
+          }
+        ],
+        "favor": "",
+        "checks": [
+          {
+            "status": "ok",
+            "label": "pnpm run test",
+            "figure": "12 / 12",
+            "command": "pnpm run test",
+            "detail": ""
+          }
+        ]
+      }
+    },
+    {
+      "afterMs": 5250,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-work-plan-parallel-report",
+        "content": "ok",
+        "isError": false
+      }
+    },
+    {
+      "afterMs": 5350,
+      "event": {
+        "kind": "turn-finished",
+        "outcome": {
+          "kind": "completed"
+        }
+      }
+    }
+  ]
+}

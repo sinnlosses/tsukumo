@@ -1,0 +1,100 @@
+{
+  "name": "rate-limit",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "welcome-greeting-changed",
+        "state": {
+          "kind": "written",
+          "greeting": {
+            "withCard": "架空の挨拶、{札} からどう？",
+            "withoutCard": "架空の挨拶。",
+            "expression": "excited"
+          }
+        }
+      }
+    },
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "reactions-written",
+        "reactions": {
+          "retrying": {
+            "text": "架空の再試行の一言。",
+            "expression": "flustered"
+          },
+          "failed": {
+            "text": "架空の失敗の一言。",
+            "expression": "sad"
+          },
+          "limited": {
+            "text": "架空の利用上限の一言。",
+            "expression": "bored"
+          },
+          "idle": {
+            "text": "架空の待ちの一言（書かせた行）。",
+            "expression": "default"
+          }
+        }
+      }
+    },
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "利用上限の近くで頼む（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 300,
+      "event": {
+        "kind": "rate-limit-changed",
+        "rateLimit": {
+          "kind": "warning",
+          "bucket": "five-hour",
+          "resetsAt": 1790326800000
+        }
+      }
+    },
+    {
+      "afterMs": 800,
+      "event": {
+        "kind": "speech",
+        "text": "上限が近いみたい。手早くいくね。",
+        "expression": "serious"
+      }
+    },
+    {
+      "afterMs": 4000,
+      "event": {
+        "kind": "rate-limit-changed",
+        "rateLimit": {
+          "kind": "rejected",
+          "bucket": "five-hour",
+          "resetsAt": 1790326800000
+        }
+      }
+    },
+    {
+      "afterMs": 4200,
+      "event": {
+        "kind": "api-error",
+        "error": "rate_limit"
+      }
+    },
+    {
+      "afterMs": 4400,
+      "event": {
+        "kind": "turn-finished",
+        "outcome": {
+          "kind": "failed",
+          "cause": {
+            "kind": "api-error"
+          }
+        }
+      }
+    }
+  ]
+}

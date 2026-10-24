@@ -47,10 +47,10 @@ describe("撮影の件のセレクタの class", () => {
 })
 
 const SELECTOR_ARIA_LABEL_PATTERN = /\[aria-label\^?="([^"]+)"\]/g
-const FAKE_SESSION_TEXT = readFileSync(
-  new URL("../../fixture/fake-session.json", import.meta.url),
-  "utf8",
-)
+const FAKE_SESSION_DIR = fileURLToPath(new URL("../../../fixture/fake-session/", import.meta.url))
+const FAKE_SESSION_TEXT = readdirSync(FAKE_SESSION_DIR)
+  .map((file) => readFileSync(`${FAKE_SESSION_DIR}${file}`, "utf8"))
+  .join("\n")
 const SRC_SOURCES = readdirSync(SRC_DIR, { recursive: true, encoding: "utf8" })
   .filter((file) => file.endsWith(".ts") || file.endsWith(".tsx"))
   .map((file) => readFileSync(`${SRC_DIR}${file}`, "utf8"))

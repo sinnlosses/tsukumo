@@ -16,6 +16,6 @@ export function readSceneSession(sessionPath: string | undefined): SceneSessionR
     ? reading
     : {
         kind: "unreadable",
-        message: `${sessionPath ?? "test/fixture/fake-session.json"} が読めない: ${reading.reason}`,
+        message: `${sessionPath ?? "fixture/fake-session/index.json"} が読めない: ${reading.reason}`,
       }
 }

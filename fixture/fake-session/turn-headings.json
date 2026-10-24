@@ -1,0 +1,68 @@
+{
+  "name": "turn-headings",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "見出しの付いた本文で報告して（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 500,
+      "event": {
+        "kind": "report",
+        "closing": {
+          "kind": "none"
+        },
+        "toolUseId": "fake-turn-headings-1",
+        "conclusion": "架空の調べが済んだ。",
+        "sections": [
+          {
+            "heading": "調べたこと（架空）",
+            "blocks": [
+              {
+                "kind": "markdown",
+                "markdown": "### 読み込みの順\n\n架空の部品は設定を先に読む。\n\n### 設定の置き場\n\n架空の設定は1か所にまとまっている。",
+                "fold": "",
+                "aside": ""
+              }
+            ]
+          },
+          {
+            "heading": "",
+            "blocks": [
+              {
+                "kind": "markdown",
+                "markdown": "## 次にやること（架空）\n\n### 手順\n\n架空の読み込みの順を揃える。\n\n### 確かめ方\n\n架空の部品を起こして順を見る。",
+                "fold": "",
+                "aside": ""
+              }
+            ]
+          }
+        ],
+        "favor": "",
+        "checks": []
+      }
+    },
+    {
+      "afterMs": 550,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-turn-headings-1",
+        "content": "ok",
+        "isError": false
+      }
+    },
+    {
+      "afterMs": 900,
+      "event": {
+        "kind": "turn-finished",
+        "outcome": {
+          "kind": "completed"
+        }
+      }
+    }
+  ]
+}

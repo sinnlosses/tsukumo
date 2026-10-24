@@ -118,9 +118,9 @@ const USAGE = `使い方:
   node scripts/capture/capture-view.ts --list-scenes [--session <ファイル>]
 
   --scene <場面>        fake driver の tsukumo を自分で起こして撮り、終わったら自分で止める
-                        （場面は test/fixture/fake-session.json〔--session があればそのファイル〕の turns[].name。URL とは併用しない）
+                        （場面は fixture/fake-session/〔--session があればその索引〕の場面名。URL とは併用しない）
   --cwd <dir>           --scene の tsukumo を起こす作業ディレクトリ（.beads や課題ファイルを探す先。既定はこの作業ツリー。手元の画像を置く場面は --out の隣に架空の画像入りの作業場所を立てる。件が演出を打ち切る場面は、--cwd の有無に関わらず打ち切ってから撮る。--scene と一緒にだけ使う）
-  --session <ファイル>  --scene・--list-scenes が読む疑似セッションを同梱のファイルから差し替える（ファイルでなければ使い方を出して終わる）。読ませるのは架空の会話だけで、実物の会話（transcript・SDK のイベント）は渡さない
+  --session <ファイル>  --scene・--list-scenes が読む疑似セッションの索引を同梱のファイルから差し替える（ファイルでなければ使い方を出して終わる）。読ませるのは架空の会話だけで、実物の会話（transcript・SDK のイベント）は渡さない
   --until-step <n>      --scene の場面を先頭から n 手目で止めた画を撮る（正の整数。--scene と一緒にだけ使う）
   --list-scenes         場面ごとに report に出る塊の kind と、書き上げる演出が掛かる見込みを一覧して終わる（撮らない。見込みは節の文字数からの見積もりで、描いて確かめてはいない）
   --out <path>          画像の出力先（既定 ${DEFAULT_OUT}）
