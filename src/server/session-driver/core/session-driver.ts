@@ -238,6 +238,8 @@ export type SessionDriverOptions = {
   readonly claudeConfigDir: string | undefined
   /** 取り込んだ tsukumo-plugins を `plugins` に載せるか（利用者が同じスキルとエージェントを入れていれば載せない）。 */
   readonly mountWorkflowPlugin: boolean
+  /** ワークフローの `tw` のパス。hook の `lap-hook`・`ask-guard` を起こす。 */
+  readonly workflowTw: string
   /** 内部イベントの受け取り口。投げても反復は止まらず、投げた失敗は `reportFailure` へ渡る。 */
   readonly onEvent: (event: SessionEvent) => void
   /** `onEvent` が投げた失敗を診断ログへ書く口。ここで例外を投げないこと。 */

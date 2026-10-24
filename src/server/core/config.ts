@@ -45,7 +45,7 @@ export const ENV_NAMES = {
    */
   fakeSession: { name: "TSUKUMO_FAKE_SESSION", audience: "test" },
   /**
-   * ワークフローの設定を読み書きするときに呼ぶ `tw` のパス（既定は取り込みの `bin/tw`。取り込みを載せないときは PATH の `tw`）。
+   * ワークフローの設定の読み書きと hook（`lap-hook`・`ask-guard`）で呼ぶ `tw` のパス（既定は取り込みの `bin/tw`。取り込みを載せないときは PATH の `tw`）。
    * 疑似セッションの撮影や自動テストで、取り込みを書き換えずに偽の `tw` へ差し替える口。
    */
   tw: { name: "TSUKUMO_TW", audience: "test" },

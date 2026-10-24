@@ -110,6 +110,7 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
     return 1
   }
   const mountWorkflowPlugin = workflowPlugin.mount
+  const workflowTw = chooseTw(config.twCommand, mountWorkflowPlugin)
 
   // fake driver を選んだときは疑似セッションが要る。無ければ起こす意味が無いので、起動時の
   // 前提不足として扱う。
@@ -128,9 +129,7 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
     { driver },
     {
       reportSchema: config.reportSchema,
-      openTask: createOpenTaskReader(
-        twClaimsRunner(chooseTw(config.twCommand, mountWorkflowPlugin), launch.cwd),
-      ),
+      openTask: createOpenTaskReader(twClaimsRunner(workflowTw, launch.cwd)),
     },
   )
   const { diagnostic: diagnosticLog, tokenUsage: tokenUsageLog } = usageLogs
@@ -157,7 +156,7 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
   // 印の読み手も1つで、成果のキャッシュとタスク一覧の見張りが同じものを使う（同時の読みは束ねられる）。
   const readBeadsStamp = createBeadsStampReader(launch.cwd)
   const achievementCache = createAchievementCache(launch.cwd, clock, readBeadsStamp)
-  const workflowSetting = wireWorkflowSetting(launch.cwd, mountWorkflowPlugin, config.twCommand)
+  const workflowSetting = wireWorkflowSetting(launch.cwd, workflowTw)
 
   const headSha = readHeadSha(launch.cwd)
 
@@ -198,6 +197,7 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
     cwd: launch.cwd,
     host,
     mountWorkflowPlugin,
+    workflowTw,
     workflowSetting,
   })
   view.connect(session)

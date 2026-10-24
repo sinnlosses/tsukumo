@@ -111,10 +111,10 @@ tsukumo が読まないもの: 委譲の返却の本文、委譲先の `SendMess
 並びに置くスキルを書くときは、上の「スキルの契約」の印を付け、受け取るもの・返すものを合わせる。
 
 取り込んだワークフローを載せるとき（`mount`・`partial`）は、plugin の `hooks/hooks.json` が `AskUserQuestion` に `tw ask-guard` を当てる。
-利用者がスキルとエージェントをリンクで入れていて載せないとき（`user-installed`）は、Claude Code が `PreToolUse` の `AskUserQuestion` に取り込みの `bin/tw ask-guard` を当てる。
+利用者がスキルとエージェントをリンクで入れていて載せないとき（`user-installed`）は、Claude Code が `PreToolUse` の `AskUserQuestion` に利用者側の `tw ask-guard`（`TSUKUMO_TW` があればそのパス）を当てる。
 どちらか一方だけが効き、二重に拒まない。子が失敗・無出力・読めない出力のときは質問を通す。`report` の `favor` は扱わない。
 
 段の自動記録も同じ切り分けで当たる。載せるときは plugin の `hooks/hooks.json` が `SubagentStart` と `Skill` の `PreToolUse` に `tw lap-hook` を当てる。
-`user-installed` のときは Claude Code が `SubagentStart` と matcher `Skill` の `PreToolUse` に取り込みの `bin/tw lap-hook` を当てる。
+`user-installed` のときは Claude Code が `SubagentStart` と matcher `Skill` の `PreToolUse` に利用者側の `tw lap-hook`（`TSUKUMO_TW` があればそのパス）を当てる。
 どちらか一方だけが効き、二重に lap を書かない。どの入力で段を書くかは `lap-hook` が決め、tsukumo は入力をそのまま渡す。
 子が失敗・タイムアウトしても会話を止めず、子の出力は hook の結果に写さない。

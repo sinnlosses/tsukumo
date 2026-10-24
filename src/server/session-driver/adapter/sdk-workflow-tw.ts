@@ -1,9 +1,6 @@
-// 取り込んだ tsukumo-plugins の入口 `bin/tw` の hook のサブコマンドを子として走らせる。
+// 渡された `tw` の hook のサブコマンドを子として走らせる。どの `tw` かは呼ぶ側が決める。
 
 import { execFile } from "node:child_process"
-import { join } from "node:path"
-
-import { workflowPluginDir } from "./workflow-plugin.ts"
 
 export const WORKFLOW_TW_TIMEOUT_MS = 5000
 const MAX_OUTPUT_BYTES = 1024 * 1024
@@ -34,10 +31,6 @@ export function runWorkflowTw(run: WorkflowTwRun): Promise<WorkflowTwResult> {
     child.stdin?.on("error", () => {})
     child.stdin?.end(run.stdin)
   })
-}
-
-export function workflowTwPath(): string {
-  return join(workflowPluginDir(), "bin", "tw")
 }
 
 function failureKind(error: Error): "failed" | "timed-out" | "not-started" {

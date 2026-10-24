@@ -25,6 +25,7 @@ const BASE_OPTIONS: SessionDriverOptions = {
   inheritedEnv: { PATH: "/usr/bin", HOME: "/tmp/tsukumo-home" },
   claudeConfigDir: undefined,
   mountWorkflowPlugin: true,
+  workflowTw: "tw",
   onEvent: () => {},
   reportFailure: () => {},
   now: () => 0,

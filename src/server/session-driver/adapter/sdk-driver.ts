@@ -133,11 +133,11 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
             ...handbackNoteHooks(callReview, options.reportHandbackHeadMismatch),
           },
           options.mountWorkflowPlugin,
-          runAskGuard,
+          (stdin) => runAskGuard(options.workflowTw, stdin),
           options.reportWorkflowTwFailure,
         ),
         options.mountWorkflowPlugin,
-        runLapHook,
+        (stdin) => runLapHook(options.workflowTw, stdin),
         options.reportWorkflowTwFailure,
       ),
       mcpServers: {

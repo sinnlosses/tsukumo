@@ -54,8 +54,8 @@ const USAGE = `tsukumo — キャラクターと一緒に仕事をするため�
   TSUKUMO_FAKE_SESSION  fake のとき読む疑似セッションのファイル（既定は同梱の
                       test/fixture/fake-session.json。相対パスは cwd 相対）。架空の会話だけを
                       読ませ、実物の会話（transcript・SDK のイベント）は渡さない
-  TSUKUMO_TW          ワークフローの設定を読み書きするときに呼ぶ tw のパス（既定は取り込みの
-                      bin/tw。取り込みを載せないときは PATH の tw）。疑似セッションの撮影や
+  TSUKUMO_TW          ワークフローの設定の読み書きと hook（lap-hook・ask-guard）で呼ぶ tw のパス
+                      （既定は取り込みの bin/tw。取り込みを載せないときは PATH の tw）。疑似セッションの撮影や
                       自動テストで、取り込みを書き換えずに偽の tw へ差し替えるための口
   TSUKUMO_HOME        tsukumo が自分の持ち物を置くホーム（既定 ~/.tsukumo。覚えたキャラクター・
                       あらすじと会話のアーカイブ・トークンの記録・画面から作ったパックがこの下に並ぶ）。

@@ -57,6 +57,8 @@ export type SessionStartOptions = {
   readonly host: Host
   /** 取り込んだ tsukumo-plugins をセッションに載せるか。利用者が同じものを入れていれば載せない。 */
   readonly mountWorkflowPlugin: boolean
+  /** ワークフローの `tw` のパス（`chooseTw`）。hook の `lap-hook`・`ask-guard` を起こす。 */
+  readonly workflowTw: string
   /** ワークフローの設定を読み書きする口。ビューの配信が読む口と同じ1つを渡す（`wireWorkflowSetting`）。 */
   readonly workflowSetting: WorkflowSettingProcedurePorts
 }
@@ -102,6 +104,7 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
     itemsEvent: item.itemsEvent,
     viewPort: options.viewPort,
     mountWorkflowPlugin: options.mountWorkflowPlugin,
+    workflowTw: options.workflowTw,
     firstViewer: firstViewer.promise,
     diagnosticLog,
     onLaunch: (seed, onEvent, restored) => {

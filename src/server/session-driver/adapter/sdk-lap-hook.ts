@@ -1,23 +1,18 @@
-// 取り込んだ tsukumo-plugins の入口 `bin/tw lap-hook` を子として走らせ、
+// 渡された `tw` の `lap-hook` を子として走らせ、
 // 主のセッションの `SubagentStart` と `Skill` の PreToolUse に当てる。
 // どの入力で段を書くかは子が決める。子の出力は委譲先の文脈に入りうるので結果へ写さず、常に `{}` を返す。
 
 import type { HookCallback, HookCallbackMatcher, HookEvent } from "@anthropic-ai/claude-agent-sdk"
 
 import type { WorkflowTwFailurePlace } from "../core/session-driver.ts"
-import {
-  runWorkflowTw,
-  WORKFLOW_TW_TIMEOUT_MS,
-  type WorkflowTwResult,
-  workflowTwPath,
-} from "./sdk-workflow-tw.ts"
+import { runWorkflowTw, WORKFLOW_TW_TIMEOUT_MS, type WorkflowTwResult } from "./sdk-workflow-tw.ts"
 
 const SKILL_TOOL = "Skill"
 
 /** hook の入力 JSON を標準入力に渡して `lap-hook` を走らせる。 */
-export function runLapHook(stdin: string): Promise<WorkflowTwResult> {
+export function runLapHook(twPath: string, stdin: string): Promise<WorkflowTwResult> {
   return runWorkflowTw({
-    twPath: workflowTwPath(),
+    twPath,
     subcommand: "lap-hook",
     stdin,
     timeoutMs: WORKFLOW_TW_TIMEOUT_MS,

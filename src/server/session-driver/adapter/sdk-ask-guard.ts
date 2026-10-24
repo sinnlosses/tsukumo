@@ -1,4 +1,4 @@
-// 取り込んだ tsukumo-plugins の入口 `bin/tw ask-guard` を子として走らせ、
+// 渡された `tw` の `ask-guard` を子として走らせ、
 // 主のセッションの `AskUserQuestion` の PreToolUse に当てる。
 // 子が起動できない・失敗・出力が読めないときは何も拒まず（質問を通す側）、足跡だけ残す。
 // 出力が空なのは「拒まない」の通常の答え。
@@ -7,12 +7,7 @@ import type { HookCallbackMatcher, HookEvent } from "@anthropic-ai/claude-agent-
 import { z } from "zod"
 
 import type { WorkflowTwFailurePlace } from "../core/session-driver.ts"
-import {
-  runWorkflowTw,
-  WORKFLOW_TW_TIMEOUT_MS,
-  type WorkflowTwResult,
-  workflowTwPath,
-} from "./sdk-workflow-tw.ts"
+import { runWorkflowTw, WORKFLOW_TW_TIMEOUT_MS, type WorkflowTwResult } from "./sdk-workflow-tw.ts"
 
 const ASK_TOOL = "AskUserQuestion"
 
@@ -24,9 +19,9 @@ const denyOutputSchema = z.object({
 })
 
 /** hook の入力 JSON を標準入力に渡して `ask-guard` を走らせる。 */
-export function runAskGuard(stdin: string): Promise<WorkflowTwResult> {
+export function runAskGuard(twPath: string, stdin: string): Promise<WorkflowTwResult> {
   return runWorkflowTw({
-    twPath: workflowTwPath(),
+    twPath,
     subcommand: "ask-guard",
     stdin,
     timeoutMs: WORKFLOW_TW_TIMEOUT_MS,

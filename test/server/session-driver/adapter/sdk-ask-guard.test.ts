@@ -1,6 +1,13 @@
+import { chmod, mkdtemp, rm, writeFile } from "node:fs/promises"
+import { tmpdir } from "node:os"
+import { join } from "node:path"
+
 import { describe, expect, it, vi } from "vitest"
 
-import { withAskGuard } from "../../../../src/server/session-driver/adapter/sdk-ask-guard.ts"
+import {
+  runAskGuard,
+  withAskGuard,
+} from "../../../../src/server/session-driver/adapter/sdk-ask-guard.ts"
 import type { WorkflowTwResult } from "../../../../src/server/session-driver/adapter/sdk-workflow-tw.ts"
 import type { WorkflowTwFailurePlace } from "../../../../src/server/session-driver/core/session-driver.ts"
 
@@ -115,5 +122,23 @@ describe("withAskGuard", () => {
     expect(merged.PreToolUse?.map((entry) => entry.matcher)).toEqual([undefined, "AskUserQuestion"])
     expect(merged.Stop).toBe(base.Stop)
     expect(base.PreToolUse).toHaveLength(1)
+  })
+})
+
+describe("runAskGuard", () => {
+  it("渡された tw のパスを ask-guard で起こし、標準入力を渡す", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "tsukumo-ask-guard-"))
+    try {
+      const twPath = join(dir, "tw")
+      await writeFile(twPath, '#!/bin/sh\nprintf "%s:" "$1"; cat\n')
+      await chmod(twPath, 0o755)
+
+      expect(await runAskGuard(twPath, '{"a":1}')).toEqual({
+        kind: "ok",
+        stdout: 'ask-guard:{"a":1}',
+      })
+    } finally {
+      await rm(dir, { recursive: true, force: true })
+    }
   })
 })
