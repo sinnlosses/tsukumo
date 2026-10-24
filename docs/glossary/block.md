@@ -29,7 +29,7 @@
 ### 塊
 
 - **英語識別子**: `ReportBlock`（`src/shared/report/report-block.ts`）/ `kind`（`text` / `list` /
-  `table` / `matrix` / `compare` / `beforeAfter`（前後）/ `dimension`（寸法図）/ `note` / `stats` / `code` / `mermaid` / `graph`（`source` の1行1辺の記法で受ける flowchart。行頭の `+ ` / `- ` / `~ ` が足した・消した・変えたの印。2026-10-12 利用者決定）/ `chart` / `svg`（座標つきの図形で書く図）/ `progress` / `options` / `claims`（確度つきの主張）/ `image`（画面の画像）/ `files` / `markdown`）/ `fold`（畳むときの見出し）/ `aside`（塊の傍注。下の「余白の柱」）/
+  `table` / `matrix` / `compare` / `beforeAfter`（前後）/ `dimension`（寸法図）/ `note` / `stats` / `code` / `mermaid` / `graph`（`source` の1行1辺の記法で受ける flowchart。行頭の `+ ` / `- ` / `~ ` が足した・消した・変えたの印。節点だけの行は `名前 | 説明` で説明の1行を足せ、分岐・合流・囲み・点線の無い5節点以下の一本道はカードの連鎖で描く。2026-10-12 利用者決定）/ `chart` / `svg`（座標つきの図形で書く図）/ `progress` / `options` / `claims`（確度つきの主張）/ `image`（画面の画像）/ `files` / `markdown`）/ `fold`（畳むときの見出し）/ `aside`（塊の傍注。下の「余白の柱」）/
   欄の `from` / `to`（表のセルの前後）・`tag`（表のセルの列挙型の札。同じ字は同じ色）・`emphasis`（表の行の強調。`{ cells, emphasis: true }`で3行まで。超えれば差し戻し）・`before`（`stats` の前の値）・`total`（`stats` の全体の数）・`keyFigures`（`report` の欄。結論の直下に並べる 3〜4 個の数の札で、項目の形は `stats` の `items` と同じ。塊の欄ではない）・`label`（`list` の項目の名前）・
   `flow`（`list` の `style` の一本道の流れ）・`cards`（`list` の `style` の並列の区画。2〜4項目を横に並べる）・`sides`（`compare` の2つの側。`heading` と `points`）・
   `before` / `after`（`beforeAfter` の前の側と後の側。`kind` が `image`〔`path`と任意の `region`（変わった場所の枠。% の `left`・`top`・`width`・`height`）〕/ `code`〔`language`・`source`〕/ `points` / `mermaid`〔`source`〕/ `svg`〔`width`・`height`・`shapes`〕の合併型）・
@@ -51,7 +51,7 @@
   **`options` は候補の比較**（候補ごとの判定〔採る / 検討 / 採らない〕と理由を1案1行に積む。書き手の順のまま描く）、
   **`files` は触ったファイルの一覧**（1行に1ファイルで、変更の種別〔追加 / 変更 / 削除 / 読んだ〕とパス。`note` の先頭の `+n −m` は差分量の棒になり、読めなければ何もしない）。
   **欄**は事実か判定を言うものだけで（前後の値・名前・流れ・判定・変更の種別）、描き方は tsukumo がその意味から決める。
-  段ごとに文が要る一本道は `list` の `flow`、一本道でも段の名前が短ければ・分岐・合流があれば `graph`（`source` の1行1辺の記法〔`A -> B: 語`〕で渡し、ID とラベルの引用符は tsukumo が組む。2026-10-12 利用者決定。flowchart 以外の図が `mermaid`）
+  段ごとに文が要る一本道は `list` の `flow`、一本道でも段の名前が短ければ・分岐・合流があれば `graph`（`source` の1行1辺の記法〔`A -> B: 語`。節点だけの行は `名前 | 説明`〕で渡し、ID とラベルの引用符は tsukumo が組む。2026-10-12 利用者決定。flowchart 以外の図が `mermaid`）
 - **避ける言い方**: ブロック（Markdown の block と紛れる）、要素（HTML の要素と紛れる）、`options` を
   「選択肢の比較」と呼ぶこと（質問の `preview` を並べた面の名前と紛れる。`options` は「候補の比較」）
 

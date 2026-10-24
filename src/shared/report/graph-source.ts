@@ -22,6 +22,8 @@ export type GraphSourceNode = {
   readonly change: GraphChange
   /** 節点だけの行に付いた色の目印。辺の行の目印は端の節点に掛けない。 */
   readonly tone: GraphTone
+  /** 節点だけの行に `名前 | 説明` で書いた説明の1行。無ければ空。 */
+  readonly note: string
 }
 
 /** `from` と `to` は `nodes` の添字。 */
@@ -77,6 +79,7 @@ type ParsedLine =
       readonly change: GraphChange
       readonly tone: GraphTone
       readonly dashed: boolean
+      readonly note: string
     }
 
 export function readGraphSource(source: string): GraphSourceReading {
@@ -87,13 +90,20 @@ export function readGraphSource(source: string): GraphSourceReading {
   const indexOf = (parsed: ParsedName): number => {
     const found = nodes.findIndex((node) => node.name === parsed.name)
     if (found < 0) {
-      nodes.push({ name: parsed.name, shape: parsed.shape, change: "unchanged", tone: "none" })
+      nodes.push({
+        name: parsed.name,
+        shape: parsed.shape,
+        change: "unchanged",
+        tone: "none",
+        note: "",
+      })
     } else if (parsed.wrapped && !wrappedNames.has(parsed.name)) {
       nodes[found] = {
         name: parsed.name,
         shape: parsed.shape,
         change: nodes[found]?.change ?? "unchanged",
         tone: nodes[found]?.tone ?? "none",
+        note: nodes[found]?.note ?? "",
       }
     }
     if (parsed.wrapped) {
@@ -170,14 +180,16 @@ export function readGraphSource(source: string): GraphSourceReading {
         if (
           line.names.length === 1 &&
           only !== undefined &&
-          (line.change !== "unchanged" || line.tone !== "none")
+          (line.change !== "unchanged" || line.tone !== "none" || line.note !== "")
         ) {
           const earlierNode = nodes.find((node) => node.name === only.name)
           const earlier = earlierNode?.change ?? "unchanged"
           const earlierTone = earlierNode?.tone ?? "none"
+          const earlierNote = earlierNode?.note ?? ""
           if (
             (earlier !== "unchanged" && line.change !== "unchanged" && earlier !== line.change) ||
-            (earlierTone !== "none" && line.tone !== "none" && earlierTone !== line.tone)
+            (earlierTone !== "none" && line.tone !== "none" && earlierTone !== line.tone) ||
+            (earlierNote !== "" && line.note !== "" && earlierNote !== line.note)
           ) {
             brokenLines.push(index + 1)
             return
@@ -189,6 +201,7 @@ export function readGraphSource(source: string): GraphSourceReading {
               ...node,
               change: node.change === "unchanged" ? line.change : node.change,
               tone: node.tone === "none" ? line.tone : node.tone,
+              note: node.note === "" ? line.note : node.note,
             }
           }
           claim()
@@ -244,10 +257,12 @@ function parseLine(text: string): ParsedLine {
   const line = mark === undefined ? trimmed : trimmed.slice(mark[0].length).trim()
   const parts = line.split(ARROW_OR_DASHED)
   if (parts.length === 1) {
-    const name = parseName(line)
-    return name === undefined
+    const [nameText = "", ...noteParts] = line.split("|")
+    const note = noteParts[0]?.trim() ?? ""
+    const name = parseName(nameText)
+    return name === undefined || noteParts.length > 1 || (noteParts.length === 1 && note === "")
       ? { kind: "broken" }
-      : { kind: "item", names: [name], label: "", change, tone, dashed: false }
+      : { kind: "item", names: [name], label: "", change, tone, dashed: false, note }
   }
   const [left, arrow, right] = parts
   if (parts.length !== 3 || left === undefined || right === undefined) {
@@ -256,12 +271,21 @@ function parseLine(text: string): ParsedLine {
   const colon = right.indexOf(":")
   const target = colon < 0 ? right : right.slice(0, colon)
   const label = colon < 0 ? "" : right.slice(colon + 1).trim()
-  const from = parseName(left)
-  const to = parseName(target)
+  // 説明の `|` は節点だけの行のもの。辺の端の名前には書けない（ラベルの `|` は文字として通す）。
+  const from = left.includes("|") ? undefined : parseName(left)
+  const to = target.includes("|") ? undefined : parseName(target)
   if (from === undefined || to === undefined) {
     return { kind: "broken" }
   }
-  return { kind: "item", names: [from, to], label, change, tone, dashed: arrow === "-.>" }
+  return {
+    kind: "item",
+    names: [from, to],
+    label,
+    change,
+    tone,
+    dashed: arrow === "-.>",
+    note: "",
+  }
 }
 
 function toneToken(letter: string | undefined): GraphTone {

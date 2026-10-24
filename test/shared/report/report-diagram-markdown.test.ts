@@ -47,6 +47,13 @@ describe("reportSectionsMarkdown", () => {
     )
   })
 
+  it("graph の節点の説明はラベルの2行目に小さい字で置き、HTML に読まれる記号は実体にする", () => {
+    const markdown = graphMarkdown("甲 | 説明 <b> & 続き\n甲 -> 乙\n甲 -> 丙")
+
+    expect(markdown).toContain('  n0["甲<br/><small>説明 #lt;b#gt; #amp; 続き</small>"]')
+    expect(markdown).toContain('  n1["乙"]')
+  })
+
   it("graph の囲みを subgraph にして、群の外の節点を先に宣言し、群ごとに破線の枠の style を足す", () => {
     const markdown = graphMarkdown("A -> B\n[架空の群]\nB -> C\n[]\nD")
 
@@ -69,8 +76,8 @@ describe("reportSectionsMarkdown", () => {
   })
 
   it.each([
-    ["箱だけ", "A -> B", []],
-    ["箱と角丸", "(A) -> B", ["round", "box"]],
+    ["箱だけ", "A -> B\nA -> C", []],
+    ["箱と角丸", "(A) -> B\nB -> C\nB -> D", ["round", "box"]],
     ["群があっても形が1種", "[群]\nA -> B\n[]", []],
     ["3種", "(A) -> B\nB -> {C}", ["round", "box", "decision"]],
   ])(
@@ -83,7 +90,7 @@ describe("reportSectionsMarkdown", () => {
   )
 
   it("graph の形の凡例は印の凡例と同じ行に、形を先に並べる", () => {
-    const markdown = graphMarkdown("(A) -> B\n+ B -> C")
+    const markdown = graphMarkdown("(A) -> B\n+ B -> C\nB -> D")
 
     expect(markdown.match(/<div class="graph-legend">/g)).toHaveLength(1)
     expect(markdown.indexOf("graph-legend-shape-round")).toBeLessThan(

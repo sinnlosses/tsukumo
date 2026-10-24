@@ -99,23 +99,45 @@ describe("reportViolations", () => {
           graph("A -> B\n\nA - B"),
           graph("秘密の一行 - 秘密の二行"),
           graph("+ A\n- A"),
+          graph("A | 説明\nB | 一 | 二"),
         ]),
       )
       expect(violations).toEqual([
         {
           kind: "broken-graph",
-          count: 3,
+          count: 4,
           faults: [
             { block: 2, line: 3 },
             { block: 3, line: 1 },
             { block: 4, line: 2 },
+            { block: 5, line: 2 },
           ],
         },
       ])
       const text = reportRejectionText(violations)
-      expect(text).toContain("2個目の 3 行目、3個目の 1 行目、4個目の 2 行目")
+      expect(text).toContain("2個目の 3 行目、3個目の 1 行目、4個目の 2 行目、5個目の 2 行目")
       expect(text).toContain("A -> B: 語")
       expect(text).not.toContain("秘密")
+    })
+
+    it("カードの連鎖になる一本道の graph でも、legend に無い色の目印は unlegended-graph-tone にする", () => {
+      const violations = reportViolations(
+        draft([
+          {
+            kind: "graph",
+            title: "",
+            direction: "LR",
+            legend: [{ tone: "a", label: "規約" }],
+            source: "甲 @a\n乙 @b\n甲 -> 乙",
+            fold: "",
+            aside: "",
+          },
+        ]),
+      )
+
+      expect(violations).toEqual([
+        { kind: "unlegended-graph-tone", count: 1, faults: [{ block: 1, tone: "b" }] },
+      ])
     })
 
     it("検査に渡すソースは、単独の塊と側を出現順（前が先）に集める", () => {

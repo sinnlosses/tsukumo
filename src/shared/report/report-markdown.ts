@@ -2,6 +2,7 @@
 //
 // 逃げ道の `markdown` の塊だけは逃がさず、今の本文と同じ経路（許可リスト・mermaid・`chart`）で描く。
 
+import { cardChainHtml } from "./card-chain-markdown.ts"
 import { encodeMarks } from "./code-mark.ts"
 import type { ReportBlock, ReportSection } from "./report-block.ts"
 import { captionedMarkdown, type CaptionKind } from "./report-caption.ts"
@@ -224,7 +225,18 @@ function blockMarkdown(
         bodyFormat: "markdown",
         fit: false,
       })
-    case "graph":
+    case "graph": {
+      const chain = cardChainHtml(block.source)
+      if (chain !== undefined) {
+        return captionedMarkdown({
+          kind: "figure",
+          ordinal,
+          title: block.title,
+          body: `${chain}${graphLegendMarkdown(block, false)}`,
+          bodyFormat: "html",
+          fit: false,
+        })
+      }
       return captionedMarkdown({
         kind: "figure",
         ordinal,
@@ -236,6 +248,7 @@ function blockMarkdown(
         bodyFormat: "markdown",
         fit: false,
       })
+    }
     case "chart":
       return captionedMarkdown({
         kind: "figure",

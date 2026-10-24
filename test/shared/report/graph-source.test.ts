@@ -10,10 +10,10 @@ describe("readGraphSource", () => {
       ),
     ).toEqual({
       nodes: [
-        { name: "架空の始点", shape: "round", change: "unchanged", tone: "none" },
-        { name: "架空の処理", shape: "box", change: "unchanged", tone: "none" },
-        { name: "架空の分岐?", shape: "decision", change: "unchanged", tone: "none" },
-        { name: "架空の終点", shape: "round", change: "unchanged", tone: "none" },
+        { name: "架空の始点", shape: "round", change: "unchanged", tone: "none", note: "" },
+        { name: "架空の処理", shape: "box", change: "unchanged", tone: "none", note: "" },
+        { name: "架空の分岐?", shape: "decision", change: "unchanged", tone: "none", note: "" },
+        { name: "架空の終点", shape: "round", change: "unchanged", tone: "none", note: "" },
       ],
       edges: [
         { from: 0, to: 1, label: "渡す", change: "unchanged", tone: "none", dashed: false },
@@ -64,9 +64,9 @@ describe("readGraphSource", () => {
     const { nodes, edges } = readGraphSource("A -> {B}\nB -> C\n(C) -> A\nC -> {A}")
 
     expect(nodes).toEqual([
-      { name: "A", shape: "decision", change: "unchanged", tone: "none" },
-      { name: "B", shape: "decision", change: "unchanged", tone: "none" },
-      { name: "C", shape: "round", change: "unchanged", tone: "none" },
+      { name: "A", shape: "decision", change: "unchanged", tone: "none", note: "" },
+      { name: "B", shape: "decision", change: "unchanged", tone: "none", note: "" },
+      { name: "C", shape: "round", change: "unchanged", tone: "none", note: "" },
     ])
     expect(edges.map(({ from, to }) => [from, to])).toEqual([
       [0, 1],
@@ -178,6 +178,30 @@ describe("readGraphSource", () => {
   it("節点の名前の中の : は壊れた行にする", () => {
     expect(readGraphSource("A:1 -> B").brokenLines).toEqual([1])
     expect(readGraphSource("A:1").brokenLines).toEqual([1])
+  })
+
+  describe("節点の説明", () => {
+    it("節点だけの行の `名前 | 説明` を読み、前後の空白を落とす。印と目印も同じ行に付く", () => {
+      const { nodes, brokenLines } = readGraphSource("+ 甲 | 甲の説明 @a\n乙\n甲 -> 乙")
+      expect(brokenLines).toEqual([])
+      expect(nodes.map(({ name, note, change, tone }) => [name, note, change, tone])).toEqual([
+        ["甲", "甲の説明", "added", "a"],
+        ["乙", "", "unchanged", "none"],
+      ])
+    })
+
+    it("説明の無い節点は note が空", () => {
+      expect(readGraphSource("甲 -> 乙").nodes.map(({ note }) => note)).toEqual(["", ""])
+    })
+
+    it.each([
+      ["| が2つ以上", "甲 | 一 | 二"],
+      ["説明が空", "甲 |"],
+      ["辺の端の名前の |", "甲 | 説明 -> 乙"],
+      ["違う説明の重ね書き", "甲 | 一\n甲 | 二"],
+    ])("%s は読めない行にする", (_, source) => {
+      expect(readGraphSource(source).brokenLines.length).toBeGreaterThan(0)
+    })
   })
 
   it("節点が1つも無い source は節点を持たない", () => {

@@ -243,7 +243,7 @@ export function graphSource(block: ReportGraph): string {
     if (node === undefined) {
       return ""
     }
-    const label = quoted(node.name)
+    const label = node.note === "" ? quoted(node.name) : noteLabel(node.name, node.note)
     const id = mermaidId(index)
     switch (node.shape) {
       case "box":
@@ -337,10 +337,11 @@ const GRAPH_SHAPES = [
   { shape: "decision", label: "分岐" },
 ] as const satisfies readonly { readonly shape: GraphNodeShape; readonly label: string }[]
 
-export function graphLegendMarkdown(block: ReportGraph): string {
+/** `withShapes` が偽なら形の見本を出さない（形を描き分けないカードの連鎖の凡例）。 */
+export function graphLegendMarkdown(block: ReportGraph, withShapes = true): string {
   const { nodes, edges } = readGraphSource(block.source)
   const shapes = GRAPH_SHAPES.filter(({ shape }) => nodes.some((node) => node.shape === shape))
-  const shapeItems = shapes.length < 2 ? [] : shapes
+  const shapeItems = !withShapes || shapes.length < 2 ? [] : shapes
   const changeItems = [...nodes, ...edges].every(({ change }) => change === "unchanged")
     ? []
     : GRAPH_CHANGES
@@ -369,6 +370,15 @@ function graphToneGroupStyle(tone: GraphTone): string {
 
 function mermaidId(index: number): string {
   return `n${String(index)}`
+}
+
+/** 名前の下に小さい字で説明を置く節点のラベル。HTML として読まれるので `<` `>` `&` は実体にする。 */
+function noteLabel(name: string, note: string): string {
+  return quoted(`${escapedForLabel(name)}<br/><small>${escapedForLabel(note)}</small>`)
+}
+
+function escapedForLabel(value: string): string {
+  return value.replaceAll("&", "#amp;").replaceAll("<", "#lt;").replaceAll(">", "#gt;")
 }
 
 function quoted(label: string): string {
