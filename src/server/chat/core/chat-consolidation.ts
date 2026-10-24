@@ -1,13 +1,14 @@
-// 定着の指示文・依頼の文面の組み立て・出力の形（JSON Schema）・出力の検査・モデルと時間切れ。
+// 定着の指示文・依頼の文面の組み立て・出力の形（zod。JSON Schema はそこから導く）・出力の検査・モデルと時間切れ。
 // 純関数と定数だけで、`query()` は起こさない。
 //
 // 渡す文面（畳む行・前のあらすじ・直前のエピソードの見出し）も受け取る出力（エピソード・あらすじ・話題の見出し）もすべて会話の内容に当たる。
 // ここで組んだ文面も検査の結果もログにもファイルにも書かない。
 //
-import { isPlainObject } from "remeda"
+import { z } from "zod"
 
 import { CHAT_MEMORY_BUDGET } from "../../../shared/chat/chat-memory-budget.ts"
 import { byteLength } from "../../../shared/utils/byte-length.ts"
+import { structuredOutputSchema } from "../../core/structured-output-schema.ts"
 import type { ChatSummary } from "../../session-driver/core/session-driver.ts"
 import type { ChatEpisodeDraft, ChatUnconsolidatedEntry } from "./chat-archive-port.ts"
 import { chatLineText } from "./chat-memory-prompt.ts"
@@ -183,7 +184,7 @@ export function chatConsolidationQuery(
     model: CHAT_CONSOLIDATION_MODEL,
     systemPrompt: CHAT_CONSOLIDATION_INSTRUCTION,
     prompt: chatConsolidationPrompt(material),
-    schema: chatConsolidationSchema(),
+    schema: structuredOutputSchema(chatConsolidationSchema()),
   }
 }
 
@@ -204,38 +205,20 @@ export function parseChatConsolidationResult(
   value: unknown,
   lineCount: number,
 ): ChatConsolidationCheck {
-  if (
-    !isPlainObject(value) ||
-    !Array.isArray(value.episodes) ||
-    typeof value.synopsis !== "string" ||
-    !Array.isArray(value.topics)
-  ) {
-    return rejected("shape-structure")
+  const schema = chatConsolidationSchema()
+  const parsed = schema.safeParse(value)
+  if (!parsed.success) {
+    const rejection = firstRejection(parsed.error.issues.map(rejectionOf))
+    // 話題だけが崩れているときも、覆いはその前に見る（形・あらすじ・エピソードは通っている）
+    const episodes = schema.pick({ episodes: true }).safeParse(value)
+    const uncovered =
+      episodes.success && !coversLinesContiguously(episodes.data.episodes, lineCount)
+    return rejected(rejection === "shape-topics" && uncovered ? "shape-coverage" : rejection)
   }
-
-  const synopsis = value.synopsis.trim()
-  const synopsisRejection = synopsisRejectionOf(synopsis)
-  if (synopsisRejection !== undefined) {
-    return { kind: "rejected", rejection: synopsisRejection }
-  }
-
-  const episodes = value.episodes.map(toEpisode)
-  if (!episodes.every((episode): episode is ChatConsolidationEpisode => episode !== undefined)) {
-    return rejected("shape-episode")
-  }
-  if (!coversLinesContiguously(episodes, lineCount)) {
+  if (!coversLinesContiguously(parsed.data.episodes, lineCount)) {
     return rejected("shape-coverage")
   }
-
-  const topics = value.topics.map(toTopic)
-  if (
-    topics.length > CHAT_CONSOLIDATION_LIMITS.topicsMax ||
-    !topics.every((topic): topic is string => topic !== undefined)
-  ) {
-    return rejected("shape-topics")
-  }
-
-  return { kind: "accepted", result: { episodes, synopsis, topics } }
+  return { kind: "accepted", result: parsed.data }
 }
 
 /**
@@ -324,43 +307,85 @@ function numberedLines(entries: readonly ChatUnconsolidatedEntry[]): string {
   return lines.join("\n")
 }
 
-/** 出力の JSON Schema（`outputFormat: { type: "json_schema", schema }` にそのまま渡す）。 */
-function chatConsolidationSchema(): Readonly<Record<string, unknown>> {
-  return {
-    type: "object",
-    properties: {
-      episodes: {
-        type: "array",
-        minItems: 1,
-        items: {
-          type: "object",
-          properties: {
-            end: { type: "integer", minimum: 1 },
-            title: { type: "string" },
-            gist: { type: "string" },
-            cues: {
-              type: "array",
-              minItems: CHAT_CONSOLIDATION_LIMITS.cuesMin,
-              maxItems: CHAT_CONSOLIDATION_LIMITS.cuesMax,
-              items: { type: "string" },
-            },
-            weight: { type: "integer", enum: [1, 2, 3] },
-          },
-          required: ["end", "title", "gist", "cues", "weight"],
-          additionalProperties: false,
-        },
-      },
-      synopsis: { type: "string", minLength: 1, maxLength: CHAT_MEMORY_BUDGET.synopsisBytes },
-      topics: {
-        type: "array",
-        maxItems: CHAT_CONSOLIDATION_LIMITS.topicsMax,
-        items: { type: "string" },
-      },
-    },
-    required: ["episodes", "synopsis", "topics"],
-    additionalProperties: false,
-  }
+/**
+ * 出力の形。JSON Schema（`outputFormat` に渡す）も検査もここから導く。
+ * 検査に落ちた理由は message に置く（{@link rejectionOf}）。型の違いは zod の issue の種類から引く。
+ */
+function chatConsolidationSchema() {
+  const episode = z.object({
+    end: z.number().int().min(1),
+    title: lineSchema(CHAT_CONSOLIDATION_LIMITS.titleChars),
+    gist: z.string().trim().min(1).max(CHAT_CONSOLIDATION_LIMITS.gistChars),
+    cues: z
+      .array(lineSchema(CHAT_CONSOLIDATION_LIMITS.cueChars))
+      .min(CHAT_CONSOLIDATION_LIMITS.cuesMin)
+      .max(CHAT_CONSOLIDATION_LIMITS.cuesMax),
+    weight: z.literal([1, 2, 3]),
+  })
+  return z.object({
+    episodes: z.array(episode).min(1, "shape-coverage"),
+    synopsis: z
+      .string()
+      .trim()
+      .min(1, "synopsis-empty")
+      .refine((synopsis) => !hasReservedTag(synopsis), "synopsis-reserved-tag")
+      .max(CHAT_MEMORY_BUDGET.synopsisBytes, "synopsis-too-long")
+      .refine(
+        (synopsis) => byteLength(synopsis) <= CHAT_MEMORY_BUDGET.synopsisBytes,
+        "synopsis-too-long",
+      ),
+    topics: z
+      .array(lineSchema(CHAT_CONSOLIDATION_LIMITS.topicChars))
+      .max(CHAT_CONSOLIDATION_LIMITS.topicsMax, "shape-topics"),
+  })
 }
+
+function lineSchema(maxChars: number) {
+  return z
+    .string()
+    .trim()
+    .min(1)
+    .max(maxChars)
+    .refine((line) => !line.includes("\n"))
+}
+
+/**
+ * 検査に落ちた issue 1件の理由。
+ * 最上位の欄の型の違いは `shape-structure`、`episodes` の中は `shape-episode`、`topics` の中は `shape-topics`、
+ * `synopsis` と `episodes`・`topics` の件数は message の理由。
+ */
+function rejectionOf(issue: z.core.$ZodIssue): ChatConsolidationRejection {
+  const [field] = issue.path
+  if (issue.code === "invalid_type" && issue.path.length <= 1) {
+    return "shape-structure"
+  }
+  if (field === "synopsis") {
+    return (
+      CHAT_CONSOLIDATION_REJECTIONS.find((reason) => reason === issue.message) ?? "synopsis-empty"
+    )
+  }
+  if (field === "topics") {
+    return "shape-topics"
+  }
+  return issue.message === "shape-coverage" ? "shape-coverage" : "shape-episode"
+}
+
+/** 複数の欠陥があるときは、次の順で最初に当たる理由を返す（形 → あらすじ → エピソード → 覆い → 話題）。 */
+function firstRejection(
+  rejections: readonly ChatConsolidationRejection[],
+): ChatConsolidationRejection {
+  return REJECTION_PRIORITY.find((reason) => rejections.includes(reason)) ?? "shape-structure"
+}
+
+const REJECTION_PRIORITY = [
+  "shape-structure",
+  "synopsis-empty",
+  "synopsis-reserved-tag",
+  "synopsis-too-long",
+  "shape-episode",
+  "shape-coverage",
+  "shape-topics",
+] as const satisfies readonly ChatConsolidationRejection[]
 
 function cappedWeight(weight: 1 | 2 | 3, range: readonly ChatUnconsolidatedEntry[]): 1 | 2 | 3 {
   return weight === 3 && !range.some((entry) => entry.origin.mode === "chat") ? 2 : weight
@@ -370,87 +395,8 @@ function rejected(rejection: ChatConsolidationRejection): ChatConsolidationCheck
   return { kind: "rejected", rejection }
 }
 
-/**
- * 前後の空白を落としたあらすじが形の検査に落ちる理由（通れば `undefined`）。
- * 中身の意味は見ない（空・決まった印の含有・長さだけ）。
- */
-function synopsisRejectionOf(synopsis: string): ChatConsolidationRejection | undefined {
-  if (synopsis === "") {
-    return "synopsis-empty"
-  }
-  if (CHAT_SYNOPSIS_RESERVED_TAGS.some((tag) => synopsis.includes(tag))) {
-    return "synopsis-reserved-tag"
-  }
-  if (byteLength(synopsis) > CHAT_MEMORY_BUDGET.synopsisBytes) {
-    return "synopsis-too-long"
-  }
-  return undefined
-}
-
-/** `episodes` の1件を検査して畳む（崩れていたら `undefined`）。 */
-function toEpisode(value: unknown): ChatConsolidationEpisode | undefined {
-  if (!isPlainObject(value)) {
-    return undefined
-  }
-  const { end, title, gist, cues, weight } = value
-  if (typeof end !== "number" || !Number.isInteger(end) || end < 1) {
-    return undefined
-  }
-  const trimmedTitle = toLine(title, CHAT_CONSOLIDATION_LIMITS.titleChars)
-  if (trimmedTitle === undefined) {
-    return undefined
-  }
-  const trimmedGist = toText(gist, CHAT_CONSOLIDATION_LIMITS.gistChars)
-  if (trimmedGist === undefined) {
-    return undefined
-  }
-  const trimmedCues = toCues(cues)
-  if (trimmedCues === undefined) {
-    return undefined
-  }
-  if (weight !== 1 && weight !== 2 && weight !== 3) {
-    return undefined
-  }
-  return { end, title: trimmedTitle, gist: trimmedGist, cues: trimmedCues, weight }
-}
-
-/** `cues` の並びを検査して畳む（件数・各要素の形。崩れていたら `undefined`）。 */
-function toCues(value: unknown): readonly string[] | undefined {
-  if (
-    !Array.isArray(value) ||
-    value.length < CHAT_CONSOLIDATION_LIMITS.cuesMin ||
-    value.length > CHAT_CONSOLIDATION_LIMITS.cuesMax
-  ) {
-    return undefined
-  }
-  const cues = value.map((cue) => toLine(cue, CHAT_CONSOLIDATION_LIMITS.cueChars))
-  return cues.every((cue): cue is string => cue !== undefined) ? cues : undefined
-}
-
-/** `topics` の1件を検査して畳む（空でない・改行を含まない・上限内。崩れていたら `undefined`）。 */
-function toTopic(value: unknown): string | undefined {
-  return toLine(value, CHAT_CONSOLIDATION_LIMITS.topicChars)
-}
-
-/** 空でない・改行を含まない・文字数が上限以下の1行（前後の空白は落とす）。 */
-function toLine(value: unknown, maxChars: number): string | undefined {
-  if (typeof value !== "string") {
-    return undefined
-  }
-  const trimmed = value.trim()
-  if (trimmed === "" || trimmed.includes("\n") || [...trimmed].length > maxChars) {
-    return undefined
-  }
-  return trimmed
-}
-
-/** 空でない・文字数が上限以下の文面（前後の空白は落とす。改行は許す＝1〜2文の要旨向け）。 */
-function toText(value: unknown, maxChars: number): string | undefined {
-  if (typeof value !== "string") {
-    return undefined
-  }
-  const trimmed = value.trim()
-  return trimmed === "" || [...trimmed].length > maxChars ? undefined : trimmed
+function hasReservedTag(synopsis: string): boolean {
+  return CHAT_SYNOPSIS_RESERVED_TAGS.some((tag) => synopsis.includes(tag))
 }
 
 /** `episodes` が `lineCount` 行を切れ目なく覆っているか（`end` が前のエピソードより大きく、最後の `end` が `lineCount` と一致）。 */

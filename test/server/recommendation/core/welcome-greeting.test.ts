@@ -116,6 +116,18 @@ describe("parseWelcomeGreeting", () => {
     })
   })
 
+  it("字数はコードポイントで数える（サロゲートペア1文字を1字とする）", () => {
+    const longest = "😀".repeat(LINE_LIMIT_CHARS)
+
+    expect(parseWelcomeGreeting({ ...OUTPUT, withoutCard: longest }, MATERIAL)).toMatchObject({
+      kind: "accepted",
+    })
+    expect(parseWelcomeGreeting({ ...OUTPUT, withoutCard: `${longest}😀` }, MATERIAL)).toEqual({
+      kind: "rejected",
+      reason: "too-long",
+    })
+  })
+
   it("オブジェクトでなければ落とす", () => {
     expect(parseWelcomeGreeting("架空", MATERIAL)).toEqual({ kind: "rejected", reason: "missing" })
   })

@@ -26,6 +26,21 @@ describe("recommendationQuery", () => {
     })
   })
 
+  it("札は1〜3件で、理由の字数の上限も出力の形に出す", () => {
+    const { schema } = recommendationQuery({ candidates: CANDIDATES, omittedCount: 0 })
+
+    expect(schema).toMatchObject({
+      required: ["cards"],
+      properties: {
+        cards: {
+          minItems: 1,
+          maxItems: 3,
+          items: { properties: { reason: { type: "string", minLength: 1, maxLength: 40 } } },
+        },
+      },
+    })
+  })
+
   it("渡せなかったタスクがあるときだけ、その件数を依頼の文面の末尾に添える", () => {
     const whole = recommendationQuery({ candidates: CANDIDATES, omittedCount: 0 })
     const cut = recommendationQuery({ candidates: CANDIDATES, omittedCount: 4 })
@@ -77,6 +92,20 @@ describe("parseRecommendationResult", () => {
       { kind: "task", taskId: "X-005", reason: "架空の理由3" },
       { kind: "resume", reason: "架空の理由4" },
     ])
+  })
+
+  it("理由の字数はコードポイントで数える（サロゲートペア1文字を1字とする）", () => {
+    expect(
+      parseRecommendationResult(
+        {
+          cards: [
+            { key: "X-002", reason: "😀".repeat(41) },
+            { key: "X-005", reason: "😀".repeat(40) },
+          ],
+        },
+        CANDIDATES,
+      ),
+    ).toEqual([{ kind: "task", taskId: "X-005", reason: "😀".repeat(40) }])
   })
 
   it("形が崩れている・1件も残らないときは何も返さない", () => {

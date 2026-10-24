@@ -1,12 +1,14 @@
-// おすすめの札の問い合わせの指示文・依頼の文面・出力の形（JSON Schema）・出力の検査・モデルと時間切れ。
+// おすすめの札の問い合わせの指示文・依頼の文面・出力の形（zod。JSON Schema はそこから導く）・出力の検査・モデルと時間切れ。
 // 純関数と定数だけで、`query()` は起こさない。
 
-import { isPlainObject, uniqueBy } from "remeda"
+import { uniqueBy } from "remeda"
+import { z } from "zod"
 
 import {
   MAX_RECOMMENDATION_CARDS,
   type RecommendationCard,
 } from "../../../shared/recommendation/recommendation-card.ts"
+import { structuredOutputSchema } from "../../core/structured-output-schema.ts"
 import type {
   RecommendationCandidate,
   RecommendationCandidates,
@@ -67,7 +69,7 @@ export function recommendationQuery(selection: RecommendationCandidates): Struct
     model: RECOMMENDATION_MODEL,
     systemPrompt: RECOMMENDATION_INSTRUCTION,
     prompt: ["## 候補", ...selection.candidates.map(candidateLine), ...omitted].join("\n"),
-    schema: recommendationSchema(selection.candidates),
+    schema: structuredOutputSchema(recommendationSchema(selection.candidates)),
   }
 }
 
@@ -80,10 +82,11 @@ export function parseRecommendationResult(
   value: unknown,
   candidates: readonly RecommendationCandidate[],
 ): readonly RecommendationCard[] | undefined {
-  if (!isPlainObject(value) || !Array.isArray(value.cards)) {
+  const outer = z.object({ cards: z.array(z.unknown()) }).safeParse(value)
+  if (!outer.success) {
     return undefined
   }
-  const cards = value.cards
+  const cards = outer.data.cards
     .map((entry) => toCard(entry, candidates))
     .filter((card): card is RecommendationCard => card !== undefined)
   const kept = uniqueBy(cards, cardKey).slice(0, MAX_RECOMMENDATION_CARDS)
@@ -99,31 +102,23 @@ function candidateLine(candidate: RecommendationCandidate): string {
   return `- key: ${candidate.id} / 待っているタスク: ${waitedBy} / 要約: ${candidate.summary}`
 }
 
-/** 出力の JSON Schema（`outputFormat: { type: "json_schema", schema }` にそのまま渡す）。`key` は候補のキーに限る。 */
-function recommendationSchema(
-  candidates: readonly RecommendationCandidate[],
-): Readonly<Record<string, unknown>> {
-  return {
-    type: "object",
-    properties: {
-      cards: {
-        type: "array",
-        minItems: 1,
-        maxItems: MAX_RECOMMENDATION_CARDS,
-        items: {
-          type: "object",
-          properties: {
-            key: { type: "string", enum: candidates.map(candidateKey) },
-            reason: { type: "string" },
-          },
-          required: ["key", "reason"],
-          additionalProperties: false,
-        },
-      },
-    },
-    required: ["cards"],
-    additionalProperties: false,
-  }
+/** 札1件の形。`key` は候補のキーに限り、`reason` は空でない・改行を含まない・{@link RECOMMENDATION_REASON_CHARS} 字以下の1行（前後の空白は落とす）。 */
+function cardSchema(candidates: readonly RecommendationCandidate[]) {
+  return z.object({
+    key: z.enum(candidates.map(candidateKey)),
+    reason: z
+      .string()
+      .trim()
+      .min(1)
+      .max(RECOMMENDATION_REASON_CHARS)
+      .refine((reason) => !reason.includes("\n")),
+  })
+}
+
+function recommendationSchema(candidates: readonly RecommendationCandidate[]) {
+  return z.object({
+    cards: z.array(cardSchema(candidates)).min(1).max(MAX_RECOMMENDATION_CARDS),
+  })
 }
 
 /** `cards` の1件を検査して札にする（候補に無いキー・理由の崩れは `undefined`）。 */
@@ -131,30 +126,18 @@ function toCard(
   value: unknown,
   candidates: readonly RecommendationCandidate[],
 ): RecommendationCard | undefined {
-  if (!isPlainObject(value) || typeof value.key !== "string") {
+  const parsed = cardSchema(candidates).safeParse(value)
+  if (!parsed.success) {
     return undefined
   }
-  const reason = toReason(value.reason)
-  const candidate = candidates.find((each) => candidateKey(each) === value.key)
-  if (reason === undefined || candidate === undefined) {
+  const { key, reason } = parsed.data
+  const candidate = candidates.find((each) => candidateKey(each) === key)
+  if (candidate === undefined) {
     return undefined
   }
   return candidate.kind === "resume"
     ? { kind: "resume", reason }
     : { kind: "task", taskId: candidate.id, reason }
-}
-
-/** 空でない・改行を含まない・{@link RECOMMENDATION_REASON_CHARS} 字以下の1行（前後の空白は落とす）。 */
-function toReason(value: unknown): string | undefined {
-  if (typeof value !== "string") {
-    return undefined
-  }
-  const trimmed = value.trim()
-  return trimmed === "" ||
-    trimmed.includes("\n") ||
-    [...trimmed].length > RECOMMENDATION_REASON_CHARS
-    ? undefined
-    : trimmed
 }
 
 function candidateKey(candidate: RecommendationCandidate): string {

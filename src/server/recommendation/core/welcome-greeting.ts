@@ -1,22 +1,24 @@
-// 迎えの挨拶の問い合わせの指示文・依頼の文面・出力の形（JSON Schema）・出力の検査。
+// 迎えの挨拶の問い合わせの指示文・依頼の文面・出力の形（zod。JSON Schema はそこから導く）・出力の検査。
 // 純関数と定数だけで、`query()` は起こさない。
 // 材料は人格・表情の選択肢・暦・直近の挨拶・迎え方（続きからなら前回からの経過の帯）だけで、
 // 会話から導いたもの（前のセッションの要約・タスク一覧）を入れない。
 
-import { isPlainObject } from "remeda"
+import { z } from "zod"
 
 import type { ExpressionChoice } from "../../../shared/character-pack/expression-choice.ts"
 import {
   WELCOME_GREETING_CARD_MARK,
   type WelcomeGreeting,
 } from "../../../shared/recommendation/welcome-greeting.ts"
+import { structuredOutputSchema } from "../../core/structured-output-schema.ts"
 import type { CheckedAnswer } from "./retried-query.ts"
 import type { StructuredQuery } from "./structured-query.ts"
 import {
+  checkWelcomeAnswer,
   rejected,
-  toExpression,
-  toWelcomeLine,
   WELCOME_LINE_REQUESTED_CHARS,
+  welcomeExpressionSchema,
+  welcomeLineSchema,
 } from "./welcome-line.ts"
 
 /** 問い合わせを起こすモデル（軽いもの）。 */
@@ -127,7 +129,7 @@ export function welcomeGreetingQuery(material: WelcomeGreetingMaterial): Structu
         ? ["- なし"]
         : material.recent.flatMap((text) => [`- ${text.withCard}`, `- ${text.withoutCard}`])),
     ].join("\n"),
-    schema: welcomeGreetingSchema(material.expressions),
+    schema: structuredOutputSchema(welcomeGreetingSchema(material.expressions)),
   }
 }
 
@@ -140,34 +142,15 @@ export function parseWelcomeGreeting(
   value: unknown,
   material: Pick<WelcomeGreetingMaterial, "expressions" | "recent">,
 ): CheckedAnswer<WelcomeGreeting> {
-  if (!isPlainObject(value)) {
-    return rejected("missing")
+  const checked = checkWelcomeAnswer(welcomeGreetingSchema(material.expressions), value)
+  if (checked.kind === "rejected") {
+    return checked
   }
-  const withCard = toWelcomeLine(value.withCard, 1)
-  const withoutCard = toWelcomeLine(value.withoutCard, 0)
-  const expression = toExpression(value.expression, material.expressions)
-  if (withCard.kind === "rejected") {
-    return withCard
-  }
-  if (withoutCard.kind === "rejected") {
-    return withoutCard
-  }
-  if (expression.kind === "rejected") {
-    return expression
-  }
+  const { withCard, withoutCard } = checked.value
   const repeated = material.recent.some(
-    (text) => text.withCard === withCard.value || text.withoutCard === withoutCard.value,
+    (text) => text.withCard === withCard || text.withoutCard === withoutCard,
   )
-  return repeated
-    ? rejected("repeated")
-    : {
-        kind: "accepted",
-        value: {
-          withCard: withCard.value,
-          withoutCard: withoutCard.value,
-          expression: expression.value,
-        },
-      }
+  return repeated ? rejected("repeated") : checked
 }
 
 /** 前回の最後からの経過（ミリ秒）を帯の語にする。 */
@@ -201,17 +184,10 @@ function visitLines(visit: WelcomeVisit): readonly string[] {
   }
 }
 
-function welcomeGreetingSchema(
-  expressions: readonly ExpressionChoice[],
-): Readonly<Record<string, unknown>> {
-  return {
-    type: "object",
-    properties: {
-      withCard: { type: "string" },
-      withoutCard: { type: "string" },
-      expression: { type: "string", enum: expressions.map((choice) => choice.name) },
-    },
-    required: ["withCard", "withoutCard", "expression"],
-    additionalProperties: false,
-  }
+function welcomeGreetingSchema(expressions: readonly ExpressionChoice[]) {
+  return z.object({
+    withCard: welcomeLineSchema(1),
+    withoutCard: welcomeLineSchema(0),
+    expression: welcomeExpressionSchema(expressions),
+  })
 }

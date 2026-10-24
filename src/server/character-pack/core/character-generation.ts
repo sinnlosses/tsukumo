@@ -1,4 +1,4 @@
-// 立ち絵1枚から作るダイアログの欄の値を生成する問い合わせの、指示文・依頼の文面・出力の形（JSON Schema）・出力の検査。
+// 立ち絵1枚から作るダイアログの欄の値を生成する問い合わせの、指示文・依頼の文面・出力の形（`generatedCharacterSchema` から導く JSON Schema）・出力の検査。
 // `query()` は起こさず、渡された口を呼ぶだけ。
 // 材料は利用者が置いた立ち絵1枚だけで、会話・人格・ほかのパックは入れない。
 
@@ -15,6 +15,7 @@ import {
   parsePromptImage,
   type PromptImageSource,
 } from "../../../shared/session-driver/prompt-image.ts"
+import { structuredOutputSchema } from "../../core/structured-output-schema.ts"
 
 /** 問い合わせを起こすモデル。 */
 const CHARACTER_GENERATION_MODEL = "opus" satisfies ModelAlias
@@ -65,7 +66,7 @@ function characterGenerationQuery(image: PromptImageSource): CharacterGeneration
     systemPrompt: CHARACTER_GENERATION_INSTRUCTION,
     prompt: "この立ち絵のキャラクターの id・名前・差し色2つ・人格を書いてください。",
     image,
-    schema: CHARACTER_GENERATION_SCHEMA,
+    schema: structuredOutputSchema(generatedCharacterSchema),
   }
 }
 
@@ -108,16 +109,3 @@ const CHARACTER_GENERATION_INSTRUCTION = `あなたは、利用者が置いた�
 - \`## 覚えたこと\` の見出しと節（あとで tsukumo が書き足す場所）
 - 表情の名前・\`speak\` などのツールの呼び方・レポートの書き方・モデルごとの掛け声（どれも tsukumo の側が決める）
 - 立ち絵から読み取れない固有の事実を、事実として断定すること（作品名・実在の人物との関係など）`
-
-const CHARACTER_GENERATION_SCHEMA = {
-  type: "object",
-  properties: {
-    id: { type: "string" },
-    name: { type: "string" },
-    accent: { type: "string" },
-    chatAccent: { type: "string" },
-    persona: { type: "string" },
-  },
-  required: ["id", "name", "accent", "chatAccent", "persona"],
-  additionalProperties: false,
-} as const satisfies Readonly<Record<string, unknown>>

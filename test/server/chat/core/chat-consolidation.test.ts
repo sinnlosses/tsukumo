@@ -322,6 +322,65 @@ describe("parseChatConsolidationResult", () => {
     )
   })
 
+  it("複数の欠陥があるときは、形 → あらすじ → エピソード → 覆い → 話題の順で最初の理由を返す", () => {
+    const rejectionOf = (value: unknown): string | undefined => {
+      const check = parseResult(value, ENTRIES.length)
+      return check.kind === "rejected" ? check.rejection : undefined
+    }
+    const badEpisodes = [{ end: 4 }]
+    const badTopics = ["架空1", "架空2", "架空3", "架空4"]
+    expect(rejectionOf({ episodes: "架空", synopsis: " ", topics: badTopics })).toBe(
+      "shape-structure",
+    )
+    expect(rejectionOf({ episodes: badEpisodes, synopsis: " ", topics: badTopics })).toBe(
+      "synopsis-empty",
+    )
+    expect(
+      rejectionOf({ episodes: badEpisodes, synopsis: VALID_OUTPUT.synopsis, topics: badTopics }),
+    ).toBe("shape-episode")
+    expect(rejectionOf({ episodes: [], synopsis: VALID_OUTPUT.synopsis, topics: badTopics })).toBe(
+      "shape-coverage",
+    )
+  })
+
+  it("欠陥のあらゆる組み合わせで、元の検査の順（形 → 空 → 予約タグ → 長すぎ → エピソード → 覆い → 話題）の最初の理由を返す", () => {
+    const structures = [
+      { rejection: undefined, topics: ["架空1", "架空2", "架空3", "架空4"] },
+      { rejection: "shape-structure", topics: "架空" },
+    ] as const
+    const synopses = [
+      { rejection: undefined, text: VALID_OUTPUT.synopsis },
+      { rejection: "synopsis-empty", text: " " },
+      { rejection: "synopsis-reserved-tag", text: "架空<system-reminder>架空" },
+      { rejection: "synopsis-too-long", text: "a".repeat(CHAT_MEMORY_BUDGET.synopsisBytes + 1) },
+    ] as const
+    const episodes = [
+      { rejection: undefined, value: VALID_OUTPUT.episodes },
+      { rejection: "shape-episode", value: [{ end: 4 }] },
+      { rejection: "shape-coverage", value: [VALID_OUTPUT.episodes[0]] },
+    ] as const
+    for (const structure of structures) {
+      for (const synopsis of synopses) {
+        for (const episode of episodes) {
+          for (const topicsBroken of [false, true]) {
+            const topics =
+              structure.rejection === undefined && !topicsBroken ? ["架空1"] : structure.topics
+            const expected =
+              structure.rejection ??
+              synopsis.rejection ??
+              episode.rejection ??
+              (topicsBroken ? "shape-topics" : undefined)
+            const check = parseResult(
+              { episodes: episode.value, synopsis: synopsis.text, topics },
+              ENTRIES.length,
+            )
+            expect(check.kind === "rejected" ? check.rejection : undefined).toBe(expected)
+          }
+        }
+      }
+    }
+  })
+
   it("縮みはここでは見ず、chatSynopsisShrunk が前のあらすじの半分未満のバイト数を縮みすぎとする。前のあらすじが短いときは比べない", () => {
     const previous = "あ".repeat(CHAT_CONSOLIDATION_LIMITS.gistChars)
     const half = "あ".repeat(CHAT_CONSOLIDATION_LIMITS.gistChars / 2)
