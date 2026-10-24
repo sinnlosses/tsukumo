@@ -40,15 +40,15 @@ const ALLOWED_TEST_ONLY_EXPORTS = {
     "E2E の足場の名前の規約を、場面の読み取りと同じ正規表現で確かめる（写すと2つがずれる）",
 } as const satisfies Record<string, string>
 
+const FOUND_TEST_ONLY_EXPORTS = testOnlyExports(readRepositorySources(), productionReader())
+
 describe("scripts/ のテストからしか import されない export", () => {
   it("許可リストの外に無い", () => {
-    const found = testOnlyExports(readRepositorySources(), productionReader())
-
-    expect(found.filter((key) => !(key in ALLOWED_TEST_ONLY_EXPORTS))).toEqual([])
+    expect(FOUND_TEST_ONLY_EXPORTS.filter((key) => !(key in ALLOWED_TEST_ONLY_EXPORTS))).toEqual([])
   })
 
   it("許可リストの項目は、いまもテストからしか import されない", () => {
-    const found = new Set(testOnlyExports(readRepositorySources(), productionReader()))
+    const found = new Set(FOUND_TEST_ONLY_EXPORTS)
 
     expect(Object.keys(ALLOWED_TEST_ONLY_EXPORTS).filter((key) => !found.has(key))).toEqual([])
   })

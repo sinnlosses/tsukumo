@@ -4,18 +4,21 @@ import { readRepositorySources, readScriptExportUse } from "./script-export-use.
 
 const ALLOWED_UNUSED_EXPORTS = {} as const satisfies Record<string, string>
 
+const FOUND_UNUSED_EXPORTS = unusedExports(readRepositorySources())
+
 describe("scripts/ のどこからも import されない export", () => {
   it("許可リストの外に無い", () => {
-    const found = unusedExports(readRepositorySources())
-
-    expect(found.filter((key) => !(key in ALLOWED_UNUSED_EXPORTS))).toEqual([])
+    expect(FOUND_UNUSED_EXPORTS.filter((key) => !(key in ALLOWED_UNUSED_EXPORTS))).toEqual([])
   })
 
-  it("許可リストの項目は、いまもどこからも import されない", () => {
-    const found = new Set(unusedExports(readRepositorySources()))
+  it.skipIf(Object.keys(ALLOWED_UNUSED_EXPORTS).length === 0)(
+    "許可リストの項目は、いまもどこからも import されない",
+    () => {
+      const found = new Set(FOUND_UNUSED_EXPORTS)
 
-    expect(Object.keys(ALLOWED_UNUSED_EXPORTS).filter((key) => !found.has(key))).toEqual([])
-  })
+      expect(Object.keys(ALLOWED_UNUSED_EXPORTS).filter((key) => !found.has(key))).toEqual([])
+    },
+  )
 
   it("本番が読む export・テストだけが読む export・型注釈から名指される型を除き、誰も読まない export を拾う", () => {
     const sources = new Map([
