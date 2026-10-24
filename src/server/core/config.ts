@@ -73,7 +73,17 @@ const REPORT_SCHEMA_ENV_NAME = "TSUKUMO_REPORT_SCHEMA"
  * セッションドライバの種類。
  * `fake` は本物の claude を起こさず、疑似セッションどおりにイベントを流す（`readFakeSession`）。
  */
-export type DriverKind = "sdk" | "fake"
+export type ConfigDriver =
+  | { readonly kind: "sdk" }
+  | {
+      readonly kind: "fake"
+      /** 疑似セッションのファイルのパス。未設定・空なら undefined ＝ 同梱のファイル。 */
+      readonly sessionPath: string | undefined
+      /** 名指しする場面。未設定なら undefined ＝ 依頼を受けるまで `opening` だけ。 */
+      readonly scene: string | undefined
+      /** `scene` の手を流す個数の上限。未設定・正の整数でない値なら undefined ＝ 全部流す。 */
+      readonly sceneUntil: number | undefined
+    }
 
 /**
  * ビューとファイルを開くホストの種類。
@@ -90,17 +100,8 @@ export type Config = {
   /** キャラクターの指定（未設定なら undefined ＝ 同梱の既定を使う）。 */
   readonly character: string | undefined
   readonly openView: boolean
-  readonly driver: DriverKind
+  readonly driver: ConfigDriver
   readonly host: HostKind
-  /**
-   * fake driver で名指しする場面（未設定なら undefined ＝ 依頼を受けるまで `opening` だけ）。
-   * `driver` が `sdk` のときは効かない。
-   */
-  readonly fakeScene: string | undefined
-  /** `fakeScene` の手を流す個数の上限。未設定・正の整数でない値なら undefined ＝ 全部流す。 */
-  readonly fakeSceneUntil: number | undefined
-  /** 疑似セッションのファイルのパス。未設定・空、または `driver` が `fake` でなければ undefined ＝ 同梱のファイル。 */
-  readonly fakeSession: string | undefined
   /** `TSUKUMO_TW` の値（未設定・空なら undefined ＝ 既定の `tw`）。 */
   readonly twCommand: string | undefined
   /** `CLAUDE_CONFIG_DIR` の値（未設定・空なら undefined ＝ `~`）。 */
@@ -120,7 +121,15 @@ export type Config = {
  * 読めない値は既定へ倒し、ポート番号のように起動を止めるべきものだけを呼び出し側が判断する。
  */
 export function readConfig(env: Readonly<Record<string, string | undefined>>): Config {
-  const driver = env[DRIVER_ENV_NAME]?.trim() === "fake" ? "fake" : "sdk"
+  const driver: ConfigDriver =
+    env[DRIVER_ENV_NAME]?.trim() === "fake"
+      ? {
+          kind: "fake",
+          sessionPath: nonEmpty(env[FAKE_SESSION_ENV_NAME]),
+          scene: nonEmpty(env[FAKE_SCENE_ENV_NAME]),
+          sceneUntil: parsePositiveInteger(env[FAKE_SCENE_UNTIL_ENV_NAME]),
+        }
+      : { kind: "sdk" }
   return {
     rawViewPort: env[VIEW_PORT_ENV_NAME],
     rawViewPortFallbackBase: env[VIEW_PORT_FALLBACK_BASE_ENV_NAME],
@@ -128,9 +137,6 @@ export function readConfig(env: Readonly<Record<string, string | undefined>>): C
     openView: env[OPEN_VIEW_ENV_NAME]?.trim() !== "0",
     driver,
     host: readHost(env),
-    fakeScene: nonEmpty(env[FAKE_SCENE_ENV_NAME]),
-    fakeSceneUntil: parsePositiveInteger(env[FAKE_SCENE_UNTIL_ENV_NAME]),
-    fakeSession: driver === "fake" ? nonEmpty(env[FAKE_SESSION_ENV_NAME]) : undefined,
     twCommand: nonEmpty(env[TW_ENV_NAME]),
     claudeConfigDir: nonEmpty(env[CLAUDE_CONFIG_DIR_ENV_NAME]),
     fixedClock: parseInstant(env[FIXED_CLOCK_ENV_NAME]),

@@ -101,7 +101,7 @@ export function wireSessionLaunch(options: {
   const { context, config, character, viewPort } = options
   const reportFailure = failureDiagnostic(options.diagnosticLog, context.now)
   // 印の付いたセッションの一覧。ここで1回読み始め、起こし直しはメモリの一覧から切り替え先を出す。
-  const sessionCatalog = chooseSessionCatalog(context, config)
+  const sessionCatalog = chooseSessionCatalog(context)
   const sessionClaim = createSessionClaim(
     createSessionClaimFile({
       place: defaultSessionClaimPlace(),
@@ -135,8 +135,6 @@ export function wireSessionLaunch(options: {
           return startDriver({
             seed,
             context,
-            scene: config.fakeScene,
-            sceneUntil: config.fakeSceneUntil,
             claudeConfigDir: config.claudeConfigDir,
             reportSchema: config.reportSchema,
             mountWorkflowPlugin: options.mountWorkflowPlugin,
@@ -150,16 +148,23 @@ export function wireSessionLaunch(options: {
               options.diagnosticLog.append([{ flow: "report-gate-block", at: context.now() }]),
           })
         },
-        restoreEvents: (resumed, pack) =>
-          context.fakeSession === undefined
-            ? readRestoredEvents(resumed, expressionChoices(pack.definition))
-            : Promise.resolve(
+        restoreEvents: (resumed, pack) => {
+          const { driver } = context
+          switch (driver.kind) {
+            case "sdk":
+              return readRestoredEvents(resumed, expressionChoices(pack.definition))
+            case "fake":
+              return Promise.resolve(
                 readFakeRestoredEvents(
-                  context.fakeSession,
+                  driver.session,
                   resumed,
                   expressionNames(expressionChoices(pack.definition)),
                 ),
-              ),
+              )
+            default:
+              return driver satisfies never
+          }
+        },
         diagnosticLog: options.diagnosticLog,
         now: context.now,
       }),
@@ -175,26 +180,29 @@ export function wireSessionLaunch(options: {
 }
 
 /** fake driver なら疑似セッションの一覧、それ以外は SDK の一覧。 */
-function chooseSessionCatalog(context: WiringContext, config: Config): SessionCatalog {
-  return context.fakeSession === undefined
-    ? createSessionCatalog({
+function chooseSessionCatalog(context: WiringContext): SessionCatalog {
+  const { driver } = context
+  switch (driver.kind) {
+    case "sdk":
+      return createSessionCatalog({
         read: () => listRepositorySessions(context.cwd),
         now: context.now,
         cwd: context.cwd,
       })
-    : createFakeSessionCatalog(context.fakeSession, config.fakeScene, context.cwd)
+    case "fake":
+      return createFakeSessionCatalog(driver.session, driver.scene, context.cwd)
+    default:
+      return driver satisfies never
+  }
 }
 
 /**
  * セッションドライバを1つ起こす。
- * 疑似セッションがあれば fake driver（claude を起こさない）、無ければ Agent SDK の駆動。
- * `scene` は fake driver のときだけ効く（名指しした場面を最初のタブが繋がったら流す。`TSUKUMO_FAKE_SCENE`）。
+ * 疑似セッションの駆動なら fake driver（claude を起こさない。名指しした場面を最初のタブが繋がったら流す）、そうでなければ Agent SDK の駆動。
  */
 function startDriver(options: {
   readonly seed: SessionLaunchSeed<CharacterPack>
   readonly context: WiringContext
-  readonly scene: string | undefined
-  readonly sceneUntil: number | undefined
   readonly claudeConfigDir: string | undefined
   readonly mountWorkflowPlugin: boolean
   readonly reportSchema: ReportSchemaVariant
@@ -211,19 +219,31 @@ function startDriver(options: {
   readonly reportGateBlock: () => void
 }): SessionDriver {
   const { seed, context, onEvent } = options
-  const { cwd, inheritedEnv, fakeSession } = context
-  if (fakeSession !== undefined) {
-    return startFakeSession({
-      session: fakeSession,
-      scene: options.scene,
-      sceneUntil: options.sceneUntil,
-      sessionDefault: seed.sessionDefault,
-      firstViewer: options.firstViewer,
-      expressions: expressionNames(expressionChoices(seed.pack.definition)),
-      onEvent,
-    })
+  const { cwd, inheritedEnv, driver } = context
+  switch (driver.kind) {
+    case "fake":
+      return startFakeSession({
+        session: driver.session,
+        scene: driver.scene,
+        sceneUntil: driver.sceneUntil,
+        sessionDefault: seed.sessionDefault,
+        firstViewer: options.firstViewer,
+        expressions: expressionNames(expressionChoices(seed.pack.definition)),
+        onEvent,
+      })
+    case "sdk":
+      return startRealDriver(options, cwd, inheritedEnv)
+    default:
+      return driver satisfies never
   }
+}
 
+function startRealDriver(
+  options: Parameters<typeof startDriver>[0],
+  cwd: string,
+  inheritedEnv: WiringContext["inheritedEnv"],
+): SessionDriver {
+  const { seed, context, onEvent } = options
   const memory = chatMemoryOf(seed.pack, context)
   const mode = sessionMode(
     seed,

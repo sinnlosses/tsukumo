@@ -26,7 +26,7 @@ export function wireCharacterPack(
       createCharacter: (create) => Promise.resolve(character.applyCreate(create)),
       deleteCharacter: (remove) => Promise.resolve(character.applyDelete(remove)),
       generateFromPortrait: async (portrait) => {
-        if (context.fakeSession !== undefined) {
+        if (context.driver.kind === "fake") {
           return undefined
         }
         const generated = await generateCharacter(

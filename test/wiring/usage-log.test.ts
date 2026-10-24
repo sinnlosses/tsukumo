@@ -4,6 +4,7 @@ import { join } from "node:path"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { wireUsageLogs } from "../../src/wiring/usage-log.ts"
+import type { WiringDriver } from "../../src/wiring/wiring-context.ts"
 import { bundledFakeSession } from "../fixture/bundled-fake-session.ts"
 import { contextUsage } from "../fixture/context-usage.ts"
 import { reportUsageEntry } from "../fixture/report-usage-entry.ts"
@@ -17,9 +18,9 @@ afterEach(() => {
   vi.unstubAllEnvs()
 })
 
-async function appendOneOfEach(fakeSession: ReturnType<typeof bundledFakeSession> | undefined) {
+async function appendOneOfEach(driver: WiringDriver) {
   vi.stubEnv("TSUKUMO_HOME", home())
-  const logs = wireUsageLogs({ fakeSession }, "json-schema")
+  const logs = wireUsageLogs({ driver }, "json-schema")
   const at = Temporal.Instant.from("2026-09-22T09:00:00Z").epochMilliseconds
   const sessionId = "fake-session"
   logs.context.append({ at, sessionId, mode: "work", usage: contextUsage() })
@@ -38,7 +39,12 @@ async function appendOneOfEach(fakeSession: ReturnType<typeof bundledFakeSession
 
 describe("wireUsageLogs", () => {
   it("疑似セッションのときは3つの記録のどこにもファイルを作らない", async () => {
-    await appendOneOfEach(bundledFakeSession())
+    await appendOneOfEach({
+      kind: "fake",
+      session: bundledFakeSession(),
+      scene: undefined,
+      sceneUntil: undefined,
+    })
 
     for (const name of USAGE_DIR_NAMES) {
       expect(existsSync(join(home(), name))).toBe(false)
@@ -46,7 +52,7 @@ describe("wireUsageLogs", () => {
   })
 
   it("疑似セッションでないときは3つの記録に書く", async () => {
-    await appendOneOfEach(undefined)
+    await appendOneOfEach({ kind: "sdk" })
 
     for (const name of USAGE_DIR_NAMES) {
       expect(existsSync(join(home(), name))).toBe(true)

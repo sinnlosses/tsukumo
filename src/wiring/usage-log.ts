@@ -16,16 +16,27 @@ export type UsageLogs = {
 }
 
 export function wireUsageLogs(
-  context: Pick<WiringContext, "fakeSession">,
+  context: Pick<WiringContext, "driver">,
   reportSchema: Config["reportSchema"],
 ): UsageLogs & { readonly closeAll: () => Promise<void> } {
-  const logs: UsageLogs = context.fakeSession === undefined ? realLogs(reportSchema) : silentLogs()
+  const logs = logsOf(context.driver, reportSchema)
   const closables: readonly Closable[] = [logs.context, logs.experienceMetric, logs.report]
   return {
     ...logs,
     closeAll: async () => {
       await Promise.all(closables.map((log) => log.close()))
     },
+  }
+}
+
+function logsOf(driver: WiringContext["driver"], reportSchema: Config["reportSchema"]): UsageLogs {
+  switch (driver.kind) {
+    case "sdk":
+      return realLogs(reportSchema)
+    case "fake":
+      return silentLogs()
+    default:
+      return driver satisfies never
   }
 }
 

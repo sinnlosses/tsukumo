@@ -14,7 +14,7 @@ import {
   todayLocalDateKey,
 } from "./server/adapter/local-time.ts"
 import { pruneChatImages } from "./server/chat/adapter/chat-archive.ts"
-import { type Config, VIEW_PORT_ENV_NAME } from "./server/core/config.ts"
+import { type Config, type ConfigDriver, VIEW_PORT_ENV_NAME } from "./server/core/config.ts"
 import {
   createDiagnosticLog,
   pruneDiagnosticFiles,
@@ -49,6 +49,7 @@ import { openViewAfterRegisteringExit, readStartupPrerequisites } from "./startu
 import { startViewDelivery } from "./view-delivery.ts"
 import { failureDiagnostic } from "./wiring/failure-diagnostic.ts"
 import { createHost } from "./wiring/host.ts"
+import type { WiringDriver } from "./wiring/wiring-context.ts"
 import { chooseTw, wireWorkflowSetting } from "./wiring/workflow-setting.ts"
 
 /** 環境変数ではなく起動の引数で選ぶもの。 */
@@ -80,10 +81,17 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
   // fake driver はプラグインを載せないので見ない。
   const { built, workflowPlugin } = await readStartupPrerequisites({
     readBundle: () => readUiBundle(builtUiDir()),
-    checkPlugin: () =>
-      config.driver === "fake"
-        ? Promise.resolve({ ok: true, mount: true, notices: [] } as const)
-        : checkWorkflowPlugin(config.claudeConfigDir),
+    checkPlugin: () => {
+      const { driver } = config
+      switch (driver.kind) {
+        case "fake":
+          return Promise.resolve({ ok: true, mount: true, notices: [] } as const)
+        case "sdk":
+          return checkWorkflowPlugin(config.claudeConfigDir)
+        default:
+          return driver satisfies never
+      }
+    },
   })
   if (!built.ok) {
     process.stderr.write(`tsukumo: ブラウザ側の成果物を読めない\n${built.reason}\n`)
@@ -109,12 +117,14 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
 
   // fake driver を選んだときは疑似セッションが要る。無ければ起こす意味が無いので、起動時の
   // 前提不足として扱う。
-  const fakeReading = config.driver === "fake" ? readFakeSession(config.fakeSession) : undefined
-  if (fakeReading?.kind === "unreadable") {
-    process.stderr.write(`tsukumo: fake driver の疑似セッションを読めない: ${fakeReading.reason}\n`)
+  const wiringDriver = wiringDriverOf(config.driver)
+  if (wiringDriver.kind === "unreadable") {
+    process.stderr.write(
+      `tsukumo: fake driver の疑似セッションを読めない: ${wiringDriver.reason}\n`,
+    )
     return 1
   }
-  const fakeSession = fakeReading?.session
+  const driver = wiringDriver.driver
 
   // 診断ログの口は1つだけ作る。
   const diagnosticLog = createDiagnosticLog()
@@ -179,7 +189,7 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
   const session = await startSession({
     config,
     character,
-    fakeSession,
+    driver,
     tokenUsageLog,
     achievementCache,
     readBeadsStamp,
@@ -233,7 +243,7 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
         },
       })
       return config.openView
-        ? await openLayoutView(host, config.driver, view.url)
+        ? await openLayoutView(host, driver, view.url)
         : { tracked: false as const }
     },
   })
@@ -346,11 +356,11 @@ function announce(url: string, devServer: boolean): void {
 
 /**
  * レイアウトページのビューを開く。失敗しても起動は続ける。
- * 疑似セッション（`driver === "fake"`）のときだけ閉じる手段を追跡して返す（終了時に閉じる対象はこれだけ）。
+ * 疑似セッション（`driver.kind` が `fake`）のときだけ閉じる手段を追跡して返す（終了時に閉じる対象はこれだけ）。
  */
 async function openLayoutView(
   host: Host,
-  driver: Config["driver"],
+  driver: WiringDriver,
   url: string,
 ): Promise<OpenedFakeView> {
   const result = await host.showView(url)
@@ -358,5 +368,40 @@ async function openLayoutView(
     process.stderr.write(`tsukumo: ビューのタブを開けなかった: ${result.reason}\n`)
     return { tracked: false }
   }
-  return driver === "fake" ? { tracked: true, close: result.close } : { tracked: false }
+  switch (driver.kind) {
+    case "fake":
+      return { tracked: true, close: result.close }
+    case "sdk":
+      return { tracked: false }
+    default:
+      return driver satisfies never
+  }
+}
+
+function wiringDriverOf(
+  driver: ConfigDriver,
+):
+  | { readonly kind: "ok"; readonly driver: WiringDriver }
+  | { readonly kind: "unreadable"; readonly reason: string } {
+  switch (driver.kind) {
+    case "sdk":
+      return { kind: "ok", driver }
+    case "fake": {
+      const reading = readFakeSession(driver.sessionPath)
+      if (reading.kind === "unreadable") {
+        return reading
+      }
+      return {
+        kind: "ok",
+        driver: {
+          kind: "fake",
+          session: reading.session,
+          scene: driver.scene,
+          sceneUntil: driver.sceneUntil,
+        },
+      }
+    }
+    default:
+      return driver satisfies never
+  }
 }

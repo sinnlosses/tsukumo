@@ -45,7 +45,7 @@ export function wireWelcomeGreeting(
   const keeper = createWelcomeKeeper()
   return {
     noteLaunched: (seed, onEvent, restored) => {
-      if (context.fakeSession !== undefined || seed.chat) {
+      if (context.driver.kind === "fake" || seed.chat) {
         return NO_OBSERVER
       }
       const kept = keeper.noteLaunched(seed.start, onEvent)

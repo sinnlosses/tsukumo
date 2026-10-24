@@ -9,11 +9,8 @@ describe("readConfig", () => {
       rawViewPortFallbackBase: undefined,
       character: undefined,
       openView: true,
-      driver: "sdk",
+      driver: { kind: "sdk" },
       host: "browser",
-      fakeScene: undefined,
-      fakeSceneUntil: undefined,
-      fakeSession: undefined,
       twCommand: undefined,
       claudeConfigDir: undefined,
       fixedClock: undefined,
@@ -60,11 +57,13 @@ describe("readConfig", () => {
       rawViewPortFallbackBase: "20000",
       character: "characters/local",
       openView: false,
-      driver: "fake",
+      driver: {
+        kind: "fake",
+        sessionPath: "/somewhere/session.json",
+        scene: "question-multi",
+        sceneUntil: 3,
+      },
       host: "none",
-      fakeScene: "question-multi",
-      fakeSceneUntil: 3,
-      fakeSession: "/somewhere/session.json",
       twCommand: "/somewhere/fake-tw",
       claudeConfigDir: "/somewhere/claude",
       fixedClock: undefined,
@@ -79,12 +78,15 @@ describe("readConfig", () => {
   })
 
   it("疑似セッションのパスは空白だけなら同梱に倒し、fake 以外の駆動では読まない", () => {
-    expect(
-      readConfig({ TSUKUMO_DRIVER: "fake", TSUKUMO_FAKE_SESSION: "  " }).fakeSession,
-    ).toBeUndefined()
-    expect(
-      readConfig({ TSUKUMO_FAKE_SESSION: "/somewhere/session.json" }).fakeSession,
-    ).toBeUndefined()
+    expect(readConfig({ TSUKUMO_DRIVER: "fake", TSUKUMO_FAKE_SESSION: "  " }).driver).toEqual({
+      kind: "fake",
+      sessionPath: undefined,
+      scene: undefined,
+      sceneUntil: undefined,
+    })
+    expect(readConfig({ TSUKUMO_FAKE_SESSION: "/somewhere/session.json" }).driver).toEqual({
+      kind: "sdk",
+    })
   })
 
   it("TSUKUMO_TW が空白だけなら未設定と同じに倒す", () => {
@@ -99,7 +101,7 @@ describe("readConfig", () => {
   })
 
   it("知らない駆動の名前は sdk に倒す", () => {
-    expect(readConfig({ TSUKUMO_DRIVER: "まぼろし" }).driver).toBe("sdk")
+    expect(readConfig({ TSUKUMO_DRIVER: "まぼろし" }).driver).toEqual({ kind: "sdk" })
   })
 
   it("知らない型の渡し方は json-schema に倒す", () => {

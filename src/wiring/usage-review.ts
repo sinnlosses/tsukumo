@@ -75,14 +75,19 @@ function usageReviewSource(
   context: WiringContext,
   mountWorkflowPlugin: boolean,
 ): UsageReviewSource {
-  if (context.fakeSession !== undefined) {
-    return { kind: "replay", ...context.fakeSession.usageReview }
-  }
-  return {
-    kind: "query",
-    review: queryUsageReview,
-    proposal: (request, onEvent, signal) =>
-      queryUsageProposal(request, onEvent, signal, mountWorkflowPlugin),
+  const { driver } = context
+  switch (driver.kind) {
+    case "fake":
+      return { kind: "replay", ...driver.session.usageReview }
+    case "sdk":
+      return {
+        kind: "query",
+        review: queryUsageReview,
+        proposal: (request, onEvent, signal) =>
+          queryUsageProposal(request, onEvent, signal, mountWorkflowPlugin),
+      }
+    default:
+      return driver satisfies never
   }
 }
 

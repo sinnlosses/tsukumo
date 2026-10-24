@@ -16,7 +16,6 @@ import { warmUpMermaidChecker } from "./server/report/adapter/report-mermaid-syn
 import type { ReportImageShelf } from "./server/report/core/report-image-shelf.ts"
 import type { BeadsStamp } from "./server/repository/adapter/beads.ts"
 import { runGit } from "./server/repository/adapter/git.ts"
-import type { FakeSession } from "./server/session-driver/adapter/fake-session.ts"
 import type { PromptImageShelf } from "./server/session-driver/core/prompt-image-shelf.ts"
 import { EVENT_BATCH_INTERVAL_MS } from "./server/session/core/event-batch.ts"
 import type { SessionManager } from "./server/session/core/session-manager-port.ts"
@@ -35,14 +34,14 @@ import { wireSessionLaunch } from "./wiring/session-launch.ts"
 import { wireUsageLogs } from "./wiring/usage-log.ts"
 import { wireUsageReview } from "./wiring/usage-review.ts"
 import { wireWelcomeGreeting } from "./wiring/welcome-greeting.ts"
-import type { WiringContext } from "./wiring/wiring-context.ts"
+import type { WiringContext, WiringDriver } from "./wiring/wiring-context.ts"
 
 export type SessionStartOptions = {
   readonly config: Config
   /** いま出しているキャラクター。起こすパックを決めるのも覚えるのもこれ越し。 */
   readonly character: CurrentCharacter
-  /** fake driver の疑似セッション（`TSUKUMO_DRIVER=fake` のときだけ）。あるときは claude を起こさない。 */
-  readonly fakeSession: FakeSession | undefined
+  /** 駆動の種類。`fake`（`TSUKUMO_DRIVER=fake`）は疑似セッションを持ち、claude を起こさない。 */
+  readonly driver: WiringDriver
   readonly tokenUsageLog: TokenUsageLog
   /** 成果の画面が Beads の読みを覚える入れ物。ビューの配信が引くものと同じ1つを渡す。 */
   readonly achievementCache: AchievementCache
@@ -82,7 +81,7 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
     // サーバの時計は1つ（`TSUKUMO_FIXED_CLOCK` なら止まった時計）。
     now: createServerClock(config.fixedClock),
     inheritedEnv: config.inheritedEnv,
-    fakeSession: options.fakeSession,
+    driver: options.driver,
     chatArchive: createChatArchive(),
     achievementCache: options.achievementCache,
     readBeadsStamp: options.readBeadsStamp,
@@ -143,8 +142,14 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
     ...usageReview.manager,
     ...repository.manager,
   })
-  if (config.driver === "sdk") {
-    setImmediate(warmUpMermaidChecker)
+  switch (context.driver.kind) {
+    case "sdk":
+      setImmediate(warmUpMermaidChecker)
+      break
+    case "fake":
+      break
+    default:
+      context.driver satisfies never
   }
   const socketRouter = createSocketRouter({
     session: {

@@ -25,10 +25,7 @@ export function wireDiary(context: WiringContext): {
   return {
     sessionCommands: {
       // 疑似セッションでは振り返りの書き手を起こさない。
-      diary:
-        context.fakeSession === undefined
-          ? diaryWriterSource(context, () => latest)
-          : { kind: "dont-write" },
+      diary: diarySourceOf(context, () => latest),
     },
     noteLaunched: (seed) => {
       latest = {
@@ -39,6 +36,21 @@ export function wireDiary(context: WiringContext): {
         env: context.inheritedEnv,
       }
     },
+  }
+}
+
+function diarySourceOf(
+  context: WiringContext,
+  readContext: () => DiaryWriterContext | undefined,
+): DiaryWriterSource {
+  const { driver } = context
+  switch (driver.kind) {
+    case "sdk":
+      return diaryWriterSource(context, readContext)
+    case "fake":
+      return { kind: "dont-write" }
+    default:
+      return driver satisfies never
   }
 }
 

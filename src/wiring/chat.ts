@@ -22,14 +22,23 @@ export function wireChat(
   return {
     manager: {
       // 疑似セッションでは claude を起こさないので、定着は走らせない。
-      chatConsolidation:
-        context.fakeSession === undefined
-          ? chatConsolidationSource(context)
-          : { kind: "dont-consolidate" },
+      chatConsolidation: chatConsolidationOf(context),
     },
     commands: {
       forgetRememberedLine: (line) => Promise.resolve(character.forgetRememberedLine(line)),
     },
+  }
+}
+
+function chatConsolidationOf(context: WiringContext): ChatConsolidationSource {
+  const { driver } = context
+  switch (driver.kind) {
+    case "sdk":
+      return chatConsolidationSource(context)
+    case "fake":
+      return { kind: "dont-consolidate" }
+    default:
+      return driver satisfies never
   }
 }
 

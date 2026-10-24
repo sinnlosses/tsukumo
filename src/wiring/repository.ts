@@ -33,8 +33,7 @@ export function wireRepository(
 } {
   return {
     manager: {
-      changeCountGit:
-        context.fakeSession === undefined ? changeCountGitOf(context.cwd) : IDLE_CHANGE_COUNT_GIT,
+      changeCountGit: changeCountGitOfContext(context),
       watchTasks: (onEvent) => {
         const recommender = startRecommender(context, diagnosticLog, onEvent)
         const reportFailure = failureDiagnostic(diagnosticLog, context.now)
@@ -64,13 +63,31 @@ export function wireRepository(
 
 /** 疑似セッションは偽の読み元のまま。ふだんは成果のキャッシュと共有する印の読み手を使う。 */
 function taskSummaryOptionsOfContext(context: WiringContext): TaskSummaryOptions {
-  if (context.fakeSession !== undefined) {
-    return taskSummaryOptionsOf("fake")
+  const { driver } = context
+  switch (driver.kind) {
+    case "fake":
+      return taskSummaryOptionsOf("fake")
+    case "sdk": {
+      const options = taskSummaryOptionsOf("real")
+      return {
+        ...options,
+        ports: { ...options.ports, createBeadsStampReader: () => context.readBeadsStamp },
+      }
+    }
+    default:
+      return driver satisfies never
   }
-  const options = taskSummaryOptionsOf("real")
-  return {
-    ...options,
-    ports: { ...options.ports, createBeadsStampReader: () => context.readBeadsStamp },
+}
+
+function changeCountGitOfContext(context: WiringContext): ReturnType<typeof changeCountGitOf> {
+  const { driver } = context
+  switch (driver.kind) {
+    case "sdk":
+      return changeCountGitOf(context.cwd)
+    case "fake":
+      return IDLE_CHANGE_COUNT_GIT
+    default:
+      return driver satisfies never
   }
 }
 
@@ -80,9 +97,22 @@ function startRecommender(
   diagnosticLog: DiagnosticLog,
   onEvent: (event: SessionEvent) => void,
 ): Recommender {
-  if (context.fakeSession !== undefined) {
-    return IDLE_RECOMMENDER
+  const { driver } = context
+  switch (driver.kind) {
+    case "fake":
+      return IDLE_RECOMMENDER
+    case "sdk":
+      return startRealRecommender(context, diagnosticLog, onEvent)
+    default:
+      return driver satisfies never
   }
+}
+
+function startRealRecommender(
+  context: WiringContext,
+  diagnosticLog: DiagnosticLog,
+  onEvent: (event: SessionEvent) => void,
+): Recommender {
   const { cwd, inheritedEnv } = context
   const reportFailure = failureDiagnostic(diagnosticLog, context.now)
   return createRecommender({
