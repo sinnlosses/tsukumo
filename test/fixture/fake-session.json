@@ -8446,6 +8446,126 @@
           "event": { "kind": "turn-finished", "outcome": { "kind": "completed" } }
         }
       ]
+    },
+    {
+      "name": "report-question-mixed",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "中間レポートと質問を挟んで仕上げて（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 500,
+          "event": {
+            "kind": "report",
+            "closing": { "kind": "speech", "text": "途中まで見たよ。", "expression": "default" },
+            "toolUseId": "fake-report-question-mixed-1",
+            "conclusion": "架空の調べが半分済んだ。方針を1つ選んでほしい。",
+            "sections": [
+              {
+                "heading": "ここまでの様子（架空）",
+                "blocks": [
+                  {
+                    "kind": "text",
+                    "text": "架空の部品の読み込みを確かめた。続きの進め方が分かれる。",
+                    "fold": "",
+                    "aside": ""
+                  }
+                ]
+              }
+            ],
+            "favor": "",
+            "checks": []
+          }
+        },
+        {
+          "afterMs": 550,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-report-question-mixed-1",
+            "content": "ok",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 800,
+          "event": {
+            "kind": "pending-changed",
+            "pending": [
+              {
+                "kind": "question",
+                "id": "fake-ask-mixed",
+                "briefs": [],
+                "questions": [
+                  {
+                    "header": "架空の選択",
+                    "text": "架空の質問：どの案で続ける？",
+                    "multiSelect": true,
+                    "options": [
+                      { "label": "A案", "description": "架空の説明A" },
+                      { "label": "B案", "description": "架空の説明B" },
+                      { "label": "C案", "description": "架空の説明C" }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "afterMs": 100,
+          "waitForAnswer": true,
+          "event": {
+            "kind": "report",
+            "task": {
+              "kind": "task",
+              "id": "t-9",
+              "name": "架空の部品の読み込みを直す",
+              "outcome": "finished",
+              "genre": "work"
+            },
+            "closing": {
+              "kind": "speech",
+              "text": "選んだ案で仕上げたよ。",
+              "expression": "proud"
+            },
+            "toolUseId": "fake-report-question-mixed-2",
+            "conclusion": "選んでもらった案で、架空の部品の読み込みを直した。",
+            "sections": [
+              {
+                "heading": "変えたところ（架空）",
+                "blocks": [
+                  {
+                    "kind": "text",
+                    "text": "架空の読み込みの順を1箇所に揃えた。",
+                    "fold": "",
+                    "aside": ""
+                  }
+                ]
+              }
+            ],
+            "favor": "",
+            "checks": []
+          }
+        },
+        {
+          "afterMs": 150,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-report-question-mixed-2",
+            "content": "ok",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 400,
+          "event": { "kind": "turn-finished", "outcome": { "kind": "completed" } }
+        }
+      ]
     }
   ],
   "pastSessions": [

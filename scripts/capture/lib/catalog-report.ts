@@ -1,7 +1,13 @@
 // 状態のカタログのうち、レポートの基本の表示（検証結果・diff・合図の行）とターンの並びの場面。
 
 import { MAIN_REGION_SELECTOR } from "./capture-page.ts"
-import { CHECKS_SELECTOR, DIFF_SELECTOR, VERDICT_SELECTOR } from "./catalog-selector.ts"
+import {
+  CHECKS_SELECTOR,
+  DIFF_SELECTOR,
+  PROGRESS_FOLD_SUMMARY_SELECTOR,
+  VERDICT_SELECTOR,
+  WORK_PLAN_FINAL_SELECTOR,
+} from "./catalog-selector.ts"
 import { SCENE_END_SETTLE, type CatalogEntry } from "./catalog-type.ts"
 
 export const REPORT_ENTRIES: readonly CatalogEntry[] = [
@@ -70,6 +76,27 @@ export const REPORT_ENTRIES: readonly CatalogEntry[] = [
     prepare: [{ kind: "click", selector: `${VERDICT_SELECTOR} summary` }],
     skipReveal: true,
     settle: { kind: "selector", selector: VERDICT_SELECTOR, phase: "before-prepare" },
+  },
+  {
+    name: "report-question-mixed",
+    scene: "report-question-mixed",
+    label: "最終レポートのある閉じたやり取り（質問の記録が経過の畳みの中にある）",
+    homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "repository" },
+    prepare: [
+      { kind: "wait", selector: `${MAIN_REGION_SELECTOR} label:has-text("A案")` },
+      { kind: "click", selector: `${MAIN_REGION_SELECTOR} label:has-text("A案")` },
+      { kind: "click", selector: 'button:has-text("これで答える")' },
+      { kind: "wait", selector: WORK_PLAN_FINAL_SELECTOR },
+      { kind: "click", selector: PROGRESS_FOLD_SUMMARY_SELECTOR },
+      { kind: "scroll", selector: `${MAIN_REGION_SELECTOR} [class*="is-chosen_"]` },
+    ],
+    skipReveal: false,
+    settle: {
+      kind: "selector",
+      selector: `${MAIN_REGION_SELECTOR} label:has-text("A案")`,
+      phase: "before-prepare",
+    },
   },
   {
     name: "turn-history",

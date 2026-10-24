@@ -40,8 +40,10 @@ export type CatalogSize = (typeof SIZES)[number]
 
 /**
  * 広い窓だけで撮る件。狭い窓は選択肢が角丸のボタンの縦並びで preview の面が出ない。
+ * `report-question-mixed` は、狭い窓では選択肢が label でなくなり、同じ手順で答えられない。
  */
 const WIDE_ONLY_NAMES: ReadonlySet<string> = new Set([
+  "report-question-mixed",
   "question-preview-image",
   "question-preview-image-missing",
 ])
