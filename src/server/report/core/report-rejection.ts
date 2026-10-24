@@ -1,7 +1,6 @@
 // 規約違反を、差し戻すときの `report` の戻り値の文面にする。
 
 import {
-  MAX_CANDIDATES,
   MAX_EMPHASIS_ROWS,
   MAX_HEADING,
   MAX_FIRST_SENTENCE,
@@ -47,8 +46,6 @@ function violationLine(violation: ReportViolation): string {
       return `隣り合う、または見出しの直後にある \`note\` が${violation.count}個ある。間に別の塊を挟むか、\`text\` に直す（\`warn\` / \`ng\` は例外）`
     case "nested-fold":
       return `\`fold\` と \`<details>\` が入れ子になっている塊が${violation.count}個ある。畳むのは1段だけにする`
-    case "too-many-candidates":
-      return `候補・箇条・説明が${String(MAX_CANDIDATES + 1)}つ以上の \`options\` / \`compare\` / \`beforeAfter\` / \`image\` の \`notes\` が${violation.count}個ある。${String(MAX_CANDIDATES)}つまでに絞る`
     case "unordered-options":
       return `候補が採る → 検討 → 採らないの順に並んでいない \`options\` が${violation.count}個ある。採る候補から順に並べ直す`
     case "ragged-table":

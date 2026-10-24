@@ -55,8 +55,6 @@ export type ReportViolation =
   | { readonly kind: "crowded-notes"; readonly count: number }
   /** `fold` を持つ `markdown` の塊が `<details>` を含む、または `<details>` が入れ子になっている。`count` は塊の数。 */
   | { readonly kind: "nested-fold"; readonly count: number }
-  /** `options` の候補、`compare` / `beforeAfter` の側の箇条、または `image` の `notes` が上限を超えている塊がある。`count` は塊の数。 */
-  | { readonly kind: "too-many-candidates"; readonly count: number }
   /** 候補が採る → 検討 → 採らないの順に並んでいない `options` の塊がある。`count` は塊の数。 */
   | { readonly kind: "unordered-options"; readonly count: number }
   /** 行のセルの数が `columns` と揃わない表がある。`count` は表の数。 */
@@ -167,7 +165,6 @@ export const VIOLATION_THRESHOLDS = {
   "too-many-notes": 2,
   "crowded-notes": 0,
   "nested-fold": 0,
-  "too-many-candidates": 0,
   "unordered-options": 0,
   "ragged-table": 0,
   "long-table": 0,

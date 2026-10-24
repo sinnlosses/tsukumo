@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest"
 import { reportRejectionText } from "../../../../src/server/report/core/report-rejection.ts"
 import { reportViolations } from "../../../../src/server/report/core/report-violation-check.ts"
 import type { ReportBlock, ReportSection } from "../../../../src/shared/report/report-block.ts"
-import { MAX_CANDIDATES } from "../../../../src/shared/report/report-limit.ts"
 import { draft, kinds, markdown, note, text } from "../../../fixture/report-draft-block.ts"
 
 describe("reportViolations", () => {
@@ -89,65 +88,6 @@ describe("reportViolations", () => {
         aside: "",
       }
       expect(kinds(draft([block]))).toEqual([])
-    })
-  })
-
-  describe("候補は5つまで", () => {
-    const options = (count: number): ReportBlock => ({
-      kind: "options",
-      title: "架空の比較",
-      items: Array.from({ length: count }, () => ({
-        name: "架空",
-        verdict: "consider" as const,
-        reason: "架空の理由。",
-      })),
-      fold: "",
-      aside: "",
-    })
-    const compare = (count: number): ReportBlock => ({
-      kind: "compare",
-      title: "架空の比較",
-      sides: [
-        { heading: "案A", points: Array.from({ length: count }, () => "架空") },
-        { heading: "案B", points: ["架空"] },
-      ],
-      fold: "",
-      aside: "",
-    })
-    const image = (count: number): ReportBlock => ({
-      kind: "image",
-      path: "架空.png",
-      caption: "架空の画面",
-      notes: Array.from({ length: count }, () => "架空の場所"),
-      fold: "",
-      aside: "",
-    })
-
-    const beforeAfter = (count: number): ReportBlock => ({
-      kind: "beforeAfter",
-      title: "架空の前後",
-      before: { kind: "points", points: ["架空"] },
-      after: { kind: "points", points: Array.from({ length: count }, () => "架空") },
-      fold: "",
-      aside: "",
-    })
-
-    it("上限を1つ超えたら違反", () => {
-      const over = MAX_CANDIDATES + 1
-      expect(
-        reportViolations(draft([options(over), compare(over), image(over), beforeAfter(over)])),
-      ).toEqual([{ kind: "too-many-candidates", count: 4 }])
-    })
-
-    it("上限ちょうどなら通る", () => {
-      const max = MAX_CANDIDATES
-      expect(kinds(draft([options(max), compare(max), image(max), beforeAfter(max)]))).toEqual([])
-    })
-
-    it("差し戻しの文面に上限の数が出る", () => {
-      const rejection = reportRejectionText([{ kind: "too-many-candidates", count: 1 }])
-      expect(rejection).toContain(`${String(MAX_CANDIDATES + 1)}つ以上`)
-      expect(rejection).toContain(`${String(MAX_CANDIDATES)}つまでに絞る`)
     })
   })
 

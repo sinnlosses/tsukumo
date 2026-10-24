@@ -3,7 +3,6 @@
 import { z } from "zod"
 
 import { aside, type DeepReadonly, fold, inlineText, omittable } from "./report-block-field.ts"
-import { MAX_CANDIDATES } from "./report-limit.ts"
 
 export const REPORT_CELL_STATUSES = ["ok", "warn", "ng"] as const
 
@@ -83,10 +82,7 @@ export const compareBlockSchema = z
       .array(
         z.object({
           heading: inlineText,
-          points: z
-            .array(inlineText)
-            .min(1)
-            .describe(`${String(MAX_CANDIDATES)}つまで`),
+          points: z.array(inlineText).min(1),
         }),
       )
       .min(2)
@@ -154,8 +150,7 @@ export const optionsBlockSchema = z
           reason: inlineText.describe("判定の理由。1文"),
         }),
       )
-      .min(2)
-      .describe(`候補は${String(MAX_CANDIDATES)}つまで`),
+      .min(2),
     fold,
     aside,
   })

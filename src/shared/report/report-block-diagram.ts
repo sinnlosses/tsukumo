@@ -11,7 +11,6 @@ import {
   omittable,
   positiveNumber,
 } from "./report-block-field.ts"
-import { MAX_CANDIDATES } from "./report-limit.ts"
 
 export const SVG_TONES = ["a", "b", "c", "d", "e"] as const
 
@@ -105,10 +104,7 @@ const beforeAfterSideSchema = z
     }),
     z.object({
       kind: z.literal("points"),
-      points: z
-        .array(inlineText)
-        .min(1)
-        .describe(`短い1行の並び。${String(MAX_CANDIDATES)}つまで`),
+      points: z.array(inlineText).min(1).describe("短い1行の並び"),
     }),
   ])
   .meta({ id: "BeforeAfterSide" })
@@ -161,7 +157,7 @@ export const imageBlockSchema = z
     path: z.string().describe("撮った画像のファイル（絶対か cwd から。png・jpeg・gif・webp）"),
     caption: inlineText.describe("何が見えるかの1行。数と向きで主張を言う1文。評価語なし"),
     notes: omittable(z.array(inlineText), []).describe(
-      `画像のどこを見るか・何が変わったか。1項目1文で、場所の言葉（左上の帯・2行目の札）から書く。番号は書かない（並びの順に振って描く）。${String(MAX_CANDIDATES)}つまで`,
+      `画像のどこを見るか・何が変わったか。1項目1文で、場所の言葉（左上の帯・2行目の札）から書く。番号は書かない（並びの順に振って描く）`,
     ),
     fold,
     aside,

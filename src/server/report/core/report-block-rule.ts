@@ -2,7 +2,7 @@
 
 import { type TableCell, tableRowCells } from "../../../shared/report/report-block-comparison.ts"
 import type { ReportBlock, ReportSection } from "../../../shared/report/report-block.ts"
-import { MAX_CANDIDATES, SENTENCE_CELL_LENGTH } from "../../../shared/report/report-limit.ts"
+import { SENTENCE_CELL_LENGTH } from "../../../shared/report/report-limit.ts"
 import { textLengthOf } from "./markdown-tree.ts"
 import type { CardsFault } from "./report-violation.ts"
 
@@ -61,23 +61,6 @@ export function crowdedNoteCount(sections: readonly ReportSection[]): number {
       ).length,
     0,
   )
-}
-
-export function hasTooManyCandidates(block: ReportBlock): boolean {
-  switch (block.kind) {
-    case "options":
-      return block.items.length > MAX_CANDIDATES
-    case "compare":
-      return block.sides.some((side) => side.points.length > MAX_CANDIDATES)
-    case "beforeAfter":
-      return [block.before, block.after].some(
-        (side) => side.kind === "points" && side.points.length > MAX_CANDIDATES,
-      )
-    case "image":
-      return block.notes.length > MAX_CANDIDATES
-    default:
-      return false
-  }
 }
 
 /** `beforeAfter` の画像の側の `region` が、画像の外に出る、または幅か高さが 0 以下の塊か。 */

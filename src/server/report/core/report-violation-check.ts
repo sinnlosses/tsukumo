@@ -29,7 +29,6 @@ import {
   drawsShape,
   hasBadRegion,
   hasShortSeries,
-  hasTooManyCandidates,
   hasUnknownEmphasis,
   isRaggedChart,
   isRaggedTable,
@@ -85,10 +84,6 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
     {
       kind: "nested-fold",
       count: blocks.filter((block) => block.kind === "markdown" && hasNestedFold(block)).length,
-    },
-    {
-      kind: "too-many-candidates",
-      count: drawnBlocks.filter((block) => hasTooManyCandidates(block)).length,
     },
     {
       kind: "unordered-options",
