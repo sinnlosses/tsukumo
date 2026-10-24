@@ -113,11 +113,33 @@ describe("createSessionManager", () => {
       const stub = createStubDriver()
       const { entries, append } = collector<TokenUsageEntry>()
       const manager = createSessionManager({
-        tokenUsageLog: { append, readRange: () => [] },
+        tokenUsageLog: { append, prefetchOpenTask: () => {}, readRange: () => [] },
         launchSession: launchWith(stub),
       })
       return { manager, stub, entries }
     }
+
+    it("依頼の始まりで着手中のタスクの先読みを1回起こし、token-usage・turn-finished では起こさない", async () => {
+      const stub = createStubDriver()
+      const prefetched: number[] = []
+      createSessionManager({
+        tokenUsageLog: {
+          append: () => {},
+          prefetchOpenTask: (now) => prefetched.push(now),
+          readRange: () => [],
+        },
+        launchSession: launchWith(stub),
+      })
+      await waitForBatch()
+
+      stub.emit(SESSION_INFO)
+      stub.emit({ kind: "request", text: "依頼", images: [] })
+      stub.emit({ kind: "token-usage", cumulative: cumulative(100, 20, 0.5) })
+      stub.emit({ kind: "turn-finished", outcome: { kind: "completed" } })
+      await waitForBatch()
+
+      expect(prefetched).toEqual([1_000])
+    })
 
     it("ターンごとに、前の累計との差を1行ぶん渡す", async () => {
       const { stub, entries } = startTokenUsageManagerWithStub()
@@ -390,7 +412,11 @@ describe("createSessionManager", () => {
         ...NOOP_CHAT_ARCHIVE,
         append: (packName, entry) => record("chat")({ packName, entry }),
       },
-      tokenUsageLog: { append: record("token"), readRange: () => [] },
+      tokenUsageLog: {
+        append: record("token"),
+        prefetchOpenTask: () => {},
+        readRange: () => [],
+      },
       contextUsageLog: { append: record("context") },
       reportUsageLog: { append: record("report"), appendRejection: record("report-rejection") },
       questionUsageLog: { append: record("question") },

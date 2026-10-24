@@ -94,7 +94,7 @@ function readLines(fileName: string): unknown[] {
 }
 
 /** 着手中のタスクが無い作業ツリー。 */
-const NO_TASK: OpenTaskReader = () => undefined
+const NO_TASK: OpenTaskReader = { prefetch: () => {}, read: () => undefined }
 
 type Claim = { readonly task: string; readonly stage: string | null }
 
@@ -102,12 +102,26 @@ type Claim = { readonly task: string; readonly stage: string | null }
 function claimsRunner(claims: readonly Claim[]): { run: TwClaimsRunner; calls: () => number } {
   let calls = 0
   return {
-    run: () => {
+    run: async () => {
       calls += 1
       return JSON.stringify({ claims: claims.map((claim) => ({ ...claim, claim: "t" })) })
     },
     calls: () => calls,
   }
+}
+
+/** 口の Promise が片付くまで待つ。 */
+function settled(): Promise<void> {
+  return new Promise((resolve) => setImmediate(resolve))
+}
+
+/** 先読みを起こして、片付くまで待つ。 */
+async function prefetched(
+  log: { prefetchOpenTask: (now: number) => void },
+  now: number,
+): Promise<void> {
+  log.prefetchOpenTask(now)
+  await settled()
 }
 
 describe("createTokenUsageLog", () => {
@@ -199,6 +213,7 @@ describe("着手中のタスクとの結び付き", () => {
       root(),
     )
 
+    await prefetched(log, at(10, 30))
     log.append(entry(at(10, 30)))
     await log.flush()
 
@@ -222,6 +237,7 @@ describe("着手中のタスクとの結び付き", () => {
       root(),
     )
 
+    await prefetched(log, at(10, 30))
     log.append(entry(at(10, 30)))
     await log.flush()
 
@@ -233,6 +249,7 @@ describe("着手中のタスクとの結び付き", () => {
   it("着手中のタスクが無ければ、どちらの欄も入らない", async () => {
     const log = createTokenUsageLog(createOpenTaskReader(claimsRunner([]).run), root())
 
+    await prefetched(log, at(10, 30))
     log.append(entry(at(10, 30)))
     await log.flush()
 
@@ -252,6 +269,7 @@ describe("着手中のタスクとの結び付き", () => {
       root(),
     )
 
+    await prefetched(log, at(10, 30))
     log.append(entry(at(10, 30)))
     await log.flush()
 
@@ -260,16 +278,18 @@ describe("着手中のタスクとの結び付き", () => {
 
   it("口が打てない・JSON が読めないときは、どちらの欄も入らない", async () => {
     const broken = createTokenUsageLog(
-      createOpenTaskReader(() => "not json"),
+      createOpenTaskReader(async () => "not json"),
       root(),
     )
     const unavailable = createTokenUsageLog(
-      createOpenTaskReader(() => undefined),
+      createOpenTaskReader(async () => undefined),
       root(),
     )
 
+    await prefetched(broken, at(10, 30))
     broken.append(entry(at(10, 30)))
     await broken.flush()
+    await prefetched(unavailable, at(10, 31))
     unavailable.append(entry(at(10, 31)))
     await unavailable.flush()
 
@@ -279,29 +299,78 @@ describe("着手中のタスクとの結び付き", () => {
     }
   })
 
-  it("控えの時間（10秒）のあいだは口を打ち直さず、過ぎたら打ち直す", () => {
+  it("先読み前の append は口を打たず、タスクIDも段も付けずに書く", async () => {
     const runner = claimsRunner([{ task: "job-7", stage: "delegate" }])
     const log = createTokenUsageLog(createOpenTaskReader(runner.run), root())
 
     log.append(entry(at(10, 30)))
-    log.append(entry(at(10, 30) + 9_000))
+    await log.flush()
+
+    expect(runner.calls()).toBe(0)
+    expect(keysOf(readLines("2026-09-22.jsonl")[0])).not.toContain("taskId")
+  })
+
+  it("append は口を打たない（先読みが済んだあとでも）", async () => {
+    const runner = claimsRunner([{ task: "job-7", stage: "delegate" }])
+    const log = createTokenUsageLog(createOpenTaskReader(runner.run), root())
+
+    await prefetched(log, at(10, 30))
+    log.append(entry(at(10, 30)))
+    log.append(entry(at(10, 30) + 1_000))
+
+    expect(runner.calls()).toBe(1)
+  })
+
+  it("読みが走っている間の先読みは重ねない", () => {
+    const runner = claimsRunner([{ task: "job-7", stage: "delegate" }])
+    const log = createTokenUsageLog(createOpenTaskReader(runner.run), root())
+
+    log.prefetchOpenTask(at(10, 30))
+    log.prefetchOpenTask(at(10, 30))
+
+    expect(runner.calls()).toBe(1)
+  })
+
+  it("控えの時間（10秒）を過ぎた read は何も返さず、過ぎたあとの先読みは打ち直す", async () => {
+    const runner = claimsRunner([{ task: "job-7", stage: "delegate" }])
+    const reader = createOpenTaskReader(runner.run)
+
+    reader.prefetch(at(10, 30))
+    await settled()
+    expect(reader.read(at(10, 30) + 9_999)?.taskId).toBe("job-7")
+    expect(reader.read(at(10, 30) + 10_000)).toBeUndefined()
+
+    reader.prefetch(at(10, 30) + 9_000)
+    await settled()
     expect(runner.calls()).toBe(1)
 
-    log.append(entry(at(10, 30) + 10_000))
+    reader.prefetch(at(10, 30) + 10_000)
+    await settled()
     expect(runner.calls()).toBe(2)
   })
 
-  it("失敗も控える", () => {
+  it("失敗も控える", async () => {
     let calls = 0
-    const reader = createOpenTaskReader(() => {
+    const reader = createOpenTaskReader(async () => {
       calls += 1
       return undefined
     })
 
-    reader(at(10, 30))
-    reader(at(10, 30) + 1_000)
+    reader.prefetch(at(10, 30))
+    await settled()
+    reader.prefetch(at(10, 30) + 1_000)
+    await settled()
 
     expect(calls).toBe(1)
+  })
+
+  it("口が拒否しても例外は漏れず、着手していない扱いになる", async () => {
+    const reader = createOpenTaskReader(() => Promise.reject(new Error("boom")))
+
+    reader.prefetch(at(10, 30))
+    await settled()
+
+    expect(reader.read(at(10, 30))).toBeUndefined()
   })
 })
 

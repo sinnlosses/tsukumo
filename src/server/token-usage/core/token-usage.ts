@@ -26,7 +26,10 @@ import { byteLength } from "../../../shared/utils/byte-length.ts"
 
 /** トークン消費の読み書き口。書けなくても例外を投げず、受け付けたかどうかは返さない。 */
 export type TokenUsageLog = {
+  /** 子プロセスを起こさない。着手中のタスクは `prefetchOpenTask` が控えたものだけを結ぶ。 */
   readonly append: (entry: TokenUsageEntry) => void
+  /** 依頼の始まりに、着手中のタスクの読みを非同期に始めさせる。 */
+  readonly prefetchOpenTask: (now: number) => void
   /**
    * 期間に入る行を、日付の範囲からファイルを選んで古い→新しい順に返す。
    * 壊れた行・版が記録の形の版と違う行は読まずに落とす（黙って飛ばして続ける）。

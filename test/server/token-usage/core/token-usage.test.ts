@@ -131,6 +131,7 @@ function writtenRowOf(events: readonly SessionEvent[]): TokenUsageEntry {
     append: (entry) => {
       written.push(entry)
     },
+    prefetchOpenTask: () => {},
     readRange: () => [],
   })
   for (const event of events) {

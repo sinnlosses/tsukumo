@@ -1,20 +1,26 @@
 // この作業ツリーで着手中のタスクとその段を、tw の読む口（`tw status --claims`）から読む。
 // tw の内部の置き場（着手の印のディレクトリ・台帳）は読まない。
-// 口は子プロセスで重い（1回およそ0.3秒）ので、作業ツリーごとに結果を一定の時間だけ控える。成功も失敗も控える。
+// 口は子プロセスで重い（1回およそ0.3秒）ので、読み始める `prefetch` と控えだけを返す `read` に分ける。
+// `read` は子プロセスを起こさず、イベントループを止めない。成功も失敗も控える。
 // 例外を投げない。打てない・読めない・着手が1件でないときは「着手していない」に倒す。
 
-import { execFileSync } from "node:child_process"
+import { execFile } from "node:child_process"
 
 import { z } from "zod"
 
 /** 着手中のタスクと、その最後の段（無ければ `undefined`）。 */
 export type OpenTask = { readonly taskId: string; readonly stage: string | undefined }
 
-/** 呼んだ時刻（エポックミリ秒）を渡して、着手中のタスクを返す。 */
-export type OpenTaskReader = (now: number) => OpenTask | undefined
+/** 着手中のタスクの読み手。時刻はどちらも呼んだ時刻（エポックミリ秒）。 */
+export type OpenTaskReader = {
+  /** 控えが古く、読みが走っていなければ、口を非同期に打って結果を控える。 */
+  readonly prefetch: (now: number) => void
+  /** 控えの時間のあいだだけ控えを返す。控えが無い・古いときは `undefined`。 */
+  readonly read: (now: number) => OpenTask | undefined
+}
 
-/** 口の出力（1行 JSON）を返す。打てなければ `undefined`。 */
-export type TwClaimsRunner = () => string | undefined
+/** 口の出力（1行 JSON）を返す。打てなければ `undefined`。拒否しない。 */
+export type TwClaimsRunner = () => Promise<string | undefined>
 
 const CLAIMS_TTL_MS = 10_000
 const TW_CLAIMS_TIMEOUT_MS = 5000
@@ -25,30 +31,42 @@ const claimsSchema = z.object({
 
 /** `tw`（パスか、PATH から引く名前）を作業先 `cwd` で打つ。 */
 export function twClaimsRunner(tw: string, cwd: string): TwClaimsRunner {
-  return () => {
-    try {
-      return execFileSync(tw, ["status", "--claims"], {
-        cwd,
-        timeout: TW_CLAIMS_TIMEOUT_MS,
-        encoding: "utf8",
-        stdio: ["ignore", "pipe", "ignore"],
-      })
-    } catch {
-      return undefined
-    }
-  }
+  return () =>
+    new Promise((resolve) => {
+      try {
+        execFile(
+          tw,
+          ["status", "--claims"],
+          { cwd, timeout: TW_CLAIMS_TIMEOUT_MS, encoding: "utf8" },
+          (error, stdout) => {
+            resolve(error === null ? stdout : undefined)
+          },
+        )
+      } catch {
+        resolve(undefined)
+      }
+    })
 }
 
-/** 控えの時間のあいだは `run` を打ち直さない読み手を作る。 */
 export function createOpenTaskReader(run: TwClaimsRunner): OpenTaskReader {
   let cached: { readonly readAt: number; readonly task: OpenTask | undefined } | undefined
-  return (now) => {
-    if (cached !== undefined && now >= cached.readAt && now - cached.readAt < CLAIMS_TTL_MS) {
-      return cached.task
-    }
-    const task = parseOpenTask(run())
-    cached = { readAt: now, task }
-    return task
+  let running = false
+  const isFresh = (now: number): boolean =>
+    cached !== undefined && now >= cached.readAt && now - cached.readAt < CLAIMS_TTL_MS
+  return {
+    prefetch: (now) => {
+      if (running || isFresh(now)) {
+        return
+      }
+      running = true
+      run()
+        .catch(() => undefined)
+        .then((output) => {
+          cached = { readAt: now, task: parseOpenTask(output) }
+          running = false
+        })
+    },
+    read: (now) => (isFresh(now) ? cached?.task : undefined),
   }
 }
 

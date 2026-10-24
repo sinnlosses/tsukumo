@@ -30,7 +30,11 @@ const BATCH_MS = 5
 export const FICTIONAL_PROJECT = "架空プロジェクト"
 
 /** トークン消費の記録を気にしないテストに渡す、何もしない書き込み口。 */
-const NOOP_TOKEN_USAGE_LOG: TokenUsageLog = { append: () => {}, readRange: () => [] }
+const NOOP_TOKEN_USAGE_LOG: TokenUsageLog = {
+  append: () => {},
+  prefetchOpenTask: () => {},
+  readRange: () => [],
+}
 
 /** 進行の計測値の記録を気にしないテストに渡す、何もしない書き込み口。 */
 const NOOP_EXPERIENCE_METRIC_LOG: ExperienceMetricLog = { append: () => {}, readRange: () => [] }

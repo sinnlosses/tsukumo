@@ -21,7 +21,12 @@ import type { SessionManagerOptions } from "./session-manager-port.ts"
 
 type EventRecordPorts = Pick<
   SessionManagerOptions,
-  "chatArchive" | "project" | "reportUsageLog" | "questionUsageLog" | "promptImageShelf"
+  | "chatArchive"
+  | "project"
+  | "reportUsageLog"
+  | "questionUsageLog"
+  | "promptImageShelf"
+  | "tokenUsageLog"
 > & {
   readonly contextUsage: ContextUsageRecorder
   readonly diagnostic: DiagnosticBuffer
@@ -54,6 +59,9 @@ export function recordSessionEvent(
   // 仕事のターンの結論を、代の勘定に預けて上書きする（`turn-finished` で読み出す）。
   if (event.kind === "report") {
     tally.pendingConclusion.hold(conclusionWithTaskName(event.conclusion, event.task))
+  }
+  if (event.kind === "request") {
+    ports.tokenUsageLog.prefetchOpenTask(at)
   }
   // ターンの中の内訳（ツール別・持ち場別）を積む。
   tally.tokenUsage.tally(event)

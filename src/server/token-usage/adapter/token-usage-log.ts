@@ -107,6 +107,7 @@ export function createTokenUsageLog(
     append: (entry) => {
       appender.append(localDateKey(entry.at), [toRecord(entry, openTask)])
     },
+    prefetchOpenTask: openTask.prefetch,
     flush: appender.flush,
     close: appender.close,
     readRange: (period) => readRecordsInRange(root, period, cache),
@@ -130,7 +131,7 @@ function statOf(path: string): { mtimeMs: number; size: number } | undefined {
 
 /** 1ターンぶんの記録を、書き出す行（`TokenUsageRecord`）へ変換する。 */
 function toRecord(entry: TokenUsageEntry, openTask: OpenTaskReader): TokenUsageRecord {
-  const task = openTask(entry.at)
+  const task = openTask.read(entry.at)
   return {
     v: TOKEN_USAGE_FORMAT_VERSION,
     at: isoWithOffset(entry.at),
