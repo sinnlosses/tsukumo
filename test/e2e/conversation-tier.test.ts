@@ -180,7 +180,7 @@ describe("会話の画面の段", () => {
 
     await room.resize(VIEWPORTS["tier-edge-rail"])
     await railToggle(page).waitFor()
-    expect(await menuToggle(page).isVisible()).toBe(false)
+    await menuToggle(page).waitFor({ state: "detached" })
 
     await room.resize(VIEWPORTS.phone)
     await expectDrawerSurvivesWiden(room)

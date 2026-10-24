@@ -31,7 +31,11 @@ let root: HTMLElement
 const scrollIntoView = vi.fn<() => void>()
 const scrollBy = vi.fn<() => void>()
 
+let pendingFrames: (() => void)[] = []
+
 beforeEach(() => {
+  pendingFrames = []
+  vi.stubGlobal("requestAnimationFrame", (callback: () => void) => pendingFrames.push(callback))
   scroller = document.createElement("div")
   scroller.style.overflowY = "auto"
   root = document.createElement("div")
@@ -46,6 +50,7 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup()
+  vi.unstubAllGlobals()
   scroller.remove()
   useReadingPosition.setState(useReadingPosition.getInitialState(), true)
 })
@@ -76,6 +81,11 @@ function renderScroll(initial: ShownTarget): {
     scrollTo: (tops) => {
       headingState.tops = [...tops]
       document.dispatchEvent(new Event("scroll"))
+      const frames = pendingFrames
+      pendingFrames = []
+      for (const frame of frames) {
+        frame()
+      }
     },
   }
 }

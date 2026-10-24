@@ -79,12 +79,87 @@ function row(index: number): HTMLElement {
   return node
 }
 
+type ObserverCallback = (
+  entries: readonly { readonly target: Element; readonly boundingClientRect: DOMRect }[],
+) => void
+
+// happy-dom は交差を計算しないので、観測の登録を控えて、テストが位置を通知する。
+class FakeIntersectionObserver {
+  static readonly instances: FakeIntersectionObserver[] = []
+  readonly targets: Element[] = []
+  live = true
+  readonly callback: ObserverCallback
+
+  readonly options: IntersectionObserverInit | undefined
+
+  constructor(callback: ObserverCallback, options?: IntersectionObserverInit) {
+    this.callback = callback
+    this.options = options
+    FakeIntersectionObserver.instances.push(this)
+  }
+
+  observe(target: Element): void {
+    this.targets.push(target)
+  }
+
+  disconnect(): void {
+    this.live = false
+  }
+}
+
+function notifyHeadings(elements: readonly Element[]): void {
+  const observer = FakeIntersectionObserver.instances.findLast((instance) => instance.live)
+  if (observer === undefined) {
+    return
+  }
+  const entries = observer.targets
+    .filter((target) => elements.includes(target))
+    .map((target) => ({ target, boundingClientRect: target.getBoundingClientRect() }))
+  act(() => {
+    observer.callback(entries)
+  })
+}
+
+function liveObserverCount(): number {
+  return FakeIntersectionObserver.instances.filter((instance) => instance.live).length
+}
+
+// 器の寸法の変化を、テストが好きなときに知らせる。
+class FakeResizeObserver {
+  static readonly instances: FakeResizeObserver[] = []
+  readonly callback: () => void
+
+  constructor(callback: () => void) {
+    this.callback = callback
+    FakeResizeObserver.instances.push(this)
+  }
+
+  observe(): void {}
+  unobserve(): void {}
+  disconnect(): void {}
+}
+
+async function nextFrame(): Promise<void> {
+  await act(async () => {
+    await new Promise<void>((resolve) => {
+      requestAnimationFrame(() => {
+        resolve()
+      })
+    })
+  })
+}
+
 beforeEach(() => {
   localStorage.removeItem(OUTLINE_PANEL_STORAGE_KEY)
+  FakeIntersectionObserver.instances.length = 0
+  FakeResizeObserver.instances.length = 0
+  vi.stubGlobal("IntersectionObserver", FakeIntersectionObserver)
+  vi.stubGlobal("ResizeObserver", FakeResizeObserver)
 })
 
 afterEach(() => {
   cleanup()
+  vi.unstubAllGlobals()
   localStorage.removeItem(OUTLINE_PANEL_STORAGE_KEY)
 })
 
@@ -105,7 +180,7 @@ describe("useReportOutline（押した見出しの固定）", () => {
     expect(row(2).getAttribute("aria-current")).toBe("location")
   })
 
-  it("本文が動いても、固定した見出しの位置が変わらなければ固定のまま", () => {
+  it("本文が動いても、固定した見出しの位置が変わらなければ固定のまま", async () => {
     render(<Probe />)
     const [heading0, heading1, heading2] = headings()
     if (heading0 === undefined || heading1 === undefined || heading2 === undefined) {
@@ -117,11 +192,12 @@ describe("useReportOutline（押した見出しの固定）", () => {
     fireEvent.click(row(2))
 
     fireEvent.scroll(document)
+    await nextFrame()
 
     expect(row(2).getAttribute("aria-current")).toBe("location")
   })
 
-  it("固定した見出しの位置がずれたら固定を外し、いつもの判定に戻る", () => {
+  it("固定した見出しの位置がずれたら固定を外し、いつもの判定に戻る", async () => {
     render(<Probe />)
     const [heading0, heading1, heading2] = headings()
     if (heading0 === undefined || heading1 === undefined || heading2 === undefined) {
@@ -135,6 +211,8 @@ describe("useReportOutline（押した見出しの固定）", () => {
     // 利用者が自分で転がして、固定していた見出しの位置が動いた場面を模す。
     stubRect(heading2, 500)
     fireEvent.scroll(document)
+    await nextFrame()
+    notifyHeadings(headings())
 
     expect(row(2).getAttribute("aria-current")).toBeNull()
     expect(row(1).getAttribute("aria-current")).toBe("location")
@@ -317,6 +395,7 @@ function placeHeadings(tops: readonly number[]): void {
   outlineHeadings().forEach((heading, index) => {
     stubRect(heading, tops[index] ?? 0)
   })
+  notifyHeadings(outlineHeadings())
 }
 
 function section(): unknown {
@@ -332,22 +411,74 @@ function moveHeading(step: "older" | "newer"): void {
   }
 }
 
+describe("useReportOutline（見出しの観測）", () => {
+  it("見出しが増えたときだけ観測し直し、転がしや見出し以外の増減では張り直さない", async () => {
+    render(<StoreProbe />)
+    const content = document.querySelector(`.${detailBlockClassName}`)
+    if (content === null) {
+      throw new Error("本文の器が見つからない")
+    }
+    expect(FakeIntersectionObserver.instances).toHaveLength(1)
+
+    content.append(document.createElement("p"))
+    await nextFrame()
+    fireEvent.scroll(document)
+    await nextFrame()
+    expect(FakeIntersectionObserver.instances).toHaveLength(1)
+
+    content.append(document.createElement("h4"))
+    await nextFrame()
+    expect(FakeIntersectionObserver.instances).toHaveLength(2)
+    expect(liveObserverCount()).toBe(1)
+  })
+})
+
+describe("useReportOutline（器の寸法が変わったときの帯）", () => {
+  it("窓も読む線も変わらず転がる器の下端だけが動いても、帯の下端を引き直す", () => {
+    render(<ScrollerProbe />)
+    const scroller = document.querySelector<HTMLElement>('[data-region="main"]')
+    if (scroller === null) {
+      throw new Error("転がる器が見つからない")
+    }
+    const bottomAt = (bottom: number): void => {
+      scroller.getBoundingClientRect = () => new DOMRect(0, 0, 100, bottom)
+    }
+    const liveMargin = (): string | undefined =>
+      FakeIntersectionObserver.instances.findLast((instance) => instance.live)?.options?.rootMargin
+
+    bottomAt(600)
+    act(() => {
+      for (const observer of FakeResizeObserver.instances) {
+        observer.callback()
+      }
+    })
+    const before = liveMargin()
+
+    bottomAt(500)
+    act(() => {
+      for (const observer of FakeResizeObserver.instances) {
+        observer.callback()
+      }
+    })
+
+    expect(liveMargin()).not.toBe(before)
+    expect(liveObserverCount()).toBe(1)
+  })
+})
+
 describe("useReportOutline（読んでいる節と節の移動）", () => {
   it("上端を通り過ぎた最後の `##` を、転がすと変わる形で store に出す", () => {
     render(<StoreProbe />)
     placeHeadings([-100, -50, 300, 600])
-    fireEvent.scroll(document)
     expect(section()).toEqual({ kind: "shown", text: "節0" })
 
     placeHeadings([-300, -250, -10, 600])
-    fireEvent.scroll(document)
     expect(section()).toEqual({ kind: "shown", text: "節1" })
   })
 
   it("どの見出しも通り過ぎていなければ出さない", () => {
     render(<StoreProbe />)
     placeHeadings([300, 400, 500, 600])
-    fireEvent.scroll(document)
 
     expect(section()).toEqual({ kind: "none" })
   })
@@ -367,7 +498,6 @@ describe("useReportOutline（読んでいる節と節の移動）", () => {
     })
     render(<StoreProbe />)
     placeHeadings([-100, 300, 600, 900])
-    fireEvent.scroll(document)
 
     moveHeading("newer")
     expect(scrollIntoView).toHaveBeenCalledTimes(1)
@@ -387,7 +517,6 @@ describe("useReportOutline（読んでいる節と節の移動）", () => {
     })
     render(<StoreProbe />)
     placeHeadings([300, 400, 500, 600])
-    fireEvent.scroll(document)
 
     moveHeading("newer")
 
@@ -411,7 +540,6 @@ describe("useReportOutline（読んでいる節と節の移動）", () => {
     it("転がし切ると、最後の `##` が上端に届かなくても最後の節を出す", () => {
       renderScrolled({ scrollTop: 700 })
       placeHeadings([-300, -250, -10, 600])
-      fireEvent.scroll(document)
 
       expect(section()).toEqual({ kind: "shown", text: "節2" })
     })
@@ -419,7 +547,6 @@ describe("useReportOutline（読んでいる節と節の移動）", () => {
     it("転がし途中では、上端を通り過ぎた最後の `##` のまま", () => {
       renderScrolled({ scrollTop: 400 })
       placeHeadings([-300, -250, -10, 600])
-      fireEvent.scroll(document)
 
       expect(section()).toEqual({ kind: "shown", text: "節1" })
     })
@@ -427,7 +554,6 @@ describe("useReportOutline（読んでいる節と節の移動）", () => {
     it("上端では出さない", () => {
       renderScrolled({ scrollTop: 0 })
       placeHeadings([300, 400, 500, 600])
-      fireEvent.scroll(document)
 
       expect(section()).toEqual({ kind: "none" })
     })
@@ -438,7 +564,6 @@ describe("useReportOutline（読んでいる節と節の移動）", () => {
       })
       renderScrolled({ scrollTop: 400 })
       placeHeadings([-300, -250, -10, 600])
-      fireEvent.scroll(document)
       moveHeading("newer")
 
       expect(section()).toEqual({ kind: "shown", text: "節2" })

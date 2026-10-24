@@ -141,6 +141,8 @@ describe("report → メインビュー", () => {
       })
       .toBeLessThan(1)
     const before = await topOf()
+    // 凍らせた時計では rAF が進まないので、読み位置を測るフレームを進める。
+    await room.page.clock.runFor(50)
 
     await room.page.getByRole("button", { name: "完了: 読み位置の一つ目（架空の依頼）" }).click()
     await room.page

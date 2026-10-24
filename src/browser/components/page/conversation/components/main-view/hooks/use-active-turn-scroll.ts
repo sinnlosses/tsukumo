@@ -15,6 +15,7 @@ import {
 import { useSession } from "../../../../../../stores/session.ts"
 import { readingPositionOf, scrollDeltaToRestore } from "../domain/reading-position.ts"
 import { readableHeadings } from "../domain/report-heading.ts"
+import { scrollerOf, subscribeScrollFrame } from "./scroll-frame.ts"
 
 /** いま出している中身。`none` は先頭へ戻す相手が無い（始め方の一覧を出している）とき。 */
 export type ShownTarget =
@@ -29,6 +30,7 @@ export function useActiveTurnScroll(
   const generation = useSession((session) => session.generation)
   const shownRef = useRef<ShownTarget>({ kind: "none" })
   const currentRef = useRef<ShownPosition | undefined>(undefined)
+  const geometryRef = useRef<ScrollGeometry | undefined>(undefined)
   const shownKind = shownTarget.kind
   const shownTurnId = shownTarget.kind === "none" ? undefined : shownTarget.turnId
 
@@ -42,19 +44,25 @@ export function useActiveTurnScroll(
     }
   }, [generation])
 
-  // 転がる祖先は画面の幅で入れ替わるので、どれが転がっても拾えるよう `document` で捕まえる。
   useEffect(() => {
+    function resolve(): void {
+      const root = scrollerRef.current
+      geometryRef.current = root === null ? undefined : resolveGeometry(root)
+    }
     function onScroll(): void {
       const root = scrollerRef.current
       const current = shownRef.current
       if (root === null || current.kind !== "report") {
         return
       }
-      currentRef.current = { turnId: current.turnId, position: measure(root) }
+      currentRef.current = { turnId: current.turnId, position: measure(root, geometryRef) }
     }
-    document.addEventListener("scroll", onScroll, { capture: true, passive: true })
+    resolve()
+    window.addEventListener("resize", resolve)
+    const unsubscribe = subscribeScrollFrame(onScroll)
     return () => {
-      document.removeEventListener("scroll", onScroll, { capture: true })
+      window.removeEventListener("resize", resolve)
+      unsubscribe()
     }
   }, [scrollerRef])
 
@@ -81,7 +89,7 @@ export function useActiveTurnScroll(
     const closedJustNow = previous.kind === "work" && previous.turnId === shown.turnId
     const remembered = store.positions[shown.turnId]
     if (shown.kind === "report" && !closedJustNow && remembered !== undefined) {
-      if (restore(scroller, remembered)) {
+      if (restore(scroller, remembered, geometryRef)) {
         currentRef.current = { turnId: shown.turnId, position: remembered }
         return
       }
@@ -99,13 +107,20 @@ type ShownPosition = {
   readonly position: ReadingPosition | undefined
 }
 
-function measure(root: HTMLElement): ReadingPosition | undefined {
-  const { baseline } = geometryOf(root)
+function measure(
+  root: HTMLElement,
+  geometryRef: RefObject<ScrollGeometry | undefined>,
+): ReadingPosition | undefined {
+  const { baseline } = baselineOf(root, geometryRef)
   return readingPositionOf(headingTopsOf(root), baseline)
 }
 
-function restore(root: HTMLElement, position: ReadingPosition): boolean {
-  const { scroller, baseline } = geometryOf(root)
+function restore(
+  root: HTMLElement,
+  position: ReadingPosition,
+  geometryRef: RefObject<ScrollGeometry | undefined>,
+): boolean {
+  const { scroller, baseline } = baselineOf(root, geometryRef)
   const delta = scrollDeltaToRestore(headingTopsOf(root), position, baseline)
   if (delta === undefined) {
     return false
@@ -118,22 +133,22 @@ function headingTopsOf(root: HTMLElement): readonly number[] {
   return readableHeadings(root).map((heading) => heading.getBoundingClientRect().top)
 }
 
-/** 転がる祖先と、読む面の基準の線（祖先の上端＋札の頭の高さ）。 */
-function geometryOf(root: HTMLElement): { readonly scroller: Element; readonly baseline: number } {
-  const scroller = scrollerOf(root)
-  const top = scroller === document.documentElement ? 0 : scroller.getBoundingClientRect().top
+/** 購読を張るときに解く、転がる祖先と札の頭の高さ。 */
+type ScrollGeometry = { readonly scroller: Element; readonly headHeight: number }
+
+function resolveGeometry(root: HTMLElement): ScrollGeometry {
   const headHeight = Number.parseFloat(
     getComputedStyle(root).getPropertyValue("--turn-card-head-height"),
   )
-  return { scroller, baseline: top + (Number.isFinite(headHeight) ? headHeight : 0) }
+  return { scroller: scrollerOf(root), headHeight: Number.isFinite(headHeight) ? headHeight : 0 }
 }
 
-function scrollerOf(root: HTMLElement): Element {
-  for (let ancestor = root.parentElement; ancestor !== null; ancestor = ancestor.parentElement) {
-    const overflowY = getComputedStyle(ancestor).overflowY
-    if (overflowY === "auto" || overflowY === "scroll") {
-      return ancestor
-    }
-  }
-  return document.scrollingElement ?? document.documentElement
+/** 転がる祖先と、読む面の基準の線（祖先の上端＋札の頭の高さ）。解いていなければここで解く。 */
+function baselineOf(
+  root: HTMLElement,
+  geometryRef: RefObject<ScrollGeometry | undefined>,
+): { readonly scroller: Element; readonly baseline: number } {
+  const { scroller, headHeight } = geometryRef.current ?? resolveGeometry(root)
+  const top = scroller === document.documentElement ? 0 : scroller.getBoundingClientRect().top
+  return { scroller, baseline: top + headHeight }
 }

@@ -30,6 +30,14 @@ import {
   type OutlineItem,
   type OutlineSectionKey,
 } from "../../../domain/report-heading.ts"
+import { subscribeScrollFrame } from "../../../hooks/scroll-frame.ts"
+import {
+  activeLineOf,
+  bandRootMargin,
+  isNarrowFrame,
+  scrollRowIntoView,
+  topOf,
+} from "../domain/outline-geometry.ts"
 import {
   isOutlineCollapsed,
   loadOutlinePanel,
@@ -114,9 +122,6 @@ export type ReportOutlineModel = {
   readonly onWidthCommit: (px: number) => void
 }
 
-/** 見出しの上端がこの距離まで一覧の上端に近づいたら、その見出しを読んでいることにする（px）。 */
-const ACTIVE_SLACK_PX = 24
-
 /** 固定した見出しの上端が、固定したときの位置からこの距離までは動いていないとみなす（px）。 */
 const PIN_TOLERANCE_PX = 1
 
@@ -124,9 +129,6 @@ const OUTLINE_WIDTH_VARIABLE = "--outline-rail-width"
 
 /** やり取りの行の `<button>` が持つ属性。値はやり取りの id。 */
 export const TURN_ROW_ATTRIBUTE = "data-outline-turn"
-
-/** 札の幅がこれ（rem）を下回るあいだは、利用者が選んでいなければ列を畳んでおく。 */
-const NARROW_CARD_REM = 48
 
 export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel {
   const frameRef = useRef<HTMLDivElement>(null)
@@ -172,42 +174,73 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
     }
     const content: HTMLDivElement = found
 
+    const scrollerOfContent = content.closest('[data-region="main"]')
+
+    let passedHeadings = new Set<Element>()
+    let headingObserver: IntersectionObserver | undefined = undefined
+    let observedHeadings: readonly HTMLElement[] = []
+    let observedBand = ""
+
     function updateActive(): void {
       const items = itemsRef.current
-      const headings = items.map((item) => item.element)
       const pinned = pinnedRef.current
       if (pinned !== undefined) {
-        const heading = headings[pinned.index]
-        if (
-          heading !== undefined &&
-          Math.abs(heading.getBoundingClientRect().top - pinned.top) <= PIN_TOLERANCE_PX
-        ) {
+        const heading = items[pinned.index]?.element
+        if (heading !== undefined && Math.abs(topOf(heading) - pinned.top) <= PIN_TOLERANCE_PX) {
           setActiveIndex(pinned.index)
           setReached(true)
           return
         }
         pinnedRef.current = undefined
       }
-      const headHeight = Number.parseFloat(
-        getComputedStyle(content).getPropertyValue("--turn-card-head-height"),
-      )
-      // 狭い画面では列が出ず（高さ 0）、一覧の上端は基準にならない。読む面の上端を使う。
-      const nav = navRef.current
-      const scroller = content.closest('[data-region="main"]')
-      const reference =
-        nav !== null && nav.getBoundingClientRect().height > 0 ? nav : (scroller ?? content)
-      const base =
-        reference.getBoundingClientRect().top + (Number.isFinite(headHeight) ? headHeight : 0)
-      const passedAtTop = headings.findLastIndex(
-        (heading) => heading.getBoundingClientRect().top <= base + ACTIVE_SLACK_PX,
-      )
+      const passedAtTop = items.findLastIndex((item) => passedHeadings.has(item.element))
       const passed = readHeadingIndexOf(
         passedAtTop,
         items.map((item) => item.level),
-        isScrolledToEnd(scroller),
+        isScrolledToEnd(scrollerOfContent),
       )
       setActiveIndex(Math.max(passed, 0))
       setReached(passed >= 0)
+    }
+
+    function observeHeadings(checkLine: boolean): void {
+      const headings = itemsRef.current.map((item) => item.element)
+      const sameHeadings =
+        headings.length === observedHeadings.length &&
+        headings.every((heading, index) => heading === observedHeadings[index])
+      if (sameHeadings && !checkLine) {
+        return
+      }
+      const line = activeLineOf(content, navRef.current, scrollerOfContent)
+      const rootMargin = bandRootMargin(line, scrollerOfContent)
+      const bandKey = `${String(Math.round(line))}:${rootMargin}`
+      if (sameHeadings && bandKey === observedBand) {
+        return
+      }
+      headingObserver?.disconnect()
+      observedHeadings = headings
+      observedBand = bandKey
+      passedHeadings = new Set(headings.filter((heading) => passedHeadings.has(heading)))
+      if (headings.length === 0) {
+        headingObserver = undefined
+        return
+      }
+      headingObserver = new IntersectionObserver(
+        (observed) => {
+          for (const entry of observed) {
+            if (entry.boundingClientRect.top <= line) {
+              passedHeadings.add(entry.target)
+            } else {
+              passedHeadings.delete(entry.target)
+            }
+          }
+          updateActive()
+        },
+        { root: scrollerOfContent, rootMargin },
+      )
+      for (const heading of headings) {
+        headingObserver.observe(heading)
+      }
     }
 
     function readHeadings(): void {
@@ -220,29 +253,37 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
         sectionKey: item.sectionKey,
       }))
       setEntries((previous) => (isDeepEqual(previous, next) ? previous : next))
+      observeHeadings(false)
+      updateActive()
+    }
+
+    function onFrame(): void {
+      observeHeadings(true)
       updateActive()
     }
 
     readHeadingsRef.current = readHeadings
     readHeadings()
+    // 見出しの増減と、畳みの開閉・筆の到着の印だけを見る。字が伸びるだけの変化では読み直さない。
     const observer = new MutationObserver(readHeadings)
     observer.observe(content, {
       childList: true,
       subtree: true,
-      characterData: true,
       attributes: true,
       attributeFilter: ["open", REVEAL_PENDING_ATTRIBUTE],
     })
-    // 転がる祖先は画面の幅で入れ替わる（`useActiveTurnScroll`）ので、どれが転がっても拾えるよう `document` で捕まえる。
-    document.addEventListener("scroll", updateActive, {
-      capture: true,
-      passive: true,
-    })
-    window.addEventListener("resize", updateActive)
+    const unsubscribeScroll = subscribeScrollFrame(onFrame)
+    // 窓・上下の境界・キャラ欄の畳みなど、どの経路でも器の寸法が変われば読む線と帯を引き直す。
+    const resizeObserver = new ResizeObserver(onFrame)
+    resizeObserver.observe(scrollerOfContent ?? content)
+    if (navRef.current !== null) {
+      resizeObserver.observe(navRef.current)
+    }
     return () => {
       observer.disconnect()
-      document.removeEventListener("scroll", updateActive, { capture: true })
-      window.removeEventListener("resize", updateActive)
+      resizeObserver.disconnect()
+      headingObserver?.disconnect()
+      unsubscribeScroll()
     }
   }, [])
 
@@ -254,8 +295,7 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
       return
     }
     const measure = (): void => {
-      const rootFontPx = Number.parseFloat(getComputedStyle(document.documentElement).fontSize)
-      setNarrow(frame.getBoundingClientRect().width < NARROW_CARD_REM * rootFontPx)
+      setNarrow(isNarrowFrame(frame))
     }
     measure()
     const observer = new ResizeObserver(measure)
@@ -271,7 +311,7 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
     const heading = itemsRef.current[index]?.element
     heading?.scrollIntoView({ block: "start" })
     if (heading !== undefined) {
-      pinnedRef.current = { index, top: heading.getBoundingClientRect().top }
+      pinnedRef.current = { index, top: topOf(heading) }
     }
     setActiveIndex(index)
     setReached(true)
@@ -328,13 +368,7 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
     if (row === null) {
       return
     }
-    const navRect = nav.getBoundingClientRect()
-    const rowRect = row.getBoundingClientRect()
-    if (rowRect.top < navRect.top) {
-      nav.scrollTop -= navRect.top - rowRect.top
-    } else if (rowRect.bottom > navRect.bottom) {
-      nav.scrollTop += rowRect.bottom - navRect.bottom
-    }
+    scrollRowIntoView(nav, row)
   }, [activeTurnId, collapsed, visible])
 
   function focusRow(step: 1 | -1): void {
