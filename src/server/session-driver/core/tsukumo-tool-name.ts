@@ -16,8 +16,6 @@ export const PHASE_RESULT_TOOL_NAME = "phase_result"
 export const QUESTION_BRIEF_TOOL_NAME = "question_brief"
 export const REMEMBER_TOOL_NAME = "remember"
 export const FORGET_TOOL_NAME = "forget"
-export const RECALL_TOOL_NAME = "recall"
-export const RECALL_EPISODE_TOOL_NAME = "recall_episode"
 
 /** tsukumo のツールのフルネーム（`mcp__tsukumo__<ツール名>`）。 */
 export function tsukumoToolFullName(toolName: string): string {

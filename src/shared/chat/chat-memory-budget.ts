@@ -8,14 +8,6 @@ export type ChatMemoryBudget = {
   readonly workRecentBytes: number
   /** あらすじの上限バイト数。 */
   readonly synopsisBytes: number
-  /** `recall` の一覧1回ぶんの上限バイト数。 */
-  readonly recallListBytes: number
-  /** `recall` の一覧を1ターンに引ける回数。 */
-  readonly recallListsPerTurn: number
-  /** `recall_episode` で開く1件の逐語の上限バイト数。 */
-  readonly recallEpisodeBytes: number
-  /** `recall_episode` を1ターンに開ける件数。 */
-  readonly recallEpisodesPerTurn: number
   /** 定着を起こす契機（畳む行が this 以上たまったら起こす）の上限バイト数。 */
   readonly consolidateEveryBytes: number
   /** 仕事の依頼の冒頭・`report` の結論をアーカイブへ書くときに切る上限（コードポイント数）。 */
@@ -27,38 +19,6 @@ export const CHAT_MEMORY_BUDGET = {
   recentBytes: 65_536,
   workRecentBytes: 16_384,
   synopsisBytes: 8_192,
-  recallListBytes: 2_048,
-  recallListsPerTurn: 2,
-  recallEpisodeBytes: 8_192,
-  recallEpisodesPerTurn: 2,
   consolidateEveryBytes: 8_192,
   workExcerptChars: 300,
 } satisfies ChatMemoryBudget
-
-export type ChatRecallScore = {
-  /** 手がかり語への当たりに掛ける重み。 */
-  readonly cueWeight: number
-  /** 見出しへの当たりに掛ける重み。 */
-  readonly titleWeight: number
-  /** 要旨への当たりに掛ける重み。 */
-  readonly gistWeight: number
-  /** 一致がこれ未満のエピソードは候補にしない足切り。 */
-  readonly minMatch: number
-  /** 新しさが半分に減衰するまでの日数（思い出した回数が0のとき）。 */
-  readonly halfLifeDays: number
-  /** 思い出した回数1回につき、半減期を伸ばす倍率。 */
-  readonly halfLifeGainPerRecall: number
-  /** 新しさの下限（0にはならない）。 */
-  readonly recencyFloor: number
-}
-
-/** エピソード索引の採点の係数。式は `docs/architecture/chat-mode.md`「古い雑談は索引を引いて思い出す」にある。 */
-export const CHAT_RECALL_SCORE = {
-  cueWeight: 1,
-  titleWeight: 1,
-  gistWeight: 0.5,
-  minMatch: 0.5,
-  halfLifeDays: 30,
-  halfLifeGainPerRecall: 1,
-  recencyFloor: 0.1,
-} satisfies ChatRecallScore

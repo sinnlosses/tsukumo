@@ -22,8 +22,8 @@ describe("createExternalToolMark", () => {
   it("tsukumo のツールだけなら remember を通す", () => {
     const mark = createExternalToolMark()
     mark.observeTool("mcp__tsukumo__speak")
-    mark.observeTool("mcp__tsukumo__recall")
-    mark.observeTool("mcp__tsukumo__recall_episode")
+    mark.observeTool("mcp__tsukumo__remember")
+    mark.observeTool("mcp__tsukumo__forget")
     mark.observeTool("mcp__tsukumo__架空の新しいツール")
     expect(mark.allowsRemember()).toBe(true)
   })

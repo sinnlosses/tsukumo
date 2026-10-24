@@ -207,6 +207,26 @@ describe("createDiagnosticLog", () => {
 
     expect(log.readRange({ startAt: at(0, 0), endAt: at(0, 0, 23) })).toEqual([footprint(at(9, 2))])
   })
+
+  it("もう無い場所の名前を持つ swallowed-failure の行は、投げずにその行だけを読み飛ばす", async () => {
+    const path = join(root(), "2026-09-22.jsonl")
+    mkdirSync(root(), { recursive: true })
+    appendFileSync(
+      path,
+      `${JSON.stringify({
+        ...failureFootprint(at(9, 0)),
+        place: { feature: "chat", place: "consolidation-shape-episode" },
+        v: DIAGNOSTIC_FORMAT_VERSION,
+      })}\n`,
+    )
+    const log = createDiagnosticLog(root())
+    log.append([failureFootprint(at(9, 1))])
+    await log.flush()
+
+    expect(log.readRange({ startAt: at(0, 0), endAt: at(0, 0, 23) })).toEqual([
+      failureFootprint(at(9, 1)),
+    ])
+  })
 })
 
 describe("pruneExpired", () => {

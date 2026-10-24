@@ -58,8 +58,8 @@
 - **機能 A が機能 B を import してよいのは、下の表にある組だけ。** 共有の箱はどの機能からも
   読んでよく、**共有の箱は機能を読まない**
 - **層ごとに循環させない。** 機能の `core/` どうしの辺と、機能の `adapter/` どうしの辺は、それぞれ
-  一方通行（表はその順に並ぶ）。機能の単位で見ると輪が2つある（`chat` ↔ `session-driver` と、
-  `view-server` → `session` → `session-driver` → `view-server`）が、どちらも1本が
+  一方通行（表はその順に並ぶ）。機能の単位で見ると輪が1つある
+  （`view-server` → `session` → `session-driver` → `view-server`）が、1本が
   `adapter → 別の機能の core` で層の辺と同じ向きなので、ファイルの単位では輪にならない
 - **束ねる機能は `session/` の1つ。** `session-manager.ts` は外の世界に触らないので `core` だが、
   各機能の判断（日記・トークン消費・会話のアーカイブ）を読んで1つのセッションに
@@ -93,7 +93,7 @@
 | `view-server`         | `session`                                                                                                                                                                  |
 | `chat`                | `session-driver` `character-pack`                                                                                                                                          |
 | `context-usage`       | `session-driver`                                                                                                                                                           |
-| `session-driver`      | `chat` `report` `view-server`                                                                                                                                              |
+| `session-driver`      | `report` `view-server`                                                                                                                                                     |
 | `diary`               | `repository` `session-driver`                                                                                                                                              |
 | `usage-review`        | `session-driver`                                                                                                                                                           |
 | `achievement`         | `repository`                                                                                                                                                               |

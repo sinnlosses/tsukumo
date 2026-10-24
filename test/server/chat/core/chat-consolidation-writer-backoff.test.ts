@@ -24,13 +24,10 @@ const DUE_BATCH: ChatUnconsolidatedBatch = {
     },
   ],
   usedBytes: CHAT_MEMORY_BUDGET.consolidateEveryBytes,
-  previousEpisodeTitle: "",
-  episodesThrough: { kind: "none" },
   overflowed: false,
 }
 
 const VALID_OUTPUT = {
-  episodes: [{ end: 1, title: "架空の見出し", gist: "架空の要旨", cues: ["架空"], weight: 2 }],
   synopsis: "架空のあらすじ",
   topics: [],
 }
@@ -52,7 +49,6 @@ function createHarness() {
       summary = next
       return { kind: "written", droppedLines: 0 }
     },
-    writeFold: () => ({ kind: "written" }),
     markUndelivered: () => {},
     markDelivered: () => {},
   }
@@ -60,7 +56,6 @@ function createHarness() {
   const write = createChatConsolidationWriter({
     archive: {
       unconsolidated: () => (reply === "not-due" ? { ...DUE_BATCH, usedBytes: 0 } : DUE_BATCH),
-      appendEpisodes: () => ({ kind: "written" }),
       // 呼ぶたびに契機の分だけ追記が進むことにして、契機の手前の読み飛ばしを起こさない。
       appendedBytes: () => (appended += CHAT_MEMORY_BUDGET.consolidateEveryBytes),
     },
@@ -80,7 +75,7 @@ function createHarness() {
         case "result-error":
           return Promise.reject(new ChatConsolidationResultError("error_max_turns"))
         case "unreadable":
-          return Promise.resolve({ ...VALID_OUTPUT, episodes: [] })
+          return Promise.resolve({ ...VALID_OUTPUT, synopsis: "" })
         case "shrunk":
           return Promise.resolve({ ...VALID_OUTPUT, synopsis: "あ" })
         case "hang":

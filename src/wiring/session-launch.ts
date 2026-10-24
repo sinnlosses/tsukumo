@@ -8,7 +8,6 @@ import { createChatSummary, UNAVAILABLE_CHAT_SUMMARY } from "../server/chat/adap
 import { createPersonaMemory, readRememberedLines } from "../server/chat/adapter/persona-memory.ts"
 import { readChatTopics } from "../server/chat/core/chat-consolidation.ts"
 import type { ReadRecent } from "../server/chat/core/chat-memory-prompt.ts"
-import { createChatRecall, UNAVAILABLE_CHAT_RECALL } from "../server/chat/core/chat-recall.ts"
 import type { Config } from "../server/core/config.ts"
 import type { DiagnosticLog } from "../server/diagnostic/core/diagnostic.ts"
 import { startFakeSession } from "../server/session-driver/adapter/fake-driver.ts"
@@ -31,7 +30,6 @@ import {
 } from "../server/session-driver/core/session-catalog.ts"
 import { createSessionClaim } from "../server/session-driver/core/session-claim.ts"
 import type {
-  ChatRecall,
   ChatSummary,
   SessionDriver,
   SessionMode,
@@ -305,7 +303,6 @@ function rememberSessionDefault(sessionDefault: SessionDefault): SessionEvent {
 
 /**
  * そのモードのときだけ渡る口を1回の分岐でまとめる。
- * 思い出す口（`recall` / `recall_episode`）は両方のモードに渡る。
  * 覚えたことを書き換える口とあらすじの印の口は雑談だけで、仕事では `remember` / `forget` のツールが載らず、作業の文脈が人格に入らない。
  */
 function sessionMode(
@@ -316,9 +313,8 @@ function sessionMode(
   onEvent: (event: SessionEvent) => void,
   reportFailure: (place: SwallowedFailurePlace, error: unknown) => void,
 ): SessionMode {
-  const { chatRecall } = memory
   if (!seed.chat) {
-    return { kind: "work", chatRecall, reportSchema }
+    return { kind: "work", reportSchema }
   }
 
   return {
@@ -332,18 +328,16 @@ function sessionMode(
       (place, error) => reportFailure({ feature: "chat", place }, error),
     ),
     chatSummary: memory.chatSummary,
-    chatRecall,
   }
 }
 
 type ChatMemoryPorts = {
   readonly chatSummary: ChatSummary
-  readonly chatRecall: ChatRecall
   readonly readRecent: ReadRecent
 }
 
 /**
- * パックの記憶（あらすじ・思い出す口・直近の逐語）の口を、パックの名前を検査して1か所で決める。
+ * パックの記憶（あらすじ・直近の逐語）の口を、パックの名前を検査して1か所で決める。
  * 名前が `CharacterPackName` にならないパックには、どれも何もしない口を渡す。
  */
 function chatMemoryOf(pack: CharacterPack, context: WiringContext): ChatMemoryPorts {
@@ -351,13 +345,11 @@ function chatMemoryOf(pack: CharacterPack, context: WiringContext): ChatMemoryPo
   if (packName === undefined) {
     return {
       chatSummary: UNAVAILABLE_CHAT_SUMMARY,
-      chatRecall: UNAVAILABLE_CHAT_RECALL,
       readRecent: () => [],
     }
   }
   return {
     chatSummary: createChatSummary(packName),
-    chatRecall: createChatRecall(context.chatArchive, packName, context.now),
     readRecent: (limits) => context.chatArchive.readRecent(packName, limits),
   }
 }

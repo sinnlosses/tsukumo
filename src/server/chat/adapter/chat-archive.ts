@@ -13,9 +13,6 @@
 // 読んだものの行き先は雑談と仕事のセッションの `systemPrompt` だけで、画面にも手続きの応答にも stderr にも出さない。
 // どこまで読むかは呼ぶ側が渡すバイト数で、ここは遡って集めることと並べ替えだけをする（文面を読んで載せる・載せないを決めない）。
 //
-// 古い会話は、エピソード索引（`episode.jsonl`。置き場と形は `readEpisodes` の側が持つ）を引いてから、当たった範囲のファイルだけを開く。
-// ここが持つのは `recallList` / `recallEpisode` での読み方だけ。
-//
 // `kept.jsonl`（「残す」旗の索引）は書きも読みもしない。
 // 過去に書かれたファイルが残っていても消さず、単に読まない。
 
@@ -40,27 +37,21 @@ import {
 import { isMissingFileError } from "../../adapter/lib/missing-file-error.ts"
 import { isoWithOffset, localDateKey } from "../../adapter/local-time.ts"
 import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
-import type {
-  ChatArchiveLine,
-  ChatArchiveLineOrigin,
-  ChatArchiveRecentEntry,
-} from "../../session-driver/core/session-driver.ts"
+import type { ChatFoldPoint } from "../../session-driver/core/session-driver.ts"
 import type {
   ChatArchive,
   ChatArchiveEntry,
-  ChatEpisodeReadResult,
-  ChatEpisodeRecallListResult,
+  ChatArchiveLine,
+  ChatArchiveLineOrigin,
+  ChatArchiveRecentEntry,
   ChatReadbackLimits,
   ChatUnconsolidatedBatch,
   ChatUnconsolidatedEntry,
   ChatUnconsolidatedLimits,
-  ChatUnconsolidatedRange,
 } from "../core/chat-archive-port.ts"
 import { takeWithinBytes } from "../core/chat-byte-budget.ts"
-import { scoreChatEpisodes, type ChatEpisodeRecord } from "../core/chat-episode-score.ts"
 import { isAfterAt, isBeforeAt } from "../core/chat-instant-order.ts"
 import { CHAT_IMAGE_DIR_NAME, writeChatImage } from "./chat-archive-image.ts"
-import { appendEpisodes, readEpisodes } from "./chat-episode-index.ts"
 
 /** 雑談の画像を残す日数。名前の先頭の日付がこれより古いファイルは消す。 */
 const CHAT_IMAGE_RETENTION_DAYS = 7
@@ -73,12 +64,6 @@ const ARCHIVE_FORMAT_VERSION = 2 satisfies number
 
 /** 読み戻しがまだ通す旧版（`mode`・`kind`・`project` を持たない雑談の行）。 */
 const ARCHIVE_FORMAT_VERSION_V1 = 1 satisfies number
-
-/** 思い出した記録の名前。 */
-const RECALLED_FILE_NAME = "recalled.jsonl"
-
-/** 思い出した記録の行の形の版。 */
-const RECALLED_FORMAT_VERSION = 1 satisfies number
 
 /**
  * 読み戻すときに要る鍵だけを検査する（`v` が知らない版・鍵が足りない行はここで落ちる）。
@@ -97,21 +82,14 @@ const archiveLineSchema = z.object({
   project: z.string().optional(),
 })
 
-/** 思い出した記録の1行。文面は持たない。 */
-const recalledLineSchema = z.object({
-  v: z.literal(RECALLED_FORMAT_VERSION),
-  id: z.string(),
-  at: z.string().regex(/^\d{4}-\d{2}-\d{2}T/),
-})
-
 /** 置き場の親（`~/.tsukumo/chat-archive`）。書き込んでよいのはこの下だけ。 */
 export function chatArchiveDir(): string {
   return tsukumoHomePath("chatArchive")
 }
 
 /**
- * パック1つぶんのアーカイブ（日ごとの会話・エピソード索引・思い出した記録）をディレクトリごと消す。
- * 同じ名前で作り直したパックが、消したパックとの会話を読み戻したり思い出したりしないため。
+ * パック1つぶんのアーカイブ（日ごとの会話と、同じディレクトリのほかのファイル）をディレクトリごと消す。
+ * 同じ名前で作り直したパックが、消したパックとの会話を読み戻さないため。
  * 無い・消せないときも何もせず続ける。
  */
 export function discardChatArchive(
@@ -177,12 +155,7 @@ export function createChatArchive(root: string = chatArchiveDir()): ChatArchive 
     appendedBytes: (packName) => appendedBytes.get(packName) ?? 0,
     writeImage: (packName, image) => writeChatImage(root, packName, image),
     readRecent: (packName, limits) => readReadback(root, packName, limits),
-    unconsolidated: (packName, limits, range) => readUnconsolidated(root, packName, limits, range),
-    appendEpisodes: (packName, episodes) => appendEpisodes(root, packName, episodes),
-    recallList: (packName, keyword, limitBytes, now) =>
-      readEpisodeCandidates(root, packName, keyword, limitBytes, now),
-    recallEpisode: (packName, id, limitBytes, now) =>
-      readEpisode(root, packName, id, limitBytes, now),
+    unconsolidated: (packName, limits, after) => readUnconsolidated(root, packName, limits, after),
   }
 }
 
@@ -338,46 +311,30 @@ function recentEntryOf(timed: TimedEntry): ChatArchiveRecentEntry {
 
 /**
  * 定着の入力の行を読む（{@link ChatArchive.unconsolidated} の実装）。
- * 範囲の始まり（`after-episodes` は最後のエピソードの `to`、`between` は `after`）より後で、直近の窓（{@link readRecentEntries} が拾う範囲）の外にある行だけを、古いほうから `maxBytes` まで集める。
- * 始まりの日付より前のファイルと、`between` の `through` の日付より後のファイルは開かない。
+ * `after` の時刻より後で、直近の窓（{@link readRecentEntries} が拾う範囲）の外にある行だけを、古いほうから `maxBytes` まで集める。
+ * `after` の日付より前のファイルは開かない。
  */
 function readUnconsolidated(
   root: string,
   packName: CharacterPackName,
   limits: ChatUnconsolidatedLimits,
-  range: ChatUnconsolidatedRange,
+  after: ChatFoldPoint,
 ): ChatUnconsolidatedBatch {
   const dir = join(root, packName)
-  const episodes = readEpisodes(root, packName)
-  const lastEpisode = episodes.at(-1)
-  const afterAt =
-    range.kind === "after-episodes"
-      ? lastEpisode?.to
-      : range.after.kind === "through"
-        ? range.after.at
-        : undefined
-  const throughAt = range.kind === "between" ? range.through : undefined
-  const previousEpisode =
-    range.kind === "after-episodes"
-      ? lastEpisode
-      : episodes.findLast((episode) => afterAt !== undefined && !isAfterAt(episode.to, afterAt))
+  const afterAt = after.kind === "through" ? after.at : undefined
   const windowStartAt = readRecentEntries(dir, limits.recentBytes).at(0)?.at
 
-  const all = dateFileNamesBetween(dir, afterAt?.slice(0, 10), throughAt?.slice(0, 10)).flatMap(
-    (fileName) =>
-      readJsonLines(join(dir, fileName)).flatMap((raw) => {
-        const entry = toTimedEntry(raw)
-        return entry === undefined ? [] : [entry]
-      }),
+  const all = dateFileNamesBetween(dir, afterAt?.slice(0, 10), undefined).flatMap((fileName) =>
+    readJsonLines(join(dir, fileName)).flatMap((raw) => {
+      const entry = toTimedEntry(raw)
+      return entry === undefined ? [] : [entry]
+    }),
   )
 
   function* untilWindow(): Generator<TimedEntry> {
     for (const timed of all) {
       if (afterAt !== undefined && !isAfterAt(timed.at, afterAt)) {
         continue
-      }
-      if (throughAt !== undefined && isAfterAt(timed.at, throughAt)) {
-        return
       }
       if (windowStartAt !== undefined && !isBeforeAt(timed.at, windowStartAt)) {
         return
@@ -400,122 +357,6 @@ function readUnconsolidated(
   return {
     entries,
     usedBytes,
-    previousEpisodeTitle: previousEpisode?.title ?? "",
-    episodesThrough:
-      lastEpisode === undefined ? { kind: "none" } : { kind: "through", at: lastEpisode.to },
     overflowed,
   }
-}
-
-/**
- * 索引を引く言葉で採点し、点の高い順の候補を返す（{@link ChatArchive.recallList} の実装）。
- * ここは行を読んで採点に渡し、`recallListBytes` に収まるところで切るだけ。
- */
-function readEpisodeCandidates(
-  root: string,
-  packName: CharacterPackName,
-  keyword: string,
-  limitBytes: number,
-  now: Temporal.Instant,
-): ChatEpisodeRecallListResult {
-  const episodes = readEpisodes(root, packName)
-  if (episodes.length === 0) {
-    return { kind: "not-found" }
-  }
-
-  const counts = readRecalledCounts(root, packName)
-  const scored = scoreChatEpisodes(
-    episodes satisfies readonly ChatEpisodeRecord[],
-    keyword,
-    now,
-    counts,
-  )
-  const { taken: candidates } = takeWithinBytes(scored, {
-    limitBytes,
-    sizeOf: (candidate) => byteLength(candidate.title) + byteLength(candidate.gist),
-    whenFirstExceeds: "stop",
-  })
-  return candidates.length === 0 ? { kind: "not-found" } : { kind: "found", candidates }
-}
-
-/**
- * 1件のエピソードの範囲を逐語のまま読む（{@link ChatArchive.recallEpisode} の実装）。
- * 開いたら `recalled.jsonl` に記録する。
- * 文面は複製せず、`v`・`id`・時刻だけを追記する（文面を書くと `docs/coding-standards.md`「会話内容の扱い」の例外の表に無い複製になる）。
- */
-function readEpisode(
-  root: string,
-  packName: CharacterPackName,
-  id: string,
-  limitBytes: number,
-  now: Temporal.Instant,
-): ChatEpisodeReadResult {
-  const episode = readEpisodes(root, packName).find((record) => record.id === id)
-  if (episode === undefined) {
-    return { kind: "not-found" }
-  }
-
-  const dir = join(root, packName)
-  const { entries, overflowed } = readEpisodeEntries(dir, episode.from, episode.to, limitBytes)
-  if (entries.length === 0) {
-    return { kind: "not-found" }
-  }
-
-  appendJsonLine(recalledPath(root, packName), {
-    v: RECALLED_FORMAT_VERSION,
-    id,
-    at: isoWithOffset(now.epochMilliseconds),
-  })
-  return { kind: "found", entries, overflowed }
-}
-
-/** `~/.tsukumo/chat-archive/<パック名>/recalled.jsonl` のパス。 */
-function recalledPath(root: string, packName: CharacterPackName): string {
-  return join(root, packName, RECALLED_FILE_NAME)
-}
-
-/** 思い出した記録から、`id` ごとに開いた回数を数える（読めない行・知らない版は数えない）。 */
-function readRecalledCounts(
-  root: string,
-  packName: CharacterPackName,
-): ReadonlyMap<string, number> {
-  const counts = new Map<string, number>()
-  for (const raw of readJsonLines(recalledPath(root, packName))) {
-    const record = recalledLineSchema.safeParse(raw)
-    if (record.success) {
-      counts.set(record.data.id, (counts.get(record.data.id) ?? 0) + 1)
-    }
-  }
-  return counts
-}
-
-/**
- * `from`〜`to`（両端含む）の逐語を古いほうから `limitBytes` まで読む。
- * 当たる日のファイルだけ開くので、アーカイブが何年ぶん増えても開くファイルの数は範囲の日数で頭打ちになる。
- */
-function readEpisodeEntries(
-  dir: string,
-  from: string,
-  to: string,
-  limitBytes: number,
-): { readonly entries: readonly ChatArchiveRecentEntry[]; readonly overflowed: boolean } {
-  const fileNames = dateFileNamesBetween(dir, from.slice(0, 10), to.slice(0, 10))
-
-  function* inRange(): Generator<TimedEntry> {
-    for (const fileName of fileNames) {
-      for (const raw of readJsonLines(join(dir, fileName))) {
-        const timed = toTimedEntry(raw)
-        if (timed !== undefined && !isBeforeAt(timed.at, from) && !isAfterAt(timed.at, to)) {
-          yield timed
-        }
-      }
-    }
-  }
-
-  const { taken, overflowed } = takeWithinBytes(inRange(), {
-    limitBytes,
-    sizeOf: timedEntryBytes,
-    whenFirstExceeds: "stop",
-  })
-  return { entries: taken.map(recentEntryOf), overflowed }
 }

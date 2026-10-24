@@ -15,13 +15,10 @@ const CONSOLIDATION_FAILURE_PLACES = {
   aborted: "consolidation-aborted",
   threw: "consolidation-threw",
   "summary-write": "consolidation-summary-write",
-  "episode-write": "consolidation-episode-write",
 } as const satisfies Record<string, string>
 
 const CONSOLIDATION_REJECTION_PLACES = {
   "shape-structure": "consolidation-shape-structure",
-  "shape-episode": "consolidation-shape-episode",
-  "shape-coverage": "consolidation-shape-coverage",
   "shape-topics": "consolidation-shape-topics",
   "synopsis-empty": "consolidation-synopsis-empty",
   "synopsis-too-long": "consolidation-synopsis-too-long",

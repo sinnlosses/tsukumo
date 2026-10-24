@@ -70,8 +70,6 @@ export type ChatSummary = {
     topics: readonly string[],
     foldedThrough: string,
   ) => ChatSummaryWriteResult
-  /** 本文・話題・印を保ったまま、取り込んだところだけを書く（例外は投げない）。 */
-  readonly writeFold: (fold: ChatFoldPoint) => ChatSummaryFoldWriteResult
   /** 印を「未渡し」に戻す（`/clear` を見たとき）。 */
   readonly markUndelivered: () => void
   /** 印を「渡し済み」にする（読んで `systemPrompt` へ載せたとき）。 */
@@ -82,9 +80,6 @@ export type ChatSummary = {
 export type ChatSummaryWriteResult =
   | { readonly kind: "failed" }
   | { readonly kind: "written"; readonly droppedLines: number }
-
-/** {@link ChatSummary.writeFold} の結果。 */
-export type ChatSummaryFoldWriteResult = { readonly kind: "written" } | { readonly kind: "failed" }
 
 /**
  * アーカイブのどの行まで畳んだか。
@@ -103,89 +98,11 @@ export type ChatSummaryRecord = {
   readonly delivered: boolean
 }
 
-/**
- * `ChatArchive.recallList` / `ChatArchive.recallEpisode` が返す候補（`id`・`title`・
- * `gist` だけ。逐語は `ChatArchive.recallEpisode` で別に開く）。
- */
-export type ChatEpisodeCandidate = {
-  readonly id: string
-  readonly title: string
-  readonly gist: string
-}
-
-/**
- * 古い会話を索引から思い出す口。
- * `ChatArchive` を駆動へそのまま渡さないために分けてある。
- * パックの名前と読む量は、`createChatRecall` を呼ぶ配線が縛ってから渡す。
- * 1ターンの回数の上限（`recallListsPerTurn` / `recallEpisodesPerTurn`）を数えるのは実装の側（`createChatRecall`）。
- */
-export type ChatRecall = {
-  /** 索引を `keyword` で引き、候補の一覧を返す（1ターンに `recallListsPerTurn` 回まで）。 */
-  readonly recallList: (keyword: string) => ChatRecallListResult
-  /** 候補の1件を `id` で開き、その範囲の逐語を返す（1ターンに `recallEpisodesPerTurn` 件まで）。 */
-  readonly recallEpisode: (id: string) => ChatRecallEpisodeResult
-  /** ターンが終わった合図（両方の回数をまた0から数え直す）。 */
-  readonly finishTurn: () => void
-}
-
-/**
- * {@link ChatRecall.recallList} が返すもの。
- * 「当たらなかった」と「このターンではもう引けない」は、モデルへ返す文面が違う。
- */
-export type ChatRecallListResult =
-  /** 採点の高い順の候補（{@link ChatEpisodeCandidate}。空の配列にはならない）。 */
-  | { readonly kind: "found"; readonly candidates: readonly ChatEpisodeCandidate[] }
-  /** 索引に当たる候補が無かった。 */
-  | { readonly kind: "not-found" }
-  /** そのターンではもう一覧を引けない（`recallListsPerTurn` を超えた）。 */
-  | { readonly kind: "exhausted" }
-
-/** {@link ChatRecall.recallEpisode} が返すもの。 */
-export type ChatRecallEpisodeResult =
-  /** 開いた1件の範囲の逐語。 */
-  | {
-      readonly kind: "found"
-      readonly entries: readonly ChatArchiveRecentEntry[]
-      readonly overflowed: boolean
-    }
-  /** 知らない `id`（一覧に無い・アーカイブの行が残っていない）。 */
-  | { readonly kind: "not-found" }
-  /** そのターンではもう開けない（`recallEpisodesPerTurn` を超えた）。 */
-  | { readonly kind: "exhausted" }
-
-/**
- * `ChatArchive.readRecent` が返す1件。行の種類・文面・その行の日付だけで、`expression` も `images` も持たない。
- * 読む側が落とすのではなく、口が最初から渡さない。
- */
-export type ChatArchiveRecentEntry = ChatArchiveLine & {
-  /** その行のローカル日付（`YYYY-MM-DD`）。日付が変わるところに挟む見出しに使う。 */
-  readonly date: string
-}
-
-/**
- * 読み戻す1行の、時刻を除いた部分。
- * 話者は `kind` から決まる（`request` は利用者、`speech` はキャラクター、`conclusion` はキャラクターがしたこと）。
- */
-export type ChatArchiveLine = {
-  readonly kind: "request" | "speech" | "conclusion"
-  readonly text: string
-  readonly origin: ChatArchiveLineOrigin
-}
-
-/** その行を書いたのが雑談か仕事か。仕事の行だけがプロジェクトの名前（リポジトリの名前だけ）を持つ。 */
-export type ChatArchiveLineOrigin =
-  | { readonly mode: "chat" }
-  | { readonly mode: "work"; readonly project: string }
-
-/**
- * このセッションが仕事か雑談か。
- * `recall` と `recall_episode` のツールは両方のモードで載る（`chatRecall`）。
- */
+/** このセッションが仕事か雑談か。 */
 export type SessionMode =
   /** 仕事。覚えたことを書き換える口とあらすじの印の口は渡らない。 */
   | {
       readonly kind: "work"
-      readonly chatRecall: ChatRecall
       /** `report` の塊の型の渡し方（`Config.reportSchema`）。 */
       readonly reportSchema: ReportSchemaVariant
     }
@@ -194,7 +111,6 @@ export type SessionMode =
       /** 渡ったときだけ `remember` と `forget` のツールが `mcpServers` に載る。 */
       readonly personaMemory: PersonaMemory
       readonly chatSummary: ChatSummary
-      readonly chatRecall: ChatRecall
     }
 
 /** このセッションを新規に起こすか、続きから始めるか。続きから始める ID は、画面の切り替えで選ばれたもの。 */

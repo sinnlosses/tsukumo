@@ -5,10 +5,7 @@ import {
   type CallReview,
   createCallReview,
 } from "../../src/server/session-driver/core/call-review.ts"
-import type {
-  ChatRecall,
-  SessionMode,
-} from "../../src/server/session-driver/core/session-driver.ts"
+import type { SessionMode } from "../../src/server/session-driver/core/session-driver.ts"
 import type { QuestionBrief } from "../../src/shared/session-driver/question-brief.ts"
 import type { SessionEvent } from "../../src/shared/session/session-event.ts"
 import { fixedChatSummary } from "./chat.ts"
@@ -16,15 +13,8 @@ import { fixedChatSummary } from "./chat.ts"
 export const TOOL_EXPRESSIONS = [{ name: "default", label: "通常" }] as const
 export const FAKE_CWD = "/tmp/tsukumo-架空のcwd"
 
-export const NOT_FOUND_RECALL = {
-  recallList: () => ({ kind: "not-found" }),
-  recallEpisode: () => ({ kind: "not-found" }),
-  finishTurn: () => {},
-} satisfies ChatRecall
-
 export const WORK_MODE: SessionMode = {
   kind: "work",
-  chatRecall: NOT_FOUND_RECALL,
   reportSchema: "json-schema",
 }
 
@@ -35,7 +25,6 @@ export const CHAT_MODE: SessionMode = {
   kind: "chat",
   personaMemory: { remember: () => "written", forget: () => "erased", finishTurn: () => {} },
   chatSummary: fixedChatSummary(undefined),
-  chatRecall: NOT_FOUND_RECALL,
 }
 
 /** `report` に渡す締めのセリフ（架空）。 */

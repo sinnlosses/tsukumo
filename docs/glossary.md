@@ -237,14 +237,6 @@ tsukumo で使う固有の用語を、**日本語表記・コード上で使う�
 
 本文は `docs/glossary/memory.md`。
 
-### recall ツール
-
-本文は `docs/glossary/memory.md`。
-
-### recall_episode ツール
-
-本文は `docs/glossary/memory.md`。
-
 ### 覚えたこと
 
 本文は `docs/glossary/memory.md`。
@@ -266,10 +258,6 @@ tsukumo で使う固有の用語を、**日本語表記・コード上で使う�
 本文は `docs/glossary/conversation-archive.md`。
 
 ### 定着
-
-本文は `docs/glossary/conversation-archive.md`。
-
-### エピソード索引
 
 本文は `docs/glossary/conversation-archive.md`。
 

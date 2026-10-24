@@ -51,7 +51,6 @@ export const UNAVAILABLE_CHAT_SUMMARY: ChatSummary = {
   readTopics: () => [],
   readFold: () => ({ kind: "unknown" }),
   write: () => ({ kind: "failed" }),
-  writeFold: () => ({ kind: "failed" }),
   markUndelivered: () => {},
   markDelivered: () => {},
 }
@@ -81,10 +80,6 @@ export function createChatSummary(
       return written
         ? { kind: "written", droppedLines: truncated.droppedLines }
         : { kind: "failed" }
-    },
-    writeFold: (fold) => {
-      const current = readStored(paths) ?? EMPTY_STORED
-      return store(paths, { ...current, fold }) ? { kind: "written" } : { kind: "failed" }
     },
     markUndelivered: () => {
       store(paths, { ...(readStored(paths) ?? EMPTY_STORED), delivered: false })

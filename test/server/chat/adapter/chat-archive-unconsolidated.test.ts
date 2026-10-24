@@ -4,10 +4,8 @@ import { join } from "node:path"
 import { describe, expect, it } from "vitest"
 
 import { createChatArchive } from "../../../../src/server/chat/adapter/chat-archive.ts"
-import type {
-  ChatArchive,
-  ChatUnconsolidatedRange,
-} from "../../../../src/server/chat/core/chat-archive-port.ts"
+import type { ChatArchive } from "../../../../src/server/chat/core/chat-archive-port.ts"
+import type { ChatFoldPoint } from "../../../../src/server/session-driver/core/session-driver.ts"
 import { characterPackName } from "../../../fixture/character.ts"
 import { useTempDir } from "../../../fixture/temp-dir.ts"
 
@@ -46,7 +44,7 @@ describe("createChatArchive の unconsolidated", () => {
   // フィクスチャは手で書いた架空の依頼だけ（実物の会話は使わない）。1行12バイト（全角4文字）に
   // 揃えてあるので、上限（バイト）と落ちる件数の対応が読める。
   const TWELVE_BYTES = "あいうえ"
-  const AFTER_EPISODES = { kind: "after-episodes" } as const satisfies ChatUnconsolidatedRange
+  const FROM_START = { kind: "none" } as const satisfies ChatFoldPoint
 
   function appendRequest(chatArchive: ChatArchive, day: number, text: string): void {
     chatArchive.append(PACK, {
@@ -81,7 +79,7 @@ describe("createChatArchive の unconsolidated", () => {
     expect(chatArchive.appendedBytes(characterPackName("other-pack"))).toBe(0)
   })
 
-  it("エピソードが無ければアーカイブの最初から、窓の外の行を古い→新しいで返す", () => {
+  it("after が none ならアーカイブの最初から、窓の外の行を古い→新しいで返す", () => {
     const chatArchive = createChatArchive(root())
     appendRequest(chatArchive, 19, "19日の依頼")
     appendRequest(chatArchive, 20, "20日の依頼")
@@ -89,46 +87,35 @@ describe("createChatArchive の unconsolidated", () => {
 
     // 窓（recentBytes）には最新の1件だけが収まる大きさにする。
     const recentBytes = Buffer.byteLength("21日の依頼")
-    const { entries, usedBytes, previousEpisodeTitle, episodesThrough, overflowed } =
-      chatArchive.unconsolidated(PACK, { recentBytes, maxBytes: 1024 }, AFTER_EPISODES)
+    const { entries, usedBytes, overflowed } = chatArchive.unconsolidated(
+      PACK,
+      { recentBytes, maxBytes: 1024 },
+      FROM_START,
+    )
 
     expect(entries.map((entry) => entry.text)).toEqual(["19日の依頼", "20日の依頼"])
     expect(entries.map((entry) => entry.kind)).toEqual(["request", "request"])
-    expect(previousEpisodeTitle).toBe("")
-    expect(episodesThrough).toEqual({ kind: "none" })
     expect(usedBytes).toBe(Buffer.byteLength("19日の依頼") + Buffer.byteLength("20日の依頼"))
     expect(overflowed).toBe(false)
   })
 
-  it("最後のエピソードの to より後の行だけを返す", () => {
+  it("after の時刻より後の行だけを返す", () => {
     const chatArchive = createChatArchive(root())
     appendRequest(chatArchive, 19, "19日の依頼")
     appendRequest(chatArchive, 20, "20日の依頼")
     appendRequest(chatArchive, 21, "21日の依頼")
-    chatArchive.appendEpisodes(PACK, [
-      {
-        from: writtenAt(19),
-        to: writtenAt(19),
-        title: "架空の見出し",
-        gist: "架空の要旨。",
-        cues: [],
-        weight: 1,
-      },
-    ])
 
-    // 窓は使い切れないほど広く取り、to より後かどうかだけを見る。
-    const { entries, previousEpisodeTitle, episodesThrough } = chatArchive.unconsolidated(
+    // 窓は使い切れないほど広く取り、after より後かどうかだけを見る。
+    const { entries } = chatArchive.unconsolidated(
       PACK,
       { recentBytes: 0, maxBytes: 1024 },
-      AFTER_EPISODES,
+      { kind: "through", at: writtenAt(19) },
     )
 
     expect(entries.map((entry) => entry.text)).toEqual(["20日の依頼", "21日の依頼"])
-    expect(previousEpisodeTitle).toBe("架空の見出し")
-    expect(episodesThrough).toEqual({ kind: "through", at: writtenAt(19) })
   })
 
-  it("to と同じ日のファイルは、to より後の行だけを返す", () => {
+  it("after と同じ日のファイルは、after より後の行だけを返す", () => {
     const chatArchive = createChatArchive(root())
     appendRequest(chatArchive, 19, "19日の依頼")
     const hour = 3_600_000
@@ -146,16 +133,12 @@ describe("createChatArchive の unconsolidated", () => {
       })
     }
     appendRequest(chatArchive, 21, "21日の依頼")
-    // 20日の1行目（前の依頼）の時刻を to にする。
-    const to = writtenAt(20)
-    chatArchive.appendEpisodes(PACK, [
-      { from: writtenAt(19), to, title: "架空の見出し", gist: "架空の要旨。", cues: [], weight: 1 },
-    ])
 
+    // 20日の1行目（前の依頼）の時刻を after にする。
     const { entries } = chatArchive.unconsolidated(
       PACK,
       { recentBytes: 0, maxBytes: 1024 },
-      AFTER_EPISODES,
+      { kind: "through", at: writtenAt(20) },
     )
 
     expect(entries.map((entry) => entry.text)).toEqual(["20日の後の依頼", "21日の依頼"])
@@ -171,7 +154,7 @@ describe("createChatArchive の unconsolidated", () => {
     const { entries, usedBytes, overflowed } = chatArchive.unconsolidated(
       PACK,
       { recentBytes: 0, maxBytes: 13 },
-      AFTER_EPISODES,
+      FROM_START,
     )
 
     expect(entries.map((entry) => entry.text)).toEqual([TWELVE_BYTES])
@@ -187,7 +170,7 @@ describe("createChatArchive の unconsolidated", () => {
     const { entries, usedBytes, overflowed } = chatArchive.unconsolidated(
       PACK,
       { recentBytes: 0, maxBytes: 5 },
-      AFTER_EPISODES,
+      FROM_START,
     )
 
     expect(entries.map((entry) => entry.text)).toEqual([TWELVE_BYTES])
@@ -209,7 +192,7 @@ describe("createChatArchive の unconsolidated", () => {
     const { entries } = chatArchive.unconsolidated(
       PACK,
       { recentBytes: 0, maxBytes: 1024 },
-      AFTER_EPISODES,
+      FROM_START,
     )
 
     expect(entries.map(({ kind, origin, text }) => ({ kind, origin, text }))).toEqual([
@@ -220,53 +203,5 @@ describe("createChatArchive の unconsolidated", () => {
         text: "20日の結論",
       },
     ])
-  })
-
-  it.each([
-    {
-      name: "after の行より後で through まで。直前の見出しは to が after を過ぎない最後のエピソード",
-      after: () => ({ kind: "through", at: writtenAt(19) }) as const,
-      texts: ["20日の依頼"],
-      title: "19日の見出し",
-    },
-    {
-      name: "after が none ならアーカイブの最初から",
-      after: () => ({ kind: "none" }) as const,
-      texts: ["19日の依頼", "20日の依頼"],
-      title: "",
-    },
-  ])("between は $name", ({ after, texts, title }) => {
-    const chatArchive = createChatArchive(root())
-    for (const day of [19, 20, 21]) {
-      appendRequest(chatArchive, day, `${String(day)}日の依頼`)
-    }
-    chatArchive.appendEpisodes(PACK, [
-      {
-        from: writtenAt(19),
-        to: writtenAt(19),
-        title: "19日の見出し",
-        gist: "架空。",
-        cues: [],
-        weight: 1,
-      },
-      {
-        from: writtenAt(20),
-        to: writtenAt(20),
-        title: "20日の見出し",
-        gist: "架空。",
-        cues: [],
-        weight: 1,
-      },
-    ])
-
-    const batch = chatArchive.unconsolidated(
-      PACK,
-      { recentBytes: 0, maxBytes: 1024 },
-      { kind: "between", after: after(), through: writtenAt(20) },
-    )
-
-    expect(batch.entries.map((entry) => entry.text)).toEqual(texts)
-    expect(batch.previousEpisodeTitle).toBe(title)
-    expect(batch.episodesThrough).toEqual({ kind: "through", at: writtenAt(20) })
   })
 })

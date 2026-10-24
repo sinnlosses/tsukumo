@@ -11,16 +11,10 @@ import type {
   PersonaForgetResult,
   PersonaMemory,
   PersonaRememberResult,
-  SessionMode,
 } from "../../../../src/server/session-driver/core/session-driver.ts"
 import { fixedChatSummary } from "../../../fixture/chat.ts"
 import { callTool } from "../../../fixture/mcp-server.ts"
-import {
-  CHAT_MODE,
-  TOOL_EXPRESSIONS,
-  FAKE_CWD,
-  NOT_FOUND_RECALL,
-} from "../../../fixture/sdk-tool.ts"
+import { TOOL_EXPRESSIONS, FAKE_CWD } from "../../../fixture/sdk-tool.ts"
 
 describe("remember / forget ツール", () => {
   /** 渡す行（手で書いた架空のもの）。応答に混ざらないことを確かめる目印にもする。 */
@@ -37,7 +31,6 @@ describe("remember / forget ツール", () => {
           kind: "chat",
           personaMemory: memory,
           chatSummary: fixedChatSummary(undefined),
-          chatRecall: NOT_FOUND_RECALL,
         },
         createCallReview(),
         () => {},
@@ -171,120 +164,5 @@ describe("remember / forget ツール", () => {
 
     expect(texts).toHaveLength(rememberResults.length + 1 + forgetResults.length)
     expect(texts.filter((text) => text.includes("ZQX"))).toEqual([])
-  })
-})
-
-describe("recall / recall_episode ツール", () => {
-  it("recall は一覧の文面を、recall_episode は開いた1件の文面を返す（口が返したものをそのまま渡す）", async () => {
-    const chatMode: SessionMode = {
-      ...CHAT_MODE,
-      chatRecall: {
-        recallList: (keyword) => ({
-          kind: "found",
-          candidates: [{ id: `id-for-${keyword}`, title: "架空の見出し", gist: "架空の要旨" }],
-        }),
-        recallEpisode: (id) => ({
-          kind: "found",
-          entries: [
-            {
-              kind: "request",
-              origin: { mode: "chat" },
-              text: `${id} の架空のやり取り`,
-              date: "2026-09-25",
-            },
-          ],
-          overflowed: false,
-        }),
-        finishTurn: () => {},
-      },
-    }
-    // `McpSdkServerConfigWithInstance` は同時に1本の transport しか繋げないので、
-    // 呼び出しごとにサーバを作り直す（`callTool` が繋いで閉じる。他のテストと同じ手）。
-    const server = (): McpSdkServerConfigWithInstance =>
-      tsukumoServer(
-        TOOL_EXPRESSIONS,
-        chatMode,
-        createCallReview(),
-        () => {},
-        FAKE_CWD,
-        () => {},
-        () => {},
-        () => true,
-      )
-
-    const listReply = await callTool(server(), "recall", { keyword: "散歩" })
-    const episodeReply = await callTool(server(), "recall_episode", { id: "2026-09-25-1" })
-
-    expect(listReply.text).toContain("id-for-散歩")
-    expect(listReply.text).toContain("架空の見出し")
-    expect(episodeReply.text).toContain("2026-09-25-1 の架空のやり取り")
-  })
-
-  it("仕事のときも recall / recall_episode が引け、仕事の行が印つきで返る", async () => {
-    const workMode: SessionMode = {
-      kind: "work",
-      reportSchema: "json-schema",
-      chatRecall: {
-        recallList: () => ({ kind: "not-found" }),
-        recallEpisode: (id) => ({
-          kind: "found",
-          entries: [
-            {
-              kind: "conclusion",
-              origin: { mode: "work", project: "架空プロジェクト" },
-              text: `${id} の架空の結論`,
-              date: "2026-09-25",
-            },
-          ],
-          overflowed: false,
-        }),
-        finishTurn: () => {},
-      },
-    }
-
-    const reply = await callTool(
-      tsukumoServer(
-        TOOL_EXPRESSIONS,
-        workMode,
-        createCallReview(),
-        () => {},
-        FAKE_CWD,
-        () => {},
-        () => {},
-        () => true,
-      ),
-      "recall_episode",
-      { id: "2026-09-25-1" },
-    )
-
-    expect(reply.text).toContain("[仕事: 架空プロジェクト] したこと: 2026-09-25-1 の架空の結論")
-  })
-
-  it("当たらない・知らない id のときは短い一言だけで、会話の文面は入らない", async () => {
-    const chatMode: SessionMode = {
-      ...CHAT_MODE,
-      chatRecall: {
-        recallList: () => ({ kind: "not-found" }),
-        recallEpisode: () => ({ kind: "not-found" }),
-        finishTurn: () => {},
-      },
-    }
-    const server = (): McpSdkServerConfigWithInstance =>
-      tsukumoServer(
-        TOOL_EXPRESSIONS,
-        chatMode,
-        createCallReview(),
-        () => {},
-        FAKE_CWD,
-        () => {},
-        () => {},
-        () => true,
-      )
-
-    const listReply = await callTool(server(), "recall", { keyword: "架空" })
-    const episodeReply = await callTool(server(), "recall_episode", { id: "no-such-id" })
-
-    expect(listReply.text).not.toContain("利用者:")
-    expect(episodeReply.text).not.toContain("利用者:")
   })
 })

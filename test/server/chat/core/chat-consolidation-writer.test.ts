@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest"
 
 import type {
-  ChatEpisodeDraft,
   ChatUnconsolidatedBatch,
   ChatUnconsolidatedLimits,
 } from "../../../../src/server/chat/core/chat-archive-port.ts"
@@ -14,6 +13,7 @@ import {
   type ChatConsolidationQuery,
 } from "../../../../src/server/chat/core/chat-consolidation.ts"
 import type {
+  ChatFoldPoint,
   ChatSummary,
   ChatSummaryFold,
 } from "../../../../src/server/session-driver/core/session-driver.ts"
@@ -25,7 +25,7 @@ const PACK = characterPackName("fictional")
 
 // `query()` は差し替え、本物の claude は起こさない。
 
-/** 前の定着でエピソードとあらすじの両方が取り込んだ最後の行の時刻。 */
+/** 前の定着であらすじが取り込んだ最後の行の時刻。 */
 const PREVIOUS_FOLDED_AT = "2026-09-20T09:59:00+09:00"
 
 /** 契機にちょうど届いた量の、架空の未定着の行。 */
@@ -51,16 +51,10 @@ const DUE_BATCH: ChatUnconsolidatedBatch = {
     },
   ],
   usedBytes: CHAT_MEMORY_BUDGET.consolidateEveryBytes,
-  previousEpisodeTitle: "架空の直前の見出し",
-  episodesThrough: { kind: "through", at: PREVIOUS_FOLDED_AT },
   overflowed: false,
 }
 
 const VALID_OUTPUT = {
-  episodes: [
-    { end: 2, title: "架空の見出し1", gist: "架空の要旨1", cues: ["架空の手がかり"], weight: 2 },
-    { end: 3, title: "架空の見出し2", gist: "架空の要旨2", cues: ["架空の手がかり2"], weight: 1 },
-  ],
   synopsis: "架空の書き直したあらすじ",
   topics: ["架空の話題1", "架空の話題2"],
 }
@@ -68,23 +62,24 @@ const VALID_OUTPUT = {
 /** 前の写しの本文（話題の見出しは別の欄にある）。 */
 const PREVIOUS_SUMMARY = "架空の前のあらすじ"
 
-/** 呼ばれた順（索引の追記とあらすじの書き込み）と中身を覚える、メモリ上の口。 */
+/** 呼ばれた順（あらすじの書き込み）と中身を覚える、メモリ上の口。 */
 function createPorts(
   batch: ChatUnconsolidatedBatch,
   query: (request: ChatConsolidationQuery, signal: AbortSignal) => Promise<unknown>,
   lockAvailable: boolean = true,
   summaryWritable: boolean = true,
   droppedLines: number = 0,
+  initialFold: ChatSummaryFold = { kind: "through", at: PREVIOUS_FOLDED_AT },
 ) {
   const order: string[] = []
   const lockEvents: string[] = []
   const limits: ChatUnconsolidatedLimits[] = []
-  const episodes: ChatEpisodeDraft[] = []
+  const afters: ChatFoldPoint[] = []
   const queries: ChatConsolidationQuery[] = []
   const summaryPacks: string[] = []
   let summary = PREVIOUS_SUMMARY
   let topics: readonly string[] = ["架空の古い話題"]
-  let fold: ChatSummaryFold = { kind: "through", at: PREVIOUS_FOLDED_AT }
+  let fold: ChatSummaryFold = initialFold
   const chatSummary: ChatSummary = {
     read: () => ({ summary, delivered: true }),
     readTopics: () => topics,
@@ -96,11 +91,6 @@ function createPorts(
       fold = { kind: "through", at: foldedThrough }
       return summaryWritable ? { kind: "written", droppedLines } : { kind: "failed" }
     },
-    writeFold: (next) => {
-      order.push("write-fold")
-      fold = next
-      return { kind: "written" }
-    },
     markUndelivered: () => {},
     markDelivered: () => {},
   }
@@ -108,14 +98,10 @@ function createPorts(
   const write = createChatConsolidationWriter({
     archive: {
       appendedBytes: () => appended,
-      unconsolidated: (_packName, given) => {
+      unconsolidated: (_packName, given, after) => {
         limits.push(given)
+        afters.push(after)
         return batch
-      },
-      appendEpisodes: (_packName, drafts) => {
-        order.push("append-episodes")
-        episodes.push(...drafts)
-        return { kind: "written" }
       },
     },
     lockConsolidation: (packName, staleAfterMs, now) => {
@@ -144,7 +130,7 @@ function createPorts(
     order,
     lockEvents,
     limits,
-    episodes,
+    afters,
     queries,
     summaryPacks,
     appendBytes: (bytes: number) => {
@@ -233,8 +219,6 @@ describe("createChatConsolidationWriter", () => {
           },
         ],
         usedBytes: CHAT_MEMORY_BUDGET.consolidateEveryBytes * 2 + 1,
-        previousEpisodeTitle: "",
-        episodesThrough: { kind: "none" as const },
         overflowed: true,
       },
     ],
@@ -250,16 +234,11 @@ describe("createChatConsolidationWriter", () => {
           },
         ],
         usedBytes: CHAT_MEMORY_BUDGET.consolidateEveryBytes - 1,
-        previousEpisodeTitle: "",
-        episodesThrough: { kind: "none" as const },
         overflowed: true,
       },
     ],
   ])("%s は overflowed が立っていれば query() を起こす", async (_name, batch) => {
     const singleEntryOutput = {
-      episodes: [
-        { end: 1, title: "架空の見出し", gist: "架空の要旨", cues: ["架空の手がかり"], weight: 2 },
-      ],
       synopsis: "架空の書き直したあらすじ",
       topics: ["架空の話題1"],
     }
@@ -285,7 +264,7 @@ describe("createChatConsolidationWriter", () => {
     })
   })
 
-  it("届いていれば、前のあらすじ（話題の見出しを除く）と直前の見出しを渡し、エピソード → あらすじの順に書いて、書いたファイルの話題を返す", async () => {
+  it("届いていれば、あらすじの印より後の行と前のあらすじ（話題の見出しを除く）を渡し、あらすじを書いて、書いたファイルの話題を返す", async () => {
     const ports = createPorts(DUE_BATCH, () => Promise.resolve(VALID_OUTPUT))
 
     const outcome = await ports.write(PACK, NEVER_ABORTED)
@@ -298,23 +277,11 @@ describe("createChatConsolidationWriter", () => {
     })
     const prompt = ports.queries[0]?.prompt ?? ""
     expect(prompt).toContain("架空の前のあらすじ")
-    expect(prompt).toContain("架空の直前の見出し")
     expect(prompt).not.toContain("架空の古い話題")
     expect(prompt).not.toContain("<topics>")
 
-    expect(ports.order).toEqual(["append-episodes", "write-summary"])
-    expect(ports.episodes.map(({ from, to, title }) => ({ from, to, title }))).toEqual([
-      {
-        from: "2026-09-20T10:00:00+09:00",
-        to: "2026-09-20T10:01:00+09:00",
-        title: "架空の見出し1",
-      },
-      {
-        from: "2026-09-20T10:02:00+09:00",
-        to: "2026-09-20T10:02:00+09:00",
-        title: "架空の見出し2",
-      },
-    ])
+    expect(ports.afters).toEqual([{ kind: "through", at: PREVIOUS_FOLDED_AT }])
+    expect(ports.order).toEqual(["write-summary"])
     // 本文には話題を埋め込まず、見出しは別の欄に書く。
     expect(ports.summary()).toBe("架空の書き直したあらすじ")
     expect(ports.topics()).toEqual(["架空の話題1", "架空の話題2"])
@@ -322,13 +289,26 @@ describe("createChatConsolidationWriter", () => {
     expect(ports.summaryPacks).toEqual([PACK])
   })
 
-  it("出力の形が崩れているときは unreadable-result（shape-coverage）で、索引にもあらすじにも書かない", async () => {
-    const ports = createPorts(DUE_BATCH, () => Promise.resolve({ ...VALID_OUTPUT, episodes: [] }))
+  it.each([
+    ["まだ1行も畳んでいない", { kind: "none" }, { kind: "none" }],
+    ["印を持たない写し（無い・旧い形）", { kind: "unknown" }, { kind: "none" }],
+  ] as const)("あらすじが%sときはアーカイブの最初から読む", async (_name, fold, after) => {
+    const ports = createPorts(DUE_BATCH, () => Promise.resolve(VALID_OUTPUT), true, true, 0, fold)
+
+    expect((await ports.write(PACK, NEVER_ABORTED)).kind).toBe("written")
+    expect(ports.afters).toEqual([after])
+    expect(ports.fold()).toEqual({ kind: "through", at: "2026-09-20T10:02:00+09:00" })
+  })
+
+  it("出力の形が崩れているときは unreadable-result（shape-topics）で、あらすじに書かない", async () => {
+    const ports = createPorts(DUE_BATCH, () =>
+      Promise.resolve({ ...VALID_OUTPUT, topics: ["架空1", "架空2", "架空3", "架空4"] }),
+    )
 
     expect(await ports.write(PACK, NEVER_ABORTED)).toEqual({
       kind: "failed",
       reason: "unreadable-result",
-      rejection: "shape-coverage",
+      rejection: "shape-topics",
     })
     expect(ports.order).toEqual([])
     expect(ports.summary()).toBe(PREVIOUS_SUMMARY)
@@ -343,7 +323,7 @@ describe("createChatConsolidationWriter", () => {
     "あらすじが%sときは unreadable-result で理由を返し、何も書かない",
     async (_name, synopsis, rejection) => {
       const ports = createPorts(DUE_BATCH, () => Promise.resolve({ ...VALID_OUTPUT, synopsis }))
-      ports.setSummary("あ".repeat(CHAT_CONSOLIDATION_LIMITS.gistChars))
+      ports.setSummary("あ".repeat(CHAT_CONSOLIDATION_LIMITS.synopsisCompareMinChars))
 
       expect(await ports.write(PACK, NEVER_ABORTED)).toEqual({
         kind: "failed",
@@ -357,7 +337,7 @@ describe("createChatConsolidationWriter", () => {
   it("縮みの検査に続けて落ちると、synopsisShrinkWaiveAt 回目は縮んだまま書き、書けたら数え直す", async () => {
     let synopsis = "あ"
     const ports = createPorts(DUE_BATCH, () => Promise.resolve({ ...VALID_OUTPUT, synopsis }))
-    const longPrevious = "あ".repeat(CHAT_CONSOLIDATION_LIMITS.gistChars)
+    const longPrevious = "あ".repeat(CHAT_CONSOLIDATION_LIMITS.synopsisCompareMinChars)
     const shrunkFailure = {
       kind: "failed",
       reason: "unreadable-result",
@@ -385,7 +365,7 @@ describe("createChatConsolidationWriter", () => {
   it("縮みで落ちた回数はパックごとに数える", async () => {
     const ports = createPorts(DUE_BATCH, () => Promise.resolve({ ...VALID_OUTPUT, synopsis: "あ" }))
     const writeOnce = async (packName: CharacterPackName) => {
-      ports.setSummary("あ".repeat(CHAT_CONSOLIDATION_LIMITS.gistChars))
+      ports.setSummary("あ".repeat(CHAT_CONSOLIDATION_LIMITS.synopsisCompareMinChars))
       return ports.write(packName, NEVER_ABORTED)
     }
 
@@ -399,7 +379,7 @@ describe("createChatConsolidationWriter", () => {
     })
   })
 
-  it("query() が reject したときは threw で例外を運び、索引にもあらすじにも書かない", async () => {
+  it("query() が reject したときは threw で例外を運び、あらすじに書かない", async () => {
     const failure = new Error("架空の失敗")
     const ports = createPorts(DUE_BATCH, () => Promise.reject(failure))
 

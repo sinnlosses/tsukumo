@@ -1,7 +1,6 @@
 // 定着を1回走らせて書く口。
-// 未定着の行を数え、契機に届いていれば使い捨ての `query()` に畳ませ、検査を通ったものをエピソード → あらすじの順で書く。
-// どこまで畳んだかはエピソードが決め、あらすじは取り込んだ最後の行の時刻を印に持つ。
-// 印がエピソードの終わりより前なら（エピソードを書いたあと、あらすじを書く前に落ちた続き）、その間の行からあらすじだけを書き直す。
+// 未定着の行を数え、契機に届いていれば使い捨ての `query()` に畳ませ、検査を通ったあらすじと話題を書く。
+// どこまで畳んだかはあらすじの写しの印（取り込んだ最後の行の時刻）が決め、次の回はその後の行から読む。
 // ここは1回ぶんだけを持つ。
 // プロセスをまたいで1本に絞るのは定着の錠で、プロセスの中で1本に絞るのは呼び出し側。
 //
@@ -9,7 +8,7 @@
 // 行は未定着のまま残り、次の契機で拾い直される。
 //
 // 渡す行も前のあらすじも受け取る出力も会話の内容に当たる。
-// メモリにだけ持ち、書くのは索引とあらすじのファイルだけで、ログには出さない。
+// メモリにだけ持ち、書くのはあらすじのファイルだけで、ログには出さない。
 // 書いてよい範囲と定着の `query()` へ渡してよい範囲は `docs/coding-standards.md`「会話内容の扱い」の例外の表が決めている。
 
 import type { CharacterPackName } from "../../../shared/character-pack/character.ts"
@@ -21,7 +20,7 @@ import type {
 } from "../../session-driver/core/session-driver.ts"
 import type {
   ChatArchive,
-  ChatUnconsolidatedBatch,
+  ChatUnconsolidatedEntry,
   ChatUnconsolidatedLimits,
 } from "./chat-archive-port.ts"
 import {
@@ -34,13 +33,11 @@ import {
   type ChatConsolidationRejection,
   type ChatConsolidationResult,
   chatConsolidationQuery,
-  chatEpisodeDrafts,
   type ChatConsolidationQuery,
   chatSynopsisShrunk,
   parseChatConsolidationResult,
   readChatTopics,
 } from "./chat-consolidation.ts"
-import { isBeforeAt } from "./chat-instant-order.ts"
 
 /**
  * 1回ぶんの結果。
@@ -54,7 +51,6 @@ import { isBeforeAt } from "./chat-instant-order.ts"
  *   - `aborted`: 中断・時間切れ
  *   - `unreadable-result`: 結果が検査を通らない。`rejection` が落ちた理由（`synopsis-shrunk` は前のあらすじから縮みすぎ）
  *   - `summary-write`: あらすじの写しが書けなかった
- *   - `episode-write`: エピソードの索引が書けなかった（あらすじも書かない）
  *   - `query-result`: `query()` の result が成功でなかった。`resultKind` が SDK の `subtype`
  *   - `threw`: 上以外の例外（起こせない・API の失敗など）。`error` は受け取った側が `error.name` と code だけを写す
  */
@@ -68,7 +64,7 @@ export type ChatConsolidationOutcome =
       readonly droppedLines: number
       readonly shrinkWaived: boolean
     }
-  | { readonly kind: "failed"; readonly reason: "aborted" | "summary-write" | "episode-write" }
+  | { readonly kind: "failed"; readonly reason: "aborted" | "summary-write" }
   | {
       readonly kind: "failed"
       readonly reason: "unreadable-result"
@@ -127,8 +123,8 @@ export type ChatConsolidationLock = {
 
 /** 書く口に外の世界から渡すもの（配線が渡す）。 */
 export type ChatConsolidationWriterPorts = {
-  /** 定着の入力の行の取り出しとエピソードの追記。 */
-  readonly archive: Pick<ChatArchive, "unconsolidated" | "appendEpisodes" | "appendedBytes">
+  /** 定着の入力の行の取り出し。 */
+  readonly archive: Pick<ChatArchive, "unconsolidated" | "appendedBytes">
   /**
    * そのパックの定着の錠を取る。プロセスをまたいで1本だけが取れる。
    * 取れなければ undefined（ほかの誰かが走らせている）。
@@ -216,7 +212,6 @@ export function chatConsolidationBackoffEffect(
           return outcome.rejection === "synopsis-shrunk" ? "keep" : "count"
         case "aborted":
         case "summary-write":
-        case "episode-write":
           return "keep"
       }
   }
@@ -287,12 +282,11 @@ async function consolidateLocked(
 ): Promise<ChatConsolidationOutcome> {
   try {
     const chatSummary = ports.chatSummary(packName)
-    const batch = ports.archive.unconsolidated(packName, BATCH_LIMITS, { kind: "after-episodes" })
-    const fold = chatSummary.readFold()
-    const alignment = summaryAlignment(fold, batch.episodesThrough)
-    if (alignment.kind === "behind") {
-      return await resummarize(ports, shrinkTally, packName, chatSummary, alignment, signal)
-    }
+    const batch = ports.archive.unconsolidated(
+      packName,
+      BATCH_LIMITS,
+      foldPointOf(chatSummary.readFold()),
+    )
 
     // maxBytes に届いて打ち切ったとき（先頭の1件だけで超えるときを含む）は、契機に届いていなくてもここまでを渡す。
     // 待つと、残りの行がずっと畳まれなくなる。
@@ -305,22 +299,9 @@ async function consolidateLocked(
       return NOT_DUE
     }
 
-    const folded = await foldBatch(ports, shrinkTally, packName, chatSummary, batch, signal)
+    const folded = await foldBatch(ports, shrinkTally, packName, chatSummary, batch.entries, signal)
     if (folded.kind === "failed") {
       return folded
-    }
-    const { result } = folded
-
-    // 印を持たない写しは、追記の前にいまのエピソードの終わりを印にする（追記のあとで落ちても、次の回が食い違いに気づける）。
-    if (fold.kind === "unknown" && chatSummary.writeFold(batch.episodesThrough).kind === "failed") {
-      return { kind: "failed", reason: "summary-write" }
-    }
-    const appended = ports.archive.appendEpisodes(
-      packName,
-      chatEpisodeDrafts(batch.entries, result.episodes),
-    )
-    if (appended.kind === "failed") {
-      return { kind: "failed", reason: "episode-write" }
     }
     return writeSynopsis(shrinkTally, packName, chatSummary, folded, lastEntry.at)
   } catch (error) {
@@ -340,59 +321,9 @@ const BATCH_LIMITS = {
   maxBytes: CHAT_MEMORY_BUDGET.consolidateEveryBytes * 2,
 } as const satisfies ChatUnconsolidatedLimits
 
-/**
- * あらすじとエピソードの食い違い。
- * `behind` はあらすじが `after` で止まり、エピソードが `through` まで進んでいる（追記のあと、あらすじを書く前に落ちた続き）。
- */
-type SummaryAlignment =
-  | { readonly kind: "aligned" }
-  | { readonly kind: "behind"; readonly after: ChatFoldPoint; readonly through: string }
-
-/** 印が分からない写しは、エピソードと揃っているとみなす（消された写しの前の話を畳み直さない）。 */
-function summaryAlignment(fold: ChatSummaryFold, episodesThrough: ChatFoldPoint): SummaryAlignment {
-  if (fold.kind === "unknown" || episodesThrough.kind === "none") {
-    return { kind: "aligned" }
-  }
-  if (fold.kind === "none" || isBeforeAt(fold.at, episodesThrough.at)) {
-    return { kind: "behind", after: fold, through: episodesThrough.at }
-  }
-  return { kind: "aligned" }
-}
-
-/**
- * エピソードには入ったがあらすじに入っていない行から、あらすじと話題だけを書き直す。
- * 索引には足さない（返ってきたエピソードは捨てる）。
- */
-async function resummarize(
-  ports: ChatConsolidationWriterPorts,
-  shrinkTally: ShrinkTally,
-  packName: CharacterPackName,
-  chatSummary: ChatSummary,
-  behind: Extract<SummaryAlignment, { kind: "behind" }>,
-  signal: AbortSignal,
-): Promise<ChatConsolidationOutcome> {
-  const batch = ports.archive.unconsolidated(packName, BATCH_LIMITS, {
-    kind: "between",
-    after: behind.after,
-    through: behind.through,
-  })
-  const lastEntry = batch.entries.at(-1)
-  // 読み直せる行が無い（アーカイブから消えた）ときは、印だけをエピソードの終わりへ進める。
-  if (lastEntry === undefined) {
-    return chatSummary.writeFold({ kind: "through", at: behind.through }).kind === "written"
-      ? {
-          kind: "written",
-          topics: readChatTopics(chatSummary),
-          droppedLines: 0,
-          shrinkWaived: false,
-        }
-      : { kind: "failed", reason: "summary-write" }
-  }
-  const folded = await foldBatch(ports, shrinkTally, packName, chatSummary, batch, signal)
-  if (folded.kind === "failed") {
-    return folded
-  }
-  return writeSynopsis(shrinkTally, packName, chatSummary, folded, lastEntry.at)
+/** 印を持たない写し（無い・旧い形）は、まだ1行も畳んでいないものとしてアーカイブの最初から読む。 */
+function foldPointOf(fold: ChatSummaryFold): ChatFoldPoint {
+  return fold.kind === "unknown" ? { kind: "none" } : fold
 }
 
 type FoldedBatch = {
@@ -407,19 +338,12 @@ async function foldBatch(
   shrinkTally: ShrinkTally,
   packName: CharacterPackName,
   chatSummary: ChatSummary,
-  batch: ChatUnconsolidatedBatch,
+  entries: readonly ChatUnconsolidatedEntry[],
   signal: AbortSignal,
 ): Promise<FoldedBatch | Extract<ChatConsolidationOutcome, { kind: "failed" }>> {
   const previousSynopsis = chatSummary.read()?.summary ?? ""
-  const request = chatConsolidationQuery({
-    entries: batch.entries,
-    previousSynopsis,
-    previousEpisodeTitle: batch.previousEpisodeTitle,
-  })
-  const check = parseChatConsolidationResult(
-    await ports.query(request, signal),
-    batch.entries.length,
-  )
+  const request = chatConsolidationQuery({ entries, previousSynopsis })
+  const check = parseChatConsolidationResult(await ports.query(request, signal))
   // 中断・時間切れのあとに届いた結果は書かない（呼び出し側はもう次の1本を起こしうる）。
   if (signal.aborted) {
     return ABORTED

@@ -9,21 +9,13 @@ import { CHAT_MODE, TOOL_EXPRESSIONS, FAKE_CWD, workServer } from "../../../fixt
 // `tools/call` で確かめる（サーバの中身を覗かず、公開された口だけを通す）。
 
 describe("tsukumoServer", () => {
-  it("仕事のときは report と work_plan と phase_result と question_brief と recall / recall_episode が載り、remember / forget と見直しの2つは載らない", async () => {
+  it("仕事のときは report と work_plan と phase_result と question_brief が載り、remember / forget と見直しの2つは載らない", async () => {
     const names = await listedToolNames(workServer())
 
-    expect(names).toEqual([
-      "speak",
-      "recall",
-      "recall_episode",
-      "report",
-      "work_plan",
-      "phase_result",
-      "question_brief",
-    ])
+    expect(names).toEqual(["speak", "report", "work_plan", "phase_result", "question_brief"])
   })
 
-  it("雑談のときは recall と recall_episode の2段階が載り、keep と index はもう載らない", async () => {
+  it("雑談のときは remember と forget が載り、recall / recall_episode は載らない", async () => {
     const names = await listedToolNames(
       tsukumoServer(
         TOOL_EXPRESSIONS,
@@ -37,6 +29,6 @@ describe("tsukumoServer", () => {
       ),
     )
 
-    expect(names).toEqual(["speak", "recall", "recall_episode", "remember", "forget"])
+    expect(names).toEqual(["speak", "remember", "forget"])
   })
 })

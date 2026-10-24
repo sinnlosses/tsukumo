@@ -109,18 +109,6 @@ describe("createChatSummary", () => {
       expect(chatSummary.readFold()).toEqual({ kind: "through", at: FOLDED_AT })
     })
 
-    it("writeFold は本文・話題・印を保ったまま、取り込んだところだけを書く", () => {
-      const chatSummary = createChatSummary(PACK, root())
-      chatSummary.write(SUMMARY, ["架空の見出し"], FOLDED_AT)
-      chatSummary.markDelivered()
-
-      expect(chatSummary.writeFold({ kind: "none" })).toEqual({ kind: "written" })
-
-      expect(chatSummary.readFold()).toEqual({ kind: "none" })
-      expect(chatSummary.read()).toEqual({ summary: SUMMARY, delivered: true })
-      expect(chatSummary.readTopics()).toEqual(["架空の見出し"])
-    })
-
     it("markDelivered・markUndelivered は取り込んだところを変えない", () => {
       const chatSummary = createChatSummary(PACK, root())
       chatSummary.write(SUMMARY, [], FOLDED_AT)
@@ -409,7 +397,6 @@ describe("createChatSummary", () => {
   describe("UNAVAILABLE_CHAT_SUMMARY", () => {
     it("読み書きとも何もしない", () => {
       expect(UNAVAILABLE_CHAT_SUMMARY.write(SUMMARY, [], FOLDED_AT)).toEqual({ kind: "failed" })
-      expect(UNAVAILABLE_CHAT_SUMMARY.writeFold({ kind: "none" })).toEqual({ kind: "failed" })
       expect(UNAVAILABLE_CHAT_SUMMARY.read()).toBeUndefined()
       expect(UNAVAILABLE_CHAT_SUMMARY.readTopics()).toEqual([])
       expect(UNAVAILABLE_CHAT_SUMMARY.readFold()).toEqual({ kind: "unknown" })

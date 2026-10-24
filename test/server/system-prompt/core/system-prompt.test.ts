@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 
+import type { ChatArchiveRecentEntry } from "../../../../src/server/chat/core/chat-archive-port.ts"
 import { CHAT_MANNER_PROMPT } from "../../../../src/server/chat/core/chat-manner.ts"
 import {
   type ReadRecent,
@@ -9,7 +10,6 @@ import {
 import { REPORT_NOTATION_PROMPT } from "../../../../src/server/report/core/report-notation.ts"
 import { QUESTION_NOTATION_PROMPT } from "../../../../src/server/session-driver/core/question-notation.ts"
 import type {
-  ChatArchiveRecentEntry,
   ChatSummary,
   SessionMode,
   SessionStart,
@@ -131,11 +131,6 @@ describe("toSystemPromptMode", () => {
       kind: "chat",
       personaMemory: { remember: () => "written", forget: () => "erased", finishTurn: () => {} },
       chatSummary,
-      chatRecall: {
-        recallList: () => ({ kind: "not-found" }),
-        recallEpisode: () => ({ kind: "not-found" }),
-        finishTurn: () => {},
-      },
     }
 
     const mode = toSystemPromptMode(sessionMode, READ_RECENT, () => undefined, { kind: "new" })
@@ -156,11 +151,6 @@ describe("toSystemPromptMode", () => {
     const sessionMode: SessionMode = {
       kind: "work",
       reportSchema: "json-schema",
-      chatRecall: {
-        recallList: () => ({ kind: "not-found" }),
-        recallEpisode: () => ({ kind: "not-found" }),
-        finishTurn: () => {},
-      },
     }
 
     const mode = toSystemPromptMode(sessionMode, READ_RECENT, readChatSummary, {

@@ -58,7 +58,7 @@ sed -n '/^## shared/,/^## /p' docs/architecture/shared-contract.md
 | ## shared                       | **両側が共有する契約**。イベント・状態・コマンド・フレーム・版                                                                                                        |
 | ## core と adapter              | 判断（core）と境界（adapter）の境目、SDK に触るファイルの分け方、代の持ち物、ツールで受け取るものと使い捨ての `query()` の形                                          |
 | ## セッションの復元と複数化     | 復元を新しい形に載せる。複数化をやらないこと。ビューの本文の持ち方と再接続                                                                                            |
-| ## 会話内容と安全               | `127.0.0.1`・Origin・起動トークン・ディスクに書く4つの例外と読み戻す口・定着・ブラウザ側のメモリ                                                                      |
+| ## 会話内容と安全               | `127.0.0.1`・Origin・起動トークン・ディスクに書く3つの例外と読み戻す口・定着・ブラウザ側のメモリ                                                                      |
 | ## 設計判断（なぜ今の形なのか） | 今の形を別の形に直そうとする前に、一覧から該当する ADR を読む                                                                                                         |
 
 本文は 16 の子のファイル（`docs/architecture/` の直下）に分けてある。節の見出しはここに残し、中身は移し先を引く。
@@ -77,7 +77,7 @@ sed -n '/^## shared/,/^## /p' docs/architecture/shared-contract.md
 - `docs/architecture/core-and-adapter.md`: core と adapter
 - `docs/architecture/session-restore.md`: セッションの復元と複数化
 - `docs/architecture/conversation-safety.md`: 会話内容と安全の前半（境界: バインド先・Origin・起動トークン・ディスク・ブラウザ側のメモリ・CSP・ログ）
-- `docs/architecture/conversation-safety-chat-memory.md`: 会話内容と安全の中盤（雑談の記憶: 定着・あらすじ・会話のアーカイブ・エピソード索引・直近の雑談の読み戻し・雑談の画像・人格への書き戻し）
+- `docs/architecture/conversation-safety-chat-memory.md`: 会話内容と安全の中盤（雑談の記憶: 定着・あらすじ・会話のアーカイブ・直近の雑談の読み戻し・雑談の画像・人格への書き戻し）
 - `docs/architecture/conversation-safety-local-record.md`: 会話内容と安全の後半（手元の記録・テストのフィクスチャと、表のあとの前提）
 
 ## 全体構成

@@ -13,17 +13,8 @@ export const NOOP_CHAT_ARCHIVE = {
   append: () => {},
   writeImage: () => Promise.resolve({ kind: "failed", error: undefined }),
   readRecent: () => [],
-  unconsolidated: () => ({
-    entries: [],
-    usedBytes: 0,
-    previousEpisodeTitle: "",
-    episodesThrough: { kind: "none" },
-    overflowed: false,
-  }),
+  unconsolidated: () => ({ entries: [], usedBytes: 0, overflowed: false }),
   appendedBytes: () => 0,
-  appendEpisodes: () => ({ kind: "written" }),
-  recallList: () => ({ kind: "not-found" }),
-  recallEpisode: () => ({ kind: "not-found" }),
 } satisfies ChatArchive
 
 /** 読むと `record` を返し続け、書き込みは捨てる `ChatSummary`。 */
@@ -33,7 +24,6 @@ export function fixedChatSummary(record: ChatSummaryRecord | undefined): ChatSum
     readTopics: () => [],
     readFold: () => ({ kind: "unknown" }),
     write: () => ({ kind: "written", droppedLines: 0 }),
-    writeFold: () => ({ kind: "written" }),
     markUndelivered: () => {},
     markDelivered: () => {},
   }
@@ -53,10 +43,6 @@ export function inMemoryChatSummary(initial: ChatSummaryRecord | undefined): Cha
       topics = nextTopics
       fold = { kind: "through", at: foldedThrough }
       return { kind: "written", droppedLines: 0 }
-    },
-    writeFold: (next) => {
-      fold = next
-      return { kind: "written" }
     },
     markUndelivered: () => {
       record = { summary: record?.summary ?? "", delivered: false }

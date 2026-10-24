@@ -186,8 +186,6 @@ describe("createSessionManager", () => {
 
       const rejections = [
         "shape-structure",
-        "shape-episode",
-        "shape-coverage",
         "shape-topics",
         "synopsis-empty",
         "synopsis-too-long",
@@ -230,8 +228,6 @@ describe("createSessionManager", () => {
           .map((entry) => entry.place.place),
       ).toEqual([
         "consolidation-shape-structure",
-        "consolidation-shape-episode",
-        "consolidation-shape-coverage",
         "consolidation-shape-topics",
         "consolidation-synopsis-empty",
         "consolidation-synopsis-too-long",
