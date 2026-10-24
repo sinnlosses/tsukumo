@@ -74,7 +74,6 @@ export function workServer(
     (briefs) => {
       heldBriefs.push(briefs)
     },
-    () => {},
     () => true,
   )
 }

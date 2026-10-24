@@ -1,5 +1,5 @@
 // tsukumo がプロセス内の MCP サーバとして提供するツール。
-// `speak` と `recall` / `recall_episode`、雑談のときの `remember` / `forget`、仕事のときの `report` / `work_plan` / `question_brief` / `clear_and_send`。
+// `speak` と `recall` / `recall_episode`、雑談のときの `remember` / `forget`、仕事のときの `report` / `work_plan` / `question_brief`。
 // `diary` と `usage_review_*` はここには載らない（どちらも会話とは別の使い捨ての問い合わせ。`queryDiary` / `queryUsageReview`）。
 //
 // サーバの名前とツールの名前は `TSUKUMO_MCP_SERVER_NAME` と `*_TOOL_NAME` が持つ。
@@ -15,12 +15,7 @@ import { TSUKUMO_MCP_SERVER_NAME } from "../core/tsukumo-tool-name.ts"
 import { forgetTool, recallEpisodeTool, recallTool, rememberTool } from "./sdk-memory-tool.ts"
 import { reportTool } from "./sdk-report-tool.ts"
 import { speakTool } from "./sdk-speech-tool.ts"
-import {
-  clearAndSendTool,
-  phaseResultTool,
-  questionBriefTool,
-  workPlanTool,
-} from "./sdk-work-tool.ts"
+import { phaseResultTool, questionBriefTool, workPlanTool } from "./sdk-work-tool.ts"
 
 /**
  * プロセス内の MCP サーバ。
@@ -41,7 +36,6 @@ import {
  * `phase_result` も仕事のときだけで、帯を動かす口は変換ではなく handler（帯を動かしたら `delegate-returned` を流す）。
  * 変換は委譲先の呼び出しから、次の返却に `phase_result` が伴った印だけを作る。
  * `question_brief` も仕事のときだけで、返すのは崩れた添え書きの直し方だけ。受け付けた添え書きは `holdBrief` に預ける。
- * `clear_and_send` も仕事のときだけで、返すのは "ok" だけ。渡された文面は `holdClearAndSend` に預ける。
  *
  * セリフそのものは、この handler ではなく `assistant` メッセージの変換から取り出す（`toSessionEvents`）。
  * 受け取り口を1つにしておくと、イベントの流れが1本で済む。
@@ -56,7 +50,6 @@ export function tsukumoServer(
   cwd: string,
   onEvent: (event: SessionEvent) => void,
   holdBrief: (briefs: readonly QuestionBrief[]) => void,
-  holdClearAndSend: (text: string) => void,
   allowsRemember: () => boolean,
 ) {
   return createSdkMcpServer({
@@ -72,7 +65,6 @@ export function tsukumoServer(
             workPlanTool(callReview),
             phaseResultTool(callReview, onEvent),
             questionBriefTool(holdBrief),
-            clearAndSendTool(holdClearAndSend),
           ]
         : []),
       ...(mode.kind === "chat"

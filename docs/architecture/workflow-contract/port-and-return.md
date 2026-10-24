@@ -2,7 +2,7 @@
 
 ステータス: **正典**。入口は `docs/architecture/workflow-contract.md`（ワークフローの契約の全体）。
 
-責務: tsukumo がワークフローから受ける3つの口（`work_plan`・`report`・`clear_and_send`）の名前と引数の意味、委譲先の返却（`phase_result`）での帯の進め方、委譲ゲートを持つ。
+責務: tsukumo がワークフローから受ける2つの口（`work_plan`・`report`）の名前と引数の意味、委譲先の返却（`phase_result`）での帯の進め方、委譲ゲートを持つ。
 読む時: 口の引数を変える・使う、帯の進め方や委譲ゲートを直すとき。
 直す時: 口の引数・委譲の返却の書式と帯の進め方・委譲ゲートを変えたとき。
 
@@ -10,13 +10,13 @@
 
 | 節            | 中身                                                                |
 | ------------- | ------------------------------------------------------------------- |
-| ## 口         | 3つの口の名前と引数の意味                                           |
+| ## 口         | 2つの口の名前と引数の意味                                           |
 | ## 委譲の返却 | `phase_result` での帯の進め方、委譲ゲート、ワークプラン前の編集の門 |
 
 ## 口
 
-口は MCP ツール `work_plan` と `report` と `clear_and_send`、委譲先が呼ぶ `phase_result`（`docs/architecture/workflow-contract/skill-sequence.md`「スキルの契約」）。意味はツールの説明（`src/server/session-driver/core/work-plan-tool.ts`・
-`src/server/report/core/report-tool.ts`・`src/server/session-driver/core/clear-and-send.ts`・`src/server/session-driver/core/phase-result-tool.ts`）とシステムプロンプトの「ワークプラン（tsukumo）」の節がモデルに教える。
+口は MCP ツール `work_plan` と `report`、委譲先が呼ぶ `phase_result`（`docs/architecture/workflow-contract/skill-sequence.md`「スキルの契約」）。意味はツールの説明（`src/server/session-driver/core/work-plan-tool.ts`・
+`src/server/report/core/report-tool.ts`・`src/server/session-driver/core/phase-result-tool.ts`）とシステムプロンプトの「ワークプラン（tsukumo）」の節がモデルに教える。
 
 `work_plan`（ワークプラン。毎回段の並びごと渡す）:
 
@@ -49,18 +49,6 @@ tsukumo は帯の段の名前を見ず、欄があるときだけ描く（段の
 `task.outcome` は目録の1行の終わり方で、帯は閉じない。どこへ送ったかは tsukumo の関心にしない。
 `task.genre` は種類ごとの既定の節の並びを選ぶだけで、描き方も差し戻しも変えない（並びの正典は `REPORT_TASK_DESCRIPTION`）。
 `checks` に `ng` の行がある `report` の `finished` は差し戻す（`docs/architecture/display.md`「出力の分離（セリフと詳細）」）。
-
-`clear_and_send`（文脈を空にして次の依頼を送る。仕事のときだけ載る）:
-
-| 引数   | 意味                                                                                               |
-| ------ | -------------------------------------------------------------------------------------------------- |
-| `text` | 文脈を空にしたあとに最初の依頼として送る文面。呼んだ時点では何も送らず、tsukumo が文面だけを預かる |
-
-呼んだターンが成功で終わると、tsukumo が `/clear` → `text` の順に続けて積む（`/clear` の完了は待たない）。
-2つとも利用者の依頼と同じく列に出る。呼ばれたら送るだけで、いつ呼ぶかはワークフローが決める。
-呼んだら `report` を渡してターンを終える。預かりは1つで、2回呼ぶと後のほうに置き換わる。
-次のときは何も送らず、預かりを捨てる（画面にも知らせない）: ターンが中断・失敗で終わった・呼んだあとに利用者が
-依頼か脇の話を送った・ターンの終わりに答え待ちが残っている・セッションが終わった。
 
 ## 委譲の返却
 

@@ -161,10 +161,6 @@ tsukumo で使う固有の用語を、**日本語表記・コード上で使う�
 
 本文は `docs/glossary/conversation-tool.md`。
 
-### clear_and_send ツール
-
-本文は `docs/glossary/conversation-tool.md`。
-
 ### ワークプラン
 
 本文は `docs/glossary/work-plan.md`。

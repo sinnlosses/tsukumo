@@ -41,7 +41,6 @@ describe("speak の差し戻し", () => {
         FAKE_CWD,
         () => {},
         () => {},
-        () => {},
         () => true,
       ),
       "speak",

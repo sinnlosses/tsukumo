@@ -17,7 +17,6 @@ import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import { createReportGate, type ReportGate } from "../../report/core/report-tool.ts"
 import { asidePromptText } from "../core/aside-prompt.ts"
 import { type CallReview, createCallReview, passRelayedEvents } from "../core/call-review.ts"
-import { createClearAndSend } from "../core/clear-and-send.ts"
 import { createExternalToolMark } from "../core/external-tool-mark.ts"
 import { createInputLedgerIntake, type InputLedgerIntake } from "../core/input-ledger.ts"
 import { createInterruptMark, type InterruptMark } from "../core/interrupt-mark.ts"
@@ -76,7 +75,6 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
   // 駆動が送り出すイベントは全部ここを通す（依頼も SDK 由来も）。
   // claude が依頼なしで始めた続きのターンに `turn-started` を補うのに、依頼で開いたターンも見ている必要がある（`withSelfStartedTurns`）。
   const ending = createSessionEnding(given.onEvent, given.reportFailure)
-  const clearAndSend = createClearAndSend()
   const progressNudge = watchProgressNudge(given.now, (summary) => {
     sendProgressNudge(summary)
   })
@@ -88,19 +86,7 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
     if (event.kind === "turn-finished") {
       queue.dropBrief()
     }
-    if (event.kind === "session-ended") {
-      clearAndSend.discard()
-    }
     ending.deliver(event)
-    if (event.kind === "turn-finished") {
-      // 預かりは取り出した時点で空になるので、`/clear` 自身のターンの終わりでは何も送らない。
-      for (const text of clearAndSend.take({
-        outcome: event.outcome,
-        pendingCount: queue.list().length,
-      })) {
-        sendRequest(text)
-      }
-    }
   }
   const options: SessionDriverOptions = { ...given, onEvent: withSelfStartedTurns(deliver) }
   const delayWatch = createPromptDelayWatch(given.reportPromptDelay)
@@ -163,7 +149,6 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
           options.cwd,
           options.onEvent,
           queue.holdBrief,
-          clearAndSend.hold,
           externalToolMark.allowsRemember,
         ),
       },
@@ -188,12 +173,6 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
     const uuid = randomUUID()
     input.push({ text, images, uuid })
     return uuid
-  }
-
-  const sendRequest = (text: string): void => {
-    emitTurnOpening({ kind: "request", text, images: [] })
-    delayWatch.pushed(options.now())
-    ledgerIntake.noteSent(push(text, []), "request")
   }
 
   // 依頼を流さない（差し込みは利用者の発言ではない）。ターンの始まりは続く `init` から `turn-resumed` が補う。
@@ -226,7 +205,6 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
 
   return {
     prompt: (text, images, opening) => {
-      clearAndSend.discard()
       // 控えと id だけが記録（`request` / `aside`）へ行き、原寸は入力のストリームへ流れる（棚の分は棚の寿命で捨てる）。
       const uuid = handOffPrompt({
         now: options.now,

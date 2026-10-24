@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { isClearWithArgs } from "../../../../../../src/browser/components/page/conversation/domain/clear-request.ts"
+import { isClearWithArgs } from "../../../../../../src/browser/components/page/conversation/domain/slash-clear.ts"
 
 describe("isClearWithArgs", () => {
   it.each(["/clear 続きの文", "/clear\n続きの文", "/clear   a"])("%j は続きがある", (text) => {

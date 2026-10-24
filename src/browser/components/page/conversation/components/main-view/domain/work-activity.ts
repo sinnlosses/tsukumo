@@ -20,7 +20,7 @@ import { formatElapsed } from "../../../../../../../shared/utils/elapsed-time.ts
 import { summarizeToolInput } from "../../../../../../domain/tool-summary.ts"
 import { backgroundSummaryLabel } from "../../../../../../features/current-work/domain/current-work-step.ts"
 import { apiRetryNotice } from "../../../domain/api-error-label.ts"
-import { isClearRequest } from "../../../domain/clear-request.ts"
+import { isSlashClear } from "../../../domain/slash-clear.ts"
 
 /** 再試行の知らせ。 */
 type WorkRetry =
@@ -94,9 +94,7 @@ export function workActivityOf(source: WorkActivitySource): WorkActivity {
     return { text: `背景で ${background}`, tone: "quiet", mono: false, retry }
   }
   return {
-    text: isClearRequest(currentRequestTextOf(source.records))
-      ? "会話を片付けている"
-      : "考えている",
+    text: isSlashClear(currentRequestTextOf(source.records)) ? "会話を片付けている" : "考えている",
     tone: "quiet",
     mono: false,
     retry,

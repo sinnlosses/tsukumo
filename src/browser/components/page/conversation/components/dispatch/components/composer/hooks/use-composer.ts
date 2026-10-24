@@ -32,7 +32,7 @@ import {
   useTurnRunning,
 } from "../../../../../../../../stores/session.ts"
 import { useDebouncedCallback } from "../../../../../../../../utils/debounce.ts"
-import { isClearWithArgs } from "../../../../../domain/clear-request.ts"
+import { isClearWithArgs } from "../../../../../domain/slash-clear.ts"
 import type { ComposerKey, ComposerSurface } from "../../../domain/composer-surface.ts"
 import {
   clearSessionDraft,

@@ -1,4 +1,4 @@
-// 仕事のときだけ載る `work_plan` / `phase_result` / `question_brief` / `clear_and_send` ツール。
+// 仕事のときだけ載る `work_plan` / `phase_result` / `question_brief` ツール。
 
 import { tool } from "@anthropic-ai/claude-agent-sdk"
 import { z } from "zod"
@@ -12,7 +12,6 @@ import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import { workPlanShape } from "../../../shared/session/work-plan.ts"
 import { checkMermaidSyntax } from "../../report/adapter/report-mermaid-syntax.ts"
 import type { CallReview } from "../core/call-review.ts"
-import { CLEAR_AND_SEND_TOOL_DESCRIPTION } from "../core/clear-and-send.ts"
 import {
   answerPhaseResultCall,
   PHASE_RESULT_COUNT_DESCRIPTION,
@@ -27,7 +26,6 @@ import {
   QUESTION_BRIEF_TOOL_DESCRIPTION,
 } from "../core/question-brief.ts"
 import {
-  CLEAR_AND_SEND_TOOL_NAME,
   PHASE_RESULT_TOOL_NAME,
   QUESTION_BRIEF_TOOL_NAME,
   WORK_PLAN_TOOL_NAME,
@@ -113,18 +111,6 @@ export function questionBriefTool(holdBrief: (briefs: readonly QuestionBrief[]) 
         content: [{ type: "text" as const, text: answer.text }],
         isError: answer.isError,
       }
-    },
-  )
-}
-
-export function clearAndSendTool(hold: (text: string) => void) {
-  return tool(
-    CLEAR_AND_SEND_TOOL_NAME,
-    CLEAR_AND_SEND_TOOL_DESCRIPTION,
-    { text: z.string().trim().min(1).describe("文脈を空にしたあと、最初の依頼として送る文面") },
-    async ({ text }) => {
-      hold(text)
-      return { content: [{ type: "text" as const, text: "ok" }] }
     },
   )
 }

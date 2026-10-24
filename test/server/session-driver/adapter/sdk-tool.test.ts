@@ -20,7 +20,6 @@ describe("tsukumoServer", () => {
       "work_plan",
       "phase_result",
       "question_brief",
-      "clear_and_send",
     ])
   })
 
@@ -32,7 +31,6 @@ describe("tsukumoServer", () => {
         createCallReview(),
         () => {},
         FAKE_CWD,
-        () => {},
         () => {},
         () => {},
         () => true,

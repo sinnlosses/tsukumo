@@ -39,7 +39,6 @@ describe("remember / forget ツール", () => {
         FAKE_CWD,
         () => {},
         () => {},
-        () => {},
         allowsRemember,
       )
   }
@@ -205,7 +204,6 @@ describe("recall / recall_episode ツール", () => {
         FAKE_CWD,
         () => {},
         () => {},
-        () => {},
         () => true,
       )
 
@@ -248,7 +246,6 @@ describe("recall / recall_episode ツール", () => {
         FAKE_CWD,
         () => {},
         () => {},
-        () => {},
         () => true,
       ),
       "recall_episode",
@@ -274,7 +271,6 @@ describe("recall / recall_episode ツール", () => {
         createCallReview(),
         () => {},
         FAKE_CWD,
-        () => {},
         () => {},
         () => {},
         () => true,
