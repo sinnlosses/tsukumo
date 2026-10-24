@@ -104,17 +104,15 @@
     background: var(--accent); color: var(--ground); font-weight: 600;
     display: inline-flex; align-items: center;
   }
-  .confirm {
-    margin-top: 28px; width: 560px; padding: 18px 20px;
-    background: var(--surface); border: 1px solid var(--rule); border-radius: 14px;
-  }
-  .confirm h4 { margin: 0 0 10px; font-size: 14px; }
-  .confirm pre {
-    margin: 0 0 14px; padding: 12px; border-radius: 8px;
-    background: var(--ground); font-family: var(--font-mono); font-size: 12px; line-height: 1.7;
-    white-space: pre-wrap; color: var(--ink-soft);
-  }
-  .confirm .btns { display: flex; justify-content: flex-end; gap: 10px; }
+  .hint { color: var(--ink-quiet); font-size: 12px; }
+  .hint.warn { color: var(--state-ng); }
+  /* 1回目を押したあと。地を抜いて枠と字を警告の色にし、形（太い枠）でも変わったと言う。 */
+  .go.armed { background: transparent; color: var(--state-ng); border: 2px solid var(--state-ng); }
+  .go.waiting { opacity: 0.45; }
+  .faces { margin-top: 28px; width: 1180px; }
+  .face { margin-bottom: 12px; background: var(--surface); border: 1px solid var(--rule-soft); border-radius: 12px; overflow: hidden; }
+  .face-label { display: block; padding: 8px 20px 0; color: var(--ink-quiet); font-size: 12px; }
+  .face .bar { border-top: none; }
 </style>
 </head>
 <body>
@@ -170,18 +168,40 @@
     </div>
   </div>
   <div class="bar">
-    <div class="tally"><span class="p">● 計画 2</span><span class="d">● 却下 1</span><span class="k">保留 2</span></div>
     <span class="ghost">仕分けを戻す</span>
-    <span class="go">tsukumo にまとめて頼む</span>
+    <span class="hint">保留の 2 件は触らない</span>
+    <span class="go">計画 2・却下 1 を頼む</span>
   </div>
 </div>
 
-<div class="confirm">
-  <h4>この文面で頼みます</h4>
-  <pre>/plan-tasks ドラフトを仕分けた。
-計画（承認済み）: GH-1401, GH-1402
-却下: GH-1403（GH-1388 で同じ名前に揃え済み）</pre>
-  <div class="btns"><span class="ghost">やめる</span><span class="go" style="margin-left:0">頼む</span></div>
+<!-- 確かめの窓は出さない。帯だけで、押す前・1回押した後・作業中の3つの顔を持つ。 -->
+<div class="faces">
+  <p class="caption">下端の帯の3つの顔（確かめの窓は出さない）</p>
+  <div class="face">
+    <span class="face-label">1. 押す前</span>
+    <div class="bar">
+      <span class="ghost">仕分けを戻す</span>
+      <span class="hint">保留の 2 件は触らない</span>
+      <span class="go">計画 2・却下 1 を頼む</span>
+    </div>
+  </div>
+  <div class="face">
+    <span class="face-label">2. 却下を含むときの1回目のあと（もう一度押すと送る）</span>
+    <div class="bar">
+      <span class="ghost">やめる</span>
+      <span class="hint warn">却下した 1 件は閉じる。戻すには開き直しが要る</span>
+      <span class="go armed">もう一度押すと却下 1 も送る</span>
+    </div>
+  </div>
+  <div class="face">
+    <span class="face-label">3. 作業中（押すと断り書きを出す）</span>
+    <div class="bar">
+      <span class="ghost">仕分けを戻す</span>
+      <span class="hint">いまの作業が終わると頼める</span>
+      <span class="go waiting">計画 2・却下 1 を頼む</span>
+    </div>
+  </div>
+  <p class="caption">計画だけ（却下 0）のときは 1 回目の押下でそのまま送る。送った文面は依頼としてメインビューに並ぶ。</p>
 </div>
 </body>
 </html>
