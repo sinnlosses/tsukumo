@@ -61,10 +61,7 @@ export function SidebarSection(props: SidebarSectionProps): ReactElement {
               size="action"
               pressed="none"
               disabled={false}
-              ariaLabel={undefined}
-              ariaHasPopup="dialog"
-              disclosure={{ kind: "none" }}
-              title={undefined}
+              disclosure={{ kind: "dialog" }}
               className={styles["sidebar-block-action"]}
               onClick={props.action.onAction}
             >

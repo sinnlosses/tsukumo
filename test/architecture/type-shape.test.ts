@@ -59,21 +59,70 @@ const ALLOWED_OPTIONAL_PROPERTIES = {
   ],
 } satisfies Readonly<Record<string, readonly string[]>>
 
+// ui の部品の DOM 属性に素通しする props（例外6）
+const ALLOWED_OPTIONAL_RULES = [
+  {
+    pathPrefix: "src/browser/components/ui/",
+    name: /^(aria([A-Z]|-)|title$|ref$|placeholder$|maxLength$|style$)/,
+  },
+] as const satisfies readonly { readonly pathPrefix: string; readonly name: RegExp }[]
+
+function isAllowedOptional(path: string, name: string): boolean {
+  return (
+    allowedOptionalProperties().includes(`${path}:${name}`) ||
+    ALLOWED_OPTIONAL_RULES.some((rule) => path.startsWith(rule.pathPrefix) && rule.name.test(name))
+  )
+}
+
 describe("オプショナルプロパティ", () => {
-  it("src の *.ts / *.tsx（*.d.ts を除く）で、型のプロパティ（引用符つきのキーも）と引数を `名前?: 型` と書くのは許可の一覧にある箇所だけ（docs/coding-standards.md「「無いかもしれない」値」）", () => {
-    const allowed = new Set(allowedOptionalProperties())
-    const offenders = optionalProperties().filter((found) => !allowed.has(found))
+  it("src の *.ts / *.tsx（*.d.ts を除く）で、型のプロパティ（引用符つきのキーも）と引数を `名前?: 型` と書くのは許可の一覧と規則に当たる箇所だけ（docs/coding-standards.md「「無いかもしれない」値」）", () => {
+    const offenders = optionalProperties().filter(
+      (found) => !isAllowedOptional(pathOf(found), nameOf(found)),
+    )
 
     expect(offenders.join("\n")).toBe("")
   })
 
-  it("許可の一覧の項目が、実物にまだ `名前?: 型` として残っている", () => {
-    const found = new Set(optionalProperties())
-    const stale = allowedOptionalProperties().filter((entry) => !found.has(entry))
+  it("許可の一覧の項目と規則が、実物にまだ `名前?: 型` として残っている", () => {
+    const found = optionalProperties()
+    const foundSet = new Set(found)
+    const staleEntries = allowedOptionalProperties().filter((entry) => !foundSet.has(entry))
+    const staleRules = ALLOWED_OPTIONAL_RULES.filter(
+      (rule) =>
+        !found.some(
+          (entry) => pathOf(entry).startsWith(rule.pathPrefix) && rule.name.test(nameOf(entry)),
+        ),
+    ).map((rule) => `${rule.pathPrefix}:${rule.name.source}`)
 
-    expect(stale.join("\n")).toBe("")
+    expect([...staleEntries, ...staleRules].join("\n")).toBe("")
+  })
+
+  it("規則は ui の中の aria*・title・ref・placeholder・maxLength・style だけを許し、ui の外の同名と ui の中のそれ以外は許さない", () => {
+    const ui = "src/browser/components/ui/button/button.tsx"
+    const outside = "src/browser/components/page/x/x.tsx"
+    expect([
+      isAllowedOptional(ui, "ariaLabel"),
+      isAllowedOptional(ui, "aria-label"),
+      isAllowedOptional(ui, "title"),
+      isAllowedOptional(ui, "ref"),
+      isAllowedOptional(ui, "placeholder"),
+      isAllowedOptional(ui, "maxLength"),
+      isAllowedOptional(ui, "style"),
+      isAllowedOptional(outside, "ariaLabel"),
+      isAllowedOptional(outside, "placeholder"),
+      isAllowedOptional(ui, "hint"),
+      isAllowedOptional(ui, "titleText"),
+    ]).toEqual([true, true, true, true, true, true, true, false, false, false, false])
   })
 })
+
+function pathOf(entry: string): string {
+  return entry.slice(0, entry.lastIndexOf(":"))
+}
+
+function nameOf(entry: string): string {
+  return entry.slice(entry.lastIndexOf(":") + 1)
+}
 
 function allowedOptionalProperties(): readonly string[] {
   return Object.entries<readonly string[]>(ALLOWED_OPTIONAL_PROPERTIES).flatMap(([path, names]) =>

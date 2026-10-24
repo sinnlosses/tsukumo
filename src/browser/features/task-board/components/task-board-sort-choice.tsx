@@ -77,8 +77,6 @@ export function TaskBoardSortReason(props: {
         id={`task-board-sort-reason-${props.rowId}`}
         className={styles["task-board-sort-reason-input"]}
         value={props.sort.reason}
-        maxLength={undefined}
-        placeholder={undefined}
         onChange={props.sort.onReason}
       />
     </label>

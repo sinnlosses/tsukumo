@@ -70,9 +70,7 @@ export function TaskPeek(props: TaskPeekProps): ReactElement {
           pressed="none"
           disabled={false}
           ariaLabel="閉じる"
-          ariaHasPopup={undefined}
           disclosure={{ kind: "none" }}
-          title={undefined}
           className={styles["task-peek-close"]}
           onClick={props.onClose}
         >
@@ -103,10 +101,7 @@ export function TaskPeek(props: TaskPeekProps): ReactElement {
           size="action"
           pressed="none"
           disabled={false}
-          ariaLabel={undefined}
-          ariaHasPopup="dialog"
-          disclosure={{ kind: "none" }}
-          title={undefined}
+          disclosure={{ kind: "dialog" }}
           className={styles["task-peek-open-full"]}
           onClick={() => {
             props.onOpenFull(task.id)
@@ -133,10 +128,7 @@ export function TaskPeek(props: TaskPeekProps): ReactElement {
               size="action"
               pressed="none"
               disabled={false}
-              ariaLabel={undefined}
-              ariaHasPopup="dialog"
-              disclosure={{ kind: "none" }}
-              title={undefined}
+              disclosure={{ kind: "dialog" }}
               className={styles["task-peek-drop"]}
               onClick={() => {
                 props.onRequest({ kind: "drop" })

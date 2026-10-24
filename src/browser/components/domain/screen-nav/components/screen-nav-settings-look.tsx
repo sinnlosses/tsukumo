@@ -34,7 +34,6 @@ export function ScreenNavSettingsLookFace(props: ScreenNavSettingsProps): ReactE
         <HStack
           element="div"
           name={{ kind: "none" }}
-          ref={undefined}
           gap="lg"
           align="center"
           justify="between"

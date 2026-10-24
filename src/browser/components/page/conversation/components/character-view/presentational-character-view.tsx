@@ -50,7 +50,6 @@ export function PresentationalCharacterView({
     <VStack
       element="div"
       name={{ kind: "none" }}
-      ref={undefined}
       gap="sm"
       align="stretch"
       justify="start"
@@ -71,7 +70,6 @@ export function PresentationalCharacterView({
         <HStack
           element="div"
           name={{ kind: "none" }}
-          ref={undefined}
           gap="none"
           align="end"
           justify="start"

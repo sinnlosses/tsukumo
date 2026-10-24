@@ -58,10 +58,7 @@ export function RequestBlock(props: RequestBlockProps): ReactElement {
             size="action"
             pressed="none"
             disabled={false}
-            ariaLabel={undefined}
-            ariaHasPopup={undefined}
             disclosure={{ kind: "expander", expanded }}
-            title={undefined}
             className={styles["request-more"]}
             onClick={() => {
               setExpanded(!expanded)

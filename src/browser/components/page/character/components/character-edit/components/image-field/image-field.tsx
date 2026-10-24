@@ -34,7 +34,6 @@ export function ImageField(props: {
     <HStack
       element="div"
       name={{ kind: "none" }}
-      ref={undefined}
       gap="lg"
       align="center"
       justify="start"
@@ -56,7 +55,6 @@ export function ImageField(props: {
       <VStack
         element="div"
         name={{ kind: "none" }}
-        ref={undefined}
         gap="sm"
         align="stretch"
         justify="start"
@@ -74,7 +72,6 @@ export function ImageField(props: {
         <HStack
           element="div"
           name={{ kind: "none" }}
-          ref={undefined}
           gap="sm"
           align="stretch"
           justify="start"
@@ -102,9 +99,7 @@ export function ImageField(props: {
               pressed="none"
               disabled={disabled}
               ariaLabel={`${field.subject}を消す`}
-              ariaHasPopup={undefined}
               disclosure={{ kind: "none" }}
-              title={undefined}
               className={characterStyles["character-button-outline"]}
               onClick={field.onClear}
             >

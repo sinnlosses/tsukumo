@@ -115,10 +115,7 @@ function Header(props: {
         size="label"
         pressed="none"
         disabled={!diary.canOpenBook}
-        ariaLabel={undefined}
         disclosure={{ kind: "none" }}
-        ariaHasPopup={undefined}
-        title={undefined}
         className={styles["achievement-diary-open-book"]}
         onClick={props.onOpenDiaryBook}
       >
@@ -235,10 +232,7 @@ function Controls(props: {
           size="secondary"
           pressed="none"
           disabled={true}
-          ariaLabel={undefined}
           disclosure={{ kind: "none" }}
-          ariaHasPopup={undefined}
-          title={undefined}
           className={styles["achievement-review-button"]}
           onClick={() => {}}
         >
@@ -259,10 +253,7 @@ function Controls(props: {
         size="secondary"
         pressed="none"
         disabled={review.availability.kind === "blocked"}
-        ariaLabel={undefined}
         disclosure={{ kind: "none" }}
-        ariaHasPopup={undefined}
-        title={undefined}
         className={styles["achievement-review-button"]}
         onClick={review.onReview}
       >

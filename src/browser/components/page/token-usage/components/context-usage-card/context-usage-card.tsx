@@ -63,7 +63,6 @@ export function ContextUsageCard(props: ContextUsageCardProps): ReactElement {
       <HStack
         element="div"
         name={{ kind: "none" }}
-        ref={undefined}
         gap="sm"
         align="baseline"
         justify="start"
@@ -75,7 +74,6 @@ export function ContextUsageCard(props: ContextUsageCardProps): ReactElement {
         <HStack
           element="div"
           name={{ kind: "none" }}
-          ref={undefined}
           gap="sm"
           align="baseline"
           justify="start"
@@ -151,7 +149,6 @@ function ContextUsageCardSkeleton(): ReactElement {
       <HStack
         element="div"
         name={{ kind: "none" }}
-        ref={undefined}
         gap="sm"
         align="baseline"
         justify="start"
@@ -163,7 +160,6 @@ function ContextUsageCardSkeleton(): ReactElement {
         <HStack
           element="div"
           name={{ kind: "none" }}
-          ref={undefined}
           gap="sm"
           align="baseline"
           justify="start"
@@ -172,14 +168,10 @@ function ContextUsageCardSkeleton(): ReactElement {
         >
           <span className={styles["context-until"]}>
             <span className={styles["context-until-label"]}>自動圧縮まで</span>{" "}
-            <Skeleton className={styles["context-skeleton-until"]} style={undefined}>
-              {SKELETON_TEXT}
-            </Skeleton>
+            <Skeleton className={styles["context-skeleton-until"]}>{SKELETON_TEXT}</Skeleton>
           </span>
           <span className={styles["context-taken"]}>
-            <Skeleton className={styles["context-skeleton-taken"]} style={undefined}>
-              {SKELETON_TEXT}
-            </Skeleton>
+            <Skeleton className={styles["context-skeleton-taken"]}>{SKELETON_TEXT}</Skeleton>
           </span>
         </HStack>
       </HStack>
@@ -191,22 +183,14 @@ function ContextUsageCardSkeleton(): ReactElement {
         weight="inherit"
         className={styles["context-total"]}
       >
-        <Skeleton className={styles["context-skeleton-total-value"]} style={undefined}>
-          {SKELETON_TEXT}
-        </Skeleton>
-        <Skeleton className={styles["context-skeleton-total-max"]} style={undefined}>
-          {SKELETON_TEXT}
-        </Skeleton>
-        <Skeleton className={styles["context-skeleton-total-share"]} style={undefined}>
-          {SKELETON_TEXT}
-        </Skeleton>
+        <Skeleton className={styles["context-skeleton-total-value"]}>{SKELETON_TEXT}</Skeleton>
+        <Skeleton className={styles["context-skeleton-total-max"]}>{SKELETON_TEXT}</Skeleton>
+        <Skeleton className={styles["context-skeleton-total-share"]}>{SKELETON_TEXT}</Skeleton>
       </Text>
 
       <div className={styles["context-bar"]}>
         {/* 横棒は中身の文字（`&nbsp;`）ではなく親（`.context-bar`）の高さに合わせて伸ばす（`flex` の既定の `stretch`）ので `SKELETON_TEXT` は入れない。 */}
-        <Skeleton className={styles["context-skeleton-bar"]} style={undefined}>
-          {null}
-        </Skeleton>
+        <Skeleton className={styles["context-skeleton-bar"]}>{null}</Skeleton>
       </div>
 
       <dl className={styles["context-legend"]}>
@@ -219,7 +203,7 @@ function ContextUsageCardSkeleton(): ReactElement {
                 {look.label}
               </dt>
               <dd className={styles["context-legend-value"]}>
-                <Skeleton className={styles["context-skeleton-legend-value"]} style={undefined}>
+                <Skeleton className={styles["context-skeleton-legend-value"]}>
                   {SKELETON_TEXT}
                 </Skeleton>
               </dd>

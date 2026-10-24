@@ -50,10 +50,7 @@ export function ToolUsageCard(props: ToolUsageCardProps): ReactElement {
           size="action"
           pressed="none"
           disabled={false}
-          ariaLabel={undefined}
           disclosure={{ kind: "none" }}
-          ariaHasPopup={undefined}
-          title={undefined}
           className={styles["usage-table-more"]}
           onClick={more.onToggle}
         >

@@ -53,7 +53,6 @@ export function PeriodUsageCard(props: PeriodUsageCardProps): ReactElement {
       <HStack
         element="p"
         name={{ kind: "none" }}
-        ref={undefined}
         gap="sm"
         align="stretch"
         justify="between"

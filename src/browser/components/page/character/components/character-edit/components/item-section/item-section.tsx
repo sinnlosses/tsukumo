@@ -22,7 +22,6 @@ export function ItemSection(props: { readonly section: ItemSectionModel }): Reac
     <VStack
       element="section"
       name={{ kind: "labelledby", id: "character-items" }}
-      ref={undefined}
       gap="md"
       align="stretch"
       justify="start"
@@ -52,9 +51,7 @@ export function ItemSection(props: { readonly section: ItemSectionModel }): Reac
                 pressed="none"
                 disabled={false}
                 ariaLabel={`${item.name}を消す`}
-                ariaHasPopup={undefined}
                 disclosure={{ kind: "none" }}
-                title={undefined}
                 className={styles["item-card-remove"]}
                 onClick={item.onRemove}
               >
@@ -69,8 +66,6 @@ export function ItemSection(props: { readonly section: ItemSectionModel }): Reac
             size="secondary"
             pressed="none"
             disabled={section.add.disabled}
-            ariaLabel={undefined}
-            ariaHasPopup={undefined}
             disclosure={{ kind: "none" }}
             title={section.add.title}
             className={styles["item-add"]}
@@ -114,7 +109,6 @@ function SeatCard(props: { readonly seat: SeatPickModel }): ReactElement {
           ...seat.options.map((option) => ({ value: option.id, label: option.name })),
         ]}
         disabled={false}
-        title={undefined}
         onChange={seat.onPick}
       />
     </div>

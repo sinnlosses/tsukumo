@@ -75,7 +75,6 @@ export function CharacterProfileEditDialog(props: CharacterProfileEditDialogProp
             id="character-profile-edit-name"
             className={styles["character-create-input"]}
             maxLength={MAX_CHARACTER_NAME_LENGTH}
-            placeholder={undefined}
             value={name}
             onChange={setName}
           />
@@ -95,7 +94,6 @@ export function CharacterProfileEditDialog(props: CharacterProfileEditDialogProp
             id="character-profile-edit-tagline"
             className={styles["character-create-input"]}
             maxLength={MAX_CHARACTER_TAGLINE_LENGTH}
-            placeholder={undefined}
             value={tagline}
             onChange={setTagline}
           />
@@ -107,10 +105,7 @@ export function CharacterProfileEditDialog(props: CharacterProfileEditDialogProp
             size="secondary"
             pressed="none"
             disabled={false}
-            ariaLabel={undefined}
             disclosure={{ kind: "none" }}
-            ariaHasPopup={undefined}
-            title={undefined}
             className={styles["character-button-outline"]}
             onClick={props.onClose}
           >
@@ -121,10 +116,7 @@ export function CharacterProfileEditDialog(props: CharacterProfileEditDialogProp
             size="secondary"
             pressed="none"
             disabled={false}
-            ariaLabel={undefined}
             disclosure={{ kind: "none" }}
-            ariaHasPopup={undefined}
-            title={undefined}
             className={styles["character-create-submit"]}
             onClick={submit}
           >

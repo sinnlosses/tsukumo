@@ -108,8 +108,6 @@ function SessionSwitcherBody(props: SessionSwitcherProps): ReactElement {
           size="secondary"
           pressed="none"
           disabled={switcher.blocked}
-          ariaLabel={undefined}
-          ariaHasPopup={undefined}
           disclosure={{ kind: "none" }}
           title={switcher.blockedTitle}
           className={styles["session-switcher-new"]}
@@ -327,8 +325,6 @@ function SessionSwitcherDetail(props: SessionSwitcherDetailProps): ReactElement 
           size="subheading"
           pressed="none"
           disabled={props.blocked || row.current}
-          ariaLabel={undefined}
-          ariaHasPopup={undefined}
           disclosure={{ kind: "none" }}
           title={row.current ? undefined : props.blockedTitle}
           className={styles["session-switcher-switch"]}

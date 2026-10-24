@@ -42,8 +42,6 @@ export function CharacterDelete(props: {
           size="secondary"
           pressed="none"
           disabled={band.disabled}
-          ariaLabel={undefined}
-          ariaHasPopup={undefined}
           disclosure={{ kind: "none" }}
           title={band.title}
           className={characterStyles["character-button-outline"]}

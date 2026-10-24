@@ -29,7 +29,6 @@ export function FormatBar({ onFormat }: FormatBarProps): ReactElement {
           disabled={false}
           ariaLabel={label}
           disclosure={{ kind: "none" }}
-          ariaHasPopup={undefined}
           title={label}
           className={styles["format-bar-button"]}
           onClick={() => {

@@ -35,7 +35,6 @@ export function ContextUsageRow(props: { readonly usage: UseContextUsageResult }
       <HStack
         element="div"
         name={{ kind: "none" }}
-        ref={undefined}
         gap="sm"
         align="baseline"
         justify="start"

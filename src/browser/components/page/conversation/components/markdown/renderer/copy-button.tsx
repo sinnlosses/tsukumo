@@ -19,10 +19,7 @@ export function CopyButton(props: { readonly text: string }): ReactElement {
       size="label"
       pressed="none"
       disabled={false}
-      ariaLabel={undefined}
       disclosure={{ kind: "none" }}
-      ariaHasPopup={undefined}
-      title={undefined}
       className={styles["code-copy"]}
       onClick={() => {
         void navigator.clipboard

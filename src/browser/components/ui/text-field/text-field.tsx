@@ -12,8 +12,8 @@ type TextFieldProps = {
   readonly id: string
   readonly className: string
   readonly value: string
-  readonly maxLength: number | undefined
-  readonly placeholder: string | undefined
+  readonly maxLength?: number
+  readonly placeholder?: string
   readonly onChange: (value: string) => void
 }
 

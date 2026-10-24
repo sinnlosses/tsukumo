@@ -29,8 +29,6 @@ export function TaskBoardHead(props: {
         disabled={false}
         ariaLabel="閉じる"
         disclosure={{ kind: "none" }}
-        ariaHasPopup={undefined}
-        title={undefined}
         className={styles["task-board-close"]}
         onClick={props.onClose}
       >

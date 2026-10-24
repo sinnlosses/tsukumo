@@ -17,7 +17,6 @@ const BASE_PROPS = {
   pressed: "none",
   disabled: false,
   ariaLabel: undefined,
-  ariaHasPopup: undefined,
   disclosure: { kind: "none" },
   title: undefined,
   className: "",
@@ -65,10 +64,42 @@ describe("Button", () => {
     const ref = createRef<HTMLButtonElement>()
     const element = renderButton({
       ...BASE_PROPS,
-      disclosure: { kind: "popover", ref, expanded: true, controls: "dummy-panel" },
+      disclosure: { kind: "popover", popup: "menu", ref, expanded: true, controls: "dummy-panel" },
     })
     expect(element.getAttribute("aria-expanded")).toBe("true")
     expect(element.getAttribute("aria-controls")).toBe("dummy-panel")
     expect(ref.current).toBe(element)
+  })
+
+  it("aria-haspopup は disclosure だけで決まる（none・expander は付けず、dialog は dialog、popover は menu）", () => {
+    const ref = createRef<HTMLButtonElement>()
+    const attributes = (
+      [
+        { kind: "none" },
+        { kind: "expander", expanded: false },
+        { kind: "dialog" },
+        { kind: "popover", popup: "menu", ref, expanded: false, controls: "dummy-panel" },
+        { kind: "popover", popup: "none", ref, expanded: false, controls: "dummy-panel" },
+      ] satisfies readonly ButtonProps["disclosure"][]
+    ).map((disclosure) => {
+      const element = renderButton({ ...BASE_PROPS, disclosure })
+      const found = [element.getAttribute("aria-haspopup"), element.getAttribute("aria-expanded")]
+      cleanup()
+      return found
+    })
+    expect(attributes).toEqual([
+      [null, null],
+      [null, "false"],
+      ["dialog", null],
+      ["menu", "false"],
+      [null, "false"],
+    ])
+  })
+
+  it("ariaLabel・title を渡さないと aria-label・title は付かない", () => {
+    const { ariaLabel: _label, title: _title, ...rest } = BASE_PROPS
+    const element = renderButton(rest)
+    expect(element.hasAttribute("aria-label")).toBe(false)
+    expect(element.hasAttribute("title")).toBe(false)
   })
 })

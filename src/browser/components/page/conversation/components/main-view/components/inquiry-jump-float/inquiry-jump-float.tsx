@@ -30,10 +30,7 @@ export function InquiryJumpFloat(): ReactElement | null {
           size="label"
           pressed="none"
           disabled={false}
-          ariaLabel={undefined}
           disclosure={{ kind: "none" }}
-          ariaHasPopup={undefined}
-          title={undefined}
           className={styles["inquiry-float-button"]}
           onClick={() => {
             requestJump({ focus: false })

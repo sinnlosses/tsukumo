@@ -55,7 +55,6 @@ export function CharacterList(props: { readonly onCreate: () => void }): ReactEl
             <VStack
               element="span"
               name={{ kind: "none" }}
-              ref={undefined}
               gap="none"
               align="stretch"
               justify="start"
@@ -83,10 +82,7 @@ export function CharacterList(props: { readonly onCreate: () => void }): ReactEl
         size="subheading"
         pressed="none"
         disabled={false}
-        ariaLabel={undefined}
         disclosure={{ kind: "none" }}
-        ariaHasPopup={undefined}
-        title={undefined}
         className={styles["character-list-new"]}
         onClick={props.onCreate}
       >

@@ -43,7 +43,6 @@ export function CharacterDeleteConfirm(props: CharacterDeleteConfirmProps): Reac
       <VStack
         element="div"
         name={{ kind: "none" }}
-        ref={undefined}
         gap="lg"
         align="stretch"
         justify="start"
@@ -79,7 +78,6 @@ export function CharacterDeleteConfirm(props: CharacterDeleteConfirmProps): Reac
             element="input"
             id="character-delete-id"
             className={styles["character-delete-input"]}
-            maxLength={undefined}
             placeholder="id"
             value={typedId}
             onChange={setTypedId}
@@ -91,10 +89,7 @@ export function CharacterDeleteConfirm(props: CharacterDeleteConfirmProps): Reac
             size="secondary"
             pressed="none"
             disabled={false}
-            ariaLabel={undefined}
             disclosure={{ kind: "none" }}
-            ariaHasPopup={undefined}
-            title={undefined}
             className={characterStyles["character-button-outline"]}
             onClick={props.onClose}
           >
@@ -105,10 +100,7 @@ export function CharacterDeleteConfirm(props: CharacterDeleteConfirmProps): Reac
             size="secondary"
             pressed="none"
             disabled={!canSubmit}
-            ariaLabel={undefined}
             disclosure={{ kind: "none" }}
-            ariaHasPopup={undefined}
-            title={undefined}
             className={styles["character-delete-ok"]}
             onClick={props.onConfirm}
           >

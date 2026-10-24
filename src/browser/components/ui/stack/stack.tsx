@@ -23,8 +23,8 @@ type StackWrap = "nowrap" | "wrap"
 export type StackProps = {
   readonly element: StackElement
   readonly name: StackName
-  /** 描いた要素を外から読む（転がし位置など）。読まないなら `undefined`。 */
-  readonly ref: Ref<HTMLElement> | undefined
+  /** 描いた要素を外から読む（転がし位置など）。読まないなら省略する。 */
+  readonly ref?: Ref<HTMLElement>
   readonly direction: StackDirection
   readonly gap: StackGap
   readonly align: StackAlign

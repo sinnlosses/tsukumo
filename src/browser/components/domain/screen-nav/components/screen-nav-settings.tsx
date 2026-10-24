@@ -49,7 +49,6 @@ export function ScreenNavSettingsSessionDefaultFace(props: ScreenNavSettingsProp
       <HStack
         element="div"
         name={{ kind: "none" }}
-        ref={undefined}
         gap="lg"
         align="center"
         justify="between"
@@ -76,7 +75,6 @@ export function ScreenNavSettingsSessionDefaultFace(props: ScreenNavSettingsProp
       <HStack
         element="div"
         name={{ kind: "none" }}
-        ref={undefined}
         gap="lg"
         align="center"
         justify="between"
@@ -111,7 +109,6 @@ export function ScreenNavSettingsSessionDefaultFace(props: ScreenNavSettingsProp
       <HStack
         element="div"
         name={{ kind: "none" }}
-        ref={undefined}
         gap="lg"
         align="center"
         justify="between"
@@ -149,7 +146,6 @@ export function ScreenNavSettingsRevealFace(props: ScreenNavSettingsProps): Reac
       <HStack
         element="div"
         name={{ kind: "none" }}
-        ref={undefined}
         gap="lg"
         align="center"
         justify="between"
@@ -188,7 +184,6 @@ export function ScreenNavSettingsLaunchSkillFace(props: ScreenNavSettingsProps):
       <HStack
         element="div"
         name={{ kind: "none" }}
-        ref={undefined}
         gap="lg"
         align="center"
         justify="between"

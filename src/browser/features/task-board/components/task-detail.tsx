@@ -69,7 +69,6 @@ export function TaskDetail(props: {
               <HStack
                 element="span"
                 name={{ kind: "none" }}
-                ref={undefined}
                 gap="xs"
                 align="center"
                 justify="start"
@@ -144,10 +143,7 @@ function TaskDetailBreadcrumb(props: {
         size="action"
         pressed="none"
         disabled={false}
-        ariaLabel={undefined}
         disclosure={{ kind: "none" }}
-        ariaHasPopup={undefined}
-        title={undefined}
         className={styles["task-detail-breadcrumb-back"]}
         onClick={props.breadcrumb.onBack}
       >

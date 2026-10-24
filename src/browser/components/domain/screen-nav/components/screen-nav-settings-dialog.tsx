@@ -137,10 +137,7 @@ function SelectedFace(props: {
           size="label"
           pressed="none"
           disabled={settings.resetDisabled}
-          ariaLabel={undefined}
           disclosure={{ kind: "none" }}
-          ariaHasPopup={undefined}
-          title={undefined}
           className={styles["reset"]}
           onClick={settings.onReset}
         >

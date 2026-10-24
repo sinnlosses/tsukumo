@@ -56,7 +56,6 @@ export function PlanUsageRow(props: { readonly planUsage: UsePlanUsageResult }):
           disabled={fetching}
           ariaLabel="プラン使用量を取り直す"
           disclosure={{ kind: "none" }}
-          ariaHasPopup={undefined}
           title="取り直す"
           className={styles["plan-usage-row-refresh"]}
           onClick={retry}

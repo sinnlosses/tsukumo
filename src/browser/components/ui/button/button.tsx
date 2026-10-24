@@ -41,13 +41,17 @@ type ButtonSize = Exclude<TextSize, "heading" | "inherit">
 type ButtonPressed = "none" | "on" | "off"
 /**
  * 押すと開く面との関係。
- * `expander` は `aria-expanded` だけを付け、`popover` は開く面の id（`aria-controls`）と、Esc で戻る先として DOM を預ける `ref` も付ける。
+ * `dialog` は `aria-haspopup="dialog"` だけを付け（開閉の状態は持たない）、
+ * `expander` は `aria-expanded` だけを付け、`popover` は（`popup` が `"menu"` のとき `aria-haspopup="menu"` と）開く面の id（`aria-controls`）と、Esc で戻る先として DOM を預ける `ref` も付ける。
  */
 type ButtonDisclosure =
   | { readonly kind: "none" }
+  | { readonly kind: "dialog" }
   | { readonly kind: "expander"; readonly expanded: boolean }
   | {
       readonly kind: "popover"
+      /** 開く面がメニューなら `"menu"`（`aria-haspopup="menu"` を付ける）。そうでなければ `"none"`。 */
+      readonly popup: "menu" | "none"
       readonly ref: Ref<HTMLButtonElement>
       readonly expanded: boolean
       readonly controls: string
@@ -58,13 +62,11 @@ export type ButtonProps = {
   readonly size: ButtonSize
   readonly pressed: ButtonPressed
   readonly disabled: boolean
-  /** 見える字がそのままアクセシブルネームになるときは `undefined`（`×` だけの札などで使う）。 */
-  readonly ariaLabel: string | undefined
-  /** 押すと開く面の種類（サイドバーの区画の見出しの「一覧を見る」など）。無ければ `undefined`。 */
-  readonly ariaHasPopup: "dialog" | "menu" | undefined
+  /** 見える字がそのままアクセシブルネームになるときは省略する（`×` だけの札などで使う）。 */
+  readonly ariaLabel?: string
   readonly disclosure: ButtonDisclosure
-  /** `disabled` の理由など、hover で読ませたい1行。無ければ `undefined`。 */
-  readonly title: string | undefined
+  /** `disabled` の理由など、hover で読ませたい1行。省略すると付けない。 */
+  readonly title?: string
   /** 置き方（margin など）と箱（高さ・余白・角丸）だけを渡す。 */
   readonly className: string
   readonly onClick: () => void
@@ -132,8 +134,12 @@ export function Button(props: ButtonProps): ReactElement {
       aria-pressed={BUTTON_PRESSED_ARIA[props.pressed]}
       aria-disabled={props.disabled}
       aria-label={props.ariaLabel}
-      aria-haspopup={props.ariaHasPopup}
-      aria-expanded={disclosure.kind === "none" ? undefined : disclosure.expanded}
+      aria-haspopup={popupOf(disclosure)}
+      aria-expanded={
+        disclosure.kind === "expander" || disclosure.kind === "popover"
+          ? disclosure.expanded
+          : undefined
+      }
       aria-controls={disclosure.kind === "popover" ? disclosure.controls : undefined}
       title={props.title}
       onClick={handleClick}
@@ -141,4 +147,16 @@ export function Button(props: ButtonProps): ReactElement {
       {props.children}
     </button>
   )
+}
+
+function popupOf(disclosure: ButtonDisclosure): "dialog" | "menu" | undefined {
+  switch (disclosure.kind) {
+    case "dialog":
+      return "dialog"
+    case "popover":
+      return disclosure.popup === "menu" ? "menu" : undefined
+    case "none":
+    case "expander":
+      return undefined
+  }
 }

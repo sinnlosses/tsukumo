@@ -51,7 +51,6 @@ export function ItemAddDialog(props: { readonly dialog: OpenDialog }): ReactElem
             id="character-item-add-name"
             className={styles["character-create-input"]}
             maxLength={MAX_ITEM_NAME_LENGTH}
-            placeholder={undefined}
             value={name}
             onChange={setName}
           />
@@ -78,10 +77,7 @@ export function ItemAddDialog(props: { readonly dialog: OpenDialog }): ReactElem
             size="secondary"
             pressed="none"
             disabled={false}
-            ariaLabel={undefined}
             disclosure={{ kind: "none" }}
-            ariaHasPopup={undefined}
-            title={undefined}
             className={styles["character-button-outline"]}
             onClick={dialog.onClose}
           >
@@ -92,10 +88,7 @@ export function ItemAddDialog(props: { readonly dialog: OpenDialog }): ReactElem
             size="secondary"
             pressed="none"
             disabled={!ready}
-            ariaLabel={undefined}
             disclosure={{ kind: "none" }}
-            ariaHasPopup={undefined}
-            title={undefined}
             className={styles["character-create-submit"]}
             onClick={() => {
               if (file !== undefined) {

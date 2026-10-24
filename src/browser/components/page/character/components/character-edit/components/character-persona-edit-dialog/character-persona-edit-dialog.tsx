@@ -70,7 +70,6 @@ export function CharacterPersonaEditDialog(props: CharacterPersonaEditDialogProp
             id="character-persona-edit-body"
             className={styles["character-persona-input"]}
             maxLength={MAX_PERSONA_BODY_LENGTH}
-            placeholder={undefined}
             value={persona}
             onChange={setPersona}
           />
@@ -82,10 +81,7 @@ export function CharacterPersonaEditDialog(props: CharacterPersonaEditDialogProp
             size="secondary"
             pressed="none"
             disabled={false}
-            ariaLabel={undefined}
             disclosure={{ kind: "none" }}
-            ariaHasPopup={undefined}
-            title={undefined}
             className={styles["character-button-outline"]}
             onClick={props.onClose}
           >
@@ -96,10 +92,7 @@ export function CharacterPersonaEditDialog(props: CharacterPersonaEditDialogProp
             size="secondary"
             pressed="none"
             disabled={false}
-            ariaLabel={undefined}
             disclosure={{ kind: "none" }}
-            ariaHasPopup={undefined}
-            title={undefined}
             className={styles["character-create-submit"]}
             onClick={submit}
           >

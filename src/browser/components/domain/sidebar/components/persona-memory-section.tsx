@@ -71,8 +71,6 @@ export function PersonaMemorySection(): ReactElement {
                   disabled={false}
                   ariaLabel={`「${line}」を消す`}
                   disclosure={{ kind: "none" }}
-                  ariaHasPopup={undefined}
-                  title={undefined}
                   className={styles["sidebar-persona-memory-remove"]}
                   onClick={() => {
                     setConfirmLine(line)
@@ -147,7 +145,6 @@ function PersonaMemoryForgetConfirm(props: PersonaMemoryForgetConfirmProps): Rea
       <HStack
         element="div"
         name={{ kind: "none" }}
-        ref={undefined}
         gap="sm"
         align="stretch"
         justify="end"
@@ -159,10 +156,7 @@ function PersonaMemoryForgetConfirm(props: PersonaMemoryForgetConfirmProps): Rea
           size="secondary"
           pressed="none"
           disabled={false}
-          ariaLabel={undefined}
           disclosure={{ kind: "none" }}
-          ariaHasPopup={undefined}
-          title={undefined}
           className={styles["sidebar-persona-memory-confirm-cancel"]}
           onClick={props.onClose}
         >
@@ -173,10 +167,7 @@ function PersonaMemoryForgetConfirm(props: PersonaMemoryForgetConfirmProps): Rea
           size="secondary"
           pressed="none"
           disabled={false}
-          ariaLabel={undefined}
           disclosure={{ kind: "none" }}
-          ariaHasPopup={undefined}
-          title={undefined}
           className={styles["sidebar-persona-memory-confirm-ok"]}
           onClick={forget}
         >

@@ -25,7 +25,6 @@ export function HeadNotice(props: HeadNoticeProps): ReactElement {
         disabled={false}
         ariaLabel={props.text}
         disclosure={{ kind: "none" }}
-        ariaHasPopup={undefined}
         title={props.text}
         className={styles["head-notice-mark"]}
         onClick={props.onPress}
@@ -42,9 +41,7 @@ export function HeadNotice(props: HeadNoticeProps): ReactElement {
       size="secondary"
       pressed="none"
       disabled={false}
-      ariaLabel={undefined}
       disclosure={{ kind: "none" }}
-      ariaHasPopup={undefined}
       title={props.text}
       className={styles["head-notice"]}
       onClick={props.onPress}

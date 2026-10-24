@@ -14,7 +14,6 @@ export function TableCardHead(props: TableCardHeadProps): ReactElement {
     <HStack
       element="div"
       name={{ kind: "none" }}
-      ref={undefined}
       gap="sm"
       align="baseline"
       justify="start"

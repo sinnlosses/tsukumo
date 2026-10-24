@@ -53,10 +53,7 @@ export function PresentationalSpeechLog({
         size="secondary"
         pressed="none"
         disabled={false}
-        ariaLabel={undefined}
-        ariaHasPopup={undefined}
         disclosure={{ kind: "expander", expanded: open }}
-        title={undefined}
         className={styles["speech-log-open"]}
         onClick={onOpen}
       >
@@ -81,10 +78,7 @@ export function PresentationalSpeechLog({
             size="action"
             pressed="none"
             disabled={false}
-            ariaLabel={undefined}
             disclosure={{ kind: "none" }}
-            ariaHasPopup={undefined}
-            title={undefined}
             className={styles["speech-log-close"]}
             onClick={onClose}
           >
@@ -94,7 +88,6 @@ export function PresentationalSpeechLog({
           <HStack
             element="div"
             name={{ kind: "none" }}
-            ref={undefined}
             gap="none"
             align="end"
             justify="start"

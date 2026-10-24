@@ -26,7 +26,6 @@ export function Topbar(props: {
     <HStack
       element="div"
       name={{ kind: "none" }}
-      ref={undefined}
       gap="md"
       align="center"
       justify="start"
@@ -58,10 +57,7 @@ export function Topbar(props: {
         size="secondary"
         pressed="none"
         disabled={false}
-        ariaLabel={undefined}
         disclosure={{ kind: "none" }}
-        ariaHasPopup={undefined}
-        title={undefined}
         className={diaryBookStyles["diary-book-topbar-button"]}
         onClick={props.onToggleToc}
       >
@@ -72,10 +68,7 @@ export function Topbar(props: {
         size="secondary"
         pressed="none"
         disabled={false}
-        ariaLabel={undefined}
         disclosure={{ kind: "none" }}
-        ariaHasPopup={undefined}
-        title={undefined}
         className={diaryBookStyles["diary-book-topbar-button"]}
         onClick={props.onClose}
       >

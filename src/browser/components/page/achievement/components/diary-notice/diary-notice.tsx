@@ -25,7 +25,6 @@ export function DiaryNotice(): ReactElement | null {
       <HStack
         element="span"
         name={{ kind: "none" }}
-        ref={undefined}
         gap="none"
         align="stretch"
         justify="start"
@@ -42,10 +41,7 @@ export function DiaryNotice(): ReactElement | null {
         size="secondary"
         pressed="none"
         disabled={false}
-        ariaLabel={undefined}
         disclosure={{ kind: "none" }}
-        ariaHasPopup={undefined}
-        title={undefined}
         className={styles["diary-notice-open"]}
         onClick={view.onOpen}
       >
@@ -60,8 +56,6 @@ export function DiaryNotice(): ReactElement | null {
         disabled={false}
         ariaLabel={DISMISS_SR_LABEL}
         disclosure={{ kind: "none" }}
-        ariaHasPopup={undefined}
-        title={undefined}
         className={styles["diary-notice-dismiss"]}
         onClick={view.onDismiss}
       >

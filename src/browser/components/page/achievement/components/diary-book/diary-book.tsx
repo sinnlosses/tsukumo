@@ -38,7 +38,6 @@ export function DiaryBook({
         <VStack
           element="div"
           name={{ kind: "none" }}
-          ref={undefined}
           gap="lg"
           align="stretch"
           justify="start"

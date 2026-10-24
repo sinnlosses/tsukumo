@@ -98,7 +98,6 @@ export function PresentationalTurnStatus(props: PresentationalTurnStatusProps): 
     <HStack
       element="div"
       name={{ kind: "none" }}
-      ref={undefined}
       gap="md"
       align="center"
       justify="start"
@@ -149,10 +148,7 @@ export function PresentationalTurnStatus(props: PresentationalTurnStatusProps): 
           size="secondary"
           pressed="none"
           disabled={false}
-          ariaLabel={undefined}
           disclosure={{ kind: "none" }}
-          ariaHasPopup={undefined}
-          title={undefined}
           className={dispatchStyles["dispatch-interrupt"]}
           onClick={props.action.onInterrupt}
         >

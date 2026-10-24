@@ -89,7 +89,6 @@ export function PresentationalComposer({
         <HStack
           element="div"
           name={{ kind: "none" }}
-          ref={undefined}
           gap="sm"
           align="center"
           justify="between"
@@ -110,10 +109,7 @@ export function PresentationalComposer({
             size="label"
             pressed="none"
             disabled={false}
-            ariaLabel={undefined}
             disclosure={{ kind: "none" }}
-            ariaHasPopup={undefined}
-            title={undefined}
             className={styles["dispatch-band-jump"]}
             onClick={band.onRestart}
           >
@@ -126,7 +122,6 @@ export function PresentationalComposer({
         <HStack
           element="div"
           name={{ kind: "none" }}
-          ref={undefined}
           gap="sm"
           align="center"
           justify="between"
@@ -147,10 +142,7 @@ export function PresentationalComposer({
             size="label"
             pressed="none"
             disabled={false}
-            ariaLabel={undefined}
             disclosure={{ kind: "none" }}
-            ariaHasPopup={undefined}
-            title={undefined}
             className={styles["dispatch-band-jump"]}
             onClick={band.onJump}
           >
@@ -162,7 +154,6 @@ export function PresentationalComposer({
         <VStack
           element="div"
           name={{ kind: "none" }}
-          ref={undefined}
           gap="none"
           align="stretch"
           justify="start"
@@ -221,7 +212,6 @@ export function PresentationalComposer({
           disabled={false}
           ariaLabel="画像を添える"
           disclosure={{ kind: "none" }}
-          ariaHasPopup={undefined}
           title="画像を添える"
           className={styles["dispatch-tool"]}
           onClick={onPickImages}
@@ -235,7 +225,6 @@ export function PresentationalComposer({
           disabled={false}
           ariaLabel="コマンドを補完する"
           disclosure={{ kind: "none" }}
-          ariaHasPopup={undefined}
           title="コマンドを補完する"
           className={styles["dispatch-tool"]}
           onClick={() => onInsertTrigger("/")}
@@ -249,7 +238,6 @@ export function PresentationalComposer({
           disabled={false}
           ariaLabel="ファイルを補完する"
           disclosure={{ kind: "none" }}
-          ariaHasPopup={undefined}
           title="ファイルを補完する"
           className={styles["dispatch-tool"]}
           onClick={() => onInsertTrigger("@")}
@@ -263,7 +251,6 @@ export function PresentationalComposer({
           disabled={false}
           ariaLabel="マークダウンエディタで書く"
           disclosure={{ kind: "none" }}
-          ariaHasPopup={undefined}
           title="マークダウンエディタで書く"
           className={styles["dispatch-tool"]}
           onClick={onToggleMode}
@@ -289,7 +276,6 @@ export function PresentationalComposer({
                 disabled={newSession.disabled}
                 ariaLabel={NEW_SESSION_LABEL}
                 disclosure={{ kind: "none" }}
-                ariaHasPopup={undefined}
                 title={newSession.title}
                 className={styles["dispatch-new-session"]}
                 onClick={newSession.onStart}

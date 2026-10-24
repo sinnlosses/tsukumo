@@ -45,10 +45,7 @@ export function Report(props: ReportProps): ReactElement {
           size="action"
           pressed="none"
           disabled={false}
-          ariaLabel={undefined}
-          ariaHasPopup={undefined}
           disclosure={{ kind: "none" }}
-          title={undefined}
           className={styles["reveal-skip"]}
           onClick={() => undefined}
         >

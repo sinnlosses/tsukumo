@@ -126,11 +126,11 @@ export function PresentationalConversationLayout({
               ariaLabel="サイドバー"
               disclosure={{
                 kind: "popover",
+                popup: "none",
                 ref: sidebarToggleRef,
                 expanded: sidebarOpen,
                 controls: sidebarId,
               }}
-              ariaHasPopup={undefined}
               title={sidebarOpen ? "サイドバーを閉じる" : "サイドバーを開く"}
               className={styles["layout-rail-toggle"]}
               onClick={onToggleSidebar}
@@ -162,10 +162,7 @@ export function PresentationalConversationLayout({
             size="action"
             pressed="none"
             disabled={false}
-            ariaLabel={undefined}
             disclosure={{ kind: "none" }}
-            ariaHasPopup={undefined}
-            title={undefined}
             className={styles["layout-reset-split"]}
             onClick={onReset}
           >

@@ -33,7 +33,6 @@ export function PresentationalCharacterEdit(
       <VStack
         element="section"
         name={{ kind: "labelledby", id: "character-face" }}
-        ref={undefined}
         gap="md"
         align="stretch"
         justify="start"
@@ -48,7 +47,6 @@ export function PresentationalCharacterEdit(
       <VStack
         element="section"
         name={{ kind: "labelledby", id: "character-mini" }}
-        ref={undefined}
         gap="md"
         align="stretch"
         justify="start"
@@ -63,7 +61,6 @@ export function PresentationalCharacterEdit(
       <VStack
         element="section"
         name={{ kind: "labelledby", id: "character-expressions" }}
-        ref={undefined}
         gap="md"
         align="stretch"
         justify="start"
@@ -88,7 +85,6 @@ export function PresentationalCharacterEdit(
         <VStack
           element="section"
           name={{ kind: "labelledby", id: "character-screen-accent" }}
-          ref={undefined}
           gap="md"
           align="stretch"
           justify="start"
@@ -98,7 +94,6 @@ export function PresentationalCharacterEdit(
           <HStack
             element="div"
             name={{ kind: "none" }}
-            ref={undefined}
             gap="sm"
             align="center"
             justify="start"
@@ -114,10 +109,7 @@ export function PresentationalCharacterEdit(
                 size="action"
                 pressed="none"
                 disabled={props.disabled}
-                ariaLabel={undefined}
                 disclosure={{ kind: "none" }}
-                ariaHasPopup={undefined}
-                title={undefined}
                 className=""
                 onClick={props.resetChatAccent.onClick}
               >
@@ -144,7 +136,6 @@ export function PresentationalCharacterEdit(
       <VStack
         element="section"
         name={{ kind: "labelledby", id: "character-background" }}
-        ref={undefined}
         gap="md"
         align="stretch"
         justify="start"

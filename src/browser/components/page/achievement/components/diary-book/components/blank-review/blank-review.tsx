@@ -17,10 +17,7 @@ export function BlankReview(props: {
         size="body"
         pressed="none"
         disabled={review.availability.kind === "blocked"}
-        ariaLabel={undefined}
         disclosure={{ kind: "none" }}
-        ariaHasPopup={undefined}
-        title={undefined}
         className={styles["diary-book-review-button"]}
         onClick={review.onReview}
       >

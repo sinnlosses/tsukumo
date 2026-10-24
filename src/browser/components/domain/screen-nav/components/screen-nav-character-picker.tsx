@@ -39,8 +39,13 @@ export function ScreenNavCharacterPicker(props: ScreenNavCharacterPickerProps): 
         pressed="none"
         disabled={false}
         ariaLabel={picker.label}
-        ariaHasPopup={undefined}
-        disclosure={{ kind: "popover", ref: toggleRef, expanded: picker.open, controls: panelId }}
+        disclosure={{
+          kind: "popover",
+          popup: "none",
+          ref: toggleRef,
+          expanded: picker.open,
+          controls: panelId,
+        }}
         title={picker.label}
         className={styles["screen-nav-character-picker-toggle"]}
         onClick={picker.onToggle}

@@ -66,7 +66,6 @@ export function Turn(props: TurnProps): ReactElement {
         <VStack
           element="div"
           name={{ kind: "none" }}
-          ref={undefined}
           gap="md"
           align="stretch"
           justify="start"
@@ -320,7 +319,6 @@ function ProgressFold(props: ProgressFoldProps): ReactElement {
       <VStack
         element="div"
         name={{ kind: "none" }}
-        ref={undefined}
         gap="md"
         align="stretch"
         justify="start"

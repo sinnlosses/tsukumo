@@ -42,7 +42,6 @@ export function PresentationalTokenUsage(props: PresentationalTokenUsageProps): 
       <HStack
         element="div"
         name={{ kind: "none" }}
-        ref={undefined}
         gap="md"
         align="baseline"
         justify="start"
@@ -76,7 +75,6 @@ export function PresentationalTokenUsage(props: PresentationalTokenUsageProps): 
       <VStack
         element="section"
         name={{ kind: "none" }}
-        ref={undefined}
         gap="sm"
         align="stretch"
         justify="start"
@@ -86,7 +84,6 @@ export function PresentationalTokenUsage(props: PresentationalTokenUsageProps): 
         <HStack
           element="div"
           name={{ kind: "none" }}
-          ref={undefined}
           gap="sm"
           align="baseline"
           justify="start"

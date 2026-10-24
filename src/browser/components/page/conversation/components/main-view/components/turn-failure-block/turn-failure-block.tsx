@@ -43,10 +43,7 @@ export function TurnFailureBlock(props: {
               size="secondary"
               pressed="none"
               disabled={false}
-              ariaLabel={undefined}
-              ariaHasPopup={undefined}
               disclosure={{ kind: "none" }}
-              title={undefined}
               className={styles["door"]}
               onClick={() => {
                 block.onRetry(retry.request)
@@ -61,10 +58,7 @@ export function TurnFailureBlock(props: {
               size="secondary"
               pressed="none"
               disabled={false}
-              ariaLabel={undefined}
-              ariaHasPopup={undefined}
               disclosure={{ kind: "none" }}
-              title={undefined}
               className={styles["door"]}
               onClick={block.onShowFailedSteps}
             >

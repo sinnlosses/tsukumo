@@ -29,7 +29,6 @@ export function TaskRefreshButton(props: { readonly place: "sidebar" | "modal" }
         disabled={refreshing}
         ariaLabel={LABEL}
         disclosure={{ kind: "none" }}
-        ariaHasPopup={undefined}
         title={LABEL}
         className={styles["task-refresh-sidebar"]}
         onClick={refresh}
@@ -46,7 +45,6 @@ export function TaskRefreshButton(props: { readonly place: "sidebar" | "modal" }
       disabled={refreshing}
       ariaLabel={LABEL}
       disclosure={{ kind: "none" }}
-      ariaHasPopup={undefined}
       title={LABEL}
       className={styles["task-refresh-modal"]}
       onClick={refresh}

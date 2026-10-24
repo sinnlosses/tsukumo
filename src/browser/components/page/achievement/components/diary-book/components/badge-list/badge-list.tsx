@@ -13,7 +13,6 @@ export function Badges(props: { readonly badges: readonly DiaryBookBadge[] }): R
     <HStack
       element="div"
       name={{ kind: "none" }}
-      ref={undefined}
       gap="md"
       align="stretch"
       justify="start"

@@ -18,10 +18,7 @@ export function TaskBoardSortBand(props: { readonly band: SortSome }): ReactElem
         size="secondary"
         pressed="none"
         disabled={false}
-        ariaLabel={undefined}
         disclosure={{ kind: "none" }}
-        ariaHasPopup={undefined}
-        title={undefined}
         className={styles["task-board-sort-reset"]}
         onClick={band.onReset}
       >
@@ -35,10 +32,7 @@ export function TaskBoardSortBand(props: { readonly band: SortSome }): ReactElem
         size="subheading"
         pressed="none"
         disabled={false}
-        ariaLabel={undefined}
-        ariaHasPopup="dialog"
-        disclosure={{ kind: "none" }}
-        title={undefined}
+        disclosure={{ kind: "dialog" }}
         className={styles["task-board-sort-request"]}
         onClick={band.onRequest}
       >

@@ -37,7 +37,6 @@ export function LanternCalendar(props: LanternCalendarProps): ReactElement {
       <HStack
         element="div"
         name={{ kind: "none" }}
-        ref={undefined}
         gap="md"
         align="center"
         justify="start"
@@ -86,7 +85,6 @@ function Legend(): ReactElement {
     <HStack
       element="div"
       name={{ kind: "none" }}
-      ref={undefined}
       gap="md"
       align="stretch"
       justify="start"
@@ -207,7 +205,6 @@ function DayCell(props: DayCellProps): ReactElement {
         <HStack
           element="span"
           name={{ kind: "none" }}
-          ref={undefined}
           gap="none"
           align="stretch"
           justify="start"

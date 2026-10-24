@@ -26,10 +26,10 @@ type SelectProps = {
   readonly options: readonly SelectOption[]
   readonly disabled: boolean
   /**
-   * `disabled` のときに理由を見せる（呼び出し側が渡さないときは `undefined`）。
+   * `disabled` のときに理由を見せる（省略すると付けない）。
    * 常設の枠は増やさず、ブラウザ既定のツールチップに任せる。
    */
-  readonly title: string | undefined
+  readonly title?: string
   readonly onChange: (value: string) => void
 }
 

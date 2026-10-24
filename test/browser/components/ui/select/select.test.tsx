@@ -18,7 +18,6 @@ describe("Select", () => {
         className="dummy-select"
         value="b"
         disabled={false}
-        title={undefined}
         options={[
           { value: "a", label: "A" },
           { value: "b", label: "B" },
@@ -33,6 +32,7 @@ describe("Select", () => {
       "ダミーの <select>",
     )
     expect(select.value).toBe("b")
+    expect(select.hasAttribute("title")).toBe(false)
     expect(screen.getByText("A")).toBeDefined()
     expect(screen.getByText("B")).toBeDefined()
   })

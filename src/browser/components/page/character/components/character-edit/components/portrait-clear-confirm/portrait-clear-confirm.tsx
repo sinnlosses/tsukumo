@@ -48,7 +48,6 @@ export function PortraitClearConfirm(props: PortraitClearConfirmProps): ReactEle
       <HStack
         element="div"
         name={{ kind: "none" }}
-        ref={undefined}
         gap="md"
         align="center"
         justify="start"
@@ -76,7 +75,6 @@ export function PortraitClearConfirm(props: PortraitClearConfirmProps): ReactEle
       <HStack
         element="div"
         name={{ kind: "none" }}
-        ref={undefined}
         gap="sm"
         align="stretch"
         justify="end"
@@ -88,10 +86,7 @@ export function PortraitClearConfirm(props: PortraitClearConfirmProps): ReactEle
           size="secondary"
           pressed="none"
           disabled={false}
-          ariaLabel={undefined}
           disclosure={{ kind: "none" }}
-          ariaHasPopup={undefined}
-          title={undefined}
           className={characterStyles["character-button-outline"]}
           onClick={props.onClose}
         >
@@ -102,10 +97,7 @@ export function PortraitClearConfirm(props: PortraitClearConfirmProps): ReactEle
           size="secondary"
           pressed="none"
           disabled={false}
-          ariaLabel={undefined}
           disclosure={{ kind: "none" }}
-          ariaHasPopup={undefined}
-          title={undefined}
           className={styles["character-clear-confirm-ok"]}
           onClick={props.onConfirm}
         >

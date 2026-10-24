@@ -119,9 +119,7 @@ function WorkflowStepsField(props: {
                 pressed="none"
                 disabled={busy}
                 ariaLabel={`${option.title} を並びの最後に足す`}
-                ariaHasPopup={undefined}
                 disclosure={{ kind: "none" }}
-                title={undefined}
                 className={styles["parked-chip"]}
                 onClick={() => {
                   row.onAdd(option.value)
@@ -374,10 +372,7 @@ function WorkflowSaveBand(props: {
         size="label"
         pressed="none"
         disabled={unchanged || props.busy}
-        ariaLabel={undefined}
-        ariaHasPopup={undefined}
         disclosure={{ kind: "none" }}
-        title={undefined}
         className={styles["save-band-button"]}
         onClick={props.onCancel}
       >
@@ -388,10 +383,7 @@ function WorkflowSaveBand(props: {
         size="label"
         pressed="none"
         disabled={unchanged || props.busy}
-        ariaLabel={undefined}
-        ariaHasPopup={undefined}
         disclosure={{ kind: "none" }}
-        title={undefined}
         className={styles["save-band-button"]}
         onClick={props.onSave}
       >

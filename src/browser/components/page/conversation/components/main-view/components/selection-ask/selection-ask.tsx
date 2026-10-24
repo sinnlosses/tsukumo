@@ -43,10 +43,7 @@ export function SelectionAsk(): ReactElement | null {
         size="label"
         pressed="none"
         disabled={false}
-        ariaLabel={undefined}
         disclosure={{ kind: "none" }}
-        ariaHasPopup={undefined}
-        title={undefined}
         className={styles["selection-ask-button"]}
         onClick={onAsk}
       >

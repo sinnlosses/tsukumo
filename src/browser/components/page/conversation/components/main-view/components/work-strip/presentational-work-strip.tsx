@@ -272,10 +272,7 @@ function StepsToggle(props: { readonly steps: WorkStripSteps }): ReactElement {
       size="secondary"
       pressed="none"
       disabled={false}
-      ariaLabel={undefined}
       disclosure={{ kind: "expander", expanded: props.steps.list.kind === "open" }}
-      ariaHasPopup={undefined}
-      title={undefined}
       className={styles["work-strip-toggle"]}
       onClick={props.steps.onToggle}
     >

@@ -23,7 +23,6 @@ export function ProfileCard(): ReactElement {
       <VStack
         element="div"
         name={{ kind: "none" }}
-        ref={undefined}
         gap="xs"
         align="stretch"
         justify="start"

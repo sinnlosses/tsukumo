@@ -94,7 +94,6 @@ function IdleReviewCard(props: {
       <VStack
         element="div"
         name={{ kind: "none" }}
-        ref={undefined}
         gap="xs"
         align="stretch"
         justify="start"
@@ -110,10 +109,7 @@ function IdleReviewCard(props: {
           size="action"
           pressed="none"
           disabled={review.start.kind === "blocked"}
-          ariaLabel={undefined}
           disclosure={{ kind: "none" }}
-          ariaHasPopup={undefined}
-          title={undefined}
           className={styles["usage-review-start"]}
           onClick={review.onStart}
         >
@@ -130,10 +126,7 @@ function IdleReviewCard(props: {
             size="label"
             pressed="none"
             disabled={false}
-            ariaLabel={undefined}
             disclosure={{ kind: "none" }}
-            ariaHasPopup={undefined}
-            title={undefined}
             className=""
             onClick={review.previousReview.onOpen}
           >
@@ -167,7 +160,6 @@ function RunningReviewCard(props: {
         <VStack
           element="div"
           name={{ kind: "none" }}
-          ref={undefined}
           gap="xs"
           align="stretch"
           justify="start"
@@ -284,10 +276,7 @@ function ResultReviewCard(props: {
               size="label"
               pressed="none"
               disabled={false}
-              ariaLabel={undefined}
               disclosure={{ kind: "none" }}
-              ariaHasPopup={undefined}
-              title={undefined}
               className=""
               onClick={review.close.onClose}
             >

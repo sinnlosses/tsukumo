@@ -70,10 +70,7 @@ export function ImageZoom(props: ImageZoomProps): ReactElement {
         size="secondary"
         pressed="none"
         disabled={false}
-        ariaLabel={undefined}
         disclosure={{ kind: "none" }}
-        ariaHasPopup={undefined}
-        title={undefined}
         className={styles["image-zoom-close"]}
         onClick={props.onClose}
       >

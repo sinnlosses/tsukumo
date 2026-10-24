@@ -31,7 +31,6 @@ export function DaySwitch(props: DaySwitchProps): ReactElement {
     <HStack
       element="div"
       name={{ kind: "none" }}
-      ref={undefined}
       gap="lg"
       align="center"
       justify="between"
@@ -49,8 +48,6 @@ export function DaySwitch(props: DaySwitchProps): ReactElement {
           disabled={!known}
           ariaLabel="前の日"
           disclosure={{ kind: "none" }}
-          ariaHasPopup={undefined}
-          title={undefined}
           className={styles["achievement-day-switch-button"]}
           onClick={props.onPreviousDay}
         >
@@ -59,7 +56,6 @@ export function DaySwitch(props: DaySwitchProps): ReactElement {
         <VStack
           element="span"
           name={{ kind: "none" }}
-          ref={undefined}
           gap="none"
           align="center"
           justify="start"
@@ -81,8 +77,6 @@ export function DaySwitch(props: DaySwitchProps): ReactElement {
           disabled={!known || isToday}
           ariaLabel="次の日"
           disclosure={{ kind: "none" }}
-          ariaHasPopup={undefined}
-          title={undefined}
           className={styles["achievement-day-switch-button"]}
           onClick={props.onNextDay}
         >
@@ -94,10 +88,7 @@ export function DaySwitch(props: DaySwitchProps): ReactElement {
             size="secondary"
             pressed="none"
             disabled={false}
-            ariaLabel={undefined}
             disclosure={{ kind: "none" }}
-            ariaHasPopup={undefined}
-            title={undefined}
             className={styles["achievement-day-switch-today"]}
             onClick={props.onToday}
           >

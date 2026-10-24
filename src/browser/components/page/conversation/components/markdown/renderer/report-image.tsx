@@ -170,10 +170,7 @@ export function BeforeAfterSwap(props: BeforeAfterSwapProps): ReactElement {
                 size="label"
                 pressed={view === choice ? "on" : "off"}
                 disabled={false}
-                ariaLabel={undefined}
                 disclosure={{ kind: "none" }}
-                ariaHasPopup={undefined}
-                title={undefined}
                 className={styles["report-before-after-swap-view"]}
                 onClick={() => chooseView(choice)}
               >
@@ -194,10 +191,7 @@ export function BeforeAfterSwap(props: BeforeAfterSwapProps): ReactElement {
                     size="label"
                     pressed={shown === side ? "on" : "off"}
                     disabled={false}
-                    ariaLabel={undefined}
                     disclosure={{ kind: "none" }}
-                    ariaHasPopup={undefined}
-                    title={undefined}
                     className={styles["report-before-after-swap-thumb"]}
                     onClick={() => setShown(side)}
                   >
@@ -286,8 +280,6 @@ export function ReportImage(props: ReportImageProps): ReactElement {
         disabled={false}
         ariaLabel={ZOOM_LABEL}
         disclosure={{ kind: "none" }}
-        ariaHasPopup={undefined}
-        title={undefined}
         className={styles["report-image-zoom"]}
         onClick={openZoom}
       >

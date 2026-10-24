@@ -17,10 +17,7 @@ export function NavButton(props: {
       size="secondary"
       pressed="none"
       disabled={disabled}
-      ariaLabel={undefined}
       disclosure={{ kind: "none" }}
-      ariaHasPopup={undefined}
-      title={undefined}
       className={styles["diary-book-topbar-button"]}
       onClick={props.onClick}
     >

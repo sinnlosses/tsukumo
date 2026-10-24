@@ -26,7 +26,6 @@ export function SurpriseSection(props: SurpriseSectionProps): ReactElement | nul
     <VStack
       element="section"
       name={{ kind: "label", label: "小さな驚き" }}
-      ref={undefined}
       gap="md"
       align="stretch"
       justify="start"

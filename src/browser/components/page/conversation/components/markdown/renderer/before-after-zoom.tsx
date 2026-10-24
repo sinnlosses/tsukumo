@@ -83,10 +83,7 @@ export function BeforeAfterZoom(props: BeforeAfterZoomProps): ReactElement {
                     size="action"
                     pressed={shown?.side === choice ? "on" : "off"}
                     disabled={false}
-                    ariaLabel={undefined}
                     disclosure={{ kind: "none" }}
-                    ariaHasPopup={undefined}
-                    title={undefined}
                     className={styles["before-after-zoom-side"]}
                     onClick={() => setSide(choice)}
                   >
@@ -103,8 +100,6 @@ export function BeforeAfterZoom(props: BeforeAfterZoomProps): ReactElement {
             disabled={false}
             ariaLabel={CLOSE_LABEL}
             disclosure={{ kind: "none" }}
-            ariaHasPopup={undefined}
-            title={undefined}
             className={styles["before-after-zoom-close"]}
             onClick={props.onClose}
           >

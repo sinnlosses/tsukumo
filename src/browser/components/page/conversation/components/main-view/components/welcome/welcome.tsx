@@ -94,9 +94,7 @@ function Card(props: {
           pressed="none"
           disabled={false}
           ariaLabel={`${card.id} を始める（すぐ送る）`}
-          ariaHasPopup={undefined}
           disclosure={{ kind: "none" }}
-          title={undefined}
           className={styles["card-start"]}
           onClick={() => {
             model.onStart(card)
@@ -157,10 +155,7 @@ function OtherButton(props: {
       size="subheading"
       pressed="none"
       disabled={false}
-      ariaLabel={undefined}
-      ariaHasPopup={undefined}
       disclosure={{ kind: "none" }}
-      title={undefined}
       className={styles["other"]}
       onClick={props.onClick}
     >

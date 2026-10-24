@@ -29,7 +29,6 @@ export function CharacterProfile(props: { readonly profile: CharacterProfileMode
       <VStack
         element="div"
         name={{ kind: "none" }}
-        ref={undefined}
         gap="xs"
         align="stretch"
         justify="start"
@@ -80,7 +79,6 @@ export function CharacterProfile(props: { readonly profile: CharacterProfileMode
         <HStack
           element="div"
           name={{ kind: "none" }}
-          ref={undefined}
           gap="sm"
           align="center"
           justify="start"
@@ -95,9 +93,7 @@ export function CharacterProfile(props: { readonly profile: CharacterProfileMode
               size="secondary"
               pressed="none"
               disabled={profile.switchTo.disabled}
-              ariaLabel={undefined}
               disclosure={{ kind: "none" }}
-              ariaHasPopup={undefined}
               title={profile.switchTo.title}
               className={characterStyles["character-button-outline"]}
               onClick={profile.switchTo.onSwitch}

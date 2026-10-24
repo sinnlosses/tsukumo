@@ -48,10 +48,7 @@ function ScreenFailure(): ReactElement {
         size="body"
         pressed="none"
         disabled={false}
-        ariaLabel={undefined}
-        ariaHasPopup={undefined}
         disclosure={{ kind: "none" }}
-        title={undefined}
         className={styles["screen-failure-reload"]}
         onClick={() => {
           window.location.reload()

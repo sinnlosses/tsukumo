@@ -40,7 +40,6 @@ export function PresentationalCharacterCreate({
       <VStack
         element="div"
         name={{ kind: "none" }}
-        ref={undefined}
         gap="xl"
         align="stretch"
         justify="start"
@@ -64,10 +63,7 @@ export function PresentationalCharacterCreate({
               size="secondary"
               pressed="none"
               disabled={!form.generation.canGenerate}
-              ariaLabel={undefined}
               disclosure={{ kind: "none" }}
-              ariaHasPopup={undefined}
-              title={undefined}
               className={characterStyles["character-button-outline"]}
               onClick={form.generation.onGenerate}
             >
@@ -113,8 +109,6 @@ export function PresentationalCharacterCreate({
                 id="character-create-name"
                 className={characterStyles["character-create-input"]}
                 value={form.name}
-                maxLength={undefined}
-                placeholder={undefined}
                 onChange={form.onNameChange}
               />
             </Field>
@@ -145,8 +139,6 @@ export function PresentationalCharacterCreate({
                 id="character-create-id"
                 className={styles["character-create-input-mono"]}
                 value={form.id}
-                maxLength={undefined}
-                placeholder={undefined}
                 onChange={form.onIdChange}
               />
             </Field>
@@ -174,7 +166,6 @@ export function PresentationalCharacterCreate({
             id="character-create-persona"
             className={characterStyles["character-persona-input"]}
             maxLength={MAX_PERSONA_BODY_LENGTH}
-            placeholder={undefined}
             value={form.persona.value}
             onChange={form.persona.onChange}
           />
@@ -190,10 +181,7 @@ export function PresentationalCharacterCreate({
           size="secondary"
           pressed="none"
           disabled={false}
-          ariaLabel={undefined}
           disclosure={{ kind: "none" }}
-          ariaHasPopup={undefined}
-          title={undefined}
           className={characterStyles["character-button-outline"]}
           onClick={onClose}
         >
@@ -204,10 +192,7 @@ export function PresentationalCharacterCreate({
           size="secondary"
           pressed="none"
           disabled={!form.canSubmit}
-          ariaLabel={undefined}
           disclosure={{ kind: "none" }}
-          ariaHasPopup={undefined}
-          title={undefined}
           className={characterStyles["character-create-submit"]}
           onClick={form.onSubmit}
         >

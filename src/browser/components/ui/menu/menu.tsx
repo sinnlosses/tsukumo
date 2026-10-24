@@ -50,8 +50,13 @@ export function Menu(props: MenuProps): ReactElement {
         pressed="none"
         disabled={props.disabled}
         ariaLabel={props.triggerLabel}
-        ariaHasPopup="menu"
-        disclosure={{ kind: "popover", ref: triggerRef, expanded: open, controls: panelId }}
+        disclosure={{
+          kind: "popover",
+          popup: "menu",
+          ref: triggerRef,
+          expanded: open,
+          controls: panelId,
+        }}
         title={props.triggerLabel}
         className={styles["menu-trigger"]}
         onClick={onToggle}

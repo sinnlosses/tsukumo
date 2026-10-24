@@ -109,7 +109,6 @@ export function ScreenNavSettingsBody(props: ScreenNavSettingsProps): ReactEleme
       <HStack
         element="div"
         name={{ kind: "none" }}
-        ref={undefined}
         gap="lg"
         align="center"
         justify="between"
@@ -121,10 +120,7 @@ export function ScreenNavSettingsBody(props: ScreenNavSettingsProps): ReactEleme
           size="label"
           pressed="none"
           disabled={settings.resetDisabled}
-          ariaLabel={undefined}
           disclosure={{ kind: "none" }}
-          ariaHasPopup={undefined}
-          title={undefined}
           className={styles["screen-nav-settings-reset"]}
           onClick={settings.onReset}
         >

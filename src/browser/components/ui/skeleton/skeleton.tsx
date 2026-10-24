@@ -8,7 +8,7 @@ import styles from "./skeleton.module.css"
 export type SkeletonProps = {
   /** 色・寸法・明滅の遅れ（`animation-delay`）を渡す。 */
   readonly className: string
-  readonly style: CSSProperties | undefined
+  readonly style?: CSSProperties
   readonly children: ReactNode
 }
 

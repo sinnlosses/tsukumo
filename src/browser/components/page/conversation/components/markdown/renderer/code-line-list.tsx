@@ -62,10 +62,7 @@ function foldRow(
       size="label"
       pressed="none"
       disabled={false}
-      ariaLabel={undefined}
       disclosure={{ kind: "expander", expanded: false }}
-      ariaHasPopup={undefined}
-      title={undefined}
       className={styles["code-fold"]}
       onClick={() => {
         open((current) => [...current, range.start])

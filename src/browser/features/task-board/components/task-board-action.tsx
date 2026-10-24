@@ -21,10 +21,7 @@ export function TaskBoardAction(props: {
         size="secondary"
         pressed="none"
         disabled={false}
-        ariaLabel={undefined}
         disclosure={{ kind: "none" }}
-        ariaHasPopup={undefined}
-        title={undefined}
         className={styles["task-board-action-button"]}
         onClick={props.onCopy}
       >
@@ -49,10 +46,7 @@ export function TaskBoardAction(props: {
             size="secondary"
             pressed="none"
             disabled={false}
-            ariaLabel={undefined}
-            ariaHasPopup="dialog"
-            disclosure={{ kind: "none" }}
-            title={undefined}
+            disclosure={{ kind: "dialog" }}
             className={styles["task-board-drop"]}
             onClick={run.onDrop}
           >
@@ -63,10 +57,7 @@ export function TaskBoardAction(props: {
             size="subheading"
             pressed="none"
             disabled={false}
-            ariaLabel={undefined}
-            ariaHasPopup="dialog"
-            disclosure={{ kind: "none" }}
-            title={undefined}
+            disclosure={{ kind: "dialog" }}
             className={styles["task-board-run-plan"]}
             onClick={run.onPlan}
           >
@@ -80,9 +71,7 @@ export function TaskBoardAction(props: {
           size="subheading"
           pressed="none"
           disabled={run.kind === "unavailable"}
-          ariaLabel={undefined}
-          ariaHasPopup="dialog"
-          disclosure={{ kind: "none" }}
+          disclosure={{ kind: "dialog" }}
           title={run.kind === "unavailable" ? run.reason : undefined}
           className={styles["task-board-run"]}
           onClick={run.kind === "available" ? run.onRun : ignoreClick}

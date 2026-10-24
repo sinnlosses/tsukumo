@@ -124,7 +124,6 @@ export function PortraitCard(props: {
         <HStack
           element="div"
           name={{ kind: "none" }}
-          ref={undefined}
           gap="xs"
           align="stretch"
           justify="start"
@@ -144,7 +143,6 @@ export function PortraitCard(props: {
               pressed="none"
               disabled={disabled}
               ariaLabel={clear.ariaLabel}
-              ariaHasPopup={undefined}
               disclosure={{ kind: "none" }}
               title="消す"
               className={styles["character-card-clear"]}

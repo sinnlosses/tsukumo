@@ -28,7 +28,6 @@ export function ItemRemoveConfirm(props: { readonly confirm: OpenConfirm }): Rea
       <HStack
         element="div"
         name={{ kind: "none" }}
-        ref={undefined}
         gap="md"
         align="center"
         justify="start"
@@ -54,7 +53,6 @@ export function ItemRemoveConfirm(props: { readonly confirm: OpenConfirm }): Rea
       <HStack
         element="div"
         name={{ kind: "none" }}
-        ref={undefined}
         gap="sm"
         align="stretch"
         justify="end"
@@ -66,10 +64,7 @@ export function ItemRemoveConfirm(props: { readonly confirm: OpenConfirm }): Rea
           size="secondary"
           pressed="none"
           disabled={false}
-          ariaLabel={undefined}
           disclosure={{ kind: "none" }}
-          ariaHasPopup={undefined}
-          title={undefined}
           className={characterStyles["character-button-outline"]}
           onClick={confirm.onCancel}
         >
@@ -80,10 +75,7 @@ export function ItemRemoveConfirm(props: { readonly confirm: OpenConfirm }): Rea
           size="secondary"
           pressed="none"
           disabled={false}
-          ariaLabel={undefined}
           disclosure={{ kind: "none" }}
-          ariaHasPopup={undefined}
-          title={undefined}
           className={styles["item-remove-confirm-ok"]}
           onClick={confirm.onConfirm}
         >

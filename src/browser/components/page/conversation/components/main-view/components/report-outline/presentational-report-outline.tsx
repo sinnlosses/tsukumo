@@ -92,8 +92,6 @@ export function PresentationalReportOutline({
                   disabled={false}
                   ariaLabel={EXPAND_LABEL}
                   disclosure={{ kind: "expander", expanded: false }}
-                  ariaHasPopup={undefined}
-                  title={undefined}
                   className={styles["outline-toggle"]}
                   onClick={onToggleCollapse}
                 >
@@ -116,8 +114,6 @@ export function PresentationalReportOutline({
                     disabled={false}
                     ariaLabel={COLLAPSE_LABEL}
                     disclosure={{ kind: "expander", expanded: true }}
-                    ariaHasPopup={undefined}
-                    title={undefined}
                     className={styles["outline-toggle"]}
                     onClick={onToggleCollapse}
                   >

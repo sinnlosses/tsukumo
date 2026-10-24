@@ -112,7 +112,6 @@ export function InquiryCard(props: { readonly actions: "inline" | "none" }): Rea
         <HStack
           element="header"
           name={{ kind: "none" }}
-          ref={undefined}
           gap="sm"
           align="center"
           justify="start"
@@ -226,7 +225,6 @@ export function InquiryCard(props: { readonly actions: "inline" | "none" }): Rea
         <HStack
           element="footer"
           name={{ kind: "none" }}
-          ref={undefined}
           gap="sm"
           align="center"
           justify="end"
@@ -250,10 +248,7 @@ export function InquiryCard(props: { readonly actions: "inline" | "none" }): Rea
               size="secondary"
               pressed="none"
               disabled={false}
-              ariaLabel={undefined}
               disclosure={{ kind: "none" }}
-              ariaHasPopup={undefined}
-              title={undefined}
               className={styles["inquiry-back"]}
               onClick={inquiry.onBack}
             >
@@ -265,10 +260,7 @@ export function InquiryCard(props: { readonly actions: "inline" | "none" }): Rea
             size="secondary"
             pressed="none"
             disabled={!inquiry.canAnswer}
-            ariaLabel={undefined}
             disclosure={{ kind: "none" }}
-            ariaHasPopup={undefined}
-            title={undefined}
             className={styles["inquiry-answer"]}
             onClick={inquiry.onAnswer}
           >
@@ -487,7 +479,6 @@ function InquiryOption(props: {
       <HStack
         element="label"
         name={{ kind: "none" }}
-        ref={undefined}
         gap="sm"
         align="baseline"
         justify="start"

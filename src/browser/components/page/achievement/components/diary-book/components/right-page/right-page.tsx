@@ -63,7 +63,6 @@ export function RightPage(props: {
       <HStack
         element="div"
         name={{ kind: "none" }}
-        ref={undefined}
         gap="lg"
         align="end"
         justify="start"
