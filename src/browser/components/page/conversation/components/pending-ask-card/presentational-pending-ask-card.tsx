@@ -1,6 +1,7 @@
 import clsx from "clsx"
 import type { ReactElement } from "react"
 
+import { CHECK_MARK } from "../../../../../domain/phase-mark.ts"
 import type { InquiryModel, InquiryOptionRow } from "../../../../../stores/inquiry-answer.ts"
 import { BottomSheet } from "../../../../ui/bottom-sheet/bottom-sheet.tsx"
 import { InquiryCard } from "../inquiry/inquiry.tsx"
@@ -15,7 +16,6 @@ const OMITTED_PREFIX = "ほか"
 const DETAIL_LABEL = "詳しく"
 const BRIEF_SHEET_LABEL = "お伺いの詳細"
 const CHIPS_SHEET_LABEL = "対象の一覧"
-const CHECK_MARK = "✓"
 /** 2択は2列に並べる。 */
 const TWO_COLUMN_COUNT = 2
 

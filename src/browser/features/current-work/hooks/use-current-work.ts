@@ -16,16 +16,12 @@ import { reportDraftingOf, type ReportDrafting } from "../../../../shared/sessio
 import type { TurnStep, TurnStepList } from "../../../../shared/session/turn-step.ts"
 import {
   phaseLabel,
-  type PhaseNumber,
   PHASE_SPAN_NAMES,
   plannedPhaseNumber,
   workPositionText,
 } from "../../../../shared/session/work-plan-phase-number.ts"
-import {
-  currentPhaseOf,
-  type PlannedPhase,
-  plannedPhasesOf,
-} from "../../../../shared/session/work-plan.ts"
+import { currentPhaseOf, plannedPhasesOf } from "../../../../shared/session/work-plan.ts"
+import { phaseMarkOf } from "../../../domain/phase-mark.ts"
 import { DEFAULT_CHARACTER_NAME } from "../../../domain/portrait-appearance.ts"
 import { toolInputText } from "../../../domain/tool-summary.ts"
 import { usePopover } from "../../../hooks/use-popover.ts"
@@ -344,7 +340,7 @@ function toPlanView(turnStepList: TurnStepList, turnInProgress: boolean): Curren
     const number = plannedPhaseNumber(plan, phase)
     const view: CurrentWorkPlanPhase = {
       key: String(phase.index),
-      mark: planMarkOf(number, phase),
+      mark: phaseMarkOf(plan, phase),
       name: phase.name,
       state: phase.state,
       skipped: phase.skipped,
@@ -369,13 +365,6 @@ function toPlanView(turnStepList: TurnStepList, turnInProgress: boolean): Curren
     headingLabel: turnInProgress ? "この依頼のワークプラン" : "前の依頼のワークプラン",
     spans,
   }
-}
-
-function planMarkOf(number: PhaseNumber, phase: Pick<PlannedPhase, "state" | "skipped">): string {
-  if (phase.state === "done") {
-    return phase.skipped ? "/" : "✓"
-  }
-  return number.kind === "numbered" ? number.ordinals : "…"
 }
 
 /**

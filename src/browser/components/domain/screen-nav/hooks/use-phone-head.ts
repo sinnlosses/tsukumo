@@ -16,6 +16,7 @@ import {
   type PlannedPhaseState,
 } from "../../../../../shared/session/work-plan.ts"
 import type { CharacterFaceInfo } from "../../../../domain/character-face.ts"
+import { phaseMarkOf } from "../../../../domain/phase-mark.ts"
 import { isTurnCounting, turnElapsedClock } from "../../../../domain/turn-elapsed.ts"
 import type {
   CurrentWork,
@@ -56,6 +57,7 @@ type PhoneHeadDot = {
   readonly state: PlannedPhaseState
   /** 済んだ段のうち飛ばした段。`state` は `done` のまま。 */
   readonly skipped: boolean
+  readonly mark: string
   /** 読み上げに渡す「2. 段の名前（今の段）」。 */
   readonly label: string
 }
@@ -184,6 +186,7 @@ function progressOf(turnStepList: TurnStepList): PhoneHeadProgress {
       key: entry.key,
       state: entry.state,
       skipped: entry.skipped,
+      mark: entry.state === "done" ? phaseMarkOf(plan, entry) : "",
       label: `${plannedPhaseTitle(plan, entry)}${entry.skipped ? SKIPPED_DOT_SUFFIX : DOT_STATE_SUFFIX[entry.state]}`,
     })),
     stepCount,

@@ -40,6 +40,7 @@ export const E2E_WATCHED_REGIONS = {
   "test/e2e/chat-speech-gap.test.ts": ["main", "chat"],
   "test/e2e/conversation-moment.test.ts": "every",
   "test/e2e/conversation-tier.test.ts": "every",
+  "test/e2e/image-layout.test.ts": ["main"],
   "test/e2e/input-dispatch.test.ts": ["main", "dispatch"],
   "test/e2e/inquiry.test.ts": ["main", "dispatch"],
   "test/e2e/live-region-focus.test.ts": "every",

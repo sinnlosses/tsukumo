@@ -33,6 +33,7 @@ import {
   plannedPhasesOf,
 } from "../../../../../../../../../shared/session/work-plan.ts"
 import { formatMeasured } from "../../../../../../../../../shared/utils/elapsed-time.ts"
+import { phaseMarkOf } from "../../../../../../../../domain/phase-mark.ts"
 import {
   FINISHED_LABEL,
   isTurnCounting,
@@ -191,7 +192,7 @@ const PHASE_STATE_SUFFIX = {
 
 const SKIPPED_PHASE_SUFFIX = "（飛ばした）"
 
-const SKIPPED_PHASE_MARK = "/"
+const ASKING_MARK = "?"
 
 const SKIPPED_STATE_WORD = "飛ばした · 所要"
 
@@ -405,26 +406,10 @@ function toPhase(
 ): WorkStripPhase {
   const state: WorkStripPhaseState =
     phase.state === "current" && flags.asking ? "asking" : phase.state
-  const number = plan.kind === "planned" ? plannedPhaseNumber(plan, phase) : NAMED
-  const awaitsRange =
-    plan.kind === "planned" &&
-    plan.delegatedRange.kind === "pending" &&
-    plan.delegatedRange.first === phase.index
   const key = phaseKeyOf(phase)
   return {
     key,
-    mark:
-      state === "done"
-        ? phase.skipped
-          ? SKIPPED_PHASE_MARK
-          : "✓"
-        : state === "asking"
-          ? "?"
-          : number.kind === "numbered"
-            ? number.ordinals
-            : awaitsRange
-              ? "…"
-              : "・",
+    mark: state === "asking" ? ASKING_MARK : phaseMarkOf(plan, phase),
     label: `${plan.kind === "planned" ? plannedPhaseTitle(plan, phase) : phase.name}${phase.skipped ? SKIPPED_PHASE_SUFFIX : PHASE_STATE_SUFFIX[state]}`,
     state,
     skipped: phase.skipped,
@@ -448,7 +433,7 @@ function popoverOf(
     kind: "open",
     title:
       state === "done"
-        ? `${phase.skipped ? SKIPPED_PHASE_MARK : "✓"} ${phase.name}`
+        ? `${phaseMarkOf(plan, phase)} ${phase.name}`
         : plan.kind === "planned"
           ? plannedPhaseTitle(plan, phase)
           : phase.name,

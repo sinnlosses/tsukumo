@@ -123,7 +123,7 @@ describe("useWorkStrip（時刻に依るもの）", () => {
     })
   })
 
-  it("範囲が pending のあいだは、前の段だけを数え、範囲の先頭の丸を「…」・その後ろを「・」にする", () => {
+  it("範囲が pending のあいだは、前の段だけを数え、範囲の先頭から後ろの丸は、どちらも「…」にする", () => {
     const pending: SessionEvent = {
       ...plan,
       delegatedRange: { kind: "pending", first: 1 },
@@ -146,7 +146,7 @@ describe("useWorkStrip（時刻に依るもの）", () => {
     expect(
       strip.kind === "working" &&
         strip.phases.map((slot) => slot.kind === "phase" && slot.phase.mark),
-    ).toEqual(["1", "…", "・"])
+    ).toEqual(["1", "…", "…"])
   })
 
   it("範囲があれば、群の先頭の丸に群の名を付け、今の群の名を目立たせ、右端に群の中の位置を出す", () => {

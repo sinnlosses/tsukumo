@@ -120,7 +120,7 @@ function PhoneHeadProgressLine(props: {
               )}
               aria-label={dot.label}
             >
-              {dot.state === "done" && (dot.skipped ? "/" : "✓")}
+              {dot.mark}
             </li>
           ))}
         </ol>

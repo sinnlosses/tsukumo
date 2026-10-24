@@ -7,6 +7,7 @@ import type {
   MainViewStepBody,
   MainViewTurn,
 } from "../../../../../../../shared/session/main-view-shape.ts"
+import { doneMarkOf } from "../../../../../../domain/phase-mark.ts"
 
 type TextBody = Extract<MainViewStepBody, { readonly kind: "text" }>
 
@@ -19,6 +20,7 @@ export type PhaseRow = {
   /** 「2:16」の形の所要。測れていなければ空。 */
   readonly duration: string
   readonly skipped: boolean
+  readonly mark: string
   readonly body: TextBody
 }
 
@@ -31,14 +33,18 @@ export type PhaseNeighbor =
 const POSITION_PREFIX = /^(?:[前本後]\s)?\d+(?:–\d+|(?:·\d+)*)\/\d+\s+/u
 
 export function phaseRowsOf(turn: MainViewTurn): readonly PhaseRow[] {
-  return turn.steps.filter(isInterimText).map((step, index) => ({
-    stepId: step.id,
-    number: index + 1,
-    title: titleOf(step.body),
-    duration: durationOf(step.body.finishedPhase),
-    skipped: step.body.finishedPhase.kind === "phase" && step.body.finishedPhase.skipped,
-    body: step.body,
-  }))
+  return turn.steps.filter(isInterimText).map((step, index) => {
+    const skipped = step.body.finishedPhase.kind === "phase" && step.body.finishedPhase.skipped
+    return {
+      stepId: step.id,
+      number: index + 1,
+      title: titleOf(step.body),
+      duration: durationOf(step.body.finishedPhase),
+      skipped,
+      mark: doneMarkOf(skipped),
+      body: step.body,
+    }
+  })
 }
 
 /** 板の頭と下端の「n/N」の N。ワークプランがあれば段の数（一覧より少なければ一覧の数）、無ければ一覧の数。 */
