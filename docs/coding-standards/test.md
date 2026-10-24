@@ -26,6 +26,12 @@
 - **モックするのはシステム境界だけ**: ファイルシステム、時刻、端末の能力判定（画像プロトコルが
   使えるか）。Vitest の `vi.fn` / `vi.spyOn` を使う。自分たちのモジュール同士はモックしない
   （`/tdd` の `mocking.md` が正典）
+- **単体の `node` project は `isolate: false` なので、同じ worker で先に走ったテストが読んだモジュールがキャッシュに残る**。
+  そのためファイルの頭の `vi.mock` による差し替えが効かないことがあり（または別のテストの差し替えが残り）、
+  呼び出し回数の数えが実行順で通ったり落ちたりする。`node:fs` などを差し替えるテストは、
+  `vi.resetModules()` のあとに `vi.doMock` で差し替え、動的 `import` で読み込み直す。後始末は `vi.doUnmock` と
+  `vi.resetModules()`（見本は `test/server/adapter/lib/jsonl.test.ts` の `loadCountingAppender`）。
+  ファイル全体を隔離するなら `vitest.config.ts` の `ISOLATED_FILES` に挙げる
 - **単体テストのプロセスのタイムゾーンは UTC に固定してある**（単体テストの設定の `test.env.TZ`。
   ホストが JST でも `Temporal.Now.timeZoneId()` は `"UTC"` を返す）。日付の境目を見るテストは、
   オフセットを `+09:00` のように固定せず、`Temporal.Now.timeZoneId()` を基準に時刻を組む。
