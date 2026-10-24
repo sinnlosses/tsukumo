@@ -7,7 +7,7 @@
 // `permissionMode: "dontAsk"`（ほかは聞かずに断る。許可を尋ねる先が無い）。
 // 設定ファイルも読まず（`settingSources: []`）、transcript も書かない（`persistSession: false`）。
 //
-// 渡す文面と受け取る日記は会話の内容に当たるので、ここではログにもファイルにも書かない。
+// 渡す文面と受け取る日記は会話の内容に当たるので、ここではログにもファイルにも書かない（足跡は数と種類の語だけ）。
 // 検査・保存・「書けた／書けなかった」の判定は core が持つ。
 
 import { createSdkMcpServer, query, tool } from "@anthropic-ai/claude-agent-sdk"
@@ -20,6 +20,11 @@ import {
 } from "../../../shared/character-pack/expression-choice.ts"
 import type { Expression } from "../../../shared/character-pack/expression.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
+import {
+  abortControllerFor,
+  recordedMessages,
+  type ThrowawayQueryWatch,
+} from "../../adapter/sdk-throwaway-query.ts"
 import { TSUKUMO_MCP_SERVER_NAME, tsukumoToolFullName } from "../../core/tsukumo-tool-name.ts"
 import {
   DIARY_BOOKMARK_DESCRIPTION,
@@ -54,19 +59,9 @@ export async function queryDiary(
   intake: DiaryIntake,
   onEvent: (event: SessionEvent) => void,
   signal: AbortSignal,
+  watch: Pick<ThrowawayQueryWatch, "record" | "now">,
 ): Promise<void> {
-  const abortController = new AbortController()
-  if (signal.aborted) {
-    abortController.abort()
-  } else {
-    signal.addEventListener(
-      "abort",
-      () => {
-        abortController.abort()
-      },
-      { once: true },
-    )
-  }
+  const abortController = abortControllerFor(signal)
 
   const session = query({
     prompt: request.prompt,
@@ -91,7 +86,7 @@ export async function queryDiary(
 
   // `diary` の呼び出しの塊を追いかけ、断片を3段の合図に変える。
   const observer = createDiaryStreamObserver()
-  for await (const message of session) {
+  for await (const message of recordedMessages(session, { kind: "diary", ...watch }, signal)) {
     for (const event of observer.observe(message)) {
       onEvent(event)
     }

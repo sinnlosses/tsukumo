@@ -79,13 +79,16 @@ function usageReviewSource(
   switch (driver.kind) {
     case "fake":
       return { kind: "replay", ...driver.session.usageReview }
-    case "sdk":
+    case "sdk": {
+      const watch = { record: context.throwawayQuery, now: context.now }
       return {
         kind: "query",
-        review: queryUsageReview,
+        review: (request, intake, onEvent, signal) =>
+          queryUsageReview(request, intake, onEvent, signal, watch),
         proposal: (request, onEvent, signal) =>
-          queryUsageProposal(request, onEvent, signal, mountWorkflowPlugin),
+          queryUsageProposal(request, onEvent, signal, mountWorkflowPlugin, watch),
       }
+    }
     default:
       return driver satisfies never
   }

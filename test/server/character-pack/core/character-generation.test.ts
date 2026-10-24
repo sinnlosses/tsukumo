@@ -1,9 +1,7 @@
 import { describe, expect, it } from "vitest"
 
-import {
-  type CharacterGenerationQuery,
-  generateCharacter,
-} from "../../../../src/server/character-pack/core/character-generation.ts"
+import { generateCharacter } from "../../../../src/server/character-pack/core/character-generation.ts"
+import type { StructuredQuery } from "../../../../src/server/core/structured-query.ts"
 import { MAX_CHARACTER_NAME_LENGTH } from "../../../../src/shared/character-pack/character-definition.ts"
 import {
   MAX_PERSONA_BODY_LENGTH,
@@ -61,7 +59,7 @@ describe("generateCharacter（出力の検査）", () => {
 
 describe("generateCharacter", () => {
   it("立ち絵を画像1枚として Opus の問い合わせに渡し、検査した欄の値を返す", async () => {
-    const requests: CharacterGenerationQuery[] = []
+    const requests: StructuredQuery[] = []
 
     const generated = await generateCharacter(
       (request) => {
@@ -73,8 +71,8 @@ describe("generateCharacter", () => {
     )
 
     expect(generated).toEqual(GENERATED)
-    expect(requests.map((request) => [request.model, request.image])).toEqual([
-      ["opus", { mediaType: "image/png", base64: PORTRAIT_BASE64 }],
+    expect(requests.map((request) => [request.kind, request.model, request.images])).toEqual([
+      ["character-generation", "opus", [{ mediaType: "image/png", base64: PORTRAIT_BASE64 }]],
     ])
   })
 
@@ -89,7 +87,7 @@ describe("generateCharacter", () => {
   })
 
   it("モデルへ渡せない立ち絵では問い合わせを起こさない", async () => {
-    const requests: CharacterGenerationQuery[] = []
+    const requests: StructuredQuery[] = []
 
     const generated = await generateCharacter(
       (request) => {

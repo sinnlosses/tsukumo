@@ -38,7 +38,7 @@
 | `view-server/`       | ビューサーバ。ポートの決定・http・ws・同梱の外部ライブラリ・ブラウザ側の組み立てと開発サーバ                            |
 | `repository/`        | 作業ディレクトリの git リポジトリを読む。`git` を起こす口・管理下のファイルと行の抜き書き・タスク一覧                   |
 | `recommendation/`    | おすすめの札。候補・出力の検査・キャッシュ                                                                              |
-| `welcome-greeting/`  | 迎えの挨拶と反応。書き手・覚え・使い捨ての `query()`（`structured-query` `retried-query` `sdk-structured-query`）       |
+| `welcome-greeting/`  | 迎えの挨拶と反応。書き手・覚え・使い捨ての問い合わせの指示文と検査                                                      |
 | `checkout/`          | 打った場所のチェックアウトと自分の根を比べ、違えば打った側の `bin/tsukumo` へ委ねる                                     |
 | `workflow-setting/`  | ワークフローの設定。`tw` の設定コマンドを起こす口と読み書きの手続き                                                     |
 | `item/`              | キャラビューの席に置くアイテム。一覧と席の置き場の読み書き・素材を配る判断                                              |
@@ -77,25 +77,25 @@
   配線には単体テストを持たない（守る振る舞いは E2E が本物のプロセスで、口の揃いは型検査が守り、
   単体で書くには adapter を差し替える本番に要らない口が要る）
 - **Agent SDK を import してよいのは、機能の `adapter/` の直下の `sdk-` で始まるファイルだけ**
-  （原則3）。1つの箱にはまとめず、**その境界が属する機能に置く**（「core と adapter」）
+  （原則3）。1つの箱にはまとめず、**その境界が属する機能に置く**（「core と adapter」）。
+  例外は共有の箱の `server/adapter/` 直下の `sdk-` で始まる、どの機能の語彙も名乗らない使い捨ての問い合わせの口
 - **機能を足すときは、検査の機能の一覧と下の表に足す**（知らない機能のディレクトリと、
   `core/` `adapter/` の外に置いたファイルと、表と `SERVER_FEATURE_IMPORTS` のずれは
   `test/architecture/server-feature.test.ts` が落とす）
 
-| 機能（import する側） | 読んでよい機能                                                                                                                                                                         |
-| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `session`             | `session-driver` `chat` `diary` `token-usage` `context-usage` `experience-metric` `diagnostic` `character-pack` `report`                                                               |
-| `system-prompt`       | `session-driver` `chat` `report` `work-plan` `question`                                                                                                                                |
-| `view-server`         | `session`                                                                                                                                                                              |
-| `chat`                | `character-pack`                                                                                                                                                                       |
-| `context-usage`       | `session-driver`                                                                                                                                                                       |
-| `session-driver`      | `report` `view-server` `chat` `work-plan` `question`                                                                                                                                   |
-| `diary`               | `repository`                                                                                                                                                                           |
-| `usage-review`        | `session-driver`                                                                                                                                                                       |
-| `achievement`         | `repository`                                                                                                                                                                           |
-| `question`            | `report`                                                                                                                                                                               |
-| `recommendation`      | `welcome-greeting`                                                                                                                                                                     |
-| そのほか              | —（葉。`plan-usage` `experience-metric` `diagnostic` `character-pack` `host` `repository` `checkout` `welcome-greeting` `workflow-setting` `report` `item` `token-usage` `work-plan`） |
+| 機能（import する側） | 読んでよい機能                                                                                                                                                                                          |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `session`             | `session-driver` `chat` `diary` `token-usage` `context-usage` `experience-metric` `diagnostic` `character-pack` `report`                                                                                |
+| `system-prompt`       | `session-driver` `chat` `report` `work-plan` `question`                                                                                                                                                 |
+| `view-server`         | `session`                                                                                                                                                                                               |
+| `chat`                | `character-pack`                                                                                                                                                                                        |
+| `context-usage`       | `session-driver`                                                                                                                                                                                        |
+| `session-driver`      | `report` `view-server` `chat` `work-plan` `question`                                                                                                                                                    |
+| `diary`               | `repository`                                                                                                                                                                                            |
+| `usage-review`        | `session-driver`                                                                                                                                                                                        |
+| `achievement`         | `repository`                                                                                                                                                                                            |
+| `question`            | `report`                                                                                                                                                                                                |
+| そのほか              | —（葉。`plan-usage` `experience-metric` `diagnostic` `character-pack` `host` `repository` `recommendation` `checkout` `welcome-greeting` `workflow-setting` `report` `item` `token-usage` `work-plan`） |
 
 表は `test/architecture/server-feature.test.ts` の `SERVER_FEATURE_IMPORTS` と一致を検査され、使われない組も落ちる。
 辺が `core` と `adapter` のどちらからどちらへ向かうかは表に持たず、実際の import が正典。

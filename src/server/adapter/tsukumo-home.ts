@@ -48,6 +48,7 @@ export const TSUKUMO_HOME_PLACES = {
   reportUsage: "report-usage",
   diary: "diary",
   tokenUsage: "token-usage",
+  throwawayQuery: "throwaway-query",
 } as const satisfies Record<string, string>
 
 export type TsukumoHomePlace = keyof typeof TSUKUMO_HOME_PLACES

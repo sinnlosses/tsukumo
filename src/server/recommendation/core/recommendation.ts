@@ -9,7 +9,7 @@ import {
   type RecommendationCard,
 } from "../../../shared/recommendation/recommendation-card.ts"
 import { structuredOutputSchema } from "../../core/structured-output-schema.ts"
-import type { StructuredQuery } from "../../welcome-greeting/core/structured-query.ts"
+import type { StructuredQuery } from "../../core/structured-query.ts"
 import type {
   RecommendationCandidate,
   RecommendationCandidates,
@@ -66,6 +66,8 @@ export function recommendationQuery(selection: RecommendationCandidates): Struct
           `着手できるタスクがほかに ${String(selection.omittedCount)} 件あるが、候補には渡していない`,
         ]
   return {
+    kind: "recommendation",
+    images: [],
     model: RECOMMENDATION_MODEL,
     systemPrompt: RECOMMENDATION_INSTRUCTION,
     prompt: ["## 候補", ...selection.candidates.map(candidateLine), ...omitted].join("\n"),

@@ -50,6 +50,8 @@ import { isAfterAt, isBeforeAt } from "../core/chat-instant-order.ts"
 import type { ChatFoldPoint } from "../core/chat-memory.ts"
 import { CHAT_IMAGE_DIR_NAME, writeChatImage } from "./chat-archive-image.ts"
 
+const CONSOLIDATION_LOCK_FILE_NAME = "consolidation.lock"
+
 /** 雑談の画像を残す日数。名前の先頭の日付がこれより古いファイルは消す。 */
 const CHAT_IMAGE_RETENTION_DAYS = 7
 
@@ -79,9 +81,9 @@ const archiveLineSchema = z.object({
   project: z.string().optional(),
 })
 
-/** 置き場の親（`~/.tsukumo/chat-archive`）。書き込んでよいのはこの下だけ。 */
-export function chatArchiveDir(): string {
-  return tsukumoHomePath("chatArchive")
+/** パック1つぶんの定着の錠のパス（置き場の親の下の `<パック名>/consolidation.lock`）。 */
+export function chatConsolidationLockPath(packName: string): string {
+  return join(chatArchiveDir(), packName, CONSOLIDATION_LOCK_FILE_NAME)
 }
 
 /**
@@ -356,4 +358,9 @@ function readUnconsolidated(
     usedBytes,
     overflowed,
   }
+}
+
+/** 置き場の親（`~/.tsukumo/chat-archive`）。書き込んでよいのはこの下だけ。 */
+function chatArchiveDir(): string {
+  return tsukumoHomePath("chatArchive")
 }

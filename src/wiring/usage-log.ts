@@ -1,7 +1,8 @@
-// 日付ごとの記録（token-usage・diagnostic・context-usage・experience-metric・report-usage）の作成・閉じる・古いファイルの掃除。
-// 疑似セッションの走りは本物の使用量に混ぜないので、context-usage・experience-metric・report-usage には何も書かない口を渡す。
+// 日付ごとの記録（token-usage・diagnostic・context-usage・experience-metric・report-usage・throwaway-query）の作成・閉じる・古いファイルの掃除。
+// 疑似セッションの走りは本物の使用量に混ぜないので、context-usage・experience-metric・report-usage・throwaway-query には何も書かない口を渡す。
 // token-usage と diagnostic は疑似でも本物を作る。
 
+import { createThrowawayQueryLog } from "../server/adapter/throwaway-query-log.ts"
 import { createContextUsageLog } from "../server/context-usage/adapter/context-usage-log.ts"
 import type { Config } from "../server/core/config.ts"
 import { createDiagnosticLog } from "../server/diagnostic/adapter/diagnostic-log.ts"
@@ -20,6 +21,7 @@ type DriverSwitchedLogs = {
   readonly context: ReturnType<typeof createContextUsageLog>
   readonly experienceMetric: ReturnType<typeof createExperienceMetricLog>
   readonly report: ReturnType<typeof createReportUsageLog>
+  readonly throwawayQuery: ReturnType<typeof createThrowawayQueryLog>
 }
 
 export type UsageLogs = DriverSwitchedLogs & {
@@ -55,6 +57,7 @@ export function wireUsageLogs(
     logs.context,
     logs.experienceMetric,
     logs.report,
+    logs.throwawayQuery,
   ]
   return {
     ...logs,
@@ -92,6 +95,7 @@ function realLogs(reportSchema: Config["reportSchema"]): DriverSwitchedLogs {
     context: createContextUsageLog(),
     experienceMetric: createExperienceMetricLog(),
     report: createReportUsageLog(reportSchema),
+    throwawayQuery: createThrowawayQueryLog(),
   }
 }
 
@@ -109,6 +113,12 @@ function silentLogs(): DriverSwitchedLogs {
     report: {
       append: () => undefined,
       appendRejection: () => undefined,
+      flush: done,
+      close: done,
+      pruneExpired: () => undefined,
+    },
+    throwawayQuery: {
+      record: () => undefined,
       flush: done,
       close: done,
       pruneExpired: () => undefined,

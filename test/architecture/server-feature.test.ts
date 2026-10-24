@@ -35,7 +35,7 @@ const SERVER_FEATURE_IMPORTS: Readonly<Record<ServerFeature, ReadonlySet<ServerF
   "usage-review": new Set(["session-driver"]),
   host: new Set([]),
   repository: new Set([]),
-  recommendation: new Set(["welcome-greeting"]),
+  recommendation: new Set([]),
   "welcome-greeting": new Set([]),
   checkout: new Set([]),
   "workflow-setting": new Set([]),

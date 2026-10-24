@@ -3,7 +3,7 @@
 
 import type { RecommendationCard } from "../../../shared/recommendation/recommendation-card.ts"
 import type { TaskSummaryResult } from "../../../shared/repository/task-summary.ts"
-import type { StructuredQuery } from "../../welcome-greeting/core/structured-query.ts"
+import type { StructuredQuery } from "../../core/structured-query.ts"
 import {
   type RecommendationCandidates,
   recommendationCandidates,

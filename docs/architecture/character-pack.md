@@ -93,7 +93,7 @@ characters/<name>/
   `persona.md` が無いパックでも、書けば作る。上限は 8000 文字。効くのは次に起こすセッションから。
   作るときも人格の本文を受け取り、空でなければ `persona.md` を書く
 - **書き込まない手続きが1つある: 立ち絵からの生成（`generateFromPortrait`）。** 作るダイアログに置いた
-  立ち絵1枚から、id・名前・差し色2つ・人格の本文を Opus の使い捨ての `query()` 1回（`sdk-character-generation.ts`）で
+  立ち絵1枚から、id・名前・差し色2つ・人格の本文を Opus の使い捨ての `query()` 1回（共有の箱の `sdk-structured-query.ts`）で
   書かせて返すだけで、ファイルには触らない。入力は利用者の画像1枚だけ（会話・人格・ほかのパックを混ぜない）。
   画像の形式と上限は依頼に添える画像と同じ `parsePromptImage` で見るので、`.svg` は画面が `<canvas>` で png に
   直してから送る（外部の変換コマンドは使わない）。値を返すので `/ws` の上で応答を待つ（「コマンドの受け手と
@@ -153,13 +153,13 @@ characters/<name>/
 入る（記憶は雑談と仕事で1つ）。 仕様（何を・いつ・どんな形で
 書き、どう読み戻すか・上限）は `docs/architecture/chat-mode.md` 4.9 が正典で、ここは置き場と持ち場だけを持つ。
 
-| 何                            | 置き場                                                                                                   | ファイルに触る adapter                    |
-| ----------------------------- | -------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
-| あらすじ（と渡し済みの印）    | `~/.tsukumo/chat-summary/<pack>.summary.json`（話題の見出しも同じ JSON）                                 | `chat/adapter/chat-summary.ts`            |
-| 会話のアーカイブ              | `~/.tsukumo/chat-archive/<pack>/<YYYY-MM-DD>.jsonl`                                                      | `chat/adapter/chat-archive.ts`            |
-| 雑談で貼った画像（7日で消す） | `~/.tsukumo/chat-archive/<pack>/images/<YYYY-MM-DD>-<id>.<拡張子>`（依頼の行の `imageFiles` が指す）     | `chat/adapter/chat-archive.ts`（同じ1つ） |
-| 定着の錠                      | `~/.tsukumo/chat-archive/<pack>/consolidation.lock`                                                      | `chat/adapter/chat-consolidation-lock.ts` |
-| 覚えたこと                    | `~/.tsukumo/characters/<pack>/persona.md` の末尾の節（「画面から作るときの置き場と受け取り方」の置き場） | `chat/adapter/persona-memory.ts`          |
+| 何                            | 置き場                                                                                                   | ファイルに触る adapter                                                      |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| あらすじ（と渡し済みの印）    | `~/.tsukumo/chat-summary/<pack>.summary.json`（話題の見出しも同じ JSON）                                 | `chat/adapter/chat-summary.ts`                                              |
+| 会話のアーカイブ              | `~/.tsukumo/chat-archive/<pack>/<YYYY-MM-DD>.jsonl`                                                      | `chat/adapter/chat-archive.ts`                                              |
+| 雑談で貼った画像（7日で消す） | `~/.tsukumo/chat-archive/<pack>/images/<YYYY-MM-DD>-<id>.<拡張子>`（依頼の行の `imageFiles` が指す）     | `chat/adapter/chat-archive.ts`（同じ1つ）                                   |
+| 定着の錠                      | `~/.tsukumo/chat-archive/<pack>/consolidation.lock`                                                      | 共有の箱の `adapter/query-lock.ts`（パスは `chat/adapter/chat-archive.ts`） |
+| 覚えたこと                    | `~/.tsukumo/characters/<pack>/persona.md` の末尾の節（「画面から作るときの置き場と受け取り方」の置き場） | `chat/adapter/persona-memory.ts`                                            |
 
 - **パックのディレクトリの中に置かない**（覚えたことを除く）。会話に由来する文章を混ぜると**パックを
   渡すことが会話を渡すことになる**。覚えたことはキャラクターの属性1行で、「画面から作るときの置き場と受け取り方」の道に乗る

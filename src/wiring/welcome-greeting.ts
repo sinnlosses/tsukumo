@@ -4,10 +4,10 @@
 // 同じプロセスの中で前に書けたセッションへ続きから戻る代は、書かせずに覚えたものを出し直す。
 
 import { localCalendarAt } from "../server/adapter/local-time.ts"
+import { queryStructured } from "../server/adapter/sdk-structured-query.ts"
 import type { CharacterPack } from "../server/character-pack/adapter/character-pack.ts"
 import type { DiagnosticLog } from "../server/diagnostic/core/diagnostic.ts"
 import type { SessionLaunchSeed } from "../server/session/core/session-launch.ts"
-import { queryStructured } from "../server/welcome-greeting/adapter/sdk-structured-query.ts"
 import {
   readRecentWelcomeGreetings,
   writeRecentWelcomeGreetings,
@@ -40,7 +40,7 @@ export function wireWelcomeGreeting(
     restored: Promise<readonly RestoredEvent[]>,
   ) => (event: SessionEvent) => void
 } {
-  const { cwd, inheritedEnv } = context
+  const { cwd, inheritedEnv, throwawayQuery } = context
   const reportFailure = failureDiagnostic(diagnosticLog, context.now)
   const keeper = createWelcomeKeeper()
   return {
@@ -54,7 +54,12 @@ export function wireWelcomeGreeting(
         writeRecent: (recent) => {
           writeRecentWelcomeGreetings(seed.pack.name, recent)
         },
-        query: (request, signal) => queryStructured(request, { cwd, env: inheritedEnv }, signal),
+        query: (request, signal) =>
+          queryStructured(
+            request,
+            { cwd, env: inheritedEnv, record: throwawayQuery, now: context.now },
+            signal,
+          ),
         now: context.now,
         emit: (state) => {
           kept.emit({ kind: "welcome-greeting-changed", state })

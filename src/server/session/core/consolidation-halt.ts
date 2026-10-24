@@ -1,8 +1,8 @@
 // 定着が続けて失敗したら、このプロセスの間は契機を起こさない勘定。
 // 数え方は writer の間引き（`chatConsolidationBackoffEffect`）と同じで、永続させない（起こし直しても残るが、プロセスを替えれば 0 から）。
 
-import { CHAT_CONSOLIDATION_BACKOFF } from "../../chat/core/chat-consolidation-backoff.ts"
 import {
+  CHAT_CONSOLIDATION_BACKOFF,
   chatConsolidationBackoffEffect,
   type ChatConsolidationOutcome,
 } from "../../chat/core/chat-consolidation-writer.ts"

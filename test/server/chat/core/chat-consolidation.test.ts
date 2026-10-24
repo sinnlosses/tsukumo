@@ -24,7 +24,7 @@ function rejectionOf(value: unknown): string | undefined {
   return check.kind === "rejected" ? check.rejection : undefined
 }
 
-// `queryChatConsolidation` 自体（本物の `query()` を起こす部分）は
+// `queryStructured` 自体（本物の `query()` を起こす部分）は
 // claude を子プロセスで起こすので、ここではテストしない。
 
 const ENTRIES: readonly ChatUnconsolidatedEntry[] = [

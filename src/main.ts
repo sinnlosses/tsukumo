@@ -167,6 +167,7 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
     inheritedEnv: config.inheritedEnv,
     driver,
     chatArchive: createChatArchive(),
+    throwawayQuery: usageLogs.throwawayQuery.record,
   }
   const achievement = wireAchievement(context, achievementCache)
   const repository = wireRepository(context, diagnosticLog, readBeadsStamp)

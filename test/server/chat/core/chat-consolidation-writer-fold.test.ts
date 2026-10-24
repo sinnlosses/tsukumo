@@ -13,8 +13,8 @@ import {
   type ChatConsolidationOutcome,
   createChatConsolidationWriter,
 } from "../../../../src/server/chat/core/chat-consolidation-writer.ts"
-import type { ChatConsolidationQuery } from "../../../../src/server/chat/core/chat-consolidation.ts"
 import type { ChatSummary } from "../../../../src/server/chat/core/chat-memory.ts"
+import type { StructuredQuery } from "../../../../src/server/core/structured-query.ts"
 import { characterPackName } from "../../../fixture/character.ts"
 import { useTempDir } from "../../../fixture/temp-dir.ts"
 
@@ -53,7 +53,7 @@ function createHarness() {
     summaryWrite: false,
     queryRejects: false,
   }
-  const queries: ChatConsolidationQuery[] = []
+  const queries: StructuredQuery[] = []
   /** `unconsolidated` が返した行の番号（発言の先頭の2桁）を、呼ばれた順に。 */
   const batches: (readonly number[])[] = []
   let synopsisCount = 0

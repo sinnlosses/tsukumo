@@ -8,7 +8,7 @@ import {
 } from "../../../shared/character-pack/expression-choice.ts"
 import type { WelcomeRejection } from "../../../shared/diagnostic/welcome-writing.ts"
 import { WELCOME_GREETING_CARD_MARK } from "../../../shared/recommendation/welcome-greeting.ts"
-import type { CheckedAnswer } from "./retried-query.ts"
+import type { CheckedAnswer } from "../../core/structured-query.ts"
 
 /** 1行を検査する上限（文字。差し込み口も数える）。 */
 const WELCOME_LINE_CHARS = 60
@@ -51,7 +51,10 @@ export function welcomeExpressionSchema(expressions: readonly ExpressionChoice[]
  * 答えを形に当てて返す。落ちたときは最初の issue から理由を引く
  * （型の違い・欠けは `missing`、それ以外の検査は message の名前そのもの）。
  */
-export function checkWelcomeAnswer<T>(schema: z.ZodType<T>, value: unknown): CheckedAnswer<T> {
+export function checkWelcomeAnswer<T>(
+  schema: z.ZodType<T>,
+  value: unknown,
+): CheckedAnswer<T, WelcomeRejection> {
   const parsed = schema.safeParse(value)
   if (parsed.success) {
     return { kind: "accepted", value: parsed.data }

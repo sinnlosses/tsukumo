@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest"
 
 import type { ChatUnconsolidatedBatch } from "../../../../src/server/chat/core/chat-archive-port.ts"
-import { CHAT_CONSOLIDATION_BACKOFF } from "../../../../src/server/chat/core/chat-consolidation-backoff.ts"
 import {
-  ChatConsolidationResultError,
+  CHAT_CONSOLIDATION_BACKOFF,
   createChatConsolidationWriter,
 } from "../../../../src/server/chat/core/chat-consolidation-writer.ts"
 import type { ChatSummary } from "../../../../src/server/chat/core/chat-memory.ts"
+import { StructuredQueryResultError } from "../../../../src/server/core/structured-query.ts"
 import type { CharacterPackName } from "../../../../src/shared/character-pack/character.ts"
 import { CHAT_MEMORY_BUDGET } from "../../../../src/shared/chat/chat-memory-budget.ts"
 import { characterPackName } from "../../../fixture/character.ts"
@@ -73,7 +73,7 @@ function createHarness() {
         case "reject":
           return Promise.reject(new Error("架空の失敗"))
         case "result-error":
-          return Promise.reject(new ChatConsolidationResultError("error_max_turns"))
+          return Promise.reject(new StructuredQueryResultError("error_max_turns"))
         case "unreadable":
           return Promise.resolve({ ...VALID_OUTPUT, synopsis: "" })
         case "shrunk":

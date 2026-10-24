@@ -1,11 +1,16 @@
 // 迎えの挨拶を1回書く。直近の挨拶を添えて問い合わせ、検査を通れば直近へ書いてから配る。
 
 import type {
+  WelcomeRejection,
   WelcomeWritingFootprint,
   WelcomeWritingResult,
 } from "../../../shared/diagnostic/welcome-writing.ts"
 import type { WelcomeGreetingState } from "../../../shared/recommendation/welcome-greeting.ts"
-import { type RetriedQueryPorts, type RetriedQueryTrace, runRetriedQuery } from "./retried-query.ts"
+import {
+  type RetriedQueryPorts,
+  type RetriedQueryTrace,
+  runRetriedQuery,
+} from "../../core/structured-query.ts"
 import {
   parseWelcomeGreeting,
   WELCOME_GREETING_HEDGE_MS,
@@ -89,7 +94,7 @@ export function welcomeWritingFootprint(
   at: number,
   target: WelcomeWritingFootprint["target"],
   outcome: WelcomeWritingResult,
-  trace: RetriedQueryTrace,
+  trace: RetriedQueryTrace<WelcomeRejection>,
 ): WelcomeWritingFootprint {
   return { flow: "welcome-writing", at, target, outcome, ...trace }
 }

@@ -2,7 +2,7 @@
 // 反応の行は代（起こした1回）につき1回だけ書き、`/clear` では挨拶だけを書き直す。
 
 import type { WrittenReactions } from "../../../shared/recommendation/reaction.ts"
-import { runRetriedQuery } from "./retried-query.ts"
+import { runRetriedQuery } from "../../core/structured-query.ts"
 import {
   type GreetingUnwrittenPlace,
   greetWelcome,

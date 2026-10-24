@@ -1,9 +1,10 @@
 // 雑談の配線。ターンの終わりの定着と、「覚えていること」から1行消すコマンドの中身を選ぶ。
 
 import type { CurrentCharacter } from "../current-character.ts"
-import { createChatConsolidationLock } from "../server/chat/adapter/chat-consolidation-lock.ts"
+import { createQueryLock } from "../server/adapter/query-lock.ts"
+import { queryStructured } from "../server/adapter/sdk-structured-query.ts"
+import { chatConsolidationLockPath } from "../server/chat/adapter/chat-archive.ts"
 import { createChatSummary } from "../server/chat/adapter/chat-summary.ts"
-import { queryChatConsolidation } from "../server/chat/adapter/sdk-chat-consolidation.ts"
 import type { ChatCommandPorts } from "../server/chat/core/chat-command.ts"
 import {
   type ChatConsolidationSource,
@@ -48,15 +49,15 @@ function chatConsolidationOf(context: WiringContext): ChatConsolidationSource {
  * `query()` は雑談のセッションと同じ作業先・引き継いだ環境で起こす。
  */
 function chatConsolidationSource(context: WiringContext): ChatConsolidationSource {
-  const { chatArchive, cwd, inheritedEnv, now } = context
+  const { chatArchive, cwd, inheritedEnv, now, throwawayQuery } = context
   return {
     kind: "consolidate",
     consolidate: createChatConsolidationWriter({
       archive: chatArchive,
-      lockConsolidation: createChatConsolidationLock(),
+      lockConsolidation: createQueryLock(chatConsolidationLockPath),
       chatSummary: (packName) => createChatSummary(packName),
       query: (request, signal) =>
-        queryChatConsolidation(request, { cwd, env: inheritedEnv }, signal),
+        queryStructured(request, { cwd, env: inheritedEnv, record: throwawayQuery, now }, signal),
       now,
     }),
   }

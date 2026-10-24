@@ -9,6 +9,7 @@ import { z } from "zod"
 import { CHAT_MEMORY_BUDGET } from "../../../shared/chat/chat-memory-budget.ts"
 import { byteLength } from "../../../shared/utils/byte-length.ts"
 import { structuredOutputSchema } from "../../core/structured-output-schema.ts"
+import type { StructuredQuery } from "../../core/structured-query.ts"
 import type { ChatUnconsolidatedEntry } from "./chat-archive-port.ts"
 import { chatLineText } from "./chat-memory-prompt.ts"
 import type { ChatSummary } from "./chat-memory.ts"
@@ -120,14 +121,6 @@ export type ChatConsolidationMaterial = {
   readonly previousSynopsis: string
 }
 
-/** `query()` に渡すもの（モデル・指示文・依頼の文面・出力の形）。 */
-export type ChatConsolidationQuery = {
-  readonly model: string
-  readonly systemPrompt: string
-  readonly prompt: string
-  readonly schema: Readonly<Record<string, unknown>>
-}
-
 /** 検査を通った定着の出力。 */
 export type ChatConsolidationResult = {
   readonly synopsis: string
@@ -136,13 +129,13 @@ export type ChatConsolidationResult = {
 }
 
 /** 材料から `query()` に渡すものを組む。 */
-export function chatConsolidationQuery(
-  material: ChatConsolidationMaterial,
-): ChatConsolidationQuery {
+export function chatConsolidationQuery(material: ChatConsolidationMaterial): StructuredQuery {
   return {
+    kind: "chat-consolidation",
     model: CHAT_CONSOLIDATION_MODEL,
     systemPrompt: CHAT_CONSOLIDATION_INSTRUCTION,
     prompt: chatConsolidationPrompt(material),
+    images: [],
     schema: structuredOutputSchema(chatConsolidationSchema()),
   }
 }

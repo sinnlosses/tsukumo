@@ -120,7 +120,7 @@
               },
               {
                 "name": "@anthropic-ai/claude-agent-sdk",
-                "message": "SDK を import するのは機能の adapter/ 直下の sdk- で始まるファイルだけ（docs/architecture/code-placement.md）"
+                "message": "SDK を import するのは機能の adapter/ 直下と共有の箱 server/adapter/ 直下の sdk- で始まるファイルだけ（docs/architecture/code-placement.md）"
               }
             ],
             "patterns": [
@@ -207,7 +207,7 @@
     },
     {
       // SDK を許す
-      "files": ["src/server/*/adapter/sdk-*.ts"],
+      "files": ["src/server/*/adapter/sdk-*.ts", "src/server/adapter/sdk-*.ts"],
       "rules": {
         "no-restricted-imports": [
           "error",

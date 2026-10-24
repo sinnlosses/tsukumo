@@ -21,6 +21,7 @@ describe("wireDiagnostic", () => {
         inheritedEnv: {},
         driver: { kind: "sdk" },
         chatArchive: NOOP_CHAT_ARCHIVE,
+        throwawayQuery: () => undefined,
       },
       log,
     )

@@ -13,22 +13,28 @@
 
 import type { CharacterPackName } from "../../../shared/character-pack/character.ts"
 import { CHAT_MEMORY_BUDGET } from "../../../shared/chat/chat-memory-budget.ts"
+import {
+  runWithDeadline,
+  type StructuredQuery,
+  StructuredQueryResultError,
+} from "../../core/structured-query.ts"
+import {
+  createQueryBackoff,
+  type QueryBackoffEffect,
+  type QueryBackoffPolicy,
+  type QueryLockPort,
+} from "../../core/throwaway-query.ts"
 import type {
   ChatArchive,
   ChatUnconsolidatedEntry,
   ChatUnconsolidatedLimits,
 } from "./chat-archive-port.ts"
 import {
-  type ChatConsolidationBackoffEffect,
-  createChatConsolidationBackoff,
-} from "./chat-consolidation-backoff.ts"
-import {
   CHAT_CONSOLIDATION_LIMITS,
   CHAT_CONSOLIDATION_TIMEOUT_MS,
   type ChatConsolidationRejection,
   type ChatConsolidationResult,
   chatConsolidationQuery,
-  type ChatConsolidationQuery,
   chatSynopsisShrunk,
   parseChatConsolidationResult,
   readChatTopics,
@@ -84,17 +90,6 @@ const CHAT_CONSOLIDATION_RESULT_KINDS = [
 /** SDK の result が成功でなかったときの `subtype`（知らない語は `other`）。 */
 export type ChatConsolidationResultKind = (typeof CHAT_CONSOLIDATION_RESULT_KINDS)[number]
 
-/** `query()` の result が成功でなかったときに口が投げる。`subtype` は SDK の語のまま持つ。 */
-export class ChatConsolidationResultError extends Error {
-  readonly subtype: string
-
-  constructor(subtype: string) {
-    super("定着の result が成功でなかった")
-    this.name = "ChatConsolidationResultError"
-    this.subtype = subtype
-  }
-}
-
 /** そのパックの定着を1回走らせる。`signal` が中断されたら、待たずに `failed` で返り、何も書かない。 */
 export type ChatConsolidationWriter = (
   packName: CharacterPackName,
@@ -111,30 +106,16 @@ export type ChatConsolidationSource =
   | { readonly kind: "dont-consolidate" }
   | { readonly kind: "consolidate"; readonly consolidate: ChatConsolidationWriter }
 
-/** {@link ChatConsolidationWriterPorts.lockConsolidation} が取れたときの錠。 */
-export type ChatConsolidationLock = {
-  /** 錠を外す。外せなくても例外は投げない。 */
-  readonly release: () => void
-}
-
 /** 書く口に外の世界から渡すもの（配線が渡す）。 */
 export type ChatConsolidationWriterPorts = {
   /** 定着の入力の行の取り出し。 */
   readonly archive: Pick<ChatArchive, "unconsolidated" | "appendedBytes">
-  /**
-   * そのパックの定着の錠を取る。プロセスをまたいで1本だけが取れる。
-   * 取れなければ undefined（ほかの誰かが走らせている）。
-   * 書いてから `staleAfterMs` を過ぎた錠は、落ちたプロセスの残りとして消して取り直す。
-   */
-  readonly lockConsolidation: (
-    packName: CharacterPackName,
-    staleAfterMs: number,
-    now: Temporal.Instant,
-  ) => ChatConsolidationLock | undefined
+  /** そのパックの定着の錠を取る（鍵はパック名）。 */
+  readonly lockConsolidation: QueryLockPort<CharacterPackName>
   /** パック1つぶんのあらすじの読み書き口（書くのは起こした時点のパックのファイル）。 */
   readonly chatSummary: (packName: CharacterPackName) => ChatSummary
   /** 使い捨ての `query()`。返すのは `structured_output` のまま（検査はここでする）。 */
-  readonly query: (request: ChatConsolidationQuery, signal: AbortSignal) => Promise<unknown>
+  readonly query: (request: StructuredQuery, signal: AbortSignal) => Promise<unknown>
   /** いまの時刻（エポックミリ秒）。錠の古さを測るのに使う。 */
   readonly now: () => number
 }
@@ -146,6 +127,15 @@ const BACKED_OFF = { kind: "backed-off" } as const satisfies ChatConsolidationOu
 
 /** 書いてからこれを過ぎた錠は、落ちたプロセスの残りとして取り直す。 */
 const CHAT_CONSOLIDATION_LOCK_STALE_MS = CHAT_CONSOLIDATION_TIMEOUT_MS * 2
+
+/**
+ * 続けて落ちたパックの定着の契機を間引く数。勘定はパックごとに、プロセスのメモリにだけ持つ。
+ * 錠はプロセスをまたぐが、この勘定はプロセスごとに別。
+ */
+export const CHAT_CONSOLIDATION_BACKOFF = {
+  failuresBeforeBackoff: 3,
+  maxSkips: 32,
+} as const satisfies QueryBackoffPolicy
 
 /**
  * パックごとの、前に書けてから縮みの検査で落ちた回数。
@@ -166,7 +156,7 @@ export function createChatConsolidationWriter(
       counts.set(packName, count)
     },
   }
-  const backoff = createChatConsolidationBackoff()
+  const backoff = createQueryBackoff<CharacterPackName>(CHAT_CONSOLIDATION_BACKOFF)
   const dueGate = createDueGate(ports.archive)
   return async (packName, signal) => {
     if (backoff.holdsBack(packName)) {
@@ -175,11 +165,12 @@ export function createChatConsolidationWriter(
     if (dueGate.isTooEarly(packName)) {
       return NOT_DUE
     }
-    const bounded = AbortSignal.any([signal, AbortSignal.timeout(CHAT_CONSOLIDATION_TIMEOUT_MS)])
-    const outcome = await Promise.race([
-      consolidate(ports, shrinkTally, dueGate, packName, bounded),
-      abortion(bounded),
-    ])
+    const outcome = await runWithDeadline<ChatConsolidationOutcome>(
+      signal,
+      CHAT_CONSOLIDATION_TIMEOUT_MS,
+      (bounded) => consolidate(ports, shrinkTally, dueGate, packName, bounded),
+      ABORTED,
+    )
     if (outcome.kind !== "not-due" && outcome.kind !== "locked") {
       dueGate.reset(packName)
     }
@@ -191,7 +182,7 @@ export function createChatConsolidationWriter(
 /** 数えるのは同じ入力で落ち続けうる失敗だけ（`docs/architecture/chat-mode/consolidation-failure.md`「続けて落ちたら契機を間引く」）。 */
 export function chatConsolidationBackoffEffect(
   outcome: ChatConsolidationOutcome,
-): ChatConsolidationBackoffEffect {
+): QueryBackoffEffect {
   switch (outcome.kind) {
     case "written":
     case "not-due":
@@ -304,7 +295,7 @@ async function consolidateLocked(
     if (signal.aborted) {
       return ABORTED
     }
-    if (error instanceof ChatConsolidationResultError) {
+    if (error instanceof StructuredQueryResultError) {
       return { kind: "failed", reason: "query-result", resultKind: resultKindOf(error) }
     }
     return { kind: "failed", reason: "threw", error }
@@ -380,23 +371,6 @@ function writeSynopsis(
   }
 }
 
-function resultKindOf(error: ChatConsolidationResultError): ChatConsolidationResultKind {
+function resultKindOf(error: StructuredQueryResultError): ChatConsolidationResultKind {
   return CHAT_CONSOLIDATION_RESULT_KINDS.find((kind) => kind === error.subtype) ?? "other"
-}
-
-/** `signal` が中断されたら `aborted` の `failed` で返る（口が中断を無視しても待たない）。 */
-function abortion(signal: AbortSignal): Promise<ChatConsolidationOutcome> {
-  return new Promise((resolve) => {
-    if (signal.aborted) {
-      resolve(ABORTED)
-      return
-    }
-    signal.addEventListener(
-      "abort",
-      () => {
-        resolve(ABORTED)
-      },
-      { once: true },
-    )
-  })
 }

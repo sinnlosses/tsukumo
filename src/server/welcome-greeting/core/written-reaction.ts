@@ -6,13 +6,13 @@ import { fromKeys } from "remeda"
 import { z } from "zod"
 
 import type { ExpressionChoice } from "../../../shared/character-pack/expression-choice.ts"
+import type { WelcomeRejection } from "../../../shared/diagnostic/welcome-writing.ts"
 import {
   WRITTEN_REACTION_KINDS,
   type WrittenReactions,
 } from "../../../shared/recommendation/reaction.ts"
 import { structuredOutputSchema } from "../../core/structured-output-schema.ts"
-import type { CheckedAnswer } from "./retried-query.ts"
-import type { StructuredQuery } from "./structured-query.ts"
+import type { CheckedAnswer, StructuredQuery } from "../../core/structured-query.ts"
 import { WELCOME_GREETING_MODEL, type WelcomeGreetingMaterial } from "./welcome-greeting.ts"
 import {
   checkWelcomeAnswer,
@@ -44,6 +44,8 @@ const WRITTEN_REACTIONS_INSTRUCTION = `あなたはいま、このセッショ�
 /** 材料から `query()` に渡すものを組む。人格は指示文の前に置く。 */
 export function writtenReactionsQuery(material: WrittenReactionsMaterial): StructuredQuery {
   return {
+    kind: "welcome-reactions",
+    images: [],
     model: WELCOME_GREETING_MODEL,
     systemPrompt: [material.persona, WRITTEN_REACTIONS_INSTRUCTION]
       .filter((part) => part.trim() !== "")
@@ -64,7 +66,7 @@ export function writtenReactionsQuery(material: WrittenReactionsMaterial): Struc
 export function parseWrittenReactions(
   value: unknown,
   expressions: readonly ExpressionChoice[],
-): CheckedAnswer<WrittenReactions> {
+): CheckedAnswer<WrittenReactions, WelcomeRejection> {
   return checkWelcomeAnswer(writtenReactionsSchema(expressions), value)
 }
 

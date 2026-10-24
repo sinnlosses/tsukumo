@@ -69,7 +69,11 @@ function diaryWriterSource(
       now: context.now,
       save: (paragraph) => appendDiaryParagraph(context.cwd, paragraph),
       readContext,
-      query: queryDiary,
+      query: (request, intake, onEvent, signal) =>
+        queryDiary(request, intake, onEvent, signal, {
+          record: context.throwawayQuery,
+          now: context.now,
+        }),
     }),
   }
 }

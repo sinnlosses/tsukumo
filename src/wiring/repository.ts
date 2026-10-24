@@ -1,5 +1,6 @@
 // 作業ディレクトリのリポジトリの配線。タスク一覧の見張りと、一覧が届くたびに札を作り直す推薦役を選ぶ。
 
+import { queryStructured } from "../server/adapter/sdk-structured-query.ts"
 import { IDLE_CHANGE_COUNT_GIT } from "../server/core/change-count-git.ts"
 import type { DiagnosticLog } from "../server/diagnostic/core/diagnostic.ts"
 import {
@@ -19,7 +20,6 @@ import {
   type TaskSummaryOptions,
 } from "../server/repository/adapter/task-summary.ts"
 import type { SessionManagerOptions } from "../server/session/core/session-manager-port.ts"
-import { queryStructured } from "../server/welcome-greeting/adapter/sdk-structured-query.ts"
 import type { SessionEvent } from "../shared/session/session-event.ts"
 import { failureDiagnostic } from "./failure-diagnostic.ts"
 import type { WiringContext } from "./wiring-context.ts"
@@ -133,8 +133,8 @@ function startRealRecommender(
   diagnosticLog: DiagnosticLog,
   onEvent: (event: SessionEvent) => void,
 ): Recommender {
-  const { cwd, inheritedEnv } = context
-  const reportFailure = failureDiagnostic(diagnosticLog, context.now)
+  const { cwd, inheritedEnv, now, throwawayQuery } = context
+  const reportFailure = failureDiagnostic(diagnosticLog, now)
   return createRecommender({
     onFailure: (place, error) => {
       reportFailure({ feature: "recommendation", place }, error)
@@ -143,7 +143,8 @@ function startRealRecommender(
     writeCache: (entries) => {
       writeRecommendationCache(entries)
     },
-    query: (request, signal) => queryStructured(request, { cwd, env: inheritedEnv }, signal),
+    query: (request, signal) =>
+      queryStructured(request, { cwd, env: inheritedEnv, record: throwawayQuery, now }, signal),
     emit: (cards) => {
       onEvent({ kind: "recommendation-changed", cards })
     },

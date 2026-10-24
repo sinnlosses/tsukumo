@@ -6,13 +6,13 @@
 import { z } from "zod"
 
 import type { ExpressionChoice } from "../../../shared/character-pack/expression-choice.ts"
+import type { WelcomeRejection } from "../../../shared/diagnostic/welcome-writing.ts"
 import {
   WELCOME_GREETING_CARD_MARK,
   type WelcomeGreeting,
 } from "../../../shared/recommendation/welcome-greeting.ts"
 import { structuredOutputSchema } from "../../core/structured-output-schema.ts"
-import type { CheckedAnswer } from "./retried-query.ts"
-import type { StructuredQuery } from "./structured-query.ts"
+import type { CheckedAnswer, StructuredQuery } from "../../core/structured-query.ts"
 import {
   checkWelcomeAnswer,
   rejected,
@@ -110,6 +110,8 @@ const DAY_OF_WEEK_LABELS = ["月", "火", "水", "木", "金", "土", "日"] as 
 export function welcomeGreetingQuery(material: WelcomeGreetingMaterial): StructuredQuery {
   const { calendar } = material
   return {
+    kind: "welcome-greeting",
+    images: [],
     model: WELCOME_GREETING_MODEL,
     systemPrompt: [material.persona, WELCOME_GREETING_INSTRUCTION]
       .filter((part) => part.trim() !== "")
@@ -141,7 +143,7 @@ export function welcomeGreetingQuery(material: WelcomeGreetingMaterial): Structu
 export function parseWelcomeGreeting(
   value: unknown,
   material: Pick<WelcomeGreetingMaterial, "expressions" | "recent">,
-): CheckedAnswer<WelcomeGreeting> {
+): CheckedAnswer<WelcomeGreeting, WelcomeRejection> {
   const checked = checkWelcomeAnswer(welcomeGreetingSchema(material.expressions), value)
   if (checked.kind === "rejected") {
     return checked

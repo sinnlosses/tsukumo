@@ -4,19 +4,17 @@ import type {
   ChatUnconsolidatedBatch,
   ChatUnconsolidatedLimits,
 } from "../../../../src/server/chat/core/chat-archive-port.ts"
-import {
-  ChatConsolidationResultError,
-  createChatConsolidationWriter,
-} from "../../../../src/server/chat/core/chat-consolidation-writer.ts"
-import {
-  CHAT_CONSOLIDATION_LIMITS,
-  type ChatConsolidationQuery,
-} from "../../../../src/server/chat/core/chat-consolidation.ts"
+import { createChatConsolidationWriter } from "../../../../src/server/chat/core/chat-consolidation-writer.ts"
+import { CHAT_CONSOLIDATION_LIMITS } from "../../../../src/server/chat/core/chat-consolidation.ts"
 import type {
   ChatFoldPoint,
   ChatSummary,
   ChatSummaryFold,
 } from "../../../../src/server/chat/core/chat-memory.ts"
+import {
+  type StructuredQuery,
+  StructuredQueryResultError,
+} from "../../../../src/server/core/structured-query.ts"
 import type { CharacterPackName } from "../../../../src/shared/character-pack/character.ts"
 import { CHAT_MEMORY_BUDGET } from "../../../../src/shared/chat/chat-memory-budget.ts"
 import { characterPackName } from "../../../fixture/character.ts"
@@ -65,7 +63,7 @@ const PREVIOUS_SUMMARY = "架空の前のあらすじ"
 /** 呼ばれた順（あらすじの書き込み）と中身を覚える、メモリ上の口。 */
 function createPorts(
   batch: ChatUnconsolidatedBatch,
-  query: (request: ChatConsolidationQuery, signal: AbortSignal) => Promise<unknown>,
+  query: (request: StructuredQuery, signal: AbortSignal) => Promise<unknown>,
   lockAvailable: boolean = true,
   summaryWritable: boolean = true,
   droppedLines: number = 0,
@@ -75,7 +73,7 @@ function createPorts(
   const lockEvents: string[] = []
   const limits: ChatUnconsolidatedLimits[] = []
   const afters: ChatFoldPoint[] = []
-  const queries: ChatConsolidationQuery[] = []
+  const queries: StructuredQuery[] = []
   const summaryPacks: string[] = []
   let summary = PREVIOUS_SUMMARY
   let topics: readonly string[] = ["架空の古い話題"]
@@ -398,7 +396,7 @@ describe("createChatConsolidationWriter", () => {
     ["架空の知らない種類", "other"],
   ])("query() の result が %s で終わったときは query-result（%s）", async (subtype, resultKind) => {
     const ports = createPorts(DUE_BATCH, () =>
-      Promise.reject(new ChatConsolidationResultError(subtype)),
+      Promise.reject(new StructuredQueryResultError(subtype)),
     )
 
     expect(await ports.write(PACK, NEVER_ABORTED)).toEqual({

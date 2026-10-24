@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 
+import type { StructuredQuery } from "../../../../src/server/core/structured-query.ts"
 import {
   recommendationCandidates,
   recommendationKey,
@@ -8,7 +9,6 @@ import {
   createRecommender,
   type RecommendationCacheEntry,
 } from "../../../../src/server/recommendation/core/recommender.ts"
-import type { StructuredQuery } from "../../../../src/server/welcome-greeting/core/structured-query.ts"
 import type { RecommendationCard } from "../../../../src/shared/recommendation/recommendation-card.ts"
 import type {
   TaskSummaryItem,

@@ -2,6 +2,7 @@
 // 2つ以上の組み立てが読むものだけを置き、1つの組み立てしか読まないものは、その組み立ての中で作るか引数に渡す。
 
 import type { ChatArchive } from "../server/chat/core/chat-archive-port.ts"
+import type { ThrowawayQueryRecorder } from "../server/core/throwaway-query.ts"
 import type { FakeSession } from "../server/session-driver/adapter/fake-session.ts"
 
 export type WiringDriver =
@@ -26,4 +27,6 @@ export type WiringContext = {
   readonly driver: WiringDriver
   /** 会話のアーカイブの口。書く側（セッションの管理）と読む側（起こすとき・定着）で1つを共有する。 */
   readonly chatArchive: ChatArchive
+  /** 使い捨ての問い合わせの足跡を残す口。疑似セッションでは何も書かない。 */
+  readonly throwawayQuery: ThrowawayQueryRecorder
 }

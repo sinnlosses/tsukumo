@@ -16,32 +16,23 @@ import {
   type PromptImageSource,
 } from "../../../shared/session-driver/prompt-image.ts"
 import { structuredOutputSchema } from "../../core/structured-output-schema.ts"
+import { runWithDeadline, type StructuredQuery } from "../../core/structured-query.ts"
 
 /** 問い合わせを起こすモデル。 */
 const CHARACTER_GENERATION_MODEL = "opus" satisfies ModelAlias
 
 /** 問い合わせ1回の締め切り（ミリ秒）。 */
-export const CHARACTER_GENERATION_TIMEOUT_MS = 120_000
-
-/** `query()` に渡すもの（モデル・指示文・依頼の文面・画像1枚・出力の形）。 */
-export type CharacterGenerationQuery = {
-  readonly model: string
-  /** `query()` の `systemPrompt` をそのまま置き換える指示文。 */
-  readonly systemPrompt: string
-  readonly prompt: string
-  readonly image: PromptImageSource
-  readonly schema: Readonly<Record<string, unknown>>
-}
+const CHARACTER_GENERATION_TIMEOUT_MS = 120_000
 
 /** 問い合わせを1回走らせて `structured_output` をそのまま返す口。 */
 export type CharacterGenerationPort = (
-  request: CharacterGenerationQuery,
+  request: StructuredQuery,
   signal: AbortSignal,
 ) => Promise<unknown>
 
 /**
  * 立ち絵の data URL から欄の値を生成する。
- * 画像として読めない・問い合わせが投げた・返った値が形に合わないときは undefined。
+ * 画像として読めない・問い合わせが投げた・`signal` か締め切りで中断した・返った値が形に合わないときは undefined。
  */
 export async function generateCharacter(
   query: CharacterGenerationPort,
@@ -53,19 +44,26 @@ export async function generateCharacter(
     return undefined
   }
   try {
-    return toGeneratedCharacter(await query(characterGenerationQuery(image), signal))
+    return await runWithDeadline(
+      signal,
+      CHARACTER_GENERATION_TIMEOUT_MS,
+      async (bounded) =>
+        toGeneratedCharacter(await query(characterGenerationQuery(image), bounded)),
+      undefined,
+    )
   } catch {
     return undefined
   }
 }
 
 /** 画像1枚から `query()` に渡すものを組む。 */
-function characterGenerationQuery(image: PromptImageSource): CharacterGenerationQuery {
+function characterGenerationQuery(image: PromptImageSource): StructuredQuery {
   return {
+    kind: "character-generation",
     model: CHARACTER_GENERATION_MODEL,
     systemPrompt: CHARACTER_GENERATION_INSTRUCTION,
     prompt: "この立ち絵のキャラクターの id・名前・差し色2つ・人格を書いてください。",
-    image,
+    images: [image],
     schema: structuredOutputSchema(generatedCharacterSchema),
   }
 }

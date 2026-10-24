@@ -12,7 +12,7 @@ import {
   type TsukumoHomePlace,
 } from "../../../src/server/adapter/tsukumo-home.ts"
 import { homeCharacterDir } from "../../../src/server/character-pack/adapter/character-pack.ts"
-import { chatArchiveDir } from "../../../src/server/chat/adapter/chat-archive.ts"
+import { chatConsolidationLockPath } from "../../../src/server/chat/adapter/chat-archive.ts"
 import { createChatSummary } from "../../../src/server/chat/adapter/chat-summary.ts"
 import { ENV_NAMES } from "../../../src/server/core/config.ts"
 import { readRememberedCharacter } from "../../../src/server/session/adapter/remembered-default.ts"
@@ -50,7 +50,9 @@ describe("TSUKUMO_HOME を渡すとホームがそこへ移る", () => {
     process.env[ENV_NAMES.home.name] = dir()
 
     expect(homeCharacterDir()).toBe(join(dir(), "characters"))
-    expect(chatArchiveDir()).toBe(join(dir(), "chat-archive"))
+    expect(chatConsolidationLockPath("fictional-pack")).toBe(
+      join(dir(), "chat-archive", "fictional-pack", "consolidation.lock"),
+    )
   })
 
   it("あらすじは移った先の chat-summary の下へ書かれる", () => {
@@ -105,7 +107,9 @@ describe("TSUKUMO_HOME を渡さないときの置き場は今までと同じ", 
 
     expect(tsukumoHomeDir()).toBe(home)
     expect(homeCharacterDir()).toBe(join(home, "characters"))
-    expect(chatArchiveDir()).toBe(join(home, "chat-archive"))
+    expect(chatConsolidationLockPath("fictional-pack")).toBe(
+      join(home, "chat-archive", "fictional-pack", "consolidation.lock"),
+    )
     expect(tsukumoHomePath("tokenUsage")).toBe(join(home, "token-usage"))
   })
 
