@@ -53,7 +53,7 @@ import {
 } from "../server/system-prompt/core/system-prompt.ts"
 import { parseCharacterPackName } from "../shared/character-pack/character.ts"
 import { expressionChoices, expressionNames } from "../shared/character-pack/expression-choice.ts"
-import type { PromptDelayFootprint } from "../shared/diagnostic/diagnostic-record.ts"
+import type { DiagnosticEntry } from "../shared/diagnostic/diagnostic-record.ts"
 import type { SwallowedFailurePlace } from "../shared/diagnostic/swallowed-failure.ts"
 import type { ReportSchemaVariant } from "../shared/report/schema-variant.ts"
 import type { SessionDefault } from "../shared/session/session-default.ts"
@@ -146,9 +146,7 @@ export function wireSessionLaunch(options: {
             onSessionMarked: (sessionId, tag) => sessionCatalog.noteMarked(sessionId, tag),
             onEvent: watched,
             reportFailure,
-            reportPromptDelay: (footprint) => options.diagnosticLog.append([footprint]),
-            reportGateBlock: () =>
-              options.diagnosticLog.append([{ flow: "report-gate-block", at: context.now() }]),
+            appendDiagnostic: (entry) => options.diagnosticLog.append([entry]),
           })
         },
         restoreEvents: (resumed, pack) => {
@@ -217,10 +215,8 @@ function startDriver(options: {
   readonly onEvent: (event: SessionEvent) => void
   /** 握りつぶした失敗を診断ログへ書く口。 */
   readonly reportFailure: (place: SwallowedFailurePlace, error: unknown) => void
-  /** 依頼が Claude Code へ届くまでの遅れを診断ログへ書く口。 */
-  readonly reportPromptDelay: (footprint: PromptDelayFootprint) => void
-  /** `report` の関所が `Stop` を止めたことを診断ログへ書く口。 */
-  readonly reportGateBlock: () => void
+  /** 駆動が残した足跡のうち、そのまま書けるものを診断ログへ書く口。 */
+  readonly appendDiagnostic: (entry: DiagnosticEntry) => void
 }): SessionDriver {
   const { seed, context, onEvent } = options
   const { cwd, inheritedEnv, driver } = context
@@ -279,20 +275,22 @@ function startRealDriver(
     mountWorkflowPlugin: options.mountWorkflowPlugin,
     workflowTw: options.workflowTw,
     onEvent,
-    reportFailure: (error) =>
-      options.reportFailure({ feature: "session", place: "event-handler" }, error),
     now: context.now,
-    reportPromptDelay: options.reportPromptDelay,
-    reportUsageFailure: (place, error) => {
-      options.reportFailure({ feature: "session", place }, error)
+    diagnose: (diagnostic) => {
+      switch (diagnostic.flow) {
+        case "prompt-delay":
+          options.appendDiagnostic(diagnostic)
+          return
+        case "report-gate-block":
+          options.appendDiagnostic({ flow: "report-gate-block", at: context.now() })
+          return
+        case "swallowed-failure":
+          options.reportFailure({ feature: "session", place: diagnostic.place }, diagnostic.error)
+          return
+        default:
+          return diagnostic satisfies never
+      }
     },
-    reportWorkflowTwFailure: (place) => {
-      options.reportFailure({ feature: "session", place }, undefined)
-    },
-    reportHandbackHeadMismatch: () => {
-      options.reportFailure({ feature: "session", place: "handback-head-mismatch" }, undefined)
-    },
-    reportGateBlock: options.reportGateBlock,
   })
 }
 

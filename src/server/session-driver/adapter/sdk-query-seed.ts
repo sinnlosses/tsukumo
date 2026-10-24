@@ -259,7 +259,7 @@ export function stopHooks(
   mode: SessionMode,
   gate: ReportGate,
   onEvent: (event: SessionEvent) => void,
-  reportGateBlock: () => void,
+  onGateBlock: () => void,
 ): Partial<Record<HookEvent, HookCallbackMatcher[]>> {
   return {
     Stop: [
@@ -278,7 +278,7 @@ export function stopHooks(
             if (verdict.kind !== "block") {
               return {}
             }
-            reportGateBlock()
+            onGateBlock()
             return { decision: "block", reason: verdict.reason }
           },
         ],

@@ -27,7 +27,11 @@ import { handOffPrompt } from "../core/prompt-handoff.ts"
 import { recordedPromptImages } from "../core/prompt-image-shelf.ts"
 import { isSubagentMessage, toSessionEvents } from "../core/sdk-message.ts"
 import { withSelfStartedTurns } from "../core/self-started-turn.ts"
-import type { SessionDriver, SessionDriverOptions } from "../core/session-driver.ts"
+import type {
+  SessionDriver,
+  SessionDriverOptions,
+  SessionFailurePlace,
+} from "../core/session-driver.ts"
 import { createSessionEnding } from "../core/session-ending.ts"
 import { createSessionTitleIntake, type SessionTitleIntake } from "../core/session-title.ts"
 import { TSUKUMO_MCP_SERVER_NAME } from "../core/tsukumo-tool-name.ts"
@@ -74,7 +78,16 @@ const VISIBLE_OUTPUT_NUDGE_NOTICE =
 export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
   // 駆動が送り出すイベントは全部ここを通す（依頼も SDK 由来も）。
   // claude が依頼なしで始めた続きのターンに `turn-started` を補うのに、依頼で開いたターンも見ている必要がある（`withSelfStartedTurns`）。
-  const ending = createSessionEnding(given.onEvent, given.reportFailure)
+  const { diagnose } = given
+  const failedWithError = (place: SessionFailurePlace, error: unknown): void => {
+    diagnose({ flow: "swallowed-failure", place, error })
+  }
+  const failedWithoutError = (place: SessionFailurePlace): void => {
+    failedWithError(place, undefined)
+  }
+  const ending = createSessionEnding(given.onEvent, (error) => {
+    failedWithError("event-handler", error)
+  })
   const progressNudge = watchProgressNudge(given.now, (summary) => {
     sendProgressNudge(summary)
   })
@@ -89,7 +102,7 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
     ending.deliver(event)
   }
   const options: SessionDriverOptions = { ...given, onEvent: withSelfStartedTurns(deliver) }
-  const delayWatch = createPromptDelayWatch(given.reportPromptDelay)
+  const delayWatch = createPromptDelayWatch(diagnose)
   const input = createPromptStream(delayWatch, given.now)
   const queue = createPendingAnswerQueue({
     onChange: (pending) => {
@@ -121,7 +134,9 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
       hooks: withLapHook(
         withAskGuard(
           {
-            ...stopHooks(options.mode, reportGate, options.onEvent, options.reportGateBlock),
+            ...stopHooks(options.mode, reportGate, options.onEvent, () => {
+              diagnose({ flow: "report-gate-block" })
+            }),
             ...preToolUseHooks(
               callReview.gateRaised,
               callReview.bandPosition,
@@ -130,15 +145,17 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
               createRtkRewrite(),
               options.mode.kind === "work" ? callReview.planMissing : undefined,
             ),
-            ...handbackNoteHooks(callReview, options.reportHandbackHeadMismatch),
+            ...handbackNoteHooks(callReview, () => {
+              failedWithoutError("handback-head-mismatch")
+            }),
           },
           options.mountWorkflowPlugin,
           (stdin) => runAskGuard(options.workflowTw, stdin),
-          options.reportWorkflowTwFailure,
+          failedWithoutError,
         ),
         options.mountWorkflowPlugin,
         (stdin) => runLapHook(options.workflowTw, stdin),
-        options.reportWorkflowTwFailure,
+        failedWithoutError,
       ),
       mcpServers: {
         [TSUKUMO_MCP_SERVER_NAME]: tsukumoServer(
@@ -230,8 +247,8 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
     },
     answer: (id, answer) => queue.answer(id, answer),
     pending: () => queue.list(),
-    readContextUsage: () => readContextUsage(session, options.reportUsageFailure),
-    readPlanUsage: () => readPlanUsage(session, options.reportUsageFailure),
+    readContextUsage: () => readContextUsage(session, failedWithError),
+    readPlanUsage: () => readPlanUsage(session, failedWithError),
     readSessionDigest,
     setModel: async (model) => {
       await session.setModel(model)

@@ -25,13 +25,8 @@ const BASE_OPTIONS: SessionDriverOptions = {
   mountWorkflowPlugin: true,
   workflowTw: "tw",
   onEvent: () => {},
-  reportFailure: () => {},
   now: () => 0,
-  reportPromptDelay: () => {},
-  reportUsageFailure: () => {},
-  reportWorkflowTwFailure: () => {},
-  reportHandbackHeadMismatch: () => {},
-  reportGateBlock: () => {},
+  diagnose: () => {},
 }
 
 describe("buildQuerySeedOptions", () => {

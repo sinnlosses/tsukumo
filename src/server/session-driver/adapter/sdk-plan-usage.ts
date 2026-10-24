@@ -46,7 +46,7 @@ const sdkPlanUsageSchema = z.object({
  */
 export async function readPlanUsage(
   session: PlanUsageSource,
-  reportFailure: (place: UsageFailurePlace, error: unknown) => void,
+  onFailure: (place: UsageFailurePlace, error: unknown) => void,
 ): Promise<PlanUsageReport> {
   let raw: unknown = undefined
   try {
@@ -54,12 +54,12 @@ export async function readPlanUsage(
       skipBehaviors: true,
     })
   } catch (error) {
-    reportFailure("plan-usage-threw", error)
+    onFailure("plan-usage-threw", error)
     return UNAVAILABLE_PLAN_USAGE
   }
   const report = toPlanUsage(raw)
   if (report.kind === "unavailable") {
-    reportFailure("plan-usage-unreadable", undefined)
+    onFailure("plan-usage-unreadable", undefined)
   }
   return report
 }

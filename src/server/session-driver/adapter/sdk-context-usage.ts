@@ -56,18 +56,18 @@ const sdkContextUsageSchema = z.object({
  */
 export async function readContextUsage(
   session: ContextUsageSource,
-  reportFailure: (place: UsageFailurePlace, error: unknown) => void,
+  onFailure: (place: UsageFailurePlace, error: unknown) => void,
 ): Promise<ContextUsageReport> {
   let raw: unknown = undefined
   try {
     raw = await session.getContextUsage({ detail: CONTEXT_USAGE_DETAIL })
   } catch (error) {
-    reportFailure("context-usage-threw", error)
+    onFailure("context-usage-threw", error)
     return UNAVAILABLE_CONTEXT_USAGE
   }
   const report = toContextUsage(raw)
   if (report.kind === "unavailable") {
-    reportFailure("context-usage-unreadable", undefined)
+    onFailure("context-usage-unreadable", undefined)
   }
   return report
 }

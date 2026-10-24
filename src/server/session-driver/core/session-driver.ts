@@ -8,6 +8,7 @@ import type { ExpressionChoice } from "../../../shared/character-pack/expression
 import type { EffortLevel, ModelAlias, PermissionMode } from "../../../shared/command.ts"
 import type { ContextUsageReport } from "../../../shared/context-usage/context-usage.ts"
 import type { PromptDelayFootprint } from "../../../shared/diagnostic/diagnostic-record.ts"
+import type { SwallowedFailurePlace } from "../../../shared/diagnostic/swallowed-failure.ts"
 import type { PlanUsageReport } from "../../../shared/plan-usage/plan-usage.ts"
 import type { ReportSchemaVariant } from "../../../shared/report/schema-variant.ts"
 import type { Answer, PendingAsk } from "../../../shared/session-driver/pending-ask.ts"
@@ -240,23 +241,26 @@ export type SessionDriverOptions = {
   readonly mountWorkflowPlugin: boolean
   /** ワークフローの `tw` のパス。hook の `lap-hook`・`ask-guard` を起こす。 */
   readonly workflowTw: string
-  /** 内部イベントの受け取り口。投げても反復は止まらず、投げた失敗は `reportFailure` へ渡る。 */
+  /** 内部イベントの受け取り口。投げても反復は止まらず、投げた失敗は `diagnose` へ渡る。 */
   readonly onEvent: (event: SessionEvent) => void
-  /** `onEvent` が投げた失敗を診断ログへ書く口。ここで例外を投げないこと。 */
-  readonly reportFailure: (error: unknown) => void
   /** 現在時刻（エポックミリ秒）を返す時計。 */
   readonly now: () => number
-  /** 依頼が Claude Code へ届くまでの遅れを診断ログへ書く口。ここで例外を投げないこと。 */
-  readonly reportPromptDelay: (footprint: PromptDelayFootprint) => void
-  /** 文脈・プラン使用量を「取れない」に畳んだ理由を診断ログへ書く口。ここで例外を投げないこと。 */
-  readonly reportUsageFailure: (place: UsageFailurePlace, error: unknown) => void
-  /** 取り込んだ `tw` の hook が失敗して何もしなかったことを診断ログへ書く口。ここで例外を投げないこと。 */
-  readonly reportWorkflowTwFailure: (place: WorkflowTwFailurePlace) => void
-  /** 委譲先の返却が包みの頭で見分けられなかった（注記が溜まったまま、頭の合わない入力が届いた）ことを診断ログへ書く口。ここで例外を投げないこと。 */
-  readonly reportHandbackHeadMismatch: () => void
-  /** `report` の関所が `Stop` を止めたことを診断ログへ書く口。ここで例外を投げないこと。 */
-  readonly reportGateBlock: () => void
+  /** 駆動が診断ログへ残したいことの受け取り口。ここで例外を投げないこと。 */
+  readonly diagnose: (diagnostic: DriverDiagnostic) => void
 }
+
+/** 駆動が `diagnose` へ渡す診断。行き先と書き出す形は配線が決める。 */
+export type DriverDiagnostic =
+  | PromptDelayFootprint
+  /** `report` の関所が `Stop` を止めた。時刻は配線が付ける。 */
+  | { readonly flow: "report-gate-block" }
+  | {
+      readonly flow: "swallowed-failure"
+      readonly place: SessionFailurePlace
+      readonly error: unknown
+    }
+
+export type SessionFailurePlace = Extract<SwallowedFailurePlace, { feature: "session" }>["place"]
 
 /** `tw` の hook を走らせて失敗した場所。サブコマンド名と失敗の種類だけで、入出力は持たない。 */
 export type WorkflowTwFailurePlace =
