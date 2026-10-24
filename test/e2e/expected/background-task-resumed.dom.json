@@ -84,8 +84,25 @@
         {
           "tag": "button",
           "attributes": {
-            "data-level": "section",
+            "data-level": "report",
             "aria-current": "location",
+            "type": "button"
+          },
+          "children": [
+            {
+              "tag": "span",
+              "attributes": {
+                "aria-hidden": "true"
+              }
+            },
+            "最終",
+            "短い背景の待ちが終わった"
+          ]
+        },
+        {
+          "tag": "button",
+          "attributes": {
+            "data-level": "section",
             "type": "button"
           },
           "children": [

@@ -129,13 +129,13 @@
 .outline-turn[data-result="awaiting-answer"] .outline-turn-mark {
   color: var(--state-warn);
 }
-/* 見出しの行。やり取りの行の字の頭（印の幅と間のぶん）まで字下げする。 */
+/* レポートの行・節の行・小節の行。レポートの行がやり取りの行の字の頭（印の幅と間のぶん）に揃い、節と小節は1段ずつ右へ字下げする。 */
 .outline-row {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   width: 100%;
-  padding: 0.3rem 0.625rem 0.3rem 1.5rem;
+  padding: 0.3rem 0.625rem 0.3rem 2.5rem;
   border: none;
   border-radius: 0.45rem;
   background: transparent;
@@ -145,9 +145,21 @@
   white-space: nowrap;
   cursor: pointer;
 }
+.outline-row[data-level="report"] {
+  padding-left: 1.5rem;
+  color: var(--ink);
+  font-weight: 600;
+}
 .outline-row[data-level="sub"] {
-  padding-left: 2.5rem;
+  padding-left: 3.5rem;
   font-size: var(--font-action);
+}
+.outline-report-label {
+  flex: none;
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+  font-weight: normal;
+  letter-spacing: 0.06em;
 }
 .outline-row.is-in-section {
   color: var(--ink);

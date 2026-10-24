@@ -274,6 +274,24 @@
                                         },
                                         "report ツールの描き方を確かめたい（架空の依頼）"
                                       ]
+                                    },
+                                    {
+                                      "tag": "button",
+                                      "attributes": {
+                                        "data-level": "report",
+                                        "aria-current": "location",
+                                        "type": "button"
+                                      },
+                                      "children": [
+                                        {
+                                          "tag": "span",
+                                          "attributes": {
+                                            "aria-hidden": "true"
+                                          }
+                                        },
+                                        "最終",
+                                        "架空の結論: 目盛りを 24 に直し、`a.ts` だけで済んだ。"
+                                      ]
                                     }
                                   ]
                                 },
@@ -340,6 +358,9 @@
                                 },
                                 {
                                   "tag": "section",
+                                  "attributes": {
+                                    "data-report-step": ""
+                                  },
                                   "children": [
                                     {
                                       "tag": "header",

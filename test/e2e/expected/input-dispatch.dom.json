@@ -76,8 +76,25 @@
                             {
                               "tag": "button",
                               "attributes": {
-                                "data-level": "section",
+                                "data-level": "report",
                                 "aria-current": "location",
+                                "type": "button"
+                              },
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  }
+                                },
+                                "最終",
+                                "疑似セッションのレポート"
+                              ]
+                            },
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "data-level": "section",
                                 "type": "button"
                               },
                               "children": [
@@ -155,6 +172,9 @@
                         },
                         {
                           "tag": "section",
+                          "attributes": {
+                            "data-report-step": ""
+                          },
                           "children": [
                             {
                               "tag": "div",

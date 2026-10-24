@@ -16,6 +16,7 @@ import type {
 import { formatMeasured } from "../../../../../../../../shared/utils/elapsed-time.ts"
 import { Text } from "../../../../../../ui/text/text.tsx"
 import { VStack } from "../../../../../../ui/v-stack/v-stack.tsx"
+import { REPORT_STEP_ATTRIBUTE } from "../../domain/outline-report-head.ts"
 import {
   arrangeTurn,
   progressFoldSummary,
@@ -179,6 +180,7 @@ function StepCard(props: StepProps): ReactElement {
           stepClassName(step),
           step.interim && questions.length === 0 && mainViewStyles["phone-hidden"],
         )}
+        {...{ [REPORT_STEP_ATTRIBUTE]: step.body.kind === "text" ? "" : undefined }}
       >
         <StepReport
           step={step}

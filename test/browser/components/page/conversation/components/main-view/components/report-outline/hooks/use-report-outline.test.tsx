@@ -19,6 +19,7 @@ const ONE_TURN = {
       result: "done",
       asideCount: 0,
       headedSectionIds: [],
+      report: { kind: "none" },
     },
   ],
   activeTurnId: 0,

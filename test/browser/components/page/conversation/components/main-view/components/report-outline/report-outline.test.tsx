@@ -21,6 +21,7 @@ describe("ReportOutline のやり取りの行", () => {
             result: "done",
             asideCount: 0,
             headedSectionIds: [],
+            report: { kind: "none" },
           },
           {
             id: 1,
@@ -28,6 +29,7 @@ describe("ReportOutline のやり取りの行", () => {
             result: "working",
             asideCount: 2,
             headedSectionIds: [],
+            report: { kind: "none" },
           },
         ]}
         activeTurnId={1}

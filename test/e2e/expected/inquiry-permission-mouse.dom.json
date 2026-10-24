@@ -72,6 +72,24 @@
                                 },
                                 "答え待ちの箱を出す場面（架空）。答えると箱が消える。"
                               ]
+                            },
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "data-level": "report",
+                                "aria-current": "location",
+                                "type": "button"
+                              },
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  }
+                                },
+                                "最終",
+                                "答え待ちの箱を出す場面（架空）。答えると箱が消える。"
+                              ]
                             }
                           ]
                         },
@@ -85,6 +103,9 @@
                         },
                         {
                           "tag": "section",
+                          "attributes": {
+                            "data-report-step": ""
+                          },
                           "children": [
                             {
                               "tag": "div",

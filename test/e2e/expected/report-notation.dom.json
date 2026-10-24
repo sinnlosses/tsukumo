@@ -76,6 +76,23 @@
                             {
                               "tag": "button",
                               "attributes": {
+                                "data-level": "report",
+                                "type": "button"
+                              },
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  }
+                                },
+                                "最終",
+                                "表現の一覧（架空）"
+                              ]
+                            },
+                            {
+                              "tag": "button",
+                              "attributes": {
                                 "data-level": "section",
                                 "aria-current": "location",
                                 "type": "button"
@@ -102,6 +119,9 @@
                         },
                         {
                           "tag": "section",
+                          "attributes": {
+                            "data-report-step": ""
+                          },
                           "children": [
                             {
                               "tag": "div",

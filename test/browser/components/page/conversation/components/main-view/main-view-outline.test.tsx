@@ -64,7 +64,15 @@ describe("MainView（やり取りの列: やり取りと見出しの2段）", ()
     chooseOutlineOpen()
     renderMainView(threeTurnsWithHeadings())
 
-    expect(outlineRowTexts()).toEqual(["✓1つ目", "✓2つ目", "●3つ目", "節の一", "小節", "節の二"])
+    expect(outlineRowTexts()).toEqual([
+      "✓1つ目",
+      "✓2つ目",
+      "●3つ目",
+      "最終節の一",
+      "節の一",
+      "小節",
+      "節の二",
+    ])
     expect(outlineTurnRows().map((row) => row.getAttribute("aria-current"))).toEqual([
       null,
       null,
@@ -92,7 +100,7 @@ describe("MainView（やり取りの列: やり取りと見出しの2段）", ()
     expect(title()).toBe("1つ目")
     // 見出しは描いた本文の DOM の変化（`MutationObserver`）で拾い直すので、次のタスクで替わる。
     await waitFor(() => {
-      expect(outlineRowTexts()).toEqual(["●1つ目", "✓2つ目", "✓3つ目"])
+      expect(outlineRowTexts()).toEqual(["●1つ目", "最終1つ目のレポート", "✓2つ目", "✓3つ目"])
     })
   })
 
@@ -112,7 +120,7 @@ describe("MainView（やり取りの列: やり取りと見出しの2段）", ()
     fireEvent.keyDown(nav, { key: "ArrowDown" })
     expect(document.activeElement?.textContent).toBe("●3つ目")
     fireEvent.keyDown(nav, { key: "ArrowDown" })
-    expect(document.activeElement?.textContent).toBe("節の一")
+    expect(document.activeElement?.textContent).toBe("最終節の一")
     fireEvent.keyDown(nav, { key: "ArrowUp" })
     fireEvent.keyDown(nav, { key: "ArrowUp" })
     fireEvent.keyDown(nav, { key: "ArrowUp" })
@@ -125,7 +133,7 @@ describe("MainView（やり取りの列: やり取りと見出しの2段）", ()
     })
     expect(title()).toBe("1つ目")
     await waitFor(() => {
-      expect(outlineRowTexts()).toEqual(["●1つ目", "✓2つ目", "✓3つ目"])
+      expect(outlineRowTexts()).toEqual(["●1つ目", "最終1つ目のレポート", "✓2つ目", "✓3つ目"])
     })
   })
 

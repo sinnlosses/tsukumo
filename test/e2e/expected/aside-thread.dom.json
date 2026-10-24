@@ -81,6 +81,24 @@
                                   ]
                                 }
                               ]
+                            },
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "data-level": "report",
+                                "aria-current": "location",
+                                "type": "button"
+                              },
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  }
+                                },
+                                "レポート",
+                                "1/3 計画を確かめる"
+                              ]
                             }
                           ]
                         },
@@ -242,6 +260,9 @@
                         },
                         {
                           "tag": "section",
+                          "attributes": {
+                            "data-report-step": ""
+                          },
                           "children": [
                             {
                               "tag": "header",

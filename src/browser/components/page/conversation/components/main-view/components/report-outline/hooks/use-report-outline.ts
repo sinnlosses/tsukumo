@@ -5,7 +5,7 @@
 // 畳んだ `<details>` の中の見出しは転がしても見えないので拾わない。
 //
 // 列の幅と畳んだ状態は利用者が変えられ、`localStorage` に保つ。
-// キーボードでは ↑↓ でやり取りの行と見出しの行を区別なく移り、Enter は行の `<button>` が受ける。
+// キーボードでは ↑↓ でやり取りの行・レポートの行・見出しの行を区別なく移り、Enter は行の `<button>` が受ける。
 
 import {
   useLayoutEffect,
@@ -24,6 +24,8 @@ import {
   type HeadingStep,
 } from "../../../../../../../../stores/reading-section.ts"
 import type { HeadNotice, HeadNoticeAction } from "../../../domain/head-notice.ts"
+import { outlineReportHeadOf } from "../../../domain/outline-report-head.ts"
+import type { OutlineReport } from "../../../domain/outline-report-row.ts"
 import { readableOutlineItems, type OutlineItem } from "../../../domain/report-heading.ts"
 import { subscribeScrollFrame } from "../../../hooks/scroll-frame.ts"
 import {
@@ -55,6 +57,7 @@ type ReportOutlineTurn = {
   readonly asideCount: number
   /** 本文に見出しのある節の欄の ID。 */
   readonly headedSectionIds: readonly number[]
+  readonly report: OutlineReport
 }
 
 export type ReportOutlineProps = {
@@ -81,6 +84,17 @@ export type ReportOutlineRow = ReportOutlineEntry & {
   readonly inActiveSection: boolean
 }
 
+/** 見ているやり取りの行の下、見出しの行の上に出すレポートの行。 */
+export type ReportOutlineReportRow =
+  | { readonly kind: "none" }
+  | {
+      readonly kind: "shown"
+      readonly label: "final" | "interim"
+      readonly title: string
+      /** 最初の見出しより上を読んでいるとき、いま読んでいる印が付く。 */
+      readonly isActive: boolean
+    }
+
 /** `<ReportOutline>` が画面に出す形。 */
 export type ReportOutlineModel = {
   /** 一覧の列を出すか。やり取りが1件で見出しも2つ未満なら列ごと隠し、本文を左いっぱいまで使う。 */
@@ -89,6 +103,8 @@ export type ReportOutlineModel = {
   readonly onSelectTurn: (turnId: number) => void
   readonly notice: HeadNotice
   readonly onNotice: () => void
+  readonly reportRow: ReportOutlineReportRow
+  readonly onSelectReport: () => void
   /** 見ているやり取りの見出しの行。 */
   readonly rows: readonly ReportOutlineRow[]
   /**
@@ -306,6 +322,23 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
     setReached(true)
   }
 
+  const activeReport =
+    props.turns.find((turn) => turn.id === props.activeTurnId)?.report ??
+    ({ kind: "none" } as const)
+
+  function selectReport(): void {
+    const content = contentRef.current
+    if (content === null || activeReport.kind === "none") {
+      return
+    }
+    outlineReportHeadOf(content, activeReport.label === "final").scrollIntoView({
+      block: "start",
+    })
+    pinnedRef.current = undefined
+    setActiveIndex(0)
+    setReached(false)
+  }
+
   const section = readingSectionOf(entries, activeIndex, reached)
   const publish = useReadingSection((state) => state.publish)
   const setMover = useReadingSection((state) => state.setMover)
@@ -367,7 +400,17 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
         props.onNotice(props.notice.action)
       }
     },
-    rows: outlineRows(entries, activeIndex),
+    reportRow:
+      activeReport.kind === "none"
+        ? activeReport
+        : {
+            kind: "shown",
+            label: activeReport.label,
+            title: activeReport.title,
+            isActive: !reached,
+          },
+    onSelectReport: selectReport,
+    rows: outlineRows(entries, activeIndex, reached),
     frameRef,
     contentRef,
     navRef,
@@ -396,19 +439,22 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
 
 /**
  * 見出しの並びに、いま読んでいる見出しとその節の印を付ける。
+ * 見出しを1つも通り過ぎていない間（`reached` が偽）は、いま読んでいる印をレポートの行が持つので、見出しの行にも節の明るい字にも付けない。
  * 節は `section` の見出しから次の `section` の見出しの手前まで（先頭の `sub` は、手前に `section` が無いので自分だけの節）。
  */
 function outlineRows(
   entries: readonly ReportOutlineEntry[],
   activeIndex: number,
+  reached: boolean,
 ): readonly ReportOutlineRow[] {
   const sectionOf = (index: number): number =>
     entries.findLastIndex((entry, at) => at <= index && entry.level === "section")
   const activeSection = sectionOf(activeIndex)
   return entries.map((entry, index) => ({
     ...entry,
-    isActive: index === activeIndex,
+    isActive: reached && index === activeIndex,
     inActiveSection:
-      index === activeIndex || (activeSection !== -1 && sectionOf(index) === activeSection),
+      reached &&
+      (index === activeIndex || (activeSection !== -1 && sectionOf(index) === activeSection)),
   }))
 }

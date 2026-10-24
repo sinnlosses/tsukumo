@@ -17,6 +17,7 @@ import { outlineWidthFromRatio } from "./domain/outline-panel.ts"
 import {
   TURN_ROW_ATTRIBUTE,
   type ReportOutlineModel,
+  type ReportOutlineReportRow,
   type ReportOutlineRow,
   type ReportOutlineTurnRow,
 } from "./hooks/use-report-outline.ts"
@@ -30,6 +31,11 @@ const RESIZER_LABEL = "やり取りと本文の境界"
 const TURN_STEP_KEY_HINT = "前後のやり取りへは [ ] キー"
 
 const ACTIVE_TURN_MARK = "●"
+
+const REPORT_LABEL_TEXT = {
+  final: "最終",
+  interim: "レポート",
+} as const satisfies Record<"final" | "interim", string>
 
 type PresentationalReportOutlineProps = ReportOutlineModel & {
   readonly children: ReactNode
@@ -45,6 +51,8 @@ export function PresentationalReportOutline({
   onSelectTurn,
   notice,
   onNotice,
+  reportRow,
+  onSelectReport,
   rows,
   frameRef,
   contentRef,
@@ -131,7 +139,14 @@ export function PresentationalReportOutline({
                       )}
                     >
                       <TurnRow turn={turn} onSelectTurn={onSelectTurn} />
-                      {turn.isActive && <HeadingRows rows={rows} onSelect={onSelect} />}
+                      {turn.isActive && (
+                        <HeadingRows
+                          reportRow={reportRow}
+                          onSelectReport={onSelectReport}
+                          rows={rows}
+                          onSelect={onSelect}
+                        />
+                      )}
                     </div>
                   ))}
                 </div>
@@ -198,11 +213,30 @@ function TurnRow(props: {
 }
 
 function HeadingRows(props: {
+  readonly reportRow: ReportOutlineReportRow
+  readonly onSelectReport: () => void
   readonly rows: readonly ReportOutlineRow[]
   readonly onSelect: (index: number) => void
 }): ReactElement {
+  const { reportRow } = props
   return (
     <>
+      {reportRow.kind === "shown" && (
+        <button
+          type="button"
+          className={styles["outline-row"]}
+          data-level="report"
+          aria-current={reportRow.isActive ? "location" : undefined}
+          title={reportRow.title}
+          onClick={props.onSelectReport}
+        >
+          <span className={styles["outline-row-mark"]} aria-hidden="true" />
+          <span className={styles["outline-report-label"]}>
+            {REPORT_LABEL_TEXT[reportRow.label]}
+          </span>
+          <span className={styles["outline-row-text"]}>{reportRow.title}</span>
+        </button>
+      )}
       {withOccurrenceKeys(props.rows, (row) => `${row.level}:${row.text}`).map(
         ({ key, item: row, index }) => (
           <button

@@ -130,8 +130,25 @@
         {
           "tag": "button",
           "attributes": {
-            "data-level": "section",
+            "data-level": "report",
             "aria-current": "location",
+            "type": "button"
+          },
+          "children": [
+            {
+              "tag": "span",
+              "attributes": {
+                "aria-hidden": "true"
+              }
+            },
+            "最終",
+            "変わったこと（架空）"
+          ]
+        },
+        {
+          "tag": "button",
+          "attributes": {
+            "data-level": "section",
             "type": "button"
           },
           "children": [

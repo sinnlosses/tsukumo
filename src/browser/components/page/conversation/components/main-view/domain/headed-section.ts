@@ -1,7 +1,10 @@
 // 見出しのある節の欄の ID（`MainViewReportSection.id`）を数える。
 
 import { reportHeadedSections } from "../../../../../../../shared/session/main-view-report-body.ts"
-import type { MainViewTurn } from "../../../../../../../shared/session/main-view-shape.ts"
+import type {
+  MainViewStep,
+  MainViewTurn,
+} from "../../../../../../../shared/session/main-view-shape.ts"
 
 const HEADED_SECTION_IDS_BY_TURN = new WeakMap<MainViewTurn, readonly number[]>()
 
@@ -16,10 +19,16 @@ export function headedSectionIdsOfTurn(turn: MainViewTurn): readonly number[] {
   return ids
 }
 
-function computeHeadedSectionIds(turn: MainViewTurn): readonly number[] {
-  const shown =
+/** 札の本文として見せるステップ。最終レポートがあればそれ、無ければ最後の本文。 */
+export function shownTextStepOf(turn: MainViewTurn): MainViewStep | undefined {
+  return (
     turn.steps.findLast((step) => step.final && step.body.kind === "text") ??
     turn.steps.findLast((step) => step.body.kind === "text")
+  )
+}
+
+function computeHeadedSectionIds(turn: MainViewTurn): readonly number[] {
+  const shown = shownTextStepOf(turn)
   return shown?.body.kind === "text"
     ? reportHeadedSections(shown.body.report).map((section) => section.id)
     : []
