@@ -124,16 +124,12 @@ export type SessionEvent =
    * `answers[i]` は `questions[i]` に対して選んだ答えの並び（{@link QuestionAnswer}）。
    * 質問文も答えも会話の内容なので、ログに出さない・外へ出さない。
    * `toolUseId` は答え待ちのときの `PendingAsk` の `id` と同じで、preview の画像の棚の鍵になる。
-   * `briefed[i]` は `questions[i]` に合う添え書きが付いていたか、`sentBack` はその答えまでに添え書きの不足で断った回数
-   * （質問の使われ方の記録の欄。字は運ばない）。
    */
   | {
       readonly kind: "question-answered"
       readonly toolUseId: string
       readonly questions: readonly Question[]
       readonly answers: readonly QuestionAnswer[]
-      readonly briefed: readonly boolean[]
-      readonly sentBack: number
     }
   | TurnHealthEvent
   /**

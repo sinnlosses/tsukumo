@@ -495,26 +495,4 @@ describe("選択肢が2つ以上の質問は添え書きが無いと断る", () 
 
     expect(queue.list()).toMatchObject([{ kind: "question", briefs: [] }])
   })
-
-  it("答えに付けて、断った回数と質問ごとの添え書きの有無を1回だけ流し、数は0に戻る", async () => {
-    const briefings: unknown[] = []
-    const queue = createPendingAnswerQueue({
-      onChange: () => {},
-      onAnswered: (_id, _questions, _answers, briefing) => briefings.push(briefing),
-    })
-
-    await queue.ask(questionRequest({ id: "toolu_q1" }))
-    await queue.ask(questionRequest({ id: "toolu_q2" }))
-    queue.holdBrief([BRIEF])
-    void queue.ask(questionRequest({ id: "toolu_q3" }))
-    queue.answer("toolu_q3", { kind: "answers", labels: [["こっち"]] })
-    queue.holdBrief([BRIEF])
-    void queue.ask(questionRequest({ id: "toolu_q4" }))
-    queue.answer("toolu_q4", { kind: "answers", labels: [["こっち"]] })
-
-    expect(briefings).toEqual([
-      { briefed: [true], sentBack: 2 },
-      { briefed: [true], sentBack: 0 },
-    ])
-  })
 })

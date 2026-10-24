@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest"
 
 import {
   answerQuestionBriefCall,
-  briefedQuestions,
   mermaidSourcesOf,
   reviewQuestionBriefing,
 } from "../../../../src/server/session-driver/core/question-brief.ts"
@@ -188,13 +187,5 @@ describe("reviewQuestionBriefing", () => {
 
     expect(reviewQuestionBriefing(questions, [])).toEqual({ kind: "accepted", briefs: [] })
     expect(reviewQuestionBriefing(questions, [brief()])).toEqual({ kind: "accepted", briefs: [] })
-  })
-})
-
-describe("briefedQuestions", () => {
-  it("質問ごとに、header の合う添え書きがあるかを並びのまま返す", () => {
-    const questions = [question("架空の見出し", ["A案", "B案"]), question("別の見出し", ["C案"])]
-
-    expect(briefedQuestions(questions, [brief()])).toEqual([true, false])
   })
 })

@@ -373,8 +373,6 @@ describe("レポートの画像の棚", () => {
       toolUseId: "toolu_q1",
       questions: [],
       answers: [],
-      briefed: [],
-      sentBack: 0,
     })
     stub.emit(imageQuestionPending("toolu_q2"))
     await waitForBatch()

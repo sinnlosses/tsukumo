@@ -107,14 +107,6 @@ export function reviewQuestionBriefing(
   return { kind: "accepted", briefs: pairing.kind === "paired" ? held : [] }
 }
 
-/** `questions[i]` に合う添え書きが付いているか。 */
-export function briefedQuestions(
-  questions: readonly Question[],
-  briefs: readonly QuestionBrief[],
-): readonly boolean[] {
-  return questions.map((question) => briefs.some((brief) => brief.header === question.header))
-}
-
 /** 呼んだ時点で分かる崩れの理由の並び。空なら受け付けてよい。 */
 function reviewQuestionBrief(briefs: readonly QuestionBrief[]): readonly string[] {
   return [

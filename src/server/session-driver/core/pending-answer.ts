@@ -10,7 +10,7 @@ import {
   type Question,
   type QuestionAnswer,
 } from "../../../shared/session-driver/question.ts"
-import { briefedQuestions, reviewQuestionBriefing } from "./question-brief.ts"
+import { reviewQuestionBriefing } from "./question-brief.ts"
 
 /** キャラクターが質問するときのツール名。これだけを質問として扱う。 */
 const ASK_USER_QUESTION_TOOL_NAME = "AskUserQuestion"
@@ -48,15 +48,7 @@ export type PendingAnswerHandlers = {
     toolUseId: string,
     questions: readonly Question[],
     answers: readonly QuestionAnswer[],
-    briefing: AnsweredBriefing,
   ) => void
-}
-
-/** 答えが付いた質問の添え書きの様子。`briefed[i]` は `questions[i]` に合う添え書きが付いていたか。 */
-export type AnsweredBriefing = {
-  readonly briefed: readonly boolean[]
-  /** その答えまでに添え書きの不足で断った回数。 */
-  readonly sentBack: number
 }
 
 export type PendingAnswerQueue = {
@@ -89,8 +81,6 @@ export function createPendingAnswerQueue(handlers: PendingAnswerHandlers): Pendi
   const detachers = new Map<string, () => void>()
 
   let heldBrief: readonly QuestionBrief[] = []
-  /** 添え書きの不足で断った回数。質問に答えが付くか、列を畳むと 0 に戻る。 */
-  let sentBack = 0
 
   const takeBrief = (): readonly QuestionBrief[] => {
     const taken = heldBrief
@@ -123,7 +113,6 @@ export function createPendingAnswerQueue(handlers: PendingAnswerHandlers): Pendi
         const briefing =
           questions === undefined ? undefined : reviewQuestionBriefing(questions, held)
         if (briefing?.kind === "rejected") {
-          sentBack += 1
           resolve({ behavior: "deny", message: briefing.message })
           return
         }
@@ -155,7 +144,6 @@ export function createPendingAnswerQueue(handlers: PendingAnswerHandlers): Pendi
 
     settleAll: () => {
       heldBrief = []
-      sentBack = 0
       if (entries.size === 0) {
         return
       }
@@ -182,13 +170,8 @@ export function createPendingAnswerQueue(handlers: PendingAnswerHandlers): Pendi
       // 質問の記録は答えが確定したここ1回だけ知らせる（未回答のまま終わった質問は残さない）。
       // 解決より先に知らせるので、答えを受けて動き出したツールのイベントより前に記録が積まれる。
       if (entry.ask.kind === "question" && answer.kind === "answers") {
-        const { briefs, questions } = entry.ask
-        handlers.onAnswered(id, questions, answer.labels, {
-          briefed: briefedQuestions(questions, briefs),
-          sentBack,
-        })
+        handlers.onAnswered(id, entry.ask.questions, answer.labels)
       }
-      sentBack = 0
 
       settle(id, entry, result)
       return true

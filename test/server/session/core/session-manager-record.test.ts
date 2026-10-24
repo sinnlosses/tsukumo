@@ -471,8 +471,6 @@ describe("createSessionManager", () => {
             },
           ],
           answers: [["架空の答え"]],
-          briefed: [false],
-          sentBack: 0,
         },
         ...RESTORED_REPLAY,
       ]),

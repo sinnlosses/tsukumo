@@ -12,7 +12,6 @@ import { UNAVAILABLE_SESSION_DIGEST } from "../../../shared/session/session-dige
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import { createCallReview } from "../core/call-review.ts"
 import { recordedPromptImages } from "../core/prompt-image-shelf.ts"
-import { briefedQuestions } from "../core/question-brief.ts"
 import { reportEvents } from "../core/sdk-report-message.ts"
 import type { SessionDriver } from "../core/session-driver.ts"
 import {
@@ -167,8 +166,6 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
         toolUseId: ask.id,
         questions: ask.questions,
         answers: answer.labels,
-        briefed: briefedQuestions(ask.questions, ask.briefs),
-        sentBack: 0,
       })
     }
     emit({ kind: "pending-changed", pending: pending.filter((candidate) => candidate.id !== id) })
