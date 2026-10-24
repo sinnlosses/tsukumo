@@ -31,6 +31,7 @@ export async function launchFakeScene(options: {
     extraEnv: options.extraEnv,
     dropInheritedTsukumoEnv: false,
     stderr: "inherit",
+    detached: false,
   })
   try {
     const url = await waitForViewUrl(child, home, LAUNCH_TIMEOUT_MS)

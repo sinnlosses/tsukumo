@@ -206,8 +206,7 @@ async function openRoom(
   addCleanup(() => {
     rmSync(home.real, { recursive: true, force: true })
     rmSync(cwd.real, { recursive: true, force: true })
-    // 設定の面が起こす `tw`（python3）の孫が、サーバを止めたあとも HOME の下へキャッシュを書き続けることがある。
-    rmSync(userHome.real, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 })
+    rmSync(userHome.real, { recursive: true, force: true })
     return Promise.resolve()
   })
   writeBeadsConfig(userHome.real)

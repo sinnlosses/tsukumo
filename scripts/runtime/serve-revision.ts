@@ -111,6 +111,7 @@ async function main(argv: readonly string[]): Promise<number> {
     extraEnv: {},
     dropInheritedTsukumoEnv: false,
     stderr: "inherit",
+    detached: false,
   })
   let url: string
   try {

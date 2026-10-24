@@ -21,6 +21,8 @@ export type FakeTsukumoOptions = {
   /** 親の `TSUKUMO_` で始まる変数を外してから渡す。 */
   readonly dropInheritedTsukumoEnv: boolean
   readonly stderr: "inherit" | "pipe"
+  /** true なら専用のプロセスグループで起こす（グループごと止められる）。 */
+  readonly detached: boolean
 }
 
 /** 駆動を fake に固定し、タブを開かない tsukumo を1つ起こす。 */
@@ -43,6 +45,7 @@ export function spawnFakeTsukumo(options: FakeTsukumoOptions): ChildProcess {
       ...options.extraEnv,
     },
     stdio: ["ignore", "pipe", options.stderr],
+    detached: options.detached,
   })
 }
 

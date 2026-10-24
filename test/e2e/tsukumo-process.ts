@@ -42,18 +42,43 @@ export function spawnTsukumo(
     extraEnv: { TSUKUMO_FIXED_CLOCK: FIXED_INSTANT, TZ: TIME_ZONE, HOME: userHome },
     dropInheritedTsukumoEnv: true,
     stderr: "pipe",
+    detached: true,
   })
 }
 
-/** 起こした pid だけに `SIGTERM` を送り、終わるのを待つ（広いパターンで止めない）。 */
-export function stopTsukumo(child: ChildProcess): Promise<void> {
-  if (child.exitCode !== null || child.signalCode !== null) {
-    return Promise.resolve()
+const GROUP_GONE_TIMEOUT_MS = 10_000
+const GROUP_POLL_INTERVAL_MS = 25
+
+function groupExists(pgid: number): boolean {
+  try {
+    process.kill(-pgid, 0)
+    return true
+  } catch (error) {
+    return !(error instanceof Error && "code" in error && error.code === "ESRCH")
   }
-  return new Promise((resolve) => {
-    child.once("exit", () => {
-      resolve()
-    })
-    child.kill("SIGTERM")
-  })
+}
+
+/**
+ * 起こしたプロセスグループだけに `SIGTERM` を送り、子と孫（`tw` の python3 など）が消えるのを待つ
+ * （広いパターンで止めない）。上限を過ぎても孫が残れば reject する。
+ */
+export async function stopTsukumo(child: ChildProcess): Promise<void> {
+  const pgid = child.pid
+  if (pgid === undefined) {
+    return
+  }
+  if (!groupExists(pgid)) {
+    return
+  }
+  try {
+    process.kill(-pgid, "SIGTERM")
+  } catch {
+    return
+  }
+  for (let waited = 0; groupExists(pgid); waited += GROUP_POLL_INTERVAL_MS) {
+    if (waited >= GROUP_GONE_TIMEOUT_MS) {
+      throw new Error(`tsukumo のプロセスグループ ${String(pgid)} に孫が残っている`)
+    }
+    await new Promise((resolve) => setTimeout(resolve, GROUP_POLL_INTERVAL_MS))
+  }
 }
