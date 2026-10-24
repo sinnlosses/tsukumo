@@ -10,13 +10,14 @@
 
 import clsx from "clsx"
 import { useEffect, useRef, useState, type ReactElement } from "react"
-import { isObjectType } from "remeda"
+import { isObjectType, sum } from "remeda"
 
 import { vendorAssetPath } from "../../../../../../../shared/view-server/vendor-asset.ts"
 import { Text } from "../../../../../ui/text/text.tsx"
 import { figureZoomTriggerProps, SvgZoom } from "./figure-zoom.tsx"
 import { useSeenOnce } from "./hooks/use-seen-once.ts"
 import styles from "./mermaid-block.module.css"
+import { pickMeasure, topDownSource } from "./mermaid-figure-measure.ts"
 import { mermaidFrameHeight } from "./mermaid-frame-height.ts"
 import { resolveHex } from "./theme-color.ts"
 import { loadVendorScript, preloadVendorScript } from "./vendor-script.ts"
@@ -70,6 +71,13 @@ export function MermaidBlock(props: MermaidBlockProps): ReactElement {
     }
     const themeVariables = resolveThemeVariables(themeNode)
     syncTheme(themeVariables)
+    const fit = (node: HTMLPreElement): Promise<void> =>
+      fitTopDown({ node, code, themeNode, themeVariables, isCancelled: () => cancelled })
+    const reportError = (reason: unknown): void => {
+      if (!cancelled) {
+        setError(mermaidErrorText(reason))
+      }
+    }
     const hit = drawn.get(code)
     if (hit === undefined) {
       drawInTurn(async () => {
@@ -78,29 +86,29 @@ export function MermaidBlock(props: MermaidBlockProps): ReactElement {
           return
         }
         const again = drawn.get(code)
+        const node = nodeRef.current
         if (again !== undefined) {
-          insertDiagram(nodeRef.current, again)
+          if (node !== null && !insertDiagram(node, again)) {
+            await fit(node)
+          }
           return
         }
         initializeFor(themeVariables)
         const id = newDiagramId()
-        const { svg, bindFunctions } = await mermaid.render(id, resolveTokens(code, themeNode))
-        const diagram = { svg, id } satisfies DrawnDiagram
-        drawn.set(code, diagram)
-        const node = nodeRef.current
+        const rendered = await mermaid.render(id, resolveTokens(code, themeNode))
+        drawn.set(code, { svg: rendered.svg, id })
         if (cancelled || node === null) {
           return
         }
-        node.innerHTML = svg
-        node.dataset["processed"] = "true"
-        bindFunctions?.(node)
-      }).catch((reason: unknown) => {
-        if (!cancelled) {
-          setError(mermaidErrorText(reason))
+        if (!showRendered(node, rendered)) {
+          await fit(node)
         }
-      })
+      }).catch(reportError)
     } else {
-      insertDiagram(nodeRef.current, hit)
+      const node = nodeRef.current
+      if (node !== null && !insertDiagram(node, hit)) {
+        drawInTurn(() => fit(node)).catch(reportError)
+      }
     }
 
     return () => {
@@ -142,6 +150,10 @@ export function MermaidBlock(props: MermaidBlockProps): ReactElement {
 }
 
 const FRAME_HEIGHT_PROPERTY = "--frame-height"
+const NATURAL_WIDTH_PROPERTY = "--natural-width"
+
+/** mermaid の SVG の文字は、自然な大きさで 16px。 */
+const SVG_TEXT_PX = 16
 
 function newDiagramId(): string {
   return `mermaid-block-${nextId++}`
@@ -207,12 +219,119 @@ function initializeFor(themeVariables: Readonly<Record<string, string | boolean>
 /**
  * 覚えた SVG を差し込む。同じ図が1画面に2つ並んでも、SVG の id と `<style>` の範囲が重ならないよう、id は毎回新しく付ける。
  */
-function insertDiagram(node: HTMLPreElement | null, diagram: DrawnDiagram): void {
-  if (node === null) {
-    return
-  }
+function insertDiagram(node: HTMLPreElement, diagram: DrawnDiagram): boolean {
   node.innerHTML = diagram.svg.replaceAll(diagram.id, newDiagramId())
   node.dataset["processed"] = "true"
+  return placeInMeasure(node)
+}
+
+/** 描いたばかりの SVG を差し、段に置けたかを返す。 */
+function showRendered(
+  node: HTMLPreElement,
+  rendered: Awaited<ReturnType<typeof mermaid.render>>,
+): boolean {
+  node.innerHTML = rendered.svg
+  node.dataset["processed"] = "true"
+  rendered.bindFunctions?.(node)
+  return placeInMeasure(node)
+}
+
+type TopDownFit = {
+  readonly node: HTMLPreElement
+  readonly code: string
+  readonly themeNode: HTMLElement
+  readonly themeVariables: Readonly<Record<string, string | boolean>>
+  readonly isCancelled: () => boolean
+}
+
+/**
+ * どの段でも下回った図を、TD に置き換えたソースで描き直して段に置く（TD の SVG は置き換えたソースを鍵に覚える）。
+ * TD にできない図と、TD でも下回る図は、自然寸法で描く。
+ * 初めて描くときも覚えた SVG を差すときも、同じソースと幅なら同じ形になる。
+ */
+async function fitTopDown(fit: TopDownFit): Promise<void> {
+  const { node, code, themeNode, themeVariables, isCancelled } = fit
+  const topDown = topDownSource(code)
+  if (topDown !== undefined) {
+    await loadVendorScript(MERMAID_SRC)
+    const cached = drawn.get(topDown)
+    if (cached === undefined) {
+      initializeFor(themeVariables)
+      const id = newDiagramId()
+      const rendered = await mermaid.render(id, resolveTokens(topDown, themeNode))
+      drawn.set(topDown, { svg: rendered.svg, id })
+      if (isCancelled() || showRendered(node, rendered)) {
+        return
+      }
+    } else if (!isCancelled() && insertDiagram(node, cached)) {
+      return
+    }
+  }
+  if (!isCancelled()) {
+    scrollAtNaturalWidth(node)
+  }
+}
+
+/**
+ * 差した SVG を、字が下限以上になる最も狭い幅の段に置く。どの段でも下回れば置かずに false を返す。
+ * 段は `data-measure` に当てて、描画後の幅と `viewBox` の幅から縮尺を測る（高さの上限による縮みも含む）。
+ * 寸法を持たない描画（まだ配置されていない・`viewBox` が無い）は測れないので、足りるものとして扱う。
+ * 前後の塊の側の図は側の幅に収めるので、段を当てない。
+ */
+function placeInMeasure(node: HTMLPreElement): boolean {
+  if (node.closest(".report-before-after-side") !== null) {
+    return true
+  }
+  const measure = pickMeasure((candidate) => {
+    node.dataset["measure"] = candidate
+    return diagramTextPx(node)
+  })
+  if (measure === undefined) {
+    return false
+  }
+  node.dataset["measure"] = measure
+  node.style.removeProperty(NATURAL_WIDTH_PROPERTY)
+  return true
+}
+
+/**
+ * 箱の縦横比が `viewBox` と違うとき、絵は箱に収まる大きい側で縮む（高さの上限で幅が縦横比に従わないときがある）ので、縮尺は幅と高さの小さいほうで測る。
+ */
+function diagramTextPx(node: HTMLPreElement): number {
+  const box = node.querySelector("svg")?.getBoundingClientRect()
+  const [naturalWidth, naturalHeight] = naturalSizeOf(node)
+  return box !== undefined && naturalWidth > 0 && box.width > 0 && box.height > 0
+    ? SVG_TEXT_PX * Math.min(box.width / naturalWidth, box.height / naturalHeight)
+    : Infinity
+}
+
+/** `viewBox="x y 幅 高さ"` の幅と高さ。読めなければ 0。 */
+function naturalSizeOf(node: HTMLPreElement): readonly [number, number] {
+  const [width, height] = (node.querySelector("svg")?.getAttribute("viewBox") ?? "")
+    .split(/\s+/)
+    .slice(2)
+    .map(Number)
+  return [
+    width !== undefined && width > 0 ? width : 0,
+    height !== undefined && height > 0 ? height : 0,
+  ]
+}
+
+/**
+ * 縮めずに自然寸法で描く。自然幅が本文の列（body）の内幅に収まれば body の幅のまま（natural）、超えれば読む面の幅にして `<pre>` の中で横に転がす（scroll）。
+ */
+function scrollAtNaturalWidth(node: HTMLPreElement): void {
+  const [naturalWidth] = naturalSizeOf(node)
+  node.dataset["measure"] = "body"
+  const style = getComputedStyle(node)
+  const padding = sum(
+    [style.paddingLeft, style.paddingRight].map((value) => Number.parseFloat(value) || 0),
+  )
+  const bodyInnerWidth = node.clientWidth - padding
+  node.dataset["measure"] = naturalWidth > bodyInnerWidth ? "scroll" : "natural"
+  if (naturalWidth > 0) {
+    node.style.setProperty(NATURAL_WIDTH_PROPERTY, `${naturalWidth}px`)
+  }
 }
 
 /**

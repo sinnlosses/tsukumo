@@ -135,6 +135,174 @@ describe("MermaidBlock の描いた SVG の使い回し", () => {
   })
 })
 
+describe("MermaidBlock の幅の段", () => {
+  // jsdom は配置しないので、描いた幅を `<pre>` の段とソース（TD か LR か）から決めて返す。
+  function stubDrawnWidth(
+    widthOf: (measure: string | undefined, topDown: boolean) => number,
+  ): void {
+    renderDiagram.mockImplementation((id: string, code: string) =>
+      Promise.resolve({
+        svg: `<svg id="${id}" viewBox="0 0 1000 400"><text>${code}</text></svg>`,
+        bindFunctions: undefined,
+      }),
+    )
+    vi.spyOn(SVGElement.prototype, "getBoundingClientRect").mockImplementation(function (
+      this: SVGElement,
+    ) {
+      const width = widthOf(
+        this.closest("pre")?.getAttribute("data-measure") ?? undefined,
+        (this.textContent ?? "").startsWith("flowchart TD"),
+      )
+      return new DOMRect(0, 0, width, width * 0.4)
+    })
+  }
+
+  async function drawn(code: string): Promise<HTMLElement> {
+    const view = render(<MermaidBlock code={code} />)
+    await finishLoading()
+    await waitFor(() => {
+      expect(view.container.querySelector("pre.mermaid svg")).not.toBeNull()
+    })
+    const pre = view.container.querySelector<HTMLElement>("pre.mermaid")
+    if (pre === null) {
+      throw new Error("pre.mermaid が無い")
+    }
+    return pre
+  }
+
+  it("本文の列で 12px 以上なら body のまま、1回だけ描く", async () => {
+    stubDrawnWidth(() => 750)
+    const pre = await drawn("flowchart LR\n  A1 --> B1")
+    expect(pre.dataset["measure"]).toBe("body")
+    expect(renderDiagram).toHaveBeenCalledTimes(1)
+  })
+
+  it("本文の列で足りず 63em で足りるなら wide にする", async () => {
+    stubDrawnWidth((measure) => (measure === "body" ? 600 : 800))
+    const pre = await drawn("flowchart LR\n  A2 --> B2")
+    expect(pre.dataset["measure"]).toBe("wide")
+    expect(renderDiagram).toHaveBeenCalledTimes(1)
+  })
+
+  it("LR がどの段でも足りないとき TD で描き直し、TD で足りる段にする", async () => {
+    stubDrawnWidth((_, topDown) => (topDown ? 900 : 300))
+    const pre = await drawn("flowchart LR\n  A3 --> B3")
+    expect(renderDiagram).toHaveBeenCalledTimes(2)
+    expect(renderDiagram.mock.calls[1]?.[1]).toBe("flowchart TD\n  A3 --> B3")
+    expect(pre.dataset["measure"]).toBe("body")
+    expect(pre.style.getPropertyValue("--natural-width")).toBe("")
+  })
+
+  it("TD でも足りず、自然幅が本文の列の内幅を超えるときは自然幅で描いて横に転がす", async () => {
+    stubDrawnWidth(() => 300)
+    vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(630)
+    const pre = await drawn("flowchart LR\n  A4 --> B4")
+    expect(renderDiagram).toHaveBeenCalledTimes(2)
+    expect(pre.dataset["measure"]).toBe("scroll")
+    expect(pre.style.getPropertyValue("--natural-width")).toBe("1000px")
+  })
+
+  it("足りなくても自然幅が本文の列の内幅に収まるなら、段を上げず自然寸法で描く", async () => {
+    stubDrawnWidth(() => 300)
+    vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(1200)
+    const pre = await drawn("flowchart LR\n  A7 --> B7")
+    expect(pre.dataset["measure"]).toBe("natural")
+    expect(pre.style.getPropertyValue("--natural-width")).toBe("1000px")
+  })
+
+  it("LR でない図は描き直さず、足りなければ自然寸法で描く", async () => {
+    stubDrawnWidth(() => 300)
+    const pre = await drawn("sequenceDiagram\n  A5->>B5: x")
+    expect(renderDiagram).toHaveBeenCalledTimes(1)
+    expect(["scroll", "natural"]).toContain(pre.dataset["measure"])
+  })
+
+  it("LR を描き終えたところで取り消されても、覚えた LR を次に差すときは TD にする", async () => {
+    stubDrawnWidth((_, topDown) => (topDown ? 900 : 300))
+    const code = "flowchart LR\n  A8 --> B8"
+    let finish: () => void = () => undefined
+    renderDiagram.mockImplementationOnce(
+      (id: string, source: string) =>
+        new Promise((resolve) => {
+          finish = () =>
+            resolve({
+              svg: `<svg id="${id}" viewBox="0 0 1000 400"><text>${source}</text></svg>`,
+              bindFunctions: undefined,
+            })
+        }),
+    )
+    const first = render(<MermaidBlock code={code} />)
+    await finishLoading()
+    await waitFor(() => {
+      expect(renderDiagram).toHaveBeenCalledTimes(1)
+    })
+    first.unmount()
+    await act(async () => {
+      finish()
+      await Promise.resolve()
+    })
+
+    const pre = await drawn(code)
+    await waitFor(() => {
+      expect(pre.dataset["measure"]).toBe("body")
+    })
+    expect(renderDiagram.mock.calls.at(-1)?.[1]).toBe("flowchart TD\n  A8 --> B8")
+  })
+
+  it("側で覚えた LR を本体で差すときも、足りなければ TD にする", async () => {
+    stubDrawnWidth((_, topDown) => (topDown ? 900 : 300))
+    const code = "flowchart LR\n  A9 --> B9"
+    const side = document.createElement("div")
+    side.className = "report-before-after-side"
+    document.body.append(side)
+    const sideView = render(<MermaidBlock code={code} />, { container: side })
+    await finishLoading()
+    await waitFor(() => {
+      expect(sideView.container.querySelector("pre.mermaid svg")).not.toBeNull()
+    })
+    sideView.unmount()
+    side.remove()
+    expect(renderDiagram).toHaveBeenCalledTimes(1)
+
+    const pre = await drawn(code)
+    await waitFor(() => {
+      expect(pre.dataset["measure"]).toBe("body")
+    })
+    expect(renderDiagram).toHaveBeenCalledTimes(2)
+    expect(renderDiagram.mock.calls[1]?.[1]).toBe("flowchart TD\n  A9 --> B9")
+  })
+
+  it("TD も覚えていれば、3 回目は描かずに差す", async () => {
+    stubDrawnWidth((_, topDown) => (topDown ? 900 : 300))
+    const code = "flowchart LR\n  A10 --> B10"
+    const first = await drawn(code)
+    await waitFor(() => {
+      expect(first.dataset["measure"]).toBe("body")
+    })
+    cleanup()
+    const second = await drawn(code)
+    await waitFor(() => {
+      expect(second.dataset["measure"]).toBe("body")
+    })
+    expect(renderDiagram).toHaveBeenCalledTimes(2)
+  })
+
+  it("前後の塊の側の図には段を当てない", async () => {
+    stubDrawnWidth(() => 300)
+    const side = document.createElement("div")
+    side.className = "report-before-after-side"
+    document.body.append(side)
+    const view = render(<MermaidBlock code={"flowchart LR\n  A6 --> B6"} />, { container: side })
+    await finishLoading()
+    await waitFor(() => {
+      expect(view.container.querySelector("pre.mermaid svg")).not.toBeNull()
+    })
+    expect(renderDiagram).toHaveBeenCalledTimes(1)
+    expect(view.container.querySelector("pre.mermaid")?.hasAttribute("data-measure")).toBe(false)
+    side.remove()
+  })
+})
+
 describe("MermaidBlock の見えてから描く", () => {
   it("見えるまでは描画を始めず、手すきまで読み込みも待ち、ソースの字なしの高さのある枠を出す", async () => {
     const idle: (() => void)[] = []

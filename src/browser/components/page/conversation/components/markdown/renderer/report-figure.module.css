@@ -357,12 +357,41 @@
   .report-captioned
   > :is(.report-caption, .report-table-status-legend, .report-graph-legend) {
   align-self: center;
-  inline-size: min(100%, var(--report-measure));
+  inline-size: min(100%, var(--figure-measure, var(--report-measure)));
 }
+/* mermaid の図の幅の段は `<pre>` の `data-measure`（`MermaidBlock` が字の大きさを測って決める）。
+   無いとき（描き終わる前）と body は本文の列（42em）で、wide と full は本文の列の左端から始める。
+   題と凡例の幅は `--figure-measure` で包みの段にそろう。 */
 .detail-block .report-captioned:has(pre:global(.mermaid)) {
-  inline-size: min(100%, var(--report-measure));
+  inline-size: min(100%, var(--figure-measure, var(--report-measure)));
   min-inline-size: 0;
   align-items: stretch;
+}
+.detail-block .report-captioned:has(> pre:global(.mermaid)[data-measure="wide"]) {
+  --figure-measure: var(--report-measure-wide);
+  margin-inline: 0;
+}
+.detail-block
+  .report-captioned:has(
+    > pre:global(.mermaid)[data-measure="full"],
+    > pre:global(.mermaid)[data-measure="scroll"]
+  ) {
+  --figure-measure: 100%;
+  max-inline-size: 100%;
+  margin-inline: 0;
+}
+.detail-block
+  .report-captioned
+  pre:global(.mermaid):is([data-measure="scroll"], [data-measure="natural"]) {
+  overflow-x: auto;
+}
+.detail-block
+  .report-captioned
+  pre:global(.mermaid):is([data-measure="scroll"], [data-measure="natural"])
+  svg {
+  width: var(--natural-width);
+  max-width: none;
+  max-height: none;
 }
 .detail-block .report-captioned pre:global(.mermaid) svg {
   display: block;

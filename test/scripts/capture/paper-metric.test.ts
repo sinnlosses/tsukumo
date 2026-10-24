@@ -15,6 +15,7 @@ const EMPTY: PaperMetric = {
   firstFigure: { kind: "absent" },
   figures: 0,
   oversizedFigures: 0,
+  diagramText: { kind: "absent" },
   stackedBlocks: {
     stats: { total: 0, stacked: 0 },
     compare: { total: 0, stacked: 0 },
@@ -45,6 +46,17 @@ describe("formatPaperMetric", () => {
     expect(valueOf(rows, "読む面を超える図の割合")).toBe("-")
     expect(valueOf(rows, "太字（段落あたり）")).toBe("-")
     expect(valueOf(rows, "色相の族の内訳")).toBe("-")
+    expect(valueOf(rows, "svg の文字の最小 px")).toBe("-")
+    expect(valueOf(rows, "11px 未満の図")).toBe("-")
+  })
+
+  test("図の文字の最小 px は小数 1 桁で、11px 未満の図は総数と並べる", () => {
+    const rows = formatPaperMetric({
+      ...EMPTY,
+      diagramText: { kind: "at", count: 3, smallest: 6.4567, belowSmall: 2 },
+    })
+    expect(valueOf(rows, "svg の文字の最小 px")).toBe("6.5px")
+    expect(valueOf(rows, "11px 未満の図")).toBe("2 / 3")
   })
 
   test("図1が最初の1画面に入るときは「はい」", () => {

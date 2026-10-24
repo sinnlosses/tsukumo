@@ -34,7 +34,15 @@
   `title` を省いてよい。`stats` は `title` を持たないので、番号だけの題の行になる。
   **題は本体の幅を超えない**: `image`・`table`・`matrix`・`dimension`・`svg` は包みが本体の幅に縮み（20rem を下限にして、
   短い表の題が何行にも折れないようにする）、題の行は包みの幅で折り返す。親の幅を取る `chart`・`stats`・`compare`・`beforeAfter` と、
-  全幅の `pre` に描く `mermaid`・`graph` は縮めない。題の文字は inline code だけを解く（太字・リンクは効かない）
+  `pre` に描く `mermaid`・`graph` は、題と凡例の幅を図の幅の段にそろえる（段の選び方は次の項）。題の文字は inline code だけを解く（太字・リンクは効かない）
+- **`mermaid`・`graph` の図は、文字 12px（CSS px。svg の自然な文字 16px × 縮尺）を守る幅の段で描く**（2026-10-24）。
+  図を差したあと、描画後の svg の縮尺を 42em（`body`）→ 63em（`wide`）→ 読む面（`full`）の順に当てて測り、12px 以上になる最初の段にする。
+  縮尺は svg の箱の幅と高さを `viewBox` の幅と高さで割った小さいほう（高さの上限 70cqh で縮むぶんも含む）。
+  どの段でも下回る `flowchart LR`・`graph LR` は、描画側が先頭行を `TD` に置き換えて描き直す（書き手の `direction` は変えず、差し替えたことは図に出さない）。
+  それでも下回る図は縮めず自然寸法で描き（高さの上限を外す）、自然幅が 42em の内幅に収まれば 42em のまま（`natural`）、超えれば読む面の幅にして `pre` の中で横に転がす（`scroll`）。
+  拡大の口は変えない。`wide`・`full`・`scroll` の包みは本文の列の左端から始め、`body`・`natural` は今までどおりレポートの幅の中央に置く。
+  段は描いた時点の幅で決め、窓の幅が変わっても測り直さない。前後の塊の側の図は側の幅に収めるので段を当てない。
+  確かめる場面は `report-graph-wide`（LR・12 節点）・`report-graph-scroll`（横に転がる TD）、数は `capture-view.ts --paper-metric` の「svg の文字の最小 px」と「11px 未満の図」（差し戻しにはしない）
 - **節を書き上げる演出の塊（トピック）の単位にする**（2026-09-27。`docs/research/report-block-richness.md`
   2章）。見出しのレベルは節の中の副見出しにも、水平線は節の中の軽い区切りにも使われるので、DOM のタグからは
   境目を当てない。本文は欄ごとに入れ物を作り（`docs/architecture/adr/0031-report-body-as-regions.md`）、演出は節の欄の入れ物

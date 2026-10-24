@@ -22,6 +22,19 @@ type FirstFigure =
   | { readonly kind: "absent" }
   | { readonly kind: "at"; readonly top: number; readonly inFirstScreen: boolean }
 
+/** mermaid の svg の文字（自然な大きさ 16px × 縮尺）の最小 px と、`SMALL_TEXT_PX` 未満の図の数。 */
+type DiagramText =
+  | { readonly kind: "absent" }
+  | {
+      readonly kind: "at"
+      readonly count: number
+      readonly smallest: number
+      readonly belowSmall: number
+    }
+
+/** 図の文字がこの px 未満の図を数える。 */
+const SMALL_TEXT_PX = 11
+
 export type PaperMetric = {
   readonly leftRules: number
   readonly statStrips: number
@@ -36,6 +49,7 @@ export type PaperMetric = {
   readonly firstFigure: FirstFigure
   readonly figures: number
   readonly oversizedFigures: number
+  readonly diagramText: DiagramText
   readonly stackedBlocks: {
     readonly stats: StackedCount
     readonly compare: StackedCount
@@ -110,6 +124,15 @@ export async function measurePaperMetric(page: Page): Promise<PaperMetric> {
         (element) => element.getBoundingClientRect().height > readingHeight * ratio,
       ).length
       const firstFigure = figures.slice(0, 1)
+      const diagramTextPx = blocks
+        .flatMap((block) => Array.from(block.querySelectorAll<SVGSVGElement>("pre.mermaid svg")))
+        .flatMap((svg) => {
+          const natural = svg.viewBox.baseVal
+          const box = svg.getBoundingClientRect()
+          return natural.width > 0 && natural.height > 0 && box.width > 0
+            ? [16 * Math.min(box.width / natural.width, box.height / natural.height)]
+            : []
+        })
 
       // evaluate でブラウザへ文字列として渡すので、外へ出すと届かない
       // oxlint-disable-next-line unicorn/consistent-function-scoping
@@ -144,6 +167,7 @@ export async function measurePaperMetric(page: Page): Promise<PaperMetric> {
         firstFigureTops: firstFigure.map(topOf),
         figures: figures.length,
         oversizedFigures,
+        diagramTextPx,
         stackedBlocks: {
           stats: stackedOf("report-stats", byChildren),
           compare: stackedOf("report-compare", byChildren),
@@ -163,11 +187,20 @@ export async function measurePaperMetric(page: Page): Promise<PaperMetric> {
   )
 
   const families = await hueFamiliesOfReport(page)
-  const { verdictTops, firstFigureTops, ...counts } = dom
+  const { verdictTops, firstFigureTops, diagramTextPx, ...counts } = dom
   const verdictTop = verdictTops[0]
   const figureTop = firstFigureTops[0]
   return {
     ...counts,
+    diagramText:
+      diagramTextPx.length === 0
+        ? { kind: "absent" }
+        : {
+            kind: "at",
+            count: diagramTextPx.length,
+            smallest: Math.min(...diagramTextPx),
+            belowSmall: diagramTextPx.filter((px) => px < SMALL_TEXT_PX).length,
+          },
     hueFamilies: families,
     hueFamilyCount: families.length,
     verdict: verdictTop === undefined ? { kind: "absent" } : { kind: "at", top: verdictTop },
@@ -220,6 +253,16 @@ export function formatPaperMetric(metric: PaperMetric): readonly string[] {
       metric.figures === 0
         ? "-"
         : `${((metric.oversizedFigures / metric.figures) * 100).toFixed(1)}%`,
+    ],
+    [
+      "svg の文字の最小 px",
+      metric.diagramText.kind === "at" ? `${metric.diagramText.smallest.toFixed(1)}px` : "-",
+    ],
+    [
+      `${String(SMALL_TEXT_PX)}px 未満の図`,
+      metric.diagramText.kind === "at"
+        ? `${String(metric.diagramText.belowSmall)} / ${String(metric.diagramText.count)}`
+        : "-",
     ],
     ["縦落ち stats", stackedText(stacked.stats)],
     ["縦落ち compare", stackedText(stacked.compare)],
