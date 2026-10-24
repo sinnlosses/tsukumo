@@ -331,14 +331,19 @@ describe("着手中のタスクとの結び付き", () => {
     expect(runner.calls()).toBe(1)
   })
 
-  it("控えの時間（10秒）を過ぎた read は何も返さず、過ぎたあとの先読みは打ち直す", async () => {
+  it("一度も先読みしていない read は何も返さない", () => {
+    const reader = createOpenTaskReader(claimsRunner([{ task: "job-7", stage: "delegate" }]).run)
+
+    expect(reader.read()).toBeUndefined()
+  })
+
+  it("10秒を過ぎても read は最後に読んだ値を返し、過ぎたあとの先読みは打ち直す", async () => {
     const runner = claimsRunner([{ task: "job-7", stage: "delegate" }])
     const reader = createOpenTaskReader(runner.run)
 
     reader.prefetch(at(10, 30))
     await settled()
-    expect(reader.read(at(10, 30) + 9_999)?.taskId).toBe("job-7")
-    expect(reader.read(at(10, 30) + 10_000)).toBeUndefined()
+    expect(reader.read()?.taskId).toBe("job-7")
 
     reader.prefetch(at(10, 30) + 9_000)
     await settled()
@@ -370,7 +375,7 @@ describe("着手中のタスクとの結び付き", () => {
     reader.prefetch(at(10, 30))
     await settled()
 
-    expect(reader.read(at(10, 30))).toBeUndefined()
+    expect(reader.read()).toBeUndefined()
   })
 })
 

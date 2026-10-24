@@ -131,7 +131,7 @@ function statOf(path: string): { mtimeMs: number; size: number } | undefined {
 
 /** 1ターンぶんの記録を、書き出す行（`TokenUsageRecord`）へ変換する。 */
 function toRecord(entry: TokenUsageEntry, openTask: OpenTaskReader): TokenUsageRecord {
-  const task = openTask.read(entry.at)
+  const task = openTask.read()
   return {
     v: TOKEN_USAGE_FORMAT_VERSION,
     at: isoWithOffset(entry.at),

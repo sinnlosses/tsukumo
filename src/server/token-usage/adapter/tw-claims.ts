@@ -11,12 +11,12 @@ import { z } from "zod"
 /** 着手中のタスクと、その最後の段（無ければ `undefined`）。 */
 export type OpenTask = { readonly taskId: string; readonly stage: string | undefined }
 
-/** 着手中のタスクの読み手。時刻はどちらも呼んだ時刻（エポックミリ秒）。 */
+/** 着手中のタスクの読み手。 */
 export type OpenTaskReader = {
-  /** 控えが古く、読みが走っていなければ、口を非同期に打って結果を控える。 */
+  /** `now` は呼んだ時刻（エポックミリ秒）。控えが古く、読みが走っていなければ、口を非同期に打って結果を控える。 */
   readonly prefetch: (now: number) => void
-  /** 控えの時間のあいだだけ控えを返す。控えが無い・古いときは `undefined`。 */
-  readonly read: (now: number) => OpenTask | undefined
+  /** 最後に読めた控えを、古くても返す。一度も控えていなければ `undefined`。 */
+  readonly read: () => OpenTask | undefined
 }
 
 /** 口の出力（1行 JSON）を返す。打てなければ `undefined`。拒否しない。 */
@@ -66,7 +66,7 @@ export function createOpenTaskReader(run: TwClaimsRunner): OpenTaskReader {
           running = false
         })
     },
-    read: (now) => (isFresh(now) ? cached?.task : undefined),
+    read: () => cached?.task,
   }
 }
 
