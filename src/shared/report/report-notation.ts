@@ -32,6 +32,7 @@ const REPORT_BLOCK_MARK_NAMES = [
   "stats-of-3",
   "stats-of-4",
   "card",
+  "cards",
   "badge",
   "badge-ok",
   "badge-warn",

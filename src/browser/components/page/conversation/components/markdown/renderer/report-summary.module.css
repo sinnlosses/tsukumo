@@ -11,6 +11,22 @@
   border-radius: 0.5rem;
   background: var(--surface-raised);
 }
+/* 読む順・因果の無い並列の区画（`list` の `cards`）。器が狭いうちは縦に積む（横の段は `report-notation.module.css`）。 */
+.detail-block .report-cards {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.75rem;
+  margin: var(--report-block-gap) 0;
+}
+.detail-block .report-cards .report-card {
+  border-color: var(--rule-quiet);
+}
+.detail-block .report-cards .report-card > p {
+  margin: 0;
+}
+.detail-block .report-cards .report-card > p + p {
+  margin-top: 0.4rem;
+}
 /* 数の要約（KPI タイル）。
    数そのものが結論になる値（件数・前後の差）を、地の文に埋めずに並べる塊。
    `.report-card` と違って中身は1つの数とそのラベルだけなので、器は `.report-cols` より狭く取り、3〜4枚が1行に収まるようにする。

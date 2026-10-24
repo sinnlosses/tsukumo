@@ -22,6 +22,7 @@ import {
 } from "../../../shared/report/report-limit.ts"
 import { codeBlockMatchesFile } from "./code-block-match.ts"
 import {
+  badCardsIn,
   crowdedNoteCount,
   drawsShape,
   hasBadRegion,
@@ -55,6 +56,7 @@ import { type ReportDraft, type ReportViolation, VIOLATION_THRESHOLDS } from "./
 export function reportViolations(report: ReportDraft): readonly ReportViolation[] {
   const blocks = report.sections.flatMap((section) => section.blocks)
   const notations = notationsInSections(report.sections)
+  const badCards = badCardsIn(blocks)
   const mismatchedCodeBlocks = blocks
     .filter(
       (block): block is Extract<ReportBlock, { readonly kind: "code" }> =>
@@ -104,6 +106,7 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
       count: blocks.filter((block) => block.kind === "list" && block.items.length > MAX_LIST_ITEMS)
         .length,
     },
+    { kind: "bad-cards", count: badCards.length, faults: badCards },
     {
       kind: "long-code",
       count: blocks.filter(

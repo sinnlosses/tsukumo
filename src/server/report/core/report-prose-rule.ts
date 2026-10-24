@@ -47,7 +47,7 @@ export function proseTexts(block: ReportBlock): readonly string[] {
 }
 
 export function labelInItemCount(block: ReportBlock): number {
-  return block.kind === "list" && block.style !== "flow"
+  return block.kind === "list" && block.style !== "flow" && block.style !== "cards"
     ? block.items.filter((item) => item.label.trim() === "" && ITEM_LABEL.test(item.text.trim()))
         .length
     : 0

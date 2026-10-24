@@ -29,6 +29,13 @@ export type ReportDraft = {
   readonly workPlanClosing: WorkPlanClosing
 }
 
+/** 差し戻す `cards` の塊の、塊の並びでの 1 始まりの位置と項目数。`unlabeled` は `label` の空の項目があること。 */
+export type CardsFault = {
+  readonly position: number
+  readonly itemCount: number
+  readonly unlabeled: boolean
+}
+
 /**
  * 規約違反1つ。`count` は違反の数（文の数・塊の数）で、モデルが書いた文面は持たない
  * （差し戻しの文面に写さないため。会話の中身をモデルの文脈へ戻す経路を作らない）。
@@ -60,6 +67,12 @@ export type ReportViolation =
   | { readonly kind: "sentence-table"; readonly count: number }
   /** 項目が上限を超える `list` がある。`count` は塊の数。 */
   | { readonly kind: "long-list"; readonly count: number }
+  /** `cards` の `list` の項目が 2〜4 の外、または `label` の空の項目がある。`faults` は塊の並びでの位置と項目数。 */
+  | {
+      readonly kind: "bad-cards"
+      readonly count: number
+      readonly faults: readonly CardsFault[]
+    }
   /** `marks` が無く、行数が上限を超える `code` がある。`count` は塊の数。 */
   | { readonly kind: "long-code"; readonly count: number }
   /** `series` の `values` の数が `labels` と揃わない、または `arrow`・`slope`・`span` の `series` が2つでない `chart` の塊がある。`count` は塊の数。 */
@@ -158,6 +171,7 @@ export const VIOLATION_THRESHOLDS = {
   "long-table": 0,
   "sentence-table": 0,
   "long-list": 0,
+  "bad-cards": 0,
   "long-code": 0,
   "ragged-chart": 0,
   "unknown-emphasis": 0,

@@ -103,7 +103,7 @@ describe("reportViolations", () => {
   describe("矢印と「名前: 説明」", () => {
     const list = (
       items: readonly { label?: string; text: string }[],
-      style: "bullet" | "ordered" | "flow" = "bullet",
+      style: "bullet" | "ordered" | "flow" | "cards" = "bullet",
     ): ReportBlock => ({
       kind: "list",
       style,
@@ -172,6 +172,47 @@ describe("reportViolations", () => {
       expect(
         kinds(draft([list([...stages.slice(0, 2), { text: "架空の説明" }], "ordered")])),
       ).toEqual([])
+    })
+  })
+
+  describe("cards の項目数と題", () => {
+    const cardItems = (count: number, label = "架空の題") =>
+      Array.from({ length: count }, (_, index) => ({
+        label,
+        text: `架空の本文${String(index + 1)}`,
+        done: false,
+      }))
+    const cards = (items: ReturnType<typeof cardItems>): ReportBlock => ({
+      kind: "list",
+      style: "cards",
+      items,
+      fold: "",
+      aside: "",
+    })
+
+    it("2〜4項目で全項目に題があれば通る", () => {
+      expect(kinds(draft([cards(cardItems(2))]))).toEqual([])
+      expect(kinds(draft([cards(cardItems(4))]))).toEqual([])
+    })
+
+    it("1項目・5項目・題の空の項目は差し戻し、文面は何個目の塊かと項目数を言う", () => {
+      expect(kinds(draft([cards(cardItems(1))]))).toEqual(["bad-cards"])
+      expect(kinds(draft([cards(cardItems(5))]))).toEqual(["bad-cards"])
+      expect(kinds(draft([cards(cardItems(3, ""))]))).toEqual(["bad-cards"])
+
+      const violations = reportViolations(draft([text("架空の段落。"), cards(cardItems(5))]))
+      expect(reportRejectionText(violations)).toContain("2個目の塊は5項目")
+    })
+
+    it("cards 以外の1項目・5項目の list は cards の差し戻しにならない", () => {
+      const bullets: ReportBlock = {
+        kind: "list",
+        style: "bullet",
+        items: cardItems(1),
+        fold: "",
+        aside: "",
+      }
+      expect(kinds(draft([bullets]))).toEqual([])
     })
   })
 

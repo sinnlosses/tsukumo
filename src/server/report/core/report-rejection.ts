@@ -58,6 +58,13 @@ function violationLine(violation: ReportViolation): string {
       return `セルの平均が${String(SENTENCE_CELL_LENGTH)}字以上の列がある表が${violation.count}個ある。その列を \`label\` 付きの \`list\` か文の塊へ移すか、セルを語句・数・状態に縮める`
     case "long-list":
       return `項目が${String(MAX_LIST_ITEMS + 1)}件以上の \`list\` が${violation.count}個ある。上位を残し、最後の項目を「ほか n 件」にして${String(MAX_LIST_ITEMS)}件までにする`
+    case "bad-cards":
+      return `\`cards\` の \`list\` が項目数 2〜4 か、全項目に \`label\` を付ける形になっていない（${violation.faults
+        .map(
+          ({ position, itemCount, unlabeled }) =>
+            `${String(position)}個目の塊は${String(itemCount)}項目${unlabeled ? "で `label` の空がある" : ""}`,
+        )
+        .join("・")}）。2〜4 項目に絞り全項目に題を付けるか、\`bullet\` / \`flow\` に直す`
     case "long-code":
       return `\`marks\` が無く${String(MAX_PLAIN_CODE_LINES + 1)}行以上の \`code\` が${violation.count}個ある。要る範囲だけを引く（${String(MAX_PLAIN_CODE_LINES)}行まで）`
     case "ragged-chart":

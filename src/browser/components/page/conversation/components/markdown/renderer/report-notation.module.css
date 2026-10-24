@@ -124,6 +124,14 @@
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
+/* `cards` は項目数で等分した横 1 行。器の幅が 760px 以下なら縦（既定の 1 列のまま）。 */
+@container report-body (min-width: 761px) {
+  .detail-block .report-cards {
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    grid-template-columns: none;
+  }
+}
 
 /* 余白の柱（塊の `aside` と `memo` の `note` の傍注。値は docs/architecture/screen-design/layout.md「余白の柱」）。
    `with-gutter` が塊1つと傍注の並び `gutter` を包む。

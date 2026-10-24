@@ -39,6 +39,62 @@ describe("reportSectionsMarkdown", () => {
     )
   })
 
+  const cardsOf = (items: { label: string; text: string }[]): string =>
+    markdownOf({
+      kind: "list",
+      style: "cards",
+      items: items.map((item) => ({ ...item, done: false })),
+      fold: "",
+      aside: "",
+    })
+
+  it("cards は項目数ぶんの card を cards の容れ物に並べ、題を太字の1行、本文をその次の段落にする", () => {
+    expect(
+      cardsOf([
+        { label: "架空の題一", text: "架空の `説明` 一" },
+        { label: "架空の題二", text: "架空の説明二" },
+      ]),
+    ).toBe(
+      [
+        '<div class="cards">',
+        "",
+        '<div class="card">',
+        "",
+        "**架空の題一**",
+        "",
+        "架空の `説明` 一",
+        "",
+        "</div>",
+        "",
+        '<div class="card">',
+        "",
+        "**架空の題二**",
+        "",
+        "架空の説明二",
+        "",
+        "</div>",
+        "",
+        "</div>",
+      ].join("\n"),
+    )
+  })
+
+  it("cards は3項目・4項目でも題と本文が全部出力に残る", () => {
+    const items = ["一", "二", "三", "四"].map((name) => ({
+      label: `架空の題${name}`,
+      text: `架空の本文${name}`,
+    }))
+
+    for (const count of [3, 4]) {
+      const html = cardsOf(items.slice(0, count))
+      expect(html.match(/<div class="card">/g)).toHaveLength(count)
+      for (const { label, text } of items.slice(0, count)) {
+        expect(html).toContain(`**${label}**`)
+        expect(html).toContain(text)
+      }
+    }
+  })
+
   const flowOf = (items: { label: string; text: string }[]): string =>
     markdownOf({
       kind: "list",

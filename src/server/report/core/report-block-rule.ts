@@ -3,6 +3,7 @@
 import type { ReportBlock, ReportSection } from "../../../shared/report/report-block.ts"
 import { MAX_CANDIDATES, SENTENCE_CELL_LENGTH } from "../../../shared/report/report-limit.ts"
 import { textLengthOf } from "./markdown-tree.ts"
+import type { CardsFault } from "./report-violation.ts"
 
 /** 流れ・つながり・構造を描く塊か（`no-shape` と合わない塊）。 */
 export function drawsShape(block: ReportBlock): boolean {
@@ -17,6 +18,22 @@ export function drawsShape(block: ReportBlock): boolean {
     default:
       return false
   }
+}
+
+const MIN_CARDS = 2
+const MAX_CARDS = 4
+
+export function badCardsIn(blocks: readonly ReportBlock[]): readonly CardsFault[] {
+  return blocks.flatMap((block, index) => {
+    if (block.kind !== "list" || block.style !== "cards") {
+      return []
+    }
+    const itemCount = block.items.length
+    const unlabeled = block.items.some((item) => item.label.trim() === "")
+    return itemCount < MIN_CARDS || itemCount > MAX_CARDS || unlabeled
+      ? [{ position: index + 1, itemCount, unlabeled }]
+      : []
+  })
 }
 
 /** `options` の候補を書く順。 */

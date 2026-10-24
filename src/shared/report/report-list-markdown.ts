@@ -42,6 +42,9 @@ export function listMarkdown(block: ListBlock): string {
   if (style === "flow") {
     return flowMarkdown(block)
   }
+  if (style === "cards") {
+    return cardsMarkdown(block)
+  }
   const labeled = block.items.some((item) => item.label.trim() !== "")
   const lines = block.items.map((item, index) => {
     const marker = listMarker(style, index, item.done)
@@ -141,8 +144,17 @@ function flowMarkdown(block: ListBlock): string {
   return `<ol class="${row ? "flow flow-row" : "flow"}" aria-label="流れ">${steps.join("")}</ol>`
 }
 
+/** 項目ごとに太字の題の1行と本文の `card` を、項目数で等分する `cards` の容れ物に並べる。内側は空行で挟む。 */
+function cardsMarkdown(block: ListBlock): string {
+  const cards = block.items.map(
+    ({ label, text }) =>
+      `<div class="card">\n\n**${markdownInline(label)}**\n\n${markdownInline(text)}\n\n</div>`,
+  )
+  return `<div class="cards">\n\n${cards.join("\n\n")}\n\n</div>`
+}
+
 function listMarker(
-  style: Exclude<ListBlock["style"], "flow">,
+  style: Exclude<ListBlock["style"], "flow" | "cards">,
   index: number,
   done: boolean,
 ): string {

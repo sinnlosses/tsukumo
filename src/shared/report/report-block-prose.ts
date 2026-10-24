@@ -17,10 +17,11 @@ export const textBlockSchema = z.object({
 export const listBlockSchema = z.object({
   kind: z.literal("list"),
   style: z
-    .enum(["bullet", "ordered", "check", "flow"])
+    .enum(["bullet", "ordered", "check", "flow", "cards"])
     .describe(
       "bullet は発見の一覧（項目ごとに言うことが2つ以上なら表）/ ordered は順番に意味がある手順 / check は済み（done）と未了が混じる並び / " +
-        "flow は段ごとに文が要る一本道（A → B → C と書かず項目を段にする。段の名前が短い一本道・分岐・合流・戻りがあるなら graph）",
+        "flow は段ごとに文が要る一本道（A → B → C と書かず項目を段にする。段の名前が短い一本道・分岐・合流・戻りがあるなら graph）/ " +
+        "cards は読む順・因果の無い2〜4枚の並列（label 必須）",
     ),
   items: z
     .array(
