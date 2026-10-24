@@ -10,8 +10,26 @@ const MAX_OUTPUT_BYTES = 1024 * 1024
 // 1（書き換えなし）・2（拒否）とそれ以外は書き換えない。
 const REWRITTEN_EXIT_CODES = new Set<unknown>([0, 3])
 
+/** 作ったときに `rtk` の有無を1回だけ確かめ、無ければ Bash ごとに `rtk` を起こさない `rewriteWithRtk`。 */
+export function createRtkRewrite(
+  probe: () => Promise<boolean> = probeRtk,
+  rewrite: (command: string) => Promise<string | undefined> = rewriteWithRtk,
+): (command: string) => Promise<string | undefined> {
+  const available = probe()
+  return async (command) => ((await available) ? rewrite(command) : undefined)
+}
+
+/** `rtk` を起こせるか。例外を投げない。 */
+function probeRtk(): Promise<boolean> {
+  return new Promise((resolve) => {
+    execFile("rtk", ["--version"], { timeout: RTK_TIMEOUT_MS }, (error) => {
+      resolve(error === null)
+    })
+  })
+}
+
 /** 書き換えたコマンド。書き換えが無ければ `undefined`。例外を投げない。 */
-export function rewriteWithRtk(command: string): Promise<string | undefined> {
+function rewriteWithRtk(command: string): Promise<string | undefined> {
   return new Promise((resolve) => {
     execFile(
       "rtk",

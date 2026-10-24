@@ -34,7 +34,7 @@ import { createSessionTitleIntake, type SessionTitleIntake } from "../core/sessi
 import { TSUKUMO_MCP_SERVER_NAME } from "../core/tsukumo-tool-name.ts"
 import { isVisibleOutputNudge } from "../core/visible-output-nudge.ts"
 import { appendInputLedger } from "./input-ledger-file.ts"
-import { rewriteWithRtk } from "./rtk-rewrite.ts"
+import { createRtkRewrite } from "./rtk-rewrite.ts"
 import { runAskGuard, withAskGuard } from "./sdk-ask-guard.ts"
 import { readContextUsage } from "./sdk-context-usage.ts"
 import { runLapHook, withLapHook } from "./sdk-lap-hook.ts"
@@ -141,7 +141,7 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
               callReview.bandPosition,
               options.onEvent,
               externalToolMark,
-              rewriteWithRtk,
+              createRtkRewrite(),
               options.mode.kind === "work" ? callReview.planMissing : undefined,
             ),
             ...handbackNoteHooks(callReview, options.reportHandbackHeadMismatch),

@@ -65,4 +65,5 @@ Storybook の型定義（`react-docgen-typescript` ほか）が TypeScript 7 の
 `rtk`（Rust Token Killer。Homebrew。2026-10-18 承認・試験導入）は、Bash の出力を縮めたコマンドへの書き換えを
 `rtk rewrite` に頼む（`src/server/session-driver/adapter/rtk-rewrite.ts`。`PreToolUse` フックが
 `updatedInput` で `command` を差し替える）。**無い・失敗・2秒を超えたときは元のコマンドを通す**ので、無くても動く。
+有無はセッションの駆動を作るときに `rtk --version` で1回だけ確かめ、無ければ Bash ごとには起こさない。
 `rtk init -g` は打たない（`~/.claude/settings.json` を書き換えるため）。
