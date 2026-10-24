@@ -1,5 +1,5 @@
 // 狭い画面（760px 以下）の頭。1行目に顔・状態の語と経過・題・≡、2行目に段の点・n/N・「手順 n」。
-// 広い画面では CSS で消える（`phone-head.module.css`）ので、ここは幅を測らない。
+// 広い画面では描かれない（幅を見て出すのは `useScreenNav`）。
 //
 // 「手順 n」は「いまの作業」の開閉をそのまま使い、開いたら依頼の手順の一覧を下から上がる板で開く。
 
@@ -12,12 +12,15 @@ import type { CurrentWork } from "../../../../features/current-work/hooks/use-cu
 import { BottomSheet } from "../../../ui/bottom-sheet/bottom-sheet.tsx"
 import { CharacterFace } from "../../character-face.tsx"
 import { usePhoneHeadHeight } from "../hooks/use-phone-head-height.ts"
-import type { PhoneHead as Head, PhoneHeadProgress } from "../hooks/use-phone-head.ts"
+import {
+  usePhoneHead,
+  type PhoneHeadProgress,
+  type PhoneHeadSource,
+} from "../hooks/use-phone-head.ts"
 import styles from "./phone-head.module.css"
 
 type PhoneHeadProps = {
-  readonly head: Head
-  readonly work: CurrentWork
+  readonly source: PhoneHeadSource
   /** 1行目の右端に置く、引き出しを開く ≡。 */
   readonly drawerToggle: ReactNode
 }
@@ -26,7 +29,9 @@ const BACK_LABEL = "‹ 会話へ"
 const STEPS_LABEL = "依頼の手順"
 
 export function PhoneHead(props: PhoneHeadProps): ReactElement {
-  const { head, work } = props
+  const { source } = props
+  const { work } = source
+  const head = usePhoneHead(source)
   const listId = useId()
   const headRef = useRef<HTMLDivElement>(null)
   usePhoneHeadHeight(headRef)

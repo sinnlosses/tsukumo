@@ -10,7 +10,7 @@ import {
   type WorkPhase,
 } from "../../../../../../../../../shared/session/work-plan.ts"
 import { isTurnCounting } from "../../../../../../../../domain/turn-elapsed.ts"
-import { useNowWhile } from "../../../../../../../../hooks/use-now-while.ts"
+import { useNowWhile } from "../../../../../../../../stores/clock.ts"
 import { useCurrentTurnSteps } from "../../../../../../../../stores/current-turn-steps.ts"
 import { useSession } from "../../../../../../../../stores/session.ts"
 import { workActivityOf, type WorkActivity } from "../../../domain/work-activity.ts"

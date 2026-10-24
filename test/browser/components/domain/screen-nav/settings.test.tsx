@@ -9,6 +9,7 @@ import {
 } from "../../../../../src/shared/session/session-state.ts"
 import { typedElement } from "../../../../typed-element.ts"
 import { EMPTY_NAV_DRAWER_SLOTS } from "../../../nav-drawer-slot.tsx"
+import { stubPhoneWidth } from "../../../phone-width.ts"
 import { queryClientWrapper } from "../../../query-client.tsx"
 import { putSession, type CommandSpy } from "../../../session-store.ts"
 
@@ -25,6 +26,7 @@ const REVEAL_SPEED_STORAGE_KEY = "tsukumo-reveal-speed:v1"
 let themeStyleElement: HTMLStyleElement | undefined
 
 beforeEach(() => {
+  stubPhoneWidth(true)
   localStorage.removeItem(COLOR_STORAGE_KEY)
   localStorage.removeItem(REVEAL_SPEED_STORAGE_KEY)
   for (const token of COLOR_TOKENS) {
@@ -39,6 +41,7 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup()
+  vi.restoreAllMocks()
   useNavDrawer.setState(useNavDrawer.getInitialState(), true)
   window.location.hash = ""
   localStorage.removeItem(COLOR_STORAGE_KEY)

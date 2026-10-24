@@ -1,5 +1,6 @@
 // 画面のナビの帯の器だけ。フックも算出も持たず、受け取った値と呼び先をそのまま置く。
-// 狭い画面では帯の代わりに頭（`<PhoneHead>`）を出し、帯の中身は頭の右上の ≡ から出る引き出し（`<NavDrawer>`）へ移す（どちらを出すかは各部品の CSS の `@media` が決める）。
+// 狭い画面では帯の代わりに頭（`<PhoneHead>`）を出し、帯の中身は頭の右上の ≡ から出る引き出し（`<NavDrawer>`）へ移す。
+// 頭は狭い画面でだけ描く（`headSource` が無いとき描かない）。帯と引き出しのどちらを見せるかは CSS の `@media` が決める。
 //
 // `data-screen` でいま出している画面を名乗るのは、狭い画面で会話の画面だけページの組み方が変わるため（`theme.css` の `@media`）。
 //
@@ -37,7 +38,7 @@ export function PresentationalScreenNav({
   parts,
   switcher,
   drawer,
-  head,
+  headSource,
   ref,
   slots,
 }: PresentationalScreenNavProps): ReactElement {
@@ -68,11 +69,9 @@ export function PresentationalScreenNav({
           </>
         )}
         <ScreenNavSettingsGear settings={parts.settings} />
-        <PhoneHead
-          head={head}
-          work={parts.work}
-          drawerToggle={<NavDrawerToggle drawer={drawer} />}
-        />
+        {headSource !== undefined && (
+          <PhoneHead source={headSource} drawerToggle={<NavDrawerToggle drawer={drawer} />} />
+        )}
         <NavDrawer parts={parts} drawer={drawer} slots={slots} />
         <SessionSwitcher switcher={switcher} character={parts.character.face} />
       </nav>

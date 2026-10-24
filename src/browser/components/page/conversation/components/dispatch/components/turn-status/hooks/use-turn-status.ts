@@ -18,7 +18,7 @@ import {
   turnElapsedLabel,
   turnElapsedText,
 } from "../../../../../../../../domain/turn-elapsed.ts"
-import { useNowWhile } from "../../../../../../../../hooks/use-now-while.ts"
+import { useNowWhile } from "../../../../../../../../stores/clock.ts"
 import { useComposerDraft } from "../../../../../../../../stores/composer-draft.ts"
 import { useInquiryAnswer } from "../../../../../../../../stores/inquiry-answer.ts"
 import { useSession } from "../../../../../../../../stores/session.ts"

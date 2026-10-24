@@ -15,6 +15,7 @@ import {
   useCurrentWork,
   type CurrentWork,
 } from "../../../../features/current-work/hooks/use-current-work.ts"
+import { usePhoneWidth } from "../../../../hooks/use-phone-width.ts"
 import { SCREEN_NAV_ITEMS, type Screen } from "../../../../stores/location-hash.ts"
 import {
   useModelPermission,
@@ -28,7 +29,7 @@ import {
 import { useScreen, useScreenHref } from "../../../../stores/screen.tsx"
 import { useRestartRefused, useSession } from "../../../../stores/session.ts"
 import { useCharacterPicker, type ScreenNavCharacterPicker } from "./use-character-picker.ts"
-import { usePhoneHead, type PhoneHead } from "./use-phone-head.ts"
+import type { PhoneHeadSource } from "./use-phone-head.ts"
 import { useProjectName } from "./use-project-name.ts"
 import {
   useSessionSwitcher,
@@ -97,7 +98,7 @@ type NavDrawerNewSession = {
   readonly onStart: () => void
 }
 
-/** 狭い画面の頭の ≡ と、押すと右から出る引き出し（広い画面では頭ごと CSS が消す）。 */
+/** 狭い画面の頭の ≡ と、押すと右から出る引き出し（広い画面では頭ごと描かない）。 */
 export type NavDrawerView = {
   readonly open: boolean
   /** 閉じたときにフォーカスを戻す先（≡）。 */
@@ -125,8 +126,8 @@ export type ScreenNavView = {
   /** 札を押すと開く切り替え画面（帯の外に1つだけ描く）。 */
   readonly switcher: ScreenNavSessionSwitcher
   readonly drawer: NavDrawerView
-  /** 狭い画面の頭（広い画面では CSS が消す）。 */
-  readonly head: PhoneHead
+  /** 狭い画面の頭の材料。広い画面では頭を描かないので `undefined`。 */
+  readonly headSource: PhoneHeadSource | undefined
   /** 帯の外側を押したかを見るための入れ物（キャラクターの選び口などを閉じる判定に使う）。 */
   readonly ref: RefObject<HTMLElement | null>
 }
@@ -192,13 +193,16 @@ export function useScreenNav(): ScreenNavView {
   const character = useCharacterPicker(ref)
   const currentRoom = currentRoomName()
   const { tag: sessionTag, switcher } = useSessionSwitcher(currentRoom, useProjectName())
-  const head = usePhoneHead({
-    current,
-    work,
-    face: character.face,
-    roomName: currentRoom,
-    conversationHref: screenHref("conversation"),
-  })
+  const phoneWidth = usePhoneWidth()
+  const headSource: PhoneHeadSource | undefined = phoneWidth
+    ? {
+        current,
+        work,
+        face: character.face,
+        roomName: currentRoom,
+        conversationHref: screenHref("conversation"),
+      }
+    : undefined
 
   const gates = GATE_LIST.map((entry): ScreenNavGate => {
     const isConversation = entry.screen === "conversation"
@@ -269,7 +273,7 @@ export function useScreenNav(): ScreenNavView {
       onShowTabs: showTabs,
       screenGates: gates.filter((gate) => gate.screen !== "conversation"),
     },
-    head,
+    headSource,
     ref,
   }
 }

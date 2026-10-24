@@ -32,9 +32,10 @@ describe("Temporal.Now を読む箇所", () => {
 
 // 単体テストには React Compiler が掛からず、描画中の時刻の読み取りが固まるのが見えないので、ここで落とす。
 describe("描画中に時計を読む箇所", () => {
-  // React の外で、フレームを受けた手から呼ばれる。
+  // React の外で、フレームを受けた手・タイマーの手から呼ばれる。
   const RENDER_CLOCK_EXEMPT_FILES = new Set([
     "browser/domain/refresh.ts",
+    "browser/stores/clock.ts",
   ]) satisfies ReadonlySet<string>
 
   it("src/browser/ で時計を読む呼び出しは、effect・state の初期化関数・タイマーとリスナーの手・on… のイベントの手の中にある", () => {

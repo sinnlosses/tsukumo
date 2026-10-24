@@ -1,8 +1,4 @@
-/* 狭い画面の「いまの段」。値は見本 `docs/history/mockup/phone-layout-2026-10-09/PHONE-1.dc.html` の1枚目の inline style。広い画面では出さない。 */
-
-.current-step {
-  display: none;
-}
+/* 狭い画面の「いまの段」。値は見本 `docs/history/mockup/phone-layout-2026-10-09/PHONE-1.dc.html` の1枚目の inline style。広い画面では描かない（`<MainView>` が幅で決める）。 */
 
 @media (max-width: 760px) {
   .current-step {

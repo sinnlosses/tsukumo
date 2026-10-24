@@ -1,5 +1,5 @@
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
-import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { ScreenNav } from "../../../../../src/browser/components/domain/screen-nav/screen-nav.tsx"
 import { useNavDrawer } from "../../../../../src/browser/stores/nav-drawer.ts"
@@ -15,6 +15,7 @@ import { setPageUrl } from "../../../../dom-environment.ts"
 import { characterInfo, characterPackEntry } from "../../../../fixture/character.ts"
 import { typedElement } from "../../../../typed-element.ts"
 import { MARKED_NAV_DRAWER_SLOTS } from "../../../nav-drawer-slot.tsx"
+import { stubPhoneWidth } from "../../../phone-width.ts"
 import { queryClientWrapper } from "../../../query-client.tsx"
 import { rpcOutput, stubRpcFetch, type RpcFetchStub } from "../../../rpc-fetch-stub.ts"
 import { type CommandSpy, putSession, type SentCommand } from "../../../session-store.ts"
@@ -31,8 +32,13 @@ const FIXTURE_PENDING: StampedPendingAsk = {
 // ポートを見るテストは URL ごと差し替える。既定へ戻すのは afterEach。
 const DEFAULT_PAGE_URL = "http://127.0.0.1/"
 
+beforeEach(() => {
+  stubPhoneWidth(true)
+})
+
 afterEach(() => {
   cleanup()
+  vi.restoreAllMocks()
   useNavDrawer.setState(useNavDrawer.getInitialState(), true)
   setPageUrl(DEFAULT_PAGE_URL)
   window.location.hash = ""
@@ -379,12 +385,10 @@ describe("ScreenNav", () => {
       expect(within(openedDrawer()).getByRole("tablist")).toBeDefined()
     })
 
-    // 答え待ちは頭の状態の語が言うので、≡ には印を添えない（13.9「狭い画面（760px 以下）」）。
-    it("答え待ちの間も ≡ の名前は変わらず、頭の状態の語が「答え待ち」になる", () => {
+    it("答え待ちの間も ≡ の名前は変わらない", () => {
       renderScreenNav({ pending: [FIXTURE_PENDING] })
 
       expect(drawerToggle()).toBeDefined()
-      expect(document.querySelector(".phone-head-word")?.textContent).toBe("答え待ち")
     })
   })
 

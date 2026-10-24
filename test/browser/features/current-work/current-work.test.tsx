@@ -1,5 +1,5 @@
 import { act, cleanup, fireEvent, screen } from "@testing-library/react"
-import { afterEach, describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { useInquiryJump } from "../../../../src/browser/stores/inquiry-jump.ts"
 import { readHashRoute } from "../../../../src/browser/stores/location-hash.ts"
@@ -13,10 +13,12 @@ import {
 import { characterInfo } from "../../../fixture/character.ts"
 import { renderScreenNav, workToggle } from "../../../fixture/current-work.tsx"
 import { requestRecord, toolRecord, workPlanRecord } from "../../../fixture/session-record.ts"
+import { stubPhoneWidth } from "../../phone-width.ts"
 import { putState } from "../../session-store.ts"
 
 afterEach(() => {
   cleanup()
+  vi.restoreAllMocks()
   useNavDrawer.setState(useNavDrawer.getInitialState(), true)
   // 「お伺いへ」は会話の画面（`#`）へ hash を書き換える（`navigateTo`）ので、次のテストへ
   // 持ち越さない。
@@ -139,6 +141,7 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
   // 狭い画面では一覧を頭の「手順 n」が開き、引き出しには札を置かない（同じ一覧が2つ開いて重ならない）。
   // 会話の画面には帯の札が無いので、Esc の戻り先は頭の「手順 n」の1つだけ。
   it("会話の画面では頭の「手順 n」が一覧を開き、Esc でその口へフォーカスを戻す。引き出しには札が無い", () => {
+    stubPhoneWidth(true)
     window.location.hash = "#conversation"
     renderScreenNav({ turn: { kind: "running", startedAt: 0 }, records: [requestRecord()] })
     const steps = screen.getByRole("button", { name: /^手順/u })

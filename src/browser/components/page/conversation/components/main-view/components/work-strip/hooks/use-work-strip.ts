@@ -44,7 +44,7 @@ import {
   currentWorkStepGroups,
   type CurrentWorkStepGroup,
 } from "../../../../../../../../features/current-work/domain/current-work-step.ts"
-import { useNowWhile } from "../../../../../../../../hooks/use-now-while.ts"
+import { useNowWhile } from "../../../../../../../../stores/clock.ts"
 import { useCurrentTurnSteps } from "../../../../../../../../stores/current-turn-steps.ts"
 import { useMainViewContent } from "../../../../../../../../stores/main-view-content.ts"
 import { useMainViewTurns } from "../../../../../../../../stores/main-view-turn.ts"

@@ -6,7 +6,7 @@
 import { ORPCError } from "@orpc/client"
 import { QueryClientProvider } from "@tanstack/react-query"
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
-import { afterEach, describe, expect, it } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { ScreenNav } from "../../../../../src/browser/components/domain/screen-nav/screen-nav.tsx"
 import { useNavDrawer } from "../../../../../src/browser/stores/nav-drawer.ts"
@@ -18,14 +18,20 @@ import {
 } from "../../../../../src/shared/session/session-state.ts"
 import { setPageUrl } from "../../../../dom-environment.ts"
 import { EMPTY_NAV_DRAWER_SLOTS } from "../../../nav-drawer-slot.tsx"
+import { stubPhoneWidth } from "../../../phone-width.ts"
 import { createTestQueryClient } from "../../../query-client.tsx"
 import { rpcOutput, stubRpcFetch, type RpcFetchStub } from "../../../rpc-fetch-stub.ts"
 import { type CommandSpy, putSession, type SentCommand } from "../../../session-store.ts"
 
 let fetchStub: RpcFetchStub | undefined = undefined
 
+beforeEach(() => {
+  stubPhoneWidth(true)
+})
+
 afterEach(() => {
   cleanup()
+  vi.restoreAllMocks()
   useNavDrawer.setState(useNavDrawer.getInitialState(), true)
   fetchStub?.restore()
   fetchStub = undefined

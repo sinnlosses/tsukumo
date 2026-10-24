@@ -21,7 +21,7 @@ import type {
   CurrentWork,
   CurrentWorkState,
 } from "../../../../features/current-work/hooks/use-current-work.ts"
-import { useNowWhile } from "../../../../hooks/use-now-while.ts"
+import { useNowWhile } from "../../../../stores/clock.ts"
 import { useCurrentTurnSteps } from "../../../../stores/current-turn-steps.ts"
 import { SCREEN_NAV_ITEMS, type Screen } from "../../../../stores/location-hash.ts"
 import { readingLabelOf, useReadingSection } from "../../../../stores/reading-section.ts"
@@ -84,7 +84,7 @@ export type PhoneHead = {
   readonly progress: PhoneHeadProgress
 }
 
-type PhoneHeadSource = {
+export type PhoneHeadSource = {
   readonly current: Screen
   readonly work: CurrentWork
   readonly face: CharacterFaceInfo

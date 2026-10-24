@@ -1,8 +1,4 @@
-/* 狭い画面（760px 以下）の頭。広い画面では出さない。 */
-
-.phone-head {
-  display: none;
-}
+/* 狭い画面（760px 以下）の頭。広い画面では描かない（`useScreenNav` が幅で決める）。 */
 
 @media (max-width: 760px) {
   /* 一覧（.phone-head-steps）を頭の真下に重ねる基準。 */

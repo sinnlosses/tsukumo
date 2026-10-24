@@ -1,5 +1,5 @@
 import { act, cleanup, fireEvent, screen, within } from "@testing-library/react"
-import { afterEach, beforeAll, describe, expect, it } from "vitest"
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
 
 import { loadMarkdown } from "../../../../../../../src/browser/components/page/conversation/components/markdown/markdown.tsx"
 import { useInquiryDraft } from "../../../../../../../src/browser/stores/inquiry-answer.ts"
@@ -25,6 +25,7 @@ import {
   workPlanRecord,
 } from "../../../../../../fixture/session-record.ts"
 import { typedElement } from "../../../../../../typed-element.ts"
+import { stubPhoneWidth } from "../../../../../phone-width.ts"
 import { putState } from "../../../../../session-store.ts"
 
 beforeAll(async () => {
@@ -33,6 +34,7 @@ beforeAll(async () => {
 
 afterEach(() => {
   cleanup()
+  vi.restoreAllMocks()
   // 組み立て中の答えはモジュール単位で残るので、次のテストへ持ち越さない。
   useInquiryDraft.setState(useInquiryDraft.getInitialState(), true)
   // 過去のターンを選ぶと hash に乗る（`useTurnSelection`）ので、次のテストへ持ち越さない。
@@ -254,6 +256,30 @@ describe("MainView（失敗の塊から帯の手順へ）", () => {
 
     const steps = screen.getByRole("region", { name: "依頼の手順" })
     expect(steps.querySelectorAll("[data-step-failed]")).toHaveLength(1)
+  })
+})
+
+describe("MainView（狭い画面の「いまの段」）", () => {
+  const RUNNING_RECORDS = [
+    requestRecord({ text: "架空の依頼", turnId: 0 }),
+    workPlanRecord({ phases: ["架空の段A", "架空の段B"], current: 0 }),
+  ]
+  const RUNNING_TURN = { kind: "running", startedAt: 0 } as const
+
+  it("広い画面では描かない", () => {
+    stubPhoneWidth(false)
+
+    renderMainView(RUNNING_RECORDS, RUNNING_TURN)
+
+    expect(screen.queryByRole("heading", { name: /^いまの段/u })).toBeNull()
+  })
+
+  it("狭い画面では描く", () => {
+    stubPhoneWidth(true)
+
+    renderMainView(RUNNING_RECORDS, RUNNING_TURN)
+
+    expect(screen.getByRole("heading", { name: /^いまの段/u })).toBeTruthy()
   })
 })
 

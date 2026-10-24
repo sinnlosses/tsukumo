@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
-import { afterEach, describe, expect, it } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { ScreenNav } from "../../../../../src/browser/components/domain/screen-nav/screen-nav.tsx"
 import { useReadingSection } from "../../../../../src/browser/stores/reading-section.ts"
@@ -18,10 +18,11 @@ import {
 } from "../../../../fixture/session-record.ts"
 import { typedElement } from "../../../../typed-element.ts"
 import { EMPTY_NAV_DRAWER_SLOTS } from "../../../nav-drawer-slot.tsx"
+import { stubPhoneWidth } from "../../../phone-width.ts"
 import { queryClientWrapper } from "../../../query-client.tsx"
 import { putSession } from "../../../session-store.ts"
 
-// 狭い画面の頭（広い画面では CSS が消す。ここでは DOM の出し分けだけを見る）。
+// 狭い画面の頭（広い画面では描かない。ここでは DOM の出し分けだけを見る）。
 
 const PENDING: StampedPendingAsk = {
   kind: "permission",
@@ -33,8 +34,13 @@ const PENDING: StampedPendingAsk = {
 
 const PHASES = ["架空の段A", "架空の段B", "架空の段C", "架空の段D", "架空の段E"]
 
+beforeEach(() => {
+  stubPhoneWidth(true)
+})
+
 afterEach(() => {
   cleanup()
+  vi.restoreAllMocks()
   setPageUrl("http://127.0.0.1/")
   window.location.hash = ""
 })
@@ -60,6 +66,20 @@ function title(): string | null | undefined {
 function stepsToggle(head: HTMLElement): HTMLElement {
   return within(head).getByRole("button", { name: /^手順/u })
 }
+
+describe("PhoneHead（幅）", () => {
+  it("広い画面では頭を描かない", () => {
+    stubPhoneWidth(false)
+    putSession({
+      ...INITIAL_SESSION_STATE,
+      character: characterInfo({ face: "/character/face.png" }),
+    })
+
+    render(<ScreenNav drawer={EMPTY_NAV_DRAWER_SLOTS} />, { wrapper: queryClientWrapper() })
+
+    expect(document.querySelector(".phone-head")).toBeNull()
+  })
+})
 
 describe("PhoneHead（読んでいる節）", () => {
   afterEach(() => {

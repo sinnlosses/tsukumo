@@ -13,7 +13,7 @@
 //   `usageReview` はプロセスを起こし直すとふだんへ戻るので、「前回の結果を見ている」はサーバの状態に持たず、この区画だけのローカルな見た目にする
 
 import { skipToken, useQuery } from "@tanstack/react-query"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 
 import {
   TOKEN_USAGE_DAYS_CHOICES,
@@ -38,18 +38,13 @@ import {
 import { formatElapsed } from "../../../../../shared/utils/elapsed-time.ts"
 import { characterFaceInfo, type CharacterFaceInfo } from "../../../../domain/character-face.ts"
 import { rpc } from "../../../../domain/rpc.ts"
+import { useNowWhile } from "../../../../stores/clock.ts"
 import { useSession, type SessionDispatch } from "../../../../stores/session.ts"
-import {
-  clockTime,
-  localTimeZoneId,
-  nowEpochMilliseconds,
-  zonedDateTime,
-} from "../../../../utils/clock.ts"
+import { clockTime, localTimeZoneId, zonedDateTime } from "../../../../utils/clock.ts"
 import { formatCount } from "../../../../utils/format-count.ts"
 import { totalUsage } from "../domain/usage-format.ts"
 
 const PROPOSAL_RUNNING_BLOCKED_REASON = "いま提案を頼んでいる。終わってからもう一度押す。"
-const TICK_INTERVAL_MS = 1000
 
 /** ボタンを押せるか（押せないときは理由を添える）。 */
 type UsageReviewStartAvailability =
@@ -176,15 +171,8 @@ export function useUsageReview(): UseUsageReviewResult {
       : undefined
   const summary = useReviewStageSummary(reviewDays)
 
-  const [now, setNow] = useState(() => nowEpochMilliseconds())
   const ticking = usageReview.kind === "running" || usageProposalRun.kind === "running"
-  useEffect(() => {
-    if (!ticking) {
-      return undefined
-    }
-    const timer = setInterval(() => setNow(nowEpochMilliseconds()), TICK_INTERVAL_MS)
-    return () => clearInterval(timer)
-  }, [ticking])
+  const now = useNowWhile(ticking)
 
   const face = characterFaceInfo(character)
   const start = () => {

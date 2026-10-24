@@ -1,7 +1,7 @@
 // `<TurnFailureBlock>` のロジック。理由の語と次の手を、セッションの状態といちばん新しい依頼の手順から用意する。
 
 import type { TurnFailure } from "../../../../../../../../../shared/session-driver/turn-failure.ts"
-import { useNowWhile } from "../../../../../../../../hooks/use-now-while.ts"
+import { useNowWhile } from "../../../../../../../../stores/clock.ts"
 import { useComposerDraft } from "../../../../../../../../stores/composer-draft.ts"
 import { useCurrentTurnSteps } from "../../../../../../../../stores/current-turn-steps.ts"
 import { useMainViewContent } from "../../../../../../../../stores/main-view-content.ts"

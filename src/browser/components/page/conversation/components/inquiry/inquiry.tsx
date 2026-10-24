@@ -12,8 +12,8 @@ import type { KeyboardEvent, ReactElement } from "react"
 
 import { reportSectionsMarkdown } from "../../../../../../shared/report/report-markdown.ts"
 import { truncateForDisplay } from "../../../../../features/current-work/domain/current-work-step.ts"
-import { useNowWhile } from "../../../../../hooks/use-now-while.ts"
 import { usePhoneWidth } from "../../../../../hooks/use-phone-width.ts"
+import { useNowWhile } from "../../../../../stores/clock.ts"
 import {
   useInquiryAnswer,
   type InquiryBrief as InquiryBriefModel,

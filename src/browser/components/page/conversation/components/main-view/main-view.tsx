@@ -24,6 +24,7 @@ import {
   plannedPhasesOf,
   type WorkPhase,
 } from "../../../../../../shared/session/work-plan.ts"
+import { usePhoneWidth } from "../../../../../hooks/use-phone-width.ts"
 import { useCurrentTurnSteps } from "../../../../../stores/current-turn-steps.ts"
 import { useInquiryJump } from "../../../../../stores/inquiry-jump.ts"
 import {
@@ -75,6 +76,7 @@ export function MainView(): ReactElement {
   const turnStepList = useCurrentTurnSteps()
   const phase: WorkPhase =
     turnStepList.kind === "turn" ? currentPhaseOf(turnStepList.plan) : { kind: "none" }
+  const phoneWidth = usePhoneWidth()
   const rootRef = useRef<HTMLDivElement>(null)
   const carriedFocusRef = useRef(false)
 
@@ -194,7 +196,7 @@ export function MainView(): ReactElement {
                     turnId={cardTurn.turn.id}
                     key={`phase-list:${String(cardTurn.turn.id)}`}
                   />
-                  {!viewingPast && view.kind === "work" && <CurrentStep />}
+                  {phoneWidth && !viewingPast && view.kind === "work" && <CurrentStep />}
                   {/* `key` にターンの番号を渡す。
                     前後へ移っても同じ位置の `<Turn>` を使い回すと、「このターンを出し始めた時点で既にあった本文」（演出の対象を決める材料）が最初のターンのものに留まってしまう。 */}
                   <Turn

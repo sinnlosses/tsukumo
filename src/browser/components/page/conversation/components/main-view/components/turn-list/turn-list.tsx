@@ -8,7 +8,7 @@ import clsx from "clsx"
 import type { ReactElement } from "react"
 
 import { isTurnCounting, turnElapsedClock } from "../../../../../../../domain/turn-elapsed.ts"
-import { useNowWhile } from "../../../../../../../hooks/use-now-while.ts"
+import { useNowWhile } from "../../../../../../../stores/clock.ts"
 import { useNavDrawer } from "../../../../../../../stores/nav-drawer.ts"
 import { useSession } from "../../../../../../../stores/session.ts"
 import { showTurn, useTurnSelection } from "../../../../../../../stores/turn-selection.ts"
