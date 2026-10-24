@@ -89,7 +89,7 @@
     background: transparent;
     color: var(--ink-quiet);
     font: inherit;
-    font-size: 13px;
+    font-size: var(--font-secondary);
     font-weight: 400;
     cursor: pointer;
   }
@@ -120,7 +120,7 @@
     background: transparent;
     color: var(--ink-quiet);
     font: inherit;
-    font-size: 13px;
+    font-size: var(--font-secondary);
     cursor: pointer;
   }
   .nav-drawer-back:hover {
@@ -141,7 +141,7 @@
     padding: 0 14px;
     border-radius: 12px;
     color: var(--ink);
-    font-size: 14px;
+    font-size: var(--font-subheading);
     text-decoration: none;
   }
   .nav-drawer-gate:hover {
@@ -178,7 +178,7 @@
   .nav-drawer-new-session {
     flex: 1 1 auto;
     color: var(--ink-soft);
-    font-size: 13.5px;
+    font-size: var(--font-secondary);
   }
   .nav-drawer-new-session[aria-disabled="true"] {
     color: var(--ink-quiet);

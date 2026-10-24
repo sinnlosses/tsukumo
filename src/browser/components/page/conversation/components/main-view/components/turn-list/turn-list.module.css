@@ -35,7 +35,7 @@
   justify-content: center;
   padding-top: 3px;
   color: var(--ink-quiet);
-  font-size: 12px;
+  font-size: var(--font-label);
   font-weight: 700;
 }
 .turn-list-row[data-result="done"] .turn-list-mark {
@@ -54,7 +54,7 @@
 }
 .turn-list-title {
   overflow: hidden;
-  font-size: 14px;
+  font-size: var(--font-subheading);
   line-height: 1.55;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -65,11 +65,11 @@
 .turn-list-span {
   color: var(--ink-quiet);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--font-label);
 }
 .turn-list-empty {
   margin: 0;
   padding: 12px 22px;
   color: var(--ink-quiet);
-  font-size: 13px;
+  font-size: var(--font-secondary);
 }

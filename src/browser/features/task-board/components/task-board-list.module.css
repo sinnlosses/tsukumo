@@ -37,7 +37,7 @@
   flex: none;
   color: var(--ink-quiet);
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: var(--font-label);
   white-space: nowrap;
 }
 .task-board-option[aria-selected="true"] .task-board-option-id {
@@ -52,7 +52,7 @@
   overflow: hidden;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
-  font-size: 13px;
+  font-size: var(--font-secondary);
   line-height: 1.55;
 }
 /* つながりの札から飛んだ先が絞り込み・検索の外にあるときだけ、一覧に一時的に出す行へ添える。 */

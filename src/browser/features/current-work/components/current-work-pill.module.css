@@ -38,7 +38,7 @@
   flex: none;
   align-items: center;
   justify-content: center;
-  font-size: 7px;
+  font-size: 0.55em;
   line-height: 1;
   border-radius: 50%;
   box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 20%, transparent);

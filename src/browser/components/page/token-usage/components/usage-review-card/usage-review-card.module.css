@@ -267,7 +267,7 @@
   border-radius: 0.75rem;
 }
 .usage-review-impact-label {
-  font-size: 0.625rem;
+  font-size: var(--font-label);
   font-weight: 700;
 }
 .usage-review-impact-large {

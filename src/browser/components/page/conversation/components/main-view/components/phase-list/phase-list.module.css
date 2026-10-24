@@ -13,7 +13,7 @@
   }
   .phase-list-heading {
     margin: 0 0 4px;
-    font-size: 11px;
+    font-size: var(--font-label);
     font-weight: 400;
     letter-spacing: 0.1em;
     color: var(--ink-quiet);
@@ -42,7 +42,7 @@
   }
   .phase-list-check {
     color: var(--state-ok);
-    font-size: 11px;
+    font-size: var(--font-label);
     font-weight: 700;
   }
   .phase-list-check.is-skipped {
@@ -51,13 +51,13 @@
   .phase-list-number,
   .phase-list-duration {
     font-family: var(--font-mono);
-    font-size: 11px;
+    font-size: var(--font-label);
     color: var(--ink-quiet);
   }
   .phase-list-title {
     min-width: 0;
     overflow: hidden;
-    font-size: 13px;
+    font-size: var(--font-secondary);
     text-overflow: ellipsis;
     white-space: nowrap;
   }
@@ -68,12 +68,12 @@
   /* 板の頭。 */
   .phase-list-sheet-position {
     font-family: var(--font-mono);
-    font-size: 11px;
+    font-size: var(--font-label);
     color: var(--ink-quiet);
   }
   .phase-list-sheet-title {
     min-width: 0;
-    font-size: 14px;
+    font-size: var(--font-subheading);
     font-weight: 700;
     color: var(--ink);
   }
@@ -88,7 +88,7 @@
     color: var(--ink);
     font: inherit;
     font-family: var(--font-mono);
-    font-size: 13px;
+    font-size: var(--font-secondary);
     cursor: pointer;
   }
   .phase-list-move.is-disabled {

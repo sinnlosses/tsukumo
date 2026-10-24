@@ -38,7 +38,7 @@
 }
 /* ダイアログの面の行。「名前 132 ＋ 操作 1fr」の2列で、行の間に細い罫線を引く。引き出しは外側にこの class を置かないので変わらない。 */
 .screen-nav-settings-table {
-  font-size: 13px;
+  font-size: var(--font-secondary);
 }
 .screen-nav-settings-table .screen-nav-settings-row {
   min-height: 0;

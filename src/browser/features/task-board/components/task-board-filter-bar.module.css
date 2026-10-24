@@ -25,7 +25,7 @@
   background: transparent;
   color: var(--ink);
   font: inherit;
-  font-size: 13px;
+  font-size: var(--font-secondary);
 }
 /* 探す欄は開いている間ずっとフォーカスを持つ（↑↓ を受ける口）ので、輪は出さない。 */
 .task-board-search-input:focus-visible {
@@ -50,7 +50,7 @@
   background: transparent;
   color: var(--ink-quiet);
   font: inherit;
-  font-size: 12px;
+  font-size: var(--font-label);
   white-space: nowrap;
   cursor: pointer;
 }

@@ -56,7 +56,7 @@
   border-color: var(--accent);
   background: var(--accent);
   color: var(--ground);
-  font-size: 20px;
+  font-size: var(--font-heading);
   font-weight: 700;
 }
 .phone-turn-send:disabled {
@@ -109,7 +109,7 @@
     border-radius: 12px;
     background: transparent;
     color: var(--ink);
-    font-size: 13.5px;
+    font-size: var(--font-secondary);
     cursor: pointer;
   }
   .phone-turn-confirm-stop {

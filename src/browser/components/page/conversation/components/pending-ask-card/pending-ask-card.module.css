@@ -21,7 +21,7 @@
   display: flex;
   align-items: baseline;
   gap: 8px;
-  font-size: 11.5px;
+  font-size: var(--font-label);
 }
 .pending-ask-card-label {
   flex: none;
@@ -47,7 +47,7 @@
   border-radius: 8px;
   background: transparent;
   color: var(--ink-quiet);
-  font-size: 12px;
+  font-size: var(--font-label);
   cursor: pointer;
 }
 .pending-ask-card-sheet-answer {
@@ -63,7 +63,7 @@
 }
 .pending-ask-card-question {
   margin: 6px 0 0;
-  font-size: 14.5px;
+  font-size: var(--font-subheading);
   font-weight: 700;
   line-height: 1.7;
   color: var(--ink);
@@ -91,7 +91,7 @@
   border-radius: 6px;
   background: var(--surface-raised);
   font-family: var(--font-mono);
-  font-size: 11.5px;
+  font-size: var(--font-label);
 }
 .pending-ask-card-omitted {
   padding: 2px 4px;
@@ -99,7 +99,7 @@
   background: transparent;
   cursor: pointer;
   color: var(--ink-quiet);
-  font-size: 11.5px;
+  font-size: var(--font-label);
 }
 .pending-ask-card-actions {
   flex: none;
@@ -125,7 +125,7 @@
   border-radius: 12px;
   background: transparent;
   color: var(--ink);
-  font-size: 14px;
+  font-size: var(--font-subheading);
   cursor: pointer;
 }
 .pending-ask-card-button.is-recommended {
@@ -149,6 +149,6 @@
 .pending-ask-card-mark {
   flex: none;
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: var(--font-label);
   opacity: 0.7;
 }

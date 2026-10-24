@@ -13,7 +13,7 @@
   align-items: center;
   gap: 6px;
   height: 20px;
-  font-size: 12px;
+  font-size: var(--font-label);
 }
 .task-detail-breadcrumb-back {
   display: inline-flex;
@@ -39,7 +39,7 @@
 .task-detail-id {
   color: var(--ink-quiet);
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: var(--font-secondary);
 }
 .task-detail-status {
   padding: 1px 7px;
@@ -51,7 +51,7 @@
 }
 .task-detail-title {
   margin: 0;
-  font-size: 20px;
+  font-size: var(--font-heading);
   font-weight: 700;
   line-height: 1.5;
 }
@@ -65,7 +65,7 @@
   border-radius: 10px;
   background: var(--ground);
   color: var(--ink-quiet);
-  font-size: 12px;
+  font-size: var(--font-label);
 }
 .task-detail-info dt,
 .task-detail-info dd {
@@ -102,13 +102,13 @@
 .task-detail-dependencies-title {
   margin: 0;
   color: color-mix(in srgb, var(--state-warn) 60%, var(--ink));
-  font-size: 12px;
+  font-size: var(--font-label);
 }
 /* 「これを待っているもの」（逆向きの札）の見出しは弱い字色。 */
 .task-detail-dependents-title {
   margin: 0;
   color: var(--ink-quiet);
-  font-size: 12px;
+  font-size: var(--font-label);
 }
 .task-detail-dependency-list {
   display: flex;
@@ -122,13 +122,13 @@
   flex: none;
   color: color-mix(in srgb, var(--accent) 45%, var(--ink));
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: var(--font-label);
 }
 .task-detail-dependency-summary {
   flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
-  font-size: 13px;
+  font-size: var(--font-secondary);
   text-overflow: ellipsis;
   white-space: nowrap;
 }

@@ -200,7 +200,7 @@
   border: 1px solid var(--rule);
   border-radius: 4px;
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: var(--font-label);
   color: var(--ink-soft);
   text-decoration: none;
   overflow-wrap: anywhere;

@@ -30,7 +30,7 @@
     align-items: center;
     height: 36px;
     color: var(--ink-quiet);
-    font-size: 13px;
+    font-size: var(--font-secondary);
     text-decoration: none;
   }
   .phone-head-main {
@@ -46,7 +46,7 @@
   .phone-head-mark {
     flex: none;
     width: 13px;
-    font-size: 9px;
+    font-size: 0.6em;
     line-height: 1;
     text-align: center;
   }
@@ -54,27 +54,27 @@
     --spinner-track: var(--surface-accent);
   }
   .phone-head-word {
-    font-size: 12px;
+    font-size: var(--font-label);
     font-weight: 700;
     white-space: nowrap;
   }
   .phone-head-elapsed {
     color: var(--ink-quiet);
     font-family: var(--font-mono);
-    font-size: 11px;
+    font-size: var(--font-label);
   }
   .phone-head-reading {
     min-width: 0;
     overflow: hidden;
     color: var(--ink-quiet);
-    font-size: 11px;
+    font-size: var(--font-label);
     text-overflow: ellipsis;
     white-space: nowrap;
   }
   .phone-head-title {
     overflow: hidden;
     color: var(--ink);
-    font-size: 14px;
+    font-size: var(--font-subheading);
     font-weight: 700;
     line-height: 1.5;
     text-overflow: ellipsis;
@@ -123,7 +123,7 @@
     border: 1.5px solid var(--rule);
     border-radius: 50%;
     color: var(--accent);
-    font-size: 8px;
+    font-size: 0.55em;
     font-weight: 700;
     line-height: 1;
   }
@@ -174,7 +174,7 @@
     border-radius: 8px;
     background: transparent;
     color: var(--ink-quiet);
-    font-size: 12px;
+    font-size: var(--font-label);
     cursor: pointer;
   }
   .phone-head-step-count {
@@ -182,7 +182,7 @@
   }
   /* 板の頭の題。 */
   .phone-head-sheet-title {
-    font-size: 14px;
+    font-size: var(--font-subheading);
     font-weight: 700;
   }
   /* 「手順 n」で開く依頼の手順の一覧。一覧の箱の枠と地は板が持つので外す(属性で詳細度を上げ、一覧の class に勝つ)。 */

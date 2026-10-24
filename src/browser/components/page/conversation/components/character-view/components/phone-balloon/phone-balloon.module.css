@@ -25,7 +25,7 @@
     border-radius: 14px 14px 14px 4px;
     background: var(--surface-accent);
     color: var(--ink);
-    font-size: 13px;
+    font-size: var(--font-secondary);
     line-height: 1.65;
     text-align: left;
     cursor: pointer;

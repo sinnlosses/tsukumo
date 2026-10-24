@@ -104,7 +104,7 @@
   overflow: hidden;
   color: var(--ink);
   font-family: var(--font-serif);
-  font-size: 16px;
+  font-size: var(--font-body);
   font-weight: 700;
   letter-spacing: 0.08em;
   text-overflow: ellipsis;
@@ -116,6 +116,6 @@
 .is-drawer .screen-nav-session-tag-id {
   border-bottom: none;
   color: var(--accent);
-  font-size: 12px;
+  font-size: var(--font-label);
   letter-spacing: normal;
 }

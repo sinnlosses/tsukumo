@@ -60,7 +60,7 @@
     min-height: 0;
     padding: 14px 16px;
     overflow-y: auto;
-    font-size: 14px;
+    font-size: var(--font-subheading);
     line-height: 1.85;
   }
   .bottom-sheet-foot {

@@ -336,7 +336,7 @@
 .detail-block .code-mark-label {
   flex: none;
   font-family: var(--font-sans);
-  font-size: 12px;
+  font-size: var(--font-label);
   color: var(--ink-quiet);
 }
 /* 畳んだ範囲の 1 行。押すと中身が出る。 */

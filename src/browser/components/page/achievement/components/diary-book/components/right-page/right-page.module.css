@@ -14,7 +14,8 @@
      `--diary-scale` は本文がページに収まるまで縮める倍率で、`useFitDiaryPage` が測って書く。
      字の大きさも罫もこの倍率を掛けるので、縮めても列は罫に揃ったまま。 */
   --diary-line: calc(2.625rem * var(--diary-scale, 1));
-  --diary-text: calc(1.1875rem * var(--diary-scale, 1));
+  --diary-text: calc(var(--font-heading) * var(--diary-scale, 1));
+  --diary-title: calc(var(--font-heading-1) * var(--diary-scale, 1));
   position: relative;
   /* 日付の列と本文を右から左へ横に並べる。
      罫は右端から数えるので（`270deg`）、右の余白・日付の列・あいだを罫の間隔の倍数にしておけば、本文の列が罫に揃う。
@@ -45,7 +46,7 @@
 }
 .diary-book-kanji-date {
   font-family: var(--font-serif);
-  font-size: calc(1.375rem * var(--diary-scale, 1));
+  font-size: var(--diary-title);
   font-weight: 700;
   color: var(--ink);
   letter-spacing: 0.15em;

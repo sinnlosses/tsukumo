@@ -4,7 +4,7 @@
 
 .task-body {
   color: var(--ink);
-  font-size: 14px;
+  font-size: var(--font-subheading);
   line-height: 1.85;
 }
 /* 描画一式を読めなかったあいだの本文。Markdown の記法は字のまま出す。 */
@@ -23,13 +23,13 @@
   margin: 22px 0 8px;
   padding-bottom: 6px;
   border-bottom: 1px solid var(--rule-quiet);
-  font-size: 16px;
+  font-size: var(--font-body);
   font-weight: 700;
   line-height: 1.5;
 }
 .task-body-sub {
   margin: 16px 0 6px;
-  font-size: 14px;
+  font-size: var(--font-subheading);
   font-weight: 700;
   line-height: 1.5;
 }
@@ -60,7 +60,7 @@
   border-radius: 4px;
   background: var(--surface-raised);
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: var(--font-label);
 }
 /* フェンスは色付けせず、長い行は折り返す（詳細の欄を横に広げない）。 */
 .task-body pre {
@@ -71,7 +71,7 @@
   background: var(--ground);
   color: color-mix(in srgb, var(--ink) 85%, transparent);
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: var(--font-label);
   line-height: 1.7;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
@@ -126,7 +126,7 @@
 }
 .task-body-table-scroll table {
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: var(--font-secondary);
   line-height: 1.6;
 }
 .task-body-table-scroll th,

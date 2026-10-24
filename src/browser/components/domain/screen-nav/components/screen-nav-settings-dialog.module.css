@@ -80,7 +80,7 @@
   background: transparent;
   color: var(--ink-quiet);
   font: inherit;
-  font-size: 13.5px;
+  font-size: var(--font-secondary);
   text-align: left;
   cursor: pointer;
 }

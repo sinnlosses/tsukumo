@@ -185,7 +185,7 @@
 .session-switcher-detail-id {
   flex: none;
   font-family: var(--font-mono);
-  font-size: 1.875rem;
+  font-size: var(--font-heading-1);
   font-weight: 500;
   letter-spacing: 0.06em;
 }

@@ -93,7 +93,11 @@
 - 大きさは**この8つだけ**（役の行は上の表の9つ）。これ以外の寸法を足さない。**同じ mock で 14px が出ても、機械のラベルに近い字（`dispatch` の送信ボタン）は
   新しい段を使わず既存の 13px に寄せた**（採らなかった理由は
   `src/browser/components/page/conversation/components/dispatch/dispatch.module.css` の該当コメント）——段を増やすのは
-  「差をはっきり見せたい」という要求があるときだけで、寄せられるところは寄せる
+  「差をはっきり見せたい」という要求があるときだけで、寄せられるところは寄せる。
+  **`test/architecture/font-size.test.ts` が、`theme.css` 以外の `*.css` の `font-size` を `var(--font-*)`・`var(--report-heading-*)`・
+  `em`・`%`・`inherit` と、部品の中で `--font-*` から導いた局所のつまみ（日記の `--diary-text`・`--diary-title` は `--font-heading`・`--font-heading-1` に縮める倍率 `--diary-scale` を掛けた値、
+  吹き出しの `--balloon-latest-scale`・`--balloon-past-scale` は `--font-*` を `clamp` で挟んだ値）に限る**。
+  `px`・`rem`・`clamp`・`calc` を `font-size` に直接書くと落ちる
 - **入力欄の見出し3段は、入力欄のマークダウンエディタの `#`〜`###` にだけ使う**（2026-09-30）。
   打った段が見て分かるよう2px 刻みにした（1px 刻みでは太字どうし隣り合う段が見分けにくかった）。
   `#` は「大きな見出し」（18px）を超えるが、画面の他の見出しと混ぜないよう `--font-heading` とは

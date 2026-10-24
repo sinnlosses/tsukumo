@@ -8,12 +8,12 @@
 }
 .task-board-title {
   margin: 0;
-  font-size: 17px;
+  font-size: var(--font-heading);
   font-weight: 700;
 }
 .task-board-counts {
   color: var(--ink-quiet);
-  font-size: 12px;
+  font-size: var(--font-label);
   white-space: nowrap;
 }
 .task-board-hints {
