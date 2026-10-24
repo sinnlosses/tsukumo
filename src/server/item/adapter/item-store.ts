@@ -4,7 +4,7 @@
 // 書き込みの口は、`items.json` が読めない（壊れている・形が違う）ときはすべて断る（undefined を返す）。
 // 壊れたファイルを読めた分で上書きすると、一覧が黙って消えるため。ファイルが無いのは「まだ何も足していない」で、最初に足したときに作る。
 
-import { mkdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs"
+import { mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
 import { fromKeys } from "remeda"
@@ -25,6 +25,8 @@ import {
   serializeItemsFile,
 } from "../../../shared/item/items-file.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
+import { writeFileAtomic } from "../../adapter/lib/atomic-file.ts"
+import { isMissingFileError } from "../../adapter/lib/missing-file-error.ts"
 import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
 import { addItem, clearSeat, removeItem, setSeat } from "../core/item-edit.ts"
 
@@ -43,7 +45,7 @@ export function readItemsFile(dir: string = tsukumoHomePath("items")): ItemsFile
   try {
     text = readFileSync(itemsFilePath(dir), "utf8")
   } catch (error) {
-    return isMissing(error) ? { kind: "absent" } : { kind: "unreadable" }
+    return isMissingFileError(error) ? { kind: "absent" } : { kind: "unreadable" }
   }
   return parseItemsFile(text)
 }
@@ -167,19 +169,7 @@ function writableItemsFile(dir: string): ItemsFile | undefined {
   }
 }
 
-/** 同じディレクトリの一時ファイルから置き換え、途中で落ちても半端な `items.json` を残さない。 */
 function writeItemsFile(dir: string, file: ItemsFile): void {
-  const temporary = join(dir, `.${ITEMS_FILE_NAME}.${process.pid}.tmp`)
   mkdirSync(dir, { recursive: true })
-  try {
-    writeFileSync(temporary, serializeItemsFile(file))
-    renameSync(temporary, itemsFilePath(dir))
-  } catch (error) {
-    rmSync(temporary, { force: true })
-    throw error
-  }
-}
-
-function isMissing(error: unknown): boolean {
-  return error instanceof Error && "code" in error && error.code === "ENOENT"
+  writeFileAtomic(itemsFilePath(dir), serializeItemsFile(file))
 }

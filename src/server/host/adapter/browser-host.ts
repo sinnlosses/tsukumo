@@ -8,6 +8,7 @@ import { execFile } from "node:child_process"
 
 import { isObjectType } from "remeda"
 
+import { isMissingFileError } from "../../adapter/lib/missing-file-error.ts"
 import type { Host, HostResult, ShowViewResult } from "../core/host.ts"
 
 const OPEN_COMMAND = "open"
@@ -54,7 +55,7 @@ function openTarget(target: string): Promise<HostResult> {
 }
 
 function describeFailure(error: unknown): string {
-  if (isObjectType(error) && "code" in error && error.code === "ENOENT") {
+  if (isMissingFileError(error)) {
     return `${OPEN_COMMAND} コマンドが見つからない`
   }
 

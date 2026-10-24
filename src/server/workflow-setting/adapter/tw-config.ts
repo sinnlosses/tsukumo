@@ -3,6 +3,7 @@
 
 import { execFile } from "node:child_process"
 
+import { isMissingFileError } from "../../adapter/lib/missing-file-error.ts"
 import type { TwConfigPort, TwOutcome } from "../core/workflow-setting-reading.ts"
 
 export const TW_TIMEOUT_MS = 5000
@@ -28,7 +29,7 @@ function runTw(tw: string, cwd: string, args: readonly string[]): Promise<TwOutc
       (error, stdout, stderr) => {
         if (error === null) {
           resolve({ kind: "ran", exitCode: 0, stdout, stderr })
-        } else if (error.code === "ENOENT") {
+        } else if (isMissingFileError(error)) {
           resolve({ kind: "missing" })
         } else {
           resolve({

@@ -11,7 +11,6 @@
 //
 // 書けなかった回・消せなかった回は結果の種類（`PersonaRememberResult` / `PersonaForgetResult`）で返し、例外は投げない。
 
-import { writeFileSync } from "node:fs"
 import { join } from "node:path"
 
 import {
@@ -19,6 +18,7 @@ import {
   rememberedSectionStart,
 } from "../../../shared/character-pack/persona-section.ts"
 import { MAX_REMEMBERED_LINE_LENGTH } from "../../../shared/chat/persona-memory.ts"
+import { writeFileAtomic } from "../../adapter/lib/atomic-file.ts"
 import { readOptionalFile } from "../../adapter/lib/optional-file.ts"
 import { copyPackOnce } from "../../character-pack/adapter/character-edit.ts"
 import {
@@ -189,7 +189,7 @@ function writeRememberedLine(pack: CharacterPack, dir: string, line: string): Pe
   try {
     copyPackOnce(pack, dir)
     const path = join(dir, PERSONA_FILE_NAME)
-    writeFileSync(path, personaWithRememberedLine(readOptionalFile(path) ?? "", line))
+    writeFileAtomic(path, personaWithRememberedLine(readOptionalFile(path) ?? "", line))
     return { kind: "written" }
   } catch (error) {
     return { kind: "failed", error }
@@ -239,7 +239,7 @@ function eraseRememberedLine(pack: CharacterPack, dir: string, target: string): 
     }
 
     copyPackOnce(pack, dir)
-    writeFileSync(path, erased)
+    writeFileAtomic(path, erased)
     return { kind: "erased" }
   } catch (error) {
     return { kind: "failed", error }

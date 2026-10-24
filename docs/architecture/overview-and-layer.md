@@ -96,4 +96,6 @@ shared（語彙・イベント・状態・reducer・zod スキーマ）は brows
   許すファイルは同じ `overrides` に並べる（許す分だけを引いた同じ規則を書き直す）。
   `node:os`・`node:http` 系・Agent SDK の import も `no-restricted-imports` が見る（`require()` は `src` に使い手が無いので見ない）。
   `process` を別名で import する形はこの規則が拾えないので、`test/architecture/outside-world.test.ts` が見る。
-  同じテストが見るのは、ほかに起こす外部コマンドと `listen` の宛先
+  同じテストが見るのは、ほかに起こす外部コマンドと `listen` の宛先、
+  `writeFileSync` を取り込めるファイルの許可リスト（テキストは `server/adapter/lib/atomic-file.ts` の `writeFileAtomic` に任せ、
+  画像・排他作成の錠だけが許可リストに入る）

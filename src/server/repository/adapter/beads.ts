@@ -18,6 +18,7 @@ import {
   type TaskDifficulty,
   type TaskLoopable,
 } from "../../../shared/repository/task-summary.ts"
+import { nonBlankString } from "../../../shared/utils/non-blank-string.ts"
 import { GIT_TIMEOUT_MS, MAX_OUTPUT_BYTES } from "./git.ts"
 
 /**
@@ -362,12 +363,8 @@ function beadsIssueOf(issue: z.infer<typeof beadsIssueSchema>): BeadsIssue {
     description: issue.description ?? "",
     acceptanceCriteria: issue.acceptance_criteria ?? "",
     notes: issue.notes ?? "",
-    externalRef: nonEmpty(issue.external_ref),
+    externalRef: nonBlankString(issue.external_ref),
   }
-}
-
-function nonEmpty(value: string | null | undefined): string | undefined {
-  return value === null || value === undefined || value === "" ? undefined : value
 }
 
 function epochMillisecondsOf(isoDateTime: string): number {

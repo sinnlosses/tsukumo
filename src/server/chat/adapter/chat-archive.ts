@@ -37,6 +37,7 @@ import {
   dateFilePath,
   readJsonLines,
 } from "../../adapter/lib/jsonl.ts"
+import { isMissingFileError } from "../../adapter/lib/missing-file-error.ts"
 import { isoWithOffset, localDateKey } from "../../adapter/local-time.ts"
 import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
 import type {
@@ -90,8 +91,7 @@ const archiveLineSchema = z.object({
   at: z.string().regex(/^\d{4}-\d{2}-\d{2}T/),
   speaker: z.enum(["user", "character"]),
   text: z.string(),
-  // `v:1` の行はキー自体を持たないので `.optional()`（値が来ても `undefined` になる境界ではなく、
-  // キーの有無そのものが版の違いを表す）。`project` は `v:2` でも仕事の行だけが持つ。
+  // `v:1` の行はキー自体を持たないので `.optional()`。`project` は `v:2` でも仕事の行だけが持つ。
   mode: z.enum(["chat", "work"]).optional(),
   kind: z.enum(["request", "speech", "conclusion"]).optional(),
   project: z.string().optional(),
@@ -232,7 +232,7 @@ function entryNames(dir: string, onFailure: (error: unknown) => void): readonly 
   try {
     return readdirSync(dir)
   } catch (error) {
-    if (!(error instanceof Error && Reflect.get(error, "code") === "ENOENT")) {
+    if (!isMissingFileError(error)) {
       onFailure(error)
     }
     return []

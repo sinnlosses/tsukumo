@@ -9,6 +9,7 @@ import { isPlainObject } from "remeda"
 import type { Expression } from "../../../shared/character-pack/expression.ts"
 import type { TurnOutcome } from "../../../shared/session-driver/turn-failure.ts"
 import type { RestoredEvent, SessionEvent } from "../../../shared/session/session-event.ts"
+import { nonBlankString } from "../../../shared/utils/non-blank-string.ts"
 import { asideTextOf } from "./aside-prompt.ts"
 import { createCallReview } from "./call-review.ts"
 import type { InputLedger, LedgeredInputKind, LedgeredTurn } from "./input-ledger.ts"
@@ -223,7 +224,7 @@ function requestText(message: unknown): string | undefined {
   }
   return message.isCompletedLocalCommand === true
     ? slashCommandLine(raw)
-    : nonEmpty(slashCommandLine(raw) ?? raw)
+    : nonBlankString(slashCommandLine(raw) ?? raw)
 }
 
 function isUserInput(message: Readonly<Record<string, unknown>>): boolean {
@@ -277,8 +278,4 @@ function slashCommandLine(text: string): string | undefined {
 
   const args = text.match(COMMAND_ARGS_TAG)?.[1]?.trim()
   return args === undefined || args === "" ? name : `${name} ${args}`
-}
-
-function nonEmpty(text: string): string | undefined {
-  return text.trim() === "" ? undefined : text
 }

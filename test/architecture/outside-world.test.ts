@@ -359,6 +359,60 @@ function importsProcessUnderOtherName(content: string): boolean {
   )
 }
 
+// テキストのファイルは `writeFileAtomic` が書き、途中の状態を見せない。
+// `writeFileSync` を取り込めるのは、それを包む atomic-file.ts と、置き換えでは足りない書き方のファイルだけ。
+const WRITE_FILE_SYNC_ALLOWED = [
+  "server/adapter/lib/atomic-file.ts",
+  // 画像（バイナリ）の書き出し
+  "server/item/adapter/item-store.ts",
+  "server/character-pack/adapter/character-edit.ts",
+  // `wx` で排他的に作る錠
+  "server/chat/adapter/chat-consolidation-lock.ts",
+]
+
+describe("ファイルの書き出し", () => {
+  it("`writeFileSync` を取り込むのは atomic-file.ts と許可リストのファイルだけ", () => {
+    const importing = listSourceFiles(SRC_ROOT).filter((relPath) =>
+      importsWriteFileSync(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8")),
+    )
+
+    expect(importing.filter((relPath) => !WRITE_FILE_SYNC_ALLOWED.includes(relPath))).toEqual([])
+  })
+
+  it("許可リストのファイルは、いまも `writeFileSync` を取り込んでいる", () => {
+    const stale = WRITE_FILE_SYNC_ALLOWED.filter(
+      (relPath) => !importsWriteFileSync(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8")),
+    )
+
+    expect(stale).toEqual([])
+  })
+
+  it("名前付き・別名・名前空間・default の import は拾い、ほかの関数の import は拾わない", () => {
+    expect(importsWriteFileSync('import { writeFileSync } from "node:fs"')).toBe(true)
+    expect(importsWriteFileSync('import { writeFileSync as put } from "fs"')).toBe(true)
+    expect(importsWriteFileSync('import * as fs from "node:fs"')).toBe(true)
+    expect(importsWriteFileSync('import fs from "node:fs"')).toBe(true)
+
+    expect(importsWriteFileSync('import { readFileSync } from "node:fs"')).toBe(false)
+    expect(importsWriteFileSync('import { writeFile } from "node:fs/promises"')).toBe(false)
+    expect(importsWriteFileSync('import { writeFileSync } from "./other.ts"')).toBe(false)
+  })
+})
+
+/** `node:fs` から `writeFileSync` を取り込むか。名前空間・default は呼び先を追えないので取り込むとみなす。 */
+function importsWriteFileSync(content: string): boolean {
+  return astDescendants(parseSourceProgram(content)).some(
+    (node) =>
+      astString(node, "type") === "ImportDeclaration" &&
+      ["node:fs", "fs"].includes(astString(astObject(node, "source"), "value") ?? "") &&
+      astChildren(node, "specifiers").some(
+        (specifier) =>
+          astString(specifier, "type") !== "ImportSpecifier" ||
+          astString(astObject(specifier, "imported"), "name") === "writeFileSync",
+      ),
+  )
+}
+
 /** 第2引数が識別子 `BIND_HOST` でない `.listen(…)` の呼び出しがあるか。 */
 function listenWithoutBindHost(content: string): boolean {
   return astDescendants(parseSourceProgram(content)).some((node) => {

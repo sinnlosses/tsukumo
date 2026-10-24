@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs"
+import { chmodSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
 import { describe, expect, it } from "vitest"
@@ -83,6 +83,23 @@ describe("item-store", () => {
     const event = removeItemFromHome("1", dir())
     expect(existsSync(join(dir(), "1.png"))).toBe(false)
     expect(event).toEqual({ kind: "items-changed", items: [], seats: {} })
+  })
+
+  it("置き換えの途中で書けなくなっても、元の items.json はそのまま残り、一時ファイルも残らない", () => {
+    addItemToHome({ name: "提灯", image: PNG }, dir())
+    const before = readFileSync(itemsFilePath(dir()), "utf8")
+
+    chmodSync(dir(), 0o500)
+    try {
+      expect(() =>
+        setSeatInHome({ pack: "fictional-a", seat: "topLeft", id: "1" }, PACKS, dir()),
+      ).toThrow("EACCES")
+    } finally {
+      chmodSync(dir(), 0o700)
+    }
+
+    expect(readFileSync(itemsFilePath(dir()), "utf8")).toBe(before)
+    expect(readdirSync(dir()).filter((name) => name.endsWith(".tmp"))).toEqual([])
   })
 
   it("画像の無いアイテムと、一覧に無い id を指す席は空として配る", () => {

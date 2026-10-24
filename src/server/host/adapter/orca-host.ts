@@ -20,6 +20,7 @@ import { execFile } from "node:child_process"
 import { isObjectType } from "remeda"
 
 import { parseJson } from "../../../shared/utils/parse-json.ts"
+import { isMissingFileError } from "../../adapter/lib/missing-file-error.ts"
 import type { Host, HostResult, ShowViewResult } from "../core/host.ts"
 import { readOrcaFailure } from "./orca-failure.ts"
 import { type OrcaTab, parseOrcaCreatedPageId, parseOrcaTabList } from "./orca-tab.ts"
@@ -195,9 +196,7 @@ function runOrca(args: readonly string[], label: string): Promise<CommandOutput>
  * 表に載ったコードは日本語の説明になり、載っていないコードは検索の手掛かりとして語だけを添える。
  */
 function describeFailure(label: string, error: unknown, stdout: string, stderr: string): string {
-  // 捕まえた例外は Error の実体（`node:child_process` が投げる）なので、`isPlainObject` では弾かれる。
-  // prototype を問わない `isObjectType` で見て、`code` があるときだけ読む。
-  if (isObjectType(error) && "code" in error && error.code === "ENOENT") {
+  if (isMissingFileError(error)) {
     return `${ORCA_COMMAND} コマンドが見つからない`
   }
 

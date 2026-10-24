@@ -3,6 +3,7 @@
 // セッションの印（`sessionTag` / `readSessionMark`）は環境変数ではないので、ここには置かない。
 
 import type { ReportSchemaVariant } from "../../shared/report/schema-variant.ts"
+import { nonBlankString } from "../../shared/utils/non-blank-string.ts"
 
 /**
  * tsukumo が読む環境変数の名前の全部。`audience` が `user` の名前は `docs/readme/configuration.md` に載せる。
@@ -132,20 +133,20 @@ export function readConfig(env: Readonly<Record<string, string | undefined>>): C
     env[ENV_NAMES.driver.name]?.trim() === "fake"
       ? {
           kind: "fake",
-          sessionPath: nonEmpty(env[ENV_NAMES.fakeSession.name]),
-          scene: nonEmpty(env[ENV_NAMES.fakeScene.name]),
+          sessionPath: nonBlankString(env[ENV_NAMES.fakeSession.name])?.trim(),
+          scene: nonBlankString(env[ENV_NAMES.fakeScene.name])?.trim(),
           sceneUntil: parsePositiveInteger(env[ENV_NAMES.fakeSceneUntil.name]),
         }
       : { kind: "sdk" }
   return {
     rawViewPort: env[ENV_NAMES.viewPort.name],
     rawViewPortFallbackBase: env[ENV_NAMES.viewPortFallbackBase.name],
-    character: nonEmpty(env[ENV_NAMES.character.name]),
+    character: nonBlankString(env[ENV_NAMES.character.name])?.trim(),
     openView: env[ENV_NAMES.openView.name]?.trim() !== "0",
     driver,
     host: readHost(env),
-    twCommand: nonEmpty(env[ENV_NAMES.tw.name]),
-    claudeConfigDir: nonEmpty(env[CLAUDE_CONFIG_DIR_ENV_NAME]),
+    twCommand: nonBlankString(env[ENV_NAMES.tw.name])?.trim(),
+    claudeConfigDir: nonBlankString(env[CLAUDE_CONFIG_DIR_ENV_NAME])?.trim(),
     fixedClock: parseInstant(env[ENV_NAMES.fixedClock.name]),
     reportSchema:
       env[ENV_NAMES.reportSchema.name]?.trim() === "short-type" ? "short-type" : "json-schema",
@@ -162,13 +163,8 @@ function readHost(env: Readonly<Record<string, string | undefined>>): HostKind {
   return env[TERM_PROGRAM_ENV_NAME]?.trim() === ORCA_TERM_PROGRAM ? "orca" : "browser"
 }
 
-function nonEmpty(value: string | undefined): string | undefined {
-  const trimmed = value?.trim()
-  return trimmed === undefined || trimmed === "" ? undefined : trimmed
-}
-
 function parsePositiveInteger(value: string | undefined): number | undefined {
-  const trimmed = nonEmpty(value)
+  const trimmed = nonBlankString(value)?.trim()
   if (trimmed === undefined || !/^\d+$/.test(trimmed)) {
     return undefined
   }
@@ -177,7 +173,7 @@ function parsePositiveInteger(value: string | undefined): number | undefined {
 }
 
 function parseInstant(value: string | undefined): Temporal.Instant | undefined {
-  const trimmed = nonEmpty(value)
+  const trimmed = nonBlankString(value)?.trim()
   if (trimmed === undefined) {
     return undefined
   }

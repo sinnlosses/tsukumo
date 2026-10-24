@@ -21,6 +21,7 @@ import {
 import { dirname, join } from "node:path"
 
 import { parseJson } from "../../../shared/utils/parse-json.ts"
+import { isMissingFileError } from "./missing-file-error.ts"
 
 /** 日付だけで積むファイルの名前（`YYYY-MM-DD.jsonl`）。これ以外のファイルは対象にしない。 */
 const DATE_FILE_NAME = /^\d{4}-\d{2}-\d{2}\.jsonl$/
@@ -234,7 +235,7 @@ function openIfExists(path: string): number | undefined {
   try {
     return openSync(path, "r")
   } catch (error) {
-    if (error instanceof Error && Reflect.get(error, "code") === "ENOENT") {
+    if (isMissingFileError(error)) {
       return undefined
     }
     throw error
