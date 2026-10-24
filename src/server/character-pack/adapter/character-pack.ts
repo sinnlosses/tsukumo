@@ -25,7 +25,7 @@ import { personaBody } from "../../../shared/character-pack/persona-section.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import { bundledFilePath } from "../../adapter/bundled-path.ts"
 import { readOptionalBinaryFile, readOptionalFile } from "../../adapter/lib/optional-file.ts"
-import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
+import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
 
 /** 定義ファイルの名前。 */
 export const CHARACTER_DEFINITION_FILE_NAME = "character.json"
@@ -33,7 +33,7 @@ export const CHARACTER_DEFINITION_FILE_NAME = "character.json"
 /** 人格のファイル名。パックの中に無くてもよい（append が空になるだけ）。 */
 export const PERSONA_FILE_NAME = "persona.md"
 
-/** パックの置き場の名前。同梱側も起動先側も、この名前のディレクトリの下を見る。 */
+/** パックの置き場の名前。同梱側も起動先側も、この名前のディレクトリの下を見る（ホーム側は `TSUKUMO_HOME_PLACES`）。 */
 const CHARACTER_DIR_NAME = "characters"
 
 /**
@@ -105,7 +105,7 @@ export function defaultCharacterPackRoots(): CharacterPackRoots {
 
 /** 画面から変えたパックの書き込み先の親（`~/.tsukumo/characters`）。書き込んでよいのはこの下だけ。 */
 export function homeCharacterDir(): string {
-  return join(tsukumoHomeDir(), CHARACTER_DIR_NAME)
+  return tsukumoHomePath("characters")
 }
 
 /**

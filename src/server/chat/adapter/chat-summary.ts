@@ -24,15 +24,12 @@ import { byteLength } from "../../../shared/utils/byte-length.ts"
 import { writeFileAtomic } from "../../adapter/lib/atomic-file.ts"
 import { readJsonFile } from "../../adapter/lib/json-file.ts"
 import { readOptionalFile } from "../../adapter/lib/optional-file.ts"
-import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
+import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
 import type {
   ChatSummary,
   ChatSummaryFold,
   ChatSummaryRecord,
 } from "../../session-driver/core/session-driver.ts"
-
-/** 置き場のディレクトリ名（`~/.tsukumo/chat-summary/`）。 */
-const CHAT_SUMMARY_DIR_NAME = "chat-summary"
 
 /**
  * 新しい形のファイル名の後ろ。
@@ -128,7 +125,7 @@ export function discardChatSummary(
 
 /** 置き場の親（`~/.tsukumo/chat-summary`）。書き込んでよいのはこの下だけ。 */
 function chatSummaryDir(): string {
-  return join(tsukumoHomeDir(), CHAT_SUMMARY_DIR_NAME)
+  return tsukumoHomePath("chatSummary")
 }
 
 /** `writeFileAtomic` の一時ファイルの名前の後ろ（16進12桁と `.tmp`）。 */

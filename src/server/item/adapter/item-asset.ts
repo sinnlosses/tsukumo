@@ -5,8 +5,8 @@ import { readFileSync } from "node:fs"
 import { join } from "node:path"
 
 import { portraitImageMimeType } from "../../../shared/character-pack/character-asset.ts"
-import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
-import { itemImageRevision, itemsDir, readItemsFile } from "./item-store.ts"
+import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
+import { itemImageRevision, readItemsFile } from "./item-store.ts"
 
 export type ServedItemAsset = {
   readonly contentType: string
@@ -19,18 +19,18 @@ export type ServedItemAsset = {
 export function readItemAsset(
   fileName: string,
   version: string | undefined,
-  home: string = tsukumoHomeDir(),
+  dir: string = tsukumoHomePath("items"),
 ): ServedItemAsset | undefined {
-  const state = readItemsFile(home)
+  const state = readItemsFile(dir)
   const entry =
     state.kind === "ok" ? state.file.items.find((item) => item.image === fileName) : undefined
   const contentType = entry === undefined ? undefined : portraitImageMimeType(entry.image)
-  const revision = entry === undefined ? undefined : itemImageRevision(home, entry.image)
+  const revision = entry === undefined ? undefined : itemImageRevision(dir, entry.image)
   if (entry === undefined || contentType === undefined || revision === undefined) {
     return undefined
   }
   try {
-    const content = readFileSync(join(itemsDir(home), entry.image))
+    const content = readFileSync(join(dir, entry.image))
     return { contentType, content, versioned: version === revision }
   } catch {
     return undefined

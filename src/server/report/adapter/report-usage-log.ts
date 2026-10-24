@@ -1,8 +1,6 @@
 // `report` の塊の使われ方の記録を `~/.tsukumo/report-usage/<YYYY-MM-DD>.jsonl` に書く。
 // 読むのは tsukumo の外の集計スクリプトだけなので、読み口は持たない。
 
-import { join } from "node:path"
-
 import {
   REPORT_USAGE_FORMAT_VERSION,
   type ReportRejectionRecord,
@@ -14,17 +12,15 @@ import {
 import type { ReportSchemaVariant } from "../../../shared/report/schema-variant.ts"
 import { createDatedRecordLog, type DatedRecordLog } from "../../adapter/lib/dated-record-log.ts"
 import { isoWithOffset, localDateKey } from "../../adapter/local-time.ts"
-import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
+import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
 import type {
   ReportRejectionEntry,
   ReportUsageEntry,
   ReportUsageLog,
 } from "../core/report-usage.ts"
 
-const REPORT_USAGE_DIR_NAME = "report-usage"
-
 export function reportUsageDir(): string {
-  return join(tsukumoHomeDir(), REPORT_USAGE_DIR_NAME)
+  return tsukumoHomePath("reportUsage")
 }
 
 /** 疑似セッションは記録を書かないので、書く行の駆動はいつも `sdk`。 */

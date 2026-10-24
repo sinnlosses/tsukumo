@@ -4,7 +4,7 @@ import process from "node:process"
 
 import { describe, expect, it } from "vitest"
 
-import { SESSION_CLAIM_DIR_NAME } from "../../src/server/session-driver/adapter/session-claim-file.ts"
+import { TSUKUMO_HOME_PLACES } from "../../src/server/adapter/tsukumo-home.ts"
 import { useScenarioRun } from "./scenario-run.ts"
 
 // セッションの札と切り替え画面（docs/architecture/testing.md「E2E のシナリオの一覧」）。fake driver は claude を
@@ -51,7 +51,7 @@ describe("セッションの切り替え", () => {
       domRoots: ["session-switcher"],
     })
     await room.waitForEvent("sessions-changed")
-    const claimDir = path.join(room.home, SESSION_CLAIM_DIR_NAME)
+    const claimDir = path.join(room.home, TSUKUMO_HOME_PLACES.sessionClaim)
     mkdirSync(claimDir, { recursive: true })
     writeFileSync(
       path.join(claimDir, `${String(process.pid)}.json`),

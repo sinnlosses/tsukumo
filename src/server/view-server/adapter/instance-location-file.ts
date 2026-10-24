@@ -6,10 +6,7 @@ import { mkdirSync, rmSync } from "node:fs"
 import { join } from "node:path"
 
 import { writeFileAtomic } from "../../adapter/lib/atomic-file.ts"
-import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
-
-/** ホームの下の所在のファイルの置き場の名前。占有ファイル（`session-claim`）とは別。 */
-export const INSTANCE_LOCATION_DIR_NAME = "instance-location"
+import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
 
 /** 所在のファイルの権限（利用者だけが読み書きできる）。 */
 const INSTANCE_LOCATION_FILE_MODE = 0o600
@@ -26,7 +23,7 @@ export type InstanceLocation = {
 
 /** 所在のファイルの置き場（ホームの下）。 */
 export function defaultInstanceLocationDir(): string {
-  return join(tsukumoHomeDir(), INSTANCE_LOCATION_DIR_NAME)
+  return tsukumoHomePath("instanceLocation")
 }
 
 /**

@@ -13,8 +13,6 @@
 //
 // 書けなくても・読めなくても例外を投げない。壊れた行・版が違う行は読まずに1行ずつ落とす。
 
-import { join } from "node:path"
-
 import {
   TOKEN_USAGE_FORMAT_VERSION,
   type TokenUsageRecord,
@@ -22,20 +20,17 @@ import {
 } from "../../../shared/token-usage/token-usage.ts"
 import { createDatedRecordLog, type DatedRecordLog } from "../../adapter/lib/dated-record-log.ts"
 import { isoWithOffset, localDateKey } from "../../adapter/local-time.ts"
-import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
+import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
 import type { TokenUsageEntry, TokenUsageLog } from "../core/token-usage.ts"
 import type { OpenTaskReader } from "./tw-claim-list.ts"
 
-/** 置き場のディレクトリ名（`~/.tsukumo/token-usage/`）。 */
-const TOKEN_USAGE_DIR_NAME = "token-usage"
-
 /** 書き込んでよいのはこの下だけ。 */
 export function tokenUsageDir(): string {
-  return join(tsukumoHomeDir(), TOKEN_USAGE_DIR_NAME)
+  return tsukumoHomePath("tokenUsage")
 }
 
 /**
- * 記録の読み書き口を作る。`openTask` はこの作業ツリーで着手中のタスクを読む口（{@link OpenTaskReader}）、`root` は置き場（既定はホームの下の {@link TOKEN_USAGE_DIR_NAME}）。
+ * 記録の読み書き口を作る。`openTask` はこの作業ツリーで着手中のタスクを読む口（{@link OpenTaskReader}）、`root` は置き場（既定は {@link tokenUsageDir}）。
  * 1つの口を日をまたいで使い回せる（`append` のたびに `entry.at` から行き先を組み立てる）。
  */
 export function createTokenUsageLog(

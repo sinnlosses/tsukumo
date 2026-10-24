@@ -7,15 +7,12 @@ import { join } from "node:path"
 import process from "node:process"
 
 import { writeFileAtomic } from "../../adapter/lib/atomic-file.ts"
-import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
+import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
 import {
   readSessionClaimRecord,
   type SessionClaimRecord,
   type SessionClaimStore,
 } from "../core/session-claim.ts"
-
-/** ホームの下の占有ファイルの置き場の名前。 */
-export const SESSION_CLAIM_DIR_NAME = "session-claim"
 
 /** 占有ファイルの名前（`<pid>.json`）。 */
 const CLAIM_FILE_NAME = /^\d+\.json$/u
@@ -53,7 +50,7 @@ export function createSessionClaimFile(options: {
 
 /** 既定の置き場（ホームの下）と、このプロセスの pid。 */
 export function defaultSessionClaimPlace(): SessionClaimPlace {
-  return { dir: join(tsukumoHomeDir(), SESSION_CLAIM_DIR_NAME), ownPid: process.pid }
+  return { dir: tsukumoHomePath("sessionClaim"), ownPid: process.pid }
 }
 
 /**

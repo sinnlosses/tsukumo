@@ -1,8 +1,6 @@
 // タスク一覧の記憶。ファイルに触るのはここだけで、置き場は `~/.tsukumo/task-summary.json`。
 // 入るのは作業ディレクトリごとに最後に読めたタスク一覧（進捗管理の要約と本文）だけで、会話は入らない。本文を含むのでログには出さない。
 
-import { join } from "node:path"
-
 import { z } from "zod"
 
 import {
@@ -12,9 +10,7 @@ import {
   type TaskSummaryItem,
 } from "../../../shared/repository/task-summary.ts"
 import { readJsonFile, writeJsonFile } from "../../adapter/lib/json-file.ts"
-import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
-
-const TASK_SUMMARY_MEMORY_FILE_NAME = "task-summary.json"
+import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
 
 /** ファイルの形の版。形を変えたら上げ、古いファイルと見分ける。 */
 const TASK_SUMMARY_MEMORY_FORMAT_VERSION = 6 satisfies number
@@ -55,7 +51,7 @@ const taskSummaryMemoryFileSchema = z.object({
 type MemoryEntry = { readonly cwd: string; readonly items: readonly TaskSummaryItem[] }
 
 export function taskSummaryMemoryPath(): string {
-  return join(tsukumoHomeDir(), TASK_SUMMARY_MEMORY_FILE_NAME)
+  return tsukumoHomePath("taskSummary")
 }
 
 /** 作業ディレクトリで最後に読めた一覧。ファイルが無い・壊れている・版や形が違う・その作業ディレクトリの組が無いときは `undefined`。 */

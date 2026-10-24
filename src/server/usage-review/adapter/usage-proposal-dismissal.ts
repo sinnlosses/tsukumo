@@ -4,14 +4,10 @@
 //
 // ファイルに触るのはここだけ。置き場は `~/.tsukumo/usage-review-dismissed.json`。
 
-import { join } from "node:path"
-
 import { z } from "zod"
 
 import { readJsonFile, writeJsonFile } from "../../adapter/lib/json-file.ts"
-import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
-
-const DISMISSED_USAGE_PROPOSAL_FILE_NAME = "usage-review-dismissed.json"
+import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
 
 /** ファイルの形の版。形を変えたら上げる。 */
 const DISMISSED_USAGE_PROPOSAL_FORMAT_VERSION = 1 satisfies number
@@ -23,7 +19,7 @@ const dismissedUsageProposalFileSchema = z.object({
 
 /** 書き込んでよいのはこの1ファイルだけ。 */
 export function dismissedUsageProposalPath(): string {
-  return join(tsukumoHomeDir(), DISMISSED_USAGE_PROPOSAL_FILE_NAME)
+  return tsukumoHomePath("dismissedUsageProposal")
 }
 
 /**

@@ -4,8 +4,6 @@
 //
 // 書けなくても・読めなくても・消せなくても例外を投げない。壊れた行・版が違う行は読まずに1行ずつ落とす。
 
-import { join } from "node:path"
-
 import { groupBy, sortBy } from "remeda"
 
 import {
@@ -16,18 +14,15 @@ import {
 } from "../../../shared/diagnostic/diagnostic-record.ts"
 import { createDatedRecordLog, type DatedRecordLog } from "../../adapter/lib/dated-record-log.ts"
 import { localDateKey } from "../../adapter/local-time.ts"
-import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
+import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
 import type { DiagnosticLog, DiagnosticRange } from "../core/diagnostic.ts"
-
-/** 置き場のディレクトリ名（`~/.tsukumo/diagnostic/`）。 */
-const DIAGNOSTIC_DIR_NAME = "diagnostic"
 
 /** 日付ファイルを残す日数。これより古い日付のファイルは消す。 */
 const DIAGNOSTIC_RETENTION_DAYS = 14
 
 /** 書き込んでよいのはこの下だけ。 */
 export function diagnosticDir(): string {
-  return join(tsukumoHomeDir(), DIAGNOSTIC_DIR_NAME)
+  return tsukumoHomePath("diagnostic")
 }
 
 /**

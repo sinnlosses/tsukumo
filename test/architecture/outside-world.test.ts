@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs"
 
 import { describe, expect, it } from "vitest"
 
+import { TSUKUMO_HOME_PLACES } from "../../src/server/adapter/tsukumo-home.ts"
 import { astChildren, astDescendants, astObject, astString } from "./ast-node.ts"
 import { importSpecifiers, listSourceFiles, parseSourceProgram, SRC_ROOT } from "./source-file.ts"
 
@@ -308,6 +309,20 @@ describe("ネットワークの口", () => {
     expect(listenWithoutBindHost("const a = 1")).toBe(false)
   })
 })
+
+describe("~/.tsukumo の置き場", () => {
+  it("`TSUKUMO_HOME_PLACES` の値が重複しない", () => {
+    expect(duplicatedValues(Object.values(TSUKUMO_HOME_PLACES))).toEqual([])
+  })
+
+  it("同じ値を2つのキーに持たせた表は拾う", () => {
+    expect(duplicatedValues(["items", "diary", "items"])).toEqual(["items"])
+  })
+})
+
+function duplicatedValues(values: readonly string[]): readonly string[] {
+  return [...new Set(values.filter((value, index) => values.indexOf(value) !== index))]
+}
 
 // `.oxlintrc.json` の `process.env`・`process.cwd` の禁止は、`process` という名前で読む形だけを拾う。
 // 別名（`import p from "node:process"`）や名前空間の import を通すと禁止が素通りするので、名前を縛る。

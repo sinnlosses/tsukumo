@@ -10,8 +10,6 @@
 //
 // 書けなくても例外を投げない。
 
-import { join } from "node:path"
-
 import {
   CONTEXT_USAGE_FORMAT_VERSION,
   type ContextUsageRecord,
@@ -19,17 +17,14 @@ import {
 } from "../../../shared/context-usage/context-usage-record.ts"
 import { createDatedRecordLog, type DatedRecordLog } from "../../adapter/lib/dated-record-log.ts"
 import { isoWithOffset, localDateKey } from "../../adapter/local-time.ts"
-import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
+import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
 import type { ContextUsageEntry, ContextUsageLog } from "../core/context-usage.ts"
-
-/** 置き場のディレクトリ名（`~/.tsukumo/context-usage/`）。 */
-const CONTEXT_USAGE_DIR_NAME = "context-usage"
 
 const CONTEXT_USAGE_RETENTION_DAYS = 90
 
 /** 書き込んでよいのはこの下だけ。 */
 export function contextUsageDir(): string {
-  return join(tsukumoHomeDir(), CONTEXT_USAGE_DIR_NAME)
+  return tsukumoHomePath("contextUsage")
 }
 
 /**

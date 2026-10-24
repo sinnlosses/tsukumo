@@ -134,6 +134,11 @@
                 "message": "node:os を import するのは server/adapter/tsukumo-home.ts だけ"
               },
               {
+                "group": ["**/tsukumo-home.ts"],
+                "importNames": ["tsukumoHomeDir"],
+                "message": "~/.tsukumo の下の置き場は tsukumoHomePath(キー) で引く。ホームの根を直に読まない"
+              },
+              {
                 "group": [
                   "node:http",
                   "http",
@@ -211,6 +216,7 @@
             "patterns": [
               { "group": ["node:process", "process"], "importNames": ["env", "cwd"] },
               { "group": ["node:os", "os"] },
+              { "group": ["**/tsukumo-home.ts"], "importNames": ["tsukumoHomeDir"] },
               {
                 "group": [
                   "node:http",
@@ -246,7 +252,8 @@
             ],
             "patterns": [
               { "group": ["node:process", "process"], "importNames": ["env", "cwd"] },
-              { "group": ["node:os", "os"] }
+              { "group": ["node:os", "os"] },
+              { "group": ["**/tsukumo-home.ts"], "importNames": ["tsukumoHomeDir"] }
             ]
           }
         ]
@@ -273,6 +280,7 @@
             ],
             "patterns": [
               { "group": ["node:os", "os"] },
+              { "group": ["**/tsukumo-home.ts"], "importNames": ["tsukumoHomeDir"] },
               {
                 "group": [
                   "node:http",

@@ -3,6 +3,7 @@
 import { cpSync, mkdirSync, writeFileSync } from "node:fs"
 import path from "node:path"
 
+import { tsukumoHomePath } from "../../../src/server/adapter/tsukumo-home.ts"
 import { appendDiaryParagraph } from "../../../src/server/diary/adapter/diary.ts"
 import { FAKE_BEADS_ISSUES_PATH } from "../../../src/server/repository/adapter/fake-beads.ts"
 import { parseDateKey } from "../../../src/shared/achievement/achievement.ts"
@@ -82,7 +83,7 @@ export async function applyHomeSetup(setup: HomeSetup, homeDir: string): Promise
   }
   if (setup.kind === "character") {
     const source = path.join(REPOSITORY_ROOT, "characters", "chou")
-    const dest = path.join(homeDir, "characters", setup.pack)
+    const dest = path.join(tsukumoHomePath("characters", homeDir), setup.pack)
     mkdirSync(path.dirname(dest), { recursive: true })
     cpSync(source, dest, { recursive: true })
     return
@@ -110,7 +111,7 @@ export async function applyHomeSetup(setup: HomeSetup, homeDir: string): Promise
         reason: "架空の理由",
       },
     },
-    homeDir,
+    tsukumoHomePath("diary", homeDir),
   )
   if (!written) {
     process.stdout.write("架空の日記を書けなかった（git の共有 .git が見えないなど）\n")

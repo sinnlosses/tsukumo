@@ -2,7 +2,7 @@
 // cwd には依存させない。どのプロジェクトから起こしても同じものを読む（相対パスを渡したときだけ cwd 相対で解く）。
 //
 // `process.env` を読む2箇所めをここに置いている（`docs/coding-standards.md`「外部の入力を読む場所を1つにする」の例外）。
-// `tsukumoHomeDir()` を呼ぶのは adapter の複数ファイルの既定引数の中で、配線層から設定を渡す道が無い。
+// ホームの下の置き場は `TSUKUMO_HOME_PLACES` の表から `tsukumoHomePath` で引く。adapter の複数ファイルが既定引数の中で呼ぶので、配線層から設定を渡す道が無い。
 // 配って回るとホームの下に置き場が1つ増えるたびに配線を足すことになり、足し忘れが黙って効かない形で残る。
 // 読み取り箇所が2つを超えないことは検査が見張る。
 
@@ -25,6 +25,36 @@ const CLAUDE_CONFIG_DIR_NAME = ".claude"
 export function tsukumoHomeDir(): string {
   const raw = process.env[ENV_NAMES.home.name]?.trim()
   return raw === undefined || raw === "" ? join(userHomeDir(), HOME_DIR_NAME) : resolve(raw)
+}
+
+/** ホームの下の置き場（ディレクトリかファイルの名前）。値は利用者のデータの実名で、重複しない。 */
+export const TSUKUMO_HOME_PLACES = {
+  rememberedDefault: "state.json",
+  recommendationCache: "recommendation.json",
+  welcomeGreeting: "welcome-greeting",
+  sessionClaim: "session-claim",
+  inputLedger: "input-ledger",
+  taskSummary: "task-summary.json",
+  previousUsageReview: "usage-review.json",
+  dismissedUsageProposal: "usage-review-dismissed.json",
+  chatSummary: "chat-summary",
+  chatArchive: "chat-archive",
+  diagnostic: "diagnostic",
+  experienceMetric: "experience-metric",
+  instanceLocation: "instance-location",
+  characters: "characters",
+  items: "items",
+  contextUsage: "context-usage",
+  reportUsage: "report-usage",
+  diary: "diary",
+  tokenUsage: "token-usage",
+} as const satisfies Record<string, string>
+
+export type TsukumoHomePlace = keyof typeof TSUKUMO_HOME_PLACES
+
+/** 置き場のパス。`home` を渡すとそれを根にし、省くと {@link tsukumoHomeDir}。 */
+export function tsukumoHomePath(place: TsukumoHomePlace, home: string = tsukumoHomeDir()): string {
+  return join(home, TSUKUMO_HOME_PLACES[place])
 }
 
 /** 利用者のホームディレクトリ（`~`）。`homedir()` を読むのはこのファイルだけ。 */

@@ -24,21 +24,14 @@ import {
 import { writeFileAtomic } from "../../adapter/lib/atomic-file.ts"
 import { readOptionalFile } from "../../adapter/lib/optional-file.ts"
 import { isoWithOffset } from "../../adapter/local-time.ts"
-import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
+import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
 import { runGit } from "../../repository/adapter/git.ts"
-
-const DIARY_DIR_NAME = "diary"
 
 /** `<リポジトリ>` の SHA-256 の取り分（先頭12桁）。 */
 const REPOSITORY_HASH_LENGTH = 12
 
 /** `readdir` で日記のある日を拾うときの、ファイル名の形。 */
 const DIARY_FILE_NAME_PATTERN = /^(\d{4}-\d{2}-\d{2})\.json$/
-
-/** 日記の置き場の根（`~/.tsukumo/diary`。`TSUKUMO_HOME` を分けていればその下）。 */
-export function diaryDir(root: string = tsukumoHomeDir()): string {
-  return join(root, DIARY_DIR_NAME)
-}
 
 /** 1段落を書き足すのに渡すもの。`writer` は書いた時点のパック（ディレクトリ名と表示名）。 */
 export type DiaryParagraphInput = {
@@ -60,7 +53,7 @@ export type DiaryParagraphInput = {
 export async function appendDiaryParagraph(
   cwd: string,
   input: DiaryParagraphInput,
-  root: string = tsukumoHomeDir(),
+  root: string = tsukumoHomePath("diary"),
 ): Promise<boolean> {
   const repositoryId = await repositoryDiaryId(cwd)
   if (repositoryId === undefined) {
@@ -97,7 +90,7 @@ export async function appendDiaryParagraph(
 export async function readDiaryDay(
   cwd: string,
   date: DateKey,
-  root: string = tsukumoHomeDir(),
+  root: string = tsukumoHomePath("diary"),
 ): Promise<DailyDiaryStatus> {
   const repositoryId = await repositoryDiaryId(cwd)
   if (repositoryId === undefined) {
@@ -119,14 +112,14 @@ export async function readDiaryDay(
  */
 export async function listDiaryDates(
   cwd: string,
-  root: string = tsukumoHomeDir(),
+  root: string = tsukumoHomePath("diary"),
 ): Promise<readonly string[]> {
   const repositoryId = await repositoryDiaryId(cwd)
   if (repositoryId === undefined) {
     return []
   }
 
-  const entries = readDirNames(join(diaryDir(root), repositoryId))
+  const entries = readDirNames(join(root, repositoryId))
   const dates = entries.flatMap((name) => {
     const match = DIARY_FILE_NAME_PATTERN.exec(name)
     return match?.[1] === undefined ? [] : [match[1]]
@@ -135,7 +128,7 @@ export async function listDiaryDates(
 }
 
 function diaryFilePath(root: string, repositoryId: string, date: DateKey): string {
-  return join(diaryDir(root), repositoryId, `${date}.json`)
+  return join(root, repositoryId, `${date}.json`)
 }
 
 /** 共有の `.git` から `<リポジトリ>` を組み立てる。`git` が無い・リポジトリでないときは `undefined`。 */

@@ -9,8 +9,6 @@
 //
 // 保存するのはパックの名前と既定だけ。会話に関わる値をここに混ぜない。
 
-import { join } from "node:path"
-
 import { z } from "zod"
 
 import { EFFORT_LEVELS, MODEL_ALIASES } from "../../../shared/command.ts"
@@ -20,9 +18,7 @@ import {
   type SessionDefault,
 } from "../../../shared/session/session-default.ts"
 import { readJsonFile, writeJsonFile } from "../../adapter/lib/json-file.ts"
-import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
-
-const STATE_FILE_NAME = "state.json"
+import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
 
 /**
  * 状態ファイルの中身。欄ごとに別のスキーマで読むので、片方が壊れていてももう片方は読める。
@@ -116,7 +112,7 @@ function writeState(state: RememberedState, path: string): void {
   writeJsonFile(path, state)
 }
 
-/** 既定の保存先。ホームの場所は `tsukumoHomeDir` が持つ（呼んだときだけ読む）。 */
+/** 既定の保存先。ホームの場所は `tsukumoHomePath` が持つ（呼んだときだけ読む）。 */
 function defaultStatePath(): string {
-  return join(tsukumoHomeDir(), STATE_FILE_NAME)
+  return tsukumoHomePath("rememberedDefault")
 }

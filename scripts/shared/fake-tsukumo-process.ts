@@ -2,7 +2,7 @@ import { type ChildProcess, spawn } from "node:child_process"
 import { join } from "node:path"
 import process from "node:process"
 
-import { INSTANCE_LOCATION_DIR_NAME } from "../../src/server/view-server/adapter/instance-location-file.ts"
+import { TSUKUMO_HOME_PLACES } from "../../src/server/adapter/tsukumo-home.ts"
 import { readInstanceLocation } from "./instance-location.ts"
 
 export type FakeTsukumoOptions = {
@@ -62,7 +62,7 @@ export function waitForViewUrl(
   return new Promise((resolve, reject) => {
     let stderr = ""
     const detail = (): string => (stderr === "" ? "" : `\n${stderr}`)
-    const path = join(home, INSTANCE_LOCATION_DIR_NAME, `${String(child.pid)}.json`)
+    const path = join(home, TSUKUMO_HOME_PLACES.instanceLocation, `${String(child.pid)}.json`)
     const finish = (settle: () => void): void => {
       clearTimeout(timer)
       clearInterval(poll)

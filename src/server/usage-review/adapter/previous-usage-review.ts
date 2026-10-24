@@ -7,8 +7,6 @@
 //
 // 会話の文面は書かない。入るのは見直しの結果（`UsageReviewFindings`）だけで、その型にそもそも文面の口が無い。
 
-import { join } from "node:path"
-
 import { z } from "zod"
 
 import {
@@ -19,9 +17,7 @@ import {
   type UsageReviewFindings,
 } from "../../../shared/usage-review/usage-review.ts"
 import { readJsonFile, writeJsonFile } from "../../adapter/lib/json-file.ts"
-import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
-
-const PREVIOUS_USAGE_REVIEW_FILE_NAME = "usage-review.json"
+import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
 
 /** ファイルの形の版。形を変えたら上げ、古いファイルと見分ける。 */
 const PREVIOUS_USAGE_REVIEW_FORMAT_VERSION = 1 satisfies number
@@ -51,7 +47,7 @@ const previousUsageReviewFileSchema = z.object({
 
 /** 書き込んでよいのはこの1ファイルだけ。 */
 export function previousUsageReviewPath(): string {
-  return join(tsukumoHomeDir(), PREVIOUS_USAGE_REVIEW_FILE_NAME)
+  return tsukumoHomePath("previousUsageReview")
 }
 
 /**

@@ -38,7 +38,7 @@ import {
   readJsonLines,
 } from "../../adapter/lib/jsonl.ts"
 import { isoWithOffset, localDateKey } from "../../adapter/local-time.ts"
-import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
+import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
 import type {
   ChatArchiveLine,
   ChatArchiveLineOrigin,
@@ -60,9 +60,6 @@ import { scoreChatEpisodes, type ChatEpisodeRecord } from "../core/chat-episode-
 import { isAfterAt, isBeforeAt } from "../core/chat-instant-order.ts"
 import { CHAT_IMAGE_DIR_NAME, writeChatImage } from "./chat-archive-image.ts"
 import { appendEpisodes, readEpisodes } from "./chat-episode-index.ts"
-
-/** 置き場のディレクトリ名（`~/.tsukumo/chat-archive/`）。 */
-const CHAT_ARCHIVE_DIR_NAME = "chat-archive"
 
 /** 雑談の画像を残す日数。名前の先頭の日付がこれより古いファイルは消す。 */
 const CHAT_IMAGE_RETENTION_DAYS = 7
@@ -109,7 +106,7 @@ const recalledLineSchema = z.object({
 
 /** 置き場の親（`~/.tsukumo/chat-archive`）。書き込んでよいのはこの下だけ。 */
 export function chatArchiveDir(): string {
-  return join(tsukumoHomeDir(), CHAT_ARCHIVE_DIR_NAME)
+  return tsukumoHomePath("chatArchive")
 }
 
 /**

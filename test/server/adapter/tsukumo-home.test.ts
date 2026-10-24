@@ -5,7 +5,12 @@ import process from "node:process"
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
-import { tsukumoHomeDir } from "../../../src/server/adapter/tsukumo-home.ts"
+import {
+  TSUKUMO_HOME_PLACES,
+  tsukumoHomeDir,
+  tsukumoHomePath,
+  type TsukumoHomePlace,
+} from "../../../src/server/adapter/tsukumo-home.ts"
 import { homeCharacterDir } from "../../../src/server/character-pack/adapter/character-pack.ts"
 import { chatArchiveDir } from "../../../src/server/chat/adapter/chat-archive.ts"
 import { createChatSummary } from "../../../src/server/chat/adapter/chat-summary.ts"
@@ -79,6 +84,22 @@ describe("TSUKUMO_HOME を渡すとホームがそこへ移る", () => {
     expect(tsukumoHomeDir()).toBe(join(process.cwd(), "~", "elsewhere"))
   })
 })
+
+describe("tsukumoHomePath", () => {
+  it("全部の置き場がホームの下の表の実名になり、home を渡すとそれが根になる", () => {
+    process.env[ENV_NAMES.home.name] = dir()
+
+    for (const place of Object.keys(TSUKUMO_HOME_PLACES).filter(isPlace)) {
+      const name = TSUKUMO_HOME_PLACES[place]
+      expect(tsukumoHomePath(place)).toBe(join(dir(), name))
+      expect(tsukumoHomePath(place, "/other")).toBe(join("/other", name))
+    }
+  })
+})
+
+function isPlace(key: string): key is TsukumoHomePlace {
+  return key in TSUKUMO_HOME_PLACES
+}
 
 describe("TSUKUMO_HOME を渡さないときの置き場は今までと同じ", () => {
   it("未設定なら ~/.tsukumo とその下の3つの置き場", () => {

@@ -1,7 +1,6 @@
 // `query()` に渡す `options` のうち `mcpServers` / `canUseTool`（クロージャが要る）を除いた部分と、
 // `Stop` と `PreToolUse` のフックの登録を組み立てる。
 
-import { join } from "node:path"
 import { setImmediate } from "node:timers/promises"
 
 import type {
@@ -19,7 +18,7 @@ import {
 } from "../../../shared/command.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import { bundledFilePath } from "../../adapter/bundled-path.ts"
-import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
+import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
 import type { ReportGate } from "../../report/core/report-tool.ts"
 import { pinToBackground } from "../core/background-delegation.ts"
 import { rewriteBashCommand } from "../core/bash-command-rewrite.ts"
@@ -82,7 +81,7 @@ export type QuerySeedOptions = {
 export function buildQuerySeedOptions(options: SessionDriverOptions): QuerySeedOptions {
   return {
     cwd: options.cwd,
-    additionalDirectories: [join(tsukumoHomeDir(), "characters")],
+    additionalDirectories: [tsukumoHomePath("characters")],
     includePartialMessages: true,
     agentProgressSummaries: true,
     systemPrompt: { type: "preset", preset: "claude_code", append: options.systemPromptAppend },

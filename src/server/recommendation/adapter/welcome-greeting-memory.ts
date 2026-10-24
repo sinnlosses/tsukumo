@@ -6,10 +6,8 @@ import { basename, join } from "node:path"
 import { z } from "zod"
 
 import { readJsonFile, writeJsonFile } from "../../adapter/lib/json-file.ts"
-import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
+import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
 import type { WelcomeGreetingText } from "../core/welcome-greeting.ts"
-
-const WELCOME_GREETING_DIR_NAME = "welcome-greeting"
 
 /** ファイルの形の版。形を変えたら上げ、古いファイルと見分ける。 */
 const WELCOME_GREETING_FORMAT_VERSION = 1 satisfies number
@@ -20,7 +18,7 @@ const welcomeGreetingFileSchema = z.object({
 })
 
 export function welcomeGreetingMemoryPath(characterName: string): string {
-  return join(tsukumoHomeDir(), WELCOME_GREETING_DIR_NAME, `${characterName}.json`)
+  return join(tsukumoHomePath("welcomeGreeting"), `${characterName}.json`)
 }
 
 /** 直近の挨拶を新しい順に読む。ファイルが無い・壊れている・版や形が違う・名前が不正なときは空。 */

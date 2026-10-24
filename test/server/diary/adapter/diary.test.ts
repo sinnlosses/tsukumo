@@ -4,6 +4,7 @@ import { join } from "node:path"
 import { beforeEach, describe, expect, it } from "vitest"
 
 import { isoWithOffset } from "../../../../src/server/adapter/local-time.ts"
+import { tsukumoHomePath } from "../../../../src/server/adapter/tsukumo-home.ts"
 import {
   appendDiaryParagraph,
   listDiaryDates,
@@ -23,11 +24,11 @@ const DAY_23 = dateKey("2026-09-23")
 
 const root = useTempDir("diary")
 let repository: string
-let home: string
+let diary: string
 
 beforeEach(async () => {
   repository = join(root(), "repository")
-  home = join(root(), "home")
+  diary = tsukumoHomePath("diary", join(root(), "home"))
   await initGitRepository(repository)
 })
 
@@ -46,18 +47,18 @@ function paragraphInput(date: DateKey, body: string) {
 
 describe("appendDiaryParagraph / readDiaryDay", () => {
   it("書いていない日は none", async () => {
-    expect(await readDiaryDay(repository, DAY_23, home)).toEqual({ kind: "none" })
+    expect(await readDiaryDay(repository, DAY_23, diary)).toEqual({ kind: "none" })
   })
 
   it("書いたら読める（1段落）", async () => {
     const saved = await appendDiaryParagraph(
       repository,
       paragraphInput(DAY_23, "架空の本文1"),
-      home,
+      diary,
     )
 
     expect(saved).toBe(true)
-    const status = await readDiaryDay(repository, DAY_23, home)
+    const status = await readDiaryDay(repository, DAY_23, diary)
     expect(status.kind).toBe("written")
     if (status.kind !== "written") {
       throw new Error("written ではなかった")
@@ -74,17 +75,17 @@ describe("appendDiaryParagraph / readDiaryDay", () => {
   })
 
   it("同じ日に2回書くと段落が足され、しおりは新しいほうに差し替わる", async () => {
-    await appendDiaryParagraph(repository, paragraphInput(DAY_23, "架空の本文1"), home)
+    await appendDiaryParagraph(repository, paragraphInput(DAY_23, "架空の本文1"), diary)
     await appendDiaryParagraph(
       repository,
       {
         ...paragraphInput(DAY_23, "架空の本文2"),
         bookmark: { kind: "placed", taskId: "T-1", summary: "架空のタスク", reason: "架空の理由" },
       },
-      home,
+      diary,
     )
 
-    const status = await readDiaryDay(repository, DAY_23, home)
+    const status = await readDiaryDay(repository, DAY_23, diary)
     if (status.kind !== "written") {
       throw new Error("written ではなかった")
     }
@@ -101,11 +102,11 @@ describe("appendDiaryParagraph / readDiaryDay", () => {
   })
 
   it("壊れたファイルは unreadable。書き足すと新しい1段落だけのファイルで置き換わる", async () => {
-    const dir = join(home, "diary")
+    const dir = diary
     mkdirSync(dir, { recursive: true })
     // リポジトリの id が分からないとファイル名を組み立てられないので、まず1回書いて置き場を
     // 作り、そのファイルを壊す。
-    await appendDiaryParagraph(repository, paragraphInput(DAY_23, "架空の本文1"), home)
+    await appendDiaryParagraph(repository, paragraphInput(DAY_23, "架空の本文1"), diary)
     const repoDirName = readdirSync(dir)[0]
     if (repoDirName === undefined) {
       throw new Error("置き場ができていない")
@@ -113,15 +114,15 @@ describe("appendDiaryParagraph / readDiaryDay", () => {
     const path = join(dir, repoDirName, "2026-09-23.json")
     writeFileSync(path, "これは JSON ではない")
 
-    expect(await readDiaryDay(repository, DAY_23, home)).toEqual({ kind: "unreadable" })
+    expect(await readDiaryDay(repository, DAY_23, diary)).toEqual({ kind: "unreadable" })
 
     const saved = await appendDiaryParagraph(
       repository,
       paragraphInput(DAY_23, "書き直した本文"),
-      home,
+      diary,
     )
     expect(saved).toBe(true)
-    const status = await readDiaryDay(repository, DAY_23, home)
+    const status = await readDiaryDay(repository, DAY_23, diary)
     if (status.kind !== "written") {
       throw new Error("written ではなかった")
     }
@@ -133,17 +134,17 @@ describe("appendDiaryParagraph / readDiaryDay", () => {
     mkdirSync(notARepository)
 
     expect(
-      await appendDiaryParagraph(notARepository, paragraphInput(DAY_23, "架空の本文"), home),
+      await appendDiaryParagraph(notARepository, paragraphInput(DAY_23, "架空の本文"), diary),
     ).toBe(false)
-    expect(await readDiaryDay(notARepository, DAY_23, home)).toEqual({ kind: "none" })
+    expect(await readDiaryDay(notARepository, DAY_23, diary)).toEqual({ kind: "none" })
   })
 
   it("違う日には別のファイルとして残る", async () => {
-    await appendDiaryParagraph(repository, paragraphInput(DAY_22, "架空の本文（22日）"), home)
-    await appendDiaryParagraph(repository, paragraphInput(DAY_23, "架空の本文（23日）"), home)
+    await appendDiaryParagraph(repository, paragraphInput(DAY_22, "架空の本文（22日）"), diary)
+    await appendDiaryParagraph(repository, paragraphInput(DAY_23, "架空の本文（23日）"), diary)
 
-    const day22 = await readDiaryDay(repository, DAY_22, home)
-    const day23 = await readDiaryDay(repository, DAY_23, home)
+    const day22 = await readDiaryDay(repository, DAY_22, diary)
+    const day23 = await readDiaryDay(repository, DAY_23, diary)
     if (day22.kind !== "written" || day23.kind !== "written") {
       throw new Error("written ではなかった")
     }
@@ -154,15 +155,15 @@ describe("appendDiaryParagraph / readDiaryDay", () => {
 
 describe("listDiaryDates", () => {
   it("日記の無いリポジトリは空", async () => {
-    expect(await listDiaryDates(repository, home)).toEqual([])
+    expect(await listDiaryDates(repository, diary)).toEqual([])
   })
 
   it("日記のある日を新しい順に返す", async () => {
-    await appendDiaryParagraph(repository, paragraphInput(DAY_20, "架空の本文"), home)
-    await appendDiaryParagraph(repository, paragraphInput(DAY_23, "架空の本文"), home)
-    await appendDiaryParagraph(repository, paragraphInput(DAY_22, "架空の本文"), home)
+    await appendDiaryParagraph(repository, paragraphInput(DAY_20, "架空の本文"), diary)
+    await appendDiaryParagraph(repository, paragraphInput(DAY_23, "架空の本文"), diary)
+    await appendDiaryParagraph(repository, paragraphInput(DAY_22, "架空の本文"), diary)
 
-    expect(await listDiaryDates(repository, home)).toEqual([DAY_23, DAY_22, DAY_20])
+    expect(await listDiaryDates(repository, diary)).toEqual([DAY_23, DAY_22, DAY_20])
   })
 })
 
@@ -171,11 +172,11 @@ describe("リポジトリの見分け", () => {
     const other = join(root(), "other-repository")
     await initGitRepository(other)
 
-    await appendDiaryParagraph(repository, paragraphInput(DAY_23, "こちらのリポジトリ"), home)
-    await appendDiaryParagraph(other, paragraphInput(DAY_23, "あちらのリポジトリ"), home)
+    await appendDiaryParagraph(repository, paragraphInput(DAY_23, "こちらのリポジトリ"), diary)
+    await appendDiaryParagraph(other, paragraphInput(DAY_23, "あちらのリポジトリ"), diary)
 
-    const fromRepository = await readDiaryDay(repository, DAY_23, home)
-    const fromOther = await readDiaryDay(other, DAY_23, home)
+    const fromRepository = await readDiaryDay(repository, DAY_23, diary)
+    const fromOther = await readDiaryDay(other, DAY_23, diary)
     if (fromRepository.kind !== "written" || fromOther.kind !== "written") {
       throw new Error("written ではなかった")
     }

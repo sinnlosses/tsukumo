@@ -1,8 +1,6 @@
-import { join } from "node:path"
-
 import { describe, expect, it } from "vitest"
 
-import { tsukumoHomeDir } from "../../../../src/server/adapter/tsukumo-home.ts"
+import { tsukumoHomePath } from "../../../../src/server/adapter/tsukumo-home.ts"
 import { buildQuerySeedOptions } from "../../../../src/server/session-driver/adapter/sdk-query-seed.ts"
 import type { SessionDriverOptions } from "../../../../src/server/session-driver/core/session-driver.ts"
 import { BUILTIN_SESSION_DEFAULT } from "../../../../src/shared/session/session-default.ts"
@@ -72,7 +70,7 @@ describe("buildQuerySeedOptions", () => {
 
   it("キャラクターパックの置き場だけを cwd の外の読める場所として渡す", () => {
     expect(buildQuerySeedOptions(BASE_OPTIONS).additionalDirectories).toEqual([
-      join(tsukumoHomeDir(), "characters"),
+      tsukumoHomePath("characters"),
     ])
   })
 

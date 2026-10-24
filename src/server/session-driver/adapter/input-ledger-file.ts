@@ -5,7 +5,7 @@ import { readdirSync, rmSync, statSync } from "node:fs"
 import { join } from "node:path"
 
 import { appendJsonLines, readValidLines } from "../../adapter/lib/jsonl.ts"
-import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
+import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
 import {
   EMPTY_INPUT_LEDGER,
   type InputLedger,
@@ -14,9 +14,6 @@ import {
   inputLedgerOf,
 } from "../core/input-ledger.ts"
 import { parseSessionId, type SessionId } from "../core/session-id.ts"
-
-/** ホームの下の控えの置き場の名前。 */
-export const INPUT_LEDGER_DIR_NAME = "input-ledger"
 
 /** 更新時刻からこの日数を過ぎた控えを消す。 */
 const INPUT_LEDGER_RETENTION_DAYS = 14
@@ -28,7 +25,7 @@ const LEDGER_FILE_NAME = /^(.+)\.jsonl$/u
 
 /** 既定の置き場（ホームの下）。 */
 export function inputLedgerDir(): string {
-  return join(tsukumoHomeDir(), INPUT_LEDGER_DIR_NAME)
+  return tsukumoHomePath("inputLedger")
 }
 
 /** ターン1つ分の控えを書き足す。 */
