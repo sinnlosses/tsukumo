@@ -219,8 +219,8 @@ describe("REPORT_NOTATION_PROMPT", () => {
   })
 
   it("文面の字数は上限以下に収まり、条を足すと落ちる", () => {
-    // いまの文面（4,811字）に約50字の余白を持たせた上限
-    const limit = 4860
+    // いまの文面（5,140字）に約50字の余白を持たせた上限
+    const limit = 5190
     const length = REPORT_NOTATION_PROMPT.length
 
     expect(
