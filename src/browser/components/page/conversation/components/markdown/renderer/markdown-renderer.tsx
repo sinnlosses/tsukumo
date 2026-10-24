@@ -24,7 +24,7 @@
 // git 管理下のパスを押すと Orca のエディタで開ける（inline code・フェンスのファイル名・相対リンクの3か所。判定は `repositoryFileTarget`）。
 
 import clsx from "clsx"
-import type { Element } from "hast"
+import type { Root } from "hast"
 import type { JSX, ReactElement } from "react"
 import ReactMarkdown, { type Components, type ExtraProps, type Options } from "react-markdown"
 import rehypeHighlight from "rehype-highlight"
@@ -33,7 +33,6 @@ import rehypeSanitize from "rehype-sanitize"
 import remarkCjkFriendly from "remark-cjk-friendly"
 import remarkGfm from "remark-gfm"
 
-import { decodeMarks, type CodeMark } from "../../../../../../../shared/report/code-mark.ts"
 import { optionalString } from "../../../../../../../shared/utils/optional-string.ts"
 import {
   breakPathText,
@@ -42,17 +41,21 @@ import {
   useRepositoryFileLink,
 } from "../../repository-link/repository-link.tsx"
 import { ChartBlock } from "./chart-block.tsx"
-import {
-  CODE_FILE_NAME_PROPERTY,
-  CODE_FILE_PATH_PROPERTY,
-  CODE_MARKS_PROPERTY,
-  rehypeCodeFileName,
-} from "./code-file-name.ts"
+import { CODE_FILE_PATH_PROPERTY, rehypeCodeFileName } from "./code-file-name.ts"
 import { splitCodeLines } from "./code-line.ts"
 import { CodeLines } from "./code-lines.tsx"
+import {
+  codeFileName,
+  codeLanguage,
+  codeMarks,
+  codeSourceText,
+  findCodeChild,
+  hastText,
+} from "./code-node.ts"
 import { colorSwatch, readColorToken } from "./color-swatch.ts"
 import { CopyButton } from "./copy-button.tsx"
 import { diffWordRanges, type DiffWordRanges } from "./diff-pair.ts"
+import { REPORT_HAST_CACHE, type HastCache } from "./hast-cache.ts"
 import { MermaidBlock } from "./mermaid-block.tsx"
 import {
   NotationAside,
@@ -106,7 +109,7 @@ export type MarkdownProps = {
 
 /** レポート1件分（または `splitReportBlocks` で割った1塊）の Markdown を描く。 */
 export function Markdown(props: MarkdownProps): ReactElement {
-  return <ReportMarkdown text={props.text} remarkPlugins={[]} />
+  return <ReportMarkdown text={props.text} remarkPlugins={[]} cache={REPORT_HAST_CACHE} />
 }
 
 export type QuestionPreviewMarkdownProps = {
@@ -117,14 +120,39 @@ export type QuestionPreviewMarkdownProps = {
 
 /** 質問の選択肢の `preview` の Markdown を、レポートと同じ経路で描く。手元の画像はその質問の棚から引く。 */
 export function QuestionPreviewMarkdown(props: QuestionPreviewMarkdownProps): ReactElement {
-  return <ReportMarkdown text={props.text} remarkPlugins={[remarkPreviewImage(props.toolUseId)]} />
+  return (
+    <ReportMarkdown
+      text={props.text}
+      remarkPlugins={[remarkPreviewImage(props.toolUseId)]}
+      cache={undefined}
+    />
+  )
 }
 
-/** `remarkPlugins` は、共通の段（GFM・CJK）のあとに足す段。 */
+/**
+ * `remarkPlugins` は、共通の段（GFM・CJK）のあとに足す段。
+ *
+ * `cache` があれば、描き終えた hast を文字列で覚える。
+ * 覚えた文字列は、空の本文を読ませて最後の段で覚えた木に差し替えるので、remark の parse もサニタイズも色付けも走らない。
+ * 木は react-markdown が後処理で触るが、2回目以降も結果が変わらない処理だけ。
+ */
 function ReportMarkdown(props: {
   readonly text: string
   readonly remarkPlugins: NonNullable<Options["remarkPlugins"]>
+  readonly cache: HastCache | undefined
 }): ReactElement {
+  const cached = props.cache?.get(props.text)
+  if (cached !== undefined) {
+    return (
+      <ReactMarkdown
+        rehypePlugins={[() => () => cached]}
+        remarkRehypeOptions={FOOTNOTE_OPTIONS}
+        components={REPORT_COMPONENTS}
+      >
+        {""}
+      </ReactMarkdown>
+    )
+  }
   return (
     <ReactMarkdown
       // remark-cjk-friendly は remark-gfm より後（README の使用例どおり）。
@@ -141,6 +169,9 @@ function ReportMarkdown(props: {
         rehypeStyleAllowlist,
         [rehypeSanitize, REPORT_SANITIZE_SCHEMA],
         rehypeHighlight,
+        () => (tree: Root) => {
+          props.cache?.set(props.text, tree)
+        },
       ]}
       remarkRehypeOptions={FOOTNOTE_OPTIONS}
       components={REPORT_COMPONENTS}
@@ -213,17 +244,6 @@ function Pre(props: PreProps): ReactElement {
   )
 }
 
-/** フェンスの `marks`。{@link rehypeCodeFileName} が属性に移し、モデルが書いた値なので読めなければ無いものとして扱う。 */
-function codeMarks(codeNode: Element): readonly CodeMark[] {
-  const token = optionalString(codeNode.properties[CODE_MARKS_PROPERTY])
-  return token === undefined ? [] : decodeMarks(token)
-}
-
-/** フェンスの中身そのまま。末尾に付く1つの改行（CommonMark がフェンスの終わりに添えるもの）だけ落とす。 */
-function codeSourceText(codeNode: Element): string {
-  return hastText(codeNode).replace(/\n$/, "")
-}
-
 /** フェンスのファイル名のラベル。一覧にあれば押せるボタン、無ければ素のテキスト。 */
 function FileNameLabel(props: { readonly fileName: string }): ReactElement {
   const link = useRepositoryFileLink()
@@ -241,37 +261,6 @@ function FileNameLabel(props: { readonly fileName: string }): ReactElement {
       {breakPathText(props.fileName, styles["report-path-glue"])}
     </RepositoryFileLinkTarget>
   )
-}
-
-function findCodeChild(node: Element | undefined): Element | undefined {
-  return node?.children.find(
-    (child): child is Element => child.type === "element" && child.tagName === "code",
-  )
-}
-
-/**
- * フェンスに書かれたファイル名。{@link rehypeCodeFileName} が属性に移し、サニタイザが通したものだけがここに来る。
- * モデルが書いた文字列なので、型の上では何が入っていてもよい形で受ける。
- */
-function codeFileName(codeNode: Element): string | undefined {
-  return optionalString(codeNode.properties[CODE_FILE_NAME_PROPERTY])
-}
-
-function codeLanguage(codeNode: Element): string | undefined {
-  const match = (codeNode.properties.className ?? []).find((name) => name.startsWith("language-"))
-  return match?.slice("language-".length)
-}
-
-/** hast の要素の中身を、素のテキストとして連結する（highlight.js が足した `<span>` も無視する）。 */
-function hastText(node: Element): string {
-  return node.children.map(hastNodeText).join("")
-}
-
-function hastNodeText(node: Element["children"][number]): string {
-  if (node.type === "text") {
-    return node.value
-  }
-  return node.type === "element" ? node.children.map(hastNodeText).join("") : ""
 }
 
 type SectionHeadingProps = JSX.IntrinsicElements["h2"] & ExtraProps

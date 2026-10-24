@@ -105,6 +105,15 @@ describe("headedSectionIdsOfTurn", () => {
     expect(headedSectionIdsOfTurn(turnOf([interim]))).toEqual([0])
     expect(headedSectionIdsOfTurn(turnOf([]))).toEqual([])
   })
+
+  it("同じ MainViewTurn の2回目は覚えた結果をそのまま返す（抽出が1回）", () => {
+    const interim = textStep(0, ["一"], { interim: true, final: false })
+    const closed = textStep(1, ["一", "二"], { interim: false, final: true })
+    const turn = turnOf([interim, closed])
+
+    expect(headedSectionIdsOfTurn(turn)).toBe(headedSectionIdsOfTurn(turn))
+    expect(newSectionIdsOfTurn(turn)).toBe(newSectionIdsOfTurn(turn))
+  })
 })
 
 describe("newSectionIdsOf", () => {

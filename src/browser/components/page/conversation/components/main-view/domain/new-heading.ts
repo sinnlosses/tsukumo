@@ -7,27 +7,17 @@ import type { MainViewTurn } from "../../../../../../../shared/session/main-view
 
 type HeadedSection = ReturnType<typeof reportHeadedSections>[number]
 
-/** やり取りの最後の中間レポートと最終レポートを比べた、足された節の欄の ID。最終が決まっていなければ空。 */
+const NEW_SECTION_IDS_BY_TURN = new WeakMap<MainViewTurn, readonly number[]>()
+const HEADED_SECTION_IDS_BY_TURN = new WeakMap<MainViewTurn, readonly number[]>()
+
+/** やり取りの最後の中間レポートと最終レポートを比べた、足された節の欄の ID。最終が決まっていなければ空。同じ `MainViewTurn` の2回目からは覚えた結果を返す。 */
 export function newSectionIdsOfTurn(turn: MainViewTurn): readonly number[] {
-  const final = turn.steps.findLast((step) => step.final && step.body.kind === "text")
-  const interim = turn.steps.findLast((step) => step.interim && step.body.kind === "text")
-  if (final?.body.kind !== "text") {
-    return []
-  }
-  return newSectionIdsOf(
-    interim?.body.kind === "text" ? reportHeadedSections(interim.body.report) : undefined,
-    reportHeadedSections(final.body.report),
-  )
+  return rememberedFor(NEW_SECTION_IDS_BY_TURN, turn, computeNewSectionIds)
 }
 
-/** 本文に見出しのある節の欄の ID。最終レポートがあればそれ、無ければ最後のレポート。 */
+/** 本文に見出しのある節の欄の ID。最終レポートがあればそれ、無ければ最後のレポート。同じ `MainViewTurn` の2回目からは覚えた結果を返す。 */
 export function headedSectionIdsOfTurn(turn: MainViewTurn): readonly number[] {
-  const shown =
-    turn.steps.findLast((step) => step.final && step.body.kind === "text") ??
-    turn.steps.findLast((step) => step.body.kind === "text")
-  return shown?.body.kind === "text"
-    ? reportHeadedSections(shown.body.report).map((section) => section.id)
-    : []
+  return rememberedFor(HEADED_SECTION_IDS_BY_TURN, turn, computeHeadedSectionIds)
 }
 
 /** 中間レポートの本文があるか。 */
@@ -50,4 +40,39 @@ export function newSectionIdsOf(
   return finalSections
     .filter((section) => !before.has(section.heading))
     .map((section) => section.id)
+}
+
+function rememberedFor(
+  memo: WeakMap<MainViewTurn, readonly number[]>,
+  turn: MainViewTurn,
+  compute: (turn: MainViewTurn) => readonly number[],
+): readonly number[] {
+  const remembered = memo.get(turn)
+  if (remembered !== undefined) {
+    return remembered
+  }
+  const ids = compute(turn)
+  memo.set(turn, ids)
+  return ids
+}
+
+function computeNewSectionIds(turn: MainViewTurn): readonly number[] {
+  const final = turn.steps.findLast((step) => step.final && step.body.kind === "text")
+  const interim = turn.steps.findLast((step) => step.interim && step.body.kind === "text")
+  if (final?.body.kind !== "text") {
+    return []
+  }
+  return newSectionIdsOf(
+    interim?.body.kind === "text" ? reportHeadedSections(interim.body.report) : undefined,
+    reportHeadedSections(final.body.report),
+  )
+}
+
+function computeHeadedSectionIds(turn: MainViewTurn): readonly number[] {
+  const shown =
+    turn.steps.findLast((step) => step.final && step.body.kind === "text") ??
+    turn.steps.findLast((step) => step.body.kind === "text")
+  return shown?.body.kind === "text"
+    ? reportHeadedSections(shown.body.report).map((section) => section.id)
+    : []
 }
