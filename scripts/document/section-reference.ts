@@ -16,6 +16,10 @@
 // 多いため）。節番号が付いていて、参照先にその番号の見出しがあるときは、その節（下位の見出しと
 // 本文を含む）の中に句があるかで照らす。行の折り返し・空白・バッククォート・`` の有無の違いは両側から除いて比べる。
 //
+// 参照先が `docs/X.md` のとき、句は親と、子ディレクトリ `docs/X/*.md` の本文で探す
+// （子の冒頭の一言と「節の索引」の節は本文にしない）。番号つきの参照は、その番号の見出しを持つ
+// ファイルがあればそこだけで照らす。
+//
 // 「」の無い素のパス（`docs/` 以下の `.md`）は、句を照らせないのでファイルの実在だけを照らす。
 // こちらは `docs/history/` を指すものも照らす。
 
@@ -122,11 +126,13 @@ export function findStrayReferences(
       return [{ ...reference, targetMissing: true }]
     }
     const phrase = normalizeForMatch(withoutTrailingEllipsis(reference.phrase))
-    const scope =
-      reference.section === undefined
-        ? undefined
-        : readNumberedSection(targetText, reference.section)
-    return normalizeForMatch(scope ?? targetText).includes(phrase)
+    const candidates = [targetText, ...readChildBodies(reference.targetPath, targets)]
+    const scopes = candidates.map((text) =>
+      reference.section === undefined ? undefined : readNumberedSection(text, reference.section),
+    )
+    const numbered = scopes.filter((scope) => scope !== undefined)
+    const searched = numbered.length > 0 ? numbered : candidates
+    return searched.some((text) => normalizeForMatch(text).includes(phrase))
       ? []
       : [{ ...reference, targetMissing: false }]
   })
@@ -290,4 +296,39 @@ function withoutTrailingEllipsis(phrase: string): string {
 /** 折り返し・空白・バッククォート・強調の `` を除く（両側を同じ形に揃えて比べるため）。 */
 function normalizeForMatch(text: string): string {
   return text.replace(/\s+/gu, "").replace(/`/gu, "").replace(/\*\*/gu, "")
+}
+
+/** `docs/X.md` を親とみなし、`targets` にある `docs/X/*.md`（直下の子）の本文を返す。 */
+function readChildBodies(parentPath: string, targets: ReadonlyMap<string, string>): string[] {
+  if (!parentPath.endsWith(".md")) {
+    return []
+  }
+  const childPrefix = `${parentPath.slice(0, -".md".length)}/`
+  return [...targets]
+    .filter(
+      ([path]) => path.startsWith(childPrefix) && !path.slice(childPrefix.length).includes("/"),
+    )
+    .map(([, text]) => withoutLeadAndIndex(text))
+}
+
+/**
+ * 最初の `## ` の見出しより前（表題と冒頭の一言）と、`## 節の索引` の節を除く。
+ * どちらも親の索引と同じ要約の再掲なので、句の正にしない。
+ */
+function withoutLeadAndIndex(text: string): string {
+  const lines = text.split("\n")
+  const first = lines.findIndex((line) => line.startsWith("## "))
+  if (first < 0) {
+    return ""
+  }
+  const kept = lines.slice(first).reduce<{ readonly skipping: boolean; readonly lines: string[] }>(
+    (state, line) => {
+      const skipping = line.startsWith("## ") ? line.startsWith("## 節の索引") : state.skipping
+      return skipping
+        ? { skipping, lines: state.lines }
+        : { skipping, lines: [...state.lines, line] }
+    },
+    { skipping: false, lines: [] },
+  )
+  return kept.lines.join("\n")
 }

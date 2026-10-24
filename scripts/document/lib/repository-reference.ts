@@ -28,7 +28,8 @@ export function collectStrayReferences(root: string): StrayReference[] {
   const references = listSourcePaths(root)
     .filter(isScannedSource)
     .flatMap((path) => findSectionReferences(path, readFileSync(join(root, path), "utf8")))
-  return findStrayReferences(references, readExistingTargets(root, references))
+  const targets = readExistingTargets(root, references)
+  return findStrayReferences(references, new Map([...targets, ...readChildTargets(root, targets)]))
 }
 
 /** `root` 以下を読み、無いファイルを指す `docs/` 以下の `.md` のパスをすべて返す。 */
@@ -50,6 +51,16 @@ export function collectStraySymbolReferences(root: string): StraySymbolReference
     .filter(isSymbolCheckedDocument)
     .flatMap((path) => findSymbolReferences(path, readFileSync(join(root, path), "utf8")))
   return findStraySymbolReferences(references, readExistingTargets(root, references))
+}
+
+/** 親 `docs/X.md` の子 `docs/X/*.md`（直下のみ）を、パスから本文への対応にして返す。 */
+function readChildTargets(root: string, parents: ReadonlyMap<string, string>): Map<string, string> {
+  return new Map(
+    [...parents.keys()]
+      .filter((path) => path.endsWith(".md"))
+      .flatMap((path) => globSync(`${path.slice(0, -".md".length)}/*.md`, { cwd: root }).toSorted())
+      .map((path) => [path, readFileSync(join(root, path), "utf8")] as const),
+  )
 }
 
 /** 参照の指す先のうち実在するものを、パスから本文への対応にして返す。 */

@@ -179,6 +179,70 @@ describe("findStrayReferences", () => {
   })
 })
 
+describe("findStrayReferences の親子", () => {
+  const parent = `docs/${"parent"}.md`
+  const child = `docs/${"parent"}/${"child"}.md`
+  const otherChild = `docs/${"parent"}/${"other"}.md`
+  const targets = new Map([
+    [parent, "# 親\n\n## 節の見出しだけ\n"],
+    [
+      child,
+      [
+        "# 子",
+        "",
+        "冒頭の一言にだけある語",
+        "",
+        "## 節の索引",
+        "",
+        "| 節 | 中身 |",
+        "| --- | --- |",
+        "| ## 子の節 | 索引の行にだけある語 |",
+        "",
+        "## 子の節",
+        "",
+        "子の本文にある語",
+      ].join("\n"),
+    ],
+    [otherChild, "# 別の子\n\n## 別の節\n\n別の本文\n"],
+  ])
+
+  function straysOf(phrase: string, section?: string): string[] {
+    return findStrayReferences(
+      [{ sourcePath: "src/sample.ts", line: 1, targetPath: parent, section, phrase }],
+      targets,
+    ).map((stray) => stray.phrase)
+  }
+
+  test("親に無く子の本文にある句は迷子にしない", () => {
+    expect(straysOf("子の本文にある語")).toEqual([])
+    expect(straysOf("別の本文")).toEqual([])
+  })
+
+  test("子にも無い句は迷子にする", () => {
+    expect(straysOf("どこにも無い語")).toEqual(["どこにも無い語"])
+  })
+
+  test("子の冒頭の一言・索引の行だけに当たる句は迷子にする", () => {
+    expect(straysOf("冒頭の一言にだけある語")).toEqual(["冒頭の一言にだけある語"])
+    expect(straysOf("索引の行にだけある語")).toEqual(["索引の行にだけある語"])
+  })
+
+  test("節番号は、その番号の見出しを持つ子の本文の節の中で照らす", () => {
+    const numbered = new Map([
+      [parent, "# 親\n"],
+      [child, "## 1 一\n\n一の本文\n"],
+      [otherChild, "## 2 二\n\n二の本文\n"],
+    ])
+    const strays = (section: string, phrase: string): number =>
+      findStrayReferences(
+        [{ sourcePath: "src/sample.ts", line: 1, targetPath: parent, section, phrase }],
+        numbered,
+      ).length
+    expect(strays("2", "二の本文")).toBe(0)
+    expect(strays("2", "一の本文")).toBe(1)
+  })
+})
+
 describe("findFileReferences", () => {
   function targetsOf(text: string): string[] {
     return findFileReferences("src/sample.ts", text).map((reference) => reference.targetPath)
