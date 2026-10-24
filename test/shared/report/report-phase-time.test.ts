@@ -135,7 +135,7 @@ describe("phaseTimesMarkdown", () => {
     )
   })
 
-  it("並列の回は waterfall で、並列の段の棒を中の段の棒の上に開始の位置と長さで置く", () => {
+  it("並列の回は waterfall で、親の棒を描かず、中の段の棒の数だけ棒を置き、囲みが壁時計の開始と長さを持つ", () => {
     const html = phaseTimesMarkdown([
       known("1/4 架空の段A", 10_000),
       {
@@ -152,17 +152,52 @@ describe("phaseTimesMarkdown", () => {
     ])
 
     const bars = [
-      ...html.matchAll(/title="([^"]+)" style="margin-left: ([\d.]+)%; width: ([\d.]+)%"/g),
+      ...html.matchAll(
+        /<span class="phase-waterfall-bar(?: phase-waterfall-longest)?" title="([^"]+)" style="margin-left: ([\d.]+)%; width: ([\d.]+)%">/g,
+      ),
     ]
     expect(bars.map(([, title, left, width]) => [title, left, width])).toEqual([
       ["1/4 架空の段A 10秒", "0", "40"],
-      ["並列 2–3 10秒", "40", "40"],
       ["2/4 架空の段B 10秒", "40", "40"],
       ["3/4 架空の段C 6秒", "40", "24"],
       ["4/4 架空の段D 5秒", "80", "20"],
     ])
+    const walls = [
+      ...html.matchAll(
+        /<span class="phase-time-wall" title="([^"]+)" style="margin-left: ([\d.]+)%; width: ([\d.]+)%"><\/span>/g,
+      ),
+    ]
+    expect(walls.map(([, title, left, width]) => [title, left, width])).toEqual([
+      ["並列 2–3 10秒", "40", "40"],
+    ])
+    expect(html.match(/<div class="phase-waterfall-group">/g)).toHaveLength(1)
     expect(html.match(/phase-waterfall-longest/g)).toHaveLength(1)
+    expect(html).not.toContain("phase-time-wall-longest")
+    expect(html.match(/<span class="phase-waterfall-bar/g)).toHaveLength(4)
     expect(html).toContain("計 25秒")
+  })
+
+  it("壁時計が最長なら、囲みの枠を強める印を付け、棒には付けない", () => {
+    const html = phaseTimesMarkdown([known("1/3 架空の段A", 5_000), parallelRows()])
+
+    expect(html.match(/phase-time-wall-longest/g)).toHaveLength(1)
+    expect(html).not.toContain("phase-waterfall-longest")
+  })
+
+  it("並列の段の壁時計が測れなければ、囲みは描かず中の段の棒だけを置く", () => {
+    const html = phaseTimesMarkdown([
+      known("1/3 架空の段A", 5_000),
+      {
+        kind: "parallel",
+        label: "並列 2–3",
+        start: UNKNOWN,
+        wall: UNKNOWN,
+        phases: [{ label: "2/3 架空の段B", start: at(5_000), duration: at(10_000) }],
+      },
+    ])
+
+    expect(html).not.toContain("phase-time-wall")
+    expect(html.match(/<span class="phase-waterfall-bar/g)).toHaveLength(2)
   })
 
   it("段の名前と title の HTML をエスケープする", () => {

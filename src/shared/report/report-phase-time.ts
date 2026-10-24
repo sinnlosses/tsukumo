@@ -29,7 +29,8 @@ export type PhaseTimeRow =
  * 見出しの行（計）・帯か横棒・一覧の順に出す。
  * 並列の段が無い回は、段ごとに1区間の1本の帯で、長さは時間の比。測れなかった段は固定幅の斜線の区間で、比には数えない。
  * 並列の段がある回は、帯の代わりに1行1段の横棒（waterfall）を置く。
- * 棒の位置は依頼の頭からの開始、長さは所要で、並列の段の棒は中の段の棒の上に置き、測れなかった段は斜線の欠片で位置だけ示す。
+ * 棒の位置は依頼の頭からの開始、長さは所要で、並列の段は親の棒を描かず、中の段の棒を壁時計の区間の囲みで包む。
+ * 測れなかった段は斜線の欠片で位置だけ示す。
  * 計は段（並列の段は壁時計の1区間）の測れた区間の和、割合はその区間の時間÷計の整数%、一番長い区間だけ強める。
  * 測れなかった区間は一覧で「不明」とし、割合は空欄にする。
  * 並列の段の中の段は一覧にだけ字下げして並べ、割合は空欄にする。
@@ -79,29 +80,32 @@ type WaterfallBar = {
   readonly start: MeasuredTime
   readonly duration: MeasuredTime
   readonly longest: boolean
+  readonly wall: boolean
 }
 
 /** 開始か所要が測れなかった棒の幅（全体の%）。 */
 const UNKNOWN_BAR_PERCENT = 2
 
 /**
- * 行ごとの横棒。並列の段は壁時計の棒を中の段の棒の上に置く。
+ * 行ごとの横棒。並列の段は中の段の棒を包みに入れ、壁時計の区間を囲みの要素で示す。
  * 開始か所要が測れなかった棒は斜線の欠片にして、直前までの棒の終わりに置く。
  */
 function waterfallMarkdown(rows: readonly PhaseTimeRow[], longestIndex: number): string {
-  const bars = rows.flatMap((row, index): readonly WaterfallBar[] =>
+  const barsOfRows = rows.map((row, index): readonly WaterfallBar[] =>
     row.kind === "phase"
-      ? [{ ...row, longest: index === longestIndex }]
+      ? [{ ...row, longest: index === longestIndex, wall: false }]
       : [
           {
             label: row.label,
             start: row.start,
             duration: row.wall,
             longest: index === longestIndex,
+            wall: true,
           },
-          ...row.phases.map((phase) => ({ ...phase, longest: false })),
+          ...row.phases.map((phase) => ({ ...phase, longest: false, wall: false })),
         ],
   )
+  const bars = barsOfRows.flat()
   const ends = bars.map((bar) =>
     bar.start.kind === "known" && bar.duration.kind === "known"
       ? bar.start.milliseconds + bar.duration.milliseconds
@@ -110,21 +114,36 @@ function waterfallMarkdown(rows: readonly PhaseTimeRow[], longestIndex: number):
   const extent = Math.max(0, ...ends.filter((end) => end !== undefined))
   const percent = (milliseconds: number): number =>
     extent > 0 ? Math.round((milliseconds / extent) * 10_000) / 100 : 0
-  const lines = bars.map((bar, index) => {
+  const barMarkdown = (bar: WaterfallBar): string => {
     const title = `title="${htmlAttribute(bar.label)} ${formatMeasured(bar.duration)}"`
     if (bar.start.kind === "known" && bar.duration.kind === "known") {
+      const geometry = `style="margin-left: ${String(percent(bar.start.milliseconds))}%; width: ${String(percent(bar.duration.milliseconds))}%"`
+      if (bar.wall) {
+        const className = bar.longest
+          ? "phase-time-wall phase-time-wall-longest"
+          : "phase-time-wall"
+        return `<span class="${className}" ${title} ${geometry}></span>`
+      }
       const className = bar.longest
         ? "phase-waterfall-bar phase-waterfall-longest"
         : "phase-waterfall-bar"
-      return waterfallRowMarkdown(
-        `<span class="${className}" ${title} style="margin-left: ${String(percent(bar.start.milliseconds))}%; width: ${String(percent(bar.duration.milliseconds))}%"></span>`,
-      )
+      return waterfallRowMarkdown(`<span class="${className}" ${title} ${geometry}></span>`)
     }
-    const before = Math.max(0, ...ends.slice(0, index).filter((end) => end !== undefined))
+    if (bar.wall) {
+      return ""
+    }
+    const before = Math.max(
+      0,
+      ...ends.slice(0, bars.indexOf(bar)).filter((end) => end !== undefined),
+    )
     const left = Math.min(percent(before), 100 - UNKNOWN_BAR_PERCENT)
     return waterfallRowMarkdown(
       `<span class="phase-waterfall-bar phase-waterfall-unknown" ${title} style="margin-left: ${String(left)}%; width: ${String(UNKNOWN_BAR_PERCENT)}%"></span>`,
     )
+  }
+  const lines = rows.map((row, index) => {
+    const html = (barsOfRows[index] ?? []).map(barMarkdown).join("")
+    return row.kind === "phase" ? html : `<div class="phase-waterfall-group">${html}</div>`
   })
   return `<div class="phase-waterfall" aria-hidden="true">${lines.join("")}</div>`
 }

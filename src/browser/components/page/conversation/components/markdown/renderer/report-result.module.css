@@ -438,6 +438,30 @@
   border-radius: 3px;
   background: var(--phase-band);
 }
+.detail-block .report-phase-waterfall-group {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 6px 0;
+}
+.detail-block .report-phase-time-wall {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--phase-band-longest) 14%, transparent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--phase-band-longest) 14%, transparent);
+  outline: 1px solid color-mix(in srgb, var(--phase-band-longest) 40%, transparent);
+  outline-offset: 4px;
+}
+.detail-block .report-phase-time-wall-longest {
+  outline-color: var(--phase-band-longest);
+}
+.detail-block .report-phase-waterfall-bar {
+  position: relative;
+}
 .detail-block .report-phase-waterfall-longest {
   background: var(--phase-band-longest);
 }
