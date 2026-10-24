@@ -37,7 +37,6 @@ describe("createSessionLaunch", () => {
       "readSessionDefault",
       "listSessions:tsukumo-spirit:work",
       "startDriver:tsukumo-spirit:work:",
-      "refreshSessions",
     ])
     expect(harness.events.map((event) => event.kind)).toEqual([
       "character-changed",
@@ -142,7 +141,6 @@ describe("createSessionLaunch", () => {
       "readSessionDefault",
       "listSessions:tsukumo-spirit:chat",
       "startDriver:tsukumo-spirit:chat:",
-      "refreshSessions",
     ])
   })
 
@@ -197,7 +195,6 @@ describe("createSessionLaunch", () => {
       "listSessions:tsukumo-spirit:work",
       "startDriver:tsukumo-spirit:work:other-session",
       "restoreEvents:other-session",
-      "refreshSessions",
     ])
     expect(harness.driverEvents).toContainEqual({
       kind: "sessions-changed",
@@ -277,8 +274,16 @@ describe("createSessionLaunch", () => {
       listSessions: () => Promise.resolve(refreshedYet ? refreshed : CHOICES),
     })
 
-    await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
+    const launch = createSessionLaunch(harness.ports)
+    await launch(harness.receive, harness.receiveRestored, {
       selection: { by: "initial" },
+      chat: undefined,
+      resume: { by: "new" },
+    })
+    await settle()
+    harness.driverEvents.length = 0
+    await launch(harness.receive, harness.receiveRestored, {
+      selection: { by: "current" },
       chat: undefined,
       resume: PREVIOUS_WORK,
     })
@@ -290,11 +295,87 @@ describe("createSessionLaunch", () => {
     ])
   })
 
-  it("読み直した一覧を採らなかったときは、切り替え先の一覧を流し直さない", async () => {
-    const harness = createHarness({ refreshSessions: () => Promise.resolve("kept") })
+  it("最初の代は駆動を一覧の読みより先に起こし、一覧は読み終えたときに流し、読み直さない", async () => {
+    const listed = Promise.withResolvers<typeof CHOICES>()
+    const harness = createHarness({
+      listSessions: () => listed.promise,
+    })
 
     await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
       selection: { by: "initial" },
+      chat: undefined,
+      resume: { by: "new" },
+    })
+    await settle()
+
+    expect(harness.calls).toContain("startDriver:tsukumo-spirit:work:")
+    expect(harness.driverEvents.some((event) => event.kind === "sessions-changed")).toBe(false)
+
+    listed.resolve(CHOICES)
+    await settle()
+
+    expect(harness.driverEvents).toContainEqual({
+      kind: "sessions-changed",
+      sessions: CHOICES,
+      current: undefined,
+    })
+    expect(harness.calls).not.toContain("refreshSessions")
+  })
+
+  it("起こし直しでは読み直す", async () => {
+    const harness = createHarness()
+    const launch = createSessionLaunch(harness.ports)
+    const request: SessionLaunchRequest = {
+      selection: { by: "initial" },
+      chat: undefined,
+      resume: { by: "new" },
+    }
+
+    await launch(harness.receive, harness.receiveRestored, request)
+    await launch(harness.receive, harness.receiveRestored, request)
+    await settle()
+
+    expect(harness.calls.filter((call) => call === "refreshSessions")).toHaveLength(1)
+  })
+
+  it("起動1回で transcript の一覧の読みは1回だけ走る", async () => {
+    let reads = 0
+    const catalog = createSessionCatalog({
+      read: () => {
+        reads += 1
+        return Promise.resolve([])
+      },
+      now: () => 1_000,
+      cwd: "/work/fictional",
+    })
+    const harness = createHarness({
+      listSessions: (pack, chat) => catalog.listChoices(sessionTag(pack.name, chat, 7327)),
+      refreshSessions: () => catalog.refresh(),
+    })
+
+    await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
+      selection: { by: "initial" },
+      chat: undefined,
+      resume: { by: "new" },
+    })
+    await settle()
+
+    expect(reads).toBe(1)
+  })
+
+  it("読み直した一覧を採らなかったときは、切り替え先の一覧を流し直さない", async () => {
+    const harness = createHarness({ refreshSessions: () => Promise.resolve("kept") })
+
+    const launch = createSessionLaunch(harness.ports)
+    await launch(harness.receive, harness.receiveRestored, {
+      selection: { by: "initial" },
+      chat: undefined,
+      resume: { by: "new" },
+    })
+    await settle()
+    harness.driverEvents.length = 0
+    await launch(harness.receive, harness.receiveRestored, {
+      selection: { by: "current" },
       chat: undefined,
       resume: PREVIOUS_WORK,
     })

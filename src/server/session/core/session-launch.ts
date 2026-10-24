@@ -119,9 +119,9 @@ export type SessionLaunchPorts<Pack extends NamedCharacterPack> = {
  * パックを決める → 画面から名前が届いたときだけ覚える → `character-changed`・`chat-mode-changed`・
  * （雑談のときだけ `chat-topics-changed` と `remembered-lines-changed`）・
  * `session-default-changed` を流す →
- * 続きのセッションを決める → 切り替え先の一覧を流す → 駆動を起こす →
+ * 続きのセッションを決める → 駆動を起こす（切り替え先の一覧は読み終えたときに流す） →
  * 続きから始まったなら履歴を組み直して流し終える → 一覧の読み直しを始める → 駆動を返す。
- * 読み直した一覧を採ったときだけ、切り替え先の一覧をもう一度流す。
+ * 読み直しは起こし直し（2代目以降）だけで、読み直した一覧を採ったときだけ切り替え先の一覧をもう一度流す。
  *
  * 受け口は2つ。`onEvent` は駆動から新しく届くイベント、`onRestoredEvents` は前のセッションの記録を組み直した再生だけを、まとめて1回で渡す。
  * 分けるのは「どちらの口から来たか」を呼び出し側が知れるようにするためだけ。
@@ -133,7 +133,10 @@ export function createSessionLaunch<Pack extends NamedCharacterPack>(
   onRestoredEvents: (events: readonly RestoredEvent[]) => void,
   request: SessionLaunchRequest,
 ) => Promise<SessionDriver> {
+  let launched = false
   return async (onEvent, onRestoredEvents, request) => {
+    const firstLaunch = !launched
+    launched = true
     const { selection } = request
     const chat = request.chat ?? false
     const pack = ports.choosePack(selection)
@@ -171,13 +174,15 @@ export function createSessionLaunch<Pack extends NamedCharacterPack>(
         current: start.kind === "resume" ? start.sessionId : undefined,
       })
     }
-    announceSessions(await ports.listSessions(pack, chat))
+    // 一覧の読みは最初の代では transcript の全件を読み終えるまで解けない。駆動はそれを待たずに起こす。
+    const listed = ports.listSessions(pack, chat)
     const restored = Promise.withResolvers<readonly RestoredEvent[]>()
     const driver = ports.startDriver(
       { pack, start, chat, sessionDefault },
       onEvent,
       restored.promise,
     )
+    void (async () => announceSessions(await listed))()
 
     // 流し終えてから駆動を返す。
     // 起こし直しの `hello` は駆動が返るのを待って配るので、ここで待たないと履歴の無い `hello` が先に出て、立ち絵の表情が既定から続きの表情へもう一度飛ぶ。
@@ -186,7 +191,10 @@ export function createSessionLaunch<Pack extends NamedCharacterPack>(
         ? await replayRestoredSession(ports, start.sessionId, pack, onRestoredEvents)
         : [],
     )
-    void announceRefreshedSessions(ports, pack, chat, announceSessions)
+    // 最初の代の一覧は作った直後に読んだばかりなので、読み直すのは起こし直しからだけ。
+    if (!firstLaunch) {
+      void announceRefreshedSessions(ports, pack, chat, announceSessions)
+    }
 
     return driver
   }
