@@ -174,12 +174,6 @@
     }
   },
   {
-    "received": "response",
-    "order": 3,
-    "status": 200,
-    "body": {}
-  },
-  {
     "received": "event",
     "at": 1768438800000,
     "event": {
@@ -187,6 +181,12 @@
       "text": "会話を消して始め直す（架空の依頼）",
       "images": []
     }
+  },
+  {
+    "received": "response",
+    "order": 3,
+    "status": 200,
+    "body": {}
   },
   {
     "received": "event",

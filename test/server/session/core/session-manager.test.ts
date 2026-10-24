@@ -181,7 +181,7 @@ describe("createSessionManager", () => {
     const before = frames.length
 
     // 束に残っているうちに再生が届く（hello の姿に入るので、events でもう一度配らない）。
-    stub.emit({ kind: "chat-mode-changed", chat: true })
+    stub.emit({ kind: "partial-utterance", text: "架空の書きかけ" })
     const stateBeforeReplay = manager.commandSession.state()
     stub.emitRestored(knownRestored(RESTORED_REPLAY))
     await waitForBatch()

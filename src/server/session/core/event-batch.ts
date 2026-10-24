@@ -1,5 +1,6 @@
 // 届いたイベントをまとめて配るための束。
-// 1件ずつ押さないのは、書きかけの本文がトークン単位で届くので、1件ずつ配ると転送量が跳ねるため。
+// 書きかけの本文がトークン単位で届くので、続けて届くものは1件ずつ配らず間隔ごとにまとめる。
+// 待ちが無いときに届いた書きかけの本文以外の1件目は、間隔を待たずにその場で配る。
 //
 // 駆動1代ぶんの持ち物で、起こし直すと作り直す（前の代の積み残しを新しい画面へ配らない）。
 //
@@ -12,7 +13,10 @@ export const EVENT_BATCH_INTERVAL_MS = 100
 
 /** 時刻を打ったイベントを積み、間隔ごとに1回だけまとめて渡す入れ物。 */
 export type EventBatch = {
-  /** 1件積む。待っている配りが無いときだけそこから間隔を数え始める。 */
+  /**
+   * 1件積む。待っている配りが無く、書きかけの本文でないものは、積まずにその場で配る。
+   * どちらも待っている配りが無いときだけそこから間隔を数え始める。
+   */
   readonly add: (stamped: StampedEvent) => void
   /** 積んだものを配らずに捨て、待っている配りも取り消す。 */
   readonly discard: () => void
@@ -49,7 +53,11 @@ export function createEventBatch(options: EventBatchOptions): EventBatch {
 
   return {
     add: (stamped) => {
-      buffered = [...buffered, stamped]
+      if (timer === undefined && stamped.event.kind !== "partial-utterance") {
+        options.deliver([stamped])
+      } else {
+        buffered = [...buffered, stamped]
+      }
       if (timer === undefined) {
         timer = setTimeout(flush, options.intervalMs)
       }

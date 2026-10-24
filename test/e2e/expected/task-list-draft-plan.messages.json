@@ -113,12 +113,6 @@
     }
   },
   {
-    "received": "response",
-    "order": 1,
-    "status": 200,
-    "body": {}
-  },
-  {
     "received": "event",
     "at": 1768438800000,
     "event": {
@@ -126,6 +120,12 @@
       "text": "ドラフト t-003 を計画して（bd show t-003 で読める）。## 完了条件 と ## やること を書いて、着手できる todo にする。",
       "images": []
     }
+  },
+  {
+    "received": "response",
+    "order": 1,
+    "status": 200,
+    "body": {}
   },
   {
     "received": "event",

@@ -61,7 +61,8 @@ transcript の一覧を読み直すのは起こし直し（2代目以降）の�
    `frame.subscribe` を呼ぶ
 2. サーバは upgrade の前に Origin とトークンを確かめ、購読の最初に **`hello` フレーム**
    （`PROTOCOL_VERSION`・`SessionState` の snapshot・キャラクターの見せ方）を1つ流す
-3. 以降、セッションで起きたイベントを **50〜100ms ごとにまとめた `events` フレーム**で押す。
+3. 以降、セッションで起きたイベントを `events` フレームで押す。待ちが無いときの単発（書きかけの本文以外）は
+   待たずに押し、続けて届くものと書きかけの本文は **100ms ごとにまとめた `events` フレーム**にする。
    ブラウザは同じ `applySessionEvent` で畳む。**サーバとブラウザの `SessionState` は構造的に同じ**
 
 ### 依頼

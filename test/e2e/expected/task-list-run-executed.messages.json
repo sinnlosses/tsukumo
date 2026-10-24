@@ -97,12 +97,6 @@
     }
   },
   {
-    "received": "response",
-    "order": 1,
-    "status": 200,
-    "body": {}
-  },
-  {
     "received": "event",
     "at": 1768438800000,
     "event": {
@@ -110,6 +104,12 @@
       "text": "タスク t-001 を進めて（bd show t-001 で読める）。",
       "images": []
     }
+  },
+  {
+    "received": "response",
+    "order": 1,
+    "status": 200,
+    "body": {}
   },
   {
     "received": "event",
