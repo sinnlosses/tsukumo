@@ -39,10 +39,10 @@ describe("撮影の件のセレクタの class", () => {
     expect(selectorNames.length).toBeGreaterThanOrEqual(14)
   })
 
-  test("すべて src の *.module.css に定義がある", () => {
+  test("すべて src の *.module.css とその部品に定義がある", () => {
     const defined = new Set(
       readdirSync(SRC_DIR, { recursive: true, encoding: "utf8" })
-        .filter((file) => file.endsWith(".module.css"))
+        .filter((file) => file.endsWith(".module.css") || file.includes("/report-notation/"))
         .flatMap((file) => cssClassNames(readFileSync(`${SRC_DIR}${file}`, "utf8"))),
     )
 
