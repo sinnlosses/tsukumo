@@ -6,15 +6,17 @@
 // 会話の内容がここを通る。
 // 持ち出す先は呼び出し側のイベントの流れだけで、ログにもファイルにも書かない。
 
-import { isPlainObject } from "remeda"
+import { isPlainObject, mapValues } from "remeda"
 
 import type { Expression } from "../../../shared/character-pack/expression.ts"
 import { reportArgumentCharsOf } from "../../../shared/report/report-argument-chars.ts"
 import { parsePhaseResult } from "../../../shared/session/phase-result.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import { foldPermissionMode } from "../../../shared/session/session-info.ts"
+import { MAX_TOOL_TEXT_LENGTH } from "../../../shared/session/session-record.ts"
 import { parseWorkPlan } from "../../../shared/session/work-plan.ts"
 import { isBlankText } from "../../../shared/utils/blank-text.ts"
+import { clipText, clipWithEllipsis } from "../../../shared/utils/clip-text.ts"
 import { nonBlankString } from "../../../shared/utils/non-blank-string.ts"
 import { optionalString } from "../../../shared/utils/optional-string.ts"
 import { apiErrorEvents, apiRetryEvents, rateLimitEvents } from "./sdk-api-trouble-message.ts"
@@ -313,11 +315,30 @@ function assistantBlockEvents(
           kind: "tool-started",
           toolUseId: block.id,
           name: block.name,
-          input: block.input,
+          input: clipInputStrings(block.input),
           parentToolUseId,
         },
       ]
     : []
+}
+
+/**
+ * ツールの引数の文字列の値を {@link MAX_TOOL_TEXT_LENGTH} 字に収める。切った値の末尾は `…`。
+ * 入れ子のオブジェクトと配列の構造は変えない。
+ */
+function clipInputStrings(value: unknown): unknown {
+  if (typeof value === "string") {
+    return clipText(value, MAX_TOOL_TEXT_LENGTH).omittedLength === 0
+      ? value
+      : clipWithEllipsis(value, MAX_TOOL_TEXT_LENGTH - 1)
+  }
+  if (Array.isArray(value)) {
+    return value.map(clipInputStrings)
+  }
+  if (isPlainObject(value)) {
+    return mapValues(value, clipInputStrings)
+  }
+  return value
 }
 
 /** 委譲先が返却を渡すツールの名前。メインの query に `parent_tool_use_id` 付きで流れる。 */

@@ -4,6 +4,7 @@ import {
   isSubagentMessage,
   toSessionEvents,
 } from "../../../../src/server/session-driver/core/sdk-message.ts"
+import { MAX_TOOL_TEXT_LENGTH } from "../../../../src/shared/session/session-record.ts"
 import { assistantMessage, EXPRESSIONS } from "../../../fixture/sdk-assistant-message.ts"
 import { WORK_PLAN_TOOL_FULL_NAME } from "../../../fixture/sdk-message.ts"
 
@@ -62,6 +63,43 @@ describe("toSessionEvents", () => {
         parentToolUseId: undefined,
       },
     ])
+  })
+
+  describe("ツールの引数の文字列", () => {
+    const inputOf = (input: unknown): unknown => {
+      const events = toSessionEvents(
+        assistantMessage([{ type: "tool_use", id: "toolu_1", name: "Write", input }]),
+        EXPRESSIONS,
+      )
+      return events[0]?.kind === "tool-started" ? events[0].input : undefined
+    }
+
+    it("上限を超える文字列は上限の字数に切り、末尾に印を付ける", () => {
+      const input = inputOf({ content: "あ".repeat(MAX_TOOL_TEXT_LENGTH + 500) })
+
+      expect(input).toEqual({ content: `${"あ".repeat(MAX_TOOL_TEXT_LENGTH - 1)}…` })
+    })
+
+    it("上限に収まる値と構造は変えない", () => {
+      const input = {
+        command: "x".repeat(MAX_TOOL_TEXT_LENGTH),
+        description: "説明",
+        count: 3,
+        flag: true,
+        list: ["a", 1],
+      }
+
+      expect(inputOf(input)).toEqual(input)
+    })
+
+    it("入れ子のオブジェクトと配列の中の文字列も切る", () => {
+      const long = "y".repeat(MAX_TOOL_TEXT_LENGTH + 1)
+
+      expect(inputOf({ edits: [{ new_string: long }], nested: { text: long } })).toEqual({
+        edits: [{ new_string: `${"y".repeat(MAX_TOOL_TEXT_LENGTH - 1)}…` }],
+        nested: { text: `${"y".repeat(MAX_TOOL_TEXT_LENGTH - 1)}…` },
+      })
+    })
   })
 
   it("1つの assistant メッセージに本文とツールが並んでいても両方拾う", () => {
