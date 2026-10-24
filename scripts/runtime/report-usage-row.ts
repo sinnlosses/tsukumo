@@ -7,7 +7,7 @@ import { z } from "zod"
 import { REPORT_USAGE_FORMAT_VERSION } from "../../src/shared/report/report-usage-record.ts"
 
 /** 読む版の下限。これより古い行は読まない。 */
-export const MIN_FORMAT_VERSION = 17
+const MIN_FORMAT_VERSION = 17
 
 const figureFieldSchema = z.union([
   z.object({ figureKind: z.literal("none"), noneReason: z.string() }),
