@@ -13,6 +13,7 @@ import {
   type ReportSection,
   sectionsWithFigure,
 } from "../../../shared/report/report-block.ts"
+import type { ReportCheck } from "../../../shared/report/report-check.ts"
 import {
   MAX_FIRST_SENTENCE,
   MAX_LIST_ITEMS,
@@ -175,10 +176,41 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
       kind: "non-japanese",
       count: blocks.filter((block) => block.kind === "text" && isNonJapanese(block.text)).length,
     },
+    browserChangeWithoutImage(blocks, drawnBlocks, report.checks),
     figureContradiction(report.figure, report.sections),
   ] as const satisfies readonly ReportViolation[]
 
   return counted.filter((violation) => violation.count > VIOLATION_THRESHOLDS[violation.kind])
+}
+
+function browserChangeWithoutImage(
+  blocks: readonly ReportBlock[],
+  drawnBlocks: readonly ReportBlock[],
+  checks: readonly ReportCheck[],
+): Extract<ReportViolation, { readonly kind: "browser-change-without-image" }> {
+  const changesBrowserFile = blocks.some(
+    (block) =>
+      block.kind === "files" &&
+      block.items.some(
+        (item) =>
+          (item.change === "added" || item.change === "modified") && isBrowserComponent(item.path),
+      ),
+  )
+  const hasImage = drawnBlocks.some(
+    (block) =>
+      block.kind === "image" ||
+      (block.kind === "beforeAfter" &&
+        [block.before, block.after].some((side) => side.kind === "image")),
+  )
+  const hasUnverified = checks.some((check) => check.status === "unverified")
+  return {
+    kind: "browser-change-without-image",
+    count: changesBrowserFile && !hasImage && !hasUnverified ? 1 : 0,
+  }
+}
+
+function isBrowserComponent(path: string): boolean {
+  return path.startsWith("src/browser/") && (path.endsWith(".tsx") || path.endsWith(".css"))
 }
 
 function figureContradiction(

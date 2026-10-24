@@ -128,6 +128,11 @@ export type ReportViolation =
   /** `text` の塊が、仮名も漢字も無く英語の語が並ぶ地の文になっている。`count` は該当の数。 */
   | { readonly kind: "non-japanese"; readonly count: number }
   /**
+   * `src/browser/` の `.tsx` か `.css` を `added` / `modified` に持つ `files` があるのに、`image` の塊も `beforeAfter` の `image` の側も無く、
+   * `checks` に `unverified` の行も無い。`count` は1か0。
+   */
+  | { readonly kind: "browser-change-without-image"; readonly count: number }
+  /**
    * `figure` の `none` の理由が本文と合わない。
    * `no-shape` なのに `sections` に流れ・つながり・構造を描く塊（`list` の `flow`・`beforeAfter`・`graph`・`mermaid`・`svg`）がある（`count` はその塊の数）か、
    * `short-answer` なのに節が2つ以上ある（`count` はその節の数）。
@@ -171,6 +176,7 @@ export const VIOLATION_THRESHOLDS = {
   "label-in-item": 0,
   "labeled-ordered": 0,
   "non-japanese": 0,
+  "browser-change-without-image": 0,
   "figure-contradiction": 0,
 } as const satisfies Record<ReportViolation["kind"], number>
 

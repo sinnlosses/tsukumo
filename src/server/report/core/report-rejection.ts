@@ -102,6 +102,8 @@ function violationLine(violation: ReportViolation): string {
       return `全部の項目に \`label\` がある3段以上の \`ordered\` の \`list\` が${violation.count}個ある。名前の付いた段を辿る流れは \`flow\` にする`
     case "non-japanese":
       return `仮名も漢字も無い英語の地の文が${violation.count}個ある。日本語で書き直す（識別子・パス・コマンド・コードは \`\` で囲めば英語のままでよい）`
+    case "browser-change-without-image":
+      return "画面のファイルを変えたのに画像が無い。撮った画像を `image` か `beforeAfter` で渡すか、撮れない事情を `checks` の `unverified` に書く"
     case "figure-contradiction":
       return violation.reason === "no-shape"
         ? `\`figure\` の reason が \`no-shape\` なのに、\`sections\` に流れ・つながり・構造を描く塊（\`list\` の \`flow\`・\`beforeAfter\`・\`graph\`・\`mermaid\`・\`svg\`）が${violation.count}個ある。その図を \`figure\` に置くか、合う reason にする`
