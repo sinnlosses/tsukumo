@@ -16,7 +16,7 @@ import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../../../src/shared/session/session-state.ts"
-import { setPageUrl } from "../../../../dom-environment.ts"
+import { setPageUrl } from "../../../../dom-setup.ts"
 import { EMPTY_NAV_DRAWER_SLOTS } from "../../../nav-drawer-slot.tsx"
 import { stubPhoneWidth } from "../../../phone-width.ts"
 import { createTestQueryClient } from "../../../query-client.tsx"

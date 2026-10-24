@@ -71,7 +71,7 @@ describe("planStages", () => {
   const SETUP_FILES = [
     "test/tsukumo-home-setup.ts",
     "test/beads-template-setup.ts",
-    "test/dom-environment.ts",
+    "test/dom-setup.ts",
   ]
 
   test("文書だけの変更は E2E を選ばず、format:check・token-limit と文書の検査だけ", () => {
@@ -129,7 +129,7 @@ describe("planStages", () => {
   })
 
   test("Vitest の準備のファイルを含む変更は、ほかに src があっても単体を全件に戻す", () => {
-    const plan = planStages(["src/cli.ts", "test/dom-environment.ts"], choose, false, SETUP_FILES)
+    const plan = planStages(["src/cli.ts", "test/dom-setup.ts"], choose, false, SETUP_FILES)
     expect(unitStage(plan)?.args).toEqual([])
     expect(plan.notice).toBe("")
   })

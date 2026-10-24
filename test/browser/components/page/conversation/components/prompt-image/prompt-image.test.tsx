@@ -10,7 +10,7 @@ import {
   promptImagePath,
   type RecordedPromptImage,
 } from "../../../../../../../src/shared/session-driver/prompt-image.ts"
-import { setPageUrl } from "../../../../../../dom-environment.ts"
+import { setPageUrl } from "../../../../../../dom-setup.ts"
 import { typedElement } from "../../../../../../typed-element.ts"
 
 const IMAGE_A: PromptImage = {

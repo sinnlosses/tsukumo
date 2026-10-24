@@ -1,7 +1,5 @@
 import { defineConfig } from "vitest/config"
 
-import { cssModuleIdentityPlugin } from "./test/css-module-loader.ts"
-
 // DOM のグローバルを借りるテスト。ほかのテストには happy-dom を読ませない。
 export const DOM_TEST_FILES = [
   "test/browser/**/*.test.{ts,tsx}",
@@ -20,8 +18,8 @@ export const ISOLATED_FILES = [
 // React Compiler は足さない。`@vitejs/plugin-react` の `compiler` は consumer が `client` の環境にだけ効き、
 // Vitest の実行（`ssr: true` の変換）には掛からないので、足しても効かない。
 export default defineConfig({
-  plugins: [cssModuleIdentityPlugin()],
   test: {
+    css: { modules: { classNameStrategy: "non-scoped" } },
     globals: false,
     environment: "node",
     // hook を起こすテストが、実物の拒否の記録に足さないようにする。
@@ -34,7 +32,11 @@ export default defineConfig({
         test: {
           name: "dom",
           include: DOM_TEST_FILES,
-          setupFiles: ["./test/dom-environment.ts"],
+          environment: "happy-dom",
+          environmentOptions: {
+            happyDOM: { url: "http://127.0.0.1/", settings: { disableCSSFileLoading: true } },
+          },
+          setupFiles: ["./test/dom-setup.ts"],
         },
       },
       {

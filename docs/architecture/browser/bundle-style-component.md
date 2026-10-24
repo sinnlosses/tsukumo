@@ -103,8 +103,8 @@ class 名は用語集の語（`balloon` / `portrait` / `work-strip` など）を
 例: 縦に並ぶ規則を横の並びで上書きしたとき、`li + li` の `margin-top`・`box-sizing`・`align-items` の3宣言のうち
 `margin-top` だけを戻し、残り2つは受け入れで2回に分けて見つかった。
 
-**テストの中では class 名が CSS に書いた綴りのまま届く**（`test/css-module-loader.ts` が
-単体テストの設定に渡す Vite プラグイン）。Vite の既定の CSS Modules の変換はブラウザに出す
+**テストの中では class 名が CSS に書いた綴りのまま届く**（`vitest.config.ts` の
+`css.modules.classNameStrategy: "non-scoped"`）。Vite の既定の CSS Modules の変換はブラウザに出す
 実際の名前と同じハッシュ付きの名前を生成するので、これが無いと部品テストが綴りで引けない。
 CSS に無い名前は `undefined` のままなので、**綴りを間違えるとテストで落ちる**。
 

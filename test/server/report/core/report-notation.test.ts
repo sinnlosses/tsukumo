@@ -1,5 +1,5 @@
 import { readdirSync, readFileSync } from "node:fs"
-import { fileURLToPath } from "node:url"
+import { fileURLToPath, URL as NodeURL } from "node:url"
 
 import { cleanup, render } from "@testing-library/react"
 import { createElement } from "react"
@@ -68,10 +68,10 @@ const namedClasses = [...REPORT_NOTATION_PROMPT.matchAll(/class="([^"]+)"/g)].fl
 )
 
 // 見た目はレポートの記法を描く機能の CSS（`markdown/renderer/report-*.module.css`）にある。
-// テストの中では class 名が CSS に書いた綴りのまま届く（`cssModuleIdentityPlugin`）ので、
+// テストの中では class 名が CSS に書いた綴りのまま届く（`classNameStrategy: "non-scoped"`）ので、
 // 部品が付け直した名前をそれらのファイルの選択子とそのまま突き合わせられる。
 const STYLE_SHEET_DIRECTORY = fileURLToPath(
-  new URL(
+  new NodeURL(
     "../../../../src/browser/components/page/conversation/components/markdown/renderer/",
     import.meta.url,
   ),

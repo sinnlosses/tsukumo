@@ -8,7 +8,7 @@ import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../../../src/shared/session/session-state.ts"
-import { setPageUrl } from "../../../../dom-environment.ts"
+import { setPageUrl } from "../../../../dom-setup.ts"
 import { characterInfo } from "../../../../fixture/character.ts"
 import {
   finishedToolStatus,

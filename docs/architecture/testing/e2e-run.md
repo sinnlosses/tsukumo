@@ -58,7 +58,7 @@
   環境変数 `TSUKUMO_CHECK_WORKER_BUDGET`（正の整数。例: `TSUKUMO_CHECK_WORKER_BUDGET=4 pnpm run check`）で上書きして下げられる。1 本あたりは `floor(予算 / 本数 / 2)`、最小 1。
   並列は止めない。途中から増えた検証は、その時点の本数で自分の分を決め、走っている検証の worker は変えない。
   本数が多く最小 1 に当たるときは予算を超えうる）。単体は `dom`・`node`・`node-isolated` の3つの project に分け、DOM のグローバルを借りる
-  `test/dom-environment.ts` は `dom`（`test/browser/` と、DOM を描くほかの置き場のファイル）にだけ掛ける。
+  happy-dom の環境（`environment: "happy-dom"`）と `test/dom-setup.ts` は `dom`（`test/browser/` と、DOM を描くほかの置き場のファイル）にだけ掛ける。
   `vitest.config.ts` の `DOM_TEST_FILES` に無いファイルが DOM を要するようになったら、そこへ足す
 - **変えたファイルがすべて文書なら、`--full` でも段は `format:check`・`token-limit` と文書の検査（`pnpm run test:document`）だけになり、E2E は流れない。**
   選んだ段は `文書だけの変更のため…` の1行で出る（`scripts/dev/lib/check-stage.ts` の `planStages`）

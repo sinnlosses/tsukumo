@@ -127,14 +127,13 @@ DOM 要素の instanceof に絞れない、性質の違う `as` が `test/` の�
   注釈を付けた例など）
 - **構造が合わないだけなら、実際に合う値を作る。** `test/browser/domain/reveal/
 brush-scroll.test.ts` は `getBoundingClientRect` の戻り値を `{ top, bottom } as unknown as
-DOMRect` と偽装していたが、`DOMRect` はテスト環境（`test/dom-environment.ts`）が借りている
+DOMRect` と偽装していたが、`DOMRect` はテスト環境（happy-dom）が持つ
   実物のクラスなので `new DOMRect(0, top, 0, bottom - top)` で本物を作れば済む。`NodeJS.
 ErrnoException` も `new Error(...) as NodeJS.ErrnoException` ではなく
   `Object.assign(new Error(...), { code })` で構造ごと満たせる
 - **`Reflect.get` / `Reflect.set` は動的なプロパティ名の読み書きに `as` が要らない。**
-  `test/dom-environment.ts` が `globalThis` と happy-dom の `Window` の間で名前づきの
-  グローバルをコピーするのに使っている（`any` を経由する `Record<string, unknown>` への
-  二段キャストの代わり）
+  `test/dom-setup.ts` が `globalThis` にテスト環境の合図を立てるのに使っている
+  （`any` を経由する `Record<string, unknown>` への二段キャストの代わり）
 - **それでも構造的に合わないものだけ、`// oxlint-disable-next-line
 typescript/consistent-type-assertions` を理由のコメントと1組で残す。** `test/browser/
 components/domain/portrait.test.tsx` の `fetch` のスタブ（`fetch` の実装のうち使う分しか

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import { sessionTokenUrl } from "../../../src/browser/domain/session-token-url.ts"
-import { setPageUrl } from "../../dom-environment.ts"
+import { setPageUrl } from "../../dom-setup.ts"
 
 // `window.location.href` を境界として持つので、`setPageUrl`（happy-dom の URL 差し替え口）で
 // ページの URL を変えてから確かめる。
