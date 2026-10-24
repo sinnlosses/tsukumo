@@ -45,6 +45,7 @@ import {
 } from "./server/view-server/core/port-resolution.ts"
 import { startSession } from "./session-start.ts"
 import type { SwallowedFailurePlace } from "./shared/diagnostic/swallowed-failure.ts"
+import { openViewAfterRegisteringExit, readStartupPrerequisites } from "./startup-order.ts"
 import { startViewDelivery } from "./view-delivery.ts"
 import { failureDiagnostic } from "./wiring/failure-diagnostic.ts"
 import { createHost } from "./wiring/host.ts"
@@ -76,7 +77,14 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
   // ブラウザ側スクリプトと CSS は `pnpm run build` が置いたものを読むだけで、起動時には組み立てない。
   // 無ければページが動かないので、起動時の前提不足として即時終了する。
   // 理由に `pnpm run build` を添える（無いと、起動できない側は何を打てばよいか分からない）。
-  const built = await readUiBundle(builtUiDir())
+  // fake driver はプラグインを載せないので見ない。
+  const { built, workflowPlugin } = await readStartupPrerequisites({
+    readBundle: () => readUiBundle(builtUiDir()),
+    checkPlugin: () =>
+      config.driver === "fake"
+        ? Promise.resolve({ ok: true, mount: true, notices: [] } as const)
+        : checkWorkflowPlugin(config.claudeConfigDir),
+  })
   if (!built.ok) {
     process.stderr.write(`tsukumo: ブラウザ側の成果物を読めない\n${built.reason}\n`)
     return 1
@@ -91,11 +99,9 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
   }
 
   // 取り込んだ tsukumo-plugins が空だとワークフローのスキルが載らないので、起動時の前提不足として止める。
-  // fake driver はプラグインを載せないので見ない。
-  const workflowPlugin =
-    config.driver === "fake"
-      ? ({ ok: true, mount: true } as const)
-      : await checkWorkflowPlugin(config.claudeConfigDir)
+  for (const notice of workflowPlugin.notices) {
+    process.stderr.write(`${notice}\n`)
+  }
   if (!workflowPlugin.ok) {
     return 1
   }
@@ -110,18 +116,15 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
   }
   const fakeSession = fakeReading?.session
 
-  // 診断ログの口は1つだけ作る。古い日付のファイルは起動のたびに1回だけ消す。
+  // 診断ログの口は1つだけ作る。
   const diagnosticLog = createDiagnosticLog()
-  pruneDiagnosticFiles(todayLocalDateKey())
   const clock = createServerClock(config.fixedClock)
-  pruneInputLedgerFiles(clock())
   const reportFailure = failureDiagnostic(diagnosticLog, clock)
   const pruneExpiredChatImages = (): void => {
     pruneChatImages(todayLocalDateKey(), (error) => {
       reportFailure({ feature: "chat", place: "archive-image-prune" }, error)
     })
   }
-  pruneExpiredChatImages()
   repeatAtEachLocalDayStart(pruneExpiredChatImages)
 
   const character = createCurrentCharacter(config, launch.cwd, (place, error) => {
@@ -146,6 +149,8 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
   const readBeadsStamp = createBeadsStampReader(launch.cwd)
   const achievementCache = createAchievementCache(launch.cwd, clock, readBeadsStamp)
   const workflowSetting = wireWorkflowSetting(launch.cwd, mountWorkflowPlugin, config.twCommand)
+
+  const headSha = readHeadSha(launch.cwd)
 
   const view = await startViewDelivery({
     portResolution,
@@ -189,38 +194,55 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
   })
   view.connect(session)
 
-  const removeInstanceLocation = writeInstanceLocation({
-    dir: defaultInstanceLocationDir(),
-    location: {
-      pid: process.pid,
-      port: view.port,
-      url: view.url,
-      cwd: launch.cwd,
-      head: await readHeadSha(launch.cwd),
+  let removeInstanceLocation = keepInstanceLocation
+  let openedView: OpenedFakeView = { tracked: false }
+
+  openedView = await openViewAfterRegisteringExit({
+    registerExit: () => {
+      stopSessionOnExit(
+        session.manager.close,
+        async () => {
+          await Promise.all([diagnosticLog.close(), tokenUsageLog.close(), session.closeLogs()])
+        },
+        () => {
+          removeInstanceLocation()
+        },
+        () => openedView,
+        reportFailure,
+      )
     },
-    reportFailure: (error) => {
-      reportFailure({ feature: "view-server", place: "instance-location-write" }, error)
+    openView: async () => {
+      announce(view.url, launch.devServer)
+      // 古い日付のファイルは起動のたびに1回だけ、知らせたあとに消す。
+      setImmediate(() => {
+        pruneDiagnosticFiles(todayLocalDateKey())
+        pruneInputLedgerFiles(clock())
+        pruneExpiredChatImages()
+      })
+      removeInstanceLocation = writeInstanceLocation({
+        dir: defaultInstanceLocationDir(),
+        location: {
+          pid: process.pid,
+          port: view.port,
+          url: view.url,
+          cwd: launch.cwd,
+          head: await headSha,
+        },
+        reportFailure: (error) => {
+          reportFailure({ feature: "view-server", place: "instance-location-write" }, error)
+        },
+      })
+      return config.openView
+        ? await openLayoutView(host, config.driver, view.url)
+        : { tracked: false as const }
     },
   })
 
-  announce(view.url, launch.devServer)
-
-  const openedView = config.openView
-    ? await openLayoutView(host, config.driver, view.url)
-    : { tracked: false as const }
-
-  stopSessionOnExit(
-    session.manager.close,
-    async () => {
-      await Promise.all([diagnosticLog.close(), tokenUsageLog.close(), session.closeLogs()])
-    },
-    removeInstanceLocation,
-    openedView,
-    reportFailure,
-  )
-
   return 0
 }
+
+/** 所在をまだ書いていないあいだの、消す側の代わり。 */
+function keepInstanceLocation(): void {}
 
 /** 終了のとき、記録の口を閉じ終えるのを待つ上限。これを過ぎたら待たずに抜ける。 */
 const CLOSE_LOGS_TIMEOUT_MS = 2_000
@@ -234,34 +256,37 @@ type OpenedFakeView =
  * 取り込んだ tsukumo-plugins が読めるかの検査と、セッションに載せるかの判定。
  * 読めないとき、と一部だけのときは、理由を stderr に1行出す（揃っていて載せないのは通常の状態なので黙る）。
  */
-async function checkWorkflowPlugin(
-  claudeConfigDir: string | undefined,
-): Promise<{ readonly ok: true; readonly mount: boolean } | { readonly ok: false }> {
+async function checkWorkflowPlugin(claudeConfigDir: string | undefined): Promise<
+  | {
+      readonly ok: true
+      readonly mount: boolean
+      readonly notices: readonly string[]
+    }
+  | { readonly ok: false; readonly notices: readonly string[] }
+> {
   const plugin = await readWorkflowPlugin(workflowPluginDir())
   if (!plugin.ok) {
-    process.stderr.write(`tsukumo: 取り込んだプラグインを読めない\n${plugin.reason}\n`)
-    return { ok: false }
+    return { ok: false, notices: [`tsukumo: 取り込んだプラグインを読めない\n${plugin.reason}`] }
   }
   const mount = await readWorkflowPluginMount(workflowPluginDir(), claudeConfigDir)
-  if (mount.kind === "partial") {
-    process.stderr.write(
-      `tsukumo: plugin partly missing (${mount.missing.join(", ")}): using bundled one\n`,
-    )
-  }
-  return { ok: true, mount: mount.kind !== "user-installed" }
+  const notices =
+    mount.kind === "partial"
+      ? [`tsukumo: plugin partly missing (${mount.missing.join(", ")}): using bundled one`]
+      : []
+  return { ok: true, mount: mount.kind !== "user-installed", notices }
 }
 
 /**
  * プロセスが終わるときにセッションを閉じる。閉じないと claude の子プロセスが残るので、
  * 割り込み（Ctrl-C）・終了要求・端末を閉じたとき（SIGHUP）で所在のファイルを消し、入力を閉じてから抜ける。
- * `openedView` を追跡しているとき（疑似セッションでビューを開いたとき）だけ、そのビューも閉じる。
+ * `openedView()` が追跡しているとき（疑似セッションでビューを開いたとき）だけ、そのビューも閉じる。
  * 未処理の拒否は記録して続け、未処理の例外は記録してから同じ閉じ方で終わる。
  */
 function stopSessionOnExit(
   closeSessions: () => void,
   closeLogs: () => Promise<void>,
   removeInstanceLocation: () => void,
-  openedView: OpenedFakeView,
+  openedView: () => OpenedFakeView,
   reportFailure: (place: SwallowedFailurePlace, error: unknown) => void,
 ): void {
   // 閉じるのは最初の1回だけ。あとから来た終了要求は終了コードも含めて無視する。
@@ -275,8 +300,9 @@ function stopSessionOnExit(
       removeInstanceLocation()
       closeSessions()
       await Promise.race([closeLogs(), delay(CLOSE_LOGS_TIMEOUT_MS)])
-      if (openedView.tracked) {
-        await openedView.close()
+      const view = openedView()
+      if (view.tracked) {
+        await view.close()
       }
     } finally {
       process.exit(exitCode)

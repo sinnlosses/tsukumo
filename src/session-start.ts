@@ -79,6 +79,7 @@ export type StartedSession = {
 /** セッションを1つ起こし、開いたタブから触れる窓口を返す。 */
 export async function startSession(options: SessionStartOptions): Promise<StartedSession> {
   const { config, character, promptImageShelf } = options
+  const archiveProject = resolveArchiveProjectName(options.cwd)
   const context: WiringContext = {
     cwd: options.cwd,
     // サーバの時計は1つ（`TSUKUMO_FIXED_CLOCK` なら止まった時計）。
@@ -125,6 +126,7 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
   const host = wireHost(context, options.host)
   const characterPack = wireCharacterPack(context, character, options.diagnosticLog)
 
+  const project = await archiveProject
   const manager = createSessionManager({
     // 時刻はエポックミリ秒の数のまま渡す（`Temporal.Instant` にしない）。
     // 両側で回す畳み込みが比較と引き算にしか使わず、数なら偽の時計も数で済む。
@@ -132,7 +134,7 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
     batchIntervalMs: EVENT_BATCH_INTERVAL_MS,
     chatArchive: context.chatArchive,
     // 会話のアーカイブに仕事の行として書く `project`。起動時に1回だけ取る。
-    project: await resolveArchiveProjectName(context.cwd),
+    project,
     tokenUsageLog: options.tokenUsageLog,
     contextUsageLog,
     experienceMetricLog,

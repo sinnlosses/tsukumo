@@ -24,18 +24,22 @@
    そこの `bin/tsukumo` を同じ引数で子として起こし、終了コードとシグナルを伝えて終わる
    （`bin/tsukumo` が無ければ食い違いを出して止まる。外か同じ根なら下へ進む）
 1. `cli.ts` が `config.ts` で環境変数を読み、`main.ts` の `run(config, launch)` を呼ぶ（`launch` は引数の `--dev`）
-2. `main.ts` が**即時終了する前提**を3つ確かめる — ポート番号として読めるか（`port-resolution.ts`）、
+2. `main.ts` が**即時終了する前提**を4つ確かめる — ポート番号として読めるか（`port-resolution.ts`）、
    組み立て済みの成果物（`dist/browser/`。`docs/architecture/build.md`）を読めるか（ソースの指紋が組み立て時と違えば、止めずに1行
-   知らせる）、fake driver なら疑似セッションを読めるか
+   知らせる）、取り込んだプラグインを読めるか（成果物とこれは互いに依らないので並べて読む。`startup-order.ts`）、
+   fake driver なら疑似セッションを読めるか
 3. `current-character.ts` が初期パック（指定されたもの・覚えていたもの・既定）を決める。
    **以降このパックの持ち回りはここに閉じる**
 4. `view-delivery.ts` が**起動トークン**を1つ作り、`server.ts` を `127.0.0.1` で listen させる
    （`--dev` のときは Vite の開発サーバもここで差し込む。`docs/architecture/build.md`「作り直しを押す仕組み」）
 5. `session-start.ts` が `session-manager.ts` にセッションを1つ作る。駆動は `TSUKUMO_DRIVER` が
    `fake` なら fake driver、それ以外は SDK。起動は常に新規のセッション（「セッションの復元と複数化」）
-   （どちらも起こす組み立ての `src/wiring/session-launch.ts`）。起こしたセッションは
-   `view-delivery.ts` の `connect` で `/ws` に繋ぐ
-6. ホストのポートで `http://127.0.0.1:<port>/?t=<token>` を開く（失敗しても続行）
+   （どちらも起こす組み立ての `src/wiring/session-launch.ts`）。会話のアーカイブの project 名を取る git の問い合わせは
+   組み立てと重ねて先に起こす。起こしたセッションは `view-delivery.ts` の `connect` で `/ws` に繋ぐ
+6. 終了のハンドラを登録し（`startup-order.ts`。タブを開く間に Ctrl-C を受けても claude の子プロセスを残さない）、
+   起動したことと URL を出し、所在のファイルを書いてから、ホストのポートで
+   `http://127.0.0.1:<port>/?t=<token>` を開く（失敗しても続行）。期限切れの診断ログ・入力の控え・会話の画像は、
+   画面を出すことに要らないので、知らせたあとに回して消す
 
 **起こし直し**（`session.switchCharacter` / `session.setChatMode` / `session.switchSession`）も、駆動を
 起こす一続き（`session/core/session-launch.ts` の `createSessionLaunch`）は起動時とまったく同じものを
