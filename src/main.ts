@@ -15,10 +15,6 @@ import {
 } from "./server/adapter/local-time.ts"
 import { pruneChatImages } from "./server/chat/adapter/chat-archive.ts"
 import { type Config, type ConfigDriver, ENV_NAMES } from "./server/core/config.ts"
-import {
-  createDiagnosticLog,
-  pruneDiagnosticFiles,
-} from "./server/diagnostic/adapter/diagnostic-log.ts"
 import type { Host, HostResult } from "./server/host/core/host.ts"
 import { readItemAsset } from "./server/item/adapter/item-asset.ts"
 import { createReportImageShelf } from "./server/report/core/report-image-shelf.ts"
@@ -32,7 +28,6 @@ import {
   workflowPluginDir,
 } from "./server/session-driver/adapter/workflow-plugin.ts"
 import { createPromptImageShelf } from "./server/session-driver/core/prompt-image-shelf.ts"
-import { createTokenUsageLog } from "./server/token-usage/adapter/token-usage-log.ts"
 import { createOpenTaskReader, twClaimsRunner } from "./server/token-usage/adapter/tw-claim-list.ts"
 import { builtUiDir, readUiBundle } from "./server/view-server/adapter/bundle.ts"
 import {
@@ -49,6 +44,7 @@ import { openViewAfterRegisteringExit, readStartupPrerequisites } from "./startu
 import { startViewDelivery } from "./view-delivery.ts"
 import { failureDiagnostic } from "./wiring/failure-diagnostic.ts"
 import { createHost } from "./wiring/host.ts"
+import { wireUsageLogs } from "./wiring/usage-log.ts"
 import type { WiringDriver } from "./wiring/wiring-context.ts"
 import { chooseTw, wireWorkflowSetting } from "./wiring/workflow-setting.ts"
 
@@ -126,8 +122,18 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
   }
   const driver = wiringDriver.driver
 
-  // 診断ログの口は1つだけ作る。
-  const diagnosticLog = createDiagnosticLog()
+  // 日付ごとの記録の口はここで1回だけ作ってセッションとビューの両側へ渡す。
+  // 置き場（`~/.tsukumo/` の下）を知っているところを増やさない。
+  const usageLogs = wireUsageLogs(
+    { driver },
+    {
+      reportSchema: config.reportSchema,
+      openTask: createOpenTaskReader(
+        twClaimsRunner(chooseTw(config.twCommand, mountWorkflowPlugin), launch.cwd),
+      ),
+    },
+  )
+  const { diagnostic: diagnosticLog, tokenUsage: tokenUsageLog } = usageLogs
   const clock = createServerClock(config.fixedClock)
   const reportFailure = failureDiagnostic(diagnosticLog, clock)
   const pruneExpiredChatImages = (): void => {
@@ -141,13 +147,6 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
     reportFailure({ feature: "chat", place }, error)
   })
 
-  // トークン消費の記録の口は1つをここで作ってセッションとビューの両側へ渡す。
-  // 置き場（`~/.tsukumo/token-usage/`）を知っているところを増やさない。
-  const tokenUsageLog = createTokenUsageLog(
-    createOpenTaskReader(
-      twClaimsRunner(chooseTw(config.twCommand, mountWorkflowPlugin), launch.cwd),
-    ),
-  )
   // 依頼に添えた画像の原寸の棚と、レポートの画像の棚も1つずつをここで作って両側へ渡す。
   // 両側が同じ棚を見ないと、置いた原寸をビューが引けない。
   const promptImageShelf = createPromptImageShelf()
@@ -190,10 +189,9 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
     config,
     character,
     driver,
-    tokenUsageLog,
+    usageLogs,
     achievementCache,
     readBeadsStamp,
-    diagnosticLog,
     promptImageShelf,
     reportImageShelf,
     viewPort: view.port,
@@ -211,9 +209,7 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
     registerExit: () => {
       stopSessionOnExit(
         session.manager.close,
-        async () => {
-          await Promise.all([diagnosticLog.close(), tokenUsageLog.close(), session.closeLogs()])
-        },
+        session.closeLogs,
         () => {
           removeInstanceLocation()
         },
@@ -225,7 +221,7 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
       announce(view.url, launch.devServer)
       // 古い日付のファイルは起動のたびに1回だけ、知らせたあとに消す。
       setImmediate(() => {
-        pruneDiagnosticFiles(todayLocalDateKey())
+        usageLogs.pruneExpired(todayLocalDateKey())
         pruneInputLedgerFiles(clock())
         pruneExpiredChatImages()
       })

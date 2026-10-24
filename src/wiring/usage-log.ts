@@ -1,35 +1,78 @@
-// 使用量の記録（context-usage・experience-metric・report-usage）の書き込み口の配線。
-// 疑似セッションの走りは本物の使用量に混ぜないので、何も書かない口を渡す。
+// 日付ごとの記録（token-usage・diagnostic・context-usage・experience-metric・report-usage）の作成・閉じる・古いファイルの掃除。
+// 疑似セッションの走りは本物の使用量に混ぜないので、context-usage・experience-metric・report-usage には何も書かない口を渡す。
+// token-usage と diagnostic は疑似でも本物を作る。
 
 import { createContextUsageLog } from "../server/context-usage/adapter/context-usage-log.ts"
 import type { Config } from "../server/core/config.ts"
+import { createDiagnosticLog } from "../server/diagnostic/adapter/diagnostic-log.ts"
 import { createExperienceMetricLog } from "../server/experience-metric/adapter/experience-metric-log.ts"
 import { createReportUsageLog } from "../server/report/adapter/report-usage-log.ts"
+import { createTokenUsageLog } from "../server/token-usage/adapter/token-usage-log.ts"
+import type { OpenTaskReader } from "../server/token-usage/adapter/tw-claim-list.ts"
 import type { WiringContext } from "./wiring-context.ts"
 
-type Closable = { readonly close: () => Promise<void> }
+type ManagedLog = {
+  readonly close: () => Promise<void>
+  readonly pruneExpired: (today: string) => void
+}
 
-export type UsageLogs = {
+type DriverSwitchedLogs = {
   readonly context: ReturnType<typeof createContextUsageLog>
   readonly experienceMetric: ReturnType<typeof createExperienceMetricLog>
   readonly report: ReturnType<typeof createReportUsageLog>
 }
 
+export type UsageLogs = DriverSwitchedLogs & {
+  readonly tokenUsage: ReturnType<typeof createTokenUsageLog>
+  readonly diagnostic: ReturnType<typeof createDiagnosticLog>
+}
+
+export type WiredUsageLogs = UsageLogs & {
+  /** 開いている追記の口を全部閉じ、書き残しがファイルに渡るのを待つ。 */
+  readonly closeAll: () => Promise<void>
+  /** 保持の日数を過ぎた日付のファイルを、全部の記録から消す。 */
+  readonly pruneExpired: (today: string) => void
+}
+
+export type UsageLogOptions = {
+  readonly reportSchema: Config["reportSchema"]
+  /** token-usage の行に結ぶ、着手中のタスクを読む口。 */
+  readonly openTask: OpenTaskReader
+}
+
 export function wireUsageLogs(
   context: Pick<WiringContext, "driver">,
-  reportSchema: Config["reportSchema"],
-): UsageLogs & { readonly closeAll: () => Promise<void> } {
-  const logs = logsOf(context.driver, reportSchema)
-  const closables: readonly Closable[] = [logs.context, logs.experienceMetric, logs.report]
+  options: UsageLogOptions,
+): WiredUsageLogs {
+  const logs: UsageLogs = {
+    ...switchedLogs(context.driver, options.reportSchema),
+    tokenUsage: createTokenUsageLog(options.openTask),
+    diagnostic: createDiagnosticLog(),
+  }
+  const managed: readonly ManagedLog[] = [
+    logs.tokenUsage,
+    logs.diagnostic,
+    logs.context,
+    logs.experienceMetric,
+    logs.report,
+  ]
   return {
     ...logs,
     closeAll: async () => {
-      await Promise.all(closables.map((log) => log.close()))
+      await Promise.all(managed.map((log) => log.close()))
+    },
+    pruneExpired: (today) => {
+      for (const log of managed) {
+        log.pruneExpired(today)
+      }
     },
   }
 }
 
-function logsOf(driver: WiringContext["driver"], reportSchema: Config["reportSchema"]): UsageLogs {
+function switchedLogs(
+  driver: WiringContext["driver"],
+  reportSchema: Config["reportSchema"],
+): DriverSwitchedLogs {
   switch (driver.kind) {
     case "sdk":
       return realLogs(reportSchema)
@@ -44,7 +87,7 @@ function done(): Promise<void> {
   return Promise.resolve()
 }
 
-function realLogs(reportSchema: Config["reportSchema"]): UsageLogs {
+function realLogs(reportSchema: Config["reportSchema"]): DriverSwitchedLogs {
   return {
     context: createContextUsageLog(),
     experienceMetric: createExperienceMetricLog(),
@@ -52,16 +95,23 @@ function realLogs(reportSchema: Config["reportSchema"]): UsageLogs {
   }
 }
 
-/** 追記は捨て、閉じる・待つは空。口は作らないので置き場のディレクトリも作られない。 */
-function silentLogs(): UsageLogs {
+/** 追記は捨て、閉じる・待つ・掃除は空。口は作らないので置き場のディレクトリも作られない。 */
+function silentLogs(): DriverSwitchedLogs {
   return {
-    context: { append: () => undefined, flush: done, close: done },
+    context: { append: () => undefined, flush: done, close: done, pruneExpired: () => undefined },
     experienceMetric: {
       append: () => undefined,
       flush: done,
       close: done,
+      pruneExpired: () => undefined,
       readRange: () => [],
     },
-    report: { append: () => undefined, appendRejection: () => undefined, flush: done, close: done },
+    report: {
+      append: () => undefined,
+      appendRejection: () => undefined,
+      flush: done,
+      close: done,
+      pruneExpired: () => undefined,
+    },
   }
 }

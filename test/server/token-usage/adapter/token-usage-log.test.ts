@@ -24,6 +24,7 @@ import {
   type TurnUsageBreakdown,
 } from "../../../../src/shared/token-usage/token-usage.ts"
 import { keysOf, readJsonLines } from "../../../fixture/jsonl.ts"
+import { expectEveryFieldKept } from "../../../fixture/record-field.ts"
 import { useTempDir } from "../../../fixture/temp-dir.ts"
 
 const MODELS: readonly ModelTokenUsage[] = [
@@ -155,6 +156,18 @@ describe("createTokenUsageLog", () => {
     })
     // オフセットはそのマシンのローカル時刻で決まるので、頭と形だけを見る。
     expect(JSON.stringify(record)).toMatch(/"at":"2026-09-22T10:30:00[+-]\d{2}:\d{2}"/)
+  })
+
+  it("渡された件の欄は、入れ子の中まで全部行に残る", async () => {
+    const log = createTokenUsageLog(NO_TASK, root())
+    const written = entry(at(10, 30))
+
+    log.append(written)
+    await log.flush()
+
+    const lines = readLines("2026-09-22.jsonl")
+    expect(lines).toHaveLength(1)
+    expectEveryFieldKept(written, lines[0])
   })
 
   // 文字列で入るのは時刻・セッションID・モード・鍵の名前・モデルの名前だけ

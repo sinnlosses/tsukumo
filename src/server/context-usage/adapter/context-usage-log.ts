@@ -15,14 +15,17 @@ import { join } from "node:path"
 import {
   CONTEXT_USAGE_FORMAT_VERSION,
   type ContextUsageRecord,
+  contextUsageRecordSchema,
 } from "../../../shared/context-usage/context-usage-record.ts"
-import { createJsonLinesAppender, type JsonLinesAppender } from "../../adapter/lib/jsonl.ts"
+import { createDatedRecordLog, type DatedRecordLog } from "../../adapter/lib/dated-record-log.ts"
 import { isoWithOffset, localDateKey } from "../../adapter/local-time.ts"
 import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
 import type { ContextUsageEntry, ContextUsageLog } from "../core/context-usage.ts"
 
 /** 置き場のディレクトリ名（`~/.tsukumo/context-usage/`）。 */
 const CONTEXT_USAGE_DIR_NAME = "context-usage"
+
+const CONTEXT_USAGE_RETENTION_DAYS = 90
 
 /** 書き込んでよいのはこの下だけ。 */
 export function contextUsageDir(): string {
@@ -35,14 +38,21 @@ export function contextUsageDir(): string {
  */
 export function createContextUsageLog(
   root: string = contextUsageDir(),
-): ContextUsageLog & Pick<JsonLinesAppender, "flush" | "close"> {
-  const appender = createJsonLinesAppender(root)
+): ContextUsageLog & Pick<DatedRecordLog<ContextUsageRecord>, "flush" | "close" | "pruneExpired"> {
+  const log = createDatedRecordLog(
+    {
+      schema: contextUsageRecordSchema,
+      retentionDays: CONTEXT_USAGE_RETENTION_DAYS,
+    },
+    root,
+  )
   return {
     append: (entry) => {
-      appender.append(localDateKey(entry.at), [toRecord(entry)])
+      log.append(localDateKey(entry.at), [toRecord(entry)])
     },
-    flush: appender.flush,
-    close: appender.close,
+    flush: log.flush,
+    close: log.close,
+    pruneExpired: log.pruneExpired,
   }
 }
 

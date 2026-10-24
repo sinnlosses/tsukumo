@@ -4,30 +4,17 @@
 //
 // 書けなくても・読めなくても・消せなくても例外を投げない。壊れた行・版が違う行は読まずに1行ずつ落とす。
 
-import { rmSync } from "node:fs"
 import { join } from "node:path"
 
 import { groupBy, sortBy } from "remeda"
-import { z } from "zod"
 
 import {
-  browserErrorFootprintSchema,
   DIAGNOSTIC_FORMAT_VERSION,
   type DiagnosticEntry,
   type DiagnosticRecord,
-  promptDelayFootprintSchema,
-  sessionEventFootprintSchema,
+  diagnosticRecordSchema,
 } from "../../../shared/diagnostic/diagnostic-record.ts"
-import { reportGateBlockFootprintSchema } from "../../../shared/diagnostic/report-gate-block.ts"
-import { swallowedFailureFootprintSchema } from "../../../shared/diagnostic/swallowed-failure.ts"
-import { synopsisTrimFootprintSchema } from "../../../shared/diagnostic/synopsis-trim.ts"
-import { welcomeWritingFootprintSchema } from "../../../shared/diagnostic/welcome-writing.ts"
-import {
-  createJsonLinesAppender,
-  dateFileNames,
-  type JsonLinesAppender,
-  readValidLines,
-} from "../../adapter/lib/jsonl.ts"
+import { createDatedRecordLog, type DatedRecordLog } from "../../adapter/lib/dated-record-log.ts"
 import { localDateKey } from "../../adapter/local-time.ts"
 import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
 import type { DiagnosticLog, DiagnosticRange } from "../core/diagnostic.ts"
@@ -37,19 +24,6 @@ const DIAGNOSTIC_DIR_NAME = "diagnostic"
 
 /** 日付ファイルを残す日数。これより古い日付のファイルは消す。 */
 const DIAGNOSTIC_RETENTION_DAYS = 14
-
-/** 記録の1行の形。流れごとの schema に版を足して束ねる。 */
-const VERSION = { v: z.literal(DIAGNOSTIC_FORMAT_VERSION) }
-
-const diagnosticRecordSchema = z.discriminatedUnion("flow", [
-  sessionEventFootprintSchema.extend(VERSION),
-  browserErrorFootprintSchema.extend(VERSION),
-  swallowedFailureFootprintSchema.extend(VERSION),
-  promptDelayFootprintSchema.extend(VERSION),
-  welcomeWritingFootprintSchema.extend(VERSION),
-  synopsisTrimFootprintSchema.extend(VERSION),
-  reportGateBlockFootprintSchema.extend(VERSION),
-])
 
 /** 書き込んでよいのはこの下だけ。 */
 export function diagnosticDir(): string {
@@ -62,33 +36,25 @@ export function diagnosticDir(): string {
  */
 export function createDiagnosticLog(
   root: string = diagnosticDir(),
-): DiagnosticLog & Pick<JsonLinesAppender, "flush" | "close"> {
-  const appender = createJsonLinesAppender(root)
+): DiagnosticLog & Pick<DatedRecordLog<DiagnosticRecord>, "flush" | "close" | "pruneExpired"> {
+  const log = createDatedRecordLog(
+    {
+      schema: diagnosticRecordSchema,
+      retentionDays: DIAGNOSTIC_RETENTION_DAYS,
+    },
+    root,
+  )
   return {
     append: (entries) => {
       const byDate = groupBy(entries, (entry) => localDateKey(entry.at))
       for (const [date, dated] of Object.entries(byDate)) {
-        appender.append(date, dated.map(toRecord))
+        log.append(date, dated.map(toRecord))
       }
     },
-    flush: appender.flush,
-    close: appender.close,
-    readRange: (range) => readEntriesInRange(root, range),
-  }
-}
-
-/**
- * 今日（`today`。`YYYY-MM-DD`）から数えて {@link DIAGNOSTIC_RETENTION_DAYS} 日を過ぎた日付のファイルを消す。
- * 日付の名前でないファイルには触らない。
- */
-export function pruneDiagnosticFiles(today: string, root: string = diagnosticDir()): void {
-  const oldestKept = Temporal.PlainDate.from(today)
-    .subtract({ days: DIAGNOSTIC_RETENTION_DAYS })
-    .toString()
-  for (const name of dateFileNames(root)) {
-    if (name.slice(0, 10) < oldestKept) {
-      removeQuietly(join(root, name))
-    }
+    flush: log.flush,
+    close: log.close,
+    pruneExpired: log.pruneExpired,
+    readRange: (range) => readEntriesInRange(log, range),
   }
 }
 
@@ -97,28 +63,13 @@ function toRecord(entry: DiagnosticEntry): DiagnosticRecord {
 }
 
 /** 範囲に掛かる日付のファイルだけを開き、範囲に入る件を時刻の順に集める。 */
-function readEntriesInRange(root: string, range: DiagnosticRange): readonly DiagnosticEntry[] {
-  const firstDate = localDateKey(range.startAt)
-  const lastDate = localDateKey(range.endAt - 1)
-  const entries = dateFileNames(root)
-    .filter((name) => {
-      const date = name.slice(0, 10)
-      return date >= firstDate && date <= lastDate
-    })
-    .flatMap((fileName) => readValidEntries(join(root, fileName)))
+function readEntriesInRange(
+  log: DatedRecordLog<DiagnosticRecord>,
+  range: DiagnosticRange,
+): readonly DiagnosticEntry[] {
+  const entries = log
+    .readRange({ startDate: localDateKey(range.startAt), endDate: localDateKey(range.endAt - 1) })
+    .map(({ v: _version, ...entry }) => entry)
     .filter((entry) => entry.at >= range.startAt && entry.at < range.endAt)
   return sortBy(entries, (entry) => entry.at)
-}
-
-/** 1ファイルの行を検証して件に戻す（通らない行は1行ずつ落とす）。 */
-function readValidEntries(path: string): readonly DiagnosticEntry[] {
-  return readValidLines(path, diagnosticRecordSchema).map(({ v: _version, ...entry }) => entry)
-}
-
-function removeQuietly(path: string): void {
-  try {
-    rmSync(path, { force: true })
-  } catch {
-    // 消せなかった回は次の起動でまた試す。
-  }
 }

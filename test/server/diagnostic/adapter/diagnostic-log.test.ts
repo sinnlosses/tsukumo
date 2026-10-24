@@ -3,15 +3,13 @@ import { join } from "node:path"
 
 import { describe, expect, it } from "vitest"
 
-import {
-  createDiagnosticLog,
-  pruneDiagnosticFiles,
-} from "../../../../src/server/diagnostic/adapter/diagnostic-log.ts"
+import { createDiagnosticLog } from "../../../../src/server/diagnostic/adapter/diagnostic-log.ts"
 import {
   DIAGNOSTIC_FORMAT_VERSION,
   type DiagnosticEntry,
 } from "../../../../src/shared/diagnostic/diagnostic-record.ts"
 import { readJsonLines } from "../../../fixture/jsonl.ts"
+import { expectEveryFieldKept } from "../../../fixture/record-field.ts"
 import { useTempDir } from "../../../fixture/temp-dir.ts"
 
 const dir = useTempDir("diagnostic")
@@ -96,6 +94,18 @@ describe("createDiagnosticLog", () => {
     expect(log.readRange({ startAt: at(0, 0), endAt: at(0, 0, 23) })).toEqual([
       browserErrorFootprint(at(9, 0)),
     ])
+  })
+
+  it("書いた行に、渡された件の欄が入れ子の中まで全部残る", async () => {
+    const log = createDiagnosticLog(root())
+    const written = browserErrorFootprint(at(9, 0))
+
+    log.append([written])
+    await log.flush()
+
+    const lines = readJsonLines(join(root(), "2026-09-22.jsonl"))
+    expect(lines).toHaveLength(1)
+    expectEveryFieldKept(written, lines[0])
   })
 
   it("握りつぶしていた失敗（swallowed-failure）も、場所の名前と error.name・code で往復する", async () => {
@@ -199,14 +209,14 @@ describe("createDiagnosticLog", () => {
   })
 })
 
-describe("pruneDiagnosticFiles", () => {
+describe("pruneExpired", () => {
   it("14日を過ぎた日付のファイルを消し、それより新しいものと日付でないファイルは残す", () => {
     mkdirSync(root(), { recursive: true })
     for (const name of ["2026-09-19.jsonl", "2026-09-20.jsonl", "2026-10-04.jsonl", "notes.txt"]) {
       writeFileSync(join(root(), name), "")
     }
 
-    pruneDiagnosticFiles("2026-10-04", root())
+    createDiagnosticLog(root()).pruneExpired("2026-10-04")
 
     expect(readdirSync(root()).toSorted()).toEqual([
       "2026-09-20.jsonl",
@@ -217,7 +227,7 @@ describe("pruneDiagnosticFiles", () => {
 
   it("置き場が無くても投げない", () => {
     expect(() => {
-      pruneDiagnosticFiles("2026-10-04", root())
+      createDiagnosticLog(root()).pruneExpired("2026-10-04")
     }).not.toThrow()
   })
 })

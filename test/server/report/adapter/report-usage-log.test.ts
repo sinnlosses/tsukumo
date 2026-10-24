@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest"
 import { createReportUsageLog } from "../../../../src/server/report/adapter/report-usage-log.ts"
 import { REPORT_USAGE_FORMAT_VERSION } from "../../../../src/shared/report/report-usage-record.ts"
 import { keysOf, readJsonLines } from "../../../fixture/jsonl.ts"
+import { expectEveryFieldKept } from "../../../fixture/record-field.ts"
 import { reportUsageEntry as entry } from "../../../fixture/report-usage-entry.ts"
 import { useTempDir } from "../../../fixture/temp-dir.ts"
 
@@ -129,6 +130,46 @@ describe("createReportUsageLog", () => {
     })
     // オフセットはそのマシンのローカル時刻で決まるので、頭だけを見る。
     expect(JSON.stringify(record)).toMatch(/"at":"2026-09-22T09:00:00[+-]\d{2}:\d{2}"/)
+  })
+
+  it("渡された件の欄は、図と節の札の欄を平らに広げたうえで、入れ子の中まで全部行に残る", async () => {
+    const log = createReportUsageLog("json-schema", root())
+    const { figure, shapeTags, ...rest } = entry(at(9, 0))
+
+    log.append(entry(at(9, 0)))
+    await log.flush()
+
+    const lines = readLines("2026-09-22.jsonl")
+    expect(lines).toHaveLength(1)
+    expectEveryFieldKept({ ...figure, ...shapeTags, ...rest }, lines[0])
+  })
+
+  it("差し戻しの件の欄は全部行に残る", async () => {
+    const log = createReportUsageLog("json-schema", root())
+    const rejection = {
+      at: at(9, 5),
+      sessionId: "claude-session-1",
+      reasons: ["resend"],
+      argumentChars: { total: 800, fields: { conclusion: 50 } },
+      inheritedFields: ["sections"],
+    } as const
+
+    log.appendRejection(rejection)
+    await log.flush()
+
+    const lines = readLines("2026-09-22.jsonl")
+    expect(lines).toHaveLength(1)
+    expectEveryFieldKept(rejection, lines[0])
+  })
+
+  it("保持の日数が無いので、掃除しても古い日付のファイルは消えない", async () => {
+    const log = createReportUsageLog("json-schema", root())
+    log.append(entry(at(9, 0)))
+    await log.flush()
+
+    log.pruneExpired("2030-01-01")
+
+    expect(readdirSync(root())).toEqual(["2026-09-22.jsonl"])
   })
 
   it("figure に図を置いた行は figureKind だけを持ち、noneReason を持たない", async () => {

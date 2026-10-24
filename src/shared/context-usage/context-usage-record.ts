@@ -15,8 +15,9 @@
 // - 会話の文面・セリフ・ツールの引数と結果は1文字も入らない。
 //   メッセージが占める量は分類1行の数として出るだけで、型にそもそも文字列の口を作らないことであとから足せないようにしてある
 
-import type { TokenUsageMode } from "../token-usage/token-usage.ts"
-import type { ContextUsage } from "./context-usage.ts"
+import { z } from "zod"
+
+import { contextUsageSchema } from "./context-usage.ts"
 
 /** 行の形の版（ターンごとの記録とは別に数える）。形を変えたら上げ、古い行と見分ける。 */
 export const CONTEXT_USAGE_FORMAT_VERSION = 1 satisfies number
@@ -25,14 +26,18 @@ export const CONTEXT_USAGE_FORMAT_VERSION = 1 satisfies number
  * JSONL に書く1行の形。1行 = 1セッションで、claude 側のセッションIDが変われば別の行になる。
  * 読むのは tsukumo の外の分析なので、この形を読み戻す口はコードの側に無い。`v` を書くのはその読む側のため。
  */
-export type ContextUsageRecord = {
-  readonly v: typeof CONTEXT_USAGE_FORMAT_VERSION
-  /** ISO 8601（オフセット付き）。行だけで時刻が決まる。 */
-  readonly at: string
-  /** claude 側のセッションID（`system/init` の `session_id`）。 */
-  readonly sessionId: string
-  /** そのセッションが仕事だったか雑談だったか。 */
-  readonly mode: TokenUsageMode
-  /** そのセッションの内訳（`getContextUsage()` の `detail: "full"` を写したもの）。 */
-  readonly usage: ContextUsage
-}
+export const contextUsageRecordSchema = z
+  .object({
+    v: z.literal(CONTEXT_USAGE_FORMAT_VERSION),
+    /** ISO 8601（オフセット付き）。行だけで時刻が決まる。 */
+    at: z.string(),
+    /** claude 側のセッションID（`system/init` の `session_id`）。 */
+    sessionId: z.string(),
+    /** そのセッションが仕事だったか雑談だったか。 */
+    mode: z.enum(["work", "chat"]),
+    /** そのセッションの内訳（`getContextUsage()` の `detail: "full"` を写したもの）。 */
+    usage: contextUsageSchema,
+  })
+  .readonly()
+
+export type ContextUsageRecord = z.infer<typeof contextUsageRecordSchema>

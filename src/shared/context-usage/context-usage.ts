@@ -64,28 +64,28 @@ const contextUsageItemSchema = z.object({
   tokens: z.number(),
 })
 
+/** {@link ContextUsage} の形。 */
+export const contextUsageSchema = z.object({
+  model: z.string(),
+  totalTokens: z.number(),
+  maxTokens: z.number(),
+  percentage: z.number(),
+  categories: z
+    .array(
+      z.object({
+        name: z.string(),
+        tokens: z.number(),
+        kind: z.enum(CONTEXT_CATEGORY_KINDS),
+      }),
+    )
+    .readonly(),
+  mcpTools: z.array(contextUsageItemSchema).readonly(),
+  memoryFiles: z.array(contextUsageItemSchema).readonly(),
+  skills: z.array(contextUsageItemSchema).readonly(),
+})
+
 /** 配る形そのもの（{@link ContextUsageReport} と同じ鍵）。 */
 export const contextUsageReportSchema = z.discriminatedUnion("kind", [
-  z.object({
-    kind: z.literal("ready"),
-    usage: z.object({
-      model: z.string(),
-      totalTokens: z.number(),
-      maxTokens: z.number(),
-      percentage: z.number(),
-      categories: z
-        .array(
-          z.object({
-            name: z.string(),
-            tokens: z.number(),
-            kind: z.enum(CONTEXT_CATEGORY_KINDS),
-          }),
-        )
-        .readonly(),
-      mcpTools: z.array(contextUsageItemSchema).readonly(),
-      memoryFiles: z.array(contextUsageItemSchema).readonly(),
-      skills: z.array(contextUsageItemSchema).readonly(),
-    }),
-  }),
+  z.object({ kind: z.literal("ready"), usage: contextUsageSchema }),
   z.object({ kind: z.literal("unavailable") }),
 ])

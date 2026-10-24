@@ -8,6 +8,7 @@ import type { ContextUsageEntry } from "../../../../src/server/context-usage/cor
 import { CONTEXT_USAGE_FORMAT_VERSION } from "../../../../src/shared/context-usage/context-usage-record.ts"
 import { contextUsage } from "../../../fixture/context-usage.ts"
 import { keysOf, readJsonLines } from "../../../fixture/jsonl.ts"
+import { expectEveryFieldKept } from "../../../fixture/record-field.ts"
 import { useTempDir } from "../../../fixture/temp-dir.ts"
 
 const dir = useTempDir("context-usage")
@@ -68,6 +69,29 @@ describe("createContextUsageLog", () => {
     })
     // オフセットはそのマシンのローカル時刻で決まるので、頭だけを見る。
     expect(JSON.stringify(record)).toMatch(/"at":"2026-09-22T09:00:00[+-]\d{2}:\d{2}"/)
+  })
+
+  it("渡された内訳の欄は、入れ子の中まで全部行に残る", async () => {
+    const log = createContextUsageLog(root())
+    const written = entry(at(9, 0))
+
+    log.append(written)
+    await log.flush()
+
+    const lines = readLines("2026-09-22.jsonl")
+    expect(lines).toHaveLength(1)
+    expectEveryFieldKept(written, lines[0])
+  })
+
+  it("90日を過ぎた日付のファイルだけを消す", async () => {
+    const log = createContextUsageLog(root())
+    log.append(entry(at(9, 0, 22)))
+    log.append(entry(at(9, 0, 23)))
+    await log.flush()
+
+    log.pruneExpired("2026-12-22")
+
+    expect(readdirSync(root())).toEqual(["2026-09-23.jsonl"])
   })
 
   // ターンごとの記録より広い線（`CONTEXT_USAGE_FORMAT_VERSION`）——分類の表示名・

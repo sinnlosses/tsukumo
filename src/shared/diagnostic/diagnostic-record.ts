@@ -14,10 +14,16 @@ import { z } from "zod"
 
 import { isSessionEventKind } from "../session/session-event-kind.ts"
 import type { SessionEvent } from "../session/session-event.ts"
-import type { ReportGateBlockFootprint } from "./report-gate-block.ts"
-import type { SwallowedFailureFootprint } from "./swallowed-failure.ts"
-import type { SynopsisTrimFootprint } from "./synopsis-trim.ts"
-import type { WelcomeWritingFootprint } from "./welcome-writing.ts"
+import {
+  type ReportGateBlockFootprint,
+  reportGateBlockFootprintSchema,
+} from "./report-gate-block.ts"
+import {
+  type SwallowedFailureFootprint,
+  swallowedFailureFootprintSchema,
+} from "./swallowed-failure.ts"
+import { type SynopsisTrimFootprint, synopsisTrimFootprintSchema } from "./synopsis-trim.ts"
+import { type WelcomeWritingFootprint, welcomeWritingFootprintSchema } from "./welcome-writing.ts"
 
 /** 行の形の版。形を変えたら上げ、古い行と見分ける。 */
 export const DIAGNOSTIC_FORMAT_VERSION = 1 satisfies number
@@ -121,10 +127,21 @@ export type DiagnosticEntry =
   | SynopsisTrimFootprint
   | ReportGateBlockFootprint
 
+const VERSION = { v: z.literal(DIAGNOSTIC_FORMAT_VERSION) }
+
+/** 記録の1行の形。流れごとの schema に版を足して束ねる。 */
+export const diagnosticRecordSchema = z.discriminatedUnion("flow", [
+  sessionEventFootprintSchema.extend(VERSION),
+  browserErrorFootprintSchema.extend(VERSION),
+  swallowedFailureFootprintSchema.extend(VERSION),
+  promptDelayFootprintSchema.extend(VERSION),
+  welcomeWritingFootprintSchema.extend(VERSION),
+  synopsisTrimFootprintSchema.extend(VERSION),
+  reportGateBlockFootprintSchema.extend(VERSION),
+])
+
 /** JSONL に書く1行の形。 */
-export type DiagnosticRecord = DiagnosticEntry & {
-  readonly v: typeof DIAGNOSTIC_FORMAT_VERSION
-}
+export type DiagnosticRecord = z.infer<typeof diagnosticRecordSchema>
 
 /** 外から届いた `error.name` を、既知の名前の合併（知らなければ `"other"`）に写す。 */
 export function toBrowserErrorName(name: string | undefined): BrowserErrorName {

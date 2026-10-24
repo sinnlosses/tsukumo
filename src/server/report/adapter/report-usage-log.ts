@@ -6,11 +6,13 @@ import { join } from "node:path"
 import {
   REPORT_USAGE_FORMAT_VERSION,
   type ReportRejectionRecord,
+  reportRejectionRecordSchema,
   type ReportUsageDriver,
   type ReportUsageRecord,
+  reportUsageRecordSchema,
 } from "../../../shared/report/report-usage-record.ts"
 import type { ReportSchemaVariant } from "../../../shared/report/schema-variant.ts"
-import { createJsonLinesAppender, type JsonLinesAppender } from "../../adapter/lib/jsonl.ts"
+import { createDatedRecordLog, type DatedRecordLog } from "../../adapter/lib/dated-record-log.ts"
 import { isoWithOffset, localDateKey } from "../../adapter/local-time.ts"
 import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
 import type {
@@ -35,17 +37,28 @@ const RECORDED_DRIVER = "sdk" satisfies ReportUsageDriver
 export function createReportUsageLog(
   reportSchema: ReportSchemaVariant,
   root: string = reportUsageDir(),
-): ReportUsageLog & Pick<JsonLinesAppender, "flush" | "close"> {
-  const appender = createJsonLinesAppender(root)
+): ReportUsageLog &
+  Pick<
+    DatedRecordLog<ReportUsageRecord | ReportRejectionRecord>,
+    "flush" | "close" | "pruneExpired"
+  > {
+  const log = createDatedRecordLog(
+    {
+      schema: reportUsageRecordSchema.or(reportRejectionRecordSchema),
+      retentionDays: undefined,
+    },
+    root,
+  )
   return {
     append: (entry) => {
-      appender.append(localDateKey(entry.at), [toRecord(entry, reportSchema)])
+      log.append(localDateKey(entry.at), [toRecord(entry, reportSchema)])
     },
     appendRejection: (entry) => {
-      appender.append(localDateKey(entry.at), [toRejectionRecord(entry, reportSchema)])
+      log.append(localDateKey(entry.at), [toRejectionRecord(entry, reportSchema)])
     },
-    flush: appender.flush,
-    close: appender.close,
+    flush: log.flush,
+    close: log.close,
+    pruneExpired: log.pruneExpired,
   }
 }
 

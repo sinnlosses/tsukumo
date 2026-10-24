@@ -6,63 +6,20 @@
 
 import { join } from "node:path"
 
-import { z } from "zod"
-
 import {
   EXPERIENCE_METRIC_FORMAT_VERSION,
   type ExperienceMetricRecord,
-  SPLIT_DIVIDERS,
+  experienceMetricRecordSchema,
 } from "../../../shared/experience-metric/experience-metric-record.ts"
-import {
-  createJsonLinesAppender,
-  dateFileNamesBetween,
-  type JsonLinesAppender,
-  readValidLines,
-} from "../../adapter/lib/jsonl.ts"
+import { createDatedRecordLog, type DatedRecordLog } from "../../adapter/lib/dated-record-log.ts"
 import { isoWithOffset, localDateKey } from "../../adapter/local-time.ts"
 import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
-import type {
-  ExperienceMetricEntry,
-  ExperienceMetricLog,
-  ExperienceMetricPeriod,
-} from "../core/experience-metric.ts"
+import type { ExperienceMetricEntry, ExperienceMetricLog } from "../core/experience-metric.ts"
 
 /** 置き場のディレクトリ名（`~/.tsukumo/experience-metric/`）。 */
 const EXPERIENCE_METRIC_DIR_NAME = "experience-metric"
 
-/** 版1の行も読む（`conclusion`・`recovery` の形は版2と同じ）。 */
-const readableVersionSchema = z.literal([1, EXPERIENCE_METRIC_FORMAT_VERSION])
-
-/** 記録の1行の形（{@link ExperienceMetricRecord} と同じ鍵）。 */
-const experienceMetricRecordSchema = z.discriminatedUnion("kind", [
-  z.object({
-    v: readableVersionSchema,
-    at: z.iso.datetime({ offset: true }),
-    sessionId: z.string(),
-    kind: z.literal("conclusion"),
-    moment: z.enum(["deliver", "stumble"]),
-    untilConclusionMs: z.number(),
-    askingMs: z.number(),
-    askCount: z.number(),
-  }),
-  z.object({
-    v: readableVersionSchema,
-    at: z.iso.datetime({ offset: true }),
-    sessionId: z.string(),
-    kind: z.literal("recovery"),
-    hands: z.number(),
-    untilRecoveryMs: z.number(),
-  }),
-  z.object({
-    v: z.literal(EXPERIENCE_METRIC_FORMAT_VERSION),
-    at: z.iso.datetime({ offset: true }),
-    sessionId: z.string(),
-    kind: z.literal("split"),
-    divider: z.enum(SPLIT_DIVIDERS),
-    releasedPercent: z.number(),
-    previousPercent: z.number(),
-  }),
-])
+const EXPERIENCE_METRIC_RETENTION_DAYS = 90
 
 /** 書き込んでよいのはこの下だけ。 */
 export function experienceMetricDir(): string {
@@ -75,15 +32,23 @@ export function experienceMetricDir(): string {
  */
 export function createExperienceMetricLog(
   root: string = experienceMetricDir(),
-): ExperienceMetricLog & Pick<JsonLinesAppender, "flush" | "close"> {
-  const appender = createJsonLinesAppender(root)
+): ExperienceMetricLog &
+  Pick<DatedRecordLog<ExperienceMetricRecord>, "flush" | "close" | "pruneExpired"> {
+  const log = createDatedRecordLog(
+    {
+      schema: experienceMetricRecordSchema,
+      retentionDays: EXPERIENCE_METRIC_RETENTION_DAYS,
+    },
+    root,
+  )
   return {
     append: (entry) => {
-      appender.append(localDateKey(entry.at), [toRecord(entry)])
+      log.append(localDateKey(entry.at), [toRecord(entry)])
     },
-    flush: appender.flush,
-    close: appender.close,
-    readRange: (period) => readEntriesInRange(root, period),
+    flush: log.flush,
+    close: log.close,
+    pruneExpired: log.pruneExpired,
+    readRange: (period) => log.readRange(period).map(fromRecord),
   }
 }
 
@@ -123,21 +88,6 @@ function toRecord(entry: ExperienceMetricEntry): ExperienceMetricRecord {
         previousPercent: entry.previousPercent,
       }
   }
-}
-
-/** 期間に入る日付のファイルだけを開き、古い→新しい順に件を集める。 */
-function readEntriesInRange(
-  root: string,
-  period: ExperienceMetricPeriod,
-): readonly ExperienceMetricEntry[] {
-  return dateFileNamesBetween(root, period.startDate, period.endDate).flatMap((fileName) =>
-    readValidEntries(join(root, fileName)),
-  )
-}
-
-/** 1ファイルの行を検証して件に戻す（通らない行は1行ずつ落とす）。 */
-function readValidEntries(path: string): readonly ExperienceMetricEntry[] {
-  return readValidLines(path, experienceMetricRecordSchema).map(fromRecord)
 }
 
 /** 読み戻した1行を件に戻す（{@link toRecord} の逆）。 */

@@ -11,6 +11,7 @@ import {
 } from "../../../../src/server/experience-metric/core/experience-metric.ts"
 import { EXPERIENCE_METRIC_FORMAT_VERSION } from "../../../../src/shared/experience-metric/experience-metric-record.ts"
 import { keysOf, readJsonLines } from "../../../fixture/jsonl.ts"
+import { expectEveryFieldKept } from "../../../fixture/record-field.ts"
 import { useTempDir } from "../../../fixture/temp-dir.ts"
 
 const dir = useTempDir("experience-metric")
@@ -71,6 +72,41 @@ describe("createExperienceMetricLog", () => {
     expect(readdirSync(root()).toSorted()).toEqual(["2026-09-22.jsonl", "2026-09-23.jsonl"])
     expect(readLines("2026-09-22.jsonl").length).toBe(2)
     expect(readLines("2026-09-23.jsonl").length).toBe(1)
+  })
+
+  it("渡された件の欄は、種類にかかわらず全部行に残る", async () => {
+    const log = createExperienceMetricLog(root())
+    const entries = [
+      conclusion(at(9, 0)),
+      recovery(at(9, 1)),
+      splitEntry(
+        { divider: "rowTop", releasedPercent: 40, previousPercent: 55 },
+        "claude-session-1",
+        at(9, 2),
+      ),
+    ]
+
+    for (const written of entries) {
+      log.append(written)
+    }
+    await log.flush()
+
+    const lines = readLines("2026-09-22.jsonl")
+    expect(lines).toHaveLength(entries.length)
+    entries.forEach((written, index) => {
+      expectEveryFieldKept(written, lines[index])
+    })
+  })
+
+  it("90日を過ぎた日付のファイルだけを消す", async () => {
+    const log = createExperienceMetricLog(root())
+    log.append(conclusion(at(9, 0, 22)))
+    log.append(conclusion(at(9, 0, 23)))
+    await log.flush()
+
+    log.pruneExpired("2026-12-22")
+
+    expect(readdirSync(root())).toEqual(["2026-09-23.jsonl"])
   })
 
   it("閉じた依頼の行の鍵は、版・日時・セッションID・種類・局面・3つの数", async () => {

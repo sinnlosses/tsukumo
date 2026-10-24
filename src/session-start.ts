@@ -9,7 +9,6 @@ import type { AchievementCache } from "./server/achievement/adapter/closed-issue
 import { createServerClock } from "./server/adapter/local-time.ts"
 import { createChatArchive } from "./server/chat/adapter/chat-archive.ts"
 import type { Config } from "./server/core/config.ts"
-import type { DiagnosticLog } from "./server/diagnostic/core/diagnostic.ts"
 import type { Host } from "./server/host/core/host.ts"
 import { readReportImageFile } from "./server/report/adapter/report-image-file.ts"
 import { warmUpMermaidChecker } from "./server/report/adapter/report-mermaid-syntax.ts"
@@ -20,7 +19,6 @@ import type { PromptImageShelf } from "./server/session-driver/core/prompt-image
 import { EVENT_BATCH_INTERVAL_MS } from "./server/session/core/event-batch.ts"
 import type { SessionManager } from "./server/session/core/session-manager-port.ts"
 import { createSessionManager } from "./server/session/core/session-manager.ts"
-import type { TokenUsageLog } from "./server/token-usage/core/token-usage.ts"
 import type { SocketRouter } from "./server/view-server/adapter/session-socket.ts"
 import type { WorkflowSettingProcedurePorts } from "./server/workflow-setting/adapter/workflow-setting-procedure.ts"
 import { wireAchievement } from "./wiring/achievement.ts"
@@ -31,7 +29,7 @@ import { wireHost } from "./wiring/host.ts"
 import { wireItem } from "./wiring/item.ts"
 import { wireRepository } from "./wiring/repository.ts"
 import { wireSessionLaunch } from "./wiring/session-launch.ts"
-import { wireUsageLogs } from "./wiring/usage-log.ts"
+import type { WiredUsageLogs } from "./wiring/usage-log.ts"
 import { wireUsageReview } from "./wiring/usage-review.ts"
 import { wireWelcomeGreeting } from "./wiring/welcome-greeting.ts"
 import type { WiringContext, WiringDriver } from "./wiring/wiring-context.ts"
@@ -42,11 +40,11 @@ export type SessionStartOptions = {
   readonly character: CurrentCharacter
   /** 駆動の種類。`fake`（`TSUKUMO_DRIVER=fake`）は疑似セッションを持ち、claude を起こさない。 */
   readonly driver: WiringDriver
-  readonly tokenUsageLog: TokenUsageLog
+  /** 日付ごとの記録の口。ビューの配信が引く token-usage・diagnostic と同じものを渡す（`wireUsageLogs`）。 */
+  readonly usageLogs: WiredUsageLogs
   /** 成果の画面が Beads の読みを覚える入れ物。ビューの配信が引くものと同じ1つを渡す。 */
   readonly achievementCache: AchievementCache
   readonly readBeadsStamp: () => Promise<BeadsStamp>
-  readonly diagnosticLog: DiagnosticLog
   /** 依頼に添えた画像の原寸の棚。ビューの配信が引く棚と同じ1つを渡す。 */
   readonly promptImageShelf: PromptImageShelf
   /** `image` の塊の画像の棚。ビューの配信が引く棚と同じ1つを渡す。 */
@@ -74,7 +72,8 @@ export type StartedSession = {
 
 /** セッションを1つ起こし、開いたタブから触れる窓口を返す。 */
 export async function startSession(options: SessionStartOptions): Promise<StartedSession> {
-  const { config, character, promptImageShelf } = options
+  const { config, character, promptImageShelf, usageLogs } = options
+  const diagnosticLog = usageLogs.diagnostic
   const archiveProject = resolveArchiveProjectName(options.cwd)
   const context: WiringContext = {
     cwd: options.cwd,
@@ -92,10 +91,8 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
   // 最初のタブが繋がったら解ける約束。
   const firstViewer = Promise.withResolvers<void>()
 
-  const usageLogs = wireUsageLogs(context, config.reportSchema)
-
   const diary = wireDiary(context)
-  const welcomeGreeting = wireWelcomeGreeting(context, options.diagnosticLog)
+  const welcomeGreeting = wireWelcomeGreeting(context, diagnosticLog)
   const usageReview = wireUsageReview(context, options.mountWorkflowPlugin)
   const item = wireItem(context)
   const launch = wireSessionLaunch({
@@ -106,7 +103,7 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
     viewPort: options.viewPort,
     mountWorkflowPlugin: options.mountWorkflowPlugin,
     firstViewer: firstViewer.promise,
-    diagnosticLog: options.diagnosticLog,
+    diagnosticLog,
     onLaunch: (seed, onEvent, restored) => {
       diary.noteLaunched(seed)
       usageReview.noteLaunched(seed)
@@ -114,10 +111,10 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
     },
   })
   const chat = wireChat(context, character)
-  const repository = wireRepository(context, options.diagnosticLog)
+  const repository = wireRepository(context, diagnosticLog)
   const achievement = wireAchievement(context)
   const host = wireHost(context, options.host)
-  const characterPack = wireCharacterPack(context, character, options.diagnosticLog)
+  const characterPack = wireCharacterPack(context, character, diagnosticLog)
 
   const project = await archiveProject
   const manager = createSessionManager({
@@ -128,10 +125,10 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
     chatArchive: context.chatArchive,
     // 会話のアーカイブに仕事の行として書く `project`。起動時に1回だけ取る。
     project,
-    tokenUsageLog: options.tokenUsageLog,
+    tokenUsageLog: usageLogs.tokenUsage,
     contextUsageLog: usageLogs.context,
     experienceMetricLog: usageLogs.experienceMetric,
-    diagnosticLog: options.diagnosticLog,
+    diagnosticLog,
     reportUsageLog: usageLogs.report,
     promptImageShelf,
     reportImageShelf: options.reportImageShelf,
