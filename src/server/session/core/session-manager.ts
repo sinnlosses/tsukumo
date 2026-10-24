@@ -141,7 +141,9 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
     }
     replaceState(applySessionEvent(state, event, at))
     tally.waitingLineAlarm.set(waitingLineDueAt(state))
-    tally.batch.add({ at, event })
+    if (event.kind !== "token-usage") {
+      tally.batch.add({ at, event })
+    }
     diagnostic.add({ flow: "session-event", at, generation: tally.generation, kind: event.kind })
     experienceMetric.observe(event, state, at)
     tally.reportChangeCounter.observe(event)

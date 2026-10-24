@@ -40,6 +40,8 @@
 **`tasks-changed` は差分を運ぶ**（`TaskSummaryChange`: 変わった・増えた課題の全文 `upserted`、消えた ID `removed`、並びの `order`）。
 全件は `hello` の `SessionState.tasks` が持ち、差分はサーバの見張り（前回知らせた一覧と比べる）が作り、`advanceSessionState` が ID をキーに当てる。
 
+**`token-usage` は `events` フレームに積まない**（姿を変えず、行き先はサーバの記録だけ）。**`apiTrouble` が `none` の姿に `step-usage`・`token-usage` を畳むと、`advanceSessionState` は同じ参照を返す**（ブラウザの `receive` が参照の同一で早期終了できるように。他のモデル出力のイベントは畳み込みで姿を作る）。
+
 **`state.model` は `init` を待たずに先回りで更新する**（`/model` を送ったそのターンの `init` はまだ古い
 モデルを返す）。`assistant` に乗る `local_command_run` の `args` が `MODEL_ALIASES`（「ClientCommand」）と完全一致する
 ときだけ更新する。**`local_command_run` を持たない古い SDK ではこの経路が黙って効かなくなり**、テストは

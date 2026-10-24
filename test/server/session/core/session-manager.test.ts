@@ -98,6 +98,23 @@ describe("createSessionManager", () => {
     }
   })
 
+  describe("使用量の累計", () => {
+    it("token-usage は events フレームに入れず、同じ束の別のイベントは流す", async () => {
+      const { manager, stub } = startManagerWithStub()
+      const frames: ServerFrame[] = []
+      manager.subscribe((frame) => frames.push(frame))
+
+      stub.emit({ kind: "token-usage", cumulative: [] })
+      stub.emit({ kind: "setting-confirmed", setting: "model", value: "fake-model-a" })
+      await waitForBatch()
+
+      const kinds = frames.flatMap((frame) =>
+        frame.type === "events" ? frame.events.map((e) => e.event.kind) : [],
+      )
+      expect(kinds).toEqual(["setting-confirmed"])
+    })
+  })
+
   describe("見届けた設定の合図", () => {
     const confirmed = (value: string): SessionEvent => ({
       kind: "setting-confirmed",

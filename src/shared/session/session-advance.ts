@@ -67,8 +67,10 @@ export function advanceSessionState(
   at: number,
 ): SessionState {
   if (!isSessionEventKind(event.kind)) return state
+  const clearsApiTrouble =
+    MODEL_OUTPUT_EVENT_KINDS.has(event.kind) && state.apiTrouble.kind !== "none"
   return foldSessionEvent(
-    MODEL_OUTPUT_EVENT_KINDS.has(event.kind) ? { ...state, apiTrouble: { kind: "none" } } : state,
+    clearsApiTrouble ? { ...state, apiTrouble: { kind: "none" } } : state,
     event,
     at,
   )

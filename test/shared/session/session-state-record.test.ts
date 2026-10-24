@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import { mainViewEntries } from "../../../src/shared/session/main-view-entry.ts"
+import { advanceSessionState } from "../../../src/shared/session/session-advance.ts"
 import type { SessionEvent, StampedEvent } from "../../../src/shared/session/session-event.ts"
 import { applySessionEvent } from "../../../src/shared/session/session-fold.ts"
 import {
@@ -285,6 +286,34 @@ describe("applySessionEvent（API の不調と失敗）", () => {
     for (const output of outputs) {
       expect(apply(REQUEST, RETRY, output).apiTrouble).toEqual({ kind: "none" })
     }
+  })
+
+  const STEP_USAGE = {
+    kind: "step-usage",
+    messageId: "msg_1",
+    scope: "main",
+    usage: {
+      inputTokens: 1,
+      outputTokens: 1,
+      cacheReadInputTokens: 0,
+      cacheCreationInputTokens: 0,
+    },
+  } satisfies SessionEvent
+
+  it("呼び直し中でない姿に step-usage・token-usage を畳むと、同じ参照が返る", () => {
+    const state = apply(REQUEST)
+
+    expect(advanceSessionState(state, STEP_USAGE, 0)).toBe(state)
+    expect(advanceSessionState(state, { kind: "token-usage", cumulative: [] }, 0)).toBe(state)
+  })
+
+  it("呼び直し中の姿に step-usage を畳むと、元の姿は変えずに none の新しい姿が返る", () => {
+    const state = applySessionEvent(apply(REQUEST), RETRY, 10)
+    const next = advanceSessionState(state, STEP_USAGE, 20)
+
+    expect(next).not.toBe(state)
+    expect(next.apiTrouble).toEqual({ kind: "none" })
+    expect(state.apiTrouble.kind).toBe("retrying")
   })
 
   it("モデルの出力でないイベント（答え待ち・使用量の累計）では呼び直し中を下ろさない", () => {

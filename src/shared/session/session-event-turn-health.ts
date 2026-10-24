@@ -29,7 +29,7 @@ export type TurnHealthEvent =
    * そのターンの終わりに SDK が渡してきたトークンの使用量（`result` の `modelUsage`）。
    * 運ぶのは `query()` の中の累計そのままで、ターンごとの増分に直すのは受け取った側。
    *
-   * 画面には出ない。畳み込みは何もせず、行き先は `~/.tsukumo/token-usage/` の記録だけ。
+   * 画面には出ない。畳み込みは何もせず、ブラウザへは配らない。行き先は `~/.tsukumo/token-usage/` の記録だけ。
    * `turn-finished` に相乗りさせずに別のイベントにしてあるのは、使用量を持たない終わり方があるから（復元の再生・fake driver・`modelUsage` の無い `result`）。
    * 数とモデルの名前だけで、会話の内容は入らない。
    */
