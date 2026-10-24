@@ -90,11 +90,13 @@
   `globalSetup`（`test/built-ui-setup.ts`）が、組み立てたときの指紋が `src/browser/`・`src/shared/` の
   いまの指紋と違う（または指紋・組み立てが無い）とテストの前に落とす。黙って組み立て直さず、`pnpm run build` を打つ。**headless shell が無ければ前提不足で落ちる**
   （飛ばすと黙って守らなくなる）
-- **ブラウザは1ファイルに1つ、tsukumo は1件ごとに1つ起こす**。後始末は自分の pid だけに `SIGTERM` を
+- **ブラウザは E2E の実行全体で1つ、tsukumo は1件ごとに1つ起こす**。後始末は自分の pid だけに `SIGTERM` を
   送り、終わるのを待ってから一時のディレクトリを消す（広いパターンで止めない）。**ブラウザは
-  `chromium.launchServer` で起こして繋ぎ、ファイルの終わり（`afterAll`）に丁寧に閉じず kill する**
-  （製品版の Chrome を使っていたときは、丁寧に閉じると最後のコンテキストを閉じてから約 10 秒たつまで終わらず、ファイルごとに
-  その待ちが乗って E2E の段の半分を占めていた。kill しても一時のプロファイルは Playwright が消す）
+  `globalSetup`（`test/e2e-chrome-setup.ts`）が `chromium.launchServer` で1回起こし、`provide` で配った
+  `wsEndpoint` に各ファイルが `beforeAll` で `connect` する**。ファイルの終わりは切断だけで、
+  Chrome は実行の終わりに `globalSetup` の後始末が kill する（丁寧に閉じると最後のコンテキストを閉じてから
+  約 10 秒待つため。kill しても一時のプロファイルは Playwright が消す）。**スクリーンショットは
+  期待値と食い違って落ちた回（`failures/` の下）と `E2E_UPDATE=1` のときだけ撮る**
 - **起こし方**: fake driver・空きポート・自動オープンなし・**`TSUKUMO_HOME`・`HOME`・cwd は1件ごとの
   一時ディレクトリ**（リポジトリで起こすと Beads の実データと git の履歴が画面に入る。`HOME` には使用状況の
   送信を止めた `bd` の設定だけを置く。タスクの一覧は `bd` を起こさない（「E2E のシナリオの一覧」のタスクの一覧の行）が、

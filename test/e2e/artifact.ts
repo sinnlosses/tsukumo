@@ -71,9 +71,21 @@ export function matchArtifact(
       lineDiff(expectedText, text),
       "utf8",
     )
-    throw new Error(`${kind} が期待値と食い違った。その回の成果物と差分を残した: ${failureDir}`, {
-      cause: error,
-    })
+    throw new ArtifactMismatchError(
+      `${kind} が期待値と食い違った。その回の成果物と差分を残した: ${failureDir}`,
+      failureDir,
+      error,
+    )
+  }
+}
+
+/** 期待値との食い違い。残した置き場を持ち、スクリーンショットを足せるようにする。 */
+export class ArtifactMismatchError extends Error {
+  readonly failureDir: string
+
+  constructor(message: string, failureDir: string, cause: unknown) {
+    super(message, { cause })
+    this.failureDir = failureDir
   }
 }
 
@@ -94,7 +106,7 @@ const FAILURE_RETENTION_COUNT = 5
 const EXPECTED_ROOT = fileURLToPath(new URL("./expected", import.meta.url))
 
 /** 期待値を書き直すか（`pnpm run test:e2e:update`）。 */
-const UPDATE_EXPECTED = process.env["E2E_UPDATE"] === "1"
+export const UPDATE_EXPECTED = process.env["E2E_UPDATE"] === "1"
 
 function replaceAll(text: string, replacements: readonly (readonly [string, string])[]): string {
   return replacements.reduce((current, [from, to]) => current.split(from).join(to), text)

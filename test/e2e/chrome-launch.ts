@@ -2,25 +2,6 @@
 
 import { type Browser, type BrowserServer, chromium } from "playwright-core"
 
-export type LaunchedChrome = {
-  readonly server: BrowserServer
-  /** `server` に繋いだ側。`close` は切断だけで、Chrome は止めない。 */
-  readonly browser: Browser
-}
-
-export async function launchChrome(): Promise<LaunchedChrome> {
-  const server = await launchChromeServer()
-  try {
-    const browser = await chromium.connect(server.wsEndpoint(), {
-      timeout: BROWSER_STEP_TIMEOUT_MS,
-    })
-    return { server, browser }
-  } catch (error) {
-    await server.kill()
-    throw error
-  }
-}
-
 /**
  * ブラウザを起こして繋ぐ全体の上限（ミリ秒）。E2E の hook の上限より短くし、
  * 起こす段と繋ぐ段で半分ずつ使う。
@@ -28,7 +9,11 @@ export async function launchChrome(): Promise<LaunchedChrome> {
 const BROWSER_LAUNCH_TIMEOUT_MS = 48_000
 const BROWSER_STEP_TIMEOUT_MS = BROWSER_LAUNCH_TIMEOUT_MS / 2
 
-async function launchChromeServer(): Promise<BrowserServer> {
+/** 起こした Chrome の `wsEndpoint` を渡す先の `provide`/`inject` の名前。 */
+export const CHROME_ENDPOINT_KEY = "chromeEndpoint"
+
+/** 止めるのは呼び側が `server.kill()` する。 */
+export async function launchChromeServer(): Promise<BrowserServer> {
   try {
     return await chromium.launchServer({
       headless: true,
@@ -41,4 +26,9 @@ async function launchChromeServer(): Promise<BrowserServer> {
       { cause: error },
     )
   }
+}
+
+/** 起こしてある Chrome に繋ぐ。返した `Browser` の `close` は切断だけで、Chrome は止めない。 */
+export function connectChrome(wsEndpoint: string): Promise<Browser> {
+  return chromium.connect(wsEndpoint, { timeout: BROWSER_STEP_TIMEOUT_MS })
 }

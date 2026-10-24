@@ -2,11 +2,12 @@
 // （`test/e2e/<シナリオ>.test.ts`）はここを呼ぶだけにする。形の正典は
 // `docs/architecture/testing.md`「E2E の走らせ方」「E2E の成果物と再現」。
 //
-// - ブラウザは1ファイルに1つ（`beforeAll`）で、`afterAll` で kill して止める。
+// - ブラウザは E2E 全体で1つ（`globalSetup` が起こす）。各ファイルは `beforeAll` で繋ぎ、`afterAll` で切る。
 //   tsukumo とブラウザのコンテキストは1件ごとに1つ
 // - 起こした tsukumo は `afterEach` で自分の pid だけに `SIGTERM` を送り、終わるのを待ってから
 //   一時のディレクトリを消す
-// - 判定は DOM の構造とメッセージの列の2つの JSON だけ。スクリーンショットは目視の添え物
+// - 判定は DOM の構造とメッセージの列の2つの JSON だけ。スクリーンショットは目視の添え物で、
+//   食い違った回と `E2E_UPDATE=1` のときだけ撮る
 // - `open` は疑似セッションの予定の最初の静かな区切りまでが届いてから部屋を渡す
 //
 // 成果物に入るのは疑似セッション（`test/fixture/fake-session.json`）の手書きの会話だけ。
@@ -16,21 +17,23 @@ import { mkdirSync, rmSync } from "node:fs"
 import path from "node:path"
 
 import type { Browser, Locator, Page } from "playwright-core"
-import { afterAll, afterEach, beforeAll } from "vitest"
+import { afterAll, afterEach, beforeAll, inject } from "vitest"
 
 import { waitForViewUrl } from "../../scripts/shared/fake-tsukumo-process.ts"
 import { PROTOCOL_VERSION } from "../../src/shared/frame.ts"
 import { writeBeadsConfig } from "../fixture/beads-repository.ts"
 import { ANNOUNCED_LOG, RECORD_ANNOUNCEMENTS_SCRIPT } from "./announcement-record.ts"
 import {
+  ArtifactMismatchError,
   type ArtifactKind,
   assertNoMessagesExpected,
   matchArtifact,
   OUTPUT_ROOT,
   REPOSITORY_ROOT,
+  UPDATE_EXPECTED,
   writeArtifact,
 } from "./artifact.ts"
-import { launchChrome, type LaunchedChrome } from "./chrome-launch.ts"
+import { CHROME_ENDPOINT_KEY, connectChrome } from "./chrome-launch.ts"
 import { type DomRootName, namedDomTreeScript, settledDom } from "./dom-tree.ts"
 import { FIXED_INSTANT, installFixedClock, TIME_ZONE } from "./fixed-clock.ts"
 import {
@@ -162,12 +165,12 @@ export type ScenarioRun = {
  * シナリオのファイルの先頭で1回呼ぶ。ブラウザを起こす・閉じる、1件ごとの後始末を登録する。
  */
 export function useScenarioRun(): ScenarioRun {
-  let launching: Promise<LaunchedChrome> | undefined = undefined
+  let connecting: Promise<Browser> | undefined = undefined
   const cleanups: (() => Promise<void>)[] = []
 
   beforeAll(async () => {
-    launching = launchChrome()
-    await launching
+    connecting = connectChrome(inject(CHROME_ENDPOINT_KEY))
+    await connecting
   })
 
   afterEach(async () => {
@@ -178,19 +181,17 @@ export function useScenarioRun(): ScenarioRun {
   })
 
   afterAll(async () => {
-    // Chrome は普通に閉じると、最後のコンテキストを閉じてから約 10 秒たつまで終わらない。
-    // beforeAll が上限で打ち切られても、起こしかけのブラウザはここで止める。
-    const chrome = await launching?.catch(() => undefined)
-    await chrome?.browser.close()
-    await chrome?.server.kill()
+    // 切断だけ。Chrome は `globalSetup` が止める。
+    const browser = await connecting?.catch(() => undefined)
+    await browser?.close()
   })
 
   return {
     open: async (options) => {
-      if (launching === undefined) {
-        throw new Error("ブラウザが起きていない（beforeAll が走っていない）")
+      if (connecting === undefined) {
+        throw new Error("ブラウザに繋いでいない（beforeAll が走っていない）")
       }
-      return openRoom((await launching).browser, options, (cleanup) => cleanups.push(cleanup))
+      return openRoom(await connecting, options, (cleanup) => cleanups.push(cleanup))
     },
   }
 }
@@ -269,7 +270,9 @@ async function openRoom(
     await page.clock.pauseAt(Temporal.Instant.from(FIXED_INSTANT).epochMilliseconds + elapsedMs)
     await settledDom(page, options.scenario, outDir)
     const dom = await page.evaluate(namedDomTreeScript(options.domRoots))
-    await page.screenshot({ path: path.join(outDir, `${options.scenario}.png`) })
+    if (UPDATE_EXPECTED) {
+      await page.screenshot({ path: path.join(outDir, `${options.scenario}.png`) })
+    }
     // 両方を書いてから比べる（先の比べで落ちると、控えに前の回の成果物が混ざる）。
     const texts = {
       dom: writeArtifact(options.scenario, "dom", dom, replacements, outDir),
@@ -339,14 +342,30 @@ async function openRoom(
       }, ANNOUNCED_LOG),
     settleAndMatch: async (elapsedMs) => {
       const { texts, outDir } = await settleAndWrite(elapsedMs)
-      matchArtifact(options.scenario, "dom", texts.dom, outDir)
-      assertNoMessagesExpected(options.scenario)
+      await shootOnMismatch(page, options.scenario, () => {
+        matchArtifact(options.scenario, "dom", texts.dom, outDir)
+        assertNoMessagesExpected(options.scenario)
+      })
     },
     settleAndMatchWithMessages: async (elapsedMs) => {
       const { texts, outDir } = await settleAndWrite(elapsedMs)
-      matchArtifact(options.scenario, "dom", texts.dom, outDir)
-      matchArtifact(options.scenario, "messages", texts.messages, outDir)
+      await shootOnMismatch(page, options.scenario, () => {
+        matchArtifact(options.scenario, "dom", texts.dom, outDir)
+        matchArtifact(options.scenario, "messages", texts.messages, outDir)
+      })
     },
+  }
+}
+
+/** 食い違いで落ちた回だけ、残した成果物の置き場へスクリーンショットを足して投げ直す。 */
+async function shootOnMismatch(page: Page, scenario: string, match: () => void): Promise<void> {
+  try {
+    match()
+  } catch (error) {
+    if (error instanceof ArtifactMismatchError) {
+      await page.screenshot({ path: path.join(error.failureDir, `${scenario}.png`) })
+    }
+    throw error
   }
 }
 

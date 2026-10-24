@@ -48,6 +48,8 @@ export const E2E_WATCHED_REGIONS = {
   "test/e2e/phone-inquiry.test.ts": ["main", "dispatch", "character"],
   "test/e2e/report-main-view.test.ts": ["main", "dispatch"],
   "test/e2e/report-spacing.test.ts": ["main"],
+  "test/e2e/spacing-media.test.ts": ["main"],
+  "test/e2e/spacing-verdict.test.ts": ["main"],
   "test/e2e/report-task.test.ts": ["main"],
   "test/e2e/run-setting.test.ts": ["sidebar"],
   "test/e2e/session-ended.test.ts": ["main", "dispatch"],
@@ -60,6 +62,7 @@ export const E2E_WATCHED_REGIONS = {
   "test/e2e/turn-flow.test.ts": "every",
   "test/e2e/usage-review-own-session.test.ts": ["main", "other-screens"],
   "test/e2e/welcome.test.ts": ["main"],
+  "test/e2e/work-strip-phase-popover.test.ts": ["main", "dispatch"],
   "test/e2e/work-strip.test.ts": ["main", "dispatch"],
   "test/e2e/workflow-setting.test.ts": ["screen-nav"],
 } as const satisfies Record<string, readonly E2eRegion[] | "every">

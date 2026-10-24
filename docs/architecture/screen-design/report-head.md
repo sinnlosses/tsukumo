@@ -176,4 +176,4 @@
 - 枠を持つ塊（`fold` の `<details>`・合図の行）の内側は塊のあきを使わず、それぞれの padding で決める
 - 塊を足すときは上下の margin に `--report-block-gap`（題つきなら `--report-figure-gap`）を書き、固定の値を書かない。
   器を持たない塊（引用の中の段落）は既定の 1em（15px）が外へ抜けてあきを崩すので、先頭・末尾の margin を 0 にする
-- 本文の隣り合う塊のあきが 13px の倍数であることは E2E（`report-spacing`）が実ブラウザで測る
+- 本文の隣り合う塊のあきが 13px の倍数であることは E2E（`report-spacing`・`spacing-media`・`spacing-verdict`）が実ブラウザで測る

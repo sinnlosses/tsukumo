@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 
 import { expectReadable } from "./readability-scan.ts"
 import { useScenarioRun } from "./scenario-run.ts"
+import { LONG_TOOL_OCCURRENCE, phaseStates, stripOf } from "./work-strip-probe.ts"
 
 // 進み具合の帯（docs/architecture/testing.md「E2E のシナリオの一覧」）。
 // 場面 `work-strip-running` は1つ目の手順のあと間を空け、4つ目の手順（長い Bash）が十数秒走るので、そこで撮る。
@@ -13,9 +14,6 @@ const run = useScenarioRun()
 
 /** 撮るときの経過（凍らせた瞬間から）。「何秒前」の類いをこの値で揃える。 */
 const ELAPSED_MS = 60_000
-
-/** 長い Bash が、場面の中で何番目の `tool-started` か。 */
-const LONG_TOOL_OCCURRENCE = 4
 
 describe("進み具合の帯", () => {
   it("段が進む・ツールが走るたびに書き換わり、本文を転がしても動かない", async () => {
@@ -47,27 +45,6 @@ describe("進み具合の帯", () => {
 
     await room.page.getByRole("button", { name: /手順/ }).waitFor()
     await expectReadable(room.page)
-  })
-
-  it("済んだ段の丸を押すと吹き出しが出て、「この段の手順へ」で依頼の手順の一覧が開く", async () => {
-    const room = await run.open({
-      scenario: "work-strip-phase-popover",
-      scene: "work-strip-running",
-      viewport: "large",
-      domRoots: ["main"],
-    })
-    const strip = stripOf(room.page)
-    await room.waitForEvent("tool-started", LONG_TOOL_OCCURRENCE)
-    await expect.poll(() => phaseStates(strip)).toEqual(["done", "current", "upcoming", "upcoming"])
-
-    await strip.getByRole("button", { name: /今の形を調べる/ }).click()
-    const popover = strip.getByRole("dialog")
-    await popover.waitFor()
-    expect(await popover.textContent()).toContain("済み · 所要")
-    await popover.getByRole("button", { name: "この段の手順へ" }).click()
-
-    await strip.getByRole("region", { name: "依頼の手順" }).waitFor()
-    expect(await strip.getByRole("dialog").count()).toBe(0)
   })
 
   it("1024x768 で許可の答え待ちが届くと、今の段の丸が答え待ちになり、2行目が何を待っているかを言い、札の口は覆われない", async () => {
@@ -126,16 +103,6 @@ describe("進み具合の帯", () => {
     )
   })
 })
-
-function stripOf(page: Page): Locator {
-  return page.locator('[data-region="main"] section[aria-label="進み具合"]')
-}
-
-async function phaseStates(strip: Locator): Promise<readonly (string | null)[]> {
-  return strip
-    .locator("[data-phase-state]")
-    .evaluateAll((items) => items.map((item) => item.getAttribute("data-phase-state")))
-}
 
 async function activityText(strip: Locator): Promise<string> {
   return (await strip.locator("p").first().textContent()) ?? ""
