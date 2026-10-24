@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { createWelcomeGreeter } from "../../../../src/server/recommendation/core/welcome-greeter.ts"
+import { createWelcomeGreeter } from "../../../../src/server/welcome-greeting/core/welcome-greeter.ts"
 import {
   flushWelcomeWriting as flush,
   welcomeGreeterHarness as harness,

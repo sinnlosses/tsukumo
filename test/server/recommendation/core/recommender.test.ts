@@ -8,7 +8,7 @@ import {
   createRecommender,
   type RecommendationCacheEntry,
 } from "../../../../src/server/recommendation/core/recommender.ts"
-import type { StructuredQuery } from "../../../../src/server/recommendation/core/structured-query.ts"
+import type { StructuredQuery } from "../../../../src/server/welcome-greeting/core/structured-query.ts"
 import type { RecommendationCard } from "../../../../src/shared/recommendation/recommendation-card.ts"
 import type {
   TaskSummaryItem,

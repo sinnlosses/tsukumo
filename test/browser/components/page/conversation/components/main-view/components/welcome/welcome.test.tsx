@@ -62,7 +62,10 @@ describe("Welcome（キーで始める）", () => {
 
     fireEvent.keyDown(document.body, { key: "1" })
 
-    expect(calls).toEqual([{ procedure: "session.prompt", text: "X-1 に着手して", images: [] }])
+    expect(calls).toEqual([
+      { procedure: "diagnostic.reportRecommendationPressed", kind: "task" },
+      { procedure: "session.prompt", text: "X-1 に着手して", images: [] },
+    ])
   })
 
   it("入力欄の中のキーは字になるだけで、札は始まらない", () => {

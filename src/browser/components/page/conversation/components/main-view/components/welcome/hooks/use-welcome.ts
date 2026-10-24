@@ -23,7 +23,7 @@ export type WelcomeModel = {
   /** 切り替え画面で選べる、いまのセッション以外の行があるか（「前のやり取りを見る」を出すか）。 */
   readonly hasOtherSessions: boolean
   /** 札の「始める」。入力欄を経由せず依頼を送る。 */
-  readonly onStart: (request: string) => void
+  readonly onStart: (card: WelcomeCard) => void
   readonly onWrite: () => void
   readonly onPickTask: () => void
   readonly onSeePrevious: () => void
@@ -42,8 +42,9 @@ export function useWelcome(): WelcomeModel {
     openSwitcher(nowEpochMilliseconds())
   }
 
-  function onStart(request: string): void {
-    dispatch.session.prompt({ text: request, images: [] })
+  function onStart(card: WelcomeCard): void {
+    void dispatch.diagnostic.reportRecommendationPressed({ kind: card.kind })
+    dispatch.session.prompt({ text: card.request, images: [] })
   }
 
   // 購読先は `document` の `keydown`（React の外）。
@@ -67,7 +68,7 @@ export function useWelcome(): WelcomeModel {
         const card = cards[key.index]
         if (card !== undefined) {
           event.preventDefault()
-          onStart(card.request)
+          onStart(card)
         }
       } else if (key.kind === "write") {
         event.preventDefault()

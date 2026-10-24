@@ -18,6 +18,7 @@ export const SERVER_FEATURES = [
   "host",
   "repository",
   "recommendation",
+  "welcome-greeting",
   "checkout",
   "workflow-setting",
   "achievement",

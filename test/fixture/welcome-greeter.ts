@@ -3,8 +3,8 @@
 import type {
   UnwrittenPlace,
   WelcomeGreeterPorts,
-} from "../../src/server/recommendation/core/welcome-greeter.ts"
-import type { WelcomeGreetingText } from "../../src/server/recommendation/core/welcome-greeting.ts"
+} from "../../src/server/welcome-greeting/core/welcome-greeter.ts"
+import type { WelcomeGreetingText } from "../../src/server/welcome-greeting/core/welcome-greeting.ts"
 import type { WelcomeWritingFootprint } from "../../src/shared/diagnostic/welcome-writing.ts"
 import type { WrittenReactions } from "../../src/shared/recommendation/reaction.ts"
 import type { WelcomeGreetingState } from "../../src/shared/recommendation/welcome-greeting.ts"

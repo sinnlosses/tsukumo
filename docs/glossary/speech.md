@@ -76,8 +76,8 @@
 
 - **英語識別子**: `welcomeGreeting`（状態の欄。イベントは `welcome-greeting-changed`）。挨拶1つは
   `WelcomeGreeting`、札の名前の差し込み口は `WELCOME_GREETING_CARD_MARK`、書く関数は
-  `src/server/recommendation/core/welcome-greeting-writer.ts` の `greetWelcome`。書けた挨拶と反応の行をセッションごとに
-  覚えて同じセッションへ戻る代で出し直す口は `src/server/recommendation/core/kept-welcome.ts` の `createWelcomeKeeper`
+  `src/server/welcome-greeting/core/welcome-greeting-writer.ts` の `greetWelcome`。書けた挨拶と反応の行をセッションごとに
+  覚えて同じセッションへ戻る代で出し直す口は `src/server/welcome-greeting/core/kept-welcome.ts` の `createWelcomeKeeper`
 - **定義**: 迎える局面の吹き出しに出す、セッションを新しく起こすたびと `/clear` のたびに背景の使い捨ての `query()`
   （`haiku`）がパックの人格の口調で書く1〜2文の挨拶。札があるときは始め方の一覧の先頭の札を名指す
 - **注記**: 札の名前は書かせず、差し込み口を書かせて画面が出すときに先頭の札の名前を差し込む（札の並びが

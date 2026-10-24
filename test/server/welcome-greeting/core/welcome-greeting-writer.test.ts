@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest"
 
-import { greetWelcome } from "../../../../src/server/recommendation/core/welcome-greeting-writer.ts"
-import { WELCOME_GREETING_RECENT_LIMIT } from "../../../../src/server/recommendation/core/welcome-greeting.ts"
+import { greetWelcome } from "../../../../src/server/welcome-greeting/core/welcome-greeting-writer.ts"
+import { WELCOME_GREETING_RECENT_LIMIT } from "../../../../src/server/welcome-greeting/core/welcome-greeting.ts"
 import {
   flushWelcomeWriting as flush,
   welcomeGreeterHarness as harness,

@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest"
 import {
   runRetriedQuery,
   type CheckedAnswer,
-} from "../../../../src/server/recommendation/core/retried-query.ts"
+} from "../../../../src/server/welcome-greeting/core/retried-query.ts"
 
 describe("runRetriedQuery", () => {
   it("並べた1回目の答えの検査が投げても、待ちが止まらず問い合わせが終わる", async () => {

@@ -6,7 +6,6 @@ import {
   readRecommendationCache,
   writeRecommendationCache,
 } from "../server/recommendation/adapter/recommendation-cache.ts"
-import { queryStructured } from "../server/recommendation/adapter/sdk-structured-query.ts"
 import { createRecommender, type Recommender } from "../server/recommendation/core/recommender.ts"
 import type { BeadsStamp } from "../server/repository/adapter/beads.ts"
 import { changeCountGitOf } from "../server/repository/adapter/change-count.ts"
@@ -20,6 +19,7 @@ import {
   type TaskSummaryOptions,
 } from "../server/repository/adapter/task-summary.ts"
 import type { SessionManagerOptions } from "../server/session/core/session-manager-port.ts"
+import { queryStructured } from "../server/welcome-greeting/adapter/sdk-structured-query.ts"
 import type { SessionEvent } from "../shared/session/session-event.ts"
 import { failureDiagnostic } from "./failure-diagnostic.ts"
 import type { WiringContext } from "./wiring-context.ts"

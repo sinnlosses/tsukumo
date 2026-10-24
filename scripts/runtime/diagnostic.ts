@@ -149,6 +149,9 @@ function line(entry: DiagnosticEntry): string {
   if (entry.flow === "synopsis-trim") {
     return `${when}  ${entry.flow}  ${String(entry.droppedLines)}行`
   }
+  if (entry.flow === "recommendation-pressed") {
+    return `${when}  ${entry.flow}  ${entry.kind}`
+  }
   if (entry.flow === "report-gate-block") {
     return `${when}  ${entry.flow}`
   }

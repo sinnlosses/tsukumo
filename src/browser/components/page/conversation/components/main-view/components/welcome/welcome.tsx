@@ -99,7 +99,7 @@ function Card(props: {
           title={undefined}
           className={styles["card-start"]}
           onClick={() => {
-            model.onStart(card.request)
+            model.onStart(card)
           }}
         >
           始める

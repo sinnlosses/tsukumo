@@ -6,7 +6,7 @@ import { describe, expect, it } from "vitest"
 import {
   readRecentWelcomeGreetings,
   writeRecentWelcomeGreetings,
-} from "../../../../src/server/recommendation/adapter/welcome-greeting-memory.ts"
+} from "../../../../src/server/welcome-greeting/adapter/welcome-greeting-memory.ts"
 import { useTempDir } from "../../../fixture/temp-dir.ts"
 
 const tempDir = useTempDir("welcome-greeting")

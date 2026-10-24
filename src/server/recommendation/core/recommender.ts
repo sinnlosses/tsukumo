@@ -3,6 +3,7 @@
 
 import type { RecommendationCard } from "../../../shared/recommendation/recommendation-card.ts"
 import type { TaskSummaryResult } from "../../../shared/repository/task-summary.ts"
+import type { StructuredQuery } from "../../welcome-greeting/core/structured-query.ts"
 import {
   type RecommendationCandidates,
   recommendationCandidates,
@@ -13,7 +14,6 @@ import {
   RECOMMENDATION_TIMEOUT_MS,
   recommendationQuery,
 } from "./recommendation.ts"
-import type { StructuredQuery } from "./structured-query.ts"
 
 /** キャッシュに持つ組の上限（新しい順）。 */
 const RECOMMENDATION_CACHE_LIMIT = 8

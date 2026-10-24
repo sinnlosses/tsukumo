@@ -9,11 +9,11 @@ import {
   type RecommendationCard,
 } from "../../../shared/recommendation/recommendation-card.ts"
 import { structuredOutputSchema } from "../../core/structured-output-schema.ts"
+import type { StructuredQuery } from "../../welcome-greeting/core/structured-query.ts"
 import type {
   RecommendationCandidate,
   RecommendationCandidates,
 } from "./recommendation-candidate.ts"
-import type { StructuredQuery } from "./structured-query.ts"
 
 /** 問い合わせを起こすモデル（軽いもの）。 */
 const RECOMMENDATION_MODEL = "haiku"

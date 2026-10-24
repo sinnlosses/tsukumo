@@ -4,7 +4,7 @@ import {
   createWelcomeKeeper,
   type WelcomeKeeper,
   type WelcomeWritingEvent,
-} from "../../../../src/server/recommendation/core/kept-welcome.ts"
+} from "../../../../src/server/welcome-greeting/core/kept-welcome.ts"
 import type { WrittenReactions } from "../../../../src/shared/recommendation/reaction.ts"
 import type { WelcomeGreeting } from "../../../../src/shared/recommendation/welcome-greeting.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"

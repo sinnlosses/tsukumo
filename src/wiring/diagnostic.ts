@@ -13,6 +13,9 @@ export function wireDiagnostic(
       reportBrowserError: (report) => {
         diagnosticLog.append([{ flow: "browser-error", at: context.now(), ...report }])
       },
+      reportRecommendationPressed: (kind) => {
+        diagnosticLog.append([{ flow: "recommendation-pressed", at: context.now(), kind }])
+      },
     },
   }
 }

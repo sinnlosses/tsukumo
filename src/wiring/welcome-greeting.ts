@@ -6,20 +6,20 @@
 import { localCalendarAt } from "../server/adapter/local-time.ts"
 import type { CharacterPack } from "../server/character-pack/adapter/character-pack.ts"
 import type { DiagnosticLog } from "../server/diagnostic/core/diagnostic.ts"
-import { queryStructured } from "../server/recommendation/adapter/sdk-structured-query.ts"
+import type { SessionLaunchSeed } from "../server/session/core/session-launch.ts"
+import { queryStructured } from "../server/welcome-greeting/adapter/sdk-structured-query.ts"
 import {
   readRecentWelcomeGreetings,
   writeRecentWelcomeGreetings,
-} from "../server/recommendation/adapter/welcome-greeting-memory.ts"
-import { createWelcomeKeeper } from "../server/recommendation/core/kept-welcome.ts"
-import { resumedWelcome } from "../server/recommendation/core/resumed-welcome.ts"
-import { createWelcomeGreeter } from "../server/recommendation/core/welcome-greeter.ts"
+} from "../server/welcome-greeting/adapter/welcome-greeting-memory.ts"
+import { createWelcomeKeeper } from "../server/welcome-greeting/core/kept-welcome.ts"
+import { resumedWelcome } from "../server/welcome-greeting/core/resumed-welcome.ts"
+import { createWelcomeGreeter } from "../server/welcome-greeting/core/welcome-greeter.ts"
 import {
   START_VISIT,
   type WelcomeGreetingMaterial,
   type WelcomeVisit,
-} from "../server/recommendation/core/welcome-greeting.ts"
-import type { SessionLaunchSeed } from "../server/session/core/session-launch.ts"
+} from "../server/welcome-greeting/core/welcome-greeting.ts"
 import { expressionChoices } from "../shared/character-pack/expression-choice.ts"
 import type { RestoredEvent, SessionEvent } from "../shared/session/session-event.ts"
 import { failureDiagnostic } from "./failure-diagnostic.ts"

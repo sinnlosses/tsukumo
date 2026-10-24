@@ -122,7 +122,7 @@ async function start(openFileResult = true): Promise<Started> {
         },
       },
       workflowSetting: { changeWorkflowSetting: unexpected },
-      diagnostic: { reportBrowserError: unexpected },
+      diagnostic: { reportBrowserError: unexpected, reportRecommendationPressed: unexpected },
       experienceMetric: { recordSplit: unexpected },
     }),
     commandSession: IDLE_WORK_SESSION,

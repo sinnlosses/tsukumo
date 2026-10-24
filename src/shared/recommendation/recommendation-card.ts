@@ -4,6 +4,9 @@
 /** 始め方の一覧に並べる札の上限。 */
 export const MAX_RECOMMENDATION_CARDS = 3
 
+/** 札の種類（`RecommendationCard["kind"]` と同じ並び）。 */
+export const RECOMMENDATION_CARD_KINDS = ["resume", "task"] as const satisfies readonly string[]
+
 /**
  * おすすめの札1枚。並びの順がおすすめの順。
  * `resume` は前回の続きで、残りの中身は持たない（画面が前のセッションの `SessionDigest` の `remaining` から読む）。

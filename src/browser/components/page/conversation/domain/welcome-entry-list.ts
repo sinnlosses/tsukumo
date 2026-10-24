@@ -24,6 +24,7 @@ const RESUME_KEY = "resume"
 
 /** 押すとすぐ `request` が送られる札。 */
 export type WelcomeCard = {
+  readonly kind: RecommendationCard["kind"]
   readonly key: string
   /** 札の頭の字（タスクの ID、前回の続きは前のセッションの見出し）。 */
   readonly id: string
@@ -95,6 +96,7 @@ function resumeCards(
   }
   return [
     {
+      kind: "resume",
       key: RESUME_KEY,
       id: previous.heading ?? NO_HEADING_LABEL,
       title: remaining,
@@ -111,6 +113,7 @@ function readyTaskCards(tasks: TaskSummaryResult): readonly WelcomeCard[] {
   return tasks.items
     .filter((task) => taskReadiness(task)?.kind === "ready")
     .map((task) => ({
+      kind: "task" as const,
       key: task.id,
       id: task.id,
       title: task.summary,

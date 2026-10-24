@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest"
 import {
   parseWrittenReactions,
   writtenReactionsQuery,
-} from "../../../../src/server/recommendation/core/written-reaction.ts"
+} from "../../../../src/server/welcome-greeting/core/written-reaction.ts"
 import type { ExpressionChoice } from "../../../../src/shared/character-pack/expression-choice.ts"
 import type { WelcomeRejection } from "../../../../src/shared/diagnostic/welcome-writing.ts"
 

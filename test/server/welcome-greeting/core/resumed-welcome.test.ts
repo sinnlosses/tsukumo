@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { resumedWelcome } from "../../../../src/server/recommendation/core/resumed-welcome.ts"
+import { resumedWelcome } from "../../../../src/server/welcome-greeting/core/resumed-welcome.ts"
 import type { ReportWaitingLine } from "../../../../src/shared/session/session-event-report.ts"
 import type { RestoredEvent, SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import { reportEvent } from "../../../fixture/report-event.ts"

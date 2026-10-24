@@ -5,8 +5,8 @@ import {
   parseWelcomeGreeting,
   welcomeGreetingQuery,
   type WelcomeGreetingMaterial,
-} from "../../../../src/server/recommendation/core/welcome-greeting.ts"
-import { WELCOME_LINE_REQUESTED_CHARS } from "../../../../src/server/recommendation/core/welcome-line.ts"
+} from "../../../../src/server/welcome-greeting/core/welcome-greeting.ts"
+import { WELCOME_LINE_REQUESTED_CHARS } from "../../../../src/server/welcome-greeting/core/welcome-line.ts"
 import type { WelcomeRejection } from "../../../../src/shared/diagnostic/welcome-writing.ts"
 
 // すべて手で書いた架空の材料と出力。

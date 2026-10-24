@@ -115,6 +115,7 @@ describe("おすすめの札", () => {
     )
     expect(cards).toEqual([
       {
+        kind: "resume",
         key: "resume",
         id: "架空の題",
         title: "架空の検証",
