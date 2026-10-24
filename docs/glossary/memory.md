@@ -98,7 +98,8 @@
 ### 最近の話題
 
 - **英語識別子**: `chatTopics`（状態の欄。イベントは `chat-topics-changed`、部品は
-  `RecentTopicSection`）
+  `RecentTopicSection`）。定着を止めたことの欄は `chatConsolidationHalt`（イベントは
+  `chat-consolidation-halted`。同じ部品が1行を出す）
 - **定義**: 雑談中のサイドバーの2段目に並べる、話題の見出し（新しい順に3件まで）。**あらすじの本文とは
   別の欄に持つ見出し**（あらすじの写しの `topics`。見出しを書くのは定着の `query()`）から読む
   （`docs/architecture/chat-mode.md` 4.9）

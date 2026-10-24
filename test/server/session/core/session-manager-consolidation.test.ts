@@ -72,7 +72,7 @@ describe("createSessionManager", () => {
     function startWithDiagnostics() {
       const entries: DiagnosticEntry[] = []
       const consolidation = createManualConsolidation()
-      const { stub } = startChatManagerWithStub({
+      const { manager, stub } = startChatManagerWithStub({
         chatConsolidation: consolidation.source,
         diagnosticLog: {
           append: (appended) => entries.push(...appended),
@@ -80,7 +80,7 @@ describe("createSessionManager", () => {
         },
       })
       stub.emit(CHARACTER_EVENT)
-      return { stub, consolidation, entries }
+      return { manager, stub, consolidation, entries }
     }
 
     async function startInChat() {
@@ -197,15 +197,23 @@ describe("createSessionManager", () => {
         "synopsis-reserved-tag",
         "synopsis-shrunk",
       ] as const
+      // 3 回続けて数える失敗で止まらないよう、1 件ごとに書けた回を挟んで勘定を戻す。
+      const settleWritten = async (): Promise<void> => {
+        stub.emit(TURN_FINISHED)
+        consolidation.finish({ kind: "written", topics: [], droppedLines: 0, shrinkWaived: false })
+        await waitForBatch()
+      }
       for (const rejection of rejections) {
         stub.emit(TURN_FINISHED)
         consolidation.finish({ kind: "failed", reason: "unreadable-result", rejection })
         await waitForBatch()
+        await settleWritten()
       }
       for (const resultKind of ["error_max_turns", "other"] as const) {
         stub.emit(TURN_FINISHED)
         consolidation.finish({ kind: "failed", reason: "query-result", resultKind })
         await waitForBatch()
+        await settleWritten()
       }
       stub.emit(TURN_FINISHED)
       consolidation.finish({ kind: "backed-off" })
@@ -241,6 +249,118 @@ describe("createSessionManager", () => {
       for (const footprint of entries.filter((entry) => entry.flow === "swallowed-failure")) {
         expect(isSwallowedFailurePlace(footprint.place)).toBe(true)
       }
+    })
+
+    describe("続けて失敗したときの停止", () => {
+      const FAILED: ChatConsolidationOutcome = {
+        kind: "failed",
+        reason: "query-result",
+        resultKind: "error_max_turns",
+      }
+      const WRITTEN: ChatConsolidationOutcome = {
+        kind: "written",
+        topics: [],
+        droppedLines: 0,
+        shrinkWaived: false,
+      }
+
+      async function turnThen(
+        started: ReturnType<typeof startWithDiagnostics>,
+        outcome: ChatConsolidationOutcome,
+      ): Promise<void> {
+        started.stub.emit(TURN_FINISHED)
+        started.consolidation.finish(outcome)
+        await waitForBatch()
+      }
+
+      function haltedFootprints(entries: readonly DiagnosticEntry[]) {
+        return entries.filter(
+          (entry) =>
+            entry.flow === "swallowed-failure" && entry.place.place === "consolidation-halted",
+        )
+      }
+
+      it("3 回続けて失敗すると、4 回目の契機では起こさず、止めた足跡を 1 行だけ残す", async () => {
+        const started = startWithDiagnostics()
+        await turnThen(started, FAILED)
+        await turnThen(started, FAILED)
+        await turnThen(started, FAILED)
+        expect(started.consolidation.calls).toHaveLength(3)
+        expect(haltedFootprints(started.entries)).toHaveLength(1)
+
+        started.stub.emit(TURN_FINISHED)
+        started.stub.emit(TURN_FINISHED)
+        expect(started.consolidation.calls).toHaveLength(3)
+        expect(haltedFootprints(started.entries)).toHaveLength(1)
+      })
+
+      it("止めたとき、chat-consolidation-halted を 1 件だけ流し、起こし直しても状態に残る", async () => {
+        const started = startWithDiagnostics()
+        const frames: ServerFrame[] = []
+        started.manager.subscribe((frame) => frames.push(frame))
+        await turnThen(started, FAILED)
+        await turnThen(started, FAILED)
+        await turnThen(started, FAILED)
+        const halted = (): SessionEvent[] =>
+          frames.flatMap((frame) =>
+            frame.type === "events"
+              ? frame.events
+                  .map(({ event }) => event)
+                  .filter((event) => event.kind === "chat-consolidation-halted")
+              : [],
+          )
+        expect(halted()).toEqual([{ kind: "chat-consolidation-halted", failures: 3 }])
+
+        await started.manager.commands.session.switchCharacter({ name: "fictional" })
+        const hello = frames.findLast((frame) => frame.type === "hello")
+        expect(hello?.type === "hello" && hello.state.chatConsolidationHalt).toEqual({
+          halted: true,
+          failures: 3,
+        })
+      })
+
+      it("失敗のあいだに 1 回書けると数が戻り、次の失敗で止まらない", async () => {
+        const started = startWithDiagnostics()
+        await turnThen(started, FAILED)
+        await turnThen(started, FAILED)
+        await turnThen(started, WRITTEN)
+        await turnThen(started, FAILED)
+        await turnThen(started, FAILED)
+
+        started.stub.emit(TURN_FINISHED)
+        expect(started.consolidation.calls).toHaveLength(6)
+        expect(haltedFootprints(started.entries)).toHaveLength(0)
+      })
+
+      it("中断・縮み・錠・間引きの結果は数えない", async () => {
+        const started = startWithDiagnostics()
+        const notCounted: readonly ChatConsolidationOutcome[] = [
+          { kind: "failed", reason: "aborted" },
+          { kind: "failed", reason: "unreadable-result", rejection: "synopsis-shrunk" },
+          { kind: "locked" },
+          { kind: "backed-off" },
+        ]
+        for (const outcome of notCounted) {
+          await turnThen(started, outcome)
+          await turnThen(started, outcome)
+        }
+        started.stub.emit(TURN_FINISHED)
+        expect(started.consolidation.calls).toHaveLength(notCounted.length * 2 + 1)
+        expect(haltedFootprints(started.entries)).toHaveLength(0)
+      })
+
+      it("止めたあとは、起こし直しても別のパックに替わっても起こさない", async () => {
+        const started = startWithDiagnostics()
+        await turnThen(started, FAILED)
+        await turnThen(started, FAILED)
+        await turnThen(started, FAILED)
+
+        await started.manager.commands.session.switchCharacter({ name: "fictional" })
+        started.stub.emit(CHARACTER_EVENT)
+        started.stub.emit(characterChangedEvent({ pack: "another-fictional" }))
+        started.stub.emit(TURN_FINISHED)
+        expect(started.consolidation.calls).toHaveLength(3)
+      })
     })
 
     it("定着の口が拒否しても、失敗として記録して次のターンの終わりでまた起こす", async () => {

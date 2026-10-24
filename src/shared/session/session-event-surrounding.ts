@@ -81,6 +81,11 @@ export type SurroundingEvent =
    */
   | { readonly kind: "chat-topics-changed"; readonly topics: readonly string[] }
   /**
+   * 定着が続けて失敗して、このプロセスの間は契機を起こさなくなった。止めた1回だけ流れる。
+   * `failures` は止めるまでに続けて失敗した回数。
+   */
+  | { readonly kind: "chat-consolidation-halted"; readonly failures: number }
+  /**
    * 雑談のサイドバーの「覚えていること」に出す一覧。
    * 雑談で起こしたときと、`remember` / `forget`（キャラクター自身）・画面の「編集」の `chat.forgetRememberedLine` のどれかで `persona.md` の `## 覚えたこと` が変わったときに流れる。
    *

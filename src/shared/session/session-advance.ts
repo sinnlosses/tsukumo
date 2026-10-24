@@ -403,6 +403,8 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
       return { ...state, chatMode: event.chat }
     case "chat-topics-changed":
       return { ...state, chatTopics: event.topics }
+    case "chat-consolidation-halted":
+      return { ...state, chatConsolidationHalt: { halted: true, failures: event.failures } }
     case "remembered-lines-changed":
       return { ...state, rememberedLines: event.lines }
     case "items-changed":

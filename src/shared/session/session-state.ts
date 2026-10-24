@@ -36,6 +36,10 @@ import {
 } from "./turn-progress.ts"
 import type { Speech } from "./turn-speech.ts"
 
+export type ChatConsolidationHalt =
+  | { readonly halted: false }
+  | { readonly halted: true; readonly failures: number }
+
 /**
  * セッションの今の姿。イベントを1件ずつ畳んで作るので、ここに無い情報は画面にも出ない。
  *
@@ -186,6 +190,11 @@ export type SessionState = {
    */
   readonly chatTopics: readonly string[]
   /**
+   * 定着が続けて失敗して止まっているか。止まっていれば「最近の話題」に1行出す。
+   * 源は `chat-consolidation-halted` だけ。サーバが起こし直しをまたいで引き継ぐ。
+   */
+  readonly chatConsolidationHalt: ChatConsolidationHalt
+  /**
    * 雑談のサイドバーの「覚えていること」に出す一覧（`persona.md` の `## 覚えたこと`）。`- ` を外した文面で、古い→新しいの順。
    * 源は `remembered-lines-changed` だけ。起こし直すと初期値の空へ戻る。
    */
@@ -281,6 +290,7 @@ export const INITIAL_SESSION_STATE: SessionState = {
   lastToolFailureAt: undefined,
   chatMode: false,
   chatTopics: [],
+  chatConsolidationHalt: { halted: false },
   rememberedLines: [],
   sessionDefault: BUILTIN_SESSION_DEFAULT,
   plan: undefined,

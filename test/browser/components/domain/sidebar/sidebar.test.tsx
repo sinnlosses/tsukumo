@@ -175,6 +175,16 @@ describe("Sidebar（雑談中）", () => {
     ])
     expect(screen.queryByText(/まだ話題が無い/u)).toBeNull()
   })
+
+  it("定着を止めていなければ、止めた旨の1行は出さない", () => {
+    renderSidebar(CHAT_STATE)
+    expect(screen.queryByText(/雑談の記憶の畳みを止めた/u)).toBeNull()
+  })
+
+  it("定着を止めていれば、止めた旨の1行を最近の話題に出す", () => {
+    renderSidebar({ ...CHAT_STATE, chatConsolidationHalt: { halted: true, failures: 3 } })
+    expect(screen.getByText("雑談の記憶の畳みを止めた（3 回続けて失敗）")).toBeDefined()
+  })
 })
 
 // 狭い画面の引き出しのタブに入る中身（docs/architecture/screen-design.md「狭い画面（760px 以下）」）。

@@ -34,7 +34,8 @@ import { releasedPromptImageIds } from "../../session-driver/core/prompt-image-s
 import type { SessionDriver } from "../../session-driver/core/session-driver.ts"
 import { createTokenUsageRecorder } from "../../token-usage/core/token-usage.ts"
 import type { CommandSession, ModeSessions } from "./command-session.ts"
-import { noteConsolidationOutcome } from "./consolidation-footprint.ts"
+import { noteConsolidationHalt, noteConsolidationOutcome } from "./consolidation-footprint.ts"
+import { createConsolidationHalt } from "./consolidation-halt.ts"
 import { createEventBatch } from "./event-batch.ts"
 import { shelveEventImages } from "./event-image-shelf.ts"
 import { createReportChangeCounter } from "./report-change-count.ts"
@@ -81,6 +82,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
   // 起こし直しをまたいでも同時に1本のまま（同じパックへ起こし直した直後に、同じ未定着の行を2本で畳まない）。
   // 走っているあいだの契機は捨てる。
   let consolidating = false
+  const consolidationHalt = createConsolidationHalt()
   // プロセスを終えるときに走っている1本を中断する（待たない。書きかけで止まれば追記済みまでが定着）。
   const consolidationAbort = new AbortController()
 
@@ -146,13 +148,20 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
    */
   const startConsolidation = (packName: CharacterPackName): void => {
     const source = options.chatConsolidation
-    if (source.kind === "dont-consolidate" || consolidating) {
+    if (source.kind === "dont-consolidate" || consolidating || consolidationHalt.isHalted()) {
       return
     }
     consolidating = true
     const settle = (outcome: ChatConsolidationOutcome): void => {
       consolidating = false
       noteConsolidationOutcome(outcome, diagnostic, options.now)
+      const haltedAfter = consolidationHalt.note(outcome)
+      if (haltedAfter !== undefined) {
+        noteConsolidationHalt(diagnostic, options.now)
+        if (!closed) {
+          generation.emit({ kind: "chat-consolidation-halted", failures: haltedAfter })
+        }
+      }
       if (
         outcome.kind === "written" &&
         !closed &&
@@ -313,7 +322,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       generation.close()
       experienceMetric.noteRestart()
       modeSessions = rememberedModeSessions(modeSessions, state, request)
-      // 見直しの欄・タスク一覧・おすすめの札は起こし直しをまたいで残す。どれも駆動1代の持ち物ではない。
+      // ここに並べるものは起こし直しをまたいで残す。どれも駆動1代の持ち物ではない。
       replaceState({
         ...INITIAL_SESSION_STATE,
         usageReview: state.usageReview,
@@ -321,6 +330,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
         usageProposalRun: state.usageProposalRun,
         tasks: state.tasks,
         recommendation: state.recommendation,
+        chatConsolidationHalt: state.chatConsolidationHalt,
       })
       generation = startGeneration(request, "after-hello")
       await generation.driver

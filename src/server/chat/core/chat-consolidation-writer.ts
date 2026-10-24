@@ -191,8 +191,34 @@ export function createChatConsolidationWriter(
     if (outcome.kind !== "not-due" && outcome.kind !== "locked") {
       dueGate.reset(packName)
     }
-    backoff.note(packName, backoffEffectOf(outcome))
+    backoff.note(packName, chatConsolidationBackoffEffect(outcome))
     return outcome
+  }
+}
+
+/** 数えるのは同じ入力で落ち続けうる失敗だけ（`docs/architecture/chat-mode/consolidation-failure.md`「続けて落ちたら契機を間引く」）。 */
+export function chatConsolidationBackoffEffect(
+  outcome: ChatConsolidationOutcome,
+): ChatConsolidationBackoffEffect {
+  switch (outcome.kind) {
+    case "written":
+    case "not-due":
+      return "reset"
+    case "locked":
+    case "backed-off":
+      return "keep"
+    case "failed":
+      switch (outcome.reason) {
+        case "threw":
+        case "query-result":
+          return "count"
+        case "unreadable-result":
+          return outcome.rejection === "synopsis-shrunk" ? "keep" : "count"
+        case "aborted":
+        case "summary-write":
+        case "episode-write":
+          return "keep"
+      }
   }
 }
 
@@ -227,30 +253,6 @@ function createDueGate(archive: Pick<ChatArchive, "appendedBytes">): DueGate {
     reset: (packName) => {
       deferred.delete(packName)
     },
-  }
-}
-
-/** 数えるのは同じ入力で落ち続けうる失敗だけ（`docs/architecture/chat-mode/consolidation-failure.md`「続けて落ちたら契機を間引く」）。 */
-function backoffEffectOf(outcome: ChatConsolidationOutcome): ChatConsolidationBackoffEffect {
-  switch (outcome.kind) {
-    case "written":
-    case "not-due":
-      return "reset"
-    case "locked":
-    case "backed-off":
-      return "keep"
-    case "failed":
-      switch (outcome.reason) {
-        case "threw":
-        case "query-result":
-          return "count"
-        case "unreadable-result":
-          return outcome.rejection === "synopsis-shrunk" ? "keep" : "count"
-        case "aborted":
-        case "summary-write":
-        case "episode-write":
-          return "keep"
-      }
   }
 }
 

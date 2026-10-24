@@ -16,6 +16,7 @@ import { SidebarSection } from "./section.tsx"
 
 export function RecentTopicSection(): ReactElement {
   const topics = useSession((session) => session.state.chatTopics)
+  const halt = useSession((session) => session.state.chatConsolidationHalt)
   return (
     <SidebarSection
       title="最近の話題"
@@ -36,6 +37,11 @@ export function RecentTopicSection(): ReactElement {
             </li>
           ))}
         </ul>
+      )}
+      {halt.halted && (
+        <Text element="p" size="inherit" tone="ink-quiet" weight="inherit" className="">
+          雑談の記憶の畳みを止めた（{halt.failures} 回続けて失敗）
+        </Text>
       )}
     </SidebarSection>
   )
