@@ -56,6 +56,7 @@ import styles from "./main-view.module.css"
 
 /** 画面に出す中身。`card` は札に載せるターンで、`fresh` は働くあいだの中身から入れ替えたばかりのレポートか。 */
 type ShownView =
+  | { readonly kind: "waiting" }
   | { readonly kind: "welcome" }
   | { readonly kind: "work" | "report"; readonly card: ShownCard }
 
@@ -68,6 +69,7 @@ export function MainView(): ReactElement {
   // 畳んだ結果は姿ごとに1回だけ作られる（昇順。追従を決める `useTurnSelection` と同じものを読む）。
   const turns = useMainViewTurns()
   const content = useMainViewContent((state) => state.content)
+  const awaitingHello = useSession((session) => session.generation === 0)
   const requestInquiryJump = useInquiryJump((state) => state.requestJump)
   const moment = useSession((session) => conversationMoment(session.state))
   const turnStepList = useCurrentTurnSteps()
@@ -81,7 +83,7 @@ export function MainView(): ReactElement {
       ? { kind: "past", turnId: activeTurnId }
       : { kind: "newest" }
   const viewingPast = viewing.kind === "past"
-  const view = shownView(content, turns, viewing)
+  const view: ShownView = awaitingHello ? { kind: "waiting" } : shownView(content, turns, viewing)
   useActiveTurnScroll(rootRef, shownTargetOf(view))
 
   const notice = headNoticeOf({ content, moment, viewingPast, phase })
@@ -95,7 +97,10 @@ export function MainView(): ReactElement {
     }
   }
 
-  const cardTurn = view.kind !== "welcome" && view.card.kind === "turn" ? view.card : undefined
+  const cardTurn =
+    view.kind !== "welcome" && view.kind !== "waiting" && view.card.kind === "turn"
+      ? view.card
+      : undefined
   const outlineTurns = useReportOutlineTurns()
   useInterimViewed(
     cardTurn?.turn,
@@ -295,7 +300,7 @@ function planCountOf(turnStepList: TurnStepList): number {
 const NO_CARD = { kind: "none" } as const satisfies ShownCard
 
 function shownTargetOf(view: ShownView): ShownTarget {
-  if (view.kind === "welcome" || view.card.kind === "none") {
+  if (view.kind === "welcome" || view.kind === "waiting" || view.card.kind === "none") {
     return { kind: "none" }
   }
   return { kind: view.kind, turnId: view.card.turn.id }

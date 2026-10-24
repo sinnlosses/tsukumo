@@ -2,6 +2,7 @@ import { QueryClientProvider } from "@tanstack/react-query"
 import { act, fireEvent, render, screen, type RenderResult } from "@testing-library/react"
 
 import { MainView } from "../../src/browser/components/page/conversation/components/main-view/main-view.tsx"
+import { useSession } from "../../src/browser/stores/session.ts"
 import type { SessionRecord } from "../../src/shared/session/session-record.ts"
 import { INITIAL_SESSION_STATE, type SessionState } from "../../src/shared/session/session-state.ts"
 import { createTestQueryClient } from "../browser/query-client.tsx"
@@ -28,6 +29,18 @@ export function renderMainView(
         }
       : INITIAL_SESSION_STATE.sdkTurn
   putSession({ ...INITIAL_SESSION_STATE, records, turn, sdkTurn, pending })
+  return renderPage()
+}
+
+/** `hello` がまだ届いていない姿（`useSession` の初期値のまま）で描く。 */
+export function renderMainViewBeforeHello(): RenderResult {
+  act(() => {
+    useSession.setState(useSession.getInitialState(), true)
+  })
+  return renderPage()
+}
+
+function renderPage(): RenderResult {
   // `MainView` は `<RepositoryFileLinkProvider>`（レポートのパスを押せる部品にする一覧の取得）を
   // 内側で mount するので `useQuery` が要る。ここでは一覧の中身を見ないので、フェッチそのものは
   // 差し替えない（`window.fetch` は happy-dom の対象外なので落ちるだけで、テストは待たない）。

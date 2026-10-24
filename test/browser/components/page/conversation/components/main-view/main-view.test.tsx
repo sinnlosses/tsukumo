@@ -12,6 +12,7 @@ import {
 import {
   press,
   renderMainView,
+  renderMainViewBeforeHello,
   rerenderMainView,
   stepTurn,
 } from "../../../../../../fixture/main-view.tsx"
@@ -65,6 +66,16 @@ function button(name: string): HTMLButtonElement {
   }
   return found
 }
+
+describe("MainView（hello の前）", () => {
+  it("hello が届くまでは始め方の一覧を描かず、届くと描く", () => {
+    renderMainViewBeforeHello()
+    expect(screen.queryByText("何から始める？")).toBeNull()
+
+    rerenderMainView([])
+    expect(screen.getByText("何から始める？")).toBeDefined()
+  })
+})
 
 describe("MainView（依頼の全文）", () => {
   function requestBlockText(): string | null | undefined {
