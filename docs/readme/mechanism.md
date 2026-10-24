@@ -69,5 +69,5 @@ tsukumo は**1つのプロセス**で、Agent SDK で Claude Code を子プロ�
 プロセスは動かしたままタブだけ閉じてしまったときは、開き直す道具があります。
 
 ```bash
-node scripts/capture/open-views.ts http://127.0.0.1:7327
+node scripts/capture/open-view.ts http://127.0.0.1:7327
 ```

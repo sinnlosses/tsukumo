@@ -7,7 +7,7 @@
 import {
   REPORT_ARGUMENT_FIELDS,
   type ReportArgumentField,
-} from "../../../shared/report/report-argument-chars.ts"
+} from "../../../shared/report/report-argument-size.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 
 type ReportEvent = Extract<SessionEvent, { readonly kind: "report" }>

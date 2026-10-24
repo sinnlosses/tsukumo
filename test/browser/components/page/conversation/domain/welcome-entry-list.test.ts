@@ -5,7 +5,7 @@ import {
   previousSessionOf,
   welcomeCardsOf,
   welcomeHeadOf,
-} from "../../../../../../src/browser/components/page/conversation/domain/welcome-entries.ts"
+} from "../../../../../../src/browser/components/page/conversation/domain/welcome-entry-list.ts"
 import type { RecommendationCard } from "../../../../../../src/shared/recommendation/recommendation-card.ts"
 import type {
   TaskSummaryItem,

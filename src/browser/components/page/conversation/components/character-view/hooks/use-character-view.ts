@@ -35,8 +35,8 @@ import { useShownReaction, useWaitingLineDueAt } from "../../../../../../stores/
 import { useTurnSelection } from "../../../../../../stores/turn-selection.ts"
 import { nowEpochMilliseconds } from "../../../../../../utils/clock.ts"
 import { recordClockStampWithDay, type ClockStamp } from "../../../domain/clock-stamp.ts"
-import { welcomeHeadOf } from "../../../domain/welcome-entries.ts"
-import { useWelcomeCards } from "../../hooks/use-welcome-cards.ts"
+import { welcomeHeadOf } from "../../../domain/welcome-entry-list.ts"
+import { useWelcomeCards } from "../../hooks/use-welcome-card-list.ts"
 import {
   balloonLineIndices,
   isSpeechSelected,

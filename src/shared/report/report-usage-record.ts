@@ -1,7 +1,7 @@
 // `report` の塊の使われ方の記録の行の形。1行 = 描いた `report` 1回。
 // 書いてよいのは時刻・セッションID・塊と記法の名前・数だけで、塊の中身・逃げ道の文字は入れない。
 
-import type { ReportArgumentChars, ReportArgumentField } from "./report-argument-chars.ts"
+import type { ReportArgumentChars, ReportArgumentField } from "./report-argument-size.ts"
 import type { RecordedFigureNoneReason, RecordedReportFigure } from "./report-block.ts"
 import type { ForbiddenBlock, RecordedReportShapeTag, ReportShapeTag } from "./report-shape-tag.ts"
 import type { ReportGenre, ReportTaskOutcome } from "./report-task.ts"

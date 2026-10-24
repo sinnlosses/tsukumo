@@ -39,7 +39,7 @@ describe("Agent SDK を import する箇所", () => {
 // `execFile("orca", …)` のような呼び出しは必ずコマンド名の文字列リテラル "orca" を伴うので、その字面で探す。
 // ファイル名やバッククォートで囲んだ日本語の説明文はクォートされた文字列リテラルではないので拾わない。
 describe("子プロセスを起こす箇所", () => {
-  it("`node:child_process` を import するのは orca-host.ts・browser-host.ts・bundle.ts・git.ts・beads.ts・checkout-launch.ts・rtk-rewrite.ts・sdk-workflow-tw.ts・tw-config.ts・tw-claims.ts だけで、`orca` コマンドを呼ぶのは orca-host.ts だけ、`open` コマンドを呼ぶのは browser-host.ts だけ", () => {
+  it("`node:child_process` を import するのは orca-host.ts・browser-host.ts・bundle.ts・git.ts・beads.ts・checkout-launch.ts・rtk-rewrite.ts・sdk-workflow-tw.ts・tw-config.ts・tw-claim-list.ts だけで、`orca` コマンドを呼ぶのは orca-host.ts だけ、`open` コマンドを呼ぶのは browser-host.ts だけ", () => {
     const allowed = new Set([
       "server/checkout/adapter/checkout-launch.ts",
       "server/host/adapter/orca-host.ts",
@@ -50,7 +50,7 @@ describe("子プロセスを起こす箇所", () => {
       "server/session-driver/adapter/rtk-rewrite.ts",
       "server/session-driver/adapter/sdk-workflow-tw.ts",
       "server/workflow-setting/adapter/tw-config.ts",
-      "server/token-usage/adapter/tw-claims.ts",
+      "server/token-usage/adapter/tw-claim-list.ts",
     ])
     const spawning = listSourceFiles(SRC_ROOT).filter((relPath) =>
       importSpecifiers(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8")).some(

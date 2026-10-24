@@ -27,7 +27,7 @@
 | 入力欄の面（素の `<textarea>` かマークダウンエディタか）                    | `<Composer>` のローカル状態。`localStorage` に**モードだけ**保存（下書きは保存しない）。面を差し替えても下書きは store が持ったまま                                                                                                                                                                                                  |
 | お伺いの選択（送る前）・何問目を見ているか・入力欄に書いた答え              | `browser/stores/inquiry-answer.ts` の zustand の store（**メインビューのお伺いの札と入力欄の両方が読み書きする**ので機能のローカル状態にしない。許可要求も質問も同じ形で持ち、どの答え待ちに対する下書きかも持つ）                                                                                                                   |
 | メインビューに出している中身（`MainViewContent`）                           | `browser/stores/main-view-content.ts` の zustand の store（姿の移り変わりを `useSession` の購読で畳む。画面を離れてアンマウントされても失わないよう、部品の state にしない）                                                                                                                                                         |
-| 進み具合の帯の手順の一覧の開閉                                              | `browser/stores/work-strip-steps.ts` の zustand の store（**失敗の塊からも失敗の行を指して開く**ので `<WorkStrip>` のローカル状態にしない。開いたやり取りと、開いた一覧をどこへ連れていくか〔失敗の行・段の吹き出しから指した段の区切り〕を持ち、やり取りが替わると閉じて見える）                                                    |
+| 進み具合の帯の手順の一覧の開閉                                              | `browser/stores/work-strip-step-list.ts` の zustand の store（**失敗の塊からも失敗の行を指して開く**ので `<WorkStrip>` のローカル状態にしない。開いたやり取りと、開いた一覧をどこへ連れていくか〔失敗の行・段の吹き出しから指した段の区切り〕を持ち、やり取りが替わると閉じて見える）                                                |
 | やり取りごとの読み位置（読む面の上端にいちばん近い見出しの番号とずれの px） | `browser/stores/reading-position.ts` の zustand の store（過去のやり取りへ移って戻ったとき `useActiveTurnScroll` が引く。**メモリだけで保存しない**〔`localStorage` にもサーバにも書かない〕。本文は持たず、セッションの世代〔`session.generation`〕が替わったときだけ `forgetUnlessGeneration` で捨てる。画面を隠して戻しても残す） |
 | 進み具合の帯の段の吹き出しの開閉                                            | `useWorkStrip` の中の `usePhasePopover`（開いた丸とそのやり取りを持ち、やり取りが替わる・帯が消えると閉じて見える。保存しない）                                                                                                                                                                                                      |
 | 経過時間などの1秒の刻み                                                     | `browser/stores/clock.ts` の `useNowWhile`（購読者がいるあいだだけ `setInterval` を1本立て、秒の境目に揃えて全部品へ配る。部品ごとにタイマーを持たない）                                                                                                                                                                             |
@@ -61,7 +61,7 @@ react-markdown
   お伺いの札・質問の記録・目録の見出しで、お伺いの札が答え待ちの札と共有されメインビューの外の部品にまたがるため。
   形は `docs/architecture/adr/0027-markdown-component-entry.md`）。外から引く口は `markdown.tsx` で、
   `import()` で読む描画一式は `renderer/` に入る。`.detail-block` の class 名は口が `detailBlockClassName` で公開し、
-  外の部品は CSS を import しない。`split-blocks.ts` は `report/domain/`、`repository-link.tsx` は
+  外の部品は CSS を import しない。`block-split.ts` は `report/domain/`、`repository-link.tsx` は
   `conversation/components/repository-link/` の部品
 - **`schema` は許可リスト**（要素・属性と `class` の語彙 `note` / `badge` / `compare` など）。`style` 属性は
   `schema` の外の `style-allowlist.ts`（`rehypeStyleAllowlist`。`rehypeSanitize` の直前に差す）が、

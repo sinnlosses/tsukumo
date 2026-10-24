@@ -4,7 +4,7 @@ import { useState, type ReactElement } from "react"
 
 import { usePhoneWidth } from "../../../../../hooks/use-phone-width.ts"
 import { useInquiryAnswer } from "../../../../../stores/inquiry-answer.ts"
-import { pendingAskChips } from "./domain/pending-ask-chips.ts"
+import { pendingAskChips } from "./domain/pending-ask-chip-list.ts"
 import {
   PresentationalPendingAskCard,
   type PendingAskSheet,

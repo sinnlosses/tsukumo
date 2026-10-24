@@ -3,7 +3,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { currentTurnStepsOf } from "../../../src/browser/stores/current-turn-steps.ts"
+import { currentTurnStepsOf } from "../../../src/browser/stores/current-turn-step-list.ts"
 import { requestRecord, toolRecord } from "../../fixture/session-record.ts"
 
 describe("currentTurnStepsOf", () => {

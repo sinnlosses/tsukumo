@@ -5,7 +5,7 @@ import {
   CommandSuggestions,
   matchingCommands,
   shouldShowCommandSuggestions,
-} from "../../../../../../../../../src/browser/components/page/conversation/components/dispatch/components/command-suggestions/command-suggestions.tsx"
+} from "../../../../../../../../../src/browser/components/page/conversation/components/dispatch/components/command-suggestion-list/command-suggestion-list.tsx"
 import type { CommandDescription } from "../../../../../../../../../src/shared/session/session-event.ts"
 
 afterEach(() => {

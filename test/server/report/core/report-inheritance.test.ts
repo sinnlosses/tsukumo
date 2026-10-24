@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import { createReportInheritance } from "../../../../src/server/report/core/report-inheritance.ts"
-import type { ReportArgumentField } from "../../../../src/shared/report/report-argument-chars.ts"
+import type { ReportArgumentField } from "../../../../src/shared/report/report-argument-size.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import { reportEvent } from "../../../fixture/report-event.ts"
 

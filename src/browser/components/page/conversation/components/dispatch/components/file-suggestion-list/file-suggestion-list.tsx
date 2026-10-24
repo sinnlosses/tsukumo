@@ -8,7 +8,7 @@ import type { ReactElement } from "react"
 
 import { Text } from "../../../../../../ui/text/text.tsx"
 import dispatchStyles from "../../dispatch.module.css"
-import styles from "./file-suggestions.module.css"
+import styles from "./file-suggestion-list.module.css"
 
 /**
  * いま打っている `@<パス>`。`start` から `end` までを確定後の文字列で置き換える

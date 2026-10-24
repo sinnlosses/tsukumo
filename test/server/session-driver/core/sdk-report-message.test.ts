@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import { toSessionEvents } from "../../../../src/server/session-driver/core/sdk-message.ts"
-import { reportArgumentCharsOf } from "../../../../src/shared/report/report-argument-chars.ts"
+import { reportArgumentCharsOf } from "../../../../src/shared/report/report-argument-size.ts"
 import { reportEvent } from "../../../fixture/report-event.ts"
 import { assistantMessage, EXPRESSIONS } from "../../../fixture/sdk-assistant-message.ts"
 import { REPORT_TOOL_FULL_NAME } from "../../../fixture/sdk-message.ts"

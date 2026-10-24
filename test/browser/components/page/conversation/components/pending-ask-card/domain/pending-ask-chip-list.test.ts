@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { pendingAskChips } from "../../../../../../../../src/browser/components/page/conversation/components/pending-ask-card/domain/pending-ask-chips.ts"
+import { pendingAskChips } from "../../../../../../../../src/browser/components/page/conversation/components/pending-ask-card/domain/pending-ask-chip-list.ts"
 import type { InquiryModel } from "../../../../../../../../src/browser/stores/inquiry-answer.ts"
 
 type Active = Exclude<InquiryModel, { readonly kind: "none" }>

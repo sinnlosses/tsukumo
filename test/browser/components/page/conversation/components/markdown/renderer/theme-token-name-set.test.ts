@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs"
 
 import { describe, expect, it } from "vitest"
 
-import { THEME_TOKEN_NAMES } from "../../../../../../../../src/browser/components/page/conversation/components/markdown/renderer/theme-token-names.ts"
+import { THEME_TOKEN_NAMES } from "../../../../../../../../src/browser/components/page/conversation/components/markdown/renderer/theme-token-name-set.ts"
 
 describe("THEME_TOKEN_NAMES", () => {
   it("theme.css に定義のあるトークンの名前と過不足なく一致する", () => {

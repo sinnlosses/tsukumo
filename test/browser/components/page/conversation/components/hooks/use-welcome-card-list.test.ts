@@ -1,7 +1,7 @@
 import { renderHook, waitFor } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
-import { useWelcomeCards } from "../../../../../../../src/browser/components/page/conversation/components/hooks/use-welcome-cards.ts"
+import { useWelcomeCards } from "../../../../../../../src/browser/components/page/conversation/components/hooks/use-welcome-card-list.ts"
 import type { SessionChoice } from "../../../../../../../src/shared/session/session-choice.ts"
 import { INITIAL_SESSION_STATE } from "../../../../../../../src/shared/session/session-state.ts"
 import { setPageUrl } from "../../../../../../dom-environment.ts"

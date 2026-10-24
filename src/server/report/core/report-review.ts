@@ -34,7 +34,7 @@ import { isDeepEqual } from "remeda"
 import type {
   ReportArgumentChars,
   ReportArgumentField,
-} from "../../../shared/report/report-argument-chars.ts"
+} from "../../../shared/report/report-argument-size.ts"
 import type { ReportTask } from "../../../shared/report/report-task.ts"
 import type { BackgroundTask } from "../../../shared/session-driver/background-task.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"

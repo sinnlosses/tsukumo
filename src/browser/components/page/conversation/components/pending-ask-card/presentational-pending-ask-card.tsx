@@ -5,7 +5,7 @@ import { CHECK_MARK } from "../../../../../domain/phase-mark.ts"
 import type { InquiryModel, InquiryOptionRow } from "../../../../../stores/inquiry-answer.ts"
 import { BottomSheet } from "../../../../ui/bottom-sheet/bottom-sheet.tsx"
 import { InquiryCard } from "../inquiry/inquiry.tsx"
-import type { PendingAskChips } from "./domain/pending-ask-chips.ts"
+import type { PendingAskChips } from "./domain/pending-ask-chip-list.ts"
 import styles from "./pending-ask-card.module.css"
 
 const HEAD_LABEL = "？ 答え待ち"

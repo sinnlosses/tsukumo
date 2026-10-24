@@ -1,7 +1,7 @@
 // レポートの inline code に書かれた色（`#bca0ec` のようなカラーコードと、`ink-quiet` / `--state-memo` のような色のトークン名）を、その色を地にして見せるための判定。
 
 import { relativeLuminance } from "../../../../../../domain/relative-luminance.ts"
-import { THEME_TOKEN_NAMES } from "./theme-token-names.ts"
+import { THEME_TOKEN_NAMES } from "./theme-token-name-set.ts"
 
 /** 地の色と、その上に載せる文字の側（明るい地には暗い字、暗い地には明るい字）。 */
 type ColorSwatch = {

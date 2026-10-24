@@ -13,8 +13,8 @@ import { useSessionSwitcherRequest } from "../../../../../../../../stores/sessio
 import { useSession } from "../../../../../../../../stores/session.ts"
 import { useTaskBoardRequest } from "../../../../../../../../stores/task-board-request.ts"
 import { nowEpochMilliseconds } from "../../../../../../../../utils/clock.ts"
-import type { WelcomeCard } from "../../../../../domain/welcome-entries.ts"
-import { useWelcomeCards } from "../../../../hooks/use-welcome-cards.ts"
+import type { WelcomeCard } from "../../../../../domain/welcome-entry-list.ts"
+import { useWelcomeCards } from "../../../../hooks/use-welcome-card-list.ts"
 import { welcomeKeyOf } from "../domain/welcome-key.ts"
 
 export type WelcomeModel = {

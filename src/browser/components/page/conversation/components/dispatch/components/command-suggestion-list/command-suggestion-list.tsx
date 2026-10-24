@@ -12,7 +12,7 @@ import { prop, sortBy } from "remeda"
 import type { CommandDescription } from "../../../../../../../../shared/session/session-event.ts"
 import { Text } from "../../../../../../ui/text/text.tsx"
 import dispatchStyles from "../../dispatch.module.css"
-import styles from "./command-suggestions.module.css"
+import styles from "./command-suggestion-list.module.css"
 
 const MAX_COMMAND_SUGGESTIONS = 10
 

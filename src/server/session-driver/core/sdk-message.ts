@@ -9,7 +9,7 @@
 import { isPlainObject, mapValues } from "remeda"
 
 import type { Expression } from "../../../shared/character-pack/expression.ts"
-import { reportArgumentCharsOf } from "../../../shared/report/report-argument-chars.ts"
+import { reportArgumentCharsOf } from "../../../shared/report/report-argument-size.ts"
 import { parsePhaseResult } from "../../../shared/session/phase-result.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import { foldPermissionMode } from "../../../shared/session/session-info.ts"

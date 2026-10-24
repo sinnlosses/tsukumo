@@ -8,7 +8,7 @@ import { isPlainObject } from "remeda"
 
 import type { Expression } from "../../../shared/character-pack/expression.ts"
 import { parseConclusion } from "../../../shared/report/conclusion-sentence.ts"
-import { reportArgumentCharsOf } from "../../../shared/report/report-argument-chars.ts"
+import { reportArgumentCharsOf } from "../../../shared/report/report-argument-size.ts"
 import { parseKeyFigures } from "../../../shared/report/report-block-comparison.ts"
 import {
   parseReportFigure,

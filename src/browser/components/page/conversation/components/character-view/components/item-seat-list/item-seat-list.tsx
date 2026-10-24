@@ -4,7 +4,7 @@
 import type { ReactElement } from "react"
 
 import type { ItemInfo, ItemSeatMap, SeatKey } from "../../../../../../../../shared/item/item.ts"
-import styles from "./item-seats.module.css"
+import styles from "./item-seat-list.module.css"
 
 type ItemSeatsProps = {
   readonly seats: ItemSeatMap

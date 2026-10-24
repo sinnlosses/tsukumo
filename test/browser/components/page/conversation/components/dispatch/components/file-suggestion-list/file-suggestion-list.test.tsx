@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it } from "vitest"
 import {
   FileSuggestions,
   filePathQuery,
-} from "../../../../../../../../../src/browser/components/page/conversation/components/dispatch/components/file-suggestions/file-suggestions.tsx"
+} from "../../../../../../../../../src/browser/components/page/conversation/components/dispatch/components/file-suggestion-list/file-suggestion-list.tsx"
 import { typedElement } from "../../../../../../../../typed-element.ts"
 
 afterEach(() => {

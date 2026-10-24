@@ -1,6 +1,6 @@
 // セッションの出来事（`SessionEvent`）のうち、`report` ツールの呼び出しに関するものの型。
 
-import type { ReportArgumentChars, ReportArgumentField } from "../report/report-argument-chars.ts"
+import type { ReportArgumentChars, ReportArgumentField } from "../report/report-argument-size.ts"
 import type { KeyFigures } from "../report/report-block-comparison.ts"
 import type { RecordedReportFigure, ReportSection } from "../report/report-block.ts"
 import type { ReportChangeCount } from "../report/report-change-summary.ts"

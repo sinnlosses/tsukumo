@@ -3,10 +3,10 @@
 import type { TurnFailure } from "../../../../../../../../../shared/session-driver/turn-failure.ts"
 import { useNowWhile } from "../../../../../../../../stores/clock.ts"
 import { useComposerDraft } from "../../../../../../../../stores/composer-draft.ts"
-import { useCurrentTurnSteps } from "../../../../../../../../stores/current-turn-steps.ts"
+import { useCurrentTurnSteps } from "../../../../../../../../stores/current-turn-step-list.ts"
 import { useMainViewContent } from "../../../../../../../../stores/main-view-content.ts"
 import { useSession } from "../../../../../../../../stores/session.ts"
-import { useWorkStripSteps } from "../../../../../../../../stores/work-strip-steps.ts"
+import { useWorkStripSteps } from "../../../../../../../../stores/work-strip-step-list.ts"
 import { turnFailureBlockOf, type TurnFailureBlockModel } from "../domain/turn-failure-block.ts"
 
 type TurnFailureBlockView = TurnFailureBlockModel & {

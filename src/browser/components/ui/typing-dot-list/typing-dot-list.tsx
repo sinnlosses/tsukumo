@@ -2,7 +2,7 @@
 
 import type { ReactElement } from "react"
 
-import styles from "./typing-dots.module.css"
+import styles from "./typing-dot-list.module.css"
 
 export function TypingDots(): ReactElement {
   return (

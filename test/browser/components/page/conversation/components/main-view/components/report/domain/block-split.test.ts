@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { splitReportBlocks } from "../../../../../../../../../../src/browser/components/page/conversation/components/main-view/components/report/domain/split-blocks.ts"
+import { splitReportBlocks } from "../../../../../../../../../../src/browser/components/page/conversation/components/main-view/components/report/domain/block-split.ts"
 
 describe("splitReportBlocks", () => {
   it("空行で塊に割る", () => {

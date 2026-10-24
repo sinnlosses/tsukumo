@@ -42,8 +42,8 @@ import {
 } from "../../repository-link/repository-link.tsx"
 import { ChartBlock } from "./chart-block.tsx"
 import { CODE_FILE_PATH_PROPERTY, rehypeCodeFileName } from "./code-file-name.ts"
+import { CodeLines } from "./code-line-list.tsx"
 import { splitCodeLines } from "./code-line.ts"
-import { CodeLines } from "./code-lines.tsx"
 import {
   codeFileName,
   codeLanguage,

@@ -12,13 +12,16 @@ import { commandSuggestions } from "../../../../../../../../../shared/session/co
 import type { CommandDescription } from "../../../../../../../../../shared/session/session-event.ts"
 import type { Draft } from "../../../../../../../../stores/composer-draft.ts"
 import { matchingFilePaths } from "../../../../../domain/file-suggestion-index.ts"
-import { useRepositoryFileIndex } from "../../../../hooks/use-repository-file-paths.ts"
+import { useRepositoryFileIndex } from "../../../../hooks/use-repository-file-path-list.ts"
 import type { ComposerKey } from "../../../domain/composer-surface.ts"
 import {
   matchingCommands,
   shouldShowCommandSuggestions,
-} from "../../command-suggestions/command-suggestions.tsx"
-import { type FilePathQuery, filePathQuery } from "../../file-suggestions/file-suggestions.tsx"
+} from "../../command-suggestion-list/command-suggestion-list.tsx"
+import {
+  type FilePathQuery,
+  filePathQuery,
+} from "../../file-suggestion-list/file-suggestion-list.tsx"
 
 /** 入力欄の下のボタンが打つ、補完の合図の文字。 */
 export type CompletionTrigger = "/" | "@"

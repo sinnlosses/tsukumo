@@ -8,7 +8,7 @@ import {
   previousSessionOf,
   welcomeCardsOf,
   type WelcomeCard,
-} from "../../domain/welcome-entries.ts"
+} from "../../domain/welcome-entry-list.ts"
 
 type WelcomeCards = {
   readonly cards: readonly WelcomeCard[]

@@ -16,7 +16,7 @@ import {
   createOpenTaskReader,
   type OpenTaskReader,
   type TwClaimsRunner,
-} from "../../../../src/server/token-usage/adapter/tw-claims.ts"
+} from "../../../../src/server/token-usage/adapter/tw-claim-list.ts"
 import type { TokenUsageEntry } from "../../../../src/server/token-usage/core/token-usage.ts"
 import {
   TOKEN_USAGE_FORMAT_VERSION,

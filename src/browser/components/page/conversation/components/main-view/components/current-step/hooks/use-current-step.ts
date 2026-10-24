@@ -11,7 +11,7 @@ import {
 } from "../../../../../../../../../shared/session/work-plan.ts"
 import { isTurnCounting } from "../../../../../../../../domain/turn-elapsed.ts"
 import { useNowWhile } from "../../../../../../../../stores/clock.ts"
-import { useCurrentTurnSteps } from "../../../../../../../../stores/current-turn-steps.ts"
+import { useCurrentTurnSteps } from "../../../../../../../../stores/current-turn-step-list.ts"
 import { useSession } from "../../../../../../../../stores/session.ts"
 import { workActivityOf, type WorkActivity } from "../../../domain/work-activity.ts"
 

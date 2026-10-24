@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { reportArgumentCharsOf } from "../../../src/shared/report/report-argument-chars.ts"
+import { reportArgumentCharsOf } from "../../../src/shared/report/report-argument-size.ts"
 
 describe("reportArgumentCharsOf", () => {
   it("全体と最上位の欄ごとに JSON にした字数を数え、渡されなかった欄は持たない", () => {

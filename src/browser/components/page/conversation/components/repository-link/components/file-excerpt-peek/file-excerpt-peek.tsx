@@ -5,7 +5,7 @@ import clsx from "clsx"
 import type { ReactElement } from "react"
 import { createPortal } from "react-dom"
 
-import type { LineRange } from "../../domain/pointed-lines.ts"
+import type { LineRange } from "../../domain/pointed-line-range.ts"
 import type { PeekAnchor, ShownFileExcerpt } from "../../hooks/use-file-excerpt-peek.ts"
 import styles from "./file-excerpt-peek.module.css"
 

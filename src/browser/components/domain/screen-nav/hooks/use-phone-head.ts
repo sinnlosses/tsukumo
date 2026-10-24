@@ -23,7 +23,7 @@ import type {
   CurrentWorkState,
 } from "../../../../features/current-work/hooks/use-current-work.ts"
 import { useNowWhile } from "../../../../stores/clock.ts"
-import { useCurrentTurnSteps } from "../../../../stores/current-turn-steps.ts"
+import { useCurrentTurnSteps } from "../../../../stores/current-turn-step-list.ts"
 import { SCREEN_NAV_ITEMS, type Screen } from "../../../../stores/location-hash.ts"
 import { readingLabelOf, useReadingSection } from "../../../../stores/reading-section.ts"
 import { useSession } from "../../../../stores/session.ts"

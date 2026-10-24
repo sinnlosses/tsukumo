@@ -7,7 +7,7 @@ import { readGraphSource } from "../../../shared/report/graph-source.ts"
 import type {
   ReportArgumentChars,
   ReportArgumentField,
-} from "../../../shared/report/report-argument-chars.ts"
+} from "../../../shared/report/report-argument-size.ts"
 import { tableRowCells } from "../../../shared/report/report-block-comparison.ts"
 import {
   type ReportBlock,

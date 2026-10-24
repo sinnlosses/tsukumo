@@ -46,7 +46,7 @@ import {
   type CurrentWorkStepGroup,
 } from "../../../../../../../../features/current-work/domain/current-work-step.ts"
 import { useNowWhile } from "../../../../../../../../stores/clock.ts"
-import { useCurrentTurnSteps } from "../../../../../../../../stores/current-turn-steps.ts"
+import { useCurrentTurnSteps } from "../../../../../../../../stores/current-turn-step-list.ts"
 import { useMainViewContent } from "../../../../../../../../stores/main-view-content.ts"
 import { useMainViewTurns } from "../../../../../../../../stores/main-view-turn.ts"
 import {
@@ -57,7 +57,7 @@ import { useSession } from "../../../../../../../../stores/session.ts"
 import {
   type StepsLanding,
   useWorkStripSteps,
-} from "../../../../../../../../stores/work-strip-steps.ts"
+} from "../../../../../../../../stores/work-strip-step-list.ts"
 import type { WorkStripResult } from "../../../../../domain/turn-result-mark.ts"
 import { workActivityOf, type WorkActivity } from "../../../domain/work-activity.ts"
 import { usePhasePopover, type PhasePopover } from "./use-phase-popover.ts"

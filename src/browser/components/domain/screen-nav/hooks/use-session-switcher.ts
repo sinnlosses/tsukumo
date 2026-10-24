@@ -14,7 +14,7 @@ import {
   zonedDateTime,
 } from "../../../../utils/clock.ts"
 import { shortSessionIds } from "../domain/session-short-id.ts"
-import { useOccupiedSessions } from "./use-occupied-sessions.ts"
+import { useOccupiedSessions } from "./use-occupied-session-list.ts"
 
 /** 一覧の日の区切り（見本の「今日」「昨日」「それより前」）。 */
 export type SessionSwitcherGroup = "today" | "yesterday" | "earlier"

@@ -25,7 +25,7 @@ import {
   type WorkPhase,
 } from "../../../../../../shared/session/work-plan.ts"
 import { usePhoneWidth } from "../../../../../hooks/use-phone-width.ts"
-import { useCurrentTurnSteps } from "../../../../../stores/current-turn-steps.ts"
+import { useCurrentTurnSteps } from "../../../../../stores/current-turn-step-list.ts"
 import { useInquiryJump } from "../../../../../stores/inquiry-jump.ts"
 import {
   type MainViewContent,
@@ -51,7 +51,7 @@ import { WorkStrip } from "./components/work-strip/work-strip.tsx"
 import { headNoticeOf, type HeadNoticeAction } from "./domain/head-notice.ts"
 import { headingStepOf, neighborTurnId, turnStepOf } from "./domain/turn-step-key.ts"
 import { type ShownTarget, useActiveTurnScroll } from "./hooks/use-active-turn-scroll.ts"
-import { useReportOutlineTurns } from "./hooks/use-report-outline-turns.ts"
+import { useReportOutlineTurns } from "./hooks/use-report-outline-turn-list.ts"
 import styles from "./main-view.module.css"
 
 /** 画面に出す中身。`card` は札に載せるターンで、`fresh` は働くあいだの中身から入れ替えたばかりのレポートか。 */

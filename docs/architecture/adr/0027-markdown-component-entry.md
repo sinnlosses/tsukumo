@@ -22,7 +22,7 @@
 | ファイル                     | 外の読み手                                                   |
 | ---------------------------- | ------------------------------------------------------------ |
 | `report-notation.module.css` | `report/`・`inquiry/`・`question-record/`・`report-outline/` |
-| `split-blocks.ts`            | `report/`                                                    |
+| `block-split.ts`             | `report/`                                                    |
 | `repository-link.tsx`        | `main-view.tsx`                                              |
 
 概念のディレクトリの決まり（`docs/architecture.md`「機能の中を分ける（container / presenter と `hooks/`）」）は
@@ -53,7 +53,7 @@
   `markdown-renderer.js` に変わる
 
 - **外の読み手が直に引いていたものは、読み手を数え直して置き直す**:
-  - `split-blocks.ts` は読み手が `report/` だけなので `main-view/components/report/domain/split-blocks.ts`
+  - `block-split.ts` は読み手が `report/` だけなので `main-view/components/report/domain/block-split.ts`
   - `repository-link.tsx` は読み手が `main-view.tsx` と描画一式の2つの部品なので、
     `conversation/components/repository-link/repository-link.tsx` の部品
   - `report-notation.module.css` の規則は `.detail-block` を除いてすべて `.detail-block` の子孫の選択子で、
@@ -75,7 +75,7 @@
 - **表に「遅延読み込みの入口を持つ部品」の行を足し、`deferred-<部品>.tsx` を外から引く口にする**: 境界の検査の
   入口を「`deferred-<部品>.tsx` があればそれだけ」に変えれば検査で落とせる。ただし `<部品>.tsx` が「外から
   引けないほうの名前」になり、表の「外から引くのはこのファイルだけ」と意味が逆になる。表・ページの形の検査・
-  境界の検査の3か所に例外が増える。CSS・`split-blocks.ts`・`repository-link.tsx` の直の import も残るので、
+  境界の検査の3か所に例外が増える。CSS・`block-split.ts`・`repository-link.tsx` の直の import も残るので、
   置き直しは結局要る
 - **直に引かれているものを置き直すだけにする**: 入口は描画一式の本体の `markdown.tsx` のままで、遅延読み込みの口
   `deferred-markdown.tsx` を外から引くと境界の検査が落とす。衝突が解けない

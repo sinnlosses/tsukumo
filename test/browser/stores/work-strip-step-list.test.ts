@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest"
 
-import { useWorkStripSteps } from "../../../src/browser/stores/work-strip-steps.ts"
+import { useWorkStripSteps } from "../../../src/browser/stores/work-strip-step-list.ts"
 
 afterEach(() => {
   useWorkStripSteps.setState(useWorkStripSteps.getInitialState(), true)

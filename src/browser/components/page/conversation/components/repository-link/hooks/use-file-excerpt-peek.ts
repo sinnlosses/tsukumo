@@ -9,7 +9,7 @@ import type {
   FileExcerptRequest,
 } from "../../../../../../../shared/repository/file-excerpt.ts"
 import { useDismissSignal } from "../../../../../../hooks/use-dismiss-signal.ts"
-import type { LineRange, PointedLines } from "../domain/pointed-lines.ts"
+import type { LineRange, PointedLines } from "../domain/pointed-line-range.ts"
 
 /** 重ねて（フォーカスして）から浮きを出すまでの待ち。 */
 export const FILE_EXCERPT_PEEK_DELAY_MS = 500

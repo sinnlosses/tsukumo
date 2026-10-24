@@ -17,7 +17,7 @@ import { useReportReveal } from "../../../../../../../domain/reveal/use-report-r
 import { Button } from "../../../../../../ui/button/button.tsx"
 import { detailBlockClassName, Markdown } from "../../../markdown/markdown.tsx"
 import styles from "../../main-view.module.css"
-import { splitReportBlocks } from "./domain/split-blocks.ts"
+import { splitReportBlocks } from "./domain/block-split.ts"
 
 type ReportProps = {
   readonly body: MainViewReportBody

@@ -13,7 +13,7 @@ import type { ReactElement } from "react"
 
 import type { ReactionKind } from "../../../../../../../../shared/recommendation/reaction.ts"
 import { Text } from "../../../../../../ui/text/text.tsx"
-import { TypingDots } from "../../../../../../ui/typing-dots/typing-dots.tsx"
+import { TypingDots } from "../../../../../../ui/typing-dot-list/typing-dot-list.tsx"
 import type { ClockStamp } from "../../../../domain/clock-stamp.ts"
 import { useSpeechPress } from "../../../hooks/use-speech-press.ts"
 import characterViewStyles from "../../character-view.module.css"

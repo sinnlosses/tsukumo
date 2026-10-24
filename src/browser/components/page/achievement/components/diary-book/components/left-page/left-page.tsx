@@ -1,7 +1,7 @@
 import type { ReactElement } from "react"
 
 import type { DiaryBookPage } from "../../../../hooks/use-diary-book.ts"
-import { Badges } from "../badges/badges.tsx"
+import { Badges } from "../badge-list/badge-list.tsx"
 import { Bookmark } from "../bookmark/bookmark.tsx"
 import { TaskListing } from "../task-listing/task-listing.tsx"
 import styles from "./left-page.module.css"

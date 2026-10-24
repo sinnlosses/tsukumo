@@ -15,7 +15,7 @@ import { showTurn, useTurnSelection } from "../../../../../../../stores/turn-sel
 import { localTimeZoneId } from "../../../../../../../utils/clock.ts"
 import { TURN_RESULT_MARKS } from "../../../../domain/turn-result-mark.ts"
 import { turnSpanLabel, turnSpans, type TurnSpan } from "../../domain/turn-span.ts"
-import { useReportOutlineTurns } from "../../hooks/use-report-outline-turns.ts"
+import { useReportOutlineTurns } from "../../hooks/use-report-outline-turn-list.ts"
 import styles from "./turn-list.module.css"
 
 const UNKNOWN_SPAN: TurnSpan = { kind: "unknown" }

@@ -4,7 +4,7 @@ import { tool } from "@anthropic-ai/claude-agent-sdk"
 import { z } from "zod"
 
 import type { ExpressionChoice } from "../../../shared/character-pack/expression-choice.ts"
-import type { ReportArgumentField } from "../../../shared/report/report-argument-chars.ts"
+import type { ReportArgumentField } from "../../../shared/report/report-argument-size.ts"
 import { keyFiguresSchema } from "../../../shared/report/report-block-comparison.ts"
 import {
   reportFigureSchema,
