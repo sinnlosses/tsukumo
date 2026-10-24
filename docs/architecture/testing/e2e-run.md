@@ -49,7 +49,7 @@
   コア数の 80% までに収める（10 コアで各 4、単体 98 秒・E2E 58 秒前後。手元の操作が重く感じたら
   下の `TSUKUMO_CHECK_WORKER_BUDGET` で予算を下げる）。
   単体の `node` project は `isolate: false` でファイルごとの隔離を外す（同じ予算で約 98 秒が約 52 秒）。
-  ただし `beads.ts` を差し替えるテストと、本物の `bd` で `closed-issue.ts` を読むテストは、`vitest.config.ts` の `ISOLATED_FILES` に挙げて `node-isolated` project で隔離して走らせる（理由と書き方は `docs/coding-standards/test.md`「置き場所とモック」）。
+  ただし `vi.mock` を使うテストは、`vitest.config.ts` の `ISOLATED_FILES` に挙げて `node-isolated` project で隔離して走らせる（今は `closed-issue.test.ts` が `beads.ts` を、`beads-issues-reader.test.ts` が `git.ts` と `node:child_process` を差し替える）。挙げ忘れた `vi.mock(` のテストも、挙げた項目が `vi.mock` を使わなくなったときも `test/architecture/test-isolation.test.ts` が落とす（理由と書き方は `docs/coding-standards/test.md`「置き場所とモック」）。
   環境変数やグローバルを書き換えるテストは、自分で戻す。
   **`check` は重い段を起こす前に、共有の git dir の `check-running/` へ自分の pid の印を置き
   （`scripts/dev/lib/check-running.ts`。終了・`SIGTERM`・`SIGINT` で消し、死んだ pid の印は数えるときに消す）、

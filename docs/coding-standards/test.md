@@ -32,6 +32,7 @@
   `vi.resetModules()` のあとに `vi.doMock` で差し替え、動的 `import` で読み込み直す。後始末は `vi.doUnmock` と
   `vi.resetModules()`（見本は `test/server/adapter/lib/jsonl.test.ts` の `loadCountingAppender`）。
   ファイル全体を隔離するなら `vitest.config.ts` の `ISOLATED_FILES` に挙げる
+  （挙げ忘れた `vi.mock(` のテストも、挙げた項目が `vi.mock` を使わなくなったときも `test/architecture/test-isolation.test.ts` が落とす）
 - **単体テストのプロセスのタイムゾーンは UTC に固定してある**（単体テストの設定の `test.env.TZ`。
   ホストが JST でも `Temporal.Now.timeZoneId()` は `"UTC"` を返す）。日付の境目を見るテストは、
   オフセットを `+09:00` のように固定せず、`Temporal.Now.timeZoneId()` を基準に時刻を組む。

@@ -3,14 +3,14 @@ import { defineConfig } from "vitest/config"
 import { cssModuleIdentityPlugin } from "./test/css-module-loader.ts"
 
 // DOM のグローバルを借りるテスト。ほかのテストには happy-dom を読ませない。
-const DOM_TEST_FILES = [
+export const DOM_TEST_FILES = [
   "test/browser/**/*.test.{ts,tsx}",
   "test/server/report/core/report-notation.test.ts",
 ]
 
-// `beads.ts` を差し替えるテストと、本物の `bd` で `closed-issue.ts` を読むテスト。
-// モジュールを共有すると、先に読んだほうの `beads.ts` が相手のファイルにも残って落ちる。
-const ISOLATED_FILES = [
+// `vi.mock` を使うテスト。
+// モジュールを共有すると、先に読んだほうの差し替えが同じ worker の別のファイルにも残って落ちる。
+export const ISOLATED_FILES = [
   "test/server/achievement/adapter/closed-issue.test.ts",
   "test/server/repository/adapter/beads-issues-reader.test.ts",
 ]
