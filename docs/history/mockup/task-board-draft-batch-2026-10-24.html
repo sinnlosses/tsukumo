@@ -105,10 +105,17 @@
     display: inline-flex; align-items: center;
   }
   .hint { color: var(--ink-quiet); font-size: 12px; }
-  .hint.warn { color: var(--state-ng); }
-  /* 1回目を押したあと。地を抜いて枠と字を警告の色にし、形（太い枠）でも変わったと言う。 */
-  .go.armed { background: transparent; color: var(--state-ng); border: 2px solid var(--state-ng); }
-  .go.waiting { opacity: 0.45; }
+  /* 値は task-run-confirm.module.css の写し（幅 28rem・余白 1rem・角丸 0.75rem）。 */
+  .dialog {
+    width: 28rem; padding: 1rem; background: var(--surface); color: var(--ink);
+    border: 1px solid var(--rule); border-radius: 0.75rem; font-size: 13px;
+  }
+  .dialog-heading { margin: 0; font-size: 15px; font-weight: 600; }
+  .dialog-note { margin: 0.5rem 0 0; color: var(--ink-quiet); line-height: 1.6; }
+  .dialog-note code { font-family: var(--font-mono); }
+  .dialog-actions { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 0.9rem; }
+  .dialog-btn { padding: 0.2rem 0.8rem; border-radius: 0.4rem; border: 1px solid var(--rule); }
+  .dialog-btn.ok { border-color: var(--accent); color: var(--accent); }
   .faces { margin-top: 28px; width: 1180px; }
   .face { margin-bottom: 12px; background: var(--surface); border: 1px solid var(--rule-soft); border-radius: 12px; overflow: hidden; }
   .face-label { display: block; padding: 8px 20px 0; color: var(--ink-quiet); font-size: 12px; }
@@ -174,34 +181,22 @@
   </div>
 </div>
 
-<!-- 確かめの窓は出さない。帯だけで、押す前・1回押した後・作業中の3つの顔を持つ。 -->
+<!-- 押したあとは単件と同じ確認ダイアログ（task-run-confirm）を通る。作業中の断りもそのダイアログが出す。 -->
 <div class="faces">
-  <p class="caption">下端の帯の3つの顔（確かめの窓は出さない）</p>
   <div class="face">
-    <span class="face-label">1. 押す前</span>
+    <span class="face-label">1件だけ計画を選んだときの帯（残りは保留のまま）</span>
     <div class="bar">
       <span class="ghost">仕分けを戻す</span>
-      <span class="hint">保留の 2 件は触らない</span>
-      <span class="go">計画 2・却下 1 を頼む</span>
+      <span class="hint">保留の 4 件は触らない</span>
+      <span class="go">計画 1 を頼む</span>
     </div>
   </div>
-  <div class="face">
-    <span class="face-label">2. 却下を含むときの1回目のあと（もう一度押すと送る）</span>
-    <div class="bar">
-      <span class="ghost">やめる</span>
-      <span class="hint warn">却下した 1 件は閉じる。戻すには開き直しが要る</span>
-      <span class="go armed">もう一度押すと却下 1 も送る</span>
-    </div>
+  <p class="caption">押したあとの確認ダイアログ（単件の「tsukumo に頼む」と同じ部品・同じ作り）</p>
+  <div class="dialog">
+    <p class="dialog-heading">ドラフト 3 件を仕分けますか</p>
+    <p class="dialog-note">入力欄に <code>/plan-tasks ドラフトを仕分けた。計画（承認済み）: GH-1401, GH-1402。却下: GH-1403（GH-1388 で同じ名前に揃え済み）</code> と打つのと同じ。</p>
+    <div class="dialog-actions"><span class="dialog-btn">キャンセル</span><span class="dialog-btn ok">仕分ける</span></div>
   </div>
-  <div class="face">
-    <span class="face-label">3. 作業中（押すと断り書きを出す）</span>
-    <div class="bar">
-      <span class="ghost">仕分けを戻す</span>
-      <span class="hint">いまの作業が終わると頼める</span>
-      <span class="go waiting">計画 2・却下 1 を頼む</span>
-    </div>
-  </div>
-  <p class="caption">計画だけ（却下 0）のときは 1 回目の押下でそのまま送る。送った文面は依頼としてメインビューに並ぶ。</p>
 </div>
 </body>
 </html>
