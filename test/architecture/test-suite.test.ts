@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs"
 import { describe, expect, it } from "vitest"
 
 import { REPOSITORY_ROOT } from "../../scripts/shared/repository-root.ts"
-import { withoutComments } from "../comment-line.ts"
+import { withoutComments } from "./comment-line.ts"
 import { listSourceFiles } from "./source-file.ts"
 
 // CI（`.github/workflows/ci.yml`）が用意する外部コマンド。`git` は `actions/checkout`、

@@ -163,7 +163,7 @@
   `~/.claude/skills/task-model/WORKFLOW.md`「段の形」を見る
 - **大きいファイルを割るタスクの計画には、呼ぶ側の数え方と関数の並べ替えを書く。** 呼ぶ側を数える
   `grep` の範囲は `src test scripts docs` にする。群をまたぐ private を `export` にした段は、
-  `test/function-order.test.ts`（export する関数は export しない関数より前）が落ちるので、
+  `test/architecture/function-order.test.ts`（export する関数は export しない関数より前）が落ちるので、
   宣言の並べ替えを同じ段に含める
 - **テストを割るタスクの計画には、書き出し直した前後の `\u` エスケープの数の確かめを書く。**
   `grep -oE '\\u[0-9A-Fa-f]{4}' <ファイル> | wc -l` の合計を、移す前の元のファイルと移したあとの

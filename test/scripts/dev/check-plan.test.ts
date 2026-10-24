@@ -1,22 +1,14 @@
 // `pnpm run check` が重い段（typecheck・lint・test:e2e）を省いてよいかの判定と、
 // その材料になる「変えたファイル」の集め方を検証する。
 
-import {
-  existsSync,
-  mkdirSync,
-  mkdtempSync,
-  readdirSync,
-  readFileSync,
-  rmSync,
-  writeFileSync,
-} from "node:fs"
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { dirname, join } from "node:path"
 
 import { describe, expect, test } from "vitest"
 
 import {
-  DOCUMENT_CHECK_TEST_FILES,
+  DOCUMENT_CHECK_TEST_PATHS,
   e2eStage,
   planStages,
 } from "../../../scripts/dev/lib/check-stage.ts"
@@ -86,8 +78,9 @@ describe("planStages", () => {
     expect(plan.stages).toEqual([
       { name: "format:check", args: [], heavy: false },
       { name: "token-limit", args: [], heavy: false },
-      { name: "test:document", args: DOCUMENT_CHECK_TEST_FILES, heavy: false },
+      { name: "test:document", args: DOCUMENT_CHECK_TEST_PATHS, heavy: false },
     ])
+    expect(DOCUMENT_CHECK_TEST_PATHS).toEqual(["test/document/", "test/scripts/document/"])
   })
 
   test("変えたファイルが空なら token-limit を含む6段すべて", () => {
@@ -149,36 +142,13 @@ describe("planStages", () => {
     ])
   })
 
-  test("文書の検査のファイルが実在する", () => {
-    for (const file of DOCUMENT_CHECK_TEST_FILES) {
-      expect(existsSync(file)).toBe(true)
+  test("文書の検査のディレクトリが実在し、中にテストがある", () => {
+    for (const directory of DOCUMENT_CHECK_TEST_PATHS) {
+      expect(existsSync(directory)).toBe(true)
+      expect(readdirSync(directory).some((name) => name.endsWith(".test.ts"))).toBe(true)
     }
   })
-
-  test("test/scripts/document/ の下で実物のリポジトリを読むテストは DOCUMENT_CHECK_TEST_FILES に入っている", () => {
-    const registered: readonly string[] = DOCUMENT_CHECK_TEST_FILES
-    const missing = readdirSync(DOCUMENT_TEST_DIRECTORY)
-      .filter((name) => name.endsWith(".test.ts"))
-      .map((name) => `${DOCUMENT_TEST_DIRECTORY}/${name}`)
-      .filter((path) => readsRepository(readFileSync(path, "utf8")))
-      .filter((path) => !registered.includes(path))
-    expect(
-      missing,
-      `${missing.join(", ")} は文書だけの変更で走らない。DOCUMENT_CHECK_TEST_FILES に足すか、実物を読まないように直す`,
-    ).toEqual([])
-  })
-
-  test("readsRepository は repository-root の import か readFileSync を持つテキストだけ true", () => {
-    expect(readsRepository('import { REPOSITORY_ROOT } from "../repository-root.ts"\n')).toBe(true)
-    expect(readsRepository("expect(parseSection(text)).toBe(1)\n")).toBe(false)
-  })
 })
-
-const DOCUMENT_TEST_DIRECTORY = "test/scripts/document"
-
-function readsRepository(source: string): boolean {
-  return source.includes("repository-root") || source.includes("readFileSync(")
-}
 
 // 一時リポジトリで git を何回も走らせるので、`pnpm run check` の並列の負荷で既定の 5000ms を
 // 超えることがある。

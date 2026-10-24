@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest"
 
 import { REPOSITORY_ROOT } from "../../scripts/shared/repository-root.ts"
 import { DOM_TEST_FILES, ISOLATED_FILES } from "../../vitest.config.ts"
-import { withoutComments } from "../comment-line.ts"
+import { withoutComments } from "./comment-line.ts"
 import { listSourceFiles } from "./source-file.ts"
 
 const MOCK_CALL = /\bvi\.mock\(/

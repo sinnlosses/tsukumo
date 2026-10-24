@@ -3,7 +3,7 @@ import { posix } from "node:path"
 
 import { describe, expect, it } from "vitest"
 
-import { DOCUMENT_CHECK_TEST_FILES } from "../../scripts/dev/lib/check-stage.ts"
+import { listConventionTests } from "../../scripts/dev/lib/convention-test.ts"
 import { arrayField, descendants, objectField, stringField } from "../../scripts/shared/ast-node.ts"
 import { REPOSITORY_ROOT } from "../../scripts/shared/repository-root.ts"
 import {
@@ -139,7 +139,9 @@ function productionReader(): (path: string) => boolean {
   const readers = new Set<string>([
     ...CONFIG_FILES,
     ...vitestSetupFiles(),
-    ...DOCUMENT_CHECK_TEST_FILES,
+    ...listConventionTests(REPOSITORY_ROOT).filter(
+      (path) => !path.startsWith("test/architecture/"),
+    ),
   ])
   return (path) =>
     PRODUCTION_DIRECTORIES.some((directory) => path.startsWith(directory)) || readers.has(path)

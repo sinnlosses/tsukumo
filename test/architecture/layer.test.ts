@@ -3,7 +3,7 @@ import { builtinModules } from "node:module"
 
 import { describe, expect, it } from "vitest"
 
-import { withoutComments } from "../comment-line.ts"
+import { withoutComments } from "./comment-line.ts"
 import { layerOf, type Layer } from "./feature-graph.ts"
 import {
   importSpecifiers,

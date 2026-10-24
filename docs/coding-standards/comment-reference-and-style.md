@@ -56,14 +56,14 @@
 ```
 
 `src` `test` `scripts` のコメントのうち、ソースファイル名（`.ts` / `.tsx`。型定義・コマンド・「」の中・
-`foo` などの例は除く）・節番号つきの参照・`//` の中の `{@link}` の3つは、`test/comment-reference.test.ts`
+`foo` などの例は除く）・節番号つきの参照・`//` の中の `{@link}` の3つは、`test/architecture/comment.test.ts`「コメント中の指し方」
 が機械で検査する（`pnpm run check` から走る）。移行待ちの一覧は無く、違反は1件でも落ちる。
 次の3つは検査しない。
 
 - ディレクトリのパス。置き場所そのものを検査するテストのように、パスが検査の中身である箇所と見分けられない
 - 呼ぶ側・使う側への言及。日本語の述語（「〜が呼ぶ」）で拾うと誤検知が多すぎる。
   ただし括弧の中にバッククォートの名前の並びと「が呼ぶ」「が使う」だけを置く形（``（`Foo` が使う）``）は、
-  `test/architecture/lint-rule.test.ts`「コメント中の呼ぶ側」が機械で検査する（`pnpm run check` から走る）。
+  `test/architecture/comment.test.ts`「コメント中の呼ぶ側」が機械で検査する（`pnpm run check` から走る）。
   「から読む」のような述語は、外部の素材の読み元や、制約の理由として名前を1つ挙げる行にも当たるので入れない
 - 番号だけの節の参照と、`{@link}` が解決できるか。前者は `0.66` や `WCAG 2.1` のような数値と
   見分けられず、後者は `tsc` が検査せず、見るには型検査器を別に起こすことになる
@@ -78,8 +78,8 @@
 - **複数行の JSDoc は `/**` だけの行で書き出す。** 1行に収まるなら `/** … */`。
   `/** 本文` から次の行へ続く形は、書き出しの行だけ本文の位置がずれて読みにくい
 
-強調の `**` は、`src` `test` `scripts` について `test/architecture/lint-rule.test.ts`「コメント中の強調」が機械で検査する（`pnpm run check` から走る）。
-JSDoc の書き出しは、同じ範囲を `test/architecture/lint-rule.test.ts`「複数行の JSDoc の書き出し」が機械で検査する。
+強調の `**` は、`src` `test` `scripts` について `test/architecture/comment.test.ts`「コメント中の強調」が機械で検査する（`pnpm run check` から走る）。
+JSDoc の書き出しは、同じ範囲を `test/architecture/comment.test.ts`「複数行の JSDoc の書き出し」が機械で検査する。
 既存のコメントの改行は、そのファイルを触るときに直す（機械では検査できないため）。
 
 ```ts

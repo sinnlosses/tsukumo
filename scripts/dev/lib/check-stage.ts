@@ -21,17 +21,7 @@ export function e2eStage(files: readonly string[]): Stage {
 }
 
 /** 文書だけの変更で打つ文書の検査。 */
-export const DOCUMENT_CHECK_TEST_FILES = [
-  "test/scripts/document/conflict-marker.test.ts",
-  "test/scripts/document/task-id.test.ts",
-  "test/scripts/document/section-reference-repository.test.ts",
-  "test/scripts/document/symbol-reference.test.ts",
-  "test/comment-reference.test.ts",
-  "test/e2e-reference.test.ts",
-  "test/scripts/document/document-index-repository.test.ts",
-  "test/scripts/document/lib/environment-variable-repository.test.ts",
-  "test/achievement-scene-reference.test.ts",
-] as const
+export const DOCUMENT_CHECK_TEST_PATHS = ["test/document/", "test/scripts/document/"] as const
 
 export type StagePlan = {
   readonly stages: readonly Stage[]
@@ -61,7 +51,7 @@ export function planStages(
       stages: [
         { name: "format:check", args: [], heavy: false },
         TOKEN_LIMIT_STAGE,
-        { name: "test:document", args: DOCUMENT_CHECK_TEST_FILES, heavy: false },
+        { name: "test:document", args: DOCUMENT_CHECK_TEST_PATHS, heavy: false },
       ],
       notice: "文書だけの変更のため format:check・token-limit と文書の検査だけを打つ",
     }

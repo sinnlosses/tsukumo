@@ -2,7 +2,7 @@ import { readdirSync, readFileSync } from "node:fs"
 
 import { describe, expect, it } from "vitest"
 
-import { commentLineIndexes } from "../comment-line.ts"
+import { commentLineIndexes } from "./comment-line.ts"
 import { SRC_ROOT } from "./source-file.ts"
 
 // レポートの字の色が、字の4段と印の色の名前だけであること

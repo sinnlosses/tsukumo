@@ -26,7 +26,7 @@
 | `server`（ws）                           | 購読 → `hello` が先に届き、押した順に取りこぼさず流れる、切断で購読が外れる、トークン無しは 403、Origin 違いは 403、コマンド → 受け手が呼ばれる                                                     | `test/server/view-server/adapter/session-socket.test.ts` |
 | browser の部品                           | Vitest + `happy-dom` + `@testing-library/react`。**役割と文言で当てる**（HTML の文字列一致はしない）                                                                                                | `test/browser/**`                                        |
 | 層の検査                                 | 層の辺・機能どうしの辺・browser の箱と領域の辺（`docs/architecture.md`「全体構成」）。外部ツールは増やさない                                                                                        | `test/architecture/`                                     |
-| 関数の並びの検査                         | `export` する関数が `export` しない関数より前に並ぶ（`docs/coding-standards.md`「関数の並び順」）                                                                                                   | `test/function-order.test.ts`                            |
+| 関数の並びの検査                         | `export` する関数が `export` しない関数より前に並ぶ（`docs/coding-standards.md`「関数の並び順」）                                                                                                   | `test/architecture/function-order.test.ts`               |
 | 画面の見た目                             | **fake driver で起こした tsukumo に Playwright**（`webapp-testing` スキル）。数値で読めるものは CDP で読む。色・間合いは人の目                                                                      | `scripts/`（本体から呼ばれない）                         |
 | 状態のカタログ                           | 疑似セッションの場面を名指しして起こし直し、広い窓と狭い窓で撮って索引 HTML に並べる（`TSUKUMO_FAKE_SCENE`）                                                                                        | `scripts/capture/capture-catalog.ts`                     |
 | E2E                                      | **fake driver で起こした tsukumo を Playwright の headless shell で開き、利用者に見える流れを1本ずつと、実ブラウザでしか確かめられないもの（寸法・入力・サーバとの往復）を確かめる**（下の「E2E」） | `test/e2e/`                                              |
@@ -36,13 +36,13 @@
   確かめられないのは**ブラウザに出た絵**の側
 - **`pnpm run test <ファイル>` は、渡したファイルに加えて規約のテスト（`CONVENTION_TEST_PATHS`）も走らせる。**
   リポジトリ全体を読むので、変えたファイルとは別のテストが落ちうる。文書だけの変更で `pnpm run check` が打つ
-  文書の検査は `pnpm run test:document` で、この一覧のうち層の検査（`test/architecture/`）と関数の並びの検査を除いたもの。
-  `test/scripts/document/` の直下で `repository-root` を import するか `readFileSync` を使うテストを `DOCUMENT_CHECK_TEST_FILES` へ足し忘れると、`test/scripts/dev/check-plan.test.ts` が落ちる。
-  層の検査は塊ごとのファイルに分かれているので、一覧はファイルを並べずにディレクトリ `test/architecture/` を1つ指す。
+  文書の検査は `pnpm run test:document` で、この一覧のうち規約の検査（`test/architecture/`）を除いたもの（`DOCUMENT_CHECK_TEST_PATHS`。
+  `test/document/` と `test/scripts/document/`）。
+  一覧はファイルを並べずにディレクトリを指すので、規約と文書の検査はディレクトリに置けば拾われる。
   vitest は渡した文字列をパスの部分一致の絞り込みとして読むので、ディレクトリの中のファイルがすべて走り、
   そのうちの1つを別に渡しても二重には走らない（ファイルを足しても一覧を直さずに済む）。
   変えたファイルから選ぶ `--related` は引数を変えたファイルとして読みディレクトリを展開しないので、
-  `test/architecture/` の中のテストファイルを `scripts/dev/test.ts` が1本ずつ列挙して渡す
+  規約のディレクトリの中のテストファイルを `scripts/dev/test.ts` が1本ずつ列挙して渡す
 - **`orca-host.ts` は自動テストの対象外。** 実際に Orca が動いていないと結果を確かめられない。
   ここに判断を書きたくなったら、それは「決める」側に置くべきものが漏れている合図
 - **サニタイザ・属性の許可を検査するテストは、DOM でなく木（hast）の段階で、本番と同じ rehype の段（`rehypeSanitize` など）を通して行う。**

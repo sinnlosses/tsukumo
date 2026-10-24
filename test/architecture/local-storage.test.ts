@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs"
 
 import { describe, expect, it } from "vitest"
 
-import { withoutComments } from "../comment-line.ts"
+import { withoutComments } from "./comment-line.ts"
 import { listSourceFiles, SRC_ROOT } from "./source-file.ts"
 
 // 保存の鍵の命名・壊れた値の畳み方・書けないときの握りつぶし方を1箇所に揃える。

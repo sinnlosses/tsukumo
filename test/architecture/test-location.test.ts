@@ -12,47 +12,8 @@ const MIRROR_ROOTS: readonly { readonly testPrefix: string; readonly targetRoot:
 
 const TARGET_ROOTS = ["src", "scripts", "plugin"] as const
 
-// 同名の対象が別の場所にあるのに、鏡の場所に置かれていない既存のテスト（テスト側の `test/` 相対パス）。
-// 直したら外す。新しく足さない。
-const KNOWN_MISPLACED: ReadonlySet<string> = new Set<string>([
-  "test/browser/components/domain/screen-nav/phone-head.test.tsx",
-  "test/browser/components/domain/screen-nav/session-switcher.test.tsx",
-  "test/browser/features/run-setting/run-setting-group.test.tsx",
-  "test/browser/features/run-setting/run-setting-select.test.tsx",
-  "test/browser/features/task-board/task-refresh-button.test.tsx",
-  "test/scripts/capture/capture-preparation.test.ts",
-  "test/scripts/capture/capture-source.test.ts",
-  "test/scripts/capture/capture-stub.test.ts",
-  "test/scripts/capture/catalog-index.test.ts",
-  "test/scripts/capture/paper-hue.test.ts",
-  "test/scripts/capture/paper-metric.test.ts",
-  "test/scripts/capture/png-pixel.test.ts",
-  "test/scripts/capture/reveal-snapshot.test.ts",
-  "test/scripts/capture/scene-catalog.test.ts",
-  "test/scripts/capture/scene-end.test.ts",
-  "test/scripts/dev/built-ui-freshness.test.ts",
-  "test/scripts/dev/check-failure.test.ts",
-  "test/scripts/dev/check-record-repository.test.ts",
-  "test/scripts/dev/check-record.test.ts",
-  "test/scripts/dev/check-running.test.ts",
-  "test/scripts/dev/convention-test.test.ts",
-  "test/scripts/dev/e2e-entry-gate.test.ts",
-  "test/scripts/dev/e2e-full-guard.test.ts",
-  "test/scripts/dev/e2e-full-lock.test.ts",
-  "test/scripts/dev/main-worktree.test.ts",
-  "test/scripts/dev/ship-plan.test.ts",
-  "test/scripts/dev/stage-priority.test.ts",
-  "test/scripts/dev/submodule-drift.test.ts",
-  "test/scripts/dev/worker-budget.test.ts",
-  "test/scripts/document/document-index-repository.test.ts",
-  "test/scripts/hook/background-verify.test.ts",
-  "test/scripts/hook/broad-kill.test.ts",
-  "test/scripts/hook/hook-denial-record.test.ts",
-  "test/scripts/hook/shell-command.test.ts",
-])
-
 describe("テストの置き場所", () => {
-  it("同名の対象が別の場所にあるテストは、鏡の場所（許す一覧を除く）に置かれている", () => {
+  it("同名の対象が別の場所にあるテストは、鏡の場所に置かれている", () => {
     const targetPaths = TARGET_ROOTS.flatMap((root) =>
       listSourceFiles(`${REPOSITORY_ROOT}/${root}`).map((relPath) => `${root}/${relPath}`),
     )
@@ -69,18 +30,12 @@ describe("テストの置き場所", () => {
         return sameNamed.length > 0 && !targetPathSet.has(mirror) ? [{ relPath, sameNamed }] : []
       })
 
-    const unexpected = misplaced
-      .filter(({ relPath }) => !KNOWN_MISPLACED.has(`test/${relPath}`))
-      .map(
-        ({ relPath, sameNamed }) =>
-          `test/${relPath} は ${sameNamed.map((target) => `test/${testPathFor(target)}`).join(" か ")} に置く`,
-      )
-    const misplacedPaths = new Set(misplaced.map(({ relPath }) => `test/${relPath}`))
-    const stale = [...KNOWN_MISPLACED]
-      .filter((path) => !misplacedPaths.has(path))
-      .map((path) => `${path} は鏡の場所にあるか無くなっている。許す一覧から外す`)
+    const unexpected = misplaced.map(
+      ({ relPath, sameNamed }) =>
+        `test/${relPath} は ${sameNamed.map((target) => `test/${testPathFor(target)}`).join(" か ")} に置く`,
+    )
 
-    expect([...unexpected, ...stale]).toEqual([])
+    expect(unexpected).toEqual([])
   })
 })
 

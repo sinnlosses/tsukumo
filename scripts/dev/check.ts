@@ -4,7 +4,7 @@
 // 出力は段ごとに溜め、全段が終わってから段の順に出し、落ちた段は最後の行で名指しする。
 //
 // 変えたファイルが `docs/`・`.tw/` の Markdown と直下の `README.md`・`AGENTS.md` だけのときは、
-// `--full` の有無に関わらず `format:check`・`token-limit` と文書の検査（`DOCUMENT_CHECK_TEST_FILES`）だけを打つ。
+// `--full` の有無に関わらず `format:check`・`token-limit` と文書の検査（`DOCUMENT_CHECK_TEST_PATHS`）だけを打つ。
 //
 // 段を組む前に、submodule が記録の版とずれていれば `git submodule update --init` で揃える。
 //

@@ -1,14 +1,13 @@
 // リポジトリ全体を読んで規約を見るテストの一覧と、絞り込みの引数にそれを足す組み立て、という概念1つを持つ。
 
-import { DOCUMENT_CHECK_TEST_FILES } from "./check-stage.ts"
+import { readdirSync } from "node:fs"
+import { join } from "node:path"
 
-export const ARCHITECTURE_TEST_DIRECTORY = "test/architecture/"
+import { DOCUMENT_CHECK_TEST_PATHS } from "./check-stage.ts"
 
-const CONVENTION_TEST_PATHS = [
-  ARCHITECTURE_TEST_DIRECTORY,
-  "test/function-order.test.ts",
-  ...DOCUMENT_CHECK_TEST_FILES,
-] as const
+const ARCHITECTURE_TEST_DIRECTORY = "test/architecture/"
+
+const CONVENTION_TEST_PATHS = [ARCHITECTURE_TEST_DIRECTORY, ...DOCUMENT_CHECK_TEST_PATHS] as const
 
 /**
  * テストファイルのパスに見える引数（`test/` で始まるか `.test.ts(x)` で終わる）があるときだけ、
@@ -27,16 +26,30 @@ export function withConventionTests(args: readonly string[]): readonly string[] 
 /**
  * `vitest related` に渡す引数。絞り込みの有無に関わらず、未指定の規約のテストを足す。
  * `related` の引数は変えたファイルとして読まれ、ディレクトリは展開されないので、
- * `test/architecture/` は列挙済みのテストファイル（`architectureTests`）に置き換えて足す。
+ * 規約のディレクトリは列挙済みのテストファイル（`conventionTests`。`listConventionTests`）に置き換えて足す。
  */
 export function withRelatedConventionTests(
   args: readonly string[],
-  architectureTests: readonly string[],
+  conventionTests: readonly string[],
 ): readonly string[] {
-  return appendMissing(args, [
-    ...architectureTests,
-    ...CONVENTION_TEST_PATHS.filter((path) => path !== ARCHITECTURE_TEST_DIRECTORY),
-  ])
+  return appendMissing(args, conventionTests)
+}
+
+/** `root` の下で、規約のディレクトリごとに `*.test.ts(x)` を再帰で列挙した `root` 相対のパス。 */
+export function listConventionTests(root: string): readonly string[] {
+  return CONVENTION_TEST_PATHS.flatMap((directory) => listTests(root, directory))
+}
+
+function listTests(root: string, directory: string): readonly string[] {
+  return readdirSync(join(root, directory), { withFileTypes: true })
+    .toSorted((a, b) => a.name.localeCompare(b.name))
+    .flatMap((entry) =>
+      entry.isDirectory()
+        ? listTests(root, `${directory}${entry.name}/`)
+        : /\.test\.tsx?$/.test(entry.name)
+          ? [`${directory}${entry.name}`]
+          : [],
+    )
 }
 
 function appendMissing(args: readonly string[], paths: readonly string[]): readonly string[] {

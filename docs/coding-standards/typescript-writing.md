@@ -27,7 +27,7 @@
 そこからしか呼ばれない非公開関数を下に置く。非公開関数同士は呼ばれる順に並べる。
 
 機械が検査するのは「`export` する関数は、`export` しない関数より前に並ぶ」だけで、
-`test/function-order.test.ts` が `src/` と `scripts/` のテスト以外のソースを読んで落とす。
+`test/architecture/function-order.test.ts` が `src/` と `scripts/` のテスト以外のソースを読んで落とす。
 数えるのは行頭に字下げの無い関数宣言と、`const` に入れた関数式・アロー関数（`memo(…)` などで包んだものは数えない）。
 非公開関数同士の並びは検査の外で、レビューが見る。
 
@@ -41,7 +41,7 @@
 
 `src/`・`scripts/` の export は `test/architecture/test-only-export.test.ts` がテストからしか import されないものを、
 `test/architecture/unused-export.test.ts` がどこからも import されないものを落とす。
-本番の側の読み手は `test/` 以外と、vitest の `globalSetup`・`setupFiles` と文書の検査の入口（`DOCUMENT_CHECK_TEST_FILES`）。
+本番の側の読み手は `test/` 以外と、vitest の `globalSetup`・`setupFiles` と文書の検査の入口（`DOCUMENT_CHECK_TEST_PATHS` のディレクトリの下のテスト）。
 型は、読まれる export の型注釈から名指されていれば数えない。
 当たった関数・定数は許可リストに入れず、`export` を外して公開口経由で確かめるか、
 公開口が実ブラウザ・git・標準入力などを要るなら純粋な部品を概念の名前のファイルへ移す。重なるテストは消す。
@@ -200,7 +200,7 @@ class 名を手で組むと、条件で落とす class を空文字に畳む三�
 
 定数の型注釈のうち、キーが `string`・`number` でなく、値が読み取り専用の入れ物（`ReadonlySet`・`ReadonlyArray`・
 `ReadonlyMap`・`readonly` の配列）でない `Record`（`Readonly<…>`・`Partial<…>` で包んだものも）は、
-`test/architecture/lint-rule.test.ts`「定数の Record の型注釈」が機械で検査する（`pnpm run check` から走る）。
+`test/architecture/type-shape.test.ts`「定数の Record の型注釈」が機械で検査する（`pnpm run check` から走る）。
 値が読み取り専用の入れ物の表は、`satisfies` にすると値の型が書き換えられる `Set` などに戻るので、読み取り専用へ広げる注釈が要る（上の例外）。
 キーが `string`・`number` の表は、値の型を広げる注釈が要る場面と見分けられないので検査しない。
 

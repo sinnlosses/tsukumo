@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs"
 
 import { describe, expect, it } from "vitest"
 
-import { commentLineIndexes } from "../comment-line.ts"
+import { commentLineIndexes } from "./comment-line.ts"
 import { listSourceFiles, SRC_ROOT } from "./source-file.ts"
 
 describe("font-size", () => {
