@@ -7,40 +7,15 @@
 読む時: `src/browser/` の部品・store・CSS を足す・直すとき。
 直す時: ブラウザ側の状態の置き場・描き方・共有部品の作法を変えたとき。
 
-本文は2つの子のファイルに分けてある。節の見出しはここに残し、中身は移し先を引く。
+## このファイルの読み方
 
-- `docs/architecture/browser/state-and-rendering.md`: 状態の持ち方、Markdown、立ち絵の動き
-- `docs/architecture/browser/bundle-style-component.md`: 重いライブラリ、CSS、`components/ui/` の部品
+節の本文は子のファイル（`docs/architecture/browser/`）にある。下の索引で節を1つ特定し、その子のファイルだけを開いて読む。
 
 ## 節の索引
 
-| 節         | 中身                                                                                                       |
-| ---------- | ---------------------------------------------------------------------------------------------------------- |
-| ## browser | 状態の持ち方、Markdown、重いライブラリ、立ち絵の動き、CSS、`components/ui/` の部品（variant の作法と一覧） |
+この表は `pnpm run format` が子のファイルの題と見出しから書き直すので、手で直さない。
 
-## browser
-
-### 状態の持ち方
-
-本文は `docs/architecture/browser/state-and-rendering.md`「状態の持ち方」。
-
-### Markdown（`components/page/conversation/components/markdown/renderer/markdown-renderer.tsx`）
-
-本文は `docs/architecture/browser/state-and-rendering.md`「Markdown（`components/page/conversation/components/markdown/renderer/markdown-renderer.tsx`）」。
-
-### 重いライブラリ
-
-本文は `docs/architecture/browser/bundle-style-component.md`「重いライブラリ」。
-
-### 立ち絵の動き
-
-本文は `docs/architecture/browser/state-and-rendering.md`「立ち絵の動き」。
-
-### CSS
-
-本文は `docs/architecture/browser/bundle-style-component.md`「CSS」。
-
-### `components/ui/` の部品（variant の作法と一覧）
-
-本文は `docs/architecture/browser/bundle-style-component.md`「`components/ui/` の部品（variant の作法と一覧）」。
-置くかどうかを決める「読み手の数は問わない」、`className` で重ねる「上書きは `className` の1つ」もそこにある。
+| ファイル                                              | 題                           | 節                                                                                                                                    |
+| ----------------------------------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `docs/architecture/browser/bundle-style-component.md` | ブラウザ側: 組み立てと見た目 | browser / 重いライブラリ / CSS / `components/ui/` の部品（variant の作法と一覧）                                                      |
+| `docs/architecture/browser/state-and-rendering.md`    | ブラウザ側: 状態と描き方     | browser / 状態の持ち方 / Markdown（`components/page/conversation/components/markdown/renderer/markdown-renderer.tsx`） / 立ち絵の動き |

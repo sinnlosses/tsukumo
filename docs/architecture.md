@@ -32,9 +32,9 @@
 
 ### このファイルは通読しない
 
-このファイルは節の見出しと索引、子のファイルの一覧、設計判断の ADR の表を持つ入口で、節の本文は
-子のファイル（`docs/architecture/`）にある。下の索引で節を1つ特定し、一覧から**その節の子のファイルだけ**を
-開いて読む（このファイルから本文を切り出さない）。子のファイルの中は、見出しを当てて節だけを次の形で読む:
+このファイルは子のファイルの索引と設計判断の ADR の表を持つ入口で、節の本文は子のファイル
+（`docs/architecture/`）にある。下の索引で節を1つ特定し、**その子のファイルだけ**を開いて読む。
+子のファイルの中は、見出しを当てて節だけを次の形で読む:
 
 ```bash
 sed -n '/^## shared/,/^## /p' docs/architecture/shared-contract.md
@@ -44,139 +44,37 @@ sed -n '/^## shared/,/^## /p' docs/architecture/shared-contract.md
 覆した決定の記録は `docs/history/` に置き、ここからは1行で参照する。何を残して何を移すかの表は
 `docs/requirements.md`「正典に残すもの・`docs/history/` へ移すもの」。
 
-### 節の索引
+## 節の索引
 
-**索引の行は本文の `##` の節と1対1**（`###` の節は載せない。節を足したり消したりしたら、
-ここも同じ数だけ動かす）。ブラウザ側・キャラクターパック・テスト・ビルドは `docs/architecture/` に
-分けてある（`browser.md`・`character-pack.md`・`testing.md`・`build.md`）。
+この表は `pnpm run format` が子のファイルの題と見出しから書き直すので、手で直さない。
 
-| 節                              | 中身                                                                                                                                                                  |
-| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| ## 全体構成                     | 全体像とデータの流れ3本。層（shared / server / browser）の図、依存の向き、サーバの機能と辺、コマンドの受け手、shared の機能、ディレクトリ、ブラウザ側の置き場所の基準 |
-| ## 新しいコードを置く場所       | 原則1〜5の判断材料                                                                                                                                                    |
-| ## 動きの流れ                   | 起動・接続・依頼・答え待ち・再接続の順序                                                                                                                              |
-| ## shared                       | **両側が共有する契約**。イベント・状態・コマンド・フレーム・版                                                                                                        |
-| ## core と adapter              | 判断（core）と境界（adapter）の境目、SDK に触るファイルの分け方、代の持ち物、ツールで受け取るものと使い捨ての `query()` の形                                          |
-| ## セッションの復元と複数化     | 復元を新しい形に載せる。複数化をやらないこと。ビューの本文の持ち方と再接続                                                                                            |
-| ## 会話内容と安全               | `127.0.0.1`・Origin・起動トークン・ディスクに書く3つの例外と読み戻す口・定着・ブラウザ側のメモリ                                                                      |
-| ## 設計判断（なぜ今の形なのか） | 今の形を別の形に直そうとする前に、一覧から該当する ADR を読む                                                                                                         |
-
-本文は 16 の子のファイル（`docs/architecture/` の直下）に分けてある。節の見出しはここに残し、中身は移し先を引く。
-
-- `docs/architecture/overview-and-layer.md`: 全体構成の前置き（全体像・データの流れ3本・層の図）、層と依存の向き
-- `docs/architecture/server-feature.md`: サーバの機能と、機能どうしの辺
-- `docs/architecture/command-procedure.md`: コマンドの受け手と手続きの置き方
-- `docs/architecture/shared-feature.md`: shared の機能
-- `docs/architecture/directory.md`: ディレクトリの前半（木の図・設定の置き場・タスク一覧の読み元・ファイル名・ページの形）
-- `docs/architecture/browser-box.md`: ディレクトリの後半（`src/browser/` の箱と、置く基準）、領域の機能と、置かれる機能
-- `docs/architecture/container-presenter.md`: 機能の中を分ける（container / presenter と `hooks/`）
-- `docs/architecture/lib-and-utils-criterion.md`: `lib/` と `utils/` に置く基準
-- `docs/architecture/code-placement.md`: 新しいコードを置く場所
-- `docs/architecture/runtime-flow.md`: 動きの流れ（起動・接続・依頼・答え待ち・再接続）
-- `docs/architecture/shared-contract.md`: shared（SessionEvent・SessionState・ClientCommand・ServerFrame・版と互換）
-- `docs/architecture/core-and-adapter.md`: core と adapter
-- `docs/architecture/session-restore.md`: セッションの復元と複数化
-- `docs/architecture/conversation-safety.md`: 会話内容と安全の前半（境界: バインド先・Origin・起動トークン・ディスク・ブラウザ側のメモリ・CSP・ログ）
-- `docs/architecture/conversation-safety-chat-memory.md`: 会話内容と安全の中盤（雑談の記憶: 定着・あらすじ・会話のアーカイブ・直近の雑談の読み戻し・雑談の画像・人格への書き戻し）
-- `docs/architecture/conversation-safety-local-record.md`: 会話内容と安全の後半（手元の記録・テストのフィクスチャと、表のあとの前提）
-
-## 全体構成
-
-本文は `docs/architecture/overview-and-layer.md`。
-
-### 層と依存の向き
-
-本文は `docs/architecture/overview-and-layer.md`。
-
-### サーバの機能と、機能どうしの辺
-
-本文は `docs/architecture/server-feature.md`（コマンドの受け手は `docs/architecture/command-procedure.md`）。
-
-#### コマンドの受け手と手続きの置き方
-
-本文は `docs/architecture/command-procedure.md`。
-
-### shared の機能
-
-本文は `docs/architecture/shared-feature.md`。
-
-### ディレクトリ
-
-本文は `docs/architecture/directory.md`（前半）と `docs/architecture/browser-box.md`（後半。`src/browser/` の箱と、置く基準）。
-
-### 領域の機能と、置かれる機能
-
-本文は `docs/architecture/browser-box.md`。
-
-### 機能の中を分ける（container / presenter と `hooks/`）
-
-本文は `docs/architecture/container-presenter.md`。
-
-### `lib/` と `utils/` に置く基準
-
-本文は `docs/architecture/lib-and-utils-criterion.md`。
-
-## 新しいコードを置く場所
-
-本文は `docs/architecture/code-placement.md`。
-
-## 動きの流れ
-
-### 起動
-
-本文は `docs/architecture/runtime-flow.md`。
-
-### 接続
-
-本文は `docs/architecture/runtime-flow.md`。
-
-### 依頼
-
-本文は `docs/architecture/runtime-flow.md`。
-
-### 答え待ち
-
-本文は `docs/architecture/runtime-flow.md`。
-
-### 再接続
-
-本文は `docs/architecture/runtime-flow.md`。
-
-## shared
-
-本文は `docs/architecture/shared-contract.md`。
-
-### SessionEvent
-
-本文は `docs/architecture/shared-contract.md`。
-
-### SessionState
-
-本文は `docs/architecture/shared-contract.md`。
-
-### ClientCommand
-
-本文は `docs/architecture/shared-contract.md`。
-
-### ServerFrame
-
-本文は `docs/architecture/shared-contract.md`。
-
-### 版と互換
-
-本文は `docs/architecture/shared-contract.md`。
-
-## core と adapter
-
-本文は `docs/architecture/core-and-adapter.md`。
-
-## セッションの復元と複数化
-
-本文は `docs/architecture/session-restore.md`。
-
-## 会話内容と安全
-
-本文は `docs/architecture/conversation-safety.md`（境界）、`docs/architecture/conversation-safety-chat-memory.md`（雑談の記憶）、`docs/architecture/conversation-safety-local-record.md`（手元の記録と前提）。
+| ファイル                                                | 題                                                     | 節                                                                                                        |
+| ------------------------------------------------------- | ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------- |
+| `docs/architecture/browser-box.md`                      | アーキテクチャ詳細: `src/browser/` の箱と領域          | 全体構成 / ディレクトリ / 領域の機能と、置かれる機能                                                      |
+| `docs/architecture/browser.md`                          | ブラウザ側                                             |                                                                                                           |
+| `docs/architecture/build.md`                            | ビルドと依存                                           |                                                                                                           |
+| `docs/architecture/character-pack.md`                   | キャラクターパック                                     | キャラクターパック / 画面から作るときの置き場と受け取り方 / パックの一覧と素材の URL / 会話の記録の置き場 |
+| `docs/architecture/chat-mode.md`                        | 雑談モード                                             | 4.9 雑談モード                                                                                            |
+| `docs/architecture/code-placement.md`                   | アーキテクチャ詳細: 新しいコードを置く場所             | 新しいコードを置く場所                                                                                    |
+| `docs/architecture/command-procedure.md`                | アーキテクチャ詳細: コマンドの受け手と手続きの置き方   | 全体構成 / サーバの機能と、機能どうしの辺 / コマンドの受け手と手続きの置き方                              |
+| `docs/architecture/container-presenter.md`              | アーキテクチャ詳細: 機能の中を分ける                   | 全体構成 / 機能の中を分ける（container / presenter と `hooks/`）                                          |
+| `docs/architecture/conversation-safety-chat-memory.md`  | アーキテクチャ詳細: 会話内容と安全（雑談の記憶）       | 会話内容と安全                                                                                            |
+| `docs/architecture/conversation-safety-local-record.md` | アーキテクチャ詳細: 会話内容と安全（手元の記録と前提） | 会話内容と安全                                                                                            |
+| `docs/architecture/conversation-safety.md`              | アーキテクチャ詳細: 会話内容と安全（境界）             | 会話内容と安全                                                                                            |
+| `docs/architecture/core-and-adapter.md`                 | アーキテクチャ詳細: core と adapter                    | core と adapter                                                                                           |
+| `docs/architecture/directory.md`                        | アーキテクチャ詳細: ディレクトリ                       | 全体構成 / ディレクトリ                                                                                   |
+| `docs/architecture/display.md`                          | 表示                                                   | 4.2 表示                                                                                                  |
+| `docs/architecture/lib-and-utils-criterion.md`          | アーキテクチャ詳細: `lib/` と `utils/` に置く基準      | 全体構成 / `lib/` と `utils/` に置く基準                                                                  |
+| `docs/architecture/overview-and-layer.md`               | アーキテクチャ詳細: 全体像と層                         | 全体構成 / 層と依存の向き                                                                                 |
+| `docs/architecture/runtime-flow.md`                     | アーキテクチャ詳細: 動きの流れ                         | 動きの流れ / 起動 / 接続 / 依頼 / 答え待ち / 再接続                                                       |
+| `docs/architecture/screen-design.md`                    | 画面のデザイン                                         |                                                                                                           |
+| `docs/architecture/server-feature.md`                   | アーキテクチャ詳細: サーバの機能と、機能どうしの辺     | 全体構成 / サーバの機能と、機能どうしの辺                                                                 |
+| `docs/architecture/session-restore.md`                  | アーキテクチャ詳細: セッションの復元と複数化           | セッションの復元と複数化                                                                                  |
+| `docs/architecture/shared-contract.md`                  | アーキテクチャ詳細: shared（両側が共有する契約）       | shared / SessionEvent / SessionState / ClientCommand / ServerFrame / 版と互換                             |
+| `docs/architecture/shared-feature.md`                   | アーキテクチャ詳細: shared の機能                      | 全体構成 / shared の機能                                                                                  |
+| `docs/architecture/stage-item.md`                       | アイテム                                               | アイテム / 置き場と形 / 画面から足すときの受け取り方 / 配る URL                                           |
+| `docs/architecture/testing.md`                          | テスト                                                 |                                                                                                           |
+| `docs/architecture/workflow-contract.md`                | ワークフローの契約                                     | 契約とは何か                                                                                              |
 
 ## 設計判断（なぜ今の形なのか）
 

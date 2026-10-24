@@ -15,64 +15,24 @@
 読む時: タスクを書く・受け入れる、作業ツリーを並行させる、tsukumo を起こすとき。
 直す時: このリポジトリ固有の運用（`loopable` の判定・`summary` の長さなど）を変えたとき。
 
-本文は4つの子のファイルに分けてある。節の見出しはここに残し、中身は移し先を引く。
+## このファイルの読み方
 
-- `docs/workflow/task-writing.md`: タスクを書くとき・受け入れるとき、`summary` の長さ
-- `docs/workflow/loopable.md`: `loopable` の判定、tsukumo を起こすときの作法と hook
-- `docs/workflow/reference-material.md`: 参考に示された画像・ディレクトリの残し方
-- `docs/workflow/worktree-and-ship.md`: 作業ツリーの並行、`main` への送り出し、コミット前のファイルの大きさの検査、実機の Claude Code を動かす計測
+節の本文は子のファイル（`docs/workflow/`）にある。下の索引で節を1つ特定し、その子のファイルだけを開いて読む。
 
 ## 節の索引
 
-| 節                                                           | 中身                                |
-| ------------------------------------------------------------ | ----------------------------------- |
-| ## タスクを書くとき・受け入れるとき                          | 書き方・受け入れ方                  |
-| ## 参考に示された画像・ディレクトリを残す（2026-09-23 決定） | 参考に示されたものの残し方          |
-| ## `loopable` の判定（2026-09-15 決定）                      | `loopable` の判定、起こすときの作法 |
-| ## `summary` の長さ                                          | 全角40文字以内                      |
-| ## 作業ツリーを並行させるとき                                | ポートとホームの分け方              |
-| ## タスクに紐付かない作業を main へ送る                      | `pnpm run ship`                     |
-| ## コミット前のファイルの大きさの検査                        | 20,000 バイトの上限                 |
-| ## 実機の Claude Code を動かす計測のとき                     | 応答の確かめ方                      |
-| ## 関連                                                      | 手順・正典・記録の置き場            |
+この表は `pnpm run format` が子のファイルの題と見出しから書き直すので、手で直さない。
 
-## タスクを書くとき・受け入れるとき
+| ファイル                              | 題                                                 | 節                                                                                                                                             |
+| ------------------------------------- | -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `docs/workflow/loopable.md`           | タスク運用: loopable の判定                        | `loopable` の判定（2026-09-15 決定）                                                                                                           |
+| `docs/workflow/reference-material.md` | タスク運用: 参考に示された画像・ディレクトリを残す | 参考に示された画像・ディレクトリを残す（2026-09-23 決定）                                                                                      |
+| `docs/workflow/task-writing.md`       | タスク運用: タスクを書く・受け入れる               | タスクを書くとき・受け入れるとき / `summary` の長さ                                                                                            |
+| `docs/workflow/worktree-and-ship.md`  | タスク運用: 作業ツリーと送り出し                   | 作業ツリーを並行させるとき / タスクに紐付かない作業を main へ送る / コミット前のファイルの大きさの検査 / 実機の Claude Code を動かす計測のとき |
 
-本文は `docs/workflow/task-writing.md`「タスクを書くとき・受け入れるとき」。
-
-## 参考に示された画像・ディレクトリを残す（2026-09-23 決定）
-
-本文は `docs/workflow/reference-material.md`「参考に示された画像・ディレクトリを残す」。
-
-## `loopable` の判定（2026-09-15 決定）
-
-本文は `docs/workflow/loopable.md`「`loopable` の判定」。
-
-### 起こすときの作法
-
-本文は `docs/workflow/loopable.md`「起こすときの作法」。
-
-## `summary` の長さ
-
-本文は `docs/workflow/task-writing.md`「`summary` の長さ」。
-
-## 作業ツリーを並行させるとき
-
-本文は `docs/workflow/worktree-and-ship.md`「作業ツリーを並行させるとき」。
+## シェルでの書き込みの拒否
 
 シェルでの書き込みの拒否は tsukumo の hook（`scripts/hook/bash-guard.ts` の `findWorktreeShellWriteDenial`。記録の hook 名は `deny-sed-in-place`）が持ち主で、`.tw/config.toml` の `shell_write_guard = "project"` により tw は `SHELL_WRITE` を見ない。
-
-## タスクに紐付かない作業を main へ送る
-
-本文は `docs/workflow/worktree-and-ship.md`「タスクに紐付かない作業を main へ送る」。
-
-## コミット前のファイルの大きさの検査
-
-本文は `docs/workflow/worktree-and-ship.md`「コミット前のファイルの大きさの検査」。
-
-## 実機の Claude Code を動かす計測のとき
-
-本文は `docs/workflow/worktree-and-ship.md`「実機の Claude Code を動かす計測のとき」。
 
 ## 関連
 

@@ -121,13 +121,6 @@ node scripts/runtime/stop.ts   # 動いている tsukumo の一覧（--port <n> 
 **グローバルなツールの導入**。`~/.claude/settings.json` の hooks と statusLine は orca が専有して
 いるので、**足すときは既存エントリを壊さず追記する。**
 
-## ドキュメントを編集するときの罠
-
-**`docs/` の各ファイルは冒頭の「節の索引」の表に見出し名がそのまま入っている**ので、見出し名で
-探すと索引の行に先に当たる。位置は行頭から特定し（`\n### 4.7 `）、編集の前後で
-`grep -c '^#\{2,3\} ' <ファイル>` の数が合うかを見る。節を削る・移す・改名するときは、引かれている
-句が消えていないかを `node scripts/document/find-stray-reference.ts` で見る（`pnpm run check` でも落ちる）。
-
 ## 索引
 
 | こういうとき                                                                                    | 読むもの                                                                      |

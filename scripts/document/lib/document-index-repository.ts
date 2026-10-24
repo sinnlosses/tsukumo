@@ -1,55 +1,74 @@
-// ADR・設計判断の表・用語集の索引のファイルを読み書きし、`document-index` の関数に渡す。
+// ADR・親の文書・子の文書の節の索引を読み書きし、`document-index` の関数に渡す。
 
 import { readdirSync, readFileSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
 import {
+  CHILD_LIST_COLUMNS,
+  childListRows,
+  type ChildFile,
   DECISION_TABLE_HEADING,
   decisionRows,
-  GLOSSARY_FILE_INDEX_HEADING,
-  GLOSSARY_INDEX_HEADING,
-  glossaryFileRows,
-  glossaryIndexRows,
+  readChildIndex,
   readTableRows,
+  replaceTable,
   replaceTableRows,
+  rewriteChildIndex,
+  SECTION_INDEX_HEADING,
   type TableRow,
   type TitledFile,
 } from "../document-index.ts"
 
 const ADR_DIRECTORY = "docs/architecture/adr"
 const ARCHITECTURE_PATH = "docs/architecture.md"
-const GLOSSARY_PATH = "docs/glossary.md"
-const GLOSSARY_DIRECTORY = "docs/glossary"
+const DOCUMENT_DIRECTORY = "docs"
+
+// 節の索引を照らさない文書（据え置きの記録と、索引を作らない調査の記録）。
+const UNINDEXED_PREFIXES = ["docs/history/", "docs/research/"] as const satisfies readonly string[]
+
+// 子のディレクトリ（`.md` を除いた同じ名前）の直下のファイルを、節の索引に一覧する親。
+const PARENT_PATHS = [
+  "docs/architecture.md",
+  "docs/architecture/browser.md",
+  "docs/architecture/build.md",
+  "docs/architecture/screen-design.md",
+  "docs/architecture/testing.md",
+  "docs/architecture/workflow-contract.md",
+  "docs/coding-standards.md",
+  "docs/glossary.md",
+  "docs/requirements.md",
+  "docs/workflow.md",
+] as const satisfies readonly string[]
 
 /** 表のあるべき行（題と見出しから組み立てたもの）と、いま書かれている行。 */
 export type IndexState = {
+  readonly kind: "decision" | "child-list" | "section-index"
   readonly name: string
   readonly expected: TableRow[]
   readonly actual: TableRow[]
 }
 
-/** `root` 以下の表（設計判断・用語集とその子のファイルの索引）について、あるべき行といま書かれている行を返す。 */
+/** `root` 以下の表（設計判断・親の子の一覧・子の文書の節の索引）について、あるべき行といま書かれている行を返す。 */
 export function readIndexStates(root: string): IndexState[] {
   const architecture = readFileSync(join(root, ARCHITECTURE_PATH), "utf8")
-  const glossary = readFileSync(join(root, GLOSSARY_PATH), "utf8")
   return [
     {
+      kind: "decision",
       name: `${ARCHITECTURE_PATH} ${DECISION_TABLE_HEADING}`,
       expected: decisionRows(readAdrs(root)),
       actual: readTableRows(architecture, DECISION_TABLE_HEADING),
     },
-    {
-      name: `${GLOSSARY_PATH} ${GLOSSARY_INDEX_HEADING}`,
-      expected: glossaryFileRows(readGlossaryFiles(root)),
-      actual: readTableRows(glossary, GLOSSARY_INDEX_HEADING),
-    },
-    ...listGlossaryFiles(root).map((fileName) => {
-      const text = readFileSync(join(root, GLOSSARY_DIRECTORY, fileName), "utf8")
-      return {
-        name: `${GLOSSARY_DIRECTORY}/${fileName} ${GLOSSARY_FILE_INDEX_HEADING}`,
-        expected: glossaryIndexRows(text),
-        actual: readTableRows(text, GLOSSARY_FILE_INDEX_HEADING),
-      }
+    ...PARENT_PATHS.map((parentPath) => ({
+      kind: "child-list" as const,
+      name: `${parentPath} ${SECTION_INDEX_HEADING}`,
+      expected: childListRows(childDirectoryOf(parentPath), readChildFiles(root, parentPath)),
+      actual: readTableRows(readFileSync(join(root, parentPath), "utf8"), SECTION_INDEX_HEADING),
+    })),
+    ...listChildDocuments(root).flatMap((path) => {
+      const index = readChildIndex(readFileSync(join(root, path), "utf8"))
+      return index === undefined
+        ? []
+        : [{ kind: "section-index" as const, name: `${path} 節の索引`, ...index }]
     }),
   ]
 }
@@ -57,8 +76,6 @@ export function readIndexStates(root: string): IndexState[] {
 /** `root` 以下の表を、題と見出しから組み立てた行に書き直す。 */
 export function writeIndexes(root: string): void {
   const architecturePath = join(root, ARCHITECTURE_PATH)
-  const glossaryPath = join(root, GLOSSARY_PATH)
-  const glossary = readFileSync(glossaryPath, "utf8")
   writeFileSync(
     architecturePath,
     replaceTableRows(
@@ -67,48 +84,68 @@ export function writeIndexes(root: string): void {
       decisionRows(readAdrs(root)),
     ),
   )
-  writeFileSync(
-    glossaryPath,
-    replaceTableRows(glossary, GLOSSARY_INDEX_HEADING, glossaryFileRows(readGlossaryFiles(root))),
-  )
-  for (const fileName of listGlossaryFiles(root)) {
-    const path = join(root, GLOSSARY_DIRECTORY, fileName)
-    const text = readFileSync(path, "utf8")
+  for (const parentPath of PARENT_PATHS) {
+    const path = join(root, parentPath)
     writeFileSync(
       path,
-      replaceTableRows(text, GLOSSARY_FILE_INDEX_HEADING, glossaryIndexRows(text)),
+      replaceTable(
+        readFileSync(path, "utf8"),
+        SECTION_INDEX_HEADING,
+        CHILD_LIST_COLUMNS,
+        childListRows(childDirectoryOf(parentPath), readChildFiles(root, parentPath)),
+      ),
     )
+  }
+  for (const childPath of listChildDocuments(root)) {
+    const path = join(root, childPath)
+    const text = readFileSync(path, "utf8")
+    const rewritten = rewriteChildIndex(text)
+    if (rewritten !== text) {
+      writeFileSync(path, rewritten)
+    }
   }
 }
 
-/** 用語集の子のファイルの名前（昇順）。 */
-function listGlossaryFiles(root: string): string[] {
-  return readdirSync(join(root, GLOSSARY_DIRECTORY))
+/** 節の索引を照らす子の文書（`docs/` 以下の `.md` から、親・記録・調査の記録を除いたもの。昇順）。 */
+function listChildDocuments(root: string): string[] {
+  const parents = new Set<string>(PARENT_PATHS)
+  return readdirSync(join(root, DOCUMENT_DIRECTORY), { recursive: true, encoding: "utf8" })
+    .map((relativePath) => `${DOCUMENT_DIRECTORY}/${relativePath}`)
+    .filter(
+      (path) =>
+        path.endsWith(".md") &&
+        !parents.has(path) &&
+        !UNINDEXED_PREFIXES.some((prefix) => path.startsWith(prefix)),
+    )
+    .toSorted()
+}
+
+function childDirectoryOf(parentPath: string): string {
+  return parentPath.slice(0, -".md".length)
+}
+
+function readChildFiles(root: string, parentPath: string): ChildFile[] {
+  const directory = childDirectoryOf(parentPath)
+  return listMarkdownFiles(root, directory).map((fileName) => ({
+    fileName,
+    text: readFileSync(join(root, directory, fileName), "utf8"),
+  }))
+}
+
+/** `directory` の直下の `.md` の名前（昇順）。 */
+function listMarkdownFiles(root: string, directory: string): string[] {
+  return readdirSync(join(root, directory))
     .filter((fileName) => fileName.endsWith(".md"))
     .toSorted()
 }
 
 function readAdrs(root: string): TitledFile[] {
-  return readTitledFiles(
-    root,
-    ADR_DIRECTORY,
-    readdirSync(join(root, ADR_DIRECTORY)).filter((fileName) => /^\d{4}-.*\.md$/.test(fileName)),
-  )
-}
-
-function readGlossaryFiles(root: string): TitledFile[] {
-  return readTitledFiles(root, GLOSSARY_DIRECTORY, listGlossaryFiles(root))
-}
-
-function readTitledFiles(
-  root: string,
-  directory: string,
-  fileNames: readonly string[],
-): TitledFile[] {
-  return fileNames.map((fileName) => ({
-    fileName,
-    title: (readFileSync(join(root, directory, fileName), "utf8").split("\n")[0] ?? "")
-      .replace(/^# /, "")
-      .trim(),
-  }))
+  return readdirSync(join(root, ADR_DIRECTORY))
+    .filter((fileName) => /^\d{4}-.*\.md$/.test(fileName))
+    .map((fileName) => ({
+      fileName,
+      title: (readFileSync(join(root, ADR_DIRECTORY, fileName), "utf8").split("\n")[0] ?? "")
+        .replace(/^# /, "")
+        .trim(),
+    }))
 }
