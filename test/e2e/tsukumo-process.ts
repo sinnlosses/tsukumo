@@ -1,7 +1,7 @@
 // E2E が起こす tsukumo の子プロセスと、その一時のディレクトリ。
 
 import type { ChildProcess } from "node:child_process"
-import { mkdtempSync, realpathSync } from "node:fs"
+import { mkdirSync, mkdtempSync, realpathSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import path from "node:path"
 
@@ -19,6 +19,20 @@ export type TempDirectory = {
 export function makeTempDirectory(prefix: string): TempDirectory {
   const given = mkdtempSync(path.join(tmpdir(), prefix))
   return { given, real: realpathSync(given) }
+}
+
+export type CwdFile = {
+  readonly path: string
+  readonly content: Buffer | string
+}
+
+/** cwd からの相対パスで、親のディレクトリごとファイルを書く。 */
+export function writeCwdFiles(cwd: string, files: readonly CwdFile[]): void {
+  for (const file of files) {
+    const target = path.join(cwd, file.path)
+    mkdirSync(path.dirname(target), { recursive: true })
+    writeFileSync(target, file.content)
+  }
 }
 
 /**

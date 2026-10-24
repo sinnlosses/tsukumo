@@ -45,7 +45,13 @@ import {
   recordResponses,
 } from "./message-record.ts"
 import { assertNextStepGap, waitForQuietPoint } from "./scene-schedule.ts"
-import { makeTempDirectory, spawnTsukumo, stopTsukumo } from "./tsukumo-process.ts"
+import {
+  type CwdFile,
+  makeTempDirectory,
+  spawnTsukumo,
+  stopTsukumo,
+  writeCwdFiles,
+} from "./tsukumo-process.ts"
 
 /** 起こした tsukumo が URL を出すまで待つ上限（ミリ秒）。 */
 const LAUNCH_TIMEOUT_MS = 15_000
@@ -80,6 +86,8 @@ export type ScenarioOptions = {
   readonly viewport: keyof typeof VIEWPORTS
   /** `*.dom.json` に写す部分木の名前の並び（`docs/architecture/testing.md`「E2E の期待値の範囲」）。 */
   readonly domRoots: readonly DomRootName[]
+  /** 起こす前に cwd へ置くファイル（cwd からの相対パスと中身の並び）。手元の画像など、場面が指すファイル。 */
+  readonly cwdFiles?: readonly CwdFile[]
 }
 
 /** サイドバーの使用量の目盛り（コンテキスト・プラン使用量）の口の `title`。 */
@@ -100,6 +108,7 @@ export type ScenarioRoom = {
    * 起こした tsukumo の cwd（`realpath` を通した絶対パス）。cwd の課題のファイルを読む
    * タスクの一覧のように、疑似セッションの場面ではなく cwd の中身そのものが元になるシナリオ
    * だけがここへ書き足す（`FAKE_BEADS_ISSUES_PATH`・`git init` など）。書き足すのは `open` が部屋を渡したあとにする。
+   * 場面が指す画像のように起こす前に要るものは、書き足さず `ScenarioOptions.cwdFiles` で渡す。
    * 起こす前や繋がる前に用意すると、最初の見回りが `hello` に畳まれてしまい、
    * 変化を捕まえる `waitForEvent` の的が無くなる（docs/architecture/testing.md「E2E の走らせ方」）。
    */
@@ -212,6 +221,7 @@ async function openRoom(
     return Promise.resolve()
   })
   writeBeadsConfig(userHome.real)
+  writeCwdFiles(cwd.real, options.cwdFiles ?? [])
 
   const child = spawnTsukumo(options.scene, home.real, userHome.real, cwd.real)
   addCleanup(() => stopTsukumo(child))

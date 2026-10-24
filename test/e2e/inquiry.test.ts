@@ -1,6 +1,3 @@
-import { mkdirSync, writeFileSync } from "node:fs"
-import { join } from "node:path"
-
 import type { Locator, Page } from "playwright-core"
 import { describe, expect, it } from "vitest"
 
@@ -159,11 +156,12 @@ describe("お伺い", () => {
       scene: "question-preview-image",
       viewport: "wide",
       domRoots: ["main"],
+      // preview が指す画像（置いていないほうの画像は置かない）。
+      cwdFiles: [
+        { path: "report-image-fixture/after.png", content: fictionalPng(8, 4) },
+        { path: "report-image-fixture/tall.png", content: fictionalPng(4, 40) },
+      ],
     })
-    // 場面の質問より先に、preview が指す画像を cwd に置く（置いていないほうの画像は置かない）。
-    mkdirSync(join(room.cwd, "report-image-fixture"))
-    writeFileSync(join(room.cwd, "report-image-fixture", "after.png"), fictionalPng(8, 4))
-    writeFileSync(join(room.cwd, "report-image-fixture", "tall.png"), fictionalPng(4, 40))
     const inquiry = inquiryOf(room.page)
 
     await room.waitForPending("fake-ask-preview-image")
