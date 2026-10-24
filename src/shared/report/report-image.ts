@@ -18,6 +18,16 @@ export type ImageRegion = {
   readonly height: number
 }
 
+/** サーバが棚に置いた画像の、書かれたままのパスと画素の幅・高さ。 */
+export type ReportImageSize = {
+  readonly path: string
+  readonly width: number
+  readonly height: number
+}
+
+/** 許可リストが `img` の `width`・`height` に通す値。 */
+export const REPORT_IMAGE_SIZE_PATTERN = /^[1-9]\d{0,5}$/
+
 /**
  * `img` が枠を運ぶ属性の名前（hast のプロパティ名は `dataChangeRegion`）。
  * 会話の画面の4領域が名乗る `data-region` とは別の名前にする。

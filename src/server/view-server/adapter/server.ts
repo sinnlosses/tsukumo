@@ -242,22 +242,28 @@ const ROUTES = [
     match: { kind: "exact", path: uiScriptPath() },
     method: "GET",
     requiresToken: false,
-    handle: (_request, response, _path, { options }) =>
-      writeBundledAsset(response, options.ui(), "text/javascript", (bundle) => bundle.uiScript),
+    handle: (request, response, _path, { options }) =>
+      writeBundledAsset(
+        request,
+        response,
+        options.ui(),
+        "text/javascript",
+        (bundle) => bundle.uiScript,
+      ),
   },
   {
     match: { kind: "exact", path: styleSheetPath() },
     method: "GET",
     requiresToken: false,
-    handle: (_request, response, _path, { options }) =>
-      writeBundledAsset(response, options.ui(), "text/css", (bundle) => bundle.styleSheet),
+    handle: (request, response, _path, { options }) =>
+      writeBundledAsset(request, response, options.ui(), "text/css", (bundle) => bundle.styleSheet),
   },
   {
     match: { kind: "prefix", prefix: ASSET_PATH_PREFIX },
     method: "GET",
     requiresToken: false,
-    handle: (_request, response, path, { options }) =>
-      writeBundledAsset(response, options.ui(), "text/javascript", (bundle) =>
+    handle: (request, response, path, { options }) =>
+      writeBundledAsset(request, response, options.ui(), "text/javascript", (bundle) =>
         bundle.chunks.get(path.slice(ASSET_PATH_PREFIX.length)),
       ),
   },

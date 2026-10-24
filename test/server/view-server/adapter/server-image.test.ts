@@ -113,7 +113,7 @@ describe("startViewServer", () => {
 
       expect(response.status).toBe(200)
       expect(response.headers.get("content-type")).toBe("image/png")
-      expect(response.headers.get("cache-control")).toBe("no-store")
+      expect(response.headers.get("cache-control")).toBe("private, max-age=3600")
       expect(new Uint8Array(await response.arrayBuffer())).toEqual(SHELVED_BYTES)
     })
 

@@ -18,6 +18,7 @@
 // 型検査はここではしない（`vite build` はトランスパイルだけで型を見ない）。型は `pnpm run check` の `tsc --noEmit` が見る。
 
 import { execFile } from "node:child_process"
+import { createHash } from "node:crypto"
 import { readdir, readFile, writeFile } from "node:fs/promises"
 import { join } from "node:path"
 import { stripVTControlCharacters } from "node:util"
@@ -81,6 +82,20 @@ export type UiBundle = {
   readonly styleSheet: string
   /** 入口から `import()` で分けたチャンク（出し先のファイル名 → 中身）。配ってよい名前はこの鍵だけ。 */
   readonly chunks: ReadonlyMap<string, string>
+  /** 対の中身から決めた ETag（引用符つき）。どれか1本でも変われば変わる。 */
+  readonly etag: string
+}
+
+export function bundleEtag(
+  uiScript: string,
+  styleSheet: string,
+  chunks: ReadonlyMap<string, string>,
+): string {
+  const hash = createHash("sha1")
+  for (const part of [uiScript, styleSheet, ...[...chunks].flat()]) {
+    hash.update(part).update("\0")
+  }
+  return `"${hash.digest("hex")}"`
 }
 
 /**
@@ -231,7 +246,7 @@ async function readPair(dir: string): Promise<UiBundle | undefined> {
     return undefined
   }
 
-  return { uiScript, styleSheet, chunks }
+  return { uiScript, styleSheet, chunks, etag: bundleEtag(uiScript, styleSheet, chunks) }
 }
 
 /** 置き場の直下にある、入口以外の `.js`（名前 → 中身）。1つでも読めなければ `undefined`。 */

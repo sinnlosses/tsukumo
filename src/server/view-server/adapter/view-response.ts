@@ -1,6 +1,6 @@
 // ビューサーバが静的に書き出す応答（ページ・同梱物・vendor・素材・画像・404）。
 
-import type { ServerResponse } from "node:http"
+import type { IncomingMessage, ServerResponse } from "node:http"
 
 import { readCharacterAssetPath } from "../../../shared/character-pack/character-asset.ts"
 import { readItemAssetPath } from "../../../shared/item/item-asset.ts"
@@ -29,6 +29,9 @@ export const ASSET_PATH_PREFIX = "/assets/"
 const UI_SCRIPT_NAME = "ui.js"
 const STYLE_SHEET_NAME = "style.css"
 
+/** 入口が後から `import()` で取りに行くチャンクのうち、ページを開いた直後に先読みするもの。 */
+const PRELOADED_CHUNK_NAMES: readonly string[] = ["markdown-renderer.js", "lib.js"]
+
 export function uiScriptPath(): string {
   return `${ASSET_PATH_PREFIX}${UI_SCRIPT_NAME}`
 }
@@ -44,7 +47,7 @@ export function writeLayoutPage(url: string, response: ServerResponse, ui: ViewU
   if (ui.kind === "bundle") {
     writeHtml(
       response,
-      buildLayoutPage([styleSheetPath()], uiScriptPath()),
+      buildLayoutPage([styleSheetPath()], uiScriptPath(), PRELOADED_CHUNK_NAMES),
       PAGE_CONTENT_SECURITY_POLICY.bundle,
     )
     return
@@ -64,20 +67,29 @@ export function writeLayoutPage(url: string, response: ServerResponse, ui: ViewU
  * `dev` のときは束を持っていないので 404。`pick` が `undefined` を返したとき（束に無い名前）も 404。
  */
 export function writeBundledAsset(
+  request: IncomingMessage,
   response: ServerResponse,
   ui: ViewUi,
   contentType: string,
   pick: (bundle: UiBundle) => string | undefined,
 ): void {
   const content = ui.kind === "bundle" ? pick(ui.bundle) : undefined
-  if (content === undefined) {
+  if (ui.kind !== "bundle" || content === undefined) {
     writeNotFound(response)
+    return
+  }
+
+  const { etag } = ui.bundle
+  if (request.headers["if-none-match"] === etag) {
+    response.writeHead(304, { etag, "cache-control": "no-cache" })
+    response.end()
     return
   }
 
   response.writeHead(200, {
     "content-type": `${contentType}; charset=utf-8`,
-    "cache-control": "no-store",
+    "cache-control": "no-cache",
+    etag,
   })
   response.end(content)
 }
@@ -190,6 +202,7 @@ export function writePromptImage(
 /**
  * レポートの `image` の塊の画像を1枚配る。起動トークンの照合は `respond` が済ませている（画面に会話の中身が写る）。
  * 経路は棚を引く鍵で、ここではファイルに触らない。形が崩れている・棚に無いときは 404。
+ * 同じ経路の中身は変わらない前提で、ブラウザに1時間持たせる。
  */
 export function writeReportImage(
   response: ServerResponse,
@@ -204,7 +217,10 @@ export function writeReportImage(
     return
   }
 
-  response.writeHead(200, { "content-type": image.mediaType, "cache-control": "no-store" })
+  response.writeHead(200, {
+    "content-type": image.mediaType,
+    "cache-control": "private, max-age=3600",
+  })
   response.end(image.content)
 }
 
@@ -238,10 +254,19 @@ const CHARACTER_ASSET_CONTENT_SECURITY_POLICY =
  * ページ本体。中身は `<div id="app">` だけ。
  * メインビュー・キャラビュー・サイドバー・入力欄のすべてが React の部品で、ブラウザ側の入口が1つの root として mount する。
  */
-function buildLayoutPage(ownStyleSheets: readonly string[], script: string): string {
-  const styleSheetLinks = [vendorAssetPath("highlight-theme.min.css"), ...ownStyleSheets]
-    .map((href) => `<link rel="stylesheet" href="${href}">`)
-    .join("\n")
+function buildLayoutPage(
+  ownStyleSheets: readonly string[],
+  script: string,
+  preloadedChunkNames: readonly string[] = [],
+): string {
+  const styleSheetLinks = [
+    ...[vendorAssetPath("highlight-theme.min.css"), ...ownStyleSheets].map(
+      (href) => `<link rel="stylesheet" href="${href}">`,
+    ),
+    ...preloadedChunkNames.map(
+      (name) => `<link rel="modulepreload" href="${ASSET_PATH_PREFIX}${name}">`,
+    ),
+  ].join("\n")
 
   return `<!doctype html>
 <html lang="ja">

@@ -2,15 +2,20 @@
 
 import type { ReportBlock } from "./report-block.ts"
 import { captionedMarkdown } from "./report-caption.ts"
-import { reportImagePath } from "./report-image.ts"
+import { reportImagePath, type ReportImageSize } from "./report-image.ts"
 import { htmlAttribute, htmlInlineWithCode } from "./report-inline-markdown.ts"
 
 /**
  * `image` の塊の画像をどこから読むか。
- * `shelved` は描いた `report` の呼び出しの id で棚を引く。`none` は棚に置いていない本文で、画像は「出せない」の札になる。
+ * `shelved` は描いた `report` の呼び出しの id で棚を引く。`sizes` はサーバが棚に置いたときに測れた画像の寸法で、無いパスの画像は寸法を付けない。
+ * `none` は棚に置いていない本文で、画像は「出せない」の札になる。
  */
 export type ReportImageSource =
-  | { readonly kind: "shelved"; readonly toolUseId: string }
+  | {
+      readonly kind: "shelved"
+      readonly toolUseId: string
+      readonly sizes: readonly ReportImageSize[]
+    }
   | { readonly kind: "none" }
 
 /**
@@ -24,7 +29,7 @@ export function imageMarkdown(
 ): string {
   const caption = block.caption.trim()
   const alt = htmlAttribute(caption === "" ? "画面の画像" : caption)
-  const image = `<img${reportImageSrcAttribute(imageSource, block.path)} alt="${alt}">`
+  const image = `<img${reportImageAttributes(imageSource, block.path)} alt="${alt}">`
   const annotated = block.notes.length > 0
   return captionedMarkdown({
     kind: "figure",
@@ -38,11 +43,19 @@ export function imageMarkdown(
   })
 }
 
-/** `img` の `src` 属性（前の空白つき）。棚に置いていない本文では空にし、描く側が「出せない」の札にする。 */
-export function reportImageSrcAttribute(imageSource: ReportImageSource, path: string): string {
-  return imageSource.kind === "shelved"
-    ? ` src="${htmlAttribute(reportImagePath(imageSource.toolUseId, path))}"`
-    : ""
+/**
+ * `img` の `src` 属性と、寸法が分かれば `width`・`height` 属性（前の空白つき）。
+ * 棚に置いていない本文では空にし、描く側が「出せない」の札にする。
+ */
+export function reportImageAttributes(imageSource: ReportImageSource, path: string): string {
+  if (imageSource.kind === "none") {
+    return ""
+  }
+  const src = ` src="${htmlAttribute(reportImagePath(imageSource.toolUseId, path))}"`
+  const size = imageSource.sizes.find((candidate) => candidate.path === path)
+  return size === undefined
+    ? src
+    : `${src} width="${String(size.width)}" height="${String(size.height)}"`
 }
 
 function imageNoteListMarkdown(notes: readonly string[]): string {

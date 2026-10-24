@@ -13,7 +13,12 @@ import {
 const BUILD_INPUT_FINGERPRINT_FILE_NAME = "build-input-fingerprint.txt"
 
 /** 組み立て結果を変えうる、ソースの外の入力（vite の設定・依存・型の設定）。 */
-const BUILD_INPUT_FILES = ["vite.config.ts", "pnpm-lock.yaml", "tsconfig.json"] as const
+const BUILD_INPUT_FILES = [
+  "vite.config.ts",
+  "pnpm-lock.yaml",
+  "tsconfig.json",
+  "scripts/dev/lib/strip-css-comment.ts",
+] as const
 
 /** 成果物が読めて、ソースと入力ファイルの指紋がどちらも前回の組み立てと同じ（比べられないときは組み立て直す）。 */
 export async function isBuiltUiCurrent(builtDir: string, root: string): Promise<boolean> {

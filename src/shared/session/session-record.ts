@@ -5,6 +5,7 @@ import type { ReactionKind } from "../recommendation/reaction.ts"
 import type { RecordedReportFigure, ReportSection } from "../report/report-block.ts"
 import type { ReportChangeSummary } from "../report/report-change-summary.ts"
 import type { ReportCheck } from "../report/report-check.ts"
+import type { ReportImageSize } from "../report/report-image.ts"
 import type { ReportRetrospective } from "../report/report-retrospective.ts"
 import type { ReportTask } from "../report/report-task.ts"
 import type { RecordedPromptImage } from "../session-driver/prompt-image.ts"
@@ -124,6 +125,8 @@ export type SessionRecord =
       readonly waitingLine: ReportWaitingLine
       /** 変更の札。積んだときは `none` で、同じ `toolUseId` の `report-change-summary` が届いたら数に差し替わる。 */
       readonly changeSummary: ReportChangeSummary
+      /** サーバが棚に置いたときに測れた画像の寸法。続きから復元した記録では、棚に置き直したときに埋まる。 */
+      readonly imageSizes: readonly ReportImageSize[]
       /** 受け付けた時刻。最後の段の所要時間を閉じる端になる。 */
       readonly time: RecordTime
     }

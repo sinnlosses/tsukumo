@@ -89,6 +89,7 @@ export function reportRecord(conclusion = "架空の結論"): SessionRecord {
     task: { kind: "none" },
     waitingLine: { kind: "none" },
     changeSummary: { kind: "none" },
+    imageSizes: [],
     time: STAMPED,
   }
 }

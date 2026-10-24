@@ -17,12 +17,40 @@ describe("reportSectionsMarkdown", () => {
     }
 
     expect(
-      reportSectionsMarkdown([section([image])], { kind: "shelved", toolUseId: "toolu_fictional" }),
+      reportSectionsMarkdown([section([image])], {
+        kind: "shelved",
+        toolUseId: "toolu_fictional",
+        sizes: [],
+      }),
     ).toBe(
       figureCaptioned(
         `<img src="${reportImagePath("toolu_fictional", "架空/after.png")}" alt="架空の&lt;画面&gt;">`,
         "架空の&lt;画面&gt;",
       ),
+    )
+  })
+
+  it("image は棚の寸法があるパスにだけ width と height を付ける", () => {
+    const image = (path: string): ReportBlock => ({
+      kind: "image",
+      path,
+      caption: "架空の画面",
+      notes: [],
+      fold: "",
+      aside: "",
+    })
+
+    const markdown = reportSectionsMarkdown([section([image("架空/a.png"), image("架空/b.png")])], {
+      kind: "shelved",
+      toolUseId: "toolu_fictional",
+      sizes: [{ path: "架空/a.png", width: 320, height: 180 }],
+    })
+
+    expect(markdown).toContain(
+      `<img src="${reportImagePath("toolu_fictional", "架空/a.png")}" width="320" height="180" alt="架空の画面">`,
+    )
+    expect(markdown).toContain(
+      `<img src="${reportImagePath("toolu_fictional", "架空/b.png")}" alt="架空の画面">`,
     )
   })
 

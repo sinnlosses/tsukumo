@@ -3,5 +3,9 @@ import { reportSectionsMarkdown as reportSectionsMarkdownFrom } from "../../src/
 
 /** 描いた `report` の本文と同じく、画像を棚から引く本文に組む。 */
 export function reportSectionsMarkdown(sections: readonly ReportSection[]): string {
-  return reportSectionsMarkdownFrom(sections, { kind: "shelved", toolUseId: "fictional-report" })
+  return reportSectionsMarkdownFrom(sections, {
+    kind: "shelved",
+    toolUseId: "fictional-report",
+    sizes: [],
+  })
 }

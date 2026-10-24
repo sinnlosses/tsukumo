@@ -3,7 +3,7 @@
 import type { ReportBlock } from "./report-block.ts"
 import { captionedMarkdown } from "./report-caption.ts"
 import { svgHtml } from "./report-diagram-markdown.ts"
-import { reportImageSrcAttribute, type ReportImageSource } from "./report-image-markdown.ts"
+import { reportImageAttributes, type ReportImageSource } from "./report-image-markdown.ts"
 import { formatImageRegion, IMAGE_REGION_ATTRIBUTE } from "./report-image.ts"
 import {
   fencedMarkdown,
@@ -119,7 +119,7 @@ function beforeAfterContentMarkdown(
         content.region === undefined
           ? ""
           : ` ${IMAGE_REGION_ATTRIBUTE}="${formatImageRegion(content.region)}"`
-      return `<img${reportImageSrcAttribute(imageSource, content.path)} alt="${htmlAttribute(alt)}"${region}>`
+      return `<img${reportImageAttributes(imageSource, content.path)} alt="${htmlAttribute(alt)}"${region}>`
     }
     case "code":
       return fencedMarkdown(content.language, content.source)

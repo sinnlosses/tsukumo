@@ -337,6 +337,7 @@ function InquiryDetail(props: {
       : reportSectionsMarkdown([{ heading: "", shapeTag: "unspecified", blocks: option.figures }], {
           kind: "shelved",
           toolUseId: props.askId,
+          sizes: [],
         })
 
   return (
@@ -437,7 +438,7 @@ function InquiryCompare(props: {
         ],
       },
     ],
-    { kind: "shelved", toolUseId: props.askId },
+    { kind: "shelved", toolUseId: props.askId, sizes: [] },
   )
 
   return (

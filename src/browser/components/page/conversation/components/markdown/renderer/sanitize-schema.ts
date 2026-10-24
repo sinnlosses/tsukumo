@@ -13,6 +13,7 @@ import type { Options as Schema } from "rehype-sanitize"
 
 import {
   IMAGE_REGION_PATTERN,
+  REPORT_IMAGE_SIZE_PATTERN,
   REPORT_IMAGE_SRC_PATTERN,
 } from "../../../../../../../shared/report/report-image.ts"
 import {
@@ -230,7 +231,13 @@ export const REPORT_SANITIZE_SCHEMA: Schema = {
     line: [["dataTone", /^[a-e]$/]],
     // `rect` の `sub`（題の下の説明）の `text` が持つ目印。
     text: [["dataSub", /^$/]],
-    img: [["src", REPORT_IMAGE_SRC_PATTERN], "alt", ["dataChangeRegion", IMAGE_REGION_PATTERN]],
+    img: [
+      ["src", REPORT_IMAGE_SRC_PATTERN],
+      "alt",
+      ["dataChangeRegion", IMAGE_REGION_PATTERN],
+      ["width", REPORT_IMAGE_SIZE_PATTERN],
+      ["height", REPORT_IMAGE_SIZE_PATTERN],
+    ],
     "*": [
       ...GLOBAL_ATTRIBUTES,
       // 値の検査は `rehypeStyleAllowlist`（サニタイザの直前）が済ませる。

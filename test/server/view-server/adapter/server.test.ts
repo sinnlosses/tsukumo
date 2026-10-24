@@ -12,6 +12,7 @@ import {
   startView,
   TEST_CHUNK,
   TEST_CHUNK_NAME,
+  TEST_ETAG,
   TEST_STYLE_SHEET,
   TEST_UI_SCRIPT,
   TOKEN,
@@ -63,6 +64,31 @@ describe("startViewServer", () => {
     expect(response.status).toBe(200)
     expect(response.headers.get("content-type")).toContain("text/javascript")
     expect(await response.text()).toBe(TEST_UI_SCRIPT)
+  })
+
+  it("/ の head に markdown-renderer.js と lib.js の modulepreload がある", async () => {
+    const server = await startView()
+
+    const body = await (await fetch(server.layoutUrl)).text()
+
+    expect(body).toContain('<link rel="modulepreload" href="/assets/markdown-renderer.js">')
+    expect(body).toContain('<link rel="modulepreload" href="/assets/lib.js">')
+  })
+
+  it("成果物は no-cache と ETag で配り、同じ ETag の If-None-Match には 304、違えば 200 を返す", async () => {
+    const server = await startView()
+    const url = `${viewOrigin(server)}/assets/ui.js`
+
+    const first = await fetch(url)
+    const etag = first.headers.get("etag") ?? ""
+    const same = await fetch(url, { headers: { "if-none-match": etag } })
+    const other = await fetch(url, { headers: { "if-none-match": '"other"' } })
+
+    expect(first.headers.get("cache-control")).toBe("no-cache")
+    expect(etag).toBe(TEST_ETAG)
+    expect(same.status).toBe(304)
+    expect(await same.text()).toBe("")
+    expect(other.status).toBe(200)
   })
 
   it("/assets/style.css が、起動時に組み立てた CSS を返す", async () => {

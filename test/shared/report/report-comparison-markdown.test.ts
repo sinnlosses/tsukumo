@@ -52,6 +52,7 @@ describe("reportSectionsMarkdown", () => {
       reportSectionsMarkdown([section([beforeAfter])], {
         kind: "shelved",
         toolUseId: "toolu_fictional",
+        sizes: [],
       }),
     ).toBe(
       fencedFigureCaptioned(

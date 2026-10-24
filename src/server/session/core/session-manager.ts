@@ -15,7 +15,6 @@ import {
 } from "../../../shared/character-pack/character.ts"
 import { swallowedFailureFootprint } from "../../../shared/diagnostic/swallowed-failure.ts"
 import { FRAME_ERROR_REASON, PROTOCOL_VERSION, type ServerFrame } from "../../../shared/frame.ts"
-import { sectionsWithFigure } from "../../../shared/report/report-block.ts"
 import { applyRestoredEvents } from "../../../shared/session/restored-event.ts"
 import type { RestoredEvent, SessionEvent } from "../../../shared/session/session-event.ts"
 import { applySessionEvent } from "../../../shared/session/session-fold.ts"
@@ -30,18 +29,14 @@ import {
   createExperienceMetricRecorder,
   splitEntry,
 } from "../../experience-metric/core/experience-metric.ts"
-import { questionImagePaths } from "../../report/core/question-image-path.ts"
-import {
-  type ReadReportImagePath,
-  releasedImageToolUseIds,
-  reportImagePaths,
-} from "../../report/core/report-image-shelf.ts"
+import { releasedImageToolUseIds } from "../../report/core/report-image-shelf.ts"
 import { releasedPromptImageIds } from "../../session-driver/core/prompt-image-shelf.ts"
 import type { SessionDriver } from "../../session-driver/core/session-driver.ts"
 import { createTokenUsageRecorder } from "../../token-usage/core/token-usage.ts"
 import type { CommandSession, ModeSessions } from "./command-session.ts"
 import { noteConsolidationOutcome } from "./consolidation-footprint.ts"
 import { createEventBatch } from "./event-batch.ts"
+import { shelveEventImages } from "./event-image-shelf.ts"
 import { createReportChangeCounter } from "./report-change-count.ts"
 import { shelveRestoredReportImages } from "./restored-report-image.ts"
 import { createDriverRead } from "./session-driver-read.ts"
@@ -110,35 +105,18 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
     state = next
   }
 
-  const readReportImageAnyAge: ReadReportImagePath = (path) =>
-    options.readReportImage(path, Number.POSITIVE_INFINITY)
-
   /**
    * 駆動から届いたイベント1件を畳んで、それを生んだ代の勘定に積む。
    * 見た目の編集で起こした `character-changed` もここを通る（サーバ側の状態とブラウザへ配る内容を1本にする）。
    */
-  const receive = (tally: GenerationTally, event: SessionEvent): void => {
-    if (closed || tally.confirmedSettings.isRepeat(event, state)) {
+  const receive = (tally: GenerationTally, driven: SessionEvent): void => {
+    if (closed || tally.confirmedSettings.isRepeat(driven, state)) {
       return
     }
-    tally.confirmedSettings.note(event)
+    tally.confirmedSettings.note(driven)
     const at = options.now()
     // 画像はブラウザがこのレポートや質問を描く前に棚に無いといけないので、束に積む前に置く。
-    if (event.kind === "report") {
-      options.reportImageShelf.shelve(
-        event.toolUseId,
-        reportImagePaths(sectionsWithFigure(event.figure, event.sections)),
-        readReportImageAnyAge,
-      )
-    }
-    if (event.kind === "pending-changed") {
-      const known = new Set(state.pending.map((ask) => ask.id))
-      for (const ask of event.pending) {
-        if (ask.kind === "question" && !known.has(ask.id)) {
-          options.reportImageShelf.shelve(ask.id, questionImagePaths(ask), readReportImageAnyAge)
-        }
-      }
-    }
+    const event = shelveEventImages(options, state, driven)
     replaceState(applySessionEvent(state, event, at))
     tally.waitingLineAlarm.set(waitingLineDueAt(state))
     if (event.kind !== "token-usage") {
@@ -265,7 +243,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       const restoredAt = options.now()
       replaceState(applyRestoredEvents(state, events, restoredAt))
       tally.waitingLineAlarm.set(waitingLineDueAt(state))
-      shelveRestoredReportImages(options, state, events, restoredAt)
+      replaceState(shelveRestoredReportImages(options, state, events, restoredAt))
       if (!held) {
         tally.batch.discard()
         publish(helloFrame(), subscribers)

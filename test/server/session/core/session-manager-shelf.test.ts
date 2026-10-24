@@ -117,6 +117,15 @@ describe("レポートの画像の棚", () => {
     content: new Uint8Array([1, 2, 3]),
   }
 
+  // PNG の印と、320x180 を書いた IHDR の頭だけの架空のバイト列。
+  const SIZED_IMAGE: ReportImage = {
+    mediaType: "image/png",
+    content: new Uint8Array([
+      0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13, 0x49, 0x48, 0x44, 0x52, 0, 0,
+      0x01, 0x40, 0, 0, 0, 0xb4,
+    ]),
+  }
+
   function imageReportEvent(toolUseId: string): SessionEvent {
     return reportEvent({
       toolUseId,
@@ -143,7 +152,7 @@ describe("レポートの画像の棚", () => {
   const DAY = 24 * 60 * 60 * 1000
 
   /** `modifiedAt` は読む先のファイルの更新時刻（ミリ秒）。上限より新しければ読めない扱いにする。 */
-  function startManagerWithReportImageShelf(modifiedAt = 0) {
+  function startManagerWithReportImageShelf(modifiedAt = 0, image = FICTIONAL_IMAGE) {
     const stub = createStubDriver()
     const shelf = createReportImageShelf()
     const readPaths: string[] = []
@@ -152,7 +161,7 @@ describe("レポートの画像の棚", () => {
       reportImageShelf: shelf,
       readReportImage: (path, notModifiedAfter) => {
         readPaths.push(path)
-        return modifiedAt > notModifiedAfter ? undefined : FICTIONAL_IMAGE
+        return modifiedAt > notModifiedAfter ? undefined : image
       },
       launchSession: (onEvent, onRestoredEvents) => {
         stub.attach(onEvent)
@@ -237,6 +246,44 @@ describe("レポートの画像の棚", () => {
     await waitForBatch()
 
     expect(shelf.find("toolu_figure", "fictional/figure.png")).toEqual(FICTIONAL_IMAGE)
+  })
+
+  it("棚に置いたときに測れた寸法を、配る report と記録に載せる", async () => {
+    const { manager, stub } = startManagerWithReportImageShelf(0, SIZED_IMAGE)
+    await waitForBatch()
+    const frames: ServerFrame[] = []
+    manager.subscribe((frame) => frames.push(frame))
+
+    stub.emit(imageReportEvent("toolu_live"))
+    await waitForBatch()
+
+    const sizes = [{ path: "fictional/after.png", width: 320, height: 180 }]
+    const delivered = frames.flatMap((frame) =>
+      frame.type === "events" ? frame.events.map(({ event }) => event) : [],
+    )
+    expect(delivered).toContainEqual(expect.objectContaining({ kind: "report", imageSizes: sizes }))
+    expect(manager.commandSession.state().records.at(-1)).toMatchObject({
+      kind: "report",
+      imageSizes: sizes,
+    })
+  })
+
+  it("復元した report の記録にも、棚に置き直したときに測れた寸法を載せる", async () => {
+    const { manager, stub } = startManagerWithReportImageShelf(0, SIZED_IMAGE)
+    await waitForBatch()
+
+    stub.emitRestored(
+      knownRestored(
+        [{ kind: "request", text: "架空の依頼", images: [] }, imageReportEvent("toolu_restored")],
+        NOW - 1,
+      ),
+    )
+    await waitForBatch()
+
+    expect(manager.commandSession.state().records.at(-1)).toMatchObject({
+      kind: "report",
+      imageSizes: [{ path: "fictional/after.png", width: 320, height: 180 }],
+    })
   })
 
   it("起こし直して記録からレポートが消えたら、その画像を棚から捨てる", async () => {

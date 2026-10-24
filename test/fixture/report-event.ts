@@ -33,6 +33,7 @@ export function reportEvent(
     title: undefined,
     sessionSummary: undefined,
     sessionRemaining: { kind: "unrecorded" },
+    imageSizes: [],
     ...overrides,
   }
 }

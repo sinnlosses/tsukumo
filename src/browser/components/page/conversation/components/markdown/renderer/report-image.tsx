@@ -264,6 +264,10 @@ export function ReportImage(props: ReportImageProps): ReactElement {
     <img
       src={src}
       alt={alt}
+      width={props.width}
+      height={props.height}
+      loading="lazy"
+      decoding="async"
       ref={(element) => {
         imageRef.current = element
         if (element !== null) {

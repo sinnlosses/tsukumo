@@ -25,7 +25,7 @@ import { closeNetServer, listenOnEphemeralPort, portOf } from "../../../fixture/
 /** 配るものの中身はここでは見ない（確かめるのはどのポートで listen したかだけ）。 */
 const emptyViewUi: ViewUi = {
   kind: "bundle",
-  bundle: { uiScript: "", styleSheet: "", chunks: new Map() },
+  bundle: { uiScript: "", styleSheet: "", chunks: new Map(), etag: '"x"' },
 }
 
 /** 同じく、配るものの中身は見ない（素材もファイル一覧も集計も空で足りる）。 */

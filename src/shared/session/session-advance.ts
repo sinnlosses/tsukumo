@@ -242,6 +242,7 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
             task: event.task,
             waitingLine: event.waitingLine,
             changeSummary: NO_REPORT_CHANGE_SUMMARY,
+            imageSizes: event.imageSizes,
             time: { kind: "stamped", at },
           },
         ],

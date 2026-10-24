@@ -157,7 +157,8 @@
       "unknownBlockCount": 0,
       "sessionRemaining": {
         "kind": "unrecorded"
-      }
+      },
+      "imageSizes": []
     }
   },
   {
@@ -387,7 +388,8 @@
       "unknownBlockCount": 0,
       "sessionRemaining": {
         "kind": "unrecorded"
-      }
+      },
+      "imageSizes": []
     }
   },
   {

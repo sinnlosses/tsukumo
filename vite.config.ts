@@ -27,7 +27,7 @@ export default defineConfig({
   },
   build: {
     emptyOutDir: true,
-    modulePreload: false,
+    modulePreload: false, // 先読みはページ側（view-response.ts の PRELOADED_CHUNK_NAMES）で書く
     // lightningcss の minify は `::picker(select):popover-open`（customizable select）を解せず落ちる。
     cssMinify: false,
     cssCodeSplit: false,

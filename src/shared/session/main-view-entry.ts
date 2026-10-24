@@ -164,6 +164,7 @@ function reportRegionsOf(
   const markdowns = reportSectionMarkdowns(sections, {
     kind: "shelved",
     toolUseId: report.toolUseId,
+    sizes: report.imageSizes,
   })
   return {
     kind: "regions",

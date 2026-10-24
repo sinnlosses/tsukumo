@@ -226,6 +226,16 @@
 .detail-block .report-image-zoom img {
   max-height: var(--report-figure-max);
 }
+/* 寸法の属性がある画像は、属性の幅が `width` に写って高さの上限で縦横比が崩れるので、幅を高さの上限から縦横比で決める（読み込み前の箱も同じ寸法）。
+   `%` を `width` に混ぜない（包みのボタンが中身の幅に縮むので、`%` の幅の画像は読み込み前に幅 0 になる）。器より広いときは `max-width: 100%` が縦横比のまま縮める。
+   前後の塊の画像は列の幅いっぱいに描くので除く。`attr()` を解さない描画では `width: auto`（比は保つが、読み込み前は箱を取らない）に戻る。 */
+.detail-block .report-image-zoom img[width][height]:not(.report-before-after-swap img) {
+  width: auto;
+  width: min(
+    attr(width px, 9999px),
+    calc(var(--report-figure-max) * attr(width type(<number>), 1) / attr(height type(<number>), 1))
+  );
+}
 /* 押すと拡大する図（`SvgZoom`）。mermaid は描き終えたものだけ。 */
 .detail-block pre:global(.mermaid)[data-processed],
 .detail-block .report-svg-figure {

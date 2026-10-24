@@ -23,6 +23,8 @@ export const TEST_UI_SCRIPT = "/* テスト用の ui スクリプト */"
 /** CSS の代役。本物のビルドはしない。 */
 export const TEST_STYLE_SHEET = "/* テスト用の CSS */"
 
+export const TEST_ETAG = '"test-etag"'
+
 /** `import()` で分けたチャンクの代役。 */
 export const TEST_CHUNK_NAME = "markdown-renderer.js"
 export const TEST_CHUNK = "/* テスト用のチャンク */"
@@ -93,6 +95,7 @@ export async function startView(
         uiScript: TEST_UI_SCRIPT,
         styleSheet: TEST_STYLE_SHEET,
         chunks: new Map([[TEST_CHUNK_NAME, TEST_CHUNK]]),
+        etag: TEST_ETAG,
       },
     }),
     serveCharacterAsset,
