@@ -9,6 +9,7 @@
 
 import { execFile } from "node:child_process"
 
+import { unique } from "remeda"
 import { z } from "zod"
 
 import {
@@ -22,7 +23,8 @@ import { GIT_TIMEOUT_MS, MAX_OUTPUT_BYTES } from "./git.ts"
 /**
  * `bd list --json` の1件のうち、Beads の組み込みの欄でこの読み手が使うものだけ。
  * `closedAtEpochMilliseconds`・`externalRef` は Beads の側で無ければ `undefined`、`labels` は無ければ空、本文の3欄は無ければ空文字列。
- * 閉じた課題は閉じた時刻の新しい {@link CLOSED_TASK_DISPLAY_LIMIT} 件だけ本文を付け、ほかは本文の3欄が空文字列。
+ * 閉じた課題は閉じた時刻の新しい {@link CLOSED_TASK_DISPLAY_LIMIT} 件と、閉じていない課題の `blockedBy` に入っているものだけ本文を付け、
+ * ほかは本文の3欄が空文字列。
  */
 export type BeadsIssue = {
   readonly id: string
@@ -261,23 +263,43 @@ const RECENT_CLOSED_ARGS = [
 ] as const
 
 /**
- * 全件を本文なしで読み、本文は閉じていない課題と閉じた新しい課題の2本から id で付ける。
- * 本文つきの2本にしか無い課題（読みのあいだに足された課題）は出さない。
+ * 全件を本文なしで読み、本文は閉じていない課題・閉じた新しい課題・閉じていない課題が依存で指す古い閉じた課題の
+ * 3本から id で付ける（3本目は指す先があるときだけ起こす）。
+ * 本文つきの読みにしか無い課題（読みのあいだに足された課題）は出さない。
  */
 async function listAllBeadsIssues(cwd: string): Promise<BeadsOutcome> {
-  const [all, unfinished, recentClosed] = await Promise.all([
-    listBeadsIssues(cwd, ALL_WITHOUT_BODY_ARGS),
-    listBeadsIssues(cwd, UNFINISHED_ARGS),
-    listBeadsIssues(cwd, RECENT_CLOSED_ARGS),
-  ])
+  const allPromise = listBeadsIssues(cwd, ALL_WITHOUT_BODY_ARGS)
+  const recentClosedPromise = listBeadsIssues(cwd, RECENT_CLOSED_ARGS)
+  const unfinished = await listBeadsIssues(cwd, UNFINISHED_ARGS)
+  const [all, recentClosed] = await Promise.all([allPromise, recentClosedPromise])
   if (all.kind !== "issues" || unfinished.kind !== "issues" || recentClosed.kind !== "issues") {
     return [all, unfinished, recentClosed].some((outcome) => outcome.kind === "failed")
       ? { kind: "failed" }
       : { kind: "timed-out" }
   }
 
+  const recentClosedIds = new Set(recentClosed.issues.map((issue) => issue.id))
+  const closedIds = new Set(
+    all.issues.filter((issue) => issue.status === "closed").map((issue) => issue.id),
+  )
+  const pointedIds = unique(
+    unfinished.issues
+      .flatMap((issue) => issue.blockedBy)
+      .filter((id) => closedIds.has(id) && !recentClosedIds.has(id)),
+  )
+  const pointed =
+    pointedIds.length === 0
+      ? ({ kind: "issues", issues: [] } as const)
+      : await listBeadsIssues(cwd, ["--all", "-n", "0", "--id", pointedIds.join(",")])
+  if (pointed.kind !== "issues") {
+    return pointed
+  }
+
   const withBody = new Map(
-    [...unfinished.issues, ...recentClosed.issues].map((issue) => [issue.id, issue]),
+    [...unfinished.issues, ...recentClosed.issues, ...pointed.issues].map((issue) => [
+      issue.id,
+      issue,
+    ]),
   )
   return {
     kind: "issues",

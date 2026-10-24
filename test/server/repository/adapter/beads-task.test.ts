@@ -188,6 +188,39 @@ describe("taskSummaryItemsOfBeadsIssues", () => {
     expect(whole.omittedClosedCount).toBe(0)
   })
 
+  it("未完了の課題が依存で指す閉じた課題は直近10件の外でも出し、指されない古いものは出さず、落とした件数が合う", () => {
+    const closedIssues = Array.from({ length: 12 }, (_, index) =>
+      issue({
+        id: `t-${100 + index}`,
+        status: "closed",
+        createdAtEpochMilliseconds: index,
+        closedAtEpochMilliseconds: index,
+      }),
+    )
+    const issues = [
+      ...closedIssues,
+      issue({ id: "t-200", status: "open", blockedBy: ["t-100"], createdAtEpochMilliseconds: 50 }),
+    ]
+
+    const known = knownTaskSummaryOfBeadsIssues(issues)
+
+    expect(known.items.map((item) => item.id)).toEqual([
+      "t-100",
+      "t-102",
+      "t-103",
+      "t-104",
+      "t-105",
+      "t-106",
+      "t-107",
+      "t-108",
+      "t-109",
+      "t-110",
+      "t-111",
+      "t-200",
+    ])
+    expect(known.omittedClosedCount).toBe(1)
+  })
+
   it("external_ref が https:// の URL のときだけ置き場所にする", () => {
     const [withUrl, withoutUrl, notHttps] = taskSummaryItemsOfBeadsIssues([
       issue({ id: "t-1", status: "open", externalRef: "https://example.com/issues/1" }),

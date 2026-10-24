@@ -1,3 +1,4 @@
+import { execFile } from "node:child_process"
 import { mkdirSync } from "node:fs"
 import { join } from "node:path"
 
@@ -39,6 +40,15 @@ vi.mock("../../../../src/server/repository/adapter/git.ts", async (importOrigina
   ...(await importOriginal<typeof GitAdapter>()),
   GIT_TIMEOUT_MS: 60_000,
 }))
+
+vi.mock("node:child_process", async (importOriginal) => {
+  const actual = await importOriginal<{ readonly execFile: typeof execFile }>()
+  return { ...actual, execFile: vi.fn<typeof execFile>(actual.execFile) }
+})
+
+function listCallCount(): number {
+  return vi.mocked(execFile).mock.calls.filter(([, args]) => args?.[0] === "list").length
+}
 
 const root = useTempDir("beads-issues-reader")
 const home = useBeadsHome(() => join(root(), "home"))
@@ -95,6 +105,46 @@ describe("readBeadsIssues", { timeout: 60_000 }, () => {
       acceptanceCriteria: "",
       notes: "",
     })
+  })
+
+  it("閉じていない課題が依存で指す古い閉じた課題にも本文を付け、指す先が無ければ bd list を3本だけ起こす", async () => {
+    const closedIds = range(1, CLOSED_TASK_DISPLAY_LIMIT + 2).map(
+      (n) => `t-${String(n).padStart(3, "0")}`,
+    )
+    const closedIssues = closedIds.map((id, index) =>
+      openIssue(id, `済み ${id}`, {
+        ...bodyOf(id),
+        status: "closed",
+        closed_at: closedAtOf(index + 1),
+      }),
+    )
+    const pointing = await initBeadsIssues(root(), [
+      openIssue("t-100", "未着手", {
+        dependencies: [{ issue_id: "t-100", depends_on_id: "t-001", type: "blocks" }],
+      }),
+      ...closedIssues,
+    ])
+
+    vi.mocked(execFile).mockClear()
+    const outcome = await readBeadsIssues(pointing, undefined)
+    if (outcome.kind !== "issues") {
+      throw new Error("読めるはず")
+    }
+
+    expect(outcome.issues.find((issue) => issue.id === "t-001")).toMatchObject({
+      description: "t-001 の架空の説明",
+      notes: "t-001 の架空のメモ",
+    })
+    expect(listCallCount()).toBe(4)
+
+    const standalone = await initBeadsIssues(join(root(), "standalone"), [
+      openIssue("t-100", "未着手"),
+      ...closedIssues,
+    ])
+    vi.mocked(execFile).mockClear()
+    await readBeadsIssues(standalone, undefined)
+
+    expect(listCallCount()).toBe(3)
   })
 })
 

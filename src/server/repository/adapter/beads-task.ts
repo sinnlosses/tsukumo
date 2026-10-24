@@ -16,17 +16,14 @@ import { CLOSED_TASK_DISPLAY_LIMIT, type BeadsIssue } from "./beads.ts"
 
 /**
  * タスクの一覧に出す要約。閉じていない課題はすべて出し、閉じた課題は `closedAtEpochMilliseconds`
- * の新しいものから {@link CLOSED_TASK_DISPLAY_LIMIT} 件だけ出す。
+ * の新しいものから {@link CLOSED_TASK_DISPLAY_LIMIT} 件と、閉じていない課題の `blockedBy` に入っているものを出す。
  * 並びは ID の番号の昇順で、番号の取れない ID は末尾に作った時刻の順（同じ時刻なら ID の順）。
  */
 export function taskSummaryItemsOfBeadsIssues(
   issues: readonly BeadsIssue[],
 ): readonly TaskSummaryItem[] {
   const unfinishedIssues = issues.filter((issue) => issue.status !== CLOSED_STATUS)
-  const closed = sortBy(
-    issues.filter((issue) => issue.status === CLOSED_STATUS),
-    [(issue) => issue.closedAtEpochMilliseconds ?? 0, "desc"],
-  ).slice(0, CLOSED_TASK_DISPLAY_LIMIT)
+  const closed = shownClosedIssues(issues)
   const unfinished = new Set(unfinishedIssues.map((issue) => issue.id))
 
   return sortBy(
@@ -47,7 +44,7 @@ export function knownTaskSummaryOfBeadsIssues(
 ): Extract<TaskSummaryResult, { readonly kind: "known" }> {
   const items = taskSummaryItemsOfBeadsIssues(issues)
   const closedCount = issues.filter((issue) => issue.status === CLOSED_STATUS).length
-  const omittedClosedCount = Math.max(0, closedCount - CLOSED_TASK_DISPLAY_LIMIT)
+  const omittedClosedCount = closedCount - shownClosedIssues(issues).length
   return { kind: "known", items, omittedClosedCount }
 }
 
@@ -66,6 +63,23 @@ export function doneTasksOfBeadsIssues(issues: readonly BeadsIssue[]): readonly 
       : [],
   )
   return sortBy(done, [(task) => task.closedAtEpochMilliseconds, "asc"], [(task) => task.id, "asc"])
+}
+
+/** 一覧に出す閉じた課題。閉じた時刻の新しい上限の件数に、閉じていない課題が依存で指すものを足す。 */
+function shownClosedIssues(issues: readonly BeadsIssue[]): readonly BeadsIssue[] {
+  const closed = issues.filter((issue) => issue.status === CLOSED_STATUS)
+  const recent = sortBy(closed, [(issue) => issue.closedAtEpochMilliseconds ?? 0, "desc"]).slice(
+    0,
+    CLOSED_TASK_DISPLAY_LIMIT,
+  )
+  const pointedAt = new Set(
+    issues.filter((issue) => issue.status !== CLOSED_STATUS).flatMap((issue) => issue.blockedBy),
+  )
+  const recentIds = new Set(recent.map((issue) => issue.id))
+  return [
+    ...recent,
+    ...closed.filter((issue) => pointedAt.has(issue.id) && !recentIds.has(issue.id)),
+  ]
 }
 
 /** ID の末尾の番号。採番前の ID（`gh-new-…` など）のように番号で終わらない ID は `undefined`。 */
