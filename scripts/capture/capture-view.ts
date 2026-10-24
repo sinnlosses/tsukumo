@@ -50,6 +50,7 @@ import {
   MAIN_REGION_SELECTOR,
   openPage,
   revealPageAt,
+  scrollIntoView,
   scrollMatchNotice,
   SKIP_REVEAL_KEY,
   settlePage,
@@ -126,7 +127,7 @@ const USAGE = `使い方:
   --size <幅>x<高さ>    窓の大きさ（既定 ${String(DEFAULT_WIDTH)}x${String(DEFAULT_HEIGHT)}）
   --measure <selector>  位置と大きさ（と scrollHeight・clientHeight）を数値で出す要素（何度でも指定できる）
   --wait-for <selector> 要素が出て、演出が終わるまで待ってから撮る（出なければ失敗して終わる）
-  --scroll-to <selector> 要素をメインビューの上端へ送ってから撮る（無ければ失敗して終わる。2つ以上に当たるとコンマ区切りでも先頭へ転がし、「一致 n 個、先頭へ転がした」の行を出す。準備の手のあとに当たり〔書く位置は問わない〕、転がしたあと偽の時計があれば進めて落ち着くまで待つので、--advance を後ろに足さなくてよい。--reveal-at のときは時計を止めているので待たない）
+  --scroll-to <selector> 要素をメインビューの上端へ送ってから撮る（無ければ失敗して終わる。本文の末尾に近い塊も上端へ届くよう、撮影のページだけ末尾に窓の高さ分の余白を足すので、--measure の scrollHeight は余白を含む。2つ以上に当たるとコンマ区切りでも先頭へ転がし、「一致 n 個、先頭へ転がした」の行を出す。準備の手のあとに当たり〔書く位置は問わない〕、転がしたあと偽の時計があれば進めて落ち着くまで待つので、--advance を後ろに足さなくてよい。--reveal-at のときは時計を止めているので待たない）
   --type <selector> <文字>  入力欄に打ってから撮る
   --click <selector>    押してから撮る
   --hover <selector>    触れてから撮る
@@ -462,19 +463,6 @@ async function waitForRevealSettled(page: Page, selector: string): Promise<boole
   } catch {
     return false
   }
-}
-
-/** 先頭の要素をメインビューのスクロールの容れ物の上端へ送り、当たった個数を返す（無ければ 0）。 */
-async function scrollIntoView(page: Page, selector: string): Promise<number> {
-  const locator = page.locator(selector)
-  const count = await locator.count()
-  if (count === 0) {
-    return 0
-  }
-  await locator.first().evaluate((element) => {
-    element.scrollIntoView({ block: "start" })
-  })
-  return count
 }
 
 function isDirectory(target: string): boolean {

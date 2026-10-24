@@ -224,6 +224,23 @@ export async function waitForRevealEnd(
     .catch(() => undefined)
 }
 
+/** 先頭の要素をメインビューのスクロールの容れ物の上端へ送り、当たった個数を返す（無ければ 0）。 */
+export async function scrollIntoView(page: Page, selector: string): Promise<number> {
+  const locator = page.locator(selector)
+  const count = await locator.count()
+  if (count === 0) {
+    return 0
+  }
+  // 末尾に近い塊も上端へ届くよう、撮影のページだけ末尾に窓の高さ分の余白を足す
+  await page.addStyleTag({
+    content: `${MAIN_REGION_SELECTOR}::after { content: ""; display: block; height: ${String(page.viewportSize()?.height ?? 0)}px; flex: none; }`,
+  })
+  await locator.first().evaluate((element) => {
+    element.scrollIntoView({ block: "start" })
+  })
+  return count
+}
+
 /** `--scroll-to` が2つ以上の要素に当たったときの知らせの行。1つなら空文字。 */
 export function scrollMatchNotice(selector: string, count: number): string {
   return count < 2 ? "" : `一致 ${String(count)} 個、先頭へ転がした: ${selector}`
