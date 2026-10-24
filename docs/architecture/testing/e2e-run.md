@@ -73,8 +73,8 @@
     `new URL("…", import.meta.url)`。`?raw` などのクエリは落として解決する）。式つきの `import()`・`require()`・
     `import.meta.glob`、クエリを落としても解決できない指定、構文エラーのファイルは、そこへ届く根からすべてのファイルに届くとみなす（以下の規則で全件や広い選び方に倒れる）
   - E2E の足場の根（`package.json`・`vitest.e2e.config.ts`・`scripts/dev/build-ui.ts` など）から import で
-    届くファイルは全件。E2E ファイルから import で届くファイル（`test/e2e/scenario-run.ts`・
-    `test/e2e/task-room.ts`・`test/fixture/` など）は、届く元の E2E を選ぶ
+    届くファイルは全件。E2E ファイルから import で届くファイル（`test/e2e/scenario-run.ts` と、それが読む
+    `scenario-open.ts`・`scenario-wait.ts`・`scenario-viewport.ts`、`test/e2e/task-room.ts`・`test/fixture/` など）は、届く元の E2E を選ぶ
   - `src/` は、サーバの入口 `src/cli.ts` から届けば全件（どの E2E もサーバ全体を起こす）。ブラウザだけが
     読むファイルは、見張りの表（`scripts/shared/e2e-watch.ts`）の領域の根から届くかで領域を決め、その領域を
     見ている E2E を選ぶ。どの根からも届かない（アプリや会話の画面の枠）なら全件

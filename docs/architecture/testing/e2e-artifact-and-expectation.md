@@ -105,7 +105,7 @@ shared の手続き応答に乗る型や DOM の構造を変える計画には�
 同じコマンドを同じ形で送る場面が2本あれば、比べるのは流れの持ち主の1本だけにする。
 
 **比べる成果物は、撮る口の名前で場面が選ぶ。** `settleAndMatch` は `*.dom.json` だけを比べ、
-`settleAndMatchWithMessages` は `*.messages.json` も比べる（どちらも `test/e2e/scenario-run.ts` の `ScenarioRoom`）。
+`settleAndMatchWithMessages` は `*.messages.json` も比べる（どちらも `test/e2e/scenario-open.ts` の `ScenarioRoom`。シナリオは `test/e2e/scenario-run.ts` から読む）。
 部分木の名前の並び（上の決まり2）は `open` の選択肢に書くが、こちらは `it` の本文の撮る口の名前で選ぶ。
 どちらも指定は場面のファイルにあり、期待値は写しだけを持つ。
 `settleAndMatch` の場面に `*.messages.json` が残っていると落ちる。`E2E_UPDATE=1` は比べない場面の
