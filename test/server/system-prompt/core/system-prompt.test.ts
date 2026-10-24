@@ -8,16 +8,16 @@ import {
   workMemoryPromptParts,
 } from "../../../../src/server/chat/core/chat-memory-prompt.ts"
 import type { ChatSummary } from "../../../../src/server/chat/core/chat-memory.ts"
+import { QUESTION_NOTATION_PROMPT } from "../../../../src/server/question/core/question-notation.ts"
 import { REPORT_NOTATION_PROMPT } from "../../../../src/server/report/core/report-notation.ts"
-import { QUESTION_NOTATION_PROMPT } from "../../../../src/server/session-driver/core/question-notation.ts"
 import type { SessionMode } from "../../../../src/server/session-driver/core/session-driver.ts"
-import { WORK_PLAN_PROMPT } from "../../../../src/server/session-driver/core/work-plan-tool.ts"
 import { SPEECH_CADENCE_PROMPT } from "../../../../src/server/system-prompt/core/speech-cadence.ts"
 import {
   type SystemPromptMode,
   takeSystemPromptAppend,
   toSystemPromptMode,
 } from "../../../../src/server/system-prompt/core/system-prompt.ts"
+import { WORK_PLAN_PROMPT } from "../../../../src/server/work-plan/core/work-plan-tool.ts"
 import { CHAT_MEMORY_BUDGET } from "../../../../src/shared/chat/chat-memory-budget.ts"
 import { fixedChatSummary, inMemoryChatSummary } from "../../../fixture/chat.ts"
 

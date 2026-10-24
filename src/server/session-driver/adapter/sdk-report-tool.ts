@@ -22,6 +22,7 @@ import { reportRetrospectiveSchema } from "../../../shared/report/report-retrosp
 import { reportTaskSchema } from "../../../shared/report/report-task.ts"
 import type { ReportSchemaVariant } from "../../../shared/report/schema-variant.ts"
 import { WORK_PLAN_CLOSINGS } from "../../../shared/session/work-plan.ts"
+import { REPORT_TOOL_NAME } from "../../core/tsukumo-tool-name.ts"
 import { readReportBlockFiles } from "../../report/adapter/report-file.ts"
 import { checkMermaidSyntax } from "../../report/adapter/report-mermaid-syntax.ts"
 import { mermaidSourcesInSections } from "../../report/core/report-figure-fault.ts"
@@ -47,7 +48,6 @@ import {
 import { reportShortTypeText } from "../../report/core/short-type-text.ts"
 import type { CallReview } from "../core/call-review.ts"
 import { reportEvents } from "../core/sdk-report-message.ts"
-import { REPORT_TOOL_NAME } from "../core/tsukumo-tool-name.ts"
 import { speechShape } from "./sdk-speech-tool.ts"
 
 /**

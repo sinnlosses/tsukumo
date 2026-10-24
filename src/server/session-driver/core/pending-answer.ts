@@ -10,7 +10,7 @@ import {
   type Question,
   type QuestionAnswer,
 } from "../../../shared/session-driver/question.ts"
-import { reviewQuestionBriefing } from "./question-brief.ts"
+import { reviewQuestionBriefing } from "../../question/core/question-brief.ts"
 
 /** キャラクターが質問するときのツール名。これだけを質問として扱う。 */
 const ASK_USER_QUESTION_TOOL_NAME = "AskUserQuestion"

@@ -2,14 +2,14 @@ import { describe, expect, it } from "vitest"
 
 import type { ReportDraft } from "../../../../src/server/report/core/report-violation.ts"
 import {
-  PHASE_RESULT_MISSING_HANDBACK_LINE,
-  RESULT_CALLED_HANDBACK_LINE,
-} from "../../../../src/server/session-driver/core/band-position.ts"
-import {
   type CallReview,
   createCallReview,
   passRelayedEvents,
 } from "../../../../src/server/session-driver/core/call-review.ts"
+import {
+  PHASE_RESULT_MISSING_HANDBACK_LINE,
+  RESULT_CALLED_HANDBACK_LINE,
+} from "../../../../src/server/work-plan/core/band-position.ts"
 import type { BackgroundTask } from "../../../../src/shared/session-driver/background-task.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import { reportDraft, reportEvent } from "../../../fixture/report-event.ts"

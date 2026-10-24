@@ -20,14 +20,17 @@ import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import { bundledFilePath } from "../../adapter/bundled-path.ts"
 import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
 import type { ReportGate } from "../../report/core/report-tool.ts"
+import { judgePhaseResultCaller } from "../../work-plan/core/phase-result-tool.ts"
+import {
+  judgeEditAgainstMissingPlan,
+  judgeToolAgainstGate,
+} from "../../work-plan/core/work-plan-gate.ts"
 import { pinToBackground } from "../core/background-delegation.ts"
 import { rewriteBashCommand } from "../core/bash-command-rewrite.ts"
 import type { CallReview } from "../core/call-review.ts"
 import type { ExternalToolMark } from "../core/external-tool-mark.ts"
-import { judgePhaseResultCaller } from "../core/phase-result-tool.ts"
 import type { SessionDriverOptions, SessionMode } from "../core/session-driver.ts"
 import { childProcessEnv } from "../core/visible-output-nudge.ts"
-import { judgeEditAgainstMissingPlan, judgeToolAgainstGate } from "../core/work-plan-gate.ts"
 import { workflowPluginDir } from "./workflow-plugin.ts"
 
 /** `query()` の `options` のうち、`mcpServers` / `canUseTool`（クロージャが要る）を除いた部分。 */

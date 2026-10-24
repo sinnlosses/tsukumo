@@ -4,7 +4,7 @@ import { createCallReview } from "../../../../src/server/session-driver/core/cal
 import {
   answerPhaseResultCall,
   judgePhaseResultCaller,
-} from "../../../../src/server/session-driver/core/phase-result-tool.ts"
+} from "../../../../src/server/work-plan/core/phase-result-tool.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import { requestEvent } from "../../../fixture/session-event.ts"
 

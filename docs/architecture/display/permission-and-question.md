@@ -95,7 +95,7 @@
       `docs/history/mockup/inquiry-brief-2026-10-08.svg`（利用者承認済み）
     - **答えたあとの記録には残さない**
     - 添え書きの付いた質問（2問のうち1問だけに添え書き）は、疑似セッションの場面 `question-brief` で出せる
-  - **質問の書き方は tsukumo が教える**（2026-10-04 決定）。`src/server/session-driver/core/question-notation.ts` の条を
+  - **質問の書き方は tsukumo が教える**（2026-10-04 決定）。`src/server/question/core/question-notation.ts` の条を
     仕事モードのときだけ `systemPrompt` の append に足し、`AskUserQuestion` の直前に `question_brief` で
     添え書き（背景・判断の軸・選択肢ごとの良い点と悪い点・軸ごとの評価・戻せない印）を渡して質問文には何を決めるかだけを書く・
     選択肢のラベルは選んだあと何が起きるかを言う語にする・おすすめはラベル末尾に `(推奨)` を付けて理由を `description` の頭に書く・

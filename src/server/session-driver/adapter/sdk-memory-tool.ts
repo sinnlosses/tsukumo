@@ -4,12 +4,12 @@ import { tool } from "@anthropic-ai/claude-agent-sdk"
 import { z } from "zod"
 
 import type { PersonaMemory } from "../../chat/core/chat-memory.ts"
+import { FORGET_TOOL_NAME, REMEMBER_TOOL_NAME } from "../../core/tsukumo-tool-name.ts"
 import {
   forgetReply,
   type PersonaMemoryReply,
   rememberReply,
 } from "../core/persona-memory-reply.ts"
-import { FORGET_TOOL_NAME, REMEMBER_TOOL_NAME } from "../core/tsukumo-tool-name.ts"
 
 /**
  * モデルに見せる `remember` ツールの説明。

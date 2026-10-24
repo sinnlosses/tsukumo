@@ -4,7 +4,7 @@ import {
   answerQuestionBriefCall,
   mermaidSourcesOf,
   reviewQuestionBriefing,
-} from "../../../../src/server/session-driver/core/question-brief.ts"
+} from "../../../../src/server/question/core/question-brief.ts"
 import type { FigureBlock } from "../../../../src/shared/report/report-block.ts"
 import type {
   QuestionBrief,

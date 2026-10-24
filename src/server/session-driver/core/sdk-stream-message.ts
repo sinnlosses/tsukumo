@@ -7,7 +7,7 @@
 import { isPlainObject } from "remeda"
 
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
-import { REPORT_TOOL_NAME, tsukumoToolFullName } from "./tsukumo-tool-name.ts"
+import { REPORT_TOOL_NAME, tsukumoToolFullName } from "../../core/tsukumo-tool-name.ts"
 
 /**
  * `includePartialMessages` で流れる断片から、本文のテキストだけを拾う。

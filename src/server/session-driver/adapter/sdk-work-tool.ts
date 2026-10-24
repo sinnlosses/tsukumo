@@ -10,8 +10,17 @@ import {
 import { phaseResultShape } from "../../../shared/session/phase-result.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import { workPlanShape } from "../../../shared/session/work-plan.ts"
+import {
+  PHASE_RESULT_TOOL_NAME,
+  QUESTION_BRIEF_TOOL_NAME,
+  WORK_PLAN_TOOL_NAME,
+} from "../../core/tsukumo-tool-name.ts"
+import {
+  answerQuestionBriefCall,
+  mermaidSourcesOf,
+  QUESTION_BRIEF_TOOL_DESCRIPTION,
+} from "../../question/core/question-brief.ts"
 import { checkMermaidSyntax } from "../../report/adapter/report-mermaid-syntax.ts"
-import type { CallReview } from "../core/call-review.ts"
 import {
   answerPhaseResultCall,
   PHASE_RESULT_COUNT_DESCRIPTION,
@@ -19,17 +28,7 @@ import {
   PHASE_RESULT_PHASE_DESCRIPTION,
   PHASE_RESULT_REASON_DESCRIPTION,
   PHASE_RESULT_TOOL_DESCRIPTION,
-} from "../core/phase-result-tool.ts"
-import {
-  answerQuestionBriefCall,
-  mermaidSourcesOf,
-  QUESTION_BRIEF_TOOL_DESCRIPTION,
-} from "../core/question-brief.ts"
-import {
-  PHASE_RESULT_TOOL_NAME,
-  QUESTION_BRIEF_TOOL_NAME,
-  WORK_PLAN_TOOL_NAME,
-} from "../core/tsukumo-tool-name.ts"
+} from "../../work-plan/core/phase-result-tool.ts"
 import {
   answerWorkPlanCall,
   WORK_PLAN_CURRENT_DESCRIPTION,
@@ -39,7 +38,8 @@ import {
   WORK_PLAN_PHASES_DESCRIPTION,
   WORK_PLAN_SKIPPED_PHASES_DESCRIPTION,
   WORK_PLAN_TOOL_DESCRIPTION,
-} from "../core/work-plan-tool.ts"
+} from "../../work-plan/core/work-plan-tool.ts"
+import type { CallReview } from "../core/call-review.ts"
 
 /**
  * ワークプランを受け取るツール。引数の形は shared の `workPlanShape` に説明文を足したもの。

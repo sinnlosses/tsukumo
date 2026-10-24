@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { createWorkPlanReview } from "../../../../src/server/session-driver/core/work-plan-review.ts"
+import { createWorkPlanReview } from "../../../../src/server/work-plan/core/work-plan-review.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import {
   finishedPhaseCount,

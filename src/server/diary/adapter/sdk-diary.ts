@@ -20,10 +20,7 @@ import {
 } from "../../../shared/character-pack/expression-choice.ts"
 import type { Expression } from "../../../shared/character-pack/expression.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
-import {
-  TSUKUMO_MCP_SERVER_NAME,
-  tsukumoToolFullName,
-} from "../../session-driver/core/tsukumo-tool-name.ts"
+import { TSUKUMO_MCP_SERVER_NAME, tsukumoToolFullName } from "../../core/tsukumo-tool-name.ts"
 import {
   DIARY_BOOKMARK_DESCRIPTION,
   DIARY_TOOL_DESCRIPTION,

@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest"
 import {
   judgeEditAgainstMissingPlan,
   judgeToolAgainstGate,
-} from "../../../../src/server/session-driver/core/work-plan-gate.ts"
+} from "../../../../src/server/work-plan/core/work-plan-gate.ts"
 
 describe("judgeEditAgainstMissingPlan", () => {
   it.each(["Edit", "Write"])(

@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest"
 
 import { handbackNoteHooks } from "../../../../src/server/session-driver/adapter/sdk-query-seed.ts"
-import { PHASE_RESULT_MISSING_HANDBACK_LINE } from "../../../../src/server/session-driver/core/band-position.ts"
 import {
   type CallReview,
   createCallReview,
 } from "../../../../src/server/session-driver/core/call-review.ts"
+import { PHASE_RESULT_MISSING_HANDBACK_LINE } from "../../../../src/server/work-plan/core/band-position.ts"
 import { requestEvent } from "../../../fixture/session-event.ts"
 
 describe("handbackNoteHooks（返却を運ぶ入力に注記を添える）", () => {

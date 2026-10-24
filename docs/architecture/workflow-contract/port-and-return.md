@@ -8,8 +8,8 @@
 
 ## 口
 
-口は MCP ツール `work_plan` と `report`、委譲先が呼ぶ `phase_result`（`docs/architecture/workflow-contract/skill-sequence.md`「スキルの契約」）。意味はツールの説明（`src/server/session-driver/core/work-plan-tool.ts`・
-`src/server/report/core/report-tool.ts`・`src/server/session-driver/core/phase-result-tool.ts`）とシステムプロンプトの「ワークプラン（tsukumo）」の節がモデルに教える。
+口は MCP ツール `work_plan` と `report`、委譲先が呼ぶ `phase_result`（`docs/architecture/workflow-contract/skill-sequence.md`「スキルの契約」）。意味はツールの説明（`src/server/work-plan/core/work-plan-tool.ts`・
+`src/server/report/core/report-tool.ts`・`src/server/work-plan/core/phase-result-tool.ts`）とシステムプロンプトの「ワークプラン（tsukumo）」の節がモデルに教える。
 
 `work_plan`（ワークプラン。毎回段の並びごと渡す）:
 

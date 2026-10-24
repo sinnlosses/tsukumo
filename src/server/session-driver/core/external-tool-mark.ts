@@ -7,7 +7,7 @@
 // 脇の話・claude が自分で始めた続きのターン（`turn-resumed`）・ターンの終わりでは下ろさない。続きのターンにも前の結果が載る。
 
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
-import { isTsukumoTool } from "./tsukumo-tool-name.ts"
+import { isTsukumoTool } from "../../core/tsukumo-tool-name.ts"
 
 export type ExternalToolMark = {
   /** PreToolUse のフックから、呼ばれたツールの名前を渡す（サブエージェントの中の呼び出しも渡す）。 */

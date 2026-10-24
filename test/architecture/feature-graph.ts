@@ -26,6 +26,8 @@ export const SERVER_FEATURES = [
   "item",
   "diary",
   "chat",
+  "work-plan",
+  "question",
   "session-driver",
   "session",
   "view-server",

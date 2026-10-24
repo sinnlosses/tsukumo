@@ -37,7 +37,7 @@ doc コメントが正典で、機能の数え方・契機・上限は `docs/req
 
 **2つのファイルが共有する定数は、読む側の層で置き場を決める。** `core` と `adapter` の両方が読む
 ものは `core` に置き、`adapter` がそこから取る（`TSUKUMO_MCP_SERVER_NAME` / `SPEAK_TOOL_NAME` は
-`core/tsukumo-tool-name.ts`。`core → adapter` は禁止なので逆には置けない）。両側と画面が読む既定値は
+共有の箱の `src/server/core/tsukumo-tool-name.ts`。`core → adapter` は禁止なので逆には置けない）。両側と画面が読む既定値は
 `shared` の1箇所（既定の effort は `BUILTIN_SESSION_DEFAULT.effort`）で、adapter は自分の定数を持たない。
 
 **代のあいだだけ意味のある勘定は、駆動1代ぶんの持ち物（`SessionGeneration`）に集める。**

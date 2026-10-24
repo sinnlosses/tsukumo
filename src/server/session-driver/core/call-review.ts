@@ -14,13 +14,13 @@ import { REPORT_REJECTION_MODES } from "../../report/core/rejection-mode.ts"
 import { createReportInheritance } from "../../report/core/report-inheritance.ts"
 import { createReportReview, type ReportVerdict } from "../../report/core/report-review.ts"
 import type { ReportDraft } from "../../report/core/report-violation.ts"
-import { judgePhaseMention, type PhaseMentionVerdict } from "./phase-mention.ts"
-import { createSpeechReview, type SpeechVerdict } from "./speech-review.ts"
+import { judgePhaseMention, type PhaseMentionVerdict } from "../../work-plan/core/phase-mention.ts"
 import {
   createWorkPlanReview,
   type PhaseResultVerdict,
   type WorkPlanVerdict,
-} from "./work-plan-review.ts"
+} from "../../work-plan/core/work-plan-review.ts"
+import { createSpeechReview, type SpeechVerdict } from "./speech-review.ts"
 
 export type CallReview = {
   /** `speak` の handler から。直前に描いたセリフのあとに新しい事実が届いていなければ差し戻す。 */

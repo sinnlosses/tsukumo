@@ -22,12 +22,12 @@ import {
   type UsageProposalFollowUp,
 } from "../../../shared/usage-review/usage-review.ts"
 import { bundledFilePath } from "../../adapter/bundled-path.ts"
-import { workflowPluginDir } from "../../session-driver/adapter/workflow-plugin.ts"
 import {
   SPEAK_TOOL_NAME,
   TSUKUMO_MCP_SERVER_NAME,
   tsukumoToolFullName,
-} from "../../session-driver/core/tsukumo-tool-name.ts"
+} from "../../core/tsukumo-tool-name.ts"
+import { workflowPluginDir } from "../../session-driver/adapter/workflow-plugin.ts"
 import type {
   UsageProposalQueryRequest,
   UsageReviewQueryRequest,

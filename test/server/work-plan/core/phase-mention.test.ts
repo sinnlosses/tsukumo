@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { judgePhaseMention } from "../../../../src/server/session-driver/core/phase-mention.ts"
+import { judgePhaseMention } from "../../../../src/server/work-plan/core/phase-mention.ts"
 import type { DelegatedRange } from "../../../../src/shared/session/work-plan.ts"
 
 const RANGE = { kind: "range", first: 1, count: 3 } as const satisfies DelegatedRange

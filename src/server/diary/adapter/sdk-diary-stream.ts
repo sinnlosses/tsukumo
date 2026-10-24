@@ -3,7 +3,7 @@
 import { isPlainObject } from "remeda"
 
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
-import { tsukumoToolFullName } from "../../session-driver/core/tsukumo-tool-name.ts"
+import { tsukumoToolFullName } from "../../core/tsukumo-tool-name.ts"
 import { DIARY_TOOL_NAME, diaryArgumentHasBookmarkKey } from "../core/diary-tool.ts"
 
 const DIARY_TOOL_FULL_NAME = tsukumoToolFullName(DIARY_TOOL_NAME)

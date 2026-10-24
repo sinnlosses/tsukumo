@@ -1,7 +1,7 @@
 // 委譲の返却が届いてからメインが `work_plan` を呼ぶまでのあいだ、メインの作業のツールを拒む判定と、
 // その依頼で最初の `work_plan` を受け付けるまでのあいだ、メインの `Edit`・`Write` を拒む判定。
 
-import { isTsukumoTool } from "./tsukumo-tool-name.ts"
+import { isTsukumoTool } from "../../core/tsukumo-tool-name.ts"
 
 const READ_ONLY_TOOL_NAMES = ["Read", "Grep", "Glob", "ToolSearch"] as const satisfies string[]
 

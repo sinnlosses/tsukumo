@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import { createCallReview } from "../../../../src/server/session-driver/core/call-review.ts"
-import { answerWorkPlanCall } from "../../../../src/server/session-driver/core/work-plan-tool.ts"
+import { answerWorkPlanCall } from "../../../../src/server/work-plan/core/work-plan-tool.ts"
 
 const PHASES = ["架空の段A", "架空の段B", "架空の段C"]
 const LONG_SUMMARY = "架空の一つ目。架空の二つ目。架空の三つ目。"

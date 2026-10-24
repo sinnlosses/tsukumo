@@ -2,10 +2,10 @@
 // ツールは仕事のときだけ載る。引数と帯の動かし方の正典は `docs/architecture/workflow-contract.md`「スキルの契約」。
 
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
+import { PHASE_RESULT_TOOL_NAME, tsukumoToolFullName } from "../../core/tsukumo-tool-name.ts"
 import { bandPositionText } from "./band-position.ts"
-import type { CallReview } from "./call-review.ts"
-import { PHASE_RESULT_TOOL_NAME, tsukumoToolFullName } from "./tsukumo-tool-name.ts"
 import type { GateVerdict } from "./work-plan-gate.ts"
+import type { WorkPlanReview } from "./work-plan-review.ts"
 
 /** モデルに見せる `phase_result` ツールの説明。 */
 export const PHASE_RESULT_TOOL_DESCRIPTION =
@@ -46,7 +46,7 @@ export type PhaseResultAnswer = { readonly text: string; readonly isError: boole
  * 帯を動かしたときだけ、結果を読んだ形の `delegate-returned` を `onEvent` で流す（`CallReview.pass` は通さず、委譲ゲートは立てない）。
  */
 export function answerPhaseResultCall(
-  review: Pick<CallReview, "judgePhaseResult">,
+  review: { readonly judgePhaseResult: WorkPlanReview["judgeResult"] },
   input: unknown,
   onEvent: (event: SessionEvent) => void,
 ): PhaseResultAnswer {

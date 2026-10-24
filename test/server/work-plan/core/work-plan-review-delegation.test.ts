@@ -3,8 +3,8 @@ import { describe, expect, it } from "vitest"
 import {
   PHASE_RESULT_MISSING_HANDBACK_LINE,
   RESULT_CALLED_HANDBACK_LINE,
-} from "../../../../src/server/session-driver/core/band-position.ts"
-import { createWorkPlanReview } from "../../../../src/server/session-driver/core/work-plan-review.ts"
+} from "../../../../src/server/work-plan/core/band-position.ts"
+import { createWorkPlanReview } from "../../../../src/server/work-plan/core/work-plan-review.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import type { LatestWorkPlan } from "../../../../src/shared/session/work-plan.ts"
 import { handedBack, REQUEST, SUMMARY } from "../../../fixture/work-plan-review.ts"

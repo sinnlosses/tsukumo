@@ -8,10 +8,10 @@ import {
   expressionEnumForSpeak,
   expressionGuideForSpeak,
 } from "../../../shared/character-pack/expression-choice.ts"
+import { SPEAK_TOOL_NAME } from "../../core/tsukumo-tool-name.ts"
 import type { CallReview } from "../core/call-review.ts"
 import type { SessionMode } from "../core/session-driver.ts"
 import type { SpeechVerdict } from "../core/speech-review.ts"
-import { SPEAK_TOOL_NAME } from "../core/tsukumo-tool-name.ts"
 
 /** モデルに見せる `speak` ツールの説明。セリフと本文の境目はここだけで説明する。 */
 const SPEAK_TOOL_DESCRIPTION =

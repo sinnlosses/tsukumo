@@ -71,7 +71,7 @@
 
 ### お伺い
 
-- **英語識別子**: `Inquiry`（中身は `PendingAsk` の許可要求と質問。質問は添え書きの並び `briefs` も持つ）
+- **英語識別子**: `Inquiry`（中身は `PendingAsk` の許可要求と質問。質問は添え書きの並び `briefs` も持つ。質問1問の型は `Question`〔`src/shared/session-driver/question.ts`〕で、サーバの機能は `src/server/question/`）
 - **定義**: 許可要求と質問を同じ形で出す札。メインビューの本文に出し、番号つきの選択肢で答える
   （置き場は `docs/architecture/display.md` 4.2「各表示物」のメインビューの項）
 - **注記**: 狭い画面（760px 以下）では本文に出さず、答え待ちの札で答える。添え書きはボトムシートの中で1列の形に読む（2026-10-09）

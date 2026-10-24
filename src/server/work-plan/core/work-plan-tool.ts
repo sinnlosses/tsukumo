@@ -2,8 +2,7 @@
 // ツールは仕事のときだけ載り、規約も仕事の `systemPrompt` の append にだけ入る。
 
 import { bandPositionText } from "./band-position.ts"
-import type { CallReview } from "./call-review.ts"
-import type { WorkPlanVerdict } from "./work-plan-review.ts"
+import type { WorkPlanReview, WorkPlanVerdict } from "./work-plan-review.ts"
 
 /** モデルに見せる `work_plan` ツールの説明。呼ぶ条件は「ワークプラン（tsukumo）」の節が持つ。 */
 export const WORK_PLAN_TOOL_DESCRIPTION =
@@ -96,7 +95,7 @@ export type WorkPlanAnswer = { readonly text: string; readonly isError: boolean 
 
 /** `work_plan` の呼び出し1つを判定して返す文を決める。 */
 export function answerWorkPlanCall(
-  review: Pick<CallReview, "judgeWorkPlan">,
+  review: { readonly judgeWorkPlan: WorkPlanReview["judge"] },
   input: unknown,
 ): WorkPlanAnswer {
   const verdict = review.judgeWorkPlan(input)

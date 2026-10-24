@@ -14,7 +14,7 @@
   イベントと記録は `work-plan`。段ごとの所要時間は `phaseDurations` で、帯と一覧の行の型は `PhaseTimeRow`（段の行と、並列の段の行）・段1つの所要は `PhaseDuration`。
   `report` の段の閉じ方の欄は `workPlanClosing`・型は `WorkPlanClosing`（`none` / `finished` / `stopped`）、
   イベントを受けて今のワークプランを畳む決まり〔依頼で忘れる・返却で進める・`finished` で最後の段を閉じる〕は `nextWorkPlan`、
-  記録から畳んだ今のワークプランは `currentWorkPlan`）
+  記録から畳んだ今のワークプランは `currentWorkPlan`。サーバの機能は `src/server/work-plan/`）
 - **定義**: 作業中のターンで claude が `work_plan` ツールで渡す、**段**（作業のまとまり・フェーズ）の
   並びと今の位置。同時に走る段は**並列の段**として並びの1要素にする。いまの作業の札・依頼の手順の一覧の頭・会話の画面の**進み具合の帯**に出て、段が移ると
   メインビューに中間レポートが出る。レポートの本文には描かない

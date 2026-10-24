@@ -15,7 +15,7 @@
   `expression`（表情）と任意の `phase`（委譲先の段を番号で言うときの、その番号。`phase_result` の `phase` と同じ数え方）で、
   **戻り値は `"ok"` か、仕事のときに新しい事実の無い呼び出しを差し戻す固定の一文か、
   委譲先の段の範囲があるあいだ範囲の外の `phase` を差し戻す固定の一文**
-  （差し戻した呼び出しは吹き出しに出さない。`src/server/session-driver/core/speech-review.ts`・`phase-mention.ts`）。
+  （差し戻した呼び出しは吹き出しに出さない。`src/server/session-driver/core/speech-review.ts`・`src/server/work-plan/core/phase-mention.ts`）。
   `phase` は差し戻しの検査だけが読み、画面へは運ばない。セリフの本文の段の番号は読まない
 - **注記**: **セリフの唯一の主経路**（`docs/architecture/adr/0009-speech-via-tool.md`）。
   **セリフが届く経路はこれだけ**（行頭マーカーの補助は
@@ -60,7 +60,7 @@
   戻り値は `"ok"` か、`current` が要素の数を超えた・段のまとめが足りない・長すぎる・1回で2段以上済ませた・
   委譲先の段の範囲の段の数が委譲の返却の `N` と違う・範囲の端が並列の段をまたぐときの直し方だけで、ターンは閉じない
 - **注記**: **仕事のときだけ載る**。呼ぶ条件と段の切り方は `WORK_PLAN_PROMPT`
-  （`src/server/session-driver/core/work-plan-tool.ts`）が持つ。メインの呼び出しだけを
+  （`src/server/work-plan/core/work-plan-tool.ts`）が持つ。メインの呼び出しだけを
   `work-plan` のイベントにし、サブエージェントの呼び出しは捨てる（`report` と同じ線）
 - **避ける言い方**: plan ツール（「プラン」と紛れる）、進捗ツール
 

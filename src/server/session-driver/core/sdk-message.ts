@@ -19,6 +19,12 @@ import { isBlankText } from "../../../shared/utils/blank-text.ts"
 import { clipText, clipWithEllipsis } from "../../../shared/utils/clip-text.ts"
 import { nonBlankString } from "../../../shared/utils/non-blank-string.ts"
 import { optionalString } from "../../../shared/utils/optional-string.ts"
+import {
+  PHASE_RESULT_TOOL_NAME,
+  REPORT_TOOL_NAME,
+  tsukumoToolFullName,
+  WORK_PLAN_TOOL_NAME,
+} from "../../core/tsukumo-tool-name.ts"
 import { apiErrorEvents, apiRetryEvents, rateLimitEvents } from "./sdk-api-trouble-message.ts"
 import { backgroundTaskEvents, delegateProgressEvents } from "./sdk-background-message.ts"
 import { toCommandDescriptions } from "./sdk-query-reply.ts"
@@ -28,12 +34,6 @@ import { partialUtteranceEvents, reportDraftingEvents } from "./sdk-stream-messa
 import { toolResultEvents } from "./sdk-tool-result-message.ts"
 import { turnOutcome } from "./sdk-turn-outcome-message.ts"
 import { stepUsageEvents, tokenUsageEvents } from "./sdk-usage-message.ts"
-import {
-  PHASE_RESULT_TOOL_NAME,
-  REPORT_TOOL_NAME,
-  tsukumoToolFullName,
-  WORK_PLAN_TOOL_NAME,
-} from "./tsukumo-tool-name.ts"
 
 /**
  * SDK のメッセージ1つを内部イベントの並びに変換する。

@@ -5,7 +5,7 @@ import { isPlainObject } from "remeda"
 
 import type { Expression } from "../../../shared/character-pack/expression.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
-import { SPEAK_TOOL_NAME, tsukumoToolFullName } from "./tsukumo-tool-name.ts"
+import { SPEAK_TOOL_NAME, tsukumoToolFullName } from "../../core/tsukumo-tool-name.ts"
 
 export function speechEvents(
   input: unknown,

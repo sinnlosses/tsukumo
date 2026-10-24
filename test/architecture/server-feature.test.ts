@@ -26,7 +26,7 @@ const DOC_ROOT = `${REPOSITORY_ROOT}/docs`
 // 共有の箱はどの機能からも読んでよいので、ここには出てこない。
 const SERVER_FEATURE_IMPORTS: Readonly<Record<ServerFeature, ReadonlySet<ServerFeature>>> = {
   report: new Set([]),
-  "system-prompt": new Set(["report", "chat", "session-driver"]),
+  "system-prompt": new Set(["report", "chat", "session-driver", "work-plan", "question"]),
   "context-usage": new Set(["session-driver"]),
   "experience-metric": new Set([]),
   diagnostic: new Set([]),
@@ -42,9 +42,11 @@ const SERVER_FEATURE_IMPORTS: Readonly<Record<ServerFeature, ReadonlySet<ServerF
   achievement: new Set(["repository"]),
   "character-pack": new Set([]),
   item: new Set([]),
-  diary: new Set(["repository", "session-driver"]),
+  diary: new Set(["repository"]),
   chat: new Set(["character-pack"]),
-  "session-driver": new Set(["report", "view-server", "chat"]),
+  "work-plan": new Set([]),
+  question: new Set(["report"]),
+  "session-driver": new Set(["report", "view-server", "chat", "work-plan", "question"]),
   session: new Set([
     "session-driver",
     "chat",

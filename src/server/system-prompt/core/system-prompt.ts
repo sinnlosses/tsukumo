@@ -16,10 +16,10 @@ import {
   workMemoryPromptParts,
 } from "../../chat/core/chat-memory-prompt.ts"
 import type { ChatSummary } from "../../chat/core/chat-memory.ts"
+import { QUESTION_NOTATION_PROMPT } from "../../question/core/question-notation.ts"
 import { REPORT_NOTATION_PROMPT } from "../../report/core/report-notation.ts"
-import { QUESTION_NOTATION_PROMPT } from "../../session-driver/core/question-notation.ts"
 import type { SessionMode, SessionStart } from "../../session-driver/core/session-driver.ts"
-import { WORK_PLAN_PROMPT } from "../../session-driver/core/work-plan-tool.ts"
+import { WORK_PLAN_PROMPT } from "../../work-plan/core/work-plan-tool.ts"
 import { SPEECH_CADENCE_PROMPT } from "./speech-cadence.ts"
 
 /** {@link takeSystemPromptAppend} に渡すもの。 */
