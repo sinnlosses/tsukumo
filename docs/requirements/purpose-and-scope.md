@@ -116,7 +116,7 @@
 - **Orca と macOS の既定のブラウザ以外のホストを作り込むこと。** ホストは Orca のブラウザタブ
   （`orca tab create --url`）と、既定のブラウザ（`open <URL>`）が並ぶ（2026-10-24 に既定のブラウザを足した）。
   どのホストで開くかは起動のしかたに属するので環境変数で選び、既定は自動で選ぶ
-  （`docs/architecture/adr/0022-three-setting-homes.md`）。VS Code 用・Linux の `xdg-open` などは作らない。
+  （`docs/architecture/adr/0025-no-project-settings.md`）。VS Code 用・Linux の `xdg-open` などは作らない。
   手で確かめるのは Orca と macOS の既定のブラウザで、ほかは落ちずに開ければよい
   （`docs/architecture/adr/0015-single-host-port.md`）
 - `orca` コマンドが無い環境で orca のホストを選んでいるときと、`open` が失敗したときは、**ビューを開くことを諦めて動作を
