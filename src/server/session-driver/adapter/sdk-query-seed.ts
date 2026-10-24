@@ -28,7 +28,7 @@ import type { ExternalToolMark } from "../core/external-tool-mark.ts"
 import { judgePhaseResultCaller } from "../core/phase-result-tool.ts"
 import type { SessionDriverOptions, SessionMode } from "../core/session-driver.ts"
 import { childProcessEnv } from "../core/visible-output-nudge.ts"
-import { judgeToolAgainstGate } from "../core/work-plan-gate.ts"
+import { judgeEditAgainstMissingPlan, judgeToolAgainstGate } from "../core/work-plan-gate.ts"
 import { workflowPluginDir } from "./workflow-plugin.ts"
 
 /** `query()` の `options` のうち、`mcpServers` / `canUseTool`（クロージャが要る）を除いた部分。 */
@@ -104,6 +104,7 @@ export function buildQuerySeedOptions(options: SessionDriverOptions): QuerySeedO
 /**
  * `PreToolUse` フックを1つ登録する。
  * メインの `phase_result`（`judgePhaseResultCaller`）と、委譲ゲート（`judgeToolAgainstGate`）で拒むときは `permissionDecision: "deny"` を返す。
+ * `planMissing` が真のあいだは、メインの `Edit`・`Write` も同じく拒む（`judgeEditAgainstMissingPlan`。渡さなければ掛けない）。
  * 通したメインの `Agent` 呼び出しは背景に固定する（`updatedInput` だけを返し、許可の判定には触らない）。
  * `Bash` の `command` は `rewriteBash` が返した短い出力の版へ差し替える（同じく `updatedInput` だけ。サブエージェントの中の呼び出しも対象）。
  * `agent_id` はサブエージェント内の呼び出しにだけ付くので、ここで真偽に畳んでから渡す。
@@ -119,6 +120,7 @@ export function preToolUseHooks(
   onEvent: (event: SessionEvent) => void,
   externalToolMark: Pick<ExternalToolMark, "observeTool">,
   rewriteBash: (command: string) => Promise<string | undefined>,
+  planMissing: (() => boolean) | undefined,
 ): Partial<Record<HookEvent, HookCallbackMatcher[]>> {
   return {
     PreToolUse: [
@@ -152,6 +154,22 @@ export function preToolUseHooks(
                     hookEventName: "PreToolUse",
                     permissionDecision: "deny",
                     permissionDecisionReason: gated.reason,
+                  },
+                }
+              }
+            }
+            if (planMissing?.() === true) {
+              const edited = judgeEditAgainstMissingPlan(
+                input.tool_name,
+                inSubagent,
+                filePathOf(input.tool_input),
+              )
+              if (edited.kind === "deny") {
+                return {
+                  hookSpecificOutput: {
+                    hookEventName: "PreToolUse",
+                    permissionDecision: "deny",
+                    permissionDecisionReason: edited.reason,
                   },
                 }
               }
@@ -285,4 +303,11 @@ function confirmedSettingEvents(input: BaseHookInput): readonly SessionEvent[] {
       ? [{ kind: "setting-confirmed", setting: "permissionMode", value: mode } as const]
       : []),
   ]
+}
+
+function filePathOf(toolInput: unknown): string | undefined {
+  if (typeof toolInput !== "object" || toolInput === null || !("file_path" in toolInput)) {
+    return undefined
+  }
+  return typeof toolInput.file_path === "string" ? toolInput.file_path : undefined
 }

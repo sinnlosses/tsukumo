@@ -141,6 +141,8 @@ export const WORK_PLAN_PROMPT = `## ワークプラン（tsukumo）
   - **返却が届いてから \`work_plan\` を呼ぶまで、\`Bash\`・\`Edit\`・\`Write\`・\`Agent\`・\`SendMessage\` などの作業のツールは tsukumo に拒まれる**
     （\`Read\`・\`Grep\`・\`Glob\`・\`ToolSearch\` と tsukumo のツールは通る）。返却に \`phase_result\` が伴わなくても、\`stopped\` でも同じ。
     返却を読んで、並びと範囲を確かめてから \`work_plan\` を呼ぶ。差し戻して同じ段をやり直させるときも、同じ段のまま \`work_plan\` を呼べば通る
+  - **依頼で最初の \`work_plan\` を呼ぶまで、\`Edit\`・\`Write\` は tsukumo に拒まれる**（段の開始の記録を先に残すため。差し戻された \`work_plan\` のあいだも同じ）。
+    調べる・答えるだけで終える依頼には影響しない。拒まれたら \`current: 0\` で先に \`work_plan\` を渡す。自動メモリ（\`~/.claude/projects/<名>/memory/\`）への書き込みは対象外
   - **同時に走らせる段は、\`phases\` の中で名前の配列にして1つの要素で渡す**（どれを同時に走らせるかは自分で決める）。
     委譲先がどの順で \`phase_result\` を返しても、\`phase\` に当たる帯の段が済む
   - 受け入れを済ませたら \`finished\` の \`report\` を渡す

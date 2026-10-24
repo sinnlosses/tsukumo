@@ -75,6 +75,8 @@ export type WorkPlanReview = {
   readonly standing: () => WorkPlanStanding
   /** 返却が届いてから、メインの `work_plan` が受け付けられるまでのあいだ真。 */
   readonly gateRaised: () => boolean
+  /** 受け付け済みのワークプランが無いあいだ真。差し戻されただけでは真のまま、`request` で真に戻る。 */
+  readonly planMissing: () => boolean
   /** 受け付け済みのワークプランの委譲先の段の範囲。ワークプランが無ければ `none`。 */
   readonly delegatedRange: () => DelegatedRange
   /** 受け付け済みのワークプランの帯の位置の文（返却で進めた位置を含む）。ワークプランが無ければ空。 */
@@ -218,6 +220,7 @@ export function createWorkPlanReview(): WorkPlanReview {
           }
     },
     gateRaised: () => gateRaised,
+    planMissing: () => accepted.kind === "none",
     delegatedRange: () =>
       accepted.kind === "planned" ? accepted.delegatedRange : NO_DELEGATED_RANGE,
     bandPosition: () => bandPositionText(accepted),

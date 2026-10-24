@@ -19,9 +19,16 @@ async function runPreToolUse(
   settings: Pick<BaseHookInput, "effort" | "permission_mode"> = {},
   externalToolMark: ExternalToolMark = createExternalToolMark(),
   rewriteBash: (command: string) => Promise<string | undefined> = () => Promise.resolve(undefined),
+  planMissing?: () => boolean,
 ): Promise<unknown> {
-  const callback = preToolUseHooks(gateRaised, bandPosition, onEvent, externalToolMark, rewriteBash)
-    .PreToolUse?.[0]?.hooks[0]
+  const callback = preToolUseHooks(
+    gateRaised,
+    bandPosition,
+    onEvent,
+    externalToolMark,
+    rewriteBash,
+    planMissing,
+  ).PreToolUse?.[0]?.hooks[0]
   expect(callback).toBeDefined()
   return callback?.(
     {
@@ -144,6 +151,87 @@ describe("preToolUseHooks（Agent を背景に固定し、委譲ゲートで作�
         updatedInput: { prompt: "手順", run_in_background: true },
       },
     })
+  })
+})
+
+describe("preToolUseHooks（work_plan の前に Edit・Write を拒む）", () => {
+  const DENIED = {
+    hookSpecificOutput: {
+      hookEventName: "PreToolUse",
+      permissionDecision: "deny",
+      permissionDecisionReason: expect.stringContaining("work_plan"),
+    },
+  }
+  const run = (
+    toolName: string,
+    toolInput: unknown,
+    agentId: string | undefined,
+    missing: boolean,
+  ) =>
+    runPreToolUse(
+      toolName,
+      toolInput,
+      agentId,
+      () => false,
+      () => "",
+      () => {},
+      {},
+      createExternalToolMark(),
+      () => Promise.resolve(undefined),
+      () => missing,
+    )
+
+  it("ワークプランが無いあいだ、メインの Edit・Write を拒む", async () => {
+    expect(await run("Edit", { file_path: "/repo/a.ts" }, undefined, true)).toEqual(DENIED)
+    expect(await run("Write", { file_path: "/repo/a.ts" }, undefined, true)).toEqual(DENIED)
+  })
+
+  it("ワークプランがあれば通す", async () => {
+    expect(await run("Edit", { file_path: "/repo/a.ts" }, undefined, false)).toEqual({})
+  })
+
+  it("無くても、Bash・Read・サブエージェントの中・メモリのパスは通す", async () => {
+    expect(await run("Bash", { command: "ls" }, undefined, true)).toEqual({})
+    expect(await run("Read", { file_path: "/repo/a.ts" }, undefined, true)).toEqual({})
+    expect(await run("Write", { file_path: "/repo/a.ts" }, "sub-1", true)).toEqual({})
+    expect(
+      await run(
+        "Write",
+        { file_path: "/Users/x/.claude/projects/-a/memory/n.md" },
+        undefined,
+        true,
+      ),
+    ).toEqual({})
+  })
+
+  it("planMissing を渡さなければ掛けない（雑談モード）", async () => {
+    expect(await runPreToolUse("Write", { file_path: "/repo/a.ts" })).toEqual({})
+  })
+
+  it("CallReview の実物で、request のあとは拒み、work_plan を受け付けたら通し、request で拒みに戻る", async () => {
+    const review = createCallReview()
+    const input = { file_path: "/repo/a.ts" }
+    const runWith = () =>
+      runPreToolUse(
+        "Edit",
+        input,
+        undefined,
+        () => false,
+        () => "",
+        () => {},
+        {},
+        createExternalToolMark(),
+        () => Promise.resolve(undefined),
+        review.planMissing,
+      )
+    review.pass({ kind: "request", text: "架空の依頼", images: [] })
+    expect(await runWith()).toEqual(DENIED)
+
+    review.judgeWorkPlan({ phases: ["架空の段A", "架空の段B"], current: 0, phaseSummary: "" })
+    expect(await runWith()).toEqual({})
+
+    review.pass({ kind: "request", text: "架空の次の依頼", images: [] })
+    expect(await runWith()).toEqual(DENIED)
   })
 })
 

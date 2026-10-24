@@ -257,6 +257,51 @@ describe("WorkPlanReview の立ち位置", () => {
   })
 })
 
+describe("WorkPlanReview の planMissing", () => {
+  it("初期は真で、受け付けた work_plan で偽になる", () => {
+    const review = createWorkPlanReview()
+    expect(review.planMissing()).toBe(true)
+
+    review.judge(inputOf(0))
+    expect(review.planMissing()).toBe(false)
+  })
+
+  it("差し戻された work_plan だけでは真のまま", () => {
+    const review = createWorkPlanReview()
+
+    expect(review.judge(inputOf(1)).kind).toBe("late-start")
+    expect(review.planMissing()).toBe(true)
+  })
+
+  it("受け付けたあとの request で真に戻る", () => {
+    const review = createWorkPlanReview()
+    review.judge(inputOf(0))
+    review.pass(REQUEST)
+
+    expect(review.planMissing()).toBe(true)
+  })
+
+  it("finished の report のあとも偽のまま", () => {
+    const review = createWorkPlanReview()
+    review.judge(inputOf(0))
+    review.judge(inputOf(1))
+    review.judge(inputOf(2))
+    review.pass(reportOf("finished"))
+
+    expect(review.planMissing()).toBe(false)
+  })
+
+  it("返却で gateRaised が立っても偽のまま", () => {
+    const review = createWorkPlanReview()
+    review.pass(REQUEST)
+    review.judge(inputOf(0))
+    review.pass(handedBack())
+
+    expect(review.gateRaised()).toBe(true)
+    expect(review.planMissing()).toBe(false)
+  })
+})
+
 describe("WorkPlanReview の今のワークプラン", () => {
   const standingOf = (plan: LatestWorkPlan): WorkPlanStanding =>
     plan.kind === "none"

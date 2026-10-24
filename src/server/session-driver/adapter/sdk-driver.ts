@@ -141,6 +141,7 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
               options.onEvent,
               externalToolMark,
               rewriteWithRtk,
+              options.mode.kind === "work" ? callReview.planMissing : undefined,
             ),
             ...handbackNoteHooks(callReview, options.reportHandbackHeadMismatch),
           },
@@ -255,7 +256,6 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
     setModel: async (model) => {
       await session.setModel(model)
       // サイドバーの `<select>` は `state.model` をそのまま出すので、ここで確認の合図を出さないと次のターンの `init` まで古い値に居座る。
-      // `/model` チャットコマンドの `model-changed` を、駆動が確定させた切り替えにもそのまま使う。
       if (model !== undefined) {
         options.onEvent({ kind: "model-changed", model })
       }
