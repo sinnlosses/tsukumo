@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>見本: ドラフトをまとめて仕分ける（2026-10-24）</title>
+<style>
+  :root {
+    --ground: #191720;
+    --surface: #221f2b;
+    --ink: #e8e3ea;
+    --accent: #f2b0a0;
+    --ink-quiet: color-mix(in srgb, var(--ink) 60%, transparent);
+    --ink-soft: color-mix(in srgb, var(--ink) 72%, transparent);
+    --rule: color-mix(in srgb, var(--surface), var(--ink) 32%);
+    --rule-quiet: color-mix(in srgb, var(--surface), var(--ink) 6%);
+    --rule-soft: color-mix(in srgb, var(--surface), var(--ink) 12%);
+    --surface-accent: color-mix(in srgb, var(--surface), var(--accent) 12%);
+    --surface-raised: color-mix(in srgb, var(--ink) 10%, transparent);
+    --state-ok: #7ee081;
+    --state-ng: #f2a0a0;
+    --state-ask: #c7aef0;
+    --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 32px;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: -apple-system, "Hiragino Sans", sans-serif;
+    font-size: 13px;
+  }
+  .caption { margin: 0 0 12px; color: var(--ink-quiet); font-size: 12px; }
+  .modal {
+    width: 1180px;
+    height: 640px;
+    display: flex;
+    flex-direction: column;
+    background: var(--surface);
+    border: 1px solid var(--rule-soft);
+    border-radius: 18px;
+    overflow: hidden;
+  }
+  .head {
+    display: flex; align-items: baseline; gap: 12px;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--rule-quiet);
+  }
+  .head h1 { margin: 0; font-size: 16px; }
+  .head .count { color: var(--ink-quiet); font-size: 12px; }
+  .cols { flex: 1; display: flex; min-height: 0; }
+  .list { width: 520px; border-right: 1px solid var(--rule-quiet); display: flex; flex-direction: column; }
+  .filters { display: flex; gap: 6px; flex-wrap: wrap; padding: 12px 14px; border-bottom: 1px solid var(--rule-quiet); }
+  .chip {
+    height: 28px; padding: 0 12px; border-radius: 14px;
+    border: 1px solid var(--rule-soft); color: var(--ink-soft);
+    display: inline-flex; align-items: center; gap: 6px; font-size: 12px;
+  }
+  .chip b { font-weight: normal; color: var(--ink-quiet); font-family: var(--font-mono); }
+  .chip.on { background: var(--surface-raised); color: var(--ink); border-color: var(--rule); }
+  .rows { flex: 1; overflow: hidden; }
+  .row {
+    display: flex; flex-direction: column; gap: 6px;
+    padding: 10px 14px 10px 16px;
+    border-bottom: 1px solid var(--rule-quiet);
+  }
+  .row.focus { background: var(--surface-accent); box-shadow: inset 3px 0 0 var(--accent); }
+  .row-top { display: flex; align-items: center; gap: 8px; }
+  .id { font-family: var(--font-mono); font-size: 12px; color: var(--ink-quiet); }
+  .focus .id { color: var(--ink); }
+  .draft-mark { width: 10px; height: 10px; border-radius: 50%; border: 1.5px dashed var(--ink-quiet); }
+  .summary { font-size: 13px; line-height: 1.55; }
+  /* 仕分けの3択。選んだ札は形（左の印）と字でも言う。 */
+  .seg { margin-left: auto; display: inline-flex; border: 1px solid var(--rule-soft); border-radius: 8px; overflow: hidden; }
+  .seg span { padding: 3px 10px; font-size: 11px; color: var(--ink-quiet); border-left: 1px solid var(--rule-soft); }
+  .seg span:first-child { border-left: none; }
+  .seg .plan.on { background: color-mix(in srgb, var(--state-ok) 18%, transparent); color: var(--state-ok); }
+  .seg .drop.on { background: color-mix(in srgb, var(--state-ng) 18%, transparent); color: var(--state-ng); }
+  .seg .keep.on { background: var(--surface-raised); color: var(--ink); }
+  .seg .on::before { content: "● "; }
+  .reason {
+    margin-left: 18px; height: 28px; padding: 0 10px;
+    border: 1px solid var(--rule-soft); border-radius: 6px;
+    display: flex; align-items: center; color: var(--ink-quiet); font-size: 12px;
+  }
+  .reason em { font-style: normal; color: var(--ink); }
+  .detail { flex: 1; padding: 22px 28px; overflow: hidden; }
+  .detail .id { font-size: 13px; }
+  .detail h2 { margin: 6px 0 16px; font-size: 19px; }
+  .detail h3 { margin: 18px 0 8px; font-size: 15px; border-bottom: 1px solid var(--rule-quiet); padding-bottom: 4px; }
+  .detail p { margin: 0; line-height: 1.85; font-size: 14px; color: var(--ink-soft); }
+  /* 下端の帯。単件の「tsukumo に頼む」の代わりに、仕分けの件数とまとめて頼む口を出す。 */
+  .bar {
+    height: 64px; display: flex; align-items: center; gap: 14px;
+    padding: 0 20px; border-top: 1px solid var(--rule-quiet);
+  }
+  .tally { display: flex; gap: 14px; font-size: 13px; }
+  .tally .p { color: var(--state-ok); }
+  .tally .d { color: var(--state-ng); }
+  .tally .k { color: var(--ink-quiet); }
+  .ghost { height: 36px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--rule-soft); display: inline-flex; align-items: center; color: var(--ink-soft); }
+  .go {
+    margin-left: auto; height: 40px; padding: 0 18px; border-radius: 9px;
+    background: var(--accent); color: var(--ground); font-weight: 600;
+    display: inline-flex; align-items: center;
+  }
+  .confirm {
+    margin-top: 28px; width: 560px; padding: 18px 20px;
+    background: var(--surface); border: 1px solid var(--rule); border-radius: 14px;
+  }
+  .confirm h4 { margin: 0 0 10px; font-size: 14px; }
+  .confirm pre {
+    margin: 0 0 14px; padding: 12px; border-radius: 8px;
+    background: var(--ground); font-family: var(--font-mono); font-size: 12px; line-height: 1.7;
+    white-space: pre-wrap; color: var(--ink-soft);
+  }
+  .confirm .btns { display: flex; justify-content: flex-end; gap: 10px; }
+</style>
+</head>
+<body>
+<p class="caption">見本: タスク板の絞り込み「ドラフト」で行ごとに仕分け、下端の帯から1通で頼む（2026-10-24。架空のドラフト）</p>
+<div class="modal">
+  <div class="head"><h1>タスク</h1><span class="count">進行中 1 · 未着手 24 · ドラフト 5</span></div>
+  <div class="cols">
+    <div class="list">
+      <div class="filters">
+        <span class="chip">すべて <b>40</b></span>
+        <span class="chip">着手できる <b>18</b></span>
+        <span class="chip">待ち <b>4</b></span>
+        <span class="chip">保留 <b>2</b></span>
+        <span class="chip on">ドラフト <b>5</b></span>
+        <span class="chip">完了 <b>10</b></span>
+      </div>
+      <div class="rows">
+        <div class="row">
+          <div class="row-top"><i class="draft-mark"></i><span class="id">GH-1401</span>
+            <span class="seg"><span class="plan on">計画</span><span class="drop">却下</span><span class="keep">保留</span></span></div>
+          <div class="summary">検証の絞り込みを受け入れの段にも効かせる</div>
+        </div>
+        <div class="row focus">
+          <div class="row-top"><i class="draft-mark"></i><span class="id">GH-1402</span>
+            <span class="seg"><span class="plan on">計画</span><span class="drop">却下</span><span class="keep">保留</span></span></div>
+          <div class="summary">振り返りの観点「空振り」の物差しを記録の数で決める</div>
+        </div>
+        <div class="row">
+          <div class="row-top"><i class="draft-mark"></i><span class="id">GH-1403</span>
+            <span class="seg"><span class="plan">計画</span><span class="drop on">却下</span><span class="keep">保留</span></span></div>
+          <div class="summary">古いフックの名前を新しい命名に揃える</div>
+          <div class="reason">却下の理由:&nbsp;<em>GH-1388 で同じ名前に揃え済み</em></div>
+        </div>
+        <div class="row">
+          <div class="row-top"><i class="draft-mark"></i><span class="id">GH-1404</span>
+            <span class="seg"><span class="plan">計画</span><span class="drop">却下</span><span class="keep on">保留</span></span></div>
+          <div class="summary">日記の表紙を選べるようにする</div>
+        </div>
+        <div class="row">
+          <div class="row-top"><i class="draft-mark"></i><span class="id">GH-1405</span>
+            <span class="seg"><span class="plan">計画</span><span class="drop">却下</span><span class="keep on">保留</span></span></div>
+          <div class="summary">E2E の待ちを固定の秒数から条件の待ちに変える</div>
+        </div>
+      </div>
+    </div>
+    <div class="detail">
+      <span class="id">GH-1402 · ドラフト</span>
+      <h2>振り返りの観点「空振り」の物差しを記録の数で決める</h2>
+      <h3>目的・背景</h3>
+      <p>振り返りの「空振り」の観点は、ドラフトを積むかどうかを言葉の目安で決めていて、28日の記録では積んだ 9 件のうち 6 件が却下された。記録の数で物差しを決め直す。</p>
+      <h3>観点</h3>
+      <p>空振り</p>
+    </div>
+  </div>
+  <div class="bar">
+    <div class="tally"><span class="p">● 計画 2</span><span class="d">● 却下 1</span><span class="k">保留 2</span></div>
+    <span class="ghost">仕分けを戻す</span>
+    <span class="go">tsukumo にまとめて頼む</span>
+  </div>
+</div>
+
+<div class="confirm">
+  <h4>この文面で頼みます</h4>
+  <pre>/plan-tasks ドラフトを仕分けた。
+計画（承認済み）: GH-1401, GH-1402
+却下: GH-1403（GH-1388 で同じ名前に揃え済み）</pre>
+  <div class="btns"><span class="ghost">やめる</span><span class="go" style="margin-left:0">頼む</span></div>
+</div>
+</body>
+</html>
