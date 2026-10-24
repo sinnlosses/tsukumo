@@ -16,7 +16,7 @@ import {
 } from "./fixture/command-router.ts"
 import { createStubDriver } from "./fixture/session-driver.ts"
 
-describe("createCommandRouter（session）", () => {
+describe("createSocketRouter（session）", () => {
   // 帯のドロップダウンはセッション限り（`docs/architecture/screen-design.md`「設定の置き場所」）。既定は書き換わらない。
   it("駆動へそのまま渡す5種は、駆動の口を順に1つずつ呼ぶ", async () => {
     const { commands, stub, remembered } = startRouter()

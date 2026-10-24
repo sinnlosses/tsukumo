@@ -61,7 +61,7 @@ export type OpenSdkTurn = {
 
 export const INITIAL_SPEECH_EXPRESSION = "default" as const satisfies Expression
 
-export const NO_TURN_BODIES = { report: false, utterance: false } as const satisfies TurnBodies
+const NO_TURN_BODIES = { report: false, utterance: false } as const satisfies TurnBodies
 
 export const CLOSED_SDK_TURN = { kind: "closed" } as const satisfies SdkTurn
 

@@ -4,7 +4,6 @@ import { createCallReview } from "../../../../src/server/session-driver/core/cal
 import {
   answerPhaseResultCall,
   judgePhaseResultCaller,
-  PHASE_RESULT_REJECTIONS,
 } from "../../../../src/server/session-driver/core/phase-result-tool.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 
@@ -55,7 +54,10 @@ describe("answerPhaseResultCall", () => {
       answerPhaseResultCall(plannedReview(), { phase: 0, count: 2, outcome: "finished" }, (event) =>
         events.push(event),
       ),
-    ).toEqual({ text: PHASE_RESULT_REJECTIONS.malformed, isError: true })
+    ).toEqual({
+      text: expect.stringContaining("phase は 1 から count までの整数にし"),
+      isError: true,
+    })
     expect(events).toEqual([])
   })
 })
@@ -64,7 +66,9 @@ describe("judgePhaseResultCaller", () => {
   it("メインの phase_result だけを拒み、委譲先の呼び出しとほかのツールは通す", () => {
     expect(judgePhaseResultCaller("mcp__tsukumo__phase_result", false)).toEqual({
       kind: "deny",
-      reason: PHASE_RESULT_REJECTIONS.main,
+      reason: expect.stringContaining(
+        "phase_result は委譲先が段の結果を返すツールで、メインは呼ばない",
+      ),
     })
     expect(judgePhaseResultCaller("mcp__tsukumo__phase_result", true)).toEqual({ kind: "allow" })
     expect(judgePhaseResultCaller("mcp__tsukumo__work_plan", false)).toEqual({ kind: "allow" })

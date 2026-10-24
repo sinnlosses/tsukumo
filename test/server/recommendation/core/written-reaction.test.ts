@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest"
 
-import { WELCOME_LINE_CHARS } from "../../../../src/server/recommendation/core/welcome-line.ts"
 import {
   parseWrittenReactions,
   writtenReactionsQuery,
@@ -68,7 +67,7 @@ describe("parseWrittenReactions", () => {
     ],
     [
       "行が上限を超える",
-      { ...OUTPUT, limited: { text: "あ".repeat(WELCOME_LINE_CHARS + 1), expression: "default" } },
+      { ...OUTPUT, limited: { text: "あ".repeat(61), expression: "default" } },
       "too-long",
     ],
     [

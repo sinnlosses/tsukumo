@@ -9,14 +9,9 @@ import { z } from "zod"
 import { EMPTY_DRAFT, type Draft } from "../../../../../../../../stores/composer-draft.ts"
 import { localPreference } from "../../../../../../../../utils/local-preference.ts"
 
-export const MAX_DRAFT_SESSIONS = 10
+const MAX_DRAFT_SESSIONS = 10
 
 type StoredDraft = Draft & { readonly sessionId: string }
-
-export function loadSessionDraft(sessionId: string): Draft | undefined {
-  const found = readAll().find((stored) => stored.sessionId === sessionId)
-  return found === undefined ? undefined : { text: found.text, caret: found.caret }
-}
 
 /** 空の文面は保存せず、あれば消す。 */
 export function saveSessionDraft(sessionId: string, draft: Draft): void {
@@ -68,6 +63,11 @@ const preference = localPreference(
   z.array(z.unknown()).transform((items) => items.filter(isStoredDraft)),
   [],
 )
+
+function loadSessionDraft(sessionId: string): Draft | undefined {
+  const found = readAll().find((stored) => stored.sessionId === sessionId)
+  return found === undefined ? undefined : { text: found.text, caret: found.caret }
+}
 
 function readAll(): readonly StoredDraft[] {
   return preference.load()

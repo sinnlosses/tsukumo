@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { Composer } from "../../../../../../../../../src/browser/components/page/conversation/components/dispatch/components/composer/composer.tsx"
 import { useComposerDraft } from "../../../../../../../../../src/browser/stores/composer-draft.ts"
-import { useInquiryDraft } from "../../../../../../../../../src/browser/stores/inquiry-answer.ts"
+import { useInquiryDraft } from "../../../../../../../../../src/browser/stores/inquiry-draft.ts"
 import { useInquiryJump } from "../../../../../../../../../src/browser/stores/inquiry-jump.ts"
 import type { CharacterInfo } from "../../../../../../../../../src/shared/character-pack/character.ts"
 import { FRAME_ERROR_REASON } from "../../../../../../../../../src/shared/frame.ts"

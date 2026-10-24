@@ -15,10 +15,13 @@ import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../src/shared/session/session-state.ts"
-import { shownReaction, WAITING_LINE_DELAY_MS } from "../../../src/shared/session/shown-reaction.ts"
+import { shownReaction } from "../../../src/shared/session/shown-reaction.ts"
 import { turnSpeeches } from "../../../src/shared/session/turn-speech.ts"
 import { characterChangedEvent } from "../../fixture/character.ts"
 import { reportEvent } from "../../fixture/report-event.ts"
+
+/** ターンが閉じてから待ちの一言を出すまでの間（2分）。 */
+const WAITING_LINE_DELAY_MS = 120_000
 
 const REQUEST = { kind: "request", text: "架空の依頼", images: [] } as const satisfies SessionEvent
 

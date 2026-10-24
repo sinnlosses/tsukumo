@@ -108,8 +108,23 @@ export type CommandRouterPorts = {
   readonly experienceMetric: ExperienceMetricProcedurePorts
 }
 
-/** コマンドの手続きを束ね、照合と断る条件のミドルウェアを全部の前に掛ける（`/ws` に載る）。 */
-export function createCommandRouter(ports: CommandRouterPorts) {
+/**
+ * `/ws` に載せるルータ。
+ * コマンドの手続きに、押し出しの購読（`frame.subscribe`）を足したもの。
+ * 購読はコマンドではないので、照合だけを掛けて断る条件（{@link commandGuard}）は見ない。
+ */
+export function createSocketRouter(ports: CommandRouterPorts) {
+  return {
+    ...createCommandRouter(ports),
+    frame: implement(frameContract)
+      .$context<SocketRpcContext>()
+      .use(rpcGuard)
+      .router(frameProcedure()),
+  }
+}
+
+/** コマンドの手続きを束ね、照合と断る条件のミドルウェアを全部の前に掛ける。 */
+function createCommandRouter(ports: CommandRouterPorts) {
   return implement(commandContract)
     .$context<CommandRpcContext>()
     .use(rpcGuard)
@@ -125,19 +140,4 @@ export function createCommandRouter(ports: CommandRouterPorts) {
       diagnostic: diagnosticProcedure(ports.diagnostic),
       experienceMetric: experienceMetricProcedure(ports.experienceMetric),
     })
-}
-
-/**
- * `/ws` に載せるルータ。
- * コマンドの手続きに、押し出しの購読（`frame.subscribe`）を足したもの。
- * 購読はコマンドではないので、照合だけを掛けて断る条件（{@link commandGuard}）は見ない。
- */
-export function createSocketRouter(ports: CommandRouterPorts) {
-  return {
-    ...createCommandRouter(ports),
-    frame: implement(frameContract)
-      .$context<SocketRpcContext>()
-      .use(rpcGuard)
-      .router(frameProcedure()),
-  }
 }

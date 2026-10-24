@@ -3,7 +3,7 @@ import { join } from "node:path"
 import process from "node:process"
 
 import { TSUKUMO_HOME_PLACES } from "../../src/server/adapter/tsukumo-home.ts"
-import { readInstanceLocation } from "./instance-location.ts"
+import { readInstanceLocation } from "./live-instance-location.ts"
 
 export type FakeTsukumoOptions = {
   /** 起こす CLI の入口ファイルのパス。 */

@@ -18,7 +18,7 @@ const TURN_FINISHED_EVENT = {
   outcome: { kind: "completed" },
 } satisfies SessionEvent
 
-describe("createCommandRouter（session）", () => {
+describe("createSocketRouter（session）", () => {
   it("switchCharacter は画面から選ばれた名前で、いまのモードのまま、最新の続きから起こし直す", async () => {
     const { commands, restarts, observe } = startRouter()
     observe(CHAT_MODE_EVENT)

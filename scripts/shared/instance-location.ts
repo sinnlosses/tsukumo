@@ -1,28 +1,9 @@
 // 動いている tsukumo を、所在のファイルから見つける、という概念1つを持つ。
 // 所在のファイルを書かない古いプロセスのために、ポートの走査を併用する。
 
-import { readdirSync, readFileSync } from "node:fs"
-import { join } from "node:path"
-import process from "node:process"
-
-import { z } from "zod"
-
-import {
-  defaultInstanceLocationDir,
-  type InstanceLocation,
-} from "../../src/server/view-server/adapter/instance-location-file.ts"
+import { defaultInstanceLocationDir } from "../../src/server/view-server/adapter/instance-location-file.ts"
+import { readLiveInstanceLocations } from "./live-instance-location.ts"
 import { findListener, type Listener } from "./port-listener.ts"
-
-const instanceLocationSchema = z.object({
-  pid: z.number().int().positive(),
-  port: z.number().int().min(0).max(65535),
-  url: z.string(),
-  cwd: z.string(),
-  head: z
-    .string()
-    .optional()
-    .transform((head) => head),
-}) satisfies z.ZodType<InstanceLocation>
 
 /** 動いている tsukumo。所在を書かない古いプロセスは `cwd`・`startHead` が無い。 */
 export type RunningTsukumo = Listener & {
@@ -43,25 +24,6 @@ export function describeFreshness(
   return currentHead === startHead
     ? "最新"
     : `古い（起動 ${startHead.slice(0, SHORT_HEAD_LENGTH)} → 今 ${currentHead.slice(0, SHORT_HEAD_LENGTH)}）`
-}
-
-/** 所在のファイルを1つ読む。読めない・形が違うときは undefined。 */
-export function readInstanceLocation(path: string): InstanceLocation | undefined {
-  try {
-    const parsed = instanceLocationSchema.safeParse(JSON.parse(readFileSync(path, "utf8")))
-    return parsed.success ? parsed.data : undefined
-  } catch {
-    return undefined
-  }
-}
-
-/** 所在のファイルの置き場の中で、書いたプロセスがまだ生きているものだけ。読む側は古いファイルを消さない。 */
-export function readLiveInstanceLocations(
-  dir = defaultInstanceLocationDir(),
-): readonly InstanceLocation[] {
-  return listFileNames(dir)
-    .flatMap((name) => readInstanceLocation(join(dir, name)) ?? [])
-    .filter((location) => isAlive(location.pid))
 }
 
 /**
@@ -94,22 +56,4 @@ export function findRunningTsukumo(
     .filter((found) => !confirmedPids.has(found.pid))
     .map((found): RunningTsukumo => ({ ...found, cwd: undefined, startHead: undefined }))
   return [...confirmed, ...unlocated].toSorted((a, b) => a.port - b.port)
-}
-
-function listFileNames(dir: string): readonly string[] {
-  try {
-    return readdirSync(dir).filter((name) => /^\d+\.json$/u.test(name))
-  } catch {
-    return []
-  }
-}
-
-/** シグナル 0 は届くかどうかだけを見る。別の利用者のプロセス（`EPERM`）も生きている。 */
-function isAlive(pid: number): boolean {
-  try {
-    process.kill(pid, 0)
-    return true
-  } catch (error) {
-    return error instanceof Error && "code" in error && error.code === "EPERM"
-  }
 }

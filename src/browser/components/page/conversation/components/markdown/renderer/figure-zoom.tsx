@@ -66,21 +66,6 @@ export function figureZoomTriggerProps(
   }
 }
 
-/** svg を、実寸（`viewBox` の幅と高さ）を持つ `<img>` 用の data URL にする。 */
-export function svgDataUrl(svg: SVGSVGElement): string {
-  const copy = svg.cloneNode(true)
-  if (!(copy instanceof Element)) {
-    return ""
-  }
-  const size = naturalSize(svg)
-  copy.setAttribute("width", String(size.width))
-  copy.setAttribute("height", String(size.height))
-  copy.removeAttribute("style")
-  copyComputedStyle(svg, copy)
-  const text = new XMLSerializer().serializeToString(copy)
-  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(text)}`
-}
-
 type SvgZoomProps = {
   readonly svg: SVGSVGElement
   readonly onClose: () => void
@@ -116,6 +101,21 @@ export function ZoomableSvgFigure(props: ZoomableSvgFigureProps): ReactElement {
       {zoomed !== undefined && <SvgZoom svg={zoomed} onClose={() => setZoomed(undefined)} />}
     </>
   )
+}
+
+/** svg を、実寸（`viewBox` の幅と高さ）を持つ `<img>` 用の data URL にする。 */
+function svgDataUrl(svg: SVGSVGElement): string {
+  const copy = svg.cloneNode(true)
+  if (!(copy instanceof Element)) {
+    return ""
+  }
+  const size = naturalSize(svg)
+  copy.setAttribute("width", String(size.width))
+  copy.setAttribute("height", String(size.height))
+  copy.removeAttribute("style")
+  copyComputedStyle(svg, copy)
+  const text = new XMLSerializer().serializeToString(copy)
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(text)}`
 }
 
 function naturalSize(svg: SVGSVGElement): { readonly width: number; readonly height: number } {

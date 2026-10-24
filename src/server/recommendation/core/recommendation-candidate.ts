@@ -5,7 +5,7 @@
 import { taskReadiness, type TaskSummaryResult } from "../../../shared/repository/task-summary.ts"
 
 /** 問い合わせに渡すタスクの候補の上限（一覧の順に上から）。 */
-export const RECOMMENDATION_TASK_CANDIDATE_LIMIT = 20
+const RECOMMENDATION_TASK_CANDIDATE_LIMIT = 20
 
 /** 並べる元の1件。`resume` は前回の続きで、中身を持たない。 */
 export type RecommendationCandidate =

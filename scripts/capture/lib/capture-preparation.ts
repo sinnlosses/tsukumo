@@ -29,6 +29,24 @@ export type Preparation =
 /** `wait` が要素の出現を待つ上限（ミリ秒）。`bd` の読みなど、ほかの手より遅いものを待つ。 */
 const WAIT_TIMEOUT_MS = 40_000
 
+/** `apply` が false を返した手を集める。`stop` は最初の外れで打ち切る。 */
+export async function collectMisses(
+  steps: readonly Preparation[],
+  apply: (step: Preparation) => Promise<boolean>,
+  onMiss: "stop" | "continue",
+): Promise<readonly Preparation[]> {
+  const missed: Preparation[] = []
+  for (const step of steps) {
+    if (!(await apply(step))) {
+      missed.push(step)
+      if (onMiss === "stop") {
+        break
+      }
+    }
+  }
+  return missed
+}
+
 /** 操作を1つ当てる。当たったら true、要素が見つからないなどで当たらなければ false。 */
 export async function applyPreparation(
   page: Page,

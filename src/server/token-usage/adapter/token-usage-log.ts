@@ -24,11 +24,6 @@ import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
 import type { TokenUsageEntry, TokenUsageLog } from "../core/token-usage.ts"
 import type { OpenTaskReader } from "./tw-claim-list.ts"
 
-/** 書き込んでよいのはこの下だけ。 */
-export function tokenUsageDir(): string {
-  return tsukumoHomePath("tokenUsage")
-}
-
 /**
  * 記録の読み書き口を作る。`openTask` はこの作業ツリーで着手中のタスクを読む口（{@link OpenTaskReader}）、`root` は置き場（既定は {@link tokenUsageDir}）。
  * 1つの口を日をまたいで使い回せる（`append` のたびに `entry.at` から行き先を組み立てる）。
@@ -54,6 +49,11 @@ export function createTokenUsageLog(
 }
 
 /** 1ターンぶんの記録を、書き出す行（`TokenUsageRecord`）へ変換する。 */
+/** 書き込んでよいのはこの下だけ。 */
+function tokenUsageDir(): string {
+  return tsukumoHomePath("tokenUsage")
+}
+
 function toRecord(entry: TokenUsageEntry, openTask: OpenTaskReader): TokenUsageRecord {
   const task = openTask.read()
   return {

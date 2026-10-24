@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest"
 import {
   createTokenUsageRecorder,
   type TokenUsageEntry,
-  tokenUsageDelta,
 } from "../../../../src/server/token-usage/core/token-usage.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import { applySessionEvent } from "../../../../src/shared/session/session-fold.ts"
@@ -25,33 +24,52 @@ function usage(model: string, input: number, output: number, cost: number): Mode
   }
 }
 
-describe("tokenUsageDelta", () => {
+/** 前の `result` の累計のあとに今の累計を渡し、今の累計で記録へ渡ったモデルの並びを返す（行が渡らなければ空）。 */
+function deltaOf(
+  previous: readonly ModelTokenUsage[],
+  current: readonly ModelTokenUsage[],
+): readonly ModelTokenUsage[] {
+  const written: TokenUsageEntry[] = []
+  const recorder = createTokenUsageRecorder({
+    append: (entry) => {
+      written.push(entry)
+    },
+    prefetchOpenTask: () => {},
+    readRange: () => [],
+  })
+  recorder.append(previous, 0, STARTED_STATE)
+  const writtenBefore = written.length
+  recorder.append(current, 1, STARTED_STATE)
+  return written.slice(writtenBefore).flatMap((entry) => entry.models)
+}
+
+describe("createTokenUsageRecorder の増分", () => {
   it("累計から前回ぶんを引いた増分を返す", () => {
     const previous = [usage("opus", 100, 20, 0.5)]
     const current = [usage("opus", 260, 35, 1.25)]
 
-    expect(tokenUsageDelta(previous, current)).toEqual([usage("opus", 160, 15, 0.75)])
+    expect(deltaOf(previous, current)).toEqual([usage("opus", 160, 15, 0.75)])
   })
 
   it("累計が振り出しに戻ったターンは負を書かず、いまの累計をそのまま増分にする", () => {
     const previous = [usage("opus", 900, 300, 4)]
     const current = [usage("opus", 120, 40, 0.6)]
 
-    expect(tokenUsageDelta(previous, current)).toEqual([usage("opus", 120, 40, 0.6)])
+    expect(deltaOf(previous, current)).toEqual([usage("opus", 120, 40, 0.6)])
   })
 
   it("増えていないモデルは並びに出さない（0だけの行を作らない）", () => {
     const previous = [usage("opus", 100, 20, 0.5), usage("haiku", 10, 2, 0.01)]
     const current = [usage("opus", 100, 20, 0.5), usage("haiku", 30, 5, 0.02)]
 
-    expect(tokenUsageDelta(previous, current)).toEqual([usage("haiku", 20, 3, 0.01)])
+    expect(deltaOf(previous, current)).toEqual([usage("haiku", 20, 3, 0.01)])
   })
 
   it("途中で増えたモデル（サブエージェント）は全量が増分になる", () => {
     const previous = [usage("opus", 100, 20, 0.5)]
     const current = [usage("opus", 150, 25, 0.7), usage("sonnet", 40, 8, 0.03)]
 
-    expect(tokenUsageDelta(previous, current)).toEqual([
+    expect(deltaOf(previous, current)).toEqual([
       usage("opus", 50, 5, 0.2),
       usage("sonnet", 40, 8, 0.03),
     ])
@@ -61,15 +79,13 @@ describe("tokenUsageDelta", () => {
     const previous = [usage("opus", 100, 500, 2)]
     const current = [usage("opus", 300, 40, 0.9)]
 
-    expect(tokenUsageDelta(previous, current)).toEqual([usage("opus", 300, 40, 0.9)])
+    expect(deltaOf(previous, current)).toEqual([usage("opus", 300, 40, 0.9)])
   })
 
   it("累計から消えたモデルは増分に出ない", () => {
     const previous = [usage("opus", 100, 20, 0.5), usage("sonnet", 40, 8, 0.03)]
 
-    expect(tokenUsageDelta(previous, [usage("opus", 110, 22, 0.55)])).toEqual([
-      usage("opus", 10, 2, 0.05),
-    ])
+    expect(deltaOf(previous, [usage("opus", 110, 22, 0.55)])).toEqual([usage("opus", 10, 2, 0.05)])
   })
 })
 

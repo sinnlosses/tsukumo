@@ -19,6 +19,7 @@ import {
   type TaskLoopable,
 } from "../../../shared/repository/task-summary.ts"
 import { nonBlankString } from "../../../shared/utils/non-blank-string.ts"
+import { memoizeByStamp } from "./beads-stamp-memo.ts"
 import { GIT_TIMEOUT_MS, MAX_OUTPUT_BYTES } from "./git.ts"
 
 /**
@@ -58,7 +59,7 @@ export type BeadsOutcome =
 export const CLOSED_TASK_DISPLAY_LIMIT = 10
 
 /** 印が動かなくても読み直す間隔。印が書き込みを取りこぼしたときに結果が古いまま残る長さの上限になる。 */
-export const BEADS_REREAD_INTERVAL_MS = 60_000
+const BEADS_REREAD_INTERVAL_MS = 60_000
 
 /** 時計が戻ったとき（負の経過）も間隔の外として読み直す。 */
 export function isWithinRereadInterval(elapsedMs: number): boolean {
@@ -67,39 +68,6 @@ export function isWithinRereadInterval(elapsedMs: number): boolean {
 
 /** `cwd` の課題を読む。`stamp` は呼ぶ側が先に読んだ課題の変化の印で、取れないときは `undefined`。 */
 export type BeadsIssuesReader = (cwd: string, stamp: string | undefined) => Promise<BeadsOutcome>
-
-/**
- * `read` を、同じ `cwd` に同じ `stamp` が続く間は読み直さない形にする。
- * 同時に来た読みにも同じ結果を渡す。`stamp` が `undefined` のときと、読めなかった（`issues` でない）ときは覚えない。
- */
-export function memoizeByStamp(read: (cwd: string) => Promise<BeadsOutcome>): BeadsIssuesReader {
-  const remembered = new Map<
-    string,
-    { readonly stamp: string; readonly outcome: Promise<BeadsOutcome> }
-  >()
-
-  return (cwd, stamp) => {
-    if (stamp === undefined) {
-      remembered.delete(cwd)
-      return read(cwd)
-    }
-    const previous = remembered.get(cwd)
-    if (previous?.stamp === stamp) {
-      return previous.outcome
-    }
-    const entry = { stamp, outcome: read(cwd) }
-    remembered.set(cwd, entry)
-    const forgetUnless = (outcome: BeadsOutcome | undefined): void => {
-      if (outcome?.kind !== "issues" && remembered.get(cwd) === entry) {
-        remembered.delete(cwd)
-      }
-    }
-    entry.outcome.then(forgetUnless, () => {
-      forgetUnless(undefined)
-    })
-    return entry.outcome
-  }
-}
 
 /**
  * 閉じたものも含めて全件を読む。
@@ -186,24 +154,6 @@ export function readBeadsWorkspace(cwd: string): Promise<BeadsWorkspace> {
   })
 }
 
-/**
- * `cwd` の課題の変化の印（`bd vc status --json` の `commit`。Beads の Dolt の HEAD）。
- * bd 1.3.1 では課題の作成・更新・ラベル・コメント・依存・クローズのどれでも変わり、読むだけでは変わらない。
- * `bd` が無い・落ちた・時間切れ・形が違うときは `undefined`。
- */
-export function readBeadsStampOf(cwd: string): Promise<string | undefined> {
-  return new Promise((resolve) => {
-    execFile(
-      "bd",
-      ["vc", "status", "--json"],
-      { cwd, timeout: GIT_TIMEOUT_MS, maxBuffer: MAX_OUTPUT_BYTES, encoding: "utf8" },
-      (error, stdout) => {
-        resolve(error === null ? beadsStampOfVcStatus(stdout) : undefined)
-      },
-    )
-  })
-}
-
 /** 1件ぶんの形。読めない1件はその1件だけ読み飛ばす（ほかの課題まで「読めない」にしない）。 */
 const beadsIssueSchema = z.object({
   id: z.string(),
@@ -232,6 +182,24 @@ export function beadsOutcomeOf(stdout: string): BeadsOutcome {
     return issue.success ? [beadsIssueOf(issue.data)] : []
   })
   return { kind: "issues", issues }
+}
+
+/**
+ * `cwd` の課題の変化の印（`bd vc status --json` の `commit`。Beads の Dolt の HEAD）。
+ * bd 1.3.1 では課題の作成・更新・ラベル・コメント・依存・クローズのどれでも変わり、読むだけでは変わらない。
+ * `bd` が無い・落ちた・時間切れ・形が違うときは `undefined`。
+ */
+function readBeadsStampOf(cwd: string): Promise<string | undefined> {
+  return new Promise((resolve) => {
+    execFile(
+      "bd",
+      ["vc", "status", "--json"],
+      { cwd, timeout: GIT_TIMEOUT_MS, maxBuffer: MAX_OUTPUT_BYTES, encoding: "utf8" },
+      (error, stdout) => {
+        resolve(error === null ? beadsStampOfVcStatus(stdout) : undefined)
+      },
+    )
+  })
 }
 
 const vcStatusSchema = z.object({ commit: z.string().min(1) })

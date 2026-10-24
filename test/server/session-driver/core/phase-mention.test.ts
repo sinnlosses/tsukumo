@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest"
 
-import {
-  judgePhaseMention,
-  PHASE_MENTION_REJECTION_TEXT,
-} from "../../../../src/server/session-driver/core/phase-mention.ts"
+import { judgePhaseMention } from "../../../../src/server/session-driver/core/phase-mention.ts"
 import type { DelegatedRange } from "../../../../src/shared/session/work-plan.ts"
 
 const RANGE = { kind: "range", first: 1, count: 3 } as const satisfies DelegatedRange
-const REJECTED = { kind: "rejected", text: PHASE_MENTION_REJECTION_TEXT } as const
+const REJECTED = {
+  kind: "rejected",
+  text: expect.stringContaining("`phase` が委譲先の段の範囲の外を指している"),
+} as const
 const ACCEPTED = { kind: "accepted" } as const
 
 describe("judgePhaseMention", () => {

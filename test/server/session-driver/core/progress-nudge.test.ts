@@ -2,11 +2,13 @@ import { describe, expect, it } from "vitest"
 
 import {
   createProgressNudge,
-  PROGRESS_NUDGE_SILENCE_MS,
   type ProgressNudgeTake,
 } from "../../../../src/server/session-driver/core/progress-nudge.ts"
 import type { BackgroundTaskKind } from "../../../../src/shared/session-driver/background-task.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
+
+/** 黙っているとみなす長さ（5分）。 */
+const PROGRESS_NUDGE_SILENCE_MS = 5 * 60 * 1000
 
 const SPOKEN_AT = 1_000
 const DUE_AT = SPOKEN_AT + PROGRESS_NUDGE_SILENCE_MS

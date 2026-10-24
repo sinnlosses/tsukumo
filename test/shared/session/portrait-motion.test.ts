@@ -1,12 +1,16 @@
 import { describe, expect, it } from "vitest"
 
 import {
-  FAILURE_MOTION_WINDOW_MS,
   nextPortraitMotionTransitionDelayMs,
   resolvePortraitMotion,
-  SUCCESS_MOTION_WINDOW_MS,
   type PortraitMotionInput,
 } from "../../../src/shared/session/portrait-motion.ts"
+
+/** 失敗の動きが当たる窓（失敗の直後から）。 */
+const FAILURE_MOTION_WINDOW_MS = 400
+
+/** 完了の動きが当たる窓（ターンが終わった直後から）。 */
+const SUCCESS_MOTION_WINDOW_MS = 700
 
 describe("resolvePortraitMotion", () => {
   const FAILED_TURN = {

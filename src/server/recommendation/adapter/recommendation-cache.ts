@@ -21,10 +21,6 @@ const recommendationCacheFileSchema = z.object({
   entries: z.array(z.object({ key: z.string(), cards: z.array(recommendationCardSchema) })),
 })
 
-export function recommendationCachePath(): string {
-  return tsukumoHomePath("recommendationCache")
-}
-
 /** 組を新しい順に読む。ファイルが無い・壊れている・版や形が違うときは空。 */
 export function readRecommendationCache(
   path: string = recommendationCachePath(),
@@ -39,4 +35,8 @@ export function writeRecommendationCache(
   path: string = recommendationCachePath(),
 ): void {
   writeJsonFile(path, { v: RECOMMENDATION_CACHE_FORMAT_VERSION, entries })
+}
+
+function recommendationCachePath(): string {
+  return tsukumoHomePath("recommendationCache")
 }

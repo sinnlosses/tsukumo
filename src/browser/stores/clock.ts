@@ -28,7 +28,7 @@ export function useNowWhile(active: boolean): number {
 }
 
 /** 刻みを受け取る。戻り値で購読をやめ、最後の購読者がやめると時計も止まる。 */
-export function subscribeClock(listener: ClockListener): () => void {
+function subscribeClock(listener: ClockListener): () => void {
   listeners.add(listener)
   if (alignTimer === undefined && tickTimer === undefined) {
     start()

@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest"
 import {
   type CharacterGenerationQuery,
   generateCharacter,
-  toGeneratedCharacter,
 } from "../../../../src/server/character-pack/core/character-generation.ts"
 import { MAX_CHARACTER_NAME_LENGTH } from "../../../../src/shared/character-pack/character-definition.ts"
 import {
@@ -25,18 +24,18 @@ const PORTRAIT_PNG_DATA_URL = `data:image/png;base64,${PORTRAIT_BASE64}`
 
 const NOT_ABORTED = new AbortController().signal
 
-describe("toGeneratedCharacter", () => {
-  it("形の合う出力をそのまま欄の値にする", () => {
-    expect(toGeneratedCharacter(GENERATED)).toEqual(GENERATED)
+describe("generateCharacter（出力の検査）", () => {
+  it("形の合う出力をそのまま欄の値にする", async () => {
+    expect(await generatedFrom(GENERATED)).toEqual(GENERATED)
   })
 
-  it("パックの名前として通らない id は空文字に畳み、ほかの欄は残す", () => {
+  it("パックの名前として通らない id は空文字に畳み、ほかの欄は残す", async () => {
     for (const id of ["架空", ".hidden", "with space", "nested/name", 42]) {
-      expect(toGeneratedCharacter({ ...GENERATED, id })).toEqual({ ...GENERATED, id: "" })
+      expect(await generatedFrom({ ...GENERATED, id })).toEqual({ ...GENERATED, id: "" })
     }
   })
 
-  it("id 以外の欄が形に合わなければ undefined", () => {
+  it("id 以外の欄が形に合わなければ undefined", async () => {
     const broken = [
       { ...GENERATED, accent: "b8c7ff" },
       { ...GENERATED, chatAccent: "#b8c7f" },
@@ -49,13 +48,13 @@ describe("toGeneratedCharacter", () => {
     ]
 
     for (const value of broken) {
-      expect(toGeneratedCharacter(value)).toBeUndefined()
+      expect(await generatedFrom(value)).toBeUndefined()
     }
   })
 
-  it("object でない値は undefined", () => {
+  it("object でない値は undefined", async () => {
     for (const value of [undefined, "文字列", [GENERATED]]) {
-      expect(toGeneratedCharacter(value)).toBeUndefined()
+      expect(await generatedFrom(value)).toBeUndefined()
     }
   })
 })
@@ -105,3 +104,7 @@ describe("generateCharacter", () => {
     expect(requests).toEqual([])
   })
 })
+
+function generatedFrom(output: unknown): Promise<unknown> {
+  return generateCharacter(() => Promise.resolve(output), PORTRAIT_PNG_DATA_URL, NOT_ABORTED)
+}

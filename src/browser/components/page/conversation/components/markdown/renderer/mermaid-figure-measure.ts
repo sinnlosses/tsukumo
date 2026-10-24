@@ -3,7 +3,7 @@
 export type FigureMeasure = "body" | "wide" | "full"
 
 /** 図の文字（CSS px）の下限。 */
-export const MIN_TEXT_PX = 12
+const MIN_TEXT_PX = 12
 
 const MEASURES = ["body", "wide", "full"] as const satisfies readonly FigureMeasure[]
 

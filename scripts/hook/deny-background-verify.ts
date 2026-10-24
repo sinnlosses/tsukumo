@@ -7,7 +7,8 @@
 // それ以外の終了コードでは実行を止めない（判定に失敗したときは通す）。
 
 import { runsTwVerify } from "./lib/background-verify.ts"
-import { type BashHookCall, denyBashCall, readBashHookCall } from "./lib/hook-input.ts"
+import type { BashHookCall } from "./lib/bash-hook-call.ts"
+import { denyBashCall, readBashHookCall } from "./lib/hook-input.ts"
 
 const REFUSAL = `\`tw verify\`（検査の全段。3〜4分）は背景で打たない。背景で打つと完了通知で手番が
 終わり、検査が走っていないのに待ちで止まる。

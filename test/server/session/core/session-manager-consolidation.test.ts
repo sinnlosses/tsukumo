@@ -6,7 +6,7 @@ import type {
 } from "../../../../src/server/chat/core/chat-consolidation-writer.ts"
 import type { SessionManagerOptions } from "../../../../src/server/session/core/session-manager-port.ts"
 import type { DiagnosticEntry } from "../../../../src/shared/diagnostic/diagnostic-record.ts"
-import { isSwallowedFailurePlace } from "../../../../src/shared/diagnostic/swallowed-failure.ts"
+import { swallowedFailureFootprintSchema } from "../../../../src/shared/diagnostic/swallowed-failure.ts"
 import type { ServerFrame } from "../../../../src/shared/frame.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import { characterChangedEvent } from "../../../fixture/character.ts"
@@ -247,7 +247,7 @@ describe("createSessionManager", () => {
       ])
       expect(JSON.stringify(entries)).not.toContain("架空の話題")
       for (const footprint of entries.filter((entry) => entry.flow === "swallowed-failure")) {
-        expect(isSwallowedFailurePlace(footprint.place)).toBe(true)
+        expect(swallowedFailureFootprintSchema.safeParse(footprint).success).toBe(true)
       }
     })
 

@@ -1,17 +1,25 @@
 import { describe, expect, it } from "vitest"
 
 import { mainViewEntries } from "../../../src/shared/session/main-view-entry.ts"
-import { MAX_MAIN_VIEW_TURNS, mainViewTurns } from "../../../src/shared/session/main-view.ts"
-import type { SessionRecord } from "../../../src/shared/session/session-record.ts"
+import { mainViewTurns } from "../../../src/shared/session/main-view.ts"
+import {
+  MAX_SESSION_STATE_TURNS,
+  type SessionRecord,
+} from "../../../src/shared/session/session-record.ts"
 import { INITIAL_SESSION_STATE } from "../../../src/shared/session/session-state.ts"
 import { turnSpeeches } from "../../../src/shared/session/turn-speech.ts"
-import { PRE_REQUEST_TURN_ID } from "../../../src/shared/session/turn.ts"
 import {
   compactBoundaryRecord,
   detailRecord,
   requestRecord,
   speechRecord,
 } from "../../fixture/session-record.ts"
+
+/** メインビューに出すやり取りの数（仕事の記録の窓と同じ）。 */
+const MAX_MAIN_VIEW_TURNS = MAX_SESSION_STATE_TURNS.work
+
+/** 依頼より前のまとまりの番号。 */
+const PRE_REQUEST_TURN_ID = -1
 
 describe("turnSpeeches（依頼を境目にセリフを分ける）", () => {
   it("依頼ごとに分かれ、各ターンのセリフだけを古い→新しいの順で返す", () => {

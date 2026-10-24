@@ -16,7 +16,6 @@ import { chatArchiveDir } from "../../../src/server/chat/adapter/chat-archive.ts
 import { createChatSummary } from "../../../src/server/chat/adapter/chat-summary.ts"
 import { ENV_NAMES } from "../../../src/server/core/config.ts"
 import { readRememberedCharacter } from "../../../src/server/session/adapter/remembered-default.ts"
-import { tokenUsageDir } from "../../../src/server/token-usage/adapter/token-usage-log.ts"
 import { characterPackName } from "../../fixture/character.ts"
 import { useTempDir } from "../../fixture/temp-dir.ts"
 
@@ -47,12 +46,11 @@ describe("TSUKUMO_HOME を渡すとホームがそこへ移る", () => {
     expect(tsukumoHomeDir()).toBe(dir())
   })
 
-  it("ホームの下に並ぶ置き場（パック・あらすじ・会話のアーカイブ・トークンの記録）が揃って移る", () => {
+  it("ホームの下に並ぶ置き場（パック・会話のアーカイブ）が揃って移る", () => {
     process.env[ENV_NAMES.home.name] = dir()
 
     expect(homeCharacterDir()).toBe(join(dir(), "characters"))
     expect(chatArchiveDir()).toBe(join(dir(), "chat-archive"))
-    expect(tokenUsageDir()).toBe(join(dir(), "token-usage"))
   })
 
   it("あらすじは移った先の chat-summary の下へ書かれる", () => {
@@ -102,13 +100,13 @@ function isPlace(key: string): key is TsukumoHomePlace {
 }
 
 describe("TSUKUMO_HOME を渡さないときの置き場は今までと同じ", () => {
-  it("未設定なら ~/.tsukumo とその下の3つの置き場", () => {
+  it("未設定なら ~/.tsukumo とその下の置き場", () => {
     const home = join(homedir(), ".tsukumo")
 
     expect(tsukumoHomeDir()).toBe(home)
     expect(homeCharacterDir()).toBe(join(home, "characters"))
     expect(chatArchiveDir()).toBe(join(home, "chat-archive"))
-    expect(tokenUsageDir()).toBe(join(home, "token-usage"))
+    expect(tsukumoHomePath("tokenUsage")).toBe(join(home, "token-usage"))
   })
 
   it("空文字・空白だけのときも既定へ倒す（resolveViewPort と同じ扱い）", () => {

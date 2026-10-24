@@ -20,7 +20,7 @@ const RECOMMENDATION_MODEL = "haiku"
 export const RECOMMENDATION_TIMEOUT_MS = 60_000
 
 /** 理由の1行の上限（文字）。 */
-export const RECOMMENDATION_REASON_CHARS = 40
+const RECOMMENDATION_REASON_CHARS = 40
 
 /** 「前回の続き」の候補のキー。タスクの候補のキーはタスクの ID。 */
 const RESUME_KEY = "resume"

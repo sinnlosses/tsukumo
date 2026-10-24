@@ -23,7 +23,6 @@ const KNOWN_MISPLACED: ReadonlySet<string> = new Set<string>([
   "test/browser/features/run-setting/run-setting-group.test.tsx",
   "test/browser/features/run-setting/run-setting-select.test.tsx",
   "test/browser/features/task-board/task-refresh-button.test.tsx",
-  "test/scripts/capture/capture-page.test.ts",
   "test/scripts/capture/capture-preparation.test.ts",
   "test/scripts/capture/capture-source.test.ts",
   "test/scripts/capture/capture-stub.test.ts",
@@ -52,7 +51,6 @@ const KNOWN_MISPLACED: ReadonlySet<string> = new Set<string>([
   "test/scripts/hook/background-verify.test.ts",
   "test/scripts/hook/broad-kill.test.ts",
   "test/scripts/hook/hook-denial-record.test.ts",
-  "test/scripts/hook/hook-input.test.ts",
   "test/scripts/hook/shell-command.test.ts",
 ])
 

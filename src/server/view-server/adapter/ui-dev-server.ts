@@ -15,8 +15,9 @@
 import type { IncomingMessage, Server, ServerResponse } from "node:http"
 
 import { bundledFilePath } from "../../adapter/bundled-path.ts"
-import { UI_SOURCE_DIR_RELATIVE_PATH, VITE_CONFIG_RELATIVE_PATH } from "./bundle.ts"
+import { UI_SOURCE_DIR_RELATIVE_PATH } from "./bundle.ts"
 import { sourceFingerprint } from "./source-fingerprint.ts"
+import { VITE_CONFIG_RELATIVE_PATH } from "./vite-build.ts"
 
 /**
  * HMR の WebSocket の経路。`/ws` と分けておき、upgrade をどちらが受けるかを経路で決める。

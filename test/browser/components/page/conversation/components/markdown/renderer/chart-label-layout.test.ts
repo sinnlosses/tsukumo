@@ -6,7 +6,7 @@ import {
   barEndText,
   shareLabelRows,
   spreadLabels,
-} from "../../../../../../../../src/browser/components/page/conversation/components/markdown/renderer/chart-direct-label.ts"
+} from "../../../../../../../../src/browser/components/page/conversation/components/markdown/renderer/chart-label-layout.ts"
 
 describe("shareLabelRows", () => {
   it("幅に収まる部分は棒の中に、部分の中心へ置く", () => {

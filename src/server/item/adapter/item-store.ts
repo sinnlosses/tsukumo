@@ -34,11 +34,6 @@ const ITEMS_FILE_NAME = "items.json"
 
 export type ItemsFileState = { readonly kind: "absent" } | ItemsFileReading
 
-/** `dir` はアイテムの置き場（`items.json` と画像を置くディレクトリ）。 */
-export function itemsFilePath(dir: string): string {
-  return join(dir, ITEMS_FILE_NAME)
-}
-
 /** `items.json` を読む。無い（ENOENT）だけが `absent`、それ以外の読み失敗と形違いは `unreadable`。 */
 export function readItemsFile(dir: string = tsukumoHomePath("items")): ItemsFileState {
   let text: string
@@ -172,4 +167,9 @@ function writableItemsFile(dir: string): ItemsFile | undefined {
 function writeItemsFile(dir: string, file: ItemsFile): void {
   mkdirSync(dir, { recursive: true })
   writeFileAtomic(itemsFilePath(dir), serializeItemsFile(file))
+}
+
+/** `dir` はアイテムの置き場（`items.json` と画像を置くディレクトリ）。 */
+function itemsFilePath(dir: string): string {
+  return join(dir, ITEMS_FILE_NAME)
 }

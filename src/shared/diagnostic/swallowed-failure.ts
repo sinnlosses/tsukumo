@@ -85,20 +85,6 @@ const SWALLOWED_FAILURE_PLACE_KEYS = new Set(
   ),
 )
 
-/** `SwallowedFailurePlace` の形か。 */
-export function isSwallowedFailurePlace(value: unknown): value is SwallowedFailurePlace {
-  if (typeof value !== "object" || value === null) {
-    return false
-  }
-  const feature = Reflect.get(value, "feature")
-  const place = Reflect.get(value, "place")
-  return (
-    typeof feature === "string" &&
-    typeof place === "string" &&
-    SWALLOWED_FAILURE_PLACE_KEYS.has(`${feature}:${place}`)
-  )
-}
-
 const KNOWN_ERROR_NAMES = {
   Error: true,
   TypeError: true,
@@ -111,11 +97,6 @@ const KNOWN_ERROR_NAMES = {
 /** 握りつぶした失敗の `error.name` を写した形。知らない名前は `"other"`。 */
 export type DiagnosedErrorName = keyof typeof KNOWN_ERROR_NAMES | "other"
 
-/** `DiagnosedErrorName` の形か。 */
-export function isDiagnosedErrorName(value: unknown): value is DiagnosedErrorName {
-  return typeof value === "string" && (value === "other" || Object.hasOwn(KNOWN_ERROR_NAMES, value))
-}
-
 const KNOWN_ERROR_CODES = {
   ENOENT: true,
   EACCES: true,
@@ -127,14 +108,6 @@ const KNOWN_ERROR_CODES = {
 
 /** 握りつぶした失敗の `error.code`（Node の `ErrnoException` など）を写した形。無ければ `"none"`、知らない値は `"other"`。 */
 export type DiagnosedErrorCode = "none" | keyof typeof KNOWN_ERROR_CODES | "other"
-
-/** `DiagnosedErrorCode` の形か。 */
-export function isDiagnosedErrorCode(value: unknown): value is DiagnosedErrorCode {
-  return (
-    typeof value === "string" &&
-    (value === "none" || value === "other" || Object.hasOwn(KNOWN_ERROR_CODES, value))
-  )
-}
 
 export const swallowedFailureFootprintSchema = z.object({
   flow: z.literal("swallowed-failure"),
@@ -179,4 +152,31 @@ function codeOf(error: unknown): DiagnosedErrorCode {
     return "none"
   }
   return typeof code === "string" && isDiagnosedErrorCode(code) ? code : "other"
+}
+
+/** `SwallowedFailurePlace` の形か。 */
+function isSwallowedFailurePlace(value: unknown): value is SwallowedFailurePlace {
+  if (typeof value !== "object" || value === null) {
+    return false
+  }
+  const feature = Reflect.get(value, "feature")
+  const place = Reflect.get(value, "place")
+  return (
+    typeof feature === "string" &&
+    typeof place === "string" &&
+    SWALLOWED_FAILURE_PLACE_KEYS.has(`${feature}:${place}`)
+  )
+}
+
+/** `DiagnosedErrorName` の形か。 */
+function isDiagnosedErrorName(value: unknown): value is DiagnosedErrorName {
+  return typeof value === "string" && (value === "other" || Object.hasOwn(KNOWN_ERROR_NAMES, value))
+}
+
+/** `DiagnosedErrorCode` の形か。 */
+function isDiagnosedErrorCode(value: unknown): value is DiagnosedErrorCode {
+  return (
+    typeof value === "string" &&
+    (value === "none" || value === "other" || Object.hasOwn(KNOWN_ERROR_CODES, value))
+  )
 }

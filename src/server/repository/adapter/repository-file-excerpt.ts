@@ -16,7 +16,7 @@ import { isTrackedPath } from "../../core/tracked-path.ts"
 import { excerptLines } from "../core/file-excerpt.ts"
 
 /** 開いて読むファイルの大きさの上限。超えたら読まずに `too-large`。 */
-export const MAX_EXCERPT_FILE_BYTES = 1024 * 1024
+const MAX_EXCERPT_FILE_BYTES = 1024 * 1024
 
 /**
  * `cwd` 相対の `request.path` が `listFiles` の一覧にあれば読み、指した行の前後を返す。

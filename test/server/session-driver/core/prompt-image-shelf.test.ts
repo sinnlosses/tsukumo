@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest"
 
 import {
   createPromptImageShelf,
-  MAX_SHELVED_PROMPT_IMAGE_BYTES,
   releasedPromptImageIds,
 } from "../../../../src/server/session-driver/core/prompt-image-shelf.ts"
 import {
@@ -77,9 +76,9 @@ describe("createPromptImageShelf", () => {
     expect(entries.every((entry) => shelf.find(entry.id) === entry.full)).toBe(true)
   })
 
-  it("合計の大きさが上限を超えるあいだ、古いほうから捨てる", () => {
+  it("合計の大きさが上限（128 MiB）を超えるあいだ、古いほうから捨てる", () => {
     const shelf = createPromptImageShelf()
-    const quarter = MAX_SHELVED_PROMPT_IMAGE_BYTES / 4
+    const quarter = (128 * 1024 * 1024) / 4
 
     // 4枚ぶん（ちょうど上限）まではどれも残る。
     const first = shelf.shelve([sizedImage("a", quarter)])[0]

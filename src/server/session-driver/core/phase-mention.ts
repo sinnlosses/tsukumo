@@ -7,7 +7,7 @@ export type PhaseMentionVerdict =
   | { readonly kind: "rejected"; readonly text: string }
 
 /** `phase` が範囲の外の呼び出しに返す直し方。 */
-export const PHASE_MENTION_REJECTION_TEXT =
+const PHASE_MENTION_REJECTION_TEXT =
   "`phase` が委譲先の段の範囲の外を指している。委譲先の段を番号で言うなら、`phase` をその段の番号（1から委譲先の段の数まで）に直す。" +
   "計画・受け入れのような範囲の外の段は番号で言わず名前で言い、`phase` を省く。" +
   "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。"

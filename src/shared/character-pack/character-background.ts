@@ -28,7 +28,7 @@ export const MIN_BACKGROUND_VEIL = 0.7
  * `veil` を省略したときの不透明度。
  * 下限ちょうどには置かない（下限に置くと字の色を少し変えただけで引き上げが起き、書いた `veil` と見え方がずれる）。
  */
-export const DEFAULT_BACKGROUND_VEIL = 0.75
+const DEFAULT_BACKGROUND_VEIL = 0.75
 
 /** 覆いで画像が完全に隠れる端。引き上げが行き止まらないことを保証する上限。 */
 export const MAX_BACKGROUND_VEIL = 1
@@ -70,20 +70,6 @@ export function toCharacterBackground(value: unknown): CharacterBackground | und
   return { image, veil: toBackgroundVeil(record["veil"]) }
 }
 
-/**
- * 背景の素材として扱ってよいファイル名か。
- * 定義ファイルに書かれた名前も外部由来なので、ここで形を確かめてから `/character/<pack>/<file>` の URL にする。
- *
- * - 使えるのは半角英数字と `.` `_` `-` だけ（パスの区切り・空白・引用符・括弧が入らないので、ディレクトリを跨ぐ名前にも、CSS の `url()` を抜け出す名前にもならない）
- * - 拡張子は `.png` / `.jpg` / `.jpeg` / `.webp` のどれか
- */
-export function isBackgroundFileName(name: string): boolean {
-  return (
-    BACKGROUND_FILE_NAME_PATTERN.test(name) &&
-    BACKGROUND_FILE_EXTENSIONS.some((extension) => name.toLowerCase().endsWith(extension))
-  )
-}
-
 /** data URL を背景1枚として読む。読めない・受け付けない種類・大きすぎるときは undefined。 */
 export function parseBackgroundImage(dataUrl: string): BackgroundImage | undefined {
   const image = parseImageDataUrl(dataUrl, MAX_BACKGROUND_BYTES)
@@ -112,6 +98,20 @@ function toBackgroundVeil(value: unknown): number {
     return DEFAULT_BACKGROUND_VEIL
   }
   return Math.min(Math.max(value, MIN_BACKGROUND_VEIL), MAX_BACKGROUND_VEIL)
+}
+
+/**
+ * 背景の素材として扱ってよいファイル名か。
+ * 定義ファイルに書かれた名前も外部由来なので、ここで形を確かめてから `/character/<pack>/<file>` の URL にする。
+ *
+ * - 使えるのは半角英数字と `.` `_` `-` だけ（パスの区切り・空白・引用符・括弧が入らないので、ディレクトリを跨ぐ名前にも、CSS の `url()` を抜け出す名前にもならない）
+ * - 拡張子は `.png` / `.jpg` / `.jpeg` / `.webp` のどれか
+ */
+function isBackgroundFileName(name: string): boolean {
+  return (
+    BACKGROUND_FILE_NAME_PATTERN.test(name) &&
+    BACKGROUND_FILE_EXTENSIONS.some((extension) => name.toLowerCase().endsWith(extension))
+  )
 }
 
 const BACKGROUND_FILE_BASE_NAME = "background"

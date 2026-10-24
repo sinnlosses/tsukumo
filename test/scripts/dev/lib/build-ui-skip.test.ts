@@ -4,11 +4,11 @@ import { join } from "node:path"
 import { describe, expect, test } from "vitest"
 
 import { isBuiltUiCurrent, recordBuildInputs } from "../../../../scripts/dev/lib/build-ui-skip.ts"
-import {
-  SOURCE_FINGERPRINT_FILE_NAME,
-  bundledSourceFingerprint,
-} from "../../../../src/server/view-server/adapter/bundle.ts"
+import { bundledSourceFingerprint } from "../../../../src/server/view-server/adapter/bundle.ts"
 import { useTempDir } from "../../../fixture/temp-dir.ts"
+
+/** 組み立てたときのソースの指紋を置くファイル（`SOURCE_FINGERPRINT_FILE_NAME`）。 */
+const SOURCE_FINGERPRINT_FILE_NAME = "source-fingerprint.txt"
 
 describe("入力が同じ組み立ての省略", () => {
   const tempDir = useTempDir("build-ui-skip")

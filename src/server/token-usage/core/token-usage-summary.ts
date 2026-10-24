@@ -30,27 +30,6 @@ const EMPTY_TOTALS = {
 } satisfies TokenUsageTotals
 
 /**
- * 期間に入る行を、推移・モデル別・ツール別の3つの軸で畳む（分析画面が要る軸だけ）。
- *
- * 期間の判定は行の `at` の頭10文字（ローカル日付）で行う（記録は書いた時点のローカル日付を持つので、タイムゾーンを変換し直さない）。
- * 渡された行が期間の外を含んでいても、ここで切り直す。
- *
- * 推移の刻みは期間の長さが決める。1日なら時間ごと（0〜23時の24点）、それより長ければ日ごと。
- * 穴は0で埋める（描く側は「今日が何日か」を知らずに端のラベルを出せる）。
- */
-export function summarizeTokenUsage(
-  records: readonly TokenUsageRecord[],
-  period: TokenUsagePeriod,
-): TokenUsageSummary {
-  const withinPeriod = records.filter((record) => isWithinPeriod(record, period))
-  return {
-    trend: summarizeTrend(withinPeriod, period),
-    byModel: summarizeByModel(withinPeriod),
-    byTool: summarizeByTool(withinPeriod),
-  }
-}
-
-/**
  * 「今日を含む直近 `days` 日」を期間にして、記録を読んで畳む。
  * 今日が何日かはここが決めない（`endDate` を受け取る。OS のタイムゾーンに依る）。
  * 期間の両端を含むので、7日なら `endDate` の6日前から。
@@ -62,6 +41,27 @@ export function summarizeRecentTokenUsage(
 ): TokenUsageSummary {
   const period = { startDate: shiftDate(endDate, -(days - 1)), endDate }
   return summarizeTokenUsage(log.readRange(period), period)
+}
+
+/**
+ * 期間に入る行を、推移・モデル別・ツール別の3つの軸で畳む（分析画面が要る軸だけ）。
+ *
+ * 期間の判定は行の `at` の頭10文字（ローカル日付）で行う（記録は書いた時点のローカル日付を持つので、タイムゾーンを変換し直さない）。
+ * 渡された行が期間の外を含んでいても、ここで切り直す。
+ *
+ * 推移の刻みは期間の長さが決める。1日なら時間ごと（0〜23時の24点）、それより長ければ日ごと。
+ * 穴は0で埋める（描く側は「今日が何日か」を知らずに端のラベルを出せる）。
+ */
+function summarizeTokenUsage(
+  records: readonly TokenUsageRecord[],
+  period: TokenUsagePeriod,
+): TokenUsageSummary {
+  const withinPeriod = records.filter((record) => isWithinPeriod(record, period))
+  return {
+    trend: summarizeTrend(withinPeriod, period),
+    byModel: summarizeByModel(withinPeriod),
+    byTool: summarizeByTool(withinPeriod),
+  }
 }
 
 /**

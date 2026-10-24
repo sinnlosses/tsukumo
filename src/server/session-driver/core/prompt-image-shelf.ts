@@ -23,7 +23,7 @@ import type { SessionRecord } from "../../../shared/session/session-record.ts"
  * 枚数で切ると1枚の上限（`MAX_PROMPT_IMAGE_BYTES`）を基準にした最悪値で決めるしかなく、実際のスクリーンショット（1枚 0.5 MiB 前後）では天井のごく一部しか使わないまま原寸が落ちる。
  * 大きさで切れば、小さい画像ほど多く残る。
  */
-export const MAX_SHELVED_PROMPT_IMAGE_BYTES = 128 * 1024 * 1024
+const MAX_SHELVED_PROMPT_IMAGE_BYTES = 128 * 1024 * 1024
 
 /** 棚に置いた1枚。原寸と控えの対に、棚が振った id を添えたもの（駆動へはこの形で渡す）。 */
 export type ShelvedPromptImage = PromptImage & RecordedPromptImage

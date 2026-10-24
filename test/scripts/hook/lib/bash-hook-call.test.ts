@@ -2,7 +2,7 @@
 
 import { describe, expect, test } from "vitest"
 
-import { parseBashHookCall } from "../../../scripts/hook/lib/hook-input.ts"
+import { parseBashHookCall } from "../../../../scripts/hook/lib/bash-hook-call.ts"
 
 function bashInput(extra: Record<string, unknown> = {}, toolInput: object = { command: "ls" }) {
   return JSON.stringify({ tool_name: "Bash", tool_input: toolInput, ...extra })

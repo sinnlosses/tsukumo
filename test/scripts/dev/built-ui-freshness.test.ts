@@ -4,13 +4,13 @@ import { join } from "node:path"
 import { describe, expect, test } from "vitest"
 
 import { assertBuiltUiFresh } from "../../../scripts/dev/lib/built-ui-freshness.ts"
-import {
-  SOURCE_FINGERPRINT_FILE_NAME,
-  bundledSourceFingerprint,
-} from "../../../src/server/view-server/adapter/bundle.ts"
+import { bundledSourceFingerprint } from "../../../src/server/view-server/adapter/bundle.ts"
 import { useTempDir } from "../../fixture/temp-dir.ts"
 
 const FAR_FUTURE_SECONDS = 4_000_000_000
+
+/** 組み立てたときのソースの指紋を置くファイル（`SOURCE_FINGERPRINT_FILE_NAME`）。 */
+const SOURCE_FINGERPRINT_FILE_NAME = "source-fingerprint.txt"
 
 describe("組み立て済みのブラウザ側の鮮度", () => {
   const tempDir = useTempDir("built-ui-freshness")

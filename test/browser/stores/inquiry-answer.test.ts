@@ -1,12 +1,8 @@
 import { act, cleanup, renderHook } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
-import {
-  useInquiryAnswer,
-  useInquiryDraft,
-  useInquiryFocus,
-  type InquiryModel,
-} from "../../../src/browser/stores/inquiry-answer.ts"
+import { useInquiryAnswer, type InquiryModel } from "../../../src/browser/stores/inquiry-answer.ts"
+import { useInquiryDraft, useInquiryFocus } from "../../../src/browser/stores/inquiry-draft.ts"
 import type { StampedPendingAsk } from "../../../src/shared/session-driver/pending-ask.ts"
 import type { QuestionBrief } from "../../../src/shared/session-driver/question-brief.ts"
 import type { Question, QuestionOption } from "../../../src/shared/session-driver/question.ts"

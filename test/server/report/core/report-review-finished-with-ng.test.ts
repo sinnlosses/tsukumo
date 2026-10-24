@@ -1,10 +1,14 @@
 import { describe, expect, it } from "vitest"
 
-import { REPORT_FINISHED_WITH_NG_REJECTION_TEXT } from "../../../../src/server/report/core/report-review.ts"
 import type { ReportDraft } from "../../../../src/server/report/core/report-violation.ts"
 import type { ReportTaskOutcome } from "../../../../src/shared/report/report-task.ts"
 import { reportDraft } from "../../../fixture/report-event.ts"
-import { createReportReview, noPlan, SESSION_INFO } from "../../../fixture/report-review.ts"
+import {
+  createReportReview,
+  noPlan,
+  REJECTION_PHRASE,
+  SESSION_INFO,
+} from "../../../fixture/report-review.ts"
 
 describe("createReportReview の judge（ng の確認がある finished の report）", () => {
   const check = (status: "ok" | "ng" | "unverified") => ({
@@ -30,10 +34,10 @@ describe("createReportReview の judge（ng の確認がある finished の repo
 
     expect(verdict).toEqual({
       kind: "rejected",
-      text: REPORT_FINISHED_WITH_NG_REJECTION_TEXT,
+      text: expect.stringContaining(REJECTION_PHRASE.finishedWithNg),
       reasons: ["finished-with-ng"],
     })
-    expect(REPORT_FINISHED_WITH_NG_REJECTION_TEXT).not.toContain("架空")
+    expect(verdict.kind === "rejected" ? verdict.text : "").not.toContain("架空")
   })
 
   it("ng の行があっても、stopped・awaiting-answer・タスクの無い report は通す", () => {

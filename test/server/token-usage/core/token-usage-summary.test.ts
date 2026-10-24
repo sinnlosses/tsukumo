@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest"
 
-import { summarizeTokenUsage } from "../../../../src/server/token-usage/core/token-usage-summary.ts"
-import type { TokenUsageTrend } from "../../../../src/shared/token-usage/token-usage-summary.ts"
+import { summarizeRecentTokenUsage } from "../../../../src/server/token-usage/core/token-usage-summary.ts"
+import type {
+  TokenUsageDays,
+  TokenUsageSummary,
+  TokenUsageTrend,
+} from "../../../../src/shared/token-usage/token-usage-summary.ts"
 import {
   TOKEN_USAGE_FORMAT_VERSION,
   type ModelTokenUsage,
@@ -21,9 +25,9 @@ function usage(model: string, input: number, output: number, cost: number): Mode
   }
 }
 
-// ここから下は summarizeTokenUsage 用のフィクスチャ。壊れた行・版違いの行を落とすのは
-// adapter（別のテスト）の役目なので、ここには渡さない — summarizeTokenUsage は
-// 既に検証済みの行だけを受け取る前提の純関数。
+// ここから下は畳み方を確かめるフィクスチャ。壊れた行・版違いの行を落とすのは
+// adapter（別のテスト）の役目なので、ここには渡さない。
+// 記録の読み口は期間に関わらず渡した行をすべて返し、期間で切り直すのは畳む側に任せる。
 const EMPTY_STEP = {
   inputTokens: 0,
   outputTokens: 0,
@@ -63,7 +67,21 @@ function totalOfTrend(trend: TokenUsageTrend): { inputTokens: number; outputToke
   }
 }
 
-describe("summarizeTokenUsage", () => {
+/** `endDate` を含む直近 `days` 日で、`records` を読む記録から畳む。 */
+function summarize(
+  records: readonly TokenUsageRecord[],
+  endDate: string,
+  days: TokenUsageDays,
+): TokenUsageSummary {
+  const log = {
+    append: () => undefined,
+    prefetchOpenTask: () => undefined,
+    readRange: () => records,
+  }
+  return summarizeRecentTokenUsage(log, endDate, days)
+}
+
+describe("summarizeRecentTokenUsage", () => {
   it("日またぎの境界: 期間の外の日の行は推移に含めない", () => {
     const records = [
       record("2026-09-21T23:59:00+09:00", [usage("opus", 100, 20, 0.5)]),
@@ -71,10 +89,7 @@ describe("summarizeTokenUsage", () => {
       record("2026-09-23T00:00:00+09:00", [usage("opus", 5, 1, 0.01)]),
     ]
 
-    const summary = summarizeTokenUsage(records, {
-      startDate: "2026-09-22",
-      endDate: "2026-09-22",
-    })
+    const summary = summarize(records, "2026-09-22", 1)
 
     expect(totalOfTrend(summary.trend)).toEqual({ inputTokens: 50, outputTokens: 10 })
   })
@@ -86,13 +101,12 @@ describe("summarizeTokenUsage", () => {
       record("2026-09-22T09:00:00+09:00", [usage("opus", 50, 10, 0.2)]),
     ]
 
-    const summary = summarizeTokenUsage(records, {
-      startDate: "2026-09-20",
-      endDate: "2026-09-24",
-    })
+    const summary = summarize(records, "2026-09-24", 7)
 
     expect(summary.trend.unit).toBe("day")
     expect(summary.trend.points.map((point) => point.key)).toEqual([
+      "2026-09-18",
+      "2026-09-19",
       "2026-09-20",
       "2026-09-21",
       "2026-09-22",
@@ -100,7 +114,7 @@ describe("summarizeTokenUsage", () => {
       "2026-09-24",
     ])
     expect(summary.trend.points.map((point) => point.totals.inputTokens)).toEqual([
-      0, 100, 50, 5, 0,
+      0, 0, 0, 100, 50, 5, 0,
     ])
   })
 
@@ -112,10 +126,7 @@ describe("summarizeTokenUsage", () => {
       record("2026-09-22T23:59:00+09:00", [usage("opus", 9, 2, 0.02)]),
     ]
 
-    const summary = summarizeTokenUsage(records, {
-      startDate: "2026-09-22",
-      endDate: "2026-09-22",
-    })
+    const summary = summarize(records, "2026-09-22", 1)
 
     expect(summary.trend.unit).toBe("hour")
     expect(summary.trend.points).toHaveLength(24)
@@ -130,10 +141,7 @@ describe("summarizeTokenUsage", () => {
   it("時の読みはタイムゾーンを変換し直さない（オフセットが違っても書かれた時のまま）", () => {
     const records = [record("2026-09-22T09:00:00+00:00", [usage("opus", 50, 10, 0.2)])]
 
-    const summary = summarizeTokenUsage(records, {
-      startDate: "2026-09-22",
-      endDate: "2026-09-22",
-    })
+    const summary = summarize(records, "2026-09-22", 1)
 
     expect(summary.trend.points[9]?.totals.inputTokens).toBe(50)
   })
@@ -141,7 +149,7 @@ describe("summarizeTokenUsage", () => {
   it("同じ日・同じ期間の行が1件も無いときも空の並びを返す(記録はあるが期間の外)", () => {
     const records = [record("2026-08-01T09:00:00+09:00", [usage("opus", 100, 20, 0.5)])]
 
-    const summary = summarizeTokenUsage(records, { startDate: "2026-09-01", endDate: "2026-09-30" })
+    const summary = summarize(records, "2026-09-30", 30)
 
     expect(summary.byModel).toEqual([])
     expect(summary.byTool).toEqual([])
@@ -157,10 +165,7 @@ describe("summarizeTokenUsage", () => {
       record("2026-09-22T10:00:00+09:00", [usage("opus", 50, 10, 0.2)]),
     ]
 
-    const summary = summarizeTokenUsage(records, {
-      startDate: "2026-09-22",
-      endDate: "2026-09-22",
-    })
+    const summary = summarize(records, "2026-09-22", 1)
 
     // opus は出力合計30、haiku は2。出力の多い opus が先に並ぶ。
     expect(summary.byModel).toEqual([
@@ -194,10 +199,7 @@ describe("summarizeTokenUsage", () => {
       record("2026-09-22T09:00:00+09:00", [usage("zeta", 10, 5, 0.1), usage("alpha", 20, 5, 0.1)]),
     ]
 
-    const summary = summarizeTokenUsage(records, {
-      startDate: "2026-09-22",
-      endDate: "2026-09-22",
-    })
+    const summary = summarize(records, "2026-09-22", 1)
 
     expect(summary.byModel.map((entry) => entry.model)).toEqual(["alpha", "zeta"])
   })
@@ -213,10 +215,7 @@ describe("summarizeTokenUsage", () => {
       record("2026-09-22T10:00:00+09:00", [usage("opus", 50, 10, 0.2)], [toolUsage("Bash", 1, 60)]),
     ]
 
-    const summary = summarizeTokenUsage(records, {
-      startDate: "2026-09-22",
-      endDate: "2026-09-22",
-    })
+    const summary = summarize(records, "2026-09-22", 1)
 
     expect(summary.byTool).toEqual([
       { name: "Bash", calls: 3, resultBytes: 160 },

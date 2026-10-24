@@ -5,20 +5,7 @@ import { execFileSync } from "node:child_process"
 import { existsSync } from "node:fs"
 import path from "node:path"
 
-/** `git submodule status` の1行。`sha` は行に出た版（`+` は作業ツリーにある版、`-` は未取り込み）。 */
-export type SubmoduleEntry = {
-  readonly path: string
-  readonly sha: string
-}
-
-export type SubmoduleClassification = {
-  /** 行頭 `+`（記録と違う版）・`-`（未取り込み）。揃える対象。 */
-  readonly drifted: readonly SubmoduleEntry[]
-  /** 行頭 `U`（衝突）。揃えずに止める対象。 */
-  readonly conflicted: readonly SubmoduleEntry[]
-  /** 行頭が空白（揃っている）。 */
-  readonly aligned: readonly SubmoduleEntry[]
-}
+import { classifySubmoduleStatus, type SubmoduleEntry } from "./submodule-status.ts"
 
 export type SubmoduleAlignment =
   | { readonly kind: "none" }
@@ -34,29 +21,6 @@ export type SubmoduleAlignment =
 
 const SHORT_SHA_LENGTH = 7
 const FIX_HINT = "\n直し方: git submodule update --init"
-
-/** `git submodule status` の出力を、行頭の印で揃える対象・止める対象・揃っているものに分ける。 */
-export function classifySubmoduleStatus(output: string): SubmoduleClassification {
-  const drifted: SubmoduleEntry[] = []
-  const conflicted: SubmoduleEntry[] = []
-  const aligned: SubmoduleEntry[] = []
-  for (const line of output.split("\n")) {
-    if (line.trim() === "") {
-      continue
-    }
-    const [sha = "", submodulePath = ""] = line.slice(1).split(/\s+/, 2)
-    const entry = { path: submodulePath, sha }
-    const marker = line[0]
-    if (marker === "+" || marker === "-") {
-      drifted.push(entry)
-    } else if (marker === "U") {
-      conflicted.push(entry)
-    } else {
-      aligned.push(entry)
-    }
-  }
-  return { drifted, conflicted, aligned }
-}
 
 /**
  * `root` の submodule がずれていれば `git submodule update --init` で記録した版へ揃える。

@@ -1,10 +1,7 @@
 import type { HookCallbackMatcher, HookEvent, StopHookInput } from "@anthropic-ai/claude-agent-sdk"
 import { describe, expect, it } from "vitest"
 
-import {
-  createReportGate,
-  REPORT_GATE_REASON,
-} from "../../../../src/server/report/core/report-tool.ts"
+import { createReportGate } from "../../../../src/server/report/core/report-tool.ts"
 import { stopHooks } from "../../../../src/server/session-driver/adapter/sdk-query-seed.ts"
 import type {
   ChatSummary,
@@ -109,7 +106,7 @@ describe("stopHooks（report の関所と effort の読み取り）", () => {
       ),
     ).toEqual({
       decision: "block",
-      reason: REPORT_GATE_REASON,
+      reason: expect.stringContaining("`report` ツール（`mcp__tsukumo__report`）で渡し直す"),
     })
     expect(blocks).toBe(1)
   })

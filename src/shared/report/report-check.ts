@@ -8,7 +8,7 @@ import { htmlAttribute, htmlInline } from "./report-inline-markdown.ts"
 /** 検証1項目の状態。確かめなかった・飛ばしたものは `unverified` にまとめ、理由は `detail` に書かせる。 */
 const REPORT_CHECK_STATUSES = ["ok", "ng", "unverified"] as const
 
-export type ReportCheckStatus = (typeof REPORT_CHECK_STATUSES)[number]
+type ReportCheckStatus = (typeof REPORT_CHECK_STATUSES)[number]
 
 export const reportCheckSchema = z.object({
   status: z.enum(REPORT_CHECK_STATUSES),

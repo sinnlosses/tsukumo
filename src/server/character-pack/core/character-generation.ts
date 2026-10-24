@@ -59,7 +59,7 @@ export async function generateCharacter(
 }
 
 /** 画像1枚から `query()` に渡すものを組む。 */
-export function characterGenerationQuery(image: PromptImageSource): CharacterGenerationQuery {
+function characterGenerationQuery(image: PromptImageSource): CharacterGenerationQuery {
   return {
     model: CHARACTER_GENERATION_MODEL,
     systemPrompt: CHARACTER_GENERATION_INSTRUCTION,
@@ -74,7 +74,7 @@ export function characterGenerationQuery(image: PromptImageSource): CharacterGen
  * id だけはパックの名前として通らなければ空文字に畳み、ほかの欄は残す（id は利用者が打てばよい）。
  * それ以外の欄が1つでも形に合わなければ undefined。
  */
-export function toGeneratedCharacter(value: unknown): GeneratedCharacter | undefined {
+function toGeneratedCharacter(value: unknown): GeneratedCharacter | undefined {
   if (!isPlainObject(value)) {
     return undefined
   }

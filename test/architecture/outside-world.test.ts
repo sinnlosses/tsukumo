@@ -18,12 +18,12 @@ import { importSpecifiers, listSourceFiles, parseSourceProgram, SRC_ROOT } from 
 // `execFile("orca", …)` のような呼び出しは必ずコマンド名の文字列リテラル "orca" を伴うので、その字面で探す。
 // ファイル名やバッククォートで囲んだ日本語の説明文はクォートされた文字列リテラルではないので拾わない。
 describe("子プロセスを起こす箇所", () => {
-  it("`node:child_process` を import するのは orca-host.ts・browser-host.ts・bundle.ts・git.ts・beads.ts・checkout-launch.ts・rtk-rewrite.ts・sdk-workflow-tw.ts・tw-config.ts・tw-claim-list.ts だけで、`orca` コマンドを呼ぶのは orca-host.ts だけ、`open` コマンドを呼ぶのは browser-host.ts だけ", () => {
+  it("`node:child_process` を import するのは orca-host.ts・browser-host.ts・vite-build.ts・git.ts・beads.ts・checkout-launch.ts・rtk-rewrite.ts・sdk-workflow-tw.ts・tw-config.ts・tw-claim-list.ts だけで、`orca` コマンドを呼ぶのは orca-host.ts だけ、`open` コマンドを呼ぶのは browser-host.ts だけ", () => {
     const allowed = new Set([
       "server/checkout/adapter/checkout-launch.ts",
       "server/host/adapter/orca-host.ts",
       "server/host/adapter/browser-host.ts",
-      "server/view-server/adapter/bundle.ts",
+      "server/view-server/adapter/vite-build.ts",
       "server/repository/adapter/git.ts",
       "server/repository/adapter/beads.ts",
       "server/session-driver/adapter/rtk-rewrite.ts",

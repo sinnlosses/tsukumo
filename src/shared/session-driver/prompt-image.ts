@@ -27,7 +27,7 @@ export const PROMPT_IMAGE_MEDIA_TYPES = [
 export type PromptImageMediaType = (typeof PROMPT_IMAGE_MEDIA_TYPES)[number]
 
 /** 画像1枚（デコード後）の上限。API の天井（base64 で1枚 10 MB）の内側で、利用者が貼るスクリーンショットが収まる幅を取る。 */
-export const MAX_PROMPT_IMAGE_BYTES = 5 * 1024 * 1024
+const MAX_PROMPT_IMAGE_BYTES = 5 * 1024 * 1024
 
 /** 原寸の data URL の文字列の上限（{@link MAX_PROMPT_IMAGE_BYTES} を base64 の長さに直したもの）。 */
 export const MAX_PROMPT_IMAGE_DATA_URL_LENGTH = maxImageDataUrlLength(MAX_PROMPT_IMAGE_BYTES)
@@ -37,7 +37,7 @@ export const MAX_PROMPT_IMAGE_DATA_URL_LENGTH = maxImageDataUrlLength(MAX_PROMPT
  * 記録に残り続けるのは控えだけなので、原寸とは別に、桁の違う小さな値で切る（雑談の 100 ターンぶん積んでも記録の大きさが暴れない）。
  * 縮めるのはブラウザ側で、サーバは加工しない。
  */
-export const MAX_PROMPT_IMAGE_THUMBNAIL_BYTES = 128 * 1024
+const MAX_PROMPT_IMAGE_THUMBNAIL_BYTES = 128 * 1024
 
 /** 控えの data URL の文字列の上限。 */
 export const MAX_PROMPT_IMAGE_THUMBNAIL_DATA_URL_LENGTH = maxImageDataUrlLength(

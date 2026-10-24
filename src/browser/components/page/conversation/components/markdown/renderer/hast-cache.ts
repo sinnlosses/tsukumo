@@ -8,11 +8,13 @@ export type HastCache = {
   readonly set: (text: string, tree: Root) => void
 }
 
+export const REPORT_HAST_CACHE = createHastCache(REPORT_HAST_LIMIT)
+
 /**
  * Markdown の文字列から、描画の木（hast。サニタイズと色付けまで済んだもの）を引く LRU。
  * 会話の内容を持つのでメモリの中だけに置き、ディスクにもログにも出さない。
  */
-export function createHastCache(limit: number): HastCache {
+function createHastCache(limit: number): HastCache {
   const entries = new Map<string, Root>()
   return {
     get(text) {
@@ -33,5 +35,3 @@ export function createHastCache(limit: number): HastCache {
     },
   }
 }
-
-export const REPORT_HAST_CACHE = createHastCache(REPORT_HAST_LIMIT)

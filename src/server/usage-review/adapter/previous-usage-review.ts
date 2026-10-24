@@ -45,11 +45,6 @@ const previousUsageReviewFileSchema = z.object({
   findings: usageReviewFindingsSchema,
 })
 
-/** 書き込んでよいのはこの1ファイルだけ。 */
-export function previousUsageReviewPath(): string {
-  return tsukumoHomePath("previousUsageReview")
-}
-
 /**
  * 前回の結果を読む。
  * ファイルが無い・JSON が壊れている・版や形が違うときは `{ kind: "none" }`（一度も見直していないのと同じ扱い）。
@@ -72,4 +67,9 @@ export function writePreviousUsageReview(
   path: string = previousUsageReviewPath(),
 ): void {
   writeJsonFile(path, { v: PREVIOUS_USAGE_REVIEW_FORMAT_VERSION, reviewedAt, findings })
+}
+
+/** 書き込んでよいのはこの1ファイルだけ。 */
+function previousUsageReviewPath(): string {
+  return tsukumoHomePath("previousUsageReview")
 }

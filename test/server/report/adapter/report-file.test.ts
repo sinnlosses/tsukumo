@@ -4,10 +4,7 @@ import { join } from "node:path"
 
 import { describe, expect, it } from "vitest"
 
-import {
-  MAX_REPORT_MATCH_FILE_BYTES,
-  readReportBlockFiles,
-} from "../../../../src/server/report/adapter/report-file.ts"
+import { readReportBlockFiles } from "../../../../src/server/report/adapter/report-file.ts"
 import type { ReportSection } from "../../../../src/shared/report/report-block.ts"
 
 const sectionsOf = (paths: readonly string[]): readonly ReportSection[] => [
@@ -53,9 +50,9 @@ describe("readReportBlockFiles", () => {
     expect(contents.size).toBe(0)
   })
 
-  it("上限を超えるファイルは読まない", async () => {
+  it("上限（1 MiB）を超えるファイルは読まない", async () => {
     const cwd = mkdtempSync(join(tmpdir(), "tsukumo-report-file-"))
-    writeFileSync(join(cwd, "big.txt"), "x".repeat(MAX_REPORT_MATCH_FILE_BYTES + 1))
+    writeFileSync(join(cwd, "big.txt"), "x".repeat(1024 * 1024 + 1))
 
     const contents = await readReportBlockFiles(cwd, sectionsOf(["big.txt"]))
 

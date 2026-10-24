@@ -1,12 +1,14 @@
 import { describe, expect, it } from "vitest"
 
 import {
-  RECOMMENDATION_TASK_CANDIDATE_LIMIT,
   recommendationCandidates,
   recommendationKey,
 } from "../../../../src/server/recommendation/core/recommendation-candidate.ts"
 import type { TaskSummaryItem } from "../../../../src/shared/repository/task-summary.ts"
 import { knownTaskSummary, taskStatusOfWord } from "../../../fixture/session-state.ts"
+
+/** 問い合わせに渡すタスクの候補の上限。 */
+const TASK_CANDIDATE_LIMIT = 20
 
 // すべて手で書いた架空のタスク一覧。
 
@@ -52,18 +54,18 @@ describe("recommendationCandidates", () => {
   })
 
   it("タスクの候補は上限で切り、切った件数を返す", () => {
-    const items = Array.from({ length: RECOMMENDATION_TASK_CANDIDATE_LIMIT + 3 }, (_, index) =>
+    const items = Array.from({ length: TASK_CANDIDATE_LIMIT + 3 }, (_, index) =>
       task(`X-${String(index + 100)}`, "todo", []),
     )
 
     const selection = recommendationCandidates(knownTaskSummary(items))
 
-    expect(selection.candidates).toHaveLength(RECOMMENDATION_TASK_CANDIDATE_LIMIT + 1)
+    expect(selection.candidates).toHaveLength(TASK_CANDIDATE_LIMIT + 1)
     expect(selection.omittedCount).toBe(3)
   })
 
   it("上限ちょうどでは切らない", () => {
-    const items = Array.from({ length: RECOMMENDATION_TASK_CANDIDATE_LIMIT }, (_, index) =>
+    const items = Array.from({ length: TASK_CANDIDATE_LIMIT }, (_, index) =>
       task(`X-${String(index + 100)}`, "todo", []),
     )
 

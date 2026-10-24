@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest"
 
 import {
   createReportImageShelf,
-  MAX_SHELVED_REPORT_IMAGE_BYTES,
   type ReportImage,
   releasedImageToolUseIds,
   reportImagePaths,
@@ -10,6 +9,9 @@ import {
 import type { ReportSection } from "../../../../src/shared/report/report-block.ts"
 import type { StampedPendingAsk } from "../../../../src/shared/session-driver/pending-ask.ts"
 import type { SessionRecord } from "../../../../src/shared/session/session-record.ts"
+
+/** 棚に置く画像の合計の上限。 */
+const SHELF_LIMIT_BYTES = 64 * 1024 * 1024
 import { reportRecord, requestRecord } from "../../../fixture/session-record.ts"
 
 // 画像は架空のバイト列（実物の画像は使わない）。
@@ -72,7 +74,7 @@ describe("createReportImageShelf", () => {
 
   it("合計が上限を超えたら古く置いたものから捨て、いま置いたものは残す", () => {
     const shelf = createReportImageShelf()
-    const half = fictionalImage(MAX_SHELVED_REPORT_IMAGE_BYTES / 2)
+    const half = fictionalImage(SHELF_LIMIT_BYTES / 2)
 
     shelf.shelve("toolu_old", ["a.png"], () => half)
     shelf.shelve("toolu_mid", ["a.png"], () => half)
@@ -82,7 +84,7 @@ describe("createReportImageShelf", () => {
     expect(shelf.find("toolu_mid", "a.png")).toBeDefined()
     expect(shelf.find("toolu_new", "a.png")).toBeDefined()
 
-    shelf.shelve("toolu_huge", ["a.png"], () => fictionalImage(MAX_SHELVED_REPORT_IMAGE_BYTES + 1))
+    shelf.shelve("toolu_huge", ["a.png"], () => fictionalImage(SHELF_LIMIT_BYTES + 1))
 
     expect(shelf.find("toolu_mid", "a.png")).toBeUndefined()
     expect(shelf.find("toolu_new", "a.png")).toBeUndefined()

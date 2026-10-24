@@ -1,7 +1,6 @@
 import type { Page } from "playwright-core"
 import { describe, expect, it } from "vitest"
 
-import { WAITING_LINE_DELAY_MS } from "../../src/shared/session/shown-reaction.ts"
 import { useScenarioRun } from "./scenario-run.ts"
 import { READY_TASK_ID, writeWelcomeTasks } from "./task-room.ts"
 
@@ -12,6 +11,9 @@ const run = useScenarioRun()
 
 /** 撮るときの経過（凍らせた瞬間から）。「何秒前」の類いをこの値で揃える。 */
 const ELAPSED_MS = 60_000
+
+/** ターンが閉じてから待ちの一言を出すまでの間（`WAITING_LINE_DELAY_MS`）。 */
+const WAITING_LINE_DELAY_MS = 120_000
 
 /** 依頼を待つ間の撮る経過。ターンが閉じてから待ちの一言を出すまでの間を越える。 */
 const WAITING_ELAPSED_MS = WAITING_LINE_DELAY_MS + ELAPSED_MS

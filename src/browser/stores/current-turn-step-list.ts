@@ -20,7 +20,7 @@ export function useCurrentTurnSteps(): TurnStepList {
 }
 
 /** 記録の並び1つから畳んだ手順。2回目からは覚えたものを返すので、セレクタの中から呼んでよい。 */
-export function currentTurnStepsOf(
+function currentTurnStepsOf(
   records: readonly SessionRecord[],
   sessionEnded: boolean,
 ): TurnStepList {

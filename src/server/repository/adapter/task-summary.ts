@@ -66,7 +66,7 @@ export type TaskSummaryOptions = {
   readonly ports: TaskSummaryPorts
 }
 
-export const REAL_TASK_SUMMARY_PORTS = {
+const REAL_TASK_SUMMARY_PORTS = {
   readBeadsIssues,
   createBeadsStampReader,
   readTaskSummaryMemory,
@@ -87,7 +87,7 @@ export const REAL_TASK_SUMMARY_PORTS = {
  * 疑似セッションの見回りの間隔。読むのはファイル1つだけなので、
  * E2E の足場が置いた一覧を待たせずに届ける。
  */
-export const FAKE_TASK_SUMMARY_POLL_INTERVAL_MS = 200
+const FAKE_TASK_SUMMARY_POLL_INTERVAL_MS = 200
 
 /**
  * 見張りの間隔と口。ふだん（`real`）は `bd` を読み、疑似セッション（`fake`）は `bd` の代わりに

@@ -17,11 +17,6 @@ const dismissedUsageProposalFileSchema = z.object({
   keys: z.array(z.string()),
 })
 
-/** 書き込んでよいのはこの1ファイルだけ。 */
-export function dismissedUsageProposalPath(): string {
-  return tsukumoHomePath("dismissedUsageProposal")
-}
-
 /**
  * 見送った識別子を読む。ファイルが無い・壊れている・版や形が違うときは空（一度も見送っていないのと同じ扱い）。
  *
@@ -50,4 +45,9 @@ export function writeDismissedUsageProposalKey(
     v: DISMISSED_USAGE_PROPOSAL_FORMAT_VERSION,
     keys: [...existing, key],
   })
+}
+
+/** 書き込んでよいのはこの1ファイルだけ。 */
+function dismissedUsageProposalPath(): string {
+  return tsukumoHomePath("dismissedUsageProposal")
 }

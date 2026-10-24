@@ -14,7 +14,6 @@ import {
   CLOSED_TASK_DISPLAY_LIMIT,
   createBeadsStampReader,
   readBeadsIssues,
-  readBeadsStampOf,
   readBeadsWorkspace,
 } from "../../../../src/server/repository/adapter/beads.ts"
 import type * as GitAdapter from "../../../../src/server/repository/adapter/git.ts"
@@ -180,9 +179,7 @@ describe("createBeadsStampReader", { timeout: 60_000 }, () => {
 
     expect(await createBeadsStampReader(repository)()).toEqual({ kind: "missing" })
   })
-})
 
-describe("readBeadsStampOf", { timeout: 60_000 }, () => {
   it("印は bd vc status の commit", async () => {
     const repository = await initBeadsIssues(root(), [openIssue("t-001", "架空")])
 
@@ -190,27 +187,25 @@ describe("readBeadsStampOf", { timeout: 60_000 }, () => {
       JSON.parse(await bd(repository, home(), "vc", "status", "--json")),
     )
 
-    expect(await readBeadsStampOf(repository)).toBe(status.commit)
+    expect(await createBeadsStampReader(repository)()).toEqual({
+      kind: "present",
+      stamp: status.commit,
+    })
   })
 
   it("課題を読むだけでは変わらず、コメントを足すと変わる", async () => {
     const repository = await initBeadsIssues(root(), [openIssue("t-001", "架空")])
-    const before = await readBeadsStampOf(repository)
+    const readStamp = createBeadsStampReader(repository)
+    const before = await readStamp()
 
     await bd(repository, home(), "list", "--json", "--all")
     await bd(repository, home(), "show", "t-001")
-    const afterRead = await readBeadsStampOf(repository)
+    const afterRead = await readStamp()
     await bd(repository, home(), "comment", "t-001", "架空のコメント")
 
-    expect(before).toEqual(expect.any(String))
-    expect(afterRead).toBe(before)
-    expect(await readBeadsStampOf(repository)).not.toBe(before)
-  })
-
-  it(".beads が無いと bd が落ちるので undefined", async () => {
-    const repository = await initRepository(root())
-
-    expect(await readBeadsStampOf(repository)).toBeUndefined()
+    expect(before).toMatchObject({ kind: "present", stamp: expect.any(String) })
+    expect(afterRead).toEqual(before)
+    expect(await readStamp()).not.toEqual(before)
   })
 })
 

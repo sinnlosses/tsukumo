@@ -3,10 +3,6 @@
 
 import { describe, expect, it } from "vitest"
 
-import {
-  REPORT_NOTHING_NEW_REJECTION_TEXT,
-  REPORT_RESEND_REJECTION_TEXT,
-} from "../../../../src/server/report/core/report-review.ts"
 import type { ReportDraft } from "../../../../src/server/report/core/report-violation.ts"
 import {
   type CallReview,
@@ -15,6 +11,7 @@ import {
 import { toSessionEvents } from "../../../../src/server/session-driver/core/sdk-message.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import { callTool } from "../../../fixture/mcp-server.ts"
+import { REJECTION_PHRASE } from "../../../fixture/report-review.ts"
 import { assistantMessage, REPORT_TOOL_FULL_NAME } from "../../../fixture/sdk-message.ts"
 import {
   CLOSING,
@@ -244,7 +241,10 @@ describe("report の差し戻しのあとの出し直し", () => {
     const resent = await live.call({ conclusion: COMPLETE.conclusion, favor: COMPLETE.favor })
 
     expect(accepted.reply.isError).toBe(false)
-    expect(nothingNew.reply.text).toBe(REPORT_NOTHING_NEW_REJECTION_TEXT)
-    expect(resent.reply).toMatchObject({ isError: true, text: REPORT_RESEND_REJECTION_TEXT })
+    expect(nothingNew.reply.text).toContain(REJECTION_PHRASE.nothingNew)
+    expect(resent.reply).toMatchObject({
+      isError: true,
+      text: expect.stringContaining(REJECTION_PHRASE.resend),
+    })
   })
 })

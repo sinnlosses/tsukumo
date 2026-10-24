@@ -23,11 +23,6 @@ const DAY_MS = 24 * 60 * 60 * 1000
 /** 控えのファイルの名前（`<sessionId>.jsonl`）。 */
 const LEDGER_FILE_NAME = /^(.+)\.jsonl$/u
 
-/** 既定の置き場（ホームの下）。 */
-export function inputLedgerDir(): string {
-  return tsukumoHomePath("inputLedger")
-}
-
 /** ターン1つ分の控えを書き足す。 */
 export function appendInputLedger(entry: InputLedgerEntry, root: string = inputLedgerDir()): void {
   appendJsonLines(ledgerPath(root, entry.sessionId), entry.lines)
@@ -56,6 +51,11 @@ export function pruneInputLedgerFiles(now: number, root: string = inputLedgerDir
       // 消せなかったファイルは次の起動でまた見る。
     }
   }
+}
+
+/** 既定の置き場（ホームの下）。 */
+function inputLedgerDir(): string {
+  return tsukumoHomePath("inputLedger")
 }
 
 function ledgerPath(root: string, sessionId: SessionId): string {

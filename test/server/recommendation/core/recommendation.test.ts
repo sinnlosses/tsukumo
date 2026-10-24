@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest"
 import type { RecommendationCandidate } from "../../../../src/server/recommendation/core/recommendation-candidate.ts"
 import {
   parseRecommendationResult,
-  RECOMMENDATION_REASON_CHARS,
   recommendationQuery,
 } from "../../../../src/server/recommendation/core/recommendation.ts"
 
@@ -65,7 +64,7 @@ describe("parseRecommendationResult", () => {
             { key: "X-002", reason: "架空の理由1" },
             { key: "X-002", reason: "架空の理由2" },
             { key: "X-005", reason: "架空の\n理由" },
-            { key: "X-005", reason: "あ".repeat(RECOMMENDATION_REASON_CHARS + 1) },
+            { key: "X-005", reason: "あ".repeat(41) },
             { key: "X-005", reason: "架空の理由3" },
             { key: "resume", reason: "架空の理由4" },
             { key: "X-007", reason: "架空の理由5" },

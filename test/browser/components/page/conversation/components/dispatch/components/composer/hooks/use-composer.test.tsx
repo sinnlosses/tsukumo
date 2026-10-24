@@ -2,13 +2,16 @@ import { act, cleanup, renderHook } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import {
-  loadSessionDraft,
+  draftOnSessionChange,
   saveSessionDraft,
 } from "../../../../../../../../../../src/browser/components/page/conversation/components/dispatch/components/composer/domain/composer-draft-storage.ts"
 import { useComposer } from "../../../../../../../../../../src/browser/components/page/conversation/components/dispatch/components/composer/hooks/use-composer.ts"
 import type { ComposerKey } from "../../../../../../../../../../src/browser/components/page/conversation/components/dispatch/domain/composer-surface.ts"
-import { useComposerDraft } from "../../../../../../../../../../src/browser/stores/composer-draft.ts"
-import { useInquiryDraft } from "../../../../../../../../../../src/browser/stores/inquiry-answer.ts"
+import {
+  EMPTY_DRAFT,
+  useComposerDraft,
+} from "../../../../../../../../../../src/browser/stores/composer-draft.ts"
+import { useInquiryDraft } from "../../../../../../../../../../src/browser/stores/inquiry-draft.ts"
 import { useSession } from "../../../../../../../../../../src/browser/stores/session.ts"
 import {
   INITIAL_SESSION_STATE,
@@ -99,6 +102,11 @@ function press(
     result.current.onKeyDown(pressed)
   })
   return pressed
+}
+
+/** `sessionId` に保存してある打ちかけの文面（無ければ空文字）。画面を開いた直後に空の入力欄へ戻る下書きで読む。 */
+function savedText(sessionId: string): string {
+  return draftOnSessionChange(undefined, sessionId, EMPTY_DRAFT)?.text ?? ""
 }
 
 describe("useComposer のプレースホルダ", () => {
@@ -395,7 +403,7 @@ describe("useComposer の打ちかけの保存", () => {
       putState(startingState)
     })
     expect(result.current.draft.text).toBe("")
-    expect(loadSessionDraft("a")?.text).toBe("Aの打ちかけ")
+    expect(savedText("a")).toBe("Aの打ちかけ")
 
     act(() => {
       putState(identified("a"))
@@ -415,7 +423,7 @@ describe("useComposer の打ちかけの保存", () => {
       putState(identified("b"))
     })
     expect(result.current.draft.text).toBe("Bのための字")
-    expect(loadSessionDraft("a")?.text).toBe("Aの打ちかけ")
+    expect(savedText("a")).toBe("Aの打ちかけ")
   })
 
   it("未確定のあいだに送って空のまま B が決まっても、A の保存済みは消えない", () => {
@@ -431,7 +439,7 @@ describe("useComposer の打ちかけの保存", () => {
     })
 
     expect(result.current.draft.text).toBe("")
-    expect(loadSessionDraft("a")?.text).toBe("Aの打ちかけ")
+    expect(savedText("a")).toBe("Aの打ちかけ")
   })
 
   it("最初にセッションが決まったとき、入力欄が空なら保存済みを戻す", () => {

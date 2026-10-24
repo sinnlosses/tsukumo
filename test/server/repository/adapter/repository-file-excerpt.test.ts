@@ -4,10 +4,7 @@ import { join } from "node:path"
 
 import { describe, expect, it } from "vitest"
 
-import {
-  MAX_EXCERPT_FILE_BYTES,
-  readFileExcerpt,
-} from "../../../../src/server/repository/adapter/repository-file-excerpt.ts"
+import { readFileExcerpt } from "../../../../src/server/repository/adapter/repository-file-excerpt.ts"
 
 /** 架空の中身を置いた作業ディレクトリ。git 管理下の一覧はテストごとに渡す。 */
 function fictionalWorkspace(files: Readonly<Record<string, string | Buffer>>): string {
@@ -76,8 +73,8 @@ describe("readFileExcerpt", () => {
     ).toEqual({ kind: "out-of-range", lineCount: 10 })
   })
 
-  it("上限より大きいファイルは読まずに too-large", async () => {
-    const cwd = fictionalWorkspace({ "large.txt": "a".repeat(MAX_EXCERPT_FILE_BYTES + 1) })
+  it("上限（1 MiB）より大きいファイルは読まずに too-large", async () => {
+    const cwd = fictionalWorkspace({ "large.txt": "a".repeat(1024 * 1024 + 1) })
 
     expect(
       await readFileExcerpt(

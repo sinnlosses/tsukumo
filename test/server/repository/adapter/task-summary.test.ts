@@ -11,7 +11,7 @@ import {
   writeTaskSummaryMemory,
 } from "../../../../src/server/repository/adapter/task-summary-memory.ts"
 import {
-  REAL_TASK_SUMMARY_PORTS,
+  taskSummaryOptionsOf,
   watchTaskSummary,
   type TaskSummaryPorts,
   type TaskSummaryWatcher,
@@ -72,13 +72,14 @@ function fakeIntake(initial: readonly Readonly<Record<string, unknown>>[]): {
 /** 本物の口のうち、覚える口だけを一時ディレクトリへ向ける（利用者のホームへ書かない）。 */
 function testPorts(): TaskSummaryPorts {
   const memoryPath = join(root(), "task-summary.json")
+  const real = taskSummaryOptionsOf("real").ports
   return {
-    ...REAL_TASK_SUMMARY_PORTS,
+    ...real,
     clock: {
-      ...REAL_TASK_SUMMARY_PORTS.clock,
+      ...real.clock,
       after: (delayMs, wake) => {
         pollsFinished += 1
-        return REAL_TASK_SUMMARY_PORTS.clock.after(delayMs, wake)
+        return real.clock.after(delayMs, wake)
       },
     },
     readTaskSummaryMemory: (cwd) => readTaskSummaryMemory(cwd, memoryPath),

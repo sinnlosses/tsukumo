@@ -4,11 +4,9 @@ import type { ChatUnconsolidatedEntry } from "../../../../src/server/chat/core/c
 import {
   CHAT_CONSOLIDATION_LIMITS,
   type ChatConsolidationResult,
-  CHAT_TOPIC_LIMIT,
   chatConsolidationQuery,
   chatEpisodeDrafts,
   chatSynopsisShrunk,
-  CHAT_SYNOPSIS_RESERVED_TAGS,
   parseChatConsolidationResult as parseResult,
   readChatTopics,
 } from "../../../../src/server/chat/core/chat-consolidation.ts"
@@ -268,23 +266,16 @@ describe("parseChatConsolidationResult", () => {
     ).toBeUndefined()
   })
 
-  it("synopsis に予約タグが含まれると undefined", () => {
-    for (const tag of CHAT_SYNOPSIS_RESERVED_TAGS) {
-      expect(
-        parseChatConsolidationResult({ ...VALID_OUTPUT, synopsis: `架空の前${tag}架空の後` }, 4),
-      ).toBeUndefined()
-    }
-  })
-
-  it("予約タグは、脇の話の包み・委譲の引き継ぎの頭・古い話題の組を網羅する", () => {
-    const tags: readonly string[] = CHAT_SYNOPSIS_RESERVED_TAGS
+  it("synopsis に予約タグが含まれると undefined。予約タグは脇の話の包み・委譲の引き継ぎの頭・古い話題の組を網羅する", () => {
     const [asideOpen = "", ...asideRest] = asidePromptText("架空").split("架空")
     const asideClose = asideRest.join("").trim()
-    expect(tags).toContain(asideOpen.trim())
-    expect(tags).toContain(asideClose)
     // 引き継ぎの頭・スラッシュコマンドの展開は非公開の定数、Claude Code の印はコードに定数が無い。
     // リテラルで照らすので、向こうの変更は検知できない。
     for (const tag of [
+      asideOpen.trim(),
+      asideClose,
+      "<tsukumo-progress>",
+      "</tsukumo-progress>",
       "<agent-message",
       "<topics>",
       "</topics>",
@@ -292,10 +283,14 @@ describe("parseChatConsolidationResult", () => {
       "<command-message>",
       "<command-args>",
       "<system-reminder>",
+      "</system-reminder>",
       "<task-notification>",
+      "</task-notification>",
       "<local-command-stdout>",
     ]) {
-      expect(tags).toContain(tag)
+      expect(
+        parseChatConsolidationResult({ ...VALID_OUTPUT, synopsis: `架空の前${tag}架空の後` }, 4),
+      ).toBeUndefined()
     }
   })
 
@@ -439,7 +434,7 @@ describe("readChatTopics", () => {
     ])
   })
 
-  it(`${String(CHAT_TOPIC_LIMIT)}件を超えて書かれていても、先頭から${String(CHAT_TOPIC_LIMIT)}件だけ`, () => {
+  it("3件を超えて書かれていても、先頭から3件だけ", () => {
     expect(topicsOf(["架空1", "架空2", "架空3", "架空4"])).toEqual(["架空1", "架空2", "架空3"])
   })
 

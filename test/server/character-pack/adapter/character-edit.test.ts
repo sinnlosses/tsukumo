@@ -7,13 +7,11 @@ import { describe, expect, it } from "vitest"
 import {
   createCharacterPack,
   editCharacterPack,
-  MAX_IMAGE_FILES_PER_PACK,
 } from "../../../../src/server/character-pack/adapter/character-edit.ts"
 import {
   listCharacterPacks,
   readCharacterPack,
 } from "../../../../src/server/character-pack/adapter/character-pack.ts"
-import { DEFAULT_BACKGROUND_VEIL } from "../../../../src/shared/character-pack/character-background.ts"
 import type { CharacterDefinition } from "../../../../src/shared/character-pack/character-definition.ts"
 import { EXPRESSIONS } from "../../../../src/shared/character-pack/expression.ts"
 import { REMEMBERED_SECTION_HEADING } from "../../../../src/shared/character-pack/persona-section.ts"
@@ -184,7 +182,8 @@ describe("editCharacterPack（立ち絵）", () => {
     // まず写させてから、上限まで画像で埋める。
     const edited = editInHome(readCharacterPack(bundled), setPortrait("default", SVG_DATA_URL))
     expect(edited).toBeDefined()
-    for (let index = 0; index < MAX_IMAGE_FILES_PER_PACK; index += 1) {
+    // 1つのパックが持てる画像は、表情ごとの立ち絵とミニ立ち絵・背景・顔の3つ。
+    for (let index = 0; index < EXPRESSIONS.length + 3; index += 1) {
       writeFileSync(join(home(), "tsukumo", `spare-${String(index)}.png`), "x")
     }
 
@@ -359,7 +358,7 @@ describe("editCharacterPack（背景）", () => {
       image: PNG_DATA_URL,
     })
 
-    expect(edited?.definition?.background?.veil).toBe(DEFAULT_BACKGROUND_VEIL)
+    expect(edited?.definition?.background?.veil).toBe(0.75)
   })
 
   it("立ち絵を全表情そろえミニ立ち絵も持つパックでも、背景を差せる", () => {

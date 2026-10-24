@@ -16,7 +16,7 @@ import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
 const TASK_SUMMARY_MEMORY_FORMAT_VERSION = 6 satisfies number
 
 /** 覚える作業ディレクトリの数。超えたら古いものから落とす。 */
-export const TASK_SUMMARY_MEMORY_LIMIT = 8
+const TASK_SUMMARY_MEMORY_LIMIT = 8
 
 const taskLocationSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("issue"), url: z.string() }),
@@ -50,10 +50,6 @@ const taskSummaryMemoryFileSchema = z.object({
 
 type MemoryEntry = { readonly cwd: string; readonly items: readonly TaskSummaryItem[] }
 
-export function taskSummaryMemoryPath(): string {
-  return tsukumoHomePath("taskSummary")
-}
-
 /** 作業ディレクトリで最後に読めた一覧。ファイルが無い・壊れている・版や形が違う・その作業ディレクトリの組が無いときは `undefined`。 */
 export function readTaskSummaryMemory(
   cwd: string,
@@ -71,6 +67,10 @@ export function writeTaskSummaryMemory(
   const others = readEntries(path).filter((entry) => entry.cwd !== cwd)
   const entries = [{ cwd, items }, ...others].slice(0, TASK_SUMMARY_MEMORY_LIMIT)
   writeJsonFile(path, { v: TASK_SUMMARY_MEMORY_FORMAT_VERSION, entries })
+}
+
+function taskSummaryMemoryPath(): string {
+  return tsukumoHomePath("taskSummary")
 }
 
 function readEntries(path: string): readonly MemoryEntry[] {

@@ -3,9 +3,9 @@ import { describe, expect, it } from "vitest"
 import {
   doneTasksOfBeadsIssues,
   knownTaskSummaryOfBeadsIssues,
-  taskSummaryItemsOfBeadsIssues,
 } from "../../../../src/server/repository/adapter/beads-task.ts"
 import type { BeadsIssue } from "../../../../src/server/repository/adapter/beads.ts"
+import type { TaskSummaryItem } from "../../../../src/shared/repository/task-summary.ts"
 
 function issue(overrides: Partial<BeadsIssue> & Pick<BeadsIssue, "id" | "status">): BeadsIssue {
   return {
@@ -25,9 +25,13 @@ function issue(overrides: Partial<BeadsIssue> & Pick<BeadsIssue, "id" | "status"
   }
 }
 
-describe("taskSummaryItemsOfBeadsIssues", () => {
+function itemsOf(issues: readonly BeadsIssue[]): readonly TaskSummaryItem[] {
+  return knownTaskSummaryOfBeadsIssues(issues).items
+}
+
+describe("knownTaskSummaryOfBeadsIssues の一覧", () => {
   it("組み込みの状態を todo・doing・hold・done に読み替え、ほかの値は other の変種に生の語のまま入れる", () => {
-    const items = taskSummaryItemsOfBeadsIssues([
+    const items = itemsOf([
       issue({ id: "t-1", status: "open", createdAtEpochMilliseconds: 1 }),
       issue({ id: "t-2", status: "in_progress", createdAtEpochMilliseconds: 2 }),
       issue({ id: "t-3", status: "deferred", createdAtEpochMilliseconds: 3 }),
@@ -52,7 +56,7 @@ describe("taskSummaryItemsOfBeadsIssues", () => {
   })
 
   it("ID の番号の昇順に並べ、番号 99 を 100 より前に置く", () => {
-    const items = taskSummaryItemsOfBeadsIssues([
+    const items = itemsOf([
       issue({ id: "x-100", status: "open", createdAtEpochMilliseconds: 1 }),
       issue({ id: "x-99", status: "open", createdAtEpochMilliseconds: 2 }),
     ])
@@ -61,7 +65,7 @@ describe("taskSummaryItemsOfBeadsIssues", () => {
   })
 
   it("番号の取れない ID は末尾に、作った時刻の順で置く", () => {
-    const items = taskSummaryItemsOfBeadsIssues([
+    const items = itemsOf([
       issue({ id: "gh-new-y", status: "open", createdAtEpochMilliseconds: 2 }),
       issue({ id: "gh-new-x", status: "open", createdAtEpochMilliseconds: 1 }),
       issue({ id: "x-5", status: "open", createdAtEpochMilliseconds: 3 }),
@@ -71,7 +75,7 @@ describe("taskSummaryItemsOfBeadsIssues", () => {
   })
 
   it("ドラフトの印は着手前（open・deferred）だけ draft にし、ほかは印があっても状態のまま", () => {
-    const items = taskSummaryItemsOfBeadsIssues([
+    const items = itemsOf([
       issue({ id: "t-1", status: "deferred", draft: true, createdAtEpochMilliseconds: 1 }),
       issue({ id: "t-2", status: "open", draft: true, createdAtEpochMilliseconds: 2 }),
       issue({ id: "t-3", status: "in_progress", draft: true, createdAtEpochMilliseconds: 3 }),
@@ -95,7 +99,7 @@ describe("taskSummaryItemsOfBeadsIssues", () => {
   })
 
   it("ID・題・依存・ラベルは課題の字のまま写す", () => {
-    const [item] = taskSummaryItemsOfBeadsIssues([
+    const [item] = itemsOf([
       issue({
         id: "gh-12",
         status: "in_progress",
@@ -122,7 +126,7 @@ describe("taskSummaryItemsOfBeadsIssues", () => {
   })
 
   it("属性が無い課題でも labels は字のまま出し、label から属性を作らない", () => {
-    const [item] = taskSummaryItemsOfBeadsIssues([
+    const [item] = itemsOf([
       issue({ id: "gh-13", status: "open", labels: ["difficulty:opus", "loopable:N"] }),
     ])
 
@@ -134,7 +138,7 @@ describe("taskSummaryItemsOfBeadsIssues", () => {
   })
 
   it("番号の取れない ID だけなら、作った時刻の順に並べ、同じ時刻なら ID の順にする", () => {
-    const items = taskSummaryItemsOfBeadsIssues([
+    const items = itemsOf([
       issue({ id: "t-b", status: "open", createdAtEpochMilliseconds: 20 }),
       issue({ id: "t-c", status: "open", createdAtEpochMilliseconds: 10 }),
       issue({ id: "t-a", status: "open", createdAtEpochMilliseconds: 20 }),
@@ -152,7 +156,7 @@ describe("taskSummaryItemsOfBeadsIssues", () => {
         closedAtEpochMilliseconds: index,
       }),
     )
-    const items = taskSummaryItemsOfBeadsIssues(closedIssues)
+    const items = itemsOf(closedIssues)
 
     expect(items.map((item) => item.id)).toEqual([
       "t-102",
@@ -222,7 +226,7 @@ describe("taskSummaryItemsOfBeadsIssues", () => {
   })
 
   it("external_ref が https:// の URL のときだけ置き場所にする", () => {
-    const [withUrl, withoutUrl, notHttps] = taskSummaryItemsOfBeadsIssues([
+    const [withUrl, withoutUrl, notHttps] = itemsOf([
       issue({ id: "t-1", status: "open", externalRef: "https://example.com/issues/1" }),
       issue({ id: "t-2", status: "open" }),
       issue({ id: "t-3", status: "open", externalRef: "example.com/issues/1" }),
@@ -234,7 +238,7 @@ describe("taskSummaryItemsOfBeadsIssues", () => {
   })
 
   it("waitingFor には閉じていない課題の依存だけを依存の順で残し、閉じた・課題に無い依存は止めない", () => {
-    const items = taskSummaryItemsOfBeadsIssues([
+    const items = itemsOf([
       issue({ id: "t-1", status: "closed", closedAtEpochMilliseconds: 1 }),
       issue({ id: "t-2", status: "open" }),
       issue({ id: "t-3", status: "deferred" }),
@@ -252,9 +256,9 @@ describe("taskSummaryItemsOfBeadsIssues", () => {
   })
 })
 
-describe("taskSummaryItemsOfBeadsIssues の本文", () => {
+describe("knownTaskSummaryOfBeadsIssues の一覧の本文", () => {
   function bodyOf(fields: Partial<BeadsIssue>): string | undefined {
-    return taskSummaryItemsOfBeadsIssues([issue({ id: "t-1", status: "open", ...fields })])[0]?.body
+    return itemsOf([issue({ id: "t-1", status: "open", ...fields })])[0]?.body
   }
 
   it("本文の欄がどれも空なら空文字列", () => {

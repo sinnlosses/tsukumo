@@ -7,7 +7,6 @@ import { readCharacterPack } from "../../../../src/server/character-pack/adapter
 import {
   createPersonaMemory,
   forgetRememberedLineFromScreen,
-  MAX_REMEMBERED_LINES,
   readRememberedLines,
 } from "../../../../src/server/chat/adapter/persona-memory.ts"
 import { REMEMBERED_SECTION_HEADING } from "../../../../src/shared/character-pack/persona-section.ts"
@@ -182,16 +181,16 @@ describe("上限: 節が持てる行数", () => {
   it("20行を超えるといちばん古い行が落ちる（節より前は変わらない）", () => {
     const memory = createPersonaMemory(readCharacterPack(writeBundledPack("架空")), dir(), home())
 
-    for (let index = 1; index <= MAX_REMEMBERED_LINES + 1; index += 1) {
+    for (let index = 1; index <= 21; index += 1) {
       memory.remember(`覚えたこと${index}`)
       memory.finishTurn()
     }
 
     const written = homePersona("架空") ?? ""
     const lines = rememberedLines(written)
-    expect(lines).toHaveLength(MAX_REMEMBERED_LINES)
+    expect(lines).toHaveLength(20)
     expect(lines[0]).toBe("- 覚えたこと2")
-    expect(lines.at(-1)).toBe(`- 覚えたこと${MAX_REMEMBERED_LINES + 1}`)
+    expect(lines.at(-1)).toBe("- 覚えたこと21")
     expect(beforeSection(written)).toBe(`${PERSONA}\n`)
   })
 })

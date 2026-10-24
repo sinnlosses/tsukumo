@@ -6,7 +6,7 @@ import { useEffect, useState } from "react"
 
 import { useSession } from "../../../../../../stores/session.ts"
 
-export const PORTRAIT_REST_MS = 60_000
+const PORTRAIT_REST_MS = 60_000
 
 const OPERATION_EVENTS = ["pointerdown", "pointermove", "keydown", "wheel", "touchstart"] as const
 

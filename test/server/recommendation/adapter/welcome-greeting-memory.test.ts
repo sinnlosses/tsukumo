@@ -5,7 +5,6 @@ import { describe, expect, it } from "vitest"
 
 import {
   readRecentWelcomeGreetings,
-  welcomeGreetingMemoryPath,
   writeRecentWelcomeGreetings,
 } from "../../../../src/server/recommendation/adapter/welcome-greeting-memory.ts"
 import { useTempDir } from "../../../fixture/temp-dir.ts"
@@ -45,9 +44,6 @@ describe("直近の迎えの挨拶", () => {
 
     expect(readRecentWelcomeGreetings("per-char-a")).toEqual(first)
     expect(readRecentWelcomeGreetings("per-char-b")).toEqual(second)
-    expect(welcomeGreetingMemoryPath("per-char-a")).not.toBe(
-      welcomeGreetingMemoryPath("per-char-b"),
-    )
   })
 
   it.each(["", ".", "..", "../escape", "a/b", "a\\b"])(

@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest"
 import { FRAME_ERROR_REASON } from "../src/shared/frame.ts"
 import { REQUEST_EVENT, startRouter } from "./fixture/command-router.ts"
 
-describe("createCommandRouter（host。レポートに書かれたパスを開く）", () => {
+describe("createSocketRouter（host。レポートに書かれたパスを開く）", () => {
   it("開けたら ok を返し、渡したパスが options.openFile に届く", async () => {
     const { commands, stub, openedFiles, restarts } = startRouter()
 

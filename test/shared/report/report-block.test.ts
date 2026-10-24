@@ -4,7 +4,7 @@ import {
   figureBlockSchema,
   parseReportSections,
   type ReportBlock,
-  reportBlockSchema,
+  reportSectionSchema,
   reportSectionsOfBody,
 } from "../../../src/shared/report/report-block.ts"
 
@@ -494,9 +494,9 @@ describe("parseReportSections", () => {
       const block = claimsWith({ claim: "架空の主張", basis: "架空の根拠", ...extra })
 
       expect(blocksOf(block)).toEqual([])
-      expect(reportBlockSchema.safeParse(block).error?.issues.map((issue) => issue.path)).toEqual([
-        ["items", 0, "howToVerify"],
-      ])
+      expect(
+        reportSectionSchema.safeParse({ blocks: [block] }).error?.issues.map((issue) => issue.path),
+      ).toEqual([["blocks", 0, "items", 0, "howToVerify"]])
     })
 
     it("確定でない項目も確かめ方があれば受け、列挙の外の確度は受けない", () => {

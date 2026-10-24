@@ -19,7 +19,7 @@ import type { TurnBodies } from "./turn-progress.ts"
  * 出すやり取りの数。
  * 値は {@link MAX_SESSION_STATE_TURNS}.work から導く（メインビューの窓が記録の窓を超えない関係を導出で保つ。別々の定数にすると、どちらかだけを直したときに関係が黙って崩れる）。
  */
-export const MAX_MAIN_VIEW_TURNS = MAX_SESSION_STATE_TURNS.work
+const MAX_MAIN_VIEW_TURNS = MAX_SESSION_STATE_TURNS.work
 
 /**
  * 1つのやり取りの中で画面に出す記録の上限。超えた分は古いほうから落とし、件数だけを残す（やり取りの境界を優先する）。

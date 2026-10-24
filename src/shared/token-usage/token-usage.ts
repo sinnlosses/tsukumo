@@ -13,7 +13,7 @@ import { z } from "zod"
 export const TOKEN_USAGE_FORMAT_VERSION = 3 satisfies number
 
 /** 読める古い版（`taskId`・`stage` の欄が無い版）。読むときだけ通し、書くのは常に {@link TOKEN_USAGE_FORMAT_VERSION}。 */
-export const TOKEN_USAGE_LEGACY_FORMAT_VERSION = 2 satisfies number
+const TOKEN_USAGE_LEGACY_FORMAT_VERSION = 2 satisfies number
 
 /** そのターンが仕事だったか雑談だったか。 */
 export type TokenUsageMode = "work" | "chat"

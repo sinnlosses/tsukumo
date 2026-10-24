@@ -8,7 +8,6 @@ import {
   addItemToHome,
   clearSeatInHome,
   itemsChangedEvent,
-  itemsFilePath,
   removeItemFromHome,
   setSeatInHome,
 } from "../../../../src/server/item/adapter/item-store.ts"
@@ -20,16 +19,17 @@ const PACKS = ["fictional-a"]
 describe("item-store", () => {
   const home = useTempDir("item-store")
   const dir = (): string => tsukumoHomePath("items", home())
+  const itemsFile = (): string => join(dir(), "items.json")
 
   function writeRaw(text: string): void {
     mkdirSync(dir(), { recursive: true })
-    writeFileSync(itemsFilePath(dir()), text)
+    writeFileSync(itemsFile(), text)
   }
 
   it("ファイルが無いところへ足すと items.json と画像ができ、配る形に載る", () => {
     const event = addItemToHome({ name: "提灯", image: PNG }, dir())
     expect(existsSync(join(dir(), "1.png"))).toBe(true)
-    expect(JSON.parse(readFileSync(itemsFilePath(dir()), "utf8"))).toEqual({
+    expect(JSON.parse(readFileSync(itemsFile(), "utf8"))).toEqual({
       items: [{ id: "1", name: "提灯", image: "1.png" }],
       seats: {},
     })
@@ -57,7 +57,7 @@ describe("item-store", () => {
       setSeatInHome({ pack: "fictional-a", seat: "topLeft", id: "1" }, PACKS, dir()),
     ).toBeUndefined()
     expect(clearSeatInHome({ pack: "fictional-a", seat: "topLeft" }, PACKS, dir())).toBeUndefined()
-    expect(readFileSync(itemsFilePath(dir()), "utf8")).toBe(raw)
+    expect(readFileSync(itemsFile(), "utf8")).toBe(raw)
     expect(readdirSync(dir())).toEqual(["items.json"])
     expect(itemsChangedEvent(dir())).toEqual({ kind: "items-changed", items: [], seats: {} })
   })
@@ -87,7 +87,7 @@ describe("item-store", () => {
 
   it("置き換えの途中で書けなくなっても、元の items.json はそのまま残り、一時ファイルも残らない", () => {
     addItemToHome({ name: "提灯", image: PNG }, dir())
-    const before = readFileSync(itemsFilePath(dir()), "utf8")
+    const before = readFileSync(itemsFile(), "utf8")
 
     chmodSync(dir(), 0o500)
     try {
@@ -98,7 +98,7 @@ describe("item-store", () => {
       chmodSync(dir(), 0o700)
     }
 
-    expect(readFileSync(itemsFilePath(dir()), "utf8")).toBe(before)
+    expect(readFileSync(itemsFile(), "utf8")).toBe(before)
     expect(readdirSync(dir()).filter((name) => name.endsWith(".tmp"))).toEqual([])
   })
 

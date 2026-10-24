@@ -25,7 +25,7 @@ export const PHASE_RESULT_REASON_DESCRIPTION =
   "止めた理由を1〜2文で。outcome が stopped のときだけ渡し、ほかでは省く"
 
 /** 差し戻しの種類ごとの直し方。 */
-export const PHASE_RESULT_REJECTIONS = {
+const PHASE_RESULT_REJECTIONS = {
   malformed:
     "phase は 1 から count までの整数にし、outcome は finished・skipped・stopped のどれかにする。" +
     "reason は outcome が stopped のときだけ、空でない文で渡す。直して呼び直すこと。" +

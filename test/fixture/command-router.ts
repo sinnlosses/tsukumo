@@ -1,4 +1,4 @@
-// コマンドの受け手（`createCommandRouter`）のテストが共有する、偽のセッションと受け手の口。
+// コマンドの受け手（`createSocketRouter`）のテストが共有する、偽のセッションと受け手の口。
 
 import type { CommandRouterPorts } from "../../src/router.ts"
 import type { DispatchResult } from "../../src/server/core/command-receiver.ts"

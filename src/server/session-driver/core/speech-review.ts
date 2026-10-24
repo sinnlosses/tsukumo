@@ -75,7 +75,7 @@ export function createSpeechReview(news: SpeechNews): SpeechReview {
 }
 
 /** 新しい事実の無い `speak` を差し戻すときの戻り値。固定の文面だけで、モデルが書いたセリフも画面の状態も写さない。 */
-export const SPEECH_NOTHING_NEW_REJECTION_TEXT =
+const SPEECH_NOTHING_NEW_REJECTION_TEXT =
   "直前のセリフのあと、新しい依頼もツールの結果もバックグラウンドタスクの終わりも届いていないので、" +
   "このセリフは画面に出していない。委譲の合図を待つあいだは `speak` も `report` も呼ばず、" +
   "何も書かずにターンを終えること。言い回しを変えて呼び直さないこと。" +

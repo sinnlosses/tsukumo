@@ -12,10 +12,10 @@ import {
 } from "../../../scripts/shared/ast-node.ts"
 import {
   readScenarioNames,
-  ROOM_OPENER,
   scenarioOwners,
   type ScenarioNames,
 } from "../../../scripts/shared/e2e-scenario.ts"
+import { ROOM_OPENER } from "../../../scripts/shared/room-opener-name.ts"
 
 describe("readScenarioNames", () => {
   test("文字列リテラルと式なしテンプレートを名前、式つきテンプレートの頭を prefixes に集める", () => {

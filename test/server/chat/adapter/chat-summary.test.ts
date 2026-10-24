@@ -4,11 +4,11 @@ import { join } from "node:path"
 import { describe, expect, it } from "vitest"
 
 import {
-  CHAT_SUMMARY_LIMIT_BYTES,
   createChatSummary,
   discardChatSummary,
   UNAVAILABLE_CHAT_SUMMARY,
 } from "../../../../src/server/chat/adapter/chat-summary.ts"
+import { CHAT_MEMORY_BUDGET } from "../../../../src/shared/chat/chat-memory-budget.ts"
 import { characterPackName } from "../../../fixture/character.ts"
 import { useTempDir } from "../../../fixture/temp-dir.ts"
 
@@ -377,7 +377,7 @@ describe("createChatSummary", () => {
       const chatSummary = createChatSummary(PACK, root())
       const lines = Array.from({ length: 200 }, (_, i) => `第${i}回のやり取りの短い要約行です。`)
       const summary = lines.join("\n")
-      expect(byteLength(summary)).toBeGreaterThan(CHAT_SUMMARY_LIMIT_BYTES)
+      expect(byteLength(summary)).toBeGreaterThan(CHAT_MEMORY_BUDGET.synopsisBytes)
 
       const result = chatSummary.write(summary, [], FOLDED_AT)
       const record = chatSummary.read()
@@ -389,7 +389,9 @@ describe("createChatSummary", () => {
       expect(kept.length).toBeLessThan(lines.length)
       expect(result).toEqual({ kind: "written", droppedLines: lines.length - kept.length })
       expect(lines.slice(lines.length - kept.length)).toEqual(kept)
-      expect(byteLength(record?.summary ?? "")).toBeLessThanOrEqual(CHAT_SUMMARY_LIMIT_BYTES)
+      expect(byteLength(record?.summary ?? "")).toBeLessThanOrEqual(
+        CHAT_MEMORY_BUDGET.synopsisBytes,
+      )
     })
 
     it("要約が1行だけで8 KiBを超えるとき（改行が無い）も空にならない", () => {

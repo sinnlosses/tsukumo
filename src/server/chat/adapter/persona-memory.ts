@@ -30,7 +30,7 @@ import {
 import type { PersonaMemory } from "../../session-driver/core/session-driver.ts"
 
 /** 節が持てる行数（超えたらいちばん古い行を落とす）。 */
-export const MAX_REMEMBERED_LINES = 20
+const MAX_REMEMBERED_LINES = 20
 
 /** `persona.md` に書けなかったことの知らせ口。`error` からは `error.name` と code だけを写すこと。 */
 export type PersonaMemoryFailureReport = (

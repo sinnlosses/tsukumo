@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest"
 
-import {
-  createPromptDelayWatch,
-  PROMPT_DELAY_THRESHOLD_MS,
-} from "../../../../src/server/session-driver/core/prompt-delay.ts"
+import { createPromptDelayWatch } from "../../../../src/server/session-driver/core/prompt-delay.ts"
 import type { PromptDelayFootprint } from "../../../../src/shared/diagnostic/diagnostic-record.ts"
+
+/** どれかの区間がこれを超えたら1行書くしきい値（3秒）。 */
+const PROMPT_DELAY_THRESHOLD_MS = 3000
 
 const START = 1_000_000
 

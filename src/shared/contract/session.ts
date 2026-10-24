@@ -32,7 +32,7 @@ const PROMPT_ROUTINGS = [
 export type PromptRouting = (typeof PROMPT_ROUTINGS)[number]
 
 /** 依頼として送れる文面の上限。送信のための素朴な上限であって、秘匿・検閲のためではない。 */
-export const MAX_PROMPT_TEXT_LENGTH = 20_000
+const MAX_PROMPT_TEXT_LENGTH = 20_000
 
 /**
  * 依頼に添える画像1枚。原寸と控えの対。

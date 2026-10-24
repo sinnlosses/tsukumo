@@ -90,7 +90,7 @@ const EXTRA_IMAGE_FILES_PER_PACK = 3
  * 1つのパックが持てる画像の数。表情の全体（{@link EXPRESSIONS}）＋ {@link EXTRA_IMAGE_FILES_PER_PACK}。
  * 数を直に書くと、表情を足したときに黙って足りなくなり、立ち絵を全部そろえたパックで背景の差し替えだけが弾かれる。
  */
-export const MAX_IMAGE_FILES_PER_PACK = EXPRESSIONS.length + EXTRA_IMAGE_FILES_PER_PACK
+const MAX_IMAGE_FILES_PER_PACK = EXPRESSIONS.length + EXTRA_IMAGE_FILES_PER_PACK
 
 /**
  * `edit.pack` で指されたパックに編集1件を書き込み、書けたパックを読み直して返す。受け付けられなかったときは undefined:

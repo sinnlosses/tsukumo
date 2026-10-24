@@ -8,7 +8,7 @@
  * 依頼で始まっていないまとまり（{@link Turn} の `pre-request`）に振る番号。実在のターンの
  * 番号（0以上）とぶつからない値にする。
  */
-export const PRE_REQUEST_TURN_ID = -1
+const PRE_REQUEST_TURN_ID = -1
 
 /** 割れる記録の形。依頼は `kind: "request"` で、`turnId` を持つ（{@link TurnRequest}）。 */
 type TurnItem = { readonly kind: string }

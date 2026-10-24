@@ -10,28 +10,15 @@
 // 組み立てるとき、ソースの指紋を成果物の隣に置く。起動時にいまのソースの指紋と比べ、違えば知らせる（`readUiBundle` の `outdated`）。
 // 古くても画面は動くので止めはしない。
 //
-// `vite` は JS API ではなく CLI を `node` の子プロセスで起こす。
-// 組み立ての JS API は同じプロセスの `process.env.NODE_ENV` を `production` に書き換えるので、
-// 常駐するサーバの中では呼ばない。
-// 設定はリポジトリ直下の Vite の設定ファイルで、入口の置き場と出し先はここが引数で渡す。
-//
-// 型検査はここではしない（`vite build` はトランスパイルだけで型を見ない）。型は `pnpm run check` の `tsc --noEmit` が見る。
+// `vite build` を起こすのは `runViteBuild`。
 
-import { execFile } from "node:child_process"
 import { createHash } from "node:crypto"
 import { readdir, readFile, writeFile } from "node:fs/promises"
 import { join } from "node:path"
-import { stripVTControlCharacters } from "node:util"
 
-import { clipText } from "../../../shared/utils/clip-text.ts"
 import { bundledFilePath } from "../../adapter/bundled-path.ts"
 import { sourceFingerprint } from "./source-fingerprint.ts"
-
-/** Vite の設定ファイル。入口のファイル名と、出す2つのファイル名はここに書いてある。 */
-export const VITE_CONFIG_RELATIVE_PATH: readonly string[] = ["vite.config.ts"]
-
-/** `vite` の CLI の実体（`node_modules/.bin/vite` が指す先）。 */
-const VITE_CLI_RELATIVE_PATH: readonly string[] = ["node_modules", "vite", "bin", "vite.js"]
+import { runViteBuild } from "./vite-build.ts"
 
 /**
  * 出し先に置かれる対の名前。Vite の設定の `entryFileNames` と `assetFileNames` に合わせる
@@ -44,7 +31,7 @@ const CHUNK_FILE_EXTENSION = ".js"
 const STYLE_SHEET_FILE_NAME = "main.css"
 
 /** 組み立てたときのソースの指紋を置くファイル（`.js` でないのでチャンクに数えない）。 */
-export const SOURCE_FINGERPRINT_FILE_NAME = "source-fingerprint.txt"
+const SOURCE_FINGERPRINT_FILE_NAME = "source-fingerprint.txt"
 
 /**
  * ブラウザ側のソースの置き場。組み立ての入口であり、指紋に入る置き場の1つでもある。
@@ -63,19 +50,6 @@ const BUNDLED_SOURCE_DIR_RELATIVE_PATHS: readonly (readonly string[])[] = [
 /** 成果物の置き場。`.gitignore` してあるので、各自が `pnpm run build` で作る。 */
 const BUILT_DIR_RELATIVE_PATH: readonly string[] = ["dist", "browser"]
 
-/**
- * `vite build` 自身の出力（警告と、失敗したときの理由）の受け取り上限。成果物は
- * ここを通らない（`--outDir` に出る）ので、数十KBあれば足りる。
- */
-const BUILD_OUTPUT_MAX_BYTES = 1024 * 1024
-
-/**
- * `vite build` の理由を stderr へ流すときの上限。実測では構文エラー1件がスタックを除いて10行ほどだが、
- * 壊れ方によっては全ファイル分のエラーが並ぶ。ターミナルに出す1回分として読める長さで切る。
- */
-const FAILURE_REASON_MAX_LINES = 20
-const FAILURE_REASON_MAX_CHARS = 2000
-
 /** 組み立てた1組。片方だけ配らない（class 名が食い違う）。 */
 export type UiBundle = {
   readonly uiScript: string
@@ -84,18 +58,6 @@ export type UiBundle = {
   readonly chunks: ReadonlyMap<string, string>
   /** 対の中身から決めた ETag（引用符つき）。どれか1本でも変われば変わる。 */
   readonly etag: string
-}
-
-export function bundleEtag(
-  uiScript: string,
-  styleSheet: string,
-  chunks: ReadonlyMap<string, string>,
-): string {
-  const hash = createHash("sha1")
-  for (const part of [uiScript, styleSheet, ...[...chunks].flat()]) {
-    hash.update(part).update("\0")
-  }
-  return `"${hash.digest("hex")}"`
 }
 
 /**
@@ -155,45 +117,6 @@ export async function buildUiBundle(outDir: string): Promise<BundleResult> {
 }
 
 /**
- * `sourceDir` の入口（Vite の設定の `input`）を `vite build` で `outDir` へまとめ、
- * 出た対の中身を返す。失敗（プロセスの異常終了・出力が揃わない）のときは `vite build` が
- * 書いた理由を添えて返す。
- *
- * 失敗しても `outDir` には手を触れないので、前に置いた成果物はそのまま残る
- * （書きかけを保存したときに、配っているものが消えない）。
- * `vite build` が出し先を空にするのは、組み立てが通って書き出す直前だけ。
- */
-export async function bundleWithVite(sourceDir: string, outDir: string): Promise<BundleResult> {
-  const failure = await runViteBuild(sourceDir, outDir)
-  if (failure !== undefined) {
-    return failure
-  }
-
-  const bundle = await readPair(outDir)
-  return bundle === undefined
-    ? { ok: false, reason: "vite build がスクリプトと CSS の対を出さなかった" }
-    : { ok: true, bundle }
-}
-
-/**
- * 成果物が、いまのソースから組み立てたものでないか。時刻でなく中身の指紋で比べる
- * （`git checkout` で時刻だけ動いても、中身が同じなら古いと言わない）。
- *
- * 成果物に指紋が無い（組み立てが指紋を埋める前の成果物・消えた・読めない）ときは古いとする。
- * いまのソースを読めなかったときは比べられないので古いと言わない
- * （「分からない」を「古い」に寄せると、出どころの怪しい警告が毎回出て読まれなくなる）。
- */
-export function isBundleOutdated(
-  storedFingerprint: string | undefined,
-  currentFingerprint: string | undefined,
-): boolean {
-  if (storedFingerprint === undefined) {
-    return true
-  }
-  return currentFingerprint !== undefined && storedFingerprint !== currentFingerprint
-}
-
-/**
  * {@link BUNDLED_SOURCE_DIR_RELATIVE_PATHS} の下の指紋。どれか1つでも読めなければ `undefined`。
  * 見るのはそこだけで、依存（`node_modules`）や tsconfig の変化は拾わない。そこまで見るなら
  * 組み立て直すほうが早いので、気づく口として割り切っている。
@@ -208,27 +131,19 @@ export async function bundledSourceFingerprint(): Promise<string | undefined> {
 }
 
 /**
- * `vite build` を起こす。うまくいったら `undefined`、だめなら理由を持った結果を返す。
+ * `sourceDir` の入口を `vite build` で `outDir` へまとめ、出た対の中身を返す。
+ * 失敗（プロセスの異常終了・出力が揃わない）のときは理由を添えて返す。
  */
-function runViteBuild(sourceDir: string, outDir: string): Promise<BundleResult | undefined> {
-  return new Promise((resolve) => {
-    execFile(
-      "node",
-      [
-        bundledFilePath(...VITE_CLI_RELATIVE_PATH),
-        "build",
-        sourceDir,
-        "--config",
-        bundledFilePath(...VITE_CONFIG_RELATIVE_PATH),
-        "--outDir",
-        outDir,
-      ],
-      { maxBuffer: BUILD_OUTPUT_MAX_BYTES },
-      (error, _stdout, stderr) => {
-        resolve(error === null ? undefined : { ok: false, reason: failureReason(error, stderr) })
-      },
-    )
-  })
+async function bundleWithVite(sourceDir: string, outDir: string): Promise<BundleResult> {
+  const failure = await runViteBuild(sourceDir, outDir)
+  if (failure !== undefined) {
+    return failure
+  }
+
+  const bundle = await readPair(outDir)
+  return bundle === undefined
+    ? { ok: false, reason: "vite build がスクリプトと CSS の対を出さなかった" }
+    : { ok: true, bundle }
 }
 
 /**
@@ -247,6 +162,18 @@ async function readPair(dir: string): Promise<UiBundle | undefined> {
   }
 
   return { uiScript, styleSheet, chunks, etag: bundleEtag(uiScript, styleSheet, chunks) }
+}
+
+function bundleEtag(
+  uiScript: string,
+  styleSheet: string,
+  chunks: ReadonlyMap<string, string>,
+): string {
+  const hash = createHash("sha1")
+  for (const part of [uiScript, styleSheet, ...[...chunks].flat()]) {
+    hash.update(part).update("\0")
+  }
+  return `"${hash.digest("hex")}"`
 }
 
 /** 置き場の直下にある、入口以外の `.js`（名前 → 中身）。1つでも読めなければ `undefined`。 */
@@ -280,25 +207,19 @@ async function isOutdated(builtDir: string): Promise<boolean> {
 }
 
 /**
- * 失敗の理由を1つの文字列にする。`vite build` の stderr が空のとき（`maxBuffer` 超過や
- * `node` が起こせなかったときはここに何も来ない）は `execFile` の側の文面へ倒す。
+ * 成果物が、いまのソースから組み立てたものでないか。時刻でなく中身の指紋で比べる
+ * （`git checkout` で時刻だけ動いても、中身が同じなら古いと言わない）。
  *
- * `vite build` は端末でなくても色の制御文字を書き、理由のあとに vite 自身のスタックを
- * 続けるので、どちらも落とす（行頭が空白と `at ` の行）。
+ * 成果物に指紋が無い（組み立てが指紋を埋める前の成果物・消えた・読めない）ときは古いとする。
+ * いまのソースを読めなかったときは比べられないので古いと言わない
+ * （「分からない」を「古い」に寄せると、出どころの怪しい警告が毎回出て読まれなくなる）。
  */
-function failureReason(error: Error, stderr: string): string {
-  const written = stripVTControlCharacters(stderr)
-    .split("\n")
-    .filter((line) => !/^\s+at /.test(line))
-    .join("\n")
-    .trim()
-  return clampReason(written === "" ? error.message.trim() : written)
-}
-
-/** 長すぎる理由を上限まで切り、切ったことを最後の行で示す（黙って落とさない）。 */
-function clampReason(reason: string): string {
-  const lines = reason.split("\n")
-  const kept = lines.slice(0, FAILURE_REASON_MAX_LINES).join("\n")
-  const clamped = clipText(kept, FAILURE_REASON_MAX_CHARS).head
-  return clamped === reason ? reason : `${clamped}\n…（長いので途中で切った）`
+function isBundleOutdated(
+  storedFingerprint: string | undefined,
+  currentFingerprint: string | undefined,
+): boolean {
+  if (storedFingerprint === undefined) {
+    return true
+  }
+  return currentFingerprint !== undefined && storedFingerprint !== currentFingerprint
 }

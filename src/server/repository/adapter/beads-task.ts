@@ -15,27 +15,6 @@ import type {
 import { CLOSED_TASK_DISPLAY_LIMIT, type BeadsIssue } from "./beads.ts"
 
 /**
- * タスクの一覧に出す要約。閉じていない課題はすべて出し、閉じた課題は `closedAtEpochMilliseconds`
- * の新しいものから {@link CLOSED_TASK_DISPLAY_LIMIT} 件と、閉じていない課題の `blockedBy` に入っているものを出す。
- * 並びは ID の番号の昇順で、番号の取れない ID は末尾に作った時刻の順（同じ時刻なら ID の順）。
- */
-export function taskSummaryItemsOfBeadsIssues(
-  issues: readonly BeadsIssue[],
-): readonly TaskSummaryItem[] {
-  const unfinishedIssues = issues.filter((issue) => issue.status !== CLOSED_STATUS)
-  const closed = shownClosedIssues(issues)
-  const unfinished = new Set(unfinishedIssues.map((issue) => issue.id))
-
-  return sortBy(
-    [...unfinishedIssues, ...closed],
-    [(issue) => numberOfTaskId(issue.id) === undefined, "asc"],
-    [(issue) => numberOfTaskId(issue.id) ?? 0, "asc"],
-    [(issue) => issue.createdAtEpochMilliseconds, "asc"],
-    [(issue) => issue.id, "asc"],
-  ).map((issue) => taskSummaryItemOfBeadsIssue(issue, unfinished))
-}
-
-/**
  * 読めた一覧の結果。{@link taskSummaryItemsOfBeadsIssues} の一覧に、閉じた課題を上限で落とした件数を添える
  * （落としていなければ 0）。
  */
@@ -63,6 +42,25 @@ export function doneTasksOfBeadsIssues(issues: readonly BeadsIssue[]): readonly 
       : [],
   )
   return sortBy(done, [(task) => task.closedAtEpochMilliseconds, "asc"], [(task) => task.id, "asc"])
+}
+
+/**
+ * タスクの一覧に出す要約。閉じていない課題はすべて出し、閉じた課題は `closedAtEpochMilliseconds`
+ * の新しいものから {@link CLOSED_TASK_DISPLAY_LIMIT} 件と、閉じていない課題の `blockedBy` に入っているものを出す。
+ * 並びは ID の番号の昇順で、番号の取れない ID は末尾に作った時刻の順（同じ時刻なら ID の順）。
+ */
+function taskSummaryItemsOfBeadsIssues(issues: readonly BeadsIssue[]): readonly TaskSummaryItem[] {
+  const unfinishedIssues = issues.filter((issue) => issue.status !== CLOSED_STATUS)
+  const closed = shownClosedIssues(issues)
+  const unfinished = new Set(unfinishedIssues.map((issue) => issue.id))
+
+  return sortBy(
+    [...unfinishedIssues, ...closed],
+    [(issue) => numberOfTaskId(issue.id) === undefined, "asc"],
+    [(issue) => numberOfTaskId(issue.id) ?? 0, "asc"],
+    [(issue) => issue.createdAtEpochMilliseconds, "asc"],
+    [(issue) => issue.id, "asc"],
+  ).map((issue) => taskSummaryItemOfBeadsIssue(issue, unfinished))
 }
 
 /** 一覧に出す閉じた課題。閉じた時刻の新しい上限の件数に、閉じていない課題が依存で指すものを足す。 */

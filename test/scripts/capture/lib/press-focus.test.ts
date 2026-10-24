@@ -2,7 +2,7 @@
 
 import { describe, expect, test } from "vitest"
 
-import { pressFocusNotice } from "../../../scripts/capture/lib/capture-page.ts"
+import { pressFocusNotice } from "../../../../scripts/capture/lib/press-focus.ts"
 
 describe("pressFocusNotice", () => {
   test("フォーカスが body にあるときは、在りかと --click を先に置く手を知らせる", () => {

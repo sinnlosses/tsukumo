@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it } from "vitest"
 
 import { Dispatch } from "../../../../../../../src/browser/components/page/conversation/components/dispatch/dispatch.tsx"
 import { useComposerDraft } from "../../../../../../../src/browser/stores/composer-draft.ts"
-import { useInquiryDraft } from "../../../../../../../src/browser/stores/inquiry-answer.ts"
+import { useInquiryDraft } from "../../../../../../../src/browser/stores/inquiry-draft.ts"
 import {
   INITIAL_SESSION_STATE,
   type SessionState,

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest"
 
-import { taskSummaryItemsOfBeadsIssues } from "../../../../src/server/repository/adapter/beads-task.ts"
+import { knownTaskSummaryOfBeadsIssues } from "../../../../src/server/repository/adapter/beads-task.ts"
 import type { BeadsIssue, BeadsOutcome } from "../../../../src/server/repository/adapter/beads.ts"
 import {
   watchTaskSummary,
@@ -189,7 +189,7 @@ describe("watchTaskSummary（偽の口と時計）", () => {
   })
 
   describe("覚えた一覧", () => {
-    const remembered = taskSummaryItemsOfBeadsIssues([FICTIONAL_BEADS_ISSUE])
+    const remembered = knownTaskSummaryOfBeadsIssues([FICTIONAL_BEADS_ISSUE]).items
     const readNothing: BeadsOutcome = { kind: "issues", issues: [] }
 
     it("覚えた一覧が先に届き、読んだ結果が違えば差し替わる", async () => {

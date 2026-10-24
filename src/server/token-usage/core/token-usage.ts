@@ -158,6 +158,11 @@ export function createTokenUsageRecorder(log: TokenUsageLog): TokenUsageRecorder
   }
 }
 
+/** 費用は浮動小数の誤差が出るので、足し引きのあとにここで丸める。 */
+export function roundCost(value: number): number {
+  return Math.round(value * 1e10) / 1e10
+}
+
 /**
  * 前の `result` の累計と今の累計から、そのターンの増分を作る。
  *
@@ -168,7 +173,7 @@ export function createTokenUsageRecorder(log: TokenUsageLog): TokenUsageRecorder
  * `costUsd` は引き算で浮動小数の誤差が出る（`0.7 - 0.5` が `0.19999999999999996` になる）ので、小数10桁で丸めてから返す。
  * これより細かい桁は SDK 側の値にも無い。
  */
-export function tokenUsageDelta(
+function tokenUsageDelta(
   previous: readonly ModelTokenUsage[],
   current: readonly ModelTokenUsage[],
 ): readonly ModelTokenUsage[] {
@@ -177,11 +182,6 @@ export function tokenUsageDelta(
     const delta = before === undefined || hasDecreased(before, now) ? now : subtract(before, now)
     return isEmptyUsage(delta) ? [] : [delta]
   })
-}
-
-/** 費用は浮動小数の誤差が出るので、足し引きのあとにここで丸める。 */
-export function roundCost(value: number): number {
-  return Math.round(value * 1e10) / 1e10
 }
 
 /**

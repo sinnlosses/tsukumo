@@ -45,7 +45,7 @@ export type WelcomeCalendar = {
  * 前回からの経過の帯の境目。経過がこのミリ秒未満なら、その語にする（上から先に当たったもの）。
  * どれにも当たらなければ {@link LONG_AWAY_BAND}。
  */
-export const AWAY_BANDS = [
+const AWAY_BANDS = [
   { belowMs: 3_600_000, band: "1時間たらず" },
   { belowMs: 21_600_000, band: "数時間" },
   { belowMs: 86_400_000, band: "半日から1日" },
@@ -170,8 +170,13 @@ export function parseWelcomeGreeting(
       }
 }
 
+/** 前回の最後からの経過（ミリ秒）を帯の語にする。 */
+export function awayBandOf(elapsedMs: number): AwayBand {
+  return AWAY_BANDS.find((entry) => elapsedMs < entry.belowMs)?.band ?? LONG_AWAY_BAND
+}
+
 /** 時（0〜23）を時刻の帯の言葉にする。 */
-export function timeBandOf(hour: number): string {
+function timeBandOf(hour: number): string {
   if (hour < 5) {
     return "深夜"
   }
@@ -185,11 +190,6 @@ export function timeBandOf(hour: number): string {
     return "夕方"
   }
   return "夜"
-}
-
-/** 前回の最後からの経過（ミリ秒）を帯の語にする。 */
-export function awayBandOf(elapsedMs: number): AwayBand {
-  return AWAY_BANDS.find((entry) => elapsedMs < entry.belowMs)?.band ?? LONG_AWAY_BAND
 }
 
 function visitLines(visit: WelcomeVisit): readonly string[] {

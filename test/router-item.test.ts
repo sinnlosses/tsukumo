@@ -5,7 +5,7 @@ import { ITEMS_EVENT, startRouter } from "./fixture/command-router.ts"
 
 const PNG = "data:image/png;base64,iVBORw0KGgo="
 
-describe("createCommandRouter（item）", () => {
+describe("createSocketRouter（item）", () => {
   it("4つのコマンドは口へ届き、items-changed を流し、駆動には渡さない", async () => {
     const { commands, itemCalls, emitted, stub, restarts } = startRouter()
 

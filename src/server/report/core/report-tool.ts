@@ -142,7 +142,7 @@ export const REPORT_SESSION_REMAINING_DESCRIPTION =
  * 固定の文面だけで、モデルが書いた本文は写さない（会話の中身をモデルの文脈へ戻す経路を作らない）。
  * 差し戻しは利用者の画面に出ないので、セリフで触れさせない（触れると利用者には意味の通らない言い訳になる）。
  */
-export const REPORT_GATE_REASON =
+const REPORT_GATE_REASON =
   "いま書いた本文は画面に出ていない。その内容を `report` ツール（`mcp__tsukumo__report`）で" +
   "渡し直すこと。締めの一言は `report` の closing に入れる（`report` が通るとそこでターンが終わる）。" +
   "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。"

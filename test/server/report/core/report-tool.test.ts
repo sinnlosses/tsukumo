@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest"
 import {
   createReportGate,
   REPORT_FIGURE_DESCRIPTION,
-  REPORT_GATE_REASON,
   REPORT_TOOL_DESCRIPTION,
 } from "../../../../src/server/report/core/report-tool.ts"
 import {
@@ -117,7 +116,7 @@ describe("createReportGate（Stop の関所）", () => {
   it("report で渡し直させる理由で差し戻す（前のターンの report は持ち越さない）", () => {
     expect(verdictOf([INIT, REPORT, FINISHED, INIT, LONG_BODY])).toEqual({
       kind: "block",
-      reason: REPORT_GATE_REASON,
+      reason: expect.stringContaining("`report` ツール（`mcp__tsukumo__report`）で渡し直す"),
     })
   })
 

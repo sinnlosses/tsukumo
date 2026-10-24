@@ -3,18 +3,32 @@ import { afterEach, describe, expect, it } from "vitest"
 import {
   clearSessionDraft,
   draftOnSessionChange,
-  loadSessionDraft,
-  MAX_DRAFT_SESSIONS,
   saveSessionDraft,
 } from "../../../../../../../../../../src/browser/components/page/conversation/components/dispatch/components/composer/domain/composer-draft-storage.ts"
+import {
+  EMPTY_DRAFT,
+  type Draft,
+} from "../../../../../../../../../../src/browser/stores/composer-draft.ts"
 
 const STORAGE_KEY = "tsukumo-composer-draft:v1"
+
+// `MAX_DRAFT_SESSIONS` と同じ値。
+const MAX_DRAFT_SESSIONS = 10
+
+/**
+ * `sessionId` に保存してある打ちかけ。無ければ undefined。
+ * 画面を開いた直後（`previous` が無い）に空の入力欄へ戻る下書きで読む（空の文面は保存されないので、空なら無い）。
+ */
+function loadSessionDraft(sessionId: string): Draft | undefined {
+  const restored = draftOnSessionChange(undefined, sessionId, EMPTY_DRAFT)
+  return restored === undefined || restored.text === "" ? undefined : restored
+}
 
 afterEach(() => {
   localStorage.removeItem(STORAGE_KEY)
 })
 
-describe("loadSessionDraft", () => {
+describe("保存した打ちかけの読み戻し", () => {
   it("何も保存していなければ undefined を返す", () => {
     expect(loadSessionDraft("a")).toBeUndefined()
   })

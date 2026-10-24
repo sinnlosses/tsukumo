@@ -105,9 +105,7 @@ const REPOSITORY_FILE_LINK_DEFAULT: RepositoryFileLink = {
   readExcerpt: () => Promise.resolve(UNREADABLE_FILE_EXCERPT),
 }
 
-export const RepositoryFileLinkContext = createContext<RepositoryFileLink>(
-  REPOSITORY_FILE_LINK_DEFAULT,
-)
+const RepositoryFileLinkContext = createContext<RepositoryFileLink>(REPOSITORY_FILE_LINK_DEFAULT)
 
 /** Provider の外では既定値（一致しない）になる。 */
 export function useRepositoryFileLink(): RepositoryFileLink {

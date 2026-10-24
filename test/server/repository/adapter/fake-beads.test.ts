@@ -12,7 +12,6 @@ import {
   writeTaskSummaryMemory,
 } from "../../../../src/server/repository/adapter/task-summary-memory.ts"
 import {
-  FAKE_TASK_SUMMARY_POLL_INTERVAL_MS,
   taskSummaryOptionsOf,
   watchTaskSummary,
   type TaskSummaryWatcher,
@@ -23,8 +22,11 @@ import { useTempDir } from "../../../fixture/temp-dir.ts"
 // 疑似セッションの見張りは `bd` を起こさず、cwd のファイルの課題を出す。ふだんの見張りは今どおり `bd` を読む。
 // 課題は架空のものだけにする。
 
+/** 疑似セッションの見回りの間隔（`FAKE_TASK_SUMMARY_POLL_INTERVAL_MS`）。 */
+const FAKE_POLL_INTERVAL_MS = 200
+
 /** 通知を待つ上限。疑似セッションの間隔の何周ぶんもとる。 */
-const WAIT_LIMIT_MS = FAKE_TASK_SUMMARY_POLL_INTERVAL_MS * 10
+const WAIT_LIMIT_MS = FAKE_POLL_INTERVAL_MS * 10
 
 const cwd = useTempDir("fake-beads")
 let watcher: TaskSummaryWatcher | undefined
@@ -111,6 +113,6 @@ function writeFakeIssuesContent(dir: string, content: string): void {
 async function waitUntil(done: () => boolean): Promise<void> {
   const deadline = performance.now() + WAIT_LIMIT_MS
   while (!done() && performance.now() < deadline) {
-    await new Promise((resolve) => setTimeout(resolve, FAKE_TASK_SUMMARY_POLL_INTERVAL_MS / 4))
+    await new Promise((resolve) => setTimeout(resolve, FAKE_POLL_INTERVAL_MS / 4))
   }
 }

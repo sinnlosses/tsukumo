@@ -21,7 +21,7 @@ const MAX_OPTION_FIGURES = 2
 const MIN_OPTIONS_NEEDING_BRIEF = 2
 
 /** 突き合わせの結果。合わなければ添え書きは載せず、理由だけを返す。 */
-export type QuestionBriefPairing =
+type QuestionBriefPairing =
   | { readonly kind: "paired"; readonly briefs: readonly QuestionBrief[] }
   | { readonly kind: "mismatched"; readonly reasons: readonly string[] }
 

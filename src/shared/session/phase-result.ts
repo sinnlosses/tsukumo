@@ -38,7 +38,7 @@ export const phaseResultShape = {
  * `phase_result` の引数の形の正典。
  * `phase` が `count` を超える・`stopped` に空でない `reason` が無い・`stopped` でないのに `reason` がある、のどれかなら通らない。
  */
-export const phaseResultSchema = z.object(phaseResultShape).superRefine((value, context) => {
+const phaseResultSchema = z.object(phaseResultShape).superRefine((value, context) => {
   const reject = (path: string): void => {
     context.addIssue({ code: "custom", message: "invalid phase result", path: [path] })
   }

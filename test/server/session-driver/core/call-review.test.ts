@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest"
 
-import { REPORT_NOTHING_NEW_REJECTION_TEXT } from "../../../../src/server/report/core/report-review.ts"
 import type { ReportDraft } from "../../../../src/server/report/core/report-violation.ts"
 import {
   PHASE_RESULT_MISSING_HANDBACK_LINE,
@@ -11,10 +10,10 @@ import {
   createCallReview,
   passRelayedEvents,
 } from "../../../../src/server/session-driver/core/call-review.ts"
-import { SPEECH_NOTHING_NEW_REJECTION_TEXT } from "../../../../src/server/session-driver/core/speech-review.ts"
 import type { BackgroundTask } from "../../../../src/shared/session-driver/background-task.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import { reportDraft, reportEvent } from "../../../fixture/report-event.ts"
+import { REJECTION_PHRASE } from "../../../fixture/report-review.ts"
 
 type SpeechEvent = Extract<SessionEvent, { kind: "speech" }>
 type ReportCalled = Extract<SessionEvent, { kind: "report" }>
@@ -33,7 +32,10 @@ const FINISHED: SessionEvent = { kind: "turn-finished", outcome: { kind: "comple
 const REQUEST: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
 const TURN_STARTED: SessionEvent = { kind: "turn-started" }
 const ASIDE: SessionEvent = { kind: "aside", text: "架空の問い", images: [] }
-const SPEECH_REJECTED = { kind: "rejected", text: SPEECH_NOTHING_NEW_REJECTION_TEXT } as const
+const SPEECH_REJECTED = {
+  kind: "rejected",
+  text: expect.stringContaining("このセリフは画面に出していない"),
+} as const
 
 const speechOf = (text: string): SpeechEvent => ({ kind: "speech", text, expression: "default" })
 const speakCalled = (toolUseId: string, text: string): SessionEvent => ({
@@ -416,7 +418,7 @@ describe("CallReview の新しい事実（report）", () => {
 
     expect(review.judgeReport(OTHER)).toEqual({
       kind: "rejected",
-      text: REPORT_NOTHING_NEW_REJECTION_TEXT,
+      text: expect.stringContaining(REJECTION_PHRASE.nothingNew),
       reasons: ["nothing-new"],
     })
   })

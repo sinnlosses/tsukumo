@@ -12,7 +12,7 @@ import {
   positiveNumber,
 } from "./report-block-field.ts"
 
-export const SVG_TONES = ["a", "b", "c", "d", "e"] as const
+const SVG_TONES = ["a", "b", "c", "d", "e"] as const
 
 const svgToneSchema = z.enum(SVG_TONES)
 

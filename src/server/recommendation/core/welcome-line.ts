@@ -7,7 +7,7 @@ import { WELCOME_GREETING_CARD_MARK } from "../../../shared/recommendation/welco
 import type { CheckedAnswer } from "./retried-query.ts"
 
 /** 1行を検査する上限（文字。差し込み口も数える）。 */
-export const WELCOME_LINE_CHARS = 60
+const WELCOME_LINE_CHARS = 60
 
 /** 指示文で頼む1行の字数（検査の上限 {@link WELCOME_LINE_CHARS} より短い）。 */
 export const WELCOME_LINE_REQUESTED_CHARS = 50

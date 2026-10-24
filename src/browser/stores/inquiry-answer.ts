@@ -9,8 +9,6 @@
 // 複数選択で2つ以上選んだときはそのまま複数の要素として送り、入力欄に書いた文字列は同じ並びの末尾に足す。
 // SDK が求める「質問1件に対して1つの文字列」へ畳むのはサーバの役目で、ここで畳むとメインビューに残す記録の側で選択肢と突き合わせられなくなる。
 
-import { create } from "zustand"
-
 import type { FigureBlock } from "../../shared/report/report-block.ts"
 import type { ReportImageSize } from "../../shared/report/report-image.ts"
 import type { StampedPendingAsk } from "../../shared/session-driver/pending-ask.ts"
@@ -23,6 +21,12 @@ import {
   withoutRecommendedMark,
 } from "../../shared/session-driver/question.ts"
 import { toolInputText } from "../domain/tool-summary.ts"
+import {
+  useInquiryDraft,
+  useInquiryFocus,
+  type DraftAnswer,
+  type InquiryFocus,
+} from "./inquiry-draft.ts"
 import { useSession, type SessionDispatch } from "./session.ts"
 
 /**
@@ -123,35 +127,9 @@ export function useInquiryAnswer(): InquiryModel {
     : questionModel(pending, { answer, setAnswer }, touched, dispatch)
 }
 
-type InquiryDraftState = {
-  /** どの答え待ち（`PendingAsk.id`）に対して組み立てている答えか。まだ何も触っていなければ undefined。 */
-  readonly draft: { readonly pendingId: string; readonly answer: DraftAnswer } | undefined
-}
-
-export const useInquiryDraft = create<InquiryDraftState>()(() => ({ draft: undefined }))
-
-type InquiryFocusState = {
-  /** 詳細の面に出すと触って決めた選択肢。どの答え待ちの何問目かも持ち、別の問に替われば読まない。 */
-  readonly focus:
-    | { readonly pendingId: string; readonly index: number; readonly label: string }
-    | undefined
-}
-
-export const useInquiryFocus = create<InquiryFocusState>()(() => ({ focus: undefined }))
-
 /** 許可要求の選択肢のラベル。並びがそのまま番号になる。 */
 const ALLOW_LABEL = "許可"
 const DENY_LABEL = "拒否"
-
-/**
- * 組み立て中の答え。問ごとに持ち続ける（「戻る」で前の問に戻ったとき、選んだものが残っているように）。
- * `selections[i]` / `writtenAnswers[i]` は `questions[i]` に対応し、まだ触っていない問の位置は空のまま（読む側が `?? []` / `?? ""` で受ける）。
- */
-type DraftAnswer = {
-  readonly index: number
-  readonly selections: readonly (readonly string[])[]
-  readonly writtenAnswers: readonly string[]
-}
 
 const EMPTY_DRAFT_ANSWER: DraftAnswer = { index: 0, selections: [], writtenAnswers: [] }
 
@@ -222,7 +200,7 @@ function permissionModel(
 function questionModel(
   pending: Extract<StampedPendingAsk, { readonly kind: "question" }>,
   draft: InquiryDraft,
-  touched: InquiryFocusState["focus"],
+  touched: InquiryFocus | undefined,
   dispatch: SessionDispatch,
 ): InquiryModel {
   const questions = pending.questions

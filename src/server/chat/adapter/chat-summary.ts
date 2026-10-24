@@ -43,7 +43,7 @@ const LEGACY_DELIVERED_MARK = "delivered"
 const SUMMARY_FORMAT_VERSION = 1 satisfies number
 
 /** あらすじの本文の上限（UTF-8 バイト数）。 */
-export const CHAT_SUMMARY_LIMIT_BYTES = CHAT_MEMORY_BUDGET.synopsisBytes
+const CHAT_SUMMARY_LIMIT_BYTES = CHAT_MEMORY_BUDGET.synopsisBytes
 
 /** 置き場を組めないパック（名前が {@link CharacterPackName} にならない）に渡す、読み書きとも何もしない口。 */
 export const UNAVAILABLE_CHAT_SUMMARY: ChatSummary = {

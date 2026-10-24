@@ -16,7 +16,7 @@ import {
 /** 生成に渡す立ち絵（中身は見ないので最小の png の data URL）。 */
 const PORTRAIT_PNG_DATA_URL = "data:image/png;base64,AAAA"
 
-describe("createCommandRouter（characterPack）", () => {
+describe("createSocketRouter（characterPack）", () => {
   it("使用中でないパックを変えるコマンドも起こし直さず、書き込み先へ pack をそのまま渡す", async () => {
     const { commands, stub, edits, restarts } = startRouter()
 
@@ -181,7 +181,7 @@ describe("createCommandRouter（characterPack）", () => {
   })
 })
 
-describe("createCommandRouter（chat。画面の「編集」から覚えたことを1行消す）", () => {
+describe("createSocketRouter（chat。画面の「編集」から覚えたことを1行消す）", () => {
   it("雑談モードなら、消したい行を渡して流し直しを配る（駆動には渡らない）", async () => {
     const { commands, stub, forgottenLines, emitted, observe } = startRouter()
     observe(CHAT_MODE_EVENT)

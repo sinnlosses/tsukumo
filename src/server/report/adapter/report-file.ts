@@ -6,7 +6,7 @@ import { resolve } from "node:path"
 import type { ReportSection } from "../../../shared/report/report-block.ts"
 
 /** 読む上限（これを超えるファイルは読まない）。 */
-export const MAX_REPORT_MATCH_FILE_BYTES = 1024 * 1024
+const MAX_REPORT_MATCH_FILE_BYTES = 1024 * 1024
 
 /**
  * `code` の塊で `path` が空でないものを集め、cwd から解いて読む。

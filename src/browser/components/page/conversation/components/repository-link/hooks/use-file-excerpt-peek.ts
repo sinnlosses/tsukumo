@@ -12,7 +12,7 @@ import { useDismissSignal } from "../../../../../../hooks/use-dismiss-signal.ts"
 import type { LineRange, PointedLines } from "../domain/pointed-line-range.ts"
 
 /** 重ねて（フォーカスして）から浮きを出すまでの待ち。 */
-export const FILE_EXCERPT_PEEK_DELAY_MS = 500
+const FILE_EXCERPT_PEEK_DELAY_MS = 500
 
 /** 押せるパスの最後の行の箱（窓の座標）。浮きはこの下か上に置く。 */
 export type PeekAnchor = {

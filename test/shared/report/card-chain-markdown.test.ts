@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { cardChainHtml, cardChainOrder } from "../../../src/shared/report/card-chain-markdown.ts"
-import { readGraphSource } from "../../../src/shared/report/graph-source.ts"
+import { cardChainHtml } from "../../../src/shared/report/card-chain-markdown.ts"
 import { graphMarkdown } from "../../fixture/report-markdown.ts"
 
 const chain = (names: readonly string[]): string =>
@@ -10,12 +9,20 @@ const chain = (names: readonly string[]): string =>
     .map((name, index) => `${names[index] ?? ""} -> ${name}`)
     .join("\n")
 
-describe("cardChainOrder", () => {
-  it("2〜5 節点の一本道は、始点から辿った並びを返す（書いた順に依らない）", () => {
-    expect(cardChainOrder(readGraphSource("乙 -> 丙\n甲 -> 乙"))).toEqual([2, 0, 1])
-    expect(cardChainOrder(readGraphSource(chain(["a", "b", "c", "d", "e"])))).toEqual([
-      0, 1, 2, 3, 4,
-    ])
+/** カードの連鎖に並んだ節点の名前（上から順）。一本道でなければ `undefined`。 */
+const cardNamesOf = (source: string): readonly string[] | undefined => {
+  const html = cardChainHtml(source)
+  return html === undefined
+    ? undefined
+    : [...html.matchAll(/<span class="card-chain-name">([^<]*)<\/span>/gu)].map(
+        (match) => match[1] ?? "",
+      )
+}
+
+describe("cardChainHtml の一本道の判定", () => {
+  it("2〜5 節点の一本道は、始点から辿った順にカードを並べる（書いた順に依らない）", () => {
+    expect(cardNamesOf("乙 -> 丙\n甲 -> 乙")).toEqual(["甲", "乙", "丙"])
+    expect(cardNamesOf(chain(["a", "b", "c", "d", "e"]))).toEqual(["a", "b", "c", "d", "e"])
   })
 
   it.each([
@@ -27,8 +34,8 @@ describe("cardChainOrder", () => {
     ["点線あり", "a -> b\nb -.> c"],
     ["節点が1つ", "a"],
     ["輪", "a -> b\nb -> a"],
-  ])("%s は一本道ではない", (_, source) => {
-    expect(cardChainOrder(readGraphSource(source))).toBeUndefined()
+  ])("%s は一本道ではないので undefined", (_, source) => {
+    expect(cardChainHtml(source)).toBeUndefined()
   })
 })
 
@@ -56,10 +63,6 @@ describe("cardChainHtml", () => {
 
     expect(html).toContain('<li class="card-chain-arrow card-chain-tone-a"')
     expect(html).toContain('<li class="card-chain-arrow card-chain-tone-b card-chain-added"')
-  })
-
-  it("一本道でなければ undefined", () => {
-    expect(cardChainHtml("a -> b\na -> c")).toBeUndefined()
   })
 })
 

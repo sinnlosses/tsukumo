@@ -47,7 +47,6 @@ export type BrowserErrorName = (typeof BROWSER_ERROR_NAMES)[number]
 
 /** スタックの1フレームの出どころ。ファイル名は運ばず、ページと同じオリジンかどうかだけに写す。 */
 const BROWSER_ERROR_ORIGINS = ["bundle", "other"] as const
-export type BrowserErrorOrigin = (typeof BROWSER_ERROR_ORIGINS)[number]
 
 /** 運ぶスタックフレームの数の上限。 */
 export const DIAGNOSTIC_BROWSER_ERROR_MAX_FRAMES = 5
@@ -79,7 +78,7 @@ export const browserErrorReportSchema = z.object({
 /** ブラウザが運ぶ、例外1件の中身（経路・`error.name`・スタックの先頭数フレーム）。 */
 export type BrowserErrorReport = z.infer<typeof browserErrorReportSchema>
 
-export const browserErrorFootprintSchema = browserErrorReportSchema.extend({
+const browserErrorFootprintSchema = browserErrorReportSchema.extend({
   flow: z.literal("browser-error"),
   /** 畳んだ時刻（エポックミリ秒）。 */
   at: z.number(),
@@ -88,7 +87,7 @@ export const browserErrorFootprintSchema = browserErrorReportSchema.extend({
 /** ブラウザの例外を1件畳んだこと。 */
 export type BrowserErrorFootprint = Readonly<z.infer<typeof browserErrorFootprintSchema>>
 
-export const sessionEventFootprintSchema = z.object({
+const sessionEventFootprintSchema = z.object({
   flow: z.literal("session-event"),
   /** 畳んだ時刻（エポックミリ秒）。 */
   at: z.number(),
@@ -100,7 +99,7 @@ export const sessionEventFootprintSchema = z.object({
 /** 駆動から届いた `SessionEvent` を1件畳んだこと。中身は持たない。 */
 export type SessionEventFootprint = Readonly<z.infer<typeof sessionEventFootprintSchema>>
 
-export const promptDelayFootprintSchema = z.object({
+const promptDelayFootprintSchema = z.object({
   flow: z.literal("prompt-delay"),
   /** Claude Code から最初のメッセージを受けた時刻（エポックミリ秒）。 */
   at: z.number(),

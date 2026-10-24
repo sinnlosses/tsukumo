@@ -6,7 +6,7 @@ import type { SessionEvent } from "../src/shared/session/session-event.ts"
 import { type UsageProposal, usageProposalKey } from "../src/shared/usage-review/usage-review.ts"
 import { REQUEST_EVENT, startRouter } from "./fixture/command-router.ts"
 
-describe("createCommandRouter（usageReview。トークン消費の画面の見直し）", () => {
+describe("createSocketRouter（usageReview。トークン消費の画面の見直し）", () => {
   const proposal = {
     kind: "tool-result",
     target: "ExampleTool",

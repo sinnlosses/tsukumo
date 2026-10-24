@@ -1,16 +1,18 @@
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-import { FILE_EXCERPT_PEEK_DELAY_MS } from "../../../../../../../src/browser/components/page/conversation/components/repository-link/hooks/use-file-excerpt-peek.ts"
 import {
-  RepositoryFileLinkContext,
   RepositoryFileLinkTarget,
   repositoryFileTarget,
 } from "../../../../../../../src/browser/components/page/conversation/components/repository-link/repository-link.tsx"
-import type {
-  FileExcerpt,
-  FileExcerptRequest,
-} from "../../../../../../../src/shared/repository/file-excerpt.ts"
+import type { FileExcerpt } from "../../../../../../../src/shared/repository/file-excerpt.ts"
+import {
+  stubRepositoryFileLink,
+  type RepositoryFileLinkStub,
+} from "../../../../../../fixture/repository-file-link.tsx"
+
+// `FILE_EXCERPT_PEEK_DELAY_MS` と同じ値。
+const FILE_EXCERPT_PEEK_DELAY_MS = 500
 
 const FILES = new Set(["src/fictional.ts"])
 
@@ -26,38 +28,35 @@ const LINES_AROUND_12 = {
 type Harness = {
   readonly link: HTMLElement
   readonly opened: readonly string[]
-  readonly requests: readonly FileExcerptRequest[]
+  readonly requests: readonly unknown[]
 }
 
-/** `candidate` を押せるパスにして描く。抜き書きの読み口は `excerpt` を返す。 */
+let stub: RepositoryFileLinkStub | undefined
+
+/** `candidate` を押せるパスにして描く。抜き書きの手続きは `excerpt` を返す。 */
 function renderLink(candidate: string, excerpt: FileExcerpt = LINES_AROUND_12): Harness {
   const target = repositoryFileTarget(candidate, FILES)
   if (target === undefined) {
     throw new Error(`一覧に無い候補: ${candidate}`)
   }
-  const opened: string[] = []
-  const requests: FileExcerptRequest[] = []
+  const current = stubRepositoryFileLink([...FILES], excerpt)
+  stub = current
   render(
-    <RepositoryFileLinkContext.Provider
-      value={{
-        files: FILES,
-        open: (path) => opened.push(path),
-        readExcerpt: (request) => {
-          requests.push(request)
-          return Promise.resolve(excerpt)
-        },
-      }}
-    >
+    current.wrap(
       <p>
         見て{" "}
         <RepositoryFileLinkTarget target={target} title={undefined} className="">
           {candidate}
         </RepositoryFileLinkTarget>{" "}
         を直した
-      </p>
-    </RepositoryFileLinkContext.Provider>,
+      </p>,
+    ),
   )
-  return { link: screen.getByRole("button"), opened, requests }
+  return {
+    link: screen.getByRole("button"),
+    opened: current.opened,
+    requests: current.excerptRequests,
+  }
 }
 
 /**
@@ -82,6 +81,8 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup()
+  stub?.restore()
+  stub = undefined
   vi.useRealTimers()
 })
 

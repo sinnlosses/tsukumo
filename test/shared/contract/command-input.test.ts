@@ -7,7 +7,6 @@ import {
 import { MAX_CHARACTER_PACK_NAME_LENGTH } from "../../../src/shared/character-pack/character.ts"
 import { MAX_PERSONA_BODY_LENGTH } from "../../../src/shared/character-pack/persona-section.ts"
 import { MAX_REMEMBERED_LINE_LENGTH } from "../../../src/shared/chat/persona-memory.ts"
-import { MAX_PROMPT_TEXT_LENGTH } from "../../../src/shared/contract/session.ts"
 import { MAX_SHOWN_WELCOME_GREETING_LENGTH } from "../../../src/shared/recommendation/welcome-greeting.ts"
 import { commandContract } from "../../../src/shared/rpc.ts"
 import {
@@ -157,7 +156,7 @@ describe("コマンドの契約の入力（落とす形）", () => {
   const rejected: readonly (readonly [string, `${string}.${string}`, unknown])[] = [
     ["prompt の routing が知らない値", "session.prompt", { text: "架空の依頼", routing: "aside" }],
     ["空白だけの依頼", "session.prompt", { text: "   " }],
-    ["上限を超えた依頼", "session.prompt", { text: "あ".repeat(MAX_PROMPT_TEXT_LENGTH + 1) }],
+    ["上限を超えた依頼", "session.prompt", { text: "あ".repeat(20_001) }],
     [
       "枚数が上限を超えた依頼（1枚だけ落とさず、コマンドごと受け付けない）",
       "session.prompt",

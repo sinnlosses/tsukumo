@@ -1,4 +1,4 @@
-// 規約のテストが共有する、`scripts/` の export がどの読み手から import されるかの読み取り。
+// 規約のテストが共有する、`src/`・`scripts/`・`story/` の export がどの読み手から import されるかの読み取り。
 
 import { readFileSync } from "node:fs"
 import { posix } from "node:path"
@@ -11,7 +11,12 @@ export const REPOSITORY_ROOT = fileURLToPath(new URL("../..", import.meta.url)).
 
 export const CONFIG_FILES = ["vite.config.ts", "vitest.config.ts", "vitest.e2e.config.ts"] as const
 
-export type ScriptExportUse = {
+const EXPORTER_DIRECTORIES = ["src/", "scripts/", "story/"] as const
+
+// Storybook が glob で読む入口なので、export は読まれるものとして数えない。
+const STORY_ENTRY_SUFFIX = ".story.tsx"
+
+export type ExportUse = {
   /** `isUse` を満たす読み手から import されず、その読まれる export の型注釈からもたどれない export を `<パス>#<名前>` で返す。 */
   readonly unreadBy: (isUse: (reader: string) => boolean) => readonly string[]
   /** どこかの読み手から import される export の `<パス>#<名前>`。 */
@@ -19,11 +24,11 @@ export type ScriptExportUse = {
 }
 
 /** `sources` は読み手のパス（リポジトリの根からの相対）から本文への対応。 */
-export function readScriptExportUse(sources: ReadonlyMap<string, string>): ScriptExportUse {
+export function readExportUse(sources: ReadonlyMap<string, string>): ExportUse {
   const programs = new Map([...sources].map(([path, source]) => [path, parseSourceProgram(source)]))
   const exportsOf = new Map(
     [...programs]
-      .filter(([path]) => path.startsWith("scripts/"))
+      .filter(([path]) => isExporter(path))
       .map(([path, program]) => [path, exportedSymbols(program)]),
   )
   const edges = [...programs].flatMap(([reader, program]) =>
@@ -57,10 +62,53 @@ export function readRepositorySources(): ReadonlyMap<string, string> {
       (path) => `scripts/${path}`,
     ),
     ...listSourceFiles(`${REPOSITORY_ROOT}/src`).map((path) => `src/${path}`),
+    ...listSourceFiles(`${REPOSITORY_ROOT}/story`).map((path) => `story/${path}`),
+    ...listSourceFiles(`${REPOSITORY_ROOT}/.storybook`).map((path) => `.storybook/${path}`),
     ...listSourceFiles(`${REPOSITORY_ROOT}/test`).map((path) => `test/${path}`),
     ...CONFIG_FILES,
   ]
   return new Map(paths.map((path) => [path, readFileSync(`${REPOSITORY_ROOT}/${path}`, "utf8")]))
+}
+
+/**
+ * 許可リストに置けない項目を返す。置けるのは、`<部品>Props` の名前の型（`type`・`interface`）の export だけ。
+ * `sources` から項目のファイルの宣言を読む。
+ */
+export function nonPropsTypeExports(
+  keys: readonly string[],
+  sources: ReadonlyMap<string, string>,
+): readonly string[] {
+  return keys.filter((key) => !isPropsTypeExport(key, sources))
+}
+
+function isPropsTypeExport(key: string, sources: ReadonlyMap<string, string>): boolean {
+  const [path = "", name = ""] = key.split("#")
+  const source = sources.get(path)
+  if (source === undefined || !PROPS_TYPE_NAME.test(name)) {
+    return false
+  }
+  return astChildren(parseSourceProgram(source), "body").some((statement) => {
+    const declaration = astObject(statement, "declaration")
+    return (
+      astString(statement, "type") === "ExportNamedDeclaration" &&
+      TYPE_DECLARATIONS.has(astString(declaration, "type") ?? "") &&
+      declaredNames(declaration).includes(name)
+    )
+  })
+}
+
+const PROPS_TYPE_NAME = /^[A-Z]\w*Props$/
+
+const TYPE_DECLARATIONS: ReadonlySet<string> = new Set([
+  "TSTypeAliasDeclaration",
+  "TSInterfaceDeclaration",
+])
+
+function isExporter(path: string): boolean {
+  return (
+    EXPORTER_DIRECTORIES.some((directory) => path.startsWith(directory)) &&
+    !path.endsWith(STORY_ENTRY_SUFFIX)
+  )
 }
 
 type ImportUse = { readonly target: string; readonly names: readonly string[] | "all" }

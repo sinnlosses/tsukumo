@@ -3,7 +3,7 @@ import type { Root } from "hast"
 import type remarkGfm from "remark-gfm"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
-import { createHastCache } from "../../../../../../../../src/browser/components/page/conversation/components/markdown/renderer/hast-cache.ts"
+import { REPORT_HAST_CACHE } from "../../../../../../../../src/browser/components/page/conversation/components/markdown/renderer/hast-cache.ts"
 import { Markdown } from "../../../../../../../../src/browser/components/page/conversation/components/markdown/renderer/markdown-renderer.tsx"
 
 const parsed = vi.hoisted(() => ({ count: 0 }))
@@ -44,16 +44,29 @@ describe("Markdown（描いた木の再利用）", () => {
   })
 })
 
-describe("createHastCache", () => {
-  it("上限を超えると、いちばん長く使われていないものから落ちる", () => {
-    const cache = createHastCache(2)
-    cache.set("a", rootOf("a"))
-    cache.set("b", rootOf("b"))
-    cache.get("a")
-    cache.set("c", rootOf("c"))
+// `REPORT_HAST_LIMIT` と同じ値。
+const REPORT_HAST_LIMIT = 200
 
-    expect(cache.get("b")).toBeUndefined()
-    expect(cache.get("a")).toBeDefined()
-    expect(cache.get("c")).toBeDefined()
+describe("REPORT_HAST_CACHE", () => {
+  it("上限を超えると、いちばん長く使われていないものから落ちる", () => {
+    // 前のテストが残したものを押し出してから、a・b と詰め物でちょうど上限まで埋める。
+    for (let index = 0; index < REPORT_HAST_LIMIT; index += 1) {
+      REPORT_HAST_CACHE.set(`前${String(index)}`, rootOf("前"))
+    }
+    const fillers = Array.from(
+      { length: REPORT_HAST_LIMIT - 2 },
+      (_, index) => `詰め${String(index)}`,
+    )
+    REPORT_HAST_CACHE.set("a", rootOf("a"))
+    REPORT_HAST_CACHE.set("b", rootOf("b"))
+    for (const filler of fillers) {
+      REPORT_HAST_CACHE.set(filler, rootOf(filler))
+    }
+    REPORT_HAST_CACHE.get("a")
+    REPORT_HAST_CACHE.set("c", rootOf("c"))
+
+    expect(REPORT_HAST_CACHE.get("b")).toBeUndefined()
+    expect(REPORT_HAST_CACHE.get("a")).toBeDefined()
+    expect(REPORT_HAST_CACHE.get("c")).toBeDefined()
   })
 })

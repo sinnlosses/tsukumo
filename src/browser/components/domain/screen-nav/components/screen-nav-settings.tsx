@@ -115,51 +115,6 @@ export function ScreenNavSettingsBody(props: ScreenNavSettingsProps): ReactEleme
   )
 }
 
-/** 画面の色の面（見出しなし）。 */
-export function ScreenNavSettingsColorFace(props: ScreenNavSettingsProps): ReactElement {
-  const { settings } = props
-  const fieldId = useId()
-
-  return (
-    <>
-      {settings.colors.map((color) => (
-        <HStack
-          element="div"
-          name={{ kind: "none" }}
-          ref={undefined}
-          gap="lg"
-          align="center"
-          justify="between"
-          wrap="nowrap"
-          className={styles["screen-nav-settings-row"]}
-          key={color.key}
-        >
-          <label htmlFor={`${fieldId}-${color.key}`}>{color.label}</label>
-          <input
-            id={`${fieldId}-${color.key}`}
-            type="color"
-            value={color.value}
-            onChange={(event) => {
-              color.onChange(event.target.value)
-            }}
-          />
-        </HStack>
-      ))}
-      {settings.colorNotice.kind === "shown" && (
-        <Text
-          element="p"
-          size="label"
-          tone="state-warn"
-          weight="inherit"
-          className={styles["screen-nav-settings-notice"]}
-        >
-          {settings.colorNotice.text}
-        </Text>
-      )}
-    </>
-  )
-}
-
 /** セッションの既定の面（見出しなし）。 */
 export function ScreenNavSettingsSessionDefaultFace(props: ScreenNavSettingsProps): ReactElement {
   const { settings } = props
@@ -349,6 +304,51 @@ export function ScreenNavSettingsLaunchSkillFace(props: ScreenNavSettingsProps):
       >
         タスクの実行で呼ぶスキル。未設定なら「タスク GH-xxxx を進めて」と送る。
       </Text>
+    </>
+  )
+}
+
+/** 画面の色の面（見出しなし）。 */
+function ScreenNavSettingsColorFace(props: ScreenNavSettingsProps): ReactElement {
+  const { settings } = props
+  const fieldId = useId()
+
+  return (
+    <>
+      {settings.colors.map((color) => (
+        <HStack
+          element="div"
+          name={{ kind: "none" }}
+          ref={undefined}
+          gap="lg"
+          align="center"
+          justify="between"
+          wrap="nowrap"
+          className={styles["screen-nav-settings-row"]}
+          key={color.key}
+        >
+          <label htmlFor={`${fieldId}-${color.key}`}>{color.label}</label>
+          <input
+            id={`${fieldId}-${color.key}`}
+            type="color"
+            value={color.value}
+            onChange={(event) => {
+              color.onChange(event.target.value)
+            }}
+          />
+        </HStack>
+      ))}
+      {settings.colorNotice.kind === "shown" && (
+        <Text
+          element="p"
+          size="label"
+          tone="state-warn"
+          weight="inherit"
+          className={styles["screen-nav-settings-notice"]}
+        >
+          {settings.colorNotice.text}
+        </Text>
+      )}
     </>
   )
 }

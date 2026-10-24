@@ -12,6 +12,7 @@ import {
   parseProgram,
   stringField,
 } from "./ast-node.ts"
+import { ROOM_OPENER } from "./room-opener-name.ts"
 
 export type ScenarioNames = {
   /** 文字列リテラル（式を含まないテンプレートも）の値。 */
@@ -21,9 +22,6 @@ export type ScenarioNames = {
   /** 名前を辿れない書き方がある。どの場面の持ち主にもなりうる。 */
   readonly open: boolean
 }
-
-/** 場面を開く共通関数 `run.open` を包んで名前を引数に取る E2E の足場の関数の名前。 */
-export const ROOM_OPENER = /^open\w*Room/
 
 /** 識別子を宣言まで辿る深さの上限。超えたら辿れないとみなす。 */
 const TRACE_DEPTH = 6

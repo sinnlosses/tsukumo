@@ -4,7 +4,6 @@ import { join } from "node:path"
 import type { Locator } from "playwright-core"
 import { describe, expect, it } from "vitest"
 
-import { TW_TIMEOUT_MS } from "../../src/server/workflow-setting/adapter/tw-config.ts"
 import { runSubprocess } from "../fixture/subprocess.ts"
 import { type ScenarioRoom, useScenarioRun } from "./scenario-run.ts"
 
@@ -15,6 +14,9 @@ import { type ScenarioRoom, useScenarioRun } from "./scenario-run.ts"
 // 期待値は撮らず、断りの理由が欄の下に出るかで判定する。
 
 const run = useScenarioRun()
+
+/** サーバが `tw` 1回を待つ上限（`TW_TIMEOUT_MS`）。 */
+const TW_TIMEOUT_MS = 5000
 
 /** 書き込み1回のサーバの最悪: `tw config set` と、読み直しの `tw` 最大2回（schema・config）が各々上限まで掛かる。 */
 const WRITE_ROUND_TRIP_TIMEOUT_MS = TW_TIMEOUT_MS * 3

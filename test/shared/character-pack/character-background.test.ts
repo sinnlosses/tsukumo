@@ -2,8 +2,6 @@ import { describe, expect, it } from "vitest"
 
 import {
   backgroundFileName,
-  DEFAULT_BACKGROUND_VEIL,
-  isBackgroundFileName,
   MAX_BACKGROUND_BYTES,
   MAX_BACKGROUND_DATA_URL_LENGTH,
   MAX_BACKGROUND_VEIL,
@@ -14,6 +12,12 @@ import {
 
 // 中身は見ないので、base64 として読める短い文字列で足りる（実物の画像は使わない）。
 const IMAGE_BASE64 = "iVBORw0KGgo="
+
+/** veil を省いた・読めないときの覆いの不透明度。 */
+const DEFAULT_BACKGROUND_VEIL = 0.75
+
+/** 素材のファイル名として受けるか（受けなければ背景そのものが無い）。 */
+const acceptsImage = (image: string): boolean => toCharacterBackground({ image }) !== undefined
 
 describe("toCharacterBackground", () => {
   it("素材のファイル名と覆いの不透明度をそのまま持つ", () => {
@@ -61,23 +65,23 @@ describe("toCharacterBackground の veil", () => {
   })
 })
 
-describe("isBackgroundFileName", () => {
+describe("toCharacterBackground の素材のファイル名", () => {
   it("受け付けるのは .png / .jpg / .jpeg / .webp だけ", () => {
-    expect(isBackgroundFileName("background.png")).toBe(true)
-    expect(isBackgroundFileName("forest.JPG")).toBe(true)
-    expect(isBackgroundFileName("room.jpeg")).toBe(true)
-    expect(isBackgroundFileName("room.webp")).toBe(true)
-    expect(isBackgroundFileName("motion.gif")).toBe(false)
-    expect(isBackgroundFileName("vector.svg")).toBe(false)
-    expect(isBackgroundFileName("background")).toBe(false)
+    expect(acceptsImage("background.png")).toBe(true)
+    expect(acceptsImage("forest.JPG")).toBe(true)
+    expect(acceptsImage("room.jpeg")).toBe(true)
+    expect(acceptsImage("room.webp")).toBe(true)
+    expect(acceptsImage("motion.gif")).toBe(false)
+    expect(acceptsImage("vector.svg")).toBe(false)
+    expect(acceptsImage("background")).toBe(false)
   })
 
   it("パスの区切り・空白・引用符が入った名前は通さない", () => {
-    expect(isBackgroundFileName("../background.png")).toBe(false)
-    expect(isBackgroundFileName("sub/background.png")).toBe(false)
-    expect(isBackgroundFileName("back ground.png")).toBe(false)
-    expect(isBackgroundFileName('back").png')).toBe(false)
-    expect(isBackgroundFileName("")).toBe(false)
+    expect(acceptsImage("../background.png")).toBe(false)
+    expect(acceptsImage("sub/background.png")).toBe(false)
+    expect(acceptsImage("back ground.png")).toBe(false)
+    expect(acceptsImage('back").png')).toBe(false)
+    expect(acceptsImage("")).toBe(false)
   })
 })
 

@@ -1,43 +1,32 @@
 import { cleanup, fireEvent, render } from "@testing-library/react"
-import type { ReactNode } from "react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { Markdown } from "../../../../../../../../src/browser/components/page/conversation/components/markdown/renderer/markdown-renderer.tsx"
-import { RepositoryFileLinkContext } from "../../../../../../../../src/browser/components/page/conversation/components/repository-link/repository-link.tsx"
 import { UNREADABLE_FILE_EXCERPT } from "../../../../../../../../src/shared/repository/file-excerpt.ts"
 import { reportSectionsMarkdown } from "../../../../../../../fixture/report-sections-markdown.ts"
+import {
+  stubRepositoryFileLink,
+  type RepositoryFileLinkStub,
+} from "../../../../../../../fixture/repository-file-link.tsx"
 import { typedElement } from "../../../../../../../typed-element.ts"
+
+let stub: RepositoryFileLinkStub | undefined
 
 afterEach(() => {
   cleanup()
+  stub?.restore()
+  stub = undefined
 })
 
 describe("Markdown（レポートのパスを押して Orca のエディタで開く）", () => {
-  /**
-   * `<RepositoryFileLinkProvider>` の実データ（`useQuery` / `useSession`）は使わず、
-   * Context だけを直接差し込む（部品のテストを軽くするため。`MainView` が実データを配る）。 */
-  function withFiles(
-    paths: readonly string[],
-    open: (path: string) => void,
-  ): (children: ReactNode) => ReactNode {
-    return function wrap(children) {
-      return (
-        <RepositoryFileLinkContext.Provider
-          value={{
-            files: new Set(paths),
-            open,
-            readExcerpt: () => Promise.resolve(UNREADABLE_FILE_EXCERPT),
-          }}
-        >
-          {children}
-        </RepositoryFileLinkContext.Provider>
-      )
-    }
+  /** 一覧を `paths` にした Provider で包む。 */
+  function withFiles(paths: readonly string[]): RepositoryFileLinkStub {
+    stub = stubRepositoryFileLink(paths, UNREADABLE_FILE_EXCERPT)
+    return stub
   }
 
   it("一覧にある inline code（file_path:line_number）が押せるボタンになり、押すと裸のパスで1回開く", () => {
-    const opened: string[] = []
-    const wrap = withFiles(["src/foo.ts"], (path) => opened.push(path))
+    const { wrap, opened } = withFiles(["src/foo.ts"])
     const { container } = render(wrap(<Markdown text="見て `src/foo.ts:12` を直した" />))
 
     const button = container.querySelector('[role="button"]')
@@ -48,8 +37,7 @@ describe("Markdown（レポートのパスを押して Orca のエディタで�
   })
 
   it("押せるパスは `/` の直後にだけ折り返しの機会（wbr）を持ち、字は変わらず、押すと同じパスで開く", () => {
-    const opened: string[] = []
-    const wrap = withFiles(["src/a/b.ts"], (path) => opened.push(path))
+    const { wrap, opened } = withFiles(["src/a/b.ts"])
     const { container } = render(wrap(<Markdown text="見て `src/a/b.ts:3` を直した" />))
 
     const button = typedElement(
@@ -65,7 +53,7 @@ describe("Markdown（レポートのパスを押して Orca のエディタで�
   })
 
   it("押せるパスはハイフンの直後に結合子の span を持ち、字は変わらない", () => {
-    const wrap = withFiles(["src/report-notation.module.css"], () => {})
+    const { wrap } = withFiles(["src/report-notation.module.css"])
     const { container } = render(
       wrap(<Markdown text="見て `src/report-notation.module.css` を直した" />),
     )
@@ -83,7 +71,7 @@ describe("Markdown（レポートのパスを押して Orca のエディタで�
   })
 
   it("files の塊のパスもハイフンの直後に結合子の span を持ち、字は変わらない", () => {
-    const wrap = withFiles(["src/a-b/c-d.ts"], () => {})
+    const { wrap } = withFiles(["src/a-b/c-d.ts"])
     const text = reportSectionsMarkdown([
       {
         heading: "",
@@ -116,8 +104,7 @@ describe("Markdown（レポートのパスを押して Orca のエディタで�
   })
 
   it("押せるパスは tabindex を持つ role=button の span で、Enter と Space で開き、ほかのキーでは開かない", () => {
-    const opened: string[] = []
-    const wrap = withFiles(["src/foo.ts"], (path) => opened.push(path))
+    const { wrap, opened } = withFiles(["src/foo.ts"])
     const { container } = render(wrap(<Markdown text="見て `src/foo.ts:12` を直した" />))
 
     const target = typedElement(
@@ -135,8 +122,7 @@ describe("Markdown（レポートのパスを押して Orca のエディタで�
   })
 
   it("文字を選んだままの click ではパスを開かない", () => {
-    const opened: string[] = []
-    const wrap = withFiles(["src/foo.ts"], (path) => opened.push(path))
+    const { wrap, opened } = withFiles(["src/foo.ts"])
     const { container } = render(wrap(<Markdown text="見て `src/foo.ts` を直した" />))
     const target = typedElement(
       container.querySelector('[role="button"]'),
@@ -156,8 +142,7 @@ describe("Markdown（レポートのパスを押して Orca のエディタで�
   })
 
   it("files の塊のパスは HTML の中の code でも、一覧にあれば押せるボタンになる", () => {
-    const opened: string[] = []
-    const wrap = withFiles(["src/foo.ts"], (path) => opened.push(path))
+    const { wrap, opened } = withFiles(["src/foo.ts"])
     const text = reportSectionsMarkdown([
       {
         heading: "",
@@ -201,7 +186,7 @@ describe("Markdown（レポートのパスを押して Orca のエディタで�
   })
 
   it("一覧に無い inline code はボタンにならない（素の <code> のまま）", () => {
-    const wrap = withFiles(["src/foo.ts"], () => {})
+    const { wrap } = withFiles(["src/foo.ts"])
     const { container } = render(wrap(<Markdown text="`src/bar.ts:3` は無い" />))
 
     expect(container.querySelector('[role="button"]')).toBeNull()
@@ -209,8 +194,7 @@ describe("Markdown（レポートのパスを押して Orca のエディタで�
   })
 
   it("一覧にあるフェンスのファイル名が押せるボタンになる", () => {
-    const opened: string[] = []
-    const wrap = withFiles([".tw/tasks.json"], (path) => opened.push(path))
+    const { wrap, opened } = withFiles([".tw/tasks.json"])
     const { container } = render(
       wrap(<Markdown text={"```diff .tw/tasks.json\n-  1\n+  2\n```"} />),
     )
@@ -223,7 +207,7 @@ describe("Markdown（レポートのパスを押して Orca のエディタで�
   })
 
   it("一覧に無いフェンスのファイル名は素のテキストのまま（別に出るボタンはコピーのボタンだけ）", () => {
-    const wrap = withFiles([".tw/tasks.json"], () => {})
+    const { wrap } = withFiles([".tw/tasks.json"])
     const { container } = render(wrap(<Markdown text={"```diff src/nope.ts\n-a\n+b\n```"} />))
 
     const label = container.querySelector(".code-file-name")
@@ -234,8 +218,7 @@ describe("Markdown（レポートのパスを押して Orca のエディタで�
   })
 
   it("一覧にある相対リンクが押せるボタンになり、ページは遷移しない", () => {
-    const opened: string[] = []
-    const wrap = withFiles(["src/foo.ts"], (path) => opened.push(path))
+    const { wrap, opened } = withFiles(["src/foo.ts"])
     const { container } = render(wrap(<Markdown text="[直した](src/foo.ts)" />))
 
     expect(container.querySelector("a")).toBeNull()
@@ -246,7 +229,7 @@ describe("Markdown（レポートのパスを押して Orca のエディタで�
   })
 
   it("ファイルを指さない相対リンクは <a> にならず、押しても何も起きない", () => {
-    const wrap = withFiles(["src/foo.ts"], () => {})
+    const { wrap } = withFiles(["src/foo.ts"])
     const { container } = render(wrap(<Markdown text="[無い](src/nope.ts)" />))
 
     expect(container.querySelector("a")).toBeNull()
@@ -255,7 +238,7 @@ describe("Markdown（レポートのパスを押して Orca のエディタで�
   })
 
   it("外部リンク・脚注の `#` リンクはこれまでどおり <a> のまま", () => {
-    const wrap = withFiles(["src/foo.ts"], () => {})
+    const { wrap } = withFiles(["src/foo.ts"])
     const { container } = render(
       wrap(<Markdown text={"[外部](https://example.com)\n\n結論[^1]\n\n[^1]: 補足。"} />),
     )

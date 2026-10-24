@@ -4,7 +4,7 @@
 import type { PromptDelayFootprint } from "../../../shared/diagnostic/diagnostic-record.ts"
 
 /** どれかの区間がこれを超えたら1行書く（ちょうどは書かない）。 */
-export const PROMPT_DELAY_THRESHOLD_MS = 3000
+const PROMPT_DELAY_THRESHOLD_MS = 3000
 
 export type PromptDelayWatch = {
   /**

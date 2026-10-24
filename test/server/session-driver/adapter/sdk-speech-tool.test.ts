@@ -5,8 +5,6 @@ import {
   type CallReview,
   createCallReview,
 } from "../../../../src/server/session-driver/core/call-review.ts"
-import { PHASE_MENTION_REJECTION_TEXT } from "../../../../src/server/session-driver/core/phase-mention.ts"
-import { SPEECH_NOTHING_NEW_REJECTION_TEXT } from "../../../../src/server/session-driver/core/speech-review.ts"
 import { callTool } from "../../../fixture/mcp-server.ts"
 import {
   CHAT_MODE,
@@ -25,7 +23,7 @@ describe("speak の差し戻し", () => {
     const reply = await callTool(workServer([], [], spokenReview()), "speak", CLOSING)
 
     expect(reply).toEqual({
-      text: SPEECH_NOTHING_NEW_REJECTION_TEXT,
+      text: expect.stringContaining("このセリフは画面に出していない"),
       isError: true,
       endsTurn: false,
     })
@@ -75,7 +73,11 @@ function rangedReview(): CallReview {
 }
 
 describe("speak の phase の差し戻し", () => {
-  const rejected = { text: PHASE_MENTION_REJECTION_TEXT, isError: true, endsTurn: false }
+  const rejected = {
+    text: expect.stringContaining("`phase` が委譲先の段の範囲の外を指している"),
+    isError: true,
+    endsTurn: false,
+  }
 
   it("範囲があるあいだ、範囲の外の phase の speak を差し戻し、範囲の中の phase は通す", async () => {
     expect(

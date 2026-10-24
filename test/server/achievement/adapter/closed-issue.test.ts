@@ -10,13 +10,14 @@ import {
 } from "../../../../src/server/achievement/adapter/closed-issue.ts"
 import type * as BeadsAdapter from "../../../../src/server/repository/adapter/beads.ts"
 import type { BeadsOutcome, BeadsStamp } from "../../../../src/server/repository/adapter/beads.ts"
-import {
-  BEADS_REREAD_INTERVAL_MS,
-  readBeadsIssues,
-} from "../../../../src/server/repository/adapter/beads.ts"
+import { readBeadsIssues } from "../../../../src/server/repository/adapter/beads.ts"
 import { createTaskBeadsSource } from "../../../../src/server/repository/adapter/task-beads-source.ts"
 import type { AchievementCalendar } from "../../../../src/shared/achievement/achievement-calendar.ts"
 import type { DailyAchievement } from "../../../../src/shared/achievement/achievement.ts"
+
+/** 印が動かなくても読み直す間隔（`BEADS_REREAD_INTERVAL_MS`）。 */
+const REREAD_INTERVAL_MS = 60_000
+
 // 取り込み口（`bd list`・`bd where`・印）のフェイク。課題は架空のものだけ。
 const fakeIntake = vi.hoisted(
   (): {
@@ -30,7 +31,9 @@ const fakeIntake = vi.hoisted(
 
 vi.mock("../../../../src/server/repository/adapter/beads.ts", async (importOriginal) => {
   const actual = await importOriginal<typeof BeadsAdapter>()
-  const fakeRead = actual.memoizeByStamp((): Promise<BeadsOutcome> => {
+  const { memoizeByStamp } =
+    await import("../../../../src/server/repository/adapter/beads-stamp-memo.ts")
+  const fakeRead = memoizeByStamp((): Promise<BeadsOutcome> => {
     fakeIntake.listCalls += 1
     return Promise.resolve(
       fakeIntake.failed
@@ -287,7 +290,7 @@ describe("readAchievementCalendar", () => {
         expect(await doneCount(cache)).toBe(1)
         changeIssuesWithoutStamp()
 
-        nowMs += BEADS_REREAD_INTERVAL_MS - 1
+        nowMs += REREAD_INTERVAL_MS - 1
 
         expect(await doneCount(cache)).toBe(1)
         expect(fakeIntake.listCalls).toBe(1)
@@ -298,7 +301,7 @@ describe("readAchievementCalendar", () => {
         expect(await doneCount(cache)).toBe(1)
         changeIssuesWithoutStamp()
 
-        nowMs += BEADS_REREAD_INTERVAL_MS
+        nowMs += REREAD_INTERVAL_MS
 
         expect(await doneCount(cache)).toBe(1)
         await vi.waitFor(async () => expect(await doneCount(cache)).toBe(2))

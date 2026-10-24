@@ -4,8 +4,8 @@ import { plannedPhaseNumber } from "../../shared/session/work-plan-phase-number.
 import type { LatestWorkPlan, PlannedPhase } from "../../shared/session/work-plan.ts"
 
 export const CHECK_MARK = "✓"
-export const SKIPPED_MARK = "/"
-export const UNNUMBERED_MARK = "…"
+const SKIPPED_MARK = "/"
+const UNNUMBERED_MARK = "…"
 
 export function doneMarkOf(skipped: boolean): string {
   return skipped ? SKIPPED_MARK : CHECK_MARK

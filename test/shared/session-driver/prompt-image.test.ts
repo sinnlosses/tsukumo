@@ -2,13 +2,14 @@ import { describe, expect, it } from "vitest"
 
 import {
   isPromptImageMediaType,
-  MAX_PROMPT_IMAGE_BYTES,
   MAX_PROMPT_IMAGE_DATA_URL_LENGTH,
-  MAX_PROMPT_IMAGE_THUMBNAIL_BYTES,
   MAX_PROMPT_IMAGE_THUMBNAIL_DATA_URL_LENGTH,
   parsePromptImage,
   parsePromptImageThumbnail,
 } from "../../../src/shared/session-driver/prompt-image.ts"
+
+/** 原寸1枚の上限（5 MiB）。 */
+const MAX_PROMPT_IMAGE_BYTES = 5 * 1024 * 1024
 
 // 中身は見ないので、base64 として読める短い文字列で足りる。
 const IMAGE_BASE64 = "iVBORw0KGgo="
@@ -61,7 +62,9 @@ describe("parsePromptImage", () => {
 
 describe("parsePromptImageThumbnail", () => {
   it("控えの上限は原寸よりずっと厳しい（記録に残り続けるのは控えだけ）", () => {
-    expect(MAX_PROMPT_IMAGE_THUMBNAIL_BYTES).toBeLessThan(MAX_PROMPT_IMAGE_BYTES)
+    expect(MAX_PROMPT_IMAGE_THUMBNAIL_DATA_URL_LENGTH).toBeLessThan(
+      MAX_PROMPT_IMAGE_DATA_URL_LENGTH,
+    )
 
     // 原寸としては通るが、控えとしては大きすぎる長さ。
     const betweenLimits = dataUrlOfLength(MAX_PROMPT_IMAGE_THUMBNAIL_DATA_URL_LENGTH * 2)

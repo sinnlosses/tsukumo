@@ -1,11 +1,5 @@
 import { describe, expect, it } from "vitest"
 
-import {
-  REPORT_MISSING_WORK_PLAN_CLOSING_REJECTION_TEXT,
-  REPORT_FINISHED_BUT_STOPPED_REJECTION_TEXT,
-  REPORT_UNANSWERED_WORK_PLAN_REJECTION_TEXT,
-  REPORT_UNFINISHED_PHASES_REJECTION_TEXT,
-} from "../../../../src/server/report/core/report-review.ts"
 import type { ReportDraft } from "../../../../src/server/report/core/report-violation.ts"
 import type { ReportTask, ReportTaskOutcome } from "../../../../src/shared/report/report-task.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
@@ -15,9 +9,15 @@ import {
   FINISHED,
   INVALID,
   noPlan,
+  REJECTION_PHRASE,
   SESSION_INFO,
   VALID,
 } from "../../../fixture/report-review.ts"
+
+const MISSING_WORK_PLAN_CLOSING_TEXT = expect.stringContaining(
+  REJECTION_PHRASE.missingWorkPlanClosing,
+)
+const UNFINISHED_PHASES_TEXT = expect.stringContaining(REJECTION_PHRASE.unfinishedPhases)
 
 describe("createReportReview の judge（ワークプランの残った report）", () => {
   const taskOf = (outcome: ReportTaskOutcome): ReportTask => ({
@@ -49,7 +49,7 @@ describe("createReportReview の judge（ワークプランの残った report�
 
     expect(review.judge(VALID)).toEqual({
       kind: "rejected",
-      text: REPORT_UNANSWERED_WORK_PLAN_REJECTION_TEXT,
+      text: expect.stringContaining(REJECTION_PHRASE.unansweredWorkPlan),
       reasons: ["unanswered-work-plan"],
     })
     moveTo({ kind: "planned", remaining: 1 })
@@ -60,7 +60,7 @@ describe("createReportReview の judge（ワークプランの残った report�
     for (const remaining of [2, 1, 0]) {
       expect(reviewWith({ kind: "planned", remaining }).review.judge(VALID)).toEqual({
         kind: "rejected",
-        text: REPORT_MISSING_WORK_PLAN_CLOSING_REJECTION_TEXT,
+        text: MISSING_WORK_PLAN_CLOSING_TEXT,
         reasons: ["missing-work-plan-closing"],
       })
     }
@@ -78,7 +78,7 @@ describe("createReportReview の judge（ワークプランの残った report�
     expect(reviewWith({ kind: "planned", remaining: 2 }).review.judge(closing("finished"))).toEqual(
       {
         kind: "rejected",
-        text: REPORT_UNFINISHED_PHASES_REJECTION_TEXT,
+        text: UNFINISHED_PHASES_TEXT,
         reasons: ["unfinished-phases"],
       },
     )
@@ -102,7 +102,7 @@ describe("createReportReview の judge（ワークプランの残った report�
       reviewWith({ kind: "planned", remaining: 1 }).review.judge(withTask("finished", "stopped")),
     ).toEqual({
       kind: "rejected",
-      text: REPORT_FINISHED_BUT_STOPPED_REJECTION_TEXT,
+      text: expect.stringContaining(REJECTION_PHRASE.finishedButStopped),
       reasons: ["finished-but-stopped"],
     })
     expect(
@@ -118,7 +118,7 @@ describe("createReportReview の judge（ワークプランの残った report�
 
     expect(review.judge(INVALID)).toEqual({
       kind: "rejected",
-      text: REPORT_MISSING_WORK_PLAN_CLOSING_REJECTION_TEXT,
+      text: MISSING_WORK_PLAN_CLOSING_TEXT,
       reasons: ["missing-work-plan-closing"],
     })
     expect(review.judge({ ...INVALID, workPlanClosing: "finished" }).kind).toBe("rejected")
@@ -128,7 +128,7 @@ describe("createReportReview の judge（ワークプランの残った report�
     ;[FINISHED, SESSION_INFO].forEach((event) => review.pass(event))
     expect(review.judge(closing("finished"))).toEqual({
       kind: "rejected",
-      text: REPORT_UNFINISHED_PHASES_REJECTION_TEXT,
+      text: UNFINISHED_PHASES_TEXT,
       reasons: ["unfinished-phases"],
     })
   })
@@ -143,7 +143,7 @@ describe("createReportReview の judge（ワークプランの残った report�
     ;[FINISHED, SESSION_INFO].forEach((event) => review.pass(event))
     expect(review.judge({ ...VALID, conclusion: "架空の別の結論。" })).toEqual({
       kind: "rejected",
-      text: REPORT_MISSING_WORK_PLAN_CLOSING_REJECTION_TEXT,
+      text: MISSING_WORK_PLAN_CLOSING_TEXT,
       reasons: ["missing-work-plan-closing"],
     })
   })

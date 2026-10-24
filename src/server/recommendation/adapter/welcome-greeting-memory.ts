@@ -17,10 +17,6 @@ const welcomeGreetingFileSchema = z.object({
   recent: z.array(z.object({ withCard: z.string(), withoutCard: z.string() })),
 })
 
-export function welcomeGreetingMemoryPath(characterName: string): string {
-  return join(tsukumoHomePath("welcomeGreeting"), `${characterName}.json`)
-}
-
 /** 直近の挨拶を新しい順に読む。ファイルが無い・壊れている・版や形が違う・名前が不正なときは空。 */
 export function readRecentWelcomeGreetings(
   characterName: string,
@@ -43,6 +39,10 @@ export function writeRecentWelcomeGreetings(
     return
   }
   writeJsonFile(path, { v: WELCOME_GREETING_FORMAT_VERSION, recent })
+}
+
+function welcomeGreetingMemoryPath(characterName: string): string {
+  return join(tsukumoHomePath("welcomeGreeting"), `${characterName}.json`)
 }
 
 /** ディレクトリの区切り・`.`・`..`・空を含まず、ファイル名の1要素として使える名前。 */

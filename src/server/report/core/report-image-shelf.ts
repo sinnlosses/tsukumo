@@ -21,7 +21,7 @@ import { imageSizeOf } from "./image-size.ts"
 export const MAX_REPORT_IMAGE_BYTES = 5 * 1024 * 1024
 
 /** 棚に置く画像の合計の上限。 */
-export const MAX_SHELVED_REPORT_IMAGE_BYTES = 64 * 1024 * 1024
+const MAX_SHELVED_REPORT_IMAGE_BYTES = 64 * 1024 * 1024
 
 export type ReportImage = {
   readonly mediaType: PromptImageMediaType

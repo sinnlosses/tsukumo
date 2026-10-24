@@ -11,7 +11,7 @@
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 
 /** 最後に描いたセリフ（か差し込み・委譲の始まり）から差し込むまでの黙っている時間。 */
-export const PROGRESS_NUDGE_SILENCE_MS = 5 * 60 * 1000
+const PROGRESS_NUDGE_SILENCE_MS = 5 * 60 * 1000
 
 export type ProgressNudgeDue =
   | { readonly kind: "none" }

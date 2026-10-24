@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest"
 
-import { hueFamilies, srgbToOklch } from "../../../scripts/capture/lib/paper-hue.ts"
+import { hueFamilies } from "../../../scripts/capture/lib/paper-hue.ts"
 
 /** 色ごとに `count` 画素ずつ並べた画。 */
 function filled(colors: readonly (readonly [number, number, number, number])[]) {
@@ -9,23 +9,6 @@ function filled(colors: readonly (readonly [number, number, number, number])[]) 
   )
   return { width: flat.length / 4, height: 1, pixels: Uint8Array.from(flat) }
 }
-
-describe("srgbToOklch", () => {
-  test("黒・白・灰は彩度がほぼ 0", () => {
-    expect(srgbToOklch(0, 0, 0).chroma).toBeLessThan(1e-3)
-    expect(srgbToOklch(255, 255, 255).chroma).toBeLessThan(1e-3)
-    expect(srgbToOklch(128, 128, 128).chroma).toBeLessThan(1e-3)
-    expect(srgbToOklch(255, 255, 255).lightness).toBeCloseTo(1, 2)
-  })
-
-  test("純赤・純緑・純青は既知の OKLCH の近傍", () => {
-    const red = srgbToOklch(255, 0, 0)
-    expect(red.hue).toBeCloseTo(29.2, 0)
-    expect(red.chroma).toBeCloseTo(0.2577, 2)
-    expect(srgbToOklch(0, 255, 0).hue).toBeCloseTo(142.5, 0)
-    expect(srgbToOklch(0, 0, 255).hue).toBeCloseTo(264.05, 0)
-  })
-})
 
 describe("hueFamilies", () => {
   test("赤だけの画は 1 族", () => {

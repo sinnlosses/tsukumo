@@ -7,7 +7,7 @@ import type { SessionEvent } from "../src/shared/session/session-event.ts"
 import { characterChangedEvent } from "./fixture/character.ts"
 import { REQUEST_EVENT, startRouter } from "./fixture/command-router.ts"
 
-describe("createCommandRouter（session）", () => {
+describe("createSocketRouter（session）", () => {
   describe("成果の日記書き（session.reflectAchievement。`docs/requirements.md`「日記」）", () => {
     const KNOWN_DAY: DailyAchievement = {
       kind: "known",

@@ -31,7 +31,7 @@ export type Expression = (typeof EXPRESSIONS)[number]
  * 画面からこれを消せないのも同じ理由（消せる表情は {@link RemovableExpression} のほうだけ）。
  * 必須はこの1つだけで、他の表情は立ち絵が無くてよく、`default` に落ちる。
  */
-export const REQUIRED_EXPRESSIONS = ["default"] as const
+const REQUIRED_EXPRESSIONS = ["default"] as const
 
 export type RequiredExpression = (typeof REQUIRED_EXPRESSIONS)[number]
 

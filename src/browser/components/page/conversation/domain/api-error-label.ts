@@ -21,11 +21,6 @@ const API_ERROR_LABEL = {
   cloud_credential_error: "クラウドの認証情報の問題",
 } satisfies Record<ApiErrorKind, string>
 
-/** API のエラーの種類の語（「API が混んでいる」など）。 */
-export function apiErrorLabel(error: ApiErrorKind): string {
-  return API_ERROR_LABEL[error]
-}
-
 /** 呼び直しを待っているあいだの知らせ。`label` は行に出す短い字、`detail` は `title` で読ませる全文。 */
 type ApiRetryNotice = { readonly label: string; readonly detail: string }
 
@@ -72,12 +67,17 @@ export function turnFailureLabel(failure: TurnFailure): string {
   }
 }
 
-/** ターンの失敗の内部の綴り（`server_error`・`max-turns` など）。`title` にだけ出す。 */
-export function turnFailureCode(failure: TurnFailure): string {
-  return failure.kind === "api-error" ? failure.error : failure.kind
-}
-
 /** 失敗で終わったことの全文（`title` に出す。「失敗で終わった: <語>（<綴り>）」）。 */
 export function turnFailureDetail(failure: TurnFailure): string {
   return `失敗で終わった: ${turnFailureLabel(failure)}（${turnFailureCode(failure)}）`
+}
+
+/** API のエラーの種類の語（「API が混んでいる」など）。 */
+function apiErrorLabel(error: ApiErrorKind): string {
+  return API_ERROR_LABEL[error]
+}
+
+/** ターンの失敗の内部の綴り（`server_error`・`max-turns` など）。`title` にだけ出す。 */
+function turnFailureCode(failure: TurnFailure): string {
+  return failure.kind === "api-error" ? failure.error : failure.kind
 }

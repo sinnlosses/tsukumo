@@ -44,7 +44,7 @@ type UntimedReaction =
   | { readonly kind: "shown"; readonly reaction: ReactionKind; readonly line: ReactionLine }
 
 /** ターンが閉じて依頼を待つ間がこのミリ秒続いたら、待ちの一言を出す。 */
-export const WAITING_LINE_DELAY_MS = 120_000
+const WAITING_LINE_DELAY_MS = 120_000
 
 const NO_SHOWN_REACTION = { kind: "none" } as const satisfies ShownReaction
 const WRITING_REACTION = { kind: "writing" } as const satisfies ShownReaction

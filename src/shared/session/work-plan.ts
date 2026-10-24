@@ -123,7 +123,7 @@ export const workPlanShape = {
  * 飛ばした段の名前が重なるか、この呼び出しで済んでいる段の名前でない。
  * 途中なのに段のまとめが無いことは、ここでは見ず `WorkPlanReview` が `summary-missing` で差し戻す。
  */
-export const workPlanSchema = z.object(workPlanShape).superRefine((value, context) => {
+const workPlanSchema = z.object(workPlanShape).superRefine((value, context) => {
   const { phases, current, finishedInGroup = [], delegatedRange, skippedPhases = [] } = value
   const reject = (path: string): void => {
     context.addIssue({ code: "custom", message: "invalid work plan", path: [path] })

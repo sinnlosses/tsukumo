@@ -1,20 +1,18 @@
 import { describe, expect, it } from "vitest"
 
 import {
-  AWAY_BANDS,
   awayBandOf,
   parseWelcomeGreeting,
-  timeBandOf,
   welcomeGreetingQuery,
   type WelcomeGreetingMaterial,
 } from "../../../../src/server/recommendation/core/welcome-greeting.ts"
-import {
-  WELCOME_LINE_CHARS,
-  WELCOME_LINE_REQUESTED_CHARS,
-} from "../../../../src/server/recommendation/core/welcome-line.ts"
+import { WELCOME_LINE_REQUESTED_CHARS } from "../../../../src/server/recommendation/core/welcome-line.ts"
 import type { WelcomeRejection } from "../../../../src/shared/diagnostic/welcome-writing.ts"
 
 // すべて手で書いた架空の材料と出力。
+
+/** 1行を検査する上限（文字）。 */
+const LINE_LIMIT_CHARS = 60
 
 const MATERIAL: WelcomeGreetingMaterial = {
   persona: "# 架空の人格\n\n架空の口調で話す。",
@@ -70,7 +68,7 @@ describe("welcomeGreetingQuery", () => {
     const { systemPrompt } = welcomeGreetingQuery(MATERIAL)
 
     expect(systemPrompt).toContain(`${String(WELCOME_LINE_REQUESTED_CHARS)}字まで`)
-    expect(systemPrompt).not.toContain(`${String(WELCOME_LINE_CHARS)}字まで`)
+    expect(systemPrompt).not.toContain(`${String(LINE_LIMIT_CHARS)}字まで`)
   })
 
   it("出力の形は挨拶の2文と表情だけで、表情を選択肢の名前に限る", () => {
@@ -95,7 +93,7 @@ describe("parseWelcomeGreeting", () => {
     ["札なしの文に差し込み口がある", { withoutCard: "{札} だけ" }, "mark-count"],
     ["空", { withoutCard: "  " }, "empty"],
     ["改行入り", { withoutCard: "架空の\n挨拶" }, "newline"],
-    ["上限を超える", { withoutCard: "あ".repeat(WELCOME_LINE_CHARS + 1) }, "too-long"],
+    ["上限を超える", { withoutCard: "あ".repeat(LINE_LIMIT_CHARS + 1) }, "too-long"],
     ["知らない表情", { expression: "架空の表情" }, "unknown-expression"],
     ["表情が無い", { expression: undefined }, "missing"],
     ["直近と同じ札ありの文", { withCard: "架空の前の挨拶、{札} だ" }, "repeated"],
@@ -109,8 +107,8 @@ describe("parseWelcomeGreeting", () => {
   })
 
   it("頼んだ字数を超えても、検査の上限ちょうどまでの文は通す", () => {
-    const longest = "あ".repeat(WELCOME_LINE_CHARS)
-    expect(WELCOME_LINE_REQUESTED_CHARS).toBeLessThan(WELCOME_LINE_CHARS)
+    const longest = "あ".repeat(LINE_LIMIT_CHARS)
+    expect(WELCOME_LINE_REQUESTED_CHARS).toBeLessThan(LINE_LIMIT_CHARS)
 
     expect(parseWelcomeGreeting({ ...OUTPUT, withoutCard: longest }, MATERIAL)).toMatchObject({
       kind: "accepted",
@@ -123,7 +121,7 @@ describe("parseWelcomeGreeting", () => {
   })
 })
 
-describe("timeBandOf", () => {
+describe("welcomeGreetingQuery（時刻の帯）", () => {
   it.each<[number, string]>([
     [0, "深夜"],
     [4, "深夜"],
@@ -136,15 +134,24 @@ describe("timeBandOf", () => {
     [19, "夜"],
     [23, "夜"],
   ])("%d 時は %s", (hour, band) => {
-    expect(timeBandOf(hour)).toBe(band)
+    const query = welcomeGreetingQuery({ ...MATERIAL, calendar: { ...MATERIAL.calendar, hour } })
+
+    expect(query.prompt.split("\n")).toContain(`- 時刻の帯: ${band}`)
   })
 })
 
 describe("awayBandOf", () => {
   it("境目の手前はその帯、境目ちょうどは次の帯", () => {
-    for (const [index, entry] of AWAY_BANDS.entries()) {
-      expect(awayBandOf(entry.belowMs - 1)).toBe(entry.band)
-      expect(awayBandOf(entry.belowMs)).toBe(AWAY_BANDS[index + 1]?.band ?? "1週間以上")
+    const hourMs = 3_600_000
+    const boundaries = [
+      { belowMs: hourMs, band: "1時間たらず", next: "数時間" },
+      { belowMs: 6 * hourMs, band: "数時間", next: "半日から1日" },
+      { belowMs: 24 * hourMs, band: "半日から1日", next: "数日" },
+      { belowMs: 7 * 24 * hourMs, band: "数日", next: "1週間以上" },
+    ]
+    for (const { belowMs, band, next } of boundaries) {
+      expect(awayBandOf(belowMs - 1)).toBe(band)
+      expect(awayBandOf(belowMs)).toBe(next)
     }
   })
 

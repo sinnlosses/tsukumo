@@ -2,7 +2,11 @@
 
 import type { Page } from "playwright-core"
 
-import { applyPreparation, type Preparation } from "./capture-preparation.ts"
+import { applyPreparation, collectMisses, type Preparation } from "./capture-preparation.ts"
+import { pressFocusNotice, readFocusPlace } from "./press-focus.ts"
+import { settleRender } from "./render-settle.ts"
+import { waitForRevealEnd } from "./reveal-end.ts"
+import { waitUntilStable } from "./stable-sample.ts"
 
 /**
  * 本文が入る領域（メインビュー）。class 名は組み立てのたびにハッシュ化される（CSS Modules）
@@ -22,9 +26,6 @@ const SETTLE_TIMEOUT_MS = 10_000
 
 /** 操作を1つ当てるのに待つ上限（ミリ秒）。 */
 const PREPARE_TIMEOUT_MS = 2_000
-
-/** 描き直しが終わるのを待つ上限（ミリ秒）。超えたら撮らずに落とす。 */
-const RENDER_SETTLE_TIMEOUT_MS = 5_000
 
 /** URL を開き、本文が入る領域が現れるまで待つ。現れなくても進む。 */
 export async function openPage(page: Page, url: string): Promise<void> {
@@ -85,68 +86,6 @@ export async function applyPreparations(
   return missed
 }
 
-export type FocusPlace = {
-  readonly description: string
-  readonly inMainView: boolean
-  readonly inDialog: boolean
-}
-
-/**
- * `--press` のキーが、メインビューにもモーダルにも無いフォーカスへ届くときの知らせの行。
- * 届き先がメインビューかモーダルなら空文字。
- */
-export function pressFocusNotice(place: FocusPlace): string {
-  if (place.inMainView || place.inDialog) {
-    return ""
-  }
-  return `フォーカスがメインビューに無い（${place.description}）: メインビューで効くキー（PageDown など）は、先に --click で中を押してから --press を書く`
-}
-
-/**
- * ページの描き直しが終わるのを待つ。フォントと画像の読み込み・終わりのある動き
- * （CSS の transition など）の完了のあと、描画を2フレーム進める。終わりのない動き（回る輪）と、
- * 時計でない時間軸（スクロール連動）の動きは待たない（後者は転がしても終わらない）。
- * `page.clock.install()` を入れて `runFor` で進めるページでも `requestAnimationFrame` は進む
- * （`pauseAt` で止めたページは進まないので、この道具は `pauseAt` を使わない）。
- * 上限まで終わらなければ throw する（撮らずに落とす）。
- */
-export async function settleRender(page: Pick<Page, "evaluate">): Promise<void> {
-  let timer: ReturnType<typeof setTimeout> | undefined
-  const timeout = new Promise<never>((_resolve, reject) => {
-    timer = setTimeout(() => {
-      reject(new Error(`描き直しが終わらなかった（${String(RENDER_SETTLE_TIMEOUT_MS)}ms）`))
-    }, RENDER_SETTLE_TIMEOUT_MS)
-  })
-  try {
-    await Promise.race([
-      page.evaluate(async () => {
-        await document.fonts.ready
-        await Promise.all(Array.from(document.images, (image) => image.decode().catch(() => null)))
-        await Promise.all(
-          document
-            .getAnimations()
-            .filter(
-              (animation) =>
-                animation.timeline instanceof DocumentTimeline &&
-                animation.effect?.getComputedTiming().endTime !== Infinity,
-            )
-            .map((animation) => animation.finished.catch(() => null)),
-        )
-        await new Promise<void>((resolve) => {
-          requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-              resolve()
-            })
-          })
-        })
-      }),
-      timeout,
-    ])
-  } finally {
-    clearTimeout(timer)
-  }
-}
-
 /**
  * 撮る前にページを落ち着かせる。描き直し（{@link settleRender}）のあと、本文の領域が静止するまで待つ
  * （チャートの伸びや自動スクロールのような、アニメーション API に載らない動きの終わりを見る）。
@@ -156,73 +95,12 @@ export async function settlePage(page: Page): Promise<void> {
   await settleStill(page)
 }
 
-/**
- * `sample` を `intervalMs` おきに最大 `attempts` 回呼び、連続2回の結果が一致したら true、
- * 一致しないまま回数が尽きたら false を返す。
- */
-export async function waitUntilStable(
-  sample: () => Promise<Buffer>,
-  options: { readonly intervalMs: number; readonly attempts: number },
-): Promise<boolean> {
-  let previous: Buffer | undefined
-  for (let attempt = 0; attempt < options.attempts; attempt++) {
-    const current = await sample()
-    if (previous?.equals(current) === true) {
-      return true
-    }
-    previous = current
-    await new Promise<void>((resolve) => {
-      setTimeout(resolve, options.intervalMs)
-    })
-  }
-  return false
-}
-
-/** `apply` が false を返した手を集める。`stop` は最初の外れで打ち切る。 */
-export async function collectMisses(
-  steps: readonly Preparation[],
-  apply: (step: Preparation) => Promise<boolean>,
-  onMiss: "stop" | "continue",
-): Promise<readonly Preparation[]> {
-  const missed: Preparation[] = []
-  for (const step of steps) {
-    if (!(await apply(step))) {
-      missed.push(step)
-      if (onMiss === "stop") {
-        break
-      }
-    }
-  }
-  return missed
-}
-
 /** 本文の領域を撮って比べる間隔と、撮る回数の上限（間隔 × 回数 ≒ 5秒）。 */
 const STILL_INTERVAL_MS = 120
 const STILL_ATTEMPTS = 42
 
 /** 本文の領域の縁から内側へ、比べる範囲を縮める幅（px）。縁の1行で揺れる描画（領域の外の部品との重なり）を見ない。 */
 const STILL_INSET_PX = 4
-
-/** 書き上げの演出が終わるのを待つ上限（ミリ秒）。既定の速さで長いレポートが約10秒かかる実測の3倍。 */
-const REVEAL_END_TIMEOUT_MS = 30_000
-
-/**
- * 書き上げの演出（`data-revealing`）が消えるのを待つ。上限までに消えなくても throw せず進む
- * （上限を超えて演出が続くときは、続く静止の待ちが落とす）。
- */
-export async function waitForRevealEnd(
-  page: {
-    readonly waitForSelector: (
-      selector: string,
-      options: { readonly state: "detached"; readonly timeout: number },
-    ) => Promise<unknown>
-  },
-  timeoutMs: number = REVEAL_END_TIMEOUT_MS,
-): Promise<void> {
-  await page
-    .waitForSelector("[data-revealing]", { state: "detached", timeout: timeoutMs })
-    .catch(() => undefined)
-}
 
 /** 先頭の要素をメインビューのスクロールの容れ物の上端へ送り、当たった個数を返す（無ければ 0）。 */
 export async function scrollIntoView(page: Page, selector: string): Promise<number> {
@@ -244,20 +122,6 @@ export async function scrollIntoView(page: Page, selector: string): Promise<numb
 /** `--scroll-to` が2つ以上の要素に当たったときの知らせの行。1つなら空文字。 */
 export function scrollMatchNotice(selector: string, count: number): string {
   return count < 2 ? "" : `一致 ${String(count)} 個、先頭へ転がした: ${selector}`
-}
-
-async function readFocusPlace(page: Pick<Page, "evaluate">): Promise<FocusPlace> {
-  return page.evaluate(() => {
-    const active = document.activeElement
-    if (active === null) {
-      return { description: "なし", inMainView: false, inDialog: false }
-    }
-    return {
-      description: `${active.tagName.toLowerCase()}${active.className === "" ? "" : `.${String(active.className).slice(0, 24)}`}`,
-      inMainView: active.closest("[data-main-view]") !== null,
-      inDialog: active.closest('[role="dialog"]') !== null,
-    }
-  })
 }
 
 /**

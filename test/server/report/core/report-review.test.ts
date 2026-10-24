@@ -1,10 +1,8 @@
 import { describe, expect, it } from "vitest"
 
-import {
-  REPORT_NOTHING_NEW_REJECTION_TEXT,
-  REPORT_RESEND_REJECTION_TEXT,
-  type ReportReview,
-  type ReportVerdict,
+import type {
+  ReportReview,
+  ReportVerdict,
 } from "../../../../src/server/report/core/report-review.ts"
 import type { ReportDraft } from "../../../../src/server/report/core/report-violation.ts"
 import type { BackgroundTask } from "../../../../src/shared/session-driver/background-task.ts"
@@ -15,6 +13,7 @@ import {
   FINISHED,
   INVALID,
   noPlan,
+  REJECTION_PHRASE,
   SESSION_INFO,
   sectionsOf,
   type TestReview,
@@ -121,12 +120,14 @@ describe("createReportReview の judge（送り直し）", () => {
     const review = createReportReview(noPlan)
     draw(review, "toolu_r1", VALID)
 
-    expect(review.judge(VALID)).toEqual({
+    const verdict = review.judge(VALID)
+
+    expect(verdict).toEqual({
       kind: "rejected",
-      text: REPORT_RESEND_REJECTION_TEXT,
+      text: expect.stringContaining(REJECTION_PHRASE.resend),
       reasons: ["resend"],
     })
-    expect(REPORT_RESEND_REJECTION_TEXT).not.toContain(VALID.conclusion)
+    expect(verdict.kind === "rejected" ? verdict.text : "").not.toContain(VALID.conclusion)
   })
 
   it("前後の空白だけが違う呼び出しも送り直しとして差し戻す", () => {
@@ -234,12 +235,14 @@ describe("createReportReview の judge（新しい事実の無い report）", ()
     const review = createReportReview(noPlan)
     draw(review, "toolu_r1", VALID)
 
-    expect(review.judge(OTHER)).toEqual({
+    const verdict = review.judge(OTHER)
+
+    expect(verdict).toEqual({
       kind: "rejected",
-      text: REPORT_NOTHING_NEW_REJECTION_TEXT,
+      text: expect.stringContaining(REJECTION_PHRASE.nothingNew),
       reasons: ["nothing-new"],
     })
-    expect(REPORT_NOTHING_NEW_REJECTION_TEXT).not.toContain(OTHER.conclusion)
+    expect(verdict.kind === "rejected" ? verdict.text : "").not.toContain(OTHER.conclusion)
   })
 
   it("差し戻したあとは nothingNewRejected が true になり、次のターンの頭で false に戻る", () => {

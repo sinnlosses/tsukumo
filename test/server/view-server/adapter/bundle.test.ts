@@ -1,4 +1,4 @@
-import { mkdtemp, writeFile } from "node:fs/promises"
+import { mkdtemp } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
@@ -7,8 +7,6 @@ import { beforeAll, describe, expect, it } from "vitest"
 import {
   buildUiBundle,
   builtUiDir,
-  bundleWithVite,
-  isBundleOutdated,
   readUiBundle,
 } from "../../../../src/server/view-server/adapter/bundle.ts"
 
@@ -18,8 +16,6 @@ import {
 //
 // 出し先は一時ディレクトリに取る（実物の dist/browser/ は書き換えない）。同じ `dist/browser/`
 // を CLI 起動時に読む別のテストと並んで走ると、書き直している最中を読んで落ちる。
-//
-// 失敗の側は src/browser/ を壊さず、一時ディレクトリに書いた入口ファイルで確かめる。
 
 // 組み立てに数秒かかるので、読むだけの4件で1回の成果物を使う。
 let builtDir: string
@@ -82,63 +78,13 @@ describe("readUiBundle", () => {
   })
 })
 
-describe("isBundleOutdated", () => {
-  it("指紋が同じなら古くない（更新時刻だけ新しくなっても変わらない）", () => {
-    expect(isBundleOutdated("abc", "abc")).toBe(false)
-  })
-
-  it("指紋が違えば古い", () => {
-    expect(isBundleOutdated("abc", "abd")).toBe(true)
-  })
-
-  it("成果物に指紋が無ければ古い", () => {
-    expect(isBundleOutdated(undefined, "abc")).toBe(true)
-  })
-
-  it("いまのソースの指紋が取れなければ古いと言わない", () => {
-    expect(isBundleOutdated("abc", undefined)).toBe(false)
-  })
-})
-
 describe("builtUiDir", () => {
   it("起こす場所に依らず dist/browser を指す", () => {
     expect(builtUiDir().endsWith("/dist/browser")).toBe(true)
   })
 })
 
-describe("bundleWithVite", () => {
-  it("入口の無い置き場を渡すと、入口を解決できなかったことを理由として返す", async () => {
-    const result = await bundleWithVite("/tmp/tsukumo-does-not-exist", await temporaryDir())
-
-    expect(result.ok).toBe(false)
-    expect(result.ok ? "" : result.reason).toContain("main.tsx")
-  })
-
-  it("構文エラーの入口を渡すと、vite のエラー文を色とスタックを除いて理由として返す", async () => {
-    const sourceDir = await temporaryDir()
-    await writeFile(join(sourceDir, "main.tsx"), "export const broken = (\n")
-
-    const result = await bundleWithVite(sourceDir, await temporaryDir())
-
-    expect(result.ok).toBe(false)
-    const reason = result.ok ? "" : result.reason
-    expect(reason).toMatch(/main\.tsx:\d+:\d+/)
-    expect(reason).not.toContain("\u001b[")
-    expect(reason).not.toMatch(/^\s+at /m)
-  })
-
-  it("CSS を持たない入口では、対が揃わなかったことを理由として返す", async () => {
-    const sourceDir = await temporaryDir()
-    await writeFile(join(sourceDir, "main.tsx"), "export const value = 1\n")
-
-    const result = await bundleWithVite(sourceDir, await temporaryDir())
-
-    expect(result.ok).toBe(false)
-    expect(result.ok ? "" : result.reason).toContain("対")
-  })
-})
-
-/** 出し先（と、壊れた入口の置き場）。リポジトリの dist/browser/ を汚さないために分ける。 */
+/** 出し先。リポジトリの dist/browser/ を汚さないために分ける。 */
 function temporaryDir(): Promise<string> {
   return mkdtemp(join(tmpdir(), "tsukumo-bundle-"))
 }

@@ -44,7 +44,7 @@ const namedSvg = svgBlockSchema.meta({ id: "SvgBlock" })
 const namedImage = imageBlockSchema.meta({ id: "ImageBlock" })
 const namedTimeline = timelineBlockSchema.meta({ id: "TimelineBlock" })
 
-export const reportBlockSchema = z.discriminatedUnion("kind", [
+const reportBlockSchema = z.discriminatedUnion("kind", [
   textBlockSchema,
   listBlockSchema,
   tableBlockSchema,
@@ -114,11 +114,6 @@ export type ReportFigure = DeepReadonly<z.infer<typeof reportFigureSchema>>
 export type RecordedReportFigure =
   | ReportFigure
   | { readonly kind: "none"; readonly reason: "unrecorded" }
-
-export type RecordedFigureNoneReason = Extract<
-  RecordedReportFigure,
-  { readonly kind: "none" }
->["reason"]
 
 /**
  * `figure` の図を見出しの無い先頭の節にした、描く順（figure → sections）の並び。`none` なら `sections` のまま。

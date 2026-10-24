@@ -11,6 +11,17 @@ import type { SessionEvent } from "../../src/shared/session/session-event.ts"
 import type { WorkPlanStanding } from "../../src/shared/session/work-plan.ts"
 import { reportDraft } from "./report-event.ts"
 
+/** `report` の差し戻しの固定の文面を見分ける句。 */
+export const REJECTION_PHRASE = {
+  resend: "同じ引数で送り直さず",
+  nothingNew: "伝える新しい事実が無いターン",
+  unansweredWorkPlan: "差し戻された `work_plan` に、まだ応えていない",
+  missingWorkPlanClosing: "workPlanClosing に段の閉じ方を入れる",
+  unfinishedPhases: "済んでいない段が2つ以上残っている",
+  finishedButStopped: "workPlanClosing が `stopped` でワークプランに済んでいない段が残っている",
+  finishedWithNg: "`checks` に `ng` の行がある",
+} as const
+
 export const noPlan = (): WorkPlanStanding => ({ kind: "none" })
 
 /** 逃げ道の塊1つの節（中身は架空）。 */

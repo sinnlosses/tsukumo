@@ -118,7 +118,7 @@ function defaultSessionManagerOptions() {
 
 /**
  * 平らに並べた口からセッションとコマンドのルータを組む。
- * 受け手そのものの振る舞いは `createCommandRouter` のテストが持ち、ここでコマンドを使うのは代の寿命と反応の順を起こす引き金としてだけ。
+ * 受け手そのものの振る舞いは `createSocketRouter` のテストが持ち、ここでコマンドを使うのは代の寿命と反応の順を起こす引き金としてだけ。
  */
 export function createSessionManager(
   overrides: Pick<SessionManagerOptions, "launchSession"> &

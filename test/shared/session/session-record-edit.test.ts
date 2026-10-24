@@ -1,11 +1,15 @@
 import { describe, expect, it } from "vitest"
 
 import { mainViewEntries } from "../../../src/shared/session/main-view-entry.ts"
-import { MAX_MAIN_VIEW_TURNS, mainViewTurns } from "../../../src/shared/session/main-view.ts"
+import { mainViewTurns } from "../../../src/shared/session/main-view.ts"
 import type { SessionEvent } from "../../../src/shared/session/session-event.ts"
 import { applySessionEvent } from "../../../src/shared/session/session-fold.ts"
+import { MAX_SESSION_STATE_TURNS } from "../../../src/shared/session/session-record.ts"
 import { reportEvent } from "../../fixture/report-event.ts"
 import { apply } from "../../fixture/session-state.ts"
+
+/** メインビューに出すやり取りの数（仕事の記録の窓と同じ）。 */
+const MAX_MAIN_VIEW_TURNS = MAX_SESSION_STATE_TURNS.work
 
 describe("applySessionEvent", () => {
   it("記録はターン数の窓（直近20ターン）だけを残し、古いターンは落とす", () => {

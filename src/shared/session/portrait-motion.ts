@@ -20,10 +20,10 @@ export type PortraitMotionInput = {
 }
 
 /** ツールが失敗してから（ターンが失敗で終わってから）、このミリ秒だけ「失敗でびくっ」を優先する。 */
-export const FAILURE_MOTION_WINDOW_MS = 400
+const FAILURE_MOTION_WINDOW_MS = 400
 
 /** ターンが（失敗でなく）終わってから、このミリ秒だけ「完了の反応」を優先する。 */
-export const SUCCESS_MOTION_WINDOW_MS = 700
+const SUCCESS_MOTION_WINDOW_MS = 700
 
 /**
  * いま出す動き。優先順位は次の順。

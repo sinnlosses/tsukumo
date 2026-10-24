@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest"
 
-import { PRE_REQUEST_TURN_ID, splitIntoTurns, turnIdOf } from "../../../src/shared/session/turn.ts"
+import { splitIntoTurns, turnIdOf } from "../../../src/shared/session/turn.ts"
+
+/** 依頼より前のまとまりの番号。 */
+const PRE_REQUEST_TURN_ID = -1
 
 // 割る関数は型引数で受けるので、記録（`SessionRecord`）の代わりに最小の形で確かめる。
 type Item =

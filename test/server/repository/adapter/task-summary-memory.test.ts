@@ -5,7 +5,6 @@ import { describe, expect, it } from "vitest"
 
 import {
   readTaskSummaryMemory,
-  TASK_SUMMARY_MEMORY_LIMIT,
   writeTaskSummaryMemory,
 } from "../../../../src/server/repository/adapter/task-summary-memory.ts"
 import type { TaskSummaryItem } from "../../../../src/shared/repository/task-summary.ts"
@@ -71,14 +70,14 @@ describe("タスク一覧の記憶", () => {
     ])
   })
 
-  it("上限を超えたら古い作業ディレクトリから落とす", () => {
-    for (let index = 0; index <= TASK_SUMMARY_MEMORY_LIMIT; index += 1) {
+  it("上限（8件）を超えたら古い作業ディレクトリから落とす", () => {
+    for (let index = 0; index <= 8; index += 1) {
       writeTaskSummaryMemory(`/work/${index}`, [item("t-1")], memoryPath())
     }
 
     expect(readTaskSummaryMemory("/work/0", memoryPath())).toBeUndefined()
     expect(readTaskSummaryMemory("/work/1", memoryPath())).toBeDefined()
-    expect(readTaskSummaryMemory(`/work/${TASK_SUMMARY_MEMORY_LIMIT}`, memoryPath())).toBeDefined()
+    expect(readTaskSummaryMemory("/work/8", memoryPath())).toBeDefined()
   })
 
   it.each([

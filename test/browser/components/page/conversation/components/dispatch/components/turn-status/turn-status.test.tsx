@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { TurnStatus } from "../../../../../../../../../src/browser/components/page/conversation/components/dispatch/components/turn-status/turn-status.tsx"
 import { useComposerDraft } from "../../../../../../../../../src/browser/stores/composer-draft.ts"
-import { useInquiryDraft } from "../../../../../../../../../src/browser/stores/inquiry-answer.ts"
+import { useInquiryDraft } from "../../../../../../../../../src/browser/stores/inquiry-draft.ts"
 import type { StampedPendingAsk } from "../../../../../../../../../src/shared/session-driver/pending-ask.ts"
 import {
   INITIAL_SESSION_STATE,

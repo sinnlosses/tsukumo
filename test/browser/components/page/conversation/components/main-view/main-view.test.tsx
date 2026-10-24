@@ -2,7 +2,7 @@ import { act, cleanup, fireEvent, screen, within } from "@testing-library/react"
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
 
 import { loadMarkdown } from "../../../../../../../src/browser/components/page/conversation/components/markdown/markdown.tsx"
-import { useInquiryDraft } from "../../../../../../../src/browser/stores/inquiry-answer.ts"
+import { useInquiryDraft } from "../../../../../../../src/browser/stores/inquiry-draft.ts"
 import type { ReportBlock } from "../../../../../../../src/shared/report/report-block.ts"
 import type { SessionRecord } from "../../../../../../../src/shared/session/session-record.ts"
 import {

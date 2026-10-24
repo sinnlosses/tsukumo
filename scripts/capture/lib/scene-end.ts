@@ -1,16 +1,14 @@
 // 撮影の道具が、疑似セッションの場面が画面へ流れ終わるのを待つための部品。
 // 画面の WebSocket が受けた `events` フレームを数え、場面の手（`startupSteps`）が出す件数に届いたら終わりとする。
 
-import { z } from "zod"
-
 import {
   type FakeSession,
   type FakeSessionStep,
   startupSteps,
 } from "../../../src/server/session-driver/adapter/fake-session.ts"
-import { parseServerFrame } from "../../../src/shared/frame.ts"
 import type { SessionEvent } from "../../../src/shared/session/session-event.ts"
 import type { Settle } from "./catalog-entry.ts"
+import { countEventKinds } from "./event-kind-count.ts"
 
 /** 場面の猶予（ミリ秒）。最後の手が流れる時刻に足す、起動と描画の余裕。 */
 const SCENE_END_GRACE_MS = 10_000
@@ -79,30 +77,6 @@ export function sceneEventTimeoutMs(
     .filter((candidate) => candidate.event.kind === target.kind)
     .at(target.occurrence - 1)
   return step === undefined ? undefined : step.afterMs + SCENE_END_GRACE_MS
-}
-
-const socketMessageSchema = z.object({
-  p: z.object({ e: z.literal("message"), d: z.object({ json: z.unknown() }) }),
-})
-
-/** WebSocket の text フレーム 1 つが運ぶ `events` の `kind` ごとの件数。読めないフレームと `events` でないフレームは空。 */
-export function countEventKinds(payload: string): ReadonlyMap<SessionEvent["kind"], number> {
-  const counts = new Map<SessionEvent["kind"], number>()
-  let value: unknown
-  try {
-    value = JSON.parse(payload)
-  } catch {
-    return counts
-  }
-  const message = socketMessageSchema.safeParse(value)
-  const frame = message.success ? parseServerFrame(message.data.p.d.json) : undefined
-  if (frame?.type !== "events") {
-    return counts
-  }
-  for (const { event } of frame.events) {
-    counts.set(event.kind, (counts.get(event.kind) ?? 0) + 1)
-  }
-  return counts
 }
 
 /** `watchSceneEvents` が使う `Page` の一部（偽物を渡せるようにしている）。 */
