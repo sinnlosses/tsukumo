@@ -1,4 +1,4 @@
-// 規約のテストが共有する、`src/`・`scripts/`・`story/` の export がどの読み手から import されるかの読み取り。
+// 規約のテストが共有する、`src/`・`scripts/` の export がどの読み手から import されるかの読み取り。
 
 import { readFileSync } from "node:fs"
 import { posix } from "node:path"
@@ -11,10 +11,7 @@ export const REPOSITORY_ROOT = fileURLToPath(new URL("../..", import.meta.url)).
 
 export const CONFIG_FILES = ["vite.config.ts", "vitest.config.ts", "vitest.e2e.config.ts"] as const
 
-const EXPORTER_DIRECTORIES = ["src/", "scripts/", "story/"] as const
-
-// Storybook が glob で読む入口なので、export は読まれるものとして数えない。
-const STORY_ENTRY_SUFFIX = ".story.tsx"
+const EXPORTER_DIRECTORIES = ["src/", "scripts/"] as const
 
 export type ExportUse = {
   /** `isUse` を満たす読み手から import されず、その読まれる export の型注釈からもたどれない export を `<パス>#<名前>` で返す。 */
@@ -62,8 +59,6 @@ export function readRepositorySources(): ReadonlyMap<string, string> {
       (path) => `scripts/${path}`,
     ),
     ...listSourceFiles(`${REPOSITORY_ROOT}/src`).map((path) => `src/${path}`),
-    ...listSourceFiles(`${REPOSITORY_ROOT}/story`).map((path) => `story/${path}`),
-    ...listSourceFiles(`${REPOSITORY_ROOT}/.storybook`).map((path) => `.storybook/${path}`),
     ...listSourceFiles(`${REPOSITORY_ROOT}/test`).map((path) => `test/${path}`),
     ...CONFIG_FILES,
   ]
@@ -105,10 +100,7 @@ const TYPE_DECLARATIONS: ReadonlySet<string> = new Set([
 ])
 
 function isExporter(path: string): boolean {
-  return (
-    EXPORTER_DIRECTORIES.some((directory) => path.startsWith(directory)) &&
-    !path.endsWith(STORY_ENTRY_SUFFIX)
-  )
+  return EXPORTER_DIRECTORIES.some((directory) => path.startsWith(directory))
 }
 
 type ImportUse = { readonly target: string; readonly names: readonly string[] | "all" }

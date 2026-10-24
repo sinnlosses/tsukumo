@@ -26,3 +26,6 @@ Vite 前提の道具（Storybook・React Compiler）を本物と同じ設定で�
   ブラウザがパースする量は減る。**CSS は縮めない**（`cssMinify: false`）。lightningcss の minify が
   `::picker(select):popover-open`（customizable select）を解せず落ちる。読める成果物で調べたいときは
   `pnpm run dev`（`dist/browser/` を使わずソースのまま配る開発サーバ）を使う
+- **Storybook は 2026-10-25 に外した。** story が新しく足されず、props の変更に追従する手間だけが
+  残ったため。描画の証拠は `capture-catalog.ts` と疑似セッションで撮る。上の「Vite 前提の道具」は
+  いま React Compiler だけを指す

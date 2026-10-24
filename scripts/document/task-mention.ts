@@ -1,4 +1,4 @@
-// `src/` / `test/` / `scripts/` / `docs/` / `story/`（`docs/history/` を除く）のコメント・テスト名・本文に
+// `src/` / `test/` / `scripts/` / `docs/`（`docs/history/` を除く）のコメント・テスト名・本文に
 // 書かれたタスク番号（`.tw/task/T-xxx.md` のパスも `T-` + 3桁以上の並びを含むので同じ形で
 // 拾える。トラッカーが `github` の課題番号 `GH-<n>`、ゼロ埋めなしも拾う）を拾う純粋関数。
 //

@@ -2,15 +2,15 @@
 
 ステータス: **正典**。入口は `docs/architecture.md`（全体構造の入口と、子のファイルの一覧）。
 
-責務: リポジトリのディレクトリの木と、設定・タスク一覧の読み元の置き場、ファイル名の付け方、story の置き場、ページの形を持つ（ディレクトリの節の前半）。
+責務: リポジトリのディレクトリの木と、設定・タスク一覧の読み元の置き場、ファイル名の付け方、ページの形を持つ（ディレクトリの節の前半）。
 読む時: 新しいファイル・ディレクトリの置き場所や名前に迷ったとき、ページの中の部品をどこに置くか決めるとき。
 直す時: ディレクトリの木・ファイル名の規則・ページの形を変えたとき（`src/browser/` の箱の表は `docs/architecture/browser-box.md`）。
 
 ## 節の索引
 
-| 節               | 中身                                                                                                                                                                              |
-| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| ### ディレクトリ | 前半: ディレクトリの木、設定の置き場、タスク一覧の読み元、ファイル名は概念で単数形、story の置き場、ページの形（後半の `src/browser/` の箱は `docs/architecture/browser-box.md`） |
+| 節               | 中身                                                                                                                                                              |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ### ディレクトリ | 前半: ディレクトリの木、設定の置き場、タスク一覧の読み元、ファイル名は概念で単数形、ページの形（後半の `src/browser/` の箱は `docs/architecture/browser-box.md`） |
 
 ## 全体構成
 
@@ -30,7 +30,6 @@ src/                          配線（composition root）。cli.ts（入口）�
   browser/                    React の部品・hooks・CSS（下の「`src/browser/` の箱と、置く基準」）
 test/                         src/<相対パス>.ts → test/<相対パス>.test.ts
 fixture/fake-session/         疑似セッション（索引 index.json と、場面1つにつき <場面名>.json。TSUKUMO_FAKE_SESSION の既定）
-story/                        src/<相対パス>.tsx → story/<相対パス>.story.tsx（Storybook。設定は .storybook/）
 characters/<name>/            character.json・persona.md・素材
 plugin/                       セッションに載せる同梱のプラグイン（`token-usage-diet` だけを持つ。`buildQuerySeedOptions` が渡す）
 vendor/tsukumo-plugins/       取り込んだ tsukumo-plugins（git submodule。契約に型の合うスキルの1つの例。利用者が同じスキルとエージェントを `~/.claude` にリンクで入れていなければ `buildQuerySeedOptions` が渡す）
@@ -76,13 +75,6 @@ kebab-case のファイル名・barrel file を作らない・`@/` を使わな�
 **実体が無い箱は先に作らない**（手本の `app/` `api/` `config/` `assets/` `testing/` などは作らない。
 理由は `docs/history/decision.md`「design.md 2. 全体構成 / ディレクトリ（採らなかった bullet-proof-react の要素）」）。
 ファイルを移すときは、パスを指す記述が `.module.css` のコメントにもあるので `grep -rn` の対象から外さない。
-
-**story（Storybook）は `src/` に置かず、`story/` の下に描く部品と同じ相対パスで置く**
-（テストと同じ写し方）。`src/browser/` は配る束の中身だけにしておき、上の箱と機能の辺の検査が
-story を読み手として数えないようにするため。story が import してよいのは `src/browser/` と
-`src/shared/` だけ（ブラウザで描くので browser の層と同じ）。置き場と辺は
-`test/architecture/story.test.ts`（`describe("story の置き場", …)`）が見る。ファイル名の接尾辞は
-単数形の `.story.tsx`（原則5。Storybook は `.stories` と `.story` のどちらも読む）。
 
 **ページの形**（`components/page/<ページ>/`）:
 

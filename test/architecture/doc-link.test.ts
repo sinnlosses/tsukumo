@@ -12,7 +12,7 @@ const REPO_ROOT = fileURLToPath(new URL("../..", import.meta.url)).replace(/\/$/
 
 describe("{@link} の指す先", () => {
   it("`{@link 名前}` の名前の頭の識別子は、同じファイルの本文に現れる", () => {
-    const offenders = ["src", "scripts", "test", "story"].flatMap((dir) => {
+    const offenders = ["src", "scripts", "test"].flatMap((dir) => {
       const root = `${REPO_ROOT}/${dir}`
       return listSourceFiles(root).flatMap((relPath) =>
         unresolvedLinkNames(readFileSync(`${root}/${relPath}`, "utf8")).map(

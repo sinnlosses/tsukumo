@@ -3,7 +3,6 @@ paths:
   - "src/**/*.{ts,tsx}"
   - "test/**/*.{ts,tsx}"
   - "scripts/**/*.ts"
-  - "story/**/*.{ts,tsx}"
 ---
 
 # TypeScript の書き方

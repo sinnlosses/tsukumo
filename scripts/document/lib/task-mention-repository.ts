@@ -1,4 +1,4 @@
-// `src/` / `test/` / `scripts/` / `docs/` / `story/`（`docs/history/` を除く）のファイルを読み、
+// `src/` / `test/` / `scripts/` / `docs/`（`docs/history/` を除く）のファイルを読み、
 // `findTaskMentions` に渡して迷子のタスク番号を集める、という概念1つを持つ。
 
 import { type Dirent, globSync, readFileSync } from "node:fs"
@@ -12,13 +12,7 @@ import {
 } from "../task-mention.ts"
 
 // 検査するディレクトリ（リポジトリ直下から）。
-const SCANNED_DIRECTORIES = [
-  "src",
-  "test",
-  "scripts",
-  "docs",
-  "story",
-] as const satisfies readonly string[]
+const SCANNED_DIRECTORIES = ["src", "test", "scripts", "docs"] as const satisfies readonly string[]
 
 // 親が何であっても（ドットで始まる親の下も含めて）、この名前のディレクトリの中は読まない。
 const SKIPPED_DIRECTORY_NAMES = new Set(["node_modules", "dist", ".git"])

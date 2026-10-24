@@ -3,7 +3,6 @@ paths:
   - "src/**/*.{ts,tsx,css}"
   - "test/**/*.{ts,tsx}"
   - "scripts/**/*.ts"
-  - "story/**/*.{ts,tsx}"
   - "docs/**/*.md"
 ---
 

@@ -67,7 +67,7 @@ sed -n '/^## shared/,/^## /p' docs/architecture/shared-contract.md
 - `docs/architecture/server-feature.md`: サーバの機能と、機能どうしの辺
 - `docs/architecture/command-procedure.md`: コマンドの受け手と手続きの置き方
 - `docs/architecture/shared-feature.md`: shared の機能
-- `docs/architecture/directory.md`: ディレクトリの前半（木の図・設定の置き場・タスク一覧の読み元・ファイル名・story・ページの形）
+- `docs/architecture/directory.md`: ディレクトリの前半（木の図・設定の置き場・タスク一覧の読み元・ファイル名・ページの形）
 - `docs/architecture/browser-box.md`: ディレクトリの後半（`src/browser/` の箱と、置く基準）、領域の機能と、置かれる機能
 - `docs/architecture/container-presenter.md`: 機能の中を分ける（container / presenter と `hooks/`）
 - `docs/architecture/lib-and-utils-criterion.md`: `lib/` と `utils/` に置く基準

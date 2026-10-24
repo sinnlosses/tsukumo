@@ -17,9 +17,9 @@ import { parseSourceProgram } from "./source-file.ts"
 const VITEST_CONFIG_FILES = ["vitest.config.ts", "vitest.e2e.config.ts"] as const
 
 // テストの側でない読み手のディレクトリ。
-const PRODUCTION_DIRECTORIES = ["src/", "scripts/", "story/", ".storybook/"] as const
+const PRODUCTION_DIRECTORIES = ["src/", "scripts/"] as const
 
-// 値は許す理由。置けるのは、テストか story だけが読む `<部品>Props` の型の export だけ
+// 値は許す理由。置けるのは、テストだけが読む `<部品>Props` の型の export だけ
 // （関数・定数は消すか、本番の口へ寄せるか、概念の名前のファイルへ移す）。
 const ALLOWED_TEST_ONLY_EXPORTS = {} as const satisfies Record<string, string>
 
@@ -27,7 +27,7 @@ const SOURCES = readRepositorySources()
 
 const FOUND_TEST_ONLY_EXPORTS = testOnlyExports(SOURCES, productionReader())
 
-describe("src/・scripts/・story/ のテストからしか import されない export", () => {
+describe("src/・scripts/ のテストからしか import されない export", () => {
   it("許可リストの外に無い", () => {
     expect(FOUND_TEST_ONLY_EXPORTS.filter((key) => !(key in ALLOWED_TEST_ONLY_EXPORTS))).toEqual([])
   })
@@ -104,14 +104,9 @@ describe("src/・scripts/・story/ のテストからしか import されない 
       ],
       [
         "src/shared/b.ts",
-        [
-          "export const READ_BY_STORY = 1",
-          "export const READ_BY_SRC = 1",
-          "export const SRC_ONLY_TEST = 1",
-        ].join("\n"),
+        ["export const READ_BY_SRC = 1", "export const SRC_ONLY_TEST = 1"].join("\n"),
       ],
       ["src/browser/c.ts", 'import { READ_BY_SRC } from "../shared/b.ts"'],
-      ["story/browser/c.story.tsx", 'import { READ_BY_STORY } from "../../src/shared/b.ts"'],
       ["test/setup.ts", 'import { setupOnly } from "../scripts/lib/a.ts"'],
       [
         "test/a.test.ts",
@@ -119,7 +114,7 @@ describe("src/・scripts/・story/ のテストからしか import されない 
           'import { ONLY_TEST, onlyTest, used, type Argument, type Inner, type Loose } from "../scripts/lib/a.ts"',
           'import { spaced } from "../scripts/lib/spaced.ts"',
           'import { late } from "../scripts/lib/late.ts"',
-          'import { READ_BY_SRC, READ_BY_STORY, SRC_ONLY_TEST } from "../src/shared/b.ts"',
+          'import { READ_BY_SRC, SRC_ONLY_TEST } from "../src/shared/b.ts"',
         ].join("\n"),
       ],
     ])

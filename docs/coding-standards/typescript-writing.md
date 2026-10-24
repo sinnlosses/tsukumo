@@ -39,13 +39,13 @@
 非公開関数は、`export` された関数の振る舞いを通して検証する。テストのために `export` すると、
 「このファイルの公開インターフェース」がテストの都合で膨らみ、上の並び順の意味も崩れる。
 
-`src/`・`scripts/`・`story/` の export は `test/architecture/test-only-export.test.ts` がテストからしか import されないものを、
+`src/`・`scripts/` の export は `test/architecture/test-only-export.test.ts` がテストからしか import されないものを、
 `test/architecture/unused-export.test.ts` がどこからも import されないものを落とす。
 本番の側の読み手は `test/` 以外と、vitest の `globalSetup`・`setupFiles` と文書の検査の入口（`DOCUMENT_CHECK_TEST_FILES`）。
-`*.story.tsx` の export は Storybook の入口なので数えない。型は、読まれる export の型注釈から名指されていれば数えない。
+型は、読まれる export の型注釈から名指されていれば数えない。
 当たった関数・定数は許可リストに入れず、`export` を外して公開口経由で確かめるか、
 公開口が実ブラウザ・git・標準入力などを要るなら純粋な部品を概念の名前のファイルへ移す。重なるテストは消す。
-許可リストに理由を付けて置けるのは、テストか story だけが読む `<部品>Props` の型だけ（自己テストが縛る）。
+許可リストに理由を付けて置けるのは、テストだけが読む `<部品>Props` の型だけ（自己テストが縛る）。
 同じファイルの中で使うなら export を外し、使わないなら消す。
 
 テストのその他の規約（置き場所・モック・カバレッジ・消す/足すの判断）は下の「テスト」節。

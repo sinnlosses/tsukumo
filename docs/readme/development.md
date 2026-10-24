@@ -39,7 +39,6 @@
 │   └── wiring/             # 機能ごとの組み立て
 │                           #   ※ src/ 直下と wiring/ は配線層。全層を import してよい唯一の場所
 ├── test/                   # テスト（src/ と同じディレクトリ構成 ＋ 層の検査の architecture/）
-├── story/                  # Storybook の story（src/ と同じディレクトリ構成。設定は .storybook/）
 ├── characters/             # キャラクターパックと素材（tsukumo-spirit が既定、local/ は .gitignore）
 ├── plugin/                 # セッションに載せる同梱の Claude Code プラグイン（token-usage-diet）
 ├── vendor/tsukumo-plugins/ # 取り込んだ tsukumo-plugins（git submodule。タスク運用のスキル・agent・hook。利用者がリンクで入れていれば載せない）

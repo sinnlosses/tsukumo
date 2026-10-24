@@ -245,8 +245,6 @@ pnpm run start                 # セッションを起こし、ページをホ�
                               #   成果物か vendor/tsukumo-plugins が無ければ前提不足で止まり、ソースの指紋が組み立て時と違えば1行知らせて古いまま配る）
 pnpm run dev                   # pnpm run build のあと、start と同じ経路を Vite の開発サーバつき（--dev）で起こす
                               #   （src/server/ と src/shared/ を直したときは上げ直しが要る。docs/architecture/build.md）
-pnpm run storybook             # 部品を props ごとに並べる Storybook を http://localhost:6006/ に起こす
-                              #   （story は story/ の下。本体と同じ vite.config.ts で組み立てる）
 node scripts/capture/open-view.ts <URL>  # プロセスは動いたままタブだけ閉じたときに開き直す
 node scripts/capture/capture-view.ts --scene <場面> --paper-metric  # 紙面の物差し（テンプレの手がかり・色相の族・判決の頭の高さ・読む面を超える図・図の文字の最小 px・横並びの縦落ち）を 1440x900 と 1920x1080 で数える
 pnpm run grid                  # 待ち受けていてタブもある部屋を iframe の格子に並べて Orca に開く。格子のタブが

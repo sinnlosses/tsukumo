@@ -24,7 +24,7 @@
 - `docs/architecture/testing/e2e-scenario-conversation-state.md`: E2E のシナリオの一覧のうち、押す的と字・始め方の一覧・失敗の塊・終わったあとの入力欄・読み上げ・見直し・結論部の行
 - `docs/architecture/testing/e2e-scenario-task-chat-and-setting.md`: E2E のシナリオの一覧のうち、タスク・雑談・覚えていること・切り替え・操作子・設定・ちらつきの行と、まだ無いシナリオ
 - `docs/architecture/testing/visual-check.md`: 手で確かめることの前半（目視が要る理由・状態のカタログ・撮る前の待ち・途中の画・窓の大きさで撮る）
-- `docs/architecture/testing/visual-check-interaction.md`: 手で確かめることの中ほど（手を動かして出す状態・1件だけ撮る・場面ごとの撮り方・Storybook）
+- `docs/architecture/testing/visual-check-interaction.md`: 手で確かめることの中ほど（手を動かして出す状態・1件だけ撮る・場面ごとの撮り方）
 - `docs/architecture/testing/visual-check-revision-and-scene.md`: 手で確かめることの後半（変更前と撮り比べる・目視で起こす tsukumo・場面ごとの確かめ・合成 PNG）
 
 ## テスト

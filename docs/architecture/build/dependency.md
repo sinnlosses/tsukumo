@@ -43,16 +43,7 @@
 | dev     | `playwright-core`                                                                                                                   | 画面の確認（`scripts/capture/capture-*.ts`）と E2E（`docs/architecture/testing.md`）                                                                   |
 | dev     | `vitest` `vite`                                                                                                                     | テストランナーとブラウザ側の組み立て・開発サーバ                                                                                                       |
 | dev     | `@vitejs/plugin-react` `oxc-transform-react`                                                                                        | JSX の変換と React Compiler（`docs/coding-standards.md`「手でメモ化しない」）。2026-09-29 承認                                                         |
-| dev     | `storybook` `@storybook/react-vite`                                                                                                 | 部品を props ごとに並べて見る（`pnpm run storybook`）                                                                                                  |
 | dev     | `@vitest/coverage-v8`                                                                                                               | 単体テストのカバレッジ（`pnpm run test:coverage`。`check` には入れない）。2026-10-02 承認                                                              |
-
-**Storybook は本体と同じ `vite.config.ts` を読む**（`.storybook/main.ts` の `viteConfigPath`。
-`build` の節だけは Storybook が捨てる）。CSS Modules の class 名は Vite が CSS の中身と行から焼く
-（置き場の root に依存しない）ので、`pnpm run build` の成果物と同じ綴りになる。部品が実行時に取りに
-行く `/character/<pack>/<file>` は同梱の `characters/` を、`/vendor/<name>` は `readVendorAsset` の
-対応表をそのまま Storybook の開発サーバが配る。型は `tsconfig.storybook.json` で別に見る——
-Storybook の型定義（`react-docgen-typescript` ほか）が TypeScript 7 の型と噛み合わず、
-ライブラリの `.d.ts` の検査を外す必要があるため（本体の `tsconfig.json` は外さない）。
 
 `zod` と `@anthropic-ai/claude-agent-sdk` はある。`ws` を選ぶのは**ランタイム固有の API に寄せない**ため。
 **`playwright-core` は Playwright 同梱の `chromium-headless-shell`（`pnpm exec playwright-core install chromium-headless-shell` で入れる）を動かし、製品版の Google Chrome は鍵をキーチェーンへ溜めるので使わず**、テストランナー（`@playwright/test`）は足さない。

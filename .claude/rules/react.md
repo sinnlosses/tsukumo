@@ -2,7 +2,6 @@
 paths:
   - "src/browser/**/*.{ts,tsx,css}"
   - "test/browser/**/*.{ts,tsx}"
-  - "story/**/*.{ts,tsx}"
 ---
 
 # React とスタイルの書き方

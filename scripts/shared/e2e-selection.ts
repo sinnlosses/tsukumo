@@ -46,16 +46,7 @@ const HARNESS_ROOTS = [
 const EXPECTED_DIRECTORY = "test/e2e/expected/"
 
 /** E2E から届かなければ E2E に効かないディレクトリ。 */
-const UNRELATED_DIRECTORIES = [
-  "test/",
-  "scripts/",
-  "story/",
-  ".storybook/",
-  ".github/",
-  ".claude/",
-  "docs/",
-  ".tw/",
-]
+const UNRELATED_DIRECTORIES = ["test/", "scripts/", ".github/", ".claude/", "docs/", ".tw/"]
 
 /** 実行時に読まれて import に出ないことがあるディレクトリ。 */
 const RUNTIME_READ_DIRECTORIES = ["test/e2e/", "test/fixture/", "fixture/"]

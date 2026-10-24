@@ -219,7 +219,6 @@ describe("collectStrayTaskMentions", () => {
       mkdirSync(join(dir, "test"), { recursive: true })
       mkdirSync(join(dir, "scripts"), { recursive: true })
       mkdirSync(join(dir, "docs", "history"), { recursive: true })
-      mkdirSync(join(dir, "story"), { recursive: true })
       writeFileSync(join(dir, "docs", "note.md"), `<!-- ${SAMPLE_ID} を書いた -->\n`)
       writeFileSync(join(dir, "docs", "history", "note.md"), `<!-- ${SAMPLE_ID} を書いた -->\n`)
       expect(
@@ -237,7 +236,6 @@ describe("collectStrayTaskMentions", () => {
       mkdirSync(join(dir, "test"), { recursive: true })
       mkdirSync(join(dir, "scripts"), { recursive: true })
       mkdirSync(join(dir, "docs"), { recursive: true })
-      mkdirSync(join(dir, "story"), { recursive: true })
       writeFileSync(
         join(dir, "docs", "requirements.md"),
         [
