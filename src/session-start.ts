@@ -8,19 +8,15 @@ import { createSocketRouter } from "./router.ts"
 import type { AchievementCache } from "./server/achievement/adapter/closed-issue.ts"
 import { createServerClock } from "./server/adapter/local-time.ts"
 import { createChatArchive } from "./server/chat/adapter/chat-archive.ts"
-import { createContextUsageLog } from "./server/context-usage/adapter/context-usage-log.ts"
 import type { Config } from "./server/core/config.ts"
 import type { DiagnosticLog } from "./server/diagnostic/core/diagnostic.ts"
-import { createExperienceMetricLog } from "./server/experience-metric/adapter/experience-metric-log.ts"
 import type { Host } from "./server/host/core/host.ts"
 import { readReportImageFile } from "./server/report/adapter/report-image-file.ts"
 import { warmUpMermaidChecker } from "./server/report/adapter/report-mermaid-syntax.ts"
-import { createReportUsageLog } from "./server/report/adapter/report-usage-log.ts"
 import type { ReportImageShelf } from "./server/report/core/report-image-shelf.ts"
 import type { BeadsStamp } from "./server/repository/adapter/beads.ts"
 import { runGit } from "./server/repository/adapter/git.ts"
 import type { FakeSession } from "./server/session-driver/adapter/fake-session.ts"
-import { createQuestionUsageLog } from "./server/session-driver/adapter/question-usage-log.ts"
 import type { PromptImageShelf } from "./server/session-driver/core/prompt-image-shelf.ts"
 import { EVENT_BATCH_INTERVAL_MS } from "./server/session/core/event-batch.ts"
 import type { SessionManager } from "./server/session/core/session-manager-port.ts"
@@ -36,6 +32,7 @@ import { wireHost } from "./wiring/host.ts"
 import { wireItem } from "./wiring/item.ts"
 import { wireRepository } from "./wiring/repository.ts"
 import { wireSessionLaunch } from "./wiring/session-launch.ts"
+import { wireUsageLogs } from "./wiring/usage-log.ts"
 import { wireUsageReview } from "./wiring/usage-review.ts"
 import { wireWelcomeGreeting } from "./wiring/welcome-greeting.ts"
 import type { WiringContext } from "./wiring/wiring-context.ts"
@@ -96,10 +93,7 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
   // 最初のタブが繋がったら解ける約束。
   const firstViewer = Promise.withResolvers<void>()
 
-  const contextUsageLog = createContextUsageLog()
-  const experienceMetricLog = createExperienceMetricLog()
-  const reportUsageLog = createReportUsageLog(config.reportSchema, config.driver)
-  const questionUsageLog = createQuestionUsageLog()
+  const usageLogs = wireUsageLogs(context, config.reportSchema)
 
   const diary = wireDiary(context)
   const welcomeGreeting = wireWelcomeGreeting(context, options.diagnosticLog)
@@ -136,11 +130,11 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
     // 会話のアーカイブに仕事の行として書く `project`。起動時に1回だけ取る。
     project,
     tokenUsageLog: options.tokenUsageLog,
-    contextUsageLog,
-    experienceMetricLog,
+    contextUsageLog: usageLogs.context,
+    experienceMetricLog: usageLogs.experienceMetric,
     diagnosticLog: options.diagnosticLog,
-    reportUsageLog,
-    questionUsageLog,
+    reportUsageLog: usageLogs.report,
+    questionUsageLog: usageLogs.question,
     promptImageShelf,
     reportImageShelf: options.reportImageShelf,
     readReportImage: (path, notModifiedAfter) =>
@@ -182,14 +176,7 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
       },
     },
     socketRouter,
-    closeLogs: async () => {
-      await Promise.all([
-        contextUsageLog.close(),
-        experienceMetricLog.close(),
-        reportUsageLog.close(),
-        questionUsageLog.close(),
-      ])
-    },
+    closeLogs: usageLogs.closeAll,
   }
 }
 

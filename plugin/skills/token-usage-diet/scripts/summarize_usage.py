@@ -25,18 +25,16 @@ from pathlib import Path
 # 日本語が多いと実際はこれより多くなるので、下限の目安として扱う。
 BYTES_PER_TOKEN = 4
 
-# **呼び出しが tools[] に残らないツール。** tsukumo の speak と report は、ツールの呼び出しでは
-# なくセリフ・レポートのイベントとして扱われるので（toSessionEvents）、
-# 記録の上では常に「0回」に見える。未使用と取り違えないよう、突き合わせから外して別に出す。
+# 呼び出しが tools[] に残らないツール（speak と report はイベント扱いで常に「0回」に見える）。
+# 未使用と取り違えないよう、突き合わせから外して別に出す。
 UNCOUNTED_TOOL_NAMES = ("mcp__tsukumo__speak", "mcp__tsukumo__report")
 
 # ---- 見積もり（estimates 節）----
 # 形を変えたら上げる。読む側（スキル・tsukumo の画面）はこの数で形の変わり目に気づく。
 ESTIMATES_VERSION = 2
 
-# トークンの消費量として足す種類。**重みは付けない**（サブスクリプションの利用枠が種類ごとに
-# どう数えられるかは公開されておらず、確かめていない）。思考（thinkingTokens）は出力に含まれる
-# ので足さない（StepTokenUsage の注記）。
+# トークンの消費量として足す種類。重みは付けない（利用枠の数え方は非公開）。
+# 思考（thinkingTokens）は出力に含まれるので足さない。
 CONSUMED_TOKEN_KEYS = (
     "inputTokens",
     "cacheReadInputTokens",
@@ -134,6 +132,10 @@ def resolve_days(args: argparse.Namespace) -> list[str]:
     return [(since + timedelta(days=i)).isoformat() for i in range(span)]
 
 
+def is_fake(record: object) -> bool:
+    return isinstance(record, dict) and record.get("sessionId") == "fake-session"
+
+
 def read_turn_records(home: Path, days: list[str]) -> dict:
     """1行 = 1ターン。v=1 の行は breakdown を持たないので、合計だけ使える行として扱う。"""
     found_days: list[str] = []
@@ -151,9 +153,12 @@ def read_turn_records(home: Path, days: list[str]) -> dict:
             if not line:
                 continue
             try:
-                records.append(json.loads(line))
+                record = json.loads(line)
             except json.JSONDecodeError:
                 broken += 1
+                continue
+            if not is_fake(record):
+                records.append(record)
     return {
         "found_days": found_days,
         "missing_days": missing_days,
@@ -183,6 +188,8 @@ def read_session_records(home: Path, days: list[str]) -> dict:
                 record = json.loads(line)
             except json.JSONDecodeError:
                 broken += 1
+                continue
+            if is_fake(record):
                 continue
             lines_read += 1
             if isinstance(record.get("usage"), dict):

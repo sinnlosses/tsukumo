@@ -36,6 +36,9 @@ const USAGE = `使い方:
 
 const DEFAULT_DAYS = 28
 
+/** 疑似セッション（fake driver）の `sessionId`。古い記録に残っている行を数えない。 */
+const FAKE_SESSION_ID = "fake-session"
+
 const optionsSchema = z.object({
   days: positiveIntegerArgument.default(DEFAULT_DAYS),
   split: z
@@ -67,7 +70,9 @@ const endDate = todayLocalDateKey()
 const startDate = Temporal.PlainDate.from(endDate)
   .subtract({ days: days - 1 })
   .toString()
-const entries = createExperienceMetricLog().readRange({ startDate, endDate })
+const entries = createExperienceMetricLog()
+  .readRange({ startDate, endDate })
+  .filter((entry) => entry.sessionId !== FAKE_SESSION_ID)
 if (entries.length === 0) {
   process.stdout.write(`直近${String(days)}日の記録が無い（${experienceMetricDir()} を見た）\n`)
   process.exit(0)

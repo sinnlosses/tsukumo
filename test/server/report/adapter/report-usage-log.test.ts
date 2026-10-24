@@ -4,9 +4,9 @@ import { join } from "node:path"
 import { describe, expect, it } from "vitest"
 
 import { createReportUsageLog } from "../../../../src/server/report/adapter/report-usage-log.ts"
-import type { ReportUsageEntry } from "../../../../src/server/report/core/report-usage.ts"
 import { REPORT_USAGE_FORMAT_VERSION } from "../../../../src/shared/report/report-usage-record.ts"
 import { keysOf, readJsonLines } from "../../../fixture/jsonl.ts"
+import { reportUsageEntry as entry } from "../../../fixture/report-usage-entry.ts"
 import { useTempDir } from "../../../fixture/temp-dir.ts"
 
 const dir = useTempDir("report-usage")
@@ -29,59 +29,13 @@ function at(hour: number, minute: number, day = 22): number {
   }).epochMilliseconds
 }
 
-function entry(
-  when: number,
-  sessionId = "claude-session-1",
-  figure: ReportUsageEntry["figure"] = { figureKind: "none", noneReason: "short-answer" },
-): ReportUsageEntry {
-  return {
-    at: when,
-    sessionId,
-    figure,
-    shapeTags: {
-      sectionShapeTags: ["cause", "unspecified"],
-      sectionBlockKinds: [["table"], ["text"]],
-      forbiddenShapeSectionCount: 1,
-      forbiddenShapeBlocks: [{ shapeTag: "cause", blockKind: "table", count: 1 }],
-    },
-    blockKinds: ["text", "table"],
-    blockFields: ["tableChange"],
-    notations: ["list"],
-    containedNotations: [],
-    escapeNotations: [],
-    unknownBlockCount: 0,
-    listStyles: ["bullet"],
-    mermaidKinds: [],
-    hasModifiedFiles: true,
-    hasBeforeAfterOrImage: false,
-    forTask: true,
-    hasFigure: true,
-    readImageWithoutImageBlock: false,
-    emphasisCount: 0,
-    graphEdgeCount: 0,
-    graphUnlabeledEdgeCount: 0,
-    graphNodeCount: 0,
-    hasUnverifiedCheck: false,
-    hasHowToVerify: false,
-    taskGenre: "decision",
-    taskOutcome: "finished",
-    hasFavor: false,
-    hasSourceReference: true,
-    shortTable: true,
-    hasKeyFigures: false,
-    conclusionNumbersWithoutKeyFigures: true,
-    argumentChars: { total: 1200, fields: { conclusion: 40, sections: 900 } },
-    inheritedFields: ["favor", "closing"],
-  }
-}
-
 function readLines(fileName: string): unknown[] {
   return readJsonLines(join(root(), fileName))
 }
 
 describe("createReportUsageLog", () => {
   it("日付ごとのファイルに1行ずつ追記する", async () => {
-    const log = createReportUsageLog("json-schema", "sdk", root())
+    const log = createReportUsageLog("json-schema", root())
 
     log.append(entry(at(9, 0), "claude-session-1"))
     log.append(entry(at(23, 30), "claude-session-2"))
@@ -94,7 +48,7 @@ describe("createReportUsageLog", () => {
   })
 
   it("1行の鍵は版・日時・セッションID・figure の種類と理由・節の札と許さない塊の数・塊の種類と欄・逃げ道の記法（外・容れ物の中・塊の無いもの）・知らない種類の数で、日時は ISO 8601（オフセット付き）", async () => {
-    const log = createReportUsageLog("json-schema", "sdk", root())
+    const log = createReportUsageLog("json-schema", root())
 
     log.append(entry(at(9, 0)))
     await log.flush()
@@ -178,7 +132,7 @@ describe("createReportUsageLog", () => {
   })
 
   it("figure に図を置いた行は figureKind だけを持ち、noneReason を持たない", async () => {
-    const log = createReportUsageLog("json-schema", "sdk", root())
+    const log = createReportUsageLog("json-schema", root())
 
     log.append(entry(at(9, 0), "claude-session-1", { figureKind: "graph" }))
     await log.flush()
@@ -189,7 +143,7 @@ describe("createReportUsageLog", () => {
   })
 
   it("差し戻しの行は同じ日付ファイルに入り、鍵は版・種類・日時・セッションID・差し戻しの名前・引数の字数・引き継いだ欄の名前・型の渡し方だけ", async () => {
-    const log = createReportUsageLog("json-schema", "sdk", root())
+    const log = createReportUsageLog("json-schema", root())
 
     log.appendRejection({
       at: at(9, 5),
@@ -224,7 +178,7 @@ describe("createReportUsageLog", () => {
   })
 
   it("短い型の表記で起こした記録は、受け付けと差し戻しの両方の行にそれを書く", async () => {
-    const log = createReportUsageLog("short-type", "sdk", root())
+    const log = createReportUsageLog("short-type", root())
 
     log.append(entry(at(9, 0)))
     log.appendRejection({

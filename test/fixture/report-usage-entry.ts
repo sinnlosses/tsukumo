@@ -1,0 +1,48 @@
+import type { ReportUsageEntry } from "../../src/server/report/core/report-usage.ts"
+
+/** 記録の書き込み口のテストが使う、架空の `report` 1件ぶん。 */
+export function reportUsageEntry(
+  when: number,
+  sessionId = "claude-session-1",
+  figure: ReportUsageEntry["figure"] = { figureKind: "none", noneReason: "short-answer" },
+): ReportUsageEntry {
+  return {
+    at: when,
+    sessionId,
+    figure,
+    shapeTags: {
+      sectionShapeTags: ["cause", "unspecified"],
+      sectionBlockKinds: [["table"], ["text"]],
+      forbiddenShapeSectionCount: 1,
+      forbiddenShapeBlocks: [{ shapeTag: "cause", blockKind: "table", count: 1 }],
+    },
+    blockKinds: ["text", "table"],
+    blockFields: ["tableChange"],
+    notations: ["list"],
+    containedNotations: [],
+    escapeNotations: [],
+    unknownBlockCount: 0,
+    listStyles: ["bullet"],
+    mermaidKinds: [],
+    hasModifiedFiles: true,
+    hasBeforeAfterOrImage: false,
+    forTask: true,
+    hasFigure: true,
+    readImageWithoutImageBlock: false,
+    emphasisCount: 0,
+    graphEdgeCount: 0,
+    graphUnlabeledEdgeCount: 0,
+    graphNodeCount: 0,
+    hasUnverifiedCheck: false,
+    hasHowToVerify: false,
+    taskGenre: "decision",
+    taskOutcome: "finished",
+    hasFavor: false,
+    hasSourceReference: true,
+    shortTable: true,
+    hasKeyFigures: false,
+    conclusionNumbersWithoutKeyFigures: true,
+    argumentChars: { total: 1200, fields: { conclusion: 40, sections: 900 } },
+    inheritedFields: ["favor", "closing"],
+  }
+}

@@ -25,23 +25,24 @@ export function reportUsageDir(): string {
   return join(tsukumoHomeDir(), REPORT_USAGE_DIR_NAME)
 }
 
+/** 疑似セッションは記録を書かないので、書く行の駆動はいつも `sdk`。 */
+const RECORDED_DRIVER = "sdk" satisfies ReportUsageDriver
+
 /**
- * `reportSchema` はこのプロセスが `report` の塊の型をどう渡しているか（`Config.reportSchema`）、
- * `driver` はこのプロセスの駆動（`Config.driver`）で、どちらも全部の行に書く。
+ * `reportSchema` はこのプロセスが `report` の塊の型をどう渡しているか（`Config.reportSchema`）で、全部の行に書く。
  * `root` はテストがホームを汚さないために差し替える。
  */
 export function createReportUsageLog(
   reportSchema: ReportSchemaVariant,
-  driver: ReportUsageDriver,
   root: string = reportUsageDir(),
 ): ReportUsageLog & Pick<JsonLinesAppender, "flush" | "close"> {
   const appender = createJsonLinesAppender(root)
   return {
     append: (entry) => {
-      appender.append(localDateKey(entry.at), [toRecord(entry, reportSchema, driver)])
+      appender.append(localDateKey(entry.at), [toRecord(entry, reportSchema)])
     },
     appendRejection: (entry) => {
-      appender.append(localDateKey(entry.at), [toRejectionRecord(entry, reportSchema, driver)])
+      appender.append(localDateKey(entry.at), [toRejectionRecord(entry, reportSchema)])
     },
     flush: appender.flush,
     close: appender.close,
@@ -51,14 +52,13 @@ export function createReportUsageLog(
 function toRejectionRecord(
   entry: ReportRejectionEntry,
   reportSchema: ReportSchemaVariant,
-  driver: ReportUsageDriver,
 ): ReportRejectionRecord {
   return {
     v: REPORT_USAGE_FORMAT_VERSION,
     kind: "rejected",
     at: isoWithOffset(entry.at),
     sessionId: entry.sessionId,
-    driver,
+    driver: RECORDED_DRIVER,
     reasons: entry.reasons,
     argumentChars: entry.argumentChars,
     inheritedFields: entry.inheritedFields,
@@ -66,16 +66,12 @@ function toRejectionRecord(
   }
 }
 
-function toRecord(
-  entry: ReportUsageEntry,
-  reportSchema: ReportSchemaVariant,
-  driver: ReportUsageDriver,
-): ReportUsageRecord {
+function toRecord(entry: ReportUsageEntry, reportSchema: ReportSchemaVariant): ReportUsageRecord {
   return {
     v: REPORT_USAGE_FORMAT_VERSION,
     at: isoWithOffset(entry.at),
     sessionId: entry.sessionId,
-    driver,
+    driver: RECORDED_DRIVER,
     ...entry.figure,
     ...entry.shapeTags,
     blockKinds: entry.blockKinds,
