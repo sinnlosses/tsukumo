@@ -48,6 +48,7 @@
   コア数の 80% までに収める（10 コアで各 4、単体 98 秒・E2E 58 秒前後。手元の操作が重く感じたら
   下の `TSUKUMO_CHECK_WORKER_BUDGET` で予算を下げる）。
   単体の `node` project は `isolate: false` でファイルごとの隔離を外す（同じ予算で約 98 秒が約 52 秒）。
+  ただし `beads.ts` を差し替えるテストと、本物の `bd` で同じモジュールを読むテストは、共有すると先に読んだほうが残って落ちるので、`vitest.config.ts` の `ISOLATED_FILES` に挙げて `node-isolated` project で隔離して走らせる。
   環境変数やグローバルを書き換えるテストは、自分で戻す。
   **`check` は重い段を起こす前に、共有の git dir の `check-running/` へ自分の pid の印を置き
   （`scripts/dev/lib/check-running.ts`。終了・`SIGTERM`・`SIGINT` で消し、死んだ pid の印は数えるときに消す）、
@@ -55,7 +56,7 @@
   （`scripts/dev/lib/worker-budget.ts`。予算は 1 本のときの合計 `2 × max(1, round(コア数 × 0.40))`（`maxWorkers: "40%"` が 1 本のときに配る数と同じ。10 コアで 8）、
   環境変数 `TSUKUMO_CHECK_WORKER_BUDGET`（正の整数。例: `TSUKUMO_CHECK_WORKER_BUDGET=4 pnpm run check`）で上書きして下げられる。1 本あたりは `floor(予算 / 本数 / 2)`、最小 1。
   並列は止めない。途中から増えた検証は、その時点の本数で自分の分を決め、走っている検証の worker は変えない。
-  本数が多く最小 1 に当たるときは予算を超えうる）。単体は `dom` と `node` の2つの project に分け、DOM のグローバルを借りる
+  本数が多く最小 1 に当たるときは予算を超えうる）。単体は `dom`・`node`・`node-isolated` の3つの project に分け（`node-isolated` は、`vi.mock` で `beads.ts` を差し替えるなど、他と同じ worker でモジュールを共有すると落ちるファイルを隔離して走らせる）、DOM のグローバルを借りる
   `test/dom-environment.ts` は `dom`（`test/browser/` と、DOM を描くほかの置き場のファイル）にだけ掛ける。
   `vitest.config.ts` の `DOM_TEST_FILES` に無いファイルが DOM を要するようになったら、そこへ足す
 - **変えたファイルがすべて文書なら、`--full` でも段は `format:check`・`token-limit` と文書の検査（`pnpm run test:document`）だけになり、E2E は流れない。**
