@@ -28,8 +28,8 @@ function appendEntryWithoutShelf(
   project: string,
   at: number,
   event: SessionEvent,
-): void {
-  appendChatArchiveEntry(archive, packName, mode, project, at, event, {
+): Promise<void> | undefined {
+  return appendChatArchiveEntry(archive, packName, mode, project, at, event, {
     find: () => undefined,
     reportFailure: () => {},
   })
@@ -177,10 +177,10 @@ describe("appendChatArchiveEntry", () => {
     ])
   })
 
-  it("添えた画像は1枚以上あるときだけ枚数を持つ", () => {
+  it("添えた画像は1枚以上あるときだけ枚数を持つ", async () => {
     const { archive, calls } = recordingChatArchive()
 
-    appendEntryWithoutShelf(archive, PACK, "chat", FICTIONAL_PROJECT, 1_000, {
+    await appendEntryWithoutShelf(archive, PACK, "chat", FICTIONAL_PROJECT, 1_000, {
       kind: "request",
       text: "架空の依頼",
       images: [{ id: "fictional-id", thumbnail: "data:image/png;base64,AAAA" }],
@@ -218,11 +218,16 @@ describe("appendChatArchiveEntry の画像", () => {
     return {
       archive: {
         ...archive,
-        writeImage: (packName: string, image: ChatArchiveImage): ChatArchiveImageWriteResult => {
+        writeImage: (
+          packName: string,
+          image: ChatArchiveImage,
+        ): Promise<ChatArchiveImageWriteResult> => {
           writes.push({ packName, id: image.id, dataUrl: image.dataUrl })
-          return failing.has(image.id)
-            ? { kind: "failed", error: WRITE_ERROR }
-            : { kind: "written", fileName: `${image.id}.png` }
+          return Promise.resolve(
+            failing.has(image.id)
+              ? { kind: "failed", error: WRITE_ERROR }
+              : { kind: "written", fileName: `${image.id}.png` },
+          )
         },
       } satisfies ChatArchive,
       calls,
@@ -251,11 +256,11 @@ describe("appendChatArchiveEntry の画像", () => {
     }
   }
 
-  it("雑談の依頼は、棚の原寸を書いてから、書けたファイル名を行に載せる", () => {
+  it("雑談の依頼は、棚の原寸を書いてから、書けたファイル名を行に載せる", async () => {
     const { archive, calls, writes } = imageRecordingArchive(new Set())
     const { source, failures } = shelfOf(["id-1", "id-2"])
 
-    appendChatArchiveEntry(
+    await appendChatArchiveEntry(
       archive,
       PACK,
       "chat",
@@ -277,7 +282,7 @@ describe("appendChatArchiveEntry の画像", () => {
     const { archive, calls, writes } = imageRecordingArchive(new Set())
     const { source } = shelfOf(["id-1"])
 
-    appendChatArchiveEntry(
+    const done = appendChatArchiveEntry(
       archive,
       PACK,
       "work",
@@ -287,16 +292,17 @@ describe("appendChatArchiveEntry の画像", () => {
       source,
     )
 
+    expect(done).toBeUndefined()
     expect(writes).toEqual([])
     expect(calls[0]?.entry).toMatchObject({ images: 1 })
     expect(calls[0]?.entry).not.toHaveProperty("imageFiles")
   })
 
-  it("書けなかった1枚と棚から落ちていた1枚は行に載せず、知らせたうえで行は書く", () => {
+  it("書けなかった1枚と棚から落ちていた1枚は行に載せず、知らせたうえで行は書く", async () => {
     const { archive, calls } = imageRecordingArchive(new Set(["id-failing"]))
     const { source, failures } = shelfOf(["id-ok", "id-failing"])
 
-    appendChatArchiveEntry(
+    await appendChatArchiveEntry(
       archive,
       PACK,
       "chat",
@@ -310,11 +316,11 @@ describe("appendChatArchiveEntry の画像", () => {
     expect(failures).toEqual([WRITE_ERROR, undefined])
   })
 
-  it("1枚も書けなければ imageFiles を持たない", () => {
+  it("1枚も書けなければ imageFiles を持たない", async () => {
     const { archive, calls } = imageRecordingArchive(new Set(["id-1"]))
     const { source } = shelfOf(["id-1"])
 
-    appendChatArchiveEntry(
+    await appendChatArchiveEntry(
       archive,
       PACK,
       "chat",
@@ -325,6 +331,35 @@ describe("appendChatArchiveEntry の画像", () => {
     )
 
     expect(calls[0]?.entry).toMatchObject({ imageFiles: undefined })
+  })
+
+  it("画像の書き出しが解けないあいだは Promise を返して行を足さず、解けてから足す", async () => {
+    const { archive, calls } = recordingChatArchive()
+    const release: { done: (result: ChatArchiveImageWriteResult) => void } = {
+      done: () => {},
+    }
+    const pending = new Promise<ChatArchiveImageWriteResult>((resolve) => {
+      release.done = resolve
+    })
+    const { source } = shelfOf(["id-1"])
+
+    const done = appendChatArchiveEntry(
+      { ...archive, writeImage: () => pending },
+      PACK,
+      "chat",
+      FICTIONAL_PROJECT,
+      1_000,
+      requestWith(["id-1"]),
+      source,
+    )
+
+    expect(done).toBeInstanceOf(Promise)
+    expect(calls).toEqual([])
+
+    release.done({ kind: "written", fileName: "id-1.png" })
+    await done
+
+    expect(calls[0]?.entry).toMatchObject({ imageFiles: ["id-1.png"] })
   })
 })
 

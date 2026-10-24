@@ -100,6 +100,8 @@ export const promptDelayFootprintSchema = z.object({
   at: z.number(),
   /** 依頼を SDK へ渡した時刻（エポックミリ秒）。 */
   pushedAt: z.number(),
+  /** 渡す手順に入ってから `push` を終えるまで。この欄を足す前の行には無い。 */
+  prepareMs: z.number().optional(),
   /** 渡してから SDK が書き終えるまで。 */
   writeMs: z.number(),
   /** 書き終えてから Claude Code の最初のメッセージが届くまで。 */

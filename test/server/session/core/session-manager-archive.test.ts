@@ -185,7 +185,10 @@ describe("createSessionManager", () => {
     /** 合成のバイト列（3バイト）の data URL。実物の画像は使わない。 */
     const SYNTHETIC_DATA_URL = "data:image/png;base64,AQID"
 
-    function startImageManagerWithStub(writeResult: ChatArchiveImageWriteResult) {
+    function startImageManagerWithStub(
+      writeResult: ChatArchiveImageWriteResult,
+      writeGate: Promise<void> = Promise.resolve(),
+    ) {
       const stub = createStubDriver()
       const promptImageShelf = createPromptImageShelf()
       const [shelved] = promptImageShelf.shelve([
@@ -203,7 +206,7 @@ describe("createSessionManager", () => {
           },
           writeImage: (_packName, image) => {
             writes.push({ id: image.id, dataUrl: image.dataUrl })
-            return writeResult
+            return writeGate.then(() => writeResult)
           },
         },
         diagnosticLog: {
@@ -240,6 +243,30 @@ describe("createSessionManager", () => {
         images: 1,
         imageFiles: ["2026-10-20-fictional.png"],
       })
+    })
+
+    it("画像の書き出しが済む前にセリフが届いても、行は依頼、セリフの順に書かれる", async () => {
+      const gate: { open: () => void } = { open: () => {} }
+      const writeGate = new Promise<void>((resolve) => {
+        gate.open = resolve
+      })
+      const { stub, request, archiveCalls } = startImageManagerWithStub(
+        { kind: "written", fileName: "2026-10-20-fictional.png" },
+        writeGate,
+      )
+      await waitForBatch()
+
+      stub.emit(CHARACTER_EVENT)
+      stub.emit({ kind: "chat-mode-changed", chat: true })
+      stub.emit(request)
+      stub.emit({ kind: "speech", text: "架空のセリフ", expression: "default" })
+      await waitForBatch()
+      expect(archiveCalls).toEqual([])
+
+      gate.open()
+      await waitForBatch()
+
+      expect(archiveCalls.map((entry) => entry.kind)).toEqual(["request", "speech"])
     })
 
     it("仕事で届いた依頼の画像は書かない", async () => {

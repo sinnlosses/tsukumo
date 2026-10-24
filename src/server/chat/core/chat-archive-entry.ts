@@ -27,7 +27,8 @@ export type ChatArchiveImageSource = {
  * 仕事のとき（`mode === "work"`）は依頼の文面を {@link CHAT_MEMORY_BUDGET.workExcerptChars} で
  * 切り、切ったら末尾に「…」を付ける。雑談のときは切らない。
  *
- * 雑談の依頼に添えた画像は、行より先に原寸を書き、書けたファイル名を行に載せる。
+ * 雑談の依頼に添えた画像は、行より先に原寸を非同期で書き、書けたファイル名を行に載せる。
+ * 書き終えて行を足すまでを Promise で返す（画像のあるときだけ。ほかは同期で足して undefined）。
  * 書けなかった1枚は行に載せず、`imageSource.reportFailure` に渡して続ける（行は書く）。
  */
 export function appendChatArchiveEntry(
@@ -38,7 +39,7 @@ export function appendChatArchiveEntry(
   at: number,
   event: SessionEvent,
   imageSource: ChatArchiveImageSource,
-): void {
+): Promise<void> | undefined {
   if (event.kind === "request") {
     const images = event.images.length > 0 ? event.images.length : undefined
     if (mode === "work") {
@@ -50,18 +51,30 @@ export function appendChatArchiveEntry(
         project,
         images,
       })
-      return
+      return undefined
     }
-    const written = writeChatImages(chatArchive, packName, at, event.images, imageSource)
-    chatArchive.append(packName, {
-      mode,
-      kind: "request",
-      at,
-      text: event.text,
-      images,
-      imageFiles: written.length > 0 ? written : undefined,
+    const request = event.text
+    if (images === undefined) {
+      chatArchive.append(packName, {
+        mode,
+        kind: "request",
+        at,
+        text: request,
+        images,
+        imageFiles: undefined,
+      })
+      return undefined
+    }
+    return writeChatImages(chatArchive, packName, at, event.images, imageSource).then((written) => {
+      chatArchive.append(packName, {
+        mode,
+        kind: "request",
+        at,
+        text: request,
+        images,
+        imageFiles: written.length > 0 ? written : undefined,
+      })
     })
-    return
   }
   if (event.kind === "speech") {
     chatArchive.append(
@@ -71,6 +84,7 @@ export function appendChatArchiveEntry(
         : { mode, kind: "speech", at, text: event.text, expression: event.expression },
     )
   }
+  return undefined
 }
 
 /**
@@ -94,20 +108,23 @@ export function appendChatArchiveConclusion(
 }
 
 /** 添えた順に1枚ずつ書き、書けたファイル名を返す。棚から落ちていた1枚も書けなかったものとして知らせる。 */
-function writeChatImages(
+async function writeChatImages(
   chatArchive: ChatArchive,
   packName: CharacterPackName,
   at: number,
   images: readonly RecordedPromptImage[],
   imageSource: ChatArchiveImageSource,
-): readonly string[] {
-  return images.flatMap((image) => {
-    const dataUrl = imageSource.find(image.id)
-    if (dataUrl === undefined) {
-      imageSource.reportFailure(undefined)
-      return []
-    }
-    const written = chatArchive.writeImage(packName, { id: image.id, at, dataUrl })
+): Promise<readonly string[]> {
+  const results = await Promise.all(
+    images.map(async (image) => {
+      const dataUrl = imageSource.find(image.id)
+      if (dataUrl === undefined) {
+        return { kind: "failed", error: undefined } as const
+      }
+      return chatArchive.writeImage(packName, { id: image.id, at, dataUrl })
+    }),
+  )
+  return results.flatMap((written) => {
     if (written.kind === "failed") {
       imageSource.reportFailure(written.error)
       return []

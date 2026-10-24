@@ -20,7 +20,7 @@ describe("createPromptDelayWatch", () => {
   it("書き込みがしきい値を超えたとき、区間のミリ秒を1行書く", () => {
     const { reported, watch } = watchWith()
 
-    watch.pushed(START)
+    watch.pushed(START, START)
     watch.written(START + PROMPT_DELAY_THRESHOLD_MS + 1)
     watch.received(START + PROMPT_DELAY_THRESHOLD_MS + 501)
 
@@ -29,16 +29,28 @@ describe("createPromptDelayWatch", () => {
         flow: "prompt-delay",
         at: START + PROMPT_DELAY_THRESHOLD_MS + 501,
         pushedAt: START,
+        prepareMs: 0,
         writeMs: PROMPT_DELAY_THRESHOLD_MS + 1,
         replyMs: 500,
       },
     ])
   })
 
+  it("渡すまでの準備だけがしきい値を超えたときも、その区間を載せて1行書く", () => {
+    const { reported, watch } = watchWith()
+
+    watch.pushed(START + PROMPT_DELAY_THRESHOLD_MS + 1, START)
+    watch.written(START + PROMPT_DELAY_THRESHOLD_MS + 2)
+    watch.received(START + PROMPT_DELAY_THRESHOLD_MS + 3)
+
+    expect(reported).toHaveLength(1)
+    expect(reported[0]).toMatchObject({ prepareMs: PROMPT_DELAY_THRESHOLD_MS + 1, writeMs: 1 })
+  })
+
   it("書き終えてから Claude Code の最初のメッセージまでが超えたときも書く", () => {
     const { reported, watch } = watchWith()
 
-    watch.pushed(START)
+    watch.pushed(START, START)
     watch.written(START + 10)
     watch.received(START + 10 + PROMPT_DELAY_THRESHOLD_MS + 1)
 
@@ -49,7 +61,7 @@ describe("createPromptDelayWatch", () => {
   it("どちらもしきい値ちょうど以内なら何も書かない", () => {
     const { reported, watch } = watchWith()
 
-    watch.pushed(START)
+    watch.pushed(START, START)
     watch.written(START + PROMPT_DELAY_THRESHOLD_MS)
     watch.received(START + 2 * PROMPT_DELAY_THRESHOLD_MS)
 
@@ -59,7 +71,7 @@ describe("createPromptDelayWatch", () => {
   it("書き終える前に届いたメッセージは数えず、最初の1通で1回だけ判定する", () => {
     const { reported, watch } = watchWith()
 
-    watch.pushed(START)
+    watch.pushed(START, START)
     watch.received(START + 1)
     watch.written(START + 5000)
     watch.received(START + 5001)
@@ -72,9 +84,9 @@ describe("createPromptDelayWatch", () => {
   it("書き終えたあと返答なしで次の依頼が来たら、前の依頼の時刻を持ち越さない", () => {
     const { reported, watch } = watchWith()
 
-    watch.pushed(START)
+    watch.pushed(START, START)
     watch.written(START + 10)
-    watch.pushed(START + 60_000)
+    watch.pushed(START + 60_000, START + 60_000)
     watch.written(START + 60_010)
     watch.received(START + 60_020)
 
@@ -84,7 +96,7 @@ describe("createPromptDelayWatch", () => {
   it("中断で捨てたあとのメッセージは、前の依頼の時刻と突き合わせない", () => {
     const { reported, watch } = watchWith()
 
-    watch.pushed(START)
+    watch.pushed(START, START)
     watch.written(START + 10)
     watch.discard()
     watch.received(START + 60_000)

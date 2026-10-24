@@ -111,6 +111,22 @@ describe("createDiagnosticLog", () => {
       flow: "prompt-delay",
       at: at(10, 0),
       pushedAt: at(10, 0) - 4000,
+      prepareMs: 3200,
+      writeMs: 3500,
+      replyMs: 500,
+    }
+
+    log.append([delay])
+
+    expect(log.readRange({ startAt: at(0, 0), endAt: at(0, 0, 23) })).toEqual([delay])
+  })
+
+  it("準備の区間を持たない古い依頼の遅れも読める", () => {
+    const log = createDiagnosticLog(root())
+    const delay: DiagnosticEntry = {
+      flow: "prompt-delay",
+      at: at(10, 0),
+      pushedAt: at(10, 0) - 4000,
       writeMs: 3500,
       replyMs: 500,
     }

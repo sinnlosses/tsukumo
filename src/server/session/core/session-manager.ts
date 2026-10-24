@@ -21,6 +21,7 @@ import type { RestoredEvent, SessionEvent } from "../../../shared/session/sessio
 import { applySessionEvent } from "../../../shared/session/session-fold.ts"
 import { INITIAL_SESSION_STATE, type SessionState } from "../../../shared/session/session-state.ts"
 import { waitingLineDueAt } from "../../../shared/session/shown-reaction.ts"
+import { createChatArchiveOrder } from "../../chat/core/chat-archive-order.ts"
 import type { ChatConsolidationOutcome } from "../../chat/core/chat-consolidation-writer.ts"
 import { createContextUsageRecorder } from "../../context-usage/core/context-usage.ts"
 import type { DispatchResult } from "../../core/command-receiver.ts"
@@ -76,6 +77,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
   // コンテキストの内訳の記録。代をまたいで持つ（世代の持ち物には入れない）。
   // 続きから起こして同じIDになったときは同じセッションなので、2行目を書かない。
   const contextUsage = createContextUsageRecorder(options.contextUsageLog)
+  const archiveOrder = createChatArchiveOrder()
   // 進行の計測値の記録。代をまたいで持つ（立ち直りまでの手数は起こし直しをまたいで数える）。
   const experienceMetric = createExperienceMetricRecorder(options.experienceMetricLog)
   // 診断ログの足跡。代をまたいで持ち、起こし直しで積み残しを捨てない。
@@ -143,7 +145,13 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
     diagnostic.add({ flow: "session-event", at, generation: tally.generation, kind: event.kind })
     experienceMetric.observe(event, state, at)
     tally.reportChangeCounter.observe(event)
-    recordSessionEvent({ ...options, contextUsage, diagnostic }, tally, state, event, at)
+    recordSessionEvent(
+      { ...options, contextUsage, diagnostic, archiveOrder },
+      tally,
+      state,
+      event,
+      at,
+    )
     // 定着を起こす。ターンの終わり（雑談・仕事）で、走っていれば契機を捨てる。待たずに次へ進む。
     const packName = shownCharacterPackName(state.character)
     if (event.kind === "turn-finished" && packName !== undefined) {

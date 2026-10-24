@@ -24,12 +24,12 @@ export type ChatArchive = {
   readonly append: (packName: CharacterPackName, entry: ChatArchiveEntry) => void
   /**
    * 雑談の依頼に添えた画像の原寸1枚を、そのパックの画像の置き場へ書く。
-   * 書けたら置き場の下のファイル名を返す。書けないときも例外は投げず、失敗を返す。
+   * 非同期で書き、書けたら置き場の下のファイル名を返す。書けないときも例外は投げず、失敗を返す。
    */
   readonly writeImage: (
     packName: CharacterPackName,
     image: ChatArchiveImage,
-  ) => ChatArchiveImageWriteResult
+  ) => Promise<ChatArchiveImageWriteResult>
   /**
    * そのパックの直近の会話を、新しいほうから遡って {@link ChatReadbackLimits} のバイト数まで読む。
    * 返すのは古い→新しいの順。

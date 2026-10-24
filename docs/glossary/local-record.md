@@ -30,7 +30,7 @@
 - **定義**: 不具合の経緯をあとから追うために手元に残す足跡。`~/.tsukumo/diagnostic/<日付>.jsonl` の1本に、
   流れ（`flow`）ごとの行を積む。流れは、畳んだ `SessionEvent` の足跡（種類・時刻・駆動の代）、
   ブラウザの例外の足跡（拾った経路・`error.name`・スタックの先頭数フレームの出どころと行・列）、
-  握りつぶした失敗の足跡（`swallowed-failure`）、依頼の遅れの足跡（`prompt-delay`）、
+  握りつぶした失敗の足跡（`swallowed-failure`）、依頼の遅れの足跡（`prompt-delay`。渡す手順に入ってから `push` を終えるまで・`push` から SDK が書き終えるまで・書き終えてから最初のメッセージまでの3区間のミリ秒）、
   迎えの挨拶と反応の行の書き込みの足跡（`welcome-writing`。結果・所要・各回の結果・検査落ちの理由の語）、
   あらすじの古い行を上限のために落とした足跡（`synopsis-trim`。時刻と落とした行数）、
   `report` の関所が `Stop` を止めた足跡（`report-gate-block`。時刻だけ）の7つ

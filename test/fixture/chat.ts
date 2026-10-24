@@ -11,7 +11,7 @@ import type {
 /** 何も書かず（画像は書けなかったと返す）、読むと空を返し、定着の錠はいつでも取れる `ChatArchive`。 */
 export const NOOP_CHAT_ARCHIVE = {
   append: () => {},
-  writeImage: () => ({ kind: "failed", error: undefined }),
+  writeImage: () => Promise.resolve({ kind: "failed", error: undefined }),
   readRecent: () => [],
   unconsolidated: () => ({
     entries: [],

@@ -24,6 +24,7 @@ import { createInterruptMark, type InterruptMark } from "../core/interrupt-mark.
 import { createPendingAnswerQueue, type PendingAnswerQueue } from "../core/pending-answer.ts"
 import { createProgressNudge, progressNudgePromptText } from "../core/progress-nudge.ts"
 import { createPromptDelayWatch, type PromptDelayWatch } from "../core/prompt-delay.ts"
+import { handOffPrompt } from "../core/prompt-handoff.ts"
 import { recordedPromptImages } from "../core/prompt-image-shelf.ts"
 import { isSubagentMessage, toSessionEvents } from "../core/sdk-message.ts"
 import { withSelfStartedTurns } from "../core/self-started-turn.ts"
@@ -226,14 +227,15 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
   return {
     prompt: (text, images, opening) => {
       clearAndSend.discard()
-      // 原寸と控えはここで分かれる。
-      // 控えと id だけが記録（`request` / `aside`）へ行き、原寸はストリーミング入力へ流れる（棚に残っているぶんは棚の寿命で捨てる）。
-      emitTurnOpening({ kind: opening, text, images: recordedPromptImages(images) })
-      delayWatch.pushed(options.now())
-      const uuid = push(
-        opening === "aside" ? asidePromptText(text) : text,
-        images.flatMap(toImageBlocks),
-      )
+      // 控えと id だけが記録（`request` / `aside`）へ行き、原寸は入力のストリームへ流れる（棚の分は棚の寿命で捨てる）。
+      const uuid = handOffPrompt({
+        now: options.now,
+        watch: delayWatch,
+        push: () =>
+          push(opening === "aside" ? asidePromptText(text) : text, images.flatMap(toImageBlocks)),
+        record: () =>
+          emitTurnOpening({ kind: opening, text, images: recordedPromptImages(images) }),
+      })
       ledgerIntake.noteSent(uuid, opening)
     },
     promptWithoutRecord: (text) => {

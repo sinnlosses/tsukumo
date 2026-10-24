@@ -49,10 +49,10 @@ function placeImage(packName: string, date: string): string {
 describe("writeImage", () => {
   const SYNTHETIC_DATA_URL = `data:image/png;base64,${SYNTHETIC_BYTES.toString("base64")}`
 
-  it("原寸のバイト列を images/<日付>-<id>.<拡張子> に書き、その名前を返す", () => {
+  it("原寸のバイト列を images/<日付>-<id>.<拡張子> に書き、その名前を返す", async () => {
     const chatArchive = createChatArchive(root())
 
-    const written = chatArchive.writeImage(PACK, {
+    const written = await chatArchive.writeImage(PACK, {
       id: FICTIONAL_ID,
       at: noonOn(20),
       dataUrl: SYNTHETIC_DATA_URL,
@@ -63,12 +63,12 @@ describe("writeImage", () => {
     expect(readFileSync(join(imagesDir(PACK), fileName))).toEqual(SYNTHETIC_BYTES)
   })
 
-  it("同じ名前のファイルがあれば上書きせず失敗を返す", () => {
+  it("同じ名前のファイルがあれば上書きせず失敗を返す", async () => {
     const chatArchive = createChatArchive(root())
     const image = { id: FICTIONAL_ID, at: noonOn(20), dataUrl: SYNTHETIC_DATA_URL }
-    chatArchive.writeImage(PACK, image)
+    await chatArchive.writeImage(PACK, image)
 
-    const again = chatArchive.writeImage(PACK, {
+    const again = await chatArchive.writeImage(PACK, {
       ...image,
       dataUrl: `data:image/png;base64,${Buffer.from([0x09]).toString("base64")}`,
     })
@@ -79,13 +79,14 @@ describe("writeImage", () => {
     )
   })
 
-  it("id・data URL のどちらかが通らなければ、何も書かずに失敗を返す", () => {
+  it("id・data URL のどちらかが通らなければ、何も書かずに失敗を返す", async () => {
     const chatArchive = createChatArchive(root())
     const image = { id: FICTIONAL_ID, at: noonOn(20), dataUrl: SYNTHETIC_DATA_URL }
 
-    expect(chatArchive.writeImage(PACK, { ...image, id: "../escape" }).kind).toBe("failed")
+    expect((await chatArchive.writeImage(PACK, { ...image, id: "../escape" })).kind).toBe("failed")
     expect(
-      chatArchive.writeImage(PACK, { ...image, dataUrl: "data:image/svg+xml;base64,AQID" }).kind,
+      (await chatArchive.writeImage(PACK, { ...image, dataUrl: "data:image/svg+xml;base64,AQID" }))
+        .kind,
     ).toBe("failed")
     expect(existsSync(root())).toBe(false)
   })

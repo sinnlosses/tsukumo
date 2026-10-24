@@ -11,6 +11,7 @@ import {
   appendChatArchiveConclusion,
   appendChatArchiveEntry,
 } from "../../chat/core/chat-archive-entry.ts"
+import type { ChatArchiveOrder } from "../../chat/core/chat-archive-order.ts"
 import type { ContextUsageRecorder } from "../../context-usage/core/context-usage.ts"
 import type { DiagnosticBuffer } from "../../diagnostic/core/diagnostic.ts"
 import { isMainImageFileRead, reportUsageEntryOf } from "../../report/core/report-usage.ts"
@@ -24,6 +25,7 @@ type EventRecordPorts = Pick<
 > & {
   readonly contextUsage: ContextUsageRecorder
   readonly diagnostic: DiagnosticBuffer
+  readonly archiveOrder: ChatArchiveOrder
 }
 
 /** `state` は `event` を畳んだあとの姿。 */
@@ -37,21 +39,16 @@ export function recordSessionEvent(
   // 会話のアーカイブへ1行足す。パックがまだ決まっていない・名前が検査を通らないときは足さない。
   const packName = shownCharacterPackName(state.character)
   if (packName !== undefined) {
-    appendChatArchiveEntry(
-      ports.chatArchive,
-      packName,
-      state.chatMode ? "chat" : "work",
-      ports.project,
-      at,
-      event,
-      {
+    const mode = state.chatMode ? "chat" : "work"
+    ports.archiveOrder.run(() =>
+      appendChatArchiveEntry(ports.chatArchive, packName, mode, ports.project, at, event, {
         find: ports.promptImageShelf.find,
         reportFailure: (error) => {
           ports.diagnostic.add(
             swallowedFailureFootprint(at, { feature: "chat", place: "archive-image-write" }, error),
           )
         },
-      },
+      }),
     )
   }
   // 仕事のターンの結論を、代の勘定に預けて上書きする（`turn-finished` で読み出す）。
@@ -101,7 +98,10 @@ export function recordSessionEvent(
     // 仕事のときだけ、預けておいた結論を1行書く。`report` 無しで終わったターンは何も足さない。
     const conclusion = tally.pendingConclusion.takeAndClear()
     if (!state.chatMode && conclusion !== undefined && packName !== undefined) {
-      appendChatArchiveConclusion(ports.chatArchive, packName, ports.project, at, conclusion)
+      ports.archiveOrder.run(() => {
+        appendChatArchiveConclusion(ports.chatArchive, packName, ports.project, at, conclusion)
+        return undefined
+      })
     }
   }
 }

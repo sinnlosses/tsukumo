@@ -158,7 +158,7 @@ function line(entry: DiagnosticEntry): string {
     return `${when}  ${entry.flow}  ${entry.route}  ${entry.errorName}`
   }
   if (entry.flow === "prompt-delay") {
-    return `${when}  ${entry.flow}  書き込み${String(entry.writeMs)}ms  応答${String(entry.replyMs)}ms`
+    return `${when}  ${entry.flow}  準備${String(entry.prepareMs ?? 0)}ms  書き込み${String(entry.writeMs)}ms  応答${String(entry.replyMs)}ms`
   }
   return `${when}  ${entry.flow}  ${entry.place.feature}/${entry.place.place}  ${entry.errorName}  ${entry.errorCode}`
 }
