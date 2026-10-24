@@ -50,17 +50,8 @@
     line-height: 1;
     text-align: center;
   }
-  /* 作業中の回る輪。色は差し色で、薄い地の輪の上を弧が回る。 */
   .phone-head-spinner {
-    flex: none;
-    box-sizing: border-box;
-    width: 13px;
-    height: 13px;
-    border: 2px solid var(--surface-accent);
-    border-top-color: var(--accent);
-    border-right-color: var(--accent);
-    border-radius: 50%;
-    animation: phone-head-spin 1s linear infinite;
+    --spinner-track: var(--surface-accent);
   }
   .phone-head-word {
     font-size: 12px;
@@ -201,11 +192,5 @@
     border: none;
     border-radius: 0;
     background: transparent;
-  }
-}
-
-@keyframes phone-head-spin {
-  to {
-    transform: rotate(360deg);
   }
 }

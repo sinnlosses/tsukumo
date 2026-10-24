@@ -6,7 +6,7 @@
   align-items: flex-end;
   justify-content: center;
   text-align: center;
-  animation: portrait-fade-in 0.25s ease-out;
+  animation: var(--fade-in-name) 0.25s ease-out;
 
   /* 立ち絵の動きの速さ・大きさ。この5組が唯一の調整箇所。
      --portrait-breathe-*: 呼吸（ごく小さい上下。「居る」の最小単位。無操作が続くと止まる。止め方は `usePortraitRest`）。
@@ -46,31 +46,31 @@
    一括指定（`animation`）ではなく個別指定で書く。
    `var()` を混ぜた一括指定だと CSS Modules の名前の付け替えが効かず、ハッシュ化された `@keyframes` を指せなくなる（実測）。 */
 .portrait[data-motion="reading"] {
-  animation-name: portrait-fade-in, portrait-breathe;
+  animation-name: var(--fade-in-name), portrait-breathe;
   animation-duration: 0.25s, var(--portrait-breathe-duration);
   animation-timing-function: ease-out, steps(14, jump-none);
   animation-iteration-count: 1, infinite;
 }
 .portrait[data-motion="waiting"] {
-  animation-name: portrait-fade-in, portrait-walk;
+  animation-name: var(--fade-in-name), portrait-walk;
   animation-duration: 0.25s, var(--portrait-walk-duration);
   animation-timing-function: ease-out, steps(32, jump-none);
   animation-iteration-count: 1, infinite;
 }
 .portrait[data-motion="writing"] {
-  animation-name: portrait-fade-in, portrait-write;
+  animation-name: var(--fade-in-name), portrait-write;
   animation-duration: 0.25s, var(--portrait-write-duration);
   animation-timing-function: ease-out, steps(12, jump-none);
   animation-iteration-count: 1, infinite;
 }
 .portrait[data-motion="success"] {
-  animation-name: portrait-fade-in, portrait-bounce;
+  animation-name: var(--fade-in-name), portrait-bounce;
   animation-duration: 0.25s, var(--portrait-bounce-duration);
   animation-timing-function: ease-out, ease-out;
   animation-iteration-count: 1, 1;
 }
 .portrait[data-motion="failure"] {
-  animation-name: portrait-fade-in, portrait-flinch;
+  animation-name: var(--fade-in-name), portrait-flinch;
   animation-duration: 0.25s, var(--portrait-flinch-duration);
   animation-timing-function: ease-out, ease-out;
   animation-iteration-count: 1, 1;
@@ -143,13 +143,5 @@
   60% {
     transform: translateX(calc(var(--portrait-flinch-amount) * 0.4))
       rotate(calc(var(--portrait-flinch-rotate) * 0.4));
-  }
-}
-@keyframes portrait-fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
   }
 }

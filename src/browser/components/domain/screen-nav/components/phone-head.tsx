@@ -10,6 +10,7 @@ import { useId, useRef, type ReactElement, type ReactNode } from "react"
 import { CurrentWorkList } from "../../../../features/current-work/components/current-work-list.tsx"
 import type { CurrentWork } from "../../../../features/current-work/hooks/use-current-work.ts"
 import { BottomSheet } from "../../../ui/bottom-sheet/bottom-sheet.tsx"
+import { Spinner } from "../../../ui/spinner/spinner.tsx"
 import { CharacterFace } from "../../character-face.tsx"
 import { usePhoneHeadHeight } from "../hooks/use-phone-head-height.ts"
 import {
@@ -58,7 +59,7 @@ export function PhoneHead(props: PhoneHeadProps): ReactElement {
               data-chat-idle={head.status.chatIdle}
             >
               {head.status.mark === "spinner" ? (
-                <span className={styles["phone-head-spinner"]} aria-hidden="true" />
+                <Spinner className={styles["phone-head-spinner"]} />
               ) : (
                 <span className={styles["phone-head-mark"]} aria-hidden="true">
                   {head.status.mark}

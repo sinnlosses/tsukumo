@@ -149,19 +149,11 @@
 /* 回る印は実行中の手順と同じ（`prefers-reduced-motion: reduce` では `theme.css` の全体の規則が止める）。 */
 .current-work-background-mark {
   display: inline-block;
-  animation: current-work-spin 1s linear infinite;
+  animation: var(--spinner-animation);
 }
 /* 色は `Text` が持つ。margin だけ残す。 */
 .current-work-steps-heading {
   margin: 0.4rem 0 0.2rem;
-}
-@keyframes current-work-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
 }
 /* 手順の一覧を畳む・広げる口。顔は `<Button variant="link">` が持ち、ここは箱だけ（margin）。 */
 .current-work-toggle-all {

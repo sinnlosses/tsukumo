@@ -16,11 +16,13 @@
 
 ### 重いライブラリ
 
-| もの                                                               | 読み方                                                                                                                                                                                                                                                                                                                                                                                  | 置き場所            |
-| ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
-| React・react-markdown 一式・`ws`（ブラウザ側は標準の `WebSocket`） | `vite build` が npm から束ねる                                                                                                                                                                                                                                                                                                                                                          | `node_modules`      |
-| highlight.js                                                       | `rehype-highlight`（`lowlight` の common 言語）を束ねる。テーマ CSS だけ `/vendor/` で配る                                                                                                                                                                                                                                                                                              | 束ねる / `/vendor/` |
-| mermaid（5.3MB）・Chart.js                                         | **束ねず `/vendor/` で配る。Chart.js はその図が窓の少し手前に見えたときだけ `<script>` で読み、mermaid は図が現れたら手すきに読み込みだけ先に済ませて、描くのは窓の少し手前に見えてから**。`MermaidBlock` / `ChartBlock` が `useEffect` で描く。mermaid は同じソースの図の SVG を覚え、描き直さない。mermaid は描き終わるまで、ソースから見積もった高さの枠に「図を描いています」を出す | `/vendor/`          |
+| もの                                                               | 読み方                                                                                        | 置き場所            |
+| ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------- | ------------------- |
+| React・react-markdown 一式・`ws`（ブラウザ側は標準の `WebSocket`） | `vite build` が npm から束ねる                                                                | `node_modules`      |
+| highlight.js                                                       | `rehype-highlight`（`lowlight` の common 言語）を束ねる。テーマ CSS だけ `/vendor/` で配る    | 束ねる / `/vendor/` |
+| mermaid（5.3MB）・Chart.js                                         | **束ねず `/vendor/` で配る**。`MermaidBlock` / `ChartBlock` が `useEffect` で描く（下の段落） | `/vendor/`          |
+
+**Chart.js はその図が窓の少し手前に見えたときだけ `<script>` で読み、mermaid は図が現れたら手すきに読み込みだけ先に済ませて、描くのは窓の少し手前に見えてから。** mermaid は同じソースの図の SVG を覚え、描き直さない。描き終わるまで、ソースから見積もった高さの枠に「図を描いています」を出す。
 
 `/vendor/<name>` が返すのは `node_modules` の実ファイル（`src/server/view-server/adapter/vendor-asset.ts`）で、
 **CDN からは読まない**。
@@ -66,8 +68,8 @@ import するので、食い違うと入口を別のモジュールとして読�
 だけ**を領域・機能・ページの1枚（`<領域>/<領域>.module.css`・`features/<機能>/<機能>.module.css`・
 `<ページ>.module.css`）に置く。部品が平たく並ぶ `components/`（`features/<機能>/components/` など）でも、
 部品の `.tsx` の隣に同じ名前で置く（container / presenter の対は対の名前）。自分の見た目を持つ共有部品も
-隣に置く（`components/domain/portrait.module.css`）。**グローバルなのは `styles/theme.css` だけ**で、
-トークン（`:root`）・`body`・フォーカスの輪・`prefers-reduced-motion`・リンクを持つ。
+隣に置く（`components/domain/portrait.module.css`）。**グローバルなのは `styles/theme.css`（`fade-in`）と `ui/spinner/spinner.css`（`spinner-turn`）だけ**で、
+`theme.css` はトークン（`:root`）・`body`・フォーカスの輪・`prefers-reduced-motion`・リンクを持つ。共有する `@keyframes` は CSS Modules が名前を付け替えるので、名前ごと `var()`（`--fade-in-name`・`--spinner-animation`）で渡す。
 **16進の色を書いてよいのもそこだけ**（`docs/architecture/screen-design.md` 13.2）。同居に移した理由は `docs/history/decision.md`
 「design.md 6.6 CSS（機能と同居させる形に移した理由）」。
 
@@ -159,6 +161,7 @@ CSS に無い名前は `undefined` のままなので、**綴りを間違える�
 - **`Button`**: 押せないは **`aria-disabled` の1通り**。押せないときの見た目は既定で透かし、字や地を
   沈める顔が要るときは**押せないときの顔ごと variant の1つの値にする**（押せないを別の prop の軸にしない）。**押せる行・押せる文字**（タスクの ID・件数の
   チップ・暦の日・吹き出しのように、中身そのものを押すもの）は `Button` にしない
+- **待ちの見せ方**: 短い操作は `Spinner`（回転）、一覧の読み込みは `Skeleton`（明滅）、遅延読み込みの本体は `aria-busy="true"` の空の器
 - **札（Badge / Chip）・`<details>`・地の段を持つ箱（Card / Surface）は部品にしない**（箱の値が置き場所
   ごとに違い、値を全部 `className` で渡すことになる。1つずつの理由は `docs/history/decision.md`
   「design.md 2. 全体構成 / `components/ui/` の部品（採らなかった部品）」）

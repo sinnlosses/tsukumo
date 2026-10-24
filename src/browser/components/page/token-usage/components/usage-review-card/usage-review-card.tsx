@@ -213,7 +213,13 @@ function StageRow(props: { readonly stage: UsageReviewStageView }): ReactElement
 
   return (
     <li className={classes}>
-      <span className={styles["usage-review-stage-mark"]} aria-hidden="true">
+      <span
+        className={clsx(
+          styles["usage-review-stage-mark"],
+          stage.status === "running" && styles["usage-review-stage-mark-running"],
+        )}
+        aria-hidden="true"
+      >
         {stageMark(stage.status)}
       </span>
       <Text

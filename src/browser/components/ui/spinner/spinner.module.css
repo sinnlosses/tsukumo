@@ -1,0 +1,12 @@
+/* 輪。トラックの色は `--spinner-track` で呼び手が決める。 */
+.spinner {
+  flex: none;
+  box-sizing: border-box;
+  width: 13px;
+  height: 13px;
+  border: 2px solid var(--spinner-track, color-mix(in srgb, var(--accent) 25%, transparent));
+  border-top-color: var(--accent);
+  border-right-color: var(--accent);
+  border-radius: 50%;
+  animation: var(--spinner-animation);
+}

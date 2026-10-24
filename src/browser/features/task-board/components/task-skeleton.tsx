@@ -3,6 +3,7 @@
 
 import type { ReactElement } from "react"
 
+import { Skeleton } from "../../../components/ui/skeleton/skeleton.tsx"
 import styles from "../task-board.module.css"
 
 const SKELETON_WIDTHS = ["88%", "72%", "80%"] as const
@@ -11,12 +12,9 @@ export function TaskSkeleton(): ReactElement {
   return (
     <div role="status" aria-label="タスクを読み込み中" className={styles["task-skeleton"]}>
       {SKELETON_WIDTHS.map((width) => (
-        <span
-          key={width}
-          aria-hidden="true"
-          className={styles["task-skeleton-bar"]}
-          style={{ width }}
-        />
+        <Skeleton key={width} className={styles["task-skeleton-bar"]} style={{ width }}>
+          {null}
+        </Skeleton>
       ))}
     </div>
   )

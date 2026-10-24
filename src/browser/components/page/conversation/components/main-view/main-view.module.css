@@ -26,15 +26,7 @@
   display: flex;
   flex: 1;
   flex-direction: column;
-  animation: main-view-content-enter 160ms ease-out;
-}
-@keyframes main-view-content-enter {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  animation: var(--fade-in-name) 160ms ease-out;
 }
 @media (prefers-reduced-motion: reduce) {
   .main-view-content {

@@ -232,6 +232,21 @@ textarea {
   }
 }
 
+/* 不透明度だけで現れる動き。`animation-name: var(--fade-in-name)` で指す
+   （CSS Modules は `animation` の名前を付け替えるので、別ファイルの `@keyframes` は名前ごと `var()` に包んで渡す）。
+   周期・イージング・ほかの動きとの並びは呼び手が持つ。 */
+:root {
+  --fade-in-name: fade-in;
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 /* リンクは本文と同じ色のまま（読む面はキャラクターの色を受け取らない）。
    色を取り上げるかわりに下線で区別するので、どのパックの accent が来てもリンクだと分かる。 */
 a {

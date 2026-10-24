@@ -54,7 +54,6 @@ function CurrentWorkStepRow(props: { readonly step: CurrentWorkStep }): ReactEle
   const classes = clsx(
     step.nested && styles["current-work-step-nested"],
     step.status.kind === "done" && styles["current-work-step-done"],
-    step.status.kind === "running" && styles["current-work-step-running"],
     step.status.kind === "failed" && styles["current-work-step-failed"],
   )
 
@@ -68,7 +67,13 @@ function CurrentWorkStepRow(props: { readonly step: CurrentWorkStep }): ReactEle
         />
       ) : (
         <>
-          <span className={styles["current-work-step-mark"]} aria-hidden="true">
+          <span
+            className={clsx(
+              styles["current-work-step-mark"],
+              step.status.kind === "running" && styles["current-work-step-mark-running"],
+            )}
+            aria-hidden="true"
+          >
             {step.status.kind === "running" ? "…" : "✓"}
           </span>{" "}
           {step.label}

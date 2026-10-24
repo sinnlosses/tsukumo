@@ -45,15 +45,10 @@
 }
 .plan-usage-row-refresh-spinning {
   display: inline-flex;
+  animation: var(--spinner-animation);
 }
 .plan-usage-row-refresh-spinning svg {
   color: var(--accent);
-  animation: plan-usage-spin 1s linear infinite;
-}
-@keyframes plan-usage-spin {
-  to {
-    transform: rotate(360deg);
-  }
 }
 /* 取れない・該当しないときの一言。2段の枠の行と同じ高さぶんで、行の高さで揃うので固定しない。 */
 .plan-usage-row-note {

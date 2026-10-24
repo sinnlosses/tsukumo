@@ -60,12 +60,7 @@
   border-top-color: var(--accent);
   border-right-color: color-mix(in srgb, var(--accent) 35%, transparent);
   border-radius: 50%;
-  animation: work-strip-spin 0.9s linear infinite;
-}
-@keyframes work-strip-spin {
-  to {
-    transform: rotate(360deg);
-  }
+  animation: var(--spinner-animation);
 }
 .work-strip-track {
   display: flex;

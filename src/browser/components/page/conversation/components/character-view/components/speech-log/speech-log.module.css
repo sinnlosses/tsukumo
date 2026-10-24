@@ -82,17 +82,9 @@
   text-align: center;
   opacity: 0;
   pointer-events: none;
-  animation: speech-log-more-appear linear both;
+  animation: var(--fade-in-name) linear both;
   animation-timeline: scroll(nearest block);
   animation-range: 0 24px;
-}
-@keyframes speech-log-more-appear {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
 }
 /* 字の段・色は `Text` が持つ。margin だけここに置く。
    列の左端は幅によって立ち絵の上に掛かり、この字は吹き出しと違って地を持たないので、下端ではなく上端（「もっと前を読む」の余白の下）に置く。 */

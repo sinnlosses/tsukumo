@@ -28,12 +28,9 @@
 .task-refresh-icon {
   display: inline-flex;
 }
+.task-refresh-spinning {
+  animation: var(--spinner-animation);
+}
 .task-refresh-spinning svg {
   color: var(--accent);
-  animation: task-refresh-spin 1s linear infinite;
-}
-@keyframes task-refresh-spin {
-  to {
-    transform: rotate(360deg);
-  }
 }

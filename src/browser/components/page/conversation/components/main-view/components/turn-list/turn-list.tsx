@@ -13,6 +13,7 @@ import { useNavDrawer } from "../../../../../../../stores/nav-drawer.ts"
 import { useSession } from "../../../../../../../stores/session.ts"
 import { showTurn, useTurnSelection } from "../../../../../../../stores/turn-selection.ts"
 import { localTimeZoneId } from "../../../../../../../utils/clock.ts"
+import { Spinner } from "../../../../../../ui/spinner/spinner.tsx"
 import { TURN_RESULT_MARKS } from "../../../../domain/turn-result-mark.ts"
 import { turnSpanLabel, turnSpans, type TurnSpan } from "../../domain/turn-span.ts"
 import { useReportOutlineTurns } from "../../hooks/use-report-outline-turn-list.ts"
@@ -62,7 +63,7 @@ export function TurnList(): ReactElement {
               }}
             >
               <span className={styles["turn-list-mark"]} aria-hidden="true">
-                {working ? <span className={styles["turn-list-spinner"]} /> : result.mark}
+                {working ? <Spinner className="" /> : result.mark}
               </span>
               <span className={styles["turn-list-body"]}>
                 <span className={styles["turn-list-title"]}>{entry.title}</span>

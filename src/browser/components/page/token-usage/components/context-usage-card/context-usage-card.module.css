@@ -153,27 +153,22 @@
 
 /* 読み込み中の骨組み（`ContextUsageCardSkeleton`）が出す塊。
    中身の値だけを灰色にする（見出し・添え書き・分類名は実物と同じ文字を出す）。
-   うっすら明滅させる。
-   `prefers-reduced-motion: reduce` では `theme.css` の全体規則（`*, *::before, *::after { animation-duration: 0.01ms !important; }`）がこの `animation` も止めるので、ここに専用の対応は要らない。
+   明滅は `Skeleton` が持つ。
    `height` を自分では持たない。
-   `SkeletonBlock` の中身の `&nbsp;` が、届いた実物の文字と同じ `font-size` で本文の行間（`--line-height-body`）ぶんの行の高さを作る。
+   塊の中身の `&nbsp;` が、届いた実物の文字と同じ `font-size` で本文の行間（`--line-height-body`）ぶんの行の高さを作る。
    固定の `1em` などを指定すると、行間を含む実物の文字の高さより低くなり、届いた札とずれる。
    文字は `color: transparent` で見えなくする（読み上げは `aria-hidden` で別に止める）。 */
-.context-skeleton-block {
+.context-skeleton-until,
+.context-skeleton-taken,
+.context-skeleton-total-value,
+.context-skeleton-total-max,
+.context-skeleton-total-share,
+.context-skeleton-legend-value,
+.context-skeleton-bar {
   display: inline-block;
   border-radius: 0.25rem;
   background-color: var(--usage-well);
   color: transparent;
-  animation: context-skeleton-pulse 1.6s ease-in-out infinite;
-}
-@keyframes context-skeleton-pulse {
-  0%,
-  100% {
-    background-color: var(--usage-well);
-  }
-  50% {
-    background-color: var(--usage-chosen);
-  }
 }
 /* 塊ごとの幅。 */
 .context-skeleton-until {
@@ -183,12 +178,15 @@
   width: 9rem;
 }
 .context-skeleton-total-value {
+  composes: context-total-value;
   width: 5rem;
 }
 .context-skeleton-total-max {
+  composes: context-total-max;
   width: 3rem;
 }
 .context-skeleton-total-share {
+  composes: context-total-share;
   width: 2.5rem;
 }
 .context-skeleton-legend-value {

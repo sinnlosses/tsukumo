@@ -147,17 +147,8 @@
   .usage-review-stage-mark {
   color: var(--usage-ink-faint);
 }
-/* 進行中の段の印だけ回す（`prefers-reduced-motion: reduce` では `theme.css` の全体規則が止めるので、ここに分岐は要らない）。 */
-.usage-review-stage-running .usage-review-stage-mark {
-  animation: usage-review-stage-spin 1s linear infinite;
-}
-@keyframes usage-review-stage-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.usage-review-stage-mark-running {
+  animation: var(--spinner-animation);
 }
 .usage-review-stage-label {
   flex: 1 1 auto;

@@ -107,13 +107,8 @@
 }
 .achievement-diary-progress-item[data-state="current"]::before {
   border-color: var(--accent);
-  animation: achievement-progress-spin 1s linear infinite;
+  animation: var(--spinner-animation);
   border-top-color: transparent;
-}
-@keyframes achievement-progress-spin {
-  to {
-    transform: rotate(360deg);
-  }
 }
 
 /* 数の札（終えたタスク）。札は列の半分の幅に置く。 */

@@ -1,0 +1,9 @@
+/* 明滅の唯一の置き場所。色・寸法・並びは呼び手が持つ（`prefers-reduced-motion` は `styles/theme.css` の全体規則が止める）。 */
+.skeleton {
+  animation: skeleton-pulse 1s ease-in-out infinite;
+}
+@keyframes skeleton-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}

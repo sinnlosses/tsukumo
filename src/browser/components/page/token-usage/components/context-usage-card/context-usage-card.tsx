@@ -18,6 +18,7 @@ import type { ContextUsageRow, UseContextUsageResult } from "../../../../../doma
 import { clockTime, localTimeZoneId, zonedDateTime } from "../../../../../utils/clock.ts"
 import { formatCount } from "../../../../../utils/format-count.ts"
 import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
+import { Skeleton } from "../../../../ui/skeleton/skeleton.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import tokenUsageStyles from "../../token-usage.module.css"
 import styles from "./context-usage-card.module.css"
@@ -26,6 +27,12 @@ import { categoryLook, SKELETON_ROW_NAMES } from "./domain/context-usage-categor
 /** 札の見出しと、その横に小さく添える一言。 */
 const CARD_TITLE = "いまのコンテキスト"
 const CARD_NOTE = "このセッション · /context と同じ内容"
+
+/**
+ * 骨組みの値1つぶんの塊の中身（`&nbsp;` を1つ）。
+ * 空の `span` だと、届いた札の実物の文字が乗せる行の高さ（`--line-height-body` ぶん）より低くなり、骨組みと届いた札の高さがずれる（実測）。
+ */
+const SKELETON_TEXT = " "
 
 /** 内訳を取れなかったときの一言（札そのものを出さない）。 */
 const UNAVAILABLE_NOTE = "いまのコンテキストはまだ取れていない"
@@ -165,10 +172,14 @@ function ContextUsageCardSkeleton(): ReactElement {
         >
           <span className={styles["context-until"]}>
             <span className={styles["context-until-label"]}>自動圧縮まで</span>{" "}
-            <SkeletonBlock className={`${styles["context-skeleton-until"]}`} />
+            <Skeleton className={styles["context-skeleton-until"]} style={undefined}>
+              {SKELETON_TEXT}
+            </Skeleton>
           </span>
           <span className={styles["context-taken"]}>
-            <SkeletonBlock className={`${styles["context-skeleton-taken"]}`} />
+            <Skeleton className={styles["context-skeleton-taken"]} style={undefined}>
+              {SKELETON_TEXT}
+            </Skeleton>
           </span>
         </HStack>
       </HStack>
@@ -180,23 +191,22 @@ function ContextUsageCardSkeleton(): ReactElement {
         weight="inherit"
         className={styles["context-total"]}
       >
-        <SkeletonBlock
-          className={clsx(styles["context-total-value"], styles["context-skeleton-total-value"])}
-        />
-        <SkeletonBlock
-          className={clsx(styles["context-total-max"], styles["context-skeleton-total-max"])}
-        />
-        <SkeletonBlock
-          className={clsx(styles["context-total-share"], styles["context-skeleton-total-share"])}
-        />
+        <Skeleton className={styles["context-skeleton-total-value"]} style={undefined}>
+          {SKELETON_TEXT}
+        </Skeleton>
+        <Skeleton className={styles["context-skeleton-total-max"]} style={undefined}>
+          {SKELETON_TEXT}
+        </Skeleton>
+        <Skeleton className={styles["context-skeleton-total-share"]} style={undefined}>
+          {SKELETON_TEXT}
+        </Skeleton>
       </Text>
 
       <div className={styles["context-bar"]}>
-        {/* 横棒は中身の文字（`&nbsp;`）ではなく親（`.context-bar`）の高さに合わせて伸ばす（`flex` の既定の `stretch`）ので `SkeletonBlock` は使わない。 */}
-        <span
-          className={clsx(styles["context-skeleton-block"], styles["context-skeleton-bar"])}
-          aria-hidden="true"
-        />
+        {/* 横棒は中身の文字（`&nbsp;`）ではなく親（`.context-bar`）の高さに合わせて伸ばす（`flex` の既定の `stretch`）ので `SKELETON_TEXT` は入れない。 */}
+        <Skeleton className={styles["context-skeleton-bar"]} style={undefined}>
+          {null}
+        </Skeleton>
       </div>
 
       <dl className={styles["context-legend"]}>
@@ -209,7 +219,9 @@ function ContextUsageCardSkeleton(): ReactElement {
                 {look.label}
               </dt>
               <dd className={styles["context-legend-value"]}>
-                <SkeletonBlock className={`${styles["context-skeleton-legend-value"]}`} />
+                <Skeleton className={styles["context-skeleton-legend-value"]} style={undefined}>
+                  {SKELETON_TEXT}
+                </Skeleton>
               </dd>
             </div>
           )
@@ -220,23 +232,6 @@ function ContextUsageCardSkeleton(): ReactElement {
         <summary className={styles["context-detail-summary"]}>{DETAIL_SUMMARY}</summary>
       </details>
     </section>
-  )
-}
-
-type SkeletonBlockProps = {
-  readonly className: string
-}
-
-/**
- * 骨組みの値1つぶんの塊。読み上げには出さない（`aria-hidden`）。
- * 中身に `&nbsp;` を1つ持たせる。
- * 空の `span` だと、届いた札の実物の文字が乗せる行の高さ（`--line-height-body` ぶん）より低くなり、骨組みと届いた札の高さがずれる（実測）。
- */
-function SkeletonBlock(props: SkeletonBlockProps): ReactElement {
-  return (
-    <span className={clsx(styles["context-skeleton-block"], props.className)} aria-hidden="true">
-      {"\u00a0"}
-    </span>
   )
 }
 

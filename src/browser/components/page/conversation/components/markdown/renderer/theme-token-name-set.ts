@@ -32,6 +32,7 @@ export const THEME_TOKEN_NAMES: ReadonlySet<string> = new Set([
   "diary-gold-ink-quiet",
   "diary-gold-strong",
   "diary-gold-surface",
+  "fade-in-name",
   "font-action",
   "font-body",
   "font-code",

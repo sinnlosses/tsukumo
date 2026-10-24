@@ -49,12 +49,7 @@
 .character-create-progress-item[data-state="current"]::before {
   border-color: var(--accent);
   border-top-color: transparent;
-  animation: character-create-progress-spin 1s linear infinite;
-}
-@keyframes character-create-progress-spin {
-  to {
-    transform: rotate(360deg);
-  }
+  animation: var(--spinner-animation);
 }
 .character-create-fields {
   display: flex;
