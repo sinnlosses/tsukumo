@@ -21,6 +21,7 @@ import {
 import type { Host, HostResult } from "./server/host/core/host.ts"
 import { readItemAsset } from "./server/item/adapter/item-asset.ts"
 import { createReportImageShelf } from "./server/report/core/report-image-shelf.ts"
+import { createBeadsStampReader } from "./server/repository/adapter/beads.ts"
 import { readHeadSha } from "./server/repository/adapter/change-count.ts"
 import { readFakeSession } from "./server/session-driver/adapter/fake-session.ts"
 import { pruneInputLedgerFiles } from "./server/session-driver/adapter/input-ledger-file.ts"
@@ -140,7 +141,9 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
   const host = createHost(config.host)
   // 成果の画面が Beads の読みを覚える入れ物も1つで、ビューとセッションの両側が同じものを見る。
   // 温めはセッション側が起こす（ビューが別の入れ物を持つと、温めた読みが画面に届かない）。
-  const achievementCache = createAchievementCache(launch.cwd, clock)
+  // 印の読み手も1つで、成果のキャッシュとタスク一覧の見張りが同じものを使う（同時の読みは束ねられる）。
+  const readBeadsStamp = createBeadsStampReader(launch.cwd)
+  const achievementCache = createAchievementCache(launch.cwd, clock, readBeadsStamp)
   const workflowSetting = wireWorkflowSetting(launch.cwd, mountWorkflowPlugin, config.twCommand)
 
   const view = await startViewDelivery({
@@ -173,6 +176,7 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
     fakeSession,
     tokenUsageLog,
     achievementCache,
+    readBeadsStamp,
     diagnosticLog,
     promptImageShelf,
     reportImageShelf,

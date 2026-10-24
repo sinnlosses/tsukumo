@@ -346,6 +346,35 @@ describe("watchTaskSummary（偽の口と時計）", () => {
     expect(count("bd list")).toBe(1)
   })
 
+  it("偽の時計を1周期進めると、印の読みは1回", async () => {
+    const manual = createManualClock()
+    let stampReads = 0
+    const ports: TaskSummaryPorts = {
+      ...fakePorts([], manual.clock, {
+        stamp: () => "stamp-1",
+        stampThrowsFirst: false,
+        remembered: undefined,
+        outcome: { kind: "issues", issues: [] },
+        outcomes: undefined,
+        writes: [],
+      }),
+      createBeadsStampReader: () => () => {
+        stampReads += 1
+        return Promise.resolve({ kind: "present", stamp: "stamp-1" })
+      },
+    }
+    const fake = watchTaskSummary("/cwd", () => {}, { intervalMs: FAKE_INTERVAL_MS, ports })
+    fake.setWatching(true)
+    await settle()
+    const afterFirst = stampReads
+
+    manual.advance(FAKE_INTERVAL_MS)
+    await settle()
+
+    expect(stampReads - afterFirst).toBe(1)
+    await fake.close()
+  })
+
   it("変化の印が変わると1回読み、要約が同じなら知らせず、次の周は読まない", async () => {
     const { fake, manual, count, changes, setStamp } = startFake()
     fake.setWatching(true)

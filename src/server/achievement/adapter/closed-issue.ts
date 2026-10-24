@@ -17,8 +17,7 @@ import { doneTasksOfBeadsIssues } from "../../repository/adapter/beads-task.ts"
 import {
   isWithinRereadInterval,
   readBeadsIssues,
-  readBeadsStampOf,
-  readBeadsWorkspace,
+  type BeadsStamp,
 } from "../../repository/adapter/beads.ts"
 import { dailyAchievementOf } from "../core/daily-achievement.ts"
 
@@ -39,7 +38,11 @@ export type AchievementCache = {
  * 印が変わっても、前に読めた結果があればそれを先に返し、課題の読みは裏で読み直す。
  * 裏の読みが終われば次の読みから新しい結果が出る。最初の1回だけは読み終わるまで待つ。
  */
-export function createAchievementCache(cwd: string, now: () => number): AchievementCache {
+export function createAchievementCache(
+  cwd: string,
+  now: () => number,
+  readBeadsStamp: () => Promise<BeadsStamp>,
+): AchievementCache {
   let lastBeadsRead:
     | {
         readonly stamp: string
@@ -48,8 +51,6 @@ export function createAchievementCache(cwd: string, now: () => number): Achievem
       }
     | undefined = undefined
   let lastDone: readonly DoneTask[] | undefined = undefined
-  // `.beads` の有無は見つかった1回だけ `bd where` で調べて覚える（呼ぶたびに調べると1秒ほどかかる）。
-  let beadsFound = false
 
   async function readAndRemember(stamp: string | undefined): Promise<AchievementBeadsRead> {
     const result = await readDoneTasks(cwd, stamp)
@@ -61,18 +62,12 @@ export function createAchievementCache(cwd: string, now: () => number): Achievem
 
   return {
     readBeads: async () => {
-      if (!beadsFound) {
-        const workspace = await readBeadsWorkspace(cwd)
-        if (workspace.kind === "missing") {
-          return "missing"
-        }
-        if (workspace.kind === "timed-out") {
-          return "unavailable"
-        }
-        beadsFound = true
-      }
       // 印は `bd list` の前に読む（読んでいるあいだの更新を次の読みで拾うため）。
-      const stamp = await readBeadsStampOf(cwd)
+      const beadsStamp = await readBeadsStamp()
+      if (beadsStamp.kind === "missing") {
+        return "missing"
+      }
+      const stamp = beadsStamp.stamp
       const at = now()
       const rereadDue =
         lastBeadsRead !== undefined && !isWithinRereadInterval(at - lastBeadsRead.at)

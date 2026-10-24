@@ -1,14 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import {
-  createAchievementCache,
+  createAchievementCache as createCacheWith,
   readAchievement,
   readAchievementCalendar,
+  type AchievementCache,
   type ReadAchievementCalendarResult,
   type ReadAchievementResult,
 } from "../../../../src/server/achievement/adapter/closed-issue.ts"
 import type * as BeadsAdapter from "../../../../src/server/repository/adapter/beads.ts"
-import type { BeadsOutcome } from "../../../../src/server/repository/adapter/beads.ts"
+import type { BeadsOutcome, BeadsStamp } from "../../../../src/server/repository/adapter/beads.ts"
 import {
   BEADS_REREAD_INTERVAL_MS,
   readBeadsIssues,
@@ -37,18 +38,20 @@ vi.mock("../../../../src/server/repository/adapter/beads.ts", async (importOrigi
         : actual.beadsOutcomeOf(JSON.stringify(fakeIntake.issues)),
     )
   })
-  return {
-    ...actual,
-    readBeadsIssues: fakeRead,
-    readBeadsWorkspace: () =>
-      Promise.resolve(
-        fakeIntake.workspace === "found"
-          ? { kind: "found", dir: "/fake/.beads" }
-          : { kind: "missing" },
-      ),
-    readBeadsStampOf: () => Promise.resolve(fakeIntake.stamp),
-  }
+  return { ...actual, readBeadsIssues: fakeRead }
 })
+
+function readFakeBeadsStamp(): Promise<BeadsStamp> {
+  return Promise.resolve(
+    fakeIntake.workspace === "found"
+      ? { kind: "present", stamp: fakeIntake.stamp }
+      : { kind: "missing" },
+  )
+}
+
+function createAchievementCache(cwd: string, now: () => number): AchievementCache {
+  return createCacheWith(cwd, now, readFakeBeadsStamp)
+}
 
 beforeEach(() => {
   fakeIntake.workspace = "found"
@@ -224,6 +227,31 @@ describe("readAchievementCalendar", () => {
       expect(await doneCount(cache)).toBe(1)
 
       expect(fakeIntake.listCalls).toBe(1)
+    })
+
+    it("見回りと成果に同じ印の読み手を渡すと、続けて読んでも印の読みは読んだ回数だけで bd list は1回", async () => {
+      const readStamp = vi.fn<typeof readFakeBeadsStamp>(readFakeBeadsStamp)
+      const source = createTaskBeadsSource("/repo-both", {
+        readBeadsIssues,
+        readBeadsStamp: readStamp,
+        now: () => 0,
+      })
+      const cache = createCacheWith("/repo-both", fixedClock, readStamp)
+
+      await source.read()
+      await doneCount(cache)
+
+      expect(readStamp).toHaveBeenCalledTimes(2)
+      expect(fakeIntake.listCalls).toBe(1)
+    })
+
+    it("印の読み手が missing を返せば bd list を打たず「不明」", async () => {
+      const cache = createCacheWith("/repo-none", fixedClock, () =>
+        Promise.resolve({ kind: "missing" }),
+      )
+
+      expect(await cache.readBeads()).toBe("missing")
+      expect(fakeIntake.listCalls).toBe(0)
     })
 
     it("印が変わると読み直し、前の結果を先に返して裏で新しい結果に替わる", async () => {

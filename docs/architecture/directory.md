@@ -51,7 +51,8 @@ Beads アダプタ（`server/**/adapter/` の Beads を読むファイル）が�
 例外は疑似セッションで、`taskSummaryOptionsOf("fake")` が `bd` の代わりに cwd のファイルを読む口（`fake-beads.ts` の
 `readFakeBeadsIssues`）と短い見回りの間隔に差し替える（E2E の足場が課題を置く。課題のファイルがあれば `.beads` があるものとして扱う）。
 見張りの `watchTaskSummary` の読み元（`task-beads-source.ts`）は、変化の印を読む呼び出し（`createBeadsStampReader` の `bd where`）で
-`.beads` の有無を知り、無ければ `bd list` を打たずに `no-beads` を返す。
+`.beads` の有無を知り、無ければ `bd list` を打たずに `no-beads` を返す。この印の読み手は成果のキャッシュ
+（`closed-issue.ts`）と共有する1つで、`main.ts` が作って配線が両方に渡す（同時の読みは1回に束ねられる）。
 成果は Beads の閉じた課題だけで数える（`server/achievement/adapter/closed-issue.ts`。
 `.beads` が無ければ成果ごと `unknown`。`docs/requirements.md` 4.11 の「数えられない・読めないとき」）。
 前回知らせたものと同じ結果は知らせない。前回の初めは画面の初期値と同じ `loading`（最初の見回りの結果がまだ届いていない）なので、

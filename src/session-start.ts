@@ -16,6 +16,7 @@ import type { Host } from "./server/host/core/host.ts"
 import { readReportImageFile } from "./server/report/adapter/report-image-file.ts"
 import { createReportUsageLog } from "./server/report/adapter/report-usage-log.ts"
 import type { ReportImageShelf } from "./server/report/core/report-image-shelf.ts"
+import type { BeadsStamp } from "./server/repository/adapter/beads.ts"
 import { runGit } from "./server/repository/adapter/git.ts"
 import type { FakeSession } from "./server/session-driver/adapter/fake-session.ts"
 import { createQuestionUsageLog } from "./server/session-driver/adapter/question-usage-log.ts"
@@ -47,6 +48,7 @@ export type SessionStartOptions = {
   readonly tokenUsageLog: TokenUsageLog
   /** 成果の画面が Beads の読みを覚える入れ物。ビューの配信が引くものと同じ1つを渡す。 */
   readonly achievementCache: AchievementCache
+  readonly readBeadsStamp: () => Promise<BeadsStamp>
   readonly diagnosticLog: DiagnosticLog
   /** 依頼に添えた画像の原寸の棚。ビューの配信が引く棚と同じ1つを渡す。 */
   readonly promptImageShelf: PromptImageShelf
@@ -82,6 +84,7 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
     fakeSession: options.fakeSession,
     chatArchive: createChatArchive(),
     achievementCache: options.achievementCache,
+    readBeadsStamp: options.readBeadsStamp,
   }
   // 成果の画面を初めて開く前に `bd list` を済ませておく（読みは覚えられ、同時の読みは束ねられる）。
   // 待たない。起動の流れはこの読みを待たずに進む。

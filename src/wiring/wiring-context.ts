@@ -3,6 +3,7 @@
 
 import type { AchievementCache } from "../server/achievement/adapter/closed-issue.ts"
 import type { ChatArchive } from "../server/chat/core/chat-archive-port.ts"
+import type { BeadsStamp } from "../server/repository/adapter/beads.ts"
 import type { FakeSession } from "../server/session-driver/adapter/fake-session.ts"
 
 export type WiringContext = {
@@ -21,4 +22,6 @@ export type WiringContext = {
    * ビューの配信が持つものとは別の1つで、同じ日を両方から数えても結果は変わらない。
    */
   readonly achievementCache: AchievementCache
+  /** `.beads` の有無と課題の変化の印の読み手。成果のキャッシュとタスク一覧の見張りで1つを共有する。 */
+  readonly readBeadsStamp: () => Promise<BeadsStamp>
 }

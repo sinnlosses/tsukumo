@@ -114,13 +114,18 @@ export type BeadsStamp =
  * `.beads` の有無と課題の変化の印（{@link readBeadsStampOf}）を読む関数を作る。
  * `.beads` の場所は取れた1回だけ `bd where` で調べて覚え、見つからないうちは読むたびに調べ直す。
  * `bd where` がタイムアウトしたときは `.beads` があるものとして印を `undefined` にする。
+ * 読みの最中に呼ばれたら新しく起こさず、実行中の読みの結果を渡す（一覧と成果が1つの読み手を共有する）。
  */
-export function createBeadsStampReader(cwd: string): () => Promise<BeadsStamp> {
+export function createBeadsStampReader(
+  cwd: string,
+  readers: BeadsStampReaders = { readWorkspace: readBeadsWorkspace, readStamp: readBeadsStampOf },
+): () => Promise<BeadsStamp> {
   let beadsFound = false
+  let running: Promise<BeadsStamp> | undefined = undefined
 
-  return async () => {
+  const readOnce = async (): Promise<BeadsStamp> => {
     if (!beadsFound) {
-      const workspace = await readBeadsWorkspace(cwd)
+      const workspace = await readers.readWorkspace(cwd)
       if (workspace.kind === "missing") {
         return { kind: "missing" }
       }
@@ -129,8 +134,24 @@ export function createBeadsStampReader(cwd: string): () => Promise<BeadsStamp> {
       }
       beadsFound = true
     }
-    return { kind: "present", stamp: await readBeadsStampOf(cwd) }
+    return { kind: "present", stamp: await readers.readStamp(cwd) }
   }
+
+  return () => {
+    if (running === undefined) {
+      const current = readOnce().finally(() => {
+        running = undefined
+      })
+      running = current
+    }
+    return running
+  }
+}
+
+/** {@link createBeadsStampReader} が `bd` を起こす2つの口。 */
+export type BeadsStampReaders = {
+  readonly readWorkspace: (cwd: string) => Promise<BeadsWorkspace>
+  readonly readStamp: (cwd: string) => Promise<string | undefined>
 }
 
 /** `bd where` の結果。`missing` は `.beads` が見つからない・`bd` が無い。 */

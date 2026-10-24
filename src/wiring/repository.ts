@@ -12,6 +12,7 @@ import { changeCountGitOf } from "../server/repository/adapter/change-count.ts"
 import {
   taskSummaryOptionsOf,
   watchTaskSummary,
+  type TaskSummaryOptions,
 } from "../server/repository/adapter/task-summary.ts"
 import type { SessionManagerOptions } from "../server/session/core/session-manager-port.ts"
 import type { SessionEvent } from "../shared/session/session-event.ts"
@@ -43,7 +44,7 @@ export function wireRepository(
             onEvent({ kind: "tasks-changed", tasks })
             recommender.observe(tasks)
           },
-          taskSummaryOptionsOf(context.fakeSession === undefined ? "real" : "fake"),
+          taskSummaryOptionsOfContext(context),
           (error) => {
             reportFailure({ feature: "repository", place: "task-summary-poll" }, error)
           },
@@ -58,6 +59,18 @@ export function wireRepository(
         }
       },
     },
+  }
+}
+
+/** 疑似セッションは偽の読み元のまま。ふだんは成果のキャッシュと共有する印の読み手を使う。 */
+function taskSummaryOptionsOfContext(context: WiringContext): TaskSummaryOptions {
+  if (context.fakeSession !== undefined) {
+    return taskSummaryOptionsOf("fake")
+  }
+  const options = taskSummaryOptionsOf("real")
+  return {
+    ...options,
+    ports: { ...options.ports, createBeadsStampReader: () => context.readBeadsStamp },
   }
 }
 

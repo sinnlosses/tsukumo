@@ -196,7 +196,7 @@ describe("readAchievement", { timeout: 60_000 }, () => {
     const result = await readAchievement(
       "2026-09-23",
       "2026-09-24",
-      createAchievementCache(dir, () => 0),
+      createAchievementCache(dir, () => 0, createBeadsStampReader(dir)),
     )
 
     expect(result).toMatchObject({
