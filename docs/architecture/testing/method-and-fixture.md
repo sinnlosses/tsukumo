@@ -71,6 +71,10 @@ contenteditable（CodeMirror）・IME の確定。同じ場面と窓で測れる
 タスク番号の形（`T-` と3桁以上の数字、または `GH-` と数字）にしない。`test/scripts/document/section-reference-repository.test.ts`
 （実在しない docs のパス）と `test/scripts/document/task-id.test.ts`（タスク番号）は、フィクスチャと本物を区別しない。
 
+**本物の `bd` を起こすテストは `test/server/repository/adapter/beads-issues-reader.test.ts` の1ファイルに置く。**
+`bd init` 済みの雛形は `globalSetup`（`test/beads-template-setup.ts`）が実行ごとに1回だけ作り、
+`test/fixture/beads-repository.ts` が `inject("beadsTemplate")` の写しを配る。読むだけの検査は取り込み口のフェイクを使う。
+
 ### E2E に任せず単体テストに残すもの
 
 E2E が通るのは**疑似セッションに書いた並びだけ**で、fake driver は `SessionEvent` を直に流すので

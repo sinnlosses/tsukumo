@@ -60,7 +60,11 @@ describe("E2E の bail", () => {
 describe("planStages", () => {
   const chosenStage = { name: "test:e2e", args: [], heavy: true }
   const choose = () => [chosenStage]
-  const SETUP_FILES = ["test/tsukumo-home-setup.ts", "test/dom-environment.ts"]
+  const SETUP_FILES = [
+    "test/tsukumo-home-setup.ts",
+    "test/beads-template-setup.ts",
+    "test/dom-environment.ts",
+  ]
 
   test("文書だけの変更は E2E を選ばず、format:check・token-limit と文書の検査だけ", () => {
     const plan = planStages(

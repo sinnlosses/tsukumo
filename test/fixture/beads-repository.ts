@@ -19,42 +19,25 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 import process from "node:process"
 
-import { afterAll, afterEach, beforeAll, beforeEach, vi } from "vitest"
+import { afterEach, beforeEach, inject, vi } from "vitest"
 
-import { git, initGitRepository } from "./git-repository.ts"
 import { runSubprocessOrThrow } from "./subprocess.ts"
 
 /** テストの中で課題を書き換える作業ツリーの名前（`bd` の actor）。 */
 export const BEADS_TEST_ACTOR = "wt-test"
 
-/** `bd init` は検証を並べて走らせた重い機械で1回あたり十数秒かかるので、全体の `hookTimeout` より長く待つ。 */
-const BEADS_TEMPLATE_TIMEOUT_MS = 60_000
-
-/** `bd init` を済ませた使い捨てのリポジトリと、そのとき使った `HOME`。 */
+/** `bd init` を済ませた雛形のリポジトリと、そのとき使った `HOME`（`globalSetup` が実行ごとに1回作る）。 */
 type BeadsTemplate = {
-  readonly root: string
   readonly home: string
   readonly repository: string
 }
 
-/** {@link useBeadsHome} が作ったもの。 */
-let beadsTemplate: BeadsTemplate | undefined
-
 /**
- * 呼んだファイルで1回だけ `bd init` を済ませたリポジトリを作り、{@link initBeads} がその写しを配る。
  * 各テストの前に `home` を `HOME` に向け、使用状況の送信を止めた `bd` の設定を置く。
+ * {@link initBeads} は実行ごとに1回作った雛形の写しを配る。
  * 返す関数は、いま走っているテストの `HOME`。`home` は `useTempDir` の下のディレクトリを渡す。
  */
 export function useBeadsHome(home: () => string): () => string {
-  beforeAll(async () => {
-    beadsTemplate = await createBeadsTemplate()
-  }, BEADS_TEMPLATE_TIMEOUT_MS)
-  afterAll(() => {
-    if (beadsTemplate !== undefined) {
-      rmSync(beadsTemplate.root, { recursive: true, force: true })
-    }
-    beadsTemplate = undefined
-  })
   beforeEach(() => {
     const dir = home()
     writeBeadsConfig(dir)
@@ -68,13 +51,9 @@ export function useBeadsHome(home: () => string): () => string {
 
 /**
  * コミットが1つ以上ある git リポジトリ `cwd`（`main` を出している作業ツリー）に `.beads` を作る。
- * `--stealth` なので `.beads` はコミットされない。`bd init` 済みの写しを置くので、
- * {@link useBeadsHome} を呼んだファイルの中でだけ使える。 */
+ * `--stealth` なので `.beads` はコミットされない。`bd init` 済みの雛形の写しを置く。 */
 export function initBeads(cwd: string): void {
-  if (beadsTemplate === undefined) {
-    throw new Error("initBeads は useBeadsHome を呼んだファイルの中でだけ使える")
-  }
-  placeBeads(beadsTemplate.repository, cwd)
+  placeBeads(inject("beadsTemplate").repository, cwd)
 }
 
 /**
@@ -84,10 +63,7 @@ export async function initBeadsWithIssues(
   cwd: string,
   issues: readonly Readonly<Record<string, unknown>>[],
 ): Promise<void> {
-  if (beadsTemplate === undefined) {
-    throw new Error("initBeadsWithIssues は useBeadsHome を呼んだファイルの中でだけ使える")
-  }
-  await placeImportedBeads(beadsTemplate, cwd, issues)
+  await placeImportedBeads(inject("beadsTemplate"), cwd, issues)
 }
 
 /**
@@ -97,12 +73,7 @@ export async function initBeadsWithIssuesOutsideGit(
   cwd: string,
   issues: readonly Readonly<Record<string, unknown>>[],
 ): Promise<void> {
-  if (beadsTemplate === undefined) {
-    throw new Error(
-      "initBeadsWithIssuesOutsideGit は useBeadsHome を呼んだファイルの中でだけ使える",
-    )
-  }
-  await placeImportedBeads(beadsTemplate, cwd, issues, { kind: "outside-git" })
+  await placeImportedBeads(inject("beadsTemplate"), cwd, issues, { kind: "outside-git" })
 }
 
 /** 置き先が git リポジトリか。`outside-git` なら除外の行を写さない。 */
@@ -140,17 +111,6 @@ export async function bd(cwd: string, home: string, ...args: readonly string[]):
     cwd,
     env: { ...process.env, HOME: home },
   })
-}
-
-async function createBeadsTemplate(): Promise<BeadsTemplate> {
-  const root = mkdtempSync(join(tmpdir(), "tsukumo-beads-template-"))
-  const home = join(root, "home")
-  const repository = join(root, "repository")
-  writeBeadsConfig(home)
-  await initGitRepository(repository)
-  await git(repository, "commit", "--allow-empty", "-m", "init")
-  await bd(repository, home, "init", "--stealth", "-p", "t", "-q")
-  return { root, home, repository }
 }
 
 /** `source` の `.beads` と、`bd init --stealth` が書いた除外の行を `cwd` へ写す。 */

@@ -1,5 +1,4 @@
 // タスク一覧を読むテストが使う、`main` に1件コミットしたリポジトリと、架空の課題の置き方。
-// `initBeadsIssues` は `useBeadsHome` を呼んだファイルの中でだけ使える。
 
 import { writeFileSync } from "node:fs"
 import { join } from "node:path"

@@ -19,7 +19,7 @@ export default defineConfig({
     environment: "node",
     // hook を起こすテストが、実物の拒否の記録に足さないようにする。
     env: { TZ: "UTC", TSUKUMO_HOOK_DENIAL_RECORD: "off" },
-    globalSetup: ["./test/tsukumo-home-setup.ts"],
+    globalSetup: ["./test/tsukumo-home-setup.ts", "./test/beads-template-setup.ts"],
     maxWorkers: "40%",
     projects: [
       {

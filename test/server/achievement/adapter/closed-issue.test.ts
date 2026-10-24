@@ -1,7 +1,4 @@
-import { mkdirSync, rmSync } from "node:fs"
-import { join } from "node:path"
-
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import {
   createAchievementCache,
@@ -16,57 +13,52 @@ import {
   BEADS_REREAD_INTERVAL_MS,
   readBeadsIssues,
 } from "../../../../src/server/repository/adapter/beads.ts"
-import type * as GitAdapter from "../../../../src/server/repository/adapter/git.ts"
 import { createTaskBeadsSource } from "../../../../src/server/repository/adapter/task-beads-source.ts"
 import type { AchievementCalendar } from "../../../../src/shared/achievement/achievement-calendar.ts"
 import type { DailyAchievement } from "../../../../src/shared/achievement/achievement.ts"
-import {
-  bd,
-  initBeadsWithIssuesOutsideGit,
-  useBeadsHome,
-} from "../../../fixture/beads-repository.ts"
-import { initBeadsIssues, initRepository } from "../../../fixture/task-summary-repository.ts"
-import { useTempDir } from "../../../fixture/temp-dir.ts"
-
-// 本物の `bd` を、`HOME` を一時ディレクトリへ向けて起こす（`useBeadsHome`）。課題は架空のものだけ。
-
-// 本物の `bd` は負荷で5秒を超えうるので、製品の上限だけ延ばす。
-vi.mock("../../../../src/server/repository/adapter/git.ts", async (importOriginal) => ({
-  ...(await importOriginal<typeof GitAdapter>()),
-  GIT_TIMEOUT_MS: 60_000,
-}))
-
-// 取り込み口（`bd list`・`bd where`・印）のフェイク。`fakeIntake.active` の間だけ本物の代わりに使う。
+// 取り込み口（`bd list`・`bd where`・印）のフェイク。課題は架空のものだけ。
 const fakeIntake = vi.hoisted(
   (): {
-    active: boolean
+    workspace: "found" | "missing"
+    failed: boolean
     stamp: string | undefined
     listCalls: number
     issues: readonly unknown[]
-  } => ({ active: false, stamp: undefined, listCalls: 0, issues: [] }),
+  } => ({ workspace: "found", failed: false, stamp: undefined, listCalls: 0, issues: [] }),
 )
 
 vi.mock("../../../../src/server/repository/adapter/beads.ts", async (importOriginal) => {
   const actual = await importOriginal<typeof BeadsAdapter>()
   const fakeRead = actual.memoizeByStamp((): Promise<BeadsOutcome> => {
     fakeIntake.listCalls += 1
-    return Promise.resolve(actual.beadsOutcomeOf(JSON.stringify(fakeIntake.issues)))
+    return Promise.resolve(
+      fakeIntake.failed
+        ? { kind: "failed" }
+        : actual.beadsOutcomeOf(JSON.stringify(fakeIntake.issues)),
+    )
   })
   return {
     ...actual,
-    readBeadsIssues: (cwd: string, stamp: string | undefined) =>
-      fakeIntake.active ? fakeRead(cwd, stamp) : actual.readBeadsIssues(cwd, stamp),
-    readBeadsWorkspace: (cwd: string) =>
-      fakeIntake.active
-        ? Promise.resolve({ kind: "found", dir: "/fake/.beads" })
-        : actual.readBeadsWorkspace(cwd),
-    readBeadsStampOf: (dir: string) =>
-      fakeIntake.active ? Promise.resolve(fakeIntake.stamp) : actual.readBeadsStampOf(dir),
+    readBeadsIssues: fakeRead,
+    readBeadsWorkspace: () =>
+      Promise.resolve(
+        fakeIntake.workspace === "found"
+          ? { kind: "found", dir: "/fake/.beads" }
+          : { kind: "missing" },
+      ),
+    readBeadsStampOf: () => Promise.resolve(fakeIntake.stamp),
   }
 })
 
-const root = useTempDir("closed-issue")
-useBeadsHome(() => join(root(), "home"))
+beforeEach(() => {
+  fakeIntake.workspace = "found"
+  fakeIntake.failed = false
+  fakeIntake.stamp = undefined
+  fakeIntake.listCalls = 0
+  fakeIntake.issues = []
+})
+
+const REPOSITORY = "/repo-fake"
 
 // 木曜。今週の月曜からその4週前の月曜までが暦の範囲になる。
 const TODAY = "2026-09-24"
@@ -119,17 +111,17 @@ function knownCalendar(
   return result.calendar
 }
 
-describe("readAchievement", { timeout: 60_000 }, () => {
+describe("readAchievement", () => {
   it("その日のうちに閉じた課題をラベルに依らず終えたタスクにし、前の日に閉じた・開いた課題は数えない", async () => {
-    const repository = await initBeadsIssues(root(), [
+    fakeIntake.issues = [
       issue("t-001", "前の日に済んだ", ["2026-09-20", "10:00"], ["2026-09-22", "18:00"]),
       issue("t-002", "今日済んだ", ["2026-09-01", "10:00"], ["2026-09-23", "18:00"]),
       issue("t-003", "やめた", ["2026-09-21", "10:00"], ["2026-09-23", "19:00"], ["cancelled"]),
       issue("t-004", "まだ", ["2026-09-21", "10:00"], "open"),
-    ])
+    ]
 
     const achievement = known(
-      await readAchievement("2026-09-23", TODAY, createAchievementCache(repository, fixedClock)),
+      await readAchievement("2026-09-23", TODAY, createAchievementCache(REPOSITORY, fixedClock)),
     )
 
     expect(achievement).toMatchObject({
@@ -142,24 +134,6 @@ describe("readAchievement", { timeout: 60_000 }, () => {
     })
   })
 
-  it("課題が変わったあとの読みは前の結果を先に返し、裏で読み直した結果が次の読みから出る", async () => {
-    const repository = await initBeadsIssues(root(), [
-      issue("t-001", "先に済んだ", ["2026-09-20", "10:00"], ["2026-09-23", "10:00"]),
-      issue("t-002", "あとで閉じる", ["2026-09-20", "10:00"], "open"),
-    ])
-    const cache = createAchievementCache(repository, fixedClock)
-    // `bd close` は閉じた時刻を今にするので、数える日も今日にする。
-    const today = Temporal.Now.plainDateISO().toString()
-    const doneCount = async (): Promise<number> =>
-      known(await readAchievement(today, today, cache)).doneTasks.length
-    expect(await doneCount()).toBe(0)
-
-    await bd(repository, join(root(), "home"), "close", "t-002")
-
-    expect(await doneCount()).toBe(0)
-    await vi.waitFor(async () => expect(await doneCount()).toBe(1), { timeout: 30_000 })
-  })
-
   it("タスクの節目: 通算250件目（仮の刻み）に届いたタスクを返す", async () => {
     const before = Array.from({ length: 248 }, (_, index) =>
       issue(
@@ -169,38 +143,24 @@ describe("readAchievement", { timeout: 60_000 }, () => {
         ["2026-09-22", "10:00"],
       ),
     )
-    const repository = await initBeadsIssues(root(), [
+    fakeIntake.issues = [
       ...before,
       issue("t-249", "今日1件目", ["2026-09-01", "10:00"], ["2026-09-23", "10:00"]),
       issue("t-250", "今日2件目（250件目）", ["2026-09-01", "10:00"], ["2026-09-23", "11:00"]),
-    ])
+    ]
 
     const achievement = known(
-      await readAchievement("2026-09-23", TODAY, createAchievementCache(repository, fixedClock)),
+      await readAchievement("2026-09-23", TODAY, createAchievementCache(REPOSITORY, fixedClock)),
     )
 
     expect(achievement.milestones).toEqual([{ count: 250, taskId: "t-250" }])
   })
 
-  it("git リポジトリでなくても .beads があれば終えたタスクを数える", async () => {
-    const dir = join(root(), "outside-git")
-    mkdirSync(dir, { recursive: true })
-    await initBeadsWithIssuesOutsideGit(dir, [
-      issue("t-001", "今日済んだ", ["2026-09-21", "10:00"], ["2026-09-23", "18:00"]),
-    ])
-
-    const achievement = known(
-      await readAchievement("2026-09-23", TODAY, createAchievementCache(dir, fixedClock)),
-    )
-
-    expect(achievement.doneTasks).toEqual([{ id: "t-001", summary: "今日済んだ" }])
-  })
-
   it(".beads が無ければ「不明」", async () => {
-    const repository = await initRepository(root())
+    fakeIntake.workspace = "missing"
 
     expect(
-      await readAchievement("2026-09-23", TODAY, createAchievementCache(repository, fixedClock)),
+      await readAchievement("2026-09-23", TODAY, createAchievementCache(REPOSITORY, fixedClock)),
     ).toEqual({
       kind: "ok",
       achievement: { kind: "unknown" },
@@ -208,31 +168,28 @@ describe("readAchievement", { timeout: 60_000 }, () => {
   })
 
   it(".beads があるのに bd が課題を読めなければ「取れなかった」", async () => {
-    const repository = await initBeadsIssues(root(), [
-      issue("t-001", "今日済んだ", ["2026-09-21", "10:00"], ["2026-09-23", "18:00"]),
-    ])
-    rmSync(join(repository, ".beads", "embeddeddolt"), { recursive: true, force: true })
+    fakeIntake.failed = true
 
     expect(
-      await readAchievement("2026-09-23", TODAY, createAchievementCache(repository, fixedClock)),
+      await readAchievement("2026-09-23", TODAY, createAchievementCache(REPOSITORY, fixedClock)),
     ).toEqual({
       kind: "unavailable",
     })
   })
 })
 
-describe("readAchievementCalendar", { timeout: 60_000 }, () => {
+describe("readAchievementCalendar", () => {
   it("範囲（今日を含む週の月曜から4週前の月曜〜今日）の日ごとに、閉じた課題の数を返す", async () => {
-    const repository = await initBeadsIssues(root(), [
+    fakeIntake.issues = [
       issue("t-001", "範囲より前", ["2026-08-01", "10:00"], ["2026-08-23", "18:00"]),
       issue("t-002", "範囲の初日", ["2026-08-01", "10:00"], ["2026-08-24", "09:00"]),
       issue("t-003", "前の日1", ["2026-09-01", "10:00"], ["2026-09-23", "18:00"]),
       issue("t-004", "前の日2", ["2026-09-01", "10:00"], ["2026-09-23", "19:00"]),
       issue("t-005", "まだ", ["2026-09-01", "10:00"], "open"),
-    ])
+    ]
 
     const calendar = knownCalendar(
-      await readAchievementCalendar(TODAY, createAchievementCache(repository, fixedClock)),
+      await readAchievementCalendar(TODAY, createAchievementCache(REPOSITORY, fixedClock)),
     )
 
     expect(calendar.days[0]).toEqual({ date: "2026-08-24", count: 1 })
@@ -246,15 +203,10 @@ describe("readAchievementCalendar", { timeout: 60_000 }, () => {
 
   describe("一覧と同じ読みの共有（取り込み口のフェイク）", () => {
     beforeEach(() => {
-      fakeIntake.active = true
       fakeIntake.stamp = "s1"
-      fakeIntake.listCalls = 0
       fakeIntake.issues = [
         issue("t-001", "済んだ", ["2026-09-20", "10:00"], ["2026-09-23", "10:00"]),
       ]
-    })
-    afterEach(() => {
-      fakeIntake.active = false
     })
 
     const doneCount = async (cache: ReturnType<typeof createAchievementCache>): Promise<number> =>
@@ -338,10 +290,10 @@ describe("readAchievementCalendar", { timeout: 60_000 }, () => {
   })
 
   it(".beads が無ければ「不明」", async () => {
-    const repository = await initRepository(root())
+    fakeIntake.workspace = "missing"
 
     expect(
-      await readAchievementCalendar(TODAY, createAchievementCache(repository, fixedClock)),
+      await readAchievementCalendar(TODAY, createAchievementCache(REPOSITORY, fixedClock)),
     ).toEqual({
       kind: "ok",
       calendar: { kind: "unknown" },
