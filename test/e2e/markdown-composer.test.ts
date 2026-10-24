@@ -160,9 +160,18 @@ describe("入力欄のマークダウンエディタ", () => {
           return -1
         }),
       )
-    const onCaretLine = await textLeft()
+    await page.evaluate(() => document.fonts.ready)
+    let onCaretLine: number[] = []
+    await expect
+      .poll(async () => {
+        const current = await textLeft()
+        const unchanged = current.join() === onCaretLine.join()
+        onCaretLine = current
+        return unchanged
+      })
+      .toBe(true)
     await page.keyboard.press("ControlOrMeta+End")
-    expect(await textLeft()).toEqual(onCaretLine)
+    await expect.poll(textLeft).toEqual(onCaretLine)
     await page.keyboard.press("ControlOrMeta+Home")
 
     await page.keyboard.press("ArrowDown")
