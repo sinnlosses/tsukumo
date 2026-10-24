@@ -2,20 +2,11 @@
 // 読めない・欠けている値は空へ畳み、空は「固定の文面で送る」を意味する。
 // 「/」の付け外しと使える文字の検査は、文面を組む `requestPromptOf` が持つ。
 
-const STORAGE_KEY = "tsukumo-launch-skill:v1"
+import { z } from "zod"
 
-export function loadLaunchSkill(): string {
-  try {
-    return localStorage.getItem(STORAGE_KEY) ?? ""
-  } catch {
-    return ""
-  }
-}
+import { localPreference, RAW_STRING_CODEC } from "../utils/local-preference.ts"
 
-export function saveLaunchSkill(value: string): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, value)
-  } catch {
-    // プライベートウィンドウなどで書けないだけなので、保存できないまま続ける。
-  }
-}
+const preference = localPreference("tsukumo-launch-skill:v1", z.string(), "", RAW_STRING_CODEC)
+
+export const loadLaunchSkill = preference.load
+export const saveLaunchSkill = preference.save

@@ -2,6 +2,9 @@
 // 読み書きに失敗しても既定へ落ちるだけで、例外は投げない。
 
 import { isPlainObject } from "remeda"
+import { z } from "zod"
+
+import { localPreference } from "../../../../../../../../utils/local-preference.ts"
 
 /**
  * 利用者が選んだ畳み。`unset` のあいだは札の幅で決まる（{@link isOutlineCollapsed}）。
@@ -27,9 +30,7 @@ const DEFAULT_OUTLINE_PANEL: OutlinePanel = {
 const OUTLINE_WIDTH_MIN_PX = 128
 const OUTLINE_WIDTH_MAX_PX = 384
 
-const STORAGE_KEY = "tsukumo-outline-panel:v1"
-
-const COLLAPSE_CHOICES: readonly OutlineCollapseChoice[] = ["unset", "collapsed", "open"]
+const COLLAPSE_CHOICES = ["unset", "collapsed", "open"] satisfies readonly OutlineCollapseChoice[]
 
 /** 実際に畳むか。選んでいなければ、札の幅が狭いときだけ畳む。 */
 export function isOutlineCollapsed(choice: OutlineCollapseChoice, narrow: boolean): boolean {
@@ -41,39 +42,31 @@ export function outlineWidthFromRatio(ratio: number, rect: DOMRect): number {
   return clampOutlineWidthPx(ratio * rect.width)
 }
 
-export function loadOutlinePanel(): OutlinePanel {
-  let raw: string | null = null
-  try {
-    raw = localStorage.getItem(STORAGE_KEY)
-  } catch {
-    return DEFAULT_OUTLINE_PANEL
-  }
-  if (raw === null) {
-    return DEFAULT_OUTLINE_PANEL
-  }
+// 幅か畳みのどちらかが不正なら全体を既定に落とす。
+const preference = localPreference(
+  "tsukumo-outline-panel:v1",
+  z.preprocess(
+    (stored) =>
+      isPlainObject(stored)
+        ? {
+            widthPx: stored["widthPx"],
+            collapse: collapseChoiceOf(stored["collapse"], stored["collapsed"]),
+          }
+        : stored,
+    z.object({
+      widthPx: z.union([
+        z.number().min(OUTLINE_WIDTH_MIN_PX).max(OUTLINE_WIDTH_MAX_PX),
+        z.undefined(),
+      ]),
+      collapse: z.enum(COLLAPSE_CHOICES),
+    }),
+  ),
+  DEFAULT_OUTLINE_PANEL,
+)
 
-  try {
-    const parsed: unknown = JSON.parse(raw)
-    if (isPlainObject(parsed)) {
-      const widthPx = parsed["widthPx"]
-      const collapse = collapseChoiceOf(parsed["collapse"], parsed["collapsed"])
-      if ((widthPx === undefined || isValidWidthPx(widthPx)) && collapse !== undefined) {
-        return { widthPx, collapse }
-      }
-    }
-  } catch {
-    // 保存値が JSON として壊れている。既定に落ちる。
-  }
-  return DEFAULT_OUTLINE_PANEL
-}
+export const loadOutlinePanel: () => OutlinePanel = preference.load
 
-export function saveOutlinePanel(value: OutlinePanel): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(value))
-  } catch {
-    // プライベートウィンドウなどで書けないだけなので、保存できないまま続ける。
-  }
-}
+export const saveOutlinePanel: (value: OutlinePanel) => void = preference.save
 
 /**
  * 保存値の畳みを読む。旧い形（`collapsed: boolean`）も読み、`true` は畳む、`false` は選んでいないに読む。
@@ -91,15 +84,6 @@ function collapseChoiceOf(
     return legacyCollapsed ? "collapsed" : "unset"
   }
   return undefined
-}
-
-function isValidWidthPx(value: unknown): value is number {
-  return (
-    typeof value === "number" &&
-    Number.isFinite(value) &&
-    value >= OUTLINE_WIDTH_MIN_PX &&
-    value <= OUTLINE_WIDTH_MAX_PX
-  )
 }
 
 function clampOutlineWidthPx(value: number): number {

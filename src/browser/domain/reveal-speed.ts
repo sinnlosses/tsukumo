@@ -8,6 +8,10 @@
 // 「切る」は演出そのものを走らせない選択で、`useReportReveal` が `revealSpeed === "off"` を見て `startReveal` を呼ばずに済ませる（本文はすぐ全部出て、ミニ立ち絵の筆も出ない）。
 // だから `RevealTiming` の対応表は `standard` / `fast` の2つだけで足りる。
 
+import { z } from "zod"
+
+import { localPreference, RAW_STRING_CODEC } from "../utils/local-preference.ts"
+
 export type RevealSpeed = "standard" | "fast" | "off"
 
 /** 塊1つぶんの時間を決める物差し。 */
@@ -36,7 +40,12 @@ export const REVEAL_SPEED_LABELS = [
   ["off", "切る"],
 ] satisfies readonly (readonly [RevealSpeed, string])[]
 
-const STORAGE_KEY = "tsukumo-reveal-speed:v1"
+const preference = localPreference(
+  "tsukumo-reveal-speed:v1",
+  z.custom<RevealSpeed>((value) => typeof value === "string" && isRevealSpeed(value)),
+  DEFAULT_REVEAL_SPEED,
+  RAW_STRING_CODEC,
+)
 
 /**
  * `standard` / `fast` の物差し。`fast` は `standard` の半分。
@@ -52,23 +61,9 @@ export function revealTimingOf(speed: Exclude<RevealSpeed, "off">): RevealTiming
   return REVEAL_TIMING[speed]
 }
 
-export function loadRevealSpeed(): RevealSpeed {
-  let raw: string | null = null
-  try {
-    raw = localStorage.getItem(STORAGE_KEY)
-  } catch {
-    return DEFAULT_REVEAL_SPEED
-  }
-  return raw !== null && isRevealSpeed(raw) ? raw : DEFAULT_REVEAL_SPEED
-}
+export const loadRevealSpeed: () => RevealSpeed = preference.load
 
-export function saveRevealSpeed(value: RevealSpeed): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, value)
-  } catch {
-    // プライベートウィンドウなどで書けないだけなので、保存できないまま続ける。
-  }
-}
+export const saveRevealSpeed: (value: RevealSpeed) => void = preference.save
 
 export function isRevealSpeed(value: string): value is RevealSpeed {
   return REVEAL_SPEED_LABELS.some(([speed]) => speed === value)

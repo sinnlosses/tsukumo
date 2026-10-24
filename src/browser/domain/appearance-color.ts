@@ -5,11 +5,13 @@
 // `localStorage` から読み戻す値・`<input type="color">` が渡す値のどちらも、型を確定させるのはここだけ。
 
 import { isPlainObject } from "remeda"
+import { z } from "zod"
 
 import {
   MAX_BACKGROUND_VEIL,
   MIN_BACKGROUND_VEIL,
 } from "../../shared/character-pack/character-background.ts"
+import { localPreference } from "../utils/local-preference.ts"
 import { relativeLuminance } from "./relative-luminance.ts"
 
 export type AppearanceColorKey = "ground" | "surface" | "ink"
@@ -29,7 +31,6 @@ export const DEFAULT_APPEARANCE_COLOR_OVERRIDE: AppearanceColorOverride = {
 // `ground` と `ink` の組が本文を読める下限。WCAG 2.1 SC 1.4.3（AA、通常テキスト）と同じ 4.5:1 を採る。
 const MIN_CONTRAST = 4.5
 
-const STORAGE_KEY = "tsukumo-appearance-color:v1"
 const HEX_COLOR_PATTERN = /^#[0-9a-f]{6}$/i
 const TOKEN_NAME = {
   ground: "--ground",
@@ -43,39 +44,30 @@ const ACCENT_TOKEN_NAME = "--accent"
  */
 const BACKGROUND_VEIL_FLOOR_TOKEN_NAME = "--character-background-veil-floor"
 
-export function loadAppearanceColorOverride(): AppearanceColorOverride {
-  let raw: string | null = null
-  try {
-    raw = localStorage.getItem(STORAGE_KEY)
-  } catch {
-    return DEFAULT_APPEARANCE_COLOR_OVERRIDE
-  }
-  if (raw === null) {
-    return DEFAULT_APPEARANCE_COLOR_OVERRIDE
-  }
+// 3色は項ごとに畳む（1色が壊れていても他の色は生かす）。キーが欠けた項は `undefined` として項の schema に渡す。
+const hexColorOrUndefined = z
+  .union([z.string().regex(HEX_COLOR_PATTERN), z.undefined()])
+  .catch(undefined)
 
-  try {
-    const parsed: unknown = JSON.parse(raw)
-    if (isPlainObject(parsed)) {
-      return {
-        ground: optionalHexColor(parsed["ground"]),
-        surface: optionalHexColor(parsed["surface"]),
-        ink: optionalHexColor(parsed["ink"]),
-      }
-    }
-  } catch {
-    // 保存値が JSON として壊れている。既定（上書き無し）に落ちる。
-  }
-  return DEFAULT_APPEARANCE_COLOR_OVERRIDE
-}
+const preference = localPreference(
+  "tsukumo-appearance-color:v1",
+  z.preprocess(
+    (stored) =>
+      isPlainObject(stored)
+        ? { ground: stored["ground"], surface: stored["surface"], ink: stored["ink"] }
+        : stored,
+    z.object({
+      ground: hexColorOrUndefined,
+      surface: hexColorOrUndefined,
+      ink: hexColorOrUndefined,
+    }),
+  ),
+  DEFAULT_APPEARANCE_COLOR_OVERRIDE,
+)
 
-export function saveAppearanceColorOverride(value: AppearanceColorOverride): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(value))
-  } catch {
-    // プライベートウィンドウなどで書けないだけなので、保存できないまま続ける。
-  }
-}
+export const loadAppearanceColorOverride: () => AppearanceColorOverride = preference.load
+
+export const saveAppearanceColorOverride: (value: AppearanceColorOverride) => void = preference.save
 
 /**
  * `document.documentElement` に反映する。`undefined` は「上書きしない」＝ 既定に戻す。
@@ -167,10 +159,6 @@ function backgroundVeilFloor(ground: string, ink: string): number {
 
 function readToken(name: string): string {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim()
-}
-
-function optionalHexColor(value: unknown): string | undefined {
-  return isValidHexColor(value) ? value : undefined
 }
 
 function isValidHexColor(value: unknown): value is string {

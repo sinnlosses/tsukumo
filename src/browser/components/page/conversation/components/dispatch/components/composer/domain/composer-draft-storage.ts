@@ -4,11 +4,12 @@
 // 並びは書いた順（末尾が最後に書いたもの）で、直近 `MAX_DRAFT_SESSIONS` セッション分を超えた古いほうを捨てる。
 // 読めない・壊れた値は空として扱う。
 
+import { z } from "zod"
+
 import { EMPTY_DRAFT, type Draft } from "../../../../../../../../stores/composer-draft.ts"
+import { localPreference } from "../../../../../../../../utils/local-preference.ts"
 
 export const MAX_DRAFT_SESSIONS = 10
-
-const STORAGE_KEY = "tsukumo-composer-draft:v1"
 
 type StoredDraft = Draft & { readonly sessionId: string }
 
@@ -61,23 +62,15 @@ export function draftOnSessionChange(
   return loadSessionDraft(next) ?? EMPTY_DRAFT
 }
 
+// 壊れた要素だけを落とし、残りは読む。配列でない・JSON として壊れているときは空。
+const preference = localPreference(
+  "tsukumo-composer-draft:v1",
+  z.array(z.unknown()).transform((items) => items.filter(isStoredDraft)),
+  [],
+)
+
 function readAll(): readonly StoredDraft[] {
-  let raw: string | null = null
-  try {
-    raw = localStorage.getItem(STORAGE_KEY)
-  } catch {
-    return []
-  }
-  if (raw === null) {
-    return []
-  }
-  let parsed: unknown
-  try {
-    parsed = JSON.parse(raw)
-  } catch {
-    return []
-  }
-  return Array.isArray(parsed) ? parsed.filter(isStoredDraft) : []
+  return preference.load()
 }
 
 function isStoredDraft(value: unknown): value is StoredDraft {
@@ -95,9 +88,5 @@ function isStoredDraft(value: unknown): value is StoredDraft {
 }
 
 function writeAll(drafts: readonly StoredDraft[]): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(drafts))
-  } catch {
-    // 書けない（容量・プライベートウィンドウ）だけなので、保存できないまま続ける。
-  }
+  preference.save([...drafts])
 }

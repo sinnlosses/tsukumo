@@ -2,28 +2,22 @@
 // 利用者の端末ごとの好みなので、サーバの状態には置かない。
 // 読めない・欠けている値は `<textarea>` へ畳む。
 
+import { z } from "zod"
+
+import {
+  localPreference,
+  RAW_STRING_CODEC,
+} from "../../../../../../../../utils/local-preference.ts"
+
 export type ComposerMode = "plain" | "markdown"
 
-const DEFAULT_COMPOSER_MODE: ComposerMode = "plain"
+const preference = localPreference(
+  "tsukumo-composer-mode:v1",
+  z.enum(["plain", "markdown"]),
+  "plain",
+  RAW_STRING_CODEC,
+)
 
-const STORAGE_KEY = "tsukumo-composer-mode:v1"
+export const loadComposerMode: () => ComposerMode = preference.load
 
-const COMPOSER_MODES = ["plain", "markdown"] satisfies readonly ComposerMode[]
-
-export function loadComposerMode(): ComposerMode {
-  let raw: string | null = null
-  try {
-    raw = localStorage.getItem(STORAGE_KEY)
-  } catch {
-    return DEFAULT_COMPOSER_MODE
-  }
-  return COMPOSER_MODES.find((mode) => mode === raw) ?? DEFAULT_COMPOSER_MODE
-}
-
-export function saveComposerMode(mode: ComposerMode): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, mode)
-  } catch {
-    // プライベートウィンドウなどで書けないだけなので、保存できないまま続ける。
-  }
-}
+export const saveComposerMode: (mode: ComposerMode) => void = preference.save

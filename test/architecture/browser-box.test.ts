@@ -192,10 +192,9 @@ describe("browser/ の箱をまたぐ import", () => {
 })
 
 // `utils/` の歯止め1（docs/architecture.md「`lib/` と `utils/` に置く基準」）。箱の辺の検査は相対 import
-// の `browser/` の中しか見ないので、`node:`・`shared/` への import はここで別に落とす。用途を問わない
-// 汎用のライブラリ（`react`・`remeda`）は歯止め1で許しているので落とさない。`utils/` から出る import は、
-// `utils/` の中への相対 import と、この一覧の汎用ライブラリだけ。
-const UTILS_ALLOWED_EXTERNAL_PACKAGES: ReadonlySet<string> = new Set(["react", "remeda"])
+// の `browser/` の中しか見ないので、`node:`・`shared/` への import はここで別に落とす。
+// `utils/` から出てよいのは、`utils/` の中への相対 import と、この一覧の汎用ライブラリだけ。
+const UTILS_ALLOWED_EXTERNAL_PACKAGES: ReadonlySet<string> = new Set(["react", "remeda", "zod"])
 
 describe("browser/utils/ の import", () => {
   it("browser/utils/ のファイルは browser/utils/ の中と汎用のライブラリしか import しない", () => {

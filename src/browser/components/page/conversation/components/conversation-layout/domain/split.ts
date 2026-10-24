@@ -2,6 +2,9 @@
 // 読み書きに失敗しても既定へ落ちるだけで、例外は投げない。
 
 import { isPlainObject } from "remeda"
+import { z } from "zod"
+
+import { localPreference } from "../../../../../../utils/local-preference.ts"
 
 export type Split = {
   readonly rowTop: number
@@ -27,47 +30,39 @@ export const DEFAULT_SPLIT: Split = {
 const MIN_PERCENT = 15
 const MAX_PERCENT = 85
 
-const STORAGE_KEY = "tsukumo-layout-split:v1"
+const percent = z.number().min(MIN_PERCENT).max(MAX_PERCENT)
+
+// 雑談用の上下比だけは、無くても壊れていても `undefined` に畳むだけにする（他の3項と違い DEFAULT_SPLIT 全体へは落とさない）。
+// この項が無い保存値＝雑談で一度も動かしていない状態で、項を足す前に保存した値もそのまま読める。
+// キーが欠けた項は `undefined` として項の schema に渡す。
+const preference = localPreference(
+  "tsukumo-layout-split:v1",
+  z.preprocess(
+    (stored) =>
+      isPlainObject(stored)
+        ? {
+            rowTop: stored["rowTop"],
+            topLeft: stored["topLeft"],
+            bottomLeft: stored["bottomLeft"],
+            collapsedRowTop: stored["collapsedRowTop"],
+          }
+        : stored,
+    z.object({
+      rowTop: percent,
+      topLeft: percent,
+      bottomLeft: percent,
+      collapsedRowTop: z.union([percent, z.undefined()]).catch(undefined),
+    }),
+  ),
+  DEFAULT_SPLIT,
+)
 
 /** `LayoutResizer` の `toValue` にそのまま渡す。比率（0〜1）を可動域つきの % にする。 */
 export function percentFromRatio(ratio: number): number {
   return clampPercent(ratio * 100)
 }
 
-export function loadSplit(): Split {
-  let raw: string | null = null
-  try {
-    raw = localStorage.getItem(STORAGE_KEY)
-  } catch {
-    return DEFAULT_SPLIT
-  }
-  if (raw === null) {
-    return DEFAULT_SPLIT
-  }
-
-  try {
-    const parsed: unknown = JSON.parse(raw)
-    if (isPlainObject(parsed)) {
-      const rowTop = parsed["rowTop"]
-      const topLeft = parsed["topLeft"]
-      const bottomLeft = parsed["bottomLeft"]
-      const collapsedRowTop = parsed["collapsedRowTop"]
-      if (isValidPercent(rowTop) && isValidPercent(topLeft) && isValidPercent(bottomLeft)) {
-        // 雑談用の上下比だけは、無くても壊れていても `undefined` に畳むだけにする（他の3項と違い DEFAULT_SPLIT 全体へは落とさない）。
-        // この項が無い保存値＝雑談で一度も動かしていない状態で、項を足す前に保存した値もそのまま読める。
-        return {
-          rowTop,
-          topLeft,
-          bottomLeft,
-          collapsedRowTop: isValidPercent(collapsedRowTop) ? collapsedRowTop : undefined,
-        }
-      }
-    }
-  } catch {
-    // 保存値が JSON として壊れている。既定に落ちる。
-  }
-  return DEFAULT_SPLIT
-}
+export const loadSplit: () => Split = preference.load
 
 /**
  * 3本の比率と雑談の上下比が、すべて既定と同じか。
@@ -82,23 +77,8 @@ export function isDefaultSplit(split: Split): boolean {
   )
 }
 
-export function saveSplit(value: Split): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(value))
-  } catch {
-    // プライベートウィンドウなどで書けないだけなので、保存できないまま続ける。
-  }
-}
+export const saveSplit: (value: Split) => void = preference.save
 
 function clampPercent(value: number): number {
   return Math.min(MAX_PERCENT, Math.max(MIN_PERCENT, value))
-}
-
-function isValidPercent(value: unknown): value is number {
-  return (
-    typeof value === "number" &&
-    Number.isFinite(value) &&
-    value >= MIN_PERCENT &&
-    value <= MAX_PERCENT
-  )
 }

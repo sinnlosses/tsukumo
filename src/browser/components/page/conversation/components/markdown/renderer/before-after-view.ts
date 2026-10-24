@@ -2,28 +2,19 @@
 // 利用者の端末ごとの好みなので、サーバの状態には置かない。
 // 読めない・欠けている値は並べるへ畳む。
 
+import { z } from "zod"
+
+import { localPreference, RAW_STRING_CODEC } from "../../../../../../utils/local-preference.ts"
+
 export type BeforeAfterView = "side" | "switch"
 
-const DEFAULT_BEFORE_AFTER_VIEW: BeforeAfterView = "side"
+const preference = localPreference(
+  "tsukumo-before-after-view:v1",
+  z.enum(["side", "switch"]),
+  "side",
+  RAW_STRING_CODEC,
+)
 
-const STORAGE_KEY = "tsukumo-before-after-view:v1"
+export const loadBeforeAfterView: () => BeforeAfterView = preference.load
 
-const BEFORE_AFTER_VIEWS = ["side", "switch"] satisfies readonly BeforeAfterView[]
-
-export function loadBeforeAfterView(): BeforeAfterView {
-  let raw: string | null = null
-  try {
-    raw = localStorage.getItem(STORAGE_KEY)
-  } catch {
-    return DEFAULT_BEFORE_AFTER_VIEW
-  }
-  return BEFORE_AFTER_VIEWS.find((view) => view === raw) ?? DEFAULT_BEFORE_AFTER_VIEW
-}
-
-export function saveBeforeAfterView(view: BeforeAfterView): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, view)
-  } catch {
-    // プライベートウィンドウなどで書けないだけなので、保存できないまま続ける。
-  }
-}
+export const saveBeforeAfterView: (view: BeforeAfterView) => void = preference.save
