@@ -28,6 +28,12 @@ vi.mock(
 const { Turn } =
   await import("../../../../../../../../../src/browser/components/page/conversation/components/main-view/components/turn/turn.tsx")
 
+function toggleDetails(details: Element, open: boolean): void {
+  const element = typedElement(details, HTMLDetailsElement, "畳み")
+  element.open = open
+  fireEvent(element, new Event("toggle"))
+}
+
 afterEach(() => {
   cleanup()
   useComposerDraft.setState(useComposerDraft.getInitialState(), true)
@@ -357,9 +363,35 @@ describe("Turn（経過の畳み）", () => {
       ),
     ).toEqual(["中間レポート: 中間0", "中間レポート: 中間1", "中間レポート: 中間2"])
 
+    expect(
+      [...container.querySelectorAll("[data-report-stub]")].map((stub) => stub.textContent),
+    ).toEqual(["最終"])
+
+    for (const details of fold.querySelectorAll("details.is-interim")) {
+      toggleDetails(details, true)
+    }
     const stubs = [...container.querySelectorAll("[data-report-stub]")]
     expect(stubs.map((stub) => stub.textContent)).toEqual(["最終", "中間0", "中間1", "中間2"])
     expect(stubs.slice(1).every((stub) => fold.contains(stub))).toBe(true)
+  })
+
+  it("畳んだ中間レポートは開いたときに描かれ、閉じ直しても DOM に残る", () => {
+    putSession(INITIAL_SESSION_STATE)
+    const { container } = render(
+      <Turn
+        turn={turn([...interims, step({ id: 3, body: text("最終"), final: true })])}
+        newest
+        freshReport={false}
+      />,
+    )
+    const first = container.querySelector("details.is-interim")
+    expect(first?.querySelector("[data-report-stub]")).toBeNull()
+
+    toggleDetails(first ?? container, true)
+    expect(first?.querySelector("[data-report-stub]")?.textContent).toBe("中間0")
+
+    toggleDetails(first ?? container, false)
+    expect(first?.querySelector("[data-report-stub]")?.textContent).toBe("中間0")
   })
 
   it("経過の畳みの中は狭い画面でも隠さず、働くあいだの畳んだ中間レポートは隠したまま", () => {
@@ -410,6 +442,9 @@ describe("Turn（経過の畳み）", () => {
     )
 
     expect(container.querySelector(".progress-fold")).toBeNull()
+    for (const details of container.querySelectorAll("details.is-interim")) {
+      toggleDetails(details, true)
+    }
     expect(
       [...container.querySelectorAll("[data-report-stub]")].map((stub) => stub.textContent),
     ).toEqual(["中間0", "中間1", "中間2", "まだ決まらない本文"])

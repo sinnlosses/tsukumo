@@ -1,5 +1,5 @@
 // レポートの ```mermaid フェンスの中身を図として描く。
-// mermaid は tsukumo 自身のサーバから配り、その記法が実際に出てきたときだけ `<script>` で読み込む。
+// mermaid は tsukumo 自身のサーバから配り、その図が窓の少し手前に見えたときだけ `<script>` で読み込む。
 //
 // 1つのレポートに複数の図があっても、描くのは1つずつ（`drawing` の鎖）。
 // 同じソースの図は描いた SVG を覚え、2回目以降は描かずに差し込む（失敗は覚えない）。
@@ -8,12 +8,14 @@
 // `initialize({ suppressErrorRendering: true })` を立てると、mermaid は失敗時に自分でエラーの絵を描くかわりに `render()` の Promise を reject する（mermaid 11.15.0 と 12.0.0 の `dist/mermaid.min.js` で確認済み）。
 // `mermaid.parse()` による事前判定は使わない。読み込み自体の失敗（スクリプトが読めない）も含めて1つの catch で受け止められるため（読み込み失敗は `loadVendorScript` が `Error(src)` を投げるので、エラー文はその URL になる）。
 
+import clsx from "clsx"
 import { useEffect, useRef, useState, type ReactElement } from "react"
 import { isObjectType } from "remeda"
 
 import { vendorAssetPath } from "../../../../../../../shared/view-server/vendor-asset.ts"
 import { Text } from "../../../../../ui/text/text.tsx"
 import { figureZoomTriggerProps, SvgZoom } from "./figure-zoom.tsx"
+import { useSeenOnce } from "./hooks/use-seen-once.ts"
 import styles from "./mermaid-block.module.css"
 import { resolveHex } from "./theme-color.ts"
 import { loadVendorScript } from "./vendor-script.ts"
@@ -50,6 +52,7 @@ export function MermaidBlock(props: MermaidBlockProps): ReactElement {
   const nodeRef = useRef<HTMLPreElement>(null)
   const [error, setError] = useState<string | undefined>(undefined)
   const [zoomed, setZoomed] = useState<SVGSVGElement | undefined>(undefined)
+  const seen = useSeenOnce(nodeRef)
 
   const { code } = props
 
@@ -57,7 +60,7 @@ export function MermaidBlock(props: MermaidBlockProps): ReactElement {
     let cancelled = false
 
     const themeNode = nodeRef.current
-    if (themeNode === null) {
+    if (!seen || themeNode === null) {
       return
     }
     const themeVariables = resolveThemeVariables(themeNode)
@@ -98,7 +101,7 @@ export function MermaidBlock(props: MermaidBlockProps): ReactElement {
     return () => {
       cancelled = true
     }
-  }, [code])
+  }, [code, seen])
 
   if (error !== undefined) {
     return (
@@ -121,12 +124,23 @@ export function MermaidBlock(props: MermaidBlockProps): ReactElement {
 
   return (
     <>
-      <pre ref={nodeRef} className="mermaid" {...figureZoomTriggerProps(setZoomed)}>
-        {props.code}
-      </pre>
+      <pre
+        ref={nodeRef}
+        className={clsx("mermaid", styles["figure-frame"])}
+        data-pending={seen ? undefined : "unseen"}
+        style={{ [FRAME_LINES_PROPERTY]: pendingLines(props.code) }}
+        {...figureZoomTriggerProps(setZoomed)}
+      />
       {zoomed !== undefined && <SvgZoom svg={zoomed} onClose={() => setZoomed(undefined)} />}
     </>
   )
+}
+
+const FRAME_LINES_PROPERTY = "--frame-lines"
+
+/** 描き終わるまでの枠の高さを決めるソースの行数（`.figure-frame` が行数から高さを作る）。 */
+function pendingLines(code: string): number {
+  return code.split("\n").length
 }
 
 function newDiagramId(): string {

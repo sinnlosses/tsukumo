@@ -493,15 +493,10 @@
                                     {
                                       "tag": "pre",
                                       "attributes": {
+                                        "data-pending": "unseen",
                                         "role": "button",
-                                        "aria-label": "この図を拡大",
-                                        "data-processed": "true"
-                                      },
-                                      "children": [
-                                        {
-                                          "tag": "svg"
-                                        }
-                                      ]
+                                        "aria-label": "この図を拡大"
+                                      }
                                     },
                                     {
                                       "tag": "canvas"

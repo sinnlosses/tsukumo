@@ -1,7 +1,8 @@
-import { cleanup, render, waitFor } from "@testing-library/react"
+import { act, cleanup, render, waitFor } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { ChartBlock } from "../../../../../../../../src/browser/components/page/conversation/components/markdown/renderer/chart-block.tsx"
+import { stubIntersectionObserver } from "../../../../../../../fixture/intersection.ts"
 
 // jsdom には canvas が無く、色のトークンも解けない。
 vi.mock(
@@ -37,6 +38,7 @@ class FakeChart implements Instance {
 }
 
 beforeEach(() => {
+  stubIntersectionObserver(true)
   instances.length = 0
   scripts.length = 0
   vi.stubGlobal("Chart", FakeChart)
@@ -61,6 +63,25 @@ function finishLoading(): void {
     script.dispatchEvent(new Event("load"))
   }
 }
+
+describe("ChartBlock の見えてから描く", () => {
+  it("見えるまでは読み込みも生成も始めず、見えたら描く", async () => {
+    const intersection = stubIntersectionObserver(false)
+    render(<ChartBlock spec={SPEC_A} />)
+    finishLoading()
+
+    expect(scripts).toHaveLength(0)
+    expect(instances).toHaveLength(0)
+
+    act(() => {
+      intersection.intersect()
+    })
+    finishLoading()
+    await waitFor(() => {
+      expect(instances).toHaveLength(1)
+    })
+  })
+})
 
 describe("ChartBlock の後片付け", () => {
   it("アンマウントで、作ったインスタンスが1回だけ破棄される", async () => {

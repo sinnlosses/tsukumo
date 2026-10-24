@@ -1,3 +1,10 @@
+/* 描き終わる（data-processed が付く）まで、ソースの行数から見積もった高さの枠を保つ。SVG に替わるとこの高さは外れる。 */
+.figure-frame:not([data-processed]) {
+  min-height: calc(var(--frame-lines) * 1.5em);
+  outline: 1px dashed var(--rule-quiet);
+  outline-offset: -1px;
+}
+
 /* mermaid の構文エラー（MermaidBlock）。
    元のコードは通常のコードブロックと同じ見た目（`.detail-block pre` に乗る）のまま残し、その下にエラー文を添える。
    新しい色は作らない（state-ng は表の report-badge-ng / report-note-ng と同じ「問題」の色）。 */

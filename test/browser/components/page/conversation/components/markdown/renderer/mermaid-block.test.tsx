@@ -2,6 +2,7 @@ import { act, cleanup, fireEvent, render, waitFor } from "@testing-library/react
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import type { MermaidBlock as MermaidBlockComponent } from "../../../../../../../../src/browser/components/page/conversation/components/markdown/renderer/mermaid-block.tsx"
+import { stubIntersectionObserver } from "../../../../../../../fixture/intersection.ts"
 
 // jsdom には canvas が無く、色のトークンも解けない。
 vi.mock(
@@ -21,6 +22,7 @@ const renderDiagram =
 let MermaidBlock: typeof MermaidBlockComponent
 
 beforeEach(async () => {
+  stubIntersectionObserver(true)
   vi.resetModules()
   ;({ MermaidBlock } =
     await import("../../../../../../../../src/browser/components/page/conversation/components/markdown/renderer/mermaid-block.tsx"))
@@ -130,6 +132,30 @@ describe("MermaidBlock の描いた SVG の使い回し", () => {
     })
 
     expect(renderDiagram).toHaveBeenCalledTimes(2)
+  })
+})
+
+describe("MermaidBlock の見えてから描く", () => {
+  it("見えるまでは読み込みも描画も始めず、ソースの字なしの高さのある枠を出す", async () => {
+    const intersection = stubIntersectionObserver(false)
+    const view = render(<MermaidBlock code={"graph A\nA --> B\nB --> C"} />)
+    await finishLoading()
+
+    const pre = view.container.querySelector("pre.mermaid")
+    expect(scripts).toHaveLength(0)
+    expect(renderDiagram).not.toHaveBeenCalled()
+    expect(pre?.getAttribute("data-pending")).toBe("unseen")
+    expect(pre?.textContent).toBe("")
+    expect(pre instanceof HTMLElement && pre.style.getPropertyValue("--frame-lines")).toBe("3")
+
+    act(() => {
+      intersection.intersect()
+    })
+    await finishLoading()
+    await waitFor(() => {
+      expect(view.container.querySelector("pre.mermaid svg")).not.toBeNull()
+    })
+    expect(view.container.querySelector("pre.mermaid")?.hasAttribute("data-pending")).toBe(false)
   })
 })
 

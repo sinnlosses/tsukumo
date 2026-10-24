@@ -152,7 +152,7 @@ function Step(props: StepProps): ReactElement | null {
  * ラベルを出すのは `finalLabel` が立っているとき（中間レポートのあるやり取りか、本文に `task` があるときだけ。どちらも無ければ「最終」が何も区別しない）。
  *
  * 後ろに別のレポートが現れた中間レポート（`step.superseded`）は、何件も開いたまま積まれると見通しが悪いので畳む。
- * 畳んだ分は `<details>` にするだけで中身は DOM に残す。まだ追い越されていない最後の中間レポートは開いた `<section>` のまま。
+ * 畳んだ分は `<details>` にして、開いたときに初めて中身を描き、開いたあとは閉じても DOM に残す。まだ追い越されていない最後の中間レポートは開いた `<section>` のまま。
  * 畳むのは本文だけで、質問の記録は畳みの外に出す。
  */
 function StepCard(props: StepProps): ReactElement {
@@ -205,8 +205,14 @@ type FoldedStepProps = {
 
 /** 中間レポートを `<summary>` の1行に畳んだ形。質問の記録は持たない（呼ぶ側が畳みの外に出す）。 */
 function FoldedStep(props: FoldedStepProps): ReactElement {
+  const [opened, setOpened] = useState(false)
   return (
     <details
+      onToggle={(event) => {
+        if (event.currentTarget.open) {
+          setOpened(true)
+        }
+      }}
       className={clsx(
         mainViewStyles["main-step"],
         mainViewStyles["is-interim"],
@@ -222,14 +228,16 @@ function FoldedStep(props: FoldedStepProps): ReactElement {
       >
         {interimSummary(props.step.body)}
       </Text>
-      <StepReport
-        step={props.step}
-        turnId={props.turnId}
-        reveal={false}
-        hasInterimReport={props.hasInterimReport}
-        folded
-        phoneHidden={props.phoneHidden}
-      />
+      {opened && (
+        <StepReport
+          step={props.step}
+          turnId={props.turnId}
+          reveal={false}
+          hasInterimReport={props.hasInterimReport}
+          folded
+          phoneHidden={props.phoneHidden}
+        />
+      )}
     </details>
   )
 }

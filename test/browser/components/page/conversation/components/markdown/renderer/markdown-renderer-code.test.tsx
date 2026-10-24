@@ -1,8 +1,9 @@
 import { act, cleanup, fireEvent, render, waitFor } from "@testing-library/react"
-import { afterEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { Markdown } from "../../../../../../../../src/browser/components/page/conversation/components/markdown/renderer/markdown-renderer.tsx"
 import { encodeMarks } from "../../../../../../../../src/shared/report/code-mark.ts"
+import { stubIntersectionObserver } from "../../../../../../../fixture/intersection.ts"
 import { reportSectionsMarkdown } from "../../../../../../../fixture/report-sections-markdown.ts"
 import { typedElement } from "../../../../../../../typed-element.ts"
 
@@ -15,8 +16,13 @@ vi.mock(
   }),
 )
 
+beforeEach(() => {
+  stubIntersectionObserver(true)
+})
+
 afterEach(() => {
   cleanup()
+  vi.unstubAllGlobals()
 })
 
 describe("Markdown（unified への置き換えが求める記法）", () => {
