@@ -138,6 +138,15 @@
   border: 1px solid color-mix(in srgb, var(--rule) 70%, transparent);
   border-radius: 0.5rem;
 }
+/* マークダウンエディタを読み込む間の素の面。枠は箱を作らず、中の textarea が今までどおり欄を埋める。 */
+.dispatch-surface-pending {
+  display: contents;
+}
+/* 書式の行（ボタン 2.25rem + 下の余白 0.375rem、`format-bar.module.css`）と同じ高さ。エディタに替わっても欄の位置を動かさない。 */
+.dispatch-format-bar-space {
+  flex: 0 0 auto;
+  height: 2.625rem;
+}
 .dispatch-text::placeholder {
   color: var(--ink-quiet);
 }

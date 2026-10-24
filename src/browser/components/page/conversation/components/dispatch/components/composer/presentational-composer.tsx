@@ -3,9 +3,19 @@
 
 import clsx from "clsx"
 import { AtSign, Heading, ImageIcon, Plus, Slash } from "lucide-react"
-import { useState, type ReactElement, type ReactNode } from "react"
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ComponentProps,
+  type ReactElement,
+  type ReactNode,
+  type RefObject,
+} from "react"
 
 import { PROMPT_IMAGE_MEDIA_TYPES } from "../../../../../../../../shared/session-driver/prompt-image.ts"
+import { deferredModule } from "../../../../../../../hooks/deferred-module.ts"
 import { usePhoneWidth } from "../../../../../../../hooks/use-phone-width.ts"
 import { Button } from "../../../../../../ui/button/button.tsx"
 import { HStack } from "../../../../../../ui/h-stack/h-stack.tsx"
@@ -13,14 +23,18 @@ import { Text } from "../../../../../../ui/text/text.tsx"
 import { VStack } from "../../../../../../ui/v-stack/v-stack.tsx"
 import { PromptImageChips } from "../../../prompt-image/prompt-image.tsx"
 import dispatchStyles from "../../dispatch.module.css"
+import type { ComposerSurface } from "../../domain/composer-surface.ts"
 import { CommandSuggestions } from "../command-suggestions/command-suggestions.tsx"
 import { FileSuggestions } from "../file-suggestions/file-suggestions.tsx"
-import { MarkdownEditorSurface } from "../markdown-editor-surface/markdown-editor-surface.tsx"
 import { TextAreaSurface } from "../text-area-surface/text-area-surface.tsx"
 import { PhoneTurnAction, TurnStatus } from "../turn-status/turn-status.tsx"
 import styles from "./composer.module.css"
 import { NEW_SESSION_LABEL, type ComposerModel } from "./hooks/use-composer.ts"
 import type { CompletionTrigger } from "./hooks/use-suggestion.ts"
+
+const markdownEditorSurface = deferredModule(
+  () => import("../markdown-editor-surface/markdown-editor-surface.tsx"),
+)
 
 type PresentationalComposerProps = ComposerModel
 
@@ -170,7 +184,7 @@ export function PresentationalComposer({
             />
           )}
           {mode === "markdown" && !phone && (
-            <MarkdownEditorSurface
+            <MarkdownSurface
               ref={surfaceRef}
               draft={draft}
               placeholder={placeholder}
@@ -288,6 +302,52 @@ export function PresentationalComposer({
         </div>
       </div>
     </form>
+  )
+}
+
+type MarkdownSurfaceProps = Omit<ComponentProps<typeof TextAreaSurface>, "ref"> & {
+  readonly ref: RefObject<ComposerSurface | null>
+}
+
+/**
+ * 読み終わるまで（読めなかったときも）は、書式の行と同じ高さの空きを上に置いた素の `<textarea>` を出す。
+ * 読み込み中の `<textarea>` にフォーカスがあれば、エディタに替わったあとへ引き継ぐ。
+ */
+function MarkdownSurface({ ref, ...surface }: MarkdownSurfaceProps): ReactElement {
+  const state = markdownEditorSurface.useLoadState()
+  const pendingHadFocus = useRef(false)
+  const ready = state.kind === "ready"
+  useEffect(() => {
+    void markdownEditorSurface.load()
+  }, [])
+  useEffect(() => {
+    if (ready && pendingHadFocus.current) {
+      pendingHadFocus.current = false
+      ref.current?.focus()
+    }
+  }, [ready, ref])
+  if (state.kind === "ready") {
+    return <state.module.MarkdownEditorSurface ref={ref} {...surface} />
+  }
+  return <PendingMarkdownSurface ref={ref} hadFocus={pendingHadFocus} {...surface} />
+}
+
+function PendingMarkdownSurface({
+  hadFocus,
+  ...surface
+}: MarkdownSurfaceProps & { readonly hadFocus: RefObject<boolean> }): ReactElement {
+  const frameRef = useRef<HTMLDivElement | null>(null)
+  useLayoutEffect(() => {
+    const frame = frameRef.current
+    return () => {
+      hadFocus.current = frame?.contains(document.activeElement) ?? false
+    }
+  }, [hadFocus])
+  return (
+    <div ref={frameRef} className={dispatchStyles["dispatch-surface-pending"]}>
+      <div aria-hidden="true" className={dispatchStyles["dispatch-format-bar-space"]} />
+      <TextAreaSurface {...surface} />
+    </div>
   )
 }
 

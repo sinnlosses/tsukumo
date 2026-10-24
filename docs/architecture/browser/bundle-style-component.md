@@ -25,14 +25,16 @@
 `/vendor/<name>` が返すのは `node_modules` の実ファイル（`src/server/view-server/adapter/vendor-asset.ts`）で、
 **CDN からは読まない**。
 
-`vite build` の出力は入口の `ui.js` と、**Markdown の描画一式だけを `import()` で分けたチャンク**。
+`vite build` の出力は入口の `ui.js` と、**`import()` で分けたチャンク**。
 Markdown を描く口は2つあり、どちらも `import()` で読む。
 
-| チャンク               | 中身                                                                                                     |
-| ---------------------- | -------------------------------------------------------------------------------------------------------- |
-| `markdown-renderer.js` | レポートの描画（`renderer/markdown-renderer.tsx` から先の rehype 一式・highlight.js・図とグラフの部品）  |
-| `task-body.js`         | タスクの本文の描画（`task-body.tsx` と ID の自動リンク）                                                 |
-| `lib.js`               | 2つが共に読む react-markdown・remark・micromark 一式（組み立てが自動で括り出す。名前も組み立てが付ける） |
+| チャンク                     | 中身                                                                                                               |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `markdown-renderer.js`       | レポートの描画（`renderer/markdown-renderer.tsx` から先の rehype 一式・highlight.js・図とグラフの部品）            |
+| `task-body.js`               | タスクの本文の描画（`task-body.tsx` と ID の自動リンク）                                                           |
+| `markdown-editor-surface.js` | 入力欄のマークダウンエディタ（CodeMirror 6 一式）                                                                  |
+| `character.js` ほか2つ       | 会話以外の3画面（`token-usage.js`・`achievement.js`）                                                              |
+| `lib.js`・`session.js` ほか  | 複数のチャンクが共に読むモジュール（組み立てが括り出して名付ける）。`lib.js` は Markdown 2つの react-markdown 一式 |
 
 CSS は分けず1本。サーバは起動時にすべてメモリに読み、`/assets/` で**組み立てた名前の一覧にある名前だけ**を
 配る（要求のパスからファイルを組み立てない）。入口の名前は配る URL と同じにする（チャンクは入口を `./ui.js` で
@@ -48,6 +50,10 @@ import するので、食い違うと入口を別のモジュールとして読�
   store に持つ。読み終わっていれば同じ描画で本体を出し、まだなら高さを持たない空の器に `aria-busy="true"` を出す。
   ブラウザは同じ URL の `import()` の失敗を覚えていて取り直さないので、読めなかったら本文を字のまま出して
   `aria-busy` を出さず、回復はページの読み直しに任せる
+- マークダウンエディタは面が `markdown` になったとき `presentational-composer.tsx` が読む。読み終わるまでは、
+  書式の行と同じ高さの空きを上に置いた素の `<textarea>` を出し、フォーカスがあれば替わったあとへ引き継ぐ。
+  3画面は `layout.tsx` が `deferredScreen` で包み、開いたときに読む。
+  読み込み中は `aria-busy="true"` の空の器、読めなければ `<ScreenBoundary>` の「読み込み直す」
 - **`React.lazy` と `Suspense` は使わない。** `lazy` は読み終わっていても最初の1回は必ず suspend し、
   store の更新（同期の lane）では fallback をその場でコミットする。React 19 は fallback から本体への
   差し替えを `setTimeout` で 300ms 間引くので、最初のレポートが 300ms 遅れ、時計を止めた E2E では眠ったままになる

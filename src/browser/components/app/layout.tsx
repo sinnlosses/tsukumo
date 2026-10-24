@@ -14,13 +14,21 @@ import { ScreenNav } from "../domain/screen-nav/screen-nav.tsx"
 import { SidebarTaskPane } from "../domain/sidebar/components/sidebar-task-pane.tsx"
 import { UsagePane } from "../domain/sidebar/components/usage-pane.tsx"
 import { SkipLink } from "../domain/skip-link.tsx"
-import { Achievement } from "../page/achievement/achievement.tsx"
 import { DiaryNotice } from "../page/achievement/components/diary-notice/diary-notice.tsx"
-import { Character } from "../page/character/character.tsx"
 import { TurnList } from "../page/conversation/components/main-view/components/turn-list/turn-list.tsx"
 import { Conversation } from "../page/conversation/conversation.tsx"
-import { TokenUsage } from "../page/token-usage/token-usage.tsx"
+import { deferredScreen } from "./deferred-screen.tsx"
 import { ScreenBoundary } from "./screen-boundary.tsx"
+
+const Character = deferredScreen(
+  async () => (await import("../page/character/character.tsx")).Character,
+)
+const TokenUsage = deferredScreen(
+  async () => (await import("../page/token-usage/token-usage.tsx")).TokenUsage,
+)
+const Achievement = deferredScreen(
+  async () => (await import("../page/achievement/achievement.tsx")).Achievement,
+)
 
 /**
  * 出している画面を選ぶ（`location.hash`）。

@@ -6,6 +6,8 @@ import { Layout } from "../../../../src/browser/components/app/layout.tsx"
 
 // 名前を入れた部品は、描くときに throw する。
 const failing = vi.hoisted(() => ({ names: new Set<string>() }))
+// モックの工場が走った（モジュールが読まれた）画面の名前。
+const loaded = vi.hoisted(() => ({ names: new Set<string>() }))
 
 function stubPart(name: string): () => ReactElement {
   return function StubPart(): ReactElement {
@@ -45,15 +47,18 @@ vi.mock(
   "../../../../src/browser/components/page/achievement/components/diary-notice/diary-notice.tsx",
   () => ({ DiaryNotice: () => stubPart("diary-notice")() }),
 )
-vi.mock("../../../../src/browser/components/page/achievement/achievement.tsx", () => ({
-  Achievement: () => stubPart("achievement")(),
-}))
-vi.mock("../../../../src/browser/components/page/character/character.tsx", () => ({
-  Character: () => stubPart("character")(),
-}))
-vi.mock("../../../../src/browser/components/page/token-usage/token-usage.tsx", () => ({
-  TokenUsage: () => stubPart("token-usage")(),
-}))
+vi.mock("../../../../src/browser/components/page/achievement/achievement.tsx", () => {
+  loaded.names.add("achievement")
+  return { Achievement: () => stubPart("achievement")() }
+})
+vi.mock("../../../../src/browser/components/page/character/character.tsx", () => {
+  loaded.names.add("character")
+  return { Character: () => stubPart("character")() }
+})
+vi.mock("../../../../src/browser/components/page/token-usage/token-usage.tsx", () => {
+  loaded.names.add("token-usage")
+  return { TokenUsage: () => stubPart("token-usage")() }
+})
 vi.mock("../../../../src/browser/domain/browser-error-report.ts", () => ({
   reportBrowserError: vi.fn<() => void>(),
 }))
@@ -77,6 +82,17 @@ async function moveTo(hash: string): Promise<void> {
 }
 
 describe("Layout の描画の失敗の受け止め", () => {
+  // 読み込みの状態はモジュールに残るので、「読まれない」側のテストをファイルの先頭に置く。
+  it("会話の画面だけのあいだは、会話以外の3画面のモジュールを読まない。画面を開くと、その画面だけ読む", async () => {
+    render(<Layout />)
+    expect([...loaded.names]).toEqual([])
+
+    await moveTo("#token-usage")
+
+    expect(await screen.findByTestId("token-usage")).toBeDefined()
+    expect([...loaded.names]).toEqual(["token-usage"])
+  })
+
   it("ほかの画面が throw しても、説明と読み込み直すボタンを出し、画面のナビは残る", async () => {
     failing.names.add("character")
     render(<Layout />)
@@ -84,7 +100,7 @@ describe("Layout の描画の失敗の受け止め", () => {
     await moveTo("#character")
 
     expect(
-      within(screen.getByRole("alert")).getByRole("button", { name: "読み込み直す" }),
+      within(await screen.findByRole("alert")).getByRole("button", { name: "読み込み直す" }),
     ).toBeDefined()
     expect(screen.getByRole("navigation", { name: "画面のナビ" })).toBeDefined()
   })
@@ -93,12 +109,12 @@ describe("Layout の描画の失敗の受け止め", () => {
     failing.names.add("character")
     render(<Layout />)
     await moveTo("#character")
-    expect(screen.getByRole("alert")).toBeDefined()
+    expect(await screen.findByRole("alert")).toBeDefined()
 
     await moveTo("#token-usage")
 
+    expect(await screen.findByTestId("token-usage")).toBeDefined()
     expect(screen.queryByRole("alert")).toBeNull()
-    expect(screen.getByTestId("token-usage")).toBeDefined()
   })
 
   it("会話の画面が throw しても、帯と書き終わりの知らせは巻き込まれない", () => {
