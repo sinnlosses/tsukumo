@@ -42,7 +42,10 @@
 **外の世界に依存する値は、読み取りを1つのモジュールに集約する**。モジュールのトップレベルで
 環境変数に触らない（読み取りの順序に依存し、テストから差し替えられなくなる）。
 tsukumo を起こしたディレクトリ（`process.cwd()`）も同じで、読むのは入口の `src/cli.ts` だけ。
-以降は引数で受け取る。
+以降は引数で受け取る。`process.env`・`process.cwd`・`node:os` を読めるファイルは
+`.oxlintrc.json` の `overrides` が決め、ほかのファイルで読むと lint が落とす。
+`process` を別名で import した下の読み取りは lint が拾えないので、`test/architecture/outside-world.test.ts` が
+別名の import を落とす。`require()` で読む形は見ない（`src` は ESM で使い手が無い）。
 
 集約すると、テストで環境を差し替える手段が1つで済み、「この値はどこで決まったのか」を
 探す場所も1つになる。

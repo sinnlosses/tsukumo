@@ -70,6 +70,266 @@
       }
     },
     {
+      // 外の世界を読む場所を限る（docs/coding-standards.md「外部の入力を読む場所を1つにする」）。
+      // `overrides` は規則を丸ごと置き換えるので、許すファイルは下のブロックで「この表から許す分を引いた同じ規則」を書き直す。
+      // 引いていない禁止と react の禁止が残る。大きさの上限のため、書き直したブロックの message はこのブロックに任せて省く
+      "files": ["src/**"],
+      "rules": {
+        "no-restricted-globals": [
+          "error",
+          {
+            "name": "Date",
+            "message": "Date を使わず Temporal を使う（docs/coding-standards.md「Date を使わない」）"
+          },
+          { "name": "fetch", "message": "fetch を呼ぶのは browser/domain/rpc.ts だけ" }
+        ],
+        "no-restricted-properties": [
+          "error",
+          {
+            "object": "process",
+            "property": "env",
+            "message": "process.env を読むのは cli.ts と server/adapter/tsukumo-home.ts だけ"
+          },
+          {
+            "object": "process",
+            "property": "cwd",
+            "message": "process.cwd を読むのは cli.ts だけ。以降は引数で配る"
+          },
+          {
+            "object": "Temporal",
+            "property": "Now",
+            "message": "Temporal.Now を読むのは server/adapter/local-time.ts と browser/utils/clock.ts だけ"
+          },
+          {
+            "object": "globalThis",
+            "property": "fetch",
+            "message": "fetch を呼ぶのは browser/domain/rpc.ts だけ"
+          },
+          { "object": "window", "property": "fetch" },
+          { "object": "self", "property": "fetch" },
+          { "object": "global", "property": "fetch" }
+        ],
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {
+                "name": "react",
+                "importNames": ["useMemo", "useCallback", "memo"],
+                "message": "手でメモ化しない。React Compiler に任せる（docs/coding-standards/react.md「手でメモ化しない」）"
+              },
+              {
+                "name": "@anthropic-ai/claude-agent-sdk",
+                "message": "SDK を import するのは機能の adapter/ 直下の sdk- で始まるファイルだけ（docs/architecture/code-placement.md）"
+              }
+            ],
+            "patterns": [
+              {
+                "group": ["node:process", "process"],
+                "importNames": ["env", "cwd"],
+                "message": "env・cwd を読むのは cli.ts と tsukumo-home.ts だけ"
+              },
+              {
+                "group": ["node:os", "os"],
+                "message": "node:os を import するのは server/adapter/tsukumo-home.ts だけ"
+              },
+              {
+                "group": [
+                  "node:http",
+                  "http",
+                  "node:https",
+                  "https",
+                  "node:http2",
+                  "http2",
+                  "node:net",
+                  "net",
+                  "node:tls",
+                  "tls",
+                  "node:dgram",
+                  "dgram"
+                ],
+                "allowTypeImports": true,
+                "message": "ネットワークの口は server/view-server/adapter/server.ts だけ"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      // process.env と node:os を許す
+      "files": ["src/server/adapter/tsukumo-home.ts"],
+      "rules": {
+        "no-restricted-properties": [
+          "error",
+          { "object": "process", "property": "cwd" },
+          { "object": "Temporal", "property": "Now" },
+          { "object": "globalThis", "property": "fetch" },
+          { "object": "window", "property": "fetch" },
+          { "object": "self", "property": "fetch" },
+          { "object": "global", "property": "fetch" }
+        ],
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              { "name": "react", "importNames": ["useMemo", "useCallback", "memo"] },
+              { "name": "@anthropic-ai/claude-agent-sdk" }
+            ],
+            "patterns": [
+              { "group": ["node:process", "process"], "importNames": ["cwd"] },
+              {
+                "group": [
+                  "node:http",
+                  "http",
+                  "node:https",
+                  "https",
+                  "node:http2",
+                  "http2",
+                  "node:net",
+                  "net",
+                  "node:tls",
+                  "tls",
+                  "node:dgram",
+                  "dgram"
+                ],
+                "allowTypeImports": true
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      // SDK を許す
+      "files": ["src/server/*/adapter/sdk-*.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [{ "name": "react", "importNames": ["useMemo", "useCallback", "memo"] }],
+            "patterns": [
+              { "group": ["node:process", "process"], "importNames": ["env", "cwd"] },
+              { "group": ["node:os", "os"] },
+              {
+                "group": [
+                  "node:http",
+                  "http",
+                  "node:https",
+                  "https",
+                  "node:http2",
+                  "http2",
+                  "node:net",
+                  "net",
+                  "node:tls",
+                  "tls",
+                  "node:dgram",
+                  "dgram"
+                ],
+                "allowTypeImports": true
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      // http 系を許す
+      "files": ["src/server/view-server/adapter/server.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              { "name": "react", "importNames": ["useMemo", "useCallback", "memo"] },
+              { "name": "@anthropic-ai/claude-agent-sdk" }
+            ],
+            "patterns": [
+              { "group": ["node:process", "process"], "importNames": ["env", "cwd"] },
+              { "group": ["node:os", "os"] }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      // process.env と process.cwd を許す
+      "files": ["src/cli.ts"],
+      "rules": {
+        "no-restricted-properties": [
+          "error",
+          { "object": "Temporal", "property": "Now" },
+          { "object": "globalThis", "property": "fetch" },
+          { "object": "window", "property": "fetch" },
+          { "object": "self", "property": "fetch" },
+          { "object": "global", "property": "fetch" }
+        ],
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              { "name": "react", "importNames": ["useMemo", "useCallback", "memo"] },
+              { "name": "@anthropic-ai/claude-agent-sdk" }
+            ],
+            "patterns": [
+              { "group": ["node:os", "os"] },
+              {
+                "group": [
+                  "node:http",
+                  "http",
+                  "node:https",
+                  "https",
+                  "node:http2",
+                  "http2",
+                  "node:net",
+                  "net",
+                  "node:tls",
+                  "tls",
+                  "node:dgram",
+                  "dgram"
+                ],
+                "allowTypeImports": true
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      // Temporal.Now を許す
+      "files": ["src/browser/utils/clock.ts", "src/server/adapter/local-time.ts"],
+      "rules": {
+        "no-restricted-properties": [
+          "error",
+          { "object": "process", "property": "env" },
+          { "object": "process", "property": "cwd" },
+          { "object": "globalThis", "property": "fetch" },
+          { "object": "window", "property": "fetch" },
+          { "object": "self", "property": "fetch" },
+          { "object": "global", "property": "fetch" }
+        ]
+      }
+    },
+    {
+      // fetch を許す
+      "files": ["src/browser/domain/rpc.ts"],
+      "rules": {
+        "no-restricted-globals": [
+          "error",
+          {
+            "name": "Date",
+            "message": "Date を使わず Temporal を使う（docs/coding-standards.md「Date を使わない」）"
+          }
+        ],
+        "no-restricted-properties": [
+          "error",
+          { "object": "process", "property": "env" },
+          { "object": "process", "property": "cwd" },
+          { "object": "Temporal", "property": "Now" }
+        ]
+      }
+    },
+    {
       "files": ["test/**"],
       "rules": {
         "no-restricted-imports": [

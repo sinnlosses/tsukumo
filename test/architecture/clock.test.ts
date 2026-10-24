@@ -2,7 +2,6 @@ import { readFileSync } from "node:fs"
 
 import { describe, expect, it } from "vitest"
 
-import { withoutComments } from "../comment-line.ts"
 import {
   astAllChildren,
   astChildren,
@@ -13,22 +12,6 @@ import {
   type AstNode,
 } from "./ast-node.ts"
 import { listSourceFiles, SRC_ROOT } from "./source-file.ts"
-
-// 「いま」を読む場所を2つに保つ。E2E は時計をこの2箇所で凍らせる（サーバは
-// `TSUKUMO_FIXED_CLOCK`、ブラウザは E2E の側で `clock.ts` が呼ぶ関数を差し替える）ので、ほかで
-// 読まれると固定が黙って効かなくなる（docs/architecture/testing.md「E2E の成果物と再現」）。
-describe("Temporal.Now を読む箇所", () => {
-  it("`Temporal.Now` を読むのは src/server/adapter/local-time.ts と src/browser/utils/clock.ts だけ", () => {
-    const allowed = new Set(["server/adapter/local-time.ts", "browser/utils/clock.ts"])
-    const offenders = listSourceFiles(SRC_ROOT)
-      .filter((relPath) => !allowed.has(relPath))
-      .filter((relPath) =>
-        /\bTemporal\.Now\b/.test(withoutComments(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8"))),
-      )
-
-    expect(offenders).toEqual([])
-  })
-})
 
 // 単体テストには React Compiler が掛からず、描画中の時刻の読み取りが固まるのが見えないので、ここで落とす。
 describe("描画中に時計を読む箇所", () => {

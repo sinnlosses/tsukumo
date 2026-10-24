@@ -60,7 +60,7 @@ HTTP/WebSocket・ホスト・ファイル・子プロセス）に触るならそ
   ファイル名で決める: 機能の `adapter/` 直下の `sdk-` で始まるファイルだけ**（いまは
   `session-driver/`・`chat/`・`diary/`・`recommendation/`）。一覧ではなく
   名前で決めるのは、ファイルを足しても検査を直さずに済み、名前で SDK の境界を名乗らずに import
-  すれば `test/architecture/outside-world.test.ts` が落とすから。`adapter/sdk/` のようなディレクトリに切らない
+  すれば `.oxlintrc.json` の `no-restricted-imports` が落とすから。`adapter/sdk/` のようなディレクトリに切らない
   のは、`adapter/` の直下が境界の並びで、その下の段は境界を名乗らない `lib/` だけと決めてある
   から（「`lib/` と `utils/` に置く基準」）。**SDK の境界を1つの機能にまとめない**
   のは、日記を書かせる使い捨ての `query()` が日記の判断とだけ組になっていて、駆動の側に

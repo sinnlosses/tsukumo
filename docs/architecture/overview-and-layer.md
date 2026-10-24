@@ -91,5 +91,9 @@ shared（語彙・イベント・状態・reducer・zod スキーマ）は brows
 - 許した辺以外は `test/architecture/layer.test.ts` が落とす（層の辺は上の4本。サーバ側の機能どうしの辺は
   次の節の表）。import の拾い方は構文木で、静的 import・`export … from`・動的 `import()`・`require()` の
   specifier を引用符の違いに関係なく拾う。`shared` と `core` が外の世界（`node:` と `node:` なしの組み込み・`ws`・
-  `@anthropic-ai/*`）を読む道も同じ拾い方で塞ぐ。`process.env`・`process.cwd` を読む形（分割代入・別名の import を含む）も
-  `test/architecture/outside-world.test.ts` が構文木で見る
+  `@anthropic-ai/*`）を読む道も同じ拾い方で塞ぐ。`process.env`・`process.cwd` を読む形のうち、`process.env`・分割代入・`process["env"]` は
+  `.oxlintrc.json` の `no-restricted-properties` が、`import { env } from "node:process"` は `no-restricted-imports` が `src/**` で見て、
+  許すファイルは同じ `overrides` に並べる（許す分だけを引いた同じ規則を書き直す）。
+  `node:os`・`node:http` 系・Agent SDK の import も `no-restricted-imports` が見る（`require()` は `src` に使い手が無いので見ない）。
+  `process` を別名で import する形はこの規則が拾えないので、`test/architecture/outside-world.test.ts` が見る。
+  同じテストが見るのは、ほかに起こす外部コマンドと `listen` の宛先
