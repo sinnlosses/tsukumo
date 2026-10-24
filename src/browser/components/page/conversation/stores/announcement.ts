@@ -3,8 +3,8 @@
 
 import { create } from "zustand"
 
+import { useSession } from "../../../../stores/session.ts"
 import { announcementsBetween } from "../domain/session-announcement.ts"
-import { useSession } from "./session.ts"
 
 type AnnouncementBatch = {
   /** 入れ替えるたびに進む。同じ文面が続いても別の挿入として読ませる。 */

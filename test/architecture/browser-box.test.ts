@@ -88,17 +88,8 @@ describe("browser/ の機能どうしの import", () => {
 // `hooks/` / `domain/` / `lib/` / `utils/` / `stores/` という箱をまたぐ辺を見る
 // （`shared` への辺は層の検査 `ALLOWED_IMPORTS` がすでに見ているので、ここでは対象にしない）。
 //
-// `browser/hooks/` は機能の語彙を持たない React のフックの箱で、`components/ui/` と同じ扱い
-// （誰から引いてもよく、自分は `lib/` までしか引かない）。機能に固有のフックは機能の中の
-// `features/<機能>/hooks/` に置くので、こちらの箱には入らない。
-//
-// `browser/types/` の `*.d.ts`（箱に属さない ambient 宣言。`css-variable.d.ts` / `css-global.d.ts`）と
-// `browser/styles/`（グローバルな CSS だけで `.ts`/`.tsx` を持たない）はどの箱にも属さないので、
-// import 元・import 先のどちらでも無視する。未知のディレクトリが `browser/` 直下や
-// `browser/components/` 直下に増えたときにテストの直し忘れで素通りしないよう、`main.tsx` でも
-// `types/`/`styles` でもない未知の区画は `layerOf` と同じく `throw` する。
-// `browser/domain/` は画面全体の語彙（tsukumo の語彙を名乗り、2つ以上の機能が読むもの）の箱で、
-// `lib/`（ライブラリを包む道具）とは「ファイル名が tsukumo の語彙を名乗るか」で分かれる。
+// `browser/types/` の `*.d.ts` と `browser/styles/` はどの箱にも属さないので、import 元・import 先の
+// どちらでも無視する。未知の区画は `layerOf` と同じく `throw` する。
 const BROWSER_BOXES = [
   "main",
   "features",
@@ -220,19 +211,16 @@ describe("browser/utils/ の import", () => {
 // 同じ基準を掛ける（docs/architecture/browser-box.md「引き金は逆にも引く」）。`components/ui/` は汎用の部品の置き場で、
 // 読み手の数を問わないので対象外（docs/architecture/browser.md「読み手の数は問わない」）。
 //
-// 読み手が機能の外だけのものは対象外（`lib/socket.ts` と `domain/refresh.ts` は `stores/` が
-// 読む。下ろす先の機能が無いので、ここに残るのが正しい）。`stores/` はまだ対象にしていない
-// ——`stores/location-hash.ts`（`screen-nav` だけ）と `stores/main-view-turn.ts`
-// （`main-view` だけ）の読み手が1機能で、状態を機能の中へ下ろしてよいかは置き場の基準とは
-// 別の判断が要るため。
+// 読み手が機能の外にも居るものは対象外（下ろす先の機能が無いので、ここに残るのが正しい）。
+// `components/ui/<部品>/` は1つの読み手として数える。
 //
 // `components/domain/` は直下のファイルだけを対象にする（サブディレクトリは全画面で共有する
 // 枠（領域）で、1つの領域だけが読むのが正しい形。docs/architecture/browser-box.md「`components/domain/` の直下のファイルは
 // 領域ではなく共有の部品」）。
-const SHARED_BROWSER_BOXES = ["lib", "domain"] as const
+const SHARED_BROWSER_BOXES = ["lib", "domain", "stores", "hooks"] as const
 
 describe("browser/ の機能をまたぐ箱", () => {
-  it("browser/lib/・browser/domain/・components/domain/ 直下に、1つの機能だけが読むファイルは無い", () => {
+  it("browser/lib/・domain/・stores/・hooks/・components/domain/ 直下に、1つの機能だけが読むファイルは無い", () => {
     const files = listSourceFiles(SRC_ROOT).filter(
       (relPath) =>
         SHARED_BROWSER_BOXES.some((box) => relPath.startsWith(`browser/${box}/`)) ||
@@ -241,7 +229,11 @@ describe("browser/ の機能をまたぐ箱", () => {
     expect(files.length).toBeGreaterThan(0)
 
     const offenders = files.flatMap((relPath) => {
-      const readers = featureReadersOf(relPath, "browser/", (path) => browserFeatureOf(path)?.name)
+      const readers = featureReadersOf(
+        relPath,
+        "browser/",
+        (path) => browserFeatureOf(path)?.name ?? uiPartOf(path),
+      )
       return readers.features.length === 1 && readers.outsideFeatureCount === 0
         ? [`src/${relPath}（読むのは ${readers.features.join("")} だけ）`]
         : []
@@ -306,12 +298,15 @@ type PageNodeRule = {
   readonly allowsGrandchildComponents: boolean
   /** 概念のディレクトリ（`renderer/` など）を許すか（ページの直下では許さない）。 */
   readonly allowsConcept: boolean
+  /** 複数の部品が読む状態の `stores/` を持ってよいか（ページの直下だけ）。 */
+  readonly allowsStores: boolean
 }
 
 const PAGE_ROOT_RULE: PageNodeRule = {
   allowsComponents: true,
   allowsGrandchildComponents: true,
   allowsConcept: false,
+  allowsStores: true,
 }
 
 describe("components/page/ の形", () => {
@@ -357,6 +352,9 @@ function pageNodeViolations(
     if (entry.name === "domain" || entry.name === "hooks") {
       return []
     }
+    if (entry.name === "stores" && rule.allowsStores) {
+      return []
+    }
     if (rule.allowsConcept && PAGE_CONCEPT_DIRECTORIES.has(entry.name)) {
       return []
     }
@@ -388,6 +386,7 @@ function componentsDirViolations(
       allowsComponents: allowsChildComponents,
       allowsGrandchildComponents: false,
       allowsConcept: true,
+      allowsStores: false,
     })
   })
 }
@@ -481,6 +480,14 @@ function componentReexportViolations(): readonly string[] {
         : []
     })
   })
+}
+
+/** `browser/components/ui/<部品>/` の中のファイルなら、その部品のパス。 */
+function uiPartOf(relPath: string): string | undefined {
+  const [browser, components, ui, part] = relPath.split("/")
+  return browser === "browser" && components === "components" && ui === "ui" && part !== undefined
+    ? `browser/components/ui/${part}`
+    : undefined
 }
 
 /** `browser/components/domain/` の直下（サブディレクトリの中ではない）ファイルか。 */

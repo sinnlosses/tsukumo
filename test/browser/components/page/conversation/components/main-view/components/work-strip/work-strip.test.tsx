@@ -2,7 +2,7 @@ import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { WorkStrip } from "../../../../../../../../../src/browser/components/page/conversation/components/main-view/components/work-strip/work-strip.tsx"
-import { useWorkStripSteps } from "../../../../../../../../../src/browser/stores/work-strip-step-list.ts"
+import { useWorkStripSteps } from "../../../../../../../../../src/browser/components/page/conversation/stores/work-strip-step-list.ts"
 import type { SessionEvent } from "../../../../../../../../../src/shared/session/session-event.ts"
 import { applySessionEvent } from "../../../../../../../../../src/shared/session/session-fold.ts"
 import {

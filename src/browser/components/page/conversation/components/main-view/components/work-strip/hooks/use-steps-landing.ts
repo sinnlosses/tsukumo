@@ -3,7 +3,7 @@
 
 import { useEffect, useRef, type RefObject } from "react"
 
-import type { StepsLanding } from "../../../../../../../../stores/work-strip-step-list.ts"
+import type { StepsLanding } from "../../../../../stores/work-strip-step-list.ts"
 
 /** 失敗の行の印（`CurrentWorkStepGroup` の行に付く `data-step-failed`）。 */
 const FAILED_STEP_SUMMARY = "[data-step-failed] summary"

@@ -37,7 +37,7 @@ import {
   type Ref,
 } from "react"
 
-import type { Draft } from "../../../../../../../stores/composer-draft.ts"
+import type { Draft } from "../../../../stores/composer-draft.ts"
 import type {
   ComposerKey,
   ComposerSurface,

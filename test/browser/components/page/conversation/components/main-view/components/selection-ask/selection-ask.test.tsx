@@ -4,7 +4,7 @@ import { act, cleanup, createEvent, fireEvent, render, screen } from "@testing-l
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { SelectionAsk } from "../../../../../../../../../src/browser/components/page/conversation/components/main-view/components/selection-ask/selection-ask.tsx"
-import { useComposerDraft } from "../../../../../../../../../src/browser/stores/composer-draft.ts"
+import { useComposerDraft } from "../../../../../../../../../src/browser/components/page/conversation/stores/composer-draft.ts"
 import { useComposerFocus } from "../../../../../../../../../src/browser/stores/composer-focus.ts"
 
 const RECT = { left: 40, bottom: 100 }

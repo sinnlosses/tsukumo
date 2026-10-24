@@ -1,7 +1,7 @@
 // 入力欄の面（`<textarea>` とマークダウンエディタ）と、面が映す下書き・面から届くキーの形。
 // どちらの面も DOM の型をここへ持ち込まない。
 
-import type { Draft } from "../../../../../../stores/composer-draft.ts"
+import type { Draft } from "../../../stores/composer-draft.ts"
 
 /** 下書きのほかに、入力欄のロジックが面に触るのはこの4つだけ。 */
 export type ComposerSurface = {

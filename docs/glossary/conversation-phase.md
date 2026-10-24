@@ -48,7 +48,7 @@
   （`docs/architecture/screen-design.md` 13.13）
 - **注記**: 局面は5つだが中身は3つ。尋ねるは進み具合の帯の今の段が答え待ちになり、答える札が本文に出る形、
   つまずくはレポートの頭に失敗の塊が付く形で、中身そのものは替わらない。いま出している中身は `MainViewContent`
-  （値は `welcome` / `work` / `report`。`src/browser/stores/main-view-content.ts`）で、局面からは導けない
+  （値は `welcome` / `work` / `report`。`src/browser/components/page/conversation/stores/main-view-content.ts`）で、局面からは導けない
   （送った・閉じたの遷移でしか変わらず、閉じたあとの続きのターンでもレポートのまま残る）
 - **避ける言い方**: フェーズ、段（ワークプランの段・`WorkPhase` と紛れる）、モード（仕事 / 雑談の切り替えと紛れる）
 

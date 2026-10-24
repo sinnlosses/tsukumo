@@ -6,7 +6,7 @@
 
 import { useEffect, useRef, type RefObject } from "react"
 
-import { acquireOverlay } from "./open-overlay.ts"
+import { acquireOverlay } from "../../../../hooks/open-overlay.ts"
 
 /** `open` に追随する `<dialog>` の ref を返す。要素へは `<dialog ref={...}>` で渡す。 */
 export function useModalDialog(open: boolean): RefObject<HTMLDialogElement | null> {

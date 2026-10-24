@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 
-import { useComposerDraft } from "../../../../../../../../stores/composer-draft.ts"
+import { useComposerDraft } from "../../../../../stores/composer-draft.ts"
 import { useTurnStatus } from "./use-turn-status.ts"
 
 export type PhoneTurnActionModel =

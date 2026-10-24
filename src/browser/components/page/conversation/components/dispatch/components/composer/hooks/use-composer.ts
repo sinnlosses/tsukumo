@@ -19,12 +19,6 @@ import { useEffect, useRef, useState, type RefObject } from "react"
 import type { PromptRouting } from "../../../../../../../../../shared/contract/session.ts"
 import { FRAME_ERROR_REASON } from "../../../../../../../../../shared/frame.ts"
 import { usePhoneWidth } from "../../../../../../../../hooks/use-phone-width.ts"
-import {
-  EMPTY_DRAFT,
-  useComposerDraft,
-  type Draft,
-} from "../../../../../../../../stores/composer-draft.ts"
-import { useInquiryAnswer } from "../../../../../../../../stores/inquiry-answer.ts"
 import { useInquiryJump } from "../../../../../../../../stores/inquiry-jump.ts"
 import {
   useRestartRefused,
@@ -33,6 +27,8 @@ import {
 } from "../../../../../../../../stores/session.ts"
 import { useDebouncedCallback } from "../../../../../../../../utils/debounce.ts"
 import { isClearWithArgs } from "../../../../../domain/slash-clear.ts"
+import { EMPTY_DRAFT, useComposerDraft, type Draft } from "../../../../../stores/composer-draft.ts"
+import { useInquiryAnswer } from "../../../../../stores/inquiry-answer.ts"
 import type { ComposerKey, ComposerSurface } from "../../../domain/composer-surface.ts"
 import {
   clearSessionDraft,

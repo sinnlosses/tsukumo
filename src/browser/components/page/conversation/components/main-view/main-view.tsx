@@ -27,14 +27,11 @@ import {
 import { usePhoneWidth } from "../../../../../hooks/use-phone-width.ts"
 import { useCurrentTurnSteps } from "../../../../../stores/current-turn-step-list.ts"
 import { useInquiryJump } from "../../../../../stores/inquiry-jump.ts"
-import {
-  type MainViewContent,
-  useMainViewContent,
-} from "../../../../../stores/main-view-content.ts"
 import { useMainViewTurns } from "../../../../../stores/main-view-turn.ts"
 import { useReadingSection } from "../../../../../stores/reading-section.ts"
 import { useSession } from "../../../../../stores/session.ts"
 import { useTurnSelection } from "../../../../../stores/turn-selection.ts"
+import { type MainViewContent, useMainViewContent } from "../../stores/main-view-content.ts"
 import { Inquiry } from "../inquiry/inquiry.tsx"
 import { RepositoryFileLinkProvider } from "../repository-link/repository-link.tsx"
 import { CurrentStep } from "./components/current-step/current-step.tsx"

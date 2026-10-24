@@ -5,7 +5,7 @@ import {
   type ShownTarget,
   useActiveTurnScroll,
 } from "../../../../../../../../src/browser/components/page/conversation/components/main-view/hooks/use-active-turn-scroll.ts"
-import { useReadingPosition } from "../../../../../../../../src/browser/stores/reading-position.ts"
+import { useReadingPosition } from "../../../../../../../../src/browser/components/page/conversation/stores/reading-position.ts"
 import { useSession } from "../../../../../../../../src/browser/stores/session.ts"
 
 // 見出しの並びは寸法を持たない jsdom に代わって、上端を差し替えられる要素で作る。

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest"
 
-import { useReadingPosition } from "../../../src/browser/stores/reading-position.ts"
+import { useReadingPosition } from "../../../../../../src/browser/components/page/conversation/stores/reading-position.ts"
 
 afterEach(() => {
   useReadingPosition.setState(useReadingPosition.getInitialState(), true)

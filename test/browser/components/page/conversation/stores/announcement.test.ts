@@ -1,11 +1,11 @@
 import { act } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
-import { useAnnouncement } from "../../../src/browser/stores/announcement.ts"
-import { useSession } from "../../../src/browser/stores/session.ts"
-import { INITIAL_SESSION_STATE } from "../../../src/shared/session/session-state.ts"
-import { requestEvent } from "../../fixture/session-event.ts"
-import { putSession, putState } from "../session-store.ts"
+import { useAnnouncement } from "../../../../../../src/browser/components/page/conversation/stores/announcement.ts"
+import { useSession } from "../../../../../../src/browser/stores/session.ts"
+import { INITIAL_SESSION_STATE } from "../../../../../../src/shared/session/session-state.ts"
+import { requestEvent } from "../../../../../fixture/session-event.ts"
+import { putSession, putState } from "../../../../session-store.ts"
 
 afterEach(() => {
   act(() => {

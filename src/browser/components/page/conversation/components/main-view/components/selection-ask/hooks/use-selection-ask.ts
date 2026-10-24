@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react"
 
-import { useComposerDraft } from "../../../../../../../../stores/composer-draft.ts"
 import { useComposerFocus } from "../../../../../../../../stores/composer-focus.ts"
+import { useComposerDraft } from "../../../../../stores/composer-draft.ts"
 import { quoteOf } from "../domain/selection-quote.ts"
 import { reportSelectionOf, type ReportSelection } from "../domain/selection-range.ts"
 

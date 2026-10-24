@@ -6,10 +6,10 @@ import clsx from "clsx"
 import type { ReactElement, RefObject } from "react"
 
 import { CurrentWorkStepGroup } from "../../../../../../../features/current-work/components/current-work-step-group.tsx"
-import type { StepsLanding } from "../../../../../../../stores/work-strip-step-list.ts"
 import { Button } from "../../../../../../ui/button/button.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
 import { WORK_STRIP_MARKS, type WorkStripResult } from "../../../../domain/turn-result-mark.ts"
+import type { StepsLanding } from "../../../../stores/work-strip-step-list.ts"
 import type { WorkActivity } from "../../domain/work-activity.ts"
 import { useStepsLanding } from "./hooks/use-steps-landing.ts"
 import type {

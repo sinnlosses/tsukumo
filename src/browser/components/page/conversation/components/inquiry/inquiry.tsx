@@ -15,16 +15,16 @@ import { reportSectionsMarkdown } from "../../../../../../shared/report/report-m
 import { truncateForDisplay } from "../../../../../features/current-work/domain/current-work-step.ts"
 import { usePhoneWidth } from "../../../../../hooks/use-phone-width.ts"
 import { useNowWhile } from "../../../../../stores/clock.ts"
+import { useInquiryJump } from "../../../../../stores/inquiry-jump.ts"
+import { Button } from "../../../../ui/button/button.tsx"
+import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
+import { Text } from "../../../../ui/text/text.tsx"
 import {
   useInquiryAnswer,
   type InquiryBrief as InquiryBriefModel,
   type InquiryModel,
   type InquiryOptionRow,
-} from "../../../../../stores/inquiry-answer.ts"
-import { useInquiryJump } from "../../../../../stores/inquiry-jump.ts"
-import { Button } from "../../../../ui/button/button.tsx"
-import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
-import { Text } from "../../../../ui/text/text.tsx"
+} from "../../stores/inquiry-answer.ts"
 import { detailBlockClassName, Markdown, QuestionPreviewMarkdown } from "../markdown/markdown.tsx"
 import { useInquiryScroll } from "./hooks/use-inquiry-scroll.ts"
 import { useInquiryVisibility } from "./hooks/use-inquiry-visibility.ts"

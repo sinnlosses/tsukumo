@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest"
 
-import { announcementsBetween } from "../../../src/browser/domain/session-announcement.ts"
-import type { SessionEvent } from "../../../src/shared/session/session-event.ts"
-import { applySessionEvent } from "../../../src/shared/session/session-fold.ts"
+import { announcementsBetween } from "../../../../../../src/browser/components/page/conversation/domain/session-announcement.ts"
+import type { SessionEvent } from "../../../../../../src/shared/session/session-event.ts"
+import { applySessionEvent } from "../../../../../../src/shared/session/session-fold.ts"
 import {
   INITIAL_SESSION_STATE,
   type SessionState,
-} from "../../../src/shared/session/session-state.ts"
-import { requestEvent } from "../../fixture/session-event.ts"
+} from "../../../../../../src/shared/session/session-state.ts"
+import { requestEvent } from "../../../../../fixture/session-event.ts"
 
 function fold(from: SessionState, ...events: readonly SessionEvent[]): SessionState {
   return events.reduce((state, event) => applySessionEvent(state, event, 0), from)

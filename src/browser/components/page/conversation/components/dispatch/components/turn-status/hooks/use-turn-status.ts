@@ -19,8 +19,6 @@ import {
   turnElapsedText,
 } from "../../../../../../../../domain/turn-elapsed.ts"
 import { useNowWhile } from "../../../../../../../../stores/clock.ts"
-import { useComposerDraft } from "../../../../../../../../stores/composer-draft.ts"
-import { useInquiryAnswer } from "../../../../../../../../stores/inquiry-answer.ts"
 import { useSession } from "../../../../../../../../stores/session.ts"
 import {
   apiRetryNotice,
@@ -28,6 +26,8 @@ import {
   turnFailureLabel,
 } from "../../../../../domain/api-error-label.ts"
 import { rateLimitResetText, rateLimitSubject } from "../../../../../domain/rate-limit-label.ts"
+import { useComposerDraft } from "../../../../../stores/composer-draft.ts"
+import { useInquiryAnswer } from "../../../../../stores/inquiry-answer.ts"
 
 const SEND_LABEL = "送信"
 /** 答え待ちの質問があるあいだの送るボタンの字（最後の1問なら「答える」、手前なら「次へ」）。 */

@@ -92,6 +92,7 @@ components/page/<ページ>/
   presentational-<ページ>.tsx    presenter（器）
   <ページ>.module.css            container / presenter と、2つ以上の部品が読む CSS（あれば）
   domain/ hooks/                 そのページだけの語彙・フック（container / presenter も読むもの）
+  stores/                        そのページだけが読む状態の store（2つ以上の部品が読むもの。ページの直下だけが持てる）
   components/                    そのページの部品。直下はディレクトリだけ
     hooks/                       components/ の下の2つ以上の部品だけが読むフック
     <部品>/                      1部品1ディレクトリ
@@ -103,7 +104,7 @@ components/page/<ページ>/
       <概念>/                    下の「機能の中を分ける」の概念のディレクトリ（renderer/ など）
 ```
 
-- **ページの直下は、container / presenter の対と `<ページ>.module.css`、`domain/` `hooks/` `components/`
+- **ページの直下は、container / presenter の対と `<ページ>.module.css`、`domain/` `hooks/` `stores/` `components/`
   だけ。** 対は**どのページも必ず1対**にする（入口の形が決まっていれば、開く前に中の見当が付き、検査で
   名前を決め打ちできる）。container が state か副作用を持つなら `hooks/use-<ページ>.ts` へ出す。
   **2つ目の画面**（ページの中で並ぶか重なるもの）は直下に置かず `components/<部品>/` の部品にする。
@@ -111,12 +112,12 @@ components/page/<ページ>/
 - **置き場所は「読み手すべてを含む、いちばん近い箱」で機械的に決める**（部品・フック・語彙・
   CSS のどれも同じ）。数えるのは `import`（`import type` も含む）で、テストは数えない:
 
-  | 読み手                                               | 置き場                                                                                               |
-  | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-  | ページの直下（対・`hooks/`・`domain/`）を1つでも含む | ページの `hooks/` / `domain/` / `components/<部品>/`                                                 |
-  | `components/` の下の2つ以上の部品（直下は含まない）  | フックは `components/hooks/`、語彙はページの `domain/`、部品は `components/<部品>/`                  |
-  | `components/<部品>/` の中だけ（その部品と子部品）    | その部品の中の `hooks/` / `domain/` / `components/<子部品>/`                                         |
-  | 2つ以上のページ・枠                                  | ページの外（部品なら `components/domain/`、フックは `browser/hooks/`、それ以外は `browser/domain/`） |
+  | 読み手                                               | 置き場                                                                                                        |
+  | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+  | ページの直下（対・`hooks/`・`domain/`）を1つでも含む | ページの `hooks/` / `domain/` / `stores/`（状態）/ `components/<部品>/`                                       |
+  | `components/` の下の2つ以上の部品（直下は含まない）  | フックは `components/hooks/`、語彙はページの `domain/`、状態はページの `stores/`、部品は `components/<部品>/` |
+  | `components/<部品>/` の中だけ（その部品と子部品）    | その部品の中の `hooks/` / `domain/` / `components/<子部品>/`                                                  |
+  | 2つ以上のページ・枠                                  | ページの外（部品なら `components/domain/`、フックは `browser/hooks/`、それ以外は `browser/domain/`）          |
 
   **入れ子はページの `components/` から2段まで**（子部品だけが使う孫は、親の部品の `components/` に
   子部品と並べる）。CSS は class ごとに読み手を数える（選択子で結ばれた class は束ねて数える。

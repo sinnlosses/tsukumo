@@ -2,7 +2,7 @@
 
 import type { ReactElement } from "react"
 
-import { useAnnouncement } from "../../../../../stores/announcement.ts"
+import { useAnnouncement } from "../../stores/announcement.ts"
 import styles from "./live-announcer.module.css"
 
 export function LiveAnnouncer(): ReactElement {

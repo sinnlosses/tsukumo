@@ -5,9 +5,12 @@
 
 import { create } from "zustand"
 
-import { conversationMoment, isExchangeClosed } from "../../shared/session/conversation-moment.ts"
-import type { SessionState } from "../../shared/session/session-state.ts"
-import { useSession } from "./session.ts"
+import {
+  conversationMoment,
+  isExchangeClosed,
+} from "../../../../../shared/session/conversation-moment.ts"
+import type { SessionState } from "../../../../../shared/session/session-state.ts"
+import { useSession } from "../../../../stores/session.ts"
 
 /**
  * 出している中身。

@@ -25,7 +25,7 @@
 経緯は `docs/history/decision.md`「display.md 4.2 各表示物 / screen-design.md 13.13 お伺い（札の置き場。2026-10-10 に覆した記録）」）。
 札の置き場は `docs/architecture/display.md` 4.2「各表示物」のメインビュー。
 部品は `components/page/conversation/components/inquiry/inquiry.tsx`、答えの組み立ては
-`stores/inquiry-answer.ts`（入力欄と同じ1つの答えを読み書きする）。
+`conversation/stores/inquiry-answer.ts`（入力欄と同じ1つの答えを読み書きする）。
 
 ```
  ┌ お伺い ─ 質問 ─ 保存先 ───────────────── 1 / 2 · 待って 0:42 ┐

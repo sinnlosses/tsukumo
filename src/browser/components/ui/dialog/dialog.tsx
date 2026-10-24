@@ -5,8 +5,8 @@
 import clsx from "clsx"
 import type { CSSProperties, MouseEvent, ReactElement, ReactNode } from "react"
 
-import { useModalDialog } from "../../../hooks/use-modal-dialog.ts"
 import styles from "./dialog.module.css"
+import { useModalDialog } from "./hooks/use-modal-dialog.ts"
 
 type DialogBackdrop = "dim" | "deep" | "veil" | "sheet" | "clear"
 

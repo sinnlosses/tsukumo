@@ -1,7 +1,7 @@
 // 姿の差から、読み上げの領域で1回だけ読む文を導く。
 
-import { conversationMoment } from "../../shared/session/conversation-moment.ts"
-import type { SessionState } from "../../shared/session/session-state.ts"
+import { conversationMoment } from "../../../../../shared/session/conversation-moment.ts"
+import type { SessionState } from "../../../../../shared/session/session-state.ts"
 
 /**
  * `previous` から `next` へ進んだ間に新しく起きたことを、読む順に返す。

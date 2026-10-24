@@ -1,13 +1,22 @@
 import { act, cleanup, renderHook } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
-import { useInquiryAnswer, type InquiryModel } from "../../../src/browser/stores/inquiry-answer.ts"
-import { useInquiryDraft, useInquiryFocus } from "../../../src/browser/stores/inquiry-draft.ts"
-import type { StampedPendingAsk } from "../../../src/shared/session-driver/pending-ask.ts"
-import type { QuestionBrief } from "../../../src/shared/session-driver/question-brief.ts"
-import type { Question, QuestionOption } from "../../../src/shared/session-driver/question.ts"
-import { INITIAL_SESSION_STATE } from "../../../src/shared/session/session-state.ts"
-import { type CommandSpy, putSession } from "../session-store.ts"
+import {
+  useInquiryAnswer,
+  type InquiryModel,
+} from "../../../../../../src/browser/components/page/conversation/stores/inquiry-answer.ts"
+import {
+  useInquiryDraft,
+  useInquiryFocus,
+} from "../../../../../../src/browser/components/page/conversation/stores/inquiry-draft.ts"
+import type { StampedPendingAsk } from "../../../../../../src/shared/session-driver/pending-ask.ts"
+import type { QuestionBrief } from "../../../../../../src/shared/session-driver/question-brief.ts"
+import type {
+  Question,
+  QuestionOption,
+} from "../../../../../../src/shared/session-driver/question.ts"
+import { INITIAL_SESSION_STATE } from "../../../../../../src/shared/session/session-state.ts"
+import { type CommandSpy, putSession } from "../../../../session-store.ts"
 
 /**
  * お伺い（答え待ちの許可要求と質問）に対して組み立てる答え（メインビューの札と入力欄の両方が読み書きする1つの

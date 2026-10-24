@@ -6,8 +6,8 @@
 
 import { z } from "zod"
 
-import { EMPTY_DRAFT, type Draft } from "../../../../../../../../stores/composer-draft.ts"
 import { localPreference } from "../../../../../../../../utils/local-preference.ts"
+import { EMPTY_DRAFT, type Draft } from "../../../../../stores/composer-draft.ts"
 
 const MAX_DRAFT_SESSIONS = 10
 

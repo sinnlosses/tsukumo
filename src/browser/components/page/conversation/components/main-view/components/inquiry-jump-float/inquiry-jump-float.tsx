@@ -4,10 +4,10 @@
 import type { ReactElement } from "react"
 
 import { usePhoneWidth } from "../../../../../../../hooks/use-phone-width.ts"
-import { useInquiryAnswer } from "../../../../../../../stores/inquiry-answer.ts"
-import { useInquiryCardVisibility } from "../../../../../../../stores/inquiry-card-visibility.ts"
 import { useInquiryJump } from "../../../../../../../stores/inquiry-jump.ts"
 import { Button } from "../../../../../../ui/button/button.tsx"
+import { useInquiryAnswer } from "../../../../stores/inquiry-answer.ts"
+import { useInquiryCardVisibility } from "../../../../stores/inquiry-card-visibility.ts"
 import styles from "./inquiry-jump-float.module.css"
 
 const FLOAT_LABEL = "お伺い ↓"

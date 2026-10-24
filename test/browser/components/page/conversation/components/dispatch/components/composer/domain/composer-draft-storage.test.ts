@@ -8,7 +8,7 @@ import {
 import {
   EMPTY_DRAFT,
   type Draft,
-} from "../../../../../../../../../../src/browser/stores/composer-draft.ts"
+} from "../../../../../../../../../../src/browser/components/page/conversation/stores/composer-draft.ts"
 
 const STORAGE_KEY = "tsukumo-composer-draft:v1"
 

@@ -31,11 +31,11 @@ import {
 } from "../../../../../../domain/character-face.ts"
 import { portraitAppearance } from "../../../../../../domain/portrait-appearance.ts"
 import { useSession } from "../../../../../../stores/session.ts"
-import { useShownReaction, useWaitingLineDueAt } from "../../../../../../stores/shown-reaction.ts"
 import { useTurnSelection } from "../../../../../../stores/turn-selection.ts"
 import { nowEpochMilliseconds } from "../../../../../../utils/clock.ts"
 import { recordClockStampWithDay, type ClockStamp } from "../../../domain/clock-stamp.ts"
 import { welcomeHeadOf } from "../../../domain/welcome-entry-list.ts"
+import { useShownReaction, useWaitingLineDueAt } from "../../../stores/shown-reaction.ts"
 import { useWelcomeCards } from "../../hooks/use-welcome-card-list.ts"
 import {
   balloonLineIndices,

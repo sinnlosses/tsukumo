@@ -5,7 +5,7 @@ import { PendingAskCard } from "../../../../../../../src/browser/components/page
 import {
   useInquiryDraft,
   useInquiryFocus,
-} from "../../../../../../../src/browser/stores/inquiry-draft.ts"
+} from "../../../../../../../src/browser/components/page/conversation/stores/inquiry-draft.ts"
 import type { StampedPendingAsk } from "../../../../../../../src/shared/session-driver/pending-ask.ts"
 import type {
   Question,

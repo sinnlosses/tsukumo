@@ -1,6 +1,6 @@
 // やり取りの読み位置。読む面の基準の線にいちばん近い見出しの番号と、その見出しからのずれ（px）。本文は持たない。
 
-import type { ReadingPosition } from "../../../../../../stores/reading-position.ts"
+import type { ReadingPosition } from "../../../stores/reading-position.ts"
 
 /** 見出しの上端がこの距離まで基準の線に近づいたら、その見出しを読んでいることにする（px）。 */
 const READING_SLACK_PX = 24

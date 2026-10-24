@@ -10,8 +10,8 @@ import type { ComposerKey } from "../../../../../../../../../../src/browser/comp
 import {
   EMPTY_DRAFT,
   useComposerDraft,
-} from "../../../../../../../../../../src/browser/stores/composer-draft.ts"
-import { useInquiryDraft } from "../../../../../../../../../../src/browser/stores/inquiry-draft.ts"
+} from "../../../../../../../../../../src/browser/components/page/conversation/stores/composer-draft.ts"
+import { useInquiryDraft } from "../../../../../../../../../../src/browser/components/page/conversation/stores/inquiry-draft.ts"
 import { useSession } from "../../../../../../../../../../src/browser/stores/session.ts"
 import {
   INITIAL_SESSION_STATE,

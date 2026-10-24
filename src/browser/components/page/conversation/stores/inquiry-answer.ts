@@ -9,25 +9,25 @@
 // 複数選択で2つ以上選んだときはそのまま複数の要素として送り、入力欄に書いた文字列は同じ並びの末尾に足す。
 // SDK が求める「質問1件に対して1つの文字列」へ畳むのはサーバの役目で、ここで畳むとメインビューに残す記録の側で選択肢と突き合わせられなくなる。
 
-import type { FigureBlock } from "../../shared/report/report-block.ts"
-import type { ReportImageSize } from "../../shared/report/report-image.ts"
-import type { StampedPendingAsk } from "../../shared/session-driver/pending-ask.ts"
-import type { QuestionBrief } from "../../shared/session-driver/question-brief.ts"
+import type { FigureBlock } from "../../../../../shared/report/report-block.ts"
+import type { ReportImageSize } from "../../../../../shared/report/report-image.ts"
+import type { StampedPendingAsk } from "../../../../../shared/session-driver/pending-ask.ts"
+import type { QuestionBrief } from "../../../../../shared/session-driver/question-brief.ts"
 import {
   FREE_TEXT_OPTION_LABEL,
   isRecommendedLabel,
   sortQuestionOptions,
   type Question,
   withoutRecommendedMark,
-} from "../../shared/session-driver/question.ts"
-import { toolInputText } from "../domain/tool-summary.ts"
+} from "../../../../../shared/session-driver/question.ts"
+import { toolInputText } from "../../../../domain/tool-summary.ts"
+import { useSession, type SessionDispatch } from "../../../../stores/session.ts"
 import {
   useInquiryDraft,
   useInquiryFocus,
   type DraftAnswer,
   type InquiryFocus,
 } from "./inquiry-draft.ts"
-import { useSession, type SessionDispatch } from "./session.ts"
 
 /**
  * 選択肢1つぶんの札。`label` は SDK へ返す元のラベル（許可要求では「許可」「拒否」）で、`text` は画面に出す字。

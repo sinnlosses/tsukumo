@@ -1,4 +1,4 @@
-import type { InquiryModel } from "../../../../../../stores/inquiry-answer.ts"
+import type { InquiryModel } from "../../../stores/inquiry-answer.ts"
 
 /** 等幅の札で出す項目の上限。超えたぶんは「ほか n」にまとめる。 */
 const MAX_SHOWN_CHIPS = 6

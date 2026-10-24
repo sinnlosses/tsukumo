@@ -28,7 +28,7 @@
 | `components/domain/`   | **tsukumo の語彙を持つ部品**。直下は2つ以上の領域が読む部品、サブディレクトリは全画面で共有する枠（領域）            | `components/ui` / `features` / `hooks` / `domain` / `lib` / `utils` / `stores` / `shared`                                           |
 | `features/`            | **置かれる機能**（置き場所を持たず、領域に置いてもらう機能の部品・状態）                                             | `components/ui` / `hooks` / `domain` / `lib` / `utils` / `stores` / `shared`                                                        |
 | `components/ui/`       | **語彙を持たない** React の部品（値と呼び先を全部受け取る）                                                          | `components/ui` / `hooks` / `lib` / `utils` / `shared`                                                                              |
-| `hooks/`               | **語彙を持たない** React のフック（`use-modal-dialog.ts`）                                                           | `lib` / `utils` / `shared`                                                                                                          |
+| `hooks/`               | **語彙を持たない** React のフック（`use-window-away.ts`）                                                            | `lib` / `utils` / `shared`                                                                                                          |
 | `domain/`              | **画面全体の語彙**（tsukumo の語彙を名乗り、複数の領域・機能が読むもの。部品ではないもの）                           | `lib` / `utils` / `shared`                                                                                                          |
 | `lib/`                 | **固有のライブラリ**（`orpc` のように特定用途のパッケージ）を包む道具                                                | `utils` / `shared`                                                                                                                  |
 | `utils/`               | **それ以外**の汎用の道具（実行環境の API・`react` / `remeda` / `zod` を含む。下の「`lib/` と `utils/` に置く基準」） | —（`utils` の中だけ）                                                                                                               |
@@ -44,15 +44,19 @@
   `Select`・`Button`・`ImageZoom` は `ui`）
 - **`stores/` は「状態ライブラリの置き場」ではなく「画面全体で共有する状態の置き場」**（`docs/architecture/browser.md`「状態の持ち方」）。置くのは
   **複数の領域が読む**状態で、領域の中に置けず、`app.tsx` に残すと領域が入口を import することになる
-  ので箱が要る。**1本の hash の書き方は `stores/location-hash.ts` だけが知る**。領域と機能が触れるのは
+  ので箱が要る。**1つの画面（領域）だけが読む状態は、その画面の直下の `stores/`
+  （`components/page/<画面>/stores/`）に置く**（会話の画面の下書き・お伺いの答え・メインビューの中身など）。
+  **1本の hash の書き方は `stores/location-hash.ts` だけが知る**。領域と機能が触れるのは
   `stores/` が公開する hook までで、`app.tsx` と `stores/` の中身を組み立てる側として import しない
 - **領域どうし・機能どうしは import しない**（唯一の例外が「領域 → 置かれる機能」の1方向。次の節。
   親が子を組む形も数える）。またいで要るものは、**語彙を持つ部品なら `components/domain/`、フックなら
   `hooks/`、状態なら `stores/`、それ以外は tsukumo の語彙を名乗るなら `domain/`、ライブラリを包む道具なら
   `lib/` へ上げる**。上げる引き金は「2つ目の読み手が出たとき」で、1つの領域しか読まないものは領域の中に残す
-- **引き金は逆にも引く。** 読み手が1つの領域だけに戻ったら、その中へ**下ろす**。`browser/lib/` と
-  `browser/domain/`、`components/domain/` の直下に「1つの領域（機能）だけが読むファイル」が無いことは
-  `test/architecture/browser-box.test.ts` が見る（どの領域・機能も読まないものは対象外）
+- **引き金は逆にも引く。** 読み手が1つの領域だけに戻ったら、その中へ**下ろす**。`browser/lib/`・
+  `browser/domain/`・`browser/stores/`・`browser/hooks/`、`components/domain/` の直下に「1つの領域（機能）
+  だけが読むファイル」が無いことは `test/architecture/browser-box.test.ts` が見る（どの領域・機能も
+  読まないもの、領域の外のファイル〔別の `stores/` や `components/domain/` 直下〕も読むものは対象外。
+  `components/ui/<部品>/` は1つの読み手に数え、`hooks/use-modal-dialog.ts` は `ui/dialog/hooks/` にある）
 - **`domain/` と `lib/` の線は、tsukumo の語彙を名乗るか、固有のライブラリ（`orpc` のような）を
   包むかで引く。** `domain/appearance-color.ts` は `localStorage` を包むが名前が指すのは**画面の色**
   なので `domain/`、`domain/tool-summary.ts` は純関数で `remeda`（用途を問わない汎用ライブラリ）しか

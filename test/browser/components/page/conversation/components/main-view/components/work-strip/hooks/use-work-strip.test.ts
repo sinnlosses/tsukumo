@@ -2,7 +2,7 @@ import { act, cleanup, renderHook } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { useWorkStrip } from "../../../../../../../../../../src/browser/components/page/conversation/components/main-view/components/work-strip/hooks/use-work-strip.ts"
-import { useMainViewContent } from "../../../../../../../../../../src/browser/stores/main-view-content.ts"
+import { useMainViewContent } from "../../../../../../../../../../src/browser/components/page/conversation/stores/main-view-content.ts"
 import {
   useReadingSection,
   type ReadingSection,

@@ -2,11 +2,11 @@ import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { Inquiry } from "../../../../../../../src/browser/components/page/conversation/components/inquiry/inquiry.tsx"
-import { useInquiryCardVisibility } from "../../../../../../../src/browser/stores/inquiry-card-visibility.ts"
+import { useInquiryCardVisibility } from "../../../../../../../src/browser/components/page/conversation/stores/inquiry-card-visibility.ts"
 import {
   useInquiryDraft,
   useInquiryFocus,
-} from "../../../../../../../src/browser/stores/inquiry-draft.ts"
+} from "../../../../../../../src/browser/components/page/conversation/stores/inquiry-draft.ts"
 import { useInquiryJump } from "../../../../../../../src/browser/stores/inquiry-jump.ts"
 import type { StampedPendingAsk } from "../../../../../../../src/shared/session-driver/pending-ask.ts"
 import type { QuestionBrief } from "../../../../../../../src/shared/session-driver/question-brief.ts"

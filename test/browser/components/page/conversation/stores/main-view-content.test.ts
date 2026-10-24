@@ -1,13 +1,13 @@
 import { act } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
-import { useMainViewContent } from "../../../src/browser/stores/main-view-content.ts"
-import { useSession } from "../../../src/browser/stores/session.ts"
-import type { SessionEvent } from "../../../src/shared/session/session-event.ts"
-import { INITIAL_SESSION_STATE } from "../../../src/shared/session/session-state.ts"
-import { requestEvent } from "../../fixture/session-event.ts"
-import { requestRecord } from "../../fixture/session-record.ts"
-import { putSession } from "../session-store.ts"
+import { useMainViewContent } from "../../../../../../src/browser/components/page/conversation/stores/main-view-content.ts"
+import { useSession } from "../../../../../../src/browser/stores/session.ts"
+import type { SessionEvent } from "../../../../../../src/shared/session/session-event.ts"
+import { INITIAL_SESSION_STATE } from "../../../../../../src/shared/session/session-state.ts"
+import { requestEvent } from "../../../../../fixture/session-event.ts"
+import { requestRecord } from "../../../../../fixture/session-record.ts"
+import { putSession } from "../../../../session-store.ts"
 
 afterEach(() => {
   act(() => {

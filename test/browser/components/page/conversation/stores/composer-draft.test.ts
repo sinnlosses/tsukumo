@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest"
 
-import { useComposerDraft } from "../../../src/browser/stores/composer-draft.ts"
+import { useComposerDraft } from "../../../../../../src/browser/components/page/conversation/stores/composer-draft.ts"
 
 afterEach(() => {
   useComposerDraft.setState(useComposerDraft.getInitialState(), true)

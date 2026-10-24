@@ -8,11 +8,8 @@
 
 import { useEffect, useRef, type RefObject } from "react"
 
-import {
-  useReadingPosition,
-  type ReadingPosition,
-} from "../../../../../../stores/reading-position.ts"
 import { useSession } from "../../../../../../stores/session.ts"
+import { useReadingPosition, type ReadingPosition } from "../../../stores/reading-position.ts"
 import { readingPositionOf, scrollDeltaToRestore } from "../domain/reading-position.ts"
 import { readableHeadings } from "../domain/report-heading.ts"
 import { scrollerOf, subscribeScrollFrame } from "./scroll-frame.ts"

@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { Composer } from "../../../../../../../../../src/browser/components/page/conversation/components/dispatch/components/composer/composer.tsx"
 import type { ComposerSurface } from "../../../../../../../../../src/browser/components/page/conversation/components/dispatch/domain/composer-surface.ts"
-import { useComposerDraft } from "../../../../../../../../../src/browser/stores/composer-draft.ts"
+import { useComposerDraft } from "../../../../../../../../../src/browser/components/page/conversation/stores/composer-draft.ts"
 import { INITIAL_SESSION_STATE } from "../../../../../../../../../src/shared/session/session-state.ts"
 import { typedElement } from "../../../../../../../../typed-element.ts"
 import { createTestQueryClient } from "../../../../../../../query-client.tsx"

@@ -5,13 +5,13 @@
 
 import { replaceEqualDeep } from "@tanstack/react-query"
 
-import type { WelcomeHead } from "../../shared/recommendation/welcome-greeting.ts"
+import type { WelcomeHead } from "../../../../../shared/recommendation/welcome-greeting.ts"
 import {
   shownReaction,
   type ShownReaction,
   waitingLineDueAt,
-} from "../../shared/session/shown-reaction.ts"
-import { useSession } from "./session.ts"
+} from "../../../../../shared/session/shown-reaction.ts"
+import { useSession } from "../../../../stores/session.ts"
 
 let latest: ShownReaction = { kind: "none" }
 

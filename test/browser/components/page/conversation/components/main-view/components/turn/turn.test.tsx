@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
-import { useComposerDraft } from "../../../../../../../../../src/browser/stores/composer-draft.ts"
+import { useComposerDraft } from "../../../../../../../../../src/browser/components/page/conversation/stores/composer-draft.ts"
 import { useTaskBoardRequest } from "../../../../../../../../../src/browser/stores/task-board-request.ts"
 import type { ReportChangeSummary } from "../../../../../../../../../src/shared/report/report-change-summary.ts"
 import type {
