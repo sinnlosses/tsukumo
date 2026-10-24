@@ -34,6 +34,14 @@ describe("colorSwatch", () => {
     expect(colorSwatch("font-body", readToken)).toBeUndefined()
   })
 
+  it("トークン名の一覧に無い語（pnpm・src）ではトークンを読みにいかない", () => {
+    const read = vi.fn<typeof readToken>(readToken)
+
+    expect(colorSwatch("pnpm", read)).toBeUndefined()
+    expect(colorSwatch("src", read)).toBeUndefined()
+    expect(read).not.toHaveBeenCalled()
+  })
+
   it("カラーコードは3桁・8桁（透ける色）も読んで地になる", () => {
     expect(colorSwatch("#fff", readToken)).toEqual({ background: "#fff", ink: "dark" })
     expect(colorSwatch("#00000080", readToken)).toEqual({ background: "#00000080", ink: "light" })
