@@ -31,6 +31,7 @@ const PARENT_PATHS = [
   "docs/architecture.md",
   "docs/architecture/browser.md",
   "docs/architecture/build.md",
+  "docs/architecture/chat-mode.md",
   "docs/architecture/screen-design.md",
   "docs/architecture/testing.md",
   "docs/architecture/workflow-contract.md",

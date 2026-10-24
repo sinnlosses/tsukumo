@@ -1,17 +1,17 @@
 # 雑談モード: あらすじの写しのファイル
 
-戻り: `docs/architecture/chat-mode.md`「記憶の圧縮と忘却」
+戻り: `docs/architecture/chat-mode/synopsis-and-topics.md`「記憶の圧縮と忘却」
 
 あらすじの写しのファイルの形、旧い形を移した跡、定着が書く順と途中で落ちたときの直し方。
 
-責務: あらすじの写し（`~/.tsukumo/chat-summary/<パック名>.summary.json`）の形と書き方を持つ。何を載せるか・いつ書き直すかは `docs/architecture/chat-mode.md`。
+責務: あらすじの写し（`~/.tsukumo/chat-summary/<パック名>.summary.json`）の形と書き方を持つ。何を載せるか・いつ書き直すかは `docs/architecture/chat-mode/synopsis-and-topics.md`。
 読む時: あらすじの写しの読み書きか、定着の書く順に触るとき。
 直す時: 写しの形・旧い形の移し方・書く順を変えたとき。
 
 ## 形
 
 - **中身は1つの JSON**（`v`・`delivered`・`synopsis`・`topics`・`fold`）。`delivered` は「次に起こす
-  セッションへ渡す必要があるか」の1ビット（`docs/architecture/chat-mode.md` の「載せる条件」が使う）、
+  セッションへ渡す必要があるか」の1ビット（`docs/architecture/chat-mode/synopsis-and-topics.md` の「載せる条件」が使う）、
   `topics` は最近の話題の見出し、`fold` はあらすじがアーカイブのどの行まで取り込んだか（下の「書く順と、途中で落ちたとき」）
 - **同じファイルに持ち、一時ファイルからの rename で丸ごと置き換える**のは、あらすじ・話題・印が1回の
   書き込みで揃い、書きかけの状態を読ませないから（別ファイルにすると片方だけ残った状態が生まれる）。

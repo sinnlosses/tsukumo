@@ -54,7 +54,7 @@ sed -n '/^## shared/,/^## /p' docs/architecture/shared-contract.md
 | `docs/architecture/browser.md`                          | ブラウザ側                                             |                                                                                                           |
 | `docs/architecture/build.md`                            | ビルドと依存                                           |                                                                                                           |
 | `docs/architecture/character-pack.md`                   | キャラクターパック                                     | キャラクターパック / 画面から作るときの置き場と受け取り方 / パックの一覧と素材の URL / 会話の記録の置き場 |
-| `docs/architecture/chat-mode.md`                        | 雑談モード                                             | 4.9 雑談モード                                                                                            |
+| `docs/architecture/chat-mode.md`                        | 雑談モード                                             |                                                                                                           |
 | `docs/architecture/code-placement.md`                   | アーキテクチャ詳細: 新しいコードを置く場所             | 新しいコードを置く場所                                                                                    |
 | `docs/architecture/command-procedure.md`                | アーキテクチャ詳細: コマンドの受け手と手続きの置き方   | 全体構成 / サーバの機能と、機能どうしの辺 / コマンドの受け手と手続きの置き方                              |
 | `docs/architecture/container-presenter.md`              | アーキテクチャ詳細: 機能の中を分ける                   | 全体構成 / 機能の中を分ける（container / presenter と `hooks/`）                                          |
