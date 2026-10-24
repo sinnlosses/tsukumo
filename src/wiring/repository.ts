@@ -40,9 +40,9 @@ export function wireRepository(
         const reportFailure = failureDiagnostic(diagnosticLog, context.now)
         const watcher = watchTaskSummary(
           context.cwd,
-          (tasks) => {
-            onEvent({ kind: "tasks-changed", tasks })
-            recommender.observe(tasks)
+          (result, change) => {
+            onEvent({ kind: "tasks-changed", tasks: change })
+            recommender.observe(result)
           },
           taskSummaryOptionsOfContext(context),
           (error) => {

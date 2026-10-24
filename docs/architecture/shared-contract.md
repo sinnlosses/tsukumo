@@ -37,6 +37,9 @@
 `applySessionEvent(state, event, at)`。**ブラウザ側で時計を reducer に渡さない**（両側の状態が同じに
 なるように、時刻はイベントの発生側が決める）。
 
+**`tasks-changed` は差分を運ぶ**（`TaskSummaryChange`: 変わった・増えた課題の全文 `upserted`、消えた ID `removed`、並びの `order`）。
+全件は `hello` の `SessionState.tasks` が持ち、差分はサーバの見張り（前回知らせた一覧と比べる）が作り、`advanceSessionState` が ID をキーに当てる。
+
 **`state.model` は `init` を待たずに先回りで更新する**（`/model` を送ったそのターンの `init` はまだ古い
 モデルを返す）。`assistant` に乗る `local_command_run` の `args` が `MODEL_ALIASES`（「ClientCommand」）と完全一致する
 ときだけ更新する。**`local_command_run` を持たない古い SDK ではこの経路が黙って効かなくなり**、テストは

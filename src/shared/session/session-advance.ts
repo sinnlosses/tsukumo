@@ -5,6 +5,7 @@ import type { CharacterInfo } from "../character-pack/character.ts"
 import { isModelAlias } from "../command.ts"
 import { applyDiaryEvent } from "../diary/diary.ts"
 import { NO_REPORT_CHANGE_SUMMARY } from "../report/report-change-summary.ts"
+import { applyTaskSummaryChange } from "../repository/task-summary-change.ts"
 import type { PendingAsk, StampedPendingAsk } from "../session-driver/pending-ask.ts"
 import { applyUsageReviewEvent } from "../usage-review/usage-review.ts"
 import { isBlankText } from "../utils/blank-text.ts"
@@ -359,7 +360,7 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
         welcomeGreeting: { kind: "none" },
       }
     case "tasks-changed":
-      return { ...state, tasks: event.tasks }
+      return { ...state, tasks: applyTaskSummaryChange(state.tasks, event.tasks) }
     case "recommendation-changed":
       return { ...state, recommendation: event.cards }
     case "welcome-greeting-changed":

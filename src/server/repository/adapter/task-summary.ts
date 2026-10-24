@@ -10,6 +10,10 @@
 
 import { isDeepEqual } from "remeda"
 
+import {
+  diffTaskSummary,
+  type TaskSummaryChange,
+} from "../../../shared/repository/task-summary-change.ts"
 import type { TaskSummaryResult } from "../../../shared/repository/task-summary.ts"
 import { createServerClock } from "../../adapter/local-time.ts"
 import { createBeadsStampReader, readBeadsIssues } from "./beads.ts"
@@ -114,7 +118,7 @@ export function taskSummaryOptionsOf(driver: "real" | "fake"): TaskSummaryOption
  */
 export function watchTaskSummary(
   cwd: string,
-  onChange: (result: TaskSummaryResult) => void,
+  onChange: (result: TaskSummaryResult, change: TaskSummaryChange) => void,
   options: TaskSummaryOptions = taskSummaryOptionsOf("real"),
   onFailure: (error: unknown) => void = () => {},
 ): TaskSummaryWatcher {
@@ -125,6 +129,13 @@ export function watchTaskSummary(
     now: ports.clock.now,
   })
   let notified: TaskSummaryResult = { kind: "loading" }
+  // `onChange` へ最後に渡した一覧。差分はこれとの違いで取る（`notified` は覚えた一覧を知らせても `loading` のまま）。
+  let delivered: TaskSummaryResult = { kind: "loading" }
+  const deliver = (result: TaskSummaryResult): void => {
+    const change = diffTaskSummary(delivered, result)
+    delivered = result
+    onChange(result, change)
+  }
   let memoryTried = false
   let shownFromMemory: TaskSummaryResult | undefined = undefined
   let failureStreak = 0
@@ -173,7 +184,7 @@ export function watchTaskSummary(
     if (result.kind === "known") {
       ports.writeTaskSummaryMemory(cwd, result.items)
     }
-    onChange(result)
+    deliver(result)
   }
 
   /** 覚えた一覧があれば知らせて、知らせた結果を返す。`notified` は `loading` のままにして、読んだ結果の初回の通知を必ず届かせる。 */
@@ -183,7 +194,7 @@ export function watchTaskSummary(
       return undefined
     }
     const shown: TaskSummaryResult = { kind: "known", items, omittedClosedCount: 0 }
-    onChange(shown)
+    deliver(shown)
     return shown
   }
 

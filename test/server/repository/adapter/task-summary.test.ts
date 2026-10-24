@@ -182,6 +182,46 @@ describe("watchTaskSummary", () => {
     ])
   })
 
+  it("1件だけ変わると、流す差分はその1件だけを運び、消えた課題の ID を removed に入れる", async () => {
+    const intake = fakeIntake([openIssue("t-001", "一つ目"), openIssue("t-002", "二つ目")])
+    const changes: unknown[] = []
+    watcher = watchTaskSummary("/repo-fake", (_result, change) => changes.push(change), {
+      intervalMs: TEST_POLL_INTERVAL_MS,
+      ports: { ...testPorts(), ...intake.ports },
+    })
+    watcher.setWatching(true)
+    await waitForChanges(changes, 1)
+
+    intake.replaceIssues([openIssue("t-001", "一つ目"), openIssue("t-002", "二つ目を直した")])
+    await waitForChanges(changes, 2)
+    intake.replaceIssues([openIssue("t-002", "二つ目を直した")])
+    await waitForChanges(changes, 3)
+
+    expect(changes).toEqual([
+      {
+        kind: "known",
+        upserted: [plainTodo("t-001", "一つ目"), plainTodo("t-002", "二つ目")],
+        removed: [],
+        order: ["t-001", "t-002"],
+        omittedClosedCount: 0,
+      },
+      {
+        kind: "known",
+        upserted: [plainTodo("t-002", "二つ目を直した")],
+        removed: [],
+        order: ["t-001", "t-002"],
+        omittedClosedCount: 0,
+      },
+      {
+        kind: "known",
+        upserted: [],
+        removed: ["t-001"],
+        order: ["t-002"],
+        omittedClosedCount: 0,
+      },
+    ])
+  })
+
   it(".beads が無ければ、初回に「Beads なし」を1回だけ通知し、見回りを重ねても通知を重ねない", async () => {
     const changes: unknown[] = []
     watch("/repo-fake", changes, {

@@ -301,8 +301,8 @@ async function openRoom(
         if (tasks["kind"] !== "known") {
           return false
         }
-        const items = Array.isArray(tasks["items"]) ? tasks["items"] : []
-        const presentIds = new Set(items.map((item) => String(asRecord(item)["id"])))
+        const order = Array.isArray(tasks["order"]) ? tasks["order"] : []
+        const presentIds = new Set(order.map(String))
         return ids.every((id) => presentIds.has(id))
       }),
     revealAfterResponse: async (target, { response, baseline }) => {

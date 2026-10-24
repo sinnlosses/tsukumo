@@ -5,16 +5,17 @@ import type { ItemInfo, ItemSeatMap } from "../item/item.ts"
 import type { ReactionLine, WrittenReactions } from "../recommendation/reaction.ts"
 import type { RecommendationCard } from "../recommendation/recommendation-card.ts"
 import type { WelcomeGreetingState } from "../recommendation/welcome-greeting.ts"
-import type { TaskSummaryResult } from "../repository/task-summary.ts"
+import type { TaskSummaryChange } from "../repository/task-summary-change.ts"
 import type { SessionChoice } from "./session-choice.ts"
 import type { SessionDefault } from "./session-default.ts"
 
 export type SurroundingEvent =
   /**
    * タスクの一覧が変わった（Beads の課題を見て起こす）。
-   * 起こしてから最初の見回りで必ず1回届く。読めない・消えたときは `tasks: { kind: "unknown" }`（{@link TaskSummaryResult}。サイドバーの「不明」表示に対応する）。
+   * 起こしてから最初の見回りで必ず1回届く。読めない・消えたときは `tasks: { kind: "unknown" }`（サイドバーの「不明」表示に対応する）。
+   * 一覧は差分（{@link TaskSummaryChange}）で運び、全件は `hello` の `SessionState.tasks` が持つ。
    */
-  | { readonly kind: "tasks-changed"; readonly tasks: TaskSummaryResult }
+  | { readonly kind: "tasks-changed"; readonly tasks: TaskSummaryChange }
   /**
    * おすすめの札が変わった（タスク一覧が届いて候補が変わったとき。出し手はサーバの推薦役）。
    * 候補が前と同じなら流れない。空の並びは「まだ無い」で、候補が変わってキャッシュに無いときに一度流れ、問い合わせが通ればその結果がもう一度流れる。

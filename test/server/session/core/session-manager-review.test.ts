@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import type { ServerFrame } from "../../../../src/shared/frame.ts"
+import { diffTaskSummary } from "../../../../src/shared/repository/task-summary-change.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import type { PreviousUsageReview } from "../../../../src/shared/usage-review/usage-review.ts"
 import { createStubDriver } from "../../../fixture/session-driver.ts"
@@ -194,7 +195,10 @@ describe("タスク一覧の見張り", () => {
   it("起こし直しの hello にそれまでのタスク一覧とおすすめの札が残り、そのあと届いた一覧も新しい代に入る", async () => {
     const { manager, watch } = startManagerWithTaskWatch()
     const cards = [{ kind: "resume", reason: "架空の理由" }] as const
-    watch.emit({ kind: "tasks-changed", tasks: KNOWN_TASKS })
+    watch.emit({
+      kind: "tasks-changed",
+      tasks: diffTaskSummary({ kind: "loading" }, KNOWN_TASKS),
+    })
     watch.emit({ kind: "recommendation-changed", cards })
 
     await manager.commands.session.setChatMode({ chat: true })

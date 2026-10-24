@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import type { WrittenReactions } from "../../../src/shared/recommendation/reaction.ts"
+import { diffTaskSummary } from "../../../src/shared/repository/task-summary-change.ts"
 import type { TaskSummaryItem } from "../../../src/shared/repository/task-summary.ts"
 import type { SessionEvent } from "../../../src/shared/session/session-event.ts"
 import { applySessionEvent } from "../../../src/shared/session/session-fold.ts"
@@ -92,7 +93,10 @@ describe("applySessionEvent", () => {
       },
     ]
     const known = { kind: "known", items, omittedClosedCount: 0 } as const
-    const withTasks = apply({ kind: "tasks-changed", tasks: known })
+    const withTasks = apply({
+      kind: "tasks-changed",
+      tasks: diffTaskSummary(INITIAL_SESSION_STATE.tasks, known),
+    })
     expect(withTasks.tasks).toEqual(known)
 
     const cleared = applySessionEvent(

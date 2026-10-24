@@ -94,7 +94,7 @@
       "kind": "tasks-changed",
       "tasks": {
         "kind": "known",
-        "items": [
+        "upserted": [
           {
             "id": "t-001",
             "summary": "架空のタスク（着手できる）",
@@ -129,6 +129,11 @@
               "kind": "none"
             }
           }
+        ],
+        "removed": [],
+        "order": [
+          "t-001",
+          "t-002"
         ],
         "omittedClosedCount": 0
       }
