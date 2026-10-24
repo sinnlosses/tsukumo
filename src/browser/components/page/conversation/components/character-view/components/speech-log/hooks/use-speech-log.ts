@@ -28,7 +28,11 @@ import { useTurnSelection } from "../../../../../../../../stores/turn-selection.
 import { localTimeZoneId } from "../../../../../../../../utils/clock.ts"
 import { dayLabel } from "../../../../../../../../utils/day-label.ts"
 import { recordClockStamp, type ClockStamp } from "../../../../../domain/clock-stamp.ts"
-import { isSpeechSelected, type PinnedSpeech } from "../../../domain/pinned-speech.ts"
+import {
+  isSpeechSelected,
+  type PinnedSpeech,
+  type SpeechTarget,
+} from "../../../domain/pinned-speech.ts"
 
 /**
  * セリフの古さの段。最新からいくつ前かで決める。
@@ -63,7 +67,7 @@ export type SpeechLogEntry =
       readonly age: SpeechAge
       /** 印を付ける行（= 立ち絵が従っている行）か。 */
       readonly selected: boolean
-      readonly onToggle: () => void
+      readonly target: SpeechTarget
     }
 
 /** `<SpeechLog>` が画面に出す形。 */
@@ -77,6 +81,8 @@ export type SpeechLogModel = {
    * 呼び名を持たないパックでは `undefined`（区切りは「」だけになる）。
    */
   readonly userCall: string | undefined
+  /** セリフの行を押したとき（行の `target` を渡して呼ぶ）。 */
+  readonly onToggleSpeech: (turnId: number, index: number) => void
 }
 
 export function useSpeechLog(
@@ -101,10 +107,9 @@ export function useSpeechLog(
 
   return {
     scrollerRef,
-    entries: open
-      ? logEntries(records, localTimeZoneId(), activeTurnId, pinnedSpeech, onToggleSpeech)
-      : [],
+    entries: open ? logEntries(records, localTimeZoneId(), activeTurnId, pinnedSpeech) : [],
     userCall,
+    onToggleSpeech,
   }
 }
 
@@ -113,7 +118,6 @@ function logEntries(
   timeZone: string,
   activeTurnId: number | undefined,
   pinnedSpeech: PinnedSpeech | undefined,
-  onToggleSpeech: (turnId: number, index: number) => void,
 ): readonly SpeechLogEntry[] {
   const turns = turnSpeeches(records).filter((turn) => turn.speeches.length > 0)
   const requestTimes = requestTimesByTurn(records)
@@ -158,9 +162,7 @@ function logEntries(
           time: recordClockStamp(speech.time, timeZone),
           age: speechAge(speechCount - 1 - (offset + index)),
           selected: isSpeechSelected(pinnedSpeech, turn.id, index, activeTurnId, defaultIndex),
-          onToggle: () => {
-            onToggleSpeech(turn.id, index)
-          },
+          target: { turnId: turn.id, index },
         },
       ]
     })

@@ -92,7 +92,7 @@ react-markdown
 - **動くのは利用者の注意が空いているときだけ。** `SessionState` から「いま読んでいるか、待っているか」を
   決め、**読んでいる間は呼吸だけに落とす**
 - **止める条件はブラウザ側が持ち、`shared` の `resolvePortraitMotion` には足さない**（サーバの畳み〔`messages.json`〕を動かさないため。DOM の期待値は、撮影の時刻が最後のイベントから60秒を超えるシナリオで `data-motion` が外れる）。
-  `usePortraitRest` が、最後のイベント（`SessionState` の参照が替わる）か操作から60秒で呼吸（`reading`）だけを止め
+  `usePortraitRest` が、最後のイベント（store の購読で `SessionState` の参照が替わるのを見る）か操作から60秒で呼吸（`reading`）だけを止め
   （`motion` を `undefined` にして `data-motion` を外す）、`<Portrait>` が `useWindowAway`（`blur`・`hidden`）の間 `data-paused` を付けて
   `animation-play-state: paused` を当てる
 - 作るのは5つ。**呼吸**（常時のごく小さい上下）/ **待っている間の移動**（ターン進行中に

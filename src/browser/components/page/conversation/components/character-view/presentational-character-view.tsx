@@ -79,7 +79,12 @@ export function PresentationalCharacterView({
           className={styles["character-layout"]}
         >
           {portrait}
-          <BalloonTrack speeches={speeches} reaction={reaction} speakerName={speakerName} />
+          <BalloonTrack
+            speeches={speeches}
+            reaction={reaction}
+            speakerName={speakerName}
+            onToggleSpeech={onToggleSpeech}
+          />
         </HStack>
       </div>
       <ItemSeats seats={seats} portraitShown={portraitUrl !== undefined} />

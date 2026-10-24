@@ -58,4 +58,23 @@ describe("useWelcomeCards", () => {
       ])
     })
   })
+
+  it("始め方の一覧の局面でない（依頼を送って働いている）あいだは前のセッションの要約を取りに行かない", async () => {
+    setPageUrl("http://127.0.0.1:7327/")
+    fetchStub = stubRpcFetch(() => rpcOutput({ kind: "unavailable" }))
+    putSession({
+      ...INITIAL_SESSION_STATE,
+      session: { kind: "identified", sessionId: "fa000000-0000" },
+      sessions: [
+        session("fa000000-0000", "架空のいまの作業"),
+        session("7b000000-0000", "架空の題"),
+      ],
+      turn: { kind: "running", startedAt: 0 },
+    })
+
+    renderHook(useWelcomeCards, { wrapper: queryClientWrapper() })
+    await new Promise((resolve) => setTimeout(resolve, 20))
+
+    expect(fetchStub.calls()).toEqual([])
+  })
 })

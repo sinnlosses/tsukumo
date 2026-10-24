@@ -21,11 +21,7 @@ import {
   type PortraitMotion,
   type PortraitMotionInput,
 } from "../../../../../../../shared/session/portrait-motion.ts"
-import {
-  shownReaction,
-  type ShownReaction,
-  waitingLineDueAt,
-} from "../../../../../../../shared/session/shown-reaction.ts"
+import type { ShownReaction } from "../../../../../../../shared/session/shown-reaction.ts"
 import { reportDraftingOf } from "../../../../../../../shared/session/turn-progress.ts"
 import type { Speech } from "../../../../../../../shared/session/turn-speech.ts"
 import { turnSpeeches, type TurnSpeech } from "../../../../../../../shared/session/turn-speech.ts"
@@ -35,6 +31,7 @@ import {
 } from "../../../../../../domain/character-face.ts"
 import { portraitAppearance } from "../../../../../../domain/portrait-appearance.ts"
 import { useSession } from "../../../../../../stores/session.ts"
+import { useShownReaction, useWaitingLineDueAt } from "../../../../../../stores/shown-reaction.ts"
 import { useTurnSelection } from "../../../../../../stores/turn-selection.ts"
 import { nowEpochMilliseconds } from "../../../../../../utils/clock.ts"
 import { recordClockStampWithDay, type ClockStamp } from "../../../domain/clock-stamp.ts"
@@ -48,6 +45,7 @@ import {
   resolvePinnedSpeech,
   toggledViewedSpeech,
   type PinnedSpeech,
+  type SpeechTarget,
   type ViewedSpeech,
 } from "../domain/pinned-speech.ts"
 import { usePortraitRest } from "./use-portrait-rest.ts"
@@ -63,7 +61,8 @@ export type CharacterViewSpeech = {
   readonly time: ClockStamp
   /** 印を付ける行（= 立ち絵が従っている行）か。 */
   readonly selected: boolean
-  readonly onToggle: () => void
+  /** 押すと遡る先。特定できなければ undefined（文面だけ出して押しても何もしない）。 */
+  readonly target: SpeechTarget | undefined
 }
 
 /** 吹き出しの最新に出す反応。`writing` は迎えの挨拶を書いている途中で、「…」を出す。 */
@@ -129,10 +128,10 @@ export function useCharacterView(): CharacterViewModel {
   const draftingReport = useSession(
     (session) => reportDraftingOf(session.state.sdkTurn).kind === "drafting",
   )
-  const state = useSession((session) => session.state)
+  const waitingDueAt = useWaitingLineDueAt()
   const { cards: welcomeCards } = useWelcomeCards()
   const welcomeHead = welcomeHeadOf(welcomeCards)
-  useWelcomeGreetingRecord(state, welcomeHead)
+  useWelcomeGreetingRecord(welcomeHead)
 
   // 留めた行（ターンの番号と位置）は、どのターンも `turnSpeeches(records)` の並びで引く（セリフのログと同じ並び）。
   const turns = turnSpeeches(records)
@@ -142,7 +141,8 @@ export function useCharacterView(): CharacterViewModel {
   const [viewed, setViewed] = useState<ViewedSpeech>(LATEST_VIEWED_SPEECH)
   const [speechLogOpen, setSpeechLogOpen] = useState(false)
 
-  const now = useCharacterClock(turn, lastToolFailureAt, waitingLineDueAt(state))
+  const now = useCharacterClock(turn, lastToolFailureAt, waitingDueAt)
+  const latestReaction = useShownReaction(welcomeHead, now)
   const pastTurn = pastTurnSpeech(turns, activeTurnId, newestTurnId)
   const activeSpeeches = pastTurn === undefined ? speeches : pastTurn.speeches
   // 吹き出しの各件が、留めた行の並びの何番目か。今のターンの吹き出しは反応を含まないので、並びの位置へ写す。
@@ -153,8 +153,7 @@ export function useCharacterView(): CharacterViewModel {
           speeches.length,
         )
       : pastTurn.speeches.map((_, index) => index)
-  const reaction: ShownReaction =
-    pastTurn === undefined ? shownReaction(state, welcomeHead, now) : { kind: "none" }
+  const reaction: ShownReaction = pastTurn === undefined ? latestReaction : { kind: "none" }
   // 何も留めていないとき、印が付くのは「いま表示しているターン」の最後の吹き出し。
   // 反応を出しているあいだは立ち絵が反応に従うので、どの行にも付けない。
   const defaultTurnId = activeTurnId
@@ -173,7 +172,7 @@ export function useCharacterView(): CharacterViewModel {
     const current = pinnedSpeech === undefined ? LATEST_VIEWED_SPEECH : viewed
     setViewed(toggledViewedSpeech(current, turnId, index, speechesOfTurn(turnId)?.length ?? 0))
   }
-  const resting = usePortraitRest(state)
+  const resting = usePortraitRest()
   const resolvedMotion = resolvePortraitMotion({ turn, lastToolFailureAt, draftingReport }, now)
   const motion = resolvedMotion === "reading" && resting ? undefined : resolvedMotion
 
@@ -190,7 +189,6 @@ export function useCharacterView(): CharacterViewModel {
       defaultTurnId,
       pinned,
       defaultIndex,
-      toggleSpeech,
       now,
     ),
     reaction: balloonReactionOf(reaction, now),
@@ -261,7 +259,6 @@ function balloonSpeeches(
   turnId: number | undefined,
   pinned: PinnedSpeech | undefined,
   defaultIndex: number | undefined,
-  onToggle: (turnId: number, index: number) => void,
   now: number,
 ): readonly CharacterViewSpeech[] {
   return speeches.map((speech, position) => {
@@ -273,11 +270,7 @@ function balloonSpeeches(
         turnId !== undefined &&
         index !== undefined &&
         isSpeechSelected(pinned, turnId, index, turnId, defaultIndex),
-      onToggle: () => {
-        if (turnId !== undefined && index !== undefined) {
-          onToggle(turnId, index)
-        }
-      },
+      target: turnId !== undefined && index !== undefined ? { turnId, index } : undefined,
     }
   })
 }

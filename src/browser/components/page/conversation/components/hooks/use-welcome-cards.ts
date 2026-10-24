@@ -1,5 +1,6 @@
 // 始め方の一覧に並べる札を、状態・前回のセッションの残り・タスク一覧から用意する。
 
+import { conversationMoment } from "../../../../../../shared/session/conversation-moment.ts"
 import { useSession } from "../../../../../stores/session.ts"
 import { useSessionDigest } from "../../../../domain/screen-nav/hooks/use-session-digest.ts"
 import {
@@ -23,8 +24,11 @@ export function useWelcomeCards(): WelcomeCards {
   const tasks = useSession((session) => session.state.tasks)
   const recommendation = useSession((session) => session.state.recommendation)
 
+  const greeting = useSession((session) => conversationMoment(session.state) === "greet")
+
   const previous = previousSessionOf(sessions, currentSessionId)
-  const digest = useSessionDigest(previous?.sessionId)
+  // 札と挨拶が出うる局面（始め方の一覧）のあいだだけ取りに行く。
+  const digest = useSessionDigest(greeting ? previous?.sessionId : undefined)
   const remaining = digest.kind === "known" ? digest.remaining : undefined
   return {
     cards: welcomeCardsOf(recommendation, previous, remaining, tasks),

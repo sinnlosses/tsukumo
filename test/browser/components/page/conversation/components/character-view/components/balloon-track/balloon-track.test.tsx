@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { BalloonTrack } from "../../../../../../../../../src/browser/components/page/conversation/components/character-view/components/balloon-track/balloon-track.tsx"
@@ -13,7 +13,11 @@ function speech(
   text: string,
   time: CharacterViewSpeech["time"] = { kind: "unknown" },
 ): CharacterViewSpeech {
-  return { text, time, selected: false, onToggle: () => {} }
+  return { text, time, selected: false, target: undefined }
+}
+
+function NOOP(): void {
+  // 押しを見ないテスト用。
 }
 
 describe("BalloonTrack", () => {
@@ -25,6 +29,7 @@ describe("BalloonTrack", () => {
         speeches={[speech("古いセリフ", old), speech("新しいセリフ", known)]}
         reaction={{ kind: "none" }}
         speakerName="架空の名前"
+        onToggleSpeech={NOOP}
       />,
     )
 
@@ -44,6 +49,7 @@ describe("BalloonTrack", () => {
         speeches={[speech("名前なし", known)]}
         reaction={{ kind: "none" }}
         speakerName={undefined}
+        onToggleSpeech={NOOP}
       />,
     )
     expect(document.querySelectorAll(".balloon time")).toHaveLength(0)
@@ -55,6 +61,7 @@ describe("BalloonTrack", () => {
         speeches={[speech("組み直した"), speech("組み直した2")]}
         reaction={{ kind: "none" }}
         speakerName="架空の名前"
+        onToggleSpeech={NOOP}
       />,
     )
     expect(document.querySelectorAll("time")).toHaveLength(0)
@@ -67,6 +74,7 @@ describe("BalloonTrack", () => {
         speeches={[]}
         reaction={{ kind: "shown", reaction: "idle", text: "架空の待ちの一言", time: known }}
         speakerName="架空の名前"
+        onToggleSpeech={NOOP}
       />,
     )
 
@@ -74,7 +82,14 @@ describe("BalloonTrack", () => {
   })
 
   it("(2) セリフも反応も無いときは吹き出しを出さず、並びの器だけを残す", () => {
-    render(<BalloonTrack speeches={[]} reaction={{ kind: "none" }} speakerName="架空の名前" />)
+    render(
+      <BalloonTrack
+        speeches={[]}
+        reaction={{ kind: "none" }}
+        speakerName="架空の名前"
+        onToggleSpeech={NOOP}
+      />,
+    )
 
     expect(document.querySelector(".balloon-track")).not.toBeNull()
     expect(document.querySelectorAll(".balloon")).toHaveLength(0)
@@ -86,6 +101,7 @@ describe("BalloonTrack", () => {
         speeches={[speech("1つめ")]}
         reaction={{ kind: "none" }}
         speakerName={undefined}
+        onToggleSpeech={NOOP}
       />,
     )
     const firstNode = screen.getByText("1つめ")
@@ -95,6 +111,7 @@ describe("BalloonTrack", () => {
         speeches={[speech("1つめ"), speech("2つめ")]}
         reaction={{ kind: "none" }}
         speakerName={undefined}
+        onToggleSpeech={NOOP}
       />,
     )
 
@@ -113,6 +130,7 @@ describe("BalloonTrack", () => {
         speeches={[speech("前のセリフ")]}
         reaction={{ kind: "writing" }}
         speakerName="架空の名前"
+        onToggleSpeech={NOOP}
       />,
     )
 
@@ -124,5 +142,22 @@ describe("BalloonTrack", () => {
     expect(writing?.textContent).toContain("架空の名前")
     const previous = screen.getByText("前のセリフ").closest(".balloon")
     expect(previous?.getAttribute("data-latest")).toBe("false")
+  })
+
+  it("(7) 押すと、そのセリフの target の番号で onToggleSpeech が呼ばれ、target の無いセリフは何も呼ばない", () => {
+    const toggled: (readonly [number, number])[] = []
+    render(
+      <BalloonTrack
+        speeches={[{ ...speech("押せる"), target: { turnId: 3, index: 1 } }, speech("押せない")]}
+        reaction={{ kind: "none" }}
+        speakerName="架空の名前"
+        onToggleSpeech={(turnId, index) => toggled.push([turnId, index])}
+      />,
+    )
+
+    fireEvent.click(screen.getByText("押せない"))
+    expect(toggled).toEqual([])
+    fireEvent.click(screen.getByText("押せる"))
+    expect(toggled).toEqual([[3, 1]])
   })
 })

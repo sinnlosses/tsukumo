@@ -40,6 +40,7 @@ export function PresentationalSpeechLog({
   open,
   entries,
   userCall,
+  onToggleSpeech,
   onOpen,
   onClose,
   portrait,
@@ -133,6 +134,7 @@ export function PresentationalSpeechLog({
                     entry={entry}
                     speakerName={speakerName}
                     userCall={userCall}
+                    onToggleSpeech={onToggleSpeech}
                   />
                 ))}
               </ol>
@@ -149,6 +151,7 @@ function SpeechLogRow(props: {
   readonly entry: SpeechLogEntry
   readonly speakerName: string | undefined
   readonly userCall: string | undefined
+  readonly onToggleSpeech: (turnId: number, index: number) => void
 }): ReactElement {
   const { entry } = props
   if (entry.kind === "request") {
@@ -181,7 +184,12 @@ function SpeechLogRow(props: {
         latest={latest}
         speaker={latest ? props.speakerName : undefined}
         time={{ kind: "unknown" }}
-        interaction={{ kind: "toggleable", selected: entry.selected, onToggle: entry.onToggle }}
+        interaction={{
+          kind: "toggleable",
+          selected: entry.selected,
+          target: entry.target,
+          onToggleSpeech: props.onToggleSpeech,
+        }}
       />
       {entry.time.kind === "known" && (
         <time className={styles["speech-log-speech-time"]} dateTime={entry.time.dateTime}>

@@ -25,6 +25,8 @@ type BalloonTrackProps = {
    * 無いときは undefined で、名前を出さない。
    */
   readonly speakerName: string | undefined
+  /** 吹き出しを押したとき（セリフごとの `target` を渡して呼ぶ）。 */
+  readonly onToggleSpeech: (turnId: number, index: number) => void
 }
 
 export function BalloonTrack(props: BalloonTrackProps): ReactElement {
@@ -82,7 +84,8 @@ export function BalloonTrack(props: BalloonTrackProps): ReactElement {
               interaction={{
                 kind: "toggleable",
                 selected: speech.selected,
-                onToggle: speech.onToggle,
+                target: speech.target,
+                onToggleSpeech: props.onToggleSpeech,
               }}
             />
           </BalloonRow>

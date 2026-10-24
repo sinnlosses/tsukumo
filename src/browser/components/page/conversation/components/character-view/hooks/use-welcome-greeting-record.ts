@@ -9,15 +9,17 @@ import {
   type WelcomeHead,
   welcomeGreetingLine,
 } from "../../../../../../../shared/recommendation/welcome-greeting.ts"
-import type { SessionState } from "../../../../../../../shared/session/session-state.ts"
 import { greetingOnShow } from "../../../../../../../shared/session/shown-reaction.ts"
 import { useSession } from "../../../../../../stores/session.ts"
 
-export function useWelcomeGreetingRecord(state: SessionState, head: WelcomeHead): void {
+export function useWelcomeGreetingRecord(head: WelcomeHead): void {
   const dispatch = useSession((session) => session.dispatch)
   const connected = useSession((session) => session.connection === "open")
-  const onShow = greetingOnShow(state)
-  const line = onShow.kind === "shown" ? welcomeGreetingLine(onShow.greeting, head) : undefined
+  const greeting = useSession((session) => {
+    const onShow = greetingOnShow(session.state)
+    return onShow.kind === "shown" ? onShow.greeting : undefined
+  })
+  const line = greeting === undefined ? undefined : welcomeGreetingLine(greeting, head)
   const text = line?.text
   const expression = line?.expression
 

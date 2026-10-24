@@ -10,8 +10,11 @@
 import type { Speech } from "../../../../../../../shared/session/turn-speech.ts"
 import type { TurnLine } from "../../../../../../../shared/session/turn-speech.ts"
 
+/** 押すと遡る先のセリフ（ターンの番号と、そのターンの並びの中の位置）。 */
+export type SpeechTarget = { readonly turnId: number; readonly index: number }
+
 /** 留めている行（吹き出し・セリフのログの両方へ、いまの印の位置として渡す）。 */
-export type PinnedSpeech = { readonly turnId: number; readonly index: number }
+export type PinnedSpeech = SpeechTarget
 
 /** 立ち絵がいま従っているセリフの状態。既定は「最新」（何も押していない）。 */
 export type ViewedSpeech =

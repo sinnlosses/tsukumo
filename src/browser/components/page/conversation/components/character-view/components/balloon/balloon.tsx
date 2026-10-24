@@ -17,6 +17,7 @@ import { TypingDots } from "../../../../../../ui/typing-dots/typing-dots.tsx"
 import type { ClockStamp } from "../../../../domain/clock-stamp.ts"
 import { useSpeechPress } from "../../../hooks/use-speech-press.ts"
 import characterViewStyles from "../../character-view.module.css"
+import type { SpeechTarget } from "../../domain/pinned-speech.ts"
 import styles from "./balloon.module.css"
 
 /**
@@ -27,7 +28,13 @@ import styles from "./balloon.module.css"
 type BalloonInteraction =
   | { readonly kind: "reaction"; readonly reaction: ReactionKind }
   | { readonly kind: "writing" }
-  | { readonly kind: "toggleable"; readonly selected: boolean; readonly onToggle: () => void }
+  | {
+      readonly kind: "toggleable"
+      readonly selected: boolean
+      /** 押したときに遡る先。特定できないセリフは undefined で、押しても何もしない。 */
+      readonly target: SpeechTarget | undefined
+      readonly onToggleSpeech: (turnId: number, index: number) => void
+    }
 
 type BalloonProps = {
   /** `interaction.kind === "writing"` のときは使わない。 */
@@ -43,7 +50,11 @@ type BalloonProps = {
 
 export function Balloon(props: BalloonProps): ReactElement {
   const { interaction } = props
-  const press = useSpeechPress(interaction.kind === "toggleable" ? interaction.onToggle : NOOP)
+  const press = useSpeechPress(() => {
+    if (interaction.kind === "toggleable" && interaction.target !== undefined) {
+      interaction.onToggleSpeech(interaction.target.turnId, interaction.target.index)
+    }
+  })
   const speakerLabel = props.speaker !== undefined && (
     <span className={styles["balloon-head"]}>
       <Text
@@ -118,8 +129,4 @@ export function Balloon(props: BalloonProps): ReactElement {
       {body}
     </div>
   )
-}
-
-const NOOP = (): void => {
-  // reaction のときは使わない（フックは条件分岐せず常に呼ぶ）。
 }

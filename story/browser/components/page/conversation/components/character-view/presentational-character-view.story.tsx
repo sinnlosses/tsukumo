@@ -16,7 +16,7 @@ function speech(text: string): CharacterViewSpeech {
     text,
     time: SAMPLE_TIME,
     selected: false,
-    onToggle: () => {},
+    target: undefined,
   }
 }
 
