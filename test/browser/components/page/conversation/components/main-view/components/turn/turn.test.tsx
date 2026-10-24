@@ -5,6 +5,7 @@ import { useComposerDraft } from "../../../../../../../../../src/browser/stores/
 import { useTaskBoardRequest } from "../../../../../../../../../src/browser/stores/task-board-request.ts"
 import type { ReportChangeSummary } from "../../../../../../../../../src/shared/report/report-change-summary.ts"
 import type {
+  MainViewQuestion,
   MainViewReportBody,
   MainViewStep,
   MainViewStepBody,
@@ -416,6 +417,94 @@ describe("Turn（経過の畳み）", () => {
       />,
     )
     expect(working.container.querySelectorAll("details.is-interim.phone-hidden")).toHaveLength(3)
+  })
+
+  function askedStep(id: number, questionText: string): MainViewQuestion {
+    return {
+      kind: "question",
+      toolUseId: `ask-${String(id)}`,
+      questions: [
+        {
+          header: `見出し${String(id)}`,
+          text: questionText,
+          multiSelect: false,
+          options: [{ label: "選んだ答え", description: "", preview: undefined }],
+        },
+      ],
+      answers: [["選んだ答え"]],
+    }
+  }
+
+  it("質問の記録は最終の札にも外にも出ず、経過の畳みの中に届いた順で入り、summary に数が付く", () => {
+    putSession(INITIAL_SESSION_STATE)
+    const { container } = render(
+      <Turn
+        turn={turn([
+          step({
+            id: 0,
+            body: text("中間"),
+            interim: true,
+            superseded: true,
+            actions: [askedStep(0, "中間の質問")],
+          }),
+          step({
+            id: 1,
+            body: text("最終"),
+            final: true,
+            actions: [askedStep(1, "最終の質問")],
+          }),
+        ])}
+        newest
+        freshReport={false}
+      />,
+    )
+
+    const fold = typedElement(container.querySelector(".progress-fold"), HTMLDetailsElement, "畳み")
+    expect(fold.querySelector(":scope > summary")?.textContent).toBe("経過 1 件 · 質問 2 件")
+    const inside = fold.textContent
+    expect(inside.indexOf("中間レポート")).toBeLessThan(inside.indexOf("中間の質問"))
+    expect(inside.indexOf("中間の質問")).toBeLessThan(inside.indexOf("最終の質問"))
+
+    const outside = [...container.querySelectorAll(":scope > div > div > *")]
+      .filter((element) => element !== fold)
+      .map((element) => element.textContent)
+    expect(outside).toEqual(["最終"])
+  })
+
+  it("中間レポートが無く質問だけでも経過の畳みが出る", () => {
+    putSession(INITIAL_SESSION_STATE)
+    const { container } = render(
+      <Turn
+        turn={turn([
+          step({
+            id: 0,
+            body: text("最終"),
+            final: true,
+            actions: [askedStep(0, "ただ1つの質問")],
+          }),
+        ])}
+        newest
+        freshReport={false}
+      />,
+    )
+
+    const fold = container.querySelector(".progress-fold")
+    expect(fold?.querySelector(":scope > summary")?.textContent).toBe("経過 0 件 · 質問 1 件")
+    expect(fold?.textContent).toContain("ただ1つの質問")
+  })
+
+  it("働くあいだは、質問の記録を今までどおり札のそばに出す", () => {
+    putSession(INITIAL_SESSION_STATE)
+    const { container } = render(
+      <Turn
+        turn={turn([step({ id: 0, body: text("本文"), actions: [askedStep(0, "進行中の質問")] })])}
+        newest
+        freshReport={false}
+      />,
+    )
+
+    expect(container.querySelector(".progress-fold")).toBeNull()
+    expect(container.textContent).toContain("進行中の質問")
   })
 
   it("中間レポートが無い閉じたやり取りには、経過の畳みを出さない", () => {

@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 import {
   arrangeTurn,
   progressFoldSummary,
+  type ProgressEntry,
 } from "../../../../../../../../src/browser/components/page/conversation/components/main-view/domain/turn-arrangement.ts"
 import type {
   MainViewAside,
@@ -119,7 +120,7 @@ describe("arrangeTurn", () => {
       kind: "final-first",
       final,
       besides: [],
-      progress: [interim],
+      progress: [{ kind: "interim", step: interim }],
     })
   })
 
@@ -133,7 +134,8 @@ describe("arrangeTurn", () => {
     ]
     const arrangement = arrangeTurn(turn(steps))
     expect(
-      arrangement.kind === "final-first" && arrangement.progress.map((entry) => entry.id),
+      arrangement.kind === "final-first" &&
+        arrangement.progress.map((entry) => entry.kind === "interim" && entry.step.id),
     ).toEqual([1, 2, 3])
   })
 
@@ -149,41 +151,73 @@ describe("arrangeTurn", () => {
         { kind: "asides", stepId: 0, asides: [first] },
         { kind: "asides", stepId: 1, asides: [second] },
       ],
-      progress: [interim],
+      progress: [{ kind: "interim", step: interim }],
     })
   })
 
-  it("中間と本文の無いステップの質問の記録は besides へ出し、最終のステップの質問は出さない", () => {
+  it("質問の記録は最終のステップのものも含め besides に出さず、経過へ中間レポートと届いた順に混ぜて入れる", () => {
     const early = question("q0")
     const middle = question("q1")
     const last = question("q2")
+    const interim = step(1, { kind: "interim", ...PLAIN, questions: [middle] })
     const arrangement = arrangeTurn(
       turn([
         step(0, { kind: "empty", ...PLAIN, questions: [early] }),
-        step(1, { kind: "interim", ...PLAIN, questions: [middle] }),
+        interim,
         step(2, { kind: "final", ...PLAIN, questions: [last] }),
       ]),
     )
-    expect(arrangement.kind === "final-first" && arrangement.besides).toEqual([
+    expect(arrangement.kind === "final-first" && arrangement.besides).toEqual([])
+    expect(arrangement.kind === "final-first" && arrangement.progress).toEqual([
       { kind: "question", entry: early },
+      { kind: "interim", step: interim },
       { kind: "question", entry: middle },
+      { kind: "question", entry: last },
+    ])
+  })
+
+  it("中間レポートが無く質問だけでも、経過に質問が入る", () => {
+    const only = question("q0")
+    const arrangement = arrangeTurn(turn([step(0, { kind: "final", ...PLAIN, questions: [only] })]))
+    expect(arrangement.kind === "final-first" && arrangement.progress).toEqual([
+      { kind: "question", entry: only },
     ])
   })
 })
 
+function summaryOf(steps: readonly MainViewStep[], questions: readonly string[] = []): string {
+  return progressFoldSummary([
+    ...steps.map((entry): ProgressEntry => ({ kind: "interim", step: entry })),
+    ...questions.map((id): ProgressEntry => ({ kind: "question", entry: question(id) })),
+  ])
+}
+
 describe("progressFoldSummary", () => {
+  it("質問の記録があれば、件数のあとに「 · 質問 m 件」が付き、n は中間レポートの数のまま", () => {
+    expect(summaryOf([step(0, { kind: "interim", ...PLAIN })], ["q0", "q1"])).toBe(
+      "経過 1 件 · 質問 2 件",
+    )
+    expect(summaryOf([], ["q0"])).toBe("経過 0 件 · 質問 1 件")
+  })
+
+  it("質問があっても、段のまとめの所要は後ろに添える", () => {
+    expect(
+      summaryOf(
+        [step(0, { kind: "interim", ...PLAIN, finishedPhase: phase("1/1 架空の段", 9_000) })],
+        ["q0"],
+      ),
+    ).toBe("経過 1 件 · 質問 1 件 · 所要 9秒（1/1 架空の段 9秒）")
+  })
+
   it("段のまとめが無ければ件数だけ", () => {
     expect(
-      progressFoldSummary([
-        step(0, { kind: "interim", ...PLAIN }),
-        step(1, { kind: "interim", ...PLAIN }),
-      ]),
+      summaryOf([step(0, { kind: "interim", ...PLAIN }), step(1, { kind: "interim", ...PLAIN })]),
     ).toBe("経過 2 件")
   })
 
   it("段のまとめがあれば、合計の所要と段ごとの所要を届いた順に添える", () => {
     expect(
-      progressFoldSummary([
+      summaryOf([
         step(0, { kind: "interim", ...PLAIN, finishedPhase: phase("1/3 今の形を調べる", 9_000) }),
         step(1, { kind: "interim", ...PLAIN, finishedPhase: phase("2/3 読み口を作る", 72_000) }),
         step(2, { kind: "interim", ...PLAIN, finishedPhase: phase("3/3 検証", 44_000) }),
@@ -195,7 +229,7 @@ describe("progressFoldSummary", () => {
 
   it("測れなかった段が混じれば合計を出さず、その段は「不明」", () => {
     expect(
-      progressFoldSummary([
+      summaryOf([
         step(0, { kind: "interim", ...PLAIN, finishedPhase: phase("1/2 架空の段A", 3_000) }),
         step(1, { kind: "interim", ...PLAIN, finishedPhase: phase("2/2 架空の段B", "unknown") }),
       ]),
@@ -204,7 +238,7 @@ describe("progressFoldSummary", () => {
 
   it("飛ばした段は所要の前に「飛ばした」を添える", () => {
     expect(
-      progressFoldSummary([
+      summaryOf([
         step(0, {
           kind: "interim",
           ...PLAIN,

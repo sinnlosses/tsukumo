@@ -1,5 +1,5 @@
 // 1つのやり取り。ステップの並び（レポート・質問の記録と、届いた位置に足す脇の話の欄）を縦に1本で積む（番号は振らない）。
-// 最終レポートのある閉じたやり取りは、最終レポート → 質問の記録と脇の話 → 経過の畳みの順にする（`arrangeTurn`）。
+// 最終レポートのある閉じたやり取りは、最終レポート → 脇の話 → 経過の畳み（中間レポートと質問の記録）の順にする（`arrangeTurn`）。
 // ツールの実行は描かない（進行は帯の「いまの作業」が持つ）。
 // 失敗で終わったやり取りは、頭に失敗の塊を出す（色だけでなく字で成功と見分ける）。
 
@@ -16,7 +16,12 @@ import type {
 import { formatMeasured } from "../../../../../../../../shared/utils/elapsed-time.ts"
 import { Text } from "../../../../../../ui/text/text.tsx"
 import { VStack } from "../../../../../../ui/v-stack/v-stack.tsx"
-import { arrangeTurn, progressFoldSummary, type TurnBeside } from "../../domain/turn-arrangement.ts"
+import {
+  arrangeTurn,
+  progressFoldSummary,
+  type ProgressEntry,
+  type TurnBeside,
+} from "../../domain/turn-arrangement.ts"
 import mainViewStyles from "../../main-view.module.css"
 import { AsideThread } from "../aside-thread/aside-thread.tsx"
 import { QuestionRecord } from "../question-record/question-record.tsx"
@@ -84,6 +89,7 @@ export function Turn(props: TurnProps): ReactElement {
                   turnId={turn.id}
                   reveal={step.id === revealStepId}
                   hasInterimReport={turn.hasInterimReport}
+                  showQuestions
                 />
                 {step.asides.length > 0 && (
                   <AsideThread asides={step.asides} newest={props.newest} />
@@ -97,6 +103,7 @@ export function Turn(props: TurnProps): ReactElement {
                 turnId={turn.id}
                 reveal={arrangement.final.id === revealStepId}
                 hasInterimReport={turn.hasInterimReport}
+                showQuestions={false}
                 key={arrangement.final.id}
               />
               {arrangement.besides.map((beside) => (
@@ -124,6 +131,8 @@ type StepProps = {
   readonly reveal: boolean
   /** このステップが載っているやり取りに中間レポートがあるか（`MainViewTurn.hasInterimReport`）。 */
   readonly hasInterimReport: boolean
+  /** このステップの質問の記録を札のそばに出すか。経過の畳みに入れるやり取りの最終のステップでは出さない。 */
+  readonly showQuestions: boolean
 }
 
 /**
@@ -134,7 +143,8 @@ type StepProps = {
  */
 function Step(props: StepProps): ReactElement | null {
   const { step } = props
-  const hasCard = step.body.kind === "text" || step.actions.some(isQuestion)
+  const hasCard =
+    step.body.kind === "text" || (props.showQuestions && step.actions.some(isQuestion))
 
   if (!hasCard) {
     return null
@@ -157,7 +167,7 @@ function Step(props: StepProps): ReactElement | null {
  */
 function StepCard(props: StepProps): ReactElement {
   const { step } = props
-  const questions = step.actions.filter(isQuestion)
+  const questions = props.showQuestions ? step.actions.filter(isQuestion) : []
   const questionCards = questions.map((question) => (
     <QuestionRecord entry={question} key={question.toolUseId} />
   ))
@@ -285,21 +295,19 @@ type BesideProps = {
 function Beside(props: BesideProps): ReactElement {
   const { beside } = props
   switch (beside.kind) {
-    case "question":
-      return <QuestionRecord entry={beside.entry} />
     case "asides":
       return <AsideThread asides={beside.asides} newest={props.newest} />
   }
 }
 
 type ProgressFoldProps = {
-  readonly progress: readonly MainViewStep[]
+  readonly progress: readonly ProgressEntry[]
   readonly turnId: number
   readonly hasInterimReport: boolean
 }
 
 /**
- * 経過の畳み。中間レポートを届いた順に、1行の畳みの形で入れる。
+ * 経過の畳み。中間レポート（1行の畳みの形）と質問の記録を届いた順に入れる。
  */
 function ProgressFold(props: ProgressFoldProps): ReactElement {
   return (
@@ -317,15 +325,19 @@ function ProgressFold(props: ProgressFoldProps): ReactElement {
         wrap="nowrap"
         className={styles["progress-fold-steps"]}
       >
-        {props.progress.map((step) => (
-          <FoldedStep
-            step={step}
-            turnId={props.turnId}
-            hasInterimReport={props.hasInterimReport}
-            phoneHidden={false}
-            key={step.id}
-          />
-        ))}
+        {props.progress.map((entry) =>
+          entry.kind === "interim" ? (
+            <FoldedStep
+              step={entry.step}
+              turnId={props.turnId}
+              hasInterimReport={props.hasInterimReport}
+              phoneHidden={false}
+              key={`interim:${String(entry.step.id)}`}
+            />
+          ) : (
+            <QuestionRecord entry={entry.entry} key={`question:${entry.entry.toolUseId}`} />
+          ),
+        )}
       </VStack>
     </details>
   )
@@ -379,9 +391,7 @@ function interimSummary(body: MainViewStepBody): string {
 }
 
 function besideKey(beside: TurnBeside): string {
-  return beside.kind === "question"
-    ? `question:${beside.entry.toolUseId}`
-    : `asides:${String(beside.stepId)}`
+  return `asides:${String(beside.stepId)}`
 }
 
 function isQuestion(
