@@ -5,6 +5,7 @@ import { z } from "zod"
 
 import type { ExpressionChoice } from "../../../shared/character-pack/expression-choice.ts"
 import type { ReportArgumentField } from "../../../shared/report/report-argument-chars.ts"
+import { keyFiguresSchema } from "../../../shared/report/report-block-comparison.ts"
 import {
   reportFigureSchema,
   reportSectionSchema,
@@ -32,6 +33,7 @@ import {
   REPORT_CLOSING_DESCRIPTION,
   REPORT_FIGURE_DESCRIPTION,
   REPORT_FIGURE_SHORT_TYPE_NOTE,
+  REPORT_KEY_FIGURES_DESCRIPTION,
   REPORT_SECTIONS_DESCRIPTION,
   REPORT_SECTIONS_SHORT_TYPE_HEADING,
   REPORT_SESSION_REMAINING_DESCRIPTION,
@@ -180,6 +182,7 @@ function reportInputShape(expressions: readonly ExpressionChoice[]) {
       .describe(
         `結論。レポートの冒頭の文を1要素1文（句点まで）で1〜${String(MAX_CONCLUSION_SENTENCES)}要素。1文目は全角${String(MAX_FIRST_SENTENCE)}字以内（目安は${String(FIRST_SENTENCE_TARGET)}字、読点は${String(FIRST_SENTENCE_TARGET_COMMAS)}つまで）。悪い例: 「設定の読み込みを共通化し、型を整理し、テストも足して、起動の流れを書き換えた」（変更の列挙）。良い例: 「次から設定の書き間違いが起動時に分かる」（読み手から見た変化）。2文目は「それで何が良いか」か「変えていないもの」。例: ["…分かる。", "読み方は変えていない。"]`,
       ),
+    keyFigures: keyFiguresSchema.optional().describe(REPORT_KEY_FIGURES_DESCRIPTION),
     figure: reportFigureSchema.optional().describe(REPORT_FIGURE_DESCRIPTION),
     sections: z.array(reportSectionSchema).min(1).optional().describe(REPORT_SECTIONS_DESCRIPTION),
     retrospective: reportRetrospectiveSchema.optional().describe(REPORT_RETROSPECTIVE_DESCRIPTION),

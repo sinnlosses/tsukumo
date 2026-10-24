@@ -2,7 +2,7 @@
 
 import { z } from "zod"
 
-import { aside, fold, inlineText, omittable } from "./report-block-field.ts"
+import { aside, type DeepReadonly, fold, inlineText, omittable } from "./report-block-field.ts"
 import { MAX_CANDIDATES } from "./report-limit.ts"
 
 export const REPORT_CELL_STATUSES = ["ok", "warn", "ng"] as const
@@ -81,28 +81,41 @@ export const compareBlockSchema = z
     "2つを同時に見比べる（案A と案B。変更の前と後は beforeAfter）。側ごとに見出しと短い箇条。採否は options、値を揃えるなら table（3つ以上も table）",
   )
 
+const statItemsSchema = z
+  .array(
+    z.object({
+      before: omittable(z.string(), "").describe("変わる前の数（前後を見せるときだけ）"),
+      value: z.string(),
+      total: omittable(z.string(), "").describe(
+        "全体の数（割合を帯で添える。value が全体のうちの数のとき）",
+      ),
+      label: inlineText,
+      series: omittable(z.array(z.number()), []).describe(
+        "推移の数の並び（3つ以上。省いてよい）。value の左に折れ線で添える",
+      ),
+      better: omittable(z.enum(["up", "down", ""]), "").describe(
+        "before と value が数のとき、増えて良いなら up・減って良いなら down",
+      ),
+    }),
+  )
+  .min(3)
+  .max(4)
+
+/** `report` の `keyFigures`（結論の直下に並べる、結論に効く数）。項目の形は `stats` の `items` と同じ。 */
+export const keyFiguresSchema = statItemsSchema
+
+export type KeyFigures = DeepReadonly<z.infer<typeof keyFiguresSchema>>
+
+/** 読み戻した `keyFigures`。「無い」と形の崩れは空の配列に畳む。 */
+export function parseKeyFigures(value: unknown): KeyFigures {
+  const parsed = keyFiguresSchema.safeParse(value)
+  return parsed.success ? parsed.data : []
+}
+
 export const statsBlockSchema = z
   .object({
     kind: z.literal("stats"),
-    items: z
-      .array(
-        z.object({
-          before: omittable(z.string(), "").describe("変わる前の数（前後を見せるときだけ）"),
-          value: z.string(),
-          total: omittable(z.string(), "").describe(
-            "全体の数（割合を帯で添える。value が全体のうちの数のとき）",
-          ),
-          label: inlineText,
-          series: omittable(z.array(z.number()), []).describe(
-            "推移の数の並び（3つ以上。省いてよい）。value の左に折れ線で添える",
-          ),
-          better: omittable(z.enum(["up", "down", ""]), "").describe(
-            "before と value が数のとき、増えて良いなら up・減って良いなら down",
-          ),
-        }),
-      )
-      .min(3)
-      .max(4),
+    items: statItemsSchema,
     fold,
     aside,
   })

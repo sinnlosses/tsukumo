@@ -103,6 +103,7 @@ function inherited(event: ReportEvent, base: ReportEvent): ReportEvent {
     conclusion: from("conclusion").conclusion,
     conclusionSentenceChars: from("conclusion").conclusionSentenceChars,
     conclusionFirstSentence: from("conclusion").conclusionFirstSentence,
+    keyFigures: from("keyFigures").keyFigures,
     figure: from("figure").figure,
     sections: from("sections").sections,
     unknownBlockCount: from("sections").unknownBlockCount,

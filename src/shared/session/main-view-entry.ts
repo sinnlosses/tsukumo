@@ -6,6 +6,7 @@ import { reportChecksMarkdown } from "../report/report-check.ts"
 import { reportSectionMarkdowns } from "../report/report-markdown.ts"
 import { phaseTimesMarkdown } from "../report/report-phase-time.ts"
 import { retrospectiveMarkdown } from "../report/report-retrospective.ts"
+import { keyFiguresMarkdown } from "../report/report-stat-markdown.ts"
 import { tidyReportSections } from "../report/report-tidy.ts"
 import { isBlankText } from "../utils/blank-text.ts"
 import type { MainViewEntry, MainViewReportRegions } from "./main-view-shape.ts"
@@ -129,7 +130,7 @@ function toMainViewEntries(record: SessionRecord, context: TurnContext): readonl
 }
 
 /**
- * `report` の引数を欄に組む。頭は `conclusion` → 合図の行と段ごとの所要時間の順で、節は `figure` の図 → `sections` の順。
+ * `report` の引数を欄に組む。頭は `conclusion` → `keyFigures`（数の札）→ 合図の行と段ごとの所要時間の順で、節は `figure` の図 → `sections` の順。
  * `figure` の図は見出しの無い先頭の節として描き（`sectionsWithFigure`）、図の番号は `sections` の図と通しで振られる。`none` は何も描かない。
  * 合図の行と段ごとの所要時間は {@link statusMarkdown}。段ごとの所要時間は最終のときの頭にだけ、同じ依頼のワークプランから描く。
  * `favor` はレポートの記法の「お願い」の塊で包むので、サニタイズも記法の解釈もテキストの本文と同じ経路を通る。
@@ -149,6 +150,7 @@ function reportRegionsOf(
       isBlankText(report.conclusion)
         ? ""
         : `<div class="${report.task.kind === "task" ? "conclusion" : "conclusion-lead"}">\n\n${report.conclusion}\n\n</div>`,
+      keyFiguresMarkdown(report.keyFigures),
       statusMarkdown(
         reportChecksMarkdown(
           report.checks,

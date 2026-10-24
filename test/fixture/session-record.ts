@@ -81,6 +81,7 @@ export function reportRecord(conclusion = "架空の結論"): SessionRecord {
     kind: "report",
     toolUseId: "fictional-report",
     conclusion,
+    keyFigures: [],
     figure: { kind: "none", reason: "unrecorded" },
     sections: [],
     favor: "",

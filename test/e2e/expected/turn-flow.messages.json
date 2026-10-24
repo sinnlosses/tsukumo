@@ -119,6 +119,7 @@
         31
       ],
       "conclusionFirstSentence": "途中の結論: 目盛りを決めているのは `a.ts` だけだった。",
+      "keyFigures": [],
       "figure": {
         "kind": "none",
         "reason": "unrecorded"
@@ -263,6 +264,7 @@
         32
       ],
       "conclusionFirstSentence": "架空の結論: 目盛りを 24 に直し、`a.ts` だけで済んだ。",
+      "keyFigures": [],
       "figure": {
         "kind": "none",
         "reason": "unrecorded"

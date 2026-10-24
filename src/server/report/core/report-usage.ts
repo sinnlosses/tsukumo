@@ -22,6 +22,7 @@ import type {
   ReportShapeTagUsage,
 } from "../../../shared/report/report-usage-record.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
+import { markdownTreeOf, nodesInOrder } from "./markdown-tree.ts"
 import { mermaidKind, mermaidSourcesInSections } from "./report-figure-fault.ts"
 import { reportImagePaths } from "./report-image-shelf.ts"
 import {
@@ -86,6 +87,10 @@ export type ReportUsageEntry = {
   readonly hasSourceReference: boolean
   /** 行が2つ以下の表が1つでもあるか。 */
   readonly shortTable: boolean
+  /** `keyFigures` が1つ以上あるか（引き継いだものを含む）。 */
+  readonly hasKeyFigures: boolean
+  /** `keyFigures` が無いのに、結論の文にインラインコードの外の数が3つ以上あるか。 */
+  readonly conclusionNumbersWithoutKeyFigures: boolean
   /** 引数の字数。全体と最上位の欄ごと。渡した欄だけを数える。 */
   readonly argumentChars: ReportArgumentChars
   /** 直前に差し戻した呼び出しから引き継いだ欄の名前。 */
@@ -196,6 +201,9 @@ export function reportUsageEntryOf(
     shortTable: blocksOf(drawnSections).some(
       (block) => block.kind === "table" && block.rows.length <= 2,
     ),
+    hasKeyFigures: event.keyFigures.length > 0,
+    conclusionNumbersWithoutKeyFigures:
+      event.keyFigures.length === 0 && numberCountOutsideCode(event.conclusion) >= 3,
     argumentChars: event.argumentChars,
     inheritedFields: event.inheritedFields,
   }
@@ -241,6 +249,17 @@ function writtenTextsOf(block: ReportBlock): readonly string[] {
     default:
       return []
   }
+}
+
+const NUMBER_PATTERN = /\d+(?:[.,]\d+)*/g
+
+/** 文中の数（数字の連なり）の数。インラインコードの中は数えない。 */
+function numberCountOutsideCode(markdown: string): number {
+  return nodesInOrder(markdownTreeOf(markdown)).reduce(
+    (total, node) =>
+      total + (node.type === "text" ? (node.value.match(NUMBER_PATTERN)?.length ?? 0) : 0),
+    0,
+  )
 }
 
 const INLINE_CODE = /(`+)[\s\S]*?\1/g

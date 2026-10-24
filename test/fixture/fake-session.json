@@ -2105,6 +2105,40 @@
             "closing": { "kind": "speech", "text": "書けたよ！", "expression": "proud" },
             "toolUseId": "fake-report-board-1",
             "conclusion": "架空の結論: 毎朝の収集結果を4つの区画にまとめた。公開テストだけが CLI の制約で止まっている。",
+            "keyFigures": [
+              {
+                "before": "",
+                "value": "14",
+                "total": "",
+                "label": "架空の区画",
+                "series": [],
+                "better": ""
+              },
+              {
+                "before": "20",
+                "value": "9",
+                "total": "",
+                "label": "架空の未了",
+                "series": [],
+                "better": "down"
+              },
+              {
+                "before": "",
+                "value": "21",
+                "total": "24",
+                "label": "架空の済み",
+                "series": [],
+                "better": ""
+              },
+              {
+                "before": "",
+                "value": "3",
+                "total": "",
+                "label": "架空の保留",
+                "series": [4, 3, 3, 3],
+                "better": ""
+              }
+            ],
             "sections": [
               {
                 "heading": "",
@@ -3727,6 +3761,40 @@
             "closing": { "kind": "speech", "text": "図を先に置いたよ！", "expression": "proud" },
             "toolUseId": "fake-report-figure-1",
             "conclusion": "架空の結論: 図の欄の図が検証結果の下に図 1 として出る。",
+            "keyFigures": [
+              {
+                "before": "",
+                "value": "14",
+                "total": "",
+                "label": "架空の区画",
+                "series": [],
+                "better": ""
+              },
+              {
+                "before": "20",
+                "value": "9",
+                "total": "",
+                "label": "架空の未了",
+                "series": [],
+                "better": "down"
+              },
+              {
+                "before": "",
+                "value": "21",
+                "total": "24",
+                "label": "架空の済み",
+                "series": [],
+                "better": ""
+              },
+              {
+                "before": "",
+                "value": "3",
+                "total": "",
+                "label": "架空の保留",
+                "series": [4, 3, 3, 3],
+                "better": ""
+              }
+            ],
             "checks": [
               {
                 "status": "ok",

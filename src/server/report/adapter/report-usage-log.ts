@@ -102,6 +102,8 @@ function toRecord(
     hasFavor: entry.hasFavor,
     hasSourceReference: entry.hasSourceReference,
     shortTable: entry.shortTable,
+    hasKeyFigures: entry.hasKeyFigures,
+    conclusionNumbersWithoutKeyFigures: entry.conclusionNumbersWithoutKeyFigures,
     argumentChars: entry.argumentChars,
     inheritedFields: entry.inheritedFields,
     reportSchema,

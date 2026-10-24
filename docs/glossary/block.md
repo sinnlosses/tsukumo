@@ -30,7 +30,7 @@
 
 - **英語識別子**: `ReportBlock`（`src/shared/report/report-block.ts`）/ `kind`（`text` / `list` /
   `table` / `matrix` / `compare` / `beforeAfter`（前後）/ `dimension`（寸法図）/ `note` / `stats` / `code` / `mermaid` / `graph`（`source` の1行1辺の記法で受ける flowchart。行頭の `+ ` / `- ` / `~ ` が足した・消した・変えたの印。2026-10-12 利用者決定）/ `chart` / `svg`（座標つきの図形で書く図）/ `progress` / `options` / `claims`（確度つきの主張）/ `image`（画面の画像）/ `files` / `markdown`）/ `fold`（畳むときの見出し）/ `aside`（塊の傍注。下の「余白の柱」）/
-  欄の `from` / `to`（表のセルの前後）・`before`（`stats` の前の値）・`total`（`stats` の全体の数）・`label`（`list` の項目の名前）・
+  欄の `from` / `to`（表のセルの前後）・`before`（`stats` の前の値）・`total`（`stats` の全体の数）・`keyFigures`（`report` の欄。結論の直下に並べる 3〜4 個の数の札で、項目の形は `stats` の `items` と同じ。塊の欄ではない）・`label`（`list` の項目の名前）・
   `flow`（`list` の `style` の一本道の流れ）・`sides`（`compare` の2つの側。`heading` と `points`）・
   `before` / `after`（`beforeAfter` の前の側と後の側。`kind` が `image`〔`path`と任意の `region`（変わった場所の枠。% の `left`・`top`・`width`・`height`）〕/ `code`〔`language`・`source`〕/ `points` / `mermaid`〔`source`〕/ `svg`〔`width`・`height`・`shapes`〕の合併型）・
   `width` / `height`（`svg` の viewBox の大きさ）・`shapes`（`svg` の図形の並び。`kind` が `rect`〔`x`・`y`・`width`・`height`・`label`・`emphasis`〕/ `line`〔`x1`・`y1`・`x2`・`y2`・`arrow`・`label`〕/ `text`〔`x`・`y`・`text`〕の合併型）・`emphasis`（`rect` の枠を強調する真偽値）・`arrow`（`line` の終点に矢じりを付ける真偽値）・

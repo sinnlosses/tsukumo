@@ -68,6 +68,8 @@ function entry(
     hasFavor: false,
     hasSourceReference: true,
     shortTable: true,
+    hasKeyFigures: false,
+    conclusionNumbersWithoutKeyFigures: true,
     argumentChars: { total: 1200, fields: { conclusion: 40, sections: 900 } },
     inheritedFields: ["favor", "closing"],
   }
@@ -133,6 +135,8 @@ describe("createReportUsageLog", () => {
       "hasFavor",
       "hasSourceReference",
       "shortTable",
+      "hasKeyFigures",
+      "conclusionNumbersWithoutKeyFigures",
       "argumentChars",
       "inheritedFields",
       "reportSchema",

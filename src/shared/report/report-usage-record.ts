@@ -8,7 +8,7 @@ import type { ReportGenre, ReportTaskOutcome } from "./report-task.ts"
 import type { ReportSchemaVariant } from "./schema-variant.ts"
 
 /** 行の形の版。形か数え方を変えたら上げ、古い行と見分ける。 */
-export const REPORT_USAGE_FORMAT_VERSION = 19 satisfies number
+export const REPORT_USAGE_FORMAT_VERSION = 20 satisfies number
 
 /** どの駆動で起こしたプロセスの行か（版19から）。`fake` は疑似セッションで、集計は既定で除く。 */
 export type ReportUsageDriver = "sdk" | "fake"
@@ -97,6 +97,10 @@ export type ReportUsageRecord = ReportFigureUsage &
     readonly hasSourceReference: boolean
     /** 行が2つ以下の表が1つでもあるか（版10から）。 */
     readonly shortTable: boolean
+    /** `keyFigures` が1つ以上あるか（版20から）。 */
+    readonly hasKeyFigures: boolean
+    /** `keyFigures` が無いのに、結論の文にインラインコードの外の数が3つ以上あるか（版20から）。 */
+    readonly conclusionNumbersWithoutKeyFigures: boolean
     /** 引数の字数。全体と最上位の欄ごと（版14から）。渡した欄だけを数え、引き継いだ欄は数えない。 */
     readonly argumentChars: ReportArgumentChars
     /** 渡さずに、直前に差し戻した呼び出しから引き継いだ欄の名前（版16から）。 */

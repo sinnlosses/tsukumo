@@ -14,6 +14,7 @@
 // 引数の字数の分布と差し戻しの出し直しの割合は、版14以降の行を分母にする。
 // 引き継ぎで出した呼び出しの数は、版16以降の行を分母にする。
 // 札 × 塊の種類の節数・`list` の style・`mermaid` の図種・駆動の数は、版19以降の行を分母にする。
+// `keyFigures` の有無と、結論に数が並ぶのに無い割合は、版20以降の行を分母にする。
 // 疑似セッションの行（`driver` が `fake`、`driver` の無い行は `sessionId` が `fake-session`）は、既定で全部の表から除く。
 //
 // 使い方:
@@ -57,6 +58,7 @@ import {
   isFakeSessionRow,
   MODIFIED_FORMAT_VERSION,
   recordSchema,
+  KEY_FIGURES_FORMAT_VERSION,
   rejectionSchema,
   SECTION_BLOCK_FORMAT_VERSION,
   SHAPE_TAG_FORMAT_VERSION,
@@ -64,6 +66,13 @@ import {
   type RejectionRecord,
   type UsageRecord,
 } from "./report-usage-row.ts"
+import {
+  type KeyFiguresRecord,
+  keyFiguresSection,
+  shareLine,
+  type ShortTableRecord,
+  shortTableSection,
+} from "./report-usage-section.ts"
 
 type FieldRecord = Extract<UsageRecord, { readonly blockFields: readonly string[] }>
 type VisualRecord = Extract<UsageRecord, { readonly hasModifiedFiles: boolean }>
@@ -71,7 +80,6 @@ type FigureRecord = Extract<UsageRecord, { readonly hasFigure: boolean }>
 type CountRecord = Extract<UsageRecord, { readonly emphasisCount: number }>
 type HowToVerifyRecord = Extract<UsageRecord, { readonly hasHowToVerify: boolean }>
 type GenreRecord = Extract<UsageRecord, { readonly taskGenre: string }>
-type ShortTableRecord = Extract<UsageRecord, { readonly shortTable: boolean }>
 type ShapeTagRecord = Extract<UsageRecord, { readonly forbiddenShapeSectionCount: number }>
 type ArgumentCharsRecord = Extract<UsageRecord, { readonly argumentChars: unknown }>
 type SectionBlockRecord = Extract<UsageRecord, { readonly sectionBlockKinds: unknown }>
@@ -175,6 +183,12 @@ process.stdout.write(
     records.filter(
       (record): record is SectionBlockRecord => record.v >= SECTION_BLOCK_FORMAT_VERSION,
     ),
+  ),
+)
+process.stdout.write("\n\n")
+process.stdout.write(
+  keyFiguresSection(
+    records.filter((record): record is KeyFiguresRecord => record.v >= KEY_FIGURES_FORMAT_VERSION),
   ),
 )
 process.stdout.write("\n\n")
@@ -443,23 +457,6 @@ function genreSection(rows: readonly GenreRecord[]): string {
   ].join("\n\n")
 }
 
-/** 行が2つ以下の表のあるレポートの割合。 */
-function shortTableSection(rows: readonly ShortTableRecord[]): string {
-  if (rows.length === 0) {
-    return "2行以下の表のあるレポート: 記録した行が無い"
-  }
-  return [
-    `2行以下の表のあるレポート（版10以降の${String(rows.length)}件のうち。外す基準の対象ではない。差し戻しにしない）:`,
-    shareLine("全レポート", "2行以下の表あり", rows, (record) => record.shortTable),
-    shareLine(
-      "task の最終レポート",
-      "2行以下の表あり",
-      rows.filter((record) => record.forTask),
-      (record) => record.shortTable,
-    ),
-  ].join("\n")
-}
-
 /** 札 × 節数と、札が許さない塊を使った節の数・許さない組 × 塊の数。分母は版13以降の行の節。 */
 function shapeTagSection(rows: readonly ShapeTagRecord[]): string {
   if (rows.length === 0) {
@@ -643,17 +640,6 @@ function noneReasonsOf(record: UsageRecord): readonly string[] {
     return [UNRECORDED_REASON]
   }
   return "noneReason" in record ? [record.noneReason] : []
-}
-
-function shareLine<Row>(
-  label: string,
-  what: string,
-  rows: readonly Row[],
-  matches: (row: Row) => boolean,
-): string {
-  const count = rows.filter(matches).length
-  const percent = (rows.length === 0 ? 0 : (count / rows.length) * 100).toFixed(1)
-  return `  ${label.padEnd(16)} ${what} ${String(count).padStart(5)}  ${String(rows.length).padStart(5)}件のうち ${percent.padStart(5)}%`
 }
 
 /** 名前ごとに「出た行の数」を数えた表。`knownNames` は0件でも出す。`total` は割合の分母で、既定は行の数。 */

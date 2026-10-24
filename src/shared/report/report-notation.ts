@@ -184,6 +184,7 @@ export const REPORT_NOTATION_NAMES = [
 
 /**
  * tsukumo が `report` の欄から組む印（モデルには教えないので、文面に書き足す決まりの外）。
+ * `key-figures` は結論の直下に並べる数の札の包み（`report` の `keyFigures` から組み、中身は `stats` と同じ）。
  * `verdict` は結論のすぐ下の合図の行（検証結果の判定だけを運ぶ）。
  * `checks` は検証結果の塊で、上から総括行（`checks-summary`。部分は `checks-summary-part`、お願いの印は `checks-summary-favor`）、
  * 問題の項目（`checks-problem`。確かめ方は `checks-problem-how`）、通った項目を畳んだ `<details>`（`checks-passed`。開くと `check` の行の一覧）。
@@ -192,6 +193,7 @@ export const REPORT_NOTATION_NAMES = [
  * 見た目は語彙と同じく `report-notation.module.css` の `report-<名前>`。
  */
 export const REPORT_DRAWN_MARK_NAMES = [
+  "key-figures",
   "verdict",
   "checks",
   "checks-summary",

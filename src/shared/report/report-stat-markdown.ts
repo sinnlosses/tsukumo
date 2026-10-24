@@ -6,6 +6,13 @@ import { NUMERIC_CELL_PATTERN, numericCellMagnitude } from "./report-table-markd
 
 type StatItem = Extract<ReportBlock, { readonly kind: "stats" }>["items"][number]
 
+/** 結論の直下に置く数の札（`keyFigures`）。札は `stats` と同じで、包みの `key-figures` だけが違う。無ければ空文字。 */
+export function keyFiguresMarkdown(items: readonly StatItem[]): string {
+  return items.length === 0
+    ? ""
+    : `<div class="key-figures"><div class="stats">${items.map(statMarkdown).join("")}</div></div>`
+}
+
 export function statMarkdown({ before, value, total, label, series, better }: StatItem): string {
   const beforeHtml =
     before.trim() === ""

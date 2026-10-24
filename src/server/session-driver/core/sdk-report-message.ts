@@ -9,6 +9,7 @@ import { isPlainObject } from "remeda"
 import type { Expression } from "../../../shared/character-pack/expression.ts"
 import { parseConclusion } from "../../../shared/report/conclusion-sentence.ts"
 import { reportArgumentCharsOf } from "../../../shared/report/report-argument-chars.ts"
+import { parseKeyFigures } from "../../../shared/report/report-block-comparison.ts"
 import {
   parseReportFigure,
   parseReportSections,
@@ -29,6 +30,7 @@ import { speechEvents } from "./sdk-speech-message.ts"
  * `sections` は塊ごとに検証して崩れた塊・知らない種類の塊を落とす（{@link parseReportSections}）。
  * `sections` の無い呼び出し（引数が文字列の `body` だったころの transcript）は、`body` を逃げ道の塊1つの節に畳む（{@link reportSectionsOfBody}）。
  * `figure` の「無い」（引数に `figure` が無かったころの transcript）と形の崩れは、理由が `unrecorded` の `none` に畳む（{@link parseReportFigure}）。
+ * `keyFigures` の「無い」と形の崩れ（3〜4個でない）は空の配列に畳む。
  * `retrospective` の「無い」と形の崩れは `none` に畳む。
  * `favor` の「無い」は空の文字列に、`checks` の「無い」は空の配列に畳む（描く側は空の塊を置かないだけで済む）。
  * `task` の「無い」と形の崩れ（引数に `task` が無かったころの transcript も）は `none` に畳む。`workPlanClosing` も同じ。
@@ -69,6 +71,7 @@ export function reportEvents(
       conclusion: conclusion.conclusion,
       conclusionSentenceChars: conclusion.conclusionSentenceChars,
       conclusionFirstSentence: conclusion.conclusionFirstSentence,
+      keyFigures: parseKeyFigures(input.keyFigures),
       figure: parseReportFigure(input.figure),
       sections: parsed.sections,
       favor: optionalString(input.favor) ?? "",

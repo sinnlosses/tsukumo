@@ -1,6 +1,7 @@
 // セッションの出来事（`SessionEvent`）のうち、`report` ツールの呼び出しに関するものの型。
 
 import type { ReportArgumentChars, ReportArgumentField } from "../report/report-argument-chars.ts"
+import type { KeyFigures } from "../report/report-block-comparison.ts"
 import type { RecordedReportFigure, ReportSection } from "../report/report-block.ts"
 import type { ReportChangeCount } from "../report/report-change-summary.ts"
 import type { ReportCheck } from "../report/report-check.ts"
@@ -30,6 +31,7 @@ export type ReportEvent =
   /**
    * `report` ツールの呼び出し。メインが呼んだものだけが届く（サブエージェントの呼び出しは変換で捨てる）。
    * `sections`（本文の節）と `checks`（検証結果）は無ければ空の配列、`favor` は無ければ空の文字列、`retrospective`（振り返りの結果）は無ければ `none`、`task` と `workPlanClosing`（段の閉じ方）は無ければ `none`。
+   * `keyFigures`（結論の直下に並べる数）は無ければ空の配列。
    * `figure`（レポートの図1つか、置かない理由）は無ければ理由が `unrecorded` の `none`。
    * `toolUseId` は呼び出しの id で、差し戻しが同じ呼び出しの `tool-finished` と突き合わせるのに使う。
    * `closing`（締めのセリフ）は描いたあとに差し戻しが `speech` として出すもので、画面の状態はこの欄を読まない。
@@ -53,6 +55,7 @@ export type ReportEvent =
       readonly conclusion: string
       readonly conclusionSentenceChars: readonly number[]
       readonly conclusionFirstSentence: string
+      readonly keyFigures: KeyFigures
       readonly figure: RecordedReportFigure
       readonly sections: readonly ReportSection[]
       readonly favor: string

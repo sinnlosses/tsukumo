@@ -234,6 +234,7 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
             kind: "report",
             toolUseId: event.toolUseId,
             conclusion: event.conclusion,
+            keyFigures: event.keyFigures,
             figure: event.figure,
             sections: event.sections,
             favor: event.favor,

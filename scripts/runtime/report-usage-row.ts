@@ -115,6 +115,14 @@ const NOTATION_TREE_FORMAT_VERSION = 18
 /** 節ごとの塊の種類・`list` の style・`mermaid` の図種・駆動を記録し始めた版。 */
 export const SECTION_BLOCK_FORMAT_VERSION = 19
 
+/** `keyFigures` の有無と、結論に数が並ぶのに無いかを記録し始めた版。 */
+export const KEY_FIGURES_FORMAT_VERSION = 20
+
+const keyFiguresRecordShape = {
+  hasKeyFigures: z.boolean(),
+  conclusionNumbersWithoutKeyFigures: z.boolean(),
+}
+
 const sectionBlockRecordShape = {
   sectionBlockKinds: z.array(z.array(z.string())),
   listStyles: z.array(z.string()),
@@ -243,12 +251,27 @@ export const recordSchema = z.union([
       ...sectionBlockRecordShape,
     })
     .and(figureFieldSchema),
+  z
+    .object({
+      v: z.literal(KEY_FIGURES_FORMAT_VERSION),
+      ...figureRecordShape,
+      ...countRecordShape,
+      ...howToVerifyRecordShape,
+      ...genreRecordShape,
+      ...shortTableRecordShape,
+      ...shapeTagRecordShape,
+      argumentChars: argumentCharsSchema,
+      inheritedFields: z.array(z.string()),
+      ...sectionBlockRecordShape,
+      ...keyFiguresRecordShape,
+    })
+    .and(figureFieldSchema),
 ])
 export type UsageRecord = z.infer<typeof recordSchema>
 
 /** 差し戻した呼び出しの行（`kind: "rejected"`）。受け付けの行には `kind` が無い。 */
 export const rejectionSchema = z.object({
-  v: z.number().int().min(VISUALLESS_FORMAT_VERSION).max(SECTION_BLOCK_FORMAT_VERSION),
+  v: z.number().int().min(VISUALLESS_FORMAT_VERSION).max(KEY_FIGURES_FORMAT_VERSION),
   kind: z.literal("rejected"),
   reasons: z.array(z.string()),
   argumentChars: argumentCharsSchema.optional(),

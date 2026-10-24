@@ -2,6 +2,7 @@
 
 import type { Expression } from "../character-pack/expression.ts"
 import type { ReactionKind } from "../recommendation/reaction.ts"
+import type { KeyFigures } from "../report/report-block-comparison.ts"
 import type { RecordedReportFigure, ReportSection } from "../report/report-block.ts"
 import type { ReportChangeSummary } from "../report/report-change-summary.ts"
 import type { ReportCheck } from "../report/report-check.ts"
@@ -116,6 +117,7 @@ export type SessionRecord =
       readonly kind: "report"
       readonly toolUseId: string
       readonly conclusion: string
+      readonly keyFigures: KeyFigures
       readonly figure: RecordedReportFigure
       readonly sections: readonly ReportSection[]
       readonly favor: string

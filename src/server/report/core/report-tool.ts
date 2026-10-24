@@ -14,7 +14,7 @@ import type { SessionEvent } from "../../../shared/session/session-event.ts"
  * MCP ツールの説明文は既定で 2048 字までしか渡らず、規約の全文は入らない。
  */
 export const REPORT_TOOL_DESCRIPTION =
-  "ターンのレポートをメインビューに出す。task（目録の1行と見出し）→ conclusion → checks（検証結果の表）→ figure → sections → retrospective → favor の順に描かれ、" +
+  "ターンのレポートをメインビューに出す。task（目録の1行と見出し）→ conclusion → keyFigures（数の札）→ checks（検証結果の表）→ figure → sections → retrospective → favor の順に描かれ、" +
   "そのあと closing のセリフが吹き出しに出る。受け付けられるとそこでターンが終わる（あとに何も書けない）。" +
   "差し戻されたら、直す欄だけを渡して呼び直せばよい（渡さなかった欄は、同じターンで直前に差し戻した呼び出しの値を引き継ぐ）。" +
   "書き方は「レポートの記法（tsukumo）」の節に従う。" +
@@ -71,6 +71,11 @@ export const REPORT_FIGURE_DESCRIPTION =
   "short-answer（2〜3文で終わる答え）/ no-shape（上の4つのどれも無い）/ " +
   "single-value（前後が値1つで、table のセルの from / to か stats の before で足りる）/ " +
   "no-material（委譲先の返却に構造の材料が無く、差分も読んでいない）。none は何も描かれない。"
+
+/** `report` の任意の `keyFigures` 引数（結論の直下に並べる数）の説明。使いどころの条は `REPORT_NOTATION_PROMPT` が持つ。 */
+export const REPORT_KEY_FIGURES_DESCRIPTION =
+  "結論に効く数を3〜4個。結論の直下に札で並べる（件数・割合・前後の差）。" +
+  "3つに満たなければ省いて結論の文に入れる。項目の形は stats の items と同じ。"
 
 /**
  * `report` の任意の `sections` 引数（本文。節と塊の並び）の説明。

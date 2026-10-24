@@ -7,6 +7,7 @@ export const REPORT_ARGUMENT_FIELDS = [
   "task",
   "workPlanClosing",
   "conclusion",
+  "keyFigures",
   "figure",
   "sections",
   "retrospective",

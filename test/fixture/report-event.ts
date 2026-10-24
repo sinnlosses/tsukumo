@@ -20,6 +20,7 @@ export function reportEvent(
     conclusion,
     conclusionSentenceChars: parseConclusion(conclusion)?.conclusionSentenceChars ?? [],
     conclusionFirstSentence: parseConclusion(conclusion)?.conclusionFirstSentence ?? "",
+    keyFigures: [],
     figure: { kind: "none", reason: "unrecorded" },
     sections: [],
     favor: "",

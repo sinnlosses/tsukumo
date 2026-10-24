@@ -129,6 +129,20 @@
   font-size: var(--font-secondary);
   color: var(--ink-quiet);
 }
+/* 結論の直下の数の札（`report` の `keyFigures`）。札の格子は `.report-stats` のままで、ここは外側のあきと、4枚を 2×2 に折る幅（下）だけを持つ。 */
+.detail-block .report-key-figures {
+  margin: 13px 0;
+}
+.detail-block .report-key-figures .report-stats {
+  margin: 0;
+}
+/* 4枚は器が 46rem（約 736px）以下で 2×2 に折る（窓幅 760px の器は約 716px）。
+   本文の `stats` が 4 列に広げる 43.25rem より広い幅で折るので、43.25rem〜46rem では `keyFigures` だけが 2×2 になる。 */
+@container report-body (max-width: 46rem) {
+  .detail-block .report-key-figures .report-stats.report-stats-of-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
 /* 結論と本文のあいだの、合図の行のまとまり（`report` から tsukumo が組む）。
    上下の margin は隣の段落や見出しの margin と相殺されるので、ここに書いた値がそのままあきになる。 */
 .detail-block .report-status {

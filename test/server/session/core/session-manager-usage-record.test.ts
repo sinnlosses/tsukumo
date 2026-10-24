@@ -95,6 +95,8 @@ describe("createSessionManager", () => {
           hasFavor: false,
           hasSourceReference: false,
           shortTable: false,
+          hasKeyFigures: false,
+          conclusionNumbersWithoutKeyFigures: false,
           argumentChars: { total: 0, fields: {} },
           inheritedFields: [],
           sessionSummary: undefined,

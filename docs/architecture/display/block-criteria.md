@@ -39,6 +39,8 @@
 - 版19: 節ごとに出た塊の種類（`sectionBlockKinds`。`sectionShapeTags` と同じ並び）、`list` の style の集合（`listStyles`）、
   `mermaid` の図種の集合（`mermaidKinds`）、駆動（`driver`。`sdk` か `fake`）。受け付けと差し戻しの両方の行に `driver` が入る。
   集計スクリプトは疑似セッションの行（`driver` が `fake`、版18以前は `sessionId` が `fake-session`）を既定で除き、`--include-fake` で含める
+- 版20: `keyFigures` が1つ以上あるか（`hasKeyFigures`）、`keyFigures` が無いのに結論の文（インラインコードの外）に数が3つ以上あるか
+  （`conclusionNumbersWithoutKeyFigures`）。受け付けの行だけに入る。差し戻しにはせず、28日の数を見てから差し戻すか決める
 
 4版以降の真偽値と数は、塊の欄とは別で外す基準の対象にしない。
 
