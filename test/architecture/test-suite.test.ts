@@ -1,8 +1,8 @@
 import { readFileSync } from "node:fs"
-import { fileURLToPath } from "node:url"
 
 import { describe, expect, it } from "vitest"
 
+import { REPOSITORY_ROOT } from "../../scripts/shared/repository-root.ts"
 import { withoutComments } from "../comment-line.ts"
 import { listSourceFiles } from "./source-file.ts"
 
@@ -11,7 +11,7 @@ import { listSourceFiles } from "./source-file.ts"
 // ここに足すときは、ci.yml にもそのコマンドを入れる段を足す。
 const CI_AVAILABLE_COMMANDS: ReadonlySet<string> = new Set(["git", "node", "pnpm", "bd"])
 
-const TEST_ROOT = fileURLToPath(new URL("../../test", import.meta.url)).replace(/\/$/, "")
+const TEST_ROOT = `${REPOSITORY_ROOT}/test`
 
 describe("テストが起こす外部コマンド", () => {
   it("test/ が子プロセスで起こすコマンドは、CI が用意する一覧に入っている", () => {

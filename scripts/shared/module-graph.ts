@@ -4,15 +4,8 @@
 
 import path from "node:path"
 
-import {
-  arrayField,
-  type AstNode,
-  descendants,
-  literalString,
-  objectField,
-  parseProgram,
-  stringField,
-} from "./ast-node.ts"
+import { parseProgram } from "./ast-node.ts"
+import { DYNAMIC, readReferences } from "./module-reference.ts"
 
 /** ファイル → そのファイルが相対指定で読む、実在するファイルの列。 */
 export type ModuleGraph = ReadonlyMap<string, readonly string[]>
@@ -22,9 +15,6 @@ export type ModuleImports = {
   readonly paths: readonly string[]
   readonly open: boolean
 }
-
-/** 指定が静的に決まらない読み方を、指定の列の中で表す印（実在しうる指定と衝突しない文字列）。 */
-const DYNAMIC = "\0dynamic"
 
 /**
  * `fromPath` の本文 `source` が相対指定で読むファイルのうち、`knownPaths` に在るものと、辿れない読み方の有無。
@@ -84,75 +74,4 @@ export function reachableFrom(
     pending.push(...(graph.get(next) ?? []))
   }
   return reached
-}
-
-/** 文字列の指定、または決められない読み方を表す `DYNAMIC`。 */
-function readReferences(program: AstNode): readonly string[] {
-  return descendants(program).flatMap((node): readonly string[] => {
-    switch (stringField(node, "type")) {
-      case "ImportDeclaration":
-      case "ExportNamedDeclaration":
-      case "ExportAllDeclaration":
-        return [stringField(objectField(node, "source"), "value")].filter(isString)
-      case "ImportExpression":
-        return [literalString(objectField(node, "source")) ?? DYNAMIC]
-      case "CallExpression":
-        return readCall(node)
-      case "NewExpression":
-        return readNewUrl(node)
-      default:
-        return []
-    }
-  })
-}
-
-function readCall(node: AstNode): readonly string[] {
-  const callee = objectField(node, "callee")
-  if (stringField(callee, "type") === "Identifier" && stringField(callee, "name") === "require") {
-    const [argument] = arrayField(node, "arguments")
-    return [literalString(argument) ?? DYNAMIC]
-  }
-  return isImportMetaGlob(callee) ? [DYNAMIC] : []
-}
-
-function readNewUrl(node: AstNode): readonly string[] {
-  const callee = objectField(node, "callee")
-  const [target, base] = arrayField(node, "arguments")
-  if (stringField(callee, "type") !== "Identifier" || stringField(callee, "name") !== "URL") {
-    return []
-  }
-  if (base === undefined || !isImportMetaUrl(base)) {
-    return []
-  }
-  return [literalString(target) ?? DYNAMIC]
-}
-
-function isImportMeta(node: AstNode | undefined): boolean {
-  return (
-    stringField(node, "type") === "MetaProperty" &&
-    stringField(objectField(node, "meta"), "name") === "import"
-  )
-}
-
-function isImportMetaUrl(node: AstNode): boolean {
-  return (
-    stringField(node, "type") === "MemberExpression" &&
-    isImportMeta(objectField(node, "object")) &&
-    stringField(objectField(node, "property"), "name") === "url"
-  )
-}
-
-function isImportMetaGlob(callee: AstNode | undefined): boolean {
-  if (
-    stringField(callee, "type") !== "MemberExpression" ||
-    !isImportMeta(objectField(callee, "object"))
-  ) {
-    return false
-  }
-  const name = stringField(objectField(callee, "property"), "name")
-  return name === "glob" || name === "globEager"
-}
-
-function isString(value: string | undefined): value is string {
-  return value !== undefined
 }

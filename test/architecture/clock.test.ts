@@ -3,15 +3,13 @@ import { readFileSync } from "node:fs"
 import { describe, expect, it } from "vitest"
 
 import {
-  astAllChildren,
-  astChildren,
-  astNumber,
-  astObject,
-  astString,
-  parseProgram,
+  arrayField,
+  objectField,
+  stringField,
   type AstNode,
-} from "./ast-node.ts"
-import { listSourceFiles, SRC_ROOT } from "./source-file.ts"
+} from "../../scripts/shared/ast-node.ts"
+import { astAllChildren, astNumber } from "./ast-node.ts"
+import { listSourceFiles, parseSourceProgram, SRC_ROOT } from "./source-file.ts"
 
 // 単体テストには React Compiler が掛からず、描画中の時刻の読み取りが固まるのが見えないので、ここで落とす。
 describe("描画中に時計を読む箇所", () => {
@@ -88,7 +86,7 @@ const DEFERRED_CALL_ARGUMENT_INDEX: ReadonlyMap<string, number> = new Map([
 ])
 
 function renderTimeClockReads(fileName: string, source: string): readonly number[] {
-  const program = parseProgram(fileName, source)
+  const program = parseSourceProgram(source, fileName)
   const reads: number[] = []
   const lineOf = (node: AstNode): number => {
     const start = astNumber(node, "start") ?? 0
@@ -96,22 +94,22 @@ function renderTimeClockReads(fileName: string, source: string): readonly number
   }
   const localNames = new Set<string>()
 
-  for (const statement of astChildren(program, "body")) {
-    if (astString(statement, "type") !== "ImportDeclaration") {
+  for (const statement of arrayField(program, "body")) {
+    if (stringField(statement, "type") !== "ImportDeclaration") {
       continue
     }
-    const importSource = astString(astObject(statement, "source"), "value")
+    const importSource = stringField(objectField(statement, "source"), "value")
     if (importSource === undefined || !importSource.endsWith(CLOCK_MODULE_SUFFIX)) {
       continue
     }
-    for (const specifier of astChildren(statement, "specifiers")) {
-      const type = astString(specifier, "type")
+    for (const specifier of arrayField(statement, "specifiers")) {
+      const type = stringField(specifier, "type")
       if (type === "ImportNamespaceSpecifier") {
         reads.push(lineOf(specifier))
       }
       if (type === "ImportSpecifier") {
-        const imported = astString(astObject(specifier, "imported"), "name")
-        const local = astString(astObject(specifier, "local"), "name")
+        const imported = stringField(objectField(specifier, "imported"), "name")
+        const local = stringField(objectField(specifier, "local"), "name")
         if (imported !== undefined && local !== undefined && CLOCK_READERS.includes(imported)) {
           localNames.add(local)
         }
@@ -120,13 +118,13 @@ function renderTimeClockReads(fileName: string, source: string): readonly number
   }
 
   const visit = (node: AstNode, ancestors: readonly AstNode[]): void => {
-    const type = astString(node, "type")
+    const type = stringField(node, "type")
     if (type === "ImportDeclaration") {
       return
     }
     if (
       type === "Identifier" &&
-      localNames.has(astString(node, "name") ?? "") &&
+      localNames.has(stringField(node, "name") ?? "") &&
       !isDeferredContext(ancestors) &&
       !isDeferredCallArgument(node, ancestors.at(-1))
     ) {
@@ -143,9 +141,9 @@ function renderTimeClockReads(fileName: string, source: string): readonly number
 // 識別子を囲む関数のどれか1つが、描画の外で走る関数なら true。
 function isDeferredContext(ancestors: readonly AstNode[]): boolean {
   return ancestors.some((node, index) => {
-    const type = astString(node, "type")
+    const type = stringField(node, "type")
     if (type === "FunctionDeclaration") {
-      return EVENT_HANDLER_NAME.test(astString(astObject(node, "id"), "name") ?? "")
+      return EVENT_HANDLER_NAME.test(stringField(objectField(node, "id"), "name") ?? "")
     }
     if (type !== "ArrowFunctionExpression" && type !== "FunctionExpression") {
       return false
@@ -160,18 +158,18 @@ function isDeferredFunctionSlot(
   parent: AstNode,
   grandParent: AstNode | undefined,
 ): boolean {
-  const parentType = astString(parent, "type")
+  const parentType = stringField(parent, "type")
   if (parentType === "CallExpression") {
     return isDeferredArgument(fn, parent)
   }
   if (parentType === "VariableDeclarator") {
-    return EVENT_HANDLER_NAME.test(astString(astObject(parent, "id"), "name") ?? "")
+    return EVENT_HANDLER_NAME.test(stringField(objectField(parent, "id"), "name") ?? "")
   }
   if (parentType === "Property") {
-    return EVENT_HANDLER_NAME.test(astString(astObject(parent, "key"), "name") ?? "")
+    return EVENT_HANDLER_NAME.test(stringField(objectField(parent, "key"), "name") ?? "")
   }
   if (parentType === "JSXExpressionContainer" && grandParent !== undefined) {
-    return EVENT_HANDLER_NAME.test(astString(astObject(grandParent, "name"), "name") ?? "")
+    return EVENT_HANDLER_NAME.test(stringField(objectField(grandParent, "name"), "name") ?? "")
   }
   return false
 }
@@ -179,21 +177,20 @@ function isDeferredFunctionSlot(
 function isDeferredCallArgument(node: AstNode, parent: AstNode | undefined): boolean {
   return (
     parent !== undefined &&
-    astString(parent, "type") === "CallExpression" &&
+    stringField(parent, "type") === "CallExpression" &&
     isDeferredArgument(node, parent)
   )
 }
 
 function isDeferredArgument(argument: AstNode, call: AstNode): boolean {
-  const callee = astObject(call, "callee")
+  const callee = objectField(call, "callee")
   const calleeName =
-    astString(callee, "type") === "MemberExpression"
-      ? astString(astObject(callee, "property"), "name")
-      : astString(callee, "name")
+    stringField(callee, "type") === "MemberExpression"
+      ? stringField(objectField(callee, "property"), "name")
+      : stringField(callee, "name")
   return (
     calleeName !== undefined &&
-    DEFERRED_CALL_ARGUMENT_INDEX.get(calleeName) ===
-      astChildren(call, "arguments").indexOf(argument)
+    DEFERRED_CALL_ARGUMENT_INDEX.get(calleeName) === arrayField(call, "arguments").indexOf(argument)
   )
 }
 
@@ -239,13 +236,13 @@ function temporalNowReads(
 ): readonly { readonly owner: string | undefined; readonly line: number }[] {
   const reads: { owner: string | undefined; line: number }[] = []
   const visit = (node: AstNode, owner: string | undefined): void => {
-    const type = astString(node, "type")
+    const type = stringField(node, "type")
     const nextOwner =
-      type === "FunctionDeclaration" ? astString(astObject(node, "id"), "name") : owner
+      type === "FunctionDeclaration" ? stringField(objectField(node, "id"), "name") : owner
     if (
       type === "MemberExpression" &&
-      astString(astObject(node, "object"), "name") === "Temporal" &&
-      astString(astObject(node, "property"), "name") === "Now"
+      stringField(objectField(node, "object"), "name") === "Temporal" &&
+      stringField(objectField(node, "property"), "name") === "Now"
     ) {
       const start = astNumber(node, "start") ?? 0
       reads.push({ owner, line: source.slice(0, start).split("\n").length })
@@ -254,6 +251,6 @@ function temporalNowReads(
       visit(child, nextOwner)
     }
   }
-  visit(parseProgram(fileName, source), undefined)
+  visit(parseSourceProgram(source, fileName), undefined)
   return reads
 }

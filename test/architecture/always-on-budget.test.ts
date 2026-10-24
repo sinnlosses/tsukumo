@@ -2,11 +2,11 @@
 // （docs/coding-standards.md「常設の文章の字数」）。
 
 import { readdirSync, readFileSync } from "node:fs"
-import { fileURLToPath } from "node:url"
 
 import { describe, expect, it } from "vitest"
 
-const REPOSITORY_ROOT = fileURLToPath(new URL("../..", import.meta.url)).replace(/\/$/, "")
+import { REPOSITORY_ROOT } from "../../scripts/shared/repository-root.ts"
+
 const RULES_DIR = `${REPOSITORY_ROOT}/.claude/rules`
 
 const AGENTS_MD_LIMIT = 9000

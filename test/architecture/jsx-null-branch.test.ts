@@ -3,13 +3,13 @@ import { readFileSync } from "node:fs"
 import { describe, expect, it } from "vitest"
 
 import {
-  astChildren,
-  astDescendants,
-  astNumber,
-  astObject,
-  astString,
+  arrayField,
+  descendants,
+  objectField,
+  stringField,
   type AstNode,
-} from "./ast-node.ts"
+} from "../../scripts/shared/ast-node.ts"
+import { astNumber } from "./ast-node.ts"
 import { listSourceFiles, parseSourceProgram, SRC_ROOT } from "./source-file.ts"
 
 // 条件付きの描画は `{条件 && <部品 />}` で書き、JSX の子に `{条件 ? <部品 /> : null}` を書かない
@@ -54,14 +54,14 @@ describe("JSX の子の三項", () => {
 })
 
 function nullBranchLines(source: string): readonly number[] {
-  return astDescendants(parseSourceProgram(source))
+  return descendants(parseSourceProgram(source))
     .filter(
       (node) =>
-        astString(node, "type") === "JSXElement" || astString(node, "type") === "JSXFragment",
+        stringField(node, "type") === "JSXElement" || stringField(node, "type") === "JSXFragment",
     )
-    .flatMap((element) => astChildren(element, "children"))
-    .filter((child) => astString(child, "type") === "JSXExpressionContainer")
-    .flatMap((container) => nullBranchConditionals(astObject(container, "expression")))
+    .flatMap((element) => arrayField(element, "children"))
+    .filter((child) => stringField(child, "type") === "JSXExpressionContainer")
+    .flatMap((container) => nullBranchConditionals(objectField(container, "expression")))
     .map((conditional) => lineOf(source, astNumber(conditional, "start") ?? 0))
 }
 
@@ -71,10 +71,10 @@ function nullBranchConditionals(expression: AstNode | undefined): readonly AstNo
   if (expression === undefined) {
     return []
   }
-  switch (astString(expression, "type")) {
+  switch (stringField(expression, "type")) {
     case "ConditionalExpression": {
-      const consequent = astObject(expression, "consequent")
-      const alternate = astObject(expression, "alternate")
+      const consequent = objectField(expression, "consequent")
+      const alternate = objectField(expression, "alternate")
       return [
         ...(isNullLiteral(consequent) || isNullLiteral(alternate) ? [expression] : []),
         ...nullBranchConditionals(consequent),
@@ -83,18 +83,18 @@ function nullBranchConditionals(expression: AstNode | undefined): readonly AstNo
     }
     case "LogicalExpression":
       return [
-        ...nullBranchConditionals(astObject(expression, "left")),
-        ...nullBranchConditionals(astObject(expression, "right")),
+        ...nullBranchConditionals(objectField(expression, "left")),
+        ...nullBranchConditionals(objectField(expression, "right")),
       ]
     case "ParenthesizedExpression":
-      return nullBranchConditionals(astObject(expression, "expression"))
+      return nullBranchConditionals(objectField(expression, "expression"))
     default:
       return []
   }
 }
 
 function isNullLiteral(node: object | undefined): boolean {
-  return astString(node, "type") === "Literal" && astString(node, "raw") === "null"
+  return stringField(node, "type") === "Literal" && stringField(node, "raw") === "null"
 }
 
 function lineOf(source: string, offset: number): number {

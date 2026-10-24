@@ -1,13 +1,11 @@
 // 見えない文字（ゼロ幅スペースなど）が、意図せずファイルに実体で入っていないことの検査。
 
 import { readFileSync, statSync } from "node:fs"
-import { fileURLToPath } from "node:url"
 
 import { describe, expect, it } from "vitest"
 
+import { REPOSITORY_ROOT } from "../../scripts/shared/repository-root.ts"
 import { runSubprocessOrThrow } from "../fixture/subprocess.ts"
-
-const REPOSITORY_ROOT = fileURLToPath(new URL("../..", import.meta.url)).replace(/\/$/, "")
 const SCANNED_DIRECTORIES = ["src", "test", "scripts", "docs", ".claude"]
 const INVISIBLE_CODE_POINTS: ReadonlySet<number> = new Set([0x200b, 0x200c, 0x200d, 0xfeff])
 

@@ -8,6 +8,7 @@ import {
   REPORT_NOTATION_NAMES,
 } from "../../src/shared/report/report-notation.ts"
 import { commentLineIndexes } from "../comment-line.ts"
+import { cssClassNames } from "../css-class-name.ts"
 import { listSourceFiles, resolveRelativeImport, SRC_ROOT } from "./source-file.ts"
 
 const HEX_COLOR = /#[0-9a-fA-F]{3,8}\b/
@@ -458,16 +459,3 @@ const REPORT_NOTATION_CLASS_NAMES: ReadonlySet<string> = new Set(
 // tsx 以外（rehype・CodeMirror）が付ける class と、domain/reveal が生の class 名で選ぶために
 // styles を介さず literal で付ける class の接頭辞。
 const FOREIGN_CSS_CLASS_PREFIXES = ["cm-", "chart-block"] as const
-
-/** CSS のセレクタ部分（`{` の前）に現れる class 名。コメントと宣言の中身は見ない。 */
-function cssClassNames(content: string): readonly string[] {
-  const withoutComments = content.replace(/\/\*[\s\S]*?\*\//g, "")
-  const preludes = [...withoutComments.matchAll(/([^{};]+)\{/g)].map((match) => match[1] ?? "")
-  return [
-    ...new Set(
-      preludes.flatMap((prelude) =>
-        [...prelude.matchAll(/\.([A-Za-z_][\w-]*)/g)].map((match) => match[1] ?? ""),
-      ),
-    ),
-  ]
-}

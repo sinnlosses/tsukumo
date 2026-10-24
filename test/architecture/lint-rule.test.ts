@@ -1,11 +1,16 @@
 import { readFileSync } from "node:fs"
-import { fileURLToPath } from "node:url"
 
 import { describe, expect, it } from "vitest"
 
+import {
+  descendants,
+  objectField,
+  stringField,
+  type AstNode,
+} from "../../scripts/shared/ast-node.ts"
+import { REPOSITORY_ROOT } from "../../scripts/shared/repository-root.ts"
 import { commentLineIndexes } from "../comment-line.ts"
-import { astDescendants, astObject, astString, parseProgram, type AstNode } from "./ast-node.ts"
-import { listSourceFiles } from "./source-file.ts"
+import { listSourceFiles, parseSourceProgram } from "./source-file.ts"
 
 // コメントに特定の日付を書かない（`docs/coding-standards.md`「コメント」の表。「いつ決まったか・
 // 誰が言ったか（特定の日付・「〜の指摘」「ユーザーの決定」）」は禁止で、理由（Why / Why not）は
@@ -149,24 +154,24 @@ function optionalProperties(): readonly string[] {
   return lintedFiles(TYPESCRIPT_EXTENSIONS)
     .filter(({ path }) => path.startsWith("src/") && !path.endsWith(".d.ts"))
     .flatMap(({ path, lines }) =>
-      optionalNamesIn(parseProgram(path, lines.join("\n"))).map((name) => `${path}:${name}`),
+      optionalNamesIn(parseSourceProgram(lines.join("\n"), path)).map((name) => `${path}:${name}`),
     )
 }
 
 function optionalNamesIn(program: AstNode): readonly string[] {
-  return astDescendants(program).flatMap((node) => {
+  return descendants(program).flatMap((node) => {
     if (Reflect.get(node, "optional") !== true) {
       return []
     }
-    const type = astString(node, "type")
+    const type = stringField(node, "type")
     if (type !== undefined && OPTIONAL_MEMBER_TYPES.has(type)) {
-      const key = astObject(node, "key")
-      return astString(key, "name") ?? astString(key, "value") ?? []
+      const key = objectField(node, "key")
+      return stringField(key, "name") ?? stringField(key, "value") ?? []
     }
     if (type !== undefined && OPTIONAL_PARAMETER_TYPES.has(type)) {
-      return astObject(node, "typeAnnotation") === undefined
+      return objectField(node, "typeAnnotation") === undefined
         ? []
-        : (astString(node, "name") ?? "(分割代入)")
+        : (stringField(node, "name") ?? "(分割代入)")
     }
     return []
   })
@@ -187,7 +192,7 @@ function lintedFiles(
   extensions: readonly string[],
 ): readonly { readonly path: string; readonly lines: readonly string[] }[] {
   return LINTED_DIRS.flatMap((dirName) => {
-    const root = fileURLToPath(new URL(`../../${dirName}`, import.meta.url)).replace(/\/$/, "")
+    const root = `${REPOSITORY_ROOT}/${dirName}`
     return listSourceFiles(root, root, extensions).map((relPath) => ({
       path: `${dirName}/${relPath}`,
       lines: readFileSync(`${root}/${relPath}`, "utf8").split("\n"),

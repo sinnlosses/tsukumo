@@ -1,10 +1,7 @@
-import { fileURLToPath } from "node:url"
-
 import { describe, expect, it } from "vitest"
 
+import { REPOSITORY_ROOT } from "../../scripts/shared/repository-root.ts"
 import { listSourceFiles } from "./source-file.ts"
-
-const REPO_ROOT = fileURLToPath(new URL("../..", import.meta.url)).replace(/\/$/, "")
 
 // 先頭から最初に合った行を使うので、空の接頭辞（`src/` の行）は最後に置く。
 const MIRROR_ROOTS: readonly { readonly testPrefix: string; readonly targetRoot: string }[] = [
@@ -57,12 +54,12 @@ const KNOWN_MISPLACED: ReadonlySet<string> = new Set<string>([
 describe("テストの置き場所", () => {
   it("同名の対象が別の場所にあるテストは、鏡の場所（許す一覧を除く）に置かれている", () => {
     const targetPaths = TARGET_ROOTS.flatMap((root) =>
-      listSourceFiles(`${REPO_ROOT}/${root}`).map((relPath) => `${root}/${relPath}`),
+      listSourceFiles(`${REPOSITORY_ROOT}/${root}`).map((relPath) => `${root}/${relPath}`),
     )
     const targetsByName = Map.groupBy(targetPaths, (path) => stemOf(path))
     const targetPathSet = new Set(targetPaths.map(withoutExtension))
 
-    const misplaced = listSourceFiles(`${REPO_ROOT}/test`)
+    const misplaced = listSourceFiles(`${REPOSITORY_ROOT}/test`)
       .filter((relPath) => !relPath.startsWith("e2e/") && !relPath.startsWith("architecture/"))
       .filter((relPath) => /\.test\.tsx?$/.test(relPath))
       .flatMap((relPath) => {

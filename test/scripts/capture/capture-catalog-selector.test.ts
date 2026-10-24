@@ -7,6 +7,8 @@ import { fileURLToPath } from "node:url"
 
 import { describe, expect, test } from "vitest"
 
+import { cssClassNames } from "../../css-class-name.ts"
+
 const SRC_DIR = fileURLToPath(new URL("../../../src/", import.meta.url))
 const CAPTURE_SOURCES = [
   "catalog-entry.ts",
@@ -21,12 +23,6 @@ const CAPTURE_SOURCES = [
 ].map((file) => new URL(`../../../scripts/capture/lib/${file}`, import.meta.url))
 
 const SELECTOR_CLASS_PATTERN = /\[class\*="([^"]+)_"\]/g
-
-function cssClassNames(source: string): readonly string[] {
-  return [
-    ...source.replace(/\/\*[\s\S]*?\*\//g, "").matchAll(/\.(-?[A-Za-z_][A-Za-z0-9_-]*)/g),
-  ].flatMap(([, name]) => name ?? [])
-}
 
 describe("撮影の件のセレクタの class", () => {
   const selectorNames = CAPTURE_SOURCES.flatMap((url) =>

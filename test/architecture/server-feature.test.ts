@@ -1,8 +1,8 @@
 import { readFileSync } from "node:fs"
-import { fileURLToPath } from "node:url"
 
 import { describe, expect, it } from "vitest"
 
+import { REPOSITORY_ROOT } from "../../scripts/shared/repository-root.ts"
 import {
   featureGraphOf,
   findFeatureCycle,
@@ -20,7 +20,7 @@ import {
   SRC_ROOT,
 } from "./source-file.ts"
 
-const DOC_ROOT = fileURLToPath(new URL("../../docs", import.meta.url)).replace(/\/$/, "")
+const DOC_ROOT = `${REPOSITORY_ROOT}/docs`
 
 // 機能 A が import してよい機能 B（同じ節の2つめの表と一致を検査する。表に無い組と、使われない組は落とす）。
 // 共有の箱はどの機能からも読んでよいので、ここには出てこない。

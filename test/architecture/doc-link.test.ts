@@ -1,19 +1,17 @@
 // JSDoc のリンクの指す先が、そのファイルで宣言も import もされていないものを落とす検査。
 
 import { readFileSync } from "node:fs"
-import { fileURLToPath } from "node:url"
 
 import { describe, expect, it } from "vitest"
 
+import { REPOSITORY_ROOT } from "../../scripts/shared/repository-root.ts"
 import { withoutComments } from "../comment-line.ts"
 import { listSourceFiles } from "./source-file.ts"
-
-const REPO_ROOT = fileURLToPath(new URL("../..", import.meta.url)).replace(/\/$/, "")
 
 describe("{@link} の指す先", () => {
   it("`{@link 名前}` の名前の頭の識別子は、同じファイルの本文に現れる", () => {
     const offenders = ["src", "scripts", "test"].flatMap((dir) => {
-      const root = `${REPO_ROOT}/${dir}`
+      const root = `${REPOSITORY_ROOT}/${dir}`
       return listSourceFiles(root).flatMap((relPath) =>
         unresolvedLinkNames(readFileSync(`${root}/${relPath}`, "utf8")).map(
           (name) => `${dir}/${relPath}: ${name}`,

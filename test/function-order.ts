@@ -1,4 +1,6 @@
-import { commentLineIndexes } from "./comment-line.ts"
+import { arrayField, type AstNode, objectField, stringField } from "../scripts/shared/ast-node.ts"
+import { astNumber } from "./architecture/ast-node.ts"
+import { parseSourceProgram } from "./architecture/source-file.ts"
 
 type TopLevelFunction = {
   readonly name: string
@@ -6,19 +8,15 @@ type TopLevelFunction = {
   readonly line: number
 }
 
-const FUNCTION_DECLARATION =
-  /^(export\s+)?(?:default\s+)?(?:async\s+)?function\b\s*\*?\s*([A-Za-z_$][\w$]*)?/
-const FUNCTION_CONST =
-  /^(export\s+)?const\s+([A-Za-z_$][\w$]*)\s*(?::[^=]+)?=\s*(?:async\s+)?(?:function\b|\(|[A-Za-z_$][\w$]*\s*=>|<)/
-const EXPORT_LIST = /^export\s*\{([^}]*)\}\s*;?\s*$/
+const FUNCTION_EXPRESSIONS = new Set(["FunctionExpression", "ArrowFunctionExpression"])
 
 /**
  * export する関数が、export しない関数より後ろにあるものを、メッセージにして返す。
- * 数えるのは行頭に字下げの無い関数宣言と、`const` に入れた関数式・アロー関数。
+ * 数えるのはトップレベルの関数宣言と、`const` に入れた関数式・アロー関数。
  * `export { a }`（`from` なし）は指す宣言を export 扱いにする。
  */
 export function functionOrderViolations(file: string, source: string): ReadonlyArray<string> {
-  const functions = topLevelFunctions(source)
+  const functions = topLevelFunctions(file, source)
   return functions.flatMap((fn, index) => {
     const earlierInternal = functions.slice(0, index).find((other) => !other.exported)
     return fn.exported && earlierInternal !== undefined
@@ -29,24 +27,52 @@ export function functionOrderViolations(file: string, source: string): ReadonlyA
   })
 }
 
-function topLevelFunctions(source: string): ReadonlyArray<TopLevelFunction> {
-  const lines = source.split("\n")
-  const skipped = new Set(commentLineIndexes(lines))
-  const listed = new Set(
-    lines.flatMap((line) => {
-      const names = EXPORT_LIST.exec(line)?.[1]
-      return names === undefined
-        ? []
-        : names.split(",").map((entry) => (entry.split(/\s+as\s+/)[0] ?? "").trim())
-    }),
-  )
-  return lines.flatMap((line, index) => {
-    if (skipped.has(index)) return []
-    const declaration = FUNCTION_DECLARATION.exec(line)
-    const constant = declaration === null ? FUNCTION_CONST.exec(line) : null
-    const exportKeyword = declaration?.[1] ?? constant?.[1]
-    const name = declaration === null ? constant?.[2] : (declaration[2] ?? "default")
-    if (name === undefined) return []
-    return [{ name, exported: exportKeyword !== undefined || listed.has(name), line: index + 1 }]
+function topLevelFunctions(file: string, source: string): ReadonlyArray<TopLevelFunction> {
+  const body = arrayField(parseSourceProgram(source, file), "body")
+  const listed = new Set(body.flatMap(listedNames))
+  const lineOf = (node: AstNode): number =>
+    source.slice(0, astNumber(node, "start") ?? 0).split("\n").length
+  return body.flatMap((statement) => {
+    const exported = isExport(statement)
+    const declaration = exported ? objectField(statement, "declaration") : statement
+    return functionsIn(declaration).map((name) => ({
+      name,
+      exported: exported || listed.has(name),
+      line: lineOf(statement),
+    }))
   })
+}
+
+function isExport(statement: AstNode): boolean {
+  const type = stringField(statement, "type")
+  return type === "ExportNamedDeclaration" || type === "ExportDefaultDeclaration"
+}
+
+function functionsIn(declaration: AstNode | undefined): readonly string[] {
+  switch (stringField(declaration, "type")) {
+    case "FunctionDeclaration":
+      return [stringField(objectField(declaration, "id"), "name") ?? "default"]
+    case "VariableDeclaration":
+      return stringField(declaration, "kind") === "const"
+        ? arrayField(declaration, "declarations").flatMap((declarator) =>
+            FUNCTION_EXPRESSIONS.has(stringField(objectField(declarator, "init"), "type") ?? "")
+              ? (stringField(objectField(declarator, "id"), "name") ?? [])
+              : [],
+          )
+        : []
+    default:
+      return []
+  }
+}
+
+function listedNames(statement: AstNode): readonly string[] {
+  if (
+    stringField(statement, "type") !== "ExportNamedDeclaration" ||
+    objectField(statement, "source") !== undefined
+  ) {
+    return []
+  }
+  return arrayField(statement, "specifiers").flatMap(
+    (specifier) => stringField(objectField(specifier, "local"), "name") ?? [],
+  )
 }

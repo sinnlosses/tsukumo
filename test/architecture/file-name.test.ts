@@ -1,10 +1,7 @@
-import { fileURLToPath } from "node:url"
-
 import { describe, expect, it } from "vitest"
 
+import { REPOSITORY_ROOT } from "../../scripts/shared/repository-root.ts"
 import { listSourceFiles } from "./source-file.ts"
-
-const REPO_ROOT = fileURLToPath(new URL("../..", import.meta.url)).replace(/\/$/, "")
 
 const TARGET_ROOTS = ["src", "scripts", "plugin"] as const
 
@@ -24,7 +21,7 @@ const SINGULAR_ENDINGS = ["ss", "us", "is"] as const
 describe("ファイル名", () => {
   it("最後の語が複数形（s で終わる）のファイルは無い", () => {
     const offenders = [...TARGET_ROOTS, "test"].flatMap((root) =>
-      listSourceFiles(`${REPO_ROOT}/${root}`)
+      listSourceFiles(`${REPOSITORY_ROOT}/${root}`)
         .filter((relPath) => isPluralName(lastStemWordOf(relPath)))
         .map(
           (relPath) =>
@@ -37,7 +34,7 @@ describe("ファイル名", () => {
 
   it("置き場所を名前にした語（helper・util・common）で終わるファイルは無い", () => {
     const offenders = TARGET_ROOTS.flatMap((root) =>
-      listSourceFiles(`${REPO_ROOT}/${root}`)
+      listSourceFiles(`${REPOSITORY_ROOT}/${root}`)
         .filter((relPath) => LOCATION_WORDS.has(lastWordOf(relPath)))
         .map(
           (relPath) =>

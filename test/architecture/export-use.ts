@@ -2,12 +2,16 @@
 
 import { readFileSync } from "node:fs"
 import { posix } from "node:path"
-import { fileURLToPath } from "node:url"
 
-import { astChildren, astDescendants, astObject, astString, type AstNode } from "./ast-node.ts"
+import {
+  arrayField,
+  descendants,
+  objectField,
+  stringField,
+  type AstNode,
+} from "../../scripts/shared/ast-node.ts"
+import { REPOSITORY_ROOT } from "../../scripts/shared/repository-root.ts"
 import { listSourceFiles, parseSourceProgram } from "./source-file.ts"
-
-export const REPOSITORY_ROOT = fileURLToPath(new URL("../..", import.meta.url)).replace(/\/$/, "")
 
 export const CONFIG_FILES = ["vite.config.ts", "vitest.config.ts", "vitest.e2e.config.ts"] as const
 
@@ -82,11 +86,11 @@ function isPropsTypeExport(key: string, sources: ReadonlyMap<string, string>): b
   if (source === undefined || !PROPS_TYPE_NAME.test(name)) {
     return false
   }
-  return astChildren(parseSourceProgram(source), "body").some((statement) => {
-    const declaration = astObject(statement, "declaration")
+  return arrayField(parseSourceProgram(source), "body").some((statement) => {
+    const declaration = objectField(statement, "declaration")
     return (
-      astString(statement, "type") === "ExportNamedDeclaration" &&
-      TYPE_DECLARATIONS.has(astString(declaration, "type") ?? "") &&
+      stringField(statement, "type") === "ExportNamedDeclaration" &&
+      TYPE_DECLARATIONS.has(stringField(declaration, "type") ?? "") &&
       declaredNames(declaration).includes(name)
     )
   })
@@ -108,18 +112,18 @@ type ImportUse = { readonly target: string; readonly names: readonly string[] | 
 type ExportedSymbol = { readonly name: string; readonly local: string }
 
 function exportedSymbols(program: AstNode): readonly ExportedSymbol[] {
-  return astChildren(program, "body").flatMap((statement): readonly ExportedSymbol[] => {
-    switch (astString(statement, "type")) {
+  return arrayField(program, "body").flatMap((statement): readonly ExportedSymbol[] => {
+    switch (stringField(statement, "type")) {
       case "ExportDefaultDeclaration":
         return [{ name: "default", local: "default" }]
       case "ExportNamedDeclaration": {
-        const declared = declaredNames(astObject(statement, "declaration")).map((name) => ({
+        const declared = declaredNames(objectField(statement, "declaration")).map((name) => ({
           name,
           local: name,
         }))
-        const specified = astChildren(statement, "specifiers").map((specifier) => ({
-          name: symbolName(astObject(specifier, "exported")),
-          local: symbolName(astObject(specifier, "local")),
+        const specified = arrayField(statement, "specifiers").map((specifier) => ({
+          name: symbolName(objectField(specifier, "exported")),
+          local: symbolName(objectField(specifier, "local")),
         }))
         return [...declared, ...specified]
       }
@@ -130,33 +134,33 @@ function exportedSymbols(program: AstNode): readonly ExportedSymbol[] {
 }
 
 function declaredNames(declaration: AstNode | undefined): readonly string[] {
-  if (astString(declaration, "type") === "VariableDeclaration") {
-    return astChildren(declaration, "declarations").flatMap(
-      (declarator) => astString(astObject(declarator, "id"), "name") ?? [],
+  if (stringField(declaration, "type") === "VariableDeclaration") {
+    return arrayField(declaration, "declarations").flatMap(
+      (declarator) => stringField(objectField(declarator, "id"), "name") ?? [],
     )
   }
-  return [astString(astObject(declaration, "id"), "name") ?? []].flat()
+  return [stringField(objectField(declaration, "id"), "name") ?? []].flat()
 }
 
 function symbolName(node: AstNode | undefined): string {
-  return astString(node, "name") ?? astString(node, "value") ?? ""
+  return stringField(node, "name") ?? stringField(node, "value") ?? ""
 }
 
 function importUses(reader: string, program: AstNode): readonly ImportUse[] {
-  return astDescendants(program).flatMap((node): readonly ImportUse[] => {
-    const specifier = astString(astObject(node, "source"), "value")
+  return descendants(program).flatMap((node): readonly ImportUse[] => {
+    const specifier = stringField(objectField(node, "source"), "value")
     if (specifier === undefined || !specifier.startsWith(".")) {
       return []
     }
     const target = posix.normalize(posix.join(posix.dirname(reader), specifier))
-    switch (astString(node, "type")) {
+    switch (stringField(node, "type")) {
       case "ImportDeclaration":
         return [{ target, names: importedNames(node) }]
       case "ExportNamedDeclaration":
         return [
           {
             target,
-            names: astChildren(node, "specifiers").map((s) => symbolName(astObject(s, "local"))),
+            names: arrayField(node, "specifiers").map((s) => symbolName(objectField(s, "local"))),
           },
         ]
       case "ExportAllDeclaration":
@@ -169,14 +173,14 @@ function importUses(reader: string, program: AstNode): readonly ImportUse[] {
 }
 
 function importedNames(declaration: AstNode): readonly string[] | "all" {
-  const specifiers = astChildren(declaration, "specifiers")
-  if (specifiers.some((s) => astString(s, "type") === "ImportNamespaceSpecifier")) {
+  const specifiers = arrayField(declaration, "specifiers")
+  if (specifiers.some((s) => stringField(s, "type") === "ImportNamespaceSpecifier")) {
     return "all"
   }
   return specifiers.map((specifier) =>
-    astString(specifier, "type") === "ImportDefaultSpecifier"
+    stringField(specifier, "type") === "ImportDefaultSpecifier"
       ? "default"
-      : symbolName(astObject(specifier, "imported")),
+      : symbolName(objectField(specifier, "imported")),
   )
 }
 
@@ -187,9 +191,9 @@ function typesNamedFrom(program: AstNode, roots: readonly string[]): ReadonlySet
   const pending = [...roots]
   for (let name = pending.pop(); name !== undefined; name = pending.pop()) {
     const referenced = (declarations.get(name) ?? [])
-      .flatMap(astDescendants)
-      .filter((node) => astString(node, "type") === "TSTypeReference")
-      .flatMap((node) => astString(astObject(node, "typeName"), "name") ?? [])
+      .flatMap(descendants)
+      .filter((node) => stringField(node, "type") === "TSTypeReference")
+      .flatMap((node) => stringField(objectField(node, "typeName"), "name") ?? [])
     for (const typeName of referenced) {
       if (!reached.has(typeName)) {
         reached.add(typeName)
@@ -202,11 +206,11 @@ function typesNamedFrom(program: AstNode, roots: readonly string[]): ReadonlySet
 
 function topLevelDeclarations(program: AstNode): ReadonlyMap<string, readonly AstNode[]> {
   const declarations = new Map<string, AstNode[]>()
-  for (const statement of astChildren(program, "body")) {
-    const type = astString(statement, "type")
+  for (const statement of arrayField(program, "body")) {
+    const type = stringField(statement, "type")
     const declaration =
       type === "ExportNamedDeclaration" || type === "ExportDefaultDeclaration"
-        ? astObject(statement, "declaration")
+        ? objectField(statement, "declaration")
         : statement
     const names = type === "ExportDefaultDeclaration" ? ["default"] : declaredNames(declaration)
     for (const name of names) {

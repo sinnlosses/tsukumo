@@ -4,13 +4,13 @@ import { posix } from "node:path"
 import { describe, expect, it } from "vitest"
 
 import { DOCUMENT_CHECK_TEST_FILES } from "../../scripts/dev/lib/check-stage.ts"
-import { astChildren, astDescendants, astObject, astString } from "./ast-node.ts"
+import { arrayField, descendants, objectField, stringField } from "../../scripts/shared/ast-node.ts"
+import { REPOSITORY_ROOT } from "../../scripts/shared/repository-root.ts"
 import {
   CONFIG_FILES,
   nonPropsTypeExports,
   readExportUse,
   readRepositorySources,
-  REPOSITORY_ROOT,
 } from "./export-use.ts"
 import { parseSourceProgram } from "./source-file.ts"
 
@@ -147,14 +147,16 @@ function productionReader(): (path: string) => boolean {
 
 function vitestSetupFiles(): readonly string[] {
   return VITEST_CONFIG_FILES.flatMap((configPath) =>
-    astDescendants(parseSourceProgram(readFileSync(`${REPOSITORY_ROOT}/${configPath}`, "utf8")))
+    descendants(parseSourceProgram(readFileSync(`${REPOSITORY_ROOT}/${configPath}`, "utf8")))
       .filter(
         (node) =>
-          astString(node, "type") === "Property" &&
-          ["globalSetup", "setupFiles"].includes(astString(astObject(node, "key"), "name") ?? ""),
+          stringField(node, "type") === "Property" &&
+          ["globalSetup", "setupFiles"].includes(
+            stringField(objectField(node, "key"), "name") ?? "",
+          ),
       )
-      .flatMap((property) => astChildren(astObject(property, "value"), "elements"))
-      .flatMap((element) => astString(element, "value") ?? [])
+      .flatMap((property) => arrayField(objectField(property, "value"), "elements"))
+      .flatMap((element) => stringField(element, "value") ?? [])
       .map((path) => posix.normalize(path)),
   )
 }

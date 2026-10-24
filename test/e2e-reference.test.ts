@@ -1,13 +1,13 @@
 import { readdirSync, readFileSync } from "node:fs"
 import { join } from "node:path"
-import { fileURLToPath } from "node:url"
 
 import { describe, expect, it } from "vitest"
+
+import { REPOSITORY_ROOT } from "../scripts/shared/repository-root.ts"
 
 // E2E の期待値・`DOM_ROOT_SELECTORS` の口・疑似セッションの場面が、使い手のいないまま残らないことを見る。
 // 使い手は名前の文字列で数える。E2E を走らせず、ソースと文書を読むだけで判定する。
 
-const REPOSITORY_ROOT = fileURLToPath(new URL("..", import.meta.url))
 const E2E_ROOT = join(REPOSITORY_ROOT, "test/e2e")
 const EXPECTED_ROOT = join(E2E_ROOT, "expected")
 const DOM_TREE = join(E2E_ROOT, "dom-tree.ts")

@@ -2,8 +2,9 @@ import { readFileSync } from "node:fs"
 
 import { describe, expect, it } from "vitest"
 
+import { arrayField, descendants, objectField, stringField } from "../../scripts/shared/ast-node.ts"
+import { REPOSITORY_ROOT } from "../../scripts/shared/repository-root.ts"
 import { TSUKUMO_HOME_PLACES } from "../../src/server/adapter/tsukumo-home.ts"
-import { astChildren, astDescendants, astObject, astString } from "./ast-node.ts"
 import { importSpecifiers, listSourceFiles, parseSourceProgram, SRC_ROOT } from "./source-file.ts"
 
 // ここから、`.oxlintrc.json` の `no-restricted-*` では表せない検査。
@@ -114,7 +115,6 @@ const DYNAMIC_COMMAND_SITES = [
 /** 第1引数にコマンド名を取る自前の包み関数。呼び出しの第1引数を `execFile` と同じに照らす。 */
 const SPAWN_WRAPPERS = [{ file: "scripts/shared/port-listener.ts", name: "run" }] as const
 
-const REPO_ROOT = `${SRC_ROOT}/..`
 const SPAWN_FUNCTIONS = new Set([
   "execFile",
   "execFileSync",
@@ -128,10 +128,13 @@ const SPAWN_FUNCTIONS = new Set([
 describe("起こす外部コマンドの一覧", () => {
   const files = [
     ...listSourceFiles(SRC_ROOT).map((relPath) => `src/${relPath}`),
-    ...listSourceFiles(`${REPO_ROOT}/scripts`, `${REPO_ROOT}/scripts`, [".ts"]).map(
+    ...listSourceFiles(`${REPOSITORY_ROOT}/scripts`, `${REPOSITORY_ROOT}/scripts`, [".ts"]).map(
       (relPath) => `scripts/${relPath}`,
     ),
-  ].map((file) => ({ file, use: spawnUse(file, readFileSync(`${REPO_ROOT}/${file}`, "utf8")) }))
+  ].map((file) => ({
+    file,
+    use: spawnUse(file, readFileSync(`${REPOSITORY_ROOT}/${file}`, "utf8")),
+  }))
   const knownCommands: readonly string[] = [...ALLOWED_COMMANDS, ...UNAPPROVED_EXISTING_COMMANDS]
 
   it("文字列で決まる第1引数は `ALLOWED_COMMANDS` か `UNAPPROVED_EXISTING_COMMANDS` にある", () => {
@@ -205,75 +208,78 @@ type SpawnUse = {
  */
 function spawnUse(file: string, content: string): SpawnUse {
   const program = parseSourceProgram(content)
-  const nodes = astDescendants(program)
+  const nodes = descendants(program)
   const spawners = new Set<string>(
     SPAWN_WRAPPERS.filter((wrapper) => wrapper.file === file).map((wrapper) => wrapper.name),
   )
   let wholesale = false
-  for (const node of nodes.filter((n) => astString(n, "type") === "ImportDeclaration")) {
-    const source = astString(astObject(node, "source"), "value") ?? ""
-    for (const specifier of astChildren(node, "specifiers")) {
-      const local = astString(astObject(specifier, "local"), "name") ?? ""
+  for (const node of nodes.filter((n) => stringField(n, "type") === "ImportDeclaration")) {
+    const source = stringField(objectField(node, "source"), "value") ?? ""
+    for (const specifier of arrayField(node, "specifiers")) {
+      const local = stringField(objectField(specifier, "local"), "name") ?? ""
       if (["node:child_process", "child_process"].includes(source)) {
-        if (astString(specifier, "type") !== "ImportSpecifier") {
+        if (stringField(specifier, "type") !== "ImportSpecifier") {
           wholesale = true
-        } else if (SPAWN_FUNCTIONS.has(astString(astObject(specifier, "imported"), "name") ?? "")) {
+        } else if (
+          SPAWN_FUNCTIONS.has(stringField(objectField(specifier, "imported"), "name") ?? "")
+        ) {
           spawners.add(local)
         }
       } else if (
         SPAWN_WRAPPERS.some(
           (wrapper) =>
             source.endsWith(wrapper.file.split("/").at(-1) ?? "") &&
-            astString(astObject(specifier, "imported"), "name") === wrapper.name,
+            stringField(objectField(specifier, "imported"), "name") === wrapper.name,
         )
       ) {
         spawners.add(local)
       }
     }
   }
-  for (const node of nodes.filter((n) => astString(n, "type") === "VariableDeclarator")) {
-    const init = astObject(node, "init")
-    const [argument] = astChildren(init, "arguments")
+  for (const node of nodes.filter((n) => stringField(n, "type") === "VariableDeclarator")) {
+    const init = objectField(node, "init")
+    const [argument] = arrayField(init, "arguments")
     if (
-      astString(astObject(init, "callee"), "name") === "promisify" &&
-      spawners.has(astString(argument, "name") ?? "")
+      stringField(objectField(init, "callee"), "name") === "promisify" &&
+      spawners.has(stringField(argument, "name") ?? "")
     ) {
-      spawners.add(astString(astObject(node, "id"), "name") ?? "")
+      spawners.add(stringField(objectField(node, "id"), "name") ?? "")
     }
   }
 
   const constants = new Map(
-    astChildren(program, "body")
-      .map((statement) => astObject(statement, "declaration") ?? statement)
+    arrayField(program, "body")
+      .map((statement) => objectField(statement, "declaration") ?? statement)
       .filter(
         (statement) =>
-          astString(statement, "type") === "VariableDeclaration" &&
-          astString(statement, "kind") === "const",
+          stringField(statement, "type") === "VariableDeclaration" &&
+          stringField(statement, "kind") === "const",
       )
-      .flatMap((statement) => astChildren(statement, "declarations"))
+      .flatMap((statement) => arrayField(statement, "declarations"))
       .flatMap((declarator) => {
-        const name = astString(astObject(declarator, "id"), "name")
-        const init = astObject(declarator, "init")
-        const value = astString(init, "type") === "Literal" ? astString(init, "value") : undefined
+        const name = stringField(objectField(declarator, "id"), "name")
+        const init = objectField(declarator, "init")
+        const value =
+          stringField(init, "type") === "Literal" ? stringField(init, "value") : undefined
         return name !== undefined && value !== undefined ? [[name, value] as const] : []
       }),
   )
   const commands = nodes.flatMap((node) => {
-    const callee = astObject(node, "callee")
+    const callee = objectField(node, "callee")
     if (
-      astString(node, "type") !== "CallExpression" ||
-      astString(callee, "type") !== "Identifier" ||
-      !spawners.has(astString(callee, "name") ?? "")
+      stringField(node, "type") !== "CallExpression" ||
+      stringField(callee, "type") !== "Identifier" ||
+      !spawners.has(stringField(callee, "name") ?? "")
     ) {
       return []
     }
-    const first = astChildren(node, "arguments")[0]
-    if (astString(first, "type") === "Literal") {
-      return [astString(first, "value")]
+    const first = arrayField(node, "arguments")[0]
+    if (stringField(first, "type") === "Literal") {
+      return [stringField(first, "value")]
     }
     return [
-      astString(first, "type") === "Identifier"
-        ? constants.get(astString(first, "name") ?? "")
+      stringField(first, "type") === "Identifier"
+        ? constants.get(stringField(first, "name") ?? "")
         : undefined,
     ]
   })
@@ -347,14 +353,16 @@ describe("process の import", () => {
 })
 
 function importsProcessUnderOtherName(content: string): boolean {
-  return astDescendants(parseSourceProgram(content)).some(
+  return descendants(parseSourceProgram(content)).some(
     (node) =>
-      astString(node, "type") === "ImportDeclaration" &&
-      ["node:process", "process"].includes(astString(astObject(node, "source"), "value") ?? "") &&
-      astChildren(node, "specifiers").some(
+      stringField(node, "type") === "ImportDeclaration" &&
+      ["node:process", "process"].includes(
+        stringField(objectField(node, "source"), "value") ?? "",
+      ) &&
+      arrayField(node, "specifiers").some(
         (specifier) =>
-          astString(specifier, "type") !== "ImportSpecifier" &&
-          astString(astObject(specifier, "local"), "name") !== "process",
+          stringField(specifier, "type") !== "ImportSpecifier" &&
+          stringField(objectField(specifier, "local"), "name") !== "process",
       ),
   )
 }
@@ -401,32 +409,34 @@ describe("ファイルの書き出し", () => {
 
 /** `node:fs` から `writeFileSync` を取り込むか。名前空間・default は呼び先を追えないので取り込むとみなす。 */
 function importsWriteFileSync(content: string): boolean {
-  return astDescendants(parseSourceProgram(content)).some(
+  return descendants(parseSourceProgram(content)).some(
     (node) =>
-      astString(node, "type") === "ImportDeclaration" &&
-      ["node:fs", "fs"].includes(astString(astObject(node, "source"), "value") ?? "") &&
-      astChildren(node, "specifiers").some(
+      stringField(node, "type") === "ImportDeclaration" &&
+      ["node:fs", "fs"].includes(stringField(objectField(node, "source"), "value") ?? "") &&
+      arrayField(node, "specifiers").some(
         (specifier) =>
-          astString(specifier, "type") !== "ImportSpecifier" ||
-          astString(astObject(specifier, "imported"), "name") === "writeFileSync",
+          stringField(specifier, "type") !== "ImportSpecifier" ||
+          stringField(objectField(specifier, "imported"), "name") === "writeFileSync",
       ),
   )
 }
 
 /** 第2引数が識別子 `BIND_HOST` でない `.listen(…)` の呼び出しがあるか。 */
 function listenWithoutBindHost(content: string): boolean {
-  return astDescendants(parseSourceProgram(content)).some((node) => {
-    if (astString(node, "type") !== "CallExpression") {
+  return descendants(parseSourceProgram(content)).some((node) => {
+    if (stringField(node, "type") !== "CallExpression") {
       return false
     }
-    const callee = astObject(node, "callee")
+    const callee = objectField(node, "callee")
     if (
-      astString(callee, "type") !== "MemberExpression" ||
-      astString(astObject(callee, "property"), "name") !== "listen"
+      stringField(callee, "type") !== "MemberExpression" ||
+      stringField(objectField(callee, "property"), "name") !== "listen"
     ) {
       return false
     }
-    const host = astChildren(node, "arguments")[1]
-    return !(astString(host, "type") === "Identifier" && astString(host, "name") === "BIND_HOST")
+    const host = arrayField(node, "arguments")[1]
+    return !(
+      stringField(host, "type") === "Identifier" && stringField(host, "name") === "BIND_HOST"
+    )
   })
 }

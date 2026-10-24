@@ -1,8 +1,8 @@
 import { readdirSync, readFileSync, statSync } from "node:fs"
-import { fileURLToPath } from "node:url"
 
 import { describe, expect, it } from "vitest"
 
+import { REPOSITORY_ROOT } from "../scripts/shared/repository-root.ts"
 import { commentLineIndexes } from "./comment-line.ts"
 
 // コメントから別の場所を、名前・置き場所が変わると古くなるもので指していないかを見る
@@ -13,8 +13,6 @@ import { commentLineIndexes } from "./comment-line.ts"
 // - ソースファイル名（拡張子が .ts / .tsx）を書かない。コードはシンボルの名前で指す
 // - 正典の節を番号つきで指さない（節の検査は句しか照らさないので、番号は黙って古くなる）
 // - 行コメントの中に link のタグを書かない（エディタが解決するのは JSDoc の中だけ）
-
-const REPOSITORY_ROOT = fileURLToPath(new URL("..", import.meta.url)).replace(/\/$/, "")
 
 const SCANNED_ROOTS = ["src", "test", "scripts"] as const satisfies readonly string[]
 

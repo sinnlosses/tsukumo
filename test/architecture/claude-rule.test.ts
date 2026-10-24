@@ -2,13 +2,12 @@
 
 import { readdirSync, readFileSync } from "node:fs"
 import { matchesGlob } from "node:path"
-import { fileURLToPath } from "node:url"
 
 import { describe, expect, it } from "vitest"
 
+import { REPOSITORY_ROOT } from "../../scripts/shared/repository-root.ts"
 import { runSubprocessOrThrow } from "../fixture/subprocess.ts"
 
-const REPOSITORY_ROOT = fileURLToPath(new URL("../..", import.meta.url)).replace(/\/$/, "")
 const RULES_DIR = `${REPOSITORY_ROOT}/.claude/rules`
 
 type Rule = { readonly name: string; readonly content: string }

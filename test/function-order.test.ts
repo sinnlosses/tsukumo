@@ -1,11 +1,10 @@
 import { readdirSync, readFileSync, statSync } from "node:fs"
-import { fileURLToPath } from "node:url"
 
 import { describe, expect, it } from "vitest"
 
+import { REPOSITORY_ROOT } from "../scripts/shared/repository-root.ts"
 import { functionOrderViolations } from "./function-order.ts"
 
-const REPOSITORY_ROOT = fileURLToPath(new URL("..", import.meta.url)).replace(/\/$/, "")
 const CHECKED_ROOTS = ["src", "scripts"] as const
 
 const check = (source: string) => functionOrderViolations("a.ts", source)
@@ -73,6 +72,17 @@ describe("export する関数は export しない関数より前に置く", () =
       "",
     ].join("\n")
     expect(check(source)).toEqual([])
+  })
+
+  it("括弧で包んだ関数でない値と、文字列の中の関数宣言は数えない", () => {
+    expect(check("const a = (1 + 2)\nexport function b() {}\n")).toEqual([])
+    expect(check("const text = `\nfunction hidden() {}\n`\nexport function b() {}\n")).toEqual([])
+  })
+
+  it("行頭に字下げの無い関数でも、型注釈つきの const の関数式は数える", () => {
+    expect(
+      check("const a: () => number = function () { return 1 }\nexport const b = () => 1\n"),
+    ).toHaveLength(1)
   })
 
   it("非公開だけ・関数が無いファイルは通る", () => {

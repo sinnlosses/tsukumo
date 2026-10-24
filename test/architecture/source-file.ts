@@ -1,18 +1,12 @@
 // 規約のテストが共有する、ソースファイルの列挙と import の specifier の読み取り。
 
 import { readdirSync, readFileSync, statSync } from "node:fs"
-import { fileURLToPath } from "node:url"
 
-import {
-  astChildren,
-  astDescendants,
-  astObject,
-  astString,
-  parseProgram,
-  type AstNode,
-} from "./ast-node.ts"
+import { parseProgram, type AstNode } from "../../scripts/shared/ast-node.ts"
+import { DYNAMIC, readReferences } from "../../scripts/shared/module-reference.ts"
+import { REPOSITORY_ROOT } from "../../scripts/shared/repository-root.ts"
 
-export const SRC_ROOT = fileURLToPath(new URL("../../src", import.meta.url)).replace(/\/$/, "")
+export const SRC_ROOT = `${REPOSITORY_ROOT}/src`
 
 /** `src/` 配下の `.ts` / `.tsx` を再帰的に集める。相対パス（`shared/<機能>/<名前>.ts`）で返す。 */
 export function listSourceFiles(
@@ -39,7 +33,8 @@ export function relativeImportSpecifiers(content: string): readonly string[] {
 /**
  * 構文木から、静的 import（副作用だけのものと `import type` を含む）・`export … from`・
  * 動的 `import("…")`・`require("…")` の specifier を、相対かどうかを問わずすべて拾う。
- * 文字列リテラルでない引数の動的 import は拾えない。
+ * `new URL("…", import.meta.url)` は拾わない（`src/` の外を指すものがあり、層を判定できない）。
+ * 文字列リテラルでない引数のものは拾えない。
  */
 export function importSpecifiers(content: string): readonly string[] {
   const cached = SPECIFIER_CACHE.get(content)
@@ -51,13 +46,13 @@ export function importSpecifiers(content: string): readonly string[] {
   return specifiers
 }
 
-// 呼ぶ側は拡張子を渡さないので、JSX を含む読み方で読めなければ型アサーションの `<T>x` を含む読み方で読み直す。
-export function parseSourceProgram(content: string): AstNode {
-  try {
-    return parseProgram("source.tsx", content)
-  } catch {
-    return parseProgram("source.ts", content)
+/** 構文エラーがあれば throw する。 */
+export function parseSourceProgram(content: string, fileName = "source.ts"): AstNode {
+  const program = parseProgram(fileName, content)
+  if (program === undefined) {
+    throw new Error(`${fileName} を読めない`)
   }
+  return program
 }
 
 /**
@@ -106,24 +101,7 @@ export function resolveRelativeImport(fromRelPath: string, specifier: string): s
 const SPECIFIER_CACHE = new Map<string, readonly string[]>()
 
 function readImportSpecifiers(content: string): readonly string[] {
-  return astDescendants(parseSourceProgram(content)).flatMap((node) => {
-    switch (astString(node, "type")) {
-      case "ImportDeclaration":
-      case "ExportNamedDeclaration":
-      case "ExportAllDeclaration":
-      case "ImportExpression":
-        return astString(astObject(node, "source"), "value") ?? []
-      case "CallExpression": {
-        const callee = astObject(node, "callee")
-        const [argument] = astChildren(node, "arguments")
-        return astString(callee, "type") === "Identifier" &&
-          astString(callee, "name") === "require" &&
-          astString(argument, "type") === "Literal"
-          ? (astString(argument, "value") ?? [])
-          : []
-      }
-      default:
-        return []
-    }
-  })
+  return readReferences(parseSourceProgram(content), "imports").filter(
+    (specifier) => specifier !== DYNAMIC,
+  )
 }

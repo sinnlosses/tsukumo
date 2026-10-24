@@ -2,7 +2,8 @@ import { readFileSync } from "node:fs"
 
 import { describe, expect, it } from "vitest"
 
-import { astChildren, astDescendants, astNumber, astObject, astString } from "./ast-node.ts"
+import { arrayField, descendants, objectField, stringField } from "../../scripts/shared/ast-node.ts"
+import { astNumber } from "./ast-node.ts"
 import { listSourceFiles, parseSourceProgram, SRC_ROOT } from "./source-file.ts"
 
 // 書く口は reject しない約束を、人の注意だけに頼らない。`void p.then(f)` は p が reject すると
@@ -32,17 +33,20 @@ describe("rejection の手を持たない then", () => {
 
 /** `void <式>.then(<引数1つ>)` の行番号（1始まり）。 */
 function voidThenLines(content: string): readonly number[] {
-  return astDescendants(parseSourceProgram(content)).flatMap((node) => {
-    if (astString(node, "type") !== "UnaryExpression" || astString(node, "operator") !== "void") {
+  return descendants(parseSourceProgram(content)).flatMap((node) => {
+    if (
+      stringField(node, "type") !== "UnaryExpression" ||
+      stringField(node, "operator") !== "void"
+    ) {
       return []
     }
-    const call = astObject(node, "argument")
-    const callee = astObject(call, "callee")
+    const call = objectField(node, "argument")
+    const callee = objectField(call, "callee")
     const isThen =
-      astString(call, "type") === "CallExpression" &&
-      astString(callee, "type") === "MemberExpression" &&
-      astString(astObject(callee, "property"), "name") === "then"
-    if (!isThen || astChildren(call, "arguments").length !== 1) {
+      stringField(call, "type") === "CallExpression" &&
+      stringField(callee, "type") === "MemberExpression" &&
+      stringField(objectField(callee, "property"), "name") === "then"
+    if (!isThen || arrayField(call, "arguments").length !== 1) {
       return []
     }
     const start = astNumber(node, "start") ?? 0

@@ -1,14 +1,12 @@
 import { existsSync, readFileSync } from "node:fs"
 import { matchesGlob } from "node:path"
-import { fileURLToPath } from "node:url"
 
 import { describe, expect, it } from "vitest"
 
+import { REPOSITORY_ROOT } from "../../scripts/shared/repository-root.ts"
 import { DOM_TEST_FILES, ISOLATED_FILES } from "../../vitest.config.ts"
 import { withoutComments } from "../comment-line.ts"
 import { listSourceFiles } from "./source-file.ts"
-
-const REPO_ROOT = fileURLToPath(new URL("../..", import.meta.url)).replace(/\/$/, "")
 
 const MOCK_CALL = /\bvi\.mock\(/
 
@@ -42,9 +40,9 @@ const DOO_MOCK_TEXT = `${["vi", "doMock("].join(".")}"./a.ts")`
 describe("単体テストの隔離", () => {
   it("vi.mock を使う node project のテストは、すべて ISOLATED_FILES に挙げてある", () => {
     const files = new Map(
-      listSourceFiles(`${REPO_ROOT}/test`).map((relPath) => [
+      listSourceFiles(`${REPOSITORY_ROOT}/test`).map((relPath) => [
         `test/${relPath}`,
-        readFileSync(`${REPO_ROOT}/test/${relPath}`, "utf8"),
+        readFileSync(`${REPOSITORY_ROOT}/test/${relPath}`, "utf8"),
       ]),
     )
 
@@ -55,8 +53,8 @@ describe("単体テストの隔離", () => {
   it("ISOLATED_FILES の各項目は実在し、vi.mock を使っている", () => {
     const stale = ISOLATED_FILES.filter(
       (path) =>
-        !existsSync(`${REPO_ROOT}/${path}`) ||
-        !usesViMock(readFileSync(`${REPO_ROOT}/${path}`, "utf8")),
+        !existsSync(`${REPOSITORY_ROOT}/${path}`) ||
+        !usesViMock(readFileSync(`${REPOSITORY_ROOT}/${path}`, "utf8")),
     )
 
     expect(stale).toEqual([])

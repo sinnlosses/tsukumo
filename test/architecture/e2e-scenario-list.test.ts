@@ -1,15 +1,14 @@
 // test/e2e/*.test.ts と、docs/architecture/testing/ の子に割った「E2E のシナリオの一覧」の表との食い違いを落とす検査。
 
 import { readFileSync } from "node:fs"
-import { fileURLToPath } from "node:url"
 
 import { describe, expect, it } from "vitest"
 
+import { REPOSITORY_ROOT } from "../../scripts/shared/repository-root.ts"
 import { listSourceFiles } from "./source-file.ts"
 
-const REPO_ROOT = fileURLToPath(new URL("../..", import.meta.url)).replace(/\/$/, "")
-const E2E_ROOT = `${REPO_ROOT}/test/e2e`
-const TESTING_ROOT = `${REPO_ROOT}/docs/architecture/testing`
+const E2E_ROOT = `${REPOSITORY_ROOT}/test/e2e`
+const TESTING_ROOT = `${REPOSITORY_ROOT}/docs/architecture/testing`
 const LIST_HEADING = "### E2E のシナリオの一覧"
 
 describe("E2E のシナリオの一覧", () => {
