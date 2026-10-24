@@ -7,6 +7,7 @@
 // 本文は節と塊の並びで届くので、塊の種類ごとに数える。
 
 import { markFitsLines, sourceLineCount } from "../../../shared/report/code-mark.ts"
+import { isEmphasisRow } from "../../../shared/report/report-block-comparison.ts"
 import {
   type RecordedReportFigure,
   type ReportBlock,
@@ -15,6 +16,7 @@ import {
 } from "../../../shared/report/report-block.ts"
 import type { ReportCheck } from "../../../shared/report/report-check.ts"
 import {
+  MAX_EMPHASIS_ROWS,
   MAX_FIRST_SENTENCE,
   MAX_LIST_ITEMS,
   MAX_PLAIN_CODE_LINES,
@@ -98,6 +100,13 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
       count: blocks.filter(
         (block) =>
           block.kind === "table" && block.rows.length > MAX_TABLE_ROWS && block.rest.trim() === "",
+      ).length,
+    },
+    {
+      kind: "many-emphasis-rows",
+      count: blocks.filter(
+        (block) =>
+          block.kind === "table" && block.rows.filter(isEmphasisRow).length > MAX_EMPHASIS_ROWS,
       ).length,
     },
     { kind: "sentence-table", count: blocks.filter((block) => isSentenceTable(block)).length },

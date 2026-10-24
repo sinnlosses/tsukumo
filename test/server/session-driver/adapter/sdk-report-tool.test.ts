@@ -434,8 +434,8 @@ const SHARED_BLOCK_DEFINITIONS = [
   "ToneLegend",
 ]
 
-/** 塊の定義が `figure` と `sections` に複製されていたとき（約3.0万字）に落ち、いまの形（23,188字）には余白を持たせた上限。 */
-const REPORT_INPUT_SCHEMA_MAX_CHARS = 23_300
+/** 塊の定義が `figure` と `sections` に複製されていたとき（約3.0万字）に落ち、いまの形（23,873字）には余白を持たせた上限。 */
+const REPORT_INPUT_SCHEMA_MAX_CHARS = 23_980
 
 /** `tools/list` の応答のうち、引数の schema を丸ごと読む形。 */
 const TOOLS_WHOLE_SCHEMA_REPLY = z.object({

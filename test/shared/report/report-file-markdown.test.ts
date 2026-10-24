@@ -103,4 +103,36 @@ describe("reportSectionsMarkdown", () => {
     )
     expect(markdownOf(files)).not.toContain("file-branch")
   })
+
+  describe("note の先頭の +n −m の差分量の棒", () => {
+    const filesWith = (notes: readonly string[]): ReportBlock => ({
+      kind: "files",
+      items: notes.map((note, index) => ({
+        path: `src/架空${String(index)}.ts`,
+        change: "modified" as const,
+        note,
+      })),
+      title: "",
+      fold: "",
+      aside: "",
+    })
+    const widthsOf = (markdown: string): readonly string[] =>
+      [...markdown.matchAll(/class="file-diff".*?width: (\d+)%/g)].map((match) => match[1] ?? "")
+
+    it("+9 −1・+14・−3（全角のマイナス）・-3（半角）に、塊の最大に対する割合の棒が付く", () => {
+      const markdown = markdownOf(filesWith(["+9 −1", "+14", "−3", "-3"]))
+
+      expect(widthsOf(markdown)).toEqual(["71", "100", "21", "21"])
+      expect(markdown).toContain('<span class="file-note">+9 −1</span>')
+    })
+
+    it("読めない note と空の note には棒を付けず、読める行が無い塊は棒の無い出力のまま", () => {
+      const mixed = markdownOf(filesWith(["+4", "目盛りを読む口", ""]))
+      const unreadable = markdownOf(filesWith(["目盛りを読む口", "", "9 行足した"]))
+
+      expect(widthsOf(mixed)).toEqual(["100"])
+      expect(mixed.match(/file-diff/g)).toHaveLength(1)
+      expect(unreadable).not.toContain("file-diff")
+    })
+  })
 })

@@ -1,5 +1,6 @@
 // レポートの検査のうち、塊の形（数・順・並び・種類）を判定する述語。
 
+import { type TableCell, tableRowCells } from "../../../shared/report/report-block-comparison.ts"
 import type { ReportBlock, ReportSection } from "../../../shared/report/report-block.ts"
 import { MAX_CANDIDATES, SENTENCE_CELL_LENGTH } from "../../../shared/report/report-limit.ts"
 import { textLengthOf } from "./markdown-tree.ts"
@@ -104,7 +105,7 @@ export function isVerdictOrdered(
 export function isRaggedTable(block: ReportBlock): boolean {
   switch (block.kind) {
     case "table":
-      return block.rows.some((row) => row.length !== block.columns.length)
+      return block.rows.some((row) => tableRowCells(row).length !== block.columns.length)
     case "matrix":
       return block.rows.some(({ cells }) => cells.length !== block.columns.length)
     default:
@@ -120,7 +121,7 @@ export function isSentenceTable(block: ReportBlock): boolean {
   if (block.kind !== "table" || block.rows.length < 2) return false
   return block.columns.some((_, column) => {
     const total = block.rows.reduce((sum, row) => {
-      const cell = row[column]
+      const cell = tableRowCells(row)[column]
       return cell === undefined ? sum : sum + cellLength(cell)
     }, 0)
     return total / block.rows.length >= SENTENCE_CELL_LENGTH
@@ -148,9 +149,8 @@ export function hasUnknownEmphasis(block: ReportBlock): boolean {
   return block.kind === "chart" && block.emphasis.some((name) => !block.labels.includes(name))
 }
 
-type TableCell = Extract<ReportBlock, { readonly kind: "table" }>["rows"][number][number]
-
 function cellLength(cell: TableCell): number {
   if (typeof cell === "string") return textLengthOf(cell)
+  if ("tag" in cell) return textLengthOf(cell.tag)
   return "text" in cell ? textLengthOf(cell.text) : textLengthOf(cell.from) + textLengthOf(cell.to)
 }

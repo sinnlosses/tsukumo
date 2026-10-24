@@ -125,6 +125,18 @@
   line-height: 1.85;
   color: var(--ink);
 }
+/* `note` の先頭の `+n −m` の差分量の棒。4 列目は棒のある塊だけに足す。棒は表の数の列と同じ `cell-bar`。 */
+.detail-block .report-files:has(.report-file-diff) {
+  grid-template-columns: 64px minmax(0, 340px) minmax(0, 1fr) 96px;
+}
+.detail-block .report-file-diff {
+  grid-column: 4;
+  align-self: center;
+  justify-self: stretch;
+}
+.detail-block .report-file-diff .report-cell-bar {
+  inset-inline: 0 auto;
+}
 .detail-block .report-file-note-empty {
   font-size: var(--font-secondary);
   color: var(--ink-quiet);

@@ -33,6 +33,7 @@ const FILE_CHANGE_ORDER = [
  */
 export function filesMarkdown(block: Extract<ReportBlock, { readonly kind: "files" }>): string {
   const summaryHtml = filesSummaryHtml(block.items)
+  const diffMax = Math.max(0, ...block.items.map((item) => fileDiffAmount(item.note)))
   const rows = fileTreeRows(block.items, (item) => item.path).map((row) => {
     if (row.kind === "folder") {
       const nameHtml = pathBreakHtml(htmlInline(row.name))
@@ -40,7 +41,7 @@ export function filesMarkdown(block: Extract<ReportBlock, { readonly kind: "file
     }
     const { path, change, note } = row.item
     const nameHtml = `<span class="file-path-name">${pathBreakHtml(htmlInline(row.name))}</span>`
-    const noteHtml = fileNoteHtml(change, note)
+    const noteHtml = fileNoteHtml(change, note) + fileDiffHtml(fileDiffAmount(note), diffMax)
     const badgeHtml = fileChangeBadgeHtml(change, "")
     if (row.guide === "" && !path.includes("/")) {
       return `<div class="file">${badgeHtml}<code>${nameHtml}</code>${noteHtml}</div>`
@@ -79,6 +80,26 @@ function fileChangeBadgeHtml(change: keyof typeof FILE_CHANGE_BADGES, countSuffi
   return (
     `<span class="file-change ${badge.className}">` +
     `<span class="file-change-symbol">${badge.symbol}</span>${badge.label}${countSuffix}</span>`
+  )
+}
+
+const DIFF_AMOUNT_PATTERN = /^\s*(?:\+(\d+))?\s*(?:[−-](\d+))?(?!\d)/
+
+/** `note` の先頭の `+n −m`（`+n` だけ・`−m` だけも。マイナスは全角も半角も）の n + m。読めなければ 0。 */
+function fileDiffAmount(note: string): number {
+  const match = DIFF_AMOUNT_PATTERN.exec(note)
+  return Number(match?.[1] ?? 0) + Number(match?.[2] ?? 0)
+}
+
+function fileDiffHtml(amount: number, max: number): string {
+  if (amount <= 0) {
+    return ""
+  }
+  const width = Math.round((amount / max) * 100)
+  return (
+    `<span class="file-diff" aria-hidden="true"><span class="cell-numeric">` +
+    `<span class="cell-bar" style="width: ${String(width)}%"></span>` +
+    `<span class="cell-numeric-value">&nbsp;</span></span></span>`
   )
 }
 

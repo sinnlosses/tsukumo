@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 import { reportRejectionText } from "../../../../src/server/report/core/report-rejection.ts"
 import { reportViolations } from "../../../../src/server/report/core/report-violation-check.ts"
 import type { ReportDraft } from "../../../../src/server/report/core/report-violation.ts"
+import type { TableCell } from "../../../../src/shared/report/report-block-comparison.ts"
 import type { ReportBlock, ReportSection } from "../../../../src/shared/report/report-block.ts"
 import { draft, kinds, markdown, mermaid, note, text } from "../../../fixture/report-draft-block.ts"
 
@@ -111,9 +112,7 @@ describe("reportViolations", () => {
       fold: "",
       aside: "",
     })
-    const table = (
-      cell: Extract<ReportBlock, { readonly kind: "table" }>["rows"][number][number],
-    ): ReportBlock => ({
+    const table = (cell: TableCell): ReportBlock => ({
       kind: "table",
       title: "架空の表",
       columns: ["列", "値"],

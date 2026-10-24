@@ -3,6 +3,10 @@ import { sumBy } from "remeda"
 import { FIGURE_WEIGHT, SHORT_REPORT_WEIGHT } from "../../../src/browser/domain/reveal/plan.ts"
 import type { FakeSession } from "../../../src/server/session-driver/adapter/fake-session.ts"
 import { reportEvents } from "../../../src/server/session-driver/core/sdk-report-message.ts"
+import {
+  type TableCell,
+  tableRowCells,
+} from "../../../src/shared/report/report-block-comparison.ts"
 import type { ReportBlock } from "../../../src/shared/report/report-block.ts"
 
 /** `table` の塊のうち、状態のセル（`{ status, text }`）を1つでも持つものに付ける印。 */
@@ -103,10 +107,8 @@ function textLength(value: unknown): number {
   return 0
 }
 
-type TableCell = Extract<ReportBlock, { readonly kind: "table" }>["rows"][number][number]
-
 function blockKindLabel(block: ReportBlock): string {
-  return block.kind === "table" && block.rows.some((row) => row.some(hasStatus))
+  return block.kind === "table" && block.rows.some((row) => tableRowCells(row).some(hasStatus))
     ? TABLE_WITH_STATUS
     : block.kind
 }

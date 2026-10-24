@@ -1,7 +1,79 @@
 import { describe, expect, it } from "vitest"
 
 import type { ReportBlock } from "../../../src/shared/report/report-block.ts"
-import { markdownOf, tableCaptioned } from "../../fixture/report-markdown.ts"
+import { reportSectionsMarkdown } from "../../../src/shared/report/report-markdown.ts"
+import { markdownOf, NO_IMAGES, section, tableCaptioned } from "../../fixture/report-markdown.ts"
+
+describe("表の tag と強調の行", () => {
+  const tableOf = (
+    rows: Extract<ReportBlock, { readonly kind: "table" }>["rows"],
+  ): ReportBlock => ({
+    kind: "table",
+    title: "架空の表",
+    columns: ["項目", "種別"],
+    rows,
+    rest: "",
+    fold: "",
+    aside: "",
+  })
+  const tag = (value: string) => ({ tag: value })
+  const toneOf = (markdown: string, value: string): string | undefined =>
+    new RegExp(`<span class="tag (tag-[a-z0-9]+)">${value}</span>`).exec(markdown)?.[1]
+
+  it("同じ字は同じ tone、出現順に tag-1〜tag-5、6 種目以降は tag-none", () => {
+    const names = ["s1", "s2", "s3", "s4", "s5", "s6", "s7"]
+    const markdown = markdownOf(tableOf([...names, "s1", "s6"].map((name) => ["架空", tag(name)])))
+
+    expect(names.map((name) => toneOf(markdown, name))).toEqual([
+      "tag-1",
+      "tag-2",
+      "tag-3",
+      "tag-4",
+      "tag-5",
+      "tag-none",
+      "tag-none",
+    ])
+    expect(markdown.match(/<span class="tag tag-1">s1<\/span>/g)).toHaveLength(2)
+  })
+
+  it("表をまたいでも、同じ字は報告全体で同じ tone になる", () => {
+    const markdown = reportSectionsMarkdown(
+      [
+        section([tableOf([["a", tag("x")]])]),
+        section([
+          tableOf([
+            ["b", tag("y")],
+            ["c", tag("x")],
+          ]),
+        ]),
+      ],
+      NO_IMAGES,
+    )
+
+    expect(markdown.match(/tag tag-1">x</g)).toHaveLength(2)
+    expect(markdown).toContain('tag tag-2">y<')
+  })
+
+  it("tag の字は出力に全部残り、字を落とす実装なら落ちる検査になっている", () => {
+    const markdown = markdownOf(
+      tableOf([["a", tag("alpha|1")], { cells: ["b", tag("beta")], emphasis: true }]),
+    )
+
+    for (const value of ["alpha\\|1", "beta"]) {
+      expect(markdown).toContain(`>${value}</span>`)
+    }
+  })
+
+  it("強調の行の先頭のセルにだけ印が付き、ほかの行には付かない", () => {
+    const markdown = markdownOf(tableOf([["a", "1"], { cells: ["b", "2"], emphasis: true }]))
+
+    const rows = markdown
+      .split("\n")
+      .filter((line) => line.startsWith("| ") && /[ab] \|/.test(line))
+    expect(rows[0]).not.toContain("row-emphasis-mark")
+    expect(rows[1]).toMatch(/^\| <span class="row-emphasis-mark" aria-hidden="true"><\/span>b \| /)
+  })
+})
 
 describe("reportSectionsMarkdown", () => {
   it("表は番号つきの題の行のあとに GFM の表で組み、状態のセルは記号と文を1行に並べたタイルにし、題の直下に出た状態だけの凡例を添える（記号は role=img の aria-label で状態語を読み上げる）", () => {

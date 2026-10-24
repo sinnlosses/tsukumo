@@ -8,6 +8,7 @@ import type {
   ReportArgumentChars,
   ReportArgumentField,
 } from "../../../shared/report/report-argument-chars.ts"
+import { tableRowCells } from "../../../shared/report/report-block-comparison.ts"
 import {
   type ReportBlock,
   type ReportSection,
@@ -240,8 +241,14 @@ function writtenTextsOf(block: ReportBlock): readonly string[] {
       return block.items.map((item) => item.text)
     case "table":
       return block.rows.flatMap((row) =>
-        row.flatMap((cell) =>
-          typeof cell === "string" ? [cell] : "from" in cell ? [cell.from, cell.to] : [cell.text],
+        tableRowCells(row).flatMap((cell) =>
+          typeof cell === "string"
+            ? [cell]
+            : "from" in cell
+              ? [cell.from, cell.to]
+              : "tag" in cell
+                ? [cell.tag]
+                : [cell.text],
         ),
       )
     case "markdown":
@@ -280,14 +287,16 @@ function emphasisCountOf(block: ReportBlock): number {
       return block.rows.reduce(
         (total, row) =>
           total +
-          row.reduce(
+          tableRowCells(row).reduce(
             (rowTotal, cell) =>
               rowTotal +
               (typeof cell === "string"
                 ? emphasisCountIn(cell)
                 : "from" in cell
                   ? emphasisCountIn(cell.from) + emphasisCountIn(cell.to)
-                  : emphasisCountIn(cell.text)),
+                  : "tag" in cell
+                    ? emphasisCountIn(cell.tag)
+                    : emphasisCountIn(cell.text)),
             0,
           ),
         0,
@@ -366,7 +375,9 @@ function hasField(block: ReportBlock, field: ReportBlockField): boolean {
     case "tableChange":
       return (
         block.kind === "table" &&
-        block.rows.some((row) => row.some((cell) => typeof cell === "object" && "from" in cell))
+        block.rows.some((row) =>
+          tableRowCells(row).some((cell) => typeof cell === "object" && "from" in cell),
+        )
       )
     case "tableRest":
       return block.kind === "table" && block.rest.trim() !== ""

@@ -63,6 +63,8 @@ export type ReportViolation =
   | { readonly kind: "ragged-table"; readonly count: number }
   /** 行が上限を超えるのに `rest` が空の `table` がある。`count` は表の数。 */
   | { readonly kind: "long-table"; readonly count: number }
+  /** 強調の行（`emphasis`）が上限を超える `table` がある。`count` は表の数。 */
+  | { readonly kind: "many-emphasis-rows"; readonly count: number }
   /** 行が2つ以上で、ある列のセルの平均が全角 `SENTENCE_CELL_LENGTH` 字以上の `table` がある（インラインコードとリンクの URL は数えない）。`count` は表の数。 */
   | { readonly kind: "sentence-table"; readonly count: number }
   /** 項目が上限を超える `list` がある。`count` は塊の数。 */
@@ -169,6 +171,7 @@ export const VIOLATION_THRESHOLDS = {
   "unordered-options": 0,
   "ragged-table": 0,
   "long-table": 0,
+  "many-emphasis-rows": 0,
   "sentence-table": 0,
   "long-list": 0,
   "bad-cards": 0,

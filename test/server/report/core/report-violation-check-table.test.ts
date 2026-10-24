@@ -20,6 +20,41 @@ describe("reportViolations", () => {
       expect(reportViolations(draft([table]))).toEqual([{ kind: "ragged-table", count: 1 }])
     })
 
+    it("強調の行 { cells, emphasis } でもセルの数がずれれば違反で、揃っていれば違反でない", () => {
+      const tableOf = (second: Extract<ReportBlock, { readonly kind: "table" }>["rows"][number]) =>
+        ({
+          kind: "table",
+          title: "架空の表",
+          columns: ["列", "値"],
+          rows: [["a", { tag: "x" }], second],
+          rest: "",
+          fold: "",
+          aside: "",
+        }) satisfies ReportBlock
+      expect(reportViolations(draft([tableOf({ cells: ["b"], emphasis: true })]))).toEqual([
+        { kind: "ragged-table", count: 1 },
+      ])
+      expect(reportViolations(draft([tableOf({ cells: ["b", "2"], emphasis: true })]))).toEqual([])
+    })
+
+    it("強調の行は3行までで、4行以上は many-emphasis-rows の差し戻しになり文面に上限を載せる", () => {
+      const tableOf = (emphasized: number): ReportBlock => ({
+        kind: "table",
+        title: "架空の表",
+        columns: ["列", "値"],
+        rows: Array.from({ length: 5 }, (_, index) =>
+          index < emphasized ? { cells: ["a", "1"], emphasis: true as const } : ["b", "2"],
+        ),
+        rest: "",
+        fold: "",
+        aside: "",
+      })
+      expect(reportViolations(draft([tableOf(3)]))).toEqual([])
+      const violations = reportViolations(draft([tableOf(4)]))
+      expect(violations).toEqual([{ kind: "many-emphasis-rows", count: 1 }])
+      expect(reportRejectionText(violations)).toContain("強調は3行までに絞る")
+    })
+
     it("セルの数が揃わない行のある matrix も違反", () => {
       const matrix: ReportBlock = {
         kind: "matrix",

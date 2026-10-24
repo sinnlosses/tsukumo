@@ -24,6 +24,9 @@ export const MAX_ITEM_LABEL = 20
 /** `table` の行数の上限。超える分は `rest` に書く。 */
 export const MAX_TABLE_ROWS = 10
 
+/** `table` で強調できる行数の上限。 */
+export const MAX_EMPHASIS_ROWS = 3
+
 /** `table` の1列のセルの平均の字数がこれ以上なら、その列を文の列とみなす（全角の字数）。 */
 export const SENTENCE_CELL_LENGTH = 35
 

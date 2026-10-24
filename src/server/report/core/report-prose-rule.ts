@@ -1,5 +1,6 @@
 // レポートの検査のうち、地の文・見出し・項目の書き方を判定する述語。
 
+import { tableRowCells } from "../../../shared/report/report-block-comparison.ts"
 import type { ReportBlock } from "../../../shared/report/report-block.ts"
 import { MAX_HEADING, MAX_ITEM_LABEL } from "../../../shared/report/report-limit.ts"
 import { withoutInlineCode } from "./markdown-tree.ts"
@@ -39,8 +40,16 @@ export function proseTexts(block: ReportBlock): readonly string[] {
       return [block.text]
     case "table":
       return block.rows
-        .flat()
-        .map((cell) => (typeof cell === "string" ? cell : "text" in cell ? cell.text : ""))
+        .flatMap(tableRowCells)
+        .map((cell) =>
+          typeof cell === "string"
+            ? cell
+            : "text" in cell
+              ? cell.text
+              : "tag" in cell
+                ? cell.tag
+                : "",
+        )
     default:
       return []
   }

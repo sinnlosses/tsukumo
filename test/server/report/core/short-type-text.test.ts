@@ -40,8 +40,8 @@ describe("reportShortTypeText", () => {
     expect(missing).toEqual([])
   })
 
-  it("JSON Schema の骨組みより小さい（説明を全部残して約9.9千字）", () => {
-    expect(reportShortTypeText().length).toBeLessThan(11_000)
+  it("JSON Schema の骨組みより小さい（説明を全部残して約11.3千字）", () => {
+    expect(reportShortTypeText().length).toBeLessThan(11_450)
   })
 })
 

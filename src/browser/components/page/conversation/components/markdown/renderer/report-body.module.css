@@ -223,6 +223,43 @@
 .detail-block .report-cell-status-text {
   color: var(--ink);
 }
+/* 列挙型の札。同じ字は同じ色（tsukumo が出現順に 1〜5 を当て、6 種目以降は灰）。字が常に見えるので色だけで意味を言わない。 */
+.detail-block .report-tag {
+  display: inline-block;
+  padding: 0.1em 0.55em;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--tag-color, var(--chart-series-other)) 24%, transparent);
+  color: var(--ink);
+  font-size: var(--font-secondary);
+  line-height: 1.5;
+  white-space: nowrap;
+}
+.detail-block .report-tag-1 {
+  --tag-color: var(--chart-series-1);
+}
+.detail-block .report-tag-2 {
+  --tag-color: var(--chart-series-2);
+}
+.detail-block .report-tag-3 {
+  --tag-color: var(--chart-series-3);
+}
+.detail-block .report-tag-4 {
+  --tag-color: var(--chart-series-4);
+}
+.detail-block .report-tag-5 {
+  --tag-color: var(--chart-series-5);
+}
+.detail-block .report-tag-none {
+  --tag-color: var(--chart-series-other);
+}
+/* 強調の行。先頭のセルの印（GFM の表の行は class を持てないので :has で拾う）で行の地を 1 段上げる。 */
+.detail-block tbody tr:has(.report-row-emphasis-mark) td {
+  background: var(--surface-raised);
+}
+/* 強調行の地と数の列の棒はどちらも `--surface-raised` なので、強調行の中の棒だけ別の段にして見分ける。 */
+.detail-block tbody tr:has(.report-row-emphasis-mark) .report-cell-bar {
+  background: var(--surface-accent);
+}
 /* 表の凡例。題の直下に中央揃えで置く。 */
 .detail-block .report-captioned > .report-table-status-legend {
   display: flex;

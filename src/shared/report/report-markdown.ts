@@ -29,7 +29,12 @@ import {
 import { REPORT_NOTE_KINDS } from "./report-notation.ts"
 import { PAUSE_POINT_CLASS_NAME } from "./report-pause-point.ts"
 import { statMarkdown } from "./report-stat-markdown.ts"
-import { matrixMarkdown, tableMarkdown } from "./report-table-markdown.ts"
+import {
+  matrixMarkdown,
+  type TagTones,
+  tableMarkdown,
+  tagTonesOf,
+} from "./report-table-markdown.ts"
 
 type CaptionCounts = Readonly<Record<CaptionKind, number>>
 
@@ -68,6 +73,7 @@ export function reportSectionMarkdowns(
   sections: readonly ReportSection[],
   imageSource: ReportImageSource,
 ): readonly string[] {
+  const tagTones = tagTonesOf(sections)
   const { parts } = sections.reduce<SectionsFold>(
     (acc, section) => {
       const blocks = section.blocks.reduce<{
@@ -89,7 +95,7 @@ export function reportSectionMarkdowns(
                 ? [...blockAcc.groups.slice(0, -1), { ...last, notes: [...last.notes, ...notes] }]
                 : [
                     ...blockAcc.groups,
-                    { body: foldedBlockMarkdown(block, imageSource, ordinal), notes },
+                    { body: foldedBlockMarkdown(block, imageSource, ordinal, tagTones), notes },
                   ],
             counts,
           }
@@ -165,8 +171,9 @@ function foldedBlockMarkdown(
   block: ReportBlock,
   imageSource: ReportImageSource,
   ordinal: number,
+  tagTones: TagTones,
 ): string {
-  const markdown = blockMarkdown(block, imageSource, ordinal)
+  const markdown = blockMarkdown(block, imageSource, ordinal, tagTones)
   return block.fold.trim() === "" || markdown.trim() === ""
     ? markdown
     : `<details><summary>${htmlInline(block.fold)}</summary>\n\n${markdown}\n\n</details>`
@@ -176,6 +183,7 @@ function blockMarkdown(
   block: ReportBlock,
   imageSource: ReportImageSource,
   ordinal: number,
+  tagTones: TagTones,
 ): string {
   switch (block.kind) {
     case "text":
@@ -183,7 +191,7 @@ function blockMarkdown(
     case "list":
       return listMarkdown(block)
     case "table":
-      return tableMarkdown(block, ordinal)
+      return tableMarkdown(block, ordinal, tagTones)
     case "matrix":
       return matrixMarkdown(block, ordinal)
     case "compare":

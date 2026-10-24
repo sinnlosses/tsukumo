@@ -15,7 +15,24 @@ const cellSchema = z.union([
   z
     .object({ from: inlineText, to: inlineText })
     .describe("変わったセル（A → B と書かず前と後に分ける。状態は隣の列に置く）"),
+  z.object({ tag: inlineText }),
 ])
+
+const tableRowSchema = z.union([
+  z.array(cellSchema),
+  z.object({ cells: z.array(cellSchema), emphasis: z.literal(true) }),
+])
+
+type TableRow = DeepReadonly<z.infer<typeof tableRowSchema>>
+export type TableCell = DeepReadonly<z.infer<typeof cellSchema>>
+
+export function tableRowCells(row: TableRow): readonly TableCell[] {
+  return "cells" in row ? row.cells : row
+}
+
+export function isEmphasisRow(row: TableRow): boolean {
+  return "cells" in row
+}
 
 export const tableBlockSchema = z
   .object({
@@ -25,7 +42,7 @@ export const tableBlockSchema = z
     ),
     columns: z.array(inlineText).min(2).describe("列は5つまで"),
     rows: z
-      .array(z.array(cellSchema))
+      .array(tableRowSchema)
       .min(1)
       .describe("行ごとのセル。数は columns と揃える。セルは1行、空にせず「なし」と書く"),
     rest: omittable(inlineText, "").describe("切った残りを1行で（「ほか 12 件（0.5% 未満）」）"),

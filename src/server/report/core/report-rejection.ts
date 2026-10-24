@@ -2,6 +2,7 @@
 
 import {
   MAX_CANDIDATES,
+  MAX_EMPHASIS_ROWS,
   MAX_HEADING,
   MAX_FIRST_SENTENCE,
   MAX_LIST_ITEMS,
@@ -54,6 +55,8 @@ function violationLine(violation: ReportViolation): string {
       return `行のセルの数が \`columns\` と揃わない表（\`matrix\` を含む）が${violation.count}個ある。セルの数を揃える`
     case "long-table":
       return `行が${String(MAX_TABLE_ROWS + 1)}以上で \`rest\` が空の表が${violation.count}個ある。上位${String(MAX_TABLE_ROWS)}行までを残し、残りを \`rest\` に書く`
+    case "many-emphasis-rows":
+      return `強調の行（\`emphasis\`）が${String(MAX_EMPHASIS_ROWS + 1)}行以上の表が${violation.count}個ある。強調は${String(MAX_EMPHASIS_ROWS)}行までに絞る`
     case "sentence-table":
       return `セルの平均が${String(SENTENCE_CELL_LENGTH)}字以上の列がある表が${violation.count}個ある。その列を \`label\` 付きの \`list\` か文の塊へ移すか、セルを語句・数・状態に縮める`
     case "long-list":
