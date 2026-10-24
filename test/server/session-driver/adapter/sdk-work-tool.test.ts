@@ -152,7 +152,12 @@ describe("phase_result（委譲先の段の結果）", () => {
 
 describe("work_plan（ワークプラン）", () => {
   it("段の並びと位置を渡すと ok が返り、ターンは閉じない", async () => {
-    const reply = await callTool(workServer(), "work_plan", {
+    const review = createCallReview()
+    await callTool(workServer([], [], review), "work_plan", {
+      phases: ["架空の段A", "架空の段B"],
+      current: 0,
+    })
+    const reply = await callTool(workServer([], [], review), "work_plan", {
       phases: ["架空の段A", "架空の段B"],
       current: 1,
       phaseSummary: "架空のまとめ。",
@@ -208,12 +213,17 @@ describe("work_plan（ワークプラン）", () => {
   })
 
   it("途中の位置の呼び出しは、段のまとめがあれば通し、無ければ差し戻す", async () => {
-    const withSummary = await callTool(workServer(), "work_plan", {
+    const review = createCallReview()
+    await callTool(workServer([], [], review), "work_plan", {
+      phases: ["架空の段A", "架空の段B"],
+      current: 0,
+    })
+    const withSummary = await callTool(workServer([], [], review), "work_plan", {
       phases: ["架空の段A", "架空の段B"],
       current: 1,
       phaseSummary: "架空のまとめ。",
     })
-    const withoutSummary = await callTool(workServer(), "work_plan", {
+    const withoutSummary = await callTool(workServer([], [], review), "work_plan", {
       phases: ["架空の段A", "架空の段B"],
       current: 1,
     })
@@ -247,7 +257,17 @@ describe("work_plan（ワークプラン）", () => {
   })
 
   it("並列の段と finishedInGroup は形の検査を通り、1段だけの並列の段は落ちる", async () => {
-    const grouped = await callTool(workServer(), "work_plan", {
+    const review = createCallReview()
+    await callTool(workServer([], [], review), "work_plan", {
+      phases: ["架空の段A", ["架空の段B", "架空の段C"]],
+      current: 0,
+    })
+    await callTool(workServer([], [], review), "work_plan", {
+      phases: ["架空の段A", ["架空の段B", "架空の段C"]],
+      current: 1,
+      phaseSummary: "架空のまとめ。",
+    })
+    const grouped = await callTool(workServer([], [], review), "work_plan", {
       phases: ["架空の段A", ["架空の段B", "架空の段C"]],
       current: 1,
       finishedInGroup: ["架空の段C"],
@@ -298,6 +318,7 @@ describe("work_plan（ワークプラン）", () => {
         current: 1,
         finishedInGroup: ["架空の段C"],
         phaseSummary: "架空のまとめ。",
+        delegatedRange: { first: 0, count: 1 },
       },
     },
     {
@@ -324,7 +345,12 @@ describe("work_plan（ワークプラン）", () => {
     },
     {
       name: "まとめが3文",
-      input: { phases: ["架空の段A", "架空の段B"], current: 1, phaseSummary: "一。二。三。" },
+      input: {
+        phases: ["架空の段A", "架空の段B"],
+        current: 1,
+        phaseSummary: "一。二。三。",
+        delegatedRange: { first: 1, count: 1 },
+      },
     },
     {
       name: "範囲が並列の段をまたぐ",

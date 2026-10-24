@@ -96,6 +96,7 @@ describe("WorkPlanReview の判定", () => {
   it("並列の段の中の段を1回で2つ済ませる呼び出しは差し戻し、途中でまとめが空なら summary-missing で差し戻す", () => {
     const grouped = ["架空の段A", ["架空の段B", "架空の段C"], "架空の段D"]
     const review = createWorkPlanReview()
+    review.judge({ phases: grouped, current: 0 })
     review.judge({ phases: grouped, current: 1, phaseSummary: SUMMARY })
 
     expect(review.judge({ phases: grouped, current: 2, phaseSummary: SUMMARY }).kind).toBe(
@@ -129,7 +130,37 @@ describe("WorkPlanReview の判定", () => {
     review.judge(inputOf(0))
     expect(review.judge(inputOf(2)).kind).toBe("skipped-phase")
     review.pass(REQUEST)
-    expect(review.judge(inputOf(2)).kind).toBe("accepted")
+    expect(review.judge(inputOf(0)).kind).toBe("accepted")
+    expect(review.judge(inputOf(1)).kind).toBe("accepted")
+  })
+
+  it("その依頼の最初が範囲の無い current 1 以上なら late-start で差し戻し、request のあとはまた最初として判定する", () => {
+    const review = createWorkPlanReview()
+
+    expect(review.judge(inputOf(1)).kind).toBe("late-start")
+    expect(review.standing()).toEqual({ kind: "rejected" })
+    expect(review.judge(inputOf(0)).kind).toBe("accepted")
+    expect(review.judge(inputOf(1)).kind).toBe("accepted")
+
+    review.pass(REQUEST)
+    expect(review.judge(inputOf(1)).kind).toBe("late-start")
+  })
+
+  it("最初が current 0 の呼び出しと、最初が範囲付きで current 1 以上の呼び出しは通す", () => {
+    const first = createWorkPlanReview()
+    expect(first.judge(inputOf(0)).kind).toBe("accepted")
+
+    const ranged = createWorkPlanReview()
+    expect(ranged.judge({ ...inputOf(1), delegatedRange: { first: 1, count: 2 } }).kind).toBe(
+      "accepted",
+    )
+  })
+
+  it("受け付け済みの依頼の2回目以降は current 1 以上でも late-start にしない", () => {
+    const review = createWorkPlanReview()
+    review.judge(inputOf(0))
+
+    expect(review.judge(inputOf(1)).kind).toBe("accepted")
   })
 
   it("形の崩れた引数は malformed で差し戻す", () => {
@@ -141,6 +172,7 @@ describe("WorkPlanReview の判定", () => {
 
   it("途中でまとめが空なら summary-missing、3文以上でも受け付け、その他の崩れは malformed で差し戻す", () => {
     const review = createWorkPlanReview()
+    review.judge(inputOf(0))
     const threeSentences = "一つ目。二つ目。三つ目。"
 
     expect(review.judge({ phases: PHASES, current: 1 }).kind).toBe("summary-missing")
@@ -173,6 +205,7 @@ describe("WorkPlanReview の判定", () => {
 describe("WorkPlanReview の立ち位置", () => {
   it("受け付けたワークプランの残りの段の数を返し、全部済みなら 0", () => {
     const review = createWorkPlanReview()
+    review.judge(inputOf(0))
     review.judge(inputOf(1))
     expect(review.standing()).toEqual({ kind: "planned", remaining: 2 })
     review.judge(inputOf(2))
@@ -200,6 +233,8 @@ describe("WorkPlanReview の立ち位置", () => {
 
   it("最後の段で finished の report が流れると、残りが 0 になる", () => {
     const review = createWorkPlanReview()
+    review.judge(inputOf(0))
+    review.judge(inputOf(1))
     review.judge(inputOf(2))
     review.pass(reportOf("finished"))
 
@@ -208,9 +243,12 @@ describe("WorkPlanReview の立ち位置", () => {
 
   it("stopped の report と、段が2つ以上残った finished の report では位置が動かない", () => {
     const stopped = createWorkPlanReview()
+    stopped.judge(inputOf(0))
+    stopped.judge(inputOf(1))
     stopped.judge(inputOf(2))
     stopped.pass(reportOf("stopped"))
     const early = createWorkPlanReview()
+    early.judge(inputOf(0))
     early.judge(inputOf(1))
     early.pass(reportOf("finished"))
 

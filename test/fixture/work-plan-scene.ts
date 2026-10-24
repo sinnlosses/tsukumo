@@ -68,7 +68,7 @@ export const WORK_PLAN_SCENES: readonly WorkPlanScene[] = [
   },
   {
     name: "範囲の無いワークプランは返却で動かさない",
-    events: [REQUEST, called(planAt(1, NO_RANGE)), returned(1)],
+    events: [REQUEST, called(planAt(0, NO_RANGE)), called(planAt(1, NO_RANGE)), returned(1)],
     plan: plannedAt(1, NO_RANGE),
   },
   {
