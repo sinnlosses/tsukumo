@@ -1,0 +1,58 @@
+/* 行の右端の3択。選んだ札は左の「●」と字の色で言う（色だけで伝えない）。値は見本 `docs/history/mockup/task-board-draft-batch-2026-10-24.html` の写し。 */
+.task-board-sort-group {
+  display: inline-flex;
+  flex: none;
+  margin-left: 8px;
+  overflow: hidden;
+  border: 1px solid var(--rule-soft);
+  border-radius: 8px;
+}
+.task-board-sort-button {
+  min-width: 24px;
+  min-height: 28px;
+  padding: 3px 10px;
+  border: none;
+  border-left: 1px solid var(--rule-soft);
+  background: transparent;
+  color: var(--ink-quiet);
+  font: inherit;
+  font-size: var(--font-label);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.task-board-sort-button:first-child {
+  border-left: none;
+}
+.task-board-sort-button:hover {
+  color: var(--ink);
+}
+.task-board-sort-plan.task-board-sort-on {
+  background: color-mix(in srgb, var(--state-ok) 18%, transparent);
+  color: var(--state-ok);
+}
+.task-board-sort-drop.task-board-sort-on {
+  background: color-mix(in srgb, var(--state-ng) 18%, transparent);
+  color: var(--state-ng);
+}
+.task-board-sort-hold.task-board-sort-on {
+  background: var(--surface-raised);
+  color: var(--ink);
+}
+/* 却下の行の理由の欄（1行）。 */
+.task-board-sort-reason {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 18px;
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+}
+.task-board-sort-reason-label {
+  flex: none;
+}
+.task-board-sort-reason-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 28px;
+  padding: 0 10px;
+}

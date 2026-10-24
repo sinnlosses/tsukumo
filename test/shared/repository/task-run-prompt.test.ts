@@ -5,6 +5,52 @@ import { requestPromptOf } from "../../../src/shared/repository/task-run-prompt.
 const FIXED = "タスク ABC-1 を進めて（bd show ABC-1 で読める）。"
 const HELD_NOTE = "このタスクは保留なので、着手の前に判断を聞いて。"
 
+describe("requestPromptOf の sort", () => {
+  it("計画だけなら計画の ID を並べる", () => {
+    expect(requestPromptOf("", { kind: "sort", plans: ["ABC-1", "ABC-2"], drops: [] })).toBe(
+      "/plan-tasks ドラフトを仕分けた。計画（承認済み）: ABC-1, ABC-2",
+    )
+  })
+
+  it("却下だけなら理由を括弧で添える", () => {
+    expect(
+      requestPromptOf("", {
+        kind: "sort",
+        plans: [],
+        drops: [{ id: "ABC-3", reason: "済み" }],
+      }),
+    ).toBe("/plan-tasks ドラフトを仕分けた。却下: ABC-3（済み）")
+  })
+
+  it("計画と却下の両方を1通にまとめる", () => {
+    expect(
+      requestPromptOf("", {
+        kind: "sort",
+        plans: ["ABC-1"],
+        drops: [
+          { id: "ABC-3", reason: "済み" },
+          { id: "ABC-4", reason: "重複" },
+        ],
+      }),
+    ).toBe(
+      "/plan-tasks ドラフトを仕分けた。計画（承認済み）: ABC-1。却下: ABC-3（済み）, ABC-4（重複）",
+    )
+  })
+
+  it("理由が空・空白だけの却下は括弧を付けない", () => {
+    expect(
+      requestPromptOf("", {
+        kind: "sort",
+        plans: [],
+        drops: [
+          { id: "ABC-3", reason: "" },
+          { id: "ABC-4", reason: "  " },
+        ],
+      }),
+    ).toBe("/plan-tasks ドラフトを仕分けた。却下: ABC-3, ABC-4")
+  })
+})
+
 describe("requestPromptOf の start", () => {
   it("起動スキルが空・未指定なら固定の文面で、保留の旨は末尾に続く", () => {
     expect(requestPromptOf("ABC-1", { kind: "start", held: false })).toBe(FIXED)

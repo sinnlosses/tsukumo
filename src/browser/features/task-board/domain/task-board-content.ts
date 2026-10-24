@@ -12,14 +12,22 @@ import {
   type TaskSummaryStatus,
 } from "../../../../shared/repository/task-summary.ts"
 import { codeSpanParts } from "../../../domain/code-span.ts"
+import {
+  choiceOf,
+  tallyDraftSort,
+  type DraftSortChoice,
+  type DraftSortState,
+} from "./draft-sort.ts"
 import { FILTER_CHIPS, matchesFilter } from "./task-board-filter.ts"
 import type {
   TaskBoardBreadcrumb,
   TaskBoardContent,
   TaskBoardFilter,
   TaskBoardOpener,
+  TaskBoardRowSort,
   TaskBoardRun,
   TaskBoardSelection,
+  TaskBoardSortBand,
   TaskDependencyCard,
   TaskStateKind,
   TaskStateView,
@@ -37,6 +45,11 @@ type BoardContentInput = {
   readonly run: (taskId: string, request: TaskRequest) => void
   readonly onJump: (id: string) => void
   readonly breadcrumb: TaskBoardBreadcrumb
+  readonly sort: DraftSortState
+  readonly onSortChoose: (id: string, choice: DraftSortChoice) => void
+  readonly onSortReason: (id: string, reason: string) => void
+  readonly onSortReset: () => void
+  readonly onSortRequest: (request: TaskRequest) => void
 }
 
 /** 「tsukumo に頼む」を押せないときに横に添える理由。保留は待ちが残っているときだけ押せない。 */
@@ -95,12 +108,53 @@ export function boardContent(
       loopable: entry.task.loopable,
       selected: entry === selected,
       outOfFilter: !isVisible(entry),
+      sort: rowSortOf(entry, input),
     })),
     omittedClosedCount: tasks.omittedClosedCount,
+    sortBand: sortBandOf(entries, input),
     activeOptionId: selected === undefined ? undefined : optionIdOf(selected.task.id),
     selection:
       selected === undefined ? { kind: "none" } : selectionOf(selected, entries, byId, input),
     knownIds,
+  }
+}
+
+function rowSortOf(entry: BoardEntry, input: BoardContentInput): TaskBoardRowSort {
+  if (input.filter !== "draft" || entry.state.kind !== "draft") {
+    return { kind: "none" }
+  }
+  const id = entry.task.id
+  return {
+    kind: "some",
+    choice: choiceOf(input.sort, id),
+    reason: input.sort.reasons[id] ?? "",
+    onChoose: (choice) => {
+      input.onSortChoose(id, choice)
+    },
+    onReason: (reason) => {
+      input.onSortReason(id, reason)
+    },
+  }
+}
+
+function sortBandOf(entries: readonly BoardEntry[], input: BoardContentInput): TaskBoardSortBand {
+  if (input.filter !== "draft") {
+    return { kind: "none" }
+  }
+  const draftIds = entries.filter((entry) => entry.state.kind === "draft").map((e) => e.task.id)
+  const tally = tallyDraftSort(draftIds, input.sort)
+  if (tally.planCount + tally.dropCount === 0) {
+    return { kind: "none" }
+  }
+  return {
+    kind: "some",
+    planCount: tally.planCount,
+    dropCount: tally.dropCount,
+    holdCount: tally.holdCount,
+    onReset: input.onSortReset,
+    onRequest: () => {
+      input.onSortRequest(tally.request)
+    },
   }
 }
 

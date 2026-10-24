@@ -1,0 +1,37 @@
+/* 下端の帯。箱の全幅に渡り、押す口の箱は操作の帯（`task-board-action.module.css`）と揃える。 */
+.task-board-sort-band {
+  box-sizing: border-box;
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  min-height: 64px;
+  padding: 12px 28px;
+  border-top: 1px solid var(--rule-quiet);
+  background: color-mix(in srgb, var(--surface), var(--ground) 40%);
+}
+.task-board-sort-reset {
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 9px;
+}
+.task-board-sort-hold-count {
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+}
+.task-board-sort-request {
+  display: inline-flex;
+  align-items: center;
+  height: 40px;
+  margin-left: auto;
+  padding: 0 18px;
+  border-radius: 10px;
+}
+@media (max-width: 760px) {
+  .task-board-sort-band {
+    padding: 10px 16px;
+  }
+}

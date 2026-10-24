@@ -97,6 +97,11 @@ describe("boardContent", () => {
     run: () => {},
     onJump: () => {},
     breadcrumb: { kind: "none" },
+    sort: { choices: {}, reasons: {} },
+    onSortChoose: () => {},
+    onSortReason: () => {},
+    onSortReset: () => {},
+    onSortRequest: () => {},
   }
 
   function contentOf(tasks: TaskSummaryResult, selectedId: string): TaskBoardContent {
@@ -148,6 +153,57 @@ describe("boardContent", () => {
       ["doing", 0, false],
       ["done", 1, false],
     ])
+  })
+
+  it("絞り込み「ドラフト」のドラフトの行にだけ仕分けを出し、選びがあれば帯に件数を出す", () => {
+    const tasks = known([
+      taskOf("X-001", { status: taskStatusOfWord("draft") }),
+      taskOf("X-002", { status: taskStatusOfWord("draft") }),
+      taskOf("X-003", {}),
+    ])
+    const entries = boardEntries(tasks.kind === "known" ? tasks.items : [])
+    const build = (input: BoardContentInput): TaskBoardContent =>
+      boardContent(
+        tasks,
+        entries,
+        new Map(entries.map((entry) => [entry.task.id, entry])),
+        entries,
+        entries[0],
+        () => true,
+        new Set(["X-001", "X-002", "X-003"]),
+        input,
+      )
+
+    const all = build(NO_BREADCRUMB)
+    if (all.kind !== "known") {
+      throw new Error("known のはず")
+    }
+    expect(all.rows.map((row) => row.sort.kind)).toEqual(["none", "none", "none"])
+    expect(all.sortBand).toEqual({ kind: "none" })
+
+    const drafts = build({ ...NO_BREADCRUMB, filter: "draft" })
+    if (drafts.kind !== "known") {
+      throw new Error("known のはず")
+    }
+    expect(drafts.rows.map((row) => row.sort.kind)).toEqual(["some", "some", "none"])
+    expect(drafts.sortBand).toEqual({ kind: "none" })
+
+    const sorted = build({
+      ...NO_BREADCRUMB,
+      filter: "draft",
+      sort: { choices: { "X-001": "plan" }, reasons: {} },
+    })
+    if (sorted.kind !== "known") {
+      throw new Error("known のはず")
+    }
+    expect(sorted.rows[0]?.sort).toMatchObject({ kind: "some", choice: "plan" })
+    expect(sorted.rows[1]?.sort).toMatchObject({ kind: "some", choice: "hold" })
+    expect(sorted.sortBand).toMatchObject({
+      kind: "some",
+      planCount: 1,
+      dropCount: 0,
+      holdCount: 1,
+    })
   })
 
   it("詳細に依存と依存元の札・置き場所の口・頼めるかを畳む", () => {

@@ -92,6 +92,19 @@ export function useTaskBoard(
       chosen.kind === "jumped"
         ? { kind: "some", previousId: chosen.previousId, onBack: goBack }
         : { kind: "none" },
+    sort: state.sort,
+    onSortChoose: (id, choice) => {
+      send({ kind: "sort", id, choice })
+    },
+    onSortReason: (id, reason) => {
+      send({ kind: "dropReason", id, reason })
+    },
+    onSortReset: () => {
+      send({ kind: "sortReset" })
+    },
+    onSortRequest: (sortRequest) => {
+      setConfirming({ taskId: "", request: sortRequest })
+    },
   })
 
   return {

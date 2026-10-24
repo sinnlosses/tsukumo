@@ -57,7 +57,7 @@ export function TaskRunConfirm(props: TaskRunConfirmProps): ReactElement {
       className={styles["task-run-confirm"]}
     >
       <Text element="p" size="heading" tone="inherit" weight="semibold" className="">
-        {props.taskId} {HEADING_OF[props.request.kind]}
+        {headingOf(props.taskId, props.request)}
       </Text>
       {turnInProgress ? (
         <Text
@@ -120,10 +120,18 @@ const HEADING_OF = {
   start: "を実行しますか",
   plan: "の計画を頼みますか",
   drop: "の却下を頼みますか",
-} satisfies Record<TaskRequest["kind"], string>
+} satisfies Record<Exclude<TaskRequest["kind"], "sort">, string>
+
+function headingOf(taskId: string, request: TaskRequest): string {
+  if (request.kind === "sort") {
+    return `ドラフト ${request.plans.length + request.drops.length} 件を仕分けますか`
+  }
+  return `${taskId} ${HEADING_OF[request.kind]}`
+}
 
 const OK_LABEL_OF = {
   start: "実行する",
   plan: "頼む",
   drop: "頼む",
+  sort: "仕分ける",
 } satisfies Record<TaskRequest["kind"], string>
