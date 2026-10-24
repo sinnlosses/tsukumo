@@ -1,5 +1,5 @@
 {
-  "plugins": ["typescript", "react", "unicorn", "oxc", "vitest"],
+  "plugins": ["typescript", "react", "unicorn", "oxc", "vitest", "import"],
   "env": {
     "es2024": true
   },
@@ -14,6 +14,29 @@
       {
         "name": "Date",
         "message": "Date を使わず Temporal を使う（docs/coding-standards.md「Date を使わない」）"
+      }
+    ],
+    // 欲しいのは import/no-cycle だけ。import プラグインを入れると suspicious で一緒に出る次の3つは使わない
+    "import/no-cycle": "error",
+    "import/no-named-as-default": "off",
+    "import/no-named-as-default-member": "off",
+    "import/no-unassigned-import": "off",
+    "unicorn/filename-case": ["error", { "case": "kebabCase" }],
+    "react/function-component-definition": [
+      "error",
+      { "namedComponents": "function-declaration", "unnamedComponents": "function-expression" }
+    ],
+    "typescript/consistent-type-definitions": ["error", "type"],
+    "no-restricted-imports": [
+      "error",
+      {
+        "paths": [
+          {
+            "name": "react",
+            "importNames": ["useMemo", "useCallback", "memo"],
+            "message": "手でメモ化しない。React Compiler に任せる（docs/coding-standards/react.md「手でメモ化しない」）"
+          }
+        ]
       }
     ],
     "react/no-unstable-nested-components": "error",
@@ -35,12 +58,29 @@
   },
   "overrides": [
     {
+      // declare module で既存の型へ足す形は interface でないと混ざらない（type だと宣言の重複になる）
+      "files": [
+        "src/browser/types/customizable-select-global.d.ts",
+        "src/browser/types/css-variable.d.ts",
+        "test/e2e-chrome-setup.ts",
+        "test/beads-template-setup.ts"
+      ],
+      "rules": {
+        "typescript/consistent-type-definitions": "off"
+      }
+    },
+    {
       "files": ["test/**"],
       "rules": {
         "no-restricted-imports": [
           "error",
           {
             "paths": [
+              {
+                "name": "react",
+                "importNames": ["useMemo", "useCallback", "memo"],
+                "message": "手でメモ化しない。React Compiler に任せる（docs/coding-standards/react.md「手でメモ化しない」）"
+              },
               {
                 "name": "node:child_process",
                 "importNames": ["execFileSync", "execSync", "spawnSync"],

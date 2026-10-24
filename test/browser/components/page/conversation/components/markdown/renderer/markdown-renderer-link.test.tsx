@@ -20,17 +20,19 @@ describe("Markdown（レポートのパスを押して Orca のエディタで�
     paths: readonly string[],
     open: (path: string) => void,
   ): (children: ReactNode) => ReactNode {
-    return (children) => (
-      <RepositoryFileLinkContext.Provider
-        value={{
-          files: new Set(paths),
-          open,
-          readExcerpt: () => Promise.resolve(UNREADABLE_FILE_EXCERPT),
-        }}
-      >
-        {children}
-      </RepositoryFileLinkContext.Provider>
-    )
+    return function wrap(children) {
+      return (
+        <RepositoryFileLinkContext.Provider
+          value={{
+            files: new Set(paths),
+            open,
+            readExcerpt: () => Promise.resolve(UNREADABLE_FILE_EXCERPT),
+          }}
+        >
+          {children}
+        </RepositoryFileLinkContext.Provider>
+      )
+    }
   }
 
   it("一覧にある inline code（file_path:line_number）が押せるボタンになり、押すと裸のパスで1回開く", () => {

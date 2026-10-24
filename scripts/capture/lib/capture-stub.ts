@@ -3,13 +3,13 @@
 import { positiveIntegerArgument } from "../../shared/positive-integer-argument.ts"
 
 /** 呼び出しの何回目か（1から数える）の閉区間。 */
-export interface StubRange {
+export type StubRange = {
   readonly from: number
   readonly to: number
 }
 
 /** `procedure` は契約の名前をドットでつないだもの。`range` が無いときは全部の呼び出し。 */
-export interface RpcStub {
+export type RpcStub = {
   readonly procedure: string
   readonly range: StubRange | undefined
   readonly body: unknown

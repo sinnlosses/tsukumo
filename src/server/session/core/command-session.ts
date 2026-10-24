@@ -27,7 +27,7 @@ export type RememberedSession =
   | { readonly kind: "none" }
   | { readonly kind: "remembered"; readonly sessionId: string }
 
-export interface ModeSessions {
+export type ModeSessions = {
   readonly work: RememberedSession
   readonly chat: RememberedSession
 }

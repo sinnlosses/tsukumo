@@ -6,6 +6,7 @@
 // 完成した DOM の根を渡すだけで、塊の中身には触らない。
 
 import clsx from "clsx"
+// oxlint-disable-next-line no-restricted-imports -- 描き直し回数を数える単体テストが Compiler の掛からない Vitest を通るため残す（docs/coding-standards/react.md「手でメモ化しない」）
 import { memo, type ReactElement } from "react"
 
 import { orderedReportRegions } from "../../../../../../../../shared/session/main-view-report-body.ts"

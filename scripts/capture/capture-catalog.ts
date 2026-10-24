@@ -190,7 +190,7 @@ async function captureShot(
     await openPage(page, url)
     // 疑似セッションが流れ終わってから操作を当てる。 流れている途中で押すと、狙った状態の手前で
     // 画面が組み直されて操作が空振りする。
-    await settleScene(page, entry, size, watch, scene, "before-prepare")
+    await settleScene(page, entry, watch, scene, "before-prepare")
     if (entry.skipReveal) {
       // `prepare` の前に演出を終わらせる（理由は `CatalogEntry` の `skipReveal` のコメント）。
       await page.keyboard.press(SKIP_REVEAL_KEY)
@@ -202,7 +202,7 @@ async function captureShot(
     for (const missed of await applyPreparations(page, entry.prepare, "continue")) {
       process.stdout.write(`${describeCatalogMiss(entry.name, size.name, missed)}\n`)
     }
-    await settleScene(page, entry, size, watch, scene, "after-prepare")
+    await settleScene(page, entry, watch, scene, "after-prepare")
     await settlePage(page)
     await page.screenshot({ path: file, fullPage: size.fullPage })
   } finally {
@@ -223,7 +223,6 @@ type SceneWait = {
 async function settleScene(
   page: Page,
   entry: CatalogEntry,
-  size: CatalogSize,
   watch: SceneEventWatch,
   scene: SceneWait,
   phase: "before-prepare" | "after-prepare",

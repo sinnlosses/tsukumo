@@ -2,6 +2,7 @@
 // 下端付近を読んでいたときだけ新しい1件で最新へ寄せる（読み返している最中は動かさない）。
 // `column-reverse` を使わないのは、この並びが「最新だけを読む」吹き出しではなく遡って読み返せるログだから。
 
+// oxlint-disable-next-line no-restricted-imports -- exhaustive-deps が依存配列の値の再生成で落ちるため残す（docs/coding-standards/react.md「手でメモ化しない」）
 import { useCallback, useEffect, useRef, type RefObject } from "react"
 
 /**
