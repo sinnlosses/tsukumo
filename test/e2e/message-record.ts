@@ -18,6 +18,8 @@ export type MessageRecord = {
     kind: string,
     predicate: (event: Readonly<Record<string, unknown>>) => boolean,
   ) => Promise<void>
+  /** 送ったコマンドのすべてに応答が届くまで待つ。 */
+  readonly waitForAnswers: () => Promise<void>
 }
 
 /**
@@ -53,6 +55,8 @@ export function recordMessages(page: Page): MessageRecord {
   // 押し出しの購読（`frame.subscribe`）の要求番号。購読はコマンドではないので列に載せず、
   // その Event Iterator の中身（`t: 3` の `message`）をフレームとしてほどく。
   const subscriptionIds = new Set<string>()
+  const unanswered = new Set<number>()
+  const answerWaiters: (() => void)[] = []
 
   const receive = (payload: string): void => {
     const envelope = parseRecord(payload)
@@ -66,12 +70,25 @@ export function recordMessages(page: Page): MessageRecord {
     // 購読のほかに届くのはコマンドの手続きの応答（oRPC の封筒）。状態コードは 200 のとき省かれる。
     if ("i" in envelope) {
       const response = asRecord(envelope["p"])
-      entries.push({
+      const order = orderOf(envelope["i"])
+      const answer = {
         received: "response",
-        order: orderOf(envelope["i"]),
+        order,
         status: response["s"] ?? 200,
         body: response["b"],
-      })
+      }
+      // 応答と、同じ操作で流れるイベントは別のフレームで、どちらが先に着くかが走らせるたびに違う。
+      // 応答は送った要求の直後に置いて、着順を成果物に持ち込まない。
+      const sentIndex = entries.findIndex(
+        (entry) => asRecord(entry)["sent"] !== undefined && asRecord(entry)["order"] === order,
+      )
+      entries.splice(sentIndex === -1 ? entries.length : sentIndex + 1, 0, answer)
+      unanswered.delete(order)
+      if (unanswered.size === 0) {
+        for (const resolve of answerWaiters.splice(0)) {
+          resolve()
+        }
+      }
     }
   }
 
@@ -120,9 +137,11 @@ export function recordMessages(page: Page): MessageRecord {
       subscriptionIds.add(String(request["i"]))
       return
     }
+    const order = orderOf(request["i"])
+    unanswered.add(order)
     entries.push({
       sent: typeof url === "string" ? url.replace(/^\//, "").replaceAll("/", ".") : request,
-      order: orderOf(request["i"]),
+      order,
       input: body["json"],
     })
   }
@@ -138,6 +157,20 @@ export function recordMessages(page: Page): MessageRecord {
 
   return {
     list: () => [...entries],
+    waitForAnswers: () => {
+      if (unanswered.size === 0) {
+        return Promise.resolve()
+      }
+      return new Promise((resolve, reject) => {
+        const timer = setTimeout(() => {
+          reject(new Error(`コマンドの応答が届かない（${String(EVENT_TIMEOUT_MS)}ms）`))
+        }, EVENT_TIMEOUT_MS)
+        answerWaiters.push(() => {
+          clearTimeout(timer)
+          resolve()
+        })
+      })
+    },
     waitForEvent: (kind, occurrence = 1) => {
       if ((counts.get(kind) ?? 0) >= occurrence) {
         return Promise.resolve()

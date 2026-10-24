@@ -111,14 +111,14 @@
     }
   },
   {
-    "received": "hello",
-    "protocolVersion": "<protocol-version>"
-  },
-  {
     "received": "response",
     "order": 1,
     "status": 200,
     "body": {}
+  },
+  {
+    "received": "hello",
+    "protocolVersion": "<protocol-version>"
   },
   {
     "received": "event",

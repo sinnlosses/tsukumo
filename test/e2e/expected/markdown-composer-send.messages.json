@@ -50,6 +50,12 @@
     }
   },
   {
+    "received": "response",
+    "order": 1,
+    "status": 200,
+    "body": {}
+  },
+  {
     "received": "event",
     "at": 1768438800000,
     "event": {
@@ -57,12 +63,6 @@
       "text": "## 架空の依頼\nエディタから送る場面を見たい",
       "images": []
     }
-  },
-  {
-    "received": "response",
-    "order": 1,
-    "status": 200,
-    "body": {}
   },
   {
     "received": "event",
