@@ -2,7 +2,7 @@
 
 ステータス: **正典**。入口は `docs/architecture.md`（全体構造の入口と、子のファイルの一覧）。
 
-責務: 会話内容と安全の表の前半（バインド先・Origin・起動トークン・ディスク・ブラウザ側のメモリ・CSP・ログ）を持つ。表の続きは `docs/architecture/conversation-safety-chat-memory.md` と `docs/architecture/conversation-safety-local-record.md`。
+責務: 会話内容と安全の表の前半（バインド先・Origin・起動トークン・ディスク・ブラウザ側のメモリ・CSP・ログ）を持つ。表の続きは `docs/architecture/conversation-safety-chat-memory.md`・`docs/architecture/conversation-safety-measurement-record.md`・`docs/architecture/conversation-safety-local-record.md`。
 読む時: 会話がプロセスの外へ出ない境界（バインド・トークン・CSP・ログ）を確かめたいとき。
 直す時: 境界の扱いを変えたとき（会話内容の規約そのものは `docs/coding-standards.md`「会話内容の扱い」）。
 

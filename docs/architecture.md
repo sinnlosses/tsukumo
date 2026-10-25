@@ -48,33 +48,34 @@ sed -n '/^## shared/,/^## /p' docs/architecture/shared-contract.md
 
 この表は `pnpm run format` が子のファイルの題と見出しから書き直すので、手で直さない。
 
-| ファイル                                                | 題                                                     | 節                                                                                                        |
-| ------------------------------------------------------- | ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------- |
-| `docs/architecture/browser-box.md`                      | アーキテクチャ詳細: `src/browser/` の箱と領域          | 全体構成 / ディレクトリ / 領域の機能と、置かれる機能                                                      |
-| `docs/architecture/browser.md`                          | ブラウザ側                                             |                                                                                                           |
-| `docs/architecture/build.md`                            | ビルドと依存                                           |                                                                                                           |
-| `docs/architecture/character-pack.md`                   | キャラクターパック                                     | キャラクターパック / 画面から作るときの置き場と受け取り方 / パックの一覧と素材の URL / 会話の記録の置き場 |
-| `docs/architecture/chat-mode.md`                        | 雑談モード                                             |                                                                                                           |
-| `docs/architecture/code-placement.md`                   | アーキテクチャ詳細: 新しいコードを置く場所             | 新しいコードを置く場所                                                                                    |
-| `docs/architecture/command-procedure.md`                | アーキテクチャ詳細: コマンドの受け手と手続きの置き方   | 全体構成 / サーバの機能と、機能どうしの辺 / コマンドの受け手と手続きの置き方                              |
-| `docs/architecture/container-presenter.md`              | アーキテクチャ詳細: 機能の中を分ける                   | 全体構成 / 機能の中を分ける（container / presenter と `hooks/`）                                          |
-| `docs/architecture/conversation-safety-chat-memory.md`  | アーキテクチャ詳細: 会話内容と安全（雑談の記憶）       | 会話内容と安全                                                                                            |
-| `docs/architecture/conversation-safety-local-record.md` | アーキテクチャ詳細: 会話内容と安全（手元の記録と前提） | 会話内容と安全                                                                                            |
-| `docs/architecture/conversation-safety.md`              | アーキテクチャ詳細: 会話内容と安全（境界）             | 会話内容と安全                                                                                            |
-| `docs/architecture/core-and-adapter.md`                 | アーキテクチャ詳細: core と adapter                    | core と adapter                                                                                           |
-| `docs/architecture/directory.md`                        | アーキテクチャ詳細: ディレクトリ                       | 全体構成 / ディレクトリ                                                                                   |
-| `docs/architecture/display.md`                          | 表示                                                   | 4.2 表示                                                                                                  |
-| `docs/architecture/lib-and-utils-criterion.md`          | アーキテクチャ詳細: `lib/` と `utils/` に置く基準      | 全体構成 / `lib/` と `utils/` に置く基準                                                                  |
-| `docs/architecture/overview-and-layer.md`               | アーキテクチャ詳細: 全体像と層                         | 全体構成 / 層と依存の向き                                                                                 |
-| `docs/architecture/runtime-flow.md`                     | アーキテクチャ詳細: 動きの流れ                         | 動きの流れ / 起動 / 接続 / 依頼 / 答え待ち / 再接続                                                       |
-| `docs/architecture/screen-design.md`                    | 画面のデザイン                                         |                                                                                                           |
-| `docs/architecture/server-feature.md`                   | アーキテクチャ詳細: サーバの機能と、機能どうしの辺     | 全体構成 / サーバの機能と、機能どうしの辺                                                                 |
-| `docs/architecture/session-restore.md`                  | アーキテクチャ詳細: セッションの復元と複数化           | セッションの復元と複数化                                                                                  |
-| `docs/architecture/shared-contract.md`                  | アーキテクチャ詳細: shared（両側が共有する契約）       | shared / SessionEvent / SessionState / ClientCommand / ServerFrame / 版と互換                             |
-| `docs/architecture/shared-feature.md`                   | アーキテクチャ詳細: shared の機能                      | 全体構成 / shared の機能                                                                                  |
-| `docs/architecture/stage-item.md`                       | アイテム                                               | アイテム / 置き場と形 / 画面から足すときの受け取り方 / 配る URL                                           |
-| `docs/architecture/testing.md`                          | テスト                                                 |                                                                                                           |
-| `docs/architecture/workflow-contract.md`                | ワークフローの契約                                     | 契約とは何か                                                                                              |
+| ファイル                                                      | 題                                                     | 節                                                                                                        |
+| ------------------------------------------------------------- | ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------- |
+| `docs/architecture/browser-box.md`                            | アーキテクチャ詳細: `src/browser/` の箱と領域          | 全体構成 / ディレクトリ / 領域の機能と、置かれる機能                                                      |
+| `docs/architecture/browser.md`                                | ブラウザ側                                             |                                                                                                           |
+| `docs/architecture/build.md`                                  | ビルドと依存                                           |                                                                                                           |
+| `docs/architecture/character-pack.md`                         | キャラクターパック                                     | キャラクターパック / 画面から作るときの置き場と受け取り方 / パックの一覧と素材の URL / 会話の記録の置き場 |
+| `docs/architecture/chat-mode.md`                              | 雑談モード                                             |                                                                                                           |
+| `docs/architecture/code-placement.md`                         | アーキテクチャ詳細: 新しいコードを置く場所             | 新しいコードを置く場所                                                                                    |
+| `docs/architecture/command-procedure.md`                      | アーキテクチャ詳細: コマンドの受け手と手続きの置き方   | 全体構成 / サーバの機能と、機能どうしの辺 / コマンドの受け手と手続きの置き方                              |
+| `docs/architecture/container-presenter.md`                    | アーキテクチャ詳細: 機能の中を分ける                   | 全体構成 / 機能の中を分ける（container / presenter と `hooks/`）                                          |
+| `docs/architecture/conversation-safety-chat-memory.md`        | アーキテクチャ詳細: 会話内容と安全（雑談の記憶）       | 会話内容と安全                                                                                            |
+| `docs/architecture/conversation-safety-local-record.md`       | アーキテクチャ詳細: 会話内容と安全（手元の記録と前提） | 会話内容と安全                                                                                            |
+| `docs/architecture/conversation-safety-measurement-record.md` | アーキテクチャ詳細: 会話内容と安全（計測・診断の記録） | 会話内容と安全                                                                                            |
+| `docs/architecture/conversation-safety.md`                    | アーキテクチャ詳細: 会話内容と安全（境界）             | 会話内容と安全                                                                                            |
+| `docs/architecture/core-and-adapter.md`                       | アーキテクチャ詳細: core と adapter                    | core と adapter                                                                                           |
+| `docs/architecture/directory.md`                              | アーキテクチャ詳細: ディレクトリ                       | 全体構成 / ディレクトリ                                                                                   |
+| `docs/architecture/display.md`                                | 表示                                                   | 4.2 表示                                                                                                  |
+| `docs/architecture/lib-and-utils-criterion.md`                | アーキテクチャ詳細: `lib/` と `utils/` に置く基準      | 全体構成 / `lib/` と `utils/` に置く基準                                                                  |
+| `docs/architecture/overview-and-layer.md`                     | アーキテクチャ詳細: 全体像と層                         | 全体構成 / 層と依存の向き                                                                                 |
+| `docs/architecture/runtime-flow.md`                           | アーキテクチャ詳細: 動きの流れ                         | 動きの流れ / 起動 / 接続 / 依頼 / 答え待ち / 再接続                                                       |
+| `docs/architecture/screen-design.md`                          | 画面のデザイン                                         |                                                                                                           |
+| `docs/architecture/server-feature.md`                         | アーキテクチャ詳細: サーバの機能と、機能どうしの辺     | 全体構成 / サーバの機能と、機能どうしの辺                                                                 |
+| `docs/architecture/session-restore.md`                        | アーキテクチャ詳細: セッションの復元と複数化           | セッションの復元と複数化                                                                                  |
+| `docs/architecture/shared-contract.md`                        | アーキテクチャ詳細: shared（両側が共有する契約）       | shared / SessionEvent / SessionState / ClientCommand / ServerFrame / 版と互換                             |
+| `docs/architecture/shared-feature.md`                         | アーキテクチャ詳細: shared の機能                      | 全体構成 / shared の機能                                                                                  |
+| `docs/architecture/stage-item.md`                             | アイテム                                               | アイテム / 置き場と形 / 画面から足すときの受け取り方 / 配る URL                                           |
+| `docs/architecture/testing.md`                                | テスト                                                 |                                                                                                           |
+| `docs/architecture/workflow-contract.md`                      | ワークフローの契約                                     | 契約とは何か                                                                                              |
 
 ## 設計判断（なぜ今の形なのか）
 

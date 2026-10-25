@@ -2,7 +2,7 @@
 
 ステータス: **正典**。入口は `docs/architecture.md`（全体構造の入口と、子のファイルの一覧）。
 
-責務: 会話内容と安全の表の中盤（定着・あらすじ・会話のアーカイブ・直近の雑談の読み戻し・雑談の画像・人格への書き戻し）を持つ。表の前半は `docs/architecture/conversation-safety.md`、後半は `docs/architecture/conversation-safety-local-record.md`。
+責務: 会話内容と安全の表の中盤（定着・あらすじ・会話のアーカイブ・直近の雑談の読み戻し・雑談の画像・人格への書き戻し）を持つ。表の前半は `docs/architecture/conversation-safety.md`、後半は `docs/architecture/conversation-safety-measurement-record.md` と `docs/architecture/conversation-safety-local-record.md`。
 読む時: 雑談の記憶が会話をどこへ書き、どこへ渡すかを確かめたいとき。
 直す時: 雑談の記憶の置き場・渡す先・認めた例外の範囲を変えたとき。
 
