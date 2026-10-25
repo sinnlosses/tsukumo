@@ -88,12 +88,12 @@
           {
             "object": "process",
             "property": "env",
-            "message": "process.env を読むのは cli.ts と server/adapter/tsukumo-home.ts だけ"
+            "message": "process.env を読むのは cli.ts と server/adapter/tsukumo-home.ts だけ（docs/coding-standards/error-input-and-absent-value.md「外部の入力を読む場所を1つにする」）"
           },
           {
             "object": "process",
             "property": "cwd",
-            "message": "process.cwd を読むのは cli.ts だけ。以降は引数で配る"
+            "message": "process.cwd を読むのは cli.ts だけ。以降は引数で配る（docs/coding-standards/error-input-and-absent-value.md「外部の入力を読む場所を1つにする」）"
           },
           {
             "object": "Temporal",
@@ -127,7 +127,7 @@
               {
                 "group": ["node:process", "process"],
                 "importNames": ["env", "cwd"],
-                "message": "env・cwd を読むのは cli.ts と tsukumo-home.ts だけ"
+                "message": "env・cwd を読むのは cli.ts と tsukumo-home.ts だけ（docs/coding-standards/error-input-and-absent-value.md「外部の入力を読む場所を1つにする」）"
               },
               {
                 "group": ["node:os", "os"],

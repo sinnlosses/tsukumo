@@ -151,7 +151,9 @@ describe("formatStrayTaskMention", () => {
         id: SAMPLE_ID,
         context: "data",
       }),
-    ).toBe(`src/sample.ts:3: ${SAMPLE_ID}`)
+    ).toBe(
+      `src/sample.ts:3: ${SAMPLE_ID}（タスク番号は書かない。docs/coding-standards/comment-reference-and-style.md「タスク番号を書かない」）`,
+    )
   })
 })
 

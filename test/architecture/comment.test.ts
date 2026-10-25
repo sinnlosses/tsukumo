@@ -77,7 +77,9 @@ describe("コメント中の強調", () => {
       COMMENT_EMPHASIS.test(line),
     )
 
-    expect(offenders.join("\n")).toBe("")
+    const hint =
+      "コメントに Markdown の強調を使わない（docs/coding-standards/comment-reference-and-style.md「コメント」の「書き方は3つ守る」）"
+    expect(offenders.length === 0 ? "" : [hint, ...offenders].join("\n")).toBe("")
   })
 })
 

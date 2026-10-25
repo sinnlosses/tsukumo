@@ -173,7 +173,13 @@ function findViolations(
 }
 
 function violationsMessage(violations: readonly Violation[]): string {
-  return violations
-    .map((v) => `src/${v.fromPath}（${v.fromLayer}） → src/${v.toPath}（${v.toLayer}）`)
-    .join("\n")
+  if (violations.length === 0) return ""
+  const hint =
+    "許されない辺（docs/architecture/server-feature.md「サーバの機能と、機能どうしの辺」）"
+  return [
+    hint,
+    ...violations.map(
+      (v) => `src/${v.fromPath}（${v.fromLayer}） → src/${v.toPath}（${v.toLayer}）`,
+    ),
+  ].join("\n")
 }

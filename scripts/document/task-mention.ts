@@ -92,7 +92,7 @@ export function findStrayTaskMentions(mentions: readonly TaskMention[]): TaskMen
 
 /** 迷子のタスク番号1件を、一覧に出す1行にする。 */
 export function formatStrayTaskMention(mention: TaskMention): string {
-  return `${mention.sourcePath}:${mention.line}: ${mention.id}`
+  return `${mention.sourcePath}:${mention.line}: ${mention.id}（タスク番号は書かない。docs/coding-standards/comment-reference-and-style.md「タスク番号を書かない」）`
 }
 
 /**
