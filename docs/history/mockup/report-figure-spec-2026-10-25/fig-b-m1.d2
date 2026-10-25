@@ -1,0 +1,31 @@
+vars: { d2-config: { theme-id: 200; layout-engine: elk; pad: 24 } }
+direction: right
+style: { fill: "#11181c" }
+classes: {
+  node: { style: { fill: "#192227"; stroke: "#2e3b42"; font-color: "#e4ecee"; border-radius: 8; font-size: 15 } }
+  key: { style: { fill: "#192227"; stroke: "#4fd1b8"; stroke-width: 3; font-color: "#e4ecee"; border-radius: 8; font-size: 15; bold: true } }
+  group: { style: { fill: "#11181c"; stroke: "#2e3b42"; stroke-dash: 3; font-color: "#8fa3ab"; font-size: 14; border-radius: 10 } }
+}
+"モデル側".class: group
+"サーバ".class: group
+"ブラウザ".class: group
+"モデル側"."モデル": "モデル\nreport を呼ぶ" { class: node }
+"サーバ"."形の検査": "形の検査\n省いた欄は引き継ぐ" { class: node }
+"サーバ"."判定": "判定\n7つの関門を上から順に" { class: node }
+"サーバ"."通す": "通す\nendTurn を付ける" { class: node }
+"サーバ"."記録": "記録\n引数のまま持つ" { class: node }
+"ブラウザ"."整形": "整形\n落としても同じ行だけ" { class: node }
+"ブラウザ"."欄ごとに描く": "欄ごとに描く" { class: node }
+"ブラウザ"."吹き出し": "吹き出し\nclosing を出す" { class: node }
+"モデル側"."直して渡し直す": "直して渡し直す\n直す欄だけ" { class: node }
+"Stop の関所": "Stop の関所\nreport 無しで止まろうとしたとき" { class: node }
+"モデル側"."モデル" -> "サーバ"."形の検査": "引数を渡す" { style: { stroke: "#4fd1b8"; font-color: "#8fa3ab" } }
+"サーバ"."形の検査" -> "サーバ"."判定": "揃った引数" { style: { stroke: "#4fd1b8"; font-color: "#8fa3ab" } }
+"サーバ"."判定" -> "サーバ"."通す": "違反なし" { style: { stroke: "#4fd1b8"; font-color: "#8fa3ab" } }
+"サーバ"."通す" -> "サーバ"."記録" { style: { stroke: "#4fd1b8"; font-color: "#8fa3ab" } }
+"サーバ"."記録" -> "ブラウザ"."整形" { style: { stroke: "#4fd1b8"; font-color: "#8fa3ab" } }
+"ブラウザ"."整形" -> "ブラウザ"."欄ごとに描く" { style: { stroke: "#4fd1b8"; font-color: "#8fa3ab" } }
+"ブラウザ"."欄ごとに描く" -> "ブラウザ"."吹き出し" { style: { stroke: "#4fd1b8"; font-color: "#8fa3ab" } }
+"サーバ"."判定" -> "モデル側"."直して渡し直す": "違反あり" { style: { stroke: "#e8707a"; font-color: "#8fa3ab"; stroke-dash: 4; stroke-width: 2 } }
+"モデル側"."直して渡し直す" -> "サーバ"."形の検査": "呼び直す" { style: { stroke: "#e8707a"; font-color: "#8fa3ab"; stroke-dash: 4; stroke-width: 2 } }
+"Stop の関所" -> "モデル側"."モデル": "report で渡し直させる" { style: { stroke: "#e8707a"; font-color: "#8fa3ab"; stroke-dash: 4; stroke-width: 2 } }

@@ -1,0 +1,73 @@
+direction: right
+
+title: |md
+  # sonnet のタスクの1サイクルでは、委譲・検証・受け入れ・レビューの4段が所要の大半を占める
+| {
+  near: top-center
+  style.font-color: "#e6edf3"
+}
+
+note: |md
+  箱の幅は所要の中央値（秒）に比例（送り出しの4段は短く字が入らないため、幅を広げてある）。出どころ: tw metrics --stages --days 28 の sonnet・normal の行（2026-10-25）
+| {
+  near: bottom-center
+  style.font-color: "#9aa7b4"
+}
+
+実装: {
+  style: {
+    fill: "#161b22"
+    stroke: "#58a6ff"
+    stroke-width: 2
+    font-color: "#58a6ff"
+    font-size: 28
+    bold: true
+  }
+  label.near: outside-top-left
+  計画: "計画\n28秒" {width: 90; height: 110}
+  委譲: "委譲\n135秒" {width: 440; height: 110}
+  検証: "検証\n112秒" {width: 365; height: 110}
+  計画 -> 委譲 -> 検証
+}
+
+受け入れ: {
+  style: {
+    fill: "#161b22"
+    stroke: "#3fb950"
+    stroke-width: 2
+    font-color: "#3fb950"
+    font-size: 28
+    bold: true
+  }
+  label.near: outside-top-left
+  受け入れ: "受け入れ\n91秒" {width: 297; height: 110}
+  レビュー: "レビュー\n75秒" {width: 245; height: 110}
+  受け入れ -> レビュー
+}
+
+送り出し: {
+  style: {
+    fill: "#161b22"
+    stroke: "#d29922"
+    stroke-width: 2
+    font-color: "#d29922"
+    font-size: 28
+    bold: true
+  }
+  label.near: outside-top-left
+  振り返り: "振り返り\n18秒" {width: 170; height: 110}
+  合流: "合流\n4秒" {width: 110; height: 110}
+  送り出し: "送り出し\n19秒" {width: 170; height: 110}
+  反映: "反映\n5秒" {width: 110; height: 110}
+  振り返り -> 合流 -> 送り出し -> 反映
+}
+
+実装.検証 -> 受け入れ.受け入れ
+受け入れ.レビュー -> 送り出し.振り返り
+
+実装.計画.style: {fill: "#21262d"; stroke: "#58a6ff"; font-color: "#c9d1d9"; font-size: 26}
+実装.委譲.style: {fill: "#f78166"; stroke: "#ffa657"; stroke-width: 6; font-color: "#0d1117"; font-size: 40; bold: true}
+実装.検証.style: {fill: "#1f6feb"; stroke: "#58a6ff"; font-color: "#ffffff"; font-size: 32}
+受け入れ.受け入れ.style: {fill: "#238636"; stroke: "#3fb950"; font-color: "#ffffff"; font-size: 32}
+受け入れ.レビュー.style: {fill: "#238636"; stroke: "#3fb950"; font-color: "#ffffff"; font-size: 32}
+送り出し.*.style: {fill: "#21262d"; stroke: "#d29922"; font-color: "#c9d1d9"; font-size: 24}

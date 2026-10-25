@@ -1,0 +1,23 @@
+vars: { d2-config: { theme-id: 200; layout-engine: elk; pad: 24 } }
+direction: down
+style: { fill: "#11181c" }
+classes: {
+  node: { style: { fill: "#192227"; stroke: "#2e3b42"; font-color: "#e4ecee"; border-radius: 8; font-size: 15 } }
+  key: { style: { fill: "#192227"; stroke: "#4fd1b8"; stroke-width: 3; font-color: "#e4ecee"; border-radius: 8; font-size: 15; bold: true } }
+  group: { style: { fill: "#11181c"; stroke: "#2e3b42"; stroke-dash: 3; font-color: "#8fa3ab"; font-size: 14; border-radius: 10 } }
+}
+"原因".class: group
+"直し方".class: group
+"原因"."current を 1 以上で渡す": "current を 1 以上で渡す\n作業を終えてから最初の work_plan" { class: node }
+"原因"."first に 0 を渡す": "first に 0 を渡す\n計画の段を委譲の範囲に入れる" { class: node }
+"最初の記録が途中から": "最初の記録が途中から\n段の開始の時刻が無い" { class: node }
+"計画の段に「…」": "計画の段に「…」\n範囲の先頭が番号を持たない" { class: node }
+"所要が「不明」": "所要が「不明」\n帯とレポートに出る" { class: key }
+"直し方"."着手時に current 0 で渡す": "着手時に current 0 で渡す" { class: node }
+"直し方"."first を計画の次にする": "first を計画の次にする" { class: node }
+"原因"."current を 1 以上で渡す" -> "最初の記録が途中から": "招く" { style: { stroke: "#4fd1b8"; font-color: "#8fa3ab" } }
+"最初の記録が途中から" -> "所要が「不明」": "その段と前の段が測れない" { style: { stroke: "#4fd1b8"; font-color: "#8fa3ab" } }
+"原因"."first に 0 を渡す" -> "計画の段に「…」": "招く" { style: { stroke: "#4fd1b8"; font-color: "#8fa3ab" } }
+"計画の段に「…」" -> "所要が「不明」": "計画の段が測れない" { style: { stroke: "#4fd1b8"; font-color: "#8fa3ab" } }
+"直し方"."着手時に current 0 で渡す" -> "原因"."current を 1 以上で渡す": "防ぐ" { style: { stroke: "#8fa3ab"; font-color: "#8fa3ab"; stroke-dash: 4 } }
+"直し方"."first を計画の次にする" -> "原因"."first に 0 を渡す": "防ぐ" { style: { stroke: "#8fa3ab"; font-color: "#8fa3ab"; stroke-dash: 4 } }

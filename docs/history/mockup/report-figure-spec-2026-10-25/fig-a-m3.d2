@@ -1,0 +1,193 @@
+direction: down
+
+title: 段の所要が「不明」になる原因は、最初の work_plan の渡し方の2通りの誤りに行き着く {
+  near: top-center
+  shape: text
+  style: {
+    font-size: 30
+    bold: true
+    font-color: "#f1f5f9"
+  }
+}
+
+cause: 原因 {
+  style: {
+    fill: "#2a1620"
+    stroke: "#f87171"
+    stroke-width: 2
+    border-radius: 14
+    font-size: 24
+    bold: true
+    font-color: "#fca5a5"
+  }
+  a: |md
+    **current を 1 以上で渡す**
+
+    作業を終えてから最初の work_plan
+  | {
+    style: {
+      fill: "#3b1d28"
+      stroke: "#f87171"
+      stroke-width: 2
+      border-radius: 10
+      font-size: 22
+      font-color: "#fee2e2"
+    }
+  }
+  b: |md
+    **first に 0 を渡す**
+
+    計画の段を委譲の範囲に入れる
+  | {
+    style: {
+      fill: "#3b1d28"
+      stroke: "#f87171"
+      stroke-width: 2
+      border-radius: 10
+      font-size: 22
+      font-color: "#fee2e2"
+    }
+  }
+}
+
+mid1: |md
+  **最初の記録が途中から**
+
+  段の開始の時刻が無い
+| {
+  style: {
+    fill: "#1e293b"
+    stroke: "#94a3b8"
+    stroke-width: 2
+    border-radius: 10
+    font-size: 22
+    font-color: "#e2e8f0"
+  }
+}
+
+fix: 直し方 {
+  style: {
+    fill: "#10261f"
+    stroke: "#34d399"
+    stroke-width: 2
+    stroke-dash: 4
+    border-radius: 14
+    font-size: 24
+    bold: true
+    font-color: "#6ee7b7"
+  }
+  a: |md
+    **着手時に**
+
+    **current 0 で渡す**
+  | {
+    style: {
+      fill: "#14352b"
+      stroke: "#34d399"
+      stroke-width: 2
+      stroke-dash: 4
+      border-radius: 10
+      font-size: 22
+      font-color: "#d1fae5"
+    }
+  }
+  b: |md
+    **first を**
+
+    **計画の次にする**
+  | {
+    style: {
+      fill: "#14352b"
+      stroke: "#34d399"
+      stroke-width: 2
+      stroke-dash: 4
+      border-radius: 10
+      font-size: 22
+      font-color: "#d1fae5"
+    }
+  }
+}
+
+mid2: |md
+  **計画の段に「…」**
+
+  範囲の先頭が番号を持たない
+| {
+  style: {
+    fill: "#1e293b"
+    stroke: "#94a3b8"
+    stroke-width: 2
+    border-radius: 10
+    font-size: 22
+    font-color: "#e2e8f0"
+  }
+}
+
+result: |md
+  **所要が「不明」**
+
+  帯とレポートに出る
+| {
+  style: {
+    fill: "#7f1d1d"
+    stroke: "#fbbf24"
+    stroke-width: 5
+    border-radius: 12
+    shadow: true
+    font-size: 28
+    font-color: "#ffffff"
+  }
+}
+
+cause.a -> mid1: 招く {
+  style: {
+    stroke: "#f87171"
+    stroke-width: 3
+    font-size: 20
+    font-color: "#fca5a5"
+  }
+}
+mid1 -> result: その段と前の段が測れない {
+  style: {
+    stroke: "#f87171"
+    stroke-width: 3
+    font-size: 20
+    font-color: "#fca5a5"
+  }
+}
+cause.b -> mid2: 招く {
+  style: {
+    stroke: "#f87171"
+    stroke-width: 3
+    font-size: 20
+    font-color: "#fca5a5"
+  }
+}
+mid2 -> result: 計画の段が測れない {
+  style: {
+    stroke: "#f87171"
+    stroke-width: 3
+    font-size: 20
+    font-color: "#fca5a5"
+  }
+}
+
+# 直し方は点線で原因を指す（矢じりを原因側に付け、図の流れは上から下のまま）
+cause.a <- fix.a: 防ぐ {
+  style: {
+    stroke: "#34d399"
+    stroke-width: 2
+    stroke-dash: 5
+    font-size: 20
+    font-color: "#6ee7b7"
+  }
+}
+cause.b <- fix.b: 防ぐ {
+  style: {
+    stroke: "#34d399"
+    stroke-width: 2
+    stroke-dash: 5
+    font-size: 20
+    font-color: "#6ee7b7"
+  }
+}

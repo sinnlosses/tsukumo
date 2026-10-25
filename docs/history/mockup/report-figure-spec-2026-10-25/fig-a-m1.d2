@@ -1,0 +1,150 @@
+direction: right
+
+title: "report の呼び出しは判定の7つの関門を通ったときだけ描かれ、\n違反は欄を直す戻り道でモデルへ返る" {
+  near: top-center
+  shape: text
+  style.font-size: 36
+  style.bold: true
+  style.font-color: "#e6edf3"
+}
+
+classes: {
+  node: {
+    shape: rectangle
+    width: 320
+    height: 110
+    style: {
+      fill: "#1f2a37"
+      stroke: "#5b7a99"
+      font-color: "#e6edf3"
+      border-radius: 8
+      font-size: 24
+    }
+  }
+  backnode: {
+    shape: rectangle
+    width: 320
+    height: 110
+    style: {
+      fill: "#3a2312"
+      stroke: "#ff8a3d"
+      stroke-width: 3
+      font-color: "#ffd9b8"
+      border-radius: 8
+      font-size: 24
+    }
+  }
+  back: {
+    style: {
+      stroke: "#ff8a3d"
+      font-color: "#ffb36b"
+      stroke-width: 3
+      stroke-dash: 4
+      font-size: 18
+    }
+  }
+  fwd: {
+    style: {
+      stroke: "#7fb4ff"
+      font-color: "#cfe3ff"
+      stroke-width: 2
+      font-size: 18
+    }
+  }
+}
+
+model: モデル側 {
+  style: {
+    fill: "#16202c"
+    stroke: "#6c8fb3"
+    font-color: "#9fc2e6"
+    font-size: 22
+    border-radius: 12
+  }
+  call: |md
+    **モデル**
+
+    report を呼ぶ
+  | {class: node}
+  fix: |md
+    **直して渡し直す**
+
+    直す欄だけ
+  | {class: backnode}
+}
+
+server: サーバ {
+  style: {
+    fill: "#16251f"
+    stroke: "#5fa88a"
+    font-color: "#9fdcc0"
+    font-size: 22
+    border-radius: 12
+  }
+  check: |md
+    **形の検査**
+
+    省いた欄は引き継ぐ
+  | {class: node}
+  judge: |md
+    **判定**
+
+    7つの関門を上から順に
+  | {
+    class: node
+    style.stroke: "#7fb4ff"
+    style.stroke-width: 5
+    style.fill: "#243b5a"
+  }
+  pass: |md
+    **通す**
+
+    endTurn を付ける
+  | {class: node}
+  rec: |md
+    **記録**
+
+    引数のまま持つ
+  | {class: node}
+}
+
+browser: ブラウザ {
+  style: {
+    fill: "#251f2e"
+    stroke: "#a58ad0"
+    font-color: "#cdb8ee"
+    font-size: 22
+    border-radius: 12
+  }
+  fmt: |md
+    **整形**
+
+    落としても同じ行だけ
+  | {class: node}
+  draw: |md
+    **欄ごとに描く**
+  | {class: node}
+  bubble: |md
+    **吹き出し**
+
+    closing を出す
+  | {class: node}
+}
+
+stop: |md
+  **Stop の関所**
+
+  report 無しで止まろうとしたとき
+| {class: backnode}
+
+model.call -> server.check: 引数を渡す {class: fwd}
+server.check -> server.judge: 揃った引数 {class: fwd}
+server.judge -> server.pass: 違反なし {class: fwd}
+server.pass -> server.rec {class: fwd}
+server.rec -> browser.fmt {class: fwd}
+browser.fmt -> browser.draw {class: fwd}
+browser.draw -> browser.bubble {class: fwd}
+
+server.judge -> model.fix: 違反あり {class: back}
+model.fix -> server.check: 呼び直す {class: back}
+stop -> model.call: report で渡し直させる {class: back}
