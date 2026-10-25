@@ -3,7 +3,7 @@
    名前ごと `var()` に包んで渡す（`var()` の中は付け替えの対象にならない）。
    刻みは `steps()` で描き直しを間引く（`prefers-reduced-motion` は `styles/theme.css` の全体規則が止める）。 */
 :root {
-  --spinner-animation: spinner-turn 1s steps(12) infinite;
+  --spinner-animation: spinner-turn 1s steps(36) infinite;
 }
 @keyframes spinner-turn {
   to {
