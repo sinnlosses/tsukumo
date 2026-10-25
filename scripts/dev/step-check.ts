@@ -1,5 +1,5 @@
 // `tw step` の段の検査（`.tw/config.toml` の `step_check`）。
-// typecheck・lint と、変えたコードのファイルに関連する単体を順に打ち、落ちた段で止まる。
+// token-limit・typecheck・lint と、変えたコードのファイルに関連する単体を順に打ち、落ちた段で止まる。
 
 import { spawnSync } from "node:child_process"
 import process from "node:process"

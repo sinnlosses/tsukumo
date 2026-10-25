@@ -9,6 +9,7 @@ export type StepCheckCommand = readonly string[]
 export function planStepCheck(changedPaths: readonly string[]): readonly StepCheckCommand[] {
   const codePaths = changedPaths.filter(isCodePath)
   return [
+    ["token-limit"],
     ["typecheck"],
     ["lint"],
     ...(codePaths.length > 0 ? [["test", RELATED_FLAG, ...codePaths]] : []),
