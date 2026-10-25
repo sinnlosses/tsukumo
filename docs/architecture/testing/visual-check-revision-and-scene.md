@@ -83,6 +83,20 @@ Network タブで `/ws` の upgrade が101を返し、`hello` フレーム（購
 段2を一度も今にしないまま閉じ、最終レポートの段ごとの時間で段2が「不明」になることを見る
 （`docs/architecture/display.md`「ワークプラン」）。
 
+**狭い画面の頭の点と経過（`phone-head-dot`・`phone-head-elapsed`）と、トークンの画面の結果の札
+（`usage-review-card` の結果の場面。class は `usage-review-result`）は、場面を足さず次の1コマンドずつで撮れる。**
+点と経過は作業が走っているあいだだけ出るので、場面の終わりでは消えている。`--until-step` で途中の手に止める。
+
+```bash
+node scripts/capture/capture-view.ts --scene phone-phases --size 390x844 --until-step 3 \
+  --measure '[class*="phone-head-dot"]' --measure '[class*="phone-head-elapsed"]'
+node scripts/capture/capture-view.ts --scene report --size 1400x900 --hash '#token-usage' \
+  --wait-after 'section[aria-label="減らし方を見てもらう"]' --click 'button:has-text("減らし方を見てもらう")' \
+  --wait-after '[class*="usage-review-result"]' --measure '[class*="usage-review-result"]'
+```
+
+札のほうは、疑似セッションの `usageReview.review`（`fixture/fake-session/index.json`）が約2.4秒後に結果を返す。
+
 **書き終わりの知らせ（`docs/architecture/screen-design.md` 13.10「書き終わりの知らせ」）を確かめるときは
 疑似セッションの場面 `diary-written`（`TSUKUMO_FAKE_SCENE=diary-written`）を使う。** `diary-requested`
 → `diary-drafting` → `diary-stage`（`write` → `pick`）→ `diary-written` と流れ、成果の画面
