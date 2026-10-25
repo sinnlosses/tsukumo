@@ -54,6 +54,7 @@ const REPORT_BLOCK_MARK_NAMES = [
   "graph-legend-added",
   "graph-legend-removed",
   "graph-legend-changed",
+  "graph-legend-return",
   "graph-legend-tone-a",
   "graph-legend-tone-b",
   "graph-legend-tone-c",

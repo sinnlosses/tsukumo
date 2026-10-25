@@ -87,8 +87,8 @@ const STYLE_SHEET_SOURCE = STYLE_SHEET_FILES.map((file) =>
 ).join("\n")
 
 describe("REPORT_NOTATION_PROMPT", () => {
-  it("見た目の CSS は入口1つと部品8つを読んでいる", () => {
-    expect(STYLE_SHEET_FILES).toHaveLength(9)
+  it("見た目の CSS は入口1つと部品9つを読んでいる", () => {
+    expect(STYLE_SHEET_FILES).toHaveLength(10)
   })
 
   it("名乗った要素を rehype-sanitize の schema が通す", () => {

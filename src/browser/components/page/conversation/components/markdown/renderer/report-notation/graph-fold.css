@@ -1,0 +1,70 @@
+/* 折り返し配置の `graph`（tsukumo が座標を決め、`svg` の塊と同じ包みで描く）。箱と字の見た目は figure.css の `svg` の塊の規則を引き継ぐ。
+   分岐の箱は `polygon`、辺は `polyline`。群の囲みは `data-frame` で、色の目印の無い群は `data-ground` の番号の地、目印のある群はその色を薄く敷く。
+   変更の印は `data-change`、戻り道は `data-return` が目印。`--tone-color` は figure.css の `data-tone` が決める。 */
+.detail-block {
+  & .report-svg-figure svg polygon {
+    fill: var(--surface-raised);
+    stroke: var(--ink-quiet);
+    stroke-width: 1.5px;
+  }
+  & .report-svg-figure svg polygon[data-tone] {
+    stroke: var(--tone-color);
+  }
+  /* 目印の節点の地は mermaid の経路と同じトークン（`svg` の塊の `rect` の地とは混ぜる先が違う）。 */
+  & .report-svg-figure svg[data-graph] :is(rect, polygon)[data-tone="a"]:not([data-frame]) {
+    fill: var(--graph-tone-fill-a);
+  }
+  & .report-svg-figure svg[data-graph] :is(rect, polygon)[data-tone="b"]:not([data-frame]) {
+    fill: var(--graph-tone-fill-b);
+  }
+  & .report-svg-figure svg[data-graph] :is(rect, polygon)[data-tone="c"]:not([data-frame]) {
+    fill: var(--graph-tone-fill-c);
+  }
+  & .report-svg-figure svg[data-graph] :is(rect, polygon)[data-tone="d"]:not([data-frame]) {
+    fill: var(--graph-tone-fill-d);
+  }
+  & .report-svg-figure svg[data-graph] :is(rect, polygon)[data-tone="e"]:not([data-frame]) {
+    fill: var(--graph-tone-fill-e);
+  }
+  & .report-svg-figure svg rect[data-frame] {
+    stroke: none;
+  }
+  & .report-svg-figure svg rect[data-frame][data-ground="1"] {
+    fill: var(--graph-ground-1);
+  }
+  & .report-svg-figure svg rect[data-frame][data-ground="2"] {
+    fill: var(--graph-ground-2);
+  }
+  & .report-svg-figure svg rect[data-frame][data-ground="3"] {
+    fill: var(--graph-ground-3);
+  }
+  & .report-svg-figure svg rect[data-frame][data-tone] {
+    fill: color-mix(in srgb, var(--tone-color) 10%, transparent);
+    stroke: var(--tone-color);
+    stroke-width: 1px;
+  }
+  & .report-svg-figure svg [data-change="added"] {
+    stroke: var(--state-ok);
+    stroke-width: 3px;
+  }
+  & .report-svg-figure svg [data-change="removed"] {
+    stroke: var(--state-ng);
+    stroke-width: 3px;
+    stroke-dasharray: 6 4;
+  }
+  & .report-svg-figure svg [data-change="changed"] {
+    stroke: var(--state-warn);
+    stroke-width: 3px;
+  }
+  & .report-svg-figure svg polyline {
+    fill: none;
+    stroke: var(--ink-quiet);
+    stroke-width: 2px;
+  }
+  & .report-svg-figure svg polyline[data-tone] {
+    stroke: var(--tone-color);
+  }
+  & .report-svg-figure svg polyline[data-return] {
+    stroke: var(--graph-return);
+  }
+}

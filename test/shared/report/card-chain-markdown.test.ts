@@ -74,8 +74,11 @@ describe("graph の塊", () => {
     expect(markdown).not.toContain("```mermaid")
   })
 
-  it("6 節点と分岐ありは mermaid のまま", () => {
-    expect(graphMarkdown(chain(["a", "b", "c", "d", "e", "f"]))).toContain("```mermaid")
+  it("6 節点はカードの連鎖でなく折り返しの図になり、分岐ありは mermaid のまま", () => {
+    const six = graphMarkdown(chain(["a", "b", "c", "d", "e", "f"]))
+
+    expect(six).not.toContain('class="card-chain"')
+    expect(six).toContain('class="svg-figure"')
     expect(graphMarkdown("a -> b\na -> c")).toContain("```mermaid")
   })
 

@@ -227,8 +227,25 @@ export const REPORT_SANITIZE_SCHEMA: Schema = {
     // `files` の塊の `code` が運ぶフルパス（`data-file-path`）も同じ理由で `code` だけに許す。
     code: [CODE_FILE_NAME_PROPERTY, CODE_FILE_PATH_PROPERTY, CODE_MARKS_PROPERTY],
     // `svg` の塊の `rect`・`line` の `tone`（色の目印）。値は a〜e だけ。
-    rect: [["dataTone", /^[a-e]$/]],
+    // 折り返し配置の `graph` は、群の囲み（`dataFrame`・地の色の番号 `dataGround`）・変更の印（`dataChange`）・戻り道（`dataReturn`）も持ち、
+    // `svg` の塊と地の塗りを分けるため `svg` に `dataGraph` を付ける。
+    svg: [["dataGraph", /^$/]],
+    rect: [
+      ["dataTone", /^[a-e]$/],
+      ["dataGround", /^[1-3]$/],
+      ["dataFrame", /^$/],
+      ["dataChange", /^(?:added|removed|changed)$/],
+    ],
     line: [["dataTone", /^[a-e]$/]],
+    polygon: [
+      ["dataTone", /^[a-e]$/],
+      ["dataChange", /^(?:added|removed|changed)$/],
+    ],
+    polyline: [
+      ["dataTone", /^[a-e]$/],
+      ["dataChange", /^(?:added|removed|changed)$/],
+      ["dataReturn", /^$/],
+    ],
     // `rect` の `sub`（題の下の説明）の `text` が持つ目印。
     text: [["dataSub", /^$/]],
     img: [

@@ -340,6 +340,10 @@
   & .report-graph-legend-changed {
     --graph-legend-color: var(--state-warn);
   }
+  & .report-graph-legend-return {
+    --graph-legend-color: var(--graph-return);
+    border-top-style: dashed;
+  }
   & .report-graph-legend-tone-a {
     --graph-legend-color: var(--chart-series-1);
   }

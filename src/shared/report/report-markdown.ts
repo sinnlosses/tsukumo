@@ -4,6 +4,8 @@
 
 import { cardChainHtml } from "./card-chain-markdown.ts"
 import { encodeMarks } from "./code-mark.ts"
+import { graphFoldHtml } from "./graph-fold-html.ts"
+import { graphFoldFigure } from "./graph-fold.ts"
 import type { ReportBlock, ReportSection } from "./report-block.ts"
 import { captionedMarkdown, type CaptionKind } from "./report-caption.ts"
 import {
@@ -11,14 +13,9 @@ import {
   beforeAfterMarkdown,
   dimensionMarkdown,
 } from "./report-comparison-markdown.ts"
-import {
-  chartConfigOf,
-  graphLegendMarkdown,
-  graphSource,
-  svgHtml,
-  withSequenceAutonumber,
-} from "./report-diagram-markdown.ts"
+import { chartConfigOf, svgHtml, withSequenceAutonumber } from "./report-diagram-markdown.ts"
 import { filesMarkdown } from "./report-file-markdown.ts"
+import { graphLegendMarkdown, graphSource } from "./report-graph-markdown.ts"
 import { imageMarkdown, type ReportImageSource } from "./report-image-markdown.ts"
 import { fencedMarkdown, htmlInline, joinParts, markdownInline } from "./report-inline-markdown.ts"
 import {
@@ -236,6 +233,17 @@ function blockMarkdown(
           body: `${chain}${graphLegendMarkdown(block, false)}`,
           bodyFormat: "html",
           fit: false,
+        })
+      }
+      const fold = graphFoldFigure(block.source)
+      if (fold !== undefined) {
+        return captionedMarkdown({
+          kind: "figure",
+          ordinal,
+          title: block.title,
+          body: `${graphFoldHtml(fold)}${graphLegendMarkdown(block)}`,
+          bodyFormat: "html",
+          fit: true,
         })
       }
       return captionedMarkdown({

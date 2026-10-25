@@ -58,6 +58,18 @@
   --chart-series-6: #d3b460;
   --chart-series-other: #a6a2b0;
 
+  /* レポートの graph の群の地（色の目印の無い群に順に当てる）・色の目印の節点の地・戻り道の線。
+     群は囲みの題、目印は凡例の名前、戻り道は凡例の語が必ず添う。戻り道は「変えた」の印（state-warn）と見分ける色にする。 */
+  --graph-ground-1: color-mix(in srgb, var(--state-info) 10%, var(--surface));
+  --graph-ground-2: color-mix(in srgb, var(--state-ask) 10%, var(--surface));
+  --graph-ground-3: color-mix(in srgb, var(--chart-series-4) 10%, var(--surface));
+  --graph-tone-fill-a: color-mix(in srgb, var(--chart-series-1) 22%, var(--surface));
+  --graph-tone-fill-b: color-mix(in srgb, var(--chart-series-2) 22%, var(--surface));
+  --graph-tone-fill-c: color-mix(in srgb, var(--chart-series-3) 22%, var(--surface));
+  --graph-tone-fill-d: color-mix(in srgb, var(--chart-series-4) 22%, var(--surface));
+  --graph-tone-fill-e: color-mix(in srgb, var(--chart-series-5) 22%, var(--surface));
+  --graph-return: #f0a35e;
+
   /* 最終レポートの段ごとの時間の帯。一番長い区間だけ `--accent` をわずかに沈めた色、ほかは `--surface` に混ぜて沈めた色で、欠片と色の印も同じ値を読む。
      区間の長さと一覧の割合・時間が必ず添うので、色だけで意味を伝えることにはならない。 */
   --phase-band: color-mix(in srgb, var(--accent) 38%, var(--surface));

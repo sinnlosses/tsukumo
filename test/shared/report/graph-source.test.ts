@@ -16,9 +16,33 @@ describe("readGraphSource", () => {
         { name: "架空の終点", shape: "round", change: "unchanged", tone: "none", note: "" },
       ],
       edges: [
-        { from: 0, to: 1, label: "渡す", change: "unchanged", tone: "none", dashed: false },
-        { from: 1, to: 2, label: "", change: "unchanged", tone: "none", dashed: false },
-        { from: 2, to: 3, label: "yes", change: "unchanged", tone: "none", dashed: false },
+        {
+          from: 0,
+          to: 1,
+          label: "渡す",
+          change: "unchanged",
+          tone: "none",
+          dashed: false,
+          returns: false,
+        },
+        {
+          from: 1,
+          to: 2,
+          label: "",
+          change: "unchanged",
+          tone: "none",
+          dashed: false,
+          returns: false,
+        },
+        {
+          from: 2,
+          to: 3,
+          label: "yes",
+          change: "unchanged",
+          tone: "none",
+          dashed: false,
+          returns: false,
+        },
       ],
       groups: [],
       brokenLines: [],
@@ -81,7 +105,15 @@ describe("readGraphSource", () => {
 
     expect(nodes.map(({ name }) => name)).toEqual(["孤立", "A", "B"])
     expect(edges).toEqual([
-      { from: 1, to: 2, label: "", change: "unchanged", tone: "none", dashed: false },
+      {
+        from: 1,
+        to: 2,
+        label: "",
+        change: "unchanged",
+        tone: "none",
+        dashed: false,
+        returns: false,
+      },
     ])
     expect(brokenLines).toEqual([])
   })
@@ -92,7 +124,15 @@ describe("readGraphSource", () => {
     expect(reading.brokenLines).toEqual([3, 4, 5, 6, 7])
     expect(reading.nodes.map(({ name }) => name)).toEqual(["A", "B"])
     expect(reading.edges).toEqual([
-      { from: 0, to: 1, label: "", change: "unchanged", tone: "none", dashed: false },
+      {
+        from: 0,
+        to: 1,
+        label: "",
+        change: "unchanged",
+        tone: "none",
+        dashed: false,
+        returns: false,
+      },
     ])
   })
 
@@ -131,7 +171,15 @@ describe("readGraphSource", () => {
         ["D", "e"],
       ])
       expect(edges).toEqual([
-        { from: 1, to: 2, label: "渡す", change: "unchanged", tone: "c", dashed: false },
+        {
+          from: 1,
+          to: 2,
+          label: "渡す",
+          change: "unchanged",
+          tone: "c",
+          dashed: false,
+          returns: false,
+        },
       ])
       expect(groups).toEqual([{ name: "層", nodes: [0, 1, 2], tone: "b" }])
       expect(brokenLines).toEqual([])
@@ -165,6 +213,39 @@ describe("readGraphSource", () => {
       ["閉じの行の目印", "[甲]\nA\n[] @a"],
     ])("%s は読めない行にする", (_, source) => {
       expect(readGraphSource(source).brokenLines.length).toBeGreaterThan(0)
+    })
+  })
+
+  describe("戻り道", () => {
+    it("`A <- B: 語` を B から A へ戻る辺として読み、ほかの矢印の辺は戻り道にしない", () => {
+      const { nodes, edges, brokenLines } = readGraphSource("A -> B\nB -.> C\nA <- C: 呼び直す")
+
+      expect(nodes.map(({ name }) => name)).toEqual(["A", "B", "C"])
+      expect(
+        edges.map(({ from, to, label, dashed, returns }) => [from, to, label, dashed, returns]),
+      ).toEqual([
+        [0, 1, "", false, false],
+        [1, 2, "", true, false],
+        [2, 0, "呼び直す", false, true],
+      ])
+      expect(brokenLines).toEqual([])
+    })
+
+    it("戻り道にも行頭の印と行末の色の目印が付く", () => {
+      const { edges, brokenLines } = readGraphSource("+ A <- B: 語 @c")
+
+      expect(edges).toEqual([
+        { from: 1, to: 0, label: "語", change: "added", tone: "c", dashed: false, returns: true },
+      ])
+      expect(brokenLines).toEqual([])
+    })
+
+    it.each([
+      ["矢印が2つ", "A <- B -> C"],
+      ["端の名前が空", "A <-"],
+      ["群の名の中の矢印", "[a <- b]"],
+    ])("%s は読めない行にする", (_, source) => {
+      expect(readGraphSource(source).brokenLines).toEqual([1])
     })
   })
 

@@ -35,6 +35,8 @@ export type GraphSourceEdge = {
   readonly tone: GraphTone
   /** `-.>` で書いた点線の辺。 */
   readonly dashed: boolean
+  /** `A <- B` で書いた戻り道（`from` が B、`to` が A）。 */
+  readonly returns: boolean
 }
 
 /** 囲み（`[群の名]` 〜 `[]`）。`nodes` は `GraphSourceReading.nodes` の添字。 */
@@ -52,10 +54,10 @@ export type GraphSourceReading = {
   readonly brokenLines: readonly number[]
 }
 
-const ARROW = "->"
+/** 実線（`->`）・点線（`-.>`）・戻り道（`<-`）の矢印。分けると演算子も配列に残る。 */
+const ARROW_OR_DASHED = /(-\.>|->|<-)/
 
-/** 実線（`->`）と点線（`-.>`）の矢印。分けると演算子も配列に残る。 */
-const ARROW_OR_DASHED = /(-\.>|->)/
+const RETURN_ARROW = "<-"
 
 /** `-` や `=>` だけの語。矢印を書き損じた行を節点の宣言と読まないために弾く。 */
 const STRAY_ARROW = /(?:^|\s)(?:-+>?|=+>|→)(?:\s|$)/
@@ -79,6 +81,7 @@ type ParsedLine =
       readonly change: GraphChange
       readonly tone: GraphTone
       readonly dashed: boolean
+      readonly returns: boolean
       readonly note: string
     }
 
@@ -207,15 +210,17 @@ export function readGraphSource(source: string): GraphSourceReading {
           claim()
           return
         }
-        const [from, to] = line.names.map(indexOf)
-        if (from !== undefined && to !== undefined) {
+        const [left, right] = line.names.map(indexOf)
+        if (left !== undefined && right !== undefined) {
+          // `A <- B` は B から A へ戻る辺。節点の並びは書いた順のまま、辺の向きだけを B → A にする。
           edges.push({
-            from,
-            to,
+            from: line.returns ? right : left,
+            to: line.returns ? left : right,
             label: line.label,
             change: line.change,
             tone: line.tone,
             dashed: line.dashed,
+            returns: line.returns,
           })
         }
         claim()
@@ -248,7 +253,7 @@ function parseLine(text: string): ParsedLine {
   }
   if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
     const name = trimmed.slice(1, -1).trim()
-    return name === "" || /[[\]:]/.test(name) || name.includes(ARROW) || name.includes("-.>")
+    return name === "" || /[[\]:]/.test(name) || ARROW_OR_DASHED.test(name)
       ? { kind: "broken" }
       : { kind: "group-open", name, tone }
   }
@@ -262,7 +267,16 @@ function parseLine(text: string): ParsedLine {
     const name = parseName(nameText)
     return name === undefined || noteParts.length > 1 || (noteParts.length === 1 && note === "")
       ? { kind: "broken" }
-      : { kind: "item", names: [name], label: "", change, tone, dashed: false, note }
+      : {
+          kind: "item",
+          names: [name],
+          label: "",
+          change,
+          tone,
+          dashed: false,
+          returns: false,
+          note,
+        }
   }
   const [left, arrow, right] = parts
   if (parts.length !== 3 || left === undefined || right === undefined) {
@@ -277,6 +291,7 @@ function parseLine(text: string): ParsedLine {
   if (from === undefined || to === undefined) {
     return { kind: "broken" }
   }
+  const returns = arrow === RETURN_ARROW
   return {
     kind: "item",
     names: [from, to],
@@ -284,6 +299,7 @@ function parseLine(text: string): ParsedLine {
     change,
     tone,
     dashed: arrow === "-.>",
+    returns,
     note: "",
   }
 }

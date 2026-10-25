@@ -26,7 +26,7 @@ function isAllowedTextColor(value: string): boolean {
 
 describe("レポートの字の色", () => {
   it("report-notation.module.css の color は、字の4段と印の色の変数だけ", () => {
-    expect(REPORT_CSS_FILES).toHaveLength(9)
+    expect(REPORT_CSS_FILES).toHaveLength(10)
     const offenders = REPORT_CSS_FILES.flatMap((file) => {
       const lines = readFileSync(`${RENDERER_DIRECTORY}/${file}`, "utf8").split("\n")
       const commentLines = new Set(commentLineIndexes(lines))

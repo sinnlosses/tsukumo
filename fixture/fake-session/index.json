@@ -66,6 +66,7 @@
     "report-svg-tone",
     "report-graph-tone",
     "report-graph-wide",
+    "report-graph-fold",
     "report-graph-scroll",
     "report-flow-row",
     "report-matrix",
