@@ -17,6 +17,7 @@
   --report-measure: 42em;
   --report-measure-wide: 63em;
   --report-figure-max: 70cqh;
+  --report-figure-min-scale: 0.75;
   margin: 0 0 1rem;
   line-height: var(--line-height-body);
   text-autospace: normal;
