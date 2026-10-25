@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import { REPOSITORY_ROOT } from "../../scripts/shared/repository-root.ts"
+import { mirrorTestPath } from "../../scripts/shared/test-mirror.ts"
 import { listSourceFiles } from "./source-file.ts"
 
 // 先頭から最初に合った行を使うので、空の接頭辞（`src/` の行）は最後に置く。
@@ -32,7 +33,7 @@ describe("テストの置き場所", () => {
 
     const unexpected = misplaced.map(
       ({ relPath, sameNamed }) =>
-        `test/${relPath} は ${sameNamed.map((target) => `test/${testPathFor(target)}`).join(" か ")} に置く`,
+        `test/${relPath} は ${sameNamed.map(mirrorTestPath).join(" か ")} に置く`,
     )
 
     expect(unexpected).toEqual([])
@@ -47,14 +48,6 @@ function mirrorOf(testRelPath: string): string {
     throw new Error(`鏡の根が決まらない: ${testRelPath}`)
   }
   return `${root.targetRoot}/${base.slice(root.testPrefix.length)}`
-}
-
-/** 対象のパス（`src/…`・`scripts/…`・`plugin/…`）から、その鏡の場所のテストの `test/` 相対パスを返す。 */
-function testPathFor(targetPath: string): string {
-  const slash = targetPath.indexOf("/")
-  const root = targetPath.slice(0, slash)
-  const rest = targetPath.slice(slash + 1)
-  return `${root === "src" ? "" : `${root}/`}${rest.replace(/(\.tsx?)$/, ".test$1")}`
 }
 
 function withoutExtension(path: string): string {

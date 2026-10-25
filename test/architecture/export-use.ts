@@ -10,6 +10,7 @@ import {
   stringField,
   type AstNode,
 } from "../../scripts/shared/ast-node.ts"
+import { exportedSymbols } from "../../scripts/shared/export-symbol.ts"
 import { REPOSITORY_ROOT } from "../../scripts/shared/repository-root.ts"
 import { listSourceFiles, parseSourceProgram } from "./source-file.ts"
 
@@ -108,30 +109,6 @@ function isExporter(path: string): boolean {
 }
 
 type ImportUse = { readonly target: string; readonly names: readonly string[] | "all" }
-
-type ExportedSymbol = { readonly name: string; readonly local: string }
-
-function exportedSymbols(program: AstNode): readonly ExportedSymbol[] {
-  return arrayField(program, "body").flatMap((statement): readonly ExportedSymbol[] => {
-    switch (stringField(statement, "type")) {
-      case "ExportDefaultDeclaration":
-        return [{ name: "default", local: "default" }]
-      case "ExportNamedDeclaration": {
-        const declared = declaredNames(objectField(statement, "declaration")).map((name) => ({
-          name,
-          local: name,
-        }))
-        const specified = arrayField(statement, "specifiers").map((specifier) => ({
-          name: symbolName(objectField(specifier, "exported")),
-          local: symbolName(objectField(specifier, "local")),
-        }))
-        return [...declared, ...specified]
-      }
-      default:
-        return []
-    }
-  })
-}
 
 function declaredNames(declaration: AstNode | undefined): readonly string[] {
   if (stringField(declaration, "type") === "VariableDeclaration") {
