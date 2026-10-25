@@ -34,6 +34,13 @@ export function readRpcStub(value: string): RpcStub | undefined {
   return range === undefined ? undefined : { procedure, range, body: body.value }
 }
 
+const PROCEDURE_PATTERN = /^[A-Za-z][A-Za-z0-9]*(?:\.[A-Za-z][A-Za-z0-9]*)*$/
+
+/** `--hold-rpc` の値（`a.b.c` 形の手続き名）を読む。読めなければ undefined。 */
+export function readHeldProcedure(value: string): string | undefined {
+  return PROCEDURE_PATTERN.test(value) ? value : undefined
+}
+
 /** 呼び出し回数（1から数える）が差し替えの範囲に入るか。範囲が無ければ常に入る。 */
 export function isStubbedCall(range: StubRange | undefined, callNumber: number): boolean {
   return range === undefined || (callNumber >= range.from && callNumber <= range.to)

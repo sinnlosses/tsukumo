@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest"
 
 import {
   isStubbedCall,
+  readHeldProcedure,
   readRpcStub,
   rpcPathOf,
 } from "../../../../scripts/capture/lib/capture-stub.ts"
@@ -58,6 +59,21 @@ describe("isStubbedCall", () => {
 
   test("範囲が無ければどの回も入る", () => {
     expect(isStubbedCall(undefined, 99)).toBe(true)
+  })
+})
+
+describe("readHeldProcedure", () => {
+  test("ドットでつないだ手続き名はそのまま返す", () => {
+    expect(readHeldProcedure("contextUsage.report")).toBe("contextUsage.report")
+  })
+
+  test.each([
+    ["空", ""],
+    ["= を含む", "a.b={}"],
+    ["ドットが連続", "a..b"],
+    ["範囲つき", "a.b@1"],
+  ])("読めない値は undefined: %s", (_name, value) => {
+    expect(readHeldProcedure(value)).toBeUndefined()
   })
 })
 

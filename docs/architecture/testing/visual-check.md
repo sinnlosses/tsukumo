@@ -80,6 +80,11 @@
 （`planUsage.report`）、JSON は出力そのもの、範囲は呼び出しの何回目かを1から数えて `3` か `1-2`（省くと全部。
 外の呼び出しはサーバへ通す）。例: `--scene report-blocks --stub-rpc 'planUsage.report={"kind":"not-applicable"}'`。
 
+**読み込み中の骨組み（一瞬で過ぎて撮れないもの）は、保留を明示して撮る。** `--hold-rpc <手続き>` は手続きの応答を返さず（`contextUsage.report` の `aria-busy="true"` の骨組み）、
+`--hold-stream` はセッションの購読（`/ws`）のサーバからのフレームを捨てる（タスク一覧の `role="status"` の `TaskSkeleton`。`--cwd` に `.tsukumo/fake-beads-issues.json` のある場所を渡すと、保留を外せば一覧が出る比較ができる）。
+保留は撮影が終わると破棄する。保留の指定が無いときの `--wait-for` は従来どおり、現れなければ画を書かず失敗で終わる。
+例: `--scene report-board --hold-rpc contextUsage.report --wait-for '[aria-busy="true"]'`。
+
 **メインビューの下のほうにある塊（ファイルの塊など）を窓の大きさで撮るときは
 `capture-view.ts --scroll-to <selector>`。** `--wait-for` の待ちが済んだあと、指した要素を
 メインビューのスクロールの容れ物の上端へ送ってから撮る。要素が無ければ撮らずに失敗で終わる。

@@ -61,8 +61,10 @@ import {
   type Preparation,
   readPreparations,
 } from "./lib/capture-preparation.ts"
+import { applyHolds, stubRpc } from "./lib/capture-route.ts"
+import { parseSize, type WindowSize } from "./lib/capture-size.ts"
 import { type Source, sourceOf } from "./lib/capture-source.ts"
-import { isStubbedCall, readRpcStub, type RpcStub, rpcPathOf } from "./lib/capture-stub.ts"
+import { readHeldProcedure, readRpcStub, type RpcStub } from "./lib/capture-stub.ts"
 import { CATALOG } from "./lib/catalog-entry.ts"
 import { imageSceneEntry, launchPlaceOf, workspaceOf } from "./lib/catalog-setup.ts"
 import { describeElement } from "./lib/element-description.ts"
@@ -85,8 +87,6 @@ import { readSceneSession } from "./lib/scene-session.ts"
 /** 既定の窓の大きさ。実機の目視で使ってきた値に揃えてある。 */
 const DEFAULT_WIDTH = 1400
 const DEFAULT_HEIGHT = 900
-
-type WindowSize = { readonly width: number; readonly height: number }
 
 /** `--paper-metric` が `--viewport` の指定なしで測る窓の並び。 */
 const DEFAULT_PAPER_METRIC_VIEWPORTS: readonly WindowSize[] = [
@@ -139,6 +139,8 @@ const USAGE = `使い方:
   --wait-after <selector> その位置で要素が出るのを待つ（--hash で開いた画面の読み込みなど。出なければ失敗して終わる）
                         （7つは書いた順に、--wait-for のあと・--scroll-to の前に当てる。当たらなければ失敗して終わる）
   --stub-rpc '<手続き>[@<範囲>]=<JSON>'  手続きの応答を差し替えて撮る（何度でも指定できる。例 'planUsage.report={"kind":"not-applicable"}'。範囲は呼び出しの何回目かを1から数えて 3 か 1-2、省くと全部。範囲の外はサーバへ通す）
+  --hold-rpc <手続き>   手続きの応答を保留して読み込み中の骨組みを撮る（何度でも指定できる。例 'contextUsage.report'）
+  --hold-stream         セッションの購読（/ws）のサーバからのフレームを保留して撮る（タスク一覧の骨組み）
   --paper-metric        レポートの紙面の物差し（テンプレの手がかり・色相の族・判決の頭の高さ・読む面を超える図・横並びの縦落ち）を窓ごとに表で出す（既定は 1440x900 と 1920x1080。--reveal-at とは併用できない）
   --viewport <幅>x<高さ> --paper-metric で測る窓（何度でも指定できる。--paper-metric と一緒にだけ使う）
   --full                ページ全体を撮る（既定は窓に収まる範囲だけ）
@@ -159,6 +161,8 @@ type Options =
       readonly clock: number | undefined
       readonly revealAt: number | undefined
       readonly stubs: readonly RpcStub[]
+      readonly heldProcedures: readonly string[]
+      readonly holdStream: boolean
       readonly paperMetric: boolean
       readonly viewports: readonly WindowSize[]
       readonly fullPage: boolean
@@ -285,6 +289,7 @@ async function capture(
     for (const stub of options.stubs) {
       await stubRpc(page, stub)
     }
+    await applyHolds(page, options.heldProcedures, options.holdStream)
     // 接続は遷移の途中で開くので、フレームを数え始めるのは遷移より前。
     const watch = watchSceneEvents(page)
     await openPage(page, url)
@@ -401,23 +406,6 @@ async function printPaperMetrics(page: Page, viewports: readonly WindowSize[]): 
   return 0
 }
 
-/** 数え上げをブラウザ側に置くと再マウントで数えが狂うので、Node 側の `calls` で持つ。 */
-async function stubRpc(page: Page, stub: RpcStub): Promise<void> {
-  let calls = 0
-  await page.route(`**/rpc/${rpcPathOf(stub.procedure)}**`, async (route) => {
-    calls += 1
-    if (!isStubbedCall(stub.range, calls)) {
-      await route.continue()
-      return
-    }
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({ json: stub.body }),
-    })
-  })
-}
-
 /**
  * `--scene` で起こした場面の最後の手（`--until-step` があればその手）が画面へ届くまで待つ。
  * URL を渡された撮影は疑似セッションではないので待たない。待てなければ理由を返す。
@@ -512,6 +500,8 @@ function readOptions(argv: readonly string[]): Options | undefined {
       clock: { type: "string" },
       size: { type: "string" },
       "stub-rpc": { type: "string", multiple: true },
+      "hold-rpc": { type: "string", multiple: true },
+      "hold-stream": { type: "boolean" },
       "paper-metric": { type: "boolean" },
       viewport: { type: "string", multiple: true },
       full: { type: "boolean" },
@@ -539,6 +529,7 @@ function readOptions(argv: readonly string[]): Options | undefined {
   const clock = values.clock === undefined ? undefined : readClockInstant(values.clock)
   const size = values.size === undefined ? undefined : parseSize(values.size)
   const stubs = (values["stub-rpc"] ?? []).map(readRpcStub)
+  const held = (values["hold-rpc"] ?? []).map(readHeldProcedure)
   const paperMetric = values["paper-metric"] === true
   const viewports = (values.viewport ?? []).map(parseSize)
   const urls = tokens.flatMap((token, index) =>
@@ -555,6 +546,7 @@ function readOptions(argv: readonly string[]): Options | undefined {
         prepared.preparations.length > 0)) ||
     (values.clock !== undefined && clock === undefined) ||
     stubs.some((stub) => stub === undefined) ||
+    held.some((procedure) => procedure === undefined) ||
     viewports.some((viewport) => viewport === undefined) ||
     (viewports.length > 0 && !paperMetric) ||
     (paperMetric && revealAt !== undefined) ||
@@ -585,6 +577,8 @@ function readOptions(argv: readonly string[]): Options | undefined {
         clock,
         revealAt: revealAt?.data,
         stubs: stubs.filter((stub) => stub !== undefined),
+        heldProcedures: held.filter((procedure) => procedure !== undefined),
+        holdStream: values["hold-stream"] === true,
         paperMetric,
         viewports:
           viewports.length === 0
@@ -592,16 +586,6 @@ function readOptions(argv: readonly string[]): Options | undefined {
             : viewports.filter((viewport) => viewport !== undefined),
         fullPage: values.full === true,
       }
-}
-
-function parseSize(value: string): { readonly width: number; readonly height: number } | undefined {
-  const parts = value.split("x")
-  const width = Number(parts[0])
-  const height = Number(parts[1])
-  if (parts.length !== 2 || !Number.isInteger(width) || !Number.isInteger(height)) {
-    return undefined
-  }
-  return width > 0 && height > 0 ? { width, height } : undefined
 }
 
 const exitCode = await main(process.argv.slice(2))
