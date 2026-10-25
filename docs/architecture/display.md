@@ -66,7 +66,7 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
 
 #### 塊を足す・外す基準（2026-09-27 決定、2026-09-30 改訂）
 
-- `docs/architecture/display/block-criteria.md`
+- `docs/architecture/display/block-criteria.md`（節「見比べで見つかった穴」: 梯子・穴ドラフトの型・採らない穴）
 
 #### 各表示物
 
