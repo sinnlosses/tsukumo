@@ -1,5 +1,5 @@
-import { act, cleanup, fireEvent, screen } from "@testing-library/react"
-import { afterEach, describe, expect, it, vi } from "vitest"
+import { cleanup, fireEvent, screen } from "@testing-library/react"
+import { afterEach, describe, expect, it } from "vitest"
 
 import { applyRestoredEvents } from "../../../../../../../src/shared/session/restored-event.ts"
 import type { ReportWaitingLine } from "../../../../../../../src/shared/session/session-event-report.ts"
@@ -381,50 +381,5 @@ describe("CharacterView（狭い画面の顔と最新の1件）", () => {
 
     expect(document.querySelector("dialog")?.hasAttribute("open")).toBe(true)
     expect(screen.getByRole("button", { name: "ログ" }).getAttribute("aria-expanded")).toBe("true")
-  })
-})
-
-describe("CharacterView の呼吸の停止", () => {
-  afterEach(() => {
-    vi.useRealTimers()
-  })
-
-  function portraitAttributes(name: string): readonly (string | null)[] {
-    return [...document.querySelectorAll(".portrait")].map((element) => element.getAttribute(name))
-  }
-
-  it("待機中（呼吸だけ）は60秒で data-motion が外れ、表情はそのまま。操作で呼吸が戻る", () => {
-    vi.useFakeTimers()
-    renderCharacterView({
-      speeches: [speech("架空のセリフ", "proud")],
-      speechExpression: "proud",
-      character: FIXTURE_CHARACTER,
-    })
-    expect(portraitAttributes("data-motion")).toContain("reading")
-
-    act(() => {
-      vi.advanceTimersByTime(60_000)
-    })
-    expect(portraitAttributes("data-motion").every((value) => value === null)).toBe(true)
-    expect(portraitAttributes("data-expression")).toContain("proud")
-
-    act(() => {
-      window.dispatchEvent(new Event("keydown"))
-    })
-    expect(portraitAttributes("data-motion")).toContain("reading")
-  })
-
-  it("ターン進行中（待っている間の移動）は60秒経っても止めない", () => {
-    vi.useFakeTimers()
-    renderCharacterView({
-      turn: { kind: "running", startedAt: 0 },
-      character: FIXTURE_CHARACTER,
-    })
-
-    act(() => {
-      vi.advanceTimersByTime(60_000)
-    })
-
-    expect(portraitAttributes("data-motion")).toContain("waiting")
   })
 })

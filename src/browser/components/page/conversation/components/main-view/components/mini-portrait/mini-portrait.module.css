@@ -89,12 +89,13 @@
    差し色は画面の差し色（`--accent`）。
 
    `drop-shadow` は素材の alpha をなぞるので、矩形ではなく姿の形に付く（素材の中身には触らないまま輪郭だけを立てられる）。
-   暈と縁を1つずつ重ねる（drop-shadow は前の結果にさらに掛かる）。毎フレーム動く入れ物の子なので、重ねる数がそのまま描画の代になる。 */
+   同じ影を重ねるのは、`color-mix` で作った縁取り・暈自体が半透明で、1回では存在感が出ないため。重ねた回数だけ濃くなる（drop-shadow は前の結果にさらに掛かる）。 */
 .mini-portrait-body {
   --mini-portrait-rim: color-mix(in srgb, var(--surface) 85%, transparent);
   --mini-portrait-glow: color-mix(in srgb, var(--accent) 80%, transparent);
 
   height: 100%;
   filter: drop-shadow(0 0 4px var(--mini-portrait-glow))
+    drop-shadow(0 0 4px var(--mini-portrait-glow)) drop-shadow(0 0 1px var(--mini-portrait-rim))
     drop-shadow(0 0 1px var(--mini-portrait-rim));
 }

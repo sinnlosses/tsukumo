@@ -48,7 +48,6 @@ import {
   type SpeechTarget,
   type ViewedSpeech,
 } from "../domain/pinned-speech.ts"
-import { usePortraitRest } from "./use-portrait-rest.ts"
 import { useWelcomeGreetingRecord } from "./use-welcome-greeting-record.ts"
 
 /** そのターンにセリフが1件も無かったときに当てる表情（`INITIAL_SESSION_STATE` と同じ既定）。 */
@@ -83,8 +82,7 @@ export type CharacterViewModel = {
   readonly portraitUrl: string | undefined
   readonly altText: string
   readonly expression: Expression
-  /** 呼吸だけの待機が `PORTRAIT_REST_MS` 続いたあとは `undefined`（動かさない）。 */
-  readonly motion: PortraitMotion | undefined
+  readonly motion: PortraitMotion
   /** 吹き出しに出すセリフ（古い→新しい）。過去のターンを見ていればそのターンぶんに差し替わる。 */
   readonly speeches: readonly CharacterViewSpeech[]
   /** 吹き出しの最新に出す反応。過去のターンを見ているあいだは出さない。 */
@@ -172,9 +170,7 @@ export function useCharacterView(): CharacterViewModel {
     const current = pinnedSpeech === undefined ? LATEST_VIEWED_SPEECH : viewed
     setViewed(toggledViewedSpeech(current, turnId, index, speechesOfTurn(turnId)?.length ?? 0))
   }
-  const resting = usePortraitRest()
-  const resolvedMotion = resolvePortraitMotion({ turn, lastToolFailureAt, draftingReport }, now)
-  const motion = resolvedMotion === "reading" && resting ? undefined : resolvedMotion
+  const motion = resolvePortraitMotion({ turn, lastToolFailureAt, draftingReport }, now)
 
   const { portraitUrl, altText } = portraitAppearance(character, expression)
 

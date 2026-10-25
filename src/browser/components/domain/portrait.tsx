@@ -13,7 +13,6 @@ import { useEffect, type ReactElement } from "react"
 
 import type { Expression } from "../../../shared/character-pack/expression.ts"
 import type { PortraitMotion } from "../../../shared/session/portrait-motion.ts"
-import { useWindowAway } from "../../hooks/use-window-away.ts"
 import styles from "./portrait.module.css"
 
 export type PortraitProps = {
@@ -59,7 +58,6 @@ export function usePortraitPreload(portraits: Readonly<Record<string, string>> |
 }
 
 export function Portrait(props: PortraitProps): ReactElement {
-  const away = useWindowAway()
   return (
     <div
       className={clsx(styles["portrait"], props.className)}
@@ -67,7 +65,6 @@ export function Portrait(props: PortraitProps): ReactElement {
       aria-label={props.altText}
       data-expression={props.expression}
       data-motion={props.motion}
-      data-paused={away ? "true" : undefined}
     >
       <img className={styles["portrait-image"]} src={props.url} alt={props.altText} />
     </div>

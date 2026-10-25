@@ -9,7 +9,7 @@
   animation: var(--fade-in-name) 0.25s ease-out;
 
   /* 立ち絵の動きの速さ・大きさ。この5組が唯一の調整箇所。
-     --portrait-breathe-*: 呼吸（ごく小さい上下。「居る」の最小単位。無操作が続くと止まる。止め方は `usePortraitRest`）。
+     --portrait-breathe-*: 呼吸（常時のごく小さい上下。「居る」の最小単位）。
      --portrait-walk-*: 待っている間の移動（ターン進行中に領域の中をゆっくり歩く。横方向）。
      --portrait-write-*: 書いている（`report` の引数を書いている間、筆を運ぶように小さく速く横へ揺れる）。
      --portrait-bounce-*: 完了の反応（ターンが終わると小さく跳ねる）。
@@ -41,26 +41,24 @@
    どの動きにするかは `<Portrait>` が `data-motion` 属性で渡す（`resolvePortraitMotion`）。
    いずれの keyframes も 0%/100% を transform なし（＝呼び出し側が置いた位置）に揃えてある。
    reduced-motion（`theme.css`）は `animation-iteration-count: 1` を強制するので、無限ループの呼吸・歩行も1周目の終わりで止まり、足元が床から浮いたまま止まることはない。
-   無限ループの easing は、keyframe の1区間の移動が端末画素（devicePixelRatio 2）の0.5画素刻みになる `steps(n, jump-none)` にする。
-   位置の列は変えずに、同じ画素の描き直しになる合成のコマ数だけを減らすため。振幅を変えたら n も合わせる。
    一括指定（`animation`）ではなく個別指定で書く。
    `var()` を混ぜた一括指定だと CSS Modules の名前の付け替えが効かず、ハッシュ化された `@keyframes` を指せなくなる（実測）。 */
 .portrait[data-motion="reading"] {
   animation-name: var(--fade-in-name), portrait-breathe;
   animation-duration: 0.25s, var(--portrait-breathe-duration);
-  animation-timing-function: ease-out, steps(14, jump-none);
+  animation-timing-function: ease-out, ease-in-out;
   animation-iteration-count: 1, infinite;
 }
 .portrait[data-motion="waiting"] {
   animation-name: var(--fade-in-name), portrait-walk;
   animation-duration: 0.25s, var(--portrait-walk-duration);
-  animation-timing-function: ease-out, steps(32, jump-none);
+  animation-timing-function: ease-out, ease-in-out;
   animation-iteration-count: 1, infinite;
 }
 .portrait[data-motion="writing"] {
   animation-name: var(--fade-in-name), portrait-write;
   animation-duration: 0.25s, var(--portrait-write-duration);
-  animation-timing-function: ease-out, steps(12, jump-none);
+  animation-timing-function: ease-out, ease-in-out;
   animation-iteration-count: 1, infinite;
 }
 .portrait[data-motion="success"] {
@@ -74,10 +72,6 @@
   animation-duration: 0.25s, var(--portrait-flinch-duration);
   animation-timing-function: ease-out, ease-out;
   animation-iteration-count: 1, 1;
-}
-/* 窓のフォーカスが外れている・タブが裏にある間は、どの動きも止める（`<Portrait>` が `data-paused` を付ける）。 */
-.portrait[data-paused] {
-  animation-play-state: paused;
 }
 @keyframes portrait-breathe {
   0%,

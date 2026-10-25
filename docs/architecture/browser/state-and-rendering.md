@@ -89,10 +89,6 @@ react-markdown
   Lottie / Live2D も同じ理由で採らない
 - **動くのは利用者の注意が空いているときだけ。** `SessionState` から「いま読んでいるか、待っているか」を
   決め、**読んでいる間は呼吸だけに落とす**
-- **止める条件はブラウザ側が持ち、`shared` の `resolvePortraitMotion` には足さない**（サーバの畳み〔`messages.json`〕を動かさないため。DOM の期待値は、撮影の時刻が最後のイベントから60秒を超えるシナリオで `data-motion` が外れる）。
-  `usePortraitRest` が、最後のイベント（store の購読で `SessionState` の参照が替わるのを見る）か操作から60秒で呼吸（`reading`）だけを止め
-  （`motion` を `undefined` にして `data-motion` を外す）、`<Portrait>` が `useWindowAway`（`blur`・`hidden`）の間 `data-paused` を付けて
-  `animation-play-state: paused` を当てる
 - 作るのは5つ。**呼吸**（常時のごく小さい上下）/ **待っている間の移動**（ターン進行中に
   領域の中をゆっくり歩く）/ **書いている**（メインが `report` の引数を書いている間、
   筆を運ぶように小さく速く横へ揺れる）/ **完了の反応**（小さく跳ねる）/ **失敗でびくっ**（一瞬のけぞる）
@@ -105,6 +101,3 @@ react-markdown
 - `prefers-reduced-motion: reduce` を尊重する（`src/browser/styles/theme.css`）
 - 動きは CSS の `@keyframes` と `transform` で足りる。**`<canvas>` もアニメーションの
   ライブラリも要らない**（矩形しか動かさないため）
-- **無限ループ（呼吸・歩き・書く）の easing は、1区間の移動が端末画素の0.5画素刻みになる
-  `steps(n, jump-none)`**。振幅は数画素しかなく、`ease-in-out` の毎秒60コマは同じ画素の描き直しなので、
-  位置の列を変えずに合成のコマ数だけを減らす（`will-change: transform` では減らなかった）。振幅を変えたら n も合わせる

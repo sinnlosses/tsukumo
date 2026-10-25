@@ -26,7 +26,8 @@
           "attributes": {
             "role": "img",
             "aria-label": "つくもの精霊（きょとん）",
-            "data-expression": "curious"
+            "data-expression": "curious",
+            "data-motion": "reading"
           },
           "children": [
             {
