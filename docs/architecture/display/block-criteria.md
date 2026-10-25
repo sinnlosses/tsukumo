@@ -88,7 +88,7 @@
 ## 見比べで見つかった穴
 
 Claude が書いた HTML と tsukumo の `report` を同じ題材で見比べると、tsukumo で表現できない・粗くなるもの（**穴**）が見つかる。
-見比べの手順は `docs/history/research/html-comparison-method.md`、実績は `docs/history/research/html-comparison-trial.md`。
+見比べの手順（`scripts/capture/compare-html.ts` が下の型の前4箇条の下書きを出す）は `docs/history/research/html-comparison-method.md`、実績は `docs/history/research/html-comparison-trial.md`。
 ここには、見つけた穴をどう扱うかだけを置く。足すかの数と物差しは上の節のとおりで、**この節では新しい基準を作らない**。
 
 ### 梯子

@@ -15,6 +15,7 @@
 //   node scripts/capture/capture-view.ts <URL> --out /tmp/view.png --size 1400x900 \
 //     --measure '[data-region="character"]' --measure '[data-region="sidebar"]'
 //   node scripts/capture/capture-view.ts <URL> --wait-for '[role="table"][aria-label="検証結果"]'
+//   node scripts/capture/capture-view.ts file:///tmp/page.html --text-length body
 //   node scripts/capture/capture-view.ts --scene report-blocks --size 600x900 \
 //     --wait-for '[class*="report-files"]' --scroll-to '[class*="report-files"]'
 //   node scripts/capture/capture-view.ts --scene report-blocks --reveal-at 1500
@@ -47,7 +48,6 @@ import { positiveIntegerArgument } from "../shared/positive-integer-argument.ts"
 import { REPOSITORY_ROOT } from "../shared/repository-root.ts"
 import {
   applyPreparations,
-  MAIN_REGION_SELECTOR,
   openPage,
   revealPageAt,
   scrollIntoView,
@@ -69,7 +69,7 @@ import { CATALOG } from "./lib/catalog-entry.ts"
 import { imageSceneEntry, launchPlaceOf, workspaceOf } from "./lib/catalog-setup.ts"
 import { describeElement } from "./lib/element-description.ts"
 import { launchFakeScene } from "./lib/fake-scene-launch.ts"
-import { formatPaperMetric, measurePaperMetric } from "./lib/paper-metric.ts"
+import { printPaperMetrics } from "./lib/paper-metric-print.ts"
 import {
   formatRevealSnapshot,
   readRevealSnapshot,
@@ -83,6 +83,7 @@ import {
   watchSceneEvents,
 } from "./lib/scene-end.ts"
 import { readSceneSession } from "./lib/scene-session.ts"
+import { describeTextLength } from "./lib/text-length.ts"
 
 /** 既定の窓の大きさ。実機の目視で使ってきた値に揃えてある。 */
 const DEFAULT_WIDTH = 1400
@@ -126,6 +127,7 @@ const USAGE = `使い方:
   --out <path>          画像の出力先（既定 ${DEFAULT_OUT}）
   --size <幅>x<高さ>    窓の大きさ（既定 ${String(DEFAULT_WIDTH)}x${String(DEFAULT_HEIGHT)}）
   --measure <selector>  位置と大きさ（と scrollHeight・clientHeight）を数値で出す要素（何度でも指定できる）
+  --text-length <selector> 要素（複数に当たれば先頭）の見えている文字数を「字数 <selector>: n」で出す（何度でも指定できる。当たらなければ「無し」）
   --wait-for <selector> 要素が出て、演出が終わるまで待ってから撮る（出なければ失敗して終わる）
   --scroll-to <selector> 要素をメインビューの上端へ送ってから撮る（無ければ失敗して終わる。本文の末尾に近い塊も上端へ届くよう、撮影のページだけ末尾に窓の高さ分の余白を足すので、--measure の scrollHeight は余白を含む。2つ以上に当たるとコンマ区切りでも先頭へ転がし、「一致 n 個、先頭へ転がした」の行を出す。準備の手のあとに当たり〔書く位置は問わない〕、転がしたあと偽の時計があれば進めて落ち着くまで待つので、--advance を後ろに足さなくてよい。--reveal-at のときは時計を止めているので待たない）
   --type <selector> <文字>  入力欄に打ってから撮る
@@ -155,6 +157,7 @@ type Options =
       readonly width: number
       readonly height: number
       readonly measures: readonly string[]
+      readonly textLengths: readonly string[]
       readonly waitFor: string | undefined
       readonly scrollTo: string | undefined
       readonly preparations: readonly Preparation[]
@@ -367,6 +370,10 @@ async function capture(
       process.stdout.write(`${selector}: ${await describeElement(page, selector)}\n`)
     }
 
+    for (const selector of options.textLengths) {
+      process.stdout.write(`${await describeTextLength(page, selector)}\n`)
+    }
+
     const overflow = await page.evaluate(
       () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
     )
@@ -379,31 +386,6 @@ async function capture(
   } finally {
     await browser.close()
   }
-}
-
-/** 窓ごとに演出を打ち切って落ち着かせ、紙面の物差しを表で出す。測れなければ理由を出して 1。 */
-async function printPaperMetrics(page: Page, viewports: readonly WindowSize[]): Promise<number> {
-  for (const viewport of viewports) {
-    try {
-      await page.setViewportSize(viewport)
-      await page.keyboard.press(SKIP_REVEAL_KEY)
-      await settlePage(page)
-      await page
-        .locator(MAIN_REGION_SELECTOR)
-        .first()
-        .evaluate((element) => {
-          element.scrollTop = 0
-        })
-      const rows = formatPaperMetric(await measurePaperMetric(page))
-      process.stdout.write(
-        `紙面の物差し ${String(viewport.width)}x${String(viewport.height)}\n${rows.join("\n")}\n`,
-      )
-    } catch (error) {
-      process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`)
-      return 1
-    }
-  }
-  return 0
 }
 
 /**
@@ -491,6 +473,7 @@ function readOptions(argv: readonly string[]): Options | undefined {
       ...PREPARATION_OPTIONS,
       out: { type: "string" },
       measure: { type: "string", multiple: true },
+      "text-length": { type: "string", multiple: true },
       "wait-for": { type: "string" },
       "scroll-to": { type: "string" },
       scene: { type: "string" },
@@ -571,6 +554,7 @@ function readOptions(argv: readonly string[]): Options | undefined {
         width: size?.width ?? DEFAULT_WIDTH,
         height: size?.height ?? DEFAULT_HEIGHT,
         measures: values.measure ?? [],
+        textLengths: values["text-length"] ?? [],
         waitFor: values["wait-for"],
         scrollTo: values["scroll-to"],
         preparations: prepared.preparations,
