@@ -25,7 +25,7 @@ export const REPORT_ENTRIES: readonly CatalogEntry[] = [
     name: "report-checks",
     // 検証結果は2件目の `report`（3状態を混ぜてある）にしか無く、約7秒後まで現れない。
     scene: "report-tool",
-    label: "検証結果の表（ok・ng・unverified）",
+    label: "検証結果の表（ok・ng・unobserved・blocked）",
     homeSetup: { kind: "default" },
     workspaceSetup: { kind: "repository" },
     prepare: [{ kind: "scroll", selector: CHECKS_SELECTOR }],

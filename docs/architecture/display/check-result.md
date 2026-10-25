@@ -40,17 +40,22 @@
   `docs/history/mockup/report-excellence-2026-10-17/after-first.png`〔題の位置は採らない〕）
   - **合図の行**（`role="group"`・`aria-label="検証結果"`）は検証結果だけを運ぶ。`checks` が空なら行ごと置かない
   - **枠と地を持たない**。上下と行の間を `--rule-quiet` の 1px の罫で区切り、色が出るのは記号と状態の語
-    （✓ 通った・？ 確かめていない・✕ 落ちた）だけ
-  - **総括行**: 「✓ 検証 n件 通った <通った行の `figure` を `·` で連ねる>」「？ k件 確かめていない」「✕ m件 落ちた」を
+    （✓ 通った・？ 確かめていない・⊘ 止まっている・✕ 落ちた）だけ
+  - **状態は4つ**（2026-10-26。`docs/research/harness-strategy.md` 3.4.1）。`ok`（通った）・`ng`（落ちた）・
+    `unobserved`（確かめなかった・飛ばした。前の `unverified` はこれに読み替え、記録の `unverified` も `unobserved` として読む）・
+    `blocked`（前提が止まっていて確かめられなかった。理由は `detail` に前提を書く）。
+    **`unobserved` と `blocked` を `ok` と描かない**。`blocked` は `ng` と別の class（`checks-problem-blocked`・`checks-summary-blocked`）・
+    記号（⊘）・語（止まっている）で描き、色は注意の色にせず弱い字の色にする
+  - **総括行**: 「✓ 検証 n件 通った <通った行の `figure` を `·` で連ねる>」「？ k件 確かめていない」「⊘ j件 止まっている」「✕ m件 落ちた」を
     この順に並べ、無い部分は出さない（通った行が無ければ頭は「検証」の語だけ）。幅が足りなければ折り返す
   - **お願いの印**: `favor` があるときだけ総括行の右端に「● お願い 1 ↓」を置く。お願いの本体は末尾のままで、
     印はページ内のリンクで飛ぶだけ。押しても `location.hash` は書かずに転がす。演出の途中で押すと、押す操作が演出を打ち切って
     全部出してから転がる
-  - **開くのは `ng` と `unverified` の行だけ**（`ng` → `unverified` の順。同じ状態の中は書いた順）。左の列に記号と
-    状態の語、右の列に「`label` ＋ `figure`・所要時間」、その下に `detail`、`unverified` ならさらに「確かめ方: <`howToVerify`>」を置く。
+  - **開くのは `ng`・`blocked`・`unobserved` の行だけ**（この順。同じ状態の中は書いた順）。左の列に記号と
+    状態の語、右の列に「`label` ＋ `figure`・所要時間」、その下に `detail`、`unobserved` ならさらに「確かめ方: <`howToVerify`>」を置く。
     問題の並びは `role="table"`・`aria-label="検証結果の問題"`
   - **通った行は1行に畳む**: 「✓ 通った n件」と `label` の頭（最初の全角の括弧「（」より前。無ければ全文）を `·` で
     連ねた `<summary>` の `<details>`。開くと ✓・`label`・`figure`・所要時間の一覧（`role="table"`・`aria-label="検証結果"`）。
     全部通ったときも総括行とこの1行だけにする。開閉は保存しない
-  - **`howToVerify`**（確かめ方）は `unverified` の行で必須、`ok`・`ng` では空文字。空の `unverified` は記法の違反で差し戻す
+  - **`howToVerify`**（確かめ方）は `unobserved` の行で必須、`ok`・`ng`・`blocked` では空文字。空の `unobserved` は記法の違反で差し戻す
     （規約違反の1ターン1回の枠）。欄の無い前の形の記録は空文字として読む

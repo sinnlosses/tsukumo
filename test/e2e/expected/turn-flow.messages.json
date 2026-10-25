@@ -368,7 +368,7 @@
           "howToVerify": ""
         },
         {
-          "status": "unverified",
+          "status": "unobserved",
           "label": "狭い窓での見た目",
           "figure": "",
           "command": "",

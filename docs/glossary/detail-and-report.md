@@ -121,15 +121,15 @@
 ### 検証結果
 
 - **英語識別子**: `checks`（`report` ツールの引数の名前）/ `ReportCheck`（1項目。
-  `src/shared/report/report-check.ts`）/ `ReportCheckStatus`（`ok` / `ng` / `unverified`）/
-  `howToVerify`（確かめ方。`unverified` の行で、知らない人が繰り返せる手順）
+  `src/shared/report/report-check.ts`）/ `ReportCheckStatus`（`ok` / `ng` / `unobserved` / `blocked`）/
+  `howToVerify`（確かめ方。`unobserved` の行で、知らない人が繰り返せる手順）
 - **定義**: **そのターンで何をどう確かめたか**（テスト・型検査・手で見たこと）。1項目は
   状態（`status`）・何で確かめたか（`label`）・結果の数（`figure`）・打ったコマンド（`command`）・
   理由（`detail`）・確かめ方（`howToVerify`）で、`report` の `checks` に並べて入れる。tsukumo が結論のすぐ下の
   合図の行に総括行を出し、落ちた・確かめていない行だけを開き、通った行は1行に畳む。状態は記号と語
-  （✓ 通った / ✕ 落ちた / ？ 確かめていない）の両方で見せる
+  （✓ 通った / ✕ 落ちた / ？ 確かめていない / ⊘ 止まっている）の両方で見せる
 - **注記**: **検証をしていないターンでは渡さない**（総括も出ない）。確かめなかった・飛ばしたものは
-  `unverified` にまとめ、理由は `detail` に、確かめ方は `howToVerify` に書く。`conclusion` と `sections` には書かない（規約は
+  `unobserved`、前提が止まって確かめられなかったものは `blocked` にし、理由は `detail` に書く。確かめ方は `unobserved` の行だけ `howToVerify` に書く。`conclusion` と `sections` には書かない（規約は
   `src/server/report/core/report-notation.ts` の条1）。規則は `docs/architecture/display.md` 4.2 が正典
 - **避ける言い方**: テスト結果（型検査や目視も入る）、確認結果
 

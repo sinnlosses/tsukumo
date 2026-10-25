@@ -68,7 +68,7 @@
 - **確かめていないこと・推測は `claims`（確度つきの主張）の塊で見せる**（2026-10-19。`docs/research/report-shape-tags.md` 6章。
   言葉だけの確度は解釈が割れるので、主張ごとに印と根拠を付ける）
   - 欄: 項目（`claim` / `certainty`〔`confirmed` 確定 / `inferred` 推測 / `unverified` 未確認〕/ `basis` / `howToVerify`）の並び。
-    **確定でない項目の `howToVerify` が空なら塊を受け付けない**（入口の型の検査。`checks` の `unverified` の行の確かめ方と同じ考え）
+    **確定でない項目の `howToVerify` が空なら塊を受け付けない**（入口の型の検査。`checks` の `unobserved` の行の確かめ方と同じ考え）
   - 描き方: 1項目1行で、行どうしは罫で区切る。左に確度を記号と語（✓ 確定 / 〜 推測 / ？ 未確認）で、右に主張と、その下に根拠・確かめ方を置く。
     根拠と確かめ方は Markdown の行内として描くので、`path:line` は押すと開き、`[ドメイン](URL)` は出典の札になる。空の欄は出さない。
     色は `docs/architecture/screen-design/color.md` の確度の段落

@@ -67,7 +67,7 @@
   - 使い分けは、向きの無い2つは `compare`、1つの値の前後は表のセルの `from` / `to` か
     `stats` の `before`、行ごとの差分は `code` の `diff`、縦に積む寸法の前後は `dimension` の `before`、構造の前後は `graph` の印。
     書き手への規約（記法の条8）は、形の札から塊を引く表を持ち、画面を変えた作業は撮った画像を `image` で載せ、
-    同じ場面の2枚は `beforeAfter` で並べる（見た目に出ない・撮れないときは `checks` の `unverified` に理由）。
+    同じ場面の2枚は `beforeAfter` で並べる（見た目に出ない・撮れないときは `checks` の `unobserved` に理由）。
     1行の変更に使わせない旨は `beforeAfter` の `describe` が持つ。
   - 箇条の側が6つ以上なら `options`・`compare` と同じ違反で差し戻す。取り違えは差し戻さず、
     使われ方の記録の「塊の種類 × レポート数」で見る

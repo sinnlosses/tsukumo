@@ -5,8 +5,11 @@ import { z } from "zod"
 import { formatElapsed, type MeasuredTime } from "../utils/elapsed-time.ts"
 import { htmlAttribute, htmlInline } from "./report-inline-markdown.ts"
 
-/** 検証1項目の状態。確かめなかった・飛ばしたものは `unverified` にまとめ、理由は `detail` に書かせる。 */
-const REPORT_CHECK_STATUSES = ["ok", "ng", "unverified"] as const
+/**
+ * 検証1項目の状態。`unobserved` は確かめなかった・飛ばしたもの、`blocked` は前提が止まっていて確かめられなかったもので、
+ * どちらも `ok` と描かず、理由は `detail` に書かせる。
+ */
+const REPORT_CHECK_STATUSES = ["ok", "ng", "unobserved", "blocked"] as const
 
 type ReportCheckStatus = (typeof REPORT_CHECK_STATUSES)[number]
 
@@ -28,12 +31,12 @@ export const reportCheckSchema = z.object({
   detail: z
     .string()
     .describe(
-      "ng なら落ちた理由、unverified なら確かめなかった理由を1文で。ok の行には描かないので書かない。直した経緯や打ち直した回数は書かない。無ければ空文字",
+      "ng・unobserved は理由、blocked は止めている前提を1文で。ok の行には描かないので書かない。直した経緯や打ち直した回数は書かない。無ければ空文字",
     ),
   howToVerify: z
     .string()
     .describe(
-      "unverified のとき必須。知らない人が繰り返せる確かめ方を1〜2文で（何を開いて・何をして・何が見えれば良いか）。ok・ng は空文字",
+      "unobserved のとき必須。知らない人が繰り返せる確かめ方を1〜2文で（何を開いて・何をして・何が見えれば良いか）。ok・ng・blocked は空文字",
     ),
 })
 
@@ -43,11 +46,14 @@ export type ReportCheck = z.infer<typeof reportCheckSchema>
  * `figure`・`command`・`howToVerify` を足す前の記録（transcript からの復元）も読めるように、3つは欠けていたら空文字に畳む。
  * 状態・ラベル・補足が崩れた呼び出しは handler に届く前に SDK が差し戻すので、ここで欠けるのは古い記録だけ。
  */
-const storedReportCheckSchema = reportCheckSchema.extend({
-  figure: z.string().catch(""),
-  command: z.string().catch(""),
-  howToVerify: z.string().catch(""),
-})
+const storedReportCheckSchema = z.preprocess(
+  readLegacyStatus,
+  reportCheckSchema.extend({
+    figure: z.string().catch(""),
+    command: z.string().catch(""),
+    howToVerify: z.string().catch(""),
+  }),
+)
 
 /** `report` の引数の `checks` を取り出す。「無い」と形の崩れは空の配列に畳む。 */
 export function parseReportChecks(value: unknown): readonly ReportCheck[] {
@@ -63,7 +69,7 @@ export type ReportFavorTarget =
 /**
  * 検証結果（1つの HTML の塊）。空なら空文字。
  * 上から、総括行（通った件数と figure・確かめていない件数・落ちた件数・お願いの印）、
- * 問題の項目（ng → unverified の順。unverified は2行目に確かめ方）、通った項目を畳んだ `<details>` の順。
+ * 問題の項目（ng → blocked → unobserved の順。unobserved は2行目に確かめ方）、通った項目を畳んだ `<details>` の順。
  * 総括行は無い部分を出さず、お願いの印は `favor` が `favor` のときだけ置く。
  * `commandDuration` は `command` から tsukumo が測った所要時間を引く口で、`command` が空の項目には呼ばない。
  * モデルの文字列は HTML として逃がし、改行は空白に畳む（HTML の塊が空行で切れないように）。
@@ -78,10 +84,9 @@ export function reportChecksMarkdown(
   }
   const checks = rawChecks.map(withoutBackticks)
   const passed = checks.filter((check) => check.status === "ok")
-  const problems = [
-    ...checks.filter(isReportCheckProblem).filter((check) => check.status === "ng"),
-    ...checks.filter(isReportCheckProblem).filter((check) => check.status === "unverified"),
-  ]
+  const problems = REPORT_CHECK_ROW_ORDER.flatMap((status) =>
+    checks.filter(isReportCheckProblem).filter((check) => check.status === status),
+  )
   return (
     `<div class="checks">` +
     checksSummaryMarkdown(checks, favor) +
@@ -95,6 +100,16 @@ export function reportChecksMarkdown(
   )
 }
 
+/** 状態が `unobserved` になる前の記録の `unverified` は、同じ意味の `unobserved` として読む。 */
+function readLegacyStatus(value: unknown): unknown {
+  return typeof value === "object" &&
+    value !== null &&
+    "status" in value &&
+    value.status === "unverified"
+    ? { ...value, status: "unobserved" }
+    : value
+}
+
 /** `label`・`figure`・`detail`・`howToVerify` の素の文字に記法は使えないので、バッククォートを落とす（`command` は打った文字列のまま）。 */
 function withoutBackticks(check: ReportCheck): ReportCheck {
   return {
@@ -106,7 +121,7 @@ function withoutBackticks(check: ReportCheck): ReportCheck {
   }
 }
 
-/** 検証1項目のうち、問題として並べるもの（ng / unverified）。 */
+/** 検証1項目のうち、問題として並べるもの（ng / blocked / unobserved）。 */
 type ReportCheckProblem = ReportCheck & { readonly status: Exclude<ReportCheckStatus, "ok"> }
 
 function isReportCheckProblem(check: ReportCheck): check is ReportCheckProblem {
@@ -114,7 +129,7 @@ function isReportCheckProblem(check: ReportCheck): check is ReportCheckProblem {
 }
 
 /**
- * 総括行。「✓ 検証 n件 通った <figure · figure>」「？ k件 確かめていない」「✕ m件 落ちた」「● お願い 1 ↓」のうち、あるものだけを並べる。
+ * 総括行。「✓ 検証 n件 通った <figure · figure>」「？ k件 確かめていない」「⊘ j件 止まっている」「✕ m件 落ちた」「● お願い 1 ↓」のうち、あるものだけを並べる。
  * 通った項目が無いときは頭に「検証」の語だけを置く。色を付けるのは記号と状態の語（`checks-summary-mark`・`checks-summary-word`）だけ。
  */
 function checksSummaryMarkdown(checks: readonly ReportCheck[], favor: ReportFavorTarget): string {
@@ -149,7 +164,7 @@ function checksSummaryMarkdown(checks: readonly ReportCheck[], favor: ReportFavo
   return `<div class="checks-summary">${[head, ...problemParts].join("")}${favorLink}</div>`
 }
 
-/** 問題の1項目。状態の印・label・figure・所要時間の行と、detail の段、unverified なら確かめ方の段。 */
+/** 問題の1項目。状態の印・label・figure・所要時間の行と、detail の段、unobserved なら確かめ方の段。 */
 function checkProblemMarkdown(
   check: ReportCheckProblem,
   commandDuration: (command: string) => MeasuredTime,
@@ -160,7 +175,7 @@ function checkProblemMarkdown(
       ? ""
       : `<div class="checks-problem-detail">${htmlInline(check.detail)}</div>`
   const howToVerify =
-    check.status !== "unverified" || check.howToVerify.trim() === ""
+    check.status !== "unobserved" || check.howToVerify.trim() === ""
       ? ""
       : `<div class="checks-problem-how"><span class="checks-problem-how-label">確かめ方:</span> ${htmlInline(check.howToVerify)}</div>`
   return (
@@ -227,17 +242,25 @@ function figureAndTimeOf(
 }
 
 /** 総括行に並べる順。 */
-const REPORT_CHECK_PROBLEM_STATUSES = ["unverified", "ng"] as const satisfies readonly Exclude<
+const REPORT_CHECK_PROBLEM_STATUSES = [
+  "unobserved",
+  "blocked",
+  "ng",
+] as const satisfies readonly Exclude<ReportCheckStatus, "ok">[]
+
+const REPORT_CHECK_ROW_ORDER = ["ng", "blocked", "unobserved"] as const satisfies readonly Exclude<
   ReportCheckStatus,
   "ok"
 >[]
 
 const REPORT_CHECK_PROBLEM_MARKS = {
   ng: "✕",
-  unverified: "？",
+  blocked: "⊘",
+  unobserved: "？",
 } as const satisfies Record<Exclude<ReportCheckStatus, "ok">, string>
 
 const REPORT_CHECK_PROBLEM_WORDS = {
   ng: "落ちた",
-  unverified: "確かめていない",
+  blocked: "止まっている",
+  unobserved: "確かめていない",
 } as const satisfies Record<Exclude<ReportCheckStatus, "ok">, string>

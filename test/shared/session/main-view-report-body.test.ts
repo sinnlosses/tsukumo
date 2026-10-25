@@ -57,7 +57,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
         howToVerify: "",
       },
       {
-        status: "unverified",
+        status: "unobserved",
         label: "架空の目視",
         figure: "",
         command: "",

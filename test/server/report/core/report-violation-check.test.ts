@@ -99,14 +99,14 @@ describe("reportViolations", () => {
       expect(kinds(withFigure(""))).toEqual([])
     })
 
-    it("unverified の行の確かめ方が空なら差し戻し、ok・ng の空は通す", () => {
-      const withCheck = (status: "ok" | "ng" | "unverified", howToVerify: string): ReportDraft => ({
+    it("unobserved の行の確かめ方が空なら差し戻し、ok・ng の空は通す", () => {
+      const withCheck = (status: "ok" | "ng" | "unobserved", howToVerify: string): ReportDraft => ({
         ...draft([reportDraftText("架空。")]),
         checks: [{ ...check(""), status, howToVerify }],
       })
-      expect(kinds(withCheck("unverified", ""))).toEqual(["unverified-without-how"])
-      expect(kinds(withCheck("unverified", "  "))).toEqual(["unverified-without-how"])
-      expect(kinds(withCheck("unverified", "架空の窓を開いて札を見る"))).toEqual([])
+      expect(kinds(withCheck("unobserved", ""))).toEqual(["unobserved-without-how"])
+      expect(kinds(withCheck("unobserved", "  "))).toEqual(["unobserved-without-how"])
+      expect(kinds(withCheck("unobserved", "架空の窓を開いて札を見る"))).toEqual([])
       expect(kinds(withCheck("ok", ""))).toEqual([])
       expect(kinds(withCheck("ng", ""))).toEqual([])
     })
@@ -325,8 +325,8 @@ describe("reportViolations", () => {
       fold: "",
       aside: "",
     }
-    const unverified = {
-      status: "unverified" as const,
+    const unobserved = {
+      status: "unobserved" as const,
       label: "架空の確認",
       figure: "",
       command: "",
@@ -343,8 +343,14 @@ describe("reportViolations", () => {
       ])
     })
 
-    it("checks に unverified の行があれば差し戻さない", () => {
-      const report = { ...draft([files("src/browser/架空.tsx", "modified")]), checks: [unverified] }
+    it("checks に unobserved の行があれば差し戻さない", () => {
+      const report = { ...draft([files("src/browser/架空.tsx", "modified")]), checks: [unobserved] }
+      expect(kinds(report)).toEqual([])
+    })
+
+    it("checks に blocked の行があれば差し戻さない", () => {
+      const blocked = { ...unobserved, status: "blocked" as const }
+      const report = { ...draft([files("src/browser/架空.tsx", "modified")]), checks: [blocked] }
       expect(kinds(report)).toEqual([])
     })
 

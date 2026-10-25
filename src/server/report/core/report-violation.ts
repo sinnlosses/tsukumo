@@ -139,8 +139,8 @@ export type ReportViolation =
   | { readonly kind: "long-first-sentence"; readonly count: number; readonly length: number }
   /** 節の `heading` が30字を超える、または疑問文（末尾が `?`・`？`）。`count` は該当の節の数。 */
   | { readonly kind: "bad-heading"; readonly count: number }
-  /** `checks` の `unverified` の行の `howToVerify` が空（空白だけを含む）。`count` は該当の行の数。 */
-  | { readonly kind: "unverified-without-how"; readonly count: number }
+  /** `checks` の `unobserved` の行の `howToVerify` が空（空白だけを含む）。`count` は該当の行の数。 */
+  | { readonly kind: "unobserved-without-how"; readonly count: number }
   /** `text` の塊か表のセルに ` → ` がある（インラインコードの中は除く）。`count` は該当の塊の数。 */
   | { readonly kind: "arrow-in-prose"; readonly count: number }
   /** `flow` でない `list` で、`label` の無い項目の `text` が「名前: 説明」で始まる。`count` は該当の項目の数。 */
@@ -151,7 +151,7 @@ export type ReportViolation =
   | { readonly kind: "non-japanese"; readonly count: number }
   /**
    * `src/browser/` の `.tsx` か `.css` を `added` / `modified` に持つ `files` があるのに、`image` の塊も `beforeAfter` の `image` の側も無く、
-   * `checks` に `unverified` の行も無い。`count` は1か0。
+   * `checks` に `unobserved`・`blocked` の行も無い。`count` は1か0。
    */
   | { readonly kind: "browser-change-without-image"; readonly count: number }
   /**
@@ -196,7 +196,7 @@ export const VIOLATION_THRESHOLDS = {
   "region-range": 0,
   "long-first-sentence": 0,
   "bad-heading": 0,
-  "unverified-without-how": 0,
+  "unobserved-without-how": 0,
   "arrow-in-prose": 0,
   "label-in-item": 0,
   "labeled-ordered": 0,

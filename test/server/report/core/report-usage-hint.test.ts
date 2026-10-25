@@ -263,13 +263,13 @@ describe("reportUsageEntryOf", () => {
       return [entry.hasUnverifiedCheck, entry.hasHowToVerify]
     }
 
-    it("unverified が無ければ両方偽、全部に確かめ方があれば両方真、1つでも空なら確かめ方は偽", () => {
+    it("unobserved が無ければ両方偽、全部に確かめ方があれば両方真、1つでも空なら確かめ方は偽", () => {
       expect(flagsOf([])).toEqual([false, false])
       expect(flagsOf([check("ok", ""), check("ng", "")])).toEqual([false, false])
       expect(
-        flagsOf([check("unverified", "架空の窓を開く"), check("unverified", "架空の札を見る")]),
+        flagsOf([check("unobserved", "架空の窓を開く"), check("unobserved", "架空の札を見る")]),
       ).toEqual([true, true])
-      expect(flagsOf([check("unverified", "架空の窓を開く"), check("unverified", " ")])).toEqual([
+      expect(flagsOf([check("unobserved", "架空の窓を開く"), check("unobserved", " ")])).toEqual([
         true,
         false,
       ])

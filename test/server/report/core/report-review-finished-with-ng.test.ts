@@ -11,17 +11,17 @@ import {
 } from "../../../fixture/report-review.ts"
 
 describe("createReportReview の judge（ng の確認がある finished の report）", () => {
-  const check = (status: "ok" | "ng" | "unverified") => ({
+  const check = (status: "ok" | "ng" | "unobserved") => ({
     status,
     label: "架空の確認",
     figure: "",
     command: "",
     detail: "",
-    howToVerify: status === "unverified" ? "架空の確かめ方を見る" : "",
+    howToVerify: status === "unobserved" ? "架空の確かめ方を見る" : "",
   })
   const withTask = (
     outcome: ReportTaskOutcome,
-    statuses: readonly ("ok" | "ng" | "unverified")[],
+    statuses: readonly ("ok" | "ng" | "unobserved")[],
   ): ReportDraft =>
     reportDraft({
       conclusion: "架空の結論。",
@@ -54,7 +54,7 @@ describe("createReportReview の judge（ng の確認がある finished の repo
   })
 
   it("ng の行が無い finished は通す", () => {
-    expect(createReportReview(noPlan).judge(withTask("finished", ["ok", "unverified"]))).toEqual({
+    expect(createReportReview(noPlan).judge(withTask("finished", ["ok", "unobserved"]))).toEqual({
       kind: "accepted",
     })
     expect(createReportReview(noPlan).judge(withTask("finished", []))).toEqual({

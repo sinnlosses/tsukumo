@@ -52,7 +52,7 @@ export const REPORT_REJECTION_MODES = {
   "region-range": "reject",
   "long-first-sentence": "reject",
   "bad-heading": "reject",
-  "unverified-without-how": "reject",
+  "unobserved-without-how": "reject",
   "arrow-in-prose": "reject",
   "label-in-item": "reject",
   "labeled-ordered": "reject",

@@ -230,9 +230,12 @@
     color: var(--state-ok);
   }
   &
-    .report-checks-summary-unverified
+    .report-checks-summary-unobserved
     :is(.report-checks-summary-mark, .report-checks-summary-word) {
     color: var(--state-warn);
+  }
+  & .report-checks-summary-blocked :is(.report-checks-summary-mark, .report-checks-summary-word) {
+    color: var(--ink-quiet);
   }
   & .report-checks-summary-ng :is(.report-checks-summary-mark, .report-checks-summary-word) {
     color: var(--state-ng);
@@ -296,7 +299,7 @@
     white-space: nowrap;
     color: var(--ink-quiet);
   }
-  /* 問題の項目（ng → unverified の順に1件ずつ縦へ重ねる）と通った項目の畳みは、
+  /* 問題の項目（ng → blocked → unobserved の順に1件ずつ縦へ重ねる）と通った項目の畳みは、
    左の列に記号と状態の語、右の列に中身を置き、行の間を罫で区切る。 */
   & .report-checks-problem {
     display: grid;
@@ -320,8 +323,11 @@
   & .report-checks-problem-ng .report-checks-problem-mark {
     color: var(--state-ng);
   }
-  & .report-checks-problem-unverified .report-checks-problem-mark {
+  & .report-checks-problem-unobserved .report-checks-problem-mark {
     color: var(--state-warn);
+  }
+  & .report-checks-problem-blocked .report-checks-problem-mark {
+    color: var(--ink-quiet);
   }
   & .report-checks-problem-word {
     margin-left: 2px;

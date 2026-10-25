@@ -34,11 +34,11 @@ const summaryOf = (markdown: string): string =>
   )
 
 describe("reportChecksMarkdown", () => {
-  it("総括行 → ng の行 → unverified の行 → 通った行の <details> の順に組む", () => {
+  it("総括行 → ng の行 → unobserved の行 → 通った行の <details> の順に組む", () => {
     const markdown = reportChecksMarkdown(
       [
         check("ok", "架空の一"),
-        check("unverified", "架空の二", { detail: "架空の理由", howToVerify: "架空の確かめ方" }),
+        check("unobserved", "架空の二", { detail: "架空の理由", howToVerify: "架空の確かめ方" }),
         check("ng", "架空の三", { detail: "架空の落ちた理由" }),
         check("ok", "架空の四"),
       ],
@@ -49,7 +49,7 @@ describe("reportChecksMarkdown", () => {
     const order = [
       markdown.indexOf('<div class="checks-summary">'),
       markdown.indexOf('<div class="checks-problem checks-problem-ng"'),
-      markdown.indexOf('<div class="checks-problem checks-problem-unverified"'),
+      markdown.indexOf('<div class="checks-problem checks-problem-unobserved"'),
       markdown.indexOf('<div class="checks-passed"><details>'),
     ]
     expect(order.every((index) => index >= 0)).toBe(true)
@@ -67,7 +67,7 @@ describe("reportChecksMarkdown", () => {
         [
           check("ng", "架空の落ちた項目"),
           check("ok", "架空の一", { figure: "単体 12" }),
-          check("unverified", "架空の目視", { howToVerify: "架空の確かめ方" }),
+          check("unobserved", "架空の目視", { howToVerify: "架空の確かめ方" }),
           check("ok", "架空の二"),
           check("ok", "架空の三", { figure: "E2E 3" }),
         ],
@@ -80,7 +80,7 @@ describe("reportChecksMarkdown", () => {
       '<span class="checks-summary-part checks-summary-ok"><span class="checks-summary-mark">✓</span>検証 3件 ' +
         '<span class="checks-summary-word">通った</span></span>' +
         '<span class="checks-summary-figures">単体 12 · E2E 3</span>' +
-        '<span class="checks-summary-part checks-summary-unverified"><span class="checks-summary-mark">？</span>1件 ' +
+        '<span class="checks-summary-part checks-summary-unobserved"><span class="checks-summary-mark">？</span>1件 ' +
         '<span class="checks-summary-word">確かめていない</span></span>' +
         '<span class="checks-summary-part checks-summary-ng"><span class="checks-summary-mark">✕</span>1件 ' +
         '<span class="checks-summary-word">落ちた</span></span>',
@@ -89,7 +89,7 @@ describe("reportChecksMarkdown", () => {
 
   it("総括行は無い部分を出さない。通った項目が無ければ頭は「検証」の語だけ", () => {
     const allOk = summaryOf(reportChecksMarkdown([check("ok", "架空の一")], UNMEASURED, NO_FAVOR))
-    expect(allOk).not.toContain("checks-summary-unverified")
+    expect(allOk).not.toContain("checks-summary-unobserved")
     expect(allOk).not.toContain("checks-summary-ng")
     expect(allOk).not.toContain("checks-summary-figures")
 
@@ -143,7 +143,7 @@ describe("reportChecksMarkdown", () => {
     )
   })
 
-  it("問題の行は記号と状態の語・label・figure・所要時間と detail、unverified には確かめ方を描く（ok の detail は描かない）", () => {
+  it("問題の行は記号と状態の語・label・figure・所要時間と detail、unobserved には確かめ方を描く（ok の detail は描かない）", () => {
     const markdown = reportChecksMarkdown(
       [
         check("ok", "架空の一", { detail: "架空の経緯" }),
@@ -152,7 +152,7 @@ describe("reportChecksMarkdown", () => {
           command: "架空の検査",
           detail: "架空の落ちた理由",
         }),
-        check("unverified", "架空の三", {
+        check("unobserved", "架空の三", {
           detail: "架空の理由",
           howToVerify: "架空の窓を開いて見る",
         }),
@@ -177,9 +177,33 @@ describe("reportChecksMarkdown", () => {
     )
   })
 
-  it("確かめ方が空の unverified と、ng の確かめ方は描かない", () => {
+  it("blocked の行は ng と別の class・記号・語で描き、総括行にも別の部分を立てる", () => {
     const markdown = reportChecksMarkdown(
-      [check("unverified", "架空の一"), check("ng", "架空の二", { howToVerify: "架空の書き過ぎ" })],
+      [
+        check("ng", "架空の落ちた項目"),
+        check("blocked", "架空の止まった項目", { detail: "架空の止めている前提" }),
+      ],
+      UNMEASURED,
+      NO_FAVOR,
+    )
+
+    expect(markdown).toContain(
+      '<div class="checks-problem checks-problem-blocked" role="row">' +
+        '<span class="checks-problem-mark">⊘ <span class="checks-problem-word">止まっている</span></span>',
+    )
+    expect(summaryOf(markdown)).toContain(
+      '<span class="checks-summary-part checks-summary-blocked"><span class="checks-summary-mark">⊘</span>1件 ' +
+        '<span class="checks-summary-word">止まっている</span></span>' +
+        '<span class="checks-summary-part checks-summary-ng">',
+    )
+    expect(markdown.indexOf("checks-problem-ng")).toBeLessThan(
+      markdown.indexOf("checks-problem-blocked"),
+    )
+  })
+
+  it("確かめ方が空の unobserved と、ng の確かめ方は描かない", () => {
+    const markdown = reportChecksMarkdown(
+      [check("unobserved", "架空の一"), check("ng", "架空の二", { howToVerify: "架空の書き過ぎ" })],
       UNMEASURED,
       NO_FAVOR,
     )
@@ -228,7 +252,7 @@ describe("reportChecksMarkdown", () => {
     const markdown = reportChecksMarkdown(
       [
         check("ng", "<b>架空</b> & 検査", { figure: "<i>1</i>", detail: "架空の\n\n件数" }),
-        check("unverified", "架空の目視", { howToVerify: "<a>窓</a>\n\nを開く" }),
+        check("unobserved", "架空の目視", { howToVerify: "<a>窓</a>\n\nを開く" }),
         check("ok", "架空の一", { figure: "<i>2</i>" }),
       ],
       UNMEASURED,
@@ -253,7 +277,7 @@ describe("reportChecksMarkdown", () => {
           command: "echo `date`",
           detail: "`a.ts` が落ちた",
         }),
-        check("unverified", "架空の目視", { howToVerify: "`b.ts` を開く" }),
+        check("unobserved", "架空の目視", { howToVerify: "`b.ts` を開く" }),
         check("ok", "`架空` の確認"),
       ],
       UNMEASURED,
@@ -284,8 +308,14 @@ describe("parseReportChecks", () => {
     ])
   })
 
+  it("状態が unverified の前の形の記録は unobserved として読む", () => {
+    expect(
+      parseReportChecks([{ status: "unverified", label: "架空", detail: "架空の理由" }]),
+    ).toEqual([check("unobserved", "架空", { detail: "架空の理由" })])
+  })
+
   it("howToVerify があれば残す", () => {
-    const stored = check("unverified", "架空", {
+    const stored = check("unobserved", "架空", {
       detail: "架空の理由",
       howToVerify: "架空の窓を開いて見る",
     })

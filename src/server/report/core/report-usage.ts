@@ -75,9 +75,9 @@ export type ReportUsageEntry = {
   readonly graphUnlabeledEdgeCount: number
   /** `graph` の節点数。1レポートに複数あれば最大。 */
   readonly graphNodeCount: number
-  /** `checks` に `unverified` の行が1つでもあるか。 */
+  /** `checks` に `unobserved` の行が1つでもあるか。 */
   readonly hasUnverifiedCheck: boolean
-  /** `unverified` の行があり、その全部の `howToVerify` が空でないか。 */
+  /** `unobserved` の行があり、その全部の `howToVerify` が空でないか。 */
   readonly hasHowToVerify: boolean
   /** `task` の報告の種類。`task` の無いレポートは `none`。 */
   readonly taskGenre: ReportGenre | "unspecified" | "none"
@@ -328,11 +328,11 @@ function graphCountsOf(
 function howToVerifyUsageOf(
   checks: readonly ReportCheck[],
 ): Pick<ReportUsageEntry, "hasUnverifiedCheck" | "hasHowToVerify"> {
-  const unverified = checks.filter((check) => check.status === "unverified")
+  const unobserved = checks.filter((check) => check.status === "unobserved")
   return {
-    hasUnverifiedCheck: unverified.length > 0,
+    hasUnverifiedCheck: unobserved.length > 0,
     hasHowToVerify:
-      unverified.length > 0 && unverified.every((check) => check.howToVerify.trim() !== ""),
+      unobserved.length > 0 && unobserved.every((check) => check.howToVerify.trim() !== ""),
   }
 }
 

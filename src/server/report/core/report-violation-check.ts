@@ -170,9 +170,9 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
       count: report.sections.filter(({ heading }) => isBadHeading(heading)).length,
     },
     {
-      kind: "unverified-without-how",
+      kind: "unobserved-without-how",
       count: report.checks.filter(
-        (check) => check.status === "unverified" && check.howToVerify.trim() === "",
+        (check) => check.status === "unobserved" && check.howToVerify.trim() === "",
       ).length,
     },
     {
@@ -217,10 +217,12 @@ function browserChangeWithoutImage(
       (block.kind === "beforeAfter" &&
         [block.before, block.after].some((side) => side.kind === "image")),
   )
-  const hasUnverified = checks.some((check) => check.status === "unverified")
+  const hasUnconfirmed = checks.some(
+    (check) => check.status === "unobserved" || check.status === "blocked",
+  )
   return {
     kind: "browser-change-without-image",
-    count: changesBrowserFile && !hasImage && !hasUnverified ? 1 : 0,
+    count: changesBrowserFile && !hasImage && !hasUnconfirmed ? 1 : 0,
   }
 }
 

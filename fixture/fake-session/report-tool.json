@@ -307,7 +307,14 @@
             "detail": "架空の 1 件が落ちた"
           },
           {
-            "status": "unverified",
+            "status": "blocked",
+            "label": "夜間の E2E",
+            "figure": "",
+            "command": "",
+            "detail": "夜間の走らせ方がまだ無く、確かめられない"
+          },
+          {
+            "status": "unobserved",
             "label": "狭い窓での見た目",
             "figure": "",
             "command": "",

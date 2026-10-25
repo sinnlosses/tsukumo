@@ -52,7 +52,7 @@
 - `region-range`: 導入時は数えていない（GH-1283・2026-10-19）
 - `long-first-sentence`: 導入時は数えていない（GH-406・2026-10-06。下の「speak-tool.md（speak と report のツール）」の「差し戻しの条を足した日」）
 - `bad-heading`: 導入時は数えていない（GH-406・2026-10-06。同上）
-- `unverified-without-how`: 導入時は数えていない（GH-1059・2026-10-17）
+- `unobserved-without-how`: 導入時は数えていない（GH-1059・2026-10-17）
 - `arrow-in-prose`: 導入時は数えていない（GH-406・2026-10-06。同上）
 - `label-in-item`: 導入時は数えていない（GH-406・2026-10-06。同上）
 - `labeled-ordered`: 導入時は数えていない（番号の無いコミット 26a89f83c・2026-10-10。同上の一覧は 2026-10-06 に含めている）
