@@ -66,6 +66,7 @@ const ALLOWED_COMMANDS = [
   "pnpm",
   "node",
   "tw",
+  "claude",
 ] as const
 
 /**
