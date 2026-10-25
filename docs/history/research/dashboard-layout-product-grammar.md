@@ -1,6 +1,6 @@
 # ダッシュボードの部品の語彙と配置の文法 — Good Design の製品の公式文書から（2026-10-20）
 
-`docs/research/dashboard-layout-vocabulary.md`（「〜を HTML にして」の紙面を塊で書けるか）の続きで、製品の調査と tsukumo の決定との照らし合わせを置く。
+`docs/history/research/dashboard-layout-vocabulary.md`（「〜を HTML にして」の紙面を塊で書けるか）の続きで、製品の調査と tsukumo の決定との照らし合わせを置く。
 足す候補と道の比較は `docs/research/dashboard-layout-proposal.md`。**正典ではない。**
 
 **出典の印**: 番号 `[n]` は末尾の出典一覧（`dashboard-layout-proposal.md` の `[n]` もこの一覧を指す）。無印は一次情報。**【推測】**は私の推定。確認日はすべて 2026-10-20。

@@ -1,5 +1,7 @@
 # レポートを「読み手の問いに位置で答える紙面」にする — 感動の水準への戦略（2026-10-17）
 
+状態: 採用
+
 **この文書は提案であって正典ではない。** 正典は `docs/architecture/display.md`（レポートの記法・各表示物・塊を足す・外す基準）、
 `docs/architecture/screen-design.md` 13章（色・字・レイアウト・13.13 のレポートの頭）、`src/server/report/core/report-notation.ts`
 （書き手の規約）、`src/shared/report/report-block.ts`（塊の欄）。**採用が決まるまでコードは1行も変わらない。**
@@ -11,16 +13,15 @@
 
 根拠は今日書いた4本の調査メモ（一次情報）と、2026-10-02 の4本、今日の実測:
 
-| メモ                                                            | 主題                                                                                           |
-| --------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| `docs/research/comprehension-science-for-reports.md`            | 認知負荷・マルチメディア学習・図と文・文章理解・数の示し方・理解の測り方                       |
-| `docs/research/beautiful-explanation-design-precedents.md`      | Distill・Tufte・Linear・Stripe・Observable・和文サイトの実測、視覚階層、題の付け方、暗い読む面 |
-| `docs/research/engineering-report-forms.md`                     | CL・PR・changelog・状態報告・障害報告の型、2026 年のエージェントの最終報告、読者の問いの梯子   |
-| `docs/research/report-block-craft.md`                           | 図の作法、数とグラフ、表、コードと差分、画像の前後、callout、動き、時間                        |
-| 2026-10-02 の4本と組み直し案 `docs/research/report-redesign.md` | 走り読み・和文組版・エージェント製品・色。組み直し案の4段は実装済みで、この提案はその続き      |
+| メモ                                                               | 主題                                                                                           |
+| ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------- |
+| `docs/history/research/comprehension-science-for-reports.md`       | 認知負荷・マルチメディア学習・図と文・文章理解・数の示し方・理解の測り方                       |
+| `docs/history/research/beautiful-explanation-design-precedents.md` | Distill・Tufte・Linear・Stripe・Observable・和文サイトの実測、視覚階層、題の付け方、暗い読む面 |
+| `docs/history/research/engineering-report-forms.md`                | CL・PR・changelog・状態報告・障害報告の型、2026 年のエージェントの最終報告、読者の問いの梯子   |
+| `docs/research/report-block-craft.md`                              | 図の作法、数とグラフ、表、コードと差分、画像の前後、callout、動き、時間                        |
+| 2026-10-02 の4本と組み直し案 `docs/research/report-redesign.md`    | 走り読み・和文組版・エージェント製品・色。組み直し案の4段は実装済みで、この提案はその続き      |
 
 見本は `docs/history/mockup/report-excellence-2026-10-17/`（`report-excellence.html` と撮った画3枚、判断3・7 の3案ずつの `variants.html` と画2枚）。
-見本の中の文言と ID は架空。
 
 ## 要点
 

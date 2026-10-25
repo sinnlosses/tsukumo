@@ -1,7 +1,8 @@
 # レポートの記法の規約を短くする案（2026-09-20）
 
-**この文書は提案であって正典ではない。** `docs/` の他ファイルにある「節の索引」はここには作らない。
-正典は `src/core/report-notation.ts` の `REPORT_NOTATION_PROMPT`（文面）と
+状態: 採用
+
+**この文書は提案であって正典ではない。** 正典は `src/core/report-notation.ts` の `REPORT_NOTATION_PROMPT`（文面）と
 `docs/display.md` 4.2（決定の記録）で、**採用が決まるまでコードは1行も変わらない**。
 
 **きっかけ**: ユーザーの指示（2026-09-20）「`ayghri/i-have-adhd` の `SKILL.md` を参考に

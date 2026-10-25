@@ -1,7 +1,8 @@
 # 開発ハーネスを「測って育てる閉ループ」にする — 世界水準への戦略（2026-10-17）
 
-**この文書は提案であって正典ではない。** `docs/` の他ファイルにある「節の索引」はここには作らない。
-tsukumo の開発フローを取り巻く仕組み全体（タスク運用・委譲・受け入れ・振り返り・送り出し・関門・
+状態: 採用
+
+**この文書は提案であって正典ではない。** tsukumo の開発フローを取り巻く仕組み全体（タスク運用・委譲・受け入れ・振り返り・送り出し・関門・
 常設の指示文・計測）を「ハーネス」と呼び、2026-10-17 時点の実測と、外の仕組み
 （google-research/harness2・QoderAI/better-harness・各社の一次情報）との比較から、次に目指す形を
 提案する。対象ユーザーは作者本人のみ（`docs/requirements.md`「2.3 想定利用者」）。
@@ -72,7 +73,7 @@ tsukumo の開発フローを取り巻く仕組み全体（タスク運用・委
 （消費量の 21%）になる。これはハーネスそのものの税で、キャッシュ読みでも歩の数に比例して利用枠を
 食う（7章に断り書き）。
 
-委譲先の歩の内訳（`docs/research/subagent-steps.md`、09-28〜10-04）: Bash の探索が歩の 33%・
+委譲先の歩の内訳（`docs/history/research/subagent-steps.md`、09-28〜10-04）: Bash の探索が歩の 33%・
 キャッシュ読みの 29.5%。委譲1回の歩数は中央値 45、90 パーセンタイル 141、最大 1,302。
 
 ### 1.3 学びのループの出力（`weekly.py` の「ドラフトの行方」、直近 28 日）
@@ -353,7 +354,7 @@ Beads の課題の写しで、会話内容ではない）。
 
 | 案                                                        | 採らない理由                                                                                                                                                                                                                  |
 | --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| PR とレビューを受け入れの場にする                         | 対象ユーザーが作者本人のみで、ff で main へ送る作法は trunk-based の必須条件（送る前に全検証）を機械で守っている（`docs/research/agentic-dev-workflow.md`）                                                                   |
+| PR とレビューを受け入れの場にする                         | 対象ユーザーが作者本人のみで、ff で main へ送る作法は trunk-based の必須条件（送る前に全検証）を機械で守っている（`docs/history/research/agentic-dev-workflow.md`）                                                           |
 | harness2 の Propose–Probe–Compose をそのまま回す          | 1 タスクごとに候補のハーネスを k 個作って実行する費用（研究の設定で実行 4k 回）は個人の開発に合わない。借りるのは予算・NO_ENTRY・盲検・指紋の考え方と、3.3 の再演（probe の個人版）                                           |
 | better-harness をハーネスの評価役として常設する           | 証拠の収集に transcript を読む。会話内容の扱いの規約と、第三者のコードに transcript を渡すことの折り合いを先に決める必要がある（6 章の判断 3）。1 回だけ読むだけで走らせて、15 チェックの評価を較正の材料にするのは価値がある |
 | Ralph Wiggum 型の無限ループ                               | `/loop` と `clear_and_send` で同じ形が既にある。足りないのは繰り返しでなく、繰り返した結果を測る口                                                                                                                            |
@@ -433,6 +434,6 @@ Beads の課題の写しで、会話内容ではない）。
   Cursor <https://cursor.com/blog/scaling-agents>、Cognition <https://cognition.com/blog/devin-fusion>、
   Vercel <https://vercel.com/blog/agents-md-outperforms-skills-in-our-agent-evals>、
   Simon Willison <https://simonwillison.net/2025/Jun/16/the-lethal-trifecta/>
-- このリポジトリ: `docs/research/agentic-dev-workflow.md`（2026-10-03 の前回の比較）、
-  `docs/research/subagent-steps.md`（委譲先の歩の内訳）、`docs/research/report-excellence-strategy.md`
+- このリポジトリ: `docs/history/research/agentic-dev-workflow.md`（2026-10-03 の前回の比較）、
+  `docs/history/research/subagent-steps.md`（委譲先の歩の内訳）、`docs/research/report-excellence-strategy.md`
   （提案書の形の前例）

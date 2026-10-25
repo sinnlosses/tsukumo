@@ -7,8 +7,8 @@
 
 **主題**: 終わった仕事を人に渡す文書（コミット・PR・changelog・状態の報告・障害の報告・AI エージェントの最終報告）の
 本文の型を並べ、読者が順に抱く問いと、型の間で一致している順序を取り出す。UI の作法は
-`docs/research/agent-report-ui-patterns.md`、走り読みの一般則と BLUF・ADR・SRE のポストモーテムは
-`docs/research/report-structure-for-skimming-readers.md` にあり、ここでは重ねない。
+`docs/history/research/agent-report-ui-patterns.md`、走り読みの一般則と BLUF・ADR・SRE のポストモーテムは
+`docs/history/research/report-structure-for-skimming-readers.md` にあり、ここでは重ねない。
 
 **出典の印**: 無印は一次情報（原典・公式ドキュメント・公式の雛形・実物の PR やリリースノート）に当たったもの。
 **【二次】**は二次情報しか見つからなかったもの。実物は見た件数を添える（少数の例であって統計ではない）。
@@ -100,7 +100,7 @@ Amp と Factory は、最終報告の本文の型を言う一次資料が見つ�
 | 作業中は計画、終わると書き換え | Copilot: `[WIP]` の題と計画のチェックリスト（実物1件は4項目すべて `[ ]`）→ 完成形の本文。2025-07-30 から「フィードバックに応じて題と本文を最新に保ち、何が変わったかが一目で分かる」 | 進行中は「どこまで来たか」、終わったあとは「何が変わったか」に答える。継ぎ足さないので古い計画が残らない |
 | 版の外に積む                   | Keep a Changelog の Unreleased                                                                                                                                                       | 出る前に何が入るかを見せ、出すときに版へ移す                                                             |
 | 状態を時系列で比べる           | Shape Up の丘（過去の状態との比較）、Atlassian の週次の更新                                                                                                                          | 「どこにいるか」に加えて「どう動いているか」。動かない点が挙げた手になる                                 |
-| 計画と項目ごとの差分           | Augment の Tasklist、Devin の plan（`docs/research/agent-report-ui-patterns.md`）                                                                                                    | 項目の単位で確かめられるが、全体の結論は別に要る                                                         |
+| 計画と項目ごとの差分           | Augment の Tasklist、Devin の plan（`docs/history/research/agent-report-ui-patterns.md`）                                                                                                    | 項目の単位で確かめられるが、全体の結論は別に要る                                                         |
 | 一括                           | Claude Code の PR・Codex・Jules・OpenHands の finish                                                                                                                                 | 終わった状態から1回で書くので筋が通る。進行中は見えない                                                  |
 | ずれの手当て                   | Google「出す前に本文がまだ中身を言っているか読み直す」、OpenHands「PR を直すときは元の題と目的を保ち、本文は必要なときだけ直す」、KEP の Implementation History                      | 育てる形の弱点は本文と中身のずれ。最後に読み直す段を置くか、経緯を別の節へ逃がす                         |
 

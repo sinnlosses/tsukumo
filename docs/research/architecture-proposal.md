@@ -1,7 +1,8 @@
 # アーキテクチャ提案: 3層は変えず、サーバ側を「判断」と「境界」に割る（2026-09-15）
 
-**この文書は提案であって正典ではない。** `docs/` の他ファイルにある「節の索引」はここには作らない。
-採用したら正典（`docs/design.md` 2章・`docs/architecture.md` 原則2/3・`docs/coding-standards.md`
+状態: 採用
+
+**この文書は提案であって正典ではない。** 採用したら正典（`docs/design.md` 2章・`docs/architecture.md` 原則2/3・`docs/coding-standards.md`
 「層と依存の向き」・`docs/glossary.md`）へ反映し、この文書は経緯として `docs/research/` に残す。
 
 **対象コミット**: `main` の `5a89117`。**書き方**: `~/.claude/skills/architecture-proposal`
@@ -102,7 +103,7 @@ python3 ~/.claude/skills/architecture-proposal/scripts/import_edges.py src --mar
    書かれている**。どちらを採るかで「Bun 固有の API に寄せてよいか」の答えが逆になるので、
    規約（`docs/coding-standards.md`「Bun固有APIに寄せない」）の扱いもここに従属する。
    **この提案の層の形はどちらでも変わらない**（`adapter/` の中で閉じる）が、規約の文言を直すときは
-   先にこの食い違いを解く。関連: `docs/research/hono-server.md`、同「箱の仕事の大きさは、tsukumo 側の
+   先にこの食い違いを解く。関連: `docs/history/research/hono-server.md`、同「箱の仕事の大きさは、tsukumo 側の
    形で変わる」節
 
 ## 2. 候補と選択

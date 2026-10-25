@@ -1,7 +1,8 @@
 # browser と server をパッケージに割るかの検討（2026-09-28）
 
-**この文書は調査メモであって正典ではない。** `docs/` の他ファイルにある「節の索引」はここには
-作らない。**ファイルを動かすのはこの文書の外**で、ここは割る・割らないの推奨と、割る目安までを持つ。
+状態: 見送り
+
+**この文書は調査メモであって正典ではない。** **ファイルを動かすのはこの文書の外**で、ここは割る・割らないの推奨と、割る目安までを持つ。
 
 **問いの出どころ**: ユーザーの言葉（2026-09-27）。t3code（https://github.com/pingdotgg/t3code/tree/main/apps）
 のようにブラウザ側とサーバ側を `package.json` ごとに分ける（pnpm workspace）ことについて
@@ -164,7 +165,7 @@ tsukumo の `src/server/<機能>/` は読み手がサーバ1つで、機能ど�
 当たったらほぼ割る。3つ目と4つ目は、まず案 B やテストの1行で済むかを先に見る。
 
 1. **契約を読むアプリが2つ目のサーバ以外に増えた**: Electron・モバイル・別のクライアント（例:
-   `docs/research/app-shell.md` の Electron 化、`docs/research/mobile-orca-reach.md`）を始めて、
+   `docs/research/app-shell.md` の Electron 化、`docs/history/research/mobile-orca-reach.md`）を始めて、
    `shared` を読む入口がブラウザ1つでなくなったとき
 2. **`pnpm link --global` 以外の配り方をする**: npm へ公開する・単体の実行ファイルにする・他の人の
    マシンへ入れる（対象ユーザーが作者本人だけ、という `docs/requirements.md` 1章の前提が変わる）とき。

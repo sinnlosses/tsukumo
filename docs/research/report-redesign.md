@@ -1,5 +1,7 @@
 # レポートの組み直し案 — 判決を先に、字で階層を運ぶ（2026-10-02）
 
+状態: 採用
+
 **この文書は提案であって正典ではない。** 正典は `docs/architecture/display.md`「各表示物」（メインビュー・
 レポートの見せ方）と `docs/architecture/screen-design.md` 13章（色・字・レイアウト）、記法の文面は
 `src/server/report/core/report-notation.ts`。**採用が決まるまでコードは1行も変わらない。**
@@ -9,17 +11,16 @@
 **読んで分かるまでの時間が短くなるか**（`docs/architecture/display.md`「読む時間を減らす物差しと線引き」）で、
 正典と食い違う提案には「正典の変更」と印を付けた。
 
-根拠は同日に書いた4本の調査メモ（出典は一次情報が中心）と、疑似セッション（fake driver）で撮った実測:
+根拠は同日に書いた4本の調査メモと、疑似セッション（fake driver）で撮った実測:
 
-| メモ                                                     | 主題                                                                 |
-| -------------------------------------------------------- | -------------------------------------------------------------------- |
-| `docs/research/report-structure-for-skimming-readers.md` | 画面上の読み方・結論先行の文書構造・Tufte・Butterick・スタイルガイド |
-| `docs/research/japanese-screen-typography.md`            | JLReq・CSS の和文機能・行長と行間の数値・書体の実測                  |
-| `docs/research/agent-report-ui-patterns.md`              | エージェント製品と CI の成果の見せ方・検証結果・差分・畳み方         |
-| `docs/research/dark-ui-color-and-status-semantics.md`    | APCA・ダークテーマの設計系・状態色と色覚・系列色・Mermaid            |
+| メモ                                                             | 主題                                                                 |
+| ---------------------------------------------------------------- | -------------------------------------------------------------------- |
+| `docs/history/research/report-structure-for-skimming-readers.md` | 画面上の読み方・結論先行の文書構造・Tufte・Butterick・スタイルガイド |
+| `docs/history/research/japanese-screen-typography.md`            | JLReq・CSS の和文機能・行長と行間の数値・書体の実測                  |
+| `docs/history/research/agent-report-ui-patterns.md`              | エージェント製品と CI の成果の見せ方・検証結果・差分・畳み方         |
+| `docs/history/research/dark-ui-color-and-status-semantics.md`    | APCA・ダークテーマの設計系・状態色と色覚・系列色・Mermaid            |
 
 見本は `docs/history/mockup/report-redesign-2026-10-02/`（`report-redesign.html` と、その画像4枚・いまの画面4枚）。
-見本の中の文言と ID は架空。
 
 ## 要点
 

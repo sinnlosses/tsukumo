@@ -5,7 +5,7 @@
 で、**採用が決まるまでコードは1行も変わらない**。
 
 **主題**: レポートのコードの塊・差分・インラインコードの色付けをどう設計するか、レポート1枚の中で色相をいくつまで、何に使ってよいか。
-`docs/research/dark-ui-color-and-status-semantics.md`（APCA・状態色の明るさ・系列色・Mermaid）と
+`docs/history/research/dark-ui-color-and-status-semantics.md`（APCA・状態色の明るさ・系列色・Mermaid）と
 `docs/research/report-block-craft.md`（行の印・畳み・枠の構造）の中身は重ねず、そこから引くだけにする。
 
 **出典の印**: 無印は一次情報（原著・公式の配布物）。**【実測】**は配布ファイル・公開 CSS を 2026-10-18 に読んだ値と、

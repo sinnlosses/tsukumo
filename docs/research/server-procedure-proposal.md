@@ -1,14 +1,15 @@
 # アーキテクチャ提案: サーバの受け口を「機能ごとの手続き」にし、流れを1枚の表から辿れるようにする（2026-09-26）
 
+状態: 採用
+
 **2026-09-26 に段1〜3を採用した。正典は `docs/design.md` 2章「コマンドの受け手と手続きの置き方」（あわせて 5章「session-manager.ts（core）」「server.ts と session-socket.ts（adapter）」、`docs/glossary.md` の「契約」「手続き」「コマンド」）で、この文書は経緯として残す**（段4は 2026-09-26 に実物で確かめて採用した。結果は 9章。受け手の中身の設計（9章）は正典で決めた）。
 
-**この文書は提案であって正典ではない。** `docs/` の他ファイルにある「節の索引」はここには作らない。
-採用したら正典（`docs/design.md` 2章・5章「server.ts と session-socket.ts（adapter）」「session-manager.ts（core）」、
+**この文書は提案であって正典ではない。** 採用したら正典（`docs/design.md` 2章・5章「server.ts と session-socket.ts（adapter）」「session-manager.ts（core）」、
 `docs/architecture.md` 原則2、`docs/glossary.md`）へ反映し、この文書は経緯として `docs/research/` に残す。
 
 **対象コミット**: `main` の `8b4efe8d`。**書き方**: `~/.claude/skills/architecture-proposal` の手順
 （性質 → 候補 → 木 → 差分 → 段階）。前回の提案（`docs/research/architecture-proposal.md`）と Hono の試算
-（`docs/research/hono-server.md`）の続きで、**3層（`shared` / `server` / `browser`）と、機能の中の
+（`docs/history/research/hono-server.md`）の続きで、**3層（`shared` / `server` / `browser`）と、機能の中の
 `core` / `adapter` の割り（2026-09-25 決定）は動かさない**。
 
 **問いの出どころ**: ユーザーの言葉「レイヤードとか、層を意識した構成になってなくて流れが追いづらい」
@@ -69,7 +70,7 @@ flowchart LR
   `src/shared/*.ts` に1本ずつ定数で置かれ、ブラウザ側の6ファイル（hook 5つと `browser/domain/context-usage.ts`）が手で `fetch` している
 - **束ね役が膨らみ続けている**: `SessionManagerOptions` の口は20本。機能を足すたびにここと
   `session-start.ts` の両方が伸びる（変更回数の上位2つ）
-- **Hono の「入れ時」の条件を2つ満たした**: `docs/research/hono-server.md` は「経路が5つを超える」
+- **Hono の「入れ時」の条件を2つ満たした**: `docs/history/research/hono-server.md` は「経路が5つを超える」
   「トークン・`Origin` の照合が要る経路が2つ以上になる」を入れ時にしていた。いまは経路が11本と `/ws`、
   照合の要る経路は `/ws` を含めて7本
 

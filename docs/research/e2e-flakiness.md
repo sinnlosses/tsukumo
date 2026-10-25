@@ -1,7 +1,8 @@
 # E2E テストの揺れ（flaky test）を防ぐ実装方法（2026-09-27）
 
-**この文書は調査メモであって正典ではない。** `docs/` の他ファイルにある「節の索引」はここには
-作らない。tsukumo の E2E（Playwright の `playwright-core` でヘッドレス Chrome を操作し、
+状態: 採用
+
+**この文書は調査メモであって正典ではない。** tsukumo の E2E（Playwright の `playwright-core` でヘッドレス Chrome を操作し、
 Vitest をランナーにして DOM の構造を JSON に落として期待値と比べる形）を安定させる実装方法を、
 一次情報源（Playwright 公式ドキュメント・GitHub・Martin Fowler・Google Testing Blog）に
 遡って調べた記録。会話の実物・利用者のデータは例に使っていない。

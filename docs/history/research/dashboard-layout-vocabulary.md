@@ -7,10 +7,10 @@
 **主題**: 利用者は Claude Code の artifact のように「〜を HTML にして」で整ったダッシュボード状の紙面が出てくる体験に憧れている。
 見本（Zenn の記事 [1] の「毎朝のルーチン実行ダッシュボード」の画）を要素に割り、今の塊の型でどこまで書けるか、足りないのは部品か配置か
 見た目かを分け、Good Design の製品の公式文書から部品の語彙と配置の文法を集めて、足す候補を優先度つきで出す。
-既存の調査とは重ねず引くだけにする: 横並びの閾値・幅の段・数の札の寸法は `docs/research/report-page-geometry.md`、
-テンプレっぽさの手がかりは `docs/research/ai-report-surfaces-2026.md` 6章、10-17 の決定は `docs/research/report-excellence-strategy.md`（以下「提案書」）。
+既存の調査とは重ねず引くだけにする: 横並びの閾値・幅の段・数の札の寸法は `docs/history/research/report-page-geometry.md`、
+テンプレっぽさの手がかりは `docs/history/research/ai-report-surfaces-2026.md` 6章、10-17 の決定は `docs/research/report-excellence-strategy.md`（以下「提案書」）。
 
-**3つのファイルに分けてある**: この文書（要点・見本の分解）、`docs/research/dashboard-layout-product-grammar.md`（2〜3章: 製品の語彙と文法・出典一覧）、
+**3つのファイルに分けてある**: この文書（要点・見本の分解）、`docs/history/research/dashboard-layout-product-grammar.md`（2〜3章: 製品の語彙と文法・出典一覧）、
 `docs/research/dashboard-layout-proposal.md`（4〜5章: 足す候補・道の比較・確かめていないこと）。
 
 **出典の印**: 番号 `[n]` は `dashboard-layout-product-grammar.md` 末尾の出典一覧で、無印は一次情報（公式のデザインシステム文書・製品文書）。**【実測】**はこの場で手元のコードと
@@ -84,4 +84,4 @@ Claude は**組み込みのデザインのスキルを当てて配色・書体�
 いまの紙面は 42em の1列で、図と表は列の中央に小さく置かれ、1400 幅では左右に大きな空きが残る（`report-chart.png`）【実測】。見本の「整って見える」印象の
 多くは、この空きを区画で埋めて**面が均等に使われていること**から来ている【推測】。
 
-続き: 製品の語彙と文法は `docs/research/dashboard-layout-product-grammar.md`、足す候補と道の比較は `docs/research/dashboard-layout-proposal.md`。
+続き: 製品の語彙と文法は `docs/history/research/dashboard-layout-product-grammar.md`、足す候補と道の比較は `docs/research/dashboard-layout-proposal.md`。

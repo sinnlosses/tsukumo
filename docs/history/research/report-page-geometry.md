@@ -6,7 +6,7 @@
 
 **主題**: 塊どうしの配置と紙面の幾何。1列か横に並べるか、幅の段、図と表の置き場、最初の1画面の組み方、幅が変わったときの
 組み替え、長い塊の切り方。塊ごとの作法は `docs/research/report-block-craft.md`、Distill の段の名・Tufte の傍注・題の2段は
-`docs/research/beautiful-explanation-design-precedents.md`、空間近接は `docs/research/comprehension-science-for-reports.md` にあり、
+`docs/history/research/beautiful-explanation-design-precedents.md`、空間近接は `docs/history/research/comprehension-science-for-reports.md` にあり、
 ここでは引くだけにする。提案書で決まった値（格子 13/26・見出し 52/13・柱の 160px と 28px・図の題は下で表の題は上）は繰り返さない。
 
 **出典の印**: 無印は一次情報（原典・公式文書・配布 CSS の本文）。**【実測】**は 2026-10-18 に配布 CSS を読んだ値か、headless Chromium

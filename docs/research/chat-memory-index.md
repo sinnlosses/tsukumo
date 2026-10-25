@@ -1,5 +1,7 @@
 # 雑談の記憶を索引で引く仕組み（提案）
 
+状態: 採用
+
 最終更新: 2026-09-26（起こしたのは 2026-09-25）
 ステータス: **正典へ移した**（2026-09-26。`docs/chat-mode.md` 4.9・`docs/design.md` 7章・
 `docs/coding-standards.md`「会話内容の扱い」・`docs/requirements.md` 2.2・`docs/glossary.md`）。

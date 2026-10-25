@@ -1,7 +1,8 @@
 # アーキテクチャの再考（2026-09-13）
 
-**この文書は調査メモであって正典ではない。** `docs/` の他ファイルにある「節の索引」はここには作らない。
-**2026-09-13 に移行を決定し、設計は `docs/design.md` に落とした。** ここは経緯（症状・採らなかった案・
+状態: 採用
+
+**この文書は調査メモであって正典ではない。** **2026-09-13 に移行を決定し、設計は `docs/design.md` に落とした。** ここは経緯（症状・採らなかった案・
 判断の基準）として残す。設計の中身は `docs/design.md` を読む。
 
 **問いの出どころ**: ユーザーの言葉「今の tsukumo の機能を見て、このような機能を実現するときの最適な
@@ -10,7 +11,7 @@
 
 **前提として読んだもの**: `src/` 全体（2026-09-13 時点、約 15,000 行。テスト含む）、`docs/requirements.md`、
 `docs/architecture.md`、`docs/coding-standards.md`、`docs/research/app-shell.md`、
-`docs/research/view-rendering.md`、`develop/tasks.json` の残タスク、`node_modules/@anthropic-ai/claude-agent-sdk/sdk.d.ts`（v0.3.268）。
+`docs/history/research/view-rendering.md`、`develop/tasks.json` の残タスク、`node_modules/@anthropic-ai/claude-agent-sdk/sdk.d.ts`（v0.3.268）。
 
 ## 結論
 

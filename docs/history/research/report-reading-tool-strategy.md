@@ -15,10 +15,10 @@
 
 | メモ                                              | 主題                                                                                                            |
 | ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `docs/research/report-page-geometry.md`           | 幅の段・横並びの条件・最初の1画面・組み替えの境目・長い塊の切り方（Distill・Quarto・Observable・Stripe の実測） |
-| `docs/research/code-and-color-in-dark-reports.md` | 構文色の効果の研究・控えめなテーマの割り当て・差分の色・色の予算・インラインコードと kbd                        |
-| `docs/research/report-reading-interface.md`       | 目次と居場所・形式の選択・参照のプレビュー・中間と最終・読む位置・読む時間の定義                                |
-| `docs/research/ai-report-surfaces-2026.md`        | 2026 年の AI の報告の読む面（ChatGPT・Perplexity・Manus・Kimi・Notion の実測）、テンプレっぽさの手がかり        |
+| `docs/history/research/report-page-geometry.md`           | 幅の段・横並びの条件・最初の1画面・組み替えの境目・長い塊の切り方（Distill・Quarto・Observable・Stripe の実測） |
+| `docs/history/research/code-and-color-in-dark-reports.md` | 構文色の効果の研究・控えめなテーマの割り当て・差分の色・色の予算・インラインコードと kbd                        |
+| `docs/history/research/report-reading-interface.md`       | 目次と居場所・形式の選択・参照のプレビュー・中間と最終・読む位置・読む時間の定義                                |
+| `docs/history/research/ai-report-surfaces-2026.md`        | 2026 年の AI の報告の読む面（ChatGPT・Perplexity・Manus・Kimi・Notion の実測）、テンプレっぽさの手がかり        |
 | 10-17 の4本                                       | 認知負荷・読み物の先例・報告の型・塊の作法（`report-excellence-strategy.md` の表）                              |
 
 見本は `docs/history/mockup/report-reading-tool-2026-10-18/`（`reading-tool.html` と撮った画 10 枚）。見本の中の文言と ID は架空。

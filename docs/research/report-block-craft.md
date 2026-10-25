@@ -1,13 +1,14 @@
 # レポートの塊ごとの最良の見せ方と、図の作法（2026-10-17）
 
-**この文書は調査の記録であって正典ではない。** `docs/` の他ファイルにある「節の索引」はここには作らない。
-正典は `docs/architecture/display.md`「各表示物」「塊を足す・外す基準」と `src/shared/report/report-block.ts`
+状態: 採用
+
+**この文書は調査の記録であって正典ではない。** 正典は `docs/architecture/display.md`「各表示物」「塊を足す・外す基準」と `src/shared/report/report-block.ts`
 （塊の欄と `describe`）・`src/server/report/core/report-notation.ts`（記法の条）で、**採用が決まるまでコードは1行も変わらない**。
 
 **主題**: `report` の塊（図・数・表・コード・差分・画像・注意書き・動き・時間）ごとに、一次資料が言う「最も速く伝わる形」と
-図の作法を集め、いまの描き方との差を出す。`docs/research/report-structure-for-skimming-readers.md`（NN/g・GOV.UK・Tufte・
-Butterick・MS/Google/Apple の表と箇条と note の条）、`docs/research/agent-report-ui-patterns.md`（GitHub/GitLab の diff・
-Difftastic・delta・Datadog の数の前後・Mermaid の ELK・D2）、`docs/research/dark-ui-color-and-status-semantics.md`（系列色・
+図の作法を集め、いまの描き方との差を出す。`docs/history/research/report-structure-for-skimming-readers.md`（NN/g・GOV.UK・Tufte・
+Butterick・MS/Google/Apple の表と箇条と note の条）、`docs/history/research/agent-report-ui-patterns.md`（GitHub/GitLab の diff・
+Difftastic・delta・Datadog の数の前後・Mermaid の ELK・D2）、`docs/history/research/dark-ui-color-and-status-semantics.md`（系列色・
 状態色・Mermaid のテーマ）にある条は重ねず、その先だけを取る。
 
 **出典の印**: 無印は一次情報（原典・公式文書・論文の本文か出版社/索引の抄録）に当たったもの。**【二次】**は二次情報しか
