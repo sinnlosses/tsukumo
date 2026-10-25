@@ -42,7 +42,7 @@
   終わった見直しをふだんへ戻す」関数）を呼ぶ。部分の reducer に `SessionEvent` 全体を渡して各自で
   反応させる形にはしない
 - **テストの置き場**: 部分の reducer の振る舞いは、その reducer を直に呼ぶテストとして
-  `test/shared/<機能>/` に置く。`test/shared/session/session-state.test.ts` に残すのは、芯の振る舞いと、
+  `test/shared/<機能>/` に置く。`test/shared/session/session-state-*.test.ts` に残すのは、芯の振る舞いと、
   機能ごとに「そのイベントは自分の欄だけを動かす」ことを1件ずつと、それにまたがるイベントの効き方だけ
 
 **機能を足すときの当て方**: 新しい欄が上の2つを満たすなら `shared/<機能>/` に部分の reducer を置き、

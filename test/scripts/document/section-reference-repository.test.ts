@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest"
 
 import {
   collectMissingFileReferences,
+  collectMissingSourcePathReferences,
   collectStrayReferences,
 } from "../../../scripts/document/lib/repository-reference.ts"
 import {
@@ -28,6 +29,12 @@ describe("節の参照", () => {
     expect(collectMissingFileReferences(REPOSITORY_ROOT).map(formatMissingFileReference)).toEqual(
       [],
     )
+  })
+
+  it("文書が指す test/・scripts/・src/ のパスはすべて実在する", () => {
+    expect(
+      collectMissingSourcePathReferences(REPOSITORY_ROOT).map(formatMissingFileReference),
+    ).toEqual([])
   })
 })
 
@@ -62,5 +69,19 @@ describe("読む対象の集め方", () => {
         .map(({ targetPath }) => targetPath)
         .toSorted(),
     ).toEqual([`${DOCS}/missing-dot.md`, `${DOCS}/missing-ext.md`, `${DOCS}/missing-plain.md`])
+  })
+
+  it("test/ のパスは、実在するものを通し、無いものを落とす", () => {
+    const root = tempDir()
+    mkdirSync(join(root, DOCS), { recursive: true })
+    mkdirSync(join(root, "test/scripts/hook"), { recursive: true })
+    writeFileSync(join(root, "test/scripts/hook/new-name.test.ts"), "")
+    writeFileSync(
+      join(root, DOCS, "index.md"),
+      "`test/scripts/hook/new-name.test.ts` `test/scripts/hook/old-name.test.ts`\n",
+    )
+    expect(collectMissingSourcePathReferences(root).map(({ targetPath }) => targetPath)).toEqual([
+      "test/scripts/hook/old-name.test.ts",
+    ])
   })
 })

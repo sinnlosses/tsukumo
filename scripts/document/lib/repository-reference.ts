@@ -13,6 +13,7 @@ import {
   isScannedSource,
   type StrayReference,
 } from "../section-reference.ts"
+import { findSourcePathReferences } from "../source-path-reference.ts"
 import {
   findSymbolReferences,
   findStraySymbolReferences,
@@ -34,15 +35,12 @@ export function collectStrayReferences(root: string): StrayReference[] {
 
 /** `root` 以下を読み、無いファイルを指す `docs/` 以下の `.md` のパスをすべて返す。 */
 export function collectMissingFileReferences(root: string): FileReference[] {
-  const references = listSourcePaths(root)
-    .filter(isScannedSource)
-    .flatMap((path) => findFileReferences(path, readFileSync(join(root, path), "utf8")))
-  const existingPaths = new Set(
-    references
-      .map((reference) => reference.targetPath)
-      .filter((path) => existsSync(join(root, path))),
-  )
-  return findMissingFileReferences(references, existingPaths)
+  return collectMissingPaths(root, findFileReferences)
+}
+
+/** `root` 以下を読み、無いファイルを指す `test/`・`scripts/`・`src/` のパスをすべて返す。 */
+export function collectMissingSourcePathReferences(root: string): FileReference[] {
+  return collectMissingPaths(root, findSourcePathReferences)
 }
 
 /** `root` 以下の文書を読み、指している置き場所（ファイルとシンボル）が見つからない参照をすべて返す。 */
@@ -51,6 +49,22 @@ export function collectStraySymbolReferences(root: string): StraySymbolReference
     .filter(isSymbolCheckedDocument)
     .flatMap((path) => findSymbolReferences(path, readFileSync(join(root, path), "utf8")))
   return findStraySymbolReferences(references, readExistingTargets(root, references))
+}
+
+/** 読む対象のファイルから `find` で拾ったパスのうち、`root` に実在しないものを返す。 */
+function collectMissingPaths(
+  root: string,
+  find: (sourcePath: string, text: string) => FileReference[],
+): FileReference[] {
+  const references = listSourcePaths(root)
+    .filter(isScannedSource)
+    .flatMap((path) => find(path, readFileSync(join(root, path), "utf8")))
+  const existingPaths = new Set(
+    references
+      .map((reference) => reference.targetPath)
+      .filter((path) => existsSync(join(root, path))),
+  )
+  return findMissingFileReferences(references, existingPaths)
 }
 
 /** 親 `docs/X.md` の子 `docs/X/*.md`（直下のみ）を、パスから本文への対応にして返す。 */
