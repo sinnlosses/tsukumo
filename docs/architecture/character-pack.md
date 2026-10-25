@@ -87,13 +87,13 @@ characters/<name>/
   ディレクトリを組み立てない。無いパック・起動先の `characters/local` と同じ名前のパック
   （`isEditableCharacterPack` が false）は書かず、理由を分けない定型文の `REFUSED` を返す
 - **画面から書けるもの**は、見た目と人格の編集12種（表情ごとの立ち絵・画面の差し色・名前と
-  自己紹介文・背景・顔・ミニ立ち絵・人格の本文〔`setPersona`〕）と、作る・消す。**人格は `persona.md` の
+  自己紹介文・背景・顔・ミニ立ち絵・ペルソナ〔`setPersona`〕）と、作る・消す。**人格は `persona.md` の
   `## 覚えたこと` の節より前だけ**で、節は受け取らず、書く瞬間のファイルの節をそのまま末尾へ付け直す
   （編集中に雑談が覚えた行を消さない。節の見出しと分け方は `src/shared/character-pack/persona-section.ts` の1か所）。
   `persona.md` が無いパックでも、書けば作る。上限は 8000 文字。効くのは次に起こすセッションから。
-  作るときも人格の本文を受け取り、空でなければ `persona.md` を書く
+  作るときもペルソナを受け取り、空でなければ `persona.md` を書く
 - **書き込まない手続きが1つある: 立ち絵からの生成（`generateFromPortrait`）。** 作るダイアログに置いた
-  立ち絵1枚から、id・名前・差し色2つ・人格の本文を Opus の使い捨ての `query()` 1回（共有の箱の `sdk-structured-query.ts`）で
+  立ち絵1枚から、id・名前・差し色2つ・ペルソナを Opus の使い捨ての `query()` 1回（共有の箱の `sdk-structured-query.ts`）で
   書かせて返すだけで、ファイルには触らない。入力は利用者の画像1枚だけ（会話・人格・ほかのパックを混ぜない）。
   画像の形式と上限は依頼に添える画像と同じ `parsePromptImage` で見るので、`.svg` は画面が `<canvas>` で png に
   直してから送る（外部の変換コマンドは使わない）。値を返すので `/ws` の上で応答を待つ（「コマンドの受け手と
@@ -123,7 +123,7 @@ characters/<name>/
 
 **1件の形は `CharacterPackEntry`**（`src/shared/character-pack/character.ts`。姿は `CharacterInfo` をそのまま入れ子で
 持つ）。**変えられるか（`editable`）・消すと何が起きるか（`removal`）はサーバが決めて持たせ**、画面は
-理由を推し量らない。**人格の本文（`personaBody`。`## 覚えたこと` の節より前）も1件に載せて配り**、
+理由を推し量らない。**ペルソナ（`personaBody`。`## 覚えたこと` の節より前）も1件に載せて配り**、
 保存後は `event()` の流し直しで画面の本文が変わる。
 
 **一覧を配り直す契機は `character-changed` を組むたび**（`src/current-character.ts` の `event`）。

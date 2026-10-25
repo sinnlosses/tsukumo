@@ -33,7 +33,7 @@ UNCOUNTED_TOOL_NAMES = ("mcp__tsukumo__speak", "mcp__tsukumo__report")
 # 形を変えたら上げる。読む側（スキル・tsukumo の画面）はこの数で形の変わり目に気づく。
 ESTIMATES_VERSION = 2
 
-# トークンの消費量として足す種類。重みは付けない（利用枠の数え方は非公開）。
+# トークンの消費量として足す種類。重みは付けない（上限の数え方は非公開）。
 # 思考（thinkingTokens）は出力に含まれるので足さない。
 CONSUMED_TOKEN_KEYS = (
     "inputTokens",
@@ -43,7 +43,7 @@ CONSUMED_TOKEN_KEYS = (
 )
 
 # 効きめの境目（期間のトークンの消費量に占める割合、%）。SKILL.md「見積もりの節」と揃える。
-# 費用の割合だった v1 と同じ数のまま。利用枠に照らして較正したものではない。
+# 費用の割合だった v1 と同じ数のまま。上限に照らして較正したものではない。
 IMPACT_LARGE_PCT = 3.0
 IMPACT_MEDIUM_PCT = 0.5
 
@@ -572,8 +572,8 @@ def estimates(
     return base | {
         "mainReadSharePct": main_share,
         "caveats": [
-            "割合の分母は種類を重みなしで足したトークンの消費量。サブスクリプションの利用枠が種類ごとに"
-            "どう数えられるかは公開されておらず確かめていないので、利用枠に占める割合とは言えない",
+            "割合の分母は種類を重みなしで足したトークンの消費量。サブスクリプションの上限が種類ごとに"
+            "どう数えられるかは公開されておらず確かめていないので、上限に占める割合とは言えない",
             f"式に入るのは main の読みだけ（キャッシュ読みの合計の {main_share}%）。subagent と、"
             "内訳に載らない読みは数えないので、見積もりは小さめに出る",
         ]
@@ -1047,7 +1047,7 @@ def render(report: dict, top: int) -> str:
             f"{labels[k]} {shares[k]}%" if shares[k] is not None else f"{labels[k]} —" for k in labels
         )
     )
-    add("  ※ 利用枠が種類ごとにどう数えられるかは公開されておらず確かめていない。この割合は数の比でしかない")
+    add("  ※ 上限が種類ごとにどう数えられるかは公開されておらず確かめていない。この割合は数の比でしかない")
     add(
         f"  参考: API の単価で換算した費用 ${overall['costUsd']:.2f}"
         "（サブスクリプションでは払っていない額。提案の物差しには使わない）"

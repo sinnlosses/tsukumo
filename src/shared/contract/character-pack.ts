@@ -101,7 +101,7 @@ const characterNameSchema = z.string().max(MAX_CHARACTER_NAME_LENGTH)
 /** 自己紹介文（`character.json` の `tagline`）。空文字も通す（空なら消したのと同じに畳む）。 */
 const characterTaglineSchema = z.string().max(MAX_CHARACTER_TAGLINE_LENGTH)
 
-/** 人格の本文（`persona.md` の `## 覚えたこと` より前）。空文字も通す（本文を空にする）。 */
+/** ペルソナ（`persona.md` の `## 覚えたこと` より前）。空文字も通す（本文を空にする）。 */
 const characterPersonaSchema = z.string().max(MAX_PERSONA_BODY_LENGTH)
 
 const expressionSchema = z.custom<Expression>(
@@ -150,7 +150,7 @@ const characterEditInput = {
     tagline: characterTaglineSchema,
   }),
   /**
-   * 人格の本文を差し替える。`## 覚えたこと` の節は受け取らず、書く瞬間のファイルのものをそのまま残す。
+   * ペルソナを差し替える。`## 覚えたこと` の節は受け取らず、書く瞬間のファイルのものをそのまま残す。
    * `persona.md` が無いパックでも、書けば作る。
    */
   setPersona: z.object({ pack: editedCharacterPackNameSchema, persona: characterPersonaSchema }),
@@ -192,7 +192,7 @@ const characterCreateInput = z.object({
   // 画面の差し色（仕事・雑談の2つ）。どちらも必須（作ったあとに片方だけ消したくなったら `clearChatAccent` で外せる）。
   accent: accentColorSchema,
   chatAccent: accentColorSchema,
-  // 人格の本文。空（空白だけも）なら `persona.md` を書かない。
+  // ペルソナ。空（空白だけも）なら `persona.md` を書かない。
   persona: characterPersonaSchema,
 })
 

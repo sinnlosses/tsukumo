@@ -14,7 +14,7 @@ const RATE_LIMIT_BUCKET_LABEL = {
   "seven-day": "7日間枠",
   "seven-day-opus": "7日間枠（Opus）",
   "seven-day-sonnet": "7日間枠（Sonnet）",
-  overage: "超過利用枠",
+  overage: "超過分の枠",
   other: "",
 } satisfies Record<RateLimitBucket, string>
 

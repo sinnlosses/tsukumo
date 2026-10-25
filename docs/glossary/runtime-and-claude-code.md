@@ -92,7 +92,7 @@
 
 ### Beads アダプタ
 
-- **英語識別子（予定）**: `beadsTask`（`src/server/**/adapter/` の Beads を読むファイルに置く）
+- **英語識別子**: `beadsTask`（`src/server/**/adapter/` の Beads を読むファイルに置く）
 - **定義**: Beads の課題を、組み込みの欄（ID・題・状態・依存・作った時刻と閉じた時刻・`external_ref`・`labels`・
   `description`・`acceptance_criteria`・`notes`）と、metadata の `difficulty`（`haiku`・`sonnet`・`opus`）・
   `loopable`（`Y`・`N`。無い・不正なら無し）だけからタスク一般の形（`TaskSummaryItem`・`DoneTask`。

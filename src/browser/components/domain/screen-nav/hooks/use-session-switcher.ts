@@ -42,7 +42,7 @@ export type SessionSwitcherRow = {
   readonly occupiedElsewhere: boolean
 }
 
-/** 帯の札に出す、いまのセッションの名乗り。ID が分かる前（新規に起こして最初の依頼を送る前）は短縮IDを出せない。 */
+/** 帯の札に出す、いまのセッションの識別情報。ID が分かる前（新規に起こして最初の依頼を送る前）は短縮IDを出せない。 */
 export type ScreenNavSessionIdentity =
   | {
       readonly kind: "known"

@@ -31,7 +31,7 @@ export type CharacterProfileModel = {
 }
 
 /**
- * 人格の本文を変えるダイアログの下書きの種。
+ * ペルソナを変えるダイアログの下書きの種。
  * 空文字も渡す（本文を空にする）。`## 覚えたこと` の節は画面に出さず、書く側が残す。
  */
 export type CharacterPersonaEditModel =

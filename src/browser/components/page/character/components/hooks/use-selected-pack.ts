@@ -26,7 +26,7 @@ type SelectedPack =
       readonly inUse: boolean
       /** 画面から消すと何が起きるか（一覧の同じ名前の1件から引く）。 */
       readonly removal: CharacterPackRemoval
-      /** 人格の本文（一覧の同じ名前の1件から引く。無ければ空）。 */
+      /** ペルソナ（一覧の同じ名前の1件から引く。無ければ空）。 */
       readonly personaBody: string
     }
 

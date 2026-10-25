@@ -58,7 +58,7 @@ export type DelegateEvent =
    */
   | { readonly kind: "background-tool-finished"; readonly toolUseId: string }
   /**
-   * 背景のタスクの進みの1行が届いた（SDK の `system` / `task_progress` の `summary`）。
+   * バックグラウンドタスクの進みの1行が届いた（SDK の `system` / `task_progress` の `summary`）。
    * `summary` は委譲先の会話から作られた字なので、畳み込み・記録・ログに写さない。
    * サーバの中だけで流れ、`ProgressNudge` が受けたら駆動が送り出す手前で捨てる（畳み込み・ブラウザには届かない）。
    */

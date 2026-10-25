@@ -296,7 +296,7 @@ describe("editCharacterPack（名前と自己紹介文）", () => {
   })
 })
 
-describe("editCharacterPack（人格の本文）", () => {
+describe("editCharacterPack（ペルソナ）", () => {
   const SECTION = `${REMEMBERED_SECTION_HEADING}\n\n- 覚えた一行\n`
 
   function setPersona(persona: string): CharacterEdit {
@@ -591,7 +591,7 @@ describe("createCharacterPack", () => {
     expect(created?.definition?.name).toBe("架空の2号")
   })
 
-  it("人格の本文を渡すと persona.md に書き、読み直したパックの人格に載る", () => {
+  it("ペルソナを渡すと persona.md に書き、読み直したパックの人格に載る", () => {
     const created = createCharacterPack(
       createCharacter("fictional-2", { persona: "# 架空の2号\n\n架空の人格。" }),
       [],
@@ -604,7 +604,7 @@ describe("createCharacterPack", () => {
     expect(created?.persona).toBe("# 架空の2号\n\n架空の人格。\n")
   })
 
-  it("人格の本文が空（空白だけも）なら persona.md を書かない", () => {
+  it("ペルソナが空（空白だけも）なら persona.md を書かない", () => {
     for (const [id, persona] of [
       ["fictional-2", ""],
       ["fictional-3", " \n\n"],

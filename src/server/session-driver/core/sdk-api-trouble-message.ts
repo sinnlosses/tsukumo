@@ -1,4 +1,4 @@
-// API の不調（エラー・再試行・利用枠の超過）の知らせを、tsukumo 内部のイベントに変換する。
+// API の不調（エラー・再試行・利用上限の超過）の知らせを、tsukumo 内部のイベントに変換する。
 // 知らせは外部由来の値なので、unknown で受けて検証する。
 
 import { isPlainObject } from "remeda"

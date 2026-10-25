@@ -1,4 +1,4 @@
-// 雑談中のサイドバーの最上段、プロフィールの札（docs/architecture/screen-design.md「雑談のときのサイドバー」）。
+// 雑談中のサイドバーの最上段、プロフィール（docs/architecture/screen-design.md「雑談のときのサイドバー」）。
 // ここで見るのは、自己紹介文が無いパックで空の行を置かないことだけ。
 
 import { cleanup, render, screen } from "@testing-library/react"

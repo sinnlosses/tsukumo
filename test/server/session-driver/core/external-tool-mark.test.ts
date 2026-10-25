@@ -57,7 +57,7 @@ describe("createExternalToolMark", () => {
     expect(mark.allowsRemember()).toBe(true)
   })
 
-  it("claude が自分で始めた続きのターン（背景のタスクの続き）では下りない", () => {
+  it("claude が自分で始めた続きのターン（バックグラウンドタスクの続き）では下りない", () => {
     const mark = createExternalToolMark()
     const relay = withSelfStartedTurns(mark.observe)
     relay(REQUEST)

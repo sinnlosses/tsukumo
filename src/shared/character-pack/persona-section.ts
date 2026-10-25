@@ -5,7 +5,7 @@
 /** 書き足す節の見出し。`persona.md` のいちばん最後に置く。 */
 export const REMEMBERED_SECTION_HEADING = "## 覚えたこと"
 
-/** 画面から書ける人格の本文の長さの上限（文字数）。 */
+/** 画面から書けるペルソナの長さの上限（文字数）。 */
 export const MAX_PERSONA_BODY_LENGTH = 8000
 
 /** 節より前の本文。節が無ければ全文。末尾の空白は落とす。 */

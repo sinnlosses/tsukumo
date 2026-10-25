@@ -19,7 +19,7 @@ import { Text } from "../../../../../../ui/text/text.tsx"
 import styles from "../../../../character.module.css"
 
 /** 自己紹介文の説明（雑談のサイドバーの札にも出ることを添える）。 */
-const TAGLINE_HINT = "画面や雑談のサイドバーのプロフィールの札に出る一言"
+const TAGLINE_HINT = "画面や雑談のサイドバーのプロフィールに出る一言"
 const NAME_HINT = "画面や吹き出しに出る名前。空にすると id をそのまま使います"
 
 type CharacterProfileEditDialogProps = {

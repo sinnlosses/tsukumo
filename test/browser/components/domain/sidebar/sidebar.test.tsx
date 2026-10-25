@@ -202,7 +202,7 @@ describe("引き出しへ渡す中身", () => {
     expect(screen.queryByRole("region", { name: "タスク" })).toBeNull()
   })
 
-  it("雑談中の「話題」はプロフィールの札・最近の話題・覚えていることで、タスクの区画は出さない", () => {
+  it("雑談中の「話題」はプロフィール・最近の話題・覚えていることで、タスクの区画は出さない", () => {
     renderSidebar({ ...CHAT_STATE, chatTopics: ["架空の話題"] }, <SidebarTaskPane />)
 
     expect(screen.getByText("窓辺に棲む架空の精霊")).toBeDefined()

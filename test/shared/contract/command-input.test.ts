@@ -216,7 +216,7 @@ describe("コマンドの契約の入力（落とす形）", () => {
       { pack: "fictional", expression: "default" },
     ],
     [
-      "create の人格の本文が上限超え",
+      "create のペルソナが上限超え",
       "characterPack.create",
       createCharacter({ persona: "あ".repeat(MAX_PERSONA_BODY_LENGTH + 1) }),
     ],

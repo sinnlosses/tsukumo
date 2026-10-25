@@ -86,9 +86,9 @@
   開くダイアログ（`character-profile-edit-dialog.tsx`）は**作るダイアログ（`character-create.tsx`）
   と同じ枠・同じ欄の書き方**で、欄は「名前」と「自己紹介文」の2つだけ（id は作ったあと
   変えないので欄を出さない。決まっていること・蒸し返さない）。**自己紹介文は雑談のサイドバーの
-  プロフィールの札（13.7）にも出ることを欄の説明に添える**。「保存する」を押すと `characterPack.setProfile`
+  プロフィール（13.7）にも出ることを欄の説明に添える**。「保存する」を押すと `characterPack.setProfile`
   を1回送って閉じ、詳しい設定の名乗りと一覧の名前がその場で替わる。もう1つの「プロフィールを設定する」
-  （`components/character-persona-edit.tsx`）は人格の本文（`persona.md` の `## 覚えたこと` より前）を直す
+  （`components/character-persona-edit.tsx`）はペルソナ（`persona.md` の `## 覚えたこと` より前）を直す
   ダイアログ（`character-persona-edit-dialog.tsx`）を開き、「保存する」で `characterPack.setPersona` を送る
 - **変えられないパック（`editable: false`）は、名乗りのひとことの下に理由の一言を出し**、口を
   すべて無効にする（押せない見た目のまま残す。`docs/architecture/character-pack.md`「画面から作るときの置き場と受け取り方」）。一覧の行には印を付けない（開けば分かる）
