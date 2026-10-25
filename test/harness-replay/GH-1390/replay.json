@@ -1,0 +1,17 @@
+{
+  "id": "GH-1390",
+  "difficulty": "sonnet",
+  "kind": "feature",
+  "base": "968f4f83a5b4a08aff541abc224d927c96777c66",
+  "after": "5d87a2cc8fcc7aadb84f6e54d0ba3fee129f9868",
+  "checkFiles": [
+    "test/browser/components/page/conversation/components/dispatch/components/markdown-editor-surface/domain/markdown-mark-concealment.test.ts"
+  ],
+  "command": [
+    "pnpm",
+    "exec",
+    "vitest",
+    "run",
+    "test/browser/components/page/conversation/components/dispatch/components/markdown-editor-surface/domain/markdown-mark-concealment.test.ts"
+  ]
+}

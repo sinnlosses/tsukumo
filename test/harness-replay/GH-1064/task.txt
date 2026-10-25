@@ -1,0 +1,43 @@
+---
+id: GH-1064
+summary: sequenceDiagram の `mermaid` に `autonumber` を既定で当てる
+status: done
+difficulty: haiku
+loopable: Y
+direct: Y
+dependencies: []
+---
+
+## 目的・背景
+
+時系列の図の矢印に通し番号があると、本文から「3 の呼び出し」と指せる（Mermaid の `autonumber`。`docs/research/report-block-craft.md` 1章・9.1）。いまは `src/shared/report/report-markdown.ts` が `mermaid` の塊の `source` をそのまま `pre.mermaid` に置き、書き手が `autonumber` を書かない限り番号は出ない。
+
+## 決まっていること（蒸し返さない）
+
+- `sequenceDiagram` で始まるソースの1行目の直後に `autonumber` を足す。既に `autonumber` の行があれば足さない。ほかの種類には触れない
+
+## 解くべき論点
+
+なし
+
+## やること
+
+### 1. 組み立てで足す
+`src/shared/report/report-markdown.ts` の `mermaid` の塊を `pre` に置く箇所で、先頭の行が `sequenceDiagram` で次の行に `autonumber` が無ければ挟む。`test/shared/report/report-markdown.test.ts` に、足す・既にある・別の種類の3つの自己テストを足す。
+- 満たす完了条件: 1, 2
+### 名指すファイル
+- `src/shared/report/report-markdown.ts`
+- `test/shared/report/report-markdown.test.ts`
+
+## 完了条件
+
+1. `sequenceDiagram` のソースに `autonumber` が1つだけ入り、既にあるものと別の種類は変わらない（自己テスト）
+2. 検証コマンドが通る
+
+## 注意
+
+なし
+
+## 参考情報
+
+- `docs/research/report-block-craft.md` 1章（Mermaid の sequenceDiagram の行）

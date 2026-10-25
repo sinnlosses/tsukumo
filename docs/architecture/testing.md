@@ -23,6 +23,7 @@
 | `docs/architecture/testing/e2e-scenario-conversation-state.md`    | テスト: E2E のシナリオ（会話の画面の状態）                   | テスト / E2E のシナリオの一覧                            |
 | `docs/architecture/testing/e2e-scenario-task-chat-and-setting.md` | テスト: E2E のシナリオ（タスク・雑談・設定）                 | テスト / E2E のシナリオの一覧                            |
 | `docs/architecture/testing/e2e-scenario-turn-and-input.md`        | テスト: E2E のシナリオ（ターンと入力）                       | テスト / E2E のシナリオの一覧                            |
+| `docs/architecture/testing/harness-replay.md`                     | テスト: ハーネスの再演集                                     | ハーネスの再演集 / 選び方                                |
 | `docs/architecture/testing/method-and-fixture.md`                 | テスト: 対象ごとの方法とフィクスチャ                         | テスト / フィクスチャ / E2E に任せず単体テストに残すもの |
 | `docs/architecture/testing/visual-check-interaction.md`           | テスト: 手で確かめること（手を動かす状態と部品）             | 手で確かめること                                         |
 | `docs/architecture/testing/visual-check-revision-and-scene.md`    | テスト: 手で確かめること（変更前との比べと場面ごとの確かめ） | 手で確かめること                                         |

@@ -1,0 +1,59 @@
+---
+id: GH-1352
+summary: graph の source で、辺のラベルに : を含む行（12:00 など）を壊れた行にしない
+status: done
+difficulty: sonnet
+loopable: Y
+dependencies: []
+---
+
+## 目的・背景
+
+- 出どころ: GH-1321 の棚卸し（モデルの出力を字面で判定している検査）
+- 棚卸しの行（`graph` の `source` のラベル。`src/shared/report/graph-source.ts`）: ラベルに `:` は無いとみなし、あれば壊れた行にする（`parseLine` が `label.includes(":")` で弾く）。`起動 -> 集計: 12:00 に走る` が壊れた行になる。直近28日の broken-graph の差し戻しは 9 回（すべての原因を合わせた数で、ラベルの `:` の分は記録から読めない）。方針は記法の読みを直す: 行の記法は残し、終点の後ろの最初の `:` より後ろを全部ラベルにする。節点の名前に `:` を書けないのは今のまま
+- 構造の欄にしない理由: nodes／edges の配列にすると GraphBlock の定義（いま 763 字）が増え、`REPORT_INPUT_SCHEMA_MAX_CHARS` の余白（いま 41 字）に入らない
+- 外との食い違い: tsukumo-plugins の `skills/task-model/scripts/tw/tw_handback.py` も、返却の `## 構造の変更` を同じ記法で `[+\-~] .+ -> .+` と緩く読んでいて、ラベル中の `:` を受ける。直すとこちらが向こうに揃う
+- 変えるファイル: `src/shared/report/graph-source.ts`。graph の塊の `source` の説明文（「`: 語` は辺のラベル」）は変えずに済む見込み
+- GH-1076・GH-1275・GH-993 との重なり: なし（schema の字数は変えない）
+
+## 決まっていること（蒸し返さない）
+
+- 構造の欄（nodes／edges の配列）にはしない（GraphBlock の定義が増え、`REPORT_INPUT_SCHEMA_MAX_CHARS` の余白 41 字に入らないため）
+- schema の字数は変えない。`source` の説明文（「`: 語` は辺のラベル」）も変えない
+
+## 解くべき論点
+
+なし
+
+## やること
+
+### 1. 前提の裏取り
+| 前提 | 確かめた場所 | 結果 |
+| --- | --- | --- |
+| 最初の `:` で辺の終点とラベルを割り、ラベルに `:` があれば broken | `src/shared/report/graph-source.ts` の `parseLine`（`label.includes(":")`） | 確認済み。`起動 -> 集計: 12:00 に走る` が broken になる |
+| 節点の名前の `:` は別に弾く | 同 `parseName`（`trimmed.includes(":")`） | 確認済み。ここは変えない |
+- 満たす完了条件: 1
+### 2. ラベル中の `:` を受ける
+`parseLine` の `label.includes(":")` の条件を外す。終点の後ろの最初の `:` より後ろを全部ラベルにする（`parseName` の節点名の `:` 禁止は残す）。`test/shared/report/graph-source.test.ts` に、ラベル `12:00 に走る` が壊れず読まれる場面と、節点名に `:` があれば今のとおり broken の場面を足す。
+- 満たす完了条件: 1, 2
+### 3. 検証する
+検証コマンドを通す。
+- 満たす完了条件: 3
+### 名指すファイル
+- `src/shared/report/graph-source.ts`
+- `test/shared/report/graph-source.test.ts`
+
+## 完了条件
+
+1. 辺のラベルに `:` を含む行（`起動 -> 集計: 12:00 に走る`）が壊れた行にならず、ラベルが `12:00 に走る` として読まれる（単体テスト）
+2. 節点の名前に `:` を含む行は今のとおり壊れた行になる
+3. 検証コマンドが通る
+
+## 注意
+
+- tsukumo-plugins の `skills/task-model/scripts/tw/tw_handback.py` は返却の `## 構造の変更` を同じ記法で緩く読んでいる。このタスクでは触らない（直すとこちらが向こうに揃う）
+- 調べて成り立たなければ `dropped` で閉じてよい
+
+## 参考情報
+
+- GH-1321（棚卸しの表）

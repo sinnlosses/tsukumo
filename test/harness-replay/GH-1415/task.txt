@@ -1,0 +1,54 @@
+---
+id: GH-1415
+summary: インラインコードの色見本の照合を theme.css のトークン名の固定の一覧に絞り、描画中の `getComputedStyle` を無くす
+status: done
+difficulty: haiku
+loopable: Y
+direct: Y
+dependencies: []
+---
+
+## 目的・背景
+
+インラインコードの色見本（`src/browser/components/page/conversation/components/markdown/renderer/color-swatch.ts`）は、`TOKEN_PATTERN` が小文字とハイフンだけの語（`pnpm`、`src` など）にすべて当たるので、初めて見る語ごとに描画の最中に `getComputedStyle(root)` を読み、見張りの `span` を `documentElement` に足して外す。結果は根の `style` 属性が変わるまで覚えるが、`--accent` を差すたび（画面や雑談の切り替え）に全部捨てる。
+
+### 実測の内訳
+
+- インラインコードの語の数: レポート 1 本で数十（`pnpm`・`src`・ファイル名の一部など）。語ごとに `getComputedStyle` 1 回と DOM の差し込み 1 回
+- 描画の中の Recalculate Style の所要: 未計測（1 回は小さい。色見本の候補にならない語を照合から外すことが目的）
+
+## 決まっていること（蒸し返さない）
+
+- 照合を `src/browser/styles/theme.css` にあるトークン名（`--` で始まる変数名）の固定の一覧に絞る。一覧は `theme.css` を読んで組み立てるのではなく、組み立て時に生成するか手で書いた定数にし、`theme.css` に変数を足したら一覧も直すことをコメントで言う
+
+## 解くべき論点
+
+なし
+
+## やること
+
+### 1. 照合を固定の一覧に絞る
+
+前提の裏取り: `TOKEN_PATTERN` が一般の語に当たる | `color-swatch.ts` の `TOKEN_PATTERN` | 小文字とハイフンだけの語
+
+`color-swatch.ts` の `TOKEN_PATTERN` を、`theme.css` のトークン名の一覧（`satisfies` で検査した定数）との照合に替える。一覧に無い語は `getComputedStyle` も DOM の差し込みもしない。単体（`test/browser/`）に「`pnpm` では計測が走らない」「トークン名では色見本が付く」を足す。`pnpm run check` を通す。
+
+- 満たす完了条件: 1, 2
+
+### 名指すファイル
+
+- `src/browser/components/page/conversation/components/markdown/renderer/color-swatch.ts`
+- `src/browser/styles/theme.css`
+
+## 完了条件
+
+1. トークン名の一覧に無い語（`pnpm`・`src`）で `getComputedStyle` が呼ばれない（単体で確かめる）
+2. 検証コマンドが通る
+
+## 注意
+
+なし
+
+## 参考情報
+
+なし

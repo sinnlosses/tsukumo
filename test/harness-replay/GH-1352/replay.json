@@ -1,0 +1,9 @@
+{
+  "id": "GH-1352",
+  "difficulty": "sonnet",
+  "kind": "bug",
+  "base": "1face72f2a4be965182a2777caf1285277038ab7",
+  "after": "f0c7e91cfa1163cd358dbe5d43593b3b1fb99058",
+  "checkFiles": ["test/shared/report/graph-source.test.ts"],
+  "command": ["pnpm", "exec", "vitest", "run", "test/shared/report/graph-source.test.ts"]
+}

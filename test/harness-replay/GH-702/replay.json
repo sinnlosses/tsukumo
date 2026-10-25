@@ -1,0 +1,9 @@
+{
+  "id": "GH-702",
+  "difficulty": "haiku",
+  "kind": "refactor",
+  "base": "f69c1882844988e73e3b4781090d16f57de50ab5",
+  "after": "60c534e460a2b1b4b6a30b0fa11335ff575856fd",
+  "checkFiles": ["test/browser/domain/relative-luminance.test.ts"],
+  "command": ["pnpm", "exec", "vitest", "run", "test/browser/domain/relative-luminance.test.ts"]
+}

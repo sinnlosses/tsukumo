@@ -1,0 +1,59 @@
+---
+id: GH-1307
+summary: 未知の kind のセッションイベントを `advanceSessionState` が姿を変えずに返し、ブラウザの受信を止めない
+status: done
+difficulty: sonnet
+loopable: Y
+dependencies: []
+---
+
+## 目的・背景
+
+`src/shared/session/session-advance.ts` の `foldSessionEvent` は `switch (event.kind)` に `default` が無く、型の上では網羅しているが、実行時に知らない `kind` が来ると `undefined` を返す。`src/shared/session/session-event.ts` の `sessionEventSchema` は「`kind` が string のオブジェクト」しか確かめない封筒のスキーマで、`src/shared/frame.ts` と `session-event.ts` のコメントは「知らない `kind` は畳み込みが無視するので、イベントを足しても `PROTOCOL_VERSION` は上げない」と言っている。実装はこのコメントと食い違っている。
+
+タブを開いたままサーバを新しくして新しい種類のイベントが届くと、`src/browser/stores/session.ts` の `applyFrame` が `undefined` を返す。そのあと `state.pending` を読むところで TypeError になり、`src/browser/lib/socket.ts` の `receiveFrames` の catch に落ちて繋ぎ直す。同じ束のほかのイベントも失われる。システムの不安定な場所の洗い出しで、型の観点の高の1件として挙がった。
+
+判定の仕組みの問い: 既にある `isSessionEventKind`（`src/shared/session/session-event-kind.ts`）という機械的な判定で受け口を絞れるので、新しい推測は足さない。
+
+## 決まっていること（蒸し返さない）
+
+- 知らない `kind` のイベントは1件ずつ捨て、同じ束のほかのイベントは畳む（束ごと捨てない）
+- イベントを足しても `PROTOCOL_VERSION` は上げない、という今のコメントの約束を実装に合わせる側で直す（コメントは変えない）
+
+## 解くべき論点
+
+なし
+
+## やること
+
+### 1. 畳み込みと受け口で知らない kind を無視する
+前提の裏取りを1行ずつ書く（`foldSessionEvent` に `default` が無いこと、`sessionEventSchema` が `kind` の値を見ないこと）。
+`src/shared/session/session-advance.ts` の `advanceSessionState` の入口で `isSessionEventKind(event.kind)` が偽なら `state` をそのまま返す（`foldSessionEvent` の網羅の型検査は崩さない）。
+`src/shared/frame.ts` の `parseServerFrame`（または `src/shared/session/session-event.ts` の `stampedEventSchema` の使い方）で、`events` の束から知らない `kind` の要素だけを落とし、残りを返す。束全体を `undefined` にしない。
+`test/shared/session/session-fold.test.ts` に「知らない kind のイベントを畳んでも姿が同じ参照で返る」を、`test/shared/frame.test.ts` に「知らない kind を1件含む events の束から、その1件だけが落ちる」を足す。足したテストが、直す前のコードで落ちることを確かめて報告に書く。
+- 満たす完了条件: 1, 2, 3
+### 2. 検証する
+検証コマンドを通す。
+- 満たす完了条件: 4
+### 名指すファイル
+- `src/shared/session/session-advance.ts`
+- `src/shared/session/session-event.ts`
+- `src/shared/session/session-event-kind.ts`
+- `src/shared/frame.ts`
+- `test/shared/session/session-fold.test.ts`
+- `test/shared/frame.test.ts`
+
+## 完了条件
+
+1. 知らない `kind` のイベントを `advanceSessionState` に渡すと、渡した姿がそのまま返る（単体テストで確かめる）
+2. 知らない `kind` を1件含む `events` のフレームを `parseServerFrame` に渡すと、その1件だけが落ちたフレームが返る（単体テストで確かめる）
+3. 足したテストが、直す前のコードでは落ちる（報告に書く）
+4. 検証コマンドが通る
+
+## 注意
+
+`hello` の `state` を `isPlainObject` だけで受けている点（`src/shared/frame.ts` の `serverFrameSchema`）はこのタスクの外。版の番号の検査が守っている。
+
+## 参考情報
+
+なし

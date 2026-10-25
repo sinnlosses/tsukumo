@@ -1,0 +1,9 @@
+{
+  "id": "GH-1064",
+  "difficulty": "haiku",
+  "kind": "feature",
+  "base": "d8a0b16a9184b3985deffc3a3eef8e199f6342fc",
+  "after": "ba75bc34b08fe7ab956c3cdb73a4df4e96bfad82",
+  "checkFiles": ["test/shared/report/report-markdown.test.ts"],
+  "command": ["pnpm", "exec", "vitest", "run", "test/shared/report/report-markdown.test.ts"]
+}

@@ -1,0 +1,9 @@
+{
+  "id": "GH-1292",
+  "difficulty": "sonnet",
+  "kind": "bug",
+  "base": "c1d499548ea2a9bb5b1d601f15877e3d207f566c",
+  "after": "480fbaf98b618342033088035e407f89f7d40089",
+  "checkFiles": ["test/scripts/dev/submodule-drift.test.ts"],
+  "command": ["pnpm", "exec", "vitest", "run", "test/scripts/dev/submodule-drift.test.ts"]
+}

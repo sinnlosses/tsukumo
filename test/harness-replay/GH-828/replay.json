@@ -1,0 +1,9 @@
+{
+  "id": "GH-828",
+  "difficulty": "haiku",
+  "kind": "docs",
+  "base": "72ef1958f9171d1411535960c3ea16757703a7fb",
+  "after": "89c36f4205989ff52d72153c20f03b4fe6ee490c",
+  "checkFiles": ["test/server/report/core/report-notation.test.ts"],
+  "command": ["pnpm", "exec", "vitest", "run", "test/server/report/core/report-notation.test.ts"]
+}

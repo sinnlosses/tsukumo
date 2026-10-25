@@ -1,0 +1,69 @@
+---
+id: GH-924
+summary: 続きからの復元が、利用者の依頼を注入タグの正規表現で削って取り出すのをやめ、メッセージの出自の欄で見分ける
+status: done
+difficulty: opus
+loopable: Y
+dependencies: []
+---
+
+## 目的・背景
+
+- `src/server/session-driver/core/session-restore.ts` は、transcript の `user` メッセージ本文から `INJECTED_BLOCK`（`system-reminder`・`task-notification`・`local-command-caveat`・`agent-message` などのタグ名の正規表現）を削って「利用者が打った依頼」を復元し、背景タスクの知らせかどうかも `raw.includes("<task-notification")` の文字列で判定する。`is_meta` と `origin.handback` は既に使っている
+- 本体が新しい注入タグを足すと依頼として画面に出る。逆に、利用者が同じ名前のタグを打つと削れて消える
+- 出どころは2026-10-15 の「決定論にすべきなのにヒューリスティックに頼っている箇所」の洗い出し
+
+## 決まっていること（蒸し返さない）
+
+- 判定の根拠は transcript のメッセージの構造化した欄（`origin`・`isSynthetic`・`is_meta` など）を第一にする。文字列の削りは、欄で見分けられない注入だけの後ろ盾として残すなら理由を残す
+- SDK のイベントと transcript の生の会話をログ・フィクスチャに実物で入れない（`docs/coding-standards.md`「会話内容の扱い」）
+
+## 解くべき論点
+
+- 実機の transcript で、利用者の入力・system-reminder・task-notification・コマンドの注意書きが、`origin` などの欄でどこまで区別できるか（会話内容を引用せず、欄の値だけを確かめる）。区別できない種類が残るなら、その種類を `## 結果` に書いて残す
+
+## やること
+
+前提の実測（2026-10-16。tsukumo の作業ツリー7つの直近10日の transcript 263 件を `getSessionMessages` に通した結果の欄の値と件数だけを数え、本文は見ていない）:
+`getSessionMessages` は `isMeta` の行を `origin` が channel・observer・peer（`senderTaskId` 付き）などのときしか返さない（`local-command-caveat`・圧縮の要約以外の `is_meta` は SDK の段階で落ちる）。
+返った `user` のうち、背景タスクの知らせ 2306 件はすべて `origin.kind === "task-notification"`（それより古い 618 件の transcript でも欠けた行は 0）、委譲先の返却・伝言は `is_meta` と `origin.kind === "peer"`、`local-command-stdout` 23 件とローカルコマンドの行 138 件は SDK が付ける `isCompletedLocalCommand`、`system-reminder`・`cross-session-message` の本文を持つ行は 0 件。
+利用者の依頼（tsukumo から送ったもの）は `is_meta` も `origin` も無い（`origin.kind === "human"` は CLI のセッションだけ）。
+合成の依頼（`<task-notification>`・`<local-command-stdout>`・`<system-reminder>`・`<agent-message>` を利用者として打つ）では、どの欄も付かず本文がそのまま残る。
+
+### 1. 依頼と続きのターンを欄で見分ける
+`session-restore.ts` を次の形にする。
+- 続きのターン（`turn-resumed`）: `user` で `origin.kind === "task-notification"` のメッセージ。本文の `<task-notification` を探す判定（`isTaskNotificationOnly` の `raw.includes`・`TASK_NOTIFICATION_TAG`）は消す
+- 依頼の候補から外すもの: `is_meta` が真（今までどおり）、`origin` があり `kind` が `"human"` でないもの（未知の `kind` も含む）
+- `isCompletedLocalCommand` が真のメッセージ: スラッシュコマンドの形（`foldSlashCommand` が畳める、`<command-name>` 系のタグだけで出来た形）なら畳んだ1行を依頼にし、それ以外（コマンドの出力）は依頼にしない
+- 上のどれにも当たらないメッセージは利用者の文面として、タグを削らずにそのまま依頼にする（`foldSlashCommand` の畳みと空の判定だけは残す）。`INJECTED_BLOCK` と `withoutInjectedBlocks` は消す
+- 欄で見分けられずに残る種類（`isCompletedLocalCommand` の中のコマンドの行と出力の区別はタグの形、CLI の `!` で打った `<bash-input>`・`<bash-stdout>` は欄が無く今までどおり依頼に出る）を、関数のコメントに実測の事実として残す。古い「実測で出たのは3つ」の文は今の実測に直す
+
+完了とする確かめ: `grep -n 'INJECTED_BLOCK\|withoutInjectedBlocks\|includes(' src/server/session-driver/core/session-restore.ts` が本文のタグ判定の行を返さない。段 2 のテストが通る。`test/server/session-driver/core/session-digest.test.ts`（`restoredMessageEvents` を使う）も通る。
+
+### 2. テスト
+`test/server/session-driver/core/session-restore.test.ts` のうち、欄の無いメッセージをタグで落とすことを前提にしたもの（「仕掛けが差し込んだ塊だけの user メッセージは依頼として起こさない」「利用者の文面に混じった塊は、その塊だけ落として前後を残す」「`<local-command-stdout>` だけの…」、知らせを欄なしで作っている脇の話・`is_meta` の要約のテスト）を、実機と同じ欄（`origin: { kind: "task-notification" }`・`is_meta: true` と `origin: { kind: "peer", … }`・`isCompletedLocalCommand: true`）を付けた合成の短い文に直し、次を足す。
+- 欄で見分ける: `origin.kind` が未知の値（合成の名前）の `user` メッセージは、本文が地の文でも依頼にしない（完了条件1）
+- 新しい注入タグ: `is_meta` 付きで未知のタグ名の塊だけのメッセージは依頼にしない
+- 同名のタグを利用者が打つ: 欄の無いメッセージの `<task-notification>…`・`<system-reminder>…</system-reminder>` と地の文・`<local-command-stdout>…` は、タグごとそのままの文面で依頼になり、`<task-notification>` でも続きのターンにはならない（完了条件2）
+- `isCompletedLocalCommand` 付きのコマンドの行は `/<name> <args>` の依頼に、同じ欄の出力は依頼にしない。`origin.kind === "human"` のメッセージは依頼にする
+
+完了とする確かめ: `pnpm run test test/server/session-driver/core/session-restore.test.ts test/server/session-driver/core/session-digest.test.ts` が通る。弱めた実装で落ちることを1つずつ確かめ、報告に書く（確かめたら戻す）: (a) `INJECTED_BLOCK` の削りを戻すと同名のタグのテストが落ちる、(b) `origin.kind` の判定を外すと未知の `kind` のテストが落ちる、(c) 続きのターンを本文の `<task-notification` で判定に戻すと欄なしの知らせのテストが落ちる、(d) `isCompletedLocalCommand` を見ないと出力のテストか利用者の `<local-command-stdout>` のテストが落ちる。`grep -rn 'local-command\|task-notification\|INJECTED' docs --exclude-dir=history` で復元の判定を書いた文書が無い（あれば実装に合わせる）ことを見る（完了条件3）。
+
+### 名指すファイル
+- `src/server/session-driver/core/session-restore.ts`
+- `test/server/session-driver/core/session-restore.test.ts`
+
+## 完了条件
+
+1. 本体が未知の注入タグを足しても、依頼として復元されない（欄で見分けられる種類の範囲で）
+2. 利用者が注入タグと同名の文字列を打っても、依頼が消えない
+3. 単体テストがあり、文書が実装と食い違わない
+4. 検証コマンド `pnpm run check` を通す
+
+## 注意
+
+- 調べて成り立たなければ `dropped` で閉じてよい。理由を `## 結果` に書く
+
+## 参考情報
+
+- `docs/coding-standards.md`「仕組みをヒューリスティックより優先する」

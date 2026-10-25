@@ -1,0 +1,15 @@
+{
+  "id": "GH-924",
+  "difficulty": "opus",
+  "kind": "bug",
+  "base": "a9cea25aba20e751c9f0e9e73d8914b96d464be5",
+  "after": "ae883a39e77ae0cb52c4f4ce0609a15f9a765258",
+  "checkFiles": ["test/server/session-driver/core/session-restore.test.ts"],
+  "command": [
+    "pnpm",
+    "exec",
+    "vitest",
+    "run",
+    "test/server/session-driver/core/session-restore.test.ts"
+  ]
+}

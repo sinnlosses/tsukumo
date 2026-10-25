@@ -1,0 +1,9 @@
+{
+  "id": "GH-943",
+  "difficulty": "opus",
+  "kind": "feature",
+  "base": "e3970d2454bf89ffa2e6c93bd57b2b32ac5be0e0",
+  "after": "79843122cf1fe763313796e4f65ea39b988d3df2",
+  "checkFiles": ["test/server/report/core/report-review.test.ts"],
+  "command": ["pnpm", "exec", "vitest", "run", "test/server/report/core/report-review.test.ts"]
+}

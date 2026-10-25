@@ -1,0 +1,19 @@
+{
+  "id": "GH-1415",
+  "difficulty": "haiku",
+  "kind": "refactor",
+  "base": "0de0f650c65c280d0616823097d74407ef81401c",
+  "after": "307024f7771d08ea39e407134d14afc72db42800",
+  "checkFiles": [
+    "test/browser/components/page/conversation/components/markdown/renderer/color-swatch.test.ts",
+    "test/browser/components/page/conversation/components/markdown/renderer/theme-token-names.test.ts"
+  ],
+  "command": [
+    "pnpm",
+    "exec",
+    "vitest",
+    "run",
+    "test/browser/components/page/conversation/components/markdown/renderer/color-swatch.test.ts",
+    "test/browser/components/page/conversation/components/markdown/renderer/theme-token-names.test.ts"
+  ]
+}

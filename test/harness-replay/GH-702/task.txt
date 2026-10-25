@@ -1,0 +1,57 @@
+---
+id: GH-702
+summary: WCAG の相対輝度の式を `appearance-color.ts` と `color-swatch.ts` で1つにする
+status: done
+difficulty: haiku
+loopable: Y
+dependencies: []
+---
+
+## 目的・背景
+
+相対輝度（WCAG の式: `0.2126 R + 0.7152 G + 0.0722 B`、各チャンネルは `<= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4`）が2か所に写されている。
+
+- `src/browser/domain/appearance-color.ts`: `luminanceOfChannels` と `srgbChannel`（入力は 0〜255 のバイト値。内部で 255 で割る）
+- `src/browser/components/page/conversation/components/markdown/renderer/color-swatch.ts`: `relativeLuminance(r, g, b)`（`inkOver` が合成した 0〜1 の値を渡す）
+
+係数としきい値が2つに分かれているので、片方だけ直すと同じ色で字の明暗の判定とコントラストの判定がずれる。
+
+## 決まっていること（蒸し返さない）
+
+- 式は1つにし、入力の尺度（0〜1 かバイト値か）は片方に揃えて、もう一方で変換する。どちらに揃えるかは実物を読んで決めてよい。
+- 色の合成（`inkOver` の `mix`）・`LIGHT_BACKGROUND_LUMINANCE`・`appearance-color.ts` の16進の読み（`channelByte`）は寄せない。
+
+## 解くべき論点
+
+なし
+
+## やること
+
+### 1. 共有の相対輝度を作る
+`src/browser/domain/relative-luminance.ts` を新しく作り、`relativeLuminance(red, green, blue)` を1つ export する。入力は 0〜1 の sRGB（`appearance-color.ts` のバイト値は `/ 255` してから渡す。`color-swatch.ts` の 0〜1 はそのまま）。中身は `0.2126 * linear(r) + 0.7152 * linear(g) + 0.0722 * linear(b)`、`linear(v)` は `v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4`。係数としきい値はこのファイルにだけ書く。`test/browser/domain/relative-luminance.test.ts` を新しく作り、`import` は `../../../src/browser/domain/relative-luminance.ts`。テストは黒 (0,0,0) が 0、白 (1,1,1) が 1（`toBeCloseTo`）、赤だけ (1,0,0) が 0.2126、緑だけ (0,1,0) が 0.7152、青だけ (0,0,1) が 0.0722、`#777777`（各チャンネル 119/255）が約 0.1845 の既知値を書く（値は式で手計算して確かめてから書く）。段1では既存の2か所は触らない（段2で切り替える）。`docs/architecture/browser.md` の `domain/` と `components/` の辺は `test/architecture.test.ts` の `ALLOWED_BROWSER_BOX_IMPORTS` で `components/page` → `domain` が許されていることを確かめてある。段1の自己テストは `tw verify` ではなく `pnpm run test -- test/browser/domain/relative-luminance.test.ts` の単体で流す。
+
+### 2. 2か所を共有の関数に切り替える
+`src/browser/domain/appearance-color.ts`: `luminanceOfChannels` と `srgbChannel` を消す。`relativeLuminance(hex)` は `relativeLuminance(channelByte(hex, RED_AT) / 255, …)` の形にする。`veiledLuminance` も `mixed(at) / 255` を共有の関数に渡す（合成は bytes のまま。`mixed` の式は変えない）。`backgroundVeilFloor` と `contrastRatio` の呼び出しは変えない。`src/browser/components/page/conversation/components/markdown/renderer/color-swatch.ts`: 末尾の `relativeLuminance(r, g, b)` と `linear` を消し、`inkOver` の `relativeLuminance(mix(...), mix(...), mix(...))` を共有の関数の import に替える（import は `../` を6つ付けて `browser/domain/relative-luminance.ts` へ。既存の `domain/` の import の書き方に合わせる）。`LIGHT_BACKGROUND_LUMINANCE` と `inkOver` の mix は変えない。完了条件「係数が `src/` に1か所だけ」は、段2の後に `grep -rn "0.2126" src/` で1件だけ（`relative-luminance.ts`）になることで確かめる。`test/e2e/readability-scan.ts` の係数は test 側で src の完了条件の外なので残す（報告に書く）。`test/browser/domain/appearance-color.test.ts` と `test/browser/components/page/conversation/components/markdown/renderer/color-swatch.test.ts` は書き換えずに通す。
+
+### 名指すファイル
+- `src/browser/domain/relative-luminance.ts`（新しく作る）
+- `test/browser/domain/relative-luminance.test.ts`（新しく作る）
+- `src/browser/domain/appearance-color.ts`
+- `src/browser/components/page/conversation/components/markdown/renderer/color-swatch.ts`
+- `test/browser/domain/appearance-color.test.ts`（読むだけ。書き換えない）
+- `test/browser/components/page/conversation/components/markdown/renderer/color-swatch.test.ts`（読むだけ。書き換えない）
+
+## 完了条件
+
+- 係数 `0.2126`・`0.7152`・`0.0722` が `src/` に1か所だけ
+- `test/browser/domain/appearance-color.test.ts`・`test/browser/components/page/conversation/components/markdown/renderer/color-swatch.test.ts` が書き換えなしで通る
+- 検証コマンド（設定の verify）が通る
+- 調べて成り立たなければ `dropped` で閉じてよい
+
+## 注意
+
+なし
+
+## 参考情報
+
+- `docs/architecture/browser.md`

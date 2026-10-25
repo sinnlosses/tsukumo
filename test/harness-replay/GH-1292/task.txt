@@ -1,0 +1,54 @@
+---
+id: GH-1292
+summary: check.ts の submodule 揃えが、作業ツリーで進めた gitlink を黙って古い版へ戻し、検証を古い版で通す（VERIFIED_UNSTAMPED）のを防ぐ
+status: done
+difficulty: sonnet
+loopable: Y
+dependencies: []
+---
+
+## 目的・背景
+
+- 出どころ: 振り返り: GH-1096
+- 観点: 赤 機械の検査
+- 根拠: GH-1096 で vendor/tsukumo-plugins を作業ツリーで進めたら、1回目の `tw verify` で `check.ts` が「submodule のずれを揃えた: a130cb0 → 0c4963c」と古い版へ戻し、段1の変更が消えたまま古い版で検証が通って `VERIFIED_UNSTAMPED` になった。実装役は気づいて gitlink をインデックスに上げて回避した（`scripts/dev/lib/submodule-drift.ts` は `git submodule status` の行頭 `+` をずれとみなして `submodule update --init` を打つ）。検証の打ち直しは 3 回
+- 出し先: `scripts/dev/lib/submodule-drift.ts`。インデックスに上げていない gitlink の変更（意図して進めたもの）を戻さず、止めて理由を出す（または戻す前に変更を検出して拒む）検査。単体テストを足す
+- 現状のコード: `alignSubmodules`（`submodule-drift.ts`）は `before.drifted`（行頭 `+`・`-`）があれば無条件に `git submodule update --init` を打つ。`+` は「作業ツリーの版がインデックス（記録）と違う」だけを言い、(a) main を取り込んだあと submodule の checkout が古い（記録のほうが新しい。揃えてよい）と、(b) 作業ツリーで submodule を進めたがまだ `git add` していない（checkout のほうが新しい。戻してはいけない）を区別しない。呼び出しは `scripts/dev/check.ts` の `alignSubmodulesOrExit`、単体は `test/scripts/dev/submodule-drift.test.ts`
+
+## 決まっていること（蒸し返さない）
+
+- (a) は今までどおり黙って揃える（ship が submodule のずれだけで止まったら揃えて打ち直す運用を壊さない）。止めるのは (b) だけ。
+- (b) の見分け方は、記録の版（`git rev-parse :<path>`）が checkout の版の祖先か（`git -C <path> merge-base --is-ancestor <記録> <checkout>`）。祖先で、かつ両者が違えば (b)。祖先でなければ (a) として揃える（祖先でない版へ進めた変更は、先に `git add` を求める扱いにはしない）。
+- (b) のときは `blocked` で止め、理由に「作業ツリーで進めた版（短い sha）が記録の版（短い sha）と違う。意図した変更なら `git add <path>` してから打ち直す」を出す。`check.ts` の「直し方: git submodule update --init」は (b) では出さない。
+
+## 解くべき論点
+
+なし
+
+## やること
+
+### 1. 作業ツリーで進めた gitlink を戻さず止める
+`scripts/dev/lib/submodule-drift.ts` の `alignSubmodules` で、`submodule update --init` の前に、`drifted` の各 submodule について記録の版と checkout の版の祖先関係を読み、(b) があれば何も戻さず `blocked`（理由は上のとおり）を返す。`SubmoduleAlignment` の `blocked` の理由に直し方を含められるよう、`scripts/dev/check.ts` の `alignSubmodulesOrExit` が固定の「直し方」を出している行を、理由を持つ側に寄せる。
+- 満たす完了条件: 1, 2
+
+### 2. 単体テストを足して通す
+`test/scripts/dev/submodule-drift.test.ts` に、一時リポジトリ（既存のテストの組み方に合わせる）で (a) 記録のほうが新しい checkout は揃う、(b) checkout を進めて `git add` していないとき `blocked` で checkout の版が変わらない、(c) `git add` 済みなら `none`、を確かめる 3 件を足す。そのあと検証コマンドを通す。
+- 満たす完了条件: 2, 3
+### 名指すファイル
+- `scripts/dev/lib/submodule-drift.ts`
+- `scripts/dev/check.ts`
+- `test/scripts/dev/submodule-drift.test.ts`
+
+## 完了条件
+
+1. 記録の版が checkout の版の祖先で両者が違うとき、`alignSubmodules` は checkout を戻さず `blocked` を返し、理由に両方の短い sha と `git add <path>` の案内が出る。記録のほうが新しい（祖先でない）ときは今までどおり揃える。
+2. 単体テストが (a)・(b)・(c) の 3 つを確かめる。(b) では checkout の版が呼び出しの前後で同じ。
+3. 検証コマンド（`tw config` の `verify`）を通す。
+
+## 注意
+
+- 調べて成り立たなければ `dropped` で閉じてよい（例: `git submodule status` の `+` の checkout の版が、祖先関係で (a)・(b) を見分けられないと分かったとき）。
+
+## 参考情報
+
+- GH-1096（gitlink が戻されて古い版で検証が通った件）

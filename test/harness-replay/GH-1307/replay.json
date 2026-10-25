@@ -1,0 +1,16 @@
+{
+  "id": "GH-1307",
+  "difficulty": "sonnet",
+  "kind": "bug",
+  "base": "f9cd923e7e74280af1c37b87641598845c0c197a",
+  "after": "b896fe51dbded654e5ba6c443419ef26c10f2825",
+  "checkFiles": ["test/shared/frame.test.ts", "test/shared/session/session-fold.test.ts"],
+  "command": [
+    "pnpm",
+    "exec",
+    "vitest",
+    "run",
+    "test/shared/frame.test.ts",
+    "test/shared/session/session-fold.test.ts"
+  ]
+}

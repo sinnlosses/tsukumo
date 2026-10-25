@@ -1,0 +1,54 @@
+---
+id: GH-943
+summary: `report` の `task.id` を実在するタスクに限り、`finished` を検証結果と突き合わせる
+status: done
+difficulty: opus
+loopable: Y
+dependencies: []
+---
+
+## 目的・背景
+
+- `src/shared/report/report-task.ts` の `task.id` は「タスクの一覧に出る ID そのまま」とモデルが写す。`outcome: "finished"` も自己申告で、checks の `ng` や未コミットの変更と突き合わせない。「最終レポート · タスクID · 終わり方」の1行と目録がここから描かれるので、取り違えたIDや、通っていない作業の `finished` がそのまま画面に出る
+- 出どころは2026-10-15 の「AI の出力頼みで決定論にすべき箇所」の洗い出し
+
+## 決まっていること（蒸し返さない）
+
+- `outcome: "finished"` は、同じ `report` の `checks` に `ng` が無いことを条件にする（`ok` の突き合わせ自体は別タスクの担当）
+- `task.id` の実在チェックは、計画の回で実機を数えて分けた（2026-10-16）: 閉じた課題が一覧に10件までしか載らず（`CLOSED_TASK_DISPLAY_LIMIT`）、このプロジェクトでは打ち切りが常に起きる。素通りにすると効かず、差し戻すと古い閉じたタスクの正しい report を誤って差し戻す。ID の形で実在しないものは直近の記録で0件。判断はドラフトへ
+
+## 解くべき論点
+
+- claim 済みのタスクをセッションが知る口があるか。あるなら ID をサーバが注入して欄を省略できる形にする。無ければ、実在チェックだけにとどめ、口を足す案を `## 結果` に残す
+- `finished` と未コミットの変更の突き合わせをするか。しないなら、`finished` の条件を checks だけにする理由を残す
+
+## やること
+
+### 1. finished と ng の差し戻し
+`src/server/report/core/report-review.ts` の `judge` に、`task.outcome === "finished"` かつ `report.checks` に `status === "ng"` の行があれば `finished-with-ng` で差し戻す枠を足す。枠は1ターンに1回（既存の `REPORT_PROCEDURE_REJECTIONS` の仕組みに足す）、文面は固定文にする。確かめ方: `test/server/report/core/report-review.test.ts` に「ng ありの finished は差し戻し」「ng ありの stopped は通る」「ng なしの finished は通る」「2回目は通る」を足す。弱めた実装で落ちる確認: 条件から `finished` の判定を外すと stopped のテストが、枠の印を立てないと2回目のテストが落ちること（Edit で崩して戻し、shasum 一致）。
+
+### 2. 説明文と文書
+`src/shared/report/report-task.ts` の `outcome` の describe に「`checks` に `ng` がある間は `finished` にしない」を足し、`report-review.ts` の冒頭のコメントと `docs/architecture/display.md` の `task` の項も合わせる。確かめ方: `tw verify`。SDK に配る schema の説明文が変わるので `test/e2e/expected/` が動くかを `pnpm run test:e2e:update` で見て、差分が説明文だけであることを読む。
+
+### 名指すファイル
+- `src/server/report/core/report-review.ts`
+- `src/shared/report/report-task.ts`
+- `test/server/report/core/report-review.test.ts`
+- `docs/architecture/display.md`
+
+## 完了条件
+
+1. `checks` に `ng` がある `finished` の `report` が、1ターンに1回だけ固定文で差し戻される（`stopped` は通る。2回目は通る）
+2. 単体テストがあり、説明文と文書が実装と食い違わない
+3. 検証コマンド `pnpm run check` を通す
+
+（`task.id` の実在チェックはこのタスクでは行わない。理由は `## 結果`。判断待ちとして別のドラフトに積む）
+
+## 注意
+
+- 調べて成り立たなければ `dropped` で閉じてよい。理由を `## 結果` に書く
+- 同じ検査関数を触る別タスク（`report` の検証結果の突き合わせ）と取り込みが重なったら、後から着手するほうが合わせる
+
+## 参考情報
+
+- `docs/coding-standards.md`「仕組みをヒューリスティックより優先する」
