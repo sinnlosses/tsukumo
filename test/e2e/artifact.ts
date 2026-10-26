@@ -21,6 +21,9 @@ export const OUTPUT_ROOT = "/tmp/tsukumo-e2e"
 
 export const REPOSITORY_ROOT = fileURLToPath(new URL("../..", import.meta.url)).replace(/\/$/, "")
 
+/** 落ちた it の Playwright の trace を `<シナリオ>/trace.zip` で残す置き場（`.gitignore` 済み）。 */
+export const TRACE_ROOT = path.join(REPOSITORY_ROOT, "test/e2e/output")
+
 export type ArtifactKind = "dom" | "messages"
 
 /**

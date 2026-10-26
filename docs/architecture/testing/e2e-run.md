@@ -95,7 +95,10 @@
   `wsEndpoint` に各ファイルが `beforeAll` で `connect` する**。ファイルの終わりは切断だけで、
   Chrome は実行の終わりに `globalSetup` の後始末が kill する（丁寧に閉じると最後のコンテキストを閉じてから
   約 10 秒待つため。kill しても一時のプロファイルは Playwright が消す）。**スクリーンショットは
-  期待値と食い違って落ちた回（`failures/` の下）と `E2E_UPDATE=1` のときだけ撮る**
+  期待値と食い違って落ちた回（`failures/` の下）と `E2E_UPDATE=1` のときだけ撮る**。
+  **落ちた it だけ、Playwright の trace を `test/e2e/output/<シナリオ>/trace.zip` に残す**
+  （`openRoom` が始め、通った回は捨てる。`.gitignore` 済み）。`https://trace.playwright.dev` に
+  zip を落として開くと（ブラウザの中だけで読む）、操作ごとの DOM とスクリーンショットを辿れる
 - **起こし方**: fake driver・空きポート・自動オープンなし・**`TSUKUMO_HOME`・`HOME`・cwd は1件ごとの
   一時ディレクトリ**（リポジトリで起こすと Beads の実データと git の履歴が画面に入る。`HOME` には使用状況の
   送信を止めた `bd` の設定だけを置く。タスクの一覧は `bd` を起こさない（「E2E のシナリオの一覧」のタスクの一覧の行）が、

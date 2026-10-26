@@ -36,7 +36,10 @@ export function useScenarioRun(): ScenarioRun {
     await connecting
   })
 
-  afterEach(async () => {
+  let testFailed = false
+
+  afterEach(async ({ task }) => {
+    testFailed = task.result?.state === "fail"
     // 後から起こしたものから閉じる（コンテキスト → tsukumo → 一時のディレクトリ）。
     for (const cleanup of cleanups.splice(0).toReversed()) {
       await cleanup()
@@ -54,7 +57,12 @@ export function useScenarioRun(): ScenarioRun {
       if (connecting === undefined) {
         throw new Error("ブラウザに繋いでいない（beforeAll が走っていない）")
       }
-      return openRoom(await connecting, options, (cleanup) => cleanups.push(cleanup))
+      return openRoom(
+        await connecting,
+        options,
+        (cleanup) => cleanups.push(cleanup),
+        () => testFailed,
+      )
     },
   }
 }

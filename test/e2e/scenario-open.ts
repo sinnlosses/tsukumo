@@ -20,6 +20,7 @@ import {
   matchArtifact,
   OUTPUT_ROOT,
   REPOSITORY_ROOT,
+  TRACE_ROOT,
   UPDATE_EXPECTED,
   writeArtifact,
 } from "./artifact.ts"
@@ -47,6 +48,9 @@ import {
   stopTsukumo,
   writeCwdFiles,
 } from "./tsukumo-process.ts"
+
+/** 前の実行の trace を掃除済みのシナリオ。同じシナリオの後の it が、落ちた it の trace を消さないようにする。 */
+const clearedTraceScenarios = new Set<string>()
 
 /** 起こした tsukumo が URL を出すまで待つ上限（ミリ秒）。 */
 const LAUNCH_TIMEOUT_MS = 15_000
@@ -139,6 +143,7 @@ export async function openRoom(
   browser: Browser,
   options: ScenarioOptions,
   addCleanup: (cleanup: () => Promise<void>) => void,
+  hasTestFailed: () => boolean,
 ): Promise<ScenarioRoom> {
   const home = makeTempDirectory("tsukumo-e2e-home-")
   const cwd = makeTempDirectory("tsukumo-e2e-cwd-")
@@ -165,6 +170,16 @@ export async function openRoom(
     reducedMotion: "reduce",
   })
   addCleanup(() => context.close())
+  const tracePath = path.join(TRACE_ROOT, options.scenario, "trace.zip")
+  if (!clearedTraceScenarios.has(options.scenario)) {
+    clearedTraceScenarios.add(options.scenario)
+    rmSync(path.dirname(tracePath), { recursive: true, force: true })
+  }
+  await context.tracing.start({ screenshots: true, snapshots: true })
+  // context.close より先に走る（後から登録したものが先に走る）。
+  addCleanup(() =>
+    hasTestFailed() ? context.tracing.stop({ path: tracePath }) : context.tracing.stop(),
+  )
   const page = await context.newPage()
   await installFixedClock(page)
   await page.addInitScript(RECORD_ANNOUNCEMENTS_SCRIPT)
