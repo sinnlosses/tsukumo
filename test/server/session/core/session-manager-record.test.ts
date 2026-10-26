@@ -159,6 +159,7 @@ describe("createSessionManager", () => {
           mode: "work",
           models: cumulative(100, 20, 0.5),
           breakdown: EMPTY_BREAKDOWN,
+          speakOnlySteps: 0,
         },
         {
           at: 1_000,
@@ -166,6 +167,7 @@ describe("createSessionManager", () => {
           mode: "work",
           models: cumulative(160, 15, 0.75),
           breakdown: EMPTY_BREAKDOWN,
+          speakOnlySteps: 0,
         },
       ])
     })

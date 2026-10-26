@@ -84,14 +84,15 @@ export function createCallReview(): CallReview {
   const reportInheritance = createReportInheritance()
   const speechReview = createSpeechReview({
     hasNews: () => ledger.hasNews("speak"),
-    markDrawn: () => ledger.markDrawn("speak"),
+    position: () => ledger.position("speak"),
+    markDrawn: (position) => ledger.markDrawn("speak", position),
   })
   const workPlanReview = createWorkPlanReview()
   const reportReview = createReportReview(
     workPlanReview.standing,
     {
       hasNews: () => ledger.hasNews("report"),
-      markDrawn: () => ledger.markDrawn("report"),
+      markDrawn: () => ledger.markDrawn("report", ledger.position("report")),
       backgroundTasks: ledger.backgroundTasks,
     },
     REPORT_REJECTION_MODES,
@@ -139,19 +140,24 @@ export function passRelayedEvents(
 type NewsLedger = {
   readonly observe: (event: SessionEvent) => void
   readonly hasNews: (subject: NewsSubject) => boolean
-  readonly markDrawn: (subject: NewsSubject) => void
+  readonly position: (subject: NewsSubject) => number
+  readonly markDrawn: (subject: NewsSubject, position: number) => void
   readonly backgroundTasks: () => readonly BackgroundTask[]
 }
 
 function createNewsLedger(): NewsLedger {
-  // 主題ごとに、直前に描いたあとに新しい事実が届いたか（セッションの頭は届いたものとする）。
-  let pending: ReadonlySet<NewsSubject> = new Set(NEWS_SUBJECTS)
+  // 主題ごとに、届いた新しい事実の数と、描いて使い切った位置。届いた数が使い切った位置より大きければ新しい事実がある（セッションの頭は 1 件届いたものとする）。
+  let raised: Readonly<Record<NewsSubject, number>> = { speak: 1, report: 1 }
+  let drawn: Readonly<Record<NewsSubject, number>> = { speak: 0, report: 0 }
   // メインが呼んで結果をまだ受け取っていないツールの id（`speak` / `report` / `work_plan` は入らない）。
   let runningTools: ReadonlySet<string> = new Set()
   let backgroundTasks: readonly BackgroundTask[] = []
 
   const raise = (subjects: readonly NewsSubject[]): void => {
-    pending = new Set([...pending, ...subjects])
+    raised = {
+      speak: raised.speak + (subjects.includes("speak") ? 1 : 0),
+      report: raised.report + (subjects.includes("report") ? 1 : 0),
+    }
   }
 
   return {
@@ -191,9 +197,10 @@ function createNewsLedger(): NewsLedger {
           return
       }
     },
-    hasNews: (subject) => pending.has(subject),
-    markDrawn: (subject) => {
-      pending = new Set([...pending].filter((candidate) => candidate !== subject))
+    hasNews: (subject) => raised[subject] > drawn[subject],
+    position: (subject) => raised[subject],
+    markDrawn: (subject, position) => {
+      drawn = { ...drawn, [subject]: Math.max(drawn[subject], position) }
     },
     backgroundTasks: () => backgroundTasks,
   }

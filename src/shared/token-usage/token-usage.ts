@@ -126,6 +126,11 @@ export const tokenUsageRecordSchema = z
      * 差し込みの頻度はこの欄を持つ行の数で読む。旧い行・差し込みの無いターンには無い。
      */
     progressNudge: z.enum(["spoke", "silent"]).optional(),
+    /**
+     * メインの assistant メッセージのうち、描かれた `speak` だけを呼んだもの（同じメッセージに別のツールの呼び出しが並んでいない）の数。
+     * `speak` を次のツールと同じ応答に並べていれば増えない。旧い行には無い。
+     */
+    speakOnlySteps: z.number().optional(),
     /** そのターンの増分。空の並びにはならない（増分が無いターンは行を書かない）。 */
     models: z.array(modelTokenUsageSchema).readonly(),
     /** ターンの中の内訳（合計の `models` を割ったもの）。 */
@@ -136,6 +141,7 @@ export const tokenUsageRecordSchema = z
     taskId: row.taskId,
     stage: row.stage,
     progressNudge: row.progressNudge,
+    speakOnlySteps: row.speakOnlySteps,
   }))
   .readonly()
 

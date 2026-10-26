@@ -53,6 +53,7 @@ function record(
     taskId: undefined,
     stage: undefined,
     progressNudge: undefined,
+    speakOnlySteps: undefined,
     models,
     breakdown: {
       main: { steps: 0, tokens: EMPTY_STEP, tools: mainTools },

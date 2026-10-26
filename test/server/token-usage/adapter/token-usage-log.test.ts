@@ -94,6 +94,7 @@ function entry(when: number, models: readonly ModelTokenUsage[] = MODELS): Token
     models,
     breakdown: BREAKDOWN,
     progressNudge: undefined,
+    speakOnlySteps: 0,
   }
 }
 
@@ -153,7 +154,15 @@ describe("createTokenUsageLog", () => {
     await log.flush()
 
     const [record] = readLines("2026-09-22.jsonl")
-    expect(keysOf(record)).toEqual(["v", "at", "sessionId", "mode", "models", "breakdown"])
+    expect(keysOf(record)).toEqual([
+      "v",
+      "at",
+      "sessionId",
+      "mode",
+      "speakOnlySteps",
+      "models",
+      "breakdown",
+    ])
     expect(record).toMatchObject({
       v: 3,
       sessionId: "claude-session-1",
@@ -228,6 +237,7 @@ describe("createTokenUsageLog", () => {
         "outputTokens",
         "resultBytes",
         "sessionId",
+        "speakOnlySteps",
         "steps",
         "subagent",
         "thinkingTokens",
@@ -260,6 +270,7 @@ describe("着手中のタスクとの結び付き", () => {
       "mode",
       "taskId",
       "stage",
+      "speakOnlySteps",
       "models",
       "breakdown",
     ])

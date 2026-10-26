@@ -61,6 +61,8 @@ export type TokenUsageEntry = {
   readonly breakdown: TurnUsageBreakdown
   /** 進みの差し込みで始まったターンだけ値を持つ（`TokenUsageRecord.progressNudge`）。 */
   readonly progressNudge: ProgressNudgeMark | undefined
+  /** メインの assistant メッセージのうち、描かれた `speak` だけを呼んだものの数（{@link speakOnlySteps}）。 */
+  readonly speakOnlySteps: number
 }
 
 type ProgressNudgeMark = NonNullable<TokenUsageRecord["progressNudge"]>
@@ -78,6 +80,14 @@ type TurnUsageTally = {
   readonly steps: readonly StepTally[]
   /** 差し込みで始まったターンか、始まったあとに `speak` が出たか。 */
   readonly progressNudge: "none" | "nudged" | "spoke"
+  /** 直近のメインの `step-usage` の `messageId`。描かれた `speak` がどのメッセージのものかを決める。 */
+  readonly lastMainMessageId: string | undefined
+  /** 直近のメインの `step-usage` のあとに、メインの `tool-started` が来たか。次のメインの `step-usage` がそのメッセージの持ち物にする。 */
+  readonly toolStartedSinceStep: boolean
+  /** 別のツールの呼び出しを持つメインのメッセージの `messageId`。 */
+  readonly toolMessageIds: readonly string[]
+  /** 描かれたメインの `speak` を持つメッセージの `messageId`。 */
+  readonly speakMessageIds: readonly string[]
 }
 
 /** ツールの呼び出し1件（{@link TurnUsageTally} の中だけで使う）。 */
@@ -107,6 +117,10 @@ const EMPTY_TURN_USAGE_TALLY = {
   calls: [],
   steps: [],
   progressNudge: "none",
+  lastMainMessageId: undefined,
+  toolStartedSinceStep: false,
+  toolMessageIds: [],
+  speakMessageIds: [],
 } satisfies TurnUsageTally
 
 /**
@@ -161,6 +175,7 @@ export function createTokenUsageRecorder(log: TokenUsageLog): TokenUsageRecorder
         models,
         breakdown: turnUsageBreakdown(turnUsage),
         progressNudge: progressNudgeMark(turnUsage.progressNudge),
+        speakOnlySteps: speakOnlySteps(turnUsage),
       })
     },
     finishTurn: () => {
@@ -208,6 +223,7 @@ function tallyTurnUsage(tally: TurnUsageTally, event: SessionEvent): TurnUsageTa
     case "tool-started":
       return {
         ...tally,
+        toolStartedSinceStep: tally.toolStartedSinceStep || event.parentToolUseId === undefined,
         calls: [
           ...tally.calls,
           {
@@ -232,6 +248,15 @@ function tallyTurnUsage(tally: TurnUsageTally, event: SessionEvent): TurnUsageTa
     case "step-usage":
       return {
         ...tally,
+        ...(event.scope === "main"
+          ? {
+              lastMainMessageId: event.messageId,
+              toolStartedSinceStep: false,
+              toolMessageIds: tally.toolStartedSinceStep
+                ? [...tally.toolMessageIds, event.messageId]
+                : tally.toolMessageIds,
+            }
+          : {}),
         steps: [
           ...tally.steps.filter((step) => step.messageId !== event.messageId),
           { messageId: event.messageId, scope: event.scope, usage: event.usage },
@@ -239,11 +264,33 @@ function tallyTurnUsage(tally: TurnUsageTally, event: SessionEvent): TurnUsageTa
       }
     case "progress-nudged":
       return { ...tally, progressNudge: "nudged" }
-    case "speak-drawn":
-      return tally.progressNudge === "nudged" ? { ...tally, progressNudge: "spoke" } : tally
+    case "speak-drawn": {
+      const withSpeak =
+        tally.lastMainMessageId === undefined
+          ? tally
+          : { ...tally, speakMessageIds: [...tally.speakMessageIds, tally.lastMainMessageId] }
+      return withSpeak.progressNudge === "nudged"
+        ? { ...withSpeak, progressNudge: "spoke" }
+        : withSpeak
+    }
     default:
       return tally
   }
+}
+
+/**
+ * 描かれた `speak` を持ち、同じメッセージに別のツールの呼び出しが並んでいないメインの assistant メッセージの数。
+ * 同じメッセージの `speak` が何回あっても1つに数える。差し戻された `speak` は描かれないので数えない。
+ *
+ * イベントの列にはメッセージの境界の印が無いので、メッセージ本体のあとに来る `step-usage` の `messageId` を境界にする
+ * （同じ `messageId` のメッセージは返答が流れている間に何度も届く）。
+ * `speak` の結果（`speak-drawn`）は呼び出したメッセージの `step-usage` より後、次のメッセージより前に届く
+ * （次のメッセージは全部の結果を受けて始まる）ので、直近の `step-usage` のメッセージのものとして数える。
+ * `report`・`work_plan` は `tool-started` にならないので、並んでいても別のツールには数えない。
+ */
+function speakOnlySteps(tally: TurnUsageTally): number {
+  const withTool = new Set(tally.toolMessageIds)
+  return new Set(tally.speakMessageIds.filter((messageId) => !withTool.has(messageId))).size
 }
 
 function progressNudgeMark(state: TurnUsageTally["progressNudge"]): ProgressNudgeMark | undefined {

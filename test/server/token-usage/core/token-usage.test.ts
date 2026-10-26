@@ -283,6 +283,86 @@ describe("createTokenUsageRecorder の内訳", () => {
   })
 })
 
+/** 本番と同じく、駆動が出したイベントを `SpeechReview.pass` に通した並びにする。 */
+function speechPassed(driven: readonly SessionEvent[]): readonly SessionEvent[] {
+  const review = createSpeechReview({
+    hasNews: () => true,
+    position: () => 0,
+    markDrawn: () => {},
+  })
+  return driven.flatMap(review.pass)
+}
+
+describe("createTokenUsageRecorder の speak だけの応答の数", () => {
+  const speech: SessionEvent = { kind: "speech", text: "架空のセリフ", expression: "default" }
+  const speakCalled = (toolUseId: string): SessionEvent => ({
+    kind: "speak-called",
+    toolUseId,
+    speech,
+  })
+  const speakRejected = (toolUseId: string): SessionEvent => ({
+    kind: "tool-finished",
+    toolUseId,
+    content: "差し戻し",
+    isError: true,
+  })
+
+  it("speak だけのメッセージを数え、別のツールと並べたメッセージ・差し戻されたメッセージは数えない", () => {
+    const row = writtenRowOf(
+      speechPassed([
+        speakCalled("s-1"),
+        stepUsage("m-1", "main", 1, 1),
+        toolFinished("s-1", "ok"),
+        speakCalled("s-2"),
+        toolStarted("t-2", "Bash"),
+        stepUsage("m-2", "main", 1, 1),
+        toolFinished("s-2", "ok"),
+        toolFinished("t-2", "ok"),
+        speakCalled("s-3"),
+        stepUsage("m-3", "main", 1, 1),
+        speakRejected("s-3"),
+      ]),
+    )
+
+    expect(row.speakOnlySteps).toBe(1)
+  })
+
+  it("同じメッセージに speak が2つ並んでいても1つに数え、委譲先のツールは並んだものに数えない", () => {
+    const row = writtenRowOf(
+      speechPassed([
+        speakCalled("s-1"),
+        speakCalled("s-2"),
+        toolStarted("t-sub", "Read", "agent-1"),
+        stepUsage("m-sub", "subagent", 1, 1),
+        stepUsage("m-1", "main", 1, 1),
+        toolFinished("s-1", "ok"),
+        toolFinished("s-2", "ok"),
+      ]),
+    )
+
+    expect(row.speakOnlySteps).toBe(1)
+  })
+
+  it("同じ messageId の返答が分かれて届いても、ツールの呼び出しがあればそのメッセージは数えない", () => {
+    const row = writtenRowOf(
+      speechPassed([
+        speakCalled("s-1"),
+        stepUsage("m-1", "main", 1, 1),
+        toolStarted("t-1", "Bash"),
+        stepUsage("m-1", "main", 1, 1),
+        toolFinished("s-1", "ok"),
+        toolFinished("t-1", "ok"),
+      ]),
+    )
+
+    expect(row.speakOnlySteps).toBe(0)
+  })
+
+  it("speak の無いターンは 0 を書く", () => {
+    expect(writtenRowOf([stepUsage("m-1", "main", 1, 1)]).speakOnlySteps).toBe(0)
+  })
+})
+
 describe("createTokenUsageRecorder の進みの差し込みの印", () => {
   const nudged: SessionEvent = { kind: "progress-nudged" }
   const speech: SessionEvent = { kind: "speech", text: "架空のセリフ", expression: "default" }
@@ -298,8 +378,7 @@ describe("createTokenUsageRecorder の進みの差し込みの印", () => {
 
   /** 本番と同じく、駆動が出したイベントを `SpeechReview.pass` に通した並びを記録に渡す。 */
   function markOf(driven: readonly SessionEvent[]): "spoke" | "silent" | undefined {
-    const review = createSpeechReview({ hasNews: () => true, markDrawn: () => {} })
-    return writtenRowOf(driven.flatMap(review.pass)).progressNudge
+    return writtenRowOf(speechPassed(driven)).progressNudge
   }
 
   it.each([

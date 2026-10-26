@@ -31,7 +31,10 @@ export type SpeechReview = {
 /** 新しい事実の帳面（`CallReview` が1つだけ持つ）のうち、`speak` が読む口。 */
 export type SpeechNews = {
   readonly hasNews: () => boolean
-  readonly markDrawn: () => void
+  /** いまの新しい事実の位置。呼び出しが届いた時点のものを `markDrawn` に返す。 */
+  readonly position: () => number
+  /** 渡した位置までの新しい事実を使い切ったことにする。それより後に届いたものは残る。 */
+  readonly markDrawn: (position: number) => void
 }
 
 const SPEAK_DRAWN = { kind: "speak-drawn" } as const satisfies SessionEvent
@@ -40,7 +43,8 @@ type SpeakCalled = Extract<SessionEvent, { readonly kind: "speak-called" }>
 
 /** {@link SpeechReview} を1つ作る。セッション1つに1つ。 */
 export function createSpeechReview(news: SpeechNews): SpeechReview {
-  let held: readonly SpeakCalled[] = []
+  // 同じ応答に並べたツールの結果が `speak` の結果より先に届いても、その新しい事実を使い切らないよう、呼び出しが届いた時点の位置を持つ。
+  let held: readonly { readonly call: SpeakCalled; readonly position: number }[] = []
 
   return {
     judge: () =>
@@ -50,22 +54,22 @@ export function createSpeechReview(news: SpeechNews): SpeechReview {
     pass: (event) => {
       switch (event.kind) {
         case "speak-called":
-          held = [...held, event]
+          held = [...held, { call: event, position: news.position() }]
           return []
         case "tool-finished": {
-          const call = held.find((candidate) => candidate.toolUseId === event.toolUseId)
-          if (call === undefined) {
+          const entry = held.find((candidate) => candidate.call.toolUseId === event.toolUseId)
+          if (entry === undefined) {
             return [event]
           }
-          held = held.filter((candidate) => candidate !== call)
+          held = held.filter((candidate) => candidate !== entry)
           if (event.isError) {
             return [event]
           }
-          news.markDrawn()
-          return [call.speech, SPEAK_DRAWN, event]
+          news.markDrawn(entry.position)
+          return [entry.call.speech, SPEAK_DRAWN, event]
         }
         case "turn-finished": {
-          const unsettled = held.flatMap((call) => [call.speech, SPEAK_DRAWN])
+          const unsettled = held.flatMap(({ call }) => [call.speech, SPEAK_DRAWN])
           held = []
           return [...unsettled, event]
         }
