@@ -62,7 +62,7 @@
 
 ### tsukumo への含意
 
-- 主要製品の既定は**全部「文字（Markdown）」**で、図や別窓は (a) 利用者が選ぶ（Gemini の Labs、Notion の /AI Block）、(b) 判定器が「開くべき場面」を当てる（Canvas 83/94%）、(c) データの性質から決まる（ChatGPT: 表データがあるときだけ表・グラフ）のどれか。「毎回のレポートで図の有無を宣言させる」形は見当たらない。
+- 主要製品の既定は全部「文字（Markdown）」で、図や別窓は (a) 利用者が選ぶ（Gemini の Labs、Notion の /AI Block）、(b) 判定器が「開くべき場面」を当てる（Canvas 83/94%）、(c) データの性質から決まる（ChatGPT: 表データがあるときだけ表・グラフ）のどれか。「毎回のレポートで図の有無を宣言させる」形は見当たらない。
 - 図の種類数は少ない。ChatGPT の対話的グラフは 4 種、Claude Docs の mark は 5 種 + Stat + Table。tsukumo の chart 7 種は多くはないが、Claude Docs は「種類」ではなく「mark × 軸 × split」の合成で表しており、種類を増やさず表現を増やす方針。
 - Claude Docs の「what to draw, before how」と「表の全列の図は表の繰り返し」は、tsukumo の `figure` 必須欄の逆向き。先例は「置く理由」を問い、tsukumo は「置かない理由」を問う。「置く理由」を問う側に揃えると、図が要らない大多数の報告で欄が消える。
 
@@ -85,7 +85,7 @@
 ### tsukumo への含意
 
 - 全系で「**意図（question / goal / plan）を先に文で書き、表現（mark・encoding）はあとで選ぶ**」が共通し、抜くと一番効く（DeepResearcher の planning 85%）。tsukumo の「形の札 14 種」は表現の分類で、意図ではない。「この節で読者が決めるものは何か」を 1 行書かせてから形を選ぶほうが先例に沿う。
-- 表現の記法は **grammar of graphics 系（mark + encoding）**が主流（LIDA の Altair、FDV の mark/scale/layout、Claude Docs の mark 5 種）。「chart 7 種」の名前で持つより、mark（bar / line / point / area）× 軸 × split の合成にすると、種類を増やさずに「数直線」（point + 線形 x 軸 1 本）も「円グラフ」（arc）も表せる。
+- 表現の記法は grammar of graphics 系（mark + encoding）が主流（LIDA の Altair、FDV の mark/scale/layout、Claude Docs の mark 5 種）。「chart 7 種」の名前で持つより、mark（bar / line / point / area）× 軸 × split の合成にすると、種類を増やさずに「数直線」（point + 線形 x 軸 1 本）も「円グラフ」（arc）も表せる。
 - ChartGPT の「1 段で 1 パラメータ」は精度を取る代わりに呼び出し回数を増やす。tsukumo は 1 回のツール呼び出しなので、段を増やすなら「意図 1 行 + 表現」の 2 段までが現実的。
 
 ---
