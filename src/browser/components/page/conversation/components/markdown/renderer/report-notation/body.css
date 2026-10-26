@@ -113,6 +113,13 @@
     margin-block: 0;
   }
 }
+/* 10 件で切った表・一覧の末尾の「ほか n 件」。押す口の顔は `<Button variant="link">` が持ち、ここは行の見え方だけ。 */
+.report-fold-more {
+  list-style: none;
+}
+.report-fold-more-button {
+  margin-block: 0.2rem;
+}
 /* 題を持たない表は、表の幅まで縮めてレポートの幅の中央に置く（題つきの表は包み `.report-captioned` が置く）。 */
 :is(.detail-block, [data-report-region]) > .table-scroll {
   inline-size: fit-content;

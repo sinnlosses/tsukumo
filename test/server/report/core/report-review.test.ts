@@ -81,35 +81,6 @@ describe("createReportReview の judge", () => {
     expect(review.judge(INVALID)).toEqual({ kind: "accepted" })
   })
 
-  it("figure の理由と本文の矛盾は規約違反の枠で1ターンに1回だけ差し戻し、文面に本文を写さない", () => {
-    const review = createReportReview(noPlan)
-    const contradicting = reportDraft({
-      conclusion: "架空の結論。",
-      figure: { kind: "none", reason: "short-answer" },
-      sections: [
-        {
-          heading: "架空の秘密の節1",
-          shapeTag: "unspecified",
-          blocks: [{ kind: "text", text: "架空の根拠。", fold: "", aside: "" }],
-        },
-        {
-          heading: "架空の秘密の節2",
-          shapeTag: "unspecified",
-          blocks: [{ kind: "text", text: "架空の根拠。", fold: "", aside: "" }],
-        },
-      ],
-    })
-
-    const first = review.judge(contradicting)
-
-    expect(first).toMatchObject({
-      kind: "rejected",
-      reasons: ["figure-contradiction"],
-      text: reportRejectionText(reportViolations(contradicting)),
-    })
-    expect(review.judge(contradicting)).toEqual({ kind: "accepted" })
-  })
-
   it("ターンの区切り（session-info / turn-finished）で回数が戻る", () => {
     const review = createReportReview(noPlan)
 

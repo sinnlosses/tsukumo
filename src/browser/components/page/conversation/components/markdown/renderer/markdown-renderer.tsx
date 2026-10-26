@@ -18,6 +18,8 @@
 // `img` は `ReportImage` で、棚の画像を起動トークンを付けて読む（読めなければ「出せない」の札）。
 // 質問の preview（`QuestionPreviewMarkdown`）は、Markdown の画像を質問の棚の経路に替える段（`remarkPreviewImage`）を足して描く。
 //
+// 長い表と一覧は `TableBody` / `UnorderedList` / `OrderedList` の上書きが切る。
+//
 // 表は横スクロールの器で包む（`Table`）。
 // 器をここで作るのは、`rehype-raw` が生の HTML も同じ hast の木に入れるので、`table` の上書き1つで Markdown の表とレポートが直接書いた `<table>` の両方に効くため。
 //
@@ -55,15 +57,10 @@ import {
 import { colorSwatch, readColorToken } from "./color-swatch.ts"
 import { CopyButton } from "./copy-button.tsx"
 import { diffWordRanges, type DiffWordRanges } from "./diff-pair.ts"
+import { OrderedList, TableBody, UnorderedList } from "./folded-block.tsx"
 import { REPORT_HAST_CACHE, type HastCache } from "./hast-cache.ts"
 import { MermaidBlock } from "./mermaid-block.tsx"
-import {
-  NotationAside,
-  NotationBlock,
-  NotationInline,
-  NotationListItem,
-  NotationOrderedList,
-} from "./notation.tsx"
+import { NotationAside, NotationBlock, NotationInline, NotationListItem } from "./notation.tsx"
 import { remarkPreviewImage } from "./preview-image.ts"
 import { ReportImage } from "./report-image.tsx"
 import styles from "./report-notation.module.css"
@@ -84,7 +81,9 @@ const REPORT_COMPONENTS = {
   div: NotationBlock,
   aside: NotationAside,
   span: NotationInline,
-  ol: NotationOrderedList,
+  tbody: TableBody,
+  ul: UnorderedList,
+  ol: OrderedList,
   li: NotationListItem,
   img: ReportImage,
 } satisfies Components

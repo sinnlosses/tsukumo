@@ -165,7 +165,7 @@
 置かない理由を enum（`short-answer`・`no-shape`・`single-value`・`no-material`）で言わせる。** 図を置く条件と最小の形は
 欄の説明（`REPORT_FIGURE_DESCRIPTION`）に置き、条8の頭は欄を指す1行だけにする。
 
-順位の違反は数えてから差し戻しを決める線は変えない。差し戻すのは理由と本文が食い違う回（`figure-contradiction`）だけで、
+順位の違反は数えてから差し戻しを決める線は変えない。理由と本文が食い違う回（`figure-contradiction`）は2026-10-27 から数えるだけで、
 理由の分布は記録の版6（`figureKind`・`noneReason`）で数える。`modified` があるのに図の無い最終レポートを差し戻すかは、
 その数を見てから決める。欄・描き方・記録の詳細は `docs/architecture/display.md`「出力の分離（セリフと詳細）」と「塊を足す・外す基準」が持つ。
 

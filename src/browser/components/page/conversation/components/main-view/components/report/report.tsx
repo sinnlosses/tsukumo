@@ -7,7 +7,7 @@
 
 import clsx from "clsx"
 // oxlint-disable-next-line no-restricted-imports -- 描き直し回数を数える単体テストが Compiler の掛からない Vitest を通るため残す（docs/coding-standards/react.md「手でメモ化しない」）
-import { memo, type ReactElement } from "react"
+import { Fragment, memo, useState, type ReactElement } from "react"
 
 import { orderedReportRegions } from "../../../../../../../../shared/session/main-view-report-body.ts"
 import type {
@@ -19,6 +19,7 @@ import { Button } from "../../../../../../ui/button/button.tsx"
 import { detailBlockClassName, Markdown } from "../../../markdown/markdown.tsx"
 import styles from "../../main-view.module.css"
 import { splitReportBlocks } from "./domain/block-split.ts"
+import { hasLongFirstSentence } from "./domain/long-first-sentence.ts"
 
 type ReportProps = {
   readonly body: MainViewReportBody
@@ -77,14 +78,37 @@ export function Report(props: ReportProps): ReactElement {
  */
 function ReportRegion(props: { readonly region: MainViewReportRegion }): ReactElement {
   const { region } = props
+  const [expanded, setExpanded] = useState(false)
+  const blocks = keyedBlocks(splitReportBlocks(region.markdown))
+  const first = blocks[0]
+  // 1文目が長い頭の欄は、最初の塊を1行に畳み、全文は口を押して読む。
+  const clamped = region.kind === "head" && first !== undefined && hasLongFirstSentence(first.text)
   return (
     <div
       data-report-region={region.kind}
       data-report-section={region.kind === "section" ? String(region.id) : undefined}
+      data-first-sentence-clamped={clamped && !expanded ? "" : undefined}
       id={region.kind === "favor" ? region.id : undefined}
     >
-      {keyedBlocks(splitReportBlocks(region.markdown)).map((block) => (
-        <ReportBlock key={block.key} text={block.text} />
+      {blocks.map((block, index) => (
+        <Fragment key={block.key}>
+          <ReportBlock text={block.text} />
+          {clamped && index === 0 && (
+            <Button
+              variant="text-accent"
+              size="action"
+              pressed="none"
+              disabled={false}
+              disclosure={{ kind: "expander", expanded }}
+              className={styles["first-sentence-more"]}
+              onClick={() => {
+                setExpanded(!expanded)
+              }}
+            >
+              {expanded ? "畳む" : "全文"}
+            </Button>
+          )}
+        </Fragment>
       ))}
     </div>
   )

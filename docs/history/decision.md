@@ -15,6 +15,9 @@
 番号と日付は、条の名前がソースに最初に出たコミット（`git log --reverse -S'"<名前>"' -- src/server`）で、
 名前を付ける前に入れた条は差し戻しの文面の句で引いたコミット。どの条も、入れる前に記録で数えてはいない。
 
+2026-10-27 に、次の8条を `reject` から `count` へ下げた（描く側で畳める、または本文の再生成を求める割に読み手へ届く品質を守らない）。
+下げる前の直近28日の差し戻しの数は `long-first-sentence` 73・`sentence-table` 34・`figure-contradiction` 9・`long-table` 5・`crowded-notes` 3・`untitled-section` 1・`long-list` 0・`many-emphasis-rows` 0。
+
 - `resend`: 導入時は数えていない（T-505・2026-09-24。名前を付けたのは GH-466・2026-10-08）
 - `nothing-new`: 導入時は数えていない（T-721・2026-09-27。名前を付けたのは GH-466）
 - `unanswered-work-plan`: 導入時は数えていない（GH-385・2026-10-06。名前を付けたのは GH-466）

@@ -105,6 +105,17 @@
 .main-step > .detail-block > [data-report-region]:last-child > :last-child {
   margin-bottom: 0;
 }
+/* 1文目が長い頭の欄は、最初の塊を1行に畳む。開く口は `first-sentence-more`。 */
+.main-step > .detail-block > [data-first-sentence-clamped] > :first-child {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+}
+.first-sentence-more {
+  min-height: 1.5rem;
+  padding: 0;
+}
 /* 中間レポート（`report` ツールの最後でない呼び出し）。
    地は最終レポートと同じ surface のまま（`.main-step` の既定）で、枠を破線にする・小さなラベルを載せるの2つで本体のレポートと見分ける（色だけに頼らない）。 */
 .main-step.is-interim {
