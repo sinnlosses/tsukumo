@@ -10,6 +10,10 @@ function fakeHooks(overrides: Partial<ShipPlanHooks> = {}): {
 } {
   const calls: string[] = []
   const hooks: ShipPlanHooks = {
+    hasOpenClaim: () => {
+      calls.push("hasOpenClaim")
+      return overrides.hasOpenClaim?.() ?? false
+    },
     isOwnWorktreeClean: () => {
       calls.push("isOwnWorktreeClean")
       return overrides.isOwnWorktreeClean?.() ?? true
@@ -38,10 +42,17 @@ function fakeHooks(overrides: Partial<ShipPlanHooks> = {}): {
 }
 
 describe("runShipPlan", () => {
-  test("正常系は6つのフックを1回ずつ、宣言順に呼ぶ", () => {
+  test("着手中のタスクがあれば clean の確かめ・rebase・verify・merge を呼ばない", () => {
+    const { hooks, calls } = fakeHooks({ hasOpenClaim: () => true })
+    expect(runShipPlan(hooks)).toEqual({ outcome: "task-claimed" })
+    expect(calls).toEqual(["hasOpenClaim"])
+  })
+
+  test("正常系は7つのフックを1回ずつ、宣言順に呼ぶ", () => {
     const { hooks, calls } = fakeHooks()
     expect(runShipPlan(hooks)).toEqual({ outcome: "ok" })
     expect(calls).toEqual([
+      "hasOpenClaim",
       "isOwnWorktreeClean",
       "isMainWorktreeClean",
       "rebaseOntoMain",
@@ -54,25 +65,36 @@ describe("runShipPlan", () => {
   test("自分の作業ツリーが clean でなければ以降を呼ばない", () => {
     const { hooks, calls } = fakeHooks({ isOwnWorktreeClean: () => false })
     expect(runShipPlan(hooks)).toEqual({ outcome: "own-worktree-dirty" })
-    expect(calls).toEqual(["isOwnWorktreeClean"])
+    expect(calls).toEqual(["hasOpenClaim", "isOwnWorktreeClean"])
   })
 
   test("main の作業ツリーが clean でなければ rebase 以降を呼ばない", () => {
     const { hooks, calls } = fakeHooks({ isMainWorktreeClean: () => false })
     expect(runShipPlan(hooks)).toEqual({ outcome: "main-worktree-dirty" })
-    expect(calls).toEqual(["isOwnWorktreeClean", "isMainWorktreeClean"])
+    expect(calls).toEqual(["hasOpenClaim", "isOwnWorktreeClean", "isMainWorktreeClean"])
   })
 
   test("rebase が衝突したら verify・mergeFfOnly を呼ばない", () => {
     const { hooks, calls } = fakeHooks({ rebaseOntoMain: () => "conflict" })
     expect(runShipPlan(hooks)).toEqual({ outcome: "rebase-conflict" })
-    expect(calls).toEqual(["isOwnWorktreeClean", "isMainWorktreeClean", "rebaseOntoMain"])
+    expect(calls).toEqual([
+      "hasOpenClaim",
+      "isOwnWorktreeClean",
+      "isMainWorktreeClean",
+      "rebaseOntoMain",
+    ])
   })
 
   test("verify が非0なら mergeFfOnly を呼ばない", () => {
     const { hooks, calls } = fakeHooks({ verify: () => 2 })
     expect(runShipPlan(hooks)).toEqual({ outcome: "verify-failed", status: 2 })
-    expect(calls).toEqual(["isOwnWorktreeClean", "isMainWorktreeClean", "rebaseOntoMain", "verify"])
+    expect(calls).toEqual([
+      "hasOpenClaim",
+      "isOwnWorktreeClean",
+      "isMainWorktreeClean",
+      "rebaseOntoMain",
+      "verify",
+    ])
   })
 
   test("mergeFfOnly が落ち続けると、やり直し上限2回でも通らず rebase・verify が3回ずつ呼ばれる", () => {

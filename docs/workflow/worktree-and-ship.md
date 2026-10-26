@@ -42,7 +42,9 @@
 `node scripts/dev/ship.ts`（`pnpm run ship`）を打つ。作業ツリーが clean か → `main` を出している
 作業ツリーが clean か → `git rebase main` → `pnpm run check --full` → `git -C <本体> merge --ff-only`
 の順に動き、`--ff-only` が `main` の先回りで落ちたら取り込み（`rebase`）と検証をやり直す
-（上限2回。超えたら止まる）。落ちた段によって次を行う。
+（上限2回。超えたら止まる）。この作業ツリーに `tw claim` 済みの着手中のタスクがあると、`ship` は
+検証より前に拒む（着手中のタスクは `tw finish` で送る。`tw status` が読めないときは拒まず進む）。
+落ちた段によって次を行う。
 
 - 自分の作業ツリーが clean でない: コミットしてから打ち直す
 - `main` を出している作業ツリーが clean でない: そちらを片付けてから打ち直す

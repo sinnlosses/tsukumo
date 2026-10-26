@@ -1,4 +1,4 @@
-// タスクに紐付かない作業を main へ送る入口。作業ツリーが clean か → main を出している作業ツリーが
+// タスクに紐付かない作業を main へ送る入口。着手中のタスクが無いか（あれば拒む）→ 作業ツリーが clean か → main を出している作業ツリーが
 // clean か → `git rebase main` → `pnpm run check --full` → `git merge --ff-only` の順に動く。
 //
 // 使い方:
@@ -11,6 +11,7 @@ import process from "node:process"
 import { PRIMARY_BRANCH } from "../shared/changed-path-repository.ts"
 import { REPOSITORY_ROOT } from "../shared/repository-root.ts"
 import { isWorktreeClean, resolveMainWorktreePath, syncSubmodules } from "./lib/main-worktree.ts"
+import { readOpenClaim } from "./lib/open-claim.ts"
 import { runShipPlan, type ShipPlanResult } from "./lib/ship-plan.ts"
 
 const ROOT = path.resolve(REPOSITORY_ROOT)
@@ -28,6 +29,7 @@ if (mainWorktreePath === ROOT || branch === primaryBranch) {
 }
 
 const result = runShipPlan({
+  hasOpenClaim: () => hasOpenClaimInWorktree(),
   isOwnWorktreeClean: () => isWorktreeClean(ROOT),
   isMainWorktreeClean: () => isWorktreeClean(mainWorktreePath),
   rebaseOntoMain: () => {
@@ -62,8 +64,21 @@ if (result.outcome !== "ok") {
   process.exitCode = 1
 }
 
+function hasOpenClaimInWorktree(): boolean {
+  const status = spawnSync("tw", ["status", "--claims"], { cwd: ROOT, encoding: "utf8" })
+  const reading = status.status === 0 ? readOpenClaim(status.stdout) : "unreadable"
+  if (reading === "unreadable") {
+    process.stderr.write(
+      "tw status --claims を読めなかったので、着手中のタスクの確かめを飛ばして進める\n",
+    )
+  }
+  return reading === "claimed"
+}
+
 function describeFailure(failure: Exclude<ShipPlanResult, { outcome: "ok" }>): string {
   switch (failure.outcome) {
+    case "task-claimed":
+      return "この作業ツリーに着手中のタスクがある。tw finish で送る"
     case "own-worktree-dirty":
       return "自分の作業ツリーに未コミットの変更がある"
     case "main-worktree-dirty":

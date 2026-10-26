@@ -2,6 +2,7 @@
 // そのものは呼ばず、呼び出し元が渡す `ShipPlanHooks` だけを呼ぶ。
 
 export type ShipPlanHooks = {
+  readonly hasOpenClaim: () => boolean
   readonly isOwnWorktreeClean: () => boolean
   readonly isMainWorktreeClean: () => boolean
   readonly rebaseOntoMain: () => "ok" | "conflict"
@@ -12,6 +13,7 @@ export type ShipPlanHooks = {
 
 export type ShipPlanResult =
   | { readonly outcome: "ok" }
+  | { readonly outcome: "task-claimed" }
   | { readonly outcome: "own-worktree-dirty" }
   | { readonly outcome: "main-worktree-dirty" }
   | { readonly outcome: "rebase-conflict" }
@@ -27,6 +29,9 @@ export function runShipPlan(
   hooks: ShipPlanHooks,
   maxRetries: number = DEFAULT_MAX_RETRIES,
 ): ShipPlanResult {
+  if (hooks.hasOpenClaim()) {
+    return { outcome: "task-claimed" }
+  }
   if (!hooks.isOwnWorktreeClean()) {
     return { outcome: "own-worktree-dirty" }
   }
