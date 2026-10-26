@@ -137,7 +137,7 @@ describe("REPORT_NOTATION_PROMPT", () => {
     expect(REPORT_NOTATION_PROMPT).toContain("レポートは必ず日本語で書く")
   })
 
-  it("条8の札の表は14の札を1行ずつ持ち、塊の列は report ツールの塊の種類に実在する", () => {
+  it("図の条の札の表は14の札を1行ずつ持ち、塊の列は report ツールの塊の種類に実在する", () => {
     const rows = articleEightRows()
     const names = rows.flatMap((cells) => cells.slice(1).flatMap(backticked))
     const known: readonly string[] = REPORT_BLOCK_KINDS
@@ -153,7 +153,7 @@ describe("REPORT_NOTATION_PROMPT", () => {
     }
   })
 
-  it("条8の表の graph と mermaid の見本と、構造の前後の印は、report の入口を通る", () => {
+  it("図の条の表の graph と mermaid の見本と、構造の前後の印は、report の入口を通る", () => {
     const samples = (kind: string): string[] =>
       [...article8.matchAll(new RegExp(`\`${kind}\`（([^）]+)）`, "g"))].flatMap(
         ([, sample]) => sample ?? [],
@@ -209,8 +209,7 @@ describe("REPORT_NOTATION_PROMPT", () => {
   })
 
   it("文面の字数は上限以下に収まり、条を足すと落ちる", () => {
-    // いまの文面（5,140字）に約50字の余白を持たせた上限
-    const limit = 5190
+    const limit = 3500
     const length = REPORT_NOTATION_PROMPT.length
 
     expect(

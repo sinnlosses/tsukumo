@@ -44,7 +44,7 @@ export type CardsFault = {
  * `code-mismatch` の `paths` は `code` の塊の `path`（schema が決めた識別子で、書いた自由文ではない）。
  */
 export type ReportViolation =
-  /** `conclusion` が3要素以上ある（条1「冒頭の1〜2文で結論」）。 */
+  /** `conclusion` が3要素以上ある（「結論は `conclusion` に1〜2文で書く」）。 */
   | { readonly kind: "long-conclusion"; readonly count: number }
   /** `mermaid` の塊に、規約が挙げる種類（`REPORT_MERMAID_KINDS`）の外の種類がある。 */
   | { readonly kind: "unknown-mermaid"; readonly count: number }

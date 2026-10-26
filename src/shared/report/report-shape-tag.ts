@@ -24,7 +24,7 @@ export type ReportShapeTag = (typeof REPORT_SHAPE_TAGS)[number]
 /** 読み戻した札。`unspecified` は札を省いた節（欄の無かった頃の transcript を含む）。 */
 export type RecordedReportShapeTag = ReportShapeTag | "unspecified"
 
-/** 札の第一候補・許す代替の塊。`sample` は条8の表に出す見本で、無ければ空。 */
+/** 札の第一候補・許す代替の塊。`sample` は図の条の表に出す見本で、無ければ空。 */
 export type ShapeTagBlock = {
   readonly kind: ReportBlock["kind"]
   readonly sample: string

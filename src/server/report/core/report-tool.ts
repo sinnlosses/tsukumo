@@ -22,7 +22,7 @@ export const REPORT_TOOL_DESCRIPTION =
 
 /**
  * `report` の任意の `checks` 引数の説明。
- * 結果を `conclusion` と `sections` に書かない条は `REPORT_NOTATION_PROMPT` の条1 が持つ。
+ * 結果を `conclusion` と `sections` に書かない条は `REPORT_NOTATION_PROMPT` の「結論は `conclusion` に1〜2文で書く」が持つ。
  */
 export const REPORT_CHECKS_DESCRIPTION =
   "検証の結果。tsukumo が結論の下に、件数の総括行と、落ちた・確かめていない項目の行で描き、通った項目は畳む。" +
@@ -85,7 +85,12 @@ export const REPORT_SECTIONS_DESCRIPTION =
   "結論のあとの根拠・比較・手順。節の並びで、節ごとに部品を並べる。" +
   "部品の文字で効くのはインラインの記法（inline code・太字・リンク）だけ。" +
   "部品の fold に見出しを書くと畳んで描く（畳んでも結論が通る部品だけ）。" +
-  "部品の aside に出典・どこを見るかを1行で書くと、本文の流れの外（本文の右の余白）に置く。"
+  "部品の aside に出典・どこを見るかを1行で書くと、本文の流れの外（本文の右の余白）に置く。" +
+  "作業の最終レポートの典型例（3節）: " +
+  "1節目は見出し「変えたこと」、shapeTag は comparison、塊は table（列は場所・前・後で、変えた箇所ごとに1行）。" +
+  "2節目は見出し「そうした理由」、shapeTag は single、塊は list（判断ごとに1項目、根拠のファイル名や数を添える）。" +
+  "3節目は見出し「変えていないもの」、shapeTag は single、塊は text（触らずに残した範囲を1〜2文で。無ければこの節を省く）。" +
+  "結論と checks に書いたことは節で繰り返さず、根拠と中身だけを置く。"
 
 /** 短い型の表記で渡す版で、`figure` の説明の後ろに足す文。 */
 export const REPORT_FIGURE_SHORT_TYPE_NOTE = "型は sections の説明の ReportFigure。"
