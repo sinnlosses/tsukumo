@@ -20,6 +20,7 @@
     "format": "node scripts/document/write-plain-word-table.ts && node scripts/document/write-document-index.ts && oxfmt .",
     "format:check": "oxfmt . --check",
     "token-limit": "node scripts/dev/token-limit.ts",
+    "token-count": "node scripts/dev/token-count.ts",
     "test": "node scripts/dev/test.ts",
     "test:document": "vitest run",
     "test:coverage": "vitest run --coverage",

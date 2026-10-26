@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest"
 
 import {
+  countTokens,
   findOversizedFiles,
   formatTokenLimitRefusal,
   type StagedChange,
@@ -65,6 +66,17 @@ describe("大きすぎるファイルの判定", () => {
       { path: "a.md", tokens: 5001, growth: 20004 },
       { path: "b.md", tokens: 5500, growth: 1000 },
     ])
+  })
+})
+
+describe("トークン数の状態", () => {
+  test.each([
+    ["超過", "src/a.ts", 20004, { tokens: 5001, limit: 5000, status: "over" }],
+    ["近接", "src/a.ts", 18004, { tokens: 4501, limit: 5000, status: "near" }],
+    ["余裕", "src/a.ts", 18000, { tokens: 4500, limit: 5000, status: "ok" }],
+    ["除外", "vendor/a.json", 90000, { tokens: 22500, limit: 5000, status: "exempt" }],
+  ])("%s", (_name, path, bytes, expected) => {
+    expect(countTokens(path, bytes)).toEqual(expected)
   })
 })
 

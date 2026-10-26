@@ -228,15 +228,16 @@ pnpm run check                 # typecheck + lint + format:check + token-limit +
 pnpm run ship                  # タスクに紐付かない作業を main へ送る（取り込み・検証・送り出しを
                               #   1つに。落ちた段を出して止まる。docs/workflow.md「タスクに紐付
                               #   かない作業を main へ送る」）
-pnpm run test                  # 単体テスト全体（Vitest。`test/e2e/` は外す。ファイルを渡すと規約のテストも足す）
+pnpm run token-count <パス…>   # トークン数と上限、状態（over・near・ok・exempt）
+pnpm run test                  # 単体テスト全体（Vitest。`test/e2e/` は外す。ファイルを渡すと規約も足す）
 npx vitest run test/cli.test.ts  # 単体テストファイルのみ実行
-pnpm run test:coverage         # 単体テストのカバレッジ（src/ が対象。HTML は /tmp/tsukumo-coverage/。check には入れない）
+pnpm run test:coverage         # 単体テストのカバレッジ（src/ が対象。HTML は /tmp/tsukumo-coverage/）
 pnpm run test:e2e <ファイル>    # E2E（組み立ててから渡した test/e2e/*.test.ts を走らせる。Playwright の headless shell が要る（`pnpm exec playwright-core install chromium-headless-shell`）。成果物と
                               #   スクリーンショットは /tmp/tsukumo-e2e/。ファイルなしの全件は check --full の中でだけ通る）
 pnpm run test:e2e:update       # E2E の期待値（test/e2e/expected/）を書き直す。git diff で読んでから入れる。
                               #   既定は check と同じ選び方の E2E だけ。--full で全件、ファイルを渡せばそれだけ
-pnpm run typecheck             # css-types のあと tsc --noEmit
-pnpm run lint                  # oxlint（--fix は lint:fix）
+pnpm run typecheck             # css-types と tsc
+pnpm run lint                  # oxlint（lint:fix で直す）
 pnpm run format                # ADR の一覧表と用語集の索引を見出しから書き直し、oxfmt で自動整形（--check は format:check）
 pnpm run build                 # ブラウザ側（src/browser/）を dist/browser/ に組み立てる（入力が前回と同じなら飛ばす）。起動時には組み立てない
                               #   ので、pnpm install のあとと src/browser/ を直したあとに打つ

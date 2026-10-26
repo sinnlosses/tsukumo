@@ -41,6 +41,20 @@ export function findOversizedFiles(changes: readonly StagedChange[]): readonly O
     }))
 }
 
+export type TokenCount = {
+  readonly tokens: number
+  readonly limit: number
+  readonly status: "over" | "near" | "ok" | "exempt"
+}
+
+/** 上限の何割を超えたら近いと数えるか。 */
+const NEAR_RATIO = 0.9
+
+export function countTokens(path: string, bytes: number): TokenCount {
+  const tokens = Math.ceil(bytes / BYTES_PER_TOKEN)
+  return { tokens, limit: TOKEN_LIMIT, status: statusOf(path, tokens) }
+}
+
 export function formatTokenLimitRefusal(oversized: readonly OversizedFile[]): string {
   const lines = oversized.map(
     (file) =>
@@ -59,6 +73,12 @@ export function formatTokenLimitRefusal(oversized: readonly OversizedFile[]): st
     "- 分けたら `git add` し直してもう一度コミットする。`--no-verify` は使わない。",
     "- どうしても分けられない生成物なら、除外の定数（`scripts/shared/token-limit.ts` の `EXEMPT_PATH_PATTERNS`）へ足すことを人に相談する。",
   ].join("\n")
+}
+
+function statusOf(path: string, tokens: number): TokenCount["status"] {
+  if (isExempt(path)) return "exempt"
+  if (tokens > TOKEN_LIMIT) return "over"
+  return tokens > TOKEN_LIMIT * NEAR_RATIO ? "near" : "ok"
 }
 
 function isExempt(path: string): boolean {
