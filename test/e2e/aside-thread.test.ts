@@ -24,7 +24,9 @@ describe("委譲中の脇の話", () => {
       domRoots: ["main"],
     })
     const main = room.page.locator('[data-region="main"]')
+    // ターンの終わりのあとに駆動が流す `setting-confirmed` まで待つ（送る要求と届く順を競わせない）。
     await room.waitForEvent("turn-finished")
+    await room.waitForEvent("setting-confirmed")
 
     const textArea = room.page.locator("textarea")
     await textArea.fill("いまどこ？（架空の脇の話）")

@@ -19,7 +19,8 @@
    時点で行うなら、疑似セッションの場面の手を前後 500ms 以上空けて区切りを作り、その区切りの手まで
    `waitForEvent` で待つ。場面の手の途中に操作を挟まない（許可の答え（いまの `inquiry`）: 押して流れる
    `pending-changed` と場面の `speech`（`afterMs` 200）が競って揺れた。`input-dispatch`: `opening` の
-   `speech` と依頼後の `partial-utterance` が同じ時刻に届いて競った）
+   `speech` と依頼後の `partial-utterance` が同じ時刻に届いて競った。`aside-thread`: `turn-finished` の直後に疑似駆動が流す
+   `setting-confirmed` を待たずに送り、メッセージ列の中の位置が揺れた）
 2. **非同期の取得（TanStack Query など）が済むまで表示が続く要素は `aria-busy="true"` を出し、
    `settledDom`（`test/e2e/dom-tree.ts`）は DOM が2回続けて同じでも `aria-busy="true"` が
    残っていれば撮らずに待つ。** `settledDom` は DOM の中身を見ず「2回続けて同じ文字列」だけで

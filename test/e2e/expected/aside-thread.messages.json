@@ -160,6 +160,15 @@
     }
   },
   {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "setting-confirmed",
+      "setting": "effort",
+      "value": "medium"
+    }
+  },
+  {
     "sent": "session.prompt",
     "order": 1,
     "input": {
@@ -173,15 +182,6 @@
     "order": 1,
     "status": 200,
     "body": {}
-  },
-  {
-    "received": "event",
-    "at": 1768438800000,
-    "event": {
-      "kind": "setting-confirmed",
-      "setting": "effort",
-      "value": "medium"
-    }
   },
   {
     "received": "event",
