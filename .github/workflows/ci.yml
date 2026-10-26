@@ -30,6 +30,29 @@ jobs:
       - run: pnpm run format:check
       - run: pnpm run test
 
+  coverage:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v2
+      - name: bd を入れる（gastownhall/beads v1.3.1、linux_amd64 を sha256 で固定）
+        run: |
+          set -euo pipefail
+          curl -sSL -o /tmp/bd.tar.gz \
+            "https://github.com/gastownhall/beads/releases/download/v1.3.1/beads_1.3.1_linux_amd64.tar.gz"
+          echo "3219443a9734b89b93fb16ee8d65844759fa1b3cd3cf139c606b7353cfb0715c  /tmp/bd.tar.gz" | sha256sum -c -
+          mkdir -p "$RUNNER_TEMP/bd"
+          tar -xzf /tmp/bd.tar.gz -C "$RUNNER_TEMP/bd" bd
+          echo "$RUNNER_TEMP/bd" >> "$GITHUB_PATH"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run test:coverage
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage-summary
+          path: /tmp/tsukumo-coverage/coverage-summary.json
+
   e2e:
     if: github.event_name == 'schedule'
     runs-on: ubuntu-latest

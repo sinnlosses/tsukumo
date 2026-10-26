@@ -21,5 +21,8 @@ characters/local/
 # E2E で落ちた it の Playwright の trace（test/e2e/output/<シナリオ>/trace.zip）
 /test/e2e/output/
 
+# Stryker の走っている間だけできる元ファイルの控え（stryker.config.mjs）
+/.stryker-tmp/
+
 # pnpm run check が同じ木での打ち直しのために残す、通った段の控え（書きかけの一時ファイルも）
 /.check-record.json*

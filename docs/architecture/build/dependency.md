@@ -38,6 +38,7 @@
 | dev     | `vitest` `vite`                                                                                                                     | テストランナーとブラウザ側の組み立て・開発サーバ                                                                                   |
 | dev     | `@vitejs/plugin-react` `oxc-transform-react`                                                                                        | JSX の変換と React Compiler（`docs/coding-standards.md`「手でメモ化しない」）。2026-09-29 承認                                     |
 | dev     | `@vitest/coverage-v8`                                                                                                               | 単体テストのカバレッジ（`pnpm run test:coverage`。`check` には入れない）。2026-10-02 承認                                          |
+| dev     | `@stryker-mutator/core` `@stryker-mutator/vitest-runner`                                                                            | `src/shared/` の mutation score（`docs/research/mutation-score.md`。手元で月 1 回）                                                |
 
 `zod` と `@anthropic-ai/claude-agent-sdk` はある。`ws` を選ぶのは**ランタイム固有の API に寄せない**ため。
 **`playwright-core` は Playwright 同梱の `chromium-headless-shell`（`pnpm exec playwright-core install chromium-headless-shell` で入れる）を動かし、製品版の Google Chrome は鍵をキーチェーンへ溜めるので使わず**、テストランナー（`@playwright/test`）は足さない。
