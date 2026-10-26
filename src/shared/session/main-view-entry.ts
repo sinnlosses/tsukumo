@@ -5,7 +5,7 @@ import { sectionsWithFigure } from "../report/report-block.ts"
 import { reportChecksMarkdown } from "../report/report-check.ts"
 import { reportSectionMarkdowns } from "../report/report-markdown.ts"
 import { phaseTimesMarkdown } from "../report/report-phase-time.ts"
-import { retrospectiveMarkdown } from "../report/report-retrospective.ts"
+import { retrospectiveSections } from "../report/report-retrospective.ts"
 import { keyFiguresMarkdown } from "../report/report-stat-markdown.ts"
 import { tidyReportSections } from "../report/report-tidy.ts"
 import { isBlankText } from "../utils/blank-text.ts"
@@ -135,7 +135,7 @@ function toMainViewEntries(record: SessionRecord, context: TurnContext): readonl
  * 合図の行と段ごとの所要時間は {@link statusMarkdown}。段ごとの所要時間は最終のときの頭にだけ、同じ依頼のワークプランから描く。
  * `favor` はレポートの記法の「お願い」の塊で包むので、サニタイズも記法の解釈もテキストの本文と同じ経路を通る。
  * `favor` の塊は `favor-<toolUseId>` の `id` を持ち、合図の行の総括行にある印がそこへ飛ぶ。
- * 中身の無い節は欄にしない。欄の無い `retrospective` は空文字にする（{@link retrospectiveMarkdown}）。
+ * 中身の無い節は欄にしない。`retrospective` は節の最後に足して組み（図と表の番号が通しで続く）、欄が無ければ空文字にする（{@link retrospectiveSections}）。
  * `conclusion` は、`task` のあるレポートでは見出しの下の一文として `conclusion` の印で、無いレポートでは見出しの代わりとして `conclusion-lead` の印で包む（`task` そのものは本文に組まない）。
  *
  * 節の並びはここで整形する（{@link tidyReportSections}。記録は引数のまま持ち、描くたびに導く）。
@@ -163,12 +163,15 @@ function reportRegionsOf(
       .filter((part) => !isBlankText(part))
       .join("\n\n")
   const sections = reportSectionsOf(report, context)
-  const markdowns = reportSectionMarkdowns(sections, {
-    kind: "shelved",
-    toolUseId: report.toolUseId,
-    sizes: report.imageSizes,
-    unshelved: report.unshelvedImages,
-  })
+  const markdowns = reportSectionMarkdowns(
+    [...sections, ...retrospectiveSections(report.retrospective)],
+    {
+      kind: "shelved",
+      toolUseId: report.toolUseId,
+      sizes: report.imageSizes,
+      unshelved: report.unshelvedImages,
+    },
+  )
   return {
     kind: "regions",
     head: head(false),
@@ -177,7 +180,7 @@ function reportRegionsOf(
       const markdown = markdowns[id] ?? ""
       return markdown === "" ? [] : [{ id, heading: section.heading.trim(), markdown }]
     }),
-    retrospective: retrospectiveMarkdown(report.retrospective),
+    retrospective: markdowns[sections.length] ?? "",
     favor: { id: favorId, markdown: report.favor },
   }
 }

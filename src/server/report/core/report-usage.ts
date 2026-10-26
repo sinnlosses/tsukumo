@@ -9,12 +9,9 @@ import type {
   ReportArgumentField,
 } from "../../../shared/report/report-argument-size.ts"
 import { tableRowCells } from "../../../shared/report/report-block-comparison.ts"
-import {
-  type ReportBlock,
-  type ReportSection,
-  sectionsWithFigure,
-} from "../../../shared/report/report-block.ts"
+import type { ReportBlock, ReportSection } from "../../../shared/report/report-block.ts"
 import type { ReportCheck } from "../../../shared/report/report-check.ts"
+import { drawnSectionsOf } from "../../../shared/report/report-retrospective.ts"
 import { isForbiddenBlock } from "../../../shared/report/report-shape-tag.ts"
 import type { ReportGenre, ReportTaskOutcome } from "../../../shared/report/report-task.ts"
 import type {
@@ -163,7 +160,7 @@ export function reportUsageEntryOf(
   at: number,
   mainReadImageFile: boolean,
 ): ReportUsageEntry {
-  const drawnSections = sectionsWithFigure(event.figure, event.sections)
+  const drawnSections = drawnSectionsOf(event)
   return {
     at,
     sessionId,

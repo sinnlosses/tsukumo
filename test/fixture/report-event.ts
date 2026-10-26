@@ -56,6 +56,7 @@ export function reportDraft(overrides: Partial<ReportDraft> = {}): ReportDraft {
     conclusionSentenceChars: parseConclusion(conclusion)?.conclusionSentenceChars ?? [],
     figure: { kind: "none", reason: "unrecorded" },
     sections: [],
+    retrospective: { kind: "none" },
     favor: "",
     checks: [],
     fileContents: new Map(),

@@ -6,11 +6,7 @@ import { z } from "zod"
 import type { ExpressionChoice } from "../../../shared/character-pack/expression-choice.ts"
 import type { ReportArgumentField } from "../../../shared/report/report-argument-size.ts"
 import { keyFiguresSchema } from "../../../shared/report/report-block-comparison.ts"
-import {
-  reportFigureSchema,
-  reportSectionSchema,
-  sectionsWithFigure,
-} from "../../../shared/report/report-block.ts"
+import { reportFigureSchema, reportSectionSchema } from "../../../shared/report/report-block.ts"
 import { reportCheckSchema } from "../../../shared/report/report-check.ts"
 import {
   FIRST_SENTENCE_TARGET,
@@ -18,7 +14,10 @@ import {
   MAX_CONCLUSION_SENTENCES,
   MAX_FIRST_SENTENCE,
 } from "../../../shared/report/report-limit.ts"
-import { reportRetrospectiveSchema } from "../../../shared/report/report-retrospective.ts"
+import {
+  drawnSectionsOf,
+  reportRetrospectiveSchema,
+} from "../../../shared/report/report-retrospective.ts"
 import { reportTaskSchema } from "../../../shared/report/report-task.ts"
 import type { ReportSchemaVariant } from "../../../shared/report/schema-variant.ts"
 import { WORK_PLAN_CLOSINGS } from "../../../shared/session/work-plan.ts"
@@ -99,15 +98,14 @@ export function reportTool(
     }
     const [fileContents, mermaidFaults] = await Promise.all([
       readReportBlockFiles(cwd, report.sections),
-      checkMermaidSyntax(
-        mermaidSourcesInSections(sectionsWithFigure(report.figure, report.sections)),
-      ),
+      checkMermaidSyntax(mermaidSourcesInSections(drawnSectionsOf(report))),
     ])
     const verdict = review.judgeReport({
       conclusion: report.conclusion,
       conclusionSentenceChars: report.conclusionSentenceChars,
       figure: report.figure,
       sections: report.sections,
+      retrospective: report.retrospective,
       favor: report.favor,
       checks: report.checks,
       fileContents,
@@ -204,10 +202,19 @@ function reportInputShape(expressions: readonly ExpressionChoice[]) {
   }
 }
 
-/** `short-type` のときモデルに渡す引数の形。`figure` と `sections` だけを緩い形にし、ほかの欄と説明は `json-schema` と同じ。 */
+/** `short-type` のときモデルに渡す引数の形。`figure`・`sections`・`retrospective` の塊だけを緩い形にし、ほかの欄と説明は `json-schema` と同じ。 */
 function shortTypeInputShape(expressions: readonly ExpressionChoice[]) {
   return {
     ...reportInputShape(expressions),
+    retrospective: reportRetrospectiveSchema
+      .extend({
+        blocks: z
+          .array(LOOSE_OBJECT)
+          .optional()
+          .describe("結果の根拠に図・表・コードが要るときだけ。ReportSection の blocks と同じ塊"),
+      })
+      .optional()
+      .describe(REPORT_RETROSPECTIVE_DESCRIPTION),
     figure: LOOSE_OBJECT.optional().describe(
       `${REPORT_FIGURE_DESCRIPTION}${REPORT_FIGURE_SHORT_TYPE_NOTE}`,
     ),

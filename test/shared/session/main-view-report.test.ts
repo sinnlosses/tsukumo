@@ -136,7 +136,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
           toolUseId: "toolu_r1",
           conclusion: "架空の結論。",
           sections: reportSectionsOfBody("架空の根拠。"),
-          retrospective: { kind: "recorded", summary: "架空の結果。", drafts: [] },
+          retrospective: { kind: "recorded", summary: "架空の結果。", drafts: [], blocks: [] },
           favor: "架空のお願い",
         }),
         finished,
@@ -151,6 +151,34 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     )
     expect(order).toEqual(order.toSorted((a, b) => (a ?? 0) - (b ?? 0)))
     expect(order.every((index) => index !== undefined && index >= 0)).toBe(true)
+  })
+
+  it("振り返りの塊は見出し「振り返り」の下の欄に、結果のあとに続けて描く", () => {
+    const turn = turnOf(
+      [
+        ask,
+        reportEvent({
+          toolUseId: "toolu_r1",
+          conclusion: "架空の結論。",
+          sections: reportSectionsOfBody("架空の根拠。"),
+          retrospective: {
+            kind: "recorded",
+            summary: "架空の結果。",
+            drafts: [],
+            blocks: [{ kind: "text", text: "架空の補足。", fold: "", aside: "" }],
+          },
+        }),
+        finished,
+      ],
+      SETTLED,
+      true,
+    )
+
+    const body = turn?.steps[0]?.body
+    const regions = body?.kind === "text" ? body.report : undefined
+    expect(regions?.kind === "regions" ? regions.retrospective : undefined).toBe(
+      "## 振り返り\n\n架空の結果。\n\n架空の補足。",
+    )
   })
 
   it("欄は頭・節（並びの位置を ID に持つ）・振り返り・お願いに分かれ、描く順の欄はそれを順に並べたもの", () => {
@@ -172,7 +200,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
               blocks: [{ kind: "text", text: "架空の本文B。", fold: "", aside: "" }],
             },
           ],
-          retrospective: { kind: "recorded", summary: "架空の結果。", drafts: [] },
+          retrospective: { kind: "recorded", summary: "架空の結果。", drafts: [], blocks: [] },
           favor: "架空のお願い",
         }),
         finished,

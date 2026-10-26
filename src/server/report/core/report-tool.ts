@@ -35,7 +35,7 @@ export const REPORT_CHECKS_DESCRIPTION =
  * どのワークフローの段かは見ず、欄があるときだけ描く。欠けても差し戻さない。
  */
 export const REPORT_RETROSPECTIVE_DESCRIPTION =
-  "振り返りの段があったときだけ、その結果を渡す（sections に混ぜない。専用の塊で描く）。"
+  "振り返りの段があったときだけ、その結果を渡す（sections に混ぜない。見出し「振り返り」の節として最後に描く）。"
 
 /**
  * `report` の任意の `task` 引数の説明。`conclusion` との書き分けと、報告の種類ごとの既定の節の並びはここだけが持つ。

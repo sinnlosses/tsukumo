@@ -5,6 +5,7 @@ import { keys } from "remeda"
 import type { RecordedReportFigure, ReportSection } from "../../../shared/report/report-block.ts"
 import type { ReportCheck } from "../../../shared/report/report-check.ts"
 import { MAX_CONCLUSION_SENTENCES } from "../../../shared/report/report-limit.ts"
+import type { ReportRetrospective } from "../../../shared/report/report-retrospective.ts"
 import type { ReportTask } from "../../../shared/report/report-task.ts"
 import type { WorkPlanClosing } from "../../../shared/session/work-plan.ts"
 import type { GraphFault, MermaidFault, SvgFault, ToneFault } from "./report-figure-fault.ts"
@@ -18,6 +19,8 @@ export type ReportDraft = {
   readonly conclusionSentenceChars: readonly number[]
   readonly figure: RecordedReportFigure
   readonly sections: readonly ReportSection[]
+  /** 図の検査（`svg`・`graph`・`timeline`・`mermaid` など）は、振り返りの塊も `sections` と同じに読む。 */
+  readonly retrospective: ReportRetrospective
   readonly favor: string
   readonly checks: readonly ReportCheck[]
   /** `code` の塊の `path` → 読めたファイルの中身。読めなかった `path` は入らない。 */

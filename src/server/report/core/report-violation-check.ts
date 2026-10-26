@@ -8,11 +8,10 @@
 
 import { markFitsLines, sourceLineCount } from "../../../shared/report/code-mark.ts"
 import { isEmphasisRow } from "../../../shared/report/report-block-comparison.ts"
-import {
-  type RecordedReportFigure,
-  type ReportBlock,
-  type ReportSection,
-  sectionsWithFigure,
+import type {
+  RecordedReportFigure,
+  ReportBlock,
+  ReportSection,
 } from "../../../shared/report/report-block.ts"
 import type { ReportCheck } from "../../../shared/report/report-check.ts"
 import {
@@ -22,6 +21,7 @@ import {
   MAX_PLAIN_CODE_LINES,
   MAX_TABLE_ROWS,
 } from "../../../shared/report/report-limit.ts"
+import { drawnSectionsOf } from "../../../shared/report/report-retrospective.ts"
 import { codeBlockMatchesFile } from "./code-block-match.ts"
 import {
   badCardsIn,
@@ -70,7 +70,7 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
     })
   const firstSentenceLength = report.conclusionSentenceChars[0] ?? 0
 
-  const drawnSections = sectionsWithFigure(report.figure, report.sections)
+  const drawnSections = drawnSectionsOf(report)
   const drawnBlocks = drawnSections.flatMap((section) => section.blocks)
   const svgFaults = svgFaultsInSections(drawnSections)
   const svgToneFaults = svgToneFaultsInSections(drawnSections)
