@@ -13,10 +13,13 @@ import type { ReportSchemaVariant } from "../../../shared/report/schema-variant.
 import { createDatedRecordLog, type DatedRecordLog } from "../../adapter/lib/dated-record-log.ts"
 import { isoWithOffset, localDateKey } from "../../adapter/local-time.ts"
 import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
-import type {
-  ReportRejectionEntry,
-  ReportUsageEntry,
-  ReportUsageLog,
+import {
+  nextCallOfAccepted,
+  nextCallOfRejected,
+  type ReportNextCall,
+  type ReportRejectionEntry,
+  type ReportUsageEntry,
+  type ReportUsageLog,
 } from "../core/report-usage.ts"
 
 export function reportUsageDir(): string {
@@ -45,15 +48,44 @@ export function createReportUsageLog(
     },
     root,
   )
+  // 差し戻しの行は次の呼び出しが分かるまで書かず、セッションごとに1件だけ待たせる。閉じるときは次が無いまま書く。
+  const pending = new Map<string, ReportRejectionEntry>()
+  const writeRejection = (entry: ReportRejectionEntry, nextCall: ReportNextCall | undefined) => {
+    log.append(localDateKey(entry.at), [toRejectionRecord(entry, reportSchema, nextCall)])
+  }
+  const settle = (sessionId: string, nextCall: ReportNextCall | undefined) => {
+    const waiting = pending.get(sessionId)
+    if (waiting !== undefined) {
+      pending.delete(sessionId)
+      writeRejection(waiting, nextCall)
+    }
+  }
+  const settleAll = () => {
+    for (const sessionId of pending.keys()) {
+      settle(sessionId, undefined)
+    }
+  }
   return {
     append: (entry) => {
+      settle(entry.sessionId, nextCallOfAccepted(entry))
       log.append(localDateKey(entry.at), [toRecord(entry, reportSchema)])
     },
     appendRejection: (entry) => {
-      log.append(localDateKey(entry.at), [toRejectionRecord(entry, reportSchema)])
+      if (entry.mode === "count") {
+        writeRejection(entry, undefined)
+        return
+      }
+      settle(entry.sessionId, nextCallOfRejected(entry))
+      pending.set(entry.sessionId, entry)
     },
-    flush: log.flush,
-    close: log.close,
+    flush: () => {
+      settleAll()
+      return log.flush()
+    },
+    close: () => {
+      settleAll()
+      return log.close()
+    },
     pruneExpired: log.pruneExpired,
   }
 }
@@ -61,6 +93,7 @@ export function createReportUsageLog(
 function toRejectionRecord(
   entry: ReportRejectionEntry,
   reportSchema: ReportSchemaVariant,
+  nextCall: ReportNextCall | undefined,
 ): ReportRejectionRecord {
   return {
     v: REPORT_USAGE_FORMAT_VERSION,
@@ -72,6 +105,7 @@ function toRejectionRecord(
     argumentChars: entry.argumentChars,
     inheritedFields: entry.inheritedFields,
     reportSchema,
+    ...(nextCall === undefined ? {} : { nextCall }),
   }
 }
 

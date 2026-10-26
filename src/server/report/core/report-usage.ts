@@ -147,6 +147,20 @@ export type ReportRejectionEntry = {
   readonly inheritedFields: readonly ReportArgumentField[]
 }
 
+/** 差し戻しのあとに同じセッションで届いた次の `report` の呼び出し。受け付けなら `reasons` は空。 */
+export type ReportNextCall = {
+  readonly reasons: readonly string[]
+  readonly chars: number
+}
+
+export function nextCallOfAccepted(entry: ReportUsageEntry): ReportNextCall {
+  return { reasons: [], chars: entry.argumentChars.total }
+}
+
+export function nextCallOfRejected(entry: ReportRejectionEntry): ReportNextCall {
+  return { reasons: entry.reasons, chars: entry.argumentChars.total }
+}
+
 /** 書けなくても例外を投げない。 */
 export type ReportUsageLog = {
   readonly append: (entry: ReportUsageEntry) => void

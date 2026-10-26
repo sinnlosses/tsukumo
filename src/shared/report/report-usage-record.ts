@@ -14,7 +14,7 @@ import { REPORT_SCHEMA_VARIANTS } from "./schema-variant.ts"
  * 欄を足したら版を上げ、集計は `MIN_FORMAT_VERSION` より古い行を読まない。
  * 集計は版で分母を切らず、欄を記録した行を分母にする。
  */
-export const REPORT_USAGE_FORMAT_VERSION = 21 satisfies number
+export const REPORT_USAGE_FORMAT_VERSION = 22 satisfies number
 
 /** どの駆動で起こしたプロセスの行か（版19から）。`fake` は疑似セッションで、集計は既定で除く。 */
 const reportUsageDriverSchema = z.enum(["sdk", "fake"])
@@ -165,6 +165,7 @@ export type ReportUsageRecord = z.infer<typeof reportUsageRecordSchema>
  * 差し戻した `report` 1回の記録の行。受け付けの行と同じファイルに入り、`kind` の有無で見分ける（受け付けの行に `kind` は無い）。
  * 書いてよいのは時刻・セッションID・差し戻しの種類の名前・引数の字数・引き継いだ欄の名前・型の渡し方だけ。
  * `kind` が `counted` の行は、通した `report` が当たった数えるだけの条の名前を同じ形で持つ（版21から）。差し戻しの集計に混ぜない。
+ * `nextCall` は `rejected` の行だけが持ち、次の呼び出しの結果。次が来ないまま記録を閉じたときは持たない（版22から）。
  */
 export const reportRejectionRecordSchema = z
   .object({
@@ -182,6 +183,14 @@ export const reportRejectionRecordSchema = z
     inheritedFields: inheritedFieldsSchema,
     /** どちらの型の渡し方で受けたか（版17から）。 */
     reportSchema: reportSchemaVariantSchema,
+    /**
+     * 同じセッションの次の `report` の呼び出し。`reasons` はその呼び出しが差し戻された理由で、受け付けなら空。
+     * `chars` はその引数の字数の合計。
+     */
+    nextCall: z
+      .object({ reasons: z.array(z.string()).readonly(), chars: z.number() })
+      .readonly()
+      .optional(),
   })
   .readonly()
 

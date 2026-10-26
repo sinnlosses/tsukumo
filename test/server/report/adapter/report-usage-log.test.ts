@@ -164,6 +164,59 @@ describe("createReportUsageLog", () => {
     expectEveryFieldKept(rejection, lines[0], ["mode"])
   })
 
+  describe("差し戻しの次の呼び出し", () => {
+    const rejection = (reasons: readonly string[], minute: number) =>
+      ({
+        mode: "reject",
+        at: at(9, minute),
+        sessionId: "claude-session-1",
+        reasons,
+        argumentChars: { total: 800, fields: {} },
+        inheritedFields: [],
+      }) as const
+
+    it("差し戻しのあとに受け付けた呼び出しが来ると、差し戻しの行に空の理由と次の字数が付く", async () => {
+      const log = createReportUsageLog("json-schema", root())
+
+      log.appendRejection(rejection(["resend"], 5))
+      log.append({ ...entry(at(9, 6)), argumentChars: { total: 300, fields: {} } })
+      await log.flush()
+
+      expect(readLines("2026-09-22.jsonl")).toMatchObject([
+        { kind: "rejected", nextCall: { reasons: [], chars: 300 } },
+        { sessionId: "claude-session-1" },
+      ])
+    })
+
+    it("同じ理由で2回差し戻されると、1回目の行には2回目の理由が付き、2回目の行には次が付かない", async () => {
+      const log = createReportUsageLog("json-schema", root())
+
+      log.appendRejection(rejection(["resend"], 5))
+      log.appendRejection({
+        ...rejection(["resend"], 6),
+        argumentChars: { total: 500, fields: {} },
+      })
+      await log.flush()
+
+      const [first, second] = readLines("2026-09-22.jsonl")
+      expect(first).toMatchObject({ nextCall: { reasons: ["resend"], chars: 500 } })
+      expect(second).not.toHaveProperty("nextCall")
+    })
+
+    it("別のセッションの呼び出しは、待っている差し戻しの次に数えない", async () => {
+      const log = createReportUsageLog("json-schema", root())
+
+      log.appendRejection(rejection(["resend"], 5))
+      log.append(entry(at(9, 6), "claude-session-2"))
+      await log.flush()
+
+      const lines = readLines("2026-09-22.jsonl")
+      expect(lines).toHaveLength(2)
+      expect(lines[1]).toMatchObject({ kind: "rejected" })
+      expect(lines[1]).not.toHaveProperty("nextCall")
+    })
+  })
+
   it("数えるだけの条の件は、差し戻しの行と同じ形の counted の行になる", async () => {
     const log = createReportUsageLog("json-schema", root())
 
