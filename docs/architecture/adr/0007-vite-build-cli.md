@@ -1,5 +1,7 @@
 # 組み立ては `vite build` の CLI を子プロセスで起こす（2026-09-27）
 
+ステータス: 採用
+
 **`bun build` をやめ、`vite build` で組み立てる。** Node + Vite + Vitest へ移す段の3段目で、
 Vite 前提の道具（Storybook・React Compiler）を本物と同じ設定で使えるようにするため。設定は
 リポジトリ直下の `vite.config.ts` の1つで、入口の置き場（`src/browser/`）と出し先（`dist/browser/`）は

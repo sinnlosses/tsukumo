@@ -1,5 +1,7 @@
 # ホスト（Orca か既定のブラウザ）と中身（Web アプリ）を分ける
 
+ステータス: 採用
+
 画面を出す入れ物を「ホスト」と呼ぶ。**いまのホストは Orca のブラウザタブと macOS の既定のブラウザが並ぶ**
 （開くのに `orca tab create --url` / `open` を使う。どちらを使うかは `docs/architecture/adr/0015-single-host-port.md`）。ページそのものは**どのホストでも動く Web アプリ**として作り、
 ホストに依存する操作はホストのポート（`src/server/host/core/host.ts`）の裏に置く（下の「ホスト依存の操作は

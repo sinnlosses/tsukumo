@@ -2,10 +2,11 @@
 // 表の範囲は、指定した見出しより後で最初に現れる `|` で始まる連続した行。
 // 見出しはコードブロックの外の行だけを数える。
 
-/** 一覧に載せる文書1件（ADR。ファイル名と、1行目の `# ` の題）。 */
+/** 一覧に載せる文書1件（ADR。ファイル名と、1行目の `# ` の題と、その次の空でない行のステータス。無い・不正なら空文字）。 */
 export type TitledFile = {
   readonly fileName: string
   readonly title: string
+  readonly status: string
 }
 
 /** 親の一覧に載せる子のファイル1件（ファイル名と本文）。 */
@@ -17,6 +18,7 @@ export type ChildFile = {
 export type TableRow = readonly string[]
 
 export const DECISION_TABLE_HEADING = "## 設計判断（なぜ今の形なのか）"
+export const DECISION_TABLE_COLUMNS = ["ファイル", "判断", "ステータス"] as const satisfies TableRow
 export const SECTION_INDEX_HEADING = "## 節の索引"
 export const CHILD_LIST_COLUMNS = ["ファイル", "題", "節"] as const satisfies TableRow
 
@@ -36,10 +38,25 @@ const READING_GUIDE_TITLES = new Set([
 
 /** 設計判断の表の行（ファイル名の昇順）。 */
 export function decisionRows(adrs: readonly TitledFile[]): TableRow[] {
-  return sortByFileName(adrs).map(({ fileName, title }) => [
+  return sortByFileName(adrs).map(({ fileName, title, status }) => [
     `\`docs/architecture/adr/${fileName}\``,
     title,
+    status,
   ])
+}
+
+const ADR_STATUS_PATTERN = /^ステータス: (採用|置き換え済み（→ \d{4}）|廃止)$/u
+
+/**
+ * ADR の題の次の空でない行のステータスの値（`採用`・`置き換え済み（→ 00NN）`・`廃止`）。
+ * 整形が題の直後に空行を入れるので、空行は読み飛ばす。その行が無い・形が違えば `undefined`。
+ */
+export function readAdrStatus(text: string): string | undefined {
+  const next = text
+    .split("\n")
+    .slice(1)
+    .find((line) => line.trim() !== "")
+  return ADR_STATUS_PATTERN.exec(next ?? "")?.[1]
 }
 
 /**
@@ -94,14 +111,6 @@ export function readTableRows(text: string, heading: string): TableRow[] {
     return []
   }
   return range.lines.slice(2).map(parseRow)
-}
-
-/** `heading` の後の表の行を `rows` に差し替える。見出し行と区切り行は残す。 */
-export function replaceTableRows(text: string, heading: string, rows: readonly TableRow[]): string {
-  return replaceTableLines(text, heading, (tableLines) => [
-    ...tableLines.slice(0, 2),
-    ...rows.map(renderRow),
-  ])
 }
 
 /** `heading` の後の表を、見出し行 `columns` と区切り行と `rows` で書き直す。 */

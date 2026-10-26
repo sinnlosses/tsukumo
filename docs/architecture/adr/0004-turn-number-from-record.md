@@ -1,5 +1,7 @@
 # ターンの通し番号は記録が持ち、位置では決めない（2026-09-22）
 
+ステータス: 採用
+
 **`SessionState` が `nextTurnId` を持ち、`request` の記録にそのときの番号を焼く。**
 `mainViewTurns` も `turnSpeeches` も、その番号をそのまま読む。
 

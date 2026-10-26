@@ -1,5 +1,7 @@
 # 機能だけが動かす状態の畳み方は、その機能の shared に置く（2026-09-30）
 
+ステータス: 採用
+
 **`SessionState` の欄のうち、1つの機能のイベントだけで動き、値の置き換えより多い判断を持つ欄の組は、
 その機能の `shared/<機能>/` に部分の reducer として置く。** `applySessionEvent` は入口のまま残り、
 その機能のイベントを部分の reducer へ1行で委ねる。日記（`diaryWriting`。`src/shared/diary/diary.ts` の

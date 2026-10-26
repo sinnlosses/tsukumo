@@ -1,5 +1,7 @@
 # ホスト依存の操作は1つのポートにまとめる
 
+ステータス: 採用
+
 **ホスト（Orca か既定のブラウザ）に依存する操作は1つのポートの裏に
 置く**。ポートは `src/server/host/core/host.ts`、アダプタは `src/server/host/adapter/orca-host.ts`・
 `src/server/host/adapter/browser-host.ts` と何も開かない `src/server/host/adapter/none-host.ts`。今あるのは次の2つ:

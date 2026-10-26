@@ -7,12 +7,13 @@ import {
   CHILD_LIST_COLUMNS,
   childListRows,
   type ChildFile,
+  DECISION_TABLE_COLUMNS,
   DECISION_TABLE_HEADING,
   decisionRows,
+  readAdrStatus,
   readChildIndex,
   readTableRows,
   replaceTable,
-  replaceTableRows,
   rewriteChildIndex,
   SECTION_INDEX_HEADING,
   type TableRow,
@@ -79,9 +80,10 @@ export function writeIndexes(root: string): void {
   const architecturePath = join(root, ARCHITECTURE_PATH)
   writeFileSync(
     architecturePath,
-    replaceTableRows(
+    replaceTable(
       readFileSync(architecturePath, "utf8"),
       DECISION_TABLE_HEADING,
+      DECISION_TABLE_COLUMNS,
       decisionRows(readAdrs(root)),
     ),
   )
@@ -143,10 +145,12 @@ function listMarkdownFiles(root: string, directory: string): string[] {
 function readAdrs(root: string): TitledFile[] {
   return readdirSync(join(root, ADR_DIRECTORY))
     .filter((fileName) => /^\d{4}-.*\.md$/.test(fileName))
-    .map((fileName) => ({
-      fileName,
-      title: (readFileSync(join(root, ADR_DIRECTORY, fileName), "utf8").split("\n")[0] ?? "")
-        .replace(/^# /, "")
-        .trim(),
-    }))
+    .map((fileName) => {
+      const text = readFileSync(join(root, ADR_DIRECTORY, fileName), "utf8")
+      return {
+        fileName,
+        title: (text.split("\n")[0] ?? "").replace(/^# /, "").trim(),
+        status: readAdrStatus(text) ?? "",
+      }
+    })
 }

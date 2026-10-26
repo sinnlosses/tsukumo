@@ -3,10 +3,10 @@ import { describe, expect, it } from "vitest"
 import {
   childListRows,
   decisionRows,
+  readAdrStatus,
   readChildIndex,
   readTableRows,
   replaceTable,
-  replaceTableRows,
   rewriteChildIndex,
 } from "../../../scripts/document/document-index.ts"
 
@@ -14,15 +14,34 @@ describe("decisionRows", () => {
   it("ADR をファイル名の昇順に、パスと題の行にする", () => {
     expect(
       decisionRows([
-        { fileName: "0002-b.adr", title: "題B" },
-        { fileName: "0001-a.adr", title: "題A" },
-        { fileName: "0003-c.adr", title: "題C" },
+        { fileName: "0002-b.adr", title: "題B", status: "廃止" },
+        { fileName: "0001-a.adr", title: "題A", status: "採用" },
+        { fileName: "0003-c.adr", title: "題C", status: "置き換え済み（→ 0004）" },
       ]),
     ).toEqual([
-      ["`docs/architecture/adr/0001-a.adr`", "題A"],
-      ["`docs/architecture/adr/0002-b.adr`", "題B"],
-      ["`docs/architecture/adr/0003-c.adr`", "題C"],
+      ["`docs/architecture/adr/0001-a.adr`", "題A", "採用"],
+      ["`docs/architecture/adr/0002-b.adr`", "題B", "廃止"],
+      ["`docs/architecture/adr/0003-c.adr`", "題C", "置き換え済み（→ 0004）"],
     ])
+  })
+})
+
+describe("readAdrStatus", () => {
+  const adr = (secondLine: string): string => ["# 題", secondLine, "", "本文"].join("\n")
+
+  it("題の次の空でない行の `ステータス: ` の値を返す（整形が入れる空行は読み飛ばす）", () => {
+    expect(readAdrStatus(["# 題", "", "ステータス: 採用", "", "本文"].join("\n"))).toBe("採用")
+    expect(readAdrStatus(adr("ステータス: 採用"))).toBe("採用")
+    expect(readAdrStatus(adr("ステータス: 廃止"))).toBe("廃止")
+    expect(readAdrStatus(adr("ステータス: 置き換え済み（→ 0034）"))).toBe("置き換え済み（→ 0034）")
+  })
+
+  it("ステータスの行が無い・題の次の空でない行でない・値が不正なら undefined", () => {
+    expect(readAdrStatus(adr(""))).toBeUndefined()
+    expect(readAdrStatus(["# 題", "", "本文", "ステータス: 採用"].join("\n"))).toBeUndefined()
+    expect(readAdrStatus(adr("ステータス: 保留"))).toBeUndefined()
+    expect(readAdrStatus(adr("ステータス: 置き換え済み"))).toBeUndefined()
+    expect(readAdrStatus("# 題")).toBeUndefined()
   })
 })
 
@@ -225,27 +244,6 @@ describe("表の読み書き", () => {
 
   it("見出しと表のあいだに文があっても、行のセルを前後の空白なしで読む", () => {
     expect(readTableRows(text, "## 見出し")).toEqual([["a", "b"]])
-  })
-
-  it("行だけを差し替え、見出し行と前後の文は残す", () => {
-    const replaced = replaceTableRows(text, "## 見出し", [
-      ["x", "y"],
-      ["z", "w"],
-    ])
-    expect(replaced).toBe(
-      [
-        "## 見出し",
-        "",
-        "表は手で直さない。",
-        "",
-        "| 列1 | 列2 |",
-        "| --- | --- |",
-        "| x | y |",
-        "| z | w |",
-        "",
-        "後ろの文",
-      ].join("\n"),
-    )
   })
 
   it("3列の表も、列の数のまま読む", () => {

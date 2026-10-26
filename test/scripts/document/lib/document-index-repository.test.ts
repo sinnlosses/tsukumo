@@ -19,6 +19,17 @@ describe("文書の一覧表", () => {
   }
 })
 
+describe("設計判断の表", () => {
+  it("すべての ADR が、題の次の空でない行に有効なステータスを持つ", () => {
+    const decision = STATES.find(({ kind }) => kind === "decision")
+    const withoutStatus = (decision?.expected ?? [])
+      .filter(([, , status]) => status === "")
+      .map(([path]) => path)
+
+    expect(withoutStatus).toEqual([])
+  })
+})
+
 describe("親の文書の子の一覧", () => {
   for (const { name, expected } of STATES.filter(({ kind }) => kind === "child-list")) {
     it(`${name} は、題と節の列の組で子を1つに決められる`, () => {
