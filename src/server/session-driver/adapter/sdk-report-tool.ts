@@ -15,7 +15,7 @@ import {
   MAX_FIRST_SENTENCE,
 } from "../../../shared/report/report-limit.ts"
 import { reportRetrospectiveSchema } from "../../../shared/report/report-retrospective.ts"
-import { reportTaskSchema } from "../../../shared/report/report-task.ts"
+import { type ReportTask, reportTaskSchema } from "../../../shared/report/report-task.ts"
 import type { ReportSchemaVariant } from "../../../shared/report/schema-variant.ts"
 import { WORK_PLAN_CLOSINGS } from "../../../shared/session/work-plan.ts"
 import { REPORT_TOOL_NAME } from "../../core/tsukumo-tool-name.ts"
@@ -53,7 +53,7 @@ import { speechShape } from "./sdk-speech-tool.ts"
  * モデルに渡す schema の欄はどれも任意で、省いた欄は同じターンで直前に差し戻した呼び出しから引き継ぐ。
  * 判定と題には、届いた引数を `assistant` メッセージの変換と同じ `reportEvents` でイベントの形にし、
  * 描く値と同じ土台で埋めた値（`CallReview.fillReport`）を使う。
- * 組んだ値が省けない欄（{@link REQUIRED_REPORT_FIELDS}）を欠いたら、判定せずに `isError` で返す（記録の理由は `tool-error`）。
+ * 組んだ値が省けない欄（{@link ALL_REQUIRED_REPORT_FIELDS}。`sessionRemaining` は作業を終えたときだけ省ける）を欠いたら、判定せずに `isError` で返す（記録の理由は `tool-error`）。
  * 土台を動かすのは `CallReview.pass` に流れる結果だけで、ここは読むだけ。
  *
  * 通したときだけ結果に `_meta["claude/endTurn"]` を付け、そこでターンを閉じる。
@@ -81,10 +81,9 @@ export function reportTool(
       (event) => event.kind === "report",
     )
     const report = called === undefined ? undefined : review.fillReport(called)
-    const missing =
-      report === undefined
-        ? REQUIRED_REPORT_FIELDS
-        : REQUIRED_REPORT_FIELDS.filter((field) => !hasReportField(report, field))
+    const missing = (
+      report === undefined ? ALL_REQUIRED_REPORT_FIELDS : requiredFieldsOf(report)
+    ).filter((field) => report === undefined || !hasReportField(report, field))
     if (report === undefined || missing.length > 0) {
       return {
         content: [{ type: "text" as const, text: missingFieldsText(missing) }],
@@ -136,15 +135,23 @@ export function reportTool(
   )
 }
 
-/** 組んだ値で省けない欄。モデルに渡す schema ではどれも任意で、省いた欄は差し戻した呼び出しから引き継ぐ。 */
-const REQUIRED_REPORT_FIELDS = [
+/**
+ * 組んだ値で省けない欄。モデルに渡す schema ではどれも任意で、省いた欄は差し戻した呼び出しから引き継ぐ。
+ * `sessionRemaining` は作業を終えた（`task.outcome` が `finished`）ときだけ省ける。
+ */
+const ALL_REQUIRED_REPORT_FIELDS = [
   "conclusion",
   "figure",
-  "sessionSummary",
   "sessionRemaining",
   "closing",
-  "waitingLine",
 ] as const satisfies readonly ReportArgumentField[]
+
+function requiredFieldsOf(report: { readonly task: ReportTask }): readonly ReportArgumentField[] {
+  const finished = report.task.kind === "task" && report.task.outcome === "finished"
+  return finished
+    ? ALL_REQUIRED_REPORT_FIELDS.filter((field) => field !== "sessionRemaining")
+    : ALL_REQUIRED_REPORT_FIELDS
+}
 
 /** handler で組む `report` のイベントの id。土台で埋めるだけで、預かりの突き合わせには使わない。 */
 const HANDLER_TOOL_USE_ID = "report-handler"

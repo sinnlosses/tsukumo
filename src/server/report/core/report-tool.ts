@@ -109,7 +109,8 @@ export const REPORT_CLOSING_DESCRIPTION =
  */
 export const REPORT_WAITING_LINE_DESCRIPTION =
   "待ちの一言（speak と同じ text と expression）。利用者が次の依頼を送らないまましばらく経ったら、吹き出しに1回だけ出る。" +
-  "次の依頼を待っていることを言う一言にし、closing とレポートの中身を言い直さない。"
+  "次の依頼を待っていることを言う一言にし、closing とレポートの中身を言い直さない。" +
+  "言いたい一言があるときだけ書く。省くと書かせた待ちの行、それも無ければ tsukumo の既定の1文が出る。"
 
 /**
  * `report` の任意の `title` 引数の説明。セッション一覧の見出しにする題を付けさせる条はここだけ。
@@ -117,7 +118,7 @@ export const REPORT_WAITING_LINE_DESCRIPTION =
  */
 export const REPORT_TITLE_DESCRIPTION =
   `セッション一覧の見出しにする短い題（${String(MAX_SESSION_HEADING_LENGTH)}字以内）。` +
-  "sessionSummary を書き直すたびに、いまの題が要約の中心に合っているかを見る。合っていなければ新しい題を渡し、合っていれば省く。" +
+  "セッションの中心の話題が変わったときだけ新しい題を渡し、変わっていなければ省く。" +
   "/clear のあとの新しいセッションには前の題が残っていることがあるので、要約の中心と違うなら付け直す。"
 
 /**
@@ -127,15 +128,15 @@ export const REPORT_TITLE_DESCRIPTION =
  */
 export const REPORT_SESSION_SUMMARY_DESCRIPTION =
   "このセッションでここまでにしたことの要約（セッションの切り替え画面に出る。レポートには描かれない）。" +
-  "毎回、前の要約を踏まえてセッション全体を書き直す。中立の文体の日本語で2〜3段落・" +
-  `${String(MAX_SESSION_SUMMARY_LENGTH)}字以内、段落は空行で区切る。` +
+  "変えたいときだけ、前の要約を踏まえて全体を書く。一度も書かないうちは、省くと直近5ターンの結論の1文目の箇条が要約になる。" +
+  `書くなら中立の文体の日本語で2〜3段落・${String(MAX_SESSION_SUMMARY_LENGTH)}字以内、段落は空行で区切る。` +
   "残っていることは要約に書かず sessionRemaining に書く。"
 
 /** `report` の `sessionRemaining` 引数の説明。 */
 export const REPORT_SESSION_REMAINING_DESCRIPTION =
   "このセッションで残っていること（次のセッションで続ける作業）を1〜2文で。書き出しに「残り：」は付けない。" +
   "始め方の一覧の「前回の続き」の札の題と、次のセッションへ送る依頼の文になる。" +
-  "残っていることが無ければ空の文字列にする。毎回、要約と同じくセッション全体で書き直す。"
+  "残っていることが無ければ空の文字列にする。task.outcome が finished のときだけ省ける（finished 以外では必須）。"
 
 /**
  * `Stop` の関所が差し戻すときにモデルへ返す理由。

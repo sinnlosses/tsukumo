@@ -44,12 +44,12 @@
   `SessionRemaining`（`report` のイベントに写した残り。`none`・`remaining`・`unrecorded`）/
   `SessionDigest`（切り替え画面に配る1件の中身。残りは欄 `remaining`）
 - **定義**: そのセッションでここまでにしたことを claude が書いた数段落。`report` の引数
-  `sessionSummary` で毎ターン書き直させ、切り替え画面が transcript の最後に通った `report` から
-  読み戻す。残っていることは要約に書かず、同じ `report` の必須の引数 `sessionRemaining`（無ければ空の文字列）に書く
+  `sessionSummary` で変えたいときだけ書かせ（省くと直近5ターンの `conclusion` の1文目の箇条が代わりになる）、切り替え画面が transcript の最後に通った `report` から
+  読み戻す。残っていることは要約に書かず、同じ `report` の引数 `sessionRemaining`（無ければ空の文字列。`finished` のときだけ省ける）に書く
 - **注記**: **tsukumo は要約を別の場所に書き出さない**（transcript のツールの入力に残るだけ）。
   切り替え画面に配る1件の中身（`SessionDigest`）は要約・残り・依頼の数・最後のセリフの4つで、選んだ
   1件ぶんだけ手続き `sessionDigest.read` で取りに来る。一覧に載ったセッションといま出している
-  セッション以外のIDは読まない。要約が無い古いセッションは「要約はまだ無い」になる。
+  セッション以外のIDは読まない。通った `report` がまだ無いセッションは「要約はまだ無い」になる。
   `sessionRemaining` の無かった頃の `report`（`unrecorded`）だけ、要約の段落の頭が「残り」の段落を残りとして読み、要約から外す
 - **避ける言い方**: あらすじ（雑談の記憶のほう）、見出し（SDK の `summary`。1行の題）
 

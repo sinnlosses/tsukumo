@@ -201,6 +201,65 @@ describe("toSessionDigest", () => {
     })
   })
 
+  describe("sessionSummary を一度も書かなかったとき", () => {
+    const reports = (count: number): unknown[] =>
+      Array.from({ length: count }, (_, index) => [
+        userMessage(`架空の依頼${String(index)}`),
+        reportCall(`r-${String(index)}`, {
+          conclusion: [`架空の結論${String(index)}。`, "補足。"],
+        }),
+        toolResult(`r-${String(index)}`, false),
+      ]).flat()
+
+    it("直近5件の結論の1文目を古い順に箇条で並べて要約の代わりにする", () => {
+      expect(toSessionDigest(reports(7), EXPRESSIONS)).toMatchObject({
+        summary: [2, 3, 4, 5, 6].map((n) => `- 架空の結論${String(n)}。`).join("\n"),
+      })
+    })
+
+    it("差し戻された report の結論は並べず、書いた要約があればそれを使う", () => {
+      const rejected = [
+        userMessage("架空の依頼"),
+        reportCall("r-x", { conclusion: ["架空の差し戻した結論。"] }),
+        toolResult("r-x", true),
+      ]
+      expect(toSessionDigest([...reports(1), ...rejected], EXPRESSIONS)).toMatchObject({
+        summary: "- 架空の結論0。",
+      })
+      const written = [
+        userMessage("架空の依頼"),
+        reportCall("r-w", { conclusion: ["架空の結論。"], sessionSummary: "架空の要約" }),
+        toolResult("r-w", false),
+      ]
+      expect(toSessionDigest([...reports(2), ...written], EXPRESSIONS)).toMatchObject({
+        summary: "架空の要約",
+      })
+    })
+
+    it("finished で sessionRemaining を省いた report は、前の残りを消し、要約の「残り」段落も残りに移さない", () => {
+      const messages = [
+        userMessage("架空の依頼"),
+        reportCall("r-1", { conclusion: "架空の一", sessionRemaining: "架空の前の残り" }),
+        toolResult("r-1", false),
+        userMessage("架空の依頼その2"),
+        reportCall("r-2", {
+          conclusion: "架空の二",
+          task: { id: "T-1", name: "架空の作業", outcome: "finished" },
+          sessionSummary: "架空の要約。\n\n残りの作業は架空の話。",
+        }),
+        toolResult("r-2", false),
+      ]
+      expect(toSessionDigest(messages, EXPRESSIONS)).toMatchObject({
+        summary: "架空の要約。\n\n残りの作業は架空の話。",
+        remaining: undefined,
+      })
+    })
+
+    it("sessionRemaining を省いた report の残りは無い", () => {
+      expect(toSessionDigest(reports(1), EXPRESSIONS)).toMatchObject({ remaining: undefined })
+    })
+  })
+
   it("列でなければ読めなかったものとして扱う", () => {
     expect(toSessionDigest(undefined, EXPRESSIONS)).toEqual({ kind: "unavailable" })
   })

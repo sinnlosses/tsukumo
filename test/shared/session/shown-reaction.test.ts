@@ -266,10 +266,12 @@ describe("shownReaction", () => {
       ).toBe("idle:架空の待ちの一言")
     })
 
-    it("Claude Code が書いておらず反応の行も書けていなければ、挨拶が書けていても何も出さない", () => {
-      expect(shown(stateAfter([REQUEST, SPEECH, COMPLETED]), NO_WELCOME_HEAD, LATER)).toBe("none")
+    it("Claude Code が書いておらず反応の行も書けていなければ、挨拶が書けていても既定の1文を出す", () => {
+      expect(shown(stateAfter([REQUEST, SPEECH, COMPLETED]), NO_WELCOME_HEAD, LATER)).toBe(
+        "idle:次の依頼を待っている。",
+      )
       expect(shown(stateAfter([GREETED, REQUEST, SPEECH, COMPLETED]), NO_WELCOME_HEAD, LATER)).toBe(
-        "none",
+        "idle:次の依頼を待っている。",
       )
     })
 

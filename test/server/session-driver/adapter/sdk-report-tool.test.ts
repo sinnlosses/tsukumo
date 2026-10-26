@@ -164,29 +164,47 @@ describe("report でターンを閉じる", () => {
     expect(reply.endsTurn).toBe(false)
   })
 
-  it("waitingLine・sessionSummary・sessionRemaining のどれかの無い report は形の検査で落ち、ターンを閉じない", async () => {
-    const complete = {
+  it("waitingLine・sessionSummary を省いた report は通り、ターンを閉じる", async () => {
+    const minimal = {
       conclusion: ["架空の結論"],
       figure: FIGURE,
       closing: CLOSING,
-      waitingLine: WAITING_LINE,
-      sessionSummary: SESSION_SUMMARY,
       sessionRemaining: REMAINING,
     }
-    const { waitingLine: _waitingLine, ...noWaitingLine } = complete
-    const { sessionSummary: _sessionSummary, ...noSummary } = complete
-    const { sessionRemaining: _sessionRemaining, ...noRemaining } = complete
 
-    for (const input of [noWaitingLine, noSummary, noRemaining]) {
-      expect(await callTool(workServer(), "report", input)).toMatchObject({
-        isError: true,
-        endsTurn: false,
-      })
-    }
-    expect(await callTool(workServer(), "report", complete)).toMatchObject({
+    expect(await callTool(workServer(), "report", minimal)).toMatchObject({
       isError: false,
       endsTurn: true,
     })
+    expect(
+      await callTool(workServer(), "report", {
+        ...minimal,
+        sessionSummary: SESSION_SUMMARY,
+        waitingLine: WAITING_LINE,
+      }),
+    ).toMatchObject({ isError: false, endsTurn: true })
+  })
+
+  it("sessionRemaining は task.outcome が finished のときだけ省ける", async () => {
+    const withoutRemaining = {
+      conclusion: ["架空の結論"],
+      figure: FIGURE,
+      closing: CLOSING,
+    }
+    const task = (outcome: string) => ({ id: "T-1", name: "架空の作業", outcome })
+
+    for (const input of [
+      withoutRemaining,
+      { ...withoutRemaining, task: task("stopped") },
+      { ...withoutRemaining, task: task("awaiting-answer") },
+    ]) {
+      const reply = await callTool(workServer(), "report", input)
+      expect(reply).toMatchObject({ isError: true, endsTurn: false })
+      expect(reply.text).toContain("sessionRemaining")
+    }
+    expect(
+      await callTool(workServer(), "report", { ...withoutRemaining, task: task("finished") }),
+    ).toMatchObject({ isError: false, endsTurn: true })
   })
 
   it("figure の無い report・理由の無い none は形の検査で落ち、図の塊1つか none と理由で通る", async () => {

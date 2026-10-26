@@ -189,6 +189,28 @@ describe("toSessionEvents（report ツール）", () => {
     ])
   })
 
+  it("finished の report で sessionRemaining を省いたら none、finished 以外は unrecorded に畳む", () => {
+    const remainings = ["finished", "stopped"].map((outcome) => {
+      const [event] = toSessionEvents(
+        assistantMessageWithoutUuid([
+          {
+            type: "tool_use",
+            id: "toolu_r1",
+            name: REPORT_TOOL_FULL_NAME,
+            input: {
+              conclusion: "架空の結論。",
+              task: { id: "T-1", name: "架空の作業", outcome },
+            },
+          },
+        ]),
+        EXPRESSIONS,
+      )
+      return event?.kind === "report" ? event.sessionRemaining : "report でない"
+    })
+
+    expect(remainings).toEqual([{ kind: "none" }, { kind: "unrecorded" }])
+  })
+
   it("sections は塊ごとに検証し、崩れた塊・知らない種類の塊と、塊の残らない節を落とす（省いた欄は既定で埋める）", () => {
     const message = assistantMessageWithoutUuid([
       {

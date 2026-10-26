@@ -3,6 +3,8 @@
 // 復元（`toRestoredEvents`）が組む履歴を数えた結果と同じになるよう、メッセージ列を1回なめて畳む。
 // 差し戻された `speak` のセリフと、差し戻された `report` の要約・締めのセリフは拾わない。
 // 差し戻しのあとの出し直しで省いた欄は、復元と同じ `ReportInheritance` で埋めてから畳む。
+// 要約は `sessionSummary` が一度も通っていないときだけ、直近5ターンの `conclusion` の1文目を箇条に並べて代わりにする
+// （これは復元の履歴には無い、この畳みだけの組み立て）。
 // 読んだものはどこにも書き出さない。
 
 import type { Expression } from "../../../shared/character-pack/expression.ts"
@@ -36,7 +38,7 @@ export function toSessionDigest(
         .reduce(foldEvent, fold),
     INITIAL_FOLD,
   )
-  const { summary, remaining, lastLine } = folded.turnOpen ? adoptHeld(folded) : folded
+  const { summary, remaining, lastLine, conclusions } = folded.turnOpen ? adoptHeld(folded) : folded
   const split =
     remaining.kind === "unrecorded" && summary !== undefined
       ? splitLegacyRemaining(summary)
@@ -44,10 +46,19 @@ export function toSessionDigest(
   return {
     kind: "known",
     requestCount: folded.requestCount,
-    summary: clipped(split.summary),
+    summary: clipped(split.summary) ?? clipped(conclusionBullets(conclusions)),
     remaining: clipped(split.remaining),
     lastLine,
   }
+}
+
+/** `sessionSummary` が一度も書かれていないときに、要約の代わりに並べる結論の数（新しいほう）。 */
+const RECENT_CONCLUSION_COUNT = 5
+
+function conclusionBullets(conclusions: readonly string[]): string | undefined {
+  return conclusions.length === 0
+    ? undefined
+    : conclusions.map((conclusion) => `- ${conclusion}`).join("\n")
 }
 
 /** `sessionRemaining` の無かった頃の要約で、残りの段落の書き出し。 */
@@ -92,6 +103,8 @@ type DigestFold = {
   /** 最後に取り込んだ `report` の残り。`report` がまだ無ければ `none`。 */
   readonly remaining: SessionRemaining
   readonly lastLine: string | undefined
+  /** 通った `report` の結論の1文目。古い順で、直近 {@link RECENT_CONCLUSION_COUNT} 件。 */
+  readonly conclusions: readonly string[]
   readonly held: readonly HeldCall[]
   readonly turnOpen: boolean
 }
@@ -101,6 +114,7 @@ const INITIAL_FOLD: DigestFold = {
   summary: undefined,
   remaining: { kind: "none" },
   lastLine: undefined,
+  conclusions: [],
   held: [],
   turnOpen: false,
 }
@@ -150,6 +164,10 @@ function adoptCall(fold: DigestFold, call: HeldCall): DigestFold {
     ...fold,
     summary: call.sessionSummary ?? fold.summary,
     remaining: call.sessionRemaining,
+    conclusions: [
+      ...fold.conclusions,
+      ...(call.conclusionFirstSentence.trim() === "" ? [] : [call.conclusionFirstSentence.trim()]),
+    ].slice(-RECENT_CONCLUSION_COUNT),
     lastLine: call.closing.kind === "speech" ? call.closing.text : fold.lastLine,
   }
 }

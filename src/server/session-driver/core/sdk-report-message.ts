@@ -17,7 +17,7 @@ import {
 } from "../../../shared/report/report-block.ts"
 import { parseReportChecks } from "../../../shared/report/report-check.ts"
 import { parseReportRetrospective } from "../../../shared/report/report-retrospective.ts"
-import { parseReportTask } from "../../../shared/report/report-task.ts"
+import { parseReportTask, type ReportTask } from "../../../shared/report/report-task.ts"
 import type { SessionRemaining } from "../../../shared/session/session-digest.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import { parseWorkPlanClosing } from "../../../shared/session/work-plan.ts"
@@ -38,7 +38,8 @@ import { speechEvents } from "./sdk-speech-message.ts"
  * `waitingLine` の「無い」（省いた・文が空白だけ・形の崩れ）も `none` に畳む。
  * `title` の「無い」と文字列でないものは undefined。
  * `sessionSummary` の「無い」（空白だけも）は undefined。
- * `sessionRemaining` は空白だけなら `none`、文字列なら `remaining`、欄が無い（欄の無かった頃の transcript）・文字列でないなら `unrecorded` に畳む。
+ * `sessionRemaining` は空白だけなら `none`、文字列なら `remaining`、欄が無い・文字列でないなら `unrecorded` に畳む。
+ * ただし作業を終えた（`task.outcome` が `finished`）呼び出しで欄が無いのは、省いたのと同じ残り無しの `none`。
  * `conclusion` は文字列の配列を連結し、文字列（引数が文字列だったころの transcript）は1要素として読む（{@link parseConclusion}）。
  * `conclusion` の「無い」は空の文字列に畳む（差し戻しのあとの出し直しで省いた欄は `ReportInheritance` が埋める）。
  * `conclusion` が文字列・文字列の配列・省略のどれでもなければ捨てる（引数の検査に落ちた呼び出しで、モデルには Claude Code がエラーを返す）。
@@ -57,6 +58,7 @@ export function reportEvents(
     return []
   }
 
+  const task = parseReportTask(input.task)
   const parsed =
     input.sections === undefined
       ? { sections: reportSectionsOfBody(optionalString(input.body) ?? ""), unknownBlockCount: 0 }
@@ -77,7 +79,7 @@ export function reportEvents(
       favor: optionalString(input.favor) ?? "",
       retrospective: parseReportRetrospective(input.retrospective),
       checks: parseReportChecks(input.checks),
-      task: parseReportTask(input.task),
+      task,
       workPlanClosing: parseWorkPlanClosing(input.workPlanClosing),
       closing: speechEvents(input.closing, expressions)[0] ?? { kind: "none" },
       waitingLine: speechEvents(input.waitingLine, expressions).find(
@@ -86,16 +88,17 @@ export function reportEvents(
       unknownBlockCount: parsed.unknownBlockCount,
       title: optionalString(input.title),
       sessionSummary: nonBlankString(input.sessionSummary),
-      sessionRemaining: sessionRemainingOf(input.sessionRemaining),
+      sessionRemaining: sessionRemainingOf(input.sessionRemaining, task),
       imageSizes: [],
       unshelvedImages: [],
     },
   ]
 }
 
-function sessionRemainingOf(value: unknown): SessionRemaining {
+function sessionRemainingOf(value: unknown, task: ReportTask): SessionRemaining {
   if (typeof value !== "string") {
-    return { kind: "unrecorded" }
+    const finished = task.kind === "task" && task.outcome === "finished"
+    return finished ? { kind: "none" } : { kind: "unrecorded" }
   }
   return value.trim() === "" ? { kind: "none" } : { kind: "remaining", text: value }
 }

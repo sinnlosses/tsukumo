@@ -199,13 +199,25 @@ function shownWelcomeBack(state: SessionState): UntimedReaction {
     : shownWelcomeReaction(state.welcomeGreeting, NO_WELCOME_HEAD)
 }
 
-/** 依頼を待つ間の吹き出し。いちばん新しい依頼より後の最後の `report` の待ちの一言、無ければ書かせた待ちの行。 */
+/**
+ * 依頼を待つ間の吹き出し。いちばん新しい依頼より後の最後の `report` の待ちの一言、
+ * 無ければ書かせた待ちの行、それも書けていなければ tsukumo の既定の1文。
+ */
 function shownWaitingLine(state: SessionState): UntimedReaction {
   const waitingLine = lastWaitingLine(state.records)
-  return waitingLine.kind === "speech"
-    ? { kind: "shown", reaction: "idle", line: reactionLineOf(waitingLine) }
-    : shownWrittenLine(state.writtenReactions, "idle")
+  if (waitingLine.kind === "speech") {
+    return { kind: "shown", reaction: "idle", line: reactionLineOf(waitingLine) }
+  }
+  return state.writtenReactions.kind === "written"
+    ? shownWrittenLine(state.writtenReactions, "idle")
+    : { kind: "shown", reaction: "idle", line: DEFAULT_WAITING_LINE }
 }
+
+/** 待ちの一言を `report` も反応の行の問い合わせも渡せなかったときの、キャラクターに依らない中立の1文。 */
+const DEFAULT_WAITING_LINE = {
+  text: "次の依頼を待っている。",
+  expression: "default",
+} as const satisfies ReactionLine
 
 /** 反応の行の問い合わせが書いた行。書けていなければ出さない。 */
 function shownWrittenLine(
