@@ -1,0 +1,162 @@
+{
+  "name": "svg-line-label",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "寸法線の札が近い線で重ならないかを確かめたい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 300,
+      "event": {
+        "kind": "speech",
+        "text": "近い線に札を付けた図を2通り書くね。",
+        "expression": "default"
+      }
+    },
+    {
+      "afterMs": 1000,
+      "event": {
+        "kind": "report",
+        "task": {
+          "kind": "none"
+        },
+        "closing": {
+          "kind": "speech",
+          "text": "書けたよ！",
+          "expression": "proud"
+        },
+        "toolUseId": "fake-report-svg-line-label-1",
+        "conclusion": "架空の結論: 近い線の札の見え方を2通りで比べる。",
+        "sections": [
+          {
+            "heading": "架空の寸法線",
+            "blocks": [
+              {
+                "kind": "svg",
+                "title": "line の label を付けた版",
+                "width": 560,
+                "height": 130,
+                "shapes": [
+                  {
+                    "kind": "line",
+                    "x1": 60,
+                    "y1": 40,
+                    "x2": 260,
+                    "y2": 40,
+                    "arrow": true,
+                    "label": "架空の上の余白 8px"
+                  },
+                  {
+                    "kind": "line",
+                    "x1": 60,
+                    "y1": 52,
+                    "x2": 260,
+                    "y2": 52,
+                    "arrow": true,
+                    "label": "架空の左右の余白 16px"
+                  },
+                  {
+                    "kind": "line",
+                    "x1": 60,
+                    "y1": 64,
+                    "x2": 260,
+                    "y2": 64,
+                    "arrow": true,
+                    "label": "架空の行間 4px"
+                  },
+                  {
+                    "kind": "line",
+                    "x1": 420,
+                    "y1": 20,
+                    "x2": 420,
+                    "y2": 110,
+                    "arrow": true,
+                    "label": "架空の高さ 90px"
+                  }
+                ],
+                "legend": [],
+                "fold": "",
+                "aside": ""
+              },
+              {
+                "kind": "svg",
+                "title": "label を空にして text 図形を並べた版",
+                "width": 560,
+                "height": 130,
+                "shapes": [
+                  {
+                    "kind": "line",
+                    "x1": 60,
+                    "y1": 40,
+                    "x2": 260,
+                    "y2": 40,
+                    "arrow": true,
+                    "label": ""
+                  },
+                  {
+                    "kind": "line",
+                    "x1": 60,
+                    "y1": 52,
+                    "x2": 260,
+                    "y2": 52,
+                    "arrow": true,
+                    "label": ""
+                  },
+                  {
+                    "kind": "line",
+                    "x1": 60,
+                    "y1": 64,
+                    "x2": 260,
+                    "y2": 64,
+                    "arrow": true,
+                    "label": ""
+                  },
+                  {
+                    "kind": "line",
+                    "x1": 420,
+                    "y1": 20,
+                    "x2": 420,
+                    "y2": 110,
+                    "arrow": true,
+                    "label": ""
+                  },
+                  { "kind": "text", "x": 270, "y": 44, "text": "架空の上の余白 8px" },
+                  { "kind": "text", "x": 270, "y": 58, "text": "架空の左右の余白 16px" },
+                  { "kind": "text", "x": 270, "y": 72, "text": "架空の行間 4px" },
+                  { "kind": "text", "x": 430, "y": 70, "text": "架空の高さ 90px" }
+                ],
+                "legend": [],
+                "fold": "",
+                "aside": ""
+              }
+            ]
+          }
+        ],
+        "favor": "",
+        "checks": []
+      }
+    },
+    {
+      "afterMs": 1050,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-report-svg-line-label-1",
+        "content": "ok",
+        "isError": false
+      }
+    },
+    {
+      "afterMs": 2300,
+      "event": {
+        "kind": "turn-finished",
+        "outcome": {
+          "kind": "completed"
+        }
+      }
+    }
+  ]
+}

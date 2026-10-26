@@ -64,6 +64,7 @@
     "report-board",
     "report-svg",
     "report-svg-tone",
+    "svg-line-label",
     "report-graph-tone",
     "report-graph-wide",
     "report-graph-fold",
