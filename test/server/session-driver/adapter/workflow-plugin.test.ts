@@ -5,6 +5,7 @@ import { join } from "node:path"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import {
+  readFigurePluginMount,
   readWorkflowPlugin,
   readWorkflowPluginMount,
 } from "../../../../src/server/session-driver/adapter/workflow-plugin.ts"
@@ -32,6 +33,43 @@ describe("readWorkflowPlugin", () => {
 
     expect(reading.ok).toBe(false)
     expect(!reading.ok && reading.reason).toContain("git submodule update --init")
+  })
+})
+
+describe("readFigurePluginMount", () => {
+  let figure: string
+  let config: string
+
+  beforeEach(async () => {
+    figure = await mkdtemp(join(tmpdir(), "tsukumo-figure-plugin-"))
+    config = await mkdtemp(join(tmpdir(), "tsukumo-figure-config-"))
+  })
+
+  afterEach(async () => {
+    await rm(figure, { recursive: true, force: true })
+    await rm(config, { recursive: true, force: true })
+  })
+
+  async function writeManifest(): Promise<void> {
+    await mkdir(join(figure, ".claude-plugin"))
+    await writeFile(join(figure, ".claude-plugin", "plugin.json"), "{}")
+  }
+
+  it("plugin.json が読めて利用者の置き場に無ければ、載せる", async () => {
+    await writeManifest()
+
+    expect(await readFigurePluginMount(figure, config)).toEqual({ kind: "mount" })
+  })
+
+  it("plugin.json が無ければ、載せない（absent）", async () => {
+    expect(await readFigurePluginMount(figure, config)).toEqual({ kind: "absent" })
+  })
+
+  it("利用者の置き場に skills/figure-capture があれば、載せない", async () => {
+    await writeManifest()
+    await mkdir(join(config, "skills", "figure-capture"), { recursive: true })
+
+    expect(await readFigurePluginMount(figure, config)).toEqual({ kind: "user-installed" })
   })
 })
 

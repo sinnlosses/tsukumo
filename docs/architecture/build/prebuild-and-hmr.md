@@ -34,7 +34,10 @@
   `vendor/tsukumo-plugins/.claude-plugin/plugin.json` が無ければ
   起動は前提不足で止まる（直し方は `git submodule update --init`。`TSUKUMO_DRIVER=fake` は見ない）。
   取り込んだ `skills/` の各ディレクトリと `agents/` の各定義が全部、利用者の設定ディレクトリ（`CLAUDE_CONFIG_DIR`、無ければ `~/.claude`）にあれば、
-  セッションには載せず（二重に並ぶのを避ける）、起動時に stderr へ1行出す。一部だけなら欠けを作らないよう載せ、欠けた名前を1行で知らせる。`vendor/` は文書の参照検査
+  セッションには載せず（二重に並ぶのを避ける）、起動時に stderr へ1行出す。一部だけなら欠けを作らないよう載せ、欠けた名前を1行で知らせる。
+  取り込みの `plugins/tsukumo-figure`（図のスキル `figure-capture`）は任意で、ワークフローの判定とは独立に載せる。
+  `plugins/tsukumo-figure/.claude-plugin/plugin.json` が読めないときは黙って載せず（起動は止めない）、
+  設定ディレクトリに `skills/figure-capture` があるときも載せず、起動時に stderr へ1行出す。`vendor/` は文書の参照検査
   （`scripts/document/lib/repository-reference.ts`）と整形（`.prettierignore`）の対象外。新しくするには
   `git -C vendor/tsukumo-plugins fetch && git -C vendor/tsukumo-plugins checkout <コミット>` のあと、親で `vendor/tsukumo-plugins` を `git add` する
 - **cwd に依存してよいのは起動先プロジェクトのものだけ。** 作業ディレクトリ・

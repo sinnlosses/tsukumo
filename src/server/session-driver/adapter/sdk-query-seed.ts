@@ -31,7 +31,7 @@ import type { CallReview } from "../core/call-review.ts"
 import type { ExternalToolMark } from "../core/external-tool-mark.ts"
 import type { SessionDriverOptions, SessionMode } from "../core/session-driver.ts"
 import { childProcessEnv } from "../core/visible-output-nudge.ts"
-import { workflowPluginDir } from "./workflow-plugin.ts"
+import { figurePluginDir, workflowPluginDir } from "./workflow-plugin.ts"
 
 /** `query()` の `options` のうち、`mcpServers` / `canUseTool`（クロージャが要る）を除いた部分。 */
 export type QuerySeedOptions = {
@@ -69,7 +69,7 @@ export type QuerySeedOptions = {
    * 渡すと tsukumo 自身の環境と混ざらず丸ごと置き換わるので、引き継いだ環境に Claude Code の催促を止める変数を足したもの（`childProcessEnv`）を渡す。
    */
   readonly env: Readonly<Record<string, string | undefined>>
-  /** セッションに載せるプラグイン。同梱の `plugin/`（`tsukumo:token-usage-diet`）と、取り込んだ tsukumo-plugins（`mountWorkflowPlugin` のときだけ）。 */
+  /** セッションに載せるプラグイン。同梱の `plugin/`（`tsukumo:token-usage-diet`）と、取り込んだ tsukumo-plugins（`mountWorkflowPlugin` のときだけ）と、その図のプラグイン（`mountFigurePlugin` のときだけ）。 */
   readonly plugins: SdkPluginConfig[]
 }
 
@@ -99,6 +99,7 @@ export function buildQuerySeedOptions(options: SessionDriverOptions): QuerySeedO
       ...(options.mountWorkflowPlugin
         ? [{ type: "local" as const, path: workflowPluginDir() }]
         : []),
+      ...(options.mountFigurePlugin ? [{ type: "local" as const, path: figurePluginDir() }] : []),
     ],
   }
 }

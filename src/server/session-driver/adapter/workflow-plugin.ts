@@ -33,6 +33,32 @@ export async function readWorkflowPluginMount(
   return classifyWorkflowPluginMount(await readNames(pluginDir), await readNames(configDir))
 }
 
+export function figurePluginDir(): string {
+  return join(workflowPluginDir(), "plugins", "tsukumo-figure")
+}
+
+/** 任意の図のプラグインを載せるかの判定。`absent` は取り込みに plugin.json が無いこと。 */
+export type FigurePluginMount =
+  | { readonly kind: "mount" }
+  | { readonly kind: "absent" }
+  | { readonly kind: "user-installed" }
+
+export async function readFigurePluginMount(
+  pluginDir: string,
+  claudeConfigDir: string | undefined,
+): Promise<FigurePluginMount> {
+  if (!(await readWorkflowPlugin(pluginDir)).ok) {
+    return { kind: "absent" }
+  }
+  const configDir = claudeConfigDir ?? defaultClaudeConfigDir()
+  const installed = await readNames(configDir)
+  return installed.includes(`skills/${FIGURE_SKILL}`)
+    ? { kind: "user-installed" }
+    : { kind: "mount" }
+}
+
+const FIGURE_SKILL = "figure-capture"
+
 export async function readWorkflowPlugin(pluginDir: string): Promise<WorkflowPluginReading> {
   const manifest = join(pluginDir, ".claude-plugin", "plugin.json")
   try {

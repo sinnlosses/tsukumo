@@ -70,6 +70,8 @@ export function wireSessionLaunch(options: {
   readonly viewPort: number
   /** 取り込んだ tsukumo-plugins をセッションに載せるか。 */
   readonly mountWorkflowPlugin: boolean
+  /** 取り込んだ図のプラグインをセッションに載せるか。 */
+  readonly mountFigurePlugin: boolean
   /** ワークフローの `tw` のパス。 */
   readonly workflowTw: string
   /** 最初のタブが繋がったら解ける約束。fake driver は疑似セッションをここから流し始める。本物の駆動は待たない。 */
@@ -135,6 +137,7 @@ export function wireSessionLaunch(options: {
             claudeConfigDir: config.claudeConfigDir,
             reportSchema: config.reportSchema,
             mountWorkflowPlugin: options.mountWorkflowPlugin,
+            mountFigurePlugin: options.mountFigurePlugin,
             workflowTw: options.workflowTw,
             firstViewer: options.firstViewer,
             viewPort,
@@ -201,6 +204,7 @@ function startDriver(options: {
   readonly context: WiringContext
   readonly claudeConfigDir: string | undefined
   readonly mountWorkflowPlugin: boolean
+  readonly mountFigurePlugin: boolean
   readonly workflowTw: string
   readonly reportSchema: ReportSchemaVariant
   readonly firstViewer: Promise<void>
@@ -268,6 +272,7 @@ function startRealDriver(
     inheritedEnv,
     claudeConfigDir: options.claudeConfigDir,
     mountWorkflowPlugin: options.mountWorkflowPlugin,
+    mountFigurePlugin: options.mountFigurePlugin,
     workflowTw: options.workflowTw,
     onEvent,
     now: context.now,

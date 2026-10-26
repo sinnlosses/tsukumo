@@ -23,6 +23,7 @@ const BASE_OPTIONS: SessionDriverOptions = {
   inheritedEnv: { PATH: "/usr/bin", HOME: "/tmp/tsukumo-home" },
   claudeConfigDir: undefined,
   mountWorkflowPlugin: true,
+  mountFigurePlugin: false,
   workflowTw: "tw",
   onEvent: () => {},
   now: () => 0,
@@ -94,5 +95,16 @@ describe("buildQuerySeedOptions", () => {
     expect(mounted).toHaveLength(2)
     expect(mounted[1]).toMatch(/vendor\/tsukumo-plugins$/)
     expect(unmounted).toEqual([mounted[0]])
+  })
+
+  it("図のプラグインは mountFigurePlugin のときだけ、mountWorkflowPlugin と独立に plugins に載せる", () => {
+    const paths = (override: Partial<SessionDriverOptions>): string[] =>
+      buildQuerySeedOptions({ ...BASE_OPTIONS, ...override }).plugins.map((plugin) => plugin.path)
+
+    expect(paths({ mountFigurePlugin: false })).toHaveLength(2)
+    const figureOnly = paths({ mountWorkflowPlugin: false, mountFigurePlugin: true })
+    expect(figureOnly).toHaveLength(2)
+    expect(figureOnly[1]).toMatch(/vendor\/tsukumo-plugins\/plugins\/tsukumo-figure$/)
+    expect(paths({ mountFigurePlugin: true })).toHaveLength(3)
   })
 })

@@ -23,6 +23,8 @@ import { readHeadSha } from "./server/repository/adapter/change-count.ts"
 import { readFakeSession } from "./server/session-driver/adapter/fake-session.ts"
 import { pruneInputLedgerFiles } from "./server/session-driver/adapter/input-ledger-file.ts"
 import {
+  figurePluginDir,
+  readFigurePluginMount,
   readWorkflowPlugin,
   readWorkflowPluginMount,
   workflowPluginDir,
@@ -85,7 +87,12 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
       const { driver } = config
       switch (driver.kind) {
         case "fake":
-          return Promise.resolve({ ok: true, mount: true, notices: [] } as const)
+          return Promise.resolve({
+            ok: true,
+            mount: true,
+            mountFigure: false,
+            notices: [],
+          } as const)
         case "sdk":
           return checkWorkflowPlugin(config.claudeConfigDir)
         default:
@@ -114,6 +121,7 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
     return 1
   }
   const mountWorkflowPlugin = workflowPlugin.mount
+  const mountFigurePlugin = workflowPlugin.mountFigure
   const workflowTw = chooseTw(config.twCommand, mountWorkflowPlugin)
 
   // fake driver を選んだときは疑似セッションが要る。無ければ起こす意味が無いので、起動時の
@@ -214,6 +222,7 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
     viewPort: view.port,
     host,
     mountWorkflowPlugin,
+    mountFigurePlugin,
     workflowTw,
     workflowSetting: workflowSetting.commands,
   })
@@ -278,11 +287,13 @@ type OpenedFakeView =
 /**
  * 取り込んだ tsukumo-plugins が読めるかの検査と、セッションに載せるかの判定。
  * 読めないとき、と一部だけのときは、理由を stderr に1行出す（揃っていて載せないのは通常の状態なので黙る）。
+ * 図のプラグインは任意で、取り込みに無いときは黙って載せず、利用者が入れているときだけ知らせる。
  */
 async function checkWorkflowPlugin(claudeConfigDir: string | undefined): Promise<
   | {
       readonly ok: true
       readonly mount: boolean
+      readonly mountFigure: boolean
       readonly notices: readonly string[]
     }
   | { readonly ok: false; readonly notices: readonly string[] }
@@ -292,11 +303,21 @@ async function checkWorkflowPlugin(claudeConfigDir: string | undefined): Promise
     return { ok: false, notices: [`tsukumo: 取り込んだプラグインを読めない\n${plugin.reason}`] }
   }
   const mount = await readWorkflowPluginMount(workflowPluginDir(), claudeConfigDir)
-  const notices =
-    mount.kind === "partial"
+  const figure = await readFigurePluginMount(figurePluginDir(), claudeConfigDir)
+  const notices = [
+    ...(mount.kind === "partial"
       ? [`tsukumo: plugin partly missing (${mount.missing.join(", ")}): using bundled one`]
-      : []
-  return { ok: true, mount: mount.kind !== "user-installed", notices }
+      : []),
+    ...(figure.kind === "user-installed"
+      ? ["tsukumo: figure-capture is already installed: not mounting the bundled one"]
+      : []),
+  ]
+  return {
+    ok: true,
+    mount: mount.kind !== "user-installed",
+    mountFigure: figure.kind === "mount",
+    notices,
+  }
 }
 
 /**
