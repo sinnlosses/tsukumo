@@ -1,5 +1,6 @@
 // 閉じの `**` の直前が約物で、直後が空白でも約物でも行末でもない行を拾う純粋関数。
 // CommonMark では、その形の `**` は太字を閉じない。
+// 開きの `**` の直前が約物でも空白でもなく、直後が約物の行も拾う（太字が開かない）。
 // 開きと閉じは、段落の中で `**` が出てきた順に対にする（段落は空行・見出し・箇条書きの項・表の行で切る）。
 // コードのフェンスの中と inline code の中の `**` は数えない。
 
@@ -58,7 +59,9 @@ function unclosedBoldInParagraph(paragraph: Paragraph): UnclosedBold[] {
   )
   const badLines = new Set(
     positions
-      .filter((position, order) => order % 2 === 1 && closesWrongly(visible, position))
+      .filter((position, order) =>
+        order % 2 === 1 ? closesWrongly(visible, position) : opensWrongly(visible, position),
+      )
       .map((position) => lineStarts.findLastIndex((start) => start <= position)),
   )
   return [...badLines].map((index) => ({
@@ -67,9 +70,19 @@ function unclosedBoldInParagraph(paragraph: Paragraph): UnclosedBold[] {
   }))
 }
 
+function opensWrongly(visible: string, position: number): boolean {
+  const [before, after] = neighbours(visible, position)
+  if (before === undefined || after === undefined) return false
+  return (
+    !PUNCTUATION.test(before) &&
+    !WHITESPACE.test(before) &&
+    PUNCTUATION.test(after) &&
+    !WHITESPACE.test(after)
+  )
+}
+
 function closesWrongly(visible: string, position: number): boolean {
-  const before = Array.from(visible.slice(0, position)).at(-1)
-  const after = Array.from(visible.slice(position + 2))[0]
+  const [before, after] = neighbours(visible, position)
   if (before === undefined || after === undefined) return false
   return (
     PUNCTUATION.test(before) &&
@@ -77,4 +90,8 @@ function closesWrongly(visible: string, position: number): boolean {
     !WHITESPACE.test(after) &&
     !PUNCTUATION.test(after)
   )
+}
+
+function neighbours(visible: string, position: number): [string | undefined, string | undefined] {
+  return [Array.from(visible.slice(0, position)).at(-1), Array.from(visible.slice(position + 2))[0]]
 }

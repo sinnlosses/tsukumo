@@ -77,7 +77,7 @@
   しない）。帯の「キャラ」から入り直すと `pack` は落ち、使用中のパックから始まる
   （`stores/location-hash.ts` / `stores/screen.tsx`、引き当ては `hooks/use-selected-pack.ts`）
 - **使用中以外のパックも右側でそのまま直せる**（書き込む先はコマンドの `pack`。`docs/architecture/character-pack.md`「画面から作るときの置き場と受け取り方」）。使用中以外の
-  名乗りの右端には**「このキャラクターに切り替える」**（`session.switchCharacter`。ターン進行中か、委譲先が動いている間は押せない
+  名乗りの右端には **「このキャラクターに切り替える」**（`session.switchCharacter`。ターン進行中か、委譲先が動いている間は押せない
   ——サイドバーの `<select>` と同じ理由・同じ文言）。切り替えたあとも hash の `pack` はそのままなので、
   同じパックが今度は使用中として開く
 - **名乗り（右の最上段）**: 大きな丸い顔（`accent` の輪）・名前・`id: <パックの名前>`（等幅。

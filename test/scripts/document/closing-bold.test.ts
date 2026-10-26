@@ -7,7 +7,9 @@ describe("findUnclosedBold", () => {
     "**これは正典ではない。**正典は別にある",
     "前置き **「語」**を使う",
     "**一つ目**と **二つ目。**続き",
-  ])("閉じない形は落とす: %s", (line) => {
+    "これに**「語」**を使う",
+    "これと**`/clear`** を使う",
+  ])("閉じない・開かない形は落とす: %s", (line) => {
     expect(findUnclosedBold(`先頭\n${line}\n`).map((found) => found.line)).toEqual([2])
   })
 
@@ -20,6 +22,9 @@ describe("findUnclosedBold", () => {
     "`**ない。**正典`",
     "**開き**は約物の直後でもよい。**閉じ**です",
     "太字なし。",
+    "（**「語」**）",
+    "**「語」** です",
+    "語 **`/clear`** です",
   ])("通る: %s", (line) => {
     expect(findUnclosedBold(line)).toEqual([])
   })
