@@ -10,6 +10,7 @@ const EXEMPT_PATH_PATTERNS = [
   "pnpm-lock.yaml",
   "test/e2e/expected/",
   "docs/history/",
+  "docs/research/",
   "vendor/",
 ] as const
 

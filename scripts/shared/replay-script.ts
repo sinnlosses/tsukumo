@@ -1,4 +1,4 @@
-// 再演集の1件（test/harness-replay/<ID>/）の台本 replay.json を読んで検査する、という概念1つを持つ。
+// タスクの再試集の1件（test/harness-replay/<ID>/）の台本 replay.json を読んで検査する、という概念1つを持つ。
 import { readFileSync } from "node:fs"
 import { join } from "node:path"
 
@@ -21,7 +21,7 @@ const replayScriptSchema = z.object({
 
 export type ReplayScript = z.infer<typeof replayScriptSchema>
 
-/** 再演集の置き場から1件の台本を読む。形が崩れていれば例外を投げる。 */
+/** タスクの再試集の置き場から1件の台本を読む。形が崩れていれば例外を投げる。 */
 export function readReplayScript(repositoryRoot: string, id: string): ReplayScript {
   const directory = join(repositoryRoot, REPLAY_DIRECTORY, id)
   const script = replayScriptSchema.parse(

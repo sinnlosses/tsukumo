@@ -1,4 +1,4 @@
-// 再演で起こす `claude -p` に渡す環境変数を決める、という概念1つを持つ。外に触らない。
+// タスクの再試で起こす `claude -p` に渡す環境変数を決める、という概念1つを持つ。外に触らない。
 
 const INHERITED_SESSION_PREFIXES = [
   "CLAUDE_CODE_",
@@ -9,7 +9,7 @@ const INHERITED_SESSION_PREFIXES = [
 
 /**
  * 今のセッションの目印（`CLAUDE_CODE_SESSION_ID`・orca の hook の合言葉など）を落とす。
- * 残すと再演の claude が今のセッションの子や orca のタブの一員として振る舞ってしまう。
+ * 残すとタスクの再試の claude が今のセッションの子や orca のタブの一員として振る舞ってしまう。
  * 認証は環境変数ではなくキーチェーン側にあるので、落としても効く。
  */
 export function replayEnvironment(

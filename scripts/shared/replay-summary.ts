@@ -1,6 +1,6 @@
-// 再演1件ぶんの結果（k 回）を、pass^k と中央値に集計する、という概念1つを持つ。外に触らない。
+// タスクの再試1件ぶんの結果（k 回）を、pass^k と中央値に集計する、という概念1つを持つ。外に触らない。
 
-/** 再演の1回の結果。 */
+/** タスクの再試の1回の結果。 */
 export type ReplayRun = {
   readonly passed: boolean
   readonly tokens: number

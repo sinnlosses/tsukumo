@@ -1,4 +1,4 @@
-// 再演で claude に渡す依頼文を組み立てる、という概念1つを持つ。外に触らない。
+// タスクの再試で claude に渡す依頼文を組み立てる、という概念1つを持つ。外に触らない。
 
 /** 課題の本文の写しから、一時の作業ツリーで進める依頼文を作る。台本（検証コマンド）は伏せる。 */
 export function buildReplayPrompt(taskText: string): string {

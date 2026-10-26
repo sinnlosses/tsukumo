@@ -1,4 +1,4 @@
-// 再演のための一時の作業ツリー（着手前のコミットで起こす）を、起こして消す、という概念1つを持つ。`git` だけを呼ぶ。
+// タスクの再試のための一時の作業ツリー（着手前のコミットで起こす）を、起こして消す、という概念1つを持つ。`git` だけを呼ぶ。
 import { execFileSync } from "node:child_process"
 import { randomUUID } from "node:crypto"
 import { cpSync, existsSync, mkdtempSync, rmSync, symlinkSync } from "node:fs"

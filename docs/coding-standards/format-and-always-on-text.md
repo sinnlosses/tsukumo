@@ -36,5 +36,5 @@
 - 増やしたいときは上限を上げず、何かを削る。出し先の梯子は
   hook・検査 → スクリプト → スキル → サブエージェント → 常設の文章（右へ行くほど常に載る）
 - `.claude/rules/` は満杯に近い。足す・直す前後は検証全体でなく `pnpm run test test/architecture/always-on-budget.test.ts` を単体で打つ
-- 値を見直すのは、常設の文章の最小値を再演で測り直したとき（`docs/research/harness-strategy.md` の戦略の段2）だけ。
+- 値を見直すのは、常設の文章の最小値をタスクの再試で測り直したとき（`docs/research/harness-strategy.md` の戦略の段2）だけ。
   経緯は `docs/research/harness-strategy.md` 3.2.4
