@@ -4,6 +4,7 @@
 import type { Page } from "playwright-core"
 
 import { MAIN_REGION_SELECTOR } from "./capture-page.ts"
+import { FIGURE_SELECTOR } from "./paper-figure-selector.ts"
 import { hueFamilies } from "./paper-hue.ts"
 import { decodePng } from "./png-pixel.ts"
 
@@ -61,7 +62,7 @@ export type PaperMetric = {
 
 export async function measurePaperMetric(page: Page): Promise<PaperMetric> {
   const dom = await page.evaluate(
-    ({ blockSelector, mainSelector, ratio }) => {
+    ({ blockSelector, mainSelector, ratio, figureSelector }) => {
       const blocks = Array.from(document.querySelectorAll(blockSelector))
       const within = (name: string): Element[] =>
         blocks.flatMap((block) => Array.from(block.querySelectorAll(`[class*="${name}_"]`)))
@@ -111,11 +112,7 @@ export async function measurePaperMetric(page: Page): Promise<PaperMetric> {
         document.querySelector('[data-main-view-content] [class*="report-conclusion-lead_"]')
 
       const candidates = blocks.flatMap((block) =>
-        Array.from(
-          block.querySelectorAll(
-            'pre.mermaid, .chart-block, [class*="report-svg-figure_"], [class*="report-image-zoom_"], [class*="report-image-missing_"]',
-          ),
-        ),
+        Array.from(block.querySelectorAll(figureSelector)),
       )
       const figures = candidates.filter(
         (element) => !candidates.some((other) => other !== element && other.contains(element)),
@@ -183,6 +180,7 @@ export async function measurePaperMetric(page: Page): Promise<PaperMetric> {
       blockSelector: DETAIL_BLOCK_SELECTOR,
       mainSelector: MAIN_REGION_SELECTOR,
       ratio: OVERSIZED_FIGURE_RATIO,
+      figureSelector: FIGURE_SELECTOR,
     },
   )
 
