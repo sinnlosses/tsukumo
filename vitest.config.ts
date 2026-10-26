@@ -6,13 +6,6 @@ export const DOM_TEST_FILES = [
   "test/server/report/core/report-notation.test.ts",
 ]
 
-// `vi.mock` を使うテスト。
-// モジュールを共有すると、先に読んだほうの差し替えが同じ worker の別のファイルにも残って落ちる。
-export const ISOLATED_FILES = [
-  "test/server/achievement/adapter/closed-issue.test.ts",
-  "test/server/repository/adapter/beads-issues-reader.test.ts",
-]
-
 // `test/e2e/` は vitest.e2e.config.ts で走らせる。
 // 日付の境目を見るテストが UTC を前提にしているので、ホストが JST でも `TZ` を固定する。
 // React Compiler は足さない。`@vitejs/plugin-react` の `compiler` は consumer が `client` の環境にだけ効き、
@@ -21,6 +14,8 @@ export default defineConfig({
   test: {
     css: { modules: { classNameStrategy: "non-scoped" } },
     globals: false,
+    // `vi.spyOn` の差し替えを、it のたびに元へ戻す。
+    restoreMocks: true,
     environment: "node",
     // hook を起こすテストが、実物の拒否の記録に足さないようにする。
     env: { TZ: "UTC", TSUKUMO_HOOK_DENIAL_RECORD: "off" },
@@ -43,15 +38,7 @@ export default defineConfig({
         extends: true,
         test: {
           name: "node",
-          isolate: false,
-          exclude: ["**/node_modules/**", "test/e2e/**", ...DOM_TEST_FILES, ...ISOLATED_FILES],
-        },
-      },
-      {
-        extends: true,
-        test: {
-          name: "node-isolated",
-          include: ISOLATED_FILES,
+          exclude: ["**/node_modules/**", "test/e2e/**", ...DOM_TEST_FILES],
         },
       },
     ],

@@ -16,9 +16,10 @@
 
 | ファイル                                                          | 題                                                           | 節                                                        |
 | ----------------------------------------------------------------- | ------------------------------------------------------------ | --------------------------------------------------------- |
+| `docs/architecture/testing/check-stage-priority.md`               | テスト: check の段の優先度                                   | テスト / check の段の優先度                               |
 | `docs/architecture/testing/e2e-artifact-and-expectation.md`       | テスト: E2E の成果物と期待値                                 | テスト / E2E の成果物と再現 / E2E の期待値の範囲          |
 | `docs/architecture/testing/e2e-flake-free-writing.md`             | テスト: E2E の揺れを生まない書き方                           | テスト / E2E の揺れを生まない書き方                       |
-| `docs/architecture/testing/e2e-run.md`                            | テスト: E2E の走らせ方                                       | テスト / E2E の走らせ方                                   |
+| `docs/architecture/testing/e2e-run.md`                            | テスト: E2E の走らせ方                                       | テスト / E2E の走らせ方 / 実測の内訳                      |
 | `docs/architecture/testing/e2e-scenario-conversation-layout.md`   | テスト: E2E のシナリオ（会話の画面の配置）                   | テスト / E2E のシナリオの一覧                             |
 | `docs/architecture/testing/e2e-scenario-conversation-state.md`    | テスト: E2E のシナリオ（会話の画面の状態）                   | テスト / E2E のシナリオの一覧                             |
 | `docs/architecture/testing/e2e-scenario-task-chat-and-setting.md` | テスト: E2E のシナリオ（タスク・雑談・設定）                 | テスト / E2E のシナリオの一覧                             |

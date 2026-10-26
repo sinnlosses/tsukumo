@@ -42,8 +42,7 @@
   E2E の設定は `maxWorkers: "40%"`、単体テスト（`vitest.config.ts`）も `"40%"` で、2つ合わせて
   コア数の 80% までに収める（10 コアで各 4、単体 98 秒・E2E 58 秒前後。手元の操作が重く感じたら
   下の `TSUKUMO_CHECK_WORKER_BUDGET` で予算を下げる）。
-  単体の `node` project は `isolate: false` でファイルごとの隔離を外す（同じ予算で約 98 秒が約 52 秒）。
-  ただし `vi.mock` を使うテストは、`vitest.config.ts` の `ISOLATED_FILES` に挙げて `node-isolated` project で隔離して走らせる（今は `closed-issue.test.ts` が `beads.ts` を、`beads-issues-reader.test.ts` が `git.ts` と `node:child_process` を差し替える）。挙げ忘れた `vi.mock(` のテストも、挙げた項目が `vi.mock` を使わなくなったときも `test/architecture/test-isolation.test.ts` が落とす（理由と書き方は `docs/coding-standards/test.md`「置き場所とモック」）。
+  単体の `node` project は Vitest の既定（`isolate: true`、ファイルごとに隔離）で走らせる。`isolate: false` は約 13% 速いだけで、`vi.spyOn` やモジュールのトップレベル状態が同じ worker の別ファイルに残る順序依存の通過を許すため採らない（下の「実測の内訳」）。同じファイルの it 間にスパイが残らないよう、`restoreMocks: true` を設定に入れている。
   環境変数やグローバルを書き換えるテストは、自分で戻す。
   **`check` は重い段を起こす前に、共有の git dir の `check-running/` へ自分の pid の印を置き
   （`scripts/dev/lib/check-running.ts`。終了・`SIGTERM`・`SIGINT` で消し、死んだ pid の印は数えるときに消す）、
@@ -51,7 +50,7 @@
   （`scripts/dev/lib/worker-budget.ts`。予算は 1 本のときの合計 `2 × max(1, round(コア数 × 0.40))`（`maxWorkers: "40%"` が 1 本のときに配る数と同じ。10 コアで 8）、
   環境変数 `TSUKUMO_CHECK_WORKER_BUDGET`（正の整数。例: `TSUKUMO_CHECK_WORKER_BUDGET=4 pnpm run check`）で上書きして下げられる。1 本あたりは `floor(予算 / 本数 / 2)`、最小 1。
   並列は止めない。途中から増えた検証は、その時点の本数で自分の分を決め、走っている検証の worker は変えない。
-  本数が多く最小 1 に当たるときは予算を超えうる）。単体は `dom`・`node`・`node-isolated` の3つの project に分け、DOM のグローバルを借りる
+  本数が多く最小 1 に当たるときは予算を超えうる）。単体は `dom`・`node` の2つの project に分け、DOM のグローバルを借りる
   happy-dom の環境（`environment: "happy-dom"`）と `test/dom-setup.ts` は `dom`（`test/browser/` と、DOM を描くほかの置き場のファイル）にだけ掛ける。
   `vitest.config.ts` の `DOM_TEST_FILES` に無いファイルが DOM を要するようになったら、そこへ足す
 - **変えたファイルがすべて文書なら、`--full` でも段は `format:check`・`token-limit` と文書の検査（`pnpm run test:document`）だけになり、E2E は流れない。**
@@ -120,19 +119,24 @@
 - **起動時の切り替え先の一覧は `hello` に含まれて届くので `sessions-changed` を待たない**；`sessions-changed` を待つのは、場面が一覧を流すときと、起こし直した代が一覧を流し直すときだけ
 - `maxWorkers` は所要時間ではなく check の間に手元が重くならないことを優先して決める（値は単体テストの
   `vitest.config.ts` と合わせてコア数に対する比率で決める）。所要時間が延びること自体は受け入れる
-- **`pnpm run check` の段の子は、`taskpolicy` があれば `taskpolicy -c utility` で起こし、検証を効率コアへ寄せて
-  性能コアを手元の操作に空ける**（`scripts/dev/lib/stage-priority.ts`。clamp も `nice` も段の子孫に受け継がれる）。
-  掛けるのは軽い段と単体で、**E2E の段だけは clamp の外の `nice` で起こす**（clamp を掛けた回では
-  `conversation-tier` の狭い画面のボトムシートの場面が4回中2回、活動の行が届く前に撮られて落ちたため）。
-  `taskpolicy` が無い環境（macOS 以外・`PATH` に無い）では全段を `nice` で起こし、検証は止めない。
-  `nice` は同じ QoS の中の順番を下げるだけで、性能コアを取り合う。
-  測定（2026-10-17、Apple M4・性能コア 4・効率コア 6、ほかのセッションの負荷あり。`--full` 相当を各2回）:
+- **`pnpm run check` の段の子は、`taskpolicy -c utility` で効率コアへ寄せて起こす（E2E の段だけ `nice`）**
+  （方式と測定は `docs/architecture/testing/check-stage-priority.md`）
 
-  | 方式         | 経過（`tw verify`） | E2E の落ち | 手元の固定の CPU 仕事（中央値。検証なしで 3.2s） |
-  | ------------ | ------------------- | ---------- | ------------------------------------------------ |
-  | `nice`       | 242s・169s          | 0・0       | 9.1s・5.0s                                       |
-  | `utility`    | 258s・172s          | 1・0       | 4.0s・3.2s                                       |
-  | `background` | 346s・291s          | 0・1       | 3.8s・3.6s                                       |
+### 実測の内訳
 
-  `background` は `utility` と手元の空きが同じで経過が長いので、`utility` を選んだ。
-  E2E の段だけを外に出したいまの形は、E2E 全件の回数の上限に当たって測れていない
+単体の `node` project の `isolate`（あり・なし）を、全件（709 ファイル・6817 テスト、全件通過）で 3 回ずつ交互に測った。
+2026-10-27、Apple M4（10 コア）、ほかのセッションの負荷あり（1 分の平均負荷 8〜11）。
+条件は `pnpm run test`（`scripts/dev/test.ts` が `vitest run` を打つ）と同じ設定で、`maxWorkers: "40%"`。`--maxWorkers` を渡す `check` 経由ではない。
+`isolate` の切り替えには `vitest.config.ts` を一時的に書き換え、測定のあとに戻した。
+
+| 回         | あり（壁時計・Vitest の Duration）           | なし（壁時計・Vitest の Duration） |
+| ---------- | -------------------------------------------- | ---------------------------------- |
+| 1          | 66s・65.34s                                  | 66s・65.86s                        |
+| 2          | 65s・64.68s                                  | 57s・56.99s                        |
+| 3          | 70s・69.39s                                  | 52s・51.29s                        |
+| 中央値     | 66s・65.34s                                  | 57s・56.99s                        |
+| 中央値の差 | なしは壁時計で 13.6%、Duration で 12.8% 短い |                                    |
+
+差は 15% 未満なので `isolate` は既定（あり）に戻し、隔離の一覧（`ISOLATED_FILES`・`node-isolated` project）は要らなくなって外した。
+`tests` の累積時間は出力に無く、Duration の内訳は あり が tests 52〜54%・import 25〜27%、なし が tests 59〜60%・import 16〜17%。
+あり に戻して落ちたテストは無かった（3 回とも 709 ファイル通過）。
