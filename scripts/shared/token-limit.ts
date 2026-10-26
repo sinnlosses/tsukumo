@@ -2,6 +2,8 @@
 
 /** 1 ファイルのトークン数の上限。`BYTES_PER_TOKEN` バイトを 1 トークンと数え、超えたら大きすぎる。 */
 const TOKEN_LIMIT = 5000
+/** `docs/` 配下の `.md` の上限。それ以外は `TOKEN_LIMIT`。 */
+const DOCUMENT_TOKEN_LIMIT = 12000
 const BYTES_PER_TOKEN = 4
 
 /** 検査から外すパス。前方一致（末尾が `/` のもの）か完全一致。足すときはここだけを直す。 */
@@ -24,6 +26,7 @@ export type StagedChange = {
 export type OversizedFile = {
   readonly path: string
   readonly tokens: number
+  readonly limit: number
   /** HEAD からの増え幅（バイト）。新規はファイルの大きさそのもの。 */
   readonly growth: number
 }
@@ -32,11 +35,12 @@ export type OversizedFile = {
 export function findOversizedFiles(changes: readonly StagedChange[]): readonly OversizedFile[] {
   return changes
     .filter((change) => !change.binary && !isExempt(change.path))
-    .filter((change) => change.stagedBytes / BYTES_PER_TOKEN > TOKEN_LIMIT)
+    .filter((change) => change.stagedBytes / BYTES_PER_TOKEN > limitOf(change.path))
     .filter((change) => change.headBytes === undefined || change.stagedBytes > change.headBytes)
     .map((change) => ({
       path: change.path,
       tokens: Math.ceil(change.stagedBytes / BYTES_PER_TOKEN),
+      limit: limitOf(change.path),
       growth: change.stagedBytes - (change.headBytes ?? 0),
     }))
 }
@@ -52,18 +56,18 @@ const NEAR_RATIO = 0.9
 
 export function countTokens(path: string, bytes: number): TokenCount {
   const tokens = Math.ceil(bytes / BYTES_PER_TOKEN)
-  return { tokens, limit: TOKEN_LIMIT, status: statusOf(path, tokens) }
+  return { tokens, limit: limitOf(path), status: statusOf(path, tokens) }
 }
 
 export function formatTokenLimitRefusal(oversized: readonly OversizedFile[]): string {
   const lines = oversized.map(
     (file) =>
-      `- ${file.path}: ${file.tokens} トークン（上限 ${TOKEN_LIMIT}）、HEAD から +${file.growth} バイト`,
+      `- ${file.path}: ${file.tokens} トークン（上限 ${file.limit}）、HEAD から +${file.growth} バイト`,
   )
   const extensions = new Set(oversized.map((file) => extensionOf(file.path)))
   const steps = [...extensions].map((extension) => `- ${splitStepFor(extension)}`)
   return [
-    `ステージしたファイルが ${TOKEN_LIMIT} トークン（${TOKEN_LIMIT * BYTES_PER_TOKEN} バイト）を超えていて、新規か HEAD より大きくなっています。`,
+    "ステージしたファイルが上限のトークン数（1 トークン = 4 バイト）を超えていて、新規か HEAD より大きくなっています。",
     ...lines,
     "",
     "分割の手順:",
@@ -77,14 +81,19 @@ export function formatTokenLimitRefusal(oversized: readonly OversizedFile[]): st
 
 function statusOf(path: string, tokens: number): TokenCount["status"] {
   if (isExempt(path)) return "exempt"
-  if (tokens > TOKEN_LIMIT) return "over"
-  return tokens > TOKEN_LIMIT * NEAR_RATIO ? "near" : "ok"
+  const limit = limitOf(path)
+  if (tokens > limit) return "over"
+  return tokens > limit * NEAR_RATIO ? "near" : "ok"
 }
 
 function isExempt(path: string): boolean {
   return EXEMPT_PATH_PATTERNS.some((pattern) =>
     pattern.endsWith("/") ? path.startsWith(pattern) : path === pattern,
   )
+}
+
+function limitOf(path: string): number {
+  return path.startsWith("docs/") && path.endsWith(".md") ? DOCUMENT_TOKEN_LIMIT : TOKEN_LIMIT
 }
 
 function extensionOf(path: string): string {

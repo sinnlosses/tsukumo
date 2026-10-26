@@ -127,7 +127,7 @@
 - **英語識別子**: `InputLedger`（置き場は `$TSUKUMO_HOME/input-ledger/<sessionId>.jsonl`。駆動の側で組むのは `InputLedgerIntake`、入力の種類は `LedgeredInputKind`）
 - **定義**: tsukumo が送った入力の種類（依頼・脇の話・進みの差し込み）と、ターンの終わり方を、送った
   `SDKUserMessage` の `uuid` を鍵に持つ記録。組み直しは transcript に残らないこの2つをここから引く
-- **注記**: 持つのは uuid と決まった語だけで、本文は持たない（`docs/architecture/conversation-safety-local-record.md`
+- **注記**: 持つのは uuid と決まった語だけで、本文は持たない（`docs/architecture/conversation-safety.md`
   「会話内容と安全」）。控えの無い入力は、本文の包み（`<tsukumo-aside>`・`<tsukumo-progress>`）で見分ける
 - **避ける言い方**: 入力ログ、送信履歴、キャッシュ
 

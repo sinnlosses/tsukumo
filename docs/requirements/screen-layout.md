@@ -88,7 +88,7 @@ tsukumo は吹き出しの文言を作らない。**入力欄はそのまま出�
 一覧が上で高さを区切って内側で転がし、詳細が残りの高さで内側で転がし、下の操作の帯は箱の下端に
 残す。組み替えるのは CSS だけで、部品の側は広い画面のまま書く（一覧と詳細を行き来する画面の
 切り替えは持たない。切り替え画面〔`docs/architecture/screen-design.md` 13.9「切り替え画面」〕の積み方と同じ）。
-値は `docs/architecture/screen-design.md` 13.12。**レポートの中の表はこの対象ではない**（`docs/architecture/screen-design.md`
+値は `docs/architecture/display/task-modal.md` 13.12。**レポートの中の表はこの対象ではない**（`docs/architecture/screen-design.md`
 13.3「領域の内幅に入りきらない表は、その表だけ横スクロールさせる」）。
 
 **右下は入力欄**で、比率は CSS だけで決まる（1枚にまとめた理由と、そこが空いていた頃の経緯は

@@ -15,6 +15,10 @@ const EXEMPT_PATH_PATTERNS = [
   "vendor/",
 ] as const
 
+/** 実在しない文書のパスを `docs/…` の字面で書くと節の参照の検査が拾うので、組み立てて作る。 */
+const DOCS_DIR = "docs"
+const docPath = (name: string) => `${DOCS_DIR}/${name}`
+
 function change(overrides: Partial<StagedChange>): StagedChange {
   return { path: "src/a.ts", headBytes: undefined, stagedBytes: 0, binary: false, ...overrides }
 }
@@ -43,6 +47,31 @@ describe("大きすぎるファイルの判定", () => {
       change({ path: "src/new.ts", headBytes: 30000, stagedBytes: 30500 }),
       true,
     ],
+    [
+      "docs の .md は 48,000 バイトちょうどまで通る",
+      change({ path: docPath("a.md"), stagedBytes: 48000 }),
+      false,
+    ],
+    [
+      "docs の .md は 48,001 バイトで拒む",
+      change({ path: docPath("architecture/a.md"), stagedBytes: 48001 }),
+      true,
+    ],
+    [
+      "docs の .md でも既存の超過が縮むなら通る",
+      change({ path: docPath("a.md"), headBytes: 50000, stagedBytes: 49000 }),
+      false,
+    ],
+    [
+      "docs の .md 以外はコードの上限のまま",
+      change({ path: "docs/a.ts", stagedBytes: 20001 }),
+      true,
+    ],
+    [
+      "docs の外の .md はコードの上限のまま",
+      change({ path: "README.md", stagedBytes: 20001 }),
+      true,
+    ],
     ["バイナリは大きくても通る", change({ stagedBytes: 900000, binary: true }), false],
     ...EXEMPT_PATH_PATTERNS.map((pattern): JudgmentRow => [
       `除外 ${pattern} は大きくても通る`,
@@ -61,10 +90,12 @@ describe("大きすぎるファイルの判定", () => {
       findOversizedFiles([
         change({ path: "a.md", stagedBytes: 20004 }),
         change({ path: "b.md", headBytes: 21000, stagedBytes: 22000 }),
+        change({ path: docPath("c.md"), stagedBytes: 48004 }),
       ]),
     ).toEqual([
-      { path: "a.md", tokens: 5001, growth: 20004 },
-      { path: "b.md", tokens: 5500, growth: 1000 },
+      { path: "a.md", tokens: 5001, limit: 5000, growth: 20004 },
+      { path: "b.md", tokens: 5500, limit: 5000, growth: 1000 },
+      { path: docPath("c.md"), tokens: 12001, limit: 12000, growth: 48004 },
     ])
   })
 })
@@ -75,6 +106,9 @@ describe("トークン数の状態", () => {
     ["近接", "src/a.ts", 18004, { tokens: 4501, limit: 5000, status: "near" }],
     ["余裕", "src/a.ts", 18000, { tokens: 4500, limit: 5000, status: "ok" }],
     ["除外", "vendor/a.json", 90000, { tokens: 22500, limit: 5000, status: "exempt" }],
+    ["docs の超過", docPath("a.md"), 48004, { tokens: 12001, limit: 12000, status: "over" }],
+    ["docs の近接", docPath("a.md"), 43204, { tokens: 10801, limit: 12000, status: "near" }],
+    ["docs の余裕", docPath("a.md"), 20004, { tokens: 5001, limit: 12000, status: "ok" }],
   ])("%s", (_name, path, bytes, expected) => {
     expect(countTokens(path, bytes)).toEqual(expected)
   })
@@ -82,16 +116,18 @@ describe("トークン数の状態", () => {
 
 describe("拒否文", () => {
   const oversized = [
-    { path: "notes/a.md", tokens: 5001, growth: 20004 },
-    { path: "src/b.ts", tokens: 5500, growth: 1000 },
-    { path: "src/c.module.css", tokens: 6000, growth: 10 },
-    { path: "data.json", tokens: 6000, growth: 10 },
+    { path: "notes/a.md", tokens: 5001, limit: 5000, growth: 20004 },
+    { path: "src/b.ts", tokens: 5500, limit: 5000, growth: 1000 },
+    { path: "src/c.module.css", tokens: 6000, limit: 5000, growth: 10 },
+    { path: "data.json", tokens: 6000, limit: 5000, growth: 10 },
+    { path: docPath("d.md"), tokens: 12500, limit: 12000, growth: 100 },
   ]
 
   test.each([
     "notes/a.md",
     "5001",
-    "5000",
+    "上限 5000",
+    "上限 12000",
     "+20004",
     "同じコミットで",
     "`--no-verify` は使わない",

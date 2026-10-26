@@ -4,7 +4,7 @@
 
 責務: トークン消費の画面の「減らし方を見てもらう」区画の文言・配置・押せない条件・経過時間の書式と、結果の場面。
 読む時: 見直し区画に触るとき。
-直す時: 区画の文言・押せない条件・結果の場面の形を変えたとき。区画の色は `docs/architecture/screen-design/color-report-and-usage.md`。
+直す時: 区画の文言・押せない条件・結果の場面の形を変えたとき。区画の色は `docs/architecture/screen-design/color.md`。
 
 ## 13. 画面のデザイン
 

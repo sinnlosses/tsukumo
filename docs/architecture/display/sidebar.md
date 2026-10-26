@@ -48,9 +48,9 @@
   区画には**全件を並べ（進行中だけ先頭、残りはファイルの順）、入りきらない分は区画の内側で
   スクロール**する（件数のチップでの絞り込みは上のとおり）。見出しの右端に **「一覧を見る」** と、
   その左に最新化の ↻（下の「タスクのモーダル」の「最新化の ↻」）を置き、押すと**左に一覧・右に選んだタスクの詳細のモーダルが開く**（2026-09-28 決定。形とふるまいは
-  下の「タスクのモーダル」、寸法と色は `docs/architecture/screen-design.md` 13.12）。
+  下の「タスクのモーダル」、寸法と色は `docs/architecture/display/task-modal.md` 13.12）。
   **のぞき窓**（2026-10-04 決定。見本 `docs/history/mockup/sidebar-task-peek-2026-10-04.html` の
-  場面3。寸法と色は `docs/architecture/screen-design.md`「サイドバーのタスクののぞき窓」）: 行か進行中の
+  場面3。寸法と色は `docs/architecture/display/task-modal.md`「サイドバーのタスクののぞき窓」）: 行か進行中の
   カードを押すと、**サイドバーの左に、押した行を尾で指す窓が開く**（行は `aria-haspopup="dialog"` と
   `aria-expanded`）。中身は上から、状態の印と語・ID・閉じる「×」 → 題（`TaskSummaryText`） →
   関わるタスク（`dependencies` の ID。無ければ行ごと出さない） → 本文の頭（タスクのモーダルと同じ

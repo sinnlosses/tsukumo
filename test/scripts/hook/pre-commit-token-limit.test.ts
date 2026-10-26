@@ -62,7 +62,7 @@ describe("新規のファイル", () => {
 
     expect(result.exitCode).toBe(1)
     expect(result.stderr).toContain("big.txt")
-    expect(result.stderr).toContain("5000")
+    expect(result.stderr).toContain("上限 5000")
     expect(result.stderr).toContain("--no-verify")
   })
 
