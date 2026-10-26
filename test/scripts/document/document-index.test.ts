@@ -46,152 +46,97 @@ describe("readAdrStatus", () => {
 })
 
 describe("childListRows", () => {
-  const children = [
-    {
-      fileName: "view.md",
-      text: [
-        "# 用語集: 見る",
-        "",
-        "冒頭の一言。",
-        "",
-        "## 節の索引",
-        "",
-        "## 画面",
-        "### メインビュー",
-        "#### 小節",
-        "##### 5段目は載せない",
-        "### サイドバー",
-        "",
-        "```bash",
-        "## コードブロックの中は見出しでない",
-        "```",
-        "",
-        "## 面",
-      ].join("\n"),
-    },
-    { fileName: "block.md", text: ["# 用語集: 塊", "", "## 塊"].join("\n") },
-  ]
+  it("子をファイル名の昇順に、パスと `責務:` の行の最初の文の行にする", () => {
+    const children = [
+      {
+        fileName: "view.md",
+        text: [
+          "# 用語集: 見る",
+          "",
+          "責務: 見る語を定める。二文目は載せない。",
+          "",
+          "## 画面",
+        ].join("\n"),
+      },
+      {
+        fileName: "block.md",
+        text: ["# 用語集: 塊", "", "責務: 塊の語。", "", "## 塊"].join("\n"),
+      },
+    ]
 
-  it("子をファイル名の昇順に、パス・題・`##` と `###` の見出し（節の索引とコードブロックの中を除く）の行にする", () => {
     expect(childListRows("docs/glossary", children)).toEqual([
-      ["`docs/glossary/block.md`", "用語集: 塊", "塊"],
-      ["`docs/glossary/view.md`", "用語集: 見る", "画面 / メインビュー / サイドバー / 面"],
+      ["`docs/glossary/block.md`", "塊の語。"],
+      ["`docs/glossary/view.md`", "見る語を定める。"],
     ])
   })
 
-  it("`##`・`###` が同じ兄弟は、`####` の見出しで行が分かれる", () => {
-    const siblings = ["前半", "後半"].map((part) => ({
-      fileName: `${part}.md`,
-      text: ["# 題", "## 13. 画面", "### 13.9 帯", `#### ${part}の小節`].join("\n"),
-    }))
+  it("`責務:` の行が無い子は、1行目の題を説明にする", () => {
+    const child = { fileName: "aside.md", text: ["# 脇の話", "", "## 脇"].join("\n") }
 
-    expect(childListRows("notes", siblings).map(([, , sections]) => sections)).toEqual([
-      "13. 画面 / 13.9 帯 / 前半の小節",
-      "13. 画面 / 13.9 帯 / 後半の小節",
-    ])
+    expect(childListRows("notes", [child])).toEqual([["`notes/aside.md`", "脇の話"]])
   })
 
-  it("子の `##`・`###` の見出しは、どの子のものも1つ残らず行に入る", () => {
-    const rows = childListRows("docs/x", children)
-    const headings = children.flatMap(({ text }) =>
-      text
-        .split("\n")
-        .filter((line) => /^#{2,3} /.test(line))
-        .map((line) => line.replace(/^#+ /, ""))
-        .filter((heading) => heading !== "節の索引" && !heading.startsWith("コードブロック")),
-    )
-
-    expect(headings).toHaveLength(5)
-    for (const heading of headings) {
-      expect(rows.some((row) => (row[2] ?? "").split(" / ").includes(heading))).toBe(true)
+  it("コードブロックの中の `責務:` の行は読まない", () => {
+    const child = {
+      fileName: "a.md",
+      text: ["# 題", "", "```md", "責務: 例の中", "```"].join("\n"),
     }
+
+    expect(childListRows("notes", [child])).toEqual([["`notes/a.md`", "題"]])
+  })
+
+  it("説明の中の `|` は表のセルを割らないよう `\\|` に書き、表から読み戻すと同じ行になる", () => {
+    const child = {
+      fileName: "a.md",
+      text: ["# 題", "", "責務: `| undefined` を持つ。"].join("\n"),
+    }
+    const rows = childListRows("docs/x", [child])
+    const table = replaceTable("## 目次\n\n| a | b |", "## 目次", ["ファイル", "説明"], rows)
+
+    expect(readTableRows(table, "## 目次")).toEqual(rows)
   })
 
   it("子が無ければ行も無い", () => {
     expect(childListRows("docs/x", [])).toEqual([])
   })
-
-  it("読み方の案内の見出しは「節」の列に載せない", () => {
-    const parent = {
-      fileName: "screen.md",
-      text: ["# 画面", "## このドキュメントの読み方", "### このファイルは通読しない", "## 色"].join(
-        "\n",
-      ),
-    }
-
-    expect(childListRows("notes", [parent])).toEqual([["`notes/screen.md`", "画面", "色"]])
-  })
 })
 
 describe("子の文書の節の索引", () => {
-  const document = (sections: readonly string[], index: readonly string[]): string =>
-    ["# 題", "", "冒頭の一言。", "", ...index, ...sections].join("\n")
+  const document = (index: readonly string[]): string =>
+    [
+      "# 題",
+      "",
+      "冒頭の一言。",
+      "",
+      ...index,
+      "## 甲",
+      "",
+      "### 甲の1",
+      "",
+      "## 乙",
+      "",
+      "本文。",
+    ].join("\n")
   const index = ["## 節の索引", "", "| 節 | 中身 |", "| --- | --- |", "| ## 甲 | 手書き |", ""]
-  const threeSections = [
-    "## 甲",
-    "",
-    "### 甲の1",
-    "",
-    "#### 子の索引には載せない小節",
-    "",
-    "```md",
-    "## コードブロックの中は節でない",
-    "```",
-    "",
-    "### 甲の2",
-    "",
-    "## 乙",
-    "",
-    "## 丙",
-    "",
-    "### 丙の1",
-    "",
-  ]
-  const twoSections = ["## 甲", "", "### 甲の1", "", "## 乙", "", "本文。", ""]
 
   it("節の索引が無い文書は照らさず、書き直しても変えない", () => {
-    const text = document(twoSections, [])
+    const text = document([])
 
     expect(readChildIndex(text)).toBeUndefined()
     expect(rewriteChildIndex(text)).toBe(text)
   })
 
-  it("本文の `##` の節が2つの文書に索引があれば食い違い、書き直すと索引の節だけが消える", () => {
-    const text = document(twoSections, index)
+  it("節の索引があれば食い違い、書き直すと索引の節だけが消える", () => {
+    const text = document(index)
 
     expect(readChildIndex(text)).toEqual({ expected: [], actual: [["## 節の索引"]] })
-    expect(rewriteChildIndex(text)).toBe(document(twoSections, []))
+    expect(rewriteChildIndex(text)).toBe(document([]))
   })
 
-  it("節が3つの文書の索引は、`##` ごとに `###` をつないだ行と比べ、書き直すと見出し行ごと組む", () => {
-    const text = document(threeSections, index)
-    const expected = [
-      ["## 甲", "甲の1 / 甲の2"],
-      ["## 乙", ""],
-      ["## 丙", "丙の1"],
-    ]
+  it("節が3つ以上の文書の索引も消す", () => {
+    const text = ["# 題", "## 節の索引", "| 節 |", "## 甲", "## 乙", "## 丙"].join("\n")
 
-    expect(readChildIndex(text)).toEqual({ expected, actual: [["## 甲", "手書き"]] })
-
-    const rewritten = rewriteChildIndex(text)
-    expect(rewritten).toContain(
-      ["| 節 | 小節 |", "| --- | --- |", "| ## 甲 | 甲の1 / 甲の2 |", "| ## 乙 |  |"].join("\n"),
-    )
-    expect(readChildIndex(rewritten)).toEqual({ expected, actual: expected })
-  })
-
-  it("本文の `##`・`###` の見出しは1つ残らず索引の行に入る", () => {
-    const state = readChildIndex(document(threeSections, index))
-    const cells = (state?.expected ?? []).flatMap(([section = "", subsections = ""]) => [
-      section.replace(/^## /, ""),
-      ...subsections.split(" / ").filter((title) => title !== ""),
-    ])
-    const headings = threeSections
-      .filter((line) => /^#{2,3} /.test(line) && !line.includes("コードブロック"))
-      .map((line) => line.replace(/^#+ /, ""))
-
-    expect(headings).toHaveLength(6)
-    expect(cells).toEqual(headings)
+    expect(rewriteChildIndex(text)).toBe(["# 題", "## 甲", "## 乙", "## 丙"].join("\n"))
   })
 
   it("`## 節の索引` の直後に `###` で本文が始まっても、本文の見出しと中身は残す", () => {

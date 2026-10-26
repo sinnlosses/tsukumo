@@ -1,4 +1,4 @@
-// ADR の一覧表・親の文書の子の一覧・子の文書の節の索引を、元の題と見出しから組み立てる純粋関数。
+// ADR の一覧表・親の文書の目次を、元の題と責務の行から組み立てる純粋関数。子の文書の節の索引は消す。
 // 表の範囲は、指定した見出しより後で最初に現れる `|` で始まる連続した行。
 // 見出しはコードブロックの外の行だけを数える。
 
@@ -19,22 +19,10 @@ export type TableRow = readonly string[]
 
 export const DECISION_TABLE_HEADING = "## 設計判断（なぜ今の形なのか）"
 export const DECISION_TABLE_COLUMNS = ["ファイル", "判断", "ステータス"] as const satisfies TableRow
-export const SECTION_INDEX_HEADING = "## 節の索引"
-export const CHILD_LIST_COLUMNS = ["ファイル", "題", "節"] as const satisfies TableRow
-
-const SECTION_INDEX_COLUMNS = ["節", "小節"] as const satisfies TableRow
-
-// 本文の `##` の節がこの数以下の文書は、節の索引を置かない。
-const MAX_SECTIONS_WITHOUT_INDEX = 2
+export const CHILD_LIST_HEADING = "## 目次"
+export const CHILD_LIST_COLUMNS = ["ファイル", "説明"] as const satisfies TableRow
 
 const SECTION_INDEX_TITLE = "節の索引"
-
-// 文書の読み方の案内の見出し。親の一覧の「節」の列には載せない。
-const READING_GUIDE_TITLES = new Set([
-  "このファイルの読み方",
-  "このドキュメントの読み方",
-  "このファイルは通読しない",
-])
 
 /** 設計判断の表の行（ファイル名の昇順）。 */
 export function decisionRows(adrs: readonly TitledFile[]): TableRow[] {
@@ -60,48 +48,30 @@ export function readAdrStatus(text: string): string | undefined {
 }
 
 /**
- * 親の文書の子の一覧の行（ファイル名の昇順）。
- * 列は子のパス・1行目の `# ` の題・`##` と `###` の見出し（節の索引と読み方の案内を除く）を ` / ` でつないだもの。
- * `##`・`###` の列が兄弟と同じになる子だけは `####` まで載せる（行ごとに子を見分けるため）。
+ * 親の文書の目次の行（ファイル名の昇順）。列は子のパスと1行の説明。
+ * 説明は `責務:` の行の最初の文で、その行が無い子は1行目の `# ` の題。
  */
 export function childListRows(directory: string, children: readonly ChildFile[]): TableRow[] {
-  const sorted = sortByFileName(children)
-  const shallow = sorted.map(({ text }) => joinSectionTitles(text, 3))
-  return sorted.map(({ fileName, text }, index) => [
+  return sortByFileName(children).map(({ fileName, text }) => [
     `\`${directory}/${fileName}\``,
-    (text.split("\n")[0] ?? "").replace(/^# /, "").trim(),
-    shallow.filter((sections) => sections === shallow[index]).length > 1
-      ? joinSectionTitles(text, 4)
-      : (shallow[index] ?? ""),
+    describeChild(text),
   ])
 }
 
 /**
- * 子の文書の節の索引の、あるべき行といま書かれている行。節の索引が無ければ `undefined`。
- * 本文の `##` の節が `MAX_SECTIONS_WITHOUT_INDEX` 以下なら索引を置かないので、あるべき行を空にし、
- * いまの行には索引の見出しの1行を入れる（索引があること自体を食い違いにする）。
+ * 子の文書に節の索引があれば、あるべき行を空、いまの行を索引の見出しの1行にして返す
+ * （索引があること自体を食い違いにする）。無ければ `undefined`。
  */
 export function readChildIndex(
   text: string,
 ): { readonly expected: TableRow[]; readonly actual: TableRow[] } | undefined {
   const heading = withoutFences(text).find(isSectionIndexHeading)
-  if (heading === undefined) {
-    return undefined
-  }
-  return countSections(text) <= MAX_SECTIONS_WITHOUT_INDEX
-    ? { expected: [], actual: [[heading]] }
-    : { expected: sectionIndexRows(text), actual: readTableRows(text, heading) }
+  return heading === undefined ? undefined : { expected: [], actual: [[heading]] }
 }
 
-/** 子の文書の節の索引を書き直す。節が少なければ索引の節を消し、多ければ見出しから表を組む。 */
+/** 子の文書の節の索引の節を消す。無ければ変えない。 */
 export function rewriteChildIndex(text: string): string {
-  const heading = withoutFences(text).find(isSectionIndexHeading)
-  if (heading === undefined) {
-    return text
-  }
-  return countSections(text) <= MAX_SECTIONS_WITHOUT_INDEX
-    ? withoutSectionIndex(text)
-    : replaceTable(text, heading, SECTION_INDEX_COLUMNS, sectionIndexRows(text))
+  return withoutFences(text).some(isSectionIndexHeading) ? withoutSectionIndex(text) : text
 }
 
 /** `heading` の後の表の、見出し行と区切り行を除いたセルの中身（前後の空白なし）。 */
@@ -127,34 +97,16 @@ export function replaceTable(
   ])
 }
 
-/** 子の文書の節の索引の行（`##` の節ごとに、その下の `###` を ` / ` でつないだもの。`###` の無い節も載せる）。 */
-function sectionIndexRows(text: string): TableRow[] {
-  return readHeadings(text).reduce<TableRow[]>((rows, { level, title }) => {
-    if (level === 2) {
-      return [...rows, [`## ${title}`, ""]]
-    }
-    const last = level === 3 ? rows.at(-1) : undefined
-    if (last === undefined) {
-      return rows
-    }
-    const [section = "", subsections = ""] = last
-    return [
-      ...rows.slice(0, -1),
-      [section, subsections === "" ? title : `${subsections} / ${title}`],
-    ]
-  }, [])
-}
-
-/** 深さ `maxLevel` までの見出し（読み方の案内を除く）を ` / ` でつなぐ。 */
-function joinSectionTitles(text: string, maxLevel: number): string {
-  return readHeadings(text)
-    .filter(({ level, title }) => level <= maxLevel && !READING_GUIDE_TITLES.has(title))
-    .map(({ title }) => title)
-    .join(" / ")
-}
-
-function countSections(text: string): number {
-  return readHeadings(text).filter(({ level }) => level === 2).length
+function describeChild(text: string): string {
+  const responsibility = withoutFences(text)
+    .find((line) => line.startsWith("責務:"))
+    ?.replace(/^責務:\s*/u, "")
+  const firstSentence = responsibility?.match(/^.*?。/u)?.[0] ?? responsibility
+  const description =
+    firstSentence !== undefined && firstSentence !== ""
+      ? firstSentence
+      : (text.split("\n")[0] ?? "").replace(/^# /, "").trim()
+  return description.replaceAll("|", "\\|")
 }
 
 /**
@@ -192,17 +144,6 @@ function replaceTableLines(
 
 function sortByFileName<T extends { readonly fileName: string }>(files: readonly T[]): T[] {
   return files.toSorted((a, b) => (a.fileName < b.fileName ? -1 : a.fileName > b.fileName ? 1 : 0))
-}
-
-/** `##`〜`####` の見出しの深さと文字列（節の索引を除く）。 */
-function readHeadings(text: string): { readonly level: number; readonly title: string }[] {
-  return withoutFences(text)
-    .filter((line) => /^#{2,4} /u.test(line))
-    .map((line) => ({
-      level: line.match(/^#+/u)?.[0].length ?? 2,
-      title: line.replace(/^#+ /u, "").trim(),
-    }))
-    .filter(({ title }) => title !== SECTION_INDEX_TITLE)
 }
 
 function isSectionIndexHeading(line: string): boolean {
@@ -249,6 +190,6 @@ function parseRow(line: string): TableRow {
     .trim()
     .replace(/^\|/, "")
     .replace(/\|$/, "")
-    .split("|")
+    .split(/(?<!\\)\|/u)
     .map((cell) => cell.trim())
 }

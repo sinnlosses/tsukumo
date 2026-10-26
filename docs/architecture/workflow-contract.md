@@ -10,17 +10,17 @@
 
 ## このファイルの読み方
 
-「契約とは何か」はこのファイルにあり、ほかの節の本文は子のファイル（`docs/architecture/workflow-contract/`）にある。下の索引で節を1つ特定し、その子のファイルだけを開いて読む。
+「契約とは何か」はこのファイルにあり、ほかの節の本文は子のファイル（`docs/architecture/workflow-contract/`）にある。下の目次で子を1つ特定し、その子のファイルを丸ごと読む。
 
-## 節の索引
+## 目次
 
-この表は `pnpm run format` が子のファイルの題と見出しから書き直すので、手で直さない。
+この表は `pnpm run format` が子のファイルの責務の行から書き直すので、手で直さない。
 
-| ファイル                                                  | 題                                            | 節                                     |
-| --------------------------------------------------------- | --------------------------------------------- | -------------------------------------- |
-| `docs/architecture/workflow-contract/config-and-beads.md` | ワークフローの契約: 設定コマンドと Beads の欄 | Beads の欄 / 設定コマンド              |
-| `docs/architecture/workflow-contract/port-and-return.md`  | ワークフローの契約: 口と委譲の返却            | 口 / 委譲の返却                        |
-| `docs/architecture/workflow-contract/skill-sequence.md`   | ワークフローの契約: スキルの並び              | スキルの契約 / してよいこと / 合わせ方 |
+| ファイル                                                  | 説明                                                                                                                                                                           |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `docs/architecture/workflow-contract/config-and-beads.md` | tsukumo が読む Beads の欄と、ワークフローが持つ設定コマンド（`tw config --schema`・`tw config set`）の形と tsukumo の使い方を持つ。                                            |
+| `docs/architecture/workflow-contract/port-and-return.md`  | tsukumo がワークフローから受ける2つの口（`work_plan`・`report`）の名前と引数の意味、委譲先の返却（`phase_result`）での帯の進め方、委譲ゲートを持つ。                           |
+| `docs/architecture/workflow-contract/skill-sequence.md`   | 並びに置くスキルの印・受け取るもの・返すもの、返却のツール `phase_result`、ワークフローがしてよいことと tsukumo が読まないもの、利用者独自のワークフローが合わせる相手を持つ。 |
 
 ## 契約とは何か
 

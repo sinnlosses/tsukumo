@@ -17,7 +17,7 @@
 // 本文を含む）の中に句があるかで照らす。行の折り返し・空白・バッククォート・`` の有無の違いは両側から除いて比べる。
 //
 // 参照先が `docs/X.md` のとき、句は親と、子ディレクトリ `docs/X/*.md` の本文で探す
-// （子の冒頭の一言と「節の索引」の節は本文にしない）。番号つきの参照は、その番号の見出しを持つ
+// （子の冒頭の一言は本文にしない）。番号つきの参照は、その番号の見出しを持つ
 // ファイルがあればそこだけで照らす。
 //
 // 「」の無い素のパス（`docs/` 以下の `.md`）は、句を照らせないのでファイルの実在だけを照らす。
@@ -308,27 +308,15 @@ function readChildBodies(parentPath: string, targets: ReadonlyMap<string, string
     .filter(
       ([path]) => path.startsWith(childPrefix) && !path.slice(childPrefix.length).includes("/"),
     )
-    .map(([, text]) => withoutLeadAndIndex(text))
+    .map(([, text]) => withoutLead(text))
 }
 
 /**
- * 最初の `## ` の見出しより前（表題と冒頭の一言）と、`## 節の索引` の節を除く。
- * どちらも親の索引と同じ要約の再掲なので、句の正にしない。
+ * 最初の `## ` の見出しより前（表題と冒頭の一言）を除く。
+ * 親の目次と同じ要約の再掲なので、句の正にしない。
  */
-function withoutLeadAndIndex(text: string): string {
+function withoutLead(text: string): string {
   const lines = text.split("\n")
   const first = lines.findIndex((line) => line.startsWith("## "))
-  if (first < 0) {
-    return ""
-  }
-  const kept = lines.slice(first).reduce<{ readonly skipping: boolean; readonly lines: string[] }>(
-    (state, line) => {
-      const skipping = line.startsWith("## ") ? line.startsWith("## 節の索引") : state.skipping
-      return skipping
-        ? { skipping, lines: state.lines }
-        : { skipping, lines: [...state.lines, line] }
-    },
-    { skipping: false, lines: [] },
-  )
-  return kept.lines.join("\n")
+  return first < 0 ? "" : lines.slice(first).join("\n")
 }

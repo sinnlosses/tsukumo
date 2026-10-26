@@ -14,7 +14,7 @@
 
 ### このファイルは通読しない
 
-節の本文は子のファイル（`docs/requirements/`）にある。下の索引で節を1つ特定し、**その節の子のファイルだけ**を開いて読む。
+節の本文は子のファイル（`docs/requirements/`）にある。下の目次で子を1つ特定し、その子のファイルを丸ごと読む。
 このファイルに本文があるのは「正典に残すもの・`docs/history/` へ移すもの」「4. 機能要件」の欠番の注記「7. 未決事項」「8. 参照」だけ。
 
 ### 正典に残すもの・`docs/history/` へ移すもの（2026-09-21 決定）
@@ -33,26 +33,26 @@
 手元に無く、一度往復した決定（吹き出しの位置・Enter の割り当て）を踏み直す余地が戻る。それでも
 **正典が現状だけを映すこと**を優先する。
 
-## 節の索引
+## 目次
 
-この表は `pnpm run format` が子のファイルの題と見出しから書き直すので、手で直さない。
+この表は `pnpm run format` が子のファイルの責務の行から書き直すので、手で直さない。
 
-| ファイル                                          | 題                                       | 節                                                                                                                                                                                                                |
-| ------------------------------------------------- | ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `docs/requirements/achievement-reflection.md`     | tsukumo 要件定義: 振り返りの依頼         | 4. 機能要件 / 4.11 成果の振り返り / 振り返りの依頼                                                                                                                                                                |
-| `docs/requirements/achievement.md`                | tsukumo 要件定義: 成果の振り返り         | 4. 機能要件 / 4.11 成果の振り返り / 数えられない・読めないとき / 何を数えるか / `done` になった日 / 卒業と節目 / 灯りの段階 / 日記                                                                                |
-| `docs/requirements/character-pack.md`             | tsukumo 要件定義: キャラクターパック     | 4. 機能要件 / 4.4 キャラクターパック                                                                                                                                                                              |
-| `docs/requirements/claude-code-driving.md`        | tsukumo 要件定義: Claude Code の駆動     | 4. 機能要件 / 4.1 Claude Code の駆動                                                                                                                                                                              |
-| `docs/requirements/constraint-and-environment.md` | tsukumo 要件定義: 技術制約と実行環境     | 3. 技術制約 / 5. 実行環境・非機能要件                                                                                                                                                                             |
-| `docs/requirements/expression.md`                 | tsukumo 要件定義: 表情                   | 4. 機能要件 / 4.3 状態連動                                                                                                                                                                                        |
-| `docs/requirements/image-attachment.md`           | tsukumo 要件定義: 画像の添付             | 4. 機能要件 / 4.10 画像の添付                                                                                                                                                                                     |
-| `docs/requirements/launch-and-setting.md`         | tsukumo 要件定義: 起動と設定             | 4. 機能要件 / 4.6 起動と設定                                                                                                                                                                                      |
-| `docs/requirements/portrait-motion.md`            | tsukumo 要件定義: 立ち絵の動き           | 4. 機能要件 / 4.3 状態連動                                                                                                                                                                                        |
-| `docs/requirements/purpose-and-scope.md`          | tsukumo 要件定義: 目的とスコープ         | 1. 概要・目的 / 合格シーン（v1） / 「ターミナル環境」とは何を指すか / 実現の手段 / 2. スコープ / 2.1 対象とすること / 2.2 対象外とすること（スコープ外） / 2.3 想定利用者 / 6. 既存のものとの関係（なぜ作るのか） |
-| `docs/requirements/screen-layout.md`              | tsukumo 要件定義: 画面レイアウト         | 4. 機能要件 / 4.7 画面レイアウト                                                                                                                                                                                  |
-| `docs/requirements/session-restore-condition.md`  | tsukumo 要件定義: セッションの復元の条件 | 4. 機能要件 / 4.8 セッションの復元 / 別の窓で使用中のセッション / いつ復元するか / 復元できなかったときどうするか                                                                                                 |
-| `docs/requirements/session-restore.md`            | tsukumo 要件定義: セッションの復元       | 4. 機能要件 / 4.8 セッションの復元 / 何を戻し、何を戻さないか / tsukumo 側に会話を保存しない / 鍵（切り替え先の一覧に何を出すか）                                                                                 |
-| `docs/requirements/token-usage-review.md`         | tsukumo 要件定義: トークン消費の見直し   | 4. 機能要件 / 4.12 トークン消費の見直し                                                                                                                                                                           |
+| ファイル                                          | 説明                                                                                                     |
+| ------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `docs/requirements/achievement-reflection.md`     | 4.11 成果の振り返りの後半。                                                                              |
+| `docs/requirements/achievement.md`                | 4.11 成果の振り返りの前半。                                                                              |
+| `docs/requirements/character-pack.md`             | 4.4 キャラクターパック（素材と表情の対応の差し替え、画面から変える・作る・消す）。                       |
+| `docs/requirements/claude-code-driving.md`        | 4.1 Claude Code の駆動（SDK の `query` の動かし方と、受け取るイベントの行き先）。                        |
+| `docs/requirements/constraint-and-environment.md` | 3. 技術制約（TUI を使わず SDK で動かす理由）、5. 実行環境・非機能要件。                                  |
+| `docs/requirements/expression.md`                 | 4.3 状態連動の前半。                                                                                     |
+| `docs/requirements/image-attachment.md`           | 4.10 画像の添付（入力欄に画像を添える道。                                                                |
+| `docs/requirements/launch-and-setting.md`         | 4.6 起動と設定（1コマンドでの起動と、既存設定を壊さない制約）。                                          |
+| `docs/requirements/portrait-motion.md`            | 4.3 状態連動の後半。                                                                                     |
+| `docs/requirements/purpose-and-scope.md`          | 1. 概要・目的、2. スコープ（やること・やらないこと・想定利用者）、6. 既存のものとの関係。                |
+| `docs/requirements/screen-layout.md`              | 4.7 画面レイアウト（biim 風の4領域、1枚の HTML にまとめた形、狭い画面での見せ方）。                      |
+| `docs/requirements/session-restore-condition.md`  | 4.8 セッションの復元の後半。                                                                             |
+| `docs/requirements/session-restore.md`            | 4.8 セッションの復元の前半。                                                                             |
+| `docs/requirements/token-usage-review.md`         | 4.12 トークン消費の見直し（見直しの2つのツール、見直しの寿命、提案の識別子と実行、見送りと前回の結果）。 |
 
 ## 4. 機能要件
 

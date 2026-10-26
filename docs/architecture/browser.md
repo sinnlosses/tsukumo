@@ -9,13 +9,13 @@
 
 ## このファイルの読み方
 
-節の本文は子のファイル（`docs/architecture/browser/`）にある。下の索引で節を1つ特定し、その子のファイルだけを開いて読む。
+節の本文は子のファイル（`docs/architecture/browser/`）にある。下の目次で子を1つ特定し、その子のファイルを丸ごと読む。
 
-## 節の索引
+## 目次
 
-この表は `pnpm run format` が子のファイルの題と見出しから書き直すので、手で直さない。
+この表は `pnpm run format` が子のファイルの責務の行から書き直すので、手で直さない。
 
-| ファイル                                              | 題                           | 節                                                                                                                                    |
-| ----------------------------------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `docs/architecture/browser/bundle-style-component.md` | ブラウザ側: 組み立てと見た目 | browser / 重いライブラリ / CSS / `components/ui/` の部品（variant の作法と一覧）                                                      |
-| `docs/architecture/browser/state-and-rendering.md`    | ブラウザ側: 状態と描き方     | browser / 状態の持ち方 / Markdown（`components/page/conversation/components/markdown/renderer/markdown-renderer.tsx`） / 立ち絵の動き |
+| ファイル                                              | 説明                                                                                       |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `docs/architecture/browser/bundle-style-component.md` | ブラウザ側（`src/browser/`）の重いライブラリの読み方・CSS・`components/ui/` の部品の作法。 |
+| `docs/architecture/browser/state-and-rendering.md`    | ブラウザ側（`src/browser/`）の状態の持ち方・Markdown・立ち絵の動き。                       |

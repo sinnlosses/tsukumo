@@ -1,10 +1,11 @@
-// ADR・親の文書・子の文書の節の索引を読み書きし、`document-index` の関数に渡す。
+// ADR の表・親の文書の目次・子の文書の節の索引（消す対象）を読み書きし、`document-index` の関数に渡す。
 
 import { readdirSync, readFileSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
 import {
   CHILD_LIST_COLUMNS,
+  CHILD_LIST_HEADING,
   childListRows,
   type ChildFile,
   DECISION_TABLE_COLUMNS,
@@ -15,7 +16,6 @@ import {
   readTableRows,
   replaceTable,
   rewriteChildIndex,
-  SECTION_INDEX_HEADING,
   type TableRow,
   type TitledFile,
 } from "../document-index.ts"
@@ -24,7 +24,7 @@ const ADR_DIRECTORY = "docs/architecture/adr"
 const ARCHITECTURE_PATH = "docs/architecture.md"
 const DOCUMENT_DIRECTORY = "docs"
 
-// 節の索引を照らさない文書（据え置きの記録と、索引を作らない調査の記録）。
+// 節の索引の有無を照らさない文書（据え置きの記録と、索引を作らない調査の記録）。
 const UNINDEXED_PREFIXES = ["docs/history/", "docs/research/"] as const satisfies readonly string[]
 
 // 子のディレクトリ（`.md` を除いた同じ名前）の直下のファイルを、節の索引に一覧する親。
@@ -62,9 +62,9 @@ export function readIndexStates(root: string): IndexState[] {
     },
     ...PARENT_PATHS.map((parentPath) => ({
       kind: "child-list" as const,
-      name: `${parentPath} ${SECTION_INDEX_HEADING}`,
+      name: `${parentPath} ${CHILD_LIST_HEADING}`,
       expected: childListRows(childDirectoryOf(parentPath), readChildFiles(root, parentPath)),
-      actual: readTableRows(readFileSync(join(root, parentPath), "utf8"), SECTION_INDEX_HEADING),
+      actual: readTableRows(readFileSync(join(root, parentPath), "utf8"), CHILD_LIST_HEADING),
     })),
     ...listChildDocuments(root).flatMap((path) => {
       const index = readChildIndex(readFileSync(join(root, path), "utf8"))
@@ -93,7 +93,7 @@ export function writeIndexes(root: string): void {
       path,
       replaceTable(
         readFileSync(path, "utf8"),
-        SECTION_INDEX_HEADING,
+        CHILD_LIST_HEADING,
         CHILD_LIST_COLUMNS,
         childListRows(childDirectoryOf(parentPath), readChildFiles(root, parentPath)),
       ),

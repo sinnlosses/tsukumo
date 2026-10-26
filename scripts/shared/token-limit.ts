@@ -105,7 +105,7 @@ function extensionOf(path: string): string {
 function splitStepFor(extension: string): string {
   switch (extension) {
     case ".md":
-      return "`.md`: `##` の節の境目で概念ごとのファイルに切る。元からは移した節を消す（`docs/` の親の「節の索引」は `pnpm run format` が書き直し、子の一覧に1行足す）。"
+      return "`.md`: `##` の節の境目で概念ごとのファイルに切る。元からは移した節を消す（`docs/` の親の「目次」は `pnpm run format` が書き直し、子の一覧に1行足す）。"
     case ".ts":
     case ".tsx":
       return "`.ts`・`.tsx`: 1 ファイル 1 概念（ファイル名が概念になる単位。`helpers`・`utils`・`common` は作らない）で、関連する関数群を新ファイルへ移して import を直す。テストは鏡の位置の別ファイルに切る。"

@@ -6,7 +6,7 @@ paths:
 
 # React とスタイルの書き方
 
-規則の正典はこのファイル。理由と例外は `docs/coding-standards.md` の括弧の節（冒頭の「節の索引」で引く）。
+規則の正典はこのファイル。理由と例外は `docs/coding-standards.md` の括弧の節（子のファイルは `docs/coding-standards.md` の目次で引く）。
 
 - `memo` / `useCallback` / `useMemo` は手で書かず、メモ化は React Compiler に任せる。残してよい理由は「React」節「手でメモ化しない」の2つだけ
 - **条件付きの描画は `{条件 && <部品 />}` で書き、`? … : null` にしない。** 左辺は `boolean` に限る（「条件付きの描画は `&&` で書く」）

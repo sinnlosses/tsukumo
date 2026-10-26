@@ -5,11 +5,11 @@
 ## プロジェクト概要
 
 **tsukumo** は、**キャラクターと一緒に楽しく仕事をするためのターミナル環境**。
-機能を足す前に `docs/requirements.md`「1. 概要・目的」と「2.2 対象外とすること」を見る。
+機能を足す前に `docs/requirements/purpose-and-scope.md`「1. 概要・目的」と「2.2 対象外とすること」を見る。
 Agent SDK で Claude Code を子プロセスとして動かし、表示はすべて HTML。セリフは MCP ツール `speak`、ターンの本文は `report` で受け取る。
 
 **IMPORTANT**: **TUI を使わず SDK で動かす**（TUI に描画を混ぜる方式は技術的に不可能）。
-設計を変える前に `docs/requirements.md`「3. 技術制約」と `docs/architecture/adr/0008-sdk-instead-of-tui.md` を読む。
+設計を変える前に `docs/requirements/constraint-and-environment.md`「3. 技術制約」と `docs/architecture/adr/0008-sdk-instead-of-tui.md` を読む。
 
 - **キャラクターの中身をコードに書かない**（素材と表情の対応は定義ファイル側）
 
@@ -26,13 +26,13 @@ pnpm run test:e2e:update  # DOM・手続き応答の型・セッションイベ�
 
 ## テスト方針
 
-配置・モックは `docs/coding-standards.md`「テスト」節。TDD 推奨（`/tdd`）。E2E は利用者に見える流れを1本ずつと、実ブラウザでしか確かめられないものだけ。見た目（色・崩れ）は目視で確かめる（`docs/architecture/testing.md`）。
+配置・モックは `docs/coding-standards/test.md`「テスト」節。TDD 推奨（`/tdd`）。E2E は利用者に見える流れを1本ずつと、実ブラウザでしか確かめられないものだけ。見た目（色・崩れ）は目視で確かめる（`docs/architecture/testing.md`）。
 `pnpm run check` を通し、テスト件数などの根拠を示してから完了を報告する。描画に関わる変更は、何をどう確かめたか（何が見えたか）を添える。
 
 ## コーディング規約
 
-書き方は `.claude/rules/` が正典。理由・例外は `docs/coding-standards.md`。
-**IMPORTANT**: SDK のイベントと transcript には利用者と Claude の生の会話が入っている。外部に送らない・複製しない・ログに全文を出さない・テストのフィクスチャに実物を使わない（`docs/coding-standards.md`「会話内容の扱い」）。この規約は他のどの規約よりも優先する。
+書き方は `.claude/rules/` が正典。理由・例外は `docs/coding-standards/` の子（目次は `docs/coding-standards.md`）。
+**IMPORTANT**: SDK のイベントと transcript には利用者と Claude の生の会話が入っている。外部に送らない・複製しない・ログに全文を出さない・テストのフィクスチャに実物を使わない（`docs/coding-standards/conversation-content.md`「会話内容の扱い」）。この規約は他のどの規約よりも優先する。
 
 ## Git運用
 

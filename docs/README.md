@@ -1,26 +1,33 @@
 # docs の索引
 
-通読せず、下の表から知りたいことを1つ特定して、その文書の節だけを読む。
+下の表から知りたいことを1つ特定し、読むものに挙げた文書を丸ごと読む。子ファイルが並ぶ分野は、表の末尾の目次（`docs/<分野>.md`）に全部の子と1行の説明がある。
 
-| こういうとき                                                                                    | 読むもの                                                                      | 防ぐ失敗               |
-| ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- | ---------------------- |
-| 要件・やらないこと・技術制約・未決事項を知りたい                                                | `docs/requirements.md`                                                        | 本文と差分のずれ       |
-| 3層・共有層・部品・置き場所を決める                                                             | `docs/architecture.md`（置き場所は「全体構成」）                              | 同じファイルの直し直し |
-| 色・書体・レイアウト                                                                            | `docs/architecture/screen-design.md`                                          | 受け入れでの直し       |
-| セリフとレポートの分離・レポートの記法・各表示物の仕様                                          | `docs/architecture/display.md`                                                | 受け入れでの直し       |
-| ワークフローの契約（`work_plan`・`report` の口、Beads の欄）・独自のワークフローを当てる        | `docs/architecture/workflow-contract.md`                                      | 本文と差分のずれ       |
-| 雑談モード                                                                                      | `docs/architecture/chat-mode.md`                                              | 本文と差分のずれ       |
-| なぜ今の形なのか                                                                                | `docs/architecture.md`「設計判断」（各判断の本文は `docs/architecture/adr/`） | 同じファイルの直し直し |
-| ブラウザ側の状態・Markdown・立ち絵の動き・CSS・`components/ui/` の部品の作法                    | `docs/architecture/browser.md`                                                | 同じファイルの直し直し |
-| キャラクターパックの形・探索順・画面から書くときの境界                                          | `docs/architecture/character-pack.md`                                         | 本文と差分のずれ       |
-| テストの方法・E2E・目視の手順                                                                   | `docs/architecture/testing.md`                                                | 検証の打ち直し         |
-| 組み立て・開発サーバ・足す依存                                                                  | `docs/architecture/build.md`                                                  | ツールのエラー         |
-| 規約の理由と例外（`Date` を使わない・層の辺など lint とテストが守るものも）                     | `docs/coding-standards.md`                                                    | 受け入れでの直し       |
-| 用語と識別子                                                                                    | `docs/glossary.md`                                                            | 付いてきた文書の変更   |
-| タスクを書く・受け入れる・作業ツリーを並行させる・tsukumo を起こす                              | `docs/workflow.md`                                                            | 段の所要時間           |
-| コマンドの全体・環境変数・構成                                                                  | `README.md`                                                                   | ツールのエラー         |
-| スキル（`~/.claude/skills/`。共通なのでこのリポジトリの事情はここと `docs/workflow.md` が補う） | 毎セッションのスキル案内                                                      | 本文と差分のずれ       |
-| シェルでの書き換え・`git add -A` などを拒まれた                                                 | hook（`tw commit-guard`）の文面に従う。`docs/workflow.md`                     | hook の拒否            |
-| 過去の判断の経緯（通読しない。`grep` で節を当てる）                                             | `docs/history/decision.md` / `tw show <ID>`                                   | 同じファイルの直し直し |
+| こういうとき                                                                                    | 読むもの                                                                                                                               | 防ぐ失敗               |
+| ----------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
+| 要件・やらないこと・技術制約・実行環境                                                          | `docs/requirements/purpose-and-scope.md`・`docs/requirements/constraint-and-environment.md`                                            | 本文と差分のずれ       |
+| 機能ごとの要件（Claude Code の駆動・キャラクターパック・起動と設定・セッションの復元など）      | 目次 `docs/requirements.md` から子を1つ                                                                                                | 本文と差分のずれ       |
+| 3層・共有層・部品・置き場所を決める                                                             | `docs/architecture/overview-and-layer.md`・`docs/architecture/code-placement.md`                                                       | 同じファイルの直し直し |
+| 色・書体                                                                                        | `docs/architecture/screen-design/color.md`・`docs/architecture/screen-design/principle-and-type.md`                                    | 受け入れでの直し       |
+| 画面のレイアウト・窓の狭いとき                                                                  | `docs/architecture/screen-design/layout.md`・`docs/architecture/screen-design/narrow-screen.md`                                        | 受け入れでの直し       |
+| 画面のその他（帯・設定・雑談の画面・成果の画面など）                                            | 目次 `docs/architecture/screen-design.md` から子を1つ                                                                                  | 受け入れでの直し       |
+| セリフとレポートの分離・レポートの記法・各表示物の仕様                                          | 目次 `docs/architecture/display.md` から子を1つ                                                                                        | 受け入れでの直し       |
+| ワークフローの契約（`work_plan`・`report` の口、Beads の欄）・独自のワークフローを当てる        | `docs/architecture/workflow-contract.md`・`docs/architecture/workflow-contract/port-and-return.md`                                     | 本文と差分のずれ       |
+| 雑談モード                                                                                      | `docs/architecture/chat-mode/mode-and-switch.md`（記憶・定着・書き戻しは目次 `docs/architecture/chat-mode.md` から）                   | 本文と差分のずれ       |
+| なぜ今の形なのか                                                                                | `docs/architecture.md`「設計判断」（各判断の本文は `docs/architecture/adr/`）                                                          | 同じファイルの直し直し |
+| ブラウザ側の状態・Markdown・立ち絵の動き                                                        | `docs/architecture/browser/state-and-rendering.md`                                                                                     | 同じファイルの直し直し |
+| ブラウザ側の CSS・`components/ui/` の部品の作法                                                 | `docs/architecture/browser/bundle-style-component.md`                                                                                  | 同じファイルの直し直し |
+| キャラクターパックの形・探索順・画面から書くときの境界                                          | `docs/architecture/character-pack.md`                                                                                                  | 本文と差分のずれ       |
+| テストの方法・E2E・目視の手順                                                                   | `docs/architecture/testing/method-and-fixture.md`・`docs/architecture/testing/e2e-run.md`・`docs/architecture/testing/visual-check.md` | 検証の打ち直し         |
+| 組み立て・開発サーバ・足す依存                                                                  | `docs/architecture/build/prebuild-and-hmr.md`・`docs/architecture/build/dependency.md`                                                 | ツールのエラー         |
+| 規約の理由と例外: 層の辺・`Date` を使わない・TypeScript の書き方                                | `docs/coding-standards/layer-and-dependency.md`・`docs/coding-standards/typescript-writing.md`                                         | 受け入れでの直し       |
+| 規約の理由と例外: テスト・コメント・会話内容の扱い                                              | `docs/coding-standards/test.md`・`docs/coding-standards/comment.md`・`docs/coding-standards/conversation-content.md`                   | 受け入れでの直し       |
+| 規約の理由と例外: そのほか（React・エラーと「無い」値・hook の足し方・整形の対象外）            | 目次 `docs/coding-standards.md` から子を1つ                                                                                            | 受け入れでの直し       |
+| 用語と識別子                                                                                    | 目次 `docs/glossary.md` から子を1つ（新しい用語は子にだけ足す）                                                                        | 付いてきた文書の変更   |
+| タスクを書く・受け入れる                                                                        | `docs/workflow/task-writing.md`                                                                                                        | 段の所要時間           |
+| 作業ツリーを並行させる・送り出す・tsukumo を起こす                                              | `docs/workflow/worktree-and-ship.md`・`docs/workflow/loopable.md`                                                                      | 段の所要時間           |
+| コマンドの全体・環境変数・構成                                                                  | `README.md`                                                                                                                            | ツールのエラー         |
+| スキル（`~/.claude/skills/`。共通なのでこのリポジトリの事情はここと `docs/workflow.md` が補う） | 毎セッションのスキル案内                                                                                                               | 本文と差分のずれ       |
+| シェルでの書き換え・`git add -A` などを拒まれた                                                 | hook（`tw commit-guard`）の文面に従う。`docs/workflow.md`                                                                              | hook の拒否            |
+| 過去の判断の経緯（通読しない。`grep` で節を当てる）                                             | `docs/history/decision.md` / `tw show <ID>`                                                                                            | 同じファイルの直し直し |
 
 機械が検査している規則（lint・`test/architecture/`・hook）はこの表に載せず、規約の理由と例外の行から `docs/coding-standards.md` を引く。
