@@ -111,12 +111,24 @@ const PROGRESS_PROMPT = /^<tsukumo-progress>\n?[\s\S]*?\n?<\/tsukumo-progress>$/
 const PROGRESS_NOTE =
   "tsukumo の差し込み。委譲先の進み。`speak` を 1 回で言い直し、`report` は呼ばない"
 
+const STEP_LIMIT_NOTE =
+  "tsukumo の差し込み。1 ターンのツール呼び出しが多い。`speak` を 1 回で、いまの様子を知らせ、`report` は呼ばない"
+
 /** 差し込む要約を、メインへ送る文面に包む。 */
 export function progressNudgePromptText(summary: string): string {
-  return `${PROGRESS_OPEN}\n${PROGRESS_NOTE}\n${summary}\n${PROGRESS_CLOSE}`
+  return wrapProgress(PROGRESS_NOTE, summary)
+}
+
+/** 歩数の上限を超えたことを、メインへ送る文面に包む。 */
+export function stepLimitPromptText(limit: number): string {
+  return wrapProgress(STEP_LIMIT_NOTE, `${limit} 回を超えた`)
 }
 
 /** transcript の `user` の文面が差し込みの包みか。入力の控え（`InputLedger`）の無い入力を、組み直しが利用者の依頼と見分ける手がかり。 */
 export function isProgressNudgePrompt(raw: string): boolean {
   return PROGRESS_PROMPT.test(raw.trim())
+}
+
+function wrapProgress(note: string, body: string): string {
+  return `${PROGRESS_OPEN}\n${note}\n${body}\n${PROGRESS_CLOSE}`
 }

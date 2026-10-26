@@ -136,6 +136,8 @@ export function wireSessionLaunch(options: {
             context,
             claudeConfigDir: config.claudeConfigDir,
             reportSchema: config.reportSchema,
+            disallowedTools: config.disallowedTools,
+            turnStepLimit: config.turnStepLimit,
             mountWorkflowPlugin: options.mountWorkflowPlugin,
             mountFigurePlugin: options.mountFigurePlugin,
             workflowTw: options.workflowTw,
@@ -207,6 +209,8 @@ function startDriver(options: {
   readonly mountFigurePlugin: boolean
   readonly workflowTw: string
   readonly reportSchema: ReportSchemaVariant
+  readonly disallowedTools: readonly string[]
+  readonly turnStepLimit: number
   readonly firstViewer: Promise<void>
   readonly viewPort: number
   /** 印が付いたセッションのIDと、付けた印を受け取る口。 */
@@ -269,6 +273,8 @@ function startRealDriver(
     tag,
     onSessionMarked: (sessionId) => options.onSessionMarked(sessionId, tag),
     mode,
+    disallowedTools: options.disallowedTools,
+    turnStepLimit: options.turnStepLimit,
     inheritedEnv,
     claudeConfigDir: options.claudeConfigDir,
     mountWorkflowPlugin: options.mountWorkflowPlugin,

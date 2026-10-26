@@ -4,7 +4,7 @@ import { tsukumoHomePath } from "../../../../src/server/adapter/tsukumo-home.ts"
 import { buildQuerySeedOptions } from "../../../../src/server/session-driver/adapter/sdk-query-seed.ts"
 import type { SessionDriverOptions } from "../../../../src/server/session-driver/core/session-driver.ts"
 import { BUILTIN_SESSION_DEFAULT } from "../../../../src/shared/session/session-default.ts"
-import { WORK_MODE } from "../../../fixture/sdk-tool.ts"
+import { CHAT_MODE, WORK_MODE } from "../../../fixture/sdk-tool.ts"
 
 // `startSdkDriver` 自体は本物の claude を子プロセスとして起こすので、ここでは呼ばない
 // （docs/requirements.md「起動と設定」 / AGENTS.md「よく使うコマンド」）。`query()` に渡る `options` の
@@ -20,6 +20,8 @@ const BASE_OPTIONS: SessionDriverOptions = {
   tag: "tsukumo-test",
   onSessionMarked: () => {},
   mode: WORK_MODE,
+  disallowedTools: ["NotebookEdit", "Artifact"],
+  turnStepLimit: 200,
   inheritedEnv: { PATH: "/usr/bin", HOME: "/tmp/tsukumo-home" },
   claudeConfigDir: undefined,
   mountWorkflowPlugin: true,
@@ -83,6 +85,14 @@ describe("buildQuerySeedOptions", () => {
       CLAUDE_CODE_TERMINAL_MCP_TOOLS: "mcp__tsukumo__speak",
       CLAUDE_CODE_SILENT_TURN_REMINDER: "0",
     })
+  })
+
+  it("外す組み込みツールは仕事の会話にだけ渡し、雑談には渡さない", () => {
+    expect(buildQuerySeedOptions(BASE_OPTIONS).disallowedTools).toEqual([
+      "NotebookEdit",
+      "Artifact",
+    ])
+    expect(buildQuerySeedOptions({ ...BASE_OPTIONS, mode: CHAT_MODE }).disallowedTools).toEqual([])
   })
 
   it("取り込んだ tsukumo-plugins は mountWorkflowPlugin のときだけ plugins に載せる", () => {

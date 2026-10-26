@@ -65,6 +65,10 @@ export type SessionDriverOptions = {
   /** {@link SessionDriverOptions.tag} の印が付いたセッションのID を受け取る口。ここで例外を投げないこと。 */
   readonly onSessionMarked: (sessionId: string) => void
   readonly mode: SessionMode
+  /** 仕事の会話の `query()` から外す組み込みツールの名前（`Config.disallowedTools`）。 */
+  readonly disallowedTools: readonly string[]
+  /** 仕事の会話で、1 ターンのツール呼び出しがこの回数を超えたら `speak` で知らせさせる（`Config.turnStepLimit`）。 */
+  readonly turnStepLimit: number
   /**
    * 子プロセス（claude）へ引き継ぐ環境変数（`Config.inheritedEnv`）。駆動はこれに
    * Claude Code の催促を止める変数を足して渡す（`childProcessEnv`）。

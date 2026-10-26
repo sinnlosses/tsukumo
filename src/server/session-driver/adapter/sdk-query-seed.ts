@@ -69,6 +69,8 @@ export type QuerySeedOptions = {
    * 渡すと tsukumo 自身の環境と混ざらず丸ごと置き換わるので、引き継いだ環境に Claude Code の催促を止める変数を足したもの（`childProcessEnv`）を渡す。
    */
   readonly env: Readonly<Record<string, string | undefined>>
+  /** 文脈から消す組み込みツール。 */
+  readonly disallowedTools: string[]
   /** セッションに載せるプラグイン。同梱の `plugin/`（`tsukumo:token-usage-diet`）と、取り込んだ tsukumo-plugins（`mountWorkflowPlugin` のときだけ）と、その図のプラグイン（`mountFigurePlugin` のときだけ）。 */
   readonly plugins: SdkPluginConfig[]
 }
@@ -94,6 +96,7 @@ export function buildQuerySeedOptions(options: SessionDriverOptions): QuerySeedO
     resume: options.start.kind === "resume" ? options.start.sessionId : undefined,
     settings: { language: "japanese" },
     env: childProcessEnv(options.inheritedEnv),
+    disallowedTools: options.mode.kind === "work" ? [...options.disallowedTools] : [],
     plugins: [
       { type: "local", path: bundledFilePath("plugin") },
       ...(options.mountWorkflowPlugin

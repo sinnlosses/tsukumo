@@ -66,7 +66,30 @@ export const ENV_NAMES = {
    * `short-type` のときだけ短い型の表記で渡す試しの版になり、ほかの値は既定に倒す。
    */
   reportSchema: { name: "TSUKUMO_REPORT_SCHEMA", audience: "test" },
+  /**
+   * 仕事の会話の `query()` の `disallowedTools` に渡すツール名（カンマ区切り。既定は `DEFAULT_DISALLOWED_TOOLS`）。
+   * 渡した名前は組み込みツールの定義ごと文脈から消える。`none` を渡すと何も外さない。
+   */
+  disallowedTools: { name: "TSUKUMO_DISALLOWED_TOOLS", audience: "user" },
+  /**
+   * 仕事の会話で 1 ターンのツール呼び出しがこの回数（正の整数。既定は `DEFAULT_TURN_STEP_LIMIT`）を超えたら、`speak` で知らせさせる。
+   * 読めない値は既定に倒す。
+   */
+  turnStepLimit: { name: "TSUKUMO_TURN_STEP_LIMIT", audience: "user" },
 } as const satisfies Record<string, { name: string; audience: "user" | "test" }>
+
+/**
+ * 直近 30 日の使用量の集計（`summarize_usage.py --days 30`）で 1 度も呼ばれていなかった組み込みツール。
+ * 呼ばれるようになったら、この一覧から外す。
+ */
+const DEFAULT_DISALLOWED_TOOLS: readonly string[] = [
+  "NotebookEdit",
+  "Artifact",
+  "ArtifactComments",
+  "ArtifactData",
+]
+
+const DEFAULT_TURN_STEP_LIMIT = 200
 
 /** Orca のターミナルが付ける環境変数。この値が {@link ORCA_TERM_PROGRAM} なら Orca の中。 */
 const TERM_PROGRAM_ENV_NAME = "TERM_PROGRAM"
@@ -117,6 +140,8 @@ export type Config = {
   /** 凍らせる瞬間。未設定・読めない値なら undefined ＝ 本物の時計。 */
   readonly fixedClock: Temporal.Instant | undefined
   readonly reportSchema: ReportSchemaVariant
+  readonly disallowedTools: readonly string[]
+  readonly turnStepLimit: number
   /**
    * 起こした環境変数の全部。claude の子プロセスへそのまま引き継ぐためのもので、tsukumo 自身はここから読まない。
    * SDK の `env` は tsukumo 自身の環境と混ぜずに丸ごと置き換えるので、足したい変数（`childProcessEnv` が足すもの）と一緒に渡す必要がある。
@@ -150,8 +175,25 @@ export function readConfig(env: Readonly<Record<string, string | undefined>>): C
     fixedClock: parseInstant(env[ENV_NAMES.fixedClock.name]),
     reportSchema:
       env[ENV_NAMES.reportSchema.name]?.trim() === "short-type" ? "short-type" : "json-schema",
+    disallowedTools: parseToolNames(env[ENV_NAMES.disallowedTools.name]),
+    turnStepLimit:
+      parsePositiveInteger(env[ENV_NAMES.turnStepLimit.name]) ?? DEFAULT_TURN_STEP_LIMIT,
     inheritedEnv: env,
   }
+}
+
+function parseToolNames(value: string | undefined): readonly string[] {
+  const trimmed = nonBlankString(value)?.trim()
+  if (trimmed === undefined) {
+    return DEFAULT_DISALLOWED_TOOLS
+  }
+  if (trimmed === "none") {
+    return []
+  }
+  return trimmed
+    .split(",")
+    .map((name) => name.trim())
+    .filter((name) => name !== "")
 }
 
 function readHost(env: Readonly<Record<string, string | undefined>>): HostKind {

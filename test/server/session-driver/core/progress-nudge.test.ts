@@ -2,7 +2,10 @@ import { describe, expect, it } from "vitest"
 
 import {
   createProgressNudge,
+  isProgressNudgePrompt,
+  progressNudgePromptText,
   type ProgressNudgeTake,
+  stepLimitPromptText,
 } from "../../../../src/server/session-driver/core/progress-nudge.ts"
 import type { BackgroundTaskKind } from "../../../../src/shared/session-driver/background-task.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
@@ -38,6 +41,19 @@ const DELEGATING: Scene = [
   [speech, SPOKEN_AT],
   [turnFinished, SPOKEN_AT],
 ]
+
+describe("差し込みの文面", () => {
+  it("委譲先の進みと歩数の上限は前置きが違い、どちらも差し込みの包みとして読める", () => {
+    const delegated = progressNudgePromptText("架空の進み")
+    const steps = stepLimitPromptText(200)
+
+    expect(delegated).toContain("委譲先の進み")
+    expect(steps).not.toContain("委譲先")
+    expect(steps).toContain("200")
+    expect(isProgressNudgePrompt(delegated)).toBe(true)
+    expect(isProgressNudgePrompt(steps)).toBe(true)
+  })
+})
 
 describe("ProgressNudge", () => {
   it.each<readonly [string, Scene, readonly number[], readonly ProgressNudgeTake[]]>([

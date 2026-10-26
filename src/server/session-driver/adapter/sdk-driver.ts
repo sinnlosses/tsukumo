@@ -22,7 +22,11 @@ import { createExternalToolMark } from "../core/external-tool-mark.ts"
 import { createInputLedgerIntake, type InputLedgerIntake } from "../core/input-ledger.ts"
 import { createInterruptMark, type InterruptMark } from "../core/interrupt-mark.ts"
 import { createPendingAnswerQueue, type PendingAnswerQueue } from "../core/pending-answer.ts"
-import { createProgressNudge, progressNudgePromptText } from "../core/progress-nudge.ts"
+import {
+  createProgressNudge,
+  progressNudgePromptText,
+  stepLimitPromptText,
+} from "../core/progress-nudge.ts"
 import { createPromptDelayWatch, type PromptDelayWatch } from "../core/prompt-delay.ts"
 import { handOffPrompt } from "../core/prompt-handoff.ts"
 import { recordedPromptImages } from "../core/prompt-image-shelf.ts"
@@ -35,6 +39,7 @@ import type {
 } from "../core/session-driver.ts"
 import { createSessionEnding } from "../core/session-ending.ts"
 import { createSessionTitleIntake, type SessionTitleIntake } from "../core/session-title.ts"
+import { createStepWatch } from "../core/step-watch.ts"
 import { isVisibleOutputNudge } from "../core/visible-output-nudge.ts"
 import { appendInputLedger } from "./input-ledger-file.ts"
 import { createRtkRewrite } from "./rtk-rewrite.ts"
@@ -89,10 +94,14 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
     failedWithError("event-handler", error)
   })
   const progressNudge = watchProgressNudge(given.now, (summary) => {
-    sendProgressNudge(summary)
+    sendProgressNudge(progressNudgePromptText(summary))
   })
+  const stepWatch = createStepWatch(given.turnStepLimit)
   const deliver = (event: SessionEvent): void => {
     progressNudge.observe(event)
+    if (given.mode.kind === "work" && stepWatch.observe(event) === "exceeded") {
+      sendProgressNudge(stepLimitPromptText(given.turnStepLimit))
+    }
     if (event.kind === "delegate-progress" || event.kind === "progress-nudged") {
       return
     }
@@ -186,13 +195,13 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
   }
 
   // 依頼を流さない（差し込みは利用者の発言ではない）。ターンの始まりは続く `init` から `turn-resumed` が補う。
-  const sendProgressNudge = (summary: string): void => {
+  const sendProgressNudge = (prompt: string): void => {
     if (ending.ended()) {
       return
     }
     emitTurnOpening({ kind: "progress-nudged" })
     delayWatch.pushed(options.now(), undefined)
-    ledgerIntake.noteSent(push(progressNudgePromptText(summary), []), "progress-nudge")
+    ledgerIntake.noteSent(push(prompt, []), "progress-nudge")
   }
 
   void applyNeutralOutputStyle(session)

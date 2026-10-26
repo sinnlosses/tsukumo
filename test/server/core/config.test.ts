@@ -15,6 +15,8 @@ describe("readConfig", () => {
       claudeConfigDir: undefined,
       fixedClock: undefined,
       reportSchema: "json-schema",
+      disallowedTools: ["NotebookEdit", "Artifact", "ArtifactComments", "ArtifactData"],
+      turnStepLimit: 200,
       inheritedEnv: {},
     })
   })
@@ -50,6 +52,8 @@ describe("readConfig", () => {
       TSUKUMO_TW: " /somewhere/fake-tw ",
       CLAUDE_CONFIG_DIR: " /somewhere/claude ",
       TSUKUMO_REPORT_SCHEMA: " short-type ",
+      TSUKUMO_DISALLOWED_TOOLS: " NotebookEdit, Artifact ",
+      TSUKUMO_TURN_STEP_LIMIT: " 50 ",
     }
 
     expect(readConfig(env)).toEqual({
@@ -68,6 +72,8 @@ describe("readConfig", () => {
       claudeConfigDir: "/somewhere/claude",
       fixedClock: undefined,
       reportSchema: "short-type",
+      disallowedTools: ["NotebookEdit", "Artifact"],
+      turnStepLimit: 50,
       // 子プロセスへ引き継ぐ分は、読んだ環境をそのまま持つ
       inheritedEnv: env,
     })
@@ -102,6 +108,19 @@ describe("readConfig", () => {
 
   it("知らない駆動の名前は sdk に倒す", () => {
     expect(readConfig({ TSUKUMO_DRIVER: "まぼろし" }).driver).toEqual({ kind: "sdk" })
+  })
+
+  it.each([
+    ["空白だけなら既定", " ", ["NotebookEdit", "Artifact", "ArtifactComments", "ArtifactData"]],
+    ["カンマ区切りを空白ごと切る", " A , B,,", ["A", "B"]],
+    ["none は何も外さない", "none", []],
+  ] as const)("外すツール: %s", (_name, raw, expected) => {
+    expect(readConfig({ TSUKUMO_DISALLOWED_TOOLS: raw }).disallowedTools).toEqual(expected)
+  })
+
+  it("読めない歩数の上限は 200 に倒す", () => {
+    expect(readConfig({ TSUKUMO_TURN_STEP_LIMIT: "0" }).turnStepLimit).toBe(200)
+    expect(readConfig({ TSUKUMO_TURN_STEP_LIMIT: "たくさん" }).turnStepLimit).toBe(200)
   })
 
   it("知らない型の渡し方は json-schema に倒す", () => {
