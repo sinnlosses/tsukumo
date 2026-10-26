@@ -3,6 +3,8 @@
 
 import {
   REPORT_USAGE_FORMAT_VERSION,
+  type ReportFollowUpRecord,
+  reportFollowUpRecordSchema,
   type ReportRejectionRecord,
   reportRejectionRecordSchema,
   type ReportUsageDriver,
@@ -38,12 +40,14 @@ export function createReportUsageLog(
   root: string = reportUsageDir(),
 ): ReportUsageLog &
   Pick<
-    DatedRecordLog<ReportUsageRecord | ReportRejectionRecord>,
+    DatedRecordLog<ReportUsageRecord | ReportRejectionRecord | ReportFollowUpRecord>,
     "flush" | "close" | "pruneExpired"
   > {
   const log = createDatedRecordLog(
     {
-      schema: reportUsageRecordSchema.or(reportRejectionRecordSchema),
+      schema: reportUsageRecordSchema
+        .or(reportRejectionRecordSchema)
+        .or(reportFollowUpRecordSchema),
       retentionDays: undefined,
     },
     root,
@@ -60,6 +64,8 @@ export function createReportUsageLog(
       writeRejection(waiting, nextCall)
     }
   }
+  // 受け付けた `report` がまだ次の依頼を迎えていないセッション。
+  const awaitingFollowUp = new Set<string>()
   const settleAll = () => {
     for (const sessionId of pending.keys()) {
       settle(sessionId, undefined)
@@ -68,6 +74,7 @@ export function createReportUsageLog(
   return {
     append: (entry) => {
       settle(entry.sessionId, nextCallOfAccepted(entry))
+      awaitingFollowUp.add(entry.sessionId)
       log.append(localDateKey(entry.at), [toRecord(entry, reportSchema)])
     },
     appendRejection: (entry) => {
@@ -77,6 +84,21 @@ export function createReportUsageLog(
       }
       settle(entry.sessionId, nextCallOfRejected(entry))
       pending.set(entry.sessionId, entry)
+    },
+    appendFollowUp: (entry) => {
+      if (!awaitingFollowUp.delete(entry.sessionId)) {
+        return
+      }
+      log.append(localDateKey(entry.at), [
+        {
+          v: REPORT_USAGE_FORMAT_VERSION,
+          kind: "followed",
+          at: isoWithOffset(entry.at),
+          sessionId: entry.sessionId,
+          driver: RECORDED_DRIVER,
+          restated: entry.restated,
+        },
+      ])
     },
     flush: () => {
       settleAll()

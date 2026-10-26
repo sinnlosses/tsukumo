@@ -1,8 +1,27 @@
 import { describe, expect, it } from "vitest"
 
-import { reportUsageEntryOf } from "../../../../src/server/report/core/report-usage.ts"
+import {
+  isRestatementRequest,
+  reportUsageEntryOf,
+} from "../../../../src/server/report/core/report-usage.ts"
 import type { ReportBlock, ReportSection } from "../../../../src/shared/report/report-block.ts"
 import { reportEvent, reportOfSections } from "../../../fixture/report-event.ts"
+
+describe("isRestatementRequest", () => {
+  it.each(["どういうこと？", "  もう一度説明して", "意味が分からない"])(
+    "聞き直しの語句で始まる架空の依頼 %s は当たる",
+    (text) => {
+      expect(isRestatementRequest(text)).toBe(true)
+    },
+  )
+
+  it.each(["次のタスクを進めて", "テストを足して。どこか直す", "", "   "])(
+    "語句で始まらない・空の依頼 %j は当たらない",
+    (text) => {
+      expect(isRestatementRequest(text)).toBe(false)
+    },
+  )
+})
 
 describe("reportUsageEntryOf", () => {
   describe("節の札と、札が許さない塊", () => {

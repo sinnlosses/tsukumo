@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import type {
+  ReportFollowUpEntry,
   ReportRejectionEntry,
   ReportUsageEntry,
 } from "../../../../src/server/report/core/report-usage.ts"
@@ -8,6 +9,7 @@ import type { ReportSection } from "../../../../src/shared/report/report-block.t
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import { reportEvent } from "../../../fixture/report-event.ts"
 import { createStubDriver } from "../../../fixture/session-driver.ts"
+import { requestEvent } from "../../../fixture/session-event.ts"
 import { collector, launchWith, sessionInfo } from "../../../fixture/session-manager-record.ts"
 import { createSessionManager, waitForBatch } from "../../../fixture/session-manager.ts"
 
@@ -35,12 +37,30 @@ describe("createSessionManager", () => {
       const stub = createStubDriver()
       const { entries, append } = collector<ReportUsageEntry>()
       const rejected = collector<ReportRejectionEntry>()
+      const followed = collector<ReportFollowUpEntry>()
       const manager = createSessionManager({
-        reportUsageLog: { append, appendRejection: rejected.append },
+        reportUsageLog: {
+          append,
+          appendRejection: rejected.append,
+          appendFollowUp: followed.append,
+        },
         launchSession: launchWith(stub),
       })
-      return { manager, stub, entries, rejections: rejected.entries }
+      return { manager, stub, entries, rejections: rejected.entries, followUps: followed.entries }
     }
+
+    it("依頼が届くと、聞き直しか否かの真偽だけを時刻・セッションIDとともに渡す", async () => {
+      const { stub, followUps } = startReportUsageManagerWithStub()
+      await waitForBatch()
+
+      stub.emit(sessionInfo("claude-session-1"))
+      stub.emit(requestEvent("もう一度架空の話を"))
+      await waitForBatch()
+
+      expect(followUps).toEqual([
+        { at: expect.any(Number), sessionId: "claude-session-1", restated: true },
+      ])
+    })
 
     it("描いた report のたびに、塊の種類と時刻・セッションIDを1行書く", async () => {
       const { stub, entries } = startReportUsageManagerWithStub()

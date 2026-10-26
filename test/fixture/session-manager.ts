@@ -45,7 +45,11 @@ const NOOP_DIAGNOSTIC_LOG: DiagnosticLog = { append: () => {}, readRange: () => 
 const NOOP_CONTEXT_USAGE_LOG: ContextUsageLog = { append: () => {} }
 
 /** `report` の塊の使われ方の記録を気にしないテストに渡す、何もしない書き込み口。 */
-const NOOP_REPORT_USAGE_LOG: ReportUsageLog = { append: () => {}, appendRejection: () => {} }
+const NOOP_REPORT_USAGE_LOG: ReportUsageLog = {
+  append: () => {},
+  appendRejection: () => {},
+  appendFollowUp: () => {},
+}
 
 /** タスク一覧を気にしないテストに渡す見張り（何も流さない）。 */
 const NO_TASK_WATCH: SessionManagerOptions["watchTasks"] = () => ({

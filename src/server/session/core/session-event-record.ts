@@ -14,7 +14,11 @@ import {
 import type { ChatArchiveOrder } from "../../chat/core/chat-archive-order.ts"
 import type { ContextUsageRecorder } from "../../context-usage/core/context-usage.ts"
 import type { DiagnosticBuffer } from "../../diagnostic/core/diagnostic.ts"
-import { isMainImageFileRead, reportUsageEntryOf } from "../../report/core/report-usage.ts"
+import {
+  isMainImageFileRead,
+  isRestatementRequest,
+  reportUsageEntryOf,
+} from "../../report/core/report-usage.ts"
 import type { GenerationTally } from "./session-generation.ts"
 import type { SessionManagerOptions } from "./session-manager-port.ts"
 
@@ -70,6 +74,13 @@ export function recordSessionEvent(
     ports.reportUsageLog.append(
       reportUsageEntryOf(event, state.session.sessionId, at, tally.turnImageRead.peek()),
     )
+  }
+  if (event.kind === "request" && state.session.kind !== "starting") {
+    ports.reportUsageLog.appendFollowUp({
+      at,
+      sessionId: state.session.sessionId,
+      restated: isRestatementRequest(event.text),
+    })
   }
   if (event.kind === "tool-started" && isMainImageFileRead(event)) {
     tally.turnImageRead.mark()

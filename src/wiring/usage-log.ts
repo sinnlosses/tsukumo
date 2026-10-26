@@ -113,6 +113,7 @@ function silentLogs(): DriverSwitchedLogs {
     report: {
       append: () => undefined,
       appendRejection: () => undefined,
+      appendFollowUp: () => undefined,
       flush: done,
       close: done,
       pruneExpired: () => undefined,

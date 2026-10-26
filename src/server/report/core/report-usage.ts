@@ -162,10 +162,34 @@ export function nextCallOfRejected(entry: ReportRejectionEntry): ReportNextCall 
   return { reasons: entry.reasons, chars: entry.argumentChars.total }
 }
 
+const RESTATEMENT_OPENINGS = [
+  "どういうこと",
+  "もう一度",
+  "もう一回",
+  "どこ",
+  "意味が",
+  "分からない",
+  "わからない",
+] as const satisfies readonly string[]
+
+/** 依頼の書き出し(先頭の空白を除いた頭)が聞き直しの語句に当たるか。 */
+export function isRestatementRequest(text: string): boolean {
+  const opening = text.trimStart()
+  return RESTATEMENT_OPENINGS.some((phrase) => opening.startsWith(phrase))
+}
+
+/** 受け付けた `report` の直後の依頼1件の記録。聞き直しか否かの真偽だけで、依頼の本文は持たない。 */
+export type ReportFollowUpEntry = {
+  readonly at: number
+  readonly sessionId: string
+  readonly restated: boolean
+}
+
 /** 書けなくても例外を投げない。 */
 export type ReportUsageLog = {
   readonly append: (entry: ReportUsageEntry) => void
   readonly appendRejection: (entry: ReportRejectionEntry) => void
+  readonly appendFollowUp: (entry: ReportFollowUpEntry) => void
 }
 
 /** 描いた（差し戻されなかった）`report` から、記録1行ぶんの中身を作る。`mainReadImageFile` は、このターンにメインが画像のファイルを `Read` したか。 */

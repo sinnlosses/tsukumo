@@ -198,3 +198,22 @@ export const reportRejectionRecordSchema = z
   .readonly()
 
 export type ReportRejectionRecord = z.infer<typeof reportRejectionRecordSchema>
+
+/**
+ * 受け付けた `report` の直後の依頼1件の記録の行。同じファイルに入り、`kind` が `followed`。
+ * 持つのは依頼が聞き直しの語句で始まるかの真偽だけで、依頼の本文・抜粋は入れない。
+ * 直前の受け付けの行とは、同じ `sessionId` で `at` が直前のものとして引き当てる。
+ */
+export const reportFollowUpRecordSchema = z
+  .object({
+    v: z.literal(REPORT_USAGE_FORMAT_VERSION),
+    kind: z.literal("followed"),
+    /** ISO 8601（オフセット付き）。 */
+    at: z.string(),
+    sessionId: z.string(),
+    driver: reportUsageDriverSchema,
+    restated: z.boolean(),
+  })
+  .readonly()
+
+export type ReportFollowUpRecord = z.infer<typeof reportFollowUpRecordSchema>

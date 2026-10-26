@@ -34,6 +34,40 @@ function readLines(fileName: string): unknown[] {
   return readJsonLines(join(root(), fileName))
 }
 
+describe("createReportUsageLog の直後の依頼", () => {
+  const followUp = (restated: boolean, minute: number) =>
+    ({ at: at(9, minute), sessionId: "claude-session-1", restated }) as const
+
+  it("受け付けた report のあとの依頼は、真偽だけの followed の行になる", async () => {
+    const log = createReportUsageLog("json-schema", root())
+    log.append(entry(at(9, 0)))
+    log.appendFollowUp(followUp(true, 5))
+    await log.flush()
+
+    const lines = readLines("2026-09-22.jsonl")
+    expect(lines).toHaveLength(2)
+    expect(lines[1]).toEqual({
+      v: REPORT_USAGE_FORMAT_VERSION,
+      kind: "followed",
+      at: expect.any(String),
+      sessionId: "claude-session-1",
+      driver: "sdk",
+      restated: true,
+    })
+  })
+
+  it("report が先に無い依頼と、同じ report への2度目の依頼は書かない", async () => {
+    const log = createReportUsageLog("json-schema", root())
+    log.appendFollowUp(followUp(false, 1))
+    log.append(entry(at(9, 2)))
+    log.appendFollowUp(followUp(false, 3))
+    log.appendFollowUp(followUp(true, 4))
+    await log.flush()
+
+    expect(readLines("2026-09-22.jsonl")).toHaveLength(2)
+  })
+})
+
 describe("createReportUsageLog", () => {
   it("日付ごとのファイルに1行ずつ追記する", async () => {
     const log = createReportUsageLog("json-schema", root())
