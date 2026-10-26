@@ -108,7 +108,10 @@ export const workPlanShape = {
   finishedInGroup: z.array(z.string()).optional(),
   phaseSummary: z.string().optional(),
   delegatedRange: z
-    .object({ first: z.number().int().min(0), count: z.number().int().min(1).optional() })
+    .object({
+      first: z.number().int().min(0).optional(),
+      count: z.number().int().min(1).optional(),
+    })
     .optional(),
   skippedPhases: z.array(phaseNameSchema).optional(),
 }
@@ -147,10 +150,8 @@ const workPlanSchema = z.object(workPlanShape).superRefine((value, context) => {
     }
   }
   if (delegatedRange !== undefined) {
-    const { first, count } = delegatedRange
-    const boundaries = entryBoundaries(phases)
-    const end = first + (count ?? 0)
-    if (end > phaseCount(phases) || !boundaries.has(first) || !boundaries.has(end)) {
+    const { first = current + 1, count } = delegatedRange
+    if (!fitsPhases(phases, first, count ?? 0)) {
       reject("delegatedRange")
     }
   }
@@ -170,6 +171,14 @@ const workPlanSchema = z.object(workPlanShape).superRefine((value, context) => {
  * ツールの handler が差し戻すかどうかと、変換がイベントにするかどうかは、この1つで決まる。
  */
 export function parseWorkPlan(value: unknown): WorkPlan | undefined {
+  return parseWorkPlanCall(value)?.plan
+}
+
+/** `work_plan` の呼び出しを読んだ結果。`firstOmitted` は範囲の `first` が省かれていたか（`plan` の `first` は今の位置の次に埋まっている）。 */
+export type WorkPlanCall = { readonly plan: WorkPlan; readonly firstOmitted: boolean }
+
+/** {@link parseWorkPlan} と同じ検査で、`first` を省いたかも残して読む。 */
+export function parseWorkPlanCall(value: unknown): WorkPlanCall | undefined {
   const parsed = workPlanSchema.safeParse(value)
   if (!parsed.success) {
     return undefined
@@ -183,13 +192,16 @@ export function parseWorkPlan(value: unknown): WorkPlan | undefined {
     skippedPhases = [],
   } = parsed.data
   return {
-    phases,
-    current,
-    finishedInGroup,
-    phaseSummary: isBlankText(phaseSummary) ? "" : phaseSummary,
-    delegatedRange: delegatedRangeOf(delegatedRange),
-    skippedPhases,
-    awaitingSummary: NO_AWAITING_SUMMARY,
+    plan: {
+      phases,
+      current,
+      finishedInGroup,
+      phaseSummary: isBlankText(phaseSummary) ? "" : phaseSummary,
+      delegatedRange: delegatedRangeOf(delegatedRange, current + 1),
+      skippedPhases,
+      awaitingSummary: NO_AWAITING_SUMMARY,
+    },
+    firstOmitted: delegatedRange?.first === undefined,
   }
 }
 
@@ -285,13 +297,56 @@ export function currentPhaseOf(plan: LatestWorkPlan): WorkPhase {
 
 const PHASE_NAME_SEPARATOR = "・"
 
-function delegatedRangeOf(value: z.infer<typeof workPlanShape.delegatedRange>): DelegatedRange {
+/**
+ * `work_plan` の呼び出しの範囲を確定させたワークプラン。
+ * 先頭は、渡された `first` → `inherited`（受け付け済みの範囲）の `first` → 今の位置の次、の順に当てる。
+ * 段の数は `returnedCount`（委譲先の返却で知らされた数）があればそれ、無ければ渡された `count`。
+ * 範囲が無く返却の数も無ければ、呼び出しのまま返す。確定した範囲が並びをはみ出すか並列の段の端をまたぐなら undefined。
+ */
+export function settleDelegatedRange(
+  call: WorkPlanCall,
+  inherited: DelegatedRange,
+  returnedCount: number | undefined,
+): WorkPlan | undefined {
+  const { plan, firstOmitted } = call
+  const given = plan.delegatedRange
+  const count = returnedCount ?? (given.kind === "range" ? given.count : undefined)
+  if (given.kind === "none" && count === undefined) {
+    return plan
+  }
+  const first =
+    given.kind !== "none" && !firstOmitted
+      ? given.first
+      : inherited.kind !== "none"
+        ? inherited.first
+        : plan.current + 1
+  if (!fitsPhases(plan.phases, first, count ?? 0)) {
+    return undefined
+  }
+  return {
+    ...plan,
+    delegatedRange:
+      count === undefined ? { kind: "pending", first } : { kind: "range", first, count },
+  }
+}
+
+function delegatedRangeOf(
+  value: z.infer<typeof workPlanShape.delegatedRange>,
+  defaultFirst: number,
+): DelegatedRange {
   if (value === undefined) {
     return NO_DELEGATED_RANGE
   }
+  const first = value.first ?? defaultFirst
   return value.count === undefined
-    ? { kind: "pending", first: value.first }
-    : { kind: "range", first: value.first, count: value.count }
+    ? { kind: "pending", first }
+    : { kind: "range", first, count: value.count }
+}
+
+function fitsPhases(phases: readonly WorkPlanEntry[], first: number, count: number): boolean {
+  const boundaries = entryBoundaries(phases)
+  const end = first + count
+  return end <= phaseCount(phases) && boundaries.has(first) && boundaries.has(end)
 }
 
 function entryNames(entry: WorkPlanEntry): readonly string[] {

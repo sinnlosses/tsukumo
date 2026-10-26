@@ -1,7 +1,7 @@
 // `work_plan` ツール（ワークプラン）の説明文と、呼ぶ条件・段の切り方の規約と、handler が返す文。
 // ツールは仕事のときだけ載り、規約も仕事の `systemPrompt` の append にだけ入る。
 
-import { bandPositionText } from "./band-position.ts"
+import { bandPositionText, delegatedRangeLine } from "./band-position.ts"
 import type { WorkPlanReview, WorkPlanVerdict } from "./work-plan-review.ts"
 
 /** モデルに見せる `work_plan` ツールの説明。呼ぶ条件は「ワークプラン（tsukumo）」の節が持つ。 */
@@ -9,7 +9,7 @@ export const WORK_PLAN_TOOL_DESCRIPTION =
   "作業のワークプラン（段の並びと今の位置）を画面に出す。段が進むたび・ワークプランを変えたときに、毎回段の並びごと渡す。" +
   "段は作業のまとまりで切り、ファイル単位・操作単位で切らない。" +
   "段を進めるときは、終えた段でしたことを必ず phaseSummary に入れる（メインビューに中間レポートとして、その段の所要とともに出る）。" +
-  "委譲するときは、委譲先の段の範囲を delegatedRange で渡す（委譲中の段は委譲先の返却で進む）。" +
+  "委譲するときは、委譲先の段の範囲を delegatedRange で渡す（委譲中の段は委譲先の返却で進み、段の数は返却の値で埋まる）。" +
   "呼ぶ条件は「ワークプラン（tsukumo）」の節に従う。"
 
 export const WORK_PLAN_PHASES_DESCRIPTION =
@@ -33,9 +33,9 @@ export const WORK_PLAN_PHASE_SUMMARY_DESCRIPTION =
   "最後の段のまとめは report に書く"
 
 export const WORK_PLAN_DELEGATED_RANGE_DESCRIPTION =
-  "作業を委譲するときだけ、委譲先の段の範囲。first は委譲先の段1に当たる位置（phases を平らにした並びで0始まり）、" +
-  "count は委譲先の段の数。帯は範囲の前・範囲・範囲の後ろの群ごとに1から数え、範囲の中の段は委譲先の段と同じ番号（範囲の先頭が 1）になる。" +
-  "計画を委譲先に頼む最初の呼び出しは { first } だけを渡す（count は計画の返却で分かってから）。" +
+  "作業を委譲するときだけ、委譲先の段の範囲。first は委譲先の段1に当たる位置（phases を平らにした並びで0始まり。省くと current の次）、" +
+  "count は委譲先の段の数（委譲先の返却を受けたあとは返却の値で埋まるので省く）。" +
+  "帯は範囲の前・範囲・範囲の後ろの群ごとに1から数え、範囲の中の段は委譲先の段と同じ番号（範囲の先頭が 1）になる。" +
   "範囲の端は同時に走らせる段の配列の途中に置かない。委譲しないときは省く"
 
 export const WORK_PLAN_SKIPPED_PHASES_DESCRIPTION =
@@ -74,20 +74,6 @@ const WORK_PLAN_REJECTIONS = {
     "前の呼び出しで skippedPhases に入れた段が、まだ済んでいるのに skippedPhases から外れている。" +
     "skippedPhases には、自分が飛ばした段を毎回すべて入れて呼び直すこと。" +
     "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。",
-  "late-start":
-    "この依頼の最初の work_plan が、済んだ段のある位置（current が 1 以上）から始まっている。" +
-    "依頼の最初の work_plan は段1（current: 0）で渡す。既に作業を終えた段があっても同じで、" +
-    "current: 0 で渡し直してから、段を1つずつ進め、そのつど終えた段のまとめを phaseSummary に入れること。" +
-    "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。",
-  "range-mismatch":
-    "delegatedRange の count が、委譲先の返却で知らされた段の数と違う。" +
-    "範囲の中の段を委譲先の段に1つずつ合わせ、" +
-    "count を返却の段の数にそろえて呼び直すこと。" +
-    "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。",
-  "range-missing":
-    "委譲先の返却を受けたのに delegatedRange が無いか、count が無い。" +
-    "first と count（返却の段の数）を付けた委譲先の段の範囲を宣言して呼び直すこと。" +
-    "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。",
 } as const satisfies Record<Exclude<WorkPlanVerdict["kind"], "accepted">, string>
 
 /** `work_plan` の handler が返す文と、差し戻したか。 */
@@ -99,9 +85,16 @@ export function answerWorkPlanCall(
   input: unknown,
 ): WorkPlanAnswer {
   const verdict = review.judgeWorkPlan(input)
-  return verdict.kind === "accepted"
-    ? { text: `ok\n${bandPositionText({ kind: "planned", ...verdict.plan })}`, isError: false }
-    : { text: WORK_PLAN_REJECTIONS[verdict.kind], isError: true }
+  if (verdict.kind !== "accepted") {
+    return { text: WORK_PLAN_REJECTIONS[verdict.kind], isError: true }
+  }
+  const rangeLine = delegatedRangeLine(verdict.plan.delegatedRange)
+  const lines = [
+    "ok",
+    bandPositionText({ kind: "planned", ...verdict.plan }),
+    ...(rangeLine === "" ? [] : [rangeLine]),
+  ]
+  return { text: lines.join("\n"), isError: false }
 }
 
 /**
@@ -115,7 +108,7 @@ export const WORK_PLAN_PROMPT = `## ワークプラン（tsukumo）
 
 **呼ぶのは、作業をするターンなら段の数にかかわらず毎回。** 作業のまとまりが1つなら1段のワークプランを渡す
 （札には \`1/1\` のように出る）。答えるだけ・1回調べて答えるだけの依頼では呼ばない。
-最初の \`work_plan\` は着手の時点で段1（\`current: 0\`）で渡す（作業を終えてから \`current\` 1 以上で渡すと差し戻される）。
+最初の \`work_plan\` は着手の時点で段1（\`current: 0\`）で渡す。
 
 - 1回の呼び出しはツール呼び出し1回のぶん時間がかかるので、段の中の細かな進みでは呼ばない
 - **段を進める呼び出しと、その契機の \`speak\` は同じ応答の中で並べて呼ぶ**（段が変わるのは論点が
@@ -128,10 +121,9 @@ export const WORK_PLAN_PROMPT = `## ワークプラン（tsukumo）
   （\`finished\`・\`skipped\` が \`phase\` に当たる帯の段を済ませる）。
   自分の \`work_plan\` は、並びと委譲先の段の範囲を渡す口
   - 並びはいつも \`phases\` で渡す。計画や受け入れを段にするかも自分で決める
-  - **計画を委譲先に頼む最初の \`work_plan\` は、\`delegatedRange\` に \`{ first }\` だけを渡す**（\`count\` は計画の返却で分かってから）。
-    そのあいだ範囲の先頭から後ろの段は番号を持たず、委譲先の返却では動かない
-  - **計画の返却で委譲先の段の数が分かったら（計画だけの回は \`phase_result\` を呼ばないので、段の数は \`plan-phases --through 計画\` などで自分が Beads から読む）、\`delegatedRange\` で範囲を宣言して並びを組み直す。**
-    \`first\` は委譲先の段1に当たる帯の段の位置（0始まり）、\`count\` は委譲先の段の数。\`phase_result\` を1件でも受けたあとは、範囲の無い \`work_plan\` は差し戻される。
+  - **計画を委譲先に頼む最初の \`work_plan\` は、\`delegatedRange\` を \`{}\` で渡す**（段の数が未定のあいだ範囲の先頭から後ろの段は番号を持たず、委譲先の返却では動かない）
+  - **\`phase_result\` を受けたあとは、範囲の段の数を tsukumo が \`count\` で埋める。** 計画だけの回は \`phase_result\` を呼ばないので、
+    段の数（\`plan-phases --through 計画\` などで Beads から読む）を \`count\` に書いて並びを組み直す。
     範囲の前後に自分の段（計画・受け入れなど）を置いてよい。範囲の端を同時に走らせる段の配列の途中に置かない。
     範囲を初めて宣言した呼び出しでは、範囲の前の段が済み、範囲の先頭の段が今の段になる（\`current\` は範囲の前の段のままでよい）
   - **返却を受けたら、帯が進んだ位置を確かめ、その位置のまま \`work_plan\` を渡す。** 段のまとめは届かないので、

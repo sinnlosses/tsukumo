@@ -1,4 +1,5 @@
-// `work_plan` の差し戻し（形の崩れ・依頼の最初の呼び出しが途中の段から・段の一足飛び・委譲先の段の範囲と `phase_result` の `count` の食い違い・`phase_result` を受けたのに範囲が無い）と、いまのワークプランの立ち位置。
+// `work_plan` の差し戻し（形の崩れ・段の一足飛び）と、いまのワークプランの立ち位置。
+// `phase_result` の `count` を受けたあとの `work_plan` は、委譲先の段の範囲の段の数をその `count` で確定する。
 // 一足飛びは、同じ依頼の中で同じ段の並びのまま、済んだ段（並びを平らにして数える）を1回で2つ以上増やした呼び出し。
 // 一足飛びで越えた段には段のまとめが無く、メインビューの中間レポートがその段だけ抜けるため。
 // 飛ばした段（`skippedPhases`）は、前に印なしに済んでいた段を新しく入れる呼び出しと、メインが入れた印をまだ済んでいる段から外す呼び出しも差し戻す。
@@ -25,14 +26,17 @@ import {
   isMidWay,
   type LatestWorkPlan,
   NO_DELEGATED_RANGE,
-  parseWorkPlan,
+  parseWorkPlanCall,
   phaseCount,
   finishedPhaseNames,
   type WorkPlan,
   type WorkPlanStanding,
+  settleDelegatedRange,
+  type WorkPlanCall,
 } from "../../../shared/session/work-plan.ts"
 import {
   bandPositionText,
+  delegatedRangeFromAnswer,
   handbackNoteText,
   PHASE_RESULT_MISSING_HANDBACK_LINE,
   RESULT_CALLED_HANDBACK_LINE,
@@ -43,9 +47,6 @@ export type WorkPlanVerdict =
   | { readonly kind: "malformed" }
   | { readonly kind: "summary-missing" }
   | { readonly kind: "skipped-phase" }
-  | { readonly kind: "range-mismatch" }
-  | { readonly kind: "range-missing" }
-  | { readonly kind: "late-start" }
   | { readonly kind: "closed-by-plan" }
   | { readonly kind: "skip-mark-late" }
   | { readonly kind: "skip-mark-dropped" }
@@ -105,6 +106,8 @@ export function createWorkPlanReview(): WorkPlanReview {
   let held: readonly WorkPlanCalled[] = []
   // 同じ依頼で最後に受けた `phase_result` の段の数。
   let returnedCount: number | undefined = undefined
+  // 直近の受け付けで `returnedCount` から確定した範囲。`judge` を通らない組み直しでは立たない。
+  let confirmedRange: DelegatedRange | undefined = undefined
   let gateRaised = false
   let handbackLines: readonly string[] = []
   // `phase_result` の `skipped` で付いた飛ばした段の名前と、`phase_result` を呼んで次の返却をまだ返していない委譲先。
@@ -118,6 +121,15 @@ export function createWorkPlanReview(): WorkPlanReview {
       (name) => finished.has(name) && !plan.skippedPhases.includes(name),
     )
     return kept.length === 0 ? plan : { ...plan, skippedPhases: [...plan.skippedPhases, ...kept] }
+  }
+
+  /**
+   * 呼び出しの範囲を、受け付けたときに確定した範囲に置き換える。
+   * `judge` を通らない組み直しでは、返した文（{@link delegatedRangeFromAnswer}）から読む。どちらも無ければそのまま。
+   */
+  const withConfirmedRange = (plan: WorkPlan, answer: string): WorkPlan => {
+    const range = confirmedRange ?? delegatedRangeFromAnswer(answer)
+    return range === undefined ? plan : { ...plan, delegatedRange: range }
   }
 
   const judgeSkipMarks = (plan: WorkPlan): WorkPlanVerdict | undefined => {
@@ -141,26 +153,17 @@ export function createWorkPlanReview(): WorkPlanReview {
     return undefined
   }
 
-  const judgeWellFormed = (plan: WorkPlan): WorkPlanVerdict => {
-    if (plan.current === plan.phases.length) {
+  const judgeWellFormed = (call: WorkPlanCall): WorkPlanVerdict => {
+    if (call.plan.current === call.plan.phases.length) {
       return { kind: "closed-by-plan" }
     }
-    if (
-      accepted.kind === "none" &&
-      plan.delegatedRange.kind !== "range" &&
-      finishedPhaseCount(plan) > 0
-    ) {
-      return { kind: "late-start" }
-    }
-    if (plan.delegatedRange.kind !== "range" && returnedCount !== undefined) {
-      return { kind: "range-missing" }
-    }
-    if (
-      plan.delegatedRange.kind === "range" &&
-      returnedCount !== undefined &&
-      plan.delegatedRange.count !== returnedCount
-    ) {
-      return { kind: "range-mismatch" }
+    const plan = settleDelegatedRange(
+      call,
+      accepted.kind === "planned" ? accepted.delegatedRange : NO_DELEGATED_RANGE,
+      returnedCount,
+    )
+    if (plan === undefined) {
+      return { kind: "malformed" }
     }
     if (isMidWay(plan) && plan.phaseSummary === "") {
       return { kind: "summary-missing" }
@@ -174,6 +177,7 @@ export function createWorkPlanReview(): WorkPlanReview {
     }
     const finishedNow = finishedPhaseNames(plan)
     resultMarks = resultMarks.filter((name) => finishedNow.has(name))
+    confirmedRange = plan.delegatedRange
     accepted = nextWorkPlan(accepted, { kind: "work-plan", ...withResultMarks(plan) })
     gateRaised = false
     handbackLines = []
@@ -187,8 +191,8 @@ export function createWorkPlanReview(): WorkPlanReview {
 
   return {
     judge: (input) => {
-      const plan = parseWorkPlan(input)
-      return settle(plan === undefined ? { kind: "malformed" } : judgeWellFormed(plan))
+      const call = parseWorkPlanCall(input)
+      return settle(call === undefined ? { kind: "malformed" } : judgeWellFormed(call))
     },
     judgeResult: (input) => {
       const result = parsePhaseResult(input)
@@ -243,7 +247,13 @@ export function createWorkPlanReview(): WorkPlanReview {
           held = held.filter((candidate) => candidate !== called)
           return event.isError
             ? [event]
-            : [{ kind: "work-plan", ...withResultMarks(called.plan) }, event]
+            : [
+                {
+                  kind: "work-plan",
+                  ...withConfirmedRange(withResultMarks(called.plan), event.content),
+                },
+                event,
+              ]
         }
         case "report":
           accepted = nextWorkPlan(accepted, event)

@@ -134,16 +134,14 @@ describe("WorkPlanReview の判定", () => {
     expect(review.judge(inputOf(1)).kind).toBe("accepted")
   })
 
-  it("その依頼の最初が範囲の無い current 1 以上なら late-start で差し戻し、request のあとはまた最初として判定する", () => {
+  it("その依頼の最初が範囲の無い current 1 以上でも差し戻さず、前の段は済んだ段に数える", () => {
     const review = createWorkPlanReview()
 
-    expect(review.judge(inputOf(1)).kind).toBe("late-start")
-    expect(review.standing()).toEqual({ kind: "rejected" })
-    expect(review.judge(inputOf(0)).kind).toBe("accepted")
     expect(review.judge(inputOf(1)).kind).toBe("accepted")
+    expect(review.standing()).toEqual({ kind: "planned", remaining: 2 })
 
     review.pass(REQUEST)
-    expect(review.judge(inputOf(1)).kind).toBe("late-start")
+    expect(review.judge(inputOf(1)).kind).toBe("accepted")
   })
 
   it("最初が current 0 の呼び出しと、最初が範囲付きで current 1 以上の呼び出しは通す", () => {
@@ -154,13 +152,6 @@ describe("WorkPlanReview の判定", () => {
     expect(ranged.judge({ ...inputOf(1), delegatedRange: { first: 1, count: 2 } }).kind).toBe(
       "accepted",
     )
-  })
-
-  it("受け付け済みの依頼の2回目以降は current 1 以上でも late-start にしない", () => {
-    const review = createWorkPlanReview()
-    review.judge(inputOf(0))
-
-    expect(review.judge(inputOf(1)).kind).toBe("accepted")
   })
 
   it("形の崩れた引数は malformed で差し戻す", () => {
@@ -188,7 +179,7 @@ describe("WorkPlanReview の判定", () => {
     expect(review.judge({ phases: PHASES, current: 9 }).kind).toBe("malformed")
   })
 
-  it("範囲の無いワークプランでは、phase_result を受けても位置は動かず、範囲の無い呼び出しは差し戻す", () => {
+  it("範囲の無いワークプランでは、phase_result を受けても位置は動かず、範囲の無い呼び出しは今の位置の次から count 段の範囲を確定する", () => {
     const review = createWorkPlanReview()
     review.pass(REQUEST)
     review.judge(inputOf(0))
@@ -197,8 +188,8 @@ describe("WorkPlanReview の判定", () => {
 
     expect(passed.map((event) => event.kind)).toEqual(["tool-started"])
     expect(review.standing()).toEqual({ kind: "planned", remaining: 3 })
-    expect(review.judge(inputOf(2)).kind).toBe("range-missing")
-    expect(review.judge(inputOf(1)).kind).toBe("range-missing")
+    expect(review.judge(inputOf(1)).kind).toBe("accepted")
+    expect(review.delegatedRange()).toEqual({ kind: "range", first: 2, count: 1 })
   })
 })
 
@@ -269,7 +260,7 @@ describe("WorkPlanReview の planMissing", () => {
   it("差し戻された work_plan だけでは真のまま", () => {
     const review = createWorkPlanReview()
 
-    expect(review.judge(inputOf(1)).kind).toBe("late-start")
+    expect(review.judge({ phases: PHASES, current: 9 }).kind).toBe("malformed")
     expect(review.planMissing()).toBe(true)
   })
 

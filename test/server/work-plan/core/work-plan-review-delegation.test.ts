@@ -64,37 +64,15 @@ describe("WorkPlanReview の委譲の返却", () => {
     ).toBe("accepted")
   })
 
-  it("最後に受けた phase_result の count と範囲の count が違う範囲は差し戻し、揃えれば通る", () => {
-    const review = createWorkPlanReview()
-    review.pass(REQUEST)
-    review.judge(ranged(0))
-    review.judgeResult({ phase: 1, count: 3, outcome: "finished" })
-
-    expect(review.judge(ranged(1, SUMMARY)).kind).toBe("range-mismatch")
-    expect(review.judge(ranged(1, SUMMARY, { first: 1, count: 3 })).kind).toBe("accepted")
-  })
-
-  it("phase_result を受けたあとの範囲の無い work_plan は差し戻し、範囲を宣言すれば通る", () => {
-    const review = createWorkPlanReview()
-    review.pass(REQUEST)
-    review.judge(ranged(0))
-    review.judgeResult({ phase: 1, count: 2, outcome: "finished" })
-
-    expect(review.judge({ ...ranged(1, SUMMARY), delegatedRange: undefined }).kind).toBe(
-      "range-missing",
-    )
-    expect(review.judge(ranged(1, SUMMARY)).kind).toBe("accepted")
-  })
-
-  it("pending は phase_result を受ける前は通り、受けたあとは range-missing で、count 付きへは通る", () => {
+  it("pending は phase_result を受ける前も受けたあとも通る", () => {
     const review = createWorkPlanReview()
     review.pass(REQUEST)
     expect(review.judge(ranged(0, "", { first: 1 })).kind).toBe("accepted")
     expect(review.delegatedRange()).toEqual({ kind: "pending", first: 1 })
     review.judgeResult({ phase: 1, count: 2, outcome: "finished" })
 
-    expect(review.judge(ranged(0, "", { first: 1 })).kind).toBe("range-missing")
-    expect(review.judge(ranged(0)).kind).toBe("accepted")
+    expect(review.judge(ranged(0, "", { first: 1 })).kind).toBe("accepted")
+    expect(review.delegatedRange()).toEqual({ kind: "range", first: 1, count: 2 })
   })
 
   it("段のまとめの本文は読まず、範囲の外の番号を書いても差し戻さない", () => {
