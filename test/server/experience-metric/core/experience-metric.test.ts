@@ -4,6 +4,7 @@ import {
   createExperienceMetricRecorder,
   type ExperienceMetricEntry,
 } from "../../../../src/server/experience-metric/core/experience-metric.ts"
+import type { ReportSection } from "../../../../src/shared/report/report-block.ts"
 import type { PendingAsk } from "../../../../src/shared/session-driver/pending-ask.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import { applySessionEvent } from "../../../../src/shared/session/session-fold.ts"
@@ -11,6 +12,7 @@ import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../../src/shared/session/session-state.ts"
+import { reportEvent } from "../../../fixture/report-event.ts"
 import { requestEvent } from "../../../fixture/session-event.ts"
 
 /** 依頼の文面に入れる目印。記録の行に出てはいけない。 */
@@ -183,5 +185,91 @@ describe("createExperienceMetricRecorder", () => {
 
     expect(entries.length).toBe(3)
     expect(JSON.stringify(entries)).not.toContain(REQUEST_MARK)
+  })
+
+  describe("読む時間", () => {
+    const BODY_MARK = "架空の本文の目印・赤い靴"
+    const sectionsWithTable: readonly ReportSection[] = [
+      {
+        heading: "",
+        shapeTag: "unspecified",
+        blocks: [
+          { kind: "text", text: BODY_MARK, fold: "", aside: "" },
+          {
+            kind: "table",
+            title: "架空の表",
+            columns: ["列A", "列B"],
+            rows: [["a", "b"]],
+            rest: "",
+            fold: "",
+            aside: "",
+          },
+        ],
+      },
+    ]
+
+    it("最終レポートで閉じてから次の依頼までの秒数と、字数・表率・図の有無を書く", () => {
+      const { entries, send } = createHarness()
+
+      send(10, REQUEST)
+      send(20, reportEvent({ sections: sectionsWithTable }))
+      send(30, COMPLETED)
+      send(75, REQUEST)
+
+      const reading = entries.filter((entry) => entry.kind === "reading")
+      expect(reading).toEqual([
+        {
+          at: 75_000,
+          sessionId: "claude-session-1",
+          kind: "reading",
+          readingSeconds: 45,
+          bodyChars: expect.any(Number),
+          tableRate: 0.5,
+          hasDiagram: false,
+        },
+      ])
+      expect(reading[0]?.bodyChars).toBeGreaterThan(BODY_MARK.length)
+    })
+
+    it.each([
+      ["figure の図", { figure: { kind: "mermaid", title: "", source: "x", fold: "", aside: "" } }],
+      [
+        "節の中の図の塊",
+        {
+          sections: [
+            {
+              heading: "",
+              shapeTag: "unspecified",
+              blocks: [{ kind: "mermaid", title: "", source: "x", fold: "", aside: "" }],
+            },
+          ],
+        },
+      ],
+    ] as const)("%s があれば hasDiagram になり、本文は行に入らない", (_name, overrides) => {
+      const { entries, send } = createHarness()
+
+      send(10, REQUEST)
+      send(20, reportEvent({ sections: sectionsWithTable, ...overrides }))
+      send(30, COMPLETED)
+      send(40, REQUEST)
+
+      expect(entries.filter((entry) => entry.kind === "reading")).toMatchObject([
+        { hasDiagram: true },
+      ])
+      expect(JSON.stringify(entries)).not.toContain(BODY_MARK)
+    })
+
+    it("つまずいて閉じたときと、依頼が続いたあとの次の依頼では書かない", () => {
+      const { entries, send } = createHarness()
+
+      send(10, REQUEST)
+      send(20, FAILED)
+      send(30, REQUEST)
+      send(40, COMPLETED)
+      send(50, REQUEST)
+      send(60, REQUEST)
+
+      expect(entries.filter((entry) => entry.kind === "reading").length).toBe(1)
+    })
   })
 })

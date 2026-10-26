@@ -56,8 +56,11 @@ export type ShapeTagRule = {
 export const REPORT_SHAPE_TAG_RULES = {
   cause: {
     name: "因果",
-    primary: [{ kind: "graph", sample: "A -> B: 語" }],
-    alternatives: [{ kind: "text", sample: "" }],
+    primary: [
+      { kind: "text", sample: "2〜3文なら文" },
+      { kind: "graph", sample: "A -> B: 語" },
+    ],
+    alternatives: [],
     forbidden: [
       { kind: "list", when: "always" },
       { kind: "table", when: "always" },
@@ -147,9 +150,12 @@ export const REPORT_SHAPE_TAG_RULES = {
   },
   boundary: {
     name: "境界",
-    primary: [{ kind: "compare", sample: "" }],
+    primary: [
+      { kind: "text", sample: "" },
+      { kind: "compare", sample: "" },
+    ],
     alternatives: [{ kind: "table", sample: "" }],
-    forbidden: [{ kind: "text", when: "always" }],
+    forbidden: [],
   },
   parallel: {
     name: "並列",

@@ -82,6 +82,17 @@ function toRecord(entry: ExperienceMetricEntry): ExperienceMetricRecord {
         releasedPercent: entry.releasedPercent,
         previousPercent: entry.previousPercent,
       }
+    case "reading":
+      return {
+        v,
+        at,
+        sessionId: entry.sessionId,
+        kind: "reading",
+        readingSeconds: entry.readingSeconds,
+        bodyChars: entry.bodyChars,
+        tableRate: entry.tableRate,
+        hasDiagram: entry.hasDiagram,
+      }
   }
 }
 
@@ -115,6 +126,16 @@ function fromRecord(record: ExperienceMetricRecord): ExperienceMetricEntry {
         divider: record.divider,
         releasedPercent: record.releasedPercent,
         previousPercent: record.previousPercent,
+      }
+    case "reading":
+      return {
+        at,
+        sessionId: record.sessionId,
+        kind: "reading",
+        readingSeconds: record.readingSeconds,
+        bodyChars: record.bodyChars,
+        tableRate: record.tableRate,
+        hasDiagram: record.hasDiagram,
       }
   }
 }

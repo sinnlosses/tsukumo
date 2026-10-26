@@ -185,7 +185,35 @@ describe("readRange", () => {
     ])
   })
 
-  it("仕切りを離した1回を版2の行に書き、読み戻す", async () => {
+  it("読む時間を秒数・字数・表率・図の有無だけの行に書き、読み戻す", async () => {
+    const log = createExperienceMetricLog(root())
+    const entry = {
+      at: at(9, 0),
+      sessionId: "claude-session-1",
+      kind: "reading",
+      readingSeconds: 42,
+      bodyChars: 800,
+      tableRate: 0.25,
+      hasDiagram: true,
+    } as const
+
+    log.append(entry)
+    await log.flush()
+
+    expect(readLines("2026-09-22.jsonl")).toMatchObject([
+      {
+        v: EXPERIENCE_METRIC_FORMAT_VERSION,
+        kind: "reading",
+        readingSeconds: 42,
+        bodyChars: 800,
+        tableRate: 0.25,
+        hasDiagram: true,
+      },
+    ])
+    expect(log.readRange({ startDate: "2026-09-22", endDate: "2026-09-22" })).toEqual([entry])
+  })
+
+  it("仕切りを離した1回を書き、読み戻す", async () => {
     const log = createExperienceMetricLog(root())
     const entry = splitEntry(
       { divider: "rowTop", releasedPercent: 62, previousPercent: 55 },
@@ -197,7 +225,13 @@ describe("readRange", () => {
     await log.flush()
 
     expect(readLines("2026-09-22.jsonl")).toMatchObject([
-      { v: 2, kind: "split", divider: "rowTop", releasedPercent: 62, previousPercent: 55 },
+      {
+        v: EXPERIENCE_METRIC_FORMAT_VERSION,
+        kind: "split",
+        divider: "rowTop",
+        releasedPercent: 62,
+        previousPercent: 55,
+      },
     ])
     expect(log.readRange({ startDate: "2026-09-22", endDate: "2026-09-22" })).toEqual([entry])
   })

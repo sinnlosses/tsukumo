@@ -3,14 +3,18 @@
 // 見るのはイベントの種類と、畳んだあとの姿から導く局面（`conversationMoment`）だけ。
 // 依頼の文面もセリフもツールの引数も、`ExperienceMetricEntry` に口が無いので通らない。
 
+import { sumBy } from "remeda"
+
 import type {
   ClosedMoment,
   SplitDivider,
 } from "../../../shared/experience-metric/experience-metric-record.ts"
+import type { ReportBlock } from "../../../shared/report/report-block.ts"
 import {
   type ConversationMoment,
   conversationMoment,
 } from "../../../shared/session/conversation-moment.ts"
+import { mainViewEntries } from "../../../shared/session/main-view-entry.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import type { SessionState } from "../../../shared/session/session-state.ts"
 
@@ -31,7 +35,18 @@ export type ExperienceMetricPeriod = {
  * 記録の1件（書き出す行そのものではない）。
  * `at` はエポックミリ秒で、ISO 8601 への変換と日付ごとのファイルの選択は `adapter` 側の仕事。
  */
-export type ExperienceMetricEntry = ConclusionEntry | RecoveryEntry | SplitEntry
+export type ExperienceMetricEntry = ConclusionEntry | RecoveryEntry | SplitEntry | ReadingEntry
+
+/** 最終レポートで閉じてから、次の依頼を送るまで。`at` は次の依頼の時刻。 */
+export type ReadingEntry = {
+  readonly at: number
+  readonly sessionId: string
+  readonly kind: "reading"
+  readonly readingSeconds: number
+  readonly bodyChars: number
+  readonly tableRate: number
+  readonly hasDiagram: boolean
+}
 
 /** 依頼1つを送ってから、そのやり取りが閉じるまで。 */
 export type ConclusionEntry = {
@@ -96,16 +111,20 @@ export type ExperienceMetricRecorder = {
 /** {@link ExperienceMetricRecorder} を1つ起こす。 */
 export function createExperienceMetricRecorder(log: ExperienceMetricLog): ExperienceMetricRecorder {
   let tally: ExperienceTally = INITIAL_EXPERIENCE_TALLY
+  let reading: PendingReading = { kind: "none" }
 
   return {
     observe: (event, state, at) => {
       const step = stepExperience(tally, event, state, at)
       tally = step.tally
-      for (const entry of step.entries) {
+      const readStep = stepReading(reading, event, state, at, step.entries)
+      reading = readStep.reading
+      for (const entry of [...readStep.entries, ...step.entries]) {
         log.append(entry)
       }
     },
     noteRestart: () => {
+      reading = { kind: "none" }
       tally = {
         last: { kind: "unsynced" },
         exchange: { kind: "none" },
@@ -194,6 +213,101 @@ function stepExperience(
       recovery: failedWhileIdle ? startRecovery(seen.recovery, at) : seen.recovery,
     },
     entries: [],
+  }
+}
+
+/**
+ * 最終レポートで閉じてから、次の依頼を待っている勘定。
+ * サーバは描画の完了を知らないので、閉じた時刻（`deliver` の行を書く時刻）を読み始めとする。
+ */
+type PendingReading =
+  | { readonly kind: "none" }
+  | {
+      readonly kind: "pending"
+      readonly closedAt: number
+      readonly sessionId: string
+      readonly shape: ReadingShape
+    }
+
+type ReadingShape = {
+  readonly bodyChars: number
+  readonly tableRate: number
+  readonly hasDiagram: boolean
+}
+
+const DIAGRAM_BLOCK_KINDS: ReadonlySet<ReportBlock["kind"]> = new Set<ReportBlock["kind"]>([
+  "mermaid",
+  "graph",
+  "chart",
+  "svg",
+  "timeline",
+  "beforeAfter",
+  "image",
+])
+
+/** 次の依頼で読む時間の行を書き、`deliver` で閉じたら次の勘定を始める（`stumble` で閉じたら捨てる）。雑談のあいだは持たない。 */
+function stepReading(
+  reading: PendingReading,
+  event: SessionEvent,
+  state: SessionState,
+  at: number,
+  closed: readonly ExperienceMetricEntry[],
+): { readonly reading: PendingReading; readonly entries: readonly ReadingEntry[] } {
+  if (state.chatMode) {
+    return { reading: { kind: "none" }, entries: [] }
+  }
+  const entries: readonly ReadingEntry[] =
+    event.kind === "request" && reading.kind === "pending"
+      ? [
+          {
+            at,
+            sessionId: reading.sessionId,
+            kind: "reading",
+            readingSeconds: (at - reading.closedAt) / 1000,
+            ...reading.shape,
+          },
+        ]
+      : []
+  const afterRequest: PendingReading = event.kind === "request" ? { kind: "none" } : reading
+  const conclusion = closed.find((entry) => entry.kind === "conclusion")
+  if (conclusion === undefined) {
+    return { reading: afterRequest, entries }
+  }
+  return {
+    reading:
+      conclusion.moment === "deliver"
+        ? {
+            kind: "pending",
+            closedAt: at,
+            sessionId: conclusion.sessionId,
+            shape: readingShapeOf(state),
+          }
+        : { kind: "none" },
+    entries,
+  }
+}
+
+/** いちばん新しい `report` の記録から、字数・表の割合・図の有無だけを取る。本文は持ち出さない。 */
+function readingShapeOf(state: SessionState): ReadingShape {
+  const report = state.records.findLast((record) => record.kind === "report")
+  if (report === undefined) {
+    return { bodyChars: 0, tableRate: 0, hasDiagram: false }
+  }
+  const blocks = report.sections.flatMap((section) => section.blocks)
+  const shownReport = mainViewEntries(state)
+    .filter((entry) => entry.kind === "report")
+    .at(-1)
+  return {
+    bodyChars:
+      shownReport === undefined
+        ? 0
+        : sumBy(shownReport.regions.sections, (section) => section.markdown.length),
+    tableRate:
+      blocks.length === 0
+        ? 0
+        : blocks.filter((block) => block.kind === "table").length / blocks.length,
+    hasDiagram:
+      report.figure.kind !== "none" || blocks.some((block) => DIAGRAM_BLOCK_KINDS.has(block.kind)),
   }
 }
 

@@ -70,6 +70,7 @@ describe("isForbiddenBlock", () => {
   it.each([
     ["cause", graph],
     ["cause", text("架空の原因")],
+    ["boundary", text("架空の境目は2文で言い切れる")],
     ["position", image],
     ["time", list(2)],
     ["order", list(2)],

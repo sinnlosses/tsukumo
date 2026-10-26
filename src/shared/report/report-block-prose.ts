@@ -8,7 +8,7 @@ import { MAX_ITEM_LABEL } from "./report-limit.ts"
 export const textBlockSchema = z.object({
   kind: z.literal("text"),
   text: inlineText.describe(
-    "地の文。3文まで。結論に効く数が3つ以上並び前後か推移を見せるなら stats",
+    "地の文。1段落1話題。結論に効く数が3つ以上並び前後か推移を見せるなら stats",
   ),
   fold,
   aside,

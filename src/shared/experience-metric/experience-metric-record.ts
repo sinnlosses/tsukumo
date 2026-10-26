@@ -1,10 +1,10 @@
 // 進行の計測値を記録に残すときの行の形。
 // 1行は、閉じた依頼1つ（`conclusion`）か、つまずきからの立ち直り1回（`recovery`）か、
-// 仕切りを離した1回（`split`）。
+// 仕切りを離した1回（`split`）か、最終レポートを閉じてから次の依頼までの読む時間（`reading`）。
 //
 // この記録に書いてよいもの:
 //
-// - 数（ミリ秒・回数）・時刻・セッションID
+// - 数（ミリ秒・回数・字数・率）・有無・時刻・セッションID
 // - 局面の名前（`ConversationMoment` の値）
 // - 仕切りの名前（`SPLIT_DIVIDERS` の固定の3語）と、仕切りの比率（%）
 //
@@ -16,10 +16,10 @@
 import { z } from "zod"
 
 /** 行の形の版。形を変えたら上げ、古い行と見分ける。 */
-export const EXPERIENCE_METRIC_FORMAT_VERSION = 2 satisfies number
+export const EXPERIENCE_METRIC_FORMAT_VERSION = 3 satisfies number
 
-/** 読める版。版1は `split` の行が無い時代の行で、`conclusion`・`recovery` の形は版2と同じ。 */
-const readableVersionSchema = z.literal([1, EXPERIENCE_METRIC_FORMAT_VERSION])
+/** 読める版。版1は `split` の行が無い時代、版2は `reading` の行が無い時代の行で、`conclusion`・`recovery` の形は版3と同じ。 */
+const readableVersionSchema = z.literal([1, 2, EXPERIENCE_METRIC_FORMAT_VERSION])
 
 /** 会話の画面の3つの仕切り（固定の語彙）。表に並べる順でもある。 */
 export const SPLIT_DIVIDERS = [
@@ -73,7 +73,7 @@ const recoveryRecordSchema = z
 /** 仕切りを離した1回。動かしている途中は書かない。 */
 const splitRecordSchema = z
   .object({
-    v: z.literal(EXPERIENCE_METRIC_FORMAT_VERSION),
+    v: z.literal([2, EXPERIENCE_METRIC_FORMAT_VERSION]),
     /** ISO 8601（オフセット付き）。離した時刻。 */
     at: isoAtSchema,
     sessionId: z.string(),
@@ -86,11 +86,31 @@ const splitRecordSchema = z
   })
   .readonly()
 
+/** 最終レポートを閉じてから、次の依頼を送るまで。本文は残さず、字数・表率・図の有無だけを持つ。 */
+const readingRecordSchema = z
+  .object({
+    v: z.literal(EXPERIENCE_METRIC_FORMAT_VERSION),
+    /** ISO 8601（オフセット付き）。次の依頼を送った時刻。 */
+    at: isoAtSchema,
+    sessionId: z.string(),
+    kind: z.literal("reading"),
+    /** 最終レポートが閉じた時刻から次の依頼までの秒数。 */
+    readingSeconds: z.number(),
+    /** 本文（節）の字数。 */
+    bodyChars: z.number(),
+    /** 節の塊のうち表の割合（0〜1）。塊が無ければ 0。 */
+    tableRate: z.number(),
+    /** 図（図の塊か `figure`）があったか。 */
+    hasDiagram: z.boolean(),
+  })
+  .readonly()
+
 /** JSONL に書く1行の形。 */
 export const experienceMetricRecordSchema = z.discriminatedUnion("kind", [
   conclusionRecordSchema,
   recoveryRecordSchema,
   splitRecordSchema,
+  readingRecordSchema,
 ])
 
 export type ExperienceMetricRecord = z.infer<typeof experienceMetricRecordSchema>
