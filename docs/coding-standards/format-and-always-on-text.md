@@ -2,7 +2,7 @@
 
 ステータス: **正典**。入口は `docs/coding-standards.md`（規約の理由と例外の入口と、子のファイルの一覧）。
 
-責務: oxfmt にかけないディレクトリとその理由、毎ターン載る常設の文章（`AGENTS.md`・`.claude/rules/`）の字数の上限と足すなら削る梯子を持つ。
+責務: oxfmt にかけないディレクトリとその理由、毎ターン載る常設の文章（`AGENTS.md`・`.claude/rules/`・systemPrompt の規約・`task-writing.md`・`implementer-brief.md`）の字数の上限と足すなら削る梯子を持つ。
 読む時: 整形の対象を確かめるとき、`AGENTS.md`・`.claude/rules/` に書き足すとき。
 直す時: 整形の対象外・字数の上限・梯子を変えたとき（検査は `test/architecture/always-on-budget.test.ts`）。
 
@@ -33,6 +33,7 @@
 検査は `test/architecture/always-on-budget.test.ts`。
 
 - 上限は `AGENTS.md` が9,000字、`.claude/rules/*.md` が合計2,400字。字数は文字数（`[...text].length`）で数える
+- 同じ検査が次にも上限を掛ける（いまの字数で固定）: systemPrompt の規約 4 本（`SPEECH_CADENCE_PROMPT`・`WORK_PLAN_PROMPT`・`REPORT_NOTATION_PROMPT`・`QUESTION_NOTATION_PROMPT`）の合計が10,481字、`docs/workflow/task-writing.md` が9,220字、実装役が毎件読む `implementer-brief.md` が9,623字。`implementer-brief.md` は submodule の中なので検査は読むだけで、超えたら tsukumo-plugins 側で削る。値を上げる変更は人の承認を要する
 - 増やしたいときは上限を上げず、何かを削る。出し先の梯子は
   hook・検査 → スクリプト → スキル → サブエージェント → 常設の文章（右へ行くほど常に載る）
 - `.claude/rules/` は満杯に近い。足す・直す前後は検証全体でなく `pnpm run test test/architecture/always-on-budget.test.ts` を単体で打つ
