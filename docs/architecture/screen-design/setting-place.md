@@ -45,7 +45,7 @@
 見本は `docs/history/mockup/settings-dialog-look-2026-10-14.png` ほか。ラベルは「地の色」「領域の色」「字の色」）。
 **地・領域・字の色は歯車へ移し、差し色（パックの持ち物）はキャラクター画面に残す。** 同じ
 `<input type="color">` が並んでいても、**一方は「どの端末でも自分が読みやすい画面」、もう一方は
-「このキャラクターの見た目」**で、変えたくなる時機も持ち先（`localStorage` と
+「このキャラクターの見た目」** で、変えたくなる時機も持ち先（`localStorage` と
 `~/.tsukumo/characters/<name>/`）も違う。**保存の仕方は変えていない**（`localStorage` の鍵も
 検証も `src/browser/domain/appearance-color.ts` のまま。機能をまたいで読まれるようになったので
 `browser/domain/` へ上げただけ。`docs/architecture.md`「全体構成」）。

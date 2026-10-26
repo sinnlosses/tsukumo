@@ -36,7 +36,7 @@
 - **英語識別子**: `UsageProposal`
 - **定義**: 見直しの結果の1件。**種類（`kind`）・対象（`target`）・効きめ（`impact`。`large` /
   `medium` / `small`）・見出し（`title`）・根拠（`basis`）・やること（`action`）・押す口
-  （`followUp`。`delegate` =「tsukumo に頼む」/ `task` =「タスクにする」）**を持つ
+  （`followUp`。`delegate` =「tsukumo に頼む」/ `task` =「タスクにする」）** を持つ
 - **注記**: **提案の識別子**（`usageProposalKey`）は種類と対象の組で、言い回しが変わっても同じ
   提案だと分かる。種類は `shared` に固定した列挙で、列挙に無い種類は受け付けない。押す口を
   押すと、仕事の会話へは送らず、その提案だけの別の問い合わせ（**提案の実行**。`usageProposalRun`）を起こす。

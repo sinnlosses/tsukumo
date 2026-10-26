@@ -4,7 +4,7 @@
 
 `docs/history/research/dashboard-layout-vocabulary.md`（見本の分解と欠け）と `docs/history/research/dashboard-layout-product-grammar.md`（製品の語彙と文法）を受けた提案。
 **正典ではなく、採用が決まるまでコードは1行も変わらない。** 欠けの記号 (a)〜(j) は `dashboard-layout-vocabulary.md` 1.2、出典の `[n]` は
-`dashboard-layout-product-grammar.md` の出典一覧を指す。「提案書」は `docs/research/report-excellence-strategy.md`。**【実測】**は手元のコードから読んだもの、**【推測】**は私の推定。
+`dashboard-layout-product-grammar.md` の出典一覧を指す。「提案書」は `docs/research/report-excellence-strategy.md`。**【実測】** は手元のコードから読んだもの、**【推測】** は私の推定。
 
 ## 節の索引
 
