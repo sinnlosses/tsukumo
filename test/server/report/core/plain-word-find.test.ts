@@ -66,6 +66,15 @@ describe("plainWordSpellingsIn", () => {
     ).toEqual(["再演"])
   })
 
+  it("節点は見つけ、始め方の札や塊（かたまり）のような頻出の語は表に無いので通る", () => {
+    expect(plainWordSpellingsIn(draft([reportDraftText("架空の節点が3つある。")]))).toEqual([
+      "節点",
+    ])
+    expect(
+      plainWordSpellingsIn(draft([reportDraftText("始め方の札を押す。お札と氷の塊を並べる。")])),
+    ).toEqual([])
+  })
+
   it("表に無い語は通る", () => {
     expect(plainWordSpellingsIn(draft([reportDraftText("架空の普通の文。")]))).toEqual([])
   })

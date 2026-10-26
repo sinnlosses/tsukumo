@@ -36,7 +36,7 @@ const questionBriefOptionSchema = z.object({
   figures: z
     .array(figureBlockSchema)
     .default([])
-    .describe("この選択肢を選んだときの形を見せる図（report の塊と同じ形）"),
+    .describe("この選択肢を選んだときの形を見せる図（report の部品と同じ形）"),
 })
 
 export const questionBriefSchema = z.object({

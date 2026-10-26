@@ -14,9 +14,9 @@ import type { SessionEvent } from "../../../shared/session/session-event.ts"
  * MCP ツールの説明文は既定で 2048 字までしか渡らず、規約の全文は入らない。
  */
 export const REPORT_TOOL_DESCRIPTION =
-  "ターンのレポートをメインビューに出す。task（目録の1行と見出し）→ conclusion → keyFigures（数の札）→ checks（検証結果の表）→ figure → sections → retrospective → favor の順に描かれ、" +
+  "ターンのレポートをメインビューに出す。task（目録の1行と見出し）→ conclusion → keyFigures（数のカード）→ checks（検証結果の表）→ figure → sections → retrospective → favor の順に描かれ、" +
   "そのあと closing のセリフが吹き出しに出る。受け付けられるとそこでターンが終わる（あとに何も書けない）。" +
-  "差し戻されたら、直す欄だけを渡して呼び直せばよい（渡さなかった欄は、同じターンで直前に差し戻した呼び出しの値を引き継ぐ）。" +
+  "差し戻されたら、直す項目だけを渡して呼び直せばよい（渡さなかった項目は、同じターンで直前に差し戻した呼び出しの値を引き継ぐ）。" +
   "書き方は「レポートの記法（tsukumo）」の節に従う。" +
   "本文は日本語で書く（識別子・パス・コマンド・コードは英語のままでよい）。"
 
@@ -64,7 +64,7 @@ export const REPORT_WORK_PLAN_CLOSING_DESCRIPTION =
  */
 export const REPORT_FIGURE_DESCRIPTION =
   "レポートの図1つ。checks の下・sections の上に「図 1」として描かれ、sections の図の番号はそのあとに続く。" +
-  "次のどれかがあれば図の塊（image / mermaid / graph / svg / timeline / beforeAfter / chart / stats）を置き、none にしない: " +
+  "次のどれかがあれば図の部品（image / mermaid / graph / svg / timeline / beforeAfter / chart / stats）を置き、none にしない: " +
   "名前が3つ以上出てきてつながる・流れや分岐がある・構造の前後がある・数が3つ以上ある。" +
   "作業のレポートの最小の形は、ここに図1つと、sections に表か箇条書き。" +
   "図を置かないときは kind を none にして reason で理由を言う: " +
@@ -74,7 +74,7 @@ export const REPORT_FIGURE_DESCRIPTION =
 
 /** `report` の任意の `keyFigures` 引数（結論の直下に並べる数）の説明。使いどころの条は `REPORT_NOTATION_PROMPT` が持つ。 */
 export const REPORT_KEY_FIGURES_DESCRIPTION =
-  "結論に効く数を3〜4個。結論の直下に札で並べる（件数・割合・前後の差）。" +
+  "結論に効く数を3〜4個。結論の直下にカードで並べる（件数・割合・前後の差）。" +
   "3つに満たなければ省いて結論の文に入れる。項目の形は stats の items と同じ。"
 
 /**
@@ -82,10 +82,10 @@ export const REPORT_KEY_FIGURES_DESCRIPTION =
  * 塊の種類ごとの使いどころは各塊の `describe`（`reportBlockSchema`）が持つので、ここに書かない。
  */
 export const REPORT_SECTIONS_DESCRIPTION =
-  "結論のあとの根拠・比較・手順。節の並びで、節ごとに塊を並べる。" +
-  "塊の文字で効くのはインラインの記法（inline code・太字・リンク）だけ。" +
-  "塊の fold に見出しを書くと畳んで描く（畳んでも結論が通る塊だけ）。" +
-  "塊の aside に出典・どこを見るかを1行で書くと、本文の流れの外（本文の右の余白）に置く。"
+  "結論のあとの根拠・比較・手順。節の並びで、節ごとに部品を並べる。" +
+  "部品の文字で効くのはインラインの記法（inline code・太字・リンク）だけ。" +
+  "部品の fold に見出しを書くと畳んで描く（畳んでも結論が通る部品だけ）。" +
+  "部品の aside に出典・どこを見るかを1行で書くと、本文の流れの外（本文の右の余白）に置く。"
 
 /** 短い型の表記で渡す版で、`figure` の説明の後ろに足す文。 */
 export const REPORT_FIGURE_SHORT_TYPE_NOTE = "型は sections の説明の ReportFigure。"

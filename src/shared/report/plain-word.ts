@@ -32,6 +32,11 @@ export const PLAIN_WORDS = [
       "図の中で、点（ファイルや部品の名前）と点をつなぐ線。「A が B に値を渡す」というつながりを表す",
   },
   {
+    spelling: "節点",
+    replacement: "箱",
+    meaning: "図の中で、ファイルや部品の名前を1つ置く点。矢印の両端になる",
+  },
+  {
     spelling: "転がして",
     replacement: "スクロールして",
     meaning: "枠に収まらない中身を、枠の中で上下に送って続きを見ること",

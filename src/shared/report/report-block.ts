@@ -144,7 +144,7 @@ export const reportSectionSchema = z.object({
     .enum(REPORT_SHAPE_TAGS)
     .optional()
     .describe(
-      "その節が表す内容の形（形の札）。節の要点を1文にし、上から問いを当てて最初に当たった札にする: 1. 要素は1つか → single / 2. 要素の間に向きのある関係があるか → cause・connection・position・state（状態の移り）・time・order / 3. 数が主役か → quantity / 4. 候補を採否するか、2つの側を比べるか → choice・comparison・boundary（どこまでが対象か） / 5. 項目が2つ以上の属性を持つか → attribute・mapping（どれがどこへ） / 6. どれでもない → parallel",
+      "その節が表す内容の形（形の名前）。節の要点を1文にし、上から問いを当てて最初に当たった形にする: 1. 要素は1つか → single / 2. 要素の間に向きのある関係があるか → cause・connection・position・state（状態の移り）・time・order / 3. 数が主役か → quantity / 4. 候補を採否するか、2つの側を比べるか → choice・comparison・boundary（どこまでが対象か） / 5. 項目が2つ以上の属性を持つか → attribute・mapping（どれがどこへ） / 6. どれでもない → parallel",
     ),
   blocks: z.array(namedReportBlockSchema).min(1),
 })

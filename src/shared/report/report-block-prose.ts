@@ -100,7 +100,7 @@ export const codeBlockSchema = z
   })
   .describe(
     "コード・コマンド・エラー文・そのまま渡す前提の文章（デザインの依頼文・コミットメッセージの案など）。" +
-      "塊にはクリックでクリップボードへ写せるボタンが付く",
+      "部品にはクリックでクリップボードへ写せるボタンが付く",
   )
 
 const REPORT_CLAIM_CERTAINTIES = ["confirmed", "inferred", "unverified"] as const
@@ -138,7 +138,7 @@ export const markdownBlockSchema = z.object({
   markdown: z
     .string()
     .describe(
-      "どの塊にも当てはまらない記法（svg・引用・区切り線・区画の格子 cols / card・札 badge）だけ",
+      "どの部品にも当てはまらない記法（svg・引用・区切り線・区画の格子 cols / card・ラベル badge）だけ",
     ),
   fold,
   aside,

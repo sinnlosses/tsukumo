@@ -209,7 +209,7 @@ function shortTypeInputShape(expressions: readonly ExpressionChoice[]) {
         blocks: z
           .array(LOOSE_OBJECT)
           .optional()
-          .describe("結果の根拠に図・表・コードが要るときだけ。ReportSection の blocks と同じ塊"),
+          .describe("結果の根拠に図・表・コードが要るときだけ。ReportSection の blocks と同じ部品"),
       })
       .optional()
       .describe(REPORT_RETROSPECTIVE_DESCRIPTION),
