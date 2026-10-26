@@ -56,6 +56,9 @@
   `vitest.config.ts` の `DOM_TEST_FILES` に無いファイルが DOM を要するようになったら、そこへ足す
 - **変えたファイルがすべて文書なら、`--full` でも段は `format:check`・`token-limit` と文書の検査（`pnpm run test:document`）だけになり、E2E は流れない。**
   選んだ段は `文書だけの変更のため…` の1行で出る（`scripts/dev/lib/check-stage.ts` の `planStages`）
+- **E2E の全件は、`.github/workflows/ci.yml` の `e2e` ジョブが夜間に1回（`schedule`）走らせ、main の健全を外から確かめる。**
+  全件の門は `TSUKUMO_E2E_FULL=1` を立てて通す。落ちたら Issue は起こさず、workflow の失敗で見る。
+  push では走らせず、main へ送る直前の `check --full` は変わらない
 - **引数なしの `pnpm run check` は、変えたファイルから選んだ E2E のファイルだけを流し**、選んだもの
   （または全件に倒した理由のパス）を1行で出す。**全件は `pnpm run check --full` で、main へ送る直前
   （`tw ship` の送る前の検証コマンドと `scripts/dev/ship.ts`）に1回だけ流す**。選び方（`scripts/shared/e2e-selection.ts`）は
