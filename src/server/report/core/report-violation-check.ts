@@ -139,11 +139,6 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
           : report.sections.filter((section) => section.heading.trim() === "").length,
     },
     { kind: "markdown-notation", count: notations.length, notations },
-    {
-      kind: "broken-mermaid",
-      count: report.mermaidFaults.length,
-      faults: report.mermaidFaults,
-    },
     { kind: "broken-svg", count: svgFaults.length, faults: svgFaults },
     { kind: "unlegended-svg-tone", count: svgToneFaults.length, faults: svgToneFaults },
     { kind: "unlegended-graph-tone", count: graphToneFaults.length, faults: graphToneFaults },

@@ -65,7 +65,7 @@ export const matrixBlockSchema = z
           name: inlineText,
           cells: z
             .array(z.enum(REPORT_MATRIX_STATUSES))
-            .describe("列ごとの状態。na は該当なし。数は columns と揃える"),
+            .describe("列ごとの状態。数は columns と揃える"),
         }),
       )
       .min(1),

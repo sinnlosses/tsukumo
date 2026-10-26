@@ -17,10 +17,9 @@ export const NOTE_KINDS_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-note
 /** メモの塊。狭い窓では種別の並びの1枚（`notation-note`）に入りきらない。 */
 export const NOTE_MEMO_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-note-memo_"]`
 export const NOTE_FAVOR_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-note-favor_"]`
-/** 番号つきの題を持つ図と表の包み・寸法図。 */
+/** 番号つきの題を持つ図と表の包み。 */
 export const CAPTIONED_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-captioned_"]`
 export const CAPTIONED_FIGURE_SELECTOR = `${CAPTIONED_SELECTOR} pre.mermaid svg`
-export const DIMENSION_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-dimension_"]`
 export const IMAGE_NOTES_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-image-notes_"]`
 /** 前後の塊（`report-before-after` 場面の先頭は画像の前後）と、その中の最初のコード・箇条。 */
 export const BEFORE_AFTER_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-before-after_"]`

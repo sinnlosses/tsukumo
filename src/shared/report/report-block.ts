@@ -12,7 +12,6 @@ import {
 import {
   beforeAfterBlockSchema,
   chartBlockSchema,
-  dimensionBlockSchema,
   graphBlockSchema,
   imageBlockSchema,
   mermaidBlockSchema,
@@ -26,7 +25,6 @@ import {
   listBlockSchema,
   markdownBlockSchema,
   noteBlockSchema,
-  progressBlockSchema,
   textBlockSchema,
 } from "./report-block-prose.ts"
 import { MAX_HEADING } from "./report-limit.ts"
@@ -35,7 +33,6 @@ import { timelineBlockSchema } from "./timeline-block.ts"
 
 // `report` の schema で `figure` と `sections` が共有する塊。名前を外すと両方に複製され、ツール定義が約1万字増える
 const namedBeforeAfter = beforeAfterBlockSchema.meta({ id: "BeforeAfterBlock" })
-const namedDimension = dimensionBlockSchema.meta({ id: "DimensionBlock" })
 const namedStats = statsBlockSchema.meta({ id: "StatsBlock" })
 const namedMermaid = mermaidBlockSchema.meta({ id: "MermaidBlock" })
 const namedGraph = graphBlockSchema.meta({ id: "GraphBlock" })
@@ -51,7 +48,6 @@ const reportBlockSchema = z.discriminatedUnion("kind", [
   matrixBlockSchema,
   compareBlockSchema,
   namedBeforeAfter,
-  namedDimension,
   noteBlockSchema,
   namedStats,
   codeBlockSchema,
@@ -60,7 +56,6 @@ const reportBlockSchema = z.discriminatedUnion("kind", [
   namedChart,
   namedSvg,
   namedTimeline,
-  progressBlockSchema,
   optionsBlockSchema,
   claimsBlockSchema,
   namedImage,
@@ -115,7 +110,6 @@ export const reportFigureSchema = z.discriminatedUnion("kind", [
   namedBeforeAfter,
   namedChart,
   namedStats,
-  namedDimension,
   z.object({ kind: z.literal("none"), reason: z.enum(REPORT_FIGURE_NONE_REASONS) }),
 ])
 

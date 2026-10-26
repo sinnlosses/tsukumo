@@ -64,7 +64,7 @@ export const REPORT_WORK_PLAN_CLOSING_DESCRIPTION =
  */
 export const REPORT_FIGURE_DESCRIPTION =
   "レポートの図1つ。checks の下・sections の上に「図 1」として描かれ、sections の図の番号はそのあとに続く。" +
-  "次のどれかがあれば図の塊（image / mermaid / graph / svg / timeline / beforeAfter / chart / stats / dimension）を置き、none にしない: " +
+  "次のどれかがあれば図の塊（image / mermaid / graph / svg / timeline / beforeAfter / chart / stats）を置き、none にしない: " +
   "名前が3つ以上出てきてつながる・流れや分岐がある・構造の前後がある・数が3つ以上ある。" +
   "作業のレポートの最小の形は、ここに図1つと、sections に表か箇条書き。" +
   "図を置かないときは kind を none にして reason で理由を言う: " +

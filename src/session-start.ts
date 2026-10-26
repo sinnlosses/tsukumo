@@ -8,7 +8,6 @@ import { createSocketRouter } from "./router.ts"
 import type { Config } from "./server/core/config.ts"
 import type { Host } from "./server/host/core/host.ts"
 import { readReportImageFile } from "./server/report/adapter/report-image-file.ts"
-import { warmUpMermaidChecker } from "./server/report/adapter/report-mermaid-syntax.ts"
 import type { ReportImageShelf } from "./server/report/core/report-image-shelf.ts"
 import { runGit } from "./server/repository/adapter/git.ts"
 import type { PromptImageShelf } from "./server/session-driver/core/prompt-image-shelf.ts"
@@ -128,15 +127,6 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
     ...usageReview.manager,
     ...repository.manager,
   })
-  switch (context.driver.kind) {
-    case "sdk":
-      setImmediate(warmUpMermaidChecker)
-      break
-    case "fake":
-      break
-    default:
-      context.driver satisfies never
-  }
   const socketRouter = createSocketRouter({
     session: {
       promptImageShelf,

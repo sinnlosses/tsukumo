@@ -66,10 +66,7 @@ export const REPORT_SHAPE_TAG_RULES = {
   connection: {
     name: "つながり",
     primary: [{ kind: "graph", sample: "A -> B: 語" }],
-    alternatives: [
-      { kind: "matrix", sample: "" },
-      { kind: "mermaid", sample: "mindmap" },
-    ],
+    alternatives: [{ kind: "matrix", sample: "" }],
     forbidden: [
       { kind: "list", when: "always" },
       { kind: "table", when: "always" },
@@ -81,7 +78,7 @@ export const REPORT_SHAPE_TAG_RULES = {
       { kind: "image", sample: "" },
       { kind: "svg", sample: "" },
     ],
-    alternatives: [{ kind: "dimension", sample: "" }],
+    alternatives: [],
     forbidden: [
       { kind: "table", when: "always" },
       { kind: "list", when: "always" },
@@ -127,10 +124,7 @@ export const REPORT_SHAPE_TAG_RULES = {
   choice: {
     name: "選択",
     primary: [{ kind: "options", sample: "" }],
-    alternatives: [
-      { kind: "table", sample: "" },
-      { kind: "mermaid", sample: "quadrantChart" },
-    ],
+    alternatives: [{ kind: "table", sample: "" }],
     forbidden: [{ kind: "list", when: "always" }],
   },
   attribute: {

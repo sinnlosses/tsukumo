@@ -29,7 +29,6 @@ import {
   turnOf,
   utteranceEvent,
 } from "../../fixture/main-view-report.ts"
-import { reportEvent } from "../../fixture/report-event.ts"
 import { requestEvent } from "../../fixture/session-event.ts"
 
 /** 段ごとの所要時間も振り返りもお願いも無い `report` の欄（頭と最終のときの頭が同じ）。 */
@@ -309,43 +308,6 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     const [, last] = shownReports(turn)
 
     expect(last).toBe(`${lead("架空の結論。")}\n\n架空の根拠。`)
-  })
-
-  it("同じ依頼にワークプランがあるレポートは progress の塊を描かず、ワークプランが無いレポートは描く", () => {
-    const withProgress: SessionEvent = reportEvent({
-      toolUseId: "toolu_r1",
-      sections: [
-        {
-          heading: "架空の節",
-          shapeTag: "unspecified",
-          blocks: [
-            {
-              kind: "progress",
-              steps: ["架空の道A", "架空の道B"],
-              current: 0,
-              fold: "",
-              aside: "",
-            },
-            { kind: "text", text: "架空の根拠。", fold: "", aside: "" },
-          ],
-        },
-      ],
-    })
-    const plan: SessionEvent = {
-      kind: "work-plan",
-      delegatedRange: { kind: "none" },
-      skippedPhases: [],
-      awaitingSummary: { kind: "none" },
-      phases: ["架空の段A", "架空の段B"],
-      current: 0,
-      finishedInGroup: [],
-      phaseSummary: "",
-    }
-    const finalOf = (events: readonly SessionEvent[]) =>
-      shownReports(turnOf(events, SETTLED, true)).at(-1)
-
-    expect(finalOf([ask, plan, withProgress, finished])).not.toContain("架空の道B")
-    expect(finalOf([ask, withProgress, finished])).toContain("架空の道B")
   })
 
   it("task のあるレポートは、結論を一文の印で包み、task を本文に組まずに運ぶ（畳んだときの先頭行は結論）", () => {

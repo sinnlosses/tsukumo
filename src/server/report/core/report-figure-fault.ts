@@ -8,26 +8,9 @@ import {
 } from "../../../shared/report/report-block-diagram.ts"
 import type { ReportBlock, ReportSection } from "../../../shared/report/report-block.ts"
 
-/**
- * 構文が割れた `mermaid` の塊の位置。`block` は `mermaid` の塊の通し番号（1始まり）。
- * `located` は構文エラーの行が取れたもの。`line` は図の中の行、`token` は mermaid の字句の名前（無いときは空）。
- * `unlocated` は行が取れないもの（未知の図種など）。どちらも書き手のソースの文字は持たない。
- */
-export type MermaidFault =
-  | {
-      readonly kind: "located"
-      readonly block: number
-      readonly line: number
-      readonly token: string
-    }
-  | { readonly kind: "unlocated"; readonly block: number }
-
 const MERMAID_KINDS: ReadonlySet<string> = new Set(REPORT_MERMAID_KINDS)
 
-/**
- * `MermaidFault.block` はこの並びの通し番号。
- * 塊の出現順に並び、`beforeAfter` は前の側が先。並びを変えると位置がずれる。
- */
+/** `mermaid` の塊のソース。塊の出現順に並び、`beforeAfter` は前の側が先。 */
 export function mermaidSourcesInSections(sections: readonly ReportSection[]): readonly string[] {
   return sections
     .flatMap((section) => section.blocks)
@@ -63,17 +46,6 @@ export function mermaidKind(source: string): string {
       : lines
   const first = afterFrontmatter.find((line) => line !== "" && !line.startsWith("%%"))
   return first?.split(/\s/)[0] ?? ""
-}
-
-/** 割れた図の位置（何個目の何行目・字句の名前）の並び。書き手のソースの文字は入れない。 */
-export function mermaidFaultPositions(faults: readonly MermaidFault[]): string {
-  return faults
-    .map((fault) =>
-      fault.kind === "unlocated"
-        ? `${String(fault.block)}個目`
-        : `${String(fault.block)}個目の ${String(fault.line)} 行目${fault.token === "" ? "" : `・字句 ${fault.token}`}`,
-    )
-    .join("、")
 }
 
 /** `block` は `svg` の塊（`beforeAfter` の側を含む）の出現順の1始まり、`shape` は `shapes` の中の1始まり。 */

@@ -16,7 +16,6 @@ import { fencedLineFlags } from "./report-fence.ts"
 export type ReportTidyInput = {
   readonly conclusion: string
   readonly sections: readonly ReportSection[]
-  readonly hasWorkPlan: boolean
 }
 
 /**
@@ -27,17 +26,12 @@ export type ReportTidyInput = {
  *   2度並ぶだけになる）。最初の塊が `text` なら塊ごと、逃げ道なら頭の行
  * - 前置き・締めの定型だけの `text` の塊と、逃げ道の中の定型だけの行（{@link BOILERPLATE_LINES} と丸ごと一致するもの）
  * - 逃げ道の中の中身の無い見出し（文字が無いか、次に来るのが同じか浅い見出し・塊の終わり）
- * - 同じ依頼にワークプランがあるときの `progress` の塊（進み具合の帯が同じ段を出している）
  * - 落として塊の残らない節（見出しごと）
  */
 export function tidyReportSections(report: ReportTidyInput): readonly ReportSection[] {
   return report.sections.flatMap((section, sectionIndex) => {
     const blocks = section.blocks.flatMap((block, blockIndex) =>
-      tidyBlock(
-        block,
-        sectionIndex === 0 && blockIndex === 0 ? report.conclusion : "",
-        report.hasWorkPlan,
-      ),
+      tidyBlock(block, sectionIndex === 0 && blockIndex === 0 ? report.conclusion : ""),
     )
     return blocks.length === 0 ? [] : [{ ...section, blocks }]
   })
@@ -47,14 +41,8 @@ export function tidyReportSections(report: ReportTidyInput): readonly ReportSect
  * 塊1つを整形する。落とすなら空の並び。`conclusion` は本文の冒頭の塊にだけ渡す（冒頭でない
  * 繰り返しは落とさない）。
  */
-function tidyBlock(
-  block: ReportBlock,
-  conclusion: string,
-  hasWorkPlan: boolean,
-): readonly ReportBlock[] {
+function tidyBlock(block: ReportBlock, conclusion: string): readonly ReportBlock[] {
   switch (block.kind) {
-    case "progress":
-      return hasWorkPlan ? [] : [block]
     case "text":
       return isBoilerplateLine(block.text) ||
         (conclusion.trim() !== "" &&

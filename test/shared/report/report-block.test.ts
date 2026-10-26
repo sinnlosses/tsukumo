@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import {
   figureBlockSchema,
+  parseReportFigure,
   parseReportSections,
   type ReportBlock,
   reportSectionSchema,
@@ -227,45 +228,6 @@ describe("parseReportSections", () => {
       { ...compare, sides: [side] },
       { ...compare, sides: [side, side, side] },
       { ...compare, sides: [side, { heading: "案B", points: [] }] },
-    ]) {
-      expect(parse(broken)).toEqual({ sections: [], unknownBlockCount: 0 })
-    }
-  })
-
-  it("dimension の塊は領域と余白の混じった並びを受け、省いた size と before を空文字で補う", () => {
-    const parse = (parts: readonly object[]): unknown =>
-      parseReportSections([
-        {
-          heading: "",
-          shapeTag: "unspecified",
-          blocks: [{ kind: "dimension", title: "", parts, fold: "", aside: "" }],
-        },
-      ])
-
-    expect(parse([{ name: "架空の見出し" }, { gap: "26px", before: "28px" }])).toEqual({
-      sections: [
-        {
-          heading: "",
-          shapeTag: "unspecified",
-          blocks: [
-            {
-              kind: "dimension",
-              title: "",
-              parts: [
-                { name: "架空の見出し", size: "", before: "" },
-                { gap: "26px", before: "28px" },
-              ],
-              fold: "",
-              aside: "",
-            },
-          ],
-        },
-      ],
-      unknownBlockCount: 0,
-    })
-    for (const broken of [
-      [{ name: "架空の見出し" }],
-      [{ name: "架空の見出し" }, { size: "8px" }],
     ]) {
       expect(parse(broken)).toEqual({ sections: [], unknownBlockCount: 0 })
     }
@@ -508,7 +470,7 @@ describe("parseReportSections", () => {
     })
   })
 
-  it("progress の塊は知らない種類として落とさない（unknownBlockCount が0になる）", () => {
+  it("外した種類（progress・dimension）の旧い記録は知らない種類の塊として落とし、残りの塊は読み戻す", () => {
     const progress = {
       kind: "progress",
       steps: ["架空の一", "架空の二"],
@@ -516,13 +478,30 @@ describe("parseReportSections", () => {
       fold: "",
       aside: "",
     }
+    const dimension = {
+      kind: "dimension",
+      title: "",
+      parts: [{ name: "架空の見出し" }, { gap: "26px", before: "28px" }],
+      fold: "",
+      aside: "",
+    }
 
     const parsed = parseReportSections([
+      { heading: "", shapeTag: "unspecified", blocks: [progress, text("架空の一。"), dimension] },
       { heading: "", shapeTag: "unspecified", blocks: [progress] },
     ])
 
-    expect(parsed.unknownBlockCount).toBe(0)
-    expect(parsed.sections).toEqual([{ heading: "", shapeTag: "unspecified", blocks: [progress] }])
+    expect(parsed.unknownBlockCount).toBe(3)
+    expect(parsed.sections).toEqual([
+      { heading: "", shapeTag: "unspecified", blocks: [text("架空の一。")] },
+    ])
+  })
+
+  it("外した種類の figure の旧い記録は unrecorded に畳む", () => {
+    expect(parseReportFigure({ kind: "dimension", title: "", parts: [] })).toEqual({
+      kind: "none",
+      reason: "unrecorded",
+    })
   })
 
   it("知らない種類の塊は落とし、unknownBlockCount で数える", () => {

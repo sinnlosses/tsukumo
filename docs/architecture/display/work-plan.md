@@ -4,8 +4,8 @@
 
 **作業中に「いまどの段にいて、あと何が残っているか」を画面で追えるように、claude からワークプラン（段の並びと
 今の位置）を MCP ツール `work_plan` で受け取る**（2026-09-29 ユーザー決定。用語は `docs/glossary.md`
-「ワークプラン」「work_plan ツール」）。`progress` の塊は `report` を渡したときにしか出ず、依頼の手順は
-ツールの実行を1回ずつ並べるだけなので、作業中の段はそれらでは見えない。Claude Code の TodoWrite を
+「ワークプラン」「work_plan ツール」）。依頼の手順はツールの実行を1回ずつ並べるだけで、`report` は渡したときにしか出ないので、
+作業中の段はそれらでは見えない。Claude Code の TodoWrite を
 拾う案とツールの手順から段を推し量る案は採らない（tsukumo から縛れない・推測になる）。
 
 - **入力は `{ phases, current, finishedInGroup, phaseSummary }` で、毎回段の並びごと渡す**（引数の意味は

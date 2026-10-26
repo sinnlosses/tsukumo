@@ -41,7 +41,6 @@
 - `short-series`: 導入時は数えていない（GH-1072・2026-10-17）
 - `untitled-section`: 導入時は数えていない（T-705・2026-09-27）
 - `markdown-notation`: 導入時は数えていない（T-705・2026-09-27）
-- `broken-mermaid`: 導入時は数えていない（GH-532・2026-10-10）
 - `broken-svg`: 導入時は数えていない（GH-678・2026-10-12）
 - `unlegended-svg-tone`: 導入時は数えていない（GH-1305・2026-10-21）
 - `unlegended-graph-tone`: 導入時は数えていない（GH-1331・2026-10-22）

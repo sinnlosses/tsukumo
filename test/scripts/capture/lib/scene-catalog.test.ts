@@ -18,11 +18,6 @@ describe("sceneBlockKinds", () => {
     expect(kinds.get("report-matrix")).toContain("table(status)")
   })
 
-  test("文字列セルだけの table は report-dimension に出るが、状態の印は付かない", () => {
-    expect(kinds.get("report-dimension")).toContain("table")
-    expect(kinds.get("report-dimension")).not.toContain("table(status)")
-  })
-
   test("流れの塊の撮影用の場面は list を持つ", () => {
     expect(kinds.get("report-flow-row")).toContain("list")
   })

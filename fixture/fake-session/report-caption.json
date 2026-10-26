@@ -123,27 +123,6 @@
                 "aside": ""
               },
               {
-                "kind": "dimension",
-                "title": "架空の寸法図で題がとても長く、図の幅を超えずに折り返して読めるかどうかを確かめるための文",
-                "parts": [
-                  {
-                    "gap": "20px",
-                    "before": ""
-                  },
-                  {
-                    "name": "見出し",
-                    "size": "字 21px",
-                    "before": "字 18px"
-                  },
-                  {
-                    "gap": "26px",
-                    "before": ""
-                  }
-                ],
-                "fold": "",
-                "aside": ""
-              },
-              {
                 "kind": "image",
                 "path": "report-image-fixture/after.png",
                 "caption": "架空の画面で題がとても長く、画像の幅を超えずに折り返して読めるかどうかを確かめるための文",

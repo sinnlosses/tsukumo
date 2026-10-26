@@ -49,7 +49,7 @@ const ALLOWED_COUNTS: Readonly<Record<string, number>> = {
   "test/browser/components/page/conversation/components/markdown/renderer/markdown-renderer-html.test.tsx": 1,
   "test/browser/components/page/conversation/components/markdown/renderer/markdown-renderer-image.test.tsx": 10,
   "test/browser/components/page/conversation/components/markdown/renderer/markdown-renderer-link.test.tsx": 2,
-  "test/browser/components/page/conversation/components/markdown/renderer/markdown-renderer.test.tsx": 31,
+  "test/browser/components/page/conversation/components/markdown/renderer/markdown-renderer.test.tsx": 27,
   "test/browser/components/page/conversation/components/markdown/renderer/mermaid-block.test.tsx": 11,
   "test/browser/components/page/conversation/components/markdown/renderer/notation.test.tsx": 5,
   "test/browser/components/page/conversation/components/pending-ask-card/pending-ask-card.test.tsx": 3,

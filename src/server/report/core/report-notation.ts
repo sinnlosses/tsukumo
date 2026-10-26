@@ -108,7 +108,7 @@ ${shapeTagTable()}
    - 作業の完了 → 文面か \`beforeAfter\` → \`checks\` の総括・変更の量
 
    前後・確度・所在は札にしない。構造の前後は \`graph\` の行頭の \`+ \` \`- \` \`~ \`、1つの値の前後は \`table\` の \`from\` / \`to\`、
-   確度は \`claims\`、所在は \`path:line\`。\`note\`・\`claims\`・\`files\`・\`code\`・\`progress\`・\`markdown\` は役割で使う塊。
+   確度は \`claims\`、所在は \`path:line\`。\`note\`・\`claims\`・\`files\`・\`code\`・\`markdown\` は役割で使う塊。
    画面を変えた作業は撮った画像を \`image\` で載せ、同じ場面の2枚は \`beforeAfter\` で並べる。
    撮れないときは \`checks\` に \`unobserved\` の行を足し、\`detail\` に理由、\`howToVerify\` に確かめ方を書く
 9. **見出しは節の \`heading\` に書く。** 短い本文（3〜4行）は節を1つにして見出しを付けない

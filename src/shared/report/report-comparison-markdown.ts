@@ -1,4 +1,4 @@
-// 見比べる塊（`compare`・`beforeAfter`・`dimension`）を Markdown と HTML に組む。
+// 見比べる塊（`compare`・`beforeAfter`）を Markdown と HTML に組む。
 
 import type { ReportBlock } from "./report-block.ts"
 import { captionedMarkdown } from "./report-caption.ts"
@@ -81,31 +81,6 @@ export function beforeAfterMarkdown(
   )
 }
 
-/**
- * 領域を箱に、余白を帯と寸法線にして上から積み、値を右に添える。図は模式で、箱と帯の大きさは値に比例させない。
- * 領域の `size` が空なら値を置かない（`before` も出さない）。
- */
-export function dimensionMarkdown(
-  block: Extract<ReportBlock, { readonly kind: "dimension" }>,
-  ordinal: number,
-): string {
-  const rows = block.parts.map((part) =>
-    "gap" in part
-      ? `<div class="dimension-gap"><span class="dimension-band" aria-hidden="true"></span>${dimensionValueMarkdown(part.gap, part.before)}</div>`
-      : `<div class="dimension-part"><span class="dimension-name">${htmlInlineWithCode(part.name)}</span>${
-          part.size.trim() === "" ? "" : dimensionValueMarkdown(part.size, part.before)
-        }</div>`,
-  )
-  return captionedMarkdown({
-    kind: "figure",
-    ordinal,
-    title: block.title,
-    body: `<div class="dimension">${rows.join("")}</div>`,
-    bodyFormat: "html",
-    fit: true,
-  })
-}
-
 function beforeAfterContentMarkdown(
   content: BeforeAfterSide,
   imageSource: ReportImageSource,
@@ -130,12 +105,4 @@ function beforeAfterContentMarkdown(
     case "svg":
       return svgHtml(content)
   }
-}
-
-function dimensionValueMarkdown(value: string, before: string): string {
-  const beforeHtml =
-    before.trim() === ""
-      ? ""
-      : `<span class="dimension-before">${htmlInlineWithCode(before)} →</span> `
-  return `<span class="dimension-value">${beforeHtml}${htmlInlineWithCode(value)}</span>`
 }

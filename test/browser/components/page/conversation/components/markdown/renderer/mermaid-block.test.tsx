@@ -124,6 +124,7 @@ describe("MermaidBlock の描いた SVG の使い回し", () => {
     await waitFor(() => {
       expect(first.container.querySelector(".mermaid-broken")).not.toBeNull()
     })
+    expect(first.container.querySelector("pre code")?.textContent).toBe("graph D1")
     first.unmount()
 
     const second = render(<MermaidBlock code="graph D1" />)

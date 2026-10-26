@@ -18,7 +18,6 @@ const tidy = (body: string, conclusion = CONCLUSION): string =>
   tidyReportSections({
     conclusion,
     sections: [{ heading: "", shapeTag: "unspecified", blocks: [markdown(body)] }],
-    hasWorkPlan: false,
   })
     .flatMap((section) => section.blocks)
     .map((block) => (block.kind === "markdown" ? block.markdown : ""))
@@ -163,34 +162,7 @@ describe("tidyReportSections（逃げ道の塊）", () => {
 
 describe("tidyReportSections（塊と節）", () => {
   const tidySections = (sections: readonly ReportSection[]) =>
-    tidyReportSections({ conclusion: CONCLUSION, sections, hasWorkPlan: false })
-
-  const progress: ReportBlock = {
-    kind: "progress",
-    steps: ["架空の段A", "架空の段B"],
-    current: 1,
-    fold: "",
-    aside: "",
-  }
-
-  it("同じ依頼にワークプランがあれば progress の塊を落とし、progress だけの節は節ごと落とす", () => {
-    const sections: readonly ReportSection[] = [
-      { heading: "架空の節", shapeTag: "unspecified", blocks: [text("架空の根拠。"), progress] },
-      { heading: "進み具合", shapeTag: "unspecified", blocks: [progress] },
-    ]
-
-    expect(tidyReportSections({ conclusion: CONCLUSION, sections, hasWorkPlan: true })).toEqual([
-      { heading: "架空の節", shapeTag: "unspecified", blocks: [text("架空の根拠。")] },
-    ])
-  })
-
-  it("ワークプランが無い依頼の progress の塊は落とさない", () => {
-    const sections: readonly ReportSection[] = [
-      { heading: "進み具合", shapeTag: "unspecified", blocks: [progress] },
-    ]
-
-    expect(tidySections(sections)).toEqual(sections)
-  })
+    tidyReportSections({ conclusion: CONCLUSION, sections })
 
   it("本文の冒頭の text の塊が conclusion と同じなら落とし、冒頭でなければ落とさない", () => {
     const sections: readonly ReportSection[] = [

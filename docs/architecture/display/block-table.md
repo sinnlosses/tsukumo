@@ -34,7 +34,7 @@
 - **変更の前と後は `beforeAfter`（前後）の塊で左右に並べる**（2026-10-05。`title`・`before`・`after` を受け、
   側はちょうど2つ。3つ以上の並びは `table`）。側は `kind` で判別する合併型で、`image`〔`path`と任意の `region`〕/ `code`〔`language`・
   `source`。`diff` にせずその側の中身をそのまま書く〕/ `points`〔短い1行の並び〕/ `mermaid`〔`source` だけ。
-  flowchart 以外で、時間の順の前後に使う。構文が割れる・種類の外なら差し戻し、位置は `mermaid` のソースの出現順で言う〕/
+  `sequenceDiagram`・`stateDiagram-v2` で、時間の順の前後に使う。種類の外なら差し戻し、位置は `mermaid` のソースの出現順で言う〕/
   `svg`〔`svg` の塊と同じ欄〕のどれか。**左右で種類が違ってよい**（設定の文言 → 画面のような前後を書ける）。
   左に前・右に後の札を同じ幅で並べ、間に `aria-hidden` の「→」を置く。札の頭の見出しは tsukumo が「前」「後」の文字で付け
   （書き手は書かない。前は `ink-quiet`・後は `ink` で、色は補助）、器が狭いときは前を上・後を下に積んで矢印を下向きに回す。
@@ -65,7 +65,7 @@
     （4領域が名乗る `data-region` とは別の名前にし、`[data-region]` が当たるのは4領域だけという前提を守る）。
     枠は `aria-hidden` の飾りで押せる要素を足さず、`region` の無い側・切り替えの見本・画像が札になった側には出さない
   - 使い分けは、向きの無い2つは `compare`、1つの値の前後は表のセルの `from` / `to` か
-    `stats` の `before`、行ごとの差分は `code` の `diff`、縦に積む寸法の前後は `dimension` の `before`、構造の前後は `graph` の印。
+    `stats` の `before`、行ごとの差分は `code` の `diff`、構造の前後は `graph` の印。
     書き手への規約（記法の条8）は、形の札から塊を引く表を持ち、画面を変えた作業は撮った画像を `image` で載せ、
     同じ場面の2枚は `beforeAfter` で並べる（見た目に出ない・撮れないときは `checks` の `unobserved` に理由）。
     1行の変更に使わせない旨は `beforeAfter` の `describe` が持つ。

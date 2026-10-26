@@ -8,22 +8,13 @@ import { graphFoldHtml } from "./graph-fold-html.ts"
 import { graphFoldFigure } from "./graph-fold.ts"
 import type { ReportBlock, ReportSection } from "./report-block.ts"
 import { captionedMarkdown, type CaptionKind } from "./report-caption.ts"
-import {
-  compareMarkdown,
-  beforeAfterMarkdown,
-  dimensionMarkdown,
-} from "./report-comparison-markdown.ts"
+import { compareMarkdown, beforeAfterMarkdown } from "./report-comparison-markdown.ts"
 import { chartConfigOf, svgHtml, withSequenceAutonumber } from "./report-diagram-markdown.ts"
 import { filesMarkdown } from "./report-file-markdown.ts"
 import { graphLegendMarkdown, graphSource } from "./report-graph-markdown.ts"
 import { imageMarkdown, type ReportImageSource } from "./report-image-markdown.ts"
 import { fencedMarkdown, htmlInline, joinParts, markdownInline } from "./report-inline-markdown.ts"
-import {
-  claimsMarkdown,
-  listMarkdown,
-  optionsMarkdown,
-  progressMarkdown,
-} from "./report-list-markdown.ts"
+import { claimsMarkdown, listMarkdown, optionsMarkdown } from "./report-list-markdown.ts"
 import { REPORT_NOTE_KINDS } from "./report-notation.ts"
 import { PAUSE_POINT_CLASS_NAME } from "./report-pause-point.ts"
 import { statMarkdown } from "./report-stat-markdown.ts"
@@ -197,8 +188,6 @@ function blockMarkdown(
       return compareMarkdown(block, ordinal)
     case "beforeAfter":
       return beforeAfterMarkdown(block, imageSource, ordinal)
-    case "dimension":
-      return dimensionMarkdown(block, ordinal)
     case "note":
       return block.tone === "memo" || block.text.trim() === ""
         ? ""
@@ -285,8 +274,6 @@ function blockMarkdown(
         bodyFormat: "html",
         fit: false,
       })
-    case "progress":
-      return progressMarkdown(block)
     case "options":
       return optionsMarkdown(block)
     case "claims":
@@ -312,7 +299,6 @@ function blockMarkdown(
 function captionKindOf(block: ReportBlock): CaptionKind | undefined {
   switch (block.kind) {
     case "image":
-    case "dimension":
     case "compare":
     case "beforeAfter":
     case "mermaid":

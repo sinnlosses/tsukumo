@@ -11,14 +11,14 @@ import { code, draft, kinds, markdown, mermaid, note } from "../../../fixture/re
 type Side = Extract<ReportBlock, { readonly kind: "beforeAfter" }>["before"]
 
 describe("reportViolations", () => {
-  describe("mermaid は規約の9種だけ", () => {
-    it("9種は違反にしない", () => {
+  describe("mermaid は規約の2種だけ", () => {
+    it("2種は違反にしない", () => {
       for (const kind of REPORT_MERMAID_KINDS) {
         expect(kinds(draft([mermaid(kind)]))).toEqual([])
       }
     })
 
-    it("9種の外の種類は違反", () => {
+    it("2種の外の種類は違反", () => {
       expect(reportViolations(draft([mermaid('pie\n  "a" : 1')]))).toEqual([
         { kind: "unknown-mermaid", count: 1 },
       ])
@@ -187,9 +187,6 @@ describe("reportViolations", () => {
       expect(notationsOf('<div class="stats"><div class="stat"><b>1</b>架空</div></div>')).toEqual([
         "stats",
       ])
-      expect(
-        notationsOf('<div class="progress"><div class="progress-step"><b>1</b>架空</div></div>'),
-      ).toEqual(["progress"])
       expect(notationsOf("```diff src/a.ts\n-a\n+b\n```")).toEqual(["code"])
       expect(notationsOf("```mermaid\nflowchart LR\n```")).toEqual(["mermaid"])
       expect(notationsOf("```chart\n{}\n```")).toEqual(["chart"])

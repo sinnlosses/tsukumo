@@ -14,17 +14,12 @@ import {
   MAX_CONCLUSION_SENTENCES,
   MAX_FIRST_SENTENCE,
 } from "../../../shared/report/report-limit.ts"
-import {
-  drawnSectionsOf,
-  reportRetrospectiveSchema,
-} from "../../../shared/report/report-retrospective.ts"
+import { reportRetrospectiveSchema } from "../../../shared/report/report-retrospective.ts"
 import { reportTaskSchema } from "../../../shared/report/report-task.ts"
 import type { ReportSchemaVariant } from "../../../shared/report/schema-variant.ts"
 import { WORK_PLAN_CLOSINGS } from "../../../shared/session/work-plan.ts"
 import { REPORT_TOOL_NAME } from "../../core/tsukumo-tool-name.ts"
 import { readReportBlockFiles } from "../../report/adapter/report-file.ts"
-import { checkMermaidSyntax } from "../../report/adapter/report-mermaid-syntax.ts"
-import { mermaidSourcesInSections } from "../../report/core/report-figure-fault.ts"
 import { hasReportField } from "../../report/core/report-inheritance.ts"
 import { REPORT_CHANGED_FIELDS_ONLY_TEXT } from "../../report/core/report-rejection.ts"
 import {
@@ -96,10 +91,7 @@ export function reportTool(
         isError: true,
       }
     }
-    const [fileContents, mermaidFaults] = await Promise.all([
-      readReportBlockFiles(cwd, report.sections),
-      checkMermaidSyntax(mermaidSourcesInSections(drawnSectionsOf(report))),
-    ])
+    const fileContents = await readReportBlockFiles(cwd, report.sections)
     const verdict = review.judgeReport({
       conclusion: report.conclusion,
       conclusionSentenceChars: report.conclusionSentenceChars,
@@ -109,7 +101,6 @@ export function reportTool(
       favor: report.favor,
       checks: report.checks,
       fileContents,
-      mermaidFaults,
       task: report.task,
       workPlanClosing: report.workPlanClosing,
     })

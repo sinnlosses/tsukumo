@@ -17,10 +17,8 @@ import {
 } from "../../core/tsukumo-tool-name.ts"
 import {
   answerQuestionBriefCall,
-  mermaidSourcesOf,
   QUESTION_BRIEF_TOOL_DESCRIPTION,
 } from "../../question/core/question-brief.ts"
-import { checkMermaidSyntax } from "../../report/adapter/report-mermaid-syntax.ts"
 import {
   answerPhaseResultCall,
   PHASE_RESULT_COUNT_DESCRIPTION,
@@ -105,8 +103,7 @@ export function questionBriefTool(holdBrief: (briefs: readonly QuestionBrief[]) 
         .describe("次の AskUserQuestion の質問ごとの添え書き。1〜4件"),
     },
     async ({ questions }) => {
-      const mermaidFaults = await checkMermaidSyntax(mermaidSourcesOf(questions))
-      const answer = answerQuestionBriefCall(questions, mermaidFaults, holdBrief)
+      const answer = answerQuestionBriefCall(questions, holdBrief)
       return {
         content: [{ type: "text" as const, text: answer.text }],
         isError: answer.isError,

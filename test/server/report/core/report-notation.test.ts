@@ -32,17 +32,7 @@ afterEach(() => {
  * （11.15.0 と 12.0.0 の両方で確かめた。docs/architecture/display.md「表示」）。`mermaid` の塊の説明が勧めてよいのはこの並びだけで、増やすときは
  * 先にメインビューへ出して描けることを確かめる。
  */
-const DRAWN_MERMAID_KINDS = [
-  "sequenceDiagram",
-  "stateDiagram-v2",
-  "classDiagram",
-  "erDiagram",
-  "mindmap",
-  "timeline",
-  "gantt",
-  "gitGraph",
-  "quadrantChart",
-]
+const DRAWN_MERMAID_KINDS = ["sequenceDiagram", "stateDiagram-v2"]
 
 const article8 = REPORT_NOTATION_PROMPT.split("\n8. ").at(1)?.split("\n9. ").at(0) ?? ""
 

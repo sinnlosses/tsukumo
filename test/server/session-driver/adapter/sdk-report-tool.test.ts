@@ -17,8 +17,8 @@ import {
   workServer,
 } from "../../../fixture/sdk-tool.ts"
 
-const MERMAID_FAULT_LINE =
-  "- mermaid の図の構文が割れている（1個目の 2 行目・字句 NEWLINE）。その行の書き方を直す"
+const UNKNOWN_MERMAID_LINE =
+  "- mermaid の図に規約の2種（sequenceDiagram・stateDiagram-v2）の外の種類が1個ある。flowchart は graph の塊で書き、それ以外の図は table・list・svg で書く"
 
 describe("report でターンを閉じる", () => {
   it("通った report の結果にだけ claude/endTurn を付ける", async () => {
@@ -71,7 +71,7 @@ describe("report でターンを閉じる", () => {
     expect(reply.endsTurn).toBe(false)
   })
 
-  it("構文が割れる mermaid の図を含む report は差し戻し、直した report は通す", async () => {
+  it("構文が割れた mermaid の図はサーバでは差し戻さず（描けなければブラウザがコードで出す）、種類の外の図は差し戻す", async () => {
     const withDiagram = (source: string) => ({
       conclusion: ["架空の結論"],
       sections: [{ blocks: [{ kind: "mermaid", source }] }],
@@ -82,26 +82,22 @@ describe("report でターンを閉じる", () => {
       waitingLine: WAITING_LINE,
     })
 
-    const broken = await callTool(
+    const brokenSyntax = await callTool(
       workServer(),
       "report",
       withDiagram("sequenceDiagram\n  A->>B: hi; there"),
     )
-    const fixed = await callTool(
-      workServer(),
-      "report",
-      withDiagram("sequenceDiagram\n  A->>B: hi"),
-    )
+    const otherKind = await callTool(workServer(), "report", withDiagram('pie\n  "a" : 1'))
 
-    expect(broken.isError).toBe(true)
-    expect(broken.text.split("\n")[1]).toBe(MERMAID_FAULT_LINE)
-    expect(fixed).toEqual({ text: "架空の結論", isError: false, endsTurn: true })
+    expect(brokenSyntax).toEqual({ text: "架空の結論", isError: false, endsTurn: true })
+    expect(otherKind.isError).toBe(true)
+    expect(otherKind.text.split("\n")[1]).toBe(UNKNOWN_MERMAID_LINE)
   })
 
-  it("figure に置いた mermaid の構文も検査し、描く順の1個目として差し戻す", async () => {
+  it("figure に置いた mermaid の種類の外も差し戻す", async () => {
     const reply = await callTool(workServer(), "report", {
       conclusion: ["架空の結論"],
-      figure: { kind: "mermaid", source: "sequenceDiagram\n  A->>B: hi; there" },
+      figure: { kind: "mermaid", source: "classDiagram\n  class A" },
       sections: [{ blocks: [{ kind: "mermaid", source: "sequenceDiagram\n  A->>B: hi" }] }],
       closing: CLOSING,
       sessionSummary: SESSION_SUMMARY,
@@ -110,7 +106,7 @@ describe("report でターンを閉じる", () => {
     })
 
     expect(reply.isError).toBe(true)
-    expect(reply.text.split("\n")[1]).toBe(MERMAID_FAULT_LINE)
+    expect(reply.text.split("\n")[1]).toBe(UNKNOWN_MERMAID_LINE)
   })
 
   it("引き継ぐ土台が無いのに closing を省いた report は組んだ値の形の検査で落ち、ターンを閉じない", async () => {
@@ -429,7 +425,6 @@ const SHARED_BLOCK_DEFINITIONS = [
   "BeforeAfterBlock",
   "BeforeAfterSide",
   "ChartBlock",
-  "DimensionBlock",
   "GraphBlock",
   "ImageBlock",
   "MermaidBlock",
@@ -440,8 +435,8 @@ const SHARED_BLOCK_DEFINITIONS = [
   "ToneLegend",
 ]
 
-/** 塊の定義が `figure`・`sections`・`retrospective` に複製されていたとき（約3.0万字）に落ち、いまの形（25,409字）には余白を持たせた上限。 */
-const REPORT_INPUT_SCHEMA_MAX_CHARS = 25_520
+/** 塊の定義が `figure`・`sections`・`retrospective` に複製されていたとき（約3.0万字）に落ち、いまの形（23,450字）には余白を持たせた上限。 */
+const REPORT_INPUT_SCHEMA_MAX_CHARS = 23_560
 
 /** `tools/list` の応答のうち、引数の schema を丸ごと読む形。 */
 const TOOLS_WHOLE_SCHEMA_REPLY = z.object({

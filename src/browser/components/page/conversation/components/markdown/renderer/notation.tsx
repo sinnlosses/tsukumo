@@ -2,7 +2,7 @@
 // 骨格を決めるのはモデル、装飾に使う class 名を決めるのは tsukumo という分担にして、モデルが書いた文字列と CSS のセレクタが直接つながらないようにする（つながっていると、片方だけ足したときに黙って崩れる）。
 //
 // 受け持つのは記法が挙げている5系統（`note` / `badge` / `cols` / `card` / `stats` / `stat`）と、
-// tsukumo が組む `ol` / `li`（`progress` の段の並び）。
+// tsukumo が組む `ol` / `li`（段の並び・連鎖・説明の並び）。
 // 知らない class 名と `style` 属性はそのまま残す（この層は足し算だけで、記法の表に無いモデルの即興を落とさない）。
 // class 名そのものは無害で、危ない経路（`script` の除去・`href` のスキーム）は `REPORT_SANITIZE_SCHEMA` が、`style` の値は `rehypeStyleAllowlist` が別に見る。
 
@@ -132,7 +132,7 @@ export function NotationInline(props: NotationInlineProps): ReactElement {
 
 type NotationOrderedListProps = JSX.IntrinsicElements["ol"] & ExtraProps
 
-/** レポートの `ol`（`progress` の段の並び）。 */
+/** レポートの `ol`（`flow` の段の並び・連鎖・画像の説明の並び）。 */
 export function NotationOrderedList(props: NotationOrderedListProps): ReactElement {
   const { node: _node, className, children, ...rest } = props
 
@@ -145,7 +145,7 @@ export function NotationOrderedList(props: NotationOrderedListProps): ReactEleme
 
 type NotationListItemProps = JSX.IntrinsicElements["li"] & ExtraProps
 
-/** レポートの `li`（`progress` の段・段の間の線）。 */
+/** レポートの `li`（`flow` の段・連鎖のカード・画像の説明）。 */
 export function NotationListItem(props: NotationListItemProps): ReactElement {
   const { node: _node, className, children, ...rest } = props
 

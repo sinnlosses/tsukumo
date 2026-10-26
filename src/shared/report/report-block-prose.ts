@@ -103,25 +103,6 @@ export const codeBlockSchema = z
       "塊にはクリックでクリップボードへ写せるボタンが付く",
   )
 
-export const progressBlockSchema = z
-  .object({
-    kind: z.literal("progress"),
-    steps: z
-      .array(inlineText)
-      .min(1)
-      .describe("段の名前の並び。空文字の段は tsukumo が1始まりの番号を振る"),
-    current: z
-      .number()
-      .refine(Number.isSafeInteger, { message: "Invalid input: expected int, received number" })
-      .refine((value) => value >= 0, { message: "Too small: expected number to be >=0" })
-      .describe("いまの段の位置（0始まり）。全部済んだら steps.length"),
-    fold,
-    aside,
-  })
-  .describe(
-    "「N のうち M 段目」のように段（フェーズ）の名前と位置が分かっているとき。文字で「N のうち M」と書かない",
-  )
-
 const REPORT_CLAIM_CERTAINTIES = ["confirmed", "inferred", "unverified"] as const
 
 export const claimsBlockSchema = z

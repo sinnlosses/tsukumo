@@ -156,59 +156,6 @@ describe("reportSectionsMarkdown", () => {
     )
   })
 
-  it("progress は節（丸）と線でつないだ1本の道で、済んだ段・いまの段・まだの段を class と aria-current・aria-label で見分ける", () => {
-    const progress: ReportBlock = {
-      kind: "progress",
-      steps: ["架空の一", "架空の二", "架空の三"],
-      current: 1,
-      fold: "",
-      aside: "",
-    }
-
-    expect(markdownOf(progress)).toBe(
-      '<ol class="progress" aria-label="進み具合">' +
-        '<li class="progress-step progress-step-done" aria-label="架空の一：済">' +
-        '<span class="progress-dot" aria-hidden="true">✓</span>' +
-        '<span class="progress-name">架空の一</span></li>' +
-        '<li class="progress-line progress-line-done" aria-hidden="true"></li>' +
-        '<li class="progress-step progress-step-current" aria-current="step" aria-label="架空の二：進行中">' +
-        '<span class="progress-dot" aria-hidden="true"><span class="progress-dot-mark"></span></span>' +
-        '<span class="progress-name">架空の二</span><span class="progress-status">進行中</span></li>' +
-        '<li class="progress-line" aria-hidden="true"></li>' +
-        '<li class="progress-step" aria-label="架空の三：まだ">' +
-        '<span class="progress-dot" aria-hidden="true"></span>' +
-        '<span class="progress-name">架空の三</span></li>' +
-        "</ol>",
-    )
-  })
-
-  it("progress の名前の無い段は1始まりの番号を名前にする", () => {
-    const progress: ReportBlock = {
-      kind: "progress",
-      steps: ["", ""],
-      current: 1,
-      fold: "",
-      aside: "",
-    }
-
-    expect(markdownOf(progress)).toBe(
-      '<ol class="progress" aria-label="進み具合">' +
-        '<li class="progress-step progress-step-done" aria-label="1：済">' +
-        '<span class="progress-dot" aria-hidden="true">✓</span>' +
-        '<span class="progress-name">1</span></li>' +
-        '<li class="progress-line progress-line-done" aria-hidden="true"></li>' +
-        '<li class="progress-step progress-step-current" aria-current="step" aria-label="2：進行中">' +
-        '<span class="progress-dot" aria-hidden="true"><span class="progress-dot-mark"></span></span>' +
-        '<span class="progress-name">2</span><span class="progress-status">進行中</span></li>' +
-        "</ol>",
-    )
-    expect(markdownOf({ ...progress, current: 0 })).toContain(
-      '<li class="progress-step" aria-label="2：まだ">' +
-        '<span class="progress-dot" aria-hidden="true"></span>' +
-        '<span class="progress-name">2</span></li>',
-    )
-  })
-
   it("options は太字の見出しのあとに候補を書き手の順のまま1案1行にし、番号・判定の語・名前・理由の順に置く（理由が空なら理由の要素は無い）", () => {
     const options: ReportBlock = {
       kind: "options",

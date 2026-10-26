@@ -111,7 +111,6 @@ const IMAGE_FILE_EXTENSIONS: readonly string[] = [".png", ".jpg", ".jpeg", ".gif
  * - statsBetter: `stats` の `better`
  * - listLabel: `list` の `label`
  * - listFlow: `list` の `flow`
- * - dimensionBefore: `dimension` の `before`
  * - imageNotes: `image` の `notes`
  * - codeMarks: `code` の `marks`
  * - blockAside: 塊の `aside`
@@ -126,7 +125,6 @@ export const REPORT_BLOCK_FIELDS = [
   "statsBetter",
   "listLabel",
   "listFlow",
-  "dimensionBefore",
   "imageNotes",
   "codeMarks",
   "blockAside",
@@ -412,8 +410,6 @@ function hasField(block: ReportBlock, field: ReportBlockField): boolean {
       return block.kind === "list" && block.items.some((item) => item.label.trim() !== "")
     case "listFlow":
       return block.kind === "list" && block.style === "flow"
-    case "dimensionBefore":
-      return block.kind === "dimension" && block.parts.some((part) => part.before.trim() !== "")
     case "imageNotes":
       return block.kind === "image" && block.notes.length > 0
     case "codeMarks":

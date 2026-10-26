@@ -160,42 +160,6 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
     expect(parts[2]?.querySelector("pre code")?.textContent).toBe("const 架空 = 1\n")
   })
 
-  it("寸法図（dimension）は領域の箱と余白の帯が並びの順のまま残る", () => {
-    const text = reportSectionsMarkdown([
-      {
-        heading: "",
-        shapeTag: "unspecified",
-        blocks: [
-          {
-            kind: "dimension",
-            title: "",
-            parts: [
-              { name: "架空の見出し", size: "字 21px", before: "字 18px" },
-              { gap: "26px", before: "28px" },
-              { name: "架空の本文", size: "", before: "" },
-            ],
-            fold: "",
-            aside: "",
-          },
-        ],
-      },
-    ])
-    const { container } = render(<Markdown text={text} />)
-
-    const rows = [...(container.querySelector("div.report-dimension")?.children ?? [])]
-    expect(rows.map((row) => row.className)).toEqual([
-      "report-dimension-part",
-      "report-dimension-gap",
-      "report-dimension-part",
-    ])
-    expect(container.querySelector(".report-dimension-band")?.getAttribute("aria-hidden")).toBe(
-      "true",
-    )
-    expect(
-      container.querySelector(".report-dimension-gap .report-dimension-value")?.textContent,
-    ).toBe("28px → 26px")
-  })
-
   it("数の要約（stats / stat）が塊のまま通る", () => {
     const { container } = render(
       <Markdown
@@ -283,42 +247,6 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
       "report-list-text",
     ])
     expect(items[0]?.querySelector("span.report-list-text > strong")?.textContent).toBe("説明")
-  })
-
-  it("段の図（progress）は ol[aria-label] の下に段と線の li が交互に並び、いまの段にだけ aria-current が付く", () => {
-    const text = reportSectionsMarkdown([
-      {
-        heading: "",
-        shapeTag: "unspecified",
-        blocks: [
-          {
-            kind: "progress",
-            steps: ["架空の一", "架空の二", "架空の三"],
-            current: 1,
-            fold: "",
-            aside: "",
-          },
-        ],
-      },
-    ])
-    const { container } = render(<Markdown text={text} />)
-
-    const list = container.querySelector('ol[aria-label="進み具合"]')
-    expect(list).not.toBeNull()
-
-    const items = [...(list?.children ?? [])]
-    expect(items.map((item) => item.tagName)).toEqual(["LI", "LI", "LI", "LI", "LI"])
-    expect(items.map((item) => item.className.split(" ")[0])).toEqual([
-      "report-progress-step",
-      "report-progress-line",
-      "report-progress-step",
-      "report-progress-line",
-      "report-progress-step",
-    ])
-
-    const current = list?.querySelectorAll('[aria-current="step"]')
-    expect(current).toHaveLength(1)
-    expect(current?.[0]?.textContent).toContain("架空の二")
   })
 
   it("対応表（matrix）は格子の中に role=img と aria-label を持つ印が残り、凡例の印は読み上げから外れる", () => {

@@ -41,7 +41,6 @@ export const REPORT_REJECTION_MODES = {
   "short-series": "reject",
   "untitled-section": "reject",
   "markdown-notation": "reject",
-  "broken-mermaid": "reject",
   "broken-svg": "reject",
   "unlegended-svg-tone": "reject",
   "unlegended-graph-tone": "reject",

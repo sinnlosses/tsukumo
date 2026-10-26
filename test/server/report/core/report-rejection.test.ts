@@ -123,8 +123,23 @@ describe("reportRejectionText", () => {
       ])
       const rejection = reportRejectionText(reportViolations(report))
       expect(violationLines(rejection)).toEqual([
-        "- `svg` の図形が `width` × `height` の外に出ている（2個目の 2 番目、2個目の 3 番目）。座標か大きさを直す",
+        "- `svg` の図形が `width` × `height` の外に出ている（2個目の 2 番目、2個目の 3 番目）。幅の目安は 480〜640 で、図形の座標と大きさを 0〜`width`・0〜`height` の内側に収める",
       ])
+    })
+
+    it("timeline の誤りの文面は、describe から外した時刻の揃え方と並びの決まりを書き手に返す", () => {
+      const text = reportRejectionText([{ kind: "broken-timeline", count: 1, faults: [] }])
+      for (const rule of [
+        "HH:MM",
+        "日をまたぐなら ISO",
+        "lane",
+        "start の昇順",
+        "extra",
+        "at の昇順",
+        "emphasis",
+      ]) {
+        expect(text).toContain(rule)
+      }
     })
 
     it("legend に無い tone を、何個目の塊のどの tone かだけで言い、legend にあれば通す", () => {
@@ -201,38 +216,6 @@ describe("reportRejectionText", () => {
         { kind: "beforeAfter", title: "", before: side, after: side, fold: "", aside: "" },
       ])
       expect(kinds(report)).toEqual(["broken-svg"])
-    })
-  })
-
-  describe("broken-mermaid", () => {
-    const withFaults = (mermaidFaults: ReportDraft["mermaidFaults"]): ReportDraft => ({
-      ...draft([mermaid("sequenceDiagram\n  A->>B: 架空の秘密; there")]),
-      mermaidFaults,
-    })
-
-    it("割れた図があると違反になり、文面は位置と字句の名前だけを持ちソースを含まない", () => {
-      const fault = { kind: "located", block: 2, line: 3, token: "NEWLINE" } as const
-      const report = withFaults([fault])
-      expect(reportViolations(report)).toEqual([
-        { kind: "broken-mermaid", count: 1, faults: [fault] },
-      ])
-      const rejection = reportRejectionText(reportViolations(report))
-      expect(violationLines(rejection)).toEqual([
-        "- mermaid の図の構文が割れている（2個目の 3 行目・字句 NEWLINE）。その行の書き方を直す",
-      ])
-    })
-
-    it("行が取れない図は行を出さず、何個目かだけを言う", () => {
-      const rejection = reportRejectionText(
-        reportViolations(withFaults([{ kind: "unlocated", block: 1 }])),
-      )
-      expect(violationLines(rejection)).toEqual([
-        "- mermaid の図の構文が割れている（1個目）。その行の書き方を直す",
-      ])
-    })
-
-    it("割れた図が無い（検査できなかったときも同じ）なら違反にならない", () => {
-      expect(reportViolations(withFaults([]))).toEqual([])
     })
   })
 

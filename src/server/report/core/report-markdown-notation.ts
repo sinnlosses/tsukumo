@@ -14,7 +14,6 @@ export const MARKDOWN_NOTATION_NAMES = {
   list: { written: "箇条書き", replacement: "`list` の塊" },
   note: { written: "`note` の塊", replacement: "`note` の塊（種別は `tone`）" },
   stats: { written: "`stats` の塊", replacement: "`stats` の塊" },
-  progress: { written: "`progress` の塊", replacement: "`progress` の塊" },
   code: { written: "フェンス", replacement: "`code` の塊" },
   mermaid: { written: "mermaid のフェンス", replacement: "`mermaid` の塊" },
   chart: { written: "`chart` のフェンス", replacement: "`chart` の塊" },
@@ -199,7 +198,7 @@ function tagMarks(closing: boolean, name: string, attributes: string): readonly 
     (match[1] ?? "").split(/\s+/),
   )
   return [
-    ...(["note", "stats", "progress"] as const)
+    ...(["note", "stats"] as const)
       .filter((notation) => classes.includes(notation))
       .map((notation): Mark => ({ kind: "notation", notation })),
     ...(name === "img" ? [{ kind: "notation", notation: "image" } as const] : []),

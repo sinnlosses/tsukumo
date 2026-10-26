@@ -22,8 +22,8 @@ export const REPORT_NOTE_KINDS = [
 ] as const satisfies readonly (readonly [name: string, label: string])[]
 
 /**
- * `note` 以外の印のうち、tsukumo が塊から組むもの（表のセルの状態の印と変化・数の棒・`matrix` / `compare` / `beforeAfter` / `dimension` の塊・`image` の説明の並び・図と表の題の包みと題の行・`stats` の塊・
- * 名前付きの `list`・`list` の `flow`・`progress` / `options` / `claims` / `files` の塊・余白の柱の包みと傍注）と、
+ * `note` 以外の印のうち、tsukumo が塊から組むもの（表のセルの状態の印と変化・数の棒・`matrix` / `compare` / `beforeAfter` の塊・`image` の説明の並び・図と表の題の包みと題の行・`stats` の塊・
+ * 名前付きの `list`・`list` の `flow`・`options` / `claims` / `files` の塊・余白の柱の包みと傍注）と、
  * 塊にする前にモデルが逃げ道に書いていた `cols` / `card`。モデルには教えない。ラベルは付かず、見た目だけを持つ。
  */
 const REPORT_BLOCK_MARK_NAMES = [
@@ -120,16 +120,6 @@ const REPORT_BLOCK_MARK_NAMES = [
   "flow-rail",
   "flow-row",
   "flow-arrow",
-  "progress",
-  "progress-step",
-  "progress-step-done",
-  "progress-step-current",
-  "progress-dot",
-  "progress-dot-mark",
-  "progress-name",
-  "progress-status",
-  "progress-line",
-  "progress-line-done",
   "status",
   "compare",
   "compare-side",
@@ -140,13 +130,6 @@ const REPORT_BLOCK_MARK_NAMES = [
   "before-after-label-after",
   "before-after-arrow",
   "before-after-swap",
-  "dimension",
-  "dimension-part",
-  "dimension-name",
-  "dimension-gap",
-  "dimension-band",
-  "dimension-value",
-  "dimension-before",
   "svg-figure",
   "svg-legend",
   "svg-legend-item",

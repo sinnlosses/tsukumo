@@ -190,16 +190,6 @@ describe("reportUsageEntryOf", () => {
       fold: "",
       aside: "",
     })
-    const dimension = (before: string): ReportBlock => ({
-      kind: "dimension",
-      title: "",
-      parts: [
-        { name: "架空の領域", size: "", before: "" },
-        { gap: "8px", before },
-      ],
-      fold: "",
-      aside: "",
-    })
     const image = (notes: readonly string[]): ReportBlock => ({
       kind: "image",
       path: "架空/after.png",
@@ -264,8 +254,6 @@ describe("reportUsageEntryOf", () => {
       ["statsSeries", stats({ series: [1, 2, 3] }), ["statsSeries"]],
       ["statsBetter", stats({ better: "up" }), ["statsBetter"]],
       ["stats（欄が全部既定）", stats({}), []],
-      ["dimensionBefore", dimension("12px"), ["dimensionBefore"]],
-      ["dimensionBefore（前の値なし）", dimension(""), []],
       ["imageNotes", image(["左上の架空の帯"]), ["imageNotes"]],
       ["imageNotes（notes なし）", image([]), []],
       ["codeMarks", code([{ lines: "1", label: "架空" }]), ["codeMarks"]],

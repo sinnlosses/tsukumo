@@ -83,19 +83,18 @@
   `core/` `adapter/` の外に置いたファイルと、表と `SERVER_FEATURE_IMPORTS` のずれは
   `test/architecture/server-feature.test.ts` が落とす）
 
-| 機能（import する側） | 読んでよい機能                                                                                                                                                                                          |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `session`             | `session-driver` `chat` `diary` `token-usage` `context-usage` `experience-metric` `diagnostic` `character-pack` `report`                                                                                |
-| `system-prompt`       | `session-driver` `chat` `report` `work-plan` `question`                                                                                                                                                 |
-| `view-server`         | `session`                                                                                                                                                                                               |
-| `chat`                | `character-pack`                                                                                                                                                                                        |
-| `context-usage`       | `session-driver`                                                                                                                                                                                        |
-| `session-driver`      | `report` `view-server` `chat` `work-plan` `question`                                                                                                                                                    |
-| `diary`               | `repository`                                                                                                                                                                                            |
-| `usage-review`        | `session-driver`                                                                                                                                                                                        |
-| `achievement`         | `repository`                                                                                                                                                                                            |
-| `question`            | `report`                                                                                                                                                                                                |
-| そのほか              | —（葉。`plan-usage` `experience-metric` `diagnostic` `character-pack` `host` `repository` `recommendation` `checkout` `welcome-greeting` `workflow-setting` `report` `item` `token-usage` `work-plan`） |
+| 機能（import する側） | 読んでよい機能                                                                                                                                                                                                     |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `session`             | `session-driver` `chat` `diary` `token-usage` `context-usage` `experience-metric` `diagnostic` `character-pack` `report`                                                                                           |
+| `system-prompt`       | `session-driver` `chat` `report` `work-plan` `question`                                                                                                                                                            |
+| `view-server`         | `session`                                                                                                                                                                                                          |
+| `chat`                | `character-pack`                                                                                                                                                                                                   |
+| `context-usage`       | `session-driver`                                                                                                                                                                                                   |
+| `session-driver`      | `report` `view-server` `chat` `work-plan` `question`                                                                                                                                                               |
+| `diary`               | `repository`                                                                                                                                                                                                       |
+| `usage-review`        | `session-driver`                                                                                                                                                                                                   |
+| `achievement`         | `repository`                                                                                                                                                                                                       |
+| そのほか              | —（葉。`plan-usage` `experience-metric` `diagnostic` `character-pack` `host` `repository` `recommendation` `checkout` `welcome-greeting` `workflow-setting` `report` `item` `token-usage` `work-plan` `question`） |
 
 表は `test/architecture/server-feature.test.ts` の `SERVER_FEATURE_IMPORTS` と一致を検査され、使われない組も落ちる。
 辺が `core` と `adapter` のどちらからどちらへ向かうかは表に持たず、実際の import が正典。

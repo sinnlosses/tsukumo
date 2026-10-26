@@ -78,9 +78,7 @@
 横の列（`flow-row`）の箱は角丸 0.5rem・枠 1px（`--report-chunk-rule`）・地 `--surface-raised` で、色は付けない。番号は等幅 12px で箱の中に置き、矢印の字は `report-sequence-ink`。
 レポートの `image` の画像は押すと拡大して見られる（`ImageZoom`、`size="width"`。原寸を上限に面の幅へ合わせ、縦に長ければ面が縦に流れる。札には入口を付けない）。前後の塊の中の画像は別の面（`BeforeAfterZoom`）で開き、前／後の2つ組は選んだ側を `accent` の枠と `accent` の薄い地、もう一方を `rule` の枠で描く。暗幕は `Dialog` の `deep`。
 
-**`progress` の丸・線（`.report-progress`）とは別の部品**で、`progress` はパックの
-`--accent` をそのまま使うのに対し、`flow` は `--accent` を `ground` へ少し沈めた `report-sequence-ink` を使う。
-どちらも `accent` の系統になるので、色と太さが並んでも区別が付くかは目視で確かめる。
+`flow` は `--accent` を `ground` へ少し沈めた `report-sequence-ink` を使う。
 
 **レポートの見出しに、キャラクターの色の線を1本通す。** 色が付くのは**罫線の側だけ**で、
 文字は `ink-bright`・地は `surface` / `surface-raised` のまま（13.1 原則1 は変えない）:

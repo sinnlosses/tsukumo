@@ -1,12 +1,7 @@
-// 項目の並び（`list`・`progress`・`options`・`claims`）の塊を Markdown と HTML に組む。
+// 項目の並び（`list`・`options`・`claims`）の塊を Markdown と HTML に組む。
 
 import type { ReportBlock } from "./report-block.ts"
-import {
-  htmlAttribute,
-  htmlInlineWithCode,
-  joinParts,
-  markdownInline,
-} from "./report-inline-markdown.ts"
+import { htmlInlineWithCode, joinParts, markdownInline } from "./report-inline-markdown.ts"
 import { PAUSE_POINT_CLASS_NAME } from "./report-pause-point.ts"
 
 /** 候補の判定 → 行の class と、頭に出す語。「採る」は筆を留める対象。 */
@@ -53,32 +48,6 @@ export function listMarkdown(block: ListBlock): string {
       : `${marker} ${markdownInline(item.text)}`
   })
   return labeled ? `<div class="labeled-list">\n\n${lines.join("\n")}\n\n</div>` : lines.join("\n")
-}
-
-type ProgressStepState = "done" | "current" | "upcoming"
-
-const PROGRESS_STATE_LABELS = {
-  done: "済",
-  current: "進行中",
-  upcoming: "まだ",
-} satisfies Record<ProgressStepState, string>
-
-/**
- * 節（丸）と線でつないだ1本の道。段の名前が空文字なら1始まりの番号を名前にする。
- * 見分けは丸の中身（✓／輪と点／空の輪）と `aria-current`・`aria-label` が持ち、名前の字の色は補助。
- */
-export function progressMarkdown(
-  block: Extract<ReportBlock, { readonly kind: "progress" }>,
-): string {
-  const items = block.steps.flatMap((step, index) => {
-    const ordinal = index + 1
-    const state: ProgressStepState =
-      index < block.current ? "done" : index === block.current ? "current" : "upcoming"
-    const label = step.trim() !== "" ? step : String(ordinal)
-    const stepHtml = progressStepMarkdown(state, label)
-    return index === 0 ? [stepHtml] : [progressLineMarkdown(index - 1 < block.current), stepHtml]
-  })
-  return `<ol class="progress" aria-label="進み具合">${items.join("")}</ol>`
 }
 
 /**
@@ -172,28 +141,4 @@ function claimFieldMarkdown(className: string, name: string, text: string): stri
   return text.trim() === ""
     ? ""
     : `<span class="${className}"><span class="claim-field">${name}</span>${markdownInline(text)}</span>`
-}
-
-function progressLineMarkdown(done: boolean): string {
-  const lineClass = done ? "progress-line progress-line-done" : "progress-line"
-  return `<li class="${lineClass}" aria-hidden="true"></li>`
-}
-
-function progressStepMarkdown(state: ProgressStepState, label: string): string {
-  const stepClass = state === "upcoming" ? "progress-step" : `progress-step progress-step-${state}`
-  const current = state === "current" ? ' aria-current="step"' : ""
-  const dot =
-    state === "done"
-      ? '<span class="progress-dot" aria-hidden="true">✓</span>'
-      : state === "current"
-        ? '<span class="progress-dot" aria-hidden="true"><span class="progress-dot-mark"></span></span>'
-        : '<span class="progress-dot" aria-hidden="true"></span>'
-  const status =
-    state === "current"
-      ? `<span class="progress-status">${PROGRESS_STATE_LABELS[state]}</span>`
-      : ""
-  return (
-    `<li class="${stepClass}"${current} aria-label="${htmlAttribute(label)}：${PROGRESS_STATE_LABELS[state]}">` +
-    `${dot}<span class="progress-name">${htmlInlineWithCode(label)}</span>${status}</li>`
-  )
 }

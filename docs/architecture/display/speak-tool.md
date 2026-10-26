@@ -120,7 +120,7 @@
     記録を読み戻す側は、必須にする前の記録のために欄が無いものも読める。
     `report` の記録に写り、transcript から組み直しても同じ値が戻る。
   - **必須の引数 `figure` にはレポートの図を1つ置くか、置かない理由を書かせる**（2026-10-13 決定。ADR 0028 の追記）。
-    形は図の塊1つ（`image`・`mermaid`・`graph`・`svg`・`beforeAfter`・`chart`・`timeline`・`stats`・`dimension`。`sections` の同じ塊と同じ形）か
+    形は図の塊1つ（`image`・`mermaid`・`graph`・`svg`・`beforeAfter`・`chart`・`timeline`・`stats`。`sections` の同じ塊と同じ形）か
     `{ kind: "none", reason }` で、`reason` は `short-answer`・`no-shape`・`single-value`・`no-material` の4つ。
     図を置く条件と理由の意味は引数の説明だけが持ち、`REPORT_NOTATION_PROMPT` の条8は欄を指す1行だけにする。
     図は `checks` の下・`sections` の上に、見出しの無い先頭の節として描き、図の番号は `sections` の図と通しで振る（`figure` の図が「図 1」）。

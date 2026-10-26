@@ -40,16 +40,12 @@ const svgShapeSchema = z
       width: positiveNumber,
       height: positiveNumber,
       label: omittable(inlineText, "").describe("枠の中に出す名前。無ければ空"),
-      sub: omittable(inlineText, "").describe(
-        "題の下に出す説明1行（題より小さい字）。label が空なら描かない。2行以上は text を並べる",
-      ),
+      sub: omittable(inlineText, "").describe("題の下の説明1行"),
       emphasis: omittable(z.boolean(), false).describe("true で枠を強調する"),
       labelAt: omittable(z.enum(["center", "top-left"]), "center").describe(
         "枠の題の位置。入れ子の外側の枠は top-left",
       ),
-      tone: omittable(z.enum(["none", ...SVG_TONES]), "none").describe(
-        "枠の意味の目印（a〜e の5色。色そのものは書けない）。使った tone は図の legend に名前を書く",
-      ),
+      tone: omittable(z.enum(["none", ...SVG_TONES]), "none").describe("枠の意味の目印（a〜e）"),
     }),
     z.object({
       kind: z.literal("line"),
@@ -60,26 +56,17 @@ const svgShapeSchema = z
       arrow: omittable(z.boolean(), false).describe("true で終点（x2, y2）に矢じりを付ける"),
       label: omittable(inlineText, "").describe("線に添える語。無ければ空"),
       dashed: omittable(z.boolean(), false).describe("true で点線にする"),
-      tone: omittable(z.enum(["none", ...SVG_TONES]), "none").describe(
-        "線の意味の目印（a〜e の5色。rect の tone と同じ。使った tone は図の legend に名前を書く）",
-      ),
+      tone: omittable(z.enum(["none", ...SVG_TONES]), "none").describe("線の意味の目印（a〜e）"),
     }),
     z.object({ kind: z.literal("text"), x: z.number(), y: z.number(), text: inlineText }),
   ])
   .meta({ id: "SvgShape" })
 
 const svgFields = {
-  width: positiveNumber.describe(
-    "viewBox の幅。目安は 480〜640（字は 14px を基準に器の幅へ比例し、幅 360 でも約 1.5 倍に拡大する）。図形はこの内側に収める",
-  ),
-  height: positiveNumber.describe("viewBox の高さ。図形はこの内側に収める"),
-  shapes: z
-    .array(svgShapeSchema)
-    .min(1)
-    .describe("座標つきの図形の並び。色は書けず、rect の tone（a〜e）か emphasis で目印を付ける"),
-  legend: omittable(toneLegendSchema, []).describe(
-    "rect の tone ごとの名前。tone を使った図には必ず付ける（色だけで意味を言わない）",
-  ),
+  width: positiveNumber.describe("viewBox の幅（目安 480〜640）。図形はこの内側に収める"),
+  height: positiveNumber.describe("viewBox の高さ"),
+  shapes: z.array(svgShapeSchema).min(1).describe("座標つきの図形。色は tone か emphasis で付ける"),
+  legend: omittable(toneLegendSchema, []).describe("使った tone ごとの名前"),
 }
 
 const beforeAfterSideSchema = z
@@ -120,35 +107,7 @@ export const beforeAfterBlockSchema = z
   })
   .describe(
     "変更の前と後を左に前・右に後で並べ、間に矢印を置く（画面の撮影・構造の前後）。1行の設定や文言の変更には使わない。ファイル名の箇条書きで変更を説明しない。側ごとに image / code / points / mermaid / svg のどれか（左右で違ってよい）。時間の順の前後は mermaid の側。" +
-      "数の前後は stats の before、行ごとの差分は code の diff、寸法の前後は dimension の before",
-  )
-
-const dimensionBefore = omittable(z.string(), "").describe("変わる前の値（前後を見せるときだけ）")
-
-export const dimensionBlockSchema = z
-  .object({
-    kind: z.literal("dimension"),
-    title: inlineText,
-    parts: z
-      .array(
-        z.union([
-          z.object({
-            name: inlineText,
-            size: omittable(z.string(), "").describe(
-              "領域の寸法（字 21px・高さ 56px）。無ければ空",
-            ),
-            before: dimensionBefore,
-          }),
-          z.object({ gap: z.string().describe("前後の領域の間の余白"), before: dimensionBefore }),
-        ]),
-      )
-      .min(2)
-      .describe("上から順の並び。先頭・末尾の gap は外側の余白"),
-    fold,
-    aside,
-  })
-  .describe(
-    "上から積む領域と、その間の余白・字の大きさの寸法（余白を直した前後）。横並び・重なりは svg",
+      "数の前後は stats の before、行ごとの差分は code の diff",
   )
 
 export const imageBlockSchema = z
@@ -170,17 +129,7 @@ export const imageBlockSchema = z
  * mermaid の種類のうち、tsukumo が配る mermaid で描けると確かめたもの（`package.json` で版を固定しているのはこの実測のため）。
  * 挙げていない種類には構文が通らないものが混ざる。
  */
-export const REPORT_MERMAID_KINDS = [
-  "sequenceDiagram",
-  "stateDiagram-v2",
-  "classDiagram",
-  "erDiagram",
-  "mindmap",
-  "timeline",
-  "gantt",
-  "gitGraph",
-  "quadrantChart",
-] as const
+export const REPORT_MERMAID_KINDS = ["sequenceDiagram", "stateDiagram-v2"] as const
 
 export const mermaidBlockSchema = z
   .object({
@@ -196,7 +145,7 @@ export const mermaidBlockSchema = z
     aside,
   })
   .describe(
-    "時間の順（sequenceDiagram）・状態・クラス・ER など、flowchart 以外の図。「まず…次に…」の地の文で書かない。1枚に1つの話を同じ抽象度で。辺は向きと動詞のラベル付き。交差は並びか分割で解く",
+    "時間の順（sequenceDiagram）・状態（stateDiagram-v2）の図。「まず…次に…」の地の文で書かない。1枚に1つの話を同じ抽象度で。辺は向きと動詞のラベル付き。交差は並びか分割で解く",
   )
 
 export const graphBlockSchema = z
@@ -256,6 +205,4 @@ export const svgBlockSchema = z
     fold,
     aside,
   })
-  .describe(
-    "位置・重なりそのもの（画面の領域の配置・重なり方）を座標で描く。つながりだけなら graph・mermaid",
-  )
+  .describe("位置・重なりを座標で描く。つながりだけなら graph・mermaid")

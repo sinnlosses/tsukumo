@@ -8,7 +8,7 @@ import { MAX_CONCLUSION_SENTENCES } from "../../../shared/report/report-limit.ts
 import type { ReportRetrospective } from "../../../shared/report/report-retrospective.ts"
 import type { ReportTask } from "../../../shared/report/report-task.ts"
 import type { WorkPlanClosing } from "../../../shared/session/work-plan.ts"
-import type { GraphFault, MermaidFault, SvgFault, ToneFault } from "./report-figure-fault.ts"
+import type { GraphFault, SvgFault, ToneFault } from "./report-figure-fault.ts"
 import type { MarkdownNotation } from "./report-markdown-notation.ts"
 import type { TimelineBlockFault } from "./timeline-fault.ts"
 
@@ -25,8 +25,6 @@ export type ReportDraft = {
   readonly checks: readonly ReportCheck[]
   /** `code` の塊の `path` → 読めたファイルの中身。読めなかった `path` は入らない。 */
   readonly fileContents: ReadonlyMap<string, string>
-  /** 構文が割れた `mermaid` の塊（`figure` を含む）。検査できなかったときも、割れた塊が無いときも空。 */
-  readonly mermaidFaults: readonly MermaidFault[]
   /** 載せたタスク。記法の検査には使わず、段の残りの差し戻し（`ReportReview`）が終わり方を読む。 */
   readonly task: ReportTask
   /** 段の閉じ方。記法の検査には使わず、段の閉じ方の差し戻し（`ReportReview`）が読む。 */
@@ -102,12 +100,6 @@ export type ReportViolation =
   | { readonly kind: "code-marks-range"; readonly count: number }
   /** `beforeAfter` の画像の側の `region` が画像の外に出る、または幅か高さが 0 以下。`count` はその塊の数。 */
   | { readonly kind: "region-range"; readonly count: number }
-  /** `mermaid` の塊の構文が割れている。`faults` は位置と字句の名前だけで、図のソースは持たない。 */
-  | {
-      readonly kind: "broken-mermaid"
-      readonly count: number
-      readonly faults: readonly MermaidFault[]
-    }
   /** `svg` の塊の図形が `width` × `height` の外に出る。`faults` は位置だけで、図形の中身は持たない。 */
   | {
       readonly kind: "broken-svg"
@@ -194,7 +186,6 @@ export const VIOLATION_THRESHOLDS = {
   "short-series": 0,
   "untitled-section": 0,
   "markdown-notation": 0,
-  "broken-mermaid": 0,
   "broken-svg": 0,
   "unlegended-svg-tone": 0,
   "unlegended-graph-tone": 0,

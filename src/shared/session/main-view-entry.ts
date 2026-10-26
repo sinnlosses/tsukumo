@@ -162,7 +162,7 @@ function reportRegionsOf(
     ]
       .filter((part) => !isBlankText(part))
       .join("\n\n")
-  const sections = reportSectionsOf(report, context)
+  const sections = reportSectionsOf(report)
   const markdowns = reportSectionMarkdowns(
     [...sections, ...retrospectiveSections(report.retrospective)],
     {
@@ -186,14 +186,10 @@ function reportRegionsOf(
 }
 
 /** 本文に描く節。`figure` を先頭の節にし、整形（{@link tidyReportSections}）したあとの並び。 */
-function reportSectionsOf(
-  report: Extract<SessionRecord, { readonly kind: "report" }>,
-  context: TurnContext,
-) {
+function reportSectionsOf(report: Extract<SessionRecord, { readonly kind: "report" }>) {
   const tidied = tidyReportSections({
     conclusion: report.conclusion,
     sections: report.sections,
-    hasWorkPlan: latestWorkPlanOf(context).kind === "planned",
   })
   return sectionsWithFigure(report.figure, tidied)
 }

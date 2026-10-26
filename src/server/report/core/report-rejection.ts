@@ -12,7 +12,6 @@ import {
 } from "../../../shared/report/report-limit.ts"
 import {
   graphFaultPositions,
-  mermaidFaultPositions,
   svgFaultPositions,
   toneFaultPositions,
 } from "./report-figure-fault.ts"
@@ -41,7 +40,7 @@ function violationLine(violation: ReportViolation): string {
     case "long-conclusion":
       return `\`conclusion\` が${violation.count}要素ある。1要素1文で2要素以内にし、残りは \`sections\` へ移す`
     case "unknown-mermaid":
-      return `mermaid の図に規約の9種の外の種類が${violation.count}個ある。flowchart は graph の塊で書き、それ以外は9種から選ぶ`
+      return `mermaid の図に規約の2種（sequenceDiagram・stateDiagram-v2）の外の種類が${violation.count}個ある。flowchart は graph の塊で書き、それ以外の図は table・list・svg で書く`
     case "too-many-notes":
       return `\`note\` の塊が${violation.count}個ある。2個まで減らす`
     case "crowded-notes":
@@ -89,10 +88,8 @@ function violationLine(violation: ReportViolation): string {
       return `\`code\` の \`marks\` の \`lines\` が読めない形か \`source\` の行数の外にある塊が${violation.count}個ある。\`4-8\` か \`12\` の形で、行数以内に直す`
     case "region-range":
       return `\`beforeAfter\` の画像の側の \`region\` が画像の外に出る、または \`width\`・\`height\` が 0 以下の塊が${violation.count}個ある。\`left\`・\`top\` は 0 以上、\`left + width\` と \`top + height\` は 100 以下、\`width\`・\`height\` は 0 より大きい%にする`
-    case "broken-mermaid":
-      return `mermaid の図の構文が割れている（${mermaidFaultPositions(violation.faults)}）。その行の書き方を直す`
     case "broken-svg":
-      return `\`svg\` の図形が \`width\` × \`height\` の外に出ている（${svgFaultPositions(violation.faults)}）。座標か大きさを直す`
+      return `\`svg\` の図形が \`width\` × \`height\` の外に出ている（${svgFaultPositions(violation.faults)}）。幅の目安は 480〜640 で、図形の座標と大きさを 0〜\`width\`・0〜\`height\` の内側に収める`
     case "unlegended-svg-tone":
       return `\`svg\` の \`rect\` の \`tone\` が \`legend\` に無い（${toneFaultPositions(violation.faults)}）。\`legend\` に \`tone\` と名前を足す（色だけで意味を言わない）`
     case "unlegended-graph-tone":
@@ -100,7 +97,7 @@ function violationLine(violation: ReportViolation): string {
     case "broken-graph":
       return `\`graph\` の \`source\` に読めない行がある（${graphFaultPositions(violation.faults)}）。1行を \`A -> B: 語\` の形に直す（\`: 語\` は省ける）。囲みは \`[群の名]\` 〜 \`[]\` の1階層で、入れ子と閉じ忘れは読めない`
     case "broken-timeline":
-      return `\`timeline\` の時刻に誤りがある（${timelineFaultPositions(violation.faults)}）。時刻は HH:MM・ISO・分の数のどれか1つに揃え、行は start の昇順、end は start より後、出来事は at の昇順にし、\`emphasis\` は行の \`name\` と同じ字にする`
+      return `\`timeline\` の時刻に誤りがある（${timelineFaultPositions(violation.faults)}）。時刻は HH:MM・ISO の日時・分の数のどれか1つに揃え（日をまたぐなら ISO）、同じ lane の行は start の昇順、extra は昇順、end は start より後、出来事は at の昇順にし、\`emphasis\` は行の \`name\` と同じ字にする`
     case "long-first-sentence":
       return `\`conclusion\` の1要素目がいま${String(violation.length)}字で、全角${String(MAX_FIRST_SENTENCE)}字を超える。1要素目を短くし、補足は2要素目か \`sections\` へ移す`
     case "bad-heading":
