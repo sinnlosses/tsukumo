@@ -31,4 +31,14 @@ export const PLAIN_WORDS = [
     meaning:
       "図の中で、点（ファイルや部品の名前）と点をつなぐ線。「A が B に値を渡す」というつながりを表す",
   },
+  {
+    spelling: "転がして",
+    replacement: "スクロールして",
+    meaning: "枠に収まらない中身を、枠の中で上下に送って続きを見ること",
+  },
+  {
+    spelling: "窓",
+    replacement: "ブラウザの表示サイズ",
+    meaning: "tsukumo の画面を開いたブラウザの、中身を描ける領域の幅と高さ（1440x900 など）",
+  },
 ] as const satisfies readonly PlainWord[]
