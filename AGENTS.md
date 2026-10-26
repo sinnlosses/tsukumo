@@ -18,18 +18,17 @@ tsukumo は Agent SDK（`@anthropic-ai/claude-agent-sdk`）で Claude Code を�
 表示はすべて HTML（Orca 内のブラウザタブの1枚のページ。入力欄も含む）。セリフは MCP ツール
 `speak`、ターンの本文は `report` で受け取る。**ホスト（Orca のタブ）と中身（Web アプリ）は分ける。**
 
-**IMPORTANT**: Claude Code の TUI に描画を混ぜる方式（パイプ・hook の stdout・Claude Code へのパッチ）は
+**IMPORTANT**: Claude Code の TUI に描画を混ぜる方式は
 技術的に不可能なので、**TUI を使わず SDK で動かす側に回っている。** 設計を変えようとする前に
 `docs/requirements.md`「3. 技術制約」と `docs/architecture/adr/0008-sdk-instead-of-tui.md` を
 必ず読む。
 
 ## セットアップ / 環境構築
 
-- mise で Node 26・pnpm 12 を入れる（`mise.toml` がバージョンを固定。TS は node でそのまま
-  実行し、pnpm はパッケージ管理とグローバルへの導入に使う）。**新しく入れる `pnpm install` は
+- mise で Node 26・pnpm 12 を入れる（`mise.toml` が固定。TS は node でそのまま実行）。**新しく入れる `pnpm install` は
   `prepare` で `pnpm run build` まで済ませる**が、依存が変わらないと飛ばすので、`src/browser/` を直したあとは
-  `pnpm run build` を打つ（`dist/browser/` は `.gitignore`。無いと起動が前提不足で止まる）
-- `tsukumo` コマンドは `mise run setup`（`pnpm add --global "link:<リポジトリ>"`）で入っている（`docs/requirements.md` 4.6）
+  `pnpm run build` を打つ
+- `tsukumo` コマンドは `mise run setup` で入っている
 - ホストに依存する操作は1つの抽象の裏に置く（`docs/architecture/adr/0015-single-host-port.md`）。
   **起こしてよい外部コマンドは `test/architecture/outside-world.test.ts` の `ALLOWED_COMMANDS` が正典。足すときはユーザーの承認を得る**
 - 環境の実測値は `docs/requirements.md`「5. 実行環境・非機能要件」。時間が経つと変わるので、
@@ -37,19 +36,17 @@ tsukumo は Agent SDK（`@anthropic-ai/claude-agent-sdk`）で Claude Code を�
 
 ## よく使うコマンド
 
-全体の一覧は `README.md`「開発」。ここには手が間違えやすいものだけを置く。
+全体の一覧は `README.md`「開発」。
 
 ```bash
 pnpm run check                 # typecheck + lint + format:check + token-limit + test + test:e2e（変更後は必ずこれを通す。
-                              #   段の選び方・飛ばし方は scripts/dev/check.ts の冒頭。--full の全件は main へ送る直前に打つ）
+                              #   段の選び方は scripts/dev/check.ts の冒頭。--full は main へ送る直前に打つ）
 pnpm run format                # 整形（oxfmt。prettier は入っていない）
 pnpm run test                  # 単体テスト（Vitest）。ファイルを渡すと規約のテストも一緒に走る
 pnpm run build                 # src/browser/ を直したら打つ（起動時には組み立てない）
 pnpm run css-types             # *.module.css に class を足したら打つ（tsc を直に打つ前。check と build は自分で打つ）
 pnpm run test:e2e:update       # DOM の構造・shared の手続き応答の型・配信するセッションイベントの種類や数を変えたら、pnpm run check より先に打つ
-                              #   check の E2E は --bail=3 で、落ちを3本までしか出さないため、打ち直しを繰り返す
-                              #   打ったあと git diff test/e2e/expected/ で意図した変化だけかを読んでから、
-                              #   直した変更と同じコミットに入れる
+                              #   git diff test/e2e/expected/ で意図した変化だけか読み、同じコミットに入れる
 node scripts/runtime/stop.ts   # 動いている tsukumo の一覧（--port <n> でそれ1つだけ止める）
 ```
 
@@ -60,12 +57,11 @@ node scripts/runtime/stop.ts   # 動いている tsukumo の一覧（--port <n> 
 
 - **原則1**: **Claude Code の TUI を使わない**（上の IMPORTANT）
 - **原則2**: `shared` / `server` / `browser` の3層。サーバは機能ごとに
-  `src/server/<機能>/{core,adapter}/`（辺は `layer.test.ts` が検査。正典は `docs/architecture.md`
-  「サーバの機能と、機能どうしの辺」）
+  `src/server/<機能>/{core,adapter}/`（辺の正典は `docs/architecture.md`「サーバの機能と、機能どうしの辺」）
 - **原則3**: ホスト・外部コマンド・OS に触るものは **`adapter/` の1ファイルに閉じ込める**。
   Agent SDK だけは機能の `adapter/` の `sdk-` で始まるファイル群に閉じ込める
 - **原則4**: **キャラクターの中身をコードに書かない**（素材と表情の対応は定義ファイル側）
-- **原則5**: 「**ファイル名が概念になっているか**」で分ける（`file-name.test.ts` が検査）。
+- **原則5**: 「**ファイル名が概念になっているか**」で分ける。
   置き場所のディレクトリの名前と、`src/browser/` の置き場所の基準は `docs/architecture.md`「全体構成」
 
 ## テスト方針
@@ -123,23 +119,23 @@ node scripts/runtime/stop.ts   # 動いている tsukumo の一覧（--port <n> 
 
 ## 索引
 
-| こういうとき                                                                                    | 読むもの                                                                      |
-| ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| 要件・やらないこと・技術制約・未決事項を知りたい                                                | `docs/requirements.md`                                                        |
-| 3層・共有層・部品・置き場所を決める                                                             | `docs/architecture.md`（置き場所は「全体構成」）                              |
-| 色・書体・レイアウト                                                                            | `docs/architecture/screen-design.md`                                          |
-| セリフとレポートの分離・レポートの記法・各表示物の仕様                                          | `docs/architecture/display.md`                                                |
-| ワークフローの契約（`work_plan`・`report` の口、Beads の欄）・独自のワークフローを当てる        | `docs/architecture/workflow-contract.md`                                      |
-| 雑談モード                                                                                      | `docs/architecture/chat-mode.md`                                              |
-| なぜ今の形なのか                                                                                | `docs/architecture.md`「設計判断」（各判断の本文は `docs/architecture/adr/`） |
-| ブラウザ側の状態・Markdown・立ち絵の動き・CSS・`components/ui/` の部品の作法                    | `docs/architecture/browser.md`                                                |
-| キャラクターパックの形・探索順・画面から書くときの境界                                          | `docs/architecture/character-pack.md`                                         |
-| テストの方法・E2E・目視の手順                                                                   | `docs/architecture/testing.md`                                                |
-| 組み立て・開発サーバ・足す依存                                                                  | `docs/architecture/build.md`                                                  |
-| 規約の理由と例外（`Date` を使わない・層の辺など lint とテストが守るものも）                     | `docs/coding-standards.md`                                                    |
-| 用語と識別子                                                                                    | `docs/glossary.md`                                                            |
-| タスクを書く・受け入れる・作業ツリーを並行させる・tsukumo を起こす                              | `docs/workflow.md`                                                            |
-| コマンドの全体・環境変数・構成                                                                  | `README.md`                                                                   |
-| スキル（`~/.claude/skills/`。共通なのでこのリポジトリの事情はここと `docs/workflow.md` が補う） | 毎セッションのスキル案内                                                      |
-| シェルでの書き換え・`git add -A` などを拒まれた                                                 | hook（`tw commit-guard`）の文面に従う。`docs/workflow.md`                     |
-| 過去の判断の経緯（通読しない。`grep` で節を当てる）                                             | `docs/history/decision.md` / `tw show <ID>`                                   |
+| こういうとき                                                                                    | 読むもの                                                                      | 防ぐ失敗               |
+| ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- | ---------------------- |
+| 要件・やらないこと・技術制約・未決事項を知りたい                                                | `docs/requirements.md`                                                        | 本文と差分のずれ       |
+| 3層・共有層・部品・置き場所を決める                                                             | `docs/architecture.md`（置き場所は「全体構成」）                              | 同じファイルの直し直し |
+| 色・書体・レイアウト                                                                            | `docs/architecture/screen-design.md`                                          | 受け入れでの直し       |
+| セリフとレポートの分離・レポートの記法・各表示物の仕様                                          | `docs/architecture/display.md`                                                | 受け入れでの直し       |
+| ワークフローの契約（`work_plan`・`report` の口、Beads の欄）・独自のワークフローを当てる        | `docs/architecture/workflow-contract.md`                                      | 本文と差分のずれ       |
+| 雑談モード                                                                                      | `docs/architecture/chat-mode.md`                                              | 本文と差分のずれ       |
+| なぜ今の形なのか                                                                                | `docs/architecture.md`「設計判断」（各判断の本文は `docs/architecture/adr/`） | 同じファイルの直し直し |
+| ブラウザ側の状態・Markdown・立ち絵の動き・CSS・`components/ui/` の部品の作法                    | `docs/architecture/browser.md`                                                | 同じファイルの直し直し |
+| キャラクターパックの形・探索順・画面から書くときの境界                                          | `docs/architecture/character-pack.md`                                         | 本文と差分のずれ       |
+| テストの方法・E2E・目視の手順                                                                   | `docs/architecture/testing.md`                                                | 検証の打ち直し         |
+| 組み立て・開発サーバ・足す依存                                                                  | `docs/architecture/build.md`                                                  | ツールのエラー         |
+| 規約の理由と例外（`Date` を使わない・層の辺など lint とテストが守るものも）                     | `docs/coding-standards.md`                                                    | 受け入れでの直し       |
+| 用語と識別子                                                                                    | `docs/glossary.md`                                                            | 付いてきた文書の変更   |
+| タスクを書く・受け入れる・作業ツリーを並行させる・tsukumo を起こす                              | `docs/workflow.md`                                                            | 段の所要時間           |
+| コマンドの全体・環境変数・構成                                                                  | `README.md`                                                                   | ツールのエラー         |
+| スキル（`~/.claude/skills/`。共通なのでこのリポジトリの事情はここと `docs/workflow.md` が補う） | 毎セッションのスキル案内                                                      | 本文と差分のずれ       |
+| シェルでの書き換え・`git add -A` などを拒まれた                                                 | hook（`tw commit-guard`）の文面に従う。`docs/workflow.md`                     | hook の拒否            |
+| 過去の判断の経緯（通読しない。`grep` で節を当てる）                                             | `docs/history/decision.md` / `tw show <ID>`                                   | 同じファイルの直し直し |
