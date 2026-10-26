@@ -15,6 +15,7 @@ const REFUSAL = `作業ツリー（CLAUDE_PROJECT_DIR）の中のファイルを
 ファイルの書き換えは Edit ツール（複数箇所なら replace_all）か Write ツールで行うこと。
 作業ツリーの外で組み立てた内容も、Write ツールで作業ツリーのパスへ書く（Bash で書き戻さない）。
 \`tw edit --body-file\` に渡す下書きは、作業ツリーの外のパス（\`/tmp/<名前>/plan.md\`）に Write ツールで書いて \`--body-file /tmp/<名前>/plan.md\` で渡すか、\`--body-file -\` へ heredoc を渡す。作業ツリーの中のパスには書かない。
+複数ファイルへ同じ語の置換をかける・テンプレートから複数ファイルを作るときは \`node scripts/dev/rewrite-file.ts --help\`（\`replace\`・\`expand\`）を使う。
 別の git 作業ツリーにある Python スクリプトは、その作業ツリーへ \`cd\` してから走らせる（\`cd <作業ツリー> && python3 x.py\`）。
 読むだけなら \`sed -n '1,5p' <file>\` は使える。生成物は \`pnpm run format\`・\`pnpm run build\` などプロジェクトのコマンドで作り直す。`
 
