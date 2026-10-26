@@ -90,6 +90,17 @@ function take(
   })
 }
 
+function partBody(part: string | undefined): string {
+  return (part ?? "").split("\n\n").at(-1) ?? ""
+}
+
+const RECENT_BODY_LINES = [
+  "### 2026-09-20",
+  "利用者: ただいま",
+  "### 2026-09-21",
+  "あなた: おかえり",
+]
+
 /** `text` の中に `needle` が何回出てくるか（重ならない出現だけを数える）。 */
 function countOccurrences(text: string, needle: string): number {
   return text.split(needle).length - 1
@@ -103,10 +114,8 @@ describe("takeChatMemoryPromptParts", () => {
     const parts = take(undefined, chatSummary, chatArchive)
 
     expect(parts).toHaveLength(2)
-    expect(parts[0]).toContain(SUMMARY)
-    expect(parts[1]).toContain("ただいま")
-    expect(parts[1]).toContain("おかえり")
-    expect(parts[1]?.indexOf("ただいま")).toBeLessThan(parts[1]?.indexOf("おかえり") ?? -1)
+    expect(partBody(parts[0])).toBe(SUMMARY)
+    expect(partBody(parts[1]).split("\n")).toEqual(RECENT_BODY_LINES)
     expect(chatSummary.markDeliveredCalls()).toBe(1)
     expect(chatSummary.read()).toEqual({ summary: SUMMARY, delivered: true })
   })
@@ -129,8 +138,7 @@ describe("takeChatMemoryPromptParts", () => {
     const parts = take(undefined, chatSummary, chatArchive)
 
     expect(parts).toHaveLength(1)
-    expect(parts[0]).toContain("ただいま")
-    expect(parts[0]).not.toContain(SUMMARY)
+    expect(partBody(parts[0]).split("\n")).toEqual(RECENT_BODY_LINES)
     expect(chatSummary.markDeliveredCalls()).toBe(1)
   })
 
@@ -140,7 +148,7 @@ describe("takeChatMemoryPromptParts", () => {
     const parts = take("session-1", chatSummary, fakeChatArchive(RECENT))
 
     expect(parts).toHaveLength(1)
-    expect(parts[0]).toContain("ただいま")
+    expect(partBody(parts[0]).split("\n")).toEqual(RECENT_BODY_LINES)
   })
 
   it("逐語が1件も無くても要約は載る", () => {
@@ -151,7 +159,7 @@ describe("takeChatMemoryPromptParts", () => {
     )
 
     expect(parts).toHaveLength(1)
-    expect(parts[0]).toContain(SUMMARY)
+    expect(partBody(parts[0])).toBe(SUMMARY)
   })
 
   it("`/clear` を見たあとの resume（印が「未渡し」）では載る", () => {
@@ -159,8 +167,7 @@ describe("takeChatMemoryPromptParts", () => {
 
     const parts = take("session-1", chatSummary, fakeChatArchive(RECENT))
 
-    expect(parts.join("\n")).toContain(SUMMARY)
-    expect(parts.join("\n")).toContain("ただいま")
+    expect(parts.map(partBody)).toEqual([SUMMARY, RECENT_BODY_LINES.join("\n")])
     expect(chatSummary.markDeliveredCalls()).toBe(1)
   })
 
@@ -235,8 +242,7 @@ describe("workMemoryPromptParts", () => {
     const parts = takeWork(chatSummary, fakeChatArchive(RECENT))
 
     expect(parts).toHaveLength(2)
-    expect(parts[0]).toContain(SUMMARY)
-    expect(parts[1]).toContain("利用者: ただいま")
+    expect(parts.map(partBody)).toEqual([SUMMARY, RECENT_BODY_LINES.join("\n")])
     expect(chatSummary.markDeliveredCalls()).toBe(0)
     expect(chatSummary.read()).toEqual({ summary: SUMMARY, delivered: true })
   })
@@ -277,8 +283,11 @@ describe("workMemoryPromptParts", () => {
   it("仕事の行には印とプロジェクトの名前が付き、結論の行は「したこと」になる", () => {
     const parts = takeWork(fakeChatSummary(undefined), fakeChatArchive(WORK_RECENT))
 
-    expect(parts[0]).toContain("[仕事: 架空プロジェクト] 利用者: 架空の依頼")
-    expect(parts[0]).toContain("[仕事: 架空プロジェクト] したこと: 架空の結論")
+    expect(partBody(parts[0]).split("\n")).toEqual([
+      "### 2026-09-21",
+      "[仕事: 架空プロジェクト] 利用者: 架空の依頼",
+      "[仕事: 架空プロジェクト] したこと: 架空の結論",
+    ])
   })
 
   it("あらすじも逐語も無いときは何も載らない", () => {

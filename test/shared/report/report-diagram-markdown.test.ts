@@ -7,6 +7,26 @@ import {
   markdownOf,
 } from "../../fixture/report-markdown.ts"
 
+const SVG_ARROW_DEFS =
+  '<defs><marker id="report-svg-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z"></path></marker></defs>'
+
+const svgFigure = (
+  width: number,
+  height: number,
+  shapes: string,
+  title = "",
+  legend = "",
+): string =>
+  `<div class="captioned captioned-fit"><div class="svg-figure"><svg viewBox="0 0 ${String(width)} ${String(height)}" width="${String(width)}" height="${String(height)}">${SVG_ARROW_DEFS}${shapes}</svg></div>${legend}${captionRow("図", 1, title)}</div>`
+
+const svgLegend = (...items: readonly (readonly [string, string])[]): string =>
+  `<div class="svg-legend">${items
+    .map(
+      ([tone, label]) =>
+        `<span class="svg-legend-item"><svg viewBox="0 0 16 12" width="16" height="12"><rect data-tone="${tone}" x="1" y="1" width="14" height="10" rx="2"></rect></svg>${label}</span>`,
+    )
+    .join("")}</div>`
+
 describe("reportSectionsMarkdown", () => {
   it("sequenceDiagram の mermaid には autonumber を1つだけ足し、既にあるものと別の種類は変えない", () => {
     const mermaidOf = (source: string): string =>
@@ -72,16 +92,18 @@ describe("reportSectionsMarkdown", () => {
       ],
     })
 
-    expect(markdown).toContain('<svg viewBox="0 0 200 100" width="200" height="100">')
-    expect(markdown).toContain(
-      '<rect x="10" y="20" width="80" height="40" rx="4" stroke-width="3"></rect>',
+    expect(markdown).toBe(
+      svgFigure(
+        200,
+        100,
+        '<rect x="10" y="20" width="80" height="40" rx="4" stroke-width="3"></rect>' +
+          '<text x="50" y="40" font-size="14" text-anchor="middle" dominant-baseline="middle">A&lt;b&gt;</text>' +
+          '<rect x="100" y="20" width="80" height="40" rx="4"></rect>' +
+          '<line x1="90" y1="40" x2="100" y2="40" marker-end="url(#report-svg-arrow)"></line>' +
+          '<text x="5" y="90" font-size="14">架空の字</text>',
+        "架空の配置",
+      ),
     )
-    expect(markdown).toContain('<rect x="100" y="20" width="80" height="40" rx="4"></rect>')
-    expect(markdown).toContain('marker-end="url(#report-svg-arrow)"')
-    expect(markdown).toContain("A&lt;b&gt;</text>")
-    expect(markdown).toContain('<text x="5" y="90" font-size="14">架空の字</text>')
-    expect(markdown).not.toContain("\n\n<svg")
-    expect(markdown).toContain(captionRow("図", 1, "架空の配置"))
   })
 
   it("svg の枠の題は center なら枠の中心、top-left なら左上の内側に左寄せで置く", () => {
@@ -110,10 +132,16 @@ describe("reportSectionsMarkdown", () => {
       ],
     })
 
-    expect(markdown).toContain(
-      '<text x="50" y="40" font-size="14" text-anchor="middle" dominant-baseline="middle">題</text>',
+    expect(markdown).toBe(
+      svgFigure(
+        200,
+        100,
+        '<rect x="10" y="20" width="80" height="40" rx="4"></rect>' +
+          '<text x="50" y="40" font-size="14" text-anchor="middle" dominant-baseline="middle">題</text>' +
+          '<rect x="110" y="20" width="80" height="40" rx="4"></rect>' +
+          '<text x="122" y="42" font-size="14">題</text>',
+      ),
     )
-    expect(markdown).toContain('<text x="122" y="42" font-size="14">題</text>')
   })
 
   it("svg の枠の sub は題の下に小さい字で置き、label が空なら描かない", () => {
@@ -141,15 +169,19 @@ describe("reportSectionsMarkdown", () => {
       ],
     })
 
-    expect(markdown).toContain(
-      '<text x="50" y="32" font-size="14" text-anchor="middle" dominant-baseline="middle">題</text>',
+    expect(markdown).toBe(
+      svgFigure(
+        200,
+        100,
+        '<rect x="10" y="20" width="80" height="40" rx="4"></rect>' +
+          '<text x="50" y="32" font-size="14" text-anchor="middle" dominant-baseline="middle">題</text>' +
+          '<text x="50" y="50" font-size="12" text-anchor="middle" dominant-baseline="middle" data-sub>説明</text>' +
+          '<rect x="110" y="20" width="80" height="40" rx="4"></rect>' +
+          '<text x="122" y="42" font-size="14">題</text>' +
+          '<text x="122" y="58" font-size="12" data-sub>説明</text>' +
+          '<rect x="10" y="70" width="80" height="40" rx="4"></rect>',
+      ),
     )
-    expect(markdown).toContain(
-      '<text x="50" y="50" font-size="12" text-anchor="middle" dominant-baseline="middle" data-sub>説明</text>',
-    )
-    expect(markdown).toContain('<text x="122" y="42" font-size="14">題</text>')
-    expect(markdown).toContain('<text x="122" y="58" font-size="12" data-sub>説明</text>')
-    expect(markdown).not.toContain("出ない説明")
   })
 
   it("svg の rect の tone は data-tone で運び、legend は図の下に tone ごとの見本と名前で並べる", () => {
@@ -180,12 +212,15 @@ describe("reportSectionsMarkdown", () => {
       ],
     })
 
-    expect(markdown).toContain(
-      '<rect x="10" y="20" width="80" height="40" rx="4" data-tone="a"></rect>',
+    expect(markdown).toBe(
+      svgFigure(
+        200,
+        100,
+        '<rect x="10" y="20" width="80" height="40" rx="4" data-tone="a"></rect>',
+        "",
+        svgLegend(["a", "層&lt;A&gt;"], ["b", "層B"]),
+      ),
     )
-    expect(markdown).toContain('<div class="svg-legend">')
-    expect(markdown).toContain('<rect data-tone="b" x="1" y="1" width="14" height="10" rx="2">')
-    expect(markdown).toContain("層&lt;A&gt;</span>")
   })
 
   it("svg の line の tone は data-tone、dashed は stroke-dasharray で運ぶ", () => {
@@ -204,11 +239,15 @@ describe("reportSectionsMarkdown", () => {
       ],
     })
 
-    expect(markdown).toContain(
-      '<line x1="0" y1="0" x2="50" y2="0" marker-end="url(#report-svg-arrow)" data-tone="b"></line>',
-    )
-    expect(markdown).toContain(
-      '<line x1="0" y1="10" x2="50" y2="10" marker-end="url(#report-svg-arrow)" stroke-dasharray="6 4"></line>',
+    expect(markdown).toBe(
+      svgFigure(
+        100,
+        50,
+        '<line x1="0" y1="0" x2="50" y2="0" marker-end="url(#report-svg-arrow)" data-tone="b"></line>' +
+          '<line x1="0" y1="10" x2="50" y2="10" marker-end="url(#report-svg-arrow)" stroke-dasharray="6 4"></line>',
+        "",
+        svgLegend(["b", "異常"]),
+      ),
     )
   })
 
@@ -460,7 +499,14 @@ describe("reportSectionsMarkdown", () => {
         aside: "",
       })
 
-      expect(fence).toContain(`"tsukumo":{"height":${String(height)}}`)
+      expect(fence).toBe(
+        `\`\`\`chart\n${JSON.stringify({
+          type: "bar",
+          data: { labels: names, datasets: [{ label: "架空系列", data: names.map(() => 1) }] },
+          options: { indexAxis: "y", scales: { y: { ticks: { autoSkip: false } } } },
+          tsukumo: { height },
+        })}\n\`\`\``,
+      )
     })
 
     it.each([
@@ -498,19 +544,18 @@ describe("reportSectionsMarkdown", () => {
         ["bar", false],
         ["share", true],
       ] as const) {
-        expect(
-          chartFenceOf({
-            kind: "chart",
-            title: "",
-            chartKind,
-            labels,
-            series: one,
-            horizontal,
-            emphasis: [],
-            fold: "",
-            aside: "",
-          }),
-        ).not.toContain('"tsukumo":')
+        const fence = chartFenceOf({
+          kind: "chart",
+          title: "",
+          chartKind,
+          labels,
+          series: one,
+          horizontal,
+          emphasis: [],
+          fold: "",
+          aside: "",
+        })
+        expect(JSON.parse(fence.split("\n")[1] ?? "")).not.toHaveProperty("tsukumo")
       }
     })
   })

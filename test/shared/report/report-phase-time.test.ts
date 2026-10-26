@@ -32,19 +32,47 @@ const parallelRows = () =>
     ],
   }) as const
 
+const wrap = (total: string, chart: string, rows: string): string =>
+  `<div class="phase-times"><div class="phase-times-head"><span class="phase-times-heading">段ごとの時間</span><span class="phase-times-total">計 ${total}</span></div>${chart}<div role="table" aria-label="段ごとの所要時間">${rows}</div></div>`
+
+const band = (...segments: readonly string[]): string =>
+  `<div class="phase-band" aria-hidden="true">${segments.join("")}</div>`
+const segment = (title: string, milliseconds: number, longest = false): string =>
+  `<span class="phase-band-segment${longest ? " phase-band-longest" : ""}" title="${title}" style="flex: ${String(milliseconds)} 0 0"></span>`
+const unknownSegment = (title: string): string =>
+  `<span class="phase-band-unknown" title="${title}"></span>`
+
+const row = (num: string, name: string, value: string, ratio: string, classes = ""): string =>
+  `<div class="phase-time${classes}" role="row"><span class="phase-time-mark"></span><span class="phase-time-label"><span class="phase-time-num">${num}</span>${name}</span><span class="phase-time-value">${value}</span><span class="phase-time-ratio">${ratio}</span></div>`
+
+const waterfallBar = (title: string, left: string, width: string, classes = ""): string =>
+  `<div class="phase-waterfall-row"><span class="phase-waterfall-bar${classes}" title="${title}" style="margin-left: ${left}; width: ${width}"></span></div>`
+
 describe("phaseTimesMarkdown", () => {
   it("段が無ければ空文字", () => {
     expect(phaseTimesMarkdown([])).toBe("")
   })
 
-  it("見出しの行に、測れた区間の和を「計」として書く", () => {
+  it("見出しの行に、測れた区間の和を「計」として書き、測れない段は帯の末尾の不明の区間と不明の行にする", () => {
     const html = phaseTimesMarkdown([
       known("1/3 架空の段A", 20_000),
       known("2/3 架空の段B", 40_000),
       unknown("3/3 架空の段C"),
     ])
 
-    expect(html).toContain('<span class="phase-times-total">計 1分00秒</span>')
+    expect(html).toBe(
+      wrap(
+        "1分00秒",
+        band(
+          segment("1/3 架空の段A 20秒", 20_000),
+          segment("2/3 架空の段B 40秒", 40_000, true),
+          unknownSegment("3/3 架空の段C 不明"),
+        ),
+        row("1/3", "架空の段A", "20秒", "33%") +
+          row("2/3", "架空の段B", "40秒", "67%", " phase-time-longest") +
+          row("3/3", "架空の段C", "不明", "", " phase-time-unknown"),
+      ),
+    )
   })
 
   it("帯の区間の長さは時間（ミリ秒）の比で、title に名前と時間を持つ", () => {
@@ -53,8 +81,14 @@ describe("phaseTimesMarkdown", () => {
       known("2/2 架空の段B", 10_000),
     ])
 
-    expect(html).toContain('title="1/2 架空の段A 20秒" style="flex: 20000 0 0"')
-    expect(html).toContain('title="2/2 架空の段B 10秒" style="flex: 10000 0 0"')
+    expect(html).toBe(
+      wrap(
+        "30秒",
+        band(segment("1/2 架空の段A 20秒", 20_000, true), segment("2/2 架空の段B 10秒", 10_000)),
+        row("1/2", "架空の段A", "20秒", "67%", " phase-time-longest") +
+          row("2/2", "架空の段B", "10秒", "33%"),
+      ),
+    )
   })
 
   it("割合は時間÷計を整数%に丸める", () => {
@@ -67,21 +101,17 @@ describe("phaseTimesMarkdown", () => {
     expect(html.match(/<span class="phase-time-ratio">33%<\/span>/g)).toHaveLength(3)
   })
 
-  it("一番長い区間の帯と行にだけ目印を付ける", () => {
+  it("一本道で測れた回は waterfall を使わず1本の帯のままで、一番長い区間の帯と行にだけ目印を付ける", () => {
     const html = phaseTimesMarkdown([known("1/2 架空の段A", 5_000), known("2/2 架空の段B", 9_000)])
 
-    expect(html.match(/phase-band-longest/g)).toHaveLength(1)
-    expect(html.match(/phase-time-longest/g)).toHaveLength(1)
-    expect(html).toContain(
-      '<span class="phase-band-segment phase-band-longest" title="2/2 架空の段B',
+    expect(html).toBe(
+      wrap(
+        "14秒",
+        band(segment("1/2 架空の段A 5秒", 5_000), segment("2/2 架空の段B 9秒", 9_000, true)),
+        row("1/2", "架空の段A", "5秒", "36%") +
+          row("2/2", "架空の段B", "9秒", "64%", " phase-time-longest"),
+      ),
     )
-  })
-
-  it("一本道で測れた回は、waterfall を使わず1本の帯のまま", () => {
-    const html = phaseTimesMarkdown([known("1/2 架空の段A", 5_000), known("2/2 架空の段B", 9_000)])
-
-    expect(html).toContain('<div class="phase-band" aria-hidden="true">')
-    expect(html).not.toContain("phase-waterfall")
   })
 
   it("並列の段が無く測れない段のある回は1本の帯のままで、測れない段を固定幅の斜線の区間にする", () => {
@@ -91,47 +121,52 @@ describe("phaseTimesMarkdown", () => {
       known("3/3 架空の段C", 5_000),
     ])
 
-    expect(html).toContain('<div class="phase-band" aria-hidden="true">')
-    expect(html).not.toContain("phase-waterfall")
-    const unknownRegion = '<span class="phase-band-unknown" title="2/3 架空の段B 不明"></span>'
-    expect(html).toContain(unknownRegion)
-    expect(html.indexOf('title="1/3 架空の段A 5秒"')).toBeLessThan(html.indexOf(unknownRegion))
-    expect(html.indexOf(unknownRegion)).toBeLessThan(html.indexOf('title="3/3 架空の段C 5秒"'))
-    expect(html).toContain(
-      '<span class="phase-time-value">不明</span><span class="phase-time-ratio"></span>',
+    expect(html).toBe(
+      wrap(
+        "10秒",
+        band(
+          segment("1/3 架空の段A 5秒", 5_000, true),
+          unknownSegment("2/3 架空の段B 不明"),
+          segment("3/3 架空の段C 5秒", 5_000),
+        ),
+        row("1/3", "架空の段A", "5秒", "50%", " phase-time-longest") +
+          row("2/3", "架空の段B", "不明", "", " phase-time-unknown") +
+          row("3/3", "架空の段C", "5秒", "50%"),
+      ),
     )
-    expect(html.match(/<span class="phase-time-ratio">50%<\/span>/g)).toHaveLength(2)
   })
 
   it("すべて測れなくても壊れず、帯のまま計は0秒で目印は付かない", () => {
     const html = phaseTimesMarkdown([unknown("1/1 架空の段")])
 
-    expect(html).toContain(
-      '<div class="phase-band" aria-hidden="true"><span class="phase-band-unknown"',
+    expect(html).toBe(
+      wrap(
+        "0秒",
+        band(unknownSegment("1/1 架空の段 不明")),
+        row("1/1", "架空の段", "不明", "", " phase-time-unknown"),
+      ),
     )
-    expect(html).toContain("計 0秒")
-    expect(html).not.toContain("phase-time-longest")
   })
 
-  it("一覧は、並列の段の見出しの行と字下げする中の段の行を1つの包みに入れる", () => {
+  it("並列の段のある回で測れない段が混じれば、waterfall のまま斜線の欠片を直前の棒の終わりに置き、一覧は並列の段の行と字下げする中の段の行を1つの包みに入れる", () => {
     const html = phaseTimesMarkdown([known("1/3 架空の段A", 5_000), parallelRows()])
 
-    expect(html).toContain(
-      '<div class="phase-time-group" role="rowgroup"><div class="phase-time phase-time-longest" role="row"><span class="phase-time-mark"></span><span class="phase-time-label">並列 2–3</span><span class="phase-time-value">20秒</span><span class="phase-time-ratio">80%</span></div>',
-    )
-    expect(html).toContain(
-      '<div class="phase-time phase-time-inner" role="row"><span class="phase-time-label"><span class="phase-time-num">2/3</span>架空の段B</span><span class="phase-time-value">10秒</span><span class="phase-time-ratio"></span></div>',
-    )
-    expect(html).toContain("phase-time phase-time-inner phase-time-unknown")
-    expect(html).toContain("計 25秒")
-  })
-
-  it("並列の段のある回で測れない段が混じれば、waterfall のまま斜線の欠片を直前の棒の終わりに置く", () => {
-    const html = phaseTimesMarkdown([known("1/3 架空の段A", 5_000), parallelRows()])
-
-    expect(html).not.toContain("phase-band")
-    expect(html).toContain(
-      '<div class="phase-waterfall-row"><span class="phase-waterfall-bar phase-waterfall-unknown" title="3/3 架空の段C 不明" style="margin-left: 98%; width: 2%"></span></div>',
+    expect(html).toBe(
+      wrap(
+        "25秒",
+        '<div class="phase-waterfall" aria-hidden="true">' +
+          waterfallBar("1/3 架空の段A 5秒", "0%", "20%") +
+          '<div class="phase-waterfall-group"><span class="phase-time-wall phase-time-wall-longest" title="並列 2–3 20秒" style="margin-left: 20%; width: 80%"></span>' +
+          waterfallBar("2/3 架空の段B 10秒", "20%", "40%") +
+          waterfallBar("3/3 架空の段C 不明", "98%", "2%", " phase-waterfall-unknown") +
+          "</div></div>",
+        row("1/3", "架空の段A", "5秒", "20%") +
+          '<div class="phase-time-group" role="rowgroup">' +
+          '<div class="phase-time phase-time-longest" role="row"><span class="phase-time-mark"></span><span class="phase-time-label">並列 2–3</span><span class="phase-time-value">20秒</span><span class="phase-time-ratio">80%</span></div>' +
+          '<div class="phase-time phase-time-inner" role="row"><span class="phase-time-label"><span class="phase-time-num">2/3</span>架空の段B</span><span class="phase-time-value">10秒</span><span class="phase-time-ratio"></span></div>' +
+          '<div class="phase-time phase-time-inner phase-time-unknown" role="row"><span class="phase-time-label"><span class="phase-time-num">3/3</span>架空の段C</span><span class="phase-time-value">不明</span><span class="phase-time-ratio"></span></div>' +
+          "</div>",
+      ),
     )
   })
 
@@ -172,16 +207,9 @@ describe("phaseTimesMarkdown", () => {
     ])
     expect(html.match(/<div class="phase-waterfall-group">/g)).toHaveLength(1)
     expect(html.match(/phase-waterfall-longest/g)).toHaveLength(1)
-    expect(html).not.toContain("phase-time-wall-longest")
+    expect(html.match(/phase-time-wall-longest/g)).toBeNull()
     expect(html.match(/<span class="phase-waterfall-bar/g)).toHaveLength(4)
-    expect(html).toContain("計 25秒")
-  })
-
-  it("壁時計が最長なら、囲みの枠を強める印を付け、棒には付けない", () => {
-    const html = phaseTimesMarkdown([known("1/3 架空の段A", 5_000), parallelRows()])
-
-    expect(html.match(/phase-time-wall-longest/g)).toHaveLength(1)
-    expect(html).not.toContain("phase-waterfall-longest")
+    expect(html.match(/<span class="phase-times-total">計 25秒<\/span>/g)).toHaveLength(1)
   })
 
   it("並列の段の壁時計が測れなければ、囲みは描かず中の段の棒だけを置く", () => {
@@ -196,14 +224,32 @@ describe("phaseTimesMarkdown", () => {
       },
     ])
 
-    expect(html).not.toContain("phase-time-wall")
-    expect(html.match(/<span class="phase-waterfall-bar/g)).toHaveLength(2)
+    expect(html).toBe(
+      wrap(
+        "5秒",
+        '<div class="phase-waterfall" aria-hidden="true">' +
+          waterfallBar("1/3 架空の段A 5秒", "0%", "33.33%", " phase-waterfall-longest") +
+          '<div class="phase-waterfall-group">' +
+          waterfallBar("2/3 架空の段B 10秒", "33.33%", "66.67%") +
+          "</div></div>",
+        row("1/3", "架空の段A", "5秒", "100%", " phase-time-longest") +
+          '<div class="phase-time-group" role="rowgroup">' +
+          '<div class="phase-time phase-time-unknown" role="row"><span class="phase-time-mark"></span><span class="phase-time-label">並列 2–3</span><span class="phase-time-value">不明</span><span class="phase-time-ratio"></span></div>' +
+          '<div class="phase-time phase-time-inner" role="row"><span class="phase-time-label"><span class="phase-time-num">2/3</span>架空の段B</span><span class="phase-time-value">10秒</span><span class="phase-time-ratio"></span></div>' +
+          "</div>",
+      ),
+    )
   })
 
   it("段の名前と title の HTML をエスケープする", () => {
     const html = phaseTimesMarkdown([known('1/1 <b>"段"</b>', 1_000)])
 
-    expect(html).not.toContain("<b>")
-    expect(html).toContain("&quot;段&quot;")
+    expect(html).toBe(
+      wrap(
+        "1秒",
+        band(segment("1/1 &lt;b&gt;&quot;段&quot;&lt;/b&gt; 1秒", 1_000, true)),
+        row("1/1", '&lt;b&gt;"段"&lt;/b&gt;', "1秒", "100%", " phase-time-longest"),
+      ),
+    )
   })
 })

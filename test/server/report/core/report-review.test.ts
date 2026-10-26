@@ -5,10 +5,12 @@ import {
   type ReportRejectionModes,
   type ReportRejectionReason,
 } from "../../../../src/server/report/core/rejection-mode.ts"
+import { reportRejectionText } from "../../../../src/server/report/core/report-rejection.ts"
 import type {
   ReportReview,
   ReportVerdict,
 } from "../../../../src/server/report/core/report-review.ts"
+import { reportViolations } from "../../../../src/server/report/core/report-violation-check.ts"
 import type { ReportDraft } from "../../../../src/server/report/core/report-violation.ts"
 import type { BackgroundTask } from "../../../../src/shared/session-driver/background-task.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
@@ -18,7 +20,6 @@ import {
   FINISHED,
   INVALID,
   noPlan,
-  REJECTION_PHRASE,
   SESSION_INFO,
   sectionsOf,
   type TestReview,
@@ -66,8 +67,10 @@ describe("createReportReview の judge", () => {
   it("違反のある report は、違反した条を文面にして差し戻す", () => {
     const verdict = createReportReview(noPlan).judge(INVALID)
 
-    expect(verdict.kind).toBe("rejected")
-    expect(verdict.kind === "rejected" ? verdict.text : "").toContain("`#` / `##` の見出し")
+    expect(verdict).toMatchObject({
+      kind: "rejected",
+      text: reportRejectionText(reportViolations(INVALID)),
+    })
   })
 
   it("差し戻すのは1ターンに1回まで（2回目は違反があっても通す）", () => {
@@ -99,8 +102,11 @@ describe("createReportReview の judge", () => {
 
     const first = review.judge(contradicting)
 
-    expect(first).toMatchObject({ kind: "rejected", reasons: ["figure-contradiction"] })
-    expect(first.kind === "rejected" ? first.text : "").not.toContain("架空の秘密")
+    expect(first).toMatchObject({
+      kind: "rejected",
+      reasons: ["figure-contradiction"],
+      text: reportRejectionText(reportViolations(contradicting)),
+    })
     expect(review.judge(contradicting)).toEqual({ kind: "accepted" })
   })
 
@@ -129,10 +135,12 @@ describe("createReportReview の judge（送り直し）", () => {
 
     expect(verdict).toEqual({
       kind: "rejected",
-      text: expect.stringContaining(REJECTION_PHRASE.resend),
+      text:
+        "この `report` は、このターンですでに受け取った `report` と同じ引数になっている。" +
+        "同じ引数で送り直さず、そのあとに `report` の外に書いた本文の中身を `report` に入れて呼び直すこと。" +
+        "呼び直すときは直す欄だけを渡せばよい（渡さなかった欄はこの呼び出しの値を引き継ぐ）。",
       reasons: ["resend"],
     })
-    expect(verdict.kind === "rejected" ? verdict.text : "").not.toContain(VALID.conclusion)
   })
 
   it("前後の空白だけが違う呼び出しも送り直しとして差し戻す", () => {
@@ -195,8 +203,10 @@ describe("createReportReview の judge（送り直し）", () => {
 
     expect(review.judge(VALID).kind).toBe("rejected")
     runTool(review)
-    const verdict = review.judge(INVALID)
-    expect(verdict.kind === "rejected" ? verdict.text : "").toContain("`#` / `##` の見出し")
+    expect(review.judge(INVALID)).toMatchObject({
+      kind: "rejected",
+      text: reportRejectionText(reportViolations(INVALID)),
+    })
   })
 
   it("差し戻して描かなかった report とは比べない", () => {
@@ -244,10 +254,13 @@ describe("createReportReview の judge（新しい事実の無い report）", ()
 
     expect(verdict).toEqual({
       kind: "rejected",
-      text: expect.stringContaining(REJECTION_PHRASE.nothingNew),
+      text:
+        "直前の `report` のあと、新しい依頼もツールの結果もバックグラウンドタスクの終わりも届いていないので、" +
+        "この `report` は画面に出していない。伝える新しい事実が無いターンは、`report` を" +
+        "呼ばず、何も書かずに終えてよい。言い回しを変えて同じ中身の `report` を送り直さないこと。" +
+        "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。",
       reasons: ["nothing-new"],
     })
-    expect(verdict.kind === "rejected" ? verdict.text : "").not.toContain(OTHER.conclusion)
   })
 
   it("差し戻したあとは nothingNewRejected が true になり、次のターンの頭で false に戻る", () => {
@@ -294,7 +307,6 @@ describe("createReportReview の judge（差し戻しの種類）", () => {
     const verdict = createReportReview(noPlan).judge(INVALID)
 
     expect(verdict.kind === "rejected" ? verdict.reasons : []).toEqual(["markdown-notation"])
-    expect(JSON.stringify(verdict.kind === "rejected" ? verdict.reasons : [])).not.toContain("架空")
   })
 
   it("手続きの差し戻しは、その種類の名前を1つ持つ", () => {
@@ -336,6 +348,10 @@ describe("createReportReview の judge（背景のシェルが残っている re
     review.setTasks(tasks)
     return review
   }
+  const BACKGROUND_REJECTION_TAIL =
+    "`TaskStop` で止めるか、待つなら待つと決めてから `report` を呼び直すこと。" +
+    "呼び直すときは直す欄だけを渡せばよい（渡さなかった欄はこの呼び出しの値を引き継ぐ）。" +
+    "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。"
   const rejectedText = (verdict: ReportVerdict): string =>
     verdict.kind === "rejected" ? verdict.text : ""
 
@@ -343,10 +359,9 @@ describe("createReportReview の judge（背景のシェルが残っている re
     const verdict = withTasks(backgroundTask("task_a", "shell", "架空の書き出し")).judge(VALID)
 
     expect(verdict).toMatchObject({ kind: "rejected", reasons: ["background-running"] })
-    expect(rejectedText(verdict)).toContain("task_a")
-    expect(rejectedText(verdict)).toContain("架空の書き出し")
-    expect(rejectedText(verdict)).toContain("TaskStop")
-    expect(rejectedText(verdict)).not.toContain(VALID.conclusion)
+    expect(rejectedText(verdict)).toBe(
+      `背景で動いているコマンドが残っている: \`task_a\`（架空の書き出し）。${BACKGROUND_REJECTION_TAIL}`,
+    )
   })
 
   it("同じターンの2回目の report は通し、次のターンで枠が戻る", () => {
@@ -361,8 +376,9 @@ describe("createReportReview の judge（背景のシェルが残っている re
   it("description が空のシェルは「背景のコマンド」と ID で載せる", () => {
     const text = rejectedText(withTasks(backgroundTask("task_a", "shell", "")).judge(VALID))
 
-    expect(text).toContain("task_a")
-    expect(text).toContain("背景のコマンド")
+    expect(text).toBe(
+      `背景で動いているコマンドが残っている: \`task_a\`（背景のコマンド）。${BACKGROUND_REJECTION_TAIL}`,
+    )
   })
 
   it.each(["agent", "other"] as const)("残っているのが %s だけなら通す", (kind) => {
@@ -439,8 +455,15 @@ describe("createReportReview の judge（数えるだけの条）", () => {
     review.pass(report)
     const passed = review.pass(finished("toolu_c1", true))
 
-    expect(verdict).toMatchObject({ kind: "rejected", reasons: ["long-conclusion"] })
-    expect(verdict.kind === "rejected" ? verdict.text : "").not.toContain("`#` / `##` の見出し")
+    expect(verdict).toMatchObject({
+      kind: "rejected",
+      reasons: ["long-conclusion"],
+      text: reportRejectionText(
+        reportViolations(TWO_VIOLATIONS).filter(
+          (violation) => violation.kind === "long-conclusion",
+        ),
+      ),
+    })
     expect(passed.map((event) => event.kind)).toEqual(["tool-finished", "report-rejected"])
     expect(passed[1]).toMatchObject({ reasons: ["long-conclusion"] })
   })

@@ -36,25 +36,38 @@ describe("welcomeGreetingQuery", () => {
     const query = welcomeGreetingQuery(MATERIAL)
 
     expect(query.systemPrompt.startsWith("# 架空の人格")).toBe(true)
-    expect(query.prompt).toContain("- 月: 10月")
-    expect(query.prompt).toContain("- 曜日: 土曜")
-    expect(query.prompt).toContain("- 時刻の帯: 朝")
-    expect(query.prompt).toContain("- excited: 架空のわくわく")
-    expect(query.prompt).toContain("- 架空の前の挨拶、{札} だ")
-  })
-
-  it("新しく起こしたときは迎え方だけを書き、前回からの行を書かない", () => {
-    const query = welcomeGreetingQuery(MATERIAL)
-
-    expect(query.prompt).toContain("- 迎え方: 新しく始める")
-    expect(query.prompt).not.toContain("- 前回から:")
+    expect(query.prompt).toBe(
+      [
+        "## 材料",
+        "- 月: 10月",
+        "- 曜日: 土曜",
+        "- 時刻の帯: 朝",
+        "- 迎え方: 新しく始める",
+        "",
+        "## 表情の選択肢",
+        "- default: 架空のふつう",
+        "- excited: 架空のわくわく",
+        "",
+        "## 直近の挨拶（同じ言い回しを避ける）",
+        "- 架空の前の挨拶、{札} だ",
+        "- 架空の前の挨拶",
+      ].join("\n"),
+    )
   })
 
   it("続きから起こしたときは、続きからの印と前回からの経過の帯を書き、指示文に続きから迎えるときの節がある", () => {
     const query = welcomeGreetingQuery({ ...MATERIAL, visit: { kind: "resume", away: "数時間" } })
 
-    expect(query.prompt).toContain("- 迎え方: 前回の続きに戻ってきた")
-    expect(query.prompt).toContain("- 前回から: 数時間")
+    expect(query.prompt.split("\n\n")[0]).toBe(
+      [
+        "## 材料",
+        "- 月: 10月",
+        "- 曜日: 土曜",
+        "- 時刻の帯: 朝",
+        "- 迎え方: 前回の続きに戻ってきた",
+        "- 前回から: 数時間",
+      ].join("\n"),
+    )
     expect(query.systemPrompt).toContain("## 続きから迎えるとき")
   })
 
@@ -148,7 +161,7 @@ describe("welcomeGreetingQuery（時刻の帯）", () => {
   ])("%d 時は %s", (hour, band) => {
     const query = welcomeGreetingQuery({ ...MATERIAL, calendar: { ...MATERIAL.calendar, hour } })
 
-    expect(query.prompt.split("\n")).toContain(`- 時刻の帯: ${band}`)
+    expect(query.prompt.split("\n")[3]).toBe(`- 時刻の帯: ${band}`)
   })
 })
 

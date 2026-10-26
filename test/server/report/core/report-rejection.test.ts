@@ -16,6 +16,14 @@ import {
   reportDraftText,
 } from "../../../fixture/report-draft-block.ts"
 
+const REJECTION_HEADER = "レポートの記法の規約に次の違反がある。直して `report` を呼び直すこと:"
+const MARKDOWN_NOTATION_LINE =
+  "- `markdown` の塊に塊で書ける記法（`#` / `##` の見出し）がある。代わりに節の `heading`を使う"
+
+function violationLines(rejection: string): readonly string[] {
+  return rejection.split("\n").slice(1, -1)
+}
+
 describe("reportRejectionText", () => {
   it("違反した条と直し方を1行ずつ並べ、直す欄だけで呼び直せることを末尾に添え、レポートの文面は写さない", () => {
     const report = draft(
@@ -24,19 +32,21 @@ describe("reportRejectionText", () => {
     )
     const rejection = reportRejectionText(reportViolations(report))
 
-    expect(rejection.split("\n")).toHaveLength(4)
-    expect(rejection.split("\n").at(-1)).toBe(REPORT_CHANGED_FIELDS_ONLY_TEXT)
-    expect(rejection).toContain("`conclusion` が3要素ある")
-    expect(rejection).toContain(
-      "`markdown` の塊に塊で書ける記法（`#` / `##` の見出し）がある。代わりに節の `heading`を使う",
+    expect(rejection).toBe(
+      [
+        REJECTION_HEADER,
+        "- `conclusion` が3要素ある。1要素1文で2要素以内にし、残りは `sections` へ移す",
+        MARKDOWN_NOTATION_LINE,
+        REPORT_CHANGED_FIELDS_ONLY_TEXT,
+      ].join("\n"),
     )
-    expect(rejection).not.toContain("XYZ")
   })
 
   it("画面の状態（描けたか・どこに出たか）を載せない", () => {
     const rejection = reportRejectionText(reportViolations(draft([markdown("# 架空")])))
-    expect(rejection).not.toContain("画面")
-    expect(rejection).not.toContain("メインビュー")
+    expect(rejection).toBe(
+      [REJECTION_HEADER, MARKDOWN_NOTATION_LINE, REPORT_CHANGED_FIELDS_ONLY_TEXT].join("\n"),
+    )
   })
 
   it("code-mismatch は食い違った path を載せる", () => {
@@ -45,7 +55,9 @@ describe("reportRejectionText", () => {
       fileContents: new Map([["src/fixture-f.ts", "架空の別の行"]]),
     }
     const rejection = reportRejectionText(reportViolations(report))
-    expect(rejection).toContain("src/fixture-f.ts")
+    expect(violationLines(rejection)).toEqual([
+      "- `path` 付きの `code` の塊が1個、ファイルの中身と一致しない（src/fixture-f.ts）。実物を読み直して直すか `path` を外す",
+    ])
   })
 
   describe("broken-svg", () => {
@@ -77,7 +89,7 @@ describe("reportRejectionText", () => {
       }) as const
 
     it("枠内に収まる図形は違反にならない（端に接するのは収まり）", () => {
-      expect(kinds(draft([svg([rect(0, 0, 100, 50)])]))).not.toContain("broken-svg")
+      expect(kinds(draft([svg([rect(0, 0, 100, 50)])]))).toEqual([])
     })
 
     it("はみ出した図形を、何個目の塊の何番目の図形かだけで言う", () => {
@@ -110,8 +122,9 @@ describe("reportRejectionText", () => {
         },
       ])
       const rejection = reportRejectionText(reportViolations(report))
-      expect(rejection).toContain("2個目の 2 番目、2個目の 3 番目")
-      expect(rejection).not.toContain("架空の秘密")
+      expect(violationLines(rejection)).toEqual([
+        "- `svg` の図形が `width` × `height` の外に出ている（2個目の 2 番目、2個目の 3 番目）。座標か大きさを直す",
+      ])
     })
 
     it("legend に無い tone を、何個目の塊のどの tone かだけで言い、legend にあれば通す", () => {
@@ -124,8 +137,9 @@ describe("reportRejectionText", () => {
         { kind: "unlegended-svg-tone", count: 1, faults: [{ block: 2, tone: "b" }] },
       ])
       const rejection = reportRejectionText(reportViolations(report))
-      expect(rejection).toContain("2個目の b")
-      expect(rejection).not.toContain("架空の秘密")
+      expect(violationLines(rejection)).toEqual([
+        "- `svg` の `rect` の `tone` が `legend` に無い（2個目の b）。`legend` に `tone` と名前を足す（色だけで意味を言わない）",
+      ])
       expect(kinds(draft([toned("a", [{ tone: "a", label: "層" }])]))).toEqual([])
     })
 
@@ -151,8 +165,9 @@ describe("reportRejectionText", () => {
         { kind: "unlegended-graph-tone", count: 1, faults: [{ block: 1, tone: "b" }] },
       ])
       const rejection = reportRejectionText(reportViolations(report))
-      expect(rejection).toContain("1個目の b")
-      expect(rejection).not.toContain("架空の秘密")
+      expect(violationLines(rejection)).toEqual([
+        "- `graph` の ` @a`〜` @e` の色の目印が `legend` に無い（1個目の b）。`legend` に `tone` と名前を足す（色だけで意味を言わない）",
+      ])
       expect(kinds(draft([graph("C -> D @c", [{ tone: "c", label: "線" }])]))).toEqual([])
     })
 
@@ -185,7 +200,7 @@ describe("reportRejectionText", () => {
       const report = draft([
         { kind: "beforeAfter", title: "", before: side, after: side, fold: "", aside: "" },
       ])
-      expect(kinds(report)).toContain("broken-svg")
+      expect(kinds(report)).toEqual(["broken-svg"])
     })
   })
 
@@ -202,16 +217,18 @@ describe("reportRejectionText", () => {
         { kind: "broken-mermaid", count: 1, faults: [fault] },
       ])
       const rejection = reportRejectionText(reportViolations(report))
-      expect(rejection).toContain("2個目の 3 行目・字句 NEWLINE")
-      expect(rejection).not.toContain("架空の秘密")
+      expect(violationLines(rejection)).toEqual([
+        "- mermaid の図の構文が割れている（2個目の 3 行目・字句 NEWLINE）。その行の書き方を直す",
+      ])
     })
 
     it("行が取れない図は行を出さず、何個目かだけを言う", () => {
       const rejection = reportRejectionText(
         reportViolations(withFaults([{ kind: "unlocated", block: 1 }])),
       )
-      expect(rejection).toContain("（1個目）")
-      expect(rejection).not.toContain("行目")
+      expect(violationLines(rejection)).toEqual([
+        "- mermaid の図の構文が割れている（1個目）。その行の書き方を直す",
+      ])
     })
 
     it("割れた図が無い（検査できなかったときも同じ）なら違反にならない", () => {
@@ -304,8 +321,9 @@ describe("reportRejectionText", () => {
       )
       expect(violations).toEqual([{ kind: "figure-contradiction", count: 2, reason: "no-shape" }])
       const rejection = reportRejectionText(violations)
-      expect(rejection).toContain("`no-shape`")
-      expect(rejection).not.toContain("架空の秘密")
+      expect(violationLines(rejection)).toEqual([
+        "- `figure` の reason が `no-shape` なのに、`sections` に流れ・つながり・構造を描く塊（`list` の `flow`・`beforeAfter`・`graph`・`mermaid`・`svg`）が2個ある。その図を `figure` に置くか、合う reason にする",
+      ])
     })
 
     it("no-shape で bullet の箇条や表しか無ければ違反にしない", () => {
@@ -331,7 +349,9 @@ describe("reportRejectionText", () => {
       expect(reportViolations(twoSections)).toEqual([
         { kind: "figure-contradiction", count: 2, reason: "short-answer" },
       ])
-      expect(reportRejectionText(reportViolations(twoSections))).not.toContain("架空の根拠")
+      expect(violationLines(reportRejectionText(reportViolations(twoSections)))).toEqual([
+        "- `figure` の reason が `short-answer` なのに、節が2つ以上ある。2〜3文で終わる答えでなければ `figure` に図を置くか、合う reason にする",
+      ])
     })
 
     it("short-answer で節1つなら、4文以上の地の文でも違反にしない", () => {

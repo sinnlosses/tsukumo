@@ -22,6 +22,36 @@ import {
 
 afterEach(closeRunningView)
 
+const PAGE_POLICY = [
+  "default-src 'self'",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data:",
+  "font-src 'self' data:",
+  "connect-src 'self'",
+  "object-src 'none'",
+  "base-uri 'none'",
+  "form-action 'self'",
+].join("; ")
+
+function pageHtml(links: readonly string[], script: string): string {
+  return [
+    "<!doctype html>",
+    '<html lang="ja">',
+    "<head>",
+    '<meta charset="utf-8">',
+    '<meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">',
+    "<title>tsukumo</title>",
+    ...links,
+    "</head>",
+    "<body>",
+    '<div id="app"></div>',
+    `<script type="module" src="${script}"></script>`,
+    "</body>",
+    "</html>",
+    "",
+  ].join("\n")
+}
+
 describe("startViewServer", () => {
   it("ループバックにだけバインドする", async () => {
     const server = await startView()
@@ -42,9 +72,17 @@ describe("startViewServer", () => {
     const body = await response.text()
 
     expect(response.status).toBe(200)
-    expect(body).toContain('<div id="app"></div>')
-    expect(body).toContain('<script type="module" src="/assets/ui.js"></script>')
-    expect(body).toContain('<link rel="stylesheet" href="/assets/style.css">')
+    expect(body).toBe(
+      pageHtml(
+        [
+          '<link rel="stylesheet" href="/vendor/highlight-theme.min.css">',
+          '<link rel="stylesheet" href="/assets/style.css">',
+          '<link rel="modulepreload" href="/assets/markdown-renderer.js">',
+          '<link rel="modulepreload" href="/assets/lib.js">',
+        ],
+        "/assets/ui.js",
+      ),
+    )
   })
 
   it("/ の応答は、スクリプトを同じオリジンのファイルだけに絞る CSP を付ける", async () => {
@@ -52,8 +90,7 @@ describe("startViewServer", () => {
 
     const policy = (await fetch(server.layoutUrl)).headers.get("content-security-policy") ?? ""
 
-    expect(policy.split("; ")).toContain("script-src 'self'")
-    expect(policy.split("; ")).toContain("object-src 'none'")
+    expect(policy).toBe(`${PAGE_POLICY}; script-src 'self'`)
   })
 
   it("/assets/ui.js が、起動時に組み立てたブラウザ側スクリプトを返す", async () => {
@@ -62,17 +99,8 @@ describe("startViewServer", () => {
     const response = await fetch(`${viewOrigin(server)}/assets/ui.js`)
 
     expect(response.status).toBe(200)
-    expect(response.headers.get("content-type")).toContain("text/javascript")
+    expect(response.headers.get("content-type")).toBe("text/javascript; charset=utf-8")
     expect(await response.text()).toBe(TEST_UI_SCRIPT)
-  })
-
-  it("/ の head に markdown-renderer.js と lib.js の modulepreload がある", async () => {
-    const server = await startView()
-
-    const body = await (await fetch(server.layoutUrl)).text()
-
-    expect(body).toContain('<link rel="modulepreload" href="/assets/markdown-renderer.js">')
-    expect(body).toContain('<link rel="modulepreload" href="/assets/lib.js">')
   })
 
   it("成果物は no-cache と ETag で配り、同じ ETag の If-None-Match には 304、違えば 200 を返す", async () => {
@@ -97,7 +125,7 @@ describe("startViewServer", () => {
     const response = await fetch(`${viewOrigin(server)}/assets/style.css`)
 
     expect(response.status).toBe(200)
-    expect(response.headers.get("content-type")).toContain("text/css")
+    expect(response.headers.get("content-type")).toBe("text/css; charset=utf-8")
     expect(await response.text()).toBe(TEST_STYLE_SHEET)
   })
 
@@ -107,7 +135,7 @@ describe("startViewServer", () => {
     const response = await fetch(`${viewOrigin(server)}/assets/${TEST_CHUNK_NAME}`)
 
     expect(response.status).toBe(200)
-    expect(response.headers.get("content-type")).toContain("text/javascript")
+    expect(response.headers.get("content-type")).toBe("text/javascript; charset=utf-8")
     expect(await response.text()).toBe(TEST_CHUNK)
   })
 
@@ -150,13 +178,15 @@ describe("startViewServer", () => {
     const origin = viewOrigin(server)
 
     const pageResponse = await fetch(server.layoutUrl)
-    expect(pageResponse.headers.get("content-security-policy")?.split("; ")).toContain(
-      "script-src 'self' 'unsafe-inline'",
+    expect(pageResponse.headers.get("content-security-policy")).toBe(
+      `${PAGE_POLICY}; script-src 'self' 'unsafe-inline'`,
     )
-    const page = await pageResponse.text()
-    expect(page).toContain('<script type="module" src="/main.tsx"></script>')
-    expect(page).toContain("<!-- hmr -->")
-    expect(page).not.toContain("/assets/style.css")
+    expect(await pageResponse.text()).toBe(
+      pageHtml(
+        ['<link rel="stylesheet" href="/vendor/highlight-theme.min.css">'],
+        "/main.tsx",
+      ).replace("</head>", "<!-- hmr -->\n</head>"),
+    )
 
     expect(await (await fetch(`${origin}/main.tsx`)).text()).toBe("/* 開発サーバの入口 */")
     expect((await fetch(`${origin}/assets/ui.js`)).status).toBe(404)
@@ -169,12 +199,12 @@ describe("startViewServer", () => {
 
     const theme = await fetch(`${origin}/vendor/highlight-theme.min.css`)
     expect(theme.status).toBe(200)
-    expect(theme.headers.get("content-type")).toContain("text/css")
+    expect(theme.headers.get("content-type")).toBe("text/css; charset=utf-8")
     expect(theme.headers.get("cache-control")).toBe("max-age=3600")
 
     const chart = await fetch(`${origin}/vendor/chart.umd.min.js`)
     expect(chart.status).toBe(200)
-    expect(chart.headers.get("content-type")).toContain("text/javascript")
+    expect(chart.headers.get("content-type")).toBe("text/javascript; charset=utf-8")
     expect((await chart.text()).length).toBeGreaterThan(1000)
   })
 

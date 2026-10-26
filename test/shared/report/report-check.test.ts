@@ -33,6 +33,43 @@ const summaryOf = (markdown: string): string =>
     markdown.indexOf("</div>", markdown.indexOf('<div class="checks-summary">')),
   )
 
+const summaryPart = (kind: string, mark: string, count: string, word: string): string =>
+  `<span class="checks-summary-part checks-summary-${kind}"><span class="checks-summary-mark">${mark}</span>${count} <span class="checks-summary-word">${word}</span></span>`
+
+const okPart = (count: number): string =>
+  summaryPart("ok", "✓", `検証 ${String(count)}件`, "通った")
+const unobservedPart = summaryPart("unobserved", "？", "1件", "確かめていない")
+const ngPart = summaryPart("ng", "✕", "1件", "落ちた")
+const LEAD = '<span class="checks-summary-lead">検証</span>'
+
+const okRow = (label: string, figure = "", time = ""): string =>
+  `<div class="check check-ok" role="row"><span class="check-mark">✓</span><span class="check-label">${label}</span><span class="check-figure">${figure}</span><span class="check-time">${time}</span></div>`
+
+const passedBlock = (count: number, labels: string, rows: string): string =>
+  `<div class="checks-passed"><details><summary><span class="checks-passed-mark">✓ 通った ${String(count)}件</span><span class="checks-passed-labels">${labels}</span></summary><div role="table" aria-label="検証結果">${rows}</div></details></div>`
+
+const problemRow = (
+  kind: string,
+  mark: string,
+  word: string,
+  head: { readonly label: string; readonly figure?: string; readonly time?: string },
+  extra = "",
+): string =>
+  `<div class="checks-problem checks-problem-${kind}" role="row"><span class="checks-problem-mark">${mark} <span class="checks-problem-word">${word}</span></span><div class="checks-problem-body"><div class="checks-problem-head"><span class="checks-problem-label">${head.label}</span><span class="checks-problem-figure">${head.figure ?? ""}</span><span class="checks-problem-time">${head.time ?? ""}</span></div>${extra}</div></div>`
+
+const ngRow = (head: Parameters<typeof problemRow>[3], extra = ""): string =>
+  problemRow("ng", "✕", "落ちた", head, extra)
+const unobservedRow = (head: Parameters<typeof problemRow>[3], extra = ""): string =>
+  problemRow("unobserved", "？", "確かめていない", head, extra)
+const detail = (text: string): string => `<div class="checks-problem-detail">${text}</div>`
+const how = (text: string): string =>
+  `<div class="checks-problem-how"><span class="checks-problem-how-label">確かめ方:</span> ${text}</div>`
+
+const checksBlock = (summary: string, problems: string, passed: string): string =>
+  `<div class="checks"><div class="checks-summary">${summary}</div>${
+    problems === "" ? "" : `<div role="table" aria-label="検証結果の問題">${problems}</div>`
+  }${passed}</div>`
+
 describe("reportChecksMarkdown", () => {
   it("総括行 → ng の行 → unobserved の行 → 通った行の <details> の順に組む", () => {
     const markdown = reportChecksMarkdown(
@@ -46,19 +83,14 @@ describe("reportChecksMarkdown", () => {
       NO_FAVOR,
     )
 
-    const order = [
-      markdown.indexOf('<div class="checks-summary">'),
-      markdown.indexOf('<div class="checks-problem checks-problem-ng"'),
-      markdown.indexOf('<div class="checks-problem checks-problem-unobserved"'),
-      markdown.indexOf('<div class="checks-passed"><details>'),
-    ]
-    expect(order.every((index) => index >= 0)).toBe(true)
-    expect(order).toEqual(order.toSorted((a, b) => a - b))
-    expect(markdown.startsWith('<div class="checks">')).toBe(true)
-    expect(markdown).toContain('role="table" aria-label="検証結果の問題"')
-    const [open = "", folded = ""] = markdown.split('<div class="checks-passed"><details>')
-    expect(open).not.toContain("架空の一")
-    expect(folded.indexOf("架空の一")).toBeLessThan(folded.indexOf("架空の四"))
+    expect(markdown).toBe(
+      checksBlock(
+        okPart(2) + unobservedPart + ngPart,
+        ngRow({ label: "架空の三" }, detail("架空の落ちた理由")) +
+          unobservedRow({ label: "架空の二" }, detail("架空の理由") + how("架空の確かめ方")),
+        passedBlock(2, "架空の一 · 架空の四", okRow("架空の一") + okRow("架空の四")),
+      ),
+    )
   })
 
   it("総括行は通った件数と figure・確かめていない件数・落ちた件数を、この順に並べる", () => {
@@ -76,27 +108,18 @@ describe("reportChecksMarkdown", () => {
       ),
     )
 
-    expect(summary).toContain(
-      '<span class="checks-summary-part checks-summary-ok"><span class="checks-summary-mark">✓</span>検証 3件 ' +
-        '<span class="checks-summary-word">通った</span></span>' +
-        '<span class="checks-summary-figures">単体 12 · E2E 3</span>' +
-        '<span class="checks-summary-part checks-summary-unobserved"><span class="checks-summary-mark">？</span>1件 ' +
-        '<span class="checks-summary-word">確かめていない</span></span>' +
-        '<span class="checks-summary-part checks-summary-ng"><span class="checks-summary-mark">✕</span>1件 ' +
-        '<span class="checks-summary-word">落ちた</span></span>',
+    expect(summary).toBe(
+      `<div class="checks-summary">${okPart(3)}<span class="checks-summary-figures">単体 12 · E2E 3</span>${unobservedPart}${ngPart}`,
     )
   })
 
   it("総括行は無い部分を出さない。通った項目が無ければ頭は「検証」の語だけ", () => {
-    const allOk = summaryOf(reportChecksMarkdown([check("ok", "架空の一")], UNMEASURED, NO_FAVOR))
-    expect(allOk).not.toContain("checks-summary-unobserved")
-    expect(allOk).not.toContain("checks-summary-ng")
-    expect(allOk).not.toContain("checks-summary-figures")
-
-    const onlyNg = reportChecksMarkdown([check("ng", "架空の一")], UNMEASURED, NO_FAVOR)
-    expect(summaryOf(onlyNg)).toContain('<span class="checks-summary-lead">検証</span>')
-    expect(summaryOf(onlyNg)).not.toContain("checks-summary-ok")
-    expect(onlyNg).not.toContain("<details")
+    expect(reportChecksMarkdown([check("ok", "架空の一")], UNMEASURED, NO_FAVOR)).toBe(
+      checksBlock(okPart(1), "", passedBlock(1, "架空の一", okRow("架空の一"))),
+    )
+    expect(reportChecksMarkdown([check("ng", "架空の一")], UNMEASURED, NO_FAVOR)).toBe(
+      checksBlock(LEAD + ngPart, ngRow({ label: "架空の一" }), ""),
+    )
   })
 
   it("お願いがあるときだけ、総括行の右端にお願いの塊へ飛ぶ印を置く", () => {
@@ -106,10 +129,18 @@ describe("reportChecksMarkdown", () => {
       id: "favor-toolu_r1",
     })
 
-    expect(summaryOf(withFavor)).toMatch(
-      /<span class="checks-summary-favor"><a href="#favor-toolu_r1">.*お願い 1 ↓<\/a><\/span>$/u,
+    const passed = passedBlock(1, "架空の一", okRow("架空の一"))
+    expect(withFavor).toBe(
+      checksBlock(
+        okPart(1) +
+          '<span class="checks-summary-favor"><a href="#favor-toolu_r1"><span class="checks-summary-favor-mark">●</span>お願い 1 ↓</a></span>',
+        "",
+        passed,
+      ),
     )
-    expect(reportChecksMarkdown(checks, UNMEASURED, NO_FAVOR)).not.toContain("<a ")
+    expect(reportChecksMarkdown(checks, UNMEASURED, NO_FAVOR)).toBe(
+      checksBlock(okPart(1), "", passed),
+    )
   })
 
   it("全部 ok なら総括行と、通った行を畳んだ <details> だけを置く", () => {
@@ -119,13 +150,17 @@ describe("reportChecksMarkdown", () => {
       NO_FAVOR,
     )
 
-    expect(markdown).not.toContain("checks-problem")
-    expect(markdown).toContain(
-      '<div class="checks-passed"><details><summary><span class="checks-passed-mark">✓ 通った 3件</span>' +
-        '<span class="checks-passed-labels">架空の一 · 架空の二 · 架空の三</span></summary>' +
-        '<div role="table" aria-label="検証結果">',
+    expect(markdown).toBe(
+      checksBlock(
+        okPart(3),
+        "",
+        passedBlock(
+          3,
+          "架空の一 · 架空の二 · 架空の三",
+          okRow("架空の一") + okRow("架空の二") + okRow("架空の三"),
+        ),
+      ),
     )
-    expect(markdown.match(/<div class="check check-ok" role="row">/gu)).toHaveLength(3)
   })
 
   it("畳んだ行の summary は label の頭（最初の全角の括弧の前。無ければ全文）を連ねる", () => {
@@ -135,11 +170,16 @@ describe("reportChecksMarkdown", () => {
       NO_FAVOR,
     )
 
-    expect(markdown).toContain(
-      '<span class="checks-passed-labels">疑似セッションの迎える画面 · 括弧の無い項目</span>',
-    )
-    expect(markdown).toContain(
-      '<span class="check-label">疑似セッションの迎える画面（1024×768）で見る</span>',
+    expect(markdown).toBe(
+      checksBlock(
+        okPart(2),
+        "",
+        passedBlock(
+          2,
+          "疑似セッションの迎える画面 · 括弧の無い項目",
+          okRow("疑似セッションの迎える画面（1024×768）で見る") + okRow("括弧の無い項目"),
+        ),
+      ),
     )
   })
 
@@ -161,19 +201,19 @@ describe("reportChecksMarkdown", () => {
       NO_FAVOR,
     )
 
-    expect(markdown).not.toContain("架空の経緯")
-    expect(markdown).toContain(
-      '<div class="checks-problem checks-problem-ng" role="row">' +
-        '<span class="checks-problem-mark">✕ <span class="checks-problem-word">落ちた</span></span>' +
-        '<div class="checks-problem-body"><div class="checks-problem-head">' +
-        '<span class="checks-problem-label">架空の二</span>' +
-        '<span class="checks-problem-figure">56 件中 1 件</span>' +
-        '<span class="checks-problem-time">1分02秒</span></div>' +
-        '<div class="checks-problem-detail">架空の落ちた理由</div></div></div>',
-    )
-    expect(markdown).toContain(
-      '<div class="checks-problem-detail">架空の理由</div>' +
-        '<div class="checks-problem-how"><span class="checks-problem-how-label">確かめ方:</span> 架空の窓を開いて見る</div>',
+    expect(markdown).toBe(
+      checksBlock(
+        okPart(1) + unobservedPart + ngPart,
+        ngRow(
+          { label: "架空の二", figure: "56 件中 1 件", time: "1分02秒" },
+          detail("架空の落ちた理由"),
+        ) +
+          unobservedRow(
+            { label: "架空の三", time: "" },
+            detail("架空の理由") + how("架空の窓を開いて見る"),
+          ),
+        passedBlock(1, "架空の一", okRow("架空の一")),
+      ),
     )
   })
 
@@ -187,17 +227,19 @@ describe("reportChecksMarkdown", () => {
       NO_FAVOR,
     )
 
-    expect(markdown).toContain(
-      '<div class="checks-problem checks-problem-blocked" role="row">' +
-        '<span class="checks-problem-mark">⊘ <span class="checks-problem-word">止まっている</span></span>',
-    )
-    expect(summaryOf(markdown)).toContain(
-      '<span class="checks-summary-part checks-summary-blocked"><span class="checks-summary-mark">⊘</span>1件 ' +
-        '<span class="checks-summary-word">止まっている</span></span>' +
-        '<span class="checks-summary-part checks-summary-ng">',
-    )
-    expect(markdown.indexOf("checks-problem-ng")).toBeLessThan(
-      markdown.indexOf("checks-problem-blocked"),
+    expect(markdown).toBe(
+      checksBlock(
+        LEAD + summaryPart("blocked", "⊘", "1件", "止まっている") + ngPart,
+        ngRow({ label: "架空の落ちた項目" }) +
+          problemRow(
+            "blocked",
+            "⊘",
+            "止まっている",
+            { label: "架空の止まった項目" },
+            detail("架空の止めている前提"),
+          ),
+        "",
+      ),
     )
   })
 
@@ -208,7 +250,13 @@ describe("reportChecksMarkdown", () => {
       NO_FAVOR,
     )
 
-    expect(markdown).not.toContain("checks-problem-how")
+    expect(markdown).toBe(
+      checksBlock(
+        LEAD + unobservedPart + ngPart,
+        ngRow({ label: "架空の二" }) + unobservedRow({ label: "架空の一" }),
+        "",
+      ),
+    )
   })
 
   it("通った行の一覧は状態・label・figure・所要時間の4列で、figure と時間が空でも列は残る", () => {
@@ -221,10 +269,17 @@ describe("reportChecksMarkdown", () => {
       NO_FAVOR,
     )
 
-    expect(markdown).toContain(
-      '<span class="check-figure">56 件中 1 件</span><span class="check-time">1分02秒</span>',
+    expect(markdown).toBe(
+      checksBlock(
+        okPart(2) + '<span class="checks-summary-figures">56 件中 1 件</span>',
+        "",
+        passedBlock(
+          2,
+          "架空の一 · 架空の二",
+          okRow("架空の一", "56 件中 1 件", "1分02秒") + okRow("架空の二"),
+        ),
+      ),
     )
-    expect(markdown).toContain('<span class="check-figure"></span><span class="check-time"></span>')
   })
 
   it("command の所要時間が測れていれば添え、測れていなければ添えない。空の command は引きに行かない", () => {
@@ -259,14 +314,19 @@ describe("reportChecksMarkdown", () => {
       NO_FAVOR,
     )
 
-    expect(markdown).toContain('<span class="checks-problem-figure">&lt;i&gt;1&lt;/i&gt;</span>')
-    expect(markdown).toContain(
-      '<span class="checks-problem-label">&lt;b&gt;架空&lt;/b&gt; &amp; 検査</span>',
+    expect(markdown).toBe(
+      checksBlock(
+        okPart(1) +
+          '<span class="checks-summary-figures">&lt;i&gt;2&lt;/i&gt;</span>' +
+          unobservedPart +
+          ngPart,
+        ngRow(
+          { label: "&lt;b&gt;架空&lt;/b&gt; &amp; 検査", figure: "&lt;i&gt;1&lt;/i&gt;" },
+          detail("架空の 件数"),
+        ) + unobservedRow({ label: "架空の目視" }, how("&lt;a&gt;窓&lt;/a&gt; を開く")),
+        passedBlock(1, "架空の一", okRow("架空の一", "&lt;i&gt;2&lt;/i&gt;")),
+      ),
     )
-    expect(markdown).toContain('<div class="checks-problem-detail">架空の 件数</div>')
-    expect(markdown).toContain("&lt;a&gt;窓&lt;/a&gt; を開く</div>")
-    expect(markdown).toContain('<span class="checks-summary-figures">&lt;i&gt;2&lt;/i&gt;</span>')
-    expect(markdown).not.toContain("\n")
   })
 
   it("label・figure・detail・howToVerify のバッククォートは外し、command には手を付けない", () => {
@@ -284,11 +344,14 @@ describe("reportChecksMarkdown", () => {
       NO_FAVOR,
     )
 
-    expect(markdown).not.toContain("`")
-    expect(markdown).toContain("pnpm run check を打った")
-    expect(markdown).toContain("a.ts が落ちた")
-    expect(markdown).toContain("b.ts を開く")
-    expect(markdown).toContain("架空 の確認")
+    expect(markdown).toBe(
+      checksBlock(
+        okPart(1) + unobservedPart + ngPart,
+        ngRow({ label: "pnpm run check を打った", figure: "2 件" }, detail("a.ts が落ちた")) +
+          unobservedRow({ label: "架空の目視" }, how("b.ts を開く")),
+        passedBlock(1, "架空 の確認", okRow("架空 の確認")),
+      ),
+    )
   })
 
   it("空なら何も描かない", () => {

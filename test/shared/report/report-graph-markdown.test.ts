@@ -6,6 +6,19 @@ import {
   graphMarkdown,
 } from "../../fixture/report-markdown.ts"
 
+function legend(...items: readonly (readonly [string, string])[]): string {
+  return (
+    '<div class="graph-legend">' +
+    items
+      .map(
+        ([swatch, label]) =>
+          `<span class="graph-legend-item"><span class="graph-legend-swatch graph-legend-${swatch}" aria-hidden="true"></span>${label}</span>`,
+      )
+      .join("") +
+    "</div>"
+  )
+}
+
 describe("graph の塊の mermaid のソースと凡例", () => {
   it("graph は ID を n0 から振り直し、ラベルを引用符で包んだ flowchart にして図の番号と題を付ける", () => {
     expect(
@@ -32,29 +45,43 @@ describe("graph の塊の mermaid のソースと凡例", () => {
   it("graph の節点の説明はラベルの2行目に小さい字で置き、HTML に読まれる記号は実体にする", () => {
     const markdown = graphMarkdown("甲 | 説明 <b> & 続き\n甲 -> 乙\n甲 -> 丙")
 
-    expect(markdown).toContain('  n0["甲<br/><small>説明 #lt;b#gt; #amp; 続き</small>"]')
-    expect(markdown).toContain('  n1["乙"]')
+    expect(markdown).toBe(
+      fencedFigureCaptioned(
+        [
+          "```mermaid",
+          "flowchart LR",
+          '  n0["甲<br/><small>説明 #lt;b#gt; #amp; 続き</small>"]',
+          '  n1["乙"]',
+          '  n2["丙"]',
+          "  n0 --> n1",
+          "  n0 --> n2",
+          "```",
+        ].join("\n"),
+      ),
+    )
   })
 
   it("graph の囲みを subgraph にして、群の外の節点を先に宣言し、群ごとに地の色の style を足す", () => {
     const markdown = graphMarkdown("A -> B\n[架空の群]\nB -> C\n[]\nD")
 
-    expect(markdown).toContain(
-      [
-        "flowchart LR",
-        '  n0["A"]',
-        '  n3["D"]',
-        '  subgraph g0["架空の群"]',
-        '    n1["B"]',
-        '    n2["C"]',
-        "  end",
-        "  n0 --> n1",
-        "  n1 --> n2",
-        "  style g0 fill:var(--graph-ground-1),stroke:var(--rule-quiet),stroke-width:1px",
-        "```",
-      ].join("\n"),
+    expect(markdown).toBe(
+      fencedFigureCaptioned(
+        [
+          "```mermaid",
+          "flowchart LR",
+          '  n0["A"]',
+          '  n3["D"]',
+          '  subgraph g0["架空の群"]',
+          '    n1["B"]',
+          '    n2["C"]',
+          "  end",
+          "  n0 --> n1",
+          "  n1 --> n2",
+          "  style g0 fill:var(--graph-ground-1),stroke:var(--rule-quiet),stroke-width:1px",
+          "```",
+        ].join("\n"),
+      ),
     )
-    expect(markdown).not.toContain("graph-legend")
   })
 
   it("色の目印の無い群に地の色を順に当て、3つで巡る。目印のある群は数えない", () => {
@@ -77,15 +104,32 @@ describe("graph の塊の mermaid のソースと凡例", () => {
   it("graph の戻り道を戻り道の色の破線にし、凡例に「戻り道」を足す。変更の印は戻り道より先に効く", () => {
     const markdown = graphMarkdown("A -> B\nA <- B: 呼び直す\n+ B <- C")
 
-    expect(markdown).toContain('  n1 -->|"呼び直す"| n0')
-    expect(markdown).toContain(
-      [
-        "  linkStyle 1 stroke:var(--graph-return),stroke-width:2px,stroke-dasharray:5 4",
-        "  linkStyle 2 stroke:var(--state-ok),stroke-width:2px,stroke-dasharray:5 4",
-      ].join("\n"),
+    expect(markdown).toBe(
+      fencedFigureCaptioned(
+        [
+          "```mermaid",
+          "flowchart LR",
+          '  n0["A"]',
+          '  n1["B"]',
+          '  n2["C"]',
+          "  n0 --> n1",
+          '  n1 -->|"呼び直す"| n0',
+          "  n2 --> n1",
+          "  classDef added stroke:var(--state-ok),stroke-width:3px",
+          "  linkStyle 1 stroke:var(--graph-return),stroke-width:2px,stroke-dasharray:5 4",
+          "  linkStyle 2 stroke:var(--state-ok),stroke-width:2px,stroke-dasharray:5 4",
+          "```",
+          "",
+          legend(
+            ["added", "足した"],
+            ["removed", "消した"],
+            ["changed", "変えた"],
+            ["return", "戻り道"],
+          ),
+        ].join("\n"),
+      ),
     )
-    expect(markdown).toContain('graph-legend-return" aria-hidden="true"></span>戻り道')
-    expect(graphMarkdown("A -> B\nB -> C")).not.toContain("graph-legend-return")
+    expect(graphMarkdown("A -> B\nA -> C").match(/graph-legend-return/g)).toBeNull()
   })
 
   it.each([
@@ -114,27 +158,46 @@ describe("graph の塊の mermaid のソースと凡例", () => {
   it("graph の印を classDef / class / linkStyle にし、凡例は印のある図にだけ付ける", () => {
     const marked = graphMarkdown("+ A -> B\n- B -> C: 語\n~ D\n- E\nB -> D")
 
-    expect(marked).toContain(
-      [
-        "  classDef added stroke:var(--state-ok),stroke-width:3px",
-        "  classDef removed stroke:var(--state-ng),stroke-width:3px,stroke-dasharray:5 4",
-        "  classDef changed stroke:var(--state-warn),stroke-width:3px",
-        "  class n3 changed",
-        "  class n4 removed",
-        "  linkStyle 0 stroke:var(--state-ok),stroke-width:2px",
-        "  linkStyle 1 stroke:var(--state-ng),stroke-width:2px,stroke-dasharray:5 4",
-        "```",
-      ].join("\n"),
+    expect(marked).toBe(
+      fencedFigureCaptioned(
+        [
+          "```mermaid",
+          "flowchart LR",
+          '  n0["A"]',
+          '  n1["B"]',
+          '  n2["C"]',
+          '  n3["D"]',
+          '  n4["E"]',
+          "  n0 --> n1",
+          '  n1 -->|"語"| n2',
+          "  n1 --> n3",
+          "  classDef added stroke:var(--state-ok),stroke-width:3px",
+          "  classDef removed stroke:var(--state-ng),stroke-width:3px,stroke-dasharray:5 4",
+          "  classDef changed stroke:var(--state-warn),stroke-width:3px",
+          "  class n3 changed",
+          "  class n4 removed",
+          "  linkStyle 0 stroke:var(--state-ok),stroke-width:2px",
+          "  linkStyle 1 stroke:var(--state-ng),stroke-width:2px,stroke-dasharray:5 4",
+          "```",
+          "",
+          legend(["added", "足した"], ["removed", "消した"], ["changed", "変えた"]),
+        ].join("\n"),
+      ),
     )
-    expect(marked).toContain('<div class="graph-legend">')
-    expect(marked).toContain("足した")
-    expect(marked).toContain("消した")
-    expect(marked).toContain("変えた")
-
-    const plain = graphMarkdown("A -> B")
-    expect(plain).not.toContain("classDef")
-    expect(plain).not.toContain("linkStyle")
-    expect(plain).not.toContain("graph-legend")
+    expect(graphMarkdown("A -> B\nA -> C")).toBe(
+      fencedFigureCaptioned(
+        [
+          "```mermaid",
+          "flowchart LR",
+          '  n0["A"]',
+          '  n1["B"]',
+          '  n2["C"]',
+          "  n0 --> n1",
+          "  n0 --> n2",
+          "```",
+        ].join("\n"),
+      ),
+    )
   })
 
   it("graph の色の目印を系列色の classDef（地は薄い塗り）/ style / linkStyle にし、点線の辺を破線にして、凡例を図の下に並べる", () => {
@@ -147,24 +210,42 @@ describe("graph の塊の mermaid のソースと凡例", () => {
       ],
     )
 
-    expect(toned).toContain(
-      "  style g0 fill:var(--surface-raised),stroke:var(--chart-series-1),stroke-width:2px",
+    expect(toned).toBe(
+      fencedFigureCaptioned(
+        [
+          "```mermaid",
+          "flowchart LR",
+          '  n3["D"]',
+          '  n4["E"]',
+          '  n5["F"]',
+          '  subgraph g0["層"]',
+          '    n0["A"]',
+          '    n1["B"]',
+          '    n2["C"]',
+          "  end",
+          "  n1 --> n2",
+          '  n3 -->|"語"| n4',
+          "  n4 --> n3",
+          "  n5 --> n0",
+          "  style g0 fill:var(--surface-raised),stroke:var(--chart-series-1),stroke-width:2px",
+          "  classDef added stroke:var(--state-ok),stroke-width:3px",
+          "  classDef tone-b fill:var(--graph-tone-fill-b),stroke:var(--chart-series-2),stroke-width:3px",
+          "  class n0 tone-b",
+          "  class n5 added",
+          "  linkStyle 0 stroke:var(--chart-series-3),stroke-width:2px,stroke-dasharray:5 4",
+          "  linkStyle 1 stroke:var(--chart-series-2),stroke-width:2px",
+          "  linkStyle 2 stroke-dasharray:5 4",
+          "```",
+          "",
+          legend(
+            ["added", "足した"],
+            ["removed", "消した"],
+            ["changed", "変えた"],
+            ["tone-a", "甲"],
+            ["tone-b", "乙"],
+          ),
+        ].join("\n"),
+      ),
     )
-    expect(toned).toContain(
-      "  classDef tone-b fill:var(--graph-tone-fill-b),stroke:var(--chart-series-2),stroke-width:3px",
-    )
-    expect(toned).not.toContain("classDef tone-a")
-    expect(toned).toContain("  class n0 tone-b")
-    expect(toned).toContain("  class n5 added")
-    expect(toned).toContain(
-      [
-        "  linkStyle 0 stroke:var(--chart-series-3),stroke-width:2px,stroke-dasharray:5 4",
-        "  linkStyle 1 stroke:var(--chart-series-2),stroke-width:2px",
-        "  linkStyle 2 stroke-dasharray:5 4",
-      ].join("\n"),
-    )
-    expect(toned).toContain('class="graph-legend-swatch graph-legend-tone-a"')
-    expect(toned).toContain("乙")
-    expect(toned.indexOf("graph-legend-tone-a")).toBeLessThan(toned.indexOf("graph-legend-tone-b"))
   })
 })

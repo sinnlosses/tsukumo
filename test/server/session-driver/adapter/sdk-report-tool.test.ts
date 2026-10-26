@@ -17,6 +17,9 @@ import {
   workServer,
 } from "../../../fixture/sdk-tool.ts"
 
+const MERMAID_FAULT_LINE =
+  "- mermaid の図の構文が割れている（1個目の 2 行目・字句 NEWLINE）。その行の書き方を直す"
+
 describe("report でターンを閉じる", () => {
   it("通った report の結果にだけ claude/endTurn を付ける", async () => {
     const reply = await callTool(workServer(), "report", {
@@ -91,8 +94,7 @@ describe("report でターンを閉じる", () => {
     )
 
     expect(broken.isError).toBe(true)
-    expect(broken.text).toContain("1個目の 2 行目")
-    expect(broken.text).not.toContain("there")
+    expect(broken.text.split("\n")[1]).toBe(MERMAID_FAULT_LINE)
     expect(fixed).toEqual({ text: "架空の結論", isError: false, endsTurn: true })
   })
 
@@ -108,8 +110,7 @@ describe("report でターンを閉じる", () => {
     })
 
     expect(reply.isError).toBe(true)
-    expect(reply.text).toContain("1個目の 2 行目")
-    expect(reply.text).not.toContain("there")
+    expect(reply.text.split("\n")[1]).toBe(MERMAID_FAULT_LINE)
   })
 
   it("引き継ぐ土台が無いのに closing を省いた report は組んだ値の形の検査で落ち、ターンを閉じない", async () => {
@@ -230,8 +231,8 @@ describe("report の本文（sections）", () => {
     const properties = reply.result.tools.find((tool) => tool.name === "report")?.inputSchema
       .properties
 
-    expect(Object.keys(properties ?? {})).toContain("sections")
-    expect(Object.keys(properties ?? {})).not.toContain("body")
+    expect(properties).toHaveProperty("sections")
+    expect(properties).not.toHaveProperty("body")
   })
 
   it("figure と sections が共有する塊は definitions に1回だけ置いて参照し、report の引数の schema が字数の上限を超えない", async () => {
@@ -343,7 +344,9 @@ describe("report の本文（sections）", () => {
 
     expect(accepted).toEqual({ text: "架空の結論", isError: false, endsTurn: true })
     expect(rejected.isError).toBe(true)
-    expect(rejected.text).toContain("`list` の塊")
+    expect(rejected.text.split("\n")[1]).toBe(
+      "- `markdown` の塊に塊で書ける記法（箇条書き）がある。代わりに`list` の塊を使う",
+    )
   })
 })
 

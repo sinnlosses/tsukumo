@@ -7,6 +7,7 @@ import process from "node:process"
 
 import { beforeEach, describe, expect, test } from "vitest"
 
+import { BASH_GUARD_HOOKS } from "../../../../scripts/hook/lib/bash-denial.ts"
 import { runSubprocess } from "../../../fixture/subprocess.ts"
 import { useTempDir } from "../../../fixture/temp-dir.ts"
 
@@ -92,15 +93,18 @@ describe("log-only の hook", () => {
 
     const replay = await runHook(["scripts/hook/hook-denial-replay.ts"], "")
     expect(replay.exitCode).toBe(0)
-    expect(replay.stdout).toContain("deny-broad-kill pkill-killall: 2（main 1 / subagent 1）")
+    const [heading, entry, ...rest] = replay.stdout.split("\n")
+    expect(heading).toBe("直近 7 日に、log-only で拒むはずだった形")
+    expect(entry).toMatch(/^deny-broad-kill pkill-killall: 2（main 1 \/ subagent 1）/)
+    expect(rest).toEqual([""])
 
     const tally = await runHook(["scripts/hook/hook-denial-tally.ts"], "")
-    expect(tally.stdout).toContain("deny-broad-kill: 0")
+    expect(tallyLines(tally.stdout)).toEqual(expectedTally({}))
   })
 
   test("log-only の記録が無ければ、無いと出す", async () => {
     const replay = await runHook(["scripts/hook/hook-denial-replay.ts"], "")
-    expect(replay.stdout).toContain("拒むはずだった形はない")
+    expect(replay.stdout).toBe("直近 7 日に、log-only で拒むはずだった形はない\n")
   })
 })
 
@@ -111,19 +115,21 @@ describe("集計", () => {
 
     const result = await runHook(["scripts/hook/hook-denial-tally.ts"], "")
     expect(result.exitCode).toBe(0)
-    expect(result.stdout).toContain("deny-broad-kill: 1\n  pkill-killall: 1")
-    expect(result.stdout).toContain("deny-sed-in-place: 0")
-    expect(result.stdout).toContain("deny-background-verify: 0")
-    expect(result.stdout).toContain("deny-stdin-wait-cat: 0")
-    expect(result.stdout).not.toContain("（未登録）")
+    expect(tallyLines(result.stdout)).toEqual(
+      expectedTally({
+        "deny-broad-kill": [
+          "deny-broad-kill: 1",
+          "  pkill-killall: 1（main 1 / subagent 0 / 不明 0）",
+        ],
+      }),
+    )
   })
 
   test("単独の deny-* の入口で登録されていても、その名前を並べる", async () => {
     writeRegistration(['node "$CLAUDE_PROJECT_DIR/scripts/hook/deny-broad-kill.ts"'])
 
     const result = await runHook(["scripts/hook/hook-denial-tally.ts"], "")
-    expect(result.stdout).toContain("deny-broad-kill: 0")
-    expect(result.stdout).not.toContain("deny-sed-in-place")
+    expect(tallyLines(result.stdout)).toEqual(["deny-broad-kill: 0", "e2e-run-limit: 0"])
   })
 
   test("hook ではなく E2E の入口が拒んだ記録も、未登録とせずに数える", async () => {
@@ -136,8 +142,11 @@ describe("集計", () => {
       `${JSON.stringify({ at, hook: "e2e-run-limit", rule: "run-limit", actor: "subagent" })}\n`,
     )
     const result = await runHook(["scripts/hook/hook-denial-tally.ts"], "")
-    expect(result.stdout).toContain("e2e-run-limit: 1\n  run-limit: 1")
-    expect(result.stdout).not.toContain("（未登録）")
+    expect(tallyLines(result.stdout)).toEqual(
+      expectedTally({
+        "e2e-run-limit": ["e2e-run-limit: 1", "  run-limit: 1（main 0 / subagent 1 / 不明 0）"],
+      }),
+    )
   })
 
   test("規則のキーごとに main / subagent / 不明の件数を出し、actor の欄が無い旧い行は不明に数える", async () => {
@@ -156,8 +165,13 @@ describe("集計", () => {
       lines.map((line) => `${JSON.stringify(line)}\n`).join(""),
     )
     const result = await runHook(["scripts/hook/hook-denial-tally.ts"], "")
-    expect(result.stdout).toContain(
-      "deny-broad-kill: 4\n  pkill-killall: 4（main 1 / subagent 2 / 不明 1）",
+    expect(tallyLines(result.stdout)).toEqual(
+      expectedTally({
+        "deny-broad-kill": [
+          "deny-broad-kill: 4",
+          "  pkill-killall: 4（main 1 / subagent 2 / 不明 1）",
+        ],
+      }),
     )
   })
 
@@ -171,17 +185,17 @@ describe("集計", () => {
       `${JSON.stringify({ at, hook: "tw-commit-guard", rule: "shell-write", actor: "subagent" })}\n`,
     )
     const result = await runHook(["scripts/hook/hook-denial-tally.ts"], "")
-    expect(result.stdout).toContain(
-      "tw-commit-guard（未登録）: 1\n  shell-write: 1（main 0 / subagent 1 / 不明 0）",
-    )
+    expect(tallyLines(result.stdout)).toEqual([
+      ...expectedTally({}),
+      "tw-commit-guard（未登録）: 1",
+      "  shell-write: 1（main 0 / subagent 1 / 不明 0）",
+    ])
   })
 
   test("記録が無ければ全部0で出す", async () => {
     writeRegistration()
     const result = await runHook(["scripts/hook/hook-denial-tally.ts"], "")
-    expect(result.stdout).toContain("deny-broad-kill: 0")
-    expect(result.stdout).toContain("deny-sed-in-place: 0")
-    expect(result.stdout).toContain("e2e-run-limit: 0")
+    expect(tallyLines(result.stdout)).toEqual(expectedTally({}))
   })
 
   test("期間の外の記録は数えない", async () => {
@@ -193,9 +207,17 @@ describe("集計", () => {
       `${JSON.stringify({ at: "2020-01-01T00:00:00Z", hook: "deny-broad-kill", rule: "pkill-killall", actor: "main" })}\n`,
     )
     const result = await runHook(["scripts/hook/hook-denial-tally.ts", "--days", "7"], "")
-    expect(result.stdout).toContain("deny-broad-kill: 0")
+    expect(tallyLines(result.stdout)).toEqual(expectedTally({}))
   })
 })
+
+function tallyLines(stdout: string): readonly string[] {
+  return stdout.split("\n").slice(1, -1)
+}
+
+function expectedTally(own: Readonly<Record<string, readonly string[]>>): readonly string[] {
+  return [...BASH_GUARD_HOOKS, "e2e-run-limit"].flatMap((hook) => own[hook] ?? [`${hook}: 0`])
+}
 
 const BASH_GUARD_COMMAND = 'node "$CLAUDE_PROJECT_DIR/scripts/hook/bash-guard.ts"'
 
