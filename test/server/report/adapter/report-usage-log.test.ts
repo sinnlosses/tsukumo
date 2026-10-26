@@ -153,6 +153,7 @@ describe("createReportUsageLog", () => {
       reasons: ["resend"],
       argumentChars: { total: 800, fields: { conclusion: 50 } },
       inheritedFields: ["sections"],
+      toolErrorFields: [{ field: "sections.n.kind", code: "invalid_union" }],
     } as const
 
     log.appendRejection(rejection)
@@ -173,6 +174,7 @@ describe("createReportUsageLog", () => {
         reasons,
         argumentChars: { total: 800, fields: {} },
         inheritedFields: [],
+        toolErrorFields: [],
       }) as const
 
     it("差し戻しのあとに受け付けた呼び出しが来ると、差し戻しの行に空の理由と次の字数が付く", async () => {
@@ -227,6 +229,7 @@ describe("createReportUsageLog", () => {
       reasons: ["long-code"],
       argumentChars: { total: 800, fields: { conclusion: 50 } },
       inheritedFields: [],
+      toolErrorFields: [],
     })
     await log.flush()
 
@@ -266,6 +269,7 @@ describe("createReportUsageLog", () => {
       reasons: ["resend", "long-paragraph"],
       argumentChars: { total: 800, fields: { conclusion: 50 } },
       inheritedFields: ["sections"],
+      toolErrorFields: [],
     })
     await log.flush()
 
@@ -292,6 +296,26 @@ describe("createReportUsageLog", () => {
     })
   })
 
+  it("形の検査で落ちた欄があれば、差し戻しの行に欄名と code だけを書く", async () => {
+    const log = createReportUsageLog("json-schema", root())
+
+    log.appendRejection({
+      mode: "reject",
+      at: at(9, 5),
+      sessionId: "claude-session-1",
+      reasons: ["tool-error"],
+      argumentChars: { total: 800, fields: {} },
+      inheritedFields: [],
+      toolErrorFields: [{ field: "sections.n.blocks.n.kind", code: "invalid_union" }],
+    })
+    await log.flush()
+
+    const [record] = readLines("2026-09-22.jsonl")
+    expect(record).toMatchObject({
+      toolErrorFields: [{ field: "sections.n.blocks.n.kind", code: "invalid_union" }],
+    })
+  })
+
   it("短い型の表記で起こした記録は、受け付けと差し戻しの両方の行にそれを書く", async () => {
     const log = createReportUsageLog("short-type", root())
 
@@ -303,6 +327,7 @@ describe("createReportUsageLog", () => {
       reasons: ["tool-error"],
       argumentChars: { total: 800, fields: { conclusion: 50 } },
       inheritedFields: [],
+      toolErrorFields: [],
     })
     await log.flush()
 

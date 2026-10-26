@@ -21,10 +21,6 @@ import { dateFileNames, readJsonLines } from "../../src/server/adapter/lib/jsonl
 import { reportUsageDir } from "../../src/server/report/adapter/report-usage-log.ts"
 import { REPORT_PROCEDURE_REJECTIONS } from "../../src/server/report/core/procedure-rejection.ts"
 import {
-  REPORT_REJECTION_MODES,
-  type ReportRejectionMode,
-} from "../../src/server/report/core/rejection-mode.ts"
-import {
   ESCAPE_NOTATIONS,
   MARKDOWN_NOTATIONS,
 } from "../../src/server/report/core/report-markdown-notation.ts"
@@ -42,6 +38,8 @@ import { REPORT_SHAPE_TAGS } from "../../src/shared/report/report-shape-tag.ts"
 import { REPORT_GENRES } from "../../src/shared/report/report-task.ts"
 import { parseDaysOption } from "../shared/days-option.ts"
 import { argumentCharsSection } from "./argument-chars-section.ts"
+import { table } from "./count-table.ts"
+import { countedSection } from "./counted-section.ts"
 import { rejectionResolutionSection } from "./rejection-resolution-section.ts"
 import {
   type CountedRecord,
@@ -61,6 +59,7 @@ import {
   shareLine,
   shortTableSection,
 } from "./report-usage-section.ts"
+import { toolErrorFieldSection } from "./tool-error-field-section.ts"
 
 const USAGE = `使い方:
   node scripts/runtime/report-block-usage.ts             # 直近28日
@@ -173,6 +172,8 @@ process.stdout.write(
 process.stdout.write("\n\n")
 process.stdout.write(rejectionResolutionSection(rejections))
 process.stdout.write("\n\n")
+process.stdout.write(toolErrorFieldSection(rejections))
+process.stdout.write("\n\n")
 process.stdout.write(countedSection(records.length, counts))
 process.stdout.write("\n")
 
@@ -213,23 +214,6 @@ function readRecentRecords(
       return counted.success ? [counted.data] : []
     }),
   }
-}
-
-/** 段 `count` の条ごとに、通した `report` が当たった回数。割合は受け付けた `report` に対する。 */
-function countedSection(acceptedCount: number, countedRecords: readonly CountedRecord[]): string {
-  const countingNames = Object.entries<ReportRejectionMode>(REPORT_REJECTION_MODES)
-    .filter(([, mode]) => mode === "count")
-    .map(([reason]) => reason)
-  if (countingNames.length === 0 && countedRecords.length === 0) {
-    return "数えるだけの条 × 回数: 数えるだけの条は無い"
-  }
-  return table(
-    `数えるだけの条 × 回数（割合は受け付けた \`report\` ${String(acceptedCount)}回に対する）`,
-    countingNames,
-    countedRecords,
-    (record) => record.reasons,
-    acceptedCount,
-  )
 }
 
 /** メインが画像のファイルを Read したのに image の塊が無かったレポートの割合。 */
@@ -490,21 +474,4 @@ function figureKindsOf(record: UsageRecord): readonly string[] {
 /** `none` の理由。図を置いた行は無い。 */
 function noneReasonsOf(record: UsageRecord): readonly string[] {
   return "noneReason" in record ? [record.noneReason] : []
-}
-
-/** 名前ごとに「出た行の数」を数えた表。`knownNames` は0件でも出す。`total` は割合の分母で、既定は行の数。 */
-function table<Row>(
-  title: string,
-  knownNames: readonly string[],
-  usageRecords: readonly Row[],
-  namesOf: (record: Row) => readonly string[],
-  total: number = usageRecords.length,
-): string {
-  const names = [...new Set([...knownNames, ...usageRecords.flatMap(namesOf)])].toSorted()
-  const rows = names.map((name) => {
-    const count = usageRecords.filter((record) => namesOf(record).includes(name)).length
-    const percent = (total === 0 ? 0 : (count / total) * 100).toFixed(1)
-    return `  ${name.padEnd(26)} ${String(count).padStart(5)}  ${percent.padStart(5)}%`
-  })
-  return [`${title}:`, ...rows].join("\n")
 }

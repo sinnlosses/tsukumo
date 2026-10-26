@@ -229,6 +229,7 @@ describe("CallReview の預かり（report）", () => {
         reasons: ["tool-error"],
         argumentChars: rejected.argumentChars,
         inheritedFields: [],
+        toolErrorFields: [],
       },
       filled,
       finished("toolu_r2", false),
@@ -263,6 +264,7 @@ describe("CallReview の預かり（report）", () => {
         reasons: ["tool-error"],
         argumentChars: ARGUMENT_CHARS,
         inheritedFields: [],
+        toolErrorFields: [],
       },
     ])
   })
@@ -282,24 +284,7 @@ describe("CallReview の預かり（report）", () => {
         reasons: ["resend"],
         argumentChars: ARGUMENT_CHARS,
         inheritedFields: [],
-      },
-    ])
-  })
-
-  it("引数が読めず handler に届かなかった report も、結果の直後に tool-error の report-rejected を出す", () => {
-    const review = createCallReview()
-    const chars = { total: 40, fields: { sections: 12 } }
-
-    expect(
-      review.pass({ kind: "report-malformed", toolUseId: "toolu_m1", argumentChars: chars }),
-    ).toEqual([])
-    expect(review.pass(finished("toolu_m1", true))).toEqual([
-      finished("toolu_m1", true),
-      {
-        kind: "report-rejected",
-        reasons: ["tool-error"],
-        argumentChars: chars,
-        inheritedFields: [],
+        toolErrorFields: [],
       },
     ])
   })

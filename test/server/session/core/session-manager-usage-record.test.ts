@@ -156,6 +156,7 @@ describe("createSessionManager", () => {
         reasons: ["resend"],
         argumentChars: ARGUMENT_CHARS,
         inheritedFields: [],
+        toolErrorFields: [],
       })
       await waitForBatch()
 
@@ -173,6 +174,7 @@ describe("createSessionManager", () => {
         reasons: ["resend", "long-paragraph"],
         argumentChars: ARGUMENT_CHARS,
         inheritedFields: ["favor"],
+        toolErrorFields: [],
       })
       await waitForBatch()
 
@@ -184,6 +186,7 @@ describe("createSessionManager", () => {
           reasons: ["resend", "long-paragraph"],
           argumentChars: ARGUMENT_CHARS,
           inheritedFields: ["favor"],
+          toolErrorFields: [],
         },
       ])
       expect(entries).toEqual([])
@@ -210,6 +213,7 @@ describe("createSessionManager", () => {
           reasons: ["long-code"],
           argumentChars: ARGUMENT_CHARS,
           inheritedFields: [],
+          toolErrorFields: [],
         },
       ])
       expect(entries).toEqual([])

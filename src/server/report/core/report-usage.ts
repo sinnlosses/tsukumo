@@ -19,6 +19,7 @@ import type {
   ReportFigureUsage,
   ReportShapeTagUsage,
 } from "../../../shared/report/report-usage-record.ts"
+import type { ToolErrorField } from "../../../shared/report/tool-error-field.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import { markdownTreeOf, nodesInOrder } from "./markdown-tree.ts"
 import type { ReportRejectionMode } from "./rejection-mode.ts"
@@ -145,6 +146,8 @@ export type ReportRejectionEntry = {
   readonly reasons: readonly string[]
   readonly argumentChars: ReportArgumentChars
   readonly inheritedFields: readonly ReportArgumentField[]
+  /** 形の検査で落ちた欄。`tool-error` の差し戻し以外は空。 */
+  readonly toolErrorFields: readonly ToolErrorField[]
 }
 
 /** 差し戻しのあとに同じセッションで届いた次の `report` の呼び出し。受け付けなら `reasons` は空。 */

@@ -106,6 +106,7 @@ function toRejectionRecord(
     inheritedFields: entry.inheritedFields,
     reportSchema,
     ...(nextCall === undefined ? {} : { nextCall }),
+    ...(entry.toolErrorFields.length === 0 ? {} : { toolErrorFields: entry.toolErrorFields }),
   }
 }
 

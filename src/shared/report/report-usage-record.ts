@@ -8,6 +8,7 @@ import { REPORT_FIGURE_NONE_REASONS, reportFigureSchema } from "./report-block.t
 import { REPORT_SHAPE_TAGS } from "./report-shape-tag.ts"
 import { REPORT_GENRES, reportTaskSchema } from "./report-task.ts"
 import { REPORT_SCHEMA_VARIANTS } from "./schema-variant.ts"
+import { toolErrorFieldSchema } from "./tool-error-field.ts"
 
 /**
  * 行の形の版。形か数え方を変えたら上げ、古い行と見分ける。
@@ -191,6 +192,8 @@ export const reportRejectionRecordSchema = z
       .object({ reasons: z.array(z.string()).readonly(), chars: z.number() })
       .readonly()
       .optional(),
+    /** 形の検査で落ちた欄の名前と code。`tool-error` の `rejected` の行で、取れたときだけ持つ（版は上げない）。 */
+    toolErrorFields: z.array(toolErrorFieldSchema).readonly().optional(),
   })
   .readonly()
 

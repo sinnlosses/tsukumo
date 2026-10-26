@@ -85,6 +85,7 @@ export function recordSessionEvent(
       reasons: event.reasons,
       argumentChars: event.argumentChars,
       inheritedFields: event.inheritedFields,
+      toolErrorFields: event.kind === "report-rejected" ? event.toolErrorFields : [],
     })
   }
   if (event.kind === "turn-finished") {

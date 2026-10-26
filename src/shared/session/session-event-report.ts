@@ -8,6 +8,7 @@ import type { ReportCheck } from "../report/report-check.ts"
 import type { ReportImageSize } from "../report/report-image.ts"
 import type { ReportRetrospective } from "../report/report-retrospective.ts"
 import type { ReportTask } from "../report/report-task.ts"
+import type { ToolErrorField } from "../report/tool-error-field.ts"
 import type { SessionRemaining } from "./session-digest.ts"
 import type { SpeechEvent } from "./session-event-speech.ts"
 import type { WorkPlanClosing } from "./work-plan.ts"
@@ -86,12 +87,14 @@ export type ReportEvent =
    * `reasons` は差し戻しの種類の名前だけで、本文も文面も持たない。判定が差し戻したものはその理由、形の検査で落ちたもの（handler に届かなかったものと、組んだ値が落ちたもの）は `tool-error`。
    * `argumentChars` は呼び出しの生の引数の字数で、`inheritedFields` は引き継いだ欄の名前（どちらも受理した `report` と同じ）。
    * 引数が読めなかった呼び出しの `inheritedFields` は空。
+   * `toolErrorFields` は形の検査で落ちた欄（zod の `issues` の欄名と `code`）で、結果の本文から取れたときだけ入る。
    */
   | {
       readonly kind: "report-rejected"
       readonly reasons: readonly string[]
       readonly argumentChars: ReportArgumentChars
       readonly inheritedFields: readonly ReportArgumentField[]
+      readonly toolErrorFields: readonly ToolErrorField[]
     }
   /**
    * 通した `report` の呼び出しが、差し戻さず数えるだけの条に当てはまったとき、`CallReview` が描いた `report` の後ろに作る（記録の口で、画面の状態は読まない）。

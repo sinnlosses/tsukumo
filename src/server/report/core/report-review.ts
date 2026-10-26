@@ -55,6 +55,7 @@ import type { ReportRejectionModes, ReportRejectionReason } from "./rejection-mo
 import { reportRejectionText } from "./report-rejection.ts"
 import { reportViolations } from "./report-violation-check.ts"
 import type { ReportDraft } from "./report-violation.ts"
+import { toolErrorFieldsOf } from "./tool-error-field.ts"
 import type { TurnRejection } from "./turn-rejection.ts"
 
 /**
@@ -136,10 +137,12 @@ export function createReportReview(
   const rejectionOf = (
     argumentChars: ReportArgumentChars,
     inheritedFields: readonly ReportArgumentField[],
+    resultContent: string,
   ): SessionEvent => {
+    const toolErrorFields = handlerReasons === undefined ? toolErrorFieldsOf(resultContent) : []
     const reasons = handlerReasons ?? [REPORT_TOOL_ERROR_REASON]
     handlerReasons = undefined
-    return { kind: "report-rejected", reasons, argumentChars, inheritedFields }
+    return { kind: "report-rejected", reasons, argumentChars, inheritedFields, toolErrorFields }
   }
 
   const startTurn = (): void => {
@@ -270,7 +273,7 @@ export function createReportReview(
           const failed = malformed.find((candidate) => candidate.toolUseId === event.toolUseId)
           if (failed !== undefined) {
             malformed = malformed.filter((candidate) => candidate !== failed)
-            return [event, rejectionOf(failed.argumentChars, [])]
+            return [event, rejectionOf(failed.argumentChars, [], event.content)]
           }
           const report = held.find((candidate) => candidate.toolUseId === event.toolUseId)
           if (report === undefined) {
@@ -280,7 +283,7 @@ export function createReportReview(
           const counted = handlerCounted
           handlerCounted = []
           if (event.isError) {
-            return [event, rejectionOf(report.argumentChars, report.inheritedFields)]
+            return [event, rejectionOf(report.argumentChars, report.inheritedFields, event.content)]
           }
           drawn = [...drawn, report]
           news.markDrawn()

@@ -96,6 +96,8 @@ export const rejectionSchema = z.object({
   inheritedFields: z.array(z.string()),
   /** 次の呼び出しの結果（版22から）。欄の無い行と、次が来なかった行は持たない。 */
   nextCall: z.object({ reasons: z.array(z.string()), chars: z.number() }).optional(),
+  /** 形の検査で落ちた欄（`tool-error` の行のうち、本文から取れたもの）。 */
+  toolErrorFields: z.array(z.object({ field: z.string(), code: z.string() })).optional(),
 })
 export type RejectionRecord = z.infer<typeof rejectionSchema>
 
