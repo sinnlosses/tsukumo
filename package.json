@@ -29,6 +29,7 @@
     "step-check": "node scripts/dev/step-check.ts",
     "ship": "node scripts/dev/ship.ts",
     "harness-replay": "node scripts/dev/harness-replay.ts",
+    "test-against-base": "node scripts/dev/test-against-base.ts",
     "repo-map": "node scripts/dev/repo-map.ts"
   },
   "dependencies": {
