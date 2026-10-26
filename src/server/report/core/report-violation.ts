@@ -152,6 +152,12 @@ export type ReportViolation =
   | { readonly kind: "labeled-ordered"; readonly count: number }
   /** `text` の塊が、仮名も漢字も無く英語の語が並ぶ地の文になっている。`count` は該当の数。 */
   | { readonly kind: "non-japanese"; readonly count: number }
+  /** 地の文に、言い換え表（`PLAIN_WORDS`）の語がある。`spellings` は見つけた表の綴りで、書いた文面は持たない。 */
+  | {
+      readonly kind: "plain-word"
+      readonly count: number
+      readonly spellings: readonly string[]
+    }
   /**
    * `src/browser/` の `.tsx` か `.css` を `added` / `modified` に持つ `files` があるのに、`image` の塊も `beforeAfter` の `image` の側も無く、
    * `checks` に `unobserved`・`blocked` の行も無い。`count` は1か0。
@@ -204,6 +210,7 @@ export const VIOLATION_THRESHOLDS = {
   "label-in-item": 0,
   "labeled-ordered": 0,
   "non-japanese": 0,
+  "plain-word": 0,
   "browser-change-without-image": 0,
   "figure-contradiction": 0,
 } as const satisfies Record<ReportViolation["kind"], number>

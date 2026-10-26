@@ -23,6 +23,7 @@ import {
 } from "../../../shared/report/report-limit.ts"
 import { drawnSectionsOf } from "../../../shared/report/report-retrospective.ts"
 import { codeBlockMatchesFile } from "./code-block-match.ts"
+import { plainWordSpellingsIn } from "./plain-word-find.ts"
 import {
   badCardsIn,
   crowdedNoteCount,
@@ -77,6 +78,8 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
   const graphFaults = graphFaultsInSections(drawnSections)
   const graphToneFaults = graphToneFaultsInSections(drawnSections)
   const timelineFaultList = timelineFaults(drawnBlocks.filter((block) => block.kind === "timeline"))
+
+  const plainWords = plainWordSpellingsIn(report)
 
   const counted = [
     { kind: "long-conclusion", count: report.conclusionSentenceChars.length },
@@ -191,6 +194,7 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
       kind: "non-japanese",
       count: blocks.filter((block) => block.kind === "text" && isNonJapanese(block.text)).length,
     },
+    { kind: "plain-word", count: plainWords.length, spellings: plainWords },
     browserChangeWithoutImage(blocks, drawnBlocks, report.checks),
     figureContradiction(report.figure, report.sections),
   ] as const satisfies readonly ReportViolation[]

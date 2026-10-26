@@ -1,5 +1,6 @@
 // 規約違反を、差し戻すときの `report` の戻り値の文面にする。
 
+import { PLAIN_WORDS } from "../../../shared/report/plain-word.ts"
 import {
   MAX_EMPHASIS_ROWS,
   MAX_HEADING,
@@ -114,6 +115,8 @@ function violationLine(violation: ReportViolation): string {
       return `全部の項目に \`label\` がある3段以上の \`ordered\` の \`list\` が${violation.count}個ある。名前の付いた段を辿る流れは \`flow\` にする`
     case "non-japanese":
       return `仮名も漢字も無い英語の地の文が${violation.count}個ある。日本語で書き直す（識別子・パス・コマンド・コードは \`\` で囲めば英語のままでよい）`
+    case "plain-word":
+      return `地の文にわかりにくい語がある。${plainWordReplacements(violation.spellings)}。言い換えて書き直す（コード・引用の中は対象外）`
     case "browser-change-without-image":
       return "画面のファイルを変えたのに画像が無い。撮った画像を `image` か `beforeAfter` で渡すか、撮れない事情を `checks` の `unobserved` に書く"
     case "figure-contradiction":
@@ -121,4 +124,14 @@ function violationLine(violation: ReportViolation): string {
         ? `\`figure\` の reason が \`no-shape\` なのに、\`sections\` に流れ・つながり・構造を描く塊（\`list\` の \`flow\`・\`beforeAfter\`・\`graph\`・\`mermaid\`・\`svg\`）が${violation.count}個ある。その図を \`figure\` に置くか、合う reason にする`
         : `\`figure\` の reason が \`short-answer\` なのに、節が2つ以上ある。2〜3文で終わる答えでなければ \`figure\` に図を置くか、合う reason にする`
   }
+}
+
+/** 見つけた綴りごとに「綴り → 言い換え先」を並べる。表から取った語だけで、書かれた文面は写さない。 */
+function plainWordReplacements(spellings: readonly string[]): string {
+  return spellings
+    .map((spelling) => {
+      const word = PLAIN_WORDS.find((entry) => entry.spelling === spelling)
+      return word === undefined ? spelling : `「${spelling}」は「${word.replacement}」`
+    })
+    .join("・")
 }

@@ -57,6 +57,7 @@ export const REPORT_REJECTION_MODES = {
   "label-in-item": "reject",
   "labeled-ordered": "reject",
   "non-japanese": "reject",
+  "plain-word": "reject",
   "browser-change-without-image": "reject",
   "figure-contradiction": "reject",
 } as const satisfies Record<ReportRejectionReason, ReportRejectionMode>
