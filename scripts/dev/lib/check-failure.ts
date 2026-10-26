@@ -11,9 +11,15 @@ export type StageOutcome = {
   readonly stopped: boolean
 }
 
-/** 終わった段のどれかが自分で落ちたなら、まだ走っている段を止める。止められた段は数えない。 */
-export function shouldStopRunningStages(finished: readonly StageOutcome[]): boolean {
-  return finished.some((outcome) => outcome.status !== 0 && !outcome.stopped)
+/**
+ * 終わった段のどれかが自分で落ちたなら、走っている段のうち重い段だけを止める対象にする。
+ * 数秒で終わる軽い段は止めず、落ちを1回の出力に並べる。
+ */
+export function pickStagesToStop<T extends { readonly heavy: boolean }>(
+  running: readonly T[],
+  finished: readonly StageOutcome[],
+): readonly T[] {
+  return shouldStopRunningStages(finished) ? running.filter((stage) => stage.heavy) : []
 }
 
 /**
@@ -82,6 +88,11 @@ export function parseFailedFiles(json: string, root: string): FailedFiles {
   )
   const failedTestCount = typeof report.numFailedTests === "number" ? report.numFailedTests : 0
   return { files, failedTestCount }
+}
+
+/** 止められた段は数えない。 */
+function shouldStopRunningStages(finished: readonly StageOutcome[]): boolean {
+  return finished.some((outcome) => outcome.status !== 0 && !outcome.stopped)
 }
 
 function parseJson(text: string): unknown {

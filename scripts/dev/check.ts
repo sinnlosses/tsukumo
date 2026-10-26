@@ -1,6 +1,7 @@
 // `pnpm run check` の入口。`test:e2e` は変えたファイルから選んだ E2E のファイルだけを流し
 // （選び方は `selectE2eFiles`）、何を選んだかを1行で出す。
 // 軽い段と重い段（`test`・`test:e2e`）は全部同時に起こす。
+// 段が落ちたら止めるのは走っている重い段だけで、軽い段は最後まで走らせる。
 // 出力は段ごとに溜め、全段が終わってから段の順に出し、落ちた段は最後の行で名指しする。
 // そのあとに、計画の段ごとの `STAGE<TAB><段名><TAB><値>` の行を段の順に出す（`tw verify` が読む）。
 //
@@ -32,7 +33,7 @@ import {
   type FailedFiles,
   parseFailedFiles,
   parseFailedTests,
-  shouldStopRunningStages,
+  pickStagesToStop,
   type StageOutcome,
 } from "./lib/check-failure.ts"
 import {
@@ -145,6 +146,7 @@ function saveRecord(results: readonly StageRunResult[]): void {
 
 /** 走らせている段。`stop` は自分が起こした子の pid だけに `SIGTERM` を送る。 */
 type RunningStage = {
+  readonly heavy: boolean
   readonly result: Promise<BufferedResult>
   readonly stop: () => void
 }
@@ -156,10 +158,8 @@ async function runConcurrently(stages: readonly Stage[]): Promise<readonly Buffe
     running.map(async (run) => {
       const result = await run.result
       finished.push(result)
-      if (shouldStopRunningStages(finished)) {
-        for (const other of running) {
-          other.stop()
-        }
+      for (const other of pickStagesToStop(running, finished)) {
+        other.stop()
       }
       return result
     }),
@@ -179,7 +179,7 @@ async function runConcurrently(stages: readonly Stage[]): Promise<readonly Buffe
 
 function startStage(stage: Stage): RunningStage {
   const control = createStopControl()
-  return { result: runLockedIfFullE2e(stage, control), stop: control.stop }
+  return { heavy: stage.heavy, result: runLockedIfFullE2e(stage, control), stop: control.stop }
 }
 
 type StopControl = {

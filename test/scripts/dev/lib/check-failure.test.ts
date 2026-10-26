@@ -6,7 +6,7 @@ import {
   describeFailedStages,
   parseFailedFiles,
   parseFailedTests,
-  shouldStopRunningStages,
+  pickStagesToStop,
   type StageOutcome,
 } from "../../../../scripts/dev/lib/check-failure.ts"
 
@@ -58,22 +58,32 @@ describe("describeFailedStages", () => {
   })
 })
 
-describe("shouldStopRunningStages", () => {
-  test("終わった段が無い・全部通ったときは止めない", () => {
-    expect(shouldStopRunningStages([])).toBe(false)
-    expect(shouldStopRunningStages([outcome("test", 0)])).toBe(false)
+describe("pickStagesToStop", () => {
+  const running = [
+    { name: "lint", heavy: false },
+    { name: "token-limit", heavy: false },
+    { name: "test", heavy: true },
+    { name: "test:e2e", heavy: true },
+  ]
+
+  test("軽い段が落ちても、止めるのは重い段だけで、ほかの軽い段は止めない", () => {
+    expect(pickStagesToStop(running, [outcome("lint", 1)]).map((stage) => stage.name)).toEqual([
+      "test",
+      "test:e2e",
+    ])
   })
 
-  test("終わった段のどれかが自分で落ちたら止める", () => {
-    expect(shouldStopRunningStages([outcome("test", 0), outcome("test:e2e", 1)])).toBe(true)
+  test("落ちた段が無ければ何も止めない", () => {
+    expect(pickStagesToStop(running, [])).toEqual([])
+    expect(pickStagesToStop(running, [outcome("lint", 0)])).toEqual([])
   })
 
-  test("軽い段が落ちたら、走っている重い段を止める", () => {
-    expect(shouldStopRunningStages([outcome("lint", 1)])).toBe(true)
+  test("重い段が落ちたら、走っている重い段を止める", () => {
+    expect(pickStagesToStop(running, [outcome("test", 1)])).toHaveLength(2)
   })
 
   test("止められただけの段では、ほかを止めない", () => {
-    expect(shouldStopRunningStages([outcome("test", 143, [], true)])).toBe(false)
+    expect(pickStagesToStop(running, [outcome("test", 143, [], true)])).toEqual([])
   })
 })
 
