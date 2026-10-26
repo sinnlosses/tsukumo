@@ -39,4 +39,4 @@
 - 手順そのもの: `next-task` スキルの手順（`tw claim`）と、`task-workflow` スキルの `SKILL.md`「手順」（`tw done` / `tw ship`）。
   **tsukumo 独自の上乗せは無い**（過去の覆しは `docs/history/decision.md` に残してある）
 - 運用の正典: `~/.claude/skills/task-model/WORKFLOW.md`
-- 過去の判断の経緯: `docs/history/decision.md`。完了タスクは `tw show <ID>`（`docs/history/tasks.md`・`progress.md` は凍結済み）
+- 過去の判断の経緯: `docs/history/decision.md`。完了タスクは `tw show <ID>`
