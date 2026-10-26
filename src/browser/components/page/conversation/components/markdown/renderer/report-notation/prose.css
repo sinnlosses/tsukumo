@@ -60,21 +60,6 @@
     border-left: 3px solid var(--accent);
     background: color-mix(in srgb, var(--surface), var(--accent) 10%);
   }
-  /* 振り返りの結果（`retrospective` の欄。本文の節の後ろ・お願いの前に置く専用の塊）。
-   お願いの縦罫（accent）と取り違えないよう、罫は左でなく上に引き、地は染めない。 */
-  & .report-retrospective {
-    max-inline-size: var(--report-measure);
-    margin: var(--report-block-gap) 0;
-    padding: 0.6rem 0.9rem;
-    border: 1px solid var(--rule);
-    border-top: 3px solid var(--rule);
-    background: var(--surface);
-  }
-  & .report-retrospective-label {
-    margin-bottom: 0.2rem;
-    letter-spacing: 0.08em;
-    color: var(--ink-quiet);
-  }
   /* 種別のラベル（「情報」「注意」「異常」「疑問」「メモ」「お願い」）。
    6種すべてに tsukumo 側で足すのは、モデルが見出しの語を書き忘れても色だけで伝えないため（文字そのものは `NotationBlock` が描く）。
    罫を持たない情報・疑問・メモは、ラベルの字が種類の色を持つ。罫を持つ注意・異常・お願いは ink 系のまま。 */

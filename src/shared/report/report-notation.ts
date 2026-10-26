@@ -83,8 +83,6 @@ const REPORT_BLOCK_MARK_NAMES = [
   "table-status-legend-item",
   "table-status-legend-swatch",
   "table-rest",
-  "retrospective",
-  "retrospective-label",
   "tag",
   "tag-1",
   "tag-2",

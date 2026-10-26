@@ -34,8 +34,8 @@ export function parseReportRetrospective(value: unknown): ReportRetrospective {
 }
 
 /**
- * 振り返りの塊の Markdown。`sections` の後ろ・`favor` の前に置く。
- * HTML の中に Markdown を入れるので、塊の内側の前後に空行を空ける。欄が無ければ空文字。
+ * 振り返りの Markdown。`sections` の後ろ・`favor` の前に置く。
+ * 節の見出しと同じ `##` で書くので、目次の行になる。欄が無ければ空文字。
  */
 export function retrospectiveMarkdown(retrospective: ReportRetrospective): string {
   if (retrospective.kind === "none") {
@@ -45,8 +45,5 @@ export function retrospectiveMarkdown(retrospective: ReportRetrospective): strin
     retrospective.drafts.length === 0
       ? ""
       : `\n\n積んだドラフト: ${retrospective.drafts.map((id) => `\`${id}\``).join("、")}`
-  return (
-    `<div class="retrospective">\n\n<div class="retrospective-label">振り返り</div>\n\n` +
-    `${retrospective.summary}${drafts}\n\n</div>`
-  )
+  return `## 振り返り\n\n${retrospective.summary}${drafts}`
 }

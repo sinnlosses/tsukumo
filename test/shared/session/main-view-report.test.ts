@@ -128,7 +128,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     expect(firstLineOf(turn?.steps[0])).toBe("架空の結論。")
   })
 
-  it("retrospective の塊は sections の後ろ・favor の前に置く", () => {
+  it("振り返りの見出しは sections の後ろ・favor の前に置く", () => {
     const turn = turnOf(
       [
         ask,
@@ -146,7 +146,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     )
 
     const [shown] = shownReports(turn)
-    const order = ["架空の根拠。", 'class="retrospective"', 'class="note note-favor"'].map((part) =>
+    const order = ["架空の根拠。", "## 振り返り", 'class="note note-favor"'].map((part) =>
       shown?.indexOf(part),
     )
     expect(order).toEqual(order.toSorted((a, b) => (a ?? 0) - (b ?? 0)))
@@ -183,8 +183,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
 
     const body = turn?.steps[0]?.body
     const regions = body?.kind === "text" ? body.report : undefined
-    const retrospective =
-      '<div class="retrospective">\n\n<div class="retrospective-label">振り返り</div>\n\n架空の結果。\n\n</div>'
+    const retrospective = "## 振り返り\n\n架空の結果。"
     expect(regions).toEqual({
       kind: "regions",
       head: lead("架空の結論。"),

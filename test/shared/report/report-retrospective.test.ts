@@ -18,7 +18,7 @@ describe("parseReportRetrospective", () => {
 })
 
 describe("retrospectiveMarkdown", () => {
-  it("欄が無ければ空、あれば結果とドラフトの ID を専用の塊に入れる", () => {
+  it("欄が無ければ空、あれば結果とドラフトの ID を見出し「振り返り」の下に入れる", () => {
     expect(retrospectiveMarkdown({ kind: "none" })).toBe("")
     expect(
       retrospectiveMarkdown({
@@ -26,9 +26,6 @@ describe("retrospectiveMarkdown", () => {
         summary: "架空の結果。",
         drafts: ["架空-1", "架空-2"],
       }),
-    ).toBe(
-      '<div class="retrospective">\n\n<div class="retrospective-label">振り返り</div>\n\n' +
-        "架空の結果。\n\n積んだドラフト: `架空-1`、`架空-2`\n\n</div>",
-    )
+    ).toBe("## 振り返り\n\n架空の結果。\n\n積んだドラフト: `架空-1`、`架空-2`")
   })
 })

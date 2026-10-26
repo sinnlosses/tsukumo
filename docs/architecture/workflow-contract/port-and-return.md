@@ -36,7 +36,7 @@ tsukumo は推し量らない。
 | `figure`          | 必須。レポートの図1つ（`image`・`mermaid`・`graph`・`svg`・`beforeAfter`・`chart`・`stats`・`dimension` の塊）か、`{ kind: "none", reason }`（`short-answer`／`no-shape`／`single-value`／`no-material`）。理由が本文と合わないと差し戻す（`docs/architecture/display.md`「出力の分離（セリフと詳細）」） |
 
 `retrospective`（任意）は、ワークフローに振り返りの段があるとき、その結果を本文の節に混ぜずに受ける欄。
-`summary`（結果の1〜2文）と `drafts`（積んだドラフトのタスクID。積まなければ空）を持ち、`sections` の後ろ・`favor` の前に専用の塊として描く。
+`summary`（結果の1〜2文）と `drafts`（積んだドラフトのタスクID。積まなければ空）を持ち、`sections` の後ろ・`favor` の前に見出し「振り返り」の節として描く（目次に載る）。
 tsukumo は帯の段の名前を見ず、欄があるときだけ描く（段の名前を契約にすると他のワークフローを縛るため）。欄が欠けても差し戻さず、数えない。
 
 `task.outcome` は目録の1行の終わり方で、帯は閉じない。どこへ送ったかは tsukumo の関心にしない。
