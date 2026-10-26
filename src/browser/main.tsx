@@ -17,28 +17,40 @@ import {
 import { loadTaskBody } from "./features/task-board/components/deferred-task-body.tsx"
 // ページ全体の下地（トークン・body・リンク）。グローバルな CSS はこれだけ。
 import "./styles/theme.css"
-
-// 保存済みの画面の色を `documentElement` へ反映する1回。
-// 最初の描画より前に差す必要があるので、色を持つ部品（帯の歯車）の初期化には任せない。
-// 任せると、保存した色が一瞬だけ既定で描かれてから入れ替わる。
-applyAppearanceColorOverride(loadAppearanceColorOverride())
-
-window.addEventListener("error", (event) => {
-  reportBrowserError("onerror", event.error)
-})
-window.addEventListener("unhandledrejection", (event) => {
-  reportBrowserError("unhandledrejection", event.reason)
-})
-
-// 最初のレポートとタスクの本文を出す前に読み終えるよう、描き始める前に起こす。
-void loadMarkdown()
-void loadTaskBody()
+import {
+  isTemporalSupported,
+  showUnsupportedBrowserNotice,
+} from "./utils/check-temporal-support.ts"
 
 const appRoot = document.querySelector("#app")
-if (appRoot !== null) {
-  createRoot(appRoot, {
-    onUncaughtError: (error) => {
-      reportBrowserError("render-failure", error)
-    },
-  }).render(<App />)
+
+// Temporal を持たないブラウザでは案内だけを出し、描画の続き（時計を読む処理）には進まない。
+if (!isTemporalSupported(globalThis)) {
+  if (appRoot !== null) {
+    showUnsupportedBrowserNotice(appRoot)
+  }
+} else {
+  // 保存済みの画面の色を `documentElement` へ反映する1回。
+  // 最初の描画より前に差す必要があるので、色を持つ部品（帯の歯車）の初期化には任せない。
+  // 任せると、保存した色が一瞬だけ既定で描かれてから入れ替わる。
+  applyAppearanceColorOverride(loadAppearanceColorOverride())
+
+  window.addEventListener("error", (event) => {
+    reportBrowserError("onerror", event.error)
+  })
+  window.addEventListener("unhandledrejection", (event) => {
+    reportBrowserError("unhandledrejection", event.reason)
+  })
+
+  // 最初のレポートとタスクの本文を出す前に読み終えるよう、描き始める前に起こす。
+  void loadMarkdown()
+  void loadTaskBody()
+
+  if (appRoot !== null) {
+    createRoot(appRoot, {
+      onUncaughtError: (error) => {
+        reportBrowserError("render-failure", error)
+      },
+    }).render(<App />)
+  }
 }
