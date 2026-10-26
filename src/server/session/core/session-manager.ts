@@ -121,7 +121,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
     const event = shelveEventImages(options, state, driven)
     replaceState(applySessionEvent(state, event, at))
     tally.waitingLineAlarm.set(waitingLineDueAt(state))
-    if (event.kind !== "token-usage") {
+    if (event.kind !== "token-usage" && event.kind !== "speak-drawn") {
       tally.batch.add({ at, event })
     }
     diagnostic.add({ flow: "session-event", at, generation: tally.generation, kind: event.kind })

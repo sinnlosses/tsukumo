@@ -13,7 +13,7 @@ import type { UsageReviewEvent } from "../usage-review/usage-review.ts"
 import type { DelegateEvent } from "./session-event-delegate.ts"
 import type { ReportEvent } from "./session-event-report.ts"
 import type { SettingEvent } from "./session-event-setting.ts"
-import type { SpeakCalledEvent, SpeechEvent } from "./session-event-speech.ts"
+import type { SpeakCalledEvent, SpeakDrawnEvent, SpeechEvent } from "./session-event-speech.ts"
 import type { SurroundingEvent } from "./session-event-surrounding.ts"
 import type { TurnHealthEvent } from "./session-event-turn-health.ts"
 import type { ReportedPermissionMode } from "./session-info.ts"
@@ -113,6 +113,7 @@ export type SessionEvent =
   | { readonly kind: "utterance"; readonly text: string }
   | SpeechEvent
   | SpeakCalledEvent
+  | SpeakDrawnEvent
   | ReportEvent
   | DelegateEvent
   /** 答え待ちの列が変わった（積まれた・解決した）。 */

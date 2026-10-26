@@ -121,12 +121,22 @@ export const tokenUsageRecordSchema = z
     taskId: z.string().optional(),
     /** 台帳の最新の `lap` の段の名前。タスクIDがあっても台帳に（当月と前月のどちらにも）そのタスクの lap が無い・読めなければ無い。 */
     stage: z.string().optional(),
+    /**
+     * 進みの差し込み（`progress-nudged`）で始まったターンだけが持つ。差し込み後に `speak` が出たら `spoke`、出なければ `silent`。
+     * 差し込みの頻度はこの欄を持つ行の数で読む。旧い行・差し込みの無いターンには無い。
+     */
+    progressNudge: z.enum(["spoke", "silent"]).optional(),
     /** そのターンの増分。空の並びにはならない（増分が無いターンは行を書かない）。 */
     models: z.array(modelTokenUsageSchema).readonly(),
     /** ターンの中の内訳（合計の `models` を割ったもの）。 */
     breakdown: turnUsageBreakdownSchema,
   })
-  .transform((row) => ({ ...row, taskId: row.taskId, stage: row.stage }))
+  .transform((row) => ({
+    ...row,
+    taskId: row.taskId,
+    stage: row.stage,
+    progressNudge: row.progressNudge,
+  }))
   .readonly()
 
 export type TokenUsageRecord = z.infer<typeof tokenUsageRecordSchema>

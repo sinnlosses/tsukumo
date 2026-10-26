@@ -108,9 +108,12 @@ const PROGRESS_CLOSE = "</tsukumo-progress>"
 /** 包みの全体。前後の空白だけを許し、包みの外に字があれば差し込みとして読まない。 */
 const PROGRESS_PROMPT = /^<tsukumo-progress>\n?[\s\S]*?\n?<\/tsukumo-progress>$/
 
+const PROGRESS_NOTE =
+  "tsukumo の差し込み。委譲先の進み。`speak` を 1 回で言い直し、`report` は呼ばない"
+
 /** 差し込む要約を、メインへ送る文面に包む。 */
 export function progressNudgePromptText(summary: string): string {
-  return `${PROGRESS_OPEN}\n${summary}\n${PROGRESS_CLOSE}`
+  return `${PROGRESS_OPEN}\n${PROGRESS_NOTE}\n${summary}\n${PROGRESS_CLOSE}`
 }
 
 /** transcript の `user` の文面が差し込みの包みか。入力の控え（`InputLedger`）の無い入力を、組み直しが利用者の依頼と見分ける手がかり。 */

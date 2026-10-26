@@ -71,7 +71,12 @@ describe("readFakeRestoredEvents", () => {
   it("過去の transcript を依頼から始まる並びに組み直す", () => {
     const events = readFakeRestoredEvents(session(), "past-1", ["default"])
 
-    expect(events.map(({ event }) => event.kind)).toEqual(["request", "speech", "turn-finished"])
+    expect(events.map(({ event }) => event.kind)).toEqual([
+      "request",
+      "speech",
+      "speak-drawn",
+      "turn-finished",
+    ])
   })
 
   it("知らない ID は空", () => {

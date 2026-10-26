@@ -69,6 +69,7 @@ async function appendOneOfEach(driver: WiringDriver) {
       },
     ],
     breakdown: { main: scope, subagent: scope },
+    progressNudge: undefined,
   })
   logs.diagnostic.append([{ flow: "session-event", at, generation: 1, kind: "turn-finished" }])
   await logs.closeAll()

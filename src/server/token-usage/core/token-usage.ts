@@ -59,7 +59,11 @@ export type TokenUsageEntry = {
   readonly models: readonly ModelTokenUsage[]
   /** ターンの中の内訳（{@link turnUsageBreakdown} の戻り値）。 */
   readonly breakdown: TurnUsageBreakdown
+  /** 進みの差し込みで始まったターンだけ値を持つ（`TokenUsageRecord.progressNudge`）。 */
+  readonly progressNudge: ProgressNudgeMark | undefined
 }
+
+type ProgressNudgeMark = NonNullable<TokenUsageRecord["progressNudge"]>
 
 /**
  * ターンの途中で積み上げる内訳の入れ物。
@@ -72,6 +76,8 @@ type TurnUsageTally = {
   readonly calls: readonly ToolCallTally[]
   /** assistant のステップの使用量。同じ `messageId` は最後の1つだけが残る。 */
   readonly steps: readonly StepTally[]
+  /** 差し込みで始まったターンか、始まったあとに `speak` が出たか。 */
+  readonly progressNudge: "none" | "nudged" | "spoke"
 }
 
 /** ツールの呼び出し1件（{@link TurnUsageTally} の中だけで使う）。 */
@@ -97,7 +103,11 @@ const EMPTY_STEP_USAGE = {
 } satisfies StepTokenUsage
 
 /** ターンの始まりの状態（何も積んでいない）。 */
-const EMPTY_TURN_USAGE_TALLY = { calls: [], steps: [] } satisfies TurnUsageTally
+const EMPTY_TURN_USAGE_TALLY = {
+  calls: [],
+  steps: [],
+  progressNudge: "none",
+} satisfies TurnUsageTally
 
 /**
  * 1代ぶんのトークン消費の勘定（駆動1代ぶんの持ち物で、起こし直すと作り直す）。
@@ -150,6 +160,7 @@ export function createTokenUsageRecorder(log: TokenUsageLog): TokenUsageRecorder
         mode: state.chatMode ? "chat" : "work",
         models,
         breakdown: turnUsageBreakdown(turnUsage),
+        progressNudge: progressNudgeMark(turnUsage.progressNudge),
       })
     },
     finishTurn: () => {
@@ -185,8 +196,9 @@ function tokenUsageDelta(
 }
 
 /**
- * イベント1件を内訳に積む。見るのは3種類だけで、他のイベントはそのまま返す。
+ * イベント1件を内訳に積む。見るのは5種類だけで、他のイベントはそのまま返す。
  *
+ * - `progress-nudged`・`speak-drawn`: 差し込みで始まったターンに、メインの `speak` が描かれたかを覚える（`speak-drawn` は差し込みの前なら無視する。委譲先の `speak` と差し戻された呼び出しには付かない）
  * - `tool-started`: 呼び出しを1件足す（始まった時点で数える。結果が返らずにターンが終わった呼び出しも「使った」ことは変わらない）。持ち場は `parentToolUseId` で決まる
  * - `tool-finished`: 結果の長さだけを、同じ `toolUseId` の呼び出しに足す。本文は捨てる
  * - `step-usage`: 同じ `messageId` の古いぶんを捨てて置き換える。返答が流れている間は同じ `message.id` の `assistant` が何度も届き、途中の `usage` は確定値ではないので（`sdk.d.ts`）、最後に届いたものだけを残す
@@ -225,8 +237,23 @@ function tallyTurnUsage(tally: TurnUsageTally, event: SessionEvent): TurnUsageTa
           { messageId: event.messageId, scope: event.scope, usage: event.usage },
         ],
       }
+    case "progress-nudged":
+      return { ...tally, progressNudge: "nudged" }
+    case "speak-drawn":
+      return tally.progressNudge === "nudged" ? { ...tally, progressNudge: "spoke" } : tally
     default:
       return tally
+  }
+}
+
+function progressNudgeMark(state: TurnUsageTally["progressNudge"]): ProgressNudgeMark | undefined {
+  switch (state) {
+    case "none":
+      return undefined
+    case "nudged":
+      return "silent"
+    case "spoke":
+      return "spoke"
   }
 }
 

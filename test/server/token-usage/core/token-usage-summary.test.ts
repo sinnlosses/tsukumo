@@ -52,6 +52,7 @@ function record(
     mode: "work",
     taskId: undefined,
     stage: undefined,
+    progressNudge: undefined,
     models,
     breakdown: {
       main: { steps: 0, tokens: EMPTY_STEP, tools: mainTools },

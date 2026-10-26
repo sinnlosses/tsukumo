@@ -107,6 +107,7 @@ describe("toRestoredEvents", () => {
       },
       { kind: "tool-finished", toolUseId: "t-1", content: "架空の結果", isError: false },
       { kind: "speech", text: "できたよ", expression: "proud" },
+      { kind: "speak-drawn" },
       { kind: "turn-finished", outcome: { kind: "completed" } },
       requestEvent("架空の依頼その2"),
       { kind: "utterance", text: "架空の本文その2" },
@@ -249,6 +250,7 @@ describe("toRestoredEvents", () => {
     expect(eventsOf(messages)).toEqual([
       requestEvent(),
       { kind: "speech", text: "架空の通ったセリフ", expression: "default" },
+      { kind: "speak-drawn" },
       { kind: "tool-finished", toolUseId: "s-1", content: "ok", isError: false },
       { kind: "tool-finished", toolUseId: "s-2", content: "架空の差し戻し", isError: true },
       { kind: "turn-finished", outcome: { kind: "completed" } },

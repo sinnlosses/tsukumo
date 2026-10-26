@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 
+import { createSpeechReview } from "../../../../src/server/session-driver/core/speech-review.ts"
 import {
   createTokenUsageRecorder,
   type TokenUsageEntry,
@@ -279,5 +280,74 @@ describe("createTokenUsageRecorder の内訳", () => {
     }
     // 長さだけは残る（54 バイト = 架空の文面2つ・18文字ぶんの UTF-8 バイト数）。
     expect(row.breakdown.main.tools).toEqual([{ name: "Bash", calls: 1, resultBytes: 54 }])
+  })
+})
+
+describe("createTokenUsageRecorder の進みの差し込みの印", () => {
+  const nudged: SessionEvent = { kind: "progress-nudged" }
+  const speech: SessionEvent = { kind: "speech", text: "架空のセリフ", expression: "default" }
+  const mainSpeakCalled: SessionEvent = { kind: "speak-called", toolUseId: "s-1", speech }
+  const mainSpeakFinished = toolFinished("s-1", "ok")
+  const mainSpeakRejected: SessionEvent = {
+    kind: "tool-finished",
+    toolUseId: "s-1",
+    content: "差し戻し",
+    isError: true,
+  }
+  const turnFinished: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
+
+  /** 本番と同じく、駆動が出したイベントを `SpeechReview.pass` に通した並びを記録に渡す。 */
+  function markOf(driven: readonly SessionEvent[]): "spoke" | "silent" | undefined {
+    const review = createSpeechReview({ hasNews: () => true, markDrawn: () => {} })
+    return writtenRowOf(driven.flatMap(review.pass)).progressNudge
+  }
+
+  it.each([
+    ["差し込みも speak も無いターン", [], undefined],
+    [
+      "差し込みの前に描かれたメインの speak",
+      [mainSpeakCalled, mainSpeakFinished, nudged],
+      "silent",
+    ],
+    ["差し込みの無いターンのメインの speak", [mainSpeakCalled, mainSpeakFinished], undefined],
+    [
+      "差し込み後にメインの speak が描かれた",
+      [nudged, mainSpeakCalled, mainSpeakFinished],
+      "spoke",
+    ],
+    ["差し込み後に speak が出なかった", [nudged], "silent"],
+    ["差し込み後に委譲先の speech だけが来た", [nudged, speech], "silent"],
+    [
+      "差し込み後のメインの speak が差し戻された",
+      [nudged, mainSpeakCalled, mainSpeakRejected],
+      "silent",
+    ],
+    [
+      "差し込み後のメインの speak が結果の無いままターンが終わった（預かりの speak は描かれる）",
+      [nudged, mainSpeakCalled, turnFinished],
+      "spoke",
+    ],
+  ] satisfies readonly [string, readonly SessionEvent[], "spoke" | "silent" | undefined][])(
+    "%s: 印は %s",
+    (_name, driven, expected) => {
+      expect(markOf(driven)).toBe(expected)
+    },
+  )
+
+  it("印はターンの終わりに捨て、次のターンへ持ち越さない", () => {
+    const written: TokenUsageEntry[] = []
+    const recorder = createTokenUsageRecorder({
+      append: (entry) => {
+        written.push(entry)
+      },
+      prefetchOpenTask: () => {},
+      readRange: () => [],
+    })
+    recorder.tally(nudged)
+    recorder.append([usage("opus", 1, 1, 0.01)], 0, STARTED_STATE)
+    recorder.finishTurn()
+    recorder.append([usage("opus", 2, 2, 0.02)], 1, STARTED_STATE)
+
+    expect(written.map((entry) => entry.progressNudge)).toEqual(["silent", undefined])
   })
 })

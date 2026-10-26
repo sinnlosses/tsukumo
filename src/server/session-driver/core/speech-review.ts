@@ -34,6 +34,8 @@ export type SpeechNews = {
   readonly markDrawn: () => void
 }
 
+const SPEAK_DRAWN = { kind: "speak-drawn" } as const satisfies SessionEvent
+
 type SpeakCalled = Extract<SessionEvent, { readonly kind: "speak-called" }>
 
 /** {@link SpeechReview} を1つ作る。セッション1つに1つ。 */
@@ -60,10 +62,10 @@ export function createSpeechReview(news: SpeechNews): SpeechReview {
             return [event]
           }
           news.markDrawn()
-          return [call.speech, event]
+          return [call.speech, SPEAK_DRAWN, event]
         }
         case "turn-finished": {
-          const unsettled = held.map((call) => call.speech)
+          const unsettled = held.flatMap((call) => [call.speech, SPEAK_DRAWN])
           held = []
           return [...unsettled, event]
         }

@@ -18,3 +18,10 @@ export type SpeakCalledEvent = {
   readonly toolUseId: string
   readonly speech: SpeechEvent
 }
+
+/**
+ * メインの `speak` が描かれた印。サーバの中だけで流れ、`CallReview.pass` が `speech` の直後に足す。
+ * 委譲先の `speak` は `speech` のまま出どころが分からないので、メインのものだけを数える記録（トークン消費）がこの印を読む。
+ * 畳み込みの姿は変えず、ブラウザへも配らない。
+ */
+export type SpeakDrawnEvent = { readonly kind: "speak-drawn" }

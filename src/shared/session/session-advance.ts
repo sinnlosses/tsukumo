@@ -201,6 +201,7 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
       }
     // サーバの中で `speech` に変わってから届く（`CallReview`）。
     case "speak-called":
+    case "speak-drawn":
       return state
     // サーバの中で `work-plan` に変わってから届く（`CallReview`）。
     case "work-plan-called":

@@ -9,7 +9,6 @@ import {
   parseChatConsolidationResult as parseResult,
   readChatTopics,
 } from "../../../../src/server/chat/core/chat-consolidation.ts"
-import { asidePromptText } from "../../../../src/server/session-driver/core/aside-prompt.ts"
 import { CHAT_MEMORY_BUDGET } from "../../../../src/shared/chat/chat-memory-budget.ts"
 import { fixedChatSummary, inMemoryChatSummary } from "../../../fixture/chat.ts"
 
@@ -166,13 +165,11 @@ describe("parseChatConsolidationResult", () => {
   })
 
   it("synopsis に予約タグが含まれると undefined。予約タグは脇の話の包み・委譲の引き継ぎの頭・古い話題の組を網羅する", () => {
-    const [asideOpen = "", ...asideRest] = asidePromptText("架空").split("架空")
-    const asideClose = asideRest.join("").trim()
     // 引き継ぎの頭・スラッシュコマンドの展開は非公開の定数、Claude Code の印はコードに定数が無い。
     // リテラルで照らすので、向こうの変更は検知できない。
     for (const tag of [
-      asideOpen.trim(),
-      asideClose,
+      "<tsukumo-aside>",
+      "</tsukumo-aside>",
       "<tsukumo-progress>",
       "</tsukumo-progress>",
       "<agent-message",

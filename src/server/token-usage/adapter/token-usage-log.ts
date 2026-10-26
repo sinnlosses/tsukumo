@@ -63,6 +63,7 @@ function toRecord(entry: TokenUsageEntry, openTask: OpenTaskReader): TokenUsageR
     mode: entry.mode,
     taskId: task?.taskId,
     stage: task?.stage,
+    progressNudge: entry.progressNudge,
     models: entry.models,
     breakdown: entry.breakdown,
   }

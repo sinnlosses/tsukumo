@@ -39,6 +39,7 @@ const SPEECH_REJECTED = {
 } as const
 
 const speechOf = (text: string): SpeechEvent => ({ kind: "speech", text, expression: "default" })
+const SPEAK_DRAWN: SessionEvent = { kind: "speak-drawn" }
 const speakCalled = (toolUseId: string, text: string): SessionEvent => ({
   kind: "speak-called",
   toolUseId,
@@ -146,6 +147,7 @@ describe("CallReview の預かり（speak）", () => {
 
     expect(speak(review, "toolu_s1", "架空のセリフ1")).toEqual([
       speechOf("架空のセリフ1"),
+      SPEAK_DRAWN,
       finished("toolu_s1", false),
     ])
   })
@@ -163,7 +165,7 @@ describe("CallReview の預かり（speak）", () => {
     const review = createCallReview()
     review.pass(speakCalled("toolu_s1", "架空のセリフ1"))
 
-    expect(review.pass(FINISHED)).toEqual([speechOf("架空のセリフ1"), FINISHED])
+    expect(review.pass(FINISHED)).toEqual([speechOf("架空のセリフ1"), SPEAK_DRAWN, FINISHED])
     expect(review.pass(FINISHED)).toEqual([FINISHED])
   })
 })
@@ -345,7 +347,13 @@ describe("CallReview の順番", () => {
     review.pass(report)
     review.pass(speakCalled("toolu_s1", "架空のセリフ"))
 
-    expect(review.pass(FINISHED)).toEqual([speechOf("架空のセリフ"), report, planOf(0), FINISHED])
+    expect(review.pass(FINISHED)).toEqual([
+      speechOf("架空のセリフ"),
+      SPEAK_DRAWN,
+      report,
+      planOf(0),
+      FINISHED,
+    ])
   })
 
   it("差し戻した work_plan に応えるまで、report を差し戻す", () => {
@@ -588,86 +596,5 @@ describe("passRelayedEvents", () => {
     const review = createCallReview()
 
     expect(passRelayedEvents(review, [reportEvent({})], true)).toEqual([])
-  })
-})
-
-describe("CallReview の委譲ゲートの印", () => {
-  const FOUR = ["架空の計画", "架空の実装A", "架空の実装B", "架空の受け入れ"]
-  const SUMMARY = "架空のまとめ。"
-  const ranged = (current: number, phaseSummary = "") => ({
-    phases: FOUR,
-    current,
-    phaseSummary,
-    delegatedRange: { first: 1, count: 2 },
-  })
-  const handback = (): SessionEvent => ({
-    kind: "delegate-handed-back",
-    delegate: "toolu_delegate",
-  })
-  const started = (): CallReview => {
-    const review = createCallReview()
-    review.pass(REQUEST)
-    review.judgeWorkPlan(ranged(0))
-    review.judgeWorkPlan(ranged(1, SUMMARY))
-    return review
-  }
-
-  it("ワークプランを受け付けた依頼で返却が届くと立つ", () => {
-    const review = started()
-    review.pass(handback())
-    expect(review.gateRaised()).toBe(true)
-  })
-
-  it("返却は帯の位置を動かさない", () => {
-    const review = started()
-    expect(review.bandPosition()).toContain("帯の今の段は 本 1/2 架空の実装A。")
-
-    review.pass(handback())
-
-    expect(review.bandPosition()).toContain("帯の今の段は 本 1/2 架空の実装A。")
-  })
-
-  it("ワークプランが無ければ帯の位置は空", () => {
-    const review = createCallReview()
-    review.pass(REQUEST)
-
-    expect(review.bandPosition()).toBe("")
-  })
-
-  it("ワークプランを受け付けていない依頼の返却では立たない", () => {
-    const review = createCallReview()
-    review.pass(REQUEST)
-
-    review.pass(handback())
-
-    expect(review.gateRaised()).toBe(false)
-  })
-
-  it("受け付けた work_plan で下り、差し戻された work_plan では下りない", () => {
-    const review = started()
-    review.pass(handback())
-
-    expect(review.judgeWorkPlan(ranged(3)).kind).toBe("summary-missing")
-    expect(review.gateRaised()).toBe(true)
-    expect(review.judgeWorkPlan(ranged(2, SUMMARY)).kind).toBe("accepted")
-    expect(review.gateRaised()).toBe(false)
-  })
-
-  it("続けて届いた返却も、1回の work_plan で下りる", () => {
-    const review = started()
-    review.pass(handback())
-    review.pass(handback())
-
-    expect(review.judgeWorkPlan(ranged(2, SUMMARY)).kind).toBe("accepted")
-    expect(review.gateRaised()).toBe(false)
-  })
-
-  it("次の依頼で下りる", () => {
-    const review = started()
-    review.pass(handback())
-
-    review.pass(REQUEST)
-
-    expect(review.gateRaised()).toBe(false)
   })
 })

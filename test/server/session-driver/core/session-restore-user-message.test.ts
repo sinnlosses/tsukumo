@@ -236,15 +236,18 @@ describe("toRestoredEvents", () => {
     expect(events.map((event) => event.kind)).toEqual([
       "request",
       "speech",
+      "speak-drawn",
       "turn-finished",
       "aside",
       "speech",
+      "speak-drawn",
       "turn-finished",
       "turn-resumed",
       "speech",
+      "speak-drawn",
       "turn-finished",
     ])
-    expect(events[3]).toEqual({ kind: "aside", text: "架空の問い", images: [] })
+    expect(events[4]).toEqual({ kind: "aside", text: "架空の問い", images: [] })
 
     const state = applyRestoredEvents(
       INITIAL_SESSION_STATE,

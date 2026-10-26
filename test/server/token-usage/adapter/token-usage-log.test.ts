@@ -87,7 +87,14 @@ function at(hour: number, minute: number, day = 22): number {
 }
 
 function entry(when: number, models: readonly ModelTokenUsage[] = MODELS): TokenUsageEntry {
-  return { at: when, sessionId: "claude-session-1", mode: "work", models, breakdown: BREAKDOWN }
+  return {
+    at: when,
+    sessionId: "claude-session-1",
+    mode: "work",
+    models,
+    breakdown: BREAKDOWN,
+    progressNudge: undefined,
+  }
 }
 
 function readLines(fileName: string): unknown[] {
@@ -158,9 +165,23 @@ describe("createTokenUsageLog", () => {
     expect(JSON.stringify(record)).toMatch(/"at":"2026-09-22T10:30:00[+-]\d{2}:\d{2}"/)
   })
 
+  it("進みの差し込みの印は、持つ行にだけ書かれ、読み戻せる", async () => {
+    const log = createTokenUsageLog(NO_TASK, root())
+
+    log.append({ ...entry(at(10, 30)), progressNudge: "spoke" })
+    log.append(entry(at(10, 31)))
+    await log.flush()
+
+    const [marked, plain] = readLines("2026-09-22.jsonl")
+    expect(marked).toMatchObject({ progressNudge: "spoke" })
+    expect(keysOf(plain)).not.toContain("progressNudge")
+    const read = log.readRange({ startDate: "2026-09-22", endDate: "2026-09-22" })
+    expect(read.map((record) => record.progressNudge)).toEqual(["spoke", undefined])
+  })
+
   it("渡された件の欄は、入れ子の中まで全部行に残る", async () => {
     const log = createTokenUsageLog(NO_TASK, root())
-    const written = entry(at(10, 30))
+    const written: TokenUsageEntry = { ...entry(at(10, 30)), progressNudge: "silent" }
 
     log.append(written)
     await log.flush()

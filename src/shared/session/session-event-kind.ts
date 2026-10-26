@@ -15,6 +15,7 @@ const SESSION_EVENT_KINDS = {
   utterance: true,
   speech: true,
   "speak-called": true,
+  "speak-drawn": true,
   "report-drafting": true,
   report: true,
   "report-malformed": true,
