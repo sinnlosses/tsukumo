@@ -89,7 +89,9 @@ hook が拒むたびに、共有の git dir（`git rev-parse --git-common-dir`�
 `node scripts/hook/hook-denial-tally.ts [--days N]`（既定30）が、`.claude/settings.json` に
 登録された hook を全部（0件も）規則のキーごとの回数で出し、各行に `（main n / subagent n / 不明 n）`
 の内訳を添える（呼び手の欄が無い旧い行は `不明`。記録にあって登録に無い名前、たとえば tw の関門は
-`（未登録）` を付けて続ける）。
+`（未登録）` を付けて続ける）。log-only で走らせた hook の行は `mode` が `log-only` で、集計の回数には
+数えない。`node scripts/hook/hook-denial-replay.ts [--days N]`（既定7）が拒むはずだった形を一覧する
+（手順は `docs/coding-standards/hook-rollout.md`）。
 
 **自分が直したコードを画面で確かめるときは、直した作業ツリーで起こす**（tsukumo は起こした
 ディレクトリでそのまま動く。グローバルの `tsukumo` も、作業ツリーの中で打てばその作業ツリーの

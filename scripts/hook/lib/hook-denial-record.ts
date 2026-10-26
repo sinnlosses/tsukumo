@@ -19,13 +19,16 @@ export type HookDenial = {
   readonly hook: string
   readonly rule: string
   readonly actor: DenialActor
+  /** log-only で拒まなかった行だけに付く。欄が無い行は block で拒んだもの。 */
+  readonly mode?: "log-only"
 }
 
 /** 呼び手の欄が無い旧い行の呼び手。 */
 export const UNKNOWN_ACTOR = "不明"
 
-export type RecordedHookDenial = Omit<HookDenial, "actor"> & {
+export type RecordedHookDenial = Omit<HookDenial, "actor" | "mode"> & {
   readonly actor: DenialActor | typeof UNKNOWN_ACTOR
+  readonly logOnly: boolean
 }
 
 export function recordHookDenial(denial: Omit<HookDenial, "at">): void {
@@ -77,7 +80,8 @@ function parseDenial(line: string): readonly RecordedHookDenial[] {
         "actor" in value && (value.actor === "main" || value.actor === "subagent")
           ? value.actor
           : UNKNOWN_ACTOR
-      return [{ at: value.at, hook: value.hook, rule: value.rule, actor }]
+      const logOnly = "mode" in value && value.mode === "log-only"
+      return [{ at: value.at, hook: value.hook, rule: value.rule, actor, logOnly }]
     }
   } catch {
     // 壊れた行は数えない

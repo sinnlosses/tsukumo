@@ -58,6 +58,52 @@ describe("拒否の記録", () => {
   })
 })
 
+describe("log-only の hook", () => {
+  test("拒まずに通し、log-only の行だけを記録に残す", async () => {
+    const result = await runBashHook(
+      { command: "pkill -f vitest" },
+      { TSUKUMO_HOOK_LOG_ONLY: "deny-broad-kill" },
+    )
+    expect(result.exitCode).toBe(0)
+    expect(result.stderr).toBe("")
+
+    const [line, ...rest] = readDenialLines()
+    expect(rest).toEqual([])
+    expect(JSON.parse(line ?? "")).toMatchObject({
+      hook: "deny-broad-kill",
+      rule: "pkill-killall",
+      mode: "log-only",
+    })
+  })
+
+  test("log-only でない hook は、同じ入力でも拒む", async () => {
+    const result = await runBashHook(
+      { command: "pkill -f vitest" },
+      { TSUKUMO_HOOK_LOG_ONLY: "deny-sed-in-place" },
+    )
+    expect(result.exitCode).toBe(2)
+  })
+
+  test("再生で拒むはずだった形が一覧に出て、集計の拒否の回数には数えない", async () => {
+    writeRegistration()
+    const env = { TSUKUMO_HOOK_LOG_ONLY: "deny-broad-kill" }
+    await runBashHook({ command: "pkill -f vitest" }, env)
+    await runBashHook({ command: "killall node", agent: true }, env)
+
+    const replay = await runHook(["scripts/hook/hook-denial-replay.ts"], "")
+    expect(replay.exitCode).toBe(0)
+    expect(replay.stdout).toContain("deny-broad-kill pkill-killall: 2（main 1 / subagent 1）")
+
+    const tally = await runHook(["scripts/hook/hook-denial-tally.ts"], "")
+    expect(tally.stdout).toContain("deny-broad-kill: 0")
+  })
+
+  test("log-only の記録が無ければ、無いと出す", async () => {
+    const replay = await runHook(["scripts/hook/hook-denial-replay.ts"], "")
+    expect(replay.stdout).toContain("拒むはずだった形はない")
+  })
+})
+
 describe("集計", () => {
   test("登録された hook を、0件のものも含めて全部並べる", async () => {
     writeRegistration()
@@ -169,21 +215,26 @@ type Call = {
   readonly background?: boolean
 }
 
-function runBashHook(call: Call) {
+function runBashHook(call: Call, extraEnv: Record<string, string> = {}) {
   const input = JSON.stringify({
     tool_name: "Bash",
     tool_input: { command: call.command, run_in_background: call.background === true },
     cwd: repoDir,
     ...(call.agent === true ? { agent_id: "subagent-1" } : {}),
   })
-  return runHook(["scripts/hook/bash-guard.ts"], input)
+  return runHook(["scripts/hook/bash-guard.ts"], input, extraEnv)
 }
 
-function runHook(args: readonly string[], input: string) {
+function runHook(args: readonly string[], input: string, extraEnv: Record<string, string> = {}) {
   const [script = "", ...rest] = args
   return runSubprocess(process.execPath, [resolve(script), ...rest], {
     cwd: repoDir,
-    env: { ...process.env, CLAUDE_PROJECT_DIR: repoDir, TSUKUMO_HOOK_DENIAL_RECORD: "on" },
+    env: {
+      ...process.env,
+      CLAUDE_PROJECT_DIR: repoDir,
+      TSUKUMO_HOOK_DENIAL_RECORD: "on",
+      ...extraEnv,
+    },
     input,
   })
 }

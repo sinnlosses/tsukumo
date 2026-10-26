@@ -44,6 +44,7 @@ tsukumo が値を持つ置き場は4つです。値の持ち主が違うので�
 - `TSUKUMO_VIEW_PORT_FALLBACK_BASE`: 既定のポートが塞がっているときにずらして探す帯の起点を差し替える（テスト用）
 - `TSUKUMO_FIXED_CLOCK`: サーバの時計を ISO 8601 の瞬間に凍らせる（E2E・撮影用）
 - `TSUKUMO_HOOK_DENIAL_RECORD`: 開発用。`off` で hook の拒否の記録を止める
+- `TSUKUMO_HOOK_LOG_ONLY`: 開発用。カンマ区切りで渡した名前の hook を log-only にする（拒まず記録だけ残す）
 
 tsukumo 自身のリポジトリごとの設定ファイルはありません。タスク一覧と成果は起動先の Beads（`bd`）から読み、
 `.beads` が無い起動先ではサイドバーにタスクの節を出しません。

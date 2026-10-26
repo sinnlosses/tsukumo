@@ -8,17 +8,16 @@
 import { readFileSync } from "node:fs"
 import { join } from "node:path"
 import process from "node:process"
-import { parseArgs } from "node:util"
 
 import { countBy, groupBy } from "remeda"
 
-import { positiveIntegerArgument } from "../shared/positive-integer-argument.ts"
 import { BASH_GUARD_HOOKS } from "./lib/bash-denial.ts"
 import {
   readHookDenials,
   UNKNOWN_ACTOR,
   type RecordedHookDenial,
 } from "./lib/hook-denial-record.ts"
+import { readDays } from "./lib/read-period.ts"
 
 const DEFAULT_DAYS = 30
 
@@ -29,10 +28,10 @@ const RUN_SIDE_GATES = ["e2e-run-limit"] as const
 
 const ACTOR_ORDER = ["main", "subagent", UNKNOWN_ACTOR] as const
 
-const days = readDays(process.argv.slice(2))
+const days = readDays(process.argv.slice(2), DEFAULT_DAYS)
 const projectDir = process.env["CLAUDE_PROJECT_DIR"] ?? process.cwd()
 const since = Temporal.Now.instant().subtract({ hours: days * 24 })
-const denials = readHookDenials(since)
+const denials = readHookDenials(since).filter((denial) => !denial.logOnly)
 
 process.stdout.write(formatTally(listRegisteredHooks(projectDir), denials, days))
 
@@ -64,20 +63,6 @@ function listRegisteredHooks(directory: string): readonly string[] {
   )
   const hooks = scripts.flatMap((name) => (name === "bash-guard" ? BASH_GUARD_HOOKS : [name]))
   return [...new Set(hooks), ...RUN_SIDE_GATES]
-}
-
-function readDays(args: readonly string[]): number {
-  try {
-    const { values } = parseArgs({
-      args: [...args],
-      strict: true,
-      options: { days: { type: "string" } },
-    })
-    return positiveIntegerArgument.default(DEFAULT_DAYS).parse(values.days)
-  } catch {
-    process.stderr.write("--days には正の整数を渡す\n")
-    return process.exit(1)
-  }
 }
 
 function readTextOrEmpty(path: string): string {

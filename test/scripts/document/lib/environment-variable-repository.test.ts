@@ -18,6 +18,7 @@ import { ENV_NAMES } from "../../../../src/server/core/config.ts"
 const READ_OUTSIDE_SERVER = [
   { name: "TSUKUMO_CHECK_WORKER_BUDGET", reader: "scripts/dev/check.ts" },
   { name: "TSUKUMO_HOOK_DENIAL_RECORD", reader: "scripts/hook/lib/hook-denial-record.ts" },
+  { name: "TSUKUMO_HOOK_LOG_ONLY", reader: "scripts/hook/lib/hook-mode.ts" },
 ] as const
 
 describe("環境変数の名前", () => {
