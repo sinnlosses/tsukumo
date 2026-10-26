@@ -12,6 +12,16 @@ export type Stage = {
 
 export const E2E_BAIL_COUNT = 3
 
+/** `--full` で打つ全段。計画で落とした段を `unobserved` と知らせるときの基準。 */
+export const FULL_STAGE_NAMES = [
+  "typecheck",
+  "lint",
+  "format:check",
+  "token-limit",
+  "test",
+  "test:e2e",
+] as const
+
 /** 文書だけの変更でも打つ、ファイルの大きさの上限の検査。 */
 const TOKEN_LIMIT_STAGE: Stage = { name: "token-limit", args: [], heavy: false }
 

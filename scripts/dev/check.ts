@@ -2,6 +2,7 @@
 // （選び方は `selectE2eFiles`）、何を選んだかを1行で出す。
 // 軽い段と重い段（`test`・`test:e2e`）は全部同時に起こす。
 // 出力は段ごとに溜め、全段が終わってから段の順に出し、落ちた段は最後の行で名指しする。
+// そのあとに、計画の段ごとの `STAGE<TAB><段名><TAB><値>` の行を段の順に出す（`tw verify` が読む）。
 //
 // 変えたファイルが `docs/`・`.tw/` の Markdown と直下の `README.md`・`AGENTS.md` だけのときは、
 // `--full` の有無に関わらず `format:check`・`token-limit` と文書の検査（`DOCUMENT_CHECK_TEST_PATHS`）だけを打つ。
@@ -42,7 +43,7 @@ import {
 } from "./lib/check-record-repository.ts"
 import { nextRecord, planRerun, type StageRunResult } from "./lib/check-record.ts"
 import { countRunning, registerRunning, runningDirectory } from "./lib/check-running.ts"
-import { e2eStage, planStages, type Stage } from "./lib/check-stage.ts"
+import { e2eStage, FULL_STAGE_NAMES, planStages, type Stage } from "./lib/check-stage.ts"
 import { E2E_FULL_ENVIRONMENT } from "./lib/e2e-full-guard.ts"
 import {
   acquireLock,
@@ -52,6 +53,13 @@ import {
   sharedLockPath,
 } from "./lib/e2e-full-lock.ts"
 import { findPriorityTool, stageCommand } from "./lib/stage-priority.ts"
+import {
+  formatStageLines,
+  parseSelectedTestCount,
+  type NamedVerdict,
+  ranStageVerdict,
+  withDroppedStages,
+} from "./lib/stage-verdict.ts"
 import { alignSubmodules } from "./lib/submodule-drift.ts"
 import { collectSetupFiles } from "./lib/vitest-setup-file.ts"
 import { workerBudget, workersPerStage } from "./lib/worker-budget.ts"
@@ -85,6 +93,23 @@ const activeStages = rerunPlan.stages.flatMap((entry) =>
 const stageWorkers = activeStages.some((stage) => stage.heavy) ? markRunningAndShareWorkers() : 0
 const stageResults = activeStages.length > 0 ? await runConcurrently(activeStages) : []
 saveRecord(stageResults)
+for (const line of formatStageLines(stageVerdicts(stageResults))) {
+  process.stdout.write(`${line}\n`)
+}
+
+/** 全段の順に4値を決める。飛ばした段・計画で落とした段は走っていないので `unobserved`。 */
+function stageVerdicts(results: readonly BufferedResult[]): readonly NamedVerdict[] {
+  const planned = rerunPlan.stages.map((entry): NamedVerdict => {
+    const name = entry.planned.name
+    const result = results.find((candidate) => candidate.name === name)
+    return {
+      name,
+      verdict:
+        entry.kind === "skip" || result === undefined ? "unobserved" : ranStageVerdict(result),
+    }
+  })
+  return withDroppedStages(FULL_STAGE_NAMES, planned)
+}
 
 /**
  * 走っている検証の印を置き（終了・`SIGTERM`・`SIGINT` で消す）、その時点の本数で
@@ -202,6 +227,8 @@ async function runLockedIfFullE2e(stage: Stage, control: StopControl): Promise<B
       failedTests: [],
       failed: NO_FAILED_FILES,
       stopped: false,
+      lockTimedOut: true,
+      selectedTestCount: undefined,
       output: `${error.message}\n`,
     }
   }
@@ -270,21 +297,31 @@ function chooseE2eStages(): readonly Stage[] {
   return plan.kind === "none" ? [] : [e2eStage(plan.args)]
 }
 
-type StageReport = Pick<BufferedResult, "failedTests" | "failed">
+type StageReport = Pick<BufferedResult, "failedTests" | "failed" | "selectedTestCount">
 
 /** 段が書いた JSON レポートを読んで消す。無ければ空。 */
 function readReport(reportPath: string): StageReport {
   try {
     const json = readFileSync(reportPath, "utf8")
-    return { failedTests: parseFailedTests(json, ROOT), failed: parseFailedFiles(json, ROOT) }
+    return {
+      failedTests: parseFailedTests(json, ROOT),
+      failed: parseFailedFiles(json, ROOT),
+      selectedTestCount: parseSelectedTestCount(json),
+    }
   } catch {
-    return { failedTests: [], failed: NO_FAILED_FILES }
+    return { failedTests: [], failed: NO_FAILED_FILES, selectedTestCount: undefined }
   } finally {
     rmSync(reportPath, { force: true })
   }
 }
 
-type BufferedResult = StageOutcome & StageRunResult & { readonly output: string }
+type BufferedResult = StageOutcome &
+  StageRunResult & {
+    readonly output: string
+    readonly lockTimedOut: boolean
+    /** JSON レポートを読めた段の、選ばれたテストの数。 */
+    readonly selectedTestCount: number | undefined
+  }
 
 function runBuffered(stage: Stage, control: StopControl): Promise<BufferedResult> {
   if (control.isStopRequested()) {
@@ -294,6 +331,8 @@ function runBuffered(stage: Stage, control: StopControl): Promise<BufferedResult
       failedTests: [],
       failed: NO_FAILED_FILES,
       stopped: true,
+      lockTimedOut: false,
+      selectedTestCount: undefined,
       output: "",
     })
   }
@@ -323,6 +362,7 @@ function runBuffered(stage: Stage, control: StopControl): Promise<BufferedResult
         name: stage.name,
         status,
         stopped: status !== 0 && control.isStopRequested(),
+        lockTimedOut: false,
         ...readReport(reportPath),
         output: Buffer.concat(chunks).toString("utf8"),
       })
