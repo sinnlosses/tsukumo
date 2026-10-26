@@ -1,0 +1,1969 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>tsukumo のレポート生成を根っこから組み直す案（2026-10-26）</title>
+    <style>
+      :root {
+        --bg: #fbfaf7;
+        --fg: #1f2328;
+        --muted: #5b6470;
+        --line: #d9d6cf;
+        --card: #ffffff;
+        --accent: #1f5fbf;
+        --accent-weak: #e6eefb;
+        --ok: #2d7d46;
+        --warn: #b2731a;
+        --ng: #b33a3a;
+        --code: #f3f1ec;
+        --mark: #fff3bf;
+        --bar1: #1f5fbf;
+        --bar2: #8aa6d6;
+        --bar3: #c9d4e8;
+        --bar4: #e1e6ef;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #161a1f;
+          --fg: #e8e6e1;
+          --muted: #a3aab5;
+          --line: #303741;
+          --card: #1d232b;
+          --accent: #7fb0ff;
+          --accent-weak: #1c2a40;
+          --ok: #6cc48b;
+          --warn: #e0a84a;
+          --ng: #ef7b7b;
+          --code: #22282f;
+          --mark: #4a3f12;
+          --bar1: #7fb0ff;
+          --bar2: #4f6f9f;
+          --bar3: #374a66;
+          --bar4: #2a3442;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--fg);
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif;
+        line-height: 1.75;
+        font-size: 15.5px;
+      }
+      .wrap {
+        max-width: 1040px;
+        margin: 0 auto;
+        padding: 40px 28px 96px;
+      }
+      header h1 {
+        font-size: 28px;
+        line-height: 1.35;
+        margin: 0 0 8px;
+      }
+      header .meta {
+        color: var(--muted);
+        font-size: 13.5px;
+      }
+      h2 {
+        font-size: 21px;
+        margin: 56px 0 14px;
+        padding-top: 14px;
+        border-top: 1px solid var(--line);
+      }
+      h3 {
+        font-size: 17px;
+        margin: 30px 0 8px;
+      }
+      h4 {
+        font-size: 15.5px;
+        margin: 22px 0 6px;
+        color: var(--muted);
+      }
+      p {
+        margin: 8px 0;
+      }
+      a {
+        color: var(--accent);
+        text-decoration: none;
+        border-bottom: 1px solid transparent;
+      }
+      a:hover {
+        border-bottom-color: var(--accent);
+      }
+      code,
+      pre {
+        font-family: "SF Mono", Menlo, Consolas, "Noto Sans Mono CJK JP", monospace;
+        font-size: 0.9em;
+      }
+      code {
+        background: var(--code);
+        padding: 1px 5px;
+        border-radius: 4px;
+      }
+      pre {
+        background: var(--code);
+        padding: 14px 16px;
+        border-radius: 8px;
+        overflow: auto;
+        line-height: 1.55;
+      }
+      pre code {
+        background: none;
+        padding: 0;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 12px 0 18px;
+        font-size: 14px;
+      }
+      th,
+      td {
+        border-bottom: 1px solid var(--line);
+        padding: 7px 9px;
+        vertical-align: top;
+        text-align: left;
+      }
+      th {
+        color: var(--muted);
+        font-weight: 600;
+        background: transparent;
+      }
+      td.num,
+      th.num {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+      }
+      .summary {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 18px 22px;
+        margin: 22px 0;
+      }
+      .summary ol {
+        margin: 8px 0 0;
+        padding-left: 1.4em;
+      }
+      .summary li {
+        margin: 6px 0;
+      }
+      .kpis {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+        gap: 10px;
+        margin: 18px 0;
+      }
+      .kpi {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 12px 14px;
+      }
+      .kpi .v {
+        font-size: 24px;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+        line-height: 1.2;
+      }
+      .kpi .l {
+        color: var(--muted);
+        font-size: 13px;
+        margin-top: 2px;
+      }
+      .kpi .s {
+        font-size: 12.5px;
+        color: var(--muted);
+      }
+      .cols {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 12px;
+        margin: 14px 0;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 12px 16px;
+      }
+      .card b.title {
+        display: block;
+        margin-bottom: 4px;
+      }
+      .badge {
+        display: inline-block;
+        font-size: 11.5px;
+        padding: 1px 8px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        color: var(--muted);
+        vertical-align: middle;
+        margin-left: 6px;
+      }
+      .badge-ok {
+        color: var(--ok);
+        border-color: var(--ok);
+      }
+      .badge-warn {
+        color: var(--warn);
+        border-color: var(--warn);
+      }
+      .badge-ng {
+        color: var(--ng);
+        border-color: var(--ng);
+      }
+      .note {
+        border-left: 4px solid var(--accent);
+        background: var(--accent-weak);
+        padding: 10px 14px;
+        border-radius: 0 8px 8px 0;
+        margin: 14px 0;
+      }
+      .note.warn {
+        border-left-color: var(--warn);
+        background: transparent;
+        border: 1px solid var(--warn);
+        border-left-width: 4px;
+      }
+      figure {
+        margin: 18px 0;
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 14px 16px;
+      }
+      figcaption {
+        color: var(--muted);
+        font-size: 13px;
+        margin-top: 8px;
+      }
+      svg text {
+        font-family: inherit;
+      }
+      .toc {
+        columns: 2;
+        column-gap: 28px;
+        font-size: 14px;
+        margin: 14px 0 0;
+      }
+      .toc a {
+        display: block;
+        padding: 2px 0;
+      }
+      .muted {
+        color: var(--muted);
+      }
+      .small {
+        font-size: 13px;
+      }
+      mark {
+        background: var(--mark);
+        color: inherit;
+        padding: 0 2px;
+      }
+      details {
+        margin: 10px 0;
+      }
+      summary {
+        cursor: pointer;
+        color: var(--accent);
+      }
+      .verdict {
+        font-weight: 700;
+      }
+      .v-adopt {
+        color: var(--ok);
+      }
+      .v-consider {
+        color: var(--warn);
+      }
+      .v-reject {
+        color: var(--ng);
+      }
+      .src {
+        font-size: 13px;
+        color: var(--muted);
+      }
+      ul.tight li {
+        margin: 3px 0;
+      }
+      .before-after {
+        display: grid;
+        grid-template-columns: 1fr 36px 1fr;
+        gap: 10px;
+        align-items: start;
+        margin: 14px 0;
+      }
+      .before-after .arrow {
+        align-self: center;
+        text-align: center;
+        font-size: 22px;
+        color: var(--muted);
+      }
+      .before-after .card h4 {
+        margin-top: 0;
+      }
+      @media (max-width: 720px) {
+        .toc {
+          columns: 1;
+        }
+        .before-after {
+          grid-template-columns: 1fr;
+        }
+        .before-after .arrow {
+          transform: rotate(90deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <h1>
+          tsukumo のレポート生成を根っこから組み直す案<br /><span
+            class="muted"
+            style="font-size: 18px; font-weight: 500"
+            >「問いと数を申告し、形は器が決める」</span
+          >
+        </h1>
+        <div class="meta">
+          2026-10-26 · 書き手: 白鈴（tsukumo-3 作業ツリー、HEAD 0c16e4e82）· 今の
+          ADR・方針に縛られずに書いた提案 · 数は 2026-09-27〜10-26 の 30
+          日の記録（<code>~/.tsukumo/report-usage</code>・<code>token-usage</code>）と 3
+          本の調査メモ（同じ置き場の <a href="theory.md">theory.md</a>・<a href="products.md"
+            >products.md</a
+          >・<a href="engines.md">engines.md</a>）による
+        </div>
+      </header>
+
+      <div class="summary">
+        <b>要旨</b>
+        <ol>
+          <li>
+            <b
+              >いまの形は「表現の名前を 21 種列挙し、書き手に札で選ばせ、44
+              条で事後に直させる」。</b
+            >
+            先例（APT 1986 → Draco 2019、Plot.auto、LIDA → Multimodal DeepResearcher、Claude
+            Docs）はどれも<b>「データの型・基数・読者の問いを先に申告し、形は決定表（制約）が決める」</b>向きで、札
+            14 種の対応表と「図を置かない理由」の欄は、調べた範囲のどの先例にも無かった。
+          </li>
+          <li>
+            <b
+              >差し戻し 805 件の理由を数え直すと、71% は文の長さ・体裁、12%
+              はスキーマ不一致、ワークフローの帳簿 10% で、「どの表現を選ぶか」に関わるものは
+              7%。</b
+            >
+            表現の選び方の仕組みは費用のわりに効いておらず、費用の本体は常設の定義（22,001
+            字のスキーマ＋5,140 字の規約が全 59,688 ステップに載る）と文章規約の往復にある。
+          </li>
+          <li>
+            <b>提案は 5 つの原則に畳める:</b> ①
+            問いと数（型・基数・関係）を先に申告させ、形は器の決定表が決める　② 塊 21 種を「Markdown
+            の本文＋型つきフェンス 8 種」に畳む　③ 差し戻しは文法・expressiveness・数の一致の約 10
+            条だけにし、文章の体裁は数えるか器が整える　④
+            色・座標・ファイル一覧・セッション要約など、器が決められる・知っていることは書かせない　⑤
+            図の有無は利用者の既定（図派／文派）に置く。
+          </li>
+          <li>
+            <b>期待する数（概算）:</b> 常設の定義 27,141 字 → 約 6,000 字、差し戻し率 19% → 5%
+            未満、塊 21 種 → 8 種（＋行内 3 種）、差し戻しの条 44 → 約 10、札 14 種 → 0（関係の語 8
+            つに置き換え）。表現力は減らず、数直線・100%
+            帯・前後の矢印・散布は決定表の行として出る。
+          </li>
+          <li>
+            <b>4 段で移し、各段で測る。</b> 段 1（条を数えるだけにする・図の欄を利用者設定へ・例を 4
+            つ載せる）は 1〜2 日で入り、差し戻しが 7 割減るはず。段 2 で図の文法と決定表、段 3
+            で本文を Markdown＋フェンスに、段 4 で帳簿を器へ。最初に「読んで分かる時間」の代理指標を
+            1 つ置く（いままで一度も測っていない）。
+          </li>
+        </ol>
+      </div>
+
+      <nav class="toc">
+        <a href="#q">1. 問いの分解と評価の軸</a>
+        <a href="#now">2. いまの形の実寸</a>
+        <a href="#diag">3. 筋の悪さの診断（6 点）</a>
+        <a href="#prior">4. 先例が指すこと</a>
+        <a href="#proposal">5. 提案: 理想の形</a>
+        <a href="#table">5.3 決定表（データの形 → 表現）</a>
+        <a href="#engine">5.4 器の構成</a>
+        <a href="#checks">5.5 検査の作り直し</a>
+        <a href="#rejected">6. 採らなかった案</a>
+        <a href="#numbers">7. 期待する数（前 → 後）</a>
+        <a href="#migration">8. 移行の段</a>
+        <a href="#unverified">9. 確かめていないこと</a>
+        <a href="#sources">10. 出典</a>
+      </nav>
+
+      <!-- ============================================================ -->
+      <h2 id="q">1. 問いの分解と評価の軸</h2>
+      <p>
+        依頼の文を 5
+        つの条件に分け、それぞれを測れる軸に言い換えた。以降の診断と提案はこの軸で判定する。
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>依頼の条件</th>
+            <th>測れる軸</th>
+            <th>理論の拠り所</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>最適な表現を<b>不自由なく描ける</b></td>
+            <td>
+              表現力: 読者の問い（比較・傾向・割合・前後・構造…）ごとに、少なくとも 1
+              つの描き方が出るか。数直線・円・帯・矢印が「塊を足さずに」出るか
+            </td>
+            <td>
+              APT の expressiveness（<a
+                href="https://courses.ischool.berkeley.edu/i247/f05/readings/Mackinlay_APT_TOG86.pdf"
+                >ischool.berkeley.edu</a
+              >）、Vega-Lite の mark × encoding
+            </td>
+          </tr>
+          <tr>
+            <td><b>いつどれを描くか判断できる</b></td>
+            <td>
+              判断の入力が機械で確かめられる量（型・基数・関係）か、書き手の解釈か。同じ材料に同じ形が出るか（再現性）
+            </td>
+            <td>Draco の hard/soft 制約、Plot.auto の決定表</td>
+          </tr>
+          <tr>
+            <td>仕組みと判断基準が<b>論理的</b></td>
+            <td>
+              各行に根拠（知覚実験・利用者実験）があるか。「許さない形」が expressiveness
+              の違反として説明できるか
+            </td>
+            <td>
+              Cleveland &amp; McGill → Heer &amp; Bostock、Hearst &amp; Tory 2019、Stokes
+              2023、Larkin &amp; Simon 1987
+            </td>
+          </tr>
+          <tr>
+            <td><b>無駄なトークンを使わない</b></td>
+            <td>
+              常設の定義の字数、出力の字数（器が知っていることを書かせていないか）、差し戻しの往復の数
+            </td>
+            <td>Anthropic「Tool Search」「Writing effective tools」、TOON／OpenUI Lang の計測</td>
+          </tr>
+          <tr>
+            <td><b>複雑で管理しづらくない</b></td>
+            <td>塊の種類・条の数・文書の量・テストの行数・変更の集中度</td>
+            <td>Draco「制約にすると記述量 1/20」、ProseMirror の content expression</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- ============================================================ -->
+      <h2 id="now">2. いまの形の実寸</h2>
+      <p>
+        「レポートの生成」は、書き手（Claude）が <code>report</code> という MCP ツールを 1
+        回呼び、JSON の引数をブラウザが描く形。書き手に渡っているものと、30 日の使われ方を測った。
+      </p>
+
+      <div class="kpis">
+        <div class="kpi">
+          <div class="v">22,001<span class="s"> 字</span></div>
+          <div class="l">report の JSON Schema（description 121・塊 21 種の判別合併）</div>
+        </div>
+        <div class="kpi">
+          <div class="v">5,140<span class="s"> 字 / 122 行</span></div>
+          <div class="l">常設の規約「レポートの記法」（条 22＋表 3）</div>
+        </div>
+        <div class="kpi">
+          <div class="v">4,652 / 805</div>
+          <div class="l">
+            30 日の受け付け / 差し戻し（差し戻しの記録がある 10-08 以降は 3,350 対 805 ＝ 19%）
+          </div>
+        </div>
+        <div class="kpi">
+          <div class="v">18<span class="s">%</span></div>
+          <div class="l">figure 欄に図が置かれた割合（471 / 2,582。none が 2,111）</div>
+        </div>
+        <div class="kpi">
+          <div class="v">46<span class="s">%</span></div>
+          <div class="l">塊の使用 11,889 回のうち table・text・list の 3 種</div>
+        </div>
+        <div class="kpi">
+          <div class="v">59,688</div>
+          <div class="l">
+            30 日の main のステップ数。各ステップの文脈は中央値 137k トークン（cache
+            read）で、定義と規約は毎回この中に載る
+          </div>
+        </div>
+      </div>
+
+      <h3>2.1 書き手に渡っているもの</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>層</th>
+            <th>中身</th>
+            <th class="num">量</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>ツール定義</td>
+            <td>
+              <code>report</code> の inputSchema。欄
+              15（conclusion・keyFigures・checks・figure・sections・retrospective・favor・task・closing・waitingLine・sessionSummary・sessionRemaining・title・workPlanClosing）。塊
+              21
+              種（text/list/table/matrix/compare/beforeAfter/dimension/note/stats/code/mermaid/graph/chart/svg/timeline/progress/options/claims/image/files/markdown）、chart
+              7 種、list 5 様式、note 5 調子
+            </td>
+            <td class="num">22,001 字</td>
+          </tr>
+          <tr>
+            <td>常設の規約</td>
+            <td>
+              「レポートの記法（tsukumo）」条 22、形の札 14
+              種の表（第一候補・許す代替・許さない）、依頼の型 → 図 1 の表、本文の塊の表
+            </td>
+            <td class="num">5,140 字</td>
+          </tr>
+          <tr>
+            <td>事後の検査</td>
+            <td>
+              差し戻しの条
+              44（<code>REPORT_REJECTION_MODES</code>）。字数・セル長・見出し・図の矛盾・帳簿の欄など
+            </td>
+            <td class="num">44 条</td>
+          </tr>
+          <tr>
+            <td>描く側</td>
+            <td>
+              サーバ <code>src/server/report</code> 3,417 行、<code>src/shared/report</code> 6,647
+              行、ブラウザの描画 4,319 行＋CSS 3,179 行、テスト 15,362 行
+            </td>
+            <td class="num">約 3.3 万行</td>
+          </tr>
+          <tr>
+            <td>文書</td>
+            <td>
+              <code>docs/architecture/display/</code> 22 ファイル 268 KB、ADR 7 本、研究メモ 9 本
+            </td>
+            <td class="num">683 KB</td>
+          </tr>
+          <tr>
+            <td>変更の集中</td>
+            <td>2026-09-27 以降のコミット 1,498 のうち report に触るもの</td>
+            <td class="num">276（18%）</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>2.2 差し戻し 805 件の理由（理由の印 952 個）</h3>
+      <figure>
+        <svg viewBox="0 0 900 250" width="100%" role="img" aria-label="差し戻しの理由の内訳">
+          <g font-size="13" fill="currentColor">
+            <text x="0" y="30">文の長さ・体裁</text>
+            <rect x="200" y="14" width="500" height="22" fill="var(--bar1)" />
+            <text x="708" y="30" font-weight="700">679（71%）</text>
+            <text x="200" y="52" font-size="12" fill="var(--muted)">
+              1 文目 50 字 354・結論の長さ 54・note の密度 48・本文の矢印 46・段落の長さ
+              39・文のセル 36・見出し無し 32 …
+            </text>
+            <text x="0" y="86">スキーマ不一致</text>
+            <rect x="200" y="70" width="82" height="22" fill="var(--bar2)" />
+            <text x="290" y="86" font-weight="700">111（12%）</text>
+            <text x="200" y="108" font-size="12" fill="var(--muted)">
+              tool-error。どの欄が合わなかったかは記録されていない
+            </text>
+            <text x="0" y="142">ワークフローの帳簿</text>
+            <rect x="200" y="126" width="71" height="22" fill="var(--bar3)" />
+            <text x="280" y="142" font-weight="700">97（10%）</text>
+            <text x="200" y="164" font-size="12" fill="var(--muted)">
+              background-running 43・unfinished-phases 28・work_plan の閉じ忘れ
+              17・unanswered-work-plan 5 …
+            </text>
+            <text x="0" y="198">表現の選び方・図の崩れ</text>
+            <rect x="200" y="182" width="48" height="22" fill="var(--bar4)" stroke="var(--line)" />
+            <text x="256" y="198" font-weight="700">65（7%）</text>
+            <text x="200" y="220" font-size="12" fill="var(--muted)">
+              figure-contradiction 31・broken-graph 19・too-many-candidates 7・no-screenshot
+              3・fraction-figure 2 …
+            </text>
+            <text x="0" y="244" font-size="12" fill="var(--muted)">
+              棒の長さは理由の印の数に比例（1 件に 2 つ以上の理由が付くことがあるので合計 952）
+            </text>
+          </g>
+        </svg>
+        <figcaption>
+          図 1. 差し戻しの理由の 71% は文の長さと体裁で、「どの表現を選んだか」に関わる差し戻しは
+          7%。表現を選ぶ仕組み（札・figure
+          の理由・許さない塊）は、差し戻しの面ではほとんど働いていない。
+        </figcaption>
+      </figure>
+
+      <h3>2.3 塊の使われ方と図の有無</h3>
+      <div class="cols">
+        <div class="card">
+          <b class="title">塊 21 種の使用（11,889 回）</b>
+          上位 5 種で 62%: table 2,066・text 1,899・list 1,516・note 1,060・options 778。下位 3 種で
+          0.8%: timeline 9・progress 16・svg 67。chart 330（2.8%）、graph 641（5.4%）、mermaid 368。
+        </div>
+        <div class="card">
+          <b class="title">figure 欄（必須）</b>
+          置いた 471（graph 261・stats 57・chart 49・image 48・beforeAfter 38・timeline 9・mermaid
+          7・svg 2）。none 2,111。none の理由が記録された 413 件は no-shape 213・short-answer
+          174・single-value 23・no-material 3。
+        </div>
+        <div class="card">
+          <b class="title">書き手の出力</b>
+          受け付けた report の引数は中央値 841 字・p90 2,793 字。内訳は sections 75.6%、figure
+          4.6%、checks
+          3.8%、帳簿の欄（closing・sessionSummary・sessionRemaining・waitingLine・title）8.2%。
+        </div>
+        <div class="card">
+          <b class="title">形の札（shapeTag）</b>
+          記録 1,590 のうち unspecified 1,018（札の導入 10-18 より前を含む）。指定された 572 は
+          parallel 138・choice 105・mapping 80・attribute 80・quantity
+          62。札が許さない塊を使った節は 56。
+        </div>
+      </div>
+      <p class="small muted">
+        table・text 偏重は Tukey／Few
+        の線引き（精密な値を読むなら表、少数の値なら文、比較・傾向なら図）と向きが合っていて、作業レポートの中身（差分・件数・判断）を考えれば<b>偏りそのものは不具合ではない</b>可能性が高い（theory.md
+        2 節）。問題は偏りではなく、偏りを直そうとして積んだ仕組みの費用にある。
+      </p>
+
+      <!-- ============================================================ -->
+      <h2 id="diag">3. 筋の悪さの診断（6 点）</h2>
+      <p>
+        各点を「いまの形 → 先例・理論が言うこと → なぜ筋が悪いか」の順に書く。前回のレビュー（<code
+          >tsukumo-audit-2026-10-26.html</code
+        >
+        の 4-1〜4-12）が個々の症状を挙げたのに対し、ここでは<b>構造の原因</b>だけを 6 つに束ねた。
+      </p>
+
+      <h3>3.1 判断の入力が「書き手の解釈（札）」で、データの形ではない</h3>
+      <p>
+        <b>いま:</b> 書き手は節ごとに形の札 14
+        種（cause・connection・position・state・time・order・quantity・choice・attribute・mapping・comparison・boundary・parallel・single）を選び、札ごとの表（第一候補・許す代替・許さない）に従う。
+      </p>
+      <p>
+        <b>先例:</b> APT（1986）から Draco（2019）・Draco
+        2（2023）まで、自動選択の入力は<b>データの型（名義・順序・量・時間）・基数・読者の課題</b>で、出力は符号化（mark
+        × チャネル）。Observable Plot の <code>auto</code> は「x/y
+        があるか・順序か・単調か・集約か」の 10 行弱の条件分岐で mark を決める（<a
+          href="https://github.com/observablehq/plot/pull/1238"
+          >github.com</a
+        >）。LLM は「型の決まった少数から 1 つ選ぶ」は 80〜86%
+        当てるが、「どの形が良いか」の好みは人の知覚実験の指針から大きく外れる（DracoGPT、<a
+          href="https://idl.uw.edu/papers/dracogpt"
+          >idl.uw.edu</a
+        >）。
+      </p>
+      <p>
+        <b>なぜ悪いか:</b>
+        札は書き手の主観で揺れ、同じ材料に別の札が付く。機械は札の正しさを確かめられないので、検査は「札が許さない塊を使ったか」（56
+        節）という間接の形にしかならず、しかもそれは差し戻しの 7% の一部でしかない。<mark
+          >判断の良し悪しを LLM の好みに任せる形は、理論からも実証からも支持されない。</mark
+        >
+      </p>
+
+      <h3>3.2 表現を「名前付きの塊」で列挙し、増やすには塊を足すしかない</h3>
+      <p>
+        <b>いま:</b> 塊 21 種＋chart 7
+        種（bar・line・pie・arrow・slope・span・share）。「数直線」のような新しい形は塊か chartKind
+        を足す。足すたびに <code>describe</code>・描画・検査の条・文書が増える。
+      </p>
+      <p>
+        <b>先例:</b> Vega-Lite は mark 原始 11＋合成 3 と encoding 41
+        チャネルの組で広い範囲を表す（<a href="https://vega.github.io/vega-lite/docs/mark.html"
+          >vega.github.io</a
+        >）。Claude Docs の図の文法は mark 5
+        種（bar・line・area・point・tile）＋annotation（rule・span）＋Stat＋Table
+        で、種類を増やさず「mark × 軸 × split」の合成で表現を増やす。名前付きの塊の数は先例でも
+        13〜36（ProseMirror 13・A2UI 18・Slack 21・Adaptive Cards 約 26・Notion 32）で、21
+        という数そのものは中央にある。
+      </p>
+      <p>
+        <b>なぜ悪いか:</b> 数が多いことではなく、<b>合成がない</b>ことが問題。Draco は命令的コード
+        4,324 行の推薦器を hard 70・soft 110 の制約で再実装して同じ答えを返した（記述量 1/20、<a
+          href="https://idl.cs.washington.edu/files/2019-Draco-InfoVis.pdf"
+          >idl.cs.washington.edu</a
+        >）。名前の列挙は「列挙した分しか描けず、検証は塊ごとに別条が要る」ので、44
+        条が塊別に増えてきた構図はこの方式の必然。
+      </p>
+
+      <h3>3.3 「使い方」をスキーマの説明文 121 個と条 22 で教え、毎ステップ載せている</h3>
+      <p>
+        <b>いま:</b> 22,001 字のスキーマと 5,140 字の規約が、仕事のセッションの全ステップ（30 日で
+        59,688）の文脈に載る。report を呼ぶのは 1 ターンに 1
+        回で、ツールを何度も走らせる長いターンでは大半のステップが使わない。
+      </p>
+      <p>
+        <b>先例:</b> Anthropic は「ツール定義が 10 個以上、または 10k
+        トークンを超えたら文脈から外す（Tool Search）」「<b
+          >JSON Schema は構造（型・必須・enum）は言えるが使い方は言えない</b
+        >」「<code>input_examples</code> 数個で複雑なパラメータの精度 72% → 90%」「brittle logic
+        をプロンプトに書くな」と書いている（<a
+          href="https://platform.claude.com/docs/en/agents-and-tools/tool-use/tool-search-tool"
+          >platform.claude.com</a
+        >、<a href="https://www.anthropic.com/engineering/advanced-tool-use">anthropic.com</a
+        >）。LLM
+        の図生成の研究でも、効いたのは段階の分解と少数の例で、長い規則の列挙が効いた報告は見つからなかった（theory.md
+        5 節）。
+      </p>
+      <p>
+        <b>なぜ悪いか:</b> 常設の定義は「レポートを書かないステップ」にも載り、context
+        rot（文脈が長いほど想起が落ちる）の側に効く。しかも 121
+        個の説明文は使い方を言おうとしているので、Anthropic
+        の注意の対象そのもの。<mark>費用の本体は差し戻しの往復ではなく、この常設の重さにある</mark>（差し戻し
+        805 回 × 約 140k トークンの cache read ≒ 30 日の総量の 0.6% と小さい。常設は全 59,688
+        ステップに載る）。
+      </p>
+
+      <h3>3.4 figure を必須にして「置かない理由」を言わせる</h3>
+      <p>
+        <b>いま:</b> 欄 <code>figure</code> は必須で、図を置かないときは
+        <code>short-answer / no-shape / single-value / no-material</code> の enum
+        で理由を言う。理由と本文が食い違うと差し戻す（figure-contradiction 31 件）。
+      </p>
+      <p>
+        <b>先例:</b> 会話型 UI で「文だけ」を選ぶ人は 41%、個人内で 82〜89%
+        一貫し、推奨は「文脈つきの図を既定にし、<b>個人設定で切れるようにする</b>」（Hearst &amp;
+        Tory 2019、<a
+          href="https://people.ischool.berkeley.edu/~hearst/papers/vis19wouldyoulikeachartfinal3.pdf"
+          >ischool.berkeley.edu</a
+        >）。APT の expressiveness
+        は「余計な情報を表す図は誤りになり得る」と定義し、置かないほうが正しい場合を理論の側に置く。ChatGPT
+        Canvas は「開くか否か」を分類器で判定（83%／94%）、Claude Docs
+        は「表の全列を描いた図は表の繰り返し」と置く理由を問う。<b
+          >図の有無を enum で正当化させる先例は見当たらなかった。</b
+        >
+      </p>
+      <p>
+        <b>なぜ悪いか:</b> 理由の既定値化（no-shape 213・short-answer 174
+        がほぼ全部）と帳簿合わせの差し戻しを生み、書き手には毎回の正当化の字数を、器には矛盾検査の条を要求する。利用者は
+        1 人なので、<mark>「図派／文派」の既定を 1 つ持てば欄ごと要らない</mark>。
+      </p>
+
+      <h3>3.5 色・座標・一覧・要約など、器が決められる・知っていることを書かせている</h3>
+      <p>
+        <b>いま:</b> <code>svg</code> の塊は座標を書き手が書く。<code>files</code>
+        は触ったファイルの一覧を書き手が書く（tsukumo は git
+        の差分を知っている）。<code>sessionSummary</code>・<code>sessionRemaining</code>・<code>waitingLine</code>・<code
+          >title</code
+        >
+        はセッションの帳簿で、毎回書き直させる（出力の 8%）。
+      </p>
+      <p>
+        <b>先例:</b> 座標を書かせる器（JSON
+        Canvas・DiagrammerGPT）はどれも配置を直す往復が前提で、宣言型（Mermaid・D2・DOT・Vega-Lite）は座標を持たない（engines.md
+        要点
+        1）。自動修復の研究は「実行エラーはほぼ解けた。残るのは色・はみ出し・配置」と結び、色覚対応を満たす図は
+        33.3% にとどまる（<a href="https://arxiv.org/html/2506.06175">arxiv.org</a>）。Few の bullet
+        graph の仕様は色を 1 色の濃淡に固定し、設計側の既定にしている。
+      </p>
+      <p>
+        <b>なぜ悪いか:</b>
+        書き手が苦手で器が得意なこと（座標・色）を書き手に、器が既に知っていること（差分・要約）を書き手に、どちらも書かせている。<code
+          >svg</code
+        >
+        67 件・<code>dimension</code> 212 件は、その代償を払って描いた図。
+      </p>
+
+      <h3>3.6 検査の重心が「表現の形」にあり、「データと符号化の整合」にない</h3>
+      <p>
+        <b>いま:</b> 44 条の大半は 1 文目 50 字・セル平均 35 字・見出しの有無・note
+        の密度など、文章の体裁。本文の数と図の値の一致、集約の単位、軸の型（名義に折れ線）を見る条は無い。
+      </p>
+      <p>
+        <b>先例:</b> LLM の図生成の誤りは 73.8% がデータ側（絞り込み・軸の値）で、視覚側は 26.2%（<a
+          href="https://arxiv.org/html/2404.17136v1"
+          >arxiv.org</a
+        >）。Draco の hard 制約は「shape は量を表せない」のような expressiveness
+        の違反を機械で落とす。Claude Docs
+        は「違反は名前と直し方を返す」閉じた文法で、事後の条文を持たない。
+      </p>
+      <p>
+        <b>なぜ悪いか:</b> 71%
+        の差し戻しが文章の体裁で起き、読み手の判断に効くデータ側の誤りは誰も見ていない。<mark>字数は読者の理解の代理にならず、一度も「読んで分かるまでの時間」を測っていない</mark>（前回レビュー
+        4-3）。
+      </p>
+
+      <!-- ============================================================ -->
+      <h2 id="prior">4. 先例が指すこと</h2>
+      <p>
+        3 本の調査メモ（理論・製品・器）の要点を、提案に効く順に 9
+        つに絞る。詳細と全出典はメモにある。
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>先例が言うこと</th>
+            <th>提案への効き方</th>
+            <th>出典</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1</td>
+            <td>
+              自動選択の入力は<b>型・基数・課題</b>、出力は符号化の合成。知識は hard（必ず満たす）/
+              soft（好み）の制約で、記述量は命令的コードの 1/20
+            </td>
+            <td>札 → 型・基数・関係の申告。決定表＋hard 制約</td>
+            <td>
+              <a href="https://idl.cs.washington.edu/files/2019-Draco-InfoVis.pdf"
+                >idl.cs.washington.edu</a
+              >
+            </td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td>
+              「何を描くかを先に、形はあとで」の段分けが効く。LIDA は
+              goal（問い＋表現＋理由）を先に出して描画エラー 3.5%、DeepResearcher は planning
+              を抜くと 85% 負け、Claude Docs は冒頭に「WHAT TO DRAW, BEFORE HOW」
+            </td>
+            <td>図ごとに「読者の問い」1 行を必須にする</td>
+            <td>
+              <a href="https://arxiv.org/abs/2303.02927">arxiv.org</a>・<a
+                href="https://arxiv.org/abs/2506.02454"
+                >arxiv.org</a
+              >
+            </td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td>
+              41% は文だけを選ぶ。文で答えるなら「値を含む 1
+              文」が最良。図を置くなら「値の注記つき＋タイトルに傾向」が最上位で、図だけは最下位
+            </td>
+            <td>1〜2 値は値つきの 1 文。図は値ラベルと傾向の題を既定に。図の有無は利用者設定</td>
+            <td>
+              <a
+                href="https://people.ischool.berkeley.edu/~hearst/papers/vis19wouldyoulikeachartfinal3.pdf"
+                >ischool.berkeley.edu</a
+              >・<a href="https://people.ischool.berkeley.edu/~hearst/papers/tvcg2022.pdf"
+                >ischool.berkeley.edu</a
+              >
+            </td>
+          </tr>
+          <tr>
+            <td>4</td>
+            <td>
+              図の優位は情報量ではなく計算量。位置で情報を束ねて探索を省き、知覚的推論（長さ・位置の比較）に置き換えられるときだけ有効
+            </td>
+            <td>図を出す条件を「3 要素以上を一緒に見比べる」に機械化</td>
+            <td>
+              <a
+                href="https://mechanism.ucsd.edu/bill/teaching/F12/cs200/Readings/larkin.whyadiagramissometimesworth.1987.pdf"
+                >mechanism.ucsd.edu</a
+              >
+            </td>
+          </tr>
+          <tr>
+            <td>5</td>
+            <td>
+              知覚精度の順位は 位置 &gt; 長さ &gt; 角度 &gt; 面積（Cleveland &amp; McGill を Heer
+              &amp; Bostock が追試）。円は角度、バブル・ツリーマップは面積
+            </td>
+            <td>決定表の第一候補は位置・長さ（棒・点・数直線）。円は部分 ≤ 3 の割合だけ</td>
+            <td>
+              <a href="https://homes.cs.washington.edu/~jheer/files/2010-MTurk-CHI.pdf"
+                >cs.washington.edu</a
+              >
+            </td>
+          </tr>
+          <tr>
+            <td>6</td>
+            <td>
+              生成 UI の標準は「部品名＋props をカタログで検証」（A2UI 18・json-render）か「LLM
+              は描かずサーバの HTML」（MCP Apps）。どちらも LLM に自由 HTML を書かせず、<b
+                >事後に条文で差し戻す形はどちらにも無い</b
+              >
+            </td>
+            <td>検証は文法で閉じ、違反は名前と直し方を返す。事後の条文を減らす</td>
+            <td>
+              <a href="https://a2ui.org/">a2ui.org</a>・<a
+                href="https://modelcontextprotocol.io/extensions/apps/overview"
+                >modelcontextprotocol.io</a
+              >
+            </td>
+          </tr>
+          <tr>
+            <td>7</td>
+            <td>
+              ツール定義 10k トークン超は文脈から外す。Schema は使い方を言えない。<code
+                >input_examples</code
+              >
+              で 72% → 90%
+            </td>
+            <td>定義を縮め、呼ぶときだけ読ませ、説明文を例 4 つに替える</td>
+            <td>
+              <a href="https://www.anthropic.com/engineering/advanced-tool-use">anthropic.com</a>
+            </td>
+          </tr>
+          <tr>
+            <td>8</td>
+            <td>
+              出力の記法で 30〜67% 減る（TOON 2,474 vs JSON 4,308 トークン、OpenUI Lang
+              −67%）。Markdown＋フェンスはスキーマを載せない点で最も軽い
+            </td>
+            <td>本文は Markdown、図は型つきフェンス（YAML 風の短い記述）</td>
+            <td><a href="https://github.com/toon-format/toon">github.com</a></td>
+          </tr>
+          <tr>
+            <td>9</td>
+            <td>
+              宣言型の記法は最小例 10〜70 字。座標を書かせる器は往復前提。1〜5
+              個の数には「語の大きさの図」（Tufte の sparkline、Few の bullet）。Mermaid 12 は ELK
+              同梱で xychart・pie が追加サイズゼロ
+            </td>
+            <td>
+              <code>svg</code> を外す。行内の印を 3 種だけ持つ。描画エンジンは今あるものを使い回す
+            </td>
+            <td>
+              <a
+                href="https://www.edwardtufte.com/notebook/sparkline-theory-and-practice-edward-tufte/"
+                >edwardtufte.com</a
+              >・<a href="https://mermaid.js.org/syntax/xyChart.html">mermaid.js.org</a>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- ============================================================ -->
+      <h2 id="proposal">5. 提案: 理想の形 ——「問いと数を申告し、形は器が決める」</h2>
+
+      <h3>5.1 原則 5 つ</h3>
+      <div class="cols">
+        <div class="card">
+          <b class="title">① 問いと数を先に、形はあとで</b
+          >図を置く箇所では、書き手は「読者がそれで決めること（問い）」1
+          行と、数（列の型・値・単位）と「関係」（比較・順位・割合・前後・傾向・区間・分布・相関の 8
+          語）だけを書く。形（棒・折れ線・数直線・円・帯）は器の決定表が決め、書き手は
+          <code>form:</code> で上書きできる（上書きは数えるだけで差し戻さない）。
+        </div>
+        <div class="card">
+          <b class="title">② 本文は Markdown、図は型つきフェンス 8 種</b>塊 21
+          種を「本文（Markdown）＋フェンス 8
+          種（figure・graph・mermaid・table・code・callout・claims・image）」に畳む。表は Markdown
+          の表（状態セルは
+          <code>✓ 通過</code> のような印）、採否・見比べ・対応表は列の形で表に戻す。
+        </div>
+        <div class="card">
+          <b class="title">③ 検査は文法と整合だけ、体裁は数えるか器が整える</b
+          >差し戻すのは、フェンスが解釈できない・expressiveness の違反（名義に折れ線、部分 6
+          以上の円）・本文の数と図の値の不一致・帳簿の欄の欠け、の約 10 条。1
+          文目の長さ・セルの長さ・見出しの有無は数えるだけにし、器が折り返し・畳みで整える。
+        </div>
+        <div class="card">
+          <b class="title">④ 器が決められること・知っていることは書かせない</b
+          >色・座標・配置・値ラベルの位置は器。触ったファイルは git
+          の差分から器が出す。セッションの要約・残り・待ちの一言は、report
+          の外で器が別に作る（小さいモデルの脇の問い合わせ）。
+        </div>
+        <div class="card">
+          <b class="title">⑤ 図の有無は利用者の既定</b>利用者が「図派／文派」を 1
+          つ持つ。決定表の第一候補が「文」の行では図を出さず、「図」の行で利用者が文派なら、表か値つきの
+          1 文に落とす。書き手は置かない理由を書かない。
+        </div>
+      </div>
+
+      <h3>5.2 書き手が渡すもの（新しい <code>report</code> の口）</h3>
+      <p>
+        欄は 6 つ。本文は Markdown
+        で、図はフェンスで本文の<b>参照する文の直下</b>に置く（文と図の値を結ぶ。Kori の 676
+        参照のうち 366 は個々の点への参照、<a href="https://arxiv.org/abs/2108.04203">arxiv.org</a
+        >）。帳簿の欄と <code>figure</code> 必須欄は無い。
+      </p>
+      <pre><code>report({
+  headline: "次から設定の書き間違いが起動時に分かる",      // 読み手から見た変化を 1 文
+  outcome: "finished",                                       // finished / stopped / awaiting-answer
+  checks: [{ status: "ok", label: "pnpm run check", figure: "単体 2855・E2E 57", command: "pnpm run check" }],
+  body: `
+## 何が変わったか
+設定の読み込みを 1 か所にまとめ、型の検査を起動時に通す。読み方は変えていない。
+
+## 時間はどこで延びたか
+実装の段が全体の 56% を占めた。
+
+\`\`\`figure
+question: どの段で時間が延びたか
+relation: compare            # compare / rank / share / change / trend / span / distribution / correlate
+unit: 分
+data:
+  計画: 4
+  実装: 31
+  検証: 12
+  受け入れ: 9
+\`\`\`
+
+## 依存の向き
+\`\`\`graph
+[server]
+  config -> loader: 渡す
+  loader -> validator: 検査
+[]
+validator -> browser: 配る
+\`\`\`
+`,
+  favor: "",                                                 // 残るお願いがあるときだけ
+  closing: { text: "……ん、通りましたの。", expression: "proud" }
+})</code></pre>
+      <p>
+        この <code>figure</code> は決定表の行 3（名義 4 × 量
+        1、比較）に当たり、器は<b>値ラベルつきの横棒</b>を描き、題に「実装 31
+        分が最大（56%）」のような傾向の 1 文を自動で添える。書き手が <code>form: pie</code> と書けば
+        expressiveness（部分 ≤ 3）に反するので、器は棒のまま描いて「上書きを採らなかった」と数える。
+      </p>
+
+      <h3>5.3 決定表（データの形 → 表現）<a id="table"></a></h3>
+      <p>
+        入力は書き手が申告する <b>列の型</b>（N 名義・O 順序・T 時間・Q
+        量）・<b>基数</b>・<b>関係</b>（8
+        語）。出力は第一候補・代替・置かない形・必須の注記。tsukumo
+        のレポートに出る材料（件数・前後・所要・依存・手順）に合わせて 12 行に絞った（理論メモの 15
+        行から、tsukumo で出ない行を落とした）。基数の境（3・5・7・20）は Few／APT
+        の慣例に基づく目安で、実証された閾値ではない。
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>データの形</th>
+            <th>関係</th>
+            <th>第一候補</th>
+            <th>代替</th>
+            <th>置かない形</th>
+            <th>必須の注記</th>
+            <th>根拠</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1</td>
+            <td>Q 1 値</td>
+            <td>—</td>
+            <td><b>値つきの 1 文</b>（図なし）</td>
+            <td>—</td>
+            <td>chart</td>
+            <td>単位</td>
+            <td>Hearst &amp; Tory、Tukey</td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td>N 2 × Q 1</td>
+            <td>compare</td>
+            <td><b>値つきの 1 文</b>（両方の値と差）</td>
+            <td>棒 2 本＋差の注記（図派）</td>
+            <td>pie</td>
+            <td>差</td>
+            <td>Hearst &amp; Tory</td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td>N 3〜7 × Q 1</td>
+            <td>compare</td>
+            <td><b>横棒</b>（値ラベル）</td>
+            <td>表</td>
+            <td>pie・面積</td>
+            <td>最大の値・題に傾向</td>
+            <td>Cleveland &amp; McGill、Stokes</td>
+          </tr>
+          <tr>
+            <td>4</td>
+            <td>N 8〜20 × Q 1</td>
+            <td>rank</td>
+            <td><b>並べ替えた横棒</b>（上位を差し色）</td>
+            <td>表（上位 10＋ほか n 件）</td>
+            <td>pie・折れ線</td>
+            <td>上位の値</td>
+            <td>Few</td>
+          </tr>
+          <tr>
+            <td>5</td>
+            <td>N 20 超 × Q 1</td>
+            <td>distribution</td>
+            <td><b>表</b>（上位＋ほか）か ヒストグラム</td>
+            <td>箱ひげ</td>
+            <td>棒（全件）</td>
+            <td>中央値・範囲</td>
+            <td>Few「20 超は図」（二次）</td>
+          </tr>
+          <tr>
+            <td>6</td>
+            <td>N ≤ 5 × Q（合計 100%）</td>
+            <td>share</td>
+            <td><b>100% の横棒 1 本</b></td>
+            <td>pie（部分 ≤ 3）・割合つきの表</td>
+            <td>多数の pie</td>
+            <td>各部分の %</td>
+            <td>Heer &amp; Bostock（角度 &lt; 長さ）</td>
+          </tr>
+          <tr>
+            <td>7</td>
+            <td>T 2 点 × 項目 1</td>
+            <td>change</td>
+            <td><b>値つきの 1 文</b>「12 → 8（−33%）」</td>
+            <td>矢印（項目 2〜8 なら）</td>
+            <td>折れ線</td>
+            <td>差と %</td>
+            <td>Hearst &amp; Tory</td>
+          </tr>
+          <tr>
+            <td>8</td>
+            <td>T ≥ 5 点 × 系列 ≤ 4</td>
+            <td>trend</td>
+            <td><b>折れ線</b>（系列名は線の端）</td>
+            <td>表（点 &lt; 5）</td>
+            <td>棒・積み上げ面</td>
+            <td>題に傾向・終点の値</td>
+            <td>Stokes 指針 3</td>
+          </tr>
+          <tr>
+            <td>9</td>
+            <td>Q 2〜6 値・同じ単位・参照値あり</td>
+            <td>compare</td>
+            <td><b>数直線</b>（1 本の軸に点、しきい値を線）</td>
+            <td>bullet（目標と区間）</td>
+            <td>pie・ゲージ</td>
+            <td>参照値の名</td>
+            <td>Few bullet graph 仕様</td>
+          </tr>
+          <tr>
+            <td>10</td>
+            <td>項目 × 区間（開始・終了）</td>
+            <td>span</td>
+            <td><b>区間の帯</b>（timeline。延び・出来事があれば目盛りつき）</td>
+            <td>表（項目 ≤ 3）</td>
+            <td>折れ線</td>
+            <td>期間の長さ</td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td>11</td>
+            <td>Q × Q</td>
+            <td>correlate</td>
+            <td><b>散布</b></td>
+            <td>表（点 &lt; 10）</td>
+            <td>折れ線</td>
+            <td>外れ値の名</td>
+            <td>APT</td>
+          </tr>
+          <tr>
+            <td>12</td>
+            <td>項目 × 属性（単位が混じる）</td>
+            <td>—</td>
+            <td><b>表</b>（状態セルは印）</td>
+            <td>—</td>
+            <td>chart</td>
+            <td>単位は列見出しに</td>
+            <td>Tukey、Few</td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="small">
+        構造（節点と辺・入れ子・戻り道）は <code>graph</code>、時間の順のやり取り・状態の移りは
+        <code>mermaid</code
+        >（sequence・state）で、決定表の外。どの行でも「図だけ」は出さない（値ラベルと題の傾向は器が付ける）。<b>図を出す条件</b>は
+        Larkin &amp; Simon の 3 つ——(a) 3 要素以上を一緒に見比べる、(b) 文だと探索・照合が要る、(c)
+        長さ・位置の比較に置き換えられる——で、行 1・2・7 はこれを満たさないので文が第一候補になる。
+      </p>
+
+      <h3>5.4 器の構成<a id="engine"></a></h3>
+      <div class="before-after">
+        <div class="card">
+          <h4>いま</h4>
+          <ul class="tight">
+            <li>
+              書き手: 塊 21 種の JSON・札・figure
+              の理由・座標（svg）・色の印・ファイル一覧・セッション要約
+            </li>
+            <li>検査: 44 条（体裁 71%）</li>
+            <li>
+              描画: 自前の chart SVG（7 種）、自前の graph 折り返し配置、mermaid（9
+              種、サーバでも構文検査のため 5.3 MB を読む）、svg、dimension、timeline、stats
+            </li>
+            <li>定義 22,001 字＋規約 5,140 字を全ステップに常設</li>
+          </ul>
+        </div>
+        <div class="arrow">→</div>
+        <div class="card">
+          <h4>提案</h4>
+          <ul class="tight">
+            <li>
+              書き手: Markdown の本文＋フェンス 8 種。図は問い・数・関係だけ（上書きは
+              <code>form:</code>）
+            </li>
+            <li>
+              決定表（12 行）＋hard 制約（約 10）を <code>shared</code> の 1
+              ファイルに。全行に単体テスト（Draco 2 と同じ作法）
+            </li>
+            <li>
+              描画: 自前の chart SVG を<b>残して</b>決定表の出力を受ける（Mermaid の xychart
+              は値ラベルを持たないため）。graph は今の経路（mermaid flowchart＋6
+              節点以上の折り返し）のまま。svg・dimension・stats・progress・compare・matrix・options
+              は塊としては外し、表か図の行に吸収
+            </li>
+            <li>
+              定義は約 4,000 字（欄 6＋フェンス名）。図の文法と決定表の説明は、report
+              を初めて呼ぶ直前に 1 回だけ返す「文法カード」（約 1,500 字）か ToolSearch
+              の遅延読み込みで渡す。例 4 つ（各 100〜200 トークン）を
+              <code>input_examples</code> 相当として載せる
+            </li>
+          </ul>
+        </div>
+      </div>
+      <figure>
+        <svg viewBox="0 0 960 230" width="100%" role="img" aria-label="提案の流れ">
+          <defs>
+            <marker
+              id="ah"
+              viewBox="0 0 10 10"
+              refX="9"
+              refY="5"
+              markerWidth="8"
+              markerHeight="8"
+              orient="auto"
+            >
+              <path d="M0,0 L10,5 L0,10 z" fill="var(--muted)" />
+            </marker>
+          </defs>
+          <g font-size="13" fill="currentColor">
+            <rect
+              x="10"
+              y="40"
+              width="180"
+              height="78"
+              rx="8"
+              fill="var(--accent-weak)"
+              stroke="var(--accent)"
+            />
+            <text x="100" y="66" text-anchor="middle" font-weight="700">書き手（Claude）</text>
+            <text x="100" y="86" text-anchor="middle" font-size="12">問い・数（型・値・単位）</text>
+            <text x="100" y="104" text-anchor="middle" font-size="12">
+              関係 8 語・本文 Markdown
+            </text>
+            <line
+              x1="190"
+              y1="79"
+              x2="250"
+              y2="79"
+              stroke="var(--muted)"
+              stroke-width="1.5"
+              marker-end="url(#ah)"
+            />
+            <text x="220" y="70" text-anchor="middle" font-size="11" fill="var(--muted)">
+              report
+            </text>
+            <rect
+              x="252"
+              y="20"
+              width="200"
+              height="118"
+              rx="8"
+              fill="var(--card)"
+              stroke="var(--line)"
+            />
+            <text x="352" y="44" text-anchor="middle" font-weight="700">文法の検査</text>
+            <text x="352" y="64" text-anchor="middle" font-size="12">フェンスを解釈できるか</text>
+            <text x="352" y="82" text-anchor="middle" font-size="12">
+              expressiveness（hard 約 10）
+            </text>
+            <text x="352" y="100" text-anchor="middle" font-size="12">本文の数 ＝ 図の値</text>
+            <text x="352" y="124" text-anchor="middle" font-size="11" fill="var(--ng)">
+              違反は名前と直し方を返す
+            </text>
+            <line
+              x1="452"
+              y1="79"
+              x2="512"
+              y2="79"
+              stroke="var(--muted)"
+              stroke-width="1.5"
+              marker-end="url(#ah)"
+            />
+            <rect
+              x="514"
+              y="20"
+              width="200"
+              height="118"
+              rx="8"
+              fill="var(--card)"
+              stroke="var(--line)"
+            />
+            <text x="614" y="44" text-anchor="middle" font-weight="700">決定表（12 行）</text>
+            <text x="614" y="64" text-anchor="middle" font-size="12">型・基数・関係 → 形</text>
+            <text x="614" y="82" text-anchor="middle" font-size="12">
+              利用者の既定（図派／文派）
+            </text>
+            <text x="614" y="100" text-anchor="middle" font-size="12">
+              書き手の form: は数えて採否
+            </text>
+            <text x="614" y="124" text-anchor="middle" font-size="11" fill="var(--muted)">
+              全行に単体テスト
+            </text>
+            <line
+              x1="714"
+              y1="79"
+              x2="774"
+              y2="79"
+              stroke="var(--muted)"
+              stroke-width="1.5"
+              marker-end="url(#ah)"
+            />
+            <rect
+              x="776"
+              y="20"
+              width="174"
+              height="118"
+              rx="8"
+              fill="var(--card)"
+              stroke="var(--line)"
+            />
+            <text x="863" y="44" text-anchor="middle" font-weight="700">描く（ブラウザ）</text>
+            <text x="863" y="64" text-anchor="middle" font-size="12">色・座標・値ラベル・題</text>
+            <text x="863" y="82" text-anchor="middle" font-size="12">折り返し・畳み</text>
+            <text x="863" y="100" text-anchor="middle" font-size="12">chart SVG / mermaid+ELK</text>
+            <rect
+              x="252"
+              y="160"
+              width="462"
+              height="50"
+              rx="8"
+              fill="none"
+              stroke="var(--line)"
+              stroke-dasharray="4 3"
+            />
+            <text x="483" y="181" text-anchor="middle" font-size="12">
+              器が自分で出すもの:
+              触ったファイル（git）・変更の量・セッション要約（脇の問い合わせ）・待ちの一言
+            </text>
+            <text x="483" y="199" text-anchor="middle" font-size="11" fill="var(--muted)">
+              書き手は書かない
+            </text>
+          </g>
+        </svg>
+        <figcaption>
+          図 2. 提案の流れ。書き手は「何を」だけを書き、「どう描くか」は文法の検査 → 決定表 → 描画の
+          3 段で器が決める。差し戻しは左の 1 段だけで起きる。
+        </figcaption>
+      </figure>
+
+      <h3>5.5 検査の作り直し<a id="checks"></a></h3>
+      <table>
+        <thead>
+          <tr>
+            <th>いまの条（44）</th>
+            <th>提案</th>
+            <th>理由</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              文の長さ・体裁 14 条（1 文目 50 字・結論の長さ・段落 3 文・文のセル・note
+              の密度・矢印・見出し…）
+            </td>
+            <td>
+              <span class="badge badge-warn">数えるだけ</span> 差し戻さない。1 文目が長ければ器が
+              <code>headline</code> を 1 行に折り返し、長い段落は畳む
+            </td>
+            <td>差し戻しの 71%。字数は理解の代理にならず、体裁は器のほうが確実に整えられる</td>
+          </tr>
+          <tr>
+            <td>スキーマ不一致（tool-error）</td>
+            <td>
+              <span class="badge badge-ok">文法で返す</span>
+              フェンスごとに「解釈できなかった行と直し方」を返す。塊が 8 種なら union が 16
+              以下になり Structured Outputs の strict も検討できる
+            </td>
+            <td>
+              Claude Docs・json-render の作法。strict の制約（union 16・optional 24・maxLength
+              不可）は 21 種では超えていた
+            </td>
+          </tr>
+          <tr>
+            <td>figure-contradiction・no-screenshot・too-many-candidates</td>
+            <td><span class="badge badge-ng">廃止</span> figure 欄が無くなるので消える</td>
+            <td>帳簿合わせの差し戻し</td>
+          </tr>
+          <tr>
+            <td>broken-graph・unknown-mermaid・code-mismatch・unlegended-graph-tone</td>
+            <td><span class="badge badge-ok">残す</span> 文法の検査として</td>
+            <td>描いた図が崩れる・引用が実物と違う</td>
+          </tr>
+          <tr>
+            <td>（無い）本文の数と図の値の不一致</td>
+            <td>
+              <span class="badge badge-ok">新設</span> 本文の数字が figure の data に無い・figure
+              の値が本文に出ないとき返す
+            </td>
+            <td>誤りの 73.8% はデータ側。読み手の判断に直接効く</td>
+          </tr>
+          <tr>
+            <td>（無い）expressiveness</td>
+            <td>
+              <span class="badge badge-ok">新設（約 6）</span> N に折れ線・部分 4 以上の pie・系列 5
+              以上・ラベル 21 以上・面積の符号化・色の印 6 以上
+            </td>
+            <td>Draco の hard 制約に相当。機械で確実に判定できる</td>
+          </tr>
+          <tr>
+            <td>
+              ワークフローの帳簿 6 条（background-running・unfinished-phases・work_plan
+              の閉じ・nothing-new）
+            </td>
+            <td><span class="badge badge-ok">残す</span> report の外の契約なので対象外</td>
+            <td>表現の問題ではない</td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="small">
+        「まず数え、差し戻すかは数を見てから決める」（ADR 0028 追記
+        2026-10-25）はそのまま使える。提案は、その原則を既存の 44
+        条にさかのぼって適用し、<b>体裁の条を全部「数える」に戻す</b>ことから始める。
+      </p>
+
+      <h3>5.6 行内の印 3 種（本文に埋める小さい図）</h3>
+      <p>
+        1〜5 個の数には別立ての図より「語の大きさの図」が合う（Tufte、Few、Charagraph
+        の「段落の数をその場で図にすると正確に答えられる」）。先例の GitHub
+        が行内描画を数式だけに絞ったように、種類は 3 つに限る。書き手は値だけを書き、描き方は器。
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>印</th>
+            <th>書き方（案）</th>
+            <th>描かれ方</th>
+            <th>いまの塊で代替していたもの</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>前後</td>
+            <td><code>{{12 → 8}}</code></td>
+            <td>
+              前・後・差（%）を 1
+              つの札に。減って良いかは文脈の語（「差し戻し」など）で器が推定せず、書き手が
+              <code>↓良</code> を付けられる
+            </td>
+            <td>stats の before、table の from/to、keyFigures</td>
+          </tr>
+          <tr>
+            <td>推移</td>
+            <td><code>{{spark: 3, 5, 8, 13}}</code></td>
+            <td>sparkline（終点の値を添える）</td>
+            <td>stats の series</td>
+          </tr>
+          <tr>
+            <td>割合</td>
+            <td><code>{{3 / 5}}</code></td>
+            <td>小さな帯と「3 / 5（60%）」</td>
+            <td>stats の total、chart の share（部分 1）</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>5.7 文脈への載せ方</h3>
+      <ul class="tight">
+        <li>
+          <b>常設にするのは原則 5 つと例 1 つ（約 1,500 字）だけ。</b> 「レポートの記法」122
+          行は、原則と例に書き直す。条の番号で参照する形はやめる（Anthropic「適切な高度」）。
+        </li>
+        <li>
+          <b>ツール定義は約 4,000 字</b>（欄 6、フェンス名 8、関係の語 8）。塊ごとの
+          <code>describe</code> は無くし、使い方は <code>input_examples</code> 相当の例 4
+          つ（作業・判断・調べもの・止めた）で示す。
+        </li>
+        <li>
+          <b>図の文法と決定表の全文（約 1,500 字）は、呼ぶ直前に 1 回だけ渡す。</b> 実装の口は 2
+          つあり、(a) report ツールを ToolSearch の遅延読み込みにして定義を呼ぶときだけ載せる、(b)
+          最初の差し戻し（または <code>work_plan</code> の最後の段）で「文法カード」を返す。(a) は
+          Agent SDK の MCP ツールで効くかを確かめる（9 節）。
+        </li>
+      </ul>
+
+      <!-- ============================================================ -->
+      <h2 id="rejected">6. 採らなかった案</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>案</th>
+            <th>判定</th>
+            <th>理由</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>本文を Markdown にし、report ツールを無くして本文から拾う</td>
+            <td class="verdict v-reject">採らない</td>
+            <td>
+              ADR 0010 の 1 回目の試行で 20 ターン中 6
+              件が本文で終えた（呼び忘れ）。「呼んだ事実で区切る」は残す価値がある。提案は<b
+                >ツールは残し、中身を Markdown にする</b
+              >折衷
+            </td>
+          </tr>
+          <tr>
+            <td>Vega-Lite を図の文法にする</td>
+            <td class="verdict v-consider">検討</td>
+            <td>
+              LLM が学習済みで妥当率 90% 超（GPT-4-Turbo）だが、最小例 230
+              字・ラベル衝突回避が未露出・gz 284
+              KB・「どう描くか」が書き手に漏れる。決定表の<b>出力</b>として器が内部で使うなら可
+            </td>
+          </tr>
+          <tr>
+            <td>Mermaid の xychart・pie に数のグラフを寄せ、自前の chart SVG を外す</td>
+            <td class="verdict v-reject">採らない</td>
+            <td>
+              追加サイズはゼロだが、xychart は値ラベルを持たず「図だけ」になる（Stokes 2023
+              で最下位）。値ラベルと題の傾向を既定にするには自前の描画が要る
+            </td>
+          </tr>
+          <tr>
+            <td>自由な HTML／iframe（MCP Apps・Artifacts 型）</td>
+            <td class="verdict v-reject">採らない</td>
+            <td>
+              ADR 0032 の測定（暗い面に合わない・スクリプト依存）に加え、Gemini の generative UI
+              は「1 分以上かかることがある」。作業の最後に 1 回描く用途には重い
+            </td>
+          </tr>
+          <tr>
+            <td>描画役の別モデルに図を描かせる</td>
+            <td class="verdict v-reject">採らない</td>
+            <td>
+              ADR 0034 の測定で 1 枚 4〜5 分・約 5 万トークン。LIDA
+              も「複数候補＋自己一貫性は高価」と明記
+            </td>
+          </tr>
+          <tr>
+            <td>今の 21 種を 8 種に減らすだけ（JSON のまま）</td>
+            <td class="verdict v-consider">検討</td>
+            <td>
+              定義は縮むが、判断の入力が札のままなら 3.1 の問題は残る。段 3
+              に進めないときの退避先として持つ
+            </td>
+          </tr>
+          <tr>
+            <td>今のスキーマに Structured Outputs の strict を当てて tool-error を消す</td>
+            <td class="verdict v-reject">採らない</td>
+            <td>
+              union 16・optional 24・maxLength 不可の枠に 21 種の判別合併は収まらない。塊を 8
+              種にしたあとなら検討できる
+            </td>
+          </tr>
+          <tr>
+            <td>札 14 種を残し、第一候補の表だけ直す</td>
+            <td class="verdict v-reject">採らない</td>
+            <td>
+              先例に無い層で、札の正しさを機械が確かめられない。関係の語 8
+              つはデータの形と突き合わせられる（N 2 に rank は付かない、など）
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- ============================================================ -->
+      <h2 id="numbers">7. 期待する数（前 → 後）</h2>
+      <p>「後」は提案を全部入れたときの<b>目標値で、概算</b>。実測は移行の段ごとに記録で取る。</p>
+      <table>
+        <thead>
+          <tr>
+            <th>量</th>
+            <th class="num">前（実測）</th>
+            <th class="num">後（目標）</th>
+            <th>根拠</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>常設の定義（スキーマ＋規約）</td>
+            <td class="num">27,141 字</td>
+            <td class="num">約 6,000 字</td>
+            <td>欄 6＋フェンス 8＋原則 5＋例 1。文法カード 1,500 字は呼ぶ直前だけ</td>
+          </tr>
+          <tr>
+            <td>差し戻し率（呼び出しに対する）</td>
+            <td class="num">19%</td>
+            <td class="num">5% 未満</td>
+            <td>
+              体裁 71% を数えるだけに、figure の帳簿 4% を廃止。残るのは文法・整合・ワークフロー
+            </td>
+          </tr>
+          <tr>
+            <td>差し戻しの条</td>
+            <td class="num">44</td>
+            <td class="num">約 10</td>
+            <td>
+              文法 4・expressiveness 約 6・数の一致 1・ワークフロー 6 のうち report に残るもの
+            </td>
+          </tr>
+          <tr>
+            <td>塊の種類</td>
+            <td class="num">21（＋chart 7）</td>
+            <td class="num">8（＋行内 3）</td>
+            <td>figure・graph・mermaid・table・code・callout・claims・image</td>
+          </tr>
+          <tr>
+            <td>形の札</td>
+            <td class="num">14 × 3 列</td>
+            <td class="num">0（関係の語 8）</td>
+            <td>関係はデータの形と突き合わせられる申告</td>
+          </tr>
+          <tr>
+            <td>描ける数の形</td>
+            <td class="num">7 種（名前）</td>
+            <td class="num">12 行（決定表）</td>
+            <td>数直線・bullet・散布・ヒストグラムが行として増える。種類ではなく行</td>
+          </tr>
+          <tr>
+            <td>書き手が書く帳簿</td>
+            <td class="num">出力の 8.2%＋files＋figure の理由</td>
+            <td class="num">0</td>
+            <td>器が git と脇の問い合わせで出す</td>
+          </tr>
+          <tr>
+            <td>図が置かれる割合</td>
+            <td class="num">18%</td>
+            <td class="num">測ってから決める</td>
+            <td>
+              利用者の既定が図派なら上がり、文派なら下がる。どちらも正しい結果（Hearst &amp; Tory）
+            </td>
+          </tr>
+          <tr>
+            <td>読んで分かるまでの時間</td>
+            <td class="num">未測定</td>
+            <td class="num">代理指標 1 つを置く</td>
+            <td>8 節の段 0</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- ============================================================ -->
+      <h2 id="migration">8. 移行の段</h2>
+      <p>
+        各段は独立に入れられ、独立に戻せる。段 1 は今のコードの差し戻しの
+        <code>mode</code> を変えるだけで入る。
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>段</th>
+            <th>すること</th>
+            <th>測るもの（14 日の窓）</th>
+            <th>戻せるか</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><b>0. 物差し</b></td>
+            <td>
+              「読んで分かる時間」の代理指標を 1 つ記録に足す。候補:
+              レポートの直後に利用者が同じ論点を聞き直した割合（次の依頼が「どういうこと」「もう一度」「どこ」で始まる）、またはレポートを開いてから次の依頼までの秒数
+            </td>
+            <td>基線を取る</td>
+            <td>記録を足すだけ</td>
+          </tr>
+          <tr>
+            <td><b>1. 条を数える・欄を外す・例を載せる</b>（1〜2 日）</td>
+            <td>
+              体裁の 14 条を <code>count</code> に。<code>figure</code>
+              を任意にし、利用者の既定（図派／文派）を設定に。<code>describe</code> の大半を消し、例
+              4 つを定義に載せる
+            </td>
+            <td>差し戻し率（19% → ?）、図の割合、代理指標の変化</td>
+            <td><code>mode</code> を戻せば元どおり</td>
+          </tr>
+          <tr>
+            <td><b>2. 図の文法と決定表</b></td>
+            <td>
+              <code>figure</code> フェンス（問い・数・関係）と決定表 12 行・hard 制約を
+              <code>shared</code> に実装、全行に単体テスト。chart 7
+              種は決定表の出力として残し、書き手の口からは消す。行内の印 3 種
+            </td>
+            <td>上書き <code>form:</code> の率、expressiveness の違反数、数の不一致の数</td>
+            <td>旧 chart の塊を 14 日並走させる</td>
+          </tr>
+          <tr>
+            <td><b>3. 本文を Markdown＋フェンスに</b></td>
+            <td>
+              sections の塊 21 種を <code>body</code> の Markdown
+              に。svg・dimension・stats・progress・compare・matrix・options・files
+              を塊から外す（表・図の行・git に吸収）。定義を約 4,000 字に、文法カードを遅延で渡す
+            </td>
+            <td>定義の字数、tool-error の数、出力の字数（中央値 841 → ?）</td>
+            <td>旧スキーマを <code>schema-variant</code> で切り替えられる形で残す</td>
+          </tr>
+          <tr>
+            <td><b>4. 帳簿を器へ</b></td>
+            <td>
+              sessionSummary・sessionRemaining・waitingLine・title を report
+              から外し、器が脇の問い合わせ（小さいモデル）で作る
+            </td>
+            <td>出力の字数、要約の質（利用者が直した回数）</td>
+            <td>欄を戻す</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="note">
+        段 1 だけで差し戻しの 7 割強が消える見込みで、費用は小さい。段 2〜3
+        が本提案の中身で、ここで「筋」が変わる。段 4 は独立していて、いつでもよい。
+      </div>
+
+      <!-- ============================================================ -->
+      <h2 id="unverified">9. 確かめていないこと</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>主張</th>
+            <th>確度</th>
+            <th>確かめ方</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>22,001 字のスキーマ＋5,140 字の規約が 1.0〜1.3 万トークンに当たる</td>
+            <td>推定</td>
+            <td>Anthropic の count_tokens API に定義の JSON と規約を渡して数える</td>
+          </tr>
+          <tr>
+            <td>体裁の条を数えるだけにすると差し戻しが 7 割減る</td>
+            <td>推定（理由の印の 71% が体裁）</td>
+            <td>段 1 を入れて 14 日の記録で差し戻し率を比べる</td>
+          </tr>
+          <tr>
+            <td>Mermaid の xychart が値ラベル（データラベル）を持たない</td>
+            <td>未確認（文書に「調整口は少ない」とあるだけ）</td>
+            <td>mermaid 12.2.0 の xychart の文書と描いた図で確かめる</td>
+          </tr>
+          <tr>
+            <td>Agent SDK の MCP ツールで ToolSearch の遅延読み込み（defer_loading 相当）が効く</td>
+            <td>未確認</td>
+            <td>
+              SDK の <code>mcpServers</code> のツールに
+              <code>defer_loading</code>
+              を付けて起こし、文脈の使用量の記録で定義が載っていないことを見る
+            </td>
+          </tr>
+          <tr>
+            <td>
+              8 種に畳んだあとのスキーマが Structured Outputs の strict の枠（union 16・optional
+              24）に入る
+            </td>
+            <td>推定</td>
+            <td>畳んだスキーマを strict で登録して 400 が返らないことを見る</td>
+          </tr>
+          <tr>
+            <td>table・text 偏重は理論どおりで不具合ではない</td>
+            <td>推定</td>
+            <td>段 0 の代理指標で、図ありと図なしのレポートの聞き直し率を比べる</td>
+          </tr>
+          <tr>
+            <td>基数の境（3・5・7・20）</td>
+            <td>目安（Few・APT の慣例、実証値ではない）</td>
+            <td>段 2 で上書き <code>form:</code> が集中する境を見て動かす</td>
+          </tr>
+          <tr>
+            <td>
+              Show Me の mark 選択規則・Cleveland &amp; McGill 原文・Tufte「20 以下は表」・Few
+              原文・Kong 2014・Charagraph 本文
+            </td>
+            <td>一次情報源を取得できず二次で補った</td>
+            <td>theory.md 末尾の一覧</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- ============================================================ -->
+      <h2 id="sources">10. 出典</h2>
+      <p class="small muted">
+        3 本の調査メモ（同じ置き場の <a href="theory.md">theory.md</a>・<a href="products.md"
+          >products.md</a
+        >・<a href="engines.md">engines.md</a>）に全出典がある。ここでは本文で引いたものだけ。
+      </p>
+      <details open>
+        <summary>理論・実証</summary>
+        <ul class="tight small">
+          <li>
+            Mackinlay, APT (1986) —
+            <a href="https://courses.ischool.berkeley.edu/i247/f05/readings/Mackinlay_APT_TOG86.pdf"
+              >ischool.berkeley.edu</a
+            >
+          </li>
+          <li>
+            Moritz et al., Draco (2019) —
+            <a href="https://idl.cs.washington.edu/files/2019-Draco-InfoVis.pdf"
+              >idl.cs.washington.edu</a
+            >; Draco 2 (2023) — <a href="https://arxiv.org/abs/2308.14247">arxiv.org</a>
+          </li>
+          <li>
+            Heer &amp; Bostock, Crowdsourcing graphical perception (2010) —
+            <a href="https://homes.cs.washington.edu/~jheer/files/2010-MTurk-CHI.pdf"
+              >cs.washington.edu</a
+            >
+          </li>
+          <li>
+            Hearst &amp; Tory, Would You Like A Chart With That? (2019) —
+            <a
+              href="https://people.ischool.berkeley.edu/~hearst/papers/vis19wouldyoulikeachartfinal3.pdf"
+              >ischool.berkeley.edu</a
+            >
+          </li>
+          <li>
+            Stokes et al., Striking a Balance (2023) —
+            <a href="https://people.ischool.berkeley.edu/~hearst/papers/tvcg2022.pdf"
+              >ischool.berkeley.edu</a
+            >
+          </li>
+          <li>
+            Larkin &amp; Simon, Why a Diagram is (Sometimes) Worth Ten Thousand Words (1987) —
+            <a
+              href="https://mechanism.ucsd.edu/bill/teaching/F12/cs200/Readings/larkin.whyadiagramissometimesworth.1987.pdf"
+              >mechanism.ucsd.edu</a
+            >
+          </li>
+          <li>
+            Gelman &amp; Unwin (2013, Tukey の 4 原則を引用) —
+            <a
+              href="https://stat243.berkeley.edu/fall-2024/units/graphics_files/gelmanUnwin2013.pdf"
+              >stat243.berkeley.edu</a
+            >
+          </li>
+          <li>
+            Latif et al., Kori (2022) — <a href="https://arxiv.org/abs/2108.04203">arxiv.org</a>
+          </li>
+          <li>
+            Observable Plot `auto` —
+            <a href="https://github.com/observablehq/plot/pull/1238">github.com</a>; Vega-Lite mark
+            — <a href="https://vega.github.io/vega-lite/docs/mark.html">vega.github.io</a>
+          </li>
+          <li>
+            LLM4Vis (2023) —
+            <a href="https://ar5iv.labs.arxiv.org/html/2310.07652">ar5iv.labs.arxiv.org</a>;
+            DracoGPT (2025) — <a href="https://idl.uw.edu/papers/dracogpt">idl.uw.edu</a>; NL2VIS
+            の探索的研究 (2024) — <a href="https://arxiv.org/html/2404.17136v1">arxiv.org</a>;
+            VisEval (2024) — <a href="https://arxiv.org/html/2407.00981v2">arxiv.org</a>
+          </li>
+          <li>
+            Tufte, Sparkline theory —
+            <a
+              href="https://www.edwardtufte.com/notebook/sparkline-theory-and-practice-edward-tufte/"
+              >edwardtufte.com</a
+            >; Few, Bullet Graph Design Spec —
+            <a href="https://www.perceptualedge.com/articles/misc/Bullet_Graph_Design_Spec.pdf"
+              >perceptualedge.com</a
+            >
+          </li>
+          <li>
+            Does It Run and Is That Enough? (2025) —
+            <a href="https://arxiv.org/html/2506.06175">arxiv.org</a>; Text2Vis (2025) —
+            <a href="https://arxiv.org/html/2507.19969v1">arxiv.org</a>
+          </li>
+        </ul>
+      </details>
+      <details open>
+        <summary>製品・仕様・器</summary>
+        <ul class="tight small">
+          <li>
+            LIDA (2023) — <a href="https://arxiv.org/abs/2303.02927">arxiv.org</a>; Multimodal
+            DeepResearcher (2025) — <a href="https://arxiv.org/abs/2506.02454">arxiv.org</a>;
+            ChartGPT — <a href="https://arxiv.org/abs/2311.01920">arxiv.org</a>
+          </li>
+          <li>
+            Anthropic: Tool Search Tool —
+            <a href="https://platform.claude.com/docs/en/agents-and-tools/tool-use/tool-search-tool"
+              >platform.claude.com</a
+            >; Advanced tool use —
+            <a href="https://www.anthropic.com/engineering/advanced-tool-use">anthropic.com</a>;
+            Structured outputs —
+            <a href="https://platform.claude.com/docs/en/build-with-claude/structured-outputs"
+              >platform.claude.com</a
+            >; Effective context engineering —
+            <a
+              href="https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents"
+              >anthropic.com</a
+            >
+          </li>
+          <li>
+            Google A2UI — <a href="https://a2ui.org/">a2ui.org</a>; MCP Apps —
+            <a href="https://modelcontextprotocol.io/extensions/apps/overview"
+              >modelcontextprotocol.io</a
+            >; Vercel json-render —
+            <a href="https://github.com/vercel-labs/json-render">github.com</a>; OpenAI Apps SDK
+            design guidelines —
+            <a href="https://developers.openai.com/apps-sdk/concepts/design-guidelines"
+              >developers.openai.com</a
+            >
+          </li>
+          <li>
+            TOON — <a href="https://github.com/toon-format/toon">github.com</a>; OpenUI Lang —
+            <a href="https://cdn.jsdelivr.net/gh/thesysdev/openui@main/README.md"
+              >cdn.jsdelivr.net</a
+            >
+          </li>
+          <li>
+            Slack Block Kit —
+            <a href="https://docs.slack.dev/reference/block-kit/blocks">docs.slack.dev</a>; Notion
+            block —
+            <a href="https://developers.notion.com/reference/block">developers.notion.com</a>;
+            ProseMirror schema-basic —
+            <a href="https://prosemirror.net/docs/ref/#schema-basic">prosemirror.net</a>
+          </li>
+          <li>
+            Mermaid xychart —
+            <a href="https://mermaid.js.org/syntax/xyChart.html">mermaid.js.org</a>; D2 layouts —
+            <a href="https://d2lang.com/tour/layouts">d2lang.com</a>; ELK cycle breaking —
+            <a
+              href="https://eclipse.dev/elk/reference/options/org-eclipse-elk-layered-cycleBreaking-strategy.html"
+              >eclipse.dev</a
+            >; JSON Canvas — <a href="https://jsoncanvas.org/spec/1.0/">jsoncanvas.org</a>
+          </li>
+          <li>Claude Docs の図の文法（MCP の guide、公開 URL なし、2026-10-26 取得）</li>
+        </ul>
+      </details>
+      <details>
+        <summary>tsukumo の内部（この提案が前提にしたもの）</summary>
+        <ul class="tight small">
+          <li>
+            ADR 0010（report はツールで受け取る）・0028（塊の梯子 →
+            形の札、差し戻しは数えてから）・0031（本文を欄の構造で）・0032（自由 HTML
+            の口は持たない）・0034（図は書き手が構造、tsukumo が描く）・0035（任意の図プラグイン）
+          </li>
+          <li>
+            <code>docs/research/report-shape-tags.md</code> 5
+            節（札の設計）、<code>report-excellence-strategy.md</code>（判決の頭）、<code>report-notation-shortening.md</code>（規約の短縮案
+            2026-09-20）
+          </li>
+          <li>
+            記録: <code>~/.tsukumo/report-usage/*.jsonl</code>（2026-09-27〜10-26）、<code
+              >~/.tsukumo/token-usage/*.jsonl</code
+            >
+          </li>
+          <li>
+            前回の外部レビュー: <code>~/Downloads/tsukumo-audit-2026-10-26.html</code> 4
+            章（4-1〜4-12）
+          </li>
+        </ul>
+      </details>
+
+      <p class="small muted" style="margin-top: 40px">
+        この提案は 1 人の利用者のための環境を前提にしている（要件
+        1「対象ユーザーは作者本人のみ」）。「図派／文派の既定」のような設計は、その前提があるから成り立つ。
+      </p>
+    </div>
+  </body>
+</html>
