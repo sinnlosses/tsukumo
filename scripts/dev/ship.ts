@@ -9,9 +9,9 @@ import path from "node:path"
 import process from "node:process"
 
 import { PRIMARY_BRANCH } from "../shared/changed-path-repository.ts"
+import { readOpenClaim } from "../shared/open-claim.ts"
 import { REPOSITORY_ROOT } from "../shared/repository-root.ts"
 import { isWorktreeClean, resolveMainWorktreePath, syncSubmodules } from "./lib/main-worktree.ts"
-import { readOpenClaim } from "./lib/open-claim.ts"
 import { runShipPlan, type ShipPlanResult } from "./lib/ship-plan.ts"
 
 const ROOT = path.resolve(REPOSITORY_ROOT)

@@ -31,6 +31,8 @@
   `state.json`・あらすじと会話のアーカイブ・トークンの記録）は共有されたままで、とくにあらすじは
   全上書きなので後に書いたほうが相手のものを丸ごと消す。分けたホームに覚えたキャラクターは
   本体のホームへは戻らない
+- 自分の着手の印が無く未コミットの変更がある作業ツリーでの `git restore`・`checkout --`・`clean`・`stash` は、
+  hook `deny-foreign-restore`（`scripts/hook/lib/foreign-restore.ts`）が log-only で記録する（拒まない。手順は `docs/coding-standards/hook-rollout.md`）
 
 ## タスクに紐付かない作業を main へ送る
 

@@ -9,6 +9,7 @@ import { findBackgroundVerifyDenial } from "./lib/background-verify.ts"
 import type { BashDenial } from "./lib/bash-denial.ts"
 import type { BashHookCall } from "./lib/bash-hook-call.ts"
 import { findBroadKillDenial } from "./lib/broad-kill.ts"
+import { findForeignRestoreDenial } from "./lib/foreign-restore.ts"
 import { denyBashCall, readBashHookCall } from "./lib/hook-input.ts"
 import { findStdinWaitCatDenial } from "./lib/stdin-wait-denial.ts"
 import { handleSubagentMark } from "./lib/subagent-mark.ts"
@@ -19,6 +20,7 @@ const DENIALS = [
   (call) => findWorktreeShellWriteDenial(call, readWorkRoot(call.cwd)),
   findBackgroundVerifyDenial,
   findStdinWaitCatDenial,
+  findForeignRestoreDenial,
 ] as const satisfies readonly ((call: BashHookCall) => BashDenial | undefined)[]
 
 const call = await readBashHookCall()

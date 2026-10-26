@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest"
 
-import { readOpenClaim } from "../../../../scripts/dev/lib/open-claim.ts"
+import { readOpenClaim } from "../../../scripts/shared/open-claim.ts"
 
 describe("readOpenClaim", () => {
   test("claims が1件以上なら claimed", () => {
