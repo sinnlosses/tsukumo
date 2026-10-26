@@ -1,141 +1,47 @@
-# AGENTS.md
-
-**このファイルには、毎回の手の動き（コードを書く・テストを走らせる・コミットする）に付いてくる
-規則だけを1行ずつ置く。** 理由・例外・手順は正典にあり、末尾の「索引」から引く。
-機械が検査している規則（lint・`test/architecture/`・hook）は索引にだけ載せる。
-
 ## 対話言語
 
-ユーザーとの対話は常に日本語で行う。
+ユーザーとの対話は常に日本語で行う。理由・例外・手順の正典は `docs/README.md` の索引表から引く。
 
 ## プロジェクト概要
 
-**tsukumo** は、**キャラクターと一緒に楽しく仕事をするためのターミナル環境**（名前は付喪神から）。
-立ち絵・吹き出し・画面レイアウトはすべてこの目的の手段で、**機能を足す前に
-`docs/requirements.md`「1. 概要・目的」と「2.2 対象外とすること」を見る**。対象ユーザーは作者本人のみ。
+**tsukumo** は、**キャラクターと一緒に楽しく仕事をするためのターミナル環境**。
+機能を足す前に `docs/requirements.md`「1. 概要・目的」と「2.2 対象外とすること」を見る。
+Agent SDK で Claude Code を子プロセスとして動かし、表示はすべて HTML。セリフは MCP ツール `speak`、ターンの本文は `report` で受け取る。
 
-tsukumo は Agent SDK（`@anthropic-ai/claude-agent-sdk`）で Claude Code を子プロセスとして動かし、
-表示はすべて HTML（Orca 内のブラウザタブの1枚のページ。入力欄も含む）。セリフは MCP ツール
-`speak`、ターンの本文は `report` で受け取る。**ホスト（Orca のタブ）と中身（Web アプリ）は分ける。**
+**IMPORTANT**: **TUI を使わず SDK で動かす**（TUI に描画を混ぜる方式は技術的に不可能）。
+設計を変える前に `docs/requirements.md`「3. 技術制約」と `docs/architecture/adr/0008-sdk-instead-of-tui.md` を読む。
 
-**IMPORTANT**: Claude Code の TUI に描画を混ぜる方式は
-技術的に不可能なので、**TUI を使わず SDK で動かす側に回っている。** 設計を変えようとする前に
-`docs/requirements.md`「3. 技術制約」と `docs/architecture/adr/0008-sdk-instead-of-tui.md` を
-必ず読む。
-
-## セットアップ / 環境構築
-
-- mise で Node 26・pnpm 12 を入れる（`mise.toml` が固定。TS は node でそのまま実行）。**新しく入れる `pnpm install` は
-  `prepare` で `pnpm run build` まで済ませる**が、依存が変わらないと飛ばすので、`src/browser/` を直したあとは
-  `pnpm run build` を打つ
-- `tsukumo` コマンドは `mise run setup` で入っている
-- ホストに依存する操作は1つの抽象の裏に置く（`docs/architecture/adr/0015-single-host-port.md`）。
-  **起こしてよい外部コマンドは `test/architecture/outside-world.test.ts` の `ALLOWED_COMMANDS` が正典。足すときはユーザーの承認を得る**
-- 環境の実測値は `docs/requirements.md`「5. 実行環境・非機能要件」。時間が経つと変わるので、
-  前提にする前にその場で確かめる
+- **キャラクターの中身をコードに書かない**（素材と表情の対応は定義ファイル側）
 
 ## よく使うコマンド
 
-全体の一覧は `README.md`「開発」。
-
 ```bash
-pnpm run check                 # typecheck + lint + format:check + token-limit + test + test:e2e（変更後は必ずこれを通す。
-                              #   段の選び方は scripts/dev/check.ts の冒頭。--full は main へ送る直前に打つ）
-pnpm run format                # 整形（oxfmt。prettier は入っていない）
-pnpm run test                  # 単体テスト（Vitest）。ファイルを渡すと規約のテストも一緒に走る
-pnpm run build                 # src/browser/ を直したら打つ（起動時には組み立てない）
-pnpm run css-types             # *.module.css に class を足したら打つ（tsc を直に打つ前。check と build は自分で打つ）
-pnpm run test:e2e:update       # DOM の構造・shared の手続き応答の型・配信するセッションイベントの種類や数を変えたら、pnpm run check より先に打つ
-                              #   git diff test/e2e/expected/ で意図した変化だけか読み、同じコミットに入れる
-node scripts/runtime/stop.ts   # 動いている tsukumo の一覧（--port <n> でそれ1つだけ止める）
+pnpm run check            # 変更後は必ず通す（着手中の作業ツリーでは tw verify）
+pnpm run format           # 整形
+pnpm run test             # 単体テスト。ファイルを渡すと規約のテストも走る
+pnpm run build            # src/browser/ を直したら打つ
+pnpm run css-types        # *.module.css に class を足したら打つ
+pnpm run test:e2e:update  # DOM・手続き応答の型・セッションイベントを変えたら check より先に打つ
 ```
-
-## アーキテクチャ概要
-
-**3層・共有層・置き場所・実装の全体図・設計判断は `docs/architecture.md` が正典。**
-原則の見出しだけを置く。
-
-- **原則1**: **Claude Code の TUI を使わない**（上の IMPORTANT）
-- **原則2**: `shared` / `server` / `browser` の3層。サーバは機能ごとに
-  `src/server/<機能>/{core,adapter}/`（辺の正典は `docs/architecture.md`「サーバの機能と、機能どうしの辺」）
-- **原則3**: ホスト・外部コマンド・OS に触るものは **`adapter/` の1ファイルに閉じ込める**。
-  Agent SDK だけは機能の `adapter/` の `sdk-` で始まるファイル群に閉じ込める
-- **原則4**: **キャラクターの中身をコードに書かない**（素材と表情の対応は定義ファイル側）
-- **原則5**: 「**ファイル名が概念になっているか**」で分ける。
-  置き場所のディレクトリの名前と、`src/browser/` の置き場所の基準は `docs/architecture.md`「全体構成」
 
 ## テスト方針
 
-配置・モック・消す/足すの判断は `docs/coding-standards.md`「テスト」節。TDD 推奨（`/tdd`）。
-**E2E は利用者に見える流れを1本ずつと、実ブラウザでしか確かめられないもの（寸法・入力・サーバとの往復）だけ。
-出し分けと DOM の細部は部品・フックの単体で、見た目（色・崩れ）は目視で確かめる**（2本目を置く条件は
-`docs/architecture/testing.md`「テスト」、E2E は `docs/architecture/testing.md`「E2E の走らせ方」、目視は
-`docs/architecture/testing.md`「手で確かめること」）。
+配置・モックは `docs/coding-standards.md`「テスト」節。TDD 推奨（`/tdd`）。E2E は利用者に見える流れを1本ずつと、実ブラウザでしか確かめられないものだけ。見た目（色・崩れ）は目視で確かめる（`docs/architecture/testing.md`）。
+`pnpm run check` を通し、テスト件数などの根拠を示してから完了を報告する。描画に関わる変更は、何をどう確かめたか（何が見えたか）を添える。
 
-**IMPORTANT**: 変更後は必ず `pnpm run check` を通してから完了を報告する（着手中の作業ツリーでは `tw verify`。中身は `.tw/config.toml` の verify）。テスト件数などの根拠なしに
-「完了しました」と言わない。**描画に関わる変更は、加えて何をどう確かめたか**（何が見えたか）を添える。
+## コーディング規約
 
-## コーディング規約・レビュー方針
-
-**コードの書き方の規則は `.claude/rules/` が正典**（`typescript.md`・`comments.md`・`react.md`。
-触るファイルに合うものが自動で届く）。理由・例外は `docs/coding-standards.md`（通読せず、冒頭の
-「節の索引」で節を1つ特定して読む）。
-
-**IMPORTANT**: **SDK のイベントと transcript には利用者と Claude の生の会話が入っている。**
-外部に送らない・複製しない・ログに全文を出さない・テストのフィクスチャに実物を使わない
-（`docs/coding-standards.md`「会話内容の扱い」）。この規約は他のどの規約よりも優先する。
-
-レビュー観点は `/code-review` の Standards 軸（`.claude/rules/`＋`docs/coding-standards.md`＋
-`docs/architecture.md`）と Spec 軸（`docs/requirements.md`）。
+書き方は `.claude/rules/` が正典。理由・例外は `docs/coding-standards.md`。
+**IMPORTANT**: SDK のイベントと transcript には利用者と Claude の生の会話が入っている。外部に送らない・複製しない・ログに全文を出さない・テストのフィクスチャに実物を使わない（`docs/coding-standards.md`「会話内容の扱い」）。この規約は他のどの規約よりも優先する。
 
 ## Git運用
 
-作業ツリーを分けるのは orca で、tsukumo は起こしたディレクトリでそのまま動く。
+- 作業ツリーを分けるのは orca で、tsukumo は起こしたディレクトリでそのまま動く
+- 自分でブランチを切らない。コミットはいま居るブランチへ積む。`main` へ送る以外で、他の作業ツリーへ `reset` / `branch -d` を走らせない
+- 検証が済んだら、聞かずにコミットして `main` まで送る（未コミットのまま待つと別のセッションに消される）。タスクは `tw ship`、タスクに紐付かない作業は `pnpm run ship`
+- push は頼まれたときだけ。新しい作業ツリーの立ち上げは人がやる
 
-- **自分でブランチを切らない。** コミットはいま居るブランチへ積む。自分の作業ツリーの中は
-  `git restore <file>` で戻してよい
-- **検証が済んだら、聞かずにコミットして `main` まで送る**（未コミットのまま待つと別のセッションに
-  消される）。タスクは `tw ship`、タスクに紐付かない作業は `node scripts/dev/ship.ts`
-  （`pnpm run ship`。手順は `docs/workflow.md`「タスクに紐付かない作業を main へ送る」）
-- `main` へ送る以外で他の作業ツリーへ `reset` / `branch -d` を走らせない。push は頼まれたときだけ
+## 承認が要ること
 
-## タスク運用
-
-機械が読む設定（検証コマンド・整形コマンド・ブランチ・タスクの置き場・トラッカー）は
-`.tw/config.toml`。ブランチは切らず、**枝の寿命は作業ツリーの寿命と同じ**で、1本の枝がいくつでも
-タスクを持つ。
-
-状態はチャットではなく Beads（`tw show GH-<n>` で読み、`tw edit` で直す。`.beads` は本体の作業ツリーの根で git の外。エージェントのドラフトも `draft` の課題としてここに置く）に残す。手順は
-`~/.claude/skills/task-model/WORKFLOW.md` が正典で、このリポジトリの上乗せは
-`docs/workflow.md`。**委譲先のモデルは `difficulty` と上の正典「分業」で決め**、判断が
-想定より要ると分かったら押し切らず `difficulty` を上げて再開する。完了は検証できる証拠で判定する。
-新しい作業ツリーの立ち上げは人がやる。
-
-**IMPORTANT**: 次は必ず人間の承認を得てから行う — 外部への公開・送信（`tw` が行う GitHub の
-`sinnlosses/tsukumo` の Issue・label と Project 1 への書き込みは除く）、破壊的な git 操作、
-認証情報や権限の変更、**`~/.claude/settings.json` などグローバル設定の書き換え**、
-**グローバルなツールの導入**。`~/.claude/settings.json` の hooks と statusLine は orca が専有して
-いるので、**足すときは既存エントリを壊さず追記する。**
-
-## 索引
-
-| こういうとき                                                                                    | 読むもの                                                                      | 防ぐ失敗               |
-| ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- | ---------------------- |
-| 要件・やらないこと・技術制約・未決事項を知りたい                                                | `docs/requirements.md`                                                        | 本文と差分のずれ       |
-| 3層・共有層・部品・置き場所を決める                                                             | `docs/architecture.md`（置き場所は「全体構成」）                              | 同じファイルの直し直し |
-| 色・書体・レイアウト                                                                            | `docs/architecture/screen-design.md`                                          | 受け入れでの直し       |
-| セリフとレポートの分離・レポートの記法・各表示物の仕様                                          | `docs/architecture/display.md`                                                | 受け入れでの直し       |
-| ワークフローの契約（`work_plan`・`report` の口、Beads の欄）・独自のワークフローを当てる        | `docs/architecture/workflow-contract.md`                                      | 本文と差分のずれ       |
-| 雑談モード                                                                                      | `docs/architecture/chat-mode.md`                                              | 本文と差分のずれ       |
-| なぜ今の形なのか                                                                                | `docs/architecture.md`「設計判断」（各判断の本文は `docs/architecture/adr/`） | 同じファイルの直し直し |
-| ブラウザ側の状態・Markdown・立ち絵の動き・CSS・`components/ui/` の部品の作法                    | `docs/architecture/browser.md`                                                | 同じファイルの直し直し |
-| キャラクターパックの形・探索順・画面から書くときの境界                                          | `docs/architecture/character-pack.md`                                         | 本文と差分のずれ       |
-| テストの方法・E2E・目視の手順                                                                   | `docs/architecture/testing.md`                                                | 検証の打ち直し         |
-| 組み立て・開発サーバ・足す依存                                                                  | `docs/architecture/build.md`                                                  | ツールのエラー         |
-| 規約の理由と例外（`Date` を使わない・層の辺など lint とテストが守るものも）                     | `docs/coding-standards.md`                                                    | 受け入れでの直し       |
-| 用語と識別子                                                                                    | `docs/glossary.md`                                                            | 付いてきた文書の変更   |
-| タスクを書く・受け入れる・作業ツリーを並行させる・tsukumo を起こす                              | `docs/workflow.md`                                                            | 段の所要時間           |
-| コマンドの全体・環境変数・構成                                                                  | `README.md`                                                                   | ツールのエラー         |
-| スキル（`~/.claude/skills/`。共通なのでこのリポジトリの事情はここと `docs/workflow.md` が補う） | 毎セッションのスキル案内                                                      | 本文と差分のずれ       |
-| シェルでの書き換え・`git add -A` などを拒まれた                                                 | hook（`tw commit-guard`）の文面に従う。`docs/workflow.md`                     | hook の拒否            |
-| 過去の判断の経緯（通読しない。`grep` で節を当てる）                                             | `docs/history/decision.md` / `tw show <ID>`                                   | 同じファイルの直し直し |
+外部への公開・送信（`tw` が行う GitHub の `sinnlosses/tsukumo` の Issue・label と Project 1 への書き込みは除く）、破壊的な git 操作、認証情報や権限の変更、`~/.claude/settings.json` などグローバル設定の書き換え、グローバルなツールの導入は、人間の承認を得てから行う。起こしてよい外部コマンドは `test/architecture/outside-world.test.ts` の `ALLOWED_COMMANDS` が正典。
+`~/.claude/settings.json` の hooks と statusLine は orca が専有しているので、足すときは既存エントリを壊さず追記する。

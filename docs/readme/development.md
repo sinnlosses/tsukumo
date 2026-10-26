@@ -63,7 +63,8 @@
 - [`docs/coding-standards.md`](../coding-standards.md) — コーディング規約（**会話内容の扱い**を含む）
 - [`docs/glossary.md`](../glossary.md) — 用語集（日本語表記とコード上の識別子の対応）
 - [`docs/workflow.md`](../workflow.md) — このリポジトリでの進捗管理の上乗せ
-- [`AGENTS.md`](../../AGENTS.md) — Claude Code などのエージェント向けのプロジェクト案内（上記への入口）
+- [`docs/README.md`](../README.md) — docs の索引（知りたいことから読む文書を引く表。`AGENTS.md` からの入口）
+- [`AGENTS.md`](../../AGENTS.md) — Claude Code などのエージェント向けのプロジェクト案内
 
 **`docs/` の各ファイルは冒頭に「節の索引」を持ち、通読しない前提で書かれています。**
 知りたいことから節を1つ特定して、その節だけを読んでください。

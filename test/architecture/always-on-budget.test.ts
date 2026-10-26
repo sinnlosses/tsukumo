@@ -13,7 +13,7 @@ import { WORK_PLAN_PROMPT } from "../../src/server/work-plan/core/work-plan-tool
 
 const RULES_DIR = `${REPOSITORY_ROOT}/.claude/rules`
 
-const AGENTS_MD_LIMIT = 9000
+const AGENTS_MD_LIMIT = 4000
 const RULES_TOTAL_LIMIT = 2400
 const SYSTEM_PROMPT_TOTAL_LIMIT = 10481
 const IMPLEMENTER_BRIEF_LIMIT = 9623
