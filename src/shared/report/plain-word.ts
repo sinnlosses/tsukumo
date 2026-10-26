@@ -25,4 +25,10 @@ export const PLAIN_WORDS = [
     meaning:
       "新しい /loop の流れの最後の段階。人の承認なしで自動で動くが、回数と触れる範囲に上限があり、その中に収まる",
   },
+  {
+    spelling: "辺",
+    replacement: "矢印",
+    meaning:
+      "図の中で、点（ファイルや部品の名前）と点をつなぐ線。「A が B に値を渡す」というつながりを表す",
+  },
 ] as const satisfies readonly PlainWord[]
