@@ -38,6 +38,13 @@ describe("style の許可", () => {
     ["値の無い宣言", "width:"],
     ["空文字", ""],
     ["空白と区切りだけ", " ; ; "],
+    ["段組み(display / grid)", "display:grid;grid-template-columns:1fr 1fr"],
+    ["色(color)", "color: rgb(1 2 3 / 50%)"],
+    ["px の幅", "width: 10px"],
+    ["var", "color: var(--accent)"],
+    ["calc", "width: calc(100% - 2px)"],
+    ["margin の細目", "margin-inline: 4px"],
+    ["割合の幅に別の宣言を足した形", "width: 10%; height: 5%"],
   ])("落とす: %s", (_name, style) => {
     expect(styleSurvives(style)).toBe(false)
   })
@@ -45,16 +52,9 @@ describe("style の許可", () => {
   it.each([
     ["割合の幅", "width: 89%"],
     ["flex の数値3つ", "flex: 20000 0 0"],
-    ["段組み", "display:grid;grid-template-columns:1fr 1fr"],
-    ["rgb の slash", "color: rgb(1 2 3 / 50%)"],
-    ["末尾の ;", "width: 10px;"],
-    ["空白と改行", "  display : flex ;\n  gap : 4px  "],
-    ["大文字小文字", "WIDTH: 10PX; Display: Grid"],
-    ["入れ子の括弧", "width: calc(100% - (2px + 3px))"],
-    ["var", "color: var(--accent)"],
-    ["repeat と minmax", "grid-template-columns: repeat(2, minmax(0, 1fr))"],
-    ["border の細目", "border-top-width: 1px"],
-    ["margin の細目", "margin-inline: 4px"],
+    ["左の余白と幅", "margin-left: 10.5%; width: 20%"],
+    ["末尾の ;", "width: 10%;"],
+    ["小数の指数表記", "width: 1e-7%"],
   ])("通す: %s", (_name, style) => {
     expect(styleSurvives(style)).toBe(true)
   })
@@ -86,10 +86,10 @@ describe("rehypeStyleAllowlist", () => {
 
   it("入れ子の要素の style も検査し、テキストはそのまま残る", () => {
     const inner = div({ style: "width:u\\72l(x)" }, [{ type: "text", value: "中身" }])
-    const tree: Root = { type: "root", children: [div({ style: "width:1px" }, [inner])] }
+    const tree: Root = { type: "root", children: [div({ style: "width:1%" }, [inner])] }
 
     expect(run(tree).children).toEqual([
-      div({ style: "width:1px" }, [div({}, [{ type: "text", value: "中身" }])]),
+      div({ style: "width:1%" }, [div({}, [{ type: "text", value: "中身" }])]),
     ])
   })
 

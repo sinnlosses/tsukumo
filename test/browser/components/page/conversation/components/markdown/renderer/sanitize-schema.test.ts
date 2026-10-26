@@ -63,4 +63,36 @@ describe("REPORT_SANITIZE_SCHEMA の style", () => {
   ])("抜け道（%s）は属性ごと落ちる", (_name, style) => {
     expect(sanitizedStyle(style)).toBeUndefined()
   })
+
+  it("モデルが書きうる見た目の style は落ち、tsukumo の棒の幅は残る", () => {
+    expect(sanitizedStyle("background-color:red")).toBeUndefined()
+    expect(sanitizedStyle("display:grid")).toBeUndefined()
+    expect(sanitizedStyle("width: 89%")).toBe("width: 89%")
+  })
+})
+
+describe("REPORT_SANITIZE_SCHEMA の SVG", () => {
+  function sanitizedTree(tagName: string, properties: Element["properties"]): Element | undefined {
+    const element: Element = { type: "element", tagName, properties, children: [] }
+    const result = unified()
+      .use(rehypeSanitize, REPORT_SANITIZE_SCHEMA)
+      .runSync({ type: "root", children: [element] })
+    const first = result.children[0]
+    return first?.type === "element" ? first : undefined
+  }
+
+  it("tsukumo が組む図形と座標の属性は残る", () => {
+    const rect = sanitizedTree("rect", { x: "1", y: "2", width: "3", height: "4", rx: "2" })
+
+    expect(rect?.properties).toEqual({ x: "1", y: "2", width: "3", height: "4", rx: "2" })
+  })
+
+  it("色・変形の属性と、グループ・tspan・ellipse の要素は落ちる", () => {
+    const rect = sanitizedTree("rect", { fill: "red", stroke: "blue", transform: "rotate(5)" })
+
+    expect(rect?.properties).toEqual({})
+    expect(sanitizedTree("g", {})).toBeUndefined()
+    expect(sanitizedTree("tspan", {})).toBeUndefined()
+    expect(sanitizedTree("ellipse", {})).toBeUndefined()
+  })
 })

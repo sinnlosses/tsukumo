@@ -1,6 +1,8 @@
 // レポート（ターンの本文の詳細）に書かれた HTML を、表示してよい形へ削ぎ落とす rehype-sanitize の schema。
 //
-// HTML を通すのは、レポートを書くのはモデル自身で、Markdown の語彙（見出し・表・コード・箇条書き）だけでは段組みやカードのような見せ方ができないため。
+// 通すのは、Markdown が作る要素と、tsukumo が塊から組む形の要素・属性（印の class・SVG の図・棒の幅）だけ。
+// それ以外（色・変形・任意の `style` など）は出どころを問わず落とす。
+// tsukumo の出力とモデルが書いた HTML は見分けないので、同じ形で書かれたものは通る。
 // 削ぎ落とすのは、このページが会話の内容を持っているため。
 // 許可リスト方式（載っているものだけを通す）にしてあるので、知らない要素・属性は自動的に落ちる。
 //
@@ -23,7 +25,7 @@ import {
 } from "./code-file-name.ts"
 
 /**
- * 通してよい要素（61個）。ここに無い要素は、中身のテキストだけを残してタグが落ちる。
+ * 通してよい要素（46個）。ここに無い要素は、中身のテキストだけを残してタグが落ちる。
  *
  * `img` は通すが、`src` は tsukumo のサーバが棚から配る `/report-image/` だけを通す（外部の URL・`data:`・ほかのパスは属性ごと落ちる）。
  *
@@ -31,19 +33,14 @@ import {
  * レポートは読む面で、押せるように見えて何も起きないものを混ぜない。
  * チェックリスト（`- [ ]`）の `<input type="checkbox">` は、ここへ来る前に `rehypeTaskCheck` が静的な印の `<span>` に畳む。
  *
- * 記法に無い要素も、次の条件のどちらかを満たすものは通す（モデルの即興を落とさないため）:
- *
- * - `section` / `article` / `aside` のように、見た目を持たない入れ物（落としても中身はそのまま出るので、通しても通さなくても読み手が見るものは変わらない）。
- *   `aside` は tsukumo が余白の柱の傍注（`gutter-note`）にも使い、見た目はその class にだけ当てる
- * - `del` / `ins` / `sup` / `sub` のように、ブラウザ既定の見た目がこの配色から浮かないもの
- * - `small` / `kbd` / `samp` / `figure` / `figcaption` のように、既定のままだとタイプスケールや配色から外れるので、report-notation.module.css の `.detail-block` 配下で当て直したもの
- *
- * `mark` は通さない。
- * 既定の黄地に黒文字はこの配色から浮くうえ、当て直すと、地付きの強調を担う `strong` と `badge` に並んで強調の道具が3通りになる。タグが落ちても中の文字は残る。
+ * `aside` は tsukumo が余白の柱の傍注（`gutter-note`）に使い、見た目はその class にだけ当てる。
+ * `section` / `sup` は Markdown の脚注が作る。
  *
  * `h2` / `h3` は記法が勧める見出し（`##` / `###`）が hast に変換されたときのタグ名（`h1` は、記法が「レポートの見出しに `#` は使わない」と決めているため通さない）。
  * DOM に出るのは実際には `h4` / `h5`（`SectionHeading` / `SubHeading` が写す）。
  * ここで `h2`/`h3` を許可リストに残すのは、その書き替えが起きる前に hast-util-sanitize が中身ごと落としてしまう（サニタイズは `components` より前に効く）のを防ぐため。
+ *
+ * SVG は tsukumo が `svg` の塊と `graph`・`stats` の折れ線で組む要素だけ。
  */
 const ALLOWED_TAG_NAMES: readonly string[] = [
   "div",
@@ -60,56 +57,38 @@ const ALLOWED_TAG_NAMES: readonly string[] = [
   "ul",
   "ol",
   "li",
-  "dl",
-  "dt",
-  "dd",
   "table",
   "thead",
   "tbody",
-  "tfoot",
   "tr",
   "th",
   "td",
   "pre",
   "code",
-  "kbd",
-  "samp",
   "strong",
   "em",
   "b",
-  "i",
   "small",
   "sup",
-  "sub",
-  // 取り消し線（GFM の `~~`）と、その対になる挿入。
-  // CSS は当てない（ブラウザ既定の打ち消し線・下線は色を持たず、どの配色でも同じに読める）。
+  // 取り消し線（GFM の `~~`）。
   "del",
-  "ins",
   "blockquote",
   "section",
-  "article",
   "aside",
-  "figure",
-  "figcaption",
   "details",
   "summary",
   "a",
   "img",
-  // 図を手で組むための SVG。座標や描画の属性は下の SVG_PRESENTATION_ATTRIBUTES で通す。
   "svg",
-  "g",
   "defs",
   "marker",
   "path",
   "circle",
-  "ellipse",
   "rect",
   "line",
   "polyline",
   "polygon",
   "text",
-  "tspan",
-  "title",
 ]
 
 /**
@@ -127,7 +106,7 @@ const STRIPPED_TAG_NAMES: readonly string[] = [
 ]
 
 /**
- * 要素を問わず通してよい属性（class・id・title・table のセル結合・details の open・datetime・aria・role・SVG の座標や描画の属性。43個）。
+ * 要素を問わず通してよい属性（class・id・title・aria・role・tsukumo が組む SVG の座標や描画の属性。32個）。
  * `href` は `<a>` だけ、`marker-end` / `marker-start` は値を検査するので別に定義する（`style` の値の検査は schema の外）。
  *
  * 名前は hast のプロパティ名（DOM プロパティ名に合わせた camelCase。`property-information` の変換規則）で書く。
@@ -137,15 +116,11 @@ const GLOBAL_ATTRIBUTES: readonly string[] = [
   "className", // class
   "id",
   "title",
-  "colSpan", // colspan
-  "rowSpan", // rowspan
-  "open",
-  "dateTime", // datetime
   "ariaLabel", // aria-label
   "ariaHidden", // aria-hidden
   "ariaCurrent", // aria-current
   "role",
-  // SVG の描画に要るもの。
+  // tsukumo が組む SVG の描画に要るもの。色は書かず、CSS が当てる。
   "viewBox", // viewbox
   "width",
   "height",
@@ -159,30 +134,20 @@ const GLOBAL_ATTRIBUTES: readonly string[] = [
   "cy",
   "r",
   "rx",
-  "ry",
   "d",
   "points",
-  "fill",
-  "stroke",
   "strokeWidth", // stroke-width
-  // hast（property-information）はここだけ React の実際の prop 名と大文字小文字が違う（`strokeDashArray` / `strokeLineCap`）。
+  // hast（property-information）はここだけ React の実際の prop 名と大文字小文字が違う（`strokeDashArray`）。
   // React 側への変換は hast-util-to-jsx-runtime が `hast-to-react` の対応表で行うので、ここは hast 側の綴りに合わせる。
   "strokeDashArray", // stroke-dasharray
-  "strokeLineCap", // stroke-linecap
-  "transform",
   "textAnchor", // text-anchor
   "dominantBaseline", // dominant-baseline
   "fontSize", // font-size
-  "fontFamily", // font-family
-  "fontWeight", // font-weight
-  "opacity",
   "orient",
   "refX", // refx
   "refY", // refy
   "markerWidth", // markerwidth
   "markerHeight", // markerheight
-  "preserveAspectRatio", // preserveaspectratio
-  "xmlns",
 ]
 
 /**
@@ -195,7 +160,7 @@ const ALLOWED_LINK_SCHEMES: readonly string[] = ["http", "https", "mailto"]
 const ALLOWED_MARKER_REFERENCE_PATTERN = /^url\(#[A-Za-z0-9_-]+\)$/
 
 /**
- * レポートの HTML を削ぎ落とす rehype-sanitize の schema（61要素・43属性）。
+ * レポートの HTML を削ぎ落とす rehype-sanitize の schema（46要素・32属性）。
  *
  * - `clobber: []`。defaultSchema の既定は `id` 等に `user-content-` を前置して DOM クロバー対策をするが、それをやると SVG の `marker-end="url(#foo)"` が指す `id="foo"` と値がズレて参照が壊れる
  * - `strip` に script 等7要素を指定し、中身ごと捨てる（既定の `strip` は `script` だけなので明示する必要がある）
@@ -209,7 +174,6 @@ export const REPORT_SANITIZE_SCHEMA: Schema = {
   ancestors: {
     thead: ["table"],
     tbody: ["table"],
-    tfoot: ["table"],
     tr: ["table"],
     td: ["table"],
     th: ["table"],
@@ -222,7 +186,7 @@ export const REPORT_SANITIZE_SCHEMA: Schema = {
     th: ["align"],
     td: ["align"],
     // フェンスの info 文字列に書いたファイル名（```diff src/foo.ts）を `rehypeCodeFileName` が移してくる属性。
-    // `code` だけに許す（`*` に足すと、どの要素にも書ける属性が1つ増える。上の43個の数もこの属性を含まない）。
+    // `code` だけに許す（`*` に足すと、どの要素にも書ける属性が1つ増える。上の32個の数もこの属性を含まない）。
     // 読むのは `Pre` で、hast の段階でラベルに変える（属性そのものは `data-filename` として DOM にも残るが、CSS も JS も引いていない）。
     // `files` の塊の `code` が運ぶフルパス（`data-file-path`）も同じ理由で `code` だけに許す。
     code: [CODE_FILE_NAME_PROPERTY, CODE_FILE_PATH_PROPERTY, CODE_MARKS_PROPERTY],

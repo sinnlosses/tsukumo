@@ -6,7 +6,6 @@ import { createElement } from "react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { NotationBlock } from "../../../../src/browser/components/page/conversation/components/markdown/renderer/notation.tsx"
-import { REPORT_SANITIZE_SCHEMA } from "../../../../src/browser/components/page/conversation/components/markdown/renderer/sanitize-schema.ts"
 import { REPORT_NOTATION_PROMPT } from "../../../../src/server/report/core/report-notation.ts"
 import { readGraphSource } from "../../../../src/shared/report/graph-source.ts"
 import { REPORT_MERMAID_KINDS } from "../../../../src/shared/report/report-block-diagram.ts"
@@ -91,17 +90,9 @@ describe("REPORT_NOTATION_PROMPT", () => {
     expect(STYLE_SHEET_FILES).toHaveLength(10)
   })
 
-  it("名乗った要素を rehype-sanitize の schema が通す", () => {
-    expect(namedTags.length).toBeGreaterThan(0)
-
-    const allowed = REPORT_SANITIZE_SCHEMA.tagNames ?? []
-    for (const tag of new Set(namedTags)) {
-      expect(allowed).toContain(tag)
-    }
-  })
-
-  it("逃げ道で名乗る class は区画の格子と札だけ", () => {
-    expect(new Set(namedClasses)).toEqual(new Set(["cols", "card", "badge", "badge-ok"]))
+  it("HTML の要素も class も名乗らない（書かせるのは Markdown と塊だけ）", () => {
+    expect(namedTags).toEqual([])
+    expect(namedClasses).toEqual([])
   })
 
   it("語彙（src/shared/report/report-notation.ts）の印はどれも部品で解決され、CSS まで届く", () => {

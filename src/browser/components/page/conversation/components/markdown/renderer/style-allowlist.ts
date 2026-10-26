@@ -1,29 +1,18 @@
-// レポートの HTML に書かれた `style` 属性を、許したプロパティと関数だけで書かれたものに絞る。
+// レポートの HTML に書かれた `style` 属性を、tsukumo が棒・目盛・点を置くために組む形だけに絞る。
 // 通らない値は属性ごと消す。
 //
-// rehype-sanitize の属性値は文字列か RegExp しか受けず関数を渡せないので、検査は `rehypeStyleAllowlist` として `rehypeSanitize` の直前に差す。
-// CSS のエスケープ・コメント・文字列は、字句を解釈せずに丸ごと不許可にする（関数名や `url(` を隠せる書き方をすべて塞ぐため）。
+// 通すのは `width` / `margin-left` の割合と、`flex` の数値3つだけ。
+// 値は数字と `%` だけなので、関数・エスケープ・コメント・文字列は入り込めない。
+//
+// rehype-sanitize の属性値は文字列か RegExp しか受けず、宣言ごとの検査を書けないので、`rehypeSanitize` の直前に差す。
 
 import type { Element, ElementContent, Root, RootContent } from "hast"
 
-const ALLOWED_PROPERTY_PATTERN =
-  /^(?:display|gap|row-gap|column-gap|width|height|min-width|min-height|max-width|max-height|color|background-color|font-size|font-weight|font-style|line-height|text-align|text-decoration|vertical-align|white-space|overflow|overflow-x|overflow-y|opacity|border-radius|flex(?:-[a-z]+)?|grid(?:-[a-z]+)*|margin(?:-[a-z]+)?|padding(?:-[a-z]+)?|border(?:-(?:top|right|bottom|left))?(?:-(?:width|style|color))?)$/
+const NUMBER = String.raw`-?\d+(?:\.\d+)?(?:e[+-]?\d+)?`
 
-const ALLOWED_FUNCTIONS: ReadonlySet<string> = new Set([
-  "calc",
-  "minmax",
-  "repeat",
-  "rgb",
-  "rgba",
-  "hsl",
-  "hsla",
-  "var",
-])
-
-/** これを含む値は、解釈せずに丸ごと不許可にする（エスケープ・コメント・文字列・`@` 規則・タグ・ブロック）。 */
-const FORBIDDEN_CHARACTER_PATTERN = /[\\"'@<{}]|\/\*/
-
-const FUNCTION_NAME_PATTERN = /([-\w]*)\(/g
+const ALLOWED_DECLARATION_PATTERN = new RegExp(
+  String.raw`^(?:(?:width|margin-left):\s*${NUMBER}%|flex:\s*${NUMBER}\s+0\s+0)$`,
+)
 
 /** `style` が許可を通らない要素から、その属性を取り除いた木を返す。 */
 export function rehypeStyleAllowlist(): (tree: Root) => Root {
@@ -49,31 +38,9 @@ function restrictElement(element: Element): Element {
 }
 
 function isAllowedStyle(value: string): boolean {
-  if (FORBIDDEN_CHARACTER_PATTERN.test(value)) {
-    return false
-  }
-
   const declarations = value.split(";").filter((declaration) => declaration.trim() !== "")
-  return declarations.length > 0 && declarations.every(isAllowedDeclaration)
-}
-
-function isAllowedDeclaration(declaration: string): boolean {
-  const colon = declaration.indexOf(":")
-  if (colon < 0) {
-    return false
-  }
-
-  const property = declaration.slice(0, colon).trim().toLowerCase()
-  const value = declaration.slice(colon + 1).trim()
   return (
-    ALLOWED_PROPERTY_PATTERN.test(property) &&
-    value !== "" &&
-    !value.includes("!") &&
-    [...value.matchAll(FUNCTION_NAME_PATTERN)].every(([, name]) => isAllowedFunction(name ?? ""))
+    declarations.length > 0 &&
+    declarations.every((declaration) => ALLOWED_DECLARATION_PATTERN.test(declaration.trim()))
   )
-}
-
-/** 名前の無い `(`（`calc(1px + (2px))` の入れ子の括弧）は、関数ではなくただの括弧。 */
-function isAllowedFunction(name: string): boolean {
-  return name === "" || ALLOWED_FUNCTIONS.has(name.toLowerCase())
 }
