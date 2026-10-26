@@ -135,7 +135,7 @@ python3 "${CLAUDE_SKILL_DIR}/scripts/summarize_usage.py" --top 20  # 各一覧�
 | キー              | 中身                                                                                                                                                                                                                                                                                                               |
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `kind`            | 提案の種類。tsukumo の `USAGE_PROPOSAL_KINDS` と同じ語（`unused-mcp` / `memory-file` / `skill-definition` / `tool-result` / `session-length`）                                                                                                                                                                     |
-| `target`          | 対象。種類ごとの決まりは tsukumo の `USAGE_PROPOSAL_KIND_TARGETS` と同じ（MCP はサーバ名、メモリはパス、ツールは名前、全体なら空）。作業ツリーごとの `CLAUDE.md`（`Project`）はファイル名で束ねる                                                                                                                  |
+| `target`          | 対象。決まりは `USAGE_PROPOSAL_KIND_TARGETS` と同じ（MCP はサーバ名、ツールは名前、全体なら空）。メモリは開始日で分け target に `（<日> 開始）` 付き、`Project` はファイル名で束ねる                                                                                                                               |
 | `key`             | 提案の識別子（`kind:target`。tsukumo の `usageProposalKey` と同じ作り方）                                                                                                                                                                                                                                          |
 | `estimatedTokens` | 期間中に減っていたトークンの消費量の見積もり（重みなし。`session-length` は増えるキャッシュ作成を差し引いた数）                                                                                                                                                                                                    |
 | `sharePct`        | 分母に占める割合（%）                                                                                                                                                                                                                                                                                              |
@@ -282,7 +282,7 @@ python3 "${CLAUDE_SKILL_DIR}/scripts/summarize_usage.py" --top 20  # 各一覧�
 | 4章の候補                                                       | `kind`             | `target`                         |
 | --------------------------------------------------------------- | ------------------ | -------------------------------- |
 | 1. 未使用 MCP ツール                                            | `unused-mcp`       | サーバ名                         |
-| 2. メモリファイルの大きさ                                       | `memory-file`      | ファイルのパス                   |
+| 2. メモリファイルの大きさ                                       | `memory-file`      | パス（日なし）                   |
 | 3. スキルの定義の重さ                                           | `skill-definition` | スキル名（定義全体なら空）       |
 | 4. サブエージェントの持ち場の比率                               | `subagent-share`   | 空                               |
 | 5. 結果のバイト数が大きいツール                                 | `tool-result`      | ツール名                         |

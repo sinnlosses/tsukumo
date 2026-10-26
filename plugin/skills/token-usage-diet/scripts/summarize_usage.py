@@ -21,6 +21,14 @@ import os
 from datetime import date, timedelta
 from pathlib import Path
 
+from summarize_definition import (
+    MIN_BASIS_TURNS,
+    definition_item,
+    definition_reads,
+    top_items,
+)
+from summarize_memory import memory_estimates
+
 # 結果のバイト数をトークンに読み替えるときの粗い目安（英数まじりで約4バイト/トークン）。
 # 日本語が多いと実際はこれより多くなるので、下限の目安として扱う。
 BYTES_PER_TOKEN = 4
@@ -55,13 +63,6 @@ DEFAULT_SESSION_THRESHOLD = 200_000
 # 1ステップあたりのキャッシュ読みが前のターンのこの割合を下回ったら、自動圧縮か作り直しが
 # 挟まったとみなし、それより前のツールの結果は持ち越さない。
 COMPACTION_DROP_RATIO = 0.5
-
-# 根拠のターンがこれより少ない件は出さない（外れ値を恒常的な浪費と取り違えない）。
-MIN_BASIS_TURNS = 3
-
-# 1種類あたりに出す件数の上限（効きの大きい順）。
-MAX_ITEMS_PER_KIND = 3
-
 
 def main() -> int:
     args = parse_args()
@@ -653,64 +654,6 @@ def session_timelines(turns: list[dict]) -> dict[str, list[dict]]:
     return by_session
 
 
-def definition_reads(
-    by_session: dict[str, list[dict]], contexts: dict, tokens_of
-) -> tuple[float, int, int]:
-    """定義のトークン × main のステップ数を、内訳のあるセッションで足す。"""
-    tokens = 0.0
-    turn_count = 0
-    session_count = 0
-    for session_id, timeline in by_session.items():
-        usage = contexts.get(session_id)
-        if usage is None:
-            continue
-        per_step = tokens_of(usage)
-        if per_step <= 0:
-            continue
-        session_count += 1
-        for turn in timeline:
-            if turn["steps"] == 0:
-                continue
-            turn_count += 1
-            tokens += per_step * turn["steps"]
-    return tokens, turn_count, session_count
-
-
-def definition_item(
-    kind: str,
-    target: str,
-    reads: tuple[float, int, int],
-    coverage_info: dict,
-    ratio: float,
-    confidence: str,
-    bound: str,
-    note: str,
-    assumptions: dict,
-) -> dict | None:
-    """内訳のあるセッションで数えたぶんを、main のステップ数の比で期間全体へ伸ばす。"""
-    tokens, turn_count, session_count = reads
-    if turn_count < MIN_BASIS_TURNS or tokens <= 0:
-        return None
-    scale = coverage_info["stepsTotal"] / coverage_info["stepsMatched"]
-    if coverage_info["stepsMatched"] / coverage_info["stepsTotal"] < 0.5:
-        confidence = lower_confidence(confidence)
-    return {
-        "kind": kind,
-        "target": target,
-        "estimatedTokens": round(tokens * ratio * scale),
-        "confidence": confidence,
-        "bound": bound,
-        "basis": {
-            "turns": turn_count,
-            "sessions": session_count,
-            "steps": coverage_info["stepsMatched"],
-            "scaledToSteps": coverage_info["stepsTotal"],
-        },
-        "assumptions": assumptions,
-        "note": note,
-    }
-
-
 def unused_mcp_estimates(
     by_session: dict[str, list[dict]], contexts: dict, unused: dict, coverage_info: dict
 ) -> list[dict]:
@@ -760,49 +703,6 @@ def in_window_ratio(usage: dict) -> float:
         elif category.get("kind") == "deferred":
             deferred += int(category.get("tokens", 0) or 0)
     return used / (used + deferred) if used + deferred else 1.0
-
-
-def memory_estimates(
-    by_session: dict[str, list[dict]], contexts: dict, coverage_info: dict, trim: float
-) -> list[dict]:
-    """メモリファイルを trim 割削ったら。作業ツリーごとの CLAUDE.md は1セッションに1つしか
-    載らないので、Project のものはファイル名で束ねる（対象はファイル名になる）。"""
-    groups: set[str] = set()
-    for usage in contexts.values():
-        for item in usage.get("memoryFiles", []) or []:
-            if isinstance(item, dict):
-                groups.add(memory_group(item))
-    items = []
-    for group in sorted(groups):
-
-        def tokens_of(usage: dict, group: str = group) -> float:
-            return sum(
-                int(i.get("tokens", 0) or 0)
-                for i in usage.get("memoryFiles", []) or []
-                if isinstance(i, dict) and memory_group(i) == group
-            )
-
-        item = definition_item(
-            "memory-file",
-            group,
-            definition_reads(by_session, contexts, tokens_of),
-            coverage_info,
-            trim,
-            "high",
-            "estimate",
-            f"ファイルの大きさ × main のステップ数 × 削れる割合 {trim}",
-            {"memoryTrim": trim},
-        )
-        if item:
-            items.append(item)
-    return top_items(items)
-
-
-def memory_group(item: dict) -> str:
-    name = str(item.get("name", "unknown"))
-    if str(item.get("source", "")) == "Project":
-        return Path(name).name
-    return name
 
 
 def skill_estimates(by_session: dict[str, list[dict]], contexts: dict, coverage_info: dict) -> list[dict]:
@@ -959,10 +859,6 @@ def not_estimated(emitted_kinds: list[str]) -> list[dict]:
     return fixed + missing
 
 
-def top_items(items: list[dict]) -> list[dict]:
-    return sorted(items, key=lambda r: -r["estimatedTokens"])[:MAX_ITEMS_PER_KIND]
-
-
 def impact_of(share: float | None) -> str | None:
     if share is None:
         return None
@@ -971,10 +867,6 @@ def impact_of(share: float | None) -> str | None:
     if share >= IMPACT_MEDIUM_PCT:
         return "medium"
     return "small"
-
-
-def lower_confidence(confidence: str) -> str:
-    return {"high": "medium", "medium": "low"}.get(confidence, "low")
 
 
 def clamp_ratio(value: float) -> float:
