@@ -9,6 +9,9 @@
   `REPORT_NOTATION_PROMPT` の表には逃げ道に残る記法（引用・区切り線・複数の塊をまとめて畳む `<details>`・
   互いに独立した区画を見渡させる `cols` / `card`・区画の状態の札 `badge`）だけを置く（板の型が効くかを書かれ方と画で見てから、欄にするかを決める。`docs/research/dashboard-layout-proposal.md` 5.1）。
   同じことを両方に書くと毎ターンの文脈に2回載る。
+- 本文を A2UI のカタログと部品の平らな一覧（`components`）で受けて描く移行は、`docs/architecture/adr/0039-report-via-a2ui-catalog.md` が決める。
+  部品の切り方（`Report` の props と葉 19 種、基本カタログから取る 5 部品）は同「論点 2」、変換と `ReportEvent` の形は「論点 3」、ブラウザの描き方は「論点 4」、段の移行は「段の移行」が正典。
+  移行のあいだ、この節の `sections`・`body` の説明は旧い変種の正典として残る。
 - 節は `heading` と並んで、省ける欄 `shapeTag`（`docs/glossary.md`「形の札」）を持つ。省いた節は `unspecified` に畳む。
   札と塊の照合は「塊を足す・外す基準」の「形の札の照合」（数えるだけで差し戻さない）。
   札は `json-schema` 版の節の欄で、`body` 版（下の項）は節を持たず札も持たない（常に `unspecified`）。
