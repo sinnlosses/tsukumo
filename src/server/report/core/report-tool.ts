@@ -9,6 +9,7 @@ import { MAX_SESSION_HEADING_LENGTH } from "../../../shared/session/session-choi
 import type { FigurePreference } from "../../../shared/session/session-default.ts"
 import { MAX_SESSION_SUMMARY_LENGTH } from "../../../shared/session/session-digest.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
+import { REPORT_CALL_EXAMPLES_TEXT } from "./call-example.ts"
 
 /**
  * モデルに見せる `report` ツールの説明。記法の条はここに書かず、規約の節を1行で指す。
@@ -19,7 +20,8 @@ export const REPORT_TOOL_DESCRIPTION =
   "そのあと closing のセリフが吹き出しに出る。受け付けられるとそこでターンが終わる（あとに何も書けない）。" +
   "差し戻されたら、直す項目だけを渡して呼び直せばよい（渡さなかった項目は、同じターンで直前に差し戻した呼び出しの値を引き継ぐ）。" +
   "書き方は「レポートの記法（tsukumo）」の節に従う。" +
-  "本文は日本語で書く（識別子・パス・コマンド・コードは英語のままでよい）。"
+  "本文は日本語で書く（識別子・パス・コマンド・コードは英語のままでよい）。\n" +
+  REPORT_CALL_EXAMPLES_TEXT
 
 /**
  * `report` の任意の `checks` 引数の説明。
@@ -96,10 +98,6 @@ export const REPORT_SECTIONS_DESCRIPTION =
   "部品の文字で効くのはインラインの記法（inline code・太字・リンク）だけ。" +
   "部品の fold に見出しを書くと畳んで描く（畳んでも結論が通る部品だけ）。" +
   "部品の aside に出典・どこを見るかを1行で書くと、本文の流れの外（本文の右の余白）に置く。" +
-  "作業の最終レポートの典型例（3節）: " +
-  "1節目は見出し「変えたこと」、shapeTag は comparison、塊は table（列は場所・前・後で、変えた箇所ごとに1行）。" +
-  "2節目は見出し「そうした理由」、shapeTag は single、塊は list（判断ごとに1項目、根拠のファイル名や数を添える）。" +
-  "3節目は見出し「変えていないもの」、shapeTag は single、塊は text（触らずに残した範囲を1〜2文で。無ければこの節を省く）。" +
   "結論と checks に書いたことは節で繰り返さず、根拠と中身だけを置く。"
 
 /** 短い型の表記で渡す版で、`figure` の説明の後ろに足す文。 */

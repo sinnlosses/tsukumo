@@ -5,7 +5,7 @@
 **本文は `report` の `sections`（節と塊の並び）で受け取る**（2026-09-27。形の案は
 `docs/research/report-block.md`、用語は `docs/glossary.md`「節」「塊」）。
 
-- 塊の種類は `src/shared/report/report-block.ts` が持ち、逃げ道は `markdown`。**種類ごとの使いどころは各塊の `describe` が持ち**、
+- 塊の種類は `src/shared/report/report-block.ts` が持ち、逃げ道は `markdown`。**種類ごとの使いどころは各塊の `describe` が持ち**（欄名・enum・型で読めることは持たない。通る呼び出しの例は `REPORT_TOOL_DESCRIPTION` の末尾）、
   `REPORT_NOTATION_PROMPT` の表には逃げ道に残る記法（引用・区切り線・複数の塊をまとめて畳む `<details>`・
   互いに独立した区画を見渡させる `cols` / `card`・区画の状態の札 `badge`）だけを置く（`cols` / `card` / `badge` は 2026-10-20 利用者決定で
   教え直した。板の型が効くかを書かれ方と画で見てから、欄にするかを決める。`docs/research/dashboard-layout-proposal.md` 5.1）。

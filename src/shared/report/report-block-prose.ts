@@ -33,8 +33,7 @@ export const listBlockSchema = z.object({
         done: omittable(z.boolean(), false),
       }),
     )
-    .min(1)
-    .describe("10件まで"),
+    .min(1),
   fold,
   aside,
 })
@@ -63,7 +62,7 @@ export const filesBlockSchema = z
     items: z
       .array(
         z.object({
-          path: z.string().describe("cwd からの相対パス"),
+          path: z.string(),
           change: z.enum(REPORT_FILE_CHANGES),
           note: omittable(inlineText, ""),
         }),
@@ -80,21 +79,13 @@ export const filesBlockSchema = z
 export const codeBlockSchema = z
   .object({
     kind: z.literal("code"),
-    language: z.string().describe("言語名。変更の前後は diff"),
+    language: z.string(),
     path: omittable(z.string(), "").describe(
       "実物の一部を引くときだけ付ける（cwd からの相対パスか絶対パス。`~` は使わない）。" +
         "中身がそのファイルの連続した一部と一致しないと差し戻される。案には付けない",
     ),
-    source: z.string().describe("marks の無いコードは45行まで"),
-    marks: omittable(
-      z.array(
-        z.object({
-          lines: z.string(),
-          label: z.string(),
-        }),
-      ),
-      [],
-    ).describe("強調する行（行は `4-8`・`12`）"),
+    source: z.string(),
+    marks: omittable(z.array(z.object({ lines: z.string(), label: z.string() })), []),
     fold,
     aside,
   })
@@ -114,7 +105,7 @@ export const claimsBlockSchema = z
           .object({
             claim: inlineText,
             certainty: z.enum(REPORT_CLAIM_CERTAINTIES),
-            basis: omittable(inlineText, "").describe("path:line か [ドメイン](URL)"),
+            basis: omittable(inlineText, ""),
             howToVerify: omittable(inlineText, "").describe(
               "確定でなければ必須。繰り返せる手順を1文で",
             ),

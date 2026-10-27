@@ -44,7 +44,7 @@ export const tableBlockSchema = z
       .array(tableRowSchema)
       .min(1)
       .describe("行ごとのセル。数は columns と揃える。セルは1行、空にせず「なし」と書く"),
-    rest: omittable(inlineText, "").describe("切った残りを1行で（「ほか 12 件（0.5% 未満）」）"),
+    rest: omittable(inlineText, ""),
     fold,
     aside,
   })
@@ -57,17 +57,10 @@ export const REPORT_MATRIX_STATUSES = ["ok", "warn", "ng", "na"] as const
 export const matrixBlockSchema = z
   .object({
     kind: z.literal("matrix"),
-    title: inlineText.describe("何と何を掛けた対応か・状態の基準"),
+    title: inlineText,
     columns: z.array(inlineText).min(1),
     rows: z
-      .array(
-        z.object({
-          name: inlineText,
-          cells: z
-            .array(z.enum(REPORT_MATRIX_STATUSES))
-            .describe("列ごとの状態。数は columns と揃える"),
-        }),
-      )
+      .array(z.object({ name: inlineText, cells: z.array(z.enum(REPORT_MATRIX_STATUSES)) }))
       .min(1),
     fold,
     aside,
@@ -97,7 +90,7 @@ export const compareBlockSchema = z
 const statItemsSchema = z
   .array(
     z.object({
-      before: omittable(z.string(), "").describe("変わる前の数（前後を見せるときだけ）"),
+      before: omittable(z.string(), ""),
       value: z.string(),
       total: omittable(z.string(), "").describe(
         "全体の数（割合を帯で添える。value が全体のうちの数のとき）",
@@ -141,13 +134,13 @@ const REPORT_OPTION_VERDICTS = ["adopt", "consider", "reject"] as const
 export const optionsBlockSchema = z
   .object({
     kind: z.literal("options"),
-    title: inlineText.describe("何を決める比較か"),
+    title: inlineText,
     items: z
       .array(
         z.object({
           name: inlineText,
           verdict: z.enum(REPORT_OPTION_VERDICTS),
-          reason: inlineText.describe("判定の理由。1文"),
+          reason: inlineText,
         }),
       )
       .min(2),

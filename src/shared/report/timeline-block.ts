@@ -7,9 +7,9 @@ import { aside, type DeepReadonly, fold, inlineText, omittable } from "./report-
 const timeValue = z.union([z.string(), z.number()])
 
 const timelineRowSchema = z.object({
-  name: inlineText.describe("項目名"),
+  name: inlineText,
   start: timeValue,
-  end: omittable(timeValue, "").describe("省くと start の一点"),
+  end: omittable(timeValue, ""),
   extra: omittable(timeValue.array(), []).describe("end より後へ延びた区切りの時刻"),
   lane: omittable(inlineText, "").describe("役ごとのまとまりの名前"),
 })

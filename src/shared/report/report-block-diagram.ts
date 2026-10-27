@@ -21,14 +21,14 @@ const toneLegendSchema = z
   .meta({ id: "ToneLegend" })
 
 const graphFields = {
-  direction: z.enum(["TD", "LR"]).describe("TD は上から下 / LR は左から右"),
+  direction: z.enum(["TD", "LR"]),
   source: z
     .string()
     .refine((value) => readGraphSource(value).nodes.length > 0, "source に箱が1つも無い")
     .describe(
       "1行1矢印。`A -> B: 語`（`: 語` は矢印のラベル。省ける。点線は `A -.> B`。前の箱へ戻る矢印は `A <- B: 語` で、B から A へ戻る戻り道に描く）。`(始点)` は始点・終点、`{分岐?}` は分岐、包みが無ければ処理。同じ名前は同じ箱（包みは最初の1回だけでよい）。`->` の無い行は箱だけの宣言（`名前 | 説明` で説明の1行を足せる。矢印の端の名前には書けない）。変更の前後は行頭に `+ `（足した）・`- `（消した）・`~ `（変えた）を付ける（矢印の行は矢印に、箱だけの行は箱に掛かる。同じ箱に違う印は付けない）。色は行末に ` @a`〜` @e`（箱・矢印・囲みの行。名前に ` @` は書かない）。囲みは `[群の名]` だけの行で始め `[]` だけの行で閉じる（間の行の箱がその群。1階層で入れ子は不可）",
     ),
-  legend: omittable(toneLegendSchema, []).describe("` @a`〜` @e` を使った色ごとの名前"),
+  legend: omittable(toneLegendSchema, []),
 }
 
 const svgShapeSchema = z
@@ -39,13 +39,13 @@ const svgShapeSchema = z
       y: z.number(),
       width: positiveNumber,
       height: positiveNumber,
-      label: omittable(inlineText, "").describe("枠の中に出す名前。無ければ空"),
-      sub: omittable(inlineText, "").describe("題の下の説明1行"),
-      emphasis: omittable(z.boolean(), false).describe("true で枠を強調する"),
+      label: omittable(inlineText, ""),
+      sub: omittable(inlineText, ""),
+      emphasis: omittable(z.boolean(), false),
       labelAt: omittable(z.enum(["center", "top-left"]), "center").describe(
         "枠の題の位置。入れ子の外側の枠は top-left",
       ),
-      tone: omittable(z.enum(["none", ...SVG_TONES]), "none").describe("枠の意味の目印（a〜e）"),
+      tone: omittable(z.enum(["none", ...SVG_TONES]), "none"),
     }),
     z.object({
       kind: z.literal("line"),
@@ -53,32 +53,29 @@ const svgShapeSchema = z
       y1: z.number(),
       x2: z.number(),
       y2: z.number(),
-      arrow: omittable(z.boolean(), false).describe("true で終点（x2, y2）に矢じりを付ける"),
-      label: omittable(inlineText, "").describe("線に添える語。無ければ空"),
-      dashed: omittable(z.boolean(), false).describe("true で点線にする"),
-      tone: omittable(z.enum(["none", ...SVG_TONES]), "none").describe("線の意味の目印（a〜e）"),
+      arrow: omittable(z.boolean(), false),
+      label: omittable(inlineText, ""),
+      dashed: omittable(z.boolean(), false),
+      tone: omittable(z.enum(["none", ...SVG_TONES]), "none"),
     }),
     z.object({ kind: z.literal("text"), x: z.number(), y: z.number(), text: inlineText }),
   ])
   .meta({ id: "SvgShape" })
 
 const svgFields = {
-  width: positiveNumber.describe("viewBox の幅（目安 480〜640）。図形はこの内側に収める"),
-  height: positiveNumber.describe("viewBox の高さ"),
-  shapes: z.array(svgShapeSchema).min(1).describe("座標つきの図形。色は tone か emphasis で付ける"),
-  legend: omittable(toneLegendSchema, []).describe("使った tone ごとの名前"),
+  width: positiveNumber,
+  height: positiveNumber,
+  shapes: z.array(svgShapeSchema).min(1),
+  legend: omittable(toneLegendSchema, []),
 }
 
 const beforeAfterSideSchema = z
   .discriminatedUnion("kind", [
     z.object({ kind: z.literal("svg"), ...svgFields }),
-    z.object({
-      kind: z.literal("mermaid"),
-      source: z.string().describe("flowchart 以外の図のソース"),
-    }),
+    z.object({ kind: z.literal("mermaid"), source: z.string() }),
     z.object({
       kind: z.literal("image"),
-      path: z.string().describe("撮った画像のファイル（絶対か cwd から。png・jpeg・gif・webp）"),
+      path: z.string().describe("撮った画像のファイル（絶対か cwd から）"),
       region: z
         .object({ left: z.number(), top: z.number(), width: z.number(), height: z.number() })
         .optional()
@@ -89,17 +86,14 @@ const beforeAfterSideSchema = z
       language: z.string().describe("言語名（diff にせず、その側の中身をそのまま書く）"),
       source: z.string(),
     }),
-    z.object({
-      kind: z.literal("points"),
-      points: z.array(inlineText).min(1).describe("短い1行の並び"),
-    }),
+    z.object({ kind: z.literal("points"), points: z.array(inlineText).min(1) }),
   ])
   .meta({ id: "BeforeAfterSide" })
 
 export const beforeAfterBlockSchema = z
   .object({
     kind: z.literal("beforeAfter"),
-    title: inlineText.describe("何の前後か"),
+    title: inlineText,
     before: beforeAfterSideSchema,
     after: beforeAfterSideSchema,
     fold,
@@ -113,7 +107,7 @@ export const beforeAfterBlockSchema = z
 export const imageBlockSchema = z
   .object({
     kind: z.literal("image"),
-    path: z.string().describe("撮った画像のファイル（絶対か cwd から。png・jpeg・gif・webp）"),
+    path: z.string().describe("撮った画像のファイル（絶対か cwd から）"),
     caption: inlineText.describe("何が見えるかの1行。数と向きで主張を言う1文。評価語なし"),
     notes: omittable(z.array(inlineText), []).describe(
       `画像のどこを見るか・何が変わったか。1項目1文で、場所の言葉（左上の帯・2行目のラベル）から書く。番号は書かない（並びの順に振って描く）`,
@@ -165,7 +159,7 @@ export type ReportGraph = DeepReadonly<z.infer<z.ZodObject<typeof graphFields>>>
 const REPORT_CHART_KINDS = ["bar", "line", "pie", "arrow", "slope", "span", "share"] as const
 
 const chartSeriesSchema = z.object({
-  name: inlineText.describe("線・棒の端に直接書く系列名"),
+  name: inlineText,
   values: z.array(z.number()).min(1),
 })
 
@@ -178,15 +172,9 @@ export const chartBlockSchema = z
       .describe(
         "bar は棒・line は折れ線・pie は円（series の先頭だけを描く）。前後の差が主役なら arrow（項目ごとの前→後の矢印）、2時点の多項目は slope（項目ごとの2点の線）。arrow・slope は series を前と後の2つにし、labels を項目にする。段の所要と重なりのように項目ごとの始まり〜終わりの区間は span（series は始まりと終わりの2つ、labels が項目。時刻の目盛り・延び・出来事が要るなら timeline）、全体に占める割合の内訳は share（100% の横棒1本。labels が部分の名前で、series の先頭だけを描く）",
       ),
-    labels: inlineText
-      .array()
-      .min(1)
-      .describe("横軸・扇形の名前の並び（arrow・slope・span では項目、share では部分の名前）"),
-    series: z
-      .array(chartSeriesSchema)
-      .min(1)
-      .describe("系列ごとの数の並び。各 values の数は labels と揃える"),
-    horizontal: omittable(z.boolean(), false).describe("bar のときだけ効く。true で横棒にする"),
+    labels: inlineText.array().min(1),
+    series: z.array(chartSeriesSchema).min(1),
+    horizontal: omittable(z.boolean(), false),
     emphasis: omittable(inlineText.array(), []).describe(
       "題の主語だけ（labels の一部）。bar・pie・share で差し色",
     ),
