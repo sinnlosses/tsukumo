@@ -1,0 +1,78 @@
+/* 吹き出しの並び。
+   DOM は新しい順（`BalloonTrack`）なので、column-reverse で並べると最新が一番下に来て、過去のセリフほど上へ積み上がる。
+   吹き出しは立ち絵の側（align-items: flex-start）へ寄せる。
+   column-reverse ではスクロールの既定位置（scrollTop = 0）が視覚上の下端＝最新なので、並びが丸ごと差し替わっても最新が見える。
+
+   align-self を center にすると、箱の高さがセリフの件数で伸び縮みするので、最新の吹き出しの位置がセリフの増減で動いてしまう。
+   flex-end のまま箱の下に固定の余白（--balloon-bottom-gap）を持たせ、下端の位置そのものを固定する。
+   max-height をその余白ぶん差し引くことで、並びが伸びても余白の下は侵食しない（＝最新の吹き出しの Y 座標がセリフ件数によらず一定になる）。
+   高さの起点は中身なり・上限は領域なり（.character-region → .character-layout と継いだ高さから --balloon-bottom-gap を引いたもの）で、入りきらなくなったぶんだけ内側でスクロールする。
+   「どれが最新か」は位置と見た目の強弱の両方で示す（.balloon[data-latest="true"]）。 */
+.balloon-track {
+  display: flex;
+  align-self: flex-end;
+  align-items: flex-start;
+  flex: 1 1 var(--balloon-track-basis);
+  flex-direction: column-reverse;
+  gap: 10px;
+  min-width: 0;
+  min-height: 0;
+  margin-right: calc(var(--balloon-right-gap) - var(--balloon-scrollbar-gap));
+  margin-bottom: var(--balloon-bottom-gap);
+  padding-right: var(--balloon-scrollbar-gap);
+  /* max() の下限は、領域を仕切りで低くしたときに calc の側が 0 以下になって吹き出しが丸ごと消えるのを防ぐためのもの。
+     下限が勝つのは領域が --balloon-bottom-gap + 6rem より低いときだけで、そこでは最新の位置の固定より読めることを優先する。 */
+  max-height: max(6rem, calc(100% - var(--balloon-bottom-gap) - var(--speech-log-open-space)));
+  overflow-y: auto;
+  z-index: 3;
+}
+/* 吹き出しの並びの1件。吹き出しと、その脇の下端に置く時刻（`.balloon-side-time`）を横に並べる。
+   時刻は吹き出しの外に置き、行を足さないので吹き出しの高さは増えない。
+   幅は並びいっぱいに取り、吹き出しの max-width の基準を並びの幅のままにする。 */
+.balloon-row {
+  display: flex;
+  align-self: stretch;
+  align-items: flex-end;
+  gap: 6px;
+  min-width: 0;
+}
+/* 吹き出しの脇の時刻。最新の吹き出しの名前の隣の時刻（`balloon.module.css` の `.balloon-time`）と同じ字で、吹き出しに押されて縮まない。 */
+.balloon-side-time {
+  flex-shrink: 0;
+  padding-bottom: 4px;
+  color: var(--ink-quiet);
+  font-family: var(--font-mono);
+  font-size: var(--font-label);
+  line-height: 1;
+}
+/* 出現と押し上げは吹き出しではなく行（`.balloon-row`）に掛け、脇の時刻を吹き出しと一緒に動かす。
+   ログの吹き出しは行に入らないので動かない（開いた瞬間に全部が押し上がって見えない）。 */
+.balloon-row:has(> .balloon[data-latest="true"]) {
+  animation: balloon-appear 0.3s ease-out;
+}
+.balloon-row:has(> .balloon[data-latest="false"]) {
+  animation: balloon-push-up 0.3s ease-out;
+}
+/* 差し替えは React の再描画。
+   key はセリフの古い側から数えた通し番号（`BalloonTrack`）なので、増えても既存のセリフの番号は変わらない。
+   そのため既存の行は中身の差し替えで使い回されず、吹き出しが最新から1つ落ちて `data-latest` が `false` に変わった瞬間に行の `animation-name` が `balloon-appear` → `balloon-push-up` へ変わり、押し上げが毎回そこで再生される（CSS アニメーションは `animation-name` の値が変わったときに生成し直されるため）。
+   ただし2つ以上前へ落ちる吹き出し（既に `data-latest="false"` だったものがさらに上へ押し出される場合）は `animation-name` の値そのものは変わらないので再生されない（実機の `getAnimations`/`animationstart` の実測で確認）。
+   押し上げる量（`balloon-push-up` の `from`）は最新の吹き出し1つぶんの当て推量で、セリフが長いと少しずれる。 */
+@keyframes balloon-push-up {
+  from {
+    transform: translateY(2.75rem);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+@keyframes balloon-appear {
+  from {
+    transform: translateY(0.9rem);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}

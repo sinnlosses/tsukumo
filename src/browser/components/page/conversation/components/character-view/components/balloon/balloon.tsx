@@ -1,6 +1,6 @@
 // 吹き出し1件。
 //
-// 最新かどうかの見た目の強弱は `data-latest` を読む CSS（`character-view.module.css` の `.balloon[data-latest="true"]`）が担う。
+// 最新かどうかの見た目の強弱は `data-latest` を読む CSS（`stage/balloon.css` の `.balloon[data-latest="true"]`）が担う。
 // 並びの中の位置では決めない（セリフのログでは吹き出しが1件ずつ行に包まれている）。
 //
 // 話し手の名前は最新の1件にだけ添える（どれを誰が言ったかは尻尾が結ぶので、過去の分に繰り返さない）。

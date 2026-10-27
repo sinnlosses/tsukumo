@@ -1,0 +1,95 @@
+/* セリフのログ（`speech-log.module.css`）が位置の基準にする名前。 */
+.character-layout {
+  anchor-name: --speech-log-floor;
+}
+.balloon-track {
+  anchor-name: --speech-log-track;
+}
+/* 見本どおり、後ろは暗くしない（`<Dialog backdrop="clear">` が持つ。開いているあいだの操作は modal が止める）。 */
+/* 枠の中を丸ごと覆う箱。
+   空いたところを押しても `<dialog>` 自身が target にならない（`<Dialog>` の backdrop クリックの読み替えは target が `<dialog>` のときだけ閉じる）。 */
+.speech-log-stage {
+  position: relative;
+  height: 100%;
+}
+/* 背景。
+   キャラビューの領域と同じ縮尺・同じ位置で敷き、上へはそのまま続けるので、開いても立ち絵の後ろの絵は動かない。
+   箱の中身の領域（content box）を領域の矩形に重ね（幅は枠の外まで 1px ずつ広げて領域の幅に、高さは `cqh` で読んだ領域の高さ）、絵の位置決めをそこに置く（`background-origin: content-box`）。
+   `cover` はその矩形に対して解かれるので `.layout-ground` と同じ絵になり、`padding-top` で上へ伸ばした箱の中に、領域では切り落とされていた上の部分が描かれる（はみ出しは枠の overflow が切る）。
+   覆いは領域と同じ `--character-veil`（`.layout-ground` が作る。`<dialog>` はその DOM の子孫なので継ぐ）。
+   絵の上端が見えないように、領域の上端から上 6rem で地（ground）へ溶かす。
+   背景の無いパックでは覆いが不透明な ground、絵が `none` に落ちて、いままでと同じ地になる。 */
+.speech-log-stage::before {
+  content: "";
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  left: -1px;
+  box-sizing: content-box;
+  height: calc(100cqh + 2 * var(--region-padding));
+  padding-top: 100vh;
+  background-image:
+    linear-gradient(
+      to top,
+      transparent calc(100cqh + 2 * var(--region-padding)),
+      var(--ground) calc(100cqh + 2 * var(--region-padding) + 6rem)
+    ),
+    linear-gradient(var(--character-veil, var(--ground)), var(--character-veil, var(--ground))),
+    var(--character-background-image, none);
+  background-origin: border-box, border-box, content-box;
+  background-position: center bottom;
+  background-size: auto, auto, cover;
+  background-repeat: no-repeat;
+  pointer-events: none;
+}
+/* 吹き出しの列。
+   左右と下端はキャラビューの `.balloon-track` に重ね（最新の吹き出しの下端がキャラビューと同じ高さに来る）、上端だけ枠の上端まで伸ばす。
+   並びは古い→新しいを上→下で、開いた直後に下端へ転がしてある。 */
+.speech-log-scroller {
+  position: fixed;
+  position-anchor: --speech-log-track;
+  top: calc(var(--speech-log-top) + 1px);
+  right: anchor(right);
+  bottom: anchor(bottom);
+  left: anchor(left);
+  z-index: 1;
+  padding-right: var(--balloon-scrollbar-gap);
+  overflow-y: auto;
+}
+/* 立ち絵があるときは、キャラビューの列（`.portrait + .balloon-track`）と同じく尻尾ぶんを左に空ける。 */
+.speech-log-stage:has(.portrait) .speech-log-scroller {
+  padding-left: var(--balloon-tail);
+}
+.speech-log-speech {
+  display: flex;
+}
+/* 過去の吹き出しは見本の 14px。
+   古いほど薄いが、地ごと薄めず字の色だけを surface へ混ぜる（地ごと薄めると背景の絵が文字の裏へ透ける）。
+   いちばん薄い段でも surface の上で 4.5:1 を割らない ink 55%（約 4.8）で止め、3つ前から先はずっとその段。 */
+.speech-log-speech > .balloon[data-latest="false"] {
+  font-size: var(--font-subheading);
+  line-height: 1.65;
+}
+.speech-log-speech[data-age="recent"] > .balloon {
+  color: color-mix(in srgb, var(--ink) 85%, var(--surface));
+}
+.speech-log-speech[data-age="older"] > .balloon {
+  color: color-mix(in srgb, var(--ink) 70%, var(--surface));
+}
+.speech-log-speech[data-age="oldest"] > .balloon {
+  color: color-mix(in srgb, var(--ink) 55%, var(--surface));
+}
+
+/* 狭い画面（760px 以下）では、セリフのログは画面いっぱいに開き、列は枠の中に置く。 */
+@media (max-width: 760px) {
+  .speech-log-stage::before {
+    top: 0;
+    height: auto;
+    padding-top: 0;
+  }
+  .speech-log-scroller {
+    position: absolute;
+    inset: 44px 0 0;
+    padding: 0 16px 16px;
+  }
+}

@@ -21,7 +21,7 @@
    立ち絵と吹き出しの列は、キャラビューの立ち絵の床（`.character-layout`）と吹き出しの並び（`.balloon-track`）にそのまま重ねるので、開いても立ち絵と最新の吹き出しは動かない。
 
    位置は CSS の anchor positioning で決める（`<dialog>` は top layer に出るので、領域の位置を知る手段が要る）。
-   基準は `character-view.module.css` の `.character-layout` と `.balloon-track` の `anchor-name`。
+   基準は `stage/speech-log.css` の `.character-layout` と `.balloon-track` の `anchor-name`。
    枠は領域の padding の外まで広げる（`--region-padding` は `.layout-region` から継ぐ。`.speech-log-open` と同じ打ち消し方）。
    床と列は `position: fixed` の子で、`<dialog>` に transform などを掛けないかぎり包含ブロックは画面のままなので、枠の外の要素を基準にできる。 */
 .speech-log {

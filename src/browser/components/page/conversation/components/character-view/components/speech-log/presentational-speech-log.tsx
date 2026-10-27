@@ -2,7 +2,7 @@
 //
 // 中身はキャラビューの舞台をそのまま上へ伸ばした形。
 // 立ち絵はキャラビューのものと同じ `<Portrait>` を受け取って床（`.speech-log-floor`）に置き、吹き出しはキャラビューと同じ `<Balloon>` で描く。
-// どこに重ねるかは CSS（`character-view.module.css` の anchor positioning）が決める。
+// どこに重ねるかは CSS（`stage/speech-log.css` の anchor positioning）が決める。
 //
 // `<dialog>` は top layer に出るので、キャラビューの `overflow` には切り取られない。
 

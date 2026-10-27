@@ -1,6 +1,6 @@
 /* キャラビューの席。基準は `.character-region`（`position: relative`、`container-type: size`）。
    重なりは 背景 → 左上 → 立ち絵（z-index 1）→ 左下・右下 → 吹き出しの列（z-index 3）。
-   立ち絵の位置は `character-view.module.css` が `.character-layout > .portrait` に付ける `--stage-portrait` で引く。
+   立ち絵の位置は `stage/layout.css` が `.character-layout > .portrait` に付ける `--stage-portrait` で引く。
    anchor の参照元が DOM で先にないと位置が効かないので、この箱は `.character-stage` の後ろに置く。
    箱そのものは `display: contents` で、領域の縦の並び（gap）に加わらない。 */
 .item-seats {

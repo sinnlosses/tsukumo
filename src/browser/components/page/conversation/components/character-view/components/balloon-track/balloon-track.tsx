@@ -1,5 +1,5 @@
 // 吹き出しの並び。吹き出しはセリフ1件につき1つ、DOM は新しい順（先頭が最新）に並べる。
-// CSS の `.balloon-track`（`column-reverse`。`character-view.module.css`）が視覚上は最新を下端に置き、過去のセリフを上へ押し上げる。
+// CSS の `.balloon-track`（`column-reverse`。`stage/balloon-track.css`）が視覚上は最新を下端に置き、過去のセリフを上へ押し上げる。
 //
 // 吹き出しに出るのは `speak` で来たセリフと、反応の1行だけ。
 // 反応はセリフより新しい位置（最新）に出す。
@@ -36,7 +36,7 @@ export function BalloonTrack(props: BalloonTrackProps): ReactElement {
   // key は props.speeches の古い側から数えた位置（＝配列に足される前からの通し番号）。
   // speeches はターンの中で末尾へ積むだけ（`applySessionEvent`）なので、この番号はセリフが増えても既存のセリフでは変わらない。
   // 位置（newestFirst の index）を key にすると、増えるたびに既存のセリフの key がずれて、別のセリフの内容が同じ DOM ノードへ上書きされる。
-  // すると `data-latest` が外れる瞬間が起きず、押し上げ（`character-view.module.css` の `.balloon-row` の `balloon-push-up`）が再生されない。
+  // すると `data-latest` が外れる瞬間が起きず、押し上げ（`stage/balloon-track.css` の `.balloon-row` の `balloon-push-up`）が再生されない。
   const newestFirst = props.speeches.toReversed()
   const oldestIndexOf = (indexFromNewest: number): number =>
     props.speeches.length - 1 - indexFromNewest

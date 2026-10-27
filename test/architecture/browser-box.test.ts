@@ -127,12 +127,12 @@ describe("components/ui/ の置き方", () => {
 // container / presenter の対（`<ページ>.tsx` / `presentational-<ページ>.tsx`）・`<ページ>.module.css`・
 // `domain/` `hooks/` `components/` だけ。部品（`components/<部品>/`）も同じ作り（`<部品>.tsx` /
 // `presentational-<部品>.tsx` / `<部品>.module.css` / `hooks/` `domain/` `components/`）で、ほかに
-// 概念のディレクトリを名前の一覧（`PAGE_CONCEPT_DIRECTORIES`。いまは `renderer` だけ）で許す。
+// 概念のディレクトリを名前の一覧（`PAGE_CONCEPT_DIRECTORIES`）で許す。
 // 子部品は部品と同じディレクトリに `<子部品>.tsx` を平らに並べる。
 // `<部品>.tsx` は自分の `components/` と概念のディレクトリを `export … from` で再エクスポートできない。
 // `components/` の直下はディレクトリだけで、`hooks/` は部品の形（`<名前>.tsx` など）を求めない
 // 固定の置き場として例外にする。
-const PAGE_CONCEPT_DIRECTORIES: ReadonlySet<string> = new Set(["renderer"])
+const PAGE_CONCEPT_DIRECTORIES: ReadonlySet<string> = new Set(["renderer", "stage"])
 
 type PageNodeRule = {
   /** このディレクトリ自身が `components/` を持ってよいか。 */

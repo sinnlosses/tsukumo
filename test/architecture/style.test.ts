@@ -396,36 +396,34 @@ describe("components/ui/ の部品の className", () => {
 })
 
 describe("CSS Modules の class", () => {
-  it("CSS Modules のセレクタに書いた class は、tsx から styles で参照されているか、許可リストにある", () => {
+  it("*.css はどれも読まれ、CSS Modules のセレクタに書いた class は tsx から styles で参照されているか、許可リストにある", () => {
     const moduleCssFiles = listSourceFiles(SRC_ROOT, SRC_ROOT, [".module.css"])
-    expect(moduleCssFiles.length).toBeGreaterThan(0)
-    // `<名>/` の下と `<名>-*.css` の `.css` は、隣の `<名>.module.css` に束ねられる部品。
-    const entryOf = (cssRelPath: string): string | undefined =>
-      moduleCssFiles.find(
-        (e) =>
-          e === `${cssRelPath.slice(0, cssRelPath.lastIndexOf("/"))}.module.css` ||
-          (!cssRelPath.endsWith(".module.css") &&
-            cssRelPath.startsWith(e.replace(".module.css", "-"))),
-      )
-    const cssFiles = listSourceFiles(SRC_ROOT, SRC_ROOT, [".css"]).filter(
-      (cssRelPath) => cssRelPath.endsWith(".module.css") || entryOf(cssRelPath) !== undefined,
+    // `.module.css` が `@import` する `.css` は、その入口に束ねられる部品。
+    const entryByPart = new Map(
+      moduleCssFiles.flatMap((entry) =>
+        [...readFileSync(`${SRC_ROOT}/${entry}`, "utf8").matchAll(/@import "(\.[^"]+)"/g)].map(
+          ([, part]) => [resolveRelativeImport(entry, part ?? ""), entry] as const,
+        ),
+      ),
     )
-    expect(cssFiles.length).toBeGreaterThan(moduleCssFiles.length)
+    expect(entryByPart.size).toBeGreaterThan(0)
 
     const readersByCss = new Map<string, readonly string[]>()
     for (const relPath of listSourceFiles(SRC_ROOT)) {
       const content = readFileSync(`${SRC_ROOT}/${relPath}`, "utf8")
       for (const importMatch of content.matchAll(
-        /import\s+\w+\s+from\s+["'](\.[^"']+\.module\.css)["']/g,
+        /import\s+(?:\w+\s+from\s+)?["'](\.[^"']+\.css)["']/g,
       )) {
         const cssRelPath = resolveRelativeImport(relPath, importMatch[1] ?? "")
         readersByCss.set(cssRelPath, [...(readersByCss.get(cssRelPath) ?? []), content])
       }
     }
 
-    const offenders = cssFiles.flatMap((cssRelPath) => {
-      const entry = entryOf(cssRelPath)
-      const readers = readersByCss.get(entry ?? cssRelPath) ?? []
+    const offenders = listSourceFiles(SRC_ROOT, SRC_ROOT, [".css"]).flatMap((cssRelPath) => {
+      const readers = readersByCss.get(entryByPart.get(cssRelPath) ?? cssRelPath)
+      if (readers === undefined) {
+        return [`src/${cssRelPath}: どこからも import・@import されていない`]
+      }
       return cssClassNames(readFileSync(`${SRC_ROOT}/${cssRelPath}`, "utf8"))
         .filter(
           (className) =>

@@ -1,0 +1,101 @@
+/* 吹き出しは中身なりの幅にする（短いセリフが横いっぱいに伸びると、視線の移動だけ長くなる）。
+   ここは過去の吹き出しの見た目（モック値）。
+   地は不透明な `surface` のままにする（モックは半透明だが、背景画像が入ると文字の裏へ透ける）。
+   薄く見せるのは枠と、下の `.balloon[data-latest="false"]` の文字色だけ。
+   padding はモック値（10px 14px）を --balloon-past-scale（既定 13px）に対する比で持つ（10÷13・14÷13）。
+   既定では計算結果が丸ごとモック値に戻り、領域が低いときだけ --balloon-past-scale と一緒に縮む。 */
+.balloon {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: fit-content;
+  max-width: 88%;
+  padding: calc(var(--balloon-past-scale) * 10 / 13) calc(var(--balloon-past-scale) * 14 / 13);
+  border: 1px solid color-mix(in srgb, var(--rule) 70%, transparent);
+  border-radius: 12px;
+  background: var(--surface);
+}
+/* 押せる吹き出し（吹き出しの並び・セリフのログの両方）。
+   地を差し色の側へ寄せるだけで示す。
+   印の付いている行には掛けない。 */
+.balloon[data-interactive="true"] {
+  cursor: pointer;
+}
+.balloon[data-interactive="true"]:hover:not([data-selected="true"]) {
+  background: color-mix(in srgb, var(--surface), var(--accent) 18%);
+}
+/* 立ち絵がいま従っている行。
+   `data-latest="true"` はすでに強い見た目を持つので、それ以外のときだけ縁と地を強める。
+   縁を太らせないのは行の高さが動くのを避けるため。 */
+.balloon[data-selected="true"]:not([data-latest="true"]) {
+  background: color-mix(in srgb, var(--surface), var(--accent) 26%);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+/* 最新の1件（`data-latest`。キャラビューでは DOM の先頭で、column-reverse で視覚上は下端に出る。セリフのログでは並びの末尾）。
+   いま読んでほしい1件だけを濃く・大きくし、立ち絵の側へ尻尾を伸ばして「誰が言ったか」を結ぶ。
+   過去の分は小さく薄くして、残ってはいるが読み返す対象だと分かる見た目にする。
+   枠は accent の 1.5px だけで、にじむ輪は付けない（線をくっきりさせる）。
+   影（box-shadow）は地から浮いていることを示すためのもので、色は黒系の生値ではなく `--ground` から作る。 */
+.balloon[data-latest="true"] {
+  max-width: 96%;
+  /* padding はモック値（14px 18px 16px）を --balloon-latest-scale（既定 15px＝--font-body）に対する比で持つ（14÷15・18÷15・16÷15）。
+     既定では計算結果が丸ごとモック値に戻り、領域が低いときだけ一緒に縮む。 */
+  padding: calc(var(--balloon-latest-scale) * 14 / 15) calc(var(--balloon-latest-scale) * 18 / 15)
+    calc(var(--balloon-latest-scale) * 16 / 15);
+  font-size: var(--balloon-latest-scale);
+  line-height: 1.7;
+  background: var(--surface-accent);
+  border-width: 1.5px;
+  border-color: var(--accent);
+  border-radius: 14px;
+  box-shadow: 0 10px 30px color-mix(in srgb, var(--ground) 65%, transparent);
+}
+/* 立ち絵の上に列を重ねる本体（--balloon-overlap ぶん左へ寄せる）。
+   加えて尻尾ぶんの場所を左に確保する。
+   `.balloon-track` は overflow-y: auto を持ち、CSS の規則で overflow-x も自動的に visible ではなくなる（＝横方向もクリップされる）ため、尻尾を吹き出しの外（左）へ絶対配置するだけだと padding の外＝クリップ境界の外に出て消える。
+   ここで確保した padding-left ぶんが、下の尻尾の幅（--balloon-tail）と一致することで、尻尾がちょうど padding の中に収まりクリップされない（目視で確認）。 */
+.portrait + .balloon-track {
+  margin-left: calc(-1 * var(--balloon-overlap));
+  padding-left: var(--balloon-tail);
+}
+/* 尻尾は立ち絵があるときだけ（立ち絵が無い・読めないときは吹き出しだけで成立させる）。
+   枠の三角（::before）と中身の三角（::after）を重ねて、枠線が尻尾の先まで続いて見える形にする。
+   三角1枚だと枠線の色で塗った板が飛び出しているだけに見える。
+   立ち絵は左にいるので、尻尾は吹き出しの左辺から真横（左）へ出し、先端を左に向ける（下辺から出すと、下に伸びる分の場所を空ける必要があり、最新の位置を固定できない）。
+   border-right を色付きに、border-top と border-bottom を透明にした二等辺三角形で、right: 100% で吹き出しの左外側に置く。
+   縦の位置は下端から --balloon-tail-bottom（吹き出しの下寄りを指す）。 */
+.portrait + .balloon-track > .balloon-row > .balloon[data-latest="true"]::before,
+.portrait + .balloon-track > .balloon-row > .balloon[data-latest="true"]::after,
+.speech-log-stage:has(.portrait) .balloon[data-latest="true"]::before,
+.speech-log-stage:has(.portrait) .balloon[data-latest="true"]::after {
+  content: "";
+  position: absolute;
+  bottom: var(--balloon-tail-bottom);
+  right: 100%;
+  width: 0;
+  height: 0;
+  border-top: var(--balloon-tail) solid transparent;
+  border-bottom: var(--balloon-tail) solid transparent;
+  border-right: var(--balloon-tail) solid var(--accent);
+}
+/* ::after は吹き出し側へ 1px 寄せたうえで上下の border 幅を一回り小さくする。
+   ずらすだけだと斜辺に沿って滑るだけで枠の色が出ないので、斜辺に 1px 残すには大きさも変える必要がある。
+   小さくしたぶん bottom も 2px 上げ、2つの三角の頂点の高さを揃える。
+   揃えないと枠線が上の斜辺だけに寄り、下の斜辺から消える。 */
+.portrait + .balloon-track > .balloon-row > .balloon[data-latest="true"]::after,
+.speech-log-stage:has(.portrait) .balloon[data-latest="true"]::after {
+  bottom: calc(var(--balloon-tail-bottom) + 2px);
+  right: calc(100% - 1px);
+  border-top-width: calc(var(--balloon-tail) - 2px);
+  border-bottom-width: calc(var(--balloon-tail) - 2px);
+  border-right-color: var(--surface-accent);
+}
+/* 過去の吹き出しは地ごと薄めず、文字の色だけを地へ混ぜて薄める。
+   要素ごと `opacity` で薄めると吹き出しの地まで半透明になり、背景を敷いたときに画像が文字の裏へ透ける。
+   混ぜる量の上限は 45%（4.83。50% だと 4.24 で下回る）。
+   背景を敷かなくても、`opacity: 0.5` は 4.20 で下限を割る。 */
+.balloon[data-latest="false"] {
+  font-size: var(--balloon-past-scale);
+  line-height: 1.6;
+  color: color-mix(in srgb, var(--ink) 55%, var(--surface));
+}

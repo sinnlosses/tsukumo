@@ -36,7 +36,7 @@ import {
 
 /**
  * セリフの古さの段。最新からいくつ前かで決める。
- * `recent`（1つ前）→ `older`（2つ前）→ `oldest`（3つ前から先は全部）の順に薄くなる。薄さの値は `character-view.module.css` が持つ。
+ * `recent`（1つ前）→ `older`（2つ前）→ `oldest`（3つ前から先は全部）の順に薄くなる。薄さの値は `stage/speech-log.css` が持つ。
  */
 type SpeechAge = "latest" | "recent" | "older" | "oldest"
 

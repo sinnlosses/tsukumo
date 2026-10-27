@@ -88,7 +88,8 @@ components/page/<ページ>/
       <部品>.module.css          この部品（と中の子部品）だけが読む CSS
       hooks/ domain/             この部品（と中の子部品）だけのフック・語彙
       <子部品>.tsx               この部品だけが使う子部品。部品と同じディレクトリに平らに並べ、CSS は <部品>.module.css に同居
-      <概念>/                    下の「機能の中を分ける」の概念のディレクトリ（renderer/ など）
+      <概念>/                    下の「機能の中を分ける」の概念のディレクトリ（renderer/・stage/ など）
+                                 <部品>.module.css が大きくなったら、規則の本体を概念のディレクトリの *.css に分けて @import する
 ```
 
 - **ページの直下は、container / presenter の対と `<ページ>.module.css`、`domain/` `hooks/` `stores/` `components/`
