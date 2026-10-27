@@ -4,10 +4,11 @@
 
 import { cardChainHtml } from "./card-chain-markdown.ts"
 import { encodeMarks } from "./code-mark.ts"
-import { plotFormOf } from "./figure-decision.ts"
+import { type PlotFormResolution, plotFormOf } from "./figure-decision.ts"
 import { type FigureForm, plotRows, type ReportPlot } from "./figure-grammar.ts"
 import { graphFoldHtml } from "./graph-fold-html.ts"
 import { graphFoldFigure } from "./graph-fold.ts"
+import { plotChartOf } from "./plot-chart.ts"
 import type { ReportBlock, ReportSection } from "./report-block.ts"
 import { captionedMarkdown, type CaptionKind } from "./report-caption.ts"
 import { compareMarkdown, beforeAfterMarkdown } from "./report-comparison-markdown.ts"
@@ -300,15 +301,20 @@ function blockMarkdown(
   }
 }
 
-type PlotRenderer = (block: ReportPlot, ordinal: number, tagTones: TagTones) => string
+type PlotRenderer = (
+  block: ReportPlot,
+  ordinal: number,
+  tagTones: TagTones,
+  resolution: PlotFormResolution,
+) => string
 
 /** `plot` を決定表の形の描き方へ振り分ける。描き方の無い形は表に落とす。 */
 const PLOT_RENDERERS = {
   text: plotTableMarkdown,
   table: plotTableMarkdown,
-  bar: plotTableMarkdown,
-  line: plotTableMarkdown,
-  pie: plotTableMarkdown,
+  bar: plotChartMarkdown,
+  line: plotChartMarkdown,
+  pie: plotChartMarkdown,
   numberLine: plotTableMarkdown,
   bullet: plotTableMarkdown,
   scatter: plotTableMarkdown,
@@ -319,8 +325,27 @@ const PLOT_RENDERERS = {
 
 /** 描く経路は利用者の図の既定を持たないので、図派として決める。 */
 function plotMarkdown(block: ReportPlot, ordinal: number, tagTones: TagTones): string {
-  const { form } = plotFormOf(block, block.form, "chart")
-  return PLOT_RENDERERS[form](block, ordinal, tagTones)
+  const resolution = plotFormOf(block, block.form, "chart")
+  return PLOT_RENDERERS[resolution.form](block, ordinal, tagTones, resolution)
+}
+
+/** 値と系列名を描く側に書かせる印をつけて、既存の `chart` の経路で描く。写せない申告は表に落とす。 */
+function plotChartMarkdown(
+  block: ReportPlot,
+  ordinal: number,
+  tagTones: TagTones,
+  resolution: PlotFormResolution,
+): string {
+  const chart = plotChartOf(block, resolution)
+  if (chart === undefined) return plotTableMarkdown(block, ordinal, tagTones)
+  return captionedMarkdown({
+    kind: "figure",
+    ordinal,
+    title: chart.title,
+    body: fencedMarkdown("chart", JSON.stringify(chartConfigOf(chart, { values: true }))),
+    bodyFormat: "markdown",
+    fit: false,
+  })
 }
 
 function plotTableMarkdown(block: ReportPlot, ordinal: number, tagTones: TagTones): string {

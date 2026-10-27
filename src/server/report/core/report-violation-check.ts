@@ -27,6 +27,7 @@ import { figureNumberFaults } from "./figure-number-fault.ts"
 import { brokenInlineMarks } from "./inline-mark-fault.ts"
 import { plainWordSpellingsIn } from "./plain-word-find.ts"
 import { plotFormFaults } from "./plot-form-fault.ts"
+import { plotNoteFaults } from "./plot-note-fault.ts"
 import {
   badCardsIn,
   crowdedNoteCount,
@@ -205,6 +206,7 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
     { kind: "plot-forbidden-form", count: plotForms.refused.length, rules: plotForms.refused },
     { kind: "plot-form-override", count: plotForms.overrides },
     { kind: "broken-inline-mark", count: brokenInlineMarks(report) },
+    { kind: "plot-title-without-number", count: plotNoteFaults(report) },
   ] as const satisfies readonly ReportViolation[]
 
   return counted.filter((violation) => violation.count > VIOLATION_THRESHOLDS[violation.kind])

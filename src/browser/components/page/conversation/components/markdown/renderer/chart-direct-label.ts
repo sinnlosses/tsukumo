@@ -32,7 +32,7 @@ const SHARE_ROW_HEIGHT = 18
 const SHARE_ROW_GAP = 8
 
 type DirectLabelOption = {
-  readonly mode: "arrow" | "slope" | "span" | "share"
+  readonly mode: "arrow" | "slope" | "span" | "share" | "values"
   readonly names: readonly string[]
 }
 
@@ -56,9 +56,9 @@ export const directLabelPlugin = {
     } else if (option?.mode === "slope") {
       drawSlope(chart)
     } else if (chart.config.type === "pie") {
-      drawPie(chart)
+      drawPie(chart, option?.mode === "values")
     } else if (chart.config.type === "line") {
-      drawLineEnds(chart)
+      drawLineEnds(chart, option?.mode === "values")
     } else if (chart.config.type === "bar") {
       drawBarEnds(chart)
     }
@@ -95,7 +95,9 @@ function paddingFor(chart: ChartInstance): Padding {
         bottom: PIE_VERTICAL_PADDING,
       }
     case "line":
-      return seriesCount > 1 ? { ...none, right: SERIES_SIDE_PADDING } : none
+      return seriesCount > 1 || option?.mode === "values"
+        ? { ...none, right: SERIES_SIDE_PADDING }
+        : none
     case "bar":
       return barEndPadding(chart.options.indexAxis === "y", seriesCount, barEndTextWidth(chart))
     default:
@@ -153,7 +155,11 @@ function directLabelOptionOf(value: unknown): DirectLabelOption | undefined {
   }
   const { mode, names } = value
   if (
-    (mode !== "arrow" && mode !== "slope" && mode !== "span" && mode !== "share") ||
+    (mode !== "arrow" &&
+      mode !== "slope" &&
+      mode !== "span" &&
+      mode !== "share" &&
+      mode !== "values") ||
     !Array.isArray(names) ||
     !names.every((name): name is string => typeof name === "string")
   ) {
@@ -188,14 +194,15 @@ function drawNameInColumn(
   ctx.fillText(text, right, y, maxWidth)
 }
 
-function drawPie(chart: ChartInstance): void {
+function drawPie(chart: ChartInstance, withValues: boolean): void {
   chart.getDatasetMeta(0).data.forEach(({ x, y, startAngle, endAngle, outerRadius }, index) => {
     const middle = (startAngle + endAngle) / 2
     const reach = outerRadius + LABEL_OFFSET
     const cosine = Math.cos(middle)
+    const name = chart.data.labels[index] ?? ""
     drawText(
       chart.ctx,
-      chart.data.labels[index] ?? "",
+      withValues ? barEndText(name, chart.data.datasets[0]?.data[index]) : name,
       x + cosine * reach,
       y + Math.sin(middle) * reach,
       cosine >= 0 ? "left" : "right",
@@ -204,11 +211,11 @@ function drawPie(chart: ChartInstance): void {
   })
 }
 
-function drawLineEnds(chart: ChartInstance): void {
-  if (chart.data.datasets.length < 2) {
+function drawLineEnds(chart: ChartInstance, withValues: boolean): void {
+  if (chart.data.datasets.length < 2 && !withValues) {
     return
   }
-  const ends = visibleEnds(chart)
+  const ends = visibleEnds(chart, withValues)
   const ys = spreadLabels(
     ends.map(({ point }) => point.y),
     LABEL_GAP,
@@ -218,12 +225,17 @@ function drawLineEnds(chart: ChartInstance): void {
   })
 }
 
-function visibleEnds(chart: ChartInstance) {
+function visibleEnds(chart: ChartInstance, withValues: boolean) {
   return chart.data.datasets.flatMap((dataset, index) => {
     const point = chart.getDatasetMeta(index).data.at(-1)
     return point === undefined || !chart.isDatasetVisible(index)
       ? []
-      : [{ point, label: dataset.label }]
+      : [
+          {
+            point,
+            label: withValues ? barEndText(dataset.label, dataset.data.at(-1)) : dataset.label,
+          },
+        ]
   })
 }
 

@@ -12,6 +12,7 @@ const COUNTED_REASONS = [
   "plot-forbidden-form",
   "plot-form-override",
   "broken-inline-mark",
+  "plot-title-without-number",
   "long-table",
   "long-list",
   "untitled-section",

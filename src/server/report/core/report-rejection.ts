@@ -127,6 +127,8 @@ function violationLine(violation: ReportViolation): string {
       return `\`plot\` の値とずれた数が本文にある（${figureNumberFaultPositions(violation.faults)}）。単位と丸めを \`plot\` の値に揃えて、本文の数を直す`
     case "plot-forbidden-form":
       return `\`plot\` の \`form\` が置いてはならない形に当たる塊が${violation.count}個ある（${violation.rules.join("・")}）。\`form\` を省いて決定表の形に任せる`
+    case "plot-title-without-number":
+      return `棒・折れ線・円で描く \`plot\` の \`question\` に数が無い塊が${violation.count}個ある。題に数と向きで言いたい傾向を1文で書く`
     case "plot-form-override":
       return `\`plot\` の \`form\` が決定表の形と違う塊が${violation.count}個ある。決定表の形で足りるなら \`form\` を省く`
   }

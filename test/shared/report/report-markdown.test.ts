@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import { encodeMarks } from "../../../src/shared/report/code-mark.ts"
+import { plotBlockSchema } from "../../../src/shared/report/figure-grammar.ts"
 import { type ReportBlock, reportSectionsOfBody } from "../../../src/shared/report/report-block.ts"
 import { reportSectionsMarkdown } from "../../../src/shared/report/report-markdown.ts"
 import {
@@ -270,6 +271,71 @@ describe("reportSectionsMarkdown", () => {
           NO_IMAGES,
         ),
       ).toBe("架空の本文。")
+    })
+  })
+
+  describe("plot の描き分け", () => {
+    const plotOf = (relation: string, data: unknown[], form?: string) =>
+      plotBlockSchema.parse({
+        kind: "plot",
+        question: "架空の題 3 件",
+        data,
+        relation,
+        ...(form === undefined ? {} : { form }),
+      })
+    const labels = ["甲", "乙", "丙", "丁", "戊"]
+
+    it("棒は chart のフェンスになり、値を書かせる印は付かない", () => {
+      const markdown = markdownOf(
+        plotOf("part", [
+          { name: "工程", type: "N", values: labels },
+          { name: "分", type: "Q", values: [4, 31, 12, 9, 3] },
+        ]),
+      )
+      expect(markdown).toContain("```chart")
+      expect(markdown).toContain('"type":"bar"')
+    })
+
+    it("折れ線と円は値を書かせる印つきの chart のフェンスになる", () => {
+      const line = markdownOf(
+        plotOf("trend", [
+          { name: "日", type: "T", values: labels },
+          { name: "件", type: "Q", values: [4, 31, 12, 9, 3] },
+        ]),
+      )
+      expect(line).toContain('"type":"line"')
+      expect(line).toContain('"mode":"values"')
+      const pie = markdownOf(
+        plotOf(
+          "part",
+          [
+            { name: "工程", type: "N", values: ["甲", "乙", "丙"] },
+            { name: "分", type: "Q", values: [4, 31, 12] },
+          ],
+          "pie",
+        ),
+      )
+      expect(pie).toContain('"type":"pie"')
+      expect(pie).toContain('"mode":"values"')
+    })
+
+    it("前後の量の change は slope、写せない申告は表に落ちる", () => {
+      const slope = markdownOf(
+        plotOf("change", [
+          { name: "項目", type: "N", values: ["甲", "乙", "丙"] },
+          { name: "前", type: "Q", values: [1, 2, 3] },
+          { name: "後", type: "Q", values: [2, 3, 4] },
+        ]),
+      )
+      expect(slope).toContain('"mode":"slope"')
+      const table = markdownOf(
+        plotOf("range", [
+          { name: "段", type: "N", values: labels },
+          { name: "始", type: "T", values: labels },
+          { name: "終", type: "T", values: labels },
+        ]),
+      )
+      expect(table).not.toContain("```chart")
     })
   })
 })

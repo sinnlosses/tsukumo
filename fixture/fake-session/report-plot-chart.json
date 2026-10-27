@@ -1,0 +1,112 @@
+{
+  "name": "report-plot-chart",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "図の申告の見え方を確かめたい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 300,
+      "event": {
+        "kind": "speech",
+        "text": "棒と折れ線と円を並べて書くね。",
+        "expression": "default"
+      }
+    },
+    {
+      "afterMs": 1000,
+      "event": {
+        "kind": "report",
+        "task": {
+          "kind": "none"
+        },
+        "closing": {
+          "kind": "speech",
+          "text": "書けたよ！",
+          "expression": "proud"
+        },
+        "toolUseId": "fake-report-plot-chart-1",
+        "conclusion": "架空の結論: 3 形の図の申告の見え方を確かめた。",
+        "sections": [
+          {
+            "heading": "架空の図の申告",
+            "shapeTag": "quantity",
+            "blocks": [
+              {
+                "kind": "plot",
+                "question": "架空の工程は乙が 31 分で全体の半分近くを占める",
+                "relation": "part",
+                "data": [
+                  {
+                    "name": "架空の工程",
+                    "type": "N",
+                    "values": ["甲", "乙", "丙", "丁", "戊"]
+                  },
+                  { "name": "分", "type": "Q", "values": [4, 31, 12, 9, 3] }
+                ],
+                "fold": "",
+                "aside": ""
+              },
+              {
+                "kind": "plot",
+                "question": "架空の件数は 5 日で甲が 4 から 15 に増え、乙は 9 から 6 に減った",
+                "relation": "trend",
+                "data": [
+                  {
+                    "name": "架空の日",
+                    "type": "T",
+                    "values": ["1日", "2日", "3日", "4日", "5日"]
+                  },
+                  { "name": "甲", "type": "Q", "values": [4, 7, 9, 12, 15] },
+                  { "name": "乙", "type": "Q", "values": [9, 8, 8, 7, 6] }
+                ],
+                "fold": "",
+                "aside": ""
+              },
+              {
+                "kind": "plot",
+                "question": "架空の内訳は 3 つに分けて乙が 31 で最大",
+                "relation": "part",
+                "form": "pie",
+                "data": [
+                  {
+                    "name": "架空の内訳",
+                    "type": "N",
+                    "values": ["甲", "乙", "丙"]
+                  },
+                  { "name": "分", "type": "Q", "values": [4, 31, 12] }
+                ],
+                "fold": "",
+                "aside": ""
+              }
+            ]
+          }
+        ],
+        "favor": "",
+        "checks": []
+      }
+    },
+    {
+      "afterMs": 1050,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-report-plot-chart-1",
+        "content": "ok",
+        "isError": false
+      }
+    },
+    {
+      "afterMs": 2300,
+      "event": {
+        "kind": "turn-finished",
+        "outcome": {
+          "kind": "completed"
+        }
+      }
+    }
+  ]
+}

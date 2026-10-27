@@ -63,4 +63,5 @@ export const REPORT_REJECTION_MODES = {
   "plot-forbidden-form": "count",
   "plot-form-override": "count",
   "broken-inline-mark": "count",
+  "plot-title-without-number": "count",
 } as const satisfies Record<ReportRejectionReason, ReportRejectionMode>

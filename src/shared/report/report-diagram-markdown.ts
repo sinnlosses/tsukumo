@@ -65,7 +65,7 @@ type SeriesPlugins = {
 
 type DirectLabelPlugins = {
   readonly "tsukumo-direct-label": {
-    readonly mode: "arrow" | "slope" | "span" | "share"
+    readonly mode: "arrow" | "slope" | "span" | "share" | "values"
     readonly names: readonly string[]
   }
 }
@@ -82,9 +82,11 @@ const CHART_FRAME_HEIGHT = 48
  * `arrow` は前→後を浮き棒1本ずつ、`slope` は項目ごとに前→後の線1本にして、描く側の plugin に系列名を渡す。
  * `span` は項目ごとの始まり〜終わりを矢じりの無い太い浮き棒にする。`share` は先頭の系列を百分率にして、部分ごとに1系列の積み上げ横棒1本にする。
  * どれも項目名・部分の名前は plugin が書くので、縦の軸（`y`）は出さない。
+ * `annotation.values` は `plot` 由来の印で、line は線端に系列名と終点の値、pie は項目名と値を plugin に書かせる。
  */
 export function chartConfigOf(
   block: Extract<ReportBlock, { readonly kind: "chart" }>,
+  annotation: { readonly values: boolean } = { values: false },
 ): ChartConfig {
   if (block.chartKind === "share") {
     const percents = percentagesOf(block.series[0]?.values ?? [])
@@ -166,6 +168,18 @@ export function chartConfigOf(
           CHART_MIN_HEIGHT,
           block.labels.length * CHART_ROW_HEIGHT + CHART_FRAME_HEIGHT,
         ),
+      },
+    }
+  }
+  if (annotation.values && (block.chartKind === "line" || block.chartKind === "pie")) {
+    return {
+      type: block.chartKind,
+      data,
+      options: {
+        plugins: {
+          "tsukumo-direct-label": { mode: "values", names: [] },
+          ...seriesPluginsOf(block).plugins,
+        },
       },
     }
   }

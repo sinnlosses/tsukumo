@@ -195,6 +195,8 @@ export type ReportViolation =
    * `count` はその `{{` の数で、本文の字は持たない。
    */
   | { readonly kind: "broken-inline-mark"; readonly count: number }
+  /** 棒・折れ線・円で描く `plot` の題に数が無い。 */
+  | { readonly kind: "plot-title-without-number"; readonly count: number }
 
 /** 違反にしない上限（これを超えたら違反）。 */
 export const VIOLATION_THRESHOLDS = {
@@ -238,6 +240,7 @@ export const VIOLATION_THRESHOLDS = {
   "plot-forbidden-form": 0,
   "plot-form-override": 0,
   "broken-inline-mark": 0,
+  "plot-title-without-number": 0,
 } as const satisfies Record<ReportViolation["kind"], number>
 
 export const REPORT_VIOLATION_KINDS = keys(VIOLATION_THRESHOLDS)

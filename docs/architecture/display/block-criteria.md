@@ -131,6 +131,8 @@ HTML の字として埋める塊（`htmlInline`・`htmlInlineWithCode`）と、�
 図派は「図派」の列、文派は「文派」の列の形を採る。必須の注記は種類だけで、差や割合の値は組まない。
 書き手の `form` が下の「置かない形」に当たれば採らずに決定表の形で描き、`plot-forbidden-form` と数える。図派・文派のどちらの既定で決めた形とも違う形は通して `plot-form-override` と数える（どちらも `count`）。
 基数の境は `CARDINALITY_BOUNDS` の 1 か所に集めた目安で、実証された閾値ではない。上書きの数を見て動かす。
+決定表が `bar`・`line`・`pie` を返した `plot` は、`plotChartOf`（`src/shared/report/plot-chart.ts`）が既存の `chart` の塊へ写して描く（始まりと終わりの量の `range` は `span`、前と後の量の `change` の `line` は `slope`、写せない申告は表）。
+値の注記は描く側が必ず出す（棒は端の値、折れ線は線端の系列名と終点の値、円は項目名と値）。題（`question`）に数が無い塊は `plot-title-without-number` と数える（`count`）。
 下の 3 つの表は `pnpm run format`（`scripts/document/write-figure-decision-table.ts`）が書き直す。手で直さない。
 
 <!-- figure-decision-table:start -->
