@@ -2,6 +2,7 @@
 
 import { z } from "zod"
 
+import { parseReportBody } from "./body-fence.ts"
 import { plotBlockSchema } from "./figure-grammar.ts"
 import {
   compareBlockSchema,
@@ -160,21 +161,17 @@ export type ReportSection = {
   readonly blocks: readonly ReportBlock[]
 }
 
+export type ParsedReportContent = ParsedReportSections & {
+  /** `body` の型つきフェンスのうち、読めずに素のコードブロックへ落としたものの数。 */
+  readonly brokenFenceCount: number
+}
+
 /**
- * 文字列の本文（`sections` に切り替える前の `report` の `body`）を節に畳む。空白だけなら節は無く、それ以外は見出しの無い節1つに
- * 逃げ道の塊1つ。頭の空行と末尾の空白は落とす（描いた見た目は変わらず、送り直しの判定で空白の差を見ないため）。
+ * `report` の `body`（Markdown。引数が文字列だったころの transcript の `body` も）を節1つに読む（{@link parseReportBody}）。
+ * 知らない種類の塊は無いので `unknownBlockCount` は 0。
  */
-export function reportSectionsOfBody(body: string): readonly ReportSection[] {
-  const markdown = body.replace(/^(?:[ \t]*\n)+/, "").trimEnd()
-  return markdown === ""
-    ? []
-    : [
-        {
-          heading: "",
-          shapeTag: "unspecified",
-          blocks: [{ kind: "markdown", markdown, fold: "", aside: "" }],
-        },
-      ]
+export function parseReportBodyContent(body: string): ParsedReportContent {
+  return { ...parseReportBody(body), unknownBlockCount: 0 }
 }
 
 /**

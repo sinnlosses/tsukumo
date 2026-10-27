@@ -255,6 +255,32 @@ describe("toSessionEvents（report ツール）", () => {
     ])
   })
 
+  it("body の型つきフェンスを塊に読み、読めないものは素のコードブロックに落として brokenFenceCount で数える", () => {
+    const message = assistantMessageWithoutUuid([
+      {
+        type: "tool_use",
+        id: "toolu_r1",
+        name: REPORT_TOOL_FULL_NAME,
+        input: {
+          conclusion: "架空の結論。",
+          body: "架空の文\n```graph\nA -> B: 渡す\n```\n```code\nx\n```",
+        },
+      },
+    ])
+
+    const [event] = toSessionEvents(message, EXPRESSIONS)
+
+    expect(event).toMatchObject({
+      kind: "report",
+      brokenFenceCount: 1,
+      unknownBlockCount: 0,
+      argumentChars: { fields: { body: expect.any(Number) } },
+    })
+    expect(
+      event?.kind === "report" && event.sections[0]?.blocks.map((block) => block.kind),
+    ).toEqual(["markdown", "graph", "code"])
+  })
+
   it("sections も body も無いときは節を空に、favor が無いときは空の文字列に、checks が無いときは空の配列に、closing と task が無いときは none に畳む", () => {
     const message = assistantMessageWithoutUuid([
       {

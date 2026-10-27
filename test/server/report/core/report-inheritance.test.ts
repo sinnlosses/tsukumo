@@ -109,6 +109,59 @@ describe("ReportInheritance", () => {
     })
   })
 
+  describe("本文の欄（sections と body）", () => {
+    const SECTIONS = [
+      { heading: "", shapeTag: "unspecified", blocks: [] },
+    ] as const satisfies ReportCalled["sections"]
+    const rejectedWith = (
+      field: "sections" | "body",
+      values: Partial<Omit<ReportCalled, "kind">>,
+    ): ReturnType<typeof createReportInheritance> => {
+      const inheritance = createReportInheritance()
+      inheritance.pass(called("toolu_r1", [field], values))
+      inheritance.pass(finished("toolu_r1", true))
+      return inheritance
+    }
+
+    it("sections を渡した土台は、本文を渡さない呼び出しに引き継ぐ", () => {
+      const inheritance = rejectedWith("sections", { sections: SECTIONS, unknownBlockCount: 2 })
+
+      expect(inheritance.pass(called("toolu_r2", []))).toMatchObject({
+        sections: SECTIONS,
+        unknownBlockCount: 2,
+        inheritedFields: ["sections"],
+      })
+    })
+
+    it("body を渡した土台は、本文を渡さない呼び出しに壊れたフェンスの数ごと引き継ぐ", () => {
+      const inheritance = rejectedWith("body", { sections: SECTIONS, brokenFenceCount: 1 })
+
+      expect(inheritance.pass(called("toolu_r2", []))).toMatchObject({
+        sections: SECTIONS,
+        brokenFenceCount: 1,
+        inheritedFields: ["body"],
+      })
+    })
+
+    it("土台が sections でも、body を渡したら sections を引き継がない", () => {
+      const inheritance = rejectedWith("sections", { sections: SECTIONS, unknownBlockCount: 2 })
+
+      expect(inheritance.pass(called("toolu_r2", ["body"], { brokenFenceCount: 1 }))).toMatchObject(
+        { sections: [], unknownBlockCount: 0, brokenFenceCount: 1, inheritedFields: [] },
+      )
+    })
+
+    it("土台が body でも、sections を渡したら body を引き継がない", () => {
+      const inheritance = rejectedWith("body", { sections: SECTIONS, brokenFenceCount: 1 })
+
+      expect(inheritance.pass(called("toolu_r2", ["sections"]))).toMatchObject({
+        sections: [],
+        brokenFenceCount: 0,
+        inheritedFields: [],
+      })
+    })
+  })
+
   it("土台が無ければ report をそのまま返す", () => {
     const inheritance = createReportInheritance()
     const report = called("toolu_r1", ["favor"], { conclusion: "", favor: "架空のお願い" })

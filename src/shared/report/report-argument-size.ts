@@ -10,6 +10,7 @@ export const REPORT_ARGUMENT_FIELDS = [
   "keyFigures",
   "figure",
   "sections",
+  "body",
   "retrospective",
   "favor",
   "checks",

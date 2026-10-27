@@ -24,6 +24,7 @@ import { readReportBlockFiles } from "../../report/adapter/report-file.ts"
 import { hasReportField } from "../../report/core/report-inheritance.ts"
 import { REPORT_CHANGED_FIELDS_ONLY_TEXT } from "../../report/core/report-rejection.ts"
 import {
+  REPORT_BODY_DESCRIPTION,
   REPORT_CHECKS_DESCRIPTION,
   REPORT_RETROSPECTIVE_DESCRIPTION,
   REPORT_CLOSING_DESCRIPTION,
@@ -67,6 +68,7 @@ import { speechShape } from "./sdk-speech-tool.ts"
  *
  * `short-type` のときは `figure` と `sections` を緩い形で受け、塊の型は `sections` の欄の説明に短い型の表記で載せる。
  * Claude Code はツールの説明文を既定 2048 字で切り、欄の説明は切らない。型の表記をツールの説明文へ移すと切れる。
+ * `body-fence` のときは本文を Markdown の `body` で受け、`sections` は緩い形で残す。`body` と `sections` が同じ呼び出しに来たら判定せずに `isError` で返す。
  * 緩い形は SDK の検査を素通りするので、handler が `json-schema` と同じ形で検査し直し、落ちたら判定せずに `isError` で返す。
  */
 export function reportTool(
@@ -124,6 +126,32 @@ export function reportTool(
       REPORT_TOOL_DESCRIPTION,
       reportInputShape(expressions, figurePreference),
       answer,
+    )
+  }
+  if (reportSchema === "body-fence") {
+    const bodyInput = z.object({
+      ...reportInputShape(expressions, figurePreference),
+      body: z.string().optional(),
+    })
+    return tool(
+      REPORT_TOOL_NAME,
+      REPORT_TOOL_DESCRIPTION,
+      bodyFenceInputShape(expressions, figurePreference),
+      async (input) => {
+        if (input.body !== undefined && input.sections !== undefined) {
+          return {
+            content: [{ type: "text" as const, text: BODY_AND_SECTIONS_TEXT }],
+            isError: true,
+          }
+        }
+        const parsed = bodyInput.safeParse(input)
+        return parsed.success
+          ? answer(parsed.data)
+          : {
+              content: [{ type: "text" as const, text: invalidInputText(parsed.error) }],
+              isError: true,
+            }
+      },
     )
   }
   const strictInput = z.object(reportInputShape(expressions, figurePreference))
@@ -238,6 +266,32 @@ function shortTypeInputShape(
       ),
   }
 }
+
+/**
+ * `body-fence` のときモデルに渡す引数の形。本文は `body` で受け、旧い `sections` は緩い形で残す。
+ * `figure`・`retrospective` は `short-type` と同じ緩い形で、塊の型の表記は `figure` の説明に1回だけ載せる。
+ */
+function bodyFenceInputShape(
+  expressions: readonly ExpressionChoice[],
+  figurePreference: FigurePreference,
+) {
+  return {
+    ...shortTypeInputShape(expressions, figurePreference),
+    figure: LOOSE_OBJECT.optional().describe(
+      `${reportFigureDescription(figurePreference)}\n型（TypeScript の表記。? の欄は省ける）:\n${reportShortTypeText()}`,
+    ),
+    sections: z
+      .array(LOOSE_OBJECT)
+      .optional()
+      .describe("旧い本文の形。body と同じ呼び出しに併記できない"),
+    body: z.string().optional().describe(REPORT_BODY_DESCRIPTION),
+  }
+}
+
+/** `body` と `sections` が同じ呼び出しに来たときの戻り値。 */
+const BODY_AND_SECTIONS_TEXT =
+  `Input validation error: ${REPORT_TOOL_NAME} の body と sections は同じ呼び出しに併記できない。` +
+  "どちらか一方だけを渡して呼び直す"
 
 const LOOSE_OBJECT = z.record(z.string(), z.unknown())
 

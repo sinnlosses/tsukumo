@@ -1,4 +1,4 @@
-// `report` の塊の型の渡し方（`json-schema` / `short-type`）ごとに、試しの比べに使う数を出す。
+// `report` の塊の型の渡し方（`json-schema` / `short-type` / `body-fence`）ごとに、試しの比べに使う数を出す。
 // `report-usage` の版17以降の行から、受理・差し戻し・差し戻し ÷ 受理・形の検査で落ちた率・引数の字数の中央値を、
 // 同じセッションIDの `context-usage` の行から report の定義のトークンの中央値を出す。読むのは数と名前の欄だけ。
 //

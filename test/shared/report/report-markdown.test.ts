@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest"
 
+import { parseReportBody } from "../../../src/shared/report/body-fence.ts"
 import { encodeMarks } from "../../../src/shared/report/code-mark.ts"
 import { plotBlockSchema } from "../../../src/shared/report/figure-grammar.ts"
-import { type ReportBlock, reportSectionsOfBody } from "../../../src/shared/report/report-block.ts"
+import type { ReportBlock } from "../../../src/shared/report/report-block.ts"
 import { reportSectionsMarkdown } from "../../../src/shared/report/report-markdown.ts"
 import {
   NO_IMAGES,
@@ -17,7 +18,7 @@ describe("reportSectionsMarkdown", () => {
   it("逃げ道の塊は中身をそのまま出し、本文から畳んだ節は元の本文と同じ Markdown になる", () => {
     const body = '## 架空の見出し\n\n<div class="note">架空の注記</div>\n\n- 架空の項目'
 
-    expect(reportSectionsMarkdown(reportSectionsOfBody(body), NO_IMAGES)).toBe(body)
+    expect(reportSectionsMarkdown(parseReportBody(body).sections, NO_IMAGES)).toBe(body)
     expect(reportSectionsMarkdown([], NO_IMAGES)).toBe("")
   })
 

@@ -18,7 +18,7 @@ import { REPORT_SCHEMA_VARIANTS } from "../../core/schema-variant.ts"
  * 欄を足したら版を上げ、集計は `MIN_FORMAT_VERSION` より古い行を読まない。
  * 集計は版で分母を切らず、欄を記録した行を分母にする。
  */
-export const REPORT_USAGE_FORMAT_VERSION = 22 satisfies number
+export const REPORT_USAGE_FORMAT_VERSION = 23 satisfies number
 
 /** どの駆動で起こしたプロセスの行か（版19から）。`fake` は疑似セッションで、集計は既定で除く。 */
 const reportUsageDriverSchema = z.enum(["sdk", "fake"])
@@ -36,7 +36,7 @@ const argumentCharsSchema = z
 /** 引き継いだ欄の名前（版16から）。 */
 const inheritedFieldsSchema = z.array(z.enum(REPORT_ARGUMENT_FIELDS)).readonly()
 
-/** どちらの型の渡し方で受けたか（版17から）。 */
+/** どの型の渡し方で受けたか（版17から）。 */
 const reportSchemaVariantSchema = z.enum(REPORT_SCHEMA_VARIANTS)
 
 /** 札が許さない塊の組と、その回に出た数（版13から）。 */
@@ -113,6 +113,8 @@ const acceptedFields = reportShapeTagUsageSchema.unwrap().extend({
   driver: reportUsageDriverSchema,
   /** 知らない種類で境界で落とした塊の数。 */
   unknownBlockCount: z.number(),
+  /** `body` の型つきフェンスのうち、読めずに素のコードブロックへ落としたものの数（版23から）。 */
+  brokenFenceCount: z.number(),
   /** `files` の塊に `modified` の項目があるか（版4から）。 */
   hasModifiedFiles: z.boolean(),
   /** `beforeAfter` か `image` の塊が1つでもあるか（版4から）。 */
@@ -153,7 +155,7 @@ const acceptedFields = reportShapeTagUsageSchema.unwrap().extend({
   argumentChars: argumentCharsSchema,
   /** 渡さずに、直前に差し戻した呼び出しから引き継いだ欄の名前（版16から）。 */
   inheritedFields: inheritedFieldsSchema,
-  /** どちらの型の渡し方で受けたか（版17から）。 */
+  /** どの型の渡し方で受けたか（版17から）。 */
   reportSchema: reportSchemaVariantSchema,
 })
 
@@ -185,7 +187,7 @@ export const reportRejectionRecordSchema = z
     argumentChars: argumentCharsSchema,
     /** 差し戻した呼び出しが引き継いだ欄の名前（版16から）。 */
     inheritedFields: inheritedFieldsSchema,
-    /** どちらの型の渡し方で受けたか（版17から）。 */
+    /** どの型の渡し方で受けたか（版17から）。 */
     reportSchema: reportSchemaVariantSchema,
     /**
      * 同じセッションの次の `report` の呼び出し。`reasons` はその呼び出しが差し戻された理由で、受け付けなら空。

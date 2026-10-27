@@ -156,6 +156,7 @@
         "kind": "none"
       },
       "unknownBlockCount": 0,
+      "brokenFenceCount": 0,
       "sessionRemaining": {
         "kind": "unrecorded"
       },
@@ -389,6 +390,7 @@
         "kind": "none"
       },
       "unknownBlockCount": 0,
+      "brokenFenceCount": 0,
       "sessionRemaining": {
         "kind": "unrecorded"
       },

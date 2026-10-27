@@ -51,6 +51,8 @@ export type ReportUsageEntry = {
   /** その回に逃げ道に出た、塊の無い記法の種類（重複無し）。 */
   readonly escapeNotations: readonly EscapeNotation[]
   readonly unknownBlockCount: number
+  /** `body` の型つきフェンスのうち、読めずに素のコードブロックへ落としたものの数。 */
+  readonly brokenFenceCount: number
   /** その回に出た `list` の `style`（重複無し）。 */
   readonly listStyles: readonly string[]
   /** その回に出た `mermaid` の図の種類（ソースの最初の語。重複無し。`figure` の図を含む）。 */
@@ -214,6 +216,7 @@ export function reportUsageEntryOf(
     containedNotations: containedNotationsInSections(event.sections),
     escapeNotations: escapeNotationsInSections(event.sections),
     unknownBlockCount: event.unknownBlockCount,
+    brokenFenceCount: event.brokenFenceCount,
     listStyles: listStylesOf(drawnSections),
     mermaidKinds: [...new Set(mermaidSourcesInSections(drawnSections).map(mermaidKind))],
     hasModifiedFiles: blocksOf(event.sections).some(

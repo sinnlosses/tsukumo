@@ -95,6 +95,7 @@ describe("createSessionManager", () => {
           containedNotations: [],
           escapeNotations: [],
           unknownBlockCount: 0,
+          brokenFenceCount: 0,
           listStyles: [],
           mermaidKinds: [],
           hasModifiedFiles: false,

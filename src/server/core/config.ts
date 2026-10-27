@@ -3,7 +3,7 @@
 // セッションの印（`sessionTag` / `readSessionMark`）は環境変数ではないので、ここには置かない。
 
 import { nonBlankString } from "./non-blank-string.ts"
-import type { ReportSchemaVariant } from "./schema-variant.ts"
+import { REPORT_SCHEMA_VARIANTS, type ReportSchemaVariant } from "./schema-variant.ts"
 
 /**
  * tsukumo が読む環境変数の名前の全部。`audience` が `user` の名前は `docs/readme/configuration.md` に載せる。
@@ -62,8 +62,8 @@ export const ENV_NAMES = {
    */
   home: { name: "TSUKUMO_HOME", audience: "user" },
   /**
-   * `report` の塊の型の渡し方（`json-schema` / `short-type`。既定は `json-schema`）。
-   * `short-type` のときだけ短い型の表記で渡す試しの版になり、ほかの値は既定に倒す。
+   * `report` の塊の型の渡し方（`json-schema` / `short-type` / `body-fence`。既定は `json-schema`）。
+   * `short-type` は短い型の表記で渡す試しの版、`body-fence` は本文を Markdown の `body` で受ける試しの版になり、ほかの値は既定に倒す。
    */
   reportSchema: { name: "TSUKUMO_REPORT_SCHEMA", audience: "test" },
   /**
@@ -174,7 +174,9 @@ export function readConfig(env: Readonly<Record<string, string | undefined>>): C
     claudeConfigDir: nonBlankString(env[CLAUDE_CONFIG_DIR_ENV_NAME])?.trim(),
     fixedClock: parseInstant(env[ENV_NAMES.fixedClock.name]),
     reportSchema:
-      env[ENV_NAMES.reportSchema.name]?.trim() === "short-type" ? "short-type" : "json-schema",
+      REPORT_SCHEMA_VARIANTS.find(
+        (variant) => variant === env[ENV_NAMES.reportSchema.name]?.trim(),
+      ) ?? "json-schema",
     disallowedTools: parseToolNames(env[ENV_NAMES.disallowedTools.name]),
     turnStepLimit:
       parsePositiveInteger(env[ENV_NAMES.turnStepLimit.name]) ?? DEFAULT_TURN_STEP_LIMIT,

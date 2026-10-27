@@ -25,6 +25,12 @@ export const SHORT_TYPE_WORK_MODE: Extract<SessionMode, { readonly kind: "work" 
   reportSchema: "short-type",
 }
 
+/** `report` の本文を Markdown の `body` で渡す仕事のモード。 */
+export const BODY_FENCE_WORK_MODE: Extract<SessionMode, { readonly kind: "work" }> = {
+  ...WORK_MODE,
+  reportSchema: "body-fence",
+}
+
 export const CHAT_MODE: SessionMode = {
   kind: "chat",
   personaMemory: { remember: () => "written", forget: () => "erased", finishTurn: () => {} },

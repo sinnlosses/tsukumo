@@ -2,31 +2,39 @@ import { describe, expect, it } from "vitest"
 
 import {
   figureBlockSchema,
+  parseReportBodyContent,
   parseReportFigure,
   parseReportSections,
   type ReportBlock,
   reportSectionSchema,
-  reportSectionsOfBody,
 } from "../../../src/shared/report/report-block.ts"
 
 const text = (value: string): ReportBlock => ({ kind: "text", text: value, fold: "", aside: "" })
 
-describe("reportSectionsOfBody", () => {
-  it("空白だけの本文は節を持たない", () => {
-    expect(reportSectionsOfBody("")).toEqual([])
-    expect(reportSectionsOfBody(" \n\n ")).toEqual([])
+describe("parseReportBodyContent", () => {
+  it("body を節1つに読み、空白だけの本文は節を持たない", () => {
+    expect(parseReportBodyContent(" \n\n ")).toEqual({
+      sections: [],
+      unknownBlockCount: 0,
+      brokenFenceCount: 0,
+    })
+    expect(parseReportBodyContent("\n\n    架空の字下げ\n\n架空の本文。  \n")).toEqual({
+      sections: [
+        {
+          heading: "",
+          shapeTag: "unspecified",
+          blocks: [
+            { kind: "markdown", markdown: "    架空の字下げ\n\n架空の本文。", fold: "", aside: "" },
+          ],
+        },
+      ],
+      unknownBlockCount: 0,
+      brokenFenceCount: 0,
+    })
   })
 
-  it("本文は見出しの無い節1つの逃げ道の塊になる（頭の空行と末尾の空白だけを落とす）", () => {
-    expect(reportSectionsOfBody("\n\n    架空の字下げ\n\n架空の本文。  \n")).toEqual([
-      {
-        heading: "",
-        shapeTag: "unspecified",
-        blocks: [
-          { kind: "markdown", markdown: "    架空の字下げ\n\n架空の本文。", fold: "", aside: "" },
-        ],
-      },
-    ])
+  it("body の壊れた型つきフェンスを数える", () => {
+    expect(parseReportBodyContent("```code\nx\n```").brokenFenceCount).toBe(1)
   })
 })
 

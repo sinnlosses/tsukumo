@@ -146,6 +146,7 @@ function toRecord(entry: ReportUsageEntry, reportSchema: ReportSchemaVariant): R
     containedNotations: entry.containedNotations,
     escapeNotations: entry.escapeNotations,
     unknownBlockCount: entry.unknownBlockCount,
+    brokenFenceCount: entry.brokenFenceCount,
     listStyles: entry.listStyles,
     mermaidKinds: entry.mermaidKinds,
     hasModifiedFiles: entry.hasModifiedFiles,

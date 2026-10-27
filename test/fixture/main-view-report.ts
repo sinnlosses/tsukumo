@@ -1,5 +1,5 @@
 import { mainViewTurns } from "../../src/browser/domain/main-view/main-view.ts"
-import { reportSectionsOfBody } from "../../src/shared/report/report-block.ts"
+import { parseReportBody } from "../../src/shared/report/body-fence.ts"
 import type { ReportCheck } from "../../src/shared/report/report-check.ts"
 import type { ReportTask } from "../../src/shared/report/report-task.ts"
 import { mainViewEntries } from "../../src/shared/session/main-view-entry.ts"
@@ -30,7 +30,7 @@ export const report = (
   reportEvent({
     toolUseId: "toolu_r1",
     conclusion,
-    sections: reportSectionsOfBody(body),
+    sections: parseReportBody(body).sections,
     favor,
     checks,
     task,

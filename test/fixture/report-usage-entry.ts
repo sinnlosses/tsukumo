@@ -22,6 +22,7 @@ export function reportUsageEntry(
     containedNotations: [],
     escapeNotations: [],
     unknownBlockCount: 0,
+    brokenFenceCount: 0,
     listStyles: ["bullet"],
     mermaidKinds: [],
     hasModifiedFiles: true,

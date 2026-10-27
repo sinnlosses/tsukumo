@@ -433,6 +433,12 @@ describe("reportUsageEntryOf", () => {
     })
   })
 
+  it("body の読めない型つきフェンスの数を運ぶ", () => {
+    const event = reportEvent({ brokenFenceCount: 3 })
+
+    expect(reportUsageEntryOf(event, "claude-session-9", 12_345, false).brokenFenceCount).toBe(3)
+  })
+
   it("知らない種類で境界で落とした塊の数と、渡した時刻・セッションIDをそのまま運ぶ", () => {
     const event = reportOfSections([], 2)
 
@@ -454,6 +460,7 @@ describe("reportUsageEntryOf", () => {
       containedNotations: [],
       escapeNotations: [],
       unknownBlockCount: 2,
+      brokenFenceCount: 0,
       listStyles: [],
       mermaidKinds: [],
       hasModifiedFiles: false,

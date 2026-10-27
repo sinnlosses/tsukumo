@@ -31,6 +31,7 @@ export function reportEvent(
     closing: { kind: "none" },
     waitingLine: { kind: "none" },
     unknownBlockCount: 0,
+    brokenFenceCount: 0,
     title: undefined,
     sessionSummary: undefined,
     sessionRemaining: { kind: "unrecorded" },

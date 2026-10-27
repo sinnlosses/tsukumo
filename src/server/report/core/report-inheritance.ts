@@ -88,13 +88,21 @@ const REPORT_INHERITANCE_BOUNDARIES: ReadonlySet<SessionEvent["kind"]> = new Set
   "aside",
 ] as const satisfies readonly SessionEvent["kind"][])
 
+/** 本文を渡す2つの欄。どちらか一方を渡したら、他方は引き継がない。 */
+const BODY_FIELDS = ["sections", "body"] as const satisfies readonly ReportArgumentField[]
+
 function inherited(event: ReportEvent, base: ReportEvent): ReportEvent {
+  const passedBody = BODY_FIELDS.some((field) => event.argumentChars.fields[field] !== undefined)
   const fields = new Set(
     REPORT_ARGUMENT_FIELDS.filter(
-      (field) => event.argumentChars.fields[field] === undefined && hasReportField(base, field),
+      (field) =>
+        event.argumentChars.fields[field] === undefined &&
+        hasReportField(base, field) &&
+        !(passedBody && BODY_FIELDS.some((bodyField) => bodyField === field)),
     ),
   )
   const from = (field: ReportArgumentField): ReportEvent => (fields.has(field) ? base : event)
+  const fromBody = BODY_FIELDS.some((field) => fields.has(field)) ? base : event
   return {
     ...event,
     inheritedFields: [...fields],
@@ -105,8 +113,9 @@ function inherited(event: ReportEvent, base: ReportEvent): ReportEvent {
     conclusionFirstSentence: from("conclusion").conclusionFirstSentence,
     keyFigures: from("keyFigures").keyFigures,
     figure: from("figure").figure,
-    sections: from("sections").sections,
-    unknownBlockCount: from("sections").unknownBlockCount,
+    sections: fromBody.sections,
+    unknownBlockCount: fromBody.unknownBlockCount,
+    brokenFenceCount: fromBody.brokenFenceCount,
     retrospective: from("retrospective").retrospective,
     favor: from("favor").favor,
     checks: from("checks").checks,

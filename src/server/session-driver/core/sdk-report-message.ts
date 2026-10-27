@@ -10,9 +10,10 @@ import type { Expression } from "../../../shared/character-pack/expression.ts"
 import { reportArgumentCharsOf } from "../../../shared/report/report-argument-size.ts"
 import { parseKeyFigures } from "../../../shared/report/report-block-comparison.ts"
 import {
+  type ParsedReportContent,
+  parseReportBodyContent,
   parseReportFigure,
   parseReportSections,
-  reportSectionsOfBody,
 } from "../../../shared/report/report-block.ts"
 import { parseReportChecks } from "../../../shared/report/report-check.ts"
 import { parseReportRetrospective } from "../../../shared/report/report-retrospective.ts"
@@ -28,7 +29,7 @@ import { speechEvents } from "./sdk-speech-message.ts"
 /**
  * `report` の引数を取り出す。
  * `sections` は塊ごとに検証して崩れた塊・知らない種類の塊を落とす（{@link parseReportSections}）。
- * `sections` の無い呼び出し（引数が文字列の `body` だったころの transcript）は、`body` を逃げ道の塊1つの節に畳む（{@link reportSectionsOfBody}）。
+ * `sections` の無い呼び出しは `body`（Markdown。引数が文字列の `body` だったころの transcript も）を節1つに読み、読めない型つきフェンスを数える（{@link parseReportBodyContent}）。
  * `figure` の「無い」（省いた呼び出しと、引数に `figure` が無かったころの transcript）と形の崩れは、理由が `unrecorded` の `none` に畳む（{@link parseReportFigure}）。
  * `keyFigures` の「無い」と形の崩れ（3〜4個でない）は空の配列に畳む。
  * `retrospective` の「無い」と形の崩れは `none` に畳む。
@@ -59,10 +60,10 @@ export function reportEvents(
   }
 
   const task = parseReportTask(input.task)
-  const parsed =
+  const parsed: ParsedReportContent =
     input.sections === undefined
-      ? { sections: reportSectionsOfBody(optionalString(input.body) ?? ""), unknownBlockCount: 0 }
-      : parseReportSections(input.sections)
+      ? parseReportBodyContent(optionalString(input.body) ?? "")
+      : { ...parseReportSections(input.sections), brokenFenceCount: 0 }
 
   return [
     {
@@ -86,6 +87,7 @@ export function reportEvents(
         (speech) => speech.text.trim() !== "",
       ) ?? { kind: "none" },
       unknownBlockCount: parsed.unknownBlockCount,
+      brokenFenceCount: parsed.brokenFenceCount,
       title: optionalString(input.title),
       sessionSummary: nonBlankString(input.sessionSummary),
       sessionRemaining: sessionRemainingOf(input.sessionRemaining, task),

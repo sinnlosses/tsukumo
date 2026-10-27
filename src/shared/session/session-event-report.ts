@@ -38,6 +38,7 @@ export type ReportEvent =
    * `closing`（締めのセリフ）は描いたあとに差し戻しが `speech` として出すもので、画面の状態はこの欄を読まない。
    * `waitingLine`（待ちの一言）は記録に写り、依頼を待つ間に `shownReaction` が出す。
    * `unknownBlockCount` は知らない種類で境界で落とした塊の数で、画面の状態は読まない。
+   * `brokenFenceCount` は `body` の型つきフェンスのうち読めずに素のコードブロックへ落とした数で、画面の状態は読まない。
    * `sessionSummary` はセッション全体の要約で、書かれていなければ undefined。レポートには描かず、切り替え画面が transcript から読み戻す。
    * `sessionRemaining`（残っていること）も同じく描かず、切り替え画面と始め方の一覧の「前回の続き」が transcript から読み戻す。
    * `argumentChars` は渡した引数だけの字数で、使われ方の記録だけが読む。
@@ -67,6 +68,7 @@ export type ReportEvent =
       readonly closing: ReportClosing
       readonly waitingLine: ReportWaitingLine
       readonly unknownBlockCount: number
+      readonly brokenFenceCount: number
       readonly title: string | undefined
       readonly sessionSummary: string | undefined
       readonly sessionRemaining: SessionRemaining

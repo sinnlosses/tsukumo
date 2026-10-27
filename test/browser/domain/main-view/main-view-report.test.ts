@@ -6,10 +6,10 @@ import {
   reportHeadedSections,
 } from "../../../../src/browser/domain/main-view/main-view-report-body.ts"
 import { mainViewTurns } from "../../../../src/browser/domain/main-view/main-view.ts"
-import {
-  type RecordedReportFigure,
-  type ReportSection,
-  reportSectionsOfBody,
+import { parseReportBody } from "../../../../src/shared/report/body-fence.ts"
+import type {
+  RecordedReportFigure,
+  ReportSection,
 } from "../../../../src/shared/report/report-block.ts"
 import type { ReportCheck } from "../../../../src/shared/report/report-check.ts"
 import type { ReportTask } from "../../../../src/shared/report/report-task.ts"
@@ -135,7 +135,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
         reportEvent({
           toolUseId: "toolu_r1",
           conclusion: "架空の結論。",
-          sections: reportSectionsOfBody("架空の根拠。"),
+          sections: parseReportBody("架空の根拠。").sections,
           retrospective: { kind: "recorded", summary: "架空の結果。", drafts: [], blocks: [] },
           favor: "架空のお願い",
         }),
@@ -160,7 +160,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
         reportEvent({
           toolUseId: "toolu_r1",
           conclusion: "架空の結論。",
-          sections: reportSectionsOfBody("架空の根拠。"),
+          sections: parseReportBody("架空の根拠。").sections,
           retrospective: {
             kind: "recorded",
             summary: "架空の結果。",
