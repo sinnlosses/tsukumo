@@ -1,5 +1,7 @@
 // hook が標準入力へ流す JSON から、Bash ツールの呼び出しのうち入口が見るところを取り出す。
 
+import { readField, readString, safeParse } from "./hook-json.ts"
+
 /** Bash ツールの hook の入力のうち、入口が見るところ。 */
 export type BashHookCall = {
   readonly command: string
@@ -26,22 +28,5 @@ export function parseBashHookCall(rawInput: string): BashHookCall | undefined {
     cwd: readString(input, "cwd"),
     runsInBackground: readField(toolInput, "run_in_background") === true,
     fromSubagent: typeof readField(input, "agent_id") === "string",
-  }
-}
-
-function readField(value: unknown, key: string): unknown {
-  return typeof value === "object" && value !== null ? Reflect.get(value, key) : undefined
-}
-
-function readString(value: unknown, key: string): string | undefined {
-  const field = readField(value, key)
-  return typeof field === "string" ? field : undefined
-}
-
-function safeParse(rawInput: string): unknown {
-  try {
-    return JSON.parse(rawInput)
-  } catch {
-    return undefined
   }
 }

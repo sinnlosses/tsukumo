@@ -12,6 +12,15 @@
             "command": "node \"$CLAUDE_PROJECT_DIR/scripts/hook/bash-guard.ts\""
           }
         ]
+      },
+      {
+        "matcher": "WebFetch",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/hook/deny-web-fetch-host.ts\""
+          }
+        ]
       }
     ]
   }

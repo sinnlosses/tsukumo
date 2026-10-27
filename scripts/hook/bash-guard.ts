@@ -10,7 +10,7 @@ import type { BashHookCall } from "./lib/bash-hook-call.ts"
 import { findBroadKillDenial } from "./lib/broad-kill.ts"
 import { findExternalSendDenial } from "./lib/external-send.ts"
 import { findForeignRestoreDenial } from "./lib/foreign-restore.ts"
-import { denyBashCall, readBashHookCall } from "./lib/hook-input.ts"
+import { denyHookCall, readBashHookCall } from "./lib/hook-input.ts"
 import { findStdinWaitCatDenial } from "./lib/stdin-wait-denial.ts"
 import { findWorktreeShellWriteDenial, readWorkRoot } from "./lib/worktree-shell-write.ts"
 
@@ -28,7 +28,7 @@ if (call !== undefined) {
   for (const find of DENIALS) {
     const denial = find(call)
     if (denial !== undefined) {
-      denyBashCall(call, denial)
+      denyHookCall(call, denial)
     }
   }
 }

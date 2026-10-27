@@ -1,21 +1,26 @@
-// Bash ツールの hook の入口が共通で使う、標準入力から Bash の呼び出しを読む処理と、拒否して止める処理。
+// Bash と WebFetch の hook の入口が共通で使う、標準入力から呼び出しを読む処理と、拒否して止める処理。
 
 import process from "node:process"
 
 import { type BashHookCall, parseBashHookCall } from "./bash-hook-call.ts"
 import { recordHookDenial } from "./hook-denial-record.ts"
 import { readHookMode } from "./hook-mode.ts"
+import { parseWebFetchHookCall, type WebFetchHookCall } from "./web-fetch-hook-call.ts"
 
 export async function readBashHookCall(): Promise<BashHookCall | undefined> {
   return parseBashHookCall(await readStdin())
+}
+
+export async function readWebFetchHookCall(): Promise<WebFetchHookCall | undefined> {
+  return parseWebFetchHookCall(await readStdin())
 }
 
 /**
  * 拒否を記録し、block の hook なら理由を stderr へ出して終了コード 2 で止める。
  * log-only の hook は記録だけして戻る。
  */
-export function denyBashCall(
-  call: BashHookCall,
+export function denyHookCall(
+  call: { readonly fromSubagent: boolean },
   denial: { readonly hook: string; readonly rule: string; readonly refusal: string },
 ): void {
   const mode = readHookMode(denial.hook)

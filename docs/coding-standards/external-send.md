@@ -30,3 +30,10 @@
 - `gh api graphql` は、`mutation` を送るときに加え、`--input` か `@` で始まる値で中身が読めないときも書き込みと見る
 - いまは log-only で、当たっても止めず `hook-denials/` に記録だけ残す
 - block か、人の承認に回す形に上げるかは、`docs/coding-standards/hook-rollout.md` の手順で記録を再生したあとに利用者へ聞く
+
+Web を読む WebFetch も、同じくサブエージェントの呼び出しだけに、読むホストを許可リストと照らす hook を掛ける。WebSearch は入力に URL を持たないので掛けない。
+
+- 判定は `scripts/hook/lib/web-fetch-host.ts` の `findWebFetchHostDenial` で、単独の入口 `scripts/hook/deny-web-fetch-host.ts`（`.claude/settings.json` の `PreToolUse` の `WebFetch` の matcher）が hook `deny-web-fetch-host` として動く
+- 許可リストは同じファイルの定数 `ALLOWED_FETCH_HOSTS` で、`docs/` が引く URL のうち引用が 5 回以上あるホストから作る。ホストが項目と一致するか、項目のサブドメインなら通す
+- `http`・`https` 以外の URL と読めない URL は記録せず通す
+- いまは log-only で、許可リストの外のホストを規則 `host-outside-allowlist` として記録だけ残す。URL とホスト名は記録に入れないので、誤検知はその時刻の前後の作業を人が見て当てる

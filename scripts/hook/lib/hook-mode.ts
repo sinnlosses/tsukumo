@@ -1,8 +1,12 @@
-// hook の mode（log-only / block）を読む口。log-only の hook は拒む形を記録するだけで、Bash を止めない。
+// hook の mode（log-only / block）を読む口。log-only の hook は拒む形を記録するだけで、ツールの実行を止めない。
 
 type HookMode = "log-only" | "block"
 
-const LOG_ONLY_HOOKS: readonly string[] = ["deny-foreign-restore", "deny-external-send"]
+const LOG_ONLY_HOOKS: readonly string[] = [
+  "deny-foreign-restore",
+  "deny-external-send",
+  "deny-web-fetch-host",
+]
 
 /** `TSUKUMO_HOOK_LOG_ONLY` にカンマ区切りで hook の名前を渡すと、その hook も log-only になる。 */
 export function readHookMode(hook: string, env: NodeJS.ProcessEnv = process.env): HookMode {
