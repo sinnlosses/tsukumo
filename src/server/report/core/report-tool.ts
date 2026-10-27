@@ -28,10 +28,9 @@ export const REPORT_TOOL_DESCRIPTION =
  * 結果を `conclusion` と `sections` に書かない条は `REPORT_NOTATION_PROMPT` の「結論は `conclusion` に1〜2文で書く」が持つ。
  */
 export const REPORT_CHECKS_DESCRIPTION =
-  "検証の結果。tsukumo が結論の下に、件数の総括行と、落ちた・確かめていない項目の行で描き、通った項目は畳む。" +
-  "検証をしていないターンでは省く。" +
-  "結果の数は figure に、打ったコマンドは command に分ける。" +
-  "label・figure・detail・howToVerify は素の文字で描かれるので、バッククォートなどの記法を使わない。"
+  "検証の結果。結論の下に総括行と、落ちた・確かめていない項目の行で描かれ、通った項目は畳む。" +
+  "検証をしていないターンでは省く。結果の数は figure に、打ったコマンドは command に分ける。" +
+  "label・figure・detail・howToVerify は素の文字で描かれるので、記法を使わない。"
 
 /**
  * `report` の任意の `retrospective` 引数の説明。
@@ -44,15 +43,13 @@ export const REPORT_RETROSPECTIVE_DESCRIPTION =
  * `report` の任意の `task` 引数の説明。`conclusion` との書き分けと、報告の種類ごとの既定の節の並びはここだけが持つ。
  */
 export const REPORT_TASK_DESCRIPTION =
-  "タスクの作業のレポートのときだけ渡す（タスクID・作業の名前・終わり方・種類）。tsukumo が結論の上に" +
-  "「最終レポート · タスクID · 終わり方」の1行と、作業の名前の見出しを描く。" +
-  "渡したら conclusion に作業の名前やタスクID を書かない。" +
-  "変更の量（ファイル数・行数）は tsukumo が git から数えて目録に添えるので書かない。" +
-  "genre に報告の種類を入れ、sections の節をその種類の既定の並びで書く（節の数は縛らない）。" +
+  "タスクの作業のレポートのときだけ渡す（タスクID・作業の名前・終わり方・種類）。結論の上に目録の1行と作業の名前の見出しが描かれる。" +
+  "渡したら conclusion に作業の名前やタスクID、変更の量（tsukumo が git から数える）を書かない。" +
+  "genre を入れると、sections の節をその種類の既定の並びで書く（節の数は縛らない）。" +
   "work: 変化 → 証拠 → 変更の要所 → 限界と変えていないもの → お願い。" +
   "decision: 決めたこと → 理由と採らなかった案（options）→ 結果 → 未決。" +
   "research: 分かったこと → 根拠（出典か path:line）→ 何を意味するか → 確かめていないこと（claims）→ 次。" +
-  "stopped は種類によらず: どこで止まったか → 原因 → 何を残し何を戻したか → 再開に要るもの（favor）。" +
+  "stopped は種類によらず: どこで止まったか → 原因 → 残したものと戻したもの → 再開に要るもの（favor）。" +
   "genre を省くと並びは縛らない。タスクに紐付かないターンでは task を省く。"
 
 /** `report` の任意の `workPlanClosing` 引数（段の閉じ方）の説明。 */
@@ -87,7 +84,7 @@ export function reportFigureDescription(preference: FigurePreference): string {
 
 /** `report` の任意の `keyFigures` 引数（結論の直下に並べる数）の説明。使いどころの条は `REPORT_NOTATION_PROMPT` が持つ。 */
 export const REPORT_KEY_FIGURES_DESCRIPTION =
-  "結論に効く数を3〜4個。結論の直下にカードで並べる（件数・割合・前後の差）。" +
+  "結論に効く数を3〜4個（件数・割合・前後の差）。結論の直下にカードで並ぶ。" +
   "3つに満たなければ省いて結論の文に入れる。項目の形は stats の items と同じ。"
 
 /**
@@ -116,6 +113,9 @@ export const REPORT_BODY_DESCRIPTION =
   "callout: 開きの行は `callout 種別`（info / warn / ng / ask / memo）、中身は一文。" +
   "claims: 1行1主張 `確度 | 主張 | 根拠 | 確かめ方`（確度は confirmed / inferred / unverified）。" +
   "image: 開きの行は `image 何が見えるか`、中身の1行目が画像のパス、2行目からが見る場所。"
+
+/** `body-fence` の版で、部品の型の表記の代わりに `figure` と `sections` の説明の後ろに足す文。 */
+export const REPORT_PART_CARD_NOTE = "部品の型と例は report_part_card で種類を渡して引く。"
 
 /** 短い型の表記で渡す版で、`figure` の説明の後ろに足す文。 */
 export const REPORT_FIGURE_SHORT_TYPE_NOTE = "型は sections の説明の ReportFigure。"

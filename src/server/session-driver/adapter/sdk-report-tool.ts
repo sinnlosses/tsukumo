@@ -31,6 +31,7 @@ import {
   reportFigureDescription,
   REPORT_FIGURE_SHORT_TYPE_NOTE,
   REPORT_KEY_FIGURES_DESCRIPTION,
+  REPORT_PART_CARD_NOTE,
   REPORT_SECTIONS_DESCRIPTION,
   REPORT_SECTIONS_SHORT_TYPE_HEADING,
   REPORT_SESSION_REMAINING_DESCRIPTION,
@@ -278,12 +279,14 @@ function bodyFenceInputShape(
   return {
     ...shortTypeInputShape(expressions, figurePreference),
     figure: LOOSE_OBJECT.optional().describe(
-      `${reportFigureDescription(figurePreference)}\n型（TypeScript の表記。? の欄は省ける）:\n${reportShortTypeText()}`,
+      `${reportFigureDescription(figurePreference)}${REPORT_PART_CARD_NOTE}`,
     ),
     sections: z
       .array(LOOSE_OBJECT)
       .optional()
-      .describe("旧い本文の形。body と同じ呼び出しに併記できない"),
+      .describe(
+        `旧い本文の形。body と同じ呼び出しに併記できない。body のフェンスで書けない部品（options・compare・matrix・svg・stats・timeline・beforeAfter・chart・plot）を使うときは、body を渡さず本文全体をこちらの節の blocks で書く。${REPORT_PART_CARD_NOTE}`,
+      ),
     body: z.string().optional().describe(REPORT_BODY_DESCRIPTION),
   }
 }
