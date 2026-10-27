@@ -11,14 +11,13 @@
 
 import type { ReactElement } from "react"
 
-import type { ReactionKind } from "../../../../../../../../shared/recommendation/reaction.ts"
-import { Text } from "../../../../../../ui/text/text.tsx"
-import { TypingDots } from "../../../../../../ui/typing-dot-list/typing-dot-list.tsx"
-import type { ClockStamp } from "../../../../domain/clock-stamp.ts"
-import { useSpeechPress } from "../../../hooks/use-speech-press.ts"
-import characterViewStyles from "../../character-view.module.css"
-import type { SpeechTarget } from "../../domain/pinned-speech.ts"
-import styles from "./balloon.module.css"
+import type { ReactionKind } from "../../../../../../shared/recommendation/reaction.ts"
+import { Text } from "../../../../ui/text/text.tsx"
+import { TypingDots } from "../../../../ui/typing-dot-list/typing-dot-list.tsx"
+import type { ClockStamp } from "../../domain/clock-stamp.ts"
+import { useSpeechPress } from "../hooks/use-speech-press.ts"
+import styles from "./character-view.module.css"
+import type { SpeechTarget } from "./domain/pinned-speech.ts"
 
 /**
  * 押せるか（押せるなら、印の状態と押されたときの呼び先を持つ）。
@@ -90,11 +89,7 @@ export function Balloon(props: BalloonProps): ReactElement {
 
   if (interaction.kind === "writing") {
     return (
-      <div
-        className={characterViewStyles["balloon"]}
-        data-latest={props.latest}
-        data-writing="true"
-      >
+      <div className={styles["balloon"]} data-latest={props.latest} data-writing="true">
         {speakerLabel}
         <TypingDots />
       </div>
@@ -104,7 +99,7 @@ export function Balloon(props: BalloonProps): ReactElement {
   if (interaction.kind === "reaction") {
     return (
       <div
-        className={characterViewStyles["balloon"]}
+        className={styles["balloon"]}
         data-latest={props.latest}
         data-reaction={interaction.reaction}
       >
@@ -115,7 +110,7 @@ export function Balloon(props: BalloonProps): ReactElement {
 
   return (
     <div
-      className={characterViewStyles["balloon"]}
+      className={styles["balloon"]}
       data-latest={props.latest}
       data-interactive="true"
       data-selected={interaction.selected}

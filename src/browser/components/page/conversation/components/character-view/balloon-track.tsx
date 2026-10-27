@@ -9,10 +9,10 @@
 
 import type { ReactElement, ReactNode } from "react"
 
-import type { ClockStamp } from "../../../../domain/clock-stamp.ts"
-import styles from "../../character-view.module.css"
-import type { BalloonReaction, CharacterViewSpeech } from "../../hooks/use-character-view.ts"
-import { Balloon } from "../balloon/balloon.tsx"
+import type { ClockStamp } from "../../domain/clock-stamp.ts"
+import { Balloon } from "./balloon.tsx"
+import styles from "./character-view.module.css"
+import type { BalloonReaction, CharacterViewSpeech } from "./hooks/use-character-view.ts"
 
 const NO_TIME = { kind: "unknown" } satisfies ClockStamp
 

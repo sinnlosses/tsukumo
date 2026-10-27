@@ -17,22 +17,15 @@ import { sumBy } from "remeda"
 import type {
   RecordTime,
   SessionRecord,
-} from "../../../../../../../../../shared/session/session-record.ts"
-import {
-  turnSpeeches,
-  type TurnSpeech,
-} from "../../../../../../../../../shared/session/turn-speech.ts"
-import { useSession } from "../../../../../../../../stores/session.ts"
-import { useTurnSelection } from "../../../../../../../../stores/turn-selection.ts"
-import { localTimeZoneId } from "../../../../../../../../utils/clock.ts"
-import { dayLabel } from "../../../../../../../../utils/day-label.ts"
-import { entryDay, startsNewDay } from "../../../../../domain/chat-log.ts"
-import { recordClockStamp, type ClockStamp } from "../../../../../domain/clock-stamp.ts"
-import {
-  isSpeechSelected,
-  type PinnedSpeech,
-  type SpeechTarget,
-} from "../../../domain/pinned-speech.ts"
+} from "../../../../../../../shared/session/session-record.ts"
+import { turnSpeeches, type TurnSpeech } from "../../../../../../../shared/session/turn-speech.ts"
+import { useSession } from "../../../../../../stores/session.ts"
+import { useTurnSelection } from "../../../../../../stores/turn-selection.ts"
+import { localTimeZoneId } from "../../../../../../utils/clock.ts"
+import { dayLabel } from "../../../../../../utils/day-label.ts"
+import { entryDay, startsNewDay } from "../../../domain/chat-log.ts"
+import { recordClockStamp, type ClockStamp } from "../../../domain/clock-stamp.ts"
+import { isSpeechSelected, type PinnedSpeech, type SpeechTarget } from "../domain/pinned-speech.ts"
 
 /**
  * セリフの古さの段。最新からいくつ前かで決める。

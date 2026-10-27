@@ -99,3 +99,28 @@
   line-height: 1.6;
   color: color-mix(in srgb, var(--ink) 55%, var(--surface));
 }
+.balloon-text {
+  white-space: pre-wrap;
+}
+/* 話し手の名前（最新の1件にだけ付く）。
+   吹き出しの主が誰かを示す札なので、accent を出してよい場所に数える。
+   本文とは gap ではなく margin-bottom で離す（吹き出し内の唯一の要素間隔なので、`.balloon` 側に汎用の gap を持たせない）。 */
+/* 名前の行。時刻を名前の隣に並べる（行を足さないので吹き出しの高さは増えない）。
+   本文との間隔は名前だけのときと同じ 4px をこの行が持つ。 */
+.balloon-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6em;
+  margin-bottom: 4px;
+}
+/* 字の段・色・太さは `Text` が持つ。字間だけここに置く。 */
+.balloon-speaker {
+  letter-spacing: 0.08em;
+}
+/* 名前の隣の時刻。名前より弱く、機械が付けた値なので等幅。 */
+.balloon-time {
+  color: var(--ink-quiet);
+  font-family: var(--font-mono);
+  font-size: var(--font-label);
+  line-height: 1;
+}

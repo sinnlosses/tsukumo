@@ -355,11 +355,11 @@ describe("components/ui/ の部品の className", () => {
     )
     const cssContentCache = new Map<string, string>()
     const cssContentOf = (cssRelPath: string): string => {
-      const cached = cssContentCache.get(cssRelPath)
-      if (cached !== undefined) {
-        return cached
-      }
-      const content = readFileSync(`${SRC_ROOT}/${cssRelPath}`, "utf8")
+      const content =
+        cssContentCache.get(cssRelPath) ??
+        [cssRelPath, ...importedPartsOf(cssRelPath)]
+          .map((path) => readFileSync(`${SRC_ROOT}/${path}`, "utf8"))
+          .join("\n")
       cssContentCache.set(cssRelPath, content)
       return content
     }
@@ -401,9 +401,7 @@ describe("CSS Modules の class", () => {
     // `.module.css` が `@import` する `.css` は、その入口に束ねられる部品。
     const entryByPart = new Map(
       moduleCssFiles.flatMap((entry) =>
-        [...readFileSync(`${SRC_ROOT}/${entry}`, "utf8").matchAll(/@import "(\.[^"]+)"/g)].map(
-          ([, part]) => [resolveRelativeImport(entry, part ?? ""), entry] as const,
-        ),
+        importedPartsOf(entry).map((part) => [part, entry] as const),
       ),
     )
     expect(entryByPart.size).toBeGreaterThan(0)
@@ -437,6 +435,12 @@ describe("CSS Modules の class", () => {
     expect(offenders.join("\n")).toBe("")
   })
 })
+
+function importedPartsOf(entry: string): readonly string[] {
+  return [...readFileSync(`${SRC_ROOT}/${entry}`, "utf8").matchAll(/@import "(\.[^"]+)"/g)].map(
+    ([, part]) => resolveRelativeImport(entry, part ?? ""),
+  )
+}
 
 /**
  * 読み手のソースに、class 名が文字列として現れるか。`styles[\`prefix-${x}\`]` のように

@@ -11,12 +11,12 @@ import type { ReactElement } from "react"
 import { Portrait } from "../../../../domain/portrait.tsx"
 import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
 import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
+import { BalloonTrack } from "./balloon-track.tsx"
 import styles from "./character-view.module.css"
-import { BalloonTrack } from "./components/balloon-track/balloon-track.tsx"
-import { ItemSeats } from "./components/item-seat-list/item-seat-list.tsx"
-import { PhoneBalloon } from "./components/phone-balloon/phone-balloon.tsx"
-import { SpeechLog } from "./components/speech-log/speech-log.tsx"
 import type { CharacterViewModel } from "./hooks/use-character-view.ts"
+import { ItemSeats } from "./item-seat-list.tsx"
+import { PhoneBalloon } from "./phone-balloon.tsx"
+import { SpeechLog } from "./speech-log.tsx"
 
 type PresentationalCharacterViewProps = CharacterViewModel
 

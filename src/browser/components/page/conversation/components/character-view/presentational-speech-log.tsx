@@ -9,15 +9,14 @@
 import { History, X } from "lucide-react"
 import type { ReactElement, ReactNode } from "react"
 
-import { Button } from "../../../../../../ui/button/button.tsx"
-import { Dialog } from "../../../../../../ui/dialog/dialog.tsx"
-import { HStack } from "../../../../../../ui/h-stack/h-stack.tsx"
-import { Text } from "../../../../../../ui/text/text.tsx"
-import { VStack } from "../../../../../../ui/v-stack/v-stack.tsx"
-import characterViewStyles from "../../character-view.module.css"
-import { Balloon } from "../balloon/balloon.tsx"
+import { Button } from "../../../../ui/button/button.tsx"
+import { Dialog } from "../../../../ui/dialog/dialog.tsx"
+import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
+import { Text } from "../../../../ui/text/text.tsx"
+import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
+import { Balloon } from "./balloon.tsx"
+import styles from "./character-view.module.css"
 import type { SpeechLogEntry, SpeechLogModel } from "./hooks/use-speech-log.ts"
-import styles from "./speech-log.module.css"
 
 const OPEN_LABEL = "ログ"
 const CLOSE_LABEL = "ログを閉じる"
@@ -70,7 +69,7 @@ export function PresentationalSpeechLog({
       >
         {/* 枠の中を丸ごと覆う。
             空いたところを押しても target が `<dialog>` にならない（＝枠の外を押したときだけ閉じる）。 */}
-        <div className={characterViewStyles["speech-log-stage"]}>
+        <div className={styles["speech-log-stage"]}>
           {/* 閉じる口を列より先に置く。
               `showModal()` は中の最初のフォーカスできる要素へフォーカスを移すので、後ろに置くと転がる列（溢れると Tab で届く）が先に選ばれる。 */}
           <Button
@@ -104,7 +103,7 @@ export function PresentationalSpeechLog({
             align="stretch"
             justify="start"
             wrap="nowrap"
-            className={characterViewStyles["speech-log-scroller"]}
+            className={styles["speech-log-scroller"]}
           >
             <p className={styles["speech-log-more"]} aria-hidden="true">
               {MORE_LABEL}
@@ -171,7 +170,7 @@ function SpeechLogRow(props: {
   }
   const latest = entry.age === "latest"
   return (
-    <li className={characterViewStyles["speech-log-speech"]} data-age={entry.age}>
+    <li className={styles["speech-log-speech"]} data-age={entry.age}>
       <Balloon
         text={entry.text}
         latest={latest}

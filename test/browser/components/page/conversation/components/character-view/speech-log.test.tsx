@@ -2,12 +2,12 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { useState, type ReactElement } from "react"
 import { afterEach, describe, expect, it } from "vitest"
 
-import { SpeechLog } from "../../../../../../../../../src/browser/components/page/conversation/components/character-view/components/speech-log/speech-log.tsx"
-import type { SessionRecord } from "../../../../../../../../../src/shared/session/session-record.ts"
-import { INITIAL_SESSION_STATE } from "../../../../../../../../../src/shared/session/session-state.ts"
-import { characterInfo } from "../../../../../../../../fixture/character.ts"
-import { requestRecord, speechRecord } from "../../../../../../../../fixture/session-record.ts"
-import { putSession } from "../../../../../../../session-store.ts"
+import { SpeechLog } from "../../../../../../../src/browser/components/page/conversation/components/character-view/speech-log.tsx"
+import type { SessionRecord } from "../../../../../../../src/shared/session/session-record.ts"
+import { INITIAL_SESSION_STATE } from "../../../../../../../src/shared/session/session-state.ts"
+import { characterInfo } from "../../../../../../fixture/character.ts"
+import { requestRecord, speechRecord } from "../../../../../../fixture/session-record.ts"
+import { putSession } from "../../../../../session-store.ts"
 
 afterEach(() => {
   cleanup()

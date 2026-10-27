@@ -1,8 +1,8 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
-import { BalloonTrack } from "../../../../../../../../../src/browser/components/page/conversation/components/character-view/components/balloon-track/balloon-track.tsx"
-import type { CharacterViewSpeech } from "../../../../../../../../../src/browser/components/page/conversation/components/character-view/hooks/use-character-view.ts"
+import { BalloonTrack } from "../../../../../../../src/browser/components/page/conversation/components/character-view/balloon-track.tsx"
+import type { CharacterViewSpeech } from "../../../../../../../src/browser/components/page/conversation/components/character-view/hooks/use-character-view.ts"
 
 afterEach(() => {
   cleanup()

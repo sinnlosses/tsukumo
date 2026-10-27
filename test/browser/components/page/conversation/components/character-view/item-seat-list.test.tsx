@@ -1,8 +1,8 @@
 import { cleanup, render } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
-import { ItemSeats } from "../../../../../../../../../src/browser/components/page/conversation/components/character-view/components/item-seat-list/item-seat-list.tsx"
-import type { ItemSeatMap } from "../../../../../../../../../src/shared/item/item.ts"
+import { ItemSeats } from "../../../../../../../src/browser/components/page/conversation/components/character-view/item-seat-list.tsx"
+import type { ItemSeatMap } from "../../../../../../../src/shared/item/item.ts"
 
 afterEach(cleanup)
 

@@ -3,7 +3,7 @@
 
 import type { ReactElement, ReactNode } from "react"
 
-import type { PinnedSpeech } from "../../domain/pinned-speech.ts"
+import type { PinnedSpeech } from "./domain/pinned-speech.ts"
 import { useSpeechLog } from "./hooks/use-speech-log.ts"
 import { PresentationalSpeechLog } from "./presentational-speech-log.tsx"
 

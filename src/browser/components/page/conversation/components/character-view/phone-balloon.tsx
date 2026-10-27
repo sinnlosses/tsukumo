@@ -1,15 +1,15 @@
 // 狭い画面（760px 以下）の、入力欄の上の顔と最新の1件の吹き出し。
-// 広い画面では CSS で消える（`phone-balloon.module.css`）ので、ここは幅を測らない。
+// 広い画面では CSS で消える（`stage/phone-balloon.css`）ので、ここは幅を測らない。
 //
 // 吹き出しを押すとセリフのログが開く。1件も無ければ顔だけを出す。
 // 時刻は名前の行を足さず、吹き出しの脇に出す（分からなければ出さない）。
 
 import type { ReactElement } from "react"
 
-import type { CharacterFaceInfo } from "../../../../../../../domain/character-face.ts"
-import { CharacterFace } from "../../../../../../domain/character-face.tsx"
-import type { PhoneBalloonLine } from "../../hooks/use-character-view.ts"
-import styles from "./phone-balloon.module.css"
+import type { CharacterFaceInfo } from "../../../../../domain/character-face.ts"
+import { CharacterFace } from "../../../../domain/character-face.tsx"
+import styles from "./character-view.module.css"
+import type { PhoneBalloonLine } from "./hooks/use-character-view.ts"
 
 type PhoneBalloonProps = {
   readonly face: CharacterFaceInfo

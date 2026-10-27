@@ -36,7 +36,7 @@
   gap: 6px;
   min-width: 0;
 }
-/* 吹き出しの脇の時刻。最新の吹き出しの名前の隣の時刻（`balloon.module.css` の `.balloon-time`）と同じ字で、吹き出しに押されて縮まない。 */
+/* 吹き出しの脇の時刻。最新の吹き出しの名前の隣の時刻（`stage/balloon.css` の `.balloon-time`）と同じ字で、吹き出しに押されて縮まない。 */
 .balloon-side-time {
   flex-shrink: 0;
   padding-bottom: 4px;

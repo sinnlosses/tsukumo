@@ -3,8 +3,8 @@
 
 import type { ReactElement } from "react"
 
-import type { ItemInfo, ItemSeatMap, SeatKey } from "../../../../../../../../shared/item/item.ts"
-import styles from "./item-seat-list.module.css"
+import type { ItemInfo, ItemSeatMap, SeatKey } from "../../../../../../shared/item/item.ts"
+import styles from "./character-view.module.css"
 
 type ItemSeatsProps = {
   readonly seats: ItemSeatMap
