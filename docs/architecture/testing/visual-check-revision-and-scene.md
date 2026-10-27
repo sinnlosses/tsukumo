@@ -79,7 +79,8 @@ Network タブで `/ws` の upgrade が101を返し、`hello` フレーム（購
 
 **ワークプランを止めて閉じたとき、止めて再開したとき、段の所要が測れないときの描き方を確かめるときは、疑似セッションの場面
 `work-plan-stopped`・`work-plan-resumed`・`work-plan-phase-unknown` を使う。** `work-plan-stopped` は段2の途中で
-`task.outcome` が `stopped`・`workPlanClosing: "stopped"` の `report` で閉じ、帯のチップが「止めた」になること、
+`task.outcome` が `stopped`・`workPlanClosing: "stopped"` の `report` で閉じ、帯のチップが「止めた」になることと、
+最終レポートの段ごとの時間で段3が「未着手」（割合は空欄）になること、`work-plan-skipped` は最終レポートで段2が「飛ばした」になること、
 `work-plan-resumed` は同じように段2で止めたあと「続けて」の依頼で同じ段の並びのまま段2から再開して閉じ、
 再開した依頼の最終レポートの段ごとの時間で全段に時間が出て「不明」が無いこと、`work-plan-phase-unknown` は
 段2を一度も今にしないまま閉じ、最終レポートの段ごとの時間で段2が「不明」になることを見る

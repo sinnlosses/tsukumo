@@ -277,6 +277,12 @@ describe("applySessionEvent（report を書いている間）", () => {
     })
   })
 
+  it("report の段の閉じ方は記録に写る", () => {
+    const state = apply(REQUEST, reportEvent({ toolUseId: "toolu_r1", workPlanClosing: "stopped" }))
+
+    expect(state.records.at(-1)).toMatchObject({ kind: "report", workPlanClosing: "stopped" })
+  })
+
   it("差し戻されて report が届かなくても、同じ呼び出しの tool-finished で下りる", () => {
     const finished = apply(REQUEST, DRAFTING, {
       kind: "tool-finished",

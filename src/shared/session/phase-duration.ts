@@ -2,7 +2,7 @@
 
 import { groupBy } from "remeda"
 
-import type { PhaseDuration, PhaseTimeRow } from "../report/report-phase-time.ts"
+import type { PhaseAbsence, PhaseDuration, PhaseTimeRow } from "../report/report-phase-time.ts"
 import type { MeasuredTime } from "../utils/elapsed-time.ts"
 import { type RecordTime, recordTimeAt, type SessionRecord } from "./session-record.ts"
 import {
@@ -12,7 +12,12 @@ import {
   phaseOrdinalText,
 } from "./work-plan-phase-number.ts"
 import type { WorkPlanStretch, WorkPlanTrail } from "./work-plan-trail.ts"
-import { finishedPhaseCount, type PlannedPhase, plannedPhasesOf } from "./work-plan.ts"
+import {
+  finishedPhaseCount,
+  type PlannedPhase,
+  plannedPhasesOf,
+  type WorkPlanClosing,
+} from "./work-plan.ts"
 
 type WorkPlanRecord = Extract<SessionRecord, { readonly kind: "work-plan" }>
 
@@ -28,54 +33,23 @@ type WorkPlanRecord = Extract<SessionRecord, { readonly kind: "work-plan" }>
  * 段は名前と、同じ名前の段の中で何番目かで追い、並列の段は中の段の名前の並びで追うので、
  * 組み替えても並びに残った段の時間は引き継がれ、並びから消えた段は出さない。
  *
- * 次の段は `unknown`: 一度も今の段にならなかった段、端が `restored` の区間を含む段、
+ * 時間を出さない段は `duration` が `unknown` で、理由を `absence` に持つ。
+ * `skipped`: 最後の記録の `skippedPhases` の段（区間が測れていても）。
+ * `not-started`: `closing` が `stopped` で、引き継いだ区間を含めて一度も今の段にならず、最後の記録で済んでいない段。
+ * `none` の `unknown`: 一度も今の段にならなかった段のうち上のどちらでもないもの、端が `restored` の区間を含む段、
  * 並び全体の最初の記録が途中の位置で始まったときに今だった段と並列の段（始まりがこの並びの外にあって測れない）。
+ * 並列の段の行は、中の段が全部 `not-started` なら `not-started`、全部 `skipped` なら `skipped`。
  */
 export function phaseDurations(
   trail: WorkPlanTrail,
   closedAt: RecordTime,
+  closing: WorkPlanClosing,
 ): readonly PhaseTimeRow[] {
-  const last = trail.plans.at(-1)
-  if (last === undefined) {
-    return []
-  }
-  const phaseTiming = timingsOf(trail, closedAt, currentPhaseKeysOf)
-  const groupTiming = timingsOf(trail, closedAt, currentGroupKeysOf)
-  const phases = plannedPhasesOf(last)
-  const rowOf = (phase: PlannedPhase): PhaseDuration => ({
-    label: phaseLabel({
-      kind: "phase",
-      indexes: [phase.index],
-      count: phases.length,
-      name: phase.name,
-      range: last.delegatedRange,
-    }),
-    ...phaseTiming(phase.key),
-  })
-  return last.phases.flatMap((entry, position): readonly PhaseTimeRow[] => {
-    const members = phases.filter((phase) => phase.entry === position)
-    if (typeof entry === "string") {
-      return members.map((phase) => ({ kind: "phase", ...rowOf(phase) }))
-    }
-    return [
-      {
-        kind: "parallel",
-        label: parallelLabel(
-          phaseNumberOf(
-            last.delegatedRange,
-            members.map((phase) => phase.index),
-            phases.length,
-          ),
-        ),
-        ...wallOf(groupTiming(groupKeyOf(entry))),
-        phases: members.map(rowOf),
-      },
-    ]
-  })
+  return rowsOf(trail, closedAt, (phase, entered) => absenceOf(phase, entered, closing))
 }
 
 /**
- * 段の見出し `label` の段の所要（{@link phaseDurations} と同じ求め方。並列の段の中の段も探す）。
+ * 段の見出し `label` の段の所要（{@link phaseDurations} と同じ求め方で、飛ばした段も区間の長さを返す。並列の段の中の段も探す）。
  * その段が最後の段の並びに無ければ `unknown`。
  */
 export function finishedPhaseDuration(
@@ -84,7 +58,7 @@ export function finishedPhaseDuration(
   closedAt: RecordTime,
 ): MeasuredTime {
   return (
-    phaseDurations(trail, closedAt)
+    rowsOf(trail, closedAt, () => "none")
       .flatMap((row) => (row.kind === "phase" ? [row] : row.phases))
       .find((found) => found.label === label)?.duration ?? UNKNOWN
   )
@@ -102,6 +76,63 @@ export function phaseDurationOf(
   return (key) => timingOf(key).duration
 }
 
+type AbsenceOf = (phase: PlannedPhase, entered: boolean) => PhaseAbsence
+
+function rowsOf(
+  trail: WorkPlanTrail,
+  closedAt: RecordTime,
+  absenceFor: AbsenceOf,
+): readonly PhaseTimeRow[] {
+  const last = trail.plans.at(-1)
+  if (last === undefined) {
+    return []
+  }
+  const phaseTiming = timingsOf(trail, closedAt, currentPhaseKeysOf)
+  const groupTiming = timingsOf(trail, closedAt, currentGroupKeysOf)
+  const phases = plannedPhasesOf(last)
+  const rowOf = (phase: PlannedPhase): PhaseDuration => {
+    const { start, duration, entered } = phaseTiming(phase.key)
+    const absence = absenceFor(phase, entered)
+    return {
+      label: phaseLabel({
+        kind: "phase",
+        indexes: [phase.index],
+        count: phases.length,
+        name: phase.name,
+        range: last.delegatedRange,
+      }),
+      start,
+      duration: absence === "none" ? duration : UNKNOWN,
+      absence,
+    }
+  }
+  return last.phases.flatMap((entry, position): readonly PhaseTimeRow[] => {
+    const members = phases.filter((phase) => phase.entry === position)
+    if (typeof entry === "string") {
+      return members.map((phase) => ({ kind: "phase", ...rowOf(phase) }))
+    }
+    const inner = members.map(rowOf)
+    const absence = groupAbsenceOf(inner)
+    const { start, wall } = wallOf(groupTiming(groupKeyOf(entry)))
+    return [
+      {
+        kind: "parallel",
+        label: parallelLabel(
+          phaseNumberOf(
+            last.delegatedRange,
+            members.map((phase) => phase.index),
+            phases.length,
+          ),
+        ),
+        start,
+        wall: absence === "none" ? wall : UNKNOWN,
+        absence,
+        phases: inner,
+      },
+    ]
+  })
+}
+
 const UNKNOWN = { kind: "unknown" } as const satisfies MeasuredTime
 
 const ZERO = { kind: "known", milliseconds: 0 } as const satisfies MeasuredTime
@@ -109,6 +140,21 @@ const ZERO = { kind: "known", milliseconds: 0 } as const satisfies MeasuredTime
 type Timing = {
   readonly start: MeasuredTime
   readonly duration: MeasuredTime
+}
+
+/** `entered` は、いずれかの区間で一度でも今の段になったか。 */
+type EnteredTiming = Timing & { readonly entered: boolean }
+
+function absenceOf(phase: PlannedPhase, entered: boolean, closing: WorkPlanClosing): PhaseAbsence {
+  if (phase.skipped) {
+    return "skipped"
+  }
+  return !entered && phase.state !== "done" && closing === "stopped" ? "not-started" : "none"
+}
+
+function groupAbsenceOf(inner: readonly PhaseDuration[]): PhaseAbsence {
+  const first = inner[0]?.absence ?? "none"
+  return inner.every((phase) => phase.absence === first) ? first : "none"
 }
 
 type Stint = Timing & { readonly key: string }
@@ -128,7 +174,7 @@ function timingsOf(
   trail: WorkPlanTrail,
   closedAt: RecordTime,
   keysOf: (record: WorkPlanRecord) => ReadonlySet<string>,
-): (key: string) => Timing {
+): (key: string) => EnteredTiming {
   const stretches = [...trail.carried, { plans: trail.plans, closedAt }]
   const first = stretches[0]?.plans[0]
   const opensMidway = first !== undefined && finishedPhaseCount(first) > 0
@@ -142,6 +188,7 @@ function timingsOf(
     return {
       start: found[0]?.start ?? UNKNOWN,
       duration: totalOf(found.map((stint) => stint.duration)),
+      entered: found.length > 0,
     }
   }
 }

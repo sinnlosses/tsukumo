@@ -243,6 +243,7 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
             retrospective: event.retrospective,
             checks: event.checks,
             task: event.task,
+            workPlanClosing: event.workPlanClosing,
             waitingLine: event.waitingLine,
             changeSummary: NO_REPORT_CHANGE_SUMMARY,
             imageSizes: event.imageSizes,

@@ -141,7 +141,7 @@ function toMainViewEntries(record: SessionRecord, context: TurnContext): readonl
 /**
  * `report` の引数を欄に組む。頭は `conclusion` → `keyFigures`（数の札）→ 合図の行と段ごとの所要時間の順で、節は `figure` の図 → `sections` の順。
  * `figure` の図は見出しの無い先頭の節として描き（`sectionsWithFigure`）、図の番号は `sections` の図と通しで振られる。`none` は何も描かない。
- * 合図の行と段ごとの所要時間は {@link statusMarkdown}。段ごとの所要時間は最終のときの頭にだけ、同じ依頼のワークプランの記録（止めて再開した依頼の記録も引き継ぐ。{@link phaseDurations}）から描く。
+ * 合図の行と段ごとの所要時間は {@link statusMarkdown}。段ごとの所要時間は最終のときの頭にだけ、同じ依頼のワークプランの記録（止めて再開した依頼の記録も引き継ぐ。{@link phaseDurations}）と `report` の `workPlanClosing` から描く。
  * `favor` はレポートの記法の「お願い」の塊で包むので、サニタイズも記法の解釈もテキストの本文と同じ経路を通る。
  * `favor` の塊は `favor-<toolUseId>` の `id` を持ち、合図の行の総括行にある印がそこへ飛ぶ。
  * 中身の無い節は欄にしない。`retrospective` は節の最後に足して組み（図と表の番号が通しで続く）、欄が無ければ空文字にする（{@link retrospectiveSections}）。
@@ -166,7 +166,9 @@ function reportRegionsOf(
           (command) => bashCommandDuration(context, command),
           isBlankText(report.favor) ? { kind: "none" } : { kind: "favor", id: favorId },
         ),
-        withPhaseTimes ? phaseTimesMarkdown(phaseDurations(context.trail, report.time)) : "",
+        withPhaseTimes
+          ? phaseTimesMarkdown(phaseDurations(context.trail, report.time, report.workPlanClosing))
+          : "",
       ),
     ]
       .filter((part) => !isBlankText(part))

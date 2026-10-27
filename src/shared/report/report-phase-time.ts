@@ -3,11 +3,18 @@
 import { formatElapsed, formatMeasured, type MeasuredTime } from "../utils/elapsed-time.ts"
 import { htmlAttribute, htmlInline } from "./report-inline-markdown.ts"
 
+/**
+ * 時間を出さない理由。`none` は理由が無い（測れたか、測れなかった「不明」）。
+ * `not-started` は止めて終えた依頼で後の段を呼ばなかった段、`skipped` は要らず飛ばした段。どちらも `duration` は `unknown`。
+ */
+export type PhaseAbsence = "none" | "not-started" | "skipped"
+
 /** 段1つの所要時間。`label` は段の見出しの字（「2/4 段の名前」）、`start` は依頼の頭からの開始。 */
 export type PhaseDuration = {
   readonly label: string
   readonly start: MeasuredTime
   readonly duration: MeasuredTime
+  readonly absence: PhaseAbsence
 }
 
 /**
@@ -21,6 +28,7 @@ export type PhaseTimeRow =
       readonly label: string
       readonly start: MeasuredTime
       readonly wall: MeasuredTime
+      readonly absence: PhaseAbsence
       readonly phases: readonly PhaseDuration[]
     }
 
@@ -32,7 +40,7 @@ export type PhaseTimeRow =
  * 棒の位置は依頼の頭からの開始、長さは所要で、並列の段は親の棒を描かず、中の段の棒を壁時計の区間の囲みで包む。
  * 測れなかった段は斜線の欠片で位置だけ示す。
  * 計は段（並列の段は壁時計の1区間）の測れた区間の和、割合はその区間の時間÷計の整数%、一番長い区間だけ強める。
- * 測れなかった区間は一覧で「不明」とし、割合は空欄にする。
+ * 時間を出さない区間は一覧で「未着手」「飛ばした」「不明」の字にし（{@link PhaseAbsence}）、割合は空欄にする。帯と棒の欠片の `title` も同じ字。
  * 並列の段の中の段は一覧にだけ字下げして並べ、割合は空欄にする。
  */
 export function phaseTimesMarkdown(rows: readonly PhaseTimeRow[]): string {
@@ -54,7 +62,7 @@ export function phaseTimesMarkdown(rows: readonly PhaseTimeRow[]): string {
     .map((row, index) => {
       const duration = intervals[index] ?? { kind: "unknown" }
       const head = listRowMarkdown(
-        { label: row.label, start: row.start, duration },
+        { label: row.label, start: row.start, duration, absence: row.absence },
         { total, longest: index === longestIndex, inner: false },
       )
       return row.kind === "phase"
@@ -79,6 +87,7 @@ type WaterfallBar = {
   readonly label: string
   readonly start: MeasuredTime
   readonly duration: MeasuredTime
+  readonly absence: PhaseAbsence
   readonly longest: boolean
   readonly wall: boolean
 }
@@ -99,6 +108,7 @@ function waterfallMarkdown(rows: readonly PhaseTimeRow[], longestIndex: number):
             label: row.label,
             start: row.start,
             duration: row.wall,
+            absence: row.absence,
             longest: index === longestIndex,
             wall: true,
           },
@@ -115,7 +125,7 @@ function waterfallMarkdown(rows: readonly PhaseTimeRow[], longestIndex: number):
   const percent = (milliseconds: number): number =>
     extent > 0 ? Math.round((milliseconds / extent) * 10_000) / 100 : 0
   const barMarkdown = (bar: WaterfallBar): string => {
-    const title = `title="${htmlAttribute(bar.label)} ${formatMeasured(bar.duration)}"`
+    const title = `title="${htmlAttribute(bar.label)} ${valueText(bar.duration, bar.absence)}"`
     if (bar.start.kind === "known" && bar.duration.kind === "known") {
       const geometry = `style="margin-left: ${String(percent(bar.start.milliseconds))}%; width: ${String(percent(bar.duration.milliseconds))}%"`
       if (bar.wall) {
@@ -159,13 +169,13 @@ function bandMarkdown(rows: readonly PhaseTimeRow[], longestIndex: number): stri
     }
     return row.duration.kind === "known"
       ? [bandSegmentMarkdown(row.label, row.duration, index === longestIndex)]
-      : [bandUnknownMarkdown(row.label)]
+      : [bandUnknownMarkdown(row.label, valueText(row.duration, row.absence))]
   })
   return `<div class="phase-band" aria-hidden="true">${regions.join("")}</div>`
 }
 
-function bandUnknownMarkdown(label: string): string {
-  return `<span class="phase-band-unknown" title="${htmlAttribute(label)} 不明"></span>`
+function bandUnknownMarkdown(label: string, value: string): string {
+  return `<span class="phase-band-unknown" title="${htmlAttribute(label)} ${value}"></span>`
 }
 
 function bandSegmentMarkdown(
@@ -185,7 +195,7 @@ type ListRowOptions = {
 }
 
 function listRowMarkdown(
-  { label, duration }: PhaseDuration,
+  { label, duration, absence }: PhaseDuration,
   { total, longest, inner }: ListRowOptions,
 ): string {
   const classes = ["phase-time"]
@@ -205,9 +215,20 @@ function listRowMarkdown(
       : `${String(ratioPercent(duration.milliseconds, total))}%`
   return (
     `<div class="${classes.join(" ")}" role="row">${mark}${labelMarkdown(label)}` +
-    `<span class="phase-time-value">${formatMeasured(duration)}</span>` +
+    `<span class="phase-time-value">${valueText(duration, absence)}</span>` +
     `<span class="phase-time-ratio">${ratio}</span></div>`
   )
+}
+
+function valueText(duration: MeasuredTime, absence: PhaseAbsence): string {
+  switch (absence) {
+    case "not-started":
+      return "未着手"
+    case "skipped":
+      return "飛ばした"
+    case "none":
+      return formatMeasured(duration)
+  }
 }
 
 function labelMarkdown(label: string): string {

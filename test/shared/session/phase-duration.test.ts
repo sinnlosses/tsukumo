@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import {
   finishedPhaseDuration,
-  phaseDurations,
+  phaseDurations as phaseDurationsClosing,
 } from "../../../src/shared/session/phase-duration.ts"
 import type { RecordTime, SessionRecord } from "../../../src/shared/session/session-record.ts"
 import {
@@ -10,7 +10,7 @@ import {
   type WorkPlanStretch,
   type WorkPlanTrail,
 } from "../../../src/shared/session/work-plan-trail.ts"
-import type { WorkPlanEntry } from "../../../src/shared/session/work-plan.ts"
+import type { WorkPlanClosing, WorkPlanEntry } from "../../../src/shared/session/work-plan.ts"
 import type { MeasuredTime } from "../../../src/shared/utils/elapsed-time.ts"
 
 type WorkPlanRecord = Extract<SessionRecord, { readonly kind: "work-plan" }>
@@ -28,6 +28,7 @@ function plan(
   time: RecordTime,
   phases: readonly WorkPlanEntry[] = PHASES,
   finishedInGroup: readonly string[] = [],
+  skippedPhases: readonly string[] = [],
 ): WorkPlanRecord {
   return {
     kind: "work-plan",
@@ -36,7 +37,7 @@ function plan(
     finishedInGroup,
     phaseSummary: "",
     delegatedRange: { kind: "none" },
-    skippedPhases: [],
+    skippedPhases,
     awaitingSummary: { kind: "none" },
     time,
   }
@@ -65,8 +66,21 @@ function known(seconds: number) {
 
 const UNKNOWN = { kind: "unknown" } as const
 
-function row(label: string, duration: MeasuredTime, start: MeasuredTime = UNKNOWN) {
-  return { kind: "phase", label, start, duration } as const
+function row(
+  label: string,
+  duration: MeasuredTime,
+  start: MeasuredTime = UNKNOWN,
+  absence: "none" | "not-started" | "skipped" = "none",
+) {
+  return { kind: "phase", label, start, duration, absence } as const
+}
+
+function phaseDurations(
+  trail: WorkPlanTrail,
+  closedAt: RecordTime,
+  closing: WorkPlanClosing = "none",
+) {
+  return phaseDurationsClosing(trail, closedAt, closing)
 }
 
 describe("phaseDurations", () => {
@@ -232,9 +246,10 @@ describe("phaseDurations（並列の段）", () => {
         label: "並列 2–3",
         start: known(10),
         wall: known(10),
+        absence: "none",
         phases: [
-          { label: "2/4 架空のサーバ", start: known(10), duration: known(10) },
-          { label: "3/4 架空の画面", start: known(10), duration: known(6) },
+          { label: "2/4 架空のサーバ", start: known(10), duration: known(10), absence: "none" },
+          { label: "3/4 架空の画面", start: known(10), duration: known(6), absence: "none" },
         ],
       },
       row("4/4 架空の検証", known(5), known(20)),
@@ -258,12 +273,144 @@ describe("phaseDurations（並列の段）", () => {
         label: "並列 2–3",
         start: UNKNOWN,
         wall: UNKNOWN,
+        absence: "none",
         phases: [
-          { label: "2/4 架空のサーバ", start: UNKNOWN, duration: UNKNOWN },
-          { label: "3/4 架空の画面", start: UNKNOWN, duration: UNKNOWN },
+          { label: "2/4 架空のサーバ", start: UNKNOWN, duration: UNKNOWN, absence: "none" },
+          { label: "3/4 架空の画面", start: UNKNOWN, duration: UNKNOWN, absence: "none" },
         ],
       },
       row("4/4 架空の検証", known(5), known(4)),
     ])
+  })
+})
+
+describe("phaseDurations（未着手と飛ばした）", () => {
+  it("停止で終え、後の段を一度も今にしなかったら未着手で、時間のある段はそのまま", () => {
+    expect(phaseDurations(within([plan(0, at(0)), plan(1, at(10))]), at(25), "stopped")).toEqual([
+      row("1/3 架空の調べ", known(10), known(0)),
+      row("2/3 架空の実装", known(15), known(10)),
+      row("3/3 架空の検証", UNKNOWN, UNKNOWN, "not-started"),
+    ])
+  })
+
+  it("停止以外で終えたなら、済んでいない段も未着手にせず不明のまま", () => {
+    for (const closing of ["finished", "none"] as const) {
+      expect(phaseDurations(within([plan(0, at(0)), plan(1, at(10))]), at(25), closing)).toEqual([
+        row("1/3 架空の調べ", known(10), known(0)),
+        row("2/3 架空の実装", known(15), known(10)),
+        row("3/3 架空の検証", UNKNOWN),
+      ])
+    }
+  })
+
+  it("skippedPhases の段は区間が測れていても飛ばしたになり、前後の段は時間を持つ", () => {
+    expect(
+      phaseDurations(
+        within([
+          plan(0, at(0)),
+          plan(1, at(10)),
+          plan(2, at(12), PHASES, [], ["架空の実装"]),
+          plan(3, at(20), PHASES, [], ["架空の実装"]),
+        ]),
+        at(30),
+        "finished",
+      ),
+    ).toEqual([
+      row("1/3 架空の調べ", known(10), known(0)),
+      row("2/3 架空の実装", UNKNOWN, known(10), "skipped"),
+      row("3/3 架空の検証", known(8), known(12)),
+    ])
+  })
+
+  it("skippedPhases の段が一度も今にならなくても飛ばした", () => {
+    expect(
+      phaseDurations(
+        within([
+          plan(0, at(0)),
+          plan(2, at(10), PHASES, [], ["架空の実装"]),
+          plan(3, at(12), PHASES, [], ["架空の実装"]),
+        ]),
+        at(20),
+        "finished",
+      ),
+    ).toEqual([
+      row("1/3 架空の調べ", known(10), known(0)),
+      row("2/3 架空の実装", UNKNOWN, UNKNOWN, "skipped"),
+      row("3/3 架空の検証", known(2), known(10)),
+    ])
+  })
+
+  it("一足飛びで越えただけで飛ばしていない済みの段は、停止でも不明", () => {
+    expect(phaseDurations(within([plan(0, at(0)), plan(2, at(10))]), at(20), "stopped")).toEqual([
+      row("1/3 架空の調べ", known(10), known(0)),
+      row("2/3 架空の実装", UNKNOWN),
+      row("3/3 架空の検証", known(10), known(10)),
+    ])
+  })
+
+  it("止めて再開したあとにまた止めたら、引き継いだ区間で今だった段は時間を持ち、どの区間でも今にならなかった段だけが未着手", () => {
+    const stopped = { plans: [plan(0, at(0)), plan(1, at(10))], closedAt: at(25) }
+
+    expect(
+      phaseDurations(resumed([stopped], [plan(1, at(100)), plan(2, at(108))]), at(112), "stopped"),
+    ).toEqual([
+      row("1/3 架空の調べ", known(10), known(0)),
+      row("2/3 架空の実装", known(23), known(10)),
+      row("3/3 架空の検証", known(4), known(33)),
+    ])
+    expect(phaseDurations(resumed([stopped], [plan(1, at(100))]), at(112), "stopped")).toEqual([
+      row("1/3 架空の調べ", known(10), known(0)),
+      row("2/3 架空の実装", known(27), known(10)),
+      row("3/3 架空の検証", UNKNOWN, UNKNOWN, "not-started"),
+    ])
+  })
+
+  it("再開をまたいで finished で終えた依頼は、引き継いだ区間があっても未着手を出さない", () => {
+    const stopped = { plans: [plan(0, at(0)), plan(1, at(10))], closedAt: at(25) }
+
+    expect(
+      phaseDurations(resumed([stopped], [plan(1, at(100)), plan(3, at(108))]), at(112), "finished"),
+    ).toEqual([
+      row("1/3 架空の調べ", known(10), known(0)),
+      row("2/3 架空の実装", known(23), known(10)),
+      row("3/3 架空の検証", UNKNOWN),
+    ])
+  })
+
+  it("復元した記録の区間で今だった段は、停止でも未着手ではなく不明", () => {
+    expect(
+      phaseDurations(within([plan(0, RESTORED), plan(1, RESTORED)]), RESTORED, "stopped"),
+    ).toEqual([
+      row("1/3 架空の調べ", UNKNOWN),
+      row("2/3 架空の実装", UNKNOWN),
+      row("3/3 架空の検証", UNKNOWN, UNKNOWN, "not-started"),
+    ])
+  })
+
+  it("並列の段の中が全部未着手なら並列の行も未着手で、一部だけなら時間も不明のまま", () => {
+    const stopped = phaseDurations(within([plan(0, at(0), GROUPED)]), at(10), "stopped")
+
+    expect(stopped.at(1)).toEqual({
+      kind: "parallel",
+      label: "並列 2–3",
+      start: UNKNOWN,
+      wall: UNKNOWN,
+      absence: "not-started",
+      phases: [
+        { label: "2/4 架空のサーバ", start: UNKNOWN, duration: UNKNOWN, absence: "not-started" },
+        { label: "3/4 架空の画面", start: UNKNOWN, duration: UNKNOWN, absence: "not-started" },
+      ],
+    })
+    expect(stopped.at(2)).toEqual(row("4/4 架空の検証", UNKNOWN, UNKNOWN, "not-started"))
+  })
+
+  it("中間レポートの所要は、飛ばした段も区間の長さを返す", () => {
+    expect(
+      finishedPhaseDuration(
+        within([plan(0, at(0)), plan(1, at(10)), plan(2, at(12), PHASES, [], ["架空の実装"])]),
+        "2/3 架空の実装",
+        at(20),
+      ),
+    ).toEqual(known(2))
   })
 })

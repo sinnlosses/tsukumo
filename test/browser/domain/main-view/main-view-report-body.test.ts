@@ -29,6 +29,7 @@ import {
   turnOf,
   utteranceEvent,
 } from "../../../fixture/main-view-report.ts"
+import { reportEvent } from "../../../fixture/report-event.ts"
 import { requestEvent } from "../../../fixture/session-event.ts"
 
 /** 段ごとの所要時間も振り返りもお願いも無い `report` の欄（頭と最終のときの頭が同じ）。 */
@@ -280,6 +281,35 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     )
     expect(summary).toEqual({ kind: "markdown", markdown: "架空のまとめ。" })
     expect(final).toEqual({ ...regions, head: regions?.finalHead })
+  })
+
+  it("workPlanClosing が stopped の最終レポートでは、呼ばなかった段が「未着手」と出て、none なら「不明」と出る", () => {
+    const plan: SessionEvent = {
+      kind: "work-plan",
+      delegatedRange: { kind: "none" },
+      skippedPhases: [],
+      awaitingSummary: { kind: "none" },
+      phases: ["架空の段A", "架空の段B"],
+      current: 0,
+      finishedInGroup: [],
+      phaseSummary: "",
+    }
+    const finalOf = (workPlanClosing: "stopped" | "none") =>
+      shownReports(
+        turnOf(
+          [
+            ask,
+            plan,
+            reportEvent({ toolUseId: "toolu_r1", conclusion: "架空の結論。", workPlanClosing }),
+            finished,
+          ],
+          SETTLED,
+          true,
+        ),
+      ).at(-1)
+
+    expect(finalOf("stopped")).toContain('<span class="phase-time-value">未着手</span>')
+    expect(finalOf("none")).toContain('<span class="phase-time-value">不明</span>')
   })
 
   it("やり取りが閉じていないあいだの report には、段ごとの所要時間の帯と一覧を出さない", () => {

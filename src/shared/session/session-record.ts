@@ -14,7 +14,7 @@ import type { Question, QuestionAnswer } from "../session-driver/question.ts"
 import type { TurnFailure } from "../session-driver/turn-failure.ts"
 import type { ClippedText } from "../utils/clip-text.ts"
 import type { ReportWaitingLine } from "./session-event-report.ts"
-import type { WorkPlan } from "./work-plan.ts"
+import type { WorkPlan, WorkPlanClosing } from "./work-plan.ts"
 
 /**
  * メインビューに残す記録の窓（直近何ターンぶんを持ち続けるか）。常駐プロセスが動き続ける以上、記録自体も無限に増やさない。
@@ -124,6 +124,8 @@ export type SessionRecord =
       readonly retrospective: ReportRetrospective
       readonly checks: readonly ReportCheck[]
       readonly task: ReportTask
+      /** `report` が渡した段の閉じ方。段ごとの所要時間で、後の段を呼ばなかった段を「未着手」と見分ける。 */
+      readonly workPlanClosing: WorkPlanClosing
       readonly waitingLine: ReportWaitingLine
       /** 変更の札。積んだときは `none` で、同じ `toolUseId` の `report-change-summary` が届いたら数に差し替わる。 */
       readonly changeSummary: ReportChangeSummary

@@ -11,14 +11,18 @@ const known = (label: string, milliseconds: number, start = 0) => ({
   label,
   start: at(start),
   duration: at(milliseconds),
+  absence: "none" as const,
 })
 
-const unknown = (label: string) => ({
+const absent = (label: string, absence: "none" | "not-started" | "skipped" = "none") => ({
   kind: "phase" as const,
   label,
   start: UNKNOWN,
   duration: UNKNOWN,
+  absence,
 })
+
+const unknown = (label: string) => absent(label)
 
 const parallelRows = () =>
   ({
@@ -26,9 +30,10 @@ const parallelRows = () =>
     label: "並列 2–3",
     start: at(5_000),
     wall: at(20_000),
+    absence: "none",
     phases: [
-      { label: "2/3 架空の段B", start: at(5_000), duration: at(10_000) },
-      { label: "3/3 架空の段C", start: UNKNOWN, duration: UNKNOWN },
+      { label: "2/3 架空の段B", start: at(5_000), duration: at(10_000), absence: "none" },
+      { label: "3/3 架空の段C", start: UNKNOWN, duration: UNKNOWN, absence: "none" },
     ],
   }) as const
 
@@ -178,9 +183,10 @@ describe("phaseTimesMarkdown", () => {
         label: "並列 2–3",
         start: at(10_000),
         wall: at(10_000),
+        absence: "none",
         phases: [
-          { label: "2/4 架空の段B", start: at(10_000), duration: at(10_000) },
-          { label: "3/4 架空の段C", start: at(10_000), duration: at(6_000) },
+          { label: "2/4 架空の段B", start: at(10_000), duration: at(10_000), absence: "none" },
+          { label: "3/4 架空の段C", start: at(10_000), duration: at(6_000), absence: "none" },
         ],
       },
       known("4/4 架空の段D", 5_000, 20_000),
@@ -220,7 +226,10 @@ describe("phaseTimesMarkdown", () => {
         label: "並列 2–3",
         start: UNKNOWN,
         wall: UNKNOWN,
-        phases: [{ label: "2/3 架空の段B", start: at(5_000), duration: at(10_000) }],
+        absence: "none",
+        phases: [
+          { label: "2/3 架空の段B", start: at(5_000), duration: at(10_000), absence: "none" },
+        ],
       },
     ])
 
@@ -239,6 +248,53 @@ describe("phaseTimesMarkdown", () => {
           "</div>",
       ),
     )
+  })
+
+  it("未着手の行は一覧と帯の欠片の title が「未着手」で、割合は空欄、計に入らない", () => {
+    const html = phaseTimesMarkdown([
+      known("1/2 架空の段A", 20_000),
+      absent("2/2 架空の段B", "not-started"),
+    ])
+
+    expect(html).toBe(
+      wrap(
+        "20秒",
+        band(segment("1/2 架空の段A 20秒", 20_000, true), unknownSegment("2/2 架空の段B 未着手")),
+        row("1/2", "架空の段A", "20秒", "100%", " phase-time-longest") +
+          row("2/2", "架空の段B", "未着手", "", " phase-time-unknown"),
+      ),
+    )
+  })
+
+  it("飛ばした行は「飛ばした」と出て、計に入らない", () => {
+    const html = phaseTimesMarkdown([
+      known("1/2 架空の段A", 20_000),
+      absent("2/2 架空の段B", "skipped"),
+    ])
+
+    expect(html).toContain(row("2/2", "架空の段B", "飛ばした", "", " phase-time-unknown"))
+    expect(html).toContain(unknownSegment("2/2 架空の段B 飛ばした"))
+    expect(html).toContain('<span class="phase-times-total">計 20秒</span>')
+  })
+
+  it("waterfall の欠片の title も未着手・飛ばしたの字になる", () => {
+    const html = phaseTimesMarkdown([
+      known("1/3 架空の段A", 5_000),
+      {
+        kind: "parallel",
+        label: "並列 2–3",
+        start: at(5_000),
+        wall: at(5_000),
+        absence: "none",
+        phases: [
+          { label: "2/3 架空の段B", start: at(5_000), duration: at(5_000), absence: "none" },
+          { label: "3/3 架空の段C", start: UNKNOWN, duration: UNKNOWN, absence: "not-started" },
+        ],
+      },
+    ])
+
+    expect(html).toContain('title="3/3 架空の段C 未着手"')
+    expect(html).toContain('<span class="phase-time-value">未着手</span>')
   })
 
   it("段の名前と title の HTML をエスケープする", () => {
