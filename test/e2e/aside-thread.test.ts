@@ -42,6 +42,7 @@ describe("委譲中の脇の話", () => {
     expect(
       await main.locator("li", { hasText: "いまどこ？（架空の脇の話）" }).innerText(),
     ).toContain("いまは委譲先が段2を進めているところ。")
-    await room.settleAndMatchWithMessages(ELAPSED_MS)
+    expect(await main.locator("[data-outline-turn]").count()).toBe(1)
+    await room.settleAndMatchPickedWithMessages(ELAPSED_MS)
   })
 })

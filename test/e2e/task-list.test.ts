@@ -1,5 +1,5 @@
 import type { Locator } from "playwright-core"
-import { describe, it } from "vitest"
+import { describe, expect, it } from "vitest"
 
 import { useScenarioRun, type ScenarioRoom } from "./scenario-run.ts"
 import { openTaskListRoom, openTaskListRoomWithDraft } from "./task-room.ts"
@@ -21,7 +21,9 @@ describe("タスクの一覧", () => {
     await room.page.getByRole("button", { name: "実行する", exact: true }).click()
     await room.waitForEvent("request")
     await room.waitForEvent("turn-finished")
-    await room.settleAndMatchWithMessages(ELAPSED_MS)
+    expect(await room.page.getByRole("dialog", { name: "タスクの実行" }).count()).toBe(0)
+    expect(await room.page.getByRole("dialog", { name: "t-001 の詳細" }).count()).toBe(0)
+    await room.settleAndMatchPickedWithMessages(ELAPSED_MS)
   })
 
   it("ドラフトのチップで絞り、のぞき窓の「計画する」から確認の「頼む」を押すと計画の文面で依頼が送られる", async () => {
@@ -36,7 +38,8 @@ describe("タスクの一覧", () => {
     await room.page.getByRole("button", { name: "頼む", exact: true }).click()
     await room.waitForEvent("request")
     await room.waitForEvent("turn-finished")
-    await room.settleAndMatchWithMessages(ELAPSED_MS)
+    expect(await room.page.getByRole("dialog", { name: "タスクの実行" }).count()).toBe(0)
+    await room.settleAndMatchPickedWithMessages(ELAPSED_MS)
   })
 })
 

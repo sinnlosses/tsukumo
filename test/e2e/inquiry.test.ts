@@ -34,7 +34,7 @@ describe("お伺い", () => {
     await inquiry.getByRole("button", { name: /これで答える/ }).click()
     await room.waitForEvent("pending-changed", 2)
     await expect.poll(() => inquiry.count()).toBe(0)
-    await room.settleAndMatchWithMessages(ELAPSED_MS)
+    await room.settleAndMatchPickedWithMessages(ELAPSED_MS)
   })
 
   it("札は本文の末尾に出て、窓の外のあいだ下端の「お伺い ↓」を押すと札が窓に入り、口が消える", async () => {

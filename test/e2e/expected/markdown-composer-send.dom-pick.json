@@ -1,0 +1,9 @@
+{
+  "dispatch": [
+    { "tag": "section", "attributes": { "data-region": "dispatch", "aria-label": "入力欄" }, "children": [
+      { "tag": "div", "attributes": { "editor": "codemirror", "value": "" } },
+      { "tag": "button", "attributes": { "aria-pressed": "true", "aria-label": "マークダウンエディタで書く" } },
+      { "tag": "button", "attributes": { "type": "submit" }, "children": ["送信"] }
+    ] }
+  ]
+}

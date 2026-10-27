@@ -1,0 +1,10 @@
+{
+  "task-section": [
+    { "tag": "section", "attributes": { "aria-label": "タスク" }, "children": [
+      { "tag": "ul", "attributes": { "aria-label": "絞り込み" }, "children": [
+        { "tag": "button", "attributes": { "aria-pressed": "true" }, "children": ["ドラフト", "1"] }
+      ] },
+      { "tag": "button", "attributes": { "aria-haspopup": "dialog", "aria-expanded": "false" }, "children": ["t-003", "架空のタスク（ドラフト）"] }
+    ] }
+  ]
+}

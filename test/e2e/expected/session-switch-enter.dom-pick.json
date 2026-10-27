@@ -1,0 +1,7 @@
+{
+  "screen-nav": [
+    { "tag": "nav", "attributes": { "aria-label": "画面", "data-screen": "conversation" }, "children": [
+      { "tag": "button", "attributes": { "aria-haspopup": "dialog", "aria-expanded": "false", "aria-label": "セッション FA。押すとセッションを切り替える画面を開く" }, "children": ["FA"] }
+    ] }
+  ]
+}

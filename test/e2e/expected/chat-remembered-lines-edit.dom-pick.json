@@ -1,0 +1,11 @@
+{
+  "remembered-lines": [
+    { "tag": "section", "attributes": { "aria-label": "覚えていること" }, "children": [
+      { "tag": "button", "children": ["編集"] },
+      { "tag": "ul", "attributes": { "aria-label": "覚えていること" }, "children": [
+        { "tag": "button", "children": ["架空の1行"] },
+        { "tag": "button", "children": ["架空の長い1行架空の長い1行架空の長い1行架空の長い1行架空の長い1行"] }
+      ] }
+    ] }
+  ]
+}

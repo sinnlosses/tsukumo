@@ -50,7 +50,7 @@ describe("入力欄のマークダウンエディタ", () => {
 
     await room.waitForEvent("request")
     await room.waitForEvent("turn-finished")
-    await room.settleAndMatchWithMessages(ELAPSED_MS)
+    await room.settleAndMatchPickedWithMessages(ELAPSED_MS)
   })
 
   it("隠れた記号を含む行とその隣で、日本語の変換を確定しても文面が壊れない", async () => {
