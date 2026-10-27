@@ -3,17 +3,17 @@
 
 import { sum } from "remeda"
 
-import { NO_REPORT_CHANGE_SUMMARY } from "../report/report-change-summary.ts"
-import { finalReportBody, orderedReportRegions } from "./main-view-report-body.ts"
+import { NO_REPORT_CHANGE_SUMMARY } from "../../../shared/report/report-change-summary.ts"
 import {
   type MainViewEntry,
   type MainViewStep,
   type MainViewTurn,
   NO_BODY,
-} from "./main-view-shape.ts"
+} from "../../../shared/session/main-view-shape.ts"
+import { MAX_SESSION_STATE_TURNS } from "../../../shared/session/session-record.ts"
+import type { TurnBodies } from "../../../shared/session/turn-progress.ts"
+import { finalReportBody, orderedReportRegions } from "./main-view-report-body.ts"
 import { groupIntoTurns } from "./main-view-step.ts"
-import { MAX_SESSION_STATE_TURNS } from "./session-record.ts"
-import type { TurnBodies } from "./turn-progress.ts"
 
 /**
  * 出すやり取りの数。

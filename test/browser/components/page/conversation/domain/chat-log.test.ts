@@ -4,8 +4,8 @@ import {
   chatLogEntries,
   chatLogRows,
   type ChatLogEntry,
-} from "../../../src/shared/chat/chat-log.ts"
-import { detailRecord, requestRecord, speechRecord } from "../../fixture/session-record.ts"
+} from "../../../../../../src/browser/components/page/conversation/domain/chat-log.ts"
+import { detailRecord, requestRecord, speechRecord } from "../../../../../fixture/session-record.ts"
 
 // 雑談のログは素直な時系列（docs/architecture/screen-design.md「雑談モードの画面」）。`mainViewEntries` のように依頼で
 // まとめ直さないことを、並びと落とすものの2点で固定する。

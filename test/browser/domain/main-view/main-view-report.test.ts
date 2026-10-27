@@ -2,29 +2,29 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  orderedReportRegions,
+  reportHeadedSections,
+} from "../../../../src/browser/domain/main-view/main-view-report-body.ts"
+import { mainViewTurns } from "../../../../src/browser/domain/main-view/main-view.ts"
+import {
   type RecordedReportFigure,
   type ReportSection,
   reportSectionsOfBody,
-} from "../../../src/shared/report/report-block.ts"
-import type { ReportCheck } from "../../../src/shared/report/report-check.ts"
-import type { ReportTask } from "../../../src/shared/report/report-task.ts"
-import { mainViewEntries } from "../../../src/shared/session/main-view-entry.ts"
-import {
-  orderedReportRegions,
-  reportHeadedSections,
-} from "../../../src/shared/session/main-view-report-body.ts"
-import type { MainViewStep } from "../../../src/shared/session/main-view-shape.ts"
-import { mainViewTurns } from "../../../src/shared/session/main-view.ts"
-import type { SessionEvent } from "../../../src/shared/session/session-event.ts"
-import { applySessionEvent } from "../../../src/shared/session/session-fold.ts"
-import { INITIAL_SESSION_STATE } from "../../../src/shared/session/session-state.ts"
+} from "../../../../src/shared/report/report-block.ts"
+import type { ReportCheck } from "../../../../src/shared/report/report-check.ts"
+import type { ReportTask } from "../../../../src/shared/report/report-task.ts"
+import { mainViewEntries } from "../../../../src/shared/session/main-view-entry.ts"
+import type { MainViewStep } from "../../../../src/shared/session/main-view-shape.ts"
+import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
+import { applySessionEvent } from "../../../../src/shared/session/session-fold.ts"
+import { INITIAL_SESSION_STATE } from "../../../../src/shared/session/session-state.ts"
 import {
   firstLineOf,
   lead,
   materialReport,
   reportOf,
   SETTLED,
-} from "../../fixture/main-view-entry.ts"
+} from "../../../fixture/main-view-entry.ts"
 import {
   ask,
   finished,
@@ -32,9 +32,9 @@ import {
   shownReports,
   turnOf,
   utteranceEvent,
-} from "../../fixture/main-view-report.ts"
-import { reportEvent } from "../../fixture/report-event.ts"
-import { requestEvent } from "../../fixture/session-event.ts"
+} from "../../../fixture/main-view-report.ts"
+import { reportEvent } from "../../../fixture/report-event.ts"
+import { requestEvent } from "../../../fixture/session-event.ts"
 
 describe("mainViewTurns（締めの speak → レポートで終える並び）", () => {
   // 締めの `speak` のあとに本文で終える並びを、SDK から届くイベントの形で流す。締めの `speak` は

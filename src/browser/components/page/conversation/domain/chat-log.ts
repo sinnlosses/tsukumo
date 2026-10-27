@@ -1,9 +1,13 @@
 // 雑談モードの会話のログ。セッションの記録から導くだけで、状態は持たない。
 // 素直な時系列で、利用者の発言とキャラクターのセリフが交互に並ぶ。
 
-import type { Expression } from "../character-pack/expression.ts"
-import type { RecordedPromptImage } from "../session-driver/prompt-image.ts"
-import { type RecordTime, recordTimeAt, type SessionRecord } from "../session/session-record.ts"
+import type { Expression } from "../../../../../shared/character-pack/expression.ts"
+import type { RecordedPromptImage } from "../../../../../shared/session-driver/prompt-image.ts"
+import {
+  type RecordTime,
+  recordTimeAt,
+  type SessionRecord,
+} from "../../../../../shared/session/session-record.ts"
 
 /**
  * 会話のログ1件。話したのがどちらかと文面、話した時刻を持つ。

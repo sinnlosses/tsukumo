@@ -1,10 +1,6 @@
 // 一覧のタスクを、行・絞り込みの札・選んだタスクの詳細・操作の帯へ畳む。
 
 import {
-  isTaskRequestable,
-  type TaskRequest,
-} from "../../../../shared/repository/task-run-prompt.ts"
-import {
   taskReadiness,
   type TaskLocation,
   type TaskSummaryItem,
@@ -32,6 +28,7 @@ import type {
   TaskStateKind,
   TaskStateView,
 } from "./task-board-view.ts"
+import { isTaskRequestable, type TaskRequest } from "./task-run-prompt.ts"
 
 /** 一覧の1件と、その状態の言い方（行・札・件数で何度も使うので1回だけ作る）。 */
 export type BoardEntry = {

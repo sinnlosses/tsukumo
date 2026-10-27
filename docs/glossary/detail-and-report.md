@@ -30,7 +30,7 @@
 - **定義**: **メインビューの本文を、Markdown 1本に畳まずに分けて持つ単位**。`report` ツールの本文は、頭（結論と合図の行）・
   節の並び・振り返り・お願いの欄を持つ。最終のときの頭は、頭に段ごとの所要時間を足したもの。節の欄の `id` は、整形して
   図を先頭に足したあとの節の並びの位置。`report` ツール以外の本文（詳細・段のまとめ）は Markdown 1本の欄にする
-- **注記**: 欄が正で、描く側は欄を描く順に並べて（`orderedReportRegions`。`src/shared/session/main-view-report-body.ts`）欄ごとに描く。
+- **注記**: 欄が正で、描く側は欄を描く順に並べて（`orderedReportRegions`。`src/browser/domain/main-view/main-view-report-body.ts`）欄ごとに描く。
   形の決めは `docs/architecture/adr/0031-report-body-as-regions.md`
 - **避ける言い方**: ブロック、塊（節の中の `ReportBlock` と紛れる）、パート
 
@@ -38,7 +38,7 @@
 
 - **英語識別子**: `final`（`MainViewStep.final`）
 - **定義**: **そのやり取りで最後の、中間でない本文**。`report` ツールが呼ばれたターンでは
-  最後の呼び出し、呼ばれなかったターンでは最後の本文（`main-view.ts` の `markFinalReport` /
+  最後の呼び出し、呼ばれなかったターンでは最後の本文（`browser/domain/main-view/main-view.ts` の `markFinalReport` /
   `selectLastText`）。ラベル「最終レポート」（目録の1行の頭）が出るのは、同じやり取りに中間レポートがあるときか、
   本文に `report` の `task` があるときだけ（どちらも無ければ区別にならないため）。**いちばん新しいやり取りでは、加えて
   そのやり取りが閉じている（ターンが `running` でなく、バックグラウンドタスクも残っていない）ときだけ
@@ -80,7 +80,7 @@
 
 - **英語識別子**: `interim`（`MainViewStep.interim`）
 - **定義**: **ターンの途中で出たレポート**。出どころは2つ: 1つのターンで `report` ツールが何度か
-  呼ばれたときの最後でない呼び出し（`src/shared/session/main-view.ts` の `selectToolReports`）と、
+  呼ばれたときの最後でない呼び出し（`src/browser/domain/main-view/main-view.ts` の `selectToolReports`）と、
   段を進めた `work_plan` の**段のまとめ**（委譲中は `phase_result` では空で、メインが同じ位置で渡す `work_plan` の `phaseSummary` が段のまとめになる。
   `docs/architecture/display.md`「ワークプラン」）。メインビューには印を付けた枠で残る。通った
   `report` はそこで SDK のターンを閉じるので、`report` からの中間レポートはバックグラウンドタスクや委譲の返却で

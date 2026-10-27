@@ -5,7 +5,7 @@ import { useRevealedChatLog } from "../../../../../../../../src/browser/componen
 import {
   chatLogEntries,
   type ChatLogEntry,
-} from "../../../../../../../../src/shared/chat/chat-log.ts"
+} from "../../../../../../../../src/browser/components/page/conversation/domain/chat-log.ts"
 import { speechRecord } from "../../../../../../../fixture/session-record.ts"
 
 /**

@@ -27,7 +27,7 @@ const ROOM_COLORS = [
 
 /**
  * 語彙の1つめが載るポート。`DEFAULT_VIEW_PORT` と同じ値に揃える。
- * `shared` からサーバ側を import できないので写してある（ずれたらテストが落ちる）。
+ * `browser` からサーバ側を import できないので写してある（ずれたらテストが落ちる）。
  */
 const FIRST_ROOM_PORT = 7327
 

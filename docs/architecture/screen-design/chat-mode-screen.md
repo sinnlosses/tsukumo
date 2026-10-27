@@ -47,7 +47,7 @@
   戻り**、背景はキャラビューへ帰る
 - **立ち絵はメインでも枠と地を持たない**（13.1 原則2。居る場所が変わっても原則は変わらない）
 - **会話のログは `speak` のセリフから作る。** `shared/session/main-view-entry.ts` の `mainViewEntries` は
-  セリフの記録を落とし続け、**雑談のログは `shared/chat/chat-log.ts` の `chatLogEntries` が
+  セリフの記録を落とし続け、**雑談のログは `browser/components/page/conversation/domain/chat-log.ts` の `chatLogEntries` が
   別に組む**（2026-09-20、プロトタイプで確かめて決めた）。`mainViewEntries` は依頼を境目に
   やり取りへまとめて札で遡る形を作っており、**素直な時系列で積む雑談とは並びの規則が違う**
 - **ログに並ぶのは雑談のセッションのぶんだけ**（2026-09-20 決定。`docs/architecture/chat-mode.md` 4.9）。
@@ -82,7 +82,7 @@
   セリフだけがログに並ぶ**
   - **送った文面はログにも記録にも残さない**（2026-09-21、ユーザーの選択）。**落とすのは組み立ての
     側ではない** — 駆動が `request` の代わりに**文面を持たないイベント**（`turn-started`）を流すので、
-    雑談のログ（`shared/chat/chat-log.ts`）にも仕事のメインビュー（`shared/session/main-view.ts`）にも
+    雑談のログ（`browser/components/page/conversation/domain/chat-log.ts`）にも仕事のメインビュー（`browser/domain/main-view/main-view.ts`）にも
     会話のアーカイブにも**初めから流れようが無い**。上の「ログの組み立てで仕切っているのでは
     ない」と同じ立場で、組む前の段階で決まっている。**アーカイブが書くのは `request` と `speech`
     の2種類だけ**なので、ここも別に除外を足す必要が無い

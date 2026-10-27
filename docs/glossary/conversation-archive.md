@@ -64,6 +64,6 @@
 - **注記**: **押せない・畳めない**（利用者の操作の対象にしない）。**圧縮の数値**
   （`compact_metadata` の `pre_tokens` / `post_tokens` / `duration_ms`）は運ばない・画面に
   出さない
-- **注記**: **仕事のメインビューには出さない。** 出るのは雑談のログ（`shared/chat/chat-log.ts` の
+- **注記**: **仕事のメインビューには出さない。** 出るのは雑談のログ（`browser/components/page/conversation/domain/chat-log.ts` の
   `chatLogEntries`）だけ
 - **避ける言い方**: 忘却の印、要約の境界、コンパクション境界

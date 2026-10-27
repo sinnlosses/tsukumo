@@ -14,8 +14,8 @@
 import { useEffect, useState } from "react"
 import { isDeepEqual } from "remeda"
 
-import type { ChatLogEntry } from "../../../../../../../shared/chat/chat-log.ts"
 import { nowEpochMilliseconds } from "../../../../../../utils/clock.ts"
+import type { ChatLogEntry } from "../../../domain/chat-log.ts"
 
 /** キャラクターの吹き出しどうしを最低これだけ空ける（ms）。 */
 const MIN_GAP_MS = 2000

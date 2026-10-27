@@ -17,12 +17,12 @@ import {
 } from "react"
 import { isDeepEqual } from "remeda"
 
-import type { TurnResult } from "../../../../../../../../../shared/session/turn-result.ts"
 import { REVEAL_PENDING_ATTRIBUTE } from "../../../../../../../../domain/reveal/paint.ts"
 import {
   useReadingSection,
   type HeadingStep,
 } from "../../../../../../../../stores/reading-section.ts"
+import type { TurnResult } from "../../../../../domain/turn-result.ts"
 import type { HeadNotice, HeadNoticeAction } from "../../../domain/head-notice.ts"
 import { outlineReportHeadOf } from "../../../domain/outline-report-head.ts"
 import type { OutlineReport } from "../../../domain/outline-report-row.ts"

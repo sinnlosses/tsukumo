@@ -8,13 +8,13 @@
 
 import type { ReactElement } from "react"
 
-import { requestPromptOf, type TaskRequest } from "../../../../shared/repository/task-run-prompt.ts"
 import { Button } from "../../../components/ui/button/button.tsx"
 import { Dialog } from "../../../components/ui/dialog/dialog.tsx"
 import { Text } from "../../../components/ui/text/text.tsx"
 import { loadLaunchSkill } from "../../../domain/launch-skill.ts"
 import { useSession, useTurnRunning } from "../../../stores/session.ts"
 import type { TaskRunConfirmOutcome } from "../domain/task-run-confirm-outcome.ts"
+import { requestPromptOf, type TaskRequest } from "../domain/task-run-prompt.ts"
 import styles from "./task-run-confirm.module.css"
 
 type TaskRunConfirmProps = {

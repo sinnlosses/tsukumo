@@ -66,7 +66,7 @@
 
 ### 部屋
 
-- **英語識別子**: `room`（名前は `roomName(viewPort)`。`src/shared/view-server/room.ts`）
+- **英語識別子**: `room`（名前は `roomName(viewPort)`。`src/browser/components/domain/screen-nav/domain/room.ts`）
 - **定義**: 起こした tsukumo 1つの居場所。**ビューのポート1つが部屋1つ**で、同じディレクトリで
   2つめを起こすとポートがずれて別の部屋になる
 - **注記**: 名前は和の色名12個をポートの並び順に割り当てたもの（7327 が「空色の間」。

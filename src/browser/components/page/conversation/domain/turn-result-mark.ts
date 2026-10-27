@@ -2,7 +2,7 @@
 
 import { omit } from "remeda"
 
-import type { TurnResult } from "../../../../../shared/session/turn-result.ts"
+import type { TurnResult } from "./turn-result.ts"
 
 /**
  * 帯のチップが言える状態。レポートの無いやり取りは帯が段の進みから決めるか、出さないので入らない。

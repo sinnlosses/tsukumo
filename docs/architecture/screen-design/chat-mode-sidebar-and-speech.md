@@ -149,7 +149,7 @@ LINE / Discord と同じ形で、日の区切りだけの案・ホバーした�
   まで古い呼び名が残る
 - **区切りは日が変わった発言の手前にだけ入り、ログの先頭には入れない**。日を比べる相手は1つ前の
   発言で、圧縮の区切りは飛ばす。日の境目は画面を見ている人のタイムゾーン
-  （`utils/clock.ts` の `localTimeZoneId`）で決め、並びを組むのは `shared/chat/chat-log.ts` の
+  （`utils/clock.ts` の `localTimeZoneId`）で決め、並びを組むのは `browser/components/page/conversation/domain/chat-log.ts` の
   `chatLogRows`（タイムゾーンは引数で受け取る）
 - **前のセッションを組み直した発言（時刻が分からない）には時刻を出さない**。そこから
   いまの発言へ移るところに、いまの発言の日付の区切りを入れる。**「時刻の無い行 = 前のセッション

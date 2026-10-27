@@ -9,11 +9,11 @@ import clsx from "clsx"
 // oxlint-disable-next-line no-restricted-imports -- 描き直し回数を数える単体テストが Compiler の掛からない Vitest を通るため残す（docs/coding-standards/react.md「手でメモ化しない」）
 import { memo, type ReactElement } from "react"
 
-import { orderedReportRegions } from "../../../../../../../../shared/session/main-view-report-body.ts"
 import type {
   MainViewReportBody,
   MainViewReportRegion,
 } from "../../../../../../../../shared/session/main-view-shape.ts"
+import { orderedReportRegions } from "../../../../../../../domain/main-view/main-view-report-body.ts"
 import { useReportReveal } from "../../../../../../../domain/reveal/use-report-reveal.ts"
 import { Button } from "../../../../../../ui/button/button.tsx"
 import { detailBlockClassName, Markdown } from "../../../markdown/markdown.tsx"

@@ -1,8 +1,8 @@
 // `mainViewTurns` の窓・ステップへのまとめ・本文の選び方と最終レポートの印。
 import { describe, expect, it } from "vitest"
 
-import { mainViewTurns } from "../../../src/shared/session/main-view.ts"
-import { MAX_SESSION_STATE_TURNS } from "../../../src/shared/session/session-record.ts"
+import { mainViewTurns } from "../../../../src/browser/domain/main-view/main-view.ts"
+import { MAX_SESSION_STATE_TURNS } from "../../../../src/shared/session/session-record.ts"
 import {
   detail,
   edit,
@@ -14,7 +14,7 @@ import {
   SETTLED,
   toolReport,
   WRITING,
-} from "../../fixture/main-view-entry.ts"
+} from "../../../fixture/main-view-entry.ts"
 
 /** メインビューに出すやり取りの数（仕事の記録の窓と同じ）。 */
 const MAX_MAIN_VIEW_TURNS = MAX_SESSION_STATE_TURNS.work

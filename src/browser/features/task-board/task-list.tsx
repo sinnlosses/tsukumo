@@ -13,7 +13,6 @@
 
 import type { ReactElement } from "react"
 
-import { isTaskRequestable } from "../../../shared/repository/task-run-prompt.ts"
 import {
   hasTaskStatus,
   type TaskSummaryItem,
@@ -25,6 +24,7 @@ import { TaskPeek, type TaskPeekRun } from "./components/task-peek.tsx"
 import { TaskRunningCard } from "./components/task-running-card.tsx"
 import { TaskSkeleton } from "./components/task-skeleton.tsx"
 import { taskListFilterLabel, type TaskListFilterStatus } from "./domain/task-list-count.ts"
+import { isTaskRequestable } from "./domain/task-run-prompt.ts"
 import { filterTasksForSidebar } from "./domain/task-sidebar-filter.ts"
 import { orderTasksForSidebar, type TaskSidebarOrder } from "./domain/task-sidebar-order.ts"
 import {

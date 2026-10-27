@@ -10,9 +10,9 @@ import { replaceEqualDeep } from "@tanstack/react-query"
 import { isExchangeClosed } from "../../shared/session/conversation-moment.ts"
 import { mainViewEntries } from "../../shared/session/main-view-entry.ts"
 import type { MainViewTurn } from "../../shared/session/main-view-shape.ts"
-import { mainViewTurns } from "../../shared/session/main-view.ts"
 import type { SessionState } from "../../shared/session/session-state.ts"
 import { bodiesOf, type TurnBodies } from "../../shared/session/turn-progress.ts"
+import { mainViewTurns } from "../domain/main-view/main-view.ts"
 import { useSession } from "./session.ts"
 
 const TURNS_BY_STATE = new WeakMap<SessionState, readonly MainViewTurn[]>()

@@ -31,7 +31,7 @@
 ## 1. いまの流れと、条の守られ方
 
 流れは「検査（`report-review.ts` / `report-violation.ts`）→ 記録（引数のまま）→ 整形
-（`src/shared/report/report-tidy.ts`）→ 組み立て（`src/shared/session/main-view.ts` の `reportMarkdown`）→ Markdown の描画
+（`src/shared/report/report-tidy.ts`）→ 組み立て（`src/browser/domain/main-view/main-view.ts` の `reportMarkdown`）→ Markdown の描画
 （`src/browser/components/page/conversation/components/main-view/markdown/`）」。
 
 **`body` に関わる条がいまどう守られているか**

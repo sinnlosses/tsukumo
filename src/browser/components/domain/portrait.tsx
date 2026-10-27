@@ -12,7 +12,7 @@ import clsx from "clsx"
 import { useEffect, type ReactElement } from "react"
 
 import type { Expression } from "../../../shared/character-pack/expression.ts"
-import type { PortraitMotion } from "../../../shared/session/portrait-motion.ts"
+import type { PortraitMotion } from "../../domain/portrait-motion.ts"
 import styles from "./portrait.module.css"
 
 export type PortraitProps = {

@@ -1,6 +1,5 @@
 // `<TaskBoard>`（タスクのモーダル）が画面に出す形。フックが畳み、presenter と部品が `kind` で出し分けて置く。
 
-import type { TaskRequest } from "../../../../shared/repository/task-run-prompt.ts"
 import type {
   TaskDifficulty,
   TaskLocation,
@@ -9,6 +8,7 @@ import type {
 import type { CodeSpanPart } from "../../../domain/code-span.ts"
 import type { DraftSortChoice } from "./draft-sort.ts"
 import type { TaskRunConfirmOutcome } from "./task-run-confirm-outcome.ts"
+import type { TaskRequest } from "./task-run-prompt.ts"
 
 export type TaskStateKind = "ready" | "blocked" | "hold" | "draft" | "doing" | "done" | "other"
 

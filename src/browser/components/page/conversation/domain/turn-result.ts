@@ -1,7 +1,10 @@
 // 窓の中のやり取りごとの結果（`TurnResult`）。やり取りの記録と、いちばん新しいやり取りの局面から導くだけで、状態は持たない。
 
-import type { ConversationMoment } from "./conversation-moment.ts"
-import type { MainViewStepBody, MainViewTurn } from "./main-view-shape.ts"
+import type { ConversationMoment } from "../../../../../shared/session/conversation-moment.ts"
+import type {
+  MainViewStepBody,
+  MainViewTurn,
+} from "../../../../../shared/session/main-view-shape.ts"
 
 type MainViewTextBody = Extract<MainViewStepBody, { readonly kind: "text" }>
 

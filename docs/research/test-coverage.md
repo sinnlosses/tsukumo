@@ -55,7 +55,7 @@
 `test/browser/components/page/conversation/main-view/report.test.tsx`・`test/browser/stores/main-view-turn.test.ts`・
 `test/server/adapter/vendor-asset.test.ts`・`test/server/core/report-notation.test.ts`・
 `test/shared/character-pack/character.test.ts`・`test/shared/character-pack/portrait-image.test.ts`・
-`test/shared/session/portrait-motion.test.ts`・`test/shared/session/turn-speech.test.ts`・`test/shared/utterance.test.ts`
+`test/browser/domain/portrait-motion.test.ts`・`test/shared/session/turn-speech.test.ts`・`test/shared/utterance.test.ts`
 
 **ただしこれは消す理由にならない。** 規約の表がそう決めている（「そのテストを外しても到達行・分岐が
 減らない」は**それだけでは消す理由にしない**）。実際この15個は、どれも**同じ振る舞いを上位が別の入力で
@@ -193,7 +193,7 @@
   コードのコメントにある取り決め。**足すなら先に要件側へ書く**のが順序
 - `src/server/adapter/fake-driver.ts:155-199`（`interrupt` / `setModel` / `setPermissionMode`）— 目視確認と
   Playwright のための代役で、守るべき契約は本物の駆動（`src/server/core/session-driver.ts`）の側
-- `src/server/core/sdk-message.ts:172,199,219,257,265`・`src/shared/session/main-view.ts:378`・
+- `src/server/core/sdk-message.ts:172,199,219,257,265`・`src/browser/domain/main-view/main-view.ts:378`・
   `src/shared/character-pack/portrait-image.ts:40` ほかの「読めない値は空文字・`undefined`」— 同じ関数の別の入口で
   同じ結果を既に固定している
 

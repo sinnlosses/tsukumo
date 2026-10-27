@@ -6,13 +6,13 @@
 
 import { useReducer, useState } from "react"
 
-import type { TaskRequest } from "../../../../shared/repository/task-run-prompt.ts"
 import type { TaskSummaryResult } from "../../../../shared/repository/task-summary.ts"
 import type { TaskBoardRequest } from "../../../stores/task-board-request.ts"
 import { boardContent, boardEntries, type BoardEntry } from "../domain/task-board-content.ts"
 import { countsTextOf, matchesFilter, matchesQuery } from "../domain/task-board-filter.ts"
 import type { TaskBoardView } from "../domain/task-board-view.ts"
 import { taskListCounts } from "../domain/task-list-count.ts"
+import type { TaskRequest } from "../domain/task-run-prompt.ts"
 import {
   boardReducer,
   initialBoardState,

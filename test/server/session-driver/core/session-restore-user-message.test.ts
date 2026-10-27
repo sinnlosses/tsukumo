@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest"
 
+import { mainViewTurns } from "../../../../src/browser/domain/main-view/main-view.ts"
 import { asidePromptText } from "../../../../src/server/session-driver/core/aside-prompt.ts"
 import { EMPTY_INPUT_LEDGER } from "../../../../src/server/session-driver/core/input-ledger.ts"
 import { progressNudgePromptText } from "../../../../src/server/session-driver/core/progress-nudge.ts"
 import { toRestoredEvents } from "../../../../src/server/session-driver/core/session-restore.ts"
 import { mainViewEntries } from "../../../../src/shared/session/main-view-entry.ts"
 import { turnAsides } from "../../../../src/shared/session/main-view-shape.ts"
-import { mainViewTurns } from "../../../../src/shared/session/main-view.ts"
 import { applyRestoredEvents } from "../../../../src/shared/session/restored-event.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import { INITIAL_SESSION_STATE } from "../../../../src/shared/session/session-state.ts"

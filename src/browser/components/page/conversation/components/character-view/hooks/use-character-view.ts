@@ -15,12 +15,6 @@ import { useEffect, useState } from "react"
 import type { Expression } from "../../../../../../../shared/character-pack/expression.ts"
 import type { ItemSeatMap } from "../../../../../../../shared/item/item.ts"
 import type { ReactionKind } from "../../../../../../../shared/recommendation/reaction.ts"
-import {
-  nextPortraitMotionTransitionDelayMs,
-  resolvePortraitMotion,
-  type PortraitMotion,
-  type PortraitMotionInput,
-} from "../../../../../../../shared/session/portrait-motion.ts"
 import type { ShownReaction } from "../../../../../../../shared/session/shown-reaction.ts"
 import { reportDraftingOf } from "../../../../../../../shared/session/turn-progress.ts"
 import type { Speech } from "../../../../../../../shared/session/turn-speech.ts"
@@ -30,6 +24,12 @@ import {
   type CharacterFaceInfo,
 } from "../../../../../../domain/character-face.ts"
 import { portraitAppearance } from "../../../../../../domain/portrait-appearance.ts"
+import {
+  nextPortraitMotionTransitionDelayMs,
+  resolvePortraitMotion,
+  type PortraitMotion,
+  type PortraitMotionInput,
+} from "../../../../../../domain/portrait-motion.ts"
 import { useSession } from "../../../../../../stores/session.ts"
 import { useTurnSelection } from "../../../../../../stores/turn-selection.ts"
 import { nowEpochMilliseconds } from "../../../../../../utils/clock.ts"

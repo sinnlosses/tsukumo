@@ -1,6 +1,10 @@
 // 「tsukumo に頼む」で頼めるタスクと、送る文面。
 
-import { hasTaskStatus, taskReadiness, type TaskSummaryItem } from "./task-summary.ts"
+import {
+  hasTaskStatus,
+  taskReadiness,
+  type TaskSummaryItem,
+} from "../../../../shared/repository/task-summary.ts"
 
 const HELD_NOTE = "このタスクは保留なので、着手の前に判断を聞いて。"
 

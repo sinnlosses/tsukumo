@@ -1,4 +1,4 @@
-import { orderedReportRegions } from "../../src/shared/session/main-view-report-body.ts"
+import { orderedReportRegions } from "../../src/browser/domain/main-view/main-view-report-body.ts"
 import type {
   MainViewEntry,
   MainViewReportBody,

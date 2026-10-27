@@ -1,13 +1,9 @@
 // メインビューの記録を、やり取り（ターン）とステップにまとめる。
 // 本文の選び方は持たず、まとめた直後の形までを作る。
 
-import { foldInlineMarks } from "../report/inline-mark.ts"
-import { NO_REPORT_CHANGE_SUMMARY } from "../report/report-change-summary.ts"
-import { NO_REPORT_TASK } from "../report/report-task.ts"
-import { isBlankText } from "../utils/blank-text.ts"
-import { clipWithEllipsis } from "../utils/clip-text.ts"
-import type { MeasuredTime } from "../utils/elapsed-time.ts"
-import { orderedReportRegions } from "./main-view-report-body.ts"
+import { foldInlineMarks } from "../../../shared/report/inline-mark.ts"
+import { NO_REPORT_CHANGE_SUMMARY } from "../../../shared/report/report-change-summary.ts"
+import { NO_REPORT_TASK } from "../../../shared/report/report-task.ts"
 import {
   type MainViewAction,
   type MainViewAside,
@@ -17,9 +13,13 @@ import {
   type MainViewStepBody,
   type MainViewTurn,
   NO_BODY,
-} from "./main-view-shape.ts"
-import { splitIntoTurns, type TurnRest, turnIdOf } from "./turn.ts"
-import type { PhaseShift } from "./work-plan-shift.ts"
+} from "../../../shared/session/main-view-shape.ts"
+import { splitIntoTurns, type TurnRest, turnIdOf } from "../../../shared/session/turn.ts"
+import type { PhaseShift } from "../../../shared/session/work-plan-shift.ts"
+import { isBlankText } from "../../../shared/utils/blank-text.ts"
+import { clipWithEllipsis } from "../../../shared/utils/clip-text.ts"
+import type { MeasuredTime } from "../../../shared/utils/elapsed-time.ts"
+import { orderedReportRegions } from "./main-view-report-body.ts"
 
 const NO_PHASE_LABEL = { kind: "none" } as const satisfies MainViewPhaseLabel
 

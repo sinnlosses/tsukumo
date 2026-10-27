@@ -4,7 +4,7 @@ import {
   nextPortraitMotionTransitionDelayMs,
   resolvePortraitMotion,
   type PortraitMotionInput,
-} from "../../../src/shared/session/portrait-motion.ts"
+} from "../../../src/browser/domain/portrait-motion.ts"
 
 /** 失敗の動きが当たる窓（失敗の直後から）。 */
 const FAILURE_MOTION_WINDOW_MS = 400

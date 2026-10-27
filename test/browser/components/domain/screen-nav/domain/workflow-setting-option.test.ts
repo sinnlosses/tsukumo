@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
-import { workflowSettingSteps } from "../../../src/shared/workflow-setting/workflow-setting-option.ts"
-import type { WorkflowSettingField } from "../../../src/shared/workflow-setting/workflow-setting.ts"
+import { workflowSettingSteps } from "../../../../../../src/browser/components/domain/screen-nav/domain/workflow-setting-option.ts"
+import type { WorkflowSettingField } from "../../../../../../src/shared/workflow-setting/workflow-setting.ts"
 
 describe("workflowSettingSteps", () => {
   const field: WorkflowSettingField = {

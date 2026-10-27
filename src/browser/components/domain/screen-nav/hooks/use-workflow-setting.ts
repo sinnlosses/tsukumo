@@ -7,10 +7,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
 import { isDeepEqual } from "remeda"
 
-import {
-  workflowSettingSteps,
-  type WorkflowSettingOption,
-} from "../../../../../shared/workflow-setting/workflow-setting-option.ts"
 import type {
   WorkflowSettingChange,
   WorkflowSettingField,
@@ -20,6 +16,10 @@ import type {
 import { rpc } from "../../../../domain/rpc.ts"
 import { useSession } from "../../../../stores/session.ts"
 import { reorderSteps } from "../domain/step-reorder.ts"
+import {
+  workflowSettingSteps,
+  type WorkflowSettingOption,
+} from "../domain/workflow-setting-option.ts"
 
 /** 面の見出しの下に出す、どのリポジトリの設定か。 */
 export type ScreenNavWorkflowSettingRepository = {

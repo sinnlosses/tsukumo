@@ -4,15 +4,7 @@ import type { RefCallback, RefObject } from "react"
 import { groupBy } from "remeda"
 
 import { conversationMoment } from "../../../../../../../../../shared/session/conversation-moment.ts"
-import {
-  type PhaseRecap,
-  phaseRecapsOf,
-} from "../../../../../../../../../shared/session/phase-recap.ts"
 import { reportDraftingOf } from "../../../../../../../../../shared/session/turn-progress.ts"
-import {
-  turnResultsOf,
-  type TurnResult,
-} from "../../../../../../../../../shared/session/turn-result.ts"
 import {
   completionText,
   type PhaseNumber,
@@ -53,7 +45,9 @@ import {
   useReadingSection,
 } from "../../../../../../../../stores/reading-section.ts"
 import { useSession } from "../../../../../../../../stores/session.ts"
+import { type PhaseRecap, phaseRecapsOf } from "../../../../../domain/phase-recap.ts"
 import type { WorkStripResult } from "../../../../../domain/turn-result-mark.ts"
+import { turnResultsOf, type TurnResult } from "../../../../../domain/turn-result.ts"
 import { useMainViewContent } from "../../../../../stores/main-view-content.ts"
 import { type StepsLanding, useWorkStripSteps } from "../../../../../stores/work-strip-step-list.ts"
 import { workActivityOf, type WorkActivity } from "../../../domain/work-activity.ts"

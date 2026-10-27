@@ -1,6 +1,6 @@
 // ドラフトの仕分け（行ごとの計画・却下・保留）から、送る頼みと帯の件数を作る。
 
-import type { DraftDrop, TaskRequest } from "../../../../shared/repository/task-run-prompt.ts"
+import type { DraftDrop, TaskRequest } from "./task-run-prompt.ts"
 
 /** 行ごとの選び。選ばなかった行は `hold`（触らない）。 */
 export type DraftSortChoice = "plan" | "drop" | "hold"

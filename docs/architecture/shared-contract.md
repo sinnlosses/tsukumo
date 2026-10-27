@@ -117,7 +117,7 @@
   起こし直した直後のログが全部「いま」に見える
 
 **`session-advance.ts` は純粋な畳み込み。** 姿から導くだけのもの（メインビューに出す形・`/`
-補完の候補）は `main-view.ts` / `command-suggestion.ts` に分けてある。状態を持つのはサーバ側の `session-manager` と
+補完の候補）は `browser/domain/main-view/main-view.ts` / `command-suggestion.ts` に分けてある。状態を持つのはサーバ側の `session-manager` と
 ブラウザ側（`browser/stores/session.ts` の zustand の store）だけで、「イベント1件でどう変わるか」はすべてここのテストで守れる。
 
 **1つの機能だけが動かす欄の畳み方は、その機能の `shared/<機能>/` に置く**（日記の `applyDiaryEvent` の形）。

@@ -1,7 +1,10 @@
 // メインビューの本文の欄から、描く順の欄の並びと節の見出しの並びを導く。
 
-import { isBlankText } from "../utils/blank-text.ts"
-import type { MainViewReportBody, MainViewReportRegion } from "./main-view-shape.ts"
+import type {
+  MainViewReportBody,
+  MainViewReportRegion,
+} from "../../../shared/session/main-view-shape.ts"
+import { isBlankText } from "../../../shared/utils/blank-text.ts"
 
 /**
  * 本文を描く順の欄に並べる。空の欄は置かない。

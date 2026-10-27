@@ -34,7 +34,7 @@
 
 **局面（`ConversationMoment`）はセッションの状態から導く**（状態の畳み込みと共有層は変えない。
 導く関数は `src/shared/session/conversation-moment.ts` で、`turn-speech.ts` と同じ置き方）。
-「閉じている」は `src/shared/session/main-view.ts` の `closed` と同じ判定（ターンが `running` でなく、
+「閉じている」は `src/browser/domain/main-view/main-view.ts` の `closed` と同じ判定（ターンが `running` でなく、
 バックグラウンドタスクも残っていない）。
 
 | 局面     | 値        | 判定                                                               | メインビューの中身                     | 知らせの行の語（中身の外で起きたとき） |

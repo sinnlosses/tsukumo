@@ -17,6 +17,7 @@ import { createServer, type IncomingMessage, type ServerResponse, type Server } 
 import { basename } from "node:path"
 import process from "node:process"
 
+import { roomName } from "../../src/browser/components/domain/screen-nav/domain/room.ts"
 import {
   closeTab,
   listTabs,
@@ -24,7 +25,6 @@ import {
   type OrcaTab,
 } from "../../src/server/host/adapter/orca-host.ts"
 import { createStartupToken } from "../../src/server/view-server/adapter/server.ts"
-import { roomName } from "../../src/shared/view-server/room.ts"
 import { findRunningTsukumo } from "../shared/instance-location.ts"
 import { candidatePorts, run, type Listener } from "../shared/port-listener.ts"
 import {

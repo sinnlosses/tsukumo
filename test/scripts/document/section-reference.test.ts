@@ -273,7 +273,7 @@ describe("isScannedSource", () => {
 
   test("それ以外の docs/・src/・AGENTS.md は対象にする", () => {
     expect(isScannedSource("docs/architecture.md")).toBe(true)
-    expect(isScannedSource("src/shared/session/main-view.ts")).toBe(true)
+    expect(isScannedSource("src/shared/session/session-state.ts")).toBe(true)
     expect(isScannedSource("AGENTS.md")).toBe(true)
   })
 })

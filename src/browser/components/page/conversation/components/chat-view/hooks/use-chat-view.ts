@@ -4,11 +4,6 @@
 import { useState, type RefObject } from "react"
 
 import type { Expression } from "../../../../../../../shared/character-pack/expression.ts"
-import {
-  chatLogEntries,
-  chatLogRows,
-  type ChatLogEntry,
-} from "../../../../../../../shared/chat/chat-log.ts"
 import type { RecordedPromptImage } from "../../../../../../../shared/session-driver/prompt-image.ts"
 import {
   characterFaceInfo,
@@ -18,6 +13,7 @@ import { portraitAppearance } from "../../../../../../domain/portrait-appearance
 import { useSession, useTurnRunning } from "../../../../../../stores/session.ts"
 import { localTimeZoneId } from "../../../../../../utils/clock.ts"
 import { dayLabel } from "../../../../../../utils/day-label.ts"
+import { chatLogEntries, chatLogRows, type ChatLogEntry } from "../../../domain/chat-log.ts"
 import { recordClockStamp, type ClockStamp } from "../../../domain/clock-stamp.ts"
 import { useRevealedChatLog } from "./use-speech-reveal.ts"
 import { useStickToBottom } from "./use-stick-to-bottom.ts"

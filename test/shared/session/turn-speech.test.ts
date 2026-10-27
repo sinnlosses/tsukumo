@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
+import { mainViewTurns } from "../../../src/browser/domain/main-view/main-view.ts"
 import { mainViewEntries } from "../../../src/shared/session/main-view-entry.ts"
-import { mainViewTurns } from "../../../src/shared/session/main-view.ts"
 import {
   MAX_SESSION_STATE_TURNS,
   type SessionRecord,

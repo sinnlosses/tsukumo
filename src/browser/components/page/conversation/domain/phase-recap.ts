@@ -1,11 +1,11 @@
 // 同じ依頼のワークプランの記録から、段ごとの所要と段のまとめを引く決まり。
 
-import type { MeasuredTime } from "../utils/elapsed-time.ts"
-import { phaseDurationOf } from "./phase-duration.ts"
-import type { RecordTime, SessionRecord } from "./session-record.ts"
-import { workPlanOf } from "./work-plan-fold.ts"
-import { shiftedPhaseOf } from "./work-plan-shift.ts"
-import { type LatestWorkPlan, plannedPhasesOf } from "./work-plan.ts"
+import { phaseDurationOf } from "../../../../../shared/session/phase-duration.ts"
+import type { RecordTime, SessionRecord } from "../../../../../shared/session/session-record.ts"
+import { workPlanOf } from "../../../../../shared/session/work-plan-fold.ts"
+import { shiftedPhaseOf } from "../../../../../shared/session/work-plan-shift.ts"
+import { type LatestWorkPlan, plannedPhasesOf } from "../../../../../shared/session/work-plan.ts"
+import type { MeasuredTime } from "../../../../../shared/utils/elapsed-time.ts"
 
 type WorkPlanRecord = Extract<SessionRecord, { readonly kind: "work-plan" }>
 

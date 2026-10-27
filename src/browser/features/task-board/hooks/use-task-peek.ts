@@ -9,10 +9,10 @@
 
 import { useRef, useState, type KeyboardEvent, type RefObject } from "react"
 
-import type { TaskRequest } from "../../../../shared/repository/task-run-prompt.ts"
 import { useDismissSignal, type DismissCause } from "../../../hooks/use-dismiss-signal.ts"
 import { useTaskBoardRequest } from "../../../stores/task-board-request.ts"
 import type { TaskRunConfirmOutcome } from "../domain/task-run-confirm-outcome.ts"
+import type { TaskRequest } from "../domain/task-run-prompt.ts"
 
 /** 開いている確認。`request` のあいだ、確認の `<dialog>` が窓の中に組み立てられる。 */
 export type TaskPeekConfirm =

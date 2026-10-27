@@ -1,10 +1,10 @@
 // `mainViewEntries` の記録ごとの結果の持ち回しと、失敗・脇の話の扱い。
 import { describe, expect, it } from "vitest"
 
+import { finalReportBody } from "../../../src/browser/domain/main-view/main-view-report-body.ts"
+import { mainViewTurns } from "../../../src/browser/domain/main-view/main-view.ts"
 import { mainViewEntries } from "../../../src/shared/session/main-view-entry.ts"
-import { finalReportBody } from "../../../src/shared/session/main-view-report-body.ts"
 import { type MainViewEntry, turnAsides } from "../../../src/shared/session/main-view-shape.ts"
-import { mainViewTurns } from "../../../src/shared/session/main-view.ts"
 import type { SessionEvent } from "../../../src/shared/session/session-event.ts"
 import { applySessionEvent } from "../../../src/shared/session/session-fold.ts"
 import {

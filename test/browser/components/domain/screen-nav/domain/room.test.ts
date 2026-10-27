@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
-import { DEFAULT_VIEW_PORT } from "../../../src/server/view-server/core/port-resolution.ts"
-import { roomName } from "../../../src/shared/view-server/room.ts"
+import { roomName } from "../../../../../../src/browser/components/domain/screen-nav/domain/room.ts"
+import { DEFAULT_VIEW_PORT } from "../../../../../../src/server/view-server/core/port-resolution.ts"
 
 describe("roomName", () => {
   // 語彙の1つめは既定のポート（`shared` からサーバ側を import できないので値を写してある）。

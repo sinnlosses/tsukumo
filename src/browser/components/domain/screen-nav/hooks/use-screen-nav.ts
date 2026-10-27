@@ -10,7 +10,6 @@
 import { useRef, type RefObject } from "react"
 
 import { FRAME_ERROR_REASON } from "../../../../../shared/frame.ts"
-import { roomName } from "../../../../../shared/view-server/room.ts"
 import {
   useCurrentWork,
   type CurrentWork,
@@ -28,6 +27,7 @@ import {
 } from "../../../../stores/nav-drawer.ts"
 import { useScreen, useScreenHref } from "../../../../stores/screen.tsx"
 import { useRestartRefused, useSession } from "../../../../stores/session.ts"
+import { roomName } from "../domain/room.ts"
 import { useCharacterPicker, type ScreenNavCharacterPicker } from "./use-character-picker.ts"
 import type { PhoneHeadSource } from "./use-phone-head.ts"
 import { useProjectName } from "./use-project-name.ts"

@@ -1,6 +1,9 @@
 // スキルの並びの欄の見せ方。候補は欄の `values` だけから作る。
 
-import type { WorkflowSettingChoice, WorkflowSettingField } from "./workflow-setting.ts"
+import type {
+  WorkflowSettingChoice,
+  WorkflowSettingField,
+} from "../../../../../shared/workflow-setting/workflow-setting.ts"
 
 export type WorkflowSettingOption = {
   readonly value: string

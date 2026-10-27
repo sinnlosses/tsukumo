@@ -8,7 +8,6 @@
 import { X } from "lucide-react"
 import type { ReactElement } from "react"
 
-import type { TaskRequest } from "../../../../shared/repository/task-run-prompt.ts"
 import type {
   TaskStatus,
   TaskSummaryItem,
@@ -17,6 +16,7 @@ import type {
 import { Button } from "../../../components/ui/button/button.tsx"
 import { codeSpanParts } from "../../../domain/code-span.ts"
 import type { TaskRunConfirmOutcome } from "../domain/task-run-confirm-outcome.ts"
+import type { TaskRequest } from "../domain/task-run-prompt.ts"
 import type { TaskPeekConfirm } from "../hooks/use-task-peek.ts"
 import { TaskBody } from "./deferred-task-body.tsx"
 import { TaskMark } from "./task-mark.tsx"

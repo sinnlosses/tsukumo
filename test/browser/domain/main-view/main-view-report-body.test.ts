@@ -1,24 +1,24 @@
 // `report` ツールのレポート本文の組み方（合図の行・所要時間・task・ツールの外の本文の扱い）。
 import { describe, expect, it } from "vitest"
 
-import type { ReportCheck } from "../../../src/shared/report/report-check.ts"
-import { mainViewEntries } from "../../../src/shared/session/main-view-entry.ts"
-import { orderedReportRegions } from "../../../src/shared/session/main-view-report-body.ts"
+import { orderedReportRegions } from "../../../../src/browser/domain/main-view/main-view-report-body.ts"
+import { mainViewTurns } from "../../../../src/browser/domain/main-view/main-view.ts"
+import type { ReportCheck } from "../../../../src/shared/report/report-check.ts"
+import { mainViewEntries } from "../../../../src/shared/session/main-view-entry.ts"
 import type {
   MainViewReportRegions,
   MainViewReportSection,
-} from "../../../src/shared/session/main-view-shape.ts"
-import { mainViewTurns } from "../../../src/shared/session/main-view.ts"
-import type { SessionEvent } from "../../../src/shared/session/session-event.ts"
-import { applySessionEvent } from "../../../src/shared/session/session-fold.ts"
-import { INITIAL_SESSION_STATE } from "../../../src/shared/session/session-state.ts"
+} from "../../../../src/shared/session/main-view-shape.ts"
+import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
+import { applySessionEvent } from "../../../../src/shared/session/session-fold.ts"
+import { INITIAL_SESSION_STATE } from "../../../../src/shared/session/session-state.ts"
 import {
   firstLineOf,
   lead,
   materialReport,
   SETTLED,
   WRITING,
-} from "../../fixture/main-view-entry.ts"
+} from "../../../fixture/main-view-entry.ts"
 import {
   ask,
   finished,
@@ -28,8 +28,8 @@ import {
   toolRun,
   turnOf,
   utteranceEvent,
-} from "../../fixture/main-view-report.ts"
-import { requestEvent } from "../../fixture/session-event.ts"
+} from "../../../fixture/main-view-report.ts"
+import { requestEvent } from "../../../fixture/session-event.ts"
 
 /** 段ごとの所要時間も振り返りもお願いも無い `report` の欄（頭と最終のときの頭が同じ）。 */
 const regionsOf = (

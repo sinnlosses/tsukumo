@@ -14,7 +14,6 @@
 import { useEffect, useRef, type RefObject } from "react"
 import { sumBy } from "remeda"
 
-import { entryDay, startsNewDay } from "../../../../../../../../../shared/chat/chat-log.ts"
 import type {
   RecordTime,
   SessionRecord,
@@ -27,6 +26,7 @@ import { useSession } from "../../../../../../../../stores/session.ts"
 import { useTurnSelection } from "../../../../../../../../stores/turn-selection.ts"
 import { localTimeZoneId } from "../../../../../../../../utils/clock.ts"
 import { dayLabel } from "../../../../../../../../utils/day-label.ts"
+import { entryDay, startsNewDay } from "../../../../../domain/chat-log.ts"
 import { recordClockStamp, type ClockStamp } from "../../../../../domain/clock-stamp.ts"
 import {
   isSpeechSelected,

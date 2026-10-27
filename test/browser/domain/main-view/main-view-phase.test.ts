@@ -1,15 +1,15 @@
 // 段が移った `work_plan` から作る中間レポート（段のまとめ）。
 import { describe, expect, it } from "vitest"
 
-import { mainViewEntries } from "../../../src/shared/session/main-view-entry.ts"
-import { mainViewTurns } from "../../../src/shared/session/main-view.ts"
-import type { SessionEvent } from "../../../src/shared/session/session-event.ts"
-import { applySessionEvent } from "../../../src/shared/session/session-fold.ts"
-import { INITIAL_SESSION_STATE } from "../../../src/shared/session/session-state.ts"
-import type { TurnBodies } from "../../../src/shared/session/turn-progress.ts"
-import { lead, reportOf, SETTLED, WRITING } from "../../fixture/main-view-entry.ts"
-import { reportEvent } from "../../fixture/report-event.ts"
-import { requestEvent } from "../../fixture/session-event.ts"
+import { mainViewTurns } from "../../../../src/browser/domain/main-view/main-view.ts"
+import { mainViewEntries } from "../../../../src/shared/session/main-view-entry.ts"
+import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
+import { applySessionEvent } from "../../../../src/shared/session/session-fold.ts"
+import { INITIAL_SESSION_STATE } from "../../../../src/shared/session/session-state.ts"
+import type { TurnBodies } from "../../../../src/shared/session/turn-progress.ts"
+import { lead, reportOf, SETTLED, WRITING } from "../../../fixture/main-view-entry.ts"
+import { reportEvent } from "../../../fixture/report-event.ts"
+import { requestEvent } from "../../../fixture/session-event.ts"
 
 describe("mainViewTurns（段が移ったときの中間レポート）", () => {
   const fold = (events: readonly SessionEvent[]) =>
