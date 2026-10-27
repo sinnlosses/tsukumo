@@ -1,13 +1,13 @@
 import { useRef, type ReactElement } from "react"
 
-import { Portrait } from "../../../../../../domain/portrait.tsx"
-import { HStack } from "../../../../../../ui/h-stack/h-stack.tsx"
-import { Text } from "../../../../../../ui/text/text.tsx"
-import type { DiaryBookPage } from "../../../../hooks/use-diary-book.ts"
-import { Lamp } from "../../../lamp/lamp.tsx"
-import { useFitDiaryPage } from "../../hooks/use-fit-diary-page.ts"
-import { BlankReview } from "../blank-review/blank-review.tsx"
-import styles from "./right-page.module.css"
+import { Portrait } from "../../../../domain/portrait.tsx"
+import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
+import { Text } from "../../../../ui/text/text.tsx"
+import type { DiaryBookPage } from "../../hooks/use-diary-book.ts"
+import { Lamp } from "../lamp/lamp.tsx"
+import { BlankReview } from "./blank-review.tsx"
+import styles from "./diary-book.module.css"
+import { useFitDiaryPage } from "./hooks/use-fit-diary-page.ts"
 
 const BLANK_BODY = "このページは、まだ白紙。"
 

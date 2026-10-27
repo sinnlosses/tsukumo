@@ -1,9 +1,9 @@
 import type { ReactElement } from "react"
 
-import { HStack } from "../../../../../../ui/h-stack/h-stack.tsx"
-import { Text } from "../../../../../../ui/text/text.tsx"
-import type { DiaryBookBadge } from "../../../../hooks/use-diary-book.ts"
-import styles from "./badge-list.module.css"
+import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
+import { Text } from "../../../../ui/text/text.tsx"
+import type { DiaryBookBadge } from "../../hooks/use-diary-book.ts"
+import styles from "./diary-book.module.css"
 
 const GRADUATION_LABEL = "卒業"
 const MILESTONE_UNIT_LABEL = "件目のタスク"

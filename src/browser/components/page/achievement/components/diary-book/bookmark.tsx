@@ -1,7 +1,7 @@
 import type { ReactElement } from "react"
 
-import type { DiaryBookBookmark } from "../../../../hooks/use-diary-book.ts"
-import styles from "./bookmark.module.css"
+import type { DiaryBookBookmark } from "../../hooks/use-diary-book.ts"
+import styles from "./diary-book.module.css"
 
 const BOOKMARK_HEADING = "しおり ── この日のいちばん"
 

@@ -1,8 +1,8 @@
 import type { ReactElement } from "react"
 
-import { Text } from "../../../../../../ui/text/text.tsx"
-import type { DiaryBookTaskList } from "../../../../hooks/use-diary-book.ts"
-import styles from "./task-listing.module.css"
+import { Text } from "../../../../ui/text/text.tsx"
+import type { DiaryBookTaskList } from "../../hooks/use-diary-book.ts"
+import styles from "./diary-book.module.css"
 
 const DONE_HEADING = "この日に終えたこと"
 

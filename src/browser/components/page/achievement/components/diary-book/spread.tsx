@@ -1,10 +1,10 @@
 import type { ReactElement } from "react"
 
-import { Text } from "../../../../../../ui/text/text.tsx"
-import type { DiaryBookPage } from "../../../../hooks/use-diary-book.ts"
-import { LeftPage } from "../left-page/left-page.tsx"
-import { RightPage } from "../right-page/right-page.tsx"
-import styles from "./spread.module.css"
+import { Text } from "../../../../ui/text/text.tsx"
+import type { DiaryBookPage } from "../../hooks/use-diary-book.ts"
+import styles from "./diary-book.module.css"
+import { LeftPage } from "./left-page.tsx"
+import { RightPage } from "./right-page.tsx"
 
 const LOADING_NOTE = "…"
 const FAILED_NOTE = "成果を取れなかった。"

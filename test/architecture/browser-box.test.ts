@@ -283,7 +283,7 @@ describe("components/ui/ の置き方", () => {
 // `domain/` `hooks/` `components/` だけ。部品（`components/<部品>/`）も同じ作り（`<部品>.tsx` /
 // `presentational-<部品>.tsx` / `<部品>.module.css` / `hooks/` `domain/` `components/`）で、ほかに
 // 概念のディレクトリを名前の一覧（`PAGE_CONCEPT_DIRECTORIES`。いまは `renderer` だけ）で許す。
-// 部品の `components/`（＝子部品）はさらに `components/` を持てない（ネストは1段だけ）。
+// 子部品は部品と同じディレクトリに `<子部品>.tsx` を平らに並べる。
 // `<部品>.tsx` は自分の `components/` と概念のディレクトリを `export … from` で再エクスポートできない。
 // `components/` の直下はディレクトリだけで、`hooks/` は部品の形（`<名前>.tsx` など）を求めない
 // 固定の置き場として例外にする。
@@ -292,12 +292,10 @@ const PAGE_CONCEPT_DIRECTORIES: ReadonlySet<string> = new Set(["renderer"])
 type PageNodeRule = {
   /** このディレクトリ自身が `components/` を持ってよいか。 */
   readonly allowsComponents: boolean
-  /**
-   * `components/` を持つとき、その子（部品）がさらに自分の `components/`（＝子部品）を
-   * 持ってよいか（ページ直下の `components/` の子＝部品だけ持てる）。 */
+  /** `components/` の子（部品）が自分の `components/` を持ってよいか（ページの直下だけ）。 */
   readonly allowsGrandchildComponents: boolean
-  /** 概念のディレクトリ（`renderer/` など）を許すか（ページの直下では許さない）。 */
-  readonly allowsConcept: boolean
+  /** 部品のディレクトリか（概念のディレクトリと、平らに並べた子部品の `.tsx` を許す）。 */
+  readonly isComponent: boolean
   /** 複数の部品が読む状態の `stores/` を持ってよいか（ページの直下だけ）。 */
   readonly allowsStores: boolean
 }
@@ -305,7 +303,7 @@ type PageNodeRule = {
 const PAGE_ROOT_RULE: PageNodeRule = {
   allowsComponents: true,
   allowsGrandchildComponents: true,
-  allowsConcept: false,
+  isComponent: false,
   allowsStores: true,
 }
 
@@ -345,7 +343,8 @@ function pageNodeViolations(
 
   return readdirSync(`${SRC_ROOT}/${relPath}`, { withFileTypes: true }).flatMap((entry) => {
     if (!entry.isDirectory()) {
-      return allowedFiles.has(entry.name)
+      const isChildComponent = rule.isComponent && /^(?!index\.).+\.tsx$/.test(entry.name)
+      return allowedFiles.has(entry.name) || isChildComponent
         ? []
         : [`src/${relPath}/${entry.name}（規約の外のファイル）`]
     }
@@ -355,7 +354,7 @@ function pageNodeViolations(
     if (entry.name === "stores" && rule.allowsStores) {
       return []
     }
-    if (rule.allowsConcept && PAGE_CONCEPT_DIRECTORIES.has(entry.name)) {
+    if (rule.isComponent && PAGE_CONCEPT_DIRECTORIES.has(entry.name)) {
       return []
     }
     if (entry.name === "components") {
@@ -385,7 +384,7 @@ function componentsDirViolations(
     return pageNodeViolations(`${relPath}/${entry.name}`, entry.name, {
       allowsComponents: allowsChildComponents,
       allowsGrandchildComponents: false,
-      allowsConcept: true,
+      isComponent: true,
       allowsStores: false,
     })
   })

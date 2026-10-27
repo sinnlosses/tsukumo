@@ -61,7 +61,8 @@ Beads アダプタ（`server/**/adapter/` の Beads を読むファイル）が�
 縛りは無く**、`src/browser/` の置き場所のディレクトリ（`components/`（とその下の `page/` `domain/` `ui/`）
 `features/` `hooks/` `domain/` `lib/` `utils/` `stores/` `styles/` `types/`）は bullet-proof-react の名前を
 そのまま採る（`components/` の下の3つは利用者の Next.js の雛形の名前）。機能・領域の名前は用語集の語に、
-画面の名前は `stores/location-hash.ts` の `Screen` の値に合わせる。**手本から採るのはディレクトリの形だけ**で、
+画面の名前は `stores/location-hash.ts` の `Screen` の値に合わせる。**画面の部品は `components/page/` に置く。**
+`features/` には枠・画面に置かれる機能（2つ以上の枠・画面から置かれるもの）だけを置き、ページの部品を置かない。**手本から採るのはディレクトリの形だけ**で、
 kebab-case のファイル名・barrel file を作らない・`@/` を使わない相対 import はそのまま（PascalCase・
 1部品1フォルダは真似しない）。**例外は `components/ui/` と、ページの `components/` の2つだけ**で、
 部品と CSS の対が平たく並ぶと見づらいので部品ごとに `<部品>/<部品>.tsx`・`<部品>.module.css` の
@@ -86,7 +87,7 @@ components/page/<ページ>/
       presentational-<部品>.tsx  割るときの presenter
       <部品>.module.css          この部品（と中の子部品）だけが読む CSS
       hooks/ domain/             この部品（と中の子部品）だけのフック・語彙
-      components/<子部品>/       この部品だけが使う子部品。ページの components/ の直下の部品だけが持てる
+      <子部品>.tsx               この部品だけが使う子部品。部品と同じディレクトリに平らに並べ、CSS は <部品>.module.css に同居
       <概念>/                    下の「機能の中を分ける」の概念のディレクトリ（renderer/ など）
 ```
 
@@ -95,19 +96,22 @@ components/page/<ページ>/
   名前を決め打ちできる）。container が state か副作用を持つなら `hooks/use-<ページ>.ts` へ出す。
   **2つ目の画面**（ページの中で並ぶか重なるもの）は直下に置かず `components/<部品>/` の部品にする。
   ファイル名の `-screen` は付けない
-- **置き場所は「読み手すべてを含む、いちばん近い箱」で機械的に決める**（部品・フック・語彙・
-  CSS のどれも同じ）。数えるのは `import`（`import type` も含む）で、テストは数えない:
+- **置き場所は下の表で決める**（部品・フック・語彙・CSS のどれも同じ）。読み手を数えて箱を移すのは、
+  2つ以上のページ・枠が読むようになってページの外へ上げるとき（表の4行目）だけで、ページの中では import が
+  1本増えても置き場を動かさない。数えるのは `import`（`import type` も含む）で、テストは数えない:
 
   | 読み手                                               | 置き場                                                                                                        |
   | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
   | ページの直下（対・`hooks/`・`domain/`）を1つでも含む | ページの `hooks/` / `domain/` / `stores/`（状態）/ `components/<部品>/`                                       |
   | `components/` の下の2つ以上の部品（直下は含まない）  | フックは `components/hooks/`、語彙はページの `domain/`、状態はページの `stores/`、部品は `components/<部品>/` |
-  | `components/<部品>/` の中だけ（その部品と子部品）    | その部品の中の `hooks/` / `domain/` / `components/<子部品>/`                                                  |
+  | `components/<部品>/` の中だけ（その部品と子部品）    | その部品の中の `hooks/` / `domain/`、子部品は部品のディレクトリに平らに                                       |
   | 2つ以上のページ・枠                                  | ページの外（部品なら `components/domain/`、フックは `browser/hooks/`、それ以外は `browser/domain/`）          |
 
-  **入れ子はページの `components/` から2段まで**（子部品だけが使う孫は、親の部品の `components/` に
-  子部品と並べる）。CSS は class ごとに読み手を数える（選択子で結ばれた class は束ねて数える。
-  `docs/architecture/browser.md`「CSS」）
+  **深さの上限は `src/browser/` から6段**（ファイルの置かれたディレクトリまでのディレクトリの数）。
+  子部品は親の部品のディレクトリに平らに並べ、`components/` の入れ子を作らない。検査は
+  `test/architecture/browser-depth.test.ts` で、上限を超える既存のディレクトリは同じファイルの除外の一覧
+  （`DEEP_DIRECTORY_EXCEPTIONS`）に載り、移したら一覧から消す。CSS は class ごとに読み手を数える
+  （選択子で結ばれた class は束ねて数える。`docs/architecture/browser.md`「CSS」）
 
 - **部品のディレクトリの外から引いてよいのは `<部品>.tsx` だけ**（例外は `main.tsx` / `app.tsx` /
   `components/app/` とテスト）。ページの部品を画面の外に置くとき（書き終わりの知らせ `DiaryNotice`）は、

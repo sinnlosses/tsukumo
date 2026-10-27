@@ -1,10 +1,10 @@
 import type { ReactElement } from "react"
 
-import { Heading } from "../../../../../../ui/heading/heading.tsx"
-import { Text } from "../../../../../../ui/text/text.tsx"
-import type { DiaryBookTocMonth } from "../../../../hooks/use-diary-book.ts"
-import { TOC_LABEL } from "../../domain/toc-label.ts"
-import styles from "./toc.module.css"
+import { Heading } from "../../../../ui/heading/heading.tsx"
+import { Text } from "../../../../ui/text/text.tsx"
+import type { DiaryBookTocMonth } from "../../hooks/use-diary-book.ts"
+import styles from "./diary-book.module.css"
+import { TOC_LABEL } from "./domain/toc-label.ts"
 
 export function Toc(props: {
   readonly months: readonly DiaryBookTocMonth[]
