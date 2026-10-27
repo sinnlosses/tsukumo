@@ -59,6 +59,7 @@ import { colorSwatch, readColorToken } from "./color-swatch.ts"
 import { CopyButton } from "./copy-button.tsx"
 import { diffWordRanges, type DiffWordRanges } from "./diff-pair.ts"
 import { OrderedList, TableBody, UnorderedList } from "./folded-block.tsx"
+import { GaugeBlock } from "./gauge-block.tsx"
 import { REPORT_HAST_CACHE, type HastCache } from "./hast-cache.ts"
 import { MermaidBlock } from "./mermaid-block.tsx"
 import { NotationAside, NotationBlock, NotationInline, NotationListItem } from "./notation.tsx"
@@ -207,6 +208,9 @@ function Pre(props: PreProps): ReactElement {
     }
     if (language === "chart") {
       return <ChartBlock spec={hastText(codeNode)} />
+    }
+    if (language === "number-line" || language === "bullet") {
+      return <GaugeBlock spec={hastText(codeNode)} />
     }
   }
 

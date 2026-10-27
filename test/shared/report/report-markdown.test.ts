@@ -337,5 +337,31 @@ describe("reportSectionsMarkdown", () => {
       )
       expect(table).not.toContain("```chart")
     })
+
+    it("数直線と bullet は専用のフェンスになり、写せない申告は表に落ちる", () => {
+      const line = markdownOf(
+        plotOf("distribution", [{ name: "分", type: "Q", values: [4, 31, 12] }]),
+      )
+      expect(line).toContain("```number-line")
+      const bullet = markdownOf(
+        plotOf("compare", [
+          { name: "項目", type: "N", values: ["甲", "乙"] },
+          { name: "実績", type: "Q", values: [7, 12] },
+          { name: "目標", type: "Q", values: [10, 10] },
+        ]),
+      )
+      expect(bullet).toContain("```bullet")
+      const table = markdownOf(
+        plotOf(
+          "compare",
+          [
+            { name: "項目", type: "N", values: ["甲", "乙", "丙"] },
+            { name: "分", type: "Q", values: [4, 31, 12] },
+          ],
+          "bullet",
+        ),
+      )
+      expect(table).not.toContain("```bullet")
+    })
   })
 })

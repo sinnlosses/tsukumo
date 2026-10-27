@@ -1,0 +1,277 @@
+{
+  "main": [
+    {
+      "tag": "main",
+      "attributes": {
+        "data-region": "main",
+        "aria-label": "メインビュー"
+      },
+      "children": [
+        {
+          "tag": "div",
+          "attributes": {
+            "data-brush-origin": "",
+            "data-main-view": ""
+          },
+          "children": [
+            {
+              "tag": "div",
+              "attributes": {
+                "data-main-view-content": "report"
+              },
+              "children": [
+                {
+                  "tag": "article",
+                  "children": [
+                    {
+                      "tag": "div",
+                      "attributes": {
+                        "data-outline": "shown",
+                        "data-outline-collapsed": "false"
+                      },
+                      "children": [
+                        {
+                          "tag": "nav",
+                          "attributes": {
+                            "aria-label": "やり取り"
+                          },
+                          "children": [
+                            "やり取り",
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "aria-disabled": "false",
+                                "aria-label": "やり取りを畳む",
+                                "aria-expanded": "true",
+                                "type": "button"
+                              },
+                              "children": [
+                                {
+                                  "tag": "svg"
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "data-outline-turn": "0",
+                                "data-result": "done",
+                                "aria-current": "true",
+                                "aria-label": "完了: 数直線と bullet の見え方を確かめたい（架空の依頼）",
+                                "type": "button"
+                              },
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  },
+                                  "children": [
+                                    "●"
+                                  ]
+                                },
+                                "数直線と bullet の見え方を確かめたい（架空の依頼）"
+                              ]
+                            },
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "data-level": "report",
+                                "aria-current": "location",
+                                "type": "button"
+                              },
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  }
+                                },
+                                "最終",
+                                "架空の結論: 数直線と bullet の見え方を確かめた。"
+                              ]
+                            },
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "data-level": "section",
+                                "type": "button"
+                              },
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  }
+                                },
+                                "架空の図の申告"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "div",
+                          "attributes": {
+                            "role": "separator",
+                            "aria-orientation": "vertical",
+                            "aria-label": "やり取りと本文の境界"
+                          }
+                        },
+                        {
+                          "tag": "section",
+                          "attributes": {
+                            "aria-label": "進み具合",
+                            "data-work-strip": "finished"
+                          },
+                          "children": [
+                            {
+                              "tag": "span",
+                              "attributes": {
+                                "data-result": "done"
+                              },
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  }
+                                },
+                                "完了"
+                              ]
+                            },
+                            "所要 0秒",
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "aria-disabled": "false",
+                                "aria-expanded": "false",
+                                "type": "button"
+                              },
+                              "children": [
+                                "手順 0 ▾"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "section",
+                          "children": [
+                            {
+                              "tag": "h2",
+                              "children": [
+                                "依頼"
+                              ]
+                            },
+                            {
+                              "tag": "p",
+                              "children": [
+                                "数直線と bullet の見え方を確かめたい（架空の依頼）"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "section",
+                          "attributes": {
+                            "data-report-step": ""
+                          },
+                          "children": [
+                            {
+                              "tag": "div",
+                              "attributes": {
+                                "data-report-body": ""
+                              },
+                              "children": [
+                                {
+                                  "tag": "div",
+                                  "attributes": {
+                                    "data-report-region": "head"
+                                  },
+                                  "children": [
+                                    {
+                                      "tag": "p",
+                                      "children": [
+                                        "架空の結論: 数直線と bullet の見え方を確かめた。"
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "tag": "div",
+                                  "attributes": {
+                                    "data-report-region": "section",
+                                    "data-report-section": "0"
+                                  },
+                                  "children": [
+                                    {
+                                      "tag": "h4",
+                                      "children": [
+                                        "架空の図の申告"
+                                      ]
+                                    },
+                                    {
+                                      "tag": "svg",
+                                      "attributes": {
+                                        "data-gauge": "number-line"
+                                      }
+                                    },
+                                    {
+                                      "tag": "div",
+                                      "attributes": {
+                                        "data-reveal-caption": ""
+                                      },
+                                      "children": [
+                                        "図 1",
+                                        "架空の所要は 4 分から 31 分まで散らばる"
+                                      ]
+                                    },
+                                    {
+                                      "tag": "svg",
+                                      "attributes": {
+                                        "data-gauge": "bullet"
+                                      }
+                                    },
+                                    {
+                                      "tag": "div",
+                                      "attributes": {
+                                        "data-reveal-caption": ""
+                                      },
+                                      "children": [
+                                        "図 2",
+                                        "架空の 3 項目のうち乙だけが目標を超えた"
+                                      ]
+                                    },
+                                    {
+                                      "tag": "svg",
+                                      "attributes": {
+                                        "data-gauge": "bullet"
+                                      }
+                                    },
+                                    {
+                                      "tag": "div",
+                                      "attributes": {
+                                        "data-reveal-caption": ""
+                                      },
+                                      "children": [
+                                        "図 3",
+                                        "架空の 1 項目は目標の 5 割に届いた"
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

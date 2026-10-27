@@ -45,6 +45,32 @@ describe("plot の題の数", () => {
     expect(titleViolationsOf(["どの工程が大半か", "table"])).toEqual([])
   })
 
+  it("数直線・bullet で描く形は題に数が無くても数えない", () => {
+    const declarations = [
+      {
+        relation: "distribution",
+        data: [{ name: "分", type: "Q", values: [4, 31, 12] }],
+      },
+      {
+        relation: "compare",
+        data: [
+          { name: "項目", type: "N", values: ["甲", "乙"] },
+          { name: "実績", type: "Q", values: [7, 12] },
+          { name: "目標", type: "Q", values: [10, 10] },
+        ],
+      },
+    ]
+    for (const declaration of declarations) {
+      const plot = plotBlockSchema.parse({ kind: "plot", question: "架空の題", ...declaration })
+      const violations = reportViolations(
+        reportDraft({
+          sections: [{ heading: "", shapeTag: "unspecified", blocks: [plot] }],
+        }),
+      ).filter((violation) => violation.kind === "plot-title-without-number")
+      expect(violations).toEqual([])
+    }
+  })
+
   it("決定表が棒を返しても表に落ちる申告は、題に数が無くても数えない", () => {
     const names = ["甲", "乙", "丙", "丁"]
     const dropped = [
