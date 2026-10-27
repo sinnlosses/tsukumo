@@ -1,6 +1,7 @@
 // セッションの記録を、メインビューに時系列で流す記録（`MainViewEntry`）へ変える。
 // セッションの状態から導くだけで、別の状態は持たない。
 
+import { changedFilesMarkdown } from "../report/changed-file-section.ts"
 import { sectionsWithFigure } from "../report/report-block.ts"
 import { reportChecksMarkdown } from "../report/report-check.ts"
 import { reportSectionMarkdowns } from "../report/report-markdown.ts"
@@ -169,6 +170,7 @@ function reportRegionsOf(
         withPhaseTimes
           ? phaseTimesMarkdown(phaseDurations(context.trail, report.time, report.workPlanClosing))
           : "",
+        withPhaseTimes ? changedFilesMarkdown(report.changeSummary) : "",
       ),
     ]
       .filter((part) => !isBlankText(part))
@@ -207,12 +209,14 @@ function reportSectionsOf(report: Extract<SessionRecord, { readonly kind: "repor
 
 /**
  * 結論のすぐ下の合図の行（検証結果の判定）と、その下の段ごとの所要時間の帯と一覧を、結論と本文のあいだの1つのまとまりに包む。
- * どちらも空なら包みごと置かない。お願いの本文は末尾のまま動かさない。
+ * 末尾に変更したファイルの畳んだ節を置く。すべて空なら包みごと置かない。お願いの本文は末尾のまま動かさない。
  */
-function statusMarkdown(checks: string, phaseTimes: string): string {
+function statusMarkdown(checks: string, phaseTimes: string, changedFiles: string): string {
   const verdict = isBlankText(checks)
     ? ""
     : `<div class="verdict" role="group" aria-label="検証結果">${checks}</div>`
-  const inner = [verdict, phaseTimes].filter((part) => !isBlankText(part)).join("\n\n")
+  const inner = [verdict, phaseTimes, changedFiles]
+    .filter((part) => !isBlankText(part))
+    .join("\n\n")
   return inner === "" ? "" : `<div class="status">\n\n${inner}\n\n</div>`
 }

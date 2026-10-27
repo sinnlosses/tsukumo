@@ -37,6 +37,8 @@
 - 目録の末尾の変更の札（`task` のある最終レポートだけ。出す条件は `docs/architecture/display.md` 4.2）は
   等幅・`tabular-nums`・`--font-action`（12px）で、`+a` を `report-change-added`（`state-ok`）、`−b`（`−` は U+2212）を
   `report-change-removed`（`state-ng`）で塗り、「変更 n ファイル」は目録の字の色のまま
+- 検証結果と段ごとの所要時間の下（`status` の末尾）に、最終レポートだけ畳んだ節「変更したファイル n」を置く。
+  枠と地は本文の `details` と同じで、開くと `files` の塊と同じ樹形図が出る
 - 上下と行の間は 1px の `rule-quiet` の罫（表の行罫と同じ `rule-soft` は 12%。ここは 6% のまま）。行の内側は上下 10px、左右の空きは無く本文の左端に揃える
 - 総括行は 13px・`ink-quiet`。記号と状態の語は太字で `state-ok`・`state-warn`・`state-ng`。部分どうしは 20px 空け、
   通った件数のすぐ後ろの `figure` は等幅 12px。お願いの印は右端で、● は `accent`・12px、「お願い 1 ↓」は太字・`ink`、押す的は高さ 24px 以上

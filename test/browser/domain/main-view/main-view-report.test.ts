@@ -7,6 +7,7 @@ import {
 } from "../../../../src/browser/domain/main-view/main-view-report-body.ts"
 import { mainViewTurns } from "../../../../src/browser/domain/main-view/main-view.ts"
 import { parseReportBody } from "../../../../src/shared/report/body-fence.ts"
+import type { ChangedFile } from "../../../../src/shared/report/changed-file.ts"
 import type {
   RecordedReportFigure,
   ReportSection,
@@ -28,6 +29,7 @@ import {
 import {
   ask,
   finished,
+  fold,
   report,
   shownReports,
   turnOf,
@@ -294,6 +296,42 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
       expect(changeSummaries(turn)).toEqual([
         { kind: "counted", changed: [], files: 3, added: 12, removed: 4, mixed: false },
       ])
+    })
+
+    describe("変更したファイルの畳んだ節", () => {
+      const regionsOf = (changed: readonly ChangedFile[]) => {
+        const counting: SessionEvent = {
+          kind: "report-change-summary",
+          toolUseId: "toolu_r1",
+          changed,
+          files: changed.length,
+          added: 0,
+          removed: 0,
+          mixed: false,
+        }
+        const entries = mainViewEntries(
+          fold([ask, report("架空の結論。", "", "", [], TASK), counting, finished]),
+        )
+        const entry = entries.find((candidate) => candidate.kind === "report")
+        return entry?.kind === "report" ? entry.regions : undefined
+      }
+
+      it("最終の頭にだけ出て、中間の頭には出ない", () => {
+        const regions = regionsOf([{ path: "src/架空/a.ts", change: "added" }])
+
+        expect(regions?.kind === "regions" ? regions.finalHead : "").toContain(
+          "<summary>変更したファイル 1</summary>",
+        )
+        expect(regions?.kind === "regions" ? regions.head : "").not.toContain("変更したファイル")
+      })
+
+      it("一覧が空なら最終の頭にも出ない", () => {
+        const regions = regionsOf([])
+
+        expect(regions?.kind === "regions" ? regions.finalHead : "").not.toContain(
+          "変更したファイル",
+        )
+      })
     })
 
     it("中間レポートに回った本文は数を持たない", () => {
