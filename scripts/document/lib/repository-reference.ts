@@ -4,6 +4,7 @@
 import { type Dirent, existsSync, globSync, readFileSync } from "node:fs"
 import { join, relative, sep } from "node:path"
 
+import { findHubPaths, findHubReferences } from "../hub-reference.ts"
 import {
   type FileReference,
   findFileReferences,
@@ -11,6 +12,7 @@ import {
   findSectionReferences,
   findStrayReferences,
   isScannedSource,
+  type SectionReference,
   type StrayReference,
 } from "../section-reference.ts"
 import { findSourcePathReferences } from "../source-path-reference.ts"
@@ -31,6 +33,17 @@ export function collectStrayReferences(root: string): StrayReference[] {
     .flatMap((path) => findSectionReferences(path, readFileSync(join(root, path), "utf8")))
   const targets = readExistingTargets(root, references)
   return findStrayReferences(references, new Map([...targets, ...readChildTargets(root, targets)]))
+}
+
+/** `root` 以下の `docs/`・`AGENTS.md` を読み、ハブを「句」付きで指す参照をすべて返す。 */
+export function collectHubReferences(root: string): SectionReference[] {
+  const paths = listSourcePaths(root)
+  const hubPaths = findHubPaths(paths.filter((path) => path.endsWith(".md")))
+  const references = paths
+    .filter(isScannedSource)
+    .filter((path) => path === "AGENTS.md" || (path.startsWith("docs/") && path.endsWith(".md")))
+    .flatMap((path) => findSectionReferences(path, readFileSync(join(root, path), "utf8")))
+  return findHubReferences(references, hubPaths)
 }
 
 /** `root` 以下を読み、無いファイルを指す `docs/` 以下の `.md` のパスをすべて返す。 */

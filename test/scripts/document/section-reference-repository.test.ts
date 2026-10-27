@@ -4,6 +4,12 @@ import { join } from "node:path"
 import { describe, expect, it } from "vitest"
 
 import {
+  countBySource,
+  findHubReferenceDrifts,
+  formatHubReferenceDrift,
+} from "../../../scripts/document/hub-reference.ts"
+import {
+  collectHubReferences,
   collectMissingFileReferences,
   collectMissingSourcePathReferences,
   collectStrayReferences,
@@ -14,6 +20,7 @@ import {
 } from "../../../scripts/document/section-reference.ts"
 import { REPOSITORY_ROOT } from "../../../scripts/shared/repository-root.ts"
 import { useTempDir } from "../../fixture/temp-dir.ts"
+import { FROZEN_HUB_REFERENCE_COUNTS } from "./lib/frozen-hub-reference.ts"
 
 // 正典の節を「ファイル名＋番号＋「句」」で引いている参照が、参照先に残っているかを0件に保つ。
 // `docs/` の節を削る・移したときに、引かれていた句が消えたことをここで知る（拾う形と照合の
@@ -29,6 +36,13 @@ describe("節の参照", () => {
     expect(collectMissingFileReferences(REPOSITORY_ROOT).map(formatMissingFileReference)).toEqual(
       [],
     )
+  })
+
+  it("ハブを句付きで指す参照は、凍結した一覧の件数と合う", () => {
+    const actual = countBySource(collectHubReferences(REPOSITORY_ROOT))
+    expect(
+      findHubReferenceDrifts(actual, FROZEN_HUB_REFERENCE_COUNTS).map(formatHubReferenceDrift),
+    ).toEqual([])
   })
 
   it("文書が指す test/・scripts/・src/ のパスはすべて実在する", () => {
