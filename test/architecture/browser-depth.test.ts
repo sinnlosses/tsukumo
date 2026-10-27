@@ -16,12 +16,6 @@ const DEEP_DIRECTORY_EXCEPTIONS: ReadonlySet<string> = new Set([
   "components/page/conversation/components/character-view/components/item-seat-list",
   "components/page/conversation/components/character-view/components/phone-balloon",
   "components/page/conversation/components/character-view/components/speech-log",
-  "components/page/conversation/components/chat-view/components/chat-day",
-  "components/page/conversation/components/chat-view/components/chat-log",
-  "components/page/conversation/components/chat-view/components/chat-speech",
-  "components/page/conversation/components/chat-view/components/chat-time",
-  "components/page/conversation/components/chat-view/components/chat-typing",
-  "components/page/conversation/components/chat-view/components/nudge-portrait",
   "components/page/conversation/components/dispatch/components/command-suggestion-list",
   "components/page/conversation/components/dispatch/components/composer",
   "components/page/conversation/components/dispatch/components/file-suggestion-list",
@@ -49,7 +43,6 @@ const DEEP_DIRECTORY_EXCEPTIONS: ReadonlySet<string> = new Set([
   "components/page/conversation/components/main-view/components/work-strip",
   "components/page/conversation/components/markdown/renderer/hooks",
   "components/page/conversation/components/markdown/renderer/report-notation",
-  "components/page/conversation/components/repository-link/components/file-excerpt-peek",
 ])
 
 describe("src/browser/ の深さ", () => {

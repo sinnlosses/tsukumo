@@ -10,8 +10,8 @@
 import clsx from "clsx"
 import type { ReactElement } from "react"
 
-import { TypingDots } from "../../../../../../ui/typing-dot-list/typing-dot-list.tsx"
-import chatViewStyles from "../../chat-view.module.css"
+import { TypingDots } from "../../../../ui/typing-dot-list/typing-dot-list.tsx"
+import chatViewStyles from "./chat-view.module.css"
 
 export function ChatTyping(): ReactElement {
   return (

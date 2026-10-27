@@ -8,9 +8,8 @@
 import clsx from "clsx"
 import type { ReactElement } from "react"
 
-import { useSpeechPress } from "../../../hooks/use-speech-press.ts"
-import chatViewStyles from "../../chat-view.module.css"
-import styles from "./chat-speech.module.css"
+import { useSpeechPress } from "../hooks/use-speech-press.ts"
+import styles from "./chat-view.module.css"
 
 export function ChatSpeech(props: {
   readonly text: string
@@ -23,9 +22,9 @@ export function ChatSpeech(props: {
   return (
     <div
       className={clsx(
-        chatViewStyles["chat-entry"],
-        chatViewStyles["chat-entry-character"],
-        props.selected && chatViewStyles["is-selected"],
+        styles["chat-entry"],
+        styles["chat-entry-character"],
+        props.selected && styles["is-selected"],
         props.pop && styles["chat-entry-pop"],
       )}
       data-speaker="character"

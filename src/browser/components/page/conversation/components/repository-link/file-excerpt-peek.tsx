@@ -5,9 +5,9 @@ import clsx from "clsx"
 import type { ReactElement } from "react"
 import { createPortal } from "react-dom"
 
-import type { LineRange } from "../../domain/pointed-line-range.ts"
-import type { PeekAnchor, ShownFileExcerpt } from "../../hooks/use-file-excerpt-peek.ts"
-import styles from "./file-excerpt-peek.module.css"
+import type { LineRange } from "./domain/pointed-line-range.ts"
+import type { PeekAnchor, ShownFileExcerpt } from "./hooks/use-file-excerpt-peek.ts"
+import styles from "./repository-link.module.css"
 
 /** 押せるパスと浮きのあき（px）。 */
 const GAP_PX = 6

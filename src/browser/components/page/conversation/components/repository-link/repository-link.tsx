@@ -28,8 +28,8 @@ import { rpc } from "../../../../../domain/rpc.ts"
 import { useSession } from "../../../../../stores/session.ts"
 import { isActivationKey } from "../hooks/activation-key.ts"
 import { useRepositoryFilePaths } from "../hooks/use-repository-file-path-list.ts"
-import { FileExcerptPeek } from "./components/file-excerpt-peek/file-excerpt-peek.tsx"
 import type { PointedLines } from "./domain/pointed-line-range.ts"
+import { FileExcerptPeek } from "./file-excerpt-peek.tsx"
 import { useFileExcerptPeek } from "./hooks/use-file-excerpt-peek.ts"
 
 /** 末尾の `:行`・`:行:桁`・`:行-行`（数字だけ）。1つ目の組が頭の行、2つ目の組が範囲の終わりの行。 */
