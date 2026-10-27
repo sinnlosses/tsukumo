@@ -1,13 +1,13 @@
 // `plot` の `Q` 列の値と、同じレポートの本文の数のずれの検出。位置だけを持ち、本文の字と列の名前は持たない。
 
 import type { ReportPlot } from "../../../shared/report/figure-grammar.ts"
+import { drawnSectionsOf } from "../../../shared/report/report-retrospective.ts"
 import {
   type BodyNumber,
   type FigureNumberSlip,
   figureNumberSlips,
   numbersIn,
-} from "../../../shared/report/figure-number.ts"
-import { drawnSectionsOf } from "../../../shared/report/report-retrospective.ts"
+} from "./figure-number.ts"
 import type { ReportDraft } from "./report-violation.ts"
 
 /** `plot` の何個目の何列目と、本文の何番目の数がずれたか。 */

@@ -1,6 +1,6 @@
 // 本文に書かれた数と、`plot` の `Q` 列の値の照合。位置だけを返し、本文の字と列の名前は持たない。
 
-import type { ReportPlot } from "./figure-grammar.ts"
+import type { ReportPlot } from "../../../shared/report/figure-grammar.ts"
 
 /** 本文から読んだ数。`percent` は末尾が `%`／`％`。 */
 export type BodyNumber = { readonly value: number; readonly percent: boolean }

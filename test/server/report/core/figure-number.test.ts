@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
-import { plotBlockSchema, type ReportPlot } from "../../../src/shared/report/figure-grammar.ts"
-import { figureNumberSlips, numbersIn } from "../../../src/shared/report/figure-number.ts"
+import { figureNumberSlips, numbersIn } from "../../../../src/server/report/core/figure-number.ts"
+import { plotBlockSchema, type ReportPlot } from "../../../../src/shared/report/figure-grammar.ts"
 
 type Column = { name: string; type: "N" | "O" | "T" | "Q"; values: (string | number)[] }
 

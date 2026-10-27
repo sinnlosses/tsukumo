@@ -139,7 +139,40 @@ describe("shared/ の機能どうしの import", () => {
 
     expect(offenders.join("\n")).toBe("")
   })
+
+  it("shared のファイルは server/ と browser/ の両方から（直接か shared の別ファイル経由で）読まれる", () => {
+    const reachableFromServer = sharedFilesReachableFrom("server/")
+    const reachableFromBrowser = sharedFilesReachableFrom("browser/")
+
+    const offenders = listSourceFiles(SRC_ROOT)
+      .filter((relPath) => relPath.startsWith("shared/"))
+      .flatMap((relPath) => {
+        const readers = [
+          ...(reachableFromServer.has(relPath) ? [] : ["server/"]),
+          ...(reachableFromBrowser.has(relPath) ? [] : ["browser/"]),
+        ]
+        return readers.length === 0 ? [] : [`src/${relPath} → ${readers.join("・")} から読まれない`]
+      })
+
+    expect(offenders.join("\n")).toBe("")
+  })
 })
+
+/** `fromPrefix` で始まるファイルが直接読む `shared/` のファイルと、そこから `shared/` の中の import を辿って届くファイルの集まり。 */
+function sharedFilesReachableFrom(fromPrefix: string): ReadonlySet<string> {
+  const reached = new Set<string>()
+  const queue = listSourceFiles(SRC_ROOT).filter((relPath) => relPath.startsWith(fromPrefix))
+  for (let next = queue.pop(); next !== undefined; next = queue.pop()) {
+    for (const specifier of relativeImportSpecifiers(readFileSync(`${SRC_ROOT}/${next}`, "utf8"))) {
+      const toPath = resolveRelativeImport(next, specifier)
+      if (toPath.startsWith("shared/") && !reached.has(toPath)) {
+        reached.add(toPath)
+        queue.push(toPath)
+      }
+    }
+  }
+  return reached
+}
 
 /** specifier が相対で、解いた先が `shared/utils/` の中か。 */
 function isInsideSharedUtils(fromRelPath: string, specifier: string): boolean {
