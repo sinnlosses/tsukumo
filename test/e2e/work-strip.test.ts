@@ -41,7 +41,7 @@ describe("進み具合の帯", () => {
     await scrollMainToBottom(room.page)
     expect(await topOf(strip)).toBe(topBefore)
 
-    await room.settleAndMatch(ELAPSED_MS)
+    await room.settleAndMatchPicked(ELAPSED_MS)
 
     await room.page.getByRole("button", { name: /手順/ }).waitFor()
     await expectReadable(room.page)
@@ -66,7 +66,7 @@ describe("進み具合の帯", () => {
     }
     await expectUncovered(inquiry.getByRole("button", { name: /これで答える/ }))
 
-    await room.settleAndMatch(ELAPSED_MS)
+    await room.settleAndMatchPicked(ELAPSED_MS)
   })
 
   it("1024x768 でも、質問の選択肢と「次へ」は帯にも札にも覆われない", async () => {

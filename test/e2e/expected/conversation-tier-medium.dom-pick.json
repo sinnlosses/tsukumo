@@ -1,0 +1,12 @@
+{
+  "sidebar": [
+    { "tag": "aside", "attributes": { "data-region": "sidebar", "aria-label": "サイドバー" }, "children": [
+      { "tag": "section", "attributes": { "aria-label": "タスク" }, "children": [
+        { "tag": "button", "attributes": { "aria-pressed": "true" }, "children": ["すべて", "3"] },
+        { "tag": "button", "children": ["進行中", "t-003", "架空のタスク（進行中）"] }
+      ] },
+      { "tag": "button", "attributes": { "aria-label": "コンテキスト 61%（122k / 200k）" } },
+      { "tag": "button", "attributes": { "aria-label": "プラン使用量 5時間 34%・7日間 61%" } }
+    ] }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "screen-nav": [
+    { "tag": "nav", "attributes": { "aria-label": "画面", "data-screen": "conversation" }, "children": [
+      { "tag": "button", "attributes": { "aria-label": "やり取りとタスクを開く", "aria-expanded": "false" } },
+      { "tag": "ol", "attributes": { "aria-label": "ワークプラン" }, "children": [
+        { "tag": "li", "attributes": { "aria-label": "4. レビューと検証（済）" } },
+        { "tag": "li", "attributes": { "aria-label": "5. 受け入れて架空の置き場を張り替える（今の段）" } }
+      ] },
+      { "tag": "button", "children": ["手順", "1"] }
+    ] }
+  ],
+  "character": [
+    { "tag": "section", "attributes": { "data-region": "character" }, "children": [
+      { "tag": "button", "children": [
+        "その前に、張り替える先の一覧を見てほしいのだ。架空の置き場が11件あって、どれも同じ形をしているから、まとめて張り替えてしまっても差し支えないはずだけれど、念のため確かめてから進めたいのだ。"
+      ] }
+    ] }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "work-strip": [
+    { "tag": "section", "attributes": { "aria-label": "進み具合", "data-work-strip": "working" }, "children": [
+      { "tag": "span", "attributes": { "data-result": "awaiting-answer" }, "children": ["答え待ち"] },
+      { "tag": "li", "attributes": { "data-phase-state": "done" } },
+      { "tag": "li", "attributes": { "data-phase-state": "asking" } },
+      { "tag": "p", "children": ["お伺いが届いた · 許可: Bash rm -rf /tmp/dummy/fake-home · 答え待ち 1分00秒"] }
+    ] }
+  ]
+}

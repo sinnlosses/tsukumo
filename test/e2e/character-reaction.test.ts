@@ -33,7 +33,8 @@ describe("機械の出来事 → キャラビューの反応", () => {
 
     await room.waitForEvent("turn-finished")
     await character.locator('[data-writing="true"]').waitFor({ state: "detached" })
-    await room.settleAndMatch(ELAPSED_MS)
+    await room.settleAndMatchPicked(ELAPSED_MS)
+    expect(await character.locator('[data-writing="true"]').count()).toBe(0)
   })
 
   it("Claude Code が待ちの一言を書いていなければ、反応の行の問い合わせが書いた待ちの行が出る", async () => {
@@ -45,7 +46,7 @@ describe("機械の出来事 → キャラビューの反応", () => {
     })
 
     await room.waitForEvent("turn-finished")
-    await room.settleAndMatch(WAITING_ELAPSED_MS)
+    await room.settleAndMatchPicked(WAITING_ELAPSED_MS)
   })
 
   it("表示した迎えの挨拶がサーバへ渡り、札が後から決まっても `/clear` のあとも、ログには吹き出しと同じ文が1件だけ残る", async () => {

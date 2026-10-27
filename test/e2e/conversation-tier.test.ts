@@ -72,7 +72,7 @@ async function expectRailOverlay(room: ScenarioRoom, match: boolean): Promise<vo
   await sidebar(page).waitFor()
   expect(await rightEdge(sidebar(page))).toBeLessThan(await leftEdge(toggle))
   if (match) {
-    await room.settleAndMatch(ELAPSED_MS)
+    await room.settleAndMatchPicked(ELAPSED_MS)
   }
 
   await page.keyboard.press("Escape")
@@ -170,7 +170,7 @@ describe("会話の画面の段", () => {
     expect(await sidebar(page).isVisible()).toBe(false)
     expect(await page.locator('nav[aria-label="やり取り"]').isVisible()).toBe(false)
     expect(await character.locator("[data-expression]").first().isVisible()).toBe(false)
-    await room.settleAndMatch(PHONE_ELAPSED_MS)
+    await room.settleAndMatchPicked(PHONE_ELAPSED_MS)
 
     await expectDrawerFlow(room)
 
@@ -289,7 +289,7 @@ describe("会話の画面の段", () => {
     expect(await scrollWidth(page)).toBeLessThanOrEqual(390)
     await page.keyboard.press("Escape")
     await page.getByRole("dialog", { name: "依頼の手順" }).waitFor({ state: "hidden" })
-    await room.settleAndMatch(PHONE_ELAPSED_MS)
+    await room.settleAndMatchPicked(PHONE_ELAPSED_MS)
 
     await rows.nth(0).click()
     await page.getByRole("dialog", { name: "中間レポート" }).waitFor()

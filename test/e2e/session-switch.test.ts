@@ -78,6 +78,6 @@ describe("セッションの切り替え", () => {
     await search.press("ArrowDown")
     expect(await selected.innerText()).toContain("/retrospect")
 
-    await room.settleAndMatch(ELAPSED_MS)
+    await room.settleAndMatchPicked(ELAPSED_MS)
   })
 })
