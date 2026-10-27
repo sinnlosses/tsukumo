@@ -6,11 +6,19 @@ import type {
   SessionRecord,
 } from "../../../../../../src/shared/session/session-record.ts"
 import {
+  EMPTY_WORK_PLAN_TRAIL,
+  type WorkPlanTrail,
+} from "../../../../../../src/shared/session/work-plan-trail.ts"
+import {
   plannedPhasesOf,
   type WorkPlanEntry,
 } from "../../../../../../src/shared/session/work-plan.ts"
 
 type WorkPlanRecord = Extract<SessionRecord, { readonly kind: "work-plan" }>
+
+function within(plans: readonly WorkPlanRecord[]): WorkPlanTrail {
+  return { ...EMPTY_WORK_PLAN_TRAIL, plans }
+}
 
 const PHASES = ["架空の調べ", "架空の実装", "架空の検証"]
 
@@ -63,7 +71,7 @@ describe("phaseRecapsOf", () => {
   it("済んだ段は所要とまとめ、今の段は closedAt までの経過、まだの段は所要が不明でまとめが空", () => {
     const last = plan(2, at(25), "架空の実装のまとめ")
     const recaps = phaseRecapsOf(
-      [plan(0, at(0)), plan(1, at(10), "架空の調べのまとめ"), last],
+      within([plan(0, at(0)), plan(1, at(10), "架空の調べのまとめ"), last]),
       at(40),
     )
 
@@ -80,14 +88,14 @@ describe("phaseRecapsOf", () => {
 
   it("一度も今の段にならなかった段は所要が不明でまとめが空", () => {
     const last = plan(1, at(10), "架空の調べのまとめ")
-    const recaps = phaseRecapsOf([plan(0, at(0)), last], at(30))
+    const recaps = phaseRecapsOf(within([plan(0, at(0)), last]), at(30))
 
     expect(recaps.get(keyOf(last, "架空の検証"))).toEqual({ duration: UNKNOWN, summary: "" })
   })
 
   it("依頼の最初の記録が途中から始まったら、そのとき今だった段の所要は不明", () => {
     const last = plan(2, at(10), "架空の実装のまとめ")
-    const recaps = phaseRecapsOf([plan(1, at(0)), last], at(30))
+    const recaps = phaseRecapsOf(within([plan(1, at(0)), last]), at(30))
 
     expect(recaps.get(keyOf(last, "架空の実装"))).toEqual({
       duration: UNKNOWN,
@@ -98,7 +106,7 @@ describe("phaseRecapsOf", () => {
 
   it("まとめを渡さずに進んだ段は、まとめが空", () => {
     const last = plan(1, at(10))
-    const recaps = phaseRecapsOf([plan(0, at(0)), last], at(30))
+    const recaps = phaseRecapsOf(within([plan(0, at(0)), last]), at(30))
 
     expect(recaps.get(keyOf(last, "架空の調べ"))).toEqual({ duration: known(10), summary: "" })
   })
@@ -106,12 +114,12 @@ describe("phaseRecapsOf", () => {
   it("並列の段の中の段が別々に済めば、段ごとに別のまとめを持つ", () => {
     const last = plan(2, at(30), "架空のサーバのまとめ", GROUPED)
     const recaps = phaseRecapsOf(
-      [
+      within([
         plan(0, at(0), "", GROUPED),
         plan(1, at(10), "架空の調べのまとめ", GROUPED),
         plan(1, at(20), "架空の画面のまとめ", GROUPED, ["架空の画面"]),
         last,
-      ],
+      ]),
       at(40),
     )
 
@@ -131,7 +139,7 @@ describe("phaseRecapsOf", () => {
       delegatedRange: { kind: "range", first: 0, count: 3 },
     })
     const last = ranged(1, at(10), "返却の要約の1文。")
-    const recaps = phaseRecapsOf([ranged(0, at(0)), last], at(30))
+    const recaps = phaseRecapsOf(within([ranged(0, at(0)), last]), at(30))
 
     expect(recaps.get(keyOf(last, "架空の調べ"))?.summary).toBe("返却の要約の1文。")
   })
@@ -142,7 +150,7 @@ describe("phaseRecapsOf", () => {
       awaitingSummary: { kind: "awaiting", key: "架空の調べ\u00000" },
     }
     const last = plan(1, at(12), "架空の調べのまとめ")
-    const recaps = phaseRecapsOf([plan(0, at(0)), returned, last], at(30))
+    const recaps = phaseRecapsOf(within([plan(0, at(0)), returned, last]), at(30))
 
     expect(recaps.get(keyOf(last, "架空の調べ"))).toEqual({
       duration: known(10),
@@ -150,7 +158,30 @@ describe("phaseRecapsOf", () => {
     })
   })
 
+  it("止めて再開した依頼では、前の依頼で済んだ段も所要とまとめを持つ", () => {
+    const last = plan(2, at(108), "架空の実装のまとめ")
+    const recaps = phaseRecapsOf(
+      {
+        ...EMPTY_WORK_PLAN_TRAIL,
+        carried: [
+          { plans: [plan(0, at(0)), plan(1, at(10), "架空の調べのまとめ")], closedAt: at(25) },
+        ],
+        plans: [plan(1, at(100)), last],
+      },
+      at(120),
+    )
+
+    expect(recaps.get(keyOf(last, "架空の調べ"))).toEqual({
+      duration: known(10),
+      summary: "架空の調べのまとめ",
+    })
+    expect(recaps.get(keyOf(last, "架空の実装"))).toEqual({
+      duration: known(23),
+      summary: "架空の実装のまとめ",
+    })
+  })
+
   it("ワークプランが無ければ空", () => {
-    expect(phaseRecapsOf([], at(0)).size).toBe(0)
+    expect(phaseRecapsOf(within([]), at(0)).size).toBe(0)
   })
 })

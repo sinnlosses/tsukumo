@@ -152,6 +152,56 @@ describe("mainViewEntries（記録ごとの結果の持ち回し）", () => {
     )
   })
 
+  it("止めて「続けて」で再開した依頼の最終レポートは、段の並びが同じなら前の依頼の段も測れて、待ちは計に入らない", () => {
+    const markdown = finalMarkdowns(
+      mainViewEntries(
+        foldTimed([
+          [ask, 0],
+          [plan(0), 1_000],
+          [plan(1, "架空のまとめ。"), 11_000],
+          [reportEvent({ toolUseId: "toolu_r1", workPlanClosing: "stopped" }), 15_000],
+          [requestEvent("続けて（架空の依頼）"), 100_000],
+          [plan(1), 101_000],
+          [reportEvent({ toolUseId: "toolu_r2", workPlanClosing: "finished" }), 104_000],
+        ]),
+      ),
+    )[1]
+
+    expect(markdown).toContain("計 17秒")
+    expect(markdown).not.toContain("不明")
+    expect(markdown).toMatch(/1\/2<\/span>架空の段A<\/span>.*?<span class="phase-time-value">10秒/)
+    expect(markdown).toMatch(/2\/2<\/span>架空の段B<\/span>.*?<span class="phase-time-value">7秒/)
+  })
+
+  it("段の並びを変えて再開した依頼の最終レポートは、依頼の中の記録だけで測る", () => {
+    const reorganized: SessionEvent = {
+      kind: "work-plan",
+      delegatedRange: { kind: "none" },
+      skippedPhases: [],
+      awaitingSummary: { kind: "none" },
+      phases: ["架空の段A", "架空の段B", "架空の段C"],
+      current: 1,
+      finishedInGroup: [],
+      phaseSummary: "",
+    }
+    const markdown = finalMarkdowns(
+      mainViewEntries(
+        foldTimed([
+          [ask, 0],
+          [plan(0), 1_000],
+          [plan(1, "架空のまとめ。"), 11_000],
+          [reportEvent({ toolUseId: "toolu_r1", workPlanClosing: "stopped" }), 15_000],
+          [requestEvent("続けて（架空の依頼）"), 100_000],
+          [reorganized, 101_000],
+          [reportEvent({ toolUseId: "toolu_r2", workPlanClosing: "finished" }), 104_000],
+        ]),
+      ),
+    )[1]
+
+    expect(markdown).toMatch(/1\/3<\/span>架空の段A<\/span>.*?不明/)
+    expect(markdown).toMatch(/2\/3<\/span>架空の段B<\/span>.*?不明/)
+  })
+
   it("ワークプランの無い依頼の report には、段ごとの所要時間の帯と一覧を出さない", () => {
     const markdown = finalMarkdowns(
       mainViewEntries(

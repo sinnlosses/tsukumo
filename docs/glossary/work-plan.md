@@ -12,6 +12,8 @@
 
 - **英語識別子**: `workPlan`（型は `WorkPlan`。段と並列の段の並びは `phases`、今の要素の位置は `current`。
   イベントと記録は `work-plan`。段ごとの所要時間は `phaseDurations` で、帯と一覧の行の型は `PhaseTimeRow`（段の行と、並列の段の行）・段1つの所要は `PhaseDuration`。
+  所要を計る、止めて再開した依頼（段を残して終わり、同じ段の並びで続けた依頼。`finished` で終えた依頼のやり直しは含まない）をまたいでつないだ
+  `work-plan` の記録の並びは `WorkPlanTrail`（閉じた依頼1つぶんの区間は `WorkPlanStretch`）。
   `report` の段の閉じ方の欄は `workPlanClosing`・型は `WorkPlanClosing`（`none` / `finished` / `stopped`）、
   イベントを受けて今のワークプランを畳む決まり〔依頼で忘れる・返却で進める・`finished` で最後の段を閉じる〕は `nextWorkPlan`、
   記録から畳んだ今のワークプランは `currentWorkPlan`。サーバの機能は `src/server/work-plan/`）

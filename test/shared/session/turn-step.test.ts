@@ -8,6 +8,7 @@ import {
   toolDuration,
   type TurnStep,
 } from "../../../src/shared/session/turn-step.ts"
+import { EMPTY_WORK_PLAN_TRAIL } from "../../../src/shared/session/work-plan-trail.ts"
 import { reportEvent } from "../../fixture/report-event.ts"
 import { requestEvent } from "../../fixture/session-event.ts"
 import {
@@ -40,7 +41,7 @@ describe("currentTurnSteps（依頼の手順を最後の依頼から導く）", 
       kind: "turn",
       steps: [],
       plan: { kind: "none" },
-      plans: [],
+      trail: EMPTY_WORK_PLAN_TRAIL,
     })
   })
 
@@ -227,7 +228,7 @@ describe("currentTurnSteps（report ツール）", () => {
       kind: "turn",
       steps: [],
       plan: { kind: "none" },
-      plans: [],
+      trail: { ...EMPTY_WORK_PLAN_TRAIL, closedAt: { kind: "stamped", at: 0 } },
     })
   })
 })
@@ -282,28 +283,33 @@ describe("currentTurnSteps（ワークプラン）", () => {
     expect(list).toMatchObject({ plan: { phases: ["架空の段X", "架空の段Y", "架空の段Z"] } })
   })
 
-  it("前の依頼のワークプランは持ち越さない", () => {
+  it("前の依頼のワークプランは手順の段に持ち越さず、段の所要の並びでは次の記録を待つ", () => {
+    const previous = workPlanRecord({ phases: ["架空の段A", "架空の段B"], current: 1 })
     const list = currentTurnSteps(
       [
         requestRecord({ turnId: 0 }),
-        workPlanRecord({ phases: ["架空の段A", "架空の段B"], current: 1 }),
+        previous,
         requestRecord({ turnId: 1 }),
         toolRecord({ toolUseId: "toolu_new" }),
       ],
       false,
     )
 
-    expect(list).toMatchObject({ plan: { kind: "none" }, plans: [] })
+    expect(list).toMatchObject({
+      plan: { kind: "none" },
+      trail: { carried: [], plans: [], awaiting: [{ plans: [previous] }] },
+    })
     expect(turnSteps(list)[0]?.phase).toEqual({ kind: "none" })
   })
 
-  it("plans はその依頼の work-plan の記録を積まれた順に持つ", () => {
+  it("trail はその依頼の work-plan の記録を積まれた順に持ち、段の並びが同じ前の依頼の記録を引き継ぐ", () => {
+    const previous = workPlanRecord({ current: 1 })
     const first = workPlanRecord({ current: 0 })
     const second = workPlanRecord({ current: 1, phaseSummary: "まとめ" })
     const list = currentTurnSteps(
       [
         requestRecord({ turnId: 0 }),
-        workPlanRecord({ current: 1 }),
+        previous,
         requestRecord({ turnId: 1 }),
         first,
         toolRecord({ toolUseId: "toolu_a" }),
@@ -312,7 +318,9 @@ describe("currentTurnSteps（ワークプラン）", () => {
       false,
     )
 
-    expect(list).toMatchObject({ plans: [first, second] })
+    expect(list).toMatchObject({
+      trail: { carried: [{ plans: [previous] }], plans: [first, second] },
+    })
   })
 
   it("脇の話を挟んでも、ワークプランと手順は親の依頼のまま続く", () => {

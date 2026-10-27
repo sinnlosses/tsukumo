@@ -267,7 +267,7 @@ export function useWorkStrip(): WorkStripModel {
       recaps:
         popover.openKey === undefined
           ? NO_RECAPS
-          : phaseRecapsOf(turnStepList.plans, {
+          : phaseRecapsOf(turnStepList.trail, {
               kind: "stamped",
               at: turnCountedUntil(turn, backgroundTasks.length, now),
             }),

@@ -102,6 +102,7 @@
     "work-plan-skipped",
     "work-plan-stopped",
     "work-plan-phase-unknown",
+    "work-plan-resumed",
     "work-plan-quick",
     "work-strip-running",
     "phone-inquiry-pick",

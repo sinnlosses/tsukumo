@@ -5,6 +5,11 @@ import {
   phaseDurations,
 } from "../../../src/shared/session/phase-duration.ts"
 import type { RecordTime, SessionRecord } from "../../../src/shared/session/session-record.ts"
+import {
+  EMPTY_WORK_PLAN_TRAIL,
+  type WorkPlanStretch,
+  type WorkPlanTrail,
+} from "../../../src/shared/session/work-plan-trail.ts"
 import type { WorkPlanEntry } from "../../../src/shared/session/work-plan.ts"
 import type { MeasuredTime } from "../../../src/shared/utils/elapsed-time.ts"
 
@@ -37,6 +42,17 @@ function plan(
   }
 }
 
+function within(plans: readonly WorkPlanRecord[]): WorkPlanTrail {
+  return { ...EMPTY_WORK_PLAN_TRAIL, plans }
+}
+
+function resumed(
+  carried: readonly WorkPlanStretch[],
+  plans: readonly WorkPlanRecord[],
+): WorkPlanTrail {
+  return { ...EMPTY_WORK_PLAN_TRAIL, carried, plans }
+}
+
 function at(seconds: number): RecordTime {
   return { kind: "stamped", at: seconds * 1000 }
 }
@@ -56,7 +72,10 @@ function row(label: string, duration: MeasuredTime, start: MeasuredTime = UNKNOW
 describe("phaseDurations", () => {
   it("順に進んだ段は、今の段になった時刻から次の段になった時刻まで", () => {
     expect(
-      phaseDurations([plan(0, at(0)), plan(1, at(10)), plan(2, at(25)), plan(3, at(30))], at(99)),
+      phaseDurations(
+        within([plan(0, at(0)), plan(1, at(10)), plan(2, at(25)), plan(3, at(30))]),
+        at(99),
+      ),
     ).toEqual([
       row("1/3 架空の調べ", known(10), known(0)),
       row("2/3 架空の実装", known(15), known(10)),
@@ -65,7 +84,9 @@ describe("phaseDurations", () => {
   })
 
   it("全部済みの呼び出しが無ければ、最後の段は report の時刻で閉じる", () => {
-    expect(phaseDurations([plan(0, at(0)), plan(1, at(10)), plan(2, at(25))], at(40))).toEqual([
+    expect(
+      phaseDurations(within([plan(0, at(0)), plan(1, at(10)), plan(2, at(25))]), at(40)),
+    ).toEqual([
       row("1/3 架空の調べ", known(10), known(0)),
       row("2/3 架空の実装", known(15), known(10)),
       row("3/3 架空の検証", known(15), known(25)),
@@ -73,7 +94,9 @@ describe("phaseDurations", () => {
   })
 
   it("一足飛びで越えた段は不明で、飛ぶ前の段は飛んだ時刻までを持つ", () => {
-    expect(phaseDurations([plan(0, at(0)), plan(2, at(10)), plan(3, at(12))], at(99))).toEqual([
+    expect(
+      phaseDurations(within([plan(0, at(0)), plan(2, at(10)), plan(3, at(12))]), at(99)),
+    ).toEqual([
       row("1/3 架空の調べ", known(10), known(0)),
       row("2/3 架空の実装", UNKNOWN),
       row("3/3 架空の検証", known(2), known(10)),
@@ -82,7 +105,7 @@ describe("phaseDurations", () => {
 
   it("復元した記録の段は、時刻が分からないので不明", () => {
     expect(
-      phaseDurations([plan(0, RESTORED), plan(1, RESTORED), plan(2, RESTORED)], RESTORED),
+      phaseDurations(within([plan(0, RESTORED), plan(1, RESTORED), plan(2, RESTORED)]), RESTORED),
     ).toEqual([
       row("1/3 架空の調べ", UNKNOWN),
       row("2/3 架空の実装", UNKNOWN),
@@ -91,7 +114,7 @@ describe("phaseDurations", () => {
   })
 
   it("依頼の最初の記録が途中の段なら、その段と前の段は不明", () => {
-    expect(phaseDurations([plan(1, at(0)), plan(2, at(10))], at(15))).toEqual([
+    expect(phaseDurations(within([plan(1, at(0)), plan(2, at(10))]), at(15))).toEqual([
       row("1/3 架空の調べ", UNKNOWN),
       row("2/3 架空の実装", UNKNOWN),
       row("3/3 架空の検証", known(5), known(10)),
@@ -100,7 +123,10 @@ describe("phaseDurations", () => {
 
   it("同じ段に戻ったら、測れた区間を足す", () => {
     expect(
-      phaseDurations([plan(0, at(0)), plan(1, at(10)), plan(0, at(12)), plan(1, at(15))], at(20)),
+      phaseDurations(
+        within([plan(0, at(0)), plan(1, at(10)), plan(0, at(12)), plan(1, at(15))]),
+        at(20),
+      ),
     ).toEqual([
       row("1/3 架空の調べ", known(13), known(0)),
       row("2/3 架空の実装", known(7), known(10)),
@@ -112,7 +138,10 @@ describe("phaseDurations", () => {
     const reorganized = ["架空の調べ", "架空の設計", "架空の実装"]
 
     expect(
-      phaseDurations([plan(0, at(0)), plan(1, at(10)), plan(2, at(20), reorganized)], at(30)),
+      phaseDurations(
+        within([plan(0, at(0)), plan(1, at(10)), plan(2, at(20), reorganized)]),
+        at(30),
+      ),
     ).toEqual([
       row("1/3 架空の調べ", known(10), known(0)),
       row("2/3 架空の設計", UNKNOWN),
@@ -125,13 +154,13 @@ describe("phaseDurations", () => {
 
     expect(
       phaseDurations(
-        [
+        within([
           plan(0, at(0), delegated),
           plan(1, at(5), delegated),
           plan(1, at(8), delegated),
           plan(2, at(20), delegated),
           plan(3, at(30), delegated),
-        ],
+        ]),
         at(31),
       ),
     ).toEqual([
@@ -143,7 +172,46 @@ describe("phaseDurations", () => {
   })
 
   it("ワークプランが無ければ空", () => {
-    expect(phaseDurations([], at(0))).toEqual([])
+    expect(phaseDurations(within([]), at(0))).toEqual([])
+  })
+})
+
+describe("phaseDurations（止めて再開した依頼の引き継ぎ）", () => {
+  it("引き継いだ区間の段も測れ、止めた段は前後の区間の和で、あいだの待ちは所要にも開始にも入らない", () => {
+    const stopped = { plans: [plan(0, at(0)), plan(1, at(10))], closedAt: at(25) }
+
+    expect(
+      phaseDurations(
+        resumed([stopped], [plan(1, at(100)), plan(2, at(108)), plan(3, at(112))]),
+        at(120),
+      ),
+    ).toEqual([
+      row("1/3 架空の調べ", known(10), known(0)),
+      row("2/3 架空の実装", known(23), known(10)),
+      row("3/3 架空の検証", known(4), known(33)),
+    ])
+  })
+
+  it("引き継いだあとの区間の頭は途中の位置でも測れ、並び全体の頭が途中の位置ならその段は不明のまま", () => {
+    const midway = { plans: [plan(1, at(0))], closedAt: at(10) }
+
+    expect(phaseDurations(resumed([midway], [plan(1, at(50)), plan(2, at(55))]), at(60))).toEqual([
+      row("1/3 架空の調べ", UNKNOWN),
+      row("2/3 架空の実装", UNKNOWN),
+      row("3/3 架空の検証", known(5), known(15)),
+    ])
+  })
+
+  it("引き継いだ区間の端が復元した記録なら、その段と、それより後の開始は不明", () => {
+    const restored = { plans: [plan(0, RESTORED), plan(1, RESTORED)], closedAt: RESTORED }
+
+    expect(
+      phaseDurations(resumed([restored], [plan(1, at(100)), plan(2, at(104))]), at(110)),
+    ).toEqual([
+      row("1/3 架空の調べ", UNKNOWN),
+      row("2/3 架空の実装", UNKNOWN),
+      row("3/3 架空の検証", known(6)),
+    ])
   })
 })
 
@@ -157,7 +225,7 @@ describe("phaseDurations（並列の段）", () => {
   ]
 
   it("重なって走った段はそれぞれの所要が出て、並列の段の所要は中の段の和ではなく壁時計", () => {
-    expect(phaseDurations(overlapped, at(99))).toEqual([
+    expect(phaseDurations(within(overlapped), at(99))).toEqual([
       row("1/4 架空の調べ", known(10), known(0)),
       {
         kind: "parallel",
@@ -174,12 +242,15 @@ describe("phaseDurations（並列の段）", () => {
   })
 
   it("中間レポートの所要は、並列の段の中の段もその段の区間で探す", () => {
-    expect(finishedPhaseDuration(overlapped, "3/4 架空の画面", at(99))).toEqual(known(6))
+    expect(finishedPhaseDuration(within(overlapped), "3/4 架空の画面", at(99))).toEqual(known(6))
   })
 
   it("依頼の最初の記録が並列の段の途中なら、並列の段と中の段は不明", () => {
     expect(
-      phaseDurations([plan(1, at(0), GROUPED, ["架空の画面"]), plan(2, at(4), GROUPED)], at(9)),
+      phaseDurations(
+        within([plan(1, at(0), GROUPED, ["架空の画面"]), plan(2, at(4), GROUPED)]),
+        at(9),
+      ),
     ).toEqual([
       row("1/4 架空の調べ", UNKNOWN),
       {
