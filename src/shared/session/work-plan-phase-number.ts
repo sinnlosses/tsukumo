@@ -1,10 +1,8 @@
 // 段の番号（群ごとの通し番号）と、番号を使った段の呼び名・見出し・位置の字を組む決まり。
 
 import {
-  currentPhaseOf,
   finishedPhaseCount,
   type DelegatedRange,
-  type LatestWorkPlan,
   phaseCount,
   type PlannedPhase,
   type WorkPhase,
@@ -43,23 +41,6 @@ export function plannedPhaseNumber(
   phase: Pick<PlannedPhase, "index">,
 ): PhaseNumber {
   return phaseNumberOf(plan.delegatedRange, [phase.index], phaseCount(plan.phases))
-}
-
-/**
- * いまの位置「後 1/3」（範囲が無ければ「2/4」）。全部の段が済んでいれば最後の段の群の段の数で「後 3/3」。
- * ワークプランが無い・今の段が番号を持たないときは空の文字列。
- */
-export function workPositionText(plan: LatestWorkPlan): string {
-  if (plan.kind === "none") {
-    return ""
-  }
-  const phase = currentPhaseOf(plan)
-  if (phase.kind === "phase") {
-    return phaseNumberText(phasePosition(phase))
-  }
-  const total = phaseCount(plan.phases)
-  const last = phaseNumberOf(plan.delegatedRange, [total - 1], total)
-  return phaseNumberText(last)
 }
 
 /** 番号の字「後 1/3」（並び全体の群なら「1/3」）。番号を持たない段は空の文字列。 */

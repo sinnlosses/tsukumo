@@ -217,12 +217,12 @@ describe("useCurrentWork の札の今の段", () => {
       "1/1 架空の段A",
     ],
     [
-      "段が1つのワークプランを済ませると「1/1 済」",
+      "段が1つのワークプランを済ませると「済」",
       {
         turn: RUNNING,
         records: [requestRecord(), workPlanRecord({ phases: ["架空の段A"], current: 1 })],
       },
-      "1/1 済",
+      "済",
     ],
     [
       "委譲先の段の範囲があれば群の名前が付く",

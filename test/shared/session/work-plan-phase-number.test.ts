@@ -5,11 +5,9 @@ import {
   phaseLabel,
   phaseNumberOf,
   plannedPhaseTitle,
-  workPositionText,
 } from "../../../src/shared/session/work-plan-phase-number.ts"
 import {
   currentPhaseOf,
-  type LatestWorkPlan,
   type WorkPhase,
   type WorkPlan,
   type WorkPlanEntry,
@@ -59,30 +57,13 @@ describe("phaseNumberOf", () => {
     expect(phaseNumberOf(range, [1, 2], 4)).toMatchObject({ ordinals: "1–2", text: "1–2/3" })
   })
 
-  it("段の呼び名・いまの位置は群の名を前に付け、範囲が無ければ付けない", () => {
-    const at = (current: number, delegatedRange: WorkPlan["delegatedRange"]): LatestWorkPlan => ({
-      kind: "planned",
-      ...next(SPANNED, current),
-      delegatedRange,
-    })
+  it("段の呼び名は群の名を前に付け、範囲が無ければ付けない", () => {
     const plan = { ...next(SPANNED, 4), delegatedRange: spannedRange }
     expect(plannedPhaseTitle(plan, { index: 0, name: "架空の計画" })).toBe("前1. 架空の計画")
     expect(plannedPhaseTitle(plan, { index: 2, name: "架空の段C" })).toBe("本2. 架空の段C")
     expect(plannedPhaseTitle(plan, { index: 5, name: "架空の振り返り" })).toBe(
       "後2. 架空の振り返り",
     )
-    expect(workPositionText(at(0, spannedRange))).toBe("前 1/1")
-    expect(workPositionText(at(2, spannedRange))).toBe("本 2/3")
-    expect(workPositionText(at(4, spannedRange))).toBe("後 1/3")
-    expect(workPositionText(at(7, spannedRange))).toBe("後 3/3")
-    expect(workPositionText(at(2, none))).toBe("3/7")
-    expect(workPositionText(at(7, none))).toBe("7/7")
-  })
-
-  it("後ろの群が無い範囲で全部済めば、本の段の数で言う", () => {
-    const plan: LatestWorkPlan = { kind: "planned", ...next(GROUPED, 3), delegatedRange: range }
-    expect(workPositionText(plan)).toBe("本 3/3")
-    expect(workPositionText({ ...plan, current: 1 })).toBe("本 1–2/3")
   })
 
   it("済み具合は範囲の外を含む全部の段で言う（範囲なし・範囲の中だけ済み・全部済み）", () => {
@@ -99,16 +80,8 @@ describe("phaseNumberOf", () => {
 
   it("pending は範囲の前だけを数え、範囲の先頭から後ろは番号を持たない", () => {
     const pending = { kind: "pending", first: 1 } as const
-    const at = (current: number): LatestWorkPlan => ({
-      kind: "planned",
-      ...next(GROUPED, current),
-      delegatedRange: pending,
-    })
     expect(phaseNumberOf(pending, [0], 4)).toMatchObject({ span: "lead", text: "1/1" })
     expect(phaseNumberOf(pending, [1, 2], 4)).toEqual({ kind: "named" })
-    expect(workPositionText(at(0))).toBe("前 1/1")
-    expect(workPositionText(at(2))).toBe("")
-    expect(workPositionText(at(3))).toBe("")
   })
 
   it("見出しは群の名と番号と名前で言う", () => {

@@ -18,7 +18,6 @@ import {
   phaseLabel,
   PHASE_SPAN_NAMES,
   plannedPhaseNumber,
-  workPositionText,
 } from "../../../../shared/session/work-plan-phase-number.ts"
 import { currentPhaseOf, plannedPhasesOf } from "../../../../shared/session/work-plan.ts"
 import { phaseMarkOf } from "../../../domain/phase-mark.ts"
@@ -62,7 +61,7 @@ const WORK_WORD_LABEL = {
 
 /**
  * 札に出す今の段（`.current-work-phase`）。作業中・答え待ちで、その依頼にワークプランがあるときだけ `shown`。
- * 字は「2/4 段の名前」、全部の段を終えていれば「4/4 済」。
+ * 字は「2/4 段の名前」、全部の段を終えていれば「済」。
  */
 type CurrentWorkPhase =
   | { readonly kind: "none" }
@@ -324,11 +323,7 @@ function toPhaseView(turnStepList: TurnStepList, state: CurrentWorkState): Curre
     return { kind: "none" }
   }
   const phase = currentPhaseOf(plan)
-  const position = workPositionText(plan)
-  return {
-    kind: "shown",
-    label: phase.kind === "phase" ? phaseLabel(phase) : position === "" ? "済" : `${position} 済`,
-  }
+  return { kind: "shown", label: phase.kind === "phase" ? phaseLabel(phase) : "済" }
 }
 
 function toPlanView(turnStepList: TurnStepList, turnInProgress: boolean): CurrentWorkPlan {
