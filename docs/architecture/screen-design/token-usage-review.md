@@ -76,7 +76,7 @@
 
 - **主ボタンの文言は `delegate` → 「tsukumo に頼む」、`task` → 「タスクにする」の2つに固定**
   （`docs/requirements.md` 4.12「トークン消費の見直し」）。見本にある「設定を開く」は置かない
-  （2026-09-23 ユーザー決定。行き先が無いため）
+  （ユーザー決定。行き先が無いため）
 - **頭の吹き出しは三角を描かず、左上の角だけ立てる**（`border-radius: 0.25rem 0.875rem …`。
   見本と同じ手）。新しい部品（`<Balloon>`）は増やさない——`components/page/conversation/components/character-view/` に
   閉じた部品で、2機能目のこの区画から読むには `browser/domain/` へ上げる手間が要り、この

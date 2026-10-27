@@ -19,7 +19,7 @@ const FROZEN_DATE_LINE_COUNTS = {
   "architecture/build": 8,
   "architecture/chat-mode": 52,
   "architecture/display": 222,
-  "architecture/screen-design": 284,
+  "architecture/screen-design": 20,
   "architecture/testing": 5,
   "coding-standards": 19,
   glossary: 67,
