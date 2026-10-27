@@ -24,8 +24,8 @@ export type ReportShapeTag = (typeof REPORT_SHAPE_TAGS)[number]
 /** 読み戻した札。`unspecified` は札を省いた節（欄の無かった頃の transcript を含む）。 */
 export type RecordedReportShapeTag = ReportShapeTag | "unspecified"
 
-/** 札の第一候補・許す代替の塊。`sample` は図の条の表に出す見本で、無ければ空。 */
-export type ShapeTagBlock = {
+/** 札の第一候補・許す代替の塊。`sample` は見本で、無ければ空。 */
+type ShapeTagBlock = {
   readonly kind: ReportBlock["kind"]
   readonly sample: string
 }
@@ -43,7 +43,7 @@ export type ForbiddenBlock =
   | { readonly kind: "table"; readonly when: "attributes-at-most-1" }
   | { readonly kind: "list"; readonly when: "single-item" }
 
-export type ShapeTagRule = {
+type ShapeTagRule = {
   readonly name: string
   readonly primary: readonly ShapeTagBlock[]
   readonly alternatives: readonly ShapeTagBlock[]
@@ -53,7 +53,7 @@ export type ShapeTagRule = {
 /**
  * 札ごとの表。属性の並び・対応の「文のセル」は、受理の前に `sentence-table` の差し戻しが塞ぐので `forbidden` に置かない。
  */
-export const REPORT_SHAPE_TAG_RULES = {
+const REPORT_SHAPE_TAG_RULES = {
   cause: {
     name: "因果",
     primary: [

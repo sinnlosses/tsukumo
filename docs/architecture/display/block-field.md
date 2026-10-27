@@ -17,7 +17,7 @@
   - `stats` の項目の `better`（`up` / `down`。省略可）: `before` と `value` がどちらも数で `better` があるときだけ、
     「前 →」の矢印の字を、増減が `better` の向きなら `state-ok`・逆なら `state-warn` にする。等しいとき・数でないときは色を付けない。
     差や増減の割合は計算も描画もしない
-  - `keyFigures`（`report` の欄）: 項目は `stats` と同じ。4個は器 46rem 以下で 2×2。条 16 は掛からない
+  - `keyFigures`（`report` の欄）: 項目は `stats` と同じ。4個は器 46rem 以下で 2×2
   - `list` の項目の `label`: 印なしのラベルと本文の2列に組み、項目の間を細い横線で区切る
     `bullet` は印を持たないが、`ordered`（番号）と `check`（済み・未了）は順番・済み未了の意味を
     持つので印を残す。器が狭いとき（screen-design.md 13.4「レポートの塊の横並び」）は1列に積み、ラベルを本文の上に置く

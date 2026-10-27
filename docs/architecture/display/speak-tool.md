@@ -123,7 +123,7 @@
     旧い形の `{ kind: "none", reason }`（`reason` は `short-answer`・`no-shape`・`single-value`・`no-material` の4つ）も受け、書き手には理由を言わせない。
     図を置く条件は引数の説明だけが持ち、図を置くかの既定（図派 `chart`／文派 `text`）は新しいセッションの既定の4つ目（`figurePreference`）で、
     起こすときの値が説明の文を変える（`text` は同じ置く条件を「なければ図は置かない・ある節には置いてよい」の言い方にする。図の塊を拒む検査は無い）。
-    `REPORT_NOTATION_PROMPT` の条8は欄を指す1行だけにする。
+    `REPORT_NOTATION_PROMPT` の「図の有無は利用者の既定に従う」の原則は欄を指す1行だけにする。
     図は `checks` の下・`sections` の上に、見出しの無い先頭の節として描き、図の番号は `sections` の図と通しで振る（`figure` の図が「図 1」）。
     省いた呼び出しと `none` は何も描かない（空の枠や札も置かない）。図の塊の検査（構文・はみ出し・種類）と画像の棚も、`figure` を先頭に含めて見る。
     理由を書いた `none` が本文と合わない回は差し戻す（規約違反の1ターン1回の枠。`no-shape` なのに `sections` に

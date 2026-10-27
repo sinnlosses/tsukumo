@@ -7,18 +7,12 @@ import { afterEach, describe, expect, it } from "vitest"
 
 import { NotationBlock } from "../../../../src/browser/components/page/conversation/components/markdown/renderer/notation.tsx"
 import { REPORT_NOTATION_PROMPT } from "../../../../src/server/report/core/report-notation.ts"
-import { readGraphSource } from "../../../../src/shared/report/graph-source.ts"
 import { REPORT_MERMAID_KINDS } from "../../../../src/shared/report/report-block-diagram.ts"
-import {
-  parseReportSections,
-  REPORT_BLOCK_KINDS,
-} from "../../../../src/shared/report/report-block.ts"
 import {
   REPORT_DRAWN_MARK_NAMES,
   REPORT_NOTATION_NAMES,
   REPORT_NOTE_KINDS,
 } from "../../../../src/shared/report/report-notation.ts"
-import { REPORT_SHAPE_TAGS } from "../../../../src/shared/report/report-shape-tag.ts"
 
 afterEach(() => {
   cleanup()
@@ -33,21 +27,6 @@ afterEach(() => {
  * 先にメインビューへ出して描けることを確かめる。
  */
 const DRAWN_MERMAID_KINDS = ["sequenceDiagram", "stateDiagram-v2"]
-
-const article8 = REPORT_NOTATION_PROMPT.split("\n8. ").at(1)?.split("\n9. ").at(0) ?? ""
-
-function backticked(cell: string): string[] {
-  return [...cell.matchAll(/`([^`]+)`/g)].flatMap(([, text]) => text ?? [])
-}
-
-function articleEightRows(): string[][] {
-  return article8
-    .split("\n")
-    .map((line) => line.trim())
-    .filter((line) => line.startsWith("|") && !/^\|[-|\s]+\|$/.test(line))
-    .slice(1)
-    .map((line) => line.split("|").slice(1, -1))
-}
 
 const namedTags = [...REPORT_NOTATION_PROMPT.matchAll(/<([a-z]+)[\s>]/g)].flatMap(
   ([, tag]) => tag ?? [],
@@ -137,53 +116,6 @@ describe("REPORT_NOTATION_PROMPT", () => {
     expect(REPORT_NOTATION_PROMPT).toContain("レポートは必ず日本語で書く")
   })
 
-  it("図の条の札の表は14の札を1行ずつ持ち、塊の列は report ツールの塊の種類に実在する", () => {
-    const rows = articleEightRows()
-    const names = rows.flatMap((cells) => cells.slice(1).flatMap(backticked))
-    const known: readonly string[] = REPORT_BLOCK_KINDS
-
-    expect(rows.map((cells) => backticked(cells.at(0) ?? ""))).toEqual(
-      REPORT_SHAPE_TAGS.map((tag) => [tag]),
-    )
-    for (const kind of ["mermaid", "graph", "svg", "image", "chart", "table", "list", "text"]) {
-      expect(names).toContain(kind)
-    }
-    for (const name of names) {
-      expect(known).toContain(name)
-    }
-  })
-
-  it("図の条の表の graph と mermaid の見本と、構造の前後の印は、report の入口を通る", () => {
-    const samples = (kind: string): string[] =>
-      [...article8.matchAll(new RegExp(`\`${kind}\`（([^）]+)）`, "g"))].flatMap(
-        ([, sample]) => sample ?? [],
-      )
-    const marks = ["+ ", "- ", "~ "].filter((mark) => article8.includes(`\`${mark}\``))
-    const graphSource = [...samples("graph"), ...marks.map((mark) => `${mark}架空 -> 架空2`)].join(
-      "\n",
-    )
-    const mermaidSources = [...new Set(samples("mermaid"))]
-    const offered: readonly string[] = REPORT_MERMAID_KINDS
-    const blocks = [
-      { kind: "graph", direction: "LR", source: graphSource },
-      ...mermaidSources.map((source) => ({ kind: "mermaid", source })),
-    ]
-
-    expect(samples("graph")).not.toEqual([])
-    expect(marks).toEqual(["+ ", "- ", "~ "])
-    expect(mermaidSources).toEqual(expect.arrayContaining(["sequenceDiagram", "stateDiagram-v2"]))
-    for (const source of mermaidSources) {
-      expect(offered).toContain(source)
-    }
-    for (const block of blocks) {
-      expect(parseReportSections([{ heading: "", blocks: [block] }])).toMatchObject({
-        sections: [{ blocks: [{ kind: block.kind }] }],
-        unknownBlockCount: 0,
-      })
-    }
-    expect(readGraphSource(graphSource).brokenLines).toEqual([])
-  })
-
   it("勧める mermaid の種類は、描けることを確かめたものだけ", () => {
     const offered: readonly string[] = REPORT_MERMAID_KINDS
     expect(offered).toEqual(DRAWN_MERMAID_KINDS)
@@ -209,7 +141,7 @@ describe("REPORT_NOTATION_PROMPT", () => {
   })
 
   it("文面の字数は上限以下に収まり、条を足すと落ちる", () => {
-    const limit = 3500
+    const limit = 2400
     const length = REPORT_NOTATION_PROMPT.length
 
     expect(

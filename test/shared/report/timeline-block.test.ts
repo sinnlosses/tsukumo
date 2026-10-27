@@ -7,7 +7,6 @@ import {
   parseReportSections,
   type ReportBlock,
 } from "../../../src/shared/report/report-block.ts"
-import { REPORT_SHAPE_TAG_RULES } from "../../../src/shared/report/report-shape-tag.ts"
 import { draft } from "../../fixture/report-draft-block.ts"
 import { markdownOf } from "../../fixture/report-markdown.ts"
 
@@ -82,15 +81,5 @@ describe("timeline の入口の検査", () => {
     expect(text).toContain("1個目の `timeline` の 1 行目")
     expect(text).not.toContain("秘密")
     expect(text).not.toContain("14:30")
-  })
-})
-
-describe("形の札 time", () => {
-  it("第一候補が timeline で、候補のどの sample にも gantt が無い", () => {
-    const { primary, alternatives } = REPORT_SHAPE_TAG_RULES.time
-    expect(primary[0]?.kind).toBe("timeline")
-    expect([...primary, ...alternatives].map((candidate) => candidate.sample)).not.toContain(
-      "gantt",
-    )
   })
 })

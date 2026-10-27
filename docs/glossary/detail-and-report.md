@@ -131,7 +131,7 @@
   （✓ 通った / ✕ 落ちた / ？ 確かめていない / ⊘ 止まっている）の両方で見せる
 - **注記**: **検証をしていないターンでは渡さない**（総括も出ない）。確かめなかった・飛ばしたものは
   `unobserved`、前提が止まって確かめられなかったものは `blocked` にし、理由は `detail` に書く。確かめ方は `unobserved` の行だけ `howToVerify` に書く。`conclusion` と `sections` には書かない（規約は
-  `src/server/report/core/report-notation.ts` の条1）。規則は `docs/architecture/display.md` 4.2 が正典
+  `src/server/report/core/report-notation.ts` の「確かめたことは断定し…」の条）。規則は `docs/architecture/display.md` 4.2 が正典
 - **避ける言い方**: テスト結果（型検査や目視も入る）、確認結果
 
 ### 合図の行
