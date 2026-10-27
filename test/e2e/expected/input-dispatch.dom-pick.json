@@ -1,0 +1,21 @@
+{
+  "main": [
+    { "tag": "main", "attributes": { "data-region": "main", "aria-label": "メインビュー" }, "children": [
+      { "tag": "button", "attributes": { "data-outline-turn": "0", "data-result": "done", "aria-label": "完了: 入力欄から送る場面を見たい（架空の依頼）" } },
+      { "tag": "section", "children": [
+        { "tag": "h2", "children": ["依頼"] },
+        { "tag": "p", "children": ["入力欄から送る場面を見たい（架空の依頼）"] }
+      ] },
+      { "tag": "section", "attributes": { "data-report-step": "" }, "children": [
+        { "tag": "h4", "children": ["疑似セッションのレポート"] },
+        { "tag": "p", "children": ["これは架空の本文で、実物の会話ではない。"] }
+      ] }
+    ] }
+  ],
+  "dispatch": [
+    { "tag": "section", "attributes": { "data-region": "dispatch", "aria-label": "入力欄" }, "children": [
+      { "tag": "textarea", "attributes": { "aria-label": "依頼を書く", "value": "" } },
+      { "tag": "button", "attributes": { "type": "submit" }, "children": ["送信"] }
+    ] }
+  ]
+}

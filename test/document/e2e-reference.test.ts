@@ -55,11 +55,12 @@ describe("E2E の期待値", () => {
   ]
   const literals = e2eSources.flatMap((source) => quotedLiterals(source.text))
 
-  it(".messages.json の期待値には同じ場面の .dom.json がある", () => {
+  it(".messages.json の期待値には同じ場面の .dom.json か .dom-pick.json がある", () => {
     const unpaired = scenarioNames.filter(
       (name) =>
         expectedNames.includes(`${name}.messages.json`) &&
-        !expectedNames.includes(`${name}.dom.json`),
+        !expectedNames.includes(`${name}.dom.json`) &&
+        !expectedNames.includes(`${name}.dom-pick.json`),
     )
     expect(unpaired).toEqual([])
   })

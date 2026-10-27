@@ -144,6 +144,11 @@ export type ScenarioRoom = {
    * 完全一致の DOM の期待値とメッセージの列の期待値が残っていれば落とす。
    */
   readonly settleAndMatchPicked: (elapsedMs: number) => Promise<void>
+  /**
+   * `settleAndMatchPicked` と同じく DOM を部分一致で当て、メッセージの列は完全一致で期待値と比べる。
+   * 完全一致の DOM の期待値が残っていれば落とす。
+   */
+  readonly settleAndMatchPickedWithMessages: (elapsedMs: number) => Promise<void>
 }
 
 export async function openRoom(
@@ -328,6 +333,14 @@ export async function openRoom(
         matchPickedArtifact(options.scenario, texts.dom, outDir)
         assertNoWholeDomExpected(options.scenario)
         assertNoMessagesExpected(options.scenario)
+      })
+    },
+    settleAndMatchPickedWithMessages: async (elapsedMs) => {
+      const { texts, outDir } = await settleAndWrite(elapsedMs)
+      await shootOnMismatch(page, options.scenario, () => {
+        matchPickedArtifact(options.scenario, texts.dom, outDir)
+        assertNoWholeDomExpected(options.scenario)
+        matchArtifact(options.scenario, "messages", texts.messages, outDir)
       })
     },
   }

@@ -133,7 +133,7 @@ export function assertNoMessagesExpected(scenario: string): void {
     scenario,
     "messages",
     "比べないメッセージの列の期待値が残っている",
-    "比べるなら場面で settleAndMatchWithMessages を呼び、比べないなら git rm で消す",
+    "比べるなら場面で settleAndMatchWithMessages（DOM が部分一致なら settleAndMatchPickedWithMessages）を呼び、比べないなら git rm で消す",
   )
 }
 
