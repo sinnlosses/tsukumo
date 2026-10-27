@@ -194,7 +194,7 @@ describe("お伺い", () => {
           .toBe("SPAN")
       }
     }
-    await room.settleAndMatch(ELAPSED_MS)
+    await room.settleAndMatchPicked(ELAPSED_MS)
   })
 })
 

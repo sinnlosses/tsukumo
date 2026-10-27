@@ -1,0 +1,15 @@
+{
+  "main": [
+    { "tag": "div", "attributes": { "data-report-region": "section", "data-report-section": "0" }, "children": [
+      { "tag": "h4", "children": ["架空の図の申告"] },
+      { "tag": "svg", "attributes": { "data-plot": "scatter" } },
+      { "tag": "div", "attributes": { "data-reveal-caption": "" }, "children": ["図 1", "架空の 12 工程のうち 1 つだけ件数と所要が飛び抜けた"] },
+      { "tag": "svg", "attributes": { "data-plot": "scatter" } },
+      { "tag": "div", "attributes": { "data-reveal-caption": "" }, "children": ["図 2", "架空の 30 項目のうち 5 つが所要で外れた"] },
+      { "tag": "svg", "attributes": { "data-plot": "histogram" } },
+      { "tag": "div", "attributes": { "data-reveal-caption": "" }, "children": ["図 3", "架空の 25 件の所要は 5 分から 149 分に散らばる"] },
+      { "tag": "svg", "attributes": { "data-plot": "histogram" } },
+      { "tag": "div", "attributes": { "data-reveal-caption": "" }, "children": ["図 4", "架空の 25 件の所要は全部 7 分だった"] }
+    ] }
+  ]
+}

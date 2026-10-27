@@ -1,0 +1,15 @@
+{
+  "main": [
+    { "tag": "section", "attributes": { "aria-label": "お伺い" }, "children": [
+      "架空の質問：どの画面の形で進める？",
+      "横長の案", "外の画像の案", "縦長の案", "置いていない画像の案",
+      { "tag": "div", "attributes": { "role": "group", "aria-label": "置いていない画像の案 の詳細" }, "children": [
+        "架空の説明D",
+        { "tag": "span", "attributes": { "role": "img", "aria-label": "架空の置いていない画像" }, "children": [
+          "画像を出せない",
+          "読めなかったか、tsukumo を起こし直して手放した"
+        ] }
+      ] }
+    ] }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "turn-outline": [
+    { "tag": "nav", "attributes": { "aria-label": "やり取り" }, "children": [
+      { "tag": "button", "attributes": { "aria-label": "やり取りを開く", "aria-expanded": "false" } }
+    ] }
+  ]
+}

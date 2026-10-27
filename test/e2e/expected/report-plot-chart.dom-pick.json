@@ -1,0 +1,13 @@
+{
+  "main": [
+    { "tag": "div", "attributes": { "data-report-region": "section", "data-report-section": "0" }, "children": [
+      { "tag": "h4", "children": ["架空の図の申告"] },
+      { "tag": "canvas" },
+      { "tag": "div", "attributes": { "data-reveal-caption": "" }, "children": ["図 1", "架空の工程は乙が 31 分で全体の半分近くを占める"] },
+      { "tag": "canvas" },
+      { "tag": "div", "attributes": { "data-reveal-caption": "" }, "children": ["図 2", "架空の件数は 5 日で甲が 4 から 15 に増え、乙は 9 から 6 に減った"] },
+      { "tag": "canvas" },
+      { "tag": "div", "attributes": { "data-reveal-caption": "" }, "children": ["図 3", "架空の内訳は 3 つに分けて乙が 31 で最大"] }
+    ] }
+  ]
+}

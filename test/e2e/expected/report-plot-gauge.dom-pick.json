@@ -1,0 +1,13 @@
+{
+  "main": [
+    { "tag": "div", "attributes": { "data-report-region": "section", "data-report-section": "0" }, "children": [
+      { "tag": "h4", "children": ["架空の図の申告"] },
+      { "tag": "svg", "attributes": { "data-gauge": "number-line" } },
+      { "tag": "div", "attributes": { "data-reveal-caption": "" }, "children": ["図 1", "架空の所要は 4 分から 31 分まで散らばる"] },
+      { "tag": "svg", "attributes": { "data-gauge": "bullet" } },
+      { "tag": "div", "attributes": { "data-reveal-caption": "" }, "children": ["図 2", "架空の 3 項目のうち乙だけが目標を超えた"] },
+      { "tag": "svg", "attributes": { "data-gauge": "bullet" } },
+      { "tag": "div", "attributes": { "data-reveal-caption": "" }, "children": ["図 3", "架空の 1 項目は目標の 5 割に届いた"] }
+    ] }
+  ]
+}

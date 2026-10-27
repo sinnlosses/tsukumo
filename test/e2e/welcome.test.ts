@@ -61,7 +61,7 @@ describe("始め方の一覧", () => {
     }
     const overflow = await mainView(page).evaluate((el) => el.scrollWidth - el.clientWidth)
     expect(overflow).toBeLessThanOrEqual(0)
-    await room.settleAndMatch(ELAPSED_MS)
+    await room.settleAndMatchPicked(ELAPSED_MS)
 
     await room.resize(VIEWPORTS.medium)
     await mainView(page).getByRole("button", { name: READY_CARD }).waitFor()

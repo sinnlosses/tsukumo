@@ -48,7 +48,7 @@ describe("report → メインビュー", () => {
     })
 
     await room.waitForEvent("turn-finished")
-    await room.settleAndMatch(ELAPSED_MS)
+    await room.settleAndMatchPicked(ELAPSED_MS)
   })
 
   it("plot の申告が数直線と bullet として描かれる", async () => {
@@ -60,7 +60,7 @@ describe("report → メインビュー", () => {
     })
 
     await room.waitForEvent("turn-finished")
-    await room.settleAndMatch(ELAPSED_MS)
+    await room.settleAndMatchPicked(ELAPSED_MS)
   })
 
   it("plot の申告が散布図とヒストグラムとして描かれる", async () => {
@@ -72,7 +72,7 @@ describe("report → メインビュー", () => {
     })
 
     await room.waitForEvent("turn-finished")
-    await room.settleAndMatch(ELAPSED_MS)
+    await room.settleAndMatchPicked(ELAPSED_MS)
   })
 
   it("レポートの本文の字を選ぶと口が出て、押すと入力欄の頭に引用が入ってフォーカスが移る", async () => {
@@ -111,7 +111,7 @@ describe("report → メインビュー", () => {
 
     await room.waitForEvent("turn-finished")
     await room.page.getByRole("button", { name: "やり取りを開く" }).waitFor()
-    await room.settleAndMatch(ELAPSED_MS)
+    await room.settleAndMatchPicked(ELAPSED_MS)
 
     await room.page.getByRole("button", { name: "やり取りを開く" }).click()
     await room.page.getByRole("button", { name: "やり取りを畳む" }).waitFor()
@@ -132,7 +132,7 @@ describe("report → メインビュー", () => {
 
     await room.waitForEvent("turn-finished", 5)
     await room.page.locator('nav[aria-label="やり取り"] [data-level="sub"]').waitFor()
-    await room.settleAndMatch(ELAPSED_MS)
+    await room.settleAndMatchPicked(ELAPSED_MS)
 
     const firstRow = room.page.getByRole("button", {
       name: "完了: 指示をタスクにする（架空の依頼）",

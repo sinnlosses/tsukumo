@@ -1,0 +1,11 @@
+{
+  "main": [
+    { "tag": "div", "attributes": { "data-speaker": "user" }, "children": ["前のセッションの架空の雑談（組み直したもの）"] },
+    { "tag": "div", "attributes": { "data-speaker": "character", "role": "button" }, "children": ["前のセッションの架空のセリフだよ。"] },
+    { "tag": "div", "attributes": { "data-day": "2026-01-15" } },
+    { "tag": "div", "attributes": { "data-speaker": "character", "role": "button" }, "children": ["疑似セッションの駆動で立ち上がったよ。ここはぜんぶ作り物の会話。"] },
+    { "tag": "div", "attributes": { "data-speaker": "user" }, "children": ["いまの架空の雑談その1"] },
+    { "tag": "div", "attributes": { "data-speaker": "character", "role": "button" }, "children": ["いまの架空のセリフその1だよ。"] },
+    { "tag": "div", "attributes": { "data-speaker": "user" }, "children": ["いまの架空の雑談その2"] }
+  ]
+}

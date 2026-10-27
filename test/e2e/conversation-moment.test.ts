@@ -49,7 +49,7 @@ describe("会話の画面の局面", () => {
       expect(working).toEqual(before)
       expect(delivered).toEqual(before)
       if (viewport === "large") {
-        await room.settleAndMatch(ELAPSED_MS)
+        await room.settleAndMatchPicked(ELAPSED_MS)
       }
     },
   )

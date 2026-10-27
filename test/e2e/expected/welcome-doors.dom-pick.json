@@ -1,0 +1,21 @@
+{
+  "main": [
+    { "tag": "div", "attributes": { "data-main-view-content": "welcome" }, "children": [
+      { "tag": "ul", "attributes": { "data-count": "2" }, "children": [
+        { "tag": "li", "children": [
+          "架空の成果の画面に振り返りの口を置きたい",
+          "いちばんのおすすめ",
+          { "tag": "button", "attributes": { "aria-label": "架空の成果の画面に振り返りの口を置きたい を始める（すぐ送る）" } }
+        ] },
+        { "tag": "li", "children": [
+          "架空のタスク（着手できる）",
+          { "tag": "button", "attributes": { "aria-label": "t-001 を始める（すぐ送る）" } }
+        ] }
+      ] },
+      "ほかの始め方",
+      { "tag": "button", "children": ["自分で書く"] },
+      { "tag": "button", "children": ["タスクの一覧から選ぶ"] },
+      { "tag": "button", "children": ["前のやり取りを見る"] }
+    ] }
+  ]
+}

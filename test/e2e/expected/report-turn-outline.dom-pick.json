@@ -1,0 +1,16 @@
+{
+  "turn-outline": [
+    { "tag": "nav", "attributes": { "aria-label": "やり取り" }, "children": [
+      { "tag": "button", "attributes": { "data-outline-turn": "0", "data-result": "done", "aria-label": "完了: 指示をタスクにする（架空の依頼）" } },
+      { "tag": "button", "attributes": { "data-outline-turn": "1", "data-result": "failed", "aria-label": "失敗: 打ち直して通す（架空の依頼）" } },
+      { "tag": "button", "attributes": { "data-outline-turn": "2", "data-result": "awaiting-answer" } },
+      { "tag": "button", "attributes": { "data-outline-turn": "3", "data-result": "stopped", "aria-label": "止めた: 古い枝を片付ける（架空の依頼）" } },
+      { "tag": "button", "attributes": { "data-outline-turn": "4", "data-result": "done", "aria-label": "完了: 目次の列を2段にする（架空の依頼）" } },
+      { "tag": "button", "attributes": { "data-level": "report" }, "children": ["最終", "変わったこと（架空）"] },
+      { "tag": "button", "attributes": { "data-level": "section" }, "children": ["変わったこと（架空）"] },
+      { "tag": "button", "attributes": { "data-level": "section" }, "children": ["確かめたこと（架空）"] },
+      { "tag": "button", "attributes": { "data-level": "sub" }, "children": ["E2E の撮り直し（架空）"] },
+      { "tag": "button", "attributes": { "data-level": "section" }, "children": ["残したこと（架空）"] }
+    ] }
+  ]
+}

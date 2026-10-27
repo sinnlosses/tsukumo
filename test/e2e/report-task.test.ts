@@ -16,6 +16,6 @@ describe("タスクの作業のレポートの結論部", () => {
     const room = await openReportTaskRoom(run, "report-task-finished", "report-task-finished", [
       "main",
     ])
-    await room.settleAndMatch(ELAPSED_MS)
+    await room.settleAndMatchPicked(ELAPSED_MS)
   })
 })

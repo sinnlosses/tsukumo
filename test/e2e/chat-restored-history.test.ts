@@ -36,6 +36,6 @@ describe("復元した雑談の履歴", () => {
     await search.press("ArrowDown")
     await search.press("Enter")
     await room.waitForEvent("turn-finished", RESTARTED_TURN_FINISHED_OCCURRENCE)
-    await room.settleAndMatch(ELAPSED_MS)
+    await room.settleAndMatchPicked(ELAPSED_MS)
   })
 })
