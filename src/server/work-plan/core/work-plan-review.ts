@@ -17,7 +17,6 @@
 import { isDeepEqual } from "remeda"
 
 import type { DelegateReturn } from "../../../shared/session/delegate-return.ts"
-import { delegateReturnOf, parsePhaseResult } from "../../../shared/session/phase-result.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import { nextWorkPlan, phaseFinishedByReturn } from "../../../shared/session/work-plan-fold.ts"
 import {
@@ -41,6 +40,7 @@ import {
   PHASE_RESULT_MISSING_HANDBACK_LINE,
   RESULT_CALLED_HANDBACK_LINE,
 } from "./band-position.ts"
+import { delegateReturnOf, parsePhaseResult } from "./phase-result.ts"
 
 export type WorkPlanVerdict =
   | { readonly kind: "accepted"; readonly plan: WorkPlan }

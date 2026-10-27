@@ -1,6 +1,10 @@
 // `report` の塊の使われ方の記録を `~/.tsukumo/report-usage/<YYYY-MM-DD>.jsonl` に書く。
 // 読むのは tsukumo の外の集計スクリプトだけなので、読み口は持たない。
 
+import { createDatedRecordLog, type DatedRecordLog } from "../../adapter/lib/dated-record-log.ts"
+import { isoWithOffset, localDateKey } from "../../adapter/local-time.ts"
+import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
+import type { ReportSchemaVariant } from "../../core/schema-variant.ts"
 import {
   REPORT_USAGE_FORMAT_VERSION,
   type ReportFollowUpRecord,
@@ -10,11 +14,7 @@ import {
   type ReportUsageDriver,
   type ReportUsageRecord,
   reportUsageRecordSchema,
-} from "../../../shared/report/report-usage-record.ts"
-import type { ReportSchemaVariant } from "../../../shared/report/schema-variant.ts"
-import { createDatedRecordLog, type DatedRecordLog } from "../../adapter/lib/dated-record-log.ts"
-import { isoWithOffset, localDateKey } from "../../adapter/local-time.ts"
-import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
+} from "../core/report-usage-record.ts"
 import {
   nextCallOfAccepted,
   nextCallOfRejected,

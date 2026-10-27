@@ -2,9 +2,9 @@
 
 import type { Nodes } from "mdast"
 
-import { PLAIN_WORDS } from "../../../shared/report/plain-word.ts"
 import type { ReportBlock } from "../../../shared/report/report-block.ts"
 import { markdownTreeOf } from "./markdown-tree.ts"
+import { PLAIN_WORDS } from "./plain-word.ts"
 import { proseTexts } from "./report-prose-rule.ts"
 import type { ReportDraft } from "./report-violation.ts"
 

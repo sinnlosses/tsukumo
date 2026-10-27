@@ -4,7 +4,7 @@
 
 import { z } from "zod"
 
-import { REPORT_USAGE_FORMAT_VERSION } from "../../src/shared/report/report-usage-record.ts"
+import { REPORT_USAGE_FORMAT_VERSION } from "../../src/server/report/core/report-usage-record.ts"
 
 /** 読む版の下限。これより古い行は読まない。 */
 const MIN_FORMAT_VERSION = 17

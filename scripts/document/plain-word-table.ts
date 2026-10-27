@@ -1,7 +1,7 @@
 // 用語集の「わかりにくい語」の表を、`PLAIN_WORDS` から組み立てる純粋関数。
 // 表の範囲は、開始と終了の印のコメントに挟まれた行。
 
-import type { PlainWord } from "../../src/shared/report/plain-word.ts"
+import type { PlainWord } from "../../src/server/report/core/plain-word.ts"
 
 export const PLAIN_WORD_TABLE_START = "<!-- plain-word-table:start -->"
 export const PLAIN_WORD_TABLE_END = "<!-- plain-word-table:end -->"

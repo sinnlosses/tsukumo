@@ -2,8 +2,8 @@
 // 値の意味と既定は各名前の doc コメントが正典で、利用者向けの一覧は `docs/readme/configuration.md`「環境変数」。
 // セッションの印（`sessionTag` / `readSessionMark`）は環境変数ではないので、ここには置かない。
 
-import type { ReportSchemaVariant } from "../../shared/report/schema-variant.ts"
-import { nonBlankString } from "../../shared/utils/non-blank-string.ts"
+import { nonBlankString } from "./non-blank-string.ts"
+import type { ReportSchemaVariant } from "./schema-variant.ts"
 
 /**
  * tsukumo が読む環境変数の名前の全部。`audience` が `user` の名前は `docs/readme/configuration.md` に載せる。

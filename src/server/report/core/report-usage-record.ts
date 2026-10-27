@@ -3,12 +3,15 @@
 
 import { z } from "zod"
 
-import { REPORT_ARGUMENT_FIELDS } from "./report-argument-size.ts"
-import { REPORT_FIGURE_NONE_REASONS, reportFigureSchema } from "./report-block.ts"
-import { REPORT_SHAPE_TAGS } from "./report-shape-tag.ts"
-import { REPORT_GENRES, reportTaskSchema } from "./report-task.ts"
-import { REPORT_SCHEMA_VARIANTS } from "./schema-variant.ts"
-import { toolErrorFieldSchema } from "./tool-error-field.ts"
+import { REPORT_ARGUMENT_FIELDS } from "../../../shared/report/report-argument-size.ts"
+import {
+  REPORT_FIGURE_NONE_REASONS,
+  reportFigureSchema,
+} from "../../../shared/report/report-block.ts"
+import { REPORT_SHAPE_TAGS } from "../../../shared/report/report-shape-tag.ts"
+import { REPORT_GENRES, reportTaskSchema } from "../../../shared/report/report-task.ts"
+import { toolErrorFieldSchema } from "../../../shared/report/tool-error-field.ts"
+import { REPORT_SCHEMA_VARIANTS } from "../../core/schema-variant.ts"
 
 /**
  * 行の形の版。形か数え方を変えたら上げ、古い行と見分ける。

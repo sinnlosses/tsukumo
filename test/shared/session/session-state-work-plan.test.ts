@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
+import { applyRestoredEvents } from "../../../src/server/session/core/restored-event.ts"
 import type { DelegateReturn } from "../../../src/shared/session/delegate-return.ts"
-import { applyRestoredEvents } from "../../../src/shared/session/restored-event.ts"
 import type { SessionEvent } from "../../../src/shared/session/session-event.ts"
 import { applySessionEvent } from "../../../src/shared/session/session-fold.ts"
 import {

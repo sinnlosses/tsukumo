@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { parseConclusion } from "../../../src/shared/report/conclusion-sentence.ts"
+import { parseConclusion } from "../../../../src/server/session-driver/core/conclusion-sentence.ts"
 
 describe("parseConclusion の conclusionFirstSentence", () => {
   it.each([

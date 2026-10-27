@@ -1,6 +1,5 @@
 // 規約違反を、差し戻すときの `report` の戻り値の文面にする。
 
-import { PLAIN_WORDS } from "../../../shared/report/plain-word.ts"
 import {
   MAX_EMPHASIS_ROWS,
   MAX_HEADING,
@@ -11,6 +10,7 @@ import {
   SENTENCE_CELL_LENGTH,
 } from "../../../shared/report/report-limit.ts"
 import { figureNumberFaultPositions } from "./figure-number-fault.ts"
+import { PLAIN_WORDS } from "./plain-word.ts"
 import {
   graphFaultPositions,
   svgFaultPositions,

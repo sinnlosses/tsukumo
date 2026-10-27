@@ -1,9 +1,9 @@
 // 前のセッションから組み直した出来事（`RestoredEvent`）を畳み、積まれた記録の時刻を写し替える。
 
-import { advanceSessionState } from "./session-advance.ts"
-import type { RestoredEvent } from "./session-event.ts"
-import type { RecordTime, SessionRecord } from "./session-record.ts"
-import type { SessionState } from "./session-state.ts"
+import { advanceSessionState } from "../../../shared/session/session-advance.ts"
+import type { RestoredEvent } from "../../../shared/session/session-event.ts"
+import type { RecordTime, SessionRecord } from "../../../shared/session/session-record.ts"
+import type { SessionState } from "../../../shared/session/session-state.ts"
 
 /**
  * 組み直した出来事を順に畳む。出来事に transcript の時刻があればその時刻で、無ければ直前に読めた時刻（まだ無ければ `now`）で畳む。

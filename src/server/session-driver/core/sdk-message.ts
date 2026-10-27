@@ -10,21 +10,21 @@ import { isPlainObject, mapValues } from "remeda"
 
 import type { Expression } from "../../../shared/character-pack/expression.ts"
 import { reportArgumentCharsOf } from "../../../shared/report/report-argument-size.ts"
-import { parsePhaseResult } from "../../../shared/session/phase-result.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import { foldPermissionMode } from "../../../shared/session/session-info.ts"
 import { MAX_TOOL_TEXT_LENGTH } from "../../../shared/session/session-record.ts"
 import { parseWorkPlan } from "../../../shared/session/work-plan.ts"
 import { isBlankText } from "../../../shared/utils/blank-text.ts"
 import { clipText, clipWithEllipsis } from "../../../shared/utils/clip-text.ts"
-import { nonBlankString } from "../../../shared/utils/non-blank-string.ts"
 import { optionalString } from "../../../shared/utils/optional-string.ts"
+import { nonBlankString } from "../../core/non-blank-string.ts"
 import {
   PHASE_RESULT_TOOL_NAME,
   REPORT_TOOL_NAME,
   tsukumoToolFullName,
   WORK_PLAN_TOOL_NAME,
 } from "../../core/tsukumo-tool-name.ts"
+import { parsePhaseResult } from "../../work-plan/core/phase-result.ts"
 import { apiErrorEvents, apiRetryEvents, rateLimitEvents } from "./sdk-api-trouble-message.ts"
 import { backgroundTaskEvents, delegateProgressEvents } from "./sdk-background-message.ts"
 import { toCommandDescriptions } from "./sdk-query-reply.ts"

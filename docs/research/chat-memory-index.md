@@ -61,7 +61,7 @@ flowchart TD
 **容量はすべて1つの定数の表に置き、値を書き換えるだけで上げ下げできるようにする**（ユーザーの指示）。
 ほかの値（定着の契機など）は表から導き、別の定数として持たない。
 
-```ts src/shared/chat/chat-memory-budget.ts
+```ts src/server/chat/core/chat-memory-budget.ts
 export const CHAT_MEMORY_BUDGET = {
   /** 作業記憶: 起こすときに逐語で載せる直近の量 */
   recentBytes: 65_536,

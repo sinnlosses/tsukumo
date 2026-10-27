@@ -9,7 +9,6 @@ import { join } from "node:path"
 
 import { fromKeys } from "remeda"
 
-import { itemAssetPath } from "../../../shared/item/item-asset.ts"
 import {
   type ItemInfo,
   type ItemSeatMap,
@@ -17,18 +16,19 @@ import {
   SEAT_KEYS,
   type SeatKey,
 } from "../../../shared/item/item.ts"
+import type { SessionEvent } from "../../../shared/session/session-event.ts"
+import { writeFileAtomic } from "../../adapter/lib/atomic-file.ts"
+import { isMissingFileError } from "../../adapter/lib/missing-file-error.ts"
+import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
+import { itemAssetPath } from "../../core/item-asset.ts"
+import { addItem, clearSeat, removeItem, setSeat } from "../core/item-edit.ts"
 import {
   EMPTY_ITEMS_FILE,
   type ItemsFile,
   type ItemsFileReading,
   parseItemsFile,
   serializeItemsFile,
-} from "../../../shared/item/items-file.ts"
-import type { SessionEvent } from "../../../shared/session/session-event.ts"
-import { writeFileAtomic } from "../../adapter/lib/atomic-file.ts"
-import { isMissingFileError } from "../../adapter/lib/missing-file-error.ts"
-import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
-import { addItem, clearSeat, removeItem, setSeat } from "../core/item-edit.ts"
+} from "../core/items-file.ts"
 
 const ITEMS_FILE_NAME = "items.json"
 

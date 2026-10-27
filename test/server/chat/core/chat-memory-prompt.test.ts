@@ -5,6 +5,7 @@ import type {
   ChatArchiveRecentEntry,
   ChatReadbackLimits,
 } from "../../../../src/server/chat/core/chat-archive-port.ts"
+import { CHAT_MEMORY_BUDGET } from "../../../../src/server/chat/core/chat-memory-budget.ts"
 import {
   takeChatMemoryPromptParts,
   workMemoryPromptParts,
@@ -13,7 +14,6 @@ import type {
   ChatSummary,
   ChatSummaryRecord,
 } from "../../../../src/server/chat/core/chat-memory.ts"
-import { CHAT_MEMORY_BUDGET } from "../../../../src/shared/chat/chat-memory-budget.ts"
 import { characterPackName } from "../../../fixture/character.ts"
 import { inMemoryChatSummary, NOOP_CHAT_ARCHIVE } from "../../../fixture/chat.ts"
 

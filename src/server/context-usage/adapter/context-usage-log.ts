@@ -10,14 +10,14 @@
 //
 // 書けなくても例外を投げない。
 
+import { createDatedRecordLog, type DatedRecordLog } from "../../adapter/lib/dated-record-log.ts"
+import { isoWithOffset, localDateKey } from "../../adapter/local-time.ts"
+import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
 import {
   CONTEXT_USAGE_FORMAT_VERSION,
   type ContextUsageRecord,
   contextUsageRecordSchema,
-} from "../../../shared/context-usage/context-usage-record.ts"
-import { createDatedRecordLog, type DatedRecordLog } from "../../adapter/lib/dated-record-log.ts"
-import { isoWithOffset, localDateKey } from "../../adapter/local-time.ts"
-import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
+} from "../core/context-usage-record.ts"
 import type { ContextUsageEntry, ContextUsageLog } from "../core/context-usage.ts"
 
 const CONTEXT_USAGE_RETENTION_DAYS = 90

@@ -1,6 +1,6 @@
 import { expect, test } from "vitest"
 
-import { PLAIN_WORDS } from "../../../src/shared/report/plain-word.ts"
+import { PLAIN_WORDS } from "../../../../src/server/report/core/plain-word.ts"
 
 test("言い換え先は、元の綴りを含まない（含むと言い換えた本文がまた差し戻される）", () => {
   expect(PLAIN_WORDS.filter((word) => word.replacement.includes(word.spelling))).toEqual([])

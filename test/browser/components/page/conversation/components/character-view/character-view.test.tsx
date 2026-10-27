@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
-import { applyRestoredEvents } from "../../../../../../../src/shared/session/restored-event.ts"
+import { applyRestoredEvents } from "../../../../../../../src/server/session/core/restored-event.ts"
 import type { ReportWaitingLine } from "../../../../../../../src/shared/session/session-event-report.ts"
 import type { SessionEvent } from "../../../../../../../src/shared/session/session-event.ts"
 import { applySessionEvent } from "../../../../../../../src/shared/session/session-fold.ts"

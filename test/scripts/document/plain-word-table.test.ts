@@ -10,7 +10,7 @@ import {
   rewritePlainWordTable,
 } from "../../../scripts/document/plain-word-table.ts"
 import { REPOSITORY_ROOT } from "../../../scripts/shared/repository-root.ts"
-import { PLAIN_WORDS } from "../../../src/shared/report/plain-word.ts"
+import { PLAIN_WORDS } from "../../../src/server/report/core/plain-word.ts"
 
 describe("rewritePlainWordTable", () => {
   test("印に挟まれた範囲を、語から組んだ表に書き直す", () => {

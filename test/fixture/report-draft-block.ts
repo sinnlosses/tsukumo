@@ -1,6 +1,6 @@
 import { reportViolations } from "../../src/server/report/core/report-violation-check.ts"
 import type { ReportDraft } from "../../src/server/report/core/report-violation.ts"
-import { parseConclusion } from "../../src/shared/report/conclusion-sentence.ts"
+import { parseConclusion } from "../../src/server/session-driver/core/conclusion-sentence.ts"
 import type { ReportBlock, ReportSection } from "../../src/shared/report/report-block.ts"
 import { reportDraft } from "./report-event.ts"
 

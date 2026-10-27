@@ -12,7 +12,7 @@ import {
   parseItemName,
   type SeatKey,
 } from "../../../shared/item/item.ts"
-import type { ItemsFile } from "../../../shared/item/items-file.ts"
+import type { ItemsFile } from "./items-file.ts"
 
 export type ItemAdded = {
   readonly file: ItemsFile

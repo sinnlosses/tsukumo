@@ -17,7 +17,7 @@
 
 import { z } from "zod"
 
-import { contextUsageSchema } from "./context-usage.ts"
+import { contextUsageSchema } from "../../../shared/context-usage/context-usage.ts"
 
 /** 行の形の版（ターンごとの記録とは別に数える）。形を変えたら上げ、古い行と見分ける。 */
 export const CONTEXT_USAGE_FORMAT_VERSION = 1 satisfies number

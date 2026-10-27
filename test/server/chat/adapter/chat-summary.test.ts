@@ -8,7 +8,7 @@ import {
   discardChatSummary,
   UNAVAILABLE_CHAT_SUMMARY,
 } from "../../../../src/server/chat/adapter/chat-summary.ts"
-import { CHAT_MEMORY_BUDGET } from "../../../../src/shared/chat/chat-memory-budget.ts"
+import { CHAT_MEMORY_BUDGET } from "../../../../src/server/chat/core/chat-memory-budget.ts"
 import { characterPackName } from "../../../fixture/character.ts"
 import { useTempDir } from "../../../fixture/temp-dir.ts"
 

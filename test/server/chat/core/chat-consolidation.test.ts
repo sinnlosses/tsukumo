@@ -9,7 +9,7 @@ import {
   parseChatConsolidationResult as parseResult,
   readChatTopics,
 } from "../../../../src/server/chat/core/chat-consolidation.ts"
-import { CHAT_MEMORY_BUDGET } from "../../../../src/shared/chat/chat-memory-budget.ts"
+import { CHAT_MEMORY_BUDGET } from "../../../../src/server/chat/core/chat-memory-budget.ts"
 import { fixedChatSummary, inMemoryChatSummary } from "../../../fixture/chat.ts"
 
 /** 通れば検査を通った出力、落ちれば undefined。落ちた理由を見るテストは `parseResult` を直に呼ぶ。 */

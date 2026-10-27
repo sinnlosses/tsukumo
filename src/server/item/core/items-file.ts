@@ -3,8 +3,7 @@
 
 import { z } from "zod"
 
-import { parseCharacterPackName } from "../character-pack/character.ts"
-import { parseJson } from "../utils/parse-json.ts"
+import { parseCharacterPackName } from "../../../shared/character-pack/character.ts"
 import {
   isItemImageFileName,
   type ItemEntry,
@@ -13,7 +12,8 @@ import {
   parseItemName,
   SEAT_KEYS,
   type SeatKey,
-} from "./item.ts"
+} from "../../../shared/item/item.ts"
+import { parseJson } from "../../../shared/utils/parse-json.ts"
 
 /** 席の選択。パックの名前 → 席ごとのアイテムの `id`。キーの無い席は空。 */
 export type ItemSeatChoices = Readonly<Record<string, Readonly<Partial<Record<SeatKey, string>>>>>

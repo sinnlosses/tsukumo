@@ -39,7 +39,7 @@
 **容量は1つの表に集め、値を書き換えるだけで上げ下げできるようにする**（2026-09-25 のユーザーの
 指示）。**設定ファイル・環境変数から上書きする口は作らない** — 利用者は作者本人だけで、表を直して
 上げ直せば足りる（要るようになったら `docs/research/configuration-and-state.md` の置き場に足す）。
-表は `src/shared/chat/chat-memory-budget.ts` の `CHAT_MEMORY_BUDGET` 1つ。**値の根拠はこの節だけに
+表は `src/server/chat/core/chat-memory-budget.ts` の `CHAT_MEMORY_BUDGET` 1つ。**値の根拠はこの節だけに
 書く**（コードの doc コメントには書かず、ここを指す）:
 
 | 何               | 表の鍵                  | 既定値       | 根拠                                                                                                                       |

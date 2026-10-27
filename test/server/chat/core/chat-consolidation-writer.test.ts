@@ -6,6 +6,7 @@ import type {
 } from "../../../../src/server/chat/core/chat-archive-port.ts"
 import { createChatConsolidationWriter } from "../../../../src/server/chat/core/chat-consolidation-writer.ts"
 import { CHAT_CONSOLIDATION_LIMITS } from "../../../../src/server/chat/core/chat-consolidation.ts"
+import { CHAT_MEMORY_BUDGET } from "../../../../src/server/chat/core/chat-memory-budget.ts"
 import type {
   ChatFoldPoint,
   ChatSummary,
@@ -16,7 +17,6 @@ import {
   StructuredQueryResultError,
 } from "../../../../src/server/core/structured-query.ts"
 import type { CharacterPackName } from "../../../../src/shared/character-pack/character.ts"
-import { CHAT_MEMORY_BUDGET } from "../../../../src/shared/chat/chat-memory-budget.ts"
 import { characterPackName } from "../../../fixture/character.ts"
 
 const PACK = characterPackName("fictional")

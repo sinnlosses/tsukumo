@@ -3,7 +3,7 @@
 // `conclusionSentenceChars` は、渡さなければ `conclusion` を1要素として数える。
 
 import type { ReportDraft } from "../../src/server/report/core/report-violation.ts"
-import { parseConclusion } from "../../src/shared/report/conclusion-sentence.ts"
+import { parseConclusion } from "../../src/server/session-driver/core/conclusion-sentence.ts"
 import type { ReportSection } from "../../src/shared/report/report-block.ts"
 import type { SessionEvent } from "../../src/shared/session/session-event.ts"
 

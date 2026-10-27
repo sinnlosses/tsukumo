@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest"
 
-import { delegateReturnOf, parsePhaseResult } from "../../../src/shared/session/phase-result.ts"
+import {
+  delegateReturnOf,
+  parsePhaseResult,
+} from "../../../../src/server/work-plan/core/phase-result.ts"
 
 describe("parsePhaseResult", () => {
   it("3つの結果を読み、止めた理由は stopped だけが持つ", () => {

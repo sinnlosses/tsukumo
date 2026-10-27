@@ -4,7 +4,7 @@ import { join } from "node:path"
 import { describe, expect, it } from "vitest"
 
 import { createReportUsageLog } from "../../../../src/server/report/adapter/report-usage-log.ts"
-import { REPORT_USAGE_FORMAT_VERSION } from "../../../../src/shared/report/report-usage-record.ts"
+import { REPORT_USAGE_FORMAT_VERSION } from "../../../../src/server/report/core/report-usage-record.ts"
 import { keysOf, readJsonLines } from "../../../fixture/jsonl.ts"
 import { expectEveryFieldKept } from "../../../fixture/record-field.ts"
 import { reportUsageEntry as entry } from "../../../fixture/report-usage-entry.ts"

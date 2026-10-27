@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import { EMPTY_INPUT_LEDGER } from "../../../../src/server/session-driver/core/input-ledger.ts"
 import { toRestoredEvents } from "../../../../src/server/session-driver/core/session-restore.ts"
-import { applyRestoredEvents } from "../../../../src/shared/session/restored-event.ts"
+import { applyRestoredEvents } from "../../../../src/server/session/core/restored-event.ts"
 import { INITIAL_SESSION_STATE } from "../../../../src/shared/session/session-state.ts"
 import { EXPRESSIONS } from "../../../fixture/sdk-assistant-message.ts"
 import {

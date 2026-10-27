@@ -3,7 +3,7 @@
 import { readFileSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
-import { PLAIN_WORDS } from "../../src/shared/report/plain-word.ts"
+import { PLAIN_WORDS } from "../../src/server/report/core/plain-word.ts"
 import { REPOSITORY_ROOT } from "../shared/repository-root.ts"
 import { rewritePlainWordTable } from "./plain-word-table.ts"
 

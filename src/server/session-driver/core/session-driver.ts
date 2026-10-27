@@ -10,12 +10,12 @@ import type { ContextUsageReport } from "../../../shared/context-usage/context-u
 import type { PromptDelayFootprint } from "../../../shared/diagnostic/diagnostic-record.ts"
 import type { SwallowedFailurePlace } from "../../../shared/diagnostic/swallowed-failure.ts"
 import type { PlanUsageReport } from "../../../shared/plan-usage/plan-usage.ts"
-import type { ReportSchemaVariant } from "../../../shared/report/schema-variant.ts"
 import type { Answer, PendingAsk } from "../../../shared/session-driver/pending-ask.ts"
 import type { FigurePreference } from "../../../shared/session/session-default.ts"
 import type { SessionDigest } from "../../../shared/session/session-digest.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import type { ChatSummary, PersonaMemory } from "../../chat/core/chat-memory.ts"
+import type { ReportSchemaVariant } from "../../core/schema-variant.ts"
 import type { ShelvedPromptImage } from "./prompt-image-shelf.ts"
 
 /** このセッションが仕事か雑談か。 */

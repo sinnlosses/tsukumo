@@ -6,7 +6,7 @@ import {
   removeItem,
   setSeat,
 } from "../../../../src/server/item/core/item-edit.ts"
-import type { ItemsFile } from "../../../../src/shared/item/items-file.ts"
+import type { ItemsFile } from "../../../../src/server/item/core/items-file.ts"
 
 const PACKS = ["fictional-a", "fictional-b"]
 

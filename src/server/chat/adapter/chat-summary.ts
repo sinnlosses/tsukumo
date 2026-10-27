@@ -16,11 +16,11 @@ import { join } from "node:path"
 import { z } from "zod"
 
 import type { CharacterPackName } from "../../../shared/character-pack/character.ts"
-import { CHAT_MEMORY_BUDGET } from "../../../shared/chat/chat-memory-budget.ts"
-import { byteLength } from "../../../shared/utils/byte-length.ts"
 import { writeFileAtomic } from "../../adapter/lib/atomic-file.ts"
 import { readJsonFile } from "../../adapter/lib/json-file.ts"
 import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
+import { byteLength } from "../../core/byte-length.ts"
+import { CHAT_MEMORY_BUDGET } from "../core/chat-memory-budget.ts"
 import type { ChatSummary, ChatSummaryFold, ChatSummaryRecord } from "../core/chat-memory.ts"
 
 const SUMMARY_FILE_SUFFIX = ".summary.json"

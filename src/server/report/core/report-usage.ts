@@ -14,11 +14,6 @@ import type { ReportCheck } from "../../../shared/report/report-check.ts"
 import { drawnSectionsOf } from "../../../shared/report/report-retrospective.ts"
 import { isForbiddenBlock } from "../../../shared/report/report-shape-tag.ts"
 import type { ReportGenre, ReportTaskOutcome } from "../../../shared/report/report-task.ts"
-import type {
-  ForbiddenShapeBlockUsage,
-  ReportFigureUsage,
-  ReportShapeTagUsage,
-} from "../../../shared/report/report-usage-record.ts"
 import type { ToolErrorField } from "../../../shared/report/tool-error-field.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import { markdownTreeOf, nodesInOrder } from "./markdown-tree.ts"
@@ -32,6 +27,11 @@ import {
   type MarkdownNotation,
   notationsInSections,
 } from "./report-markdown-notation.ts"
+import type {
+  ForbiddenShapeBlockUsage,
+  ReportFigureUsage,
+  ReportShapeTagUsage,
+} from "./report-usage-record.ts"
 
 export type ReportUsageEntry = {
   readonly at: number

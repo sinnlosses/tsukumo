@@ -10,8 +10,8 @@ import type {
   ChatArchiveImage,
   ChatArchiveImageWriteResult,
 } from "../../../../src/server/chat/core/chat-archive-port.ts"
+import { CHAT_MEMORY_BUDGET } from "../../../../src/server/chat/core/chat-memory-budget.ts"
 import type { CharacterPackName } from "../../../../src/shared/character-pack/character.ts"
-import { CHAT_MEMORY_BUDGET } from "../../../../src/shared/chat/chat-memory-budget.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import { characterPackName } from "../../../fixture/character.ts"
 import { NOOP_CHAT_ARCHIVE } from "../../../fixture/chat.ts"

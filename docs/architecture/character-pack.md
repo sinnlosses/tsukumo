@@ -178,4 +178,4 @@ characters/<name>/
   駆動の代ではなく `session-manager` 自身が持つ（起こし直しで代だけを作り直しても、同じ行を2本で畳まない）。
   **プロセスをまたいだ1本は錠のファイル**で持つ（形と取り直しは `docs/architecture/chat-mode.md` 4.9
   「窓から溢れた会話は定着で畳む」）。
-  容量の表と採点の係数は複数の機能が読むので `src/shared/chat/chat-memory-budget.ts`
+  容量の表と採点の係数は `chat` と `system-prompt` が読むので `src/server/chat/core/chat-memory-budget.ts`

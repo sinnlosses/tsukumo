@@ -7,7 +7,6 @@ import {
   type QuestionBrief,
   questionBriefSchema,
 } from "../../../shared/session-driver/question-brief.ts"
-import { phaseResultShape } from "../../../shared/session/phase-result.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import { workPlanShape } from "../../../shared/session/work-plan.ts"
 import {
@@ -27,6 +26,7 @@ import {
   PHASE_RESULT_REASON_DESCRIPTION,
   PHASE_RESULT_TOOL_DESCRIPTION,
 } from "../../work-plan/core/phase-result-tool.ts"
+import { phaseResultShape } from "../../work-plan/core/phase-result.ts"
 import {
   answerWorkPlanCall,
   WORK_PLAN_CURRENT_DESCRIPTION,

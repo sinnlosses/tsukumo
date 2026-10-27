@@ -3,8 +3,8 @@
 
 import { z } from "zod"
 
-import { isBlankText } from "../utils/blank-text.ts"
-import type { DelegateReturn } from "./delegate-return.ts"
+import type { DelegateReturn } from "../../../shared/session/delegate-return.ts"
+import { isBlankText } from "../../../shared/utils/blank-text.ts"
 
 /** 段の結果。`finished` は済ませた、`skipped` は飛ばした、`stopped` は途中で止めた。 */
 const PHASE_OUTCOMES = ["finished", "skipped", "stopped"] as const

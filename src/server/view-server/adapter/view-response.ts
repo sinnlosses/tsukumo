@@ -3,13 +3,13 @@
 import type { IncomingMessage, ServerResponse } from "node:http"
 
 import { readCharacterAssetPath } from "../../../shared/character-pack/character-asset.ts"
-import { readItemAssetPath } from "../../../shared/item/item-asset.ts"
 import { readReportImageRoute } from "../../../shared/report/report-image.ts"
 import {
   parsePromptImage,
   promptImageIdSchema,
 } from "../../../shared/session-driver/prompt-image.ts"
 import { vendorAssetPath } from "../../../shared/view-server/vendor-asset.ts"
+import { readItemAssetPath } from "../../core/item-asset.ts"
 import type { UiBundle } from "./bundle.ts"
 import type {
   FindPromptImage,

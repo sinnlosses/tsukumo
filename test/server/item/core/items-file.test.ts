@@ -4,7 +4,7 @@ import {
   type ItemsFile,
   parseItemsFile,
   serializeItemsFile,
-} from "../../../src/shared/item/items-file.ts"
+} from "../../../../src/server/item/core/items-file.ts"
 
 function item(id: number): { id: string; name: string; image: string } {
   return { id: String(id), name: `架空${id}`, image: `${id}.png` }

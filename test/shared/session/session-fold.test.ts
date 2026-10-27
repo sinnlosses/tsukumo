@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest"
 
+import { applyRestoredEvents } from "../../../src/server/session/core/restored-event.ts"
 import type { WrittenReactions } from "../../../src/shared/recommendation/reaction.ts"
 import {
   NO_WELCOME_HEAD,
   type WelcomeHead,
   welcomeGreetingLine,
 } from "../../../src/shared/recommendation/welcome-greeting.ts"
-import { applyRestoredEvents } from "../../../src/shared/session/restored-event.ts"
 import { advanceSessionState } from "../../../src/shared/session/session-advance.ts"
 import { sessionEventSchema, type SessionEvent } from "../../../src/shared/session/session-event.ts"
 import { applySessionEvent } from "../../../src/shared/session/session-fold.ts"

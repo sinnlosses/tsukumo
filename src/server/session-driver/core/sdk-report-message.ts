@@ -7,7 +7,6 @@
 import { isPlainObject } from "remeda"
 
 import type { Expression } from "../../../shared/character-pack/expression.ts"
-import { parseConclusion } from "../../../shared/report/conclusion-sentence.ts"
 import { reportArgumentCharsOf } from "../../../shared/report/report-argument-size.ts"
 import { parseKeyFigures } from "../../../shared/report/report-block-comparison.ts"
 import {
@@ -21,8 +20,9 @@ import { parseReportTask, type ReportTask } from "../../../shared/report/report-
 import type { SessionRemaining } from "../../../shared/session/session-digest.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import { parseWorkPlanClosing } from "../../../shared/session/work-plan.ts"
-import { nonBlankString } from "../../../shared/utils/non-blank-string.ts"
 import { optionalString } from "../../../shared/utils/optional-string.ts"
+import { nonBlankString } from "../../core/non-blank-string.ts"
+import { parseConclusion } from "./conclusion-sentence.ts"
 import { speechEvents } from "./sdk-speech-message.ts"
 
 /**

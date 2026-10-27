@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import type { ChatArchiveRecentEntry } from "../../../../src/server/chat/core/chat-archive-port.ts"
 import { CHAT_MANNER_PROMPT } from "../../../../src/server/chat/core/chat-manner.ts"
+import { CHAT_MEMORY_BUDGET } from "../../../../src/server/chat/core/chat-memory-budget.ts"
 import {
   type ReadRecent,
   takeChatMemoryPromptParts,
@@ -18,7 +19,6 @@ import {
   toSystemPromptMode,
 } from "../../../../src/server/system-prompt/core/system-prompt.ts"
 import { WORK_PLAN_PROMPT } from "../../../../src/server/work-plan/core/work-plan-tool.ts"
-import { CHAT_MEMORY_BUDGET } from "../../../../src/shared/chat/chat-memory-budget.ts"
 import { fixedChatSummary, inMemoryChatSummary } from "../../../fixture/chat.ts"
 
 // `systemPrompt` に何が・どの順で載るかを、3通り（仕事・雑談・続きから始めるとき）で固定する

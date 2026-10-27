@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest"
 
 import type { NumstatOutput } from "../../../../src/server/core/change-count-git.ts"
+import { applyRestoredEvents } from "../../../../src/server/session/core/restored-event.ts"
 import type { SessionLaunchRequest } from "../../../../src/server/session/core/session-launch.ts"
 import { PROTOCOL_VERSION, type ServerFrame } from "../../../../src/shared/frame.ts"
-import { applyRestoredEvents } from "../../../../src/shared/session/restored-event.ts"
 import { UNAVAILABLE_SESSION_DIGEST } from "../../../../src/shared/session/session-digest.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import { INITIAL_SESSION_STATE } from "../../../../src/shared/session/session-state.ts"

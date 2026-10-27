@@ -5,10 +5,10 @@ import {
   CHAT_CONSOLIDATION_BACKOFF,
   createChatConsolidationWriter,
 } from "../../../../src/server/chat/core/chat-consolidation-writer.ts"
+import { CHAT_MEMORY_BUDGET } from "../../../../src/server/chat/core/chat-memory-budget.ts"
 import type { ChatSummary } from "../../../../src/server/chat/core/chat-memory.ts"
 import { StructuredQueryResultError } from "../../../../src/server/core/structured-query.ts"
 import type { CharacterPackName } from "../../../../src/shared/character-pack/character.ts"
-import { CHAT_MEMORY_BUDGET } from "../../../../src/shared/chat/chat-memory-budget.ts"
 import { characterPackName } from "../../../fixture/character.ts"
 
 const PACK = characterPackName("fictional")

@@ -11,7 +11,7 @@
 短さより、語だけで意味が分かることを優先する。少し長くてもよい。
 新しい言い換えは、語が表す概念の説明と推奨をセットで利用者に示して決める。
 
-**正典はコードの `PLAIN_WORDS`（`src/shared/report/plain-word.ts`）で、下の表は `pnpm run format` がそこから書き直す**ので、表は手で直さない。
+**正典はコードの `PLAIN_WORDS`（`src/server/report/core/plain-word.ts`）で、下の表は `pnpm run format` がそこから書き直す**ので、表は手で直さない。
 コードを正典にしたのは、`report` の本文の検査（`src/server/report/core/plain-word-find.ts`）が実行時に表を読むため（文書を実行時に読む経路を作らない）。文書の表を作るときに読むのは `scripts/document/` で、`test/` も対応を見る。
 語を足すときは `PLAIN_WORDS` に1行足して `pnpm run format` を打つ。長い綴りを先に置く（「再演集」は「再演」より前）。
 「札」「塊」は表に足さない。綴りの部分一致で検査するため、始め方の札（画面の語）やお札・氷の塊のような普通の語まで差し戻してしまう。規約と `describe` の文面だけを言い換えてある。「札」は形を指すときは「形の名前」(条の表の列名は「形」)、画像の notes と badge では「ラベル」、keyFigures では「カード」、「塊」は「部品」にした。

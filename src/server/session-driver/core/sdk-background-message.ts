@@ -8,8 +8,8 @@ import type {
   BackgroundTaskKind,
 } from "../../../shared/session-driver/background-task.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
-import { nonBlankString } from "../../../shared/utils/non-blank-string.ts"
 import { optionalString } from "../../../shared/utils/optional-string.ts"
+import { nonBlankString } from "../../core/non-blank-string.ts"
 
 /**
  * `background_tasks_changed` の `tasks`（変わったあとの全員）を内部の型に写す。

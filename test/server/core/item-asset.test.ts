@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { itemAssetPath, readItemAssetPath } from "../../../src/shared/item/item-asset.ts"
+import { itemAssetPath, readItemAssetPath } from "../../../src/server/core/item-asset.ts"
 
 describe("itemAssetPath / readItemAssetPath", () => {
   it("版つきの URL からファイル名を読み戻せる", () => {
