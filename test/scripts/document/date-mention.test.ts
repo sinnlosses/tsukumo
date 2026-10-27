@@ -17,7 +17,7 @@ const FROZEN_DATE_LINE_COUNTS = {
   "architecture/display": 7,
   "architecture/screen-design": 20,
   "architecture/testing": 2,
-  requirements: 142,
+  requirements: 2,
 } as const satisfies Record<string, number>
 
 const MAX_FROZEN_RANGES = 100

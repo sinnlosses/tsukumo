@@ -34,7 +34,7 @@
 - **モデルと許可モードは SDK のオプションで渡す**（`/model` を入力文字列として送らない）。
   どちらも画面から切り替えられるようにする。**既定の許可モードは `auto`**（`default` だと
   読み取り専用以外が逐一 `canUseTool` に届く。実測は `docs/history/decision.md`）
-- **既定のモデルは Opus、既定の effort は medium**（2026-09-12 のユーザーの指示では high。Opus 5.5 で API の既定が medium に下がり、同じ段でも前の Opus より多く考えるため、2026-09-24 に見直した）。
+- **既定のモデルは Opus、既定の effort は medium**（ユーザーの指示は high だったが、Opus 5.5 で API の既定が medium に下がり、同じ段でも前の Opus より多く考えるため見直した）。
   **effort は帯から切り替えられる**（`applyFlagSettings({ effortLevel })` でセッションの途中から
   変えられ、変えた値は次のターンから hook 入力の `effort` に載って外から読める。実測は
   `docs/history/decision.md`）。**画面に表示するのは読み取った値**で、帯から送った値をそのまま
@@ -56,11 +56,11 @@
   見え方は `docs/architecture/screen-design.md` 13.9「バックグラウンドタスク」）
 - **中断は SDK の `interrupt()` で効く。** 中断されたターンの `result` は `error_during_execution`
   で終わり、同じセッションに続けて入力を送れる（中断前の文脈を保っている）
-- **API がうまくいかなかったことを黙って捨てない**（2026-09-24 決定）。再試行中（まだ続く）・
+- **API がうまくいかなかったことを黙って捨てない**。再試行中（まだ続く）・
   失敗で終わった（もう続かない）・利用上限に達した（いつ戻るか）の3つを、**入力欄の経過時間の行の
   1つの枠**に出す（強いほうを1つ。見え方は `docs/architecture/display/input-box.md`「入力欄」。仕事のときは
   再試行中を進み具合の帯、失敗の理由を失敗の塊が持ち、行に残すのは利用上限に達しただけ）。**利用上限が近い
-  （`allowed_warning`）は出さない**（2026-09-27 ユーザー決定）。失敗で終わった
+  （`allowed_warning`）は出さない**（ユーザー決定）。失敗で終わった
   ターンは、加えてメインビューのそのやり取りの頭の失敗の塊に、理由と次の手（同じ依頼を入力欄に戻す など）を
   残す（過去のターンを遡っても成功と見分けられるように）。**中断は失敗にしない**
 - **出すのは型の決まった理由だけ**（エラーの列挙値・HTTP の状態コード・回数と待ち時間・利用上限の
@@ -68,8 +68,7 @@
   `docs/coding-standards.md`「会話内容の扱い」）。`rate_limit_event` の使用率は出さない（効いている
   枠1つぶんしか運ばない。枠ごとの使用率は下のプラン使用量が持つ）。`error` の付いた `assistant` の本文は今までどおり本文として扱う（出力の上限で切れた
   本物の本文のこともあり、Claude Code が作ったエラーの文面と見分ける印が無い）
-- **5時間枠と7日間枠の使用状況（プラン使用量）は、知らせを待たずに SDK へ取りに行く**（2026-09-27
-  決定）。口は `Query` の `usage_EXPERIMENTAL_MAY_CHANGE_DO_NOT_RELY_ON_THIS_API_YET({ skipBehaviors: true })`
+- **5時間枠と7日間枠の使用状況（プラン使用量）は、知らせを待たずに SDK へ取りに行く**。口は `Query` の `usage_EXPERIMENTAL_MAY_CHANGE_DO_NOT_RELY_ON_THIS_API_YET({ skipBehaviors: true })`
   で、Claude Code が自分のログインで `/usage` と同じ値を取ってくる（60秒以内の取り直しは Claude Code の控えで
   答える）。**tsukumo は認証情報を読まない**。`skipBehaviors` は必ず `true`（手元の transcript の
   走査を起こさない）。名前のとおり実験中の口なので、呼ぶのは `sdk-` のアダプタ1本に閉じ、読めない形・

@@ -20,7 +20,7 @@
 **割り込む必要がそもそも無くなる**（TUI をそのまま使っていた頃の形と、そこから転換した経緯は
 `docs/architecture/adr/0008-sdk-instead-of-tui.md`）。
 
-**SDK で使えることは一次情報で確認済み**（2026-09-11、code.claude.com/docs の agent-sdk 各ページ）:
+**SDK で使えることは一次情報で確認済み**（code.claude.com/docs の agent-sdk 各ページ）:
 構造化イベント、`canUseTool`（許可と `AskUserQuestion` の両方が届く）、ストリーミング入力モードでの
 追加入力と中断、スキルと `.claude/commands`、hook、MCP、Bun サポート。**スラッシュコマンドは
 `/<name>` を入力文字列に書けば送れ**、使えるものは `system` の `init` イベントの `slash_commands` に
@@ -31,31 +31,30 @@
 
 ## 5. 実行環境・非機能要件
 
-実装スタック: **Node + TypeScript**（2026-09-26 に Bun から移すと決め、2026-09-27 に完了した。
+実装スタック: **Node + TypeScript**（Bun から移した。
 理由は `docs/architecture/adr/0002-render-migration-tech-choice.md`）。チェックコマンドは
 `pnpm run check`。
 
 実行時の依存は次のとおり:
 
-- **`@anthropic-ai/claude-agent-sdk`**（npm パッケージ）— Claude Code を動かす。2026-09-11 に
-  追加。これが唯一の本質的な実行時依存で、`claude`（Claude Code）は SDK が子プロセスとして起こす
+- **`@anthropic-ai/claude-agent-sdk`**（npm パッケージ）— Claude Code を動かす。
+  これが唯一の本質的な実行時依存で、`claude`（Claude Code）は SDK が子プロセスとして起こす
 - **`orca` コマンド**— 使うのは **`orca tab list` / `orca goto` / `orca tab create --url`（ページをホストの中に開く・開いているタブを貼り直す）だけ**。
   1つのアダプタに閉じ込め、**無ければその機能を諦めて動作を続ける**（`orca` に何ができるかの
   一覧は `docs/history/decision.md`「requirements.md 5. 実行環境・非機能要件 / Orca の使える機能」）
-- **`python3` コマンド**— 同梱した見直しのスキルが使用量の記録を集計するのに使う（4.12。2026-10-04
-  承認）。tsukumo 本体からは起こさず、見直しの問い合わせの中でスキルが走らせる。無ければ見直しが集計できないと
+- **`python3` コマンド**— 同梱した見直しのスキルが使用量の記録を集計するのに使う（4.12。承認済み）。tsukumo 本体からは起こさず、見直しの問い合わせの中でスキルが走らせる。無ければ見直しが集計できないと
   断るだけで、ほかの機能は動く
 - **本体（立ち絵・吹き出し・レポートの整形）は外部コマンドに依存しない**
-- **2026-09-13 の移行で足す npm の依存（React・`ws`・unified 一式）は承認済み**（一覧は
+- **ブラウザ描画への移行で足す npm の依存（React・`ws`・unified 一式）は承認済み**（一覧は
   `docs/architecture/build.md`）。外部**コマンド**は増えない
 - これ以外の実行時依存を増やすときは、ユーザーの承認を得る
 
 開発する環境は **macOS + Orca**（Orca と既定のブラウザが並ぶ環境は 2.3）。**バージョンや導入済みコマンドの一覧は
-正典に持たない**（2026-09-21 決定。時間が経つと変わるので、前提にする前に**その場で確認する**。
-2026-09-09 時点の実測は `docs/history/environment-2026-09-09.md`）。
+正典に持たない**（時間が経つと変わるので、前提にする前に**その場で確認する**。
+過去の実測は `docs/history/environment-2026-09-09.md`）。
 
 **ただし「入っていないもの」は残す** — 外部コマンドを増やす提案を止める材料になるため。
-2026-09-09 時点で**未導入**だったのは `tmux`, `chafa`, `viu`, `timg`, `img2sixel`, `cowsay`,
+実測の時点で**未導入**だったのは `tmux`, `chafa`, `viu`, `timg`, `img2sixel`, `cowsay`,
 `deno`, `cargo`。これらに依存する案は、入れてよいかの承認から始まる。
 
 Node の下限は `package.json` の `engines.node`（`>=26`）。`engines` は宣言で、`pnpm install`・

@@ -12,13 +12,13 @@
 
 **トークン消費の画面の「減らし方を見てもらう」は、仕事の会話へ依頼を送らず、押すたびに会話とは別の
 使い捨ての問い合わせを起こしてスキル `token-usage-diet` を流し、結果を tsukumo の MCP ツールで構造のまま受け取る**
-（2026-09-24。別の問い合わせにしたのは 2026-10-12、`docs/architecture/adr/0029-usage-review-own-query.md`。
+（別の問い合わせにした経緯は `docs/architecture/adr/0029-usage-review-own-query.md`。
 語は `docs/glossary.md`「見直し」「見直しの段」「提案」、画面は `docs/architecture/screen-design.md` 13.2）。
 tsukumo 本体は分析しない。**スキルと集計スクリプトは tsukumo に同梱する**（`plugin/` を SDK の
-プラグインとして載せ、`tsukumo:token-usage-diet` の名で呼ばれる。2026-10-04）ので、利用者のホームに
+プラグインとして載せ、`tsukumo:token-usage-diet` の名で呼ばれる）ので、利用者のホームに
 スキルが無くても見直しが流れる。タスク運用のスキルは tsukumo-plugins を git submodule（`vendor/tsukumo-plugins`）で
-コミット固定して取り込み、同じく SDK のプラグインとして載せる（2026-10-08）。
-ただし利用者が同じスキルとエージェントを設定ディレクトリにリンクで入れていれば、二重に並ばないよう載せない（2026-10-10）。集計は python3 で走る（5. の実行時の依存）。
+コミット固定して取り込み、同じく SDK のプラグインとして載せる。
+ただし利用者が同じスキルとエージェントを設定ディレクトリにリンクで入れていれば、二重に並ばないよう載せない。集計は python3 で走る（5. の実行時の依存）。
 
 - **ツールは2つ**: 段の進みを渡す `usage_review_stage` と、結果を1回で渡す `usage_review_result`。
   段は**いまの段だけ**を運び、並びより前を済と読む。載るのは**見直しの問い合わせだけ**で、仕事の会話・
