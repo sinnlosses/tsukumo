@@ -1,6 +1,28 @@
 import { describe, expect, test } from "vitest"
 
-import { parseClaudeResult } from "../../../scripts/shared/claude-result.ts"
+import {
+  parseClaudeResult,
+  parseClaudeStructuredResult,
+} from "../../../scripts/shared/claude-result.ts"
+
+describe("parseClaudeStructuredResult", () => {
+  test("構造化出力とエラーの印を読む", () => {
+    const stdout = JSON.stringify({
+      result: "架空の返却",
+      structured_output: { verdict: "pass", findings: [] },
+      is_error: false,
+    })
+
+    expect(parseClaudeStructuredResult(stdout)).toEqual({
+      output: { verdict: "pass", findings: [] },
+      isError: false,
+    })
+  })
+
+  test("形が違えば例外", () => {
+    expect(() => parseClaudeStructuredResult("{}")).toThrow(/expected/)
+  })
+})
 
 describe("parseClaudeResult", () => {
   test("usage の4種の合計をトークンに、duration_ms を時間に、拒否の数を数える", () => {

@@ -1,4 +1,4 @@
-// `claude -p --output-format json` の結果の JSON から、トークン・時間・拒否の回数を読む、という概念1つを持つ。外に触らない。
+// `claude -p --output-format json` の結果の JSON から、トークン・時間・拒否の回数と構造化出力を読む、という概念1つを持つ。外に触らない。
 import { z } from "zod"
 
 const claudeResultSchema = z.object({
@@ -11,6 +11,17 @@ const claudeResultSchema = z.object({
     cache_read_input_tokens: z.number().default(0),
   }),
 })
+
+const claudeStructuredResultSchema = z.object({
+  structured_output: z.unknown(),
+  is_error: z.boolean(),
+})
+
+export type ClaudeStructuredResult = {
+  /** `--json-schema` に合わせた出力。形は呼ぶ側が検証する。 */
+  readonly output: unknown
+  readonly isError: boolean
+}
 
 export type ClaudeRunResult = {
   readonly tokens: number
@@ -31,4 +42,10 @@ export function parseClaudeResult(stdout: string): ClaudeRunResult {
     durationMs: result.duration_ms,
     denials: result.permission_denials.length,
   }
+}
+
+/** 結果の JSON から構造化出力とエラーの印を読む。形が違えば例外を投げる。 */
+export function parseClaudeStructuredResult(stdout: string): ClaudeStructuredResult {
+  const result = claudeStructuredResultSchema.parse(JSON.parse(stdout))
+  return { output: result.structured_output, isError: result.is_error }
 }

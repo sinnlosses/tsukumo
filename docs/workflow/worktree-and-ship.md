@@ -33,14 +33,30 @@
 捨てうる（2026-09-23 に実際に9ファイルぶんが痕跡なく消えた）。
 
 `node scripts/dev/ship.ts`（`pnpm run ship`）を打つ。作業ツリーが clean か → `main` を出している
-作業ツリーが clean か → `git rebase main` → `pnpm run check --full` → `git -C <本体> merge --ff-only`
+作業ツリーが clean か → 受け入れ → `git rebase main` → `pnpm run check --full` → `git -C <本体> merge --ff-only`
 の順に動き、`--ff-only` が `main` の先回りで落ちたら取り込み（`rebase`）と検証をやり直す
-（上限2回。超えたら止まる）。この作業ツリーに `tw claim` 済みの着手中のタスクがあると、`ship` は
+（上限2回。超えたら止まる。受け入れはやり直さない）。この作業ツリーに `tw claim` 済みの着手中のタスクがあると、`ship` は
 検証より前に拒む（着手中のタスクは `tw finish` で送る。`tw status` が読めないときは拒まず進む）。
+
+受け入れは、`main` とのマージベースからの差分に `src/`・`scripts/`・`test/` のパスがあるときだけ掛かり、
+文書だけの差分は省く（`REVIEW_SKIPPED` の行を出して先へ進む）。掛かると、通った印が無い限り、`ship` は同梱の受け入れ役
+（`vendor/tsukumo-plugins/agents/acceptor.md` の定義）を `claude -p` の子プロセスで起こして判定を待ち、
+通って印が書かれるまで `rebase` へ進まない（`REVIEW_PASSED`）。
+
+- 費用と時間: コードを触る `ship` は、受け入れ役の Opus を1回使い、数分かかる（上限20分）。同じ差分を打ち直すときは印があるので起こさない
+- 判定の材料: 完了条件と差分（受け入れ役が `git diff`・`git log` で読む）は、子の `claude -p` を通して API に送られる。会話の中身は渡さない
+- 完了条件: 会話で決めた完了条件をファイルに書き、`node scripts/dev/ship.ts --criteria-file <パス>` で渡す。渡さなければ `main..HEAD` のコミットの件名で判定させる
+- 印: 共有の git dir（`git rev-parse --git-common-dir`）の下の `ship-review/` に置く。通った印は `accepted/<差分の patch-id>`
+  （`rebase` をまたいでも変わらない。30日より古いものは書くときに消す）、差し戻しの回数は `rejected/<main..HEAD の最初のコミットの patch-id>`
+  （直しのコミットを足しても変わらず、送り終えると次の作業の最初のコミットが変わるので切れる）
+
 落ちた段によって次を行う。
 
 - 自分の作業ツリーが clean でない: コミットしてから打ち直す
 - `main` を出している作業ツリーが clean でない: そちらを片付けてから打ち直す
+- `REVIEW_REJECTED`（受け入れ役が差し戻した）: 並んだ指摘を直してコミットし、打ち直す。差し戻しは1回まで
+- `REVIEW_EXHAUSTED`（直したあとも通らなかった）: 打ち直さず、指摘を添えて人に報告して止まる
+- `REVIEW_UNAVAILABLE`（受け入れ役が起きない・返らない・構造化出力が判定の形でない）: 通さず止まる。下の「実機の Claude Code を動かす計測のとき」の形で CLI が応答するかを確かめてから1回だけ打ち直し、なお落ちれば人に報告する
 - `git rebase main` が衝突した（`rebase --abort` 済み）: 衝突を手で解消し、コミットしてから打ち直す
 - `pnpm run check --full` が落ちた: 直してから打ち直す
 - やり直しの上限を超えた: `main` が速く進みすぎている。少し待つか、送る相手に相談する

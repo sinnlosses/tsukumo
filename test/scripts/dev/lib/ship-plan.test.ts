@@ -1,4 +1,4 @@
-// 取り込み・検証・送り出しの順序とやり直しの上限を、偽のフックで検証する。
+// 受け入れ・取り込み・検証・送り出しの順序とやり直しの上限を、偽のフックで検証する。
 
 import { describe, expect, test } from "vitest"
 
@@ -21,6 +21,10 @@ function fakeHooks(overrides: Partial<ShipPlanHooks> = {}): {
     isMainWorktreeClean: () => {
       calls.push("isMainWorktreeClean")
       return overrides.isMainWorktreeClean?.() ?? true
+    },
+    review: () => {
+      calls.push("review")
+      return overrides.review?.() ?? { kind: "passed" }
     },
     rebaseOntoMain: () => {
       calls.push("rebaseOntoMain")
@@ -48,13 +52,14 @@ describe("runShipPlan", () => {
     expect(calls).toEqual(["hasOpenClaim"])
   })
 
-  test("正常系は7つのフックを1回ずつ、宣言順に呼ぶ", () => {
+  test("正常系は8つのフックを1回ずつ、宣言順に呼ぶ（受け入れは main 側の clean と rebase の間）", () => {
     const { hooks, calls } = fakeHooks()
     expect(runShipPlan(hooks)).toEqual({ outcome: "ok" })
     expect(calls).toEqual([
       "hasOpenClaim",
       "isOwnWorktreeClean",
       "isMainWorktreeClean",
+      "review",
       "rebaseOntoMain",
       "verify",
       "mergeFfOnly",
@@ -66,6 +71,40 @@ describe("runShipPlan", () => {
     const { hooks, calls } = fakeHooks({ isOwnWorktreeClean: () => false })
     expect(runShipPlan(hooks)).toEqual({ outcome: "own-worktree-dirty" })
     expect(calls).toEqual(["hasOpenClaim", "isOwnWorktreeClean"])
+  })
+
+  test.each([
+    [
+      { kind: "rejected", findings: ["- 指摘: a.ts: 架空の指摘"] },
+      { outcome: "review-rejected", findings: ["- 指摘: a.ts: 架空の指摘"] },
+    ],
+    [
+      { kind: "exhausted", findings: ["- 指摘: a.ts: 架空の指摘"] },
+      { outcome: "review-exhausted", findings: ["- 指摘: a.ts: 架空の指摘"] },
+    ],
+    [
+      { kind: "unavailable", reason: "上限を超えた" },
+      { outcome: "review-unavailable", reason: "上限を超えた" },
+    ],
+  ] as const)(
+    "受け入れの門が止めたら rebase・verify・merge を呼ばない（%o）",
+    (review, expected) => {
+      const { hooks, calls } = fakeHooks({ review: () => review })
+      expect(runShipPlan(hooks)).toEqual(expected)
+      expect(calls).toEqual(["hasOpenClaim", "isOwnWorktreeClean", "isMainWorktreeClean", "review"])
+    },
+  )
+
+  test("受け入れを省いた差分は先へ進む", () => {
+    const { hooks, calls } = fakeHooks({ review: () => ({ kind: "skipped" }) })
+    expect(runShipPlan(hooks)).toEqual({ outcome: "ok" })
+    expect(calls).toContain("mergeFfOnly")
+  })
+
+  test("ff-only のやり直しでは受け入れを呼び直さない", () => {
+    const { hooks, calls } = fakeHooks({ mergeFfOnly: () => "not-fast-forward" })
+    runShipPlan(hooks, 2)
+    expect(calls.filter((name) => name === "review")).toHaveLength(1)
   })
 
   test("main の作業ツリーが clean でなければ rebase 以降を呼ばない", () => {
@@ -81,6 +120,7 @@ describe("runShipPlan", () => {
       "hasOpenClaim",
       "isOwnWorktreeClean",
       "isMainWorktreeClean",
+      "review",
       "rebaseOntoMain",
     ])
   })
@@ -92,6 +132,7 @@ describe("runShipPlan", () => {
       "hasOpenClaim",
       "isOwnWorktreeClean",
       "isMainWorktreeClean",
+      "review",
       "rebaseOntoMain",
       "verify",
     ])
