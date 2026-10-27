@@ -14,7 +14,7 @@
 - **定義**: 背景で委譲したサブエージェントがメインへ返す報告。委譲先が `phase_result` で段の結果を返し、`SubagentHandback` の本文は読まない。
   `phase` に当たる帯の段が今の段の集合に入っているときだけ、その段を済ませる（一足飛び・もう済んだ段・範囲の無い依頼・`count` が宣言した**委譲先の段の範囲**の段の数と違う呼び出しでは帯は動かない）
 - **注記**: 規則の正典は `docs/architecture/workflow-contract.md`「委譲の返却」で、スキルの依頼文は参照するだけ
-  （2026-10-10 の改訂。`docs/architecture/adr/0024-no-skill-dependency.md`）。
+  （`docs/architecture/adr/0024-no-skill-dependency.md`）。
   ワークプランを渡した仕事の依頼では、返却が届いたらメインが `work_plan` を呼ぶまで作業のツールを拒む委譲ゲートが立つ。
   委譲先が途中で `SendMessage({ to: "main" })` で送る1行は吹き出しの材料で、帯を動かさない
   （`docs/architecture/display.md`「ワークプラン」）

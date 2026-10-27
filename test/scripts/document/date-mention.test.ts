@@ -22,7 +22,6 @@ const FROZEN_DATE_LINE_COUNTS = {
   "architecture/screen-design": 20,
   "architecture/testing": 5,
   "coding-standards": 19,
-  glossary: 67,
   requirements: 142,
   workflow: 9,
 } as const satisfies Record<string, number>
