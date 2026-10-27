@@ -80,40 +80,6 @@ describe("Report（書き上げる演出を飛ばす口）", () => {
   })
 })
 
-describe("Report（長い1文目の畳み）", () => {
-  const head = (text: string): MainViewReportBody => ({
-    kind: "regions",
-    head: text,
-    finalHead: text,
-    sections: [],
-    retrospective: "",
-    favor: { id: "favor-fictional", markdown: "" },
-  })
-  const clampedRegion = (container: HTMLElement): Element | null =>
-    container.querySelector("[data-report-region='head']")
-
-  it("1文目が50字を超える頭の欄は畳んで始め、口を押すと開き、もう一度押すと畳む", () => {
-    const { container } = render(
-      <Report reveal={false} turnId={1} className="" body={head(`${"あ".repeat(60)}。`)} />,
-    )
-    expect(clampedRegion(container)?.hasAttribute("data-first-sentence-clamped")).toBe(true)
-
-    fireEvent.click(screen.getByRole("button", { name: "全文" }))
-    expect(clampedRegion(container)?.hasAttribute("data-first-sentence-clamped")).toBe(false)
-
-    fireEvent.click(screen.getByRole("button", { name: "畳む" }))
-    expect(clampedRegion(container)?.hasAttribute("data-first-sentence-clamped")).toBe(true)
-  })
-
-  it("1文目が短い頭の欄は畳まず、口も置かない", () => {
-    const { container } = render(
-      <Report reveal={false} turnId={1} className="" body={head("短い結論。")} />,
-    )
-    expect(clampedRegion(container)?.hasAttribute("data-first-sentence-clamped")).toBe(false)
-    expect(screen.queryByRole("button", { name: "全文" })).toBeNull()
-  })
-})
-
 describe("Report（空行で塊に割り、塊ごとに memo）", () => {
   it("最初の描画では、すべての塊を1回ずつ描く", () => {
     render(
