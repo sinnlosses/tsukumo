@@ -31,7 +31,7 @@ function requestRecord(turnId: number, ids: readonly string[]): SessionRecord {
     kind: "request",
     turnId,
     text: "架空の依頼",
-    images: ids.map((id) => ({ id, thumbnail: `data:image/png;base64,thumb${id}` })),
+    images: ids.map((id) => ({ kind: "sent", id, thumbnail: `data:image/png;base64,thumb${id}` })),
     time: { kind: "stamped", at: 1_000 },
   }
 }
@@ -106,6 +106,18 @@ describe("createPromptImageShelf", () => {
 
     expect(shelf.find(a?.id ?? "")).toBeUndefined()
     expect(shelf.find(b?.id ?? "")).toBe(image("B").full)
+  })
+
+  it("復元で置き直した原寸は、控えを持たない id として返り、その id で引ける", () => {
+    const shelf = createPromptImageShelf()
+
+    const restored = shelf.shelveRestored([image("A").full, image("B").full])
+
+    expect(restored.map((entry) => entry.kind)).toEqual(["restored", "restored"])
+    expect(restored.map((entry) => shelf.find(entry.id))).toEqual([
+      image("A").full,
+      image("B").full,
+    ])
   })
 })
 

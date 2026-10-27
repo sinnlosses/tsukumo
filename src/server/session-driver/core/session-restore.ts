@@ -7,6 +7,7 @@
 import { isPlainObject } from "remeda"
 
 import type { Expression } from "../../../shared/character-pack/expression.ts"
+import { parsePromptImage } from "../../../shared/session-driver/prompt-image.ts"
 import type { TurnOutcome } from "../../../shared/session-driver/turn-failure.ts"
 import type { RestoredEvent, SessionEvent } from "../../../shared/session/session-event.ts"
 import { nonBlankString } from "../../core/non-blank-string.ts"
@@ -28,7 +29,8 @@ const UNLEDGERED_TURN_OUTCOME: TurnOutcome = { kind: "completed" }
  *
  * - 委譲先の返却（`origin.handback` が真の `user` メッセージ）: 依頼にもイベントにもしない（`phase_result` で進んだ帯は戻さない）
  * - 利用者の依頼（`request`）と脇の話（`aside`）: 欄で利用者の入力と分かる `user` のテキストブロックから起こす（{@link requestText}）。
- *   依頼・脇の話・進みの差し込みのどれかは、メッセージの `uuid` で控えを引いて決め、控えに無ければ包み（`asideTextOf`・`isProgressNudgePrompt`）で見分ける
+ *   依頼・脇の話・進みの差し込みのどれかは、メッセージの `uuid` で控えを引いて決め、控えに無ければ包み（`asideTextOf`・`isProgressNudgePrompt`）で見分ける。
+ *   添えてあった画像の原寸は `promptImages` に載せる（{@link restoredPromptImages}）
  * - 続きのターンの始まり（`turn-resumed`）: バックグラウンドタスクの知らせの `user` メッセージと、進みの差し込みから起こす。差し込みは依頼にしない
  * - ターンの境目（`turn-finished`）: `result` が残らないので、次の依頼・脇の話・続きのターンの手前と並びの末尾で区切る（{@link boundedTurns}）。時刻は直前の出来事のものを引き継ぐ
  *
@@ -55,6 +57,7 @@ export function toRestoredEvents(
       event,
       time,
       turn,
+      promptImages: isTurnOpening(event) ? restoredPromptImages(message) : [],
     }))
   })
   return passThrough(boundedTurns(steps), createCallReview().pass)
@@ -75,8 +78,7 @@ export function restoredMessageEvents(
   if (text === undefined) {
     return toSessionEvents(message, expressions)
   }
-  // 組み直した依頼に画像は付かない。
-  // tsukumo は画像の控えをディスクに残さず、原寸の棚もメモリだけで起こし直すと空になるので、読み直せるのは文面だけ。
+  // 添えてあった画像は `images` に載せない（棚の id がまだ無い）。原寸は `RestoredEvent.promptImages` で別に運ぶ。
   switch (ledger.inputKindOf(messageUuid(message) ?? "") ?? kindByWrapping(text)) {
     case "progress-nudge":
       return [{ kind: "turn-resumed" }]
@@ -103,9 +105,10 @@ function boundedTurns(steps: readonly RestoringStep[]): readonly RestoredEvent[]
   const finished = (time: RestoredEvent["time"]): RestoredEvent => ({
     event: { kind: "turn-finished", outcome: current?.outcome ?? UNLEDGERED_TURN_OUTCOME },
     time,
+    promptImages: [],
   })
 
-  const bounded = steps.flatMap(({ event, time, turn }): readonly RestoredEvent[] => {
+  const bounded = steps.flatMap(({ event, time, turn, promptImages }): readonly RestoredEvent[] => {
     const opening = isTurnOpening(event)
     const resumed = event.kind === "turn-resumed"
     if (!started) {
@@ -117,7 +120,7 @@ function boundedTurns(steps: readonly RestoringStep[]): readonly RestoredEvent[]
         started = true
         current = turn
       }
-      return [{ event, time }]
+      return [{ event, time, promptImages }]
     }
     const boundary = (opening || resumed) && (turn === undefined || turn !== current)
     const closing = boundary ? [finished(lastTime)] : []
@@ -125,7 +128,7 @@ function boundedTurns(steps: readonly RestoringStep[]): readonly RestoredEvent[]
       current = turn
     }
     lastTime = time
-    return [...closing, { event, time }]
+    return [...closing, { event, time, promptImages }]
   })
   return started ? [...bounded, finished(lastTime)] : bounded
 }
@@ -157,10 +160,14 @@ function passThrough(
   events: readonly RestoredEvent[],
   pass: (event: SessionEvent) => readonly SessionEvent[],
 ): readonly RestoredEvent[] {
-  return events.flatMap(({ event, time }) =>
+  return events.flatMap(({ event, time, promptImages }) =>
     pass(event)
       .filter((passed) => passed.kind !== "report-rejected")
-      .map((passed) => ({ event: passed, time })),
+      .map((passed) => ({
+        event: passed,
+        time,
+        promptImages: isTurnOpening(passed) ? promptImages : [],
+      })),
   )
 }
 
@@ -247,6 +254,32 @@ function userRawText(message: unknown): string | undefined {
     return undefined
   }
   return content.map((block) => textBlock(block)).join("\n")
+}
+
+/**
+ * `user` のメッセージに添えてあった画像を、原寸の data URL にして並びのまま返す。
+ * 駆動は画像を `{ type: "image", source: { type: "base64", media_type, data } }` で渡し、claude はそのまま transcript に書く。
+ * 形の違うもの・受け付けない種類・大きすぎるものは落とす（依頼として送れなかった画像は戻さない）。
+ */
+function restoredPromptImages(message: unknown): readonly string[] {
+  if (!isPlainObject(message) || !isPlainObject(message.message)) {
+    return []
+  }
+  const content = message.message.content
+  if (!Array.isArray(content)) {
+    return []
+  }
+  return content.flatMap((block): readonly string[] => {
+    if (!isPlainObject(block) || block.type !== "image" || !isPlainObject(block.source)) {
+      return []
+    }
+    const { type, media_type: mediaType, data } = block.source
+    if (type !== "base64" || typeof mediaType !== "string" || typeof data !== "string") {
+      return []
+    }
+    const dataUrl = `data:${mediaType};base64,${data}`
+    return parsePromptImage(dataUrl) === undefined ? [] : [dataUrl]
+  })
 }
 
 function isToolResultBlock(block: unknown): boolean {

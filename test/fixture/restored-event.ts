@@ -4,9 +4,9 @@ export function knownRestored(
   events: readonly SessionEvent[],
   at = 1_000,
 ): readonly RestoredEvent[] {
-  return events.map((event) => ({ event, time: { kind: "known", at } }))
+  return events.map((event) => ({ event, time: { kind: "known", at }, promptImages: [] }))
 }
 
 export function unknownRestored(events: readonly SessionEvent[]): readonly RestoredEvent[] {
-  return events.map((event) => ({ event, time: { kind: "unknown" } }))
+  return events.map((event) => ({ event, time: { kind: "unknown" }, promptImages: [] }))
 }

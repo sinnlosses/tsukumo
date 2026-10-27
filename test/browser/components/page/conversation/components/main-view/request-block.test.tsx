@@ -77,7 +77,7 @@ describe("RequestBlock", () => {
       <RequestBlock
         request={{
           text: "架空の依頼",
-          images: [{ id: "架空の画像", thumbnail: "data:image/png;base64,AAAA" }],
+          images: [{ kind: "sent", id: "架空の画像", thumbnail: "data:image/png;base64,AAAA" }],
         }}
       />,
     )

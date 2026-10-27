@@ -183,7 +183,7 @@ describe("appendChatArchiveEntry", () => {
     await appendEntryWithoutShelf(archive, PACK, "chat", FICTIONAL_PROJECT, 1_000, {
       kind: "request",
       text: "架空の依頼",
-      images: [{ id: "fictional-id", thumbnail: "data:image/png;base64,AAAA" }],
+      images: [{ kind: "sent", id: "fictional-id", thumbnail: "data:image/png;base64,AAAA" }],
     })
 
     expect(calls[0]?.entry).toMatchObject({ images: 1 })
@@ -252,7 +252,7 @@ describe("appendChatArchiveEntry の画像", () => {
     return {
       kind: "request",
       text: "架空の依頼",
-      images: ids.map((id) => ({ id, thumbnail: SYNTHETIC_DATA_URL })),
+      images: ids.map((id) => ({ kind: "sent", id, thumbnail: SYNTHETIC_DATA_URL })),
     }
   }
 

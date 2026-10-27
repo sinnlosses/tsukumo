@@ -162,6 +162,11 @@ export type StampedEvent = {
 export type RestoredEvent = {
   readonly event: SessionEvent
   readonly time: { readonly kind: "known"; readonly at: number } | { readonly kind: "unknown" }
+  /**
+   * 依頼・脇の話に添えてあった原寸の data URL（transcript から読み戻したもの。ほかの出来事では空）。
+   * 組み直した時点では棚の id がまだ無いので `event.images` は空で、棚に置いて写すのは受け手。
+   */
+  readonly promptImages: readonly string[]
 }
 
 /**

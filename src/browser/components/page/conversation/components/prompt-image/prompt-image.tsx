@@ -6,7 +6,8 @@
 //
 // - 札: 送る前なので原寸はブラウザのメモリにある（サーバへは取りに行かない）
 // - 控え: 記録に載っているのは控えと id だけなので、押したときに id でサーバの棚から取りに行く（`/prompt-image/<id>`。WebSocket のフレームには原寸を載せない）。
-//   棚は直近の数枚しか持たないので、取れなかったら（404）控えを拡大の面に出し、原寸はもう手放したと1行添える（ブラウザは棚の中身を知らないので、取りに行ってから決める）
+//   棚は直近の数枚しか持たないので、取れなかったら（404）控えを拡大の面に出し、原寸はもう手放したと1行添える（ブラウザは棚の中身を知らないので、取りに行ってから決める）。
+//   続きから復元した依頼は控えを持たないので、棚の原寸から控えを作り直して描く
 //
 // 1枚も無いときは何も描かないので、常設の枠にならない。
 
@@ -23,6 +24,7 @@ import { withOccurrenceKeys } from "../../../../../domain/occurrence-key.ts"
 import { sessionTokenUrl } from "../../../../../domain/session-token-url.ts"
 import { Button } from "../../../../ui/button/button.tsx"
 import { ImageZoom, type ImageZoomFallback } from "../../../../ui/image-zoom/image-zoom.tsx"
+import { useRemadeThumbnail } from "./hooks/use-remade-thumbnail.ts"
 import styles from "./prompt-image.module.css"
 
 /** 札にも控えにも同じ alt を付ける（中身は読めないので、そこに何があるかだけを伝える）。 */
@@ -34,7 +36,10 @@ const REMOVE_LABEL = "この画像を外す"
 /** 控えを押したが棚に原寸が残っていなかったときの1行（控えを代わりに出している理由）。 */
 const RELEASED_NOTE = "原寸はもう手放したので、控えを拡大しています"
 
-/** 札の原寸はブラウザのメモリにあり、読めないことが起きないので代わりを持たない。 */
+/**
+ * 代わりを出さない。
+ * 札の原寸はブラウザのメモリにあって読めないことが起きず、復元した控えには代わりに出せる控えが記録に無い。
+ */
 const NO_FALLBACK = { kind: "none" } as const satisfies ImageZoomFallback
 
 type PromptImageChipsProps = {
@@ -132,30 +137,14 @@ export function PromptImageThumbnails(props: PromptImageThumbnailsProps): ReactE
   return (
     <>
       <ul className={styles["prompt-images"]}>
-        {props.images.map((image, index) => (
-          <li className={styles["prompt-image-thumbnail"]} key={image.id}>
-            <Button
-              variant="ghost"
-              size="label"
-              pressed="none"
-              disabled={false}
-              ariaLabel={ZOOM_LABEL}
-              disclosure={{ kind: "none" }}
-              className={styles["prompt-image-zoom"]}
-              onClick={() => setZoomedIndex(index)}
-            >
-              <img
-                className={clsx(
-                  styles["prompt-image"],
-                  props.size === "full" && styles["prompt-image-full"],
-                )}
-                src={image.thumbnail}
-                alt={IMAGE_ALT}
-              />
-              <Search className={styles["prompt-image-zoom-icon"]} size={16} />
-            </Button>
-          </li>
-        ))}
+        {props.images.map((image, index) => {
+          const onZoom = (): void => setZoomedIndex(index)
+          return image.kind === "sent" ? (
+            <ThumbnailItem key={image.id} src={image.thumbnail} size={props.size} onZoom={onZoom} />
+          ) : (
+            <RestoredThumbnailItem key={image.id} id={image.id} size={props.size} onZoom={onZoom} />
+          )
+        })}
       </ul>
       {zoomedImage !== undefined && (
         <ImageZoom
@@ -163,12 +152,63 @@ export function PromptImageThumbnails(props: PromptImageThumbnailsProps): ReactE
           src={shelvedImageUrl(zoomedImage.id)}
           alt={IMAGE_ALT}
           size="original"
-          fallback={{ kind: "substitute", src: zoomedImage.thumbnail, note: RELEASED_NOTE }}
+          fallback={
+            zoomedImage.kind === "sent"
+              ? { kind: "substitute", src: zoomedImage.thumbnail, note: RELEASED_NOTE }
+              : NO_FALLBACK
+          }
           onClose={() => setZoomedIndex(undefined)}
         />
       )}
     </>
   )
+}
+
+type ThumbnailItemProps = {
+  readonly src: string
+  readonly size: PromptImageThumbnailsProps["size"]
+  readonly onZoom: () => void
+}
+
+function ThumbnailItem(props: ThumbnailItemProps): ReactElement {
+  return (
+    <li className={styles["prompt-image-thumbnail"]}>
+      <Button
+        variant="ghost"
+        size="label"
+        pressed="none"
+        disabled={false}
+        ariaLabel={ZOOM_LABEL}
+        disclosure={{ kind: "none" }}
+        className={styles["prompt-image-zoom"]}
+        onClick={props.onZoom}
+      >
+        <img
+          className={clsx(
+            styles["prompt-image"],
+            props.size === "full" && styles["prompt-image-full"],
+          )}
+          src={props.src}
+          alt={IMAGE_ALT}
+        />
+        <Search className={styles["prompt-image-zoom-icon"]} size={16} />
+      </Button>
+    </li>
+  )
+}
+
+/**
+ * 続きから復元した依頼の控え1枚。棚の原寸からブラウザで作り直し、作れるまでと作れなかったときは何も描かない
+ * （棚から原寸が消えていれば、見せられる絵がどこにも無い）。
+ */
+function RestoredThumbnailItem(
+  props: Omit<ThumbnailItemProps, "src"> & { readonly id: string },
+): ReactElement | null {
+  const thumbnail = useRemadeThumbnail(shelvedImageUrl(props.id))
+  if (thumbnail.kind !== "made") {
+    return null
+  }
+  return <ThumbnailItem src={thumbnail.src} size={props.size} onZoom={props.onZoom} />
 }
 
 /** 棚の原寸を取りに行く URL。起動トークンはこのページの URL から引き継ぐ。 */

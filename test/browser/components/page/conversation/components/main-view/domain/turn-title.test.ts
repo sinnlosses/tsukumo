@@ -83,7 +83,7 @@ describe("turnTitle（やり取りの題）", () => {
         turn({
           request: {
             text: "",
-            images: [{ id: "fictional-id", thumbnail: "data:image/png;base64,AA==" }],
+            images: [{ kind: "sent", id: "fictional-id", thumbnail: "data:image/png;base64,AA==" }],
           },
           steps,
         }),

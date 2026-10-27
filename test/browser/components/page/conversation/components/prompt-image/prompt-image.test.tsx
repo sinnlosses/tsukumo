@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
-import { afterEach, describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 
 import {
   PromptImageChips,
@@ -12,6 +12,7 @@ import {
 } from "../../../../../../../src/shared/session-driver/prompt-image.ts"
 import { setPageUrl } from "../../../../../../dom-setup.ts"
 import { typedElement } from "../../../../../../typed-element.ts"
+import { createTestQueryClient, queryClientWrapper } from "../../../../../query-client.tsx"
 
 const IMAGE_A: PromptImage = {
   full: "data:image/png;base64,fullA",
@@ -84,14 +85,16 @@ describe("PromptImageChips", () => {
 
 describe("PromptImageThumbnails", () => {
   // 記録に載っている控えと id の組（id は架空の UUID）。
-  const RECORDED_A: RecordedPromptImage = {
+  const RECORDED_A = {
+    kind: "sent",
     id: "0b6f7a52-3c1e-4d7a-9f2b-5e8c1d4a6b3f",
     thumbnail: "data:image/png;base64,thumbA",
-  }
-  const RECORDED_B: RecordedPromptImage = {
+  } as const satisfies RecordedPromptImage
+  const RECORDED_B = {
+    kind: "sent",
     id: "7d1c2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f",
     thumbnail: "data:image/png;base64,thumbB",
-  }
+  } as const satisfies RecordedPromptImage
 
   function zoomedImage(): HTMLImageElement | null {
     return zoomDialog()?.querySelector("img") ?? null
@@ -156,5 +159,37 @@ describe("PromptImageThumbnails", () => {
       true,
     )
     expect(zoomDialog()?.textContent).not.toContain("原寸はもう手放した")
+  })
+})
+
+describe("PromptImageThumbnails（続きから復元した依頼）", () => {
+  const RESTORED = {
+    kind: "restored",
+    id: "3e2d1c0b-9a8f-4e7d-8c6b-5a4f3e2d1c0b",
+  } as const satisfies RecordedPromptImage
+  /** ブラウザの画像の読み込みの代役。jsdom は画像を読み込まないので、読み込みを `error` で終わらせる（棚から原寸が消えていた）。 */
+  class UnreadableImage extends EventTarget {
+    readonly naturalWidth = 0
+    readonly naturalHeight = 0
+    set src(_value: string) {
+      queueMicrotask(() => this.dispatchEvent(new Event("error")))
+    }
+  }
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it("棚に原寸が無ければ控えを描かない", async () => {
+    vi.stubGlobal("Image", UnreadableImage)
+    const client = createTestQueryClient()
+    render(<PromptImageThumbnails images={[RESTORED]} size="full" />, {
+      wrapper: queryClientWrapper(client),
+    })
+
+    await vi.waitFor(() => {
+      expect(client.getQueryCache().getAll()[0]?.state.status).toBe("success")
+    })
+    expect(screen.queryByRole("button", { name: "この画像を拡大" })).toBeNull()
   })
 })

@@ -293,3 +293,73 @@ describe("toRestoredEvents", () => {
     expect(eventsOf(messages).map((event) => event.kind)).toEqual(["request", "turn-finished"])
   })
 })
+
+describe("toRestoredEvents の添えた画像", () => {
+  // 駆動が送る形（image,text の順・base64）を手で組む。中身は合成の数バイト（実物の画像は使わない）。
+  function imageBlock(mediaType: string, data: string) {
+    return { type: "image", source: { type: "base64", media_type: mediaType, data } }
+  }
+
+  function promptImagesOf(messages: unknown): readonly (readonly string[])[] {
+    return toRestoredEvents(messages, EXPRESSIONS, EMPTY_INPUT_LEDGER).map(
+      ({ promptImages }) => promptImages,
+    )
+  }
+
+  it("依頼に添えた画像を、並びのまま原寸の data URL にして依頼の出来事に添える", () => {
+    const messages = [
+      userMessage([
+        imageBlock("image/png", "AQID"),
+        imageBlock("image/jpeg", "BAUG"),
+        { type: "text", text: "架空の依頼" },
+      ]),
+    ]
+
+    expect(eventsOf(messages)[0]).toEqual(requestEvent("架空の依頼"))
+    expect(promptImagesOf(messages)).toEqual([
+      ["data:image/png;base64,AQID", "data:image/jpeg;base64,BAUG"],
+      [],
+    ])
+  })
+
+  it("脇の話に添えた画像も添える", () => {
+    const messages = [
+      userMessage("架空の依頼"),
+      userMessage([
+        imageBlock("image/webp", "AQID"),
+        { type: "text", text: asidePromptText("架空の脇") },
+      ]),
+    ]
+
+    expect(eventsOf(messages).map((event) => event.kind)).toContain("aside")
+    expect(promptImagesOf(messages).flat()).toEqual(["data:image/webp;base64,AQID"])
+  })
+
+  it("base64 でないもの・受け付けない種類の画像は添えない", () => {
+    const messages = [
+      userMessage([
+        { type: "image", source: { type: "url", url: "https://example.invalid/架空.png" } },
+        imageBlock("image/svg+xml", "AQID"),
+        { type: "text", text: "架空の依頼" },
+      ]),
+    ]
+
+    expect(promptImagesOf(messages)).toEqual([[], []])
+  })
+
+  it("ツールの結果に入った画像は依頼の画像にしない", () => {
+    const messages = [
+      userMessage("架空の依頼"),
+      userMessage([
+        {
+          type: "tool_result",
+          tool_use_id: "toolu_架空",
+          content: [imageBlock("image/png", "AQID")],
+        },
+        imageBlock("image/png", "AQID"),
+      ]),
+    ]
+
+    expect(promptImagesOf(messages).flat()).toEqual([])
+  })
+})

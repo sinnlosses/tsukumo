@@ -219,7 +219,9 @@ describe("createSessionManager", () => {
       })
       const request = requestEvent(
         "架空の依頼",
-        shelved === undefined ? [] : [{ id: shelved.id, thumbnail: shelved.thumbnail }],
+        shelved === undefined
+          ? []
+          : [{ kind: "sent", id: shelved.id, thumbnail: shelved.thumbnail }],
       )
       return { stub, request, shelvedId: shelved?.id, writes, archiveCalls, diagnostics }
     }

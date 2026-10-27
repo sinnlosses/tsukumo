@@ -26,7 +26,7 @@ import type { SessionRecord } from "../../../shared/session/session-record.ts"
 const MAX_SHELVED_PROMPT_IMAGE_BYTES = 128 * 1024 * 1024
 
 /** 棚に置いた1枚。原寸と控えの対に、棚が振った id を添えたもの（駆動へはこの形で渡す）。 */
-export type ShelvedPromptImage = PromptImage & RecordedPromptImage
+export type ShelvedPromptImage = PromptImage & { readonly id: string }
 
 export type PromptImageShelf = {
   /**
@@ -34,6 +34,11 @@ export type PromptImageShelf = {
    * 合計の大きさが上限を超えるあいだ、いま置いた画像を除いて古いほうから捨てる。
    */
   readonly shelve: (images: readonly PromptImage[]) => readonly ShelvedPromptImage[]
+  /**
+   * 続きからの復元で transcript から読み戻した原寸（data URL）を棚に置き、記録に載せる形で返す（控えはブラウザが作り直す）。
+   * 上限の扱いは {@link PromptImageShelf.shelve} と同じ。
+   */
+  readonly shelveRestored: (fulls: readonly string[]) => readonly RecordedPromptImage[]
   /** id が指す原寸の data URL。棚に無ければ undefined（配る側が 404 にする）。 */
   readonly find: (id: string) => string | undefined
   /** id の原寸を捨てる（棚に無い id は黙って無視する）。 */
@@ -44,27 +49,36 @@ export function createPromptImageShelf(): PromptImageShelf {
   // `Map` は入れた順を保つので、先頭がいちばん古い。
   const shelved = new Map<string, string>()
 
+  // 古いほうから捨てる対象は、いま置く前から棚にあった id だけ（挿入順で先頭側）。
+  const place = (entries: readonly { readonly id: string; readonly full: string }[]): void => {
+    const previousIds = [...shelved.keys()]
+    for (const entry of entries) {
+      shelved.set(entry.id, entry.full)
+    }
+    let total = sumBy([...shelved.values()], (full) => full.length)
+    for (const id of previousIds) {
+      if (total <= MAX_SHELVED_PROMPT_IMAGE_BYTES) {
+        break
+      }
+      const full = shelved.get(id)
+      if (full === undefined) {
+        continue
+      }
+      shelved.delete(id)
+      total -= full.length
+    }
+  }
+
   return {
     shelve: (images) => {
-      // 古いほうから捨てる対象は、いま置く前から棚にあった id だけ（挿入順で先頭側）。
-      const previousIds = [...shelved.keys()]
       const entries = images.map((image) => ({ ...image, id: crypto.randomUUID() }))
-      for (const entry of entries) {
-        shelved.set(entry.id, entry.full)
-      }
-      let total = sumBy([...shelved.values()], (full) => full.length)
-      for (const id of previousIds) {
-        if (total <= MAX_SHELVED_PROMPT_IMAGE_BYTES) {
-          break
-        }
-        const full = shelved.get(id)
-        if (full === undefined) {
-          continue
-        }
-        shelved.delete(id)
-        total -= full.length
-      }
+      place(entries)
       return entries
+    },
+    shelveRestored: (fulls) => {
+      const entries = fulls.map((full) => ({ full, id: crypto.randomUUID() }))
+      place(entries)
+      return entries.map(({ id }) => ({ kind: "restored", id }))
     },
     find: (id) => shelved.get(id),
     release: (ids) => {
@@ -82,7 +96,7 @@ export function createPromptImageShelf(): PromptImageShelf {
 export function recordedPromptImages(
   images: readonly ShelvedPromptImage[],
 ): readonly RecordedPromptImage[] {
-  return images.map((image) => ({ id: image.id, thumbnail: image.thumbnail }))
+  return images.map((image) => ({ kind: "sent", id: image.id, thumbnail: image.thumbnail }))
 }
 
 /**
@@ -101,7 +115,7 @@ export function releasedPromptImageIds(
   return recordedPromptImageIds(before).filter((id) => !remaining.has(id))
 }
 
-function recordedPromptImageIds(records: readonly SessionRecord[]): readonly string[] {
+export function recordedPromptImageIds(records: readonly SessionRecord[]): readonly string[] {
   return records.flatMap((record) =>
     record.kind === "request" || record.kind === "aside"
       ? record.images.map((image) => image.id)

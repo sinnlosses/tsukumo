@@ -12,7 +12,7 @@ import type { SessionState } from "../../../shared/session/session-state.ts"
  */
 export function applyRestoredEvents(
   state: SessionState,
-  events: readonly RestoredEvent[],
+  events: readonly Pick<RestoredEvent, "event" | "time">[],
   now: number,
 ): SessionState {
   return events.reduce(

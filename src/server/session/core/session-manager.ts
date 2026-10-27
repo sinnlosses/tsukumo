@@ -36,6 +36,10 @@ import { createEventBatch } from "./event-batch.ts"
 import { shelveEventImages } from "./event-image-shelf.ts"
 import { createReportChangeCounter } from "./report-change-count.ts"
 import { applyRestoredEvents } from "./restored-event.ts"
+import {
+  shelveRestoredPromptImages,
+  unrecordedRestoredPromptImageIds,
+} from "./restored-prompt-image.ts"
 import { shelveRestoredReportImages } from "./restored-report-image.ts"
 import { createDriverRead } from "./session-driver-read.ts"
 import { recordSessionEvent } from "./session-event-record.ts"
@@ -247,7 +251,9 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
         return
       }
       const restoredAt = options.now()
-      replaceState(applyRestoredEvents(state, events, restoredAt))
+      const shelved = shelveRestoredPromptImages(options.promptImageShelf, events)
+      replaceState(applyRestoredEvents(state, shelved, restoredAt))
+      options.promptImageShelf.release(unrecordedRestoredPromptImageIds(shelved, state.records))
       tally.waitingLineAlarm.set(waitingLineDueAt(state))
       replaceState(shelveRestoredReportImages(options, state, events, restoredAt))
       if (!held) {

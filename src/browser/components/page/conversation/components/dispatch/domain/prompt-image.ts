@@ -1,7 +1,5 @@
 // 貼り付け・ドロップ・ファイルを選ぶ窓で届いたファイルを、依頼に添える画像（`PromptImage`）にする。
 //
-// 縮めるのはここ（ブラウザ側）だけ。
-// サーバは受け取った控えをそのまま記録に載せるので、原寸が残る場所はどこにも無い。
 // 控えを作るのは「原寸を手放しても依頼の記録が読める」ようにするためで、押して拡大する面は作らない（作ろうとしても開くものが無い）。
 //
 // 読めなかった1枚は undefined にして呼び出し側が諦める（例外を投げない）。
@@ -9,21 +7,10 @@
 import {
   isPromptImageMediaType,
   parsePromptImage,
-  parsePromptImageThumbnail,
   type PromptImage,
 } from "../../../../../../../shared/session-driver/prompt-image.ts"
 import { readDataUrl } from "../../../../../../utils/data-url.ts"
-
-/**
- * 控えの長いほうの辺（px）。記録に残り続けるものなので小さく持つ（`MAX_PROMPT_IMAGE_THUMBNAIL_BYTES` に対して十分な余裕がある）。
- * 札にも控えにも、この1枚をそのまま出す。
- */
-const THUMBNAIL_MAX_EDGE_PX = 320
-
-/** 控えの形式。受け付ける4つのうち、同じ絵をいちばん小さく持てるもの。 */
-const THUMBNAIL_MEDIA_TYPE = "image/webp"
-
-const THUMBNAIL_QUALITY = 0.8
+import { shrinkToThumbnail } from "../../../domain/prompt-image-thumbnail.ts"
 
 /**
  * 落ちてきた・貼られたものから、依頼に添えられる画像のファイルだけを拾う（`.svg` や PDF やフォルダは混ざらない）。
@@ -64,48 +51,4 @@ export async function readPromptImage(file: File): Promise<PromptImage | undefin
 
   const thumbnail = await shrinkToThumbnail(full)
   return thumbnail === undefined ? undefined : { full, thumbnail }
-}
-
-/**
- * 原寸の data URL から控えを作る。
- * 長いほうの辺を {@link THUMBNAIL_MAX_EDGE_PX} に収め、上限に収まったものだけを返す（収まらなければその1枚を諦める）。
- */
-async function shrinkToThumbnail(full: string): Promise<string | undefined> {
-  const decoded = await decodeImage(full)
-  if (decoded === undefined) {
-    return undefined
-  }
-
-  const longestEdge = Math.max(decoded.naturalWidth, decoded.naturalHeight)
-  if (longestEdge === 0) {
-    return undefined
-  }
-
-  const scale = Math.min(1, THUMBNAIL_MAX_EDGE_PX / longestEdge)
-  const canvas = document.createElement("canvas")
-  canvas.width = Math.max(1, Math.round(decoded.naturalWidth * scale))
-  canvas.height = Math.max(1, Math.round(decoded.naturalHeight * scale))
-
-  const context = canvas.getContext("2d")
-  if (context === null) {
-    return undefined
-  }
-  context.drawImage(decoded, 0, 0, canvas.width, canvas.height)
-
-  const thumbnail = canvas.toDataURL(THUMBNAIL_MEDIA_TYPE, THUMBNAIL_QUALITY)
-  return parsePromptImageThumbnail(thumbnail) === undefined ? undefined : thumbnail
-}
-
-/** data URL を読み込んだ `<img>`。読めなければ undefined（例外にしない）。 */
-function decodeImage(dataUrl: string): Promise<HTMLImageElement | undefined> {
-  return new Promise((resolve) => {
-    const image = new Image()
-    image.addEventListener("load", () => {
-      resolve(image)
-    })
-    image.addEventListener("error", () => {
-      resolve(undefined)
-    })
-    image.src = dataUrl
-  })
 }

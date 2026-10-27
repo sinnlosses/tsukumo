@@ -7,6 +7,7 @@
 // 原寸と控えは別の寿命を持つ。
 // 原寸（`PromptImage.full`）はブラウザのメモリ → WebSocket の1フレーム → サーバのメモリ → SDK の子プロセス、と流れ、サーバのメモリでは直近の数枚だけが棚に残る（棚はディスクに書かない。雑談の画像だけは会話のアーカイブが別に書く）。
 // 記録（`SessionState`）に載るのは控え（`PromptImage.thumbnail`）と、棚の原寸を指す id だけ（`RecordedPromptImage`）。
+// 起こし直すと棚は空から始まり、続きからの復元が transcript に残った原寸を棚へ置き直す（ディスクには書かない）。
 // 上限が2つあるのはそのためで、控えのほうが桁違いに小さい。
 
 import { z } from "zod"
@@ -59,15 +60,25 @@ export type PromptImage = {
 }
 
 /**
- * 記録に載る1枚。控えと、棚の原寸を指す id の組で、原寸そのものは載らない（`hello` は接続のたびに状態を丸ごと送るので、原寸を載せると数 MiB × 枚数になる）。
+ * 記録に載る1枚。棚の原寸を指す id を持ち、原寸そのものは載らない（`hello` は接続のたびに状態を丸ごと送るので、原寸を載せると数 MiB × 枚数になる）。
  * id が指す原寸は棚から消えていることがある（そのときは {@link PROMPT_IMAGE_PATH_PREFIX} が 404 を返す）。
+ *
+ * - `sent`: 送ったときにブラウザが作った控えを持つ
+ * - `restored`: 続きからの復元で transcript から棚へ置き直した1枚。控えは持たず、ブラウザが棚の原寸から作り直す（サーバは画像を加工しない）
  */
-export type RecordedPromptImage = {
-  /** 棚の原寸を指す id（{@link promptImageIdSchema}）。 */
-  readonly id: string
-  /** 控えの data URL。 */
-  readonly thumbnail: string
-}
+export type RecordedPromptImage =
+  | {
+      readonly kind: "sent"
+      /** 棚の原寸を指す id（{@link promptImageIdSchema}）。 */
+      readonly id: string
+      /** 控えの data URL。 */
+      readonly thumbnail: string
+    }
+  | {
+      readonly kind: "restored"
+      /** 棚の原寸を指す id（{@link promptImageIdSchema}）。 */
+      readonly id: string
+    }
 
 /**
  * 棚の原寸を配る経路の接頭辞（`GET /prompt-image/<id>?t=<起動トークン>`）。

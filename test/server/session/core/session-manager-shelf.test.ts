@@ -109,6 +109,77 @@ describe("依頼に添えた画像の棚", () => {
 
     expect(shelf.find(id)).toBeUndefined()
   })
+
+  /** 続きから起こした駆動へ、transcript から組み直した再生を流せる形で起こす。 */
+  function startRestoringManager() {
+    const shelf: PromptImageShelf = createPromptImageShelf()
+    // 棚に置き直した id を覚える（窓から溢れて捨てられたものも、ここに残る）。
+    const placedIds: string[] = []
+    const stub = createStubDriver()
+    const manager = createSessionManager({
+      promptImageShelf: {
+        ...shelf,
+        shelveRestored: (fulls) => {
+          const recorded = shelf.shelveRestored(fulls)
+          placedIds.push(...recorded.map((image) => image.id))
+          return recorded
+        },
+      },
+      launchSession: (onEvent, onRestoredEvents) => {
+        stub.attach(onEvent)
+        stub.attachRestored(onRestoredEvents)
+        return Promise.resolve(stub.driver)
+      },
+    })
+    const restoredRequest = (promptImages: readonly string[]): RestoredEvent => ({
+      event: requestEvent("架空の依頼"),
+      time: { kind: "known", at: 1 },
+      promptImages,
+    })
+    return { manager, shelf, stub, placedIds, restoredRequest }
+  }
+
+  it("復元した依頼の原寸を棚に置き、記録には控えの無い id だけを載せる", async () => {
+    const { manager, shelf, stub, restoredRequest } = startRestoringManager()
+    await waitForBatch()
+    const frames: ServerFrame[] = []
+    manager.subscribe((frame) => frames.push(frame))
+
+    stub.emitRestored([restoredRequest([fullImage("A").full, fullImage("B").full])])
+    await waitForBatch()
+
+    const request = manager.commandSession
+      .state()
+      .records.find((record) => record.kind === "request")
+    const images = request?.kind === "request" ? request.images : []
+    expect(images.map((image) => image.kind)).toEqual(["restored", "restored"])
+    expect(images.map((image) => shelf.find(image.id))).toEqual([
+      fullImage("A").full,
+      fullImage("B").full,
+    ])
+    const lastHello = JSON.stringify(frames.filter((frame) => frame.type === "hello").at(-1))
+    expect(lastHello).toContain(images[0]?.id ?? "画像が載っていない")
+    expect(lastHello).not.toContain(fullImage("A").full)
+  })
+
+  it("復元した依頼のうち記録の窓から溢れたものの原寸は、棚に残さない", async () => {
+    const { manager, shelf, stub, placedIds, restoredRequest } = startRestoringManager()
+    await waitForBatch()
+
+    stub.emitRestored([
+      restoredRequest([fullImage("old").full]),
+      ...Array.from({ length: MAX_SESSION_STATE_TURNS.work }, () => restoredRequest([])),
+      restoredRequest([fullImage("new").full]),
+    ])
+    await waitForBatch()
+
+    const kept = manager.commandSession
+      .state()
+      .records.flatMap((record) => (record.kind === "request" ? record.images : []))
+    expect(placedIds).toHaveLength(2)
+    expect(kept.map((image) => image.id)).toEqual(placedIds.slice(1))
+    expect(placedIds.map((id) => shelf.find(id))).toEqual([undefined, fullImage("new").full])
+  })
 })
 
 describe("レポートの画像の棚", () => {
@@ -191,10 +262,12 @@ describe("レポートの画像の棚", () => {
     const turn = (text: string): RestoredEvent => ({
       event: requestEvent(text),
       time: { kind: "known", at: recent },
+      promptImages: [],
     })
     const report = (id: string, time: RestoredEvent["time"]): RestoredEvent => ({
       event: imageReportEvent(id),
       time,
+      promptImages: [],
     })
 
     stub.emitRestored([

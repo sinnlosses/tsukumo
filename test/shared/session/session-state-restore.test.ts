@@ -56,8 +56,13 @@ describe("applyRestoredEvents（transcript の時刻）", () => {
   const known = (event: SessionEvent, at: number): RestoredEvent => ({
     event,
     time: { kind: "known", at },
+    promptImages: [],
   })
-  const unknown = (event: SessionEvent): RestoredEvent => ({ event, time: { kind: "unknown" } })
+  const unknown = (event: SessionEvent): RestoredEvent => ({
+    event,
+    time: { kind: "unknown" },
+    promptImages: [],
+  })
   const request = requestEvent()
   const bashStarted: SessionEvent = {
     kind: "tool-started",
