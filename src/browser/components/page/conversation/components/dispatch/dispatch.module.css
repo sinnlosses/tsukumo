@@ -1,5 +1,14 @@
 /* 入力欄（`<Dispatch>` 一式）。
-   `.dispatch` は `.layout-dispatch` の中いっぱいに広がり、フォーム・答え待ちの箱を縦に積む。 */
+   `.dispatch` は `.layout-dispatch` の中いっぱいに広がり、フォーム・答え待ちの箱を縦に積む。
+   フォームの中に描く子部品の見た目は `form/` の各 `*.css` にあり、ここで `@import` する。 */
+
+@import "./form/composer.css";
+@import "./form/turn-status.css";
+@import "./form/markdown-editor-surface.css";
+@import "./form/format-bar.css";
+@import "./form/file-suggestion-list.css";
+@import "./form/command-suggestion-list.css";
+
 .dispatch {
   height: 100%;
 }
@@ -142,7 +151,7 @@
 .dispatch-surface-pending {
   display: contents;
 }
-/* 書式の行（ボタン 2.25rem + 下の余白 0.375rem、`format-bar.module.css`）と同じ高さ。エディタに替わっても欄の位置を動かさない。 */
+/* 書式の行（ボタン 2.25rem + 下の余白 0.375rem、`form/format-bar.css`）と同じ高さ。エディタに替わっても欄の位置を動かさない。 */
 .dispatch-format-bar-space {
   flex: 0 0 auto;
   height: 2.625rem;

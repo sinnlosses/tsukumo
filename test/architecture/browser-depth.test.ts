@@ -11,13 +11,6 @@ const MAX_DEEP_DIRECTORY_EXCEPTIONS = 120
 // 上限を超えたまま残っている、深さ 7 のディレクトリ（`browser/` からの相対パス）。
 // この下のファイルは深さを数えない。移し終えたら一覧から消す。
 const DEEP_DIRECTORY_EXCEPTIONS: ReadonlySet<string> = new Set([
-  "components/page/conversation/components/dispatch/components/command-suggestion-list",
-  "components/page/conversation/components/dispatch/components/composer",
-  "components/page/conversation/components/dispatch/components/file-suggestion-list",
-  "components/page/conversation/components/dispatch/components/format-bar",
-  "components/page/conversation/components/dispatch/components/markdown-editor-surface",
-  "components/page/conversation/components/dispatch/components/text-area-surface",
-  "components/page/conversation/components/dispatch/components/turn-status",
   "components/page/conversation/components/main-view/components/aside-thread",
   "components/page/conversation/components/main-view/components/current-step",
   "components/page/conversation/components/main-view/components/head-notice",

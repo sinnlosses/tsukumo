@@ -208,7 +208,7 @@ class 名を手で組むと、条件で落とす class を空文字に畳む三�
 **例外は無い。** テストで固定の時刻を作るときも `Temporal.ZonedDateTime.from({ ..., timeZone })`
 や `Temporal.PlainDate` を使い、偽の時計は `spyOn(Temporal.Now, "instant")` で差し替える
 （`test/browser/components/page/conversation/components/chat-view/hooks/use-chat-view.test.tsx` /
-`test/browser/components/page/conversation/components/dispatch/components/turn-status/turn-status.test.tsx`）。ファイルの mtime のように「エポック秒の
+`test/browser/components/page/conversation/components/dispatch/turn-status.test.tsx`）。ファイルの mtime のように「エポック秒の
 数をそのまま受け取れる」API（`node:fs` の `utimesSync` など）は `Date` を経由せず数を直接渡す。
 
 ## 識別子は用語集に合わせる

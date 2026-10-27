@@ -5,7 +5,7 @@ import { useEffect, useRef, type ReactElement } from "react"
 
 import { useSession } from "../../../../../stores/session.ts"
 import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
-import { Composer } from "./components/composer/composer.tsx"
+import { Composer } from "./composer.tsx"
 import styles from "./dispatch.module.css"
 
 export function Dispatch(): ReactElement {
