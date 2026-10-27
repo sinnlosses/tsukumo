@@ -10,7 +10,7 @@
 
 ## 会話のアーカイブ
 
-**入れる**（2026-09-21 決定）。狙いは**あとで活用できること・設計変更に耐えること**。**tsukumo が
+**入れる**（決定）。狙いは**あとで活用できること・設計変更に耐えること**。**tsukumo が
 自分で、雑談の会話を受け取ったその場でディスクへ書く。**
 
 **claude の transcript には任せない。** **鎖を無視して全部読む口が無い**うえ、保持期間も形式も
@@ -27,7 +27,7 @@ Claude Code の都合で古いものから消えていく（確かめた内容�
 | 圧縮・起こし直し | 圧縮点から先だけが復元される                 | **影響されない**（続きに書き足す）                                     |
 | 消える契機       | プロセスが終わる・窓から溢れる               | **利用者がファイルを消したときだけ**（雑談の画像は7日で消す）          |
 
-**雑談と仕事の両方を残す**（2026-09-26 決定。上の「記憶の圧縮と忘却」の「記憶は雑談と仕事で1つ」）。
+**雑談と仕事の両方を残す**（決定。上の「記憶の圧縮と忘却」の「記憶は雑談と仕事で1つ」）。
 
 | モード | 残すもの                                                                                                                                               |
 | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -58,10 +58,10 @@ Claude Code の都合で古いものから消えていく（確かめた内容�
 マシンのローカル時刻**（利用者が「その日」と読む単位）。**形は JSONL（1行1件、追記）**:
 
 ```jsonl
-{"v":2,"at":"2026-09-21T14:03:12+09:00","pack":"tsukumo","mode":"chat","kind":"request","speaker":"user","text":"ただいま"}
-{"v":2,"at":"2026-09-21T14:03:20+09:00","pack":"tsukumo","mode":"chat","kind":"speech","speaker":"character","text":"おかえり","expression":"smile"}
-{"v":2,"at":"2026-09-21T15:10:02+09:00","pack":"tsukumo","mode":"work","project":"tsukumo","kind":"request","speaker":"user","text":"入力欄の…"}
-{"v":2,"at":"2026-09-21T15:24:47+09:00","pack":"tsukumo","mode":"work","project":"tsukumo","kind":"conclusion","speaker":"character","text":"入力欄を…"}
+{"v":2,"at":"YYYY-MM-DDT14:03:12+09:00","pack":"tsukumo","mode":"chat","kind":"request","speaker":"user","text":"ただいま"}
+{"v":2,"at":"YYYY-MM-DDT14:03:20+09:00","pack":"tsukumo","mode":"chat","kind":"speech","speaker":"character","text":"おかえり","expression":"smile"}
+{"v":2,"at":"YYYY-MM-DDT15:10:02+09:00","pack":"tsukumo","mode":"work","project":"tsukumo","kind":"request","speaker":"user","text":"入力欄の…"}
+{"v":2,"at":"YYYY-MM-DDT15:24:47+09:00","pack":"tsukumo","mode":"work","project":"tsukumo","kind":"conclusion","speaker":"character","text":"入力欄を…"}
 ```
 
 | 鍵           | 中身                                                                                                                   |
@@ -110,7 +110,7 @@ Claude Code の都合で古いものから消えていく（確かめた内容�
 10 KiB 前後**。**例外は下の雑談で貼った画像だけ**で、これは7日で消す。
 
 **雑談で貼った画像**は原寸を `<パック名>/images/<YYYY-MM-DD>-<id>.<拡張子>` に1枚1ファイルで残す
-（2026-10-18 決定。規約の例外の3つ目で、範囲は `docs/coding-standards.md`「会話内容の扱い」の表）。
+（決定。規約の例外の3つ目で、範囲は `docs/coding-standards.md`「会話内容の扱い」の表）。
 
 - **仕事の依頼に添えた画像は書かない**（行に枚数が残るだけ）
 - **書くのは依頼の行を書くその場**（`recordSessionEvent` が雑談の `request` を渡すとき）。モードとパックが
