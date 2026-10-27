@@ -25,6 +25,7 @@ import { drawnSectionsOf } from "../../../shared/report/report-retrospective.ts"
 import { codeBlockMatchesFile } from "./code-block-match.ts"
 import { figureNumberFaults } from "./figure-number-fault.ts"
 import { plainWordSpellingsIn } from "./plain-word-find.ts"
+import { plotFormFaults } from "./plot-form-fault.ts"
 import {
   badCardsIn,
   crowdedNoteCount,
@@ -82,6 +83,7 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
 
   const plainWords = plainWordSpellingsIn(report)
   const figureNumberFaultList = figureNumberFaults(report)
+  const plotForms = plotFormFaults(report)
 
   const counted = [
     { kind: "long-conclusion", count: report.conclusionSentenceChars.length },
@@ -199,6 +201,8 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
       count: figureNumberFaultList.length,
       faults: figureNumberFaultList,
     },
+    { kind: "plot-forbidden-form", count: plotForms.refused.length, rules: plotForms.refused },
+    { kind: "plot-form-override", count: plotForms.overrides },
   ] as const satisfies readonly ReportViolation[]
 
   return counted.filter((violation) => violation.count > VIOLATION_THRESHOLDS[violation.kind])

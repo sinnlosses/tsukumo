@@ -113,6 +113,23 @@ describe("plot の受け付け", () => {
     expect(html).toContain("丙")
   })
 
+  it.each([["bar"], ["pie"], ["table"]])(
+    "form に %s を書いても、描き方の無い形は同じ表で描く",
+    (form) => {
+      const block = parseInSections(plot({ form })).sections[0]?.blocks[0]
+      const auto = parseInSections(plot()).sections[0]?.blocks[0]
+      if (block === undefined || auto === undefined) {
+        throw new Error("plot の塊が受け付けられなかった")
+      }
+
+      expect(markdownOf(block)).toBe(markdownOf(auto))
+    },
+  )
+
+  it("form が形の語彙の外なら schema で落ちる", () => {
+    expect(firstBlock(plot({ form: "donut" }))).toBeUndefined()
+  })
+
   it("使用量の記録の blockKinds に plot が出る", () => {
     const block = parseInSections(plot()).sections[0]?.blocks[0]
     if (block === undefined) throw new Error("plot の塊が受け付けられなかった")

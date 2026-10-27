@@ -106,6 +106,70 @@
 | `mermaid` の図の種類・`list` の `style`                                            | しない | 第一候補と代替の違いで、「許さない」に関わらない                                              |
 | 逃げ道（`markdown`）の中の表と箇条                                                 | しない | 塊ではないので照合の対象にしない                                                              |
 
+## 図の決定表
+
+`plot` の申告（列の型・行の数・`relation`）と利用者の図の既定から形と必須の注記を決める行の並びは、
+`src/shared/report/figure-decision.ts` の `FIGURE_DECISION_ROWS` が正典で、上から当てて最初に当たった行を採り、どれにも当たらなければ `table`（注記は `unitInHeader`）にする。
+図派は「図派」の列、文派は「文派」の列の形を採る。必須の注記は種類だけで、差や割合の値は組まない。
+書き手の `form` が下の「置かない形」に当たれば採らずに決定表の形で描き、`plot-forbidden-form` と数える。図派・文派のどちらの既定で決めた形とも違う形は通して `plot-form-override` と数える（どちらも `count`）。
+基数の境は `CARDINALITY_BOUNDS` の 1 か所に集めた目安で、実証された閾値ではない。上書きの数を見て動かす。
+下の 3 つの表は `pnpm run format`（`scripts/document/write-figure-decision-table.ts`）が書き直す。手で直さない。
+
+<!-- figure-decision-table:start -->
+
+| #   | 名前                | 条件                                                              | 図派         | 文派    | 必須の注記          |
+| --- | ------------------- | ----------------------------------------------------------------- | ------------ | ------- | ------------------- |
+| 1   | `one-value`         | Q が 1 列・1 行                                                   | `text`       | `text`  | `unit`              |
+| 2   | `bullet`            | compare、N か O が 1 列・Q が 2 列（値と目標）・1〜6 行           | `bullet`     | `table` | `reference`         |
+| 3   | `key-figures`       | Q だけが 2〜4 列・1 行                                            | `stats`      | `stats` | `unit`              |
+| 4   | `two-compare`       | compare、N か O が 1 列・Q が 1 列・2 行                          | `bar`        | `text`  | `difference`        |
+| 5   | `number-line`       | compare か distribution、Q の 1 列だけ・2〜6 行                   | `numberLine` | `table` | `extremes`          |
+| 6   | `part`              | part、N か O が 1 列・Q が 1 列・2〜5 行                          | `bar`        | `table` | `percent`           |
+| 7   | `change-two-points` | change、T が 1 列・Q が 1 列・2 行                                | `text`       | `text`  | `differencePercent` |
+| 8   | `change-items`      | change、N か O が 1 列・Q が 2 列（前と後）・2〜8 行              | `line`       | `table` | `differencePercent` |
+| 9   | `trend`             | trend、T が 1 列・Q が 1〜4 列・5 行以上                          | `line`       | `table` | `trendTitle`        |
+| 10  | `range`             | range、N か O が 1 列・Q か T が 2 列（始まりと終わり）・4 行以上 | `bar`        | `table` | `duration`          |
+| 11  | `correlate`         | correlate、Q が 2 列・10 行以上                                   | `scatter`    | `table` | `outlier`           |
+| 12  | `few-compare`       | compare か rank、N か O が 1 列・Q が 1 列・3〜7 行               | `bar`        | `table` | `extremes`          |
+| 13  | `many-rank`         | compare か rank、N か O が 1 列・Q が 1 列・8〜20 行              | `bar`        | `table` | `top`               |
+| 14  | `distribution`      | Q が 1 列（N か O は 1 列まで）・21 行以上                        | `histogram`  | `table` | `medianRange`       |
+
+<!-- figure-decision-table:end -->
+
+置かない形（Draco の hard 制約に当たるもの。体裁の好みは入れない）:
+
+<!-- figure-hard-rule-table:start -->
+
+| 名前                  | 置かない形                                                            |
+| --------------------- | --------------------------------------------------------------------- |
+| `unordered-line`      | T も O も無い申告に line（change の前と後の Q の 2 列は順序に数える） |
+| `single-value-figure` | Q が 1 値だけの申告に text・stats・table 以外                         |
+| `crowded-pie`         | 4 行以上の申告に pie                                                  |
+| `edgeless-graph`      | graph（plot は辺を申告できない）                                      |
+
+<!-- figure-hard-rule-table:end -->
+
+基数の境:
+
+<!-- cardinality-bound-table:start -->
+
+| 名前             | 値  |
+| ---------------- | --- |
+| `pair`           | 2   |
+| `few`            | 7   |
+| `many`           | 20  |
+| `partMax`        | 5   |
+| `pieMax`         | 3   |
+| `keyFiguresMax`  | 4   |
+| `numberLineMax`  | 6   |
+| `seriesMax`      | 4   |
+| `trendMin`       | 5   |
+| `changeItemsMax` | 8   |
+| `rangeMin`       | 4   |
+| `correlateMin`   | 10  |
+
+<!-- cardinality-bound-table:end -->
+
 ## 見比べで見つかった穴
 
 Claude が書いた HTML と tsukumo の `report` を同じ題材で見比べると、tsukumo で表現できない・粗くなるもの（**穴**）が見つかる。

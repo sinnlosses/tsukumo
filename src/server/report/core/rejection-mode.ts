@@ -60,4 +60,6 @@ export const REPORT_REJECTION_MODES = {
   "browser-change-without-image": "reject",
   "figure-contradiction": "count",
   "figure-number-mismatch": "count",
+  "plot-forbidden-form": "count",
+  "plot-form-override": "count",
 } as const satisfies Record<ReportRejectionReason, ReportRejectionMode>

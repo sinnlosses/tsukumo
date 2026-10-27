@@ -1,8 +1,26 @@
-// 図の申告（問い・データ・関係）の `plot` の塊の形と、型と値の整合の検査。形（mark）・色・座標は書かせない。
+// 図の申告（問い・データ・関係）の `plot` の塊の形と、型と値の整合の検査。色・座標は書かせない。
+// 形は決定表（`plotFormOf`）が決め、書き手は `form` で上書きできる。
 
 import { z } from "zod"
 
-import { aside, type DeepReadonly, fold, inlineText } from "./report-block-field.ts"
+import { aside, type DeepReadonly, fold, inlineText, omittable } from "./report-block-field.ts"
+
+/** 決定表が返す形。`form` の欄で書き手が選べる値でもある。 */
+const FIGURE_FORMS = [
+  "text",
+  "table",
+  "bar",
+  "line",
+  "pie",
+  "numberLine",
+  "bullet",
+  "scatter",
+  "histogram",
+  "graph",
+  "stats",
+] as const
+
+export type FigureForm = (typeof FIGURE_FORMS)[number]
 
 /** 列の型。N 名義・O 順序・T 時間・Q 量。 */
 const PLOT_COLUMN_TYPES = ["N", "O", "T", "Q"] as const
@@ -40,6 +58,9 @@ export const plotBlockSchema = z
       .describe("この図で読者が決めること。1文"),
     data: z.array(plotColumnSchema).min(1),
     relation: z.enum(PLOT_RELATIONS),
+    form: omittable(z.enum(["auto", ...FIGURE_FORMS]), "auto").describe(
+      "省けば決定表が形を決める。置いてはならない形は採らない",
+    ),
     fold,
     aside,
   })
@@ -49,7 +70,7 @@ export const plotBlockSchema = z
     }
   })
   .describe(
-    "図の申告。問い（question）・列の並び（data。name・type〔N 名義・O 順序・T 時間・Q 量〕・values）・関係（relation）だけを書き、形・色・座標は書かない",
+    "図の申告。問い（question）・列の並び（data。name・type〔N 名義・O 順序・T 時間・Q 量〕・values）・関係（relation）を書き、色・座標は書かない",
   )
 
 export type ReportPlot = DeepReadonly<z.infer<typeof plotBlockSchema>>

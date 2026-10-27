@@ -2,6 +2,7 @@
 
 import { keys } from "remeda"
 
+import type { FigureHardRuleName } from "../../../shared/report/figure-decision.ts"
 import type { KeyFigures } from "../../../shared/report/report-block-comparison.ts"
 import type { RecordedReportFigure, ReportSection } from "../../../shared/report/report-block.ts"
 import type { ReportCheck } from "../../../shared/report/report-check.ts"
@@ -178,6 +179,17 @@ export type ReportViolation =
       readonly count: number
       readonly faults: readonly FigureNumberFault[]
     }
+  /**
+   * `plot` の `form` が置いてはならない形（`FIGURE_HARD_RULES`）に当たり、決定表の形で描いた。
+   * `rules` は当たった `plot` ごとの規則の名前。
+   */
+  | {
+      readonly kind: "plot-forbidden-form"
+      readonly count: number
+      readonly rules: readonly FigureHardRuleName[]
+    }
+  /** `plot` の `form` が、どちらの図の既定で決めた形とも違い、上書きとして通した。 */
+  | { readonly kind: "plot-form-override"; readonly count: number }
 
 /** 違反にしない上限（これを超えたら違反）。 */
 export const VIOLATION_THRESHOLDS = {
@@ -218,6 +230,8 @@ export const VIOLATION_THRESHOLDS = {
   "browser-change-without-image": 0,
   "figure-contradiction": 0,
   "figure-number-mismatch": 0,
+  "plot-forbidden-form": 0,
+  "plot-form-override": 0,
 } as const satisfies Record<ReportViolation["kind"], number>
 
 export const REPORT_VIOLATION_KINDS = keys(VIOLATION_THRESHOLDS)

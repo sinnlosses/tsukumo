@@ -23,7 +23,7 @@
 ### 塊
 
 - **英語識別子**: `ReportBlock`（`src/shared/report/report-block.ts`）/ `kind`（`text` / `list` /
-  `table` / `matrix` / `compare` / `beforeAfter`（前後）/ `note` / `stats` / `code` / `mermaid` / `graph`（`source` の1行1辺の記法で受ける flowchart。行頭の `+ ` / `- ` / `~ ` が足した・消した・変えたの印。節点だけの行は `名前 | 説明` で説明の1行を足せ、分岐・合流・囲み・点線の無い5節点以下の一本道はカードの連鎖で描く。2026-10-12 利用者決定）/ `chart` / `timeline`（時刻の軸に行ごとの帯・延びた分・出来事を並べる図。延び・出来事・一点の無い区間の長さの比べは `chart` の `span`）/ `svg`（座標つきの図形で書く図）/ `plot`（図の申告。`question`〔読者がその図で決めること。全角60字以内の1文〕・`data`〔列の並び。各列は `name`・`type`〔`N` 名義 / `O` 順序 / `T` 時間 / `Q` 量〕・`values`〕・`relation`〔`compare`・`rank`・`part`・`trend`・`change`・`distribution`・`correlate`・`range` の8語〕だけを受け、形・色・座標は書かせない。形を選ぶ決定表が入るまでは `data` を表として描く）/ `options` / `claims`（確度つきの主張）/ `image`（画面の画像）/ `files` / `markdown`）/ `fold`（畳むときの見出し）/ `aside`（塊の傍注。下の「余白の柱」）/
+  `table` / `matrix` / `compare` / `beforeAfter`（前後）/ `note` / `stats` / `code` / `mermaid` / `graph`（`source` の1行1辺の記法で受ける flowchart。行頭の `+ ` / `- ` / `~ ` が足した・消した・変えたの印。節点だけの行は `名前 | 説明` で説明の1行を足せ、分岐・合流・囲み・点線の無い5節点以下の一本道はカードの連鎖で描く。2026-10-12 利用者決定）/ `chart` / `timeline`（時刻の軸に行ごとの帯・延びた分・出来事を並べる図。延び・出来事・一点の無い区間の長さの比べは `chart` の `span`）/ `svg`（座標つきの図形で書く図）/ `plot`（図の申告。`question`〔読者がその図で決めること。全角60字以内の1文〕・`data`〔列の並び。各列は `name`・`type`〔`N` 名義 / `O` 順序 / `T` 時間 / `Q` 量〕・`values`〕・`relation`〔`compare`・`rank`・`part`・`trend`・`change`・`distribution`・`correlate`・`range` の8語〕と任意の `form`〔形の上書き〕を受け、色・座標は書かせない。形は下の「図の決定表」が決め、形ごとの描き方が入るまでは `data` を表として描く）/ `options` / `claims`（確度つきの主張）/ `image`（画面の画像）/ `files` / `markdown`）/ `fold`（畳むときの見出し）/ `aside`（塊の傍注。下の「余白の柱」）/
   欄の `from` / `to`（表のセルの前後）・`tag`（表のセルの列挙型の札。同じ字は同じ色）・`emphasis`（表の行の強調。`{ cells, emphasis: true }`で3行まで。超えれば差し戻し）・`before`（`stats` の前の値）・`total`（`stats` の全体の数）・`keyFigures`（`report` の欄。結論の直下に並べる 3〜4 個の数の札で、項目の形は `stats` の `items` と同じ。塊の欄ではない）・`label`（`list` の項目の名前）・
   `flow`（`list` の `style` の一本道の流れ）・`cards`（`list` の `style` の並列の区画。2〜4項目を横に並べる）・`sides`（`compare` の2つの側。`heading` と `points`）・
   `before` / `after`（`beforeAfter` の前の側と後の側。`kind` が `image`〔`path`と任意の `region`（変わった場所の枠。% の `left`・`top`・`width`・`height`）〕/ `code`〔`language`・`source`〕/ `points` / `mermaid`〔`source`〕/ `svg`〔`width`・`height`・`shapes`〕の合併型）・
@@ -60,6 +60,17 @@
 - **注記**: 前後・確度・所在は札にせず、どの札にも掛かる添え物として扱う（確度は `claims` の塊が受ける）。`svg` の塊の欄 `shapes` と紛れるので、
   識別子に `shape` を単独で使わない
 - **避ける言い方**: タグ、型（`task` の `genre`〔報告の種類〕と紛れる）
+
+### 図の決定表
+
+- **英語識別子**: `figureDecision`（`src/shared/report/figure-decision.ts`）/ 行の並び `FIGURE_DECISION_ROWS` /
+  形 `FigureForm`（列挙 `FIGURE_FORMS`。`src/shared/report/figure-grammar.ts` の `plot` の欄 `form` と共有）/ 必須の注記 `FigureNote`（列挙 `FIGURE_NOTES`）/ 基数の境 `CARDINALITY_BOUNDS` /
+  置いてはならない形の規則 `FIGURE_HARD_RULES`・`forbiddenFormOf` / 書き手の上書きの解決 `plotFormOf`
+- **定義**: **`plot` の申告（列の型・基数・関係）と利用者の図の既定から、形と必須の注記を決める順序つきの行の並び。**
+  上から当てて最初に当たった行を採り、当たらなければ表にする
+- **注記**: 必須の注記は種類だけを返し、差や割合の値は組まない。置いてはならない形（Draco の hard 制約に当たるもの）は
+  体裁の好みを含めない。基数の境は目安で、実証された閾値ではない
+- **避ける言い方**: 推薦表、ルール表（差し戻しの条と紛れる）
 
 ### 確度つきの主張
 

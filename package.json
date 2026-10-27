@@ -17,7 +17,7 @@
     "typecheck": "pnpm run css-types && tsc --noEmit",
     "lint": "oxlint src test scripts vite.config.ts --deny-warnings",
     "lint:fix": "oxlint src test scripts vite.config.ts --fix --deny-warnings",
-    "format": "node scripts/document/write-plain-word-table.ts && node scripts/document/write-document-index.ts && oxfmt .",
+    "format": "node scripts/document/write-figure-decision-table.ts && node scripts/document/write-plain-word-table.ts &&node scripts/document/write-document-index.ts && oxfmt .",
     "format:check": "oxfmt . --check",
     "token-limit": "node scripts/dev/token-limit.ts",
     "token-count": "node scripts/dev/token-count.ts",

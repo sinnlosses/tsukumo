@@ -123,6 +123,10 @@ function violationLine(violation: ReportViolation): string {
         : `\`figure\` の reason が \`short-answer\` なのに、節が2つ以上ある。2〜3文で終わる答えでなければ \`figure\` に図を置くか、合う reason にする`
     case "figure-number-mismatch":
       return `\`plot\` の値とずれた数が本文にある（${figureNumberFaultPositions(violation.faults)}）。単位と丸めを \`plot\` の値に揃えて、本文の数を直す`
+    case "plot-forbidden-form":
+      return `\`plot\` の \`form\` が置いてはならない形に当たる塊が${violation.count}個ある（${violation.rules.join("・")}）。\`form\` を省いて決定表の形に任せる`
+    case "plot-form-override":
+      return `\`plot\` の \`form\` が決定表の形と違う塊が${violation.count}個ある。決定表の形で足りるなら \`form\` を省く`
   }
 }
 

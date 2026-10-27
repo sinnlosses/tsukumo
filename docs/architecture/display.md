@@ -62,7 +62,7 @@
 
 #### 塊を足す・外す基準（2026-09-27 決定、2026-09-30 改訂）
 
-- `docs/architecture/display/block-criteria.md`（節「見比べで見つかった穴」: 梯子・穴ドラフトの型・採らない穴）
+- `docs/architecture/display/block-criteria.md`（節「図の決定表」: `plot` の形を決める行・置かない形・基数の境。節「見比べで見つかった穴」: 梯子・穴ドラフトの型・採らない穴）
 
 #### 各表示物
 

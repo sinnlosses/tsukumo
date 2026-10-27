@@ -4,7 +4,8 @@
 
 import { cardChainHtml } from "./card-chain-markdown.ts"
 import { encodeMarks } from "./code-mark.ts"
-import { plotRows } from "./figure-grammar.ts"
+import { plotFormOf } from "./figure-decision.ts"
+import { type FigureForm, plotRows, type ReportPlot } from "./figure-grammar.ts"
 import { graphFoldHtml } from "./graph-fold-html.ts"
 import { graphFoldFigure } from "./graph-fold.ts"
 import type { ReportBlock, ReportSection } from "./report-block.ts"
@@ -186,19 +187,7 @@ function blockMarkdown(
     case "matrix":
       return matrixMarkdown(block, ordinal)
     case "plot":
-      return tableMarkdown(
-        {
-          kind: "table",
-          title: block.question,
-          columns: block.data.map((column) => column.name),
-          rows: plotRows(block),
-          rest: "",
-          fold: block.fold,
-          aside: block.aside,
-        },
-        ordinal,
-        tagTones,
-      )
+      return plotMarkdown(block, ordinal, tagTones)
     case "compare":
       return compareMarkdown(block, ordinal)
     case "beforeAfter":
@@ -309,6 +298,45 @@ function blockMarkdown(
     case "markdown":
       return block.markdown
   }
+}
+
+type PlotRenderer = (block: ReportPlot, ordinal: number, tagTones: TagTones) => string
+
+/** `plot` を決定表の形の描き方へ振り分ける。描き方の無い形は表に落とす。 */
+const PLOT_RENDERERS = {
+  text: plotTableMarkdown,
+  table: plotTableMarkdown,
+  bar: plotTableMarkdown,
+  line: plotTableMarkdown,
+  pie: plotTableMarkdown,
+  numberLine: plotTableMarkdown,
+  bullet: plotTableMarkdown,
+  scatter: plotTableMarkdown,
+  histogram: plotTableMarkdown,
+  graph: plotTableMarkdown,
+  stats: plotTableMarkdown,
+} as const satisfies Record<FigureForm, PlotRenderer>
+
+/** 描く経路は利用者の図の既定を持たないので、図派として決める。 */
+function plotMarkdown(block: ReportPlot, ordinal: number, tagTones: TagTones): string {
+  const { form } = plotFormOf(block, block.form, "chart")
+  return PLOT_RENDERERS[form](block, ordinal, tagTones)
+}
+
+function plotTableMarkdown(block: ReportPlot, ordinal: number, tagTones: TagTones): string {
+  return tableMarkdown(
+    {
+      kind: "table",
+      title: block.question,
+      columns: block.data.map((column) => column.name),
+      rows: plotRows(block),
+      rest: "",
+      fold: block.fold,
+      aside: block.aside,
+    },
+    ordinal,
+    tagTones,
+  )
 }
 
 function captionKindOf(block: ReportBlock): CaptionKind | undefined {

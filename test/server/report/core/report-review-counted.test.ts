@@ -9,6 +9,8 @@ const COUNTED_REASONS = [
   "sentence-table",
   "figure-contradiction",
   "figure-number-mismatch",
+  "plot-forbidden-form",
+  "plot-form-override",
   "long-table",
   "long-list",
   "untitled-section",
