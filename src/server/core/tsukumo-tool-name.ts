@@ -14,6 +14,8 @@ export const WORK_PLAN_TOOL_NAME = "work_plan"
 export const PHASE_RESULT_TOOL_NAME = "phase_result"
 /** 質問の添え書きを受け取るツールの名前。載るのは仕事のときだけ。 */
 export const QUESTION_BRIEF_TOOL_NAME = "question_brief"
+/** `report` の部品の文法カードを引くツールの名前。載るのは仕事のときだけ。 */
+export const PART_CARD_TOOL_NAME = "report_part_card"
 export const REMEMBER_TOOL_NAME = "remember"
 export const FORGET_TOOL_NAME = "forget"
 

@@ -30,6 +30,18 @@ export function reportShortTypeText(): string {
   ].join("\n")
 }
 
+/**
+ * 塊1種類の型の表記。中で使う共有の形ごとの `type <名前> = …` を並べる。
+ * 塊が名前を持たなければ、最後に `type <rootName> = …` を足す（名前を持つ塊は共有の形の側に出る）。
+ */
+export function blockShortTypeText(block: z.ZodType, rootName: string): string {
+  const { $defs: definitions = {}, ...root } = z.toJSONSchema(block, { io: "input" })
+  const aliases = Object.entries(definitions).map(([name, definition]) =>
+    typeAlias(name, definition),
+  )
+  return (root.$ref === undefined ? [...aliases, typeAlias(rootName, root)] : aliases).join("\n")
+}
+
 /** 表記に出すキーワード。 */
 const NOTATED_KEYWORDS: ReadonlySet<string> = new Set([
   "type",

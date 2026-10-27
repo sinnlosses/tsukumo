@@ -7,6 +7,7 @@ import {
   reportFigureSchema,
   reportSectionSchema,
 } from "../../../../src/shared/report/report-block.ts"
+import { descriptionsIn, missingDescriptions } from "../../../fixture/json-schema-description.ts"
 
 describe("reportShortTypeText", () => {
   it("figure と sections の型を、塊の種類を全部含めて型の表記にする", () => {
@@ -38,26 +39,10 @@ describe("reportShortTypeText", () => {
       { io: "input" },
     )
 
-    const missing = descriptionsIn(schema).filter((description) =>
-      description.split("\n").some((line) => !text.includes(`// ${line}\n`)),
-    )
-    expect(missing).toEqual([])
+    expect(missingDescriptions(descriptionsIn(schema), text)).toEqual([])
   })
 
   it("JSON Schema の骨組みより小さい（説明を全部残して約12.1千字）", () => {
     expect(reportShortTypeText().length).toBeLessThan(12_150)
   })
 })
-
-/** 値を再帰で歩き、`description` の文字列を全部集める（位置を問わない）。 */
-function descriptionsIn(value: unknown): readonly string[] {
-  if (Array.isArray(value)) {
-    return value.flatMap(descriptionsIn)
-  }
-  if (typeof value !== "object" || value === null) {
-    return []
-  }
-  return Object.entries(value).flatMap(([key, child]) =>
-    key === "description" && typeof child === "string" ? [child] : descriptionsIn(child),
-  )
-}

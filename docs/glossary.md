@@ -33,7 +33,7 @@ tsukumo で使う固有の用語を、**日本語表記・コード上で使う�
 | `docs/glossary/communication.md`           | サーバとブラウザのあいだの通信と共有の契約（共有層・アダプタ・フレーム・コマンド・契約・手続き・セッションの状態・fake driver・疑似セッション）の用語を持つ。                                                    |
 | `docs/glossary/conversation-archive.md`    | 会話を手元に残して読み戻す仕組み（会話のアーカイブ・作業記憶・定着）と、claude 自身の圧縮の区切りの用語を持つ。                                                                                                  |
 | `docs/glossary/conversation-phase.md`      | 会話の画面がいまどの場面にあるか（局面）と、そこに出す札や行（いまの作業・依頼の手順・失敗の塊・進み具合の帯・お伺い・答え待ちの札・添え書き・始め方の一覧・おすすめの札・依頼の全文・知らせの行）の用語を持つ。 |
-| `docs/glossary/conversation-tool.md`       | tsukumo がプロセス内の MCP サーバで渡す会話のツール（`speak`・`report`・`work_plan`・`question_brief`）と、その呼び出しを差し戻す仕掛けの用語を持つ。                                                            |
+| `docs/glossary/conversation-tool.md`       | tsukumo がプロセス内の MCP サーバで渡す会話のツール（`speak`・`report`・`work_plan`・`question_brief`・`report_part_card`）と、その呼び出しを差し戻す仕掛けの用語を持つ。                                        |
 | `docs/glossary/delegation.md`              | サブエージェントへの委譲の用語（委譲の返却・`phase_result` ツール・飛ばした段・委譲先の段の範囲・委譲ゲート・進みの差し込み）を持つ。                                                                            |
 | `docs/glossary/detail-and-report.md`       | 詳細（ターンの本文）とレポートの結論部の用語（本文の欄・最終レポート・目録の1行・報告の種類・変更の札・中間レポート・経過の畳み・お願い・検証結果・合図の行）を持つ。                                            |
 | `docs/glossary/local-record.md`            | 改善や不具合の追跡のために手元に残す記録（進行の計測値・診断ログ・使い捨ての問い合わせの記録）の用語を持つ。                                                                                                     |

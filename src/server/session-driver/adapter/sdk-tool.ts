@@ -1,5 +1,5 @@
 // tsukumo がプロセス内の MCP サーバとして提供するツール。
-// `speak`、雑談のときの `remember` / `forget`、仕事のときの `report` / `work_plan` / `question_brief`。
+// `speak`、雑談のときの `remember` / `forget`、仕事のときの `report` / `work_plan` / `phase_result` / `question_brief` / `report_part_card`。
 // `diary` と `usage_review_*` はここには載らない（どちらも会話とは別の使い捨ての問い合わせ。`queryDiary` / `queryUsageReview`）。
 //
 // サーバの名前とツールの名前は `TSUKUMO_MCP_SERVER_NAME` と `*_TOOL_NAME` が持つ。
@@ -13,6 +13,7 @@ import { TSUKUMO_MCP_SERVER_NAME } from "../../core/tsukumo-tool-name.ts"
 import type { CallReview } from "../core/call-review.ts"
 import type { SessionMode } from "../core/session-driver.ts"
 import { forgetTool, rememberTool } from "./sdk-memory-tool.ts"
+import { partCardTool } from "./sdk-part-card-tool.ts"
 import { reportTool } from "./sdk-report-tool.ts"
 import { speakTool } from "./sdk-speech-tool.ts"
 import { phaseResultTool, questionBriefTool, workPlanTool } from "./sdk-work-tool.ts"
@@ -20,7 +21,7 @@ import { phaseResultTool, questionBriefTool, workPlanTool } from "./sdk-work-too
 /**
  * プロセス内の MCP サーバ。
  * 戻り値は既定が "ok" だけで、tsukumo の内部の状態や画面の事情がモデルへ戻る経路を作らない（`docs/architecture/adr/0009-speech-via-tool.md`）。
- * 例外は `speak`（仕事のときだけ）と `report` と `work_plan` と `phase_result` と `question_brief` と `remember` / `forget`。
+ * 例外は `speak`（仕事のときだけ）と `report` と `work_plan` と `phase_result` と `question_brief` と `report_part_card` と `remember` / `forget`。
  * `remember` / `forget` が返すのは、書けなかった・消せなかった理由の固定の文面だけ（`rememberReply` / `forgetReply`）。
  * `remember` は `allowsRemember` が偽のあいだ口を呼ばずに断る（外部由来の印）。
  * `phase_result` が返すのは、帯の今の段（帯を動かさなかったらそのこと）か、形の崩れの直し方だけ。
@@ -35,6 +36,7 @@ import { phaseResultTool, questionBriefTool, workPlanTool } from "./sdk-work-too
  * `phase_result` も仕事のときだけで、帯を動かす口は変換ではなく handler（帯を動かしたら `delegate-returned` を流す）。
  * 変換は委譲先の呼び出しから、次の返却に `phase_result` が伴った印だけを作る。
  * `question_brief` も仕事のときだけで、返すのは崩れた添え書きの直し方だけ。受け付けた添え書きは `holdBrief` に預ける。
+ * `report_part_card` も仕事のときだけで、返すのは部品の文法カード（型と例）か、引ける種類の一覧だけ。
  *
  * セリフそのものは、この handler ではなく `assistant` メッセージの変換から取り出す（`toSessionEvents`）。
  * 受け取り口を1つにしておくと、イベントの流れが1本で済む。
@@ -69,6 +71,7 @@ export function tsukumoServer(
             workPlanTool(callReview),
             phaseResultTool(callReview, onEvent),
             questionBriefTool(holdBrief),
+            partCardTool(),
           ]
         : []),
       ...(mode.kind === "chat"
