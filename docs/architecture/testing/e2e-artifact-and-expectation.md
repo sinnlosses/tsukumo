@@ -42,10 +42,13 @@
 
 **置き場所と比べ方**: 期待値は `test/e2e/expected/<シナリオ>.*.json` に置いてリポジトリに入れ、走らせた
 結果は `/tmp/tsukumo-e2e/<シナリオ>/` に毎回書き直す。スクリーンショットは食い違って落ちた回（残す `failures/` の下）と
-`E2E_UPDATE=1` の回（`<シナリオ>/`）だけ撮り、通った回は撮らない。比べ方は `toEqual` で、
+`E2E_UPDATE=1` の回（`<シナリオ>/`）だけ撮り、通った回は撮らない。比べ方は2つある。撮り直しで書く完全一致の期待値（`*.dom.json`・`*.messages.json`）は `toEqual` で比べ、
+手で書く部分一致の期待値（`*.dom-pick.json`。下の「部分一致の期待値」）は写しに当てる。
 **比べる期待値が無ければ落とし、比べない期待値が残っていても落とす**（黙って書かない・黙って比べない）。**期待値の更新**は `pnpm run test:e2e:update` → `git diff
 test/e2e/expected/` で意図した変化だけであることを確かめる → 直した変更と同じコミットに入れる。
 shared の手続き応答に乗る型や DOM の構造を変える計画には、その変更を含むコミットで期待値を撮り直す段を置く。
+`pnpm run check` は最後の行に `STAGE<TAB>expected-diff<TAB><行数>` を出す。行数は `test/e2e/expected/` の主ブランチとのマージベースからの差分（コミット済み・未コミット）の足した行と消した行の和に、未追跡のファイルの全行を足したもの（`scripts/dev/lib/expected-diff.ts`）。
+値は4値ではないので `tw verify` の段の判定には入らない。撮り直しの差分の大きさを読む目安で、500 行を超えたら撮り直した理由を `## 結果` に書く。
 
 **期待値と食い違った回**は、`matchArtifact`（`test/e2e/artifact.ts`）がその回の成果物と期待値との
 行単位の差分を `/tmp/tsukumo-e2e/failures/<シナリオ>/<Temporal の刻んだ名前>/` へ残す（あとで通った回に
@@ -98,13 +101,36 @@ shared の手続き応答に乗る型や DOM の構造を変える計画には�
 同じコマンドを同じ形で送る場面が2本あれば、比べるのは流れの持ち主の1本だけにする。
 
 **比べる成果物は、撮る口の名前で場面が選ぶ。** `settleAndMatch` は `*.dom.json` だけを比べ、
-`settleAndMatchWithMessages` は `*.messages.json` も比べる（どちらも `test/e2e/scenario-open.ts` の `ScenarioRoom`。シナリオは `test/e2e/scenario-run.ts` から読む）。
+`settleAndMatchWithMessages` は `*.messages.json` も比べ、`settleAndMatchPicked` は `*.dom-pick.json` だけを当てる（どれも `test/e2e/scenario-open.ts` の `ScenarioRoom`。シナリオは `test/e2e/scenario-run.ts` から読む）。
 部分木の名前の並び（上の決まり2）は `open` の選択肢に書くが、こちらは `it` の本文の撮る口の名前で選ぶ。
 どちらも指定は場面のファイルにあり、期待値は写しだけを持つ。
 `settleAndMatch` の場面に `*.messages.json` が残っていると落ちる。`E2E_UPDATE=1` は比べない場面の
 `*.messages.json` を書きも消しもしないので、比べるのをやめた場面の期待値は `git rm` で消す。
+`settleAndMatchPicked` の場面に `*.dom.json`・`*.messages.json` が残っていても落ちる（部分一致に移したら `git rm` で消す）。
 
 比べる場面の列にも例外があり、`session-info` の `slashCommands`・`terminalSlashCommands` と `command-descriptions` の
 `descriptions`（コマンド一覧）は、`collapseCommandCatalog`（`test/e2e/message-record.ts`）が固定の印に
 畳む。一覧が画面に届くことは `markdown-composer` の `/` の補完の確定が通し、中身の写しは
 `test/server/session-driver/core/sdk-message.test.ts` と `test/shared/session/command-suggestion.test.ts` が持つ。
+
+### 部分一致の期待値
+
+**完全一致の写しで比べる場面は `page` の3場面（上の決まり3）へ絞り、ほかの場面は `it` の題が守る節だけを手で書いた期待値に当てる。** 新しく足す場面は部分一致で書く。
+いまは移行の途中で、`page` の3場面のほかにも完全一致のまま残る場面がある。残りは、その場面を直すときか別のタスクで部分一致に移す。
+写し全体の一致は「変わった」としか言えず、撮り直しの差分が大きいと「正しいか」を誰も読み切れない。
+部分一致の期待値は、守りたい節だけが並ぶので数行で読め、場面と関係のない部品の直しでは書き換わらない。
+
+**記法は写しと同じ JSON の部分木**（`test/e2e/expected/<シナリオ>.dom-pick.json`）。根は部分木の名前（`open` の `domRoots` に選んだもの）で、値は節の並び。
+節は文字か、`{ "tag": …, "attributes": {…}, "children": [ … ] }` の要素（`attributes`・`children` は省いてよい）。
+写しと同じ形なので、走らせた回の写し（`/tmp/tsukumo-e2e/<シナリオ>/<シナリオ>.dom.json`）から節を切り出して書ける。
+書く属性は `role`・`aria-label`・`data-*`・入力の状態のように意味の契約になっているものだけにし、文字は画面に出る文面を書く。
+
+**当て方**（`test/fixture/dom-pick.ts` の `missingPicks`）:
+
+- 期待値の節の並びを、写しの節を文書順（行きがけ順）に並べた中から、前の節の部分木より後ろで順に探す。包む要素と間に挟まる節は飛ばしてよい
+- 文字は文字の節と完全に一致したときに当たる
+- 要素は名前が同じで、期待値に書いた属性がすべて同じ値で写しにあり、期待値の子がその要素の子孫の中に同じ決まりで見つかったときに当たる。期待値に書かない属性と子は見ない
+- 見つからなかった節を `<部分木の名前>[<添字>]: <節>` で並べて落とし（名前と属性の合う要素があって子だけが見つからないときは `main[0].children[6]: <節>` のように子まで降りて名指す）、その回の写しと一覧（`<シナリオ>.dom-pick.missing.txt`）を `failures/` に残す
+
+**撮り直しでは書かない。** `E2E_UPDATE=1` の回も当てて、当たらなければ落とす（手で書いた期待値が撮り直しで写し全体に置き換わらないように）。
+期待値を直すときは、変わった画面で守りたい節を `/tmp/tsukumo-e2e/<シナリオ>/<シナリオ>.dom.json` から切り出して書き直す。

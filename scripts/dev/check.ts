@@ -4,6 +4,7 @@
 // 段が落ちたら止めるのは走っている重い段だけで、軽い段は最後まで走らせる。
 // 出力は段ごとに溜め、全段が終わってから段の順に出し、落ちた段は最後の行で名指しする。
 // そのあとに、計画の段ごとの `STAGE<TAB><段名><TAB><値>` の行を段の順に出す（`tw verify` が読む）。
+// 最後に、E2E の期待値の差分行数を `STAGE<TAB>expected-diff<TAB><行数>` の1行で出す（マージベースが引けなければ出さない）。
 //
 // 変えたファイルが `docs/`・`.tw/` の Markdown と直下の `README.md`・`AGENTS.md` だけのときは、
 // `--full` の有無に関わらず `format:check`・`token-limit` と文書の検査（`DOCUMENT_CHECK_TEST_PATHS`）だけを打つ。
@@ -53,6 +54,8 @@ import {
   REAL_LOCK_ENVIRONMENT,
   sharedLockPath,
 } from "./lib/e2e-full-lock.ts"
+import { readExpectedDiffLines } from "./lib/expected-diff-repository.ts"
+import { formatExpectedDiffLine } from "./lib/expected-diff.ts"
 import { findPriorityTool, stageCommand } from "./lib/stage-priority.ts"
 import {
   formatStageLines,
@@ -96,6 +99,10 @@ const stageResults = activeStages.length > 0 ? await runConcurrently(activeStage
 saveRecord(stageResults)
 for (const line of formatStageLines(stageVerdicts(stageResults))) {
   process.stdout.write(`${line}\n`)
+}
+const expectedDiffLines = readExpectedDiffLines(ROOT, PRIMARY_BRANCH)
+if (expectedDiffLines !== undefined) {
+  process.stdout.write(`${formatExpectedDiffLine(expectedDiffLines)}\n`)
 }
 
 /** 全段の順に4値を決める。飛ばした段・計画で落とした段は走っていないので `unobserved`。 */

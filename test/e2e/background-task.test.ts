@@ -1,4 +1,4 @@
-import { describe, it } from "vitest"
+import { describe, expect, it } from "vitest"
 
 import { useScenarioRun } from "./scenario-run.ts"
 
@@ -24,11 +24,13 @@ describe("バックグラウンドタスク", () => {
       domRoots: ["work-strip", "turn-outline"],
     })
     const strip = room.page.locator('[data-region="main"] section[aria-label="進み具合"]')
+    const backgroundLine = strip.getByText("背景で 架空の短い待ち（2秒）")
 
     await room.waitForEvent("turn-finished")
-    await strip.getByText("背景で 架空の短い待ち（2秒）").waitFor()
+    await backgroundLine.waitFor()
 
     await room.waitForEvent("turn-finished", RESUMED_TURN_FINISHED_OCCURRENCE)
-    await room.settleAndMatch(ELAPSED_MS)
+    await room.settleAndMatchPicked(ELAPSED_MS)
+    expect(await backgroundLine.count()).toBe(0)
   })
 })

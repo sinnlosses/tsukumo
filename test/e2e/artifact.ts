@@ -16,6 +16,8 @@ import { fileURLToPath } from "node:url"
 
 import { expect } from "vitest"
 
+import { missingPicks, parseDomTreeByRoot } from "../fixture/dom-pick.ts"
+
 /** 走らせた結果とスクリーンショットの置き場（リポジトリの外。毎回書き直す）。 */
 export const OUTPUT_ROOT = "/tmp/tsukumo-e2e"
 
@@ -82,6 +84,40 @@ export function matchArtifact(
   }
 }
 
+/**
+ * 書いた DOM の写しを、手で書いた部分一致の期待値（`<シナリオ>.dom-pick.json`）に当てる。
+ * 期待値は撮り直しで書かないので、`E2E_UPDATE=1` の回も当てる。
+ */
+export function matchPickedArtifact(scenario: string, domText: string, outDir: string): void {
+  const fileName = `${scenario}.${PICKED_KIND}.json`
+  const expectedPath = path.join(EXPECTED_ROOT, fileName)
+  if (!existsSync(expectedPath)) {
+    throw new Error(
+      `部分一致の期待値が無い: ${path.relative(REPOSITORY_ROOT, expectedPath)}（撮り直しでは書かれないので手で書く）`,
+    )
+  }
+  const expectedText = readFileSync(expectedPath, "utf8")
+  const missing = missingPicks(
+    parseDomTreeByRoot(JSON.parse(expectedText), fileName),
+    parseDomTreeByRoot(JSON.parse(domText), `${scenario}.dom.json`),
+  )
+  if (missing.length === 0) {
+    return
+  }
+  const failureDir = recordFailure(scenario, outDir)
+  writeFileSync(path.join(failureDir, fileName), expectedText, "utf8")
+  writeFileSync(
+    path.join(failureDir, `${scenario}.${PICKED_KIND}.missing.txt`),
+    `${missing.join("\n")}\n`,
+    "utf8",
+  )
+  throw new ArtifactMismatchError(
+    `写しに見つからない節がある（${String(missing.length)}件。写しと一覧を残した: ${failureDir}）\n${missing.slice(0, 5).join("\n")}`,
+    failureDir,
+    undefined,
+  )
+}
+
 /** 期待値との食い違い。残した置き場を持ち、スクリーンショットを足せるようにする。 */
 export class ArtifactMismatchError extends Error {
   readonly failureDir: string
@@ -93,13 +129,31 @@ export class ArtifactMismatchError extends Error {
 }
 
 export function assertNoMessagesExpected(scenario: string): void {
-  const expectedPath = path.join(EXPECTED_ROOT, `${scenario}.messages.json`)
+  assertNoExpected(
+    scenario,
+    "messages",
+    "比べないメッセージの列の期待値が残っている",
+    "比べるなら場面で settleAndMatchWithMessages を呼び、比べないなら git rm で消す",
+  )
+}
+
+export function assertNoWholeDomExpected(scenario: string): void {
+  assertNoExpected(
+    scenario,
+    "dom",
+    "部分一致の場面に完全一致の DOM の期待値が残っている",
+    "部分一致に移したなら git rm で消す",
+  )
+}
+
+const PICKED_KIND = "dom-pick"
+
+function assertNoExpected(scenario: string, kind: ArtifactKind, what: string, hint: string): void {
+  const expectedPath = path.join(EXPECTED_ROOT, `${scenario}.${kind}.json`)
   if (UPDATE_EXPECTED || !existsSync(expectedPath)) {
     return
   }
-  throw new Error(
-    `比べないメッセージの列の期待値が残っている: ${path.relative(REPOSITORY_ROOT, expectedPath)}（比べるなら場面で settleAndMatchWithMessages を呼び、比べないなら git rm で消す）`,
-  )
+  throw new Error(`${what}: ${path.relative(REPOSITORY_ROOT, expectedPath)}（${hint}）`)
 }
 
 /** 期待値と食い違った回を、シナリオごとに直近何回まで `failures/` の下へ残すか。 */

@@ -17,7 +17,9 @@ import {
   ArtifactMismatchError,
   type ArtifactKind,
   assertNoMessagesExpected,
+  assertNoWholeDomExpected,
   matchArtifact,
+  matchPickedArtifact,
   OUTPUT_ROOT,
   REPOSITORY_ROOT,
   TRACE_ROOT,
@@ -137,6 +139,11 @@ export type ScenarioRoom = {
   readonly settleAndMatch: (elapsedMs: number) => Promise<void>
   /** `settleAndMatch` と同じく撮り、メッセージの列も期待値と比べる。 */
   readonly settleAndMatchWithMessages: (elapsedMs: number) => Promise<void>
+  /**
+   * `settleAndMatch` と同じく撮り、DOM の写しを手で書いた部分一致の期待値（`<シナリオ>.dom-pick.json`）に当てる。
+   * 完全一致の DOM の期待値とメッセージの列の期待値が残っていれば落とす。
+   */
+  readonly settleAndMatchPicked: (elapsedMs: number) => Promise<void>
 }
 
 export async function openRoom(
@@ -313,6 +320,14 @@ export async function openRoom(
       await shootOnMismatch(page, options.scenario, () => {
         matchArtifact(options.scenario, "dom", texts.dom, outDir)
         matchArtifact(options.scenario, "messages", texts.messages, outDir)
+      })
+    },
+    settleAndMatchPicked: async (elapsedMs) => {
+      const { texts, outDir } = await settleAndWrite(elapsedMs)
+      await shootOnMismatch(page, options.scenario, () => {
+        matchPickedArtifact(options.scenario, texts.dom, outDir)
+        assertNoWholeDomExpected(options.scenario)
+        assertNoMessagesExpected(options.scenario)
       })
     },
   }

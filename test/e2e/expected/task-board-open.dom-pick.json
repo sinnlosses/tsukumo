@@ -1,0 +1,27 @@
+{
+  "task-board": [
+    { "tag": "dialog", "attributes": { "aria-label": "タスク", "open": true }, "children": [
+      { "tag": "ul", "attributes": { "role": "listbox", "aria-label": "タスク" }, "children": [
+        { "tag": "li", "attributes": { "role": "option", "aria-selected": "true", "data-state": "ready" }, "children": ["t-001"] },
+        { "tag": "li", "attributes": { "role": "option", "aria-selected": "false" }, "children": ["t-002"] },
+        { "tag": "li", "attributes": { "role": "option", "aria-selected": "false" }, "children": ["t-005"] }
+      ] },
+      { "tag": "section", "attributes": { "aria-label": "t-001 の詳細" }, "children": [
+        { "tag": "h3", "children": ["架空のタスク（", { "tag": "code", "children": ["code"] }, "を含む要約）"] },
+        { "tag": "article", "attributes": { "aria-label": "本文" }, "children": [
+          { "tag": "h4", "children": ["目的・背景"] },
+          { "tag": "p", "children": [{ "tag": "code", "children": ["inline code"] }, { "tag": "strong", "children": ["強調"] }] },
+          { "tag": "table", "children": [{ "tag": "th", "children": ["項目"] }, { "tag": "td", "children": ["甲"] }] },
+          { "tag": "pre", "children": [{ "tag": "code", "children": ["echo 架空"] }] },
+          { "tag": "p", "children": ["<b>", "生の HTML は字のまま出る", "</b>"] },
+          { "tag": "p", "children": [{ "tag": "a", "attributes": { "href": "https://example.invalid/foo" }, "children": ["外のリンク"] }, "相対のリンク"] },
+          { "tag": "h4", "children": ["受け入れ条件"] },
+          { "tag": "li", "children": [{ "tag": "input", "attributes": { "type": "checkbox", "checked": false } }, "まだの条件"] },
+          { "tag": "li", "children": [{ "tag": "input", "attributes": { "type": "checkbox", "checked": true } }, "済んだ条件"] },
+          { "tag": "ol", "children": [{ "tag": "li", "children": ["一つ目の手順"] }] },
+          { "tag": "h5", "children": ["段の見出し"] }
+        ] }
+      ] }
+    ] }
+  ]
+}

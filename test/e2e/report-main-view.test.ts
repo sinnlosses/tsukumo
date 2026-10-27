@@ -24,7 +24,7 @@ describe("report → メインビュー", () => {
     })
 
     await room.waitForEvent("turn-finished")
-    await room.settleAndMatch(ELAPSED_MS)
+    await room.settleAndMatchPicked(ELAPSED_MS)
   })
 
   it("chart の塊が種類ごとにグラフとして描かれる", async () => {
@@ -36,7 +36,7 @@ describe("report → メインビュー", () => {
     })
 
     await room.waitForEvent("turn-finished")
-    await room.settleAndMatch(ELAPSED_MS)
+    await room.settleAndMatchPicked(ELAPSED_MS)
   })
 
   it("plot の申告が棒・折れ線・円として、値と系列名つきで描かれる", async () => {

@@ -1,0 +1,18 @@
+{
+  "main": [
+    { "tag": "div", "attributes": { "data-report-region": "section", "data-report-section": "0" }, "children": [
+      { "tag": "h4", "children": ["架空の件数の推移"] },
+      { "tag": "canvas" }, { "tag": "div", "attributes": { "data-reveal-caption": "" }, "children": ["図 1"] },
+      { "tag": "canvas" }, { "tag": "div", "attributes": { "data-reveal-caption": "" }, "children": ["図 2"] },
+      { "tag": "canvas" }, { "tag": "div", "attributes": { "data-reveal-caption": "" }, "children": ["図 3"] },
+      { "tag": "canvas" }, { "tag": "div", "attributes": { "data-reveal-caption": "" }, "children": ["図 4"] },
+      { "tag": "canvas" }, { "tag": "div", "attributes": { "data-reveal-caption": "" }, "children": ["図 5"] },
+      { "tag": "canvas" }, { "tag": "div", "attributes": { "data-reveal-caption": "" }, "children": ["図 6"] },
+      { "tag": "canvas" }, { "tag": "div", "attributes": { "data-reveal-caption": "" }, "children": ["図 7"] },
+      { "tag": "canvas" }, { "tag": "div", "attributes": { "data-reveal-caption": "" }, "children": ["図 8"] },
+      { "tag": "canvas" }, { "tag": "div", "attributes": { "data-reveal-caption": "" }, "children": ["図 9", "架空の振り返りが最も多い"] },
+      { "tag": "canvas" }, { "tag": "div", "attributes": { "data-reveal-caption": "" }, "children": ["図 10", "架空の内訳は振り返りが 35%"] },
+      { "tag": "canvas" }, { "tag": "div", "attributes": { "data-reveal-caption": "" }, "children": ["図 11", "架空の3月が最も多い"] }
+    ] }
+  ]
+}

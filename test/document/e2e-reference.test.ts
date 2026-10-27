@@ -51,12 +51,16 @@ const e2eSources = listFiles("test/e2e", [".ts"]).map((path) => ({ path, text: r
 describe("E2E の期待値", () => {
   const expectedNames = readdirSync(EXPECTED_ROOT)
   const scenarioNames = [
-    ...new Set(expectedNames.map((name) => name.replace(/\.(dom|messages)\.json$/, ""))),
+    ...new Set(expectedNames.map((name) => name.replace(/\.(dom|dom-pick|messages)\.json$/, ""))),
   ]
   const literals = e2eSources.flatMap((source) => quotedLiterals(source.text))
 
   it(".messages.json の期待値には同じ場面の .dom.json がある", () => {
-    const unpaired = scenarioNames.filter((name) => !expectedNames.includes(`${name}.dom.json`))
+    const unpaired = scenarioNames.filter(
+      (name) =>
+        expectedNames.includes(`${name}.messages.json`) &&
+        !expectedNames.includes(`${name}.dom.json`),
+    )
     expect(unpaired).toEqual([])
   })
 

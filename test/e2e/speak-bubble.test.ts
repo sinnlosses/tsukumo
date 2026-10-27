@@ -21,6 +21,6 @@ describe("speak → キャラビューの吹き出し", () => {
     })
 
     await room.waitForEvent("turn-finished")
-    await room.settleAndMatch(ELAPSED_MS)
+    await room.settleAndMatchPicked(ELAPSED_MS)
   })
 })

@@ -1,0 +1,6 @@
+{
+  "character": [
+    { "tag": "div", "attributes": { "role": "button", "data-latest": "true" }, "children": ["つくもの精霊", "ほら、片付いたぞ。"] },
+    { "tag": "div", "attributes": { "role": "button", "data-latest": "false" }, "children": ["見てくるぞ。"] }
+  ]
+}

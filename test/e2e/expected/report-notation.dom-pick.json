@@ -1,0 +1,35 @@
+{
+  "main": [
+    { "tag": "div", "attributes": { "data-report-region": "markdown" }, "children": [
+      { "tag": "h4", "children": ["表現の一覧（架空）"] },
+      { "tag": "blockquote", "children": [{ "tag": "p", "children": ["これは引用のテスト。実物の会話ではない。"] }] },
+      { "tag": "ul", "children": [
+        { "tag": "li", "children": ["項目1", { "tag": "ul", "children": [{ "tag": "li", "children": ["子項目1"] }] }] }
+      ] },
+      { "tag": "li", "children": ["✓", "済みの項目（架空）"] },
+      { "tag": "li", "children": ["未了の項目（架空）"] },
+      { "tag": "hr" },
+      { "tag": "table", "children": [
+        { "tag": "th", "children": ["項目"] },
+        { "tag": "td", "children": [{ "tag": "code", "children": ["src/browser/components/page/conversation/components/main-view/markdown/report-notation.module.css"] }] }
+      ] },
+      "情報",
+      "結論：ここに並べた記法はすべて架空の例。",
+      "注意",
+      "この画面は疑似セッションで、実際の作業は1つもしていない。",
+      { "tag": "p", "children": ["色の見本:", { "tag": "code", "children": ["#bca0ec"] }] },
+      { "tag": "p", "children": ["OK", "要注意", "NG"] },
+      "案A（架空）",
+      { "tag": "b", "children": ["4"] },
+      "色",
+      { "tag": "ol", "attributes": { "aria-label": "流れ" }, "children": [
+        { "tag": "li", "children": ["1", { "tag": "b", "children": ["読む"] }] },
+        { "tag": "li", "children": ["3", { "tag": "b", "children": ["確かめる"] }] }
+      ] },
+      { "tag": "pre", "attributes": { "role": "button", "aria-label": "この図を拡大" } },
+      { "tag": "canvas" },
+      "お願い",
+      "この一覧の見え方に気づいた点があれば教えてください（架空の例）。"
+    ] }
+  ]
+}

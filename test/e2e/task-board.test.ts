@@ -11,6 +11,6 @@ const ELAPSED_MS = 60_000
 describe("タスクのモーダル", () => {
   it("「一覧を見る」で開き、左の一覧の先頭を選んで右に本文を Markdown で描く", async () => {
     const room = await openTaskBoardRoom(run, "task-board-open", ["task-board"])
-    await room.settleAndMatch(ELAPSED_MS)
+    await room.settleAndMatchPicked(ELAPSED_MS)
   })
 })
