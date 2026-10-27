@@ -1,5 +1,5 @@
 // `query()` に渡す `options` のうち `mcpServers` / `canUseTool`（クロージャが要る）を除いた部分と、
-// `Stop` と `PreToolUse` のフックの登録を組み立てる。
+// `Stop`・`PreToolUse`・`PostToolUse` などのフックの登録を組み立てる。
 
 import { setImmediate } from "node:timers/promises"
 
@@ -7,7 +7,9 @@ import type {
   BaseHookInput,
   HookCallbackMatcher,
   HookEvent,
+  HookInput,
   SdkPluginConfig,
+  SyncHookJSONOutput,
 } from "@anthropic-ai/claude-agent-sdk"
 
 import {
@@ -19,9 +21,11 @@ import {
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import { bundledFilePath } from "../../adapter/bundled-path.ts"
 import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
+import { PHASE_RESULT_TOOL_NAME, tsukumoToolFullName } from "../../core/tsukumo-tool-name.ts"
 import type { ReportGate } from "../../report/core/report-tool.ts"
 import { judgePhaseResultCaller } from "../../work-plan/core/phase-result-tool.ts"
 import {
+  GATED_TOOL_MATCHER,
   judgeEditAgainstMissingPlan,
   judgeToolAgainstGate,
 } from "../../work-plan/core/work-plan-gate.ts"
@@ -30,6 +34,11 @@ import { rewriteBashCommand } from "../core/bash-command-rewrite.ts"
 import type { CallReview } from "../core/call-review.ts"
 import type { ExternalToolMark } from "../core/external-tool-mark.ts"
 import type { SessionDriverOptions, SessionMode } from "../core/session-driver.ts"
+import {
+  type ToolHookClock,
+  type ToolHookDurationLap,
+  toolHookDurationTool,
+} from "../core/tool-hook-clock.ts"
 import { childProcessEnv } from "../core/visible-output-nudge.ts"
 import { figurePluginDir, workflowPluginDir } from "./workflow-plugin.ts"
 
@@ -108,83 +117,110 @@ export function buildQuerySeedOptions(options: SessionDriverOptions): QuerySeedO
 }
 
 /**
- * `PreToolUse` フックを1つ登録する。
- * メインの `phase_result`（`judgePhaseResultCaller`）と、委譲ゲート（`judgeToolAgainstGate`）で拒むときは `permissionDecision: "deny"` を返す。
- * `planMissing` が真のあいだは、メインの `Edit`・`Write` も同じく拒む（`judgeEditAgainstMissingPlan`。渡さなければ掛けない）。
- * 通したメインの `Agent` 呼び出しは背景に固定する（`updatedInput` だけを返し、許可の判定には触らない）。
- * `Bash` の `command` は `rewriteBash` が返した短い出力の版へ差し替える（同じく `updatedInput` だけ。サブエージェントの中の呼び出しも対象）。
+ * `PreToolUse` フックを、当てるツールごとの matcher に分けて登録する。
+ * 読み取り（`Read`・`Grep`・`Glob`・`ToolSearch`）と `phase_result` 以外の tsukumo のツールには、どれも当たらない。
+ * 1つのツールに当たった matcher のフックは並んで走り、どれかの `deny` が勝つ。
+ *
+ * - 委譲ゲート（{@link GATED_TOOL_MATCHER}）: 外部由来の印を立て、委譲ゲート（`judgeToolAgainstGate`）で拒む。
+ *   印は結果のフック（{@link postToolUseHooks}）でも立てる
+ * - `mcp__tsukumo__phase_result`: メインの呼び出しを拒む（`judgePhaseResultCaller`）
+ * - `Edit|Write`: `planMissing` が真のあいだ、メインの呼び出しを拒む（`judgeEditAgainstMissingPlan`。渡さなければ登録しない）
+ * - `Agent`: メインの呼び出しを背景に固定する（`updatedInput` だけを返し、許可の判定には触らない）
+ * - `Bash`: `command` を `rewriteBash` が返した短い出力の版へ差し替える（同じく `updatedInput` だけ。サブエージェントの中の呼び出しも対象）
+ *
+ * 委譲ゲートと `phase_result` のフックは、所要を測るために呼ばれた時刻を `hookClock` に控える。
  * `agent_id` はサブエージェント内の呼び出しにだけ付くので、ここで真偽に畳んでから渡す。
  *
- * 印を読む前に、拒む側に当たったときだけ1回 macrotask を待つ。
+ * 委譲ゲートの印を読む前に、拒む側に当たったときだけ1回 macrotask を待つ。
  * 返却を運ぶメッセージは `relayMessages` の反復へ渡るまで列に積まれ、フックの呼び出しはそれより先に処理されうる。
- *
- * 外部由来の印（`ExternalToolMark`）へのツール名は、拒むかどうかを決める前に、サブエージェントの中の呼び出しも含めて渡す。
  */
 export function preToolUseHooks(
   gateRaised: () => boolean,
   bandPosition: () => string,
-  onEvent: (event: SessionEvent) => void,
   externalToolMark: Pick<ExternalToolMark, "observeTool">,
   rewriteBash: (command: string) => Promise<string | undefined>,
   planMissing: (() => boolean) | undefined,
+  hookClock: Pick<ToolHookClock, "started">,
 ): Partial<Record<HookEvent, HookCallbackMatcher[]>> {
   return {
     PreToolUse: [
       {
+        matcher: GATED_TOOL_MATCHER,
         hooks: [
           async (input) => {
             if (input.hook_event_name !== "PreToolUse") {
               return {}
             }
+            hookClock.started(input.tool_use_id)
+            // 背景へ回った（detached の）結果では Claude Code が PostToolUse を呼ばずに結果を返すので、ここでも印を立てる。
             externalToolMark.observeTool(input.tool_name)
             const inSubagent = input.agent_id !== undefined
-            if (!inSubagent) {
-              confirmedSettingEvents(input).forEach(onEvent)
+            if (judgeToolAgainstGate(input.tool_name, inSubagent, "").kind !== "deny") {
+              return {}
             }
-            const caller = judgePhaseResultCaller(input.tool_name, inSubagent)
-            if (caller.kind === "deny") {
-              return {
-                hookSpecificOutput: {
-                  hookEventName: "PreToolUse",
-                  permissionDecision: "deny",
-                  permissionDecisionReason: caller.reason,
+            await setImmediate()
+            const gated = judgeToolAgainstGate(input.tool_name, inSubagent, bandPosition())
+            return gated.kind === "deny" && gateRaised() ? deny(gated.reason) : {}
+          },
+        ],
+      },
+      {
+        matcher: tsukumoToolFullName(PHASE_RESULT_TOOL_NAME),
+        hooks: [
+          async (input) => {
+            if (input.hook_event_name !== "PreToolUse") {
+              return {}
+            }
+            hookClock.started(input.tool_use_id)
+            const caller = judgePhaseResultCaller(input.tool_name, input.agent_id !== undefined)
+            return caller.kind === "deny" ? deny(caller.reason) : {}
+          },
+        ],
+      },
+      ...(planMissing === undefined
+        ? []
+        : [
+            {
+              matcher: "Edit|Write",
+              hooks: [
+                async (input: HookInput) => {
+                  if (input.hook_event_name !== "PreToolUse" || !planMissing()) {
+                    return {}
+                  }
+                  const edited = judgeEditAgainstMissingPlan(
+                    input.tool_name,
+                    input.agent_id !== undefined,
+                    filePathOf(input.tool_input),
+                  )
+                  return edited.kind === "deny" ? deny(edited.reason) : {}
                 },
-              }
+              ],
+            },
+          ]),
+      {
+        matcher: "Agent",
+        hooks: [
+          async (input) => {
+            if (input.hook_event_name !== "PreToolUse") {
+              return {}
             }
-            if (judgeToolAgainstGate(input.tool_name, inSubagent, "").kind === "deny") {
-              await setImmediate()
-              const gated = judgeToolAgainstGate(input.tool_name, inSubagent, bandPosition())
-              if (gated.kind === "deny" && gateRaised()) {
-                return {
-                  hookSpecificOutput: {
-                    hookEventName: "PreToolUse",
-                    permissionDecision: "deny",
-                    permissionDecisionReason: gated.reason,
-                  },
-                }
-              }
-            }
-            if (planMissing?.() === true) {
-              const edited = judgeEditAgainstMissingPlan(
-                input.tool_name,
-                inSubagent,
-                filePathOf(input.tool_input),
-              )
-              if (edited.kind === "deny") {
-                return {
-                  hookSpecificOutput: {
-                    hookEventName: "PreToolUse",
-                    permissionDecision: "deny",
-                    permissionDecisionReason: edited.reason,
-                  },
-                }
-              }
-            }
-            const pinned = pinToBackground(input.tool_name, input.tool_input, inSubagent)
-            if (pinned.kind === "rewrite") {
-              return {
-                hookSpecificOutput: { hookEventName: "PreToolUse", updatedInput: pinned.input },
-              }
+            const pinned = pinToBackground(
+              input.tool_name,
+              input.tool_input,
+              input.agent_id !== undefined,
+            )
+            return pinned.kind === "rewrite"
+              ? { hookSpecificOutput: { hookEventName: "PreToolUse", updatedInput: pinned.input } }
+              : {}
+          },
+        ],
+      },
+      {
+        matcher: "Bash",
+        hooks: [
+          async (input) => {
+            if (input.hook_event_name !== "PreToolUse") {
+              return {}
             }
             const shortened = await rewriteBashCommand(
               input.tool_name,
@@ -194,6 +230,73 @@ export function preToolUseHooks(
             return shortened === undefined
               ? {}
               : { hookSpecificOutput: { hookEventName: "PreToolUse", updatedInput: shortened } }
+          },
+        ],
+      },
+    ],
+  }
+}
+
+/**
+ * matcher の無い `PostToolUse` と `PostToolUseFailure` のフックを1つずつ登録する。
+ * どちらも、外部由来の印（`ExternalToolMark`）へサブエージェントの中の呼び出しも含めてツール名を渡し、
+ * メインの呼び出しでは見届けた設定（{@link confirmedSettingEvents}）を流し、
+ * `hookClock` に控えのあるツールでは PreToolUse のフックからツールが走り始めるまでの所要を `diagnose` へ渡す。
+ * Claude Code はこのフックが返るのを待ってからツールの結果をモデルへ渡す（`updatedToolOutput` で結果を差し替えられる）ので、
+ * 印は結果がモデルへ届くより先に立つ。
+ */
+export function postToolUseHooks(
+  onEvent: (event: SessionEvent) => void,
+  externalToolMark: Pick<ExternalToolMark, "observeTool">,
+  hookClock: Pick<ToolHookClock, "finished">,
+  diagnose: (lap: ToolHookDurationLap) => void,
+): Partial<Record<HookEvent, HookCallbackMatcher[]>> {
+  const observe = (
+    input: BaseHookInput & { readonly tool_name: string; readonly tool_use_id: string },
+    hook: ToolHookDurationLap["hook"],
+    toolMs: number | undefined,
+  ): void => {
+    externalToolMark.observeTool(input.tool_name)
+    const inSubagent = input.agent_id !== undefined
+    if (!inSubagent) {
+      confirmedSettingEvents(input).forEach(onEvent)
+    }
+    if (toolMs === undefined) {
+      return
+    }
+    const lap = hookClock.finished(input.tool_use_id, toolMs)
+    if (lap.kind === "measured") {
+      diagnose({
+        flow: "tool-hook-duration",
+        tool: toolHookDurationTool(input.tool_name),
+        inSubagent,
+        hook,
+        beforeToolMs: lap.beforeToolMs,
+        toolMs,
+      })
+    }
+  }
+  return {
+    PostToolUse: [
+      {
+        hooks: [
+          async (input) => {
+            if (input.hook_event_name === "PostToolUse") {
+              observe(input, "PostToolUse", input.duration_ms)
+            }
+            return {}
+          },
+        ],
+      },
+    ],
+    PostToolUseFailure: [
+      {
+        hooks: [
+          async (input) => {
+            if (input.hook_event_name === "PostToolUseFailure") {
+              observe(input, "PostToolUseFailure", input.duration_ms)
+            }
+            return {}
           },
         ],
       },
@@ -309,6 +412,16 @@ function confirmedSettingEvents(input: BaseHookInput): readonly SessionEvent[] {
       ? [{ kind: "setting-confirmed", setting: "permissionMode", value: mode } as const]
       : []),
   ]
+}
+
+function deny(reason: string): SyncHookJSONOutput {
+  return {
+    hookSpecificOutput: {
+      hookEventName: "PreToolUse",
+      permissionDecision: "deny",
+      permissionDecisionReason: reason,
+    },
+  }
 }
 
 function filePathOf(toolInput: unknown): string | undefined {

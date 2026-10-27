@@ -287,6 +287,9 @@ function startRealDriver(
         case "prompt-delay":
           options.appendDiagnostic(diagnostic)
           return
+        case "tool-hook-duration":
+          options.appendDiagnostic({ ...diagnostic, at: context.now() })
+          return
         case "report-gate-block":
           options.appendDiagnostic({ flow: "report-gate-block", at: context.now() })
           return

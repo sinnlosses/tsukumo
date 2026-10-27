@@ -37,7 +37,7 @@
   立っているあいだは雑談の `remember` を通さない
 - **注記**: 外部由来かどうかは tsukumo の MCP サーバのツール（名前の頭が `mcp__tsukumo__`。`isTsukumoTool`）を許す側とし、それ以外（Read・Bash・Web・
   他の MCP・`Agent` など。サブエージェントの中の呼び出しも）をすべて外部由来に数える。印を立てるのは
-  PreToolUse のフックで、下ろすのは依頼を送ったときだけ（脇の話・claude が自分で始めた続きのターンでは下ろさない）
+  PostToolUse・PostToolUseFailure のフック（読み取り以外のツールは PreToolUse のフックでも）で、下ろすのは依頼を送ったときだけ（脇の話・claude が自分で始めた続きのターンでは下ろさない）
 - **避ける言い方**: 汚染フラグ、taint
 
 ### 覚えたこと

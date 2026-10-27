@@ -40,6 +40,7 @@ import type {
 import { createSessionEnding } from "../core/session-ending.ts"
 import { createSessionTitleIntake, type SessionTitleIntake } from "../core/session-title.ts"
 import { createStepWatch } from "../core/step-watch.ts"
+import { createToolHookClock } from "../core/tool-hook-clock.ts"
 import { isVisibleOutputNudge } from "../core/visible-output-nudge.ts"
 import { appendInputLedger } from "./input-ledger-file.ts"
 import { createRtkRewrite } from "./rtk-rewrite.ts"
@@ -51,6 +52,7 @@ import { createPromptStream, type PromptContentBlock } from "./sdk-prompt-stream
 import {
   buildQuerySeedOptions,
   handbackNoteHooks,
+  postToolUseHooks,
   preToolUseHooks,
   stopHooks,
 } from "./sdk-query-seed.ts"
@@ -124,6 +126,7 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
 
   const callReview = createCallReview()
   const externalToolMark = createExternalToolMark()
+  const toolHookClock = createToolHookClock(options.now)
   const reportGate = createReportGate(callReview.nothingNewRejected, callReview.backgroundRunning)
   const readSessionDigest = createSessionDigestReader(options.expressions)
   const titleIntake = createSessionTitleIntake()
@@ -142,11 +145,12 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
             ...preToolUseHooks(
               callReview.gateRaised,
               callReview.bandPosition,
-              options.onEvent,
               externalToolMark,
               createRtkRewrite(),
               options.mode.kind === "work" ? callReview.planMissing : undefined,
+              toolHookClock,
             ),
+            ...postToolUseHooks(options.onEvent, externalToolMark, toolHookClock, diagnose),
             ...handbackNoteHooks(callReview, () => {
               failedWithoutError("handback-head-mismatch")
             }),

@@ -1,9 +1,15 @@
 // 委譲の返却が届いてからメインが `work_plan` を呼ぶまでのあいだ、メインの作業のツールを拒む判定と、
 // その依頼で最初の `work_plan` を受け付けるまでのあいだ、メインの `Edit`・`Write` を拒む判定。
 
-import { isTsukumoTool } from "../../core/tsukumo-tool-name.ts"
+import { isTsukumoTool, tsukumoToolFullName } from "../../core/tsukumo-tool-name.ts"
 
 const READ_ONLY_TOOL_NAMES = ["Read", "Grep", "Glob", "ToolSearch"] as const satisfies string[]
+
+/**
+ * {@link judgeToolAgainstGate} が拒みうるツールの名前（読み取りと tsukumo のツール以外）に当たる PreToolUse の matcher。
+ * Claude Code は英数字・`_`・`|`・`,`・空白・`-` 以外を含む matcher を正規表現として名前に当て、正規表現として不正なら当てない。
+ */
+export const GATED_TOOL_MATCHER = `^(?!(?:${READ_ONLY_TOOL_NAMES.join("|")})$)(?!${tsukumoToolFullName("")})`
 
 export type GateVerdict =
   | { readonly kind: "allow" }

@@ -1,97 +1,67 @@
-import type { BaseHookInput } from "@anthropic-ai/claude-agent-sdk"
 import { describe, expect, it } from "vitest"
 
-import { preToolUseHooks } from "../../../../src/server/session-driver/adapter/sdk-query-seed.ts"
 import { createCallReview } from "../../../../src/server/session-driver/core/call-review.ts"
-import {
-  createExternalToolMark,
-  type ExternalToolMark,
-} from "../../../../src/server/session-driver/core/external-tool-mark.ts"
-import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
+import { createExternalToolMark } from "../../../../src/server/session-driver/core/external-tool-mark.ts"
+import { createToolHookClock } from "../../../../src/server/session-driver/core/tool-hook-clock.ts"
 import { requestEvent } from "../../../fixture/session-event.ts"
+import { matcherHits, preTable, runPreToolUse } from "../../../fixture/tool-use-hook-table.ts"
 
-async function runPreToolUse(
-  toolName: string,
-  toolInput: unknown,
-  agentId?: string,
-  gateRaised: () => boolean = () => false,
-  bandPosition: () => string = () => "",
-  onEvent: (event: SessionEvent) => void = () => {},
-  settings: Pick<BaseHookInput, "effort" | "permission_mode"> = {},
-  externalToolMark: ExternalToolMark = createExternalToolMark(),
-  rewriteBash: (command: string) => Promise<string | undefined> = () => Promise.resolve(undefined),
-  planMissing?: () => boolean,
-): Promise<unknown> {
-  const callback = preToolUseHooks(
-    gateRaised,
-    bandPosition,
-    onEvent,
-    externalToolMark,
-    rewriteBash,
-    planMissing,
-  ).PreToolUse?.[0]?.hooks[0]
-  expect(callback).toBeDefined()
-  return callback?.(
-    {
-      session_id: "s-1",
-      transcript_path: "/tmp/tsukumo-test/fake.jsonl",
-      cwd: "/tmp/tsukumo-test",
-      hook_event_name: "PreToolUse",
-      tool_name: toolName,
-      tool_input: toolInput,
-      tool_use_id: "t-1",
-      ...(agentId === undefined ? {} : { agent_id: agentId }),
-      ...settings,
-    },
-    "t-1",
-    { signal: new AbortController().signal },
-  )
-}
+describe("preToolUseHooks（matcher で当てるツールを分ける）", () => {
+  const hitCount = (toolName: string) =>
+    (preTable({ planMissing: () => true }).PreToolUse ?? []).filter((entry) =>
+      matcherHits(entry.matcher, toolName),
+    ).length
 
-describe("preToolUseHooks が見届けた設定を流す", () => {
-  it("メインの呼び出しでは effort.level と permission_mode を setting-confirmed にする", async () => {
-    const events: SessionEvent[] = []
-    await runPreToolUse(
-      "Read",
-      {},
-      undefined,
-      () => false,
-      () => "",
-      (event) => events.push(event),
-      { effort: { level: "high" }, permission_mode: "plan" },
-    )
-    expect(events).toEqual([
-      { kind: "setting-confirmed", setting: "effort", value: "high" },
-      { kind: "setting-confirmed", setting: "permissionMode", value: "plan" },
-    ])
+  it("Read・Grep・Glob・ToolSearch には、どの PreToolUse のフックも当たらない", () => {
+    expect(hitCount("Read")).toBe(0)
+    expect(hitCount("Grep")).toBe(0)
+    expect(hitCount("Glob")).toBe(0)
+    expect(hitCount("ToolSearch")).toBe(0)
   })
 
-  it("effort が無い入力では effort を出さず、サブエージェントの中の呼び出しは何も出さない", async () => {
-    const mainEvents: SessionEvent[] = []
-    await runPreToolUse(
-      "Read",
-      {},
-      undefined,
-      () => false,
-      () => "",
-      (event) => mainEvents.push(event),
-      { permission_mode: "default" },
-    )
-    expect(mainEvents).toEqual([
-      { kind: "setting-confirmed", setting: "permissionMode", value: "default" },
-    ])
+  it("phase_result 以外の tsukumo のツールにも当たらない", () => {
+    expect(hitCount("mcp__tsukumo__speak")).toBe(0)
+    expect(hitCount("mcp__tsukumo__report")).toBe(0)
+    expect(hitCount("mcp__tsukumo__phase_result")).toBe(1)
+  })
 
-    const subEvents: SessionEvent[] = []
-    await runPreToolUse(
-      "Read",
-      {},
-      "sub-1",
-      () => false,
-      () => "",
-      (event) => subEvents.push(event),
-      { effort: { level: "high" }, permission_mode: "plan" },
+  it("Bash・Agent・Edit・Write には委譲ゲートとそれぞれのフックが当たり、ほかの外部のツールには委譲ゲートだけが当たる", () => {
+    expect(hitCount("Bash")).toBe(2)
+    expect(hitCount("Agent")).toBe(2)
+    expect(hitCount("Edit")).toBe(2)
+    expect(hitCount("Write")).toBe(2)
+    expect(hitCount("WebFetch")).toBe(1)
+    expect(hitCount("mcp__other__tool")).toBe(1)
+    expect(hitCount("ReadMcpResource")).toBe(1)
+  })
+
+  it("委譲ゲートの matcher は、正規表現として組めて judgeToolAgainstGate と同じ名前に当たる", async () => {
+    const raised = { gateRaised: () => true }
+    expect(await runPreToolUse("WebFetch", {}, undefined, raised)).toMatchObject({
+      hookSpecificOutput: { permissionDecision: "deny" },
+    })
+    expect(await runPreToolUse("Read", {}, undefined, raised)).toEqual({})
+  })
+
+  it("Read・Grep では、外部由来の印も所要の控えも PreToolUse では触らない", async () => {
+    const mark = createExternalToolMark()
+    const clock = createToolHookClock(() => 0)
+    await runPreToolUse("Read", {}, undefined, { externalToolMark: mark, hookClock: clock })
+    await runPreToolUse("Grep", {}, undefined, { externalToolMark: mark, hookClock: clock })
+    expect(mark.allowsRemember()).toBe(true)
+    expect(clock.finished("t-1", 0)).toEqual({ kind: "unseen" })
+  })
+
+  it("matcher の当て方の写しは、`,` と空白で区切った列も完全一致の列として扱う", () => {
+    expect(matcherHits("Edit, Write", "Write")).toBe(true)
+    expect(matcherHits("Edit, Write", "Edit")).toBe(true)
+    expect(matcherHits("Edit, Write", "NotebookEdit")).toBe(false)
+  })
+
+  it("planMissing を渡さなければ Edit|Write のフックを登録しない", () => {
+    expect((preTable({}).PreToolUse ?? []).some((entry) => entry.matcher === "Edit|Write")).toBe(
+      false,
     )
-    expect(subEvents).toEqual([])
   })
 })
 
@@ -103,14 +73,14 @@ describe("preToolUseHooks（Agent を背景に固定し、委譲ゲートで作�
       permissionDecisionReason: expect.stringContaining("work_plan"),
     },
   }
+  const raised = { gateRaised: () => true }
 
-  it("印が立っているあいだ、メインの作業のツールと Agent は拒み、背景固定は返さない", async () => {
-    expect(await runPreToolUse("Bash", { command: "ls" }, undefined, () => true)).toEqual(DENIED)
-    expect(await runPreToolUse("Agent", { prompt: "手順" }, undefined, () => true)).toEqual(DENIED)
+  it("印が立っているあいだ、メインの作業のツールと Agent は拒む", async () => {
+    expect(await runPreToolUse("Bash", { command: "ls" }, undefined, raised)).toEqual(DENIED)
+    expect(await runPreToolUse("Agent", { prompt: "手順" }, undefined, raised)).toEqual(DENIED)
   })
 
   it("印が立っていても、読み取り・tsukumo のツール・サブエージェントの中の呼び出しは通す", async () => {
-    const raised = () => true
     expect(await runPreToolUse("Read", {}, undefined, raised)).toEqual({})
     expect(await runPreToolUse("mcp__tsukumo__report", {}, undefined, raised)).toEqual({})
     expect(await runPreToolUse("Bash", {}, "sub-1", raised)).toEqual({})
@@ -133,7 +103,10 @@ describe("preToolUseHooks（Agent を背景に固定し、委譲ゲートで作�
     review.pass({ kind: "delegate-handed-back", delegate: "toolu_delegate" })
 
     expect(
-      await runPreToolUse("Bash", {}, undefined, review.gateRaised, review.bandPosition),
+      await runPreToolUse("Bash", {}, undefined, {
+        gateRaised: review.gateRaised,
+        bandPosition: review.bandPosition,
+      }),
     ).toEqual({
       hookSpecificOutput: {
         hookEventName: "PreToolUse",
@@ -142,7 +115,9 @@ describe("preToolUseHooks（Agent を背景に固定し、委譲ゲートで作�
       },
     })
     review.judgeWorkPlan({ ...plan, current: 1, phaseSummary: "架空のまとめ。" })
-    expect(await runPreToolUse("Bash", {}, undefined, review.gateRaised)).toEqual({})
+    expect(await runPreToolUse("Bash", {}, undefined, { gateRaised: review.gateRaised })).toEqual(
+      {},
+    )
   })
 
   it("run_in_background の無い Agent は updatedInput で true にし、permissionDecision は返さない", async () => {
@@ -168,19 +143,7 @@ describe("preToolUseHooks（work_plan の前に Edit・Write を拒む）", () =
     toolInput: unknown,
     agentId: string | undefined,
     missing: boolean,
-  ) =>
-    runPreToolUse(
-      toolName,
-      toolInput,
-      agentId,
-      () => false,
-      () => "",
-      () => {},
-      {},
-      createExternalToolMark(),
-      () => Promise.resolve(undefined),
-      () => missing,
-    )
+  ) => runPreToolUse(toolName, toolInput, agentId, { planMissing: () => missing })
 
   it("ワークプランが無いあいだ、メインの Edit・Write を拒む", async () => {
     expect(await run("Edit", { file_path: "/repo/a.ts" }, undefined, true)).toEqual(DENIED)
@@ -211,20 +174,10 @@ describe("preToolUseHooks（work_plan の前に Edit・Write を拒む）", () =
 
   it("CallReview の実物で、request のあとは拒み、work_plan を受け付けたら通し、request で拒みに戻る", async () => {
     const review = createCallReview()
-    const input = { file_path: "/repo/a.ts" }
     const runWith = () =>
-      runPreToolUse(
-        "Edit",
-        input,
-        undefined,
-        () => false,
-        () => "",
-        () => {},
-        {},
-        createExternalToolMark(),
-        () => Promise.resolve(undefined),
-        review.planMissing,
-      )
+      runPreToolUse("Edit", { file_path: "/repo/a.ts" }, undefined, {
+        planMissing: review.planMissing,
+      })
     review.pass(requestEvent())
     expect(await runWith()).toEqual(DENIED)
 
@@ -240,17 +193,7 @@ describe("preToolUseHooks（Bash の command を短い出力の版へ差し替�
   const shorten = (command: string): Promise<string | undefined> =>
     Promise.resolve(`rtk ${command}`)
   const rewriting = (toolName: string, toolInput: unknown, agentId?: string) =>
-    runPreToolUse(
-      toolName,
-      toolInput,
-      agentId,
-      () => false,
-      () => "",
-      () => {},
-      {},
-      createExternalToolMark(),
-      shorten,
-    )
+    runPreToolUse(toolName, toolInput, agentId, { rewriteBash: shorten })
 
   it("メインの Bash は updatedInput で command を差し替え、permissionDecision は返さない", async () => {
     expect(await rewriting("Bash", { command: "git status" })).toEqual({
@@ -267,20 +210,13 @@ describe("preToolUseHooks（Bash の command を短い出力の版へ差し替�
     })
   })
 
-  it("Bash 以外は差し替えず、委譲ゲートで拒むときは差し替えを返さない", async () => {
+  it("Bash 以外は差し替えず、委譲ゲートで拒むときは拒否が勝つ", async () => {
     expect(await rewriting("Read", { command: "git status" })).toEqual({})
     expect(
-      await runPreToolUse(
-        "Bash",
-        { command: "ls" },
-        undefined,
-        () => true,
-        () => "",
-        () => {},
-        {},
-        createExternalToolMark(),
-        shorten,
-      ),
+      await runPreToolUse("Bash", { command: "ls" }, undefined, {
+        gateRaised: () => true,
+        rewriteBash: shorten,
+      }),
     ).toEqual({
       hookSpecificOutput: {
         hookEventName: "PreToolUse",
@@ -288,36 +224,6 @@ describe("preToolUseHooks（Bash の command を短い出力の版へ差し替�
         permissionDecisionReason: expect.stringContaining("work_plan"),
       },
     })
-  })
-})
-
-describe("preToolUseHooks（外部由来の印を立てる）", () => {
-  async function markAfter(toolName: string, agentId?: string, gateRaised = false) {
-    const mark = createExternalToolMark()
-    await runPreToolUse(
-      toolName,
-      {},
-      agentId,
-      () => gateRaised,
-      () => "",
-      () => {},
-      {},
-      mark,
-    )
-    return mark.allowsRemember()
-  }
-
-  it("メインでもサブエージェントの中でも、tsukumo のツール以外を見たら印を立てる", async () => {
-    expect(await markAfter("WebFetch")).toBe(false)
-    expect(await markAfter("Read", "sub-1")).toBe(false)
-  })
-
-  it("委譲ゲートで拒むツールでも印を立てる", async () => {
-    expect(await markAfter("Bash", undefined, true)).toBe(false)
-  })
-
-  it("tsukumo のツールでは印を立てない", async () => {
-    expect(await markAfter("mcp__tsukumo__speak")).toBe(true)
   })
 })
 
@@ -335,8 +241,10 @@ describe("preToolUseHooks（メインの phase_result を拒む）", () => {
   })
 
   it("委譲先の phase_result は通す", async () => {
-    expect(await runPreToolUse("mcp__tsukumo__phase_result", input, "sub-1", () => true)).toEqual(
-      {},
-    )
+    expect(
+      await runPreToolUse("mcp__tsukumo__phase_result", input, "sub-1", {
+        gateRaised: () => true,
+      }),
+    ).toEqual({})
   })
 })

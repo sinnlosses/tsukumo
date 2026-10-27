@@ -27,6 +27,10 @@ import {
   swallowedFailureFootprintSchema,
 } from "./swallowed-failure.ts"
 import { type SynopsisTrimFootprint, synopsisTrimFootprintSchema } from "./synopsis-trim.ts"
+import {
+  type ToolHookDurationFootprint,
+  toolHookDurationFootprintSchema,
+} from "./tool-hook-duration.ts"
 import { type WelcomeWritingFootprint, welcomeWritingFootprintSchema } from "./welcome-writing.ts"
 
 /** 行の形の版。形を変えたら上げ、古い行と見分ける。 */
@@ -130,6 +134,7 @@ export type DiagnosticEntry =
   | SynopsisTrimFootprint
   | ReportGateBlockFootprint
   | RecommendationPressedFootprint
+  | ToolHookDurationFootprint
 
 const VERSION = { v: z.literal(DIAGNOSTIC_FORMAT_VERSION) }
 
@@ -143,6 +148,7 @@ export const diagnosticRecordSchema = z.discriminatedUnion("flow", [
   synopsisTrimFootprintSchema.extend(VERSION),
   reportGateBlockFootprintSchema.extend(VERSION),
   recommendationPressedFootprintSchema.extend(VERSION),
+  toolHookDurationFootprintSchema.extend(VERSION),
 ])
 
 /** JSONL に書く1行の形。 */

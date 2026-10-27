@@ -50,7 +50,7 @@ export type SettingEvent =
   /**
    * モデル・effort・許可モードのどれかが効いているのを、SDK から届いた値で見届けた。値は設定ごとの型に絞ってあり、受け付けた値と合うかは読む側が決める。
    * 出どころは `assistant` の `message.model`（メインのみ）・`init` の `model` / `permissionMode`・
-   * フック入力（`PreToolUse` と `Stop`）の `effort.level` / `permission_mode`。
+   * フック入力（`PostToolUse`・`PostToolUseFailure` と `Stop`）の `effort.level` / `permission_mode`。
    * effort に対応しないモデルでは `effort.level` が来ないので、effort のこの合図は出ない。
    */
   | ({ readonly kind: "setting-confirmed" } & SettingConfirmation)

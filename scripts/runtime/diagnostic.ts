@@ -161,6 +161,9 @@ function line(entry: DiagnosticEntry): string {
   if (entry.flow === "browser-error") {
     return `${when}  ${entry.flow}  ${entry.route}  ${entry.errorName}`
   }
+  if (entry.flow === "tool-hook-duration") {
+    return `${when}  ${entry.flow}  ${entry.tool}${entry.inSubagent ? "（委譲先）" : ""}  ${entry.hook}  前${String(entry.beforeToolMs)}ms  本体${String(entry.toolMs)}ms`
+  }
   if (entry.flow === "prompt-delay") {
     return `${when}  ${entry.flow}  準備${String(entry.prepareMs ?? 0)}ms  書き込み${String(entry.writeMs)}ms  応答${String(entry.replyMs)}ms`
   }

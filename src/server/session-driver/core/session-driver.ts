@@ -17,6 +17,7 @@ import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import type { ChatSummary, PersonaMemory } from "../../chat/core/chat-memory.ts"
 import type { ReportSchemaVariant } from "../../core/schema-variant.ts"
 import type { ShelvedPromptImage } from "./prompt-image-shelf.ts"
+import type { ToolHookDurationLap } from "./tool-hook-clock.ts"
 
 /** このセッションが仕事か雑談か。 */
 export type SessionMode =
@@ -96,6 +97,7 @@ export type SessionDriverOptions = {
 /** 駆動が `diagnose` へ渡す診断。行き先と書き出す形は配線が決める。 */
 export type DriverDiagnostic =
   | PromptDelayFootprint
+  | ToolHookDurationLap
   /** `report` の関所が `Stop` を止めた。時刻は配線が付ける。 */
   | { readonly flow: "report-gate-block" }
   | {
