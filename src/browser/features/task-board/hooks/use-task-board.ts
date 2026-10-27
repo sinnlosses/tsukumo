@@ -9,9 +9,8 @@ import { useReducer, useState } from "react"
 import type { TaskSummaryResult } from "../../../../shared/repository/task-summary.ts"
 import type { TaskBoardRequest } from "../../../stores/task-board-request.ts"
 import { boardContent, boardEntries, type BoardEntry } from "../domain/task-board-content.ts"
-import { countsTextOf, matchesFilter, matchesQuery } from "../domain/task-board-filter.ts"
+import { matchesFilter, matchesQuery } from "../domain/task-board-filter.ts"
 import type { TaskBoardView } from "../domain/task-board-view.ts"
-import { taskListCounts } from "../domain/task-list-count.ts"
 import type { TaskRequest } from "../domain/task-run-prompt.ts"
 import {
   boardReducer,
@@ -109,7 +108,6 @@ export function useTaskBoard(
 
   return {
     open,
-    countsText: tasks.kind === "known" ? countsTextOf(taskListCounts(tasks.items)) : "",
     content,
     confirm: confirming === undefined ? { kind: "closed" } : { kind: "open", ...confirming },
     onClose: close,

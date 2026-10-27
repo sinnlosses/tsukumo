@@ -168,8 +168,6 @@ type TaskBoardKeyEvent = {
 
 export type TaskBoardView = {
   readonly open: boolean
-  /** 見出しの帯の件数（「進行中 2 · 未着手 19 · 完了 0」）。読めないときは空文字列。 */
-  readonly countsText: string
   readonly content: TaskBoardContent
   readonly confirm: TaskBoardConfirm
   readonly onClose: () => void

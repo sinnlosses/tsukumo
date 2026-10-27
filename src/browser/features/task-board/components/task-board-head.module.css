@@ -11,11 +11,6 @@
   font-size: var(--font-heading);
   font-weight: 700;
 }
-.task-board-counts {
-  color: var(--ink-quiet);
-  font-size: var(--font-label);
-  white-space: nowrap;
-}
 .task-board-hints {
   margin-left: auto;
   color: var(--ink-quiet);

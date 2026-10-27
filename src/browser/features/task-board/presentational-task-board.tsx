@@ -57,7 +57,7 @@ export function PresentationalTaskBoard(props: TaskBoardView): ReactElement {
           tabIndex={-1}
           onKeyDown={props.onKeyDown}
         >
-          <TaskBoardHead countsText={props.countsText} onClose={props.onClose} />
+          <TaskBoardHead onClose={props.onClose} />
           {content.kind === "loading" && (
             <div className={styles["task-board-message"]}>
               <TaskSkeleton />

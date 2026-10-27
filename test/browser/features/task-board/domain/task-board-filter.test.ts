@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest"
 
 import {
-  countsTextOf,
   matchesFilter,
   matchesQuery,
 } from "../../../../../src/browser/features/task-board/domain/task-board-filter.ts"
@@ -66,16 +65,5 @@ describe("matchesQuery", () => {
     expect(matchesQuery(task, "alpha")).toBe(true)
     expect(matchesQuery(task, "BETA")).toBe(true)
     expect(matchesQuery(task, "gamma")).toBe(false)
-  })
-})
-
-describe("countsTextOf", () => {
-  it("件数を「ラベル 数」で ・ でつなぐ", () => {
-    expect(
-      countsTextOf([
-        { status: "open", label: "未完了", count: 19 },
-        { status: "done", label: "完了", count: 2 },
-      ]),
-    ).toBe("未完了 19 · 完了 2")
   })
 })

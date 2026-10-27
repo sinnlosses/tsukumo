@@ -1,8 +1,7 @@
-// 一覧の絞り込み（札と検索）と、見出しの件数の言い方。
+// 一覧の絞り込み（札と検索）。
 
 import type { TaskSummaryItem } from "../../../../shared/repository/task-summary.ts"
 import type { TaskBoardFilter, TaskStateView } from "./task-board-view.ts"
-import type { TaskListCountItem } from "./task-list-count.ts"
 
 export const FILTER_CHIPS = [
   { filter: "all", label: "すべて" },
@@ -28,8 +27,4 @@ export function matchesQuery(task: TaskSummaryItem, query: string): boolean {
     task.summary.toLowerCase().includes(needle) ||
     task.body.toLowerCase().includes(needle)
   )
-}
-
-export function countsTextOf(counts: readonly TaskListCountItem[]): string {
-  return counts.map((item) => `${item.label} ${String(item.count)}`).join(" · ")
 }
