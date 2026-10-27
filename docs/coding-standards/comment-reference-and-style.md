@@ -119,3 +119,7 @@ JSDoc の書き出しは、同じ範囲を `test/architecture/comment.test.ts`�
 
 **コミットメッセージは対象外**（上の確認はワーキングツリーしか見ない）。件名の先頭にIDを置く
 運用は `~/.claude/skills/task-model/WORKFLOW.md`「コミットメッセージ」が正典。
+
+## 正典に日付を書かない
+
+`docs/`（`docs/architecture/adr/`・`docs/history/`・`docs/research/` を除く）の本文に `20\d\d-\d\d-\d\d` の日付を書かない。経緯は ADR へ置く。日付入りのファイル名と「…」で引いた節名は対象外。既存の該当は `test/scripts/document/date-mention.test.ts` が範囲ごとの行数で凍結し、増やすと落ちる。

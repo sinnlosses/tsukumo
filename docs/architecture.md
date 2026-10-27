@@ -36,7 +36,7 @@
 （`docs/architecture/`）にある。下の目次で子を1つ特定し、その子のファイルを丸ごと読む。
 
 **このファイルには「いまどうなっているか」だけを書く。** 却下した案の理由・値の根拠の実測・
-覆した決定の記録は `docs/history/` に置き、ここからは1行で参照する。何を残して何を移すかの表は
+覆した決定の記録は `docs/history/` に置き、ここからは1行で参照する（日付は書かない。検査は `test/scripts/document/date-mention.test.ts`）。何を残して何を移すかの表は
 `docs/requirements.md`「正典に残すもの・`docs/history/` へ移すもの」。
 
 ## 目次
