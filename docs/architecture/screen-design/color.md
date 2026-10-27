@@ -215,6 +215,7 @@
 レポートの `image` の画像は押すと拡大して見られる（`ImageZoom`、`size="width"`。原寸を上限に面の幅へ合わせ、縦に長ければ面が縦に流れる。札には入口を付けない）。前後の塊の中の画像は別の面（`BeforeAfterZoom`）で開き、前／後の2つ組は選んだ側を `accent` の枠と `accent` の薄い地、もう一方を `rule` の枠で描く。暗幕は `Dialog` の `deep`。
 
 `flow` は `--accent` を `ground` へ少し沈めた `report-sequence-ink` を使う。
+出どころ・分岐のある流れ（`flow-detailed`）は、段の内側を `flow-row` の箱と同じ角丸 0.5rem・枠 1px（`--report-chunk-rule`）・地 `--surface-raised` で囲む。出どころの行は `--font-label` の `ink-quiet`、分岐は左に 2px の罫を判定の色（`state-ok`・`state-warn`・`state-ng`）で引き、字は `ink` のまま。
 
 **レポートの見出しに、キャラクターの色の線を1本通す。** 色が付くのは**罫線の側だけ**で、
 文字は `ink-bright`・地は `surface` / `surface-raised` のまま（13.1 原則1 は変えない）:

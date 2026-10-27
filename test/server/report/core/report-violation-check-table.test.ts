@@ -245,7 +245,14 @@ describe("reportViolations", () => {
     const listOf = (itemCount: number): ReportBlock => ({
       kind: "list",
       style: "bullet",
-      items: Array.from({ length: itemCount }, () => ({ label: "", text: "架空", done: false })),
+      items: Array.from({ length: itemCount }, () => ({
+        label: "",
+        text: "架空",
+        done: false,
+        source: "",
+        branch: "",
+        branchTone: "warn",
+      })),
       fold: "",
       aside: "",
     })

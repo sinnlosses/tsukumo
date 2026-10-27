@@ -88,10 +88,17 @@ export function claimsMarkdown(block: ClaimsBlock): string {
 const FLOW_ROW_MAX_STEPS = 5
 const FLOW_ROW_MAX_CHARS = 50
 
+function hasFlowDetail(item: ListBlock["items"][number]): boolean {
+  return item.source.trim() !== "" || item.branch.trim() !== ""
+}
+
 function flowFitsRow(items: ListBlock["items"]): boolean {
   return (
     items.length <= FLOW_ROW_MAX_STEPS &&
-    items.every((item) => item.label.trim().length + item.text.length <= FLOW_ROW_MAX_CHARS)
+    items.every(
+      (item) =>
+        !hasFlowDetail(item) && item.label.trim().length + item.text.length <= FLOW_ROW_MAX_CHARS,
+    )
   )
 }
 
@@ -102,15 +109,23 @@ function flowFitsRow(items: ListBlock["items"]): boolean {
 function flowMarkdown(block: ListBlock): string {
   const lastIndex = block.items.length - 1
   const row = flowFitsRow(block.items)
-  const steps = block.items.map(({ label, text }, index) => {
+  const detailed = block.items.some(hasFlowDetail)
+  const steps = block.items.map(({ label, text, source, branch, branchTone }, index) => {
     const name = label.trim() === "" ? "" : `<b>${htmlInlineWithCode(label)}</b>`
+    const sourceHtml =
+      source.trim() === "" ? "" : `<span class="flow-source">${htmlInlineWithCode(source)}</span>`
+    const branchHtml =
+      branch.trim() === ""
+        ? ""
+        : `<span class="flow-branch flow-branch-${branchTone}">${htmlInlineWithCode(branch)}</span>`
     const number = `<span class="flow-number" aria-hidden="true">${String(index + 1)}</span>`
     const rail = index === lastIndex ? "" : '<span class="flow-rail" aria-hidden="true"></span>'
     const arrow =
       row && index !== lastIndex ? '<span class="flow-arrow" aria-hidden="true">→</span>' : ""
-    return `<li class="flow-step">${number}${rail}<span>${name}${htmlInlineWithCode(text)}</span>${arrow}</li>`
+    return `<li class="flow-step">${number}${rail}<span>${name}${htmlInlineWithCode(text)}${sourceHtml}${branchHtml}</span>${arrow}</li>`
   })
-  return `<ol class="${row ? "flow flow-row" : "flow"}" aria-label="流れ">${steps.join("")}</ol>`
+  const className = row ? "flow flow-row" : detailed ? "flow flow-detailed" : "flow"
+  return `<ol class="${className}" aria-label="流れ">${steps.join("")}</ol>`
 }
 
 /** 項目ごとに太字の題の1行と本文の `card` を、項目数で等分する `cards` の容れ物に並べる。内側は空行で挟む。 */

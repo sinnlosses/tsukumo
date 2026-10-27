@@ -323,7 +323,10 @@ function emphasisCountOf(block: ReportBlock): number {
     case "text":
       return emphasisCountIn(block.text)
     case "list":
-      return block.items.reduce((total, item) => total + emphasisCountIn(item.text), 0)
+      return block.items.reduce(
+        (total, item) => total + emphasisCountIn(item.text) + emphasisCountIn(item.branch),
+        0,
+      )
     case "table":
       return block.rows.reduce(
         (total, row) =>

@@ -207,8 +207,22 @@ describe("reportUsageEntryOf", () => {
           kind: "list",
           style: "bullet",
           items: [
-            { label: "", text: "**一**と**二**", done: false },
-            { label: "", text: "なし", done: false },
+            {
+              label: "",
+              text: "**一**と**二**",
+              done: false,
+              source: "",
+              branch: "",
+              branchTone: "warn",
+            },
+            {
+              label: "",
+              text: "なし",
+              done: false,
+              source: "",
+              branch: "**分岐**",
+              branchTone: "warn",
+            },
           ],
           fold: "",
           aside: "",
@@ -224,7 +238,7 @@ describe("reportUsageEntryOf", () => {
         },
       ])
 
-      expect(entry.emphasisCount).toBe(6)
+      expect(entry.emphasisCount).toBe(7)
     })
 
     it("graph が2つあれば辺とラベルの無い辺を合計し、節点数は多いほうにする", () => {
@@ -313,7 +327,16 @@ describe("reportUsageEntryOf", () => {
         {
           kind: "list",
           style: "bullet",
-          items: [{ label: "", text: "src/a.ts:12 で読む", done: false }],
+          items: [
+            {
+              label: "",
+              text: "src/a.ts:12 で読む",
+              done: false,
+              source: "",
+              branch: "",
+              branchTone: "warn",
+            },
+          ],
           fold: "",
           aside: "",
         },

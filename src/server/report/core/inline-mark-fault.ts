@@ -20,6 +20,6 @@ export function brokenInlineMarks(report: InlineMarkSource): number {
 
 function markTexts(block: ReportBlock): readonly string[] {
   return block.kind === "list"
-    ? block.items.flatMap((item) => [item.label, item.text])
+    ? block.items.flatMap((item) => [item.label, item.text, item.source, item.branch])
     : proseTexts(block)
 }

@@ -28,7 +28,14 @@ describe("reportUsageEntryOf", () => {
     const list = (count: number): ReportBlock => ({
       kind: "list",
       style: "bullet",
-      items: Array.from({ length: count }, () => ({ label: "", text: "架空", done: false })),
+      items: Array.from({ length: count }, () => ({
+        label: "",
+        text: "架空",
+        done: false,
+        source: "",
+        branch: "",
+        branchTone: "warn",
+      })),
       fold: "",
       aside: "",
     })
@@ -118,7 +125,7 @@ describe("reportUsageEntryOf", () => {
     const list = (style: "bullet" | "ordered"): ReportBlock => ({
       kind: "list",
       style,
-      items: [{ label: "", text: "架空", done: false }],
+      items: [{ label: "", text: "架空", done: false, source: "", branch: "", branchTone: "warn" }],
       fold: "",
       aside: "",
     })
@@ -325,7 +332,16 @@ describe("reportUsageEntryOf", () => {
           {
             kind: "list",
             style: "flow",
-            items: [{ label: "架空の名前", text: "架空の段", done: false }],
+            items: [
+              {
+                label: "架空の名前",
+                text: "架空の段",
+                done: false,
+                source: "",
+                branch: "",
+                branchTone: "warn",
+              },
+            ],
             fold: "",
             aside: "",
           },

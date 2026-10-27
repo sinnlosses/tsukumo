@@ -66,6 +66,19 @@ describe("plainWordSpellingsIn", () => {
     ).toEqual(["再演"])
   })
 
+  it("flow の branch の語も見つけ、出どころ（source）は地の文でないので見ない", () => {
+    const flow = (source: string, branch: string): ReportBlock => ({
+      kind: "list",
+      style: "flow",
+      items: [{ label: "", text: "架空の段", done: false, source, branch, branchTone: "ng" }],
+      fold: "",
+      aside: "",
+    })
+
+    expect(plainWordSpellingsIn(draft([flow("", "架空の再演へ戻す")]))).toEqual(["再演"])
+    expect(plainWordSpellingsIn(draft([flow("再演", "")]))).toEqual([])
+  })
+
   it("節点は見つけ、始め方の札や塊（かたまり）のような頻出の語は表に無いので通る", () => {
     expect(plainWordSpellingsIn(draft([reportDraftText("架空の節点が3つある。")]))).toEqual([
       "節点",

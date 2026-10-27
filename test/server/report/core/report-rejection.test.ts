@@ -283,7 +283,16 @@ describe("reportRejectionText", () => {
     const flow: ReportBlock = {
       kind: "list",
       style: "flow",
-      items: [{ label: "", text: "架空の秘密の段", done: false }],
+      items: [
+        {
+          label: "",
+          text: "架空の秘密の段",
+          done: false,
+          source: "",
+          branch: "",
+          branchTone: "warn",
+        },
+      ],
       fold: "",
       aside: "",
     }

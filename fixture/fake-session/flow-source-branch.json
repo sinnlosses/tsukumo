@@ -1,0 +1,145 @@
+{
+  "name": "flow-source-branch",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "出どころと分岐のある流れの見え方を確かめたい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 300,
+      "event": {
+        "kind": "speech",
+        "text": "出どころと分岐つきの7段と、欄の無い流れを並べて書くね。",
+        "expression": "default"
+      }
+    },
+    {
+      "afterMs": 1000,
+      "event": {
+        "kind": "report",
+        "task": { "kind": "none" },
+        "closing": { "kind": "speech", "text": "書けたよ！", "expression": "proud" },
+        "toolUseId": "fake-flow-source-branch-1",
+        "conclusion": "架空の結論: 出どころと分岐のある流れの見え方を確かめた。",
+        "sections": [
+          {
+            "heading": "架空の7段（出どころと分岐つき）",
+            "blocks": [
+              {
+                "kind": "list",
+                "style": "flow",
+                "items": [
+                  {
+                    "label": "呼ぶ",
+                    "text": "架空の入口が依頼を受けて、架空の組み立てを始める",
+                    "source": "`src/server/entry/accept-request.ts`"
+                  },
+                  {
+                    "label": "検査",
+                    "text": "架空の検査が本文の形を確かめる",
+                    "source": "`src/server/check/check-body.ts`",
+                    "branch": "違反あり → 差し戻して書き直させる",
+                    "branchTone": "ng"
+                  },
+                  {
+                    "label": "閉じる",
+                    "text": "架空の締めの一文を決める",
+                    "source": "`src/server/close/close-turn.ts`",
+                    "branch": "締めが揃っていれば次へ進む",
+                    "branchTone": "ok"
+                  },
+                  {
+                    "label": "記録",
+                    "text": "架空の記録を書き足す",
+                    "source": "`.tsukumo/log/` の架空のファイル",
+                    "branch": "記録が大きいときは古い順に畳む",
+                    "branchTone": "warn"
+                  },
+                  {
+                    "label": "整形",
+                    "text": "架空の整形が余分な行を消す",
+                    "source": "`src/shared/tidy/tidy-lines.ts`"
+                  },
+                  {
+                    "label": "描く",
+                    "text": "架空の画面が整った本文を描く。長い名前のファイル `src/browser/components/page/conversation/components/markdown/renderer/very-long-file-name-for-wrapping.tsx` でも折り返して収まる",
+                    "source": "`src/browser/render/draw-report.tsx`"
+                  },
+                  {
+                    "label": "締め",
+                    "text": "架空の締めの返事を出す",
+                    "branch": "ここで流れが終わる",
+                    "branchTone": "ok"
+                  }
+                ],
+                "fold": "",
+                "aside": ""
+              }
+            ]
+          },
+          {
+            "heading": "架空の欄の無い短い4段",
+            "blocks": [
+              {
+                "kind": "list",
+                "style": "flow",
+                "items": [
+                  { "label": "読む", "text": "架空の対象を確かめる" },
+                  { "label": "直す", "text": "架空の1か所を直す" },
+                  { "label": "試す", "text": "架空のテストを回す" },
+                  { "label": "送る", "text": "架空の結果を渡す" }
+                ],
+                "fold": "",
+                "aside": ""
+              }
+            ]
+          },
+          {
+            "heading": "架空の欄の無い長い3段",
+            "blocks": [
+              {
+                "kind": "list",
+                "style": "flow",
+                "items": [
+                  {
+                    "label": "受ける",
+                    "text": "架空の依頼を受けて、架空の置き場から対象のファイルを全部読み、関係する箇所を洗い出して、それぞれの現状を一覧にまとめる"
+                  },
+                  {
+                    "label": "組む",
+                    "text": "洗い出した箇所ごとに、架空の部品へ渡す値を決めて、架空の組み立ての関数を書き直す"
+                  },
+                  {
+                    "label": "確かめる",
+                    "text": "架空の検証を全段回して、落ちた箇所があれば最初の段へ戻って直す"
+                  }
+                ],
+                "fold": "",
+                "aside": ""
+              }
+            ]
+          }
+        ],
+        "favor": "",
+        "checks": []
+      }
+    },
+    {
+      "afterMs": 1050,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-flow-source-branch-1",
+        "content": "ok",
+        "isError": false
+      }
+    },
+    {
+      "afterMs": 2300,
+      "event": { "kind": "turn-finished", "outcome": { "kind": "completed" } }
+    }
+  ]
+}

@@ -119,7 +119,14 @@ describe("reportViolations", () => {
     ): ReportBlock => ({
       kind: "list",
       style,
-      items: items.map((item) => ({ label: item.label ?? "", text: item.text, done: false })),
+      items: items.map((item) => ({
+        label: item.label ?? "",
+        text: item.text,
+        done: false,
+        source: "",
+        branch: "",
+        branchTone: "warn",
+      })),
       fold: "",
       aside: "",
     })
@@ -207,6 +214,9 @@ describe("reportViolations", () => {
         label,
         text: `架空の本文${String(index + 1)}`,
         done: false,
+        source: "",
+        branch: "",
+        branchTone: "warn" as const,
       }))
     const cards = (items: ReturnType<typeof cardItems>): ReportBlock => ({
       kind: "list",

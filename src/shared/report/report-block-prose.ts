@@ -31,6 +31,15 @@ export const listBlockSchema = z.object({
         ),
         text: inlineText,
         done: omittable(z.boolean(), false),
+        source: omittable(inlineText, "").describe(
+          "flow のみ。段の出どころの1行（ファイル名・コマンド名など。80字以内）",
+        ),
+        branch: omittable(inlineText, "").describe(
+          "flow のみ。段の分岐の1文（「違反あり → 差し戻し」など。120字以内）",
+        ),
+        branchTone: omittable(z.enum(["ok", "warn", "ng"]), "warn").describe(
+          "flow のみ。branch の判定（ok は通る・warn は注意・ng は止まる。省略は warn）",
+        ),
       }),
     )
     .min(1),

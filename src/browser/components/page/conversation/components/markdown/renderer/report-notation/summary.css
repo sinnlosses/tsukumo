@@ -378,6 +378,43 @@
       display: none;
     }
   }
+  /* 出どころ・分岐のある流れ（`flow-detailed`）。段の内側を角丸の枠で囲み、段の名前を題にする。
+   出どころは小さい字、分岐は判定の色の左罫で添える。 */
+  & .report-flow-detailed .report-flow-step > span:not(.report-flow-number, .report-flow-rail) {
+    box-sizing: border-box;
+    min-width: 0;
+    padding: 0.45rem 0.75rem;
+    border: 1px solid var(--report-chunk-rule, var(--rule));
+    border-radius: 0.5rem;
+    background: var(--surface-raised);
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+  }
+  & .report-flow-source {
+    display: block;
+    font-size: var(--font-label);
+    color: var(--ink-quiet);
+  }
+  & .report-flow-branch {
+    display: block;
+    margin-top: 0.35rem;
+    padding-left: 0.6rem;
+    border-left: 2px solid var(--rule);
+  }
+  & .report-flow-branch-warn {
+    border-left-color: var(--state-warn);
+  }
+  & .report-flow-branch-ok {
+    border-left-color: var(--state-ok);
+  }
+  & .report-flow-branch-ng {
+    border-left-color: var(--state-ng);
+  }
+  @container report-body (max-width: 28em) {
+    & .report-flow-detailed .report-flow-step > span:not(.report-flow-number, .report-flow-rail) {
+      padding: 0.35rem 0.5rem;
+    }
+  }
   /* 候補の比較（`report` の `options` の塊から tsukumo が組む）。
    1案1行の積み。行は「番号・判定の語・名前と理由」の3列で、行どうしは罫で区切る。並びは書き手の順のまま。
    頭の番号は入力欄の質問の札の番号と同じ見た目にする。

@@ -38,7 +38,7 @@ function ownProseTexts(block: ReportBlock): readonly string[] {
     case "markdown":
       return [block.markdown]
     case "list":
-      return block.items.flatMap((item) => [item.label, item.text])
+      return block.items.flatMap((item) => [item.label, item.text, item.branch])
     default:
       return []
   }

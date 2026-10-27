@@ -10,7 +10,7 @@ const textBlock = (text: string): ReportBlock => ({ kind: "text", text, fold: ""
 const listBlock = (label: string, text: string): ReportBlock => ({
   kind: "list",
   style: "bullet",
-  items: [{ label, text, done: false }],
+  items: [{ label, text, done: false, source: "", branch: "", branchTone: "warn" }],
   fold: "",
   aside: "",
 })
@@ -55,6 +55,23 @@ describe("broken-inline-mark", () => {
         conclusion: "架空の結論。",
         sections: [sectionOf(listBlock("{{x}}", "架空の項目"))],
       }),
+    ).toHaveLength(1)
+  })
+
+  it("flow の source・branch の壊れた印も数える", () => {
+    const flow = (source: string, branch: string): ReportBlock => ({
+      kind: "list",
+      style: "flow",
+      items: [{ label: "", text: "架空の段", done: false, source, branch, branchTone: "ng" }],
+      fold: "",
+      aside: "",
+    })
+
+    expect(
+      brokenOf({ conclusion: "架空の結論。", sections: [sectionOf(flow("", "{{x}}"))] }),
+    ).toHaveLength(1)
+    expect(
+      brokenOf({ conclusion: "架空の結論。", sections: [sectionOf(flow("{{x}}", ""))] }),
     ).toHaveLength(1)
   })
 

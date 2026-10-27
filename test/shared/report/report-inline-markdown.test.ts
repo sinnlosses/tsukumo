@@ -95,7 +95,9 @@ describe("reportSectionsMarkdown", () => {
         markdownOf({
           kind: "list",
           style: "bullet",
-          items: [{ label: "", text: "## 架空", done: false }],
+          items: [
+            { label: "", text: "## 架空", done: false, source: "", branch: "", branchTone: "warn" },
+          ],
           fold: "",
           aside: "",
         }),

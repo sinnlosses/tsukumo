@@ -3,11 +3,13 @@ import { describe, expect, it } from "vitest"
 import type { ReportBlock } from "../../../src/shared/report/report-block.ts"
 import { markdownOf } from "../../fixture/report-markdown.ts"
 
+const NO_DETAIL = { source: "", branch: "", branchTone: "warn" } as const
+
 describe("reportSectionsMarkdown", () => {
   it("箇条書き・番号付き・チェックリストを組む", () => {
     const items = [
-      { label: "", text: "架空の一", done: true },
-      { label: "", text: "架空の二", done: false },
+      { label: "", text: "架空の一", done: true, ...NO_DETAIL },
+      { label: "", text: "架空の二", done: false, ...NO_DETAIL },
     ]
 
     expect(markdownOf({ kind: "list", style: "bullet", items, fold: "", aside: "" })).toBe(
@@ -23,8 +25,8 @@ describe("reportSectionsMarkdown", () => {
 
   it("名前のある並びは印を保ったまま名前と説明を span に分けて容れ物で包み、名前の無い項目も同じ形にする", () => {
     const items = [
-      { label: "架空の名前", text: "架空の **説明**", done: true },
-      { label: "", text: "架空の説明だけ", done: false },
+      { label: "架空の名前", text: "架空の **説明**", done: true, ...NO_DETAIL },
+      { label: "", text: "架空の説明だけ", done: false, ...NO_DETAIL },
     ]
 
     expect(markdownOf({ kind: "list", style: "check", items, fold: "", aside: "" })).toBe(
@@ -43,7 +45,7 @@ describe("reportSectionsMarkdown", () => {
     markdownOf({
       kind: "list",
       style: "cards",
-      items: items.map((item) => ({ ...item, done: false })),
+      items: items.map((item) => ({ ...item, done: false, ...NO_DETAIL })),
       fold: "",
       aside: "",
     })
@@ -95,11 +97,18 @@ describe("reportSectionsMarkdown", () => {
     }
   })
 
-  const flowOf = (items: { label: string; text: string }[]): string =>
+  type FlowItem = {
+    label: string
+    text: string
+    source?: string
+    branch?: string
+    branchTone?: "ok" | "warn" | "ng"
+  }
+  const flowOf = (items: FlowItem[], style: "flow" | "bullet" | "cards" = "flow"): string =>
     markdownOf({
       kind: "list",
-      style: "flow",
-      items: items.map((item) => ({ ...item, done: false })),
+      style,
+      items: items.map((item) => ({ done: false, ...NO_DETAIL, ...item })),
       fold: "",
       aside: "",
     })
@@ -154,6 +163,45 @@ describe("reportSectionsMarkdown", () => {
     expect(flowOf([short, { label: "あ".repeat(10), text: "い".repeat(41) }])).not.toContain(
       "flow-row",
     )
+  })
+
+  it("flow の3欄が空なら足す前と同じ出力で、source ありは flow-detailed になり flow-row は付かない", () => {
+    const plain = flowOf([{ label: "", text: "架空の一段" }])
+    expect(plain).toBe(flowOf([{ label: "", text: "架空の一段", source: "", branch: "" }]))
+    expect(plain).not.toContain("flow-source")
+    expect(plain).not.toContain("flow-detailed")
+
+    const html = flowOf([
+      { label: "架空の段", text: "短い", source: "`src/a.ts`" },
+      { label: "", text: "短い" },
+    ])
+    expect(html).toContain('<ol class="flow flow-detailed"')
+    expect(html).toContain('<span class="flow-source"><code>src/a.ts</code></span>')
+    expect(html).not.toContain("flow-row")
+    expect(html).not.toContain("flow-arrow")
+  })
+
+  it("flow の branch は branchTone の3値がそれぞれ class に残り、文は inline を通す", () => {
+    for (const tone of ["ok", "warn", "ng"] as const) {
+      const html = flowOf([
+        { label: "", text: "架空", branch: "違反あり → `差し戻し`", branchTone: tone },
+      ])
+      expect(html).toContain(
+        `<span class="flow-branch flow-branch-${tone}">違反あり → <code>差し戻し</code></span>`,
+      )
+    }
+    expect(flowOf([{ label: "", text: "架空", branch: "分岐" }])).toContain("flow-branch-warn")
+  })
+
+  it("source・branch は flow 以外の style では出力に出ない", () => {
+    for (const style of ["bullet", "cards"] as const) {
+      const html = flowOf(
+        [{ label: "題", text: "架空", source: "出どころ", branch: "分岐" }],
+        style,
+      )
+      expect(html).not.toContain("出どころ")
+      expect(html).not.toContain("分岐")
+    }
   })
 
   it("options は太字の見出しのあとに候補を書き手の順のまま1案1行にし、番号・判定の語・名前・理由の順に置く（理由が空なら理由の要素は無い）", () => {

@@ -73,6 +73,7 @@
     "report-graph-fold",
     "report-graph-scroll",
     "report-flow-row",
+    "flow-source-branch",
     "report-matrix",
     "report-before-after",
     "report-image",
