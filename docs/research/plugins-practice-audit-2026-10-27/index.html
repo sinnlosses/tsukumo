@@ -1,0 +1,1431 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>
+      tsukumo-plugins の skills・agents を最新の Claude Code のプラクティスで点検する（2026-10-27）
+    </title>
+    <style>
+      :root {
+        --bg: #fbfaf7;
+        --fg: #1f2328;
+        --muted: #5b6470;
+        --line: #d9d6cf;
+        --card: #ffffff;
+        --accent: #1f5fbf;
+        --accent-weak: #e6eefb;
+        --ok: #2d7d46;
+        --warn: #b2731a;
+        --ng: #b33a3a;
+        --code: #f3f1ec;
+        --mark: #fff3bf;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #161a1f;
+          --fg: #e8e6e1;
+          --muted: #a3aab5;
+          --line: #303741;
+          --card: #1d232b;
+          --accent: #7fb0ff;
+          --accent-weak: #1c2a40;
+          --ok: #6cc48b;
+          --warn: #e0a84a;
+          --ng: #ef7b7b;
+          --code: #22282f;
+          --mark: #4a3f12;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--fg);
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif;
+        line-height: 1.75;
+        font-size: 15.5px;
+      }
+      main {
+        max-width: 62rem;
+        margin: 0 auto;
+        padding: 2.5rem 1.5rem 5rem;
+      }
+      h1 {
+        font-size: 1.6rem;
+        line-height: 1.4;
+        margin: 0 0 0.5rem;
+      }
+      h2 {
+        font-size: 1.25rem;
+        margin: 3rem 0 0.75rem;
+        padding-top: 0.5rem;
+        border-top: 1px solid var(--line);
+      }
+      h3 {
+        font-size: 1.05rem;
+        margin: 2rem 0 0.5rem;
+      }
+      p {
+        margin: 0.6rem 0;
+      }
+      .lede {
+        color: var(--muted);
+        margin-bottom: 1.5rem;
+      }
+      .verdict {
+        background: var(--accent-weak);
+        border-left: 4px solid var(--accent);
+        padding: 0.9rem 1.1rem;
+        border-radius: 6px;
+        margin: 1.2rem 0;
+      }
+      .kpis {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr));
+        gap: 0.75rem;
+        margin: 1.2rem 0;
+      }
+      .kpi {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 0.75rem 0.9rem;
+      }
+      .kpi b {
+        display: block;
+        font-size: 1.5rem;
+        line-height: 1.2;
+      }
+      .kpi span {
+        color: var(--muted);
+        font-size: 0.85rem;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 0.8rem 0 1.2rem;
+        font-size: 0.92rem;
+      }
+      th,
+      td {
+        border: 1px solid var(--line);
+        padding: 0.45rem 0.6rem;
+        vertical-align: top;
+        text-align: left;
+      }
+      th {
+        background: var(--code);
+        font-weight: 600;
+      }
+      code {
+        background: var(--code);
+        padding: 0.05rem 0.3rem;
+        border-radius: 4px;
+        font-size: 0.88em;
+      }
+      pre {
+        background: var(--code);
+        padding: 0.8rem 1rem;
+        border-radius: 6px;
+        overflow-x: auto;
+        font-size: 0.85rem;
+        line-height: 1.5;
+      }
+      pre code {
+        background: none;
+        padding: 0;
+      }
+      .tag {
+        display: inline-block;
+        font-size: 0.78rem;
+        font-weight: 700;
+        padding: 0.05rem 0.5rem;
+        border-radius: 999px;
+        color: #fff;
+        vertical-align: middle;
+      }
+      .red {
+        background: var(--ng);
+      }
+      .yellow {
+        background: var(--warn);
+      }
+      .blue {
+        background: var(--accent);
+      }
+      .green {
+        background: var(--ok);
+      }
+      .finding {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 1rem 1.2rem;
+        margin: 1.2rem 0;
+      }
+      .finding h3 {
+        margin-top: 0;
+      }
+      .finding dl {
+        display: grid;
+        grid-template-columns: 7.5rem 1fr;
+        gap: 0.3rem 0.8rem;
+        margin: 0.6rem 0 0;
+      }
+      .finding dt {
+        color: var(--muted);
+        font-weight: 600;
+      }
+      .finding dd {
+        margin: 0;
+      }
+      .src {
+        color: var(--muted);
+        font-size: 0.85rem;
+      }
+      a {
+        color: var(--accent);
+      }
+      ul {
+        padding-left: 1.3rem;
+      }
+      li {
+        margin: 0.2rem 0;
+      }
+      mark {
+        background: var(--mark);
+        color: inherit;
+        padding: 0 0.15rem;
+      }
+      .toc {
+        columns: 2;
+        column-gap: 2rem;
+        font-size: 0.92rem;
+      }
+      .toc li {
+        break-inside: avoid;
+      }
+      @media (max-width: 640px) {
+        .finding dl {
+          grid-template-columns: 1fr;
+        }
+        .toc {
+          columns: 1;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>tsukumo-plugins の skills・agents を最新の Claude Code のプラクティスで点検する</h1>
+      <p class="lede">
+        2026-10-27。対象は
+        <code>sinnlosses/tsukumo-plugins</code>（<code>94616e8</code>、2026-10-27）の plugin
+        <code>tsukumo-workflow</code>（skills 13・agents 2・hooks.json）と
+        <code>tsukumo-figure</code>（skill 1）。 公式の根拠は
+        <a href="https://code.claude.com/docs/en/">code.claude.com/docs</a>・<a
+          href="https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices"
+          >platform.claude.com</a
+        >・Anthropic のエンジニアリングブログを 2026-10-27 に読んだもの（9 節に一覧）。
+      </p>
+
+      <div class="verdict">
+        <p>
+          <strong>結論。</strong>作りの大筋（手順を <code>tw</code> に持たせ、SKILL.md
+          は入口だけ、hook
+          で関門、受け入れは別のエージェント）は公式のプラクティスと向きが合っている。 筋が悪いのは
+          <mark>導入経路が自分で決めた「plugin の 1 経路」と食い違ったまま動いていること</mark>（赤
+          2 件。hooks.json
+          の関門が効いていない）と、<mark>委譲先に渡す決まりとメインが読む手順が「積み上がる一方」になっていること</mark>（黄
+          2 件。公式が context rot・過剰適用として退ける形）。 残りは hook の書き方・agent
+          定義の体裁・公開の体裁で、小さく直せる（黄 4 件・青 4 件）。
+        </p>
+      </div>
+
+      <div class="kpis">
+        <div class="kpi"><b>12</b><span>指摘（赤 2・黄 6・青 4）</span></div>
+        <div class="kpi">
+          <b>0</b><span>plugin として入っている数（手元。`claude plugin list`）</span>
+        </div>
+        <div class="kpi">
+          <b>18</b><span>「リンクで入れたとき／plugin で入れたとき」の分岐の記述</span>
+        </div>
+        <div class="kpi">
+          <b>約 92KB</b><span>/next-task 1 サイクルでメインが読む手順の文書（14 ファイル）</span>
+        </div>
+        <div class="kpi">
+          <b>51 本</b><span>実装役の決まり implementer-brief.md の箇条（21.8KB）</span>
+        </div>
+        <div class="kpi">
+          <b>3,729 字</b><span>毎セッション載る skill・agent の description の合計</span>
+        </div>
+      </div>
+
+      <h2 id="toc">目次</h2>
+      <ol class="toc">
+        <li><a href="#method">点検のしかた</a></li>
+        <li><a href="#list">指摘の一覧</a></li>
+        <li><a href="#red">赤: 決めたことと実態が食い違っている</a></li>
+        <li><a href="#yellow">黄: 動くが公式の勧めから外れている</a></li>
+        <li><a href="#blue">青: 確かめた結果、直さなくてよい</a></li>
+        <li><a href="#good">筋が良いと確かめたもの</a></li>
+        <li><a href="#order">直す順番の提案</a></li>
+        <li><a href="#practice">公式プラクティスの要点（7 観点）</a></li>
+        <li><a href="#sources">出典と確かめていないこと</a></li>
+      </ol>
+
+      <h2 id="method">1. 点検のしかた</h2>
+      <ul>
+        <li>
+          リポジトリの側: 14 の SKILL.md の frontmatter
+          と本文、<code>agents/*.md</code>、<code>hooks/hooks.json</code>、<code>.claude-plugin/*.json</code>、<code>bin/tw</code>、hook
+          の入口 4
+          本（<code>commit_guard.py</code>・<code>handback_guard.py</code>・<code>ask_guard.py</code>・<code>lap_hook.py</code>）、<code>scripts/check_repo.py</code>、<code
+            >check.sh</code
+          >
+          を読んだ。
+        </li>
+        <li>
+          数えたもの: description の字数（<code>awk</code>）、SKILL.md の行数（<code>wc -l</code
+          >）、毎回読まれる文書のバイト数（<code>selftest_doc_budget.py --measure</code
+          >）、二経路の記述（<code>grep -rn "リンクで入れたとき\|plugin で入れたとき"</code> で 18
+          行）。
+        </li>
+        <li>
+          打ったもの: <code>claude plugin validate .</code> と
+          <code>claude plugin validate plugins/tsukumo-figure</code>、<code>claude plugin list</code
+          >、<code>ls -l ~/.claude/skills ~/.claude/agents</code>。
+        </li>
+        <li>
+          公式の側: 調べもの役（sonnet のサブエージェント）が公式 docs とブログを WebFetch で読み、7
+          観点の推奨・非推奨・上限を出典つきで集めた（9 節）。WebFetch
+          は要約を返すので、数値は設計に使う前に原文で確かめる。
+        </li>
+      </ul>
+      <p>
+        色の意味。<span class="tag red">赤</span>
+        公式の仕様か自分の決定と食い違い、守らせたい関門が効いていない。<span class="tag yellow"
+          >黄</span
+        >
+        動くが公式の勧めから外れ、費用か壊れやすさを抱えている。<span class="tag blue">青</span>
+        疑って確かめたが、公式の仕様に照らして今のままでよい。
+      </p>
+
+      <h2 id="list">2. 指摘の一覧</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>色</th>
+            <th>箇所</th>
+            <th>要点</th>
+            <th>直す大きさ</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><a href="#f1">1</a></td>
+            <td><span class="tag red">赤</span></td>
+            <td>導入経路（手元の環境・README・tw-reference.md）</td>
+            <td>
+              「plugin の 1 経路だけ」と決めながら、手元はリンクで入っていて
+              <code>hooks/hooks.json</code> の関門が掛かっていない
+            </td>
+            <td>人の作業 1 回（切り替え）＋記述の削除</td>
+          </tr>
+          <tr>
+            <td><a href="#f2">2</a></td>
+            <td><span class="tag red">赤</span></td>
+            <td><code>agents/no-delegate.md:6-18</code></td>
+            <td>
+              frontmatter の <code>hooks</code> は plugin では無視される。リンク導入の名残を
+              check.sh が守り続けている
+            </td>
+            <td>小（削除とテストの更新）</td>
+          </tr>
+          <tr>
+            <td><a href="#f3">3</a></td>
+            <td><span class="tag yellow">黄</span></td>
+            <td><code>parts/implementer/implementer-brief.md</code></td>
+            <td>
+              箇条 51 本・21.8KB の決まりを委譲のたびに渡す。公式は「Claude
+              が知っていることは書かない」「例外ゼロの規則は hook」「念押しは逆効果」
+            </td>
+            <td>中（GH-1576 で効いた行の選別が進行中）</td>
+          </tr>
+          <tr>
+            <td><a href="#f4">4</a></td>
+            <td><span class="tag yellow">黄</span></td>
+            <td><code>task-workflow/SKILL.md</code> と <code>parts/</code></td>
+            <td>
+              1 サイクルで約 92KB の手順がメインの文脈に積まれる。公式の
+              <code>context: fork</code> で段のスキルを別文脈で走らせる口が使われていない
+            </td>
+            <td>中（段ごとに試す）</td>
+          </tr>
+          <tr>
+            <td><a href="#f5">5</a></td>
+            <td><span class="tag yellow">黄</span></td>
+            <td><code>parts/implementer/delegate.md:58-66</code></td>
+            <td>
+              無音の見張りが transcript の symlink を <code>stat</code> する 5
+              秒ループ。ハーネスの内部（output_file の実体）に寄りかかる
+            </td>
+            <td>中（hook の鼓動に置き換え）</td>
+          </tr>
+          <tr>
+            <td><a href="#f6">6</a></td>
+            <td><span class="tag yellow">黄</span></td>
+            <td><code>hooks/hooks.json</code></td>
+            <td>
+              同じ 200 字の殻を 7 回書き、exec
+              形（<code>args</code>）・<code>onFailure</code>・Subagent 系の
+              <code>matcher</code> を使っていない
+            </td>
+            <td>小</td>
+          </tr>
+          <tr>
+            <td><a href="#f7">7</a></td>
+            <td><span class="tag yellow">黄</span></td>
+            <td><code>agents/acceptor.md</code>・<code>agents/no-delegate.md</code></td>
+            <td>
+              description に hook の内部事情を書き、<code>model: opus</code> を「固定」と
+              description と check_repo.py に焼いている
+            </td>
+            <td>小</td>
+          </tr>
+          <tr>
+            <td><a href="#f8">8</a></td>
+            <td><span class="tag yellow">黄</span></td>
+            <td><code>.claude-plugin/plugin.json</code>・<code>check.sh</code></td>
+            <td>
+              公式 validate が <code>version</code> 無し・<code>LICENSE</code> 無し・README 31
+              語を出すが、check.sh は公式 validate を打たない
+            </td>
+            <td>小</td>
+          </tr>
+          <tr>
+            <td><a href="#f9">9</a></td>
+            <td><span class="tag blue">青</span></td>
+            <td><code>hooks.json:17</code>・<code>handback_guard.py:27</code></td>
+            <td>
+              <code>SubagentHandback</code> は hook のイベントではなくツール名。<code
+                >PreToolUse</code
+              >
+              の matcher として正しいが、auto mode・v2.1.271 以降に限る。本線は
+              <code>SubagentStop</code>
+            </td>
+            <td>記述の 1 行</td>
+          </tr>
+          <tr>
+            <td><a href="#f10">10</a></td>
+            <td><span class="tag blue">青</span></td>
+            <td><code>next-task/SKILL.md:71</code> ほか 4 箇所</td>
+            <td>スキル名の「末尾一致」探しは二経路併存の産物。#1 を直せば全名で固定できる</td>
+            <td>#1 に含む</td>
+          </tr>
+          <tr>
+            <td><a href="#f11">11</a></td>
+            <td><span class="tag blue">青</span></td>
+            <td>
+              <code>next-task</code>・<code>plan-tasks</code>・<code>task-workflow</code> の
+              <code>!`tw config`</code>
+            </td>
+            <td>公式どおり（2 分の上限・非 0 で中止）。<code>|| true</code> で守られている</td>
+            <td>なし</td>
+          </tr>
+          <tr>
+            <td><a href="#f12">12</a></td>
+            <td><span class="tag blue">青</span></td>
+            <td>委譲先の <code>SendMessage({to:"main"})</code> の進捗</td>
+            <td>
+              公式に進捗専用の仕組みは無く、名簿の名前へ SendMessage が公式の記述。今の形でよい
+            </td>
+            <td>なし</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 id="red">3. 赤: 決めたことと実態が食い違っている</h2>
+
+      <div class="finding" id="f1">
+        <h3>
+          <span class="tag red">赤</span> 1. 導入経路が「plugin の 1 経路」と食い違い、hooks.json
+          の関門が効いていない
+        </h3>
+        <dl>
+          <dt>今の形</dt>
+          <dd>
+            <code>README.md:24</code> と
+            <code>skills/task-model/tw-reference.md:90</code> は「入れ方は plugin の 1
+            つだけ（GH-771）。リンクで置くと
+            <code>hooks/hooks.json</code>
+            が読まれず、<code>ask-guard</code>・<code>lap-hook</code>・主のセッションの
+            <code>bd</code> の書き込みの拒否・受け入れ役の拒否が掛からない」と書く。
+            ところが手元の環境は <code>~/.claude/skills/&lt;name&gt;</code> と
+            <code>~/.claude/agents/*.md</code> がこのリポジトリへのシンボリックリンクで、<code
+              >claude plugin list</code
+            >
+            は「No plugins installed」。スキルの Base directory も
+            <code>~/.claude/skills/plan-tasks</code> と出る。 その結果、効いている関門は
+            <code>agents/no-delegate.md</code> の frontmatter の
+            hook（<code>commit-guard</code>・<code>handback-guard</code>）だけで、plugin 側で足した
+            <code>--agent-scoped</code> の判定・<code>ask-guard</code>・<code>lap-hook</code>
+            は掛かっていない。 さらに両方の経路を生かすため、skills と agents
+            に「リンクで入れたとき／plugin で入れたとき」の分岐が 18
+            行あり、スキル名を「一覧の末尾一致」で探す手順（#10）が要っている。
+          </dd>
+          <dt>公式の言い分</dt>
+          <dd>
+            plugin の hooks は plugin が読み込まれたときから常に走り、plugin 同梱の agent では
+            frontmatter の <code>hooks</code>・<code>mcpServers</code>・<code>permissionMode</code>
+            が無視される
+            <span class="src"
+              >[<a href="https://code.claude.com/docs/en/plugins/components">components</a>]</span
+            >。 ローカルパスから足した marketplace の plugin
+            は複製されずその場で読まれ、編集は次のセッションか
+            <code>/reload-plugins</code> で効き、version を上げなくてよい
+            <span class="src"
+              >[<a href="https://code.claude.com/docs/en/plugins/loading">loading</a>]</span
+            >。 symlink の置き場は Personal・Project で使えるが、plugin
+            とは別の名前空間（<code>plugin:skill</code>）になる
+            <span class="src">[<a href="https://code.claude.com/docs/en/skills">skills</a>]</span>。
+          </dd>
+          <dt>筋が悪い理由</dt>
+          <dd>
+            関門を hook に置いたのに hook
+            の置き場（hooks.json）が読まれない経路で運用しているので、「守らせたい規則は hook
+            へ」という公式の枠組みが崩れている。二経路を文書で支えるぶん、手順の分岐（18
+            行）と名前解決（末尾一致）が増え、hook の挙動の説明も「plugin
+            なら／リンクなら」で二重になっている。
+          </dd>
+          <dt>提案</dt>
+          <dd>
+            README の「リンクで入れていた環境の切り替え」を人がやる（リンクを外し、<code
+              >/plugin marketplace add /絶対パス/tsukumo-plugins</code
+            >
+            → <code>/plugin install tsukumo-workflow@tsukumo-plugins</code>）。切り替えたら、18
+            行の二経路の記述と末尾一致の手順を plugin の全名（<code
+              >tsukumo-workflow:task-workflow</code
+            >
+            など）に書き換え、<code>tw lap</code>
+            の「リンクだけで入れたときは手で打つ」の段落も消す。 tsukumo が SDK
+            で起こすセッションにも同じ plugin が載るかは、tsukumo 側の
+            <code>settingSources</code>（省くと user/project/local を読む
+            <span class="src"
+              >[<a href="https://code.claude.com/docs/en/agent-sdk/claude-code-features"
+                >claude-code-features</a
+              >]</span
+            >）で確かめる。
+          </dd>
+          <dt>根拠</dt>
+          <dd>
+            <code>ls -l ~/.claude/skills</code>（accept-step ほか 13
+            件がこのリポジトリへのリンク）、<code>ls -l ~/.claude/agents</code
+            >（acceptor.md・no-delegate.md がリンク）、<code>claude plugin list</code>（0 件）。
+          </dd>
+        </dl>
+      </div>
+
+      <div class="finding" id="f2">
+        <h3>
+          <span class="tag red">赤</span> 2. <code>no-delegate.md</code> の frontmatter の hooks は
+          plugin では無視される
+        </h3>
+        <dl>
+          <dt>今の形</dt>
+          <dd>
+            <code>agents/no-delegate.md:6-18</code> に
+            <code>PreToolUse</code>（<code>Bash</code>・<code>SubagentHandback</code>）と
+            <code>Stop</code> の hook が書かれ、<code>scripts/check_repo.py</code> の
+            <code>NO_DELEGATE_HOOK_LINES</code> がその行の存在を検査し、<code>check.sh</code> も
+            frontmatter の変更をテストに当てている。tw-reference.md:90
+            自身が「リンク導入の時代の口で、plugin では無視される」と書いている。
+          </dd>
+          <dt>公式の言い分</dt>
+          <dd>
+            plugin 同梱の agent は
+            <code>hooks</code>・<code>mcpServers</code>・<code>permissionMode</code>・<code
+              >initialPrompt</code
+            >
+            を無視する。使うなら <code>.claude/agents/</code> へ写すか、plugin の hooks
+            として別に登録する
+            <span class="src"
+              >[<a href="https://code.claude.com/docs/en/plugins/components">components</a>・<a
+                href="https://code.claude.com/docs/en/sub-agents"
+                >sub-agents</a
+              >]</span
+            >。agent 内の <code>Stop</code> は実行時に <code>SubagentStop</code> へ変換される
+            <span class="src"
+              >[<a href="https://code.claude.com/docs/en/sub-agents">sub-agents</a>]</span
+            >。
+          </dd>
+          <dt>筋が悪い理由</dt>
+          <dd>
+            plugin を唯一の経路と決めたなら、この hook は決して走らない設定で、check.sh
+            がそれを「守る」テストを持つのは、消したい形を固定していることになる。いまは #1
+            のとおりリンク導入のおかげで動いているので、消すと関門が全部外れる。#1
+            と同じコミットで片付ける。
+          </dd>
+          <dt>提案</dt>
+          <dd>
+            #1 の切り替えのあと、frontmatter から <code>hooks:</code> を消し、<code
+              >NO_DELEGATE_HOOK_LINES</code
+            >
+            の検査と check.sh の「frontmatter の変更をテストに当てる」注記を外す。関門は
+            <code>hooks/hooks.json</code> の 1 か所に寄せる。
+          </dd>
+        </dl>
+      </div>
+
+      <h2 id="yellow">4. 黄: 動くが公式の勧めから外れている</h2>
+
+      <div class="finding" id="f3">
+        <h3>
+          <span class="tag yellow">黄</span> 3. 実装役の決まり（implementer-brief.md）が 51
+          本・21.8KB の規則の山になっている
+        </h3>
+        <dl>
+          <dt>今の形</dt>
+          <dd>
+            委譲のたびに実装役が最初に読む
+            <code>parts/implementer/implementer-brief.md</code> は箇条 51 本（<code
+              >grep -c '^- '</code
+            >）・21,786 バイト。これに依頼文の型 <code>implementer-request.md</code>（9,258
+            バイト）、タスクの本文、プロジェクトの CLAUDE.md が重なる。 中身は「Edit の前に Read
+            する」（63 行）、「<code>/</code> やホーム全体を find しない」（66
+            行）、「待つコマンドに上限を付ける」（67 行）、「コメントを足す前の 3 問」（72
+            行）のような、モデルが既に持つ作法と、hook（<code>commit-guard</code>）が拒むものの言い直し（62
+            行の <code>git stash</code>）が混ざる。振り返り（retrospect）のドラフトが 1
+            件ごとに行を足す構造で、GH-1576 が「28 日に 1
+            度でも効いたか」で行を選別する作業として積まれている。
+          </dd>
+          <dt>公式の言い分</dt>
+          <dd>
+            足す内容は「Claude が既に知っていること」を除いた最小限にし、選択肢を並べすぎず既定を 1
+            つ示す
+            <span class="src"
+              >[<a
+                href="https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices"
+                >skill best-practices</a
+              >]</span
+            >。 文脈は有限の注意予算で、増えるほど想起が落ちる（context
+            rot）。システムプロンプトは脆い手書きの分岐でも曖昧な一般論でもなく「ちょうど良い高さ」で
+            <span class="src"
+              >[<a
+                href="https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents"
+                >effective-context-engineering</a
+              >]</span
+            >。
+            強調や念押しを足し続けるのは過剰適用を招く。守られない行は、長すぎて埋もれているか、例外のない規則なので
+            hook にすべきかのどちらか
+            <span class="src"
+              >[<a href="https://code.claude.com/docs/en/best-practices">best-practices</a>]</span
+            >。 慣習は段階的に足す: 同じ誤りを 2 度したら CLAUDE.md、毎回やらせたいなら hook
+            <span class="src"
+              >[<a href="https://code.claude.com/docs/en/features-overview">features-overview</a
+              >]</span
+            >。
+          </dd>
+          <dt>筋が悪い理由</dt>
+          <dd>
+            規則が増えるほど 1
+            行あたりの遵守率が下がる、と公式が明言している形に、振り返りの仕組みが構造的に向かっている。hook
+            で既に拒んでいるものを文でも言う二重化は、文脈を食うだけで強制力を足さない。
+          </dd>
+          <dt>提案</dt>
+          <dd>
+            GH-1576 の選別を、公式の梯子で分類し直す: (a) hook・<code>commit-guard</code>・<code
+              >handback-guard</code
+            >
+            が既に拒むもの → 文から消す（拒否文が案内する）。(b) 例外ゼロで毎回守らせたいもの → hook
+            か <code>tw step</code> の検査へ移す。(c) モデルの既知の作法 → 消す。(d)
+            このワークフロー固有（<code>tw step</code>／<code>tw pause</code>
+            の打ち方、返却の書式、<code>phase_result</code>）→ 残す。 残す行は
+            <code>implementer-request.md</code>
+            の場合分けと同じ型で「その段に当たるときだけ」依頼文に入れ、brief
+            自体は固有の決まりだけにする。目安は、brief と request を合わせて今の半分（約
+            15KB）以下。
+          </dd>
+        </dl>
+      </div>
+
+      <div class="finding" id="f4">
+        <h3>
+          <span class="tag yellow">黄</span> 4. オーケストレーターが 1 サイクルで約 92KB
+          の手順をメインの文脈に積む
+        </h3>
+        <dl>
+          <dt>今の形</dt>
+          <dd>
+            <code>/next-task</code> 1 サイクルでメインが読む文書（<code
+              >selftest_doc_budget.py --measure</code
+            >
+            の値）: next-task 7,098 → task-workflow 18,578 → implement-step 4,468 → delegate 11,497
+            → handback-read 4,500 → accept-step 3,997 → accept 11,472 → acceptor-return 5,933 →
+            verify-check 1,483 → retrospect-step 3,900 → retrospect 3,812 → ship-step 2,814 → ship
+            7,330 → completion-report 5,678。合計 92,560 バイト。
+            段のスキル（accept-step・retrospect-step・ship-step）は「入口と出口だけ」で、状態は
+            <code>tw relay</code>（Beads
+            の申し送り）で前後の段へ渡している。つまり段のスキルは会話の履歴に頼らない作りになっているのに、全部メインの文脈で走る。
+          </dd>
+          <dt>公式の言い分</dt>
+          <dd>
+            skill の frontmatter <code>context: fork</code> と
+            <code>agent:</code
+            >（Explore・Plan・general-purpose・カスタム名）で、独立した処理を別の文脈で走らせられる。fork
+            先は会話履歴を見ないので、SKILL.md を自己完結に書く
+            <span class="src">[<a href="https://code.claude.com/docs/en/skills">skills</a>]</span>。
+            長い仕事は compaction・構造化したメモ（文脈の外のファイル）・サブエージェントの 3
+            本立てで、サブエージェントは要約（1,000〜2,000 トークン）だけを返す
+            <span class="src"
+              >[<a
+                href="https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents"
+                >effective-context-engineering</a
+              >]</span
+            >。
+            ただし「文脈を守るためにサブエージェントを使う」は旧い助言で、サブエージェントは追加トークンを食う。並列・隔離・独立レビューの手段として使う
+            <span class="src"
+              >[<a href="https://code.claude.com/docs/en/best-practices">best-practices</a>]</span
+            >。
+          </dd>
+          <dt>筋が悪い理由</dt>
+          <dd>
+            段の設計（申し送りで状態を渡す）は fork
+            向きなのに、メインがすべての手順を読み、委譲先の返却・受け入れ役の返却・振り返りの判定もメインの文脈に重なる。1
+            サイクルの終わりに <code>/loop</code> が文脈を空にして次へ進む運用で救っているが、1
+            件の中では「積む一方」。
+          </dd>
+          <dt>提案</dt>
+          <dd>
+            段ごとに試す。<strong>受け入れ</strong>（accept-step）は受け入れ役の起こし直しと差し戻しの往復をメインが持つので
+            fork
+            に向く（返すのは判定の行だけ）。<strong>振り返り</strong>（retrospect-step）は材料が申し送りだけなので
+            fork に向く。<strong>送り出し</strong>は <code>tw finish</code> 1 本で短いのでそのまま。
+            制約: tsukumo の <code>work_plan</code>・<code>report</code>
+            はメインが呼ぶ口なので、fork
+            した段の中からは呼ばず、段の返却（<code>finished</code>／<code>stopped</code>）をメインが
+            <code>work_plan</code>
+            に写す（今の「委譲先の返却が届くたびに呼ぶ」と同じ形）。公式が「節約の手段ではない」と言うとおり、試すときは
+            1 サイクルのトークン（tsukumo の <code>context-usage</code>）を前後で測って決める。
+          </dd>
+        </dl>
+      </div>
+
+      <div class="finding" id="f5">
+        <h3>
+          <span class="tag yellow">黄</span> 5. 無音の見張りが transcript の symlink を
+          <code>stat</code> する 5 秒ループ
+        </h3>
+        <dl>
+          <dt>今の形</dt>
+          <dd>
+            <code>parts/implementer/delegate.md:58-66</code>。委譲を投げた直後に
+            <code>Monitor</code> で、<code>Agent</code> の戻りの
+            <code>output_file</code>（symlink。実体は委譲先の transcript）を
+            <code>stat -L -f %m</code> で 5 秒ごとに読み、更新が T 秒止まったら
+            <code>SILENT</code> を 1 回出し、6 回に 1 回
+            <code>tw escalate-check</code> を打つ。timeout は上限の 30 分で、失効したら起こし直す。
+          </dd>
+          <dt>公式の言い分</dt>
+          <dd>
+            hook はサブエージェントの中でも発火し、入力に <code>agent_id</code>・<code
+              >agent_type</code
+            >
+            が付く
+            <span class="src"
+              >[<a href="https://code.claude.com/docs/en/hooks">hooks</a>・<a
+                href="https://code.claude.com/docs/en/agent-sdk/claude-code-features"
+                >claude-code-features</a
+              >]</span
+            >。SubagentStop は <code>agent_transcript_path</code> を入力に持つ
+            <span class="src">[<a href="https://code.claude.com/docs/en/hooks">hooks</a>]</span>。
+            進捗を返す専用の仕組みは無く、<code>SendMessage</code> が公式の記述
+            <span class="src"
+              >[<a href="https://code.claude.com/docs/en/sub-agents">sub-agents</a>]</span
+            >。transcript のパスや symlink の形は、どの docs も契約として書いていない。
+          </dd>
+          <dt>筋が悪い理由</dt>
+          <dd>
+            「output_file は symlink で実体が transcript」「macOS の
+            <code>stat -f %m</code>」という、docs に無いハーネスの内部に寄りかかっている。transcript
+            の置き方が変われば見張りが黙って死ぬ（更新が見えず、常に SILENT
+            か常に無音）。既に委譲先に <code>SendMessage</code> で「段の区切りと長いコマンドの前に 1
+            行」を送らせているので、鼓動の源は 2 つある。
+          </dd>
+          <dt>提案</dt>
+          <dd>
+            鼓動を hook で取る: <code>hooks/hooks.json</code> の <code>PostToolUse</code>（<code
+              >agent_id</code
+            >
+            があるときだけ）で <code>tw</code> が台帳（<code>.tw/local/</code>）に「agent_id
+            ごとの最終活動時刻」を書く。<code>Monitor</code> のループはその時刻を読む（transcript
+            に触らない）。
+            <code>tw escalate-check</code>
+            も同じ時刻を読めるので、見張りのシェルは「台帳の時刻を読む → T 秒超なら SILENT」の 1
+            行になる。hook の起動は Bash 1 回につき子プロセス 1 つの合流（tsukumo の
+            GH-1647）と同じ流れで、新しい子プロセスを増やさず
+            <code>commit-guard</code> の入口に相乗りさせる。
+          </dd>
+        </dl>
+      </div>
+
+      <div class="finding" id="f6">
+        <h3>
+          <span class="tag yellow">黄</span> 6. hooks.json の書き方: 同じ殻を 7 回、exec
+          形・<code>onFailure</code>・Subagent 系の matcher が未使用
+        </h3>
+        <dl>
+          <dt>今の形</dt>
+          <dd>
+            <code>hooks/hooks.json</code> は 7 つの hook すべてが
+            <code
+              >"${CLAUDE_PLUGIN_ROOT}/bin/tw" &lt;sub&gt; || { c=$?; case $c in 78|127) …exit 0;; *)
+              …exit 1;; esac; }</code
+            >
+            という同じ 200 字の shell
+            形で、サブコマンド名だけが違う。<code>SubagentStop</code>・<code>SubagentStart</code> は
+            matcher 無しで、Explore・Plan・acceptor・general-purpose のどれが止まっても
+            <code>tw</code>（python の起動）が走り、絞り込みは <code>lap_hook.py</code> の中で
+            <code>agent_type</code> を見て行う。 <code>tw</code> が落ちたとき（78・127 以外）は exit
+            1 で「関門が掛かっていない」と stderr に出すだけで、ツールは通る。
+          </dd>
+          <dt>公式の言い分</dt>
+          <dd>
+            plugin の hook は <code>args</code> を付けた exec 形ならクォート不要、shell
+            形は二重引用符で包む
+            <span class="src"
+              >[<a href="https://code.claude.com/docs/en/plugins/manifest-reference"
+                >manifest-reference</a
+              >]</span
+            >。 Subagent 系の matcher は agent 型（plugin は <code>^plugin:name$</code>）で書ける
+            <span class="src">[<a href="https://code.claude.com/docs/en/hooks">hooks</a>]</span>。
+            終了コード 2 以外のエラーは非ブロッキングで、<code>onFailure: "block"</code>
+            を付けたときだけ止まる
+            <span class="src">[<a href="https://code.claude.com/docs/en/hooks">hooks</a>]</span
+            >。command 型の timeout は既定 600 秒
+            <span class="src">[<a href="https://code.claude.com/docs/en/hooks">hooks</a>]</span>。
+          </dd>
+          <dt>筋が悪い理由</dt>
+          <dd>
+            殻の重複は直すとき 7 か所を揃える手間になり、shell 形は引用の崩れを validate
+            が拾えない。関門が「落ちたら通す」なのは、python
+            が無い環境（78・127）を通す判断としては正しいが、tw 自体のバグ（1）まで通すのは
+            fail-open で、hook を置いた目的（例外ゼロの強制）と逆向き。Subagent 系の全発火は、1
+            セッションあたりの python 起動を増やすだけで判定は変わらない。
+          </dd>
+          <dt>提案</dt>
+          <dd>
+            (a) <code>bin/tw-hook</code>（1 本の殻）を置き、各 hook は exec 形
+            <code
+              >{"type":"command","command":"${CLAUDE_PLUGIN_ROOT}/bin/tw-hook","args":["commit-guard","--agent-scoped"]}</code
+            >
+            にする。(b) 78・127 は殻の中で exit 0、それ以外は exit 2（止める）にするか、<code
+              >onFailure: "block"</code
+            >
+            を付けて fail-closed
+            にする。どちらにするかは「関門が壊れたとき作業を止めてよいか」の判断で、/loop
+            の無人運転なら止めるほうが安全。(c) <code>SubagentStop</code>・<code
+              >SubagentStart</code
+            >
+            に
+            <code
+              >"matcher":
+              "tsukumo-workflow:no-delegate|tsukumo-workflow:acceptor|general-purpose"</code
+            >
+            を付け、Explore・Plan では起動しない。
+          </dd>
+        </dl>
+      </div>
+
+      <div class="finding" id="f7">
+        <h3>
+          <span class="tag yellow">黄</span> 7. agent 定義の description が長く内部事情を含み、<code
+            >model: opus</code
+          >
+          を「固定」と焼いている
+        </h3>
+        <dl>
+          <dt>今の形</dt>
+          <dd>
+            <code>agents/acceptor.md</code> の description は 315
+            字で「<code>Agent</code>・<code>Edit</code>・<code>Write</code>・<code
+              >NotebookEdit</code
+            >
+            を持たないので返却は <code>tw handback-guard</code> に判定されない」「plugin
+            で入れたとき <code>hooks/hooks.json</code> の <code>tw commit-guard</code> が入力の
+            <code>agent_type</code> で見分ける。リンクだけで入れたときは掛からない」まで書く。<code
+              >no-delegate.md</code
+            >
+            も 251 字で同様。 <code>model: opus</code> は description に「モデルは Opus
+            固定」と書かれ、<code>check_repo.py</code> の
+            <code>check_agent_frontmatter</code> が値を検査する。
+          </dd>
+          <dt>公式の言い分</dt>
+          <dd>
+            agent の description は短く、詳細は本文（システムプロンプト）へ。全 agent の description
+            の合計が 15,000 トークンを超えると起動時に警告
+            <span class="src"
+              >[<a href="https://code.claude.com/docs/en/sub-agents">sub-agents</a>]</span
+            >。 <code>model</code> は sonnet／opus／haiku／fable／完全 ID／<code>inherit</code>
+            を取る
+            <span class="src"
+              >[<a href="https://code.claude.com/docs/en/sub-agents">sub-agents</a>]</span
+            >。
+          </dd>
+          <dt>筋が悪い理由</dt>
+          <dd>
+            description は Agent
+            ツールの一覧として毎セッション載る文で、メインが「どれを選ぶか」にだけ使う。hook
+            の掛かり方は選択に関係なく、読み手（メイン）にとっては雑音になる。「Opus 固定」は Fable
+            が出た今、最上位の判定役を opus に縛る根拠がなく、変えるには
+            description・frontmatter・check_repo.py の 3 か所を揃える。
+          </dd>
+          <dt>提案</dt>
+          <dd>
+            description を「受け入れの判定だけを返す。ファイルを書き換えない」程度（60
+            字以内）にし、hook の掛かり方は本文か tw-reference.md「hook の関門」へ移す。<code
+              >model</code
+            >
+            は受け入れの難易度の対応表（task-model「difficulty
+            とモデルの切り替え」）から渡す形にし、固定値の検査は外す。
+          </dd>
+        </dl>
+      </div>
+
+      <div class="finding" id="f8">
+        <h3>
+          <span class="tag yellow">黄</span> 8. 公式の validate が出す警告を check.sh が拾わない
+        </h3>
+        <dl>
+          <dt>今の形</dt>
+          <dd>
+            <code>claude plugin validate .</code>: 警告 3（<code>tsukumo-workflow</code>・<code
+              >tsukumo-figure</code
+            >
+            の <code>plugin.json</code> に <code>version</code> 無し）、plugin directory が拒む問題
+            1（<code>LICENSE</code> 無し）、警告 1（icon 無し）。<code
+              >claude plugin validate plugins/tsukumo-figure</code
+            >: 拒む問題 2（README 31 語で 40 語に満たない、LICENSE 無し）。
+            <code>check.sh</code> は独自の <code>scripts/check_repo.py</code>（frontmatter・README
+            の索引・参照先の実在・<code>!`cmd`</code> の末尾）を打つが、公式 validate
+            は打たない。README は「<code>claude plugin validate .</code> で検査する」と書いている。
+          </dd>
+          <dt>公式の言い分</dt>
+          <dd>
+            検証は <code>claude plugin validate ./my-plugin</code>。CI では
+            <code>--strict</code>（警告も失敗）。version を使わない運用では
+            <code>--strict</code> を外す
+            <span class="src"
+              >[<a href="https://code.claude.com/docs/en/plugins/publish">publish</a>]</span
+            >。git の marketplace では version を省いて commit SHA に追わせる運用も可
+            <span class="src"
+              >[<a href="https://code.claude.com/docs/en/plugins/loading">loading</a>]</span
+            >。<code>license</code> は plugin.json の欄（SPDX id）か LICENSE ファイル
+            <span class="src"
+              >[<a href="https://code.claude.com/docs/en/plugins/manifest-reference"
+                >manifest-reference</a
+              >]</span
+            >。
+          </dd>
+          <dt>筋が悪い理由</dt>
+          <dd>
+            独自の検査は公式の変化（新しい欄・予約語・廃止）に追随できない。公式の validate を
+            check.sh の最初の段に置けば、今回の 6 件は check で見えていた。
+          </dd>
+          <dt>提案</dt>
+          <dd>
+            <code>check.sh</code> の段 1 に
+            <code>claude plugin validate . && claude plugin validate plugins/tsukumo-figure</code>
+            を足す（<code>claude</code> が無い環境では飛ばす）。<code>plugin.json</code> に
+            <code>license</code>（SPDX）を書き、<code>tsukumo-figure</code> の README を 40
+            語以上にする。<code>version</code>
+            は「ローカルパスでその場で読む」運用なので省いたままでよく、<code>--strict</code>
+            は付けない。
+          </dd>
+        </dl>
+      </div>
+
+      <h2 id="blue">5. 青: 確かめた結果、直さなくてよい</h2>
+
+      <div class="finding" id="f9">
+        <h3>
+          <span class="tag blue">青</span> 9. <code>SubagentHandback</code> は hook
+          のイベントではなくツール名
+        </h3>
+        <dl>
+          <dt>疑ったこと</dt>
+          <dd>
+            <code>hooks.json:17</code> と <code>handback_guard.py:27</code> が
+            <code>PreToolUse</code> の matcher に <code>SubagentHandback</code> を使う。hook
+            のイベント名と混同していないか。
+          </dd>
+          <dt>確かめた結果</dt>
+          <dd>
+            hook のイベント 32 件に <code>SubagentHandback</code> は無い。<code
+              >SubagentHandback</code
+            >
+            はサブエージェントの最終報告を親へ渡す<strong>ツール</strong>で、auto mode で、Agent
+            ツールがローカルで走らせるサブエージェント（fork を除く）にだけ提供される（v2.1.271
+            以降。<code>disallowedTools</code> に書いても付く）
+            <span class="src"
+              >[<a href="https://code.claude.com/docs/en/tools-reference">tools-reference</a>・<a
+                href="https://code.claude.com/docs/en/hooks"
+                >hooks</a
+              >]</span
+            >。 したがって <code>PreToolUse</code> の matcher としては正しい。ただし auto mode
+            でないセッションではこのツールが無いので、<code>handback-guard</code> の本線は
+            <code>SubagentStop</code>（<code>decision: block</code>）で、<code>PreToolUse</code>
+            の経路はその補い。<code>hook-rationale.md:36</code>
+            の「確かめていないこと」はそのまま残る。
+          </dd>
+          <dt>残す作業</dt>
+          <dd>
+            <code>tw-reference.md</code>「hook の関門」に「<code>SubagentHandback</code>
+            はツール名で、auto mode のときだけ現れる」の 1 行を足す。
+          </dd>
+        </dl>
+      </div>
+
+      <div class="finding" id="f10">
+        <h3><span class="tag blue">青</span> 10. スキル名の「末尾一致」探しは二経路併存の産物</h3>
+        <dl>
+          <dt>今の形</dt>
+          <dd>
+            <code>next-task/SKILL.md:71</code
+            >・<code>delegate.md:33-36</code>・<code>acceptor-request.md:19</code>・<code
+              >retrospect.md:14</code
+            >
+            が「一覧で末尾が
+            <code>task-workflow</code> の行」「末尾一致が複数当たったら止める」と書く。
+          </dd>
+          <dt>確かめた結果</dt>
+          <dd>
+            plugin の skill は <code>plugin:skill</code>、agent は
+            <code>plugin:name</code> の名前空間で、同じ plugin の中からは全名で指せる
+            <span class="src"
+              >[<a href="https://code.claude.com/docs/en/plugins/components">components</a>]</span
+            >。末尾一致は #1 の二経路を両方生かすための手順で、単独の欠陥ではない。
+          </dd>
+          <dt>残す作業</dt>
+          <dd>
+            #1
+            を直したら全名（<code>tsukumo-workflow:task-workflow</code>）に固定し、「複数当たったら止める」の分岐を消す。
+          </dd>
+        </dl>
+      </div>
+
+      <div class="finding" id="f11">
+        <h3>
+          <span class="tag blue">青</span> 11.
+          <code>!`tw config 2>&amp;1 || true`</code> の使い方は公式どおり
+        </h3>
+        <dl>
+          <dt>確かめた結果</dt>
+          <dd>
+            <code>!`cmd`</code> は skill が Claude に渡る前に 1 回走り、1 本 2
+            分で打ち切られ、終了コードが非 0 だと skill 全体が中止される
+            <span class="src">[<a href="https://code.claude.com/docs/en/skills">skills</a>]</span
+            >。3 つの SKILL.md は <code>|| true</code> で守り、<code>check_repo.py</code> の
+            <code>check_shell_embeds</code>
+            が末尾を検査している。<code>${CLAUDE_SKILL_DIR}</code>・<code
+              >${CLAUDE_PLUGIN_ROOT}</code
+            >
+            も公式の置換子
+            <span class="src">[<a href="https://code.claude.com/docs/en/skills">skills</a>]</span>。
+          </dd>
+        </dl>
+      </div>
+
+      <div class="finding" id="f12">
+        <h3>
+          <span class="tag blue">青</span> 12. 委譲先からの進捗は
+          <code>SendMessage({to:"main"})</code> でよい
+        </h3>
+        <dl>
+          <dt>確かめた結果</dt>
+          <dd>
+            進捗を返す専用の仕組みは docs に無く、名簿に載る名前へ
+            <code>SendMessage</code> で送る形が公式の記述
+            <span class="src"
+              >[<a href="https://code.claude.com/docs/en/sub-agents">sub-agents</a>]</span
+            >。サブエージェントの最終報告は親が読む前に命令風の文言が走査され、印行が付く（削除や書き換えはしない）
+            <span class="src"
+              >[<a href="https://code.claude.com/docs/en/sub-agents">sub-agents</a>]</span
+            >。返却の先頭 1 文と
+            <code>## 構造の変更</code> の節を読む今の形は、この走査と衝突しない。
+          </dd>
+        </dl>
+      </div>
+
+      <h2 id="good">6. 筋が良いと確かめたもの</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>やっていること</th>
+            <th>公式の対応する勧め</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              SKILL.md は入口だけ（最長 197 行）で、手順は <code>tw</code> とサブファイルへ。70KB の
+              WORKFLOW.md は目次で 1 節を選んで読む
+            </td>
+            <td>
+              本文 500 行以内、100
+              行超の参照ファイルは目次、決まった処理はスクリプトを「実行」させる
+              <span class="src"
+                >[<a
+                  href="https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices"
+                  >best-practices</a
+                >]</span
+              >
+            </td>
+          </tr>
+          <tr>
+            <td>
+              毎回読まれる文書のバイト数を
+              <code>selftest_doc_budget.py</code> で凍結し、足すなら削る
+            </td>
+            <td>
+              常時読み込まれる分は毎リクエスト課金。context rot
+              <span class="src"
+                >[<a href="https://code.claude.com/docs/en/features-overview">features-overview</a
+                >]</span
+              >
+            </td>
+          </tr>
+          <tr>
+            <td>
+              段のスキル・<code>task-model</code>・<code>retrospect</code> に
+              <code>user-invocable: false</code>、<code>retro</code> に
+              <code>disable-model-invocation: true</code>
+            </td>
+            <td>
+              背景知識は <code>user-invocable: false</code>、副作用のある手順は
+              <code>disable-model-invocation</code>
+              <span class="src">[<a href="https://code.claude.com/docs/en/skills">skills</a>]</span>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              hook は <code>${CLAUDE_PLUGIN_ROOT}/bin/tw</code> を呼び、拒否は
+              <code>permissionDecision: deny</code>・<code>decision: block</code> の JSON で返す
+            </td>
+            <td>
+              plugin のパスは <code>${CLAUDE_PLUGIN_ROOT}</code>、PreToolUse は
+              <code>hookSpecificOutput.permissionDecision</code>
+              <span class="src">[<a href="https://code.claude.com/docs/en/hooks">hooks</a>]</span>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              関門は
+              <code>agent_id</code>
+              の有無で掛け、エージェントの名前（<code>agent_type</code>）に頼らない
+            </td>
+            <td>
+              <code>agent_type</code> は <code>--agent</code> で起こした主のセッションにも入る
+              <span class="src">[<a href="https://code.claude.com/docs/en/hooks">hooks</a>]</span>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              受け入れは会話を見ていない別のエージェント（acceptor）が差分・完了条件・規約だけで判定する
+            </td>
+            <td>
+              新しい目でのレビューは効く。<code>/code-review</code> も同じ作り
+              <span class="src"
+                >[<a href="https://code.claude.com/docs/en/best-practices">best-practices</a>]</span
+              >
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <code>tw verify</code>・<code>plan-check</code>・<code>verify-check</code>
+              で「検証して直して繰り返す」ループを機械が持つ
+            </td>
+            <td>
+              検証を渡す。ルールによる検査が最良
+              <span class="src"
+                >[<a href="https://claude.com/blog/building-agents-with-the-claude-agent-sdk"
+                  >building-agents</a
+                >]</span
+              >
+            </td>
+          </tr>
+          <tr>
+            <td>
+              frontmatter の独自の欄は <code>metadata:</code> の下に置く（<code>workflow-step</code>
+              など）
+            </td>
+            <td>
+              <code>metadata</code> は可搬な 6 欄の 1 つ
+              <span class="src">[<a href="https://code.claude.com/docs/en/skills">skills</a>]</span>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              hook
+              の記録（<code>hook-denials/</code>）と介入の効果（<code>intervention_effect.py</code>）を数で見る
+            </td>
+            <td>
+              skill は評価を先に作り、転写を分析して直す
+              <span class="src"
+                >[<a href="https://www.anthropic.com/engineering/writing-tools-for-agents"
+                  >writing-tools</a
+                >]</span
+              >
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 id="order">7. 直す順番の提案</h2>
+      <ol>
+        <li>
+          <strong>#1 → #2 → #10</strong>（1 コミット＋人の切り替え 1 回）。plugin の 1
+          経路に揃え、二経路の記述 18 行・frontmatter の hooks・末尾一致を消す。これで hooks.json
+          の関門（ask-guard・lap-hook・agent-scoped の判定）が初めて効く。
+        </li>
+        <li>
+          <strong>#8</strong>（小）。check.sh に公式 validate を足し、license と README を直す。
+        </li>
+        <li>
+          <strong>#6</strong>（小）。hooks.json を exec 形の殻 1 本にし、fail-open か fail-closed
+          かを決める。
+        </li>
+        <li><strong>#7</strong>（小）。agent の description を短くし、model の固定を外す。</li>
+        <li>
+          <strong>#3</strong>（中。GH-1576 と併せる）。brief の行を公式の梯子で分類し、hook
+          が拒むもの・既知の作法を消す。
+        </li>
+        <li><strong>#5</strong>（中）。見張りの鼓動を hook の台帳に移す。</li>
+        <li>
+          <strong>#4</strong>（中・要計測）。受け入れ・振り返りの段を
+          <code>context: fork</code> で試し、1 サイクルのトークンの前後で決める。
+        </li>
+      </ol>
+
+      <h2 id="practice">8. 公式プラクティスの要点（7 観点）</h2>
+      <p>
+        調べもの役が集めた一覧のうち、この点検に効いた行だけ。全文は会話の記録にあり、数値は原文で確かめてから設計に使う。
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>観点</th>
+            <th>推奨</th>
+            <th>非推奨・注意</th>
+            <th>上限・既定値</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Skills</td>
+            <td>
+              description は「何を＋いつ」を三人称で。本文 500 行以内、補助ファイルは 1 段。<code
+                >context: fork</code
+              >・<code>agent:</code>・<code>paths:</code>。既知のことは書かない。既定 1 つ＋逃げ道 1
+              つ
+            </td>
+            <td>
+              <code>.claude/commands</code> は旧式。時限情報を書かない。Claude Code 専用欄は
+              claude.ai・API で落ちる
+            </td>
+            <td>
+              description＋when_to_use 1,536 字で切れる。API は name 64・description 1,024。<code
+                >!</code
+              >
+              は 2 分・非 0 で中止
+            </td>
+          </tr>
+          <tr>
+            <td>Subagents</td>
+            <td>
+              description は短く詳細は本文。読み取り専用は
+              <code>tools</code>
+              で絞る。渡るのは依頼文・CLAUDE.md・<code>skills:</code>・名簿だけ。再開は SendMessage
+            </td>
+            <td>
+              plugin の agent は hooks・mcpServers・permissionMode
+              を無視。「文脈を守るため」は旧い助言。<code>Stop</code> は
+              <code>SubagentStop</code> に変換
+            </td>
+            <td>
+              description 合計 15,000 トークンで警告。深さ 3・同時 20。背景のサブエージェントに
+              AskUserQuestion は無い
+            </td>
+          </tr>
+          <tr>
+            <td>Hooks</td>
+            <td>
+              決定論的に守らせるなら command。例外ゼロの規則だけを hook に。plugin は
+              <code>hooks/hooks.json</code>＋<code>${CLAUDE_PLUGIN_ROOT}</code>。exec
+              形（<code>args</code>）
+            </td>
+            <td>
+              <code>SubagentHandback</code> はイベントでない。hook が 40 本なら大半は好み。<code
+                >suppressOutput</code
+              >
+              は効かない
+            </td>
+            <td>
+              command 600 秒、prompt 30 秒、agent 60 秒。exit 2 がブロック、他は
+              <code>onFailure: block</code> のときだけ止まる
+            </td>
+          </tr>
+          <tr>
+            <td>Plugins</td>
+            <td>
+              <code>plugin.json</code> の必須は <code>name</code>。<code>bin/</code> は有効な間
+              PATH。<code>claude plugin validate</code>（CI は <code>--strict</code>）。状態は
+              <code>${CLAUDE_PLUGIN_DATA}</code>
+            </td>
+            <td>
+              <code>commands/</code> は旧式。plugin 直下の CLAUDE.md
+              は読まれない。外（<code>../</code>）を指すパスは読まれない
+            </td>
+            <td>
+              ローカルパスの marketplace はその場で読み version 不要。第三者の自動更新は既定オフ
+            </td>
+          </tr>
+          <tr>
+            <td>CLAUDE.md</td>
+            <td>
+              200 行未満、コードから読めないことだけ。領域限定は <code>paths:</code> 付き rules
+              へ。<code>/doctor prompt-audit</code>
+            </td>
+            <td>強調・念押しの積み増し。構成の説明。「文脈窓を管理せよ」は旧い助言</td>
+            <td>200 行超で警告。4 MiB で読まれない。MEMORY.md は 200 行／25KB</td>
+          </tr>
+          <tr>
+            <td>Agent SDK</td>
+            <td>
+              <code>settingSources</code> を明示。<code>systemPrompt</code>
+              省略は最小プロンプト。MCP は <code>allowedTools</code> のワイルドカード。<code
+                >alwaysLoad</code
+              >
+              は常時要るサーバーだけ
+            </td>
+            <td>
+              MCP を <code>bypassPermissions</code> で通す。skill を登録する API
+              は無い（ファイルで置く）
+            </td>
+            <td>
+              ツール検索は既定オン（<code>auto:N</code>）。30〜50 本超で選択精度が落ちる。MCP 出力
+              25,000 トークン
+            </td>
+          </tr>
+          <tr>
+            <td>一般</td>
+            <td>
+              集める→動く→確かめる→繰り返す。検証はルール＞視覚＞別モデル。just-in-time
+              で取りに行かせる。2 度誤ったら CLAUDE.md、3 度頼んだら skill、毎回なら hook
+            </td>
+            <td>
+              「サブエージェントで文脈を守る」「怠けるなと念押し」は誤解として明記。文面で縛る運用（非決定的）
+            </td>
+            <td>窓 1M、compaction 自動。cache 約 1 時間（購読）</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 id="sources">9. 出典と確かめていないこと</h2>
+      <h3>公式の出典</h3>
+      <ul>
+        <li>
+          <a href="https://code.claude.com/docs/en/skills">Skills</a>・<a
+            href="https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices"
+            >Skill best practices</a
+          >・<a href="https://code.claude.com/docs/en/features-overview">Features overview</a>
+        </li>
+        <li>
+          <a href="https://code.claude.com/docs/en/sub-agents">Subagents</a>・<a
+            href="https://code.claude.com/docs/en/agent-sdk/subagents"
+            >Agent SDK: Subagents</a
+          >・<a href="https://code.claude.com/docs/en/tools-reference">Tools reference</a>
+        </li>
+        <li>
+          <a href="https://code.claude.com/docs/en/hooks">Hooks</a>・<a
+            href="https://code.claude.com/docs/en/best-practices"
+            >Best practices</a
+          >
+        </li>
+        <li>
+          <a href="https://code.claude.com/docs/en/plugins/manifest-reference">Plugin manifest</a
+          >・<a href="https://code.claude.com/docs/en/plugins/components">Plugin components</a>・<a
+            href="https://code.claude.com/docs/en/plugins/marketplace-reference"
+            >Marketplace</a
+          >・<a href="https://code.claude.com/docs/en/plugins/loading">Loading</a>・<a
+            href="https://code.claude.com/docs/en/plugins/publish"
+            >Publish</a
+          >
+        </li>
+        <li><a href="https://code.claude.com/docs/en/memory">Memory</a></li>
+        <li>
+          <a href="https://code.claude.com/docs/en/agent-sdk/claude-code-features"
+            >Agent SDK: Claude Code features</a
+          >・<a href="https://code.claude.com/docs/en/agent-sdk/modifying-system-prompts"
+            >Modifying system prompts</a
+          >・<a href="https://code.claude.com/docs/en/agent-sdk/mcp">MCP</a>・<a
+            href="https://code.claude.com/docs/en/agent-sdk/tool-search"
+            >Tool search</a
+          >
+        </li>
+        <li>
+          <a
+            href="https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents"
+            >Effective context engineering for AI agents</a
+          >・<a href="https://www.anthropic.com/engineering/writing-tools-for-agents"
+            >Writing tools for agents</a
+          >・<a href="https://claude.com/blog/building-agents-with-the-claude-agent-sdk"
+            >Building agents with the Claude Agent SDK</a
+          >
+        </li>
+      </ul>
+      <h3>確かめていないこと</h3>
+      <ul>
+        <li>
+          公式 docs は WebFetch
+          の要約で読んだ。行数・字数・秒数は原文の逐語を確かめていない。設計に使う前にそのページで照合する。
+        </li>
+        <li>
+          tsukumo が SDK で起こすセッションに plugin が載るか（<code>settingSources</code>
+          の値）は、tsukumo の <code>src/server/session-driver/adapter/</code> を読んで確かめる。#1
+          の提案の前提。
+        </li>
+        <li>
+          #4 の
+          <code>context: fork</code>
+          で段を走らせたときのトークンの前後は測っていない。公式が「節約の手段ではない」と言うので、測ってから決める。
+        </li>
+        <li>
+          #5 の hook の鼓動が、背景に回った長いコマンド（<code>tw verify</code> の 600
+          秒超）の間に止まって見えるかは、実機で確かめる。
+        </li>
+        <li>
+          Stop hook の「連続 8
+          回ブロックで上書き」（<code>CLAUDE_CODE_STOP_HOOK_BLOCK_CAP</code>）は best-practices
+          のページにだけあり、hooks のリファレンスでは確認できなかった。<code>handback-guard</code>
+          の <code>SubagentStop</code> の block が差し戻しを 8 回超えると上書きされる可能性がある。
+        </li>
+        <li>
+          手元で <code>tsukumo-figure:figure-capture</code> が plugin
+          の名前空間で見えている理由（<code>claude plugin list</code> は 0 件）は追っていない。<code
+            >--plugin-dir</code
+          >
+          か別の設定の可能性。
+        </li>
+      </ul>
+    </main>
+  </body>
+</html>
