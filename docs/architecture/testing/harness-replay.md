@@ -42,6 +42,15 @@
 pnpm run harness-replay -- --tasks <ID,…> --k <n>
 ```
 
+`--brief <path>` を足すと、そのファイルの本文（実装役の決まり `implementer-brief.md` など）を依頼文の先頭に「次の決まりを最初に読んで従ってください。」と添えて入れる。brief の行を外した版と元の版を比べるときは、版ごとのファイルを渡して2回ずつ走らせ、`pass^k` を比べる。
+
+```bash
+pnpm run harness-replay -- --tasks <ID,…> --k 2 --brief <元の版>
+pnpm run harness-replay -- --tasks <ID,…> --k 2 --brief <外した版>
+```
+
+`--brief` を省くと依頼文は従来のまま（課題の本文だけ）で、brief を通らない。費用の幅は下の「費用と負荷」の「5件 × k=2 の概算」を見る。
+
 1回ごとに、`base` で一時の作業ツリーと枝を起こし、いまの `AGENTS.md`・`CLAUDE.md`・`.claude/`・`.tw/config.toml` を重ね、`task.txt` を依頼にして `claude -p` を1回起こす（モデルは `claude -p` の既定。台本の検証コマンドは伏せる）。終わったら `checkFiles` を `after` から置いて `command` を打ち、通れば1回の合格。一時の作業ツリーと枝は成否にかかわらず消す。
 
 - **出力**: 1件ごとに4行。`pass^k`（k 回とも通ったか）・トークンの中央値（入力・出力・キャッシュの合計）・時間の中央値・拒否の回数（hook や権限で断られた数の合計）

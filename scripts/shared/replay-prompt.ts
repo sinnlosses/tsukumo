@@ -1,11 +1,14 @@
 // タスクの再試で claude に渡す依頼文を組み立てる、という概念1つを持つ。外に触らない。
 
 /** 課題の本文の写しから、一時の作業ツリーで進める依頼文を作る。台本（検証コマンド）は伏せる。 */
-export function buildReplayPrompt(taskText: string): string {
-  return [
+export function buildReplayPrompt(taskText: string, brief: string | undefined): string {
+  const body = [
     "次の課題を、いまの作業ツリーで実装してください。コミットはしないでください。",
     "完了の判定は別の検査が行います。課題の完了条件を満たすことを目指してください。",
     "",
     taskText,
   ].join("\n")
+  return brief === undefined
+    ? body
+    : ["次の決まりを最初に読んで従ってください。", "", brief, "", "---", "", body].join("\n")
 }

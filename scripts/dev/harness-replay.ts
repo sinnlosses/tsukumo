@@ -6,6 +6,7 @@
 //   pnpm run harness-replay -- --tasks <ID> --k 1
 
 import { spawnSync } from "node:child_process"
+import { readFileSync } from "node:fs"
 import process from "node:process"
 
 import { runClaude } from "../shared/claude-run.ts"
@@ -24,9 +25,13 @@ import { REPOSITORY_ROOT as ROOT } from "../shared/repository-root.ts"
 
 const options = parseReplayOptions(process.argv.slice(2))
 if (options === "invalid") {
-  process.stderr.write("使い方: pnpm run harness-replay -- --tasks <ID,…> [--k <n>]\n")
+  process.stderr.write(
+    "使い方: pnpm run harness-replay -- --tasks <ID,…> [--k <n>] [--brief <path>]\n",
+  )
   process.exit(2)
 }
+
+const brief = readBrief(options.brief)
 
 for (const id of options.tasks) {
   const script = readReplayScript(ROOT, id)
@@ -40,12 +45,22 @@ for (const id of options.tasks) {
   }
 }
 
+function readBrief(path: string | undefined): string | undefined {
+  if (path === undefined) return undefined
+  try {
+    return readFileSync(path, "utf8")
+  } catch {
+    process.stderr.write(`--brief のファイルを読めません: ${path}\n`)
+    return process.exit(2)
+  }
+}
+
 function replayOnce(script: ReplayScript, taskText: string): ReplayRun {
   const worktree = createReplayWorktree(ROOT, script.id, script.base)
   try {
     linkDependencies(ROOT, worktree)
     overlayHarness(ROOT, worktree)
-    const claude = runClaude(worktree.path, buildReplayPrompt(taskText))
+    const claude = runClaude(worktree.path, buildReplayPrompt(taskText, brief))
     checkoutCheckFiles(worktree, script.after, script.checkFiles)
     const check = spawnSync("pnpm", script.command.slice(1), {
       cwd: worktree.path,

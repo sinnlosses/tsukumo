@@ -18,10 +18,21 @@ describe("parseReplayOptions", () => {
     expect(parseReplayOptions(["--tasks", "a-1", "--k", "1"])).toEqual({ tasks: ["a-1"], k: 1 })
   })
 
-  test.each([[[]], [["--tasks", ""]], [["--tasks", "a-1", "--k", "0"]], [["--foo"]]])(
-    "%j は崩れた引数として invalid に畳む",
-    (args) => {
-      expect(parseReplayOptions(args)).toBe("invalid")
-    },
-  )
+  test("--brief を読み、省けば未指定になる", () => {
+    expect(parseReplayOptions(["--tasks", "a-1", "--brief", "/tmp/b.md"])).toHaveProperty(
+      "brief",
+      "/tmp/b.md",
+    )
+    expect(parseReplayOptions(["--tasks", "a-1"])).toHaveProperty("brief", undefined)
+  })
+
+  test.each([
+    [[]],
+    [["--tasks", ""]],
+    [["--tasks", "a-1", "--k", "0"]],
+    [["--tasks", "a-1", "--brief", ""]],
+    [["--foo"]],
+  ])("%j は崩れた引数として invalid に畳む", (args) => {
+    expect(parseReplayOptions(args)).toBe("invalid")
+  })
 })
