@@ -141,7 +141,6 @@ describe("useWorkStrip（時刻に依るもの）", () => {
     expect(strip).toMatchObject({
       kind: "working",
       headLabel: "架空の計画",
-      positionLabel: "前 1/1",
       sideLabel: "経過 5秒",
     })
     expect(
@@ -166,7 +165,7 @@ describe("useWorkStrip（時刻に依るもの）", () => {
       START + 5_000,
     )
 
-    expect(strip).toMatchObject({ kind: "working", positionLabel: "後 1/2" })
+    expect(strip).toMatchObject({ kind: "working" })
     expect(strip.kind === "working" && strip.phases.map((slot) => slot.spanHead)).toEqual([
       { kind: "head", name: "前", current: false },
       { kind: "head", name: "本", current: false },

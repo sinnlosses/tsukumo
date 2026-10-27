@@ -56,17 +56,6 @@ export function PresentationalWorkStrip(props: {
         >
           {strip.headLabel}
         </Text>
-        {strip.kind === "working" && strip.positionLabel !== "" && (
-          <Text
-            element="span"
-            size="secondary"
-            tone="ink"
-            weight="bold"
-            className={styles["work-strip-position"]}
-          >
-            {strip.positionLabel}
-          </Text>
-        )}
         <Text
           element="span"
           size="secondary"

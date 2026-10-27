@@ -253,11 +253,6 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.work-strip-position {
-  flex: none;
-  font-family: var(--font-mono);
-  white-space: nowrap;
-}
 .work-strip-side {
   flex: none;
   font-family: var(--font-mono);

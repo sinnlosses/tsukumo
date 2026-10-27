@@ -14,7 +14,6 @@ import {
   type PhaseSpan,
   plannedPhaseNumber,
   plannedPhaseTitle,
-  workPositionText,
 } from "../../../../../../../../../shared/session/work-plan-phase-number.ts"
 import {
   currentPhaseOf,
@@ -138,7 +137,7 @@ export type WorkStripSteps = {
  * 帯に出す形。`headLabel` は丸の右の字、`sideLabel` は右端の等幅の字。
  *
  * - `none`: 帯ごと出さない（本文が1つも無いまま閉じた依頼と、ワークプランも働きも無いとき）
- * - `working`: 中身が働くあいだ。送った直後から出す。今の段の名前・今の位置（`positionLabel`「後 1/3」。番号を持たない段では空）・「経過 6分12秒」・2行目（ワークプランが届く前は段の丸が無く字は空。チップが「作業中」を言うので重ねない）
+ * - `working`: 中身が働くあいだ。送った直後から出す。今の段の名前・「経過 6分12秒」・2行目（ワークプランが届く前は段の丸が無く字は空。チップが「作業中」を言うので重ねない）
  * - `finished`: 中身がレポートに入れ替わったあと。済んだ姿の字・「所要 21分49秒」の1行（ワークプランが無ければ字は空）
  *
  * `result` は状態のチップの状態。`working` は作業中・答え待ち・背景で作業中（ターンが終わってバックグラウンドタスクだけ残る）、`finished` は完了・答え待ち・止めた・失敗。
@@ -154,7 +153,6 @@ export type WorkStripModel =
       /** 列を畳んでいるあいだの「いま: <節>」。出さないときは空。 */
       readonly readingLabel: string
       readonly headLabel: string
-      readonly positionLabel: string
       readonly sideLabel: string
       readonly activity: WorkActivity
       readonly steps: WorkStripSteps
@@ -299,7 +297,6 @@ export function useWorkStrip(): WorkStripModel {
     result,
     readingLabel,
     headLabel: planned.length === 0 ? "" : nowPhase.kind === "phase" ? nowPhase.name : completion,
-    positionLabel: nowPhase.kind === "phase" ? workPositionText(plan) : "",
     sideLabel: elapsedLabel,
     activity: workActivityOf({
       turnStepList,
