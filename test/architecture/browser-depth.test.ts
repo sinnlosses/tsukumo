@@ -10,26 +10,7 @@ const MAX_DEEP_DIRECTORY_EXCEPTIONS = 120
 
 // 上限を超えたまま残っている、深さ 7 のディレクトリ（`browser/` からの相対パス）。
 // この下のファイルは深さを数えない。移し終えたら一覧から消す。
-const DEEP_DIRECTORY_EXCEPTIONS: ReadonlySet<string> = new Set([
-  "components/page/conversation/components/main-view/components/aside-thread",
-  "components/page/conversation/components/main-view/components/current-step",
-  "components/page/conversation/components/main-view/components/head-notice",
-  "components/page/conversation/components/main-view/components/inquiry-jump-float",
-  "components/page/conversation/components/main-view/components/mini-portrait",
-  "components/page/conversation/components/main-view/components/phase-list",
-  "components/page/conversation/components/main-view/components/question-record",
-  "components/page/conversation/components/main-view/components/report",
-  "components/page/conversation/components/main-view/components/report-head",
-  "components/page/conversation/components/main-view/components/report-outline",
-  "components/page/conversation/components/main-view/components/request-block",
-  "components/page/conversation/components/main-view/components/selection-ask",
-  "components/page/conversation/components/main-view/components/turn",
-  "components/page/conversation/components/main-view/components/turn-card-head",
-  "components/page/conversation/components/main-view/components/turn-failure-block",
-  "components/page/conversation/components/main-view/components/turn-list",
-  "components/page/conversation/components/main-view/components/welcome",
-  "components/page/conversation/components/main-view/components/work-strip",
-])
+const DEEP_DIRECTORY_EXCEPTIONS: ReadonlySet<string> = new Set([])
 
 describe("src/browser/ の深さ", () => {
   it(`src/browser/ のファイルは、除外の一覧の下を除いて深さ ${String(MAX_BROWSER_DEPTH)} 以内`, () => {

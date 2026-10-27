@@ -37,7 +37,7 @@ vi.mock("../../../../src/browser/features/run-setting/components/run-setting-gro
   RunSettingGroup: () => <div />,
 }))
 vi.mock(
-  "../../../../src/browser/components/page/conversation/components/main-view/components/turn-list/turn-list.tsx",
+  "../../../../src/browser/components/page/conversation/components/main-view/turn-list.tsx",
   () => ({ TurnList: () => <div /> }),
 )
 vi.mock("../../../../src/browser/components/page/conversation/conversation.tsx", () => ({

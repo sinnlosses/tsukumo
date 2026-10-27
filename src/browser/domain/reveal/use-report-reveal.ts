@@ -38,7 +38,7 @@ const REVEALING_ATTRIBUTE = "data-revealing"
 
 /**
  * 自動送りが追う範囲（`BrushTipRange.tipHeight`）に渡す、ミニ立ち絵の高さの見積もり。
- * 実測ではなく固定値で、`mini-portrait.module.css` の `--mini-portrait-height`（`clamp(60px, 8vmin, 96px)`）の上限に合わせる。
+ * 実測ではなく固定値で、`turn-card/mini-portrait.css` の `--mini-portrait-height`（`clamp(60px, 8vmin, 96px)`）の上限に合わせる。
  * 狭く見積もって立ち絵の頭が余白から出るより、広めに見積もって余白が少し余るほうが安全。
  */
 const MINI_PORTRAIT_HEIGHT_ESTIMATE_PX = 96

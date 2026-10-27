@@ -15,7 +15,7 @@ import { SidebarTaskPane } from "../domain/sidebar/components/sidebar-task-pane.
 import { UsagePane } from "../domain/sidebar/components/usage-pane.tsx"
 import { SkipLink } from "../domain/skip-link.tsx"
 import { DiaryNotice } from "../page/achievement/components/diary-notice/diary-notice.tsx"
-import { TurnList } from "../page/conversation/components/main-view/components/turn-list/turn-list.tsx"
+import { TurnList } from "../page/conversation/components/main-view/turn-list.tsx"
 import { Conversation } from "../page/conversation/conversation.tsx"
 import { deferredScreen } from "./deferred-screen.tsx"
 import { ScreenBoundary } from "./screen-boundary.tsx"

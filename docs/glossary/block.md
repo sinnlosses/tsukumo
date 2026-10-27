@@ -93,7 +93,7 @@
 
 ### やり取りの列
 
-- **英語識別子**: `ReportOutline`（部品。`main-view/components/report-outline/`）/
+- **英語識別子**: `ReportOutline`（部品。`main-view/report-outline.tsx`）/
   `ReportOutlineEntry`（見出し1つ。`level` は `section`〔`##`〕/ `sub`〔`###`〕）/
   `OutlineReport`（レポートの行の材料。`main-view/domain/outline-report-row.ts`）
 - **定義**: **メインビューの左の列**。窓の中のやり取りの一覧と、見ているやり取りのレポートの行・見出しの

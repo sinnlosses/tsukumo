@@ -48,7 +48,7 @@
 
 ### 失敗の塊
 
-- **英語識別子**: `TurnFailureBlock`（`src/browser/components/page/conversation/components/main-view/components/turn-failure-block/`）
+- **英語識別子**: `TurnFailureBlock`（`src/browser/components/page/conversation/components/main-view/turn-failure-block.tsx`）
 - **定義**: 失敗で終わったやり取りのレポートの頭に出す塊。何が起きたかを人の言葉で言い、次の手
   （同じ依頼を入力欄に戻す・利用上限の戻る時刻を示して入力欄に戻す・失敗した手順を見る）を押せる
 - **注記**: 次の手はどれも入力欄に戻すか一覧を開くだけで、送らず、自動では再開しない
@@ -57,7 +57,7 @@
 
 ### 進み具合の帯
 
-- **英語識別子**: `WorkStrip`（`src/browser/components/page/conversation/components/main-view/components/work-strip/`）
+- **英語識別子**: `WorkStrip`（`src/browser/components/page/conversation/components/main-view/work-strip.tsx`）
 - **定義**: 会話の画面のメインビューの札に載せる、段の丸の並び・今の段の名前・経過・
   いま走っている手順（再試行中・答え待ちも）と、押すと開く依頼の手順の一覧の口を持つ横の帯。
   段の丸を押すと、その段の名前・所要・段のまとめの吹き出しが出る。
@@ -121,7 +121,7 @@
 
 ### 依頼の全文
 
-- **英語識別子**: `RequestBlock`（`src/browser/components/page/conversation/components/main-view/components/request-block/`）
+- **英語識別子**: `RequestBlock`（`src/browser/components/page/conversation/components/main-view/request-block.tsx`）
 - **定義**: メインビューの本文の頭に、見ているやり取りの依頼の全文と
   添えた画像を出す塊。見出し「依頼」がページの `h2`。1行に畳み、「全文」で開いて畳み直せる
 - **注記**: 札の頭の題の行を無くしたときに置いた。列の行には依頼の1行目だけを出す。

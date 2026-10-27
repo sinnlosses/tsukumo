@@ -3,6 +3,7 @@
 // 撮影の件は `pnpm run check` で走らないので、class を消した変更が件を黙って壊す。
 
 import { readdirSync, readFileSync } from "node:fs"
+import path from "node:path"
 import { fileURLToPath } from "node:url"
 
 import { describe, expect, test } from "vitest"
@@ -36,17 +37,25 @@ describe("撮影の件のセレクタの class", () => {
   })
 
   test("すべて src の *.module.css とその部品に定義がある", () => {
+    const moduleFiles = readdirSync(SRC_DIR, { recursive: true, encoding: "utf8" }).filter((file) =>
+      file.endsWith(".module.css"),
+    )
     const defined = new Set(
-      readdirSync(SRC_DIR, { recursive: true, encoding: "utf8" })
-        .filter(
-          (file) => file.endsWith(".module.css") || /(^|\/)report-notation-[^/]+\.css$/.test(file),
-        )
-        .flatMap((file) => cssClassNames(readFileSync(`${SRC_DIR}${file}`, "utf8"))),
+      [...moduleFiles, ...moduleFiles.flatMap(importedParts)].flatMap((file) =>
+        cssClassNames(readFileSync(`${SRC_DIR}${file}`, "utf8")),
+      ),
     )
 
     expect(selectorNames.filter((name) => !defined.has(name))).toEqual([])
   })
 })
+
+/** `.module.css` が `@import` する `.css`（入口の名前で class が焼かれる部品）の、`src/` からの相対パス。 */
+function importedParts(moduleFile: string): readonly string[] {
+  return [...readFileSync(`${SRC_DIR}${moduleFile}`, "utf8").matchAll(/@import "(\.[^"]+)"/g)].map(
+    ([, part]) => path.posix.join(path.posix.dirname(moduleFile), part ?? ""),
+  )
+}
 
 const SELECTOR_ARIA_LABEL_PATTERN = /\[aria-label\^?="([^"]+)"\]/g
 const FAKE_SESSION_DIR = fileURLToPath(new URL("../../../fixture/fake-session/", import.meta.url))

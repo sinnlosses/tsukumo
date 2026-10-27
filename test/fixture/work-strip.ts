@@ -4,7 +4,7 @@ import { vi } from "vitest"
 import {
   useWorkStrip,
   type WorkStripModel,
-} from "../../src/browser/components/page/conversation/components/main-view/components/work-strip/hooks/use-work-strip.ts"
+} from "../../src/browser/components/page/conversation/components/main-view/hooks/use-work-strip.ts"
 import type { SessionEvent } from "../../src/shared/session/session-event.ts"
 import { applySessionEvent } from "../../src/shared/session/session-fold.ts"
 import { INITIAL_SESSION_STATE, type SessionState } from "../../src/shared/session/session-state.ts"

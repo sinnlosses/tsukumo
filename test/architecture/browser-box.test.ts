@@ -132,7 +132,14 @@ describe("components/ui/ の置き方", () => {
 // `<部品>.tsx` は自分の `components/` と概念のディレクトリを `export … from` で再エクスポートできない。
 // `components/` の直下はディレクトリだけで、`hooks/` は部品の形（`<名前>.tsx` など）を求めない
 // 固定の置き場として例外にする。
-const PAGE_CONCEPT_DIRECTORIES: ReadonlySet<string> = new Set(["renderer", "stage", "form"])
+const PAGE_CONCEPT_DIRECTORIES: ReadonlySet<string> = new Set([
+  "form",
+  "phone",
+  "renderer",
+  "stage",
+  "turn-card",
+  "welcome",
+])
 
 type PageNodeRule = {
   /** このディレクトリ自身が `components/` を持ってよいか。 */

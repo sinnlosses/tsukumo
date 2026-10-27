@@ -1,5 +1,5 @@
 .detail-block {
-  /* `task` のあるレポートの結論の一文。見出し（`report-head.module.css`）のすぐ下に描く。 */
+  /* `task` のあるレポートの結論の一文。見出し（`turn-card/report-head.css`）のすぐ下に描く。 */
   & .report-conclusion {
     font-size: var(--font-subheading);
     line-height: 1.85;
