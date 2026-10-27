@@ -7,16 +7,16 @@
 
 import { useState, type ReactElement } from "react"
 
-import { Button } from "../../../../../../ui/button/button.tsx"
-import { Dialog } from "../../../../../../ui/dialog/dialog.tsx"
-import { Field } from "../../../../../../ui/field/field.tsx"
-import { Heading } from "../../../../../../ui/heading/heading.tsx"
-import { TextField } from "../../../../../../ui/text-field/text-field.tsx"
-import { Text } from "../../../../../../ui/text/text.tsx"
-import { VStack } from "../../../../../../ui/v-stack/v-stack.tsx"
-import characterStyles from "../../../../character.module.css"
-import type { CharacterDeleteBandModel } from "../../../../domain/character-edit-model.ts"
-import styles from "./character-delete-confirm.module.css"
+import { Button } from "../../../../ui/button/button.tsx"
+import { Dialog } from "../../../../ui/dialog/dialog.tsx"
+import { Field } from "../../../../ui/field/field.tsx"
+import { Heading } from "../../../../ui/heading/heading.tsx"
+import { TextField } from "../../../../ui/text-field/text-field.tsx"
+import { Text } from "../../../../ui/text/text.tsx"
+import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
+import characterStyles from "../../character.module.css"
+import type { CharacterDeleteBandModel } from "../../domain/character-edit-model.ts"
+import styles from "./character-edit.module.css"
 
 type CharacterDeleteConfirmProps = {
   readonly band: Extract<CharacterDeleteBandModel, { readonly kind: "shown" }>

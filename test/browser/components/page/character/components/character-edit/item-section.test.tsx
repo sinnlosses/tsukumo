@@ -2,19 +2,15 @@ import { QueryClientProvider } from "@tanstack/react-query"
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
-import { CharacterEdit } from "../../../../../../../../../src/browser/components/page/character/components/character-edit/character-edit.tsx"
-import { MAX_ITEMS, type ItemInfo } from "../../../../../../../../../src/shared/item/item.ts"
+import { CharacterEdit } from "../../../../../../../src/browser/components/page/character/components/character-edit/character-edit.tsx"
+import { MAX_ITEMS, type ItemInfo } from "../../../../../../../src/shared/item/item.ts"
 import {
   INITIAL_SESSION_STATE,
   type SessionState,
-} from "../../../../../../../../../src/shared/session/session-state.ts"
-import { characterInfo } from "../../../../../../../../fixture/character.ts"
-import { createTestQueryClient } from "../../../../../../../query-client.tsx"
-import {
-  type CommandSpy,
-  type SentCommand,
-  putSession,
-} from "../../../../../../../session-store.ts"
+} from "../../../../../../../src/shared/session/session-state.ts"
+import { characterInfo } from "../../../../../../fixture/character.ts"
+import { createTestQueryClient } from "../../../../../query-client.tsx"
+import { type CommandSpy, type SentCommand, putSession } from "../../../../../session-store.ts"
 
 const FIXTURE_CHARACTER = characterInfo({})
 

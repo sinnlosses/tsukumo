@@ -4,15 +4,15 @@
 
 import { type ReactElement, useState } from "react"
 
-import { MAX_ITEM_NAME_LENGTH } from "../../../../../../../../shared/item/item.ts"
-import { Button } from "../../../../../../ui/button/button.tsx"
-import { Dialog } from "../../../../../../ui/dialog/dialog.tsx"
-import { Field } from "../../../../../../ui/field/field.tsx"
-import { Heading } from "../../../../../../ui/heading/heading.tsx"
-import { TextField } from "../../../../../../ui/text-field/text-field.tsx"
-import { Text } from "../../../../../../ui/text/text.tsx"
-import styles from "../../../../character.module.css"
-import type { ItemAddDialogModel } from "../../../../domain/item-edit-model.ts"
+import { MAX_ITEM_NAME_LENGTH } from "../../../../../../shared/item/item.ts"
+import { Button } from "../../../../ui/button/button.tsx"
+import { Dialog } from "../../../../ui/dialog/dialog.tsx"
+import { Field } from "../../../../ui/field/field.tsx"
+import { Heading } from "../../../../ui/heading/heading.tsx"
+import { TextField } from "../../../../ui/text-field/text-field.tsx"
+import { Text } from "../../../../ui/text/text.tsx"
+import styles from "../../character.module.css"
+import type { ItemAddDialogModel } from "../../domain/item-edit-model.ts"
 
 /** 選ぶときの絞り込み。中身の検証はサーバ側。 */
 const ITEM_FILE_ACCEPT = ".svg,.png,.gif"

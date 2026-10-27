@@ -3,17 +3,17 @@
 
 import type { ReactElement } from "react"
 
-import { Button } from "../../../../../../ui/button/button.tsx"
-import { Heading } from "../../../../../../ui/heading/heading.tsx"
-import { PlusIcon, TrashIcon } from "../../../../../../ui/icon/icon.tsx"
-import { Select } from "../../../../../../ui/select/select.tsx"
-import { Text } from "../../../../../../ui/text/text.tsx"
-import { VStack } from "../../../../../../ui/v-stack/v-stack.tsx"
-import { ITEM_LEAD, SEAT_EMPTY_OPTION } from "../../../../domain/character-edit-copy.ts"
-import type { ItemSectionModel, SeatPickModel } from "../../../../domain/item-edit-model.ts"
-import { ItemAddDialog } from "../item-add-dialog/item-add-dialog.tsx"
-import { ItemRemoveConfirm } from "../item-remove-confirm/item-remove-confirm.tsx"
-import styles from "./item-section.module.css"
+import { Button } from "../../../../ui/button/button.tsx"
+import { Heading } from "../../../../ui/heading/heading.tsx"
+import { PlusIcon, TrashIcon } from "../../../../ui/icon/icon.tsx"
+import { Select } from "../../../../ui/select/select.tsx"
+import { Text } from "../../../../ui/text/text.tsx"
+import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
+import { ITEM_LEAD, SEAT_EMPTY_OPTION } from "../../domain/character-edit-copy.ts"
+import type { ItemSectionModel, SeatPickModel } from "../../domain/item-edit-model.ts"
+import styles from "./character-edit.module.css"
+import { ItemAddDialog } from "./item-add-dialog.tsx"
+import { ItemRemoveConfirm } from "./item-remove-confirm.tsx"
 
 export function ItemSection(props: { readonly section: ItemSectionModel }): ReactElement {
   const { section } = props

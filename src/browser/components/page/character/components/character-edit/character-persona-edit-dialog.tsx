@@ -5,14 +5,14 @@
 
 import { useState, type ReactElement } from "react"
 
-import { MAX_PERSONA_BODY_LENGTH } from "../../../../../../../../shared/character-pack/persona-section.ts"
-import { Button } from "../../../../../../ui/button/button.tsx"
-import { Dialog } from "../../../../../../ui/dialog/dialog.tsx"
-import { Field } from "../../../../../../ui/field/field.tsx"
-import { Heading } from "../../../../../../ui/heading/heading.tsx"
-import { TextField } from "../../../../../../ui/text-field/text-field.tsx"
-import { Text } from "../../../../../../ui/text/text.tsx"
-import styles from "../../../../character.module.css"
+import { MAX_PERSONA_BODY_LENGTH } from "../../../../../../shared/character-pack/persona-section.ts"
+import { Button } from "../../../../ui/button/button.tsx"
+import { Dialog } from "../../../../ui/dialog/dialog.tsx"
+import { Field } from "../../../../ui/field/field.tsx"
+import { Heading } from "../../../../ui/heading/heading.tsx"
+import { TextField } from "../../../../ui/text-field/text-field.tsx"
+import { Text } from "../../../../ui/text/text.tsx"
+import styles from "../../character.module.css"
 
 const PERSONA_HINT =
   "口調や性格を書く。保存した人格が効くのは次に起こすセッションから。雑談で覚えたことはここには出ない"

@@ -6,12 +6,12 @@
 
 import type { ReactElement } from "react"
 
-import { Button } from "../../../../../../ui/button/button.tsx"
-import { Dialog, type DialogPlacement } from "../../../../../../ui/dialog/dialog.tsx"
-import { HStack } from "../../../../../../ui/h-stack/h-stack.tsx"
-import { Text } from "../../../../../../ui/text/text.tsx"
-import characterStyles from "../../../../character.module.css"
-import styles from "./portrait-clear-confirm.module.css"
+import { Button } from "../../../../ui/button/button.tsx"
+import { Dialog, type DialogPlacement } from "../../../../ui/dialog/dialog.tsx"
+import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
+import { Text } from "../../../../ui/text/text.tsx"
+import characterStyles from "../../character.module.css"
+import styles from "./character-edit.module.css"
 
 /** 吹き出しの幅（見本の実測）。 */
 const CONFIRM_WIDTH = 300

@@ -4,17 +4,17 @@
 
 import type { ReactElement } from "react"
 
-import { Button } from "../../../../../../ui/button/button.tsx"
-import { HStack } from "../../../../../../ui/h-stack/h-stack.tsx"
-import { Heading } from "../../../../../../ui/heading/heading.tsx"
-import { SwitchIcon } from "../../../../../../ui/icon/icon.tsx"
-import { Text } from "../../../../../../ui/text/text.tsx"
-import { VStack } from "../../../../../../ui/v-stack/v-stack.tsx"
-import characterStyles from "../../../../character.module.css"
-import type { CharacterProfileModel } from "../../../../domain/character-edit-model.ts"
-import { CharacterPersonaEdit } from "../character-persona-edit/character-persona-edit.tsx"
-import { CharacterProfileEdit } from "../character-profile-edit/character-profile-edit.tsx"
-import styles from "./character-profile.module.css"
+import { Button } from "../../../../ui/button/button.tsx"
+import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
+import { Heading } from "../../../../ui/heading/heading.tsx"
+import { SwitchIcon } from "../../../../ui/icon/icon.tsx"
+import { Text } from "../../../../ui/text/text.tsx"
+import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
+import characterStyles from "../../character.module.css"
+import type { CharacterProfileModel } from "../../domain/character-edit-model.ts"
+import styles from "./character-edit.module.css"
+import { CharacterPersonaEdit } from "./character-persona-edit.tsx"
+import { CharacterProfileEdit } from "./character-profile-edit.tsx"
 
 export function CharacterProfile(props: { readonly profile: CharacterProfileModel }): ReactElement {
   const { profile } = props

@@ -16,8 +16,8 @@ import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
 import characterStyles from "../../character.module.css"
 import { AccentSwatch } from "../accent-swatch/accent-swatch.tsx"
 import styles from "./character-create.module.css"
-import { PortraitDrop } from "./components/portrait-drop/portrait-drop.tsx"
 import type { CharacterCreateModel } from "./hooks/use-character-create.ts"
+import { PortraitDrop } from "./portrait-drop.tsx"
 
 type PresentationalCharacterCreateProps = CharacterCreateModel & {
   readonly onClose: () => void

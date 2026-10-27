@@ -3,13 +3,13 @@
 
 import type { ReactElement } from "react"
 
-import { Button } from "../../../../../../ui/button/button.tsx"
-import { Dialog } from "../../../../../../ui/dialog/dialog.tsx"
-import { HStack } from "../../../../../../ui/h-stack/h-stack.tsx"
-import { Text } from "../../../../../../ui/text/text.tsx"
-import characterStyles from "../../../../character.module.css"
-import type { ItemRemoveConfirmModel } from "../../../../domain/item-edit-model.ts"
-import styles from "./item-remove-confirm.module.css"
+import { Button } from "../../../../ui/button/button.tsx"
+import { Dialog } from "../../../../ui/dialog/dialog.tsx"
+import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
+import { Text } from "../../../../ui/text/text.tsx"
+import characterStyles from "../../character.module.css"
+import type { ItemRemoveConfirmModel } from "../../domain/item-edit-model.ts"
+import styles from "./character-edit.module.css"
 
 type OpenConfirm = Extract<ItemRemoveConfirmModel, { kind: "open" }>
 

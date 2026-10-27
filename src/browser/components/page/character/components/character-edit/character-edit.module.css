@@ -50,3 +50,449 @@
     padding: 1rem;
   }
 }
+
+/* 消す／同梱に戻す前の確かめ。UA 既定の中央寄せで、画面全体を覆う。 */
+.character-delete-dialog {
+  box-sizing: border-box;
+  width: min(32.5rem, calc(100vw - 2rem));
+  max-height: calc(100vh - 4rem);
+  margin: auto;
+  padding: 1.5rem 1.625rem;
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid color-mix(in srgb, var(--surface), var(--state-ng) 45%);
+  border-radius: 0.875rem;
+  overflow: auto;
+}
+.character-delete-head {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+}
+.character-delete-portrait,
+.character-delete-portrait-blank {
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+}
+.character-delete-portrait {
+  object-fit: cover;
+  filter: grayscale(0.6);
+}
+.character-delete-portrait-blank {
+  box-sizing: border-box;
+  background: var(--ground);
+  border: 1px dashed var(--rule);
+}
+/* 字の段・色は `Text` が持つ。行の高さ・改行の扱いだけここに置く。 */
+.character-delete-note {
+  line-height: 1.8;
+  white-space: pre-line;
+}
+.character-delete-input {
+  height: 2.5rem;
+  padding: 0 0.75rem;
+  border-color: color-mix(in srgb, var(--surface), var(--state-ng) 45%);
+  font-family: var(--font-mono);
+}
+.character-delete-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.625rem;
+}
+/* 顔は `<Button variant="solid-danger">` が持つ。箱だけここに置く。 */
+.character-delete-ok {
+  height: 2.5rem;
+  padding: 0 1.125rem;
+  border-radius: 0.5625rem;
+}
+
+/* このキャラクターを消す／同梱に戻す帯。
+   赤みがかった枠（`state-ng` を混ぜた地と縁）。 */
+.character-delete-band {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.875rem 1rem;
+  background: color-mix(in srgb, var(--ground), var(--state-ng) 8%);
+  border: 1px solid color-mix(in srgb, var(--surface), var(--state-ng) 45%);
+  border-radius: 0.75rem;
+}
+.character-delete-band-text {
+  display: flex;
+  flex: 1 1 16rem;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+/* 名乗り */
+.character-profile {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.1rem;
+}
+.character-profile-face,
+.character-profile-face-blank {
+  flex-shrink: 0;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+}
+.character-profile-face {
+  object-fit: cover;
+  box-shadow: 0 0 0 2px var(--accent);
+}
+.character-profile-face-blank {
+  box-sizing: border-box;
+  background: var(--ground);
+  border: 1px dashed var(--rule);
+}
+.character-profile-text {
+  flex: 1 1 14rem;
+  min-width: 0;
+}
+.character-profile-headline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.4rem 0.75rem;
+}
+/* 字の段・色・太さは `Heading` が持つ。字間だけここに置く。 */
+.character-profile-name {
+  letter-spacing: 0.06em;
+}
+/* パックの名前はディレクトリ名なので等幅。 */
+/* 字の段・色は `Text` が持つ。書体だけここに置く。 */
+.character-profile-id {
+  font-family: var(--font-mono);
+}
+.character-in-use {
+  padding: 0.1rem 0.55rem;
+  background: var(--accent);
+  color: var(--ground);
+  border-radius: 999px;
+  font-size: var(--font-label);
+  font-weight: bold;
+}
+/* 「名前と自己紹介文を設定する」と「このキャラクターに切り替える」の並び（右端に寄せる）。 */
+.character-profile-actions {
+  margin-left: auto;
+}
+
+/* 顔の行。帯・一覧・名乗りの丸と同じ丸い縮図と、字と2つの口。 */
+.character-face-field-preview,
+.character-face-field-blank {
+  box-sizing: border-box;
+  flex-shrink: 0;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+}
+.character-face-field-preview {
+  border: 1px solid var(--rule-quiet);
+  object-fit: cover;
+}
+/* 顔が無いときは、背景と同じ点線の枠（丸め）。 */
+.character-face-field-blank {
+  border: 1.5px dashed var(--rule);
+}
+
+/* ミニ立ち絵の行。立ち絵に近い縦長の縮図（全身が収まるよう contain）と、字と2つの口。 */
+.character-mini-field-preview,
+.character-mini-field-blank {
+  box-sizing: border-box;
+  flex-shrink: 0;
+  width: 84px;
+  height: 112px;
+  border-radius: 0.625rem;
+}
+.character-mini-field-preview {
+  border: 1px solid var(--rule-quiet);
+  object-fit: contain;
+}
+/* ミニ立ち絵を持たないときは、背景と同じ点線の枠。フォールバックの絵は縮図に出さない。 */
+.character-mini-field-blank {
+  border: 1.5px dashed var(--rule);
+}
+
+/* 背景の行。敷いたときと同じ切り取り方（cover・下端合わせ）の縮図と、字と2つの口。 */
+.character-background-preview,
+.character-background-blank {
+  box-sizing: border-box;
+  width: 220px;
+  max-width: 100%;
+  height: 124px;
+  border-radius: 0.625rem;
+}
+.character-background-preview {
+  border: 1px solid var(--rule-quiet);
+  object-fit: cover;
+  object-position: center bottom;
+}
+/* 背景が無いときは、表情の空欄と同じ点線の枠（そこに置けることだけを示す）。 */
+.character-background-blank {
+  border: 1.5px dashed var(--rule);
+}
+
+.item-remove-confirm {
+  box-sizing: border-box;
+  width: 22rem;
+  max-width: calc(100vw - 2rem);
+  margin: auto;
+  padding: 1rem;
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid color-mix(in srgb, var(--surface), var(--state-ng) 45%);
+  border-radius: 0.875rem;
+}
+.item-remove-confirm[open] {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.item-remove-confirm-thumb {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  background: var(--ground);
+  border-radius: 0.5rem;
+}
+.item-remove-confirm-note {
+  line-height: 1.7;
+}
+.item-remove-confirm-ok {
+  height: 34px;
+  padding: 0 0.875rem;
+  border-radius: 0.5rem;
+}
+
+/* 席の札3枚。広いときは横に並べ、狭いときは1枚ずつ縦に積む。 */
+.item-seats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 0.75rem;
+}
+.item-seat {
+  display: grid;
+  grid-template-columns: 4rem minmax(0, 1fr);
+  grid-template-areas:
+    "thumb label"
+    "thumb select";
+  align-items: center;
+  column-gap: 0.75rem;
+  row-gap: 0.4rem;
+  padding: 0.6rem;
+  background: var(--surface);
+  border: 1px solid var(--rule-quiet);
+  border-radius: 0.625rem;
+}
+.item-seat-thumb,
+.item-seat-blank {
+  box-sizing: border-box;
+  grid-area: thumb;
+  width: 4rem;
+  height: 4rem;
+  border-radius: 0.5rem;
+}
+.item-seat-thumb {
+  object-fit: contain;
+  background: var(--ground);
+  border: 1px solid var(--rule-quiet);
+}
+.item-seat-blank {
+  border: 1.5px dashed var(--rule);
+}
+.item-seat-label {
+  grid-area: label;
+  font-size: var(--font-secondary);
+  font-weight: bold;
+}
+.item-seat-select-frame {
+  grid-area: select;
+  min-width: 0;
+}
+.item-seat-select {
+  box-sizing: border-box;
+  width: 100%;
+  height: 2rem;
+  padding: 0 1.75rem 0 0.5rem;
+  border: 1px solid var(--rule-quiet);
+  border-radius: 0.5rem;
+  background: var(--ground);
+  color: var(--ink);
+  font-size: var(--font-secondary);
+  cursor: pointer;
+}
+.item-seat-select:hover {
+  border-color: var(--accent);
+}
+/* 開いた一覧の地はブラウザが描くので、選択肢の地と字は明示する。 */
+.item-seat-select option {
+  background: var(--surface);
+  color: var(--ink);
+}
+
+/* 一覧の格子。 */
+.item-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.item-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem;
+  background: var(--surface);
+  border: 1px solid var(--rule-quiet);
+  border-radius: 0.625rem;
+}
+.item-card-thumb {
+  width: 4.5rem;
+  height: 4.5rem;
+  object-fit: contain;
+}
+.item-card-name {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: var(--font-secondary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* 右上の消す口。カードに乗せたとき・フォーカスがあるときだけ出す。 */
+.item-card-actions {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.35rem;
+  opacity: 0;
+  transition: opacity 0.12s ease-out;
+}
+.item-card:hover .item-card-actions,
+.item-card:focus-within .item-card-actions {
+  opacity: 1;
+}
+@media (hover: none) {
+  .item-card-actions {
+    opacity: 1;
+  }
+}
+.item-card-remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: 0.5rem;
+}
+
+.item-add-cell {
+  display: flex;
+}
+.item-add {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 7.5rem;
+  padding: 0 0.75rem;
+  border-radius: 0.625rem;
+  white-space: nowrap;
+}
+
+.character-card-stage {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  height: 10.5rem;
+  padding-top: 0.5rem;
+}
+/* 立ち絵は枠も地も持たない（カードの地の上に直接置く）。
+   大きさはここで決める（`<Portrait>` に className で渡す置き方。キャラビュー側の割合指定は `.character-region` が持つ変数なので、この画面では解決されない）。 */
+.character-card-stage .character-card-portrait {
+  height: 10rem;
+  max-width: 100%;
+  margin: 0;
+}
+.character-card-label {
+  padding: 0.5rem 0.6rem 0.6rem;
+  border-top: 1px solid var(--rule-quiet);
+  font-size: var(--font-secondary);
+  text-align: center;
+}
+.character-card-badge {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  padding: 0.05rem 0.45rem;
+  background: var(--accent);
+  color: var(--ground);
+  border-radius: 0.5rem;
+  font-size: var(--font-label);
+  font-weight: bold;
+}
+/* `<Button>` で描く消す口の箱だけ（顔は Button が持つ）。寸法は `.character-card-action` と揃える。 */
+.character-card-clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: 0.5rem;
+}
+.character-card-clear:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* 表情を消す前の確かめ。画面全体は覆わない。
+   UA 既定の中央寄せ（`inset: 0; margin: auto;`）を外し、押したカードの位置から置く（`top` / `left` は部品側の inline style）。
+   `showModal()` なので top layer に出て `.character-card` の `overflow: hidden` には切り取られない。 */
+.character-clear-confirm {
+  position: fixed;
+  inset: auto;
+  box-sizing: border-box;
+  width: 300px;
+  max-width: calc(100vw - 2rem);
+  margin: 0;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid color-mix(in srgb, var(--surface), var(--state-ng) 45%);
+  border-radius: 0.875rem;
+  box-shadow: 0 16px 40px color-mix(in srgb, var(--ground) 70%, transparent);
+}
+/* 画面を暗く覆わない（`<Dialog backdrop="clear">` が既定の暗いベールを消し、外側クリックの読み替えだけ使う）。 */
+.character-clear-confirm-portrait {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  background: var(--ground);
+  border-radius: 0.5rem;
+}
+/* 字の段・色は `Text` が持つ。行の高さだけここに置く。 */
+.character-clear-confirm-note {
+  line-height: 1.7;
+}
+/* 顔は `<Button variant="solid-danger">` が持つ。箱だけここに置く。 */
+.character-clear-confirm-ok {
+  height: 34px;
+  padding: 0 0.875rem;
+  border-radius: 0.5rem;
+}

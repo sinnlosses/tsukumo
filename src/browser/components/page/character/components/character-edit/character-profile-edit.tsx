@@ -4,11 +4,11 @@
 
 import { useState, type ReactElement } from "react"
 
-import { Button } from "../../../../../../ui/button/button.tsx"
-import { PencilIcon } from "../../../../../../ui/icon/icon.tsx"
-import styles from "../../../../character.module.css"
-import type { CharacterProfileEditModel } from "../../../../domain/character-edit-model.ts"
-import { CharacterProfileEditDialog } from "../character-profile-edit-dialog/character-profile-edit-dialog.tsx"
+import { Button } from "../../../../ui/button/button.tsx"
+import { PencilIcon } from "../../../../ui/icon/icon.tsx"
+import styles from "../../character.module.css"
+import type { CharacterProfileEditModel } from "../../domain/character-edit-model.ts"
+import { CharacterProfileEditDialog } from "./character-profile-edit-dialog.tsx"
 
 export function CharacterProfileEdit(props: {
   readonly edit: CharacterProfileEditModel

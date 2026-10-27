@@ -11,12 +11,12 @@ import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
 import characterStyles from "../../character.module.css"
 import type { CharacterEditModel } from "../../domain/character-edit-model.ts"
 import { AccentSwatch } from "../accent-swatch/accent-swatch.tsx"
+import { CharacterDelete } from "./character-delete.tsx"
 import styles from "./character-edit.module.css"
-import { CharacterDelete } from "./components/character-delete/character-delete.tsx"
-import { CharacterProfile } from "./components/character-profile/character-profile.tsx"
-import { ImageField } from "./components/image-field/image-field.tsx"
-import { ItemSection } from "./components/item-section/item-section.tsx"
-import { PortraitCard } from "./components/portrait-card/portrait-card.tsx"
+import { CharacterProfile } from "./character-profile.tsx"
+import { ImageField } from "./image-field.tsx"
+import { ItemSection } from "./item-section.tsx"
+import { PortraitCard } from "./portrait-card.tsx"
 
 type PresentationalCharacterEditProps = CharacterEditModel
 

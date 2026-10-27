@@ -3,11 +3,11 @@
 
 import { useState, type ReactElement } from "react"
 
-import { Button } from "../../../../../../ui/button/button.tsx"
-import { PencilIcon } from "../../../../../../ui/icon/icon.tsx"
-import styles from "../../../../character.module.css"
-import type { CharacterPersonaEditModel } from "../../../../domain/character-edit-model.ts"
-import { CharacterPersonaEditDialog } from "../character-persona-edit-dialog/character-persona-edit-dialog.tsx"
+import { Button } from "../../../../ui/button/button.tsx"
+import { PencilIcon } from "../../../../ui/icon/icon.tsx"
+import styles from "../../character.module.css"
+import type { CharacterPersonaEditModel } from "../../domain/character-edit-model.ts"
+import { CharacterPersonaEditDialog } from "./character-persona-edit-dialog.tsx"
 
 export function CharacterPersonaEdit(props: {
   readonly edit: CharacterPersonaEditModel

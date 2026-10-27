@@ -7,11 +7,11 @@
 import clsx from "clsx"
 import type { DragEvent, ReactElement } from "react"
 
-import { UploadIcon } from "../../../../../../ui/icon/icon.tsx"
-import { Text } from "../../../../../../ui/text/text.tsx"
-import characterStyles from "../../../../character.module.css"
-import type { PortraitDropModel } from "../../hooks/use-character-create.ts"
-import styles from "./portrait-drop.module.css"
+import { UploadIcon } from "../../../../ui/icon/icon.tsx"
+import { Text } from "../../../../ui/text/text.tsx"
+import characterStyles from "../../character.module.css"
+import styles from "./character-create.module.css"
+import type { PortraitDropModel } from "./hooks/use-character-create.ts"
 
 const PORTRAIT_FILE_ACCEPT = ".svg,.png,.gif"
 

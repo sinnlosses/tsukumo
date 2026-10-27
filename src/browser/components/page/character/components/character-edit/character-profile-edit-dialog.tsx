@@ -9,14 +9,14 @@ import { useState, type ReactElement } from "react"
 import {
   MAX_CHARACTER_NAME_LENGTH,
   MAX_CHARACTER_TAGLINE_LENGTH,
-} from "../../../../../../../../shared/character-pack/character-definition.ts"
-import { Button } from "../../../../../../ui/button/button.tsx"
-import { Dialog } from "../../../../../../ui/dialog/dialog.tsx"
-import { Field } from "../../../../../../ui/field/field.tsx"
-import { Heading } from "../../../../../../ui/heading/heading.tsx"
-import { TextField } from "../../../../../../ui/text-field/text-field.tsx"
-import { Text } from "../../../../../../ui/text/text.tsx"
-import styles from "../../../../character.module.css"
+} from "../../../../../../shared/character-pack/character-definition.ts"
+import { Button } from "../../../../ui/button/button.tsx"
+import { Dialog } from "../../../../ui/dialog/dialog.tsx"
+import { Field } from "../../../../ui/field/field.tsx"
+import { Heading } from "../../../../ui/heading/heading.tsx"
+import { TextField } from "../../../../ui/text-field/text-field.tsx"
+import { Text } from "../../../../ui/text/text.tsx"
+import styles from "../../character.module.css"
 
 /** 自己紹介文の説明（雑談のサイドバーの札にも出ることを添える）。 */
 const TAGLINE_HINT = "画面や雑談のサイドバーのプロフィールに出る一言"

@@ -11,20 +11,6 @@ const MAX_DEEP_DIRECTORY_EXCEPTIONS = 120
 // 上限を超えたまま残っている、深さ 7 のディレクトリ（`browser/` からの相対パス）。
 // この下のファイルは深さを数えない。移し終えたら一覧から消す。
 const DEEP_DIRECTORY_EXCEPTIONS: ReadonlySet<string> = new Set([
-  "components/page/character/components/character-create/components/portrait-drop",
-  "components/page/character/components/character-edit/components/character-delete",
-  "components/page/character/components/character-edit/components/character-delete-confirm",
-  "components/page/character/components/character-edit/components/character-persona-edit",
-  "components/page/character/components/character-edit/components/character-persona-edit-dialog",
-  "components/page/character/components/character-edit/components/character-profile",
-  "components/page/character/components/character-edit/components/character-profile-edit",
-  "components/page/character/components/character-edit/components/character-profile-edit-dialog",
-  "components/page/character/components/character-edit/components/image-field",
-  "components/page/character/components/character-edit/components/item-add-dialog",
-  "components/page/character/components/character-edit/components/item-remove-confirm",
-  "components/page/character/components/character-edit/components/item-section",
-  "components/page/character/components/character-edit/components/portrait-card",
-  "components/page/character/components/character-edit/components/portrait-clear-confirm",
   "components/page/conversation/components/character-view/components/balloon",
   "components/page/conversation/components/character-view/components/balloon-track",
   "components/page/conversation/components/character-view/components/item-seat-list",
