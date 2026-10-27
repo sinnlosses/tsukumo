@@ -1,0 +1,65 @@
+{
+  "name": "report-graph-states",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "状態の流れを件数つきで見たい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 300,
+      "event": {
+        "kind": "speech",
+        "text": "4つの状態を横一列に並べて、戻りの辺は点線にするね。",
+        "expression": "default"
+      }
+    },
+    {
+      "afterMs": 1000,
+      "event": {
+        "kind": "report",
+        "task": { "kind": "none" },
+        "toolUseId": "fake-graph-states",
+        "conclusion": "架空の件数。保留は依存が片付いても手で戻すまで動かない。",
+        "figure": {
+          "kind": "graph",
+          "title": "架空の状態の流れ",
+          "direction": "LR",
+          "source": "保留 | 11 件\\n（外せる 2 件）\n着手前 | 8 件\\n（ループ可 8 件）\n着手中 | 1 件\n完了 | 120 件\n保留 -> 着手前: 手で戻す\n着手前 -> 着手中: 着手\n着手中 -> 完了: 完了\n着手前 <- 着手中: 手放す",
+          "legend": []
+        },
+        "sections": [
+          {
+            "heading": "架空の節",
+            "shapeTag": "attribute",
+            "blocks": [
+              {
+                "kind": "list",
+                "style": "bullet",
+                "items": [{ "label": "架空", "text": "状態の流れが横1行に収まるかを確かめる場面" }]
+              }
+            ]
+          }
+        ],
+        "favor": "",
+        "closing": { "kind": "speech", "text": "書けたよ！", "expression": "proud" }
+      }
+    },
+    {
+      "afterMs": 1050,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-graph-states",
+        "content": "ok",
+        "isError": false
+      }
+    },
+    {
+      "afterMs": 1800,
+      "event": { "kind": "turn-finished", "outcome": { "kind": "completed" } }
+    }
+  ]
+}

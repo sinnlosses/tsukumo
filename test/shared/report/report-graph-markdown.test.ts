@@ -84,6 +84,27 @@ describe("graph の塊の mermaid のソースと凡例", () => {
     )
   })
 
+  it("入れ子の囲みは外側の subgraph の中に内側の subgraph を出し、直の節点は内側のあとに置く", () => {
+    const markdown = graphMarkdown("[外]\n[内]\nA\n[]\nB\n[]\nA -> B")
+
+    expect(markdown).toContain(
+      [
+        '  subgraph g1["外"]',
+        '    subgraph g0["内"]',
+        '      n0["A"]',
+        "    end",
+        '    n1["B"]',
+        "  end",
+      ].join("\n"),
+    )
+  })
+
+  it("箱の説明の改行は <br/> でつなぎ、行ごとに実体へ直す", () => {
+    const markdown = graphMarkdown("甲 | 一行目\\n二行目&\\n三行目")
+
+    expect(markdown).toContain('n0["甲<br/><small>一行目<br/>二行目#amp;<br/>三行目</small>"]')
+  })
+
   it("色の目印の無い群に地の色を順に当て、3つで巡る。目印のある群は数えない", () => {
     const markdown = graphMarkdown(
       "[甲]\nA\n[]\n[乙] @a\nB\n[]\n[丙]\nC\n[]\n[丁]\nD\n[]\n[戊]\nE\n[]",

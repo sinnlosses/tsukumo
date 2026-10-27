@@ -205,7 +205,7 @@ function initializeFor(themeVariables: Readonly<Record<string, string | boolean>
   if (key === initializedTheme) {
     return
   }
-  // 既定の配置は elk で、囲みをまたぐ辺のラベルが囲みの中の節点に重なる
+  // 既定の配置は elk。dagre に固定する（測定は ADR 0034 の「結果」）
   mermaid.initialize({
     startOnLoad: false,
     layout: "dagre",

@@ -54,7 +54,9 @@ describe("readGraphSource", () => {
       const reading = readGraphSource("X\n[架空の群]\nA\nB -> C\n[]\nC -> D")
 
       expect(reading.nodes.map(({ name }) => name)).toEqual(["X", "A", "B", "C", "D"])
-      expect(reading.groups).toEqual([{ name: "架空の群", nodes: [1, 2, 3], tone: "none" }])
+      expect(reading.groups).toEqual([
+        { name: "架空の群", nodes: [1, 2, 3], inner: [], tone: "none" },
+      ])
       expect(reading.brokenLines).toEqual([])
     })
 
@@ -62,14 +64,15 @@ describe("readGraphSource", () => {
       const reading = readGraphSource("[甲]\nA\n[]\n[乙]\nB\n[]")
 
       expect(reading.groups).toEqual([
-        { name: "甲", nodes: [0], tone: "none" },
-        { name: "乙", nodes: [1], tone: "none" },
+        { name: "甲", nodes: [0], inner: [], tone: "none" },
+        { name: "乙", nodes: [1], inner: [], tone: "none" },
       ])
       expect(reading.brokenLines).toEqual([])
     })
 
     it.each([
-      ["入れ子", "[甲]\n[乙]\nA\n[]\n[]", [2, 5]],
+      ["内側だけが空", "[甲]\nA\n[乙]\n[]\n[]", [3]],
+      ["3階層", "[甲]\n[乙]\n[丙]\nA\n[]\n[]\n[]", [3]],
       ["閉じ忘れ", "[甲]\nA", [1]],
       ["開いていない閉じ", "A\n[]", [2]],
       ["空の群", "[甲]\n[]", [1]],
@@ -79,8 +82,41 @@ describe("readGraphSource", () => {
       expect(readGraphSource(source).brokenLines).toEqual(broken)
     })
 
+    it("囲みは2階層まで入れ子にでき、外側は内側の添字を持つ", () => {
+      const reading = readGraphSource("[外]\nX\n[内]\nA\nB\n[]\n[]\nX -> A")
+
+      expect(reading.groups).toEqual([
+        { name: "内", nodes: [1, 2], inner: [], tone: "none" },
+        { name: "外", nodes: [0], inner: [0], tone: "none" },
+      ])
+      expect(reading.brokenLines).toEqual([])
+    })
+
+    it("外側に直の節点が無くても、内側の囲みがあれば群として読む", () => {
+      const reading = readGraphSource("[外]\n[内]\nA\n[]\n[]")
+
+      expect(reading.groups.map(({ name, inner }) => [name, inner])).toEqual([
+        ["内", []],
+        ["外", [0]],
+      ])
+      expect(reading.brokenLines).toEqual([])
+    })
+
+    it("3階層目の開きは壊れた行にし、対の閉じは飛ばして外側を壊さない", () => {
+      const reading = readGraphSource("[甲]\n[乙]\n[丙]\nA\n[]\n[]\n[]")
+
+      expect(reading.brokenLines).toEqual([3])
+      expect(reading.groups.map(({ name }) => name)).toEqual(["乙", "甲"])
+    })
+
+    it("別の囲みに入った節点を内側の囲みに入れ直すと壊れた行にする", () => {
+      expect(readGraphSource("[外]\nA\n[内]\nA\n[]\n[]").brokenLines).toEqual([3, 4])
+    })
+
     it("閉じ忘れの群は、中に節点があれば群として読む", () => {
-      expect(readGraphSource("[甲]\nA").groups).toEqual([{ name: "甲", nodes: [0], tone: "none" }])
+      expect(readGraphSource("[甲]\nA").groups).toEqual([
+        { name: "甲", nodes: [0], inner: [], tone: "none" },
+      ])
     })
   })
 
@@ -181,7 +217,7 @@ describe("readGraphSource", () => {
           returns: false,
         },
       ])
-      expect(groups).toEqual([{ name: "層", nodes: [0, 1, 2], tone: "b" }])
+      expect(groups).toEqual([{ name: "層", nodes: [0, 1, 2], inner: [], tone: "b" }])
       expect(brokenLines).toEqual([])
     })
 
@@ -269,6 +305,19 @@ describe("readGraphSource", () => {
         ["甲", "甲の説明", "added", "a"],
         ["乙", "", "unchanged", "none"],
       ])
+    })
+
+    it("説明は \\n で3行まで改行でき、note は実際の改行でつなぐ", () => {
+      const { nodes, brokenLines } = readGraphSource("甲 | 一行目 \\n 二行目\\n三行目")
+
+      expect(brokenLines).toEqual([])
+      expect(nodes[0]?.note).toBe("一行目\n二行目\n三行目")
+    })
+
+    it("4行以上と空の行は壊れた行にする", () => {
+      const reading = readGraphSource("甲 | 一\\n二\\n三\\n四\n乙 | 一\\n\\n三")
+
+      expect(reading.brokenLines).toEqual([1, 2])
     })
 
     it("説明の無い節点は note が空", () => {

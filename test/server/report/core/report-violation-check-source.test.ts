@@ -62,7 +62,7 @@ describe("reportViolations", () => {
       ).toEqual([{ kind: "unknown-mermaid", count: 1 }])
     })
 
-    it("graph の囲みの入れ子は broken-graph にし、文面に囲みの書き方を添える", () => {
+    it("graph の囲みが3階層以上は broken-graph にし、直し方を添える", () => {
       const violations = reportViolations(
         draft([
           {
@@ -70,7 +70,7 @@ describe("reportViolations", () => {
             title: "",
             direction: "TD",
             legend: [],
-            source: "[甲]\n[乙]\nA\n[]",
+            source: "[甲]\n[乙]\n[丙]\nA\n[]\n[]\n[]",
             fold: "",
             aside: "",
           },
@@ -78,9 +78,9 @@ describe("reportViolations", () => {
       )
 
       expect(violations).toEqual([
-        { kind: "broken-graph", count: 1, faults: [{ block: 1, line: 2 }] },
+        { kind: "broken-graph", count: 1, faults: [{ block: 1, line: 3 }] },
       ])
-      expect(reportRejectionText(violations)).toContain("[群の名]")
+      expect(reportRejectionText(violations)).toContain("2階層まで")
     })
 
     it("graph の source に読めない行があれば broken-graph にし、位置だけで書き手の行は持たない", () => {

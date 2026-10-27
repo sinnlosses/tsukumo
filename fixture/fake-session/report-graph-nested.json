@@ -1,0 +1,65 @@
+{
+  "name": "report-graph-nested",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "層の構成を入れ子の囲みで見たい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 300,
+      "event": {
+        "kind": "speech",
+        "text": "3つの層と、server の中の core と adapter を囲みで分けるね。",
+        "expression": "default"
+      }
+    },
+    {
+      "afterMs": 1000,
+      "event": {
+        "kind": "report",
+        "task": { "kind": "none" },
+        "toolUseId": "fake-graph-nested",
+        "conclusion": "架空の構成。層は shared・server・browser の3つで、server の中は core と adapter に分かれる。",
+        "figure": {
+          "kind": "graph",
+          "title": "架空の3層の構成",
+          "direction": "LR",
+          "source": "[shared]\n型 | 塊の型と\\nイベントの型\n[]\n[server]\n[core]\n検査 | 形と規約を\\n確かめる\n差し戻し | 位置だけを\\n書き手へ返す\n記録の判断 | 何を残すか\\nを決める\n[]\n[adapter]\n受け口 | ツールの呼び出しを\\n受ける @a\n台帳 | 1行ずつ\\nファイルへ足す @a\n配信 | 接続中の画面へ\\n流す @a\n[]\n[]\n[browser]\n受信 | イベントを\\n受け取る\n描画 | 塊ごとに\\n描く\n吹き出し | 結論を\\n見せる\n[]\n型 -> 検査: 読む\n受け口 -> 検査: 引数を渡す\n検査 -> 差し戻し: 違反あり\n差し戻し -> 受け口: 文面を返す\n検査 -> 記録の判断: 通った\n記録の判断 -> 台帳: 書かせる\n検査 -> 配信: 通った\n配信 -> 受信: WebSocket\n受信 -> 描画: 塊を渡す\n描画 -> 吹き出し: 結論\n型 -> 受信: 読む",
+          "legend": [{ "tone": "a", "label": "adapter（外に触る）" }]
+        },
+        "sections": [
+          {
+            "heading": "架空の節",
+            "shapeTag": "attribute",
+            "blocks": [
+              {
+                "kind": "list",
+                "style": "bullet",
+                "items": [{ "label": "架空", "text": "入れ子の囲みの見え方を確かめる場面" }]
+              }
+            ]
+          }
+        ],
+        "favor": "",
+        "closing": { "kind": "speech", "text": "書けたよ！", "expression": "proud" }
+      }
+    },
+    {
+      "afterMs": 1050,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-graph-nested",
+        "content": "ok",
+        "isError": false
+      }
+    },
+    {
+      "afterMs": 1800,
+      "event": { "kind": "turn-finished", "outcome": { "kind": "completed" } }
+    }
+  ]
+}

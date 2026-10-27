@@ -40,7 +40,11 @@ const MAX_PER_ROW = 6
 export function graphFoldFigure(source: string): GraphFoldFigure | undefined {
   const reading = readGraphSource(source)
   const main = mainPathOf(reading)
-  if (main === undefined || main.length < FOLD_MIN_MAIN_NODES) {
+  if (
+    reading.groups.some((group) => group.inner.length > 0) ||
+    main === undefined ||
+    main.length < FOLD_MIN_MAIN_NODES
+  ) {
     return undefined
   }
   const anchors = sideAnchorsOf(reading, main)

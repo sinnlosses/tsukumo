@@ -22,7 +22,7 @@ export type GraphSourceNode = {
   readonly change: GraphChange
   /** 節点だけの行に付いた色の目印。辺の行の目印は端の節点に掛けない。 */
   readonly tone: GraphTone
-  /** 節点だけの行に `名前 | 説明` で書いた説明の1行。無ければ空。 */
+  /** 節点だけの行に `名前 | 説明` で書いた説明。`\n` で改行した行を実際の改行でつなぐ（3行まで）。無ければ空。 */
   readonly note: string
 }
 
@@ -39,10 +39,14 @@ export type GraphSourceEdge = {
   readonly returns: boolean
 }
 
-/** 囲み（`[群の名]` 〜 `[]`）。`nodes` は `GraphSourceReading.nodes` の添字。 */
+/**
+ * 囲み（`[群の名]` 〜 `[]`）。`nodes` は `GraphSourceReading.nodes` の添字で、直に書いた節点だけ。
+ * 入れ子は2階層まで。`inner` は直に入れた囲みの `GraphSourceReading.groups` の添字（内側が先に閉じるので外側より小さい）。
+ */
 export type GraphSourceGroup = {
   readonly name: string
   readonly nodes: readonly number[]
+  readonly inner: readonly number[]
   readonly tone: GraphTone
 }
 
@@ -53,6 +57,12 @@ export type GraphSourceReading = {
   /** 読めなかった行の、1始まりの行番号（空行も数える）。 */
   readonly brokenLines: readonly number[]
 }
+
+const GROUP_DEPTH_LIMIT = 2
+
+const NOTE_LINE_LIMIT = 3
+
+const NOTE_BREAK = "\\n"
 
 /** 実線（`->`）・点線（`-.>`）・戻り道（`<-`）の矢印。分けると演算子も配列に残る。 */
 const ARROW_OR_DASHED = /(-\.>|->|<-)/
@@ -72,6 +82,7 @@ type ParsedName = {
 type ParsedLine =
   | { readonly kind: "blank" }
   | { readonly kind: "broken" }
+  | { readonly kind: "broken-note" }
   | { readonly kind: "group-open"; readonly name: string; readonly tone: GraphTone }
   | { readonly kind: "group-close" }
   | {
@@ -116,24 +127,21 @@ export function readGraphSource(source: string): GraphSourceReading {
   }
   const groups: GraphSourceGroup[] = []
   const groupOf = new Map<string, number>()
-  let open:
-    | {
-        readonly name: string
-        readonly tone: GraphTone
-        readonly line: number
-        readonly members: number[]
-      }
-    | undefined
-  const closeGroup = (): void => {
-    if (open === undefined) {
+  const stack: OpenGroup[] = []
+  let opened = 0
+  // 3階層目以降の開きは読まずに飛ばすので、対の閉じも飛ばす。
+  let skippedOpens = 0
+  const finishGroup = (group: OpenGroup): void => {
+    if (group.members.length === 0 && group.inner.length === 0) {
       return
     }
-    if (open.members.length === 0) {
-      brokenLines.push(open.line)
-    } else {
-      groups.push({ name: open.name, nodes: open.members, tone: open.tone })
-    }
-    open = undefined
+    groups.push({
+      name: group.name,
+      nodes: group.members,
+      inner: group.inner,
+      tone: group.tone,
+    })
+    stack.at(-1)?.inner.push(groups.length - 1)
   }
   source.split("\n").forEach((text, index) => {
     const line = parseLine(text)
@@ -143,23 +151,45 @@ export function readGraphSource(source: string): GraphSourceReading {
       case "broken":
         brokenLines.push(index + 1)
         return
+      case "broken-note":
+        brokenLines.push(index + 1)
+        return
       case "group-open":
-        if (open !== undefined) {
+        if (skippedOpens > 0 || stack.length >= GROUP_DEPTH_LIMIT) {
+          skippedOpens += 1
           brokenLines.push(index + 1)
           return
         }
-        open = { name: line.name, tone: line.tone, line: index + 1, members: [] }
+        stack.push({
+          id: opened,
+          name: line.name,
+          tone: line.tone,
+          line: index + 1,
+          members: [],
+          inner: [],
+        })
+        opened += 1
         return
-      case "group-close":
-        if (open === undefined) {
+      case "group-close": {
+        if (skippedOpens > 0) {
+          skippedOpens -= 1
+          return
+        }
+        const closing = stack.pop()
+        if (closing === undefined) {
           brokenLines.push(index + 1)
           return
         }
-        closeGroup()
+        if (closing.members.length === 0 && closing.inner.length === 0) {
+          brokenLines.push(closing.line)
+          return
+        }
+        finishGroup(closing)
         return
+      }
       case "item": {
-        const current = open
-        const owner = groups.length
+        const current = stack.at(-1)
+        const owner = current?.id ?? -1
         if (
           current !== undefined &&
           line.names.some(({ name }) => (groupOf.get(name) ?? owner) !== owner)
@@ -227,13 +257,25 @@ export function readGraphSource(source: string): GraphSourceReading {
       }
     }
   })
-  if (open !== undefined) {
-    brokenLines.push(open.line)
-    if (open.members.length > 0) {
-      groups.push({ name: open.name, nodes: open.members, tone: open.tone })
-    }
+  for (let unclosed = stack.pop(); unclosed !== undefined; unclosed = stack.pop()) {
+    brokenLines.push(unclosed.line)
+    finishGroup(unclosed)
   }
-  return { nodes, edges, groups, brokenLines: brokenLines.toSorted((a, b) => a - b) }
+  return {
+    nodes,
+    edges,
+    groups,
+    brokenLines: brokenLines.toSorted((a, b) => a - b),
+  }
+}
+
+type OpenGroup = {
+  readonly id: number
+  readonly name: string
+  readonly tone: GraphTone
+  readonly line: number
+  readonly members: number[]
+  readonly inner: number[]
 }
 
 function parseLine(text: string): ParsedLine {
@@ -263,8 +305,17 @@ function parseLine(text: string): ParsedLine {
   const parts = line.split(ARROW_OR_DASHED)
   if (parts.length === 1) {
     const [nameText = "", ...noteParts] = line.split("|")
-    const note = noteParts[0]?.trim() ?? ""
+    const noteText = noteParts[0]?.trim() ?? ""
+    const noteLines = noteText.split(NOTE_BREAK).map((part) => part.trim())
     const name = parseName(nameText)
+    if (
+      name !== undefined &&
+      noteParts.length === 1 &&
+      (noteLines.length > NOTE_LINE_LIMIT || (noteLines.length > 1 && noteLines.includes("")))
+    ) {
+      return { kind: "broken-note" }
+    }
+    const note = noteLines.join("\n")
     return name === undefined || noteParts.length > 1 || (noteParts.length === 1 && note === "")
       ? { kind: "broken" }
       : {

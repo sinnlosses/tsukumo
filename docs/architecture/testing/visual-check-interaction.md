@@ -75,6 +75,7 @@ tsukumo を空きポートで自分で起こし、配信 URL を待って撮り�
 **`svg` の塊（単独と `beforeAfter` の側）の描画は、場面 `report-svg`**（`--until-step 99 --wait-for '[class*="is-final_"]'`。`beforeAfter` は `--scroll-to '[class*="before-after_"]'`）。
 **`graph` の色の目印（` @a`〜` @e`）・点線の辺（`-.>`）・`legend` の描画は、場面 `report-graph-tone`**（`--until-step 99 --wait-for '[class*="is-final_"]'`。群の枠・節点の枠・辺の色と凡例の色見本が合っているかを見る）。
 **節点の多い `graph`（12 節点・囲み 3 つの LR）の幅の段と TD への差し替えは、場面 `report-graph-wide`**（`--until-step 99 --wait-for '[class*="is-final_"]'`。`--paper-metric` で図の文字の最小 px を数える）。
+**入れ子の囲み（2 階層）と複数行の箱を持つ `graph` は場面 `report-graph-nested`、箱に件数を書いた LR の状態の流れ（戻りの辺は点線）が横 1 行に収まるかは場面 `report-graph-states`**（どちらも `--until-step 99 --wait-for '[class*="is-final_"]'`。`--paper-metric` で図の文字の最小 px を数える）。
 **自然幅が読む面を超える `graph`（1 つの起点から 10 本に分かれる TD）の横転がしは、場面 `report-graph-scroll`**（`--until-step 99 --wait-for '[class*="is-final_"]'`。`pre.mermaid` が `data-measure="scroll"` になり、`pre` の中で横に転がる）。
 **縦に長い図の高さと拡大は場面 `report-tall-figure`**（mermaid・svg・画像。`--reveal-at 30000`。拡大は `--click 'pre.mermaid'`）、**中間レポートの箱の中の塊の枠は場面 `report-interim-nested`**（`--click summary` で畳みを開く）。
 **計画の返却を待つ間の帯（`delegatedRange` が `pending`。丸が「・」「…」「・」）は、場面 `work-strip-plan-pending`**（`--wait-for 'text=計画を書き直す'`）。

@@ -73,6 +73,8 @@
     "report-graph-wide",
     "report-graph-fold",
     "report-graph-scroll",
+    "report-graph-nested",
+    "report-graph-states",
     "report-flow-row",
     "flow-source-branch",
     "report-matrix",

@@ -34,13 +34,22 @@ export function graphSource(block: ReportGraph): string {
     }
   }
   const grouped = new Set(groups.flatMap((group) => group.nodes))
+  const nested = new Set(groups.flatMap((group) => group.inner))
+  const groupLines = (index: number, indent: string): readonly string[] => {
+    const group = groups[index]
+    if (group === undefined) {
+      return []
+    }
+    return [
+      `${indent}subgraph g${String(index)}[${quoted(group.name)}]`,
+      ...group.inner.flatMap((at) => groupLines(at, `${indent}  `)),
+      ...group.nodes.map((at) => nodeLine(at, `${indent}  `)),
+      `${indent}end`,
+    ]
+  }
   const nodeLines = [
     ...nodes.flatMap((_, index) => (grouped.has(index) ? [] : [nodeLine(index, "  ")])),
-    ...groups.flatMap((group, index) => [
-      `  subgraph g${String(index)}[${quoted(group.name)}]`,
-      ...group.nodes.map((at) => nodeLine(at, "    ")),
-      "  end",
-    ]),
+    ...groups.flatMap((_, index) => (nested.has(index) ? [] : groupLines(index, "  "))),
   ]
   const groundOf = groupGrounds(groups)
   const groupStyleLines = groups.map(
@@ -188,7 +197,8 @@ function mermaidId(index: number): string {
 
 /** 名前の下に小さい字で説明を置く節点のラベル。HTML として読まれるので `<` `>` `&` は実体にする。 */
 function noteLabel(name: string, note: string): string {
-  return quoted(`${escapedForLabel(name)}<br/><small>${escapedForLabel(note)}</small>`)
+  const lines = note.split("\n").map(escapedForLabel).join("<br/>")
+  return quoted(`${escapedForLabel(name)}<br/><small>${lines}</small>`)
 }
 
 function escapedForLabel(value: string): string {

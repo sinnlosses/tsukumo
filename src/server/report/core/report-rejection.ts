@@ -96,7 +96,7 @@ function violationLine(violation: ReportViolation): string {
     case "unlegended-graph-tone":
       return `\`graph\` の \` @a\`〜\` @e\` の色の目印が \`legend\` に無い（${toneFaultPositions(violation.faults)}）。\`legend\` に \`tone\` と名前を足す（色だけで意味を言わない）`
     case "broken-graph":
-      return `\`graph\` の \`source\` に読めない行がある（${graphFaultPositions(violation.faults)}）。1行を \`A -> B: 語\` の形に直す（\`: 語\` は省ける）。囲みは \`[群の名]\` 〜 \`[]\` の1階層で、入れ子と閉じ忘れは読めない`
+      return `\`graph\` の \`source\` に読めない行がある（${graphFaultPositions(violation.faults)}）。1行を \`A -> B: 語\` の形に直す（\`: 語\` は省ける）。囲みは \`[群の名]\` 〜 \`[]\` で、内側を先に \`[]\` で閉じる入れ子は2階層まで（3階層以上と閉じ忘れは読めない）。箱の説明は \`名前 | 一\\n二\` の \`\\n\` で区切って3行まで（空の行も不可）`
     case "broken-timeline":
       return `\`timeline\` の時刻に誤りがある（${timelineFaultPositions(violation.faults)}）。時刻は HH:MM・ISO の日時・分の数のどれか1つに揃え（日をまたぐなら ISO）、同じ lane の行は start の昇順、extra は昇順、end は start より後、出来事は at の昇順にし、\`emphasis\` は行の \`name\` と同じ字にする`
     case "long-first-sentence":
