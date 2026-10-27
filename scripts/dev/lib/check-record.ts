@@ -17,6 +17,8 @@ export type RecordedStage = {
   readonly result: RecordedResult
   /** 次の回に絞って流すファイル。空なら絞らない。 */
   readonly retryFiles: readonly string[]
+  /** 落ちたテストの `<ファイル> > <テスト名>`。次の回で通ったら flaky として台帳に残す。 */
+  readonly failedTests: readonly string[]
 }
 
 export type CheckRecord = {
@@ -50,6 +52,45 @@ export type StageRunResult = {
   /** 別の段が落ちたため、走っている途中で止めた段。 */
   readonly stopped: boolean
   readonly failed: FailedFiles
+  /** `parseFailedTests` の結果。 */
+  readonly failedTests: readonly string[]
+  /** `parsePassedTests` の結果。 */
+  readonly passedTests: readonly string[]
+}
+
+/** 同じ木で前回落ちて今回通ったテスト。台帳の1行になる。 */
+export type FlakyTest = { readonly stage: string; readonly test: string }
+
+/** `--bail` が発火した回は、全件を見ていない。 */
+export function isBailed(result: Pick<StageRunResult, "name" | "failed">): boolean {
+  return result.name === "test:e2e" && result.failed.failedTestCount >= E2E_BAIL_COUNT
+}
+
+/** 控えの木が `tree` と違えば（控えが無ければ）空。飛ばした段・止めた段は見ない。 */
+export function findFlakyTests(
+  record: CheckRecord,
+  tree: string,
+  planned: readonly PlannedStage[],
+  results: readonly StageRunResult[],
+): readonly FlakyTest[] {
+  if (record.tree === "" || record.tree !== tree) {
+    return []
+  }
+  return planned.flatMap((entry): readonly FlakyTest[] => {
+    const recorded = entry.kind === "skip" ? undefined : findRecorded(record, entry.planned)
+    const result = results.find((candidate) => candidate.name === entry.planned.name)
+    if (recorded?.result !== "failed" || result === undefined || result.stopped) {
+      return []
+    }
+    return recorded.failedTests
+      .filter((test) => result.passedTests.includes(test))
+      .map((test) => ({ stage: entry.planned.name, test }))
+  })
+}
+
+/** 台帳（JSON Lines）の1行。 */
+export function formatLedgerLine(flaky: FlakyTest, tree: string, at: Temporal.Instant): string {
+  return JSON.stringify({ at: at.toString(), tree, stage: flaky.stage, test: flaky.test })
 }
 
 /** 控えの木が `tree` と違えば、計画の段をすべてそのまま流す。 */
@@ -82,16 +123,30 @@ export function nextRecord(
   const stages = planned.flatMap((entry): readonly RecordedStage[] => {
     const key = { name: entry.planned.name, args: entry.planned.args }
     if (entry.kind === "skip") {
-      return [{ ...key, result: "carried", retryFiles: [] }]
+      return [{ ...key, result: "carried", retryFiles: [], failedTests: [] }]
     }
     const result = results.find((candidate) => candidate.name === entry.planned.name)
     if (result === undefined || result.stopped) {
       return []
     }
     if (result.status === 0) {
-      return [{ ...key, result: entry.kind === "narrowed" ? "carried" : "passed", retryFiles: [] }]
+      return [
+        {
+          ...key,
+          result: entry.kind === "narrowed" ? "carried" : "passed",
+          retryFiles: [],
+          failedTests: [],
+        },
+      ]
     }
-    return [{ ...key, result: "failed", retryFiles: retryFilesOf(result) }]
+    return [
+      {
+        ...key,
+        result: "failed",
+        retryFiles: retryFilesOf(result),
+        failedTests: result.failedTests,
+      },
+    ]
   })
   return { tree, stages }
 }
@@ -104,8 +159,7 @@ function findRecorded(record: CheckRecord, stage: Stage) {
 
 /** bail が発火した回は、打ち切られたファイルが通ったと書かれるので絞らない。 */
 function retryFilesOf(result: StageRunResult): readonly string[] {
-  const bailed = result.failed.failedTestCount >= E2E_BAIL_COUNT
-  return result.name === "test:e2e" && !bailed ? result.failed.files : []
+  return result.name === "test:e2e" && !isBailed(result) ? result.failed.files : []
 }
 
 function describeRerun(planned: readonly PlannedStage[]): readonly string[] {

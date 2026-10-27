@@ -64,6 +64,28 @@ export function parseFailedTests(json: string, root: string): readonly string[] 
   })
 }
 
+/**
+ * vitest の JSON レポーターの出力から、通ったテストを `parseFailedTests` と同じ
+ * `<ルートからの相対ファイル> > <テスト名>` の列にする。読めない・形が違う JSON は空の列。
+ */
+export function parsePassedTests(json: string, root: string): readonly string[] {
+  const report = parseJson(json)
+  if (!isRecord(report) || !Array.isArray(report.testResults)) {
+    return []
+  }
+  return report.testResults.flatMap((file: unknown): readonly string[] => {
+    if (!isRecord(file) || typeof file.name !== "string" || !Array.isArray(file.assertionResults)) {
+      return []
+    }
+    const path = relative(root, file.name)
+    return file.assertionResults.flatMap((test: unknown): readonly string[] =>
+      isRecord(test) && test.status === "passed" && typeof test.fullName === "string"
+        ? [`${path} > ${test.fullName}`]
+        : [],
+    )
+  })
+}
+
 export type FailedFiles = {
   /** 落ちたファイルのルートからの相対パス。 */
   readonly files: readonly string[]

@@ -6,6 +6,7 @@ import {
   describeFailedStages,
   parseFailedFiles,
   parseFailedTests,
+  parsePassedTests,
   pickStagesToStop,
   type StageOutcome,
 } from "../../../../scripts/dev/lib/check-failure.ts"
@@ -119,6 +120,25 @@ describe("parseFailedTests", () => {
     expect(parseFailedTests("{", "/repo")).toEqual([])
     expect(parseFailedTests("[]", "/repo")).toEqual([])
     expect(parseFailedTests('{"testResults":3}', "/repo")).toEqual([])
+  })
+})
+
+describe("parsePassedTests", () => {
+  test("通ったテストだけを parseFailedTests と同じ書式で返し、読めない JSON は空", () => {
+    const json = JSON.stringify({
+      testResults: [
+        {
+          name: "/repo/test/a.test.ts",
+          status: "failed",
+          assertionResults: [
+            { fullName: "a ok", status: "passed" },
+            { fullName: "a ng", status: "failed" },
+          ],
+        },
+      ],
+    })
+    expect(parsePassedTests(json, "/repo")).toEqual(["test/a.test.ts > a ok"])
+    expect(parsePassedTests("{", "/repo")).toEqual([])
   })
 })
 

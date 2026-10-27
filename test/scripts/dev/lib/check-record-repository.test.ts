@@ -76,7 +76,7 @@ describe("readCheckRecord と writeCheckRecord", () => {
       expect(readCheckRecord(root)).toEqual(EMPTY_CHECK_RECORD)
       const record = {
         tree: "abc",
-        stages: [{ name: "lint", args: [], result: "passed", retryFiles: [] }],
+        stages: [{ name: "lint", args: [], result: "passed", retryFiles: [], failedTests: [] }],
       } as const
       writeCheckRecord(root, record)
       expect(readCheckRecord(root)).toEqual(record)

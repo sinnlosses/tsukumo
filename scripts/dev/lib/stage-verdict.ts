@@ -45,9 +45,15 @@ export function withDroppedStages(
   return [...inUniverse, ...planned.filter((stage) => !universe.includes(stage.name))]
 }
 
-/** 段の順に1段1行の `STAGE` 行にする。 */
-export function formatStageLines(stages: readonly NamedVerdict[]): readonly string[] {
-  return stages.map((stage) => `STAGE\t${stage.name}\t${stage.verdict}`)
+/** 段の順に1段1行の `STAGE` 行にする。`bailed` に挙げた段は、その行の次に値 `bailed` の行を足す。 */
+export function formatStageLines(
+  stages: readonly NamedVerdict[],
+  bailed: readonly string[],
+): readonly string[] {
+  return stages.flatMap((stage) => [
+    `STAGE\t${stage.name}\t${stage.verdict}`,
+    ...(bailed.includes(stage.name) ? [`STAGE\t${stage.name}\tbailed`] : []),
+  ])
 }
 
 /**

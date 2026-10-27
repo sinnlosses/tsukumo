@@ -26,3 +26,6 @@ characters/local/
 
 # pnpm run check が同じ木での打ち直しのために残す、通った段の控え（書きかけの一時ファイルも）
 /.check-record.json*
+
+# 前回落ちて今回通ったテストを pnpm run check が足していく台帳
+/flaky-ledger.jsonl

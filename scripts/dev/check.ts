@@ -13,6 +13,8 @@
 //
 // 同じ木での打ち直しは、根の `.check-record.json` の控えから、前回通った段を1回だけ飛ばし、
 // E2E は前回落ちたファイルだけを流す（判定は `planRerun`）。
+// 前回落ちて今回通ったテストは、根の `flaky-ledger.jsonl` に1件1行で足す。
+// `--bail` が発火した段は、STAGE 行の次に `STAGE<TAB><段名><TAB>bailed` の行を出す。
 //
 // 使い方:
 //   node scripts/dev/check.ts         # 変えたファイルを見て、E2E を選び、文書だけなら文書の検査だけにする
@@ -34,16 +36,25 @@ import {
   type FailedFiles,
   parseFailedFiles,
   parseFailedTests,
+  parsePassedTests,
   pickStagesToStop,
   type StageOutcome,
 } from "./lib/check-failure.ts"
 import {
+  appendFlakyLedger,
   readCheckRecord,
   removeCheckRecord,
   worktreeTree,
   writeCheckRecord,
 } from "./lib/check-record-repository.ts"
-import { nextRecord, planRerun, type StageRunResult } from "./lib/check-record.ts"
+import {
+  findFlakyTests,
+  formatLedgerLine,
+  isBailed,
+  nextRecord,
+  planRerun,
+  type StageRunResult,
+} from "./lib/check-record.ts"
 import {
   countRunning,
   isProcessAlive,
@@ -87,7 +98,8 @@ if (stagePlan.notice !== "") {
   process.stdout.write(`${stagePlan.notice}\n`)
 }
 const tree = worktreeTree(ROOT)
-const rerunPlan = planRerun(stagePlan.stages, readCheckRecord(ROOT), tree)
+const previousRecord = readCheckRecord(ROOT)
+const rerunPlan = planRerun(stagePlan.stages, previousRecord, tree)
 for (const notice of rerunPlan.notices) {
   process.stdout.write(`${notice}\n`)
 }
@@ -98,7 +110,8 @@ const activeStages = rerunPlan.stages.flatMap((entry) =>
 const stageWorkers = activeStages.some((stage) => stage.heavy) ? markRunningAndShareWorkers() : 0
 const stageResults = activeStages.length > 0 ? await runConcurrently(activeStages) : []
 saveRecord(stageResults)
-for (const line of formatStageLines(stageVerdicts(stageResults))) {
+const bailedStages = stageResults.filter((result) => isBailed(result)).map((result) => result.name)
+for (const line of formatStageLines(stageVerdicts(stageResults), bailedStages)) {
   process.stdout.write(`${line}\n`)
 }
 const expectedDiffLines = readExpectedDiffLines(ROOT, PRIMARY_BRANCH)
@@ -149,6 +162,13 @@ function saveRecord(results: readonly StageRunResult[]): void {
     removeCheckRecord(ROOT)
     return
   }
+  const now = Temporal.Now.instant()
+  appendFlakyLedger(
+    ROOT,
+    findFlakyTests(previousRecord, tree, rerunPlan.stages, results).map((flaky) =>
+      formatLedgerLine(flaky, tree, now),
+    ),
+  )
   writeCheckRecord(ROOT, nextRecord(tree, rerunPlan.stages, results))
 }
 
@@ -228,6 +248,7 @@ async function runLockedIfFullE2e(stage: Stage, control: StopControl): Promise<B
       name: stage.name,
       status: 1,
       failedTests: [],
+      passedTests: [],
       failed: NO_FAILED_FILES,
       stopped: false,
       lockTimedOut: true,
@@ -301,7 +322,10 @@ function chooseE2eStages(): readonly Stage[] {
   return plan.kind === "none" ? [] : [e2eStage(plan.args)]
 }
 
-type StageReport = Pick<BufferedResult, "failedTests" | "failed" | "selectedTestCount">
+type StageReport = Pick<
+  BufferedResult,
+  "failedTests" | "passedTests" | "failed" | "selectedTestCount"
+>
 
 /** 段が書いた JSON レポートを読んで消す。無ければ空。 */
 function readReport(reportPath: string): StageReport {
@@ -309,11 +333,17 @@ function readReport(reportPath: string): StageReport {
     const json = readFileSync(reportPath, "utf8")
     return {
       failedTests: parseFailedTests(json, ROOT),
+      passedTests: parsePassedTests(json, ROOT),
       failed: parseFailedFiles(json, ROOT),
       selectedTestCount: parseSelectedTestCount(json),
     }
   } catch {
-    return { failedTests: [], failed: NO_FAILED_FILES, selectedTestCount: undefined }
+    return {
+      failedTests: [],
+      passedTests: [],
+      failed: NO_FAILED_FILES,
+      selectedTestCount: undefined,
+    }
   } finally {
     rmSync(reportPath, { force: true })
   }
@@ -333,6 +363,7 @@ function runBuffered(stage: Stage, control: StopControl): Promise<BufferedResult
       name: stage.name,
       status: 1,
       failedTests: [],
+      passedTests: [],
       failed: NO_FAILED_FILES,
       stopped: true,
       lockTimedOut: false,

@@ -5,6 +5,9 @@ import { describe, expect, test } from "vitest"
 import {
   type CheckRecord,
   EMPTY_CHECK_RECORD,
+  findFlakyTests,
+  formatLedgerLine,
+  isBailed,
   nextRecord,
   planRerun,
   type RerunPlan,
@@ -23,7 +26,14 @@ const STAGES: readonly Stage[] = [
 ]
 
 function result(name: string, status = 0, files: readonly string[] = []): StageRunResult {
-  return { name, status, stopped: false, failed: { files, failedTestCount: files.length } }
+  return {
+    name,
+    status,
+    stopped: false,
+    failed: { files, failedTestCount: files.length },
+    failedTests: [],
+    passedTests: [],
+  }
 }
 
 const ALL_PASSED = STAGES.map((stage) => result(stage.name))
@@ -105,8 +115,63 @@ describe("planRerun と nextRecord", () => {
       status: 1,
       stopped: false,
       failed: { files: ["test/e2e/b.test.ts"], failedTestCount: 3 },
+      failedTests: [],
+      passedTests: [],
     }
     const first = recordAfter(EMPTY_CHECK_RECORD, [...ALL_PASSED.slice(0, 4), failed])
     expect(runStages(planRerun(STAGES, first, TREE)).at(-1)).toEqual(STAGES.at(-1))
+  })
+})
+
+describe("findFlakyTests と isBailed", () => {
+  const FAILED: StageRunResult = {
+    ...result("test", 1),
+    failedTests: ["test/a.test.ts > a ng", "test/a.test.ts > b ng"],
+  }
+
+  function flakyOn(tree: string, passedTests: readonly string[]) {
+    const first = recordAfter(EMPTY_CHECK_RECORD, [FAILED])
+    const plan = planRerun(STAGES, first, tree)
+    return findFlakyTests(first, tree, plan.stages, [{ ...result("test"), passedTests }])
+  }
+
+  test("同じ木で前回落ちて今回通ったテストだけが flaky になる", () => {
+    expect(flakyOn(TREE, ["test/a.test.ts > a ng"])).toEqual([
+      { stage: "test", test: "test/a.test.ts > a ng" },
+    ])
+  })
+
+  test("木が変われば、通っても flaky にしない", () => {
+    expect(flakyOn("tree-b", ["test/a.test.ts > a ng"])).toEqual([])
+  })
+
+  test("前回落ちていないテストは flaky にしない", () => {
+    expect(flakyOn(TREE, ["test/a.test.ts > c"])).toEqual([])
+  })
+
+  test("台帳の1行は時刻・木・段・テスト名の JSON", () => {
+    const line = formatLedgerLine(
+      { stage: "test", test: "t" },
+      TREE,
+      Temporal.Instant.from("2026-10-27T00:00:00Z"),
+    )
+    expect(JSON.parse(line)).toEqual({
+      at: "2026-10-27T00:00:00Z",
+      tree: TREE,
+      stage: "test",
+      test: "t",
+    })
+  })
+
+  test("E2E は落ちたテストの数が bail の数に届いたときだけ bailed", () => {
+    const e2e = (count: number): StageRunResult => ({
+      ...result("test:e2e", 1),
+      failed: { files: [], failedTestCount: count },
+    })
+    expect([isBailed(e2e(2)), isBailed(e2e(3)), isBailed({ ...e2e(3), name: "test" })]).toEqual([
+      false,
+      true,
+      false,
+    ])
   })
 })

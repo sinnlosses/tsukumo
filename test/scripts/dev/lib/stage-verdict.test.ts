@@ -107,11 +107,26 @@ describe("withDroppedStages", () => {
 describe("formatStageLines", () => {
   test("段の順に1段1行のタブ区切りにする", () => {
     expect(
-      formatStageLines([
-        { name: "lint", verdict: "pass" },
-        { name: "test:e2e", verdict: "blocked" },
-      ]),
+      formatStageLines(
+        [
+          { name: "lint", verdict: "pass" },
+          { name: "test:e2e", verdict: "blocked" },
+        ],
+        [],
+      ),
     ).toEqual(["STAGE\tlint\tpass", "STAGE\ttest:e2e\tblocked"])
+  })
+
+  test("bail が発火した段は、その行の次に bailed の行を足す", () => {
+    expect(
+      formatStageLines(
+        [
+          { name: "test", verdict: "pass" },
+          { name: "test:e2e", verdict: "fail" },
+        ],
+        ["test:e2e"],
+      ),
+    ).toEqual(["STAGE\ttest\tpass", "STAGE\ttest:e2e\tfail", "STAGE\ttest:e2e\tbailed"])
   })
 })
 

@@ -3,6 +3,7 @@
 
 import { execFileSync } from "node:child_process"
 import {
+  appendFileSync,
   cpSync,
   existsSync,
   mkdirSync,
@@ -19,6 +20,7 @@ import process from "node:process"
 import { type CheckRecord, EMPTY_CHECK_RECORD, type RecordedStage } from "./check-record.ts"
 
 const RECORD_FILE_NAME = ".check-record.json"
+const LEDGER_FILE_NAME = "flaky-ledger.jsonl"
 
 const RECORDED_RESULTS = ["passed", "carried", "failed"] as const
 
@@ -74,6 +76,13 @@ export function removeCheckRecord(root: string): void {
   rmSync(recordPath(root), { force: true })
 }
 
+/** 控えの隣の台帳に、flaky の1件を1行で足す。 */
+export function appendFlakyLedger(root: string, lines: readonly string[]): void {
+  if (lines.length > 0) {
+    appendFileSync(join(root, LEDGER_FILE_NAME), `${lines.join("\n")}\n`)
+  }
+}
+
 function recordPath(root: string): string {
   return join(root, RECORD_FILE_NAME)
 }
@@ -108,9 +117,10 @@ function parseStage(value: unknown): RecordedStage | undefined {
     return undefined
   }
   const result = RECORDED_RESULTS.find((candidate) => candidate === value.result)
+  const failedTests = isStringArray(value.failedTests) ? value.failedTests : []
   return result === undefined
     ? undefined
-    : { name: value.name, args: value.args, result, retryFiles: value.retryFiles }
+    : { name: value.name, args: value.args, result, retryFiles: value.retryFiles, failedTests }
 }
 
 function isStringArray(value: unknown): value is readonly string[] {
