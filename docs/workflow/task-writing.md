@@ -67,7 +67,7 @@
   waterfall の分岐を足した変更で、帯の斜線の箇条・2つの図・`src/shared/report/report-phase-time.ts` の
   `bandSegmentMarkdown` の不明の枝が古くなり、段が無かったので最後の受け入れの差し戻しで初めて出た。
 - **spec の出典**は `docs/requirements.md` と各タスクの本文（`tw show GH-<n>`。GitHub の Issue は
-  その写しで、正は Beads）。2026-09-27 より前に閉じたタスクの本文は、git の履歴の `develop/task/` と、
+  その写しで、正は Beads）。以前の置き場で閉じたタスクの本文は、git の履歴の `develop/task/` と、
   `docs/history/README.md` が案内するタグにある。**standards の出典**は `AGENTS.md` ＋
   `docs/coding-standards.md` ＋ `docs/architecture.md` の3つ。`code-review` スキルが
   「リポジトリ内から探す」と言うのはこれらのこと

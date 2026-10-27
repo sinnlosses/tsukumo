@@ -8,10 +8,10 @@
 
 ## 層と依存の向き
 
-**2026-09-13 の移行後、`src/` は層をディレクトリで表す**（設計は `docs/architecture.md`「全体構成」）。
-**2026-09-16 にサーバ側を `core`（判断）と `adapter`（境界）に割り、2026-09-20 に層の名前を
+**ブラウザ側へ描く層を移したあと、`src/` は層をディレクトリで表す**（設計は `docs/architecture.md`「全体構成」）。
+**サーバ側を `core`（判断）と `adapter`（境界）に割り、のちに層の名前を
 実行環境に合わせて `shared`（サーバとブラウザ）/ `browser`（ブラウザ）へ改名し、サーバ側の
-2つを `src/server/` の下へ入れ子にした。** **2026-09-25 に、サーバ側の `core` と `adapter` を
+2つを `src/server/` の下へ入れ子にした。** **さらに、サーバ側の `core` と `adapter` を
 機能の中へ入れると決めた**（`src/server/<機能>/{core,adapter}/`。機能の一覧・機能どうしの辺・
 共有の箱は `docs/architecture.md`「サーバの機能と、機能どうしの辺」が正典）。
 **新しいファイルは、まずどの層かを決めてから置く**（サーバ側は、どの機能かも決める）。
@@ -41,11 +41,11 @@ import してよい先が決まっている**（表は二重に書かず `docs/a
 `taskSummaryItemsOfBeadsIssues`）。理由は、ファイル名が**概念**を指すため（原則5）。概念は1つで、いくつ返すかは
 関数の都合。
 
-**ディレクトリ名には単数形の縛りを掛けない**（2026-09-26 に外した）。置き場所のディレクトリは
+**ディレクトリ名には単数形の縛りを掛けない**（外した）。置き場所のディレクトリは
 bullet-proof-react の名前（`features/` `components/` `lib/` `stores/` `styles/` `types/`）をそのまま使い、
 機能・領域のディレクトリは `components/page/conversation/components/markdown/renderer/` のように
 **概念の名前**を付ける。**置き場所を名前にしたディレクトリのうち、`lib/` と `utils/` はどの層の中にも作ってよく、
-`helpers/` と `common/` は作らない**（2026-09-21 決定。どちらの箱に置くかの判定手順・`utils/` を
+`helpers/` と `common/` は作らない**（どちらの箱に置くかの判定手順・`utils/` を
 受け皿にしないための歯止め・層ごとの読み方は二重に書かず `docs/architecture.md`「全体構成」
 「`lib/` と `utils/` に置く基準」を正典とする）。**ファイル名としての `utils.ts` / `helpers.ts` /
 `common.ts` は引き続き作らない**（許したのはディレクトリの名前だけで、ファイル名は概念のまま）。
@@ -55,7 +55,7 @@ bullet-proof-react の名前（`features/` `components/` `lib/` `stores/` `style
 （`browser` は `vite build` で1本に束ねる。`docs/architecture/build.md`）。(2) `index.ts` という名前自体が
 「置き場所を名前にしたファイル」になり、原則5に反する（ディレクトリ名がすでに概念や置き場所を
 表すのに、その中の `index.ts` は何も指さない。**ディレクトリ名の例外を足した後も、ファイル名は
-概念のまま**）。2026-09-13、`src/browser/` を切った段（`docs/history/decision.md`
+概念のまま**）。`src/browser/` を切った段（`docs/history/decision.md`
 「design.md 12. 移行の段階」の段3）で bulletproof-react の実例と突き合わせて決めた。
 
 **`components/ui/` の部品は `ui/<部品>/<部品>.tsx` に置き、`index.tsx` は作らない。検査が

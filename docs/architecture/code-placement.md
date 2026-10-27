@@ -10,7 +10,7 @@
 
 **新しいコードは `src/shared/` / `src/server/<機能>/core/` / `src/server/<機能>/adapter/` /
 `src/browser/` に置く**（「全体構成」）。**層の名前は「どの実行環境で動くか」を表す**
-（2026-09-20。`docs/history/architecture-placement.md`）。サーバ側は**まずどの機能かを決め**
+（`docs/history/architecture-placement.md`）。サーバ側は**まずどの機能かを決め**
 （機能の一覧は「サーバの機能と、機能どうしの辺」）、**外の世界（SDK・
 HTTP/WebSocket・ホスト・ファイル・子プロセス）に触るならその機能の `adapter/`、触らない判断なら
 `core/`。** どの機能にも属さず2つ以上の読み手を持つものだけ、共有の `src/server/core/` /
@@ -66,7 +66,7 @@ HTTP/WebSocket・ホスト・ファイル・子プロセス）に触るならそ
   「**ファイル名が概念になっているか**」で決める。`helpers.ts` / `utils.ts` / `common.ts` のような
   **置き場所を名前にしたファイルは作らない**。**ファイルは単数形**にし、複数は「複数返す」
   関数名の側で表す（`unfinishedTaskIds`）。ディレクトリ名には単数形の縛りを掛けず、置き場所の
-  ディレクトリは bullet-proof-react の名前をそのまま使う（2026-09-26）。
+  ディレクトリは bullet-proof-react の名前をそのまま使う。
   **`presentational-<機能>.tsx` は container と対になっているときだけ例外として許す**
   （「機能の中を分ける」）。**箱ごとに何を置くか・`lib/` と `utils/` の
   どちらに置くかは「ディレクトリ」「`lib/` と `utils/` に置く基準」が正典**

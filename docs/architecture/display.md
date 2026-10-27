@@ -56,11 +56,11 @@
 
 - `docs/architecture/display/notation-per-host.md`
 
-#### 読む時間を減らす物差しと線引き（2026-09-13 決定、2026-09-30 改訂）
+#### 読む時間を減らす物差しと線引き
 
 - `docs/architecture/display/reading-time.md`
 
-#### 塊を足す・外す基準（2026-09-27 決定、2026-09-30 改訂）
+#### 塊を足す・外す基準
 
 - `docs/architecture/display/block-criteria.md`（節「図の決定表」: `plot` の形を決める行・置かない形・基数の境。節「見比べで見つかった穴」: 梯子・穴ドラフトの型・採らない穴）
 
@@ -73,6 +73,6 @@
 - `docs/architecture/display/sidebar.md`: サイドバー
 - `docs/architecture/display/input-box.md`: 入力欄・配り方・フォールバック
 
-#### タスクのモーダル（2026-09-28 決定）
+#### タスクのモーダル
 
 - `docs/architecture/display/task-modal.md`

@@ -24,6 +24,14 @@ describe("decisionRows", () => {
       ["`docs/architecture/adr/0003-c.adr`", "題C", "置き換え済み（→ 0004）"],
     ])
   })
+
+  it("題の末尾の（日付）と（日付〜日）は表に載せず、題の途中の語は変えない", () => {
+    const titles = ["題A（2026-09-13）", "題B（2026-09-13〜17）", "題C（途中）の続き", "題D"]
+    const rows = decisionRows(
+      titles.map((title, index) => ({ fileName: `000${index}-x.adr`, title, status: "採用" })),
+    )
+    expect(rows.map((row) => row[1])).toEqual(["題A", "題B", "題C（途中）の続き", "題D"])
+  })
 })
 
 describe("readAdrStatus", () => {

@@ -65,7 +65,7 @@
 ので、境界で検証してから内側の型に変換する。検証を通っていない値が内側に入らないよう、
 変換は1箇所の関数に封じ込める。
 
-**「素のオブジェクトか」の判定は remeda の `isPlainObject` を使う**（2026-09-22。それまでは
+**「素のオブジェクトか」の判定は remeda の `isPlainObject` を使う**（それまでは
 8ファイルがそれぞれ `isRecord` を書き写していた）。**`isPlainObject` は prototype が
 `Object.prototype` か `null` のものだけを通す**ので、`JSON.parse` の結果・SDK のメッセージ・
 transcript の1行のような**外から来た素のデータ**に使う。捕まえた例外（`Error` の実体）のように
@@ -87,7 +87,7 @@ prototype を持つものを見るときだけ `isObjectType` で、`code` の�
 `test/**` では `typescript/consistent-type-assertions`（`assertionStyle: "never"`）を
 `.oxlintrc.json` の `overrides` で有効にしてある。`as const` 以外の `as` キャスト（`any` 経由の
 二段のものも含む）を全部落とす。`screen.getByLabelText(...) as HTMLSelectElement` のような、
-クエリの戻り値を具体クラスとして扱うためのキャストが特に多かった（2026-09-26 時点で 15
+クエリの戻り値を具体クラスとして扱うためのキャストが特に多かった（導入時に 15
 ファイル・74 か所）。
 
 **代わりに `test/typed-element.ts` の `typedElement(value, ctor, description)` を使う。**
@@ -129,7 +129,7 @@ components/domain/portrait.test.tsx` の `fetch` のスタブ（`fetch` の実�
 
 手書きの `reduce` での合計・グループ分け・比較関数などは、remeda に同じ関数があれば
 **可読性が良くなる場合**にそちらへ寄せる。基準は「案を選ぶときの指標」と同じで、
-**行数の削減それ自体は理由にしない**。remeda は依存にある（`package.json`。2026-09-22 に
+**行数の削減それ自体は理由にしない**。remeda は依存にある（`package.json`。
 型ガードなどの一般的な小物として承認）。
 
 **寄せないもの**（線引き）:
@@ -149,7 +149,7 @@ components/domain/portrait.test.tsx` の `fetch` のスタブ（`fetch` の実�
 
 2つ以上の class 名をつないで `className` に渡すときは、配列の `.filter(...).join(" ")` や
 テンプレート文字列で手で組まず、`clsx(...)` に渡す。clsx は依存にある（`package.json`。
-2026-09-26 に承認）。
+承認済み）。
 
 class 名を手で組むと、条件で落とす class を空文字に畳む三項演算子が混ざり、区切りの空白を
 どちらが持つかも呼び出し側が気にすることになる。clsx は `undefined`・`false`・空文字を捨てて

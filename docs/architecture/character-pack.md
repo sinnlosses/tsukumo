@@ -19,7 +19,7 @@ characters/<name>/
 
 - **キャラクターの中身は定義が持つ**（原則4）。`speak` の enum と説明は `expressions` から作る。
   `diaryFont` はパックに同梱した書体ファイルだけを指せ、素材と同じ経路（「パックの一覧と素材の URL」）で配る
-- **パックは機械の出来事への反応の行（定型文）を持たない**（2026-10-05 利用者決定）。再試行・失敗・
+- **パックは機械の出来事への反応の行（定型文）を持たない**（利用者決定）。再試行・失敗・
   利用上限・待ちの行は、迎えの挨拶とは別の問い合わせが `persona.md` の口調で代（起こした1回）ごとに書く
   （`docs/architecture/display.md` 4.2「出力の分離（セリフと詳細）」）。前の版の `character.json` に残った
   `reactions` の節は読まずに無視する
@@ -27,7 +27,7 @@ characters/<name>/
   グローバルの出力スタイルを中立に戻してから `persona.md` を足す（実測と採らない案は
   `docs/requirements.md` 4.4）
 - **出力スタイル（`~/.claude/output-styles/`）はセッションを起こしたときにしか読まれない。**
-  `/clear` では読み直されない（2026-09-10 実測）。書き換えを効かせるには tsukumo を起こし直す
+  `/clear` では読み直されない（実測）。書き換えを効かせるには tsukumo を起こし直す
 - **切り替えは別のパックでセッションを起こし直す**（`speak` の enum も人格も、起こし直せば確実に
   入れ替わる。`startSdkDriver` が `mcpServers` を毎回組み直すので `setMcpServers` は要らない）。
   起こすのは新規のセッションで、そのパックの前のセッションへは切り替え画面から戻る
@@ -69,8 +69,8 @@ characters/<name>/
 **画像は data URL を JSON に載せ、いまの WebSocket のコマンドで受け取る。**
 `src/shared/contract/character-pack.ts` に手続きを足すだけで、`src/server/view-server/adapter/server.ts` に新しい
 書き込み経路を作らない。起動トークンと `Origin` の照合・zod の検証・定型文の `REFUSED` がそのまま効く
-（multipart の POST と生バイトの POST を採らない理由は `docs/history/decision.md`「design.md 7.
-キャラクターパック（2026-09-27 に仕様を持ち主へ返したときに落とした経緯と採らない案）」）。
+（multipart の POST と生バイトの POST を採らない理由は `docs/history/decision.md`
+「design.md 7. キャラクターパック（2026-09-27 に仕様を持ち主へ返したときに落とした経緯と採らない案）」）。
 
 | 何                        | 上限                                                                                |
 | ------------------------- | ----------------------------------------------------------------------------------- |

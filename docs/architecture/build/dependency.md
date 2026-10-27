@@ -19,11 +19,11 @@
 | runtime | `ws`                                                                                                                                | core の WebSocket サーバ                                                                                                           |
 | runtime | `react-markdown` `remark-gfm` `rehype-raw` `rehype-sanitize` `rehype-highlight`                                                     | Markdown                                                                                                                           |
 | runtime | `remark-cjk-friendly`                                                                                                               | CJK の強調（`**「…」**`）                                                                                                          |
-| runtime | `unified`                                                                                                                           | サーバで Markdown を構文木にする口（質問の preview の画像を拾う）。2026-10-05 承認（利用者決定）                                   |
-| runtime | `remark-parse`                                                                                                                      | サーバで Markdown を読む段（`react-markdown` と同じ版）。2026-10-05 承認（利用者決定）                                             |
+| runtime | `unified`                                                                                                                           | サーバで Markdown を構文木にする口（質問の preview の画像を拾う）。承認済み（利用者決定）                                          |
+| runtime | `remark-parse`                                                                                                                      | サーバで Markdown を読む段（`react-markdown` と同じ版）。承認済み（利用者決定）                                                    |
 | runtime | `remeda`                                                                                                                            | 型ガードなど一般的な小物（`isPlainObject` / `isObjectType`）                                                                       |
 | runtime | `mermaid` `chart.js` `highlight.js`                                                                                                 | ブラウザへそのまま配る外部ライブラリ（`docs/architecture/browser.md`「重いライブラリ」）                                           |
-| runtime | `@fontsource/ibm-plex-mono`                                                                                                         | レポートのコードの書体（`/vendor/` から配る woff2）。2026-10-02 承認                                                               |
+| runtime | `@fontsource/ibm-plex-mono`                                                                                                         | レポートのコードの書体（`/vendor/` から配る woff2）。承認済み                                                                      |
 | runtime | `mdast-util-find-and-replace` `unist-util-visit`                                                                                    | Markdown の木を辿って書き換える                                                                                                    |
 | runtime | `zustand`                                                                                                                           | 画面全体で共有する状態（`docs/architecture/browser.md`）                                                                           |
 | runtime | `@orpc/client` `@orpc/contract` `@orpc/server` `@orpc/tanstack-query` `@tanstack/react-query`                                       | サーバとブラウザの間の手続きと、その結果の取得                                                                                     |
@@ -38,8 +38,8 @@
 | dev     | `playwright-core`                                                                                                                   | 画面の確認（`scripts/capture/capture-*.ts`）と E2E（`docs/architecture/testing.md`）                                               |
 | dev     | `happy-dom`                                                                                                                         | `browser` のテストの DOM（`vitest.config.ts` の `dom`）。サーバの mermaid 構文検査の worker をやめたので runtime から dev へ移した |
 | dev     | `vitest` `vite`                                                                                                                     | テストランナーとブラウザ側の組み立て・開発サーバ                                                                                   |
-| dev     | `@vitejs/plugin-react` `oxc-transform-react`                                                                                        | JSX の変換と React Compiler（`docs/coding-standards.md`「手でメモ化しない」）。2026-09-29 承認                                     |
-| dev     | `@vitest/coverage-v8`                                                                                                               | 単体テストのカバレッジ（`pnpm run test:coverage`。`check` には入れない）。2026-10-02 承認                                          |
+| dev     | `@vitejs/plugin-react` `oxc-transform-react`                                                                                        | JSX の変換と React Compiler（`docs/coding-standards.md`「手でメモ化しない」）。承認済み                                            |
+| dev     | `@vitest/coverage-v8`                                                                                                               | 単体テストのカバレッジ（`pnpm run test:coverage`。`check` には入れない）。承認済み                                                 |
 | dev     | `@stryker-mutator/core` `@stryker-mutator/vitest-runner`                                                                            | `src/shared/` の mutation score（`docs/research/mutation-score.md`。手元で月 1 回）                                                |
 
 `zod` と `@anthropic-ai/claude-agent-sdk` はある。`ws` を選ぶのは**ランタイム固有の API に寄せない**ため。
@@ -47,7 +47,7 @@
 
 ### 足す外部コマンド
 
-**足す外部コマンド**（パッケージではなく OS のもの。**ユーザーの承認済み**）: `rtk`（Rust Token Killer。Homebrew。2026-10-18 承認・試験導入）は、Bash の出力を縮めたコマンドへの書き換えを
+**足す外部コマンド**（パッケージではなく OS のもの。**ユーザーの承認済み**）: `rtk`（Rust Token Killer。Homebrew。承認済み・試験導入）は、Bash の出力を縮めたコマンドへの書き換えを
 `rtk rewrite` に頼む（`src/server/session-driver/adapter/rtk-rewrite.ts`。`PreToolUse` フックが
 `updatedInput` で `command` を差し替える）。**無い・失敗・2秒を超えたときは元のコマンドを通す**ので、無くても動く。
 有無はセッションの駆動を作るときに `rtk --version` で1回だけ確かめ、無ければ Bash ごとには起こさない。

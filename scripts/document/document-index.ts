@@ -24,11 +24,13 @@ export const CHILD_LIST_COLUMNS = ["ファイル", "説明"] as const satisfies 
 
 const SECTION_INDEX_TITLE = "節の索引"
 
-/** 設計判断の表の行（ファイル名の昇順）。 */
+const TRAILING_DATE_PATTERN = /（20\d\d-\d\d-\d\d(?:〜\d+)?）$/u
+
+/** 設計判断の表の行（ファイル名の昇順）。題の末尾の（日付）は表に載せない。 */
 export function decisionRows(adrs: readonly TitledFile[]): TableRow[] {
   return sortByFileName(adrs).map(({ fileName, title, status }) => [
     `\`docs/architecture/adr/${fileName}\``,
-    title,
+    title.replace(TRAILING_DATE_PATTERN, ""),
     status,
   ])
 }

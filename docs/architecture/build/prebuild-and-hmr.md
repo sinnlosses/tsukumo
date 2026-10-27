@@ -45,8 +45,7 @@
   はそこに当たる。**自分で持ち歩くもの（既定の立ち絵・`node_modules` の外部ライブラリ）は
   tsukumo 自身の場所から読む**（`src/server/adapter/bundled-path.ts`）。`tsukumo` コマンドをどの
   プロジェクトのディレクトリで起こしても見つかるようにするための区別
-- **リポジトリの外に置いたのは `pnpm add --global "link:<リポジトリ>"` の2つだけ**（2026-09-12。
-  2026-09-27 に `bun link` から移し、2026-10-02 に pnpm 12 の `pnpm link` が `--global` を受け付けない
+- **リポジトリの外に置いたのは `pnpm add --global "link:<リポジトリ>"` の2つだけ**（`bun link` から移し、さらに pnpm 12 の `pnpm link` が `--global` を受け付けない
   ので `pnpm add --global` のリンク形式へ移した。打つのは `mise run setup`）。`~/Library/pnpm/bin/tsukumo`
   （実体への**シンボリックリンクではなく**、`bin/tsukumo` のシバン行を読んで
   `exec <そのシバンの処理系> <bin/tsukumo のパス>` を生成するシム）と `~/Library/pnpm/global/`
