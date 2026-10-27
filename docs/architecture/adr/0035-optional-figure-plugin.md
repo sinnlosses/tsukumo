@@ -60,3 +60,7 @@ ADR 0034 は図を「書き手が構造だけを書き、tsukumo が描く」と
 
 - 本体の変更は `image` の塊の説明の1文の言い換えだけ
 - スキル側の文書（`description`・使いどころ）は tsukumo-plugins の `tsukumo-figure` が持つ
+
+## 追記: `browser-change-without-image` を外した
+
+上の調べに出る `browser-change-without-image` は、入力の `files` の塊を書き手の口から外したため外した。

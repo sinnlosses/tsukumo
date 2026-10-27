@@ -10,7 +10,7 @@ import type { SessionEvent } from "../../../../src/shared/session/session-event.
 import { reportEvent, reportOfSections } from "../../../fixture/report-event.ts"
 
 describe("reportUsageEntryOf", () => {
-  it("modified のファイルの有無・前後図か画像の有無・task の有無を、塊の欄とは別の真偽値で持つ", () => {
+  it("hasModifiedFiles は常に false で、前後図か画像の有無・task の有無を塊の欄とは別の真偽値で持つ", () => {
     const files = (change: "modified" | "read"): ReportBlock => ({
       kind: "files",
       items: [{ path: "架空/a.ts", change, note: "" }],
@@ -46,10 +46,10 @@ describe("reportUsageEntryOf", () => {
       readonly task: boolean
       readonly expected: readonly [boolean, boolean, boolean]
     }[] = [
-      { blocks: [files("modified")], task: false, expected: [true, false, false] },
-      { blocks: [files("modified")], task: true, expected: [true, false, true] },
-      { blocks: [files("modified"), beforeAfter], task: false, expected: [true, true, false] },
-      { blocks: [files("modified"), image], task: true, expected: [true, true, true] },
+      { blocks: [files("modified")], task: false, expected: [false, false, false] },
+      { blocks: [files("modified")], task: true, expected: [false, false, true] },
+      { blocks: [files("modified"), beforeAfter], task: false, expected: [false, true, false] },
+      { blocks: [files("modified"), image], task: true, expected: [false, true, true] },
       { blocks: [files("read")], task: false, expected: [false, false, false] },
       { blocks: [files("read"), image], task: false, expected: [false, true, false] },
     ]

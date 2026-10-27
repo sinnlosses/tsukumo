@@ -30,7 +30,7 @@ export function shortTableSection(rows: readonly UsageRecord[]): string {
   ].join("\n")
 }
 
-/** modified のファイルがあるレポートのうち、前後図も画像も無かった数。 */
+/** modified のファイルがあるレポートのうち、前後図も画像も無かった数。`hasModifiedFiles` が常に false になる前の記録だけが数に入る。 */
 export function modifiedWithoutVisualSection(reports: readonly UsageRecord[]): string {
   if (reports.length === 0) {
     return "modified のファイルがあるのに前後図も画像も無いレポート: 記録した行が無い"

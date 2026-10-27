@@ -115,7 +115,7 @@ const acceptedFields = reportShapeTagUsageSchema.unwrap().extend({
   unknownBlockCount: z.number(),
   /** `body` の型つきフェンスのうち、読めずに素のコードブロックへ落としたものの数（版23から）。 */
   brokenFenceCount: z.number(),
-  /** `files` の塊に `modified` の項目があるか（版4から）。 */
+  /** 旧い記録では `files` の塊に `modified` の項目があるか。新規は常に false（版4から）。 */
   hasModifiedFiles: z.boolean(),
   /** `beforeAfter` か `image` の塊が1つでもあるか（版4から）。 */
   hasBeforeAfterOrImage: z.boolean(),

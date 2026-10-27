@@ -83,7 +83,7 @@ export const filesBlockSchema = z
     fold,
     aside,
   })
-  .describe("触った・読んだファイルの一覧")
+  .describe("旧い記録の読み戻し用。書き手には渡さない")
 
 export const codeBlockSchema = z
   .object({

@@ -40,7 +40,7 @@ export const FROZEN_HUB_REFERENCE_COUNTS = {
   "docs/architecture/directory.md": 3,
   "docs/architecture/display/aside.md": 2,
   "docs/architecture/display/block-criteria.md": 3,
-  "docs/architecture/display/block-field.md": 2,
+  "docs/architecture/display/block-field.md": 1,
   "docs/architecture/display/block-table.md": 1,
   "docs/architecture/display/check-result.md": 1,
   "docs/architecture/display/conclusion.md": 2,

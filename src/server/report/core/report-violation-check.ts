@@ -13,7 +13,6 @@ import type {
   ReportBlock,
   ReportSection,
 } from "../../../shared/report/report-block.ts"
-import type { ReportCheck } from "../../../shared/report/report-check.ts"
 import {
   MAX_EMPHASIS_ROWS,
   MAX_FIRST_SENTENCE,
@@ -196,7 +195,6 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
       count: blocks.filter((block) => block.kind === "text" && isNonJapanese(block.text)).length,
     },
     { kind: "plain-word", count: plainWords.length, spellings: plainWords },
-    browserChangeWithoutImage(blocks, drawnBlocks, report.checks),
     figureContradiction(report.figure, report.sections),
     {
       kind: "figure-number-mismatch",
@@ -210,38 +208,6 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
   ] as const satisfies readonly ReportViolation[]
 
   return counted.filter((violation) => violation.count > VIOLATION_THRESHOLDS[violation.kind])
-}
-
-function browserChangeWithoutImage(
-  blocks: readonly ReportBlock[],
-  drawnBlocks: readonly ReportBlock[],
-  checks: readonly ReportCheck[],
-): Extract<ReportViolation, { readonly kind: "browser-change-without-image" }> {
-  const changesBrowserFile = blocks.some(
-    (block) =>
-      block.kind === "files" &&
-      block.items.some(
-        (item) =>
-          (item.change === "added" || item.change === "modified") && isBrowserComponent(item.path),
-      ),
-  )
-  const hasImage = drawnBlocks.some(
-    (block) =>
-      block.kind === "image" ||
-      (block.kind === "beforeAfter" &&
-        [block.before, block.after].some((side) => side.kind === "image")),
-  )
-  const hasUnconfirmed = checks.some(
-    (check) => check.status === "unobserved" || check.status === "blocked",
-  )
-  return {
-    kind: "browser-change-without-image",
-    count: changesBrowserFile && !hasImage && !hasUnconfirmed ? 1 : 0,
-  }
-}
-
-function isBrowserComponent(path: string): boolean {
-  return path.startsWith("src/browser/") && (path.endsWith(".tsx") || path.endsWith(".css"))
 }
 
 function figureContradiction(

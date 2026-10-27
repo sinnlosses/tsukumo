@@ -57,7 +57,6 @@ export const REPORT_REJECTION_MODES = {
   "labeled-ordered": "reject",
   "non-japanese": "reject",
   "plain-word": "reject",
-  "browser-change-without-image": "reject",
   "figure-contradiction": "count",
   "figure-number-mismatch": "count",
   "plot-forbidden-form": "count",

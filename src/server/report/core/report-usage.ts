@@ -57,7 +57,7 @@ export type ReportUsageEntry = {
   readonly listStyles: readonly string[]
   /** その回に出た `mermaid` の図の種類（ソースの最初の語。重複無し。`figure` の図を含む）。 */
   readonly mermaidKinds: readonly string[]
-  /** `files` の塊に `modified` の項目があるか。 */
+  /** 常に false。旧い記録との互換のために欄を残す。 */
   readonly hasModifiedFiles: boolean
   /** `beforeAfter` か `image` の塊が1つでもあるか（`figure` を含む）。 */
   readonly hasBeforeAfterOrImage: boolean
@@ -219,9 +219,7 @@ export function reportUsageEntryOf(
     brokenFenceCount: event.brokenFenceCount,
     listStyles: listStylesOf(drawnSections),
     mermaidKinds: [...new Set(mermaidSourcesInSections(drawnSections).map(mermaidKind))],
-    hasModifiedFiles: blocksOf(event.sections).some(
-      (block) => block.kind === "files" && block.items.some((item) => item.change === "modified"),
-    ),
+    hasModifiedFiles: false,
     hasBeforeAfterOrImage: blocksOf(drawnSections).some(
       (block) => block.kind === "beforeAfter" || block.kind === "image",
     ),

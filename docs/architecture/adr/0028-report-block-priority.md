@@ -207,3 +207,8 @@
 条は足しては外すを繰り返していた（画面のファイルの判定は上の追記で外し、2026-10-24 に `browser-change-without-image` で入れ直した）。新しい条は `REPORT_REJECTION_MODES` に `count` で入れて記録の `kind: "counted"` の行で数え、
 `reject` へ上げるときは数と日付を `docs/history/decision.md` に1行書く。既存の条は「導入時は数えていない」の1行で許す
 （同「adr/0028 追記 差し戻しの条ごとの根拠」）。根拠の行の有無は文書の検査が見る。
+
+## 追記: `files` を書き手の口から外した
+
+`files` の塊は書き手の口から外し、触ったファイルの一覧は tsukumo が git の差分から出す。入力が `files` の塊だけだった
+`browser-change-without-image` は、直近 28 日の発火が 0 回（`report` 280 件のうち `files` は 20 件）のまま外した。

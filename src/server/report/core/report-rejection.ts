@@ -115,8 +115,6 @@ function violationLine(violation: ReportViolation): string {
       return `仮名も漢字も無い英語の地の文が${violation.count}個ある。日本語で書き直す（識別子・パス・コマンド・コードは \`\` で囲めば英語のままでよい）`
     case "plain-word":
       return `地の文にわかりにくい語がある。${plainWordReplacements(violation.spellings)}。言い換えて書き直す（コード・引用の中は対象外）`
-    case "browser-change-without-image":
-      return "画面のファイルを変えたのに画像が無い。撮った画像を `image` か `beforeAfter` で渡すか、撮れない事情を `checks` の `unobserved` に書く"
     case "figure-contradiction":
       return violation.reason === "no-shape"
         ? `\`figure\` の reason が \`no-shape\` なのに、\`sections\` に流れ・つながり・構造を描く塊（\`list\` の \`flow\`・\`beforeAfter\`・\`graph\`・\`mermaid\`・\`svg\`）が${violation.count}個ある。その図を \`figure\` に置くか、合う reason にする`

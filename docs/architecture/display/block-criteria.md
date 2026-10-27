@@ -15,8 +15,8 @@
 
 行は版を持ち、版ごとに次の数と真偽値を足した（欄の名前と形は `src/server/report/core/report-usage.ts` が持つ）:
 
-- 版4: `files` に `modified` の項目があるか・`beforeAfter` か `image` の塊があるか・`task` を渡した最終レポートか
-  （modified があるのに前後図も画像も無い回を数える。browser のファイルに限って差し戻し〔kind `browser-change-without-image`〕に上げてある）
+- 版4: `files` に `modified` の項目があるか（`hasModifiedFiles`。書き手が `files` を渡せなくなったため、新規は常に false で、型と欄だけ残す）・
+  `beforeAfter` か `image` の塊があるか・`task` を渡した最終レポートか
 - 版5: 段1の図（`image`・`mermaid`・`graph`・`svg`。`beforeAfter` の側を含む）があるか、
   このターンにメインが画像のファイルを `Read` したのに `image` の塊が無かったか（サブエージェントの `Read` は数えない）
 - 版6: `figure` の欄の種類と、`none` のときの理由。塊の種類・欄・段1の図・画像の有無を `figure` の図も含めて数える

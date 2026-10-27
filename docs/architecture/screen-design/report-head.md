@@ -135,8 +135,9 @@
 #### ファイルの塊
 
 **種類の札と、フォルダを畳んだ樹形図・説明の3列で見せる**（デザイン案A。パスは樹形図にする。見本の元は `docs/history/mockup/report-files-block-2026-10-03.html` で、樹形図は
-それに無い）。`files` の塊の構造は `docs/architecture/display/block-field.md`「候補の比較は `options`、
-触ったファイルの一覧は `files` の塊で見せる」が持つ。
+それに無い）。この見た目は、最終レポートの頭の畳んだ節「変更したファイル n」（上の `status` の末尾）と、
+書き手の口から外した後も旧い記録の読み戻しに残る `files` の塊が共用する。`files` の塊は
+`docs/architecture/display/block-field.md` が読み戻し専用として持つ。
 
 ```
          tsukumo-2/

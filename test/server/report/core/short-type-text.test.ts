@@ -14,9 +14,13 @@ describe("reportShortTypeText", () => {
 
     expect(text).toContain("type ReportFigure = ")
     expect(text).toContain("type ReportSection = ")
-    for (const kind of REPORT_BLOCK_KINDS) {
+    for (const kind of REPORT_BLOCK_KINDS.filter((known) => known !== "files")) {
       expect(text).toContain(`kind: "${kind}"`)
     }
+  })
+
+  it("読み戻し専用の files の塊は書き手向けの型に出さない", () => {
+    expect(reportShortTypeText()).not.toContain(`kind: "files"`)
   })
 
   it("欄の説明をそのまま残し、数・字数の制約は出さない", () => {

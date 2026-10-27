@@ -6,7 +6,7 @@ import { z } from "zod"
 
 import { nonEmpty, omittable } from "./report-block-field.ts"
 import {
-  namedReportBlockSchema,
+  namedWriterBlockSchema,
   parseReportBlocks,
   type RecordedReportFigure,
   type ReportBlock,
@@ -17,7 +17,7 @@ import {
 export const reportRetrospectiveSchema = z.object({
   summary: nonEmpty(z.string().trim()).describe("結果を1〜2文で"),
   drafts: omittable(z.array(nonEmpty(z.string().trim())), []).describe("積んだドラフトのID"),
-  blocks: omittable(z.array(namedReportBlockSchema), []).describe(
+  blocks: omittable(z.array(namedWriterBlockSchema), []).describe(
     "結果の根拠に図・表・コードが要るときだけ。sections の blocks と同じ部品",
   ),
 })
