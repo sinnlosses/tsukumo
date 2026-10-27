@@ -11,6 +11,7 @@ const COUNTED_REASONS = [
   "figure-number-mismatch",
   "plot-forbidden-form",
   "plot-form-override",
+  "broken-inline-mark",
   "long-table",
   "long-list",
   "untitled-section",

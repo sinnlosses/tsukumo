@@ -3,6 +3,8 @@
 // Markdown に埋める文字は行頭の塊の記法と `<` を逃がして改行を畳み、許すのはインラインの記法（inline code・太字・リンク）だけにする。
 // HTML に埋める文字は HTML として逃がし、Markdown の記法は効かせない。ただし `htmlInlineWithCode` は inline code だけ `code` 要素にする。
 
+import { foldInlineMarks } from "./inline-mark.ts"
+
 /** inline code（開きと同じ数のバッククォートで閉じる）。中の文字は逃がさない。 */
 const CODE_SPAN = /(?<!`)(`+)(?!`)[\s\S]*?(?<!`)\1(?!`)/g
 
@@ -17,7 +19,7 @@ export function joinParts(parts: readonly string[]): string {
  * HTML の中に埋める1行の文字。改行を空白に畳み、HTML として逃がす（Markdown の記法は効かない）。
  */
 export function htmlInline(text: string): string {
-  return escapeHtml(text.replace(/\s+/g, " ").trim())
+  return escapeHtml(foldInlineMarks(text).replace(/\s+/g, " ").trim())
 }
 
 /** 二重引用符で囲む HTML 属性の値に埋める1行の文字。`htmlInline` に加えて `"` も逃がす。 */
@@ -55,7 +57,7 @@ export function markdownInline(text: string): string {
  */
 export function htmlInlineWithCode(text: string): string {
   return mapCodeSpans(
-    text.replace(/\s+/g, " ").trim(),
+    foldInlineMarks(text).replace(/\s+/g, " ").trim(),
     (part) => escapeHtml(part),
     (span) => `<code>${escapeHtml(codeSpanContent(span))}</code>`,
   )

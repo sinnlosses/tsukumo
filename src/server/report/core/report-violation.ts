@@ -190,6 +190,11 @@ export type ReportViolation =
     }
   /** `plot` の `form` が、どちらの図の既定で決めた形とも違い、上書きとして通した。 */
   | { readonly kind: "plot-form-override"; readonly count: number }
+  /**
+   * 結論・`text` の塊・`list` の項目・`table` のセルに、行内の印の書式に当たらない `{{` がある。
+   * `count` はその `{{` の数で、本文の字は持たない。
+   */
+  | { readonly kind: "broken-inline-mark"; readonly count: number }
 
 /** 違反にしない上限（これを超えたら違反）。 */
 export const VIOLATION_THRESHOLDS = {
@@ -232,6 +237,7 @@ export const VIOLATION_THRESHOLDS = {
   "figure-number-mismatch": 0,
   "plot-forbidden-form": 0,
   "plot-form-override": 0,
+  "broken-inline-mark": 0,
 } as const satisfies Record<ReportViolation["kind"], number>
 
 export const REPORT_VIOLATION_KINDS = keys(VIOLATION_THRESHOLDS)

@@ -3,6 +3,7 @@
 import { isPlainObject } from "remeda"
 import { z } from "zod"
 
+import { foldInlineMarks } from "./inline-mark.ts"
 import { nonEmpty } from "./report-block-field.ts"
 
 /** 作業の終わり方。`finished` は作業を終えた、`stopped` は止めた、`awaiting-answer` は利用者の答え待ち。 */
@@ -63,7 +64,8 @@ export function parseReportTask(value: unknown): ReportTask {
  * （`task` のある `conclusion` には作業の名前が書かれない）。
  */
 export function conclusionWithTaskName(conclusion: string, task: ReportTask): string {
-  return task.kind === "task" ? `${task.name}: ${conclusion}` : conclusion
+  const line = foldInlineMarks(conclusion)
+  return task.kind === "task" ? `${task.name}: ${line}` : line
 }
 
 const LEGACY_FINISHED_OUTCOME = "shipped"

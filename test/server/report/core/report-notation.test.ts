@@ -76,8 +76,8 @@ const STYLE_SHEET_SOURCE = STYLE_SHEET_FILES.map((file) =>
 ).join("\n")
 
 describe("REPORT_NOTATION_PROMPT", () => {
-  it("見た目の CSS は入口1つと部品9つを読んでいる", () => {
-    expect(STYLE_SHEET_FILES).toHaveLength(10)
+  it("見た目の CSS は入口1つと部品10を読んでいる", () => {
+    expect(STYLE_SHEET_FILES).toHaveLength(11)
   })
 
   it("HTML の要素も class も名乗らない（書かせるのは Markdown と塊だけ）", () => {

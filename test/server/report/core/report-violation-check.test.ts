@@ -149,6 +149,18 @@ describe("reportViolations", () => {
       expect(kinds(draft([reportDraftText("架空の-->と=>は対象外。")]))).toEqual([])
     })
 
+    it("行内の印 {{A → B}} の中の矢印は差し戻さず、印の外の矢印は差し戻す", () => {
+      expect(kinds(draft([reportDraftText("架空の値は {{12 → 8}} に変わる。")]))).toEqual([])
+      expect(kinds(draft([table("{{12 → 8}}")]))).toEqual([])
+      expect(kinds(draft([reportDraftText("架空の旧 → 架空の新、{{12 → 8}} に変わる。")]))).toEqual(
+        ["arrow-in-prose"],
+      )
+      expect(kinds(draft([reportDraftText("架空の {{12 → 8 は閉じない。")]))).toEqual([
+        "arrow-in-prose",
+        "broken-inline-mark",
+      ])
+    })
+
     it("二重のバッククォートのインラインコードを取り違えない", () => {
       expect(kinds(draft([reportDraftText("架空の ``a ` → ` b`` と書く。")]))).toEqual([])
       expect(kinds(draft([reportDraftText("架空の ``a`b`` → `c` に変わる。")]))).toEqual([

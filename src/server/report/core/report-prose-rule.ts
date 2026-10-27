@@ -1,5 +1,6 @@
 // レポートの検査のうち、地の文・見出し・項目の書き方を判定する述語。
 
+import { textOutsideInlineMarks } from "../../../shared/report/inline-mark.ts"
 import { tableRowCells } from "../../../shared/report/report-block-comparison.ts"
 import type { ReportBlock } from "../../../shared/report/report-block.ts"
 import { MAX_HEADING, MAX_ITEM_LABEL } from "../../../shared/report/report-limit.ts"
@@ -31,7 +32,7 @@ const ARROW = " → "
 const ITEM_LABEL = new RegExp(`^[^\`:：。\\n]{1,${String(MAX_ITEM_LABEL)}}[:：](?!//)(?!\\d)`)
 
 export function hasArrow(text: string): boolean {
-  return withoutInlineCode(text, "").includes(ARROW)
+  return withoutInlineCode(textOutsideInlineMarks(text), "").includes(ARROW)
 }
 
 export function proseTexts(block: ReportBlock): readonly string[] {

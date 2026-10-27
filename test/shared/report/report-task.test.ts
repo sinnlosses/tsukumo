@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { parseReportTask } from "../../../src/shared/report/report-task.ts"
+import { conclusionWithTaskName, parseReportTask } from "../../../src/shared/report/report-task.ts"
 
 describe("parseReportTask", () => {
   it("前の記録の終わり方 shipped は finished として読む", () => {
@@ -36,5 +36,13 @@ describe("parseReportTask", () => {
     expect(
       parseReportTask({ id: "", name: "架空の作業", outcome: "finished", genre: "work" }),
     ).toEqual({ kind: "none" })
+  })
+})
+
+describe("conclusionWithTaskName", () => {
+  it("1行に残す結論の行内の印は素の文字へ畳む", () => {
+    expect(conclusionWithTaskName("架空の {{12 → 8}} 秒", { kind: "none" })).toBe(
+      "架空の 12 → 8 秒",
+    )
   })
 })

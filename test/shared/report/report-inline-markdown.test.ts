@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  htmlInline,
+  htmlInlineWithCode,
+} from "../../../src/shared/report/report-inline-markdown.ts"
+import {
   fencedFigureCaptioned,
   markdownOf,
   reportMarkdownText,
@@ -44,6 +48,18 @@ describe("reportSectionsMarkdown", () => {
         "架空の図",
       ),
     )
+  })
+
+  describe("行内の印", () => {
+    it("Markdown に埋める文字では印を字のまま残し、HTML に埋める文字では素の文字へ畳む", () => {
+      expect(markdownOf(reportMarkdownText("架空の {{12 → 8}} 秒と {{3 / 5}}"))).toBe(
+        "架空の {{12 → 8}} 秒と {{3 / 5}}",
+      )
+      expect(htmlInline("架空の {{12 → 8}} 秒と {{3 / 5}}")).toBe("架空の 12 → 8 秒と 3/5")
+      expect(htmlInlineWithCode("`{{3 / 5}}` と {{3 / 5}} と {{x")).toBe(
+        "<code>{{3 / 5}}</code> と 3/5 と {{x",
+      )
+    })
   })
 
   describe("塊の文字の逃がし方", () => {

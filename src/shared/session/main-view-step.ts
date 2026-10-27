@@ -1,6 +1,7 @@
 // メインビューの記録を、やり取り（ターン）とステップにまとめる。
 // 本文の選び方は持たず、まとめた直後の形までを作る。
 
+import { foldInlineMarks } from "../report/inline-mark.ts"
 import { NO_REPORT_CHANGE_SUMMARY } from "../report/report-change-summary.ts"
 import { NO_REPORT_TASK } from "../report/report-task.ts"
 import { isBlankText } from "../utils/blank-text.ts"
@@ -255,6 +256,6 @@ function extractFirstLine(markdown: string): string {
   }
 
   const heading = /^#{1,6}\s+(.*)$/.exec(line)
-  const text = heading?.[1] === undefined ? line : heading[1].trim()
+  const text = foldInlineMarks(heading?.[1] === undefined ? line : heading[1].trim())
   return clipWithEllipsis(text, MAX_STEP_SUMMARY_LENGTH)
 }

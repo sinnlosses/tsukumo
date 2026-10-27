@@ -7,6 +7,7 @@
 // - `rehype-raw` で、Markdown の中に直接書いた HTML ブロック・インライン HTML を解釈する
 // - `rehypeTaskCheck` で、チェックリストの `<input type="checkbox">` を静的な印に畳む（サニタイズより前）
 // - `rehype-sanitize`（`REPORT_SANITIZE_SCHEMA`）で許可リストに無い要素・属性を落とす。サニタイズはここ1箇所に集約
+// - `rehypeInlineMark` で、文中の行内の印（`{{12 → 8}}` など）を `span` に替える（サニタイズのあと。`code`・`pre` の中は触らない）
 // - `rehype-highlight` でコードの色付け（`pre > code` に `hljs` の class と `<span>` を足す。テーマ CSS は `/vendor/highlight-theme.min.css` としてサーバが配る）
 //
 // ```mermaid / ```chart のフェンスは「コード」ではなく図・グラフの入れ物にする（`MermaidBlock` / `ChartBlock`）。
@@ -62,6 +63,7 @@ import { REPORT_HAST_CACHE, type HastCache } from "./hast-cache.ts"
 import { MermaidBlock } from "./mermaid-block.tsx"
 import { NotationAside, NotationBlock, NotationInline, NotationListItem } from "./notation.tsx"
 import { remarkPreviewImage } from "./preview-image.ts"
+import { rehypeInlineMark } from "./rehype-inline-mark.ts"
 import { ReportImage } from "./report-image.tsx"
 import styles from "./report-notation.module.css"
 import { REPORT_SANITIZE_SCHEMA } from "./sanitize-schema.ts"
@@ -167,6 +169,7 @@ function ReportMarkdown(props: {
         // `style` の検査はサニタイザが値の関数を受けないので、ここで済ませる。
         rehypeStyleAllowlist,
         [rehypeSanitize, REPORT_SANITIZE_SCHEMA],
+        rehypeInlineMark,
         rehypeHighlight,
         () => (tree: Root) => {
           props.cache?.set(props.text, tree)

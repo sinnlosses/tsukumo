@@ -1,0 +1,46 @@
+.detail-block {
+  /* 文中の行内の印。どれも行の高さを変えず、途中で折り返さない。 */
+  & .report-mark-diff,
+  & .report-mark-spark,
+  & .report-mark-ratio {
+    display: inline-block;
+    line-height: 1;
+    white-space: nowrap;
+    vertical-align: baseline;
+  }
+  /* 前の値と矢印を静かな色にし、後の値は地の ink のまま。 */
+  & .report-mark-diff-from {
+    color: var(--ink-quiet);
+  }
+  /* block 文字の列。等幅にそろえて段の幅を一定にする。 */
+  & .report-mark-spark {
+    font-family: var(--font-code);
+    font-size-adjust: none;
+    letter-spacing: 0;
+    color: var(--ink);
+  }
+  /* 全体を下地に、a/b の幅の帯を敷き、数字を横に添える。 */
+  & .report-mark-ratio {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35em;
+  }
+  & .report-mark-ratio-bar {
+    position: relative;
+    display: inline-block;
+    inline-size: 2.5em;
+    block-size: 0.55em;
+    border-radius: 0.15em;
+    background: color-mix(in srgb, var(--ink) 16%, transparent);
+    overflow: hidden;
+  }
+  & .report-mark-ratio-value {
+    font-variant-numeric: tabular-nums;
+  }
+  & .report-mark-ratio-fill {
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: 0;
+    background: var(--ink-soft);
+  }
+}

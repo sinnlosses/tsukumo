@@ -1,6 +1,6 @@
 /* レポートの記法と Markdown の見た目の語彙の入口。
 
-   見た目の本体は `report-notation/` の summary / figure / graph-fold / card-chain / timeline / result / prose / body / inline の各 `*.css` にあり、ここで `@import` して元の順に並べる。
+   見た目の本体は `report-notation/` の summary / figure / graph-fold / card-chain / timeline / result / prose / body / inline / mark の各 `*.css` にあり、ここで `@import` して元の順に並べる。
    CSS Modules が class 名をファイルごとにハッシュ化しても、`@import` で取り込んだ規則は入口の名前になるので、`.detail-block`（レポート本文・質問の preview の入れ物）を含む全部の class を、部品はこのファイルの1つから引く。
    文脈ごとの打ち消し（`.main-step > .detail-block:last-child` / `.question-ask-option .detail-block`）は、CSS Modules が class 名をファイルごとにハッシュ化するため、この class 名だけをこのファイルの外から選択子で指すことができない。
    打ち消す側（main-view.module.css / question-ask.module.css）が同じ綴りの class をもう1つ持ち、呼び出し側がその class をこの `.detail-block` と一緒に付ける。 */
@@ -14,3 +14,4 @@
 @import "./report-notation/prose.css";
 @import "./report-notation/body.css";
 @import "./report-notation/inline.css";
+@import "./report-notation/mark.css";

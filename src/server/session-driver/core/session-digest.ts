@@ -8,6 +8,7 @@
 // 読んだものはどこにも書き出さない。
 
 import type { Expression } from "../../../shared/character-pack/expression.ts"
+import { foldInlineMarks } from "../../../shared/report/inline-mark.ts"
 import {
   MAX_SESSION_SUMMARY_LENGTH,
   type SessionDigest,
@@ -166,7 +167,9 @@ function adoptCall(fold: DigestFold, call: HeldCall): DigestFold {
     remaining: call.sessionRemaining,
     conclusions: [
       ...fold.conclusions,
-      ...(call.conclusionFirstSentence.trim() === "" ? [] : [call.conclusionFirstSentence.trim()]),
+      ...(call.conclusionFirstSentence.trim() === ""
+        ? []
+        : [foldInlineMarks(call.conclusionFirstSentence.trim())]),
     ].slice(-RECENT_CONCLUSION_COUNT),
     lastLine: call.closing.kind === "speech" ? call.closing.text : fold.lastLine,
   }
