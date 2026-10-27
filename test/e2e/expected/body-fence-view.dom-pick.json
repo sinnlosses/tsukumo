@@ -1,0 +1,26 @@
+{
+  "main": [
+    { "tag": "div", "attributes": { "data-report-body": "" }, "children": [
+      { "tag": "h4", "children": ["架空の節"] },
+      { "tag": "pre", "attributes": { "aria-label": "この図を拡大" } },
+      { "tag": "div", "attributes": { "data-reveal-caption": "" }, "children": ["図 1"] },
+      { "tag": "div", "attributes": { "data-reveal-caption": "" }, "children": ["表 1", "架空の表"] },
+      { "tag": "table", "children": [
+        { "tag": "th", "children": ["列A"] },
+        { "tag": "th", "children": ["列B"] },
+        { "tag": "td", "children": ["1"] },
+        { "tag": "td", "children": ["2"] }
+      ] },
+      "注意",
+      { "tag": "p", "children": ["架空の注意の一文。"] },
+      { "tag": "ol", "attributes": { "aria-label": "連鎖" } },
+      { "tag": "div", "attributes": { "data-reveal-caption": "" }, "children": ["図 2"] },
+      { "tag": "pre", "children": [
+        { "tag": "code", "children": ["print", "(", "'素のコード'", ")"] }
+      ] },
+      { "tag": "pre", "children": [
+        { "tag": "code", "children": ["これは壊れた表"] }
+      ] }
+    ] }
+  ]
+}
