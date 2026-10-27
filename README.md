@@ -263,7 +263,7 @@ node scripts/runtime/diagnostic.ts     # 診断ログ（~/.tsukumo/diagnostic/�
                               #   <YYYY-MM-DD[THH:MM[:SS]]> で時刻の範囲、--generation <n> で駆動の代を絞る）
 ```
 
-`main` への push では GitHub Actions（`.github/workflows/ci.yml`）が typecheck・lint・format:check・
+どの枝への push でも GitHub Actions（`.github/workflows/ci.yml`）が typecheck・lint・format:check・
 単体テストを走らせます。Node と pnpm の版は `mise.toml` から入れます。E2E の全件は夜間に1回 `schedule` で走り、目視は手元にだけ残します。
 `bd` は CI が版を固定して別に入れ、`test/architecture/test-suite.test.ts` が
 CI に無い外部コマンドを起こすテストを落とします。

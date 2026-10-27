@@ -61,6 +61,26 @@
 - `pnpm run check --full` が落ちた: 直してから打ち直す
 - やり直しの上限を超えた: `main` が速く進みすぎている。少し待つか、送る相手に相談する
 
+### 送り出しの列に積んで送る
+
+作業ツリーごとに `ship` を打つと、それぞれが `rebase` → `check --full` → `--ff-only` を独立に回し、先を越されるたびにやり直す。
+列に積めば、取り込み・検証・送り出しは1つの drain が先頭から1件ずつ直列に打つ。
+
+1. `node scripts/dev/ship.ts --enqueue` を打つ。着手中のタスク・未コミットの変更・受け入れ（上の門と同じ。`--criteria-file` も渡せる）を確かめてから、
+   枝名を列に積んで戻る（`QUEUED`。同じ枝が積まれていれば `ALREADY_QUEUED`）。差し戻し・判定が取れないときは積まない
+2. 続けて `node scripts/dev/ship.ts --drain` を打つ。列の先頭から、その枝を出している作業ツリーで `git rebase main` → `pnpm run check --full`、
+   本体で `merge --ff-only` を打ち、列が空になるまで続ける。送った枝は `SHIPPED`、送れなかった枝は `SHIP_FAILED\t<枝>\t<理由の種類>\t<理由>` を出し、
+   最後に `DRAINED`。送れなかった枝が1件でもあれば終了コード1
+3. 別の drain が走っていれば `DRAIN_RUNNING\t<pid>` を出してすぐ戻る。積んだ枝はその drain が拾うので、打ち直さなくてよい
+
+- drain は作業ツリーをまたいで1つだけ走る（共有の git dir の `ship-queue/drain.lock`。持ち主の pid が死んでいれば奪う）。打つ作業ツリーは問わない
+- drain は受け入れ役を起こさない。`--enqueue` が書いた通った印（`ship-review/accepted/`）だけを見て、印が無ければ `review-unavailable` で送らずに次の枝へ進む。
+  印の無い枝は `--enqueue` で受け入れを通してから積み直す
+- `check --full` が落ちたら、drain は1回だけ打ち直す。通れば送ったうえで `flaky`、また落ちれば `real` として記録する
+- 列と記録は共有の git dir の `ship-queue/` に置く。積んだ枝は1件1ファイル（`<時刻>-<枝名>.entry`、中身は枝名）で、送り終えるか落ちたら消える。
+  送れなかった枝と `flaky` の枝は `ship-queue/records.jsonl` に1行1件（`at`・`branch`・`outcome`・`reason`・`verify`）で残る
+- 送れなかった枝は、上の「落ちた段によって次を行う」に従って直し、`--enqueue` から打ち直す
+
 ## コミット前のファイルの大きさの検査
 
 1 ファイルが大きいと、読むたびにコンテキストを食い、編集の突き合わせも壊れやすくなる。

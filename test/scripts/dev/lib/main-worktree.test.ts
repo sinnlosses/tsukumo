@@ -1,4 +1,4 @@
-// 主ブランチを出している作業ツリーの解決と、作業ツリーが clean かどうかの判定を、
+// 枝を出している作業ツリーの解決と、作業ツリーが clean かどうかの判定を、
 // 使い捨てリポジトリの実物の git で検証する。
 
 import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from "node:fs"
@@ -9,7 +9,7 @@ import { afterAll, beforeAll, describe, expect, test, vi } from "vitest"
 
 import {
   isWorktreeClean,
-  resolveMainWorktreePath,
+  resolveWorktreePathOfBranch,
   syncSubmodules,
 } from "../../../../scripts/dev/lib/main-worktree.ts"
 import { runSubprocessOrThrow } from "../../../fixture/subprocess.ts"
@@ -61,13 +61,15 @@ describe("main-worktree", { timeout: GIT_LOAD_TIMEOUT_MS }, () => {
     rmSync(sharedParent, { recursive: true, force: true })
   })
 
-  describe("resolveMainWorktreePath", () => {
+  describe("resolveWorktreePathOfBranch", () => {
     test("main ブランチを出している作業ツリーのパスを返す", () => {
-      expect(resolveMainWorktreePath(shared.root, "main")).toBe(realpathSync(shared.mainWorktree))
+      expect(resolveWorktreePathOfBranch(shared.root, "main")).toBe(
+        realpathSync(shared.mainWorktree),
+      )
     })
 
     test("そのブランチを出している作業ツリーが無ければ例外を投げる", () => {
-      expect(() => resolveMainWorktreePath(shared.root, "trunk")).toThrow(
+      expect(() => resolveWorktreePathOfBranch(shared.root, "trunk")).toThrow(
         "trunk を出している作業ツリーが見つからない",
       )
     })

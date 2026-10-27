@@ -1,4 +1,4 @@
-// 主ブランチを出している作業ツリーのパスを見つける概念と、作業ツリーが clean かどうかを
+// 枝を出している作業ツリーのパスを見つける概念と、作業ツリーが clean かどうかを
 // 見る概念を持つ。`git` だけを呼ぶ。
 
 import { execFileSync } from "node:child_process"
@@ -7,13 +7,13 @@ import path from "node:path"
 import process from "node:process"
 
 /**
- * `root` から見た `worktree list --porcelain` の中から、`primaryBranch` を出している作業ツリーの
+ * `root` から見た `worktree list --porcelain` の中から、`branch` を出している作業ツリーの
  * パスを返す。見つからなければ例外を投げる。 */
-export function resolveMainWorktreePath(root: string, primaryBranch: string): string {
+export function resolveWorktreePathOfBranch(root: string, branch: string): string {
   const output = execFileSync("git", ["-C", root, "worktree", "list", "--porcelain"], {
     encoding: "utf8",
   })
-  const targetBranch = `refs/heads/${primaryBranch}`
+  const targetBranch = `refs/heads/${branch}`
   for (const block of output.split("\n\n")) {
     const worktreeLine = block.split("\n").find((line) => line.startsWith("worktree "))
     const branchLine = block.split("\n").find((line) => line === `branch ${targetBranch}`)
@@ -21,7 +21,7 @@ export function resolveMainWorktreePath(root: string, primaryBranch: string): st
       return worktreeLine.slice("worktree ".length)
     }
   }
-  throw new Error(`${primaryBranch} を出している作業ツリーが見つからない`)
+  throw new Error(`${branch} を出している作業ツリーが見つからない`)
 }
 
 /**
