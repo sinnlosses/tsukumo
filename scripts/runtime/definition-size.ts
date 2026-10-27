@@ -12,17 +12,7 @@ import { z } from "zod"
 
 import { REPORT_SCHEMA_VARIANTS } from "../../src/server/core/schema-variant.ts"
 import { REPORT_NOTATION_PROMPT } from "../../src/server/report/core/report-notation.ts"
-import { tsukumoServer } from "../../src/server/session-driver/adapter/sdk-tool.ts"
-import { createCallReview } from "../../src/server/session-driver/core/call-review.ts"
-
-const TOOLS_REPLY = z.object({
-  id: z.literal(1),
-  result: z.object({
-    tools: z.array(
-      z.object({ name: z.string(), description: z.string().optional(), inputSchema: z.unknown() }),
-    ),
-  }),
-})
+import { fetchReportDefinition } from "./tools-list-reply.ts"
 
 const INPUT_SCHEMA = z.object({ properties: z.record(z.string(), z.unknown()) })
 
@@ -44,32 +34,7 @@ type Sizes = {
 }
 
 async function measure(reportSchema: (typeof REPORT_SCHEMA_VARIANTS)[number]): Promise<Sizes> {
-  const server = tsukumoServer(
-    [{ name: "default", label: "通常" }],
-    { kind: "work", reportSchema, figurePreference: "chart" },
-    createCallReview(),
-    () => {},
-    process.cwd(),
-    () => {},
-    () => {},
-    () => true,
-  )
-  const replies: unknown[] = []
-  const transport: Parameters<typeof server.instance.connect>[0] = {
-    start: async () => {},
-    close: async () => {},
-    send: async (message) => {
-      replies.push(message)
-    },
-  }
-  await server.instance.connect(transport)
-  transport.onmessage?.({ jsonrpc: "2.0", id: 1, method: "tools/list", params: {} })
-  const reply = await waitFor(replies)
-  await server.instance.close()
-  const report = reply.result.tools.find((tool) => tool.name === "report")
-  if (report === undefined) {
-    throw new Error(`${reportSchema} の tools/list に report が載っていない`)
-  }
+  const report = await fetchReportDefinition(reportSchema)
   const { properties } = INPUT_SCHEMA.parse(report.inputSchema)
   return {
     schema: JSON.stringify(report.inputSchema).length,
@@ -78,15 +43,4 @@ async function measure(reportSchema: (typeof REPORT_SCHEMA_VARIANTS)[number]): P
       .map(([name, value]) => [name, JSON.stringify(value).length] as const)
       .toSorted((a, b) => b[1] - a[1]),
   }
-}
-
-async function waitFor(replies: readonly unknown[]): Promise<z.output<typeof TOOLS_REPLY>> {
-  for (let attempt = 0; attempt < 2000; attempt += 1) {
-    const found = replies.find((reply) => TOOLS_REPLY.safeParse(reply).success)
-    if (found !== undefined) {
-      return TOOLS_REPLY.parse(found)
-    }
-    await new Promise((resolve) => setTimeout(resolve, 5))
-  }
-  throw new Error("tools/list の応答が届かなかった")
 }
