@@ -16,7 +16,6 @@
 
 | ファイル                                                          | 説明                                                                                                                                                                                           |
 | ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `docs/architecture/testing/check-stage-priority.md`               | `pnpm run check` の段の子を効率コアへ寄せる方式（`taskpolicy -c utility`）と、その選んだ根拠の測定。                                                                                           |
 | `docs/architecture/testing/e2e-artifact-and-expectation.md`       | E2E が判定に使う2つの成果物（DOM の構造・WebSocket のメッセージの列）の形、時計の固定、期待値の置き場所と比べ方、写す部分木の範囲、比べる成果物の選び方。                                      |
 | `docs/architecture/testing/e2e-flake-free-writing.md`             | 過去の揺れと「揺れずに間違った期待値」から取り出した、E2E を書くときの10の条。                                                                                                                 |
 | `docs/architecture/testing/e2e-run.md`                            | E2E のランナーとブラウザ、置き場所、`pnpm run check` の段と選び方、起こし方と後始末、場面の流し方、負荷の抑え方。                                                                              |

@@ -60,7 +60,6 @@ const ALLOWED_COMMANDS = [
   "dolt",
   "gh",
   "python3",
-  "taskpolicy",
   "rtk",
   "git",
   "pnpm",
@@ -73,7 +72,7 @@ const ALLOWED_COMMANDS = [
  * 利用者の承認待ちの既存の依存。承認されたら `ALLOWED_COMMANDS` へ移す。
  * 新しい名前をここへ足してはならない。
  */
-const UNAPPROVED_EXISTING_COMMANDS = ["lsof", "ps", "nice"] as const
+const UNAPPROVED_EXISTING_COMMANDS = ["lsof", "ps"] as const
 
 /**
  * 第1引数が文字列リテラルにも同じファイルの最上位 `const` にも解けない呼び出しがあるファイルと、
@@ -100,11 +99,6 @@ const DYNAMIC_COMMAND_SITES = [
     commands: ["node"],
     reason:
       "別のチェックアウトの `bin/tsukumo`（sh の薄い包みで、最後に node の `src/cli.ts` を起こす）",
-  },
-  {
-    file: "scripts/dev/check.ts",
-    commands: ["pnpm", "taskpolicy", "nice"],
-    reason: "段ごとの `pnpm run` を `stage-priority.ts` の前置きで包む",
   },
   {
     file: "scripts/shared/port-listener.ts",

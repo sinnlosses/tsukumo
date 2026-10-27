@@ -22,14 +22,14 @@
   1ファイル走らせるときに Chrome を要らないままにするため。`pnpm run check` は軽い段（typecheck・lint・format:check・token-limit）と
   重い段（単体と E2E）を全部同時に起こし、1つが落ちると残りを止める。**`--full` でない `check` の単体の段は、変えた `src/`・`test/`・`scripts/` のファイルに関連するテスト
   （`vitest related`）と規約のテストだけ**（`vitest related` は引数を変えたファイルとして読みディレクトリを展開しないので、
-  規約のテストのうち `test/architecture/` は中のテストファイルを1本ずつ名指しして渡す。設定だけの変更と `--full` は全件。`vitest.config.ts` の `globalSetup`・`setupFiles` に挙がるファイルはどのテストからも import されず辿れないので、変えたときも全件）。**`--full` の E2E の段だけ、作業ツリーをまたぐ錠を取ってから走らせる**
-  （`scripts/dev/lib/e2e-full-lock.ts`。共有の git dir の `e2e-full-lock` に持ち主の pid を書き、
-  持ち主が死んでいれば奪う。待っている間は1分ごとに1行出し、15 分を超えたら理由と錠のパスを出して落とす。単体や lint は待たせない）。
+  規約のテストのうち `test/architecture/` は中のテストファイルを1本ずつ名指しして渡す。設定だけの変更と `--full` は全件。`vitest.config.ts` の `globalSetup`・`setupFiles` に挙がるファイルはどのテストからも import されず辿れないので、変えたときも全件）。**`--full` の E2E の段だけ、作業ツリーをまたぐ排他制御を占有してから走らせる**
+  （`scripts/dev/lib/e2e-exclusion-directory.ts`。共有の git dir の `e2e-full-lock` を `mkdir` で作れた1本が占有し、終わったら消して解放する。
+  15 分より古いものは持ち主がいないとみなして消し、占有し直す。待っている間は1分ごとに1行出し、15 分を超えたら理由とパスを出して落とす。単体や lint は待たせない）。
   全件が2つ重なると、単独や単体と並べたときには通る `chat-restored-history` が 6 回中 6 回落ちたため
   （2026-10-11 の測定。最大プロセスは 6〜8 から 12 に増え、1分の平均負荷は 11 から 13〜23 に上がった）。
   落ちた原因は、切り替え先が流し直す場面を撮る時点が、負荷で場面の途中に前後したこと。
   いまの `chat-restored-history` は、切り替え先の流し直しが終わる `turn-finished` まで待ってから撮る。
-  引数なしの `check` が選ぶ少数の E2E は錠を取らない。
+  引数なしの `check` が選ぶ少数の E2E は排他制御を占有しない。
   **並べた段のどれかが落ちたら、まだ走っている段へ `SIGTERM` を送って止める**（自分が起こした子の pid だけ。
   落ちると分かっている段の待ちを延ばさないため。最後の行に「落ちた段」と「止めた段」を分けて出す）。
   **E2E の段には `--bail=3` を付ける**（揺れる E2E が整理されるまでの値）。撮り直し（`test:e2e:update`）には付けない。
@@ -119,8 +119,6 @@
 - **起動時の切り替え先の一覧は `hello` に含まれて届くので `sessions-changed` を待たない**；`sessions-changed` を待つのは、場面が一覧を流すときと、起こし直した代が一覧を流し直すときだけ
 - `maxWorkers` は所要時間ではなく check の間に手元が重くならないことを優先して決める（値は単体テストの
   `vitest.config.ts` と合わせてコア数に対する比率で決める）。所要時間が延びること自体は受け入れる
-- **`pnpm run check` の段の子は、`taskpolicy -c utility` で効率コアへ寄せて起こす（E2E の段だけ `nice`）**
-  （方式と測定は `docs/architecture/testing/check-stage-priority.md`）
 
 ### 実測の内訳
 

@@ -45,10 +45,7 @@
 
 ### 足す外部コマンド
 
-**足す外部コマンド**（パッケージではなく OS のもの。**ユーザーの承認済み**）: `taskpolicy`（macOS 標準。2026-10-17 承認）。
-`pnpm run check` が段の子を QoS の clamp で起こすのに使い、無い環境では `nice` で起こす
-（`scripts/dev/lib/stage-priority.ts`。掛ける範囲と測定は `docs/architecture/testing.md`「E2E の走らせ方」）。
-`rtk`（Rust Token Killer。Homebrew。2026-10-18 承認・試験導入）は、Bash の出力を縮めたコマンドへの書き換えを
+**足す外部コマンド**（パッケージではなく OS のもの。**ユーザーの承認済み**）: `rtk`（Rust Token Killer。Homebrew。2026-10-18 承認・試験導入）は、Bash の出力を縮めたコマンドへの書き換えを
 `rtk rewrite` に頼む（`src/server/session-driver/adapter/rtk-rewrite.ts`。`PreToolUse` フックが
 `updatedInput` で `command` を差し替える）。**無い・失敗・2秒を超えたときは元のコマンドを通す**ので、無くても動く。
 有無はセッションの駆動を作るときに `rtk --version` で1回だけ確かめ、無ければ Bash ごとには起こさない。

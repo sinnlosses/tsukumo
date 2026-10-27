@@ -44,19 +44,21 @@ import {
   writeCheckRecord,
 } from "./lib/check-record-repository.ts"
 import { nextRecord, planRerun, type StageRunResult } from "./lib/check-record.ts"
-import { countRunning, registerRunning, runningDirectory } from "./lib/check-running.ts"
-import { e2eStage, FULL_STAGE_NAMES, planStages, type Stage } from "./lib/check-stage.ts"
-import { E2E_FULL_ENVIRONMENT } from "./lib/e2e-full-guard.ts"
 import {
-  acquireLock,
+  countRunning,
   isProcessAlive,
-  LockWaitTimeoutError,
-  REAL_LOCK_ENVIRONMENT,
-  sharedLockPath,
-} from "./lib/e2e-full-lock.ts"
+  registerRunning,
+  runningDirectory,
+} from "./lib/check-running.ts"
+import { e2eStage, FULL_STAGE_NAMES, planStages, type Stage } from "./lib/check-stage.ts"
+import {
+  DEFAULT_EXCLUSION_OPTIONS,
+  e2eExclusionDirectory,
+  occupyE2eExclusion,
+} from "./lib/e2e-exclusion-directory.ts"
+import { E2E_FULL_ENVIRONMENT } from "./lib/e2e-full-guard.ts"
 import { readExpectedDiffLines } from "./lib/expected-diff-repository.ts"
 import { formatExpectedDiffLine } from "./lib/expected-diff.ts"
-import { findPriorityTool, stageCommand } from "./lib/stage-priority.ts"
 import {
   formatStageLines,
   parseSelectedTestCount,
@@ -76,7 +78,6 @@ const CHECK_USAGE = `使い方:
 const NO_FAILED_FILES = { files: [], failedTestCount: 0 } as const satisfies FailedFiles
 
 const forceFull = readForceFull(process.argv.slice(2))
-const priorityTool = findPriorityTool(process.env.PATH ?? "")
 
 alignSubmodulesOrExit()
 
@@ -216,18 +217,13 @@ function createStopControl(): StopControl {
   }
 }
 
-/** `--full` の E2E の段だけ、ほかの作業ツリーの全件と重ならないよう錠を取って走らせる。 */
+/** `--full` の E2E の段だけ、ほかの作業ツリーの全件と重ならないよう排他制御を占有して走らせる。 */
 async function runLockedIfFullE2e(stage: Stage, control: StopControl): Promise<BufferedResult> {
   if (!forceFull || stage.name !== "test:e2e") {
     return runBuffered(stage, control)
   }
-  let release: () => void
-  try {
-    release = await acquireLock(sharedLockPath(ROOT), REAL_LOCK_ENVIRONMENT)
-  } catch (error) {
-    if (!(error instanceof LockWaitTimeoutError)) {
-      throw error
-    }
+  const exclusion = await occupyE2eExclusion(e2eExclusionDirectory(ROOT), DEFAULT_EXCLUSION_OPTIONS)
+  if (exclusion.kind === "timed-out") {
     return {
       name: stage.name,
       status: 1,
@@ -236,13 +232,14 @@ async function runLockedIfFullE2e(stage: Stage, control: StopControl): Promise<B
       stopped: false,
       lockTimedOut: true,
       selectedTestCount: undefined,
-      output: `${error.message}\n`,
+      output: `${exclusion.message}\n`,
     }
   }
+  process.on("exit", exclusion.release)
   try {
     return await runBuffered(stage, control)
   } finally {
-    release()
+    exclusion.release()
   }
 }
 
@@ -349,12 +346,10 @@ function runBuffered(stage: Stage, control: StopControl): Promise<BufferedResult
   )
   const reporterArgs = ["--reporter=default", "--reporter=json", `--outputFile.json=${reportPath}`]
   return new Promise((resolve) => {
-    const { command, args } = stageCommand(
-      stage.name,
-      stage.heavy ? [...stage.args, `--maxWorkers=${stageWorkers}`, ...reporterArgs] : stage.args,
-      priorityTool,
-    )
-    const child = spawn(command, args, {
+    const stageArgs = stage.heavy
+      ? [...stage.args, `--maxWorkers=${stageWorkers}`, ...reporterArgs]
+      : stage.args
+    const child = spawn("pnpm", ["run", stage.name, ...stageArgs], {
       cwd: ROOT,
       env: stage.name === "test:e2e" ? { ...process.env, ...E2E_FULL_ENVIRONMENT } : process.env,
       stdio: ["ignore", "pipe", "pipe"],
