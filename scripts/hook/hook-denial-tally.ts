@@ -1,7 +1,7 @@
 // 登録された hook ごとの拒否の回数を、期間を決めて数えて出す。
 // 使い方: node scripts/hook/hook-denial-tally.ts [--days N]（既定 30）
 // 登録された hook は `.claude/settings.json` の hooks から呼ばれる Bash の入口（束ねた判定の名前に展開する）と
-// 単独の `deny-*` の入口と、hook ではなく実行する側が拒んで同じ置き場に記録する門（`RUN_SIDE_GATES`）。
+// 単独の `deny-*` の入口。
 // 記録にあって登録に無い名前（tw の関門など）は「（未登録）」を付けて続ける。
 // 規則のキーごとに、呼び手（main / subagent / 呼び手の欄が無い旧い行の不明）の件数を添える。
 
@@ -22,9 +22,6 @@ import { readDays } from "./lib/read-period.ts"
 const DEFAULT_DAYS = 30
 
 const HOOK_SCRIPT = /scripts\/hook\/(bash-guard|deny-[\w-]+)\.ts/g
-
-/** E2E の入口が上限で拒んだときの記録の名前。 */
-const RUN_SIDE_GATES = ["e2e-run-limit"] as const
 
 const ACTOR_ORDER = ["main", "subagent", UNKNOWN_ACTOR] as const
 
@@ -55,14 +52,14 @@ function formatTally(
   return `直近 ${periodDays} 日の拒否の回数\n${lines.join("\n")}\n`
 }
 
-/** `.claude/settings.json` から呼ばれる拒否の hook の名前と、実行する側の門の名前。 */
+/** `.claude/settings.json` から呼ばれる拒否の hook の名前。 */
 function listRegisteredHooks(directory: string): readonly string[] {
   const text = readTextOrEmpty(join(directory, ".claude", "settings.json"))
   const scripts = [...new Set([...text.matchAll(HOOK_SCRIPT)].map((match) => match[1]))].filter(
     (name) => name !== undefined,
   )
   const hooks = scripts.flatMap((name) => (name === "bash-guard" ? BASH_GUARD_HOOKS : [name]))
-  return [...new Set(hooks), ...RUN_SIDE_GATES]
+  return [...new Set(hooks)]
 }
 
 function readTextOrEmpty(path: string): string {

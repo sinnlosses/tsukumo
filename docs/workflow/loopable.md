@@ -61,27 +61,7 @@ hook は書き込みの形を事前に列挙して拒む。Bash の前後の作�
 
 段の確かめの単体は `pnpm run test <ファイル or ディレクトリ>` で流す（`pnpm exec vitest` を直に打たない。規約のテストが一緒に走る）。`tw step` が打つ `step_check`（`pnpm run step-check`）が段の返却の前に typecheck・lint と、変えたコードのファイルに関連する単体（規約の `test/architecture` を含む）を自動で流すので、置き場所や export の違反は段の終わりで落ちる（手で足さない）。
 
-委譲先が E2E を流す呼び出しは、着手中の1件につき **6回まで**で、7回目は
-E2E の入口（`scripts/dev/e2e.ts`）が vitest を起こさずに終了コード 2 で止める（検証は通常1〜3回で、残りは揺らぎの
-確認と自分の検証の余裕）。コマンドの書き方では分類せず、実際に走る側で数える。
-数えるのは `TSUKUMO_E2E_FULL=1` の付いた `pnpm run test:e2e` で、`pnpm run check` の E2E の段
-（`--full` も、変えたファイルから選んだ分も。`tw verify` 越しを含む）と、ファイルを名指さない
-`pnpm run test:e2e:update` がこれに当たる。組み立てが通ってから1回と数えるので、
-起動に失敗した呼び出しと E2E を流さない `check`（文書だけの変更など）は数えない。
-E2E のファイル単位の実行（`pnpm run test:e2e test/e2e/<ファイル>.test.ts`）は数えない。
-`e2e.ts` を経ずにテストのファイルを名指さずに起こした vitest（`pnpm exec vitest run --config vitest.e2e.config.ts` など）は、
-委譲先の Bash の中では E2E の設定の globalSetup（`test/e2e-entry-setup.ts`）が止める。
-ファイルを名指した直の起動（`npx vitest run --config vitest.e2e.config.ts test/e2e/<シナリオ>.test.ts -t '<it>'`）は数えず、止めない。
-
-数はその作業ツリー固有の git dir の `e2e-full-runs` に、`{key, count}` の JSON（一時ファイルへ書いてから名前を変える）で置く。
-鍵は `tw status --claims` が返す着手の `claim`（作業ツリーをまたいで混ざらない）。
-着手が1件でないとき・口が打てない／読めないときは数えない。**着手し直すと鍵が変わり0に戻る。**
-委譲先の呼び出しかどうかは hook（`scripts/hook/bash-guard.ts` が Pre で置き、`scripts/hook/mark-subagent-bash.ts` が Post で消す印）が渡す。
-入力に `agent_id` がある Bash の PreToolUse で git dir の `subagent-bash/<tool_use_id>` に印を置き、
-PostToolUse・PostToolUseFailure で消す（背景の呼び出しは消さない）。10分より古い印は無いものとみなし、
-印が1つも無ければ数えない（メインの呼び出しは対象にしない）。この印には2つの限界がある。
-印は呼び出し元を区別しないので、委譲先の Bash と同時に走るメインの実行も数える。
-PreToolUse を別の hook が拒んだときや許可が下りなかったときは Post が来ず、印が10分残る。
+E2E の全件（約 65 秒）は回数に上限を掛けない。全件を打つ入口は `TSUKUMO_E2E_FULL=1` を立てた呼び出しだけで、ファイル単位の実行（`pnpm run test:e2e test/e2e/<ファイル>.test.ts`）は立てずに打てる。
 
 hook が拒むたびに、共有の git dir（`git rev-parse --git-common-dir`）の `hook-denials/<年-月>.jsonl` へ
 時刻・hook の名前・規則のキー・呼び出し元（`main` / `subagent`）の1行を足す。

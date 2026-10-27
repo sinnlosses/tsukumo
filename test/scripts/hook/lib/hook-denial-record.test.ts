@@ -129,24 +129,7 @@ describe("集計", () => {
     writeRegistration(['node "$CLAUDE_PROJECT_DIR/scripts/hook/deny-broad-kill.ts"'])
 
     const result = await runHook(["scripts/hook/hook-denial-tally.ts"], "")
-    expect(tallyLines(result.stdout)).toEqual(["deny-broad-kill: 0", "e2e-run-limit: 0"])
-  })
-
-  test("hook ではなく E2E の入口が拒んだ記録も、未登録とせずに数える", async () => {
-    writeRegistration()
-    const directory = join(repoDir, ".git", "hook-denials")
-    mkdirSync(directory)
-    const at = Temporal.Now.instant().toString()
-    writeFileSync(
-      join(directory, `${at.slice(0, 7)}.jsonl`),
-      `${JSON.stringify({ at, hook: "e2e-run-limit", rule: "run-limit", actor: "subagent" })}\n`,
-    )
-    const result = await runHook(["scripts/hook/hook-denial-tally.ts"], "")
-    expect(tallyLines(result.stdout)).toEqual(
-      expectedTally({
-        "e2e-run-limit": ["e2e-run-limit: 1", "  run-limit: 1（main 0 / subagent 1 / 不明 0）"],
-      }),
-    )
+    expect(tallyLines(result.stdout)).toEqual(["deny-broad-kill: 0"])
   })
 
   test("規則のキーごとに main / subagent / 不明の件数を出し、actor の欄が無い旧い行は不明に数える", async () => {
@@ -216,7 +199,7 @@ function tallyLines(stdout: string): readonly string[] {
 }
 
 function expectedTally(own: Readonly<Record<string, readonly string[]>>): readonly string[] {
-  return [...BASH_GUARD_HOOKS, "e2e-run-limit"].flatMap((hook) => own[hook] ?? [`${hook}: 0`])
+  return BASH_GUARD_HOOKS.flatMap((hook) => own[hook] ?? [`${hook}: 0`])
 }
 
 const BASH_GUARD_COMMAND = 'node "$CLAUDE_PROJECT_DIR/scripts/hook/bash-guard.ts"'

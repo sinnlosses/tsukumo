@@ -1,13 +1,11 @@
 // hook が標準入力へ流す JSON から、Bash ツールの呼び出しのうち入口が見るところを取り出す。
 
-/** Bash ツールの hook の入力のうち、入口が見るところ。`event` は `hook_event_name`（`PreToolUse` など）。 */
+/** Bash ツールの hook の入力のうち、入口が見るところ。 */
 export type BashHookCall = {
   readonly command: string
   readonly cwd: string | undefined
   readonly runsInBackground: boolean
   readonly fromSubagent: boolean
-  readonly toolUseId: string | undefined
-  readonly event: string | undefined
 }
 
 /** hook が stdin へ流す JSON から Bash の呼び出しを取り出す。壊れた JSON・Bash 以外・形が違えば `undefined`。 */
@@ -28,8 +26,6 @@ export function parseBashHookCall(rawInput: string): BashHookCall | undefined {
     cwd: readString(input, "cwd"),
     runsInBackground: readField(toolInput, "run_in_background") === true,
     fromSubagent: typeof readField(input, "agent_id") === "string",
-    toolUseId: readString(input, "tool_use_id"),
-    event: readString(input, "hook_event_name"),
   }
 }
 

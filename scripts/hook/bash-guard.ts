@@ -3,7 +3,6 @@
 //
 // 判定を順に当て、最初に拒んだもので止める。終了コード 2 で Bash の実行を止め、stderr の中身がモデルへ返る。
 // それ以外の終了コードでは実行を止めない（判定に失敗したときは通す）。
-// 拒否が無ければ、サブエージェントの呼び出しの印を最後に置く（拒否された呼び出しには PostToolUse が来ず、印が残るため）。
 
 import { findBackgroundVerifyDenial } from "./lib/background-verify.ts"
 import type { BashDenial } from "./lib/bash-denial.ts"
@@ -13,7 +12,6 @@ import { findExternalSendDenial } from "./lib/external-send.ts"
 import { findForeignRestoreDenial } from "./lib/foreign-restore.ts"
 import { denyBashCall, readBashHookCall } from "./lib/hook-input.ts"
 import { findStdinWaitCatDenial } from "./lib/stdin-wait-denial.ts"
-import { handleSubagentMark } from "./lib/subagent-mark.ts"
 import { findWorktreeShellWriteDenial, readWorkRoot } from "./lib/worktree-shell-write.ts"
 
 const DENIALS = [
@@ -33,5 +31,4 @@ if (call !== undefined) {
       denyBashCall(call, denial)
     }
   }
-  handleSubagentMark(call)
 }

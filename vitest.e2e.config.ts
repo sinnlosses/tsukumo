@@ -3,11 +3,7 @@ import { defineConfig } from "vitest/config"
 export default defineConfig({
   test: {
     globals: false,
-    globalSetup: [
-      "./test/e2e-entry-setup.ts",
-      "./test/built-ui-setup.ts",
-      "./test/e2e-chrome-setup.ts",
-    ],
+    globalSetup: ["./test/built-ui-setup.ts", "./test/e2e-chrome-setup.ts"],
     include: ["test/e2e/**/*.test.ts"],
     testTimeout: 60_000,
     hookTimeout: 60_000,

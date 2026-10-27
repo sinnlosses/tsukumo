@@ -8,8 +8,6 @@ export function bashCall(command: string, overrides: Partial<BashHookCall> = {})
     cwd: undefined,
     runsInBackground: false,
     fromSubagent: false,
-    toolUseId: undefined,
-    event: "PreToolUse",
     ...overrides,
   }
 }

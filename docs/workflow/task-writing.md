@@ -25,11 +25,10 @@
   必ず書く**（orca が専有している。`AGENTS.md`「承認が要ること」）
 - **環境側の前提はその場で確かめる。** ターミナルの画像プロトコル対応、外部コマンドの有無、
   常駐プロセスの生死は時間とともに変わる。docs やタスク本文に書かれた実測を鵜呑みにしない
-- **E2E 全件を何度も流す測定のタスクは、計画の段に E2E 全件を流す回数の割り振りを段ごとに書く。**
-  割り振りは `scripts/shared/e2e-run-ledger.ts` の `RUN_LIMIT`（着手中の1件ごとに E2E 全件を
-  流してよい回数の上限）の内に収め、最後の段で `tw verify` を通す分の1回を残す。過去の測定では、
-  方式ごとに `check --full` を流して上限を使い切り、混ぜ方の測定が終わらず、最後の `tw verify` が
-  E2E の段で拒まれて、受け入れで流し直したことがあった。
+- **E2E 全件を何度も流す測定のタスクは、他の作業ツリーの全件と重ならないよう、計画に排他の掛け方を書く。**
+  `docs/architecture/testing/e2e-run.md` の `--full` の項のとおり、共有の git dir の `e2e-full-lock` を
+  `mkdir` で占有してから `TSUKUMO_E2E_FULL=1 pnpm run test:e2e` を打ち、終わったら `rmdir` で解放する。
+  重なると所要がぶれ、揺れる E2E が落ちる。
 - **描画を変えるタスクは、DOM に足す class・属性が、記法の語彙の検査と E2E の DOM の期待値にどう響くかを
   計画の段で先に確かめ、期待値の更新（`pnpm run test:e2e:update`）を1回にまとめる。**
   語彙の検査は `test/server/report/core/report-notation.test.ts`、期待値は `test/e2e/expected/`。
@@ -39,7 +38,7 @@
   「`.report-<名前>` の CSS まで届くか」の検査に落ち、足さなければハッシュ名にならない素の class
   として DOM に残るので、属性にする（`data-reveal-caption` と同じ）。見た目を付ける印は、語彙と
   `.report-<名前>` の CSS を一緒に足す。属性を足すと期待値のファイルが動き、更新と `tw verify` の
-  打ち直しが E2E 全件の上限（`RUN_LIMIT`）に響く。
+  打ち直しが E2E 全件の所要を増やす。
 - **`report` の説明文または塊（型の定義）を足す計画は、字数を測るテストを全部挙げ、今の字数と上限の差を数えて段に書く。**
   測るのは3か所で、`test/server/report/core/report-notation.test.ts` が `REPORT_NOTATION_PROMPT` を
   4600字以下に、`test/server/report/core/report-tool.test.ts` が `REPORT_TOOL_DESCRIPTION` を

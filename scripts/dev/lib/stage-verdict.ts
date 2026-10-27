@@ -12,14 +12,14 @@ export type RanStage = {
   readonly selectedTestCount: number | undefined
 }
 
-/** E2E の入口が回数の上限で止まるときの終了コード。 */
-const E2E_LIMIT_EXIT_CODE = 2
+/** E2E の入口が全件の門で止まるときの終了コード。 */
+const E2E_REFUSED_EXIT_CODE = 2
 
 export function ranStageVerdict(stage: RanStage): StageVerdict {
   if (stage.stopped) {
     return "unobserved"
   }
-  if (stage.lockTimedOut || (stage.name === "test:e2e" && stage.status === E2E_LIMIT_EXIT_CODE)) {
+  if (stage.lockTimedOut || (stage.name === "test:e2e" && stage.status === E2E_REFUSED_EXIT_CODE)) {
     return "blocked"
   }
   if (stage.status !== 0) {
