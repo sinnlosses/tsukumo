@@ -1,18 +1,18 @@
 import { describe, expect, it } from "vitest"
 
-import type { ContextUsageEntry } from "../../../../src/server/context-usage/core/context-usage.ts"
-import type { ExperienceMetricEntry } from "../../../../src/server/experience-metric/core/experience-metric.ts"
 import type { SessionDriver } from "../../../../src/server/session-driver/core/session-driver.ts"
-import type { TokenUsageEntry } from "../../../../src/server/token-usage/core/token-usage.ts"
+import type { ContextUsageEntry } from "../../../../src/server/usage/core/context-usage.ts"
+import type { ExperienceMetricEntry } from "../../../../src/server/usage/core/experience-metric.ts"
+import type { TokenUsageEntry } from "../../../../src/server/usage/core/token-usage.ts"
 import {
   type ContextUsageReport,
   UNAVAILABLE_CONTEXT_USAGE,
-} from "../../../../src/shared/context-usage/context-usage.ts"
+} from "../../../../src/shared/usage/context-usage.ts"
 import type {
   ModelTokenUsage,
   ScopeUsage,
   TurnUsageBreakdown,
-} from "../../../../src/shared/token-usage/token-usage.ts"
+} from "../../../../src/shared/usage/token-usage.ts"
 import { NOOP_CHAT_ARCHIVE } from "../../../fixture/chat.ts"
 import { contextUsage, readyContextUsage } from "../../../fixture/context-usage.ts"
 import { reportEvent } from "../../../fixture/report-event.ts"

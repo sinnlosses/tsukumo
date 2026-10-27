@@ -6,11 +6,11 @@ import { afterEach, describe, expect, it } from "vitest"
 import { ContextUsageRow } from "../../../../../../src/browser/components/domain/sidebar/components/context-usage-row.tsx"
 import { useContextUsage } from "../../../../../../src/browser/domain/context-usage.ts"
 import { rpc } from "../../../../../../src/browser/domain/rpc.ts"
+import { INITIAL_SESSION_STATE } from "../../../../../../src/shared/session/session-state.ts"
 import {
   type ContextUsageReport,
   UNAVAILABLE_CONTEXT_USAGE,
-} from "../../../../../../src/shared/context-usage/context-usage.ts"
-import { INITIAL_SESSION_STATE } from "../../../../../../src/shared/session/session-state.ts"
+} from "../../../../../../src/shared/usage/context-usage.ts"
 import { readyContextUsage } from "../../../../../fixture/context-usage.ts"
 import { createTestQueryClient } from "../../../../query-client.tsx"
 import { stubRpcFetch } from "../../../../rpc-fetch-stub.ts"

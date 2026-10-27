@@ -13,7 +13,7 @@ import type {
   TokenUsageTotals,
   TokenUsageTrend,
   TokenUsageTrendUnit,
-} from "../../../../../../shared/token-usage/token-usage-summary.ts"
+} from "../../../../../../shared/usage/token-usage-summary.ts"
 import { formatCount } from "../../../../../utils/format-count.ts"
 import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
 import { Text } from "../../../../ui/text/text.tsx"

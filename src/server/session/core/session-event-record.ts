@@ -12,13 +12,13 @@ import {
   appendChatArchiveEntry,
 } from "../../chat/core/chat-archive-entry.ts"
 import type { ChatArchiveOrder } from "../../chat/core/chat-archive-order.ts"
-import type { ContextUsageRecorder } from "../../context-usage/core/context-usage.ts"
 import type { DiagnosticBuffer } from "../../diagnostic/core/diagnostic.ts"
 import {
   isMainImageFileRead,
   isRestatementRequest,
   reportUsageEntryOf,
 } from "../../report/core/report-usage.ts"
+import type { ContextUsageRecorder } from "../../usage/core/context-usage.ts"
 import type { GenerationTally } from "./session-generation.ts"
 import type { SessionManagerOptions } from "./session-manager-port.ts"
 

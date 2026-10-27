@@ -1,0 +1,157 @@
+import { readdirSync, readFileSync } from "node:fs"
+import { join } from "node:path"
+
+import { describe, expect, it } from "vitest"
+
+import { createContextUsageLog } from "../../../../src/server/usage/adapter/context-usage-log.ts"
+import { CONTEXT_USAGE_FORMAT_VERSION } from "../../../../src/server/usage/core/context-usage-record.ts"
+import type { ContextUsageEntry } from "../../../../src/server/usage/core/context-usage.ts"
+import { contextUsage } from "../../../fixture/context-usage.ts"
+import { keysOf, readJsonLines } from "../../../fixture/jsonl.ts"
+import { expectEveryFieldKept } from "../../../fixture/record-field.ts"
+import { useTempDir } from "../../../fixture/temp-dir.ts"
+
+const dir = useTempDir("context-usage")
+
+/** 書き込み先（本物の `~/.tsukumo/context-usage` の代わり）。 */
+function root(): string {
+  return join(dir(), "context-usage")
+}
+
+/** ある日のローカル時刻のエポックミリ秒（日をまたぐ心配をしない値）。 */
+function at(hour: number, minute: number, day = 22): number {
+  return Temporal.ZonedDateTime.from({
+    year: 2026,
+    month: 9,
+    day,
+    hour,
+    minute,
+    second: 0,
+    timeZone: Temporal.Now.timeZoneId(),
+  }).epochMilliseconds
+}
+
+function entry(when: number, sessionId = "claude-session-1"): ContextUsageEntry {
+  return { at: when, sessionId, mode: "work", usage: contextUsage() }
+}
+
+function readLines(fileName: string): unknown[] {
+  return readJsonLines(join(root(), fileName))
+}
+
+describe("createContextUsageLog", () => {
+  it("日付ごとのファイルに1行ずつ追記する", async () => {
+    const log = createContextUsageLog(root())
+
+    log.append(entry(at(9, 0), "claude-session-1"))
+    log.append(entry(at(23, 30), "claude-session-2"))
+    log.append(entry(at(1, 15, 23), "claude-session-3"))
+    await log.flush()
+
+    expect(readdirSync(root()).toSorted()).toEqual(["2026-09-22.jsonl", "2026-09-23.jsonl"])
+    expect(readLines("2026-09-22.jsonl").length).toBe(2)
+    expect(readLines("2026-09-23.jsonl").length).toBe(1)
+  })
+
+  it("1行の鍵は版・日時・セッションID・モード・内訳で、日時は ISO 8601（オフセット付き）", async () => {
+    const log = createContextUsageLog(root())
+
+    log.append(entry(at(9, 0)))
+    await log.flush()
+
+    const [record] = readLines("2026-09-22.jsonl")
+    expect(keysOf(record)).toEqual(["v", "at", "sessionId", "mode", "usage"])
+    expect(record).toMatchObject({
+      v: CONTEXT_USAGE_FORMAT_VERSION,
+      sessionId: "claude-session-1",
+      mode: "work",
+      usage: contextUsage(),
+    })
+    // オフセットはそのマシンのローカル時刻で決まるので、頭だけを見る。
+    expect(JSON.stringify(record)).toMatch(/"at":"2026-09-22T09:00:00[+-]\d{2}:\d{2}"/)
+  })
+
+  it("渡された内訳の欄は、入れ子の中まで全部行に残る", async () => {
+    const log = createContextUsageLog(root())
+    const written = entry(at(9, 0))
+
+    log.append(written)
+    await log.flush()
+
+    const lines = readLines("2026-09-22.jsonl")
+    expect(lines).toHaveLength(1)
+    expectEveryFieldKept(written, lines[0])
+  })
+
+  it("90日を過ぎた日付のファイルだけを消す", async () => {
+    const log = createContextUsageLog(root())
+    log.append(entry(at(9, 0, 22)))
+    log.append(entry(at(9, 0, 23)))
+    await log.flush()
+
+    log.pruneExpired("2026-12-22")
+
+    expect(readdirSync(root())).toEqual(["2026-09-23.jsonl"])
+  })
+
+  // ターンごとの記録より広い線（`CONTEXT_USAGE_FORMAT_VERSION`）——分類の表示名・
+  // MCP ツール名・メモリファイルのパス・スキル名まで入る。広がったのはそこまでで、
+  // 会話の文面が混ざる余地が無いことを、行に出てくる文字列を数え上げて固定する。
+  it("行に出てくる文字列は、鍵の名前と内訳の名前・セッションID・モード・時刻だけ", async () => {
+    const log = createContextUsageLog(root())
+
+    log.append(entry(at(9, 0)))
+    await log.flush()
+
+    const [line] = readFileSync(join(root(), "2026-09-22.jsonl"), "utf8").trimEnd().split("\n")
+    const strings = [...(line ?? "").matchAll(/"([^"]*)"/g)].flatMap(([, value]) => value ?? [])
+    expect(strings.filter((value) => value.startsWith("2026-09-22T")).length).toBe(1)
+    // 同じ鍵の名前が内訳の行ごとに繰り返す（`name` / `tokens` は3つの並びすべてに出る）ので、
+    // 種類を数え上げる。見たいのは「知らない文字列が1つも無い」こと。
+    const kinds = [...new Set(strings.filter((value) => !value.startsWith("2026-09-22T")))]
+    expect(kinds.toSorted()).toEqual(
+      [
+        // 鍵の名前。
+        "at",
+        "categories",
+        "kind",
+        "maxTokens",
+        "mcpTools",
+        "memoryFiles",
+        "mode",
+        "model",
+        "name",
+        "percentage",
+        "sessionId",
+        "skills",
+        "source",
+        "tokens",
+        "totalTokens",
+        "usage",
+        "v",
+        // 行そのものが持つ値。
+        "claude-session-1",
+        "work",
+        // SDK が内訳として返す名前（ここが広げた線）。
+        "CLAUDE.md",
+        "MCP tools (deferred)",
+        "Memory files",
+        "Messages",
+        "Project",
+        "System prompt",
+        "System tools",
+        "Autocompact buffer",
+        "Free space",
+        "buffer",
+        "claude-opus-5",
+        "deferred",
+        "free",
+        "mcp__tsukumo__speak",
+        "tsukumo",
+        "used",
+        "userSettings",
+        "架空のスキル",
+      ].toSorted(),
+    )
+  })
+})

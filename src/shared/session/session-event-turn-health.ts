@@ -3,7 +3,7 @@
 import type { ApiErrorKind, ApiRetry } from "../session-driver/api-trouble.ts"
 import type { RateLimit } from "../session-driver/rate-limit.ts"
 import type { TurnOutcome } from "../session-driver/turn-failure.ts"
-import type { ModelTokenUsage, StepTokenUsage, TurnUsageScope } from "../token-usage/token-usage.ts"
+import type { ModelTokenUsage, StepTokenUsage, TurnUsageScope } from "../usage/token-usage.ts"
 
 export type TurnHealthEvent =
   /**

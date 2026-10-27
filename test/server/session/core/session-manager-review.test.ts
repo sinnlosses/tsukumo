@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest"
 import type { ServerFrame } from "../../../../src/shared/frame.ts"
 import { diffTaskSummary } from "../../../../src/shared/repository/task-summary-change.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
-import type { PreviousUsageReview } from "../../../../src/shared/usage-review/usage-review.ts"
+import type { PreviousUsageReview } from "../../../../src/shared/usage/usage-review.ts"
 import { createStubDriver } from "../../../fixture/session-driver.ts"
 import {
   createSessionManager,

@@ -26,7 +26,7 @@
 - **英語識別子**: `UsageReviewStage`（`model` / `cache` / `tool` / `context` / `proposal`）
 - **定義**: 見直しの進みを区切る5つの段。モデルの使い分け → キャッシュの効き方 → ツールの呼び方と
   結果の大きさ → コンテキストの中身 → 見直し案をまとめる、の順
-- **注記**: 段の並びと見出しは `src/shared/usage-review/usage-review.ts` が持つ。**いまの段より前は済、後は
+- **注記**: 段の並びと見出しは `src/shared/usage/usage-review.ts` が持つ。**いまの段より前は済、後は
   未着手**と読む（済んだ段を1つずつ運ばない）。段の右に添える数（モデルの数など）はスキルから
   受け取らず、画面が tsukumo の集計から出す
 - **避ける言い方**: ステップ（依頼の手順・`step-usage` と紛れる）、フェーズ
@@ -74,7 +74,7 @@
 
 ### 前回の見直し
 
-- **英語識別子**: `PreviousUsageReview`（`src/shared/usage-review/usage-review.ts`）
+- **英語識別子**: `PreviousUsageReview`（`src/shared/usage/usage-review.ts`）
 - **定義**: 直前の1回の見直しの結果。ホームのファイル（`previous-usage-review.ts` が読み書き）に
   残り、トークン消費の画面の「前回の提案」のリンクが読む
 - **注記**: **「見直し」の状態（`idle` / `running` / `result`）とは別**——見直しはプロセスを起こし直すと

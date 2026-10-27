@@ -8,7 +8,7 @@ import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../../../../src/shared/session/session-state.ts"
-import { DEFAULT_TOKEN_USAGE_DAYS } from "../../../../../../src/shared/token-usage/token-usage-summary.ts"
+import { DEFAULT_TOKEN_USAGE_DAYS } from "../../../../../../src/shared/usage/token-usage-summary.ts"
 import { createTestQueryClient, queryClientWrapper } from "../../../../query-client.tsx"
 import {
   rpcError,

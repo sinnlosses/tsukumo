@@ -1,6 +1,6 @@
 import type { ReactElement } from "react"
 
-import type { TokenUsageDays } from "../../../../../../shared/token-usage/token-usage-summary.ts"
+import type { TokenUsageDays } from "../../../../../../shared/usage/token-usage-summary.ts"
 import type { PeriodChoiceView } from "../../hooks/use-token-usage.ts"
 import styles from "./period-choice-list.module.css"
 

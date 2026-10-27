@@ -15,11 +15,11 @@ import {
   startOnResolvedPort,
   VIEW_PORT_FALLBACK_ATTEMPTS,
 } from "../../../../src/server/view-server/core/port-resolution.ts"
-import { UNAVAILABLE_CONTEXT_USAGE } from "../../../../src/shared/context-usage/context-usage.ts"
-import { UNAVAILABLE_PLAN_USAGE } from "../../../../src/shared/plan-usage/plan-usage.ts"
 import { UNREADABLE_FILE_EXCERPT } from "../../../../src/shared/repository/file-excerpt.ts"
 import { UNAVAILABLE_SESSION_DIGEST } from "../../../../src/shared/session/session-digest.ts"
-import { EMPTY_TOKEN_USAGE_SUMMARY } from "../../../../src/shared/token-usage/token-usage-summary.ts"
+import { UNAVAILABLE_CONTEXT_USAGE } from "../../../../src/shared/usage/context-usage.ts"
+import { UNAVAILABLE_PLAN_USAGE } from "../../../../src/shared/usage/plan-usage.ts"
+import { EMPTY_TOKEN_USAGE_SUMMARY } from "../../../../src/shared/usage/token-usage-summary.ts"
 import { closeNetServer, listenOnEphemeralPort, portOf } from "../../../fixture/net-server.ts"
 
 /** 配るものの中身はここでは見ない（確かめるのはどのポートで listen したかだけ）。 */

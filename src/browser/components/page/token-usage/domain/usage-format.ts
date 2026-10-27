@@ -7,7 +7,7 @@
 import type {
   ModelUsageTotal,
   TokenUsageTotals,
-} from "../../../../../shared/token-usage/token-usage-summary.ts"
+} from "../../../../../shared/usage/token-usage-summary.ts"
 import { round } from "../../../../utils/format-count.ts"
 
 /** 合計する対象が無いときの値。 */

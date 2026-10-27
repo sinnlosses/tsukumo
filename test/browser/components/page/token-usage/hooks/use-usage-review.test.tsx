@@ -9,7 +9,7 @@ import type {
   UsageReview,
   UsageReviewFindings,
   UsageReviewStage,
-} from "../../../../../../src/shared/usage-review/usage-review.ts"
+} from "../../../../../../src/shared/usage/usage-review.ts"
 import { createTestQueryClient, queryClientWrapper } from "../../../../query-client.tsx"
 import { rpcOutput, stubRpcFetch, type RpcFetchStub } from "../../../../rpc-fetch-stub.ts"
 import { type CommandSpy, putSession, stateWith } from "../../../../session-store.ts"

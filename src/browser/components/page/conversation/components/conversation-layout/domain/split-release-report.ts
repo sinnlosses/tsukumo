@@ -1,6 +1,6 @@
 // 仕切りを離したことを体験の記録へ送る。送れなくても諦める（再送しない）。
 
-import type { SplitDivider } from "../../../../../../../shared/experience-metric/experience-metric-record.ts"
+import type { SplitDivider } from "../../../../../../../shared/usage/experience-metric-record.ts"
 import { useSession } from "../../../../../../stores/session.ts"
 
 export function reportSplitRelease(

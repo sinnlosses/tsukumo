@@ -17,7 +17,7 @@ import type { SessionDefault } from "../../src/shared/session/session-default.ts
 import type { SessionEvent } from "../../src/shared/session/session-event.ts"
 import { applySessionEvent } from "../../src/shared/session/session-fold.ts"
 import { INITIAL_SESSION_STATE, type SessionState } from "../../src/shared/session/session-state.ts"
-import { usageProposalKey } from "../../src/shared/usage-review/usage-review.ts"
+import { usageProposalKey } from "../../src/shared/usage/usage-review.ts"
 import { createCommandClient } from "./command-client.ts"
 import { createStubDriver, type StubDriver } from "./session-driver.ts"
 import { CHARACTER_EVENT, ITEMS_EVENT, requestEvent } from "./session-event.ts"

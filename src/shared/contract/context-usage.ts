@@ -3,7 +3,7 @@
 
 import { oc } from "@orpc/contract"
 
-import { contextUsageReportSchema } from "../context-usage/context-usage.ts"
+import { contextUsageReportSchema } from "../usage/context-usage.ts"
 
 export const contextUsageContract = {
   /**

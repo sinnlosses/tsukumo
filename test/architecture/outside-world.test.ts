@@ -77,7 +77,7 @@ const DYNAMIC_COMMAND_SITES = [
     reason: "設定から受ける `tw` のパスか名前",
   },
   {
-    file: "src/server/token-usage/adapter/tw-claim-list.ts",
+    file: "src/server/usage/adapter/tw-claim-list.ts",
     commands: ["tw"],
     reason: "設定から受ける `tw` のパスか名前",
   },

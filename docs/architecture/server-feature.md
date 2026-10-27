@@ -16,32 +16,33 @@
 `ls src/server/<機能>/core/ src/server/<機能>/adapter/` が正典で、各ファイルの持ち物はそのファイルの
 冒頭のコメント（「core と adapter」）。
 
-| 機能                 | 何の機能か                                                                                                              |
-| -------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `session/`           | セッションを持つ・起こす・頼む。**各機能の判断を束ねる**（下の「束ねる機能」）                                          |
-| `session-driver/`    | セッションドライバ。契約・SDK の実装・fake driver・メッセージの変換・答え待ち・続きから始める・セッションの占有ファイル |
-| `report/`            | レポートの記法・`report` ツール・検査と差し戻し・塊の使われ方の記録・部品の文法カード                                   |
-| `work-plan/`         | ワークプラン。`work_plan`・`phase_result` の説明と判断・差し戻し・委譲ゲート・帯の位置の文                              |
-| `question/`          | 質問。`question_brief` の添え書きの検査と `AskUserQuestion` との突き合わせ・質問の書き方の規約                          |
-| `system-prompt/`     | `systemPrompt` の append の組み立てと、セリフの間合いの規約                                                             |
-| `chat/`              | 雑談モード。作法・記憶・話しかけ・アーカイブ・要約・覚えたこと・定着                                                    |
-| `character-pack/`    | キャラクターパックの選択・読み込み・画面からの編集・立ち絵からの生成（使い捨ての `query()`）                            |
-| `diary/`             | 日記。`diary` ツールと保存                                                                                              |
-| `achievement/`       | 成果。終えたタスクを Beads の閉じた課題から数える                                                                       |
-| `usage-review/`      | 見直し。見直しと提案の実行の走り（使い捨ての `query()`）・2つのツール・前回の結果・見送り                               |
-| `token-usage/`       | トークン消費の記録と集計                                                                                                |
-| `context-usage/`     | コンテキストの内訳の記録                                                                                                |
-| `plan-usage/`        | プラン使用量（`/usage` と同じ上限）の手続き                                                                             |
-| `experience-metric/` | 進行の計測値の記録と集計                                                                                                |
-| `diagnostic/`        | 診断ログ（不具合の経緯を追う足跡）の書き口・束ね・置き場と掃除                                                          |
-| `host/`              | ホストのポートと Orca・`none` の実装、ホストへ渡す前の門番                                                              |
-| `view-server/`       | ビューサーバ。ポートの決定・http・ws・同梱の外部ライブラリ・ブラウザ側の組み立てと開発サーバ                            |
-| `repository/`        | 作業ディレクトリの git リポジトリを読む。`git` を起こす口・管理下のファイルと行の抜き書き・タスク一覧                   |
-| `recommendation/`    | おすすめの札。候補・出力の検査・キャッシュ                                                                              |
-| `welcome-greeting/`  | 迎えの挨拶と反応。書き手・覚え・使い捨ての問い合わせの指示文と検査                                                      |
-| `checkout/`          | 打った場所のチェックアウトと自分の根を比べ、違えば打った側の `bin/tsukumo` へ委ねる                                     |
-| `workflow-setting/`  | ワークフローの設定。`tw` の設定コマンドを起こす口と読み書きの手続き                                                     |
-| `item/`              | キャラビューの席に置くアイテム。一覧と席の置き場の読み書き・素材を配る判断                                              |
+| 機能                | 何の機能か                                                                                                                                                                         |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `session/`          | セッションを持つ・起こす・頼む。**各機能の判断を束ねる**（下の「束ねる機能」）                                                                                                     |
+| `session-driver/`   | セッションドライバ。契約・SDK の実装・fake driver・メッセージの変換・答え待ち・続きから始める・セッションの占有ファイル                                                            |
+| `report/`           | レポートの記法・`report` ツール・検査と差し戻し・塊の使われ方の記録・部品の文法カード                                                                                              |
+| `work-plan/`        | ワークプラン。`work_plan`・`phase_result` の説明と判断・差し戻し・委譲ゲート・帯の位置の文                                                                                         |
+| `question/`         | 質問。`question_brief` の添え書きの検査と `AskUserQuestion` との突き合わせ・質問の書き方の規約                                                                                     |
+| `system-prompt/`    | `systemPrompt` の append の組み立てと、セリフの間合いの規約                                                                                                                        |
+| `chat/`             | 雑談モード。作法・記憶・話しかけ・アーカイブ・要約・覚えたこと・定着                                                                                                               |
+| `character-pack/`   | キャラクターパックの選択・読み込み・画面からの編集・立ち絵からの生成（使い捨ての `query()`）                                                                                       |
+| `diary/`            | 日記。`diary` ツールと保存                                                                                                                                                         |
+| `achievement/`      | 成果。終えたタスクを Beads の閉じた課題から数える                                                                                                                                  |
+| `usage/`            | 使用量。トークン消費の記録と集計・コンテキストの内訳の記録・プラン使用量の手続き・進行の計測値の記録と集計・見直し（使い捨ての `query()` の走り・2つのツール・前回の結果・見送り） |
+| `diagnostic/`       | 診断ログ（不具合の経緯を追う足跡）の書き口・束ね・置き場と掃除                                                                                                                     |
+| `host/`             | ホストのポートと Orca・`none` の実装、ホストへ渡す前の門番                                                                                                                         |
+| `view-server/`      | ビューサーバ。ポートの決定・http・ws・同梱の外部ライブラリ・ブラウザ側の組み立てと開発サーバ                                                                                       |
+| `repository/`       | 作業ディレクトリの git リポジトリを読む。`git` を起こす口・管理下のファイルと行の抜き書き・タスク一覧                                                                              |
+| `recommendation/`   | おすすめの札。候補・出力の検査・キャッシュ                                                                                                                                         |
+| `welcome-greeting/` | 迎えの挨拶と反応。書き手・覚え・使い捨ての問い合わせの指示文と検査                                                                                                                 |
+| `checkout/`         | 打った場所のチェックアウトと自分の根を比べ、違えば打った側の `bin/tsukumo` へ委ねる                                                                                                |
+| `workflow-setting/` | ワークフローの設定。`tw` の設定コマンドを起こす口と読み書きの手続き                                                                                                                |
+| `item/`             | キャラビューの席に置くアイテム。一覧と席の置き場の読み書き・素材を配る判断                                                                                                         |
+
+**機能の下限**: 機能は `core/` と `adapter/` の両方を持つか、`src/shared/<機能>/` を持つ。どちらも
+満たさないまとまりは機能にせず、読み手の機能へ入れる。例外は名指しの3つ（`question`・`system-prompt`・
+`work-plan`。どれも `core/` だけで shared を持たない）。検査は `test/architecture/server-feature.test.ts`
+（例外の一覧 `FEATURE_FLOOR_EXCEPTIONS`）。
 
 **どの機能にも属さない共有のもの**は、`server/core/` と `server/adapter/` の**直下**に置く
 （いまあるものは `ls src/server/core/ src/server/adapter/`）。置いてよいのは**どの機能の語彙も名乗らず、読み手が
@@ -88,18 +89,17 @@
 
 <!-- feature-edge-table:start -->
 
-| 機能（import する側） | 読んでよい機能                                                                                                                                                                                                     |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `session`             | `session-driver` `chat` `diary` `token-usage` `context-usage` `experience-metric` `diagnostic` `character-pack` `report`                                                                                           |
-| `system-prompt`       | `session-driver` `chat` `report` `work-plan` `question`                                                                                                                                                            |
-| `view-server`         | `session`                                                                                                                                                                                                          |
-| `chat`                | `character-pack`                                                                                                                                                                                                   |
-| `context-usage`       | `session-driver`                                                                                                                                                                                                   |
-| `session-driver`      | `report` `view-server` `chat` `work-plan` `question`                                                                                                                                                               |
-| `diary`               | `repository`                                                                                                                                                                                                       |
-| `usage-review`        | `session-driver`                                                                                                                                                                                                   |
-| `achievement`         | `repository`                                                                                                                                                                                                       |
-| そのほか              | —（葉。`plan-usage` `experience-metric` `diagnostic` `character-pack` `host` `repository` `recommendation` `checkout` `welcome-greeting` `workflow-setting` `report` `item` `token-usage` `work-plan` `question`） |
+| 機能（import する側） | 読んでよい機能                                                                                                                                                      |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `session`             | `session-driver` `chat` `diary` `usage` `diagnostic` `character-pack` `report`                                                                                      |
+| `system-prompt`       | `session-driver` `chat` `report` `work-plan` `question`                                                                                                             |
+| `view-server`         | `session`                                                                                                                                                           |
+| `chat`                | `character-pack`                                                                                                                                                    |
+| `usage`               | `session-driver`                                                                                                                                                    |
+| `session-driver`      | `report` `view-server` `chat` `work-plan` `question`                                                                                                                |
+| `diary`               | `repository`                                                                                                                                                        |
+| `achievement`         | `repository`                                                                                                                                                        |
+| そのほか              | —（葉。`diagnostic` `character-pack` `host` `repository` `recommendation` `checkout` `welcome-greeting` `workflow-setting` `report` `item` `work-plan` `question`） |
 
 <!-- feature-edge-table:end -->
 

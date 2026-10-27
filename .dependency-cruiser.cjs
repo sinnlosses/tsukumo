@@ -2,27 +2,14 @@
 // `scripts/document/feature-edge-table.ts`（`server-feature-edge:` で始まる規則から文書の表を書く）。
 
 const SERVER_FEATURE_IMPORTS = {
-  session: [
-    "session-driver",
-    "chat",
-    "diary",
-    "token-usage",
-    "context-usage",
-    "experience-metric",
-    "diagnostic",
-    "character-pack",
-    "report",
-  ],
+  session: ["session-driver", "chat", "diary", "usage", "diagnostic", "character-pack", "report"],
   "system-prompt": ["session-driver", "chat", "report", "work-plan", "question"],
   "view-server": ["session"],
   chat: ["character-pack"],
-  "context-usage": ["session-driver"],
+  usage: ["session-driver"],
   "session-driver": ["report", "view-server", "chat", "work-plan", "question"],
   diary: ["repository"],
-  "usage-review": ["session-driver"],
   achievement: ["repository"],
-  "plan-usage": [],
-  "experience-metric": [],
   diagnostic: [],
   "character-pack": [],
   host: [],
@@ -33,7 +20,6 @@ const SERVER_FEATURE_IMPORTS = {
   "workflow-setting": [],
   report: [],
   item: [],
-  "token-usage": [],
   "work-plan": [],
   question: [],
 }
@@ -124,7 +110,7 @@ const CHILD_PROCESS_FILES = [
   "src/server/session-driver/adapter/rtk-rewrite.ts",
   "src/server/session-driver/adapter/sdk-workflow-tw.ts",
   "src/server/workflow-setting/adapter/tw-config.ts",
-  "src/server/token-usage/adapter/tw-claim-list.ts",
+  "src/server/usage/adapter/tw-claim-list.ts",
 ]
 
 const alternation = (paths) => `(?:${paths.join("|")})`

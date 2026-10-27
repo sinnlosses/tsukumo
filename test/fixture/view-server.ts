@@ -9,11 +9,11 @@ import {
   startViewServer,
   type ViewServer,
 } from "../../src/server/view-server/adapter/server.ts"
-import { UNAVAILABLE_CONTEXT_USAGE } from "../../src/shared/context-usage/context-usage.ts"
-import { UNAVAILABLE_PLAN_USAGE } from "../../src/shared/plan-usage/plan-usage.ts"
 import { UNREADABLE_FILE_EXCERPT } from "../../src/shared/repository/file-excerpt.ts"
 import { UNAVAILABLE_SESSION_DIGEST } from "../../src/shared/session/session-digest.ts"
-import { EMPTY_TOKEN_USAGE_SUMMARY } from "../../src/shared/token-usage/token-usage-summary.ts"
+import { UNAVAILABLE_CONTEXT_USAGE } from "../../src/shared/usage/context-usage.ts"
+import { UNAVAILABLE_PLAN_USAGE } from "../../src/shared/usage/plan-usage.ts"
+import { EMPTY_TOKEN_USAGE_SUMMARY } from "../../src/shared/usage/token-usage-summary.ts"
 
 export const TOKEN = createStartupToken()
 

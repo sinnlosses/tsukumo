@@ -62,6 +62,47 @@ describe("server/ の機能どうしの import", () => {
   })
 })
 
+// 機能の下限を満たさないまま機能として残す例外（docs/architecture/server-feature.md「機能の下限」）。
+const FEATURE_FLOOR_EXCEPTIONS = [
+  "question",
+  "system-prompt",
+  "work-plan",
+] as const satisfies readonly ServerFeature[]
+
+describe("server/ の機能の下限", () => {
+  it("機能は core/ と adapter/ の両方か shared/<機能>/ を持ち、例外の一覧は下限を満たさないものだけ", () => {
+    const files = listSourceFiles(SRC_ROOT)
+    const exceptions: readonly ServerFeature[] = FEATURE_FLOOR_EXCEPTIONS
+
+    const offenders = SERVER_FEATURES.flatMap((feature) => {
+      const meetsFloor = meetsFeatureFloor(feature, files)
+      const excepted = exceptions.includes(feature)
+      if (!meetsFloor && !excepted) {
+        return [`${feature}: core/ と adapter/ の両方も shared/${feature}/ も無い`]
+      }
+      if (meetsFloor && excepted) {
+        return [`${feature}: 下限を満たすので例外の一覧から外す`]
+      }
+      return []
+    })
+
+    expect(offenders.join("\n")).toBe("")
+  })
+})
+
+function meetsFeatureFloor(feature: ServerFeature, files: readonly string[]): boolean {
+  const layers = new Set(
+    files.flatMap((relPath) => {
+      if (!relPath.startsWith(`server/${feature}/`)) {
+        return []
+      }
+      return [serverPlaceOf(relPath).layer]
+    }),
+  )
+  const hasShared = files.some((relPath) => relPath.startsWith(`shared/${feature}/`))
+  return (layers.has("core") && layers.has("adapter")) || hasShared
+}
+
 // `server/core/` `server/adapter/` の直下（`lib/` を含む）に置いてよいのは、どの機能にも
 // 属さない共有の箱のファイルだけ（docs/architecture.md「サーバの機能と、機能どうしの辺」）。
 // 共有の箱は「どの機能の語彙も名乗らず、読み手が2つ以上ある」ものだけを置く場所なので、

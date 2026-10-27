@@ -10,7 +10,7 @@
 
 ### 進行の計測値
 
-- **英語識別子**: `experienceMetric`（機能は `experience-metric`、記録の1行は `ExperienceMetricRecord`）
+- **英語識別子**: `experienceMetric`（機能は `usage`、記録の1行は `ExperienceMetricRecord`）
 - **定義**: 会話の画面の使い心地を、改善の前後で比べるために手元に残す数。依頼を送ってから結論が見えるまでの時間・
   答え待ちで止まっていた時間・つまずいてから立ち直るまでの手数の3つと、仕切りを離した回数と比率
   （`docs/architecture/screen-design.md` 13.13）

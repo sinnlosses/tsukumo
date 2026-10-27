@@ -1,6 +1,6 @@
 // テストが使う、手で書いた架空のプラン使用量。既定を1つ持ち、呼ぶ側は違うところだけを渡す。
 
-import type { PlanUsage, PlanUsageReport } from "../../src/shared/plan-usage/plan-usage.ts"
+import type { PlanUsage, PlanUsageReport } from "../../src/shared/usage/plan-usage.ts"
 
 /** 架空のプラン使用量1つ。違うところだけを渡す。 */
 export function planUsage(overrides: Partial<PlanUsage> = {}): PlanUsage {

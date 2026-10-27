@@ -1,6 +1,6 @@
 // プラン使用量の語彙。取れた状態（`PlanUsageState`）から描く2つの枠（`WindowDisplay`）を起こし、警告にするかを決める。
 
-import type { PlanUsage } from "../../../../../shared/plan-usage/plan-usage.ts"
+import type { PlanUsage } from "../../../../../shared/usage/plan-usage.ts"
 
 /** 高いときの境目（%）。見本（`QUOTA-Sidebar.dc.html`「2 高いとき」）の値。 */
 const WARN_THRESHOLD_PERCENTAGE = 80

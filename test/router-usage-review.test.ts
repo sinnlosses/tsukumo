@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest"
 import { FRAME_ERROR_REASON } from "../src/shared/frame.ts"
 import { BUILTIN_SESSION_DEFAULT } from "../src/shared/session/session-default.ts"
 import type { SessionEvent } from "../src/shared/session/session-event.ts"
-import { type UsageProposal, usageProposalKey } from "../src/shared/usage-review/usage-review.ts"
+import { type UsageProposal, usageProposalKey } from "../src/shared/usage/usage-review.ts"
 import { REQUEST_EVENT, startRouter } from "./fixture/command-router.ts"
 
 describe("createSocketRouter（usageReview。トークン消費の画面の見直し）", () => {

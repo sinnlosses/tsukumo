@@ -1,11 +1,11 @@
 // 駆動へ引きに行く3つの問い合わせ（コンテキストの内訳・プラン使用量・セッション1件の中身）。
 // 押すのではなく引くので、状態にもフレームにも乗らない。駆動への問い合わせが失敗したときは足跡を残して「取れない」を返す。
 
-import { UNAVAILABLE_CONTEXT_USAGE } from "../../../shared/context-usage/context-usage.ts"
 import { swallowedFailureFootprint } from "../../../shared/diagnostic/swallowed-failure.ts"
-import { UNAVAILABLE_PLAN_USAGE } from "../../../shared/plan-usage/plan-usage.ts"
 import { UNAVAILABLE_SESSION_DIGEST } from "../../../shared/session/session-digest.ts"
 import type { SessionState } from "../../../shared/session/session-state.ts"
+import { UNAVAILABLE_CONTEXT_USAGE } from "../../../shared/usage/context-usage.ts"
+import { UNAVAILABLE_PLAN_USAGE } from "../../../shared/usage/plan-usage.ts"
 import type { DiagnosticBuffer } from "../../diagnostic/core/diagnostic.ts"
 import type { SessionDriver } from "../../session-driver/core/session-driver.ts"
 import type { SessionManager } from "./session-manager-port.ts"

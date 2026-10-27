@@ -4,10 +4,7 @@
 import { oc } from "@orpc/contract"
 import { z } from "zod"
 
-import {
-  tokenUsageDaysSchema,
-  tokenUsageSummarySchema,
-} from "../token-usage/token-usage-summary.ts"
+import { tokenUsageDaysSchema, tokenUsageSummarySchema } from "../usage/token-usage-summary.ts"
 
 export const tokenUsageContract = {
   /** 今日を含む直近 `days` 日の集計。 */

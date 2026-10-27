@@ -13,7 +13,7 @@
 import clsx from "clsx"
 import type { ReactElement } from "react"
 
-import type { ContextUsageItem } from "../../../../../../shared/context-usage/context-usage.ts"
+import type { ContextUsageItem } from "../../../../../../shared/usage/context-usage.ts"
 import type { ContextUsageRow, UseContextUsageResult } from "../../../../../domain/context-usage.ts"
 import { clockTime, localTimeZoneId, zonedDateTime } from "../../../../../utils/clock.ts"
 import { formatCount } from "../../../../../utils/format-count.ts"

@@ -1,25 +1,22 @@
 // セッションを持つ係 `createSessionManager` の入口（`SessionManagerOptions`）と出口（`SessionManager`）の型。
 
-import type { ContextUsageReport } from "../../../shared/context-usage/context-usage.ts"
 import type { ServerFrame } from "../../../shared/frame.ts"
-import type { PlanUsageReport } from "../../../shared/plan-usage/plan-usage.ts"
 import type { SessionDigest } from "../../../shared/session/session-digest.ts"
 import type { RestoredEvent, SessionEvent } from "../../../shared/session/session-event.ts"
-import type { PreviousUsageReview } from "../../../shared/usage-review/usage-review.ts"
+import type { ContextUsageReport } from "../../../shared/usage/context-usage.ts"
+import type { PlanUsageReport } from "../../../shared/usage/plan-usage.ts"
+import type { PreviousUsageReview } from "../../../shared/usage/usage-review.ts"
 import type { ChatArchive } from "../../chat/core/chat-archive-port.ts"
 import type { ChatConsolidationSource } from "../../chat/core/chat-consolidation-writer.ts"
-import type { ContextUsageLog } from "../../context-usage/core/context-usage.ts"
 import type { ChangeCountGit } from "../../core/change-count-git.ts"
 import type { DiagnosticLog } from "../../diagnostic/core/diagnostic.ts"
-import type {
-  ExperienceMetricLog,
-  SplitRelease,
-} from "../../experience-metric/core/experience-metric.ts"
 import type { ReadReportImage, ReportImageShelf } from "../../report/core/report-image-shelf.ts"
 import type { ReportUsageLog } from "../../report/core/report-usage.ts"
 import type { PromptImageShelf } from "../../session-driver/core/prompt-image-shelf.ts"
 import type { SessionDriver } from "../../session-driver/core/session-driver.ts"
-import type { TokenUsageLog } from "../../token-usage/core/token-usage.ts"
+import type { ContextUsageLog } from "../../usage/core/context-usage.ts"
+import type { ExperienceMetricLog, SplitRelease } from "../../usage/core/experience-metric.ts"
+import type { TokenUsageLog } from "../../usage/core/token-usage.ts"
 import type { CommandSession } from "./command-session.ts"
 import type { SessionLaunchRequest } from "./session-launch.ts"
 

@@ -16,11 +16,7 @@ import type { ApiTrouble } from "../session-driver/api-trouble.ts"
 import type { BackgroundTask } from "../session-driver/background-task.ts"
 import type { StampedPendingAsk } from "../session-driver/pending-ask.ts"
 import type { RateLimit } from "../session-driver/rate-limit.ts"
-import type {
-  PreviousUsageReview,
-  UsageProposalRun,
-  UsageReview,
-} from "../usage-review/usage-review.ts"
+import type { PreviousUsageReview, UsageProposalRun, UsageReview } from "../usage/usage-review.ts"
 import type { SessionChoice } from "./session-choice.ts"
 import { BUILTIN_SESSION_DEFAULT, type SessionDefault } from "./session-default.ts"
 import type { ModelEffortSupport } from "./session-event-setting.ts"

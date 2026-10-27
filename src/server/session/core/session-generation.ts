@@ -4,7 +4,7 @@ import type { SettingConfirmation } from "../../../shared/session/session-event-
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import type { SessionState } from "../../../shared/session/session-state.ts"
 import type { SessionDriver } from "../../session-driver/core/session-driver.ts"
-import type { TokenUsageRecorder } from "../../token-usage/core/token-usage.ts"
+import type { TokenUsageRecorder } from "../../usage/core/token-usage.ts"
 import type { EventBatch } from "./event-batch.ts"
 import type { ReportChangeCounter } from "./report-change-count.ts"
 import type { WaitingLineAlarm } from "./waiting-line-alarm.ts"

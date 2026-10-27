@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import { readContextUsage as readContextUsageReporting } from "../../../../src/server/session-driver/adapter/sdk-context-usage.ts"
-import { UNAVAILABLE_CONTEXT_USAGE } from "../../../../src/shared/context-usage/context-usage.ts"
+import { UNAVAILABLE_CONTEXT_USAGE } from "../../../../src/shared/usage/context-usage.ts"
 
 function readContextUsage(
   session: Parameters<typeof readContextUsageReporting>[0],

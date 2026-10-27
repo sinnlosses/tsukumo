@@ -23,14 +23,11 @@ import {
   startOnResolvedPort,
 } from "./server/view-server/core/port-resolution.ts"
 import type { StartedSession } from "./session-start.ts"
-import {
-  type ContextUsageReport,
-  UNAVAILABLE_CONTEXT_USAGE,
-} from "./shared/context-usage/context-usage.ts"
 import { swallowedFailureFootprint } from "./shared/diagnostic/swallowed-failure.ts"
 import type { RefreshTarget, ServerFrame } from "./shared/frame.ts"
-import { type PlanUsageReport, UNAVAILABLE_PLAN_USAGE } from "./shared/plan-usage/plan-usage.ts"
 import { type SessionDigest, UNAVAILABLE_SESSION_DIGEST } from "./shared/session/session-digest.ts"
+import { type ContextUsageReport, UNAVAILABLE_CONTEXT_USAGE } from "./shared/usage/context-usage.ts"
+import { type PlanUsageReport, UNAVAILABLE_PLAN_USAGE } from "./shared/usage/plan-usage.ts"
 
 export type ViewDeliveryOptions = {
   /** どのポートで試すか（決めるのは `resolveViewPort`）。 */

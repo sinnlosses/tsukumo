@@ -9,12 +9,8 @@ export type Layer = "shared" | "core" | "adapter" | "browser" | "cli" | "ambient
 export const SERVER_FEATURES = [
   "report",
   "system-prompt",
-  "context-usage",
-  "experience-metric",
+  "usage",
   "diagnostic",
-  "plan-usage",
-  "token-usage",
-  "usage-review",
   "host",
   "repository",
   "recommendation",

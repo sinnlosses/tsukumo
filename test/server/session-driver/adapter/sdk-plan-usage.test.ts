@@ -4,7 +4,7 @@ import { readPlanUsage as readPlanUsageReporting } from "../../../../src/server/
 import {
   NOT_APPLICABLE_PLAN_USAGE,
   UNAVAILABLE_PLAN_USAGE,
-} from "../../../../src/shared/plan-usage/plan-usage.ts"
+} from "../../../../src/shared/usage/plan-usage.ts"
 
 function readPlanUsage(
   session: Parameters<typeof readPlanUsageReporting>[0],

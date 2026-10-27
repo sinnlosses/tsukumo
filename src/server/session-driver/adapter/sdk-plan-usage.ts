@@ -8,7 +8,7 @@ import {
   type PlanUsageReport,
   type PlanUsageWindow,
   UNAVAILABLE_PLAN_USAGE,
-} from "../../../shared/plan-usage/plan-usage.ts"
+} from "../../../shared/usage/plan-usage.ts"
 import type { UsageFailurePlace } from "../core/session-driver.ts"
 
 /**

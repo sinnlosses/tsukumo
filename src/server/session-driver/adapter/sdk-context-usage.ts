@@ -7,7 +7,7 @@ import {
   CONTEXT_CATEGORY_KINDS,
   type ContextUsageReport,
   UNAVAILABLE_CONTEXT_USAGE,
-} from "../../../shared/context-usage/context-usage.ts"
+} from "../../../shared/usage/context-usage.ts"
 import type { UsageFailurePlace } from "../core/session-driver.ts"
 
 /**

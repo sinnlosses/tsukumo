@@ -2,7 +2,7 @@
 
 import { oc } from "@orpc/contract"
 
-import { planUsageReportSchema } from "../plan-usage/plan-usage.ts"
+import { planUsageReportSchema } from "../usage/plan-usage.ts"
 
 export const planUsageContract = {
   /**

@@ -35,7 +35,7 @@
   受け手は `CommandSession`（`command-session.ts`）を受け取り、**`session` の表にだけ書ける**（型が
   `session/core/` にあるので、葉の機能からは物理的に書けない）。書き込み口は各機能の `ports` にあり、
   中身を選ぶのはその機能の組み立て（`src/wiring/<機能>.ts`）
-- **束ねるのを配線に置く理由**: 表を `session/core/` で束ねると、`session` が `usage-review` と
+- **束ねるのを配線に置く理由**: 表を `session/core/` で束ねると、`session` が `item` と
   `host` を読む辺（いまの表に無い）が要り、`session` がまた全部を知る場所に戻る。配線なら
   **機能どうしの辺の表は増えない**。葉の機能の表と手続きが読むのは `shared` と共有の `core`
   （`command-receiver.ts`）と自分の機能だけ

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import { experienceMetricContract } from "../../../src/shared/contract/experience-metric.ts"
-import { SPLIT_DIVIDERS } from "../../../src/shared/experience-metric/experience-metric-record.ts"
+import { SPLIT_DIVIDERS } from "../../../src/shared/usage/experience-metric-record.ts"
 
 function parseInput(value: unknown) {
   const schema = experienceMetricContract.recordSplit["~orpc"].inputSchema

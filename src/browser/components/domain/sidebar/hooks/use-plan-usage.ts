@@ -18,7 +18,7 @@ import { useState } from "react"
 import {
   type PlanUsageReport,
   UNAVAILABLE_PLAN_USAGE,
-} from "../../../../../shared/plan-usage/plan-usage.ts"
+} from "../../../../../shared/usage/plan-usage.ts"
 import { rpc } from "../../../../domain/rpc.ts"
 import type { PlanUsageState } from "../domain/plan-window.ts"
 import type { UsageSource } from "../domain/usage-source.ts"

@@ -14,8 +14,8 @@ import {
   type TokenUsageDays,
   type TokenUsageTotals,
   type TokenUsageTrend,
-} from "../../../../../shared/token-usage/token-usage-summary.ts"
-import type { ToolUsageCount } from "../../../../../shared/token-usage/token-usage.ts"
+} from "../../../../../shared/usage/token-usage-summary.ts"
+import type { ToolUsageCount } from "../../../../../shared/usage/token-usage.ts"
 import { rpc } from "../../../../domain/rpc.ts"
 import { useSession } from "../../../../stores/session.ts"
 import { formatCount } from "../../../../utils/format-count.ts"

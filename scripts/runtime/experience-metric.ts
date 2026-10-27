@@ -21,18 +21,18 @@ import {
 import {
   createExperienceMetricLog,
   experienceMetricDir,
-} from "../../src/server/experience-metric/adapter/experience-metric-log.ts"
+} from "../../src/server/usage/adapter/experience-metric-log.ts"
 import {
   type ExperienceSplit,
   type ExperienceSummary,
   type PercentRange,
   type Spread,
   summarizeExperienceMetric,
-} from "../../src/server/experience-metric/core/experience-metric-summary.ts"
+} from "../../src/server/usage/core/experience-metric-summary.ts"
 import {
   SPLIT_DIVIDERS,
   type SplitDivider,
-} from "../../src/shared/experience-metric/experience-metric-record.ts"
+} from "../../src/shared/usage/experience-metric-record.ts"
 import { positiveIntegerArgument } from "../shared/positive-integer-argument.ts"
 
 const USAGE = `使い方:

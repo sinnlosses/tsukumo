@@ -13,7 +13,7 @@ import type {
   TokenUsageDays,
   TokenUsageTotals,
   TokenUsageTrend,
-} from "../../../../../src/shared/token-usage/token-usage-summary.ts"
+} from "../../../../../src/shared/usage/token-usage-summary.ts"
 
 /**
  * 見た目だけを測る（文字・割合への畳みは `useTokenUsage` が持つので、フィクスチャは手で書いた

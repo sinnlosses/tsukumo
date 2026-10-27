@@ -85,7 +85,7 @@
   `split` の行を、最終レポートで閉じたあとに次の依頼を送るたびに `reading` の行（読む時間: 秒数・本文の字数・
   表の割合・図の有無。本文は残さない。版3）を、それぞれ1行ずつ積む（仕切りは動かしている途中は積まない）。
   行の形と、書いてよいもの（数・時刻・セッションID・局面の名前・仕切りの名前〔固定の3語〕と比率〔%〕・
-  字数・表の割合・図の有無）の線は `src/shared/experience-metric/experience-metric-record.ts` の `ExperienceMetricRecord`
+  字数・表の割合・図の有無）の線は `src/shared/usage/experience-metric-record.ts` の `ExperienceMetricRecord`
 - **集計は `scripts/runtime/experience-metric.ts` で見る**（`--days <日数>`、既定28日。`--split <YYYY-MM-DD>` でその日の
   前と後に分ける）。中央値と90パーセンタイルで出す。画面には出さない
 

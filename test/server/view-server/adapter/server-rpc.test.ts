@@ -9,13 +9,13 @@ import type {
   AchievementDaySelection,
   DailyAchievement,
 } from "../../../../src/shared/achievement/achievement.ts"
-import { UNAVAILABLE_CONTEXT_USAGE } from "../../../../src/shared/context-usage/context-usage.ts"
 import { RPC_PATH, type RpcClient } from "../../../../src/shared/rpc.ts"
+import { UNAVAILABLE_CONTEXT_USAGE } from "../../../../src/shared/usage/context-usage.ts"
 import {
   EMPTY_TOKEN_USAGE_SUMMARY,
   type TokenUsageDays,
   type TokenUsageSummary,
-} from "../../../../src/shared/token-usage/token-usage-summary.ts"
+} from "../../../../src/shared/usage/token-usage-summary.ts"
 import { readyContextUsage } from "../../../fixture/context-usage.ts"
 import {
   closeRunningView,

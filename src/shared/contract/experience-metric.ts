@@ -4,7 +4,7 @@
 import { z } from "zod"
 
 import { commandBase } from "../command.ts"
-import { SPLIT_DIVIDERS } from "../experience-metric/experience-metric-record.ts"
+import { SPLIT_DIVIDERS } from "../usage/experience-metric-record.ts"
 
 const splitReleaseSchema = z.object({
   divider: z.enum(SPLIT_DIVIDERS),

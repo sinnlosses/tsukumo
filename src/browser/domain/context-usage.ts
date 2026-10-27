@@ -17,7 +17,7 @@ import {
   type ContextUsageItem,
   type ContextUsageReport,
   UNAVAILABLE_CONTEXT_USAGE,
-} from "../../shared/context-usage/context-usage.ts"
+} from "../../shared/usage/context-usage.ts"
 import { rpc } from "./rpc.ts"
 
 /** 横棒の一区間と、凡例の1行（同じ並びを両方が使うので、色と名前が必ず対になる）。 */

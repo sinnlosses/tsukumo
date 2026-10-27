@@ -9,9 +9,9 @@
 import process from "node:process"
 import { parseArgs } from "node:util"
 
-import { contextUsageDir } from "../../src/server/context-usage/adapter/context-usage-log.ts"
-import { experienceMetricDir } from "../../src/server/experience-metric/adapter/experience-metric-log.ts"
 import { reportUsageDir } from "../../src/server/report/adapter/report-usage-log.ts"
+import { contextUsageDir } from "../../src/server/usage/adapter/context-usage-log.ts"
+import { experienceMetricDir } from "../../src/server/usage/adapter/experience-metric-log.ts"
 import { purgeFakeRows } from "../shared/fake-usage-purge.ts"
 
 const USAGE = `使い方:
