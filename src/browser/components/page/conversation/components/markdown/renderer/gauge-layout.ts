@@ -15,9 +15,9 @@ const ROW_HEIGHT = 44
 const AXIS_HEIGHT = 24
 const NUMBER_LINE_HEIGHT = 64
 
-type GaugeAnchor = "start" | "middle" | "end"
+export type GaugeAnchor = "start" | "middle" | "end"
 
-type GaugeAxis = {
+export type GaugeAxis = {
   readonly min: number
   readonly max: number
 }
@@ -134,28 +134,32 @@ export function gaugeLayoutOf(spec: GaugeSpec): GaugeLayout {
 }
 
 /** 値を字にする。小数は 2 桁までに丸める。 */
-function valueText(value: number): string {
+export function valueText(value: number): string {
   return String(Math.round(value * 100) / 100)
 }
 
-function truncated(label: string): string {
+export function truncated(label: string): string {
   const letters = [...label]
   return letters.length <= LABEL_MAX ? label : `${letters.slice(0, LABEL_MAX - 1).join("")}…`
 }
 
 /** 値の最小〜最大を含む範囲。`includeZero` なら 0 を含める。1 点・同じ値だけでも幅を持たせる。 */
-function axisOf(values: readonly number[], includeZero: boolean): GaugeAxis {
+export function axisOf(values: readonly number[], includeZero: boolean): GaugeAxis {
   const low = Math.min(...values, ...(includeZero ? [0] : []))
   const high = Math.max(...values, ...(includeZero ? [0] : []))
   if (high > low) return { min: low, max: high }
   return { min: low - 1, max: high + 1 }
 }
 
-function positionOf(axis: GaugeAxis, value: number): number {
+export function positionOf(axis: GaugeAxis, value: number): number {
   return EDGE + ((value - axis.min) / (axis.max - axis.min)) * (1 - 2 * EDGE)
 }
 
-function anchorOf(at: number): GaugeAnchor {
+export function anchorOf(at: number): GaugeAnchor {
   if (at < ANCHOR_EDGE) return "start"
   return at > 1 - ANCHOR_EDGE ? "end" : "middle"
+}
+
+export function percent(at: number): string {
+  return `${String(at * 100)}%`
 }

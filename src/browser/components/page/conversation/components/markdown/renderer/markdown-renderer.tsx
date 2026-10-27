@@ -61,6 +61,7 @@ import { diffWordRanges, type DiffWordRanges } from "./diff-pair.ts"
 import { OrderedList, TableBody, UnorderedList } from "./folded-block.tsx"
 import { GaugeBlock } from "./gauge-block.tsx"
 import { REPORT_HAST_CACHE, type HastCache } from "./hast-cache.ts"
+import { HistogramBlock } from "./histogram-block.tsx"
 import { MermaidBlock } from "./mermaid-block.tsx"
 import { NotationAside, NotationBlock, NotationInline, NotationListItem } from "./notation.tsx"
 import { remarkPreviewImage } from "./preview-image.ts"
@@ -68,6 +69,7 @@ import { rehypeInlineMark } from "./rehype-inline-mark.ts"
 import { ReportImage } from "./report-image.tsx"
 import styles from "./report-notation.module.css"
 import { REPORT_SANITIZE_SCHEMA } from "./sanitize-schema.ts"
+import { ScatterBlock } from "./scatter-block.tsx"
 import { shellCommandText, shellLineKinds } from "./shell-line.ts"
 import { isSourceLink } from "./source-link.ts"
 import { rehypeStyleAllowlist } from "./style-allowlist.ts"
@@ -211,6 +213,12 @@ function Pre(props: PreProps): ReactElement {
     }
     if (language === "number-line" || language === "bullet") {
       return <GaugeBlock spec={hastText(codeNode)} />
+    }
+    if (language === "scatter") {
+      return <ScatterBlock spec={hastText(codeNode)} />
+    }
+    if (language === "histogram") {
+      return <HistogramBlock spec={hastText(codeNode)} />
     }
   }
 

@@ -134,6 +134,12 @@ HTML の字として埋める塊（`htmlInline`・`htmlInlineWithCode`）と、�
 決定表が `bar`・`line`・`pie` を返した `plot` は、`plotChartOf`（`src/shared/report/plot-chart.ts`）が既存の `chart` の塊へ写して描く（始まりと終わりの量の `range` は `span`、前と後の量の `change` の `line` は `slope`、写せない申告は表）。
 `numberLine`・`bullet` を返した `plot` は、`plotGaugeOf`（`src/shared/report/plot-gauge.ts`）が `number-line`・`bullet` のフェンスへ写す（bullet の区間は申告に無いので 0 から目標までの 1 つ。写せない申告は表）。座標と色は書き手に開かず、描画側が決める。
 ブラウザは `GaugeBlock`（`gauge-block.tsx`）が自前の SVG で描く。位置は `gauge-layout.ts` が軸の範囲から割合で決め、色は `--accent` の濃淡だけ（定性区間は 1〜5 個で、濃いほうから薄いほうへ）。
+`scatter`・`histogram` を返した `plot` は、`plotScatterOf`（`src/shared/report/plot-scatter.ts`）・`plotHistogramOf`（`src/shared/report/plot-histogram.ts`）が `scatter`・`histogram` のフェンスへ写す。
+散布は先頭の量を x、次を y にし、x か y が四分位範囲の 1.5 倍の柵の外にある点を外れ値として名前を添える（外れ値があるのに名前の列が無い申告は表）。
+ヒストグラムの階級幅は Freedman–Diaconis の規則（2 × 四分位範囲 × 個数の -1/3 乗）で、階級数は 1〜20、四分位範囲が 0 か全部同じ値なら 1 つ。中央値と範囲は必ず添える。数でない値が混ざる申告は表。
+ブラウザは `ScatterBlock`（`scatter-block.tsx`）・`HistogramBlock`（`histogram-block.tsx`）が自前の SVG で描く。横の位置は `scatter-layout.ts`・`histogram-layout.ts` が軸の範囲から割合で決め、色は `--accent` の濃淡だけ。
+散布は外れ値の点だけ濃くして名前を 18 字で切って出し（4 点以上は 3 点までで残りは「ほか N 点」）、ヒストグラムは中央値の縦線と範囲を必ず出す。
+この 2 形は描かれた塊が値・外れ値の名前・中央値と範囲を必ず出すので、題の数は数えない。
 値の注記は描く側が必ず出す（棒は端の値、折れ線は線端の系列名と終点の値、円は項目名と値）。題（`question`）に数が無い塊は `plot-title-without-number` と数える（`count`）。
 下の 3 つの表は `pnpm run format`（`scripts/document/write-figure-decision-table.ts`）が書き直す。手で直さない。
 

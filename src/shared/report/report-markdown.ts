@@ -10,6 +10,8 @@ import { graphFoldHtml } from "./graph-fold-html.ts"
 import { graphFoldFigure } from "./graph-fold.ts"
 import { plotChartOf } from "./plot-chart.ts"
 import { plotGaugeOf } from "./plot-gauge.ts"
+import { plotHistogramOf } from "./plot-histogram.ts"
+import { plotScatterOf } from "./plot-scatter.ts"
 import type { ReportBlock, ReportSection } from "./report-block.ts"
 import { captionedMarkdown, type CaptionKind } from "./report-caption.ts"
 import { compareMarkdown, beforeAfterMarkdown } from "./report-comparison-markdown.ts"
@@ -318,8 +320,8 @@ const PLOT_RENDERERS = {
   pie: plotChartMarkdown,
   numberLine: plotGaugeMarkdown,
   bullet: plotGaugeMarkdown,
-  scatter: plotTableMarkdown,
-  histogram: plotTableMarkdown,
+  scatter: plotScatterMarkdown,
+  histogram: plotHistogramMarkdown,
   graph: plotTableMarkdown,
   stats: plotTableMarkdown,
 } as const satisfies Record<FigureForm, PlotRenderer>
@@ -363,6 +365,44 @@ function plotGaugeMarkdown(
     ordinal,
     title: gauge.title,
     body: fencedMarkdown(gauge.kind === "bullet" ? "bullet" : "number-line", JSON.stringify(gauge)),
+    bodyFormat: "markdown",
+    fit: false,
+  })
+}
+
+/** 散布図を、描画側が読むフェンスにする。外れ値の名前を添えられない申告は表に落とす。 */
+function plotScatterMarkdown(
+  block: ReportPlot,
+  ordinal: number,
+  tagTones: TagTones,
+  resolution: PlotFormResolution,
+): string {
+  const scatter = plotScatterOf(block, resolution)
+  if (scatter === undefined) return plotTableMarkdown(block, ordinal, tagTones)
+  return captionedMarkdown({
+    kind: "figure",
+    ordinal,
+    title: scatter.title,
+    body: fencedMarkdown("scatter", JSON.stringify(scatter)),
+    bodyFormat: "markdown",
+    fit: false,
+  })
+}
+
+/** ヒストグラムを、描画側が読むフェンスにする。写せない申告は表に落とす。 */
+function plotHistogramMarkdown(
+  block: ReportPlot,
+  ordinal: number,
+  tagTones: TagTones,
+  resolution: PlotFormResolution,
+): string {
+  const histogram = plotHistogramOf(block, resolution)
+  if (histogram === undefined) return plotTableMarkdown(block, ordinal, tagTones)
+  return captionedMarkdown({
+    kind: "figure",
+    ordinal,
+    title: histogram.title,
+    body: fencedMarkdown("histogram", JSON.stringify(histogram)),
     bodyFormat: "markdown",
     fit: false,
   })

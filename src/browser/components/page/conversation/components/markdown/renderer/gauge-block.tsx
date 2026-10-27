@@ -6,7 +6,7 @@ import { z } from "zod"
 
 import type { GaugeSpec } from "../../../../../../../shared/report/plot-gauge.ts"
 import styles from "./gauge-block.module.css"
-import { gaugeLayoutOf } from "./gauge-layout.ts"
+import { gaugeLayoutOf, percent } from "./gauge-layout.ts"
 
 type GaugeBlockProps = {
   /** フェンスの中身（`GaugeSpec` の JSON）。 */
@@ -149,10 +149,6 @@ export function GaugeBlock(props: GaugeBlockProps): ReactElement {
       </text>
     </svg>
   )
-}
-
-function percent(at: number): string {
-  return `${String(at * 100)}%`
 }
 
 function parseSpec(source: string): GaugeSpec | undefined {

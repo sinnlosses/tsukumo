@@ -363,5 +363,29 @@ describe("reportSectionsMarkdown", () => {
       )
       expect(table).not.toContain("```bullet")
     })
+
+    it("散布図とヒストグラムは専用のフェンスになり、外れ値の名前を添えられない散布は表に落ちる", () => {
+      const rows = Array.from({ length: 12 }, (_, i) => i)
+      const scatter = markdownOf(
+        plotOf("correlate", [
+          { name: "件数", type: "Q", values: rows },
+          { name: "分", type: "Q", values: rows },
+        ]),
+      )
+      expect(scatter).toContain("```scatter")
+      const histogram = markdownOf(
+        plotOf("distribution", [
+          { name: "分", type: "Q", values: Array.from({ length: 25 }, (_, i) => i) },
+        ]),
+      )
+      expect(histogram).toContain("```histogram")
+      const dropped = markdownOf(
+        plotOf("correlate", [
+          { name: "件数", type: "Q", values: [...rows.slice(1), 500] },
+          { name: "分", type: "Q", values: [...rows.slice(1), 900] },
+        ]),
+      )
+      expect(dropped).not.toContain("```scatter")
+    })
   })
 })

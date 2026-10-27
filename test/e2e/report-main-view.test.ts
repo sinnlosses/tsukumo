@@ -63,6 +63,18 @@ describe("report → メインビュー", () => {
     await room.settleAndMatch(ELAPSED_MS)
   })
 
+  it("plot の申告が散布図とヒストグラムとして描かれる", async () => {
+    const room = await run.open({
+      scenario: "plot-scatter-histogram",
+      scene: "plot-scatter-histogram",
+      viewport: "wide",
+      domRoots: ["main"],
+    })
+
+    await room.waitForEvent("turn-finished")
+    await room.settleAndMatch(ELAPSED_MS)
+  })
+
   it("レポートの本文の字を選ぶと口が出て、押すと入力欄の頭に引用が入ってフォーカスが移る", async () => {
     const room = await run.open({
       scenario: "report-selection-ask",

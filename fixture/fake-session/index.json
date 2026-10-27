@@ -63,6 +63,7 @@
     "report-chart",
     "report-plot-chart",
     "report-plot-gauge",
+    "plot-scatter-histogram",
     "report-board",
     "report-svg",
     "report-svg-tone",

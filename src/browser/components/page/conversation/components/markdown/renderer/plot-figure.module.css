@@ -1,0 +1,42 @@
+.plot {
+  display: block;
+  width: 100%;
+  margin: var(--report-block-gap, 12px) 0;
+  overflow: visible;
+}
+
+.plot-axis {
+  stroke: var(--accent);
+  stroke-opacity: 0.35;
+  stroke-width: 2;
+}
+
+.plot-dot {
+  fill: var(--accent);
+  fill-opacity: 0.45;
+}
+
+.plot-outlier {
+  fill: var(--accent);
+  fill-opacity: 1;
+}
+
+.plot-bar {
+  fill: var(--accent);
+  fill-opacity: 0.55;
+}
+
+.plot-median {
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+
+.plot-text {
+  font-size: var(--font-label);
+  fill: var(--ink);
+}
+
+.plot-quiet {
+  font-size: var(--font-label);
+  fill: var(--ink-quiet);
+}

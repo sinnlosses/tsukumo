@@ -71,6 +71,39 @@ describe("plot の題の数", () => {
     }
   })
 
+  it("散布図・ヒストグラムで描く形は題に数が無くても数えず、表に落ちた散布も数えない", () => {
+    const rows = Array.from({ length: 12 }, (_, i) => i)
+    const declarations = [
+      {
+        relation: "correlate",
+        data: [
+          { name: "件数", type: "Q", values: rows },
+          { name: "分", type: "Q", values: rows },
+        ],
+      },
+      {
+        relation: "correlate",
+        data: [
+          { name: "件数", type: "Q", values: [...rows.slice(1), 500] },
+          { name: "分", type: "Q", values: [...rows.slice(1), 900] },
+        ],
+      },
+      {
+        relation: "distribution",
+        data: [{ name: "分", type: "Q", values: Array.from({ length: 25 }, (_, i) => i) }],
+      },
+    ]
+    for (const declaration of declarations) {
+      const plot = plotBlockSchema.parse({ kind: "plot", question: "架空の題", ...declaration })
+      const violations = reportViolations(
+        reportDraft({
+          sections: [{ heading: "", shapeTag: "unspecified", blocks: [plot] }],
+        }),
+      ).filter((violation) => violation.kind === "plot-title-without-number")
+      expect(violations).toEqual([])
+    }
+  })
+
   it("決定表が棒を返しても表に落ちる申告は、題に数が無くても数えない", () => {
     const names = ["甲", "乙", "丙", "丁"]
     const dropped = [
