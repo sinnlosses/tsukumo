@@ -123,7 +123,7 @@
     記録を読み戻す側は、欄が無いものも読める。
     `report` の記録に写り、transcript から組み直しても同じ値が戻る。
   - **任意の引数 `figure` にはレポートの図を1つ置く。置かないときは省く**（2026-10-13 に必須にし、2026-10-27 に省ける欄へ改めた。ADR 0036）。
-    形は図の塊1つ（`image`・`mermaid`・`graph`・`svg`・`beforeAfter`・`chart`・`timeline`・`stats`。`sections` の同じ塊と同じ形）。
+    形は図の塊1つ（`image`・`mermaid`・`graph`・`svg`・`beforeAfter`・`chart`・`timeline`・`stats`・`plot`。`sections` の同じ塊と同じ形）。
     旧い形の `{ kind: "none", reason }`（`reason` は `short-answer`・`no-shape`・`single-value`・`no-material` の4つ）も受け、書き手には理由を言わせない。
     図を置く条件は引数の説明だけが持ち、図を置くかの既定（図派 `chart`／文派 `text`）は新しいセッションの既定の4つ目（`figurePreference`）で、
     起こすときの値が説明の文を変える（`text` は同じ置く条件を「なければ図は置かない・ある節には置いてよい」の言い方にする。図の塊を拒む検査は無い）。

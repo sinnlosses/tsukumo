@@ -4,6 +4,7 @@
 
 import { cardChainHtml } from "./card-chain-markdown.ts"
 import { encodeMarks } from "./code-mark.ts"
+import { plotRows } from "./figure-grammar.ts"
 import { graphFoldHtml } from "./graph-fold-html.ts"
 import { graphFoldFigure } from "./graph-fold.ts"
 import type { ReportBlock, ReportSection } from "./report-block.ts"
@@ -184,6 +185,20 @@ function blockMarkdown(
       return tableMarkdown(block, ordinal, tagTones)
     case "matrix":
       return matrixMarkdown(block, ordinal)
+    case "plot":
+      return tableMarkdown(
+        {
+          kind: "table",
+          title: block.question,
+          columns: block.data.map((column) => column.name),
+          rows: plotRows(block),
+          rest: "",
+          fold: block.fold,
+          aside: block.aside,
+        },
+        ordinal,
+        tagTones,
+      )
     case "compare":
       return compareMarkdown(block, ordinal)
     case "beforeAfter":
@@ -310,6 +325,7 @@ function captionKindOf(block: ReportBlock): CaptionKind | undefined {
       return "figure"
     case "table":
     case "matrix":
+    case "plot":
       return "table"
     case "files":
       return block.title.trim() === "" ? undefined : "figure"

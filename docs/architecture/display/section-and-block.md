@@ -84,6 +84,10 @@
   延び・出来事・一点のどれも無く、項目ごとの区間の長さを比べるだけなら `chart` の `span`。`mermaid` の `gantt` は見た目を制御できないので
   形の札 `time` の候補から外した（札の第一候補は `timeline`、許す代替は `mermaid` の `sequenceDiagram` と `list` の `ordered`）。
   見え方は疑似セッションの場面 `report-timeline` で撮る。
+- **図の形を書き手が選ばず、問い・データ・関係を申告するのは `plot` の塊**（`src/shared/report/figure-grammar.ts`。`sections` と `figure` の双方に置ける）。
+  申告は `question`（全角60字以内の1文）・`data`（列の並び。`name`・`type`〔`N`・`O`・`T`・`Q`〕・`values`）・`relation`（8語）の3つだけで、色・座標・形は書けない。
+  型と値の整合（列の長さの一致・`Q` の列は数だけ）は schema が見て、外れた呼び出しは `report` の入力の検査で弾かれる。新しい差し戻しの条は足していない。形の良し悪しは検査しない。
+  形を選ぶ決定表が入るまでは `data` を `table` と同じ表として描く（題は `question`）。
 - **座標で見せる図は `svg` の塊で書く**（`docs/architecture/adr/0028-report-block-priority.md`「SVG（論点3）」）。
   書き手は題・viewBox の大きさ・図形（`rect`・`line`・`text`）を渡し、SVG の文字列は書かず、描く側が図形から組む。
   `rect` の題は既定で枠の中心、`labelAt: "top-left"` で左上の内側に左寄せで置く（入れ子の外側の枠は `top-left` にして、子の枠・矢印の題と重ねない）。

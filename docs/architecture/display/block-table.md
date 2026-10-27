@@ -70,3 +70,6 @@
     1行の変更に使わせない旨は `beforeAfter` の `describe` が持つ。
   - 箇条の側が6つ以上なら `options`・`compare` と同じ違反で差し戻す。取り違えは差し戻さず、
     使われ方の記録の「塊の種類 × レポート数」で見る
+- **問い・データ・関係を申告する図は `plot` の塊で受け、形を選ぶ決定表が入るまでは表として描く**（`question`・`data` の列・`relation` の3つだけ。
+  詳細は `docs/architecture/display/section-and-block.md`）。`data` の列を表の列、`values` を行に起こして `table` と同じ描き方に通し、題は `question`。
+  列の型〔`N`・`O`・`T`・`Q`〕は描き方を変えない（決定表が入ってから形の選択に使う）。`table` と同じ「表 n」の題を付ける

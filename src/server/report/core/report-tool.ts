@@ -68,7 +68,8 @@ export const REPORT_WORK_PLAN_CLOSING_DESCRIPTION =
 export function reportFigureDescription(preference: FigurePreference): string {
   const head =
     "レポートの図1つ。checks の下・sections の上に「図 1」として描かれ、sections の図の番号はそのあとに続く。"
-  const parts = "図の部品（image / mermaid / graph / svg / timeline / beforeAfter / chart / stats）"
+  const parts =
+    "図の部品（image / mermaid / graph / svg / timeline / beforeAfter / chart / stats / plot）"
   const conditions =
     "名前が3つ以上出てきてつながる・流れや分岐がある・構造の前後がある・数が3つ以上ある"
   if (preference === "text") {

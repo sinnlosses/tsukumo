@@ -2,6 +2,7 @@
 
 import { z } from "zod"
 
+import { plotBlockSchema } from "./figure-grammar.ts"
 import {
   compareBlockSchema,
   matrixBlockSchema,
@@ -40,6 +41,7 @@ const namedChart = chartBlockSchema.meta({ id: "ChartBlock" })
 const namedSvg = svgBlockSchema.meta({ id: "SvgBlock" })
 const namedImage = imageBlockSchema.meta({ id: "ImageBlock" })
 const namedTimeline = timelineBlockSchema.meta({ id: "TimelineBlock" })
+const namedPlot = plotBlockSchema.meta({ id: "PlotBlock" })
 
 const reportBlockSchema = z.discriminatedUnion("kind", [
   textBlockSchema,
@@ -59,6 +61,7 @@ const reportBlockSchema = z.discriminatedUnion("kind", [
   optionsBlockSchema,
   claimsBlockSchema,
   namedImage,
+  namedPlot,
   filesBlockSchema,
   markdownBlockSchema,
 ])
@@ -110,6 +113,7 @@ export const reportFigureSchema = z.discriminatedUnion("kind", [
   namedBeforeAfter,
   namedChart,
   namedStats,
+  namedPlot,
   z.object({ kind: z.literal("none"), reason: z.enum(REPORT_FIGURE_NONE_REASONS) }),
 ])
 

@@ -23,7 +23,7 @@
   並びは親の幅を取るので包みを縮めない（`notes` が空なら本体の幅に縮める）。画像が読めないときも、並びは
   「画像を出せない」の札の横に残る。6つ以上は `options`・`compare` と同じ違反で差し戻す
 - **図と表には番号つきの題を付ける**（2026-10-03。利用者決定は 2026-10-02）。図（`image`・
-  `compare`・`beforeAfter`・`mermaid`・`graph`・`chart`・`timeline`・`svg`・`stats`）は題を本体の**下**に「図 n」、表（`table`・`matrix`）は
+  `compare`・`beforeAfter`・`mermaid`・`graph`・`chart`・`timeline`・`svg`・`stats`）は題を本体の**下**に「図 n」、表（`table`・`matrix`・表として描く間の `plot`）は
   題を本体の**上**に「表 n」。番号は図と表を別々に、節をまたいで塊の並びの順に1から数える。
   `options` は候補の採否の札なので数えない。**題が空でも番号は出し**（題の有無で番号の振り方が変わらない）、
   **`fold` で畳んだ中も数える**（畳んでも番号が飛ばない）。引数は `title`（`image` だけ `caption`）で、`mermaid`・`graph`・`chart`・`timeline`・`svg` は

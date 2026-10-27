@@ -164,6 +164,39 @@ describe("report でターンを閉じる", () => {
     expect(reply.endsTurn).toBe(false)
   })
 
+  it("plot の Q の列に文字がある report は形の検査で落ち、直した report は通る", async () => {
+    const plot = (values: readonly (string | number)[]) => ({
+      kind: "plot",
+      question: "架空の工程のどれを縮めるか",
+      data: [
+        { name: "工程", type: "N", values: ["甲", "乙"] },
+        { name: "分", type: "Q", values },
+      ],
+      relation: "rank",
+    })
+    const call = (figure: unknown, sections: unknown) =>
+      callTool(workServer(), "report", {
+        conclusion: ["架空の結論"],
+        closing: CLOSING,
+        figure,
+        sections,
+        sessionSummary: SESSION_SUMMARY,
+        sessionRemaining: REMAINING,
+      })
+    const inSections = (block: unknown) => [{ blocks: [block] }]
+
+    expect(await call(plot(["多い", 3]), undefined)).toMatchObject({
+      isError: true,
+      endsTurn: false,
+    })
+    expect(await call(plot([5, 3]), undefined)).toMatchObject({ isError: false })
+    expect(await call(FIGURE, inSections(plot(["多い", 3])))).toMatchObject({
+      isError: true,
+      endsTurn: false,
+    })
+    expect(await call(FIGURE, inSections(plot([5, 3])))).toMatchObject({ isError: false })
+  })
+
   it("waitingLine・sessionSummary を省いた report は通り、ターンを閉じる", async () => {
     const minimal = {
       conclusion: ["架空の結論"],
@@ -447,6 +480,7 @@ const SHARED_BLOCK_DEFINITIONS = [
   "GraphBlock",
   "ImageBlock",
   "MermaidBlock",
+  "PlotBlock",
   "StatsBlock",
   "SvgBlock",
   "SvgShape",
@@ -454,8 +488,8 @@ const SHARED_BLOCK_DEFINITIONS = [
   "ToneLegend",
 ]
 
-/** 塊の定義が `figure`・`sections`・`retrospective` に複製されていたとき（約3.0万字）に落ち、いまの形（21,998字）には余白を持たせた上限。 */
-const REPORT_INPUT_SCHEMA_MAX_CHARS = 22_100
+/** 塊の定義が `figure`・`sections`・`retrospective` に複製されていたとき（約3.0万字）に落ち、いまの形（22,799字）には余白を持たせた上限。 */
+const REPORT_INPUT_SCHEMA_MAX_CHARS = 22_900
 
 /** `tools/list` の応答のうち、引数の schema を丸ごと読む形。 */
 const TOOLS_WHOLE_SCHEMA_REPLY = z.object({
