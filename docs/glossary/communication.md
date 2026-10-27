@@ -27,7 +27,7 @@
   置き場所。**1ファイル = 1つの境界**。判断は持たず、`core` から呼ばれるか `cli.ts` が結ぶ
 - **注記**: インターフェースは**実装が2つあるもの（駆動・ホスト）にだけ** `core` に置く
   （`session-driver/core/session-driver.ts` / `host/core/host.ts`）。`core → adapter` の import は
-  `test/architecture/layer.test.ts`「層と依存の向き」が落とす
+  `.dependency-cruiser.cjs` の `layer-core` が落とす
 - **避ける言い方**: インフラ層、外界、helpers
 
 ### フレーム

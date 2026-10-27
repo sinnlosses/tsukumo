@@ -4,7 +4,7 @@
 
 責務: 層と依存の向きのうち、`docs/architecture.md` の表だけでは読み取れない決まり（配線・`core` と `browser`・`import type`・`browser` の箱）と、ファイル名・ディレクトリ名・barrel file の規約を持つ。
 読む時: 新しいファイルの層と置き場所を決めるとき、import の向きやファイル名・ディレクトリ名を確かめるとき。
-直す時: 層の辺・命名の規約を変えたとき、`test/architecture/layer.test.ts` などの検査を変えたとき。
+直す時: 層の辺・命名の規約を変えたとき、`.dependency-cruiser.cjs` や `test/architecture/` の検査を変えたとき。
 
 ## 層と依存の向き
 
@@ -26,7 +26,7 @@
 （外の世界へ出る道が無い）。両者を結ぶのは `src/` 直下と `src/wiring/` だけ。`adapter` は**1ファイル = 1つの境界**で、
 インターフェースは切らない（実装が2つあるもの — 駆動とホスト — だけ契約の型を `core` に置く）。
 `shared` は `node:` にも `document` にも触らない（両方の実行場所で動くため）。**許した辺以外は
-`test/architecture/layer.test.ts` が落とす**ので、向きを変えたくなったら先にこのテストと `docs/architecture.md`
+`.dependency-cruiser.cjs` が落とす**ので、向きを変えたくなったら先にこの規則と `docs/architecture.md`
 「全体構成」を直す。
 
 **型だけの import は文全体の `import type` で書く**（`import { type X }` ではなく）。Node の
@@ -35,7 +35,7 @@ import の輪ができると初期化前参照で落ちる。`typescript/no-impo
 
 **`browser` 層の中も、箱（`main.tsx` / `app.tsx` / `features/` / `components/` / `lib/` / `stores/`）ごとに
 import してよい先が決まっている**（表は二重に書かず `docs/architecture/browser-box.md`「`src/browser/` の箱と、
-置く基準」を正典とする）。この縦の辺も `test/architecture/browser-box.test.ts` が落とす。
+置く基準」を正典とする）。この縦の辺も `.dependency-cruiser.cjs` が落とす。
 
 **ファイルは単数形にする。** 複数は「複数返す」関数名の側で表す（`beads-task.ts` の
 `taskSummaryItemsOfBeadsIssues`）。理由は、ファイル名が**概念**を指すため（原則5）。概念は1つで、いくつ返すかは

@@ -7,7 +7,7 @@ import {
   FIGURE_HARD_RULES,
 } from "../../src/shared/report/figure-decision.ts"
 
-type MarkedTable = {
+export type MarkedTable = {
   readonly start: string
   readonly end: string
   readonly columns: readonly string[]
@@ -80,7 +80,7 @@ export function readMarkedRows(
     )
 }
 
-function rewriteMarkedTable(text: string, table: MarkedTable): string {
+export function rewriteMarkedTable(text: string, table: MarkedTable): string {
   const start = text.indexOf(table.start)
   const end = text.indexOf(table.end)
   if (start < 0 || end < start) {

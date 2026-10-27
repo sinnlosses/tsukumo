@@ -4,7 +4,7 @@
 
 責務: `src/browser/` の箱ごとに置くものと import してよい先、上げる・下ろす引き金、領域の機能（枠・画面）と置かれる機能の辺を持つ（ディレクトリの節の後半と、領域の機能の節）。
 読む時: ブラウザ側のファイルをどの箱に置くか迷ったとき、領域や置かれる機能どうしの import を確かめたいとき。
-直す時: 箱や領域の一覧・辺を変えたとき（検査は `test/architecture/browser-box.test.ts`）。
+直す時: 箱や領域の一覧・辺を変えたとき（辺は `.dependency-cruiser.cjs`、1機能しか読まない検査と `components/` の形は `test/architecture/browser-box.test.ts`）。
 
 ## 全体構成
 
@@ -54,7 +54,7 @@
   包むかで引く。** `domain/appearance-color.ts` は `localStorage` を包むが名前が指すのは**画面の色**
   なので `domain/`、`domain/tool-summary.ts` は純関数で `remeda`（用途を問わない汎用ライブラリ）しか
   使わず、`shared/` の型にも依存する（`utils/` の歯止め3を満たさない）ので、`lib/` ではなく `domain/`
-- 検査は `test/architecture/browser-box.test.ts`（領域と置かれる機能の一覧が横の辺を、箱の一覧が縦の辺を落とす）
+- 辺の検査は `.dependency-cruiser.cjs`（領域と置かれる機能の一覧が横の辺を、箱の一覧が縦の辺を落とす）。1機能しか読まない検査と `components/` の形は `test/architecture/browser-box.test.ts`
 
 ### 領域の機能と、置かれる機能
 

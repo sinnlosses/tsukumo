@@ -95,7 +95,7 @@
 | `docs/architecture/adr/0016-html-instead-of-terminal.md`            | 表示はターミナル描画をやめて、すべて HTML にした                                                       | 採用                   |
 | `docs/architecture/adr/0017-serve-from-local-http.md`               | HTML はローカルの HTTP サーバから配る（ファイルに書き出さない）                                        | 採用                   |
 | `docs/architecture/adr/0018-single-page-view.md`                    | ビューは1枚のページにまとめる                                                                          | 採用                   |
-| `docs/architecture/adr/0019-layer-as-directory.md`                  | 層をディレクトリで表し、依存の向きをテストで縛る                                                       | 採用                   |
+| `docs/architecture/adr/0019-layer-as-directory.md`                  | 層をディレクトリで表し、依存の向きをテストで縛る                                                       | 置き換え済み（→ 0037） |
 | `docs/architecture/adr/0020-mixed-purity-in-adapter-file.md`        | 境界のファイルの中に、外の世界に触らない関数が混じっていてよい                                         | 採用                   |
 | `docs/architecture/adr/0021-feature-state-fold-in-feature.md`       | 機能だけが動かす状態の畳み方は、その機能の shared に置く（2026-09-30）                                 | 採用                   |
 | `docs/architecture/adr/0022-three-setting-homes.md`                 | 設定は誰の・何に属する値かで3つの置き場に割る（2026-10-03）                                            | 置き換え済み（→ 0025） |
@@ -113,3 +113,4 @@
 | `docs/architecture/adr/0034-figure-description-drawn-by-tsukumo.md` | 図は書き手が構造を記述し、tsukumo が決まった配色と配置規則で描く（2026-10-25）                         | 採用                   |
 | `docs/architecture/adr/0035-optional-figure-plugin.md`              | 既存の塊で描けない図は、任意の同梱プラグインのスキルが撮った PNG を `image` の塊で載せる（2026-10-26） | 採用                   |
 | `docs/architecture/adr/0036-optional-figure-and-preference.md`      | `report` の `figure` は省ける欄にし、図を置くかの既定は利用者の設定に持つ（2026-10-27）                | 採用                   |
+| `docs/architecture/adr/0037-dependency-cruiser-edge-check.md`       | 層と機能の辺の検査を dependency-cruiser の宣言に移す                                                   | 採用                   |

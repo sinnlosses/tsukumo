@@ -4,15 +4,14 @@ import { describe, expect, it } from "vitest"
 
 import {
   featureReadersOf,
-  importSpecifiers,
   listSourceFiles,
   relativeImportSpecifiers,
   resolveRelativeImport,
   SRC_ROOT,
 } from "./source-file.ts"
 
-// 画面を組み立てる部品のまとまりどうしの import を制限する（`docs/architecture.md`「領域の機能と、置かれる機能」）。
-// まとまりは3種類あり、辺は「枠・画面 → 置かれる機能」と「画面 → 枠」だけを許す。
+// 画面を組み立てる部品のまとまり（`docs/architecture.md`「領域の機能と、置かれる機能」）の一覧。
+// まとまりどうしの辺は `.dependency-cruiser.cjs` が見て、ここは一覧に無いディレクトリを `throw` で落とす。
 //
 // - 枠（`BROWSER_FRAMES`）: 全画面で共有する枠（`components/domain/<枠>/`）。差し込み口は
 //   props で受け、画面を知らない。枠どうしは import しない
@@ -29,8 +28,7 @@ import {
 // `browser/lib/` `browser/stores/` `browser/styles/` と `browser/main.tsx` / `browser/app.tsx` は誰から引いてもよい
 // 共有部分なので、ここでは見ない。一覧に無いディレクトリが `features/` の直下・
 // `components/domain/` の直下（サブディレクトリがあるとき）・`components/page/` の下に
-// あれば `throw` する（足し忘れが「検査の対象外」として黙って通るのを防ぐ。`browserBoxOf` と
-// 同じ作り）。
+// あれば `throw` する（足し忘れが「検査の対象外」として黙って通るのを防ぐ）。
 //
 // 会話の画面の4つの領域（`main-view` など）は `conversation/components/` の下の部品なので、
 // 画面 `components/page/conversation` の一部として扱われる。
@@ -47,163 +45,10 @@ const BROWSER_PLACED_FEATURES = [
   "features/run-setting",
 ] as const
 
-type BrowserFeatureKind = "frame" | "screen" | "placed"
-
 type BrowserFeature = {
   /** `browser/` からの相対パス（`BROWSER_FRAMES` / `BROWSER_SCREENS` / `BROWSER_PLACED_FEATURES` の1件）。 */
   readonly name: string
-  readonly kind: BrowserFeatureKind
 }
-
-/** まとまりの種類ごとに、import してよい先の種類（docs/architecture.md「領域の機能と、置かれる機能」）。 */
-const ALLOWED_BROWSER_FEATURE_IMPORTS: Readonly<
-  Record<BrowserFeatureKind, ReadonlySet<BrowserFeatureKind>>
-> = {
-  frame: new Set(["placed"]),
-  screen: new Set(["frame", "placed"]),
-  placed: new Set(),
-}
-
-type BrowserFeatureViolation = {
-  readonly fromPath: string
-  readonly fromFeature: BrowserFeature
-  readonly toPath: string
-  readonly toFeature: BrowserFeature
-}
-
-describe("browser/ の機能どうしの import", () => {
-  it("枠・画面・置かれる機能どうしの import は「枠・画面 → 置かれる機能」と「画面 → 枠」だけ", () => {
-    const files = listSourceFiles(SRC_ROOT).filter((relPath) => relPath.startsWith("browser/"))
-    expect(files.length).toBeGreaterThan(0)
-
-    const violations = files.flatMap((relPath) => findBrowserFeatureViolations(relPath))
-
-    expect(browserFeatureViolationsMessage(violations)).toBe("")
-  })
-})
-
-// `src/browser/` の箱をまたぐ縦の辺（`docs/architecture/browser-box.md`「`src/browser/` の箱と、置く基準」の表そのもの）。
-// 上の `BROWSER_FRAMES` / `BROWSER_SCREENS` / `BROWSER_PLACED_FEATURES` の検査はまとまりどうしの横の辺を見るのに対し、こちらは
-// `main.tsx` / `features/` / `components/app/` / `components/page/` / `components/domain/` / `components/ui/` /
-// `hooks/` / `domain/` / `lib/` / `utils/` / `stores/` という箱をまたぐ辺を見る
-// （`shared` への辺は層の検査 `ALLOWED_IMPORTS` がすでに見ているので、ここでは対象にしない）。
-//
-// `browser/types/` の `*.d.ts` と `browser/styles/` はどの箱にも属さないので、import 元・import 先の
-// どちらでも無視する。未知の区画は `layerOf` と同じく `throw` する。
-const BROWSER_BOXES = [
-  "main",
-  "features",
-  "components/app",
-  "components/page",
-  "components/domain",
-  "components/ui",
-  "hooks",
-  "domain",
-  "lib",
-  "utils",
-  "stores",
-] as const
-type BrowserBox = (typeof BROWSER_BOXES)[number]
-
-// 各箱が import してよい先（docs/architecture/browser-box.md「`src/browser/` の箱と、置く基準」の表そのもの。`main` は「すべて」なので全箱を許す）。
-// `utils/` は誰からも引けて、自分は `utils/` の中しか引かない（外部パッケージ・`shared` も
-// 引かないことは、この表では見えないので下の「browser/utils/ の import」が見る）。
-const ALLOWED_BROWSER_BOX_IMPORTS: Readonly<Record<BrowserBox, ReadonlySet<BrowserBox>>> = {
-  main: new Set([
-    "main",
-    "features",
-    "components/app",
-    "components/page",
-    "components/domain",
-    "components/ui",
-    "hooks",
-    "domain",
-    "lib",
-    "utils",
-    "stores",
-  ]),
-  "components/app": new Set([
-    "components/app",
-    "components/page",
-    "components/domain",
-    "components/ui",
-    "features",
-    "hooks",
-    "domain",
-    "lib",
-    "utils",
-    "stores",
-  ]),
-  "components/page": new Set([
-    "components/page",
-    "components/domain",
-    "components/ui",
-    "features",
-    "hooks",
-    "domain",
-    "lib",
-    "utils",
-    "stores",
-  ]),
-  "components/domain": new Set([
-    "components/domain",
-    "components/ui",
-    "features",
-    "hooks",
-    "domain",
-    "lib",
-    "utils",
-    "stores",
-  ]),
-  features: new Set(["features", "components/ui", "hooks", "domain", "lib", "utils", "stores"]),
-  "components/ui": new Set(["components/ui", "hooks", "lib", "utils"]),
-  hooks: new Set(["hooks", "lib", "utils"]),
-  domain: new Set(["domain", "lib", "utils"]),
-  lib: new Set(["lib", "utils"]),
-  utils: new Set(["utils"]),
-  stores: new Set(["stores", "domain", "lib", "utils"]),
-}
-
-type BrowserBoxViolation = {
-  readonly fromPath: string
-  readonly fromBox: BrowserBox
-  readonly toPath: string
-  readonly toBox: BrowserBox
-}
-
-describe("browser/ の箱をまたぐ import", () => {
-  it("src/browser/ の箱どうしの import は、docs/architecture/browser-box.md「`src/browser/` の箱と、置く基準」の表にある辺だけで構成されている", () => {
-    const files = listSourceFiles(SRC_ROOT).filter((relPath) => relPath.startsWith("browser/"))
-    expect(files.length).toBeGreaterThan(0)
-
-    const violations = files.flatMap((relPath) => findBrowserBoxViolations(relPath))
-
-    expect(browserBoxViolationsMessage(violations)).toBe("")
-  })
-})
-
-// `utils/` の歯止め1（docs/architecture.md「`lib/` と `utils/` に置く基準」）。箱の辺の検査は相対 import
-// の `browser/` の中しか見ないので、`node:`・`shared/` への import はここで別に落とす。
-// `utils/` から出てよいのは、`utils/` の中への相対 import と、この一覧の汎用ライブラリだけ。
-const UTILS_ALLOWED_EXTERNAL_PACKAGES: ReadonlySet<string> = new Set(["react", "remeda", "zod"])
-
-describe("browser/utils/ の import", () => {
-  it("browser/utils/ のファイルは browser/utils/ の中と汎用のライブラリしか import しない", () => {
-    const offenders = listSourceFiles(SRC_ROOT)
-      .filter((relPath) => relPath.startsWith("browser/utils/"))
-      .flatMap((relPath) =>
-        importSpecifiers(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8"))
-          .filter(
-            (specifier) =>
-              !isInsideBrowserUtils(relPath, specifier) &&
-              !UTILS_ALLOWED_EXTERNAL_PACKAGES.has(specifier),
-          )
-          .map((specifier) => `src/${relPath} → ${specifier}`),
-      )
-
-    expect(offenders.join("\n")).toBe("")
-  })
-})
 
 // 機能をまたぐ箱に、1つの機能しか読まないファイルが残っていないことを見る
 // （`docs/architecture/browser-box.md`「上げる引き金は「2つ目の読み手が出たとき」」。引き金は逆にも引き、
@@ -500,101 +345,6 @@ function isDirectBrowserComponentsDomainFile(relPath: string): boolean {
   )
 }
 
-/** ファイル1件の相対 import から、許した箱の辺に無いものだけを違反として返す。 */
-function findBrowserBoxViolations(relPath: string): readonly BrowserBoxViolation[] {
-  const fromBox = browserBoxOf(relPath)
-  if (fromBox === undefined) {
-    return []
-  }
-
-  const content = readFileSync(`${SRC_ROOT}/${relPath}`, "utf8")
-  const allowed = ALLOWED_BROWSER_BOX_IMPORTS[fromBox]
-  return relativeImportSpecifiers(content).flatMap((specifier) => {
-    const toPath = resolveRelativeImport(relPath, specifier)
-    const toBox = browserBoxOf(toPath)
-    return toBox === undefined || allowed.has(toBox)
-      ? []
-      : [{ fromPath: relPath, fromBox, toPath, toBox }]
-  })
-}
-
-/**
- * `browser/` 相対パスから箱を決める。箱に属さない `browser/types/` の `*.d.ts` と `browser/styles/`（CSS のみ）は
- * `undefined`（import 元・import 先のどちらでも無視する）。`browser/` の外は対象外なので `undefined`。
- * `components/` は `app/` `page/` `domain/` `ui/` の4段（直下に残ったファイルは新しい箱として `throw`）。
- */
-function browserBoxOf(relPath: string): BrowserBox | undefined {
-  if (!relPath.startsWith("browser/")) {
-    return undefined
-  }
-  if (ENTRY_FILES.has(relPath)) {
-    return "main"
-  }
-  if (relPath.startsWith("browser/types/") && relPath.endsWith(".d.ts")) {
-    return undefined
-  }
-  const [, second, third] = relPath.split("/")
-  if (second === "components") {
-    if (third === "app") {
-      return "components/app"
-    }
-    if (third === "page") {
-      return "components/page"
-    }
-    if (third === "domain") {
-      return "components/domain"
-    }
-    if (third === "ui") {
-      return "components/ui"
-    }
-    throw new Error(
-      `src/${relPath} の browser 箱を判定できない（components/ 直下は app/page/domain/ui の4段のはず）`,
-    )
-  }
-  if (
-    second === "features" ||
-    second === "hooks" ||
-    second === "domain" ||
-    second === "lib" ||
-    second === "utils" ||
-    second === "stores"
-  ) {
-    return second
-  }
-  if (second === "styles") {
-    return undefined
-  }
-  throw new Error(
-    `src/${relPath} の browser 箱を判定できない（新しい箱なら BROWSER_BOXES と ALLOWED_BROWSER_BOX_IMPORTS を足す）`,
-  )
-}
-
-function browserBoxViolationsMessage(violations: readonly BrowserBoxViolation[]): string {
-  return violations
-    .map((v) => `src/${v.fromPath}（${v.fromBox}） → src/${v.toPath}（${v.toBox}）`)
-    .join("\n")
-}
-
-/** ファイル1件の相対 import から、許した辺（枠・画面 → 置かれる機能、画面 → 枠）に無いものを違反として返す。 */
-function findBrowserFeatureViolations(relPath: string): readonly BrowserFeatureViolation[] {
-  const fromFeature = browserFeatureOf(relPath)
-  if (fromFeature === undefined) {
-    return []
-  }
-
-  const content = readFileSync(`${SRC_ROOT}/${relPath}`, "utf8")
-  return relativeImportSpecifiers(content).flatMap((specifier) => {
-    const toPath = resolveRelativeImport(relPath, specifier)
-    const toFeature = browserFeatureOf(toPath)
-    if (toFeature === undefined || toFeature.name === fromFeature.name) {
-      return []
-    }
-    // 枠どうし・画面どうし・枠から画面・置かれる機能から出る辺は落とす。
-    const allowed = ALLOWED_BROWSER_FEATURE_IMPORTS[fromFeature.kind].has(toFeature.kind)
-    return allowed ? [] : [{ fromPath: relPath, fromFeature, toPath, toFeature }]
-  })
-}
-
 /**
  * `browser/` 相対パスから、枠・画面・置かれる機能のどれかを返す。`BROWSER_FRAMES` / `BROWSER_SCREENS` /
  * `BROWSER_PLACED_FEATURES` のどれかのパスの下にあれば一致したものを返し、共有部分（`browser/lib/` など）は
@@ -610,15 +360,15 @@ function browserFeatureOf(relPath: string): BrowserFeature | undefined {
 
   const frame = BROWSER_FRAMES.find((p) => path === p || path.startsWith(`${p}/`))
   if (frame !== undefined) {
-    return { name: frame, kind: "frame" }
+    return { name: frame }
   }
   const screen = BROWSER_SCREENS.find((p) => path === p || path.startsWith(`${p}/`))
   if (screen !== undefined) {
-    return { name: screen, kind: "screen" }
+    return { name: screen }
   }
   const placed = BROWSER_PLACED_FEATURES.find((p) => path === p || path.startsWith(`${p}/`))
   if (placed !== undefined) {
-    return { name: placed, kind: "placed" }
+    return { name: placed }
   }
 
   const segments = path.split("/")
@@ -633,21 +383,4 @@ function browserFeatureOf(relPath: string): BrowserFeature | undefined {
     )
   }
   return undefined
-}
-
-function browserFeatureViolationsMessage(violations: readonly BrowserFeatureViolation[]): string {
-  return violations
-    .map(
-      (v) =>
-        `src/${v.fromPath}（${v.fromFeature.name}／${v.fromFeature.kind}） → src/${v.toPath}（${v.toFeature.name}／${v.toFeature.kind}）`,
-    )
-    .join("\n")
-}
-
-/** specifier が相対で、解いた先が `browser/utils/` の中か。 */
-function isInsideBrowserUtils(fromRelPath: string, specifier: string): boolean {
-  return (
-    specifier.startsWith(".") &&
-    resolveRelativeImport(fromRelPath, specifier).startsWith("browser/utils/")
-  )
 }

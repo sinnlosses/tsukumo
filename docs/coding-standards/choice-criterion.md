@@ -37,7 +37,7 @@
 **優先の順**: 機械的な仕組み ＞ 仕組みで塞げない部分だけを文面の条で補う。このリポジトリにある
 「仕組み」の実例:
 
-- `test/architecture/layer.test.ts`: 層をまたぐ `import` を構文木（`vite` の `parseSync`）で検査し、許した辺以外を落とす。静的 import・`export … from`・動的 `import()`・`require()` を拾う
+- `.dependency-cruiser.cjs`: 層・機能・箱をまたぐ `import` を許した辺の宣言（dependency-cruiser。`pnpm run lint` で打つ）で検査し、許した辺以外を落とす。静的 import・`export … from`・動的 `import()`・`require()` を拾う
 - `src/server/report/core/report-review.ts`: 規約違反のある `report` 呼び出しを handler が差し戻す。
   差し戻しの枠を足すときは、`REPORT_PROCEDURE_REJECTIONS` と `ReportReview.judge` の JSDoc（順と脇の話の扱い）を直し、
   `docs/architecture/display/work-plan-closing.md` の「枠の数え方」と脇の話の節の列挙を同じ順・同じ枠に合わせる

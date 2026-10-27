@@ -4,7 +4,7 @@
 
 責務: `src/shared/` を割る機能の置き場と、機能の決め方・辺の規則を持つ。
 読む時: `src/shared/` にファイルを足すとき、どの機能に置くか迷ったとき。
-直す時: shared の機能の置き方・辺の規則を変えたとき（一覧と辺は `test/architecture/shared-feature.test.ts` が見る）。
+直す時: shared の機能の置き方・辺の規則を変えたとき（辺は `.dependency-cruiser.cjs`、一覧と輪は `test/architecture/shared-feature.test.ts` が見る）。
 
 ## 全体構成
 

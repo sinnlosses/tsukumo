@@ -4,7 +4,7 @@
 
 責務: どの層の中にも作れる `lib/` と `utils/` に、tsukumo の語彙を名乗らない道具を振り分ける基準と、`utils/` の歯止めを持つ。
 読む時: 道具のファイルを `lib/`・`utils/`・機能の中のどこに置くか迷ったとき。
-直す時: 振り分けの基準か `utils/` の歯止めを変えたとき（`src/browser/utils/` の辺は `test/architecture/browser-box.test.ts` が見る）。
+直す時: 振り分けの基準か `utils/` の歯止めを変えたとき（`src/browser/utils/` の辺は `.dependency-cruiser.cjs` が見る）。
 
 ## 全体構成
 
@@ -43,5 +43,5 @@
   （「JSONL を1行ずつ読む」）で、読み手が1つの機能だけならその機能の `adapter/lib/`、2つ以上なら共有の
   `server/adapter/lib/`
 - `core/lib/` に入れてよいのは **`node:` を要求しない技術**だけ。`shared/lib/` は**両方の実行環境で動く技術**だけ
-- **`src/browser/utils/` の辺は `test/architecture/browser-box.test.ts` が見る**（箱の辺と歯止め1）。他の層に `utils/` を
+- **`src/browser/utils/` の辺は `.dependency-cruiser.cjs` が見る**（箱の辺と歯止め1）。他の層に `utils/` を
   作るときも、同じ検査を足す。**ライブラリに依存しない小物は、`utils/` を作る前に remeda（`docs/architecture/build.md`）にあるかを見る**

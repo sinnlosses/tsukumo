@@ -4,7 +4,7 @@
 
 責務: `src/server/` を割る機能の一覧と、どの機能にも属さない共有の箱、機能どうしの import の規則と辺の表を持つ。
 読む時: サーバに機能を足すとき、機能どうしの import が許されるかを確かめたいとき。
-直す時: 機能を足す・消すとき、機能どうしの辺を変えたとき（表は `test/architecture/server-feature.test.ts` が読む）。
+直す時: 機能を足す・消すとき、機能どうしの辺を変えたとき（辺の規則は `.dependency-cruiser.cjs` が持ち、表は `pnpm run format` が書き直す）。
 
 ## 全体構成
 
@@ -79,9 +79,14 @@
 - **Agent SDK を import してよいのは、機能の `adapter/` の直下の `sdk-` で始まるファイルだけ**
   （原則3）。1つの箱にはまとめず、**その境界が属する機能に置く**（「core と adapter」）。
   例外は共有の箱の `server/adapter/` 直下の `sdk-` で始まる、どの機能の語彙も名乗らない使い捨ての問い合わせの口
-- **機能を足すときは、検査の機能の一覧と下の表に足す**（知らない機能のディレクトリと、
-  `core/` `adapter/` の外に置いたファイルと、表と `SERVER_FEATURE_IMPORTS` のずれは
-  `test/architecture/server-feature.test.ts` が落とす）
+- **機能を足すときは、`test/architecture/feature-graph.ts` の機能の一覧と `.dependency-cruiser.cjs` の
+  機能の規則に足す**（知らない機能のディレクトリと、`core/` `adapter/` の外に置いたファイルは
+  `test/architecture/server-feature.test.ts` が、規則の足し忘れは `test/architecture/dependency-rule.test.ts` が落とす）。
+  下の表は規則から書き直される
+
+#### 機能どうしの辺の表
+
+<!-- feature-edge-table:start -->
 
 | 機能（import する側） | 読んでよい機能                                                                                                                                                                                                     |
 | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -96,5 +101,7 @@
 | `achievement`         | `repository`                                                                                                                                                                                                       |
 | そのほか              | —（葉。`plan-usage` `experience-metric` `diagnostic` `character-pack` `host` `repository` `recommendation` `checkout` `welcome-greeting` `workflow-setting` `report` `item` `token-usage` `work-plan` `question`） |
 
-表は `test/architecture/server-feature.test.ts` の `SERVER_FEATURE_IMPORTS` と一致を検査され、使われない組も落ちる。
+<!-- feature-edge-table:end -->
+
+表は `.dependency-cruiser.cjs` の `server-feature-edge:` の規則から `pnpm run format` が書き直す。使われない組を落とす検査は持たない（`docs/architecture/adr/0037-dependency-cruiser-edge-check.md`）。
 辺が `core` と `adapter` のどちらからどちらへ向かうかは表に持たず、実際の import が正典。

@@ -1,6 +1,8 @@
 # 層をディレクトリで表し、依存の向きをテストで縛る
 
-ステータス: 採用
+ステータス: 置き換え済み（→ 0037）
+
+> 置き換えられた: 層と機能の辺の検査は `docs/architecture/adr/0037-dependency-cruiser-edge-check.md` で dependency-cruiser の宣言に移り、「外部ツールは増やさない」は改められた。
 
 > **層の割り方は 2026-09-13 の移行で `shared` / `server` / `browser` の3つに変わり、2026-09-16 に
 > サーバ側が `core` と `adapter` に割れた**（2026-09-20 に `src/server/` の下へ入れ子にした。

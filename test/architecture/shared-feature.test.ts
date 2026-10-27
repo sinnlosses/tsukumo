@@ -2,9 +2,8 @@ import { readFileSync } from "node:fs"
 
 import { describe, expect, it } from "vitest"
 
-import { findFeatureCycle, layerOf, type ServerFeature } from "./feature-graph.ts"
+import { findFeatureCycle, type ServerFeature } from "./feature-graph.ts"
 import {
-  importSpecifiers,
   listSourceFiles,
   relativeImportSpecifiers,
   resolveRelativeImport,
@@ -39,9 +38,6 @@ type SharedFeature = (typeof SHARED_FEATURES)[number]
 // shared/ の直下に置いてよいファイル（docs/architecture.md「shared の機能」の「shared の直下」）。
 // どの機能にも属さないプロトコルの3つだけ。
 const SHARED_ROOT_FILES: ReadonlySet<string> = new Set(["frame.ts", "command.ts", "rpc.ts"])
-
-// `shared` が読んでよい外部パッケージ（相対でない specifier）。`remeda` は手続きより前から読んでいる。
-const SHARED_EXTERNAL_PACKAGES: ReadonlySet<string> = new Set(["zod", "@orpc/contract", "remeda"])
 
 // `shared` の下に置いてよいディレクトリ（直下のファイルのほかに）。`contract/` は機能ごとの契約の
 // 置き場、`lib/` と `utils/` は docs/architecture.md「`lib/` と `utils/` に置く基準」、残りは
@@ -91,55 +87,6 @@ describe("shared/ の機能どうしの import", () => {
     expect(cycle.join(" → ")).toBe("")
   })
 
-  it("shared の機能のディレクトリは shared/contract/ と shared/rpc.ts を import しない", () => {
-    const offenders = listSourceFiles(SRC_ROOT)
-      .filter((relPath) => sharedFeatureOf(relPath) !== undefined)
-      .flatMap((relPath) =>
-        relativeImportSpecifiers(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8")).flatMap(
-          (specifier) => {
-            const toPath = resolveRelativeImport(relPath, specifier)
-            return toPath.startsWith("shared/contract/") || toPath === "shared/rpc.ts"
-              ? [`src/${relPath} → src/${toPath}`]
-              : []
-          },
-        ),
-      )
-
-    expect(offenders.join("\n")).toBe("")
-  })
-
-  it("shared が読む外部パッケージは zod・@orpc/contract・remeda だけ", () => {
-    const offenders = listSourceFiles(SRC_ROOT)
-      .filter((relPath) => layerOf(relPath) === "shared")
-      .flatMap((relPath) =>
-        importSpecifiers(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8"))
-          .filter((specifier) => !specifier.startsWith("."))
-          .filter((specifier) => !SHARED_EXTERNAL_PACKAGES.has(specifier))
-          .map((specifier) => `src/${relPath} → ${specifier}`),
-      )
-
-    expect(offenders).toEqual([])
-  })
-
-  it("shared/utils/ のファイルは shared/utils/ の中と汎用のライブラリしか import しない", () => {
-    // `zod`・`@orpc/contract` は shared 全体で読んでよいが固有の用途のライブラリなので、
-    // ここでの「汎用のライブラリ」は `remeda` だけ（browser/utils/ の "react" は browser 専用）。
-    const sharedUtilsAllowedExternalPackages: ReadonlySet<string> = new Set(["remeda"])
-    const offenders = listSourceFiles(SRC_ROOT)
-      .filter((relPath) => relPath.startsWith("shared/utils/"))
-      .flatMap((relPath) =>
-        importSpecifiers(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8"))
-          .filter(
-            (specifier) =>
-              !isInsideSharedUtils(relPath, specifier) &&
-              !sharedUtilsAllowedExternalPackages.has(specifier),
-          )
-          .map((specifier) => `src/${relPath} → ${specifier}`),
-      )
-
-    expect(offenders.join("\n")).toBe("")
-  })
-
   it("shared のファイルは server/ と browser/ の両方から（直接か shared の別ファイル経由で）読まれる", () => {
     const reachableFromServer = sharedFilesReachableFrom("server/")
     const reachableFromBrowser = sharedFilesReachableFrom("browser/")
@@ -172,14 +119,6 @@ function sharedFilesReachableFrom(fromPrefix: string): ReadonlySet<string> {
     }
   }
   return reached
-}
-
-/** specifier が相対で、解いた先が `shared/utils/` の中か。 */
-function isInsideSharedUtils(fromRelPath: string, specifier: string): boolean {
-  return (
-    specifier.startsWith(".") &&
-    resolveRelativeImport(fromRelPath, specifier).startsWith("shared/utils/")
-  )
 }
 
 /** `shared/<機能>/` のファイルなら、その機能の名前。直下のファイル・`contract/`・`utils/`・`lib/` は undefined。 */

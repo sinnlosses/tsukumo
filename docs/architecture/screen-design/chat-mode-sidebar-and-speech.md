@@ -117,7 +117,7 @@
   吹き出しの見た目を持っており（`chat-view.module.css` の `.chat-entry`）、`<Balloon>` のほうは
   `.balloon-track` の並び（`column-reverse`・押し上げ・薄める）と一体になっている。上げると
   **両方の事情を知る部品**になり、どちらを直しても相手が動く。`components/page/conversation/components/chat-view/` に閉じた
-  ままなので、機能どうしの import も増えない（`test/architecture/browser-box.test.ts`）
+  ままなので、機能どうしの import も増えない（`.dependency-cruiser.cjs`）
 
 **採らなかった案**:
 

@@ -19,26 +19,13 @@ import { importSpecifiers, listSourceFiles, parseSourceProgram, SRC_ROOT } from 
 // `execFile("orca", …)` のような呼び出しは必ずコマンド名の文字列リテラル "orca" を伴うので、その字面で探す。
 // ファイル名やバッククォートで囲んだ日本語の説明文はクォートされた文字列リテラルではないので拾わない。
 describe("子プロセスを起こす箇所", () => {
-  it("`node:child_process` を import するのは orca-host.ts・browser-host.ts・vite-build.ts・git.ts・beads.ts・checkout-launch.ts・rtk-rewrite.ts・sdk-workflow-tw.ts・tw-config.ts・tw-claim-list.ts だけで、`orca` コマンドを呼ぶのは orca-host.ts だけ、`open` コマンドを呼ぶのは browser-host.ts だけ", () => {
-    const allowed = new Set([
-      "server/checkout/adapter/checkout-launch.ts",
-      "server/host/adapter/orca-host.ts",
-      "server/host/adapter/browser-host.ts",
-      "server/view-server/adapter/vite-build.ts",
-      "server/repository/adapter/git.ts",
-      "server/repository/adapter/beads.ts",
-      "server/session-driver/adapter/rtk-rewrite.ts",
-      "server/session-driver/adapter/sdk-workflow-tw.ts",
-      "server/workflow-setting/adapter/tw-config.ts",
-      "server/token-usage/adapter/tw-claim-list.ts",
-    ])
+  it("`orca` コマンドを呼ぶのは orca-host.ts だけ、`open` コマンドを呼ぶのは browser-host.ts だけ", () => {
     const spawning = listSourceFiles(SRC_ROOT).filter((relPath) =>
       importSpecifiers(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8")).some(
         (specifier) => specifier === "node:child_process" || specifier === "child_process",
       ),
     )
 
-    expect(spawning.filter((relPath) => !allowed.has(relPath))).toEqual([])
     expect(
       spawning.filter((relPath) =>
         /["']orca["']/.test(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8")),

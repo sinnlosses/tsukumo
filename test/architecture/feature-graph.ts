@@ -3,7 +3,7 @@
 export type Layer = "shared" | "core" | "adapter" | "browser" | "cli" | "ambient"
 
 // サーバの機能（docs/architecture/server-feature.md「サーバの機能と、機能どうしの辺」の1つめの表）。機能を足す
-// ときは、ここと `SERVER_FEATURE_IMPORTS` に足す（一覧に無いディレクトリを `server/` の下に
+// ときは、ここと `.dependency-cruiser.cjs` の `server-feature-edge:` の規則に足す（一覧に無いディレクトリを `server/` の下に
 // 作ると `layerOf` が throw する）。まだ移していないファイルは共有の箱（`server/core/`
 // `server/adapter/` の直下）に居るまま動く。
 export const SERVER_FEATURES = [
@@ -91,7 +91,7 @@ export function serverPlaceOf(relPath: string): ServerPlace {
   const feature = SERVER_FEATURES.find((name) => name === second)
   if (feature === undefined) {
     throw new Error(
-      `src/${relPath} の置き場を判定できない（新しい機能なら SERVER_FEATURES と SERVER_FEATURE_IMPORTS に足す）`,
+      `src/${relPath} の置き場を判定できない（新しい機能なら SERVER_FEATURES と .dependency-cruiser.cjs の規則に足す）`,
     )
   }
   if ((third === "core" || third === "adapter") && rest.length > 0) {
