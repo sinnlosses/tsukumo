@@ -54,7 +54,7 @@ describe("文書が指すシンボルの置き場所", () => {
   it("記録の置き場は対象外で、正典・README.md・AGENTS.md・規約は対象", () => {
     expect(
       [
-        "docs/history/tasks.md",
+        "docs/history/decision.md",
         "docs/research/topic.md",
         "docs/architecture.md",
         "README.md",

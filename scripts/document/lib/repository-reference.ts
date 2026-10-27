@@ -56,6 +56,31 @@ export function collectMissingSourcePathReferences(root: string): FileReference[
   return collectMissingPaths(root, findSourcePathReferences)
 }
 
+export type HistoryFileReference = {
+  readonly sourcePath: string
+  readonly line: number
+  readonly text: string
+}
+
+// このファイル自身に当たらないよう、パスは組み立てて持つ。
+const REMOVED_HISTORY_FILE = new RegExp(`${"docs"}/${"history"}/(tasks|progress)\\.md`)
+
+/**
+ * `src/`・`scripts/`・`docs/`（`docs/history/` 以下を除く）を読み、
+ * 作業ツリーから外した `tasks.md`・`progress.md` を指す行をすべて返す。
+ */
+export function collectHistoryFileReferences(root: string): HistoryFileReference[] {
+  return listSourcePaths(root)
+    .filter((path) => /^(src|scripts|docs)\//.test(path) && !path.startsWith("docs/history/"))
+    .flatMap((sourcePath) =>
+      readFileSync(join(root, sourcePath), "utf8")
+        .split("\n")
+        .flatMap((text, index) =>
+          REMOVED_HISTORY_FILE.test(text) ? [{ sourcePath, line: index + 1, text }] : [],
+        ),
+    )
+}
+
 /** `root` 以下の文書を読み、指している置き場所（ファイルとシンボル）が見つからない参照をすべて返す。 */
 export function collectStraySymbolReferences(root: string): StraySymbolReference[] {
   const references = listSourcePaths(root)

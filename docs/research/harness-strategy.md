@@ -347,8 +347,8 @@ Beads の課題の写しで、会話内容ではない）。
   （`task` → `tw`）、スキルどうしの矛盾（verifying-before-completion と task-model）、tw の版のずれ
   （PATH と vendor）
 - メモリの各ファイルに `last_confirmed` を持たせ、60 日確かめていないものを掃除が候補に挙げる
-- `docs/history/progress.md`・`tasks.md` は 09-24 で止まっているので、索引から外すか、Beads の閉じた
-  課題から日ごとに生成する形に置き換える
+- 凍結した進行記録と完了タスクの一覧は 09-24 で止まっているので（タグ `history/2026-10-26` に出した）、
+  索引から外すか、Beads の閉じた課題から日ごとに生成する形に置き換える
 
 ## 4. 採らなかった案
 

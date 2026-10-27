@@ -9,6 +9,7 @@ import {
   formatHubReferenceDrift,
 } from "../../../scripts/document/hub-reference.ts"
 import {
+  collectHistoryFileReferences,
   collectHubReferences,
   collectMissingFileReferences,
   collectMissingSourcePathReferences,
@@ -54,6 +55,34 @@ describe("節の参照", () => {
 
 // このファイル自身も拾われる側なので、`docs/` で始まる `.md` のパスは定数から組み立てて書く。
 const DOCS = "docs"
+
+const HISTORY = `${DOCS}/history`
+
+describe("作業ツリーから外した記録への参照", () => {
+  const tempDir = useTempDir("history-reference")
+
+  it("src/・scripts/・docs/ に tasks.md・progress.md を指す参照が無い", () => {
+    expect(collectHistoryFileReferences(REPOSITORY_ROOT)).toEqual([])
+  })
+
+  it("src/・scripts/・docs/ の中の参照を拾い、残す記録・ディレクトリ名だけ・history 自身・test/ は拾わない", () => {
+    const root = tempDir()
+    const files: Record<string, string> = {
+      "src/a.ts": `// ${HISTORY}/tasks.md\n`,
+      [`${DOCS}/x.md`]: `ok\n${HISTORY}/progress.md\n`,
+      [`${DOCS}/keep.md`]: `${HISTORY}/decision.md ${HISTORY}/ ${DOCS}/research/tasks.md\n`,
+      [`${HISTORY}/inner.md`]: `${HISTORY}/tasks.md\n`,
+      "test/t.ts": `${HISTORY}/tasks.md\n`,
+    }
+    for (const [file, text] of Object.entries(files)) {
+      mkdirSync(join(root, file, ".."), { recursive: true })
+      writeFileSync(join(root, file), text)
+    }
+    expect(
+      collectHistoryFileReferences(root).map(({ sourcePath, line }) => `${sourcePath}:${line}`),
+    ).toEqual([`${DOCS}/x.md:2`, "src/a.ts:1"])
+  })
+})
 
 describe("読む対象の集め方", () => {
   const tempDir = useTempDir("reference-scan")

@@ -133,7 +133,7 @@ describe("planStages", () => {
   })
 
   test("並べて走らせる重い段は、文書だけの変更には無く、通常の組み立てにはある", () => {
-    const documentOnly = planStages(["docs/history/tasks.md"], choose, false, SETUP_FILES)
+    const documentOnly = planStages(["docs/history/decision.md"], choose, false, SETUP_FILES)
     const regular = planStages(["src/cli.ts"], choose, false, SETUP_FILES)
     expect(documentOnly.stages.some((stage) => stage.heavy)).toBe(false)
     expect(regular.stages.filter((stage) => stage.heavy).map((stage) => stage.name)).toEqual([

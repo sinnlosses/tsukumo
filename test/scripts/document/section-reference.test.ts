@@ -19,7 +19,7 @@ import {
 
 const DISPLAY = "docs/architecture/display.md"
 const RESEARCH = "docs/research/topic.md"
-const HISTORY = "docs/history/tasks.md"
+const HISTORY = "docs/history/decision.md"
 const AGENTS = "AGENTS.md"
 const GONE = "docs/gone.md"
 const ABSENT = `docs/${"absent"}.md`
@@ -266,7 +266,7 @@ describe("findMissingFileReferences", () => {
 
 describe("isScannedSource", () => {
   test("docs/history/・docs/research/・.tw/ は参照を探す対象にしない", () => {
-    expect(isScannedSource("docs/history/tasks.md")).toBe(false)
+    expect(isScannedSource("docs/history/decision.md")).toBe(false)
     expect(isScannedSource("docs/research/topic.md")).toBe(false)
     expect(isScannedSource(".tw/tasks.json")).toBe(false)
   })
