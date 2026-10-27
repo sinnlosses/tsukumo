@@ -54,6 +54,7 @@ export function reportDraft(overrides: Partial<ReportDraft> = {}): ReportDraft {
   return {
     conclusion,
     conclusionSentenceChars: parseConclusion(conclusion)?.conclusionSentenceChars ?? [],
+    keyFigures: [],
     figure: { kind: "none", reason: "unrecorded" },
     sections: [],
     retrospective: { kind: "none" },

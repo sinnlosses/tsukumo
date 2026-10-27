@@ -23,6 +23,7 @@ import {
 } from "../../../shared/report/report-limit.ts"
 import { drawnSectionsOf } from "../../../shared/report/report-retrospective.ts"
 import { codeBlockMatchesFile } from "./code-block-match.ts"
+import { figureNumberFaults } from "./figure-number-fault.ts"
 import { plainWordSpellingsIn } from "./plain-word-find.ts"
 import {
   badCardsIn,
@@ -80,6 +81,7 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
   const timelineFaultList = timelineFaults(drawnBlocks.filter((block) => block.kind === "timeline"))
 
   const plainWords = plainWordSpellingsIn(report)
+  const figureNumberFaultList = figureNumberFaults(report)
 
   const counted = [
     { kind: "long-conclusion", count: report.conclusionSentenceChars.length },
@@ -192,6 +194,11 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
     { kind: "plain-word", count: plainWords.length, spellings: plainWords },
     browserChangeWithoutImage(blocks, drawnBlocks, report.checks),
     figureContradiction(report.figure, report.sections),
+    {
+      kind: "figure-number-mismatch",
+      count: figureNumberFaultList.length,
+      faults: figureNumberFaultList,
+    },
   ] as const satisfies readonly ReportViolation[]
 
   return counted.filter((violation) => violation.count > VIOLATION_THRESHOLDS[violation.kind])

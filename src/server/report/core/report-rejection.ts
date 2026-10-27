@@ -10,6 +10,7 @@ import {
   MAX_TABLE_ROWS,
   SENTENCE_CELL_LENGTH,
 } from "../../../shared/report/report-limit.ts"
+import { figureNumberFaultPositions } from "./figure-number-fault.ts"
 import {
   graphFaultPositions,
   svgFaultPositions,
@@ -120,6 +121,8 @@ function violationLine(violation: ReportViolation): string {
       return violation.reason === "no-shape"
         ? `\`figure\` の reason が \`no-shape\` なのに、\`sections\` に流れ・つながり・構造を描く塊（\`list\` の \`flow\`・\`beforeAfter\`・\`graph\`・\`mermaid\`・\`svg\`）が${violation.count}個ある。その図を \`figure\` に置くか、合う reason にする`
         : `\`figure\` の reason が \`short-answer\` なのに、節が2つ以上ある。2〜3文で終わる答えでなければ \`figure\` に図を置くか、合う reason にする`
+    case "figure-number-mismatch":
+      return `\`plot\` の値とずれた数が本文にある（${figureNumberFaultPositions(violation.faults)}）。単位と丸めを \`plot\` の値に揃えて、本文の数を直す`
   }
 }
 

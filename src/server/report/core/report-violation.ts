@@ -2,12 +2,14 @@
 
 import { keys } from "remeda"
 
+import type { KeyFigures } from "../../../shared/report/report-block-comparison.ts"
 import type { RecordedReportFigure, ReportSection } from "../../../shared/report/report-block.ts"
 import type { ReportCheck } from "../../../shared/report/report-check.ts"
 import { MAX_CONCLUSION_SENTENCES } from "../../../shared/report/report-limit.ts"
 import type { ReportRetrospective } from "../../../shared/report/report-retrospective.ts"
 import type { ReportTask } from "../../../shared/report/report-task.ts"
 import type { WorkPlanClosing } from "../../../shared/session/work-plan.ts"
+import type { FigureNumberFault } from "./figure-number-fault.ts"
 import type { GraphFault, SvgFault, ToneFault } from "./report-figure-fault.ts"
 import type { MarkdownNotation } from "./report-markdown-notation.ts"
 import type { TimelineBlockFault } from "./timeline-fault.ts"
@@ -17,6 +19,8 @@ export type ReportDraft = {
   readonly conclusion: string
   /** `conclusion` の要素ごとの字数（`ParsedConclusion`）。 */
   readonly conclusionSentenceChars: readonly number[]
+  /** 結論の直下に並べる数。「無い」は空の配列。 */
+  readonly keyFigures: KeyFigures
   readonly figure: RecordedReportFigure
   readonly sections: readonly ReportSection[]
   /** 図の検査（`svg`・`graph`・`timeline`・`mermaid` など）は、振り返りの塊も `sections` と同じに読む。 */
@@ -165,6 +169,15 @@ export type ReportViolation =
       readonly count: number
       readonly reason: "no-shape" | "short-answer"
     }
+  /**
+   * 本文（`conclusion`・`keyFigures`・節の `text`）の数が、どの `plot` の `Q` 列の値とも一致せず、ある列の値と取り違えた形（近い値・桁の単位違い）をしている。
+   * `faults` は位置だけで、本文の字も列の名前も持たない。
+   */
+  | {
+      readonly kind: "figure-number-mismatch"
+      readonly count: number
+      readonly faults: readonly FigureNumberFault[]
+    }
 
 /** 違反にしない上限（これを超えたら違反）。 */
 export const VIOLATION_THRESHOLDS = {
@@ -204,6 +217,7 @@ export const VIOLATION_THRESHOLDS = {
   "plain-word": 0,
   "browser-change-without-image": 0,
   "figure-contradiction": 0,
+  "figure-number-mismatch": 0,
 } as const satisfies Record<ReportViolation["kind"], number>
 
 export const REPORT_VIOLATION_KINDS = keys(VIOLATION_THRESHOLDS)

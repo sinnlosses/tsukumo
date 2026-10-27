@@ -96,6 +96,7 @@ export function reportTool(
     const verdict = review.judgeReport({
       conclusion: report.conclusion,
       conclusionSentenceChars: report.conclusionSentenceChars,
+      keyFigures: report.keyFigures,
       figure: report.figure,
       sections: report.sections,
       retrospective: report.retrospective,

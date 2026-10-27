@@ -59,4 +59,5 @@ export const REPORT_REJECTION_MODES = {
   "plain-word": "reject",
   "browser-change-without-image": "reject",
   "figure-contradiction": "count",
+  "figure-number-mismatch": "count",
 } as const satisfies Record<ReportRejectionReason, ReportRejectionMode>

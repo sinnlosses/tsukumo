@@ -8,6 +8,7 @@ const COUNTED_REASONS = [
   "long-first-sentence",
   "sentence-table",
   "figure-contradiction",
+  "figure-number-mismatch",
   "long-table",
   "long-list",
   "untitled-section",
