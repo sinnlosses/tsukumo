@@ -110,6 +110,8 @@ HTML の字として埋める塊（`htmlInline`・`htmlInlineWithCode`）と、�
 
 ## 形の札の照合
 
+札は `json-schema` 版の節の欄の仕組みで、`body` 版は節を1つに畳み札を持たない（常に `unspecified`。ADR 0038）。照合は札のある節にだけ働く。
+
 節の `shapeTag`（`docs/glossary.md`「形の札」）ごとに許さない塊は `src/shared/report/report-shape-tag.ts` の
 `REPORT_SHAPE_TAG_RULES` が持ち、照合は同じファイルの `isForbiddenBlock`。**差し戻さず、版13の記録で数えるだけ**にする
 （ADR 0028 の「順位違反はまず記録で数える」に倣う）。差し戻すかは28日の数を見てから別に決める。

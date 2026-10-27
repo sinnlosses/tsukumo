@@ -1,6 +1,8 @@
 # レポートの節に「形の札」を付け、札ごとに使える塊を決める（2026-10-18）
 
-状態: 採用
+状態: 参考
+
+実装は ADR 0038 に置き換わった。
 
 **この文書は調査の記録であって正典ではない。** 正典は `docs/architecture/display.md`「各表示物」「塊を足す・外す基準」と `src/shared/report/report-block.ts`
 （塊の欄と `describe`）・`src/server/report/core/report-notation.ts`（記法の条8）で、**採用が決まるまでコードは1行も変わらない**。

@@ -48,9 +48,9 @@
   帯の class はモデルに教えない印として語彙に置く
 - **記法の条の足し方**: 条を増やさず、**条1** に「検証の結果は `checks` に
   入れ、`conclusion` と本文に書かない」と「結論は、したことではなく読み手から見た変化で書く」を、
-  **条8** を「文字より視覚情報で見せる」（媒体は「情報の形 → 塊」の表）に広げた。
-  条5 の「確かめていないこと」には `checks` の `unobserved` を添える。
-  条の番号は他の文書から引かれているので動かさない（`src/server/report/core/report-notation.ts`）
+  図の置き方は原則（「図の有無は利用者の既定に従う」）に移した。
+  確かめていないことは条4で `claims` に確度つきで書き、確かめなかった画面の変更は `checks` の `unobserved` に添える。
+  条は見出しの太字の名前で引き、番号は並びの目印で外から参照しない（`src/server/report/core/report-notation.ts`）
 - **タスクの作業のレポートは、結論部を「目録の1行・見出し・一文」の3段にする**（見本は `docs/history/mockup/report-conclusion-2026-09-30.html` の案A）。
   - **書き手が `report` の任意の引数 `task`（`id` / `name` / `outcome` / `genre`）で渡す。** `outcome` は `finished`
     （作業を終えた）/ `stopped`（止めた）/ `awaiting-answer`（答え待ち）の3つ。どこへ送ったか（主ブランチ・push）は

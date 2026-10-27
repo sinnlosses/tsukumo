@@ -11,7 +11,8 @@
   同じことを両方に書くと毎ターンの文脈に2回載る。
 - 節は `heading` と並んで、省ける欄 `shapeTag`（`docs/glossary.md`「形の札」）を持つ。省いた節は `unspecified` に畳む。
   札と塊の照合は「塊を足す・外す基準」の「形の札の照合」（数えるだけで差し戻さない）。
-  図 1 には、札のほかに依頼の型ごとの第一候補と `stats` に置く数を条 8 の表（8 行。差し戻しは足さない）で引かせる。
+  札は `json-schema` 版の節の欄で、`body` 版（下の項）は節を持たず札も持たない（常に `unspecified`）。
+  条8は表を持たず、原則 5 つ・条 8 本・通る呼び出しの例 1 つの並びで、札と塊の対応は定義の `describe` と `report_part_card` が引かせる（ADR 0038）。
   効いたかは図の欄の `none`（省いた回を含む）と、旧い記録に残る `no-shape` の割合で見る
   （省いた回は旧い記録・形の崩れと同じ `unrecorded` に畳まれ、記録から区別できない。ADR 0036）
   **種類の数に上限は置かない**（足すかは「読む時間を減らす物差しと線引き」、
@@ -89,6 +90,9 @@
   形は決定表（`src/shared/report/figure-decision.ts` の `plotFormOf`。行と境は `docs/architecture/display/block-criteria.md`「図の決定表」）が申告から決める。
   書き手は任意の欄 `form` で形を上書きでき、置いてはならない形は採らずに決定表の形で描いて `plot-forbidden-form`、図派・文派のどちらの既定で決めた形とも違う形は通して `plot-form-override` と数える（どちらも差し戻さない）。
   形ごとの描き方はまだ無く、どの形も `data` を `table` と同じ表として描く（題は `question`）。
+- **`body` は試しの版（`TSUKUMO_REPORT_SCHEMA=body-fence`。既定は `json-schema`）の本文の欄で、Markdown に型つきフェンスを混ぜて書く。** フェンスの種類は `graph`・`mermaid`・`table`・`code`・`callout`・`claims`・`image`（`READER_FENCE_KINDS`）と `figure`。
+  読んだ結果は見出し空の節1つで、節の札は持たない。型つきでない言語名のフェンスは散文の一部のまま残す。
+  読めない型つきフェンスは差し戻さず素のコードブロックに落とし、数を記録の `brokenFenceCount` に残す（`src/shared/report/body-fence.ts` の `parseReportBody`）。`sections` と同じ呼び出しに併記できない。
 - **座標で見せる図は `svg` の塊で書く**（`docs/architecture/adr/0028-report-block-priority.md`「SVG（論点3）」）。
   書き手は題・viewBox の大きさ・図形（`rect`・`line`・`text`）を渡し、SVG の文字列は書かず、描く側が図形から組む。
   `rect` の題は既定で枠の中心、`labelAt: "top-left"` で左上の内側に左寄せで置く（入れ子の外側の枠は `top-left` にして、子の枠・矢印の題と重ねない）。
