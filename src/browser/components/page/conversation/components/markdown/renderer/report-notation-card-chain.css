@@ -1,4 +1,4 @@
-/* 一本道の `graph`（5 節点以下）のカードの連鎖。器が 761px 未満のうちは縦に積み、矢印を下向きにする。761px 以上は横 1 行で、包みが 63em まで広がり、5 枚で各 11em になる（矢印は 2em、辺のラベルがあればその分だけ広がる）。
+/* 一本道の `graph`（5 節点以下）のカードの連鎖。器が 761px 未満のうちは縦に積み、矢印を下向きにする。761px 以上は横 1 行で、包みが 63em まで広がる。カードは最長の語（`min-content`）より狭くならず、語は途中で折れない。収まらない長さの語は連鎖の中でだけ横にスクロールし、ページは横にはみ出さない。辺のラベルは矢印の上で 5em まで広がり、2 行以上に折って全部出す。
    色の目印の帯は凡例の見本（`report-graph-legend-tone-*`）と同じ系列色、印の枠は mermaid の `graph` と同じ状態色。 */
 .detail-block {
   & .report-card-chain {
@@ -9,6 +9,7 @@
     inline-size: 100%;
     margin: 0;
     padding: 0;
+    overflow-x: auto;
     list-style: none;
   }
   & .report-card-chain > li {
@@ -19,13 +20,13 @@
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
-    min-inline-size: 0;
+    min-inline-size: min-content;
     padding: 0.5rem 0.75rem;
     overflow: hidden;
     border: 1px solid var(--rule);
     border-radius: 0.5rem;
     background: var(--surface-raised);
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
   }
   & .report-card-chain-name {
     font-weight: 600;
@@ -107,11 +108,11 @@
     color: var(--state-warn);
   }
   & .report-card-chain-edge {
-    max-inline-size: 8em;
+    max-inline-size: 5em;
     font-size: var(--font-label);
     line-height: 1.3;
     text-align: center;
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
   }
   @container report-body (min-width: 761px) {
     & .report-card-chain {
