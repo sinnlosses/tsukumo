@@ -1,10 +1,13 @@
 // 最終レポートの目録の末尾に出す変更の札の形。数えるのは tsukumo で、モデルには書かせない。
 
+import type { ChangedFile } from "./changed-file.ts"
+
 /**
  * 依頼の頭の HEAD から数えた変更の量。
  * `mixed` は、そのタスクのコミットだけに絞れず、範囲に別の変更が混ざりうること（目録に控えめな注記が付く）。
  */
 export type ReportChangeCount = {
+  readonly changed: readonly ChangedFile[]
   readonly files: number
   readonly added: number
   readonly removed: number

@@ -123,6 +123,7 @@ describe("Turn（目録の1行と見出し）", () => {
     putSession(INITIAL_SESSION_STATE)
     const body = taskBody("架空の本文", {
       kind: "counted",
+      changed: [],
       files: 3,
       added: 12,
       removed: 4,
@@ -141,6 +142,7 @@ describe("Turn（目録の1行と見出し）", () => {
     putSession(INITIAL_SESSION_STATE)
     const body = taskBody("架空の本文", {
       kind: "counted",
+      changed: [],
       files: 3,
       added: 12,
       removed: 4,

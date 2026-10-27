@@ -48,6 +48,7 @@ export function withReportChangeSummary(
   }
   const changeSummary = {
     kind: "counted",
+    changed: event.changed,
     files: event.files,
     added: event.added,
     removed: event.removed,

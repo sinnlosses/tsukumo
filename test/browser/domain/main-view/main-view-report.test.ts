@@ -273,6 +273,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     const counted = (toolUseId: string): SessionEvent => ({
       kind: "report-change-summary",
       toolUseId,
+      changed: [],
       files: 3,
       added: 12,
       removed: 4,
@@ -291,7 +292,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
       )
 
       expect(changeSummaries(turn)).toEqual([
-        { kind: "counted", files: 3, added: 12, removed: 4, mixed: false },
+        { kind: "counted", changed: [], files: 3, added: 12, removed: 4, mixed: false },
       ])
     })
 

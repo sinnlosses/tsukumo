@@ -1,11 +1,12 @@
 // 変更の札を数えるための git の口（`ChangeCountGit`）を、作業ディレクトリ1つに向けて作る。
-// 打つのは `rev-parse HEAD`・`merge-base --is-ancestor`・`diff --numstat`・`log`・`show --numstat` だけで、出力は数えずに返す。
+// 打つのは `rev-parse HEAD`・`merge-base --is-ancestor`・`diff --numstat`・`log`・`show --numstat` と、その `--name-status` 版だけで、出力は数えずに返す。
 // `git diff --numstat <HEAD>` は未追跡のファイルを出さないので、それは数えない。
 
 import type {
   ChangeCountGit,
   CommitListOutput,
   GitHead,
+  NameStatusOutput,
   NumstatOutput,
 } from "../../core/change-count-git.ts"
 import { runGit } from "./git.ts"
@@ -16,6 +17,8 @@ export function changeCountGitOf(cwd: string): ChangeCountGit {
     diffNumstatSince: (head) => diffNumstatSince(cwd, head),
     commitsSince: (head) => commitsSince(cwd, head),
     numstatOfCommit: (sha) => numstatOfCommit(cwd, sha),
+    nameStatusSince: (head) => nameStatusSince(cwd, head),
+    nameStatusOfCommit: (sha) => nameStatusOfCommit(cwd, sha),
   }
 }
 
@@ -60,6 +63,19 @@ async function commitsSince(cwd: string, head: string): Promise<CommitListOutput
 
 async function numstatOfCommit(cwd: string, sha: string): Promise<NumstatOutput> {
   const show = await runGit(cwd, ["show", "--numstat", "--format=", sha, "--"])
+  return show.kind === "output" ? { kind: "output", text: show.stdout } : { kind: "unavailable" }
+}
+
+async function nameStatusSince(cwd: string, head: string): Promise<NameStatusOutput> {
+  if (!(await isAncestorOfHead(cwd, head))) {
+    return { kind: "unavailable" }
+  }
+  const diff = await runGit(cwd, ["diff", "--name-status", "--no-renames", head, "--"])
+  return diff.kind === "output" ? { kind: "output", text: diff.stdout } : { kind: "unavailable" }
+}
+
+async function nameStatusOfCommit(cwd: string, sha: string): Promise<NameStatusOutput> {
+  const show = await runGit(cwd, ["show", "--name-status", "--no-renames", "--format=", sha, "--"])
   return show.kind === "output" ? { kind: "output", text: show.stdout } : { kind: "unavailable" }
 }
 

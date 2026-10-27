@@ -28,6 +28,8 @@ function stubGit(
   range: {
     readonly commits?: CommitListOutput
     readonly numstatOfCommit?: Readonly<Record<string, NumstatOutput>>
+    readonly nameStatus?: NumstatOutput
+    readonly nameStatusOfCommit?: Readonly<Record<string, NumstatOutput>>
   } = {},
 ): { readonly git: ChangeCountGit; readonly askedSince: () => readonly string[] } {
   let headIndex = 0
@@ -46,6 +48,9 @@ function stubGit(
       commitsSince: () => Promise.resolve(range.commits ?? { kind: "output", commits: [] }),
       numstatOfCommit: (sha) =>
         Promise.resolve(range.numstatOfCommit?.[sha] ?? { kind: "unavailable" }),
+      nameStatusSince: () => Promise.resolve(range.nameStatus ?? { kind: "output", text: "" }),
+      nameStatusOfCommit: (sha) =>
+        Promise.resolve(range.nameStatusOfCommit?.[sha] ?? { kind: "output", text: "" }),
     },
     askedSince: () => asked,
   }
@@ -83,6 +88,7 @@ describe("createReportChangeCounter", () => {
       {
         kind: "report-change-summary",
         toolUseId: "fictional-task-report",
+        changed: [],
         files: 3,
         added: 10,
         removed: 7,
@@ -112,6 +118,7 @@ describe("createReportChangeCounter", () => {
         {
           kind: "report-change-summary",
           toolUseId: "fictional-task-report",
+          changed: [],
           files: 1,
           added: 1,
           removed: 0,
@@ -239,12 +246,109 @@ describe("createReportChangeCounter", () => {
       {
         kind: "report-change-summary",
         toolUseId: "fictional-task-report",
+        changed: [],
         files: 0,
         added: 0,
         removed: 0,
         mixed: false,
       },
     ])
+  })
+
+  describe("触ったファイルの一覧", () => {
+    /** 古い順に並べた name-status の本文をタスクのコミットとして重ね、流れた一覧を返す。 */
+    async function changedAfterStacking(oldestFirst: readonly string[]) {
+      const shas = oldestFirst.map((_, index) => `c${index}`)
+      const { git } = stubGit(
+        [KNOWN_HEAD],
+        { kind: "output", text: "" },
+        {
+          commits: {
+            kind: "output",
+            commits: shas.map((sha) => ({ sha, subject: "t-001: 架空の一歩" })).toReversed(),
+          },
+          numstatOfCommit: Object.fromEntries(
+            shas.map((sha) => [sha, { kind: "output", text: "1\t0\tsrc/a.ts\n" }] as const),
+          ),
+          nameStatusOfCommit: Object.fromEntries(
+            shas.map(
+              (sha, index) => [sha, { kind: "output", text: oldestFirst[index] ?? "" }] as const,
+            ),
+          ),
+        },
+      )
+      const emitted = await observeAll(git, [REQUEST, TASK_REPORT])
+      return emitted.map((event) => (event.kind === "report-change-summary" ? event.changed : []))
+    }
+
+    it.each([
+      ["A → M は追加", ["A\tsrc/a.ts\n", "M\tsrc/a.ts\n"], [{ path: "src/a.ts", change: "added" }]],
+      ["A → D は出さない", ["A\tsrc/a.ts\n", "D\tsrc/a.ts\n"], []],
+      [
+        "M → D は削除",
+        ["M\tsrc/a.ts\n", "D\tsrc/a.ts\n"],
+        [{ path: "src/a.ts", change: "deleted" }],
+      ],
+      [
+        "D → A は変更",
+        ["D\tsrc/a.ts\n", "A\tsrc/a.ts\n"],
+        [{ path: "src/a.ts", change: "modified" }],
+      ],
+      [
+        "M → M は変更",
+        ["M\tsrc/a.ts\n", "M\tsrc/a.ts\n"],
+        [{ path: "src/a.ts", change: "modified" }],
+      ],
+    ] as const)("古い順に重ねる: %s", async (_name, stacked, expected) => {
+      expect(await changedAfterStacking(stacked)).toEqual([expected])
+    })
+
+    it("T と未知の文字は変更に読む", async () => {
+      expect(await changedAfterStacking(["T\tsrc/a.ts\nU\tsrc/b.ts\n"])).toEqual([
+        [
+          { path: "src/a.ts", change: "modified" },
+          { path: "src/b.ts", change: "modified" },
+        ],
+      ])
+    })
+
+    it("差分なしなら counted の changed は空", async () => {
+      const { git } = stubGit([KNOWN_HEAD], { kind: "output", text: "" })
+
+      expect(await observeAll(git, [REQUEST, TASK_REPORT])).toMatchObject([{ changed: [] }])
+    })
+
+    it("範囲全体の差分は nameStatusSince の一覧を載せる", async () => {
+      const { git } = stubGit(
+        [KNOWN_HEAD],
+        { kind: "output", text: "1\t0\tsrc/a.ts\n" },
+        { nameStatus: { kind: "output", text: "A\tsrc/a.ts\n" } },
+      )
+
+      expect(await observeAll(git, [REQUEST, TASK_REPORT])).toMatchObject([
+        { changed: [{ path: "src/a.ts", change: "added" }] },
+      ])
+    })
+
+    it("読めない行があれば一覧も数も流さない", async () => {
+      const { git } = stubGit(
+        [KNOWN_HEAD],
+        { kind: "output", text: "1\t0\tsrc/a.ts\n" },
+        { nameStatus: { kind: "output", text: "架空の行\n" } },
+      )
+
+      expect(await observeAll(git, [REQUEST, TASK_REPORT])).toEqual([])
+    })
+
+    it("name-status が取れなければ何も流さない", async () => {
+      const { git } = stubGit(
+        [KNOWN_HEAD],
+        { kind: "output", text: "1\t0\tsrc/a.ts\n" },
+        { nameStatus: { kind: "unavailable" } },
+      )
+
+      expect(await observeAll(git, [REQUEST, TASK_REPORT])).toEqual([])
+    })
   })
 
   it("HEAD が読めないときは何も流さない", async () => {

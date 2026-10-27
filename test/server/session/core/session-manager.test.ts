@@ -395,6 +395,8 @@ describe("createSessionManager", () => {
             }),
           commitsSince: () => Promise.resolve({ kind: "output", commits: [] }),
           numstatOfCommit: () => Promise.resolve({ kind: "unavailable" }),
+          nameStatusSince: () => Promise.resolve({ kind: "output", text: "M\tsrc/a.ts\n" }),
+          nameStatusOfCommit: () => Promise.resolve({ kind: "unavailable" }),
         },
       })
       const frames: ServerFrame[] = []
@@ -427,7 +429,14 @@ describe("createSessionManager", () => {
       expect(deliveredKinds()).toEqual(["request", "report", "report-change-summary"])
       expect(manager.commandSession.state().records.at(-1)).toMatchObject({
         kind: "report",
-        changeSummary: { kind: "counted", files: 1, added: 3, removed: 1, mixed: false },
+        changeSummary: {
+          kind: "counted",
+          changed: [{ path: "src/a.ts", change: "modified" }],
+          files: 1,
+          added: 3,
+          removed: 1,
+          mixed: false,
+        },
       })
     })
   })

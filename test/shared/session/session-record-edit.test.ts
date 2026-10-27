@@ -92,6 +92,7 @@ describe("applySessionEvent（変更の札）", () => {
   const COUNTED: SessionEvent = {
     kind: "report-change-summary",
     toolUseId: "toolu_r1",
+    changed: [{ path: "src/a.ts", change: "added" }],
     files: 2,
     added: 10,
     removed: 4,
@@ -106,7 +107,14 @@ describe("applySessionEvent（変更の札）", () => {
       apply(REQUEST, reportEvent({ toolUseId: "toolu_r1" }), COUNTED).records.at(-1),
     ).toMatchObject({
       kind: "report",
-      changeSummary: { kind: "counted", files: 2, added: 10, removed: 4, mixed: true },
+      changeSummary: {
+        kind: "counted",
+        changed: [{ path: "src/a.ts", change: "added" }],
+        files: 2,
+        added: 10,
+        removed: 4,
+        mixed: true,
+      },
     })
   })
 

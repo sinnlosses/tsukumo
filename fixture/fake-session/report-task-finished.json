@@ -58,6 +58,11 @@
       "event": {
         "kind": "report-change-summary",
         "toolUseId": "fake-report-task-finished",
+        "changed": [
+          { "path": "src/example/a.ts", "change": "modified" },
+          { "path": "src/example/b.ts", "change": "added" },
+          { "path": "src/example/c.ts", "change": "deleted" }
+        ],
         "files": 3,
         "added": 42,
         "removed": 18,

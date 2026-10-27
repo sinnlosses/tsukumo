@@ -4,6 +4,7 @@
 // 数えるのは待たずに裏で走らせるので、`report` そのものは遅れない。
 // 数えられないとき（HEAD が読めない・控えた HEAD がいまの HEAD の祖先でない・git が打てない・出力が読めない）は何も流さない。
 
+import type { ChangedFile } from "../../../shared/report/changed-file.ts"
 import {
   NO_REPORT_CHANGE_SUMMARY,
   type ReportChangeSummary,
@@ -15,6 +16,7 @@ import type {
   GitHead,
   NumstatOutput,
 } from "../../core/change-count-git.ts"
+import { foldNameStatus } from "./changed-file-line.ts"
 
 export type ReportChangeCounter = {
   /** 受理されたイベントを1件ずつ見る（復元した再生は渡さない）。 */
@@ -48,8 +50,8 @@ export function createReportChangeCounter(
     try {
       const summary = await counting
       if (summary.kind === "counted") {
-        const { files, added, removed, mixed } = summary
-        emit({ kind: "report-change-summary", toolUseId, files, added, removed, mixed })
+        const { changed, files, added, removed, mixed } = summary
+        emit({ kind: "report-change-summary", toolUseId, changed, files, added, removed, mixed })
       }
     } catch {
       // 数えられないときは何も流さない（ファイル先頭の約束）。
@@ -75,15 +77,41 @@ async function countSince(
     .catch((): CommitListOutput => ({ kind: "unavailable" }))
   const own = commits.kind === "output" ? commitsOfTask(commits, taskId) : []
   if (own.length > 0) {
-    const outputs = await Promise.all(
-      own.map((sha) => git.numstatOfCommit(sha).catch(() => UNAVAILABLE_NUMSTAT)),
-    )
-    const texts = outputs.flatMap((output) => (output.kind === "output" ? [output.text] : []))
-    return texts.length === outputs.length ? countNumstat(texts, false) : NO_REPORT_CHANGE_SUMMARY
+    const [numstats, nameStatuses] = await Promise.all([
+      Promise.all(own.map((sha) => git.numstatOfCommit(sha).catch(() => UNAVAILABLE_NUMSTAT))),
+      Promise.all(own.map((sha) => git.nameStatusOfCommit(sha).catch(() => UNAVAILABLE_NUMSTAT))),
+    ])
+    // コミットは新しい順に並ぶので、古い順に重ねるため逆にする。
+    return countOutputs(numstats, nameStatuses.toReversed(), false)
   }
-  const output = await git.diffNumstatSince(known.sha).catch(() => UNAVAILABLE_NUMSTAT)
+  const [numstat, nameStatus] = await Promise.all([
+    git.diffNumstatSince(known.sha).catch(() => UNAVAILABLE_NUMSTAT),
+    git.nameStatusSince(known.sha).catch(() => UNAVAILABLE_NUMSTAT),
+  ])
   const mixed = commits.kind === "unavailable" || commits.commits.length > 0
-  return output.kind === "output" ? countNumstat([output.text], mixed) : NO_REPORT_CHANGE_SUMMARY
+  return countOutputs([numstat], [nameStatus], mixed)
+}
+
+function countOutputs(
+  numstats: readonly NumstatOutput[],
+  nameStatuses: readonly NumstatOutput[],
+  mixed: boolean,
+): ReportChangeSummary {
+  const numstatTexts = textsOf(numstats)
+  const nameStatusTexts = textsOf(nameStatuses)
+  if (numstatTexts === undefined || nameStatusTexts === undefined) {
+    return NO_REPORT_CHANGE_SUMMARY
+  }
+  const changed = foldNameStatus(nameStatusTexts)
+  return changed === undefined
+    ? NO_REPORT_CHANGE_SUMMARY
+    : countNumstat(numstatTexts, changed, mixed)
+}
+
+/** 全部が出力のときだけ本文を返す。1つでも取れていなければ undefined。 */
+function textsOf(outputs: readonly NumstatOutput[]): readonly string[] | undefined {
+  const texts = outputs.flatMap((output) => (output.kind === "output" ? [output.text] : []))
+  return texts.length === outputs.length ? texts : undefined
 }
 
 /** 件名が `<タスクID>:` で始まるコミットの SHA。大文字小文字は区別しない。 */
@@ -102,7 +130,11 @@ function commitsOfTask(
  * バイナリの `-` は行に数えずファイルには数える。読めない行があれば数えない。
  * 変更が無い（0 ファイル）ときは混ざりようが無いので `mixed` は立てない。
  */
-function countNumstat(texts: readonly string[], mixed: boolean): ReportChangeSummary {
+function countNumstat(
+  texts: readonly string[],
+  changed: readonly ChangedFile[],
+  mixed: boolean,
+): ReportChangeSummary {
   const paths = new Set<string>()
   let added = 0
   let removed = 0
@@ -115,7 +147,14 @@ function countNumstat(texts: readonly string[], mixed: boolean): ReportChangeSum
     added += lineCount(match[1] ?? "-")
     removed += lineCount(match[2] ?? "-")
   }
-  return { kind: "counted", files: paths.size, added, removed, mixed: mixed && paths.size > 0 }
+  return {
+    kind: "counted",
+    changed,
+    files: paths.size,
+    added,
+    removed,
+    mixed: mixed && paths.size > 0,
+  }
 }
 
 function lineCount(field: string): number {

@@ -75,6 +75,28 @@ describe("changeCountGitOf", () => {
     })
   })
 
+  it("追加・変更・削除を name-status で出し、コミット1件分も引ける", async () => {
+    const repository = await repositoryWithCommit()
+    writeFileSync(join(repository, "gone.txt"), "x\n")
+    await git(repository, ["add", "gone.txt"])
+    await git(repository, ["commit", "--quiet", "-m", "架空の下ごしらえ"])
+    const port = changeCountGitOf(repository)
+    const head = await port.readHead()
+    writeFileSync(join(repository, "a.txt"), "changed\n")
+    writeFileSync(join(repository, "new.txt"), "n\n")
+    await git(repository, ["rm", "--quiet", "gone.txt"])
+    await git(repository, ["add", "a.txt", "new.txt"])
+    await git(repository, ["commit", "--quiet", "-m", "架空の三種"])
+
+    const expected = { kind: "output", text: "M\ta.txt\nD\tgone.txt\nA\tnew.txt\n" }
+    expect(head.kind === "known" ? await port.nameStatusSince(head.sha) : undefined).toEqual(
+      expected,
+    )
+    const commits = head.kind === "known" ? await port.commitsSince(head.sha) : undefined
+    const sha = commits?.kind === "output" ? (commits.commits[0]?.sha ?? "") : ""
+    expect(await port.nameStatusOfCommit(sha)).toEqual(expected)
+  })
+
   it("控えた HEAD がいまの HEAD の祖先でなければ、コミットの一覧も unavailable", async () => {
     const repository = await repositoryWithCommit()
     const port = changeCountGitOf(repository)
