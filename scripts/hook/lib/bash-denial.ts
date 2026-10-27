@@ -7,6 +7,7 @@ export const BASH_GUARD_HOOKS = [
   "deny-background-verify",
   "deny-stdin-wait-cat",
   "deny-foreign-restore",
+  "deny-external-send",
 ] as const satisfies readonly string[]
 
 export type BashDenial = {

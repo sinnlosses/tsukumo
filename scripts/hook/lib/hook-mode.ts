@@ -2,7 +2,7 @@
 
 type HookMode = "log-only" | "block"
 
-const LOG_ONLY_HOOKS: readonly string[] = ["deny-foreign-restore"]
+const LOG_ONLY_HOOKS: readonly string[] = ["deny-foreign-restore", "deny-external-send"]
 
 /** `TSUKUMO_HOOK_LOG_ONLY` にカンマ区切りで hook の名前を渡すと、その hook も log-only になる。 */
 export function readHookMode(hook: string, env: NodeJS.ProcessEnv = process.env): HookMode {

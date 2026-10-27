@@ -9,6 +9,7 @@ import { findBackgroundVerifyDenial } from "./lib/background-verify.ts"
 import type { BashDenial } from "./lib/bash-denial.ts"
 import type { BashHookCall } from "./lib/bash-hook-call.ts"
 import { findBroadKillDenial } from "./lib/broad-kill.ts"
+import { findExternalSendDenial } from "./lib/external-send.ts"
 import { findForeignRestoreDenial } from "./lib/foreign-restore.ts"
 import { denyBashCall, readBashHookCall } from "./lib/hook-input.ts"
 import { findStdinWaitCatDenial } from "./lib/stdin-wait-denial.ts"
@@ -21,6 +22,7 @@ const DENIALS = [
   findBackgroundVerifyDenial,
   findStdinWaitCatDenial,
   findForeignRestoreDenial,
+  findExternalSendDenial,
 ] as const satisfies readonly ((call: BashHookCall) => BashDenial | undefined)[]
 
 const call = await readBashHookCall()

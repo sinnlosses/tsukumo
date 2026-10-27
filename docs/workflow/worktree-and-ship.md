@@ -24,6 +24,8 @@
   本体のホームへは戻らない
 - 自分の着手の印が無く未コミットの変更がある作業ツリーでの `git restore`・`checkout --`・`clean`・`stash` は、
   hook `deny-foreign-restore`（`scripts/hook/lib/foreign-restore.ts`）が log-only で記録する（拒まない。手順は `docs/coding-standards/hook-rollout.md`）
+- サブエージェントの外へ送る操作（GitHub への書き込み・`git push`）は、
+  hook `deny-external-send`（`scripts/hook/lib/external-send.ts`）が log-only で記録する（拒まない。一覧は `docs/coding-standards/external-send.md`）
 
 ## タスクに紐付かない作業を main へ送る
 
