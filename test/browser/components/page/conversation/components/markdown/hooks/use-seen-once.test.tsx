@@ -2,8 +2,8 @@ import { act, cleanup, render } from "@testing-library/react"
 import { useRef, type ReactElement } from "react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
-import { useSeenOnce } from "../../../../../../../../../src/browser/components/page/conversation/components/markdown/renderer/hooks/use-seen-once.ts"
-import { stubIntersectionObserver } from "../../../../../../../../fixture/intersection.ts"
+import { useSeenOnce } from "../../../../../../../../src/browser/components/page/conversation/components/markdown/hooks/use-seen-once.ts"
+import { stubIntersectionObserver } from "../../../../../../../fixture/intersection.ts"
 
 function Probe(): ReactElement {
   const ref = useRef<HTMLDivElement>(null)

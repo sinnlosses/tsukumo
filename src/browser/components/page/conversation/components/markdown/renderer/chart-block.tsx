@@ -6,8 +6,8 @@ import { useEffect, useRef, useState, type ReactElement } from "react"
 import { omit } from "remeda"
 import { z } from "zod"
 
+import { useSeenOnce } from "../hooks/use-seen-once.ts"
 import { loadChart } from "./chart.ts"
-import { useSeenOnce } from "./hooks/use-seen-once.ts"
 import styles from "./report-notation.module.css"
 
 type ChartBlockProps = {

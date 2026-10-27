@@ -11,7 +11,9 @@ import { SRC_ROOT } from "./source-file.ts"
 const RENDERER_DIRECTORY = `${SRC_ROOT}/browser/components/page/conversation/components/markdown/renderer`
 const REPORT_CSS_FILES = [
   "report-notation.module.css",
-  ...readdirSync(`${RENDERER_DIRECTORY}/report-notation`).map((file) => `report-notation/${file}`),
+  ...readdirSync(RENDERER_DIRECTORY).filter(
+    (file) => file.startsWith("report-notation-") && file.endsWith(".css"),
+  ),
 ]
 
 const TEXT_COLOR_DECLARATION = /^\s*(?:color|text-decoration-color)\s*:\s*(?<value>[^;]+);/

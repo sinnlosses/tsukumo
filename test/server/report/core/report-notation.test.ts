@@ -56,7 +56,7 @@ const namedClasses = [...REPORT_NOTATION_PROMPT.matchAll(/class="([^"]+)"/g)].fl
   ([, names]) => names?.split(" ") ?? [],
 )
 
-// 見た目はレポートの記法を描く機能の CSS（`markdown/renderer/report-notation.module.css` と `report-notation/*.css`）にある。
+// 見た目はレポートの記法を描く機能の CSS（`markdown/renderer/report-notation.module.css` と `report-notation-*.css`）にある。
 // テストの中では class 名が CSS に書いた綴りのまま届く（`classNameStrategy: "non-scoped"`）ので、
 // 部品が付け直した名前をそれらのファイルの選択子とそのまま突き合わせられる。
 const STYLE_SHEET_DIRECTORY = fileURLToPath(
@@ -67,8 +67,8 @@ const STYLE_SHEET_DIRECTORY = fileURLToPath(
 )
 const STYLE_SHEET_FILES = [
   "report-notation.module.css",
-  ...readdirSync(`${STYLE_SHEET_DIRECTORY}report-notation`).map(
-    (file) => `report-notation/${file}`,
+  ...readdirSync(STYLE_SHEET_DIRECTORY).filter(
+    (file) => file.startsWith("report-notation-") && file.endsWith(".css"),
   ),
 ]
 const STYLE_SHEET_SOURCE = STYLE_SHEET_FILES.map((file) =>

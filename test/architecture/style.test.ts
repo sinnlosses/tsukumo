@@ -399,10 +399,13 @@ describe("CSS Modules の class", () => {
   it("CSS Modules のセレクタに書いた class は、tsx から styles で参照されているか、許可リストにある", () => {
     const moduleCssFiles = listSourceFiles(SRC_ROOT, SRC_ROOT, [".module.css"])
     expect(moduleCssFiles.length).toBeGreaterThan(0)
-    // `<名>.module.css` の隣の `<名>/` の下の `.css` は、その入口に束ねられる部品。
+    // `<名>/` の下と `<名>-*.css` の `.css` は、隣の `<名>.module.css` に束ねられる部品。
     const entryOf = (cssRelPath: string): string | undefined =>
       moduleCssFiles.find(
-        (e) => e === `${cssRelPath.slice(0, cssRelPath.lastIndexOf("/"))}.module.css`,
+        (e) =>
+          e === `${cssRelPath.slice(0, cssRelPath.lastIndexOf("/"))}.module.css` ||
+          (!cssRelPath.endsWith(".module.css") &&
+            cssRelPath.startsWith(e.replace(".module.css", "-"))),
       )
     const cssFiles = listSourceFiles(SRC_ROOT, SRC_ROOT, [".css"]).filter(
       (cssRelPath) => cssRelPath.endsWith(".module.css") || entryOf(cssRelPath) !== undefined,

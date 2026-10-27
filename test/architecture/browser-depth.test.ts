@@ -41,8 +41,6 @@ const DEEP_DIRECTORY_EXCEPTIONS: ReadonlySet<string> = new Set([
   "components/page/conversation/components/main-view/components/turn-list",
   "components/page/conversation/components/main-view/components/welcome",
   "components/page/conversation/components/main-view/components/work-strip",
-  "components/page/conversation/components/markdown/renderer/hooks",
-  "components/page/conversation/components/markdown/renderer/report-notation",
 ])
 
 describe("src/browser/ の深さ", () => {

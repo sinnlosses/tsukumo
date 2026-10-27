@@ -311,7 +311,7 @@ function svgTextHtml(
   return svgTextElement(x, y, text, { centered, fontSize: SVG_LABEL_FONT_SIZE, extra: "" })
 }
 
-/** `rect` の `sub`。`report-notation/figure.css` が `data-sub` を目印に弱い色を当てる。 */
+/** `rect` の `sub`。`report-notation-figure.css` が `data-sub` を目印に弱い色を当てる。 */
 function svgSubTextHtml(
   x: number,
   y: number,
