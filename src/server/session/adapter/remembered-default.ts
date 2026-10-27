@@ -1,5 +1,5 @@
 // 次に起こすときの初期値をホームの状態ファイル（`~/.tsukumo/state.json`）に覚える。
-// 覚えるのは2つ。直前まで出していたキャラクターパックの名前と、新しいセッションの既定（モデル・effort・許可モード）。
+// 覚えるのは2つ。直前まで出していたキャラクターパックの名前と、新しいセッションの既定（モデル・effort・許可モード・図の既定）。
 //
 // 状態ファイルに触るのはここだけ。
 // 書き込みがファイル丸ごとの置き換えなので、別々のモジュールから書くと、後から書いたほうが相手の欄を消す。
@@ -14,6 +14,7 @@ import { z } from "zod"
 import { EFFORT_LEVELS, MODEL_ALIASES } from "../../../shared/command.ts"
 import {
   BUILTIN_SESSION_DEFAULT,
+  FIGURE_PREFERENCES,
   SESSION_DEFAULT_PERMISSION_MODES,
   type SessionDefault,
 } from "../../../shared/session/session-default.ts"
@@ -31,9 +32,11 @@ const sessionDefaultStateSchema = z.object({
     model: z.enum(MODEL_ALIASES),
     // effort だけ optional（`model` / `permissionMode` と違う扱い）。
     // effort を足す前に覚えた古い `state.json` にはこの欄が無いので、無くても `sessionDefault` 全体を読めたことにし、欄の値だけ `readState` の出口で同梱の既定へ畳む。
-    // 他の2つは1組のまま。壊れている・知らない値なら3つとも同梱の既定へ倒れる。
+    // model / permissionMode は1組のまま。壊れている・知らない値なら全部同梱の既定へ倒れる。
     effort: z.enum(EFFORT_LEVELS).optional(),
     permissionMode: z.enum(SESSION_DEFAULT_PERMISSION_MODES),
+    // effort と同じく、図の既定を足す前に覚えた古い `state.json` には欄が無い。無ければ `readState` の出口で同梱の既定へ畳む。知らない値は全部同梱の既定へ倒れる。
+    figurePreference: z.enum(FIGURE_PREFERENCES).optional(),
   }),
 })
 
@@ -99,6 +102,9 @@ function readState(path: string): RememberedState {
           // effort の無い古い `state.json` は同梱の既定へ畳む（model / permissionMode は読めた値をそのまま使う。`sessionDefaultStateSchema`）。
           effort: sessionDefault.data.sessionDefault.effort ?? BUILTIN_SESSION_DEFAULT.effort,
           permissionMode: sessionDefault.data.sessionDefault.permissionMode,
+          figurePreference:
+            sessionDefault.data.sessionDefault.figurePreference ??
+            BUILTIN_SESSION_DEFAULT.figurePreference,
         }
       : undefined,
   }

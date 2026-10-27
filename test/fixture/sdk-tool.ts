@@ -13,13 +13,17 @@ import { fixedChatSummary } from "./chat.ts"
 export const TOOL_EXPRESSIONS = [{ name: "default", label: "通常" }] as const
 export const FAKE_CWD = "/tmp/tsukumo-架空のcwd"
 
-export const WORK_MODE: SessionMode = {
+export const WORK_MODE: Extract<SessionMode, { readonly kind: "work" }> = {
   kind: "work",
   reportSchema: "json-schema",
+  figurePreference: "chart",
 }
 
 /** `report` の塊の型を短い型の表記で渡す仕事のモード。 */
-export const SHORT_TYPE_WORK_MODE: SessionMode = { ...WORK_MODE, reportSchema: "short-type" }
+export const SHORT_TYPE_WORK_MODE: Extract<SessionMode, { readonly kind: "work" }> = {
+  ...WORK_MODE,
+  reportSchema: "short-type",
+}
 
 export const CHAT_MODE: SessionMode = {
   kind: "chat",
@@ -35,7 +39,7 @@ export const WAITING_LINE = { text: "架空の待ちの一言", expression: "def
 export const SESSION_SUMMARY = "架空の要約"
 export const REMAINING = "架空の残り"
 
-/** `report` に渡す図の欄（組んだ値に欠かせない）。図を置かない理由を言う形。 */
+/** `report` に渡す図の欄。旧い形の、理由つきの `none`。 */
 export const FIGURE = { kind: "none", reason: "short-answer" }
 
 /**

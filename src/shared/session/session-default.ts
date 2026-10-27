@@ -1,4 +1,4 @@
-// 新しいセッションの既定（モデル・effort・許可モード）。
+// 新しいセッションの既定（モデル・effort・許可モード・図の既定）。
 // セッションを起こすたびに効く値で、帯で変えたその場の値とは別物（帯はセッション限り、ここは次に起こすときの初期値）。
 //
 // 許可モードの値の一覧そのものは `PERMISSION_MODES` が持ち、ここが持つのは「既定として選べるのはどれか」という別の問いへの答えだけ。
@@ -23,11 +23,22 @@ export const SESSION_DEFAULT_PERMISSION_MODES = [
   "plan",
 ] as const satisfies readonly SessionDefaultPermissionMode[]
 
-/** 新しいセッションを起こすときの既定。3つで1組（1つだけ覚えている状態は作らない）。 */
+/** `report` の図を置くかの既定。`chart` は図を置く側、`text` は文を主にして図は構造・前後・数がある節に限る側。 */
+export const FIGURE_PREFERENCES = ["chart", "text"] as const
+
+export type FigurePreference = (typeof FIGURE_PREFERENCES)[number]
+
+/** 外から届いた文字列が、図の既定として選べる値かどうか。 */
+export function isFigurePreference(value: string): value is FigurePreference {
+  return FIGURE_PREFERENCES.some((preference) => preference === value)
+}
+
+/** 新しいセッションを起こすときの既定。4つで1組（1つだけ覚えている状態は作らない）。 */
 export type SessionDefault = {
   readonly model: ModelAlias
   readonly effort: EffortLevel
   readonly permissionMode: SessionDefaultPermissionMode
+  readonly figurePreference: FigurePreference
 }
 
 /**
@@ -38,8 +49,8 @@ export const BUILTIN_SESSION_DEFAULT = {
   model: "opus",
   effort: "medium",
   permissionMode: "auto",
+  figurePreference: "chart",
 } satisfies SessionDefault
-
 /** 外から届いた文字列が、既定として選べる許可モードかどうか。 */
 export function isSessionDefaultPermissionMode(
   value: string,

@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest"
 import { z } from "zod"
 
 import {
-  REPORT_FIGURE_DESCRIPTION,
+  reportFigureDescription,
   REPORT_SECTIONS_DESCRIPTION,
   REPORT_TOOL_DESCRIPTION,
 } from "../../../../src/server/report/core/report-tool.ts"
@@ -36,7 +36,39 @@ describe("short-type の report の定義", () => {
       REPORT_SECTIONS_DESCRIPTION,
     )
     expect(report.inputSchema.properties.sections.description).toContain(reportShortTypeText())
-    expect(report.inputSchema.properties.figure.description).toContain(REPORT_FIGURE_DESCRIPTION)
+    expect(report.inputSchema.properties.figure.description).toContain(
+      reportFigureDescription("chart"),
+    )
+  })
+
+  it.each(["chart", "text"] as const)(
+    "figure の説明は図の既定（%s）に従い、json-schema の版も同じ文を載せる",
+    async (figurePreference) => {
+      const mode = { ...SHORT_TYPE_WORK_MODE, figurePreference }
+      const otherMode = { ...WORK_MODE, figurePreference }
+
+      const short = await listedReport(workServer([], [], createCallReview(), [], mode))
+      const full = await listedReport(workServer([], [], createCallReview(), [], otherMode))
+
+      expect(short.inputSchema.properties.figure.description).toContain(
+        reportFigureDescription(figurePreference),
+      )
+      expect(full.inputSchema.properties.figure.description).toContain(
+        reportFigureDescription(figurePreference),
+      )
+    },
+  )
+
+  it("text の図の既定だけ、図を置かない既定の文が説明に入る", async () => {
+    const descriptionOf = async (figurePreference: "chart" | "text") =>
+      (
+        await listedReport(
+          workServer([], [], createCallReview(), [], { ...WORK_MODE, figurePreference }),
+        )
+      ).inputSchema.properties.figure.description
+
+    expect(await descriptionOf("text")).toContain("図は置かない")
+    expect(await descriptionOf("chart")).not.toContain("図は置かない")
   })
 
   it("引数の schema は json-schema の版より小さく、上限を超えない", async () => {
@@ -118,7 +150,7 @@ describe("short-type の report の受理", () => {
 
     expect(short).toEqual(await outcomes(WORK_MODE))
     expect(short.map((outcome) => outcome.isError)).toEqual([
-      true,
+      false,
       true,
       true,
       true,

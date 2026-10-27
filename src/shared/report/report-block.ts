@@ -116,7 +116,7 @@ export const reportFigureSchema = z.discriminatedUnion("kind", [
 export type ReportFigure = DeepReadonly<z.infer<typeof reportFigureSchema>>
 
 /**
- * 読み戻した `figure`。`unrecorded` は `figure` の欄が無かったころの呼び出しと形の崩れで、
+ * 読み戻した `figure`。`unrecorded` は `figure` を省いた呼び出し・欄が無かったころの呼び出し・形の崩れで、
  * 書き手には出さない（{@link reportFigureSchema} の理由には入れない）。
  */
 export type RecordedReportFigure =
@@ -209,7 +209,7 @@ export function parseReportSections(value: unknown): ParsedReportSections {
   }
 }
 
-/** `report` の引数の `figure` を取り出す。無い・崩れたものは `unrecorded` に畳む。 */
+/** `report` の引数の `figure` を取り出す。省いた・崩れたものは `unrecorded` の `none`（図なし）に畳む。 */
 export function parseReportFigure(value: unknown): RecordedReportFigure {
   const figure = reportFigureSchema.safeParse(value)
   return figure.success ? figure.data : { kind: "none", reason: "unrecorded" }

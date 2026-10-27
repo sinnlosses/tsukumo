@@ -148,6 +148,7 @@ describe("toSystemPromptMode", () => {
     const sessionMode: SessionMode = {
       kind: "work",
       reportSchema: "json-schema",
+      figurePreference: "chart",
     }
 
     const mode = toSystemPromptMode(sessionMode, READ_RECENT, readChatSummary, {

@@ -11,7 +11,9 @@ import { useRef, useState, type RefObject } from "react"
 
 import { isEffortLevel, isModelAlias, type ModelAlias } from "../../../../../shared/command.ts"
 import {
+  isFigurePreference,
   isSessionDefaultPermissionMode,
+  type FigurePreference,
   type SessionDefault,
   type SessionDefaultPermissionMode,
 } from "../../../../../shared/session/session-default.ts"
@@ -46,6 +48,8 @@ type ScreenNavSettingsSessionDefault = {
   readonly onChangeEffort: (value: string) => void
   readonly permissionMode: SessionDefaultPermissionMode
   readonly onChangePermissionMode: (value: string) => void
+  readonly figurePreference: FigurePreference
+  readonly onChangeFigurePreference: (value: string) => void
 }
 
 export type ScreenNavSettings = {
@@ -87,12 +91,13 @@ export function useSettings(): ScreenNavSettings {
     toggleRef.current?.focus()
   }
 
-  /** 3つで1組なので、変えた1つに、ほかの2つはいまの値を写して送る。 */
+  /** 4つで1組なので、変えた1つに、ほかの3つはいまの値を写して送る。 */
   function sendSessionDefault(change: Partial<SessionDefault>): void {
     dispatch.session.setSessionDefault({
       model: sessionDefault.model,
       effort: sessionDefault.effort,
       permissionMode: sessionDefault.permissionMode,
+      figurePreference: sessionDefault.figurePreference,
       ...change,
     })
   }
@@ -125,6 +130,12 @@ export function useSettings(): ScreenNavSettings {
         // 「全部許す」はここを通らない（選択肢にも無い）。
         if (isSessionDefaultPermissionMode(value)) {
           sendSessionDefault({ permissionMode: value })
+        }
+      },
+      figurePreference: sessionDefault.figurePreference,
+      onChangeFigurePreference: (value) => {
+        if (isFigurePreference(value)) {
+          sendSessionDefault({ figurePreference: value })
         }
       },
     },

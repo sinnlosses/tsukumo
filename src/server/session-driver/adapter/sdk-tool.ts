@@ -58,7 +58,14 @@ export function tsukumoServer(
       speakTool(expressions, mode, callReview),
       ...(mode.kind === "work"
         ? [
-            reportTool(expressions, callReview, onReportTitle, cwd, mode.reportSchema),
+            reportTool(
+              expressions,
+              callReview,
+              onReportTitle,
+              cwd,
+              mode.reportSchema,
+              mode.figurePreference,
+            ),
             workPlanTool(callReview),
             phaseResultTool(callReview, onEvent),
             questionBriefTool(holdBrief),

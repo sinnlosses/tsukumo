@@ -12,6 +12,7 @@ import type { SwallowedFailurePlace } from "../../../shared/diagnostic/swallowed
 import type { PlanUsageReport } from "../../../shared/plan-usage/plan-usage.ts"
 import type { ReportSchemaVariant } from "../../../shared/report/schema-variant.ts"
 import type { Answer, PendingAsk } from "../../../shared/session-driver/pending-ask.ts"
+import type { FigurePreference } from "../../../shared/session/session-default.ts"
 import type { SessionDigest } from "../../../shared/session/session-digest.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import type { ChatSummary, PersonaMemory } from "../../chat/core/chat-memory.ts"
@@ -24,6 +25,8 @@ export type SessionMode =
       readonly kind: "work"
       /** `report` の塊の型の渡し方（`Config.reportSchema`）。 */
       readonly reportSchema: ReportSchemaVariant
+      /** `report` の `figure` の説明に効く、図を置くかの既定（起こすときの `SessionDefault`）。 */
+      readonly figurePreference: FigurePreference
     }
   | {
       readonly kind: "chat"

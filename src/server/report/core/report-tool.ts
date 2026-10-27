@@ -6,6 +6,7 @@
 // `report` の呼び出しそのものの検査と差し戻しは `ReportReview` が持つ。
 
 import { MAX_SESSION_HEADING_LENGTH } from "../../../shared/session/session-choice.ts"
+import type { FigurePreference } from "../../../shared/session/session-default.ts"
 import { MAX_SESSION_SUMMARY_LENGTH } from "../../../shared/session/session-digest.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 
@@ -62,15 +63,24 @@ export const REPORT_WORK_PLAN_CLOSING_DESCRIPTION =
  * `report` の `figure` 引数（レポートの図1つか、置かない理由）の説明。
  * 図を置く条件と作業のレポートの最小形はここだけが持つ。図の塊ごとの使いどころは各塊の `describe` が持つ。
  */
-export const REPORT_FIGURE_DESCRIPTION =
-  "レポートの図1つ。checks の下・sections の上に「図 1」として描かれ、sections の図の番号はそのあとに続く。" +
-  "次のどれかがあれば図の部品（image / mermaid / graph / svg / timeline / beforeAfter / chart / stats）を置き、none にしない: " +
-  "名前が3つ以上出てきてつながる・流れや分岐がある・構造の前後がある・数が3つ以上ある。" +
-  "作業のレポートの最小の形は、ここに図1つと、sections に表か箇条書き。" +
-  "図を置かないときは kind を none にして reason で理由を言う: " +
-  "short-answer（2〜3文で終わる答え）/ no-shape（上の4つのどれも無い）/ " +
-  "single-value（前後が値1つで、table のセルの from / to か stats の before で足りる）/ " +
-  "no-material（委譲先の返却に構造の材料が無く、差分も読んでいない）。none は何も描かれない。"
+export function reportFigureDescription(preference: FigurePreference): string {
+  const head =
+    "レポートの図1つ。checks の下・sections の上に「図 1」として描かれ、sections の図の番号はそのあとに続く。"
+  const parts = "図の部品（image / mermaid / graph / svg / timeline / beforeAfter / chart / stats）"
+  const conditions =
+    "名前が3つ以上出てきてつながる・流れや分岐がある・構造の前後がある・数が3つ以上ある"
+  if (preference === "text") {
+    return (
+      `${head}利用者は文を主に読む設定なので、次のどれかがある節がなければ図は置かない（figure を省く。省くと何も描かれない）: ${conditions}。` +
+      `ある節には${parts}を置いてよい。`
+    )
+  }
+  return (
+    `${head}次のどれかがあれば${parts}を置く: ${conditions}。` +
+    "作業のレポートの最小の形は、ここに図1つと、sections に表か箇条書き。" +
+    "どれにも当たらないときは figure を省く（省くと何も描かれない）。"
+  )
+}
 
 /** `report` の任意の `keyFigures` 引数（結論の直下に並べる数）の説明。使いどころの条は `REPORT_NOTATION_PROMPT` が持つ。 */
 export const REPORT_KEY_FIGURES_DESCRIPTION =

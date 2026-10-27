@@ -207,7 +207,7 @@ describe("report でターンを閉じる", () => {
     ).toMatchObject({ isError: false, endsTurn: true })
   })
 
-  it("figure の無い report・理由の無い none は形の検査で落ち、図の塊1つか none と理由で通る", async () => {
+  it("figure を省いた report は通り、理由の無い none は形の検査で落ち、図の塊1つか none と理由でも通る", async () => {
     const withFigure = (figure: unknown) => ({
       conclusion: ["架空の結論"],
       ...(figure === undefined ? {} : { figure }),
@@ -228,7 +228,8 @@ describe("report でターンを閉じる", () => {
       ].map((figure) => callTool(workServer(), "report", withFigure(figure))),
     )
 
-    expect(replies.map((reply) => reply.isError)).toEqual([true, true, true, true, false, false])
+    expect(replies.map((reply) => reply.isError)).toEqual([false, true, true, true, false, false])
+    expect(replies[0]).toEqual({ text: "架空の結論", isError: false, endsTurn: true })
     expect(replies[5]).toEqual({ text: "架空の結論", isError: false, endsTurn: true })
   })
 

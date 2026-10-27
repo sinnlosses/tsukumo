@@ -322,7 +322,7 @@ function sessionMode(
   reportFailure: (place: SwallowedFailurePlace, error: unknown) => void,
 ): SessionMode {
   if (!seed.chat) {
-    return { kind: "work", reportSchema }
+    return { kind: "work", reportSchema, figurePreference: seed.sessionDefault.figurePreference }
   }
 
   return {

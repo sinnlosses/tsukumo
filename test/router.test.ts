@@ -156,14 +156,22 @@ describe("createSocketRouter（session）", () => {
       model: "sonnet",
       effort: "high",
       permissionMode: "plan",
+      figurePreference: "text",
     })
 
     expect(result).toEqual({ ok: true })
-    expect(remembered).toEqual([{ model: "sonnet", effort: "high", permissionMode: "plan" }])
+    expect(remembered).toEqual([
+      { model: "sonnet", effort: "high", permissionMode: "plan", figurePreference: "text" },
+    ])
     expect(emitted).toEqual([
       {
         kind: "session-default-changed",
-        sessionDefault: { model: "sonnet", effort: "high", permissionMode: "plan" },
+        sessionDefault: {
+          model: "sonnet",
+          effort: "high",
+          permissionMode: "plan",
+          figurePreference: "text",
+        },
       },
     ])
   })

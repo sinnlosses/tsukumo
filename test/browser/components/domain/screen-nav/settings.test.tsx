@@ -183,7 +183,7 @@ describe("設定の歯車（帯の右端）", () => {
     showFace("セッションの既定")
 
     expect(current()).toEqual([null, "page", null, null, null])
-    expect(faceLabels()).toEqual(["モデル", "effort", "許可モード"])
+    expect(faceLabels()).toEqual(["モデル", "effort", "許可モード", "図の既定"])
 
     showFace("演出")
 
@@ -334,7 +334,14 @@ describe("設定の歯車（帯の右端）", () => {
 // 「届いた値をそのまま出す」「選ぶと `session.setSessionDefault` を送る」「全部許すは並べない」の3つ。
 describe("設定の歯車（新しいセッションの既定）", () => {
   it("届いた既定をそのまま出す", () => {
-    renderScreenNav({ sessionDefault: { model: "sonnet", effort: "high", permissionMode: "plan" } })
+    renderScreenNav({
+      sessionDefault: {
+        model: "sonnet",
+        effort: "high",
+        permissionMode: "plan",
+        figurePreference: "chart",
+      },
+    })
     openFace("セッションの既定")
 
     expect(defaultSelect("モデル").value).toBe("sonnet")
@@ -356,7 +363,14 @@ describe("設定の歯車（新しいセッションの既定）", () => {
   it("モデルを選ぶと、いまの effort・許可モードと一緒に session.setSessionDefault を送る", () => {
     const sent: unknown[] = []
     renderScreenNav(
-      { sessionDefault: { model: "opus", effort: "high", permissionMode: "plan" } },
+      {
+        sessionDefault: {
+          model: "opus",
+          effort: "high",
+          permissionMode: "plan",
+          figurePreference: "chart",
+        },
+      },
       (command) => sent.push(command),
     )
     openFace("セッションの既定")
@@ -369,6 +383,7 @@ describe("設定の歯車（新しいセッションの既定）", () => {
         model: "sonnet",
         effort: "high",
         permissionMode: "plan",
+        figurePreference: "chart",
       },
     ])
   })
@@ -391,7 +406,14 @@ describe("設定の歯車（新しいセッションの既定）", () => {
   it("引き出しの設定の面でモデルを選んでも、同じ session.setSessionDefault を送る", () => {
     const sent: unknown[] = []
     renderScreenNav(
-      { sessionDefault: { model: "opus", effort: "high", permissionMode: "plan" } },
+      {
+        sessionDefault: {
+          model: "opus",
+          effort: "high",
+          permissionMode: "plan",
+          figurePreference: "chart",
+        },
+      },
       (command) => sent.push(command),
     )
     fireEvent.click(screen.getByRole("button", { name: "やり取りとタスクを開く" }))
@@ -408,6 +430,7 @@ describe("設定の歯車（新しいセッションの既定）", () => {
         model: "sonnet",
         effort: "high",
         permissionMode: "plan",
+        figurePreference: "chart",
       },
     ])
   })
@@ -415,7 +438,14 @@ describe("設定の歯車（新しいセッションの既定）", () => {
   it("許可モードを選ぶと、いまのモデル・effort と一緒に session.setSessionDefault を送る", () => {
     const sent: unknown[] = []
     renderScreenNav(
-      { sessionDefault: { model: "haiku", effort: "medium", permissionMode: "auto" } },
+      {
+        sessionDefault: {
+          model: "haiku",
+          effort: "medium",
+          permissionMode: "auto",
+          figurePreference: "chart",
+        },
+      },
       (command) => sent.push(command),
     )
     openFace("セッションの既定")
@@ -428,6 +458,7 @@ describe("設定の歯車（新しいセッションの既定）", () => {
         model: "haiku",
         effort: "medium",
         permissionMode: "acceptEdits",
+        figurePreference: "chart",
       },
     ])
   })
@@ -455,7 +486,12 @@ describe("設定の歯車（新しいセッションの既定の effort）", () 
   it("既定のモデルが対応しないと対応表が言っていれば選べない", () => {
     renderScreenNav({
       model: "claude-opus-5",
-      sessionDefault: { model: "haiku", effort: "medium", permissionMode: "auto" },
+      sessionDefault: {
+        model: "haiku",
+        effort: "medium",
+        permissionMode: "auto",
+        figurePreference: "chart",
+      },
       modelEffortSupport: [OPUS_SUPPORT, HAIKU_SUPPORT],
     })
     openFace("セッションの既定")
@@ -467,7 +503,12 @@ describe("設定の歯車（新しいセッションの既定の effort）", () 
     const sent: unknown[] = []
     renderScreenNav(
       {
-        sessionDefault: { model: "opus", effort: "medium", permissionMode: "plan" },
+        sessionDefault: {
+          model: "opus",
+          effort: "medium",
+          permissionMode: "plan",
+          figurePreference: "chart",
+        },
         modelEffortSupport: [OPUS_SUPPORT],
       },
       (command) => sent.push(command),
@@ -482,6 +523,7 @@ describe("設定の歯車（新しいセッションの既定の effort）", () 
         model: "opus",
         effort: "xhigh",
         permissionMode: "plan",
+        figurePreference: "chart",
       },
     ])
   })

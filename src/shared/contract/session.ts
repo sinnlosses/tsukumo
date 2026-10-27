@@ -18,7 +18,7 @@ import {
   parsePromptImageThumbnail,
 } from "../session-driver/prompt-image.ts"
 import { MAX_SESSION_ID_LENGTH } from "../session/session-choice.ts"
-import { SESSION_DEFAULT_PERMISSION_MODES } from "../session/session-default.ts"
+import { FIGURE_PREFERENCES, SESSION_DEFAULT_PERMISSION_MODES } from "../session/session-default.ts"
 
 /**
  * 送った言葉をどう扱うか。
@@ -138,10 +138,10 @@ export const sessionContract = {
    */
   reflectAchievement: commandBase.input(z.object({ date: dateKeySchema })),
   /**
-   * 新しいセッションの既定（モデル・effort・許可モード）を覚える（帯の右端の歯車）。
+   * 新しいセッションの既定（モデル・effort・許可モード・図の既定）を覚える（帯の右端の歯車）。
    * いま動いているセッションには効かず、効くのは次に起こすときから。
    *
-   * 3つを1つのコマンドで運ぶのは、覚え先（`~/.tsukumo/state.json`）が1組で書き換わるものだから（1つだけ覚えている状態を作らない）。
+   * 4つを1つのコマンドで運ぶのは、覚え先（`~/.tsukumo/state.json`）が1組で書き換わるものだから（1つだけ覚えている状態を作らない）。
    * 「全部許す」は選択肢に無いので、届いても検証で落ちる（`SESSION_DEFAULT_PERMISSION_MODES`）。
    */
   setSessionDefault: commandBase.input(
@@ -149,6 +149,7 @@ export const sessionContract = {
       model: z.enum(MODEL_ALIASES),
       effort: z.enum(EFFORT_LEVELS),
       permissionMode: z.enum(SESSION_DEFAULT_PERMISSION_MODES),
+      figurePreference: z.enum(FIGURE_PREFERENCES),
     }),
   ),
 }

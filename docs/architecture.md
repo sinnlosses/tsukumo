@@ -112,3 +112,4 @@
 | `docs/architecture/adr/0033-timeline-block.md`                      | 時刻の軸に行ごとの帯を並べる図は、`timeline` の塊として HTML で描く（2026-10-24）                      | 採用                   |
 | `docs/architecture/adr/0034-figure-description-drawn-by-tsukumo.md` | 図は書き手が構造を記述し、tsukumo が決まった配色と配置規則で描く（2026-10-25）                         | 採用                   |
 | `docs/architecture/adr/0035-optional-figure-plugin.md`              | 既存の塊で描けない図は、任意の同梱プラグインのスキルが撮った PNG を `image` の塊で載せる（2026-10-26） | 採用                   |
+| `docs/architecture/adr/0036-optional-figure-and-preference.md`      | `report` の `figure` は省ける欄にし、図を置くかの既定は利用者の設定に持つ（2026-10-27）                | 採用                   |

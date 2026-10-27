@@ -122,15 +122,17 @@
     省くと、書かせた待ち `idle` の行（`docs/architecture/display/speech-convention.md`）が出る。その行がまだ書けていない間は、tsukumo の既定の1文が出る。
     記録を読み戻す側は、欄が無いものも読める。
     `report` の記録に写り、transcript から組み直しても同じ値が戻る。
-  - **必須の引数 `figure` にはレポートの図を1つ置くか、置かない理由を書かせる**（2026-10-13 決定。ADR 0028 の追記）。
-    形は図の塊1つ（`image`・`mermaid`・`graph`・`svg`・`beforeAfter`・`chart`・`timeline`・`stats`。`sections` の同じ塊と同じ形）か
-    `{ kind: "none", reason }` で、`reason` は `short-answer`・`no-shape`・`single-value`・`no-material` の4つ。
-    図を置く条件と理由の意味は引数の説明だけが持ち、`REPORT_NOTATION_PROMPT` の条8は欄を指す1行だけにする。
+  - **任意の引数 `figure` にはレポートの図を1つ置く。置かないときは省く**（2026-10-13 に必須にし、2026-10-27 に省ける欄へ改めた。ADR 0036）。
+    形は図の塊1つ（`image`・`mermaid`・`graph`・`svg`・`beforeAfter`・`chart`・`timeline`・`stats`。`sections` の同じ塊と同じ形）。
+    旧い形の `{ kind: "none", reason }`（`reason` は `short-answer`・`no-shape`・`single-value`・`no-material` の4つ）も受け、書き手には理由を言わせない。
+    図を置く条件は引数の説明だけが持ち、図を置くかの既定（図派 `chart`／文派 `text`）は新しいセッションの既定の4つ目（`figurePreference`）で、
+    起こすときの値が説明の文を変える（`text` は同じ置く条件を「なければ図は置かない・ある節には置いてよい」の言い方にする。図の塊を拒む検査は無い）。
+    `REPORT_NOTATION_PROMPT` の条8は欄を指す1行だけにする。
     図は `checks` の下・`sections` の上に、見出しの無い先頭の節として描き、図の番号は `sections` の図と通しで振る（`figure` の図が「図 1」）。
-    `none` は何も描かない（空の枠や札も置かない）。図の塊の検査（構文・はみ出し・種類）と画像の棚も、`figure` を先頭に含めて見る。
-    `reason` が本文と合わない回は差し戻す（規約違反の1ターン1回の枠。`no-shape` なのに `sections` に
+    省いた呼び出しと `none` は何も描かない（空の枠や札も置かない）。図の塊の検査（構文・はみ出し・種類）と画像の棚も、`figure` を先頭に含めて見る。
+    理由を書いた `none` が本文と合わない回は差し戻す（規約違反の1ターン1回の枠。`no-shape` なのに `sections` に
     `list` の `flow`・`beforeAfter`・`graph`・`mermaid`・`svg` がある回と、`short-answer` なのに節が2つ以上ある回）。
-    欄の無い古い transcript の `report` は、理由が `unrecorded` の `none` に畳んで読む（`unrecorded` は書き手には出さない）
+    省いた呼び出し・欄の無い古い transcript の `report`・形の崩れは、理由が `unrecorded` の `none` に畳んで読む（`unrecorded` は書き手には出さない）
 - ターンの途中の経過は `speak` で言う。雑談には `report` を使わない（1ターンに `speak` を何度か呼ぶのが普通の形なので、
   閉じるツールを置くと切れる）。`report` の外に書いたターンの本文（`assistant` のテキスト）は、`report` が1つでも
   呼ばれたターンでは画面に出さない。呼ばれなかったターンだけ、本文を詳細として扱い、「メインビュー」の選び方でレポートにする

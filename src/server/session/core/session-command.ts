@@ -33,7 +33,7 @@ export type SessionCommandPorts = {
   /** 依頼に添えた画像の原寸の棚（`prompt` を受けたときに置く。捨てるのはセッションの管理側）。 */
   readonly promptImageShelf: PromptImageShelf
   /**
-   * 新しいセッションの既定（モデル・effort・許可モード）を覚え、画面へ流す `session-default-changed` イベントを返す。
+   * 新しいセッションの既定（モデル・effort・許可モード・図の既定）を覚え、画面へ流す `session-default-changed` イベントを返す。
    * いま動いているセッションには効かない（効くのは次に起こすときから）。
    * 書き込みは失敗しても投げない口なので、返すイベントは常に1つ。
    */
@@ -193,6 +193,7 @@ export function sessionCommands(ports: SessionCommandPorts): SessionCommandTable
           model: input.model,
           effort: input.effort,
           permissionMode: input.permissionMode,
+          figurePreference: input.figurePreference,
         }),
       failure: FRAME_ERROR_REASON.sessionDefaultFailed,
     },

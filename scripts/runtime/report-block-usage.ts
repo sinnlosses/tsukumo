@@ -73,7 +73,7 @@ const FIGURE_KINDS: readonly string[] = reportFigureSchema.options.map(
   (option) => option.shape.kind.value,
 )
 
-/** `figure` を記録する前の行の理由。 */
+/** `figure` を省いた回・`figure` を記録する前の行・形の崩れの理由（この3つは記録から区別できない）。 */
 const UNRECORDED_REASON = "unrecorded"
 
 const argv = process.argv.slice(2)

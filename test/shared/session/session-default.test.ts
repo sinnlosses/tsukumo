@@ -33,17 +33,19 @@ function parseSessionDefault(value: unknown): unknown {
 }
 
 describe("session.setSessionDefault コマンド", () => {
-  it("モデル・effort・許可モードの組を受け付ける", () => {
+  it("モデル・effort・許可モード・図の既定の組を受け付ける", () => {
     expect(
       parseSessionDefault({
         model: "sonnet",
         effort: "high",
         permissionMode: "plan",
+        figurePreference: "text",
       }),
     ).toEqual({
       model: "sonnet",
       effort: "high",
       permissionMode: "plan",
+      figurePreference: "text",
     })
   })
 
@@ -53,23 +55,51 @@ describe("session.setSessionDefault コマンド", () => {
         model: "sonnet",
         effort: "medium",
         permissionMode: "bypassPermissions",
+        figurePreference: "chart",
       }),
     ).toBeUndefined()
   })
 
   it.each([
-    ["知らないモデル名", { model: "no-such-model", effort: "medium", permissionMode: "auto" }],
-    ["知らない effort", { model: "sonnet", effort: "no-such-effort", permissionMode: "auto" }],
+    [
+      "知らないモデル名",
+      {
+        model: "no-such-model",
+        effort: "medium",
+        permissionMode: "auto",
+        figurePreference: "chart",
+      },
+    ],
+    [
+      "知らない effort",
+      {
+        model: "sonnet",
+        effort: "no-such-effort",
+        permissionMode: "auto",
+        figurePreference: "chart",
+      },
+    ],
+    [
+      "知らない figurePreference",
+      { model: "sonnet", effort: "medium", permissionMode: "auto", figurePreference: "no-such" },
+    ],
   ])("%s は落とす", (_name, value) => {
     expect(parseSessionDefault(value)).toBeUndefined()
   })
 
-  it("effort が無いときは落とす（3つで1組）", () => {
+  it("effort が無いときは落とす（4つで1組）", () => {
     expect(
       parseSessionDefault({
         model: "sonnet",
         permissionMode: "auto",
+        figurePreference: "chart",
       }),
+    ).toBeUndefined()
+  })
+
+  it("figurePreference が無いときは落とす（4つで1組）", () => {
+    expect(
+      parseSessionDefault({ model: "sonnet", effort: "medium", permissionMode: "auto" }),
     ).toBeUndefined()
   })
 })

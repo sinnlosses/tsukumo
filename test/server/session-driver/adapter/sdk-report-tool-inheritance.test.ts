@@ -178,6 +178,7 @@ describe("report の差し戻しのあとの出し直し", () => {
 
     expect(missing.reply.isError).toBe(true)
     expect(missing.reply.text).toContain("closing")
+    expect(missing.reply.text).not.toContain("figure")
     expect(live.drafts).toHaveLength(1)
     expect(resent.drawn).toMatchObject({ conclusion: "架空の結論", favor: "架空のお願い" })
     expectJudgedAsDrawn(live.drafts.at(-1), resent.drawn)

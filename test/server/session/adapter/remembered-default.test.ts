@@ -39,7 +39,7 @@ describe("readRememberedCharacter", () => {
 // そちらが持ち主として検査する。
 // ここで確かめるのは `readRememberedCharacter` 自身の読み取りまで（このファイル冒頭の describe）。
 
-// 新しいセッションの既定（モデル・effort・許可モード。docs/architecture/screen-design.md「設定の置き場所」）。壊れた
+// 新しいセッションの既定（モデル・effort・許可モード・図の既定。docs/architecture/screen-design.md「設定の置き場所」）。壊れた
 // state.json でも起動を止めないので、読めないときは同梱の既定へ畳む。
 describe("readRememberedSessionDefault", () => {
   it("ファイルが無いときは同梱の既定", () => {
@@ -99,7 +99,39 @@ describe("readRememberedSessionDefault", () => {
       model: "sonnet",
       effort: "medium",
       permissionMode: "plan",
+      figurePreference: "chart",
     })
+  })
+
+  it("figurePreference の無い古い state.json でも、ほかの3つは読めて図の既定だけ同梱の既定に落ちる", () => {
+    writeFileSync(
+      statePath(),
+      JSON.stringify({
+        sessionDefault: { model: "sonnet", effort: "high", permissionMode: "plan" },
+      }),
+    )
+
+    expect(readRememberedSessionDefault(statePath())).toEqual({
+      model: "sonnet",
+      effort: "high",
+      permissionMode: "plan",
+      figurePreference: "chart",
+    })
+  })
+
+  it("知らない figurePreference が書かれているときは4つとも同梱の既定に落ちる", () => {
+    writeFileSync(
+      statePath(),
+      JSON.stringify({
+        sessionDefault: {
+          model: "sonnet",
+          effort: "high",
+          permissionMode: "plan",
+          figurePreference: "no-such-preference",
+        },
+      }),
+    )
+    expect(readRememberedSessionDefault(statePath())).toEqual(BUILTIN_SESSION_DEFAULT)
   })
 
   it("知らない effort が書かれているときは3つとも同梱の既定に落ちる", () => {
@@ -116,7 +148,12 @@ describe("readRememberedSessionDefault", () => {
     writeFileSync(
       statePath(),
       JSON.stringify({
-        sessionDefault: { model: "sonnet", effort: "high", permissionMode: "plan" },
+        sessionDefault: {
+          model: "sonnet",
+          effort: "high",
+          permissionMode: "plan",
+          figurePreference: "text",
+        },
       }),
     )
 
@@ -124,6 +161,7 @@ describe("readRememberedSessionDefault", () => {
       model: "sonnet",
       effort: "high",
       permissionMode: "plan",
+      figurePreference: "text",
     })
   })
 })
@@ -138,7 +176,7 @@ describe("writeRememberedSessionDefault", () => {
   it("既定を書いても覚えたキャラクターは残る", () => {
     writeRememberedCharacter("tsukumo", statePath())
     writeRememberedSessionDefault(
-      { model: "sonnet", effort: "high", permissionMode: "plan" },
+      { model: "sonnet", effort: "high", permissionMode: "plan", figurePreference: "text" },
       statePath(),
     )
 
@@ -147,12 +185,13 @@ describe("writeRememberedSessionDefault", () => {
       model: "sonnet",
       effort: "high",
       permissionMode: "plan",
+      figurePreference: "text",
     })
   })
 
   it("キャラクターを覚え直しても既定は残る", () => {
     writeRememberedSessionDefault(
-      { model: "sonnet", effort: "high", permissionMode: "plan" },
+      { model: "sonnet", effort: "high", permissionMode: "plan", figurePreference: "text" },
       statePath(),
     )
     writeRememberedCharacter("kagami", statePath())
@@ -161,6 +200,7 @@ describe("writeRememberedSessionDefault", () => {
       model: "sonnet",
       effort: "high",
       permissionMode: "plan",
+      figurePreference: "text",
     })
     expect(readRememberedCharacter(statePath())).toBe("kagami")
   })

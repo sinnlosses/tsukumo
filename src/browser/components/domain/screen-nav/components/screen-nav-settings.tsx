@@ -3,7 +3,10 @@
 
 import { useId, type ReactElement } from "react"
 
-import { isSessionDefaultPermissionMode } from "../../../../../shared/session/session-default.ts"
+import {
+  isSessionDefaultPermissionMode,
+  type FigurePreference,
+} from "../../../../../shared/session/session-default.ts"
 import { EFFORT_PLACEHOLDER_VALUE } from "../../../../domain/effort-label.ts"
 import { PERMISSION_MODE_LABELS } from "../../../../domain/permission-mode-label.ts"
 import { REVEAL_SPEED_LABELS } from "../../../../domain/reveal-speed.ts"
@@ -38,6 +41,20 @@ const REVEAL_SPEED_OPTIONS = REVEAL_SPEED_LABELS.map(([value, label]): RunSettin
   icon: undefined,
   row: <RunSettingName danger={false}>{label}</RunSettingName>,
 }))
+
+const FIGURE_PREFERENCE_LABELS = [
+  ["chart", "図を置く"],
+  ["text", "文を主にする"],
+] as const satisfies readonly (readonly [FigurePreference, string])[]
+
+const FIGURE_PREFERENCE_OPTIONS = FIGURE_PREFERENCE_LABELS.map(
+  ([value, label]): RunSettingSelectOption => ({
+    value,
+    disabled: false,
+    icon: undefined,
+    row: <RunSettingName danger={false}>{label}</RunSettingName>,
+  }),
+)
 
 /** セッションの既定の面（見出しなし）。 */
 export function ScreenNavSettingsSessionDefaultFace(props: ScreenNavSettingsProps): ReactElement {
@@ -130,6 +147,32 @@ export function ScreenNavSettingsSessionDefaultFace(props: ScreenNavSettingsProp
           title={undefined}
           dot="none"
           onChange={settings.sessionDefault.onChangePermissionMode}
+        />
+      </HStack>
+      <HStack
+        element="div"
+        name={{ kind: "none" }}
+        gap="lg"
+        align="center"
+        justify="between"
+        wrap="nowrap"
+        className={styles["screen-nav-settings-row"]}
+      >
+        <label htmlFor={`${fieldId}-default-figure-preference`}>図の既定</label>
+        <RunSettingSelect
+          id={`${fieldId}-default-figure-preference`}
+          ariaLabel="新しいセッションの図の既定"
+          heading="図の既定"
+          value={settings.sessionDefault.figurePreference}
+          options={FIGURE_PREFERENCE_OPTIONS}
+          disabled={false}
+          danger={false}
+          rail={false}
+          layout="list"
+          mouth="field"
+          title={undefined}
+          dot="none"
+          onChange={settings.sessionDefault.onChangeFigurePreference}
         />
       </HStack>
     </>

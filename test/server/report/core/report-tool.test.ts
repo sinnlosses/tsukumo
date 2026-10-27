@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import {
   createReportGate,
-  REPORT_FIGURE_DESCRIPTION,
+  reportFigureDescription,
   REPORT_TOOL_DESCRIPTION,
 } from "../../../../src/server/report/core/report-tool.ts"
 import {
@@ -19,16 +19,40 @@ describe("REPORT_TOOL_DESCRIPTION", () => {
   })
 })
 
-describe("REPORT_FIGURE_DESCRIPTION", () => {
-  it("figure に置ける図の塊の種類と、none の理由をすべて名指す", () => {
-    const blockKinds = reportFigureSchema.options
-      .map((option) => option.shape.kind.value)
-      .filter((kind) => kind !== "none")
+describe("reportFigureDescription", () => {
+  it.each(["chart", "text"] as const)(
+    "%s でも、figure に置ける図の塊の種類をすべて名指し、none の理由は書き手に見せない",
+    (preference) => {
+      const description = reportFigureDescription(preference)
+      const blockKinds = reportFigureSchema.options
+        .map((option) => option.shape.kind.value)
+        .filter((kind) => kind !== "none")
 
-    for (const name of [...blockKinds, ...REPORT_FIGURE_NONE_REASONS]) {
-      expect(REPORT_FIGURE_DESCRIPTION).toContain(name)
-    }
+      for (const name of blockKinds) {
+        expect(description).toContain(name)
+      }
+      for (const reason of REPORT_FIGURE_NONE_REASONS) {
+        expect(description).not.toContain(reason)
+      }
+    },
+  )
+
+  it("text だけが図を置かない既定の文を足し、chart の文とは違う", () => {
+    expect(reportFigureDescription("text")).not.toBe(reportFigureDescription("chart"))
+    expect(reportFigureDescription("text")).toContain("節がなければ図は置かない")
+    expect(reportFigureDescription("chart")).not.toContain("図は置かない")
   })
+
+  it.each(["chart", "text"] as const)(
+    "%s の文は置く条件を1度だけ言い、同じ条件に「置く」と「置かない」の両方を向けない",
+    (preference) => {
+      const description = reportFigureDescription(preference)
+
+      expect(description.split("名前が3つ以上出てきてつながる")).toHaveLength(2)
+      expect(description.includes("を置く:")).toBe(preference === "chart")
+      expect(description.includes("置いてよい")).toBe(preference === "text")
+    },
+  )
 })
 
 const INIT: SessionEvent = {

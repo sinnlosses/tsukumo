@@ -17,6 +17,7 @@ import {
 import { reportRetrospectiveSchema } from "../../../shared/report/report-retrospective.ts"
 import { type ReportTask, reportTaskSchema } from "../../../shared/report/report-task.ts"
 import type { ReportSchemaVariant } from "../../../shared/report/schema-variant.ts"
+import type { FigurePreference } from "../../../shared/session/session-default.ts"
 import { WORK_PLAN_CLOSINGS } from "../../../shared/session/work-plan.ts"
 import { REPORT_TOOL_NAME } from "../../core/tsukumo-tool-name.ts"
 import { readReportBlockFiles } from "../../report/adapter/report-file.ts"
@@ -26,7 +27,7 @@ import {
   REPORT_CHECKS_DESCRIPTION,
   REPORT_RETROSPECTIVE_DESCRIPTION,
   REPORT_CLOSING_DESCRIPTION,
-  REPORT_FIGURE_DESCRIPTION,
+  reportFigureDescription,
   REPORT_FIGURE_SHORT_TYPE_NOTE,
   REPORT_KEY_FIGURES_DESCRIPTION,
   REPORT_SECTIONS_DESCRIPTION,
@@ -74,6 +75,7 @@ export function reportTool(
   onReportTitle: (title: string) => void,
   cwd: string,
   reportSchema: ReportSchemaVariant,
+  figurePreference: FigurePreference,
 ) {
   const expressionNames = expressions.map((choice) => choice.name)
   const answer = async (input: unknown) => {
@@ -116,13 +118,18 @@ export function reportTool(
   }
 
   if (reportSchema === "json-schema") {
-    return tool(REPORT_TOOL_NAME, REPORT_TOOL_DESCRIPTION, reportInputShape(expressions), answer)
+    return tool(
+      REPORT_TOOL_NAME,
+      REPORT_TOOL_DESCRIPTION,
+      reportInputShape(expressions, figurePreference),
+      answer,
+    )
   }
-  const strictInput = z.object(reportInputShape(expressions))
+  const strictInput = z.object(reportInputShape(expressions, figurePreference))
   return tool(
     REPORT_TOOL_NAME,
     REPORT_TOOL_DESCRIPTION,
-    shortTypeInputShape(expressions),
+    shortTypeInputShape(expressions, figurePreference),
     async (input) => {
       const parsed = strictInput.safeParse(input)
       return parsed.success
@@ -138,10 +145,10 @@ export function reportTool(
 /**
  * 組んだ値で省けない欄。モデルに渡す schema ではどれも任意で、省いた欄は差し戻した呼び出しから引き継ぐ。
  * `sessionRemaining` は作業を終えた（`task.outcome` が `finished`）ときだけ省ける。
+ * `figure` は省ける（省くと図なしとして描かれる）。
  */
 const ALL_REQUIRED_REPORT_FIELDS = [
   "conclusion",
-  "figure",
   "sessionRemaining",
   "closing",
 ] as const satisfies readonly ReportArgumentField[]
@@ -165,7 +172,10 @@ function missingFieldsText(missing: readonly ReportArgumentField[]): string {
 }
 
 /** モデルに渡す `report` の引数の形。欄はどれも任意。 */
-function reportInputShape(expressions: readonly ExpressionChoice[]) {
+function reportInputShape(
+  expressions: readonly ExpressionChoice[],
+  figurePreference: FigurePreference,
+) {
   return {
     task: reportTaskSchema.optional().describe(REPORT_TASK_DESCRIPTION),
     workPlanClosing: z
@@ -179,7 +189,7 @@ function reportInputShape(expressions: readonly ExpressionChoice[]) {
         `結論。レポートの冒頭の文を1要素1文（句点まで）で1〜${String(MAX_CONCLUSION_SENTENCES)}要素。1文目は全角${String(MAX_FIRST_SENTENCE)}字以内（目安は${String(FIRST_SENTENCE_TARGET)}字、読点は${String(FIRST_SENTENCE_TARGET_COMMAS)}つまで）。悪い例: 「設定の読み込みを共通化し、型を整理し、テストも足して、起動の流れを書き換えた」（変更の列挙）。良い例: 「次から設定の書き間違いが起動時に分かる」（読み手から見た変化）。2文目は「それで何が良いか」か「変えていないもの」。例: ["…分かる。", "読み方は変えていない。"]`,
       ),
     keyFigures: keyFiguresSchema.optional().describe(REPORT_KEY_FIGURES_DESCRIPTION),
-    figure: reportFigureSchema.optional().describe(REPORT_FIGURE_DESCRIPTION),
+    figure: reportFigureSchema.optional().describe(reportFigureDescription(figurePreference)),
     sections: z.array(reportSectionSchema).min(1).optional().describe(REPORT_SECTIONS_DESCRIPTION),
     retrospective: reportRetrospectiveSchema.optional().describe(REPORT_RETROSPECTIVE_DESCRIPTION),
     favor: z
@@ -201,9 +211,12 @@ function reportInputShape(expressions: readonly ExpressionChoice[]) {
 }
 
 /** `short-type` のときモデルに渡す引数の形。`figure`・`sections`・`retrospective` の塊だけを緩い形にし、ほかの欄と説明は `json-schema` と同じ。 */
-function shortTypeInputShape(expressions: readonly ExpressionChoice[]) {
+function shortTypeInputShape(
+  expressions: readonly ExpressionChoice[],
+  figurePreference: FigurePreference,
+) {
   return {
-    ...reportInputShape(expressions),
+    ...reportInputShape(expressions, figurePreference),
     retrospective: reportRetrospectiveSchema
       .extend({
         blocks: z
@@ -214,7 +227,7 @@ function shortTypeInputShape(expressions: readonly ExpressionChoice[]) {
       .optional()
       .describe(REPORT_RETROSPECTIVE_DESCRIPTION),
     figure: LOOSE_OBJECT.optional().describe(
-      `${REPORT_FIGURE_DESCRIPTION}${REPORT_FIGURE_SHORT_TYPE_NOTE}`,
+      `${reportFigureDescription(figurePreference)}${REPORT_FIGURE_SHORT_TYPE_NOTE}`,
     ),
     sections: z
       .array(LOOSE_OBJECT)
