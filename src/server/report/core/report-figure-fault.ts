@@ -7,13 +7,14 @@ import {
   type ReportGraph,
 } from "../../../shared/report/report-block-diagram.ts"
 import type { ReportBlock, ReportSection } from "../../../shared/report/report-block.ts"
+import { leafBlocksOf } from "../../../shared/report/row-panel-block.ts"
 
 const MERMAID_KINDS: ReadonlySet<string> = new Set(REPORT_MERMAID_KINDS)
 
 /** `mermaid` の塊のソース。塊の出現順に並び、`beforeAfter` は前の側が先。 */
 export function mermaidSourcesInSections(sections: readonly ReportSection[]): readonly string[] {
   return sections
-    .flatMap((section) => section.blocks)
+    .flatMap((section) => leafBlocksOf(section.blocks))
     .flatMap((block) => {
       switch (block.kind) {
         case "mermaid":
@@ -96,7 +97,7 @@ export type GraphFault = { readonly block: number; readonly line: number }
 
 export function graphFaultsInSections(sections: readonly ReportSection[]): readonly GraphFault[] {
   return sections
-    .flatMap((section) => section.blocks)
+    .flatMap((section) => leafBlocksOf(section.blocks))
     .flatMap((block): readonly ReportGraph[] => (block.kind === "graph" ? [block] : []))
     .flatMap((graph, graphIndex) =>
       readGraphSource(graph.source).brokenLines.map((line) => ({ block: graphIndex + 1, line })),
@@ -111,7 +112,7 @@ export function graphToneFaultsInSections(
   sections: readonly ReportSection[],
 ): readonly ToneFault[] {
   return sections
-    .flatMap((section) => section.blocks)
+    .flatMap((section) => leafBlocksOf(section.blocks))
     .flatMap((block): readonly ReportGraph[] => (block.kind === "graph" ? [block] : []))
     .flatMap((graph, graphIndex) => {
       const { nodes, edges, groups } = readGraphSource(graph.source)
@@ -125,7 +126,7 @@ export function graphToneFaultsInSections(
 
 function svgFiguresInSections(sections: readonly ReportSection[]): readonly SvgFigure[] {
   return sections
-    .flatMap((section) => section.blocks)
+    .flatMap((section) => leafBlocksOf(section.blocks))
     .flatMap((block): readonly SvgFigure[] => {
       switch (block.kind) {
         case "svg":

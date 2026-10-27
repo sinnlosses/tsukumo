@@ -1,0 +1,98 @@
+{
+  "name": "row-panel-status",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "架空のタスクの状態を一覧で見たい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 300,
+      "event": {
+        "kind": "speech",
+        "text": "数と打つコマンドを横に並べて、一覧は枠にまとめるね。",
+        "expression": "default"
+      }
+    },
+    {
+      "afterMs": 1000,
+      "event": {
+        "kind": "report",
+        "task": { "kind": "none" },
+        "toolUseId": "fake-row-panel-status",
+        "conclusion": "架空の結論: いまループに乗るのは 8 件で、保留の 2 件は手で戻せば乗る。",
+        "sections": [
+          {
+            "heading": "架空の件数",
+            "shapeTag": "attribute",
+            "blocks": [
+              {
+                "kind": "row",
+                "blocks": [
+                  {
+                    "kind": "stats",
+                    "items": [
+                      { "value": "8", "label": "ループに乗る" },
+                      { "before": "13", "value": "11", "label": "保留", "better": "down" },
+                      { "value": "1", "label": "着手中" }
+                    ]
+                  },
+                  {
+                    "kind": "code",
+                    "language": "sh",
+                    "source": "tw edit FAKE-101 --status todo\ntw edit FAKE-102 --status todo"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "heading": "架空の一覧",
+            "shapeTag": "attribute",
+            "blocks": [
+              {
+                "kind": "panel",
+                "title": "いまループに乗る 8 件",
+                "blocks": [
+                  {
+                    "kind": "table",
+                    "title": "架空の着手前のタスク",
+                    "columns": ["ID", "題", "難しさ"],
+                    "rows": [
+                      ["FAKE-201", "架空の一覧の行を詰める", "low"],
+                      ["FAKE-202", "架空の帯の色を直す", "low"],
+                      ["FAKE-203", "架空の検査を足す", "medium"],
+                      ["FAKE-204", "架空の文書を直す", "low"],
+                      ["FAKE-205", "架空の画を撮り直す", "low"],
+                      ["FAKE-206", "架空の型を分ける", "medium"],
+                      ["FAKE-207", "架空の名前を揃える", "low"],
+                      ["FAKE-208", "架空の古い枝を外す", "high"]
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "favor": "",
+        "closing": { "kind": "speech", "text": "まとめたよ！", "expression": "proud" }
+      }
+    },
+    {
+      "afterMs": 1050,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-row-panel-status",
+        "content": "ok",
+        "isError": false
+      }
+    },
+    {
+      "afterMs": 1800,
+      "event": { "kind": "turn-finished", "outcome": { "kind": "completed" } }
+    }
+  ]
+}

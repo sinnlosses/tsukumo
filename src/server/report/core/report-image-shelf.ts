@@ -13,6 +13,7 @@ import { sumBy } from "remeda"
 
 import type { ReportSection } from "../../../shared/report/report-block.ts"
 import type { ReportImageSize } from "../../../shared/report/report-image.ts"
+import { leafBlocksOf } from "../../../shared/report/row-panel-block.ts"
 import type { PromptImageMediaType } from "../../../shared/session-driver/prompt-image.ts"
 import type { SessionState } from "../../../shared/session/session-state.ts"
 import { imageSizeOf } from "./image-size.ts"
@@ -104,7 +105,7 @@ export function createReportImageShelf(): ReportImageShelf {
 /** レポートの `image` の塊と `beforeAfter` の画像の側が指すパス（空のパスは除く）。 */
 export function reportImagePaths(sections: readonly ReportSection[]): readonly string[] {
   return sections
-    .flatMap((section) => section.blocks)
+    .flatMap((section) => leafBlocksOf(section.blocks))
     .flatMap((block) => {
       switch (block.kind) {
         case "image":

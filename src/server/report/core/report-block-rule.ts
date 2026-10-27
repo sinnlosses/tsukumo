@@ -1,9 +1,16 @@
 // レポートの検査のうち、塊の形（数・順・並び・種類）を判定する述語。
 
+import { sumBy } from "remeda"
+
 import { type TableCell, tableRowCells } from "../../../shared/report/report-block-comparison.ts"
-import type { ReportBlock, ReportSection } from "../../../shared/report/report-block.ts"
+import type {
+  ReportBlock,
+  ReportSection,
+  SectionBlock,
+} from "../../../shared/report/report-block.ts"
 import { SENTENCE_CELL_LENGTH } from "../../../shared/report/report-limit.ts"
 import { textLengthOf } from "./markdown-tree.ts"
+import { hasNestedFold } from "./report-markdown-notation.ts"
 import type { CardsFault } from "./report-violation.ts"
 
 /** 流れ・つながり・構造を描く塊か（`no-shape` と合わない塊）。 */
@@ -48,20 +55,33 @@ const VERDICT_ORDER = {
   number
 >
 
+/** 縦に続く `note` の数。`panel` の子は縦に積むので同じく数え、`row` の子は横に並ぶので数えない。 */
 export function crowdedNoteCount(sections: readonly ReportSection[]): number {
-  return sections.reduce(
-    (total, section) =>
-      total +
-      section.blocks.filter(
-        (block, index) =>
-          block.kind === "note" &&
-          block.tone !== "warn" &&
-          block.tone !== "ng" &&
-          (section.blocks[index - 1]?.kind === "note" ||
-            (index === 0 && section.heading.trim() !== "")),
-      ).length,
-    0,
+  return sumBy(
+    sections,
+    (section) =>
+      crowdedNotesIn(section.blocks, section.heading.trim() !== "") +
+      sumBy(section.blocks, (block) =>
+        block.kind === "panel" ? crowdedNotesIn(block.blocks, false) : 0,
+      ),
   )
+}
+
+/** `fold` を持つ `row`・`panel` のうち、子に `fold` か `<details>` があって描くと畳みが入れ子になる数。 */
+export function nestedArrangedFoldCount(sections: readonly ReportSection[]): number {
+  return sections
+    .flatMap((section) => section.blocks)
+    .filter(
+      (block) =>
+        (block.kind === "row" || block.kind === "panel") &&
+        block.fold.trim() !== "" &&
+        block.blocks.some(
+          (child) =>
+            child.fold.trim() !== "" ||
+            (child.kind === "markdown" &&
+              hasNestedFold({ fold: block.fold, markdown: child.markdown })),
+        ),
+    ).length
 }
 
 /** `beforeAfter` の画像の側の `region` が、画像の外に出る、または幅か高さが 0 以下の塊か。 */
@@ -137,4 +157,15 @@ function cellLength(cell: TableCell): number {
   if (typeof cell === "string") return textLengthOf(cell)
   if ("tag" in cell) return textLengthOf(cell.tag)
   return "text" in cell ? textLengthOf(cell.text) : textLengthOf(cell.from) + textLengthOf(cell.to)
+}
+
+/** 並びの中で、`note` の直後か見出しの直後に置いた `note`（`warn`・`ng` を除く）の数。 */
+function crowdedNotesIn(blocks: readonly SectionBlock[], headed: boolean): number {
+  return blocks.filter(
+    (block, index) =>
+      block.kind === "note" &&
+      block.tone !== "warn" &&
+      block.tone !== "ng" &&
+      (blocks[index - 1]?.kind === "note" || (index === 0 && headed)),
+  ).length
 }

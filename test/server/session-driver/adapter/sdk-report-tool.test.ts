@@ -299,7 +299,7 @@ describe("report の本文（sections）", () => {
     )
 
     expect(Object.keys(schema.definitions).toSorted()).toEqual(
-      [...SHARED_BLOCK_DEFINITIONS, "ReportBlock"].toSorted(),
+      [...SHARED_BLOCK_DEFINITIONS, "ReportBlock", "SectionBlock"].toSorted(),
     )
     expect(figureRefs.toSorted()).toEqual(
       SHARED_BLOCK_DEFINITIONS.filter(

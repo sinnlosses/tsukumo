@@ -21,6 +21,7 @@ import {
   MAX_TABLE_ROWS,
 } from "../../../shared/report/report-limit.ts"
 import { drawnSectionsOf } from "../../../shared/report/report-retrospective.ts"
+import { leafBlocksOf } from "../../../shared/report/row-panel-block.ts"
 import { codeBlockMatchesFile } from "./code-block-match.ts"
 import { figureNumberFaults } from "./figure-number-fault.ts"
 import { brokenInlineMarks } from "./inline-mark-fault.ts"
@@ -38,6 +39,7 @@ import {
   isRaggedTable,
   isSentenceTable,
   isVerdictOrdered,
+  nestedArrangedFoldCount,
 } from "./report-block-rule.ts"
 import {
   graphFaultsInSections,
@@ -60,7 +62,7 @@ import { timelineFaults } from "./timeline-fault.ts"
 
 /** レポートの規約違反を並べる。空なら違反は無い。 */
 export function reportViolations(report: ReportDraft): readonly ReportViolation[] {
-  const blocks = report.sections.flatMap((section) => section.blocks)
+  const blocks = report.sections.flatMap((section) => leafBlocksOf(section.blocks))
   const notations = notationsInSections(report.sections)
   const badCards = badCardsIn(blocks)
   const mismatchedCodeBlocks = blocks
@@ -75,7 +77,7 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
   const firstSentenceLength = report.conclusionSentenceChars[0] ?? 0
 
   const drawnSections = drawnSectionsOf(report)
-  const drawnBlocks = drawnSections.flatMap((section) => section.blocks)
+  const drawnBlocks = drawnSections.flatMap((section) => leafBlocksOf(section.blocks))
   const svgFaults = svgFaultsInSections(drawnSections)
   const svgToneFaults = svgToneFaultsInSections(drawnSections)
   const graphFaults = graphFaultsInSections(drawnSections)
@@ -93,7 +95,9 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
     { kind: "crowded-notes", count: crowdedNoteCount(report.sections) },
     {
       kind: "nested-fold",
-      count: blocks.filter((block) => block.kind === "markdown" && hasNestedFold(block)).length,
+      count:
+        blocks.filter((block) => block.kind === "markdown" && hasNestedFold(block)).length +
+        nestedArrangedFoldCount(report.sections),
     },
     {
       kind: "unordered-options",
@@ -214,7 +218,7 @@ function figureContradiction(
   figure: RecordedReportFigure,
   sections: readonly ReportSection[],
 ): Extract<ReportViolation, { readonly kind: "figure-contradiction" }> {
-  const blocks = sections.flatMap((section) => section.blocks)
+  const blocks = sections.flatMap((section) => leafBlocksOf(section.blocks))
   if (figure.kind === "none" && figure.reason === "no-shape") {
     return {
       kind: "figure-contradiction",

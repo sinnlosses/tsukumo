@@ -6,6 +6,7 @@ import {
   parseReportSections,
   type ReportBlock,
 } from "../../../src/shared/report/report-block.ts"
+import { leafBlocksOf } from "../../../src/shared/report/row-panel-block.ts"
 import { reportOfSections } from "../../fixture/report-event.ts"
 import { markdownOf } from "../../fixture/report-markdown.ts"
 
@@ -26,6 +27,9 @@ const parseInSections = (value: unknown) =>
   parseReportSections([{ heading: "", shapeTag: "quantity", blocks: [value] }])
 
 const firstBlock = (value: unknown): unknown => parseInSections(value).sections[0]?.blocks[0]
+
+const leafInSections = (value: unknown): ReportBlock | undefined =>
+  leafBlocksOf(parseInSections(value).sections[0]?.blocks ?? [])[0]
 
 /** 入れ子の中の文字・数の葉を、深さを問わず並びで集める。 */
 function leavesOf(value: unknown): readonly (string | number)[] {
@@ -91,7 +95,7 @@ describe("plot の受け付け", () => {
   })
 
   it("form に table を書くと表として描かれ、題は表の番号つきで question、列名と行は data から起こす", () => {
-    const block = parseInSections(plot({ form: "table" })).sections[0]?.blocks[0]
+    const block = leafInSections(plot({ form: "table" }))
     if (block === undefined) throw new Error("plot の塊が受け付けられなかった")
 
     const table: ReportBlock = {
@@ -114,8 +118,8 @@ describe("plot の受け付け", () => {
   })
 
   it.each([["bar"]])("form に %s を書いても、決定表と同じ形なら省いたときと同じに描く", (form) => {
-    const block = parseInSections(plot({ form })).sections[0]?.blocks[0]
-    const auto = parseInSections(plot()).sections[0]?.blocks[0]
+    const block = leafInSections(plot({ form }))
+    const auto = leafInSections(plot())
     if (block === undefined || auto === undefined) {
       throw new Error("plot の塊が受け付けられなかった")
     }

@@ -3,6 +3,7 @@
 import { type FigureHardRuleName, plotFormOf } from "../../../shared/report/figure-decision.ts"
 import type { ReportPlot } from "../../../shared/report/figure-grammar.ts"
 import { drawnSectionsOf } from "../../../shared/report/report-retrospective.ts"
+import { leafBlocksOf } from "../../../shared/report/row-panel-block.ts"
 import { FIGURE_PREFERENCES } from "../../../shared/session/session-default.ts"
 import type { ReportDraft } from "./report-violation.ts"
 
@@ -20,7 +21,7 @@ export function plotFormFaults(
   report: Pick<ReportDraft, "figure" | "sections" | "retrospective">,
 ): PlotFormFaults {
   const plots = drawnSectionsOf(report)
-    .flatMap((section) => section.blocks)
+    .flatMap((section) => leafBlocksOf(section.blocks))
     .flatMap((block): readonly ReportPlot[] => (block.kind === "plot" ? [block] : []))
   return {
     refused: plots.flatMap((plot) => {

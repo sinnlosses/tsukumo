@@ -12,7 +12,7 @@ import { plotChartOf } from "./plot-chart.ts"
 import { plotGaugeOf } from "./plot-gauge.ts"
 import { plotHistogramOf } from "./plot-histogram.ts"
 import { plotScatterOf } from "./plot-scatter.ts"
-import type { ReportBlock, ReportSection } from "./report-block.ts"
+import type { ReportBlock, ReportSection, SectionBlock } from "./report-block.ts"
 import { captionedMarkdown, type CaptionKind } from "./report-caption.ts"
 import { compareMarkdown, beforeAfterMarkdown } from "./report-comparison-markdown.ts"
 import { chartConfigOf, svgHtml, withSequenceAutonumber } from "./report-diagram-markdown.ts"
@@ -30,6 +30,7 @@ import {
   tableMarkdown,
   tagTonesOf,
 } from "./report-table-markdown.ts"
+import { arrangedBlockMarkdown } from "./row-panel-markdown.ts"
 import { timelineHtml } from "./timeline-markdown.ts"
 
 type CaptionCounts = Readonly<Record<CaptionKind, number>>
@@ -43,6 +44,12 @@ type SectionsFold = {
 type GutterGroup = {
   readonly body: string
   readonly notes: readonly string[]
+}
+
+/** 塊を1つずつ足していく途中の、本文の位置の包みの並びと、ここまでに数えた題の番号。 */
+type BlocksFold = {
+  readonly groups: readonly GutterGroup[]
+  readonly counts: CaptionCounts
 }
 
 /**
@@ -64,6 +71,7 @@ export function reportSectionsMarkdown(
  * 番号は題が空でも、`fold` の中でも数える。
  * 塊の `aside` と `memo` の `note` は傍注になり、直前の塊と一緒に包む（{@link gutterGroupMarkdown}）。
  * `memo` の `note` は本文の位置に残さない。節の最初の `memo` は塊の無い包みになる。
+ * `row`・`panel` は子を葉の塊と同じ手で描き、1つの包みにする（{@link withArrangedBlock}）。
  */
 export function reportSectionMarkdowns(
   sections: readonly ReportSection[],
@@ -72,30 +80,11 @@ export function reportSectionMarkdowns(
   const tagTones = tagTonesOf(sections)
   const { parts } = sections.reduce<SectionsFold>(
     (acc, section) => {
-      const blocks = section.blocks.reduce<{
-        readonly groups: readonly GutterGroup[]
-        readonly counts: CaptionCounts
-      }>(
-        (blockAcc, block) => {
-          const kind = captionKindOf(block)
-          const counts =
-            kind === undefined
-              ? blockAcc.counts
-              : { ...blockAcc.counts, [kind]: blockAcc.counts[kind] + 1 }
-          const ordinal = kind === undefined ? 0 : counts[kind]
-          const notes = gutterNotesOf(block)
-          const last = blockAcc.groups.at(-1)
-          return {
-            groups:
-              isMemoNote(block) && last !== undefined
-                ? [...blockAcc.groups.slice(0, -1), { ...last, notes: [...last.notes, ...notes] }]
-                : [
-                    ...blockAcc.groups,
-                    { body: foldedBlockMarkdown(block, imageSource, ordinal, tagTones), notes },
-                  ],
-            counts,
-          }
-        },
+      const blocks = section.blocks.reduce<BlocksFold>(
+        (blockAcc, block) =>
+          block.kind === "row" || block.kind === "panel"
+            ? withArrangedBlock(blockAcc, block, imageSource, tagTones)
+            : withBlock(blockAcc, block, imageSource, tagTones),
         { groups: [], counts: acc.counts },
       )
       const part = joinParts([
@@ -110,6 +99,63 @@ export function reportSectionMarkdowns(
     { parts: [], counts: { figure: 0, table: 0 } },
   )
   return parts
+}
+
+/**
+ * `row`・`panel` を1つの包みとして足す。子は葉の塊と同じ手で描き、題の番号は子の順に続ける。
+ * 子の傍注と親の `aside` は包みの傍注にまとめ、親の `fold` は容れ物ごと畳む。
+ */
+function withArrangedBlock(
+  acc: BlocksFold,
+  block: Extract<SectionBlock, { readonly kind: "row" | "panel" }>,
+  imageSource: ReportImageSource,
+  tagTones: TagTones,
+): BlocksFold {
+  const children = block.blocks.reduce<BlocksFold>(
+    (childAcc, child) => withBlock(childAcc, child, imageSource, tagTones),
+    { groups: [], counts: acc.counts },
+  )
+  const body = arrangedBlockMarkdown(
+    block,
+    children.groups.map((group) => group.body),
+  )
+  return {
+    groups: [
+      ...acc.groups,
+      {
+        body: foldedMarkdown(block.fold, body),
+        notes: [
+          ...children.groups.flatMap((group) => group.notes),
+          gutterNoteMarkdown("", block.aside),
+        ].filter((note) => note !== ""),
+      },
+    ],
+    counts: children.counts,
+  }
+}
+
+/** 葉の塊1つを足す。題の番号を数え、`memo` の `note` は直前の包みの傍注へ寄せる。 */
+function withBlock(
+  acc: BlocksFold,
+  block: ReportBlock,
+  imageSource: ReportImageSource,
+  tagTones: TagTones,
+): BlocksFold {
+  const kind = captionKindOf(block)
+  const counts = kind === undefined ? acc.counts : { ...acc.counts, [kind]: acc.counts[kind] + 1 }
+  const ordinal = kind === undefined ? 0 : counts[kind]
+  const notes = gutterNotesOf(block)
+  const last = acc.groups.at(-1)
+  return {
+    groups:
+      isMemoNote(block) && last !== undefined
+        ? [...acc.groups.slice(0, -1), { ...last, notes: [...last.notes, ...notes] }]
+        : [
+            ...acc.groups,
+            { body: foldedBlockMarkdown(block, imageSource, ordinal, tagTones), notes },
+          ],
+    counts,
+  }
 }
 
 /**
@@ -169,10 +215,13 @@ function foldedBlockMarkdown(
   ordinal: number,
   tagTones: TagTones,
 ): string {
-  const markdown = blockMarkdown(block, imageSource, ordinal, tagTones)
-  return block.fold.trim() === "" || markdown.trim() === ""
+  return foldedMarkdown(block.fold, blockMarkdown(block, imageSource, ordinal, tagTones))
+}
+
+function foldedMarkdown(fold: string, markdown: string): string {
+  return fold.trim() === "" || markdown.trim() === ""
     ? markdown
-    : `<details><summary>${htmlInline(block.fold)}</summary>\n\n${markdown}\n\n</details>`
+    : `<details><summary>${htmlInline(fold)}</summary>\n\n${markdown}\n\n</details>`
 }
 
 function blockMarkdown(

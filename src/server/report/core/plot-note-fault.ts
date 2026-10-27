@@ -4,6 +4,7 @@ import { plotFormOf } from "../../../shared/report/figure-decision.ts"
 import type { ReportPlot } from "../../../shared/report/figure-grammar.ts"
 import { plotChartOf } from "../../../shared/report/plot-chart.ts"
 import { drawnSectionsOf } from "../../../shared/report/report-retrospective.ts"
+import { leafBlocksOf } from "../../../shared/report/row-panel-block.ts"
 import type { ReportDraft } from "./report-violation.ts"
 
 const NUMERAL = /[0-9０-９]/u
@@ -13,7 +14,7 @@ export function plotNoteFaults(
   report: Pick<ReportDraft, "figure" | "sections" | "retrospective">,
 ): number {
   return drawnSectionsOf(report)
-    .flatMap((section) => section.blocks)
+    .flatMap((section) => leafBlocksOf(section.blocks))
     .filter(
       (block): block is ReportPlot =>
         block.kind === "plot" &&

@@ -7,7 +7,8 @@ import {
   type TableCell,
   tableRowCells,
 } from "../../../src/shared/report/report-block-comparison.ts"
-import type { ReportBlock } from "../../../src/shared/report/report-block.ts"
+import type { ReportBlock, SectionBlock } from "../../../src/shared/report/report-block.ts"
+import { blocksWithChildrenOf, leafBlocksOf } from "../../../src/shared/report/row-panel-block.ts"
 
 /** `table` の塊のうち、状態のセル（`{ status, text }`）を1つでも持つものに付ける印。 */
 const TABLE_WITH_STATUS = "table(status)"
@@ -36,7 +37,7 @@ export function sceneBlockKinds(session: FakeSession): ReadonlyMap<string, reado
         continue
       }
       for (const section of report.sections) {
-        for (const block of section.blocks) {
+        for (const block of blocksWithChildrenOf(section.blocks)) {
           kinds.add(blockKindLabel(block))
         }
       }
@@ -63,7 +64,7 @@ export function revealForecast(session: FakeSession): ReadonlyMap<string, Reveal
       }
       return [
         sumBy(
-          report.sections.flatMap((section) => section.blocks),
+          report.sections.flatMap((section) => leafBlocksOf(section.blocks)),
           blockWeight,
         ),
       ]
@@ -108,7 +109,7 @@ function textLength(value: unknown): number {
   return 0
 }
 
-function blockKindLabel(block: ReportBlock): string {
+function blockKindLabel(block: SectionBlock): string {
   return block.kind === "table" && block.rows.some((row) => tableRowCells(row).some(hasStatus))
     ? TABLE_WITH_STATUS
     : block.kind

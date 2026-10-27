@@ -4,6 +4,7 @@ import { readFile, stat } from "node:fs/promises"
 import { resolve } from "node:path"
 
 import type { ReportSection } from "../../../shared/report/report-block.ts"
+import { leafBlocksOf } from "../../../shared/report/row-panel-block.ts"
 
 /** 読む上限（これを超えるファイルは読まない）。 */
 const MAX_REPORT_MATCH_FILE_BYTES = 1024 * 1024
@@ -19,7 +20,7 @@ export async function readReportBlockFiles(
   const paths = [
     ...new Set(
       sections
-        .flatMap((section) => section.blocks)
+        .flatMap((section) => leafBlocksOf(section.blocks))
         .flatMap((block) =>
           block.kind === "code" && block.path.trim() !== "" ? [block.path] : [],
         ),

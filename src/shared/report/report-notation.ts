@@ -6,6 +6,7 @@
 // claude に教える文面（`REPORT_NOTATION_PROMPT`）はここから組み立てず、手で書く。
 // 印を足すときは見た目（`report-notation.module.css` の `report-<名前>`）にも書き足す（書き忘れはテストが落とす）。
 
+import { ROW_PANEL_MARK_NAMES } from "./row-panel-markdown.ts"
 import { TIMELINE_MARK_NAMES } from "./timeline-markdown.ts"
 
 /**
@@ -23,11 +24,12 @@ export const REPORT_NOTE_KINDS = [
 
 /**
  * `note` 以外の印のうち、tsukumo が塊から組むもの（表のセルの状態の印と変化・数の棒・`matrix` / `compare` / `beforeAfter` の塊・`image` の説明の並び・図と表の題の包みと題の行・`stats` の塊・
- * 名前付きの `list`・`list` の `flow`・`options` / `claims` / `files` の塊・余白の柱の包みと傍注）と、
+ * 名前付きの `list`・`list` の `flow`・`options` / `claims` / `files` の塊・余白の柱の包みと傍注・`row` / `panel` の容れ物）と、
  * 塊にする前にモデルが逃げ道に書いていた `cols` / `card`。モデルには教えない。ラベルは付かず、見た目だけを持つ。
  */
 const REPORT_BLOCK_MARK_NAMES = [
   ...TIMELINE_MARK_NAMES,
+  ...ROW_PANEL_MARK_NAMES,
   "cols",
   "cols-of-2",
   "cols-of-3",

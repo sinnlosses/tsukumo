@@ -7,6 +7,7 @@ import {
   parseReportSections,
   type ReportBlock,
 } from "../../../src/shared/report/report-block.ts"
+import { leafBlocksOf } from "../../../src/shared/report/row-panel-block.ts"
 import { draft } from "../../fixture/report-draft-block.ts"
 import { markdownOf } from "../../fixture/report-markdown.ts"
 
@@ -24,7 +25,7 @@ const timeline = (rows: readonly Row[], emphasis: readonly string[] = []): unkno
 
 const blockOf = (value: unknown): ReportBlock => {
   const parsed = parseReportSections([{ heading: "", shapeTag: "time", blocks: [value] }])
-  const block = parsed.sections[0]?.blocks[0]
+  const block = leafBlocksOf(parsed.sections[0]?.blocks ?? [])[0]
   if (block === undefined) throw new Error("timeline の塊が受け付けられなかった")
   return block
 }

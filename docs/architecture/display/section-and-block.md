@@ -21,6 +21,13 @@
   `aside` と `memo` の `note` は本文の流れに入れず、余白の柱に出す
   （「各表示物」のメインビュー。`memo` の `note` は本文の位置に残さない）。使いどころは `report` の `sections` の説明
   だけが持ち、書き手の規約（`REPORT_NOTATION_PROMPT`）には書かない
+- **節の `blocks` には、葉の塊のほかに部品を横に並べる `row` と題つきの枠 `panel` を置ける**（`src/shared/report/row-panel-block.ts`）。
+  子は葉の塊だけで、`row`・`panel` は子に入れられない（入れ子は1段まで）。`row` は子を 2〜4 個とり、等分の幅で横に並べ、器が 760px 以下なら縦に積む。
+  `panel` は `title` の題を付けた枠で子を囲む。色・幅・余白・縦に積むかは tsukumo が決め、書き手は選ばない。
+  子の図・表の番号と傍注は、子を節の中に平らに並べたときと同じ順で付く。
+  差し戻しの検査は子にも節の塊と同じく掛かり、隣り合う `note` は縦に積む `panel` の中では数え、横に並ぶ `row` の中では数えない。
+  `fold` を持つ `row`・`panel` の子に `fold` か `<details>` があれば、畳みの入れ子として差し戻す。使い方は `report_part_card` の `row`・`panel` のカードが持つ。
+  見え方は疑似セッションの場面 `row-panel-decision`（候補の比較）と `row-panel-status`（件数と一覧）で撮る
 - **数の推移・割合は `chart` の塊で見せる**。書き手は種類（`bar` / `line` / `pie` / `arrow` / `slope` / `span` / `share`）・項目・
   系列・横棒かを渡し、Chart.js の設定は tsukumo が組む。色は書き手が指定しない（配色のトークンから入れる）。`pie` は
   先頭の系列だけを描く。前後の差が主役なら `arrow`（項目ごとの前→後の矢印）、2時点の多項目は
@@ -93,6 +100,8 @@
 - **`body` は試しの版（`TSUKUMO_REPORT_SCHEMA=body-fence`。既定は `json-schema`）の本文の欄で、Markdown に型つきフェンスを混ぜて書く。** フェンスの種類は `graph`・`mermaid`・`table`・`code`・`callout`・`claims`・`image`（`READER_FENCE_KINDS`）と `figure`。
   読んだ結果は見出し空の節1つで、節の札は持たない。型つきでない言語名のフェンスは散文の一部のまま残す。
   読めない型つきフェンスは差し戻さず素のコードブロックに落とし、数を記録の `brokenFenceCount` に残す（`src/shared/report/body-fence.ts` の `parseReportBody`）。`sections` と同じ呼び出しに併記できない。
+  `body` は `row`・`panel` を扱わない。フェンスの中にフェンスは入れ子にできず、並べる容れ物には新しい記法が要るため。
+  `body-fence` の版でも `sections` は同じ zod で受けるので、並べたいときは `sections` で書ける。
 - **座標で見せる図は `svg` の塊で書く**（`docs/architecture/adr/0028-report-block-priority.md`「SVG（論点3）」）。
   書き手は題・viewBox の大きさ・図形（`rect`・`line`・`text`）を渡し、SVG の文字列は書かず、描く側が図形から組む。
   `rect` の題は既定で枠の中心、`labelAt: "top-left"` で左上の内側に左寄せで置く（入れ子の外側の枠は `top-left` にして、子の枠・矢印の題と重ねない）。

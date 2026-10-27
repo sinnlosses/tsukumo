@@ -4,6 +4,7 @@
 import type { z } from "zod"
 
 import { namedWriterBlockSchema } from "../../../shared/report/report-block.ts"
+import { arrangedBlockSchemasOf } from "../../../shared/report/row-panel-block.ts"
 import { blockShortTypeText } from "./short-type-text.ts"
 
 /** `report_part_card` ツールの説明文。 */
@@ -21,7 +22,7 @@ type PartCard =
   | { readonly kind: "unknown-kind"; readonly text: string }
 
 export function partCardOf(kind: string): PartCard {
-  const branch = namedWriterBlockSchema.options.find((option) => option.shape.kind.value === kind)
+  const branch = PART_BRANCHES.find((option) => option.shape.kind.value === kind)
   if (branch === undefined) {
     return {
       kind: "unknown-kind",
@@ -29,25 +30,45 @@ export function partCardOf(kind: string): PartCard {
     }
   }
   const partKind = branch.shape.kind.value
+  const arranged = partKind === "row" || partKind === "panel"
   return {
     kind: "card",
     text: [
       `部品 ${partKind} の文法（report の定義の部品と同じ型）`,
       "型（TypeScript の表記。? の欄は省ける）:",
-      blockShortTypeText(branch, `${partKind.charAt(0).toUpperCase()}${partKind.slice(1)}Block`),
+      blockShortTypeText(
+        branch,
+        `${partKind.charAt(0).toUpperCase()}${partKind.slice(1)}Block`,
+        LEAF_UNION_NAMES,
+      ),
+      ...(arranged ? [ARRANGED_NOTES[partKind]] : []),
       "例:",
       JSON.stringify(PART_EXAMPLES[partKind]),
     ].join("\n"),
   }
 }
 
-type WriterBlockInput = z.input<typeof namedWriterBlockSchema>
+const { rowBlockSchema, panelBlockSchema } = arrangedBlockSchemasOf(namedWriterBlockSchema)
+
+// `row`・`panel` のカードで子の型を展開しない名前。葉の部品の合併を展開すると全部品の型が1枚に載る
+const LEAF_UNION_NAMES: ReadonlySet<string> = new Set(["ReportBlock"])
+
+// 型の表記は数の制約を落とすので、子の数はここで言う
+const ARRANGED_NOTES = {
+  row: "子は 2〜4 個で、report_part_card で各部品の型を引く。row と panel は子に入れられない",
+  panel: "子は 1 個以上で、report_part_card で各部品の型を引く。row と panel は子に入れられない",
+} as const satisfies Readonly<Record<"row" | "panel", string>>
+
+const PART_BRANCHES = [...namedWriterBlockSchema.options, rowBlockSchema, panelBlockSchema]
+
+type WriterBlockInput =
+  | z.input<typeof namedWriterBlockSchema>
+  | z.input<typeof rowBlockSchema>
+  | z.input<typeof panelBlockSchema>
 
 type PartKind = WriterBlockInput["kind"]
 
-const PART_KINDS: readonly PartKind[] = namedWriterBlockSchema.options.map(
-  (option) => option.shape.kind.value,
-)
+const PART_KINDS: readonly PartKind[] = PART_BRANCHES.map((option) => option.shape.kind.value)
 
 const PART_EXAMPLES = {
   text: { kind: "text", text: "架空の取り込みは 120 件中 8 件が上限で切れていた。" },
@@ -175,4 +196,33 @@ const PART_EXAMPLES = {
     relation: "compare",
   },
   markdown: { kind: "markdown", markdown: "> 架空の引用の1行" },
+  row: {
+    kind: "row",
+    blocks: [
+      {
+        kind: "stats",
+        items: [
+          { before: "8", value: "0", label: "切れた件数", better: "down" },
+          { value: "120", label: "取り込んだ件数" },
+          { value: "3", total: "4", label: "通った段" },
+        ],
+      },
+      { kind: "code", language: "ts", source: "export const LIMIT = 60" },
+    ],
+  },
+  panel: {
+    kind: "panel",
+    title: "架空の取り込みの結果",
+    blocks: [
+      {
+        kind: "table",
+        title: "架空の上限を 60 にすると切れる件数が 0 になる",
+        columns: ["上限", "切れた件数"],
+        rows: [
+          ["30", "8"],
+          ["60", "0"],
+        ],
+      },
+    ],
+  },
 } satisfies { readonly [K in PartKind]: Extract<WriterBlockInput, { kind: K }> }

@@ -6,6 +6,7 @@
 import { sumBy } from "remeda"
 
 import type { ReportBlock } from "../../../shared/report/report-block.ts"
+import { leafBlocksOf } from "../../../shared/report/row-panel-block.ts"
 import {
   type ConversationMoment,
   conversationMoment,
@@ -290,7 +291,7 @@ function readingShapeOf(state: SessionState): ReadingShape {
   if (report === undefined) {
     return { bodyChars: 0, tableRate: 0, hasDiagram: false }
   }
-  const blocks = report.sections.flatMap((section) => section.blocks)
+  const blocks = report.sections.flatMap((section) => leafBlocksOf(section.blocks))
   const shownReport = mainViewEntries(state)
     .filter((entry) => entry.kind === "report")
     .at(-1)

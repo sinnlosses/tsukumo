@@ -2,6 +2,7 @@
 
 import type { ReportPlot } from "../../../shared/report/figure-grammar.ts"
 import { drawnSectionsOf } from "../../../shared/report/report-retrospective.ts"
+import { leafBlocksOf } from "../../../shared/report/row-panel-block.ts"
 import {
   type BodyNumber,
   type FigureNumberSlip,
@@ -20,7 +21,7 @@ type FigureNumberSource = Pick<
 
 export function figureNumberFaults(report: FigureNumberSource): readonly FigureNumberFault[] {
   const plots = drawnSectionsOf(report)
-    .flatMap((section) => section.blocks)
+    .flatMap((section) => leafBlocksOf(section.blocks))
     .flatMap((block): readonly ReportPlot[] => (block.kind === "plot" ? [block] : []))
   return plots.length === 0 ? [] : figureNumberSlips(plots, bodyNumbersOf(report))
 }
@@ -43,7 +44,7 @@ function bodyNumbersOf(report: FigureNumberSource): readonly BodyNumber[] {
       [item.before, item.value, item.total].flatMap(numbersIn),
     ),
     ...report.sections
-      .flatMap((section) => section.blocks)
+      .flatMap((section) => leafBlocksOf(section.blocks))
       .flatMap((block) => (block.kind === "text" ? numbersIn(block.text) : [])),
   ]
 }

@@ -12,6 +12,7 @@ import {
 import type { ReportBlock, ReportSection } from "./report-block.ts"
 import { captionedMarkdown } from "./report-caption.ts"
 import { htmlInlineWithCode, joinParts, markdownInline } from "./report-inline-markdown.ts"
+import { leafBlocksOf } from "./row-panel-block.ts"
 
 /** 表のセルの状態 → 記号付きの印の class（記法の `cell-status-*`）・記号・書き手の文字に関わらず付ける語。 */
 const CELL_STATUS_MARKS = {
@@ -46,7 +47,7 @@ export type TagTones = ReadonlyMap<string, string>
 /** レポート全体の表の `tag` の字を、出現順に色へ割り当てる（同じ字は表をまたいでも同じ色）。 */
 export function tagTonesOf(sections: readonly ReportSection[]): TagTones {
   const tags = sections
-    .flatMap((section) => section.blocks)
+    .flatMap((section) => leafBlocksOf(section.blocks))
     .flatMap((block) => (block.kind === "table" ? block.rows.flatMap(tableRowCells) : []))
     .flatMap((cell) => (typeof cell === "object" && "tag" in cell ? [cell.tag] : []))
   return new Map(

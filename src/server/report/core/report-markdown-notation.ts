@@ -5,6 +5,7 @@
 import type { Nodes } from "mdast"
 
 import type { ReportBlock, ReportSection } from "../../../shared/report/report-block.ts"
+import { leafBlocksOf } from "../../../shared/report/row-panel-block.ts"
 import { markdownTreeOf, nodesInOrder } from "./markdown-tree.ts"
 
 /** 逃げ道の中の記法 → 差し戻しの文面での呼び名と、代わりに使うもの。 */
@@ -115,7 +116,7 @@ function markdownNotationsAt(
 
 function readingsOf(sections: readonly ReportSection[]): readonly MarkdownReading[] {
   return sections
-    .flatMap((section) => section.blocks)
+    .flatMap((section) => leafBlocksOf(section.blocks))
     .flatMap((block) => (block.kind === "markdown" ? [markdownReadingOf(block.markdown)] : []))
 }
 

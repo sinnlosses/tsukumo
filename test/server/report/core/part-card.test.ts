@@ -3,9 +3,13 @@ import { z } from "zod"
 
 import { partCardOf } from "../../../../src/server/report/core/part-card.ts"
 import { namedWriterBlockSchema } from "../../../../src/shared/report/report-block.ts"
+import { arrangedBlockSchemasOf } from "../../../../src/shared/report/row-panel-block.ts"
 import { descriptionsIn, missingDescriptions } from "../../../fixture/json-schema-description.ts"
 
-const BRANCHES = namedWriterBlockSchema.options
+const LEAF_BRANCHES = namedWriterBlockSchema.options
+const { rowBlockSchema, panelBlockSchema } = arrangedBlockSchemasOf(namedWriterBlockSchema)
+const ARRANGED_BRANCHES = [rowBlockSchema, panelBlockSchema]
+const BRANCHES = [...LEAF_BRANCHES, ...ARRANGED_BRANCHES]
 const KINDS = BRANCHES.map((branch) => branch.shape.kind.value)
 
 describe("partCardOf", () => {
@@ -18,12 +22,25 @@ describe("partCardOf", () => {
     },
   )
 
-  it.each(BRANCHES.map((branch) => [branch.shape.kind.value, branch] as const))(
+  it.each(LEAF_BRANCHES.map((branch) => [branch.shape.kind.value, branch] as const))(
     "%s のカードは、部品の JSON Schema の説明を1つも落とさない",
     (kind, branch) => {
       const descriptions = descriptionsIn(z.toJSONSchema(branch, { io: "input" }))
 
       expect(missingDescriptions(descriptions, cardText(kind))).toEqual([])
+    },
+  )
+
+  it.each(ARRANGED_BRANCHES.map((branch) => [branch.shape.kind.value, branch] as const))(
+    "%s のカードは、子の部品の型を展開せず名前で指し、自分の欄の説明は落とさない",
+    (kind, branch) => {
+      const { $defs: _definitions, ...own } = z.toJSONSchema(branch, { io: "input" })
+      const text = cardText(kind)
+
+      expect(missingDescriptions(descriptionsIn(own), text)).toEqual([])
+      expect(text).toContain("ReportBlock[]")
+      expect(text).not.toContain("type ReportBlock")
+      expect(text).not.toContain("type GraphBlock")
     },
   )
 
@@ -48,9 +65,10 @@ describe("partCardOf", () => {
     }
   })
 
-  it("引ける種類は files を除く19種類", () => {
-    expect(KINDS).toHaveLength(19)
+  it("引ける種類は files を除く19種類の葉と row・panel", () => {
+    expect(KINDS).toHaveLength(21)
     expect(KINDS).not.toContain("files")
+    expect(KINDS).toEqual(expect.arrayContaining(["row", "panel"]))
   })
 })
 

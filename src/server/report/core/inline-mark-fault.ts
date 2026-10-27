@@ -3,6 +3,7 @@
 import { brokenInlineMarkCount } from "../../../shared/report/inline-mark.ts"
 import type { ReportBlock } from "../../../shared/report/report-block.ts"
 import { drawnSectionsOf } from "../../../shared/report/report-retrospective.ts"
+import { leafBlocksOf } from "../../../shared/report/row-panel-block.ts"
 import { proseTexts } from "./report-prose-rule.ts"
 import type { ReportDraft } from "./report-violation.ts"
 
@@ -12,7 +13,7 @@ export function brokenInlineMarks(report: InlineMarkSource): number {
   const texts = [
     report.conclusion,
     ...drawnSectionsOf(report)
-      .flatMap((section) => section.blocks)
+      .flatMap((section) => leafBlocksOf(section.blocks))
       .flatMap(markTexts),
   ]
   return texts.reduce((total, text) => total + brokenInlineMarkCount(text), 0)

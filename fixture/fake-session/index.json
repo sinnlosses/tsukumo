@@ -140,7 +140,9 @@
     "report-file-peek",
     "report-question-mixed",
     "turn-headings",
-    "turn-running-report"
+    "turn-running-report",
+    "row-panel-decision",
+    "row-panel-status"
   ],
   "pastSessions": [
     {

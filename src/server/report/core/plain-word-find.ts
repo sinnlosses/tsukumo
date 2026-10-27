@@ -3,6 +3,7 @@
 import type { Nodes } from "mdast"
 
 import type { ReportBlock } from "../../../shared/report/report-block.ts"
+import { leafBlocksOf } from "../../../shared/report/row-panel-block.ts"
 import { markdownTreeOf } from "./markdown-tree.ts"
 import { PLAIN_WORDS } from "./plain-word.ts"
 import { proseTexts } from "./report-prose-rule.ts"
@@ -15,7 +16,11 @@ import type { ReportDraft } from "./report-violation.ts"
 export function plainWordSpellingsIn(report: ReportDraft): readonly string[] {
   const proseOfBlocks = report.sections.flatMap((section) => [
     section.heading,
-    ...section.blocks.flatMap((block) => [...proseTexts(block), ...ownProseTexts(block)]),
+    ...section.blocks.flatMap((block) => (block.kind === "panel" ? [block.title] : [])),
+    ...leafBlocksOf(section.blocks).flatMap((block) => [
+      ...proseTexts(block),
+      ...ownProseTexts(block),
+    ]),
   ])
   const prose = [report.conclusion, report.favor, ...proseOfBlocks].flatMap(proseSegmentsOf)
   const remaining = PLAIN_WORDS.reduce(

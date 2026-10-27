@@ -1,0 +1,133 @@
+{
+  "name": "row-panel-decision",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "架空の置き場の案を3つ並べて比べたい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 300,
+      "event": {
+        "kind": "speech",
+        "text": "候補を横に並べて、採った理由は枠にまとめるね。",
+        "expression": "default"
+      }
+    },
+    {
+      "afterMs": 1000,
+      "event": {
+        "kind": "report",
+        "task": { "kind": "none" },
+        "toolUseId": "fake-row-panel-decision",
+        "conclusion": "架空の結論: 置き場は案B（種類ごとのファイル）にした。探す場所が種類で決まり、参照の増えは2本で済む。",
+        "sections": [
+          {
+            "heading": "架空の候補",
+            "shapeTag": "comparison",
+            "blocks": [
+              {
+                "kind": "row",
+                "blocks": [
+                  {
+                    "kind": "list",
+                    "style": "bullet",
+                    "items": [
+                      { "label": "案A", "text": "1つのファイルにまとめる" },
+                      { "label": "良い", "text": "読む場所が1つ" },
+                      { "label": "悪い", "text": "行が多く読み切れない" }
+                    ]
+                  },
+                  {
+                    "kind": "list",
+                    "style": "bullet",
+                    "items": [
+                      { "label": "案B", "text": "種類ごとのファイルに分ける" },
+                      { "label": "良い", "text": "探す場所が種類で決まる" },
+                      { "label": "悪い", "text": "参照が2本増える" }
+                    ]
+                  },
+                  {
+                    "kind": "list",
+                    "style": "bullet",
+                    "items": [
+                      { "label": "案C", "text": "置き場を外の台帳に出す" },
+                      { "label": "良い", "text": "手元の行が減る" },
+                      { "label": "悪い", "text": "台帳と手元がずれる" }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "heading": "架空の層と参照",
+            "shapeTag": "structure",
+            "blocks": [
+              {
+                "kind": "row",
+                "blocks": [
+                  {
+                    "kind": "graph",
+                    "direction": "TD",
+                    "title": "架空の層は入口から保存へ下る",
+                    "source": "入口 -> 検査: 渡す\n検査 -> 保存: 通ったもの",
+                    "legend": []
+                  },
+                  {
+                    "kind": "table",
+                    "title": "架空の案ごとの参照の数",
+                    "columns": ["案", "参照の数"],
+                    "rows": [
+                      ["案A", "0"],
+                      ["案B", "2"],
+                      ["案C", "5"]
+                    ]
+                  }
+                ]
+              },
+              {
+                "kind": "panel",
+                "title": "採った理由",
+                "blocks": [
+                  {
+                    "kind": "note",
+                    "tone": "info",
+                    "text": "架空の判断: 探す場所が種類で決まることを、参照の増えより重く見た。"
+                  },
+                  {
+                    "kind": "table",
+                    "title": "架空の物差しごとの採点",
+                    "columns": ["物差し", "案A", "案B", "案C"],
+                    "rows": [
+                      ["探しやすさ", "低い", "高い", "中くらい"],
+                      ["ずれにくさ", "高い", "高い", "低い"]
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "favor": "",
+        "closing": { "kind": "speech", "text": "並べたよ！", "expression": "proud" }
+      }
+    },
+    {
+      "afterMs": 1050,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-row-panel-decision",
+        "content": "ok",
+        "isError": false
+      }
+    },
+    {
+      "afterMs": 1800,
+      "event": { "kind": "turn-finished", "outcome": { "kind": "completed" } }
+    }
+  ]
+}

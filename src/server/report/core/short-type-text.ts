@@ -1,6 +1,7 @@
 // `report` の塊の型（`figure` と `sections`）を、TypeScript 風の短い型の表記にする。
 // 型は塊の zod から zod の `toJSONSchema` で出した JSON Schema を読んで組み、手で写さない。
 
+import { isPlainObject } from "remeda"
 import { z } from "zod"
 
 import { reportFigureSchema, reportSectionSchema } from "../../../shared/report/report-block.ts"
@@ -33,12 +34,18 @@ export function reportShortTypeText(): string {
 /**
  * 塊1種類の型の表記。中で使う共有の形ごとの `type <名前> = …` を並べる。
  * 塊が名前を持たなければ、最後に `type <rootName> = …` を足す（名前を持つ塊は共有の形の側に出る）。
+ * `unexpanded` の名前の形は名前で指すだけにし、その形と、その形からだけ使う形の `type` は並べない。
  */
-export function blockShortTypeText(block: z.ZodType, rootName: string): string {
+export function blockShortTypeText(
+  block: z.ZodType,
+  rootName: string,
+  unexpanded: ReadonlySet<string>,
+): string {
   const { $defs: definitions = {}, ...root } = z.toJSONSchema(block, { io: "input" })
-  const aliases = Object.entries(definitions).map(([name, definition]) =>
-    typeAlias(name, definition),
-  )
+  const reachable = reachableNames(root, definitions, unexpanded)
+  const aliases = Object.entries(definitions)
+    .filter(([name]) => reachable.has(name))
+    .map(([name, definition]) => typeAlias(name, definition))
   return (root.$ref === undefined ? [...aliases, typeAlias(rootName, root)] : aliases).join("\n")
 }
 
@@ -199,4 +206,35 @@ function commentLines(description: string | undefined, indent: string): string {
         .split("\n")
         .map((line) => `${indent}// ${line}\n`)
         .join("")
+}
+
+/** `root` から `$ref` をたどって使う共有の形の名前。`unexpanded` の名前では止まり、その名前も含めない。 */
+function reachableNames(
+  root: unknown,
+  definitions: Readonly<Record<string, z.core.JSONSchema._JSONSchema>>,
+  unexpanded: ReadonlySet<string>,
+): ReadonlySet<string> {
+  const visit = (seen: ReadonlySet<string>, schema: unknown): ReadonlySet<string> =>
+    refNamesIn(schema).reduce<ReadonlySet<string>>(
+      (acc, name) =>
+        acc.has(name) || unexpanded.has(name)
+          ? acc
+          : visit(new Set([...acc, name]), definitions[name]),
+      seen,
+    )
+  return visit(new Set(), root)
+}
+
+function refNamesIn(value: unknown): readonly string[] {
+  if (Array.isArray(value)) {
+    return value.flatMap(refNamesIn)
+  }
+  if (!isPlainObject(value)) {
+    return []
+  }
+  return Object.entries(value).flatMap(([key, inner]) =>
+    key === "$ref" && typeof inner === "string"
+      ? [inner.replace(/^#\/\$defs\//, "")]
+      : refNamesIn(inner),
+  )
 }

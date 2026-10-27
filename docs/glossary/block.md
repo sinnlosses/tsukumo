@@ -12,8 +12,8 @@
 
 - **英語識別子**: `ReportSection`（`src/shared/report/report-block.ts`）/ `sections`（記録と
   `SessionEvent` の `report` の欄）/ `heading`（節の見出し）
-- **定義**: **レポートの本文を区切る1段**。見出し（`heading`）と、その下に平らに並ぶ塊の並びを持つ。
-  本文は節の並びで、入れ子は節の1段だけ。見出しが空の節は見出しを描かない
+- **定義**: **レポートの本文を区切る1段**。見出し（`heading`）と、その下に並ぶ塊の並び（`SectionBlock`）を持つ。
+  本文は節の並びで、節の中の入れ子は `row`・`panel` の子の1段だけ。見出しが空の節は見出しを描かない
 - **注記**: `report` の引数 `sections` がこの形で、節が2つ以上なら全部に見出しを付けさせる（無ければ
   差し戻す）。引数が文字列の `body` だったころの記録は、呼び出しをイベントに変える境目
   （`sdk-report-message.ts` の `reportEvents`）で見出しの無い節1つ・逃げ道の塊1つに畳むので、描く側は文字列の
@@ -23,7 +23,7 @@
 ### 塊
 
 - **英語識別子**: `ReportBlock`（`src/shared/report/report-block.ts`）/ `kind`（`text` / `list` /
-  `table` / `matrix` / `compare` / `beforeAfter`（前後）/ `note` / `stats` / `code` / `mermaid` / `graph`（`source` の1行1辺の記法で受ける flowchart。行頭の `+ ` / `- ` / `~ ` が足した・消した・変えたの印。節点だけの行は `名前 | 説明` で説明の1行を足せ、分岐・合流・囲み・点線の無い5節点以下の一本道はカードの連鎖で描く）/ `chart` / `timeline`（時刻の軸に行ごとの帯・延びた分・出来事を並べる図。延び・出来事・一点の無い区間の長さの比べは `chart` の `span`）/ `svg`（座標つきの図形で書く図）/ `plot`（図の申告。`question`〔読者がその図で決めること。全角60字以内の1文〕・`data`〔列の並び。各列は `name`・`type`〔`N` 名義 / `O` 順序 / `T` 時間 / `Q` 量〕・`values`〕・`relation`〔`compare`・`rank`・`part`・`trend`・`change`・`distribution`・`correlate`・`range` の8語〕と任意の `form`〔形の上書き〕を受け、色・座標は書かせない。形は下の「図の決定表」が決め、形ごとの描き方が入るまでは `data` を表として描く）/ `options` / `claims`（確度つきの主張）/ `image`（画面の画像）/ `markdown`）/ `fold`（畳むときの見出し）/ `aside`（塊の傍注。下の「余白の柱」）/
+  `table` / `matrix` / `compare` / `beforeAfter`（前後）/ `note` / `stats` / `code` / `mermaid` / `graph`（`source` の1行1辺の記法で受ける flowchart。行頭の `+ ` / `- ` / `~ ` が足した・消した・変えたの印。節点だけの行は `名前 | 説明` で説明の1行を足せ、分岐・合流・囲み・点線の無い5節点以下の一本道はカードの連鎖で描く）/ `chart` / `timeline`（時刻の軸に行ごとの帯・延びた分・出来事を並べる図。延び・出来事・一点の無い区間の長さの比べは `chart` の `span`）/ `svg`（座標つきの図形で書く図）/ `plot`（図の申告。`question`〔読者がその図で決めること。全角60字以内の1文〕・`data`〔列の並び。各列は `name`・`type`〔`N` 名義 / `O` 順序 / `T` 時間 / `Q` 量〕・`values`〕・`relation`〔`compare`・`rank`・`part`・`trend`・`change`・`distribution`・`correlate`・`range` の8語〕と任意の `form`〔形の上書き〕を受け、色・座標は書かせない。形は下の「図の決定表」が決め、形ごとの描き方が入るまでは `data` を表として描く）/ `options` / `claims`（確度つきの主張）/ `image`（画面の画像）/ `markdown`。節にはほかに `row`〔2〜4 個の塊を横に並べる〕と `panel`〔`title` つきの枠〕を置け、どちらも子は葉の塊だけで `row`・`panel` を入れない）/ `fold`（畳むときの見出し）/ `aside`（塊の傍注。下の「余白の柱」）/
   欄の `from` / `to`（表のセルの前後）・`tag`（表のセルの列挙型の札。同じ字は同じ色）・`emphasis`（表の行の強調。`{ cells, emphasis: true }`で3行まで。超えれば差し戻し）・`before`（`stats` の前の値）・`total`（`stats` の全体の数）・`keyFigures`（`report` の欄。結論の直下に並べる 3〜4 個の数の札で、項目の形は `stats` の `items` と同じ。塊の欄ではない）・`label`（`list` の項目の名前）・
   `flow`（`list` の `style` の一本道の流れ）・`cards`（`list` の `style` の並列の区画。2〜4項目を横に並べる）・`sides`（`compare` の2つの側。`heading` と `points`）・
   `before` / `after`（`beforeAfter` の前の側と後の側。`kind` が `image`〔`path`と任意の `region`（変わった場所の枠。% の `left`・`top`・`width`・`height`）〕/ `code`〔`language`・`source`〕/ `points` / `mermaid`〔`source`〕/ `svg`〔`width`・`height`・`shapes`〕の合併型）・

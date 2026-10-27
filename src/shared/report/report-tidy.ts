@@ -9,7 +9,7 @@
 //
 // 整形は塊ごとに掛ける。逃げ道（`markdown` の塊）は Markdown として構文解析せず、行で見る（フェンスの中は触らない）。
 
-import type { ReportBlock, ReportSection } from "./report-block.ts"
+import type { ReportSection, SectionBlock } from "./report-block.ts"
 import { fencedLineFlags } from "./report-fence.ts"
 
 /** 整形にかけるレポート。 */
@@ -41,7 +41,7 @@ export function tidyReportSections(report: ReportTidyInput): readonly ReportSect
  * 塊1つを整形する。落とすなら空の並び。`conclusion` は本文の冒頭の塊にだけ渡す（冒頭でない
  * 繰り返しは落とさない）。
  */
-function tidyBlock(block: ReportBlock, conclusion: string): readonly ReportBlock[] {
+function tidyBlock(block: SectionBlock, conclusion: string): readonly SectionBlock[] {
   switch (block.kind) {
     case "text":
       return isBoilerplateLine(block.text) ||

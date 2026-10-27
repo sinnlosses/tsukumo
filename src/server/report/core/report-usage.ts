@@ -9,11 +9,16 @@ import type {
   ReportArgumentField,
 } from "../../../shared/report/report-argument-size.ts"
 import { tableRowCells } from "../../../shared/report/report-block-comparison.ts"
-import type { ReportBlock, ReportSection } from "../../../shared/report/report-block.ts"
+import type {
+  ReportBlock,
+  ReportSection,
+  SectionBlock,
+} from "../../../shared/report/report-block.ts"
 import type { ReportCheck } from "../../../shared/report/report-check.ts"
 import { drawnSectionsOf } from "../../../shared/report/report-retrospective.ts"
 import { isForbiddenBlock } from "../../../shared/report/report-shape-tag.ts"
 import type { ReportGenre, ReportTaskOutcome } from "../../../shared/report/report-task.ts"
+import { blocksWithChildrenOf, leafBlocksOf } from "../../../shared/report/row-panel-block.ts"
 import type { ToolErrorField } from "../../../shared/report/tool-error-field.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import { markdownTreeOf, nodesInOrder } from "./markdown-tree.ts"
@@ -380,15 +385,13 @@ function shapeTagUsageOf(sections: readonly ReportSection[]): ReportShapeTagUsag
   const forbiddenBySection = sections.map(({ shapeTag, blocks }) =>
     shapeTag === "unspecified"
       ? []
-      : blocks
+      : leafBlocksOf(blocks)
           .filter((block) => isForbiddenBlock(shapeTag, block))
           .map((block) => ({ shapeTag, blockKind: block.kind })),
   )
   return {
     sectionShapeTags: sections.map((section) => section.shapeTag),
-    sectionBlockKinds: sections.map((section) => [
-      ...new Set(section.blocks.map((block) => block.kind)),
-    ]),
+    sectionBlockKinds: sections.map((section) => kindsOf(section.blocks)),
     forbiddenShapeSectionCount: forbiddenBySection.filter((uses) => uses.length > 0).length,
     forbiddenShapeBlocks: Object.values(
       groupBy(forbiddenBySection.flat(), (use) => `${use.shapeTag}/${use.blockKind}`),
@@ -403,19 +406,25 @@ function listStylesOf(sections: readonly ReportSection[]): readonly string[] {
 }
 
 function blocksOf(sections: readonly ReportSection[]): readonly ReportBlock[] {
-  return sections.flatMap((section) => section.blocks)
+  return sections.flatMap((section) => leafBlocksOf(section.blocks))
 }
 
 function blockKindsOf(sections: readonly ReportSection[]): readonly string[] {
-  return [...new Set(sections.flatMap((section) => section.blocks.map((block) => block.kind)))]
+  return kindsOf(sections.flatMap((section) => section.blocks))
 }
 
+/** 塊の種類の集合。`row`・`panel` は自分の種類と子の種類の両方を数える。 */
+function kindsOf(blocks: readonly SectionBlock[]): readonly string[] {
+  return [...new Set(blocksWithChildrenOf(blocks).map((block) => block.kind))]
+}
+
+/** 使った欄の集合。`row`・`panel` は自分の欄と子の欄の両方を見る。 */
 function blockFieldsOf(sections: readonly ReportSection[]): readonly ReportBlockField[] {
-  const blocks = blocksOf(sections)
+  const blocks = sections.flatMap((section) => blocksWithChildrenOf(section.blocks))
   return REPORT_BLOCK_FIELDS.filter((field) => blocks.some((block) => hasField(block, field)))
 }
 
-function hasField(block: ReportBlock, field: ReportBlockField): boolean {
+function hasField(block: SectionBlock, field: ReportBlockField): boolean {
   switch (field) {
     case "tableChange":
       return (

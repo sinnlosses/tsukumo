@@ -23,27 +23,47 @@
     }
   }
   /* カードは「浮く」塊。
-   地を親のステップと同じ surface にすると枠しか効かない。 */
-  & .report-card {
+   地を親のステップと同じ surface にすると枠しか効かない。`panel` の枠も同じ見た目にする。 */
+  & :is(.report-card, .report-block-panel) {
     padding: 0.6rem 0.75rem;
     border: 1px solid var(--report-chunk-rule, var(--rule));
     border-radius: 0.5rem;
     background: var(--surface-raised);
   }
-  /* 読む順・因果の無い並列の区画（`list` の `cards`）。
-   項目数で等分した横 1 行にし、器の幅が 760px 以下なら縦（既定の 1 列のまま）。 */
-  & .report-cards {
+  /* 読む順・因果の無い並列の区画（`list` の `cards`）と、部品を横に並べる `row`。
+   子の数で等分した横 1 行にし、器の幅が 760px 以下なら縦（既定の 1 列のまま）。 */
+  & :is(.report-cards, .report-block-row) {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     gap: 0.75rem;
     margin: var(--report-block-gap) 0;
   }
   @container report-body (min-width: 761px) {
-    & .report-cards {
+    & :is(.report-cards, .report-block-row) {
       grid-auto-flow: column;
       grid-auto-columns: minmax(0, 1fr);
       grid-template-columns: none;
     }
+  }
+  & .report-block-row-cell {
+    min-inline-size: 0;
+  }
+  & :is(.report-block-row-cell, .report-block-panel) > :first-child {
+    margin-block-start: 0;
+  }
+  & :is(.report-block-row-cell, .report-block-panel) > :last-child {
+    margin-block-end: 0;
+  }
+  & .report-block-panel {
+    margin: var(--report-block-gap) 0;
+  }
+  & .report-block-panel-title {
+    margin-block-end: 0.5rem;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  & .report-block-panel-title > p {
+    margin: 0;
   }
   & .report-cards .report-card {
     border-color: var(--rule-quiet);
