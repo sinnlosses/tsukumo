@@ -49,6 +49,7 @@ export const REPORT_TASK_DESCRIPTION =
   "work: 変化 → 証拠 → 変更の要所 → 限界と変えていないもの → お願い。" +
   "decision: 決めたこと → 理由と採らなかった案（options）→ 結果 → 未決。" +
   "research: 分かったこと → 根拠（出典か path:line）→ 何を意味するか → 確かめていないこと（claims）→ 次。" +
+  "status は research、diagnosis・timeline・structure・screen は work の並び。" +
   "stopped は種類によらず: どこで止まったか → 原因 → 残したものと戻したもの → 再開に要るもの（favor）。" +
   "genre を省くと並びは縛らない。タスクに紐付かないターンでは task を省く。"
 

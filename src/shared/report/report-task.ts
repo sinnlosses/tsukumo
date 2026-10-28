@@ -11,7 +11,16 @@ const REPORT_TASK_OUTCOMES = ["finished", "stopped", "awaiting-answer"] as const
 
 export type ReportTaskOutcome = (typeof REPORT_TASK_OUTCOMES)[number]
 
-export const REPORT_GENRES = ["work", "decision", "research"] as const
+export const REPORT_GENRES = [
+  "work",
+  "decision",
+  "research",
+  "diagnosis",
+  "timeline",
+  "structure",
+  "screen",
+  "status",
+] as const
 
 export type ReportGenre = (typeof REPORT_GENRES)[number]
 
@@ -25,10 +34,7 @@ export const reportTaskSchema = z.object({
     .describe(
       "finished（作業を終えた）/ stopped（止めた）/ awaiting-answer（利用者の答え待ち）。checks に ng の行がある間は finished にしない",
     ),
-  genre: z
-    .enum(REPORT_GENRES)
-    .optional()
-    .describe("報告の種類。work（作業）/ decision（判断）/ research（調べもの）"),
+  genre: z.enum(REPORT_GENRES).optional().describe("報告の種類"),
 })
 
 /** レポートが載せるタスク。タスクに紐付かないレポートと、`task` を持たなかったころの記録は `none`。 */

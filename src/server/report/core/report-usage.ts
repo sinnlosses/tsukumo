@@ -21,7 +21,7 @@ import type { ReportGenre, ReportTaskOutcome } from "../../../shared/report/repo
 import { blocksWithChildrenOf, leafBlocksOf } from "../../../shared/report/row-panel-block.ts"
 import type { ToolErrorField } from "../../../shared/report/tool-error-field.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
-import { markdownTreeOf, nodesInOrder } from "./markdown-tree.ts"
+import { numberCountOutsideCode } from "./number-count.ts"
 import type { ReportRejectionMode } from "./rejection-mode.ts"
 import { mermaidKind, mermaidSourcesInSections } from "./report-figure-fault.ts"
 import { reportImagePaths } from "./report-image-shelf.ts"
@@ -303,17 +303,6 @@ function writtenTextsOf(block: ReportBlock): readonly string[] {
     default:
       return []
   }
-}
-
-const NUMBER_PATTERN = /\d+(?:[.,]\d+)*/g
-
-/** 文中の数（数字の連なり）の数。インラインコードの中は数えない。 */
-function numberCountOutsideCode(markdown: string): number {
-  return nodesInOrder(markdownTreeOf(markdown)).reduce(
-    (total, node) =>
-      total + (node.type === "text" ? (node.value.match(NUMBER_PATTERN)?.length ?? 0) : 0),
-    0,
-  )
 }
 
 const INLINE_CODE = /(`+)[\s\S]*?\1/g

@@ -58,6 +58,7 @@ import {
   proseTexts,
 } from "./report-prose-rule.ts"
 import { type ReportDraft, type ReportViolation, VIOLATION_THRESHOLDS } from "./report-violation.ts"
+import { templateMissesOf } from "./template-miss-fault.ts"
 import { timelineFaults } from "./timeline-fault.ts"
 
 /** レポートの規約違反を並べる。空なら違反は無い。 */
@@ -86,6 +87,7 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
 
   const plainWords = plainWordSpellingsIn(report)
   const figureNumberFaultList = figureNumberFaults(report)
+  const templateMissList = templateMissesOf(report)
   const plotForms = plotFormFaults(report)
 
   const counted = [
@@ -209,6 +211,7 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
     { kind: "plot-form-override", count: plotForms.overrides },
     { kind: "broken-inline-mark", count: brokenInlineMarks(report) },
     { kind: "plot-title-without-number", count: plotNoteFaults(report) },
+    { kind: "template-miss", count: templateMissList.length, misses: templateMissList },
   ] as const satisfies readonly ReportViolation[]
 
   return counted.filter((violation) => violation.count > VIOLATION_THRESHOLDS[violation.kind])

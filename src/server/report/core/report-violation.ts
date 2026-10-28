@@ -13,6 +13,7 @@ import type { WorkPlanClosing } from "../../../shared/session/work-plan.ts"
 import type { FigureNumberFault } from "./figure-number-fault.ts"
 import type { GraphFault, SvgFault, ToneFault } from "./report-figure-fault.ts"
 import type { MarkdownNotation } from "./report-markdown-notation.ts"
+import type { TemplateMiss } from "./request-template.ts"
 import type { TimelineBlockFault } from "./timeline-fault.ts"
 
 /** 検査にかけるレポート。`sections` と `checks` の「無い」は空の配列、`favor` の「無い」は空の文字列。 */
@@ -192,6 +193,15 @@ export type ReportViolation =
   | { readonly kind: "broken-inline-mark"; readonly count: number }
   /** 棒・折れ線・円で描く `plot` の題に数が無い。 */
   | { readonly kind: "plot-title-without-number"; readonly count: number }
+  /**
+   * 申告した依頼の型（`task.genre`）の雛形から外れた。`misses` は外れた点
+   * （結論の数が 3 つ以上あるのに数の帯が無い `key-figures`、図 1 が第一候補の種類でない `figure`）。
+   */
+  | {
+      readonly kind: "template-miss"
+      readonly count: number
+      readonly misses: readonly TemplateMiss[]
+    }
 
 /** 違反にしない上限（これを超えたら違反）。 */
 export const VIOLATION_THRESHOLDS = {
@@ -235,6 +245,7 @@ export const VIOLATION_THRESHOLDS = {
   "plot-form-override": 0,
   "broken-inline-mark": 0,
   "plot-title-without-number": 0,
+  "template-miss": 0,
 } as const satisfies Record<ReportViolation["kind"], number>
 
 export const REPORT_VIOLATION_KINDS = keys(VIOLATION_THRESHOLDS)

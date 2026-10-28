@@ -64,7 +64,7 @@
     「古い閉じた課題」なのか区別できないため）。
     依頼の文面や結論の文字列から ID・終わり方を推し量らない。入口で揃っていない値と
     `task` の無かったころの記録は「無い」に畳む
-  - **`task` は省略できる `genre`（報告の種類。`work` 作業／`decision` 判断／`research` 調べもの）を持つ**（
+  - **`task` は省略できる `genre`（報告の種類。`work` 作業の完了／`decision` 判断／`research` 調べもの／`diagnosis` 原因の診断／`timeline` 時間の内訳／`structure` 構成の説明／`screen` 画面の変更／`status` 一覧と状態。型ごとの数の帯の要否と図 1 の第一候補は `src/server/report/core/request-template.ts` の表が持ち、外れは `template-miss` と数えるだけ）を持つ**（
     終わった仕事の報告は種類で型が違うため。`docs/research/report-excellence-strategy.md` 3.2）。種類ごとの既定の節の並びは
     `task` の引数の説明だけが持ち、規約の文面（`REPORT_NOTATION_PROMPT`）には並びを書かない（「規則と置き場の対応」）。`stopped` は種類によらず中断の並び。
     描き方は種類で変えない。`genre` の無い・読めない値は `task` を捨てずに `unspecified` に畳む。

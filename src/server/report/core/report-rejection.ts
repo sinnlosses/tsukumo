@@ -170,6 +170,8 @@ function violationLine(violation: ReportViolation): string {
       return `\`plot\` の \`form\` が置いてはならない形に当たる塊が${violation.count}個ある（${violation.rules.join("・")}）。\`form\` を省いて決定表の形に任せる`
     case "plot-title-without-number":
       return `棒・折れ線・円で描く \`plot\` の \`question\` に数が無い塊が${violation.count}個ある。題に数と向きで言いたい傾向を1文で書く`
+    case "template-miss":
+      return `申告した依頼の型の雛形から外れた点がある（${violation.misses.join("・")}）。数の帯 \`keyFigures\` を足すか、図 1 を型の第一候補の種類にする`
     case "plot-form-override":
       return `\`plot\` の \`form\` が決定表の形と違う塊が${violation.count}個ある。決定表の形で足りるなら \`form\` を省く`
   }
