@@ -89,7 +89,7 @@ components/page/<ページ>/
       hooks/ domain/             この部品（と中の子部品）だけのフック・語彙
       <子部品>.tsx               この部品だけが使う子部品。部品と同じディレクトリに平らに並べ、CSS は <部品>.module.css に同居
       <概念>/                    下の「機能の中を分ける」の概念のディレクトリ（renderer/・stage/・form/ など）
-                                 <部品>.module.css が大きくなったら、規則の本体を概念のディレクトリの *.css に分けて @import する
+                                 同居の CSS が合計 20000 バイト超なら最初から *.css に分け @import。足したら PAGE_CONCEPT_DIRECTORIES も
 ```
 
 - **ページの直下は、container / presenter の対と `<ページ>.module.css`、`domain/` `hooks/` `stores/` `components/`
