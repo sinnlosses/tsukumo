@@ -158,6 +158,7 @@
   }
   & .report-captioned.report-before-after-swap .report-image-zoom img {
     width: 100%;
+    max-height: none;
     border: 1px solid var(--rule-soft);
     border-radius: 10px;
   }
