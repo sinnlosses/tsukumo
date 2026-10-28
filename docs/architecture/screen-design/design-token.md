@@ -73,8 +73,8 @@
 | 部品      | 持つもの                                                                                                                                                                                                              |
 | --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `Surface` | 地（`tone`: `--surface`・`--surface-raised`・`--surface-accent`）・枠（`--rule-soft` の 1px で固定）・角丸（`radius`: `--radius-*`）・内側の余白（`space`: `--space-*`）・影（`shadow`: `none`・`raised`・`overlay`） |
-| `Badge`   | 小さな印。`tone`（`neutral`・`ok`・`warn`・`ng`・`accent`）・字は `--font-label`・角丸は `--radius-pill` か `--radius-sm`                                                                                             |
-| `Divider` | 罫。`--rule`・`--rule-soft`・`--rule-quiet` の 3 段                                                                                                                                                                   |
+| `Badge`   | 小さな印。`tone`（`neutral`・`ok`・`warn`・`ng`・`accent`）・`shape`（`pill`＝`--radius-pill`・`square`＝`--radius-sm`）・字は `--font-label`。`data-tone`・`data-shape` を出す                                       |
+| `Divider` | 罫（`<hr>`）。`tone`（`strong`＝`--rule`・`soft`＝`--rule-soft`・`quiet`＝`--rule-quiet`）・`orientation`（`horizontal`・`vertical`）。`data-tone` を出し、縦のときだけ `aria-orientation="vertical"` を付ける        |
 
 カタログの部品（`report` の a2ui の面）は、枠を `Surface`・見出しを `Heading`・並べる入れ物を `Stack` 系・印を `Badge` で組む。
 

@@ -29,6 +29,10 @@ const PENDING_READER_EXPORTS = {
     "使い手は見本帳と、既存の箱を移す領域ごとの課題で付く",
   "src/browser/components/ui/surface/surface.tsx#SurfaceProps":
     "使い手は見本帳と、既存の箱を移す領域ごとの課題で付く",
+  "src/browser/components/ui/badge/badge.tsx#Badge": "見本帳が読み手になるまで",
+  "src/browser/components/ui/badge/badge.tsx#BadgeProps": "見本帳が読み手になるまで",
+  "src/browser/components/ui/divider/divider.tsx#Divider": "見本帳が読み手になるまで",
+  "src/browser/components/ui/divider/divider.tsx#DividerProps": "見本帳が読み手になるまで",
 } as const satisfies Record<string, string>
 
 const SOURCES = readRepositorySources()

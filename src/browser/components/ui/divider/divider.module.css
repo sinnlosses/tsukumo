@@ -1,0 +1,22 @@
+.divider {
+  flex: none;
+  margin: 0;
+  border: 0;
+}
+.divider-orientation-horizontal {
+  inline-size: 100%;
+  border-block-start: 1px solid var(--divider-color);
+}
+.divider-orientation-vertical {
+  align-self: stretch;
+  border-inline-start: 1px solid var(--divider-color);
+}
+.divider-tone-strong {
+  --divider-color: var(--rule);
+}
+.divider-tone-soft {
+  --divider-color: var(--rule-soft);
+}
+.divider-tone-quiet {
+  --divider-color: var(--rule-quiet);
+}
