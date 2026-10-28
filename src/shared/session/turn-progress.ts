@@ -1,6 +1,7 @@
 // ターンの始まり・続き・終わりが、進み具合と SDK ターンごとの持ち物（`SessionState` の `turn` など）をどう変えるか。
 
 import type { Expression } from "../character-pack/expression.ts"
+import type { A2uiReportComponent } from "../report/a2ui-report-catalog.ts"
 import type { ApiTrouble } from "../session-driver/api-trouble.ts"
 import type {
   TurnEnding,
@@ -36,10 +37,17 @@ export type TurnProgress =
  */
 export type TurnBodies = { readonly report: boolean; readonly utterance: boolean }
 
-/** メインが `report` の引数を書いている途中か（{@link OpenSdkTurn} の `reportDrafting`）。 */
+/**
+ * メインが `report` の引数を書いている途中か（{@link OpenSdkTurn} の `reportDrafting`）。
+ * `components` は引数の中で閉じた部品を届いた順に持つ（同じ `id` は最初のものだけ）。
+ */
 export type ReportDrafting =
   | { readonly kind: "idle" }
-  | { readonly kind: "drafting"; readonly toolUseId: string }
+  | {
+      readonly kind: "drafting"
+      readonly toolUseId: string
+      readonly components: readonly A2uiReportComponent[]
+    }
 
 /**
  * SDK のターンの持ち物（{@link SessionState.sdkTurn}）。開いている間だけ欄を持ち、閉じると型の上で消える。

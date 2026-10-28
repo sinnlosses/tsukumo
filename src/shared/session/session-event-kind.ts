@@ -17,6 +17,7 @@ const SESSION_EVENT_KINDS = {
   "speak-called": true,
   "speak-drawn": true,
   "report-drafting": true,
+  "report-draft-component": true,
   report: true,
   "report-malformed": true,
   "report-rejected": true,

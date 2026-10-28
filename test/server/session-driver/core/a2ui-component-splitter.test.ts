@@ -4,7 +4,7 @@ import {
   INITIAL_SPLIT_STATE,
   mismatchCount,
   splitComponents,
-} from "../../../scripts/runtime/a2ui-component-splitter.ts"
+} from "../../../../src/server/session-driver/core/a2ui-component-splitter.ts"
 
 const COMPONENTS = [
   { id: "root", component: "Report", children: ["s1", "s2"] },

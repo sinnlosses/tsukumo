@@ -256,10 +256,74 @@ describe("applySessionEvent（report を書いている間）", () => {
     expect(reportDraftingOf(apply(REQUEST, DRAFTING).sdkTurn)).toEqual({
       kind: "drafting",
       toolUseId: "toolu_r1",
+      components: [],
     })
     expect(
       reportDraftingOf(apply(REQUEST, DRAFTING, reportEvent({ toolUseId: "toolu_r1" })).sdkTurn),
     ).toEqual({ kind: "idle" })
+  })
+
+  describe("部品", () => {
+    const SECTION_A: SessionEvent = {
+      kind: "report-draft-component",
+      toolUseId: "toolu_r1",
+      component: { id: "a", component: "Section", heading: "架空の見出し", children: ["x"] },
+    }
+    const SECTION_B: SessionEvent = {
+      kind: "report-draft-component",
+      toolUseId: "toolu_r1",
+      component: { id: "b", component: "Section", heading: "別の見出し", children: ["y"] },
+    }
+    const componentIds = (state: ReturnType<typeof apply>): readonly string[] => {
+      const drafting = reportDraftingOf(state.sdkTurn)
+      return drafting.kind === "drafting" ? drafting.components.map(({ id }) => id) : []
+    }
+
+    it("届くたびに草稿が届いた順に伸びる", () => {
+      expect(componentIds(apply(REQUEST, DRAFTING, SECTION_A))).toEqual(["a"])
+      expect(componentIds(apply(REQUEST, DRAFTING, SECTION_A, SECTION_B))).toEqual(["a", "b"])
+    })
+
+    it("同じ id の再送では増えず、最初のものが残る", () => {
+      const resent: SessionEvent = {
+        ...SECTION_A,
+        component: {
+          id: "a",
+          component: "Section",
+          heading: "書き換わった見出し",
+          children: ["x"],
+        },
+      }
+      const drafting = reportDraftingOf(apply(REQUEST, DRAFTING, SECTION_A, resent).sdkTurn)
+
+      expect(drafting.kind === "drafting" ? drafting.components : []).toEqual([
+        SECTION_A.kind === "report-draft-component" ? SECTION_A.component : undefined,
+      ])
+    })
+
+    it("開いていない草稿・別の呼び出しの部品は捨てる", () => {
+      expect(reportDraftingOf(apply(REQUEST, SECTION_A).sdkTurn)).toEqual({ kind: "idle" })
+      expect(
+        componentIds(apply(REQUEST, DRAFTING, { ...SECTION_B, toolUseId: "toolu_other" })),
+      ).toEqual([])
+    })
+
+    it("report・差し戻しの tool-finished・ターンの終わりで草稿が消える", () => {
+      const drafted = [REQUEST, DRAFTING, SECTION_A] as const
+      const finished: SessionEvent = {
+        kind: "tool-finished",
+        toolUseId: "toolu_r1",
+        content: "架空の差し戻し",
+        isError: true,
+      }
+      const ended: SessionEvent = { kind: "turn-finished", outcome: { kind: "interrupted" } }
+
+      expect(
+        reportDraftingOf(apply(...drafted, reportEvent({ toolUseId: "toolu_r1" })).sdkTurn),
+      ).toEqual({ kind: "idle" })
+      expect(reportDraftingOf(apply(...drafted, finished).sdkTurn)).toEqual({ kind: "idle" })
+      expect(reportDraftingOf(apply(...drafted, ended).sdkTurn)).toEqual({ kind: "idle" })
+    })
   })
 
   it("report の待ちの一言は記録に写る", () => {

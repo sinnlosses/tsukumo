@@ -73,7 +73,7 @@ const NOT_DRAFTING = {
 } satisfies SessionState["sdkTurn"]
 const DRAFTING = {
   ...NOT_DRAFTING,
-  reportDrafting: { kind: "drafting", toolUseId: "fake-report-1" },
+  reportDrafting: { kind: "drafting", toolUseId: "fake-report-1", components: [] },
 } satisfies SessionState["sdkTurn"]
 
 const RUNNING_BASH = [

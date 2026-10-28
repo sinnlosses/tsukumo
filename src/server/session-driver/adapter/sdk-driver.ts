@@ -12,12 +12,12 @@ import { randomUUID, type UUID } from "node:crypto"
 import { type PermissionResult, query } from "@anthropic-ai/claude-agent-sdk"
 
 import { expressionNames as toExpressionNames } from "../../../shared/character-pack/expression-choice.ts"
-import { parsePromptImage, type PromptImage } from "../../../shared/session-driver/prompt-image.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import { TSUKUMO_MCP_SERVER_NAME } from "../../core/tsukumo-tool-name.ts"
 import { createReportGate, type ReportGate } from "../../report/core/report-tool.ts"
 import { asidePromptText } from "../core/aside-prompt.ts"
 import { type CallReview, createCallReview, passRelayedEvents } from "../core/call-review.ts"
+import { createReportDraftIntake, type ReportDraftIntake } from "../core/draft-component-intake.ts"
 import { createExternalToolMark } from "../core/external-tool-mark.ts"
 import { createInputLedgerIntake, type InputLedgerIntake } from "../core/input-ledger.ts"
 import { createInterruptMark, type InterruptMark } from "../core/interrupt-mark.ts"
@@ -48,7 +48,7 @@ import { runAskGuard, withAskGuard } from "./sdk-ask-guard.ts"
 import { readContextUsage } from "./sdk-context-usage.ts"
 import { runLapHook, withLapHook } from "./sdk-lap-hook.ts"
 import { readPlanUsage } from "./sdk-plan-usage.ts"
-import { createPromptStream, type PromptContentBlock } from "./sdk-prompt-stream.ts"
+import { createPromptStream, type PromptContentBlock, toImageBlocks } from "./sdk-prompt-stream.ts"
 import {
   buildQuerySeedOptions,
   handbackNoteHooks,
@@ -192,6 +192,7 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
   }
 
   const ledgerIntake = createInputLedgerIntake()
+  const draftIntake = createReportDraftIntake()
   const push = (text: string, images: readonly PromptContentBlock[]): UUID => {
     const uuid = randomUUID()
     input.push({ text, images, uuid })
@@ -219,6 +220,7 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
     delayWatch,
     interruptMark,
     ledgerIntake,
+    draftIntake,
   )
   void relayCommandDescriptions(session, options)
   void relayPlan(session, options)
@@ -340,6 +342,7 @@ function watchProgressNudge(
  *
  * `titleIntake` が覚えている題（`report` の `title` 引数）もターンの終わりに取り出し、`titleWriter` で書く。
  * 入力の控え（`ledgerIntake`）もメインのメッセージを見て、ターンの終わりに書く。
+ * 書いている途中の `report` の部品（`draftIntake`）もメインの断片から切り出し、変換したイベントの後ろに並べる。
  */
 async function relayMessages(
   session: AsyncIterable<unknown>,
@@ -351,6 +354,7 @@ async function relayMessages(
   delayWatch: PromptDelayWatch,
   interruptMark: InterruptMark,
   ledgerIntake: InputLedgerIntake,
+  draftIntake: ReportDraftIntake,
 ): Promise<void> {
   // セッションIDは `session-info`（ターンのたびに届く）から取り、ターンが終わるたびに印を付け直す（`markSession`）。
   let sessionId: string | undefined = undefined
@@ -370,7 +374,8 @@ async function relayMessages(
         toExpressionNames(options.expressions),
         interruptMark.sent(),
       )
-      const events = passRelayedEvents(callReview, converted, fromMain)
+      const drafted = fromMain ? draftIntake.observe(message) : []
+      const events = passRelayedEvents(callReview, [...converted, ...drafted], fromMain)
       for (const event of events) {
         if (fromMain) {
           reportGate.observe(event)
@@ -446,23 +451,6 @@ function askForAnswer(
   signal: AbortSignal,
 ): Promise<PermissionResult> {
   return queue.ask({ id, toolName, input, signal })
-}
-
-/**
- * 依頼に添えられた画像1枚を、モデルへ渡す内容ブロックにする。
- * 渡せない形・大きすぎるものは空（その1枚を諦めて依頼そのものは送る）。
- * 形は境界（契約の zod）で見てあるので、ここは同じ関数でほどくだけ。
- */
-function toImageBlocks(image: PromptImage): readonly PromptContentBlock[] {
-  const source = parsePromptImage(image.full)
-  return source === undefined
-    ? []
-    : [
-        {
-          type: "image",
-          source: { type: "base64", media_type: source.mediaType, data: source.base64 },
-        },
-      ]
 }
 
 function describeError(error: unknown): string {

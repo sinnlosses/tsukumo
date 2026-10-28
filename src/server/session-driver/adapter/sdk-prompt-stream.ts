@@ -5,6 +5,7 @@ import type { UUID } from "node:crypto"
 
 import type { SDKUserMessage } from "@anthropic-ai/claude-agent-sdk"
 
+import { parsePromptImage, type PromptImage } from "../../../shared/session-driver/prompt-image.ts"
 import type { PromptDelayWatch } from "../core/prompt-delay.ts"
 
 /**
@@ -83,6 +84,23 @@ export function createPromptStream(
       }
     },
   }
+}
+
+/**
+ * 依頼に添えられた画像1枚を、モデルへ渡す内容ブロックにする。
+ * 渡せない形・大きすぎるものは空（その1枚を諦めて依頼そのものは送る）。
+ * 形は境界（契約の zod）で見てあるので、ここは同じ関数でほどくだけ。
+ */
+export function toImageBlocks(image: PromptImage): readonly PromptContentBlock[] {
+  const source = parsePromptImage(image.full)
+  return source === undefined
+    ? []
+    : [
+        {
+          type: "image",
+          source: { type: "base64", media_type: source.mediaType, data: source.base64 },
+        },
+      ]
 }
 
 /** 依頼1件の `content`。画像が無ければ文字列のまま。 */

@@ -53,7 +53,7 @@
 ## 測り方
 
 - `scripts/runtime/a2ui-fragment-record.ts`: SDK の `query()` を直に呼び、組み込みツールを外して `report` だけを持つ進行内 MCP サーバで 1 ターン走らせる（`permissionMode` は `default`）。断片の種類・時刻・字数を表にし、本文は作業ツリーの外にだけ書く。
-- `scripts/runtime/a2ui-streaming-trial.ts`: 録った断片を順に足し、`scripts/runtime/a2ui-component-splitter.ts` の読み手で部品が閉じる時刻を測る。
+- `scripts/runtime/a2ui-streaming-trial.ts`: 録った断片を順に足し、`src/server/session-driver/core/a2ui-component-splitter.ts` の読み手で部品が閉じる時刻を測る。
 - 1 回だけの測定で、モデルと依頼の長さを変えた比較はしていない。時刻は 1 回の実行の値で、ばらつきは測っていない。本番の経路は変えていない。
 
 ## 判断に効く点

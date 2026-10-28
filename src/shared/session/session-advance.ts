@@ -50,6 +50,7 @@ const MODEL_OUTPUT_EVENT_KINDS: ReadonlySet<SessionEvent["kind"]> = new Set([
   "utterance",
   "speech",
   "report-drafting",
+  "report-draft-component",
   "report",
   "work-plan",
   "tool-started",
@@ -219,8 +220,23 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
     case "report-drafting":
       return withOpenSdkTurn(state, (open) => ({
         ...open,
-        reportDrafting: { kind: "drafting", toolUseId: event.toolUseId },
+        reportDrafting: { kind: "drafting", toolUseId: event.toolUseId, components: [] },
       }))
+    case "report-draft-component":
+      return withOpenSdkTurn(state, (open) => {
+        const drafting = open.reportDrafting
+        return drafting.kind === "drafting" &&
+          drafting.toolUseId === event.toolUseId &&
+          !drafting.components.some((component) => component.id === event.component.id)
+          ? {
+              ...open,
+              reportDrafting: {
+                ...drafting,
+                components: [...drafting.components, event.component],
+              },
+            }
+          : open
+      })
     case "report":
       // `tool-started` と同じく、届いた位置に積むだけ（吹き出しにも帯の「いまの作業」にも出さない）。
       // 段の閉じ方が `finished` なら、閉じたワークプランの記録をその直前に積む。

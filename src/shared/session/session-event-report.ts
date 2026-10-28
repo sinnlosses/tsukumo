@@ -31,6 +31,15 @@ export type ReportEvent =
    */
   | { readonly kind: "report-drafting"; readonly toolUseId: string }
   /**
+   * 書いている途中の `report`（`a2ui` の版）の引数で、部品が 1 つ閉じた。部品 1 つにつき 1 イベント。
+   * `component` は駆動が形を検査し終えたもの。同じ `toolUseId` の草稿が開いているときだけ畳み込みが積む。
+   */
+  | {
+      readonly kind: "report-draft-component"
+      readonly toolUseId: string
+      readonly component: A2uiReportComponent
+    }
+  /**
    * `report` ツールの呼び出し。メインが呼んだものだけが届く（サブエージェントの呼び出しは変換で捨てる）。
    * `sections`（本文の節）と `checks`（検証結果）は無ければ空の配列、`favor` は無ければ空の文字列、`retrospective`（振り返りの結果）は無ければ `none`、`task` と `workPlanClosing`（段の閉じ方）は無ければ `none`。
    * `keyFigures`（結論の直下に並べる数）は無ければ空の配列。
