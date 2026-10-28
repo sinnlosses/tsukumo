@@ -4,19 +4,19 @@
 .token-usage-period {
   display: flex;
   margin-left: auto;
-  gap: 2px;
-  padding: 3px;
+  gap: var(--space-2xs);
+  padding: calc(1.5 * var(--space-2xs));
   background: var(--usage-well);
   border: 1px solid var(--usage-rule);
-  border-radius: 0.625rem;
+  border-radius: var(--radius-lg);
 }
 /* 選ばれている側は地を1段上げる（`aria-pressed`。色だけに頼らない）。 */
 .token-usage-choice {
-  padding: 0.25rem 0.7rem;
+  padding: var(--space-xs) var(--space-md);
   background: none;
   color: var(--usage-ink-label);
   border: none;
-  border-radius: 0.4375rem;
+  border-radius: var(--radius-md);
   font-size: var(--font-label);
   cursor: pointer;
 }

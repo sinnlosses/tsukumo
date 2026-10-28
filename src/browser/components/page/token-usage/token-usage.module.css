@@ -4,10 +4,10 @@
 .token-usage {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: var(--space-xl);
   max-width: 60rem;
   margin: 0 auto;
-  padding: 0 0.25rem 2rem;
+  padding: 0 var(--space-xs) 2rem;
 }
 .token-usage-title {
   margin: 0;
@@ -18,9 +18,9 @@
 /* プランの札。題の右に添えるだけの静かな印（状態の警告ではないので accent は使わない）。 */
 /* 字の段・色は `Text` が持つ。箱（枠・角丸・余白）・行の高さだけここに置く。 */
 .token-usage-plan {
-  padding: 0.1rem 0.5rem;
+  padding: var(--space-2xs) var(--space-sm);
   border: 1px solid var(--rule);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   line-height: 1.4;
 }
 /* 題の帯の残りを埋め、見直し中の札を右端へ押しやる（`.token-usage-bar` の `flex-wrap` と合わせ、狭い画面では下へ折り返す）。 */
@@ -30,8 +30,8 @@
 /* 「見直し中」（題の帯の右）。
    押せない。見直し中かどうかは区画の枠の色と中身がすでに言っているので、ここは題の帯からも分かるようにするだけの印（`role="status"` で読み上げにも状態として伝える）。 */
 .token-usage-review-badge {
-  padding: 0.35rem 0.9rem;
-  border-radius: 0.625rem;
+  padding: var(--space-xs) var(--space-lg);
+  border-radius: var(--radius-lg);
   background: var(--accent);
   color: var(--ground);
   font-size: var(--font-action);
@@ -52,17 +52,17 @@
 .usage-card-row {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 1rem;
+  gap: var(--space-lg);
 }
 
 /* 札1枚。枠を持つ。 */
 .usage-card {
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
-  padding: 1rem 1.125rem;
+  gap: var(--space-2xs);
+  padding: var(--space-lg) var(--space-xl);
   border: 1px solid var(--usage-rule);
-  border-radius: 0.875rem;
+  border-radius: var(--radius-xl);
   background: var(--usage-card);
   /* 中の棒は grid の列幅に合わせて縮む。
      `min-width: 0` が無いと、棒の本数ぶんの最小幅がそのまま列の下限になり、狭い画面で横に溢れる。 */
@@ -79,7 +79,7 @@
 }
 .token-usage-table th,
 .token-usage-table td {
-  padding: 0.5rem 0.4rem;
+  padding: var(--space-sm);
   text-align: right;
 }
 /* 見出しの行は下の罫線だけで区切る（地を上げない。行の罫線より1段はっきりさせて、ここが表の頭だと分かるようにする）。 */
@@ -118,7 +118,7 @@
 .usage-table-row {
   display: grid;
   grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
-  gap: 1rem;
+  gap: var(--space-lg);
   align-items: start;
   min-width: 0;
 }

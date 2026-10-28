@@ -15,5 +15,5 @@
    文字だけのボタン（枠を増やさない）。
    顔は `<Button variant="link">` が持つ。 */
 .usage-table-more {
-  margin: 0.75rem 0 0;
+  margin: var(--space-md) 0 0;
 }

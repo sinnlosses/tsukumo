@@ -2,7 +2,7 @@
    期間の合計の札（`.usage-card-label` 以下）よりひとまわり大きくする。
    「いまのコンテキスト」と同格の区画の見出しなので、`.context-title` / `.context-note` と同じ大きさ・色の組にする。 */
 .usage-table-head {
-  margin-bottom: 0.4rem;
+  margin-bottom: var(--space-sm);
 }
 .usage-table-title {
   margin: 0;

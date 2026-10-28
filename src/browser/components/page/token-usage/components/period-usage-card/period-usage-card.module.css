@@ -16,7 +16,7 @@
    目盛りも軸も描かないので、これが唯一の高さの手がかりになる。
    寄せる側は棒の位置で決まる。 */
 .usage-card-peak {
-  margin: 0.4rem 0 0.15rem;
+  margin: var(--space-sm) 0 var(--space-2xs);
   color: var(--usage-ink-note);
   font-family: var(--font-mono);
   font-size: var(--font-label);
@@ -38,7 +38,7 @@
   grid-auto-flow: column;
   grid-auto-columns: 1fr;
   align-items: end;
-  gap: 1px;
+  gap: calc(0.5 * var(--space-2xs));
   height: 3.5rem;
   /* 基線。寸法を変えないよう枠ではなく外側の影で引く（棒の足元のすぐ下に1本出る）。 */
   box-shadow: 0 1px 0 var(--usage-bar-baseline);
@@ -48,7 +48,7 @@
   align-self: end;
   height: var(--usage-bar-height);
   min-height: 2px;
-  border-radius: 2px 2px 0 0;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
   background: var(--usage-bar);
 }
 /* 記録の無い刻み。
@@ -56,11 +56,11 @@
    塗りを落とすのは、空だったことと「少しだけ使った」ことを取り違えさせないため。 */
 .usage-card-bar-zero {
   background: var(--usage-bar-zero);
-  border-radius: 1px;
+  border-radius: 0;
 }
 /* 期間の両端の刻み（最初と最後だけ）。 */
 .usage-card-scale {
-  margin: 0.25rem 0 0;
+  margin: var(--space-xs) 0 0;
   color: var(--usage-ink-faint);
   font-family: var(--font-mono);
   font-size: var(--font-label);

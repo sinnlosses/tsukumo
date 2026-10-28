@@ -2,7 +2,7 @@
 .usage-table-bar-cell {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: var(--space-sm);
   min-width: 0;
 }
 .usage-table-bar {
@@ -10,7 +10,7 @@
   overflow: hidden;
   min-width: 1.5rem;
   height: 0.5rem;
-  border-radius: 0.25rem;
+  border-radius: var(--radius-sm);
   background: var(--usage-bar-track);
 }
 /* 塗りは期間の合計の棒（`.usage-card-bar`）と同じ `--usage-bar`（どちらも「その列の最大に対する長さ」を言う棒で、分類の色ではない）。 */
@@ -18,6 +18,6 @@
   display: block;
   width: var(--usage-bar-share);
   height: 100%;
-  border-radius: 0.25rem;
+  border-radius: var(--radius-sm);
   background: var(--usage-bar);
 }

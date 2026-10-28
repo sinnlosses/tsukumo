@@ -3,10 +3,10 @@
 .context-card {
   display: flex;
   flex-direction: column;
-  gap: 1.125rem;
-  padding: 1.5rem 1.75rem;
+  gap: var(--space-xl);
+  padding: var(--space-2xl) 1.75rem;
   border: 1px solid var(--usage-rule);
-  border-radius: 0.875rem;
+  border-radius: var(--radius-xl);
   background: var(--usage-card);
 }
 /* 見出しの行。右の2つは `margin-left: auto` で押しやる（狭い画面では下へ折り返す）。 */
@@ -27,9 +27,9 @@
    札より沈んだ枠のある小さな箱（期間の切り替えの外枠と同じ地）。
    数のほうを明るく、「自動圧縮まで」を一段落とす。 */
 .context-until {
-  padding: 0.1rem 0.5rem;
+  padding: var(--space-2xs) var(--space-sm);
   border: 1px solid var(--usage-rule);
-  border-radius: 0.625rem;
+  border-radius: var(--radius-lg);
   background: var(--usage-well);
   color: var(--usage-ink);
   font-size: var(--font-label);
@@ -48,7 +48,7 @@
 .context-total {
   display: flex;
   align-items: baseline;
-  gap: 0.4rem;
+  gap: var(--space-sm);
   margin: 0;
 }
 .context-total-value {
@@ -76,7 +76,7 @@
 .context-bar {
   display: flex;
   overflow: hidden;
-  gap: 2px;
+  gap: var(--space-2xs);
   width: 100%;
   height: 1.75rem;
 }
@@ -84,10 +84,10 @@
   width: var(--context-share);
 }
 .context-span:first-child {
-  border-radius: 0.375rem 0 0 0.375rem;
+  border-radius: var(--radius-md) 0 0 var(--radius-md);
 }
 .context-span:last-child {
-  border-radius: 0 0.375rem 0.375rem 0;
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
 }
 
 /* 凡例。3列の格子（狭い画面では列が減る。1列の下限は、いちばん長い分類名と数が1行に収まる幅）。 */
@@ -101,8 +101,8 @@
 .context-legend-row {
   display: flex;
   align-items: baseline;
-  gap: 0.6rem;
-  padding: 0.5rem 0;
+  gap: var(--space-sm);
+  padding: var(--space-sm) 0;
   border-top: 1px solid var(--usage-rule-quiet);
   font-size: var(--font-secondary);
   white-space: nowrap;
@@ -111,7 +111,7 @@
   display: flex;
   color: var(--usage-ink-soft);
   align-items: baseline;
-  gap: 0.35rem;
+  gap: var(--space-xs);
 }
 /* 数（トークン数）を明るく、割合を静かに。 */
 .context-legend-value {
@@ -129,7 +129,7 @@
   flex-shrink: 0;
   width: 0.75rem;
   height: 0.75rem;
-  border-radius: 0.1875rem;
+  border-radius: var(--radius-sm);
 }
 /* 空き・自動圧縮バッファの四角だけは縁を足す（地に近い塗りなので、縁が無いと四角が消える）。 */
 .context-swatch.context-tone-free,
@@ -139,7 +139,7 @@
 
 /* 畳んだ内訳（`details`）。開くと表が縦に並ぶ。凡例の行と同じ罫で上を区切る。 */
 .context-detail {
-  padding-top: 0.625rem;
+  padding-top: var(--space-md);
   border-top: 1px solid var(--usage-rule-quiet);
   font-size: var(--font-label);
 }
@@ -148,7 +148,7 @@
   cursor: pointer;
 }
 .context-detail[open] .context-detail-summary {
-  margin-bottom: 0.4rem;
+  margin-bottom: var(--space-sm);
 }
 
 /* 読み込み中の骨組み（`ContextUsageCardSkeleton`）が出す塊。
@@ -166,7 +166,7 @@
 .context-skeleton-legend-value,
 .context-skeleton-bar {
   display: inline-block;
-  border-radius: 0.25rem;
+  border-radius: var(--radius-sm);
   background-color: var(--usage-well);
   color: transparent;
 }
@@ -197,7 +197,7 @@
    中身が無いので `&nbsp;` は要らない（高さは `stretch` が決める）。 */
 .context-skeleton-bar {
   flex: 1 1 auto;
-  border-radius: 0.375rem;
+  border-radius: var(--radius-md);
 }
 
 /* 分類ごとの塗り（`ContextTone` と対。16進は theme.css だけが持つ）。 */
