@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest"
 
+import { isFaultTopic, requestFor } from "../../../../scripts/dev/lib/a2ui-trial-topic.ts"
 import {
   catalogCard,
   extractComponents,
@@ -130,13 +131,84 @@ describe("catalogCard", () => {
 })
 
 describe("trialConditions", () => {
-  test("載せ方 2 つで 32 件、操作できる部品の題材は 8 件", () => {
+  test("載せ方 2 つで 52 件、操作できる部品の題材は 8 件", () => {
     const conditions = trialConditions()
 
-    expect(conditions).toHaveLength(32)
+    expect(conditions).toHaveLength(52)
     expect(conditions.filter((entry) => entry.topic === "T3" || entry.topic === "T4")).toHaveLength(
       8,
     )
+  })
+
+  test("規約を破らせる題材は A が 8 件、B が 12 件", () => {
+    const faulty = trialConditions().filter((entry) => isFaultTopic(entry.topic))
+
+    expect(faulty.filter((entry) => entry.loading === "full")).toHaveLength(8)
+    expect(faulty.filter((entry) => entry.loading === "names")).toHaveLength(12)
+  })
+})
+
+describe("requestFor", () => {
+  test("違反の指示は最初の依頼にだけ添え、再試行の依頼には添えない", () => {
+    expect(requestFor("T5", 2, true)).toContain("優先する")
+    expect(requestFor("T5", 2, false)).not.toContain("優先する")
+  })
+
+  test("規約を破らせない題材は violate が真でも指示を添えない", () => {
+    expect(requestFor("T1", 2, true)).toBe(requestFor("T1", 2, false))
+  })
+})
+
+describe("規約を破らせる題材の違反", () => {
+  const nestedSection = {
+    id: "s2",
+    component: "Section",
+    heading: "架空の入れ子",
+    children: ["p1"],
+  }
+  const layer = (id: string, component: string, child: string): unknown =>
+    component === "Card" ? { id, component, child } : { id, component, children: [child] }
+
+  test.each([
+    [
+      "Report の子に節でない部品",
+      [{ ...report, children: ["s1", "p1"] }, section, paragraph],
+      "report-child-not-section",
+    ],
+    [
+      "節の中の節",
+      [report, { ...section, children: ["s2", "p1"] }, nestedSection, paragraph],
+      "nested-section",
+    ],
+    [
+      "配置の 5 重の入れ子",
+      [
+        report,
+        { ...section, children: ["l1"] },
+        layer("l1", "Row", "l2"),
+        layer("l2", "Column", "l3"),
+        layer("l3", "Card", "l4"),
+        layer("l4", "Row", "l5"),
+        layer("l5", "Card", "p1"),
+        paragraph,
+      ],
+      "deep-layout",
+    ],
+    [
+      "どこからも参照されない部品",
+      [
+        report,
+        section,
+        paragraph,
+        { id: "n1", component: "Note", tone: "info", text: "架空の補足" },
+      ],
+      "unreferenced-component",
+    ],
+  ])("%s は構造の検査で落ちる", (_label, components, code) => {
+    const judged = judgeComponents(components)
+
+    expect(judged.faults.map((fault) => fault.code)).toContain(code)
+    expect(judged.retryText).toContain("VALIDATION_FAILED")
   })
 })
 

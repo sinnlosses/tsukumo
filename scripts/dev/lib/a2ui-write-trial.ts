@@ -13,10 +13,16 @@ import {
   buildReportCatalogDocument,
   REPORT_COMPONENT_SCHEMAS,
 } from "../../../src/shared/report/a2ui-report-catalog.ts"
+import {
+  CONTROL_TOPICS,
+  FAULT_TOPICS,
+  isControlTopic,
+  isFaultTopic,
+  PLAIN_TOPICS,
+  type TopicId,
+} from "./a2ui-trial-topic.ts"
 
 export type Loading = "full" | "names"
-
-export type TopicId = "T1" | "T2" | "T3" | "T4"
 
 export type TrialCondition = {
   readonly id: string
@@ -46,39 +52,12 @@ export type CaseResult = {
   readonly retryFaults: readonly Fault[] | undefined
   readonly usedControls: boolean
   readonly calls: number
+  // 最初の出力と再試行の出力の字数。出力が残っていない結果や再試行しなかった結果は undefined
+  readonly firstChars: number | undefined
+  readonly retryChars: number | undefined
 }
 
 type Outcome = "first-pass" | "fixed" | "unfixed"
-
-const PLAIN_TOPICS = ["T1", "T2"] as const
-const CONTROL_TOPICS = ["T3", "T4"] as const
-
-const TOPIC_REQUESTS = {
-  T1: {
-    request:
-      "A2UI と tsukumo の report の違いを比べる報告を書いて。少なくとも 1 つの節に表を入れる。",
-    facts:
-      "材料（すべて架空）: A2UI は宣言的 UI の規約で、AI は部品の JSON だけを出し描くのはクライアント。report はツール引数の JSON を server が検査して差し戻し、ブラウザの HTML で描く。近い点はデータでありコードでないこと・部品をクライアントが持つこと・スキーマで検証すること。違う点は A2UI が双方向のストリーミング前提で、report がターン末に 1 回であること。未確認なのは節の数を AI が守る率。",
-  },
-  T2: {
-    request:
-      "検索画面の不具合を直した報告を書いて。変えたファイルを表で、検証結果を結論の下の欄で示す。",
-    facts:
-      "材料（すべて架空）: 検索画面で空の語を送ると一覧が消える不具合を直した。変えたのは search-box.tsx（空の語を送らない）、search-list.tsx（空の一覧に案内を出す）、search-box.test.tsx（空の語の 1 件）。単体テスト 120 件が通り、画面での確かめは 1 件が未確認（狭い窓）。原因は、空の語を送ると絞り込みが全部外れて空の一覧を返していたこと。",
-  },
-  T3: {
-    request:
-      "架空の案件の一覧を、種別で絞り、列の見出しで並べ替えられる表にして報告して。操作できる部品（Table の sortable・filterable と ChoicePicker）を使う。",
-    facts:
-      "材料（すべて架空）: 案件 6 件。列は案件・種別（甲・乙・丙）・状態（完了・遅れ・停止）・件数・更新日。件数の多い順に見たい。種別で絞り込みたい。",
-  },
-  T4: {
-    request:
-      "架空の検証結果の一覧を、状態で絞れる表にして報告して。操作できる部品（Table の sortable・filterable と ChoicePicker）を使う。",
-    facts:
-      "材料（すべて架空）: 検証 8 件。列は検証名・状態（通った・落ちた・飛ばした）・所要秒・確かめた日。状態で絞り込みたい。落ちた 2 件の理由を節で説明する。",
-  },
-} as const satisfies Record<TopicId, { request: string; facts: string }>
 
 const COMPONENT_PURPOSES = {
   Report: "根。結論・検証結果・締めのセリフなど報告全体の欄を持つ。id は root",
@@ -120,11 +99,12 @@ export function trialConditions(): readonly TrialCondition[] {
     ...CONTROL_TOPICS.flatMap((topic) =>
       [2, 3].map((sections) => condition(loading, topic, sections, true)),
     ),
+    ...FAULT_TOPICS.flatMap((topic) =>
+      (loading === "full" ? [2, 3] : [2, 3, 4]).map((sections) =>
+        condition(loading, topic, sections, true),
+      ),
+    ),
   ])
-}
-
-export function isControlTopic(topic: TopicId): boolean {
-  return CONTROL_TOPICS.some((candidate) => candidate === topic)
 }
 
 /** 書き手に渡す system prompt。`names` は部品名の一覧だけで、型は `CARD <部品名>` で引かせる。 */
@@ -149,11 +129,6 @@ export function systemPromptFor(loading: Loading, example: readonly unknown[] | 
       ? []
       : ["出力の例（節の数と中身は依頼に合わせて変える）:", JSON.stringify(example)]
   return [...rules, ...catalog, ...exampleText].join("\n\n")
-}
-
-export function requestFor(topic: TopicId, sections: number): string {
-  const { request, facts } = TOPIC_REQUESTS[topic]
-  return `${request} 節はちょうど ${String(sections)} つにする。\n\n${facts}`
 }
 
 /** 書き手の返答から、`CARD <部品名>` の行で引かれた部品名を取る。 */
@@ -285,11 +260,15 @@ export function toolDefinitionChars(loading: Loading): {
 export function summarizeCases(results: readonly CaseResult[]): readonly SummaryRow[] {
   const groups = Map.groupBy(
     results,
-    (result) => `${result.loading}\t${isControlTopic(result.topic) ? "操作あり" : "操作無し"}`,
+    (result) => `${result.loading}\t${groupLabelOf(result.topic)}`,
   )
   return [...groups.entries()].toSorted().map(([key, rows]) => {
     const [loading = "", controls = ""] = key.split("\t")
     const outcomes = rows.map(outcomeOf)
+    const retried = rows.filter((row) => row.retryFaults !== undefined)
+    const measured = retried.filter(
+      (row) => row.firstChars !== undefined && row.retryChars !== undefined,
+    )
     const faultCodes = rows.flatMap((row) =>
       row.firstFaults.map((fault) => `${fault.source}:${fault.code}`),
     )
@@ -304,9 +283,20 @@ export function summarizeCases(results: readonly CaseResult[]): readonly Summary
       pathFaults: faultCodes.filter((code) => code.startsWith("structure:filter-")).length,
       usedControls: rows.filter((row) => row.usedControls).length,
       calls: rows.reduce((sum, row) => sum + row.calls, 0),
+      retried: retried.length,
+      retryCalls: retried.length,
+      firstCharsAverage: average(measured.map((row) => row.firstChars)),
+      retryCharsAverage: average(measured.map((row) => row.retryChars)),
       reasons: tally(faultCodes),
     }
   })
+}
+
+function average(sizes: readonly (number | undefined)[]): number | undefined {
+  const known = sizes.filter((size) => size !== undefined)
+  return known.length === 0
+    ? undefined
+    : Math.round(known.reduce((sum, size) => sum + size, 0) / known.length)
 }
 
 export type SummaryRow = {
@@ -320,7 +310,18 @@ export type SummaryRow = {
   readonly pathFaults: number
   readonly usedControls: number
   readonly calls: number
+  readonly retried: number
+  readonly retryCalls: number
+  readonly firstCharsAverage: number | undefined
+  readonly retryCharsAverage: number | undefined
   readonly reasons: string
+}
+
+function groupLabelOf(topic: TopicId): string {
+  if (isFaultTopic(topic)) {
+    return "違反を促す"
+  }
+  return isControlTopic(topic) ? "操作あり" : "操作無し"
 }
 
 /** 一発・直った・直らない。再試行しなかった（一発で通った）ときは `retryFaults` が undefined。 */

@@ -17,16 +17,15 @@ import { z } from "zod"
 import { buildReportCatalogDocument } from "../../src/shared/report/a2ui-report-catalog.ts"
 import { replayEnvironment } from "../shared/claude-environment.ts"
 import { REPOSITORY_ROOT } from "../shared/repository-root.ts"
+import { isControlTopic, requestFor } from "./lib/a2ui-trial-topic.ts"
 import {
   type CaseResult,
   catalogCard,
   extractComponents,
-  isControlTopic,
   judgeComponents,
   type Judgement,
   type Loading,
   requestedCards,
-  requestFor,
   summarizeCases,
   systemPromptFor,
   toolDefinitionChars,
@@ -55,13 +54,14 @@ const faultSchema = z.object({
 const storedResultSchema = z.object({
   id: z.string(),
   loading: z.enum(["full", "names"]),
-  topic: z.enum(["T1", "T2", "T3", "T4"]),
+  topic: z.enum(["T1", "T2", "T3", "T4", "T5", "T6", "T7", "T8"]),
   sections: z.number(),
   firstFaults: z.array(faultSchema),
   firstSectionCount: z.number(),
   retryFaults: z.array(faultSchema).optional(),
   usedControls: z.boolean(),
   calls: z.number(),
+  outputs: z.array(z.string()).optional(),
 })
 
 async function main(argv: readonly string[]): Promise<number> {
@@ -134,7 +134,7 @@ async function runCase(entry: TrialCondition): Promise<{
       ? examples.control
       : examples.plain
   const system = systemPromptFor(entry.loading, example)
-  const request = requestFor(entry.topic, entry.sections)
+  const request = requestFor(entry.topic, entry.sections, true)
   const first = await writeOnce(entry.loading, system, request, examples.cardSources)
   const firstJudgement = judgeComponents(extractComponents(first.text))
   if (firstJudgement.faults.length === 0) {
@@ -144,7 +144,7 @@ async function runCase(entry: TrialCondition): Promise<{
     }
   }
   const retryUser = [
-    first.context,
+    first.context.replace(request, requestFor(entry.topic, entry.sections, false)),
     "前回の出力:",
     first.text,
     "差し戻し:",
@@ -196,6 +196,8 @@ function resultOf(
     retryFaults: retry?.faults,
     usedControls: first.usedControls,
     calls,
+    firstChars: undefined,
+    retryChars: undefined,
   }
 }
 
@@ -283,11 +285,23 @@ function printSummary(out: string): void {
   const results = readdirSync(out)
     .filter((file) => file.endsWith(".json"))
     .map((file) => storedResultSchema.parse(JSON.parse(readFileSync(path.join(out, file), "utf8"))))
-    .map((stored): CaseResult => ({ ...stored, retryFaults: stored.retryFaults }))
+    .map((stored): CaseResult => ({
+      id: stored.id,
+      loading: stored.loading,
+      topic: stored.topic,
+      sections: stored.sections,
+      firstFaults: stored.firstFaults,
+      firstSectionCount: stored.firstSectionCount,
+      retryFaults: stored.retryFaults,
+      usedControls: stored.usedControls,
+      calls: stored.calls,
+      firstChars: stored.outputs?.[0]?.length,
+      retryChars: stored.outputs?.[1]?.length,
+    }))
   printToolDefinitions()
   process.stdout.write(`最初の呼び出し ${String(results.length)} 件\n`)
   process.stdout.write(
-    "載せ方\t操作\t件数\t一発\t直った\t直らない\t節の数の一致\tpath の整合の違反\t操作を使った\t呼び出し\t理由の内訳\n",
+    "載せ方\t題材\t件数\t一発\t直った\t直らない\t節の数の一致\tpath の整合の違反\t操作を使った\t呼び出し\t再試行が起きた件数\t再試行の呼び出し\t最初の出力の平均字数\t出し直しの平均字数\t出し直し/最初\t理由の内訳\n",
   )
   for (const row of summarizeCases(results)) {
     process.stdout.write(
@@ -302,6 +316,13 @@ function printSummary(out: string): void {
         row.pathFaults,
         row.usedControls,
         row.calls,
+        row.retried,
+        row.retryCalls,
+        row.firstCharsAverage ?? "-",
+        row.retryCharsAverage ?? "-",
+        row.firstCharsAverage === undefined || row.retryCharsAverage === undefined
+          ? "-"
+          : (row.retryCharsAverage / row.firstCharsAverage).toFixed(2),
         row.reasons,
       ].join("\t") + "\n",
     )
