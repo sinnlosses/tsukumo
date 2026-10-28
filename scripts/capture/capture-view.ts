@@ -7,7 +7,7 @@
 // （`channel: "chrome"`）は起こすたびにキーチェーンへ鍵を足すので使わない。
 //
 // fake driver（`TSUKUMO_DRIVER=fake`）と組み合わせて使う。 本物の claude を起こさずに画面全体を
-// 出せるので、API を使わずに何度でも撮り直せる（`docs/architecture/testing.md`「テスト」）。
+// 出せるので、API を使わずに何度でも撮り直せる。
 //
 // 使い方:
 //   TSUKUMO_DRIVER=fake TSUKUMO_VIEW_PORT=7398 pnpm run start &
@@ -254,6 +254,7 @@ async function openSource(source: Source, outDir: string): Promise<OpenedSource 
       cwd,
       scene: source.scene,
       home: undefined,
+      builtDir: undefined,
       session: source.session,
       extraEnv:
         source.until === undefined ? {} : { TSUKUMO_FAKE_SCENE_UNTIL: String(source.until) },

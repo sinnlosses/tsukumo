@@ -36,7 +36,8 @@
 `名前_ハッシュ` に焼くため）。**`scripts/capture/lib/` の `catalog-*.ts`（`capture-catalog.ts` の件の定義。件は概念ごとのファイルに置き、`catalog-entry.ts` が組み立てる）が待つ `[class*="名前_"]` の名前が CSS Modules に
 定義されているかは `test/scripts/capture/capture-catalog-selector.test.ts` が確かめる**（件そのものは
 `pnpm run check` で走らない）。区画の格子と札（`cols`・`card`・`badge`）の見え方は、場面 `report-board` を
-`capture-view.ts --scene` で撮って見る。**撮った画像はリポジトリに置かない。** 疑似セッションの会話は架空でも、
+`capture-view.ts --scene` で撮って見る。**撮影の道具（`capture-view.ts`・`capture-catalog.ts`）は、`dist/browser/` が古い・読めないと tsukumo を起こさず、`pnpm run build` を促して非0で止まる。**
+**撮った画像はリポジトリに置かない。** 疑似セッションの会話は架空でも、
 **タスク一覧のモーダルを撮る件には実データのタスク一覧（Beads の課題）が写る**ので、
 画像そのものを他所へ共有・複製しない。
 

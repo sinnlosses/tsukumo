@@ -146,6 +146,7 @@ async function captureEntry(
       scene: entry.scene,
       home,
       session: undefined,
+      builtDir: undefined,
       extraEnv: {},
     })
   let session = await launch()
