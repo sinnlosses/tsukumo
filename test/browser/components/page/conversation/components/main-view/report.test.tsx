@@ -15,6 +15,10 @@ vi.mock(
     detailBlockClassName: "detail-block",
     textLeafClassNames: {},
     noteLeafClassNames: {},
+    tableLeafClassNames: {},
+    matrixLeafClassNames: {},
+    compareLeafClassNames: {},
+    statsLeafClassNames: {},
     Markdown: (props: { readonly text: string }) => {
       calls.push(props.text)
       return <div data-markdown-stub="yes">{props.text}</div>

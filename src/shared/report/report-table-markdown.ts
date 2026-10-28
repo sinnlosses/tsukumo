@@ -1,39 +1,21 @@
-// 表（`table`）と対応表（`matrix`）の塊を Markdown と HTML に組む。列の揃え・数の棒・状態の印もここが持つ。
+// 表（`table`）と対応表（`matrix`）の塊を Markdown と HTML に組む。
 
 import { unique } from "remeda"
 
-import {
-  isEmphasisRow,
-  REPORT_CELL_STATUSES,
-  REPORT_MATRIX_STATUSES,
-  type TableCell,
-  tableRowCells,
-} from "./report-block-comparison.ts"
+import { isEmphasisRow, type TableCell, tableRowCells } from "./report-block-comparison.ts"
 import type { ReportBlock, ReportSection } from "./report-block.ts"
 import { captionedMarkdown } from "./report-caption.ts"
 import { htmlInlineWithCode, joinParts, markdownInline } from "./report-inline-markdown.ts"
 import { leafBlocksOf } from "./row-panel-block.ts"
-
-/** 表のセルの状態 → 記号付きの印の class（記法の `cell-status-*`）・記号・書き手の文字に関わらず付ける語。 */
-const CELL_STATUS_MARKS = {
-  ok: { className: "cell-status-ok", symbol: "✓", label: "OK" },
-  warn: { className: "cell-status-warn", symbol: "！", label: "要注意" },
-  ng: { className: "cell-status-ng", symbol: "✕", label: "NG" },
-} as const satisfies Record<
-  Extract<ReportCell, { readonly status: string }>["status"],
-  { readonly className: string; readonly symbol: string; readonly label: string }
->
-
-/** 対応表の状態 → 印の class・記号・読み上げと凡例の語。 */
-const MATRIX_MARKS = {
-  ok: { className: "matrix-mark-ok", symbol: "✓", label: "OK" },
-  warn: { className: "matrix-mark-warn", symbol: "！", label: "要注意" },
-  ng: { className: "matrix-mark-ng", symbol: "✕", label: "NG" },
-  na: { className: "matrix-mark-na", symbol: "－", label: "該当なし" },
-} as const satisfies Record<
-  Extract<ReportBlock, { readonly kind: "matrix" }>["rows"][number]["cells"][number],
-  { readonly className: string; readonly symbol: string; readonly label: string }
->
+import {
+  CELL_STATUS_MARKS,
+  type ColumnBar,
+  MATRIX_MARKS,
+  type MatrixStatus,
+  matrixLegendStatuses,
+  numericCellMagnitude,
+  tableLayoutOf,
+} from "./table-layout.ts"
 
 /** 強調の行の先頭のセルに置く印。地の色は CSS が `tr:has()` で行に当てる。 */
 const EMPHASIS_ROW_MARK = '<span class="row-emphasis-mark" aria-hidden="true"></span>'
@@ -63,12 +45,8 @@ export function tableRowMarkdowns(
   table: Extract<ReportBlock, { readonly kind: "table" }>,
   tagTones: TagTones,
 ): readonly string[] {
-  const rows = table.rows.map(tableRowCells)
-  const bars = table.columns.map((_, index) => columnBar(rows, index))
-  const statusColumns = table.columns.map((_, index) =>
-    rows.some((cells) => isStatusCell(cells[index])),
-  )
-  const bodyCellMarkdown = (cell: ReportCell, index: number): string =>
+  const { bars, statusColumns } = tableLayoutOf(table)
+  const bodyCellMarkdown = (cell: TableCell, index: number): string =>
     statusColumns[index] === true && typeof cell === "string"
       ? `<span class="cell-status-none">${cellTextMarkdown(cell)}</span>`
       : cellMarkdown(cell, bars[index] ?? NO_BAR, tagTones)
@@ -84,17 +62,16 @@ export function tableMarkdown(
   ordinal: number,
   tagTones: TagTones,
 ): string {
-  const rows = table.rows.map(tableRowCells)
-  const aligns = table.columns.map((_, index) => columnAlign(rows, index))
+  const { aligns, legendStatuses } = tableLayoutOf(table)
   return captionedMarkdown({
     kind: "table",
     ordinal,
     title: table.title,
     body: joinParts([
-      tableStatusLegendMarkdown(table),
+      tableStatusLegendMarkdown(legendStatuses),
       [
         markdownRow(table.columns.map((column) => cellMarkdown(column, NO_BAR, tagTones))),
-        markdownRow(aligns.map(alignMarker)),
+        markdownRow(aligns.map((align) => (align === "right" ? "---:" : "---"))),
         ...tableRowMarkdowns(table, tagTones),
       ].join("\n"),
       table.rest.trim() === ""
@@ -107,7 +84,6 @@ export function tableMarkdown(
 }
 
 type MatrixBlock = Extract<ReportBlock, { readonly kind: "matrix" }>
-type MatrixStatus = MatrixBlock["rows"][number]["cells"][number]
 
 /**
  * 行の名前と列の名前だけを見出しにした格子。交点は状態の印だけで、凡例は格子に出た状態だけを添える。
@@ -124,10 +100,7 @@ export function matrixMarkdown(block: MatrixBlock, ordinal: number): string {
       ]),
     ),
   ].join("\n")
-  const present = REPORT_MATRIX_STATUSES.filter((status) =>
-    block.rows.some(({ cells }) => cells.includes(status)),
-  )
-  const legend = present
+  const legend = matrixLegendStatuses(block)
     .map(
       (status) =>
         `<span class="matrix-legend-item">${matrixMarkMarkdown(status, true)} ${MATRIX_MARKS[status].label}</span>`,
@@ -143,11 +116,6 @@ export function matrixMarkdown(block: MatrixBlock, ordinal: number): string {
   })
 }
 
-/** `NUMERIC_CELL_PATTERN` に合う文字列を数値にする（桁区切りの `,` を除き、`%` は数値のまま読む）。 */
-export function numericCellMagnitude(text: string): number {
-  return Number.parseFloat(text.replaceAll(",", ""))
-}
-
 function matrixMarkMarkdown(status: MatrixStatus, legend: boolean): string {
   const { className, symbol, label } = MATRIX_MARKS[status]
   const attributes = legend ? 'aria-hidden="true"' : `role="img" aria-label="${label}"`
@@ -156,17 +124,12 @@ function matrixMarkMarkdown(status: MatrixStatus, legend: boolean): string {
 
 /** 表に出た状態のセルの状態だけを、題と表のあいだの凡例に並べる（`matrix` の凡例と同じ考え方）。 */
 function tableStatusLegendMarkdown(
-  table: Extract<ReportBlock, { readonly kind: "table" }>,
+  statuses: ReturnType<typeof tableLayoutOf>["legendStatuses"],
 ): string {
-  const present = REPORT_CELL_STATUSES.filter((status) =>
-    table.rows.some((row) =>
-      tableRowCells(row).some((cell) => isStatusCell(cell) && cell.status === status),
-    ),
-  )
-  if (present.length === 0) {
+  if (statuses.length === 0) {
     return ""
   }
-  const items = present
+  const items = statuses
     .map((status) => {
       const { className, symbol, label } = CELL_STATUS_MARKS[status]
       return (
@@ -179,70 +142,9 @@ function tableStatusLegendMarkdown(
   return `<div class="table-status-legend">${items}</div>`
 }
 
-function isStatusCell(
-  cell: ReportCell | undefined,
-): cell is Extract<ReportCell, { readonly status: string }> {
-  return cell !== undefined && typeof cell !== "string" && "status" in cell
-}
-
-type ColumnAlign = "left" | "right"
-
-/** 見た目だけの数字（符号・桁区切り・小数点・末尾の % を許す）。単位付きの数字は左揃えのまま。 */
-export const NUMERIC_CELL_PATTERN = /^-?\d[\d,]*(?:\.\d+)?%?$/
-
-type ReportCell = TableCell
-type CellRows = readonly (readonly ReportCell[])[]
-
-/** 列の全セルが数（前と後がどちらも数の変化を含む）なら右に揃える。それ以外は左。 */
-function columnAlign(rows: CellRows, index: number): ColumnAlign {
-  const cells = rows.map((row) => row[index])
-  if (cells.every((cell) => cell !== undefined && isNumericCell(cell))) {
-    return "right"
-  }
-  return "left"
-}
-
-function isNumericCell(cell: ReportCell): boolean {
-  if (typeof cell === "string") {
-    return NUMERIC_CELL_PATTERN.test(cell)
-  }
-  return (
-    "from" in cell && NUMERIC_CELL_PATTERN.test(cell.from) && NUMERIC_CELL_PATTERN.test(cell.to)
-  )
-}
-
-/** GFM の列揃えの記法（`---:`）。 */
-function alignMarker(align: ColumnAlign): string {
-  switch (align) {
-    case "left":
-      return "---"
-    case "right":
-      return "---:"
-  }
-}
-
-type ColumnBar = { readonly kind: "none" } | { readonly kind: "bar"; readonly max: number }
-
 const NO_BAR: ColumnBar = { kind: "none" }
 
-/**
- * 列の全セルが素の文字列で数（`from`/`to` の変化セルを含まない）・行が2つ以上・列に負の数が無い・
- * 最大値が0より大きいときだけ、行の値を最大値に照らす棒を描く。
- */
-function columnBar(rows: CellRows, index: number): ColumnBar {
-  if (rows.length < 2 || columnAlign(rows, index) !== "right") {
-    return NO_BAR
-  }
-  const cells = rows.map((row) => row[index])
-  if (!cells.every((cell): cell is string => typeof cell === "string")) {
-    return NO_BAR
-  }
-  const magnitudes = cells.map(numericCellMagnitude)
-  const max = Math.max(...magnitudes)
-  return magnitudes.some((magnitude) => magnitude < 0) || max <= 0 ? NO_BAR : { kind: "bar", max }
-}
-
-function cellMarkdown(cell: ReportCell, bar: ColumnBar, tagTones: TagTones): string {
+function cellMarkdown(cell: TableCell, bar: ColumnBar, tagTones: TagTones): string {
   if (typeof cell === "string") {
     return bar.kind === "bar" ? numericBarMarkdown(cell, bar.max) : cellTextMarkdown(cell)
   }

@@ -12,7 +12,9 @@ import styles from "./markdown.module.css"
 import { ZoomableSvgFigure } from "./renderer/figure-zoom.tsx"
 import {
   FoldedList as LongBlockFoldedList,
+  FoldedTableBody as LongBlockFoldedTableBody,
   type FoldedListProps,
+  type FoldedTableBodyProps,
 } from "./renderer/long-block-fold.tsx"
 import type { MarkdownProps, QuestionPreviewMarkdownProps } from "./renderer/markdown-renderer.tsx"
 import { MermaidBlock } from "./renderer/mermaid-block.tsx"
@@ -98,6 +100,74 @@ export const noteLeafClassNames = {
   optionReason: notationStyles["report-option-reason"],
 } as const
 
+/** 葉を直接描く表の部品が付ける class 名（Markdown の表・セルの印・凡例と同じ見た目）。 */
+export const tableLeafClassNames = {
+  tableScroll: notationStyles["table-scroll"],
+  cellNumeric: notationStyles["report-cell-numeric"],
+  cellBar: notationStyles["report-cell-bar"],
+  cellNumericValue: notationStyles["report-cell-numeric-value"],
+  cellStatus: notationStyles["report-cell-status"],
+  cellStatusMark: notationStyles["report-cell-status-mark"],
+  cellStatusText: notationStyles["report-cell-status-text"],
+  cellStatusNone: notationStyles["report-cell-status-none"],
+  cellStatusOk: notationStyles["report-cell-status-ok"],
+  cellStatusWarn: notationStyles["report-cell-status-warn"],
+  cellStatusNg: notationStyles["report-cell-status-ng"],
+  changeFrom: notationStyles["report-change-from"],
+  tag: notationStyles["report-tag"],
+  rowEmphasisMark: notationStyles["report-row-emphasis-mark"],
+  tableRest: notationStyles["report-table-rest"],
+  tableStatusLegend: notationStyles["report-table-status-legend"],
+  tableStatusLegendItem: notationStyles["report-table-status-legend-item"],
+  tableStatusLegendSwatch: notationStyles["report-table-status-legend-swatch"],
+} as const
+
+/** 葉を直接描く対応表の部品が付ける class 名（Markdown の `matrix`・`matrix-mark-*`・凡例と同じ見た目）。 */
+export const matrixLeafClassNames = {
+  matrix: notationStyles["report-matrix"],
+  matrixMark: notationStyles["report-matrix-mark"],
+  matrixMarkOk: notationStyles["report-matrix-mark-ok"],
+  matrixMarkWarn: notationStyles["report-matrix-mark-warn"],
+  matrixMarkNg: notationStyles["report-matrix-mark-ng"],
+  matrixMarkNa: notationStyles["report-matrix-mark-na"],
+  matrixLegend: notationStyles["report-matrix-legend"],
+  matrixLegendItem: notationStyles["report-matrix-legend-item"],
+} as const
+
+/** 葉を直接描く見比べの部品が付ける class 名（Markdown の `compare` と同じ見た目）。 */
+export const compareLeafClassNames = {
+  compare: notationStyles["report-compare"],
+  compareSide: notationStyles["report-compare-side"],
+  compareHeading: notationStyles["report-compare-heading"],
+} as const
+
+/** 葉を直接描く数の部品が付ける class 名（Markdown の `stats`・`stat` と同じ見た目）。 */
+export const statsLeafClassNames = {
+  stats: notationStyles["report-stats"],
+  statsOf3: notationStyles["report-stats-of-3"],
+  statsOf4: notationStyles["report-stats-of-4"],
+  stat: notationStyles["report-stat"],
+  statBefore: notationStyles["report-stat-before"],
+  statBetter: notationStyles["report-stat-better"],
+  statWorse: notationStyles["report-stat-worse"],
+  statTotal: notationStyles["report-stat-total"],
+  statMeter: notationStyles["report-stat-meter"],
+  statMeterFill: notationStyles["report-stat-meter-fill"],
+} as const
+
+const TAG_TONE_CLASS_NAMES = new Map([
+  ["tag-1", notationStyles["report-tag-1"]],
+  ["tag-2", notationStyles["report-tag-2"]],
+  ["tag-3", notationStyles["report-tag-3"]],
+  ["tag-4", notationStyles["report-tag-4"]],
+  ["tag-5", notationStyles["report-tag-5"]],
+])
+
+/** 札の色の字（`tag-1`〜`tag-5`、それ以外は `tag-none`）→ class 名。 */
+export function tagToneClassName(tone: string): string {
+  return TAG_TONE_CLASS_NAMES.get(tone) ?? notationStyles["report-tag-none"]
+}
+
 /** 図の葉が使う印の名前（Markdown の描画が同じ名前に当てる class と同じ見た目）。 */
 type FigureMarkName =
   | "svg-figure"
@@ -164,6 +234,11 @@ export function NoteLabel(props: {
 /** 10 件を超える一覧を 10 件で切り、残りを「ほか n 件」を押すと出す。 */
 export function FoldedList(props: FoldedListProps): ReactElement {
   return <LongBlockFoldedList {...props} />
+}
+
+/** 本体の行が 10 を超える表の `tbody`。残りは「ほか n 件」を押すと出す。 */
+export function FoldedTableBody(props: FoldedTableBodyProps): ReactElement {
+  return <LongBlockFoldedTableBody {...props} />
 }
 
 /** 描画一式を読み込む。何度呼んでも読み込みは1回で、済めば待っている部品が描き直る。 */

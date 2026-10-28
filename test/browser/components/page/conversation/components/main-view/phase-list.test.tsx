@@ -16,6 +16,10 @@ vi.mock(
     detailBlockClassName: "detail-block",
     textLeafClassNames: {},
     noteLeafClassNames: {},
+    tableLeafClassNames: {},
+    matrixLeafClassNames: {},
+    compareLeafClassNames: {},
+    statsLeafClassNames: {},
     Markdown: (props: { readonly text: string }) => <div>{props.text}</div>,
   }),
 )

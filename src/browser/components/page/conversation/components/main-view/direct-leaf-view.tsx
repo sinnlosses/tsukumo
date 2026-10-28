@@ -8,13 +8,17 @@ import type { ReportImageSource } from "../../../../../../shared/report/report-i
 import type { LeafValue } from "../../../../../../shared/report/report-leaf-value.ts"
 import { BeforeAfterLeaf } from "./before-after-leaf.tsx"
 import { ClaimsLeaf } from "./claims-leaf.tsx"
+import { CompareLeaf } from "./compare-leaf.tsx"
 import { GraphLeaf } from "./graph-leaf.tsx"
 import { ItemListLeaf } from "./item-list-leaf.tsx"
+import { MatrixLeaf } from "./matrix-leaf.tsx"
 import { NoteLeaf } from "./note-leaf.tsx"
 import { OptionsLeaf } from "./options-leaf.tsx"
 import { ParagraphLeaf } from "./paragraph-leaf.tsx"
 import { PictureLeaf } from "./picture-leaf.tsx"
+import { StatsLeaf } from "./stats-leaf.tsx"
 import { SvgLeaf } from "./svg-leaf.tsx"
+import { TableLeaf } from "./table-leaf.tsx"
 import { TimelineLeaf } from "./timeline-leaf.tsx"
 
 type DirectLeafViewProps = {
@@ -32,6 +36,10 @@ const DIRECT_LEAF_VIEWS: ReadonlyMap<A2uiReportComponent["component"], DirectLea
   ["Claims", ClaimsLeaf],
   ["Note", NoteLeaf],
   ["Options", OptionsLeaf],
+  ["Table", TableLeaf],
+  ["Matrix", MatrixLeaf],
+  ["Compare", CompareLeaf],
+  ["Stats", StatsLeaf],
   ["Svg", SvgLeaf],
   ["Timeline", TimelineLeaf],
   ["Graph", GraphLeaf],

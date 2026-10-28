@@ -5,30 +5,32 @@ import type { SurfaceModel } from "@a2ui/web_core/v0_9"
 import { type ReactElement, useSyncExternalStore } from "react"
 
 import type { A2uiReportPart } from "../../../../../../shared/report/a2ui-report-outline.ts"
+import type { LeafValue } from "../../../../../../shared/report/report-leaf-value.ts"
 import { tableViewPath } from "../../../../../../shared/report/table-view.ts"
-import type { MainViewTableRows } from "../../../../../../shared/session/main-view-shape.ts"
 import { Button } from "../../../../ui/button/button.tsx"
-import { RegionChunks } from "./body-region.tsx"
-import { arrangedTableMarkdown, type TableSort, visibleRowOrder } from "./domain/a2ui-table-view.ts"
+import { type TableSort, visibleRowOrder } from "./domain/a2ui-table-view.ts"
 import styles from "./main-view.module.css"
+import { TableFigure } from "./table-leaf.tsx"
 
 type DataModel = SurfaceModel<never>["dataModel"]
 
 type InteractiveTableProps = {
   readonly dataModel: DataModel
   readonly part: A2uiReportPart<"Table">
-  /** サーバが組んだ表の Markdown（題・凡例・全行つき）を、データ行の前後と行ごとに分けたもの。 */
-  readonly table: MainViewTableRows
+  /** 葉の図表番号・札の色・傍注。整形で落ちた表は値を持たず、何も描かない。 */
+  readonly value: LeafValue | undefined
 }
 
 /** 見出しごとの並べ替えの押しボタンと、並べ替え・絞り込みを当てた表。使わない `Table` はここを通らない。 */
 export function InteractiveTable(props: InteractiveTableProps): ReactElement {
-  const { dataModel, part } = props
+  const { dataModel, part, value } = props
   const sort = useDataPath<TableSort>(dataModel, tableViewPath(part.id, "sort"))
   const filter =
     useDataPath<readonly string[]>(dataModel, tableViewPath(part.id, "filter")) ?? NO_SELECTION
   const order = visibleRowOrder(part, sort, filter)
-  const markdown = arrangedTableMarkdown(props.table, order)
+  if (value === undefined) {
+    return <></>
+  }
   return (
     <div>
       {part.sortable === true && (
@@ -55,7 +57,7 @@ export function InteractiveTable(props: InteractiveTableProps): ReactElement {
           })}
         </div>
       )}
-      <RegionChunks markdown={markdown} />
+      <TableFigure part={part} value={value} rowOrder={order} />
       {order.length === 0 && <p>該当する行はありません</p>}
     </div>
   )

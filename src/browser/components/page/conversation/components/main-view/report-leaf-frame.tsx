@@ -11,6 +11,7 @@ import { PAUSE_POINT_CLASS_NAME } from "../../../../../../shared/report/report-p
 import {
   BeforeAfterSwap,
   figureClassName,
+  InlineCodeText,
   InlineMarkdown,
   leafFrameClassNames,
 } from "../markdown/markdown.tsx"
@@ -41,7 +42,7 @@ export function ReportLeafFrame(props: ReportLeafFrameProps): ReactElement {
 }
 
 /**
- * 題の包みごと `details` で畳む枠（図の葉。畳みの外に傍注の柱が付く）。
+ * 題の包みごと `details` で畳む枠（図の葉・表の葉。畳みの外に傍注の柱が付く）。
  * `fold` が空なら畳まない。
  * `swap` が真なら題の包みを、並べる・切り替えの口を持つ `BeforeAfterSwap` にする（両側が画像の前後の塊）。
  */
@@ -143,7 +144,11 @@ function LeafCaption(props: { readonly label: string; readonly title: string }):
   return (
     <div className={leafFrameClassNames.caption} {...{ [REVEAL_CAPTION_ATTRIBUTE]: "" }}>
       <span className={leafFrameClassNames.captionNumber}>{props.label}</span>
-      {props.title !== "" && <span className={leafFrameClassNames.captionText}>{props.title}</span>}
+      {props.title !== "" && (
+        <span className={leafFrameClassNames.captionText}>
+          <InlineCodeText text={props.title} />
+        </span>
+      )}
     </div>
   )
 }
