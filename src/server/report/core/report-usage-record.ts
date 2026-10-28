@@ -18,7 +18,7 @@ import { REPORT_SCHEMA_VARIANTS } from "../../core/schema-variant.ts"
  * 欄を足したら版を上げ、集計は `MIN_FORMAT_VERSION` より古い行を読まない。
  * 集計は版で分母を切らず、欄を記録した行を分母にする。
  */
-export const REPORT_USAGE_FORMAT_VERSION = 23 satisfies number
+export const REPORT_USAGE_FORMAT_VERSION = 24 satisfies number
 
 /** どの駆動で起こしたプロセスの行か（版19から）。`fake` は疑似セッションで、集計は既定で除く。 */
 const reportUsageDriverSchema = z.enum(["sdk", "fake"])
@@ -116,6 +116,10 @@ const acceptedFields = reportShapeTagUsageSchema.unwrap().extend({
   listStyles: z.array(z.string()).readonly(),
   /** その回に出た `mermaid` の図の種類（ソースの最初の語。重複無し。`figure` の図を含む。版19から）。 */
   mermaidKinds: z.array(z.string()).readonly(),
+  /** その回に使った `a2ui` の部品の名前（重複無し。`a2ui` 以外の渡し方では空。版24から）。 */
+  componentNames: z.array(z.string()).readonly(),
+  /** その回の `Markdown` の部品の中身に出た記法の種類（重複無し。容れ物の内外を問わない。版24から）。 */
+  markdownNotationKinds: z.array(z.string()).readonly(),
   /** どの駆動で起こしたプロセスの行か（版19から）。 */
   driver: reportUsageDriverSchema,
   /** 知らない種類で境界で落とした塊の数。 */

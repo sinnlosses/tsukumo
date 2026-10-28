@@ -21,6 +21,8 @@ export function reportUsageEntry(
     notations: ["list"],
     containedNotations: [],
     escapeNotations: [],
+    componentNames: ["Table", "Markdown"],
+    markdownNotationKinds: ["quote"],
     unknownBlockCount: 0,
     brokenFenceCount: 0,
     listStyles: ["bullet"],

@@ -64,6 +64,8 @@ const sectionBlockRecordSchema = z
     listStyles: z.array(z.string()),
     mermaidKinds: z.array(z.string()),
     driver: z.enum(["sdk", "fake"]),
+    componentNames: z.array(z.string()).optional(),
+    markdownNotationKinds: z.array(z.string()).optional(),
     hasKeyFigures: z.boolean().optional(),
     conclusionNumbersWithoutKeyFigures: z.boolean().optional(),
   })

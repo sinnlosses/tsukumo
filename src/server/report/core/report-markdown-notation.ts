@@ -44,6 +44,11 @@ export const ESCAPE_NOTATIONS = [
   "details",
 ] as const satisfies readonly string[]
 
+/** `markdownNotationKinds` にだけ数える記法（`escapeNotations` の欄には入れない）。 */
+const MARKDOWN_ONLY_KINDS = ["badge"] as const satisfies readonly string[]
+
+type MarkdownOnlyKind = (typeof MARKDOWN_ONLY_KINDS)[number]
+
 /** 逃げ道の外側（HTML の容れ物の中でないところ）に出た記法の種類（重複無し）。 */
 export function notationsInSections(
   sections: readonly ReportSection[],
@@ -71,6 +76,21 @@ export function escapeNotationsInSections(
   )
 }
 
+/** `Markdown` の部品の中身に出た記法の種類（重複無し）。容れ物の中か外かは問わず、塊のある記法と塊の無い記法を合わせる。 */
+export function notationKindsInMarkdowns(
+  markdowns: readonly string[],
+): readonly (MarkdownNotation | EscapeNotation | MarkdownOnlyKind)[] {
+  const readings = markdowns.map(markdownReadingOf)
+  return [
+    ...MARKDOWN_NOTATIONS.filter((notation) =>
+      readings.some((reading) => reading.placed.some((placed) => placed.notation === notation)),
+    ),
+    ...[...ESCAPE_NOTATIONS, ...MARKDOWN_ONLY_KINDS].filter((notation) =>
+      readings.some((reading) => reading.escapes.includes(notation)),
+    ),
+  ]
+}
+
 /** `<details>` の中に `<details>` があるか、`fold` を持つ塊の中身に `<details>` があるか。 */
 export function hasNestedFold({
   fold,
@@ -83,14 +103,14 @@ export function hasNestedFold({
 /** 逃げ道1つに出た記法。`placed` は塊のある記法と、それが容れ物の中にあるか。 */
 type MarkdownReading = {
   readonly placed: readonly { readonly notation: MarkdownNotation; readonly inContainer: boolean }[]
-  readonly escapes: readonly EscapeNotation[]
+  readonly escapes: readonly (EscapeNotation | MarkdownOnlyKind)[]
   readonly nestedDetails: boolean
 }
 
 /** 文書の順に並べた、深さを変える印と記法の印。 */
 type Mark =
   | { readonly kind: "notation"; readonly notation: MarkdownNotation }
-  | { readonly kind: "escape"; readonly notation: EscapeNotation }
+  | { readonly kind: "escape"; readonly notation: EscapeNotation | MarkdownOnlyKind }
   | { readonly kind: "open"; readonly details: boolean }
   | { readonly kind: "close"; readonly details: boolean }
 
@@ -206,6 +226,7 @@ function tagMarks(closing: boolean, name: string, attributes: string): readonly 
     ...(classes.includes("cols") || classes.includes("card")
       ? [{ kind: "escape", notation: "colsCard" } as const]
       : []),
+    ...(classes.includes("badge") ? [{ kind: "escape", notation: "badge" } as const] : []),
     ...(name === "svg" || name === "dl" || name === "details"
       ? [{ kind: "escape", notation: name } as const]
       : []),

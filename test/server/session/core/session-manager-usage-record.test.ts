@@ -94,6 +94,8 @@ describe("createSessionManager", () => {
           notations: [],
           containedNotations: [],
           escapeNotations: [],
+          componentNames: [],
+          markdownNotationKinds: [],
           unknownBlockCount: 0,
           brokenFenceCount: 0,
           listStyles: [],

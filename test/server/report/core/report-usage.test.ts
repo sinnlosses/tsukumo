@@ -459,6 +459,8 @@ describe("reportUsageEntryOf", () => {
       notations: [],
       containedNotations: [],
       escapeNotations: [],
+      componentNames: [],
+      markdownNotationKinds: [],
       unknownBlockCount: 2,
       brokenFenceCount: 0,
       listStyles: [],
@@ -484,6 +486,51 @@ describe("reportUsageEntryOf", () => {
       argumentChars: { total: 0, fields: {} },
       inheritedFields: [],
     })
+  })
+
+  it("a2ui の部品は名前だけを重複なしで、Markdown の中身は記法の種類だけを持ち、本文は持たない", () => {
+    const entry = reportUsageEntryOf(
+      reportEvent({
+        components: [
+          { id: "p1", component: "Paragraph", text: "架空の本文", fold: "", aside: "" },
+          {
+            id: "m1",
+            component: "Markdown",
+            markdown: '> 架空の引用\n\n---\n\n<span class="badge">架空</span>',
+            fold: "",
+            aside: "",
+          },
+          { id: "m2", component: "Markdown", markdown: "> 架空の引用", fold: "", aside: "" },
+        ],
+      }),
+      "claude-session-9",
+      1,
+      false,
+    )
+
+    expect(entry.componentNames).toEqual(["Paragraph", "Markdown"])
+    expect(entry.markdownNotationKinds).toEqual(["quote", "hr", "badge"])
+    const badgeSection: ReportSection = {
+      heading: "架空",
+      shapeTag: "unspecified",
+      blocks: [
+        { kind: "markdown", markdown: '<span class="badge">架空</span>', fold: "", aside: "" },
+      ],
+    }
+    expect(
+      reportUsageEntryOf(reportEvent({ sections: [badgeSection] }), "claude-session-9", 1, false)
+        .escapeNotations,
+    ).toEqual([])
+    expect(JSON.stringify([entry.componentNames, entry.markdownNotationKinds])).not.toContain(
+      "架空の",
+    )
+  })
+
+  it("components が空の回は、部品の名前も記法の種類も空", () => {
+    const entry = reportUsageEntryOf(reportEvent(), "claude-session-9", 1, false)
+
+    expect(entry.componentNames).toEqual([])
+    expect(entry.markdownNotationKinds).toEqual([])
   })
 
   it("イベントの引数の字数と引き継いだ欄の名前を、本文を含めずにそのまま運ぶ", () => {

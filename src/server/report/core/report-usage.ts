@@ -30,6 +30,7 @@ import {
   escapeNotationsInSections,
   type EscapeNotation,
   type MarkdownNotation,
+  notationKindsInMarkdowns,
   notationsInSections,
 } from "./report-markdown-notation.ts"
 import type {
@@ -55,6 +56,10 @@ export type ReportUsageEntry = {
   readonly containedNotations: readonly MarkdownNotation[]
   /** その回に逃げ道に出た、塊の無い記法の種類（重複無し）。 */
   readonly escapeNotations: readonly EscapeNotation[]
+  /** その回に使った `a2ui` の部品の名前（重複無し）。 */
+  readonly componentNames: readonly string[]
+  /** その回の `Markdown` の部品の中身に出た記法の種類（重複無し）。 */
+  readonly markdownNotationKinds: readonly string[]
   readonly unknownBlockCount: number
   /** `body` の型つきフェンスのうち、読めずに素のコードブロックへ落としたものの数。 */
   readonly brokenFenceCount: number
@@ -220,6 +225,10 @@ export function reportUsageEntryOf(
     notations: notationsInSections(event.sections),
     containedNotations: containedNotationsInSections(event.sections),
     escapeNotations: escapeNotationsInSections(event.sections),
+    componentNames: [...new Set(event.components.map((part) => part.component))],
+    markdownNotationKinds: notationKindsInMarkdowns(
+      event.components.flatMap((part) => (part.component === "Markdown" ? [part.markdown] : [])),
+    ),
     unknownBlockCount: event.unknownBlockCount,
     brokenFenceCount: event.brokenFenceCount,
     listStyles: listStylesOf(drawnSections),
