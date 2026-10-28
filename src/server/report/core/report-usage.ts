@@ -15,6 +15,7 @@ import type {
   SectionBlock,
 } from "../../../shared/report/report-block.ts"
 import type { ReportCheck } from "../../../shared/report/report-check.ts"
+import { reportOutline } from "../../../shared/report/report-outline.ts"
 import { drawnSectionsOf } from "../../../shared/report/report-retrospective.ts"
 import { isForbiddenBlock } from "../../../shared/report/report-shape-tag.ts"
 import type { ReportGenre, ReportTaskOutcome } from "../../../shared/report/report-task.ts"
@@ -212,6 +213,7 @@ export function reportUsageEntryOf(
   mainReadImageFile: boolean,
 ): ReportUsageEntry {
   const drawnSections = drawnSectionsOf(event)
+  const outline = reportOutline(event.components)
   return {
     at,
     sessionId,
@@ -222,9 +224,9 @@ export function reportUsageEntryOf(
     shapeTags: shapeTagUsageOf(event.sections),
     blockKinds: blockKindsOf(drawnSections),
     blockFields: blockFieldsOf(drawnSections),
-    notations: notationsInSections(event.sections),
-    containedNotations: containedNotationsInSections(event.sections),
-    escapeNotations: escapeNotationsInSections(event.sections),
+    notations: notationsInSections(outline),
+    containedNotations: containedNotationsInSections(outline),
+    escapeNotations: escapeNotationsInSections(outline),
     componentNames: [...new Set(event.components.map((part) => part.component))],
     markdownNotationKinds: notationKindsInMarkdowns(
       event.components.flatMap((part) => (part.component === "Markdown" ? [part.markdown] : [])),

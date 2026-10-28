@@ -1,10 +1,16 @@
 import { describe, expect, it } from "vitest"
 
-import { plainWordSpellingsIn } from "../../../../src/server/report/core/plain-word-find.ts"
+import { plainWordSpellingsIn as spellingsOf } from "../../../../src/server/report/core/plain-word-find.ts"
 import { reportRejectionText } from "../../../../src/server/report/core/report-rejection.ts"
 import { reportViolations } from "../../../../src/server/report/core/report-violation-check.ts"
-import type { ReportBlock } from "../../../../src/shared/report/report-block.ts"
+import type { ReportDraft } from "../../../../src/server/report/core/report-violation.ts"
+import type { ReportBlock, SectionBlock } from "../../../../src/shared/report/report-block.ts"
+import { reportOutline } from "../../../../src/shared/report/report-outline.ts"
 import { draft, markdown, reportDraftText } from "../../../fixture/report-draft-block.ts"
+import { reportDraft } from "../../../fixture/report-event.ts"
+
+const plainWordSpellingsIn = (report: ReportDraft) =>
+  spellingsOf(report, reportOutline(report.components))
 
 describe("plainWordSpellingsIn", () => {
   it("地の文の表の語を、表の順に返す", () => {
@@ -85,6 +91,43 @@ describe("plainWordSpellingsIn", () => {
     ])
     expect(
       plainWordSpellingsIn(draft([reportDraftText("始め方の札を押す。お札と氷の塊を並べる。")])),
+    ).toEqual([])
+  })
+
+  it("枠（Card）の先頭の見出しの語も見つける", () => {
+    const panel: SectionBlock = {
+      kind: "panel",
+      title: "架空の再演の枠",
+      blocks: [{ kind: "text", text: "架空の段落。", fold: "", aside: "" }],
+      fold: "",
+      aside: "",
+    }
+    expect(
+      plainWordSpellingsIn(
+        draft([], "架空の結論。", [{ heading: "", shapeTag: "unspecified", blocks: [panel] }]),
+      ),
+    ).toEqual(["再演"])
+  })
+
+  it("図・振り返りの塊の語は本文でないので見ない", () => {
+    expect(
+      plainWordSpellingsIn(
+        reportDraft({
+          sections: [
+            {
+              heading: "",
+              shapeTag: "unspecified",
+              blocks: [reportDraftText("架空の段落。")],
+            },
+          ],
+          retrospective: {
+            kind: "recorded",
+            summary: "架空の再演の要約",
+            drafts: [],
+            blocks: [reportDraftText("架空の再演の塊")],
+          },
+        }),
+      ),
     ).toEqual([])
   })
 

@@ -67,6 +67,11 @@ export function drawnSectionsOf(report: {
   ]
 }
 
+/** 振り返りの節の末尾に描く、積んだドラフトの行。 */
+export function retrospectiveDraftsLine(drafts: readonly string[]): string {
+  return `積んだドラフト: ${drafts.map((id) => `\`${id}\``).join("、")}`
+}
+
 /**
  * 振り返りを見出し「振り返り」の節にしたもの。`sections` の後ろ・`favor` の前に描く。
  * 図と表の番号が `sections` から通しで続くよう、描く側は節の並びの最後に足して組む。欄が無ければ節は無い。
@@ -83,7 +88,7 @@ export function retrospectiveSections(
       : [
           {
             kind: "text",
-            text: `積んだドラフト: ${retrospective.drafts.map((id) => `\`${id}\``).join("、")}`,
+            text: retrospectiveDraftsLine(retrospective.drafts),
             fold: "",
             aside: "",
           } as const satisfies ReportBlock,

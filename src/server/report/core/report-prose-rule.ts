@@ -4,6 +4,7 @@ import { textOutsideInlineMarks } from "../../../shared/report/inline-mark.ts"
 import { tableRowCells } from "../../../shared/report/report-block-comparison.ts"
 import type { ReportBlock } from "../../../shared/report/report-block.ts"
 import { MAX_HEADING, MAX_ITEM_LABEL } from "../../../shared/report/report-limit.ts"
+import type { ReportOutlineLeaf } from "../../../shared/report/report-outline.ts"
 import { withoutInlineCode } from "./markdown-tree.ts"
 
 /** 英語の地の文とみなす語の数の下限。 */
@@ -35,12 +36,12 @@ export function hasArrow(text: string): boolean {
   return withoutInlineCode(textOutsideInlineMarks(text), "").includes(ARROW)
 }
 
-export function proseTexts(block: ReportBlock): readonly string[] {
-  switch (block.kind) {
-    case "text":
-      return [block.text]
-    case "table":
-      return block.rows
+export function proseTexts(leaf: ReportOutlineLeaf): readonly string[] {
+  switch (leaf.component) {
+    case "Paragraph":
+      return [leaf.text]
+    case "Table":
+      return leaf.rows
         .flatMap(tableRowCells)
         .map((cell) =>
           typeof cell === "string"

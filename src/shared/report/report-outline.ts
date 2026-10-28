@@ -9,6 +9,7 @@ import {
   a2uiOutlineSections,
   a2uiPartsById,
 } from "./a2ui-report-outline.ts"
+import type { ReportPlot } from "./figure-grammar.ts"
 
 export type ReportOutlineLeaf = Extract<
   A2uiReportComponent,
@@ -57,6 +58,22 @@ export function reportOutline(components: readonly A2uiReportComponent[]): Repor
     figure: leavesOf(root.figure === undefined ? [] : [root.figure]),
     retrospective: leavesOf(root.retrospective?.blocks ?? []),
   }
+}
+
+export function sectionLeaves(outline: ReportOutline): readonly ReportOutlineLeaf[] {
+  return outline.sections.flatMap((section) => section.leaves)
+}
+
+/** 画面に描く葉の並び（図 → 本文の節 → 振り返り）。 */
+export function drawnLeaves(outline: ReportOutline): readonly ReportOutlineLeaf[] {
+  return [...outline.figure, ...sectionLeaves(outline), ...outline.retrospective]
+}
+
+/** 葉のうち `Plot` を、`ReportPlot` の形（`kind` つき）にして並び順に返す。 */
+export function plotsOfLeaves(leaves: readonly ReportOutlineLeaf[]): readonly ReportPlot[] {
+  return leaves.flatMap((leaf): readonly ReportPlot[] =>
+    leaf.component === "Plot" ? [{ kind: "plot", ...leaf }] : [],
+  )
 }
 
 function isLeafPart(part: A2uiReportComponent): part is ReportOutlineLeaf {

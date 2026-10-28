@@ -2,8 +2,7 @@
 
 import type { Nodes } from "mdast"
 
-import type { ReportBlock } from "../../../shared/report/report-block.ts"
-import { leafBlocksOf } from "../../../shared/report/row-panel-block.ts"
+import type { ReportOutline, ReportOutlineLeaf } from "../../../shared/report/report-outline.ts"
 import { markdownTreeOf } from "./markdown-tree.ts"
 import { PLAIN_WORDS } from "./plain-word.ts"
 import { proseTexts } from "./report-prose-rule.ts"
@@ -13,14 +12,13 @@ import type { ReportDraft } from "./report-violation.ts"
  * 本文の地の文に出てくる表の綴りを、表の順に返す。同じ箇所は長い綴りにだけ数える。
  * 引用・コード・HTML の中は見ない。
  */
-export function plainWordSpellingsIn(report: ReportDraft): readonly string[] {
-  const proseOfBlocks = report.sections.flatMap((section) => [
-    section.heading,
-    ...section.blocks.flatMap((block) => (block.kind === "panel" ? [block.title] : [])),
-    ...leafBlocksOf(section.blocks).flatMap((block) => [
-      ...proseTexts(block),
-      ...ownProseTexts(block),
-    ]),
+export function plainWordSpellingsIn(
+  report: Pick<ReportDraft, "conclusion" | "favor">,
+  outline: ReportOutline,
+): readonly string[] {
+  const proseOfBlocks = outline.sections.flatMap((section) => [
+    ...(section.kind === "section" ? [section.heading] : []),
+    ...section.leaves.flatMap((leaf) => [...proseTexts(leaf), ...ownProseTexts(leaf)]),
   ])
   const prose = [report.conclusion, report.favor, ...proseOfBlocks].flatMap(proseSegmentsOf)
   const remaining = PLAIN_WORDS.reduce(
@@ -36,14 +34,14 @@ export function plainWordSpellingsIn(report: ReportDraft): readonly string[] {
 }
 
 /** `proseTexts` が数えない、利用者が読む地の文（`note`・`markdown`・`list` の項目の本文と題）。 */
-function ownProseTexts(block: ReportBlock): readonly string[] {
-  switch (block.kind) {
-    case "note":
-      return [block.text]
-    case "markdown":
-      return [block.markdown]
-    case "list":
-      return block.items.flatMap((item) => [item.label, item.text, item.branch])
+function ownProseTexts(leaf: ReportOutlineLeaf): readonly string[] {
+  switch (leaf.component) {
+    case "Note":
+      return [leaf.text]
+    case "Markdown":
+      return [leaf.markdown]
+    case "ItemList":
+      return leaf.items.flatMap((item) => [item.label, item.text, item.branch])
     default:
       return []
   }

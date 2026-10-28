@@ -4,8 +4,11 @@
 
 import type { Nodes } from "mdast"
 
-import type { ReportBlock, ReportSection } from "../../../shared/report/report-block.ts"
-import { leafBlocksOf } from "../../../shared/report/row-panel-block.ts"
+import {
+  type ReportOutline,
+  type ReportOutlineLeaf,
+  sectionLeaves,
+} from "../../../shared/report/report-outline.ts"
 import { markdownTreeOf, nodesInOrder } from "./markdown-tree.ts"
 
 /** 逃げ道の中の記法 → 差し戻しの文面での呼び名と、代わりに使うもの。 */
@@ -50,27 +53,21 @@ const MARKDOWN_ONLY_KINDS = ["badge"] as const satisfies readonly string[]
 type MarkdownOnlyKind = (typeof MARKDOWN_ONLY_KINDS)[number]
 
 /** 逃げ道の外側（HTML の容れ物の中でないところ）に出た記法の種類（重複無し）。 */
-export function notationsInSections(
-  sections: readonly ReportSection[],
-): readonly MarkdownNotation[] {
-  return markdownNotationsAt(sections, false)
+export function notationsInSections(outline: ReportOutline): readonly MarkdownNotation[] {
+  return markdownNotationsAt(outline, false)
 }
 
 /**
  * 逃げ道の HTML の容れ物（`<details>` / `<div>`）の中に出た記法の種類（重複無し）。
  * 複数の塊を畳む・`cols` に並べるのは逃げ道の役目なので、ここに出ても差し戻さない。
  */
-export function containedNotationsInSections(
-  sections: readonly ReportSection[],
-): readonly MarkdownNotation[] {
-  return markdownNotationsAt(sections, true)
+export function containedNotationsInSections(outline: ReportOutline): readonly MarkdownNotation[] {
+  return markdownNotationsAt(outline, true)
 }
 
 /** 逃げ道に出た、塊の無い記法の種類（重複無し）。容れ物の中か外かは問わない。 */
-export function escapeNotationsInSections(
-  sections: readonly ReportSection[],
-): readonly EscapeNotation[] {
-  const readings = readingsOf(sections)
+export function escapeNotationsInSections(outline: ReportOutline): readonly EscapeNotation[] {
+  const readings = readingsOf(outline)
   return ESCAPE_NOTATIONS.filter((notation) =>
     readings.some((reading) => reading.escapes.includes(notation)),
   )
@@ -95,7 +92,10 @@ export function notationKindsInMarkdowns(
 export function hasNestedFold({
   fold,
   markdown,
-}: Pick<Extract<ReportBlock, { readonly kind: "markdown" }>, "fold" | "markdown">): boolean {
+}: Pick<
+  Extract<ReportOutlineLeaf, { readonly component: "Markdown" }>,
+  "fold" | "markdown"
+>): boolean {
   const reading = markdownReadingOf(markdown)
   return reading.nestedDetails || (fold.trim() !== "" && reading.escapes.includes("details"))
 }
@@ -121,10 +121,10 @@ const HTML_TAG = /<(\/?)([A-Za-z][\w-]*)([^>]*)>?/g
 const CONTAINER_TAGS: readonly string[] = ["details", "div"]
 
 function markdownNotationsAt(
-  sections: readonly ReportSection[],
+  outline: ReportOutline,
   inContainer: boolean,
 ): readonly MarkdownNotation[] {
-  const readings = readingsOf(sections)
+  const readings = readingsOf(outline)
   return MARKDOWN_NOTATIONS.filter((notation) =>
     readings.some((reading) =>
       reading.placed.some(
@@ -134,10 +134,10 @@ function markdownNotationsAt(
   )
 }
 
-function readingsOf(sections: readonly ReportSection[]): readonly MarkdownReading[] {
-  return sections
-    .flatMap((section) => leafBlocksOf(section.blocks))
-    .flatMap((block) => (block.kind === "markdown" ? [markdownReadingOf(block.markdown)] : []))
+function readingsOf(outline: ReportOutline): readonly MarkdownReading[] {
+  return sectionLeaves(outline).flatMap((leaf) =>
+    leaf.component === "Markdown" ? [markdownReadingOf(leaf.markdown)] : [],
+  )
 }
 
 function markdownReadingOf(markdown: string): MarkdownReading {

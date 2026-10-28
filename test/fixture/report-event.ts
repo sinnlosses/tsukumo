@@ -46,18 +46,32 @@ export function reportEvent(
   }
 }
 
-/** 節だけを渡す `report` ツールの呼び出し1件。 */
+/** 節だけを渡す `report` ツールの呼び出し1件。`components` は節から本番と同じ組み直しで作る。 */
 export function reportOfSections(
   sections: readonly ReportSection[],
   unknownBlockCount = 0,
 ): Extract<SessionEvent, { readonly kind: "report" }> {
-  return reportEvent({ sections, unknownBlockCount })
+  return reportEvent({
+    sections,
+    unknownBlockCount,
+    components: componentsOfSections(
+      sections,
+      { kind: "none", reason: "unrecorded" },
+      { kind: "none" },
+    ),
+  })
 }
 
 /** 記法の検査にかけるレポート1件。 */
 export function reportDraft(overrides: Partial<ReportDraft> = {}): ReportDraft {
   const conclusion = overrides.conclusion ?? "架空の結論"
-  const components = overrides.components ?? componentsOfSections(overrides.sections ?? [])
+  const components =
+    overrides.components ??
+    componentsOfSections(
+      overrides.sections ?? [],
+      overrides.figure ?? { kind: "none", reason: "unrecorded" },
+      overrides.retrospective ?? { kind: "none" },
+    )
   return {
     conclusion,
     conclusionSentenceChars: parseConclusion(conclusion)?.conclusionSentenceChars ?? [],
@@ -75,8 +89,26 @@ export function reportDraft(overrides: Partial<ReportDraft> = {}): ReportDraft {
   }
 }
 
-/** 旧い形の節を、本番と同じ組み直し（`legacyReportComponents`）で部品の一覧にする。 */
-function componentsOfSections(sections: readonly ReportSection[]): ReportDraft["components"] {
-  const legacy = legacyReportComponents({ sections })
+/**
+ * 旧い形の節・図・振り返りを、本番と同じ組み直し（`legacyReportComponents`）で部品の一覧にする。
+ * 節が無いまま図か振り返りの塊だけがあるときは、根の子が空にならないよう空の段落の節を1つ置く。
+ */
+function componentsOfSections(
+  sections: readonly ReportSection[],
+  figure: ReportDraft["figure"],
+  retrospective: ReportDraft["retrospective"],
+): ReportDraft["components"] {
+  const hasDrawn =
+    figure.kind !== "none" || (retrospective.kind === "recorded" && retrospective.blocks.length > 0)
+  const placeholder: ReportSection = {
+    heading: "",
+    shapeTag: "unspecified",
+    blocks: [{ kind: "text", text: "", fold: "", aside: "" }],
+  }
+  const legacy = legacyReportComponents({
+    sections: sections.length === 0 && hasDrawn ? [placeholder] : sections,
+    figure,
+    retrospective,
+  })
   return legacy === undefined ? [] : z.array(a2uiReportComponentSchema).parse(legacy.components)
 }

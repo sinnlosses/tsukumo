@@ -20,7 +20,7 @@ import {
   MAX_PLAIN_CODE_LINES,
   MAX_TABLE_ROWS,
 } from "../../../shared/report/report-limit.ts"
-import { reportOutline } from "../../../shared/report/report-outline.ts"
+import { reportOutline, sectionLeaves } from "../../../shared/report/report-outline.ts"
 import { drawnSectionsOf } from "../../../shared/report/report-retrospective.ts"
 import { leafBlocksOf } from "../../../shared/report/row-panel-block.ts"
 import { codeBlockMatchesFile } from "./code-block-match.ts"
@@ -67,7 +67,7 @@ import { timelineFaults } from "./timeline-fault.ts"
 export function reportViolations(report: ReportDraft): readonly ReportViolation[] {
   const outline = reportOutline(report.components)
   const blocks = report.sections.flatMap((section) => leafBlocksOf(section.blocks))
-  const notations = notationsInSections(report.sections)
+  const notations = notationsInSections(outline)
   const badCards = badCardsIn(blocks)
   const mismatchedCodeBlocks = blocks
     .filter(
@@ -88,10 +88,10 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
   const graphToneFaults = graphToneFaultsInSections(drawnSections)
   const timelineFaultList = timelineFaults(drawnBlocks.filter((block) => block.kind === "timeline"))
 
-  const plainWords = plainWordSpellingsIn(report)
-  const figureNumberFaultList = figureNumberFaults(report)
+  const plainWords = plainWordSpellingsIn(report, outline)
+  const figureNumberFaultList = figureNumberFaults(report, outline)
   const templateMissList = templateMissesOf(report)
-  const plotForms = plotFormFaults(report)
+  const plotForms = plotFormFaults(outline)
 
   const counted = [
     { kind: "long-conclusion", count: report.conclusionSentenceChars.length },
@@ -184,7 +184,7 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
     },
     {
       kind: "arrow-in-prose",
-      count: blocks.filter((block) => proseTexts(block).some(hasArrow)).length,
+      count: sectionLeaves(outline).filter((leaf) => proseTexts(leaf).some(hasArrow)).length,
     },
     {
       kind: "label-in-item",
@@ -207,8 +207,8 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
     },
     { kind: "plot-forbidden-form", count: plotForms.refused.length, rules: plotForms.refused },
     { kind: "plot-form-override", count: plotForms.overrides },
-    { kind: "broken-inline-mark", count: brokenInlineMarks(report) },
-    { kind: "plot-title-without-number", count: plotNoteFaults(report) },
+    { kind: "broken-inline-mark", count: brokenInlineMarks(report, outline) },
+    { kind: "plot-title-without-number", count: plotNoteFaults(outline) },
     { kind: "template-miss", count: templateMissList.length, misses: templateMissList },
   ] as const satisfies readonly ReportViolation[]
 
