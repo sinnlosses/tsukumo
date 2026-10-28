@@ -53,7 +53,8 @@ const faultSchema = z.object({
 
 const storedResultSchema = z.object({
   id: z.string(),
-  loading: z.enum(["full", "names"]),
+  loading: z.enum(["full", "names", "mixed"]),
+  pulledCards: z.number().optional(),
   topic: z.enum(["T1", "T2", "T3", "T4", "T5", "T6", "T7", "T8"]),
   sections: z.number(),
   firstFaults: z.array(faultSchema),
@@ -139,7 +140,7 @@ async function runCase(entry: TrialCondition): Promise<{
   const firstJudgement = judgeComponents(extractComponents(first.text))
   if (firstJudgement.faults.length === 0) {
     return {
-      result: resultOf(entry, firstJudgement, undefined, first.calls),
+      result: resultOf(entry, firstJudgement, undefined, first),
       outputs: [first.text],
     }
   }
@@ -154,7 +155,7 @@ async function runCase(entry: TrialCondition): Promise<{
   const retry = await ask(system, retryUser)
   const retryJudgement = judgeComponents(extractComponents(retry))
   return {
-    result: resultOf(entry, firstJudgement, retryJudgement, first.calls + 1),
+    result: resultOf(entry, firstJudgement, retryJudgement, { ...first, calls: first.calls + 1 }),
     outputs: [first.text, retry],
   }
 }
@@ -165,26 +166,33 @@ async function writeOnce(
   system: string,
   request: string,
   cardSources: readonly unknown[],
-): Promise<{ readonly text: string; readonly calls: number; readonly context: string }> {
+): Promise<WrittenOnce> {
   const reply = await ask(system, request)
   if (loading === "full") {
-    return { text: reply, calls: 1, context: request }
+    return { text: reply, calls: 1, context: request, pulledCards: 0 }
   }
   const names = requestedCards(reply)
   if (names.length === 0) {
-    return { text: reply, calls: 1, context: request }
+    return { text: reply, calls: 1, context: request, pulledCards: 0 }
   }
   const document = buildReportCatalogDocument()
   const cards = names.map((name) => catalogCard(name, document, exampleOf(name, cardSources)).text)
   const context = `${request}\n\n引いた文法カード:\n${cards.join("\n")}`
-  return { text: await ask(system, context), calls: 2, context }
+  return { text: await ask(system, context), calls: 2, context, pulledCards: names.length }
+}
+
+type WrittenOnce = {
+  readonly text: string
+  readonly calls: number
+  readonly context: string
+  readonly pulledCards: number
 }
 
 function resultOf(
   entry: TrialCondition,
   first: Judgement,
   retry: Judgement | undefined,
-  calls: number,
+  written: WrittenOnce,
 ): CaseResult {
   return {
     id: entry.id,
@@ -195,7 +203,8 @@ function resultOf(
     firstSectionCount: first.sectionCount,
     retryFaults: retry?.faults,
     usedControls: first.usedControls,
-    calls,
+    calls: written.calls,
+    pulledCards: written.pulledCards,
     firstChars: undefined,
     retryChars: undefined,
   }
@@ -273,10 +282,15 @@ function exampleOf(name: string, cardSources: readonly unknown[]): unknown {
 }
 
 function printToolDefinitions(): void {
-  for (const loading of ["full", "names"] as const) {
+  const labels = {
+    full: "A 全部載せ",
+    names: "B 名前の列挙＋引く口",
+    mixed: "C 混ぜる形",
+  } as const
+  for (const loading of ["full", "names", "mixed"] as const) {
     const chars = toolDefinitionChars(loading)
     process.stdout.write(
-      `ツール定義の字数 ${loading === "full" ? "A 全部載せ" : "B 名前の列挙＋引く口"}: ${String(chars.total)}（文法カード 平均 ${String(chars.cardAverage)}・最大 ${String(chars.cardMax)}）\n`,
+      `ツール定義の字数 ${labels[loading]}:${String(chars.total)}（文法カード 平均 ${String(chars.cardAverage)}・最大 ${String(chars.cardMax)}）\n`,
     )
   }
 }
@@ -295,13 +309,14 @@ function printSummary(out: string): void {
       retryFaults: stored.retryFaults,
       usedControls: stored.usedControls,
       calls: stored.calls,
+      pulledCards: stored.pulledCards ?? 0,
       firstChars: stored.outputs?.[0]?.length,
       retryChars: stored.outputs?.[1]?.length,
     }))
   printToolDefinitions()
   process.stdout.write(`最初の呼び出し ${String(results.length)} 件\n`)
   process.stdout.write(
-    "載せ方\t題材\t件数\t一発\t直った\t直らない\t節の数の一致\tpath の整合の違反\t操作を使った\t呼び出し\t再試行が起きた件数\t再試行の呼び出し\t最初の出力の平均字数\t出し直しの平均字数\t出し直し/最初\t理由の内訳\n",
+    "載せ方\t題材\t件数\t一発\t直った\t直らない\t節の数の一致\tpath の整合の違反\t操作を使った\t呼び出し\tカードを引かずに書いた\tそのうち落ちた\t再試行が起きた件数\t再試行の呼び出し\t最初の出力の平均字数\t出し直しの平均字数\t出し直し/最初\t理由の内訳\n",
   )
   for (const row of summarizeCases(results)) {
     process.stdout.write(
@@ -316,6 +331,8 @@ function printSummary(out: string): void {
         row.pathFaults,
         row.usedControls,
         row.calls,
+        row.unpulled,
+        row.unpulledFaults,
         row.retried,
         row.retryCalls,
         row.firstCharsAverage ?? "-",

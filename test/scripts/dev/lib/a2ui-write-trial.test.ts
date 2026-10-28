@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest"
+import { z } from "zod"
 
 import { isFaultTopic, requestFor } from "../../../../scripts/dev/lib/a2ui-trial-topic.ts"
 import {
@@ -6,6 +7,8 @@ import {
   extractComponents,
   judgeComponents,
   requestedCards,
+  systemPromptFor,
+  toolDefinitionChars,
   trialConditions,
   type CatalogDocument,
 } from "../../../../scripts/dev/lib/a2ui-write-trial.ts"
@@ -130,21 +133,73 @@ describe("catalogCard", () => {
   })
 })
 
+describe("混ぜる形", () => {
+  const prompt = systemPromptFor("mixed", undefined)
+  const loaded = z
+    .object({
+      $defs: z.record(z.string(), z.unknown()),
+      components: z.record(z.string(), z.unknown()),
+    })
+    .parse(JSON.parse(prompt.split("\n\n").find((part) => part.startsWith('{"catalogId"')) ?? ""))
+
+  test("載せる部品だけの JSON Schema と、残りの部品の名前を持つ", () => {
+    const loadedNames = Object.keys(loaded.components)
+    const restNames = Object.keys(REPORT_COMPONENT_SCHEMAS).filter(
+      (name) => !loadedNames.includes(name),
+    )
+
+    expect(loadedNames).toEqual(expect.arrayContaining(["Report", "Section", "Table"]))
+    expect(restNames).toEqual(expect.arrayContaining(["Chart", "ChoicePicker"]))
+    expect(loadedNames.length + restNames.length).toBe(Object.keys(REPORT_COMPONENT_SCHEMAS).length)
+    for (const name of restNames) {
+      expect(prompt).toContain(`- ${name}: `)
+    }
+    expect(prompt).not.toContain("- Table: ")
+  })
+
+  test("載せた部品の断片が参照する $defs は全部残る", () => {
+    const references = localReferencesOf(loaded.components)
+
+    expect(references.every((reference) => reference in loaded.$defs)).toBe(true)
+  })
+
+  test("ツール定義の字数は、全部載せより小さく、名前の列挙だけより大きい", () => {
+    const full = toolDefinitionChars("full").total
+    const names = toolDefinitionChars("names").total
+    const mixed = toolDefinitionChars("mixed").total
+
+    expect(mixed).toBeLessThan(full)
+    expect(mixed).toBeGreaterThan(names)
+  })
+})
+
 describe("trialConditions", () => {
-  test("載せ方 2 つで 52 件、操作できる部品の題材は 8 件", () => {
+  test("載せ方 3 つで 128 件、操作できる部品の題材は 24 件", () => {
     const conditions = trialConditions()
 
-    expect(conditions).toHaveLength(52)
+    expect(conditions).toHaveLength(128)
     expect(conditions.filter((entry) => entry.topic === "T3" || entry.topic === "T4")).toHaveLength(
-      8,
+      24,
     )
   })
 
-  test("規約を破らせる題材は A が 8 件、B が 12 件", () => {
+  test("規約を破らせない題材は載せ方ごとに 32 件で、条件の id は重ならない", () => {
+    const conditions = trialConditions()
+
+    for (const loading of ["full", "names", "mixed"] as const) {
+      expect(
+        conditions.filter((entry) => entry.loading === loading && !isFaultTopic(entry.topic)),
+      ).toHaveLength(32)
+    }
+    expect(new Set(conditions.map((entry) => entry.id)).size).toBe(conditions.length)
+  })
+
+  test("規約を破らせる題材は A が 8 件、B と C が 12 件", () => {
     const faulty = trialConditions().filter((entry) => isFaultTopic(entry.topic))
 
     expect(faulty.filter((entry) => entry.loading === "full")).toHaveLength(8)
     expect(faulty.filter((entry) => entry.loading === "names")).toHaveLength(12)
+    expect(faulty.filter((entry) => entry.loading === "mixed")).toHaveLength(12)
   })
 })
 

@@ -22,7 +22,25 @@ import {
   type TopicId,
 } from "./a2ui-trial-topic.ts"
 
-export type Loading = "full" | "names"
+export type Loading = "full" | "names" | "mixed"
+
+/**
+ * 混ぜる形で JSON Schema を載せる部品。
+ * 構造の 2 つ（Report・Section）と、~/.tsukumo/report-usage/ の記録で本文の部品として使われた回数の上位
+ * （text・table・list・graph・claims・markdown・note・options に当たる部品）。
+ */
+const MIXED_FULL_COMPONENTS = [
+  "Report",
+  "Section",
+  "Paragraph",
+  "Table",
+  "ItemList",
+  "Graph",
+  "Claims",
+  "Markdown",
+  "Note",
+  "Options",
+] as const satisfies readonly (keyof typeof REPORT_COMPONENT_SCHEMAS)[]
 
 export type TrialCondition = {
   readonly id: string
@@ -52,6 +70,8 @@ export type CaseResult = {
   readonly retryFaults: readonly Fault[] | undefined
   readonly usedControls: boolean
   readonly calls: number
+  // 最初の書き出しの前に引いた文法カードの数（`full` は引かないので 0）
+  readonly pulledCards: number
   // 最初の出力と再試行の出力の字数。出力が残っていない結果や再試行しなかった結果は undefined
   readonly firstChars: number | undefined
   readonly retryChars: number | undefined
@@ -89,19 +109,23 @@ const COMPONENT_PURPOSES = {
 } as const satisfies Record<keyof typeof REPORT_COMPONENT_SCHEMAS, string>
 
 export function trialConditions(): readonly TrialCondition[] {
-  const loadings: readonly Loading[] = ["full", "names"]
+  const loadings: readonly Loading[] = ["full", "names", "mixed"]
   return loadings.flatMap((loading) => [
     ...PLAIN_TOPICS.flatMap((topic) =>
       [2, 3, 4].flatMap((sections) =>
-        [false, true].map((withExample) => condition(loading, topic, sections, withExample)),
+        [false, true].flatMap((withExample) =>
+          [1, 2].map((repeat) => condition(loading, topic, sections, withExample, repeat)),
+        ),
       ),
     ),
     ...CONTROL_TOPICS.flatMap((topic) =>
-      [2, 3].map((sections) => condition(loading, topic, sections, true)),
+      [2, 3].flatMap((sections) =>
+        [1, 2].map((repeat) => condition(loading, topic, sections, true, repeat)),
+      ),
     ),
     ...FAULT_TOPICS.flatMap((topic) =>
       (loading === "full" ? [2, 3] : [2, 3, 4]).map((sections) =>
-        condition(loading, topic, sections, true),
+        condition(loading, topic, sections, true, 1),
       ),
     ),
   ])
@@ -120,10 +144,17 @@ export function systemPromptFor(loading: Loading, example: readonly unknown[] | 
           "使える部品は次のカタログに定義されたものだけ。",
           JSON.stringify(buildReportCatalogDocument()),
         ]
-      : [
-          "使える部品の名前は次のとおり。型が要る部品は、先に `CARD <部品名>` だけを 1 行ずつ出力する（そのときは JSON の配列を出さない）。引いた型と例が届いたら、そのあと JSON の配列を出力する。",
-          namesListText(),
-        ]
+      : loading === "mixed"
+        ? [
+            "使える部品は、次のカタログに定義された部品と、そのあとに名前だけを挙げた部品。名前だけの部品を使うときは、先に `CARD <部品名>` だけを 1 行ずつ出力する（そのときは JSON の配列を出さない）。引いた型と例が届いたら、そのあと JSON の配列を出力する。",
+            JSON.stringify(mixedCatalogDocument(buildReportCatalogDocument())),
+            "名前だけの部品:",
+            namesListText(restComponentNames()),
+          ]
+        : [
+            "使える部品の名前は次のとおり。型が要る部品は、先に `CARD <部品名>` だけを 1 行ずつ出力する（そのときは JSON の配列を出さない）。引いた型と例が届いたら、そのあと JSON の配列を出力する。",
+            namesListText(Object.keys(COMPONENT_PURPOSES)),
+          ]
   const exampleText =
     example === undefined
       ? []
@@ -246,9 +277,24 @@ export function toolDefinitionChars(loading: Loading): {
       cardMax,
     }
   }
+  if (loading === "mixed") {
+    const loaded = a2uiReportComponentSchema.options.filter((option) =>
+      isMixedFull(option.shape.component.value),
+    )
+    const schema = z.toJSONSchema(z.array(z.union(loaded)), { io: "input" })
+    return {
+      total:
+        JSON.stringify(schema).length +
+        namesListText(restComponentNames()).length +
+        REPORT_A2UI_COMPONENTS_DESCRIPTION.length +
+        PART_CARD_TOOL_DESCRIPTION.length,
+      cardAverage,
+      cardMax,
+    }
+  }
   return {
     total:
-      namesListText().length +
+      namesListText(Object.keys(COMPONENT_PURPOSES)).length +
       REPORT_A2UI_COMPONENTS_DESCRIPTION.length +
       PART_CARD_TOOL_DESCRIPTION.length,
     cardAverage,
@@ -283,6 +329,9 @@ export function summarizeCases(results: readonly CaseResult[]): readonly Summary
       pathFaults: faultCodes.filter((code) => code.startsWith("structure:filter-")).length,
       usedControls: rows.filter((row) => row.usedControls).length,
       calls: rows.reduce((sum, row) => sum + row.calls, 0),
+      unpulledFaults: rows.filter((row) => row.pulledCards === 0 && row.firstFaults.length > 0)
+        .length,
+      unpulled: rows.filter((row) => row.pulledCards === 0).length,
       retried: retried.length,
       retryCalls: retried.length,
       firstCharsAverage: average(measured.map((row) => row.firstChars)),
@@ -310,6 +359,9 @@ export type SummaryRow = {
   readonly pathFaults: number
   readonly usedControls: number
   readonly calls: number
+  // カードを引かずに書いた件数と、そのうち最初の出力が落ちた件数
+  readonly unpulled: number
+  readonly unpulledFaults: number
   readonly retried: number
   readonly retryCalls: number
   readonly firstCharsAverage: number | undefined
@@ -332,14 +384,21 @@ function outcomeOf(result: CaseResult): Outcome {
   return result.retryFaults?.length === 0 ? "fixed" : "unfixed"
 }
 
+const LOADING_LABELS = { full: "A", names: "B", mixed: "C" } as const satisfies Record<
+  Loading,
+  string
+>
+
 function condition(
   loading: Loading,
   topic: TopicId,
   sections: number,
   withExample: boolean,
+  repeat: number,
 ): TrialCondition {
+  const suffix = repeat === 1 ? "" : `-r${String(repeat)}`
   return {
-    id: `${loading === "full" ? "A" : "B"}-${topic}-n${String(sections)}-${withExample ? "ex" : "noex"}`,
+    id: `${LOADING_LABELS[loading]}-${topic}-n${String(sections)}-${withExample ? "ex" : "noex"}${suffix}`,
     loading,
     topic,
     sections,
@@ -347,10 +406,33 @@ function condition(
   }
 }
 
-function namesListText(): string {
+function namesListText(names: readonly string[]): string {
   return Object.entries(COMPONENT_PURPOSES)
+    .filter(([name]) => names.includes(name))
     .map(([name, purpose]) => `- ${name}: ${purpose}`)
     .join("\n")
+}
+
+function isMixedFull(name: string): boolean {
+  const loaded: readonly string[] = MIXED_FULL_COMPONENTS
+  return loaded.includes(name)
+}
+
+function restComponentNames(): readonly string[] {
+  return Object.keys(COMPONENT_PURPOSES).filter((name) => !isMixedFull(name))
+}
+
+/** カタログ文書のうち、混ぜる形で載せる部品の断片と、断片が参照する `$defs` だけ。 */
+function mixedCatalogDocument(document: CatalogDocument): CatalogDocument {
+  const components = Object.fromEntries(
+    Object.entries(document.components).filter(([name]) => isMixedFull(name)),
+  )
+  const definitions = referencedDefinitions(Object.values(components), document.$defs)
+  return {
+    ...document,
+    $defs: Object.fromEntries(definitions.map((def) => [def, document.$defs[def]])),
+    components,
+  }
 }
 
 function referencedDefinitions(
