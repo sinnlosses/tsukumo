@@ -12,8 +12,8 @@ import {
 } from "../../../shared/report/a2ui-report-outline.ts"
 import { parseReportSections } from "../../../shared/report/report-block.ts"
 import { joinParts } from "../../../shared/report/report-inline-markdown.ts"
+import { reportLeafLayoutOf } from "../../../shared/report/report-leaf-value.ts"
 import { reportSectionPieces } from "../../../shared/report/report-markdown.ts"
-import { tagTonesOf } from "../../../shared/report/report-table-markdown.ts"
 import { tidyReportSections } from "../../../shared/report/report-tidy.ts"
 import { a2uiReportView } from "../../../shared/session/a2ui-report-view.ts"
 import type {
@@ -53,7 +53,8 @@ function draftRegions(
   const conclusion = (root.conclusion ?? []).join("")
   const { sections } = parseReportSections(a2uiReportFields(root, a2uiPartsById(drawn)).sections)
   const tidied = tidyReportSections({ conclusion, sections })
-  const pieces = reportSectionPieces(tidied, { kind: "none" })
+  const layout = reportLeafLayoutOf(tidied)
+  const pieces = reportSectionPieces(tidied, { kind: "none" }, layout)
   const head = isBlankText(conclusion)
     ? ""
     : `<div class="conclusion-lead">\n\n${conclusion}\n\n</div>`
@@ -69,9 +70,15 @@ function draftRegions(
     retrospective: "",
     favor: { id: `favor-${toolUseId}`, markdown: "" },
     a2ui: a2uiReportView(
-      { components: drawn, conclusion, figure: { kind: "none", reason: "unrecorded" }, sections },
+      {
+        components: drawn,
+        conclusion,
+        figure: { kind: "none", reason: "unrecorded" },
+        retrospective: { kind: "none" },
+        sections,
+      },
       pieces,
-      tagTonesOf(tidied),
+      layout,
     ),
   }
 }

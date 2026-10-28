@@ -60,6 +60,32 @@ describe("mainViewDraftOf", () => {
     expect(new Set(drawnIds(all))).toEqual(reachableFromRoot(all))
   })
 
+  it("草稿の葉の値は、記録と同じ関数で番号と傍注を持つ", () => {
+    const parts = a2uiParts(
+      {
+        id: "root",
+        component: "Report",
+        conclusion: ["架空の結論。"],
+        children: ["s1"],
+      },
+      { id: "s1", component: "Section", heading: "架空の節", children: ["t1", "m1"] },
+      {
+        id: "t1",
+        component: "Table",
+        title: "架空の表",
+        columns: ["列", "数"],
+        rows: [["値", "1"]],
+      },
+      { id: "m1", component: "Note", tone: "memo", text: "架空の覚え書き。" },
+    )
+    const a2ui = mainViewDraftOf("toolu_draft", parts)?.regions.a2ui
+    if (a2ui?.kind !== "surface") throw new Error("面の値が無い")
+
+    expect(a2ui.leafValues.t1?.captionNumber).toEqual({ kind: "table", ordinal: 1 })
+    expect(a2ui.leafValues.t1?.gutterNotes).toEqual([{ label: "メモ", text: "架空の覚え書き。" }])
+    expect(a2ui.leafValues.m1?.mergedIntoPrevious).toBe(true)
+  })
+
   it("葉の Markdown と節の見出しが、面で描く値に載る", () => {
     const draft = mainViewDraftOf("toolu_draft", STAGED_PARTS)
 

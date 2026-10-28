@@ -3,6 +3,7 @@
 
 import type { A2uiReportComponent } from "../report/a2ui-report-catalog.ts"
 import type { ReportChangeSummary } from "../report/report-change-summary.ts"
+import type { LeafValue } from "../report/report-leaf-value.ts"
 import type { ReportTask } from "../report/report-task.ts"
 import type { RecordedPromptImage } from "../session-driver/prompt-image.ts"
 import type { Question, QuestionAnswer } from "../session-driver/question.ts"
@@ -102,6 +103,8 @@ export type MainViewReportRegions = {
  * 部品の一覧で描く本文の値。`none` は一覧の無い記録と、一覧と `sections` の写しが食い違う記録。
  * `sections` は根の子の部品の ID から、その子が写った節の欄の ID と見出しの行（`## …`。見出しの無い節は空文字）。整形で塊の残らない子は持たない。
  * `leaves` は葉の部品の ID から、その葉の Markdown（図表の番号と傍注は節の欄の Markdown と同じ。整形で落ちた葉は空文字）。
+ * `leafValues` は葉の部品の ID から、その葉の図表番号・表の札の色・寄せられた傍注（{@link LeafValue}）。
+ * `leaves` の葉に加えて `Report.figure` の葉と振り返りの葉も持ち、整形で落ちた葉は持たない。
  * `tables` は操作できる `Table` の ID から、その Markdown の行ごとの分け方。整形で落ちた表は持たない。
  */
 export type MainViewA2uiReport =
@@ -113,6 +116,7 @@ export type MainViewA2uiReport =
         Record<string, { readonly regionId: number; readonly heading: string }>
       >
       readonly leaves: Readonly<Record<string, string>>
+      readonly leafValues: Readonly<Record<string, LeafValue>>
       readonly tables: Readonly<Record<string, MainViewTableRows>>
     }
 

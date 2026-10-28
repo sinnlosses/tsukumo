@@ -2,53 +2,34 @@
 //
 // 逃げ道の `markdown` の塊だけは逃がさず、今の本文と同じ経路（許可リスト・mermaid・`chart`）で描く。
 
+import { zip } from "remeda"
+
 import { cardChainHtml } from "./card-chain-markdown.ts"
 import { encodeMarks } from "./code-mark.ts"
-import { type PlotFormResolution, plotFormOf } from "./figure-decision.ts"
-import { type FigureForm, plotRows, type ReportPlot } from "./figure-grammar.ts"
+import { plotRows, type ReportPlot } from "./figure-grammar.ts"
 import { graphFoldHtml } from "./graph-fold-html.ts"
 import { graphFoldFigure } from "./graph-fold.ts"
-import { plotChartOf } from "./plot-chart.ts"
-import { plotGaugeOf } from "./plot-gauge.ts"
-import { plotHistogramOf } from "./plot-histogram.ts"
-import { plotScatterOf } from "./plot-scatter.ts"
+import { plotDrawingOf } from "./plot-drawing.ts"
 import type { ReportBlock, ReportSection, SectionBlock } from "./report-block.ts"
-import { captionedMarkdown, type CaptionKind } from "./report-caption.ts"
+import { captionedMarkdown } from "./report-caption.ts"
 import { compareMarkdown, beforeAfterMarkdown } from "./report-comparison-markdown.ts"
 import { chartConfigOf, svgHtml, withSequenceAutonumber } from "./report-diagram-markdown.ts"
 import { filesMarkdown } from "./report-file-markdown.ts"
 import { graphLegendMarkdown, graphSource } from "./report-graph-markdown.ts"
 import { imageMarkdown, type ReportImageSource } from "./report-image-markdown.ts"
 import { fencedMarkdown, htmlInline, joinParts, markdownInline } from "./report-inline-markdown.ts"
+import {
+  type LeafGutterNote,
+  type LeafValue,
+  type ReportLeafLayout,
+  reportLeafLayoutOf,
+} from "./report-leaf-value.ts"
 import { claimsMarkdown, listMarkdown, optionsMarkdown } from "./report-list-markdown.ts"
-import { REPORT_NOTE_KINDS } from "./report-notation.ts"
 import { PAUSE_POINT_CLASS_NAME } from "./report-pause-point.ts"
 import { statMarkdown } from "./report-stat-markdown.ts"
-import {
-  matrixMarkdown,
-  type TagTones,
-  tableMarkdown,
-  tagTonesOf,
-} from "./report-table-markdown.ts"
+import { matrixMarkdown, type TagTones, tableMarkdown } from "./report-table-markdown.ts"
 import { arrangedBlockMarkdown } from "./row-panel-markdown.ts"
 import { timelineHtml } from "./timeline-markdown.ts"
-
-type CaptionCounts = Readonly<Record<CaptionKind, number>>
-
-type SectionsFold = {
-  readonly parts: readonly ReportSectionPieces[]
-  readonly counts: CaptionCounts
-}
-
-/**
- * 本文の位置に描く塊1つと、その塊に添える傍注（余白の柱に置くもの）。`body` が空なら傍注だけ。
- * `blockIndex` は包みを作った塊の、節の中の位置。
- */
-type GutterGroup = {
-  readonly blockIndex: number
-  readonly body: string
-  readonly notes: readonly string[]
-}
 
 /**
  * 節1つの Markdown を塊ごとに分けたもの。`heading` は見出しの行（見出しの無い節は空文字）。
@@ -57,12 +38,6 @@ type GutterGroup = {
 export type ReportSectionPieces = {
   readonly heading: string
   readonly blocks: readonly string[]
-}
-
-/** 塊を1つずつ足していく途中の、本文の位置の包みの並びと、ここまでに数えた題の番号。 */
-type BlocksFold = {
-  readonly groups: readonly GutterGroup[]
-  readonly counts: CaptionCounts
 }
 
 /**
@@ -83,113 +58,52 @@ export function reportSectionsMarkdown(
 /**
  * 節ごとの Markdown を塊ごとに分けて返す。入力と同じ並び・同じ長さ。
  * 見出しと塊を `joinParts` で繋ぐと節1つの Markdown になる（中身の無い節は空文字）。
- * 題を持つ塊（図 6種・表 2種）は、節をまたいで並びの順に数えた「図 n」「表 n」の番号を1回だけ受け取る（{@link foldedBlockMarkdown}）。
- * 番号は題が空でも、`fold` の中でも数える。
+ * 題の番号と傍注は `layout`（既定は `sections` から導く）の値を使う（番号は節をまたいで並びの順に数え、塊は番号を1回だけ受け取る）。
  * 塊の `aside` と `memo` の `note` は傍注になり、直前の塊と一緒に包む（{@link gutterGroupMarkdown}）。
  * `memo` の `note` は本文の位置に残さない。節の最初の `memo` は塊の無い包みになる。
- * `row`・`panel` は子を葉の塊と同じ手で描き、1つの包みにする（{@link withArrangedBlock}）。
+ * `row`・`panel` は子を葉の塊と同じ手で描き、1つの包みにする（{@link blockBodyMarkdown}）。
  */
 export function reportSectionPieces(
   sections: readonly ReportSection[],
   imageSource: ReportImageSource,
+  layout: ReportLeafLayout = reportLeafLayoutOf(sections),
 ): readonly ReportSectionPieces[] {
-  const tagTones = tagTonesOf(sections)
-  const { parts } = sections.reduce<SectionsFold>(
-    (acc, section) => {
-      const blocks = section.blocks.reduce<BlocksFold>(
-        (blockAcc, block, blockIndex) =>
-          block.kind === "row" || block.kind === "panel"
-            ? withArrangedBlock(blockAcc, block, blockIndex, imageSource, tagTones)
-            : withBlock(blockAcc, block, blockIndex, imageSource, tagTones),
-        { groups: [], counts: acc.counts },
-      )
-      const markdowns = section.blocks.map((_, blockIndex) => {
-        const group = blocks.groups.find((candidate) => candidate.blockIndex === blockIndex)
-        return group === undefined ? "" : gutterGroupMarkdown(group)
-      })
-      return {
-        parts: [
-          ...acc.parts,
-          {
-            heading: section.heading.trim() === "" ? "" : `## ${markdownInline(section.heading)}`,
-            blocks: markdowns,
-          },
-        ],
-        counts: blocks.counts,
-      }
-    },
-    { parts: [], counts: { figure: 0, table: 0 } },
-  )
-  return parts
+  const { tagTones, values } = layout
+  return zip(sections, values).map(([section, sectionValues]) => ({
+    heading: section.heading.trim() === "" ? "" : `## ${markdownInline(section.heading)}`,
+    blocks: zip(section.blocks, sectionValues).map(([block, value]) =>
+      value.mergedIntoPrevious
+        ? ""
+        : gutterGroupMarkdown(
+            blockBodyMarkdown(block, value, imageSource, tagTones),
+            value.gutterNotes,
+          ),
+    ),
+  }))
 }
 
 /**
- * `row`・`panel` を1つの包みとして足す。子は葉の塊と同じ手で描き、題の番号は子の順に続ける。
- * 子の傍注と親の `aside` は包みの傍注にまとめ、親の `fold` は容れ物ごと畳む。
+ * 塊の本文の位置に描く Markdown。`row`・`panel` は子を葉の塊と同じ手で描き、親の `fold` は容れ物ごと畳む。
+ * 傍注を直前へ寄せた `memo` の子は容れ物の中に置かない。
  */
-function withArrangedBlock(
-  acc: BlocksFold,
-  block: Extract<SectionBlock, { readonly kind: "row" | "panel" }>,
-  blockIndex: number,
+function blockBodyMarkdown(
+  block: SectionBlock,
+  value: LeafValue,
   imageSource: ReportImageSource,
   tagTones: TagTones,
-): BlocksFold {
-  const children = block.blocks.reduce<BlocksFold>(
-    (childAcc, child, childIndex) => withBlock(childAcc, child, childIndex, imageSource, tagTones),
-    { groups: [], counts: acc.counts },
-  )
-  const body = arrangedBlockMarkdown(
-    block,
-    children.groups.map((group) => group.body),
-  )
-  return {
-    groups: [
-      ...acc.groups,
-      {
-        blockIndex,
-        body: foldedMarkdown(block.fold, body),
-        notes: [
-          ...children.groups.flatMap((group) => group.notes),
-          gutterNoteMarkdown("", block.aside),
-        ].filter((note) => note !== ""),
-      },
-    ],
-    counts: children.counts,
+): string {
+  if (block.kind === "row" || block.kind === "panel") {
+    const children = zip(block.blocks, value.children)
+      .filter(([, child]) => !child.mergedIntoPrevious)
+      .map(([child, childValue]) => foldedBlockMarkdown(child, childValue, imageSource, tagTones))
+    return foldedMarkdown(block.fold, arrangedBlockMarkdown(block, children))
   }
-}
-
-/** 葉の塊1つを足す。題の番号を数え、`memo` の `note` は直前の包みの傍注へ寄せる。 */
-function withBlock(
-  acc: BlocksFold,
-  block: ReportBlock,
-  blockIndex: number,
-  imageSource: ReportImageSource,
-  tagTones: TagTones,
-): BlocksFold {
-  const kind = captionKindOf(block)
-  const counts = kind === undefined ? acc.counts : { ...acc.counts, [kind]: acc.counts[kind] + 1 }
-  const ordinal = kind === undefined ? 0 : counts[kind]
-  const notes = gutterNotesOf(block)
-  const last = acc.groups.at(-1)
-  return {
-    groups:
-      isMemoNote(block) && last !== undefined
-        ? [...acc.groups.slice(0, -1), { ...last, notes: [...last.notes, ...notes] }]
-        : [
-            ...acc.groups,
-            {
-              blockIndex,
-              body: foldedBlockMarkdown(block, imageSource, ordinal, tagTones),
-              notes,
-            },
-          ],
-    counts,
-  }
+  return foldedBlockMarkdown(block, value, imageSource, tagTones)
 }
 
 /**
  * 本文の位置に描く `note` の種別 → 記法の class。ラベルは描く側が class から引く（`REPORT_NOTE_KINDS`）。注意・異常は筆を留める対象。
- * `memo` は傍注になる（{@link gutterNotesOf}）。
+ * `memo` は傍注になる（`ReportLeafLayout` の傍注）。
  */
 const NOTE_CLASSES = {
   info: "note",
@@ -201,49 +115,30 @@ const NOTE_CLASSES = {
   string
 >
 
-/** 傍注にした `memo` の頭に付けるラベル。 */
-const MEMO_LABEL = new Map(REPORT_NOTE_KINDS).get("note-memo") ?? ""
-
-function isMemoNote(block: ReportBlock): boolean {
-  return block.kind === "note" && block.tone === "memo"
-}
-
-/** 塊の傍注。`memo` の `note` は本文を「メモ」のラベル付きで、塊の `aside` はそのあとに置く。 */
-function gutterNotesOf(block: ReportBlock): readonly string[] {
-  return [
-    ...(block.kind === "note" && block.tone === "memo"
-      ? [gutterNoteMarkdown(MEMO_LABEL, block.text)]
-      : []),
-    gutterNoteMarkdown("", block.aside),
-  ].filter((note) => note !== "")
-}
-
-function gutterNoteMarkdown(label: string, text: string): string {
-  if (text.trim() === "") {
-    return ""
-  }
+function gutterNoteMarkdown({ label, text }: LeafGutterNote): string {
   const labelHtml = label === "" ? "" : `<span class="gutter-note-label">${label}</span>`
   return `<aside class="gutter-note">\n\n${labelHtml}${markdownInline(text)}\n\n</aside>`
 }
 
-function gutterGroupMarkdown({ body, notes }: GutterGroup): string {
-  if (notes.length === 0) {
+function gutterGroupMarkdown(body: string, gutterNotes: readonly LeafGutterNote[]): string {
+  if (gutterNotes.length === 0) {
     return body
   }
   return joinParts([
     '<div class="with-gutter">',
     body,
-    joinParts(['<div class="gutter">', ...notes, "</div>"]),
+    joinParts(['<div class="gutter">', ...gutterNotes.map(gutterNoteMarkdown), "</div>"]),
     "</div>",
   ])
 }
 
 function foldedBlockMarkdown(
   block: ReportBlock,
+  value: LeafValue,
   imageSource: ReportImageSource,
-  ordinal: number,
   tagTones: TagTones,
 ): string {
+  const ordinal = value.captionNumber.kind === "none" ? 0 : value.captionNumber.ordinal
   return foldedMarkdown(block.fold, blockMarkdown(block, imageSource, ordinal, tagTones))
 }
 
@@ -382,105 +277,52 @@ function blockMarkdown(
   }
 }
 
-type PlotRenderer = (
-  block: ReportPlot,
-  ordinal: number,
-  tagTones: TagTones,
-  resolution: PlotFormResolution,
-) => string
-
-/** `plot` を決定表の形の描き方へ振り分ける。描き方の無い形は表に落とす。 */
-const PLOT_RENDERERS = {
-  text: plotTableMarkdown,
-  table: plotTableMarkdown,
-  bar: plotChartMarkdown,
-  line: plotChartMarkdown,
-  pie: plotChartMarkdown,
-  numberLine: plotGaugeMarkdown,
-  bullet: plotGaugeMarkdown,
-  scatter: plotScatterMarkdown,
-  histogram: plotHistogramMarkdown,
-  graph: plotTableMarkdown,
-  stats: plotTableMarkdown,
-} as const satisfies Record<FigureForm, PlotRenderer>
-
-/** 描く経路は利用者の図の既定を持たないので、図派として決める。 */
+/**
+ * `plot` を {@link plotDrawingOf} が決めた形で描く。
+ * チャートは値と系列名を描く側に書かせる印をつけて既存の `chart` の経路で、そのほかは描画側が読むフェンスで描く。
+ */
 function plotMarkdown(block: ReportPlot, ordinal: number, tagTones: TagTones): string {
-  const resolution = plotFormOf(block, block.form, "chart")
-  return PLOT_RENDERERS[resolution.form](block, ordinal, tagTones, resolution)
+  const drawing = plotDrawingOf(block)
+  switch (drawing.kind) {
+    case "table":
+      return plotTableMarkdown(block, ordinal, tagTones)
+    case "chart":
+      return plotFigureMarkdown(
+        ordinal,
+        drawing.chart.title,
+        "chart",
+        JSON.stringify(chartConfigOf(drawing.chart, { values: true })),
+      )
+    case "gauge":
+      return plotFigureMarkdown(
+        ordinal,
+        drawing.gauge.title,
+        drawing.gauge.kind === "bullet" ? "bullet" : "number-line",
+        JSON.stringify(drawing.gauge),
+      )
+    case "scatter":
+      return plotFigureMarkdown(
+        ordinal,
+        drawing.scatter.title,
+        "scatter",
+        JSON.stringify(drawing.scatter),
+      )
+    case "histogram":
+      return plotFigureMarkdown(
+        ordinal,
+        drawing.histogram.title,
+        "histogram",
+        JSON.stringify(drawing.histogram),
+      )
+  }
 }
 
-/** 値と系列名を描く側に書かせる印をつけて、既存の `chart` の経路で描く。写せない申告は表に落とす。 */
-function plotChartMarkdown(
-  block: ReportPlot,
-  ordinal: number,
-  tagTones: TagTones,
-  resolution: PlotFormResolution,
-): string {
-  const chart = plotChartOf(block, resolution)
-  if (chart === undefined) return plotTableMarkdown(block, ordinal, tagTones)
+function plotFigureMarkdown(ordinal: number, title: string, fence: string, spec: string): string {
   return captionedMarkdown({
     kind: "figure",
     ordinal,
-    title: chart.title,
-    body: fencedMarkdown("chart", JSON.stringify(chartConfigOf(chart, { values: true }))),
-    bodyFormat: "markdown",
-    fit: false,
-  })
-}
-
-/** 数直線・bullet を、描画側が読むフェンスにする。写せない申告は表に落とす。 */
-function plotGaugeMarkdown(
-  block: ReportPlot,
-  ordinal: number,
-  tagTones: TagTones,
-  resolution: PlotFormResolution,
-): string {
-  const gauge = plotGaugeOf(block, resolution)
-  if (gauge === undefined) return plotTableMarkdown(block, ordinal, tagTones)
-  return captionedMarkdown({
-    kind: "figure",
-    ordinal,
-    title: gauge.title,
-    body: fencedMarkdown(gauge.kind === "bullet" ? "bullet" : "number-line", JSON.stringify(gauge)),
-    bodyFormat: "markdown",
-    fit: false,
-  })
-}
-
-/** 散布図を、描画側が読むフェンスにする。外れ値の名前を添えられない申告は表に落とす。 */
-function plotScatterMarkdown(
-  block: ReportPlot,
-  ordinal: number,
-  tagTones: TagTones,
-  resolution: PlotFormResolution,
-): string {
-  const scatter = plotScatterOf(block, resolution)
-  if (scatter === undefined) return plotTableMarkdown(block, ordinal, tagTones)
-  return captionedMarkdown({
-    kind: "figure",
-    ordinal,
-    title: scatter.title,
-    body: fencedMarkdown("scatter", JSON.stringify(scatter)),
-    bodyFormat: "markdown",
-    fit: false,
-  })
-}
-
-/** ヒストグラムを、描画側が読むフェンスにする。写せない申告は表に落とす。 */
-function plotHistogramMarkdown(
-  block: ReportPlot,
-  ordinal: number,
-  tagTones: TagTones,
-  resolution: PlotFormResolution,
-): string {
-  const histogram = plotHistogramOf(block, resolution)
-  if (histogram === undefined) return plotTableMarkdown(block, ordinal, tagTones)
-  return captionedMarkdown({
-    kind: "figure",
-    ordinal,
-    title: histogram.title,
-    body: fencedMarkdown("histogram", JSON.stringify(histogram)),
+    title,
+    body: fencedMarkdown(fence, spec),
     bodyFormat: "markdown",
     fit: false,
   })
@@ -500,29 +342,6 @@ function plotTableMarkdown(block: ReportPlot, ordinal: number, tagTones: TagTone
     ordinal,
     tagTones,
   )
-}
-
-function captionKindOf(block: ReportBlock): CaptionKind | undefined {
-  switch (block.kind) {
-    case "image":
-    case "compare":
-    case "beforeAfter":
-    case "mermaid":
-    case "graph":
-    case "chart":
-    case "svg":
-    case "timeline":
-    case "stats":
-      return "figure"
-    case "table":
-    case "matrix":
-    case "plot":
-      return "table"
-    case "files":
-      return block.title.trim() === "" ? undefined : "figure"
-    default:
-      return undefined
-  }
 }
 
 /**

@@ -7,12 +7,16 @@ import type { A2uiReportComponent } from "../report/a2ui-report-catalog.ts"
 import {
   A2UI_ROOT_ID,
   type A2uiOutlineSection,
+  type A2uiReportPart,
+  a2uiLeafIds,
   a2uiOutlineSections,
   a2uiPartsById,
 } from "../report/a2ui-report-outline.ts"
 import type { RecordedReportFigure, ReportSection } from "../report/report-block.ts"
 import { joinParts } from "../report/report-inline-markdown.ts"
+import type { LeafValue, ReportLeafLayout } from "../report/report-leaf-value.ts"
 import type { ReportSectionPieces } from "../report/report-markdown.ts"
+import type { ReportRetrospective } from "../report/report-retrospective.ts"
 import { type TagTones, tableRowMarkdowns } from "../report/report-table-markdown.ts"
 import { type TidiedBlock, tidiedSectionBlocks } from "../report/report-tidy.ts"
 import type { MainViewA2uiReport, MainViewTableRows } from "./main-view-shape.ts"
@@ -22,6 +26,7 @@ export type A2uiReportSource = {
   readonly components: readonly A2uiReportComponent[]
   readonly conclusion: string
   readonly figure: RecordedReportFigure
+  readonly retrospective: ReportRetrospective
   readonly sections: readonly ReportSection[]
 }
 
@@ -29,13 +34,14 @@ export type A2uiReportSource = {
  * 部品の一覧を、節の欄の ID と葉ごとの Markdown に当てる。
  * `pieces` は描く節の並び（`figure` の図の節 → 整形した `sections` → 振り返り）の塊ごとの Markdown で、添字が欄の ID。
  * 根の子ごとの葉の数が記録の `sections` の塊の数と食い違えば `none`（一覧から写した節ではない）。
- * `tagTones` は `pieces` を組んだときの札の色の割り当てで、操作できる表の行を組み直すのに使う。
+ * `layout` は `pieces` を組んだときの値。`tagTones` は操作できる表の行を組み直すのに使い、`values` は `leafValues` に葉の ID で当てる。
  */
 export function a2uiReportView(
   report: A2uiReportSource,
   pieces: readonly ReportSectionPieces[],
-  tagTones: TagTones,
+  layout: ReportLeafLayout,
 ): MainViewA2uiReport {
+  const { tagTones, values } = layout
   const byId = a2uiPartsById(report.components)
   const root = byId.get(A2UI_ROOT_ID)
   if (root?.component !== "Report") {
@@ -62,6 +68,13 @@ export function a2uiReportView(
         const position = kept.indexOf(index)
         return [leafId, piece === undefined || position < 0 ? "" : (piece.blocks[position] ?? "")]
       })
+      const leafValues = section.leafIds.flatMap(
+        (leafId, index): readonly (readonly [string, LeafValue])[] => {
+          const value =
+            piece === undefined ? undefined : values[acc.regionId]?.[kept.indexOf(index)]
+          return value === undefined ? [] : [[leafId, value]]
+        },
+      )
       if (piece === undefined) {
         return { ...acc, leaves: [...acc.leaves, ...leaves] }
       }
@@ -75,11 +88,17 @@ export function a2uiReportView(
             ]
           : acc.sections,
         leaves: [...acc.leaves, ...leaves],
+        leafValues: [...acc.leafValues, ...leafValues],
       }
     },
-    { regionId: report.figure.kind === "none" ? 0 : 1, sections: [], leaves: [] },
+    { regionId: report.figure.kind === "none" ? 0 : 1, sections: [], leaves: [], leafValues: [] },
   )
   const leaves = Object.fromEntries(folded.leaves)
+  const leafValues = Object.fromEntries([
+    ...figureLeafValues(report, root, values),
+    ...folded.leafValues,
+    ...retrospectiveLeafValues(report, root, byId, values),
+  ])
   const tables = interactiveTables(zip(outline, tidied), byId, leaves, tagTones)
   return tables === undefined
     ? { kind: "none" }
@@ -88,8 +107,44 @@ export function a2uiReportView(
         components: report.components,
         sections: Object.fromEntries(folded.sections),
         leaves,
+        leafValues,
         tables,
       }
+}
+
+/** `Report.figure` の葉の値。図の節は描く並びの先頭にある。 */
+function figureLeafValues(
+  report: A2uiReportSource,
+  root: A2uiReportPart<"Report">,
+  values: readonly (readonly LeafValue[])[],
+): readonly (readonly [string, LeafValue])[] {
+  const value = values[0]?.[0]
+  return report.figure.kind === "none" || root.figure === undefined || value === undefined
+    ? []
+    : [[root.figure, value]]
+}
+
+/**
+ * 振り返りの葉の値。振り返りの節は描く並びの最後で、先頭の塊は要約の `text`。
+ * 振り返りの葉の数が記録の塊の数と食い違えば（読み損ねた塊を落としている）持たない。
+ */
+function retrospectiveLeafValues(
+  report: A2uiReportSource,
+  root: A2uiReportPart<"Report">,
+  byId: ReadonlyMap<string, A2uiReportComponent>,
+  values: readonly (readonly LeafValue[])[],
+): readonly (readonly [string, LeafValue])[] {
+  if (report.retrospective.kind === "none") {
+    return []
+  }
+  const leafIds = a2uiLeafIds(root.retrospective?.blocks ?? [], byId)
+  const retrospective = values.at(-1) ?? []
+  return leafIds.length === report.retrospective.blocks.length
+    ? leafIds.flatMap((leafId, index): readonly (readonly [string, LeafValue])[] => {
+        const value = retrospective[index + 1]
+        return value === undefined ? [] : [[leafId, value]]
+      })
+    : []
 }
 
 /**
@@ -141,4 +196,5 @@ type ViewFold = {
     { readonly regionId: number; readonly heading: string },
   ])[]
   readonly leaves: readonly (readonly [string, string])[]
+  readonly leafValues: readonly (readonly [string, LeafValue])[]
 }

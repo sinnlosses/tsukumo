@@ -5,11 +5,11 @@ import { changedFilesMarkdown } from "../report/changed-file-section.ts"
 import { sectionsWithFigure } from "../report/report-block.ts"
 import { reportChecksMarkdown } from "../report/report-check.ts"
 import { joinParts } from "../report/report-inline-markdown.ts"
+import { reportLeafLayoutOf } from "../report/report-leaf-value.ts"
 import { reportSectionPieces } from "../report/report-markdown.ts"
 import { phaseTimesMarkdown } from "../report/report-phase-time.ts"
 import { retrospectiveSections } from "../report/report-retrospective.ts"
 import { keyFiguresMarkdown } from "../report/report-stat-markdown.ts"
-import { tagTonesOf } from "../report/report-table-markdown.ts"
 import { tidyReportSections } from "../report/report-tidy.ts"
 import { isBlankText } from "../utils/blank-text.ts"
 import { a2uiReportView } from "./a2ui-report-view.ts"
@@ -181,12 +181,17 @@ function reportRegionsOf(
       .join("\n\n")
   const sections = reportSectionsOf(report)
   const drawnSections = [...sections, ...retrospectiveSections(report.retrospective)]
-  const pieces = reportSectionPieces(drawnSections, {
-    kind: "shelved",
-    toolUseId: report.toolUseId,
-    sizes: report.imageSizes,
-    unshelved: report.unshelvedImages,
-  })
+  const layout = reportLeafLayoutOf(drawnSections)
+  const pieces = reportSectionPieces(
+    drawnSections,
+    {
+      kind: "shelved",
+      toolUseId: report.toolUseId,
+      sizes: report.imageSizes,
+      unshelved: report.unshelvedImages,
+    },
+    layout,
+  )
   const markdowns = pieces.map((piece) => joinParts([piece.heading, ...piece.blocks]))
   return {
     kind: "regions",
@@ -198,7 +203,7 @@ function reportRegionsOf(
     }),
     retrospective: markdowns[sections.length] ?? "",
     favor: { id: favorId, markdown: report.favor },
-    a2ui: a2uiReportView(report, pieces, tagTonesOf(drawnSections)),
+    a2ui: a2uiReportView(report, pieces, layout),
   }
 }
 

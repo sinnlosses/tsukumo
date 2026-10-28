@@ -91,6 +91,46 @@ describe("a2ui の版の記録の本文", () => {
     })
   })
 
+  it("leafValues は図の葉・節の葉・振り返りの葉に、通しの番号と寄せた傍注を持つ", () => {
+    const parts = [
+      {
+        id: "root",
+        component: "Report",
+        conclusion: ["架空の結論。"],
+        figure: "fig",
+        children: ["s1"],
+        retrospective: { summary: "架空の要約。", drafts: [], blocks: ["rt"] },
+      },
+      { id: "fig", component: "Mermaid", title: "", source: "flowchart TD\n  A --> B" },
+      { id: "s1", component: "Section", heading: "架空の節", children: ["t1", "m1", "b1"] },
+      {
+        id: "t1",
+        component: "Table",
+        title: "架空の表",
+        columns: ["列", "数"],
+        rows: [["値", "1"]],
+      },
+      { id: "m1", component: "Note", tone: "memo", text: "架空の覚え書き。" },
+      { id: "b1", component: "Paragraph", text: "以上です" },
+      {
+        id: "rt",
+        component: "Table",
+        title: "架空の根拠",
+        columns: ["列", "数"],
+        rows: [["値", "1"]],
+      },
+    ]
+    const { a2ui } = regionsOf(reportOf({ components: parts }))
+    if (a2ui.kind !== "surface") throw new Error("面の値が無い")
+
+    expect(Object.keys(a2ui.leafValues).toSorted()).toEqual(["fig", "m1", "rt", "t1"])
+    expect(a2ui.leafValues.fig?.captionNumber).toEqual({ kind: "figure", ordinal: 1 })
+    expect(a2ui.leafValues.t1?.captionNumber).toEqual({ kind: "table", ordinal: 1 })
+    expect(a2ui.leafValues.t1?.gutterNotes).toEqual([{ label: "メモ", text: "架空の覚え書き。" }])
+    expect(a2ui.leafValues.m1?.mergedIntoPrevious).toBe(true)
+    expect(a2ui.leafValues.rt?.captionNumber).toEqual({ kind: "table", ordinal: 2 })
+  })
+
   it("図が無ければ欄の ID は 0 から振る", () => {
     const parts = PARTS.map((part) =>
       part.id === "root" ? { ...part, figure: undefined, figureNone: "short-answer" } : part,
