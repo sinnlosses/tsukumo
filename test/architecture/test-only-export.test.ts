@@ -26,17 +26,24 @@ const ALLOWED_TEST_ONLY_EXPORTS = {} as const satisfies Record<string, string>
 // 本番の読み手が後続の課題で付くまでの、期限つきの例外（Props の型でなくてよい）。読み手が付いたら外す。
 const PENDING_READER_EXPORTS = {} as const satisfies Record<string, string>
 
+const OFFENDER_GUIDE = [
+  "テストからしか import されない export がある。次のどれかにする。",
+  '- 使い手が後続の課題で付く新部品: PENDING_READER_EXPORTS に "パス#名前": "読み手が付く課題の名前と理由" で足す（読み手が付いたら外す）',
+  '- テストだけが読む `<部品>Props` の型: ALLOWED_TEST_ONLY_EXPORTS に "パス#名前": "理由" で足す',
+  "- それ以外の関数・定数: 消すか、本番の口へ寄せる",
+].join("\n")
+
 const SOURCES = readRepositorySources()
 
 const FOUND_TEST_ONLY_EXPORTS = testOnlyExports(SOURCES, productionReader())
 
 describe("src/・scripts/ のテストからしか import されない export", () => {
   it("許可リストの外に無い", () => {
-    expect(
-      FOUND_TEST_ONLY_EXPORTS.filter(
-        (key) => !(key in ALLOWED_TEST_ONLY_EXPORTS) && !(key in PENDING_READER_EXPORTS),
-      ),
-    ).toEqual([])
+    const offenders = FOUND_TEST_ONLY_EXPORTS.filter(
+      (key) => !(key in ALLOWED_TEST_ONLY_EXPORTS) && !(key in PENDING_READER_EXPORTS),
+    )
+
+    expect(offenders, OFFENDER_GUIDE).toEqual([])
   })
 
   it("期限つきの例外の項目は、いまもテストからしか import されない（読み手が付いたら外す）", () => {
