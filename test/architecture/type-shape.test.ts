@@ -63,7 +63,7 @@ const ALLOWED_OPTIONAL_PROPERTIES = {
 const ALLOWED_OPTIONAL_RULES = [
   {
     pathPrefix: "src/browser/components/ui/",
-    name: /^(aria([A-Z]|-)|title$|ref$|placeholder$|maxLength$|style$)/,
+    name: /^(aria([A-Z]|-)|title$|ref$|placeholder$|maxLength$|disabled$|style$)/,
   },
 ] as const satisfies readonly { readonly pathPrefix: string; readonly name: RegExp }[]
 
@@ -97,7 +97,7 @@ describe("オプショナルプロパティ", () => {
     expect([...staleEntries, ...staleRules].join("\n")).toBe("")
   })
 
-  it("規則は ui の中の aria*・title・ref・placeholder・maxLength・style だけを許し、ui の外の同名と ui の中のそれ以外は許さない", () => {
+  it("規則は ui の中の aria*・title・ref・placeholder・maxLength・disabled・style だけを許し、ui の外の同名と ui の中のそれ以外は許さない", () => {
     const ui = "src/browser/components/ui/button/button.tsx"
     const outside = "src/browser/components/page/x/x.tsx"
     expect([
@@ -107,12 +107,14 @@ describe("オプショナルプロパティ", () => {
       isAllowedOptional(ui, "ref"),
       isAllowedOptional(ui, "placeholder"),
       isAllowedOptional(ui, "maxLength"),
+      isAllowedOptional(ui, "disabled"),
       isAllowedOptional(ui, "style"),
       isAllowedOptional(outside, "ariaLabel"),
       isAllowedOptional(outside, "placeholder"),
+      isAllowedOptional(outside, "disabled"),
       isAllowedOptional(ui, "hint"),
       isAllowedOptional(ui, "titleText"),
-    ]).toEqual([true, true, true, true, true, true, true, false, false, false, false])
+    ]).toEqual([true, true, true, true, true, true, true, true, false, false, false, false, false])
   })
 })
 

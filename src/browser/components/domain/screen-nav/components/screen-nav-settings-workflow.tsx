@@ -1,5 +1,6 @@
-// 設定のダイアログの「ワークフロー」の面。どのリポジトリの設定かを先頭に出し、並びの欄ごとに、
-// 頭の行・流れの帯・行の札（つかむ点・番号・名前・識別子・説明・「…」）・並びに入っていないスキルの札を置く。
+// 設定のダイアログの「ワークフロー」の面。どのリポジトリの設定かを先頭に出し、欄を schema の順に置く。
+// 並びの欄は頭の行・流れの帯・行の札（つかむ点・番号・名前・識別子・説明・「…」）・並びに入っていないスキルの札、
+// 選択の欄は選択肢のラジオ（名前と説明）、コマンドの欄は1行のテキスト欄を置く。
 // 下の帯に「やめる」「保存」を置き、操作は保存するまで書かない。
 // 欄はワークフローの設定コマンドから来たものだけで、出せないときは欄を出さずに何が無いかを1文で言う。
 
@@ -9,15 +10,19 @@ import { Fragment, useRef, type ReactElement } from "react"
 
 import { Button } from "../../../ui/button/button.tsx"
 import { Menu, type MenuItem } from "../../../ui/menu/menu.tsx"
+import { TextField } from "../../../ui/text-field/text-field.tsx"
 import { Text } from "../../../ui/text/text.tsx"
 import { dropLineSlot } from "../domain/step-reorder.ts"
 import { useStepGrab } from "../hooks/use-step-grab.ts"
 import {
   useWorkflowSetting,
+  type ScreenNavWorkflowSettingChoiceRow,
+  type ScreenNavWorkflowSettingCommandRow,
   type ScreenNavWorkflowSettingDraftChange,
   type ScreenNavWorkflowSettingRepository,
   type ScreenNavWorkflowSettingRow,
   type ScreenNavWorkflowSettingStep,
+  type ScreenNavWorkflowSettingStepsRow,
 } from "../hooks/use-workflow-setting.ts"
 import { ScreenNavSettingsFaceFrame } from "./screen-nav-settings-face-frame.tsx"
 import styles from "./screen-nav-settings-workflow.module.css"
@@ -58,20 +63,64 @@ export function ScreenNavSettingsWorkflowFace(props: { readonly title: string })
               busy={setting.busy}
               onSave={setting.onSave}
               onCancel={setting.onCancel}
+              canSave={setting.canSave}
             />
           }
         >
           <WorkflowRepository repository={setting.repository} />
           {setting.rows.map((row) => (
-            <WorkflowStepsField key={row.key} row={row} busy={setting.busy} />
+            <WorkflowField key={row.key} row={row} busy={setting.busy} />
           ))}
         </ScreenNavSettingsFaceFrame>
       )
   }
 }
 
-function WorkflowStepsField(props: {
+function WorkflowField(props: {
   readonly row: ScreenNavWorkflowSettingRow
+  readonly busy: boolean
+}): ReactElement {
+  const { row, busy } = props
+  switch (row.kind) {
+    case "steps":
+      return <WorkflowStepsField row={row} busy={busy} />
+    case "choice":
+      return <WorkflowChoiceField row={row} busy={busy} />
+    case "command":
+      return <WorkflowCommandField row={row} busy={busy} />
+  }
+}
+
+function WorkflowFieldDescription(props: { readonly text: string }): ReactElement {
+  return (
+    <Text
+      element="p"
+      size="label"
+      tone="ink-quiet"
+      weight="inherit"
+      className={styles["field-description"]}
+    >
+      {props.text}
+    </Text>
+  )
+}
+
+function WorkflowFieldNotice(props: {
+  readonly row: ScreenNavWorkflowSettingRow
+}): ReactElement | null {
+  const { notice } = props.row
+  if (notice.kind === "none") {
+    return null
+  }
+  return (
+    <Text element="p" size="label" tone="state-warn" weight="inherit" className={styles["notice"]}>
+      {notice.text}
+    </Text>
+  )
+}
+
+function WorkflowChoiceField(props: {
+  readonly row: ScreenNavWorkflowSettingChoiceRow
   readonly busy: boolean
 }): ReactElement {
   const { row, busy } = props
@@ -87,15 +136,91 @@ function WorkflowStepsField(props: {
         >
           {row.label}
         </Text>
+        <WorkflowFieldDescription text={row.description} />
+      </div>
+      <div role="radiogroup" aria-label={row.label} className={styles["options"]}>
+        {row.options.map((option) => (
+          <label
+            key={option.value}
+            className={clsx(styles["option"], option.selected && styles["option-selected"])}
+          >
+            <input
+              type="radio"
+              name={row.key}
+              value={option.value}
+              checked={option.selected}
+              disabled={busy}
+              className={styles["option-radio"]}
+              onChange={() => {
+                row.onSelect(option.value)
+              }}
+            />
+            <span className={styles["option-body"]}>
+              <span className={styles["option-label"]}>{option.label}</span>
+              <span className={styles["option-description"]}>{option.description}</span>
+            </span>
+          </label>
+        ))}
+      </div>
+      <WorkflowFieldNotice row={row} />
+    </div>
+  )
+}
+
+function WorkflowCommandField(props: {
+  readonly row: ScreenNavWorkflowSettingCommandRow
+  readonly busy: boolean
+}): ReactElement {
+  const { row, busy } = props
+  const inputId = `workflow-setting-${row.key}`
+  return (
+    <div className={styles["field"]}>
+      <div className={styles["field-head"]}>
+        <label htmlFor={inputId} className={styles["command-label"]}>
+          {row.label}
+        </label>
+        <WorkflowFieldDescription text={row.description} />
+      </div>
+      <TextField
+        element="input"
+        id={inputId}
+        className={styles["command-input"]}
+        value={row.text}
+        disabled={busy}
+        onChange={row.onChange}
+      />
+      <Text
+        element="p"
+        size="label"
+        tone="ink-quiet"
+        weight="inherit"
+        className={styles["command-hint"]}
+      >
+        無効にしたいときは「なし」と書く。空にして保存はできない。
+      </Text>
+      <WorkflowFieldNotice row={row} />
+    </div>
+  )
+}
+
+function WorkflowStepsField(props: {
+  readonly row: ScreenNavWorkflowSettingStepsRow
+  readonly busy: boolean
+}): ReactElement {
+  const { row, busy } = props
+  return (
+    <div className={styles["field"]}>
+      <div className={styles["field-head"]}>
         <Text
           element="p"
-          size="label"
-          tone="ink-quiet"
-          weight="inherit"
-          className={styles["field-description"]}
+          size="subheading"
+          tone="ink"
+          weight="bold"
+          className={styles["field-label"]}
         >
-          {row.description}
+          {row.label}
         </Text>
+        <WorkflowFieldDescription text={row.description} />
       </div>
       <WorkflowFlow steps={row.steps} />
       <WorkflowStepList row={row} busy={busy} />
@@ -140,17 +265,7 @@ function WorkflowStepsField(props: {
           つとも並んでいる）
         </p>
       )}
-      {row.notice.kind === "shown" && (
-        <Text
-          element="p"
-          size="label"
-          tone="state-warn"
-          weight="inherit"
-          className={styles["notice"]}
-        >
-          {row.notice.text}
-        </Text>
-      )}
+      <WorkflowFieldNotice row={row} />
     </div>
   )
 }
@@ -160,7 +275,7 @@ function WorkflowStepsField(props: {
  * つかんだ札は元の位置から浮かせ、置き場所は行の間の線で見せる（行そのものは動かさない）。
  */
 function WorkflowStepList(props: {
-  readonly row: ScreenNavWorkflowSettingRow
+  readonly row: ScreenNavWorkflowSettingStepsRow
   readonly busy: boolean
 }): ReactElement {
   const { row, busy } = props
@@ -288,7 +403,7 @@ function WorkflowFlow(props: {
 }
 
 function stepMenuItems(
-  row: ScreenNavWorkflowSettingRow,
+  row: ScreenNavWorkflowSettingStepsRow,
   step: ScreenNavWorkflowSettingStep,
   index: number,
 ): readonly MenuItem[] {
@@ -349,6 +464,7 @@ function stepMenuItems(
 function WorkflowSaveBand(props: {
   readonly change: ScreenNavWorkflowSettingDraftChange
   readonly busy: boolean
+  readonly canSave: boolean
   readonly onSave: () => void
   readonly onCancel: () => void
 }): ReactElement {
@@ -382,7 +498,7 @@ function WorkflowSaveBand(props: {
         variant="solid-ink"
         size="label"
         pressed="none"
-        disabled={unchanged || props.busy}
+        disabled={unchanged || props.busy || !props.canSave}
         disclosure={{ kind: "none" }}
         className={styles["save-band-button"]}
         onClick={props.onSave}

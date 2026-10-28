@@ -280,6 +280,68 @@
   color: var(--ink-quiet);
   font-size: var(--font-label);
 }
+/* 選択の欄。選択肢を全部縦に並べ、選んだ札の枠を差し色にする。 */
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  min-width: 0;
+}
+.option {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-md);
+  min-width: 0;
+  padding: var(--space-md);
+  border: 1px solid var(--rule-quiet);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+}
+.option-selected {
+  border-color: var(--accent);
+}
+.option-radio {
+  flex: none;
+  margin: var(--space-xs) 0 0;
+  accent-color: var(--accent);
+}
+.option-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  min-width: 0;
+}
+.option-label {
+  color: var(--ink);
+  font-size: var(--font-subheading);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.option-description {
+  color: var(--ink-soft);
+  font-size: var(--font-secondary);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+/* コマンドの欄。見出しは入力欄の名前を兼ねる。 */
+.command-label {
+  margin: 0;
+  color: var(--ink);
+  font-size: var(--font-subheading);
+  font-weight: 700;
+}
+.command-input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding: var(--space-md);
+  font-family: var(--font-mono);
+}
+.command-hint {
+  margin: 0;
+}
+
 /* 値を断った理由の1行。その欄の下に置く。 */
 .notice {
   margin: 0;

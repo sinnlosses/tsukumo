@@ -1,6 +1,7 @@
 // 設定のダイアログの「ワークフロー」の面のロジック。
-// 面を開くたびにワークフローの設定を読み直し（`workflowSetting.read`）、並びの操作は下書きだけを変える。
-// 保存で、下書きのある欄ごとに並び全体を1回 `workflowSetting.set` で書き、返った値で描き直す（押した側へ先に倒さない）。
+// 面を開くたびにワークフローの設定を読み直し（`workflowSetting.read`）、並び・選択・コマンドの操作は下書きだけを変える。
+// 保存で、下書きのある欄ごとに1回 `workflowSetting.set` で書き、返った値で描き直す（押した側へ先に倒さない）。
+// 書く値は、並びは全体を JSON にした文字列、選択とコマンドは下書きの文字列そのまま。
 // 下書きはこのフックの状態なので、面を切り替える・ダイアログを閉じると黙って消える。
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
@@ -9,6 +10,9 @@ import { isDeepEqual } from "remeda"
 
 import type {
   WorkflowSettingChange,
+  WorkflowSettingChoiceField,
+  WorkflowSettingCommandField,
+  WorkflowSettingField,
   WorkflowSettingRepository,
   WorkflowSettingStepsField,
   WorkflowSettingView,
@@ -17,7 +21,10 @@ import { rpc } from "../../../../domain/rpc.ts"
 import { useSession } from "../../../../stores/session.ts"
 import { reorderSteps } from "../domain/step-reorder.ts"
 import {
+  isWorkflowCommandSaveable,
+  workflowSettingChoiceOptions,
   workflowSettingSteps,
+  type WorkflowSettingChoiceOption,
   type WorkflowSettingOption,
 } from "../domain/workflow-setting-option.ts"
 
@@ -49,13 +56,34 @@ export type ScreenNavWorkflowSettingStep = {
 
 type ScreenNavWorkflowSettingMove = "top" | "up" | "down" | "bottom"
 
-/** 欄1つ。`steps`・`addable` は下書きの並びから作る。 */
-export type ScreenNavWorkflowSettingRow = {
+type ScreenNavWorkflowSettingRowBase = {
   readonly key: string
   readonly label: string
   readonly description: string
   /** ワークフローが値を断った・書けなかったときの理由。次に書けたときか、やめたときに消える。 */
   readonly notice: ScreenNavWorkflowSettingNotice
+}
+
+export type ScreenNavWorkflowSettingRow =
+  | ScreenNavWorkflowSettingStepsRow
+  | ScreenNavWorkflowSettingChoiceRow
+  | ScreenNavWorkflowSettingCommandRow
+
+export type ScreenNavWorkflowSettingChoiceRow = ScreenNavWorkflowSettingRowBase & {
+  readonly kind: "choice"
+  readonly options: readonly WorkflowSettingChoiceOption[]
+  readonly onSelect: (value: string) => void
+}
+
+export type ScreenNavWorkflowSettingCommandRow = ScreenNavWorkflowSettingRowBase & {
+  readonly kind: "command"
+  readonly text: string
+  readonly onChange: (text: string) => void
+}
+
+/** スキルの並びの欄。`steps`・`addable` は下書きの並びから作る。 */
+export type ScreenNavWorkflowSettingStepsRow = ScreenNavWorkflowSettingRowBase & {
+  readonly kind: "steps"
   readonly steps: readonly ScreenNavWorkflowSettingStep[]
   readonly addable: readonly WorkflowSettingOption[]
   /** 並びが2つ以上あり、つかんで動かせる。 */
@@ -89,6 +117,8 @@ type ScreenNavWorkflowSetting =
       readonly change: ScreenNavWorkflowSettingDraftChange
       readonly onSave: () => void
       readonly onCancel: () => void
+      /** 偽のあいだ「保存」は押せない（空のコマンドが下書きにある）。 */
+      readonly canSave: boolean
       /** 書いている最中は操作させない。 */
       readonly busy: boolean
     }
@@ -104,6 +134,7 @@ type SaveOutcome = { readonly kind: "saved" } | Extract<WorkflowSettingChange, {
 const UNREACHABLE_MESSAGE = "ワークフローの設定を読めなかった（サーバに届かない）。"
 const SEND_FAILED_MESSAGE = "書けなかった（サーバに届かない）。"
 const REORDERED_TEXT = "並びを変えた"
+const SEVERAL_CHANGED_TEXT = "設定を変えた"
 
 export function useWorkflowSetting(): ScreenNavWorkflowSetting {
   const dispatchAwaited = useSession((session) => session.dispatchAwaited)
@@ -111,6 +142,7 @@ export function useWorkflowSetting(): ScreenNavWorkflowSetting {
   // 面は選んだときだけマウントされるので、開くたびに `tw` を打ち直して `.tw/config.toml` の今を読む。
   const query = useQuery(rpc.workflowSetting.read.queryOptions({ retry: false, staleTime: 0 }))
   const [drafts, setDrafts] = useState<ReadonlyMap<string, readonly string[]>>(new Map())
+  const [textDrafts, setTextDrafts] = useState<ReadonlyMap<string, string>>(new Map())
   const [failure, setFailure] = useState<SetFailure>({ kind: "none" })
   const mutation = useMutation({
     mutationFn: async (writes: readonly FieldWrite[]): Promise<SaveOutcome> => {
@@ -129,6 +161,7 @@ export function useWorkflowSetting(): ScreenNavWorkflowSetting {
         return
       }
       setDrafts(new Map())
+      setTextDrafts(new Map())
       setFailure({ kind: "none" })
     },
     onError: (_error, writes) => {
@@ -152,33 +185,45 @@ export function useWorkflowSetting(): ScreenNavWorkflowSetting {
       message: unavailableMessage(view),
     }
   }
-  const stepsFields = view.fields.filter(
-    (field): field is WorkflowSettingStepsField => field.kind === "steps",
-  )
-  const dirtyFields = stepsFields.filter((field) => {
-    const draft = drafts.get(field.key)
-    return draft !== undefined && !isDeepEqual(draft, field.current)
-  })
+  const dirtyFields = view.fields.filter((field) => isDirty(field, drafts, textDrafts))
+  const setStepsDraft = (key: string, next: readonly string[]): void => {
+    setDrafts((previous) => new Map(previous).set(key, next))
+  }
+  const setTextDraft = (key: string, next: string): void => {
+    setTextDrafts((previous) => new Map(previous).set(key, next))
+  }
   return {
     kind: "available",
     repository: repositoryLine(view.repository),
-    rows: stepsFields.map((field) =>
-      stepsRow(
-        field,
-        drafts.get(field.key) ?? field.current,
+    rows: view.fields.map((field): ScreenNavWorkflowSettingRow => {
+      const notice: ScreenNavWorkflowSettingNotice =
         failure.kind === "shown" && failure.key === field.key
           ? { kind: "shown", text: failure.message }
-          : { kind: "none" },
-        (next) => {
-          setDrafts((previous) => new Map(previous).set(field.key, next))
-        },
-      ),
-    ),
+          : { kind: "none" }
+      switch (field.kind) {
+        case "steps":
+          return stepsRow(field, drafts.get(field.key) ?? field.current, notice, (next) => {
+            setStepsDraft(field.key, next)
+          })
+        case "choice":
+          return choiceRow(field, textDrafts.get(field.key) ?? field.current, notice, (next) => {
+            setTextDraft(field.key, next)
+          })
+        case "command":
+          return commandRow(field, textDrafts.get(field.key) ?? field.current, notice, (next) => {
+            setTextDraft(field.key, next)
+          })
+      }
+    }),
     change: draftChange(dirtyFields, drafts),
     onSave: () => {
-      const writes = dirtyFields.flatMap((field) => {
-        const draft = drafts.get(field.key)
-        return draft === undefined ? [] : [{ key: field.key, value: JSON.stringify(draft) }]
+      const writes = dirtyFields.flatMap((field): FieldWrite[] => {
+        if (field.kind === "steps") {
+          const draft = drafts.get(field.key)
+          return draft === undefined ? [] : [{ key: field.key, value: JSON.stringify(draft) }]
+        }
+        const draft = textDrafts.get(field.key)
+        return draft === undefined ? [] : [{ key: field.key, value: draft }]
       })
       if (writes.length > 0) {
         mutation.mutate(writes)
@@ -186,9 +231,62 @@ export function useWorkflowSetting(): ScreenNavWorkflowSetting {
     },
     onCancel: () => {
       setDrafts(new Map())
+      setTextDrafts(new Map())
       setFailure({ kind: "none" })
     },
+    canSave: dirtyFields.every(
+      (field) =>
+        field.kind !== "command" ||
+        isWorkflowCommandSaveable(textDrafts.get(field.key) ?? field.current),
+    ),
     busy: mutation.isPending,
+  }
+}
+
+function isDirty(
+  field: WorkflowSettingField,
+  drafts: ReadonlyMap<string, readonly string[]>,
+  textDrafts: ReadonlyMap<string, string>,
+): boolean {
+  if (field.kind === "steps") {
+    const draft = drafts.get(field.key)
+    return draft !== undefined && !isDeepEqual(draft, field.current)
+  }
+  const draft = textDrafts.get(field.key)
+  return draft !== undefined && draft !== field.current
+}
+
+function choiceRow(
+  field: WorkflowSettingChoiceField,
+  draft: string,
+  notice: ScreenNavWorkflowSettingNotice,
+  setDraft: (next: string) => void,
+): ScreenNavWorkflowSettingChoiceRow {
+  return {
+    kind: "choice",
+    key: field.key,
+    label: field.label,
+    description: field.description,
+    notice,
+    options: workflowSettingChoiceOptions(field, draft),
+    onSelect: setDraft,
+  }
+}
+
+function commandRow(
+  field: WorkflowSettingCommandField,
+  draft: string,
+  notice: ScreenNavWorkflowSettingNotice,
+  setDraft: (next: string) => void,
+): ScreenNavWorkflowSettingCommandRow {
+  return {
+    kind: "command",
+    key: field.key,
+    label: field.label,
+    description: field.description,
+    notice,
+    text: draft,
+    onChange: setDraft,
   }
 }
 
@@ -197,7 +295,7 @@ function stepsRow(
   draft: readonly string[],
   notice: ScreenNavWorkflowSettingNotice,
   setDraft: (next: readonly string[]) => void,
-): ScreenNavWorkflowSettingRow {
+): ScreenNavWorkflowSettingStepsRow {
   const { items, addable } = workflowSettingSteps({ ...field, current: draft })
   const reorder = (from: number, to: number): void => {
     const next = reorderSteps(draft, from, to)
@@ -206,6 +304,7 @@ function stepsRow(
     }
   }
   return {
+    kind: "steps",
     key: field.key,
     label: field.label,
     description: field.description,
@@ -249,19 +348,28 @@ function moveTarget(index: number, to: ScreenNavWorkflowSettingMove, length: num
   }
 }
 
-/** 下書きのある欄が1つで、今の値から1つだけ外して順はそのままなら「<名前>を外した」。 */
+/**
+ * 下書きのある欄が1つで、並びなら今の値から1つだけ外して順はそのままのとき「<名前>を外した」、
+ * 選択・コマンドなら「<欄の名前>を変えた」。並びだけの複数は「並びを変えた」、並び以外を含む複数は「設定を変えた」。
+ */
 function draftChange(
-  dirtyFields: readonly WorkflowSettingStepsField[],
+  dirtyFields: readonly WorkflowSettingField[],
   drafts: ReadonlyMap<string, readonly string[]>,
 ): ScreenNavWorkflowSettingDraftChange {
   const [field, ...others] = dirtyFields
   if (field === undefined) {
     return { kind: "none" }
   }
+  if (others.length > 0) {
+    const onlySteps = dirtyFields.every((dirty) => dirty.kind === "steps")
+    return { kind: "changed", text: onlySteps ? REORDERED_TEXT : SEVERAL_CHANGED_TEXT }
+  }
+  if (field.kind !== "steps") {
+    return { kind: "changed", text: `${field.label}を変えた` }
+  }
   const draft = drafts.get(field.key) ?? field.current
   const removedValue = field.current.find((value) => !draft.includes(value))
   const onlyRemoved =
-    others.length === 0 &&
     draft.length === field.current.length - 1 &&
     isDeepEqual(
       field.current.filter((value) => draft.includes(value)),

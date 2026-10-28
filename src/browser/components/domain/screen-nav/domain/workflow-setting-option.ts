@@ -1,9 +1,30 @@
-// スキルの並びの欄の見せ方。候補は欄の `values` だけから作る。
+// スキルの並び・選択・コマンドの欄の見せ方。候補は欄の `values` だけから作る。
 
 import type {
   WorkflowSettingChoice,
+  WorkflowSettingChoiceField,
   WorkflowSettingStepsField,
 } from "../../../../../shared/workflow-setting/workflow-setting.ts"
+
+export type WorkflowSettingChoiceOption = {
+  readonly value: string
+  readonly label: string
+  readonly description: string
+  readonly selected: boolean
+}
+
+/** 下書きが `values` に無い名前でも選択肢は増やさない。 */
+export function workflowSettingChoiceOptions(
+  field: WorkflowSettingChoiceField,
+  draft: string,
+): readonly WorkflowSettingChoiceOption[] {
+  return field.values.map((option) => ({ ...option, selected: option.value === draft }))
+}
+
+/** `command` は空白だけでは保存できない（無効にしたいときは `なし` と書く）。 */
+export function isWorkflowCommandSaveable(draft: string): boolean {
+  return draft.trim() !== ""
+}
 
 export type WorkflowSettingOption = {
   readonly value: string

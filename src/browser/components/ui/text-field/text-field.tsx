@@ -14,6 +14,7 @@ type TextFieldProps = {
   readonly value: string
   readonly maxLength?: number
   readonly placeholder?: string
+  readonly disabled?: boolean
   readonly onChange: (value: string) => void
 }
 
@@ -27,6 +28,7 @@ export function TextField(props: TextFieldProps): ReactElement {
         value={props.value}
         maxLength={props.maxLength}
         placeholder={props.placeholder}
+        disabled={props.disabled}
         onChange={(event) => props.onChange(event.target.value)}
       />
     )
@@ -39,6 +41,7 @@ export function TextField(props: TextFieldProps): ReactElement {
       value={props.value}
       maxLength={props.maxLength}
       placeholder={props.placeholder}
+      disabled={props.disabled}
       onChange={(event) => props.onChange(event.target.value)}
     />
   )
