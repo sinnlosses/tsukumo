@@ -1,0 +1,62 @@
+{
+  "name": "a2ui-same-update",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "報告と終了が同じ更新で届いたときの演出を確かめたい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 1500,
+      "event": {
+        "kind": "report",
+        "toolUseId": "fake-same-update-1",
+        "components": [
+          {
+            "id": "root",
+            "component": "Report",
+            "conclusion": ["架空の結論: 報告と終了を同じ更新で届けた。"],
+            "children": ["s1"]
+          },
+          {
+            "id": "s1",
+            "component": "Section",
+            "heading": "架空の見立て",
+            "children": ["p1", "p2"]
+          },
+          {
+            "id": "p1",
+            "component": "Paragraph",
+            "text": "架空の段落の1つ目。草稿が一度も描かれないまま確定版が届く。"
+          },
+          {
+            "id": "p2",
+            "component": "Paragraph",
+            "text": "架空の段落の2つ目。書き上げる演出が出るかを見る。"
+          }
+        ]
+      }
+    },
+    {
+      "afterMs": 1500,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-same-update-1",
+        "content": "ok",
+        "isError": false
+      }
+    },
+    {
+      "afterMs": 1500,
+      "event": {
+        "kind": "turn-finished",
+        "outcome": {
+          "kind": "completed"
+        }
+      }
+    }
+  ]
+}

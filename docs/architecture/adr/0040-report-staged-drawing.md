@@ -46,7 +46,7 @@
 - 目次: 目次は記録の `report` から作る見え方に依存する。草稿はステップでなく `MainViewTurn.drafts` に載るので、確定版がステップとして出るまで目次の材料に載らない。脇の目次は本文の見出しを DOM から拾うので、草稿の面には `data-report-draft` の印を付け、`readableHeadings`（`report-heading.ts`）がその中の見出しを除く。
 - 演出: 筆は「このやり取りを出し始めたあとに現れた最終レポートのステップ」に、マウント時の DOM を見て掛かる（`turn.tsx` の `revealStepId`、`use-report-reveal.ts`）。草稿が現れていたレポートの確定版に筆を走らせると、読み終えたものがもう一度書かれる。同じ `toolUseId` の草稿があった確定版は `reveal` を偽にする（`draft-reveal.ts` の `revealStepIdOf`）。草稿には演出を掛けない。部品が閉じるたびに足されること自体が段階的な出方になる。
 - 草稿を描いた `toolUseId` は部品の外の store（`src/browser/components/page/conversation/stores/drafted-report.ts` の `useDraftedReports`）に覚える。ターンが閉じると働くあいだの中身からレポートの中身へ替わって `Turn` が作り直され、部品の state では描いたことが消えるため。
-- 帰結: `a2ui` の `report` は伏せられているあいだ草稿として描くため、`a2ui` では書き上げる演出が出ない。草稿のイベントを持たない呼び出し（疑似セッションの `a2ui-surface-sample` など）でも、`report` が届いてからターンが閉じるまで記録の部品で草稿を描くので同じになる。旧い版（Markdown の欄）の `report` は草稿にならず、演出は今のまま掛かる。
+- 帰結: `a2ui` の `report` には書き上げる演出を掛けない（利用者が決めた仕様）。伏せられているあいだは草稿として描き、部品が足されていく動きが段階的な出方になる。草稿のイベントを持たない呼び出し（疑似セッションの `a2ui-surface-sample` など）でも、`report` が届いてからターンが閉じるまで記録の部品で草稿を描くので同じになる。確定で足される検証結果・図・合図の行・所要時間にも演出は掛けず、確定版への入れ替わりで本文全体に掛け直すこともしない。旧い版（Markdown の欄）の `report` は草稿にならず、演出は今のまま掛かる。測定は未決 4。
 - 草稿の「書いている」は立ち絵だけが言う（`reportDrafting` が `drafting` のあいだだけ）。草稿の面は中間レポートと同じ破線の箱（`main-step is-interim`）に入れ、ラベルは付けない。
 - 復元: transcript は assistant の完成メッセージだけで `stream_event` を含まない。tsukumo は会話を保存しない（`docs/requirements/session-restore.md`）ので、草稿について新しく書くものは無い。
 
@@ -93,12 +93,25 @@
 2. 許容できないときの番号つきの草稿。部品の一覧から旧い版の引数の形を組む `a2uiReportInput`（`src/server/session-driver/core/a2ui-report-message.ts`）を `src/shared/` へ移し、ブラウザが草稿の部品から番号つきの見え方を作る。移すと共有層に変換が増えるので、必要と分かってから別の課題にする。
    - 結果: 草稿にも番号を付けるため、部品の一覧から欄の引数を組む変換を `src/shared/report/a2ui-report-input.ts`（`a2uiReportFields`）へ移した。駆動の `a2ui-report-message.ts` とブラウザの `a2ui-draft-view.ts` の両方が読む。
 3. 草稿の部品の増え方が演出の代わりとして足りるか。短い報告では差が小さい（記録の「効果」）。使われ方を見て、段階描画を長い報告だけに絞るかを利用者が決める。
+4. `a2ui` の `report` で書き上げる演出をどう扱うか。現状を `capture-view.ts --scene <場面> --reveal-at 300` で測った（2026-10-28）。
+
+   | 場面                                                                        | 版               | 草稿                                               | `data-revealing`        |
+   | --------------------------------------------------------------------------- | ---------------- | -------------------------------------------------- | ----------------------- |
+   | `report-blocks`                                                             | 旧い（Markdown） | なし                                               | 出る                    |
+   | `a2ui-sections-sample`                                                      | 旧い（Markdown） | なし                                               | 出る                    |
+   | `a2ui-surface-sample`                                                       | `a2ui`           | `report` が届いてから閉じるまで                    | 出ない（15 秒待っても） |
+   | `a2ui-staged-draft`                                                         | `a2ui`           | 部品ごと                                           | 出ない                  |
+   | `a2ui-same-update`（`report`・`tool-finished`・`turn-finished` が同じ更新） | `a2ui`           | 疑似セッションの駆動では確かめられた限り描かれない | 出ない                  |
+   - 同じ更新で届く例外（草稿が一度も描かれず演出が出る）は、疑似セッションで再現しなかった。保留中の `report` は `heldReportDrafts`（`main-view.ts`）が `a2ui` の面なら草稿に数えるので、草稿のイベントが無くても `draftedToolUseIds` に入る。実ブラウザの実 SDK では未確認だが、(b) の「草稿が描かれない」条件は作れていない。
+   - 草稿と確定版の部品の ID は一致する（同じ `report` の引数から作るため）。ただし確定で足される検証結果・図・合図の行・所要時間は、`Report` の根の欄から組まれ別の部品ではない。ID では見分けられず、(c) は描いた結果の差分を取る作りになる。
+   - 立ち絵の「書いている」は草稿が伸びるあいだは画面と噛み合う。確定版の入れ替わり以降は「書いている」が終わっているので、演出が無くても食い違わない。
+   - 結果（2026-10-28）: (a)「やめて今の挙動を仕様にする」に決めた。見た目の動きは草稿の部品が増えることに任せる。(b) は条件を作れず成り立たず、(c) は部品 ID で見分けられず描いた結果の差分が要り、(d) は読み終えた本文を書き直す。コードの変更は無く、実装の課題も登録しない。短い報告での動きの小ささは未決 3 で見る。
 
 ## 影響
 
 - `SessionEvent` に `report-draft-component` が増え、`ReportDrafting` の `drafting` が `components` を持つ。`pnpm run test:e2e:update` が要る。
 - 駆動に `ReportDraftIntake` が増え、読み手が `scripts/runtime/` から `src/server/session-driver/core/` へ移る。
-- ブラウザは草稿を `sdkTurn` と伏せた記録の `report` から読み、`a2ui` の面へ部品が届くたびに流す。確定版は同じ `toolUseId` の草稿があったとき `reveal` を偽にするので、`a2ui` の `report` には書き上げる演出が出ない。
+- ブラウザは草稿を `sdkTurn` と伏せた記録の `report` から読み、`a2ui` の面へ部品が届くたびに流す。確定版は同じ `toolUseId` の草稿があったとき `reveal` を偽にするので、`a2ui` の `report` には書き上げる演出が出ない。これは決めた仕様で、演出を足す課題は無い。
 - 記録の `report` の `toolUseId` がステップ（`MainViewStep.origin`）まで通る。
 - 後段の課題（駆動とイベントの実装・ブラウザの草稿描画の実装）の本文は、この ADR の「決めたこと」に揃える。
 - 0031（欄ごとの描画と演出・目次の区切り）・0039（`report` を A2UI で受けて描く）は覆さない。0039 の論点 4 (d)「段階描画は別の測定に預ける」を、この ADR が引き取る。
