@@ -36,7 +36,9 @@ import {
   ReportFrame,
   ReportRegion,
 } from "./body-region.tsx"
+import { DirectLeaf, directLeafViewOf } from "./direct-leaf-view.tsx"
 import { loadReportCatalogApis } from "./domain/a2ui-catalog-load.ts"
+import { isPlainHeadingText } from "./domain/plain-heading.ts"
 
 type SurfaceView = Extract<MainViewA2uiReport, { readonly kind: "surface" }>
 
@@ -185,8 +187,19 @@ function ReportRoot(): ReactElement {
 function SectionContent(props: { readonly id: string }): ReactElement {
   const report = useReport()
   const part = report.parts.get(props.id)
-  const heading = report.view.sections[props.id]?.heading ?? ""
-  return <PartRun lead={heading} ids={part?.component === "Section" ? part.children : [props.id]} />
+  const section = report.view.sections[props.id]
+  const headingLine = section?.heading ?? ""
+  const headingText = report.body.sections.find((s) => s.id === section?.regionId)?.heading ?? ""
+  const drawnDirectly = headingLine !== "" && isPlainHeadingText(headingText)
+  return (
+    <>
+      {drawnDirectly && <h4>{headingText}</h4>}
+      <PartRun
+        lead={drawnDirectly ? "" : headingLine}
+        ids={part?.component === "Section" ? part.children : [props.id]}
+      />
+    </>
+  )
 }
 
 type RunSegment =
@@ -230,7 +243,7 @@ function runSegments(ids: readonly string[], report: ReportContextValue): readon
     if (part === undefined) {
       return []
     }
-    if (isInteractiveTable(part)) {
+    if (isInteractiveTable(part) || directLeafViewOf(part) !== undefined) {
       return [{ kind: "part", id }]
     }
     if (a2uiLeafKind(part) !== undefined) {
@@ -256,7 +269,9 @@ function PartView(props: { readonly id: string }): ReactElement {
   if (part.component === "Section") {
     return <SectionContent id={props.id} />
   }
-  return a2uiLeafKind(part) === undefined || isInteractiveTable(part) ? (
+  return a2uiLeafKind(part) === undefined ||
+    isInteractiveTable(part) ||
+    directLeafViewOf(part) !== undefined ? (
     <LayoutPart id={props.id} />
   ) : (
     <RegionChunks markdown={report.view.leaves[props.id] ?? ""} />
@@ -305,8 +320,14 @@ function LayoutPart(props: { readonly id: string }): ReactElement {
     }
     case "ChoicePicker":
       return <ChoicePicker dataModel={report.dataModel} part={part} />
-    default:
-      return <></>
+    default: {
+      const view = part === undefined ? undefined : directLeafViewOf(part)
+      return part === undefined || view === undefined ? (
+        <></>
+      ) : (
+        <DirectLeaf part={part} value={report.view.leafValues[part.id]} view={view} />
+      )
+    }
   }
 }
 

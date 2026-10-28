@@ -20,9 +20,12 @@ vi.mock(
       rowCell: "report-block-row-cell",
       panel: "report-block-panel",
     },
-    Markdown: (props: { readonly text: string }) => (
-      <div data-markdown-stub="yes">{props.text}</div>
-    ),
+    Markdown: (props: { readonly text: string }) =>
+      props.text.startsWith("## ") ? (
+        <h4>{props.text.slice(3)}</h4>
+      ) : (
+        <div data-markdown-stub="yes">{props.text}</div>
+      ),
   }),
 )
 
@@ -212,7 +215,20 @@ describe("部品の一覧のある本文（A2UI の面）", () => {
       [...(region?.children ?? [])].map((child) =>
         child === row ? "row" : (child.textContent ?? ""),
       ),
-    ).toEqual(["## 架空の並び", "架空の前。", "row", "架空の後ろ。"])
+    ).toEqual(["架空の並び", "架空の前。", "row", "架空の後ろ。"])
+    expect(region?.firstElementChild?.tagName).toBe("H4")
+  })
+
+  it("記法の字を含む見出しは、h4 を React で描かず欄の Markdown に任せる", () => {
+    const body = regionsOf({
+      components: ROW_PARTS.map((part) =>
+        part.component === "Section" ? { ...part, heading: "架空の `code` 見出し" } : part,
+      ),
+    })
+    const { container } = render(<Report reveal={false} turnId={1} className="" body={body} />)
+
+    const region = container.querySelector('[data-report-section="0"]')
+    expect(region?.firstElementChild?.textContent).toBe("架空の `code` 見出し")
   })
 
   it("Row のある本文でも、欄の並びと見出しの数は欄の Markdown で描いたときと同じ", () => {

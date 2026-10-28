@@ -23,6 +23,19 @@ export const arrangedBlockClassNames = {
   panel: notationStyles["report-block-panel"],
 } as const
 
+/** 葉を直接描く部品が題・番号・傍注の包みに付ける class 名（Markdown の `captioned`・`caption`・`with-gutter`・`gutter` などと同じ見た目）。 */
+export const leafFrameClassNames = {
+  captioned: notationStyles["report-captioned"],
+  captionedFit: notationStyles["report-captioned-fit"],
+  caption: notationStyles["report-caption"],
+  captionNumber: notationStyles["report-caption-number"],
+  captionText: notationStyles["report-caption-text"],
+  withGutter: notationStyles["report-with-gutter"],
+  gutter: notationStyles["report-gutter"],
+  gutterNote: notationStyles["report-gutter-note"],
+  gutterNoteLabel: notationStyles["report-gutter-note-label"],
+} as const
+
 /** 描画一式を読み込む。何度呼んでも読み込みは1回で、済めば待っている部品が描き直る。 */
 export const loadMarkdown = markdownRenderer.load
 
