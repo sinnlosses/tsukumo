@@ -39,19 +39,20 @@
   display: flex;
   flex: 1;
   flex-direction: column;
-  margin: calc(-1 * var(--region-padding, 0px));
+  margin: calc(-1 * var(--region-padding));
 }
 /* 依頼の全文の入れ物。左右はレポート本文の余白に揃える。 */
 .turn-card-request {
-  padding: 0.9rem 1.25rem 0;
+  padding: var(--space-lg) var(--space-xl) 0;
 }
 /* お伺いの札の入れ物。札は領域の縁まで広がらず、領域の余白のぶん内側に置く。 */
 .turn-card-inquiry {
-  padding: 0.75rem var(--region-padding, 0px) 0;
+  padding-top: var(--space-md);
+  padding-inline: var(--region-padding);
 }
 /* レポート本文の余白。 */
 .turn-card-body {
-  padding: 0.9rem 1.25rem 0.75rem;
+  padding: var(--space-lg) var(--space-xl) var(--space-md);
 }
 /* 列から飛んだ見出しとレポートの札と、ページ内のリンクから飛んだ先（お願いの塊など）が、貼り付いた頭の下に隠れないようにする。 */
 .turn-card :is(h4, h5, [id], [data-report-step]) {
@@ -60,9 +61,9 @@
 /* ステップは縦に1本で積む（Z字に読ませない）。カードの枠は「ひとかたまり」の区切りを見せるためだけに使い、番号は振らない。 */
 .main-step {
   margin: 0;
-  padding: 0.75rem 0.9rem;
+  padding: var(--space-md) var(--space-lg);
   border: 1px solid var(--rule);
-  border-radius: 0.5rem;
+  border-radius: var(--radius-md);
   background: var(--surface);
   min-width: 0;
 }
@@ -79,7 +80,7 @@
   z-index: 1;
   min-width: 24px;
   min-height: 24px;
-  padding: 0 0.5rem;
+  padding: 0 var(--space-sm);
 }
 /* `a2ui-react-report` は、部品の一覧で描く本文（`A2uiReport`）の根を包む `display: contents` の入れ物で、本文の根と「全部出す」の口が `.main-step` の孫になる。
    `.main-step` の子を指す規則は、この入れ物の子も同じに指す。 */
@@ -128,7 +129,7 @@
   background: none;
 }
 .main-step.is-final:not(:first-child) {
-  margin-top: 0.75rem;
+  margin-top: var(--space-md);
 }
 /* 追い越された中間レポートは `<details>` で畳む。
    地・枠は `.main-step.is-interim` のままで、開閉できることだけ `summary` のカーソルで示す（新しい色は作らない）。 */
@@ -139,7 +140,7 @@
   cursor: pointer;
 }
 .main-step.is-interim[open] > summary {
-  margin-bottom: 0.5rem;
+  margin-bottom: var(--space-sm);
 }
 
 /* 狭い画面では中間レポートの本文を出さず、一覧の行を押して板で読む(`display: none` は読み上げからも外れる)。 */

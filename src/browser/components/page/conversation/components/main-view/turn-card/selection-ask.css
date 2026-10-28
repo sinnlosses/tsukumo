@@ -3,7 +3,7 @@
   position: fixed;
   z-index: 3;
   display: flex;
-  border-radius: 0.4rem;
+  border-radius: var(--radius-md);
   background: var(--surface);
 }
 /* 見える面は行の隙間（選択の下端から次の行の字の上端まで約8px）にできるだけ寄せて低くし、次の行の頭を覆う量を減らす。
@@ -11,8 +11,8 @@
 .selection-ask-button {
   position: relative;
   min-height: 0;
-  padding: 0 0.5rem;
-  border-radius: 0.4rem;
+  padding: 0 var(--space-sm);
+  border-radius: var(--radius-md);
   line-height: 1;
 }
 .selection-ask-button::after {

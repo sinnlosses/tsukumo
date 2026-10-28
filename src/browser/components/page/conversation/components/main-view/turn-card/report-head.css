@@ -3,15 +3,15 @@
 .report-head {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin: 0 0 12px;
+  gap: var(--space-md);
+  margin: 0 0 var(--space-md);
 }
 
 .report-catalog {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 10px;
+  gap: var(--space-md);
   margin: 0;
   font-size: var(--font-action);
   color: var(--ink-quiet);
@@ -63,7 +63,7 @@
 }
 
 .report-headline {
-  margin: 2px 0 0;
+  margin: var(--space-2xs) 0 0;
   font-size: var(--report-heading-2);
   line-height: 1.45;
   font-weight: 700;
@@ -79,6 +79,6 @@
   font-size: 0.86em;
   background: var(--report-code-surface);
   color: var(--ink);
-  padding: 1px 5px;
-  border-radius: 4px;
+  padding: var(--space-2xs) var(--space-xs);
+  border-radius: var(--radius-sm);
 }

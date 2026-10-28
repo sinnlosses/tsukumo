@@ -1,9 +1,9 @@
 /* 脇の話の欄（`AsideThread`）。 */
 .aside-thread {
   margin: 0;
-  padding: 0.5rem 0.75rem;
+  padding: var(--space-sm) var(--space-md);
   border: 1px dashed var(--rule);
-  border-radius: 0.5rem;
+  border-radius: var(--radius-md);
 }
 /* 開閉の印は字の後ろに置くので、ブラウザ既定の三角は消す。 */
 .aside-thread > summary {
@@ -14,14 +14,14 @@
   display: none;
 }
 .aside-thread[open] > summary {
-  margin-bottom: 0.4rem;
+  margin-bottom: var(--space-sm);
 }
 .aside-rows {
   list-style: none;
   margin: 0;
-  padding: 0 0 0 0.75rem;
+  padding: 0 0 0 var(--space-md);
   display: grid;
-  gap: 0.3rem;
+  gap: var(--space-xs);
 }
 .aside-row {
   font-size: var(--font-secondary);

@@ -34,24 +34,24 @@
   max-height: 100cqh;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 0.75rem 0.375rem;
+  padding: var(--space-md) var(--space-sm);
 }
 .outline-list {
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: var(--space-2xs);
 }
 .outline-list-head {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 0.5rem;
-  padding: 0.125rem 0.625rem 0.5rem;
+  gap: var(--space-sm);
+  padding: var(--space-2xs) var(--space-md) var(--space-sm);
 }
 .outline-toggle {
   flex: none;
   min-width: 24px;
-  padding: 0.25rem;
+  padding: var(--space-xs);
 }
 .outline-list-title {
   color: var(--ink-quiet);
@@ -63,22 +63,22 @@
 .outline-turn-group {
   display: flex;
   flex-direction: column;
-  gap: 1px;
-  border-radius: 0.45rem;
+  gap: var(--space-2xs);
+  border-radius: var(--radius-md);
 }
 .outline-turn-group.is-active {
-  padding-bottom: 0.25rem;
+  padding-bottom: var(--space-xs);
   background: var(--surface-raised);
 }
 /* やり取りの行。頭の印は固定幅で切らず、依頼の1行目だけを省略する。 */
 .outline-turn {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-sm);
   width: 100%;
-  padding: 0.375rem 0.625rem;
+  padding: var(--space-sm) var(--space-md);
   border: none;
-  border-radius: 0.45rem;
+  border-radius: var(--radius-md);
   background: transparent;
   color: var(--ink-quiet);
   font-size: var(--font-secondary);
@@ -101,14 +101,14 @@
   min-width: 0;
 }
 .outline-notice {
-  padding: 0 0.25rem 0.5rem;
+  padding: 0 var(--space-xs) var(--space-sm);
 }
 /* 畳んだ列。開き直す口の下に、知らせがあれば印だけの口を縦に並べる。 */
 .outline-collapsed {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-sm);
 }
 .outline-turn-aside {
   color: var(--ink-quiet);
@@ -133,11 +133,11 @@
 .outline-row {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-sm);
   width: 100%;
-  padding: 0.3rem 0.625rem 0.3rem 2.5rem;
+  padding: var(--space-xs) var(--space-md) var(--space-xs) 2.5rem;
   border: none;
-  border-radius: 0.45rem;
+  border-radius: var(--radius-md);
   background: transparent;
   color: var(--ink-quiet);
   font-size: var(--font-secondary);
@@ -146,7 +146,7 @@
   cursor: pointer;
 }
 .outline-row[data-level="report"] {
-  padding-left: 1.5rem;
+  padding-left: var(--space-2xl);
   color: var(--ink);
   font-weight: 600;
 }
@@ -176,7 +176,7 @@
   flex: none;
   width: 0;
   height: 14px;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   background: var(--accent);
 }
 .outline-row[aria-current="location"] .outline-row-mark {
@@ -203,6 +203,6 @@
   }
   .outline-phone-notice {
     display: block;
-    padding-bottom: 0.5rem;
+    padding-bottom: var(--space-sm);
   }
 }

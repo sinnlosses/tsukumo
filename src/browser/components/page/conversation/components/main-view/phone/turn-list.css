@@ -4,19 +4,19 @@
 .turn-list {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--space-2xs);
   margin: 0;
-  padding: 0 8px;
+  padding: 0 var(--space-sm);
   list-style: none;
 }
 .turn-list-row {
   display: grid;
   grid-template-columns: 16px 1fr;
-  column-gap: 10px;
+  column-gap: var(--space-md);
   width: 100%;
-  padding: 12px 14px;
+  padding: var(--space-md) var(--space-lg);
   border: none;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   background: transparent;
   color: var(--ink-soft);
   font: inherit;
@@ -33,7 +33,7 @@
 .turn-list-mark {
   display: flex;
   justify-content: center;
-  padding-top: 3px;
+  padding-top: var(--space-xs);
   color: var(--ink-quiet);
   font-size: var(--font-label);
   font-weight: 700;
@@ -69,7 +69,7 @@
 }
 .turn-list-empty {
   margin: 0;
-  padding: 12px 22px;
+  padding: var(--space-md) var(--space-2xl);
   color: var(--ink-quiet);
   font-size: var(--font-secondary);
 }

@@ -2,11 +2,11 @@
 .interactive-view-group {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
-  margin: 0.5rem 0;
+  gap: var(--space-sm);
+  margin: var(--space-sm) 0;
 }
 .interactive-view-button {
   min-height: 1.75rem;
-  padding: 0.2rem 0.75rem;
-  border-radius: 0.4rem;
+  padding: var(--space-xs) var(--space-md);
+  border-radius: var(--radius-md);
 }

@@ -6,7 +6,7 @@
 .request-row {
   display: flex;
   align-items: baseline;
-  gap: 10px;
+  gap: var(--space-md);
 }
 .request-label {
   flex: none;
@@ -34,7 +34,7 @@
   display: inline-flex;
   flex: none;
   align-items: center;
-  gap: 0.2rem;
+  gap: var(--space-xs);
   padding: 0;
 }
 /* 字ではなく `theme.css` のトークンの線画で、色は `currentColor`。 */
