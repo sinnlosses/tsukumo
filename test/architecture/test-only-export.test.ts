@@ -12,6 +12,7 @@ import {
   readExportUse,
   readRepositorySources,
 } from "./export-use.ts"
+import { PENDING_READERS, pendingProductionExports } from "./pending-reader-table.ts"
 import { parseSourceProgram } from "./source-file.ts"
 
 const VITEST_CONFIG_FILES = ["vitest.config.ts", "vitest.e2e.config.ts"] as const
@@ -23,12 +24,11 @@ const PRODUCTION_DIRECTORIES = ["src/", "scripts/"] as const
 // （関数・定数は消すか、本番の口へ寄せるか、概念の名前のファイルへ移す）。
 const ALLOWED_TEST_ONLY_EXPORTS = {} as const satisfies Record<string, string>
 
-// 本番の読み手が後続の課題で付くまでの、期限つきの例外（Props の型でなくてよい）。読み手が付いたら外す。
-const PENDING_READER_EXPORTS = {} as const satisfies Record<string, string>
+const PENDING_READER_EXPORTS = pendingProductionExports(PENDING_READERS)
 
 const OFFENDER_GUIDE = [
   "テストからしか import されない export がある。次のどれかにする。",
-  '- 使い手が後続の課題で付く新部品: PENDING_READER_EXPORTS に "パス#名前": "読み手が付く課題の名前と理由" で足す（読み手が付いたら外す）',
+  '- 使い手が後続の課題で付く新部品: test/architecture/pending-reader-table.ts の PENDING_READERS に { file, missingReader: "production", exportName, reason, removeWhen } の行で足す（読み手が付いたら行を外す）',
   '- テストだけが読む `<部品>Props` の型: ALLOWED_TEST_ONLY_EXPORTS に "パス#名前": "理由" で足す',
   "- それ以外の関数・定数: 消すか、本番の口へ寄せる",
 ].join("\n")
@@ -49,7 +49,10 @@ describe("src/・scripts/ のテストからしか import されない export", 
   it("期限つきの例外の項目は、いまもテストからしか import されない（読み手が付いたら外す）", () => {
     const found = new Set(FOUND_TEST_ONLY_EXPORTS)
 
-    expect(Object.keys(PENDING_READER_EXPORTS).filter((key) => !found.has(key))).toEqual([])
+    expect(
+      Object.keys(PENDING_READER_EXPORTS).filter((key) => !found.has(key)),
+      "読み手が付いた行は test/architecture/pending-reader-table.ts の PENDING_READERS から外す",
+    ).toEqual([])
   })
 
   it("許可リストの項目は、いまもテストからしか import されない", () => {

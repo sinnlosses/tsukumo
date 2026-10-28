@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs"
 import { describe, expect, it } from "vitest"
 
 import { findFeatureCycle, type ServerFeature } from "./feature-graph.ts"
+import { PENDING_READERS, pendingBrowserReaderFiles } from "./pending-reader-table.ts"
 import {
   listSourceFiles,
   relativeImportSpecifiers,
@@ -46,10 +47,10 @@ const SHARED_DIRECTORIES: ReadonlySet<string> = new Set([
   ...SHARED_FEATURES,
 ])
 
-// server からだけ読まれていて、browser の読み手が付くまでの期限つきの例外。読み手が付いたら外す。
-const PENDING_BROWSER_READER_FILES: ReadonlySet<string> = new Set([
-  "shared/report/report-outline.ts",
-])
+const PENDING_BROWSER_READER_FILES = pendingBrowserReaderFiles(PENDING_READERS)
+
+const PENDING_TABLE_GUIDE =
+  'browser の読み手が後続で付く新部品は test/architecture/pending-reader-table.ts の PENDING_READERS に { file, missingReader: "browser", reason, removeWhen } の行で足す（読み手が付いたら行を外す）'
 
 describe("shared/ の機能どうしの import", () => {
   it("shared/ の直下のファイルは frame.ts・command.ts・rpc.ts だけ", () => {
@@ -104,7 +105,16 @@ describe("shared/ の機能どうしの import", () => {
         return readers.length === 0 ? [] : [`src/${relPath} → ${readers.join("・")} から読まれない`]
       })
 
-    expect(offenders.join("\n")).toBe("")
+    expect(offenders.join("\n"), PENDING_TABLE_GUIDE).toBe("")
+  })
+
+  it("期限つきの browser の行は、いまも browser から読まれない（読み手が付いたら外す）", () => {
+    const reachableFromBrowser = sharedFilesReachableFrom("browser/")
+
+    expect(
+      [...PENDING_BROWSER_READER_FILES].filter((relPath) => reachableFromBrowser.has(relPath)),
+      "読み手が付いた行は test/architecture/pending-reader-table.ts の PENDING_READERS から外す",
+    ).toEqual([])
   })
 })
 
