@@ -69,8 +69,8 @@
 
 **effort のドロップダウンの値の源**は3つ: 起こしたときに `query()` へ渡した値（起動直後）、
 `applyFlagSettings` が受け付けた値（押した直後。`setModel` の `model-changed` と同じ扱い）、
-hook 入力の `effort.level`（ターンの終わり。実測は `docs/history/decision.md`「effort の途中変更と
-読み取りが成り立った実測」）。前の2つは `effort-changed`、hook 入力は `setting-confirmed`
+hook 入力の `effort.level`（ターンの終わり。実測は `docs/history/decision.md`「requirements.md 4.1 Claude Code の駆動（スパイクの実測）」の
+「effort の途中変更と読み取りが成り立った実測」）。前の2つは `effort-changed`、hook 入力は `setting-confirmed`
 （設定が `effort`）で届き、どちらも `state.effort` を更新して、後に届いた値が勝つ。
 「押した値へ先に倒さない」（読み取った値だけを出す）形は、押しても表示が変わらず
 不具合に見えたため採らない。

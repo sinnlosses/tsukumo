@@ -358,7 +358,7 @@ const HANDBACK_PROMPT_HEAD = "<agent-message"
  * `SubagentStop` には載せない（サブエージェントの `report` は捨てるので、渡し直させても画面に出ない。effort もメインの手元の値だけを読めばよい）。
  *
  * 見届けた設定（{@link confirmedSettingEvents}）はブロック判定より先に読む。
- * 実測は `docs/history/decision.md`「effort の途中変更と読み取りが成り立った実測」。
+ * 実測は `docs/history/decision.md`「requirements.md 4.1 Claude Code の駆動（スパイクの実測）」。
  *
  * 関所の判定の前に1回だけ macrotask を待つ。
  * SDK はフックの呼び出し（制御リクエスト）を読んだその場で処理し、それより前に届いたメッセージは列に積んで `relayMessages` の反復へ渡す。

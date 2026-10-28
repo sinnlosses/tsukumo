@@ -95,7 +95,11 @@ const CONTINUATION_PREFIX = /^[ \t]*(?:\/\/+|\*|#+|>)?[ \t]*/u
 /**
  * ファイル1つの本文から、節を引いている参照をすべて拾う。
  */
-export function findSectionReferences(sourcePath: string, text: string): SectionReference[] {
+export function findSectionReferences(
+  sourcePath: string,
+  text: string,
+  accepts: (targetPath: string) => boolean = isNotRecord,
+): SectionReference[] {
   const lines = text.split("\n")
   return lines.flatMap((lineText, index) => [
     ...[...lineText.matchAll(REFERENCE_HEAD)].flatMap((match) =>
@@ -106,9 +110,10 @@ export function findSectionReferences(sourcePath: string, text: string): Section
         match[2],
         lineText.slice(match.index + match[0].length),
         lines.slice(index + 1, index + 1 + MAX_CONTINUATION_LINES),
+        accepts,
       ),
     ),
-    ...findReferenceAcrossLineBreak(sourcePath, lines, index, lineText),
+    ...findReferenceAcrossLineBreak(sourcePath, lines, index, lineText, accepts),
   ])
 }
 
@@ -174,6 +179,16 @@ export function isScannedSource(path: string): boolean {
   return !UNSCANNED_PREFIXES.some((prefix) => path.startsWith(prefix))
 }
 
+/** 句の末尾の「…」（後ろを略した印）を外す。略した句は前半だけで照らす。 */
+export function withoutTrailingEllipsis(phrase: string): string {
+  return phrase.replace(/(?:…|\.\.\.)+$/u, "")
+}
+
+/** 折り返し・空白・バッククォート・強調の `` を除く（両側を同じ形に揃えて比べるため）。 */
+export function normalizeForMatch(text: string): string {
+  return text.replace(/\s+/gu, "").replace(/`/gu, "").replace(/\*\*/gu, "")
+}
+
 /**
  * パス（と番号・「の」）で行が終わり、次の行の頭（継続行の記号を除いたあと）が「で始まる形を拾う。
  */
@@ -182,6 +197,7 @@ function findReferenceAcrossLineBreak(
   lines: readonly string[],
   index: number,
   lineText: string,
+  accepts: (targetPath: string) => boolean,
 ): SectionReference[] {
   const nextLine = lines[index + 1]
   if (nextLine === undefined) {
@@ -202,6 +218,7 @@ function findReferenceAcrossLineBreak(
     match[2],
     strippedNextLine.slice("「".length),
     lines.slice(index + 2, index + 2 + MAX_CONTINUATION_LINES),
+    accepts,
   )
 }
 
@@ -213,8 +230,9 @@ function toReference(
   section: string | undefined,
   afterOpen: string,
   continuation: readonly string[],
+  accepts: (targetPath: string) => boolean,
 ): SectionReference[] {
-  if (targetPath === undefined || isRecord(targetPath)) {
+  if (targetPath === undefined || !accepts(targetPath)) {
     return []
   }
   const phrase = readPhrase(afterOpen, continuation)
@@ -224,8 +242,8 @@ function toReference(
   return [{ sourcePath, line, targetPath, section, phrase }]
 }
 
-function isRecord(path: string): boolean {
-  return RECORD_PREFIXES.some((prefix) => path.startsWith(prefix))
+function isNotRecord(path: string): boolean {
+  return !RECORD_PREFIXES.some((prefix) => path.startsWith(prefix))
 }
 
 /**
@@ -286,16 +304,6 @@ function readNumberedSection(text: string, section: string): string | undefined 
       index > start && /^#{1,6} /u.test(line) && (line.match(/^#+/u)?.[0].length ?? 7) <= level,
   )
   return lines.slice(start, end < 0 ? undefined : end).join("\n")
-}
-
-/** 句の末尾の「…」（後ろを略した印）を外す。略した句は前半だけで照らす。 */
-function withoutTrailingEllipsis(phrase: string): string {
-  return phrase.replace(/(?:…|\.\.\.)+$/u, "")
-}
-
-/** 折り返し・空白・バッククォート・強調の `` を除く（両側を同じ形に揃えて比べるため）。 */
-function normalizeForMatch(text: string): string {
-  return text.replace(/\s+/gu, "").replace(/`/gu, "").replace(/\*\*/gu, "")
 }
 
 /** `docs/X.md` を親とみなし、`targets` にある `docs/X/*.md`（直下の子）の本文を返す。 */

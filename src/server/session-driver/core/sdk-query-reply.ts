@@ -41,7 +41,7 @@ export function toPlan(value: unknown): string | undefined {
 
 /**
  * `supportedModels()` の戻り値から、effort に関わる部分だけを取り出す（`ModelEffortSupport`）。
- * 運ぶのは「いま効いている値」ではなく「対応の有無・選べる段」だけ（実測は `docs/history/decision.md`「effort の途中変更と読み取りが成り立った実測」）。
+ * 運ぶのは「いま効いている値」ではなく「対応の有無・選べる段」だけ（実測は `docs/history/decision.md`「requirements.md 4.1 Claude Code の駆動（スパイクの実測）」）。
  *
  * `value` が文字列でない要素は捨てる。`supportsEffort` は真偽値でなければ `false` に倒す。
  * `supportedEffortLevels` は配列でない・{@link isEffortLevel} を通らない要素を捨て、最終的に空になれば `[]` に畳む。
