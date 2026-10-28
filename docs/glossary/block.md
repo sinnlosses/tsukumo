@@ -52,7 +52,7 @@
 ### 形の札
 
 - **英語識別子**: `ReportShapeTag`（`src/shared/report/report-shape-tag.ts`）/ 列挙 `REPORT_SHAPE_TAGS` /
-  札ごとの表 `REPORT_SHAPE_TAG_RULES` / 節の欄 `shapeTag` / 札を省いた節を含む `RecordedReportShapeTag`（`unspecified`）。
+  使われ方の記録の節の欄 `shapeTag` / 札を省いた節を含む `RecordedReportShapeTag`（`unspecified`）。
   値は 因果 `cause`・つながり `connection`・位置 `position`・状態 `state`・時間 `time`・順序 `order`・量 `quantity`・
   選択 `choice`・属性の並び `attribute`・対応 `mapping`・見比べ `comparison`・境界 `boundary`・並列 `parallel`・一言 `single`
 - **定義**: **節が表す内容の形。** 書き手が節ごとに1つ言い、札ごとに第一候補・許す代替・許さない塊が決まる。

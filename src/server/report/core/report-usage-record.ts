@@ -55,8 +55,6 @@ const forbiddenShapeBlockUsageSchema = z
   })
   .readonly()
 
-export type ForbiddenShapeBlockUsage = z.infer<typeof forbiddenShapeBlockUsageSchema>
-
 /** 節の札と、札が許さない塊の使われ方（版13から）。 */
 const reportShapeTagUsageSchema = z
   .object({
@@ -64,9 +62,9 @@ const reportShapeTagUsageSchema = z
     sectionShapeTags: z.array(z.enum([...REPORT_SHAPE_TAGS, "unspecified"])).readonly(),
     /** 節の順の、節の中の塊の種類（重複無し）。`sectionShapeTags` と同じ並び（版19から）。 */
     sectionBlockKinds: z.array(z.array(z.string()).readonly()).readonly(),
-    /** 札が許さない塊を1つ以上含む節の数。 */
+    /** 札が許さない塊を1つ以上含む節の数。新しい行は常に 0。 */
     forbiddenShapeSectionCount: z.number(),
-    /** 札が許さない塊の組ごとの数。0の組は入れない。 */
+    /** 札が許さない塊の組ごとの数。0の組は入れない。新しい行は常に空。 */
     forbiddenShapeBlocks: z.array(forbiddenShapeBlockUsageSchema).readonly(),
   })
   .readonly()

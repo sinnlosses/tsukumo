@@ -1,14 +1,15 @@
 import { describe, expect, it } from "vitest"
 
-import { mermaidSourcesInSections } from "../../../../src/server/report/core/report-figure-fault.ts"
+import { mermaidSourcesOfLeaves } from "../../../../src/server/report/core/report-figure-fault.ts"
 import { reportRejectionText } from "../../../../src/server/report/core/report-rejection.ts"
 import { reportViolations } from "../../../../src/server/report/core/report-violation-check.ts"
 import type { ReportDraft } from "../../../../src/server/report/core/report-violation.ts"
 import { REPORT_MERMAID_KINDS } from "../../../../src/shared/report/report-block-diagram.ts"
 import type { ReportBlock } from "../../../../src/shared/report/report-block.ts"
+import type { ReportOutlineLeaf } from "../../../../src/shared/report/report-outline.ts"
 import { code, draft, kinds, markdown, mermaid, note } from "../../../fixture/report-draft-block.ts"
 
-type Side = Extract<ReportBlock, { readonly kind: "beforeAfter" }>["before"]
+type Side = Extract<ReportOutlineLeaf, { readonly component: "BeforeAfter" }>["before"]
 
 describe("reportViolations", () => {
   describe("mermaid は規約の2種だけ", () => {
@@ -142,20 +143,25 @@ describe("reportViolations", () => {
 
     it("検査に渡すソースは、単独の塊と側を出現順（前が先）に集める", () => {
       const side = (source: string): Side => ({ kind: "mermaid", source })
-      const pair: ReportBlock = {
-        kind: "beforeAfter",
+      const single: ReportOutlineLeaf = {
+        id: "a",
+        component: "Mermaid",
+        title: "",
+        source: "A",
+        fold: "",
+        aside: "",
+      }
+      const pair: ReportOutlineLeaf = {
+        id: "b",
+        component: "BeforeAfter",
         title: "",
         before: side("B"),
         after: { kind: "points", points: ["架空"] },
         fold: "",
         aside: "",
       }
-      const both: ReportBlock = { ...pair, before: side("C"), after: side("D") }
-      expect(
-        mermaidSourcesInSections([
-          { heading: "", shapeTag: "unspecified", blocks: [mermaid("A"), pair, both] },
-        ]),
-      ).toEqual(["A", "B", "C", "D"])
+      const both: ReportOutlineLeaf = { ...pair, id: "c", before: side("C"), after: side("D") }
+      expect(mermaidSourcesOfLeaves([single, pair, both])).toEqual(["A", "B", "C", "D"])
     })
 
     it("%% の行と先頭の --- の設定は飛ばして種類を読む", () => {

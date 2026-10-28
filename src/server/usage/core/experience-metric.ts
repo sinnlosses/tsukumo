@@ -5,8 +5,8 @@
 
 import { sumBy } from "remeda"
 
-import type { ReportBlock } from "../../../shared/report/report-block.ts"
-import { leafBlocksOf } from "../../../shared/report/row-panel-block.ts"
+import { LEAF_COMPONENT_KINDS } from "../../../shared/report/a2ui-report-catalog.ts"
+import { reportOutline, sectionLeaves } from "../../../shared/report/report-outline.ts"
 import {
   type ConversationMoment,
   conversationMoment,
@@ -233,7 +233,7 @@ type ReadingShape = {
   readonly hasDiagram: boolean
 }
 
-const DIAGRAM_BLOCK_KINDS: ReadonlySet<ReportBlock["kind"]> = new Set<ReportBlock["kind"]>([
+const DIAGRAM_BLOCK_KINDS: ReadonlySet<string> = new Set([
   "mermaid",
   "graph",
   "chart",
@@ -291,7 +291,8 @@ function readingShapeOf(state: SessionState): ReadingShape {
   if (report === undefined) {
     return { bodyChars: 0, tableRate: 0, hasDiagram: false }
   }
-  const blocks = report.sections.flatMap((section) => leafBlocksOf(section.blocks))
+  const outline = reportOutline(report.components)
+  const leaves = sectionLeaves(outline)
   const shownReport = mainViewEntries(state)
     .filter((entry) => entry.kind === "report")
     .at(-1)
@@ -301,11 +302,12 @@ function readingShapeOf(state: SessionState): ReadingShape {
         ? 0
         : sumBy(shownReport.regions.sections, (section) => section.markdown.length),
     tableRate:
-      blocks.length === 0
+      leaves.length === 0
         ? 0
-        : blocks.filter((block) => block.kind === "table").length / blocks.length,
+        : leaves.filter((leaf) => leaf.component === "Table").length / leaves.length,
     hasDiagram:
-      report.figure.kind !== "none" || blocks.some((block) => DIAGRAM_BLOCK_KINDS.has(block.kind)),
+      outline.figure.length > 0 ||
+      leaves.some((leaf) => DIAGRAM_BLOCK_KINDS.has(LEAF_COMPONENT_KINDS[leaf.component])),
   }
 }
 

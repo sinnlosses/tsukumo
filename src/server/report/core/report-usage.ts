@@ -1,30 +1,28 @@
 // `report` の塊の使われ方の記録1行ぶんの中身。
 // 持つのはそのレポートに出た名前の集合と数だけで、塊の中身・逃げ道の文字は入れない。
 
-import { groupBy, isPlainObject } from "remeda"
+import { isPlainObject } from "remeda"
 
+import { LEAF_COMPONENT_KINDS } from "../../../shared/report/a2ui-report-catalog.ts"
 import { readGraphSource } from "../../../shared/report/graph-source.ts"
 import type {
   ReportArgumentChars,
   ReportArgumentField,
 } from "../../../shared/report/report-argument-size.ts"
 import { tableRowCells } from "../../../shared/report/report-block-comparison.ts"
-import type {
-  ReportBlock,
-  ReportSection,
-  SectionBlock,
-} from "../../../shared/report/report-block.ts"
 import type { ReportCheck } from "../../../shared/report/report-check.ts"
-import { drawnLeaves, reportOutline } from "../../../shared/report/report-outline.ts"
-import { drawnSectionsOf } from "../../../shared/report/report-retrospective.ts"
-import { isForbiddenBlock } from "../../../shared/report/report-shape-tag.ts"
+import {
+  drawnLeaves,
+  type ReportOutlineLeaf,
+  reportOutline,
+  sectionLeaves,
+} from "../../../shared/report/report-outline.ts"
 import type { ReportGenre, ReportTaskOutcome } from "../../../shared/report/report-task.ts"
-import { blocksWithChildrenOf, leafBlocksOf } from "../../../shared/report/row-panel-block.ts"
 import type { ToolErrorField } from "../../../shared/report/tool-error-field.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import { numberCountOutsideCode } from "./number-count.ts"
 import type { ReportRejectionMode } from "./rejection-mode.ts"
-import { mermaidKind, mermaidSourcesInSections } from "./report-figure-fault.ts"
+import { mermaidKind, mermaidSourcesOfLeaves } from "./report-figure-fault.ts"
 import { reportImagePaths } from "./report-image-shelf.ts"
 import {
   containedNotationsInSections,
@@ -34,18 +32,14 @@ import {
   notationKindsInMarkdowns,
   notationsInSections,
 } from "./report-markdown-notation.ts"
-import type {
-  ForbiddenShapeBlockUsage,
-  ReportFigureUsage,
-  ReportShapeTagUsage,
-} from "./report-usage-record.ts"
+import type { ReportFigureUsage, ReportShapeTagUsage } from "./report-usage-record.ts"
 
 export type ReportUsageEntry = {
   readonly at: number
   readonly sessionId: string
   /** `figure` の欄の種類と、`none` の理由。 */
   readonly figure: ReportFigureUsage
-  /** 節の札と、札が許さない塊を使った節・組の数。 */
+  /** 節ごとの塊の種類。札は常に `unspecified` で、札が許さない塊の数は空（過去の行の列を残している）。 */
   readonly shapeTags: ReportShapeTagUsage
   /** その回に出た塊の種類（`figure` の図を含む。重複無し）。 */
   readonly blockKinds: readonly string[]
@@ -212,8 +206,9 @@ export function reportUsageEntryOf(
   at: number,
   mainReadImageFile: boolean,
 ): ReportUsageEntry {
-  const drawnSections = drawnSectionsOf(event)
   const outline = reportOutline(event.components)
+  const drawn = drawnLeaves(outline)
+  const own = sectionLeaves(outline)
   return {
     at,
     sessionId,
@@ -221,9 +216,14 @@ export function reportUsageEntryOf(
       event.figure.kind === "none"
         ? { figureKind: "none", noneReason: event.figure.reason }
         : { figureKind: event.figure.kind },
-    shapeTags: shapeTagUsageOf(event.sections),
-    blockKinds: blockKindsOf(drawnSections),
-    blockFields: blockFieldsOf(drawnSections),
+    shapeTags: {
+      sectionShapeTags: outline.sections.map(() => "unspecified"),
+      sectionBlockKinds: outline.sections.map((section) => kindsOf(section.leaves)),
+      forbiddenShapeSectionCount: 0,
+      forbiddenShapeBlocks: [],
+    },
+    blockKinds: kindsOf(drawn),
+    blockFields: REPORT_BLOCK_FIELDS.filter((field) => drawn.some((leaf) => hasField(leaf, field))),
     notations: notationsInSections(outline),
     containedNotations: containedNotationsInSections(outline),
     escapeNotations: escapeNotationsInSections(outline),
@@ -233,34 +233,30 @@ export function reportUsageEntryOf(
     ),
     unknownBlockCount: event.unknownBlockCount,
     brokenFenceCount: event.brokenFenceCount,
-    listStyles: listStylesOf(drawnSections),
-    mermaidKinds: [...new Set(mermaidSourcesInSections(drawnSections).map(mermaidKind))],
+    listStyles: [
+      ...new Set(drawn.flatMap((leaf) => (leaf.component === "ItemList" ? [leaf.style] : []))),
+    ],
+    mermaidKinds: [...new Set(mermaidSourcesOfLeaves(drawn).map(mermaidKind))],
     hasModifiedFiles: false,
-    hasBeforeAfterOrImage: blocksOf(drawnSections).some(
-      (block) => block.kind === "beforeAfter" || block.kind === "image",
+    hasBeforeAfterOrImage: drawn.some(
+      (leaf) => leaf.component === "BeforeAfter" || leaf.component === "Picture",
     ),
     forTask: event.task.kind === "task",
-    hasFigure: blocksOf(drawnSections).some(
-      (block) =>
-        FIGURE_KINDS.includes(block.kind) ||
-        (block.kind === "beforeAfter" &&
-          [block.before, block.after].some((side) => FIGURE_KINDS.includes(side.kind))),
+    hasFigure: drawn.some(
+      (leaf) =>
+        FIGURE_KINDS.includes(kindOf(leaf)) ||
+        (leaf.component === "BeforeAfter" &&
+          [leaf.before, leaf.after].some((side) => FIGURE_KINDS.includes(side.kind))),
     ),
-    readImageWithoutImageBlock:
-      mainReadImageFile && reportImagePaths(drawnLeaves(outline)).length === 0,
-    emphasisCount: blocksOf(drawnSections).reduce(
-      (total, block) => total + emphasisCountOf(block),
-      0,
-    ),
-    ...graphCountsOf(blocksOf(drawnSections)),
+    readImageWithoutImageBlock: mainReadImageFile && reportImagePaths(drawn).length === 0,
+    emphasisCount: drawn.reduce((total, leaf) => total + emphasisCountOf(leaf), 0),
+    ...graphCountsOf(drawn),
     ...howToVerifyUsageOf(event.checks),
     taskGenre: event.task.kind === "task" ? event.task.genre : "none",
     taskOutcome: event.task.kind === "task" ? event.task.outcome : "none",
     hasFavor: event.favor.trim() !== "",
-    hasSourceReference: blocksOf(event.sections).some(hasSourceReference),
-    shortTable: blocksOf(drawnSections).some(
-      (block) => block.kind === "table" && block.rows.length <= 2,
-    ),
+    hasSourceReference: own.some(hasSourceReference),
+    shortTable: drawn.some((leaf) => leaf.component === "Table" && leaf.rows.length <= 2),
     hasKeyFigures: event.keyFigures.length > 0,
     conclusionNumbersWithoutKeyFigures:
       event.keyFigures.length === 0 && numberCountOutsideCode(event.conclusion) >= 3,
@@ -285,21 +281,21 @@ export function isMainImageFileRead(
 
 const SOURCE_REFERENCE = /https?:\/\/\S|[\w./-]+\.\w+:\d+/
 
-function hasSourceReference(block: ReportBlock): boolean {
-  return block.kind === "code"
-    ? block.path.trim() !== ""
-    : writtenTextsOf(block).some((text) => SOURCE_REFERENCE.test(text))
+function hasSourceReference(leaf: ReportOutlineLeaf): boolean {
+  return leaf.component === "Code"
+    ? leaf.path.trim() !== ""
+    : writtenTextsOf(leaf).some((text) => SOURCE_REFERENCE.test(text))
 }
 
-function writtenTextsOf(block: ReportBlock): readonly string[] {
-  switch (block.kind) {
-    case "text":
-    case "note":
-      return [block.text]
-    case "list":
-      return block.items.map((item) => item.text)
-    case "table":
-      return block.rows.flatMap((row) =>
+function writtenTextsOf(leaf: ReportOutlineLeaf): readonly string[] {
+  switch (leaf.component) {
+    case "Paragraph":
+    case "Note":
+      return [leaf.text]
+    case "ItemList":
+      return leaf.items.map((item) => item.text)
+    case "Table":
+      return leaf.rows.flatMap((row) =>
         tableRowCells(row).flatMap((cell) =>
           typeof cell === "string"
             ? [cell]
@@ -310,8 +306,8 @@ function writtenTextsOf(block: ReportBlock): readonly string[] {
                 : [cell.text],
         ),
       )
-    case "markdown":
-      return [block.markdown]
+    case "Markdown":
+      return [leaf.markdown]
     default:
       return []
   }
@@ -325,17 +321,17 @@ function emphasisCountIn(text: string): number {
   return text.replace(INLINE_CODE, "").match(EMPHASIS_PAIR)?.length ?? 0
 }
 
-function emphasisCountOf(block: ReportBlock): number {
-  switch (block.kind) {
-    case "text":
-      return emphasisCountIn(block.text)
-    case "list":
-      return block.items.reduce(
+function emphasisCountOf(leaf: ReportOutlineLeaf): number {
+  switch (leaf.component) {
+    case "Paragraph":
+      return emphasisCountIn(leaf.text)
+    case "ItemList":
+      return leaf.items.reduce(
         (total, item) => total + emphasisCountIn(item.text) + emphasisCountIn(item.branch),
         0,
       )
-    case "table":
-      return block.rows.reduce(
+    case "Table":
+      return leaf.rows.reduce(
         (total, row) =>
           total +
           tableRowCells(row).reduce(
@@ -358,10 +354,10 @@ function emphasisCountOf(block: ReportBlock): number {
 }
 
 function graphCountsOf(
-  blocks: readonly ReportBlock[],
+  leaves: readonly ReportOutlineLeaf[],
 ): Pick<ReportUsageEntry, "graphEdgeCount" | "graphUnlabeledEdgeCount" | "graphNodeCount"> {
-  const readings = blocks.flatMap((block) =>
-    block.kind === "graph" ? [readGraphSource(block.source)] : [],
+  const readings = leaves.flatMap((leaf) =>
+    leaf.component === "Graph" ? [readGraphSource(leaf.source)] : [],
   )
   const edges = readings.flatMap((reading) => reading.edges)
   return {
@@ -382,84 +378,48 @@ function howToVerifyUsageOf(
   }
 }
 
-function shapeTagUsageOf(sections: readonly ReportSection[]): ReportShapeTagUsage {
-  const forbiddenBySection = sections.map(({ shapeTag, blocks }) =>
-    shapeTag === "unspecified"
-      ? []
-      : leafBlocksOf(blocks)
-          .filter((block) => isForbiddenBlock(shapeTag, block))
-          .map((block) => ({ shapeTag, blockKind: block.kind })),
-  )
-  return {
-    sectionShapeTags: sections.map((section) => section.shapeTag),
-    sectionBlockKinds: sections.map((section) => kindsOf(section.blocks)),
-    forbiddenShapeSectionCount: forbiddenBySection.filter((uses) => uses.length > 0).length,
-    forbiddenShapeBlocks: Object.values(
-      groupBy(forbiddenBySection.flat(), (use) => `${use.shapeTag}/${use.blockKind}`),
-    ).map(([first, ...rest]): ForbiddenShapeBlockUsage => ({ ...first, count: rest.length + 1 })),
-  }
+/** 今までの塊の `kind` 名で数える。 */
+function kindOf(leaf: ReportOutlineLeaf): string {
+  return LEAF_COMPONENT_KINDS[leaf.component]
 }
 
-function listStylesOf(sections: readonly ReportSection[]): readonly string[] {
-  return [
-    ...new Set(blocksOf(sections).flatMap((block) => (block.kind === "list" ? [block.style] : []))),
-  ]
+function kindsOf(leaves: readonly ReportOutlineLeaf[]): readonly string[] {
+  return [...new Set(leaves.map(kindOf))]
 }
 
-function blocksOf(sections: readonly ReportSection[]): readonly ReportBlock[] {
-  return sections.flatMap((section) => leafBlocksOf(section.blocks))
-}
-
-function blockKindsOf(sections: readonly ReportSection[]): readonly string[] {
-  return kindsOf(sections.flatMap((section) => section.blocks))
-}
-
-/** 塊の種類の集合。`row`・`panel` は自分の種類と子の種類の両方を数える。 */
-function kindsOf(blocks: readonly SectionBlock[]): readonly string[] {
-  return [...new Set(blocksWithChildrenOf(blocks).map((block) => block.kind))]
-}
-
-/** 使った欄の集合。`row`・`panel` は自分の欄と子の欄の両方を見る。 */
-function blockFieldsOf(sections: readonly ReportSection[]): readonly ReportBlockField[] {
-  const blocks = sections.flatMap((section) => blocksWithChildrenOf(section.blocks))
-  return REPORT_BLOCK_FIELDS.filter((field) => blocks.some((block) => hasField(block, field)))
-}
-
-function hasField(block: SectionBlock, field: ReportBlockField): boolean {
+function hasField(leaf: ReportOutlineLeaf, field: ReportBlockField): boolean {
   switch (field) {
     case "tableChange":
       return (
-        block.kind === "table" &&
-        block.rows.some((row) =>
+        leaf.component === "Table" &&
+        leaf.rows.some((row) =>
           tableRowCells(row).some((cell) => typeof cell === "object" && "from" in cell),
         )
       )
     case "tableRest":
-      return block.kind === "table" && block.rest.trim() !== ""
+      return leaf.component === "Table" && leaf.rest.trim() !== ""
     case "statsBefore":
-      return block.kind === "stats" && block.items.some((item) => item.before.trim() !== "")
+      return leaf.component === "Stats" && leaf.items.some((item) => item.before.trim() !== "")
     case "statsTotal":
-      return block.kind === "stats" && block.items.some((item) => item.total.trim() !== "")
+      return leaf.component === "Stats" && leaf.items.some((item) => item.total.trim() !== "")
     case "statsSeries":
-      return block.kind === "stats" && block.items.some((item) => item.series.length > 0)
+      return leaf.component === "Stats" && leaf.items.some((item) => item.series.length > 0)
     case "statsBetter":
-      return block.kind === "stats" && block.items.some((item) => item.better !== "")
+      return leaf.component === "Stats" && leaf.items.some((item) => item.better !== "")
     case "listLabel":
-      return block.kind === "list" && block.items.some((item) => item.label.trim() !== "")
+      return leaf.component === "ItemList" && leaf.items.some((item) => item.label.trim() !== "")
     case "listFlow":
-      return block.kind === "list" && block.style === "flow"
+      return leaf.component === "ItemList" && leaf.style === "flow"
     case "imageNotes":
-      return block.kind === "image" && block.notes.length > 0
+      return leaf.component === "Picture" && leaf.notes.length > 0
     case "codeMarks":
-      return block.kind === "code" && block.marks.length > 0
+      return leaf.component === "Code" && leaf.marks.length > 0
     case "blockAside":
-      return block.aside.trim() !== ""
+      return leaf.aside.trim() !== ""
     case "beforeAfterRegion":
       return (
-        block.kind === "beforeAfter" &&
-        [block.before, block.after].some(
-          (side) => side.kind === "image" && side.region !== undefined,
-        )
+        leaf.component === "BeforeAfter" &&
+        [leaf.before, leaf.after].some((side) => side.kind === "image" && side.region !== undefined)
       )
   }
 }

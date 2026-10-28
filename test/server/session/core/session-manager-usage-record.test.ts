@@ -7,7 +7,7 @@ import type {
 } from "../../../../src/server/report/core/report-usage.ts"
 import type { ReportSection } from "../../../../src/shared/report/report-block.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
-import { reportEvent } from "../../../fixture/report-event.ts"
+import { reportOfDrawn } from "../../../fixture/report-event.ts"
 import { createStubDriver } from "../../../fixture/session-driver.ts"
 import { requestEvent } from "../../../fixture/session-event.ts"
 import { collector, launchWith, sessionInfo } from "../../../fixture/session-manager-record.ts"
@@ -25,7 +25,7 @@ describe("createSessionManager", () => {
       sections: readonly ReportSection[],
       unknownBlockCount = 0,
     ): SessionEvent {
-      return reportEvent({
+      return reportOfDrawn({
         toolUseId: "toolu_r1",
         conclusion: "架空の結論。",
         sections,
@@ -94,7 +94,7 @@ describe("createSessionManager", () => {
           notations: [],
           containedNotations: [],
           escapeNotations: [],
-          componentNames: [],
+          componentNames: ["Report", "Section", "Paragraph"],
           markdownNotationKinds: [],
           unknownBlockCount: 0,
           brokenFenceCount: 0,

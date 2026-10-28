@@ -62,6 +62,29 @@ describe("集計が読む記録の形", () => {
     ).toEqual(["Row", "Markdown"])
   })
 
+  it("札を書いた過去の行(許さない塊の数つき)も、札が unspecified の新しい行も読み戻せる", () => {
+    const past = recordSchema.safeParse({
+      v: 17,
+      ...acceptedRow,
+      sectionShapeTags: ["cause", "unspecified"],
+      sectionBlockKinds: [["table"], ["text"]],
+      forbiddenShapeSectionCount: 1,
+      forbiddenShapeBlocks: [{ shapeTag: "cause", blockKind: "table", count: 1 }],
+    })
+    const current = recordSchema.safeParse({
+      v: REPORT_USAGE_FORMAT_VERSION,
+      ...acceptedRow,
+      sectionShapeTags: ["unspecified"],
+      sectionBlockKinds: [["text"]],
+    })
+
+    expect(past.success).toBe(true)
+    expect(current.success).toBe(true)
+    expect(past.success && past.data.forbiddenShapeBlocks).toEqual([
+      { shapeTag: "cause", blockKind: "table", count: 1 },
+    ])
+  })
+
   it("直後の依頼の行(followed)は、どの形にも当たらず読み飛ばされる", () => {
     const followed = {
       v: REPORT_USAGE_FORMAT_VERSION,

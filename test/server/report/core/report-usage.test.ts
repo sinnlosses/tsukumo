@@ -5,7 +5,7 @@ import {
   reportUsageEntryOf,
 } from "../../../../src/server/report/core/report-usage.ts"
 import type { ReportBlock, ReportSection } from "../../../../src/shared/report/report-block.ts"
-import { reportEvent, reportOfSections } from "../../../fixture/report-event.ts"
+import { reportEvent, reportOfDrawn, reportOfSections } from "../../../fixture/report-event.ts"
 
 describe("isRestatementRequest", () => {
   it.each(["どういうこと？", "  もう一度説明して", "意味が分からない"])(
@@ -57,38 +57,30 @@ describe("reportUsageEntryOf", () => {
       fold: "",
       aside: "",
     }
-    const usageOf = (shapeTag: ReportSection["shapeTag"], block: ReportBlock) =>
+    const usageOf = (block: ReportBlock) =>
       reportUsageEntryOf(
-        reportOfSections([{ heading: "", shapeTag, blocks: [block, block] }]),
+        reportOfSections([{ heading: "", shapeTag: "unspecified", blocks: [block, block] }]),
         "claude-session-1",
         1_000,
         false,
       ).shapeTags
 
-    it.each([["cause", list(2), "list"]] as const)(
-      "%s の札の節の %o は許さない組に数える",
-      (shapeTag, block, blockKind) => {
-        expect(usageOf(shapeTag, block)).toEqual({
-          sectionShapeTags: [shapeTag],
-          sectionBlockKinds: [[blockKind]],
-          forbiddenShapeSectionCount: 1,
-          forbiddenShapeBlocks: [{ shapeTag, blockKind, count: 2 }],
-        })
-      },
-    )
-
-    it.each([["cause", graph]] as const)("%s の札の節の %o は数えない", (shapeTag, block) => {
-      expect(usageOf(shapeTag, block)).toEqual({
-        sectionShapeTags: [shapeTag],
-        sectionBlockKinds: [["graph"]],
+    it.each([
+      [list(2), "list"],
+      [graph, "graph"],
+      [table(["a", "b", "c"]), "table"],
+    ] as const)("%o は札が許さない組に数えず、種類だけを節に持つ", (block, blockKind) => {
+      expect(usageOf(block)).toEqual({
+        sectionShapeTags: ["unspecified"],
+        sectionBlockKinds: [[blockKind]],
         forbiddenShapeSectionCount: 0,
         forbiddenShapeBlocks: [],
       })
     })
 
-    it("節ごとの札を順に持ち、figure の図は節に数えない", () => {
+    it("節の数だけ unspecified を持ち、figure の図は節に数えない", () => {
       const entry = reportUsageEntryOf(
-        reportEvent({
+        reportOfDrawn({
           figure: {
             kind: "graph",
             title: "",
@@ -110,13 +102,10 @@ describe("reportUsageEntryOf", () => {
       )
 
       expect(entry.shapeTags).toEqual({
-        sectionShapeTags: ["cause", "unspecified", "cause"],
+        sectionShapeTags: ["unspecified", "unspecified", "unspecified"],
         sectionBlockKinds: [["list"], ["list"], ["table"]],
-        forbiddenShapeSectionCount: 2,
-        forbiddenShapeBlocks: [
-          { shapeTag: "cause", blockKind: "list", count: 1 },
-          { shapeTag: "cause", blockKind: "table", count: 1 },
-        ],
+        forbiddenShapeSectionCount: 0,
+        forbiddenShapeBlocks: [],
       })
     })
   })
@@ -524,6 +513,73 @@ describe("reportUsageEntryOf", () => {
     expect(JSON.stringify([entry.componentNames, entry.markdownNotationKinds])).not.toContain(
       "架空の",
     )
+  })
+
+  it("配置の部品の中・図・振り返りの葉の種類と欄を全部拾い、根から届かない葉は拾わない", () => {
+    const item = {
+      before: "0",
+      value: "1",
+      total: "",
+      label: "架空",
+      series: [],
+      better: "" as const,
+    }
+    const entry = reportUsageEntryOf(
+      reportEvent({
+        components: [
+          {
+            id: "root",
+            component: "Report",
+            children: ["s1"],
+            figure: "fig",
+            retrospective: { summary: "架空", drafts: [], blocks: ["retro"] },
+          },
+          { id: "s1", component: "Section", heading: "架空の節", children: ["row"] },
+          { id: "row", component: "Row", children: ["card", "tabs"] },
+          { id: "card", component: "Card", child: "col" },
+          { id: "col", component: "Column", children: ["stats"] },
+          { id: "stats", component: "Stats", items: [item], fold: "", aside: "" },
+          { id: "tabs", component: "Tabs", tabs: [{ title: "架空", child: "pic" }] },
+          {
+            id: "pic",
+            component: "Picture",
+            path: "架空/a.png",
+            caption: "架空",
+            notes: ["架空の帯"],
+            fold: "",
+            aside: "架空の出典",
+          },
+          { id: "fig", component: "Mermaid", title: "", source: "graph TD", fold: "", aside: "" },
+          {
+            id: "retro",
+            component: "Code",
+            language: "ts",
+            path: "",
+            source: "架空",
+            marks: [{ lines: "1", label: "架空" }],
+            fold: "",
+            aside: "",
+          },
+          {
+            id: "orphan",
+            component: "Table",
+            title: "",
+            columns: ["a", "b"],
+            rows: [["1", "2"]],
+            rest: "ほか",
+            fold: "",
+            aside: "",
+          },
+        ],
+      }),
+      "claude-session-1",
+      1_000,
+      false,
+    )
+
+    expect(entry.blockKinds).toEqual(["mermaid", "stats", "image", "code"])
+    expect(entry.blockFields).toEqual(["statsBefore", "imageNotes", "codeMarks", "blockAside"])
+    expect(entry.shapeTags.sectionBlockKinds).toEqual([["stats", "image"]])
   })
 
   it("components が空の回は、部品の名前も記法の種類も空", () => {

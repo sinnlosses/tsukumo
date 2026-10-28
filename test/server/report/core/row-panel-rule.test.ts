@@ -114,11 +114,15 @@ describe("row・panel の中と外で同じ並べ方の判定", () => {
     it.each([
       ["葉の塊の aside", [{ ...reportDraftText("架空"), aside: "架空の出典" }], ["blockAside"]],
       [
-        "row 自身の aside",
+        "row 自身の aside は部品に写らないので数えない",
         [row([reportDraftText("架空"), reportDraftText("架空")], "", "架空の出典")],
-        ["blockAside"],
+        [],
       ],
-      ["panel 自身の aside", [panel([reportDraftText("架空")], "", "架空の出典")], ["blockAside"]],
+      [
+        "panel 自身の aside は部品に写らないので数えない",
+        [panel([reportDraftText("架空")], "", "架空の出典")],
+        [],
+      ],
       [
         "panel の子の aside",
         [panel([{ ...reportDraftText("架空"), aside: "架空の出典" }])],

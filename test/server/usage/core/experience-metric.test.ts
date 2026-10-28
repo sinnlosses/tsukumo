@@ -12,7 +12,7 @@ import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../../src/shared/session/session-state.ts"
-import { reportEvent } from "../../../fixture/report-event.ts"
+import { reportOfDrawn } from "../../../fixture/report-event.ts"
 import { requestEvent } from "../../../fixture/session-event.ts"
 
 /** 依頼の文面に入れる目印。記録の行に出てはいけない。 */
@@ -212,7 +212,7 @@ describe("createExperienceMetricRecorder", () => {
       const { entries, send } = createHarness()
 
       send(10, REQUEST)
-      send(20, reportEvent({ sections: sectionsWithTable }))
+      send(20, reportOfDrawn({ sections: sectionsWithTable }))
       send(30, COMPLETED)
       send(75, REQUEST)
 
@@ -249,7 +249,7 @@ describe("createExperienceMetricRecorder", () => {
       const { entries, send } = createHarness()
 
       send(10, REQUEST)
-      send(20, reportEvent({ sections: sectionsWithTable, ...overrides }))
+      send(20, reportOfDrawn({ sections: sectionsWithTable, ...overrides }))
       send(30, COMPLETED)
       send(40, REQUEST)
 

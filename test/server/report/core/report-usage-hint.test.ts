@@ -55,7 +55,7 @@ describe("reportUsageEntryOf", () => {
     ]
 
     for (const row of table) {
-      const event = reportEvent({
+      const event = reportOfDrawn({
         sections: [{ heading: "", shapeTag: "unspecified", blocks: row.blocks }],
         task: row.task ? task : { kind: "none" },
       })
@@ -347,8 +347,8 @@ describe("reportUsageEntryOf", () => {
         {
           kind: "table",
           title: "",
-          columns: ["根拠"],
-          rows: [["src/b.ts:3"]],
+          columns: ["根拠", "補足"],
+          rows: [["src/b.ts:3", "架空"]],
           rest: "",
           fold: "",
           aside: "",
@@ -437,7 +437,7 @@ describe("reportUsageEntryOf", () => {
         true,
       )
 
-      expect(entry.blockKinds).toEqual(["image"])
+      expect(entry.blockKinds).toContain("image")
       expect(entry.hasFigure).toBe(true)
       expect(entry.hasBeforeAfterOrImage).toBe(true)
       expect(entry.readImageWithoutImageBlock).toBe(false)

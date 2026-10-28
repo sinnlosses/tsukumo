@@ -7,26 +7,25 @@ import {
   type ReportGraph,
 } from "../../../shared/report/report-block-diagram.ts"
 import type { ReportBlock, ReportSection } from "../../../shared/report/report-block.ts"
+import type { ReportOutlineLeaf } from "../../../shared/report/report-outline.ts"
 import { leafBlocksOf } from "../../../shared/report/row-panel-block.ts"
 
 const MERMAID_KINDS: ReadonlySet<string> = new Set(REPORT_MERMAID_KINDS)
 
-/** `mermaid` の塊のソース。塊の出現順に並び、`beforeAfter` は前の側が先。 */
-export function mermaidSourcesInSections(sections: readonly ReportSection[]): readonly string[] {
-  return sections
-    .flatMap((section) => leafBlocksOf(section.blocks))
-    .flatMap((block) => {
-      switch (block.kind) {
-        case "mermaid":
-          return [block.source]
-        case "beforeAfter":
-          return [block.before, block.after].flatMap((side) =>
-            side.kind === "mermaid" ? [side.source] : [],
-          )
-        default:
-          return []
-      }
-    })
+/** `Mermaid` の葉のソース。葉の出現順に並び、`BeforeAfter` は前の側が先。 */
+export function mermaidSourcesOfLeaves(leaves: readonly ReportOutlineLeaf[]): readonly string[] {
+  return leaves.flatMap((leaf) => {
+    switch (leaf.component) {
+      case "Mermaid":
+        return [leaf.source]
+      case "BeforeAfter":
+        return [leaf.before, leaf.after].flatMap((side) =>
+          side.kind === "mermaid" ? [side.source] : [],
+        )
+      default:
+        return []
+    }
+  })
 }
 
 export function unknownMermaidCount(sections: readonly ReportSection[]): number {
@@ -133,6 +132,24 @@ function svgFiguresInSections(sections: readonly ReportSection[]): readonly SvgF
           return [block]
         case "beforeAfter":
           return [block.before, block.after].flatMap((side) => (side.kind === "svg" ? [side] : []))
+        default:
+          return []
+      }
+    })
+}
+
+/** `mermaid` の塊のソース。塊の出現順に並び、`beforeAfter` は前の側が先。 */
+function mermaidSourcesInSections(sections: readonly ReportSection[]): readonly string[] {
+  return sections
+    .flatMap((section) => leafBlocksOf(section.blocks))
+    .flatMap((block) => {
+      switch (block.kind) {
+        case "mermaid":
+          return [block.source]
+        case "beforeAfter":
+          return [block.before, block.after].flatMap((side) =>
+            side.kind === "mermaid" ? [side.source] : [],
+          )
         default:
           return []
       }

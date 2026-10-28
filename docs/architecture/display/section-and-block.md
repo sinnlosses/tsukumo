@@ -13,7 +13,7 @@
   部品の切り方（`Report` の props と葉 19 種、基本カタログから取る 5 部品）は同「論点 2」、変換と `ReportEvent` の形は「論点 3」、ブラウザの描き方は「論点 4」が正典。
   `report` の受け口はこの `components` だけで、旧い変種（`json-schema`・`short-type`・`body-fence`）の受け口は外した。旧い `sections`・`body` で書かれた過去のセッションの `report` は、復元が読む。
 - 節は `heading` と並んで、省ける欄 `shapeTag`（`docs/glossary.md`「形の札」）を持つ。省いた節は `unspecified` に畳む。
-  札と塊の照合は「塊を足す・外す基準」の「形の札の照合」（数えるだけで差し戻さない）。
+  札と塊の照合は外した。過去の行の扱いは「塊を足す・外す基準」の「形の札の照合」。
   札は旧い `sections` の節の欄で、`components` の `Section` は札を持たず、旧い `body`（下の項）も持たない（どちらも常に `unspecified`）。
   条8は表を持たず、原則 5 つ・条 8 本・通る呼び出しの例 1 つの並びで、札と塊の対応は定義の `describe` と `report_part_card` が引かせる（ADR 0038）。
   効いたかは図の欄の `none`（省いた回を含む）と、旧い記録に残る `no-shape` の割合で見る
