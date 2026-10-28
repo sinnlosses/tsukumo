@@ -119,3 +119,4 @@
 | `docs/architecture/adr/0040-report-staged-drawing.md`               | `report` の `a2ui` の版を、部品が閉じるたびに草稿として描く                                           | 採用                   |
 | `docs/architecture/adr/0041-design-system-tokens-and-gallery.md`    | 画面全体のデザインシステム: 余白・角丸・影・動きのトークンと見本帳                                    | 採用                   |
 | `docs/architecture/adr/0042-report-leaf-direct-react.md`            | `report` の葉の部品を、Markdown に戻さず React の部品で直接描く                                       | 採用                   |
+| `docs/architecture/adr/0043-report-internal-on-components.md`       | `report` の内部の表現を `components` に一本化する                                                     | 採用                   |
