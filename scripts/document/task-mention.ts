@@ -1,6 +1,7 @@
 // `src/` / `test/` / `scripts/` / `docs/`（`docs/history/` を除く）のコメント・テスト名・本文に
 // 書かれたタスク番号（`.tw/task/T-xxx.md` のパスも `T-` + 3桁以上の並びを含むので同じ形で
-// 拾える。トラッカーが `github` の課題番号 `GH-<n>`、ゼロ埋めなしも拾う）を拾う純粋関数。
+// 拾える。トラッカーが `github` の課題番号 `GH-<n>`、ゼロ埋めなしも拾う。パスや文字列に入る
+// ハイフン無しの小文字 `gh<3桁以上>` も拾い、Beads の中の表記 `gh-<n>` は拾わない）を拾う純粋関数。
 //
 // `.beads` は git の外（`--stealth`）なので、切り替えで課題の `description` 末尾に残る
 // 「旧ID: T-xxx」の行はここが読む対象（コミットされたファイル）に現れない。
@@ -25,13 +26,13 @@ export type TaskMention = {
   readonly sourcePath: string
   /** 出現がある行（1始まり）。 */
   readonly line: number
-  /** 拾った ID（`T-xxx` または `GH-<n>` の形）。 */
+  /** 拾った ID（`T-xxx`・`GH-<n>`・`gh<n>` のいずれかの形）。 */
   readonly id: string
   /** 出現が置かれている場所（コメント・テスト名・それ以外のデータ）。 */
   readonly context: TaskMentionContext
 }
 
-const TASK_ID_PATTERN = /T-\d{3,}|GH-\d+/gu
+const TASK_ID_PATTERN = /T-\d{3,}|GH-\d+|\bgh\d{3,}\b/gu
 
 // `describe`/`it`/`test`（`.skip` などの修飾つきも）の最初の引数として開く引用符の直前まで。
 // テスト名の文字列そのものは、この直後から対応する閉じ引用符までになる。

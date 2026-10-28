@@ -26,6 +26,7 @@ const KNOWN_EXCEPTION_NUMBER = 225
 const KNOWN_EXCEPTION_ID = `T-${KNOWN_EXCEPTION_NUMBER}`
 const GH_SAMPLE_NUMBER = 5
 const GH_SAMPLE_ID = `GH-${GH_SAMPLE_NUMBER}`
+const GH_PLAIN_NUMBER = 4321
 const REQUIREMENTS_PATH = "docs/requirements.md"
 
 describe("findTaskMentions", () => {
@@ -55,6 +56,29 @@ describe("findTaskMentions", () => {
   test("小文字の `gh-` は拾わない（Beads の中の表記）", () => {
     expect(
       findTaskMentions("src/sample.ts", `gh-${GH_SAMPLE_NUMBER} はタスク番号ではない`),
+    ).toEqual([])
+  })
+
+  test("文字列リテラルの中のハイフン無し小文字 `gh` + 3桁以上を拾う", () => {
+    const id = `gh${GH_PLAIN_NUMBER}`
+    expect(findTaskMentions("src/sample.ts", `const name = "${id}"`)).toEqual([
+      { sourcePath: "src/sample.ts", line: 1, id, context: "data" },
+    ])
+  })
+
+  test("パスの形の中のハイフン無し小文字 `gh` + 数も拾う", () => {
+    const id = `gh${GH_PLAIN_NUMBER}`
+    expect(findTaskMentions("src/sample.ts", `const path = "/tmp/${id}/x.jsonl"`)).toEqual([
+      { sourcePath: "src/sample.ts", line: 1, id, context: "data" },
+    ])
+  })
+
+  test("語の途中と2桁以下のハイフン無し `gh` + 数は拾わない", () => {
+    expect(
+      findTaskMentions(
+        "src/sample.ts",
+        [`hi${"gh"}${GH_PLAIN_NUMBER}`, `x${"gh"}${GH_PLAIN_NUMBER}`, `${"gh"}12`].join(" "),
+      ),
     ).toEqual([])
   })
 

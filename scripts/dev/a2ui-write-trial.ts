@@ -2,8 +2,8 @@
 // 1 件ごとに <out>/<条件>.json へ結果を書き、あれば飛ばす。出力の全文は <out> にだけ残り、リポジトリには入れない。
 // 使い方:
 //   node scripts/dev/a2ui-write-trial.ts --dry-run
-//   node scripts/dev/a2ui-write-trial.ts --out /tmp/gh1732/runs [--only A-T1]
-//   node scripts/dev/a2ui-write-trial.ts --out /tmp/gh1732/runs --summary
+//   node scripts/dev/a2ui-write-trial.ts --out /tmp/a2ui-trial/runs [--only A-T1]
+//   node scripts/dev/a2ui-write-trial.ts --out /tmp/a2ui-trial/runs --summary
 // 題材は架空のものだけを渡す。実物の会話は渡さない。
 
 import { execFile } from "node:child_process"
