@@ -15,12 +15,12 @@ import type { SessionEvent } from "../../../../src/shared/session/session-event.
 import { callTool, mcpRequest } from "../../../fixture/mcp-server.ts"
 import { assistantMessage, REPORT_TOOL_FULL_NAME } from "../../../fixture/sdk-message.ts"
 import {
-  A2UI_WORK_MODE,
   CLOSING,
   REMAINING,
   SESSION_SUMMARY,
   TOOL_EXPRESSIONS,
   WAITING_LINE,
+  WORK_MODE,
   workServer,
 } from "../../../fixture/sdk-tool.ts"
 
@@ -78,7 +78,7 @@ function session() {
         ["default"],
       )
       const before = converted.flatMap((event) => review.pass(event))
-      const reply = await callTool(workServer([], [], review, [], A2UI_WORK_MODE), "report", input)
+      const reply = await callTool(workServer([], [], review, [], WORK_MODE), "report", input)
       const after = review.pass({
         kind: "tool-finished",
         toolUseId,
@@ -160,7 +160,7 @@ describe("a2ui の report の受理と差し戻し", () => {
 })
 
 describe("a2ui の report の定義", () => {
-  it("説明文は json-schema と同じで、引数は components だけを持つ", async () => {
+  it("説明文は REPORT_TOOL_DESCRIPTION で、引数は components だけを持つ", async () => {
     const report = await listedReport()
 
     expect(report.description).toBe(REPORT_TOOL_DESCRIPTION)
@@ -220,7 +220,7 @@ const REPORT_INPUT_SCHEMA = z.object({
 })
 
 async function listedReport() {
-  const server = workServer([], [], createCallReview(), [], A2UI_WORK_MODE)
+  const server = workServer([], [], createCallReview(), [], WORK_MODE)
   const reply = await mcpRequest(server, "tools/list", {}, TOOLS_REPLY)
   const report = reply.result.tools.find((tool) => tool.name === "report")
   if (report === undefined) {

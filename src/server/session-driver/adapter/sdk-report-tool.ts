@@ -6,20 +6,9 @@ import { z } from "zod"
 import type { ExpressionChoice } from "../../../shared/character-pack/expression-choice.ts"
 import { REPORT_COMPONENT_SCHEMAS } from "../../../shared/report/a2ui-report-catalog.ts"
 import type { ReportArgumentField } from "../../../shared/report/report-argument-size.ts"
-import { keyFiguresSchema } from "../../../shared/report/report-block-comparison.ts"
-import { reportFigureSchema, reportSectionSchema } from "../../../shared/report/report-block.ts"
-import { reportCheckSchema } from "../../../shared/report/report-check.ts"
-import {
-  FIRST_SENTENCE_TARGET,
-  FIRST_SENTENCE_TARGET_COMMAS,
-  MAX_CONCLUSION_SENTENCES,
-  MAX_FIRST_SENTENCE,
-} from "../../../shared/report/report-limit.ts"
-import { reportRetrospectiveSchema } from "../../../shared/report/report-retrospective.ts"
-import { type ReportTask, reportTaskSchema } from "../../../shared/report/report-task.ts"
+import type { ReportTask } from "../../../shared/report/report-task.ts"
 import type { FigurePreference } from "../../../shared/session/session-default.ts"
 import { WORK_PLAN_CLOSINGS } from "../../../shared/session/work-plan.ts"
-import type { ReportSchemaVariant } from "../../core/schema-variant.ts"
 import { REPORT_TOOL_NAME } from "../../core/tsukumo-tool-name.ts"
 import { readReportBlockFiles } from "../../report/adapter/report-file.ts"
 import { a2uiStructureFaults } from "../../report/core/a2ui-structure-fault.ts"
@@ -27,16 +16,12 @@ import { hasReportField } from "../../report/core/report-inheritance.ts"
 import { REPORT_CHANGED_FIELDS_ONLY_TEXT } from "../../report/core/report-rejection.ts"
 import {
   REPORT_A2UI_COMPONENTS_DESCRIPTION,
-  REPORT_BODY_DESCRIPTION,
   REPORT_CHECKS_DESCRIPTION,
-  REPORT_RETROSPECTIVE_DESCRIPTION,
   REPORT_CLOSING_DESCRIPTION,
-  reportFigureDescription,
-  REPORT_FIGURE_SHORT_TYPE_NOTE,
   REPORT_KEY_FIGURES_DESCRIPTION,
-  REPORT_PART_CARD_NOTE,
+  reportFigureDescription,
+  REPORT_RETROSPECTIVE_DESCRIPTION,
   REPORT_SECTIONS_DESCRIPTION,
-  REPORT_SECTIONS_SHORT_TYPE_HEADING,
   REPORT_SESSION_REMAINING_DESCRIPTION,
   REPORT_SESSION_SUMMARY_DESCRIPTION,
   REPORT_TASK_DESCRIPTION,
@@ -45,7 +30,6 @@ import {
   REPORT_WAITING_LINE_DESCRIPTION,
   REPORT_WORK_PLAN_CLOSING_DESCRIPTION,
 } from "../../report/core/report-tool.ts"
-import { reportShortTypeText } from "../../report/core/short-type-text.ts"
 import type { CallReview } from "../core/call-review.ts"
 import { reportEvents } from "../core/sdk-report-message.ts"
 import { speechShape } from "./sdk-speech-tool.ts"
@@ -70,11 +54,7 @@ import { speechShape } from "./sdk-speech-tool.ts"
  * 差し戻された呼び出しの題を渡すと、規約違反を書いたついでの題が残ってしまう。
  * 実際に書くかどうかの判断（利用者の `/rename` を上書きしないなど）は `decideSessionTitle` が持つので、ここは渡すだけ。
  *
- * `short-type` のときは `figure` と `sections` を緩い形で受け、塊の型は `sections` の欄の説明に短い型の表記で載せる。
- * Claude Code はツールの説明文を既定 2048 字で切り、欄の説明は切らない。型の表記をツールの説明文へ移すと切れる。
- * `body-fence` のときは本文を Markdown の `body` で受け、`sections` は緩い形で残す。`body` と `sections` が同じ呼び出しに来たら判定せずに `isError` で返す。
- * 緩い形は SDK の検査を素通りするので、handler が `json-schema` と同じ形で検査し直し、落ちたら判定せずに `isError` で返す。
- * `a2ui` のときは A2UI のカタログの部品の一覧 `components` だけで受ける。
+ * 入力は A2UI のカタログの部品の一覧 `components` だけで受ける。
  * 構造の規約に外れた一覧は、判定より先に `CallReview.judgeReportStructure` に渡し、差し戻すなら `VALIDATION_FAILED` の文を `isError` で返す。
  */
 export function reportTool(
@@ -82,7 +62,6 @@ export function reportTool(
   review: CallReview,
   onReportTitle: (title: string) => void,
   cwd: string,
-  reportSchema: ReportSchemaVariant,
   figurePreference: FigurePreference,
 ) {
   const expressionNames = expressions.map((choice) => choice.name)
@@ -126,68 +105,17 @@ export function reportTool(
     }
   }
 
-  if (reportSchema === "json-schema") {
-    return tool(
-      REPORT_TOOL_NAME,
-      REPORT_TOOL_DESCRIPTION,
-      reportInputShape(expressions, figurePreference),
-      answer,
-    )
-  }
-  if (reportSchema === "a2ui") {
-    return tool(
-      REPORT_TOOL_NAME,
-      REPORT_TOOL_DESCRIPTION,
-      a2uiInputShape(expressions),
-      async (input) => {
-        const faults = a2uiStructureFaults(input.components)
-        const structure =
-          faults.length === 0 ? { kind: "accepted" as const } : review.judgeReportStructure(faults)
-        return structure.kind === "rejected"
-          ? { content: [{ type: "text" as const, text: structure.text }], isError: true }
-          : answer(input)
-      },
-    )
-  }
-  if (reportSchema === "body-fence") {
-    const bodyInput = z.object({
-      ...reportInputShape(expressions, figurePreference),
-      body: z.string().optional(),
-    })
-    return tool(
-      REPORT_TOOL_NAME,
-      REPORT_TOOL_DESCRIPTION,
-      bodyFenceInputShape(expressions, figurePreference),
-      async (input) => {
-        if (input.body !== undefined && input.sections !== undefined) {
-          return {
-            content: [{ type: "text" as const, text: BODY_AND_SECTIONS_TEXT }],
-            isError: true,
-          }
-        }
-        const parsed = bodyInput.safeParse(input)
-        return parsed.success
-          ? answer(parsed.data)
-          : {
-              content: [{ type: "text" as const, text: invalidInputText(parsed.error) }],
-              isError: true,
-            }
-      },
-    )
-  }
-  const strictInput = z.object(reportInputShape(expressions, figurePreference))
   return tool(
     REPORT_TOOL_NAME,
     REPORT_TOOL_DESCRIPTION,
-    shortTypeInputShape(expressions, figurePreference),
+    a2uiInputShape(expressions, figurePreference),
     async (input) => {
-      const parsed = strictInput.safeParse(input)
-      return parsed.success
-        ? answer(parsed.data)
-        : {
-            content: [{ type: "text" as const, text: invalidInputText(parsed.error) }],
-            isError: true,
-          }
+      const faults = a2uiStructureFaults(input.components)
+      const structure =
+        faults.length === 0 ? { kind: "accepted" as const } : review.judgeReportStructure(faults)
+      return structure.kind === "rejected"
+        ? { content: [{ type: "text" as const, text: structure.text }], isError: true }
+        : answer(input)
     },
   )
 }
@@ -221,121 +149,52 @@ function missingFieldsText(missing: readonly ReportArgumentField[]): string {
   )
 }
 
-/** モデルに渡す `report` の引数の形。欄はどれも任意。 */
-function reportInputShape(
+/**
+ * モデルに渡す引数の形。`Report` の欄に説明を付け、締めのセリフと待ちの一言だけ、表情を選べる名前に絞る。
+ * 結論の説明は `Report` の部品の定義が持つ。
+ */
+function a2uiInputShape(
   expressions: readonly ExpressionChoice[],
   figurePreference: FigurePreference,
 ) {
-  return {
-    task: reportTaskSchema.optional().describe(REPORT_TASK_DESCRIPTION),
+  const { Report, Section, ...others } = REPORT_COMPONENT_SCHEMAS
+  const { shape } = Report
+  const report = Report.extend({
+    figure: shape.figure.describe(
+      `${reportFigureDescription(figurePreference)}ここには図の部品の ID を置く。`,
+    ),
+    task: shape.task.describe(REPORT_TASK_DESCRIPTION),
     workPlanClosing: z
       .enum(WORK_PLAN_CLOSINGS)
       .optional()
       .describe(REPORT_WORK_PLAN_CLOSING_DESCRIPTION),
-    conclusion: z
-      .array(z.string())
-      .optional()
-      .describe(
-        `結論。レポートの冒頭の文を1要素1文（句点まで）で1〜${String(MAX_CONCLUSION_SENTENCES)}要素。1文目は全角${String(MAX_FIRST_SENTENCE)}字以内（目安は${String(FIRST_SENTENCE_TARGET)}字、読点は${String(FIRST_SENTENCE_TARGET_COMMAS)}つまで）。悪い例: 「設定の読み込みを共通化し、型を整理し、テストも足して、起動の流れを書き換えた」（変更の列挙）。良い例: 「次から設定の書き間違いが起動時に分かる」（読み手から見た変化）。2文目は「それで何が良いか」か「変えていないもの」。例: ["…分かる。", "読み方は変えていない。"]`,
-      ),
-    keyFigures: keyFiguresSchema.optional().describe(REPORT_KEY_FIGURES_DESCRIPTION),
-    figure: reportFigureSchema.optional().describe(reportFigureDescription(figurePreference)),
-    sections: z.array(reportSectionSchema).min(1).optional().describe(REPORT_SECTIONS_DESCRIPTION),
-    retrospective: reportRetrospectiveSchema.optional().describe(REPORT_RETROSPECTIVE_DESCRIPTION),
-    favor: z
-      .string()
-      .optional()
-      .describe(
-        "作業を終えた・止めたあとに残る利用者へのお願い（判断・作業・情報）が実際にあるときだけ1つ（2件あってもまとめる）。無ければ省く",
-      ),
-    checks: z.array(reportCheckSchema).optional().describe(REPORT_CHECKS_DESCRIPTION),
-    title: z.string().optional().describe(REPORT_TITLE_DESCRIPTION),
-    sessionSummary: z.string().optional().describe(REPORT_SESSION_SUMMARY_DESCRIPTION),
-    sessionRemaining: z.string().optional().describe(REPORT_SESSION_REMAINING_DESCRIPTION),
+    keyFigures: shape.keyFigures.describe(REPORT_KEY_FIGURES_DESCRIPTION),
+    retrospective: shape.retrospective.describe(REPORT_RETROSPECTIVE_DESCRIPTION),
+    favor: shape.favor.describe(
+      "作業を終えた・止めたあとに残る利用者へのお願い（判断・作業・情報）が実際にあるときだけ1つ（2件あってもまとめる）。無ければ省く",
+    ),
+    checks: shape.checks.describe(REPORT_CHECKS_DESCRIPTION),
+    title: shape.title.describe(REPORT_TITLE_DESCRIPTION),
+    sessionSummary: shape.sessionSummary.describe(REPORT_SESSION_SUMMARY_DESCRIPTION),
+    sessionRemaining: shape.sessionRemaining.describe(REPORT_SESSION_REMAINING_DESCRIPTION),
     closing: z.object(speechShape(expressions)).optional().describe(REPORT_CLOSING_DESCRIPTION),
     waitingLine: z
       .object(speechShape(expressions))
       .optional()
       .describe(REPORT_WAITING_LINE_DESCRIPTION),
-  }
-}
-
-/** `short-type` のときモデルに渡す引数の形。`figure`・`sections`・`retrospective` の塊だけを緩い形にし、ほかの欄と説明は `json-schema` と同じ。 */
-function shortTypeInputShape(
-  expressions: readonly ExpressionChoice[],
-  figurePreference: FigurePreference,
-) {
-  return {
-    ...reportInputShape(expressions, figurePreference),
-    retrospective: reportRetrospectiveSchema
-      .extend({
-        blocks: z
-          .array(LOOSE_OBJECT)
-          .optional()
-          .describe("結果の根拠に図・表・コードが要るときだけ。ReportSection の blocks と同じ部品"),
-      })
-      .optional()
-      .describe(REPORT_RETROSPECTIVE_DESCRIPTION),
-    figure: LOOSE_OBJECT.optional().describe(
-      `${reportFigureDescription(figurePreference)}${REPORT_FIGURE_SHORT_TYPE_NOTE}`,
-    ),
-    sections: z
-      .array(LOOSE_OBJECT)
-      .optional()
-      .describe(
-        `${REPORT_SECTIONS_DESCRIPTION}\n${REPORT_SECTIONS_SHORT_TYPE_HEADING}\n${reportShortTypeText()}`,
-      ),
-  }
-}
-
-/**
- * `body-fence` のときモデルに渡す引数の形。本文は `body` で受け、旧い `sections` は緩い形で残す。
- * `figure`・`retrospective` は `short-type` と同じ緩い形で、塊の型の表記は `figure` の説明に1回だけ載せる。
- */
-function bodyFenceInputShape(
-  expressions: readonly ExpressionChoice[],
-  figurePreference: FigurePreference,
-) {
-  return {
-    ...shortTypeInputShape(expressions, figurePreference),
-    figure: LOOSE_OBJECT.optional().describe(
-      `${reportFigureDescription(figurePreference)}${REPORT_PART_CARD_NOTE}`,
-    ),
-    sections: z
-      .array(LOOSE_OBJECT)
-      .optional()
-      .describe(
-        `旧い本文の形。body と同じ呼び出しに併記できない。body のフェンスで書けない部品（options・compare・matrix・svg・stats・timeline・beforeAfter・chart・plot）を使うときは、body を渡さず本文全体をこちらの節の blocks で書く。${REPORT_PART_CARD_NOTE}`,
-      ),
-    body: z.string().optional().describe(REPORT_BODY_DESCRIPTION),
-  }
-}
-
-/** `a2ui` のときモデルに渡す引数の形。`Report` の締めのセリフと待ちの一言だけ、表情を選べる名前に絞る。 */
-function a2uiInputShape(expressions: readonly ExpressionChoice[]) {
-  const { Report, ...others } = REPORT_COMPONENT_SCHEMAS
-  const report = Report.extend({
-    closing: z.object(speechShape(expressions)).optional(),
-    waitingLine: z.object(speechShape(expressions)).optional(),
   })
   return {
     components: z
-      .array(z.discriminatedUnion("component", [report, ...Object.values(others)]))
+      .array(
+        z.discriminatedUnion("component", [
+          report,
+          Section.describe(REPORT_SECTIONS_DESCRIPTION),
+          ...Object.values(others),
+        ]),
+      )
       .min(1)
       .describe(REPORT_A2UI_COMPONENTS_DESCRIPTION),
   }
-}
-
-/** `body` と `sections` が同じ呼び出しに来たときの戻り値。 */
-const BODY_AND_SECTIONS_TEXT =
-  `Input validation error: ${REPORT_TOOL_NAME} の body と sections は同じ呼び出しに併記できない。` +
-  "どちらか一方だけを渡して呼び直す"
-
-const LOOSE_OBJECT = z.record(z.string(), z.unknown())
-
-/** handler の検査で落ちたときの戻り値。SDK が自分の検査で落としたときと同じ書き出しにする。 */
-function invalidInputText(error: z.ZodError): string {
-  return `Input validation error: Invalid arguments for tool ${REPORT_TOOL_NAME}: ${error.message}`
 }
 
 /** ツールの結果の `_meta` に true で載せると、Claude Code がそこでターンを閉じるキー。 */

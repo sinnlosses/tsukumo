@@ -3,15 +3,12 @@ import { z } from "zod"
 
 import { REPORT_CALL_EXAMPLES_TEXT } from "../../../../src/server/report/core/call-example.ts"
 import { REPORT_TOOL_DESCRIPTION } from "../../../../src/server/report/core/report-tool.ts"
-import { createCallReview } from "../../../../src/server/session-driver/core/call-review.ts"
-import { callTool } from "../../../fixture/mcp-server.ts"
+import { callReport } from "../../../fixture/a2ui-report.ts"
 import {
   CLOSING,
   REMAINING,
   SESSION_SUMMARY,
-  SHORT_TYPE_WORK_MODE,
   WAITING_LINE,
-  WORK_MODE,
   workServer,
 } from "../../../fixture/sdk-tool.ts"
 
@@ -44,16 +41,11 @@ describe("report の呼び出しの例", () => {
   })
 
   it.each(examples)(
-    "$name は json-schema と short-type のどちらの report でも差し戻されずに通る",
+    "$name は components に組み直した report が差し戻されずに通る",
     async (example) => {
-      for (const mode of [WORK_MODE, SHORT_TYPE_WORK_MODE]) {
-        const reply = await callTool(workServer([], [], createCallReview(), [], mode), "report", {
-          ...baseCall,
-          ...example.value,
-        })
+      const reply = await callReport(workServer(), { ...baseCall, ...example.value })
 
-        expect(reply).toMatchObject({ isError: false, endsTurn: true })
-      }
+      expect(reply).toMatchObject({ isError: false, endsTurn: true })
     },
   )
 

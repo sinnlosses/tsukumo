@@ -10,7 +10,6 @@ import { readChatTopics } from "../server/chat/core/chat-consolidation.ts"
 import type { ReadRecent } from "../server/chat/core/chat-memory-prompt.ts"
 import type { ChatSummary } from "../server/chat/core/chat-memory.ts"
 import type { Config } from "../server/core/config.ts"
-import type { ReportSchemaVariant } from "../server/core/schema-variant.ts"
 import type { DiagnosticLog } from "../server/diagnostic/core/diagnostic.ts"
 import { startFakeSession } from "../server/session-driver/adapter/fake-driver.ts"
 import {
@@ -135,7 +134,6 @@ export function wireSessionLaunch(options: {
             seed,
             context,
             claudeConfigDir: config.claudeConfigDir,
-            reportSchema: config.reportSchema,
             disallowedTools: config.disallowedTools,
             turnStepLimit: config.turnStepLimit,
             mountWorkflowPlugin: options.mountWorkflowPlugin,
@@ -208,7 +206,6 @@ function startDriver(options: {
   readonly mountWorkflowPlugin: boolean
   readonly mountFigurePlugin: boolean
   readonly workflowTw: string
-  readonly reportSchema: ReportSchemaVariant
   readonly disallowedTools: readonly string[]
   readonly turnStepLimit: number
   readonly firstViewer: Promise<void>
@@ -248,14 +245,7 @@ function startRealDriver(
 ): SessionDriver {
   const { seed, context, onEvent } = options
   const memory = chatMemoryOf(seed.pack, context)
-  const mode = sessionMode(
-    seed,
-    context,
-    memory,
-    options.reportSchema,
-    onEvent,
-    options.reportFailure,
-  )
+  const mode = sessionMode(seed, context, memory, onEvent, options.reportFailure)
   const tag = sessionTag(seed.pack.name, seed.chat, options.viewPort)
 
   return startSdkDriver({
@@ -320,12 +310,11 @@ function sessionMode(
   seed: SessionLaunchSeed<CharacterPack>,
   context: WiringContext,
   memory: ChatMemoryPorts,
-  reportSchema: ReportSchemaVariant,
   onEvent: (event: SessionEvent) => void,
   reportFailure: (place: SwallowedFailurePlace, error: unknown) => void,
 ): SessionMode {
   if (!seed.chat) {
-    return { kind: "work", reportSchema, figurePreference: seed.sessionDefault.figurePreference }
+    return { kind: "work", figurePreference: seed.sessionDefault.figurePreference }
   }
 
   return {

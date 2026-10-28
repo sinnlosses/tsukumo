@@ -62,8 +62,7 @@ export const ENV_NAMES = {
    */
   home: { name: "TSUKUMO_HOME", audience: "user" },
   /**
-   * `report` の塊の型の渡し方（`json-schema` / `short-type` / `body-fence` / `a2ui`。既定は `json-schema`）。
-   * `short-type` は短い型の表記で渡す試しの版、`body-fence` は本文を Markdown の `body` で受ける試しの版、`a2ui` は A2UI の部品の一覧 `components` で受ける試しの版になり、ほかの値は既定に倒す。
+   * `report` の入力の渡し方（`a2ui` だけ。A2UI の部品の一覧 `components` で受ける）。ほかの値は `a2ui` に倒す。
    */
   reportSchema: { name: "TSUKUMO_REPORT_SCHEMA", audience: "test" },
   /**
@@ -176,7 +175,7 @@ export function readConfig(env: Readonly<Record<string, string | undefined>>): C
     reportSchema:
       REPORT_SCHEMA_VARIANTS.find(
         (variant) => variant === env[ENV_NAMES.reportSchema.name]?.trim(),
-      ) ?? "json-schema",
+      ) ?? "a2ui",
     disallowedTools: parseToolNames(env[ENV_NAMES.disallowedTools.name]),
     turnStepLimit:
       parsePositiveInteger(env[ENV_NAMES.turnStepLimit.name]) ?? DEFAULT_TURN_STEP_LIMIT,

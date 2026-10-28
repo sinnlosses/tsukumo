@@ -31,7 +31,7 @@ afterEach(() => {
 
 function wire(driver: WiringDriver) {
   vi.stubEnv("TSUKUMO_HOME", home())
-  return wireUsageLogs({ driver }, { reportSchema: "json-schema", openTask: NO_TASK })
+  return wireUsageLogs({ driver }, { reportSchema: "a2ui", openTask: NO_TASK })
 }
 
 async function appendOneOfEach(driver: WiringDriver) {

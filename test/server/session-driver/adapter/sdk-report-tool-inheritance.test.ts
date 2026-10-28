@@ -10,6 +10,7 @@ import {
 } from "../../../../src/server/session-driver/core/call-review.ts"
 import { toSessionEvents } from "../../../../src/server/session-driver/core/sdk-message.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
+import { reportInput } from "../../../fixture/a2ui-report.ts"
 import { callTool } from "../../../fixture/mcp-server.ts"
 import { REJECTION_PHRASE } from "../../../fixture/report-review.ts"
 import { assistantMessage, REPORT_TOOL_FULL_NAME } from "../../../fixture/sdk-message.ts"
@@ -62,7 +63,8 @@ function session() {
      * `assistant` メッセージの変換 → handler → 結果の順に流し、`pass` が描いた `report` を返す（描かなければ undefined）。
      * handler に届かない呼び出し（入力検査で落ちる）も、結果は `isError` で流れる。
      */
-    call: async (input: Readonly<Record<string, unknown>>) => {
+    call: async (fields: Readonly<Record<string, unknown>>) => {
+      const input = reportInput(fields)
       count += 1
       const toolUseId = `toolu_r${String(count)}`
       const converted = toSessionEvents(

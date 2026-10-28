@@ -5,7 +5,7 @@ import { mapValues, omit } from "remeda"
 import { z } from "zod"
 
 import { BASIC_PART_DEFS, BASIC_PART_SCHEMAS, BASIC_PARTS } from "./a2ui-basic-part-list.ts"
-import { plotBlockSchema } from "./figure-grammar.ts"
+import { addPlotDataIssues, plotBlockSchema } from "./figure-grammar.ts"
 import {
   compareBlockSchema,
   keyFiguresSchema,
@@ -36,6 +36,12 @@ import {
   reportSectionSchema,
 } from "./report-block.ts"
 import { reportCheckSchema } from "./report-check.ts"
+import {
+  FIRST_SENTENCE_TARGET,
+  FIRST_SENTENCE_TARGET_COMMAS,
+  MAX_CONCLUSION_SENTENCES,
+  MAX_FIRST_SENTENCE,
+} from "./report-limit.ts"
 import { reportRetrospectiveSchema } from "./report-retrospective.ts"
 import { reportTaskSchema } from "./report-task.ts"
 import { timelineBlockSchema } from "./timeline-block.ts"
@@ -73,7 +79,8 @@ const LEAF_COMPONENTS = {
   Options: leafComponent("Options", optionsBlockSchema),
   Claims: leafComponent("Claims", claimsBlockSchema),
   Picture: leafComponent("Picture", imageBlockSchema),
-  Plot: leafComponent("Plot", plotBlockSchema),
+  // leafComponent は塊ぜんたいに掛かる検査（superRefine）を写さないので、Plot の data の検査はここで掛け直す
+  Plot: leafComponent("Plot", plotBlockSchema).superRefine(addPlotDataIssues),
   Markdown: leafComponent("Markdown", markdownBlockSchema),
 } as const
 
@@ -125,7 +132,12 @@ const reportComponentSchema = z.object({
   component: z.literal("Report"),
   task: reportTaskSchema.optional(),
   workPlanClosing: z.enum(["finished", "stopped"]).optional(),
-  conclusion: z.array(z.string()).optional(),
+  conclusion: z
+    .array(z.string())
+    .optional()
+    .describe(
+      `結論。レポートの冒頭の文を1要素1文（句点まで）で1〜${String(MAX_CONCLUSION_SENTENCES)}要素。1文目は全角${String(MAX_FIRST_SENTENCE)}字以内（目安は${String(FIRST_SENTENCE_TARGET)}字、読点は${String(FIRST_SENTENCE_TARGET_COMMAS)}つまで）。悪い例: 「設定の読み込みを共通化し、型を整理し、テストも足して、起動の流れを書き換えた」（変更の列挙）。良い例: 「次から設定の書き間違いが起動時に分かる」（読み手から見た変化）。2文目は「それで何が良いか」か「変えていないもの」。例: ["…分かる。", "読み方は変えていない。"]`,
+    ),
   keyFigures: keyFiguresSchema.optional(),
   figure: z.string().optional(),
   figureNone: z.enum(REPORT_FIGURE_NONE_REASONS).optional(),

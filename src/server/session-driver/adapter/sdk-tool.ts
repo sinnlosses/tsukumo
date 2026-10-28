@@ -36,7 +36,7 @@ import { phaseResultTool, questionBriefTool, workPlanTool } from "./sdk-work-too
  * `phase_result` も仕事のときだけで、帯を動かす口は変換ではなく handler（帯を動かしたら `delegate-returned` を流す）。
  * 変換は委譲先の呼び出しから、次の返却に `phase_result` が伴った印だけを作る。
  * `question_brief` も仕事のときだけで、返すのは崩れた添え書きの直し方だけ。受け付けた添え書きは `holdBrief` に預ける。
- * `report_part_card` も仕事のときだけで、返すのは部品の文法カード（型と例）か、引ける種類の一覧だけ。
+ * `report_part_card` も仕事のときだけで、返すのは部品の文法カード（JSON Schema と例）か、引ける名前の一覧だけ。
  *
  * セリフそのものは、この handler ではなく `assistant` メッセージの変換から取り出す（`toSessionEvents`）。
  * 受け取り口を1つにしておくと、イベントの流れが1本で済む。
@@ -60,14 +60,7 @@ export function tsukumoServer(
       speakTool(expressions, mode, callReview),
       ...(mode.kind === "work"
         ? [
-            reportTool(
-              expressions,
-              callReview,
-              onReportTitle,
-              cwd,
-              mode.reportSchema,
-              mode.figurePreference,
-            ),
+            reportTool(expressions, callReview, onReportTitle, cwd, mode.figurePreference),
             workPlanTool(callReview),
             phaseResultTool(callReview, onEvent),
             questionBriefTool(holdBrief),

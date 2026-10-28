@@ -99,36 +99,10 @@ export const REPORT_SECTIONS_DESCRIPTION =
   "部品の aside に出典・どこを見るかを1行で書くと、本文の流れの外（本文の右の余白）に置く。" +
   "結論と checks に書いたことは節で繰り返さず、根拠と中身だけを置く。"
 
-/**
- * `report` の任意の `body` 引数（`body-fence` の版の本文）の説明。
- * フェンスは info string の語で種類を言い、中身は既存の記法を使う。読めないフェンスは差し戻さず、素のコードブロックに描く。
- */
-export const REPORT_BODY_DESCRIPTION =
-  "結論のあとの本文。Markdown 1つで書く（見出しは ##）。sections と同じ呼び出しに併記できない。" +
-  "図・表・コード・注記・主張・画像だけ、言語名の代わりに種類を書いたフェンスで書く。" +
-  "figure: question:（読者がこの図で決めること）・relation:（compare / rank / part / trend / change / distribution / correlate / range）・unit:（値の単位）・data:（次の行から字下げして `名前: 数`）。" +
-  "graph: 1行1矢印の `A -> B: 語`。" +
-  "mermaid: sequenceDiagram か stateDiagram-v2 のソース。" +
-  "table: 開きの行の語の後ろに表の題、中身は `| 列 | 列 |` の表。" +
-  "code: 開きの行は `code 言語 [パス]`。" +
-  "callout: 開きの行は `callout 種別`（info / warn / ng / ask / memo）、中身は一文。" +
-  "claims: 1行1主張 `確度 | 主張 | 根拠 | 確かめ方`（確度は confirmed / inferred / unverified）。" +
-  "image: 開きの行は `image 何が見えるか`、中身の1行目が画像のパス、2行目からが見る場所。"
-
 /** `a2ui` の版の `components` 引数（A2UI のカタログの部品の平らな一覧）の説明。 */
 export const REPORT_A2UI_COMPONENTS_DESCRIPTION =
   "レポートを A2UI の部品の平らな一覧で書く。根は id が root の Report で、結論ほかの欄は Report の props に書き、Report.children に Section の ID を並べる。" +
   "Section.children は葉か配置の部品（Row・Column・Card・Tabs・ChoicePicker）の ID、図は Report.figure に図の部品の ID を置く。呼び直すときも一覧を全部渡す。"
-
-/** `body-fence` の版で、部品の型の表記の代わりに `figure` と `sections` の説明の後ろに足す文。 */
-export const REPORT_PART_CARD_NOTE = "部品の型と例は report_part_card で種類を渡して引く。"
-
-/** 短い型の表記で渡す版で、`figure` の説明の後ろに足す文。 */
-export const REPORT_FIGURE_SHORT_TYPE_NOTE = "型は sections の説明の ReportFigure。"
-
-/** 短い型の表記で渡す版で、`sections` の説明と型の表記の間に置く見出し。 */
-export const REPORT_SECTIONS_SHORT_TYPE_HEADING =
-  "各節の型は ReportSection（TypeScript の表記。? の欄は省ける）:"
 
 /**
  * `report` の `closing` 引数（締めのセリフ）の説明。

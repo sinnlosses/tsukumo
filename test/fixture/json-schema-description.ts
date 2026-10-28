@@ -10,13 +10,3 @@ export function descriptionsIn(value: unknown): readonly string[] {
     key === "description" && typeof child === "string" ? [child] : descriptionsIn(child),
   )
 }
-
-/** 説明のうち、どれかの行が `// ` の行として型の表記に無いもの。 */
-export function missingDescriptions(
-  descriptions: readonly string[],
-  text: string,
-): readonly string[] {
-  return descriptions.filter((description) =>
-    description.split("\n").some((line) => !text.includes(`// ${line}\n`)),
-  )
-}

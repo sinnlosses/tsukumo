@@ -147,7 +147,6 @@ describe("toSystemPromptMode", () => {
     const readChatSummary = (): undefined => undefined
     const sessionMode: SessionMode = {
       kind: "work",
-      reportSchema: "json-schema",
       figurePreference: "chart",
     }
 

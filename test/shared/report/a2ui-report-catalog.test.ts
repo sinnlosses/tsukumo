@@ -8,7 +8,10 @@ import {
   LEAF_COMPONENT_KINDS,
   REPORT_COMPONENT_SCHEMAS,
 } from "../../../src/shared/report/a2ui-report-catalog.ts"
-import { REPORT_BLOCK_KINDS } from "../../../src/shared/report/report-block.ts"
+import {
+  namedWriterBlockSchema,
+  REPORT_BLOCK_KINDS,
+} from "../../../src/shared/report/report-block.ts"
 
 // 書き手に渡す塊の kind と部品名の対応（塊を足したら、ここと実装の表の両方に足す）
 const KIND_TO_COMPONENT = {
@@ -117,6 +120,36 @@ describe("A2UI のカタログ文書", () => {
 
     expect(refs.length).toBeGreaterThan(0)
     expect(dangling).toEqual([])
+  })
+
+  it("葉の部品は、元の塊の塊ぜんたいに掛かる検査（refine・superRefine）を落とさない", () => {
+    const sources = new Map(
+      namedWriterBlockSchema.options.map((option) => [option.shape.kind.value, option]),
+    )
+
+    const parts = new Map(Object.entries(REPORT_COMPONENT_SCHEMAS))
+
+    for (const [component, kind] of Object.entries(LEAF_COMPONENT_KINDS)) {
+      expect(parts.get(component)?.def.checks?.length ?? 0, component).toBe(
+        sources.get(kind)?.def.checks?.length ?? 0,
+      )
+    }
+  })
+
+  it("Plot は Q の列に文字があると落ち、数なら通る", () => {
+    const plot = (values: readonly (string | number)[]) => ({
+      id: "p",
+      component: "Plot",
+      question: "架空の工程のどれを縮めるか",
+      data: [
+        { name: "工程", type: "N", values: ["甲", "乙"] },
+        { name: "分", type: "Q", values },
+      ],
+      relation: "rank",
+    })
+
+    expect(REPORT_COMPONENT_SCHEMAS.Plot.safeParse(plot(["多い", 3])).success).toBe(false)
+    expect(REPORT_COMPONENT_SCHEMAS.Plot.safeParse(plot([5, 3])).success).toBe(true)
   })
 
   it("Table は sortable・filterable・filterColumn を任意で受け、使わない呼び出しも通る", () => {

@@ -15,7 +15,6 @@ import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import type { ContextUsageReport } from "../../../shared/usage/context-usage.ts"
 import type { PlanUsageReport } from "../../../shared/usage/plan-usage.ts"
 import type { ChatSummary, PersonaMemory } from "../../chat/core/chat-memory.ts"
-import type { ReportSchemaVariant } from "../../core/schema-variant.ts"
 import type { ShelvedPromptImage } from "./prompt-image-shelf.ts"
 import type { ToolHookDurationLap } from "./tool-hook-clock.ts"
 
@@ -24,8 +23,6 @@ export type SessionMode =
   /** 仕事。覚えたことを書き換える口とあらすじの印の口は渡らない。 */
   | {
       readonly kind: "work"
-      /** `report` の塊の型の渡し方（`Config.reportSchema`）。 */
-      readonly reportSchema: ReportSchemaVariant
       /** `report` の `figure` の説明に効く、図を置くかの既定（起こすときの `SessionDefault`）。 */
       readonly figurePreference: FigurePreference
     }

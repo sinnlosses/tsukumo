@@ -5,16 +5,15 @@ import { describe, expect, it } from "vitest"
 import { createCallReview } from "../../../../src/server/session-driver/core/call-review.ts"
 import { toSessionEvents } from "../../../../src/server/session-driver/core/sdk-message.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
+import { callReport, reportInput } from "../../../fixture/a2ui-report.ts"
 import { callTool } from "../../../fixture/mcp-server.ts"
 import { assistantMessage, REPORT_TOOL_FULL_NAME } from "../../../fixture/sdk-message.ts"
 import {
   CLOSING,
   FIGURE,
   REMAINING,
-  SHORT_TYPE_WORK_MODE,
   SESSION_SUMMARY,
   WAITING_LINE,
-  WORK_MODE,
   workServer,
 } from "../../../fixture/sdk-tool.ts"
 
@@ -37,13 +36,10 @@ function figures(count: number) {
 }
 
 describe("report の keyFigures の個数", () => {
-  it.each([
-    { name: "json-schema", mode: WORK_MODE },
-    { name: "short-type", mode: SHORT_TYPE_WORK_MODE },
-  ])("3〜4 個だけ受け付け、2 個以下・5 個以上は形の検査で落とす: $name", async ({ mode }) => {
+  it("3〜4 個だけ受け付け、2 個以下・5 個以上は形の検査で落とす", async () => {
     const outcomes = await Promise.all(
       [2, 3, 4, 5].map(async (count) => {
-        const reply = await callTool(workServer([], [], createCallReview(), [], mode), "report", {
+        const reply = await callReport(workServer(), {
           ...COMPLETE,
           keyFigures: figures(count),
         })
@@ -83,7 +79,8 @@ describe("report の keyFigures のイベントへの変換と引き継ぎ", () 
 
   it("keyFigures を省いた出し直しは、直前に差し戻した呼び出しの keyFigures を引き継ぐ", async () => {
     const review = createCallReview()
-    const call = async (id: string, input: Readonly<Record<string, unknown>>) => {
+    const call = async (id: string, fields: Readonly<Record<string, unknown>>) => {
+      const input = reportInput(fields)
       const converted = toSessionEvents(
         assistantMessage([{ type: "tool_use", id, name: REPORT_TOOL_FULL_NAME, input }]),
         ["default"],

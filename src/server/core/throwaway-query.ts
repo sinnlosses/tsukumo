@@ -16,7 +16,6 @@ const THROWAWAY_QUERY_KINDS = [
   "character-generation",
   "usage-review",
   "usage-proposal",
-  "pair-judge",
 ] as const
 
 export type ThrowawayQueryKind = (typeof THROWAWAY_QUERY_KINDS)[number]

@@ -36,8 +36,15 @@ const argumentCharsSchema = z
 /** 引き継いだ欄の名前（版16から）。 */
 const inheritedFieldsSchema = z.array(z.enum(REPORT_ARGUMENT_FIELDS)).readonly()
 
-/** どの型の渡し方で受けたか（版17から）。 */
-const reportSchemaVariantSchema = z.enum(REPORT_SCHEMA_VARIANTS)
+/** どの型の渡し方で受けたか（版17から）。旧い渡し方の記録も読めたまま残す。書くのは `a2ui` だけ。 */
+const PAST_REPORT_SCHEMA_VARIANTS = [
+  "json-schema",
+  "short-type",
+  "body-fence",
+  ...REPORT_SCHEMA_VARIANTS,
+] as const
+
+const reportSchemaVariantSchema = z.enum(PAST_REPORT_SCHEMA_VARIANTS)
 
 /** 札が許さない塊の組と、その回に出た数（版13から）。 */
 const forbiddenShapeBlockUsageSchema = z

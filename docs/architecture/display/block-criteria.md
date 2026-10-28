@@ -33,7 +33,7 @@
 - 版15: `beforeAfter` の画像の側に `region` が付いた回を、塊の欄 `beforeAfterRegion` で数える（行の形は版14と同じ）
 - 版16: 差し戻しのあとの出し直しで、渡さずに直前の差し戻しから引き継いだ欄の名前（`inheritedFields`）。受け付けと差し戻しの両方の行に入る。
   引数の字数は渡した欄だけを数え、引き継いだ欄の字数は持たない（直前の差し戻しの行の欄ごとの字数から出せる）
-- 版17: どの型の渡し方で `report` を受けたか（`reportSchema`。`json-schema`・`short-type`・`body-fence`・`a2ui` のどれか）。受け付けと差し戻しの両方の行に入る
+- 版17: どの型の渡し方で `report` を受けたか（`reportSchema`。いまは `a2ui` だけ。旧い行には `json-schema`・`short-type`・`body-fence` が残り、読めたままにする）。受け付けと差し戻しの両方の行に入る
 - 版18: 逃げ道の記法を構文木（mdast）で数える（行の形は版17と同じ。版17以前の行とは数え方が違う。
   インラインコードの中の `<div>` で容れ物の深さが狂わず、ブラウザが記法として描かない形は数えない）
 - 版19: 節ごとに出た塊の種類（`sectionBlockKinds`。`sectionShapeTags` と同じ並び）、`list` の style の集合（`listStyles`）、
@@ -47,7 +47,7 @@
   受け付けなら理由は空）を持たせる。次が来ないまま記録を閉じた行は持たない。集計は「差し戻しの理由 × 直り率」の表に、
   次の呼び出しで同じ理由が出なかった割合と直した呼び出しの字数の中央値を出し、`nextCall` の無い行は分母から外す
 - 版23: 受け付けの行に、`body` の型つきフェンスのうち読めずに素のコードブロックへ落としたものの数 `brokenFenceCount` を持たせる。
-  差し戻しにはしない。`body` を渡さない回は 0
+  差し戻しにはしない。`body` の無い回は 0（いまの受け口は `body` を受けないので、旧い記録の行だけが 0 でない値を持ちうる）
 - 版は上げずに任意の欄 `toolErrorFields`: 理由が `tool-error` の差し戻しの行に、形の検査で落ちた欄を `{ field, code }` の並びで持たせる。
   `field` は zod の `issues[].path` を `.` でつなぎ配列の添字を `n` に畳んだもの、`code` は `issues[].code`。結果の本文から取れたときだけ持ち、`message` と値は残さない。
   `a2ui` の版の部品の一覧が構造の規約に外れた差し戻しは、理由が `tool-error` と `a2ui-structure` で、`field` は違反の JSON Pointer を同じ形に畳んだもの、`code` は違反の種類
@@ -80,7 +80,7 @@
 `plot` の `Q` 列の値と、同じレポートの本文の数（`conclusion`・`keyFigures` の `before`・`value`・`total`・節の `text` の塊）のずれを、
 差し戻しの条 `figure-number-mismatch` で見る。**`count`（ADR 0028）で、差し戻さず `kind: "counted"` の行に名前だけ残す。**
 除外の上限は 0 で、根拠の行は `docs/history/decision.md`「adr/0028 追記 差し戻しの条ごとの根拠」にある。
-`plot` は `figure` にも `sections` の塊にも置ける。`plot` か本文の数が無ければ何も見ない。
+`plot` は `Report.figure` にも `Section` の子にも置ける。`plot` か本文の数が無ければ何も見ない。
 
 本文の数 b ごとに、次の順で読む（`src/server/report/core/figure-number.ts`）。
 
@@ -111,7 +111,7 @@ HTML の字として埋める塊（`htmlInline`・`htmlInlineWithCode`）と、�
 
 ## 形の札の照合
 
-札は `json-schema` 版の節の欄の仕組みで、`body` 版は節を1つに畳み札を持たない（常に `unspecified`。ADR 0038）。照合は札のある節にだけ働く。
+札は旧い `sections` の節の欄の仕組みで、`components` の `Section` と旧い `body` は札を持たない（常に `unspecified`。ADR 0038）。照合は札のある節にだけ働く。
 
 節の `shapeTag`（`docs/glossary.md`「形の札」）ごとに許さない塊は `src/shared/report/report-shape-tag.ts` の
 `REPORT_SHAPE_TAG_RULES` が持ち、照合は同じファイルの `isForbiddenBlock`。**差し戻さず、版13の記録で数えるだけ**にする

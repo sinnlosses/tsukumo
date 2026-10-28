@@ -64,11 +64,7 @@ export const plotBlockSchema = z
     fold,
     aside,
   })
-  .superRefine((block, context) => {
-    for (const fault of plotDataFaults(block.data)) {
-      context.addIssue({ code: "custom", message: fault, path: ["data"] })
-    }
-  })
+  .superRefine(addPlotDataIssues)
   .describe(
     "図の申告。問い（question）・列の並び（data。name・type〔N 名義・O 順序・T 時間・Q 量〕・values）・関係（relation）を書き、色・座標は書かない",
   )
@@ -81,6 +77,15 @@ export function plotRows(plot: ReportPlot): readonly (readonly string[])[] {
   return Array.from({ length }, (_, row) =>
     plot.data.map((column) => String(column.values[row] ?? "")),
   )
+}
+
+export function addPlotDataIssues(
+  block: { readonly data: readonly PlotColumn[] },
+  context: z.core.$RefinementCtx,
+): void {
+  for (const fault of plotDataFaults(block.data)) {
+    context.addIssue({ code: "custom", message: fault, path: ["data"] })
+  }
 }
 
 /** 列の長さの不一致と、`Q` の列に数でない値がある位置を、書き手に返す文にする。 */

@@ -15,26 +15,7 @@ export const FAKE_CWD = "/tmp/tsukumo-架空のcwd"
 
 export const WORK_MODE: Extract<SessionMode, { readonly kind: "work" }> = {
   kind: "work",
-  reportSchema: "json-schema",
   figurePreference: "chart",
-}
-
-/** `report` の塊の型を短い型の表記で渡す仕事のモード。 */
-export const SHORT_TYPE_WORK_MODE: Extract<SessionMode, { readonly kind: "work" }> = {
-  ...WORK_MODE,
-  reportSchema: "short-type",
-}
-
-/** `report` の本文を Markdown の `body` で渡す仕事のモード。 */
-export const BODY_FENCE_WORK_MODE: Extract<SessionMode, { readonly kind: "work" }> = {
-  ...WORK_MODE,
-  reportSchema: "body-fence",
-}
-
-/** `report` を A2UI の部品の一覧 `components` で渡す仕事のモード。 */
-export const A2UI_WORK_MODE: Extract<SessionMode, { readonly kind: "work" }> = {
-  ...WORK_MODE,
-  reportSchema: "a2ui",
 }
 
 export const CHAT_MODE: SessionMode = {

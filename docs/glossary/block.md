@@ -14,8 +14,8 @@
   `SessionEvent` の `report` の欄）/ `heading`（節の見出し）
 - **定義**: **レポートの本文を区切る1段**。見出し（`heading`）と、その下に並ぶ塊の並び（`SectionBlock`）を持つ。
   本文は節の並びで、節の中の入れ子は `row`・`panel` の子の1段だけ。見出しが空の節は見出しを描かない
-- **注記**: `report` の引数 `sections` がこの形で、節が2つ以上なら全部に見出しを付けさせる（無ければ
-  差し戻す）。引数が文字列の `body` だったころの記録は、呼び出しをイベントに変える境目
+- **注記**: `report` の引数 `components` の `Section` がこの形に写り、節が2つ以上なら全部に見出しを付けさせる（無ければ
+  差し戻す）。旧い引数 `sections` や、文字列の `body` だったころの記録は、呼び出しをイベントに変える境目
   （`sdk-report-message.ts` の `reportEvents`）で見出しの無い節1つ・逃げ道の塊1つに畳むので、描く側は文字列の
   本文を見ない。形の案は `docs/research/report-block.md`、決定は `docs/architecture/display.md` 4.2
 - **避ける言い方**: セクション（Markdown の見出しの区切りと紛れる）、章
@@ -57,7 +57,7 @@
   選択 `choice`・属性の並び `attribute`・対応 `mapping`・見比べ `comparison`・境界 `boundary`・並列 `parallel`・一言 `single`
 - **定義**: **節が表す内容の形。** 書き手が節ごとに1つ言い、札ごとに第一候補・許す代替・許さない塊が決まる。
   許さないのは下の段（`table`・`list`・`text`）だけ
-- **注記**: `json-schema` 版の仕組みで、`body` 版は札を持たない（ADR 0038）。前後・確度・所在は札にせず、どの札にも掛かる添え物として扱う（確度は `claims` の塊が受ける）。`svg` の塊の欄 `shapes` と紛れるので、
+- **注記**: 旧い `sections` の節の欄の仕組みで、`components` の `Section` と旧い `body` は札を持たない（ADR 0038）。前後・確度・所在は札にせず、どの札にも掛かる添え物として扱う（確度は `claims` の塊が受ける）。`svg` の塊の欄 `shapes` と紛れるので、
   識別子に `shape` を単独で使わない
 - **避ける言い方**: タグ、型（`task` の `genre`〔報告の種類〕と紛れる）
 

@@ -2,19 +2,19 @@
 
 戻り: `docs/architecture/display.md`「出力の分離（セリフと詳細）」
 
-**本文は `report` の `sections`（節と塊の並び）で受け取る**（形の案は
+**本文は `report` の `components`（A2UI の部品の平らな一覧）で受け取り、節と塊の並び（`sections`）に写して描く**（形の案は
 `docs/research/report-block.md`、用語は `docs/glossary.md`「節」「塊」）。
 
 - 塊の種類は `src/shared/report/report-block.ts` が持ち、逃げ道は `markdown`。**種類ごとの使いどころは各塊の `describe` が持ち**（欄名・enum・型で読めることは持たない。通る呼び出しの例は `REPORT_TOOL_DESCRIPTION` の末尾）、
   `REPORT_NOTATION_PROMPT` の表には逃げ道に残る記法（引用・区切り線・複数の塊をまとめて畳む `<details>`・
   互いに独立した区画を見渡させる `cols` / `card`・区画の状態の札 `badge`）だけを置く（板の型が効くかを書かれ方と画で見てから、欄にするかを決める。`docs/research/dashboard-layout-proposal.md` 5.1）。
   同じことを両方に書くと毎ターンの文脈に2回載る。
-- 本文を A2UI のカタログと部品の平らな一覧（`components`）で受けて描く移行は、`docs/architecture/adr/0039-report-via-a2ui-catalog.md` が決める。
-  部品の切り方（`Report` の props と葉 19 種、基本カタログから取る 5 部品）は同「論点 2」、変換と `ReportEvent` の形は「論点 3」、ブラウザの描き方は「論点 4」、段の移行は「段の移行」が正典。
-  移行のあいだ、この節の `sections`・`body` の説明は旧い変種の正典として残る。
+- 本文を A2UI のカタログと部品の平らな一覧（`components`）で受けて描くことは、`docs/architecture/adr/0039-report-via-a2ui-catalog.md` が決める。
+  部品の切り方（`Report` の props と葉 19 種、基本カタログから取る 5 部品）は同「論点 2」、変換と `ReportEvent` の形は「論点 3」、ブラウザの描き方は「論点 4」が正典。
+  `report` の受け口はこの `components` だけで、旧い変種（`json-schema`・`short-type`・`body-fence`）の受け口は外した。旧い `sections`・`body` で書かれた過去のセッションの `report` は、復元が読む。
 - 節は `heading` と並んで、省ける欄 `shapeTag`（`docs/glossary.md`「形の札」）を持つ。省いた節は `unspecified` に畳む。
   札と塊の照合は「塊を足す・外す基準」の「形の札の照合」（数えるだけで差し戻さない）。
-  札は `json-schema` 版の節の欄で、`body` 版（下の項）は節を持たず札も持たない（常に `unspecified`）。
+  札は旧い `sections` の節の欄で、`components` の `Section` は札を持たず、旧い `body`（下の項）も持たない（どちらも常に `unspecified`）。
   条8は表を持たず、原則 5 つ・条 8 本・通る呼び出しの例 1 つの並びで、札と塊の対応は定義の `describe` と `report_part_card` が引かせる（ADR 0038）。
   効いたかは図の欄の `none`（省いた回を含む）と、旧い記録に残る `no-shape` の割合で見る
   （省いた回は旧い記録・形の崩れと同じ `unrecorded` に畳まれ、記録から区別できない。ADR 0036）
@@ -22,17 +22,17 @@
   外すかは「塊を足す・外す基準」の外す基準で決める）
 - **どの塊も、`fold`（畳むときの見出し）と `aside`（塊の傍注。出典・どこを見るかの1行）を省略できる欄として持つ**。
   `aside` と `memo` の `note` は本文の流れに入れず、余白の柱に出す
-  （「各表示物」のメインビュー。`memo` の `note` は本文の位置に残さない）。使いどころは `report` の `sections` の説明
+  （「各表示物」のメインビュー。`memo` の `note` は本文の位置に残さない）。使いどころは `report` の `Section` の説明
   だけが持ち、書き手の規約（`REPORT_NOTATION_PROMPT`）には書かない
 - **節の `blocks` には、葉の塊のほかに部品を横に並べる `row` と題つきの枠 `panel` を置ける**（`src/shared/report/row-panel-block.ts`）。
   子は葉の塊だけで、`row`・`panel` は子に入れられない（入れ子は1段まで）。`row` は子を 2〜4 個とり、等分の幅で横に並べ、器が 760px 以下なら縦に積む。
   `panel` は `title` の題を付けた枠で子を囲む。色・幅・余白・縦に積むかは tsukumo が決め、書き手は選ばない。
   子の図・表の番号と傍注は、子を節の中に平らに並べたときと同じ順で付く。
   差し戻しの検査は子にも節の塊と同じく掛かり、隣り合う `note` は縦に積む `panel` の中では数え、横に並ぶ `row` の中では数えない。
-  `fold` を持つ `row`・`panel` の子に `fold` か `<details>` があれば、畳みの入れ子として差し戻す。使い方は `report_part_card` の `row`・`panel` のカードが持つ。
+  `fold` を持つ `row`・`panel` の子に `fold` か `<details>` があれば、畳みの入れ子として差し戻す。使い方は `report_part_card` の `Row`・`Column`・`Card` のカードが持つ。
   見え方は疑似セッションの場面 `row-panel-decision`（候補の比較）と `row-panel-status`（件数と一覧）で撮る。
-  `row`・`panel` は旧い変種の塊で、`json-schema` の変種と `sections` の受け口を外すときまで残す（ADR 0039「追記（2026-10-28）」）。
-  `a2ui` の変種では同じ見た目を基本カタログの `Row`・`Card`・`Column` で書き、ブラウザは同じ class で描く。`sections` へは中の葉が平らに入り、配置は `components` だけが持つ
+  `row`・`panel` は旧い `sections` の塊で、いまの書き手は受け口を持たない（旧い transcript の復元だけが読む。ADR 0039「追記（2026-10-28）」）。
+  `components` では同じ見た目を基本カタログの `Row`・`Card`・`Column` で書き、ブラウザは同じ class で描く。`sections` へは中の葉が平らに入り、配置は `components` だけが持つ
 - **数の推移・割合は `chart` の塊で見せる**。書き手は種類（`bar` / `line` / `pie` / `arrow` / `slope` / `span` / `share`）・項目・
   系列・横棒かを渡し、Chart.js の設定は tsukumo が組む。色は書き手が指定しない（配色のトークンから入れる）。`pie` は
   先頭の系列だけを描く。前後の差が主役なら `arrow`（項目ごとの前→後の矢印）、2時点の多項目は
@@ -85,7 +85,7 @@
     1つでもあるときだけで、両方あれば同じ行に形・印の順で並べる。色の凡例は書き手が `legend` に書いたものを最後に並べる。囲みは名が図に出るので凡例に載せない
 - **時刻の軸に行ごとの帯・延びた分・出来事を並べる図は `timeline` の塊で書く**（`docs/architecture/adr/0033-timeline-block.md`）。
   書き手は題・行（`name`・`start`・`end`〔省くと一点〕・`extra`〔`end` より後へ延びた区切りの時刻の昇順の並び〕・`lane`）・
-  出来事（`at`・`label`）・差し色にする行の名前（`emphasis`）を渡し、目盛り・色・幅は tsukumo が決める。`figure` にも `sections` にも置ける。
+  出来事（`at`・`label`）・差し色にする行の名前（`emphasis`）を渡し、目盛り・色・幅は tsukumo が決める。`Section` の子にも `Report.figure` にも置ける。
   時刻は `HH:MM`・ISO の日時・分の数のどれでもよく、尺度は値の形で判別する（`unit` の欄は無い）。1つの塊の中で混ぜない。
   目盛りは区間が8以下になる最小の間隔（1・2・5・10・30・60・360 分、1日、その先は1日の倍数）で、軸の字は分の数なら `n分`（`n時間`）、
   時刻なら `HH:MM`、ISO なら日が変わった目盛りに `M/D` を添える。区間は灰の帯（`emphasis` の行だけ差し色）、一点は菱形、
@@ -96,17 +96,16 @@
   延び・出来事・一点のどれも無く、項目ごとの区間の長さを比べるだけなら `chart` の `span`。`mermaid` の `gantt` は見た目を制御できないので
   形の札 `time` の候補から外した（札の第一候補は `timeline`、許す代替は `mermaid` の `sequenceDiagram` と `list` の `ordered`）。
   見え方は疑似セッションの場面 `report-timeline` で撮る。
-- **図の形を書き手が選ばず、問い・データ・関係を申告するのは `plot` の塊**（`src/shared/report/figure-grammar.ts`。`sections` と `figure` の双方に置ける）。
+- **図の形を書き手が選ばず、問い・データ・関係を申告するのは `plot` の塊**（`src/shared/report/figure-grammar.ts`。`Section` の子にも `Report.figure` にも置ける）。
   申告は `question`（全角60字以内の1文）・`data`（列の並び。`name`・`type`〔`N`・`O`・`T`・`Q`〕・`values`）・`relation`（8語）の3つで、色・座標は書けない。
   型と値の整合（列の長さの一致・`Q` の列は数だけ）は schema が見て、外れた呼び出しは `report` の入力の検査で弾かれる。
   形は決定表（`src/shared/report/figure-decision.ts` の `plotFormOf`。行と境は `docs/architecture/display/block-criteria.md`「図の決定表」）が申告から決める。
   書き手は任意の欄 `form` で形を上書きでき、置いてはならない形は採らずに決定表の形で描いて `plot-forbidden-form`、図派・文派のどちらの既定で決めた形とも違う形は通して `plot-form-override` と数える（どちらも差し戻さない）。
   形ごとの描き方はまだ無く、どの形も `data` を `table` と同じ表として描く（題は `question`）。
-- **`body` は試しの版（`TSUKUMO_REPORT_SCHEMA=body-fence`。既定は `json-schema`）の本文の欄で、Markdown に型つきフェンスを混ぜて書く。** フェンスの種類は `graph`・`mermaid`・`table`・`code`・`callout`・`claims`・`image`（`READER_FENCE_KINDS`）と `figure`。
+- **`body` は旧い試しの版（`body-fence`）の本文の欄で、いまの受け口は無い。復元が旧い transcript の `body` を読むだけ。** Markdown に型つきフェンスを混ぜて書かれていて、フェンスの種類は `graph`・`mermaid`・`table`・`code`・`callout`・`claims`・`image`（`READER_FENCE_KINDS`）と `figure`。
   読んだ結果は見出し空の節1つで、節の札は持たない。型つきでない言語名のフェンスは散文の一部のまま残す。
-  読めない型つきフェンスは差し戻さず素のコードブロックに落とし、数を記録の `brokenFenceCount` に残す（`src/shared/report/body-fence.ts` の `parseReportBody`）。`sections` と同じ呼び出しに併記できない。
+  読めない型つきフェンスは差し戻さず素のコードブロックに落とし、数を記録の `brokenFenceCount` に残す（`src/shared/report/body-fence.ts` の `parseReportBody`）。
   `body` は `row`・`panel` を扱わない。フェンスの中にフェンスは入れ子にできず、並べる容れ物には新しい記法が要るため。
-  `body-fence` の版でも `sections` は同じ zod で受けるので、並べたいときは `sections` で書ける。
 - **座標で見せる図は `svg` の塊で書く**（`docs/architecture/adr/0028-report-block-priority.md`「SVG（論点3）」）。
   書き手は題・viewBox の大きさ・図形（`rect`・`line`・`text`）を渡し、SVG の文字列は書かず、描く側が図形から組む。
   `rect` の題は既定で枠の中心、`labelAt: "top-left"` で左上の内側に左寄せで置く（入れ子の外側の枠は `top-left` にして、子の枠・矢印の題と重ねない）。

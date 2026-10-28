@@ -2,86 +2,82 @@ import { describe, expect, it } from "vitest"
 import { z } from "zod"
 
 import { partCardOf } from "../../../../src/server/report/core/part-card.ts"
-import { namedWriterBlockSchema } from "../../../../src/shared/report/report-block.ts"
-import { arrangedBlockSchemasOf } from "../../../../src/shared/report/row-panel-block.ts"
-import { descriptionsIn, missingDescriptions } from "../../../fixture/json-schema-description.ts"
+import { REPORT_COMPONENT_SCHEMAS } from "../../../../src/shared/report/a2ui-report-catalog.ts"
+import { descriptionsIn } from "../../../fixture/json-schema-description.ts"
 
-const LEAF_BRANCHES = namedWriterBlockSchema.options
-const { rowBlockSchema, panelBlockSchema } = arrangedBlockSchemasOf(namedWriterBlockSchema)
-const ARRANGED_BRANCHES = [rowBlockSchema, panelBlockSchema]
-const BRANCHES = [...LEAF_BRANCHES, ...ARRANGED_BRANCHES]
-const KINDS = BRANCHES.map((branch) => branch.shape.kind.value)
+const ENTRIES = Object.entries(REPORT_COMPONENT_SCHEMAS)
+const NAMES = ENTRIES.map(([name]) => name)
 
 describe("partCardOf", () => {
-  it.each(BRANCHES.map((branch) => [branch.shape.kind.value, branch] as const))(
-    "%s の例は、その部品の schema を通る",
-    (kind, branch) => {
-      const example = exampleIn(cardText(kind))
+  it.each(ENTRIES)("%s の例は、その部品の schema を通る", (name, schema) => {
+    const example = examplesIn(cardText(name))
 
-      expect(branch.safeParse(example).success).toBe(true)
-    },
-  )
+    const own = example.filter((part) => part.component === name)
+    expect(own).toHaveLength(1)
+    expect(schema.safeParse(own[0]).success).toBe(true)
+  })
 
-  it.each(LEAF_BRANCHES.map((branch) => [branch.shape.kind.value, branch] as const))(
-    "%s のカードは、部品の JSON Schema の説明を1つも落とさない",
-    (kind, branch) => {
-      const descriptions = descriptionsIn(z.toJSONSchema(branch, { io: "input" }))
+  it.each(ENTRIES)(
+    "%s のカードは、部品の JSON Schema の説明を1つも落とさない（$defs の中も含む）",
+    (name, schema) => {
+      const descriptions = descriptionsIn(z.toJSONSchema(schema, { io: "input" }))
 
-      expect(missingDescriptions(descriptions, cardText(kind))).toEqual([])
-    },
-  )
-
-  it.each(ARRANGED_BRANCHES.map((branch) => [branch.shape.kind.value, branch] as const))(
-    "%s のカードは、子の部品の型を展開せず名前で指し、自分の欄の説明は落とさない",
-    (kind, branch) => {
-      const { $defs: _definitions, ...own } = z.toJSONSchema(branch, { io: "input" })
-      const text = cardText(kind)
-
-      expect(missingDescriptions(descriptionsIn(own), text)).toEqual([])
-      expect(text).toContain("ReportBlock[]")
-      expect(text).not.toContain("type ReportBlock")
-      expect(text).not.toContain("type GraphBlock")
+      expect(missing(descriptions, cardText(name))).toEqual([])
     },
   )
 
   it("説明の照合は、説明を1つ消したカードの欠けを見つける", () => {
-    const branch = namedWriterBlockSchema.options.find(
-      (option) => option.shape.kind.value === "graph",
+    const descriptions = descriptionsIn(
+      z.toJSONSchema(REPORT_COMPONENT_SCHEMAS.Graph, { io: "input" }),
     )
-    const descriptions = descriptionsIn(z.toJSONSchema(branch ?? z.never(), { io: "input" }))
     const removed = descriptions[0] ?? ""
-    const text = cardText("graph").replace(`// ${removed.split("\n")[0] ?? ""}\n`, "")
+    const text = cardText("Graph").replace(JSON.stringify(removed).slice(1, -1), "")
 
     expect(removed).not.toBe("")
-    expect(missingDescriptions(descriptions, text)).toEqual([removed])
+    expect(missing(descriptions, text)).toContain(removed)
   })
 
-  it.each(["files", "", "Graph"])("知らない種類 %j には、引ける種類の一覧を返す", (kind) => {
-    const card = partCardOf(kind)
-
-    expect(card.kind).toBe("unknown-kind")
-    for (const known of KINDS) {
-      expect(card.text).toContain(known)
+  it("$defs を持つ部品のカードは $defs ごと載せる", () => {
+    for (const name of ["BeforeAfter", "Graph", "Svg"]) {
+      expect(cardText(name)).toContain('"$defs"')
     }
   })
 
-  it("引ける種類は files を除く19種類の葉と row・panel", () => {
-    expect(KINDS).toHaveLength(21)
-    expect(KINDS).not.toContain("files")
-    expect(KINDS).toEqual(expect.arrayContaining(["row", "panel"]))
+  it.each(["table", "graph", "files", ""])(
+    "知らない名前 %j には、引ける名前の一覧を返す",
+    (name) => {
+      const card = partCardOf(name)
+
+      expect(card.kind).toBe("unknown-component")
+      for (const known of NAMES) {
+        expect(card.text).toContain(known)
+      }
+    },
+  )
+
+  it("引ける名前は 26 部品", () => {
+    expect(NAMES).toHaveLength(26)
   })
 })
 
-function cardText(kind: string): string {
-  const card = partCardOf(kind)
+function cardText(name: string): string {
+  const card = partCardOf(name)
   if (card.kind !== "card") {
-    throw new Error(`${kind} のカードが組めなかった`)
+    throw new Error(`${name} のカードが組めなかった`)
   }
   return card.text
 }
 
-/** カードの「例:」の次の行を JSON として読む。 */
-function exampleIn(text: string): unknown {
+/** カードの JSON のまま入った説明のうち、載っていないもの。 */
+function missing(descriptions: readonly string[], text: string): readonly string[] {
+  return descriptions.filter(
+    (description) => !text.includes(JSON.stringify(description).slice(1, -1)),
+  )
+}
+
+/** カードの「例」の次の行を JSON の配列として読む。 */
+function examplesIn(text: string) {
   const lines = text.split("\n")
-  return JSON.parse(lines[lines.indexOf("例:") + 1] ?? "")
+  const index = lines.findIndex((line) => line.startsWith("例"))
+  return z.array(z.looseObject({ component: z.string() })).parse(JSON.parse(lines[index + 1] ?? ""))
 }

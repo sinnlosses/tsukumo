@@ -64,7 +64,7 @@ import { type ClosingFit, isFinished, judgeWorkPlanClosing } from "./work-plan-c
  * 判定が差し戻していないのに `isError` で返った呼び出し（形の検査で落ちて handler に届かなかったものと、handler で組んだ値が形の検査に落ちたもの）の理由の名前。
  * 差し戻しの記録（`report-rejected`）は handler ではなく `pass` が、この呼び出しの引数の字数つきで作る。
  */
-export const REPORT_TOOL_ERROR_REASON = "tool-error"
+const REPORT_TOOL_ERROR_REASON = "tool-error"
 
 /** `a2ui` の版の部品の一覧が構造の規約に外れて差し戻した呼び出しの、記録の理由の名前。 */
 export const A2UI_STRUCTURE_REJECTION_REASONS = [

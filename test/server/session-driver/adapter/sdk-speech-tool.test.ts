@@ -5,6 +5,7 @@ import {
   type CallReview,
   createCallReview,
 } from "../../../../src/server/session-driver/core/call-review.ts"
+import { callReport } from "../../../fixture/a2ui-report.ts"
 import { callTool } from "../../../fixture/mcp-server.ts"
 import {
   CHAT_MODE,
@@ -105,7 +106,7 @@ describe("speak の phase の差し戻し", () => {
       }),
     ).toMatchObject({ isError: false })
     expect(
-      await callTool(workServer([], [], rangedReview()), "report", {
+      await callReport(workServer([], [], rangedReview()), {
         conclusion: ["段9まで済んだ"],
         workPlanClosing: "stopped",
         closing: { text: "段9まで済んだ", expression: "default" },
