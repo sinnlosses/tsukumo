@@ -112,6 +112,149 @@ describe("a2ui の版の記録の本文", () => {
   })
 })
 
+const plainTable = (id: string, extra: Readonly<Record<string, unknown>>) => ({
+  id,
+  component: "Table",
+  title: "架空の表",
+  columns: ["名", "種", "数"],
+  rows: [
+    ["ぼ", "甲", "10"],
+    ["あ", "乙", "9"],
+    ["ん", "甲", "100"],
+  ],
+  sortable: true,
+  filterable: true,
+  ...extra,
+})
+
+/** 操作できる表の見え方（行の組み方が変わる種類）。どれも、行を選び直せることを同じ検査で見る。 */
+const TABLE_VARIANTS = [
+  { name: "素の表", extra: {} },
+  {
+    name: "状態のセルがあり凡例が付く表",
+    extra: {
+      rows: [
+        ["ぼ", "甲", { status: "ok", text: "完了" }],
+        ["あ", "乙", { status: "ng", text: "停止" }],
+        ["ん", "甲", "なし"],
+      ],
+    },
+  },
+  {
+    name: "数の列に棒が付く表",
+    extra: {
+      columns: ["名", "種", "件数"],
+      rows: [
+        ["ぼ", "甲", "5"],
+        ["あ", "乙", "50"],
+      ],
+    },
+  },
+  {
+    name: "札のセルがある表",
+    extra: {
+      rows: [
+        ["ぼ", { tag: "甲" }, "1"],
+        ["あ", { tag: "乙" }, "2"],
+      ],
+    },
+  },
+  {
+    name: "変わったセルがある表",
+    extra: {
+      rows: [
+        ["ぼ", { from: "甲", to: "乙" }, "1"],
+        ["あ", "丙", "2"],
+      ],
+    },
+  },
+  {
+    name: "強調の行がある表",
+    extra: {
+      rows: [{ cells: ["ぼ", "甲", "1"], emphasis: true }, ["あ", "乙", "2"]],
+    },
+  },
+  { name: "rest が付く表", extra: { rest: "ほか 3 件は省略" } },
+  { name: "傍注が付く表", extra: { aside: "架空の出典" } },
+  { name: "fold で畳む表", extra: { fold: "架空の補足" } },
+  { name: "行が 1 つだけの表", extra: { rows: [["ぼ", "甲", "1"]] } },
+] as const
+
+describe("操作できる表の行の分け方（tables）", () => {
+  const tablesOf = (parts: readonly object[]) => {
+    const event = reportOf({ components: parts })
+    const { a2ui } = regionsOf(event)
+    if (a2ui.kind !== "surface") throw new Error("面の値が無い")
+    return a2ui
+  }
+  const reportWith = <Part extends { readonly id: string }>(
+    table: object,
+    before: readonly Part[] = [],
+  ) => [
+    { id: "root", component: "Report", conclusion: ["架空の結論。"], children: ["s1"] },
+    {
+      id: "s1",
+      component: "Section",
+      heading: "架空の節",
+      children: [...before.map((part) => part.id), "t1"],
+    },
+    ...before,
+    table,
+  ]
+
+  it.each(TABLE_VARIANTS)(
+    "$name: 前後と行を繋ぐと葉の Markdown になり、行の数が表と同じ",
+    ({ extra }) => {
+      const table = plainTable("t1", extra)
+      const view = tablesOf(reportWith(table))
+      const split = view.tables.t1
+
+      expect(split?.rows).toHaveLength(table.rows.length)
+      expect(`${split?.before}${split?.rows.join("\n")}${split?.after}`).toBe(view.leaves.t1)
+    },
+  )
+
+  it("先に別の表と札があっても、札の色と表の番号は葉の Markdown どおりに行へ入る", () => {
+    const first = plainTable("t0", {
+      rows: [
+        ["ぼ", { tag: "甲" }, "1"],
+        ["あ", { tag: "乙" }, "2"],
+      ],
+      sortable: undefined,
+      filterable: undefined,
+    })
+    const second = plainTable("t1", {
+      rows: [
+        ["ぼ", { tag: "乙" }, "1"],
+        ["あ", { tag: "丙" }, "2"],
+      ],
+    })
+    const view = tablesOf(reportWith(second, [first]))
+    const split = view.tables.t1
+
+    expect(split?.before).toContain("表 2")
+    expect(`${split?.before}${split?.rows.join("\n")}${split?.after}`).toBe(view.leaves.t1)
+    expect(split?.rows.join("\n")).toContain("tag-2")
+  })
+
+  it("操作を使わない表は tables に無い", () => {
+    const view = tablesOf(
+      reportWith(plainTable("t1", { sortable: undefined, filterable: undefined })),
+    )
+
+    expect(view.tables).toEqual({})
+  })
+
+  it("整形で落ちた葉の表は tables に無く、残る表の分け方は崩れない", () => {
+    const view = tablesOf(
+      reportWith(plainTable("t1", {}), [{ id: "b1", component: "Paragraph", text: "以上です" }]),
+    )
+
+    expect(view.leaves.b1).toBe("")
+    expect(Object.keys(view.tables)).toEqual(["t1"])
+  })
+})
+
 function reportOf(input: Readonly<Record<string, unknown>>): ReportEvent {
   const [event] = reportEvents("toolu_fictional", input, [])
   if (event?.kind !== "report") throw new Error("report にならなかった")

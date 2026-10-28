@@ -42,6 +42,63 @@ const section = (id: string, children: readonly string[]) => ({
   children,
 })
 
+const filterTable = (extra: object = {}) => ({
+  id: "t",
+  component: "Table",
+  columns: ["名前", "種別"],
+  rows: [
+    ["a", { status: "ok", text: "良" }],
+    ["b", { tag: "新" }],
+  ],
+  filterable: true,
+  ...extra,
+})
+
+const picker = (path: string, values: readonly string[]) => ({
+  id: "c",
+  component: "ChoicePicker",
+  options: values.map((value) => ({ label: value, value })),
+  value: { path },
+})
+
+const filterList = (table: object, choice: object) => [
+  report(["s"]),
+  section("s", ["t", "c"]),
+  table,
+  choice,
+]
+
+describe("a2uiStructureFaults の絞り込みの結び", () => {
+  it("実在する filterable な Table のセルにある値を選ぶ ChoicePicker は通る", () => {
+    const components = filterList(filterTable(), picker("/view/t/filter", ["a", "良", "新"]))
+
+    expect(a2uiStructureFaults(components)).toEqual([])
+  })
+
+  it.each([
+    {
+      name: "path の Table が無い",
+      components: filterList(filterTable(), picker("/view/nothing/filter", ["a"])),
+      faults: [{ kind: "filter-target-missing", pointer: "/components/3/value/path" }],
+    },
+    {
+      name: "Table が filterable でない",
+      components: filterList(filterTable({ filterable: false }), picker("/view/t/filter", ["a"])),
+      faults: [{ kind: "filter-target-not-filterable", pointer: "/components/3/value/path" }],
+    },
+    {
+      name: "選択肢の値が絞り込む列のセルに無い",
+      components: filterList(
+        filterTable({ filterColumn: 0 }),
+        picker("/view/t/filter", ["a", "良"]),
+      ),
+      faults: [{ kind: "filter-option-not-in-cells", pointer: "/components/3/options/1/value" }],
+    },
+  ])("$name を拾う", ({ components, faults }) => {
+    expect(a2uiStructureFaults(components)).toEqual(faults)
+  })
+})
+
 describe("a2uiStructureFaults", () => {
   it("正しい一覧は違反を返さない", () => {
     expect(a2uiStructureFaults(VALID)).toEqual([])

@@ -1,0 +1,30 @@
+{
+  "main": [
+    { "tag": "a2ui-react-report", "children": [
+      { "tag": "div", "attributes": { "data-report-region": "section", "data-report-section": "0" }, "children": [
+        { "tag": "h4", "children": ["架空の一覧"] },
+        { "tag": "div", "attributes": { "role": "group", "aria-label": "種別" }, "children": [
+          { "tag": "button", "attributes": { "aria-pressed": "false" }, "children": ["甲"] },
+          { "tag": "button", "attributes": { "aria-pressed": "true" }, "children": ["乙"] },
+          { "tag": "button", "attributes": { "aria-pressed": "false" }, "children": ["丙"] }
+        ] },
+        { "tag": "div", "attributes": { "role": "group", "aria-label": "並べ替え" }, "children": [
+          { "tag": "button", "attributes": { "aria-pressed": "false" }, "children": ["案件"] },
+          { "tag": "button", "attributes": { "aria-pressed": "true" }, "children": ["件数"] }
+        ] },
+        { "tag": "div", "attributes": { "data-reveal-caption": "" }, "children": ["表 1"] },
+        { "tag": "table", "children": [
+          { "tag": "tbody", "children": [
+            { "tag": "tr", "children": [{ "tag": "td", "children": ["架空の案件 あ"] }] },
+            { "tag": "tr", "children": [{ "tag": "td", "children": ["架空の案件 さ"] }] }
+          ] }
+        ] }
+      ] },
+      { "tag": "div", "attributes": { "data-report-region": "section", "data-report-section": "1" }, "children": [
+        { "tag": "h4", "children": ["架空の対照"] },
+        { "tag": "div", "attributes": { "data-reveal-caption": "" }, "children": ["表 2"] },
+        { "tag": "table" }
+      ] }
+    ] }
+  ]
+}

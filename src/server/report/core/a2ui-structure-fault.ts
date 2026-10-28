@@ -8,6 +8,7 @@ import {
   LEAF_COMPONENT_KINDS,
   REPORT_COMPONENT_SCHEMAS,
 } from "../../../shared/report/a2ui-report-catalog.ts"
+import { tableIdOfFilterPath, tableRowFilterTexts } from "../../../shared/report/table-view.ts"
 import type { ToolErrorField } from "../../../shared/report/tool-error-field.ts"
 
 export type A2uiStructureFaultKind =
@@ -22,6 +23,9 @@ export type A2uiStructureFaultKind =
   | "deep-layout"
   | "figure-not-figure-part"
   | "unreferenced-component"
+  | "filter-target-missing"
+  | "filter-target-not-filterable"
+  | "filter-option-not-in-cells"
 
 /** 違反 1 つ。`pointer` は引数の根からの JSON Pointer（`/components/2/children/0`）。 */
 export type A2uiStructureFault = {
@@ -103,10 +107,61 @@ export function a2uiStructureFaults(components: readonly unknown[]): readonly A2
       faults.push({ kind: "unreferenced-component", pointer: `/components/${String(index)}` })
     }
   })
+  faults.push(...filterBindingFaults(parts, indexById))
   return faults
 }
 
 const ROOT_ID = "root"
+
+/**
+ * `value` を `/view/<TableのID>/filter` に結んだ `ChoicePicker` が、実在する `filterable` な `Table` を指し、
+ * 選択肢の値がその表のセル（`filterColumn` があればその列）の文字に完全一致で現れるかを見る。
+ * ほかの path は読まない。
+ */
+function filterBindingFaults(
+  parts: readonly ReturnType<typeof partOf>[],
+  indexById: ReadonlyMap<string, number>,
+): readonly A2uiStructureFault[] {
+  return parts.flatMap((part, index): readonly A2uiStructureFault[] => {
+    if (part.component !== "ChoicePicker" || !isPlainObject(part.props.value)) {
+      return []
+    }
+    const tableId = tableIdOfFilterPath(part.props.value.path)
+    if (tableId === undefined) {
+      return []
+    }
+    const base = `/components/${String(index)}`
+    const tableIndex = indexById.get(tableId)
+    const table = tableIndex === undefined ? undefined : parts[tableIndex]
+    if (table?.component !== "Table") {
+      return [{ kind: "filter-target-missing" as const, pointer: `${base}/value/path` }]
+    }
+    if (table.props.filterable !== true) {
+      return [{ kind: "filter-target-not-filterable" as const, pointer: `${base}/value/path` }]
+    }
+    const texts = new Set(filterTargetTexts(table.props))
+    const options: unknown = part.props.options
+    return Array.isArray(options)
+      ? options.flatMap((option: unknown, position) =>
+          isPlainObject(option) && typeof option.value === "string" && !texts.has(option.value)
+            ? [
+                {
+                  kind: "filter-option-not-in-cells" as const,
+                  pointer: `${base}/options/${String(position)}/value`,
+                },
+              ]
+            : [],
+        )
+      : []
+  })
+}
+
+/** `Table` の絞り込みの対象のセルが持つ文字を全行ぶん集める。 */
+function filterTargetTexts(props: Readonly<Record<string, unknown>>): readonly string[] {
+  const column = typeof props.filterColumn === "number" ? props.filterColumn : undefined
+  const rows: unknown = props.rows
+  return Array.isArray(rows) ? rows.flatMap((row: unknown) => tableRowFilterTexts(row, column)) : []
+}
 
 /** 子を持つ配置の部品。`ChoicePicker` は子を持たないので入れ子の深さに数えない。 */
 const CONTAINERS: ReadonlySet<string> = new Set(["Row", "Column", "Card", "Tabs"])

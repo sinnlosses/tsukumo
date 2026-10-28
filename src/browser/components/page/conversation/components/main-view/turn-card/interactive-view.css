@@ -1,0 +1,12 @@
+/* 操作できる表の並べ替えと、絞り込みの選択肢。押せるボタンを枠で見せ、選択中は Button の tinted-accent の顔にする。 */
+.interactive-view-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.5rem 0;
+}
+.interactive-view-button {
+  min-height: 1.75rem;
+  padding: 0.2rem 0.75rem;
+  border-radius: 0.4rem;
+}

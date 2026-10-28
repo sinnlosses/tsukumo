@@ -39,6 +39,20 @@ describe("report → メインビュー", () => {
     await room.settleAndMatchPicked(ELAPSED_MS)
   })
 
+  it("操作できる Table は、ChoicePicker の選択で行が絞られ、列名のボタンで並べ替わる", async () => {
+    const room = await run.open({
+      scenario: "a2ui-interactive",
+      scene: "a2ui-interactive-sample",
+      viewport: "wide",
+      domRoots: ["main"],
+    })
+
+    await room.waitForEvent("turn-finished")
+    await room.page.getByRole("button", { name: "乙", exact: true }).click()
+    await room.page.getByRole("button", { name: "件数", exact: true }).click()
+    await room.settleAndMatchPicked(ELAPSED_MS)
+  })
+
   it("chart の塊が種類ごとにグラフとして描かれる", async () => {
     const room = await run.open({
       scenario: "report-chart",

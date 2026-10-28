@@ -9,6 +9,7 @@ import { reportSectionPieces } from "../report/report-markdown.ts"
 import { phaseTimesMarkdown } from "../report/report-phase-time.ts"
 import { retrospectiveSections } from "../report/report-retrospective.ts"
 import { keyFiguresMarkdown } from "../report/report-stat-markdown.ts"
+import { tagTonesOf } from "../report/report-table-markdown.ts"
 import { tidyReportSections } from "../report/report-tidy.ts"
 import { isBlankText } from "../utils/blank-text.ts"
 import { a2uiReportView } from "./a2ui-report-view.ts"
@@ -178,15 +179,13 @@ function reportRegionsOf(
       .filter((part) => !isBlankText(part))
       .join("\n\n")
   const sections = reportSectionsOf(report)
-  const pieces = reportSectionPieces(
-    [...sections, ...retrospectiveSections(report.retrospective)],
-    {
-      kind: "shelved",
-      toolUseId: report.toolUseId,
-      sizes: report.imageSizes,
-      unshelved: report.unshelvedImages,
-    },
-  )
+  const drawnSections = [...sections, ...retrospectiveSections(report.retrospective)]
+  const pieces = reportSectionPieces(drawnSections, {
+    kind: "shelved",
+    toolUseId: report.toolUseId,
+    sizes: report.imageSizes,
+    unshelved: report.unshelvedImages,
+  })
   const markdowns = pieces.map((piece) => joinParts([piece.heading, ...piece.blocks]))
   return {
     kind: "regions",
@@ -198,7 +197,7 @@ function reportRegionsOf(
     }),
     retrospective: markdowns[sections.length] ?? "",
     favor: { id: favorId, markdown: report.favor },
-    a2ui: a2uiReportView(report, pieces),
+    a2ui: a2uiReportView(report, pieces, tagTonesOf(drawnSections)),
   }
 }
 

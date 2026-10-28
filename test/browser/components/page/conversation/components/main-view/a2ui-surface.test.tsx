@@ -1,4 +1,4 @@
-import { cleanup, render } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { reportEvents } from "../../../../../../../src/server/session-driver/core/sdk-report-message.ts"
@@ -68,6 +68,104 @@ const ROW_PARTS = [
   { id: "p3", component: "Paragraph", text: "架空の右。" },
   { id: "p4", component: "Paragraph", text: "架空の後ろ。" },
 ]
+
+const INTERACTIVE_PARTS = [
+  { id: "root", component: "Report", conclusion: ["架空の結論。"], children: ["s1"] },
+  { id: "s1", component: "Section", heading: "架空の操作", children: ["pick", "t1"] },
+  {
+    id: "pick",
+    component: "ChoicePicker",
+    label: "架空の種別",
+    options: [
+      { label: "甲", value: "甲" },
+      { label: "乙", value: "乙" },
+    ],
+    value: { path: "/view/t1/filter" },
+  },
+  {
+    id: "t1",
+    component: "Table",
+    title: "架空の表",
+    columns: ["架空の名", "架空の種別", "架空の数"],
+    rows: [
+      ["ぼ", "甲", "10"],
+      ["あ", "乙", "9"],
+      ["ん", "甲", "100"],
+    ],
+    sortable: true,
+    filterable: true,
+  },
+]
+
+/** 表の本文の行の先頭のセル（見出しと区切りの行を除く）を、描かれた順に返す。 */
+function bodyRowNames(container: HTMLElement): readonly string[] {
+  return [...container.querySelectorAll("[data-markdown-stub]")]
+    .flatMap((stub) => (stub.textContent ?? "").split("\n"))
+    .filter((line) => /^\| (ぼ|あ|ん) /.test(line))
+    .map((line) => line.slice(2, 3))
+}
+
+describe("操作できる Table と ChoicePicker", () => {
+  it("見出しを押すと並びが変わり、押し直すと降順、もう一度で元に戻る", () => {
+    const body = regionsOf({ components: INTERACTIVE_PARTS })
+    const { container } = render(<Report reveal={false} turnId={1} className="" body={body} />)
+    expect(bodyRowNames(container)).toEqual(["ぼ", "あ", "ん"])
+
+    fireEvent.click(screen.getByRole("button", { name: "架空の数" }))
+    expect(bodyRowNames(container)).toEqual(["あ", "ぼ", "ん"])
+
+    fireEvent.click(screen.getByRole("button", { name: /架空の数/ }))
+    expect(bodyRowNames(container)).toEqual(["ん", "ぼ", "あ"])
+
+    fireEvent.click(screen.getByRole("button", { name: /架空の数/ }))
+    expect(bodyRowNames(container)).toEqual(["ぼ", "あ", "ん"])
+  })
+
+  it("ChoicePicker の選択で行が絞られ、選び直すと戻る", () => {
+    const body = regionsOf({ components: INTERACTIVE_PARTS })
+    const { container } = render(<Report reveal={false} turnId={1} className="" body={body} />)
+
+    fireEvent.click(screen.getByRole("button", { name: "乙" }))
+    expect(bodyRowNames(container)).toEqual(["あ"])
+
+    fireEvent.click(screen.getByRole("button", { name: "甲" }))
+    expect(bodyRowNames(container)).toEqual(["ぼ", "ん"])
+
+    fireEvent.click(screen.getByRole("button", { name: "甲" }))
+    expect(bodyRowNames(container)).toEqual(["ぼ", "あ", "ん"])
+  })
+
+  it("どの行にも当たらない選びでは、見出しの行だけの表と「該当する行はありません」が出る", () => {
+    const parts = INTERACTIVE_PARTS.map((part) =>
+      part.id === "pick"
+        ? { ...part, options: [...(part.options ?? []), { label: "丙", value: "丙" }] }
+        : part,
+    )
+    const body = regionsOf({ components: parts })
+    const { container } = render(<Report reveal={false} turnId={1} className="" body={body} />)
+
+    fireEvent.click(screen.getByRole("button", { name: "丙" }))
+
+    expect(bodyRowNames(container)).toEqual([])
+    expect(container.textContent).toContain("| 架空の名 | 架空の種別 | 架空の数 |")
+    expect(screen.getByText("該当する行はありません")).toBeTruthy()
+  })
+
+  it("sortable・filterable を使わない Table は欄の Markdown のままで、ボタンを出さない", () => {
+    const plainParts = INTERACTIVE_PARTS.filter((part) => part.id !== "pick").map((part) =>
+      part.id === "t1" ? { ...part, sortable: undefined, filterable: undefined } : part,
+    )
+    const body = regionsOf({
+      components: plainParts.map((part) =>
+        part.id === "s1" ? { ...part, children: ["t1"] } : part,
+      ),
+    })
+    const { container } = render(<Report reveal={false} turnId={1} className="" body={body} />)
+
+    expect(screen.queryAllByRole("button")).toEqual([])
+    expect(bodyRowNames(container)).toEqual(["ぼ", "あ", "ん"])
+  })
+})
 
 describe("部品の一覧のある本文（A2UI の面）", () => {
   it("配置の部品の無い一覧は、欄の Markdown で描いたときと本文の根の中の DOM が同じで、面の入れ物が 1 枚だけ挟まる", () => {

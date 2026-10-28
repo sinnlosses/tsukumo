@@ -119,6 +119,24 @@ describe("A2UI のカタログ文書", () => {
     expect(dangling).toEqual([])
   })
 
+  it("Table は sortable・filterable・filterColumn を任意で受け、使わない呼び出しも通る", () => {
+    const base = {
+      id: "t",
+      component: "Table",
+      title: "件数",
+      columns: ["名前", "数"],
+      rows: [["a", "1"]],
+    }
+    const schema = REPORT_COMPONENT_SCHEMAS.Table
+
+    expect(schema.safeParse(base).success).toBe(true)
+    expect(
+      schema.safeParse({ ...base, sortable: true, filterable: true, filterColumn: 0 }).success,
+    ).toBe(true)
+    expect(schema.safeParse({ ...base, filterColumn: -1 }).success).toBe(false)
+    expect(JSON.stringify(document.components.Table)).toContain("filterColumn")
+  })
+
   it("元の zod の説明が部品の props に運ばれる", () => {
     expect(JSON.stringify(document.components.Claims)).toContain("howToVerify")
   })

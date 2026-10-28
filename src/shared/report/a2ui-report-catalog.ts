@@ -44,7 +44,21 @@ import { timelineBlockSchema } from "./timeline-block.ts"
 const LEAF_COMPONENTS = {
   Paragraph: leafComponent("Paragraph", textBlockSchema),
   ItemList: leafComponent("ItemList", listBlockSchema),
-  Table: leafComponent("Table", tableBlockSchema),
+  Table: leafComponent("Table", tableBlockSchema).extend({
+    sortable: z.boolean().optional().describe("true で列の見出しを押して並べ替えられる"),
+    filterable: z
+      .boolean()
+      .optional()
+      .describe(
+        'true で ChoicePicker の value を {path: "/view/<この表のID>/filter"} に結ぶと行が絞られる',
+      ),
+    filterColumn: z
+      .number()
+      .int()
+      .min(0)
+      .optional()
+      .describe("絞り込みで見る列の位置（0 始まり）。省略すると全列"),
+  }),
   Matrix: leafComponent("Matrix", matrixBlockSchema),
   Compare: leafComponent("Compare", compareBlockSchema),
   BeforeAfter: leafComponent("BeforeAfter", beforeAfterBlockSchema),

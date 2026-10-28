@@ -100,6 +100,7 @@ export type MainViewReportRegions = {
  * 部品の一覧で描く本文の値。`none` は一覧の無い記録と、一覧と `sections` の写しが食い違う記録。
  * `sections` は根の子の部品の ID から、その子が写った節の欄の ID と見出しの行（`## …`。見出しの無い節は空文字）。整形で塊の残らない子は持たない。
  * `leaves` は葉の部品の ID から、その葉の Markdown（図表の番号と傍注は節の欄の Markdown と同じ。整形で落ちた葉は空文字）。
+ * `tables` は操作できる `Table` の ID から、その Markdown の行ごとの分け方。整形で落ちた表は持たない。
  */
 export type MainViewA2uiReport =
   | { readonly kind: "none" }
@@ -110,7 +111,18 @@ export type MainViewA2uiReport =
         Record<string, { readonly regionId: number; readonly heading: string }>
       >
       readonly leaves: Readonly<Record<string, string>>
+      readonly tables: Readonly<Record<string, MainViewTableRows>>
     }
+
+/**
+ * 操作できる `Table`（`sortable`・`filterable`）の Markdown を、データ行の前後と行ごとに分けたもの。
+ * `before + rows.join("\n") + after` が、その葉の Markdown と一致する。
+ */
+export type MainViewTableRows = {
+  readonly before: string
+  readonly rows: readonly string[]
+  readonly after: string
+}
 
 /**
  * 節の欄。`id` は整形して図を先頭に足したあとの節の並びの位置。

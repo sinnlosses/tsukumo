@@ -58,13 +58,12 @@ export function tagTonesOf(sections: readonly ReportSection[]): TagTones {
   )
 }
 
-export function tableMarkdown(
+/** 表のデータ行ごとの Markdown。`tableMarkdown` が表に組み込む行そのもので、並びは `table.rows` と同じ。 */
+export function tableRowMarkdowns(
   table: Extract<ReportBlock, { readonly kind: "table" }>,
-  ordinal: number,
   tagTones: TagTones,
-): string {
+): readonly string[] {
   const rows = table.rows.map(tableRowCells)
-  const aligns = table.columns.map((_, index) => columnAlign(rows, index))
   const bars = table.columns.map((_, index) => columnBar(rows, index))
   const statusColumns = table.columns.map((_, index) =>
     rows.some((cells) => isStatusCell(cells[index])),
@@ -73,11 +72,20 @@ export function tableMarkdown(
     statusColumns[index] === true && typeof cell === "string"
       ? `<span class="cell-status-none">${cellTextMarkdown(cell)}</span>`
       : cellMarkdown(cell, bars[index] ?? NO_BAR, tagTones)
-  const bodyRowMarkdown = (row: (typeof table.rows)[number]): string => {
+  return table.rows.map((row) => {
     const cells = tableRowCells(row).map(bodyCellMarkdown)
     const [first = "", ...rest] = cells
     return markdownRow(isEmphasisRow(row) ? [`${EMPHASIS_ROW_MARK}${first}`, ...rest] : cells)
-  }
+  })
+}
+
+export function tableMarkdown(
+  table: Extract<ReportBlock, { readonly kind: "table" }>,
+  ordinal: number,
+  tagTones: TagTones,
+): string {
+  const rows = table.rows.map(tableRowCells)
+  const aligns = table.columns.map((_, index) => columnAlign(rows, index))
   return captionedMarkdown({
     kind: "table",
     ordinal,
@@ -87,7 +95,7 @@ export function tableMarkdown(
       [
         markdownRow(table.columns.map((column) => cellMarkdown(column, NO_BAR, tagTones))),
         markdownRow(aligns.map(alignMarker)),
-        ...table.rows.map(bodyRowMarkdown),
+        ...tableRowMarkdowns(table, tagTones),
       ].join("\n"),
       table.rest.trim() === ""
         ? ""

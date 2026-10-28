@@ -74,6 +74,9 @@ const A2UI_STRUCTURE_FAULT_REASONS = {
   "deep-layout": "配置の部品の入れ子は 3 階層まで",
   "figure-not-figure-part": "Report.figure には図の部品の id を置く",
   "unreferenced-component": "どこからも参照されない部品",
+  "filter-target-missing": "value の path が指す id の Table が無い（/view/<Table の id>/filter）",
+  "filter-target-not-filterable": "value の path が指す Table に filterable: true が無い",
+  "filter-option-not-in-cells": "選択肢の value が、絞り込む Table のセルの文字に無い",
 } as const satisfies Record<A2uiStructureFaultKind, string>
 
 function violationLine(violation: ReportViolation): string {

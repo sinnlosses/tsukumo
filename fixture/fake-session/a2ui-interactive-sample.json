@@ -1,0 +1,97 @@
+{
+  "name": "a2ui-interactive-sample",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "並べ替えと絞り込みのできる表を見たい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 1500,
+      "event": {
+        "kind": "report",
+        "toolUseId": "fake-a2ui-interactive-1",
+        "components": [
+          {
+            "id": "root",
+            "component": "Report",
+            "conclusion": ["架空の結論: 種別で絞り、列の見出しで並べ替えられる表を置いた。"],
+            "children": ["s1", "s2"],
+            "closing": { "text": "触ってみてね！", "expression": "proud" }
+          },
+          {
+            "id": "s1",
+            "component": "Section",
+            "heading": "架空の一覧",
+            "children": ["p1", "pick", "t1"]
+          },
+          {
+            "id": "p1",
+            "component": "Paragraph",
+            "text": "種別のボタンで行を絞り、列の名前のボタンで並べ替える。"
+          },
+          {
+            "id": "pick",
+            "component": "ChoicePicker",
+            "label": "種別",
+            "variant": "multipleSelection",
+            "options": [
+              { "label": "甲", "value": "甲" },
+              { "label": "乙", "value": "乙" },
+              { "label": "丙", "value": "丙" }
+            ],
+            "value": { "path": "/view/t1/filter" }
+          },
+          {
+            "id": "t1",
+            "component": "Table",
+            "title": "架空の案件の一覧。件数の多い順",
+            "columns": ["案件", "種別", "状態", "件数", "更新日"],
+            "rows": [
+              ["架空の案件 ぼ", "甲", { "status": "ok", "text": "完了" }, "120", "2026-10-02"],
+              ["架空の案件 あ", "乙", { "status": "warn", "text": "遅れ" }, "9", "2026-09-28"],
+              ["架空の案件 ん", "甲", { "status": "ng", "text": "停止" }, "1,000", "2026-10-20"],
+              ["架空の案件 か", "丙", { "status": "ok", "text": "完了" }, "45", "2026-08-15"],
+              ["架空の案件 さ", "乙", { "status": "ok", "text": "完了" }, "300", "2026-10-11"]
+            ],
+            "sortable": true,
+            "filterable": true,
+            "filterColumn": 1
+          },
+          {
+            "id": "s2",
+            "component": "Section",
+            "heading": "架空の対照",
+            "children": ["t2"]
+          },
+          {
+            "id": "t2",
+            "component": "Table",
+            "title": "操作を使わない表（変わらない）",
+            "columns": ["項目", "値"],
+            "rows": [
+              ["架空の甲", "1"],
+              ["架空の乙", "2"]
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "afterMs": 1900,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-a2ui-interactive-1",
+        "content": "ok",
+        "isError": false
+      }
+    },
+    {
+      "afterMs": 2300,
+      "event": { "kind": "turn-finished", "outcome": { "kind": "completed" } }
+    }
+  ]
+}

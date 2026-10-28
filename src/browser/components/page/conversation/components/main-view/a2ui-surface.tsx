@@ -16,6 +16,7 @@ import { createContext, type ReactElement, use, useState } from "react"
 import type { A2uiReportComponent } from "../../../../../../shared/report/a2ui-report-catalog.ts"
 import {
   A2UI_ROOT_ID,
+  type A2uiReportPart,
   a2uiLeafKind,
   a2uiPartsById,
 } from "../../../../../../shared/report/a2ui-report-outline.ts"
@@ -27,6 +28,7 @@ import type {
 import { orderedReportRegions } from "../../../../../domain/main-view/main-view-report-body.ts"
 import { Button } from "../../../../ui/button/button.tsx"
 import { arrangedBlockClassNames } from "../markdown/markdown.tsx"
+import { ChoicePicker, InteractiveTable } from "./a2ui-interactive-view.tsx"
 import {
   MarkdownReport,
   RegionBox,
@@ -61,7 +63,7 @@ export function A2uiReport(props: A2uiReportProps): ReactElement {
     )
   }
   return (
-    <ReportContext value={{ ...props, parts }}>
+    <ReportContext value={{ ...props, parts, dataModel: surface.surface.dataModel }}>
       <A2uiSurface surface={surface.surface} />
     </ReportContext>
   )
@@ -71,6 +73,7 @@ const SURFACE_ID = "report"
 
 type ReportContextValue = A2uiReportProps & {
   readonly parts: ReadonlyMap<string, A2uiReportComponent>
+  readonly dataModel: SurfaceModel<ReactComponentImplementation>["dataModel"]
 }
 
 const ReportContext = createContext<ReportContextValue | undefined>(undefined)
@@ -194,6 +197,9 @@ function runSegments(ids: readonly string[], report: ReportContextValue): readon
     if (part === undefined) {
       return []
     }
+    if (isInteractiveTable(part)) {
+      return [{ kind: "part", id }]
+    }
     if (a2uiLeafKind(part) !== undefined) {
       return [{ kind: "markdown", markdown: report.view.leaves[id] ?? "" }]
     }
@@ -201,6 +207,11 @@ function runSegments(ids: readonly string[], report: ReportContextValue): readon
       ? runSegments(part.children, report)
       : [{ kind: "part", id }]
   })
+}
+
+/** 並べ替えか絞り込みを受ける `Table`。使わない `Table` は欄の Markdown のまま描く。 */
+function isInteractiveTable(part: A2uiReportComponent): part is A2uiReportPart<"Table"> {
+  return part.component === "Table" && (part.sortable === true || part.filterable === true)
 }
 
 function PartView(props: { readonly id: string }): ReactElement {
@@ -212,7 +223,7 @@ function PartView(props: { readonly id: string }): ReactElement {
   if (part.component === "Section") {
     return <SectionContent id={props.id} />
   }
-  return a2uiLeafKind(part) === undefined ? (
+  return a2uiLeafKind(part) === undefined || isInteractiveTable(part) ? (
     <LayoutPart id={props.id} />
   ) : (
     <RegionChunks markdown={report.view.leaves[props.id] ?? ""} />
@@ -221,7 +232,7 @@ function PartView(props: { readonly id: string }): ReactElement {
 
 /**
  * 配置の部品。`Row` は旧い `row` と、`Card` は旧い `panel` と同じ class を使い、`Column` は子を順に積む。
- * `Tabs` は題の並びと選んだ子1つ。`ChoicePicker` は描かない（操作できる部品は別に描く）。
+ * `Tabs` は題の並びと選んだ子1つ。操作できる `Table` と `ChoicePicker` は別のファイルの `InteractiveTable`・`ChoicePicker`。
  */
 function LayoutPart(props: { readonly id: string }): ReactElement {
   const report = useReport()
@@ -251,6 +262,16 @@ function LayoutPart(props: { readonly id: string }): ReactElement {
       )
     case "Tabs":
       return <TabsPart tabs={part.tabs} />
+    case "Table": {
+      const table = report.view.tables[part.id]
+      return table === undefined ? (
+        <></>
+      ) : (
+        <InteractiveTable dataModel={report.dataModel} part={part} table={table} />
+      )
+    }
+    case "ChoicePicker":
+      return <ChoicePicker dataModel={report.dataModel} part={part} />
     default:
       return <></>
   }
