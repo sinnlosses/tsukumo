@@ -1,0 +1,300 @@
+import { readFileSync } from "node:fs"
+
+import { describe, expect, it } from "vitest"
+
+import { REPOSITORY_SCAN_TIMEOUT_MS } from "../fixture/repository-scan-timeout.ts"
+import {
+  hardcodedDeclarations,
+  isAllowedRadius,
+  isAllowedShadow,
+  isAllowedSpace,
+  isAllowedTransition,
+} from "./design-token-declaration.ts"
+import { listSourceFiles, SRC_ROOT } from "./source-file.ts"
+
+describe("design-token", () => {
+  it(
+    "src/browser/ の *.css で、theme.css 以外の余白・角丸・影・transition の時間の直書きが、除外の一覧の件数を超えない",
+    () => {
+      const actual = Object.fromEntries(
+        listSourceFiles(SRC_ROOT, SRC_ROOT, [".css"])
+          .filter(
+            (relPath) => relPath.startsWith("browser/") && relPath !== "browser/styles/theme.css",
+          )
+          .flatMap((relPath) => {
+            const count = hardcodedDeclarations(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8"))
+            return count.length > 0 ? [[relPath, count.length] as const] : []
+          }),
+      )
+
+      const increased = Object.entries(actual)
+        .filter(([relPath, count]) => count > (EXCLUDED_DECLARATION_COUNTS[relPath] ?? 0))
+        .map(
+          ([relPath, count]) =>
+            `${relPath}: ${count}（一覧 ${EXCLUDED_DECLARATION_COUNTS[relPath] ?? 0}）`,
+        )
+      const decreased = Object.entries(EXCLUDED_DECLARATION_COUNTS)
+        .filter(([relPath, count]) => (actual[relPath] ?? 0) < count)
+        .map(([relPath, count]) => `${relPath}: ${actual[relPath] ?? 0}（一覧 ${count}）`)
+
+      expect(increased.join("\n"), "直書きを増やしている。トークン（theme.css）を使う").toBe("")
+      expect(
+        decreased.join("\n"),
+        "直書きが減った。EXCLUDED_DECLARATION_COUNTS の件数を減らす（0 になったら行を消す）",
+      ).toBe("")
+    },
+    REPOSITORY_SCAN_TIMEOUT_MS,
+  )
+
+  it("余白の判定は、0・auto・トークン・局所のつまみ・em・%・28px 以上・それらだけの calc を通し、小さな px・rem を拒む", () => {
+    const allowed = [
+      "0",
+      "auto",
+      "var(--space-md)",
+      "var(--report-block-gap)",
+      "0.5em",
+      "50%",
+      "28px",
+      "2rem",
+      "0 var(--space-sm)",
+      "calc(-1 * var(--space-xs))",
+      "calc(var(--space-sm) + 0.5em)",
+    ]
+    const rejected = ["6px", "0.5rem", "4px 8px", "calc(1rem + 2px)", "var(--space-sm) 6px", "10px"]
+
+    expect(allowed.filter((value) => !isAllowedSpace(value))).toEqual([])
+    expect(rejected.filter((value) => isAllowedSpace(value))).toEqual([])
+  })
+
+  it("角丸の判定は、0・トークン・%・999px 以上を通し、小さな px・rem を拒む", () => {
+    const allowed = [
+      "0",
+      "var(--radius-md)",
+      "50%",
+      "999px",
+      "var(--radius-sm) var(--radius-sm) 0 0",
+    ]
+    const rejected = ["8px", "0.5rem", "4px 4px 0 0"]
+
+    expect(allowed.filter((value) => !isAllowedRadius(value))).toEqual([])
+    expect(rejected.filter((value) => isAllowedRadius(value))).toEqual([])
+  })
+
+  it("影の判定は、none・トークン・inset・ぼかし 0 の輪・向きのある影を通し、ぼかしのある向きの無い影を拒む", () => {
+    const allowed = [
+      "none",
+      "var(--shadow-raised)",
+      "inset 0 0 0 1px var(--accent)",
+      "0 0 0 1px var(--state-warn) inset",
+      "0 0 0 2px var(--accent)",
+      "0 0 0 2px var(--ground), 0 0 0 3.5px var(--accent)",
+      "-20px 0 50px rgb(0 0 0 / 0.5)",
+      "0 -20px 50px rgb(0 0 0 / 0.5)",
+    ]
+    const rejected = [
+      "0 8px 24px rgb(0 0 0 / 0.3)",
+      "0 20px 50px color-mix(in srgb, var(--ground) 80%, transparent)",
+      "0 0 0 2px var(--accent), 0 8px 24px rgb(0 0 0 / 0.3)",
+    ]
+
+    expect(allowed.filter((value) => !isAllowedShadow(value))).toEqual([])
+    expect(rejected.filter((value) => isAllowedShadow(value))).toEqual([])
+  })
+
+  it("transition の判定は、時間がトークンのものを通し、秒の直書きを拒む", () => {
+    const allowed = [
+      "none",
+      "opacity var(--motion-fast) ease-out",
+      "opacity var(--motion-base) ease-out, transform var(--motion-base) ease-out",
+    ]
+    const rejected = ["opacity 0.12s ease-out", "opacity var(--motion-fast) ease-out, color 0.2s"]
+
+    expect(allowed.filter((value) => !isAllowedTransition(value))).toEqual([])
+    expect(rejected.filter((value) => isAllowedTransition(value))).toEqual([])
+  })
+
+  it("宣言は、コメントを除き、複数行に渡る値も 1 つの宣言として読む", () => {
+    const css = [
+      "/* padding: 6px; */",
+      ".a { padding: 6px; margin: var(--space-sm); }",
+      ".b {",
+      "  box-shadow:",
+      "    0 0 0 2px var(--ground),",
+      "    0 8px 24px rgb(0 0 0 / 0.3);",
+      "  transition: opacity 0.12s ease-out;",
+      "  border-radius: 0.5rem;",
+      "}",
+    ].join("\n")
+
+    expect(hardcodedDeclarations(css)).toEqual([
+      "padding: 6px",
+      "box-shadow: 0 0 0 2px var(--ground),\n    0 8px 24px rgb(0 0 0 / 0.3)",
+      "transition: opacity 0.12s ease-out",
+      "border-radius: 0.5rem",
+    ])
+  })
+
+  it("同じ直書きは、どの書き方の宣言でも数える（長手形・論理プロパティ・角ごとの角丸）", () => {
+    const space = [
+      "padding",
+      "padding-top",
+      "padding-inline",
+      "padding-inline-start",
+      "padding-block-end",
+      "margin",
+      "margin-left",
+      "margin-block",
+      "margin-inline-end",
+      "gap",
+      "row-gap",
+      "column-gap",
+    ].map((property) => `.a { ${property}: 6px; }`)
+    const radius = [
+      "border-radius",
+      "border-top-left-radius",
+      "border-bottom-right-radius",
+      "border-start-end-radius",
+      "border-end-start-radius",
+    ].map((property) => `.a { ${property}: 6px; }`)
+    const others = [".a { box-shadow: 0 8px 24px red; }", ".a { transition-duration: 0.2s; }"]
+
+    const uncounted = [...space, ...radius, ...others].filter(
+      (css) => hardcodedDeclarations(css).length !== 1,
+    )
+
+    expect(uncounted).toEqual([])
+  })
+})
+
+/** 置き換えの課題が済むまで通す、ファイルごとの直書きの宣言の件数。減る向きにだけ動かす。 */
+const EXCLUDED_DECLARATION_COUNTS: Readonly<Record<string, number>> = {
+  "browser/components/app/screen-boundary.module.css": 6,
+  "browser/components/domain/protocol-mismatch.module.css": 3,
+  "browser/components/domain/screen-nav/components/nav-drawer.module.css": 24,
+  "browser/components/domain/screen-nav/components/phone-head.module.css": 7,
+  "browser/components/domain/screen-nav/components/screen-nav-character-picker.module.css": 6,
+  "browser/components/domain/screen-nav/components/screen-nav-gate.module.css": 2,
+  "browser/components/domain/screen-nav/components/screen-nav-model-permission.module.css": 3,
+  "browser/components/domain/screen-nav/components/screen-nav-session-tag.module.css": 10,
+  "browser/components/domain/screen-nav/components/screen-nav-settings-dialog.module.css": 12,
+  "browser/components/domain/screen-nav/components/screen-nav-settings-face-frame.module.css": 4,
+  "browser/components/domain/screen-nav/components/screen-nav-settings-look.module.css": 12,
+  "browser/components/domain/screen-nav/components/screen-nav-settings-workflow.module.css": 34,
+  "browser/components/domain/screen-nav/components/screen-nav-settings.module.css": 6,
+  "browser/components/domain/screen-nav/components/session-switcher.module.css": 33,
+  "browser/components/domain/screen-nav/screen-nav.module.css": 6,
+  "browser/components/domain/sidebar/components/context-usage-gauge.module.css": 2,
+  "browser/components/domain/sidebar/components/context-usage-row.module.css": 7,
+  "browser/components/domain/sidebar/components/persona-memory-section.module.css": 9,
+  "browser/components/domain/sidebar/components/plan-usage-gauge.module.css": 1,
+  "browser/components/domain/sidebar/components/plan-usage-row.module.css": 8,
+  "browser/components/domain/sidebar/components/profile-card.module.css": 2,
+  "browser/components/domain/sidebar/components/recent-topic-section.module.css": 1,
+  "browser/components/domain/sidebar/components/section.module.css": 10,
+  "browser/components/domain/sidebar/components/sidebar-footer.module.css": 6,
+  "browser/components/domain/sidebar/components/task-doing-count.module.css": 1,
+  "browser/components/domain/sidebar/components/usage-pane.module.css": 2,
+  "browser/components/domain/sidebar/sidebar.module.css": 7,
+  "browser/components/domain/skip-link.module.css": 2,
+  "browser/components/page/achievement/achievement.module.css": 2,
+  "browser/components/page/achievement/components/bookmark-section/bookmark-section.module.css": 4,
+  "browser/components/page/achievement/components/day-switch/day-switch.module.css": 5,
+  "browser/components/page/achievement/components/diary-book/diary-book.module.css": 32,
+  "browser/components/page/achievement/components/diary-notice/diary-notice.module.css": 7,
+  "browser/components/page/achievement/components/diary-section/diary-section.module.css": 20,
+  "browser/components/page/achievement/components/lantern-calendar/lantern-calendar.module.css": 9,
+  "browser/components/page/achievement/components/surprise-section/surprise-section.module.css": 8,
+  "browser/components/page/character/character.module.css": 27,
+  "browser/components/page/character/components/accent-swatch/accent-swatch.module.css": 6,
+  "browser/components/page/character/components/character-create/character-create.module.css": 11,
+  "browser/components/page/character/components/character-edit/character-edit.module.css": 57,
+  "browser/components/page/character/components/character-list/character-list.module.css": 8,
+  "browser/components/page/conversation/components/character-view/stage/balloon-track.css": 3,
+  "browser/components/page/conversation/components/character-view/stage/balloon.css": 4,
+  "browser/components/page/conversation/components/character-view/stage/phone-balloon.css": 5,
+  "browser/components/page/conversation/components/character-view/stage/speech-log.css": 16,
+  "browser/components/page/conversation/components/chat-view/chat-view.module.css": 21,
+  "browser/components/page/conversation/components/conversation-layout/conversation-layout.module.css": 14,
+  "browser/components/page/conversation/components/dispatch/dispatch.module.css": 18,
+  "browser/components/page/conversation/components/dispatch/form/composer.css": 16,
+  "browser/components/page/conversation/components/dispatch/form/file-suggestion-list.css": 1,
+  "browser/components/page/conversation/components/dispatch/form/format-bar.css": 3,
+  "browser/components/page/conversation/components/dispatch/form/markdown-editor-surface.css": 4,
+  "browser/components/page/conversation/components/dispatch/form/turn-status.css": 6,
+  "browser/components/page/conversation/components/inquiry/inquiry.module.css": 36,
+  "browser/components/page/conversation/components/live-announcer/live-announcer.module.css": 1,
+  "browser/components/page/conversation/components/main-view/phone/current-step.css": 4,
+  "browser/components/page/conversation/components/main-view/phone/phase-list.css": 4,
+  "browser/components/page/conversation/components/main-view/phone/turn-list.css": 7,
+  "browser/components/page/conversation/components/main-view/turn-card/aside-thread.css": 5,
+  "browser/components/page/conversation/components/main-view/turn-card/head-notice.css": 4,
+  "browser/components/page/conversation/components/main-view/turn-card/inquiry-jump-float.css": 3,
+  "browser/components/page/conversation/components/main-view/turn-card/interactive-view.css": 4,
+  "browser/components/page/conversation/components/main-view/turn-card/layout.css": 9,
+  "browser/components/page/conversation/components/main-view/turn-card/mini-portrait.css": 2,
+  "browser/components/page/conversation/components/main-view/turn-card/question-record.css": 11,
+  "browser/components/page/conversation/components/main-view/turn-card/report-head.css": 6,
+  "browser/components/page/conversation/components/main-view/turn-card/report-outline.css": 19,
+  "browser/components/page/conversation/components/main-view/turn-card/request-block.css": 2,
+  "browser/components/page/conversation/components/main-view/turn-card/selection-ask.css": 3,
+  "browser/components/page/conversation/components/main-view/turn-card/turn-failure-block.css": 5,
+  "browser/components/page/conversation/components/main-view/turn-card/turn.css": 5,
+  "browser/components/page/conversation/components/main-view/turn-card/work-strip.css": 18,
+  "browser/components/page/conversation/components/main-view/welcome/welcome.css": 27,
+  "browser/components/page/conversation/components/markdown/renderer/before-after-zoom.module.css": 9,
+  "browser/components/page/conversation/components/markdown/renderer/gauge-block.module.css": 1,
+  "browser/components/page/conversation/components/markdown/renderer/mermaid-block.module.css": 2,
+  "browser/components/page/conversation/components/markdown/renderer/plot-figure.module.css": 1,
+  "browser/components/page/conversation/components/markdown/renderer/region-frame.module.css": 1,
+  "browser/components/page/conversation/components/markdown/renderer/report-notation-body.css": 23,
+  "browser/components/page/conversation/components/markdown/renderer/report-notation-card-chain.css": 5,
+  "browser/components/page/conversation/components/markdown/renderer/report-notation-figure.css": 39,
+  "browser/components/page/conversation/components/markdown/renderer/report-notation-inline.css": 10,
+  "browser/components/page/conversation/components/markdown/renderer/report-notation-mark.css": 1,
+  "browser/components/page/conversation/components/markdown/renderer/report-notation-prose.css": 25,
+  "browser/components/page/conversation/components/markdown/renderer/report-notation-result.css": 46,
+  "browser/components/page/conversation/components/markdown/renderer/report-notation-summary.css": 32,
+  "browser/components/page/conversation/components/markdown/renderer/report-notation-timeline.css": 4,
+  "browser/components/page/conversation/components/pending-ask-card/pending-ask-card.module.css": 17,
+  "browser/components/page/conversation/components/prompt-image/prompt-image.module.css": 4,
+  "browser/components/page/conversation/components/repository-link/repository-link.module.css": 6,
+  "browser/components/page/token-usage/components/barred-value/barred-value.module.css": 3,
+  "browser/components/page/token-usage/components/context-usage-card/context-usage-card.module.css": 17,
+  "browser/components/page/token-usage/components/period-choice-list/period-choice-list.module.css": 5,
+  "browser/components/page/token-usage/components/period-usage-card/period-usage-card.module.css": 5,
+  "browser/components/page/token-usage/components/table-card-head/table-card-head.module.css": 1,
+  "browser/components/page/token-usage/components/tool-usage-card/tool-usage-card.module.css": 1,
+  "browser/components/page/token-usage/components/usage-review-card/usage-review-card.module.css": 35,
+  "browser/components/page/token-usage/token-usage.module.css": 11,
+  "browser/components/ui/bottom-sheet/bottom-sheet.module.css": 9,
+  "browser/components/ui/field/field.module.css": 1,
+  "browser/components/ui/image-zoom/image-zoom.module.css": 6,
+  "browser/components/ui/menu/menu.module.css": 8,
+  "browser/components/ui/stack/stack.module.css": 5,
+  "browser/components/ui/text-field/text-field.module.css": 1,
+  "browser/components/ui/typing-dot-list/typing-dot-list.module.css": 1,
+  "browser/features/current-work/components/current-work-list.module.css": 22,
+  "browser/features/current-work/components/current-work-pill.module.css": 3,
+  "browser/features/current-work/components/current-work-step-group.module.css": 6,
+  "browser/features/run-setting/components/run-setting-group.module.css": 4,
+  "browser/features/run-setting/components/run-setting-option.module.css": 3,
+  "browser/features/run-setting/components/run-setting-select.module.css": 15,
+  "browser/features/task-board/components/task-attribute.module.css": 4,
+  "browser/features/task-board/components/task-board-action.module.css": 18,
+  "browser/features/task-board/components/task-board-filter-bar.module.css": 9,
+  "browser/features/task-board/components/task-board-head.module.css": 5,
+  "browser/features/task-board/components/task-board-list.module.css": 3,
+  "browser/features/task-board/components/task-board-sort-band.module.css": 7,
+  "browser/features/task-board/components/task-board-sort-choice.module.css": 6,
+  "browser/features/task-board/components/task-body.module.css": 22,
+  "browser/features/task-board/components/task-count-chip-list.module.css": 4,
+  "browser/features/task-board/components/task-detail.module.css": 16,
+  "browser/features/task-board/components/task-item.module.css": 3,
+  "browser/features/task-board/components/task-legend.module.css": 4,
+  "browser/features/task-board/components/task-peek.module.css": 10,
+  "browser/features/task-board/components/task-refresh-button.module.css": 2,
+  "browser/features/task-board/components/task-run-confirm.module.css": 7,
+  "browser/features/task-board/components/task-running-card.module.css": 4,
+  "browser/features/task-board/components/task-summary-text.module.css": 2,
+  "browser/features/task-board/task-board.module.css": 16,
+}
