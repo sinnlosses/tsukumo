@@ -4,16 +4,16 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: 22px 28px;
+  padding: var(--space-2xl) 28px;
 }
 .face-title {
-  margin: 0 0 1rem;
+  margin: 0 0 var(--space-lg);
 }
 .foot {
   display: flex;
   flex: none;
   align-items: center;
   justify-content: flex-end;
-  gap: 8px;
-  padding: 0.9rem 28px;
+  gap: var(--space-sm);
+  padding: var(--space-lg) 28px;
 }

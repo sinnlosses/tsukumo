@@ -3,20 +3,20 @@
 .band {
   display: flex;
   align-items: center;
-  gap: 0.9rem;
+  gap: var(--space-lg);
   box-sizing: border-box;
   height: 54px;
-  margin-bottom: 4px;
-  padding: 0 14px;
+  margin-bottom: var(--space-xs);
+  padding: 0 var(--space-lg);
   border: 1px solid var(--rule);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
 }
 .band-surface {
   display: flex;
   align-items: center;
   height: 30px;
-  padding: 0 14px;
-  border-radius: 6px;
+  padding: 0 var(--space-lg);
+  border-radius: var(--radius-md);
 }
 /* 差し色の輪。色は `accent`（パックの持ち物）で、ここでは選べない。 */
 .band-ring {
@@ -30,15 +30,15 @@
 .control {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-md);
 }
 .swatch {
   box-sizing: border-box;
   width: 30px;
   height: 30px;
-  padding: 3px;
+  padding: var(--space-xs);
   border: 1px solid var(--rule);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: transparent;
   cursor: pointer;
   appearance: none;
@@ -48,12 +48,12 @@
 }
 .swatch::-webkit-color-swatch {
   border: none;
-  border-radius: 5px;
+  border-radius: var(--radius-sm);
 }
 .hex {
-  padding: 5px 10px;
+  padding: var(--space-xs) var(--space-md);
   border: 1px solid var(--rule);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   background: var(--ground);
   color: var(--ink-quiet);
   font-family: var(--font-mono);

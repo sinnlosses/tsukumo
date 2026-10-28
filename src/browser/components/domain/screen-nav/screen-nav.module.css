@@ -14,10 +14,10 @@
   position: relative;
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: var(--space-xl);
   height: var(--screen-nav-height);
   margin: calc(-1 * var(--page-padding)) calc(-1 * var(--page-padding)) var(--screen-nav-gap);
-  padding: 0 24px;
+  padding: 0 var(--space-2xl);
   border-bottom: var(--screen-nav-rule) solid var(--rule);
   background: color-mix(in srgb, var(--ground), var(--surface) 50%);
 }
@@ -27,13 +27,13 @@
   flex: 0 1 auto;
   min-width: 0;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-md);
 }
 /* 仕事・雑談の門とほかの画面の門の間の縦の仕切り（飾りなので読み上げない）。 */
 .screen-nav-divider {
   flex: none;
   align-self: center;
-  margin: 0 10px;
+  margin: 0 var(--space-md);
   width: 1px;
   height: 24px;
   background: var(--rule);
@@ -44,7 +44,7 @@
   display: flex;
   flex: none;
   align-self: stretch;
-  gap: 2px;
+  gap: var(--space-2xs);
   min-width: 0;
 }
 /* いまの作業の札を置く箱。口の右に置き、幅が足りないときに最初に縮む。
@@ -65,7 +65,8 @@
     z-index: 20;
     height: auto;
     margin: calc(-1 * var(--page-padding)) calc(-1 * var(--page-padding)) var(--page-padding);
-    padding: max(8px, env(safe-area-inset-top)) 14px 10px;
+    --screen-nav-phone-top: max(var(--space-sm), env(safe-area-inset-top));
+    padding: var(--screen-nav-phone-top) var(--space-lg) var(--space-md);
     border-bottom: 1px solid var(--rule);
     background: var(--ground);
   }

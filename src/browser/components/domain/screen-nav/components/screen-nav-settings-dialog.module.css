@@ -11,7 +11,7 @@
   padding: 0;
   overflow: hidden;
   border: 1px solid var(--rule);
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   background: var(--surface);
   color: var(--ink);
   font-size: var(--font-secondary);
@@ -21,9 +21,9 @@
   display: flex;
   flex: none;
   align-items: center;
-  gap: 0.6rem;
+  gap: var(--space-sm);
   height: 54px;
-  padding: 0 1.1rem;
+  padding: 0 var(--space-lg);
   border-bottom: 1px solid var(--rule-quiet);
 }
 .head-icon {
@@ -41,7 +41,7 @@
   margin-left: auto;
   padding: 0;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: transparent;
   color: var(--ink-quiet);
   cursor: pointer;
@@ -58,25 +58,25 @@
   display: flex;
   flex: none;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--space-2xs);
   box-sizing: border-box;
   width: 232px;
-  padding: 18px 12px;
+  padding: var(--space-xl) var(--space-md);
   border-right: 1px solid var(--rule-quiet);
   background: color-mix(in srgb, var(--ground) 40%, transparent);
 }
 .nav-group {
-  margin: 0 0 0.4rem 0.6rem;
+  margin: 0 0 var(--space-sm) var(--space-sm);
 }
 .nav-item {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: var(--space-sm);
   height: 36px;
-  padding: 0 0.7rem;
+  padding: 0 var(--space-md);
   border: none;
-  border-radius: 9px;
+  border-radius: var(--radius-md);
   background: transparent;
   color: var(--ink-quiet);
   font: inherit;
@@ -102,7 +102,7 @@
   bottom: 8px;
   left: 0;
   width: 3px;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   background: var(--accent);
 }
 .face {
@@ -113,5 +113,5 @@
 }
 .reset {
   flex: none;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
 }

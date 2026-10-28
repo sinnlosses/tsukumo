@@ -11,9 +11,9 @@
   padding: 0;
   overflow: hidden;
   border: 1px solid var(--rule);
-  border-radius: 1.125rem;
+  border-radius: var(--radius-xl);
   background: var(--surface);
-  box-shadow: 0 30px 80px rgb(0 0 0 / 0.6);
+  box-shadow: var(--shadow-overlay);
   color: var(--ink);
 }
 .session-switcher-frame {
@@ -26,8 +26,8 @@
   display: flex;
   flex: none;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.875rem 1.125rem;
+  gap: var(--space-md);
+  padding: var(--space-lg) var(--space-xl);
   border-bottom: 1px solid var(--rule-quiet);
   color: var(--ink-quiet);
 }
@@ -51,8 +51,8 @@
 .session-switcher-new {
   flex: none;
   height: 2.125rem;
-  padding: 0 0.75rem;
-  border-radius: 0.5625rem;
+  padding: 0 var(--space-md);
+  border-radius: var(--radius-md);
   white-space: nowrap;
 }
 /* まん中の段: 左の一覧（見本 430px）と右の要約。 */
@@ -65,23 +65,23 @@
   flex: none;
   width: 26.875rem;
   box-sizing: border-box;
-  padding: 0.375rem 0.5rem;
+  padding: var(--space-sm);
   overflow-y: auto;
   border-right: 1px solid var(--rule-quiet);
 }
 .session-switcher-empty {
-  padding: 1rem 0.75rem;
+  padding: var(--space-lg) var(--space-md);
 }
 /* 作業ツリーの塊の見出し。日の区切りより一段目立たせ、塊の間をあける。 */
 .session-switcher-worktree-label {
-  padding: 0.75rem 0.75rem 0.125rem;
+  padding: var(--space-md) var(--space-md) var(--space-2xs);
   border-bottom: 1px solid var(--rule-quiet);
   color: var(--ink);
   font-size: var(--font-label);
   font-weight: 700;
 }
 .session-switcher-group-label {
-  padding: 0.625rem 0.75rem 0.25rem;
+  padding: var(--space-md) var(--space-md) var(--space-xs);
   color: var(--ink-quiet);
   font-size: var(--font-label);
 }
@@ -89,9 +89,9 @@
 .session-switcher-row {
   display: flex;
   align-items: flex-start;
-  gap: 0.75rem;
-  padding: 0.375rem 0.75rem;
-  border-radius: 0.625rem;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-lg);
   color: var(--ink-quiet);
   cursor: pointer;
 }
@@ -144,7 +144,7 @@
 .session-switcher-row-line {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: var(--space-md);
   min-width: 0;
 }
 /* 作業ツリーの名前。全文を出す `title` の持ち手で、2段目の余りを取る。 */
@@ -171,16 +171,16 @@
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
-  gap: 1rem;
+  gap: var(--space-lg);
   min-width: 0;
   min-height: 0;
-  padding: 1.375rem 1.625rem;
+  padding: var(--space-2xl);
 }
 .session-switcher-detail-head {
   display: flex;
   flex: none;
   align-items: baseline;
-  gap: 0.75rem;
+  gap: var(--space-md);
 }
 .session-switcher-detail-id {
   flex: none;
@@ -198,7 +198,7 @@
   display: inline-flex;
   flex: none;
   align-items: center;
-  gap: 0.375rem;
+  gap: var(--space-sm);
 }
 .session-switcher-detail-face {
   width: 1.25rem;
@@ -212,12 +212,12 @@
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--space-sm);
   min-height: 0;
   overflow-y: auto;
 }
 .session-switcher-summary-heading {
-  margin: 0 0 0.125rem;
+  margin: 0 0 var(--space-2xs);
   letter-spacing: 0.08em;
 }
 .session-switcher-paragraph {
@@ -231,14 +231,14 @@
   color: var(--ink-quiet);
 }
 .session-switcher-last-line {
-  margin-top: 0.5rem;
-  padding: 0.75rem 0.875rem;
+  margin-top: var(--space-sm);
+  padding: var(--space-md) var(--space-lg);
   border: 1px solid var(--rule-quiet);
-  border-radius: 0.625rem;
+  border-radius: var(--radius-lg);
   background: var(--ground);
 }
 .session-switcher-last-line-label {
-  margin-bottom: 0.25rem;
+  margin-bottom: var(--space-xs);
   color: var(--ink-quiet);
   font-size: var(--font-label);
 }
@@ -254,25 +254,25 @@
 }
 .session-switcher-switch {
   height: 2.5rem;
-  padding: 0 1.125rem;
-  border-radius: 0.625rem;
+  padding: 0 var(--space-xl);
+  border-radius: var(--radius-lg);
 }
 /* 下の段: キーの案内。 */
 .session-switcher-hints {
   display: flex;
   flex: none;
   align-items: center;
-  gap: 1rem;
-  padding: 0.625rem 1.125rem;
+  gap: var(--space-lg);
+  padding: var(--space-md) var(--space-xl);
   border-top: 1px solid var(--rule-quiet);
   color: var(--ink-quiet);
   font-size: var(--font-action);
 }
 .session-switcher-hints kbd {
-  padding: 1px 6px;
+  padding: var(--space-2xs) var(--space-sm);
   border: 1px solid var(--rule);
   border-bottom-width: 2px;
-  border-radius: 5px;
+  border-radius: var(--radius-sm);
   background: var(--surface-raised);
   color: var(--ink);
   font-family: var(--font-mono);
@@ -283,7 +283,7 @@
      キーの案内は指で触る画面では読まないので畳む。 */
   .session-switcher {
     height: calc(100dvh - 2rem);
-    margin: 1rem auto auto;
+    margin: var(--space-lg) auto auto;
   }
   .session-switcher-columns {
     flex-direction: column;
@@ -295,12 +295,12 @@
     border-bottom: 1px solid var(--rule-quiet);
   }
   .session-switcher-detail {
-    padding: 1rem;
+    padding: var(--space-lg);
   }
   /* 見出しの行は折り返す（大きな短縮IDの横に時刻と依頼の数が入りきらない）。 */
   .session-switcher-detail-head {
     flex-wrap: wrap;
-    row-gap: 0.25rem;
+    row-gap: var(--space-xs);
   }
   .session-switcher-hints {
     display: none;

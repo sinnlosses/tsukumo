@@ -6,12 +6,12 @@
     position: relative;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: var(--space-sm);
   }
   .phone-head-line {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: var(--space-md);
     min-width: 0;
   }
   /* 顔の丸の二重の輪（地の色の 2px と差し色の 1.5px）。 */
@@ -40,7 +40,7 @@
   .phone-head-status {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--space-sm);
     line-height: 1.5;
   }
   .phone-head-mark {
@@ -103,7 +103,7 @@
   .phone-head-status[data-work-state="idle"][data-chat-idle="true"] {
     color: var(--accent);
   }
-  /* 段の点。14px の丸を 10x2 の線でつなぐ。 */
+  /* 段の点。14px の丸を 12x2 の線でつなぐ（丸のあいだの余白と線の幅は同じ）。 */
   .phone-head-dots {
     display: flex;
     align-items: center;
@@ -128,7 +128,7 @@
     line-height: 1;
   }
   .phone-head-dot + .phone-head-dot {
-    margin-left: 10px;
+    margin-left: var(--space-md);
   }
   /* 前の丸とのあいだの線。丸の外側の縁から左へ伸ばす。 */
   .phone-head-dot + .phone-head-dot::before {
@@ -136,7 +136,7 @@
     position: absolute;
     top: calc(50% - 1px);
     right: calc(100% + 1.5px);
-    width: 10px;
+    width: var(--space-md);
     height: 2px;
     background: var(--surface-accent);
   }
@@ -166,12 +166,12 @@
   .phone-head-steps-toggle {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--space-xs);
     height: 26px;
     margin-left: auto;
-    padding: 0 8px;
+    padding: 0 var(--space-sm);
     border: none;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     background: transparent;
     color: var(--ink-quiet);
     font-size: var(--font-label);

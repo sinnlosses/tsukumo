@@ -6,9 +6,9 @@
 .screen-nav-gate {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-sm);
   margin-bottom: calc(-1 * var(--screen-nav-rule));
-  padding: 0 12px;
+  padding: 0 var(--space-md);
   border-bottom: 2px solid transparent;
   color: var(--ink-quiet);
   font-size: var(--font-subheading);

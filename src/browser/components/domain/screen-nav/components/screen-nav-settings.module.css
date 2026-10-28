@@ -17,7 +17,7 @@
   height: 36px;
   padding: 0;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: transparent;
   color: var(--ink-quiet);
   cursor: pointer;
@@ -27,10 +27,10 @@
 }
 /* 群の区切りの見出し。2つ目からは上に余白を置く。字の大きさ・色は `Text` が持つ。 */
 .screen-nav-settings-heading {
-  margin: 0 0 0.4rem;
+  margin: 0 0 var(--space-sm);
 }
 .screen-nav-settings-heading ~ .screen-nav-settings-heading {
-  margin-top: 0.8rem;
+  margin-top: var(--space-md);
 }
 /* ラベルと操作子の2列。並べ・間隔・揃えは `HStack` が持つ。 */
 .screen-nav-settings-row {
@@ -42,7 +42,7 @@
 }
 .screen-nav-settings-table .screen-nav-settings-row {
   min-height: 0;
-  padding: 12px 0;
+  padding: var(--space-md) 0;
   border-bottom: 1px solid var(--rule-quiet);
 }
 /* 操作は名前の隣から左へ詰める（行の余白を右の自動マージンが吸う）。 */
@@ -53,13 +53,13 @@
 .screen-nav-settings-table .screen-nav-settings-row > label {
   flex: none;
   width: 132px;
-  margin-right: 4px;
+  margin-right: var(--space-xs);
 }
 /* 色を受け取らなかった理由の1行。面の幅を押し広げないように、幅は行の並びに任せて折り返す。 */
 .screen-nav-settings-notice {
   width: 0;
   min-width: 100%;
-  margin: 0.2rem 0 0;
+  margin: var(--space-xs) 0 0;
 }
 /* 箱だけ（置き方）。顔は `<Button variant="link">` が持つ。 */
 .screen-nav-settings-reset {
