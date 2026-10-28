@@ -30,7 +30,9 @@
   子の図・表の番号と傍注は、子を節の中に平らに並べたときと同じ順で付く。
   差し戻しの検査は子にも節の塊と同じく掛かり、隣り合う `note` は縦に積む `panel` の中では数え、横に並ぶ `row` の中では数えない。
   `fold` を持つ `row`・`panel` の子に `fold` か `<details>` があれば、畳みの入れ子として差し戻す。使い方は `report_part_card` の `row`・`panel` のカードが持つ。
-  見え方は疑似セッションの場面 `row-panel-decision`（候補の比較）と `row-panel-status`（件数と一覧）で撮る
+  見え方は疑似セッションの場面 `row-panel-decision`（候補の比較）と `row-panel-status`（件数と一覧）で撮る。
+  `row`・`panel` は旧い変種の塊で、`json-schema` の変種と `sections` の受け口を外すときまで残す（ADR 0039「追記（2026-10-28）」）。
+  `a2ui` の変種では同じ見た目を基本カタログの `Row`・`Card`・`Column` で書き、ブラウザは同じ class で描く。`sections` へは中の葉が平らに入り、配置は `components` だけが持つ
 - **数の推移・割合は `chart` の塊で見せる**。書き手は種類（`bar` / `line` / `pie` / `arrow` / `slope` / `span` / `share`）・項目・
   系列・横棒かを渡し、Chart.js の設定は tsukumo が組む。色は書き手が指定しない（配色のトークンから入れる）。`pie` は
   先頭の系列だけを描く。前後の差が主役なら `arrow`（項目ごとの前→後の矢印）、2時点の多項目は
