@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 
+import { phaseDurations } from "../../../src/shared/session/phase-duration.ts"
 import type { SessionEvent } from "../../../src/shared/session/session-event.ts"
 import { applySessionEvent } from "../../../src/shared/session/session-fold.ts"
 import type { RecordTime } from "../../../src/shared/session/session-record.ts"
@@ -9,7 +10,7 @@ import {
   EMPTY_WORK_PLAN_TRAIL,
   type WorkPlanTrail,
 } from "../../../src/shared/session/work-plan-trail.ts"
-import type { WorkPlanEntry } from "../../../src/shared/session/work-plan.ts"
+import type { DelegatedRange, WorkPlanEntry } from "../../../src/shared/session/work-plan.ts"
 import { reportEvent } from "../../fixture/report-event.ts"
 import { requestEvent } from "../../fixture/session-event.ts"
 
@@ -17,10 +18,14 @@ const PHASES = ["架空の計画", "架空の実装", "架空の検証"]
 
 type Timed = readonly [SessionEvent, number]
 
-function plan(current: number, phases: readonly WorkPlanEntry[] = PHASES): SessionEvent {
+function plan(
+  current: number,
+  phases: readonly WorkPlanEntry[] = PHASES,
+  delegatedRange: DelegatedRange = { kind: "none" },
+): SessionEvent {
   return {
     kind: "work-plan",
-    delegatedRange: { kind: "none" },
+    delegatedRange,
     skippedPhases: [],
     awaitingSummary: { kind: "none" },
     phases,
@@ -188,6 +193,27 @@ describe("advanceWorkPlanTrail", () => {
       ],
       times: [at(201)],
     })
+  })
+
+  it("範囲を初めて宣言した記録は、範囲の先頭の段が今の段として残り、その段の所要が測れる", () => {
+    const phases = ["架空の計画", "架空の段1", "架空の段2", "架空の受け入れ"]
+    const declared = plan(0, phases, { kind: "range", first: 1, count: 2 })
+    const trail = trailOf([
+      [requestEvent(), 0],
+      [plan(0, phases), 1],
+      [declared, 10],
+      [plan(2, phases), 40],
+    ])
+
+    expect(trail.plans.map((record) => record.current)).toEqual([0, 1, 2])
+    expect(
+      phaseDurations(trail, at(60), "none")
+        .map((row) => (row.kind === "phase" ? row.duration : row.wall))
+        .slice(0, 2),
+    ).toEqual([
+      { kind: "known", milliseconds: 9_000 },
+      { kind: "known", milliseconds: 30_000 },
+    ])
   })
 
   it("再開した依頼でワークプランがまだ渡っていなければ、引き継ぎを決めずに待つ", () => {

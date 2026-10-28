@@ -25,6 +25,30 @@ export function workPlanRecords(
     : [{ ...next, kind: "work-plan", time: { kind: "stamped", at } }]
 }
 
+/**
+ * `work-plan` のイベント1件で積む記録。ワークプランは {@link nextWorkPlan} で畳んだものを持たせる。
+ * 呼び出しのままの `current` を持たせると、範囲を初めて宣言した呼び出しで帯が進めた範囲の先頭の段が、
+ * 記録から求める所要では一度も今の段にならず不明になる。
+ */
+export function workPlanRecordOf(
+  records: readonly SessionRecord[],
+  event: Extract<WorkPlanEvent, { readonly kind: "work-plan" }>,
+  at: number,
+): SessionRecord {
+  const next = nextWorkPlan(currentWorkPlan(records), event)
+  return {
+    kind: "work-plan",
+    phases: event.phases,
+    current: next.kind === "planned" ? next.current : event.current,
+    finishedInGroup: event.finishedInGroup,
+    phaseSummary: event.phaseSummary,
+    delegatedRange: event.delegatedRange,
+    skippedPhases: event.skippedPhases,
+    awaitingSummary: event.awaitingSummary,
+    time: { kind: "stamped", at },
+  }
+}
+
 /** 書きかけの本文を確定した記録に移す。空のときは何もしない（空の本文を積まない）。 */
 export function settleUtterance(state: SessionState): SessionState {
   if (isBlankText(state.partialUtterance)) {

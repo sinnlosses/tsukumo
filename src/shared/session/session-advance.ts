@@ -18,6 +18,7 @@ import {
   settleUtterance,
   trimToRecentTurns,
   withReportChangeSummary,
+  workPlanRecordOf,
   workPlanRecords,
 } from "./session-record-edit.ts"
 import { MAX_TOOL_TEXT_LENGTH } from "./session-record.ts"
@@ -274,20 +275,7 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
     case "work-plan":
       return {
         ...state,
-        records: [
-          ...state.records,
-          {
-            kind: "work-plan",
-            phases: event.phases,
-            current: event.current,
-            finishedInGroup: event.finishedInGroup,
-            phaseSummary: event.phaseSummary,
-            delegatedRange: event.delegatedRange,
-            skippedPhases: event.skippedPhases,
-            awaitingSummary: event.awaitingSummary,
-            time: { kind: "stamped", at },
-          },
-        ],
+        records: [...state.records, workPlanRecordOf(state.records, event, at)],
       }
     case "tool-started": {
       const nested = event.parentToolUseId !== undefined
