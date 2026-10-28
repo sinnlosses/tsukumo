@@ -116,3 +116,4 @@
 | `docs/architecture/adr/0037-dependency-cruiser-edge-check.md`       | 層と機能の辺の検査を dependency-cruiser の宣言に移す                                                  | 採用                   |
 | `docs/architecture/adr/0038-declare-then-decide-form.md`            | `report` は問いと数を申告させて形は決定表が決め、本文は `body` で受け、差し戻しは文法と数の整合に絞る | 採用                   |
 | `docs/architecture/adr/0039-report-via-a2ui-catalog.md`             | `report` を A2UI のカタログとメッセージで受けて描く                                                   | 採用                   |
+| `docs/architecture/adr/0040-report-staged-drawing.md`               | `report` の `a2ui` の版を、部品が閉じるたびに草稿として描く                                           | 採用                   |
