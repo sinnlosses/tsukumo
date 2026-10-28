@@ -24,7 +24,7 @@ import {
   ESCAPE_NOTATIONS,
   MARKDOWN_NOTATIONS,
 } from "../../src/server/report/core/report-markdown-notation.ts"
-import { REPORT_TOOL_ERROR_REASON } from "../../src/server/report/core/report-review.ts"
+import { A2UI_STRUCTURE_REJECTION_REASONS } from "../../src/server/report/core/report-review.ts"
 import { REPORT_BLOCK_FIELDS } from "../../src/server/report/core/report-usage.ts"
 import { REPORT_VIOLATION_KINDS } from "../../src/server/report/core/report-violation.ts"
 import { REPORT_MERMAID_KINDS } from "../../src/shared/report/report-block-diagram.ts"
@@ -163,7 +163,11 @@ process.stdout.write(`知らない種類で境界で落とした塊の数（合�
 process.stdout.write(
   table(
     `差し戻しの種類 × 回数（割合は \`report\` の呼び出し${String(records.length + rejections.length)}回〔受け付け${String(records.length)}＋差し戻し${String(rejections.length)}〕に対する）`,
-    [...REPORT_PROCEDURE_REJECTIONS, REPORT_TOOL_ERROR_REASON, ...REPORT_VIOLATION_KINDS],
+    [
+      ...REPORT_PROCEDURE_REJECTIONS,
+      ...A2UI_STRUCTURE_REJECTION_REASONS,
+      ...REPORT_VIOLATION_KINDS,
+    ],
     rejections,
     (record) => record.reasons,
     records.length + rejections.length,

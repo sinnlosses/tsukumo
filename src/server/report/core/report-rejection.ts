@@ -9,6 +9,7 @@ import {
   MAX_TABLE_ROWS,
   SENTENCE_CELL_LENGTH,
 } from "../../../shared/report/report-limit.ts"
+import type { A2uiStructureFault, A2uiStructureFaultKind } from "./a2ui-structure-fault.ts"
 import { figureNumberFaultPositions } from "./figure-number-fault.ts"
 import { PLAIN_WORDS } from "./plain-word.ts"
 import {
@@ -35,6 +36,45 @@ export function reportRejectionText(violations: readonly ReportViolation[]): str
     REPORT_CHANGED_FIELDS_ONLY_TEXT,
   ].join("\n")
 }
+
+/**
+ * `a2ui` の版で構造の規約に外れたときの `report` の戻り値。
+ * 違反 1 つにつき A2UI の `VALIDATION_FAILED` のエラーのメッセージ 1 行（JSON）で、理由は種類ごとの固定の文だけを載せ、書き手の ID・文面は写さない。
+ */
+export function a2uiValidationFailedText(faults: readonly A2uiStructureFault[]): string {
+  return [
+    ...faults.map((fault) =>
+      JSON.stringify({
+        version: A2UI_VERSION,
+        error: {
+          code: "VALIDATION_FAILED",
+          surfaceId: A2UI_REPORT_SURFACE_ID,
+          path: fault.pointer,
+          message: A2UI_STRUCTURE_FAULT_REASONS[fault.kind],
+        },
+      }),
+    ),
+    "直して `components` を全部渡し、`report` を呼び直すこと。",
+  ].join("\n")
+}
+
+const A2UI_VERSION = "v0.9"
+
+const A2UI_REPORT_SURFACE_ID = "report"
+
+const A2UI_STRUCTURE_FAULT_REASONS = {
+  "unknown-component": "カタログに無い部品",
+  "duplicate-id": "同じ id の部品がほかにある",
+  "missing-root": "id が root の Report が無い",
+  "root-not-report": "id が root の部品は Report にする",
+  "undefined-reference": "参照先の id の部品が無い",
+  "report-child-not-section": "Report.children には Section の id だけを置く",
+  "nested-section": "Section の子に Section は置けない",
+  "misplaced-component": "ここに置けない種類の部品",
+  "deep-layout": "配置の部品の入れ子は 2 階層まで",
+  "figure-not-figure-part": "Report.figure には図の部品の id を置く",
+  "unreferenced-component": "どこからも参照されない部品",
+} as const satisfies Record<A2uiStructureFaultKind, string>
 
 function violationLine(violation: ReportViolation): string {
   switch (violation.kind) {

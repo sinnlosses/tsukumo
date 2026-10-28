@@ -1,6 +1,13 @@
+import { keys } from "remeda"
 import { describe, expect, it } from "vitest"
 
-import { buildReportCatalogDocument } from "../../../src/shared/report/a2ui-report-catalog.ts"
+import { BASIC_PART_SCHEMAS, BASIC_PARTS } from "../../../src/shared/report/a2ui-basic-part-list.ts"
+import {
+  buildReportCatalogDocument,
+  FIGURE_COMPONENTS,
+  LEAF_COMPONENT_KINDS,
+  REPORT_COMPONENT_SCHEMAS,
+} from "../../../src/shared/report/a2ui-report-catalog.ts"
 import { REPORT_BLOCK_KINDS } from "../../../src/shared/report/report-block.ts"
 
 // 書き手に渡す塊の kind と部品名の対応（塊を足したら、ここと実装の表の両方に足す）
@@ -122,6 +129,50 @@ describe("A2UI のカタログ文書", () => {
     expect(leaf).toContain('"id"')
     expect(leaf).not.toContain('"kind"')
   })
+
+  it("受理の形の表は文書と同じ 26 部品を持つ", () => {
+    expect(Object.keys(REPORT_COMPONENT_SCHEMAS).toSorted()).toEqual(expected.toSorted())
+  })
+
+  it("葉の部品名は対応表の kind に写る", () => {
+    expect(LEAF_COMPONENT_KINDS).toEqual(
+      Object.fromEntries(
+        Object.entries(KIND_TO_COMPONENT).map(([kind, component]) => [component, kind]),
+      ),
+    )
+  })
+
+  it("図に置ける葉は figure の塊の種類と同じ", () => {
+    expect(FIGURE_COMPONENTS.toSorted()).toEqual(
+      [
+        "Picture",
+        "Mermaid",
+        "Graph",
+        "Svg",
+        "Timeline",
+        "BeforeAfter",
+        "Chart",
+        "Stats",
+        "Plot",
+      ].toSorted(),
+    )
+  })
+
+  it.each(keys(BASIC_PART_SCHEMAS))(
+    "基本の %s の受理の形は、公開物の写しと欄の名前・必須の欄が揃う",
+    (name) => {
+      const part = BASIC_PARTS[name].allOf[2]
+      const schema = BASIC_PART_SCHEMAS[name]
+      const required = Object.entries(schema.shape)
+        .filter(([, field]) => !field.safeParse(undefined).success)
+        .map(([key]) => key)
+
+      expect(Object.keys(schema.shape).toSorted()).toEqual(
+        [...Object.keys(part.properties), "id", "weight"].toSorted(),
+      )
+      expect(required.toSorted()).toEqual([...part.required, "id"].toSorted())
+    },
+  )
 
   it("Report の workPlanClosing は WORK_PLAN_CLOSINGS と一致する", async () => {
     const { WORK_PLAN_CLOSINGS } = await import("../../../src/shared/session/work-plan.ts")

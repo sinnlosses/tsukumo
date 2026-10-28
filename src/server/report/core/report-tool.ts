@@ -114,6 +114,11 @@ export const REPORT_BODY_DESCRIPTION =
   "claims: 1行1主張 `確度 | 主張 | 根拠 | 確かめ方`（確度は confirmed / inferred / unverified）。" +
   "image: 開きの行は `image 何が見えるか`、中身の1行目が画像のパス、2行目からが見る場所。"
 
+/** `a2ui` の版の `components` 引数（A2UI のカタログの部品の平らな一覧）の説明。 */
+export const REPORT_A2UI_COMPONENTS_DESCRIPTION =
+  "レポートを A2UI の部品の平らな一覧で書く。根は id が root の Report で、結論ほかの欄は Report の props に書き、Report.children に Section の ID を並べる。" +
+  "Section.children は葉か配置の部品（Row・Column・Card・Tabs・ChoicePicker）の ID、図は Report.figure に図の部品の ID を置く。呼び直すときも一覧を全部渡す。"
+
 /** `body-fence` の版で、部品の型の表記の代わりに `figure` と `sections` の説明の後ろに足す文。 */
 export const REPORT_PART_CARD_NOTE = "部品の型と例は report_part_card で種類を渡して引く。"
 

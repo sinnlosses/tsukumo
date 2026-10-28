@@ -126,5 +126,6 @@ describe("readConfig", () => {
   it("知らない型の渡し方は json-schema に倒す", () => {
     expect(readConfig({ TSUKUMO_REPORT_SCHEMA: "json" }).reportSchema).toBe("json-schema")
     expect(readConfig({ TSUKUMO_REPORT_SCHEMA: " body-fence " }).reportSchema).toBe("body-fence")
+    expect(readConfig({ TSUKUMO_REPORT_SCHEMA: " a2ui " }).reportSchema).toBe("a2ui")
   })
 })

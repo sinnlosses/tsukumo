@@ -55,6 +55,25 @@ describe("toSessionEvents（report ツール）", () => {
     ])
   })
 
+  it("旧い版の引数の report は components が空", () => {
+    const [event] = toSessionEvents(
+      assistantMessageWithoutUuid([
+        {
+          type: "tool_use",
+          id: "toolu_r1",
+          name: REPORT_TOOL_FULL_NAME,
+          input: {
+            conclusion: ["架空の結論。"],
+            sections: [{ blocks: [{ kind: "text", text: "架空。" }] }],
+          },
+        },
+      ]),
+      EXPRESSIONS,
+    )
+
+    expect(event).toMatchObject({ kind: "report", components: [] })
+  })
+
   it("report の workPlanClosing はイベントに乗せ、形の崩れは none に畳む", () => {
     const closings = ["finished", "stopped", "架空の閉じ方"].map((workPlanClosing) => {
       const [event] = toSessionEvents(

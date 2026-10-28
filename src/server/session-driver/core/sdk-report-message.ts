@@ -23,6 +23,7 @@ import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import { parseWorkPlanClosing } from "../../../shared/session/work-plan.ts"
 import { optionalString } from "../../../shared/utils/optional-string.ts"
 import { nonBlankString } from "../../core/non-blank-string.ts"
+import { a2uiReportInput } from "./a2ui-report-message.ts"
 import { parseConclusion } from "./conclusion-sentence.ts"
 import { speechEvents } from "./sdk-speech-message.ts"
 
@@ -45,6 +46,9 @@ import { speechEvents } from "./sdk-speech-message.ts"
  * `conclusion` の「無い」は空の文字列に畳む（差し戻しのあとの出し直しで省いた欄は `ReportInheritance` が埋める）。
  * `conclusion` が文字列・文字列の配列・省略のどれでもなければ捨てる（引数の検査に落ちた呼び出しで、モデルには Claude Code がエラーを返す）。
  * `inheritedFields` はここでは空で、引き継ぎは `ReportInheritance` がする。
+ * 空でない `components`（`a2ui` の版の部品の一覧）を持つ呼び出しは、一覧を旧い版の引数の形に組み直してから同じに取り出す（{@link a2uiReportInput}）。
+ * そのときの `argumentChars` は、全体を生の引数で、欄ごとを組み直した引数で数える（引き継ぎが渡した欄を見分けられるように）。
+ * 旧い版の呼び出しの `components` は空。
  */
 export function reportEvents(
   toolUseId: string,
@@ -54,43 +58,55 @@ export function reportEvents(
   if (!isPlainObject(input)) {
     return []
   }
-  const conclusion = parseConclusion(input.conclusion)
+  const a2ui =
+    Array.isArray(input.components) && input.components.length > 0
+      ? a2uiReportInput(input.components)
+      : undefined
+  const fields = a2ui?.input ?? input
+  const conclusion = parseConclusion(fields.conclusion)
   if (conclusion === undefined) {
     return []
   }
 
-  const task = parseReportTask(input.task)
+  const task = parseReportTask(fields.task)
   const parsed: ParsedReportContent =
-    input.sections === undefined
-      ? parseReportBodyContent(optionalString(input.body) ?? "")
-      : { ...parseReportSections(input.sections), brokenFenceCount: 0 }
+    fields.sections === undefined
+      ? parseReportBodyContent(optionalString(fields.body) ?? "")
+      : { ...parseReportSections(fields.sections), brokenFenceCount: 0 }
 
   return [
     {
       kind: "report",
       toolUseId,
-      argumentChars: reportArgumentCharsOf(input),
+      argumentChars:
+        a2ui === undefined
+          ? reportArgumentCharsOf(input)
+          : {
+              total: reportArgumentCharsOf(input).total,
+              fields: reportArgumentCharsOf(a2ui.input).fields,
+            },
       inheritedFields: [],
       conclusion: conclusion.conclusion,
       conclusionSentenceChars: conclusion.conclusionSentenceChars,
       conclusionFirstSentence: conclusion.conclusionFirstSentence,
-      keyFigures: parseKeyFigures(input.keyFigures),
-      figure: parseReportFigure(input.figure),
+      keyFigures: parseKeyFigures(fields.keyFigures),
+      figure: parseReportFigure(fields.figure),
       sections: parsed.sections,
-      favor: optionalString(input.favor) ?? "",
-      retrospective: parseReportRetrospective(input.retrospective),
-      checks: parseReportChecks(input.checks),
+      favor: optionalString(fields.favor) ?? "",
+      retrospective: parseReportRetrospective(fields.retrospective),
+      checks: parseReportChecks(fields.checks),
       task,
-      workPlanClosing: parseWorkPlanClosing(input.workPlanClosing),
-      closing: speechEvents(input.closing, expressions)[0] ?? { kind: "none" },
-      waitingLine: speechEvents(input.waitingLine, expressions).find(
+      workPlanClosing: parseWorkPlanClosing(fields.workPlanClosing),
+      closing: speechEvents(fields.closing, expressions)[0] ?? { kind: "none" },
+      waitingLine: speechEvents(fields.waitingLine, expressions).find(
         (speech) => speech.text.trim() !== "",
       ) ?? { kind: "none" },
-      unknownBlockCount: parsed.unknownBlockCount,
+      unknownBlockCount: parsed.unknownBlockCount + (a2ui?.droppedCount ?? 0),
       brokenFenceCount: parsed.brokenFenceCount,
-      title: optionalString(input.title),
-      sessionSummary: nonBlankString(input.sessionSummary),
-      sessionRemaining: sessionRemainingOf(input.sessionRemaining, task),
+      title: optionalString(fields.title),
+      sessionSummary: nonBlankString(fields.sessionSummary),
+      sessionRemaining: sessionRemainingOf(fields.sessionRemaining, task),
+      components: a2ui?.components ?? [],
       imageSizes: [],
       unshelvedImages: [],
     },

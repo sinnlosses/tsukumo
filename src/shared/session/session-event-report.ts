@@ -1,5 +1,6 @@
 // セッションの出来事（`SessionEvent`）のうち、`report` ツールの呼び出しに関するものの型。
 
+import type { A2uiReportComponent } from "../report/a2ui-report-catalog.ts"
 import type { ReportArgumentChars, ReportArgumentField } from "../report/report-argument-size.ts"
 import type { KeyFigures } from "../report/report-block-comparison.ts"
 import type { RecordedReportFigure, ReportSection } from "../report/report-block.ts"
@@ -47,6 +48,7 @@ export type ReportEvent =
    * `conclusionSentenceChars` は `conclusion` の要素ごとの字数で、記法の検査だけが読む。
    * `conclusionFirstSentence` は `conclusion` の1要素目で、通った `report` のツール結果の文になる。
    * `title`（セッション一覧の見出し）は書かれていなければ undefined。画面の状態は読まず、差し戻しのあとの出し直しで引き継ぐためだけに持つ（書き込むのは handler）。
+   * `components` は `a2ui` の版で受け付けた部品の一覧で、旧い版の呼び出しでは空。`sections` などの欄はこの一覧から写した値。
    * `imageSizes` と `unshelvedImages` は `report` の引数ではなく、サーバが画像を棚に置いたときに測った寸法と、棚に置けなかった・寸法を測れなかったパス。駆動は空で渡し、セッションの管理が畳む前に埋める。
    */
   | {
@@ -72,6 +74,7 @@ export type ReportEvent =
       readonly title: string | undefined
       readonly sessionSummary: string | undefined
       readonly sessionRemaining: SessionRemaining
+      readonly components: readonly A2uiReportComponent[]
       readonly imageSizes: readonly ReportImageSize[]
       readonly unshelvedImages: readonly string[]
     }
@@ -86,10 +89,10 @@ export type ReportEvent =
     }
   /**
    * 結果が `isError` で返った `report` の呼び出しごとに、`CallReview` が `tool-finished` の直後に作る（記録の口で、画面の状態は読まない）。
-   * `reasons` は差し戻しの種類の名前だけで、本文も文面も持たない。判定が差し戻したものはその理由、形の検査で落ちたもの（handler に届かなかったものと、組んだ値が落ちたもの）は `tool-error`。
+   * `reasons` は差し戻しの種類の名前だけで、本文も文面も持たない。判定が差し戻したものはその理由、形の検査で落ちたもの（handler に届かなかったものと、組んだ値が落ちたもの）は `tool-error`。`a2ui` の版の部品の一覧が構造の規約に外れたものは `tool-error` と `a2ui-structure`。
    * `argumentChars` は呼び出しの生の引数の字数で、`inheritedFields` は引き継いだ欄の名前（どちらも受理した `report` と同じ）。
    * 引数が読めなかった呼び出しの `inheritedFields` は空。
-   * `toolErrorFields` は形の検査で落ちた欄（zod の `issues` の欄名と `code`）で、結果の本文から取れたときだけ入る。
+   * `toolErrorFields` は形の検査で落ちた欄（zod の `issues` の欄名と `code`）で、結果の本文から取れたときだけ入る。構造の規約に外れたものは、違反の JSON Pointer を畳んだ欄名と違反の種類。
    */
   | {
       readonly kind: "report-rejected"

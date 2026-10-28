@@ -5,6 +5,8 @@
 // - 部品直下の `DynamicString`・`DynamicStringList` を、リテラルと `{path}` だけの定義に替える
 // - `ChoicePicker` の `Checkable`（関数を要する `checks`）の参照を外す
 
+import { z } from "zod"
+
 const COMMON = [
   { $ref: "common_types.json#/$defs/ComponentCommon" },
   { $ref: "#/$defs/CatalogComponentCommon" },
@@ -235,4 +237,49 @@ export const BASIC_PARTS = {
     ],
     unevaluatedProperties: false,
   },
+} as const
+
+const literalOrPathString = z.union([z.string(), z.object({ path: z.string() })])
+
+const layoutFields = {
+  id: z.string(),
+  weight: z.number().optional(),
+}
+
+/** `BASIC_PARTS` の 5 部品の受理の形。子は ID の並びだけ（雛形の `ChildList` は受けない）。 */
+export const BASIC_PART_SCHEMAS = {
+  Row: z.object({
+    ...layoutFields,
+    component: z.literal("Row"),
+    children: z.array(z.string()),
+    justify: z.enum(BASIC_PARTS.Row.allOf[2].properties.justify.enum).optional(),
+    align: z.enum(BASIC_PARTS.Row.allOf[2].properties.align.enum).optional(),
+  }),
+  Column: z.object({
+    ...layoutFields,
+    component: z.literal("Column"),
+    children: z.array(z.string()),
+    justify: z.enum(MAIN_AXIS_ENUM).optional(),
+    align: z.enum(BASIC_PARTS.Column.allOf[2].properties.align.enum).optional(),
+  }),
+  Card: z.object({
+    ...layoutFields,
+    component: z.literal("Card"),
+    child: z.string(),
+  }),
+  Tabs: z.object({
+    ...layoutFields,
+    component: z.literal("Tabs"),
+    tabs: z.array(z.object({ title: literalOrPathString, child: z.string() })).min(1),
+  }),
+  ChoicePicker: z.object({
+    ...layoutFields,
+    component: z.literal("ChoicePicker"),
+    label: literalOrPathString.optional(),
+    variant: z.enum(BASIC_PARTS.ChoicePicker.allOf[2].properties.variant.enum).optional(),
+    options: z.array(z.object({ label: literalOrPathString, value: z.string() })),
+    value: z.union([z.array(z.string()), z.object({ path: z.string() })]),
+    displayStyle: z.enum(BASIC_PARTS.ChoicePicker.allOf[2].properties.displayStyle.enum).optional(),
+    filterable: z.boolean().optional(),
+  }),
 } as const

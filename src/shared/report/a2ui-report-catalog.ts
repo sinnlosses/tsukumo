@@ -4,7 +4,7 @@
 import { mapValues, omit } from "remeda"
 import { z } from "zod"
 
-import { BASIC_PART_DEFS, BASIC_PARTS } from "./a2ui-basic-part-list.ts"
+import { BASIC_PART_DEFS, BASIC_PART_SCHEMAS, BASIC_PARTS } from "./a2ui-basic-part-list.ts"
 import { plotBlockSchema } from "./figure-grammar.ts"
 import {
   compareBlockSchema,
@@ -30,7 +30,11 @@ import {
   noteBlockSchema,
   textBlockSchema,
 } from "./report-block-prose.ts"
-import { REPORT_FIGURE_NONE_REASONS, reportSectionSchema } from "./report-block.ts"
+import {
+  REPORT_FIGURE_NONE_REASONS,
+  reportFigureSchema,
+  reportSectionSchema,
+} from "./report-block.ts"
 import { reportCheckSchema } from "./report-check.ts"
 import { reportRetrospectiveSchema } from "./report-retrospective.ts"
 import { reportTaskSchema } from "./report-task.ts"
@@ -58,6 +62,38 @@ const LEAF_COMPONENTS = {
   Plot: leafComponent("Plot", plotBlockSchema),
   Markdown: leafComponent("Markdown", markdownBlockSchema),
 } as const
+
+/** 葉の部品名と、写す先の塊の `kind`。 */
+export const LEAF_COMPONENT_KINDS = {
+  Paragraph: textBlockSchema.shape.kind.value,
+  ItemList: listBlockSchema.shape.kind.value,
+  Table: tableBlockSchema.shape.kind.value,
+  Matrix: matrixBlockSchema.shape.kind.value,
+  Compare: compareBlockSchema.shape.kind.value,
+  BeforeAfter: beforeAfterBlockSchema.shape.kind.value,
+  Note: noteBlockSchema.shape.kind.value,
+  Stats: statsBlockSchema.shape.kind.value,
+  Code: codeBlockSchema.shape.kind.value,
+  Mermaid: mermaidBlockSchema.shape.kind.value,
+  Graph: graphBlockSchema.shape.kind.value,
+  Chart: chartBlockSchema.shape.kind.value,
+  Svg: svgBlockSchema.shape.kind.value,
+  Timeline: timelineBlockSchema.shape.kind.value,
+  Options: optionsBlockSchema.shape.kind.value,
+  Claims: claimsBlockSchema.shape.kind.value,
+  Picture: imageBlockSchema.shape.kind.value,
+  Plot: plotBlockSchema.shape.kind.value,
+  Markdown: markdownBlockSchema.shape.kind.value,
+} as const satisfies Record<keyof typeof LEAF_COMPONENTS, string>
+
+const FIGURE_KINDS: readonly string[] = reportFigureSchema.options.map(
+  (option) => option.shape.kind.value,
+)
+
+/** `Report.figure` に置ける葉の部品名。 */
+export const FIGURE_COMPONENTS: readonly string[] = Object.entries(LEAF_COMPONENT_KINDS)
+  .filter(([, kind]) => FIGURE_KINDS.includes(kind))
+  .map(([component]) => component)
 
 const speechSchema = z.object({ text: z.string(), expression: z.string() })
 
@@ -97,16 +133,35 @@ const reportComponentSchema = z.object({
   waitingLine: speechSchema.optional(),
 })
 
+const OWN_COMPONENT_SCHEMAS = {
+  Report: reportComponentSchema,
+  Section: sectionComponentSchema,
+  ...LEAF_COMPONENTS,
+} as const
+
+/** 部品名と受理の形。根・節・葉 19 種・基本 5 部品の 26。 */
+export const REPORT_COMPONENT_SCHEMAS = {
+  ...OWN_COMPONENT_SCHEMAS,
+  ...BASIC_PART_SCHEMAS,
+} as const
+
+/** 部品 1 つの受理の形（26 部品のどれか）。 */
+export const a2uiReportComponentSchema = z.discriminatedUnion("component", [
+  reportComponentSchema,
+  sectionComponentSchema,
+  ...Object.values(LEAF_COMPONENTS),
+  ...Object.values(BASIC_PART_SCHEMAS),
+])
+
+export type A2uiReportComponent = z.infer<typeof a2uiReportComponentSchema>
+
 const CATALOG_ID = "https://tsukumo.example/catalogs/report/v1"
 
 /** AI に渡し、`Catalog.fromJson` に読ませるカタログ文書（自作分は zod から出し、基本の 5 部品は定数）。 */
 export function buildReportCatalogDocument() {
-  const own = {
-    Report: reportComponentSchema,
-    Section: sectionComponentSchema,
-    ...LEAF_COMPONENTS,
-  }
-  const schemas = mapValues(own, (schema) => z.toJSONSchema(schema, { io: "input" }))
+  const schemas = mapValues(OWN_COMPONENT_SCHEMAS, (schema) =>
+    z.toJSONSchema(schema, { io: "input" }),
+  )
   return {
     catalogId: CATALOG_ID,
     $defs: { ...BASIC_PART_DEFS, ...hoistedDefs(Object.entries(schemas)) },

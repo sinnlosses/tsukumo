@@ -10,6 +10,10 @@
 
 import type { BackgroundTask } from "../../../shared/session-driver/background-task.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
+import type {
+  A2uiStructureFault,
+  A2uiStructureVerdict,
+} from "../../report/core/a2ui-structure-fault.ts"
 import { REPORT_REJECTION_MODES } from "../../report/core/rejection-mode.ts"
 import { createReportInheritance } from "../../report/core/report-inheritance.ts"
 import { createReportReview, type ReportVerdict } from "../../report/core/report-review.ts"
@@ -27,6 +31,8 @@ export type CallReview = {
   readonly judgeSpeak: () => SpeechVerdict
   /** `report` の handler から。{@link CallReview.fillReport} で組んだ値で呼ぶ。 */
   readonly judgeReport: (report: ReportDraft) => ReportVerdict
+  /** `report` の `a2ui` の版の handler から、構造の規約の違反があるときだけ `judgeReport` より先に呼ぶ（`ReportReview.judgeStructure`）。 */
+  readonly judgeReportStructure: (faults: readonly A2uiStructureFault[]) => A2uiStructureVerdict
   /**
    * `report` の handler から、届いた引数を `report` のイベントの形にしたもので呼ぶ。
    * `pass` が描く値を組むのと同じ土台で埋める（`ReportInheritance.fill`）。
@@ -101,6 +107,7 @@ export function createCallReview(): CallReview {
   return {
     judgeSpeak: speechReview.judge,
     judgeReport: reportReview.judge,
+    judgeReportStructure: reportReview.judgeStructure,
     fillReport: reportInheritance.fill,
     judgePhaseMention: (phase) => judgePhaseMention(workPlanReview.delegatedRange(), phase),
     judgeWorkPlan: workPlanReview.judge,

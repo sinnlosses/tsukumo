@@ -4,6 +4,7 @@ import { tool } from "@anthropic-ai/claude-agent-sdk"
 import { z } from "zod"
 
 import type { ExpressionChoice } from "../../../shared/character-pack/expression-choice.ts"
+import { REPORT_COMPONENT_SCHEMAS } from "../../../shared/report/a2ui-report-catalog.ts"
 import type { ReportArgumentField } from "../../../shared/report/report-argument-size.ts"
 import { keyFiguresSchema } from "../../../shared/report/report-block-comparison.ts"
 import { reportFigureSchema, reportSectionSchema } from "../../../shared/report/report-block.ts"
@@ -21,9 +22,11 @@ import { WORK_PLAN_CLOSINGS } from "../../../shared/session/work-plan.ts"
 import type { ReportSchemaVariant } from "../../core/schema-variant.ts"
 import { REPORT_TOOL_NAME } from "../../core/tsukumo-tool-name.ts"
 import { readReportBlockFiles } from "../../report/adapter/report-file.ts"
+import { a2uiStructureFaults } from "../../report/core/a2ui-structure-fault.ts"
 import { hasReportField } from "../../report/core/report-inheritance.ts"
 import { REPORT_CHANGED_FIELDS_ONLY_TEXT } from "../../report/core/report-rejection.ts"
 import {
+  REPORT_A2UI_COMPONENTS_DESCRIPTION,
   REPORT_BODY_DESCRIPTION,
   REPORT_CHECKS_DESCRIPTION,
   REPORT_RETROSPECTIVE_DESCRIPTION,
@@ -71,6 +74,8 @@ import { speechShape } from "./sdk-speech-tool.ts"
  * Claude Code はツールの説明文を既定 2048 字で切り、欄の説明は切らない。型の表記をツールの説明文へ移すと切れる。
  * `body-fence` のときは本文を Markdown の `body` で受け、`sections` は緩い形で残す。`body` と `sections` が同じ呼び出しに来たら判定せずに `isError` で返す。
  * 緩い形は SDK の検査を素通りするので、handler が `json-schema` と同じ形で検査し直し、落ちたら判定せずに `isError` で返す。
+ * `a2ui` のときは A2UI のカタログの部品の一覧 `components` だけで受ける。
+ * 構造の規約に外れた一覧は、判定より先に `CallReview.judgeReportStructure` に渡し、差し戻すなら `VALIDATION_FAILED` の文を `isError` で返す。
  */
 export function reportTool(
   expressions: readonly ExpressionChoice[],
@@ -127,6 +132,21 @@ export function reportTool(
       REPORT_TOOL_DESCRIPTION,
       reportInputShape(expressions, figurePreference),
       answer,
+    )
+  }
+  if (reportSchema === "a2ui") {
+    return tool(
+      REPORT_TOOL_NAME,
+      REPORT_TOOL_DESCRIPTION,
+      a2uiInputShape(expressions),
+      async (input) => {
+        const faults = a2uiStructureFaults(input.components)
+        const structure =
+          faults.length === 0 ? { kind: "accepted" as const } : review.judgeReportStructure(faults)
+        return structure.kind === "rejected"
+          ? { content: [{ type: "text" as const, text: structure.text }], isError: true }
+          : answer(input)
+      },
     )
   }
   if (reportSchema === "body-fence") {
@@ -288,6 +308,21 @@ function bodyFenceInputShape(
         `旧い本文の形。body と同じ呼び出しに併記できない。body のフェンスで書けない部品（options・compare・matrix・svg・stats・timeline・beforeAfter・chart・plot）を使うときは、body を渡さず本文全体をこちらの節の blocks で書く。${REPORT_PART_CARD_NOTE}`,
       ),
     body: z.string().optional().describe(REPORT_BODY_DESCRIPTION),
+  }
+}
+
+/** `a2ui` のときモデルに渡す引数の形。`Report` の締めのセリフと待ちの一言だけ、表情を選べる名前に絞る。 */
+function a2uiInputShape(expressions: readonly ExpressionChoice[]) {
+  const { Report, ...others } = REPORT_COMPONENT_SCHEMAS
+  const report = Report.extend({
+    closing: z.object(speechShape(expressions)).optional(),
+    waitingLine: z.object(speechShape(expressions)).optional(),
+  })
+  return {
+    components: z
+      .array(z.discriminatedUnion("component", [report, ...Object.values(others)]))
+      .min(1)
+      .describe(REPORT_A2UI_COMPONENTS_DESCRIPTION),
   }
 }
 

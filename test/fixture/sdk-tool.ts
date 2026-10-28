@@ -31,6 +31,12 @@ export const BODY_FENCE_WORK_MODE: Extract<SessionMode, { readonly kind: "work" 
   reportSchema: "body-fence",
 }
 
+/** `report` を A2UI の部品の一覧 `components` で渡す仕事のモード。 */
+export const A2UI_WORK_MODE: Extract<SessionMode, { readonly kind: "work" }> = {
+  ...WORK_MODE,
+  reportSchema: "a2ui",
+}
+
 export const CHAT_MODE: SessionMode = {
   kind: "chat",
   personaMemory: { remember: () => "written", forget: () => "erased", finishTurn: () => {} },

@@ -116,6 +116,7 @@ function inherited(event: ReportEvent, base: ReportEvent): ReportEvent {
     sections: fromBody.sections,
     unknownBlockCount: fromBody.unknownBlockCount,
     brokenFenceCount: fromBody.brokenFenceCount,
+    components: fromBody.components,
     retrospective: from("retrospective").retrospective,
     favor: from("favor").favor,
     checks: from("checks").checks,

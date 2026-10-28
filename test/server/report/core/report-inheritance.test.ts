@@ -151,6 +151,16 @@ describe("ReportInheritance", () => {
       )
     })
 
+    it("部品の一覧（components）は本文と一緒に引き継ぎ、本文を渡したら引き継がない", () => {
+      const COMPONENTS = [
+        { id: "p", component: "Paragraph", text: "架空の文。", fold: "", aside: "" },
+      ] as const satisfies ReportCalled["components"]
+      const inheritance = rejectedWith("sections", { sections: SECTIONS, components: COMPONENTS })
+
+      expect(inheritance.fill(called("toolu_r2", []))).toMatchObject({ components: COMPONENTS })
+      expect(inheritance.fill(called("toolu_r3", ["sections"]))).toMatchObject({ components: [] })
+    })
+
     it("土台が body でも、sections を渡したら body を引き継がない", () => {
       const inheritance = rejectedWith("body", { sections: SECTIONS, brokenFenceCount: 1 })
 

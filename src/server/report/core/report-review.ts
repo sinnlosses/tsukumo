@@ -36,33 +36,41 @@ import type {
   ReportArgumentChars,
   ReportArgumentField,
 } from "../../../shared/report/report-argument-size.ts"
-import type { ReportTask } from "../../../shared/report/report-task.ts"
+import type { ToolErrorField } from "../../../shared/report/tool-error-field.ts"
 import type { BackgroundTask } from "../../../shared/session-driver/background-task.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import type { WorkPlanStanding } from "../../../shared/session/work-plan.ts"
 import {
-  type ProcedureRejection,
-  REPORT_FINISHED_BUT_STOPPED_REJECTION_TEXT,
+  type A2uiStructureFault,
+  a2uiStructureFaultField,
+  type A2uiStructureVerdict,
+} from "./a2ui-structure-fault.ts"
+import {
   REPORT_FINISHED_WITH_NG_REJECTION_TEXT,
-  REPORT_MISSING_WORK_PLAN_CLOSING_REJECTION_TEXT,
   REPORT_NOTHING_NEW_REJECTION_TEXT,
   REPORT_RESEND_REJECTION_TEXT,
   REPORT_UNANSWERED_WORK_PLAN_REJECTION_TEXT,
-  REPORT_UNFINISHED_PHASES_REJECTION_TEXT,
   reportBackgroundRunningRejectionText,
 } from "./procedure-rejection.ts"
 import type { ReportRejectionModes, ReportRejectionReason } from "./rejection-mode.ts"
-import { reportRejectionText } from "./report-rejection.ts"
+import { a2uiValidationFailedText, reportRejectionText } from "./report-rejection.ts"
 import { reportViolations } from "./report-violation-check.ts"
 import type { ReportDraft } from "./report-violation.ts"
 import { toolErrorFieldsOf } from "./tool-error-field.ts"
 import type { TurnRejection } from "./turn-rejection.ts"
+import { type ClosingFit, isFinished, judgeWorkPlanClosing } from "./work-plan-closing-fit.ts"
 
 /**
  * 判定が差し戻していないのに `isError` で返った呼び出し（形の検査で落ちて handler に届かなかったものと、handler で組んだ値が形の検査に落ちたもの）の理由の名前。
  * 差し戻しの記録（`report-rejected`）は handler ではなく `pass` が、この呼び出しの引数の字数つきで作る。
  */
 export const REPORT_TOOL_ERROR_REASON = "tool-error"
+
+/** `a2ui` の版の部品の一覧が構造の規約に外れて差し戻した呼び出しの、記録の理由の名前。 */
+export const A2UI_STRUCTURE_REJECTION_REASONS = [
+  REPORT_TOOL_ERROR_REASON,
+  "a2ui-structure",
+] as const
 
 /**
  * handler の判定。`rejected` の `text` はそのまま `report` の戻り値になる。
@@ -87,6 +95,8 @@ export type ReportReview = {
    * 段が `count` の条は、枠の残りに関わらず当てはまれば預け、枠を使わずに次の条へ進む（差し戻した呼び出しの預かりは捨てる）。
    */
   readonly judge: (report: ReportDraft) => ReportVerdict
+  /** `a2ui` の版の handler から、構造の規約の違反があるときだけ `judge` より先に呼ぶ。枠は1ターンに1回。 */
+  readonly judgeStructure: (faults: readonly A2uiStructureFault[]) => A2uiStructureVerdict
   /** このターンで「新しい事実が無い」差し戻しをしたか。ターンの頭（`session-info`）で戻る。 */
   readonly nothingNewRejected: () => boolean
   /**
@@ -125,7 +135,9 @@ export function createReportReview(
   // 引数が読めず（`conclusion` の形が不正）レポートにならなかった呼び出し。結果が届いたら差し戻しの記録にだけ使う。
   let malformed: readonly Extract<SessionEvent, { readonly kind: "report-malformed" }>[] = []
   // handler が直前に差し戻した理由。同じ呼び出しの `tool-finished` で使い切る。
-  let handlerReasons: readonly ReportRejectionReason[] | undefined
+  let handlerReasons: readonly string[] | undefined
+  // handler が直前に差し戻した呼び出しの、記録に残す落ちた欄。`handlerReasons` と一緒に使い切る。
+  let handlerToolErrorFields: readonly ToolErrorField[] = []
   // handler が直前に通した呼び出しが当てはまった、段 `count` の条。同じ呼び出しの `tool-finished` で使い切る。
   let handlerCounted: readonly ReportRejectionReason[] = []
   // このターンで出した（描いた）`report`。送り直しの判定にだけ使う。
@@ -139,9 +151,11 @@ export function createReportReview(
     inheritedFields: readonly ReportArgumentField[],
     resultContent: string,
   ): SessionEvent => {
-    const toolErrorFields = handlerReasons === undefined ? toolErrorFieldsOf(resultContent) : []
+    const toolErrorFields =
+      handlerReasons === undefined ? toolErrorFieldsOf(resultContent) : handlerToolErrorFields
     const reasons = handlerReasons ?? [REPORT_TOOL_ERROR_REASON]
     handlerReasons = undefined
+    handlerToolErrorFields = []
     return { kind: "report-rejected", reasons, argumentChars, inheritedFields, toolErrorFields }
   }
 
@@ -257,8 +271,19 @@ export function createReportReview(
     judge: (report) => {
       const { verdict, counted } = decide(report)
       handlerReasons = verdict.kind === "rejected" ? verdict.reasons : undefined
+      handlerToolErrorFields = []
       handlerCounted = verdict.kind === "accepted" ? counted : []
       return verdict
+    },
+    judgeStructure: (faults) => {
+      if (rejectedInTurn.has("a2ui-structure")) {
+        return { kind: "accepted" }
+      }
+      markRejected("a2ui-structure")
+      handlerReasons = A2UI_STRUCTURE_REJECTION_REASONS
+      handlerToolErrorFields = faults.map(a2uiStructureFaultField)
+      handlerCounted = []
+      return { kind: "rejected", text: a2uiValidationFailedText(faults) }
     },
     nothingNewRejected: () => rejectedInTurn.has("nothing-new"),
     pass: (event) => {
@@ -323,41 +348,6 @@ function hasNgCheck(report: ReportDraft): boolean {
   return report.checks.some((check) => check.status === "ng")
 }
 
-/** 同じ依頼にワークプランがあるときの、段の閉じ方だけで見た判定。`remaining` は済んでいない段の数（全部済みなら 0）。 */
-function judgeWorkPlanClosing(report: ReportDraft, remaining: number): ClosingFit {
-  if (report.workPlanClosing === "none") {
-    return {
-      kind: "unfit",
-      reason: "missing-work-plan-closing",
-      text: REPORT_MISSING_WORK_PLAN_CLOSING_REJECTION_TEXT,
-    }
-  }
-  if (report.workPlanClosing === "finished" && remaining >= 2) {
-    return {
-      kind: "unfit",
-      reason: "unfinished-phases",
-      text: REPORT_UNFINISHED_PHASES_REJECTION_TEXT,
-    }
-  }
-  if (report.workPlanClosing === "stopped" && remaining > 0 && isFinished(report.task)) {
-    return {
-      kind: "unfit",
-      reason: "finished-but-stopped",
-      text: REPORT_FINISHED_BUT_STOPPED_REJECTION_TEXT,
-    }
-  }
-  return { kind: "fit" }
-}
-
-/** 段の閉じ方の判定。合わなければ、当てはまった条の名前と差し戻しの文面。 */
-type ClosingFit =
-  | { readonly kind: "fit" }
-  | {
-      readonly kind: "unfit"
-      readonly reason: ProcedureRejection
-      readonly text: string
-    }
-
 /** 描いた `report` が段 `count` の条に当てはまっていたときの記録。当てはまらなければ何も出さない。 */
 function countedRecord(
   report: ReportEvent,
@@ -373,10 +363,6 @@ function countedRecord(
           inheritedFields: report.inheritedFields,
         },
       ]
-}
-
-function isFinished(task: ReportTask): boolean {
-  return task.kind === "task" && task.outcome === "finished"
 }
 
 /** 描いた `report` の締めのセリフ。`closing` を持たなかったころの呼び出しには無い。 */
