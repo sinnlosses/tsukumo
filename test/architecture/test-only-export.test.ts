@@ -23,13 +23,29 @@ const PRODUCTION_DIRECTORIES = ["src/", "scripts/"] as const
 // （関数・定数は消すか、本番の口へ寄せるか、概念の名前のファイルへ移す）。
 const ALLOWED_TEST_ONLY_EXPORTS = {} as const satisfies Record<string, string>
 
+// 本番の読み手が後続の課題で付くまでの、期限つきの例外（Props の型でなくてよい）。読み手が付いたら外す。
+const PENDING_READER_EXPORTS = {
+  "src/browser/lib/a2ui-catalog-load.ts#loadReportCatalogApis":
+    "ブラウザの描画の surface.tsx から呼ぶ。読み手が付いたら外す",
+} as const satisfies Record<string, string>
+
 const SOURCES = readRepositorySources()
 
 const FOUND_TEST_ONLY_EXPORTS = testOnlyExports(SOURCES, productionReader())
 
 describe("src/・scripts/ のテストからしか import されない export", () => {
   it("許可リストの外に無い", () => {
-    expect(FOUND_TEST_ONLY_EXPORTS.filter((key) => !(key in ALLOWED_TEST_ONLY_EXPORTS))).toEqual([])
+    expect(
+      FOUND_TEST_ONLY_EXPORTS.filter(
+        (key) => !(key in ALLOWED_TEST_ONLY_EXPORTS) && !(key in PENDING_READER_EXPORTS),
+      ),
+    ).toEqual([])
+  })
+
+  it("期限つきの例外の項目は、いまもテストからしか import されない（読み手が付いたら外す）", () => {
+    const found = new Set(FOUND_TEST_ONLY_EXPORTS)
+
+    expect(Object.keys(PENDING_READER_EXPORTS).filter((key) => !found.has(key))).toEqual([])
   })
 
   it("許可リストの項目は、いまもテストからしか import されない", () => {

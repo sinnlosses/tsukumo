@@ -3,7 +3,7 @@
 //
 // 使い方:
 //   node scripts/runtime/definition-size.ts
-// 出力: 版ごとに `<版>\tschema <字数>\tdescription <字数>` と、字数の多い順の欄ごとの行。最後に `prompt <字数>`。
+// 出力: 版ごとに `<版>\tschema <字数>\tdescription <字数>` と、字数の多い順の欄ごとの行。最後に `prompt <字数>` と `a2ui-catalog <字数>`（A2UI のカタログ文書）。
 // `report` が載っていないなど、数えられないときは標準エラーに理由を書いて終了コード1。
 
 import process from "node:process"
@@ -11,6 +11,7 @@ import process from "node:process"
 import { z } from "zod"
 
 import { REPORT_SCHEMA_VARIANTS } from "../../src/server/core/schema-variant.ts"
+import { reportCatalogText } from "../../src/server/report/core/a2ui-catalog-text.ts"
 import { REPORT_NOTATION_PROMPT } from "../../src/server/report/core/report-notation.ts"
 import { fetchReportDefinition } from "./tools-list-reply.ts"
 
@@ -26,6 +27,7 @@ for (const reportSchema of REPORT_SCHEMA_VARIANTS) {
   }
 }
 process.stdout.write(`prompt\t${String(REPORT_NOTATION_PROMPT.length)}\n`)
+process.stdout.write(`a2ui-catalog\t${String(reportCatalogText().length)}\n`)
 
 type Sizes = {
   readonly schema: number
