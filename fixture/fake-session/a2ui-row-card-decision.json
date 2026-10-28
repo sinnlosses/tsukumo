@@ -1,0 +1,220 @@
+{
+  "name": "a2ui-row-card-decision",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "架空の置き場の案を3つ比べて、どれにするか決めてほしい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 1500,
+      "event": {
+        "kind": "report",
+        "toolUseId": "fake-a2ui-row-card-decision",
+        "components": [
+          {
+            "id": "root",
+            "component": "Report",
+            "conclusion": [
+              "架空の結論: 置き場は案B（種類ごとのファイル）にした。探す場所が種類で決まり、参照の増えは2本で済む。"
+            ],
+            "figureNone": "no-shape",
+            "children": ["sec-options", "sec-facts", "sec-close"],
+            "closing": {
+              "text": "案Bにしたよ！",
+              "expression": "proud"
+            }
+          },
+          {
+            "id": "sec-facts",
+            "component": "Section",
+            "heading": "架空の事実",
+            "children": ["facts-row"]
+          },
+          {
+            "id": "facts-row",
+            "component": "Row",
+            "children": ["facts-graph", "facts-table"]
+          },
+          {
+            "id": "facts-graph",
+            "component": "Graph",
+            "title": "架空の層は入口から保存へ下る",
+            "direction": "TD",
+            "legend": [],
+            "source": "入口 -> 検査: 渡す\n検査 -> 保存: 通ったもの"
+          },
+          {
+            "id": "facts-table",
+            "component": "Table",
+            "title": "架空の案ごとの参照の数",
+            "columns": ["案", "参照の数"],
+            "rows": [
+              ["案A", "0"],
+              ["案B", "2"],
+              ["案C", "5"]
+            ]
+          },
+          {
+            "id": "sec-options",
+            "component": "Section",
+            "heading": "架空の候補",
+            "children": ["options-row"]
+          },
+          {
+            "id": "options-row",
+            "component": "Row",
+            "children": ["option-a", "option-b", "option-c"]
+          },
+          {
+            "id": "option-a",
+            "component": "Card",
+            "child": "option-a-body"
+          },
+          {
+            "id": "option-a-body",
+            "component": "Column",
+            "children": ["option-a-title", "option-a-text", "option-a-reason"]
+          },
+          {
+            "id": "option-a-title",
+            "component": "Paragraph",
+            "text": "**候補1 案A: 1つのファイルにまとめる**（採らない）"
+          },
+          {
+            "id": "option-a-text",
+            "component": "Paragraph",
+            "text": "架空の置き場を1つのファイルに集める。"
+          },
+          {
+            "id": "option-a-reason",
+            "component": "Paragraph",
+            "text": "理由 — 行が多く読み切れない"
+          },
+          {
+            "id": "option-b",
+            "component": "Card",
+            "child": "option-b-body"
+          },
+          {
+            "id": "option-b-body",
+            "component": "Column",
+            "children": ["option-b-title", "option-b-text", "option-b-reason"]
+          },
+          {
+            "id": "option-b-title",
+            "component": "Paragraph",
+            "text": "**候補2 案B: 種類ごとのファイルに分ける**（採る）"
+          },
+          {
+            "id": "option-b-text",
+            "component": "Paragraph",
+            "text": "架空の置き場を種類ごとのファイルに分ける。"
+          },
+          {
+            "id": "option-b-reason",
+            "component": "Paragraph",
+            "text": "理由 — 探す場所が種類で決まり、参照の増えは2本で済む"
+          },
+          {
+            "id": "option-c",
+            "component": "Card",
+            "child": "option-c-body"
+          },
+          {
+            "id": "option-c-body",
+            "component": "Column",
+            "children": ["option-c-title", "option-c-text", "option-c-reason"]
+          },
+          {
+            "id": "option-c-title",
+            "component": "Paragraph",
+            "text": "**候補3 案C: 外の台帳に出す**（検討）"
+          },
+          {
+            "id": "option-c-text",
+            "component": "Paragraph",
+            "text": "架空の置き場を外の台帳に移す。"
+          },
+          {
+            "id": "option-c-reason",
+            "component": "Paragraph",
+            "text": "理由 — 手元の行は減るが、台帳と手元がずれる"
+          },
+          {
+            "id": "sec-close",
+            "component": "Section",
+            "heading": "架空の結論",
+            "children": ["close-row"]
+          },
+          {
+            "id": "close-row",
+            "component": "Row",
+            "children": ["close-now", "close-later"]
+          },
+          {
+            "id": "close-now",
+            "component": "Card",
+            "child": "close-now-body"
+          },
+          {
+            "id": "close-now-body",
+            "component": "Column",
+            "children": ["close-now-title", "close-now-text"]
+          },
+          {
+            "id": "close-now-title",
+            "component": "Paragraph",
+            "text": "**今**"
+          },
+          {
+            "id": "close-now-text",
+            "component": "Paragraph",
+            "text": "架空の置き場を種類ごとのファイルに分ける。"
+          },
+          {
+            "id": "close-later",
+            "component": "Card",
+            "child": "close-later-body"
+          },
+          {
+            "id": "close-later-body",
+            "component": "Column",
+            "children": ["close-later-title", "close-later-text"]
+          },
+          {
+            "id": "close-later-title",
+            "component": "Paragraph",
+            "text": "**見直す日**"
+          },
+          {
+            "id": "close-later-text",
+            "component": "Paragraph",
+            "text": "架空の種類が10を超えたら、台帳に出す案Cを見直す。"
+          }
+        ]
+      }
+    },
+    {
+      "afterMs": 1550,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-a2ui-row-card-decision",
+        "content": "ok",
+        "isError": false
+      }
+    },
+    {
+      "afterMs": 2300,
+      "event": {
+        "kind": "turn-finished",
+        "outcome": {
+          "kind": "completed"
+        }
+      }
+    }
+  ]
+}

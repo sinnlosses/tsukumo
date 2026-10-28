@@ -1,0 +1,156 @@
+{
+  "name": "a2ui-row-card-status",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "いまループに乗る件数と、保留から外せるものを教えて（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 1500,
+      "event": {
+        "kind": "report",
+        "toolUseId": "fake-a2ui-row-card-status",
+        "components": [
+          {
+            "id": "root",
+            "component": "Report",
+            "conclusion": [
+              "架空の結論: いまループに乗るのは 8 件で、保留の 2 件は手で戻せば乗る。"
+            ],
+            "figureNone": "no-shape",
+            "children": ["sec-now", "sec-breakdown"],
+            "closing": {
+              "text": "数えたよ！",
+              "expression": "proud"
+            }
+          },
+          {
+            "id": "sec-now",
+            "component": "Section",
+            "heading": "架空のいまの件数",
+            "children": ["now-card"]
+          },
+          {
+            "id": "now-card",
+            "component": "Card",
+            "child": "now-row"
+          },
+          {
+            "id": "now-row",
+            "component": "Row",
+            "children": ["now-left", "now-command"]
+          },
+          {
+            "id": "now-left",
+            "component": "Column",
+            "children": ["now-stats", "now-text"]
+          },
+          {
+            "id": "now-stats",
+            "component": "Stats",
+            "items": [
+              {
+                "before": "8",
+                "value": "10",
+                "label": "ループに乗る",
+                "better": "up"
+              },
+              {
+                "value": "11",
+                "label": "保留"
+              },
+              {
+                "value": "2",
+                "label": "着手中"
+              }
+            ]
+          },
+          {
+            "id": "now-text",
+            "component": "Paragraph",
+            "text": "架空の保留 11 件のうち 2 件は、依存していたタスクが済んだので外せる。外せば乗る件数は 8 → 10 件。"
+          },
+          {
+            "id": "now-command",
+            "component": "Code",
+            "language": "sh",
+            "source": "tw edit FAKE-101 --status todo\ntw edit FAKE-102 --status todo",
+            "aside": "依存が消えても自動では戻らないので手で打つ"
+          },
+          {
+            "id": "sec-breakdown",
+            "component": "Section",
+            "heading": "架空の未完了 21 件の内訳",
+            "children": ["breakdown-share", "breakdown-card"]
+          },
+          {
+            "id": "breakdown-share",
+            "component": "Chart",
+            "title": "架空の未完了の内訳",
+            "chartKind": "share",
+            "labels": ["着手できる", "外せる", "待つ", "変えない", "着手中"],
+            "series": [
+              {
+                "name": "件数",
+                "values": [8, 2, 2, 7, 2]
+              }
+            ]
+          },
+          {
+            "id": "breakdown-card",
+            "component": "Card",
+            "child": "breakdown-body"
+          },
+          {
+            "id": "breakdown-body",
+            "component": "Column",
+            "children": ["breakdown-title", "breakdown-table"]
+          },
+          {
+            "id": "breakdown-title",
+            "component": "Paragraph",
+            "text": "**いまループに乗る 8 件**"
+          },
+          {
+            "id": "breakdown-table",
+            "component": "Table",
+            "title": "架空の着手前のタスク",
+            "columns": ["ID", "題", "難しさ"],
+            "rows": [
+              ["FAKE-201", "架空の一覧の行を詰める", "low"],
+              ["FAKE-202", "架空の帯の色を直す", "low"],
+              ["FAKE-203", "架空の検査を足す", "medium"],
+              ["FAKE-204", "架空の文書を直す", "low"],
+              ["FAKE-205", "架空の画を撮り直す", "low"],
+              ["FAKE-206", "架空の型を分ける", "medium"],
+              ["FAKE-207", "架空の名前を揃える", "low"],
+              ["FAKE-208", "架空の古い枝を外す", "high"]
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "afterMs": 1550,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-a2ui-row-card-status",
+        "content": "ok",
+        "isError": false
+      }
+    },
+    {
+      "afterMs": 2300,
+      "event": {
+        "kind": "turn-finished",
+        "outcome": {
+          "kind": "completed"
+        }
+      }
+    }
+  ]
+}

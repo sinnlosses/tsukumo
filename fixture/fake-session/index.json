@@ -144,7 +144,9 @@
     "turn-headings",
     "turn-running-report",
     "row-panel-decision",
-    "row-panel-status"
+    "row-panel-status",
+    "a2ui-row-card-decision",
+    "a2ui-row-card-status"
   ],
   "pastSessions": [
     {

@@ -101,16 +101,29 @@ describe("a2uiStructureFaults", () => {
       ],
     },
     {
-      name: "配置の部品の入れ子が 3 階層",
+      name: "配置の部品の入れ子が 3 階層（題つきの枠を横に並べる形）",
+      components: [
+        report(["s"]),
+        section("s", ["r1"]),
+        { id: "r1", component: "Row", children: ["r2"] },
+        { id: "r2", component: "Card", child: "r3" },
+        { id: "r3", component: "Column", children: ["p"] },
+        paragraph("p"),
+      ],
+      faults: [],
+    },
+    {
+      name: "配置の部品の入れ子が 4 階層",
       components: [
         report(["s"]),
         section("s", ["r1"]),
         { id: "r1", component: "Row", children: ["r2"] },
         { id: "r2", component: "Column", children: ["r3"] },
-        { id: "r3", component: "Card", child: "p" },
+        { id: "r3", component: "Card", child: "r4" },
+        { id: "r4", component: "Row", children: ["p"] },
         paragraph("p"),
       ],
-      faults: [{ kind: "deep-layout", pointer: "/components/3/children/0" }],
+      faults: [{ kind: "deep-layout", pointer: "/components/4/child" }],
     },
     {
       name: "配置の部品の子に Section",

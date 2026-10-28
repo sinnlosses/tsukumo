@@ -112,7 +112,7 @@ const ROOT_ID = "root"
 const CONTAINERS: ReadonlySet<string> = new Set(["Row", "Column", "Card", "Tabs"])
 
 /** 配置の部品の入れ子の上限。 */
-const MAX_LAYOUT_DEPTH = 2
+const MAX_LAYOUT_DEPTH = 3
 
 /** 参照の欄の種類。`layout` は配置の部品の子。 */
 type Slot = "report-child" | "figure" | "retrospective" | "section-child" | "layout"

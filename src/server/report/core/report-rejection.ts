@@ -71,7 +71,7 @@ const A2UI_STRUCTURE_FAULT_REASONS = {
   "report-child-not-section": "Report.children には Section の id だけを置く",
   "nested-section": "Section の子に Section は置けない",
   "misplaced-component": "ここに置けない種類の部品",
-  "deep-layout": "配置の部品の入れ子は 2 階層まで",
+  "deep-layout": "配置の部品の入れ子は 3 階層まで",
   "figure-not-figure-part": "Report.figure には図の部品の id を置く",
   "unreferenced-component": "どこからも参照されない部品",
 } as const satisfies Record<A2uiStructureFaultKind, string>
