@@ -14,6 +14,8 @@ vi.mock(
   "../../../../../../../src/browser/components/page/conversation/components/markdown/markdown.tsx",
   () => ({
     detailBlockClassName: "detail-block",
+    textLeafClassNames: {},
+    noteLeafClassNames: {},
     Markdown: (props: { readonly text: string }) => <div>{props.text}</div>,
   }),
 )

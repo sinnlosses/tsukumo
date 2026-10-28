@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import {
   htmlInline,
+  htmlInlineSegments,
   htmlInlineWithCode,
 } from "../../../src/shared/report/report-inline-markdown.ts"
 import {
@@ -59,6 +60,36 @@ describe("reportSectionsMarkdown", () => {
       expect(htmlInlineWithCode("`{{3 / 5}}` と {{3 / 5}} と {{x")).toBe(
         "<code>{{3 / 5}}</code> と 3/5 と {{x",
       )
+    })
+  })
+
+  describe("htmlInlineSegments", () => {
+    it.each([
+      "`a` と `b < c` と  {{3 / 5}} と {{x",
+      "``架空 ` のコード`` の後ろ",
+      "コードの無い 1 行",
+      "`先頭` と `末尾`",
+    ])("code の中と外が全部残り、HTML にすると htmlInlineWithCode と同じ: %s", (text) => {
+      const segments = htmlInlineSegments(text)
+      const html = segments
+        .map((segment) =>
+          segment.kind === "code"
+            ? `<code>${segment.value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")}</code>`
+            : segment.value
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;"),
+        )
+        .join("")
+
+      expect(html).toBe(htmlInlineWithCode(text))
+      expect(segments.filter((segment) => segment.kind === "code")).toHaveLength(
+        htmlInlineWithCode(text).split("<code>").length - 1,
+      )
+    })
+
+    it("空の字の部分は含めない", () => {
+      expect(htmlInlineSegments("`a`")).toEqual([{ kind: "code", value: "a" }])
     })
   })
 

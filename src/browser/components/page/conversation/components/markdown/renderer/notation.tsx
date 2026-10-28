@@ -15,8 +15,8 @@ import {
   REPORT_NOTATION_NAMES,
   REPORT_NOTE_KINDS,
 } from "../../../../../../../shared/report/report-notation.ts"
-import { Text } from "../../../../../ui/text/text.tsx"
 import { ZoomableSvgFigure } from "./figure-zoom.tsx"
+import { NoteLabel } from "./note-label.tsx"
 import { BeforeAfterSwap } from "./report-image.tsx"
 import styles from "./report-notation.module.css"
 
@@ -88,17 +88,7 @@ export function NotationBlock(props: NotationBlockProps): ReactElement {
       {...(isGutter ? { [REVEAL_GUTTER_ATTRIBUTE]: "" } : {})}
       className={resolveNotationClassName(className)}
     >
-      {label !== undefined && (
-        <Text
-          element="span"
-          size="label"
-          tone="ink-quiet"
-          weight="inherit"
-          className={styles["report-note-label"]}
-        >
-          <span className={noteLabelColorClass(kindName)}>{label}</span>
-        </Text>
-      )}
+      {label !== undefined && <NoteLabel kindName={kindName} label={label} />}
       {children}
     </div>
   )
@@ -197,20 +187,6 @@ function noteKind(className: string | undefined): (typeof NOTE_LABELS)[number] |
   const tokens = classNameTokens(className)
 
   return NOTE_LABELS.find(([name]) => tokens.includes(name))
-}
-
-/** 罫を持たない種別（情報・疑問・メモ）だけ、ラベルの字に種類の色を付ける。 */
-function noteLabelColorClass(kindName: string | undefined): string | undefined {
-  switch (kindName) {
-    case "note":
-      return styles["report-note-label-info"]
-    case "note-ask":
-      return styles["report-note-label-ask"]
-    case "note-memo":
-      return styles["report-note-label-memo"]
-    default:
-      return undefined
-  }
 }
 
 function classNameTokens(className: string): readonly string[] {

@@ -56,10 +56,40 @@ export function markdownInline(text: string): string {
  * （HTML の中では Markdown の inline code が効かないため）。
  */
 export function htmlInlineWithCode(text: string): string {
-  return mapCodeSpans(
-    foldInlineMarks(text).replace(/\s+/g, " ").trim(),
-    (part) => escapeHtml(part),
-    (span) => `<code>${escapeHtml(codeSpanContent(span))}</code>`,
+  return htmlInlineSegments(text)
+    .map((segment) =>
+      segment.kind === "code"
+        ? `<code>${escapeHtml(segment.value)}</code>`
+        : escapeHtml(segment.value),
+    )
+    .join("")
+}
+
+/** 1行の字を、inline code の外（`text`）と中（`code`）に分けたもの。逃がす前の字で、空の字は含まない。 */
+export type HtmlInlineSegment = {
+  readonly kind: "text" | "code"
+  readonly value: string
+}
+
+/** {@link htmlInlineWithCode} と同じ畳み方で、字を `code` とそれ以外に分ける（HTML の文字にはしない）。 */
+export function htmlInlineSegments(text: string): readonly HtmlInlineSegment[] {
+  const flat = foldInlineMarks(text).replace(/\s+/g, " ").trim()
+  const { segments, last } = [...flat.matchAll(CODE_SPAN)].reduce<{
+    readonly segments: readonly HtmlInlineSegment[]
+    readonly last: number
+  }>(
+    (acc, match) => ({
+      segments: [
+        ...acc.segments,
+        { kind: "text", value: flat.slice(acc.last, match.index) },
+        { kind: "code", value: codeSpanContent(match[0]) },
+      ],
+      last: match.index + match[0].length,
+    }),
+    { segments: [], last: 0 },
+  )
+  return [...segments, { kind: "text" as const, value: flat.slice(last) }].filter(
+    (segment) => segment.kind === "code" || segment.value !== "",
   )
 }
 

@@ -20,6 +20,10 @@ vi.mock(
       rowCell: "report-block-row-cell",
       panel: "report-block-panel",
     },
+    leafFrameClassNames: {},
+    textLeafClassNames: {},
+    noteLeafClassNames: {},
+    InlineMarkdown: (props: { readonly text: string }) => <>{props.text}</>,
     Markdown: (props: { readonly text: string }) =>
       props.text.startsWith("## ") ? (
         <h4>{props.text.slice(3)}</h4>
@@ -57,21 +61,21 @@ const PARTS = [
     aside: "架空の出典",
   },
   { id: "m1", component: "Note", tone: "memo", text: "架空の覚え書き。" },
-  { id: "p1", component: "Paragraph", text: LONG },
+  { id: "p1", component: "Markdown", markdown: LONG },
   { id: "s2", component: "Section", heading: "架空の二", children: ["p2"] },
-  { id: "p2", component: "Paragraph", text: "架空の二の段落。" },
-  { id: "p0", component: "Paragraph", text: "架空の根の段落。" },
+  { id: "p2", component: "Markdown", markdown: "架空の二の段落。" },
+  { id: "p0", component: "Markdown", markdown: "架空の根の段落。" },
 ]
 
 const ROW_PARTS = [
   { id: "root", component: "Report", conclusion: ["架空の結論。"], children: ["s1"] },
   { id: "s1", component: "Section", heading: "架空の並び", children: ["p1", "r1", "p4"] },
-  { id: "p1", component: "Paragraph", text: "架空の前。" },
+  { id: "p1", component: "Markdown", markdown: "架空の前。" },
   { id: "r1", component: "Row", children: ["c1", "p3"] },
   { id: "c1", component: "Card", child: "p2" },
-  { id: "p2", component: "Paragraph", text: "架空の左。" },
-  { id: "p3", component: "Paragraph", text: "架空の右。" },
-  { id: "p4", component: "Paragraph", text: "架空の後ろ。" },
+  { id: "p2", component: "Markdown", markdown: "架空の左。" },
+  { id: "p3", component: "Markdown", markdown: "架空の右。" },
+  { id: "p4", component: "Markdown", markdown: "架空の後ろ。" },
 ]
 
 const INTERACTIVE_PARTS = [

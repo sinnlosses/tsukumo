@@ -29,8 +29,11 @@ const VALUE: LeafValue = {
 }
 
 describe("directLeafViewOf", () => {
-  it("同梱の一覧は空で、どの葉も Markdown の描画に通す", () => {
-    expect(directLeafViewOf(PART)).toBeUndefined()
+  it("同梱の一覧は Paragraph を持ち、一覧に無い葉は Markdown の描画に通す", () => {
+    expect(directLeafViewOf(PART)).toBeDefined()
+    expect(
+      directLeafViewOf({ id: "m1", component: "Markdown", markdown: "", fold: "", aside: "" }),
+    ).toBeUndefined()
   })
 
   it("一覧にある部品名なら、その部品を返す", () => {

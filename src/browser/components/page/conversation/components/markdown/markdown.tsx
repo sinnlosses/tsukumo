@@ -8,7 +8,12 @@ import type { ReactElement } from "react"
 
 import { deferredModule } from "../../../../../hooks/deferred-module.ts"
 import styles from "./markdown.module.css"
+import {
+  FoldedList as LongBlockFoldedList,
+  type FoldedListProps,
+} from "./renderer/long-block-fold.tsx"
 import type { MarkdownProps, QuestionPreviewMarkdownProps } from "./renderer/markdown-renderer.tsx"
+import { NoteLabel as NoteLabelView } from "./renderer/note-label.tsx"
 import notationStyles from "./renderer/report-notation.module.css"
 
 const markdownRenderer = deferredModule(() => import("./renderer/markdown-renderer.tsx"))
@@ -36,6 +41,72 @@ export const leafFrameClassNames = {
   gutterNoteLabel: notationStyles["report-gutter-note-label"],
 } as const
 
+/** 葉を直接描く文字系の部品（一覧・主張）が付ける class 名（Markdown の `labeled-list`・`flow`・`cards`・`claims` などと同じ見た目）。 */
+export const textLeafClassNames = {
+  labeledList: notationStyles["report-labeled-list"],
+  listLabel: notationStyles["report-list-label"],
+  listText: notationStyles["report-list-text"],
+  taskItem: notationStyles["report-task-item"],
+  taskCheck: notationStyles["report-task-check"],
+  taskCheckDone: notationStyles["report-task-check-done"],
+  flow: notationStyles["report-flow"],
+  flowRow: notationStyles["report-flow-row"],
+  flowDetailed: notationStyles["report-flow-detailed"],
+  flowStep: notationStyles["report-flow-step"],
+  flowNumber: notationStyles["report-flow-number"],
+  flowRail: notationStyles["report-flow-rail"],
+  flowArrow: notationStyles["report-flow-arrow"],
+  flowSource: notationStyles["report-flow-source"],
+  flowBranch: notationStyles["report-flow-branch"],
+  flowBranchOk: notationStyles["report-flow-branch-ok"],
+  flowBranchWarn: notationStyles["report-flow-branch-warn"],
+  flowBranchNg: notationStyles["report-flow-branch-ng"],
+  cards: notationStyles["report-cards"],
+  card: notationStyles["report-card"],
+  claims: notationStyles["report-claims"],
+  claim: notationStyles["report-claim"],
+  claimConfirmed: notationStyles["report-claim-confirmed"],
+  claimInferred: notationStyles["report-claim-inferred"],
+  claimUnverified: notationStyles["report-claim-unverified"],
+  claimCertainty: notationStyles["report-claim-certainty"],
+  claimMark: notationStyles["report-claim-mark"],
+  claimText: notationStyles["report-claim-text"],
+  claimBasis: notationStyles["report-claim-basis"],
+  claimHow: notationStyles["report-claim-how"],
+  claimField: notationStyles["report-claim-field"],
+} as const
+
+/** 葉を直接描く注記・候補の部品が付ける class 名（Markdown の `note`・`options` などと同じ見た目）。 */
+export const noteLeafClassNames = {
+  note: notationStyles["report-note"],
+  noteWarn: notationStyles["report-note-warn"],
+  noteNg: notationStyles["report-note-ng"],
+  noteAsk: notationStyles["report-note-ask"],
+  options: notationStyles["report-options"],
+  option: notationStyles["report-option"],
+  optionAdopt: notationStyles["report-option-adopt"],
+  optionConsider: notationStyles["report-option-consider"],
+  optionReject: notationStyles["report-option-reject"],
+  optionNumber: notationStyles["report-option-number"],
+  optionVerdict: notationStyles["report-option-verdict"],
+  optionBody: notationStyles["report-option-body"],
+  optionName: notationStyles["report-option-name"],
+  optionReason: notationStyles["report-option-reason"],
+} as const
+
+/** `note` の種別のラベル。 */
+export function NoteLabel(props: {
+  readonly kindName: string
+  readonly label: string
+}): ReactElement {
+  return <NoteLabelView kindName={props.kindName} label={props.label} />
+}
+
+/** 10 件を超える一覧を 10 件で切り、残りを「ほか n 件」を押すと出す。 */
+export function FoldedList(props: FoldedListProps): ReactElement {
+  return <LongBlockFoldedList {...props} />
+}
+
 /** 描画一式を読み込む。何度呼んでも読み込みは1回で、済めば待っている部品が描き直る。 */
 export const loadMarkdown = markdownRenderer.load
 
@@ -52,6 +123,32 @@ export function Markdown(props: MarkdownProps): ReactElement {
   }
 }
 
+/** 1行の字の行内の記法（太字・inline code・リンク・`{{…}}`）。段落の `p` は付けない。読み込み中は空の `span` に `aria-busy` を出す。 */
+export function InlineMarkdown(props: MarkdownProps): ReactElement {
+  const state = markdownRenderer.useLoadState()
+  switch (state.kind) {
+    case "loading":
+      return <PendingInline />
+    case "failed":
+      return <>{props.text}</>
+    case "ready":
+      return <state.module.InlineMarkdown text={props.text} />
+  }
+}
+
+/** 1行の字の inline code だけを `code` にして描く（太字やリンクの記法は効かせない）。読み込み中は空の `span` に `aria-busy` を出す。 */
+export function InlineCodeText(props: MarkdownProps): ReactElement {
+  const state = markdownRenderer.useLoadState()
+  switch (state.kind) {
+    case "loading":
+      return <PendingInline />
+    case "failed":
+      return <>{props.text}</>
+    case "ready":
+      return <state.module.InlineCodeText text={props.text} />
+  }
+}
+
 /** 質問の選択肢の `preview` の Markdown。 */
 export function QuestionPreviewMarkdown(props: QuestionPreviewMarkdownProps): ReactElement {
   const state = markdownRenderer.useLoadState()
@@ -63,6 +160,10 @@ export function QuestionPreviewMarkdown(props: QuestionPreviewMarkdownProps): Re
     case "ready":
       return <state.module.QuestionPreviewMarkdown text={props.text} toolUseId={props.toolUseId} />
   }
+}
+
+function PendingInline(): ReactElement {
+  return <span aria-busy="true" />
 }
 
 function PendingMarkdown(): ReactElement {

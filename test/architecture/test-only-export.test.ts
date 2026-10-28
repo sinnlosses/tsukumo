@@ -24,12 +24,7 @@ const PRODUCTION_DIRECTORIES = ["src/", "scripts/"] as const
 const ALLOWED_TEST_ONLY_EXPORTS = {} as const satisfies Record<string, string>
 
 // 本番の読み手が後続の課題で付くまでの、期限つきの例外（Props の型でなくてよい）。読み手が付いたら外す。
-const PENDING_READER_EXPORTS = {
-  "src/browser/components/page/conversation/components/main-view/report-leaf-frame.tsx#ReportLeafFrame":
-    "葉を直接描く部品が使い手になる（文字系の葉の課題で付く）",
-  "src/browser/components/page/conversation/components/main-view/report-leaf-frame.tsx#ReportPausePoint":
-    "筆を留める葉（Note・Options）の部品が使い手になる（文字系の葉の課題で付く）",
-} as const satisfies Record<string, string>
+const PENDING_READER_EXPORTS = {} as const satisfies Record<string, string>
 
 const SOURCES = readRepositorySources()
 

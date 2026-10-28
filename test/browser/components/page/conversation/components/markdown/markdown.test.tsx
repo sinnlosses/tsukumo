@@ -58,6 +58,23 @@ describe("Markdown（描画一式を分けて読む口）", () => {
     expect(next.container.querySelector('[aria-busy="true"]')).toBeNull()
     expect(screen.getByRole("heading", { name: "次の見出し" })).toBeDefined()
   }, 15_000)
+
+  it.each(["Markdown", "QuestionPreviewMarkdown", "InlineMarkdown", "InlineCodeText"] as const)(
+    "%s は、読み込み前は aria-busy の器を出し、読み終わると消える",
+    async (name) => {
+      const module = await freshDeferredMarkdown()
+      const Port = module[name]
+      const { container } = render(<Port text={"架空の字"} toolUseId={"toolu_fictional"} />)
+
+      expect(container.querySelector('[aria-busy="true"]')).not.toBeNull()
+      expect(container.textContent).toBe("")
+
+      await act(() => module.loadMarkdown())
+
+      expect(container.querySelector('[aria-busy="true"]')).toBeNull()
+    },
+    15_000,
+  )
 })
 
 /** 読み込みの状態が初めの姿のモジュール（`beforeEach` で登録を捨ててから読む）。 */

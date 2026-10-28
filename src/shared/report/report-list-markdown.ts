@@ -88,11 +88,12 @@ export function claimsMarkdown(block: ClaimsBlock): string {
 const FLOW_ROW_MAX_STEPS = 5
 const FLOW_ROW_MAX_CHARS = 50
 
-function hasFlowDetail(item: ListBlock["items"][number]): boolean {
+export function hasFlowDetail(item: ListBlock["items"][number]): boolean {
   return item.source.trim() !== "" || item.branch.trim() !== ""
 }
 
-function flowFitsRow(items: ListBlock["items"]): boolean {
+/** 段が少なく短く、出どころも分岐も無い `flow` は横の箱の列（`flow-row`）に並べる。 */
+export function flowFitsRow(items: ListBlock["items"]): boolean {
   return (
     items.length <= FLOW_ROW_MAX_STEPS &&
     items.every(

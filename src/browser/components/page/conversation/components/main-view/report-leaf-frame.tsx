@@ -5,9 +5,10 @@
 import clsx from "clsx"
 import type { ReactElement, ReactNode } from "react"
 
+import { foldInlineMarks } from "../../../../../../shared/report/inline-mark.ts"
 import type { LeafValue } from "../../../../../../shared/report/report-leaf-value.ts"
 import { PAUSE_POINT_CLASS_NAME } from "../../../../../../shared/report/report-pause-point.ts"
-import { leafFrameClassNames } from "../markdown/markdown.tsx"
+import { InlineMarkdown, leafFrameClassNames } from "../markdown/markdown.tsx"
 
 /** 書き上げる演出（`planReveal`）が題の行・傍注の柱を見分ける印の属性。 */
 const REVEAL_CAPTION_ATTRIBUTE = "data-reveal-caption"
@@ -67,12 +68,32 @@ export function ReportLeafFrame(props: ReportLeafFrameProps): ReactElement {
               {note.label !== "" && (
                 <span className={leafFrameClassNames.gutterNoteLabel}>{note.label}</span>
               )}
-              {note.text}
+              <InlineMarkdown text={note.text} />
             </p>
           </aside>
         ))}
       </div>
     </div>
+  )
+}
+
+/**
+ * `fold` が空でなければ本体を `details` で畳む。本体が空なら畳まない。
+ * `summary` の字は `{{…}}` の印を素の字に畳んだもの。
+ */
+export function LeafFold(props: {
+  readonly fold: string
+  readonly empty: boolean
+  readonly children: ReactNode
+}): ReactElement {
+  if (props.fold.trim() === "" || props.empty) {
+    return <>{props.children}</>
+  }
+  return (
+    <details>
+      <summary>{foldInlineMarks(props.fold).replace(/\s+/g, " ").trim()}</summary>
+      {props.children}
+    </details>
   )
 }
 

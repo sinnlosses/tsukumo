@@ -1,11 +1,17 @@
 import { cleanup, render } from "@testing-library/react"
-import { afterEach, describe, expect, it } from "vitest"
+import { afterEach, beforeAll, describe, expect, it } from "vitest"
 
 import {
+  LeafFold,
   ReportLeafFrame,
   ReportPausePoint,
 } from "../../../../../../../src/browser/components/page/conversation/components/main-view/report-leaf-frame.tsx"
+import { loadMarkdown } from "../../../../../../../src/browser/components/page/conversation/components/markdown/markdown.tsx"
 import type { LeafValue } from "../../../../../../../src/shared/report/report-leaf-value.ts"
+
+beforeAll(async () => {
+  await loadMarkdown()
+})
 
 afterEach(() => {
   cleanup()
@@ -81,6 +87,15 @@ describe("ReportLeafFrame", () => {
     ])
   })
 
+  it("傍注の字の inline code は code 要素で描く", () => {
+    const { container } = frame(
+      { captionNumber: NO_CAPTION, gutterNotes: [{ label: "", text: "架空の傍注 `a.ts`" }] },
+      "",
+    )
+
+    expect(container.querySelector("aside code")?.textContent).toBe("a.ts")
+  })
+
   it("題と傍注の両方があれば、題つきの包みを傍注の包みが外から囲む", () => {
     const { container } = frame(
       {
@@ -94,6 +109,41 @@ describe("ReportLeafFrame", () => {
     expect(outer?.children).toHaveLength(2)
     expect(outer?.firstElementChild?.querySelector("[data-reveal-caption]")).not.toBeNull()
     expect(outer?.lastElementChild?.hasAttribute("data-reveal-gutter")).toBe(true)
+  })
+})
+
+describe("LeafFold", () => {
+  function fold(props: { readonly fold: string; readonly empty: boolean }) {
+    return render(
+      <div data-report-region="section">
+        <LeafFold fold={props.fold} empty={props.empty}>
+          <p>架空の本体</p>
+        </LeafFold>
+      </div>,
+    )
+  }
+
+  it("fold が空なら本体をそのまま返す", () => {
+    const { container } = fold({ fold: " ", empty: false })
+
+    expect(
+      [...(container.querySelector("[data-report-region]")?.children ?? [])].map(
+        (child) => child.tagName,
+      ),
+    ).toEqual(["P"])
+  })
+
+  it("本体が空なら畳まない", () => {
+    const { container } = fold({ fold: "架空の題", empty: true })
+
+    expect(container.querySelector("details")).toBeNull()
+  })
+
+  it("fold があれば details で包み、summary の字は行内の印を素の字に畳む", () => {
+    const { container } = fold({ fold: "架空の根拠 {{1 → 2}}", empty: false })
+
+    expect(container.querySelector("details > summary")?.textContent).toBe("架空の根拠 1 → 2")
+    expect(container.querySelector("details > p")).not.toBeNull()
   })
 })
 

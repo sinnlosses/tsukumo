@@ -36,7 +36,7 @@ import rehypeSanitize from "rehype-sanitize"
 import remarkCjkFriendly from "remark-cjk-friendly"
 import remarkGfm from "remark-gfm"
 
-import { optionalString } from "../../../../../../../shared/utils/optional-string.ts"
+import { markdownInline } from "../../../../../../../shared/report/report-inline-markdown.ts"
 import {
   breakPathText,
   repositoryFileTarget,
@@ -44,7 +44,7 @@ import {
   useRepositoryFileLink,
 } from "../../repository-link/repository-link.tsx"
 import { ChartBlock } from "./chart-block.tsx"
-import { CODE_FILE_PATH_PROPERTY, rehypeCodeFileName } from "./code-file-name.ts"
+import { rehypeCodeFileName } from "./code-file-name.ts"
 import { CodeLines } from "./code-line-list.tsx"
 import { splitCodeLines } from "./code-line.ts"
 import {
@@ -55,7 +55,6 @@ import {
   findCodeChild,
   hastText,
 } from "./code-node.ts"
-import { colorSwatch, readColorToken } from "./color-swatch.ts"
 import { CopyButton } from "./copy-button.tsx"
 import { diffWordRanges, type DiffWordRanges } from "./diff-pair.ts"
 import { OrderedList, TableBody, UnorderedList } from "./folded-block.tsx"
@@ -66,12 +65,13 @@ import { MermaidBlock } from "./mermaid-block.tsx"
 import { NotationAside, NotationBlock, NotationInline, NotationListItem } from "./notation.tsx"
 import { remarkPreviewImage } from "./preview-image.ts"
 import { rehypeInlineMark } from "./rehype-inline-mark.ts"
+import { Anchor } from "./report-anchor.tsx"
+import { Code } from "./report-code.tsx"
 import { ReportImage } from "./report-image.tsx"
 import styles from "./report-notation.module.css"
 import { REPORT_SANITIZE_SCHEMA } from "./sanitize-schema.ts"
 import { ScatterBlock } from "./scatter-block.tsx"
 import { shellCommandText, shellLineKinds } from "./shell-line.ts"
-import { isSourceLink } from "./source-link.ts"
 import { rehypeStyleAllowlist } from "./style-allowlist.ts"
 import { rehypeTaskCheck } from "./task-check.ts"
 
@@ -107,6 +107,28 @@ const FOOTNOTE_OPTIONS = {
   footnoteBackLabel: "参照元へ戻る",
 } satisfies NonNullable<Options["remarkRehypeOptions"]>
 
+// remark-cjk-friendly は remark-gfm より後（README の使用例どおり）。
+// 効くのは `` と `*` だけで、GFM の取り消し線 `~~` には効かない（あちらは micromark-extension-gfm-strikethrough の別の判定を通るため。直すには remark-cjk-friendly-gfm-strikethrough が要る）。
+// 取り消し線はレポートの記法（`REPORT_NOTATION_PROMPT`）が勧めていないので、穴のまま置いてある。
+// この2段は、サーバが質問の preview から棚に置く画像を拾う読み方（`questionImagePaths`）とそろえる。
+const REPORT_REMARK_PLUGINS = [remarkGfm, remarkCjkFriendly] satisfies NonNullable<
+  Options["remarkPlugins"]
+>
+
+const REPORT_REHYPE_PLUGINS = [
+  // rehype-raw より前（フェンスのファイル名は `data.meta` に入っていて、raw が木を HTML へ書き出して読み直すと落ちるため）。
+  rehypeCodeFileName,
+  rehypeRaw,
+  rehypeTaskCheck,
+  // `style` の検査はサニタイザが値の関数を受けないので、ここで済ませる。
+  rehypeStyleAllowlist,
+  [rehypeSanitize, REPORT_SANITIZE_SCHEMA],
+  rehypeInlineMark,
+  rehypeHighlight,
+] satisfies NonNullable<Options["rehypePlugins"]>
+
+export { InlineCodeText } from "./inline-code-text.tsx"
+
 export type MarkdownProps = {
   readonly text: string
 }
@@ -130,6 +152,25 @@ export function QuestionPreviewMarkdown(props: QuestionPreviewMarkdownProps): Re
       remarkPlugins={[remarkPreviewImage(props.toolUseId)]}
       cache={undefined}
     />
+  )
+}
+
+/**
+ * 段落の `p` を外して、行内の記法だけを描く（葉の部品が1行の字を `p` や `li` の中に置くときに使う）。
+ * 描き終えた木は覚えない（覚える鍵は塊の Markdown で、段落の木と混ざる）。
+ */
+export function InlineMarkdown(props: MarkdownProps): ReactElement {
+  return (
+    <ReactMarkdown
+      remarkPlugins={REPORT_REMARK_PLUGINS}
+      rehypePlugins={REPORT_REHYPE_PLUGINS}
+      remarkRehypeOptions={FOOTNOTE_OPTIONS}
+      components={REPORT_COMPONENTS}
+      disallowedElements={["p"]}
+      unwrapDisallowed
+    >
+      {markdownInline(props.text)}
+    </ReactMarkdown>
   )
 }
 
@@ -159,21 +200,9 @@ function ReportMarkdown(props: {
   }
   return (
     <ReactMarkdown
-      // remark-cjk-friendly は remark-gfm より後（README の使用例どおり）。
-      // 効くのは `` と `*` だけで、GFM の取り消し線 `~~` には効かない（あちらは micromark-extension-gfm-strikethrough の別の判定を通るため。直すには remark-cjk-friendly-gfm-strikethrough が要る）。
-      // 取り消し線はレポートの記法（`REPORT_NOTATION_PROMPT`）が勧めていないので、穴のまま置いてある。
-      // この2段は、サーバが質問の preview から棚に置く画像を拾う読み方（`questionImagePaths`）とそろえる。
-      remarkPlugins={[remarkGfm, remarkCjkFriendly, ...props.remarkPlugins]}
+      remarkPlugins={[...REPORT_REMARK_PLUGINS, ...props.remarkPlugins]}
       rehypePlugins={[
-        // rehype-raw より前（フェンスのファイル名は `data.meta` に入っていて、raw が木を HTML へ書き出して読み直すと落ちるため）。
-        rehypeCodeFileName,
-        rehypeRaw,
-        rehypeTaskCheck,
-        // `style` の検査はサニタイザが値の関数を受けないので、ここで済ませる。
-        rehypeStyleAllowlist,
-        [rehypeSanitize, REPORT_SANITIZE_SCHEMA],
-        rehypeInlineMark,
-        rehypeHighlight,
+        ...REPORT_REHYPE_PLUGINS,
         () => (tree: Root) => {
           props.cache?.set(props.text, tree)
         },
@@ -295,136 +324,6 @@ type SubHeadingProps = JSX.IntrinsicElements["h3"] & ExtraProps
 function SubHeading(props: SubHeadingProps): ReactElement {
   const { node: _node, children, ...rest } = props
   return <h5 {...rest}>{children}</h5>
-}
-
-type CodeProps = JSX.IntrinsicElements["code"] & ExtraProps
-
-/**
- * コード（inline code・フェンスの中の `<code>` の両方がここを通る）。
- * 中身の文字が git 管理下の一覧にあるパスなら、押せるボタンで包む（人格の指示が `file_path:line_number` の形で書く inline code）。
- * フェンスの中の複数行のコードは1つのパスと一致しないので、そのまま `<code>` になる（色付け・言語の `className` は変えない）。
- *
- * 中身の文字が1つの色（カラーコードか色のトークン名）なら、その色を地にする（{@link colorSwatch}）。
- */
-function Code(props: CodeProps): ReactElement {
-  const { node, children, className, ...rest } = props
-  const link = useRepositoryFileLink()
-  const text = node === undefined ? "" : hastText(node)
-  const carriedPath =
-    node === undefined ? undefined : optionalString(node.properties[CODE_FILE_PATH_PROPERTY])
-  const target =
-    node === undefined ? undefined : repositoryFileTarget(carriedPath ?? text, link.files)
-
-  if (target === undefined) {
-    const swatch = node === undefined ? undefined : colorSwatch(text, readColorToken)
-    return swatch === undefined ? (
-      <code className={className} {...rest}>
-        {children}
-      </code>
-    ) : (
-      <code
-        {...rest}
-        className={clsx(
-          className,
-          styles["report-color"],
-          styles[`report-color-ink-${swatch.ink}`],
-        )}
-        style={{ background: swatch.background }}
-      >
-        {children}
-      </code>
-    )
-  }
-  const code = (
-    <code className={className} {...rest}>
-      {breakPathText(children, styles["report-path-glue"])}
-    </code>
-  )
-  return (
-    <RepositoryFileLinkTarget
-      target={target}
-      title={undefined}
-      className={styles["report-file-link"]}
-    >
-      {code}
-    </RepositoryFileLinkTarget>
-  )
-}
-
-type AnchorProps = JSX.IntrinsicElements["a"] & ExtraProps
-
-/**
- * リンク。
- * スキームの許可は {@link REPORT_SANITIZE_SCHEMA} の `protocols` が済ませている（通らない `href` はここに来る前に落ちている）ので、`http:` / `https:` / `mailto:` はそのまま `<a>` にする（`rel="noopener noreferrer"` を添えるだけ）。
- *
- * ページ内のリンク（`#` で始まるもの。脚注の往復・合図の行のお願いの口）は、押すと `location.hash` を書かずに飛び先の `id` の要素へ転がす。
- * `location.hash` は画面と見ているターンの経路なので、書くと見ているターンが外れる。
- *
- * スキームの無い相対リンク（`[x](src/foo.ts)`）は `<a>` にしない。
- * `protocols` は相対リンクを素通しするので、`<a>` にすると押したときにページ自身が `/src/foo.ts` へ遷移してしまう。
- * - git 管理下の一覧にあれば、押すと Orca のエディタで開くボタン
- * - 無ければ、ファイルを指さないリンクなので押しても何も起きない素のテキスト（`<span>`）
- */
-function Anchor(props: AnchorProps): ReactElement {
-  const { node: _node, children, href, title, className } = props
-  const link = useRepositoryFileLink()
-
-  if (href?.startsWith("#") === true) {
-    const targetId = href.slice(1)
-    return (
-      <a
-        href={href}
-        title={title}
-        className={className}
-        onClick={(event) => {
-          event.preventDefault()
-          event.currentTarget.ownerDocument
-            .getElementById(targetId)
-            ?.scrollIntoView({ block: "start" })
-        }}
-      >
-        {children}
-      </a>
-    )
-  }
-
-  if (href === undefined || hasUrlScheme(href)) {
-    const isSource =
-      href !== undefined && typeof children === "string" && isSourceLink(href, children)
-    return (
-      <a
-        href={href}
-        title={title}
-        className={isSource ? clsx(className, styles["report-source"]) : className}
-        rel="noopener noreferrer"
-      >
-        {children}
-      </a>
-    )
-  }
-
-  const target = repositoryFileTarget(href, link.files)
-  if (target === undefined) {
-    return (
-      <span title={title} className={className}>
-        {children}
-      </span>
-    )
-  }
-  return (
-    <RepositoryFileLinkTarget
-      target={target}
-      title={title}
-      className={clsx(styles["report-file-link"], className)}
-    >
-      {breakPathText(children, styles["report-path-glue"])}
-    </RepositoryFileLinkTarget>
-  )
-}
-
-/** `href` にスキーム（`https:` のような `<scheme>:` の頭）があるかどうか。 */
-function hasUrlScheme(href: string): boolean {
-  return /^[a-z][a-z0-9+.-]*:/i.test(href)
 }
 
 type TableProps = JSX.IntrinsicElements["table"] & ExtraProps

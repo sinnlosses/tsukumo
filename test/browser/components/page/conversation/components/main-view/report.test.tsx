@@ -13,6 +13,8 @@ vi.mock(
   "../../../../../../../src/browser/components/page/conversation/components/markdown/markdown.tsx",
   () => ({
     detailBlockClassName: "detail-block",
+    textLeafClassNames: {},
+    noteLeafClassNames: {},
     Markdown: (props: { readonly text: string }) => {
       calls.push(props.text)
       return <div data-markdown-stub="yes">{props.text}</div>
