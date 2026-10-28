@@ -42,6 +42,7 @@ import {
   type SessionLaunchSeed,
 } from "../server/session/core/session-launch.ts"
 import type { SessionManagerOptions } from "../server/session/core/session-manager-port.ts"
+import { appearancePromptPart } from "../server/system-prompt/core/appearance-prompt.ts"
 import {
   takeSystemPromptAppend,
   toSystemPromptMode,
@@ -257,6 +258,7 @@ function startRealDriver(
     effort: seed.sessionDefault.effort,
     systemPromptAppend: takeSystemPromptAppend({
       persona: seed.pack.persona ?? "",
+      appearance: appearancePromptPart(seed.pack.dir, seed.pack.definition),
       mode: toSystemPromptMode(mode, memory.readRecent, memory.chatSummary.read, seed.start),
     }),
     start: seed.start,

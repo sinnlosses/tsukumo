@@ -45,7 +45,7 @@ const READ_NOTHING: ReadRecent = () => []
 
 describe("takeSystemPromptAppend", () => {
   it("仕事のときは 人格 → セリフの間合い → ワークプラン → レポートの記法 → 質問の書き方 の順でつながる", () => {
-    const append = takeSystemPromptAppend({ persona: PERSONA, mode: workMode() })
+    const append = takeSystemPromptAppend({ persona: PERSONA, appearance: "", mode: workMode() })
 
     expect(append).toBe(
       `${PERSONA}\n\n${SPEECH_CADENCE_PROMPT}\n\n${WORK_PLAN_PROMPT}\n\n${REPORT_NOTATION_PROMPT}\n\n${QUESTION_NOTATION_PROMPT}`,
@@ -62,6 +62,7 @@ describe("takeSystemPromptAppend", () => {
 
     const append = takeSystemPromptAppend({
       persona: PERSONA,
+      appearance: "",
       mode: workMode(summary, READ_RECENT),
     })
 
@@ -91,6 +92,7 @@ describe("takeSystemPromptAppend", () => {
 
     const append = takeSystemPromptAppend({
       persona: PERSONA,
+      appearance: "",
       mode: chatMode(false, summary, READ_RECENT),
     })
 
@@ -106,14 +108,30 @@ describe("takeSystemPromptAppend", () => {
 
     const append = takeSystemPromptAppend({
       persona: PERSONA,
+      appearance: "",
       mode: chatMode(true, summary, READ_RECENT),
     })
 
     expect(append).toBe(`${PERSONA}\n\n${CHAT_MANNER_PROMPT}`)
   })
 
+  it("姿の絵のパスの節は人格のすぐ後ろに、仕事にも雑談にも載る", () => {
+    const appearance = "## 姿の節"
+    const summary = inMemoryChatSummary({ summary: SUMMARY, delivered: true })
+
+    const work = takeSystemPromptAppend({ persona: PERSONA, appearance, mode: workMode() })
+    const chat = takeSystemPromptAppend({
+      persona: PERSONA,
+      appearance,
+      mode: chatMode(true, summary, READ_RECENT),
+    })
+
+    expect(work.startsWith(`${PERSONA}\n\n${appearance}\n\n${SPEECH_CADENCE_PROMPT}`)).toBe(true)
+    expect(chat).toBe(`${PERSONA}\n\n${appearance}\n\n${CHAT_MANNER_PROMPT}`)
+  })
+
   it("人格が無いパック（空文字列）でも規約は載る（どのパックでも黙りっぱなしにしない）", () => {
-    const append = takeSystemPromptAppend({ persona: "", mode: workMode() })
+    const append = takeSystemPromptAppend({ persona: "", appearance: "", mode: workMode() })
 
     expect(append).toBe(
       `${SPEECH_CADENCE_PROMPT}\n\n${WORK_PLAN_PROMPT}\n\n${REPORT_NOTATION_PROMPT}\n\n${QUESTION_NOTATION_PROMPT}`,

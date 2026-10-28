@@ -29,6 +29,8 @@ export type SystemPromptSeed = {
    * 空の節は並びから落ちるだけなので、そのパックは tsukumo 側の規約だけで起動する。
    */
   readonly persona: string
+  /** 立ち絵と背景のパスの節（`appearancePromptPart`）。絵が無いパックは空文字列で、並びから落ちる。 */
+  readonly appearance: string
   /** 仕事か雑談か。記憶の口の形がモードで違うので、2つで1つの合併型にしてある。 */
   readonly mode: SystemPromptMode
 }
@@ -82,7 +84,7 @@ export function toSystemPromptMode(
 }
 
 /**
- * `systemPrompt` の append を組み立てる。人格 → tsukumo 側の規約 → 記憶の順で、空の節は落として `\n\n` でつなぐ。
+ * `systemPrompt` の append を組み立てる。人格 → 姿の絵のパス → tsukumo 側の規約 → 記憶の順で、空の節は落として `\n\n` でつなぐ。
  * 規約（機械的な決まりごと）を人格の後ろに置くのは、人格の文章に埋もれさせないため。
  *
  * 並びはモードで入れ替わる:
@@ -98,7 +100,9 @@ export function toSystemPromptMode(
  * 名前が `take` で始まるのは、返すだけでなく写しの印を書き換えるから（雑談で記憶を載せたとき、印が「渡し済み」に戻る）。
  */
 export function takeSystemPromptAppend(seed: SystemPromptSeed): string {
-  return [seed.persona, ...modeParts(seed.mode)].filter((part) => part.trim() !== "").join("\n\n")
+  return [seed.persona, seed.appearance, ...modeParts(seed.mode)]
+    .filter((part) => part.trim() !== "")
+    .join("\n\n")
 }
 
 /**
