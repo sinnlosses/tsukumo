@@ -56,7 +56,13 @@
             "id": "s1",
             "component": "Section",
             "heading": "架空の表",
-            "children": ["t1", "dv1", "x1", "p1", "m1"]
+            "children": ["t1", "dv1", "x1", "p1", "q1", "m1"]
+          },
+          {
+            "id": "q1",
+            "component": "Quote",
+            "text": "架空の引用の一文。`code` と **太字** も読める。",
+            "source": "架空の資料の第3章"
           },
           {
             "id": "dv1",

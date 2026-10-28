@@ -138,7 +138,8 @@ const LEAF_BLOCK_EXAMPLES = {
     ],
     relation: "compare",
   },
-  markdown: { kind: "markdown", markdown: "> 架空の引用の1行" },
+  quote: { kind: "quote", text: "架空の一文", source: "架空の出典" },
+  markdown: { kind: "markdown", markdown: "架空の **一行**" },
 } satisfies LeafExamples
 
 /** 葉の部品の例。塊の例から `kind` を除き、`id` と `component` を足す。 */

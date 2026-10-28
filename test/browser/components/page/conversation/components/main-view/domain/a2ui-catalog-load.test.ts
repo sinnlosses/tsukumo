@@ -14,10 +14,10 @@ function processorOfDocument() {
 }
 
 describe("loadReportCatalogApis", () => {
-  it("Catalog.fromJson が文書を読み、27 部品を持つ", () => {
+  it("Catalog.fromJson が文書を読み、28 部品を持つ", () => {
     const catalog = loadReportCatalogApis()
 
-    expect(catalog.components.size).toBe(27)
+    expect(catalog.components.size).toBe(28)
     expect(catalog.components.has("Report")).toBe(true)
     expect(catalog.components.has("Row")).toBe(true)
   })

@@ -129,6 +129,25 @@ describe("a2uiStructureFaults の Divider", () => {
   })
 })
 
+describe("a2uiStructureFaults の Quote", () => {
+  const quote = { id: "q", component: "Quote", text: "架空の一文" }
+
+  it.each([
+    {
+      name: "Section の子",
+      components: [report(["s"]), section("s", ["q"]), quote],
+      faults: [],
+    },
+    {
+      name: "Report.figure",
+      components: [report(["s"], { figure: "q" }), section("s", ["p"]), paragraph("p"), quote],
+      faults: [{ kind: "figure-not-figure-part", pointer: "/components/0/figure" }],
+    },
+  ])("$name に置いたときの違反", ({ components, faults }) => {
+    expect(a2uiStructureFaults(components)).toEqual(faults)
+  })
+})
+
 describe("a2uiStructureFaults", () => {
   it("正しい一覧は違反を返さない", () => {
     expect(a2uiStructureFaults(VALID)).toEqual([])

@@ -133,12 +133,20 @@ export const claimsBlockSchema = z
     "確かめていないこと・推測を、主張ごとに確度・根拠・確かめ方で1行ずつ書く。テスト・型検査の結果は checks",
   )
 
+export const quoteBlockSchema = z.object({
+  kind: z.literal("quote"),
+  text: inlineText,
+  source: omittable(inlineText, ""),
+  fold,
+  aside,
+})
+
 export const markdownBlockSchema = z.object({
   kind: z.literal("markdown"),
   markdown: z
     .string()
     .describe(
-      "どの部品にも当てはまらない記法（svg・引用・区切り線・区画の格子 cols / card・ラベル badge）だけ",
+      "どの部品にも当てはまらない記法（svg・区切り線・区画の格子 cols / card・ラベル badge）だけ",
     ),
   fold,
   aside,

@@ -77,6 +77,20 @@ describe("reportLeafLayoutOf", () => {
     ])
   })
 
+  it("quote の aside は傍注になり、図表番号は付かない", () => {
+    const [blocks] = reportLeafLayoutOf(
+      parseReportSections([
+        {
+          heading: "",
+          blocks: [{ kind: "quote", text: "架空の一文", aside: "架空の出どころ" }],
+        },
+      ]).sections,
+    ).values
+
+    expect(blocks?.[0]?.captionNumber).toEqual({ kind: "none" })
+    expect(blocks?.[0]?.gutterNotes).toEqual([{ label: "", text: "架空の出どころ" }])
+  })
+
   it("row・panel の子は葉と同じ手で数え、番号は子の順に続く", () => {
     const cell = { kind: "table", title: "架空の表", columns: ["列", "数"], rows: [["値", "1"]] }
     const [blocks] = reportLeafValues(

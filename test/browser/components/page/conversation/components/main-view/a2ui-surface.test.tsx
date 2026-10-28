@@ -212,6 +212,30 @@ describe("Divider", () => {
   })
 })
 
+describe("Quote", () => {
+  it("Section の中の Quote は欄の Markdown を通らず、文と出典を直接描く", () => {
+    const body = regionsOf({
+      components: [
+        { id: "root", component: "Report", conclusion: ["架空の結論。"], children: ["s1"] },
+        { id: "s1", component: "Section", heading: "架空の引用", children: ["p1", "q1"] },
+        { id: "p1", component: "Markdown", markdown: "架空の前。" },
+        { id: "q1", component: "Quote", text: "架空の引用の一文", source: "架空の出典" },
+      ],
+    })
+    const { container } = render(<Report reveal={false} turnId={1} className="" body={body} />)
+
+    const paragraphs = [...container.querySelectorAll("[data-report-region] p")].map(
+      (paragraph) => paragraph.textContent,
+    )
+    expect(paragraphs).toEqual(["架空の引用の一文", "— 架空の出典"])
+    expect(
+      [...container.querySelectorAll("[data-markdown-stub]")].some((stub) =>
+        stub.textContent.includes("架空の引用の一文"),
+      ),
+    ).toBe(false)
+  })
+})
+
 describe("部品の一覧のある本文（A2UI の面）", () => {
   it("配置の部品の無い一覧は、欄の Markdown で描いたときと本文の根の中の DOM が同じで、面の入れ物が 1 枚だけ挟まる", () => {
     const withComponents = regionsOf({ components: PARTS })

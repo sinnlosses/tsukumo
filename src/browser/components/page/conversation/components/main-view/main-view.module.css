@@ -15,6 +15,7 @@
 @import "./turn-card/request-block.css";
 @import "./turn-card/selection-ask.css";
 @import "./turn-card/interactive-view.css";
+@import "./turn-card/quote-leaf.css";
 @import "./turn-card/turn-card-head.css";
 @import "./turn-card/aside-thread.css";
 @import "./turn-card/question-record.css";

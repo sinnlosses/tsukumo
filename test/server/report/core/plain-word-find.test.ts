@@ -47,6 +47,17 @@ describe("plainWordSpellingsIn", () => {
     ).toEqual([])
   })
 
+  it("Quote の文と出典の中は見ない", () => {
+    const quote: ReportBlock = {
+      kind: "quote",
+      text: "架空の再演の一文。",
+      source: "架空の有界な自律の出典",
+      fold: "",
+      aside: "",
+    }
+    expect(plainWordSpellingsIn(draft([quote]))).toEqual([])
+  })
+
   it("note・markdown・節の見出しの中の語も見つける", () => {
     const note: ReportBlock = {
       kind: "note",

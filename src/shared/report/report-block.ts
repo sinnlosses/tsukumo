@@ -27,6 +27,7 @@ import {
   listBlockSchema,
   markdownBlockSchema,
   noteBlockSchema,
+  quoteBlockSchema,
   textBlockSchema,
 } from "./report-block-prose.ts"
 import { MAX_HEADING } from "./report-limit.ts"
@@ -62,6 +63,7 @@ const writerBlockBranches = [
   namedTimeline,
   optionsBlockSchema,
   claimsBlockSchema,
+  quoteBlockSchema,
   namedImage,
   namedPlot,
   markdownBlockSchema,

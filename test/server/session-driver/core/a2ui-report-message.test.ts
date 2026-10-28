@@ -104,6 +104,18 @@ describe("a2uiReportInput", () => {
       { blocks: [{ kind: "text", text: "架空の根の子。" }] },
     ])
   })
+
+  it("Quote は塊 quote に text と source を写す", () => {
+    const { input } = a2uiReportInput([
+      { id: "root", component: "Report", conclusion: ["架空。"], children: ["s"] },
+      { id: "s", component: "Section", heading: "架空の節", children: ["q"] },
+      { id: "q", component: "Quote", text: "架空の一文", source: "架空の出典" },
+    ])
+
+    expect(input.sections).toMatchObject([
+      { blocks: [{ kind: "quote", text: "架空の一文", source: "架空の出典" }] },
+    ])
+  })
 })
 
 describe("写しの自己テスト", () => {

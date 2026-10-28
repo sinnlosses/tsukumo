@@ -173,6 +173,8 @@ function blockMarkdown(
       return block.tone === "memo" || block.text.trim() === ""
         ? ""
         : `<div class="${NOTE_CLASSES[block.tone]}">\n\n${markdownInline(block.text)}\n\n</div>`
+    case "quote":
+      return quoteMarkdown(block)
     case "stats":
       return captionedMarkdown({
         kind: "figure",
@@ -275,6 +277,14 @@ function blockMarkdown(
     case "markdown":
       return block.markdown
   }
+}
+
+function quoteMarkdown(block: Extract<ReportBlock, { readonly kind: "quote" }>): string {
+  if (block.text.trim() === "") {
+    return ""
+  }
+  const text = `> ${markdownInline(block.text)}`
+  return block.source.trim() === "" ? text : `${text}\n>\n> — ${markdownInline(block.source)}`
 }
 
 /**

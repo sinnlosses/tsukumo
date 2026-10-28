@@ -1,0 +1,11 @@
+/* 引用の部品の置き方。枠・地・字は `ui/` の Surface と Text が持つ。 */
+.quote-leaf {
+  margin: var(--report-block-gap) 0;
+}
+.quote-leaf-text,
+.quote-leaf-source {
+  margin: 0;
+}
+.quote-leaf-source {
+  margin-top: var(--space-xs);
+}

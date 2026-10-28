@@ -74,6 +74,7 @@ const LEAVES: Readonly<Record<string, unknown>> = {
     kind: "claims",
     items: [{ certainty: "confirmed", claim: "架空", basis: "", howToVerify: "" }],
   },
+  quote: { kind: "quote", text: "架空の引用" },
   image: { kind: "image", path: "/架空/a.png", caption: "架空" },
   plot: {
     kind: "plot",

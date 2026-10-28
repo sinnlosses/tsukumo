@@ -31,6 +31,7 @@ const KIND_TO_COMPONENT = {
   timeline: "Timeline",
   options: "Options",
   claims: "Claims",
+  quote: "Quote",
   image: "Picture",
   plot: "Plot",
   markdown: "Markdown",
@@ -100,8 +101,8 @@ describe("A2UI のカタログ文書", () => {
     expect(Object.keys(KIND_TO_COMPONENT).toSorted()).toEqual(writerKinds.toSorted())
   })
 
-  it("根・節・葉 19 種・基本 6 部品の 27 部品が全部残る", () => {
-    expect(expected).toHaveLength(27)
+  it("根・節・葉 20 種・基本 6 部品の 28 部品が全部残る", () => {
+    expect(expected).toHaveLength(28)
     expect(findMissingComponents(document, expected)).toEqual([])
   })
 
@@ -181,8 +182,25 @@ describe("A2UI のカタログ文書", () => {
     expect(leaf).not.toContain('"kind"')
   })
 
-  it("受理の形の表は文書と同じ 27 部品を持つ", () => {
+  it("受理の形の表は文書と同じ 28 部品を持つ", () => {
     expect(Object.keys(REPORT_COMPONENT_SCHEMAS).toSorted()).toEqual(expected.toSorted())
+  })
+
+  it("Quote は text だけで通り、text が無ければ拒み、source・fold・aside を受ける", () => {
+    const quote = REPORT_COMPONENT_SCHEMAS.Quote
+
+    expect(quote.safeParse({ id: "q", component: "Quote", text: "架空の一文" }).success).toBe(true)
+    expect(quote.safeParse({ id: "q", component: "Quote" }).success).toBe(false)
+    expect(
+      quote.safeParse({
+        id: "q",
+        component: "Quote",
+        text: "架空の一文",
+        source: "架空の出典",
+        fold: "",
+        aside: "",
+      }).success,
+    ).toBe(true)
   })
 
   it("Divider は axis だけを受け、axis の不正な値は拒む", () => {

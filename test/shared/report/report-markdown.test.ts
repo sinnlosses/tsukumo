@@ -61,6 +61,14 @@ describe("reportSectionsMarkdown", () => {
   )
 
   it.each([
+    ["出典あり", "架空の一文", "架空の出典", "> 架空の一文\n>\n> — 架空の出典"],
+    ["出典なし", "架空の一文", "", "> 架空の一文"],
+    ["文が空白だけ", "  ", "架空の出典", ""],
+  ])("quote は %s のとき引用の記法になる", (_name, text, source, expected) => {
+    expect(markdownOf({ kind: "quote", text, source, fold: "", aside: "" })).toBe(expected)
+  })
+
+  it.each([
     ["言語・marks", "ts", "", true, "```ts $marks"],
     ["言語・パス・marks", "ts", "src/a.ts", true, "```ts src/a.ts $marks"],
     ["言語が空でパスだけ", "", "src/a.ts", false, "```text src/a.ts"],

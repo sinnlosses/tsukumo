@@ -20,6 +20,7 @@ import { OptionsLeaf } from "./options-leaf.tsx"
 import { ParagraphLeaf } from "./paragraph-leaf.tsx"
 import { PictureLeaf } from "./picture-leaf.tsx"
 import { PlotLeaf } from "./plot-leaf.tsx"
+import { QuoteLeaf } from "./quote-leaf.tsx"
 import { StatsLeaf } from "./stats-leaf.tsx"
 import { SvgLeaf } from "./svg-leaf.tsx"
 import { TableLeaf } from "./table-leaf.tsx"
@@ -38,6 +39,7 @@ const DIRECT_LEAF_VIEWS: ReadonlyMap<A2uiReportComponent["component"], DirectLea
   ["Paragraph", ParagraphLeaf],
   ["ItemList", ItemListLeaf],
   ["Claims", ClaimsLeaf],
+  ["Quote", QuoteLeaf],
   ["Note", NoteLeaf],
   ["Options", OptionsLeaf],
   ["Table", TableLeaf],
