@@ -3,9 +3,9 @@
   display: flex;
   flex-direction: column;
   max-height: 50dvh;
-  padding: 14px 14px 12px;
+  padding: var(--space-lg) var(--space-lg) var(--space-md);
   border: 1px solid color-mix(in srgb, var(--state-warn) 45%, transparent);
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   background: linear-gradient(
     to bottom,
     color-mix(in srgb, var(--state-warn) 10%, transparent),
@@ -20,7 +20,7 @@
 .pending-ask-card-head {
   display: flex;
   align-items: baseline;
-  gap: 8px;
+  gap: var(--space-sm);
   font-size: var(--font-label);
 }
 .pending-ask-card-label {
@@ -36,15 +36,15 @@
   display: flex;
   flex: none;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-sm);
   margin-left: auto;
 }
 /* 添え書きを板で読む口。 */
 .pending-ask-card-detail {
   height: 26px;
-  padding: 0 8px;
+  padding: 0 var(--space-sm);
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: transparent;
   color: var(--ink-quiet);
   font-size: var(--font-label);
@@ -62,7 +62,7 @@
   font-family: var(--font-mono);
 }
 .pending-ask-card-question {
-  margin: 6px 0 0;
+  margin: var(--space-sm) 0 0;
   font-size: var(--font-subheading);
   font-weight: 700;
   line-height: 1.7;
@@ -71,8 +71,8 @@
 .pending-ask-card-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 5px;
-  margin: 8px 0 0;
+  gap: var(--space-xs);
+  margin: var(--space-sm) 0 0;
   padding: 0;
   list-style: none;
 }
@@ -87,14 +87,14 @@
   }
 }
 .pending-ask-card-chip {
-  padding: 2px 7px;
-  border-radius: 6px;
+  padding: var(--space-2xs) var(--space-sm);
+  border-radius: var(--radius-md);
   background: var(--surface-raised);
   font-family: var(--font-mono);
   font-size: var(--font-label);
 }
 .pending-ask-card-omitted {
-  padding: 2px 4px;
+  padding: var(--space-2xs) var(--space-xs);
   border: none;
   background: transparent;
   cursor: pointer;
@@ -103,12 +103,12 @@
 }
 .pending-ask-card-actions {
   flex: none;
-  margin-top: 12px;
+  margin-top: var(--space-md);
 }
 .pending-ask-card-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 8px;
+  gap: var(--space-sm);
 }
 .pending-ask-card-grid.is-two-columns {
   grid-template-columns: 1fr 1fr;
@@ -117,12 +117,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: var(--space-sm);
   min-width: 0;
   min-height: 44px;
-  padding: 6px 12px;
+  padding: var(--space-sm) var(--space-md);
   border: 1px solid var(--rule);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   background: transparent;
   color: var(--ink);
   font-size: var(--font-subheading);

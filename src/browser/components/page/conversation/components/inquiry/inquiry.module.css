@@ -8,10 +8,10 @@
   display: flex;
   flex-direction: column;
   max-height: calc(100cqh - var(--turn-card-head-height, 0px) - 1.5rem);
-  margin: 0.75rem 0 0;
-  padding: 0.75rem 0.9rem;
+  margin: var(--space-md) 0 0;
+  padding: var(--space-md) var(--space-lg);
   border: 1px solid var(--state-warn);
-  border-radius: 0.75rem;
+  border-radius: var(--radius-lg);
   /* 地は塗りつぶさず、面の色に警告色をごく薄く混ぜる。 */
   background: color-mix(in srgb, var(--surface), var(--state-warn) 6%);
   /* 札へ転がしたとき、貼り付いた札の頭の下に潜らせない。 */
@@ -34,12 +34,12 @@
    狭い画面では折り返す（横スクロールを出さない）。 */
 .inquiry-head {
   flex: 0 0 auto;
-  margin-bottom: 0.5rem;
+  margin-bottom: var(--space-sm);
 }
 .inquiry-chip {
   flex: 0 0 auto;
-  padding: 0.1rem 0.5rem;
-  border-radius: 0.3rem;
+  padding: var(--space-2xs) var(--space-sm);
+  border-radius: var(--radius-sm);
   background: var(--state-warn);
   color: var(--ground);
   font-size: var(--font-label);
@@ -74,14 +74,14 @@
 }
 /* 太さは `Text` が持つ。margin だけここに置く。 */
 .inquiry-text {
-  margin: 0 0 0.75rem;
+  margin: 0 0 var(--space-md);
 }
 /* 許可要求の対象の全文。等幅で折り返す。 */
 .inquiry-target {
-  margin: 0 0 0.75rem;
-  padding: 0.5rem 0.65rem;
+  margin: 0 0 var(--space-md);
+  padding: var(--space-sm) var(--space-md);
   border: 1px solid var(--rule);
-  border-radius: 0.5rem;
+  border-radius: var(--radius-md);
   background: var(--surface);
   font-family: var(--font-mono);
   font-size: var(--font-secondary);
@@ -90,22 +90,22 @@
 }
 /* 背景と判断の軸の塊。 */
 .inquiry-brief {
-  margin: 0 0 0.75rem;
-  padding: 0.5rem 0.65rem;
+  margin: 0 0 var(--space-md);
+  padding: var(--space-sm) var(--space-md);
   border: 1px dashed var(--rule);
-  border-radius: 0.5rem;
+  border-radius: var(--radius-md);
 }
 .inquiry-brief-line {
   margin: 0;
 }
 .inquiry-brief-line + .inquiry-brief-line {
-  margin-top: 0.25rem;
+  margin-top: var(--space-xs);
 }
 /* 左に選択肢の縦の並び、右に詳細。札の幅が 44rem に満たなければ1列にして、詳細を選択肢の下へ回す。 */
 .inquiry-choose {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 0.75rem;
+  gap: var(--space-md);
 }
 @container (min-width: 44rem) {
   .inquiry-choose {
@@ -116,7 +116,7 @@
 .inquiry-options {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: var(--space-sm);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -124,22 +124,22 @@
 /* フォーカスした選択肢の詳細。高さは切らない（札の本文が転がる）。 */
 .inquiry-detail {
   min-width: 0;
-  padding: 0.6rem 0.75rem;
+  padding: var(--space-sm) var(--space-md);
   border: 1px solid var(--rule);
-  border-radius: 0.5rem;
+  border-radius: var(--radius-md);
   background: var(--surface);
 }
 .inquiry-detail-title {
   margin: 0;
 }
 .inquiry-detail-description {
-  margin: 0.35rem 0 0;
+  margin: var(--space-xs) 0 0;
 }
 .inquiry-points {
-  margin-top: 0.5rem;
+  margin-top: var(--space-sm);
 }
 .inquiry-points-list {
-  margin: 0.15rem 0 0;
+  margin: var(--space-2xs) 0 0;
   padding: 0;
   list-style: none;
 }
@@ -149,22 +149,22 @@
 /* 戻せない選択肢の印。色に加えて字で示す。 */
 .inquiry-badge {
   flex: 0 0 auto;
-  padding: 0.05rem 0.4rem;
+  padding: var(--space-2xs) var(--space-sm);
   border: 1px solid currentcolor;
-  border-radius: 0.3rem;
+  border-radius: var(--radius-sm);
 }
 /* 並べて比べる表。畳めて、開くと表だけが横に転がる（表の器は `Table`）。 */
 .inquiry-compare {
-  margin-top: 0.75rem;
+  margin-top: var(--space-md);
 }
 .inquiry-compare > summary {
   cursor: pointer;
 }
 .inquiry-option {
   min-width: 0;
-  padding: 0.6rem 0.75rem;
+  padding: var(--space-sm) var(--space-md);
   border: 1px solid var(--rule);
-  border-radius: 0.5rem;
+  border-radius: var(--radius-md);
   background: var(--surface);
 }
 /* 選んだカード。枠の色と太さで示す（色だけに頼らない）。 */
@@ -201,24 +201,24 @@
 /* 字の段・色は `Text` が持つ。箱（枠・角丸・余白）だけここに置く。 */
 .inquiry-option-badge {
   flex: 0 0 auto;
-  padding: 0.05rem 0.4rem;
+  padding: var(--space-2xs) var(--space-sm);
   border: 1px solid var(--state-warn);
-  border-radius: 0.3rem;
+  border-radius: var(--radius-sm);
 }
 /* 詳細の面の preview と図の Markdown。レポートと同じ語彙（`.detail-block`）に乗せ、余白の打ち消しだけここに置く。 */
 .inquiry-detail .detail-block,
 .inquiry-compare .detail-block {
-  margin-top: 0.5rem;
+  margin-top: var(--space-sm);
 }
 /* 入力欄に書いて記録した答え（まだ送っていない問のぶん）。 */
 /* 字の段・色は `Text` が持つ。margin だけここに置く。 */
 .inquiry-written {
-  margin: 0.6rem 0 0;
+  margin: var(--space-sm) 0 0;
 }
 /* 操作の行：左に案内、右に「戻る」と「次へ」/「これで答える」。札の下端に残る。狭い画面では折り返す。 */
 .inquiry-foot {
   flex: 0 0 auto;
-  margin-top: 0.75rem;
+  margin-top: var(--space-md);
 }
 /* 字の段・色は `Text` が持つ。伸び縮みだけここに置く。 */
 .inquiry-hint {
@@ -228,20 +228,20 @@
 /* 顔は `<Button variant="outline-hover-warn">` が持つ。箱だけここに置く。 */
 .inquiry-back {
   flex: 0 0 auto;
-  padding: 0.5rem 1rem;
-  border-radius: 0.5625rem;
+  padding: var(--space-sm) var(--space-lg);
+  border-radius: var(--radius-md);
 }
 /* 札の主目的の口なので、答え待ちの色で塗りつぶす。
    顔は `<Button variant="solid-warn">` が持つ。
    箱だけここに置く。 */
 .inquiry-answer {
   flex: 0 0 auto;
-  padding: 0.5rem 1.125rem;
-  border-radius: 0.5625rem;
+  padding: var(--space-sm) var(--space-xl);
+  border-radius: var(--radius-md);
 }
 /* 押せる口に添える Enter の字。 */
 .inquiry-key {
-  margin-left: 0.4rem;
+  margin-left: var(--space-sm);
   font-family: var(--font-mono);
   font-size: var(--font-label);
   opacity: 0.75;

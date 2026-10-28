@@ -6,15 +6,15 @@
   width: min(36rem, calc(100vw - 16px));
   max-height: calc(100vh - 16px);
   overflow: auto;
-  padding: 0.6rem 0;
+  padding: var(--space-sm) 0;
   border: 1px solid var(--rule);
-  border-radius: 0.5rem;
+  border-radius: var(--radius-md);
   background: var(--surface);
-  box-shadow: 0 0.4rem 1.2rem color-mix(in srgb, var(--ground) 60%, transparent);
+  box-shadow: var(--shadow-raised);
   pointer-events: none;
 }
 .peek-head {
-  padding: 0 0.9rem 0.4rem;
+  padding: 0 var(--space-lg) var(--space-sm);
   color: var(--ink-quiet);
   font-size: var(--font-label);
   overflow-wrap: anywhere;
@@ -30,7 +30,7 @@
 /* 長い行は字の側だけを省き、指した行の印は縮めずに行の右に残す。 */
 .peek-line {
   display: flex;
-  padding: 0 0.9rem;
+  padding: 0 var(--space-lg);
 }
 .peek-text {
   min-width: 0;
@@ -48,7 +48,7 @@
 }
 .peek-note {
   margin: 0;
-  padding: 0 0.9rem;
+  padding: 0 var(--space-lg);
   color: var(--ink-soft);
   font-size: var(--font-secondary);
 }
