@@ -70,11 +70,11 @@
 
 `ui/` の部品は、持つのは顔（地・枠・字の色・振る舞い）で、置き方（margin・flex・align-self）は呼び出し側が `className` で渡す。箱の語彙を持つ 3 つを足す。props は全部必須で、型で縛る（`ui/stack` と同じ）。
 
-| 部品      | 持つもの                                                                                                                                        |
-| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Surface` | 地（`--surface`・`--surface-raised`・`--surface-accent`）・枠・角丸（`--radius-*`）・内側の余白（`--space-*`）・影（なし・`raised`・`overlay`） |
-| `Badge`   | 小さな印。`tone`（`neutral`・`ok`・`warn`・`ng`・`accent`）・字は `--font-label`・角丸は `--radius-pill` か `--radius-sm`                       |
-| `Divider` | 罫。`--rule`・`--rule-soft`・`--rule-quiet` の 3 段                                                                                             |
+| 部品      | 持つもの                                                                                                                                                                                                              |
+| --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Surface` | 地（`tone`: `--surface`・`--surface-raised`・`--surface-accent`）・枠（`--rule-soft` の 1px で固定）・角丸（`radius`: `--radius-*`）・内側の余白（`space`: `--space-*`）・影（`shadow`: `none`・`raised`・`overlay`） |
+| `Badge`   | 小さな印。`tone`（`neutral`・`ok`・`warn`・`ng`・`accent`）・字は `--font-label`・角丸は `--radius-pill` か `--radius-sm`                                                                                             |
+| `Divider` | 罫。`--rule`・`--rule-soft`・`--rule-quiet` の 3 段                                                                                                                                                                   |
 
 カタログの部品（`report` の a2ui の面）は、枠を `Surface`・見出しを `Heading`・並べる入れ物を `Stack` 系・印を `Badge` で組む。
 

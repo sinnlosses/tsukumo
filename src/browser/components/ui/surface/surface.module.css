@@ -1,0 +1,54 @@
+.surface {
+  border: 1px solid var(--rule-soft);
+}
+.surface-tone-surface {
+  background: var(--surface);
+}
+.surface-tone-raised {
+  background: var(--surface-raised);
+}
+.surface-tone-accent {
+  background: var(--surface-accent);
+}
+.surface-space-none {
+  padding: 0;
+}
+.surface-space-xs {
+  padding: var(--space-xs);
+}
+.surface-space-sm {
+  padding: var(--space-sm);
+}
+.surface-space-md {
+  padding: var(--space-md);
+}
+.surface-space-lg {
+  padding: var(--space-lg);
+}
+.surface-space-xl {
+  padding: var(--space-xl);
+}
+.surface-space-2xl {
+  padding: var(--space-2xl);
+}
+.surface-radius-sm {
+  border-radius: var(--radius-sm);
+}
+.surface-radius-md {
+  border-radius: var(--radius-md);
+}
+.surface-radius-lg {
+  border-radius: var(--radius-lg);
+}
+.surface-radius-xl {
+  border-radius: var(--radius-xl);
+}
+.surface-shadow-none {
+  box-shadow: none;
+}
+.surface-shadow-raised {
+  box-shadow: var(--shadow-raised);
+}
+.surface-shadow-overlay {
+  box-shadow: var(--shadow-overlay);
+}
