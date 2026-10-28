@@ -27,6 +27,7 @@ function textStep(
         })),
         retrospective: "",
         favor: { id: "favor-toolu_fictional", markdown: "" },
+        a2ui: { kind: "none" },
       },
       firstLine: "",
       task: { kind: "none" },

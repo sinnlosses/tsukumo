@@ -3,8 +3,12 @@ import { describe, expect, it } from "vitest"
 import { parseReportBody } from "../../../src/shared/report/body-fence.ts"
 import { encodeMarks } from "../../../src/shared/report/code-mark.ts"
 import { plotBlockSchema } from "../../../src/shared/report/figure-grammar.ts"
-import type { ReportBlock } from "../../../src/shared/report/report-block.ts"
-import { reportSectionsMarkdown } from "../../../src/shared/report/report-markdown.ts"
+import type { ReportBlock, ReportSection } from "../../../src/shared/report/report-block.ts"
+import { joinParts } from "../../../src/shared/report/report-inline-markdown.ts"
+import {
+  reportSectionPieces,
+  reportSectionsMarkdown,
+} from "../../../src/shared/report/report-markdown.ts"
 import {
   NO_IMAGES,
   captionNumbers,
@@ -388,5 +392,77 @@ describe("reportSectionsMarkdown", () => {
       )
       expect(dropped).not.toContain("```scatter")
     })
+  })
+})
+
+describe("reportSectionPieces", () => {
+  const memo = (value: string): ReportBlock => ({
+    kind: "note",
+    tone: "memo",
+    text: value,
+    fold: "",
+    aside: "",
+  })
+  const table = (title: string): Extract<ReportBlock, { readonly kind: "table" }> => ({
+    kind: "table",
+    title,
+    columns: ["架空の列"],
+    rows: [["架空の値"]],
+    rest: "",
+    fold: "",
+    aside: "架空の出典",
+  })
+  const sections = [
+    section([memo("架空の頭の覚え書き。"), table("架空の表A")], "架空の一"),
+    section(
+      [
+        reportMarkdownText("架空の本文。"),
+        memo("架空の覚え書き。"),
+        {
+          kind: "mermaid",
+          title: "架空の図",
+          source: "flowchart TD\n  A --> B",
+          fold: "",
+          aside: "",
+        },
+      ],
+      "架空の二",
+    ),
+    {
+      heading: "",
+      shapeTag: "unspecified",
+      blocks: [
+        {
+          kind: "row",
+          blocks: [table("架空の表B"), { kind: "text", text: "架空の右。", fold: "", aside: "" }],
+          fold: "",
+          aside: "",
+        },
+        reportMarkdownText("架空の後ろ。"),
+      ],
+    },
+  ] as const satisfies readonly ReportSection[]
+
+  it("塊ごとの文字列を見出しと一緒に繋ぐと、節ごとの Markdown と同じになる", () => {
+    const pieces = reportSectionPieces(sections, NO_IMAGES)
+
+    expect(joinParts(pieces.map((piece) => joinParts([piece.heading, ...piece.blocks])))).toBe(
+      reportSectionsMarkdown(sections, NO_IMAGES),
+    )
+  })
+
+  it("塊の並びと同じ長さで、前の包みへ寄せた memo は空文字、図表の番号は節をまたいで続く", () => {
+    const pieces = reportSectionPieces(sections, NO_IMAGES)
+
+    expect(pieces.map((piece) => piece.blocks.length)).toEqual([2, 3, 2])
+    expect(pieces[1]?.blocks[1]).toBe("")
+    expect(pieces[1]?.blocks[0]).toContain("架空の覚え書き。")
+    const numbers = [
+      ...pieces
+        .flatMap((piece) => piece.blocks)
+        .join("\n\n")
+        .matchAll(/class="caption-number">([^<]+)</g),
+    ].map(([, label]) => label)
+    expect(numbers).toEqual(captionNumbers(sections))
   })
 })

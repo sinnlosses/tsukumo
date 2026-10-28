@@ -84,6 +84,8 @@
     "report-interim-nested",
     "report-caption",
     "report-figure",
+    "a2ui-surface-sample",
+    "a2ui-sections-sample",
     "report-timeline",
     "report-figure-none",
     "report-mermaid-rejected",

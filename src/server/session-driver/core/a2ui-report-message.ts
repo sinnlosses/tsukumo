@@ -9,8 +9,15 @@ import { omit } from "remeda"
 import {
   type A2uiReportComponent,
   a2uiReportComponentSchema,
-  LEAF_COMPONENT_KINDS,
 } from "../../../shared/report/a2ui-report-catalog.ts"
+import {
+  A2UI_ROOT_ID,
+  type A2uiReportPart,
+  a2uiLeafIds,
+  a2uiLeafKind,
+  a2uiOutlineSections,
+  a2uiPartsById,
+} from "../../../shared/report/a2ui-report-outline.ts"
 
 /** 組み直した結果。`input` は旧い版の引数の形、`droppedCount` は部品の形に合わず落とした要素の数。 */
 export type A2uiReportInput = {
@@ -31,13 +38,8 @@ export function a2uiReportInput(components: readonly unknown[]): A2uiReportInput
     const result = a2uiReportComponentSchema.safeParse(component)
     return result.success ? [result.data] : []
   })
-  const byId = new Map<string, A2uiReportComponent>()
-  for (const part of parsed) {
-    if (!byId.has(part.id)) {
-      byId.set(part.id, part)
-    }
-  }
-  const root = byId.get(ROOT_ID)
+  const byId = a2uiPartsById(parsed)
+  const root = byId.get(A2UI_ROOT_ID)
   return {
     input: root?.component === "Report" ? reportInput(root, byId) : {},
     components: parsed,
@@ -45,17 +47,11 @@ export function a2uiReportInput(components: readonly unknown[]): A2uiReportInput
   }
 }
 
-const ROOT_ID = "root"
-
-const LEAF_KINDS: ReadonlyMap<string, string> = new Map(Object.entries(LEAF_COMPONENT_KINDS))
-
-type ReportPart = Extract<A2uiReportComponent, { readonly component: "Report" }>
-
 function reportInput(
-  root: ReportPart,
+  root: A2uiReportPart<"Report">,
   byId: ReadonlyMap<string, A2uiReportComponent>,
 ): Readonly<Record<string, unknown>> {
-  const blocksOf = (ids: readonly string[]) => leafBlocks(ids, byId, new Set([ROOT_ID]))
+  const blocksOf = (ids: readonly string[]) => leafBlocks(a2uiLeafIds(ids, byId), byId)
   const figure = root.figure === undefined ? undefined : blocksOf([root.figure])[0]
   return {
     ...omit(root, ["id", "component", "children", "figure", "figureNone", "retrospective"]),
@@ -74,53 +70,22 @@ function reportInput(
               : { blocks: blocksOf(root.retrospective.blocks) }),
           },
         }),
-    sections: root.children.flatMap((id) => {
-      const child = byId.get(id)
-      if (child === undefined) {
-        return []
-      }
-      const blocks = blocksOf([id])
-      return child.component === "Section"
-        ? [{ heading: child.heading, blocks }]
-        : blocks.length === 0
-          ? []
-          : [{ blocks }]
+    sections: a2uiOutlineSections(root, byId).map((section) => {
+      const blocks = leafBlocks(section.leafIds, byId)
+      return section.kind === "section" ? { heading: section.heading, blocks } : { blocks }
     }),
   }
 }
 
-/** ID の並びの先の葉を、並び順に塊にする。`Section` と配置の部品は中へ降りる。`visited` は辿った ID（循環を止める）。 */
 function leafBlocks(
-  ids: readonly string[],
+  leafIds: readonly string[],
   byId: ReadonlyMap<string, A2uiReportComponent>,
-  visited: ReadonlySet<string>,
 ): readonly Readonly<Record<string, unknown>>[] {
-  let seen = visited
-  return ids.flatMap((id) => {
+  return leafIds.flatMap((id) => {
     const part = byId.get(id)
-    if (part === undefined || seen.has(id)) {
-      return []
-    }
-    seen = new Set([...seen, id])
-    const kind = LEAF_KINDS.get(part.component)
-    if (kind !== undefined) {
-      return [{ kind, ...omit(part, ["id", "component"]) }]
-    }
-    return leafBlocks(childIdsOf(part), byId, seen)
+    const kind = part === undefined ? undefined : a2uiLeafKind(part)
+    return part === undefined || kind === undefined
+      ? []
+      : [{ kind, ...omit(part, ["id", "component"]) }]
   })
-}
-
-function childIdsOf(part: A2uiReportComponent): readonly string[] {
-  switch (part.component) {
-    case "Section":
-    case "Row":
-    case "Column":
-      return part.children
-    case "Card":
-      return [part.child]
-    case "Tabs":
-      return part.tabs.map((tab) => tab.child)
-    default:
-      return []
-  }
 }

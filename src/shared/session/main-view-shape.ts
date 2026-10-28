@@ -1,6 +1,7 @@
 // メインビューに出す記録・ステップ・やり取りの形。
 // 形だけを持ち、記録から導く判断は持たない。
 
+import type { A2uiReportComponent } from "../report/a2ui-report-catalog.ts"
 import type { ReportChangeSummary } from "../report/report-change-summary.ts"
 import type { ReportTask } from "../report/report-task.ts"
 import type { RecordedPromptImage } from "../session-driver/prompt-image.ts"
@@ -83,6 +84,7 @@ export type MainViewEntry =
  * `sections` は中身のある節だけを並べる。
  * `retrospective` は振り返りの塊の Markdown（無ければ空文字）。
  * `favor` はお願いの本文（無ければ空文字）と、合図の行の印が飛ぶ先の `id`。
+ * `a2ui` は `a2ui` の版の部品の一覧を A2UI の面で描くための値（{@link MainViewA2uiReport}）。
  */
 export type MainViewReportRegions = {
   readonly kind: "regions"
@@ -91,7 +93,24 @@ export type MainViewReportRegions = {
   readonly sections: readonly MainViewReportSection[]
   readonly retrospective: string
   readonly favor: { readonly id: string; readonly markdown: string }
+  readonly a2ui: MainViewA2uiReport
 }
+
+/**
+ * 部品の一覧で描く本文の値。`none` は一覧の無い記録と、一覧と `sections` の写しが食い違う記録。
+ * `sections` は根の子の部品の ID から、その子が写った節の欄の ID と見出しの行（`## …`。見出しの無い節は空文字）。整形で塊の残らない子は持たない。
+ * `leaves` は葉の部品の ID から、その葉の Markdown（図表の番号と傍注は節の欄の Markdown と同じ。整形で落ちた葉は空文字）。
+ */
+export type MainViewA2uiReport =
+  | { readonly kind: "none" }
+  | {
+      readonly kind: "surface"
+      readonly components: readonly A2uiReportComponent[]
+      readonly sections: Readonly<
+        Record<string, { readonly regionId: number; readonly heading: string }>
+      >
+      readonly leaves: Readonly<Record<string, string>>
+    }
 
 /**
  * 節の欄。`id` は整形して図を先頭に足したあとの節の並びの位置。

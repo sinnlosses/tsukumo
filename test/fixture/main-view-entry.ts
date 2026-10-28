@@ -52,6 +52,7 @@ export const toolReport = (markdown: string): MainViewEntry => ({
     sections: [],
     retrospective: "",
     favor: { id: "favor-toolu_fictional", markdown: "" },
+    a2ui: { kind: "none" },
   },
   conclusion: "",
   task: { kind: "none" },

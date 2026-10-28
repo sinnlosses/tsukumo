@@ -224,6 +224,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
       ],
       retrospective,
       favor: { id: "favor-toolu_r1", markdown: "架空のお願い" },
+      a2ui: { kind: "none" },
     })
     expect(regions === undefined ? undefined : orderedReportRegions(regions)).toEqual([
       { kind: "head", markdown: lead("架空の結論。") },

@@ -29,12 +29,31 @@ export type ReportTidyInput = {
  * - 落として塊の残らない節（見出しごと）
  */
 export function tidyReportSections(report: ReportTidyInput): readonly ReportSection[] {
-  return report.sections.flatMap((section, sectionIndex) => {
-    const blocks = section.blocks.flatMap((block, blockIndex) =>
-      tidyBlock(block, sectionIndex === 0 && blockIndex === 0 ? report.conclusion : ""),
-    )
-    return blocks.length === 0 ? [] : [{ ...section, blocks }]
+  return tidiedSectionBlocks(report).flatMap((tidied, sectionIndex) => {
+    const section = report.sections[sectionIndex]
+    const blocks = tidied.flatMap((block) => (block.kind === "kept" ? [block.block] : []))
+    return section === undefined || blocks.length === 0 ? [] : [{ ...section, blocks }]
   })
+}
+
+export type TidiedBlock =
+  | { readonly kind: "kept"; readonly block: SectionBlock }
+  | { readonly kind: "dropped" }
+
+/**
+ * 節ごと・塊ごとの整形の結果。入力の節・塊と同じ並び・同じ長さ。
+ * 塊の残らない節を落とすのは {@link tidyReportSections} の側。
+ */
+export function tidiedSectionBlocks(report: ReportTidyInput): readonly (readonly TidiedBlock[])[] {
+  return report.sections.map((section, sectionIndex) =>
+    section.blocks.map((block, blockIndex): TidiedBlock => {
+      const [tidied] = tidyBlock(
+        block,
+        sectionIndex === 0 && blockIndex === 0 ? report.conclusion : "",
+      )
+      return tidied === undefined ? { kind: "dropped" } : { kind: "kept", block: tidied }
+    }),
+  )
 }
 
 /**

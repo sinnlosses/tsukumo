@@ -1,0 +1,188 @@
+{
+  "name": "a2ui-sections-sample",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "部品の一覧と同じ中身を節の引数で描いて見比べたい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 1500,
+      "event": {
+        "kind": "report",
+        "task": {
+          "kind": "none"
+        },
+        "closing": {
+          "kind": "speech",
+          "text": "並べたよ！",
+          "expression": "proud"
+        },
+        "toolUseId": "fake-a2ui-sample-1",
+        "conclusion": "架空の結論: 同じ中身の本文を、節と図と表の番号つきで並べた。",
+        "checks": [
+          {
+            "status": "ok",
+            "label": "架空の単体テスト",
+            "figure": "12 件",
+            "command": "",
+            "detail": "",
+            "howToVerify": ""
+          },
+          {
+            "status": "ng",
+            "label": "架空の目視",
+            "figure": "1 件",
+            "command": "",
+            "detail": "架空の画面で 1 か所ずれた",
+            "howToVerify": ""
+          }
+        ],
+        "figure": {
+          "kind": "graph",
+          "title": "架空の流れの図",
+          "direction": "LR",
+          "legend": [],
+          "source": "架空の受付 | 架空の依頼を読む\n架空の受付 -> {架空の判定?}: 渡す\n{架空の判定?} -> 架空の処理: yes\n{架空の判定?} -> 架空の断り: no",
+          "fold": "",
+          "aside": ""
+        },
+        "sections": [
+          {
+            "heading": "架空の表",
+            "blocks": [
+              {
+                "kind": "table",
+                "title": "架空の件数の表",
+                "columns": ["架空の項目", "架空の件数"],
+                "rows": [
+                  ["架空の a", "12"],
+                  ["架空の b", "8"]
+                ],
+                "rest": "",
+                "fold": "",
+                "aside": "出どころ: 架空の集計"
+              },
+              {
+                "kind": "matrix",
+                "title": "架空の対応",
+                "columns": ["架空の条件その一", "架空の条件その二"],
+                "rows": [
+                  {
+                    "name": "架空の機能A",
+                    "cells": ["ok", "ng"]
+                  },
+                  {
+                    "name": "架空の機能B",
+                    "cells": ["warn", "na"]
+                  }
+                ],
+                "fold": "",
+                "aside": ""
+              },
+              {
+                "kind": "text",
+                "text": "架空の表の読み方の一文。",
+                "fold": "",
+                "aside": ""
+              },
+              {
+                "kind": "note",
+                "tone": "memo",
+                "text": "架空の覚え書き。",
+                "fold": "",
+                "aside": ""
+              }
+            ]
+          },
+          {
+            "heading": "架空の図",
+            "blocks": [
+              {
+                "kind": "text",
+                "text": "架空の図の前置きの一文。",
+                "fold": "",
+                "aside": ""
+              },
+              {
+                "kind": "mermaid",
+                "title": "架空の呼び出しの図",
+                "source": "sequenceDiagram\n  A->>B: 架空の呼び出し",
+                "fold": "",
+                "aside": ""
+              },
+              {
+                "kind": "chart",
+                "title": "架空の件数の推移",
+                "chartKind": "bar",
+                "labels": ["架空1月", "架空2月", "架空3月"],
+                "series": [
+                  {
+                    "name": "架空系列A",
+                    "values": [12, 18, 9]
+                  }
+                ],
+                "horizontal": false,
+                "emphasis": [],
+                "fold": "",
+                "aside": ""
+              }
+            ]
+          },
+          {
+            "heading": "架空の並び",
+            "blocks": [
+              {
+                "kind": "text",
+                "text": "架空の並びの前置きの一文。",
+                "fold": "",
+                "aside": ""
+              },
+              {
+                "kind": "row",
+                "blocks": [
+                  {
+                    "kind": "text",
+                    "text": "架空の左の区画の一文。",
+                    "fold": "",
+                    "aside": ""
+                  },
+                  {
+                    "kind": "text",
+                    "text": "架空の右の区画の一文。",
+                    "fold": "",
+                    "aside": ""
+                  }
+                ],
+                "fold": "",
+                "aside": ""
+              }
+            ]
+          }
+        ],
+        "favor": ""
+      }
+    },
+    {
+      "afterMs": 1550,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-a2ui-sample-1",
+        "content": "ok",
+        "isError": false
+      }
+    },
+    {
+      "afterMs": 2300,
+      "event": {
+        "kind": "turn-finished",
+        "outcome": {
+          "kind": "completed"
+        }
+      }
+    }
+  ]
+}

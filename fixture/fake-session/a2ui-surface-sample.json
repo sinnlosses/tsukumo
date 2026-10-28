@@ -1,0 +1,177 @@
+{
+  "name": "a2ui-surface-sample",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "部品の一覧で書いた本文を A2UI の面で描いて見比べたい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 1500,
+      "event": {
+        "kind": "report",
+        "toolUseId": "fake-a2ui-sample-1",
+        "components": [
+          {
+            "id": "root",
+            "component": "Report",
+            "conclusion": ["架空の結論: 同じ中身の本文を、節と図と表の番号つきで並べた。"],
+            "checks": [
+              {
+                "status": "ok",
+                "label": "架空の単体テスト",
+                "figure": "12 件",
+                "command": "",
+                "detail": "",
+                "howToVerify": ""
+              },
+              {
+                "status": "ng",
+                "label": "架空の目視",
+                "figure": "1 件",
+                "command": "",
+                "detail": "架空の画面で 1 か所ずれた",
+                "howToVerify": ""
+              }
+            ],
+            "figure": "fig",
+            "children": ["s1", "s2", "s3"],
+            "closing": {
+              "text": "並べたよ！",
+              "expression": "proud"
+            }
+          },
+          {
+            "id": "fig",
+            "component": "Graph",
+            "title": "架空の流れの図",
+            "direction": "LR",
+            "legend": [],
+            "source": "架空の受付 | 架空の依頼を読む\n架空の受付 -> {架空の判定?}: 渡す\n{架空の判定?} -> 架空の処理: yes\n{架空の判定?} -> 架空の断り: no"
+          },
+          {
+            "id": "s1",
+            "component": "Section",
+            "heading": "架空の表",
+            "children": ["t1", "x1", "p1", "m1"]
+          },
+          {
+            "id": "t1",
+            "component": "Table",
+            "title": "架空の件数の表",
+            "columns": ["架空の項目", "架空の件数"],
+            "rows": [
+              ["架空の a", "12"],
+              ["架空の b", "8"]
+            ],
+            "aside": "出どころ: 架空の集計"
+          },
+          {
+            "id": "x1",
+            "component": "Matrix",
+            "title": "架空の対応",
+            "columns": ["架空の条件その一", "架空の条件その二"],
+            "rows": [
+              {
+                "name": "架空の機能A",
+                "cells": ["ok", "ng"]
+              },
+              {
+                "name": "架空の機能B",
+                "cells": ["warn", "na"]
+              }
+            ]
+          },
+          {
+            "id": "p1",
+            "component": "Paragraph",
+            "text": "架空の表の読み方の一文。"
+          },
+          {
+            "id": "m1",
+            "component": "Note",
+            "tone": "memo",
+            "text": "架空の覚え書き。"
+          },
+          {
+            "id": "s2",
+            "component": "Section",
+            "heading": "架空の図",
+            "children": ["p2", "d1", "c1"]
+          },
+          {
+            "id": "p2",
+            "component": "Paragraph",
+            "text": "架空の図の前置きの一文。"
+          },
+          {
+            "id": "d1",
+            "component": "Mermaid",
+            "title": "架空の呼び出しの図",
+            "source": "sequenceDiagram\n  A->>B: 架空の呼び出し"
+          },
+          {
+            "id": "c1",
+            "component": "Chart",
+            "title": "架空の件数の推移",
+            "chartKind": "bar",
+            "labels": ["架空1月", "架空2月", "架空3月"],
+            "series": [
+              {
+                "name": "架空系列A",
+                "values": [12, 18, 9]
+              }
+            ]
+          },
+          {
+            "id": "s3",
+            "component": "Section",
+            "heading": "架空の並び",
+            "children": ["p3", "r1"]
+          },
+          {
+            "id": "p3",
+            "component": "Paragraph",
+            "text": "架空の並びの前置きの一文。"
+          },
+          {
+            "id": "r1",
+            "component": "Row",
+            "children": ["p4", "p5"]
+          },
+          {
+            "id": "p4",
+            "component": "Paragraph",
+            "text": "架空の左の区画の一文。"
+          },
+          {
+            "id": "p5",
+            "component": "Paragraph",
+            "text": "架空の右の区画の一文。"
+          }
+        ]
+      }
+    },
+    {
+      "afterMs": 1550,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-a2ui-sample-1",
+        "content": "ok",
+        "isError": false
+      }
+    },
+    {
+      "afterMs": 2300,
+      "event": {
+        "kind": "turn-finished",
+        "outcome": {
+          "kind": "completed"
+        }
+      }
+    }
+  ]
+}

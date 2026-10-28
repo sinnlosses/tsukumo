@@ -320,12 +320,48 @@ describe("toRestoredEvents", () => {
           sections: [{ id: 0, heading: "", markdown: "架空の根拠。" }],
           retrospective: "",
           favor: { id: "favor-r-1", markdown: "" },
+          a2ui: { kind: "none" },
         },
         conclusion: "架空の結論。",
         task: { kind: "none" },
         changeSummary: { kind: "none" },
       },
     ])
+  })
+
+  it("部品の一覧で呼んだ report も、同じ中身の節で呼んだときと同じ欄に組み直し、面で描く値を持つ", () => {
+    const restoredRegions = (input: Readonly<Record<string, unknown>>) => {
+      const messages = [
+        userMessage("架空の依頼"),
+        assistantMessage([{ type: "tool_use", id: "r-1", name: REPORT_TOOL_FULL_NAME, input }]),
+        userMessage([{ type: "tool_result", tool_use_id: "r-1", content: "ok" }]),
+      ]
+      const state = eventsOf(messages).reduce(
+        (current, event) => applySessionEvent(current, event, 0),
+        INITIAL_SESSION_STATE,
+      )
+      const entry = mainViewEntries(state).find((candidate) => candidate.kind === "report")
+      if (entry?.kind !== "report") throw new Error("レポートの記録が無い")
+      return entry.regions
+    }
+    const fromComponents = restoredRegions({
+      components: [
+        { id: "root", component: "Report", conclusion: ["架空の結論。"], children: ["s1"] },
+        { id: "s1", component: "Section", heading: "架空の節", children: ["p1"] },
+        { id: "p1", component: "Paragraph", text: "架空の根拠。" },
+      ],
+    })
+    const fromSections = restoredRegions({
+      conclusion: ["架空の結論。"],
+      sections: [{ heading: "架空の節", blocks: [{ kind: "text", text: "架空の根拠。" }] }],
+    })
+
+    expect({ ...fromComponents, a2ui: fromSections.a2ui }).toEqual(fromSections)
+    expect(fromComponents.a2ui).toMatchObject({
+      kind: "surface",
+      sections: { s1: { regionId: 0, heading: "## 架空の節" } },
+      leaves: { p1: "架空の根拠。" },
+    })
   })
 
   it("依頼が1つも無い列にはターンの境目を足さない", () => {

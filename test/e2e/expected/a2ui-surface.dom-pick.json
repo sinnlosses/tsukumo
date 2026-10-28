@@ -1,0 +1,33 @@
+{
+  "main": [
+    { "tag": "a2ui-react-report", "children": [
+      { "tag": "div", "attributes": { "data-report-region": "head" }, "children": [
+        "架空の結論: 同じ中身の本文を、節と図と表の番号つきで並べた。",
+        { "tag": "div", "attributes": { "role": "group", "aria-label": "検証結果" } }
+      ] },
+      { "tag": "div", "attributes": { "data-report-region": "section", "data-report-section": "0" }, "children": [
+        { "tag": "div", "attributes": { "data-reveal-caption": "" }, "children": ["図 1"] }
+      ] },
+      { "tag": "div", "attributes": { "data-report-region": "section", "data-report-section": "1" }, "children": [
+        { "tag": "h4", "children": ["架空の表"] },
+        { "tag": "div", "attributes": { "data-reveal-caption": "" }, "children": ["表 1"] },
+        { "tag": "table" },
+        { "tag": "div", "attributes": { "data-reveal-gutter": "" }, "children": ["出どころ: 架空の集計"] },
+        { "tag": "div", "attributes": { "data-reveal-caption": "" }, "children": ["表 2"] },
+        { "tag": "span", "attributes": { "role": "img", "aria-label": "NG" } },
+        { "tag": "p", "children": ["架空の表の読み方の一文。"] }
+      ] },
+      { "tag": "div", "attributes": { "data-report-region": "section", "data-report-section": "2" }, "children": [
+        { "tag": "h4", "children": ["架空の図"] },
+        { "tag": "div", "attributes": { "data-reveal-caption": "" }, "children": ["図 2", "架空の呼び出しの図"] },
+        { "tag": "canvas" },
+        { "tag": "div", "attributes": { "data-reveal-caption": "" }, "children": ["図 3", "架空の件数の推移"] }
+      ] },
+      { "tag": "div", "attributes": { "data-report-region": "section", "data-report-section": "3" }, "children": [
+        { "tag": "h4", "children": ["架空の並び"] },
+        { "tag": "p", "children": ["架空の左の区画の一文。"] },
+        { "tag": "p", "children": ["架空の右の区画の一文。"] }
+      ] }
+    ] }
+  ]
+}

@@ -93,6 +93,7 @@ export function reportRecord(conclusion = "架空の結論"): SessionRecord {
     changeSummary: { kind: "none" },
     imageSizes: [],
     unshelvedImages: [],
+    components: [],
     time: STAMPED,
   }
 }

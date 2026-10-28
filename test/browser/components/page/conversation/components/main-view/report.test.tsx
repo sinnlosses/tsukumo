@@ -40,6 +40,7 @@ function regionsBody(text: string): MainViewReportBody {
     sections: [{ id: 0, heading: "", markdown: text }],
     retrospective: "",
     favor: { id: "favor-fictional", markdown: "" },
+    a2ui: { kind: "none" },
   }
 }
 

@@ -248,6 +248,7 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
             changeSummary: NO_REPORT_CHANGE_SUMMARY,
             imageSizes: event.imageSizes,
             unshelvedImages: event.unshelvedImages,
+            components: event.components,
             time: { kind: "stamped", at },
           },
         ],

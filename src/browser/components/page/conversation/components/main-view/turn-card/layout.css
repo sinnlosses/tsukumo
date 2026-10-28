@@ -81,26 +81,34 @@
   min-height: 24px;
   padding: 0 0.5rem;
 }
-.main-step:has(> [data-revealing]) > .reveal-skip {
+/* `a2ui-react-report` は、部品の一覧で描く本文（`A2uiReport`）の根を包む `display: contents` の入れ物で、本文の根と「全部出す」の口が `.main-step` の孫になる。
+   `.main-step` の子を指す規則は、この入れ物の子も同じに指す。 */
+:is(.main-step, .main-step > a2ui-react-report):has(> [data-revealing]) > .reveal-skip {
   display: block;
 }
 /* `.detail-block`（レポート本文の入れ物）本体は report-notation.module.css にあり、CSS Modules は class 名をファイルごとにハッシュ化するので、この選択子だけではそちらの `.detail-block` を指せない。
    `Report` が両方のファイルの `.detail-block` を同じ要素に重ねて付ける（このファイルの側はこの選択子のためだけに出てくる綴りで、見た目は持たない）。 */
-.main-step > .detail-block:last-child {
+:is(.main-step, .main-step > a2ui-react-report) > .detail-block:last-child {
   margin-bottom: 0;
 }
 /* 余白の柱を出すかを本文の幅で決める器（`report-notation.module.css` の `@container report-gutter`）。
    お伺いの札の preview にも `.detail-block` があるので、名前を付けてメインビューの本文だけに効かせる。
    `container` は名前を上書きするので、`.detail-block` 自身の `report-body` もここに並べる。 */
-.main-step > .detail-block {
+:is(.main-step, .main-step > a2ui-react-report) > .detail-block {
   container: report-gutter report-body / inline-size;
 }
 /* 本文の最初と最後の塊の margin は器の padding に足されるので落とす（padding がそのまま器の内側のあきになる）。
    塊の margin は欄の入れ物を通り抜けるので、最初と最後の欄の中の塊を指す。 */
-.main-step > .detail-block > [data-report-region]:first-child > :first-child {
+:is(.main-step, .main-step > a2ui-react-report)
+  > .detail-block
+  > [data-report-region]:first-child
+  > :first-child {
   margin-top: 0;
 }
-.main-step > .detail-block > [data-report-region]:last-child > :last-child {
+:is(.main-step, .main-step > a2ui-react-report)
+  > .detail-block
+  > [data-report-region]:last-child
+  > :last-child {
   margin-bottom: 0;
 }
 /* 中間レポート（`report` ツールの最後でない呼び出し）。
@@ -141,7 +149,8 @@
     display: none !important;
   }
   /* 本文が隠れているあいだは、飛ばす口だけを残さない。 */
-  .main-step:has(> .phone-hidden[data-revealing]) > .reveal-skip {
+  :is(.main-step, .main-step > a2ui-react-report):has(> .phone-hidden[data-revealing])
+    > .reveal-skip {
     display: none;
   }
 }

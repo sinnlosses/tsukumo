@@ -36,14 +36,27 @@ import { timelineHtml } from "./timeline-markdown.ts"
 type CaptionCounts = Readonly<Record<CaptionKind, number>>
 
 type SectionsFold = {
-  readonly parts: readonly string[]
+  readonly parts: readonly ReportSectionPieces[]
   readonly counts: CaptionCounts
 }
 
-/** 本文の位置に描く塊1つと、その塊に添える傍注（余白の柱に置くもの）。`body` が空なら傍注だけ。 */
+/**
+ * 本文の位置に描く塊1つと、その塊に添える傍注（余白の柱に置くもの）。`body` が空なら傍注だけ。
+ * `blockIndex` は包みを作った塊の、節の中の位置。
+ */
 type GutterGroup = {
+  readonly blockIndex: number
   readonly body: string
   readonly notes: readonly string[]
+}
+
+/**
+ * 節1つの Markdown を塊ごとに分けたもの。`heading` は見出しの行（見出しの無い節は空文字）。
+ * `blocks` は節の塊と同じ並び・同じ長さで、`memo` の `note` を前の包みへ寄せた塊と中身の無い塊は空文字。
+ */
+export type ReportSectionPieces = {
+  readonly heading: string
+  readonly blocks: readonly string[]
 }
 
 /** 塊を1つずつ足していく途中の、本文の位置の包みの並びと、ここまでに数えた題の番号。 */
@@ -54,45 +67,54 @@ type BlocksFold = {
 
 /**
  * 節の並びを1つの Markdown に組む。空の塊・空の節は置かず、節の間は空行で区切る。
- * 節ごとの組み方は {@link reportSectionMarkdowns}。
+ * 節ごとの組み方は {@link reportSectionPieces}。
  */
 export function reportSectionsMarkdown(
   sections: readonly ReportSection[],
   imageSource: ReportImageSource,
 ): string {
-  return reportSectionMarkdowns(sections, imageSource)
-    .filter((part) => part.trim() !== "")
-    .join("\n\n")
+  return joinParts(
+    reportSectionPieces(sections, imageSource).map((pieces) =>
+      joinParts([pieces.heading, ...pieces.blocks]),
+    ),
+  )
 }
 
 /**
- * 節ごとの Markdown。入力と同じ並び・同じ長さで、中身の無い節は空文字になる。
+ * 節ごとの Markdown を塊ごとに分けて返す。入力と同じ並び・同じ長さ。
+ * 見出しと塊を `joinParts` で繋ぐと節1つの Markdown になる（中身の無い節は空文字）。
  * 題を持つ塊（図 6種・表 2種）は、節をまたいで並びの順に数えた「図 n」「表 n」の番号を1回だけ受け取る（{@link foldedBlockMarkdown}）。
  * 番号は題が空でも、`fold` の中でも数える。
  * 塊の `aside` と `memo` の `note` は傍注になり、直前の塊と一緒に包む（{@link gutterGroupMarkdown}）。
  * `memo` の `note` は本文の位置に残さない。節の最初の `memo` は塊の無い包みになる。
  * `row`・`panel` は子を葉の塊と同じ手で描き、1つの包みにする（{@link withArrangedBlock}）。
  */
-export function reportSectionMarkdowns(
+export function reportSectionPieces(
   sections: readonly ReportSection[],
   imageSource: ReportImageSource,
-): readonly string[] {
+): readonly ReportSectionPieces[] {
   const tagTones = tagTonesOf(sections)
   const { parts } = sections.reduce<SectionsFold>(
     (acc, section) => {
       const blocks = section.blocks.reduce<BlocksFold>(
-        (blockAcc, block) =>
+        (blockAcc, block, blockIndex) =>
           block.kind === "row" || block.kind === "panel"
-            ? withArrangedBlock(blockAcc, block, imageSource, tagTones)
-            : withBlock(blockAcc, block, imageSource, tagTones),
+            ? withArrangedBlock(blockAcc, block, blockIndex, imageSource, tagTones)
+            : withBlock(blockAcc, block, blockIndex, imageSource, tagTones),
         { groups: [], counts: acc.counts },
       )
-      const part = joinParts([
-        section.heading.trim() === "" ? "" : `## ${markdownInline(section.heading)}`,
-        ...blocks.groups.map(gutterGroupMarkdown),
-      ])
+      const markdowns = section.blocks.map((_, blockIndex) => {
+        const group = blocks.groups.find((candidate) => candidate.blockIndex === blockIndex)
+        return group === undefined ? "" : gutterGroupMarkdown(group)
+      })
       return {
-        parts: [...acc.parts, part.trim() === "" ? "" : part],
+        parts: [
+          ...acc.parts,
+          {
+            heading: section.heading.trim() === "" ? "" : `## ${markdownInline(section.heading)}`,
+            blocks: markdowns,
+          },
+        ],
         counts: blocks.counts,
       }
     },
@@ -108,11 +130,12 @@ export function reportSectionMarkdowns(
 function withArrangedBlock(
   acc: BlocksFold,
   block: Extract<SectionBlock, { readonly kind: "row" | "panel" }>,
+  blockIndex: number,
   imageSource: ReportImageSource,
   tagTones: TagTones,
 ): BlocksFold {
   const children = block.blocks.reduce<BlocksFold>(
-    (childAcc, child) => withBlock(childAcc, child, imageSource, tagTones),
+    (childAcc, child, childIndex) => withBlock(childAcc, child, childIndex, imageSource, tagTones),
     { groups: [], counts: acc.counts },
   )
   const body = arrangedBlockMarkdown(
@@ -123,6 +146,7 @@ function withArrangedBlock(
     groups: [
       ...acc.groups,
       {
+        blockIndex,
         body: foldedMarkdown(block.fold, body),
         notes: [
           ...children.groups.flatMap((group) => group.notes),
@@ -138,6 +162,7 @@ function withArrangedBlock(
 function withBlock(
   acc: BlocksFold,
   block: ReportBlock,
+  blockIndex: number,
   imageSource: ReportImageSource,
   tagTones: TagTones,
 ): BlocksFold {
@@ -152,7 +177,11 @@ function withBlock(
         ? [...acc.groups.slice(0, -1), { ...last, notes: [...last.notes, ...notes] }]
         : [
             ...acc.groups,
-            { body: foldedBlockMarkdown(block, imageSource, ordinal, tagTones), notes },
+            {
+              blockIndex,
+              body: foldedBlockMarkdown(block, imageSource, ordinal, tagTones),
+              notes,
+            },
           ],
     counts,
   }

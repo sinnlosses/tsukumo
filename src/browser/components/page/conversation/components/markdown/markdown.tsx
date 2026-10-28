@@ -16,6 +16,13 @@ const markdownRenderer = deferredModule(() => import("./renderer/markdown-render
 /** レポート本文と質問の preview の入れ物の class 名。外の部品が自分の要素に重ねて付ける。 */
 export const detailBlockClassName = notationStyles["detail-block"]
 
+/** 塊を横に並べる・枠で包む容れ物の class 名（Markdown の `block-row`・`block-row-cell`・`block-panel` と同じ見た目）。外の部品が自分の要素に付ける。 */
+export const arrangedBlockClassNames = {
+  row: notationStyles["report-block-row"],
+  rowCell: notationStyles["report-block-row-cell"],
+  panel: notationStyles["report-block-panel"],
+} as const
+
 /** 描画一式を読み込む。何度呼んでも読み込みは1回で、済めば待っている部品が描き直る。 */
 export const loadMarkdown = markdownRenderer.load
 

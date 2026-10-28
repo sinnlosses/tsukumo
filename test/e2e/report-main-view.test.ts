@@ -27,6 +27,18 @@ describe("report → メインビュー", () => {
     await room.settleAndMatchPicked(ELAPSED_MS)
   })
 
+  it("部品の一覧で受けた report が A2UI の面で節・表・図として描かれる", async () => {
+    const room = await run.open({
+      scenario: "a2ui-surface",
+      scene: "a2ui-surface-sample",
+      viewport: "wide",
+      domRoots: ["main"],
+    })
+
+    await room.waitForEvent("turn-finished")
+    await room.settleAndMatchPicked(ELAPSED_MS)
+  })
+
   it("chart の塊が種類ごとにグラフとして描かれる", async () => {
     const room = await run.open({
       scenario: "report-chart",

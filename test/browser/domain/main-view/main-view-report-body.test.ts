@@ -43,6 +43,7 @@ const regionsOf = (
   sections,
   retrospective: "",
   favor: { id: "favor-toolu_r1", markdown: "" },
+  a2ui: { kind: "none" },
 })
 
 describe("mainViewTurns（report ツールで受け取ったレポート）", () => {
@@ -503,6 +504,7 @@ describe("orderedReportRegions", () => {
         ],
         retrospective: "架空の振り返り",
         favor: { id: "favor-toolu_fictional", markdown: "架空のお願い" },
+        a2ui: { kind: "none" },
       }),
     ).toEqual([
       { kind: "head", markdown: "架空の頭" },
@@ -526,6 +528,7 @@ describe("orderedReportRegions", () => {
         sections: [{ id: 0, heading: "", markdown: "架空の一。" }],
         retrospective: "",
         favor: { id: "favor-toolu_fictional", markdown: "\n" },
+        a2ui: { kind: "none" },
       }),
     ).toEqual([{ kind: "section", id: 0, markdown: "架空の一。" }])
   })

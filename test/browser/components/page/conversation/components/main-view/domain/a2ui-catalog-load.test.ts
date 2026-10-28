@@ -2,7 +2,7 @@ import { createComponentImplementation, type ReactComponentImplementation } from
 import { Catalog, MessageProcessor } from "@a2ui/web_core/v0_9"
 import { describe, expect, it } from "vitest"
 
-import { loadReportCatalogApis } from "../../../src/browser/lib/a2ui-catalog-load.ts"
+import { loadReportCatalogApis } from "../../../../../../../../src/browser/components/page/conversation/components/main-view/domain/a2ui-catalog-load.ts"
 
 function processorOfDocument() {
   const apis = loadReportCatalogApis()

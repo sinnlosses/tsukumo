@@ -24,10 +24,7 @@ const PRODUCTION_DIRECTORIES = ["src/", "scripts/"] as const
 const ALLOWED_TEST_ONLY_EXPORTS = {} as const satisfies Record<string, string>
 
 // 本番の読み手が後続の課題で付くまでの、期限つきの例外（Props の型でなくてよい）。読み手が付いたら外す。
-const PENDING_READER_EXPORTS = {
-  "src/browser/lib/a2ui-catalog-load.ts#loadReportCatalogApis":
-    "ブラウザの描画の surface.tsx から呼ぶ。読み手が付いたら外す",
-} as const satisfies Record<string, string>
+const PENDING_READER_EXPORTS = {} as const satisfies Record<string, string>
 
 const SOURCES = readRepositorySources()
 
