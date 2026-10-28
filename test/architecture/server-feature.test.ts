@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs"
 
 import { describe, expect, it } from "vitest"
 
+import { REPOSITORY_SCAN_TIMEOUT_MS } from "../fixture/repository-scan-timeout.ts"
 import {
   featureGraphOf,
   findFeatureCycle,
@@ -20,14 +21,18 @@ import {
 } from "./source-file.ts"
 
 describe("server/ の機能どうしの import", () => {
-  it("機能の core/ どうし・adapter/ どうしの辺は、それぞれ循環しない", () => {
-    const cycles = (["core", "adapter"] as const).flatMap((layer) => {
-      const cycle = findFeatureCycle(featureGraphOf(serverFeatureEdges(), layer), SERVER_FEATURES)
-      return cycle.length === 0 ? [] : [`${layer}: ${cycle.join(" → ")}`]
-    })
+  it(
+    "機能の core/ どうし・adapter/ どうしの辺は、それぞれ循環しない",
+    () => {
+      const cycles = (["core", "adapter"] as const).flatMap((layer) => {
+        const cycle = findFeatureCycle(featureGraphOf(serverFeatureEdges(), layer), SERVER_FEATURES)
+        return cycle.length === 0 ? [] : [`${layer}: ${cycle.join(" → ")}`]
+      })
 
-    expect(cycles.join("\n")).toBe("")
-  })
+      expect(cycles.join("\n")).toBe("")
+    },
+    REPOSITORY_SCAN_TIMEOUT_MS,
+  )
 
   // 上の2つが黙って空振りしないことの確かめ（検査の道具そのものの振る舞い）。
   it("層の判定は、知らない機能・機能の中で core/ adapter/ の外・server/ の直下で throw する", () => {
@@ -70,24 +75,28 @@ const FEATURE_FLOOR_EXCEPTIONS = [
 ] as const satisfies readonly ServerFeature[]
 
 describe("server/ の機能の下限", () => {
-  it("機能は core/ と adapter/ の両方か shared/<機能>/ を持ち、例外の一覧は下限を満たさないものだけ", () => {
-    const files = listSourceFiles(SRC_ROOT)
-    const exceptions: readonly ServerFeature[] = FEATURE_FLOOR_EXCEPTIONS
+  it(
+    "機能は core/ と adapter/ の両方か shared/<機能>/ を持ち、例外の一覧は下限を満たさないものだけ",
+    () => {
+      const files = listSourceFiles(SRC_ROOT)
+      const exceptions: readonly ServerFeature[] = FEATURE_FLOOR_EXCEPTIONS
 
-    const offenders = SERVER_FEATURES.flatMap((feature) => {
-      const meetsFloor = meetsFeatureFloor(feature, files)
-      const excepted = exceptions.includes(feature)
-      if (!meetsFloor && !excepted) {
-        return [`${feature}: core/ と adapter/ の両方も shared/${feature}/ も無い`]
-      }
-      if (meetsFloor && excepted) {
-        return [`${feature}: 下限を満たすので例外の一覧から外す`]
-      }
-      return []
-    })
+      const offenders = SERVER_FEATURES.flatMap((feature) => {
+        const meetsFloor = meetsFeatureFloor(feature, files)
+        const excepted = exceptions.includes(feature)
+        if (!meetsFloor && !excepted) {
+          return [`${feature}: core/ と adapter/ の両方も shared/${feature}/ も無い`]
+        }
+        if (meetsFloor && excepted) {
+          return [`${feature}: 下限を満たすので例外の一覧から外す`]
+        }
+        return []
+      })
 
-    expect(offenders.join("\n")).toBe("")
-  })
+      expect(offenders.join("\n")).toBe("")
+    },
+    REPOSITORY_SCAN_TIMEOUT_MS,
+  )
 })
 
 function meetsFeatureFloor(feature: ServerFeature, files: readonly string[]): boolean {
@@ -109,21 +118,25 @@ function meetsFeatureFloor(feature: ServerFeature, files: readonly string[]): bo
 // 機能を読んではいけない（`.dependency-cruiser.cjs` が見る）し、読み手が
 // 1つの機能だけに絞られたら、その機能の中へ下ろすのが正しい（`browser/domain/` の検査と同じ形）。
 describe("server/ の共有の箱", () => {
-  it("共有の箱に、1つの機能だけが読むファイルは無い", () => {
-    const files = listSourceFiles(SRC_ROOT).filter(
-      (relPath) => relPath.startsWith("server/") && serverPlaceOf(relPath).kind === "shared",
-    )
-    expect(files.length).toBeGreaterThan(0)
+  it(
+    "共有の箱に、1つの機能だけが読むファイルは無い",
+    () => {
+      const files = listSourceFiles(SRC_ROOT).filter(
+        (relPath) => relPath.startsWith("server/") && serverPlaceOf(relPath).kind === "shared",
+      )
+      expect(files.length).toBeGreaterThan(0)
 
-    const offenders = files.flatMap((relPath) => {
-      const readers = featureReadersOf(relPath, "", serverFeatureOf)
-      return readers.features.length === 1 && readers.outsideFeatureCount === 0
-        ? [`src/${relPath}（読むのは ${readers.features.join("")} だけ）`]
-        : []
-    })
+      const offenders = files.flatMap((relPath) => {
+        const readers = featureReadersOf(relPath, "", serverFeatureOf)
+        return readers.features.length === 1 && readers.outsideFeatureCount === 0
+          ? [`src/${relPath}（読むのは ${readers.features.join("")} だけ）`]
+          : []
+      })
 
-    expect(offenders.join("\n")).toBe("")
-  })
+      expect(offenders.join("\n")).toBe("")
+    },
+    REPOSITORY_SCAN_TIMEOUT_MS,
+  )
 })
 
 function serverFeatureOf(relPath: string): ServerFeature | undefined {

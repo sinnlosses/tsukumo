@@ -1,0 +1,1 @@
+export const REPOSITORY_SCAN_TIMEOUT_MS = 30_000
