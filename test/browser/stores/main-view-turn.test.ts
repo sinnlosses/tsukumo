@@ -5,12 +5,16 @@
 import { describe, expect, it } from "vitest"
 
 import { mainViewTurnsOf } from "../../../src/browser/stores/main-view-turn.ts"
+import { createCallReview } from "../../../src/server/session-driver/core/call-review.ts"
+import { reportEvents } from "../../../src/server/session-driver/core/sdk-report-message.ts"
 import type { SessionEvent } from "../../../src/shared/session/session-event.ts"
 import { applySessionEvent } from "../../../src/shared/session/session-fold.ts"
 import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../src/shared/session/session-state.ts"
+import { reportDraftingOf } from "../../../src/shared/session/turn-progress.ts"
+import { STAGED_PARTS } from "../../fixture/a2ui-component.ts"
 import { reportEvent } from "../../fixture/report-event.ts"
 import { requestEvent } from "../../fixture/session-event.ts"
 
@@ -263,6 +267,127 @@ describe("mainViewTurnsOf（続きのターンを2回以上含む並びを1件�
       "架空のいちど目の続き",
       "架空のにど目の続き",
     ])
+  })
+})
+
+// 部品の一覧の `report` は、書いている途中から草稿として描く。
+// `report` は `tool-finished` まで預かられ、届いたあとも確定するまでステップに出ないので、そのあいだも草稿が残る。
+describe("mainViewTurnsOf（report の草稿）", () => {
+  const drafting = (toolUseId: string): SessionEvent => ({ kind: "report-drafting", toolUseId })
+  const part = (toolUseId: string, index: number): SessionEvent => {
+    const component = STAGED_PARTS[index]
+    if (component === undefined) {
+      throw new Error(`架空の部品の ${String(index)} 番目が無い`)
+    }
+    return { kind: "report-draft-component", toolUseId, component }
+  }
+  const report = (toolUseId: string): readonly SessionEvent[] =>
+    reportEvents(toolUseId, { components: STAGED_PARTS }, [])
+  const toolFinished = (toolUseId: string, isError: boolean): SessionEvent => ({
+    kind: "tool-finished",
+    toolUseId,
+    content: "",
+    isError,
+  })
+  const finished: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
+  /** 駆動と同じく `CallReview` を通して畳み、1件ごとの姿を返す。 */
+  const foldEach = (events: readonly SessionEvent[]): readonly SessionState[] => {
+    const review = createCallReview()
+    return events
+      .flatMap((event) => review.pass(event))
+      .reduce<readonly SessionState[]>(
+        (states, event) => [
+          ...states,
+          applySessionEvent(states.at(-1) ?? INITIAL_SESSION_STATE, event, 0),
+        ],
+        [],
+      )
+  }
+  const draftsOf = (state: SessionState | undefined) =>
+    state === undefined
+      ? []
+      : (mainViewTurnsOf(state)
+          .at(-1)
+          ?.drafts.map((draft) => [draft.toolUseId, draft.components.length]) ?? [])
+  const shownReportIds = (state: SessionState | undefined) =>
+    state === undefined
+      ? []
+      : (mainViewTurnsOf(state)
+          .at(-1)
+          ?.steps.flatMap((step) =>
+            step.body.kind === "text" && step.origin.kind === "tool-report"
+              ? [step.origin.toolUseId]
+              : [],
+          ) ?? [])
+
+  it("部品が届くたびに、根から辿れる部品が草稿に載る", () => {
+    const states = foldEach([requestEvent(), drafting("toolu_d1"), part("toolu_d1", 0)])
+    const withLeaf = foldEach([
+      requestEvent(),
+      drafting("toolu_d1"),
+      part("toolu_d1", 0),
+      part("toolu_d1", 1),
+      part("toolu_d1", 2),
+    ])
+
+    expect(draftsOf(states.at(-1))).toEqual([["toolu_d1", 1]])
+    expect(draftsOf(withLeaf.at(-1))).toEqual([["toolu_d1", 3]])
+  })
+
+  it("届いた report が確定するまでは、記録の部品で同じ草稿を描き続け、確定してステップに出ると外れる", () => {
+    const states = foldEach([
+      requestEvent(),
+      drafting("toolu_d1"),
+      ...STAGED_PARTS.map((_, index) => part("toolu_d1", index)),
+      ...report("toolu_d1"),
+      toolFinished("toolu_d1", false),
+    ])
+    const held = states.at(-1)
+    const settled = held === undefined ? undefined : applySessionEvent(held, finished, 0)
+
+    expect(held !== undefined && reportDraftingOf(held.sdkTurn).kind).toBe("idle")
+    expect(draftsOf(held)).toEqual([["toolu_d1", STAGED_PARTS.length]])
+    expect(shownReportIds(held)).toEqual([])
+    expect(draftsOf(settled)).toEqual([])
+    expect(shownReportIds(settled)).toEqual(["toolu_d1"])
+  })
+
+  it("差し戻された report の草稿は消え、ステップにも出ない", () => {
+    const states = foldEach([
+      requestEvent(),
+      drafting("toolu_d1"),
+      ...STAGED_PARTS.map((_, index) => part("toolu_d1", index)),
+      ...report("toolu_d1"),
+      toolFinished("toolu_d1", true),
+    ])
+
+    expect(draftsOf(states.at(-1))).toEqual([])
+    expect(shownReportIds(states.at(-1))).toEqual([])
+  })
+
+  it("次の report を書いているあいだは、伏せた前の report と次の草稿が並び、次が届くと前はステップに出る", () => {
+    const first = [
+      requestEvent(),
+      drafting("toolu_d1"),
+      ...STAGED_PARTS.map((_, index) => part("toolu_d1", index)),
+      ...report("toolu_d1"),
+      toolFinished("toolu_d1", false),
+    ]
+    const writingNext = foldEach([...first, drafting("toolu_d2"), part("toolu_d2", 0)]).at(-1)
+    const nextArrived = foldEach([
+      ...first,
+      drafting("toolu_d2"),
+      part("toolu_d2", 0),
+      ...report("toolu_d2"),
+      toolFinished("toolu_d2", false),
+    ]).at(-1)
+
+    expect(draftsOf(writingNext)).toEqual([
+      ["toolu_d1", STAGED_PARTS.length],
+      ["toolu_d2", 1],
+    ])
+    expect(draftsOf(nextArrived)).toEqual([["toolu_d2", STAGED_PARTS.length]])
+    expect(shownReportIds(nextArrived)).toEqual(["toolu_d1"])
   })
 })
 

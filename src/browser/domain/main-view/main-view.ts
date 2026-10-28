@@ -5,13 +5,15 @@ import { sum } from "remeda"
 
 import { NO_REPORT_CHANGE_SUMMARY } from "../../../shared/report/report-change-summary.ts"
 import {
+  type MainViewDraft,
   type MainViewEntry,
   type MainViewStep,
   type MainViewTurn,
   NO_BODY,
 } from "../../../shared/session/main-view-shape.ts"
 import { MAX_SESSION_STATE_TURNS } from "../../../shared/session/session-record.ts"
-import type { TurnBodies } from "../../../shared/session/turn-progress.ts"
+import type { ReportDrafting, TurnBodies } from "../../../shared/session/turn-progress.ts"
+import { mainViewDraftOf } from "./a2ui-draft-view.ts"
 import { finalReportBody, orderedReportRegions } from "./main-view-report-body.ts"
 import { groupIntoTurns } from "./main-view-step.ts"
 
@@ -42,6 +44,8 @@ const MAX_MAIN_VIEW_ENTRIES = 40
  * いちばん新しいやり取りにだけ渡す（それより前のやり取りは、次の依頼が始まった時点で既に閉じている）。
  * `unsettled` は「まだ伸びる本文をそもそも出すか」、`closed` は「出した本文に最終レポートの札を立ててよいか」で、独立に false になりうる
  * （背景の仕事を待って `turn-finished` が届くと `unsettled.report` は確定扱いに変わるが、バックグラウンドタスクが残っているあいだは `closed` は false のまま）。
+ *
+ * 伏せた `report` は、ステップに出るまでのあいだ草稿（`MainViewTurn.drafts`）として描き続ける。
  */
 export function mainViewTurns(
   entries: readonly MainViewEntry[],
@@ -53,14 +57,39 @@ export function mainViewTurns(
     .map(({ turn, toolReportIds }, index) => {
       // 動いているのはいちばん新しいやり取りだけで、それ以外の本文はもう確定している。
       const latest = index === turns.length - 1
+      const reportSettled = !latest || !unsettled.report
       const selected =
         toolReportIds.length === 0
           ? selectLastText(turn, !latest || !unsettled.utterance)
-          : selectToolReports(turn, toolReportIds, !latest || !unsettled.report)
-      return { turn: markSupersededSteps(selected), closed: !latest || closed }
+          : selectToolReports(turn, toolReportIds, reportSettled)
+      const drafts =
+        toolReportIds.length === 0 || reportSettled ? [] : heldReportDrafts(turn, toolReportIds)
+      return { turn: { ...markSupersededSteps(selected), drafts }, closed: !latest || closed }
     })
     .map(({ turn, closed: turnClosed }) => markFinalReport(turn, turnClosed))
     .map((turn) => limitTurnEntries(turn))
+}
+
+/**
+ * いちばん新しいやり取りの草稿の後ろに、いま書いている `report` の草稿（`SessionState.sdkTurn` の `reportDrafting`）を足す。
+ * 同じ `toolUseId` の草稿が既にあれば足さない。根が届いていなければ何も足さない。
+ */
+export function withReportDrafting(
+  turns: readonly MainViewTurn[],
+  drafting: ReportDrafting,
+): readonly MainViewTurn[] {
+  const latest = turns.at(-1)
+  if (
+    latest === undefined ||
+    drafting.kind !== "drafting" ||
+    latest.drafts.some((draft) => draft.toolUseId === drafting.toolUseId)
+  ) {
+    return turns
+  }
+  const draft = mainViewDraftOf(drafting.toolUseId, drafting.components)
+  return draft === undefined
+    ? turns
+    : [...turns.slice(0, -1), { ...latest, drafts: [...latest.drafts, draft] }]
 }
 
 /**
@@ -124,6 +153,27 @@ function selectToolReports(
       return settled ? step : { ...step, body: NO_BODY }
     }),
   }
+}
+
+/**
+ * {@link selectToolReports} が確定していないとして伏せた最後の `report` を、草稿として描き続ける値。
+ * 部品の一覧で描く本文（`a2ui` が `surface`）だけが草稿になる。
+ */
+function heldReportDrafts(
+  turn: MainViewTurn,
+  toolReportIds: readonly number[],
+): readonly MainViewDraft[] {
+  const held = turn.steps.find((step) => step.id === toolReportIds.at(-1))
+  if (
+    held?.origin.kind !== "tool-report" ||
+    held.body.kind !== "text" ||
+    held.body.report.kind !== "regions" ||
+    held.body.report.a2ui.kind !== "surface"
+  ) {
+    return []
+  }
+  const draft = mainViewDraftOf(held.origin.toolUseId, held.body.report.a2ui.components)
+  return draft === undefined ? [] : [draft]
 }
 
 /**

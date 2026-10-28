@@ -43,7 +43,7 @@ export const edit = (path: string): MainViewEntry => ({
   },
 })
 /** `report` ツールで受け取ったレポート（引数を組んだあとの形。本文は頭の欄だけ）。中間レポートはここからしか生まれない。 */
-export const toolReport = (markdown: string): MainViewEntry => ({
+export const toolReport = (markdown: string, toolUseId = "toolu_fictional"): MainViewEntry => ({
   kind: "report",
   regions: {
     kind: "regions",
@@ -57,6 +57,7 @@ export const toolReport = (markdown: string): MainViewEntry => ({
   conclusion: "",
   task: { kind: "none" },
   changeSummary: { kind: "none" },
+  toolUseId,
 })
 /** 見出しと箇条書きを持つ本文。資料らしい形でも `report` の外なら出ないことを確かめるのに使う。 */
 export const materialReport = (label: string): string =>

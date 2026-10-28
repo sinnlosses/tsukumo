@@ -65,6 +65,19 @@ export function a2uiLeafIds(
   return leafIdsOf(ids, byId, new Set([A2UI_ROOT_ID]))
 }
 
+/**
+ * 根から子の参照をたどって届く部品の ID（根を含む）。根の `Report` が無ければ空。
+ * `figure` と `retrospective.blocks` の参照はたどらない。
+ */
+export function a2uiReachableIds(
+  byId: ReadonlyMap<string, A2uiReportComponent>,
+): ReadonlySet<string> {
+  const root = byId.get(A2UI_ROOT_ID)
+  return root?.component === "Report"
+    ? reachableFrom(root.children, byId, new Set([A2UI_ROOT_ID]))
+    : new Set()
+}
+
 /** 葉の部品なら写す先の塊の `kind`、葉でなければ undefined。 */
 export function a2uiLeafKind(part: A2uiReportComponent): string | undefined {
   return LEAF_KINDS.get(part.component)
@@ -86,6 +99,19 @@ function leafIdsOf(
     seen = new Set([...seen, id])
     return a2uiLeafKind(part) === undefined ? leafIdsOf(childIdsOf(part), byId, seen) : [id]
   })
+}
+
+function reachableFrom(
+  ids: readonly string[],
+  byId: ReadonlyMap<string, A2uiReportComponent>,
+  reached: ReadonlySet<string>,
+): ReadonlySet<string> {
+  return ids.reduce((acc, id) => {
+    const part = byId.get(id)
+    return part === undefined || acc.has(id)
+      ? acc
+      : reachableFrom(childIdsOf(part), byId, new Set([...acc, id]))
+  }, reached)
 }
 
 /** 部品が子として参照する ID。葉と `ChoicePicker` は持たない。 */

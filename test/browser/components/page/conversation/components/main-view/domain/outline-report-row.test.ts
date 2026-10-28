@@ -1,11 +1,14 @@
 import { describe, expect, it } from "vitest"
 
 import { outlineReportOf } from "../../../../../../../../src/browser/components/page/conversation/components/main-view/domain/outline-report-row.ts"
+import { mainViewDraftOf } from "../../../../../../../../src/browser/domain/main-view/a2ui-draft-view.ts"
 import type { ReportTask } from "../../../../../../../../src/shared/report/report-task.ts"
 import type {
+  MainViewDraft,
   MainViewStep,
   MainViewTurn,
 } from "../../../../../../../../src/shared/session/main-view-shape.ts"
+import { STAGED_PARTS } from "../../../../../../../fixture/a2ui-component.ts"
 
 function textStep(id: number, firstLine: string, task: ReportTask, final: boolean): MainViewStep {
   return {
@@ -26,6 +29,7 @@ function textStep(id: number, firstLine: string, task: ReportTask, final: boolea
       finishedPhase: { kind: "none" },
       changeSummary: { kind: "none" },
     },
+    origin: { kind: "tool-report", toolUseId: "toolu_fictional" },
     interim: !final,
     superseded: false,
     final,
@@ -34,7 +38,10 @@ function textStep(id: number, firstLine: string, task: ReportTask, final: boolea
   }
 }
 
-function turnOf(steps: readonly MainViewStep[]): MainViewTurn {
+function turnOf(
+  steps: readonly MainViewStep[],
+  drafts: readonly MainViewDraft[] = [],
+): MainViewTurn {
   return {
     id: 0,
     request: undefined,
@@ -42,7 +49,16 @@ function turnOf(steps: readonly MainViewStep[]): MainViewTurn {
     hasInterimReport: steps.some((step) => step.interim),
     droppedCount: 0,
     failure: { kind: "none" },
+    drafts,
   }
+}
+
+function draftOf(): MainViewDraft {
+  const draft = mainViewDraftOf("toolu_draft", STAGED_PARTS)
+  if (draft === undefined) {
+    throw new Error("根のある一覧から草稿が作れなかった")
+  }
+  return draft
 }
 
 const NO_TASK = { kind: "none" } as const satisfies ReportTask
@@ -96,5 +112,12 @@ describe("outlineReportOf", () => {
   it("本文が無い・題にできる字が無いやり取りは行を出さない", () => {
     expect(outlineReportOf(turnOf([]))).toEqual({ kind: "none" })
     expect(outlineReportOf(turnOf([textStep(0, "  ", NO_TASK, true)]))).toEqual({ kind: "none" })
+  })
+
+  it("草稿は目次の材料にならない（草稿だけのやり取りは行を出さず、本文があれば本文から選ぶ）", () => {
+    expect(outlineReportOf(turnOf([], [draftOf()]))).toEqual({ kind: "none" })
+    expect(
+      outlineReportOf(turnOf([textStep(0, "中間の先頭行", NO_TASK, false)], [draftOf()])),
+    ).toEqual({ kind: "report", label: "interim", title: "中間の先頭行" })
   })
 })

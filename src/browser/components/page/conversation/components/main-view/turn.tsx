@@ -4,7 +4,7 @@
 // 失敗で終わったやり取りは、頭に失敗の塊を出す（色だけでなく字で成功と見分ける）。
 
 import clsx from "clsx"
-import { Fragment, useState, type ReactElement } from "react"
+import { Fragment, useEffect, useState, type ReactElement } from "react"
 
 import type { ReportTask } from "../../../../../../shared/report/report-task.ts"
 import type {
@@ -16,8 +16,11 @@ import type {
 import { formatMeasured } from "../../../../../../shared/utils/elapsed-time.ts"
 import { Text } from "../../../../ui/text/text.tsx"
 import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
+import { useDraftedReports } from "../../stores/drafted-report.ts"
 import { AsideThread } from "./aside-thread.tsx"
+import { revealStepIdOf } from "./domain/draft-reveal.ts"
 import { REPORT_STEP_ATTRIBUTE } from "./domain/outline-report-head.ts"
+import { REPORT_DRAFT_ATTRIBUTE } from "./domain/report-heading.ts"
 import {
   arrangeTurn,
   progressFoldSummary,
@@ -40,12 +43,24 @@ type TurnProps = {
 
 export function Turn(props: TurnProps): ReactElement {
   const { turn } = props
-  const writingStepId = finalReportStepId(turn)
+  const finalStep = finalReportStep(turn)
   // このやり取りを出し始めた時点で既にあった本文は演出しない。
   // 過去のターンを開いたとき・ページを読み込み直したときは「確定済みの本文が一度も書かれない」ので、あとから現れた本文だけが対象になる。
   // この初期値がやり取りごとに取り直されるのは、`<MainView>` がやり取りの番号を `key` に渡すため。
-  const [stepIdAtMount] = useState(props.freshReport ? undefined : writingStepId)
-  const revealStepId = props.newest && writingStepId !== stepIdAtMount ? writingStepId : undefined
+  const [stepIdAtMount] = useState(props.freshReport ? undefined : finalStep?.id)
+  const draftedToolUseIds = useDraftedReports((state) => state.toolUseIds)
+  const rememberDrafts = useDraftedReports((state) => state.remember)
+  // 草稿は確定版がステップに出た時点で外れ、この部品も中身の切り替えで作り直されるので、描いたことは部品の外の store に書く。
+  // 描画中に書くとほかの部品の描画中の更新になるので、描いたあとに書く。
+  useEffect(() => {
+    rememberDrafts(turn.drafts.map((draft) => draft.toolUseId))
+  }, [turn.drafts, rememberDrafts])
+  const revealStepId = revealStepIdOf({
+    newest: props.newest,
+    finalStep,
+    stepIdAtMount,
+    draftedToolUseIds,
+  })
   const arrangement = arrangeTurn(turn)
 
   return (
@@ -61,7 +76,7 @@ export function Turn(props: TurnProps): ReactElement {
           これ以前の {turn.droppedCount} 件は省略した
         </Text>
       )}
-      {(turn.steps.length > 0 || turn.failure.kind === "failed") && (
+      {(turn.steps.length > 0 || turn.drafts.length > 0 || turn.failure.kind === "failed") && (
         <VStack
           element="div"
           name={{ kind: "none" }}
@@ -117,6 +132,16 @@ export function Turn(props: TurnProps): ReactElement {
               )}
             </>
           )}
+          {/* `key` を `toolUseId` にするので、書いている途中の部品から記録の部品へ移っても面を作り直さない。 */}
+          {turn.drafts.map((draft) => (
+            <section
+              key={`draft:${draft.toolUseId}`}
+              className={clsx(styles["main-step"], styles["is-interim"])}
+              {...{ [REPORT_DRAFT_ATTRIBUTE]: "" }}
+            >
+              <Report body={draft.regions} reveal={false} turnId={turn.id} className="" />
+            </section>
+          ))}
         </VStack>
       )}
     </div>
@@ -373,8 +398,8 @@ function stepClassName(step: MainViewStep): string {
  * 中間レポートは流れている最中に少しずつ出る本文なので、ここでは選ばない。
  * 選び方そのものは `markFinalReport` が済ませてある。
  */
-function finalReportStepId(turn: MainViewTurn): number | undefined {
-  return turn.steps.find((step) => step.final)?.id
+function finalReportStep(turn: MainViewTurn): MainViewStep | undefined {
+  return turn.steps.find((step) => step.final)
 }
 
 /** 畳んだ中間レポートの `<summary>` に出す文字列。先頭行が無ければラベルだけ。 */

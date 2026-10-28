@@ -41,6 +41,7 @@ function interim(id: number, title: string, seconds: number, skipped = false): M
       },
       changeSummary: { kind: "none" },
     },
+    origin: { kind: "other" },
     interim: true,
     superseded: true,
     final: false,
@@ -56,6 +57,7 @@ const TURN: MainViewTurn = {
   hasInterimReport: true,
   droppedCount: 0,
   failure: { kind: "none" },
+  drafts: [],
 }
 
 function renderList(turn: MainViewTurn = TURN): void {

@@ -1,0 +1,180 @@
+{
+  "name": "a2ui-staged-rejected",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "差し戻された草稿が消えるかを見たい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 800,
+      "event": { "kind": "report-drafting", "toolUseId": "fake-staged-rejected" }
+    },
+    {
+      "afterMs": 1600,
+      "event": {
+        "kind": "report-draft-component",
+        "toolUseId": "fake-staged-rejected",
+        "component": {
+          "id": "root",
+          "component": "Report",
+          "conclusion": ["架空の差し戻される結論。"],
+          "children": ["s1"]
+        }
+      }
+    },
+    {
+      "afterMs": 2400,
+      "event": {
+        "kind": "report-draft-component",
+        "toolUseId": "fake-staged-rejected",
+        "component": {
+          "id": "s1",
+          "component": "Section",
+          "heading": "架空の差し戻される節",
+          "children": ["p1"]
+        }
+      }
+    },
+    {
+      "afterMs": 3200,
+      "event": {
+        "kind": "report-draft-component",
+        "toolUseId": "fake-staged-rejected",
+        "component": {
+          "id": "p1",
+          "component": "Paragraph",
+          "text": "架空の差し戻される段落。",
+          "fold": "",
+          "aside": ""
+        }
+      }
+    },
+    {
+      "afterMs": 4000,
+      "event": {
+        "kind": "report",
+        "toolUseId": "fake-staged-rejected",
+        "components": [
+          {
+            "id": "root",
+            "component": "Report",
+            "conclusion": ["架空の差し戻される結論。"],
+            "children": ["s1"]
+          },
+          {
+            "id": "s1",
+            "component": "Section",
+            "heading": "架空の差し戻される節",
+            "children": ["p1"]
+          },
+          {
+            "id": "p1",
+            "component": "Paragraph",
+            "text": "架空の差し戻される段落。"
+          }
+        ]
+      }
+    },
+    {
+      "afterMs": 4050,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-staged-rejected",
+        "content": "架空の差し戻しの理由",
+        "isError": true
+      }
+    },
+    {
+      "afterMs": 6050,
+      "event": { "kind": "report-drafting", "toolUseId": "fake-staged-retry" }
+    },
+    {
+      "afterMs": 6850,
+      "event": {
+        "kind": "report-draft-component",
+        "toolUseId": "fake-staged-retry",
+        "component": {
+          "id": "root",
+          "component": "Report",
+          "conclusion": ["架空の出し直した結論。"],
+          "children": ["s1"]
+        }
+      }
+    },
+    {
+      "afterMs": 7650,
+      "event": {
+        "kind": "report-draft-component",
+        "toolUseId": "fake-staged-retry",
+        "component": {
+          "id": "s1",
+          "component": "Section",
+          "heading": "架空の出し直した節",
+          "children": ["p1"]
+        }
+      }
+    },
+    {
+      "afterMs": 8450,
+      "event": {
+        "kind": "report-draft-component",
+        "toolUseId": "fake-staged-retry",
+        "component": {
+          "id": "p1",
+          "component": "Paragraph",
+          "text": "架空の出し直した段落。",
+          "fold": "",
+          "aside": ""
+        }
+      }
+    },
+    {
+      "afterMs": 9250,
+      "event": {
+        "kind": "report",
+        "toolUseId": "fake-staged-retry",
+        "components": [
+          {
+            "id": "root",
+            "component": "Report",
+            "conclusion": ["架空の出し直した結論。"],
+            "children": ["s1"]
+          },
+          {
+            "id": "s1",
+            "component": "Section",
+            "heading": "架空の出し直した節",
+            "children": ["p1"]
+          },
+          {
+            "id": "p1",
+            "component": "Paragraph",
+            "text": "架空の出し直した段落。"
+          }
+        ]
+      }
+    },
+    {
+      "afterMs": 9300,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-staged-retry",
+        "content": "ok",
+        "isError": false
+      }
+    },
+    {
+      "afterMs": 11300,
+      "event": {
+        "kind": "turn-finished",
+        "outcome": {
+          "kind": "completed"
+        }
+      }
+    }
+  ]
+}

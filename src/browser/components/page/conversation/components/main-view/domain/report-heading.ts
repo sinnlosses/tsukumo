@@ -9,6 +9,9 @@ const HEADING_SELECTOR = `.${detailBlockClassName} :is(h4, h5)`
 /** 節の欄の入れ物が欄の ID を持つ属性（`Report` が付ける）。 */
 const SECTION_ATTRIBUTE = "data-report-section"
 
+/** 草稿の面の入れ物が付ける属性。草稿の見出しは目次にも読み位置にも数えない。 */
+export const REPORT_DRAFT_ATTRIBUTE = "data-report-draft"
+
 /** 目次の見出し1つ。`section` は `##`、`sub` は `###` と、節の中で書かれた余分な `##`。 */
 export type OutlineItem = {
   readonly element: HTMLElement
@@ -16,12 +19,13 @@ export type OutlineItem = {
   readonly text: string
 }
 
-/** 畳んだ `<details>` の中と、筆がまだ届いていない節の中を除いた見出し。 */
+/** 畳んだ `<details>` の中と、筆がまだ届いていない節の中と、草稿の面の中を除いた見出し。 */
 export function readableHeadings(content: HTMLElement): readonly HTMLElement[] {
   return [...content.querySelectorAll<HTMLElement>(HEADING_SELECTOR)].filter(
     (heading) =>
       heading.closest("details:not([open])") === null &&
-      heading.closest(`[${REVEAL_PENDING_ATTRIBUTE}="pending"]`) === null,
+      heading.closest(`[${REVEAL_PENDING_ATTRIBUTE}="pending"]`) === null &&
+      heading.closest(`[${REPORT_DRAFT_ATTRIBUTE}]`) === null,
   )
 }
 

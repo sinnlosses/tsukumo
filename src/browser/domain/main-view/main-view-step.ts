@@ -11,6 +11,7 @@ import {
   type MainViewPhaseLabel,
   type MainViewStep,
   type MainViewStepBody,
+  type MainViewStepOrigin,
   type MainViewTurn,
   NO_BODY,
 } from "../../../shared/session/main-view-shape.ts"
@@ -22,6 +23,8 @@ import type { MeasuredTime } from "../../../shared/utils/elapsed-time.ts"
 import { orderedReportRegions } from "./main-view-report-body.ts"
 
 const NO_PHASE_LABEL = { kind: "none" } as const satisfies MainViewPhaseLabel
+
+const OTHER_ORIGIN = { kind: "other" } as const satisfies MainViewStepOrigin
 
 /**
  * まとめたやり取りと、その中で `report` ツールから来たステップの id（呼ばれた順）。id の並びは
@@ -52,6 +55,7 @@ export function groupIntoTurns(entries: readonly MainViewEntry[]): readonly Grou
         droppedCount: 0,
         failure:
           failure === undefined ? { kind: "none" } : { kind: "failed", failure: failure.failure },
+        drafts: [],
       },
       toolReportIds,
     }
@@ -98,8 +102,12 @@ function groupIntoSteps(entries: readonly StepEntry[]): GroupedSteps {
           finishedPhase: NO_PHASE_LABEL,
           changeSummary: entry.kind === "report" ? entry.changeSummary : NO_REPORT_CHANGE_SUMMARY,
         } as const satisfies MainViewStepBody
+        const origin: MainViewStepOrigin =
+          entry.kind === "report"
+            ? { kind: "tool-report", toolUseId: entry.toolUseId }
+            : OTHER_ORIGIN
         return {
-          steps: [...steps, newStep(id, body, [])],
+          steps: [...steps, newStep(id, body, origin, [])],
           toolReportIds: entry.kind === "report" ? [...toolReportIds, id] : toolReportIds,
         }
       }
@@ -119,7 +127,7 @@ function groupIntoSteps(entries: readonly StepEntry[]): GroupedSteps {
         return {
           steps:
             last === undefined
-              ? [{ ...newStep(id, NO_BODY, []), asides: [aside] }]
+              ? [{ ...newStep(id, NO_BODY, OTHER_ORIGIN, []), asides: [aside] }]
               : replaceStep(steps, steps.length - 1, { ...last, asides: [...last.asides, aside] }),
           toolReportIds,
         }
@@ -134,7 +142,7 @@ function groupIntoSteps(entries: readonly StepEntry[]): GroupedSteps {
       return {
         steps:
           step === undefined || step.asides.length > 0
-            ? [...steps, newStep(id, NO_BODY, [entry])]
+            ? [...steps, newStep(id, NO_BODY, OTHER_ORIGIN, [entry])]
             : replaceStep(steps, steps.length - 1, { ...step, actions: [...step.actions, entry] }),
         toolReportIds,
       }
@@ -176,11 +184,13 @@ function replaceStep(
 function newStep(
   id: number,
   body: MainViewStepBody,
+  origin: MainViewStepOrigin,
   actions: readonly MainViewAction[],
 ): MainViewStep {
   return {
     id,
     body,
+    origin,
     interim: false,
     superseded: false,
     final: false,
@@ -211,6 +221,7 @@ function phaseShiftStep(id: number, shift: PhaseShift, duration: MeasuredTime): 
           },
           changeSummary: NO_REPORT_CHANGE_SUMMARY,
         },
+    OTHER_ORIGIN,
     [],
   )
   return {

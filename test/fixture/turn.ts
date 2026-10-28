@@ -24,6 +24,7 @@ export function turnBodyText(report: string): MainViewStepBody {
 export function step(overrides: Partial<MainViewStep> & { readonly id: number }): MainViewStep {
   return {
     body: { kind: "none" },
+    origin: { kind: "other" },
     interim: false,
     superseded: false,
     final: false,
@@ -41,5 +42,6 @@ export function turn(steps: readonly MainViewStep[]): MainViewTurn {
     hasInterimReport: false,
     droppedCount: 0,
     failure: { kind: "none" },
+    drafts: [],
   }
 }

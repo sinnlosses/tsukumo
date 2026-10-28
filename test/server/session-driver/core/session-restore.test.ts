@@ -325,6 +325,7 @@ describe("toRestoredEvents", () => {
         conclusion: "架空の結論。",
         task: { kind: "none" },
         changeSummary: { kind: "none" },
+        toolUseId: "r-1",
       },
     ])
   })

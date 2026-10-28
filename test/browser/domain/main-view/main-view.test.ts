@@ -228,6 +228,27 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
     expect(turns[0]?.request).toBeUndefined()
     expect(reportOf(turns[0]?.steps[0])).toBe("依頼より前のレポート")
   })
+
+  it("report から来たステップだけが、その呼び出しの toolUseId を origin に持つ", () => {
+    const [turn] = mainViewTurns(
+      [
+        request("依頼"),
+        edit("a.ts"),
+        detail("ツールの外の本文"),
+        toolReport("一つ目", "toolu_a"),
+        toolReport("二つ目", "toolu_b"),
+      ],
+      SETTLED,
+      true,
+    )
+
+    expect(turn?.steps.map((step) => step.origin)).toEqual([
+      { kind: "other" },
+      { kind: "other" },
+      { kind: "tool-report", toolUseId: "toolu_a" },
+      { kind: "tool-report", toolUseId: "toolu_b" },
+    ])
+  })
 })
 
 describe("mainViewTurns（追い越された中間レポートを畳む印）", () => {

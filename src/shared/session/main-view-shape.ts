@@ -47,9 +47,11 @@ export type MainViewEntry =
    * `task` は本文に組まず、描く側が目録の1行と見出しに出す。
    * `conclusion` は組む前の結論で、畳んだときの先頭行に使う（`groupIntoSteps`）。
    * `changeSummary` は記録の変更の札をそのまま通したもの。
+   * `toolUseId` は `report` ツールの呼び出しの ID。
    */
   | {
       readonly kind: "report"
+      readonly toolUseId: string
       readonly regions: MainViewReportRegions
       readonly conclusion: string
       readonly task: ReportTask
@@ -187,6 +189,7 @@ export type MainViewTurnFailure =
 export type MainViewStep = {
   readonly id: number
   readonly body: MainViewStepBody
+  readonly origin: MainViewStepOrigin
   readonly interim: boolean
   readonly superseded: boolean
   readonly final: boolean
@@ -194,6 +197,13 @@ export type MainViewStep = {
   /** このステップの後ろに足す脇の話（古い順）。 */
   readonly asides: readonly MainViewAside[]
 }
+
+/**
+ * ステップの本文がどこから来たか。`report` ツールから来たステップだけが、その呼び出しの ID を持つ。
+ */
+export type MainViewStepOrigin =
+  | { readonly kind: "tool-report"; readonly toolUseId: string }
+  | { readonly kind: "other" }
 
 /** 段の見出しの字（「2/4 段の名前」）。無ければ `none`。 */
 export type MainViewPhaseLabel =
@@ -257,6 +267,21 @@ export type MainViewTurn = {
   readonly droppedCount: number
   /** このやり取りが失敗で終わったか（{@link MainViewTurnFailure}）。 */
   readonly failure: MainViewTurnFailure
+  /**
+   * まだステップとして画面に出ていない `report` の草稿（{@link MainViewDraft}。届いた順）。
+   * 目次の材料（`steps`）には入らない。いちばん新しいやり取りにだけ載る。
+   */
+  readonly drafts: readonly MainViewDraft[]
+}
+
+/**
+ * `a2ui` の版の `report` の草稿1つ。書いている途中の引数か、届いたが確定するまで伏せている記録の部品から作る。
+ * `components` は根から辿れる部品だけ。`regions` はそれを描く欄（図・合図の行・所要時間は持たない）。
+ */
+export type MainViewDraft = {
+  readonly toolUseId: string
+  readonly components: readonly A2uiReportComponent[]
+  readonly regions: MainViewReportRegions
 }
 
 /** やり取りの脇の話を、届いた順に1本にしたもの。 */

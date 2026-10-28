@@ -40,6 +40,7 @@ function step(
       finishedPhase: overrides.finishedPhase,
       changeSummary: { kind: "none" },
     },
+    origin: { kind: "other" },
     interim: overrides.interim,
     superseded: false,
     final: !overrides.interim,
@@ -56,6 +57,7 @@ function turn(steps: readonly MainViewStep[]): MainViewTurn {
     hasInterimReport: true,
     droppedCount: 0,
     failure: { kind: "none" },
+    drafts: [],
   }
 }
 

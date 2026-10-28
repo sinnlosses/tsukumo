@@ -11,8 +11,8 @@ import { isExchangeClosed } from "../../shared/session/conversation-moment.ts"
 import { mainViewEntries } from "../../shared/session/main-view-entry.ts"
 import type { MainViewTurn } from "../../shared/session/main-view-shape.ts"
 import type { SessionState } from "../../shared/session/session-state.ts"
-import { bodiesOf, type TurnBodies } from "../../shared/session/turn-progress.ts"
-import { mainViewTurns } from "../domain/main-view/main-view.ts"
+import { bodiesOf, reportDraftingOf, type TurnBodies } from "../../shared/session/turn-progress.ts"
+import { mainViewTurns, withReportDrafting } from "../domain/main-view/main-view.ts"
 import { useSession } from "./session.ts"
 
 const TURNS_BY_STATE = new WeakMap<SessionState, readonly MainViewTurn[]>()
@@ -35,7 +35,10 @@ export function mainViewTurnsOf(state: SessionState): readonly MainViewTurn[] {
   }
   const turns = replaceEqualDeep(
     latestTurns,
-    mainViewTurns(mainViewEntries(state), unsettledBodies(state), isExchangeClosed(state)),
+    withReportDrafting(
+      mainViewTurns(mainViewEntries(state), unsettledBodies(state), isExchangeClosed(state)),
+      reportDraftingOf(state.sdkTurn),
+    ),
   )
   TURNS_BY_STATE.set(state, turns)
   latestTurns = turns

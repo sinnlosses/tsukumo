@@ -34,6 +34,7 @@ function textStep(
       finishedPhase: { kind: "none" },
       changeSummary: { kind: "none" },
     },
+    origin: { kind: "tool-report", toolUseId: "toolu_fictional" },
     interim: flags.interim,
     superseded: false,
     final: flags.final,
@@ -50,6 +51,7 @@ function turnOf(steps: readonly MainViewStep[]): MainViewTurn {
     hasInterimReport: steps.some((step) => step.interim),
     droppedCount: 0,
     failure: { kind: "none" },
+    drafts: [],
   }
 }
 

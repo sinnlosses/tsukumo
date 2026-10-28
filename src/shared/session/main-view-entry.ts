@@ -128,6 +128,7 @@ function toMainViewEntries(record: SessionRecord, context: TurnContext): readonl
     return [
       {
         kind: "report",
+        toolUseId: record.toolUseId,
         regions: reportRegionsOf(record, context),
         conclusion: record.conclusion,
         task: record.task,

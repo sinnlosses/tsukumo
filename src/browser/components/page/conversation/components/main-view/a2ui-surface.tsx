@@ -11,7 +11,7 @@ import {
   type ReactComponentImplementation,
 } from "@a2ui/react/v0_9"
 import { Catalog, MessageProcessor, type SurfaceModel } from "@a2ui/web_core/v0_9"
-import { createContext, type ReactElement, use, useState } from "react"
+import { createContext, type ReactElement, use, useEffect, useState } from "react"
 
 import type { A2uiReportComponent } from "../../../../../../shared/report/a2ui-report-catalog.ts"
 import {
@@ -48,10 +48,19 @@ type A2uiReportProps = {
   readonly className: string
 }
 
-/** 本文1つぶんの面。面は本文ごとに1つで、部品の一覧は記録のあいだ変わらないので最初の一覧で作る。 */
+/**
+ * 本文1つぶんの面。面は本文ごとに1つで、最初の一覧で作る。
+ * 草稿のように一覧があとから伸びたら、まだ面に無い部品だけを足す（面は作り直さない）。
+ */
 export function A2uiReport(props: A2uiReportProps): ReactElement {
   const [surface] = useState(() => reportSurfaceOf(props.view.components))
-  const [parts] = useState(() => a2uiPartsById(props.view.components))
+  const parts = a2uiPartsById(props.view.components)
+  const { components } = props.view
+  useEffect(() => {
+    if (surface.kind === "surface") {
+      addMissingComponents(surface, components)
+    }
+  }, [surface, components])
   if (surface.kind === "failed") {
     return (
       <MarkdownReport
@@ -96,11 +105,15 @@ function reportCatalog(): Catalog<ReactComponentImplementation> {
 /**
  * 一覧から面を作る。A2UI の検証が一覧を拒んだら（`processMessages` が投げる）`failed` にする（1件の本文のために画面を落とさない）。
  */
-function reportSurfaceOf(
-  components: readonly A2uiReportComponent[],
-):
-  | { readonly kind: "surface"; readonly surface: SurfaceModel<ReactComponentImplementation> }
-  | { readonly kind: "failed" } {
+type ReportSurface =
+  | {
+      readonly kind: "surface"
+      readonly processor: MessageProcessor<ReactComponentImplementation>
+      readonly surface: SurfaceModel<ReactComponentImplementation>
+    }
+  | { readonly kind: "failed" }
+
+function reportSurfaceOf(components: readonly A2uiReportComponent[]): ReportSurface {
   const processor = new MessageProcessor<ReactComponentImplementation>([REPORT_CATALOG])
   try {
     processor.processMessages([
@@ -111,7 +124,27 @@ function reportSurfaceOf(
     return { kind: "failed" }
   }
   const surface = processor.model.surfacesMap.get(SURFACE_ID)
-  return surface === undefined ? { kind: "failed" } : { kind: "surface", surface }
+  return surface === undefined ? { kind: "failed" } : { kind: "surface", processor, surface }
+}
+
+/** 面にまだ無い部品を足す。A2UI の検証が拒んだら（`processMessages` が投げる）、それまでの面のままにする。 */
+function addMissingComponents(
+  surface: Extract<ReportSurface, { readonly kind: "surface" }>,
+  components: readonly A2uiReportComponent[],
+): void {
+  const missing = components.filter(
+    (part) => surface.surface.componentsModel.get(part.id) === undefined,
+  )
+  if (missing.length === 0) {
+    return
+  }
+  try {
+    surface.processor.processMessages([
+      { version: "v0.9", updateComponents: { surfaceId: SURFACE_ID, components: [...missing] } },
+    ])
+  } catch {
+    // 足せなかった部品は面の外のまま。描く側は一覧から引くので、本文は伸びた一覧で描かれる。
+  }
 }
 
 function useReport(): ReportContextValue {

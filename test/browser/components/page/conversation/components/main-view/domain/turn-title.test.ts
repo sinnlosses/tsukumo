@@ -22,6 +22,7 @@ function reportStep(id: number, firstLine: string): MainViewStep {
       finishedPhase: { kind: "none" },
       changeSummary: { kind: "none" },
     },
+    origin: { kind: "other" },
     interim: false,
     superseded: false,
     final: false,
@@ -38,6 +39,7 @@ function turn(overrides: Partial<MainViewTurn>): MainViewTurn {
     hasInterimReport: false,
     droppedCount: 0,
     failure: { kind: "none" },
+    drafts: [],
     ...overrides,
   }
 }

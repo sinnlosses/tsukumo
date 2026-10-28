@@ -147,7 +147,9 @@
     "row-panel-decision",
     "row-panel-status",
     "a2ui-row-card-decision",
-    "a2ui-row-card-status"
+    "a2ui-row-card-status",
+    "a2ui-staged-draft",
+    "a2ui-staged-rejected"
   ],
   "pastSessions": [
     {

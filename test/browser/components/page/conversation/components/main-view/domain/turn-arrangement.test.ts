@@ -43,6 +43,7 @@ function step(id: number, shape: StepShape): MainViewStep {
             finishedPhase: shape.finishedPhase,
             changeSummary: { kind: "none" },
           },
+    origin: { kind: "other" },
     interim: shape.kind === "interim",
     superseded: shape.kind === "interim",
     final: shape.kind === "final",
@@ -62,6 +63,7 @@ function turn(
     hasInterimReport: steps.some((entry) => entry.interim),
     droppedCount: 0,
     failure,
+    drafts: [],
   }
 }
 

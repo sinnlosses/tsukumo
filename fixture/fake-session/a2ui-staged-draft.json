@@ -1,0 +1,259 @@
+{
+  "name": "a2ui-staged-draft",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "部品が届くたびに草稿として描かれるかを見たい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 800,
+      "event": { "kind": "report-drafting", "toolUseId": "fake-staged-interim" }
+    },
+    {
+      "afterMs": 1600,
+      "event": {
+        "kind": "report-draft-component",
+        "toolUseId": "fake-staged-interim",
+        "component": {
+          "id": "root",
+          "component": "Report",
+          "conclusion": ["架空の途中の結論: 調べ始めた。"],
+          "children": ["s1"]
+        }
+      }
+    },
+    {
+      "afterMs": 2400,
+      "event": {
+        "kind": "report-draft-component",
+        "toolUseId": "fake-staged-interim",
+        "component": {
+          "id": "s1",
+          "component": "Section",
+          "heading": "架空の途中の見立て",
+          "children": ["p1"]
+        }
+      }
+    },
+    {
+      "afterMs": 3200,
+      "event": {
+        "kind": "report-draft-component",
+        "toolUseId": "fake-staged-interim",
+        "component": {
+          "id": "p1",
+          "component": "Paragraph",
+          "text": "架空の途中の段落。ここまでで分かったことを一文で書く。",
+          "fold": "",
+          "aside": ""
+        }
+      }
+    },
+    {
+      "afterMs": 4000,
+      "event": {
+        "kind": "report",
+        "toolUseId": "fake-staged-interim",
+        "components": [
+          {
+            "id": "root",
+            "component": "Report",
+            "conclusion": ["架空の途中の結論: 調べ始めた。"],
+            "children": ["s1"]
+          },
+          {
+            "id": "s1",
+            "component": "Section",
+            "heading": "架空の途中の見立て",
+            "children": ["p1"]
+          },
+          {
+            "id": "p1",
+            "component": "Paragraph",
+            "text": "架空の途中の段落。ここまでで分かったことを一文で書く。"
+          }
+        ]
+      }
+    },
+    {
+      "afterMs": 4050,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-staged-interim",
+        "content": "ok",
+        "isError": false
+      }
+    },
+    {
+      "afterMs": 5000,
+      "event": { "kind": "report-drafting", "toolUseId": "fake-staged-final" }
+    },
+    {
+      "afterMs": 5800,
+      "event": {
+        "kind": "report-draft-component",
+        "toolUseId": "fake-staged-final",
+        "component": {
+          "id": "root",
+          "component": "Report",
+          "conclusion": ["架空の結論: 部品が届くたびに本文が伸びた。"],
+          "children": ["s1", "s2"]
+        }
+      }
+    },
+    {
+      "afterMs": 6600,
+      "event": {
+        "kind": "report-draft-component",
+        "toolUseId": "fake-staged-final",
+        "component": {
+          "id": "s1",
+          "component": "Section",
+          "heading": "架空の表の節",
+          "children": ["p1", "t1"]
+        }
+      }
+    },
+    {
+      "afterMs": 7400,
+      "event": {
+        "kind": "report-draft-component",
+        "toolUseId": "fake-staged-final",
+        "component": {
+          "id": "p1",
+          "component": "Paragraph",
+          "text": "架空の一つ目の段落。表の前に置く前置きの一文。",
+          "fold": "",
+          "aside": ""
+        }
+      }
+    },
+    {
+      "afterMs": 8200,
+      "event": {
+        "kind": "report-draft-component",
+        "toolUseId": "fake-staged-final",
+        "component": {
+          "id": "t1",
+          "component": "Table",
+          "title": "架空の数の表",
+          "columns": ["架空の項目", "架空の数"],
+          "rows": [
+            ["架空の甲", "12"],
+            ["架空の乙", "7"]
+          ],
+          "rest": "",
+          "fold": "",
+          "aside": ""
+        }
+      }
+    },
+    {
+      "afterMs": 9000,
+      "event": {
+        "kind": "report-draft-component",
+        "toolUseId": "fake-staged-final",
+        "component": {
+          "id": "s2",
+          "component": "Section",
+          "heading": "架空の二つ目の節",
+          "children": ["p2"]
+        }
+      }
+    },
+    {
+      "afterMs": 9800,
+      "event": {
+        "kind": "report-draft-component",
+        "toolUseId": "fake-staged-final",
+        "component": {
+          "id": "p2",
+          "component": "Paragraph",
+          "text": "架空の二つ目の段落。最後に届く葉。草稿として描いていた本文は、確定版に入れ替わっても書き上げる演出を掛けない。この段落は演出が掛かる長さを超えるように、架空の説明を続けて書いている。部品が届くたびに本文が伸び、確定版が届いた時点で番号と頭の欄が足される。入れ替わりの前後で、目次と演出がどう見えるかを撮って確かめる。架空の説明はここで終わらず、もう少しだけ続く。読み終えた本文をもう一度書き直すと、読み手は同じものを二度読むことになるので、それを避けたい。",
+          "fold": "",
+          "aside": ""
+        }
+      }
+    },
+    {
+      "afterMs": 10600,
+      "event": {
+        "kind": "report",
+        "toolUseId": "fake-staged-final",
+        "components": [
+          {
+            "id": "root",
+            "component": "Report",
+            "conclusion": ["架空の結論: 部品が届くたびに本文が伸びた。"],
+            "checks": [
+              {
+                "status": "ok",
+                "label": "架空の単体テスト",
+                "figure": "3 件",
+                "command": "",
+                "detail": "",
+                "howToVerify": ""
+              }
+            ],
+            "children": ["s1", "s2"],
+            "closing": { "text": "描けたよ！", "expression": "proud" }
+          },
+          {
+            "id": "s1",
+            "component": "Section",
+            "heading": "架空の表の節",
+            "children": ["p1", "t1"]
+          },
+          {
+            "id": "p1",
+            "component": "Paragraph",
+            "text": "架空の一つ目の段落。表の前に置く前置きの一文。"
+          },
+          {
+            "id": "t1",
+            "component": "Table",
+            "title": "架空の数の表",
+            "columns": ["架空の項目", "架空の数"],
+            "rows": [
+              ["架空の甲", "12"],
+              ["架空の乙", "7"]
+            ]
+          },
+          {
+            "id": "s2",
+            "component": "Section",
+            "heading": "架空の二つ目の節",
+            "children": ["p2"]
+          },
+          {
+            "id": "p2",
+            "component": "Paragraph",
+            "text": "架空の二つ目の段落。最後に届く葉。草稿として描いていた本文は、確定版に入れ替わっても書き上げる演出を掛けない。この段落は演出が掛かる長さを超えるように、架空の説明を続けて書いている。部品が届くたびに本文が伸び、確定版が届いた時点で番号と頭の欄が足される。入れ替わりの前後で、目次と演出がどう見えるかを撮って確かめる。架空の説明はここで終わらず、もう少しだけ続く。読み終えた本文をもう一度書き直すと、読み手は同じものを二度読むことになるので、それを避けたい。"
+          }
+        ]
+      }
+    },
+    {
+      "afterMs": 10650,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-staged-final",
+        "content": "ok",
+        "isError": false
+      }
+    },
+    {
+      "afterMs": 12650,
+      "event": {
+        "kind": "turn-finished",
+        "outcome": {
+          "kind": "completed"
+        }
+      }
+    }
+  ]
+}

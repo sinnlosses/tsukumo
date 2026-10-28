@@ -75,6 +75,21 @@ describe("mainViewEntries（記録ごとの結果の持ち回し）", () => {
       entry.kind === "report" ? [bodyMarkdownOf(finalReportBody(entry.regions))] : [],
     )
 
+  it("report の記録は、呼び出しの toolUseId を持ったまま entry になる", () => {
+    const entries = mainViewEntries(
+      foldTimed([
+        [ask, 0],
+        [report("toolu_r1"), 1_000],
+        [report("toolu_r2"), 2_000],
+      ]),
+    )
+
+    expect(entries.flatMap((entry) => (entry.kind === "report" ? [entry.toolUseId] : []))).toEqual([
+      "toolu_r1",
+      "toolu_r2",
+    ])
+  })
+
   it("記録を足しても、前からある記録の結果は同じ参照のまま返る", () => {
     const before: readonly Timed[] = [
       [ask, 0],
