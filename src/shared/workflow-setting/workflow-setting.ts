@@ -21,10 +21,10 @@ export type WorkflowSettingChoice = {
 }
 
 /**
- * 画面に描く欄1つ（スキルの並び）。
+ * スキルの並びの欄。
  * `current` は実行の順の全名で、`.tw/config.toml` に書いてある値か、書いていなければワークフローが決めた既定。`values` に無い名前を含みうる。
  */
-export type WorkflowSettingField = {
+export type WorkflowSettingStepsField = {
   readonly kind: "steps"
   readonly key: string
   readonly label: string
@@ -32,6 +32,38 @@ export type WorkflowSettingField = {
   readonly values: readonly WorkflowSettingChoice[]
   readonly current: readonly string[]
 }
+
+/** 選択肢1つ。 */
+export type WorkflowSettingOptionValue = {
+  readonly value: string
+  readonly label: string
+  readonly description: string
+}
+
+/** 決められた選択肢から1つを選ぶ欄。`current` は書いてある値か既定。 */
+export type WorkflowSettingChoiceField = {
+  readonly kind: "choice"
+  readonly key: string
+  readonly label: string
+  readonly description: string
+  readonly values: readonly WorkflowSettingOptionValue[]
+  readonly current: string
+}
+
+/** コマンド1行を書く欄。`current` は書いてある値か既定。 */
+export type WorkflowSettingCommandField = {
+  readonly kind: "command"
+  readonly key: string
+  readonly label: string
+  readonly description: string
+  readonly current: string
+}
+
+/** tsukumo が読む欄1つ。 */
+export type WorkflowSettingField =
+  | WorkflowSettingStepsField
+  | WorkflowSettingChoiceField
+  | WorkflowSettingCommandField
 
 /** 欄を出せないわけ。 */
 export type WorkflowSettingUnavailableReason =
@@ -68,23 +100,42 @@ export type WorkflowSettingChange =
 
 const repositorySchema = z.object({ worktreeName: z.string(), configPath: z.string() })
 
-const fieldSchema = z.object({
-  kind: z.literal("steps"),
-  key: z.string(),
-  label: z.string(),
-  description: z.string(),
-  values: z
-    .array(
-      z.object({
-        value: z.string(),
-        label: z.string(),
-        title: z.string(),
-        description: z.string(),
-      }),
-    )
-    .readonly(),
-  current: z.array(z.string()).readonly(),
-})
+const fieldSchema = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("steps"),
+    key: z.string(),
+    label: z.string(),
+    description: z.string(),
+    values: z
+      .array(
+        z.object({
+          value: z.string(),
+          label: z.string(),
+          title: z.string(),
+          description: z.string(),
+        }),
+      )
+      .readonly(),
+    current: z.array(z.string()).readonly(),
+  }),
+  z.object({
+    kind: z.literal("choice"),
+    key: z.string(),
+    label: z.string(),
+    description: z.string(),
+    values: z
+      .array(z.object({ value: z.string(), label: z.string(), description: z.string() }))
+      .readonly(),
+    current: z.string(),
+  }),
+  z.object({
+    kind: z.literal("command"),
+    key: z.string(),
+    label: z.string(),
+    description: z.string(),
+    current: z.string(),
+  }),
+])
 
 /** 配る形そのもの（{@link WorkflowSettingView} と同じ鍵）。 */
 export const workflowSettingViewSchema = z.discriminatedUnion("kind", [

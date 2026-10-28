@@ -69,17 +69,41 @@ const stepsEntrySchema = z.object({
   ),
 })
 
-type SchemaEntry = z.infer<typeof stepsEntrySchema>
+const choiceEntrySchema = z.object({
+  key: z.string(),
+  label: z.string(),
+  description: z.string(),
+  kind: z.literal("choice"),
+  default: z.string(),
+  values: z.array(z.object({ value: z.string(), label: z.string(), description: z.string() })),
+})
 
-// `steps` 以外の `kind` の欄は描けないので、中身を見ずに読み飛ばす。
+const commandEntrySchema = z.object({
+  key: z.string(),
+  label: z.string(),
+  description: z.string(),
+  kind: z.literal("command"),
+  default: z.string(),
+})
+
+const READABLE_KINDS: readonly string[] = ["steps", "choice", "command"]
+
+type SchemaEntry =
+  | z.infer<typeof stepsEntrySchema>
+  | z.infer<typeof choiceEntrySchema>
+  | z.infer<typeof commandEntrySchema>
+
+// 読まない `kind` の欄（`readonly` など）は、中身を見ずに読み飛ばす。
 const otherKindEntrySchema = z
-  .object({ kind: z.string().refine((kind) => kind !== "steps") })
+  .object({ kind: z.string().refine((kind) => !READABLE_KINDS.includes(kind)) })
   .transform(() => undefined)
 
 const configSchemaSchema = z
   .object({
     schema: z.literal(2),
-    keys: z.array(z.union([stepsEntrySchema, otherKindEntrySchema])),
+    keys: z.array(
+      z.union([stepsEntrySchema, choiceEntrySchema, commandEntrySchema, otherKindEntrySchema]),
+    ),
   })
   .transform((parsed) => ({
     schema: parsed.schema,
@@ -198,19 +222,34 @@ function foldConfig(
 }
 
 function fieldOf(entry: SchemaEntry, raw: unknown): WorkflowSettingField {
-  return {
-    kind: "steps",
-    key: entry.key,
-    label: entry.label,
-    description: entry.description,
-    values: entry.values.map((choice) => ({
-      value: choice.value,
-      label: choice.label,
-      title: choice.title ?? choice.label,
-      description: choice.description,
-    })),
-    current: stepsOf(raw, entry.default),
+  const head = { key: entry.key, label: entry.label, description: entry.description }
+  switch (entry.kind) {
+    case "steps":
+      return {
+        kind: "steps",
+        ...head,
+        values: entry.values.map((choice) => ({
+          value: choice.value,
+          label: choice.label,
+          title: choice.title ?? choice.label,
+          description: choice.description,
+        })),
+        current: stepsOf(raw, entry.default),
+      }
+    case "choice":
+      return {
+        kind: "choice",
+        ...head,
+        values: entry.values,
+        current: textOf(raw, entry.default),
+      }
+    case "command":
+      return { kind: "command", ...head, current: textOf(raw, entry.default) }
   }
+}
+
+function textOf(raw: unknown, fallback: string): string {
+  return typeof raw === "string" ? raw : fallback
 }
 
 function unavailable(

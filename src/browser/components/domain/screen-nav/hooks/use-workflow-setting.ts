@@ -9,8 +9,8 @@ import { isDeepEqual } from "remeda"
 
 import type {
   WorkflowSettingChange,
-  WorkflowSettingField,
   WorkflowSettingRepository,
+  WorkflowSettingStepsField,
   WorkflowSettingView,
 } from "../../../../../shared/workflow-setting/workflow-setting.ts"
 import { rpc } from "../../../../domain/rpc.ts"
@@ -152,14 +152,17 @@ export function useWorkflowSetting(): ScreenNavWorkflowSetting {
       message: unavailableMessage(view),
     }
   }
-  const dirtyFields = view.fields.filter((field) => {
+  const stepsFields = view.fields.filter(
+    (field): field is WorkflowSettingStepsField => field.kind === "steps",
+  )
+  const dirtyFields = stepsFields.filter((field) => {
     const draft = drafts.get(field.key)
     return draft !== undefined && !isDeepEqual(draft, field.current)
   })
   return {
     kind: "available",
     repository: repositoryLine(view.repository),
-    rows: view.fields.map((field) =>
+    rows: stepsFields.map((field) =>
       stepsRow(
         field,
         drafts.get(field.key) ?? field.current,
@@ -190,7 +193,7 @@ export function useWorkflowSetting(): ScreenNavWorkflowSetting {
 }
 
 function stepsRow(
-  field: WorkflowSettingField,
+  field: WorkflowSettingStepsField,
   draft: readonly string[],
   notice: ScreenNavWorkflowSettingNotice,
   setDraft: (next: readonly string[]) => void,
@@ -248,7 +251,7 @@ function moveTarget(index: number, to: ScreenNavWorkflowSettingMove, length: num
 
 /** 下書きのある欄が1つで、今の値から1つだけ外して順はそのままなら「<名前>を外した」。 */
 function draftChange(
-  dirtyFields: readonly WorkflowSettingField[],
+  dirtyFields: readonly WorkflowSettingStepsField[],
   drafts: ReadonlyMap<string, readonly string[]>,
 ): ScreenNavWorkflowSettingDraftChange {
   const [field, ...others] = dirtyFields

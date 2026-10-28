@@ -240,9 +240,9 @@ describe("readWorkflowSetting", () => {
     expect(currents).toEqual([["架空:一つ目"], ["架空:一つ目"]])
   })
 
-  it("steps でない kind の欄は読み飛ばし、steps の欄だけを描く", async () => {
-    const choice = { key: "架空の選択", label: "選択", kind: "choice", values: [] }
-    const mixed = { ...SCHEMA, keys: [...SCHEMA.keys, choice] }
+  it("読まない kind の欄は読み飛ばし、読める欄だけを返す", async () => {
+    const fixed = { key: "架空の固定", label: "固定", kind: "readonly" }
+    const mixed = { ...SCHEMA, keys: [...SCHEMA.keys, fixed] }
 
     const view = await readWorkflowSetting(portOf({ schema: ran(0, JSON.stringify(mixed)) }), PLACE)
 
@@ -251,15 +251,144 @@ describe("readWorkflowSetting", () => {
     ])
   })
 
-  it("steps の欄が無ければ欄は空で、schema-unsupported にしない", async () => {
-    const onlyChoice = { schema: 2, keys: [{ key: "架空の選択", kind: "choice" }] }
+  it("読める欄が無ければ欄は空で、schema-unsupported にしない", async () => {
+    const onlyFixed = { schema: 2, keys: [{ key: "架空の固定", kind: "readonly" }] }
 
     const view = await readWorkflowSetting(
-      portOf({ schema: ran(0, JSON.stringify(onlyChoice)) }),
+      portOf({ schema: ran(0, JSON.stringify(onlyFixed)) }),
       PLACE,
     )
 
     expect(view).toEqual({ kind: "available", repository: REPOSITORY, fields: [] })
+  })
+
+  it("steps・choice・command の欄を schema の順に3種で返し、readonly は飛ばす", async () => {
+    const schema = {
+      schema: 2,
+      keys: [
+        ...SCHEMA.keys,
+        {
+          key: "架空の選択",
+          label: "選択",
+          description: "選択の説明",
+          kind: "choice",
+          default: "a",
+          values: [
+            { value: "a", label: "甲", description: "甲の説明" },
+            { value: "b", label: "乙", description: "乙の説明" },
+          ],
+        },
+        { key: "架空の固定", label: "固定", description: "", kind: "readonly" },
+        {
+          key: "架空の命令",
+          label: "命令",
+          description: "命令の説明",
+          kind: "command",
+          default: "なし",
+        },
+      ],
+    }
+    const config = configJson([
+      { key: "steps", value: ["架空:二つ目"] },
+      { key: "架空の選択", value: "b" },
+      { key: "架空の命令", value: "架空の命令行" },
+    ])
+
+    const view = await readWorkflowSetting(
+      portOf({ schema: ran(0, JSON.stringify(schema)), config: ran(0, config) }),
+      PLACE,
+    )
+
+    expect(view.kind === "available" ? view.fields.map((field) => field.kind) : view.kind).toEqual([
+      "steps",
+      "choice",
+      "command",
+    ])
+    expect(view.kind === "available" ? view.fields.slice(1) : []).toEqual([
+      {
+        kind: "choice",
+        key: "架空の選択",
+        label: "選択",
+        description: "選択の説明",
+        values: [
+          { value: "a", label: "甲", description: "甲の説明" },
+          { value: "b", label: "乙", description: "乙の説明" },
+        ],
+        current: "b",
+      },
+      {
+        kind: "command",
+        key: "架空の命令",
+        label: "命令",
+        description: "命令の説明",
+        current: "架空の命令行",
+      },
+    ])
+  })
+
+  it("--json に値が無い、または文字列でない choice・command は default が current になる", async () => {
+    const schema = {
+      schema: 2,
+      keys: [
+        {
+          key: "架空の選択",
+          label: "選択",
+          description: "",
+          kind: "choice",
+          default: "a",
+          values: [{ value: "a", label: "甲", description: "" }],
+        },
+        { key: "架空の命令", label: "命令", description: "", kind: "command", default: "なし" },
+      ],
+    }
+    const configs = [configJson([]), configJson([{ key: "架空の命令", value: ["配列"] }])]
+
+    const currents = await Promise.all(
+      configs.map(async (config) => {
+        const view = await readWorkflowSetting(
+          portOf({ schema: ran(0, JSON.stringify(schema)), config: ran(0, config) }),
+          PLACE,
+        )
+        return view.kind === "available"
+          ? view.fields.map((field) => (field.kind === "steps" ? "" : field.current))
+          : view.kind
+      }),
+    )
+
+    expect(currents).toEqual([
+      ["a", "なし"],
+      ["a", "なし"],
+    ])
+  })
+
+  it("choice の values が欠けた欄があると欄は作られず schema-unsupported になる", async () => {
+    const broken = {
+      schema: 2,
+      keys: [
+        ...SCHEMA.keys,
+        { key: "架空の選択", label: "選択", description: "", kind: "choice", default: "a" },
+      ],
+    }
+
+    const view = await readWorkflowSetting(
+      portOf({ schema: ran(0, JSON.stringify(broken)) }),
+      PLACE,
+    )
+
+    expect(view).toEqual({
+      kind: "unavailable",
+      repository: { worktreeName: "架空の作業ツリー", configPath: "/架空/根/.tw/config.toml" },
+      reason: "schema-unsupported",
+      detail: "",
+    })
+  })
+
+  it("steps だけを返す古い出力は steps の欄だけを返す", async () => {
+    const view = await readWorkflowSetting(portOf({}), PLACE)
+
+    expect(view.kind === "available" ? view.fields.map((field) => field.kind) : view.kind).toEqual([
+      "steps",
+    ])
   })
 
   it("kind が steps で形の崩れた欄は schema-unsupported のまま", async () => {

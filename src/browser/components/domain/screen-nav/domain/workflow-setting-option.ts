@@ -2,7 +2,7 @@
 
 import type {
   WorkflowSettingChoice,
-  WorkflowSettingField,
+  WorkflowSettingStepsField,
 } from "../../../../../shared/workflow-setting/workflow-setting.ts"
 
 export type WorkflowSettingOption = {
@@ -30,7 +30,7 @@ export type WorkflowSettingSteps = {
  * 並びは今の値の順のまま、候補に無い名前も残して `known: false` を付ける。
  * 足せるのは `values` のうち並びに無いものだけで、SDK の一覧は使わない。
  */
-export function workflowSettingSteps(field: WorkflowSettingField): WorkflowSettingSteps {
+export function workflowSettingSteps(field: WorkflowSettingStepsField): WorkflowSettingSteps {
   const choices = new Map<string, WorkflowSettingChoice>(
     field.values.map((choice) => [choice.value, choice] as const),
   )
