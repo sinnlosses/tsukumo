@@ -18,7 +18,7 @@ import {
 
 const REJECTION_HEADER = "レポートの記法の規約に次の違反がある。直して `report` を呼び直すこと:"
 const MARKDOWN_NOTATION_LINE =
-  "- `markdown` の塊に塊で書ける記法（`#` / `##` の見出し）がある。代わりに節の `heading`を使う"
+  "- `Markdown` に部品で書ける記法（`#` / `##` の見出し）がある。代わりに節の `heading`を使う"
 
 function violationLines(rejection: string): readonly string[] {
   return rejection.split("\n").slice(1, -1)
@@ -35,7 +35,7 @@ describe("reportRejectionText", () => {
     expect(rejection).toBe(
       [
         REJECTION_HEADER,
-        "- `conclusion` が3要素ある。1要素1文で2要素以内にし、残りは `sections` へ移す",
+        "- `conclusion` が3要素ある。1要素1文で2要素以内にし、残りは `Section` へ移す",
         MARKDOWN_NOTATION_LINE,
         REPORT_CHANGED_FIELDS_ONLY_TEXT,
       ].join("\n"),
@@ -56,7 +56,7 @@ describe("reportRejectionText", () => {
     }
     const rejection = reportRejectionText(reportViolations(report))
     expect(violationLines(rejection)).toEqual([
-      "- `path` 付きの `code` の塊が1個、ファイルの中身と一致しない（src/fixture-f.ts）。実物を読み直して直すか `path` を外す",
+      "- `path` 付きの `Code` が1個、ファイルの中身と一致しない（src/fixture-f.ts）。実物を読み直して直すか `path` を外す",
     ])
   })
 
@@ -123,7 +123,7 @@ describe("reportRejectionText", () => {
       ])
       const rejection = reportRejectionText(reportViolations(report))
       expect(violationLines(rejection)).toEqual([
-        "- `svg` の図形が `width` × `height` の外に出ている（2個目の 2 番目、2個目の 3 番目）。幅の目安は 480〜640 で、図形の座標と大きさを 0〜`width`・0〜`height` の内側に収める",
+        "- `Svg` の図形が `width` × `height` の外に出ている（2個目の 2 番目、2個目の 3 番目）。幅の目安は 480〜640 で、図形の座標と大きさを 0〜`width`・0〜`height` の内側に収める",
       ])
     })
 
@@ -153,7 +153,7 @@ describe("reportRejectionText", () => {
       ])
       const rejection = reportRejectionText(reportViolations(report))
       expect(violationLines(rejection)).toEqual([
-        "- `svg` の `rect` の `tone` が `legend` に無い（2個目の b）。`legend` に `tone` と名前を足す（色だけで意味を言わない）",
+        "- `Svg` の `rect` の `tone` が `legend` に無い（2個目の b）。`legend` に `tone` と名前を足す（色だけで意味を言わない）",
       ])
       expect(kinds(draft([toned("a", [{ tone: "a", label: "層" }])]))).toEqual([])
     })
@@ -181,7 +181,7 @@ describe("reportRejectionText", () => {
       ])
       const rejection = reportRejectionText(reportViolations(report))
       expect(violationLines(rejection)).toEqual([
-        "- `graph` の ` @a`〜` @e` の色の目印が `legend` に無い（1個目の b）。`legend` に `tone` と名前を足す（色だけで意味を言わない）",
+        "- `Graph` の ` @a`〜` @e` の色の目印が `legend` に無い（1個目の b）。`legend` に `tone` と名前を足す（色だけで意味を言わない）",
       ])
       expect(kinds(draft([graph("C -> D @c", [{ tone: "c", label: "線" }])]))).toEqual([])
     })
@@ -314,7 +314,7 @@ describe("reportRejectionText", () => {
       expect(violations).toEqual([{ kind: "figure-contradiction", count: 2, reason: "no-shape" }])
       const rejection = reportRejectionText(violations)
       expect(violationLines(rejection)).toEqual([
-        "- `figure` の reason が `no-shape` なのに、`sections` に流れ・つながり・構造を描く塊（`list` の `flow`・`beforeAfter`・`graph`・`mermaid`・`svg`）が2個ある。その図を `figure` に置くか、合う reason にする",
+        "- `figure` の reason が `no-shape` なのに、`Section` に流れ・つながり・構造を描く部品（`ItemList` の `flow`・`BeforeAfter`・`Graph`・`Mermaid`・`Svg`）が2個ある。その図を `figure` に置くか、合う reason にする",
       ])
     })
 

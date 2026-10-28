@@ -1,4 +1,4 @@
-// 逃げ道（`markdown` の塊）の中の記法の検出。
+// 逃げ道（`Markdown` の部品）の中の記法の検出。
 // 逃げ道を構文木（mdast）にして文書の順に辿り、ブラウザが記法として描く形だけを数える。
 // HTML の容れ物（`<details>` / `<div>`）は木にならないので、深さは `html` ノードの中のタグを1つずつ数えて決める。
 
@@ -11,14 +11,14 @@ import { markdownTreeOf, nodesInOrder } from "./markdown-tree.ts"
 /** 逃げ道の中の記法 → 差し戻しの文面での呼び名と、代わりに使うもの。 */
 export const MARKDOWN_NOTATION_NAMES = {
   heading: { written: "`#` / `##` の見出し", replacement: "節の `heading`" },
-  table: { written: "表", replacement: "`table` の塊" },
-  list: { written: "箇条書き", replacement: "`list` の塊" },
-  note: { written: "`note` の塊", replacement: "`note` の塊（種別は `tone`）" },
-  stats: { written: "`stats` の塊", replacement: "`stats` の塊" },
-  code: { written: "フェンス", replacement: "`code` の塊" },
-  mermaid: { written: "mermaid のフェンス", replacement: "`mermaid` の塊" },
-  chart: { written: "`chart` のフェンス", replacement: "`chart` の塊" },
-  image: { written: "画像（`![]()` / `<img>`）", replacement: "`image` の塊" },
+  table: { written: "表", replacement: "`Table`" },
+  list: { written: "箇条書き", replacement: "`ItemList`" },
+  note: { written: "class が `note` の要素", replacement: "`Note`（種別は `tone`）" },
+  stats: { written: "class が `stats` の要素", replacement: "`Stats`" },
+  code: { written: "フェンス", replacement: "`Code`" },
+  mermaid: { written: "mermaid のフェンス", replacement: "`Mermaid`" },
+  chart: { written: "`chart` のフェンス", replacement: "`Chart`" },
+  image: { written: "画像（`![]()` / `<img>`）", replacement: "`Picture`" },
 } as const satisfies Record<string, { readonly written: string; readonly replacement: string }>
 
 /** 逃げ道の中に書くと差し戻す記法（塊の種類か節の見出しで書けるもの）。 */

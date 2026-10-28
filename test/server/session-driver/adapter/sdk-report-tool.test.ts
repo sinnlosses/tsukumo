@@ -19,7 +19,7 @@ import {
 } from "../../../fixture/sdk-tool.ts"
 
 const UNKNOWN_MERMAID_LINE =
-  "- mermaid の図に規約の2種（sequenceDiagram・stateDiagram-v2）の外の種類が1個ある。flowchart は graph の塊で書き、それ以外の図は table・list・svg で書く"
+  "- `Mermaid` の図に規約の2種（sequenceDiagram・stateDiagram-v2）の外の種類が1個ある。flowchart は `Graph` で書き、それ以外の図は `Table`・`ItemList`・`Svg` で書く"
 
 /** 省けない欄をそろえた `report` の欄。 */
 const COMPLETE = {
@@ -309,7 +309,7 @@ describe("report の本文（components）", () => {
     expect(accepted).toEqual({ text: "架空の結論", isError: false, endsTurn: true })
     expect(rejected.isError).toBe(true)
     expect(rejected.text.split("\n")[1]).toBe(
-      "- `markdown` の塊に塊で書ける記法（箇条書き）がある。代わりに`list` の塊を使う",
+      "- `Markdown` に部品で書ける記法（箇条書き）がある。代わりに`ItemList`を使う",
     )
   })
 })

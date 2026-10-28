@@ -82,98 +82,98 @@ const A2UI_STRUCTURE_FAULT_REASONS = {
 function violationLine(violation: ReportViolation): string {
   switch (violation.kind) {
     case "long-conclusion":
-      return `\`conclusion\` が${violation.count}要素ある。1要素1文で2要素以内にし、残りは \`sections\` へ移す`
+      return `\`conclusion\` が${violation.count}要素ある。1要素1文で2要素以内にし、残りは \`Section\` へ移す`
     case "unknown-mermaid":
-      return `mermaid の図に規約の2種（sequenceDiagram・stateDiagram-v2）の外の種類が${violation.count}個ある。flowchart は graph の塊で書き、それ以外の図は table・list・svg で書く`
+      return `\`Mermaid\` の図に規約の2種（sequenceDiagram・stateDiagram-v2）の外の種類が${violation.count}個ある。flowchart は \`Graph\` で書き、それ以外の図は \`Table\`・\`ItemList\`・\`Svg\` で書く`
     case "too-many-notes":
-      return `\`note\` の塊が${violation.count}個ある。2個まで減らす`
+      return `\`Note\` が${violation.count}個ある。2個まで減らす`
     case "crowded-notes":
-      return `隣り合う、または見出しの直後にある \`note\` が${violation.count}個ある。間に別の塊を挟むか、\`text\` に直す（\`warn\` / \`ng\` は例外）`
+      return `隣り合う、または見出しの直後にある \`Note\` が${violation.count}個ある。間に別の部品を挟むか、\`Paragraph\` に直す（\`warn\` / \`ng\` は例外）`
     case "nested-fold":
       return `\`fold\` と \`<details>\` が入れ子になっている塊が${violation.count}個ある。畳むのは1段だけにする`
     case "unordered-options":
-      return `候補が採る → 検討 → 採らないの順に並んでいない \`options\` が${violation.count}個ある。採る候補から順に並べ直す`
+      return `候補が採る → 検討 → 採らないの順に並んでいない \`Options\` が${violation.count}個ある。採る候補から順に並べ直す`
     case "ragged-table":
-      return `行のセルの数が \`columns\` と揃わない表（\`matrix\` を含む）が${violation.count}個ある。セルの数を揃える`
+      return `行のセルの数が \`columns\` と揃わない表（\`Matrix\` を含む）が${violation.count}個ある。セルの数を揃える`
     case "long-table":
       return `行が${String(MAX_TABLE_ROWS + 1)}以上で \`rest\` が空の表が${violation.count}個ある。上位${String(MAX_TABLE_ROWS)}行までを残し、残りを \`rest\` に書く`
     case "many-emphasis-rows":
       return `強調の行（\`emphasis\`）が${String(MAX_EMPHASIS_ROWS + 1)}行以上の表が${violation.count}個ある。強調は${String(MAX_EMPHASIS_ROWS)}行までに絞る`
     case "sentence-table":
-      return `セルの平均が${String(SENTENCE_CELL_LENGTH)}字以上の列がある表が${violation.count}個ある。その列を \`label\` 付きの \`list\` か文の塊へ移すか、セルを語句・数・状態に縮める`
+      return `セルの平均が${String(SENTENCE_CELL_LENGTH)}字以上の列がある表が${violation.count}個ある。その列を \`label\` 付きの \`ItemList\` か \`Paragraph\` へ移すか、セルを語句・数・状態に縮める`
     case "long-list":
-      return `項目が${String(MAX_LIST_ITEMS + 1)}件以上の \`list\` が${violation.count}個ある。上位を残し、最後の項目を「ほか n 件」にして${String(MAX_LIST_ITEMS)}件までにする`
+      return `項目が${String(MAX_LIST_ITEMS + 1)}件以上の \`ItemList\` が${violation.count}個ある。上位を残し、最後の項目を「ほか n 件」にして${String(MAX_LIST_ITEMS)}件までにする`
     case "bad-cards":
-      return `\`cards\` の \`list\` が項目数 2〜4 か、全項目に \`label\` を付ける形になっていない（${violation.faults
+      return `\`cards\` の \`ItemList\` が項目数 2〜4 か、全項目に \`label\` を付ける形になっていない（${violation.faults
         .map(
           ({ position, itemCount, unlabeled }) =>
             `${String(position)}個目の塊は${String(itemCount)}項目${unlabeled ? "で `label` の空がある" : ""}`,
         )
         .join("・")}）。2〜4 項目に絞り全項目に題を付けるか、\`bullet\` / \`flow\` に直す`
     case "long-code":
-      return `\`marks\` が無く${String(MAX_PLAIN_CODE_LINES + 1)}行以上の \`code\` が${violation.count}個ある。要る範囲だけを引く（${String(MAX_PLAIN_CODE_LINES)}行まで）`
+      return `\`marks\` が無く${String(MAX_PLAIN_CODE_LINES + 1)}行以上の \`Code\` が${violation.count}個ある。要る範囲だけを引く（${String(MAX_PLAIN_CODE_LINES)}行まで）`
     case "ragged-chart":
-      return `\`series\` の \`values\` の数が \`labels\` と揃わない、または \`arrow\`・\`slope\`・\`span\` の \`series\` が前と後（span は始まりと終わり）の2つでない \`chart\` の塊が${violation.count}個ある。数を揃える`
+      return `\`series\` の \`values\` の数が \`labels\` と揃わない、または \`arrow\`・\`slope\`・\`span\` の \`series\` が前と後（span は始まりと終わり）の2つでない \`Chart\` が${violation.count}個ある。数を揃える`
     case "unknown-emphasis":
-      return `\`emphasis\` に \`labels\` に無い名前がある \`chart\` の塊が${violation.count}個ある。\`labels\` にある名前だけにする`
+      return `\`emphasis\` に \`labels\` に無い名前がある \`Chart\` が${violation.count}個ある。\`labels\` にある名前だけにする`
     case "short-series":
-      return `\`stats\` の \`series\` が1〜2個の項目がある塊が${violation.count}個ある。3つ以上にするか省く`
+      return `\`Stats\` の \`series\` が1〜2個の項目がある塊が${violation.count}個ある。3つ以上にするか省く`
     case "untitled-section":
       return `見出しの無い節が${violation.count}個ある。節が2つ以上なら全部に \`heading\` を付ける`
     case "markdown-notation":
-      return `\`markdown\` の塊に塊で書ける記法（${violation.notations
+      return `\`Markdown\` に部品で書ける記法（${violation.notations
         .map((notation) => MARKDOWN_NOTATION_NAMES[notation].written)
         .join("・")}）がある。代わりに${violation.notations
         .map((notation) => MARKDOWN_NOTATION_NAMES[notation].replacement)
         .join("・")}を使う`
     case "code-mismatch":
-      return `\`path\` 付きの \`code\` の塊が${violation.count}個、ファイルの中身と一致しない（${violation.paths.join("・")}）。実物を読み直して直すか \`path\` を外す`
+      return `\`path\` 付きの \`Code\` が${violation.count}個、ファイルの中身と一致しない（${violation.paths.join("・")}）。実物を読み直して直すか \`path\` を外す`
     case "code-marks-range":
-      return `\`code\` の \`marks\` の \`lines\` が読めない形か \`source\` の行数の外にある塊が${violation.count}個ある。\`4-8\` か \`12\` の形で、行数以内に直す`
+      return `\`Code\` の \`marks\` の \`lines\` が読めない形か \`source\` の行数の外にある部品が${violation.count}個ある。\`4-8\` か \`12\` の形で、行数以内に直す`
     case "region-range":
-      return `\`beforeAfter\` の画像の側の \`region\` が画像の外に出る、または \`width\`・\`height\` が 0 以下の塊が${violation.count}個ある。\`left\`・\`top\` は 0 以上、\`left + width\` と \`top + height\` は 100 以下、\`width\`・\`height\` は 0 より大きい%にする`
+      return `\`BeforeAfter\` の画像の側の \`region\` が画像の外に出る、または \`width\`・\`height\` が 0 以下の塊が${violation.count}個ある。\`left\`・\`top\` は 0 以上、\`left + width\` と \`top + height\` は 100 以下、\`width\`・\`height\` は 0 より大きい%にする`
     case "broken-svg":
-      return `\`svg\` の図形が \`width\` × \`height\` の外に出ている（${svgFaultPositions(violation.faults)}）。幅の目安は 480〜640 で、図形の座標と大きさを 0〜\`width\`・0〜\`height\` の内側に収める`
+      return `\`Svg\` の図形が \`width\` × \`height\` の外に出ている（${svgFaultPositions(violation.faults)}）。幅の目安は 480〜640 で、図形の座標と大きさを 0〜\`width\`・0〜\`height\` の内側に収める`
     case "unlegended-svg-tone":
-      return `\`svg\` の \`rect\` の \`tone\` が \`legend\` に無い（${toneFaultPositions(violation.faults)}）。\`legend\` に \`tone\` と名前を足す（色だけで意味を言わない）`
+      return `\`Svg\` の \`rect\` の \`tone\` が \`legend\` に無い（${toneFaultPositions(violation.faults)}）。\`legend\` に \`tone\` と名前を足す（色だけで意味を言わない）`
     case "unlegended-graph-tone":
-      return `\`graph\` の \` @a\`〜\` @e\` の色の目印が \`legend\` に無い（${toneFaultPositions(violation.faults)}）。\`legend\` に \`tone\` と名前を足す（色だけで意味を言わない）`
+      return `\`Graph\` の \` @a\`〜\` @e\` の色の目印が \`legend\` に無い（${toneFaultPositions(violation.faults)}）。\`legend\` に \`tone\` と名前を足す（色だけで意味を言わない）`
     case "broken-graph":
-      return `\`graph\` の \`source\` に読めない行がある（${graphFaultPositions(violation.faults)}）。1行を \`A -> B: 語\` の形に直す（\`: 語\` は省ける）。囲みは \`[群の名]\` 〜 \`[]\` で、内側を先に \`[]\` で閉じる入れ子は2階層まで（3階層以上と閉じ忘れは読めない）。箱の説明は \`名前 | 一\\n二\` の \`\\n\` で区切って3行まで（空の行も不可）`
+      return `\`Graph\` の \`source\` に読めない行がある（${graphFaultPositions(violation.faults)}）。1行を \`A -> B: 語\` の形に直す（\`: 語\` は省ける）。囲みは \`[群の名]\` 〜 \`[]\` で、内側を先に \`[]\` で閉じる入れ子は2階層まで（3階層以上と閉じ忘れは読めない）。箱の説明は \`名前 | 一\\n二\` の \`\\n\` で区切って3行まで（空の行も不可）`
     case "broken-timeline":
-      return `\`timeline\` の時刻に誤りがある（${timelineFaultPositions(violation.faults)}）。時刻は HH:MM・ISO の日時・分の数のどれか1つに揃え（日をまたぐなら ISO）、同じ lane の行は start の昇順、extra は昇順、end は start より後、出来事は at の昇順にし、\`emphasis\` は行の \`name\` と同じ字にする`
+      return `\`Timeline\` の時刻に誤りがある（${timelineFaultPositions(violation.faults)}）。時刻は HH:MM・ISO の日時・分の数のどれか1つに揃え（日をまたぐなら ISO）、同じ lane の行は start の昇順、extra は昇順、end は start より後、出来事は at の昇順にし、\`emphasis\` は行の \`name\` と同じ字にする`
     case "long-first-sentence":
-      return `\`conclusion\` の1要素目がいま${String(violation.length)}字で、全角${String(MAX_FIRST_SENTENCE)}字を超える。1要素目を短くし、補足は2要素目か \`sections\` へ移す`
+      return `\`conclusion\` の1要素目がいま${String(violation.length)}字で、全角${String(MAX_FIRST_SENTENCE)}字を超える。1要素目を短くし、補足は2要素目か \`Section\` へ移す`
     case "bad-heading":
       return `見出しが${violation.count}個、${String(MAX_HEADING)}字を超えるか疑問文になっている。その節の結論を言う短い語にする`
     case "unobserved-without-how":
       return `\`checks\` の \`unobserved\` の行のうち \`howToVerify\` が空のものが${violation.count}個ある。知らない人が繰り返せる確かめ方を1〜2文で書く`
     case "arrow-in-prose":
-      return `地の文・表のセルに \`A → B\` と書いた塊が${violation.count}個ある。セルは \`from\` / \`to\`、流れは \`list\` の \`flow\` にする`
+      return `地の文・表のセルに \`A → B\` と書いた塊が${violation.count}個ある。セルは \`from\` / \`to\`、流れは \`ItemList\` の \`flow\` にする`
     case "label-in-item":
-      return `\`list\` の項目の \`text\` が「名前: 説明」の形になっているものが${violation.count}個ある。名前を \`label\` に分ける`
+      return `\`ItemList\` の項目の \`text\` が「名前: 説明」の形になっているものが${violation.count}個ある。名前を \`label\` に分ける`
     case "labeled-ordered":
-      return `全部の項目に \`label\` がある3段以上の \`ordered\` の \`list\` が${violation.count}個ある。名前の付いた段を辿る流れは \`flow\` にする`
+      return `全部の項目に \`label\` がある3段以上の \`ordered\` の \`ItemList\` が${violation.count}個ある。名前の付いた段を辿る流れは \`flow\` にする`
     case "non-japanese":
       return `仮名も漢字も無い英語の地の文が${violation.count}個ある。日本語で書き直す（識別子・パス・コマンド・コードは \`\` で囲めば英語のままでよい）`
     case "plain-word":
       return `地の文にわかりにくい語がある。${plainWordReplacements(violation.spellings)}。言い換えて書き直す（コード・引用の中は対象外）`
     case "figure-contradiction":
       return violation.reason === "no-shape"
-        ? `\`figure\` の reason が \`no-shape\` なのに、\`sections\` に流れ・つながり・構造を描く塊（\`list\` の \`flow\`・\`beforeAfter\`・\`graph\`・\`mermaid\`・\`svg\`）が${violation.count}個ある。その図を \`figure\` に置くか、合う reason にする`
+        ? `\`figure\` の reason が \`no-shape\` なのに、\`Section\` に流れ・つながり・構造を描く部品（\`ItemList\` の \`flow\`・\`BeforeAfter\`・\`Graph\`・\`Mermaid\`・\`Svg\`）が${violation.count}個ある。その図を \`figure\` に置くか、合う reason にする`
         : `\`figure\` の reason が \`short-answer\` なのに、節が2つ以上ある。2〜3文で終わる答えでなければ \`figure\` に図を置くか、合う reason にする`
     case "broken-inline-mark":
       return `行内の印の書式（\`{{A → B}}\`・\`{{spark: 数 数 …}}\`・\`{{a / b}}\`）に当たらない \`{{\` が${violation.count}個ある。書式に合わせて直すか、\`{{\` を使わない書き方にする`
     case "figure-number-mismatch":
-      return `\`plot\` の値とずれた数が本文にある（${figureNumberFaultPositions(violation.faults)}）。単位と丸めを \`plot\` の値に揃えて、本文の数を直す`
+      return `\`Plot\` の値とずれた数が本文にある（${figureNumberFaultPositions(violation.faults)}）。単位と丸めを \`Plot\` の値に揃えて、本文の数を直す`
     case "plot-forbidden-form":
-      return `\`plot\` の \`form\` が置いてはならない形に当たる塊が${violation.count}個ある（${violation.rules.join("・")}）。\`form\` を省いて決定表の形に任せる`
+      return `\`Plot\` の \`form\` が置いてはならない形に当たる塊が${violation.count}個ある（${violation.rules.join("・")}）。\`form\` を省いて決定表の形に任せる`
     case "plot-title-without-number":
-      return `棒・折れ線・円で描く \`plot\` の \`question\` に数が無い塊が${violation.count}個ある。題に数と向きで言いたい傾向を1文で書く`
+      return `棒・折れ線・円で描く \`Plot\` の \`question\` に数が無い塊が${violation.count}個ある。題に数と向きで言いたい傾向を1文で書く`
     case "template-miss":
       return `申告した依頼の型の雛形から外れた点がある（${violation.misses.join("・")}）。数の帯 \`keyFigures\` を足すか、図 1 を型の第一候補の種類にする`
     case "plot-form-override":
-      return `\`plot\` の \`form\` が決定表の形と違う塊が${violation.count}個ある。決定表の形で足りるなら \`form\` を省く`
+      return `\`Plot\` の \`form\` が決定表の形と違う塊が${violation.count}個ある。決定表の形で足りるなら \`form\` を省く`
   }
 }
 
