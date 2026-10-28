@@ -116,3 +116,18 @@
   受け付けた値で効いているのを見届けたこと（塗り）を言い分ける。字は出さず、ポインタを載せたときの `title` だけが言う
   （`docs/architecture/screen-design/nav-mode-control.md` 13.9「設定の点」）
 - **避ける言い方**: 設定の口の右肩の点（旧称。「設定の口」が `tw config` を指す語だったため紛れる）
+
+### デザイントークン
+
+- **英語識別子（予定）**: `--space-*`・`--radius-*`・`--shadow-*`・`--motion-*`（色は `--ink`・`--surface` など、字の大きさは `--font-*`。値は `src/browser/styles/theme.css`）
+- **定義**: 画面の見た目の値（色・字の大きさ・余白・角丸・影・動き）に付けた名前で、CSS のカスタムプロパティ。CSS はトークンを `var()` で読み、値を直に書かない
+  （`docs/architecture/screen-design/design-token.md` 13.14）
+- **注記**: 余白・角丸は大きさの語（`md`）、影・動きは使う場面の語（`raised`・`fast`）で付ける
+- **避ける言い方**: 単に「トークン」（LLM のトークン消費と紛れる。画面の文書は「デザイントークン」と書く）
+
+### 見本帳
+
+- **英語識別子（予定）**: `design`（画面の hash は `#design`）
+- **定義**: デザイントークン・`ui/` の部品・カタログの全部品を 1 ページに並べて確かめる専用の画面。帯には出さず、hash を打って開く
+  （`docs/architecture/screen-design/design-token.md` 13.17）
+- **避ける言い方**: Storybook（入れない。`docs/architecture/adr/0041-design-system-tokens-and-gallery.md`）、スタイルガイド
