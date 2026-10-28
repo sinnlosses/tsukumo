@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>サイドバーのタスク行: ループ可・待ちの見せ方 4案（見本）</title>
+<style>
+  :root {
+    --surface: #221f2b; --ink: #e8e3ea; --accent: #f2b0a0;
+    --ink-quiet: color-mix(in srgb, var(--ink) 60%, transparent);
+    --ink-soft: color-mix(in srgb, var(--ink) 72%, transparent);
+    --rule: color-mix(in srgb, var(--surface), var(--ink) 32%);
+    --rule-soft: color-mix(in srgb, var(--surface), var(--ink) 12%);
+    --state-ok: #7ee081; --state-warn: #e3c766; --state-ng: #f2a0a0;
+    --info: #8fb8e8;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 24px; background: #17151d; color: var(--ink); font: 13px/1.5 -apple-system, "Hiragino Sans", sans-serif; }
+  h1 { font-size: 15px; margin: 0 0 4px; }
+  p.lead { margin: 0 0 20px; color: var(--ink-quiet); }
+  .cases { display: grid; grid-template-columns: repeat(4, 320px); gap: 20px; align-items: start; }
+  .case h2 { font-size: 13px; margin: 0 0 2px; }
+  .case p { margin: 0 0 8px; color: var(--ink-quiet); font-size: 11.5px; min-height: 52px; }
+  .side { background: var(--surface); border: 1px solid var(--rule-soft); border-radius: 12px; padding: 8px 6px; }
+  .side h3 { margin: 6px 10px 4px; font-size: 11px; font-weight: 600; color: var(--ink-quiet); letter-spacing: .04em; }
+  ul { list-style: none; margin: 0; padding: 0; }
+  .row { display: grid; align-items: center; height: 40px; padding: 0 8px 0 10px; column-gap: 10px; border-radius: 9px; position: relative; }
+  .row:hover { background: rgb(255 255 255 / .035); }
+  .id { font-size: 11px; color: var(--ink-quiet); font-variant-numeric: tabular-nums; }
+  .sum { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 12.5px; }
+  .chev { color: var(--ink-quiet); font-size: 12px; }
+
+  /* 印 */
+  .mk { width: 12px; height: 12px; display: inline-block; justify-self: center; }
+  .mk.todo { border: 1.5px solid var(--ink-soft); border-radius: 50%; }
+  .mk.doing { background: var(--accent); border-radius: 50%; }
+  .mk.hold { border-left: 3px solid var(--state-warn); border-right: 3px solid var(--state-warn); width: 11px; height: 11px; }
+  .mk.blocked { border: 1.5px dashed var(--state-warn); border-radius: 3px; }
+
+  /* 案A: 印の形を状態で変え、右端に ↻ */
+  .a .row { grid-template-columns: 14px 50px minmax(0,1fr) 22px 16px; }
+  .loop { font-size: 13px; color: var(--state-ok); text-align: center; }
+  .noloop { color: var(--rule); text-align: center; font-size: 11px; }
+
+  /* 案B: 右に文字のチップ */
+  .b .row { grid-template-columns: 14px 50px minmax(0,1fr) auto 16px; }
+  .chip { font-size: 10.5px; padding: 1px 7px; border-radius: 99px; border: 1px solid; white-space: nowrap; }
+  .chip.loop { color: var(--state-ok); border-color: color-mix(in srgb, var(--state-ok) 55%, transparent); }
+  .chip.wait { color: var(--state-warn); border-color: color-mix(in srgb, var(--state-warn) 55%, transparent); }
+  .chip.hand { color: var(--ink-quiet); border-color: var(--rule-soft); }
+
+  /* 案C: 左の色帯 */
+  .c .row { grid-template-columns: 14px 50px minmax(0,1fr) 16px; padding-left: 14px; }
+  .c .row::before { content: ""; position: absolute; left: 3px; top: 8px; bottom: 8px; width: 3px; border-radius: 2px; }
+  .c .row.go::before { background: var(--state-ok); }
+  .c .row.wait::before { background: repeating-linear-gradient(180deg, var(--state-warn) 0 4px, transparent 4px 7px); }
+  .c .row.hand::before { background: var(--rule); }
+  .legend { display: flex; gap: 12px; padding: 6px 10px 2px; font-size: 10.5px; color: var(--ink-quiet); }
+  .legend i { display: inline-block; width: 3px; height: 10px; margin-right: 4px; vertical-align: -1px; border-radius: 2px; }
+
+  /* 案D: 区画で分ける */
+  .d .row { grid-template-columns: 14px 50px minmax(0,1fr) 16px; }
+  .d h3 .n { color: var(--ink-quiet); font-weight: 400; margin-left: 4px; }
+  .d h3.go { color: var(--state-ok); } .d h3.wait { color: var(--state-warn); }
+  .why { grid-column: 3 / 4; font-size: 10.5px; color: var(--ink-quiet); margin-top: -2px; }
+  .d .row.tall { height: 48px; align-content: center; row-gap: 0; }
+  .d .row.tall > .mk { grid-column: 1; grid-row: 1 / span 2; }
+  .d .row.tall > .id { grid-column: 2; grid-row: 1 / span 2; }
+  .d .row.tall > .sum { grid-column: 3; grid-row: 1; }
+  .d .row.tall > .why { grid-column: 3; grid-row: 2; }
+  .d .row.tall > .chev { grid-column: 4; grid-row: 1 / span 2; }
+</style>
+</head>
+<body>
+<h1>サイドバーのタスク行: ループ可・待ちを一覧で読む 4案</h1>
+<p class="lead">同じ6件を4通りで描いた。「ループ可」= <code>loopable: Y</code> の着手できる行、「待ち」= 依存で止まった行（blocked）と <code>hold</code> の行、「手で」= <code>loopable: N</code> の着手できる行。値は実画面の theme.css と task-item の寸法に合わせてある。</p>
+
+<div class="cases">
+
+<section class="case a">
+  <h2>案A 印の形 + 右端の ↻</h2>
+  <p>印の形で待ち（破線の角丸＝依存待ち、二本線＝hold）を言い、右端の ↻ でループ可を言う。列は1つ増えるだけ。</p>
+  <div class="side"><ul>
+    <li class="row"><span class="mk todo"></span><span class="id">GH-1731</span><span class="sum">描画の共有層をつなぐ</span><span class="loop" title="ループ可">↻</span><span class="chev">›</span></li>
+    <li class="row"><span class="mk todo"></span><span class="id">GH-1709</span><span class="sum">report に row と panel を足す</span><span class="loop">↻</span><span class="chev">›</span></li>
+    <li class="row"><span class="mk todo"></span><span class="id">GH-1733</span><span class="sum">操作の状態を自作する</span><span class="noloop">·</span><span class="chev">›</span></li>
+    <li class="row"><span class="mk blocked"></span><span class="id">GH-1738</span><span class="sum">surface を結線する</span><span class="loop">↻</span><span class="chev">›</span></li>
+    <li class="row"><span class="mk hold"></span><span class="id">GH-1725</span><span class="sum">決定待ちの移行方針</span><span class="noloop">·</span><span class="chev">›</span></li>
+    <li class="row"><span class="mk hold"></span><span class="id">GH-1734</span><span class="sum">ADR と振り返り</span><span class="loop">↻</span><span class="chev">›</span></li>
+  </ul></div>
+</section>
+
+<section class="case b">
+  <h2>案B 右端の文字チップ</h2>
+  <p>「ループ」「待ち」「手で」を語で出す。読むのに慣れが要らない。代わりに題の幅が約40px削れる。</p>
+  <div class="side"><ul>
+    <li class="row"><span class="mk todo"></span><span class="id">GH-1731</span><span class="sum">描画の共有層をつなぐ</span><span class="chip loop">ループ</span><span class="chev">›</span></li>
+    <li class="row"><span class="mk todo"></span><span class="id">GH-1709</span><span class="sum">report に row と panel を足す</span><span class="chip loop">ループ</span><span class="chev">›</span></li>
+    <li class="row"><span class="mk todo"></span><span class="id">GH-1733</span><span class="sum">操作の状態を自作する</span><span class="chip hand">手で</span><span class="chev">›</span></li>
+    <li class="row"><span class="mk todo"></span><span class="id">GH-1738</span><span class="sum">surface を結線する</span><span class="chip wait">待ち</span><span class="chev">›</span></li>
+    <li class="row"><span class="mk todo"></span><span class="id">GH-1725</span><span class="sum">決定待ちの移行方針</span><span class="chip wait">待ち</span><span class="chev">›</span></li>
+    <li class="row"><span class="mk todo"></span><span class="id">GH-1734</span><span class="sum">ADR と振り返り</span><span class="chip wait">待ち</span><span class="chev">›</span></li>
+  </ul></div>
+</section>
+
+<section class="case c">
+  <h2>案C 左の色帯</h2>
+  <p>行の左端に3pxの帯。緑の実線＝ループ可、黄の破線＝待ち、灰＝手で。行の幅は変わらず、縦に並ぶと一目で塊が見える。凡例が要る。</p>
+  <div class="side">
+    <div class="legend"><span><i style="background:var(--state-ok)"></i>ループ可</span><span><i style="background:var(--state-warn)"></i>待ち</span><span><i style="background:var(--rule)"></i>手で</span></div>
+    <ul>
+    <li class="row go"><span class="mk todo"></span><span class="id">GH-1731</span><span class="sum">描画の共有層をつなぐ</span><span class="chev">›</span></li>
+    <li class="row go"><span class="mk todo"></span><span class="id">GH-1709</span><span class="sum">report に row と panel を足す</span><span class="chev">›</span></li>
+    <li class="row hand"><span class="mk todo"></span><span class="id">GH-1733</span><span class="sum">操作の状態を自作する</span><span class="chev">›</span></li>
+    <li class="row wait"><span class="mk todo"></span><span class="id">GH-1738</span><span class="sum">surface を結線する</span><span class="chev">›</span></li>
+    <li class="row wait"><span class="mk todo"></span><span class="id">GH-1725</span><span class="sum">決定待ちの移行方針</span><span class="chev">›</span></li>
+    <li class="row wait"><span class="mk todo"></span><span class="id">GH-1734</span><span class="sum">ADR と振り返り</span><span class="chev">›</span></li>
+  </ul></div>
+</section>
+
+<section class="case d">
+  <h2>案D 区画で分ける</h2>
+  <p>「ループで進める」「待ち」「手で」の小見出しで束ねる。行は今のまま。待ちの行は題の下に理由を1行足せる（高さ48px）。並びが変わるのが欠点。</p>
+  <div class="side">
+    <h3 class="go">ループで進める<span class="n">2</span></h3>
+    <ul>
+      <li class="row"><span class="mk todo"></span><span class="id">GH-1731</span><span class="sum">描画の共有層をつなぐ</span><span class="chev">›</span></li>
+      <li class="row"><span class="mk todo"></span><span class="id">GH-1709</span><span class="sum">report に row と panel を足す</span><span class="chev">›</span></li>
+    </ul>
+    <h3>手で進める<span class="n">1</span></h3>
+    <ul>
+      <li class="row"><span class="mk todo"></span><span class="id">GH-1733</span><span class="sum">操作の状態を自作する</span><span class="chev">›</span></li>
+    </ul>
+    <h3 class="wait">待ち<span class="n">3</span></h3>
+    <ul>
+      <li class="row tall"><span class="mk blocked"></span><span class="id">GH-1738</span><span class="sum">surface を結線する</span><span class="chev">›</span><span class="why">GH-1731 の完了待ち</span></li>
+      <li class="row tall"><span class="mk hold"></span><span class="id">GH-1725</span><span class="sum">決定待ちの移行方針</span><span class="chev">›</span><span class="why">移行の向きが決まれば todo</span></li>
+      <li class="row tall"><span class="mk hold"></span><span class="id">GH-1734</span><span class="sum">ADR と振り返り</span><span class="chev">›</span><span class="why">GH-1728 の送付後に再開</span></li>
+    </ul>
+  </div>
+</section>
+
+</div>
+</body>
+</html>

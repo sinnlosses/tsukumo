@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>サイドバーのタスク行 案A: hold と依存待ちの描き分け（見本）</title>
+<style>
+  :root {
+    --surface: #221f2b; --ink: #e8e3ea; --accent: #f2b0a0;
+    --ink-quiet: color-mix(in srgb, var(--ink) 60%, transparent);
+    --ink-soft: color-mix(in srgb, var(--ink) 72%, transparent);
+    --rule: color-mix(in srgb, var(--surface), var(--ink) 32%);
+    --rule-soft: color-mix(in srgb, var(--surface), var(--ink) 12%);
+    --state-ok: #7ee081; --state-warn: #e3c766; --state-ng: #f2a0a0;
+    --state-info: #8fb8e8;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 24px; background: #17151d; color: var(--ink); font: 13px/1.5 -apple-system, "Hiragino Sans", sans-serif; }
+  h1 { font-size: 15px; margin: 0 0 4px; }
+  p.lead { margin: 0 0 20px; color: var(--ink-quiet); max-width: 1100px; }
+  .cases { display: grid; grid-template-columns: repeat(3, 340px); gap: 20px; align-items: start; }
+  .case h2 { font-size: 13px; margin: 0 0 2px; }
+  .case p { margin: 0 0 8px; color: var(--ink-quiet); font-size: 11.5px; min-height: 66px; }
+  .side { background: var(--surface); border: 1px solid var(--rule-soft); border-radius: 12px; padding: 8px 6px; }
+  ul { list-style: none; margin: 0; padding: 0; }
+  .row { display: grid; align-items: center; height: 40px; padding: 0 8px 0 10px; column-gap: 10px; border-radius: 9px; grid-template-columns: 14px 50px minmax(0,1fr) auto 22px 16px; }
+  .row:hover { background: rgb(255 255 255 / .035); }
+  .id { font-size: 11px; color: var(--ink-quiet); font-variant-numeric: tabular-nums; }
+  .sum { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 12.5px; }
+  .row.waiting .sum { color: var(--ink-soft); }
+  .chev { color: var(--ink-quiet); font-size: 12px; }
+  .mk { width: 12px; height: 12px; display: inline-block; justify-self: center; }
+  .mk.todo { border: 1.5px solid var(--ink-soft); border-radius: 50%; }
+  svg.ic { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; justify-self: center; }
+  .blocked { color: var(--state-warn); }
+  .hold { color: var(--state-info); }
+  .loop { font-size: 13px; color: var(--state-ok); text-align: center; }
+  .loop.dim { color: color-mix(in srgb, var(--state-ok) 38%, transparent); }
+  .noloop { color: var(--rule); text-align: center; font-size: 11px; }
+  .tag { font-size: 10.5px; white-space: nowrap; }
+  .tag.blocked { color: var(--state-warn); }
+  .tag.hold { color: var(--state-info); }
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 14px; padding: 4px 10px 8px; font-size: 10.5px; color: var(--ink-quiet); border-bottom: 1px solid var(--rule-soft); margin-bottom: 4px; }
+  .legend span { display: inline-flex; align-items: center; gap: 4px; }
+</style>
+</head>
+<body>
+<h1>案A の発展: hold と依存待ちを別の印で言う</h1>
+<p class="lead">印（左の列）が「いま着手できるか・なぜ着手できないか」、右端の ↻ が「ループで進めてよいか」。待ちには2種類ある。<b>依存待ち</b>＝先行タスクの完了で自然に解ける（黄・砂時計）。<b>hold</b>＝人の決定で解ける（青・一時停止）。下の6件は3案とも同じ並び。</p>
+
+<div class="cases">
+
+<section class="case">
+  <h2>A1 印の形と色だけで分ける</h2>
+  <p>砂時計（黄）＝依存待ち、一時停止（青）＝hold。↻ は着手できる行は緑、待ちの行は薄い緑（解けたらループ可、の意味）。語は出さないので幅は変わらない。</p>
+  <div class="side">
+    <div class="legend">
+      <span><svg class="ic" style="color:var(--ink-soft)" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.5"/></svg>着手できる</span>
+      <span class="blocked"><svg class="ic" viewBox="0 0 16 16"><path d="M4 2h8M4 14h8M5 2c0 4 6 4 6 6s-6 2-6 6M11 2c0 4-6 4-6 6s6 2 6 6"/></svg>依存待ち</span>
+      <span class="hold"><svg class="ic" viewBox="0 0 16 16"><path d="M5.5 3v10M10.5 3v10"/></svg>hold</span>
+      <span style="color:var(--state-ok)">↻ ループ可</span>
+    </div>
+    <ul>
+      <li class="row"><span class="mk todo"></span><span class="id">GH-1731</span><span class="sum">描画の共有層をつなぐ</span><span></span><span class="loop">↻</span><span class="chev">›</span></li>
+      <li class="row"><span class="mk todo"></span><span class="id">GH-1709</span><span class="sum">report に row と panel を足す</span><span></span><span class="loop">↻</span><span class="chev">›</span></li>
+      <li class="row"><span class="mk todo"></span><span class="id">GH-1733</span><span class="sum">操作の状態を自作する</span><span></span><span class="noloop">·</span><span class="chev">›</span></li>
+      <li class="row waiting"><svg class="ic blocked" viewBox="0 0 16 16"><path d="M4 2h8M4 14h8M5 2c0 4 6 4 6 6s-6 2-6 6M11 2c0 4-6 4-6 6s6 2 6 6"/></svg><span class="id">GH-1738</span><span class="sum">surface を結線する</span><span></span><span class="loop dim">↻</span><span class="chev">›</span></li>
+      <li class="row waiting"><svg class="ic hold" viewBox="0 0 16 16"><path d="M5.5 3v10M10.5 3v10"/></svg><span class="id">GH-1725</span><span class="sum">決定待ちの移行方針</span><span></span><span class="noloop">·</span><span class="chev">›</span></li>
+      <li class="row waiting"><svg class="ic hold" viewBox="0 0 16 16"><path d="M5.5 3v10M10.5 3v10"/></svg><span class="id">GH-1734</span><span class="sum">ADR と振り返り</span><span></span><span class="loop dim">↻</span><span class="chev">›</span></li>
+    </ul>
+  </div>
+</section>
+
+<section class="case">
+  <h2>A2 印＋待ち相手の短い札</h2>
+  <p>A1 に、題の右へ「何を待つか」を1語足す。依存待ちは待つ相手の ID、hold は「決定」。待ちの理由まで一覧で読める。題は約50px削れる。</p>
+  <div class="side">
+    <ul>
+      <li class="row"><span class="mk todo"></span><span class="id">GH-1731</span><span class="sum">描画の共有層をつなぐ</span><span></span><span class="loop">↻</span><span class="chev">›</span></li>
+      <li class="row"><span class="mk todo"></span><span class="id">GH-1709</span><span class="sum">report に row と panel を足す</span><span></span><span class="loop">↻</span><span class="chev">›</span></li>
+      <li class="row"><span class="mk todo"></span><span class="id">GH-1733</span><span class="sum">操作の状態を自作する</span><span></span><span class="noloop">·</span><span class="chev">›</span></li>
+      <li class="row waiting"><svg class="ic blocked" viewBox="0 0 16 16"><path d="M4 2h8M4 14h8M5 2c0 4 6 4 6 6s-6 2-6 6M11 2c0 4-6 4-6 6s6 2 6 6"/></svg><span class="id">GH-1738</span><span class="sum">surface を結線する</span><span class="tag blocked">←1731</span><span class="loop dim">↻</span><span class="chev">›</span></li>
+      <li class="row waiting"><svg class="ic hold" viewBox="0 0 16 16"><path d="M5.5 3v10M10.5 3v10"/></svg><span class="id">GH-1725</span><span class="sum">決定待ちの移行方針</span><span class="tag hold">決定</span><span class="noloop">·</span><span class="chev">›</span></li>
+      <li class="row waiting"><svg class="ic hold" viewBox="0 0 16 16"><path d="M5.5 3v10M10.5 3v10"/></svg><span class="id">GH-1734</span><span class="sum">ADR と振り返り</span><span class="tag hold">決定</span><span class="loop dim">↻</span><span class="chev">›</span></li>
+    </ul>
+  </div>
+</section>
+
+<section class="case">
+  <h2>A3 hold は行ごと沈める</h2>
+  <p>依存待ちは A1 のまま「もうすぐ動く行」として扱い、hold は題と ID を薄くして「人が動かすまで触らない行」に見せる。↻ は hold の行では出さない（解除されるまでループに乗らないため）。</p>
+  <div class="side">
+    <ul>
+      <li class="row"><span class="mk todo"></span><span class="id">GH-1731</span><span class="sum">描画の共有層をつなぐ</span><span></span><span class="loop">↻</span><span class="chev">›</span></li>
+      <li class="row"><span class="mk todo"></span><span class="id">GH-1709</span><span class="sum">report に row と panel を足す</span><span></span><span class="loop">↻</span><span class="chev">›</span></li>
+      <li class="row"><span class="mk todo"></span><span class="id">GH-1733</span><span class="sum">操作の状態を自作する</span><span></span><span class="noloop">·</span><span class="chev">›</span></li>
+      <li class="row waiting"><svg class="ic blocked" viewBox="0 0 16 16"><path d="M4 2h8M4 14h8M5 2c0 4 6 4 6 6s-6 2-6 6M11 2c0 4-6 4-6 6s6 2 6 6"/></svg><span class="id">GH-1738</span><span class="sum">surface を結線する</span><span></span><span class="loop dim">↻</span><span class="chev">›</span></li>
+      <li class="row" style="opacity:.55"><svg class="ic hold" viewBox="0 0 16 16"><path d="M5.5 3v10M10.5 3v10"/></svg><span class="id">GH-1725</span><span class="sum">決定待ちの移行方針</span><span></span><span></span><span class="chev">›</span></li>
+      <li class="row" style="opacity:.55"><svg class="ic hold" viewBox="0 0 16 16"><path d="M5.5 3v10M10.5 3v10"/></svg><span class="id">GH-1734</span><span class="sum">ADR と振り返り</span><span></span><span></span><span class="chev">›</span></li>
+    </ul>
+  </div>
+</section>
+
+</div>
+</body>
+</html>
