@@ -37,7 +37,12 @@ const MARKS_TOKEN_PREFIX = "marks="
 
 /** フェンスの info に添える 1 語（空白を含まない）。 */
 export function encodeMarks(marks: readonly CodeMark[]): string {
-  return `${MARKS_TOKEN_PREFIX}${encodeURIComponent(JSON.stringify(marks))}`
+  return `${MARKS_TOKEN_PREFIX}${marksToken(marks)}`
+}
+
+/** `decodeMarks` が読む形（`marks=` の頭を除いた部分）。 */
+export function marksToken(marks: readonly CodeMark[]): string {
+  return encodeURIComponent(JSON.stringify(marks))
 }
 
 /** info の meta から末尾の `marks=` の語を切り離す。`rest` は残り（前後の空白を落とす）。 */

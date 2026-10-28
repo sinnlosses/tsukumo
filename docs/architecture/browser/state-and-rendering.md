@@ -48,7 +48,7 @@
 react-markdown
   remarkPlugins: [remark-gfm]
   rehypePlugins: [rehype-raw, [rehype-sanitize, schema], rehype-highlight]
-  components: { code: フェンスの言語で MermaidBlock / ChartBlock / 通常 に振り分け, a: 許可スキームだけ }
+  components: { code: フェンスの言語で FenceFigure（MermaidBlock / ChartBlock など）/ 通常 に振り分け, a: 許可スキームだけ }
 ```
 
 - Markdown 一式は**会話の画面の部品 `conversation/components/markdown/`** に置く（読み手が `<Report>`・

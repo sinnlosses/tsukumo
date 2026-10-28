@@ -1,5 +1,5 @@
 import { cleanup, render } from "@testing-library/react"
-import { afterEach, beforeAll, describe, expect, it } from "vitest"
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
 
 import {
   DirectLeaf,
@@ -13,8 +13,15 @@ import type { A2uiReportComponent } from "../../../../../../../src/shared/report
 import type { SectionBlock } from "../../../../../../../src/shared/report/report-block.ts"
 import { reportLeafLayoutOf } from "../../../../../../../src/shared/report/report-leaf-value.ts"
 import { reportSectionPieces } from "../../../../../../../src/shared/report/report-markdown.ts"
+import { stubIntersectionObserver } from "../../../../../../fixture/intersection.ts"
+
+vi.mock(
+  "../../../../../../../src/browser/components/page/conversation/components/markdown/renderer/vendor-script.ts",
+  () => ({ loadVendorScript: () => new Promise(() => {}), preloadVendorScript: () => {} }),
+)
 
 beforeAll(async () => {
+  stubIntersectionObserver(false)
   await loadMarkdown()
 })
 
@@ -38,7 +45,74 @@ const ADOPT_ITEMS: { name: string; verdict: "adopt" | "consider" | "reject"; rea
   { name: "架空の案丁", verdict: "reject", reason: "架空の理由丁" },
 ]
 
+const CHART_LABELS: string[] = ["架空1", "架空2", "架空3"]
+const CHART_SERIES: { name: string; values: number[] }[] = [{ name: "架空系列", values: [3, 1, 2] }]
+const CODE_MARKS: { lines: string; label: string }[] = [{ lines: "2", label: "架空の印" }]
+
 const PAIRS = [
+  {
+    block: {
+      kind: "code",
+      language: "ts",
+      path: "",
+      source: "const a = 1\nconst b = 2\n",
+      marks: CODE_MARKS,
+      fold: "",
+      aside: "",
+    },
+    part: {
+      id: "k1",
+      component: "Code",
+      language: "ts",
+      path: "",
+      source: "const a = 1\nconst b = 2\n",
+      marks: CODE_MARKS,
+      fold: "",
+      aside: "",
+    },
+  },
+  {
+    block: {
+      kind: "mermaid",
+      title: "架空の図",
+      source: "sequenceDiagram\n  A->>B: 架空",
+      fold: "",
+      aside: "",
+    },
+    part: {
+      id: "m1",
+      component: "Mermaid",
+      title: "架空の図",
+      source: "sequenceDiagram\n  A->>B: 架空",
+      fold: "",
+      aside: "",
+    },
+  },
+  {
+    block: {
+      kind: "chart",
+      title: "架空のグラフ",
+      chartKind: "bar",
+      labels: CHART_LABELS,
+      series: CHART_SERIES,
+      horizontal: false,
+      emphasis: [],
+      fold: "",
+      aside: "",
+    },
+    part: {
+      id: "c1",
+      component: "Chart",
+      title: "架空のグラフ",
+      chartKind: "bar",
+      labels: CHART_LABELS,
+      series: CHART_SERIES,
+      horizontal: false,
+      emphasis: [],
+      fold: "",
+      aside: "",
+    },
+  },
   {
     block: { kind: "text", text: LONG_TEXT, fold: "", aside: "" },
     part: { id: "p1", component: "Paragraph", text: LONG_TEXT, fold: "", aside: "" },

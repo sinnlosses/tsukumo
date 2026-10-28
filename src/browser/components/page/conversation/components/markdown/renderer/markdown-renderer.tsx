@@ -10,7 +10,7 @@
 // - `rehypeInlineMark` で、文中の行内の印（`{{12 → 8}}` など）を `span` に替える（サニタイズのあと。`code`・`pre` の中は触らない）
 // - `rehype-highlight` でコードの色付け（`pre > code` に `hljs` の class と `<span>` を足す。テーマ CSS は `/vendor/highlight-theme.min.css` としてサーバが配る）
 //
-// ```mermaid / ```chart のフェンスは「コード」ではなく図・グラフの入れ物にする（`MermaidBlock` / `ChartBlock`）。
+// ```mermaid / ```chart のフェンスは「コード」ではなく図・グラフの入れ物にする（`FenceFigure`）。
 // `pre` を上書きし、中の `code` 要素の `className`（`language-mermaid` / `language-chart`）を見て振り分ける。
 //
 // レポートの記法の class 名は `div` / `aside` / `span` / `ol` / `li` の上書きで部品に解決する
@@ -36,6 +36,7 @@ import rehypeSanitize from "rehype-sanitize"
 import remarkCjkFriendly from "remark-cjk-friendly"
 import remarkGfm from "remark-gfm"
 
+import type { CodeMark } from "../../../../../../../shared/report/code-mark.ts"
 import { markdownInline } from "../../../../../../../shared/report/report-inline-markdown.ts"
 import {
   breakPathText,
@@ -43,7 +44,7 @@ import {
   RepositoryFileLinkTarget,
   useRepositoryFileLink,
 } from "../../repository-link/repository-link.tsx"
-import { ChartBlock } from "./chart-block.tsx"
+import { codeFenceTree } from "./code-fence-tree.ts"
 import { rehypeCodeFileName } from "./code-file-name.ts"
 import { CodeLines } from "./code-line-list.tsx"
 import { splitCodeLines } from "./code-line.ts"
@@ -57,11 +58,9 @@ import {
 } from "./code-node.ts"
 import { CopyButton } from "./copy-button.tsx"
 import { diffWordRanges, type DiffWordRanges } from "./diff-pair.ts"
+import { FenceFigure, isFenceFigureLanguage } from "./fence-figure.tsx"
 import { OrderedList, TableBody, UnorderedList } from "./folded-block.tsx"
-import { GaugeBlock } from "./gauge-block.tsx"
 import { REPORT_HAST_CACHE, type HastCache } from "./hast-cache.ts"
-import { HistogramBlock } from "./histogram-block.tsx"
-import { MermaidBlock } from "./mermaid-block.tsx"
 import { NotationAside, NotationBlock, NotationInline, NotationListItem } from "./notation.tsx"
 import { remarkPreviewImage } from "./preview-image.ts"
 import { rehypeInlineMark } from "./rehype-inline-mark.ts"
@@ -70,7 +69,6 @@ import { Code } from "./report-code.tsx"
 import { ReportImage } from "./report-image.tsx"
 import styles from "./report-notation.module.css"
 import { REPORT_SANITIZE_SCHEMA } from "./sanitize-schema.ts"
-import { ScatterBlock } from "./scatter-block.tsx"
 import { shellCommandText, shellLineKinds } from "./shell-line.ts"
 import { rehypeStyleAllowlist } from "./style-allowlist.ts"
 import { rehypeTaskCheck } from "./task-check.ts"
@@ -128,6 +126,7 @@ const REPORT_REHYPE_PLUGINS = [
 ] satisfies NonNullable<Options["rehypePlugins"]>
 
 export { InlineCodeText } from "./inline-code-text.tsx"
+export { FenceFigure } from "./fence-figure.tsx"
 
 export type MarkdownProps = {
   readonly text: string
@@ -152,6 +151,30 @@ export function QuestionPreviewMarkdown(props: QuestionPreviewMarkdownProps): Re
       remarkPlugins={[remarkPreviewImage(props.toolUseId)]}
       cache={undefined}
     />
+  )
+}
+
+export type CodeFenceProps = {
+  readonly language: string
+  readonly path: string
+  readonly marks: readonly CodeMark[]
+  readonly source: string
+}
+
+/**
+ * `code` の塊を、フェンスを書かずに `Pre` と同じ経路で描く（色付け・帯・写しボタン・印の行）。
+ * 描き終えた木は覚えない。
+ */
+export function CodeFence(props: CodeFenceProps): ReactElement {
+  const tree = codeFenceTree(props)
+  return (
+    <ReactMarkdown
+      rehypePlugins={[() => () => tree, rehypeHighlight]}
+      remarkRehypeOptions={FOOTNOTE_OPTIONS}
+      components={REPORT_COMPONENTS}
+    >
+      {""}
+    </ReactMarkdown>
   )
 }
 
@@ -221,7 +244,7 @@ const NO_WORD_RANGES: DiffWordRanges = new Map()
 
 /**
  * フェンス付きコードブロックの入れ物。
- * `node`（hast の `pre` 要素。react-markdown が渡す）の中の `code` 要素の `className` を見て、`language-mermaid` / `language-chart` なら {@link MermaidBlock} / {@link ChartBlock} に振り、それ以外は素の `<pre>` のまま描く（色付けは `rehype-highlight` がすでにこの木に当ててある）。
+ * `node`（hast の `pre` 要素。react-markdown が渡す）の中の `code` 要素の `className` を見て、`language-mermaid` / `language-chart` など図・グラフの言語なら {@link FenceFigure} に振り、それ以外は素の `<pre>` のまま描く（色付けは `rehype-highlight` がすでにこの木に当ててある）。
  *
  * それ以外のフェンスは頭に帯を1本添え、{@link CopyButton} を常に置く。
  * フェンスにファイル名が書いてあれば（```diff src/foo.ts）、帯の左にラベルとして出す。
@@ -233,21 +256,8 @@ function Pre(props: PreProps): ReactElement {
 
   if (codeNode !== undefined) {
     const language = codeLanguage(codeNode)
-    if (language === "mermaid") {
-      const code = hastText(codeNode)
-      return <MermaidBlock key={code} code={code} />
-    }
-    if (language === "chart") {
-      return <ChartBlock spec={hastText(codeNode)} />
-    }
-    if (language === "number-line" || language === "bullet") {
-      return <GaugeBlock spec={hastText(codeNode)} />
-    }
-    if (language === "scatter") {
-      return <ScatterBlock spec={hastText(codeNode)} />
-    }
-    if (language === "histogram") {
-      return <HistogramBlock spec={hastText(codeNode)} />
+    if (isFenceFigureLanguage(language)) {
+      return <FenceFigure language={language} spec={hastText(codeNode)} />
     }
   }
 

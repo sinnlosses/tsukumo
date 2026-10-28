@@ -135,6 +135,16 @@ export const NOTATION_ENTRIES: readonly CatalogEntry[] = [
     settle: SCENE_END_SETTLE,
   },
   {
+    name: "a2ui-external-leaves",
+    scene: "a2ui-external-leaves",
+    label: "外部の描画に頼る葉（Mermaid・Chart・Plot・Code）を A2UI の面で描く",
+    homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "repository" },
+    prepare: [],
+    skipReveal: true,
+    settle: SCENE_END_SETTLE,
+  },
+  {
     name: "a2ui-row-card-decision",
     scene: "a2ui-row-card-decision",
     label: "候補 3 枚の題つきの枠（Row・Card・Column）と、図と表の左右（a2ui）",

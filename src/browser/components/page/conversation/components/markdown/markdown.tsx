@@ -9,12 +9,17 @@ import type { ReactElement } from "react"
 import type { TIMELINE_MARK_NAMES } from "../../../../../../shared/report/timeline-markdown.ts"
 import { deferredModule } from "../../../../../hooks/deferred-module.ts"
 import styles from "./markdown.module.css"
+import type { FenceFigureLanguage } from "./renderer/fence-figure.tsx"
 import { ZoomableSvgFigure } from "./renderer/figure-zoom.tsx"
 import {
   FoldedList as LongBlockFoldedList,
   type FoldedListProps,
 } from "./renderer/long-block-fold.tsx"
-import type { MarkdownProps, QuestionPreviewMarkdownProps } from "./renderer/markdown-renderer.tsx"
+import type {
+  CodeFenceProps,
+  MarkdownProps,
+  QuestionPreviewMarkdownProps,
+} from "./renderer/markdown-renderer.tsx"
 import { MermaidBlock } from "./renderer/mermaid-block.tsx"
 import { NoteLabel as NoteLabelView } from "./renderer/note-label.tsx"
 import { BeforeAfterSwap, ReportImage } from "./renderer/report-image.tsx"
@@ -179,6 +184,35 @@ export function Markdown(props: MarkdownProps): ReactElement {
       return <PlainText text={props.text} />
     case "ready":
       return <state.module.Markdown text={props.text} />
+  }
+}
+
+/** 図・グラフのフェンスの中身を描く。読み込み中は `aria-busy` の空の器、読めなかったときは中身を字のまま出す。 */
+export function FigureFence(props: {
+  readonly language: FenceFigureLanguage
+  readonly spec: string
+}): ReactElement {
+  const state = markdownRenderer.useLoadState()
+  switch (state.kind) {
+    case "loading":
+      return <PendingMarkdown />
+    case "failed":
+      return <pre>{props.spec}</pre>
+    case "ready":
+      return <state.module.FenceFigure language={props.language} spec={props.spec} />
+  }
+}
+
+/** `code` の塊（色付け・帯・写しボタン・印の行つき）。読み込み中は `aria-busy` の空の器、読めなかったときは原文を `pre` で出す。 */
+export function CodeFence(props: CodeFenceProps): ReactElement {
+  const state = markdownRenderer.useLoadState()
+  switch (state.kind) {
+    case "loading":
+      return <PendingMarkdown />
+    case "failed":
+      return <pre>{props.source}</pre>
+    case "ready":
+      return <state.module.CodeFence {...props} />
   }
 }
 

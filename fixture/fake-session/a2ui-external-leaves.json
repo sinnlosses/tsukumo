@@ -1,0 +1,332 @@
+{
+  "name": "a2ui-external-leaves",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "外部の描画に頼る葉（図・グラフ・コード）を A2UI の面で描いて見比べたい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 1500,
+      "event": {
+        "kind": "report",
+        "toolUseId": "fake-a2ui-external-1",
+        "components": [
+          {
+            "id": "root",
+            "component": "Report",
+            "conclusion": ["架空の結論: 図・グラフ・図の申告・コードを節ごとに並べた。"],
+            "checks": [],
+            "children": ["s1", "s2", "s3", "s4"],
+            "closing": { "text": "並べたよ！", "expression": "proud" }
+          },
+          {
+            "id": "s1",
+            "component": "Section",
+            "heading": "架空の時間の図",
+            "children": ["mm1", "mm2", "mm3"]
+          },
+          {
+            "id": "s2",
+            "component": "Section",
+            "heading": "架空のグラフ",
+            "children": ["ch1", "ch2", "ch3", "ch4"]
+          },
+          {
+            "id": "s3",
+            "component": "Section",
+            "heading": "架空の図の申告",
+            "children": ["pl1", "pl2", "pl3", "pl4", "pl5", "pl6", "pl7"]
+          },
+          {
+            "id": "s4",
+            "component": "Section",
+            "heading": "架空のコード",
+            "children": ["cd1", "cd2", "cd3", "cd4", "cd5", "cd6", "cd7"]
+          },
+          {
+            "id": "mm1",
+            "component": "Mermaid",
+            "title": "架空の呼び出しの流れ",
+            "source": "sequenceDiagram\n  A->>B: 架空の呼び出し\n  B-->>A: 架空の返事",
+            "fold": "",
+            "aside": ""
+          },
+          {
+            "id": "mm2",
+            "component": "Mermaid",
+            "title": "",
+            "source": "stateDiagram-v2\n  [*] --> 架空の待ち\n  架空の待ち --> 架空の実行: 開始\n  架空の実行 --> [*]: 終了",
+            "fold": "架空の畳んだ図",
+            "aside": "架空の傍注: 図の読み方"
+          },
+          {
+            "id": "mm3",
+            "component": "Mermaid",
+            "title": "架空の書き手が番号を書いた流れ",
+            "source": "sequenceDiagram\n  autonumber\n  A->>B: 架空の呼び出し",
+            "fold": "",
+            "aside": ""
+          },
+          {
+            "id": "ch1",
+            "component": "Chart",
+            "title": "架空の件数の推移",
+            "chartKind": "bar",
+            "labels": ["架空1月", "架空2月", "架空3月"],
+            "series": [{ "name": "架空系列A", "values": [12, 18, 9] }],
+            "horizontal": false,
+            "emphasis": ["架空3月"],
+            "fold": "",
+            "aside": ""
+          },
+          {
+            "id": "ch2",
+            "component": "Chart",
+            "title": "",
+            "chartKind": "line",
+            "labels": ["架空1週", "架空2週", "架空3週", "架空4週"],
+            "series": [
+              { "name": "架空系列A", "values": [4, 7, 5, 9] },
+              { "name": "架空系列B", "values": [2, 3, 6, 4] }
+            ],
+            "horizontal": false,
+            "emphasis": [],
+            "fold": "",
+            "aside": ""
+          },
+          {
+            "id": "ch3",
+            "component": "Chart",
+            "title": "架空の内訳は振り返りが 35%",
+            "chartKind": "share",
+            "labels": [
+              "架空の振り返り",
+              "架空の実装",
+              "架空の受け入れ",
+              "架空の計画",
+              "架空の相談"
+            ],
+            "series": [{ "name": "架空の件数", "values": [35, 28, 22, 10, 5] }],
+            "horizontal": false,
+            "emphasis": ["架空の振り返り"],
+            "fold": "",
+            "aside": ""
+          },
+          {
+            "id": "ch4",
+            "component": "Chart",
+            "title": "架空の前後の差",
+            "chartKind": "arrow",
+            "labels": ["架空項目A", "架空の長い項目名B", "架空C"],
+            "series": [
+              { "name": "架空の前", "values": [9594, 9783, 1057] },
+              { "name": "架空の後", "values": [1415, 817, 375] }
+            ],
+            "horizontal": false,
+            "emphasis": [],
+            "fold": "架空の畳んだグラフ",
+            "aside": ""
+          },
+          {
+            "id": "pl1",
+            "component": "Plot",
+            "question": "架空の工程は乙が 31 分で全体の半分近くを占める",
+            "relation": "part",
+            "data": [
+              { "name": "架空の工程", "type": "N", "values": ["甲", "乙", "丙", "丁", "戊"] },
+              { "name": "分", "type": "Q", "values": [4, 31, 12, 9, 3] }
+            ],
+            "fold": "",
+            "aside": ""
+          },
+          {
+            "id": "pl2",
+            "component": "Plot",
+            "question": "架空の件数は 5 日で甲が 4 から 15 に増え、乙は 9 から 6 に減った",
+            "relation": "trend",
+            "data": [
+              { "name": "架空の日", "type": "T", "values": ["1日", "2日", "3日", "4日", "5日"] },
+              { "name": "甲", "type": "Q", "values": [4, 7, 9, 12, 15] },
+              { "name": "乙", "type": "Q", "values": [9, 8, 8, 7, 6] }
+            ],
+            "fold": "",
+            "aside": ""
+          },
+          {
+            "id": "pl3",
+            "component": "Plot",
+            "question": "架空の所要は 4 分から 31 分まで散らばる",
+            "relation": "distribution",
+            "data": [{ "name": "分", "type": "Q", "values": [4, 31, 12, 9, 3] }],
+            "fold": "",
+            "aside": "架空の傍注: 数直線"
+          },
+          {
+            "id": "pl4",
+            "component": "Plot",
+            "question": "架空の 3 項目のうち乙だけが目標を超えた",
+            "relation": "compare",
+            "data": [
+              { "name": "架空の項目", "type": "N", "values": ["甲", "乙", "丙"] },
+              { "name": "実績", "type": "Q", "values": [7, 12.5, 3] },
+              { "name": "目標", "type": "Q", "values": [10, 10, 8] }
+            ],
+            "fold": "",
+            "aside": ""
+          },
+          {
+            "id": "pl5",
+            "component": "Plot",
+            "question": "架空の 12 工程のうち 1 つだけ件数と所要が飛び抜けた",
+            "relation": "correlate",
+            "data": [
+              {
+                "name": "架空の工程",
+                "type": "N",
+                "values": [
+                  "工程1",
+                  "工程2",
+                  "工程3",
+                  "工程4",
+                  "工程5",
+                  "工程6",
+                  "工程7",
+                  "工程8",
+                  "工程9",
+                  "工程10",
+                  "工程11",
+                  "極端に長かった架空の工程"
+                ]
+              },
+              { "name": "件数", "type": "Q", "values": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 80] },
+              {
+                "name": "分",
+                "type": "Q",
+                "values": [20, 22, 24, 26, 28, 20, 22, 24, 26, 28, 20, 400]
+              }
+            ],
+            "fold": "",
+            "aside": ""
+          },
+          {
+            "id": "pl6",
+            "component": "Plot",
+            "question": "架空の 25 件の所要は 5 分から 149 分に散らばる",
+            "relation": "distribution",
+            "data": [
+              {
+                "name": "分",
+                "type": "Q",
+                "values": [
+                  5, 5, 6, 7, 9, 11, 14, 17, 21, 25, 30, 35, 41, 47, 54, 61, 69, 77, 86, 95, 105,
+                  115, 126, 137, 149
+                ]
+              }
+            ],
+            "fold": "架空の畳んだ分布",
+            "aside": ""
+          },
+          {
+            "id": "pl7",
+            "component": "Plot",
+            "question": "架空の担当と状態の対応",
+            "relation": "compare",
+            "data": [
+              { "name": "架空の担当", "type": "N", "values": ["甲", "乙", "丙"] },
+              { "name": "架空の状態", "type": "N", "values": ["進行中", "待ち", "完了"] }
+            ],
+            "fold": "",
+            "aside": ""
+          },
+          {
+            "id": "cd1",
+            "component": "Code",
+            "language": "ts",
+            "path": "",
+            "source": "export function pickTicks(values: number[]): number[] {\n  const sorted = [...values].sort((a, b) => a - b)\n  return sorted\n}\n",
+            "marks": [],
+            "fold": "",
+            "aside": ""
+          },
+          {
+            "id": "cd2",
+            "component": "Code",
+            "language": "ts",
+            "path": "src/dummy/ticks.ts",
+            "source": "export const LIMIT = 12\nexport const NAME = \"ticks\"\n",
+            "marks": [],
+            "fold": "",
+            "aside": ""
+          },
+          {
+            "id": "cd3",
+            "component": "Code",
+            "language": "ts",
+            "path": "",
+            "source": "const a = 1\nconst b = 2\nconst c = 3\nconst d = 4\nconst e = 5\nconst f = 6\nconst g = 7\nconst h = 8\nconst i = 9\nconst j = 10\nconst k = 11\nconst l = 12\n",
+            "marks": [{ "lines": "2-3", "label": "架空の印" }],
+            "fold": "",
+            "aside": ""
+          },
+          {
+            "id": "cd4",
+            "component": "Code",
+            "language": "diff",
+            "path": "",
+            "source": "-  const step = niceStep(sorted)\n+  const step = niceStep(sorted, 2)\n   return sorted.filter((v) => v % step === 0)\n",
+            "marks": [],
+            "fold": "",
+            "aside": ""
+          },
+          {
+            "id": "cd5",
+            "component": "Code",
+            "language": "bash",
+            "path": "",
+            "source": "$ pnpm run check src/dummy/ticks.ts\ntypecheck  ok   6.1s\nlint       ok   2.3s\n",
+            "marks": [],
+            "fold": "",
+            "aside": ""
+          },
+          {
+            "id": "cd6",
+            "component": "Code",
+            "language": "text",
+            "path": "",
+            "source": "#0a84ff",
+            "marks": [],
+            "fold": "架空の畳んだコード",
+            "aside": "架空の傍注: 色見本"
+          },
+          {
+            "id": "cd7",
+            "component": "Code",
+            "language": "",
+            "path": "",
+            "source": "言語の無い架空の文章\n2 行目",
+            "marks": [],
+            "fold": "",
+            "aside": ""
+          }
+        ]
+      }
+    },
+    {
+      "afterMs": 1550,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-a2ui-external-1",
+        "content": "ok",
+        "isError": false
+      }
+    },
+    {
+      "afterMs": 2300,
+      "event": { "kind": "turn-finished", "outcome": { "kind": "completed" } }
+    }
+  ]
+}
