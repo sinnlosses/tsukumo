@@ -1,0 +1,126 @@
+{
+  "name": "a2ui-reveal-sample",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "候補を比べて、注意点と一緒に書き上げの演出で見たい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 1200,
+      "event": {
+        "kind": "turn-finished",
+        "outcome": {
+          "kind": "completed"
+        }
+      }
+    },
+    {
+      "afterMs": 1500,
+      "event": {
+        "kind": "report",
+        "toolUseId": "fake-a2ui-reveal-1",
+        "components": [
+          {
+            "id": "root",
+            "component": "Report",
+            "conclusion": ["架空の結論: 候補の中から架空の案Aを採り、注意点を2つ添えた。"],
+            "checks": [
+              {
+                "status": "ok",
+                "label": "架空の単体テスト",
+                "figure": "12 件",
+                "command": "",
+                "detail": "",
+                "howToVerify": ""
+              }
+            ],
+            "children": ["s1", "s2"],
+            "closing": {
+              "text": "並べたよ！",
+              "expression": "proud"
+            }
+          },
+          {
+            "id": "s1",
+            "component": "Section",
+            "heading": "架空の比べ方",
+            "children": ["p1", "n1", "p2", "o1"]
+          },
+          {
+            "id": "p1",
+            "component": "Paragraph",
+            "text": "架空の三つの案を、架空の読み手が迷わないかという一点で見比べた。案Aは手順が短く、案Bは準備が要り、案Cは前提が重い。比べた材料は架空の聞き取りと架空の試作の二つだけで、数字は載せていない。"
+          },
+          {
+            "id": "n1",
+            "component": "Note",
+            "tone": "warn",
+            "text": "架空の聞き取りは三人ぶんで、偏りがあるかもしれない。"
+          },
+          {
+            "id": "p2",
+            "component": "Paragraph",
+            "text": "案Aを採る理由は、試作の段階で読み手が一度も止まらなかったことにある。案Bは準備の手順を読み飛ばす人が出て、案Cは前提を知らない人が途中で離れた。どちらも直せるが、直す手間が採る案との差を上回った。"
+          },
+          {
+            "id": "o1",
+            "component": "Options",
+            "title": "架空の案の判定",
+            "items": [
+              {
+                "name": "架空の案A",
+                "verdict": "adopt",
+                "reason": "手順が短く、読み手が止まらなかった"
+              },
+              {
+                "name": "架空の案B",
+                "verdict": "consider",
+                "reason": "準備の説明を足せば戻せる"
+              },
+              {
+                "name": "架空の案C",
+                "verdict": "reject",
+                "reason": "前提が重く、途中で離れる人が出た"
+              }
+            ]
+          },
+          {
+            "id": "s2",
+            "component": "Section",
+            "heading": "架空の残りの作業",
+            "children": ["p3", "n2", "p4"]
+          },
+          {
+            "id": "p3",
+            "component": "Paragraph",
+            "text": "採った案Aを本番の手順へ写す前に、架空の読み手をもう三人増やして同じ試作を読んでもらう。結果が割れたときは、割れた箇所だけを案Bの説明で補う。補った版でもう一度だけ読み直し、止まる人がいなければ写す。"
+          },
+          {
+            "id": "n2",
+            "component": "Note",
+            "tone": "ng",
+            "text": "架空の本番の手順は、写したあとに戻せない。"
+          },
+          {
+            "id": "p4",
+            "component": "Paragraph",
+            "text": "写したあとの確かめは、架空の読み手の一人に実際の手順で作業してもらい、止まった箇所を数える形にする。数えた結果は次の見直しの材料に回す。"
+          }
+        ]
+      }
+    },
+    {
+      "afterMs": 1500,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-a2ui-reveal-1",
+        "content": "ok",
+        "isError": false
+      }
+    }
+  ]
+}

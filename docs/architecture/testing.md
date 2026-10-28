@@ -9,6 +9,7 @@
 ## このファイルの読み方
 
 節の本文は子のファイル（`docs/architecture/testing/`）にある。下の目次で子を1つ特定し、その子のファイルを丸ごと読む。
+書き上げる演出を実ブラウザで前後比較する手順（`--reveal-at`・場面 `a2ui-reveal-sample`）は `docs/architecture/testing/visual-check.md`。
 
 ## 目次
 
