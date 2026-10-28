@@ -1,4 +1,4 @@
-// 操作できる `Table`（`sortable`・`filterable`）の、並べ替えと絞り込みの判定と、表の Markdown の組み直し。
+// 操作できる `Table`（`sortable`・`filterable`）の、並べ替えと絞り込みの判定。
 
 import type { A2uiReportPart } from "../../../../../../../shared/report/a2ui-report-outline.ts"
 import {
@@ -8,12 +8,11 @@ import {
 import {
   NUMERIC_CELL_PATTERN,
   numericCellMagnitude,
-} from "../../../../../../../shared/report/report-table-markdown.ts"
+} from "../../../../../../../shared/report/table-layout.ts"
 import {
   tableCellTexts,
   tableRowFilterTexts,
 } from "../../../../../../../shared/report/table-view.ts"
-import type { MainViewTableRows } from "../../../../../../../shared/session/main-view-shape.ts"
 
 export type TableSort = { readonly column: number; readonly direction: "asc" | "desc" }
 
@@ -45,11 +44,6 @@ export function visibleRowOrder(
       return order === 0 ? a.index - b.index : order * sign
     })
     .map(({ index }) => index)
-}
-
-/** 表の Markdown を、`order`（元の行の添字）の行だけ・その順に並べて組み直す。行が 0 件なら見出しの行だけの表になる。 */
-export function arrangedTableMarkdown(table: MainViewTableRows, order: readonly number[]): string {
-  return `${table.before}${order.flatMap((index) => table.rows[index] ?? []).join("\n")}${table.after}`
 }
 
 /** 状態のセルは重さの順、数は大きさ、日付は時刻、それ以外は日本語の文字の順。セルが無ければ最後。 */

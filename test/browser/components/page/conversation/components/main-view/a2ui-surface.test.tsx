@@ -1,4 +1,5 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import type { ReactNode } from "react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { mainViewDraftOf } from "../../../../../../../src/browser/domain/main-view/a2ui-draft-view.ts"
@@ -23,6 +24,13 @@ vi.mock(
     leafFrameClassNames: {},
     textLeafClassNames: {},
     noteLeafClassNames: {},
+    tableLeafClassNames: {},
+    matrixLeafClassNames: {},
+    compareLeafClassNames: {},
+    statsLeafClassNames: {},
+    tagToneClassName: () => "",
+    FoldedTableBody: (props: { readonly children: ReactNode }) => <tbody>{props.children}</tbody>,
+    InlineCodeText: (props: { readonly text: string }) => <>{props.text}</>,
     InlineMarkdown: (props: { readonly text: string }) => <>{props.text}</>,
     Markdown: (props: { readonly text: string }) =>
       props.text.startsWith("## ") ? (
@@ -52,14 +60,7 @@ const PARTS = [
   },
   { id: "fig", component: "Mermaid", title: "架空の図", source: "flowchart TD\n  A --> B" },
   { id: "s1", component: "Section", heading: "架空の表", children: ["t1", "m1", "p1"] },
-  {
-    id: "t1",
-    component: "Table",
-    title: "架空の表の題",
-    columns: ["架空の列", "架空の数"],
-    rows: [["架空の値", "1"]],
-    aside: "架空の出典",
-  },
+  { id: "t1", component: "Markdown", markdown: "架空の段落。", aside: "架空の出典" },
   { id: "m1", component: "Note", tone: "memo", text: "架空の覚え書き。" },
   { id: "p1", component: "Markdown", markdown: LONG },
   { id: "s2", component: "Section", heading: "架空の二", children: ["p2"] },
@@ -106,12 +107,11 @@ const INTERACTIVE_PARTS = [
   },
 ]
 
-/** 表の本文の行の先頭のセル（見出しと区切りの行を除く）を、描かれた順に返す。 */
+/** 表の本文の行の先頭のセルを、描かれた順に返す。 */
 function bodyRowNames(container: HTMLElement): readonly string[] {
-  return [...container.querySelectorAll("[data-markdown-stub]")]
-    .flatMap((stub) => (stub.textContent ?? "").split("\n"))
-    .filter((line) => /^\| (ぼ|あ|ん) /.test(line))
-    .map((line) => line.slice(2, 3))
+  return [...container.querySelectorAll("tbody tr")].map(
+    (row) => row.firstElementChild?.textContent ?? "",
+  )
 }
 
 describe("操作できる Table と ChoicePicker", () => {
@@ -156,11 +156,15 @@ describe("操作できる Table と ChoicePicker", () => {
     fireEvent.click(screen.getByRole("button", { name: "丙" }))
 
     expect(bodyRowNames(container)).toEqual([])
-    expect(container.textContent).toContain("| 架空の名 | 架空の種別 | 架空の数 |")
+    expect([...container.querySelectorAll("thead th")].map((cell) => cell.textContent)).toEqual([
+      "架空の名",
+      "架空の種別",
+      "架空の数",
+    ])
     expect(screen.getByText("該当する行はありません")).toBeTruthy()
   })
 
-  it("sortable・filterable を使わない Table は欄の Markdown のままで、ボタンを出さない", () => {
+  it("sortable・filterable を使わない Table は部品が直接描き、ボタンを出さない", () => {
     const plainParts = INTERACTIVE_PARTS.filter((part) => part.id !== "pick").map((part) =>
       part.id === "t1" ? { ...part, sortable: undefined, filterable: undefined } : part,
     )
@@ -172,7 +176,11 @@ describe("操作できる Table と ChoicePicker", () => {
     const { container } = render(<Report reveal={false} turnId={1} className="" body={body} />)
 
     expect(screen.queryAllByRole("button")).toEqual([])
-    expect(bodyRowNames(container)).toEqual(["ぼ", "あ", "ん"])
+    expect(
+      [...container.querySelectorAll("[data-report-region] table tbody tr")].map(
+        (row) => row.firstElementChild?.textContent,
+      ),
+    ).toEqual(["ぼ", "あ", "ん"])
   })
 })
 

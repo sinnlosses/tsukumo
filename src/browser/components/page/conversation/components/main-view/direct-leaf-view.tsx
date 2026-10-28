@@ -10,15 +10,19 @@ import { BeforeAfterLeaf } from "./before-after-leaf.tsx"
 import { ChartLeaf } from "./chart-leaf.tsx"
 import { ClaimsLeaf } from "./claims-leaf.tsx"
 import { CodeLeaf } from "./code-leaf.tsx"
+import { CompareLeaf } from "./compare-leaf.tsx"
 import { GraphLeaf } from "./graph-leaf.tsx"
 import { ItemListLeaf } from "./item-list-leaf.tsx"
+import { MatrixLeaf } from "./matrix-leaf.tsx"
 import { MermaidLeaf } from "./mermaid-leaf.tsx"
 import { NoteLeaf } from "./note-leaf.tsx"
 import { OptionsLeaf } from "./options-leaf.tsx"
 import { ParagraphLeaf } from "./paragraph-leaf.tsx"
 import { PictureLeaf } from "./picture-leaf.tsx"
-import { PlotLeaf, plotDrawingOfPart } from "./plot-leaf.tsx"
+import { PlotLeaf } from "./plot-leaf.tsx"
+import { StatsLeaf } from "./stats-leaf.tsx"
 import { SvgLeaf } from "./svg-leaf.tsx"
+import { TableLeaf } from "./table-leaf.tsx"
 import { TimelineLeaf } from "./timeline-leaf.tsx"
 
 type DirectLeafViewProps = {
@@ -36,6 +40,10 @@ const DIRECT_LEAF_VIEWS: ReadonlyMap<A2uiReportComponent["component"], DirectLea
   ["Claims", ClaimsLeaf],
   ["Note", NoteLeaf],
   ["Options", OptionsLeaf],
+  ["Table", TableLeaf],
+  ["Matrix", MatrixLeaf],
+  ["Compare", CompareLeaf],
+  ["Stats", StatsLeaf],
   ["Svg", SvgLeaf],
   ["Timeline", TimelineLeaf],
   ["Graph", GraphLeaf],
@@ -47,17 +55,11 @@ const DIRECT_LEAF_VIEWS: ReadonlyMap<A2uiReportComponent["component"], DirectLea
   ["Code", CodeLeaf],
 ])
 
-/**
- * 葉を直接描く部品。無ければ undefined（Markdown の描画に通す葉）。
- * 表に落ちる `Plot` は表の部品が無いので、Markdown の描画に通す。
- */
+/** 葉を直接描く部品。無ければ undefined（Markdown の描画に通す葉）。 */
 export function directLeafViewOf(
   part: A2uiReportComponent,
   views: ReadonlyMap<A2uiReportComponent["component"], DirectLeafView> = DIRECT_LEAF_VIEWS,
 ): DirectLeafView | undefined {
-  if (part.component === "Plot" && plotDrawingOfPart(part).kind === "table") {
-    return undefined
-  }
   return views.get(part.component)
 }
 

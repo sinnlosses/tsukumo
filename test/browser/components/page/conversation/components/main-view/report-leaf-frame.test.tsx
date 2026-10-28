@@ -3,7 +3,7 @@ import { afterEach, beforeAll, describe, expect, it } from "vitest"
 
 import {
   LeafFold,
-  ReportLeafFrame,
+  FoldedLeafFrame,
   ReportPausePoint,
 } from "../../../../../../../src/browser/components/page/conversation/components/main-view/report-leaf-frame.tsx"
 import { loadMarkdown } from "../../../../../../../src/browser/components/page/conversation/components/markdown/markdown.tsx"
@@ -21,17 +21,17 @@ type FrameValue = Pick<LeafValue, "captionNumber" | "gutterNotes">
 
 const NO_CAPTION: FrameValue["captionNumber"] = { kind: "none" }
 
-function frame(value: FrameValue, title: string) {
+function frame(value: FrameValue, title: string, fold = "") {
   return render(
     <div data-report-region="section">
-      <ReportLeafFrame value={value} title={title} fit={false}>
+      <FoldedLeafFrame value={value} title={title} fit={false} fold={fold} swap={false}>
         <p>架空の本体</p>
-      </ReportLeafFrame>
+      </FoldedLeafFrame>
     </div>,
   )
 }
 
-describe("ReportLeafFrame", () => {
+describe("FoldedLeafFrame", () => {
   it("番号も傍注も無い葉は、本体だけを欄の直接の子に返す", () => {
     const { container } = frame({ captionNumber: NO_CAPTION, gutterNotes: [] }, "架空の題")
 
@@ -94,6 +94,33 @@ describe("ReportLeafFrame", () => {
     )
 
     expect(container.querySelector("aside code")?.textContent).toBe("a.ts")
+  })
+
+  it("題の字の inline code は code 要素で描く", () => {
+    const { container } = frame(
+      { captionNumber: { kind: "figure", ordinal: 1 }, gutterNotes: [] },
+      "架空の `a.ts` の題",
+    )
+
+    expect(container.querySelector("[data-reveal-caption] code")?.textContent).toBe("a.ts")
+  })
+
+  it("fold があれば題つきの包みを details で畳み、傍注の柱は details の外に置く", () => {
+    const { container } = frame(
+      {
+        captionNumber: { kind: "table", ordinal: 1 },
+        gutterNotes: [{ label: "", text: "架空の傍注" }],
+      },
+      "架空の題",
+      "架空の畳み",
+    )
+
+    const outer = container.querySelector("[data-report-region] > div")
+    const details = outer?.firstElementChild
+    expect(details?.tagName).toBe("DETAILS")
+    expect(details?.querySelector("summary")?.textContent).toBe("架空の畳み")
+    expect(details?.querySelector("[data-reveal-caption]")).not.toBeNull()
+    expect(outer?.lastElementChild?.hasAttribute("data-reveal-gutter")).toBe(true)
   })
 
   it("題と傍注の両方があれば、題つきの包みを傍注の包みが外から囲む", () => {

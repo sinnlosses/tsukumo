@@ -41,15 +41,19 @@ export function fencedMarkdown(info: string, source: string): string {
   return `${fence}${info}\n${source.replace(/\n$/, "")}\n${fence}`
 }
 
+/** 改行（と前後の空白）を空白1つに畳み、両端を落とした1行の文字。 */
+export function flatInline(text: string): string {
+  return text.replace(/\s*\n\s*/g, " ").trim()
+}
+
 /**
  * Markdown の中に埋める1行の文字。改行を空白に畳み、inline code の外の `<` を逃がし、
  * 行頭で塊の記法（見出し・引用・箇条書き・番号付きリスト・表・フェンス・区切り線）になる文字を逃がす。
  */
 export function markdownInline(text: string): string {
-  const flat = text.replace(/\s*\n\s*/g, " ").trim()
   return escapeLineStart(
     mapCodeSpans(
-      flat,
+      flatInline(text),
       (part) => part.replaceAll("<", "&lt;"),
       (span) => span,
     ),

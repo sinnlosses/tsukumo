@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import {
-  arrangedTableMarkdown,
-  visibleRowOrder,
-} from "../../../../../../../../src/browser/components/page/conversation/components/main-view/domain/a2ui-table-view.ts"
+import { visibleRowOrder } from "../../../../../../../../src/browser/components/page/conversation/components/main-view/domain/a2ui-table-view.ts"
 import type { A2uiReportPart } from "../../../../../../../../src/shared/report/a2ui-report-outline.ts"
 
 function table(cells: readonly string[]): A2uiReportPart<"Table"> {
@@ -19,30 +16,6 @@ function table(cells: readonly string[]): A2uiReportPart<"Table"> {
     sortable: true,
   }
 }
-
-const SPLIT = {
-  before: "<div>\n\n| 名 | 数 |\n| --- | ---: |\n",
-  rows: ["| a | 1 |", "| b | 2 |", "| c | 3 |"],
-  after: "\n\n<div>rest</div>\n\n</div>",
-}
-
-describe("arrangedTableMarkdown", () => {
-  it("全行を元の順に渡すと元の Markdown に戻る", () => {
-    const original = `${SPLIT.before}${SPLIT.rows.join("\n")}${SPLIT.after}`
-
-    expect(arrangedTableMarkdown(SPLIT, [0, 1, 2])).toBe(original)
-  })
-
-  it("選んだ行だけを渡した順に並べる", () => {
-    expect(arrangedTableMarkdown(SPLIT, [2, 0])).toBe(
-      `${SPLIT.before}| c | 3 |\n| a | 1 |${SPLIT.after}`,
-    )
-  })
-
-  it("行が 0 件なら、見出しの行と区切りの行だけの表になる", () => {
-    expect(arrangedTableMarkdown(SPLIT, [])).toBe(`${SPLIT.before}${SPLIT.after}`)
-  })
-})
 
 describe("visibleRowOrder の絞り込み", () => {
   it("filterColumn の列だけを見て、選びが空なら全行を残す", () => {

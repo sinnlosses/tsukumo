@@ -2,8 +2,8 @@ import { cleanup } from "@testing-library/react"
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
 
 import { directLeafViewOf } from "../../../../../../../src/browser/components/page/conversation/components/main-view/direct-leaf-view.tsx"
-import { plotDrawingOfPart } from "../../../../../../../src/browser/components/page/conversation/components/main-view/plot-leaf.tsx"
 import { loadMarkdown } from "../../../../../../../src/browser/components/page/conversation/components/markdown/markdown.tsx"
+import { plotDrawingOf } from "../../../../../../../src/shared/report/plot-drawing.ts"
 import { newLeafHtml, oldLeafHtml } from "../../../../../../fixture/direct-leaf-compare.tsx"
 import { stubIntersectionObserver } from "../../../../../../fixture/intersection.ts"
 
@@ -116,6 +116,20 @@ const TABLE: Shape = [
   ],
 ]
 
+const TABLE_RICH: Shape = [
+  "記法つきの表",
+  "compare",
+  [
+    { name: "架空の `担当`", type: "N", values: ["**甲**", "乙 | 丙", "丁_戊_"] },
+    { name: "架空の状態", type: "N", values: ["進行中", "待ち", "完了"] },
+    { name: "架空の件数", type: "N", values: ["12", "3", "100"] },
+  ],
+]
+
+function drawingKindOf(part: ReturnType<typeof build>["part"]): string {
+  return plotDrawingOf({ ...part, kind: "plot" }).kind
+}
+
 function build(shape: Shape, fold = "", aside = "") {
   const [name, relation, data] = shape
   const columns = data.map((column) => ({ ...column, values: [...column.values] }))
@@ -155,23 +169,40 @@ describe("Plot の部品", () => {
   })
 
   it("描く形は申告から決まる（表に落ちる形と図になる形）", () => {
-    expect(plotDrawingOfPart(build(TABLE).part).kind).toBe("table")
-    expect(plotDrawingOfPart(build(BAR).part).kind).toBe("chart")
+    expect(drawingKindOf(build(TABLE).part)).toBe("table")
+    expect(drawingKindOf(build(TABLE_RICH).part)).toBe("table")
+    expect(drawingKindOf(build(BAR).part)).toBe("chart")
+  })
+
+  it.each([
+    ["文字だけの表", TABLE],
+    ["記法・縦棒・数を含む表", TABLE_RICH],
+  ] as const)("表に落ちる形（%s）が旧い描画と一致する", (_name, shape) => {
+    const { block, part } = build(shape)
+
+    const fresh = newLeafHtml(block, part)
+
+    expect(fresh).toBe(oldLeafHtml(block))
+    expect(fresh).toContain("<table")
+  })
+
+  it("表に落ちる形の fold と aside が旧い描画と一致する", () => {
+    const { block, part } = build(TABLE, "架空の畳み", "架空の傍注")
+
+    const fresh = newLeafHtml(block, part)
+
+    expect(fresh).toBe(oldLeafHtml(block))
+    expect(fresh).toContain("<details>")
   })
 
   it("散布の点は申告の行を1つも落とさない", () => {
-    const drawing = plotDrawingOfPart(build(SCATTER).part)
+    const drawing = plotDrawingOf({ ...build(SCATTER).block })
 
     expect(drawing.kind === "scatter" ? drawing.scatter.points.length : -1).toBe(12)
   })
 
-  it("表に落ちる形は表の部品が無いので、直接描かず Markdown の経路に残す", () => {
-    expect(directLeafViewOf(build(TABLE).part)).toBeUndefined()
-    expect(directLeafViewOf(build(BAR).part)).toBeDefined()
-  })
-
-  it("図の形はどれも直接描く部品を持つ", () => {
-    const shapes = [BAR, LINE, NUMBER_LINE, BULLET, SCATTER, HISTOGRAM]
+  it("表に落ちる形も図の形も直接描く部品を持つ", () => {
+    const shapes = [TABLE, TABLE_RICH, BAR, LINE, NUMBER_LINE, BULLET, SCATTER, HISTOGRAM]
 
     expect(shapes.filter((shape) => directLeafViewOf(build(shape).part) === undefined)).toEqual([])
   })

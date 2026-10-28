@@ -243,7 +243,7 @@ function runSegments(ids: readonly string[], report: ReportContextValue): readon
     if (part === undefined) {
       return []
     }
-    if (isInteractiveTable(part) || directLeafViewOf(part) !== undefined) {
+    if (directLeafViewOf(part) !== undefined) {
       return [{ kind: "part", id }]
     }
     if (a2uiLeafKind(part) !== undefined) {
@@ -269,9 +269,7 @@ function PartView(props: { readonly id: string }): ReactElement {
   if (part.component === "Section") {
     return <SectionContent id={props.id} />
   }
-  return a2uiLeafKind(part) === undefined ||
-    isInteractiveTable(part) ||
-    directLeafViewOf(part) !== undefined ? (
+  return a2uiLeafKind(part) === undefined || directLeafViewOf(part) !== undefined ? (
     <LayoutPart id={props.id} />
   ) : (
     <RegionChunks markdown={report.view.leaves[props.id] ?? ""} />
@@ -310,17 +308,18 @@ function LayoutPart(props: { readonly id: string }): ReactElement {
       )
     case "Tabs":
       return <TabsPart tabs={part.tabs} />
-    case "Table": {
-      const table = report.view.tables[part.id]
-      return table === undefined ? (
-        <></>
-      ) : (
-        <InteractiveTable dataModel={report.dataModel} part={part} table={table} />
-      )
-    }
     case "ChoicePicker":
       return <ChoicePicker dataModel={report.dataModel} part={part} />
     default: {
+      if (part !== undefined && isInteractiveTable(part)) {
+        return (
+          <InteractiveTable
+            dataModel={report.dataModel}
+            part={part}
+            value={report.view.leafValues[part.id]}
+          />
+        )
+      }
       const view = part === undefined ? undefined : directLeafViewOf(part)
       return part === undefined || view === undefined ? (
         <></>
