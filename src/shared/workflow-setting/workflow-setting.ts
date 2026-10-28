@@ -59,11 +59,21 @@ export type WorkflowSettingCommandField = {
   readonly current: string
 }
 
+/** 画面から書けない欄。`current` は `tw config --json` の値を1行の文字列にしたもの。 */
+export type WorkflowSettingReadonlyField = {
+  readonly kind: "readonly"
+  readonly key: string
+  readonly label: string
+  readonly description: string
+  readonly current: string
+}
+
 /** tsukumo が読む欄1つ。 */
 export type WorkflowSettingField =
   | WorkflowSettingStepsField
   | WorkflowSettingChoiceField
   | WorkflowSettingCommandField
+  | WorkflowSettingReadonlyField
 
 /** 欄を出せないわけ。 */
 export type WorkflowSettingUnavailableReason =
@@ -130,6 +140,13 @@ const fieldSchema = z.discriminatedUnion("kind", [
   }),
   z.object({
     kind: z.literal("command"),
+    key: z.string(),
+    label: z.string(),
+    description: z.string(),
+    current: z.string(),
+  }),
+  z.object({
+    kind: z.literal("readonly"),
     key: z.string(),
     label: z.string(),
     description: z.string(),

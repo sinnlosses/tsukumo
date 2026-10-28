@@ -1,6 +1,7 @@
 // 設定のダイアログの「ワークフロー」の面。どのリポジトリの設定かを先頭に出し、欄を schema の順に置く。
 // 並びの欄は頭の行・流れの帯・行の札（つかむ点・番号・名前・識別子・説明・「…」）・並びに入っていないスキルの札、
 // 選択の欄は選択肢のラジオ（名前と説明）、コマンドの欄は1行のテキスト欄を置く。
+// 読み取り専用の欄は名前・説明・値の字だけで、入力は置かない。
 // 下の帯に「やめる」「保存」を置き、操作は保存するまで書かない。
 // 欄はワークフローの設定コマンドから来たものだけで、出せないときは欄を出さずに何が無いかを1文で言う。
 
@@ -19,6 +20,7 @@ import {
   type ScreenNavWorkflowSettingChoiceRow,
   type ScreenNavWorkflowSettingCommandRow,
   type ScreenNavWorkflowSettingDraftChange,
+  type ScreenNavWorkflowSettingReadonlyRow,
   type ScreenNavWorkflowSettingRepository,
   type ScreenNavWorkflowSettingRow,
   type ScreenNavWorkflowSettingStep,
@@ -88,7 +90,41 @@ function WorkflowField(props: {
       return <WorkflowChoiceField row={row} busy={busy} />
     case "command":
       return <WorkflowCommandField row={row} busy={busy} />
+    case "readonly":
+      return <WorkflowReadonlyField row={row} />
   }
+}
+
+function WorkflowReadonlyField(props: {
+  readonly row: ScreenNavWorkflowSettingReadonlyRow
+}): ReactElement {
+  const { row } = props
+  return (
+    <div className={styles["field"]}>
+      <WorkflowFieldHead label={row.label} description={row.description} />
+      <p className={styles["step-id"]}>{row.current}</p>
+    </div>
+  )
+}
+
+function WorkflowFieldHead(props: {
+  readonly label: string
+  readonly description: string
+}): ReactElement {
+  return (
+    <div className={styles["field-head"]}>
+      <Text
+        element="p"
+        size="subheading"
+        tone="ink"
+        weight="bold"
+        className={styles["field-label"]}
+      >
+        {props.label}
+      </Text>
+      <WorkflowFieldDescription text={props.description} />
+    </div>
+  )
 }
 
 function WorkflowFieldDescription(props: { readonly text: string }): ReactElement {
@@ -106,7 +142,7 @@ function WorkflowFieldDescription(props: { readonly text: string }): ReactElemen
 }
 
 function WorkflowFieldNotice(props: {
-  readonly row: ScreenNavWorkflowSettingRow
+  readonly row: Pick<ScreenNavWorkflowSettingStepsRow, "notice">
 }): ReactElement | null {
   const { notice } = props.row
   if (notice.kind === "none") {
@@ -126,18 +162,7 @@ function WorkflowChoiceField(props: {
   const { row, busy } = props
   return (
     <div className={styles["field"]}>
-      <div className={styles["field-head"]}>
-        <Text
-          element="p"
-          size="subheading"
-          tone="ink"
-          weight="bold"
-          className={styles["field-label"]}
-        >
-          {row.label}
-        </Text>
-        <WorkflowFieldDescription text={row.description} />
-      </div>
+      <WorkflowFieldHead label={row.label} description={row.description} />
       <div role="radiogroup" aria-label={row.label} className={styles["options"]}>
         {row.options.map((option) => (
           <label
@@ -210,18 +235,7 @@ function WorkflowStepsField(props: {
   const { row, busy } = props
   return (
     <div className={styles["field"]}>
-      <div className={styles["field-head"]}>
-        <Text
-          element="p"
-          size="subheading"
-          tone="ink"
-          weight="bold"
-          className={styles["field-label"]}
-        >
-          {row.label}
-        </Text>
-        <WorkflowFieldDescription text={row.description} />
-      </div>
+      <WorkflowFieldHead label={row.label} description={row.description} />
       <WorkflowFlow steps={row.steps} />
       <WorkflowStepList row={row} busy={busy} />
       {row.addable.length > 0 && (

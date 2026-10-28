@@ -241,7 +241,7 @@ describe("readWorkflowSetting", () => {
   })
 
   it("読まない kind の欄は読み飛ばし、読める欄だけを返す", async () => {
-    const fixed = { key: "架空の固定", label: "固定", kind: "readonly" }
+    const fixed = { key: "架空の固定", label: "固定", kind: "架空の種類" }
     const mixed = { ...SCHEMA, keys: [...SCHEMA.keys, fixed] }
 
     const view = await readWorkflowSetting(portOf({ schema: ran(0, JSON.stringify(mixed)) }), PLACE)
@@ -252,7 +252,7 @@ describe("readWorkflowSetting", () => {
   })
 
   it("読める欄が無ければ欄は空で、schema-unsupported にしない", async () => {
-    const onlyFixed = { schema: 2, keys: [{ key: "架空の固定", kind: "readonly" }] }
+    const onlyFixed = { schema: 2, keys: [{ key: "架空の固定", kind: "架空の種類" }] }
 
     const view = await readWorkflowSetting(
       portOf({ schema: ran(0, JSON.stringify(onlyFixed)) }),
@@ -262,7 +262,7 @@ describe("readWorkflowSetting", () => {
     expect(view).toEqual({ kind: "available", repository: REPOSITORY, fields: [] })
   })
 
-  it("steps・choice・command の欄を schema の順に3種で返し、readonly は飛ばす", async () => {
+  it("steps・choice・readonly・command の欄を schema の順に返す", async () => {
     const schema = {
       schema: 2,
       keys: [
@@ -292,6 +292,7 @@ describe("readWorkflowSetting", () => {
       { key: "steps", value: ["架空:二つ目"] },
       { key: "架空の選択", value: "b" },
       { key: "架空の命令", value: "架空の命令行" },
+      { key: "架空の固定", value: "固定の値" },
     ])
 
     const view = await readWorkflowSetting(
@@ -302,6 +303,7 @@ describe("readWorkflowSetting", () => {
     expect(view.kind === "available" ? view.fields.map((field) => field.kind) : view.kind).toEqual([
       "steps",
       "choice",
+      "readonly",
       "command",
     ])
     expect(view.kind === "available" ? view.fields.slice(1) : []).toEqual([
@@ -317,6 +319,13 @@ describe("readWorkflowSetting", () => {
         current: "b",
       },
       {
+        kind: "readonly",
+        key: "架空の固定",
+        label: "固定",
+        description: "",
+        current: "固定の値",
+      },
+      {
         kind: "command",
         key: "架空の命令",
         label: "命令",
@@ -324,6 +333,68 @@ describe("readWorkflowSetting", () => {
         current: "架空の命令行",
       },
     ])
+  })
+
+  it("readonly の値は1行の文字列にする（無い・null は -、数・真偽値・配列・入れ子）", async () => {
+    const schema = {
+      schema: 2,
+      keys: [
+        "文字列",
+        "数",
+        "真偽値",
+        "配列",
+        "空の配列",
+        "入れ子",
+        "配列の入れ子",
+        "null",
+        "欠け",
+      ].map((key) => ({ key, label: key, description: "", kind: "readonly" })),
+    }
+    const config = configJson([
+      { key: "文字列", value: "架空の文字列" },
+      { key: "数", value: 12 },
+      { key: "真偽値", value: false },
+      { key: "配列", value: ["甲", 2, true] },
+      { key: "空の配列", value: [] },
+      { key: "入れ子", value: { 甲: 1 } },
+      { key: "配列の入れ子", value: [{ 乙: 2 }, "丙"] },
+      { key: "null", value: null },
+    ])
+
+    const view = await readWorkflowSetting(
+      portOf({ schema: ran(0, JSON.stringify(schema)), config: ran(0, config) }),
+      PLACE,
+    )
+
+    expect(
+      view.kind === "available"
+        ? view.fields.map((field) => [field.key, field.current])
+        : view.kind,
+    ).toEqual([
+      ["文字列", "架空の文字列"],
+      ["数", "12"],
+      ["真偽値", "false"],
+      ["配列", "甲, 2, true"],
+      ["空の配列", "-"],
+      ["入れ子", '{"甲":1}'],
+      ["配列の入れ子", '{"乙":2}, 丙'],
+      ["null", "-"],
+      ["欠け", "-"],
+    ])
+  })
+
+  it("readonly の欄で label が欠けると欄は作られず schema-unsupported になる", async () => {
+    const broken = {
+      schema: 2,
+      keys: [{ key: "架空の固定", description: "", kind: "readonly" }],
+    }
+
+    const view = await readWorkflowSetting(
+      portOf({ schema: ran(0, JSON.stringify(broken)) }),
+      PLACE,
+    )
+
+    expect(view.kind === "unavailable" ? view.reason : view.kind).toBe("schema-unsupported")
   })
 
   it("--json に値が無い、または文字列でない choice・command は default が current になる", async () => {

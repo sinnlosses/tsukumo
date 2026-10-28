@@ -13,6 +13,7 @@ import type {
   WorkflowSettingChoiceField,
   WorkflowSettingCommandField,
   WorkflowSettingField,
+  WorkflowSettingReadonlyField,
   WorkflowSettingRepository,
   WorkflowSettingStepsField,
   WorkflowSettingView,
@@ -68,6 +69,16 @@ export type ScreenNavWorkflowSettingRow =
   | ScreenNavWorkflowSettingStepsRow
   | ScreenNavWorkflowSettingChoiceRow
   | ScreenNavWorkflowSettingCommandRow
+  | ScreenNavWorkflowSettingReadonlyRow
+
+/** 画面から書けない欄。操作も下書きも断りの理由も持たず、`current` は1行の文字列。 */
+export type ScreenNavWorkflowSettingReadonlyRow = {
+  readonly kind: "readonly"
+  readonly key: string
+  readonly label: string
+  readonly description: string
+  readonly current: string
+}
 
 export type ScreenNavWorkflowSettingChoiceRow = ScreenNavWorkflowSettingRowBase & {
   readonly kind: "choice"
@@ -196,6 +207,9 @@ export function useWorkflowSetting(): ScreenNavWorkflowSetting {
     kind: "available",
     repository: repositoryLine(view.repository),
     rows: view.fields.map((field): ScreenNavWorkflowSettingRow => {
+      if (field.kind === "readonly") {
+        return readonlyRow(field)
+      }
       const notice: ScreenNavWorkflowSettingNotice =
         failure.kind === "shown" && failure.key === field.key
           ? { kind: "shown", text: failure.message }
@@ -248,12 +262,25 @@ function isDirty(
   drafts: ReadonlyMap<string, readonly string[]>,
   textDrafts: ReadonlyMap<string, string>,
 ): boolean {
+  if (field.kind === "readonly") {
+    return false
+  }
   if (field.kind === "steps") {
     const draft = drafts.get(field.key)
     return draft !== undefined && !isDeepEqual(draft, field.current)
   }
   const draft = textDrafts.get(field.key)
   return draft !== undefined && draft !== field.current
+}
+
+function readonlyRow(field: WorkflowSettingReadonlyField): ScreenNavWorkflowSettingReadonlyRow {
+  return {
+    kind: "readonly",
+    key: field.key,
+    label: field.label,
+    description: field.description,
+    current: field.current,
+  }
 }
 
 function choiceRow(

@@ -28,7 +28,7 @@
 `docs/architecture/adr/0024-no-skill-dependency.md`・`docs/architecture/adr/0025-no-project-settings.md` の「2026-10-14 の改訂」と
 `docs/architecture/adr/0030-workflow-as-skill-sequence.md`。
 
-欄の形は `schema: 2`（tsukumo のサーバは `steps`・`choice`・`command` の欄を読み、それ以外の `kind` は読み飛ばす。画面が描くのは今 `steps` だけで、`choice`・`command` を描くのは別の決め）。引数なしの `tw config --schema` が schema 2 を返す。
+欄の形は `schema: 2`（tsukumo のサーバは `steps`・`choice`・`command`・`readonly` の欄を読み、それ以外の `kind` は読み飛ばす）。`steps`・`choice`・`command` は入力で描いて書き、`readonly` は画面から書かせず値だけで描く。引数なしの `tw config --schema` が schema 2 を返す。
 
 ワークフローが持つもの（どちらも作業先の作業ツリーで打つ）:
 
@@ -44,8 +44,8 @@
 | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `key`                  | `set` に渡すキー。並びは `steps`                                                                                                                                                                                                                                                                                                                           |
 | `label`・`description` | 画面に出す名前と説明                                                                                                                                                                                                                                                                                                                                       |
-| `kind`                 | `steps`（`values` の中から1つ以上を選んで並べる）・`choice`（`values` の中から1つを選ぶ）・`command`（コマンド1行）。`readonly` などは読み飛ばす                                                                                                                                                                                                           |
-| `default`              | 書いていないときの値。`steps` ではスキルの全名の配列で、既定の並びはワークフローが決める。`choice`・`command` では文字列で、`--json` に値が無いときはこれが今の値になる                                                                                                                                                                                    |
+| `kind`                 | `steps`（`values` の中から1つ以上を選んで並べる）・`choice`（`values` の中から1つを選ぶ）・`command`（コマンド1行）・`readonly`（画面から書かせない欄。`default`・`values` を持たない）。ほかの `kind` は読み飛ばす                                                                                                                                        |
+| `default`              | 書いていないときの値。`steps` ではスキルの全名の配列で、既定の並びはワークフローが決める。`choice`・`command` では文字列で、`--json` に値が無いときはこれが今の値になる。`readonly` は持たず、今の値は `--json` の `value` を1行の文字列にしたもの（`null`・欠けと空の配列は `-`、数と真偽値は文字列、配列は要素を `, ` でつなぎ、入れ子は JSON の1行）    |
 | `values`（`steps`）    | 候補の `{ value, label, title, description }` の配列。`value` はスキルの全名（`<プラグイン>:<名前>` か `<名前>`）で、候補は契約を満たすと宣言したスキルだけ（`docs/architecture/workflow-contract/skill-sequence.md`「スキルの契約」）。`label` は識別子の名前、`title` は日本語の段の名前で、`title` を返さない古い `tw` では tsukumo が `label` で埋める |
 
 `steps` の欄の決まり:
@@ -56,7 +56,7 @@
   `tw config --json` の `value` には同じ内容を配列で出す。`.tw/config.toml` では最上位の文字列の配列 `steps = ["…", "…"]` で、並びの順がそのまま実行の順
 - tsukumo は `values` に無い名前が今の値にあっても消さずに並べる（スキルを外したあとの並びを失わない）
 
-`schema` は欄を消す・意味を変えるときだけ上がる。tsukumo は `schema` が 2 の形だけを読み、それ以外は「描ける版でない」として扱う。`schema` が 2 でも `kind` が `steps`・`choice`・`command` でない欄は読み飛ばす。画面が描くのは今 `steps` の欄だけで、`choice`・`command` の欄が来ても描かず無視する（欄を足しても `schema` は上げない）。
+`schema` は欄を消す・意味を変えるときだけ上がる。tsukumo は `schema` が 2 の形だけを読み、それ以外は「描ける版でない」として扱う。`schema` が 2 でも `kind` が `steps`・`choice`・`command`・`readonly` でない欄は読み飛ばす（欄を足しても `schema` は上げない）。
 
 tsukumo がすること:
 

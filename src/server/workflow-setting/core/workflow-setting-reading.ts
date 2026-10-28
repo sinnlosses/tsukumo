@@ -86,14 +86,22 @@ const commandEntrySchema = z.object({
   default: z.string(),
 })
 
-const READABLE_KINDS: readonly string[] = ["steps", "choice", "command"]
+const readonlyEntrySchema = z.object({
+  key: z.string(),
+  label: z.string(),
+  description: z.string(),
+  kind: z.literal("readonly"),
+})
+
+const READABLE_KINDS: readonly string[] = ["steps", "choice", "command", "readonly"]
 
 type SchemaEntry =
   | z.infer<typeof stepsEntrySchema>
   | z.infer<typeof choiceEntrySchema>
   | z.infer<typeof commandEntrySchema>
+  | z.infer<typeof readonlyEntrySchema>
 
-// 読まない `kind` の欄（`readonly` など）は、中身を見ずに読み飛ばす。
+// 読まない `kind` の欄は、中身を見ずに読み飛ばす。
 const otherKindEntrySchema = z
   .object({ kind: z.string().refine((kind) => !READABLE_KINDS.includes(kind)) })
   .transform(() => undefined)
@@ -102,7 +110,13 @@ const configSchemaSchema = z
   .object({
     schema: z.literal(2),
     keys: z.array(
-      z.union([stepsEntrySchema, choiceEntrySchema, commandEntrySchema, otherKindEntrySchema]),
+      z.union([
+        stepsEntrySchema,
+        choiceEntrySchema,
+        commandEntrySchema,
+        readonlyEntrySchema,
+        otherKindEntrySchema,
+      ]),
     ),
   })
   .transform((parsed) => ({
@@ -245,11 +259,31 @@ function fieldOf(entry: SchemaEntry, raw: unknown): WorkflowSettingField {
       }
     case "command":
       return { kind: "command", ...head, current: textOf(raw, entry.default) }
+    case "readonly":
+      return { kind: "readonly", ...head, current: displayOf(raw) }
   }
 }
 
 function textOf(raw: unknown, fallback: string): string {
   return typeof raw === "string" ? raw : fallback
+}
+
+const NO_VALUE_TEXT = "-"
+
+function displayOf(raw: unknown): string {
+  if (raw === undefined || raw === null) {
+    return NO_VALUE_TEXT
+  }
+  if (typeof raw === "string") {
+    return raw
+  }
+  if (typeof raw === "number" || typeof raw === "boolean") {
+    return String(raw)
+  }
+  if (Array.isArray(raw)) {
+    return raw.length === 0 ? NO_VALUE_TEXT : raw.map(displayOf).join(", ")
+  }
+  return JSON.stringify(raw)
 }
 
 function unavailable(
