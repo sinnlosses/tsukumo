@@ -15,9 +15,9 @@
 .dispatch-notice {
   flex: 0 1 auto;
   min-width: 0;
-  padding: 0.125rem 0.5rem;
+  padding: var(--space-2xs) var(--space-sm);
   border: 1px solid currentcolor;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -68,7 +68,7 @@
 .phone-turn-stop-mark {
   width: 12px;
   height: 12px;
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   background: var(--ink);
 }
 .phone-turn-cover,
@@ -91,22 +91,22 @@
   .phone-turn-confirm {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 8px;
+    gap: var(--space-sm);
     position: absolute;
     left: 10px;
     right: 10px;
     bottom: 100%;
     z-index: 10;
-    padding: 8px;
+    padding: var(--space-sm);
     border: 1px solid var(--rule);
-    border-radius: 16px;
+    border-radius: var(--radius-xl);
     background: var(--surface);
   }
   .phone-turn-confirm-stop,
   .phone-turn-confirm-keep {
     height: 44px;
     border: 1px solid var(--rule);
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     background: transparent;
     color: var(--ink);
     font-size: var(--font-secondary);

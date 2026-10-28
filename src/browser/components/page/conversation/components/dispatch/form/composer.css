@@ -3,7 +3,7 @@
    字は答え待ちの色で、地は持たない（枠の色と二重にしない）。 */
 .dispatch-band {
   flex: 0 0 auto;
-  margin: 0 0 0.5rem;
+  margin: 0 0 var(--space-sm);
 }
 /* 字の段・色は `Text` が持つ。伸び縮み・margin だけここに置く。 */
 .dispatch-band-text {
@@ -15,8 +15,8 @@
 .dispatch-band-jump {
   flex: 0 0 auto;
   min-height: 1.5rem;
-  padding: 0.2rem 0.6rem;
-  border-radius: 0.4rem;
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-md);
 }
 /* textarea と / 補完の候補一覧の包み。候補一覧（position: absolute）の基準になる。 */
 .dispatch-text-wrap {
@@ -33,12 +33,12 @@
      知らせが無いときは今までどおり1段に収まる。 */
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.25rem;
+  gap: var(--space-xs);
   min-width: 0;
   /* textarea との間（上）は、この行だけの余白としてここに持たせる。
      左右・下は `.layout-region` の 0.75rem（12px）がすでに空けており、モックの 14px とは 2px の差だが、textarea の外枠（.dispatch-text の border-box）もこの 12px に揃っているため、ここへ左右・下の padding を足すと道具の口だけ textarea よりインデントされて揃わなくなる（目視で確認済み）。
      揃えることを優先し、上だけをここで持つ。 */
-  padding-top: 0.625rem;
+  padding-top: var(--space-md);
 }
 /* 画像・`/`・`@` の口。
    絵だけの四角いボタン。
@@ -51,7 +51,7 @@
   width: 2.25rem;
   height: 2.25rem;
   padding: 0;
-  border-radius: 0.5rem;
+  border-radius: var(--radius-md);
 }
 /* 道具の行の右のかたまり。区切り線・「＋ 新規」・<TurnStatus> を右端へ寄せる。 */
 .dispatch-toolbar-end {
@@ -60,24 +60,24 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
-  gap: 0.5rem;
+  gap: var(--space-sm);
   min-width: 0;
   margin-left: auto;
 }
 .dispatch-toolbar-divider {
   align-self: stretch;
   width: 1px;
-  margin: 0.375rem 0.25rem;
+  margin: var(--space-sm) var(--space-xs);
   background: var(--rule);
 }
 .dispatch-new-session {
   display: inline-flex;
   flex: 0 0 auto;
   align-items: center;
-  gap: 0.25rem;
+  gap: var(--space-xs);
   min-height: 2rem;
-  padding: 0 0.75rem;
-  border-radius: 999px;
+  padding: 0 var(--space-md);
+  border-radius: var(--radius-pill);
 }
 /* 窓が狭いと入力欄の幅が道具の列・区切り・札・送信を1段に並べるには足りないので、「新規」の字を隠して絵だけにする（`title` と `aria-label` は残る）。 */
 @media (max-width: 1000px) {
@@ -85,7 +85,7 @@
     display: none;
   }
   .dispatch-new-session {
-    padding: 0 0.5rem;
+    padding: 0 var(--space-sm);
   }
 }
 /* 狭い画面（760px 以下）。左に ＋、まん中に丸い欄、右に丸ボタン（<PhoneTurnAction>）。
@@ -95,7 +95,7 @@
     display: flex;
     flex: 0 0 auto;
     align-items: flex-end;
-    gap: 8px;
+    gap: var(--space-sm);
   }
   .dispatch-text-wrap {
     flex: 1 1 0;
@@ -140,16 +140,16 @@
     bottom: 100%;
     z-index: 10;
     min-width: 200px;
-    padding: 4px;
+    padding: var(--space-xs);
     border: 1px solid var(--rule);
-    border-radius: 14px;
+    border-radius: var(--radius-xl);
     background: var(--surface);
   }
   .phone-attach-sheet button {
     height: 44px;
-    padding: 0 14px;
+    padding: 0 var(--space-lg);
     border: none;
-    border-radius: 10px;
+    border-radius: var(--radius-lg);
     background: transparent;
     color: var(--ink);
     font-size: var(--font-subheading);

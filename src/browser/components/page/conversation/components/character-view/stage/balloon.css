@@ -12,7 +12,7 @@
   max-width: 88%;
   padding: calc(var(--balloon-past-scale) * 10 / 13) calc(var(--balloon-past-scale) * 14 / 13);
   border: 1px solid color-mix(in srgb, var(--rule) 70%, transparent);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   background: var(--surface);
 }
 /* 押せる吹き出し（吹き出しの並び・セリフのログの両方）。
@@ -47,8 +47,8 @@
   background: var(--surface-accent);
   border-width: 1.5px;
   border-color: var(--accent);
-  border-radius: 14px;
-  box-shadow: 0 10px 30px color-mix(in srgb, var(--ground) 65%, transparent);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-raised);
 }
 /* 立ち絵の上に列を重ねる本体（--balloon-overlap ぶん左へ寄せる）。
    加えて尻尾ぶんの場所を左に確保する。
@@ -111,7 +111,7 @@
   display: flex;
   align-items: baseline;
   gap: 0.6em;
-  margin-bottom: 4px;
+  margin-bottom: var(--space-xs);
 }
 /* 字の段・色・太さは `Text` が持つ。字間だけここに置く。 */
 .balloon-speaker {

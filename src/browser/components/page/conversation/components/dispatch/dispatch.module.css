@@ -33,9 +33,9 @@
 /* 答え待ちの質問があるあいだは、答えを書く場所になる（選択肢の札はメインビュー）。
    枠は答え待ちの色（var(--state-warn)。.dispatch-pending-glow と同じ意味の色）で、内側の余白は帯とテキスト入力欄の両方に効かせる。 */
 .dispatch-form.is-answering {
-  padding: 0.5rem;
+  padding: var(--space-sm);
   border: 1px solid var(--state-warn);
-  border-radius: 0.75rem;
+  border-radius: var(--radius-lg);
 }
 /* / 補完の候補一覧。
    textarea の下端に底を合わせ、textarea の中に重ねて上へ伸びるポップアップ。
@@ -48,21 +48,21 @@
   bottom: 0;
   z-index: 5;
   margin: 0;
-  padding: 0.3rem;
+  padding: var(--space-xs);
   max-height: 50%;
   overflow-y: auto;
   list-style: none;
   background: var(--ground);
   border: 1px solid var(--rule);
-  border-radius: 0.4rem;
+  border-radius: var(--radius-md);
 }
 /* 1件は「名前＋説明」の1行。説明は薄い色で、幅が足りなければ省略記号で切る（候補一覧そのものを横に広げない）。 */
 .dispatch-suggestion-item {
   display: flex;
   align-items: baseline;
-  gap: 0.5rem;
-  padding: 0.35rem 0.5rem;
-  border-radius: 0.3rem;
+  gap: var(--space-sm);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm);
   cursor: pointer;
 }
 .dispatch-suggestion-item.is-selected {
@@ -76,11 +76,11 @@
 .dispatch-interrupt {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-sm);
   flex: 0 0 auto;
   height: 2.5rem;
-  padding: 0 1.125rem;
-  border-radius: 0.5625rem;
+  padding: 0 var(--space-xl);
+  border-radius: var(--radius-md);
   /* モックの 14px（--font-subheading）は区画の見出しの段で、ボタンには使わない。
      ボタンの字は機械のラベルではなく操作の名前そのものなので「補助・サイドバーの本文」寄りに見て --font-secondary（13px）に寄せた（大きさ以外は `theme.css` の既定を継ぐ）。 */
   font-size: var(--font-secondary);
@@ -141,11 +141,11 @@
   resize: none;
   /* モックの `margin: 14px 14px 0` は外の余白で、`.layout-region` の 0.75rem が担っている。
      ここはモックの `padding: 12px 14px` 側なので、いまの値のままでよい。 */
-  padding: 0.75rem 0.9rem;
+  padding: var(--space-md) var(--space-lg);
   background: var(--ground);
   color: inherit;
   border: 1px solid color-mix(in srgb, var(--rule) 70%, transparent);
-  border-radius: 0.5rem;
+  border-radius: var(--radius-md);
 }
 /* マークダウンエディタを読み込む間の素の面。枠は箱を作らず、中の textarea が今までどおり欄を埋める。 */
 .dispatch-surface-pending {
@@ -169,8 +169,8 @@
 @media (max-width: 760px) {
   .dispatch-form {
     position: relative;
-    padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
-    gap: 8px;
+    padding: var(--space-sm) var(--space-md) calc(var(--space-sm) + env(safe-area-inset-bottom));
+    gap: var(--space-sm);
     border-top: 1px solid var(--rule);
     background: color-mix(in srgb, var(--ground) 50%, var(--surface));
   }
@@ -182,8 +182,8 @@
     box-sizing: border-box;
     min-height: 40px;
     max-height: 30dvh;
-    padding: 9px 14px;
-    border-radius: 20px;
+    padding: var(--space-sm) var(--space-lg);
+    border-radius: var(--radius-xl);
     background: var(--surface);
     border-color: var(--rule);
     font-size: var(--font-subheading);
@@ -200,7 +200,7 @@
 /* 狭い画面では答え待ちでも入力欄の枠と余白を変えない（答え待ちの札が受け持つ）。 */
 @media (max-width: 760px) {
   .dispatch-form.is-answering {
-    padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+    padding: var(--space-sm) var(--space-md) calc(var(--space-sm) + env(safe-area-inset-bottom));
     border: none;
     border-top: 1px solid var(--rule);
     border-radius: 0;

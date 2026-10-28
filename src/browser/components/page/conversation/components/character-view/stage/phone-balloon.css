@@ -8,8 +8,8 @@
   .phone-balloon {
     display: flex;
     align-items: flex-end;
-    gap: 8px;
-    padding: 10px 12px 0;
+    gap: var(--space-sm);
+    padding: var(--space-md) var(--space-md) 0;
   }
   .phone-balloon-face {
     flex: none;
@@ -20,9 +20,9 @@
   /* 顔の側の下の角だけ尖らせる。高さが変わって本文が揺れないよう、字は3行で切る。 */
   .phone-balloon-bubble {
     min-width: 0;
-    padding: 9px 12px;
+    padding: var(--space-sm) var(--space-md);
     border: 1px solid color-mix(in srgb, var(--surface-accent), var(--accent) 25%);
-    border-radius: 14px 14px 14px 4px;
+    border-radius: var(--radius-xl) var(--radius-xl) var(--radius-xl) var(--radius-sm);
     background: var(--surface-accent);
     color: var(--ink);
     font-size: var(--font-secondary);
@@ -33,7 +33,7 @@
   /* 吹き出しの脇の下端の時刻。吹き出しに押されて縮まない。 */
   .phone-balloon-time {
     flex: none;
-    padding-bottom: 4px;
+    padding-bottom: var(--space-xs);
     color: var(--ink-quiet);
     font-family: var(--font-mono);
     font-size: var(--font-label);
