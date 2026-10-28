@@ -7,16 +7,22 @@ import {
   reportImagePaths,
 } from "../../../../src/server/report/core/report-image-shelf.ts"
 import type { ReportSection } from "../../../../src/shared/report/report-block.ts"
+import { drawnLeaves, reportOutline } from "../../../../src/shared/report/report-outline.ts"
 import type { StampedPendingAsk } from "../../../../src/shared/session-driver/pending-ask.ts"
 import type { SessionRecord } from "../../../../src/shared/session/session-record.ts"
 
 /** 棚に置く画像の合計の上限。 */
 const SHELF_LIMIT_BYTES = 64 * 1024 * 1024
+import { reportOfSections } from "../../../fixture/report-event.ts"
 import { reportRecord, requestRecord } from "../../../fixture/session-record.ts"
 
 // 画像は架空のバイト列（実物の画像は使わない）。
 function fictionalImage(bytes: number): ReportImage {
   return { mediaType: "image/png", content: new Uint8Array(bytes) }
+}
+
+function leavesOf(sections: readonly ReportSection[]) {
+  return drawnLeaves(reportOutline(reportOfSections(sections).components))
 }
 
 function imageSections(...paths: readonly string[]): readonly ReportSection[] {
@@ -104,7 +110,7 @@ describe("createReportImageShelf", () => {
 
 describe("reportImagePaths", () => {
   it("image の塊のパスだけを拾い、空のパスは除く", () => {
-    expect(reportImagePaths(imageSections("架空/a.png", "", "架空/b.png"))).toEqual([
+    expect(reportImagePaths(leavesOf(imageSections("架空/a.png", "", "架空/b.png")))).toEqual([
       "架空/a.png",
       "架空/b.png",
     ])
@@ -136,7 +142,7 @@ describe("reportImagePaths", () => {
       },
     ]
 
-    expect(reportImagePaths(sections)).toEqual(["架空/before.png", "架空/after.png"])
+    expect(reportImagePaths(leavesOf(sections))).toEqual(["架空/before.png", "架空/after.png"])
   })
 })
 

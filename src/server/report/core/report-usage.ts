@@ -15,7 +15,7 @@ import type {
   SectionBlock,
 } from "../../../shared/report/report-block.ts"
 import type { ReportCheck } from "../../../shared/report/report-check.ts"
-import { reportOutline } from "../../../shared/report/report-outline.ts"
+import { drawnLeaves, reportOutline } from "../../../shared/report/report-outline.ts"
 import { drawnSectionsOf } from "../../../shared/report/report-retrospective.ts"
 import { isForbiddenBlock } from "../../../shared/report/report-shape-tag.ts"
 import type { ReportGenre, ReportTaskOutcome } from "../../../shared/report/report-task.ts"
@@ -246,7 +246,8 @@ export function reportUsageEntryOf(
         (block.kind === "beforeAfter" &&
           [block.before, block.after].some((side) => FIGURE_KINDS.includes(side.kind))),
     ),
-    readImageWithoutImageBlock: mainReadImageFile && reportImagePaths(drawnSections).length === 0,
+    readImageWithoutImageBlock:
+      mainReadImageFile && reportImagePaths(drawnLeaves(outline)).length === 0,
     emphasisCount: blocksOf(drawnSections).reduce(
       (total, block) => total + emphasisCountOf(block),
       0,

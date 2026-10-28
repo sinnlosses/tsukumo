@@ -7,7 +7,7 @@ import {
 import type { ReportBlock } from "../../../../src/shared/report/report-block.ts"
 import type { ReportCheck } from "../../../../src/shared/report/report-check.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
-import { reportEvent, reportOfSections } from "../../../fixture/report-event.ts"
+import { reportEvent, reportOfDrawn, reportOfSections } from "../../../fixture/report-event.ts"
 
 describe("reportUsageEntryOf", () => {
   it("hasModifiedFiles は常に false で、前後図か画像の有無・task の有無を塊の欄とは別の真偽値で持つ", () => {
@@ -431,7 +431,7 @@ describe("reportUsageEntryOf", () => {
 
     it("figure の図も塊の種類・段1の図・画像の有無に数える", () => {
       const entry = reportUsageEntryOf(
-        reportEvent({ figure: image }),
+        reportOfDrawn({ figure: image }),
         "claude-session-1",
         1_000,
         true,

@@ -36,6 +36,7 @@ const reportOfDraft = (
     conclusion: draft.conclusion,
     figure: draft.figure,
     sections: draft.sections,
+    components: draft.components,
     favor: draft.favor,
     checks: draft.checks,
     workPlanClosing: draft.workPlanClosing,

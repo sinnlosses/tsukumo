@@ -1,6 +1,6 @@
 // 続きから復元した再生のうち、記録の窓に残った24時間以内の `report` の画像を棚へ置き直す。
 
-import { drawnSectionsOf } from "../../../shared/report/report-retrospective.ts"
+import { drawnLeaves, reportOutline } from "../../../shared/report/report-outline.ts"
 import type { RestoredEvent } from "../../../shared/session/session-event.ts"
 import type { SessionState } from "../../../shared/session/session-state.ts"
 import { reportImagePaths, type ShelvedImages } from "../../report/core/report-image-shelf.ts"
@@ -34,7 +34,7 @@ export function shelveRestoredReportImages(
         event.toolUseId,
         options.reportImageShelf.shelve(
           event.toolUseId,
-          reportImagePaths(drawnSectionsOf(event)),
+          reportImagePaths(drawnLeaves(reportOutline(event.components))),
           (path) => options.readReportImage(path, time.at),
         ),
       )

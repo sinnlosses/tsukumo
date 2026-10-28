@@ -3,27 +3,24 @@
 import { readFile, stat } from "node:fs/promises"
 import { resolve } from "node:path"
 
-import type { ReportSection } from "../../../shared/report/report-block.ts"
-import { leafBlocksOf } from "../../../shared/report/row-panel-block.ts"
+import type { ReportOutlineLeaf } from "../../../shared/report/report-outline.ts"
 
 /** 読む上限（これを超えるファイルは読まない）。 */
 const MAX_REPORT_MATCH_FILE_BYTES = 1024 * 1024
 
 /**
- * `code` の塊で `path` が空でないものを集め、cwd から解いて読む。
+ * `Code` の葉で `path` が空でないものを集め、cwd から解いて読む。
  * 読めなかった（無い・ファイルでない・大きすぎる・バイナリ）`path` は戻り値の `Map` に入らない。
  */
 export async function readReportBlockFiles(
   cwd: string,
-  sections: readonly ReportSection[],
+  leaves: readonly ReportOutlineLeaf[],
 ): Promise<ReadonlyMap<string, string>> {
   const paths = [
     ...new Set(
-      sections
-        .flatMap((section) => leafBlocksOf(section.blocks))
-        .flatMap((block) =>
-          block.kind === "code" && block.path.trim() !== "" ? [block.path] : [],
-        ),
+      leaves.flatMap((leaf) =>
+        leaf.component === "Code" && leaf.path.trim() !== "" ? [leaf.path] : [],
+      ),
     ),
   ]
   const entries = await Promise.all(

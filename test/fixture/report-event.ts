@@ -62,6 +62,22 @@ export function reportOfSections(
   })
 }
 
+/** 節・図・振り返りを渡す `report` ツールの呼び出し1件。`components` はそれらから本番と同じ組み直しで作る。 */
+export function reportOfDrawn(
+  overrides: Partial<
+    Omit<Extract<SessionEvent, { readonly kind: "report" }>, "kind" | "components">
+  >,
+): Extract<SessionEvent, { readonly kind: "report" }> {
+  return reportEvent({
+    ...overrides,
+    components: componentsOfSections(
+      overrides.sections ?? [],
+      overrides.figure ?? { kind: "none", reason: "unrecorded" },
+      overrides.retrospective ?? { kind: "none" },
+    ),
+  })
+}
+
 /** 記法の検査にかけるレポート1件。 */
 export function reportDraft(overrides: Partial<ReportDraft> = {}): ReportDraft {
   const conclusion = overrides.conclusion ?? "架空の結論"

@@ -4,11 +4,14 @@ import { mapValues, omit } from "remeda"
 import type { z } from "zod"
 
 import { LEAF_COMPONENT_KINDS, type REPORT_COMPONENT_SCHEMAS } from "./a2ui-report-catalog.ts"
-import type { namedWriterBlockSchema } from "./report-block.ts"
 
-type LeafBlockInput = z.input<typeof namedWriterBlockSchema>
-
-type LeafKind = LeafBlockInput["kind"]
+/** 葉の部品の入力から `id`・`component` を除き、写す先の `kind` を足した形（例の鍵は `kind`）。 */
+type LeafExamples = {
+  readonly [C in keyof typeof LEAF_COMPONENT_KINDS as (typeof LEAF_COMPONENT_KINDS)[C]]: Omit<
+    z.input<(typeof REPORT_COMPONENT_SCHEMAS)[C]>,
+    "id" | "component"
+  > & { readonly kind: (typeof LEAF_COMPONENT_KINDS)[C] }
+}
 
 const LEAF_BLOCK_EXAMPLES = {
   text: { kind: "text", text: "架空の取り込みは 120 件中 8 件が上限で切れていた。" },
@@ -136,7 +139,7 @@ const LEAF_BLOCK_EXAMPLES = {
     relation: "compare",
   },
   markdown: { kind: "markdown", markdown: "> 架空の引用の1行" },
-} satisfies { readonly [K in LeafKind]: Extract<LeafBlockInput, { kind: K }> }
+} satisfies LeafExamples
 
 /** 葉の部品の例。塊の例から `kind` を除き、`id` と `component` を足す。 */
 const LEAF_EXAMPLES = mapValues(LEAF_COMPONENT_KINDS, (kind, component) => [

@@ -30,8 +30,6 @@
 // 違反の差し戻し・送り直し・新しい事実の判定のどれでも、サブエージェントの呼び出しがそのターンの1回を使いうる。
 // サブエージェントの `report` はどのみち描かないので、失うのはメインの差し戻しの機会だけ。
 
-import { isDeepEqual } from "remeda"
-
 import type {
   ReportArgumentChars,
   ReportArgumentField,
@@ -56,6 +54,7 @@ import type { ReportRejectionModes, ReportRejectionReason } from "./rejection-mo
 import { a2uiValidationFailedText, reportRejectionText } from "./report-rejection.ts"
 import { reportViolations } from "./report-violation-check.ts"
 import type { ReportDraft } from "./report-violation.ts"
+import { isSameReport } from "./same-report.ts"
 import { toolErrorFieldsOf } from "./tool-error-field.ts"
 import type { TurnRejection } from "./turn-rejection.ts"
 import { type ClosingFit, isFinished, judgeWorkPlanClosing } from "./work-plan-closing-fit.ts"
@@ -368,15 +367,4 @@ function countedRecord(
 /** 描いた `report` の締めのセリフ。`closing` を持たなかったころの呼び出しには無い。 */
 function closingSpeech(report: ReportEvent): readonly SessionEvent[] {
   return report.closing.kind === "speech" ? [report.closing] : []
-}
-
-/** 描いたレポートと同じ引数か。文字列の2つの欄は前後の空白を除いて、`figure` と `sections` と `checks` は中身で比べる。 */
-function isSameReport(drawn: ReportEvent, draft: ReportDraft): boolean {
-  return (
-    drawn.conclusion.trim() === draft.conclusion.trim() &&
-    isDeepEqual(drawn.figure, draft.figure) &&
-    isDeepEqual(drawn.sections, draft.sections) &&
-    drawn.favor.trim() === draft.favor.trim() &&
-    isDeepEqual(drawn.checks, draft.checks)
-  )
 }

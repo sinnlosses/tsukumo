@@ -14,7 +14,7 @@ import type { ServerFrame } from "../../../../src/shared/frame.ts"
 import type { PromptImage } from "../../../../src/shared/session-driver/prompt-image.ts"
 import type { RestoredEvent, SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import { MAX_SESSION_STATE_TURNS } from "../../../../src/shared/session/session-record.ts"
-import { reportEvent } from "../../../fixture/report-event.ts"
+import { reportOfDrawn } from "../../../fixture/report-event.ts"
 import { knownRestored } from "../../../fixture/restored-event.ts"
 import { createStubDriver } from "../../../fixture/session-driver.ts"
 import { requestEvent } from "../../../fixture/session-event.ts"
@@ -199,7 +199,7 @@ describe("レポートの画像の棚", () => {
   }
 
   function imageReportEvent(toolUseId: string): SessionEvent {
-    return reportEvent({
+    return reportOfDrawn({
       toolUseId,
       sections: [
         {
@@ -343,7 +343,7 @@ describe("レポートの画像の棚", () => {
     await waitForBatch()
 
     stub.emit(
-      reportEvent({
+      reportOfDrawn({
         toolUseId: "toolu_figure",
         figure: {
           kind: "image",

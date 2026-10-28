@@ -7,8 +7,10 @@ import {
   type ReportSection,
   reportSectionSchema,
 } from "../../../src/shared/report/report-block.ts"
+import { drawnLeaves, reportOutline } from "../../../src/shared/report/report-outline.ts"
 import { leafBlocksOf } from "../../../src/shared/report/row-panel-block.ts"
 import { draft } from "../../fixture/report-draft-block.ts"
+import { reportOfSections } from "../../fixture/report-event.ts"
 
 const text = (value: string): unknown => ({ kind: "text", text: value })
 const row = (blocks: readonly unknown[]): unknown => ({ kind: "row", blocks })
@@ -91,7 +93,9 @@ describe("row・panel の子への検査", () => {
       row([{ kind: "image", path: "架空/画面.png", caption: "架空の画面" }, text("架空の一文。")]),
     ])
 
-    expect(reportImagePaths(sections)).toEqual(["架空/画面.png"])
+    expect(
+      reportImagePaths(drawnLeaves(reportOutline(reportOfSections(sections).components))),
+    ).toEqual(["架空/画面.png"])
   })
 })
 
