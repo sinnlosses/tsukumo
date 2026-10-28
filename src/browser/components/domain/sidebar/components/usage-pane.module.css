@@ -3,7 +3,7 @@
 .usage-pane {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  padding: 4px 16px 12px;
+  gap: var(--space-md);
+  padding: var(--space-xs) var(--space-lg) var(--space-md);
   container-type: inline-size;
 }

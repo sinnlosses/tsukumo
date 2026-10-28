@@ -17,12 +17,12 @@
 .run-setting-effort {
   display: flex;
   align-items: flex-end;
-  gap: 2px;
+  gap: var(--space-2xs);
   height: 14px;
 }
 .run-setting-effort-bar {
   width: 3px;
-  border-radius: 1px;
+  border-radius: var(--radius-sm);
   background: var(--rule);
 }
 .run-setting-effort-bar.is-lit {
@@ -67,7 +67,7 @@
   flex: none;
   width: 4.5em;
   margin-left: auto;
-  padding-left: 8px;
+  padding-left: var(--space-sm);
   color: var(--accent);
   font-size: var(--font-label);
 }

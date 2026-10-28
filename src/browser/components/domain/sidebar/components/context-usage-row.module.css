@@ -1,15 +1,15 @@
 /* いまのコンテキストの使用量。押せるのは右端の `›` だけで、外枠は `<a>` ではなく `<div>`。
 
-   札として浮かせる。左右は `.sidebar-footer` の内側 padding ぶん外へ張り出し（負のマージン 10px）、自分の padding（10px）で中身を元の位置へ戻す。
+   札として浮かせる。左右は `.sidebar-footer` の内側 padding ぶん外へ張り出し（負のマージン `--space-md`）、自分の padding（同じ `--space-md`）で中身を元の位置へ戻す。
    札の地と枠はホバーで変えない（押せるのは `›` だけなので、札が浮くと全体を押せるように見える）。 */
 .context-usage-row {
   display: flex;
   flex-direction: column;
-  gap: 0.375rem;
-  margin: 0 -0.625rem;
-  padding: 0.5rem 0.625rem;
+  gap: var(--space-sm);
+  margin: 0 calc(-1 * var(--space-md));
+  padding: var(--space-sm) var(--space-md);
   border: 1px solid transparent;
-  border-radius: 0.625rem;
+  border-radius: var(--radius-lg);
   font-size: var(--font-secondary);
 }
 /* 70%以上は警告にする。16進を写さず `--state-warn` からの導出で表す。 */
@@ -72,14 +72,14 @@
   white-space: nowrap;
   opacity: 0;
   transition:
-    max-width 0.18s ease-out,
-    padding-right 0.18s ease-out,
-    opacity 0.18s ease-out;
+    max-width var(--motion-base) ease-out,
+    padding-right var(--motion-base) ease-out,
+    opacity var(--motion-base) ease-out;
 }
 .context-usage-row-link:hover .context-usage-row-link-text,
 .context-usage-row-link:focus-visible .context-usage-row-link-text {
   max-width: 3.5em;
-  padding-right: 0.125rem;
+  padding-right: var(--space-2xs);
   opacity: 1;
 }
 
@@ -87,7 +87,7 @@
 .context-usage-row-bar {
   display: block;
   height: 0.5rem;
-  border-radius: 0.25rem;
+  border-radius: var(--radius-sm);
   background: var(--rule);
   overflow: hidden;
 }

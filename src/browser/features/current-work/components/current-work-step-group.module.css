@@ -2,13 +2,13 @@
 
 /* 手順を段で区切る小見出し。字の太さは `Text` が持つ。 */
 .current-work-phase-heading {
-  margin: 0.4rem 0 0.15rem;
+  margin: var(--space-sm) 0 var(--space-2xs);
 }
 /* 群の名「前」「本」「後」の小さなタグ。 */
 .current-work-phase-span {
   padding: 0 0.3em;
   border: 1px solid var(--rule);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   color: var(--ink-quiet);
   font-size: var(--font-label);
   font-weight: 400;
@@ -16,7 +16,7 @@
 .current-work-steps {
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
+  gap: var(--space-2xs);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -24,7 +24,7 @@
 }
 /* サブエージェントの中は1段下げる。 */
 .current-work-step-nested {
-  margin-left: 1rem;
+  margin-left: var(--space-lg);
 }
 /* 済みは薄く、実行中は普通の濃さ。 */
 .current-work-step-done {
@@ -46,10 +46,10 @@
 }
 .current-work-failure pre {
   margin: 0;
-  padding: 0.4rem;
+  padding: var(--space-sm);
   max-height: 12rem;
   overflow: auto;
-  border-radius: 0.4rem;
+  border-radius: var(--radius-md);
   background: var(--ground);
   font-family: var(--font-mono);
   white-space: pre-wrap;

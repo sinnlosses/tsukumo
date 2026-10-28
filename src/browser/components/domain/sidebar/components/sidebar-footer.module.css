@@ -12,9 +12,9 @@
   flex: 0 0 auto;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.25rem;
+  gap: var(--space-xs);
   margin: auto calc(-1 * var(--region-padding)) calc(-1 * var(--region-padding));
-  padding: 0.625rem 0.75rem;
+  padding: var(--space-md);
   border-top: 1px solid var(--rule);
   background: color-mix(in srgb, var(--ground), var(--surface) 50%);
 }
@@ -22,7 +22,7 @@
   display: flex;
   flex: none;
   align-items: center;
-  gap: 0.25rem;
+  gap: var(--space-xs);
   margin-left: auto;
 }
 /* 目盛りと円の間の縦の仕切り（飾りなので読み上げない）。 */
@@ -40,10 +40,10 @@
   bottom: calc(100% + 0.4rem);
   left: 0.75rem;
   z-index: 2;
-  padding: 0.625rem 0.875rem 0.75rem;
+  padding: var(--space-md) var(--space-lg);
   border: 1px solid var(--rule);
-  border-radius: 0.75rem;
+  border-radius: var(--radius-lg);
   background: var(--ground);
-  box-shadow: 0 18px 44px color-mix(in srgb, var(--ground) 80%, transparent);
+  box-shadow: var(--shadow-overlay);
   container-type: inline-size;
 }

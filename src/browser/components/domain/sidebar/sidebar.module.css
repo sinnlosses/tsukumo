@@ -9,9 +9,9 @@
   display: flex;
   flex: none;
   height: 40px;
-  padding: 0 6px;
+  padding: 0 var(--space-sm);
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: transparent;
   color: var(--ink);
   font: inherit;
@@ -34,12 +34,12 @@
 .context-gauge {
   flex-direction: column;
   justify-content: center;
-  gap: 5px;
+  gap: var(--space-xs);
 }
 .context-gauge-fill {
   display: block;
   height: 100%;
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   background: var(--accent);
 }
 .context-gauge.is-warn .usage-gauge-value {
@@ -51,7 +51,7 @@
 .plan-gauge-window {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: var(--space-xs);
 }
 .plan-gauge-pie-fill {
   fill: var(--accent);
@@ -76,10 +76,10 @@
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
-  gap: 0.625rem;
+  gap: var(--space-md);
   min-height: 0;
   margin: 0 calc(-1 * var(--region-padding));
-  padding: 1rem 0;
+  padding: var(--space-lg) 0;
   overflow-y: auto;
 }
 /* 雑談の区画は自分では転がらない（中身なりの高さを取り、転がすのは .sidebar-chat-body）。 */

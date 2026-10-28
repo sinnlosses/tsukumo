@@ -31,7 +31,7 @@
   width: 34px;
   height: 30px;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: none;
   color: var(--ink);
   font-size: var(--font-secondary);
@@ -72,7 +72,7 @@
 }
 /* 吊り札の頭の見出し。閉じているあいだは `<select>` の直下の子として非表示、開いたときだけ出る。 */
 .run-setting-select-heading {
-  padding: 6px 10px 2px;
+  padding: var(--space-sm) var(--space-md) var(--space-2xs);
   color: var(--ink-quiet);
   font-size: var(--font-label);
   font-weight: 600;
@@ -85,15 +85,15 @@
 .run-setting-select::picker(select) {
   appearance: base-select;
   min-width: 11rem;
-  padding: 4px;
+  padding: var(--space-xs);
   border: 1px solid var(--rule);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   background: var(--surface);
-  box-shadow: 0 8px 24px rgb(0 0 0 / 20%);
+  box-shadow: var(--shadow-raised);
   /* 既定の anchor は口の右端に合わせて右へ伸びるので、広い窓で右端の口（許可モード）が
      窓の外へ出る。左へ伸ばし、窓の縁からの余白を margin で持つ。 */
   position-area: bottom span-left;
-  margin: 6px 8px;
+  margin: var(--space-sm);
 }
 .run-setting-select::picker(select):popover-open {
   display: flex;
@@ -102,9 +102,9 @@
 .run-setting-select-option {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 8px;
-  border-radius: 8px;
+  gap: var(--space-sm);
+  padding: var(--space-sm);
+  border-radius: var(--radius-md);
   color: var(--ink);
   cursor: pointer;
 }
@@ -137,7 +137,7 @@
   display: flex;
   flex: 1 1 auto;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-sm);
   min-width: 0;
   font-size: var(--font-secondary);
 }
@@ -158,7 +158,7 @@
    （`span-bottom` だと口の下端から下へ伸び、縦の位置が口からずれる実測）。 */
 .run-setting-select.is-rail::picker(select) {
   position-area: left;
-  margin-right: 6px;
+  margin-right: var(--space-sm);
 }
 
 /* effort の5本の棒。見出しは1行占めて改行させ、選択肢はその下に横並びにする。 */
@@ -174,7 +174,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: flex-end;
-  gap: 4px;
+  gap: var(--space-xs);
 }
 /* 閉じた口の絵（5本すべてを描く `EffortBars`）は、開いた列の中では出さない。列の中は1行1本の棒。 */
 .run-setting-select.is-row .run-setting-select-option .run-setting-select-icon {
@@ -200,7 +200,7 @@
 /* 1段ぶんの棒（`EffortBar`）。いまの段までを `--accent` で塗り、いまの段だけ縁取りを足す。 */
 .run-setting-effort-bar-row {
   width: 18px;
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   background: var(--rule);
 }
 .run-setting-effort-bar-row.is-lit {
@@ -229,8 +229,8 @@
 }
 .run-setting-select.is-field .run-setting-select-button {
   justify-content: flex-start;
-  gap: 8px;
-  padding: 0 10px;
+  gap: var(--space-sm);
+  padding: 0 var(--space-md);
 }
 .run-setting-select.is-field .run-setting-select-closed .run-setting-select-row {
   display: flex;

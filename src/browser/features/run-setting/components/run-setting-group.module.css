@@ -3,9 +3,9 @@
   display: flex;
   flex: none;
   align-items: center;
-  padding: 0 2px;
+  padding: 0 var(--space-2xs);
   border: 1px solid var(--rule);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: var(--ground);
 }
 .run-setting-divider {
@@ -17,7 +17,7 @@
 /* 中くらいの窓幅の柱では縦に並べる。 */
 .run-setting-group-rail {
   flex-direction: column;
-  padding: 2px 0;
+  padding: var(--space-2xs) 0;
 }
 .run-setting-group-rail .run-setting-divider {
   width: 18px;
@@ -25,7 +25,7 @@
 }
 /* 狭い画面の引き出しでは、仕事・雑談の門の右に並べる。 */
 .run-setting-group-drawer {
-  padding: 4px 2px;
+  padding: var(--space-xs) var(--space-2xs);
 }
 /* 中くらいの窓幅では柱が持つので、開いたサイドバーの下端には出さない。 */
 @media (min-width: 761px) and (max-width: 1100px) {

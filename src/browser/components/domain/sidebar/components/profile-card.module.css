@@ -6,9 +6,9 @@
   display: flex;
   flex: 0 0 auto;
   align-items: center;
-  gap: 0.875rem;
+  gap: var(--space-lg);
   margin: calc(-1 * var(--region-padding)) calc(-1 * var(--region-padding)) 0;
-  padding: 1.125rem;
+  padding: var(--space-xl);
   border-bottom: 1px solid var(--rule);
   background: color-mix(in srgb, var(--surface), var(--accent) 5%);
 }

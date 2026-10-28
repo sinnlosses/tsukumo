@@ -16,14 +16,14 @@
 .current-work-toggle {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-md);
   box-sizing: border-box;
   width: 100%;
   max-width: 600px;
   height: 34px;
-  padding: 0 14px;
+  padding: 0 var(--space-lg);
   border: 1px solid color-mix(in srgb, var(--rule), var(--accent) 35%);
-  border-radius: 17px;
+  border-radius: var(--radius-xl);
   background: var(--surface-accent);
   color: var(--ink-quiet);
   font-size: var(--font-secondary);
