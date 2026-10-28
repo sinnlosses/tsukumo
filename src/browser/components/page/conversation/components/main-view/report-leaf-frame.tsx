@@ -8,7 +8,12 @@ import type { ReactElement, ReactNode } from "react"
 import { foldInlineMarks } from "../../../../../../shared/report/inline-mark.ts"
 import type { LeafValue } from "../../../../../../shared/report/report-leaf-value.ts"
 import { PAUSE_POINT_CLASS_NAME } from "../../../../../../shared/report/report-pause-point.ts"
-import { InlineMarkdown, leafFrameClassNames } from "../markdown/markdown.tsx"
+import {
+  BeforeAfterSwap,
+  figureClassName,
+  InlineMarkdown,
+  leafFrameClassNames,
+} from "../markdown/markdown.tsx"
 
 /** 書き上げる演出（`planReveal`）が題の行・傍注の柱を見分ける印の属性。 */
 const REVEAL_CAPTION_ATTRIBUTE = "data-reveal-caption"
@@ -32,6 +37,17 @@ type ReportLeafFrameProps = {
  * 表は題が本体の上、図は本体の下。どちらも無い葉は本体をそのまま返す。
  */
 export function ReportLeafFrame(props: ReportLeafFrameProps): ReactElement {
+  return <FoldedLeafFrame {...props} fold="" swap={false} />
+}
+
+/**
+ * 題の包みごと `details` で畳む枠（図の葉。畳みの外に傍注の柱が付く）。
+ * `fold` が空なら畳まない。
+ * `swap` が真なら題の包みを、並べる・切り替えの口を持つ `BeforeAfterSwap` にする（両側が画像の前後の塊）。
+ */
+export function FoldedLeafFrame(
+  props: ReportLeafFrameProps & { readonly fold: string; readonly swap: boolean },
+): ReactElement {
   const { captionNumber, gutterNotes } = props.value
   const caption =
     captionNumber.kind === "none" ? undefined : (
@@ -40,21 +56,24 @@ export function ReportLeafFrame(props: ReportLeafFrameProps): ReactElement {
         title={props.title}
       />
     )
-  const captioned =
-    captionNumber.kind === "none" ? (
-      props.children
-    ) : (
-      <div
-        className={clsx(
-          leafFrameClassNames.captioned,
-          props.fit && leafFrameClassNames.captionedFit,
-        )}
-      >
-        {captionNumber.kind === "table" && caption}
-        {props.children}
-        {captionNumber.kind === "figure" && caption}
-      </div>
-    )
+  const captionedClassName = clsx(
+    leafFrameClassNames.captioned,
+    props.fit && leafFrameClassNames.captionedFit,
+    props.swap && figureClassName("before-after-swap"),
+  )
+  const captioned = (
+    <LeafFold fold={props.fold} empty={false}>
+      {captionNumber.kind === "none" ? (
+        props.children
+      ) : (
+        <CaptionedBox className={captionedClassName} swap={props.swap}>
+          {captionNumber.kind === "table" && caption}
+          {props.children}
+          {captionNumber.kind === "figure" && caption}
+        </CaptionedBox>
+      )}
+    </LeafFold>
+  )
   if (gutterNotes.length === 0) {
     return <>{captioned}</>
   }
@@ -106,6 +125,18 @@ export function ReportPausePoint(props: {
   readonly children: ReactNode
 }): ReactElement {
   return <div className={clsx(props.className, PAUSE_POINT_CLASS_NAME)}>{props.children}</div>
+}
+
+function CaptionedBox(props: {
+  readonly className: string
+  readonly swap: boolean
+  readonly children: ReactNode
+}): ReactElement {
+  return props.swap ? (
+    <BeforeAfterSwap className={props.className}>{props.children}</BeforeAfterSwap>
+  ) : (
+    <div className={props.className}>{props.children}</div>
+  )
 }
 
 function LeafCaption(props: { readonly label: string; readonly title: string }): ReactElement {

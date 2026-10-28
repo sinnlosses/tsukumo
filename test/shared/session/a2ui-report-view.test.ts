@@ -120,7 +120,8 @@ describe("a2ui の版の記録の本文", () => {
         rows: [["値", "1"]],
       },
     ]
-    const { a2ui } = regionsOf(reportOf({ components: parts }))
+    const reported = reportOf({ components: parts })
+    const { a2ui } = regionsOf(reported)
     if (a2ui.kind !== "surface") throw new Error("面の値が無い")
 
     expect(Object.keys(a2ui.leafValues).toSorted()).toEqual(["fig", "m1", "rt", "t1"])
@@ -129,6 +130,12 @@ describe("a2ui の版の記録の本文", () => {
     expect(a2ui.leafValues.t1?.gutterNotes).toEqual([{ label: "メモ", text: "架空の覚え書き。" }])
     expect(a2ui.leafValues.m1?.mergedIntoPrevious).toBe(true)
     expect(a2ui.leafValues.rt?.captionNumber).toEqual({ kind: "table", ordinal: 2 })
+    expect(a2ui.imageSource).toEqual({
+      kind: "shelved",
+      toolUseId: reported.toolUseId,
+      sizes: [],
+      unshelved: [],
+    })
   })
 
   it("図が無ければ欄の ID は 0 から振る", () => {

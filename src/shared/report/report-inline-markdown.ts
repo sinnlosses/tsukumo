@@ -19,7 +19,12 @@ export function joinParts(parts: readonly string[]): string {
  * HTML の中に埋める1行の文字。改行を空白に畳み、HTML として逃がす（Markdown の記法は効かない）。
  */
 export function htmlInline(text: string): string {
-  return escapeHtml(foldInlineMarks(text).replace(/\s+/g, " ").trim())
+  return escapeHtml(plainInline(text))
+}
+
+/** 逃がす前の1行の字。改行を空白に畳み、行内の印は素の字にする（React が要素の中身や属性に直接渡す）。 */
+export function plainInline(text: string): string {
+  return foldInlineMarks(text).replace(/\s+/g, " ").trim()
 }
 
 /** 二重引用符で囲む HTML 属性の値に埋める1行の文字。`htmlInline` に加えて `"` も逃がす。 */

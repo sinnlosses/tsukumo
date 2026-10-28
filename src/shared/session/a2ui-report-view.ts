@@ -13,6 +13,7 @@ import {
   a2uiPartsById,
 } from "../report/a2ui-report-outline.ts"
 import type { RecordedReportFigure, ReportSection } from "../report/report-block.ts"
+import type { ReportImageSource } from "../report/report-image-markdown.ts"
 import { joinParts } from "../report/report-inline-markdown.ts"
 import type { LeafValue, ReportLeafLayout } from "../report/report-leaf-value.ts"
 import type { ReportSectionPieces } from "../report/report-markdown.ts"
@@ -40,6 +41,7 @@ export function a2uiReportView(
   report: A2uiReportSource,
   pieces: readonly ReportSectionPieces[],
   layout: ReportLeafLayout,
+  imageSource: ReportImageSource,
 ): MainViewA2uiReport {
   const { tagTones, values } = layout
   const byId = a2uiPartsById(report.components)
@@ -108,6 +110,7 @@ export function a2uiReportView(
         sections: Object.fromEntries(folded.sections),
         leaves,
         leafValues,
+        imageSource,
         tables,
       }
 }

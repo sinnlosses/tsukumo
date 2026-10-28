@@ -3,6 +3,7 @@
 
 import type { A2uiReportComponent } from "../report/a2ui-report-catalog.ts"
 import type { ReportChangeSummary } from "../report/report-change-summary.ts"
+import type { ReportImageSource } from "../report/report-image-markdown.ts"
 import type { LeafValue } from "../report/report-leaf-value.ts"
 import type { ReportTask } from "../report/report-task.ts"
 import type { RecordedPromptImage } from "../session-driver/prompt-image.ts"
@@ -105,6 +106,7 @@ export type MainViewReportRegions = {
  * `leaves` は葉の部品の ID から、その葉の Markdown（図表の番号と傍注は節の欄の Markdown と同じ。整形で落ちた葉は空文字）。
  * `leafValues` は葉の部品の ID から、その葉の図表番号・表の札の色・寄せられた傍注（{@link LeafValue}）。
  * `leaves` の葉に加えて `Report.figure` の葉と振り返りの葉も持ち、整形で落ちた葉は持たない。
+ * `imageSource` は画像の葉が `src` を作る取り出し元（棚に置いていない本文は `none`）。
  * `tables` は操作できる `Table` の ID から、その Markdown の行ごとの分け方。整形で落ちた表は持たない。
  */
 export type MainViewA2uiReport =
@@ -117,6 +119,7 @@ export type MainViewA2uiReport =
       >
       readonly leaves: Readonly<Record<string, string>>
       readonly leafValues: Readonly<Record<string, LeafValue>>
+      readonly imageSource: ReportImageSource
       readonly tables: Readonly<Record<string, MainViewTableRows>>
     }
 

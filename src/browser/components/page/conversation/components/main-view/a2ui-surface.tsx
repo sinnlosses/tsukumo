@@ -325,7 +325,12 @@ function LayoutPart(props: { readonly id: string }): ReactElement {
       return part === undefined || view === undefined ? (
         <></>
       ) : (
-        <DirectLeaf part={part} value={report.view.leafValues[part.id]} view={view} />
+        <DirectLeaf
+          part={part}
+          value={report.view.leafValues[part.id]}
+          imageSource={report.view.imageSource}
+          view={view}
+        />
       )
     }
   }

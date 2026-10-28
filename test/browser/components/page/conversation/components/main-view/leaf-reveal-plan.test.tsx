@@ -110,7 +110,13 @@ function newPlan(): Plan {
           const view = directLeafViewOf(pair.part)
           return (
             view !== undefined && (
-              <DirectLeaf key={pair.part.id} part={pair.part} value={values[index]} view={view} />
+              <DirectLeaf
+                key={pair.part.id}
+                part={pair.part}
+                value={values[index]}
+                imageSource={NO_IMAGES}
+                view={view}
+              />
             )
           )
         })}

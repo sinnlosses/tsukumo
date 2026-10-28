@@ -1,7 +1,15 @@
 import { describe, expect, it } from "vitest"
 
-import { cardChainHtml } from "../../../src/shared/report/card-chain-markdown.ts"
+import {
+  cardChainHtml as htmlOfChain,
+  cardChainOf as chainOf,
+} from "../../../src/shared/report/card-chain-markdown.ts"
 import { graphMarkdown } from "../../fixture/report-markdown.ts"
+
+const cardChainHtml = (source: string): string | undefined => {
+  const items = chainOf(source)
+  return items === undefined ? undefined : htmlOfChain(items)
+}
 
 const chain = (names: readonly string[]): string =>
   names

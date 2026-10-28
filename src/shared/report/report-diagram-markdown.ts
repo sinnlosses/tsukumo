@@ -214,19 +214,73 @@ const SVG_SUB_LABEL_SHIFT = 8
 /** `center` で説明があるとき、説明を枠の中心から下げる量。 */
 const SVG_SUB_DROP = 10
 
+export type SvgTone = Exclude<Extract<SvgShape, { readonly kind: "rect" }>["tone"], "none">
+
+/** 描く図形1つ。`tone` が無いときは色の目印を付けない。字の `sub` は説明の字（弱い色）。 */
+export type SvgPrimitive =
+  | {
+      readonly kind: "rect"
+      readonly x: number
+      readonly y: number
+      readonly width: number
+      readonly height: number
+      readonly emphasis: boolean
+      readonly tone: SvgTone | undefined
+    }
+  | {
+      readonly kind: "line"
+      readonly x1: number
+      readonly y1: number
+      readonly x2: number
+      readonly y2: number
+      readonly arrow: boolean
+      readonly dashed: boolean
+      readonly tone: SvgTone | undefined
+    }
+  | {
+      readonly kind: "text"
+      readonly x: number
+      readonly y: number
+      readonly text: string
+      readonly fontSize: number
+      readonly centered: boolean
+      readonly sub: boolean
+    }
+
+export type SvgDrawing = {
+  readonly width: number
+  readonly height: number
+  /** 矢じりの定義の id。線の矢印はこの id を `url(#…)` で指す。 */
+  readonly arrowMarkerId: string
+  readonly primitives: readonly SvgPrimitive[]
+  readonly legend: SvgFigure["legend"]
+}
+
+/** `svg` の塊の図形を、描く順の図形の並びにする。色は持たず、`tone` の目印だけを運ぶ。 */
+export function svgDrawingOf({ width, height, shapes, legend }: SvgFigure): SvgDrawing {
+  return {
+    width,
+    height,
+    arrowMarkerId: SVG_ARROW_MARKER_ID,
+    primitives: shapes.flatMap(svgShapePrimitives),
+    legend,
+  }
+}
+
 /**
  * 図形を `<svg viewBox="0 0 W H">` の1行に組む（空行を挟むと Markdown の HTML の塊が切れる）。
  * 色は書かない。`report-svg-figure` の下の要素に CSS が当てる（強調の枠は `stroke-width`、`tone` は `data-tone` の属性が目印）。
  * `legend` は図の下に、色の見本と名前の並びで出す。
  */
-export function svgHtml({ width, height, shapes, legend }: SvgFigure): string {
-  const w = String(width)
-  const h = String(height)
+export function svgHtml(figure: SvgFigure): string {
+  const drawing = svgDrawingOf(figure)
+  const w = String(drawing.width)
+  const h = String(drawing.height)
   const marker =
-    `<defs><marker id="${SVG_ARROW_MARKER_ID}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">` +
+    `<defs><marker id="${drawing.arrowMarkerId}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">` +
     `<path d="M0,0 L10,5 L0,10 z"></path></marker></defs>`
-  const body = shapes.map(svgShapeHtml).join("")
-  return `<div class="svg-figure"><svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">${marker}${body}</svg></div>${svgLegendHtml(legend)}`
+  const body = drawing.primitives.map(svgPrimitiveHtml).join("")
+  return `<div class="svg-figure"><svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">${marker}${body}</svg></div>${svgLegendHtml(drawing.legend)}`
 }
 
 /** 本文から「3 の呼び出し」と指せるよう、時系列の図の矢印に通し番号を振る。書き手が `autonumber` を書いていれば足さない。 */
@@ -255,84 +309,118 @@ function svgLegendHtml(legend: SvgFigure["legend"]): string {
   return `<div class="svg-legend">${items}</div>`
 }
 
-function svgShapeHtml(shape: SvgShape): string {
+function toneOf(tone: Extract<SvgShape, { readonly kind: "rect" }>["tone"]): SvgTone | undefined {
+  return tone === "none" ? undefined : tone
+}
+
+function svgShapePrimitives(shape: SvgShape): readonly SvgPrimitive[] {
   switch (shape.kind) {
     case "rect": {
-      const strokeWidth = shape.emphasis ? ' stroke-width="3"' : ""
-      const toneAttribute = shape.tone === "none" ? "" : ` data-tone="${shape.tone}"`
-      const rect = `<rect x="${String(shape.x)}" y="${String(shape.y)}" width="${String(shape.width)}" height="${String(shape.height)}" rx="4"${strokeWidth}${toneAttribute}></rect>`
-      if (shape.label.trim() === "") return rect
+      const rect: SvgPrimitive = {
+        kind: "rect",
+        x: shape.x,
+        y: shape.y,
+        width: shape.width,
+        height: shape.height,
+        emphasis: shape.emphasis,
+        tone: toneOf(shape.tone),
+      }
+      if (shape.label.trim() === "") return [rect]
       const hasSub = shape.sub.trim() !== ""
       if (shape.labelAt === "top-left") {
         const labelY = shape.y + SVG_LABEL_FONT_SIZE + SVG_LABEL_TOP_GAP
-        const sub = hasSub
-          ? svgSubTextHtml(shape.x + SVG_LABEL_INSET, labelY + SVG_SUB_LINE_GAP, shape.sub, {
-              centered: false,
-            })
-          : ""
-        return (
-          rect +
-          svgTextHtml(shape.x + SVG_LABEL_INSET, labelY, shape.label, { centered: false }) +
-          sub
-        )
+        return [
+          rect,
+          svgText(shape.x + SVG_LABEL_INSET, labelY, shape.label, { centered: false, sub: false }),
+          ...(hasSub
+            ? [
+                svgText(shape.x + SVG_LABEL_INSET, labelY + SVG_SUB_LINE_GAP, shape.sub, {
+                  centered: false,
+                  sub: true,
+                }),
+              ]
+            : []),
+        ]
       }
       const centerX = shape.x + shape.width / 2
       const centerY = shape.y + shape.height / 2
-      if (!hasSub) return rect + svgTextHtml(centerX, centerY, shape.label, { centered: true })
-      return (
-        rect +
-        svgTextHtml(centerX, centerY - SVG_SUB_LABEL_SHIFT, shape.label, { centered: true }) +
-        svgSubTextHtml(centerX, centerY + SVG_SUB_DROP, shape.sub, { centered: true })
-      )
+      if (!hasSub) {
+        return [rect, svgText(centerX, centerY, shape.label, { centered: true, sub: false })]
+      }
+      return [
+        rect,
+        svgText(centerX, centerY - SVG_SUB_LABEL_SHIFT, shape.label, {
+          centered: true,
+          sub: false,
+        }),
+        svgText(centerX, centerY + SVG_SUB_DROP, shape.sub, { centered: true, sub: true }),
+      ]
     }
     case "line": {
-      const markerEnd = shape.arrow ? ` marker-end="url(#${SVG_ARROW_MARKER_ID})"` : ""
-      const dashArray = shape.dashed ? ' stroke-dasharray="6 4"' : ""
-      const toneAttribute = shape.tone === "none" ? "" : ` data-tone="${shape.tone}"`
-      const line = `<line x1="${String(shape.x1)}" y1="${String(shape.y1)}" x2="${String(shape.x2)}" y2="${String(shape.y2)}"${markerEnd}${dashArray}${toneAttribute}></line>`
+      const line: SvgPrimitive = {
+        kind: "line",
+        x1: shape.x1,
+        y1: shape.y1,
+        x2: shape.x2,
+        y2: shape.y2,
+        arrow: shape.arrow,
+        dashed: shape.dashed,
+        tone: toneOf(shape.tone),
+      }
       return shape.label.trim() === ""
-        ? line
-        : line +
-            svgTextHtml((shape.x1 + shape.x2) / 2, (shape.y1 + shape.y2) / 2 - 6, shape.label, {
+        ? [line]
+        : [
+            line,
+            svgText((shape.x1 + shape.x2) / 2, (shape.y1 + shape.y2) / 2 - 6, shape.label, {
               centered: true,
-            })
+              sub: false,
+            }),
+          ]
     }
     case "text":
-      return svgTextHtml(shape.x, shape.y, shape.text, { centered: false })
+      return [svgText(shape.x, shape.y, shape.text, { centered: false, sub: false })]
   }
 }
 
-function svgTextHtml(
+/** `sub` は `rect` の説明の字。`report-notation-figure.css` が `data-sub` を目印に弱い色を当てる。 */
+function svgText(
   x: number,
   y: number,
   text: string,
-  { centered }: { readonly centered: boolean },
-): string {
-  return svgTextElement(x, y, text, { centered, fontSize: SVG_LABEL_FONT_SIZE, extra: "" })
-}
-
-/** `rect` の `sub`。`report-notation-figure.css` が `data-sub` を目印に弱い色を当てる。 */
-function svgSubTextHtml(
-  x: number,
-  y: number,
-  text: string,
-  { centered }: { readonly centered: boolean },
-): string {
-  return svgTextElement(x, y, text, { centered, fontSize: SVG_SUB_FONT_SIZE, extra: " data-sub" })
-}
-
-function svgTextElement(
-  x: number,
-  y: number,
-  text: string,
-  {
+  { centered, sub }: { readonly centered: boolean; readonly sub: boolean },
+): SvgPrimitive {
+  return {
+    kind: "text",
+    x,
+    y,
+    text,
+    fontSize: sub ? SVG_SUB_FONT_SIZE : SVG_LABEL_FONT_SIZE,
     centered,
-    fontSize,
-    extra,
-  }: { readonly centered: boolean; readonly fontSize: number; readonly extra: string },
-): string {
-  const anchor = centered ? ' text-anchor="middle" dominant-baseline="middle"' : ""
-  return `<text x="${String(x)}" y="${String(y)}" font-size="${String(fontSize)}"${anchor}${extra}>${htmlInline(text)}</text>`
+    sub,
+  }
+}
+
+function toneAttribute(tone: SvgTone | undefined): string {
+  return tone === undefined ? "" : ` data-tone="${tone}"`
+}
+
+function svgPrimitiveHtml(primitive: SvgPrimitive): string {
+  switch (primitive.kind) {
+    case "rect": {
+      const strokeWidth = primitive.emphasis ? ' stroke-width="3"' : ""
+      return `<rect x="${String(primitive.x)}" y="${String(primitive.y)}" width="${String(primitive.width)}" height="${String(primitive.height)}" rx="4"${strokeWidth}${toneAttribute(primitive.tone)}></rect>`
+    }
+    case "line": {
+      const markerEnd = primitive.arrow ? ` marker-end="url(#${SVG_ARROW_MARKER_ID})"` : ""
+      const dashArray = primitive.dashed ? ' stroke-dasharray="6 4"' : ""
+      return `<line x1="${String(primitive.x1)}" y1="${String(primitive.y1)}" x2="${String(primitive.x2)}" y2="${String(primitive.y2)}"${markerEnd}${dashArray}${toneAttribute(primitive.tone)}></line>`
+    }
+    case "text": {
+      const anchor = primitive.centered ? ' text-anchor="middle" dominant-baseline="middle"' : ""
+      const sub = primitive.sub ? " data-sub" : ""
+      return `<text x="${String(primitive.x)}" y="${String(primitive.y)}" font-size="${String(primitive.fontSize)}"${anchor}${sub}>${htmlInline(primitive.text)}</text>`
+    }
+  }
 }
 
 /**

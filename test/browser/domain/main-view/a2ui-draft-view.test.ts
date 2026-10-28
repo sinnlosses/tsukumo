@@ -86,6 +86,13 @@ describe("mainViewDraftOf", () => {
     expect(a2ui.leafValues.m1?.mergedIntoPrevious).toBe(true)
   })
 
+  it("草稿の画像の取り出し元は none（棚に置いていない本文）", () => {
+    const a2ui = mainViewDraftOf("toolu_draft", STAGED_PARTS)?.regions.a2ui
+    if (a2ui?.kind !== "surface") throw new Error("面の値が無い")
+
+    expect(a2ui.imageSource).toEqual({ kind: "none" })
+  })
+
   it("葉の Markdown と節の見出しが、面で描く値に載る", () => {
     const draft = mainViewDraftOf("toolu_draft", STAGED_PARTS)
 

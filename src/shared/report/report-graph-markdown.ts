@@ -138,35 +138,56 @@ const GRAPH_SHAPES = [
   { shape: "decision", label: "分岐" },
 ] as const satisfies readonly { readonly shape: GraphNodeShape; readonly label: string }[]
 
+/** 凡例の1項目。`tone` の `label` は書き手の字（行内の記法を含みうる）。 */
+type GraphLegendItem =
+  | { readonly kind: "shape"; readonly shape: GraphNodeShape; readonly label: string }
+  | {
+      readonly kind: "change"
+      readonly change: Exclude<GraphChange, "unchanged">
+      readonly label: string
+    }
+  | { readonly kind: "return"; readonly label: string }
+  | {
+      readonly kind: "tone"
+      readonly tone: ReportGraph["legend"][number]["tone"]
+      readonly label: string
+    }
+
 /** `withShapes` が偽なら形の見本を出さない（形を描き分けないカードの連鎖の凡例）。 */
-export function graphLegendMarkdown(block: ReportGraph, withShapes = true): string {
+export function graphLegendItemsOf(
+  block: ReportGraph,
+  withShapes = true,
+): readonly GraphLegendItem[] {
   const { nodes, edges } = readGraphSource(block.source)
   const shapes = GRAPH_SHAPES.filter(({ shape }) => nodes.some((node) => node.shape === shape))
   const shapeItems = !withShapes || shapes.length < 2 ? [] : shapes
   const changeItems = [...nodes, ...edges].every(({ change }) => change === "unchanged")
     ? []
     : GRAPH_CHANGES
-  const returnItems = edges.some((edge) => edge.returns)
-    ? [
-        `<span class="graph-legend-item"><span class="graph-legend-swatch graph-legend-return" aria-hidden="true"></span>戻り道</span>`,
-      ]
-    : []
-  const toneItems = block.legend.map(
-    ({ tone, label }) =>
-      `<span class="graph-legend-item"><span class="graph-legend-swatch graph-legend-tone-${tone}" aria-hidden="true"></span>${htmlInline(label)}</span>`,
-  )
-  const items = [
-    ...shapeItems.map(
-      ({ shape, label }) =>
-        `<span class="graph-legend-item"><span class="graph-legend-shape graph-legend-shape-${shape}" aria-hidden="true"></span>${label}</span>`,
-    ),
-    ...changeItems.map(
-      ({ change, label }) =>
-        `<span class="graph-legend-item"><span class="graph-legend-swatch graph-legend-${change}" aria-hidden="true"></span>${label}</span>`,
-    ),
-    ...returnItems,
-    ...toneItems,
+  return [
+    ...shapeItems.map(({ shape, label }): GraphLegendItem => ({ kind: "shape", shape, label })),
+    ...changeItems.map(({ change, label }): GraphLegendItem => ({ kind: "change", change, label })),
+    ...(edges.some((edge) => edge.returns)
+      ? [{ kind: "return", label: "戻り道" } satisfies GraphLegendItem]
+      : []),
+    ...block.legend.map(({ tone, label }): GraphLegendItem => ({ kind: "tone", tone, label })),
   ]
+}
+
+/** `withShapes` が偽なら形の見本を出さない（形を描き分けないカードの連鎖の凡例）。 */
+export function graphLegendMarkdown(block: ReportGraph, withShapes = true): string {
+  const items = graphLegendItemsOf(block, withShapes).map((item) => {
+    switch (item.kind) {
+      case "shape":
+        return `<span class="graph-legend-item"><span class="graph-legend-shape graph-legend-shape-${item.shape}" aria-hidden="true"></span>${item.label}</span>`
+      case "change":
+        return `<span class="graph-legend-item"><span class="graph-legend-swatch graph-legend-${item.change}" aria-hidden="true"></span>${item.label}</span>`
+      case "return":
+        return `<span class="graph-legend-item"><span class="graph-legend-swatch graph-legend-return" aria-hidden="true"></span>${item.label}</span>`
+      case "tone":
+        return `<span class="graph-legend-item"><span class="graph-legend-swatch graph-legend-tone-${item.tone}" aria-hidden="true"></span>${htmlInline(item.label)}</span>`
+    }
+  })
   return items.length === 0 ? "" : `<div class="graph-legend">${items.join("")}</div>`
 }
 

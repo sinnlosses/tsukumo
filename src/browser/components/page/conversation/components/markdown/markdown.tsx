@@ -6,14 +6,18 @@
 
 import type { ReactElement } from "react"
 
+import type { TIMELINE_MARK_NAMES } from "../../../../../../shared/report/timeline-markdown.ts"
 import { deferredModule } from "../../../../../hooks/deferred-module.ts"
 import styles from "./markdown.module.css"
+import { ZoomableSvgFigure } from "./renderer/figure-zoom.tsx"
 import {
   FoldedList as LongBlockFoldedList,
   type FoldedListProps,
 } from "./renderer/long-block-fold.tsx"
 import type { MarkdownProps, QuestionPreviewMarkdownProps } from "./renderer/markdown-renderer.tsx"
+import { MermaidBlock } from "./renderer/mermaid-block.tsx"
 import { NoteLabel as NoteLabelView } from "./renderer/note-label.tsx"
+import { BeforeAfterSwap, ReportImage } from "./renderer/report-image.tsx"
 import notationStyles from "./renderer/report-notation.module.css"
 
 const markdownRenderer = deferredModule(() => import("./renderer/markdown-renderer.tsx"))
@@ -93,6 +97,61 @@ export const noteLeafClassNames = {
   optionName: notationStyles["report-option-name"],
   optionReason: notationStyles["report-option-reason"],
 } as const
+
+/** 図の葉が使う印の名前（Markdown の描画が同じ名前に当てる class と同じ見た目）。 */
+type FigureMarkName =
+  | "svg-figure"
+  | "svg-legend"
+  | "svg-legend-item"
+  | "before-after"
+  | "before-after-side"
+  | "before-after-label"
+  | "before-after-label-after"
+  | "before-after-arrow"
+  | "before-after-swap"
+  | "image-notes"
+  | "image-note-list"
+  | "image-note-number"
+  | "image-note-text"
+  | (typeof TIMELINE_MARK_NAMES)[number]
+  | "card-chain"
+  | "card-chain-card"
+  | "card-chain-name"
+  | "card-chain-note"
+  | "card-chain-tone"
+  | `card-chain-tone-${"a" | "b" | "c" | "d" | "e"}`
+  | "card-chain-added"
+  | "card-chain-removed"
+  | "card-chain-changed"
+  | "card-chain-arrow"
+  | "card-chain-edge"
+  | "graph-legend"
+  | "graph-legend-item"
+  | "graph-legend-swatch"
+  | "graph-legend-added"
+  | "graph-legend-removed"
+  | "graph-legend-changed"
+  | "graph-legend-return"
+  | `graph-legend-tone-${"a" | "b" | "c" | "d" | "e"}`
+  | "graph-legend-shape"
+  | `graph-legend-shape-${"round" | "box" | "decision"}`
+
+/** 図の葉の要素に付ける class 名。 */
+export function figureClassName(name: FigureMarkName): string | undefined {
+  return notationStyles[`report-${name}`]
+}
+
+export { ZoomableSvgFigure }
+
+export { BeforeAfterSwap, ReportImage }
+
+/**
+ * mermaid のソースを図に描く。
+ * フェンスから読んだ code は末尾に改行が付き、図の枠の高さの見積もりがその行を数えるので、同じ形にして渡す。
+ */
+export function MermaidFigure(props: { readonly source: string }): ReactElement {
+  return <MermaidBlock key={props.source} code={`${props.source.replace(/\n$/, "")}\n`} />
+}
 
 /** `note` の種別のラベル。 */
 export function NoteLabel(props: {

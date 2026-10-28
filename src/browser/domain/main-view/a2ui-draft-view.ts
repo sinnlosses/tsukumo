@@ -54,7 +54,8 @@ function draftRegions(
   const { sections } = parseReportSections(a2uiReportFields(root, a2uiPartsById(drawn)).sections)
   const tidied = tidyReportSections({ conclusion, sections })
   const layout = reportLeafLayoutOf(tidied)
-  const pieces = reportSectionPieces(tidied, { kind: "none" }, layout)
+  const imageSource = { kind: "none" } as const
+  const pieces = reportSectionPieces(tidied, imageSource, layout)
   const head = isBlankText(conclusion)
     ? ""
     : `<div class="conclusion-lead">\n\n${conclusion}\n\n</div>`
@@ -79,6 +80,7 @@ function draftRegions(
       },
       pieces,
       layout,
+      imageSource,
     ),
   }
 }

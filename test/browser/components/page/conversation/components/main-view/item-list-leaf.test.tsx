@@ -134,6 +134,7 @@ describe("ItemList の部品", () => {
           {view !== undefined && (
             <DirectLeaf
               part={part}
+              imageSource={{ kind: "none" }}
               value={{
                 captionNumber: { kind: "none" },
                 tagTones: {},

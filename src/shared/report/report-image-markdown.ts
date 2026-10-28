@@ -30,7 +30,7 @@ export function imageMarkdown(
   ordinal: number,
 ): string {
   const caption = block.caption.trim()
-  const alt = htmlAttribute(caption === "" ? "画面の画像" : caption)
+  const alt = htmlAttribute(pictureAltOf(block.caption))
   const image = `<img${reportImageAttributes(imageSource, block.path)} alt="${alt}">`
   const annotated = block.notes.length > 0
   return captionedMarkdown({
@@ -50,14 +50,40 @@ export function imageMarkdown(
  * 棚に置いていない本文では空にし、描く側が「出せない」の札にする。
  */
 export function reportImageAttributes(imageSource: ReportImageSource, path: string): string {
-  if (imageSource.kind === "none" || imageSource.unshelved.includes(path)) {
+  const props = reportImageProps(imageSource, path)
+  if (props.src === undefined) {
     return ""
   }
-  const src = ` src="${htmlAttribute(reportImagePath(imageSource.toolUseId, path))}"`
-  const size = imageSource.sizes.find((candidate) => candidate.path === path)
-  return size === undefined
+  const src = ` src="${htmlAttribute(props.src)}"`
+  return props.size === undefined
     ? src
-    : `${src} width="${String(size.width)}" height="${String(size.height)}"`
+    : `${src} width="${String(props.size.width)}" height="${String(props.size.height)}"`
+}
+
+/**
+ * 画像の `src` と、分かれば画素の寸法。棚に置いていない本文・棚に置けなかったパスは `src` を持たない（描く側が「出せない」の札にする）。
+ */
+export function reportImageProps(
+  imageSource: ReportImageSource,
+  path: string,
+): {
+  readonly src: string | undefined
+  readonly size: { readonly width: number; readonly height: number } | undefined
+} {
+  if (imageSource.kind === "none" || imageSource.unshelved.includes(path)) {
+    return { src: undefined, size: undefined }
+  }
+  const size = imageSource.sizes.find((candidate) => candidate.path === path)
+  return {
+    src: reportImagePath(imageSource.toolUseId, path),
+    size: size === undefined ? undefined : { width: size.width, height: size.height },
+  }
+}
+
+/** `image` の代替テキスト。題が空なら「画面の画像」。 */
+export function pictureAltOf(caption: string): string {
+  const text = caption.trim()
+  return text === "" ? "画面の画像" : text
 }
 
 function imageNoteListMarkdown(notes: readonly string[]): string {

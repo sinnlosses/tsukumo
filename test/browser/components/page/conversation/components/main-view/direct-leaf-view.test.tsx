@@ -47,7 +47,12 @@ describe("directLeafViewOf", () => {
 describe("DirectLeaf", () => {
   it("値を渡して部品を描く", () => {
     const { container } = render(
-      <DirectLeaf part={PART} value={VALUE} view={(props) => <p>{props.part.id}</p>} />,
+      <DirectLeaf
+        part={PART}
+        value={VALUE}
+        imageSource={{ kind: "none" }}
+        view={(props) => <p>{props.part.id}</p>}
+      />,
     )
 
     expect(container.textContent).toBe("p1")
@@ -55,7 +60,12 @@ describe("DirectLeaf", () => {
 
   it("整形で落ちた葉（値が無い）は何も描かない", () => {
     const { container } = render(
-      <DirectLeaf part={PART} value={undefined} view={() => <p>直接</p>} />,
+      <DirectLeaf
+        part={PART}
+        value={undefined}
+        imageSource={{ kind: "none" }}
+        view={() => <p>直接</p>}
+      />,
     )
 
     expect(container.textContent).toBe("")

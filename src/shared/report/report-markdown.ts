@@ -7,15 +7,15 @@ import { zip } from "remeda"
 import { cardChainHtml } from "./card-chain-markdown.ts"
 import { encodeMarks } from "./code-mark.ts"
 import { plotRows, type ReportPlot } from "./figure-grammar.ts"
+import { graphDrawingOf } from "./graph-drawing.ts"
 import { graphFoldHtml } from "./graph-fold-html.ts"
-import { graphFoldFigure } from "./graph-fold.ts"
 import { plotDrawingOf } from "./plot-drawing.ts"
 import type { ReportBlock, ReportSection, SectionBlock } from "./report-block.ts"
 import { captionedMarkdown } from "./report-caption.ts"
 import { compareMarkdown, beforeAfterMarkdown } from "./report-comparison-markdown.ts"
 import { chartConfigOf, svgHtml, withSequenceAutonumber } from "./report-diagram-markdown.ts"
 import { filesMarkdown } from "./report-file-markdown.ts"
-import { graphLegendMarkdown, graphSource } from "./report-graph-markdown.ts"
+import { graphLegendMarkdown } from "./report-graph-markdown.ts"
 import { imageMarkdown, type ReportImageSource } from "./report-image-markdown.ts"
 import { fencedMarkdown, htmlInline, joinParts, markdownInline } from "./report-inline-markdown.ts"
 import {
@@ -194,39 +194,39 @@ function blockMarkdown(
         fit: false,
       })
     case "graph": {
-      const chain = cardChainHtml(block.source)
-      if (chain !== undefined) {
-        return captionedMarkdown({
-          kind: "figure",
-          ordinal,
-          title: block.title,
-          body: `${chain}${graphLegendMarkdown(block, false)}`,
-          bodyFormat: "html",
-          fit: false,
-        })
+      const drawing = graphDrawingOf(block)
+      switch (drawing.kind) {
+        case "chain":
+          return captionedMarkdown({
+            kind: "figure",
+            ordinal,
+            title: block.title,
+            body: `${cardChainHtml(drawing.chain)}${graphLegendMarkdown(block, false)}`,
+            bodyFormat: "html",
+            fit: false,
+          })
+        case "fold":
+          return captionedMarkdown({
+            kind: "figure",
+            ordinal,
+            title: block.title,
+            body: `${graphFoldHtml(drawing.figure)}${graphLegendMarkdown(block)}`,
+            bodyFormat: "html",
+            fit: true,
+          })
+        case "mermaid":
+          return captionedMarkdown({
+            kind: "figure",
+            ordinal,
+            title: block.title,
+            body: joinParts([
+              fencedMarkdown("mermaid", drawing.source),
+              graphLegendMarkdown(block),
+            ]),
+            bodyFormat: "markdown",
+            fit: false,
+          })
       }
-      const fold = graphFoldFigure(block.source)
-      if (fold !== undefined) {
-        return captionedMarkdown({
-          kind: "figure",
-          ordinal,
-          title: block.title,
-          body: `${graphFoldHtml(fold)}${graphLegendMarkdown(block)}`,
-          bodyFormat: "html",
-          fit: true,
-        })
-      }
-      return captionedMarkdown({
-        kind: "figure",
-        ordinal,
-        title: block.title,
-        body: joinParts([
-          fencedMarkdown("mermaid", graphSource(block)),
-          graphLegendMarkdown(block),
-        ]),
-        bodyFormat: "markdown",
-        fit: false,
-      })
     }
     case "chart":
       return captionedMarkdown({

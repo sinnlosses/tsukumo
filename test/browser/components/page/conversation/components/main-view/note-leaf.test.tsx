@@ -60,7 +60,9 @@ describe("Note の部品", () => {
       } as const
       const { container } = render(
         <div data-report-region="section">
-          {view !== undefined && <DirectLeaf part={part} value={value} view={view} />}
+          {view !== undefined && (
+            <DirectLeaf part={part} value={value} imageSource={{ kind: "none" }} view={view} />
+          )}
         </div>,
       )
       const text = container.querySelector("[data-report-region] > div")?.firstChild?.textContent
@@ -80,6 +82,7 @@ describe("Note の部品", () => {
         {view !== undefined && (
           <DirectLeaf
             part={part}
+            imageSource={{ kind: "none" }}
             value={{
               captionNumber: { kind: "none" },
               tagTones: {},

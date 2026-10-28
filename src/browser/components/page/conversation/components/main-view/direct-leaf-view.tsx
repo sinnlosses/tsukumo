@@ -4,16 +4,23 @@
 import type { ReactElement } from "react"
 
 import type { A2uiReportComponent } from "../../../../../../shared/report/a2ui-report-catalog.ts"
+import type { ReportImageSource } from "../../../../../../shared/report/report-image-markdown.ts"
 import type { LeafValue } from "../../../../../../shared/report/report-leaf-value.ts"
+import { BeforeAfterLeaf } from "./before-after-leaf.tsx"
 import { ClaimsLeaf } from "./claims-leaf.tsx"
+import { GraphLeaf } from "./graph-leaf.tsx"
 import { ItemListLeaf } from "./item-list-leaf.tsx"
 import { NoteLeaf } from "./note-leaf.tsx"
 import { OptionsLeaf } from "./options-leaf.tsx"
 import { ParagraphLeaf } from "./paragraph-leaf.tsx"
+import { PictureLeaf } from "./picture-leaf.tsx"
+import { SvgLeaf } from "./svg-leaf.tsx"
+import { TimelineLeaf } from "./timeline-leaf.tsx"
 
 type DirectLeafViewProps = {
   readonly part: A2uiReportComponent
   readonly value: LeafValue
+  readonly imageSource: ReportImageSource
 }
 
 type DirectLeafView = (props: DirectLeafViewProps) => ReactElement
@@ -25,6 +32,11 @@ const DIRECT_LEAF_VIEWS: ReadonlyMap<A2uiReportComponent["component"], DirectLea
   ["Claims", ClaimsLeaf],
   ["Note", NoteLeaf],
   ["Options", OptionsLeaf],
+  ["Svg", SvgLeaf],
+  ["Timeline", TimelineLeaf],
+  ["Graph", GraphLeaf],
+  ["Picture", PictureLeaf],
+  ["BeforeAfter", BeforeAfterLeaf],
 ])
 
 /** 葉を直接描く部品。無ければ undefined（Markdown の描画に通す葉）。 */
@@ -39,8 +51,13 @@ export function directLeafViewOf(
 export function DirectLeaf(props: {
   readonly part: A2uiReportComponent
   readonly value: LeafValue | undefined
+  readonly imageSource: ReportImageSource
   readonly view: DirectLeafView
 }): ReactElement {
   const View = props.view
-  return props.value === undefined ? <></> : <View part={props.part} value={props.value} />
+  return props.value === undefined ? (
+    <></>
+  ) : (
+    <View part={props.part} value={props.value} imageSource={props.imageSource} />
+  )
 }

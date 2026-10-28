@@ -81,6 +81,11 @@ export function beforeAfterMarkdown(
   )
 }
 
+/** 前後の画像の代替テキスト。`imageLabel` は「前の画面」「後の画面」で、題があれば続ける。 */
+export function beforeAfterImageAltOf(imageLabel: string, title: string): string {
+  return title.trim() === "" ? imageLabel : `${imageLabel}: ${title}`
+}
+
 function beforeAfterContentMarkdown(
   content: BeforeAfterSide,
   imageSource: ReportImageSource,
@@ -89,12 +94,11 @@ function beforeAfterContentMarkdown(
 ): string {
   switch (content.kind) {
     case "image": {
-      const alt = title.trim() === "" ? imageLabel : `${imageLabel}: ${title}`
       const region =
         content.region === undefined
           ? ""
           : ` ${IMAGE_REGION_ATTRIBUTE}="${formatImageRegion(content.region)}"`
-      return `<img${reportImageAttributes(imageSource, content.path)} alt="${htmlAttribute(alt)}"${region}>`
+      return `<img${reportImageAttributes(imageSource, content.path)} alt="${htmlAttribute(beforeAfterImageAltOf(imageLabel, title))}"${region}>`
     }
     case "code":
       return fencedMarkdown(content.language, content.source)

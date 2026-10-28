@@ -182,16 +182,13 @@ function reportRegionsOf(
   const sections = reportSectionsOf(report)
   const drawnSections = [...sections, ...retrospectiveSections(report.retrospective)]
   const layout = reportLeafLayoutOf(drawnSections)
-  const pieces = reportSectionPieces(
-    drawnSections,
-    {
-      kind: "shelved",
-      toolUseId: report.toolUseId,
-      sizes: report.imageSizes,
-      unshelved: report.unshelvedImages,
-    },
-    layout,
-  )
+  const imageSource = {
+    kind: "shelved",
+    toolUseId: report.toolUseId,
+    sizes: report.imageSizes,
+    unshelved: report.unshelvedImages,
+  } as const
+  const pieces = reportSectionPieces(drawnSections, imageSource, layout)
   const markdowns = pieces.map((piece) => joinParts([piece.heading, ...piece.blocks]))
   return {
     kind: "regions",
@@ -203,7 +200,7 @@ function reportRegionsOf(
     }),
     retrospective: markdowns[sections.length] ?? "",
     favor: { id: favorId, markdown: report.favor },
-    a2ui: a2uiReportView(report, pieces, layout),
+    a2ui: a2uiReportView(report, pieces, layout, imageSource),
   }
 }
 
