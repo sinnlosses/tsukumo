@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, it } from "vitest"
 
-import { formatHash, readHashRoute } from "../../../src/browser/stores/location-hash.ts"
+import {
+  formatHash,
+  readHashRoute,
+  SCREEN_NAV_ITEMS,
+} from "../../../src/browser/stores/location-hash.ts"
 
 type HashRoute = ReturnType<typeof readHashRoute>
 
@@ -26,6 +30,14 @@ function route(overrides: Partial<HashRoute>): HashRoute {
     ...overrides,
   }
 }
+
+describe("見本帳の画面", () => {
+  it("`#design` は見本帳の画面に読め、書き戻せて、帯のメニューには出ない", () => {
+    expect(readHash("#design")).toEqual(route({ screen: "design" }))
+    expect(formatHash(route({ screen: "design" }))).toBe("#design")
+    expect(SCREEN_NAV_ITEMS.map((item) => item.screen)).not.toContain("design")
+  })
+})
 
 describe("readHashRoute", () => {
   it("画面は `?` の前、見ているターンは turn の値から読む", () => {

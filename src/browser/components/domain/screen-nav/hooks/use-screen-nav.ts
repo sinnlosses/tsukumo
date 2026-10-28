@@ -15,7 +15,7 @@ import {
   type CurrentWork,
 } from "../../../../features/current-work/hooks/use-current-work.ts"
 import { usePhoneWidth } from "../../../../hooks/use-phone-width.ts"
-import { SCREEN_NAV_ITEMS, type Screen } from "../../../../stores/location-hash.ts"
+import { SCREEN_NAV_ITEMS, type NavScreen, type Screen } from "../../../../stores/location-hash.ts"
 import {
   useModelPermission,
   type ModelPermissionControl,
@@ -145,7 +145,7 @@ const OTHER_SCREEN_ICONS = {
   character: "character",
   "token-usage": "token",
   achievement: "achievement",
-} satisfies Record<Screen, ScreenNavGateIcon>
+} satisfies Record<NavScreen, ScreenNavGateIcon>
 
 /**
  * 帯の門の並び。仕事・雑談はどちらも会話の画面で、押すとモードも決まる。

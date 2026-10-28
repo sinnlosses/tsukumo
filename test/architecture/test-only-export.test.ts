@@ -24,16 +24,7 @@ const PRODUCTION_DIRECTORIES = ["src/", "scripts/"] as const
 const ALLOWED_TEST_ONLY_EXPORTS = {} as const satisfies Record<string, string>
 
 // 本番の読み手が後続の課題で付くまでの、期限つきの例外（Props の型でなくてよい）。読み手が付いたら外す。
-const PENDING_READER_EXPORTS = {
-  "src/browser/components/ui/surface/surface.tsx#Surface":
-    "使い手は見本帳と、既存の箱を移す領域ごとの課題で付く",
-  "src/browser/components/ui/surface/surface.tsx#SurfaceProps":
-    "使い手は見本帳と、既存の箱を移す領域ごとの課題で付く",
-  "src/browser/components/ui/badge/badge.tsx#Badge": "見本帳が読み手になるまで",
-  "src/browser/components/ui/badge/badge.tsx#BadgeProps": "見本帳が読み手になるまで",
-  "src/browser/components/ui/divider/divider.tsx#Divider": "見本帳が読み手になるまで",
-  "src/browser/components/ui/divider/divider.tsx#DividerProps": "見本帳が読み手になるまで",
-} as const satisfies Record<string, string>
+const PENDING_READER_EXPORTS = {} as const satisfies Record<string, string>
 
 const SOURCES = readRepositorySources()
 

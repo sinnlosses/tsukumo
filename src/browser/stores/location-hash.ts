@@ -9,6 +9,7 @@
 // - `#character?turn=3`           キャラクター画面（使用中のパック）。ターンは会話の画面へ戻ったときのために運ぶ
 // - `#character?pack=tsukumo`     キャラクター画面で `tsukumo` のパックを選んでいる
 // - `#achievement?date=YYYY-MM-DD` 成果の画面でその日を見ている
+// - `#design`                     見本帳（帯に出さない）
 //
 // パックと見ている日を `?` の前に置かないのは、`turn` と同じく画面の上に乗る付随情報だから。
 // `pack` を読むのはキャラクター画面のときだけ、`date` を読むのは成果の画面のときだけで、ほかの画面へ移ると落ちる（戻ると使用中のパック・今日から）。
@@ -33,11 +34,19 @@ const SCREEN_LIST = [
   { screen: "achievement", label: "成果" },
 ] as const satisfies readonly { readonly screen: string; readonly label: string }[]
 
+/** 帯のメニューに出る画面。 */
+export type NavScreen = (typeof SCREEN_LIST)[number]["screen"]
+
+/** 帯に出さず、hash を打って開く画面（見本帳）。 */
+const HIDDEN_SCREEN_LIST = [{ screen: "design" }] as const satisfies readonly {
+  readonly screen: string
+}[]
+
 /** 出している画面。hash が対応しない値のときは会話の画面に落ちる。 */
-export type Screen = (typeof SCREEN_LIST)[number]["screen"]
+export type Screen = NavScreen | (typeof HIDDEN_SCREEN_LIST)[number]["screen"]
 
 /** 帯のメニューが並べる順そのもの。 */
-export const SCREEN_NAV_ITEMS: readonly { readonly screen: Screen; readonly label: string }[] =
+export const SCREEN_NAV_ITEMS: readonly { readonly screen: NavScreen; readonly label: string }[] =
   SCREEN_LIST
 
 /**
@@ -144,7 +153,8 @@ function subscribeToHash(onStoreChange: () => void): () => void {
 }
 
 function screenOf(path: string): Screen {
-  return SCREEN_LIST.find((entry) => pathOf(entry.screen) === path)?.screen ?? "conversation"
+  const entries: readonly { readonly screen: Screen }[] = [...SCREEN_LIST, ...HIDDEN_SCREEN_LIST]
+  return entries.find((entry) => pathOf(entry.screen) === path)?.screen ?? "conversation"
 }
 
 /** `URLSearchParams.get` の `null`（無い）もここで畳む。番号に読めない値は今回に追従する。 */

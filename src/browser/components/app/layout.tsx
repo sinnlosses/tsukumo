@@ -29,6 +29,7 @@ const TokenUsage = deferredScreen(
 const Achievement = deferredScreen(
   async () => (await import("../page/achievement/achievement.tsx")).Achievement,
 )
+const Design = deferredScreen(async () => (await import("./design/design.tsx")).Design)
 
 /**
  * 出している画面を選ぶ（`location.hash`）。
@@ -80,4 +81,5 @@ const OVERLAY_SCREEN = {
   character: <Character />,
   "token-usage": <TokenUsage />,
   achievement: <Achievement />,
+  design: <Design />,
 } satisfies Record<Exclude<Screen, "conversation">, ReactElement>

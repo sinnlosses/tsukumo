@@ -80,4 +80,4 @@
 
 ### 13.17 見本帳
 
-**見本帳は専用の画面 `#design`。** 帯に出さず、hash を打って開く。初期読み込みの束には入れず、`import()` で外して読む。デザイントークン（値と使われ方）・`ui/` の部品（状態ごと）・カタログの全部品を 1 ページに並べる。カタログの部品の例は `report_part_card` が返す例をそのまま使い、a2ui の面で描く。撮影（`scripts/capture/capture-catalog.ts`）と E2E からは hash で開いて撮る。Storybook は入れない（理由は ADR 0041）。
+**見本帳は専用の画面 `#design`。** 帯に出さず、hash を打って開く。初期読み込みの束には入れず、`import()` で外して読む。置き場は `src/browser/components/app/design/`（カタログの描き手を引くので、全画面を知る `components/app/` に置く）。デザイントークン（値と使われ方）・`ui/` の部品（状態ごと）・カタログの全部品を 1 ページに並べる。カタログの部品の例は `report_part_card` が返す例（`src/shared/report/part-example-list.ts`）をそのまま使い、a2ui の面で描く。見本帳が並べるカタログの部品は例の一覧から導くので、部品を足せば自動で並ぶ。見本帳が描いた部品の名前がカタログ（`REPORT_COMPONENT_SCHEMAS`）の全部品と一致すること、余白・角丸・影・動きのトークンの一覧が `theme.css` の宣言と一致することは、単体テスト（`test/browser/components/app/design/`）が見る。撮影（`scripts/capture/capture-view.ts --hash '#design'`）と E2E からは hash で開いて撮る。Storybook は入れない（理由は ADR 0041）。
