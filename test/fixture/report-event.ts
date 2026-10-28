@@ -2,8 +2,12 @@
 // 既定は欄の「無い」の値で、呼ぶ側は確かめたい欄だけを渡す。
 // `conclusionSentenceChars` は、渡さなければ `conclusion` を1要素として数える。
 
+import { z } from "zod"
+
 import type { ReportDraft } from "../../src/server/report/core/report-violation.ts"
 import { parseConclusion } from "../../src/server/session-driver/core/conclusion-sentence.ts"
+import { legacyReportComponents } from "../../src/server/session-driver/core/legacy-report-component-list.ts"
+import { a2uiReportComponentSchema } from "../../src/shared/report/a2ui-report-catalog.ts"
 import type { ReportSection } from "../../src/shared/report/report-block.ts"
 import type { SessionEvent } from "../../src/shared/session/session-event.ts"
 
@@ -53,6 +57,7 @@ export function reportOfSections(
 /** 記法の検査にかけるレポート1件。 */
 export function reportDraft(overrides: Partial<ReportDraft> = {}): ReportDraft {
   const conclusion = overrides.conclusion ?? "架空の結論"
+  const components = overrides.components ?? componentsOfSections(overrides.sections ?? [])
   return {
     conclusion,
     conclusionSentenceChars: parseConclusion(conclusion)?.conclusionSentenceChars ?? [],
@@ -66,5 +71,12 @@ export function reportDraft(overrides: Partial<ReportDraft> = {}): ReportDraft {
     task: { kind: "none" },
     workPlanClosing: "none",
     ...overrides,
+    components,
   }
+}
+
+/** 旧い形の節を、本番と同じ組み直し（`legacyReportComponents`）で部品の一覧にする。 */
+function componentsOfSections(sections: readonly ReportSection[]): ReportDraft["components"] {
+  const legacy = legacyReportComponents({ sections })
+  return legacy === undefined ? [] : z.array(a2uiReportComponentSchema).parse(legacy.components)
 }

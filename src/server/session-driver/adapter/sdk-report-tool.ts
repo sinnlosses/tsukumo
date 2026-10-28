@@ -86,6 +86,7 @@ export function reportTool(
       keyFigures: report.keyFigures,
       figure: report.figure,
       sections: report.sections,
+      components: report.components,
       retrospective: report.retrospective,
       favor: report.favor,
       checks: report.checks,

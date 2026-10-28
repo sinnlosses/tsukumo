@@ -20,6 +20,7 @@ import {
   MAX_PLAIN_CODE_LINES,
   MAX_TABLE_ROWS,
 } from "../../../shared/report/report-limit.ts"
+import { reportOutline } from "../../../shared/report/report-outline.ts"
 import { drawnSectionsOf } from "../../../shared/report/report-retrospective.ts"
 import { leafBlocksOf } from "../../../shared/report/row-panel-block.ts"
 import { codeBlockMatchesFile } from "./code-block-match.ts"
@@ -39,7 +40,8 @@ import {
   isRaggedTable,
   isSentenceTable,
   isVerdictOrdered,
-  nestedArrangedFoldCount,
+  nestedFoldCount,
+  noteCount,
 } from "./report-block-rule.ts"
 import {
   graphFaultsInSections,
@@ -48,7 +50,7 @@ import {
   svgToneFaultsInSections,
   unknownMermaidCount,
 } from "./report-figure-fault.ts"
-import { hasNestedFold, notationsInSections } from "./report-markdown-notation.ts"
+import { notationsInSections } from "./report-markdown-notation.ts"
 import {
   hasArrow,
   isBadHeading,
@@ -63,6 +65,7 @@ import { timelineFaults } from "./timeline-fault.ts"
 
 /** レポートの規約違反を並べる。空なら違反は無い。 */
 export function reportViolations(report: ReportDraft): readonly ReportViolation[] {
+  const outline = reportOutline(report.components)
   const blocks = report.sections.flatMap((section) => leafBlocksOf(section.blocks))
   const notations = notationsInSections(report.sections)
   const badCards = badCardsIn(blocks)
@@ -93,14 +96,9 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
   const counted = [
     { kind: "long-conclusion", count: report.conclusionSentenceChars.length },
     { kind: "unknown-mermaid", count: unknownMermaidCount(drawnSections) },
-    { kind: "too-many-notes", count: blocks.filter((block) => block.kind === "note").length },
-    { kind: "crowded-notes", count: crowdedNoteCount(report.sections) },
-    {
-      kind: "nested-fold",
-      count:
-        blocks.filter((block) => block.kind === "markdown" && hasNestedFold(block)).length +
-        nestedArrangedFoldCount(report.sections),
-    },
+    { kind: "too-many-notes", count: noteCount(outline) },
+    { kind: "crowded-notes", count: crowdedNoteCount(outline) },
+    { kind: "nested-fold", count: nestedFoldCount(outline) },
     {
       kind: "unordered-options",
       count: blocks.filter((block) => block.kind === "options" && !isVerdictOrdered(block)).length,

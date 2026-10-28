@@ -3,12 +3,9 @@
 import { sumBy } from "remeda"
 
 import { type TableCell, tableRowCells } from "../../../shared/report/report-block-comparison.ts"
-import type {
-  ReportBlock,
-  ReportSection,
-  SectionBlock,
-} from "../../../shared/report/report-block.ts"
+import type { ReportBlock } from "../../../shared/report/report-block.ts"
 import { SENTENCE_CELL_LENGTH } from "../../../shared/report/report-limit.ts"
+import type { ReportOutline, ReportOutlineLeaf } from "../../../shared/report/report-outline.ts"
 import { textLengthOf } from "./markdown-tree.ts"
 import { hasNestedFold } from "./report-markdown-notation.ts"
 import type { CardsFault } from "./report-violation.ts"
@@ -55,33 +52,27 @@ const VERDICT_ORDER = {
   number
 >
 
-/** 縦に続く `note` の数。`panel` の子は縦に積むので同じく数え、`row` の子は横に並ぶので数えない。 */
-export function crowdedNoteCount(sections: readonly ReportSection[]): number {
-  return sumBy(
-    sections,
-    (section) =>
-      crowdedNotesIn(section.blocks, section.heading.trim() !== "") +
-      sumBy(section.blocks, (block) =>
-        block.kind === "panel" ? crowdedNotesIn(block.blocks, false) : 0,
-      ),
+/** 葉の平らな並び（配置の部品の中の葉も外側の節へ入る）で、`Note` の直後か見出しの直後にある `Note` の数。 */
+export function crowdedNoteCount(outline: ReportOutline): number {
+  return sumBy(outline.sections, (section) =>
+    crowdedNotesIn(section.leaves, section.kind === "section" && section.heading.trim() !== ""),
   )
 }
 
-/** `fold` を持つ `row`・`panel` のうち、子に `fold` か `<details>` があって描くと畳みが入れ子になる数。 */
-export function nestedArrangedFoldCount(sections: readonly ReportSection[]): number {
-  return sections
-    .flatMap((section) => section.blocks)
-    .filter(
-      (block) =>
-        (block.kind === "row" || block.kind === "panel") &&
-        block.fold.trim() !== "" &&
-        block.blocks.some(
-          (child) =>
-            child.fold.trim() !== "" ||
-            (child.kind === "markdown" &&
-              hasNestedFold({ fold: block.fold, markdown: child.markdown })),
-        ),
-    ).length
+export function noteCount(outline: ReportOutline): number {
+  return sumBy(
+    outline.sections,
+    (section) => section.leaves.filter((leaf) => leaf.component === "Note").length,
+  )
+}
+
+/** `fold` を持つ `Markdown` が `<details>` を含む、または `<details>` が入れ子になっている数。 */
+export function nestedFoldCount(outline: ReportOutline): number {
+  return sumBy(
+    outline.sections,
+    (section) =>
+      section.leaves.filter((leaf) => leaf.component === "Markdown" && hasNestedFold(leaf)).length,
+  )
 }
 
 /** `beforeAfter` の画像の側の `region` が、画像の外に出る、または幅か高さが 0 以下の塊か。 */
@@ -160,12 +151,12 @@ function cellLength(cell: TableCell): number {
 }
 
 /** 並びの中で、`note` の直後か見出しの直後に置いた `note`（`warn`・`ng` を除く）の数。 */
-function crowdedNotesIn(blocks: readonly SectionBlock[], headed: boolean): number {
-  return blocks.filter(
-    (block, index) =>
-      block.kind === "note" &&
-      block.tone !== "warn" &&
-      block.tone !== "ng" &&
-      (blocks[index - 1]?.kind === "note" || (index === 0 && headed)),
+function crowdedNotesIn(leaves: readonly ReportOutlineLeaf[], headed: boolean): number {
+  return leaves.filter(
+    (leaf, index) =>
+      leaf.component === "Note" &&
+      leaf.tone !== "warn" &&
+      leaf.tone !== "ng" &&
+      (leaves[index - 1]?.component === "Note" || (index === 0 && headed)),
   ).length
 }

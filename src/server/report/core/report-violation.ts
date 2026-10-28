@@ -2,6 +2,7 @@
 
 import { keys } from "remeda"
 
+import type { A2uiReportComponent } from "../../../shared/report/a2ui-report-catalog.ts"
 import type { FigureHardRuleName } from "../../../shared/report/figure-decision.ts"
 import type { KeyFigures } from "../../../shared/report/report-block-comparison.ts"
 import type { RecordedReportFigure, ReportSection } from "../../../shared/report/report-block.ts"
@@ -25,6 +26,8 @@ export type ReportDraft = {
   readonly keyFigures: KeyFigures
   readonly figure: RecordedReportFigure
   readonly sections: readonly ReportSection[]
+  /** `Note` の数と隣接・畳みの入れ子の検査が読む部品の一覧。「無い」は空の配列。 */
+  readonly components: readonly A2uiReportComponent[]
   /** 図の検査（`svg`・`graph`・`timeline`・`mermaid` など）は、振り返りの塊も `sections` と同じに読む。 */
   readonly retrospective: ReportRetrospective
   readonly favor: string
