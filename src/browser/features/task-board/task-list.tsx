@@ -20,6 +20,7 @@ import {
 } from "../../../shared/repository/task-summary.ts"
 import { Text } from "../../components/ui/text/text.tsx"
 import { TaskItem, type TaskItemPeek } from "./components/task-item.tsx"
+import { TaskLegend } from "./components/task-legend.tsx"
 import { TaskPeek, type TaskPeekRun } from "./components/task-peek.tsx"
 import { TaskRunningCard } from "./components/task-running-card.tsx"
 import { TaskSkeleton } from "./components/task-skeleton.tsx"
@@ -98,6 +99,7 @@ export function TaskList(props: TaskListProps): ReactElement {
 
   return (
     <div ref={rootRef} onKeyDown={peek.onKeyDown}>
+      <TaskLegend />
       {running.length > 0 && (
         <ul className={styles["task-running-list"]}>
           {running.map((task) => (

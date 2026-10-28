@@ -115,6 +115,61 @@ describe("taskList", () => {
     expect(item.className.includes("task-done")).toBe(expected.done)
   })
 
+  it.each([
+    { name: "依存待ちの todo", status: "todo", waitingFor: ["X-001"], mark: "waiting" },
+    { name: "待ちの無い todo", status: "todo", waitingFor: [], mark: "todo" },
+    { name: "hold", status: "hold", waitingFor: [], mark: "hold" },
+  ])("$name の行は印が $mark だけで、想定外の「!」にならない", (expected) => {
+    const items = [{ ...taskOf("X-010", expected.status), waitingFor: expected.waitingFor }]
+    render(<TaskList tasks={known(items)} selectedStatus="all" />)
+
+    const item = screen.getByRole("listitem")
+    for (const mark of ["todo", "waiting", "hold", "other"]) {
+      expect(item.querySelector(`.task-mark-${mark}`) !== null).toBe(mark === expected.mark)
+    }
+  })
+
+  it.each([
+    { name: "着手できる Y", status: "todo", waitingFor: [], loopable: "Y", loop: "ループ可" },
+    { name: "依存待ちの Y", status: "todo", waitingFor: ["X-001"], loopable: "Y", loop: "waiting" },
+    { name: "hold の Y", status: "hold", waitingFor: [], loopable: "Y", loop: "waiting" },
+    { name: "N", status: "todo", waitingFor: [], loopable: "N", loop: "none" },
+    { name: "未設定", status: "hold", waitingFor: [], loopable: undefined, loop: "none" },
+    { name: "doing の Y", status: "doing", waitingFor: [], loopable: "Y", loop: "absent" },
+    { name: "done の Y", status: "done", waitingFor: [], loopable: "Y", loop: "absent" },
+    { name: "draft の Y", status: "draft", waitingFor: [], loopable: "Y", loop: "absent" },
+  ] as const)("$name の行の ↻ 列は $loop", (expected) => {
+    const items = [
+      {
+        ...taskOf("X-010", expected.status),
+        waitingFor: expected.waitingFor,
+        loopable: expected.loopable,
+      },
+    ]
+    render(<TaskList tasks={known(items)} selectedStatus="all" />)
+
+    const item = screen.getByRole("listitem")
+    const shown = item.querySelector(".task-item-loop") !== null
+    const dim = item.querySelector(".task-item-loop-waiting") !== null
+    const none = item.querySelector(".task-item-loop-none") !== null
+    expect({ shown, dim, none }).toEqual({
+      shown: expected.loop === "ループ可" || expected.loop === "waiting",
+      dim: expected.loop === "waiting",
+      none: expected.loop === "none",
+    })
+  })
+
+  it("一覧の上に凡例を出し、行の無いとき（不明・タスクが無い）は出さない", () => {
+    const { unmount } = render(<TaskList tasks={known(TASKS)} selectedStatus="all" />)
+    for (const word of ["着手できる", "依存待ち", "hold", "ループ可"]) {
+      expect(screen.getByText(word, { exact: false })).toBeDefined()
+    }
+    unmount()
+
+    render(<TaskList tasks={known([])} selectedStatus="all" />)
+    expect(screen.queryByText("ループ可", { exact: false })).toBeNull()
+  })
+
   it("ドラフトで絞ると他の行は消える", () => {
     const draft: TaskSummaryItem = { ...TASKS[0]!, id: "X-009", status: taskStatusOfWord("draft") }
     render(<TaskList tasks={known([...TASKS, draft])} selectedStatus="draft" />)

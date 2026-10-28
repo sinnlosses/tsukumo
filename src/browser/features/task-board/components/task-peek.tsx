@@ -61,7 +61,7 @@ export function TaskPeek(props: TaskPeekProps): ReactElement {
     >
       <span className={styles["task-peek-tail"]} aria-hidden="true" />
       <div className={styles["task-peek-head"]}>
-        <TaskMark status={task.status} />
+        <TaskMark status={task.status} waiting={task.waitingFor.length > 0} />
         <span className={styles["task-peek-state"]}>{statusWordOf(task.status)}</span>
         <span className={styles["task-peek-id"]}>{task.id}</span>
         <Button

@@ -22,6 +22,16 @@
   color: var(--accent);
   font-weight: 700;
 }
+.task-mark-waiting,
+.task-mark-hold {
+  display: inline-flex;
+}
+.task-mark-waiting {
+  color: var(--state-info);
+}
+.task-mark-hold {
+  color: var(--state-warn);
+}
 .task-mark-other::before {
   content: "!";
   color: var(--state-warn);

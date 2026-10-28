@@ -1,12 +1,18 @@
 // status ごとの印（サイドバーの行とのぞき窓の状態の行）。色だけで状態を伝えない。
-// todo は空の丸、draft は破線の丸、doing は塗った丸、done はチェック、想定外の値は注意色の「!」。status が読めない要素は印を出さない。
+// todo は空の丸（依存待ちは青の砂時計）、draft は破線の丸、doing は塗った丸、done はチェック、hold は黄の二本線、
+// 想定外の値は注意色の「!」。status が読めない要素は印を出さない。
 
+import { Hourglass, Pause } from "lucide-react"
 import type { ReactElement } from "react"
 
 import type { TaskSummaryStatus } from "../../../../shared/repository/task-summary.ts"
 import styles from "./task-mark.module.css"
 
-export function TaskMark(props: { readonly status: TaskSummaryStatus }): ReactElement | null {
+export function TaskMark(props: {
+  readonly status: TaskSummaryStatus
+  /** 依存のうち済んでいないものがある（`waitingFor` が空でない）。`todo` の印だけに効く。 */
+  readonly waiting: boolean
+}): ReactElement | null {
   const { status } = props
   if (status.kind === "none") {
     return null
@@ -16,7 +22,13 @@ export function TaskMark(props: { readonly status: TaskSummaryStatus }): ReactEl
   }
   switch (status.status) {
     case "todo":
-      return <span className={styles["task-mark-todo"]} title="未着手" />
+      return props.waiting ? (
+        <span className={styles["task-mark-waiting"]} title="依存待ち">
+          <Hourglass size={13} strokeWidth={1.8} aria-hidden="true" />
+        </span>
+      ) : (
+        <span className={styles["task-mark-todo"]} title="未着手" />
+      )
     case "draft":
       return <span className={styles["task-mark-draft"]} title="ドラフト" />
     case "doing":
@@ -24,6 +36,10 @@ export function TaskMark(props: { readonly status: TaskSummaryStatus }): ReactEl
     case "done":
       return <span className={styles["task-mark-done"]} title="完了" />
     case "hold":
-      return <span className={styles["task-mark-other"]} title={status.status} />
+      return (
+        <span className={styles["task-mark-hold"]} title="保留">
+          <Pause size={13} strokeWidth={1.8} aria-hidden="true" />
+        </span>
+      )
   }
 }

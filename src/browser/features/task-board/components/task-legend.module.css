@@ -1,0 +1,19 @@
+.task-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin: 0 0 4px;
+  padding: 4px 10px 8px;
+  border-bottom: 1px solid var(--rule-soft);
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+  list-style: none;
+}
+.task-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.task-legend-loop {
+  color: var(--state-ok);
+}
