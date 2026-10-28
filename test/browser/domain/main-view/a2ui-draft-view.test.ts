@@ -7,9 +7,9 @@ import { a2uiParts, STAGED_PARTS } from "../../../fixture/a2ui-component.ts"
 const drawnIds = (components: readonly A2uiReportComponent[]) =>
   mainViewDraftOf("toolu_draft", components)?.components.map((part) => part.id)
 
-const leavesOf = (components: readonly A2uiReportComponent[]) => {
+const markdownLeavesOf = (components: readonly A2uiReportComponent[]) => {
   const a2ui = mainViewDraftOf("toolu_draft", components)?.regions.a2ui
-  return a2ui?.kind === "surface" ? a2ui.leaves : {}
+  return a2ui?.kind === "surface" ? a2ui.markdownLeaves : {}
 }
 
 /** 根から子の参照をたどって届く ID を、部品の並びと独立に集める。 */
@@ -35,7 +35,7 @@ describe("mainViewDraftOf", () => {
     const arrived = STAGED_PARTS.slice(0, 3)
 
     expect(drawnIds(arrived)).toEqual(["root", "s1", "p1"])
-    expect(leavesOf(arrived)).toEqual({ p1: "架空の段落一" })
+    expect(markdownLeavesOf(arrived)).toEqual({})
   })
 
   it("根がまだ届いていない一覧は、子が届いていても草稿にしない", () => {
@@ -93,14 +93,20 @@ describe("mainViewDraftOf", () => {
     expect(a2ui.imageSource).toEqual({ kind: "none" })
   })
 
-  it("葉の Markdown と節の見出しが、面で描く値に載る", () => {
+  it("Markdown の葉の Markdown が、面で描く値に載る", () => {
+    const parts = a2uiParts(
+      { id: "root", component: "Report", conclusion: ["架空の結論。"], children: ["s1"] },
+      { id: "s1", component: "Section", heading: "架空の節", children: ["m1", "p1"] },
+      { id: "m1", component: "Markdown", markdown: "> 架空の引用" },
+      { id: "p1", component: "Paragraph", text: "架空の段落" },
+    )
+
+    expect(markdownLeavesOf(parts)).toEqual({ m1: "> 架空の引用" })
+  })
+
+  it("節の見出しが、面で描く値に載る", () => {
     const draft = mainViewDraftOf("toolu_draft", STAGED_PARTS)
 
-    expect(leavesOf(STAGED_PARTS)).toEqual({
-      p1: "架空の段落一",
-      p2: "架空の段落二",
-      p3: "架空の段落三",
-    })
     expect(draft?.regions.sections.map((section) => section.heading)).toEqual([
       "架空の節一",
       "架空の節二",

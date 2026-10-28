@@ -142,19 +142,4 @@ describe("操作できる Table", () => {
 
     expect(names(container)).toHaveLength(12)
   })
-
-  it("view の tables が空でも描ける（行の文字列を割る経路に頼らない）", () => {
-    const body = regionsOf(reportParts(INTERACTIVE))
-    if (body.a2ui.kind !== "surface") {
-      throw new Error("部品の一覧の面にならなかった")
-    }
-    const withoutTables: MainViewReportRegions = {
-      ...body,
-      a2ui: { ...body.a2ui, tables: {} },
-    }
-    const { container } = renderRegions(withoutTables)
-
-    expect(names(container)).toEqual(["ぼ", "あ", "ん"])
-    expect(screen.getByRole("group", { name: "並べ替え" })).toBeTruthy()
-  })
 })

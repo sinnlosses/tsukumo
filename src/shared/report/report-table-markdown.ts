@@ -40,23 +40,6 @@ export function tagTonesOf(sections: readonly ReportSection[]): TagTones {
   )
 }
 
-/** 表のデータ行ごとの Markdown。`tableMarkdown` が表に組み込む行そのもので、並びは `table.rows` と同じ。 */
-export function tableRowMarkdowns(
-  table: Extract<ReportBlock, { readonly kind: "table" }>,
-  tagTones: TagTones,
-): readonly string[] {
-  const { bars, statusColumns } = tableLayoutOf(table)
-  const bodyCellMarkdown = (cell: TableCell, index: number): string =>
-    statusColumns[index] === true && typeof cell === "string"
-      ? `<span class="cell-status-none">${cellTextMarkdown(cell)}</span>`
-      : cellMarkdown(cell, bars[index] ?? NO_BAR, tagTones)
-  return table.rows.map((row) => {
-    const cells = tableRowCells(row).map(bodyCellMarkdown)
-    const [first = "", ...rest] = cells
-    return markdownRow(isEmphasisRow(row) ? [`${EMPHASIS_ROW_MARK}${first}`, ...rest] : cells)
-  })
-}
-
 export function tableMarkdown(
   table: Extract<ReportBlock, { readonly kind: "table" }>,
   ordinal: number,
@@ -113,6 +96,23 @@ export function matrixMarkdown(block: MatrixBlock, ordinal: number): string {
     body: `<div class="matrix">\n\n${grid}\n\n<div class="matrix-legend">${legend}</div>\n\n</div>`,
     bodyFormat: "markdown",
     fit: true,
+  })
+}
+
+/** 表のデータ行ごとの Markdown。並びは `table.rows` と同じ。 */
+function tableRowMarkdowns(
+  table: Extract<ReportBlock, { readonly kind: "table" }>,
+  tagTones: TagTones,
+): readonly string[] {
+  const { bars, statusColumns } = tableLayoutOf(table)
+  const bodyCellMarkdown = (cell: TableCell, index: number): string =>
+    statusColumns[index] === true && typeof cell === "string"
+      ? `<span class="cell-status-none">${cellTextMarkdown(cell)}</span>`
+      : cellMarkdown(cell, bars[index] ?? NO_BAR, tagTones)
+  return table.rows.map((row) => {
+    const cells = tableRowCells(row).map(bodyCellMarkdown)
+    const [first = "", ...rest] = cells
+    return markdownRow(isEmphasisRow(row) ? [`${EMPHASIS_ROW_MARK}${first}`, ...rest] : cells)
   })
 }
 

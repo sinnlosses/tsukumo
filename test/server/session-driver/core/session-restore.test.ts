@@ -361,7 +361,8 @@ describe("toRestoredEvents", () => {
     expect(fromComponents.a2ui).toMatchObject({
       kind: "surface",
       sections: { s1: { regionId: 0, heading: "## 架空の節" } },
-      leaves: { p1: "架空の根拠。" },
+      markdownLeaves: {},
+      leafValues: { p1: expect.objectContaining({ mergedIntoPrevious: false }) },
     })
   })
 

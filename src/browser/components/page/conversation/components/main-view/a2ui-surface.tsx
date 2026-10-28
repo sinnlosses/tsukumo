@@ -17,10 +17,8 @@ import type { A2uiReportComponent } from "../../../../../../shared/report/a2ui-r
 import {
   A2UI_ROOT_ID,
   type A2uiReportPart,
-  a2uiLeafKind,
   a2uiPartsById,
 } from "../../../../../../shared/report/a2ui-report-outline.ts"
-import { joinParts } from "../../../../../../shared/report/report-inline-markdown.ts"
 import type {
   MainViewA2uiReport,
   MainViewReportRegions,
@@ -202,56 +200,29 @@ function SectionContent(props: { readonly id: string }): ReactElement {
   )
 }
 
-type RunSegment =
-  | { readonly kind: "markdown"; readonly markdown: string }
-  | { readonly kind: "part"; readonly id: string }
-
 /**
- * ID の並びを描く。続く葉の Markdown は `lead`（見出しの行）と一緒に1本にまとめて既定の描画と同じ手で描き、配置の部品で区切る。
+ * ID の並びを描く。`lead`（見出しの行）は欄の描画と同じ手で先頭に描く。
  * 入れ子の `Section` は中の子を同じ並びに開く。
  */
 function PartRun(props: { readonly lead: string; readonly ids: readonly string[] }): ReactElement {
   const report = useReport()
-  const segments = runSegments(props.ids, report).reduce<readonly RunSegment[]>(
-    (acc, segment) => {
-      const last = acc.at(-1)
-      return segment.kind === "markdown" && last?.kind === "markdown"
-        ? [
-            ...acc.slice(0, -1),
-            { kind: "markdown", markdown: joinParts([last.markdown, segment.markdown]) },
-          ]
-        : [...acc, segment]
-    },
-    [{ kind: "markdown", markdown: props.lead }],
-  )
   return (
     <>
-      {segments.map((segment, index) =>
-        segment.kind === "markdown" ? (
-          <RegionChunks key={`markdown-${String(index)}`} markdown={segment.markdown} />
-        ) : (
-          <LayoutPart key={segment.id} id={segment.id} />
-        ),
-      )}
+      {props.lead !== "" && <RegionChunks markdown={props.lead} />}
+      {runIds(props.ids, report).map((id) => (
+        <PartBody key={id} id={id} />
+      ))}
     </>
   )
 }
 
-function runSegments(ids: readonly string[], report: ReportContextValue): readonly RunSegment[] {
-  return ids.flatMap((id): readonly RunSegment[] => {
+function runIds(ids: readonly string[], report: ReportContextValue): readonly string[] {
+  return ids.flatMap((id): readonly string[] => {
     const part = report.parts.get(id)
     if (part === undefined) {
       return []
     }
-    if (directLeafViewOf(part) !== undefined) {
-      return [{ kind: "part", id }]
-    }
-    if (a2uiLeafKind(part) !== undefined) {
-      return [{ kind: "markdown", markdown: report.view.leaves[id] ?? "" }]
-    }
-    return part.component === "Section"
-      ? runSegments(part.children, report)
-      : [{ kind: "part", id }]
+    return part.component === "Section" ? runIds(part.children, report) : [id]
   })
 }
 
@@ -269,10 +240,16 @@ function PartView(props: { readonly id: string }): ReactElement {
   if (part.component === "Section") {
     return <SectionContent id={props.id} />
   }
-  return a2uiLeafKind(part) === undefined || directLeafViewOf(part) !== undefined ? (
-    <LayoutPart id={props.id} />
+  return <PartBody id={props.id} />
+}
+
+/** `Markdown` の葉は書き手の Markdown を欄と同じ描画に通し、ほかの部品は配置の部品か直接描く葉として描く。 */
+function PartBody(props: { readonly id: string }): ReactElement {
+  const report = useReport()
+  return report.parts.get(props.id)?.component === "Markdown" ? (
+    <RegionChunks markdown={report.view.markdownLeaves[props.id] ?? ""} />
   ) : (
-    <RegionChunks markdown={report.view.leaves[props.id] ?? ""} />
+    <LayoutPart id={props.id} />
   )
 }
 

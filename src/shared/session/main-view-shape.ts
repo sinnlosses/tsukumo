@@ -103,11 +103,11 @@ export type MainViewReportRegions = {
 /**
  * 部品の一覧で描く本文の値。`none` は一覧の無い記録と、一覧と `sections` の写しが食い違う記録。
  * `sections` は根の子の部品の ID から、その子が写った節の欄の ID と見出しの行（`## …`。見出しの無い節は空文字）。整形で塊の残らない子は持たない。
- * `leaves` は葉の部品の ID から、その葉の Markdown（図表の番号と傍注は節の欄の Markdown と同じ。整形で落ちた葉は空文字）。
+ * `markdownLeaves` は `Markdown` の葉の部品の ID から、その葉の Markdown（傍注と畳みを包んだもの。整形で落ちた葉は空文字）。
+ * 書き手の生 HTML を通す葉だけが文字列で描かれ、ほかの葉は持たない。
  * `leafValues` は葉の部品の ID から、その葉の図表番号・表の札の色・寄せられた傍注（{@link LeafValue}）。
- * `leaves` の葉に加えて `Report.figure` の葉と振り返りの葉も持ち、整形で落ちた葉は持たない。
+ * 節の葉に加えて `Report.figure` の葉と振り返りの葉も持ち、整形で落ちた葉は持たない。
  * `imageSource` は画像の葉が `src` を作る取り出し元（棚に置いていない本文は `none`）。
- * `tables` は操作できる `Table` の ID から、その Markdown の行ごとの分け方。整形で落ちた表は持たない。
  */
 export type MainViewA2uiReport =
   | { readonly kind: "none" }
@@ -117,21 +117,10 @@ export type MainViewA2uiReport =
       readonly sections: Readonly<
         Record<string, { readonly regionId: number; readonly heading: string }>
       >
-      readonly leaves: Readonly<Record<string, string>>
+      readonly markdownLeaves: Readonly<Record<string, string>>
       readonly leafValues: Readonly<Record<string, LeafValue>>
       readonly imageSource: ReportImageSource
-      readonly tables: Readonly<Record<string, MainViewTableRows>>
     }
-
-/**
- * 操作できる `Table`（`sortable`・`filterable`）の Markdown を、データ行の前後と行ごとに分けたもの。
- * `before + rows.join("\n") + after` が、その葉の Markdown と一致する。
- */
-export type MainViewTableRows = {
-  readonly before: string
-  readonly rows: readonly string[]
-  readonly after: string
-}
 
 /**
  * 節の欄。`id` は整形して図を先頭に足したあとの節の並びの位置。
