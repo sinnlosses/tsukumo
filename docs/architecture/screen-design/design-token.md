@@ -66,6 +66,8 @@
 
 `test/architecture/` の検査が、`src/browser/` の `theme.css` 以外の `*.css` で、上の 4 つの値がトークンかそれに従う値（`0`・`auto`・`em`・`%`・局所の `var(--*)`・28px 以上の余白・向きのある影・輪と `inset`）だけであることを確かめる。字の大きさの検査（`test/architecture/font-size.test.ts`）と同じ形で、**置き換えが済むまでの違反は、ファイルごとの件数の除外の一覧に載せて通す**。件数が増えたら落ち、減ったら一覧を減らすよう促す。除外の一覧は減る向きにだけ動く。
 
+置き換えが済んだあとも一覧に残してよい例外は、トークンにすると意味が変わる 2 つ。領域の寸法として使う `100vh`（`stage/speech-log.css` の `padding-top`）と、親の角丸に追従させる `border-radius: inherit`（`dispatch/dispatch.module.css`）。どちらも件数 1 で載せ、検査の許す値は広げない。
+
 ### 13.16 `ui/` の箱の部品
 
 `ui/` の部品は、持つのは顔（地・枠・字の色・振る舞い）で、置き方（margin・flex・align-self）は呼び出し側が `className` で渡す。箱の語彙を持つ 3 つを足す。props は全部必須で、型で縛る（`ui/stack` と同じ）。
