@@ -51,11 +51,14 @@ describe("toSessionEvents（report ツール）", () => {
         closing: { kind: "speech", text: "架空の締め", expression: "proud" },
         waitingLine: { kind: "speech", text: "架空の待ちの一言", expression: "thinking" },
         sessionSummary: "架空の要約",
+        components: expect.arrayContaining([
+          expect.objectContaining({ component: "Markdown", markdown: "## 架空の見出し" }),
+        ]),
       }),
     ])
   })
 
-  it("旧い版の引数の report は components が空", () => {
+  it("旧い版の引数の report も、components に組み直した部品の一覧を持つ", () => {
     const [event] = toSessionEvents(
       assistantMessageWithoutUuid([
         {
@@ -71,7 +74,14 @@ describe("toSessionEvents（report ツール）", () => {
       EXPRESSIONS,
     )
 
-    expect(event).toMatchObject({ kind: "report", components: [] })
+    expect(event).toMatchObject({
+      kind: "report",
+      components: [
+        { id: "root", component: "Report", children: ["section-1"] },
+        { id: "section-1", component: "Section", children: ["section-1-1"] },
+        { id: "section-1-1", component: "Paragraph", text: "架空。" },
+      ],
+    })
   })
 
   it("report の workPlanClosing はイベントに乗せ、形の崩れは none に畳む", () => {

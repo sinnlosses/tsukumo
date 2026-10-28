@@ -25,6 +25,7 @@ import { optionalString } from "../../../shared/utils/optional-string.ts"
 import { nonBlankString } from "../../core/non-blank-string.ts"
 import { a2uiReportInput } from "./a2ui-report-message.ts"
 import { parseConclusion } from "./conclusion-sentence.ts"
+import { legacyReportComponents } from "./legacy-report-component-list.ts"
 import { speechEvents } from "./sdk-speech-message.ts"
 
 /**
@@ -48,7 +49,8 @@ import { speechEvents } from "./sdk-speech-message.ts"
  * `inheritedFields` はここでは空で、引き継ぎは `ReportInheritance` がする。
  * 空でない `components`（`a2ui` の版の部品の一覧）を持つ呼び出しは、一覧を旧い版の引数の形に組み直してから同じに取り出す（{@link a2uiReportInput}）。
  * そのときの `argumentChars` は、全体を生の引数で、欄ごとを組み直した引数で数える（引き継ぎが渡した欄を見分けられるように）。
- * 旧い版の呼び出しの `components` は空。
+ * 旧い変種の呼び出し（`sections`・`body`）は、先に `components` へ組み直してから同じに通す（{@link legacyReportComponents}）。
+ * そのときの `argumentChars` は生の引数で数え、組み直せない引数（節が残らない）は組み直さずに取り出す。
  */
 export function reportEvents(
   toolUseId: string,
@@ -58,10 +60,16 @@ export function reportEvents(
   if (!isPlainObject(input)) {
     return []
   }
+  const givenComponents: readonly unknown[] = Array.isArray(input.components)
+    ? input.components
+    : []
+  const legacy = givenComponents.length > 0 ? undefined : legacyReportComponents(input)
   const a2ui =
-    Array.isArray(input.components) && input.components.length > 0
-      ? a2uiReportInput(input.components)
-      : undefined
+    givenComponents.length > 0
+      ? a2uiReportInput(givenComponents)
+      : legacy === undefined
+        ? undefined
+        : a2uiReportInput(legacy.components)
   const fields = a2ui?.input ?? input
   const conclusion = parseConclusion(fields.conclusion)
   if (conclusion === undefined) {
@@ -79,7 +87,7 @@ export function reportEvents(
       kind: "report",
       toolUseId,
       argumentChars:
-        a2ui === undefined
+        a2ui === undefined || legacy !== undefined
           ? reportArgumentCharsOf(input)
           : {
               total: reportArgumentCharsOf(input).total,
@@ -101,8 +109,9 @@ export function reportEvents(
       waitingLine: speechEvents(fields.waitingLine, expressions).find(
         (speech) => speech.text.trim() !== "",
       ) ?? { kind: "none" },
-      unknownBlockCount: parsed.unknownBlockCount + (a2ui?.droppedCount ?? 0),
-      brokenFenceCount: parsed.brokenFenceCount,
+      unknownBlockCount:
+        parsed.unknownBlockCount + (a2ui?.droppedCount ?? 0) + (legacy?.unknownBlockCount ?? 0),
+      brokenFenceCount: parsed.brokenFenceCount + (legacy?.brokenFenceCount ?? 0),
       title: optionalString(fields.title),
       sessionSummary: nonBlankString(fields.sessionSummary),
       sessionRemaining: sessionRemainingOf(fields.sessionRemaining, task),

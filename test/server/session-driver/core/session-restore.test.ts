@@ -320,7 +320,7 @@ describe("toRestoredEvents", () => {
           sections: [{ id: 0, heading: "", markdown: "架空の根拠。" }],
           retrospective: "",
           favor: { id: "favor-r-1", markdown: "" },
-          a2ui: { kind: "none" },
+          a2ui: expect.objectContaining({ kind: "surface" }),
         },
         conclusion: "架空の結論。",
         task: { kind: "none" },

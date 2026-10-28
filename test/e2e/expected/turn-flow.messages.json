@@ -160,7 +160,38 @@
       "sessionRemaining": {
         "kind": "unrecorded"
       },
-      "components": [],
+      "components": [
+        {
+          "id": "root",
+          "component": "Report",
+          "conclusion": [
+            "途中の結論: 目盛りを決めているのは `a.ts` だけだった。"
+          ],
+          "children": [
+            "section-1"
+          ],
+          "favor": "",
+          "closing": {
+            "text": "途中まで書いたよ。",
+            "expression": "default"
+          }
+        },
+        {
+          "id": "section-1",
+          "component": "Section",
+          "heading": "",
+          "children": [
+            "section-1-1"
+          ]
+        },
+        {
+          "id": "section-1-1",
+          "component": "Markdown",
+          "markdown": "- 読んだのは `/tmp/dummy/a.ts` と `/tmp/dummy/b.ts` の2つ\n- 目盛りを決めているのは `a.ts` のほう\n- `b.ts` は目盛りを読むだけ",
+          "fold": "",
+          "aside": ""
+        }
+      ],
       "imageSizes": [],
       "unshelvedImages": []
     }
@@ -395,7 +426,130 @@
       "sessionRemaining": {
         "kind": "unrecorded"
       },
-      "components": [],
+      "components": [
+        {
+          "id": "root",
+          "component": "Report",
+          "conclusion": [
+            "架空の結論: 目盛りを 24 に直し、`a.ts` だけで済んだ。"
+          ],
+          "children": [
+            "section-1"
+          ],
+          "favor": "`b.ts` のキャッシュを消してよいか決めてほしい（架空のお願い）。",
+          "checks": [
+            {
+              "status": "ok",
+              "label": "pnpm run check",
+              "figure": "1234 件",
+              "command": "pnpm run check",
+              "detail": "架空の単体テストがすべて通った",
+              "howToVerify": ""
+            },
+            {
+              "status": "ng",
+              "label": "目盛りの E2E",
+              "figure": "1 / 56",
+              "command": "",
+              "detail": "架空の 1 件が落ちた",
+              "howToVerify": ""
+            },
+            {
+              "status": "unobserved",
+              "label": "狭い窓での見た目",
+              "figure": "",
+              "command": "",
+              "detail": "手で確かめていない",
+              "howToVerify": "窓を 720 幅にして、目盛りの帯が欄からはみ出さないことを見る"
+            }
+          ],
+          "closing": {
+            "text": "書けたよ！",
+            "expression": "proud"
+          }
+        },
+        {
+          "id": "section-1",
+          "component": "Section",
+          "heading": "",
+          "children": [
+            "section-1-1",
+            "section-1-2",
+            "section-1-3"
+          ]
+        },
+        {
+          "id": "section-1-1",
+          "component": "Table",
+          "title": "直したファイルと結果（架空の数）",
+          "columns": [
+            "ファイル",
+            "変えたこと",
+            "状態"
+          ],
+          "rows": [
+            [
+              "`a.ts`",
+              "目盛りを 12 から 24 へ",
+              {
+                "status": "ok",
+                "text": "OK"
+              }
+            ],
+            [
+              "`b.ts`",
+              "読むだけなので変えない",
+              {
+                "status": "warn",
+                "text": "キャッシュが古いまま"
+              }
+            ],
+            [
+              "`c.ts`",
+              "型の食い違いが残る",
+              {
+                "status": "ng",
+                "text": "NG"
+              }
+            ]
+          ],
+          "rest": "",
+          "fold": "",
+          "aside": ""
+        },
+        {
+          "id": "section-1-2",
+          "component": "Table",
+          "title": "目盛りの数（架空の数）",
+          "columns": [
+            "場所",
+            "前",
+            "後"
+          ],
+          "rows": [
+            [
+              "帯",
+              "12",
+              "24"
+            ],
+            [
+              "札",
+              "6",
+              "12"
+            ]
+          ],
+          "rest": "ほか 3 件（一覧は省略）",
+          "fold": "",
+          "aside": ""
+        },
+        {
+          "id": "section-1-3",
+          "component": "Markdown",
+          "markdown": "```diff src/a.ts\n-const TICKS = 12\n+const TICKS = 24\n```\n\n<div class=\"note note-warn\">\n\n`b.ts` のキャッシュは古い目盛りを持ったまま残る。\n\n</div>",
+          "fold": "",
+          "aside": ""
+        }
+      ],
       "imageSizes": [],
       "unshelvedImages": []
     }
