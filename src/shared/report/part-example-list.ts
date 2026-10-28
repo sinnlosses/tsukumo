@@ -191,6 +191,12 @@ export const PART_EXAMPLES = {
     { id: "p1", component: "Paragraph", text: "架空の案Aの説明。" },
     { id: "p2", component: "Paragraph", text: "架空の案Bの説明。" },
   ],
+  Divider: [
+    { id: "s1", component: "Section", heading: "架空の結果", children: ["p1", "d1", "p2"] },
+    { id: "p1", component: "Paragraph", text: "架空の取り込みは 120 件すべてが通った。" },
+    { id: "d1", component: "Divider" },
+    { id: "p2", component: "Paragraph", text: "架空の書き出しは次の節で扱う。" },
+  ],
   ChoicePicker: [
     {
       id: "tbl1",

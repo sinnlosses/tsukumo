@@ -165,13 +165,13 @@ const OWN_COMPONENT_SCHEMAS = {
   ...LEAF_COMPONENTS,
 } as const
 
-/** 部品名と受理の形。根・節・葉 19 種・基本 5 部品の 26。 */
+/** 部品名と受理の形。根・節・葉 19 種・基本 6 部品の 27。 */
 export const REPORT_COMPONENT_SCHEMAS = {
   ...OWN_COMPONENT_SCHEMAS,
   ...BASIC_PART_SCHEMAS,
 } as const
 
-/** 部品 1 つの受理の形（26 部品のどれか）。 */
+/** 部品 1 つの受理の形（27 部品のどれか）。 */
 export const a2uiReportComponentSchema = z.discriminatedUnion("component", [
   reportComponentSchema,
   sectionComponentSchema,
@@ -183,7 +183,7 @@ export type A2uiReportComponent = z.infer<typeof a2uiReportComponentSchema>
 
 const CATALOG_ID = "https://tsukumo.example/catalogs/report/v1"
 
-/** AI に渡し、`Catalog.fromJson` に読ませるカタログ文書（自作分は zod から出し、基本の 5 部品は定数）。 */
+/** AI に渡し、`Catalog.fromJson` に読ませるカタログ文書（自作分は zod から出し、基本の 6 部品は定数）。 */
 export function buildReportCatalogDocument() {
   const schemas = mapValues(OWN_COMPONENT_SCHEMAS, (schema) =>
     z.toJSONSchema(schema, { io: "input" }),

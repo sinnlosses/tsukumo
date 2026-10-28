@@ -102,7 +102,7 @@ export const REPORT_SECTIONS_DESCRIPTION =
 /** `a2ui` の版の `components` 引数（A2UI のカタログの部品の平らな一覧）の説明。 */
 export const REPORT_A2UI_COMPONENTS_DESCRIPTION =
   "レポートを A2UI の部品の平らな一覧で書く。根は id が root の Report で、結論ほかの欄は Report の props に書き、Report.children に Section の ID を並べる。" +
-  "Section.children は葉か配置の部品（Row・Column・Card・Tabs・ChoicePicker）の ID、図は Report.figure に図の部品の ID を置く。呼び直すときも一覧を全部渡す。"
+  "Section.children は葉か配置の部品（Row・Column・Card・Tabs・ChoicePicker・Divider）の ID、図は Report.figure に図の部品の ID を置く。呼び直すときも一覧を全部渡す。"
 
 /**
  * `report` の `closing` 引数（締めのセリフ）の説明。

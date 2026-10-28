@@ -105,6 +105,7 @@ const COMPONENT_PURPOSES = {
   Column: "子を縦に並べる配置",
   Card: "子を 1 つ枠に入れる配置",
   Tabs: "子を切り替えて見せる配置",
+  Divider: "節の中の部品の間に引く区切り線",
   ChoicePicker: "選択肢。Table の絞り込みと path で結ぶ",
 } as const satisfies Record<keyof typeof REPORT_COMPONENT_SCHEMAS, string>
 

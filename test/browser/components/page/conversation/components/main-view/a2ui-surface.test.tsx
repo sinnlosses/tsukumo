@@ -184,6 +184,34 @@ describe("操作できる Table と ChoicePicker", () => {
   })
 })
 
+describe("Divider", () => {
+  const dividerParts = (axis: object) => [
+    { id: "root", component: "Report", conclusion: ["架空の結論。"], children: ["s1"] },
+    { id: "s1", component: "Section", heading: "架空の区切り", children: ["p1", "d1", "p2"] },
+    { id: "p1", component: "Markdown", markdown: "架空の前。" },
+    { id: "d1", component: "Divider", ...axis },
+    { id: "p2", component: "Markdown", markdown: "架空の後ろ。" },
+  ]
+
+  it("Section の中の 2 つの部品の間に罫が 1 つ引かれる", () => {
+    const body = regionsOf({ components: dividerParts({}) })
+    const { container } = render(<Report reveal={false} turnId={1} className="" body={body} />)
+
+    const rules = [...container.querySelectorAll("[data-report-region] hr")]
+    expect(rules).toHaveLength(1)
+    expect(rules[0]?.previousElementSibling?.textContent).toBe("架空の前。")
+    expect(rules[0]?.nextElementSibling?.textContent).toBe("架空の後ろ。")
+    expect(rules[0]?.getAttribute("aria-orientation")).toBeNull()
+  })
+
+  it("axis が vertical なら縦の罫になる", () => {
+    const body = regionsOf({ components: dividerParts({ axis: "vertical" }) })
+    const { container } = render(<Report reveal={false} turnId={1} className="" body={body} />)
+
+    expect(container.querySelector("hr")?.getAttribute("aria-orientation")).toBe("vertical")
+  })
+})
+
 describe("部品の一覧のある本文（A2UI の面）", () => {
   it("配置の部品の無い一覧は、欄の Markdown で描いたときと本文の根の中の DOM が同じで、面の入れ物が 1 枚だけ挟まる", () => {
     const withComponents = regionsOf({ components: PARTS })

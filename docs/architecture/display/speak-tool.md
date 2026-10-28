@@ -135,7 +135,7 @@
 
 **部品の書き方は MCP ツール `report_part_card(component)` で引ける**（仕事のセッションだけ載り、雑談では載らない）。
 
-- カタログの部品の名前（`component` の値。26 種）を1つ渡すと、その部品の**文法カード**（JSON Schema と、架空の値で書いた `components` の例1つ）を返す。
+- カタログの部品の名前（`component` の値。27 種）を1つ渡すと、その部品の**文法カード**（JSON Schema と、架空の値で書いた `components` の例1つ）を返す。
   知らない名前には、引ける名前の一覧を `isError` 付きで返す。返すのはこの2つだけで、tsukumo の内部の状態は返さない。
   組むのは `partCardOf`（`src/server/report/core/part-card.ts`）。
 - JSON Schema は `report` の定義の部品と同じ zod から出す（`z.toJSONSchema`）。欄の説明は全部残り、手で二重に書かない。

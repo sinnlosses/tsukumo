@@ -55,8 +55,8 @@ describe("partCardOf", () => {
     },
   )
 
-  it("引ける名前は 26 部品", () => {
-    expect(NAMES).toHaveLength(26)
+  it("引ける名前は 27 部品", () => {
+    expect(NAMES).toHaveLength(27)
   })
 })
 

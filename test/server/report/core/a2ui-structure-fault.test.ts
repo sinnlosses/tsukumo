@@ -99,6 +99,36 @@ describe("a2uiStructureFaults の絞り込みの結び", () => {
   })
 })
 
+describe("a2uiStructureFaults の Divider", () => {
+  const divider = { id: "d", component: "Divider" }
+
+  it.each([
+    {
+      name: "Section の子",
+      components: [report(["s"]), section("s", ["p", "d"]), paragraph("p"), divider],
+      faults: [],
+    },
+    {
+      name: "Row の子",
+      components: [
+        report(["s"]),
+        section("s", ["r"]),
+        { id: "r", component: "Row", children: ["p", "d"] },
+        paragraph("p"),
+        divider,
+      ],
+      faults: [],
+    },
+    {
+      name: "Report の子",
+      components: [report(["d"]), divider],
+      faults: [{ kind: "report-child-not-section", pointer: "/components/0/children/0" }],
+    },
+  ])("$name に置いたときの違反", ({ components, faults }) => {
+    expect(a2uiStructureFaults(components)).toEqual(faults)
+  })
+})
+
 describe("a2uiStructureFaults", () => {
   it("正しい一覧は違反を返さない", () => {
     expect(a2uiStructureFaults(VALID)).toEqual([])

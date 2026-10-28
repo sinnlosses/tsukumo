@@ -8,7 +8,7 @@ import { z } from "zod"
 import { BASIC_PART_DEFS, BASIC_PARTS } from "../../../src/shared/report/a2ui-basic-part-list.ts"
 
 const COMMON_TYPES = "https://a2ui.org/specification/v0_9/common_types.json#"
-const PART_NAMES = ["Row", "Column", "Card", "Tabs", "ChoicePicker"] as const
+const PART_NAMES = ["Row", "Column", "Card", "Tabs", "Divider", "ChoicePicker"] as const
 
 type Json = null | boolean | number | string | readonly Json[] | { readonly [key: string]: Json }
 
@@ -74,10 +74,10 @@ function differencesOf(expected: Json, actual: Json, path = "$"): readonly strin
   return expected === actual ? [] : [`${path}: 値`]
 }
 
-describe("基本カタログの 5 部品の定数", () => {
+describe("基本カタログの 6 部品の定数", () => {
   const published = readPublishedCatalog()
 
-  it("5 部品は公開物に存在する", () => {
+  it("6 部品は公開物に存在する", () => {
     for (const name of PART_NAMES) {
       expect(published.components[name], name).toBeDefined()
     }

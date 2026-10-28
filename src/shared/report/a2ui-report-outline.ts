@@ -114,7 +114,7 @@ function reachableFrom(
   }, reached)
 }
 
-/** 部品が子として参照する ID。葉と `ChoicePicker` は持たない。 */
+/** 部品が子として参照する ID。葉と `ChoicePicker`・`Divider` は持たない。 */
 function childIdsOf(part: A2uiReportComponent): readonly string[] {
   switch (part.component) {
     case "Section":

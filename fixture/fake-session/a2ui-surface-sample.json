@@ -56,7 +56,11 @@
             "id": "s1",
             "component": "Section",
             "heading": "架空の表",
-            "children": ["t1", "x1", "p1", "m1"]
+            "children": ["t1", "dv1", "x1", "p1", "m1"]
+          },
+          {
+            "id": "dv1",
+            "component": "Divider"
           },
           {
             "id": "t1",

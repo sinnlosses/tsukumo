@@ -163,7 +163,7 @@ function filterTargetTexts(props: Readonly<Record<string, unknown>>): readonly s
   return Array.isArray(rows) ? rows.flatMap((row: unknown) => tableRowFilterTexts(row, column)) : []
 }
 
-/** 子を持つ配置の部品。`ChoicePicker` は子を持たないので入れ子の深さに数えない。 */
+/** 子を持つ配置の部品。`ChoicePicker` と `Divider` は子を持たないので入れ子の深さに数えない。 */
 const CONTAINERS: ReadonlySet<string> = new Set(["Row", "Column", "Card", "Tabs"])
 
 /** 配置の部品の入れ子の上限。 */

@@ -36,7 +36,7 @@ const KIND_TO_COMPONENT = {
   markdown: "Markdown",
 } as const
 
-const BASIC_COMPONENTS = ["Row", "Column", "Card", "Tabs", "ChoicePicker"]
+const BASIC_COMPONENTS = ["Row", "Column", "Card", "Tabs", "Divider", "ChoicePicker"]
 
 type Document = ReturnType<typeof buildReportCatalogDocument>
 
@@ -100,8 +100,8 @@ describe("A2UI のカタログ文書", () => {
     expect(Object.keys(KIND_TO_COMPONENT).toSorted()).toEqual(writerKinds.toSorted())
   })
 
-  it("根・節・葉 19 種・基本 5 部品の 26 部品が全部残る", () => {
-    expect(expected).toHaveLength(26)
+  it("根・節・葉 19 種・基本 6 部品の 27 部品が全部残る", () => {
+    expect(expected).toHaveLength(27)
     expect(findMissingComponents(document, expected)).toEqual([])
   })
 
@@ -181,8 +181,20 @@ describe("A2UI のカタログ文書", () => {
     expect(leaf).not.toContain('"kind"')
   })
 
-  it("受理の形の表は文書と同じ 26 部品を持つ", () => {
+  it("受理の形の表は文書と同じ 27 部品を持つ", () => {
     expect(Object.keys(REPORT_COMPONENT_SCHEMAS).toSorted()).toEqual(expected.toSorted())
+  })
+
+  it("Divider は axis だけを受け、axis の不正な値は拒む", () => {
+    const divider = REPORT_COMPONENT_SCHEMAS.Divider
+
+    expect(divider.safeParse({ id: "d", component: "Divider" }).success).toBe(true)
+    expect(divider.safeParse({ id: "d", component: "Divider", axis: "vertical" }).success).toBe(
+      true,
+    )
+    expect(divider.safeParse({ id: "d", component: "Divider", axis: "diagonal" }).success).toBe(
+      false,
+    )
   })
 
   it("葉の部品名は対応表の kind に写る", () => {

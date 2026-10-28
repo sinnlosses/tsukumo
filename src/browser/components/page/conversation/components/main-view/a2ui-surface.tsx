@@ -25,6 +25,7 @@ import type {
 } from "../../../../../../shared/session/main-view-shape.ts"
 import { orderedReportRegions } from "../../../../../domain/main-view/main-view-report-body.ts"
 import { Button } from "../../../../ui/button/button.tsx"
+import { Divider } from "../../../../ui/divider/divider.tsx"
 import { arrangedBlockClassNames } from "../markdown/markdown.tsx"
 import { ChoicePicker, InteractiveTable } from "./a2ui-interactive-view.tsx"
 import {
@@ -255,7 +256,7 @@ function PartBody(props: { readonly id: string }): ReactElement {
 
 /**
  * 配置の部品。`Row` は旧い `row` と、`Card` は旧い `panel` と同じ class を使い、`Column` は子を順に積む。
- * `Tabs` は題の並びと選んだ子1つ。操作できる `Table` と `ChoicePicker` は別のファイルの `InteractiveTable`・`ChoicePicker`。
+ * `Tabs` は題の並びと選んだ子1つ。`Divider` は `ui/` の罫。操作できる `Table` と `ChoicePicker` は別のファイルの `InteractiveTable`・`ChoicePicker`。
  */
 function LayoutPart(props: { readonly id: string }): ReactElement {
   const report = useReport()
@@ -285,6 +286,14 @@ function LayoutPart(props: { readonly id: string }): ReactElement {
       )
     case "Tabs":
       return <TabsPart tabs={part.tabs} />
+    case "Divider":
+      return (
+        <Divider
+          tone="soft"
+          orientation={part.axis === "vertical" ? "vertical" : "horizontal"}
+          className=""
+        />
+      )
     case "ChoicePicker":
       return <ChoicePicker dataModel={report.dataModel} part={part} />
     default: {

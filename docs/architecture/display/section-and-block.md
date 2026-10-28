@@ -10,7 +10,7 @@
   互いに独立した区画を見渡させる `cols` / `card`・区画の状態の札 `badge`）だけを置く（板の型が効くかを書かれ方と画で見てから、欄にするかを決める。`docs/research/dashboard-layout-proposal.md` 5.1）。
   同じことを両方に書くと毎ターンの文脈に2回載る。
 - 本文を A2UI のカタログと部品の平らな一覧（`components`）で受けて描くことは、`docs/architecture/adr/0039-report-via-a2ui-catalog.md` が決める。
-  部品の切り方（`Report` の props と葉 19 種、基本カタログから取る 5 部品）は同「論点 2」、変換と `ReportEvent` の形は「論点 3」、ブラウザの描き方は「論点 4」が正典。
+  部品の切り方（`Report` の props と葉 19 種、基本カタログから取る 6 部品）は同「論点 2」、変換と `ReportEvent` の形は「論点 3」、ブラウザの描き方は「論点 4」が正典。
   `report` の受け口はこの `components` だけで、旧い変種（`json-schema`・`short-type`・`body-fence`）の受け口は外した。旧い `sections`・`body` で書かれた過去のセッションの `report` は、復元が読む。
 - 節は `heading` と並んで、省ける欄 `shapeTag`（`docs/glossary.md`「形の札」）を持つ。省いた節は `unspecified` に畳む。
   札と塊の照合は外した。過去の行の扱いは「塊を足す・外す基準」の「形の札の照合」。

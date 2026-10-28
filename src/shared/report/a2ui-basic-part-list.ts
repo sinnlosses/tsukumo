@@ -1,4 +1,4 @@
-// A2UI の基本カタログから取る 5 部品（配置と選択）の JSON Schema。
+// A2UI の基本カタログから取る 6 部品（配置・選択・区切り）の JSON Schema。
 // `@a2ui/web_core` の基本カタログの公開物を、次の 3 点だけ変えて写している。
 // 共有層は `@a2ui/*` を読めないので定数で持ち、公開物との一致はブラウザ側のテストが確かめる。
 // - 共通型の参照を絶対 URL から相対の `common_types.json#` にする
@@ -177,6 +177,26 @@ export const BASIC_PARTS = {
     ],
     unevaluatedProperties: false,
   },
+  Divider: {
+    type: "object",
+    allOf: [
+      ...COMMON,
+      {
+        type: "object",
+        properties: {
+          component: { const: "Divider" },
+          axis: {
+            type: "string",
+            description: "The orientation of the divider.",
+            enum: ["horizontal", "vertical"],
+            default: "horizontal",
+          },
+        },
+        required: ["component"],
+      },
+    ],
+    unevaluatedProperties: false,
+  },
   ChoicePicker: {
     type: "object",
     allOf: [
@@ -246,7 +266,7 @@ const layoutFields = {
   weight: z.number().optional(),
 }
 
-/** `BASIC_PARTS` の 5 部品の受理の形。子は ID の並びだけ（雛形の `ChildList` は受けない）。 */
+/** `BASIC_PARTS` の 6 部品の受理の形。子は ID の並びだけ（雛形の `ChildList` は受けない）。 */
 export const BASIC_PART_SCHEMAS = {
   Row: z.object({
     ...layoutFields,
@@ -271,6 +291,11 @@ export const BASIC_PART_SCHEMAS = {
     ...layoutFields,
     component: z.literal("Tabs"),
     tabs: z.array(z.object({ title: literalOrPathString, child: z.string() })).min(1),
+  }),
+  Divider: z.object({
+    ...layoutFields,
+    component: z.literal("Divider"),
+    axis: z.enum(BASIC_PARTS.Divider.allOf[2].properties.axis.enum).optional(),
   }),
   ChoicePicker: z.object({
     ...layoutFields,
