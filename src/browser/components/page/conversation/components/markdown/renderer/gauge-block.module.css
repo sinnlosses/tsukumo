@@ -1,7 +1,7 @@
 .gauge {
   display: block;
   width: 100%;
-  margin: var(--report-block-gap, 12px) 0;
+  margin: var(--report-block-gap, var(--space-md)) 0;
   overflow: visible;
 }
 

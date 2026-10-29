@@ -16,7 +16,7 @@
 .before-after-zoom-body {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--space-md);
 }
 .before-after-zoom-bar {
   position: sticky;
@@ -24,19 +24,19 @@
   z-index: 1;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding-block: 2px;
+  gap: var(--space-md);
+  padding-block: var(--space-2xs);
   background: color-mix(in srgb, var(--ground) 88%, transparent);
 }
 .before-after-zoom-pair {
   display: inline-flex;
-  gap: 4px;
+  gap: var(--space-xs);
 }
 .before-after-zoom-side {
   min-width: 24px;
   min-height: 28px;
-  padding: 0 12px;
-  border-radius: 8px;
+  padding: 0 var(--space-md);
+  border-radius: var(--radius-md);
 }
 .before-after-zoom-guide {
   margin-left: auto;
@@ -47,7 +47,7 @@
   min-width: 30px;
   min-height: 30px;
   padding: 0;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-size: var(--font-heading);
 }
 .before-after-zoom-image {
@@ -55,7 +55,7 @@
   flex-shrink: 0;
   max-width: 100%;
   height: auto;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
 }
 /* 枠を重ねる画像の箱は、画像の大きさに合わせて縮める（枠の%の基準が画像になる）。 */
 .before-after-zoom-framed {
@@ -71,7 +71,7 @@
   overflow-wrap: anywhere;
 }
 .before-after-zoom-number {
-  margin-inline-end: 10px;
+  margin-inline-end: var(--space-md);
   font-family: var(--font-mono);
   font-size: var(--font-label);
   letter-spacing: 0.08em;

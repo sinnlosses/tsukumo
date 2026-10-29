@@ -69,6 +69,8 @@ function isAllowedSpaceToken(token: string): boolean {
   if (px !== null) return Number(px[1]) >= 28
   const rem = /^([\d.]+)rem$/.exec(token)
   if (rem !== null) return Number(rem[1]) >= 1.75
+  const fallback = /^var\(--[\w-]+,\s*(.+)\)$/.exec(token)
+  if (fallback !== null) return isAllowedSpaceToken((fallback[1] ?? "").trim())
   if (token.startsWith("calc(") && token.endsWith(")")) {
     const parts = token.slice(5, -1).match(/var\([^)]*\)|-?[\d.]+[a-z%]*|[-+*/]/g) ?? []
     return parts.every(

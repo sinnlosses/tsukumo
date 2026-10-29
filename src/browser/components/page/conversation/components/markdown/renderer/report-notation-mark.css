@@ -30,7 +30,7 @@
     display: inline-block;
     inline-size: 2.5em;
     block-size: 0.55em;
-    border-radius: 0.15em;
+    border-radius: var(--radius-sm);
     background: color-mix(in srgb, var(--ink) 16%, transparent);
     overflow: hidden;
   }

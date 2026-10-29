@@ -59,8 +59,17 @@ describe("design-token", () => {
       "0 var(--space-sm)",
       "calc(-1 * var(--space-xs))",
       "calc(var(--space-sm) + 0.5em)",
+      "var(--report-block-gap, var(--space-md)) 0",
     ]
-    const rejected = ["6px", "0.5rem", "4px 8px", "calc(1rem + 2px)", "var(--space-sm) 6px", "10px"]
+    const rejected = [
+      "6px",
+      "0.5rem",
+      "4px 8px",
+      "calc(1rem + 2px)",
+      "var(--space-sm) 6px",
+      "10px",
+      "var(--report-block-gap, 12px) 0",
+    ]
 
     expect(allowed.filter((value) => !isAllowedSpace(value))).toEqual([])
     expect(rejected.filter((value) => isAllowedSpace(value))).toEqual([])
@@ -174,16 +183,10 @@ const EXCLUDED_DECLARATION_COUNTS: Readonly<Record<string, number>> = {
   "browser/components/page/conversation/components/character-view/stage/speech-log.css": 1,
   "browser/components/page/conversation/components/dispatch/dispatch.module.css": 1,
   "browser/components/page/conversation/components/main-view/turn-card/mini-portrait.css": 2,
-  "browser/components/page/conversation/components/markdown/renderer/before-after-zoom.module.css": 9,
-  "browser/components/page/conversation/components/markdown/renderer/gauge-block.module.css": 1,
-  "browser/components/page/conversation/components/markdown/renderer/mermaid-block.module.css": 2,
-  "browser/components/page/conversation/components/markdown/renderer/plot-figure.module.css": 1,
-  "browser/components/page/conversation/components/markdown/renderer/region-frame.module.css": 1,
   "browser/components/page/conversation/components/markdown/renderer/report-notation-body.css": 23,
   "browser/components/page/conversation/components/markdown/renderer/report-notation-card-chain.css": 5,
   "browser/components/page/conversation/components/markdown/renderer/report-notation-figure.css": 39,
   "browser/components/page/conversation/components/markdown/renderer/report-notation-inline.css": 10,
-  "browser/components/page/conversation/components/markdown/renderer/report-notation-mark.css": 1,
   "browser/components/page/conversation/components/markdown/renderer/report-notation-prose.css": 25,
   "browser/components/page/conversation/components/markdown/renderer/report-notation-result.css": 46,
   "browser/components/page/conversation/components/markdown/renderer/report-notation-summary.css": 31,
