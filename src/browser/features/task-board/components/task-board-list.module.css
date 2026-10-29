@@ -11,13 +11,15 @@
 /* 閉じたタスクを上限で落としたときだけ、一覧の末尾に添える一言。 */
 .task-board-list-omitted {
   margin: 0;
-  padding: 10px 14px 10px 16px;
+  padding: var(--space-md) calc(var(--space-lg) - var(--space-2xs)) var(--space-md) var(--space-lg);
 }
 .task-board-option {
   display: flex;
   flex-direction: column;
-  gap: 5px;
-  padding: 10px 14px 10px 16px;
+  gap: var(--space-xs);
+  /* 上下 10px は元の値のまま（12px に丸めると 360px で一覧の欄に収まる行が減る） */
+  padding: calc(var(--space-sm) + var(--space-2xs)) calc(var(--space-lg) - var(--space-2xs))
+    calc(var(--space-sm) + var(--space-2xs)) var(--space-lg);
   border-bottom: 1px solid var(--rule-quiet);
   cursor: pointer;
 }

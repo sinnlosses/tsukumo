@@ -3,7 +3,7 @@
 .task-count-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: var(--space-xs);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -15,11 +15,11 @@
 .task-count-chip-button {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: var(--space-xs);
   height: 26px;
-  padding: 0 8px;
+  padding: 0 var(--space-sm);
   border: 1px solid var(--rule);
-  border-radius: 13px;
+  border-radius: var(--radius-pill);
   background: none;
   color: var(--ink-quiet);
   font-size: var(--font-label);

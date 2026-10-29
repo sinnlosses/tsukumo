@@ -2,23 +2,23 @@
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
-  gap: 14px;
+  gap: var(--space-lg);
   min-height: 0;
-  padding: 22px 28px;
+  padding: var(--space-2xl) 28px;
   overflow-y: auto;
 }
 /* パンくず（つながりをたどった先にだけ出す。直前の1つだけ）。 */
 .task-detail-breadcrumb {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-sm);
   height: 20px;
   font-size: var(--font-label);
 }
 .task-detail-breadcrumb-back {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-xs);
   padding: 0;
 }
 .task-detail-breadcrumb-back-chevron {
@@ -34,7 +34,7 @@
 .task-detail-head {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-md);
 }
 .task-detail-id {
   color: var(--ink-quiet);
@@ -42,9 +42,10 @@
   font-size: var(--font-secondary);
 }
 .task-detail-status {
-  padding: 1px 7px;
+  /* 上下は 1px のまま（バッジの高さを変えない） */
+  padding: calc(var(--space-2xs) / 2) var(--space-sm);
   border: 1px solid var(--rule);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   color: color-mix(in srgb, var(--ink) 85%, transparent);
   font-family: var(--font-mono);
   font-size: var(--font-label);
@@ -58,11 +59,11 @@
 .task-detail-info {
   display: grid;
   grid-template-columns: auto 1fr;
-  gap: 8px 18px;
+  gap: var(--space-sm) var(--space-xl);
   margin: 0;
-  padding: 12px 14px;
+  padding: var(--space-md) var(--space-lg);
   border: 1px solid var(--rule-quiet);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: var(--ground);
   color: var(--ink-quiet);
   font-size: var(--font-label);
@@ -80,13 +81,13 @@
   font-family: var(--font-mono);
 }
 .task-detail-label {
-  padding: 0 0.5rem;
+  padding: 0 var(--space-sm);
   border: 1px solid color-mix(in srgb, var(--ink-quiet) 40%, transparent);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   overflow-wrap: anywhere;
 }
 .task-detail-location {
-  gap: 5px;
+  gap: var(--space-xs);
   color: var(--accent);
   font-family: var(--font-mono);
   overflow-wrap: anywhere;
@@ -97,7 +98,7 @@
 .task-detail-dependencies {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--space-sm);
 }
 .task-detail-dependencies-title {
   margin: 0;
@@ -113,7 +114,7 @@
 .task-detail-dependency-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--space-sm);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -142,6 +143,6 @@
 }
 @media (max-width: 760px) {
   .task-detail {
-    padding: 16px;
+    padding: var(--space-lg);
   }
 }

@@ -10,16 +10,18 @@
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--space-md);
   width: min(400px, calc(100vw - 16px));
   max-height: calc(100dvh - 16px);
   margin: 0;
-  padding: 16px 18px 14px;
+  /* 右 18px・下 14px は元の値のまま（左右・上下で 2px ずつ違う） */
+  padding: var(--space-lg) calc(var(--space-lg) + var(--space-2xs))
+    calc(var(--space-md) + var(--space-2xs));
   overflow: visible;
   border: 1px solid var(--rule);
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   background: var(--surface);
-  box-shadow: 0 24px 60px rgb(0 0 0 / 0.55);
+  box-shadow: var(--shadow-overlay);
   color: var(--ink);
   text-decoration: none;
   white-space: normal;
@@ -40,7 +42,7 @@
 .task-peek-head {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-sm);
 }
 .task-peek-state {
   color: var(--ink-quiet);
@@ -60,7 +62,7 @@
   width: 26px;
   height: 26px;
   padding: 0;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
 }
 .task-peek-title {
   margin: 0;
@@ -82,7 +84,7 @@
   position: relative;
   max-height: 170px;
   overflow: hidden;
-  padding-top: 10px;
+  padding-top: var(--space-md);
   border-top: 1px solid var(--rule-quiet);
 }
 .task-peek-body-fade {
@@ -96,7 +98,7 @@
 .task-peek-action {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-sm);
 }
 /* 箱だけ。顔は `<Button variant="link">` が持つ。 */
 .task-peek-open-full {
@@ -110,9 +112,9 @@
 /* 見本の地のグラデーションは `<Button>` の顔に無いので、素のボタンで持つ。 */
 .task-peek-start {
   height: 32px;
-  padding: 0 14px;
+  padding: 0 var(--space-lg);
   border: none;
-  border-radius: 9px;
+  border-radius: var(--radius-md);
   background: linear-gradient(
     180deg,
     color-mix(in srgb, var(--accent), white 12%),

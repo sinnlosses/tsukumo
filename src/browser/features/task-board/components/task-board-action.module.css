@@ -5,9 +5,10 @@
   flex: none;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  /* 横 10px は元の値のまま（12px に丸めると 360px で「tsukumo に頼む」が 2 行目へ落ちる） */
+  gap: calc(var(--space-sm) + var(--space-2xs));
   min-height: 64px;
-  padding: 12px 28px;
+  padding: var(--space-md) 28px;
   border-top: 1px solid var(--rule-quiet);
   background: color-mix(in srgb, var(--surface), var(--ground) 40%);
 }
@@ -15,21 +16,21 @@
 .task-board-action-button {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-sm);
   height: 36px;
-  padding: 0 12px;
-  border-radius: 9px;
+  padding: 0 var(--space-md);
+  border-radius: var(--radius-md);
 }
 /* 「Issue を開く」はページを移る口なのでリンクのまま、ボタンと同じ箱と顔にする。 */
 .task-board-action-link {
   box-sizing: border-box;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-sm);
   height: 36px;
-  padding: 0 12px;
+  padding: 0 var(--space-md);
   border: 1px solid var(--rule);
-  border-radius: 9px;
+  border-radius: var(--radius-md);
   color: inherit;
   font-size: var(--font-secondary);
   text-decoration: none;
@@ -41,29 +42,30 @@
 .task-board-run {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-sm);
   height: 40px;
   margin-left: auto;
-  padding: 0 18px;
-  border-radius: 10px;
+  /* 横 18px は元の値のまま（20px に丸めると 360px で「tsukumo に頼む」が 2 行目へ落ちる） */
+  padding: 0 calc(var(--space-lg) + var(--space-2xs));
+  border-radius: var(--radius-lg);
 }
 /* ドラフトの「却下する」は右寄せの組の左端（箱は「ID をコピー」と同じ）、「計画する」は「tsukumo に頼む」と同じ箱で右端。 */
 .task-board-drop {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-sm);
   height: 36px;
   margin-left: auto;
-  padding: 0 12px;
-  border-radius: 9px;
+  padding: 0 var(--space-md);
+  border-radius: var(--radius-md);
 }
 .task-board-run-plan {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-sm);
   height: 40px;
-  padding: 0 18px;
-  border-radius: 10px;
+  padding: 0 calc(var(--space-lg) + var(--space-2xs));
+  border-radius: var(--radius-lg);
 }
 .task-board-run-reason {
   color: var(--ink-quiet);
@@ -71,6 +73,6 @@
 }
 @media (max-width: 760px) {
   .task-board-action {
-    padding: 10px 16px;
+    padding: var(--space-md) var(--space-lg);
   }
 }

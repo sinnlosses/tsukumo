@@ -1,11 +1,11 @@
 .task-running-item + .task-running-item {
-  margin-top: 0.3rem;
+  margin-top: var(--space-xs);
 }
 /* 1行目。札・IDを左に寄せ、`›` を右端に置く。 */
 .task-running-head {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-sm);
   min-width: 0;
 }
 .task-running-chevron {
@@ -19,8 +19,8 @@
   display: inline-flex;
   align-items: center;
   height: 24px;
-  padding: 0 0.5rem;
-  border-radius: 12px;
+  padding: 0 var(--space-sm);
+  border-radius: var(--radius-lg);
   background: var(--accent);
   color: var(--ground);
   font-size: var(--font-label);

@@ -17,29 +17,29 @@
   margin-top: 0;
 }
 .task-body p {
-  margin: 0 0 10px;
+  margin: 0 0 var(--space-md);
 }
 .task-body-section {
-  margin: 22px 0 8px;
-  padding-bottom: 6px;
+  margin: var(--space-2xl) 0 var(--space-sm);
+  padding-bottom: var(--space-sm);
   border-bottom: 1px solid var(--rule-quiet);
   font-size: var(--font-body);
   font-weight: 700;
   line-height: 1.5;
 }
 .task-body-sub {
-  margin: 16px 0 6px;
+  margin: var(--space-lg) 0 var(--space-sm);
   font-size: var(--font-subheading);
   font-weight: 700;
   line-height: 1.5;
 }
 .task-body ul {
-  margin: 0 0 10px;
-  padding-left: 20px;
+  margin: 0 0 var(--space-md);
+  padding-left: var(--space-xl);
 }
 .task-body ol {
-  margin: 0 0 10px;
-  padding-left: 22px;
+  margin: 0 0 var(--space-md);
+  padding-left: var(--space-2xl);
 }
 .task-body li > ul,
 .task-body li > ol {
@@ -51,23 +51,23 @@
   list-style: none;
 }
 .task-body input[type="checkbox"] {
-  margin: 0 8px 0 0;
+  margin: 0 var(--space-sm) 0 0;
   accent-color: var(--accent);
   transform: translateY(2px);
 }
 .task-body code {
-  padding: 0 5px;
-  border-radius: 4px;
+  padding: 0 var(--space-xs);
+  border-radius: var(--radius-sm);
   background: var(--surface-raised);
   font-family: var(--font-mono);
   font-size: var(--font-label);
 }
 /* フェンスは色付けせず、長い行は折り返す（詳細の欄を横に広げない）。 */
 .task-body pre {
-  margin: 0 0 12px;
-  padding: 12px 14px;
+  margin: 0 0 var(--space-md);
+  padding: var(--space-md) var(--space-lg);
   border: 1px solid var(--rule-quiet);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: var(--ground);
   color: color-mix(in srgb, var(--ink) 85%, transparent);
   font-family: var(--font-mono);
@@ -84,13 +84,13 @@
   color: var(--accent);
 }
 .task-body blockquote {
-  margin: 0 0 10px;
-  padding-left: 12px;
+  margin: 0 0 var(--space-md);
+  padding-left: var(--space-md);
   border-left: 3px solid var(--rule);
   color: var(--ink-quiet);
 }
 .task-body hr {
-  margin: 16px 0;
+  margin: var(--space-lg) 0;
   border: none;
   border-top: 1px solid var(--rule-quiet);
 }
@@ -103,11 +103,11 @@
 .task-body-peek p,
 .task-body-peek ul,
 .task-body-peek ol {
-  margin-bottom: 8px;
+  margin-bottom: var(--space-sm);
 }
 .task-body-peek .task-body-section,
 .task-body-peek .task-body-sub {
-  margin: 0 0 2px;
+  margin: 0 0 var(--space-2xs);
   padding-bottom: 0;
   border-bottom: none;
   color: var(--ink-quiet);
@@ -117,11 +117,11 @@
 }
 .task-body-peek ul,
 .task-body-peek ol {
-  padding-left: 18px;
+  padding-left: var(--space-xl);
 }
 /* 表は横に溢れたら表だけを転がす。 */
 .task-body-table-scroll {
-  margin: 0 0 12px;
+  margin: 0 0 var(--space-md);
   overflow-x: auto;
 }
 .task-body-table-scroll table {
@@ -131,7 +131,7 @@
 }
 .task-body-table-scroll th,
 .task-body-table-scroll td {
-  padding: 4px 10px;
+  padding: var(--space-xs) var(--space-md);
   border: 1px solid var(--rule-quiet);
   text-align: left;
   vertical-align: top;

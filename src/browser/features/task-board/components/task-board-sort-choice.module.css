@@ -4,15 +4,16 @@
 .task-board-sort-group {
   display: inline-flex;
   flex: none;
-  margin-left: 8px;
+  margin-left: var(--space-sm);
   overflow: hidden;
   border: 1px solid var(--rule-soft);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
 }
 .task-board-sort-button {
   min-width: 24px;
   min-height: 28px;
-  padding: 3px 10px;
+  /* 横 10px は元の値のまま（12px に丸めると 360px で行の「ドラフト」が「ドラ…」に省かれる） */
+  padding: var(--space-xs) calc(var(--space-sm) + var(--space-2xs));
   border: none;
   border-left: 1px solid var(--rule-soft);
   background: transparent;
@@ -44,8 +45,8 @@
 .task-board-sort-reason {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-left: 18px;
+  gap: var(--space-sm);
+  margin-left: var(--space-xl);
   color: var(--ink-quiet);
   font-size: var(--font-label);
 }
@@ -56,5 +57,5 @@
   flex: 1 1 auto;
   min-width: 0;
   height: 28px;
-  padding: 0 10px;
+  padding: 0 var(--space-md);
 }

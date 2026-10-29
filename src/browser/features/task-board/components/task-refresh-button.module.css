@@ -10,13 +10,13 @@
 .task-refresh-sidebar {
   width: 1.5rem;
   height: 1.5rem;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
 }
 /* 閉じるボタン（`task-board-head.module.css`）と同じ 34px。 */
 .task-refresh-modal {
   width: 34px;
   height: 34px;
-  border-radius: 9px;
+  border-radius: var(--radius-md);
 }
 /* キーの案内（右寄せの元）を畳む狭い画面では、こちらが右へ寄せる。 */
 @media (max-width: 760px) {

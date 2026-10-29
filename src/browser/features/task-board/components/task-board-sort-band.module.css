@@ -5,9 +5,10 @@
   flex: none;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px 14px;
+  /* 10px・14px は元の値のまま（丸めると 360px で帯の並びが変わる） */
+  gap: calc(var(--space-sm) + var(--space-2xs)) calc(var(--space-md) + var(--space-2xs));
   min-height: 64px;
-  padding: 12px 28px;
+  padding: var(--space-md) 28px;
   border-top: 1px solid var(--rule-quiet);
   background: color-mix(in srgb, var(--surface), var(--ground) 40%);
 }
@@ -15,8 +16,8 @@
   display: inline-flex;
   align-items: center;
   height: 36px;
-  padding: 0 14px;
-  border-radius: 9px;
+  padding: 0 calc(var(--space-md) + var(--space-2xs));
+  border-radius: var(--radius-md);
 }
 .task-board-sort-hold-count {
   color: var(--ink-quiet);
@@ -27,11 +28,11 @@
   align-items: center;
   height: 40px;
   margin-left: auto;
-  padding: 0 18px;
-  border-radius: 10px;
+  padding: 0 calc(var(--space-lg) + var(--space-2xs));
+  border-radius: var(--radius-lg);
 }
 @media (max-width: 760px) {
   .task-board-sort-band {
-    padding: 10px 16px;
+    padding: var(--space-md) var(--space-lg);
   }
 }

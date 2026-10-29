@@ -1,9 +1,10 @@
 .task-legend {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px 10px;
-  margin: 0 0 4px;
-  padding: 4px 10px 8px;
+  /* 横 10px は元の値のまま（12px に丸めるとサイドバーの幅で 2 行に割れる） */
+  gap: var(--space-xs) calc(var(--space-sm) + var(--space-2xs));
+  margin: 0 0 var(--space-xs);
+  padding: var(--space-xs) calc(var(--space-sm) + var(--space-2xs)) var(--space-sm);
   border-bottom: 1px solid var(--rule-soft);
   color: var(--ink-quiet);
   font-size: var(--font-label);
@@ -12,7 +13,7 @@
 .task-legend-item {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-xs);
 }
 .task-legend-loop {
   color: var(--state-ok);

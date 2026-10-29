@@ -2,19 +2,20 @@
   display: flex;
   flex: none;
   flex-direction: column;
-  gap: 10px;
-  padding: 12px 14px;
+  /* 間隔 10px は元の値のまま（12px に丸めると 360px で一覧の欄に収まる行が減る） */
+  gap: calc(var(--space-sm) + var(--space-2xs));
+  padding: var(--space-md) var(--space-lg);
   border-bottom: 1px solid var(--rule-quiet);
 }
 .task-board-search {
   box-sizing: border-box;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-sm);
   height: 36px;
-  padding: 0 12px;
+  padding: 0 var(--space-md);
   border: 1px solid var(--rule);
-  border-radius: 9px;
+  border-radius: var(--radius-md);
   background: var(--ground);
   color: var(--ink-quiet);
 }
@@ -37,16 +38,16 @@
 .task-board-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: calc(var(--space-xs) + var(--space-2xs));
 }
 .task-board-chip {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-sm);
   height: 30px;
-  padding: 0 12px;
+  padding: 0 var(--space-md);
   border: 1px solid var(--rule);
-  border-radius: 15px;
+  border-radius: var(--radius-pill);
   background: transparent;
   color: var(--ink-quiet);
   font: inherit;
