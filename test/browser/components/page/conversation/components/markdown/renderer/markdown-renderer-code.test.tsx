@@ -195,9 +195,7 @@ describe("Markdown（code の marks）", () => {
       aside: "",
     } as const
     const { container } = render(
-      <Markdown
-        text={reportSectionsMarkdown([{ heading: "", shapeTag: "unspecified", blocks: [block] }])}
-      />,
+      <Markdown text={reportSectionsMarkdown([{ heading: "", blocks: [block] }])} />,
     )
 
     expect(container.querySelectorAll(".code-line-mark")).toHaveLength(1)

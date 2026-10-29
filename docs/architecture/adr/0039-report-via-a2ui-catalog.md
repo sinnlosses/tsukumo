@@ -177,7 +177,7 @@
 
 ### 先に入った `row`・`panel` の扱い
 
-- `sections` の塊の種類 `row`・`panel`（`src/shared/report/row-panel-block.ts`・`row-panel-markdown.ts`）は、論点 5 の撤去の順どおり、`json-schema` の変種と `sections` の受け口を外すときまで残す。旧い変種の記録と描画が読むため。
+- `sections` の塊の種類 `row`・`panel`（`src/server/session-driver/core/legacy-report-section-list.ts` が読む）は、論点 5 の撤去の順どおり、`json-schema` の変種と `sections` の受け口を外すときまで残す。旧い変種の記録と描画が読むため。
 - そのあいだ、横に並べる・枠に入れるは 2 通りで持つ。旧い変種では `row`・`panel` が `sections` の塊として配置ごと持つ。`a2ui` の変種では `Row`・`Card`・`Column` が `components` だけで配置を持ち、`sections` へは中の葉が平らに入る（論点 3）。ブラウザはどちらも同じ class で描くので、見た目は同じになる。
 - 新しい塊の種類は足さない（論点 6）。
 

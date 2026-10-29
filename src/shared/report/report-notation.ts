@@ -6,7 +6,6 @@
 // claude に教える文面（`REPORT_NOTATION_PROMPT`）はここから組み立てず、手で書く。
 // 印を足すときは見た目（`report-notation.module.css` の `report-<名前>`）にも書き足す（書き忘れはテストが落とす）。
 
-import { ROW_PANEL_MARK_NAMES } from "./row-panel-markdown.ts"
 import { TIMELINE_MARK_NAMES } from "./timeline-markdown.ts"
 
 /**
@@ -29,7 +28,6 @@ export const REPORT_NOTE_KINDS = [
  */
 const REPORT_BLOCK_MARK_NAMES = [
   ...TIMELINE_MARK_NAMES,
-  ...ROW_PANEL_MARK_NAMES,
   "cols",
   "cols-of-2",
   "cols-of-3",

@@ -5,8 +5,8 @@
 // 「逃げ道の中の記法 × レポート数」「差し戻しの種類 × 回数」を割合つきで出す。
 // 読むのは `MIN_FORMAT_VERSION` 以降の行だけで、それより古い行は捨てる。
 // 札 × 塊の種類の節数・`list` の style・`mermaid` の図種・駆動の数は、`sectionBlockKinds` を記録した行を分母にする。
-// `keyFigures` の有無と、結論に数が並ぶのに無い割合は、その欄を記録した行を分母にする。
-// 疑似セッションの行（`driver` が `fake`、`driver` の無い行は `sessionId` が `fake-session`）は、既定で全部の表から除く。
+// `keyFigures` の有無と、結論に数が並ぶのに無い割合も、その欄を記録した行が分母。
+// 疑似セッションの行（`driver` が `fake`、無い行は `sessionId` が `fake-session`）は、既定で全部の表から除く。
 //
 // 使い方:
 //   node scripts/runtime/report-block-usage.ts                       # 直近28日
@@ -25,16 +25,16 @@ import {
   MARKDOWN_NOTATIONS,
 } from "../../src/server/report/core/report-markdown-notation.ts"
 import { A2UI_STRUCTURE_REJECTION_REASONS } from "../../src/server/report/core/report-review.ts"
+import { REPORT_SHAPE_TAGS } from "../../src/server/report/core/report-usage-record.ts"
 import { REPORT_BLOCK_FIELDS } from "../../src/server/report/core/report-usage.ts"
 import { REPORT_VIOLATION_KINDS } from "../../src/server/report/core/report-violation.ts"
-import { REPORT_MERMAID_KINDS } from "../../src/shared/report/report-block-diagram.ts"
-import { listBlockSchema } from "../../src/shared/report/report-block-prose.ts"
 import {
-  REPORT_BLOCK_KINDS,
   REPORT_FIGURE_NONE_REASONS,
   reportFigureSchema,
-} from "../../src/shared/report/report-block.ts"
-import { REPORT_SHAPE_TAGS } from "../../src/shared/report/report-shape-tag.ts"
+} from "../../src/shared/report/a2ui-report-catalog.ts"
+import { REPORT_MERMAID_KINDS } from "../../src/shared/report/report-block-diagram.ts"
+import { listBlockSchema } from "../../src/shared/report/report-block-prose.ts"
+import { REPORT_BLOCK_KINDS } from "../../src/shared/report/report-block.ts"
 import { REPORT_GENRES } from "../../src/shared/report/report-task.ts"
 import { parseDaysOption } from "../shared/days-option.ts"
 import { argumentCharsSection } from "./argument-chars-section.ts"
@@ -73,7 +73,7 @@ const FIGURE_KINDS: readonly string[] = reportFigureSchema.options.map(
   (option) => option.shape.kind.value,
 )
 
-/** `figure` を省いた回・`figure` を記録する前の行・形の崩れの理由（この3つは記録から区別できない）。 */
+/** `figure` を省いた回・記録前の行・形の崩れ（記録から区別できない）。 */
 const UNRECORDED_REASON = "unrecorded"
 
 const argv = process.argv.slice(2)
@@ -327,7 +327,7 @@ function nodeBucket(record: UsageRecord): string {
   return record.graphNodeCount <= 5 ? "〜5" : record.graphNodeCount <= 10 ? "6〜10" : "11以上"
 }
 
-/** `checks` に unverified の行があるレポートのうち、その全部に確かめ方があった割合。 */
+/** `checks` の unverified の行の全部に確かめ方があったレポートの割合。 */
 function howToVerifySection(rows: readonly UsageRecord[]): string {
   const unverified = rows.filter((record) => record.hasUnverifiedCheck)
   if (unverified.length === 0) {

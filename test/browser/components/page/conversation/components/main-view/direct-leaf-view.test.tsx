@@ -25,7 +25,6 @@ const VALUE: LeafValue = {
   tagTones: {},
   gutterNotes: [],
   mergedIntoPrevious: false,
-  children: [],
 }
 
 describe("directLeafViewOf", () => {

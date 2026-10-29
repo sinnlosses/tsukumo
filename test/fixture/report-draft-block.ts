@@ -1,18 +1,15 @@
 import { reportViolations } from "../../src/server/report/core/report-violation-check.ts"
 import type { ReportDraft } from "../../src/server/report/core/report-violation.ts"
 import { parseConclusion } from "../../src/server/session-driver/core/conclusion-sentence.ts"
-import type {
-  RecordedReportFigure,
-  ReportBlock,
-  ReportSection,
-} from "../../src/shared/report/report-block.ts"
-import { reportDraft } from "./report-event.ts"
+import type { RecordedReportFigure } from "../../src/shared/report/a2ui-report-catalog.ts"
+import type { ReportBlock } from "../../src/shared/report/report-block.ts"
+import { type LegacySectionInput, reportDraft } from "./report-event.ts"
 
 /** `conclusion` は文字列なら1要素、配列なら要素の並び。 */
 export const draft = (
   blocks: readonly ReportBlock[],
   conclusion: string | readonly string[] = "架空の結論。",
-  sections: readonly ReportSection[] = [{ heading: "", shapeTag: "unspecified", blocks }],
+  sections: readonly LegacySectionInput[] = [{ heading: "", blocks }],
   figure: RecordedReportFigure = { kind: "none", reason: "unrecorded" },
 ): ReportDraft =>
   reportDraft({

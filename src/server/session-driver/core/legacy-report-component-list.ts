@@ -7,19 +7,19 @@ import { isPlainObject, omit } from "remeda"
 
 import {
   LEAF_COMPONENT_KINDS,
+  parseReportFigure,
   REPORT_COMPONENT_SCHEMAS,
 } from "../../../shared/report/a2ui-report-catalog.ts"
 import { A2UI_ROOT_ID } from "../../../shared/report/a2ui-report-outline.ts"
 import { parseKeyFigures } from "../../../shared/report/report-block-comparison.ts"
-import {
-  type ReportBlock,
-  parseReportBodyContent,
-  parseReportFigure,
-  parseReportSections,
-  type SectionBlock,
-} from "../../../shared/report/report-block.ts"
+import type { ReportBlock } from "../../../shared/report/report-block.ts"
 import { parseReportChecks } from "../../../shared/report/report-check.ts"
 import { parseReportRetrospective } from "../../../shared/report/report-retrospective.ts"
+import {
+  type LegacyBlock,
+  parseLegacyBody,
+  parseLegacySections,
+} from "./legacy-report-section-list.ts"
 
 /** 組み直した結果。件数は旧い塊の読みで落とした・素のコードブロックに落とした数。 */
 export type LegacyReportComponents = {
@@ -54,8 +54,8 @@ export function legacyReportComponents(
 ): LegacyReportComponents | undefined {
   const parsed =
     input.sections === undefined
-      ? parseReportBodyContent(typeof input.body === "string" ? input.body : "")
-      : { ...parseReportSections(input.sections), brokenFenceCount: 0 }
+      ? parseLegacyBody(typeof input.body === "string" ? input.body : "")
+      : { ...parseLegacySections(input.sections), brokenFenceCount: 0 }
 
   const sections = parsed.sections.flatMap((section, index) => {
     const id = `section-${String(index + 1)}`
@@ -138,7 +138,7 @@ type Part = Readonly<Record<string, unknown>> & { readonly id: string }
 /** 節の塊 1 つが写る部品。`id` は節の子として参照する部品、`parts` はその部品と、その下に降りる部品。 */
 type BlockParts = { readonly id: string; readonly parts: readonly Part[] }
 
-function blockParts(id: string, block: SectionBlock): readonly BlockParts[] {
+function blockParts(id: string, block: LegacyBlock): readonly BlockParts[] {
   if (block.kind === "row") {
     const children = block.blocks.flatMap((child, index) =>
       leafPart(`${id}-${String(index + 1)}`, child),

@@ -23,7 +23,6 @@ const titleViolationsOf = (...questions: readonly [string, string?][]) =>
       sections: [
         {
           heading: "",
-          shapeTag: "unspecified",
           blocks: questions.map(([question, form]) => plotOf(question, form)),
         },
       ],
@@ -64,7 +63,7 @@ describe("plot の題の数", () => {
       const plot = plotBlockSchema.parse({ kind: "plot", question: "架空の題", ...declaration })
       const violations = reportViolations(
         reportDraft({
-          sections: [{ heading: "", shapeTag: "unspecified", blocks: [plot] }],
+          sections: [{ heading: "", blocks: [plot] }],
         }),
       ).filter((violation) => violation.kind === "plot-title-without-number")
       expect(violations).toEqual([])
@@ -97,7 +96,7 @@ describe("plot の題の数", () => {
       const plot = plotBlockSchema.parse({ kind: "plot", question: "架空の題", ...declaration })
       const violations = reportViolations(
         reportDraft({
-          sections: [{ heading: "", shapeTag: "unspecified", blocks: [plot] }],
+          sections: [{ heading: "", blocks: [plot] }],
         }),
       ).filter((violation) => violation.kind === "plot-title-without-number")
       expect(violations).toEqual([])
@@ -140,7 +139,7 @@ describe("plot の題の数", () => {
       const plot = plotBlockSchema.parse({ kind: "plot", question: "架空の題", ...declaration })
       const violations = reportViolations(
         reportDraft({
-          sections: [{ heading: "", shapeTag: "unspecified", blocks: [plot] }],
+          sections: [{ heading: "", blocks: [plot] }],
         }),
       ).filter((violation) => violation.kind === "plot-title-without-number")
       expect(violations).toEqual([])

@@ -10,7 +10,7 @@ import { plotRows, type ReportPlot } from "./figure-grammar.ts"
 import { graphDrawingOf } from "./graph-drawing.ts"
 import { graphFoldHtml } from "./graph-fold-html.ts"
 import { plotDrawingOf } from "./plot-drawing.ts"
-import type { ReportBlock, ReportSection, SectionBlock } from "./report-block.ts"
+import type { ReportBlock, ReportBlockSection } from "./report-block.ts"
 import { captionedMarkdown } from "./report-caption.ts"
 import { compareMarkdown, beforeAfterMarkdown } from "./report-comparison-markdown.ts"
 import { chartConfigOf, svgHtml, withSequenceAutonumber } from "./report-diagram-markdown.ts"
@@ -28,7 +28,6 @@ import { claimsMarkdown, listMarkdown, optionsMarkdown } from "./report-list-mar
 import { PAUSE_POINT_CLASS_NAME } from "./report-pause-point.ts"
 import { statMarkdown } from "./report-stat-markdown.ts"
 import { matrixMarkdown, type TagTones, tableMarkdown } from "./report-table-markdown.ts"
-import { arrangedBlockMarkdown } from "./row-panel-markdown.ts"
 import { timelineHtml } from "./timeline-markdown.ts"
 
 /**
@@ -45,7 +44,7 @@ export type ReportSectionPieces = {
  * 節ごとの組み方は {@link reportSectionPieces}。
  */
 export function reportSectionsMarkdown(
-  sections: readonly ReportSection[],
+  sections: readonly ReportBlockSection[],
   imageSource: ReportImageSource,
 ): string {
   return joinParts(
@@ -61,10 +60,9 @@ export function reportSectionsMarkdown(
  * 題の番号と傍注は `layout`（既定は `sections` から導く）の値を使う（番号は節をまたいで並びの順に数え、塊は番号を1回だけ受け取る）。
  * 塊の `aside` と `memo` の `note` は傍注になり、直前の塊と一緒に包む（{@link gutterGroupMarkdown}）。
  * `memo` の `note` は本文の位置に残さない。節の最初の `memo` は塊の無い包みになる。
- * `row`・`panel` は子を葉の塊と同じ手で描き、1つの包みにする（{@link blockBodyMarkdown}）。
  */
 export function reportSectionPieces(
-  sections: readonly ReportSection[],
+  sections: readonly ReportBlockSection[],
   imageSource: ReportImageSource,
   layout: ReportLeafLayout = reportLeafLayoutOf(sections),
 ): readonly ReportSectionPieces[] {
@@ -75,30 +73,11 @@ export function reportSectionPieces(
       value.mergedIntoPrevious
         ? ""
         : gutterGroupMarkdown(
-            blockBodyMarkdown(block, value, imageSource, tagTones),
+            foldedBlockMarkdown(block, value, imageSource, tagTones),
             value.gutterNotes,
           ),
     ),
   }))
-}
-
-/**
- * 塊の本文の位置に描く Markdown。`row`・`panel` は子を葉の塊と同じ手で描き、親の `fold` は容れ物ごと畳む。
- * 傍注を直前へ寄せた `memo` の子は容れ物の中に置かない。
- */
-function blockBodyMarkdown(
-  block: SectionBlock,
-  value: LeafValue,
-  imageSource: ReportImageSource,
-  tagTones: TagTones,
-): string {
-  if (block.kind === "row" || block.kind === "panel") {
-    const children = zip(block.blocks, value.children)
-      .filter(([, child]) => !child.mergedIntoPrevious)
-      .map(([child, childValue]) => foldedBlockMarkdown(child, childValue, imageSource, tagTones))
-    return foldedMarkdown(block.fold, arrangedBlockMarkdown(block, children))
-  }
-  return foldedBlockMarkdown(block, value, imageSource, tagTones)
 }
 
 /**

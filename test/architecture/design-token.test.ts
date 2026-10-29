@@ -186,6 +186,6 @@ const EXCLUDED_DECLARATION_COUNTS: Readonly<Record<string, number>> = {
   "browser/components/page/conversation/components/markdown/renderer/report-notation-mark.css": 1,
   "browser/components/page/conversation/components/markdown/renderer/report-notation-prose.css": 25,
   "browser/components/page/conversation/components/markdown/renderer/report-notation-result.css": 46,
-  "browser/components/page/conversation/components/markdown/renderer/report-notation-summary.css": 32,
+  "browser/components/page/conversation/components/markdown/renderer/report-notation-summary.css": 31,
   "browser/components/page/conversation/components/markdown/renderer/report-notation-timeline.css": 4,
 }

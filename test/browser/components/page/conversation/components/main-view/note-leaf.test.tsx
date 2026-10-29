@@ -56,7 +56,6 @@ describe("Note の部品", () => {
         tagTones: {},
         gutterNotes: [],
         mergedIntoPrevious: false,
-        children: [],
       } as const
       const { container } = render(
         <div data-report-region="section">
@@ -88,7 +87,6 @@ describe("Note の部品", () => {
               tagTones: {},
               gutterNotes: [],
               mergedIntoPrevious: true,
-              children: [],
             }}
             view={view}
           />

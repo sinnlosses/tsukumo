@@ -89,10 +89,9 @@ describe("drawnReportOf", () => {
     const retrospective = drawnReportOf(WITH_RETROSPECTIVE, CONCLUSION, "whole")
 
     expect(figure.sections.map((entry) => entry.section)).toEqual([
-      { heading: "", shapeTag: "unspecified", blocks: [FIGURE_BLOCK] },
+      { heading: "", blocks: [FIGURE_BLOCK] },
       {
         heading: "架空の節",
-        shapeTag: "unspecified",
         blocks: [
           text("架空の根拠。"),
           { kind: "markdown", markdown: "- 架空の項目", fold: "", aside: "" },
@@ -100,10 +99,9 @@ describe("drawnReportOf", () => {
       },
     ])
     expect(retrospective.sections.map((entry) => entry.section)).toEqual([
-      { heading: "架空の節", shapeTag: "unspecified", blocks: [text("架空の根拠。")] },
+      { heading: "架空の節", blocks: [text("架空の根拠。")] },
       {
         heading: "振り返り",
-        shapeTag: "unspecified",
         blocks: [
           text("架空の結果"),
           text("架空の振り返りの根拠。"),

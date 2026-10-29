@@ -1,6 +1,6 @@
 // 依頼の型（`task.genre`）ごとの、最初の 1 画面の雛形。数の帯（`keyFigures`）を求めるかと、図 1 の第一候補を 1 つの表に置く。
 
-import type { RecordedReportFigure } from "../../../shared/report/report-block.ts"
+import type { RecordedReportFigure } from "../../../shared/report/a2ui-report-catalog.ts"
 import type { ReportGenre } from "../../../shared/report/report-task.ts"
 
 type FigureKind = Exclude<RecordedReportFigure["kind"], "none">

@@ -6,7 +6,7 @@ import {
 } from "../../../../src/server/report/core/report-rejection.ts"
 import { reportViolations } from "../../../../src/server/report/core/report-violation-check.ts"
 import type { ReportDraft } from "../../../../src/server/report/core/report-violation.ts"
-import type { ReportBlock, ReportSection } from "../../../../src/shared/report/report-block.ts"
+import type { ReportBlock, ReportBlockSection } from "../../../../src/shared/report/report-block.ts"
 import {
   code,
   draft,
@@ -279,7 +279,7 @@ describe("reportRejectionText", () => {
   describe("figure-contradiction", () => {
     const withReason = (
       reason: "no-shape" | "short-answer",
-      sections: readonly ReportSection[],
+      sections: readonly ReportBlockSection[],
     ): ReportDraft => draft([], "架空の結論。", sections, { kind: "none", reason })
     const flow: ReportBlock = {
       kind: "list",
@@ -303,7 +303,6 @@ describe("reportRejectionText", () => {
         withReason("no-shape", [
           {
             heading: "",
-            shapeTag: "unspecified",
             blocks: [
               flow,
               mermaid("sequenceDiagram\n  a ->> b: x"),
@@ -321,21 +320,17 @@ describe("reportRejectionText", () => {
 
     it("no-shape で bullet の箇条や表しか無ければ違反にしない", () => {
       const bullet: ReportBlock = { ...flow, style: "bullet" }
-      expect(
-        kinds(withReason("no-shape", [{ heading: "", shapeTag: "unspecified", blocks: [bullet] }])),
-      ).toEqual([])
+      expect(kinds(withReason("no-shape", [{ heading: "", blocks: [bullet] }]))).toEqual([])
     })
 
     it("short-answer なのに節が2つ以上あれば違反になる", () => {
       const twoSections = withReason("short-answer", [
         {
           heading: "架空の節1",
-          shapeTag: "unspecified",
           blocks: [reportDraftText("架空の根拠。")],
         },
         {
           heading: "架空の節2",
-          shapeTag: "unspecified",
           blocks: [reportDraftText("架空の根拠。")],
         },
       ])
@@ -353,7 +348,6 @@ describe("reportRejectionText", () => {
           withReason("short-answer", [
             {
               heading: "",
-              shapeTag: "unspecified",
               blocks: [reportDraftText("架空の1文目。2文目。3文目。4文目。")],
             },
           ]),
@@ -362,9 +356,9 @@ describe("reportRejectionText", () => {
     })
 
     it("ほかの理由・記録の無い理由・図を置いた回は見ない", () => {
-      const sections: readonly ReportSection[] = [
-        { heading: "架空の節1", shapeTag: "unspecified", blocks: [flow] },
-        { heading: "架空の節2", shapeTag: "unspecified", blocks: [flow] },
+      const sections: readonly ReportBlockSection[] = [
+        { heading: "架空の節1", blocks: [flow] },
+        { heading: "架空の節2", blocks: [flow] },
       ]
       for (const figure of [
         { kind: "none", reason: "single-value" },

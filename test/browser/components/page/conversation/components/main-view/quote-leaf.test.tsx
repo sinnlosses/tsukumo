@@ -21,7 +21,6 @@ const VALUE: LeafValue = {
   tagTones: {},
   gutterNotes: [],
   mergedIntoPrevious: false,
-  children: [],
 }
 
 function drawn(extra: {

@@ -1,11 +1,9 @@
 import { describe, expect, it } from "vitest"
 
 import { a2uiReportInput } from "../../../../src/server/session-driver/core/a2ui-report-message.ts"
+import { parseLegacySections } from "../../../../src/server/session-driver/core/legacy-report-section-list.ts"
 import { reportEvents } from "../../../../src/server/session-driver/core/sdk-report-message.ts"
-import {
-  parseReportFigure,
-  parseReportSections,
-} from "../../../../src/shared/report/report-block.ts"
+import { parseReportFigure } from "../../../../src/shared/report/a2ui-report-catalog.ts"
 import { parseReportRetrospective } from "../../../../src/shared/report/report-retrospective.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 
@@ -132,7 +130,7 @@ describe("写しの自己テスト", () => {
 
   it("出力から塊を 1 つ落とすと、落とした葉を欠けとして拾う", () => {
     const { input } = a2uiReportInput(COMPONENTS)
-    const [first, ...rest] = parseReportSections(input.sections).sections
+    const [first, ...rest] = parseLegacySections(input.sections).sections
     const dropped = [
       ...(first === undefined
         ? []
@@ -184,7 +182,7 @@ function outputKindsOf(fields: Readonly<Record<string, unknown>>): readonly stri
   const figure = parseReportFigure(fields.figure)
   const retrospective = parseReportRetrospective(fields.retrospective)
   return [
-    ...parseReportSections(fields.sections).sections.flatMap((section) =>
+    ...parseLegacySections(fields.sections).sections.flatMap((section) =>
       section.blocks.map((block) => block.kind),
     ),
     ...(figure.kind === "none" ? [] : [figure.kind]),

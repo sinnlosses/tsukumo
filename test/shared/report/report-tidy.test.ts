@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import type { A2uiReportComponent } from "../../../src/shared/report/a2ui-report-catalog.ts"
-import type { ReportBlock, ReportSection } from "../../../src/shared/report/report-block.ts"
+import type { ReportBlock, ReportBlockSection } from "../../../src/shared/report/report-block.ts"
 import { outlineLeafBlock, reportOutline } from "../../../src/shared/report/report-outline.ts"
 import { tidyReportOutline } from "../../../src/shared/report/report-tidy.ts"
 
@@ -17,9 +17,9 @@ const text = (value: string): ReportBlock => ({ kind: "text", text: value, fold:
 
 /** 逃げ道の塊1つだけの本文を整形し、残った中身を返す（塊ごと落ちたら空）。 */
 const tidy = (body: string, conclusion = CONCLUSION): string =>
-  tidyReportSections({
+  tidyReportBlockSections({
     conclusion,
-    sections: [{ heading: "", shapeTag: "unspecified", blocks: [markdown(body)] }],
+    sections: [{ heading: "", blocks: [markdown(body)] }],
   })
     .flatMap((section) => section.blocks)
     .map((block) => (block.kind === "markdown" ? block.markdown : ""))
@@ -163,28 +163,26 @@ describe("tidyReportOutline（逃げ道の塊）", () => {
 })
 
 describe("tidyReportOutline（塊と節）", () => {
-  const tidySections = (sections: readonly ReportSection[]) =>
-    tidyReportSections({ conclusion: CONCLUSION, sections })
+  const tidySections = (sections: readonly ReportBlockSection[]) =>
+    tidyReportBlockSections({ conclusion: CONCLUSION, sections })
 
   it("本文の冒頭の text の塊が conclusion と同じなら落とし、冒頭でなければ落とさない", () => {
-    const sections: readonly ReportSection[] = [
+    const sections: readonly ReportBlockSection[] = [
       {
         heading: "",
-        shapeTag: "unspecified",
         blocks: [text(` ${CONCLUSION}`), text("架空の根拠。"), text(CONCLUSION)],
       },
     ]
 
     expect(tidySections(sections)).toEqual([
-      { heading: "", shapeTag: "unspecified", blocks: [text("架空の根拠。"), text(CONCLUSION)] },
+      { heading: "", blocks: [text("架空の根拠。"), text(CONCLUSION)] },
     ])
   })
 
   it("定型だけの text の塊を落とし、定型に中身が続く塊は落とさない", () => {
-    const sections: readonly ReportSection[] = [
+    const sections: readonly ReportBlockSection[] = [
       {
         heading: "",
-        shapeTag: "unspecified",
         blocks: [text("架空の根拠。"), text("以上です。"), text("以上です。架空の補足。")],
       },
     ]
@@ -192,7 +190,6 @@ describe("tidyReportOutline（塊と節）", () => {
     expect(tidySections(sections)).toEqual([
       {
         heading: "",
-        shapeTag: "unspecified",
         blocks: [text("架空の根拠。"), text("以上です。架空の補足。")],
       },
     ])
@@ -206,23 +203,20 @@ describe("tidyReportOutline（塊と節）", () => {
       fold: "",
       aside: "",
     }
-    const sections: readonly ReportSection[] = [
+    const sections: readonly ReportBlockSection[] = [
       {
         heading: "架空の節",
-        shapeTag: "unspecified",
         blocks: [text("以上です。"), markdown("何かあれば言ってください。")],
       },
-      { heading: "架空の次の節", shapeTag: "unspecified", blocks: [note] },
+      { heading: "架空の次の節", blocks: [note] },
     ]
 
-    expect(tidySections(sections)).toEqual([
-      { heading: "架空の次の節", shapeTag: "unspecified", blocks: [note] },
-    ])
+    expect(tidySections(sections)).toEqual([{ heading: "架空の次の節", blocks: [note] }])
   })
 
   it("落とすものが無ければ中身は引数のまま", () => {
-    const sections: readonly ReportSection[] = [
-      { heading: "架空の節", shapeTag: "unspecified", blocks: [text("架空の根拠。")] },
+    const sections: readonly ReportBlockSection[] = [
+      { heading: "架空の節", blocks: [text("架空の根拠。")] },
     ]
 
     expect(tidySections(sections)).toEqual(sections)
@@ -230,7 +224,7 @@ describe("tidyReportOutline（塊と節）", () => {
 })
 
 /** 塊の節を `components` に組む（`text` は `Paragraph`、`markdown` は `Markdown`、`note` は `Note`）。 */
-function componentsOf(sections: readonly ReportSection[]): readonly A2uiReportComponent[] {
+function componentsOf(sections: readonly ReportBlockSection[]): readonly A2uiReportComponent[] {
   const leaves = sections.flatMap((section, sectionIndex) =>
     section.blocks.map((block, blockIndex): A2uiReportComponent => {
       const id = `leaf-${String(sectionIndex)}-${String(blockIndex)}`
@@ -268,17 +262,16 @@ function componentsOf(sections: readonly ReportSection[]): readonly A2uiReportCo
 }
 
 /** 塊の節を葉にして整形し、整形後の葉を塊の節に戻す。 */
-function tidyReportSections(report: {
+function tidyReportBlockSections(report: {
   readonly conclusion: string
-  readonly sections: readonly ReportSection[]
-}): readonly ReportSection[] {
+  readonly sections: readonly ReportBlockSection[]
+}): readonly ReportBlockSection[] {
   const { outline } = tidyReportOutline({
     conclusion: report.conclusion,
     outline: reportOutline(componentsOf(report.sections)),
   })
   return outline.sections.map((section) => ({
     heading: section.kind === "section" ? section.heading : "",
-    shapeTag: "unspecified",
     blocks: section.leaves.flatMap((leaf) => {
       const block = outlineLeafBlock(leaf)
       return block === undefined ? [] : [block]
@@ -288,13 +281,12 @@ function tidyReportSections(report: {
 
 describe("tidyReportOutline（落とした葉の ID）", () => {
   it("落とした葉の ID だけが集合に入り、整形で書き換えた葉の ID は入らない", () => {
-    const sections: readonly ReportSection[] = [
+    const sections: readonly ReportBlockSection[] = [
       {
         heading: "架空の節",
-        shapeTag: "unspecified",
         blocks: [text("以上です。"), markdown("以上です。\n\n架空の根拠。"), text("架空の本文。")],
       },
-      { heading: "全部落ちる節", shapeTag: "unspecified", blocks: [markdown("")] },
+      { heading: "全部落ちる節", blocks: [markdown("")] },
     ]
 
     const tidied = tidyReportOutline({

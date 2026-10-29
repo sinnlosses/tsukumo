@@ -10,7 +10,7 @@ import { Markdown } from "../../../../../../../src/browser/components/page/conve
 import { revealTimingOf } from "../../../../../../../src/browser/domain/reveal-speed.ts"
 import { planReveal } from "../../../../../../../src/browser/domain/reveal/plan.ts"
 import type { A2uiReportComponent } from "../../../../../../../src/shared/report/a2ui-report-catalog.ts"
-import type { SectionBlock } from "../../../../../../../src/shared/report/report-block.ts"
+import type { ReportBlock } from "../../../../../../../src/shared/report/report-block.ts"
 import { reportLeafLayoutOf } from "../../../../../../../src/shared/report/report-leaf-value.ts"
 import { reportSectionPieces } from "../../../../../../../src/shared/report/report-markdown.ts"
 import { stubIntersectionObserver } from "../../../../../../fixture/intersection.ts"
@@ -32,7 +32,7 @@ afterEach(() => {
 const NO_IMAGES = { kind: "none" } as const
 
 type LeafPair = {
-  readonly block: SectionBlock
+  readonly block: ReportBlock
   readonly part: A2uiReportComponent
 }
 
@@ -157,9 +157,7 @@ const PAIRS = [
 
 type Plan = ReturnType<typeof planReveal>
 
-const SECTIONS = [
-  { heading: "", shapeTag: "unspecified", blocks: PAIRS.map((pair) => pair.block) },
-] as const
+const SECTIONS = [{ heading: "", blocks: PAIRS.map((pair) => pair.block) }] as const
 
 function oldPlan(): Plan {
   const pieces = reportSectionPieces(SECTIONS, NO_IMAGES)[0]?.blocks ?? []

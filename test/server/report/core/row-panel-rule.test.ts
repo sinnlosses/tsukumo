@@ -3,13 +3,13 @@ import { describe, expect, it } from "vitest"
 import { reportUsageEntryOf } from "../../../../src/server/report/core/report-usage.ts"
 import { reportViolations } from "../../../../src/server/report/core/report-violation-check.ts"
 import type { A2uiReportComponent } from "../../../../src/shared/report/a2ui-report-catalog.ts"
-import type {
-  ReportBlock,
-  ReportSection,
-  SectionBlock,
-} from "../../../../src/shared/report/report-block.ts"
+import type { ReportBlock } from "../../../../src/shared/report/report-block.ts"
 import { draft, markdown, reportDraftText } from "../../../fixture/report-draft-block.ts"
-import { reportDraft, reportOfSections } from "../../../fixture/report-event.ts"
+import {
+  type LegacySectionInput,
+  reportDraft,
+  reportOfSections,
+} from "../../../fixture/report-event.ts"
 
 const info = (): ReportBlock => ({
   kind: "note",
@@ -19,27 +19,21 @@ const info = (): ReportBlock => ({
   aside: "",
 })
 
-type ArrangedChild = Extract<SectionBlock, { readonly kind: "row" }>["blocks"][number]
-
-const row = (blocks: readonly ReportBlock[], fold = "", aside = ""): SectionBlock => ({
+/** 旧い記録の `row`・`panel`。今の型には無いので、組み直しへ渡す生の値で置く。 */
+const row = (blocks: readonly ReportBlock[], fold = "", aside = ""): unknown => ({
   kind: "row",
-  blocks: childrenOf(blocks),
+  blocks,
   fold,
   aside,
 })
 
-const panel = (blocks: readonly ReportBlock[], fold = "", aside = ""): SectionBlock => ({
+const panel = (blocks: readonly ReportBlock[], fold = "", aside = ""): unknown => ({
   kind: "panel",
   title: "架空の枠",
-  blocks: childrenOf(blocks),
+  blocks,
   fold,
   aside,
 })
-
-/** 子に置けない `files` を型から外す（架空の子に `files` は使わない）。 */
-function childrenOf(blocks: readonly ReportBlock[]): readonly ArrangedChild[] {
-  return blocks.filter((block): block is ArrangedChild => block.kind !== "files")
-}
 
 describe("row・panel の中と外で同じ並べ方の判定", () => {
   describe("隣り合う note", () => {
@@ -142,19 +136,19 @@ describe("row・panel の中と外で同じ並べ方の判定", () => {
   })
 })
 
-function sectionsOf(blocks: readonly SectionBlock[]): readonly ReportSection[] {
-  return [{ heading: "", shapeTag: "unspecified", blocks }]
+function sectionsOf(blocks: readonly unknown[]): readonly LegacySectionInput[] {
+  return [{ heading: "", blocks }]
 }
 
-function crowdedNotesIn(sections: readonly ReportSection[]): number {
+function crowdedNotesIn(sections: readonly LegacySectionInput[]): number {
   return countOf(sections, "crowded-notes")
 }
 
-function nestedFoldsIn(sections: readonly ReportSection[]): number {
+function nestedFoldsIn(sections: readonly LegacySectionInput[]): number {
   return countOf(sections, "nested-fold")
 }
 
-function countOf(sections: readonly ReportSection[], kind: string): number {
+function countOf(sections: readonly LegacySectionInput[], kind: string): number {
   const violation = reportViolations(draft([], "架空の結論。", sections)).find(
     (candidate) => candidate.kind === kind,
   )

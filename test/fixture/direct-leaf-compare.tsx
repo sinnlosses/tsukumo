@@ -9,7 +9,7 @@ import {
 } from "../../src/browser/components/page/conversation/components/main-view/direct-leaf-view.tsx"
 import { Markdown } from "../../src/browser/components/page/conversation/components/markdown/renderer/markdown-renderer.tsx"
 import type { A2uiReportComponent } from "../../src/shared/report/a2ui-report-catalog.ts"
-import type { SectionBlock } from "../../src/shared/report/report-block.ts"
+import type { ReportBlock } from "../../src/shared/report/report-block.ts"
 import type { ReportImageSource } from "../../src/shared/report/report-image-markdown.ts"
 import { reportLeafLayoutOf } from "../../src/shared/report/report-leaf-value.ts"
 import { reportSectionPieces } from "../../src/shared/report/report-markdown.ts"
@@ -17,8 +17,8 @@ import { reportSectionPieces } from "../../src/shared/report/report-markdown.ts"
 const NO_IMAGES = { kind: "none" } as const
 
 /** 塊1つだけの節。 */
-function sectionOf(block: SectionBlock) {
-  return [{ heading: "", shapeTag: "unspecified", blocks: [block] }] as const
+function sectionOf(block: ReportBlock) {
+  return [{ heading: "", blocks: [block] }] as const
 }
 
 /** 空白だけの違いと、属性の並びの違いは畳む。 */
@@ -54,7 +54,7 @@ function readRendered(container: HTMLElement): Rendered {
   return rendered
 }
 
-function renderOld(block: SectionBlock, imageSource: ReportImageSource): Rendered {
+function renderOld(block: ReportBlock, imageSource: ReportImageSource): Rendered {
   const text = reportSectionPieces(sectionOf(block), imageSource)[0]?.blocks[0] ?? ""
   const { container } = render(
     <div data-report-region="section">
@@ -65,7 +65,7 @@ function renderOld(block: SectionBlock, imageSource: ReportImageSource): Rendere
 }
 
 function renderNew(
-  block: SectionBlock,
+  block: ReportBlock,
   part: A2uiReportComponent,
   imageSource: ReportImageSource,
 ): Rendered {
@@ -84,7 +84,7 @@ function renderNew(
 
 /** 旧い描画（欄の直接の子）の `innerHTML`。 */
 export function oldLeafHtml(
-  block: SectionBlock,
+  block: ReportBlock,
   imageSource: ReportImageSource = NO_IMAGES,
 ): string {
   return renderOld(block, imageSource).html
@@ -92,7 +92,7 @@ export function oldLeafHtml(
 
 /** 新しい描画（部品が直接描く）の `innerHTML`。`part` は `block` と同じ中身の部品。 */
 export function newLeafHtml(
-  block: SectionBlock,
+  block: ReportBlock,
   part: A2uiReportComponent,
   imageSource: ReportImageSource = NO_IMAGES,
 ): string {
@@ -100,14 +100,11 @@ export function newLeafHtml(
 }
 
 /** 旧い描画の text ノードの字の並び。 */
-export function oldLeafTextNodes(block: SectionBlock): readonly string[] {
+export function oldLeafTextNodes(block: ReportBlock): readonly string[] {
   return renderOld(block, NO_IMAGES).textNodes
 }
 
 /** 新しい描画の text ノードの字の並び。 */
-export function newLeafTextNodes(
-  block: SectionBlock,
-  part: A2uiReportComponent,
-): readonly string[] {
+export function newLeafTextNodes(block: ReportBlock, part: A2uiReportComponent): readonly string[] {
   return renderNew(block, part, NO_IMAGES).textNodes
 }

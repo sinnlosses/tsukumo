@@ -22,6 +22,7 @@ import {
   mermaidBlockSchema,
   svgBlockSchema,
 } from "./report-block-diagram.ts"
+import { type DeepReadonly, omittable } from "./report-block-field.ts"
 import {
   claimsBlockSchema,
   codeBlockSchema,
@@ -31,17 +32,13 @@ import {
   quoteBlockSchema,
   textBlockSchema,
 } from "./report-block-prose.ts"
-import {
-  REPORT_FIGURE_NONE_REASONS,
-  reportFigureSchema,
-  reportSectionSchema,
-} from "./report-block.ts"
 import { reportCheckSchema } from "./report-check.ts"
 import {
   FIRST_SENTENCE_TARGET,
   FIRST_SENTENCE_TARGET_COMMAS,
   MAX_CONCLUSION_SENTENCES,
   MAX_FIRST_SENTENCE,
+  MAX_HEADING,
 } from "./report-limit.ts"
 import { reportRetrospectiveSchema } from "./report-retrospective.ts"
 import { reportTaskSchema } from "./report-task.ts"
@@ -110,6 +107,44 @@ export const LEAF_COMPONENT_KINDS = {
   Markdown: markdownBlockSchema.shape.kind.value,
 } as const satisfies Record<keyof typeof LEAF_COMPONENTS, string>
 
+/** `Report.figureNone` に置ける、図を置かない理由。 */
+export const REPORT_FIGURE_NONE_REASONS = [
+  "short-answer",
+  "no-shape",
+  "single-value",
+  "no-material",
+] as const
+
+/** 図の葉（レポートの図1つか、置かない理由）。図の葉は節の同じ種類の葉と同じ形。 */
+export const reportFigureSchema = z.discriminatedUnion("kind", [
+  imageBlockSchema,
+  mermaidBlockSchema,
+  graphBlockSchema,
+  svgBlockSchema,
+  timelineBlockSchema,
+  beforeAfterBlockSchema,
+  chartBlockSchema,
+  statsBlockSchema,
+  plotBlockSchema,
+  z.object({ kind: z.literal("none"), reason: z.enum(REPORT_FIGURE_NONE_REASONS) }),
+])
+
+type ReportFigure = DeepReadonly<z.infer<typeof reportFigureSchema>>
+
+/**
+ * 読み戻した図。`unrecorded` は図を省いた呼び出し・欄が無かったころの呼び出し・形の崩れで、
+ * 書き手には出さない（{@link reportFigureSchema} の理由には入れない）。
+ */
+export type RecordedReportFigure =
+  | ReportFigure
+  | { readonly kind: "none"; readonly reason: "unrecorded" }
+
+/** 旧い引数の `figure` を取り出す。省いた・崩れたものは `unrecorded` の `none`（図なし）に畳む。 */
+export function parseReportFigure(value: unknown): RecordedReportFigure {
+  const figure = reportFigureSchema.safeParse(value)
+  return figure.success ? figure.data : { kind: "none", reason: "unrecorded" }
+}
+
 const FIGURE_KINDS: readonly string[] = reportFigureSchema.options.map(
   (option) => option.shape.kind.value,
 )
@@ -125,7 +160,9 @@ const speechSchema = z.object({ text: z.string(), expression: z.string() })
 const sectionComponentSchema = z.object({
   id: z.string(),
   component: z.literal("Section"),
-  heading: reportSectionSchema.shape.heading,
+  heading: omittable(z.string(), "").describe(
+    `その節の結論を言う語（「変更点」「まとめ」のようなどのレポートにも当てはまる語にしない）。${String(MAX_HEADING)}字以内で、疑問文にしない。節が1つなら省いてよく、2つ以上なら全部に付ける`,
+  ),
   children: z.array(z.string()).min(1),
 })
 

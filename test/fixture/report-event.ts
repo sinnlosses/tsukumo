@@ -7,10 +7,19 @@ import { z } from "zod"
 import type { ReportDraft } from "../../src/server/report/core/report-violation.ts"
 import { parseConclusion } from "../../src/server/session-driver/core/conclusion-sentence.ts"
 import { legacyReportComponents } from "../../src/server/session-driver/core/legacy-report-component-list.ts"
-import { a2uiReportComponentSchema } from "../../src/shared/report/a2ui-report-catalog.ts"
-import type { RecordedReportFigure, ReportSection } from "../../src/shared/report/report-block.ts"
+import {
+  a2uiReportComponentSchema,
+  type RecordedReportFigure,
+} from "../../src/shared/report/a2ui-report-catalog.ts"
+import type { ReportBlockSection } from "../../src/shared/report/report-block.ts"
 import type { ReportRetrospective } from "../../src/shared/report/report-retrospective.ts"
 import type { SessionEvent } from "../../src/shared/session/session-event.ts"
+
+/** 旧い引数の節。`row`・`panel` のような今は型に無い塊も、旧い記録の読み戻しの検査のために置ける。 */
+export type LegacySectionInput = {
+  readonly heading: string
+  readonly blocks: readonly unknown[]
+}
 
 /** `report` ツールの呼び出し1件。 */
 export function reportEvent(
@@ -46,7 +55,7 @@ export function reportEvent(
 
 /** 節だけを渡す `report` ツールの呼び出し1件。`components` は節から本番と同じ組み直しで作る。 */
 export function reportOfSections(
-  sections: readonly ReportSection[],
+  sections: readonly LegacySectionInput[],
   droppedCount = 0,
 ): Extract<SessionEvent, { readonly kind: "report" }> {
   return reportEvent({
@@ -66,7 +75,7 @@ export function reportOfDrawn(
   overrides: Partial<
     Omit<Extract<SessionEvent, { readonly kind: "report" }>, "kind" | "components">
   > & {
-    readonly sections?: readonly ReportSection[]
+    readonly sections?: readonly LegacySectionInput[]
     readonly figure?: RecordedReportFigure
     readonly retrospective?: ReportRetrospective
   },
@@ -84,7 +93,7 @@ export function reportOfDrawn(
 
 /** `reportDraft` に渡す欄。`components` の代わりに節・図・振り返りで渡すと、本番と同じ組み直しで `components` になる。 */
 export type ReportDraftInput = Partial<ReportDraft> & {
-  readonly sections?: readonly ReportSection[]
+  readonly sections?: readonly LegacySectionInput[]
   readonly figure?: RecordedReportFigure
   readonly retrospective?: ReportRetrospective
 }
@@ -119,15 +128,14 @@ export function reportDraft(input: ReportDraftInput = {}): ReportDraft {
  * 節が無いまま図か振り返りの塊だけがあるときは、根の子が空にならないよう空の段落の節を1つ置く。
  */
 export function componentsOfSections(
-  sections: readonly ReportSection[],
+  sections: readonly LegacySectionInput[],
   figure: RecordedReportFigure,
   retrospective: ReportRetrospective,
 ): ReportDraft["components"] {
   const hasDrawn =
     figure.kind !== "none" || (retrospective.kind === "recorded" && retrospective.blocks.length > 0)
-  const placeholder: ReportSection = {
+  const placeholder: ReportBlockSection = {
     heading: "",
-    shapeTag: "unspecified",
     blocks: [{ kind: "text", text: "", fold: "", aside: "" }],
   }
   const legacy = legacyReportComponents({

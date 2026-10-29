@@ -4,7 +4,6 @@ import { z } from "zod"
 import { reportViolations } from "../../../../src/server/report/core/report-violation-check.ts"
 import { a2uiReportComponentSchema } from "../../../../src/shared/report/a2ui-report-catalog.ts"
 import { plotBlockSchema } from "../../../../src/shared/report/figure-grammar.ts"
-import type { SectionBlock } from "../../../../src/shared/report/report-block.ts"
 import { reportDraft } from "../../../fixture/report-event.ts"
 
 // 部品の一覧（`components`）を直接入力にして、配置の部品の中の葉も同じ検査にかかることを確かめる。
@@ -164,14 +163,14 @@ describe("components を入力にした字・印・番号の検査", () => {
   })
 
   it("旧い形の panel の題は、Card の先頭の見出しの段落として壊れた印・矢印にも読まれる", () => {
-    const panel: SectionBlock = {
+    const panel = {
       kind: "panel",
       title: "架空の {{x}} と 甲 → 乙 と 1.2",
       blocks: [{ kind: "text", text: "架空の段落。", fold: "", aside: "" }],
       fold: "",
       aside: "",
     }
-    const sections = [{ heading: "", shapeTag: "unspecified", blocks: [panel] }] as const
+    const sections = [{ heading: "", blocks: [panel] }]
 
     expect(kindsOf({ sections }, "broken-inline-mark")).toEqual([
       { kind: "broken-inline-mark", count: 1 },

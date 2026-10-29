@@ -3,7 +3,12 @@
 
 import { omit } from "remeda"
 
-import { type A2uiReportComponent, LEAF_COMPONENT_KINDS } from "./a2ui-report-catalog.ts"
+import {
+  type A2uiReportComponent,
+  LEAF_COMPONENT_KINDS,
+  type RecordedReportFigure,
+  reportFigureSchema,
+} from "./a2ui-report-catalog.ts"
 import {
   A2UI_ROOT_ID,
   a2uiLeafIds,
@@ -12,12 +17,7 @@ import {
   a2uiPartsById,
 } from "./a2ui-report-outline.ts"
 import type { ReportPlot } from "./figure-grammar.ts"
-import {
-  parseReportBlocks,
-  type RecordedReportFigure,
-  type ReportBlock,
-  reportFigureSchema,
-} from "./report-block.ts"
+import { parseReportBlocks, type ReportBlock } from "./report-block.ts"
 import type { ReportTimeline } from "./timeline-block.ts"
 
 export type ReportOutlineLeaf = Extract<

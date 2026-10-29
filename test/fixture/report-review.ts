@@ -9,7 +9,7 @@ import {
   type ReportReview,
 } from "../../src/server/report/core/report-review.ts"
 import type { ReportDraft } from "../../src/server/report/core/report-violation.ts"
-import type { ReportSection } from "../../src/shared/report/report-block.ts"
+import type { ReportBlockSection } from "../../src/shared/report/report-block.ts"
 import type { BackgroundTask } from "../../src/shared/session-driver/background-task.ts"
 import type { SessionEvent } from "../../src/shared/session/session-event.ts"
 import type { WorkPlanStanding } from "../../src/shared/session/work-plan.ts"
@@ -29,10 +29,9 @@ export const REJECTION_PHRASE = {
 export const noPlan = (): WorkPlanStanding => ({ kind: "none" })
 
 /** 逃げ道の塊1つの節（中身は架空）。 */
-export const sectionsOf = (markdown: string): readonly ReportSection[] => [
+export const sectionsOf = (markdown: string): readonly ReportBlockSection[] => [
   {
     heading: "",
-    shapeTag: "unspecified",
     blocks: [{ kind: "markdown", markdown, fold: "", aside: "" }],
   },
 ]

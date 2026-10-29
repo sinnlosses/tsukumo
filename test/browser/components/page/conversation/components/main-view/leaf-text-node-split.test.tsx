@@ -3,7 +3,7 @@ import { afterEach, beforeAll, describe, expect, it } from "vitest"
 
 import { loadMarkdown } from "../../../../../../../src/browser/components/page/conversation/components/markdown/markdown.tsx"
 import type { A2uiReportComponent } from "../../../../../../../src/shared/report/a2ui-report-catalog.ts"
-import type { SectionBlock } from "../../../../../../../src/shared/report/report-block.ts"
+import type { ReportBlock } from "../../../../../../../src/shared/report/report-block.ts"
 import {
   newLeafHtml,
   newLeafTextNodes,
@@ -19,7 +19,7 @@ afterEach(() => {
   cleanup()
 })
 
-type Sample = { readonly block: SectionBlock; readonly part: A2uiReportComponent }
+type Sample = { readonly block: ReportBlock; readonly part: A2uiReportComponent }
 
 const TABLE: Sample = (() => {
   const base = {

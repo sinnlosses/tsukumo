@@ -30,8 +30,7 @@ const brokenOf = (report: Parameters<typeof reportDraft>[0]) =>
     (violation) => violation.kind === "broken-inline-mark",
   )
 
-const sectionOf = (...blocks: ReportBlock[]) =>
-  ({ heading: "", shapeTag: "unspecified", blocks }) as const
+const sectionOf = (...blocks: ReportBlock[]) => ({ heading: "", blocks }) as const
 
 describe("broken-inline-mark", () => {
   it("結論・text・list の項目・table のセルの壊れた印を数える", () => {

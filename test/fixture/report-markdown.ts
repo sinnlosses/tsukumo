@@ -1,12 +1,11 @@
-import type { ReportBlock, ReportSection } from "../../src/shared/report/report-block.ts"
+import type { ReportBlock, ReportBlockSection } from "../../src/shared/report/report-block.ts"
 import type { ReportImageSource } from "../../src/shared/report/report-image-markdown.ts"
 import { reportSectionsMarkdown } from "../../src/shared/report/report-markdown.ts"
 
 export const NO_IMAGES = { kind: "none" } as const satisfies ReportImageSource
 
-export const section = (blocks: readonly ReportBlock[], heading = ""): ReportSection => ({
+export const section = (blocks: readonly ReportBlock[], heading = ""): ReportBlockSection => ({
   heading,
-  shapeTag: "unspecified",
   blocks,
 })
 export const markdownOf = (block: ReportBlock): string =>
@@ -61,7 +60,7 @@ export const chartFenceOf = (block: ReportBlock): string =>
   markdownOf(block)
     .replace(/^<div class="captioned">\n\n/, "")
     .replace(/\n\n<div class="caption">.*<\/div>\n\n<\/div>$/, "")
-export const captionNumbers = (sections: readonly ReportSection[]): string[] =>
+export const captionNumbers = (sections: readonly ReportBlockSection[]): string[] =>
   [...reportSectionsMarkdown(sections, NO_IMAGES).matchAll(/class="caption-number">([^<]+)</g)].map(
     ([, label]) => label ?? "",
   )

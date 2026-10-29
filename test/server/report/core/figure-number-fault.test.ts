@@ -18,8 +18,7 @@ const plotOf = (...values: number[]) =>
 
 const textBlock = (text: string): ReportBlock => ({ kind: "text", text, fold: "", aside: "" })
 
-const sectionOf = (...blocks: ReportBlock[]) =>
-  ({ heading: "", shapeTag: "unspecified", blocks }) as const
+const sectionOf = (...blocks: ReportBlock[]) => ({ heading: "", blocks }) as const
 
 const mismatchOf = (report: Parameters<typeof reportDraft>[0]) =>
   reportViolations(reportDraft(report)).filter(

@@ -1,8 +1,7 @@
-// `report` の本文の節と塊の合併と、その検証。
+// `report` の葉の塊の合併と、その検証。
 
 import { z } from "zod"
 
-import { parseReportBody } from "./body-fence.ts"
 import { plotBlockSchema } from "./figure-grammar.ts"
 import {
   compareBlockSchema,
@@ -19,7 +18,7 @@ import {
   mermaidBlockSchema,
   svgBlockSchema,
 } from "./report-block-diagram.ts"
-import { type DeepReadonly, omittable } from "./report-block-field.ts"
+import type { DeepReadonly } from "./report-block-field.ts"
 import {
   claimsBlockSchema,
   codeBlockSchema,
@@ -30,12 +29,9 @@ import {
   quoteBlockSchema,
   textBlockSchema,
 } from "./report-block-prose.ts"
-import { MAX_HEADING } from "./report-limit.ts"
-import { type RecordedReportShapeTag, REPORT_SHAPE_TAGS } from "./report-shape-tag.ts"
-import { arrangedBlockSchemasOf } from "./row-panel-block.ts"
 import { timelineBlockSchema } from "./timeline-block.ts"
 
-// `report` の schema で `figure` と `sections` が共有する塊。名前を外すと両方に複製され、ツール定義が約1万字増える
+// ツール定義の中で `retrospective.blocks` の合併に入る塊の、定義上の名前
 const namedBeforeAfter = beforeAfterBlockSchema.meta({ id: "BeforeAfterBlock" })
 const namedStats = statsBlockSchema.meta({ id: "StatsBlock" })
 const namedMermaid = mermaidBlockSchema.meta({ id: "MermaidBlock" })
@@ -76,26 +72,24 @@ const reportBlockSchema = z.discriminatedUnion("kind", [...writerBlockBranches, 
 
 export type ReportBlock = DeepReadonly<z.infer<typeof reportBlockSchema>>
 
-// `sections` と `retrospective` が共有する、書き手向けの塊の合併。名前を外すと両方に複製され、ツール定義が約1万字増える
+// `retrospective.blocks` の要素になる、書き手向けの塊の合併
 export const namedWriterBlockSchema = writerBlockSchema.meta({ id: "ReportBlock" })
 
-const { rowBlockSchema, panelBlockSchema } = arrangedBlockSchemasOf(namedWriterBlockSchema)
+/**
+ * 使われ方の記録の `blockKinds` に現れうる塊の種類。読み戻しの合併の枝から導き、旧い記録だけにある
+ * `row`・`panel` を足す。塊を1種類足してここへ書き忘れる経路を型で塞ぐ。
+ */
+export const REPORT_BLOCK_KINDS: readonly string[] = [
+  ...reportBlockSchema.options.map((option) => option.shape.kind.value),
+  "row",
+  "panel",
+]
 
-// 節の `blocks` の合併。葉の塊は名前（`ReportBlock`）で1回だけ参照し、`row`・`panel` の子と共有する
-const namedSectionBlockSchema = z
-  .discriminatedUnion("kind", [namedWriterBlockSchema, rowBlockSchema, panelBlockSchema])
-  .meta({ id: "SectionBlock" })
-
-// 節の塊の読み戻し用。枝を平らに並べ、知らない種類の判定（`REPORT_BLOCK_KINDS`）を枝から導く
-const sectionBlockSchema = z.discriminatedUnion("kind", [
-  ...writerBlockBranches,
-  filesBlockSchema,
-  rowBlockSchema,
-  panelBlockSchema,
-])
-
-/** 節に置く塊。葉の塊（{@link ReportBlock}）か、葉を並べる `row`・`panel`。 */
-export type SectionBlock = DeepReadonly<z.infer<typeof sectionBlockSchema>>
+/** 画面に描く節。見出し（空なら描かない）と葉の塊の並び。 */
+export type ReportBlockSection = {
+  readonly heading: string
+  readonly blocks: readonly ReportBlock[]
+}
 
 /** 塊の配列を1つずつ検証し、崩れた塊と知らない種類の塊は落とす。配列でない値は空。 */
 export function parseReportBlocks(value: unknown): readonly ReportBlock[] {
@@ -120,132 +114,3 @@ export const figureBlockSchema = z.discriminatedUnion("kind", [
 ])
 
 export type FigureBlock = DeepReadonly<z.infer<typeof figureBlockSchema>>
-
-/** `report` の `figure` に図を置かない理由。 */
-export const REPORT_FIGURE_NONE_REASONS = [
-  "short-answer",
-  "no-shape",
-  "single-value",
-  "no-material",
-] as const
-
-/** `report` の `figure`（レポートの図1つか、置かない理由）。図の塊は `sections` の同じ種類の塊と同じ形。 */
-export const reportFigureSchema = z.discriminatedUnion("kind", [
-  namedImage,
-  namedMermaid,
-  namedGraph,
-  namedSvg,
-  namedTimeline,
-  namedBeforeAfter,
-  namedChart,
-  namedStats,
-  namedPlot,
-  z.object({ kind: z.literal("none"), reason: z.enum(REPORT_FIGURE_NONE_REASONS) }),
-])
-
-export type ReportFigure = DeepReadonly<z.infer<typeof reportFigureSchema>>
-
-/**
- * 読み戻した `figure`。`unrecorded` は `figure` を省いた呼び出し・欄が無かったころの呼び出し・形の崩れで、
- * 書き手には出さない（{@link reportFigureSchema} の理由には入れない）。
- */
-export type RecordedReportFigure =
-  | ReportFigure
-  | { readonly kind: "none"; readonly reason: "unrecorded" }
-
-export const reportSectionSchema = z.object({
-  heading: omittable(z.string(), "").describe(
-    `その節の結論を言う語（「変更点」「まとめ」のようなどのレポートにも当てはまる語にしない）。${String(MAX_HEADING)}字以内で、疑問文にしない。節が1つなら省いてよく、2つ以上なら全部に付ける`,
-  ),
-  shapeTag: z
-    .enum(REPORT_SHAPE_TAGS)
-    .optional()
-    .describe(
-      "その節が表す内容の形（形の名前）。節の要点を1文にし、上から問いを当てて最初に当たった形にする: 1. 要素は1つか → single / 2. 要素の間に向きのある関係があるか → cause・connection・position・state（状態の移り）・time・order / 3. 数が主役か → quantity / 4. 候補を採否するか、2つの側を比べるか → choice・comparison・boundary（どこまでが対象か） / 5. 項目が2つ以上の属性を持つか → attribute・mapping（どれがどこへ） / 6. どれでもない → parallel",
-    ),
-  blocks: z.array(namedSectionBlockSchema).min(1),
-})
-
-/** 読み戻した節。札を省いた節は `unspecified`。 */
-export type ReportSection = {
-  readonly heading: string
-  readonly shapeTag: RecordedReportShapeTag
-  readonly blocks: readonly SectionBlock[]
-}
-
-export type ParsedReportContent = ParsedReportSections & {
-  /** `body` の型つきフェンスのうち、読めずに素のコードブロックへ落としたものの数。 */
-  readonly brokenFenceCount: number
-}
-
-/**
- * `report` の `body`（Markdown。引数が文字列だったころの transcript の `body` も）を節1つに読む（{@link parseReportBody}）。
- * 知らない種類の塊は無いので `unknownBlockCount` は 0。
- */
-export function parseReportBodyContent(body: string): ParsedReportContent {
-  return { ...parseReportBody(body), unknownBlockCount: 0 }
-}
-
-/**
- * 節の読み戻しの合併（`sectionBlockSchema`）が知っている塊の種類。合併の枝から導き、塊を1種類足して
- * ここへ書き忘れる経路を型で塞ぐ（列挙し直すと `satisfies` は部分集合しか検査しない）。
- */
-export const REPORT_BLOCK_KINDS: readonly SectionBlock["kind"][] = sectionBlockSchema.options.map(
-  (option) => option.shape.kind.value,
-)
-
-export type ParsedReportSections = {
-  readonly sections: readonly ReportSection[]
-  /** 知らない種類（{@link REPORT_BLOCK_KINDS} に無い `kind`）で落とした塊の数。 */
-  readonly unknownBlockCount: number
-}
-
-/**
- * `report` の引数の `sections` を取り出す。塊ごとに検証し、崩れた塊と知らない種類の塊は落とす
- * （塊1つの読み損ねでレポートを捨てない）。塊が残らない節と、配列でない値は無いものとする。
- */
-export function parseReportSections(value: unknown): ParsedReportSections {
-  const sections = z.array(z.unknown()).safeParse(value)
-  if (!sections.success) {
-    return { sections: [], unknownBlockCount: 0 }
-  }
-  const parsed = sections.data.flatMap((candidate) => {
-    const section = looseSectionSchema.safeParse(candidate)
-    return section.success ? [section.data] : []
-  })
-  return {
-    sections: parsed.flatMap(({ heading, shapeTag, blocks }) => {
-      const valid = parseSectionBlocks(blocks)
-      return valid.length === 0 ? [] : [{ heading, shapeTag, blocks: valid }]
-    }),
-    unknownBlockCount: parsed.flatMap(({ blocks }) => blocks).filter(isUnknownKindBlock).length,
-  }
-}
-
-/** `report` の引数の `figure` を取り出す。省いた・崩れたものは `unrecorded` の `none`（図なし）に畳む。 */
-export function parseReportFigure(value: unknown): RecordedReportFigure {
-  const figure = reportFigureSchema.safeParse(value)
-  return figure.success ? figure.data : { kind: "none", reason: "unrecorded" }
-}
-
-/** 塊を1つずつ検証するために、節の見出しと札だけを先に読む形。札が無い・列挙の外なら `unspecified`。 */
-const looseSectionSchema = z.object({
-  heading: reportSectionSchema.shape.heading,
-  shapeTag: z.union([z.enum(REPORT_SHAPE_TAGS), z.literal("unspecified")]).catch("unspecified"),
-  blocks: z.array(z.unknown()),
-})
-
-const blockKindSchema = z.object({ kind: z.string() })
-
-function isUnknownKindBlock(block: unknown): boolean {
-  const kind = blockKindSchema.safeParse(block)
-  return kind.success && !REPORT_BLOCK_KINDS.some((known) => known === kind.data.kind)
-}
-
-/** 節の塊の配列を1つずつ検証し、崩れた塊と知らない種類の塊は落とす。 */
-function parseSectionBlocks(blocks: readonly unknown[]): readonly SectionBlock[] {
-  return blocks.flatMap((block) => {
-    const parsed = sectionBlockSchema.safeParse(block)
-    return parsed.success ? [parsed.data] : []
-  })
-}

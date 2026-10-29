@@ -34,7 +34,6 @@ describe("createSessionManager", () => {
         sections: [
           {
             heading: "",
-            shapeTag: "unspecified",
             blocks: [{ kind: "text", text: "本文はここに出ない", fold: "", aside: "" }],
           },
         ],

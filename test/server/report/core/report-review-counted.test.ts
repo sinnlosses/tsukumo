@@ -32,7 +32,6 @@ describe("本番の表で数えるだけの条", () => {
     const section = (heading: string) =>
       ({
         heading,
-        shapeTag: "unspecified",
         blocks: [{ kind: "text", text: "架空の根拠。", fold: "", aside: "" }],
       }) as const
     const contradicting = reportDraft({

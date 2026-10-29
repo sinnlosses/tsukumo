@@ -1,12 +1,8 @@
 import { describe, expect, it } from "vitest"
 
 import { reportUsageEntryOf } from "../../../src/server/report/core/report-usage.ts"
-import {
-  parseReportFigure,
-  parseReportSections,
-  type ReportBlock,
-} from "../../../src/shared/report/report-block.ts"
-import { leafBlocksOf } from "../../../src/shared/report/row-panel-block.ts"
+import { parseReportFigure } from "../../../src/shared/report/a2ui-report-catalog.ts"
+import { parseReportBlocks, type ReportBlock } from "../../../src/shared/report/report-block.ts"
 import { reportOfSections } from "../../fixture/report-event.ts"
 import { markdownOf } from "../../fixture/report-markdown.ts"
 
@@ -23,13 +19,9 @@ const plot = (overrides: Record<string, unknown> = {}): Record<string, unknown> 
   ...overrides,
 })
 
-const parseInSections = (value: unknown) =>
-  parseReportSections([{ heading: "", shapeTag: "quantity", blocks: [value] }])
+const firstBlock = (value: unknown): ReportBlock | undefined => parseReportBlocks([value])[0]
 
-const firstBlock = (value: unknown): unknown => parseInSections(value).sections[0]?.blocks[0]
-
-const leafInSections = (value: unknown): ReportBlock | undefined =>
-  leafBlocksOf(parseInSections(value).sections[0]?.blocks ?? [])[0]
+const leafInSections = firstBlock
 
 /** 入れ子の中の文字・数の葉を、深さを問わず並びで集める。 */
 function leavesOf(value: unknown): readonly (string | number)[] {
@@ -132,11 +124,11 @@ describe("plot の受け付け", () => {
   })
 
   it("使用量の記録の blockKinds に plot が出る", () => {
-    const block = parseInSections(plot()).sections[0]?.blocks[0]
+    const block = firstBlock(plot())
     if (block === undefined) throw new Error("plot の塊が受け付けられなかった")
 
     const entry = reportUsageEntryOf(
-      reportOfSections([{ heading: "架空の節", shapeTag: "quantity", blocks: [block] }]),
+      reportOfSections([{ heading: "架空の節", blocks: [block] }]),
       "claude-session-1",
       1_000,
       false,

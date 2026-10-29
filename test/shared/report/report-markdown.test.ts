@@ -1,9 +1,8 @@
 import { describe, expect, it } from "vitest"
 
-import { parseReportBody } from "../../../src/shared/report/body-fence.ts"
 import { encodeMarks } from "../../../src/shared/report/code-mark.ts"
 import { plotBlockSchema } from "../../../src/shared/report/figure-grammar.ts"
-import type { ReportBlock, ReportSection } from "../../../src/shared/report/report-block.ts"
+import type { ReportBlock } from "../../../src/shared/report/report-block.ts"
 import { joinParts } from "../../../src/shared/report/report-inline-markdown.ts"
 import {
   reportSectionPieces,
@@ -19,10 +18,10 @@ import {
 } from "../../fixture/report-markdown.ts"
 
 describe("reportSectionsMarkdown", () => {
-  it("逃げ道の塊は中身をそのまま出し、本文から畳んだ節は元の本文と同じ Markdown になる", () => {
+  it("逃げ道の塊は中身をそのまま出す", () => {
     const body = '## 架空の見出し\n\n<div class="note">架空の注記</div>\n\n- 架空の項目'
 
-    expect(reportSectionsMarkdown(parseReportBody(body).sections, NO_IMAGES)).toBe(body)
+    expect(markdownOf({ kind: "markdown", markdown: body, fold: "", aside: "" })).toBe(body)
     expect(reportSectionsMarkdown([], NO_IMAGES)).toBe("")
   })
 
@@ -436,20 +435,8 @@ describe("reportSectionPieces", () => {
       ],
       "架空の二",
     ),
-    {
-      heading: "",
-      shapeTag: "unspecified",
-      blocks: [
-        {
-          kind: "row",
-          blocks: [table("架空の表B"), { kind: "text", text: "架空の右。", fold: "", aside: "" }],
-          fold: "",
-          aside: "",
-        },
-        reportMarkdownText("架空の後ろ。"),
-      ],
-    },
-  ] as const satisfies readonly ReportSection[]
+    section([table("架空の表B"), reportMarkdownText("架空の後ろ。")]),
+  ]
 
   it("塊ごとの文字列を見出しと一緒に繋ぐと、節ごとの Markdown と同じになる", () => {
     const pieces = reportSectionPieces(sections, NO_IMAGES)

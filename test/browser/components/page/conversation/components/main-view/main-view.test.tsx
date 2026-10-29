@@ -5,7 +5,7 @@ import { loadMarkdown } from "../../../../../../../src/browser/components/page/c
 import { useInquiryDraft } from "../../../../../../../src/browser/components/page/conversation/stores/inquiry-draft.ts"
 import type {
   ReportBlock,
-  ReportSection,
+  ReportBlockSection,
 } from "../../../../../../../src/shared/report/report-block.ts"
 import type { SessionRecord } from "../../../../../../../src/shared/session/session-record.ts"
 import {
@@ -336,9 +336,9 @@ describe("MainView（レポートを欄ごとに描く）", () => {
     if (base.kind !== "report") {
       throw new Error("report の記録ではない")
     }
-    const sections: readonly ReportSection[] = [
-      { heading: "架空の節A", shapeTag: "unspecified", blocks: [firstBlock] },
-      { heading: "架空の節B", shapeTag: "unspecified", blocks: [textBlock("架空の本文B。")] },
+    const sections: readonly ReportBlockSection[] = [
+      { heading: "架空の節A", blocks: [firstBlock] },
+      { heading: "架空の節B", blocks: [textBlock("架空の本文B。")] },
     ]
     return {
       ...base,

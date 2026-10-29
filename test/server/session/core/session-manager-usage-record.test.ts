@@ -5,7 +5,7 @@ import type {
   ReportRejectionEntry,
   ReportUsageEntry,
 } from "../../../../src/server/report/core/report-usage.ts"
-import type { ReportSection } from "../../../../src/shared/report/report-block.ts"
+import type { ReportBlockSection } from "../../../../src/shared/report/report-block.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import { reportOfDrawn } from "../../../fixture/report-event.ts"
 import { createStubDriver } from "../../../fixture/session-driver.ts"
@@ -22,7 +22,7 @@ describe("createSessionManager", () => {
   describe("report の塊の使われ方の記録", () => {
     /** 描いた `report` の `SessionEvent`（中身はすべて手で書いた架空のもの）。 */
     function reportWithSections(
-      sections: readonly ReportSection[],
+      sections: readonly ReportBlockSection[],
       droppedCount = 0,
     ): SessionEvent {
       return reportOfDrawn({
@@ -71,7 +71,6 @@ describe("createSessionManager", () => {
         reportWithSections([
           {
             heading: "",
-            shapeTag: "unspecified",
             blocks: [{ kind: "text", text: "架空の根拠。", fold: "", aside: "" }],
           },
         ]),
@@ -130,7 +129,6 @@ describe("createSessionManager", () => {
         reportWithSections([
           {
             heading: "",
-            shapeTag: "unspecified",
             blocks: [{ kind: "text", text: "架空の根拠。", fold: "", aside: "" }],
           },
         ])

@@ -49,7 +49,6 @@ const PLAIN_VALUE: LeafValue = {
   tagTones: {},
   gutterNotes: [],
   mergedIntoPrevious: false,
-  children: [],
 }
 
 describe("Stats の部品", () => {

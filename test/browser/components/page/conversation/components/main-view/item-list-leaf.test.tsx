@@ -140,7 +140,6 @@ describe("ItemList の部品", () => {
                 tagTones: {},
                 gutterNotes: [],
                 mergedIntoPrevious: false,
-                children: [],
               }}
               view={view}
             />

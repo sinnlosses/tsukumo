@@ -185,7 +185,6 @@ const PLAIN_VALUE: LeafValue = {
   tagTones: {},
   gutterNotes: [],
   mergedIntoPrevious: false,
-  children: [],
 }
 
 function renderPart(part: ReturnType<typeof pair>["part"]) {

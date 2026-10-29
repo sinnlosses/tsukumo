@@ -75,7 +75,6 @@ describe("Markdown（レポートのパスを押して Orca のエディタで�
     const text = reportSectionsMarkdown([
       {
         heading: "",
-        shapeTag: "unspecified",
         blocks: [
           {
             kind: "files",
@@ -146,7 +145,6 @@ describe("Markdown（レポートのパスを押して Orca のエディタで�
     const text = reportSectionsMarkdown([
       {
         heading: "",
-        shapeTag: "unspecified",
         blocks: [
           {
             kind: "files",

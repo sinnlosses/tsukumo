@@ -4,7 +4,7 @@ import { plainWordSpellingsIn as spellingsOf } from "../../../../src/server/repo
 import { reportRejectionText } from "../../../../src/server/report/core/report-rejection.ts"
 import { reportViolations } from "../../../../src/server/report/core/report-violation-check.ts"
 import type { ReportDraft } from "../../../../src/server/report/core/report-violation.ts"
-import type { ReportBlock, SectionBlock } from "../../../../src/shared/report/report-block.ts"
+import type { ReportBlock } from "../../../../src/shared/report/report-block.ts"
 import { reportOutline } from "../../../../src/shared/report/report-outline.ts"
 import { draft, markdown, reportDraftText } from "../../../fixture/report-draft-block.ts"
 import { reportDraft } from "../../../fixture/report-event.ts"
@@ -75,7 +75,6 @@ describe("plainWordSpellingsIn", () => {
         draft([], "架空の結論。", [
           {
             heading: "架空の再演の見出し",
-            shapeTag: "unspecified",
             blocks: [reportDraftText("架空の段落。")],
           },
         ]),
@@ -106,7 +105,7 @@ describe("plainWordSpellingsIn", () => {
   })
 
   it("枠（Card）の先頭の見出しの語も見つける", () => {
-    const panel: SectionBlock = {
+    const panel = {
       kind: "panel",
       title: "架空の再演の枠",
       blocks: [{ kind: "text", text: "架空の段落。", fold: "", aside: "" }],
@@ -114,9 +113,7 @@ describe("plainWordSpellingsIn", () => {
       aside: "",
     }
     expect(
-      plainWordSpellingsIn(
-        draft([], "架空の結論。", [{ heading: "", shapeTag: "unspecified", blocks: [panel] }]),
-      ),
+      plainWordSpellingsIn(draft([], "架空の結論。", [{ heading: "", blocks: [panel] }])),
     ).toEqual(["再演"])
   })
 
@@ -127,7 +124,6 @@ describe("plainWordSpellingsIn", () => {
           sections: [
             {
               heading: "",
-              shapeTag: "unspecified",
               blocks: [reportDraftText("架空の段落。")],
             },
           ],

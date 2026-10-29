@@ -1,12 +1,12 @@
-// `report` の `body`（Markdown）を、散文の塊と型つきフェンスの塊を本文の順に並べた節1つに読む。
+// `report` の `body`（Markdown）を、散文の塊と型つきフェンスの塊を本文の順に並べて読む。
 // 読めない型つきフェンスは素のコードブロックに落とし、差し戻さず数える。
 
 import { READER_FENCE_KINDS, readTypedFence } from "./body-fence-reader.ts"
 import { readFigureFence } from "./body-figure-fence.ts"
-import type { ReportBlock, ReportSection } from "./report-block.ts"
+import type { ReportBlock } from "./report-block.ts"
 
 export type ParsedReportBody = {
-  readonly sections: readonly ReportSection[]
+  readonly blocks: readonly ReportBlock[]
   /** 型つきフェンスのうち、読めずに素のコードブロックに落としたものの数。 */
   readonly brokenFenceCount: number
 }
@@ -25,16 +25,13 @@ const TYPED_KINDS: readonly string[] = ["figure", ...READER_FENCE_KINDS]
 
 /**
  * 型つきでない言語名のフェンスは散文の一部のまま残す（描く側が拾う）。
- * フェンスの無い本文は、見出し空の節の `markdown` の塊1つ。空白だけなら節は無い。
+ * フェンスの無い本文は `markdown` の塊1つ。空白だけなら塊は無い。
  */
 export function parseReportBody(body: string): ParsedReportBody {
-  const blocks = segmentsOf(body.split("\n")).flatMap(blockOf)
+  const entries = segmentsOf(body.split("\n")).flatMap(blockOf)
   return {
-    sections:
-      blocks.length === 0
-        ? []
-        : [{ heading: "", shapeTag: "unspecified", blocks: blocks.map((entry) => entry.block) }],
-    brokenFenceCount: blocks.filter((entry) => entry.broken).length,
+    blocks: entries.map((entry) => entry.block),
+    brokenFenceCount: entries.filter((entry) => entry.broken).length,
   }
 }
 

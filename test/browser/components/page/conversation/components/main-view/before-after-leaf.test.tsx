@@ -3,7 +3,7 @@ import { afterEach, beforeAll, describe, expect, it } from "vitest"
 
 import { loadMarkdown } from "../../../../../../../src/browser/components/page/conversation/components/markdown/markdown.tsx"
 import type { A2uiReportComponent } from "../../../../../../../src/shared/report/a2ui-report-catalog.ts"
-import type { SectionBlock } from "../../../../../../../src/shared/report/report-block.ts"
+import type { ReportBlock } from "../../../../../../../src/shared/report/report-block.ts"
 import type { ReportImageSource } from "../../../../../../../src/shared/report/report-image-markdown.ts"
 import { newLeafHtml, oldLeafHtml } from "../../../../../../fixture/direct-leaf-compare.tsx"
 
@@ -22,7 +22,7 @@ const SHELVED: ReportImageSource = {
   unshelved: ["/tmp/置けない.png"],
 }
 
-type Block = Extract<SectionBlock, { readonly kind: "beforeAfter" }>
+type Block = Extract<ReportBlock, { readonly kind: "beforeAfter" }>
 type Side = Extract<A2uiReportComponent, { readonly component: "BeforeAfter" }>["before"]
 
 const IMAGE_BEFORE: Side = { kind: "image", path: "/tmp/前.png" }

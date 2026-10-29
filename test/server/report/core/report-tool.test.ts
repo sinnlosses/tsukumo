@@ -8,7 +8,7 @@ import {
 import {
   REPORT_FIGURE_NONE_REASONS,
   reportFigureSchema,
-} from "../../../../src/shared/report/report-block.ts"
+} from "../../../../src/shared/report/a2ui-report-catalog.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import { reportEvent } from "../../../fixture/report-event.ts"
 

@@ -4,7 +4,7 @@ import { reportRejectionText } from "../../../../src/server/report/core/report-r
 import { reportViolations } from "../../../../src/server/report/core/report-violation-check.ts"
 import type { ReportDraft } from "../../../../src/server/report/core/report-violation.ts"
 import type { TableCell } from "../../../../src/shared/report/report-block-comparison.ts"
-import type { ReportBlock, ReportSection } from "../../../../src/shared/report/report-block.ts"
+import type { ReportBlock, ReportBlockSection } from "../../../../src/shared/report/report-block.ts"
 import {
   draft,
   kinds,
@@ -45,9 +45,7 @@ describe("reportViolations", () => {
       howToVerify: "",
     })
     const withHeading = (heading: string): ReportDraft =>
-      draft([], "架空の結論。", [
-        { heading, shapeTag: "unspecified", blocks: [reportDraftText("架空の本文。")] },
-      ])
+      draft([], "架空の結論。", [{ heading, blocks: [reportDraftText("架空の本文。")] }])
 
     it("1要素目が全角50字なら通り、51字なら差し戻す", () => {
       expect(kinds(draft([reportDraftText("架空。")], `${"あ".repeat(50)}。`))).toEqual([])
@@ -264,7 +262,6 @@ describe("reportViolations", () => {
           draft([], "架空の結論。", [
             {
               heading: "Claude Agent SDK",
-              shapeTag: "unspecified",
               blocks: [reportDraftText("架空。")],
             },
           ]),
@@ -283,9 +280,7 @@ describe("reportViolations", () => {
       ).toEqual([])
       expect(
         kinds(
-          draft([], "架空の結論。", [
-            { heading: "Parser", shapeTag: "unspecified", blocks: [reportDraftText("架空。")] },
-          ]),
+          draft([], "架空の結論。", [{ heading: "Parser", blocks: [reportDraftText("架空。")] }]),
         ),
       ).toEqual([])
       expect(kinds(draft([reportDraftText("OK")]))).toEqual([])
@@ -317,9 +312,9 @@ describe("reportViolations", () => {
 
   describe("節が2つ以上なら全部に見出し", () => {
     it("見出しの無い節があれば違反", () => {
-      const sections: readonly ReportSection[] = [
-        { heading: "架空の節", shapeTag: "unspecified", blocks: [reportDraftText("架空の一。")] },
-        { heading: " ", shapeTag: "unspecified", blocks: [reportDraftText("架空の二。")] },
+      const sections: readonly ReportBlockSection[] = [
+        { heading: "架空の節", blocks: [reportDraftText("架空の一。")] },
+        { heading: " ", blocks: [reportDraftText("架空の二。")] },
       ]
       expect(reportViolations(draft([], "架空の結論。", sections))).toEqual([
         { kind: "untitled-section", count: 1 },

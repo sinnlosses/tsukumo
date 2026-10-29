@@ -2,7 +2,7 @@
 // 描く順は図 → 整形した本文の節 → 振り返り。節の塊には、元になった葉の ID を添える。
 
 import type { A2uiReportComponent } from "./a2ui-report-catalog.ts"
-import type { ReportBlock, ReportSection } from "./report-block.ts"
+import type { ReportBlock, ReportBlockSection } from "./report-block.ts"
 import {
   outlineLeafBlock,
   type ReportOutlineLeaf,
@@ -28,7 +28,7 @@ export type DrawnSection = {
   readonly heading: string
   readonly entries: readonly DrawnEntry[]
   /** `entries` の塊を並べた節。組み立ての関数がこの形を受ける。 */
-  readonly section: ReportSection
+  readonly section: ReportBlockSection
 }
 
 export type DrawnReport = {
@@ -112,6 +112,6 @@ function drawnSection(
     componentId,
     heading,
     entries,
-    section: { heading, shapeTag: "unspecified", blocks: entries.map((entry) => entry.block) },
+    section: { heading, blocks: entries.map((entry) => entry.block) },
   }
 }

@@ -24,7 +24,6 @@ describe("Markdown（image の塊の画像の読み方）", () => {
       [
         {
           heading: "",
-          shapeTag: "unspecified",
           blocks: [image("架空/a.png"), image("架空/b.png")],
         },
       ],
@@ -54,7 +53,6 @@ describe("Markdown（image の塊の画像の読み方）", () => {
       [
         {
           heading: "",
-          shapeTag: "unspecified",
           blocks: [
             {
               kind: "image",

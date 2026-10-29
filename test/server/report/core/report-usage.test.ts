@@ -4,7 +4,7 @@ import {
   isRestatementRequest,
   reportUsageEntryOf,
 } from "../../../../src/server/report/core/report-usage.ts"
-import type { ReportBlock, ReportSection } from "../../../../src/shared/report/report-block.ts"
+import type { ReportBlock, ReportBlockSection } from "../../../../src/shared/report/report-block.ts"
 import { reportEvent, reportOfDrawn, reportOfSections } from "../../../fixture/report-event.ts"
 
 describe("isRestatementRequest", () => {
@@ -59,7 +59,7 @@ describe("reportUsageEntryOf", () => {
     }
     const usageOf = (block: ReportBlock) =>
       reportUsageEntryOf(
-        reportOfSections([{ heading: "", shapeTag: "unspecified", blocks: [block, block] }]),
+        reportOfSections([{ heading: "", blocks: [block, block] }]),
         "claude-session-1",
         1_000,
         false,
@@ -91,9 +91,9 @@ describe("reportUsageEntryOf", () => {
             aside: "",
           },
           sections: [
-            { heading: "架空の節1", shapeTag: "cause", blocks: [list(2)] },
-            { heading: "架空の節2", shapeTag: "unspecified", blocks: [list(2)] },
-            { heading: "架空の節3", shapeTag: "cause", blocks: [table(["a", "b", "c"])] },
+            { heading: "架空の節1", blocks: [list(2)] },
+            { heading: "架空の節2", blocks: [list(2)] },
+            { heading: "架空の節3", blocks: [table(["a", "b", "c"])] },
           ],
         }),
         "claude-session-1",
@@ -129,7 +129,6 @@ describe("reportUsageEntryOf", () => {
       reportOfSections([
         {
           heading: "架空の節",
-          shapeTag: "unspecified",
           blocks: [
             list("bullet"),
             list("bullet"),
@@ -152,7 +151,6 @@ describe("reportUsageEntryOf", () => {
     const event = reportOfSections([
       {
         heading: "架空の節1",
-        shapeTag: "unspecified",
         blocks: [
           { kind: "text", text: "架空の根拠。", fold: "", aside: "" },
           {
@@ -168,7 +166,6 @@ describe("reportUsageEntryOf", () => {
       },
       {
         heading: "架空の節2",
-        shapeTag: "unspecified",
         blocks: [{ kind: "text", text: "架空の根拠その2。", fold: "", aside: "" }],
       },
     ])
@@ -253,7 +250,7 @@ describe("reportUsageEntryOf", () => {
       ["beforeAfterRegion（単体の image）", image([]), []],
     ] as const)("%s の欄", (_, block, expected) => {
       const entry = reportUsageEntryOf(
-        reportOfSections([{ heading: "", shapeTag: "unspecified", blocks: [block] }]),
+        reportOfSections([{ heading: "", blocks: [block] }]),
         "claude-session-1",
         1_000,
         false,
@@ -277,7 +274,7 @@ describe("reportUsageEntryOf", () => {
       ["blockAside（空白だけ）", text(" "), []],
     ] as const)("%s の欄", (_, block, expected) => {
       const entry = reportUsageEntryOf(
-        reportOfSections([{ heading: "", shapeTag: "unspecified", blocks: [block] }]),
+        reportOfSections([{ heading: "", blocks: [block] }]),
         "claude-session-1",
         1_000,
         false,
@@ -291,7 +288,6 @@ describe("reportUsageEntryOf", () => {
     const event = reportOfSections([
       {
         heading: "架空の節1",
-        shapeTag: "unspecified",
         blocks: [
           {
             kind: "table",
@@ -316,7 +312,6 @@ describe("reportUsageEntryOf", () => {
       },
       {
         heading: "架空の節2",
-        shapeTag: "unspecified",
         blocks: [
           {
             kind: "list",
@@ -412,7 +407,7 @@ describe("reportUsageEntryOf", () => {
       ],
     ] as const)("%s", (_, blocks, expected) => {
       const entry = reportUsageEntryOf(
-        reportOfSections([{ heading: "架空の節", shapeTag: "unspecified", blocks }]),
+        reportOfSections([{ heading: "架空の節", blocks }]),
         "claude-session-1",
         1_000,
         false,
@@ -499,9 +494,8 @@ describe("reportUsageEntryOf", () => {
 
     expect(entry.componentNames).toEqual(["Paragraph", "Markdown"])
     expect(entry.markdownNotationKinds).toEqual(["quote", "hr", "badge"])
-    const badgeSection: ReportSection = {
+    const badgeSection: ReportBlockSection = {
       heading: "架空",
-      shapeTag: "unspecified",
       blocks: [
         { kind: "markdown", markdown: '<span class="badge">架空</span>', fold: "", aside: "" },
       ],

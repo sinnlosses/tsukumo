@@ -5,17 +5,16 @@ import { join } from "node:path"
 import { describe, expect, it } from "vitest"
 
 import { readReportBlockFiles } from "../../../../src/server/report/adapter/report-file.ts"
-import type { ReportSection } from "../../../../src/shared/report/report-block.ts"
+import type { ReportBlockSection } from "../../../../src/shared/report/report-block.ts"
 import { reportOutline, sectionLeaves } from "../../../../src/shared/report/report-outline.ts"
 import { reportOfSections } from "../../../fixture/report-event.ts"
 
 const sectionsOf = (paths: readonly string[]) =>
   sectionLeaves(reportOutline(reportOfSections(codeSections(paths)).components))
 
-const codeSections = (paths: readonly string[]): readonly ReportSection[] => [
+const codeSections = (paths: readonly string[]): readonly ReportBlockSection[] => [
   {
     heading: "",
-    shapeTag: "unspecified",
     blocks: paths.map((path) => ({
       kind: "code" as const,
       language: "text",

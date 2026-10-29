@@ -4,7 +4,7 @@
 
 import { plotDrawingOf } from "./plot-drawing.ts"
 import { tableRowCells } from "./report-block-comparison.ts"
-import type { ReportBlock, ReportSection, SectionBlock } from "./report-block.ts"
+import type { ReportBlock, ReportBlockSection } from "./report-block.ts"
 import type { CaptionKind } from "./report-caption.ts"
 import { REPORT_NOTE_KINDS } from "./report-notation.ts"
 import { type TagTones, tagTonesOf } from "./report-table-markdown.ts"
@@ -22,14 +22,12 @@ export type LeafGutterNote = { readonly label: string; readonly text: string }
  * `tagTones` は表の葉が使う `tag` の字 → 札の色の class（表以外は空）。
  * `gutterNotes` は葉に寄った傍注（葉の `aside` と、直後の `memo` の `note`）。
  * `mergedIntoPrevious` は直前の葉へ傍注を寄せた `memo` の葉で、この葉自身は何も描かず `gutterNotes` も空。
- * `children` は `row`・`panel` の子の値（ほかの葉は空）。容れ物の `gutterNotes` は子の傍注に容れ物の `aside` を続けたもの。
  */
 export type LeafValue = {
   readonly captionNumber: LeafCaptionNumber
   readonly tagTones: Readonly<Record<string, string>>
   readonly gutterNotes: readonly LeafGutterNote[]
   readonly mergedIntoPrevious: boolean
-  readonly children: readonly LeafValue[]
 }
 
 type CaptionCounts = Readonly<Record<CaptionKind, number>>
@@ -48,15 +46,14 @@ const MEMO_LABEL = new Map(REPORT_NOTE_KINDS).get("note-memo") ?? ""
  * 節の並びから導いた、札の色の割り当て（`tagTones`）と葉ごとの値（`values`）。
  * `values` は入力の節・塊と同じ並び・同じ長さ。
  * 図と表の番号は題が空でも、`fold` の中でも数える。`memo` の `note` は直前の葉の傍注へ寄せる。
- * `row`・`panel` は子を葉と同じ手で数え、番号は子の順に続ける。
  */
 export type ReportLeafLayout = {
   readonly tagTones: TagTones
   readonly values: readonly (readonly LeafValue[])[]
 }
 
-export function reportLeafLayoutOf(sections: readonly ReportSection[]): ReportLeafLayout {
-  const tagTones = tagTonesOf(sections)
+export function reportLeafLayoutOf(sections: readonly ReportBlockSection[]): ReportLeafLayout {
+  const tagTones = tagTonesOf(sections.flatMap((section) => section.blocks))
   const { perSection } = sections.reduce<{
     readonly perSection: readonly (readonly LeafValue[])[]
     readonly counts: CaptionCounts
@@ -71,42 +68,15 @@ export function reportLeafLayoutOf(sections: readonly ReportSection[]): ReportLe
 }
 
 function valuesOfBlocks(
-  blocks: readonly SectionBlock[],
+  blocks: readonly ReportBlock[],
   counts: CaptionCounts,
   tagTones: ReadonlyMap<string, string>,
 ): BlocksFold {
-  return blocks.reduce<BlocksFold>(
-    (acc, block) =>
-      block.kind === "row" || block.kind === "panel"
-        ? withArrangedValue(acc, block, tagTones)
-        : withLeafValue(acc, block, tagTones),
-    { values: [], counts, ownerIndex: -1 },
-  )
-}
-
-function withArrangedValue(
-  acc: BlocksFold,
-  block: Extract<SectionBlock, { readonly kind: "row" | "panel" }>,
-  tagTones: ReadonlyMap<string, string>,
-): BlocksFold {
-  const children = valuesOfBlocks(block.blocks, acc.counts, tagTones)
-  return {
-    values: [
-      ...acc.values,
-      {
-        captionNumber: { kind: "none" },
-        tagTones: {},
-        gutterNotes: [
-          ...children.values.flatMap((child) => child.gutterNotes),
-          ...asideNotes(block.aside),
-        ],
-        mergedIntoPrevious: false,
-        children: children.values,
-      },
-    ],
-    counts: children.counts,
-    ownerIndex: acc.values.length,
-  }
+  return blocks.reduce<BlocksFold>((acc, block) => withLeafValue(acc, block, tagTones), {
+    values: [],
+    counts,
+    ownerIndex: -1,
+  })
 }
 
 function withLeafValue(
@@ -133,7 +103,6 @@ function withLeafValue(
           tagTones: {},
           gutterNotes: [],
           mergedIntoPrevious: true,
-          children: [],
         },
       ],
       counts,
@@ -148,7 +117,6 @@ function withLeafValue(
         tagTones: tagTonesUsedBy(block, tagTones),
         gutterNotes,
         mergedIntoPrevious: false,
-        children: [],
       },
     ],
     counts,

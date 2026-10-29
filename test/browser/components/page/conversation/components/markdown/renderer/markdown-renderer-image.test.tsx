@@ -27,7 +27,6 @@ describe("Markdown（image の塊の画像）", () => {
       const text = reportSectionsMarkdown([
         {
           heading: "",
-          shapeTag: "unspecified",
           blocks: [
             {
               kind: "image",
@@ -60,7 +59,6 @@ describe("Markdown（image の塊の画像）", () => {
       const text = reportSectionsMarkdown([
         {
           heading: "",
-          shapeTag: "unspecified",
           blocks: [
             {
               kind: "image",
@@ -113,7 +111,6 @@ describe("Markdown（image の塊の画像）", () => {
     const text = reportSectionsMarkdown([
       {
         heading: "",
-        shapeTag: "unspecified",
         blocks: [
           { kind: "image", path: "架空.png", caption: "架空", notes: [], fold: "", aside: "" },
         ],
@@ -134,7 +131,6 @@ describe("Markdown（image の塊の画像）", () => {
     const imagesText = reportSectionsMarkdown([
       {
         heading: "",
-        shapeTag: "unspecified",
         blocks: [
           {
             kind: "beforeAfter",
@@ -364,7 +360,6 @@ describe("Markdown（image の塊の画像）", () => {
       const text = reportSectionsMarkdown([
         {
           heading: "",
-          shapeTag: "unspecified",
           blocks: [
             {
               kind: "beforeAfter",
@@ -391,7 +386,6 @@ describe("Markdown（image の塊の画像）", () => {
       const text = reportSectionsMarkdown([
         {
           heading: "",
-          shapeTag: "unspecified",
           blocks: [
             { kind: "image", path: "架空.png", caption: "架空", notes: [], fold: "", aside: "" },
           ],
@@ -451,7 +445,6 @@ describe("Markdown（svg の塊の拡大）", () => {
     const text = reportSectionsMarkdown([
       {
         heading: "",
-        shapeTag: "unspecified",
         blocks: [
           {
             kind: "svg",

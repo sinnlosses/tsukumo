@@ -6,12 +6,10 @@ import {
   reportHeadedSections,
 } from "../../../../src/browser/domain/main-view/main-view-report-body.ts"
 import { mainViewTurns } from "../../../../src/browser/domain/main-view/main-view.ts"
+import type { RecordedReportFigure } from "../../../../src/shared/report/a2ui-report-catalog.ts"
 import { parseReportBody } from "../../../../src/shared/report/body-fence.ts"
 import type { ChangedFile } from "../../../../src/shared/report/changed-file.ts"
-import type {
-  RecordedReportFigure,
-  ReportSection,
-} from "../../../../src/shared/report/report-block.ts"
+import type { ReportBlockSection } from "../../../../src/shared/report/report-block.ts"
 import type { ReportCheck } from "../../../../src/shared/report/report-check.ts"
 import type { ReportTask } from "../../../../src/shared/report/report-task.ts"
 import { mainViewEntries } from "../../../../src/shared/session/main-view-entry.ts"
@@ -137,7 +135,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
         reportOfDrawn({
           toolUseId: "toolu_r1",
           conclusion: "架空の結論。",
-          sections: parseReportBody("架空の根拠。").sections,
+          sections: [{ heading: "", blocks: parseReportBody("架空の根拠。").blocks }],
           retrospective: { kind: "recorded", summary: "架空の結果。", drafts: [], blocks: [] },
           favor: "架空のお願い",
         }),
@@ -162,7 +160,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
         reportOfDrawn({
           toolUseId: "toolu_r1",
           conclusion: "架空の結論。",
-          sections: parseReportBody("架空の根拠。").sections,
+          sections: [{ heading: "", blocks: parseReportBody("架空の根拠。").blocks }],
           retrospective: {
             kind: "recorded",
             summary: "架空の結果。",
@@ -193,12 +191,10 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
           sections: [
             {
               heading: " 架空の節A ",
-              shapeTag: "unspecified",
               blocks: [{ kind: "text", text: "架空の本文A。", fold: "", aside: "" }],
             },
             {
               heading: "",
-              shapeTag: "unspecified",
               blocks: [{ kind: "text", text: "架空の本文B。", fold: "", aside: "" }],
             },
           ],
@@ -373,12 +369,10 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
           sections: [
             {
               heading,
-              shapeTag: "unspecified",
               blocks: [{ kind: "text", text: "架空の本文。", fold: "", aside: "" }],
             },
             {
               heading: "",
-              shapeTag: "unspecified",
               blocks: [{ kind: "text", text: "架空の本文。", fold: "", aside: "" }],
             },
           ],
@@ -399,9 +393,8 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
   })
 
   it("見出しのある節の欄の ID は節の並びの位置で、見出しの無い節の位置を飛ばさず、`markdown` 本文は空になる", () => {
-    const section = (heading: string): ReportSection => ({
+    const section = (heading: string): ReportBlockSection => ({
       heading,
-      shapeTag: "unspecified",
       blocks: [{ kind: "text", text: "架空の本文。", fold: "", aside: "" }],
     })
     const turn = turnOf(
@@ -433,10 +426,9 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     const checks: readonly ReportCheck[] = [
       { status: "ok", label: "架空の検査", figure: "", command: "", detail: "", howToVerify: "" },
     ]
-    const sections: readonly ReportSection[] = [
+    const sections: readonly ReportBlockSection[] = [
       {
         heading: "",
-        shapeTag: "unspecified",
         blocks: [
           { kind: "text", text: "架空の根拠。", fold: "", aside: "" },
           {

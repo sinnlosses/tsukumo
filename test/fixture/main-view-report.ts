@@ -1,5 +1,6 @@
 import { mainViewTurns } from "../../src/browser/domain/main-view/main-view.ts"
 import { parseReportBody } from "../../src/shared/report/body-fence.ts"
+import type { ReportBlockSection } from "../../src/shared/report/report-block.ts"
 import type { ReportCheck } from "../../src/shared/report/report-check.ts"
 import type { ReportTask } from "../../src/shared/report/report-task.ts"
 import { mainViewEntries } from "../../src/shared/session/main-view-entry.ts"
@@ -30,11 +31,17 @@ export const report = (
   reportOfDrawn({
     toolUseId: "toolu_r1",
     conclusion,
-    sections: parseReportBody(body).sections,
+    sections: sectionsOfBody(body),
     favor,
     checks,
     task,
   })
+
+function sectionsOfBody(body: string): readonly ReportBlockSection[] {
+  const { blocks } = parseReportBody(body)
+  return blocks.length === 0 ? [] : [{ heading: "", blocks }]
+}
+
 export const toolRun = (id: string): readonly SessionEvent[] => [
   {
     kind: "tool-started",

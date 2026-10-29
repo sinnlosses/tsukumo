@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import { plotBlockSchema } from "../../../src/shared/report/figure-grammar.ts"
-import { parseReportSections, type ReportBlock } from "../../../src/shared/report/report-block.ts"
+import type { ReportBlock } from "../../../src/shared/report/report-block.ts"
 import {
   reportLeafLayoutOf,
   type ReportLeafLayout,
@@ -78,36 +78,14 @@ describe("reportLeafLayoutOf", () => {
   })
 
   it("quote の aside は傍注になり、図表番号は付かない", () => {
-    const [blocks] = reportLeafLayoutOf(
-      parseReportSections([
-        {
-          heading: "",
-          blocks: [{ kind: "quote", text: "架空の一文", aside: "架空の出どころ" }],
-        },
-      ]).sections,
-    ).values
+    const [blocks] = reportLeafValues([
+      section([
+        { kind: "quote", text: "架空の一文", source: "", fold: "", aside: "架空の出どころ" },
+      ]),
+    ])
 
     expect(blocks?.[0]?.captionNumber).toEqual({ kind: "none" })
     expect(blocks?.[0]?.gutterNotes).toEqual([{ label: "", text: "架空の出どころ" }])
-  })
-
-  it("row・panel の子は葉と同じ手で数え、番号は子の順に続く", () => {
-    const cell = { kind: "table", title: "架空の表", columns: ["列", "数"], rows: [["値", "1"]] }
-    const [blocks] = reportLeafValues(
-      parseReportSections([
-        {
-          heading: "",
-          blocks: [{ kind: "row", blocks: [cell, cell], aside: "架空の枠の出典" }, cell],
-        },
-      ]).sections,
-    )
-
-    expect(blocks?.[0]?.children.map((value) => value.captionNumber)).toEqual([
-      { kind: "table", ordinal: 1 },
-      { kind: "table", ordinal: 2 },
-    ])
-    expect(blocks?.[0]?.gutterNotes).toEqual([{ label: "", text: "架空の枠の出典" }])
-    expect(blocks?.[1]?.captionNumber).toEqual({ kind: "table", ordinal: 3 })
   })
 
   it("memo の傍注は直前の葉へ寄り、memo 自身は寄せたことだけを持つ。節の最初の memo は自分で持つ", () => {

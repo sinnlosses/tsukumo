@@ -3,12 +3,11 @@
 
 import { z } from "zod"
 
-import { REPORT_ARGUMENT_FIELDS } from "../../../shared/report/report-argument-size.ts"
 import {
   REPORT_FIGURE_NONE_REASONS,
   reportFigureSchema,
-} from "../../../shared/report/report-block.ts"
-import { REPORT_SHAPE_TAGS } from "../../../shared/report/report-shape-tag.ts"
+} from "../../../shared/report/a2ui-report-catalog.ts"
+import { REPORT_ARGUMENT_FIELDS } from "../../../shared/report/report-argument-size.ts"
 import { REPORT_GENRES, reportTaskSchema } from "../../../shared/report/report-task.ts"
 import { toolErrorFieldSchema } from "../../../shared/report/tool-error-field.ts"
 import { REPORT_SCHEMA_VARIANTS } from "../../core/schema-variant.ts"
@@ -45,6 +44,24 @@ const PAST_REPORT_SCHEMA_VARIANTS = [
 ] as const
 
 const reportSchemaVariantSchema = z.enum(PAST_REPORT_SCHEMA_VARIANTS)
+
+/** 形の札（節が表す内容の形）の名前。過去の行が持つ札を読み戻すために残す。 */
+export const REPORT_SHAPE_TAGS = [
+  "cause",
+  "connection",
+  "position",
+  "state",
+  "time",
+  "order",
+  "quantity",
+  "choice",
+  "attribute",
+  "mapping",
+  "comparison",
+  "boundary",
+  "parallel",
+  "single",
+] as const
 
 /** 札が許さない塊の組と、その回に出た数（版13から）。 */
 const forbiddenShapeBlockUsageSchema = z

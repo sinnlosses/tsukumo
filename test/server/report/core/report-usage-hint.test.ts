@@ -56,7 +56,7 @@ describe("reportUsageEntryOf", () => {
 
     for (const row of table) {
       const event = reportOfDrawn({
-        sections: [{ heading: "", shapeTag: "unspecified", blocks: row.blocks }],
+        sections: [{ heading: "", blocks: row.blocks }],
         task: row.task ? task : { kind: "none" },
       })
       const entry = reportUsageEntryOf(event, "claude-session-1", 1_000, false)
@@ -77,7 +77,6 @@ describe("reportUsageEntryOf", () => {
       reportOfSections([
         {
           heading: "",
-          shapeTag: "unspecified",
           blocks: [
             { kind: "table", title: "", columns: ["a", "b"], rows, rest: "", fold: "", aside: "" },
           ],
@@ -94,7 +93,7 @@ describe("reportUsageEntryOf", () => {
   describe("hasFigure", () => {
     const figureOf = (block: ReportBlock): boolean =>
       reportUsageEntryOf(
-        reportOfSections([{ heading: "", shapeTag: "unspecified", blocks: [block] }]),
+        reportOfSections([{ heading: "", blocks: [block] }]),
         "claude-session-1",
         1_000,
         false,
@@ -160,7 +159,7 @@ describe("reportUsageEntryOf", () => {
   describe("readImageWithoutImageBlock", () => {
     const entryOf = (blocks: readonly ReportBlock[], mainReadImageFile: boolean) =>
       reportUsageEntryOf(
-        reportOfSections([{ heading: "", shapeTag: "unspecified", blocks }]),
+        reportOfSections([{ heading: "", blocks }]),
         "claude-session-1",
         1_000,
         mainReadImageFile,
@@ -194,7 +193,7 @@ describe("reportUsageEntryOf", () => {
   describe("強調と graph の数", () => {
     const entryOf = (blocks: readonly ReportBlock[]) =>
       reportUsageEntryOf(
-        reportOfSections([{ heading: "", shapeTag: "unspecified", blocks }]),
+        reportOfSections([{ heading: "", blocks }]),
         "claude-session-1",
         1_000,
         false,
@@ -393,7 +392,7 @@ describe("reportUsageEntryOf", () => {
       ],
       ["行番号の無いパス", { kind: "text", text: "src/a.ts を読んだ", fold: "", aside: "" }, false],
     ] as const)("%s なら出典の有無は %s", (_, block, expected) => {
-      const event = reportOfSections([{ heading: "", shapeTag: "unspecified", blocks: [block] }])
+      const event = reportOfSections([{ heading: "", blocks: [block] }])
 
       expect(reportUsageEntryOf(event, "claude-session-1", 1_000, false).hasSourceReference).toBe(
         expected,
@@ -424,7 +423,6 @@ describe("reportUsageEntryOf", () => {
           sections: [
             {
               heading: "",
-              shapeTag: "unspecified",
               blocks: [{ kind: "text", text: "架空の本文", fold: "", aside: "" }],
             },
           ],

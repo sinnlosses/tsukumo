@@ -2,12 +2,8 @@ import { describe, expect, it } from "vitest"
 
 import { reportRejectionText } from "../../../src/server/report/core/report-rejection.ts"
 import { reportViolations } from "../../../src/server/report/core/report-violation-check.ts"
-import {
-  parseReportFigure,
-  parseReportSections,
-  type ReportBlock,
-} from "../../../src/shared/report/report-block.ts"
-import { leafBlocksOf } from "../../../src/shared/report/row-panel-block.ts"
+import { parseReportFigure } from "../../../src/shared/report/a2ui-report-catalog.ts"
+import { parseReportBlocks, type ReportBlock } from "../../../src/shared/report/report-block.ts"
 import { draft } from "../../fixture/report-draft-block.ts"
 import { markdownOf } from "../../fixture/report-markdown.ts"
 
@@ -24,8 +20,7 @@ const timeline = (rows: readonly Row[], emphasis: readonly string[] = []): unkno
 })
 
 const blockOf = (value: unknown): ReportBlock => {
-  const parsed = parseReportSections([{ heading: "", shapeTag: "time", blocks: [value] }])
-  const block = leafBlocksOf(parsed.sections[0]?.blocks ?? [])[0]
+  const block = parseReportBlocks([value])[0]
   if (block === undefined) throw new Error("timeline の塊が受け付けられなかった")
   return block
 }

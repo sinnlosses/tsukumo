@@ -49,7 +49,6 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
     const text = reportSectionsMarkdown([
       {
         heading: "",
-        shapeTag: "unspecified",
         blocks: [
           { kind: "text", text: "架空の **本文**。", fold: "", aside: "出どころ: `a.ts:3`" },
           { kind: "note", tone: "memo", text: "架空の覚え書き。", fold: "", aside: "" },
@@ -100,7 +99,6 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
     const text = reportSectionsMarkdown([
       {
         heading: "",
-        shapeTag: "unspecified",
         blocks: [
           {
             kind: "compare",
@@ -129,7 +127,6 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
     const text = reportSectionsMarkdown([
       {
         heading: "",
-        shapeTag: "unspecified",
         blocks: [
           {
             kind: "beforeAfter",
@@ -221,7 +218,6 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
     const text = reportSectionsMarkdown([
       {
         heading: "",
-        shapeTag: "unspecified",
         blocks: [
           {
             kind: "list",
@@ -267,7 +263,6 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
     const text = reportSectionsMarkdown([
       {
         heading: "",
-        shapeTag: "unspecified",
         blocks: [
           {
             kind: "matrix",

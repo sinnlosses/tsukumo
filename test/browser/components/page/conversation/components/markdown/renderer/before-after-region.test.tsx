@@ -17,7 +17,6 @@ function renderBeforeAfter(regions: {
   const text = reportSectionsMarkdown([
     {
       heading: "",
-      shapeTag: "unspecified",
       blocks: [
         {
           kind: "beforeAfter",

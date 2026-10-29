@@ -103,7 +103,6 @@ describe("Svg の部品", () => {
           tagTones: {},
           gutterNotes: [],
           mergedIntoPrevious: false,
-          children: [],
         }}
         imageSource={{ kind: "none" }}
         view={view}

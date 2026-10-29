@@ -347,10 +347,7 @@ function InquiryDetail(props: {
   const figures =
     option.figures.length === 0
       ? ""
-      : reportSectionsMarkdown(
-          [{ heading: "", shapeTag: "unspecified", blocks: option.figures }],
-          props.imageSource,
-        )
+      : reportSectionsMarkdown([{ heading: "", blocks: option.figures }], props.imageSource)
 
   return (
     <div
@@ -433,7 +430,6 @@ function InquiryCompare(props: {
     [
       {
         heading: "",
-        shapeTag: "unspecified",
         blocks: [
           {
             kind: "table",

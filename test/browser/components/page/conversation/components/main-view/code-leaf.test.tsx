@@ -138,7 +138,6 @@ async function clickCopy(overrides: Partial<Fields>): Promise<string[]> {
           tagTones: {},
           gutterNotes: [],
           mergedIntoPrevious: false,
-          children: [],
         }}
         imageSource={{ kind: "none" }}
         view={view}

@@ -3,10 +3,9 @@
 import { unique } from "remeda"
 
 import { isEmphasisRow, type TableCell, tableRowCells } from "./report-block-comparison.ts"
-import type { ReportBlock, ReportSection } from "./report-block.ts"
+import type { ReportBlock } from "./report-block.ts"
 import { captionedMarkdown } from "./report-caption.ts"
 import { htmlInlineWithCode, joinParts, markdownInline } from "./report-inline-markdown.ts"
-import { leafBlocksOf } from "./row-panel-block.ts"
 import {
   CELL_STATUS_MARKS,
   type ColumnBar,
@@ -27,9 +26,8 @@ const TAG_TONE_NONE = "tag-none"
 export type TagTones = ReadonlyMap<string, string>
 
 /** レポート全体の表の `tag` の字を、出現順に色へ割り当てる（同じ字は表をまたいでも同じ色）。 */
-export function tagTonesOf(sections: readonly ReportSection[]): TagTones {
-  const tags = sections
-    .flatMap((section) => leafBlocksOf(section.blocks))
+export function tagTonesOf(blocks: readonly ReportBlock[]): TagTones {
+  const tags = blocks
     .flatMap((block) => (block.kind === "table" ? block.rows.flatMap(tableRowCells) : []))
     .flatMap((cell) => (typeof cell === "object" && "tag" in cell ? [cell.tag] : []))
   return new Map(

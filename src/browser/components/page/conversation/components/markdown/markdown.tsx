@@ -32,7 +32,7 @@ const markdownRenderer = deferredModule(() => import("./renderer/markdown-render
 /** レポート本文と質問の preview の入れ物の class 名。外の部品が自分の要素に重ねて付ける。 */
 export const detailBlockClassName = notationStyles["detail-block"]
 
-/** 塊を横に並べる・枠で包む容れ物の class 名（Markdown の `block-row`・`block-row-cell`・`block-panel` と同じ見た目）。外の部品が自分の要素に付ける。 */
+/** 塊を横に並べる・枠で包む容れ物の class 名。外の部品が自分の要素に付ける。 */
 export const arrangedBlockClassNames = {
   row: notationStyles["report-block-row"],
   rowCell: notationStyles["report-block-row-cell"],

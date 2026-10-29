@@ -19,8 +19,7 @@ const partPlot = (form: string | undefined) =>
     ...(form === undefined ? {} : { form }),
   })
 
-const sectionOf = (...blocks: ReportBlock[]) =>
-  ({ heading: "", shapeTag: "unspecified", blocks }) as const
+const sectionOf = (...blocks: ReportBlock[]) => ({ heading: "", blocks }) as const
 
 const plotFormViolationsOf = (report: Parameters<typeof reportDraft>[0]) =>
   reportViolations(reportDraft(report)).filter(

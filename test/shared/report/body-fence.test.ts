@@ -31,13 +31,11 @@ const ALL_KINDS_BODY = [
 ].join("\n")
 
 describe("parseReportBody", () => {
-  it("8 種のフェンスと散文を、本文の順のまま節1つの塊に全部残す", () => {
-    const { sections, brokenFenceCount } = parseReportBody(ALL_KINDS_BODY)
+  it("8 種のフェンスと散文を、本文の順のまま塊に全部残す", () => {
+    const { blocks, brokenFenceCount } = parseReportBody(ALL_KINDS_BODY)
 
     expect(brokenFenceCount).toBe(0)
-    expect(sections).toHaveLength(1)
-    expect(sections[0]?.heading).toBe("")
-    expect(sections[0]?.blocks.map((block) => block.kind)).toEqual([
+    expect(blocks.map((block) => block.kind)).toEqual([
       "markdown",
       "plot",
       "markdown",
@@ -53,8 +51,7 @@ describe("parseReportBody", () => {
   })
 
   it("フェンスを 1 つ読み落とす実装なら、並びの検査が落ちる（欠けた種類を数えて確かめる）", () => {
-    const kinds =
-      parseReportBody(ALL_KINDS_BODY).sections[0]?.blocks.map((block) => block.kind) ?? []
+    const kinds = parseReportBody(ALL_KINDS_BODY).blocks.map((block) => block.kind)
 
     expect(kinds.filter((kind) => kind !== "markdown")).toHaveLength(8)
   })
@@ -71,48 +68,38 @@ describe("parseReportBody", () => {
       fence("image"),
     ].join("\n")
 
-    const { sections, brokenFenceCount } = parseReportBody(body)
+    const { blocks, brokenFenceCount } = parseReportBody(body)
 
     expect(brokenFenceCount).toBe(8)
-    expect(sections[0]?.blocks.every((block) => block.kind === "code")).toBe(true)
+    expect(blocks.every((block) => block.kind === "code")).toBe(true)
   })
 
   it("型の無いフェンスは散文のまま残し、数えない", () => {
     const body = ["文", fence("ts", "const a = 1"), "後"].join("\n")
 
-    const { sections, brokenFenceCount } = parseReportBody(body)
+    const { blocks, brokenFenceCount } = parseReportBody(body)
 
     expect(brokenFenceCount).toBe(0)
-    expect(sections).toEqual([
-      {
-        heading: "",
-        shapeTag: "unspecified",
-        blocks: [{ kind: "markdown", markdown: body, fold: "", aside: "" }],
-      },
-    ])
+    expect(blocks).toEqual([{ kind: "markdown", markdown: body, fold: "", aside: "" }])
   })
 
   it("閉じの無い型つきフェンスは末尾まで読む", () => {
-    const { sections, brokenFenceCount } = parseReportBody("```graph\nA -> B: 渡す")
+    const { blocks, brokenFenceCount } = parseReportBody("```graph\nA -> B: 渡す")
 
     expect(brokenFenceCount).toBe(0)
-    expect(sections[0]?.blocks.map((block) => block.kind)).toEqual(["graph"])
+    expect(blocks.map((block) => block.kind)).toEqual(["graph"])
   })
 
-  it("空の本文は節を作らない", () => {
-    expect(parseReportBody("")).toEqual({ sections: [], brokenFenceCount: 0 })
-    expect(parseReportBody("\n  \n")).toEqual({ sections: [], brokenFenceCount: 0 })
+  it("空の本文は塊を作らない", () => {
+    expect(parseReportBody("")).toEqual({ blocks: [], brokenFenceCount: 0 })
+    expect(parseReportBody("\n  \n")).toEqual({ blocks: [], brokenFenceCount: 0 })
   })
 
-  it("フェンスの無い本文は逃げ道の塊1つの節と同じ結果になる", () => {
+  it("フェンスの無い本文は逃げ道の塊1つと同じ結果になる", () => {
     const body = "\n\n## 見出し\n本文  \n"
 
-    expect(parseReportBody(body).sections).toEqual([
-      {
-        heading: "",
-        shapeTag: "unspecified",
-        blocks: [{ kind: "markdown", markdown: "## 見出し\n本文", fold: "", aside: "" }],
-      },
+    expect(parseReportBody(body).blocks).toEqual([
+      { kind: "markdown", markdown: "## 見出し\n本文", fold: "", aside: "" },
     ])
   })
 })
