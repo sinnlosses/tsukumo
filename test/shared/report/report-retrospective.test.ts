@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest"
 
 import {
-  drawnSectionsOf,
   parseReportRetrospective,
   retrospectiveSections,
 } from "../../../src/shared/report/report-retrospective.ts"
@@ -58,23 +57,5 @@ describe("retrospectiveSections", () => {
         ],
       },
     ])
-  })
-})
-
-describe("drawnSectionsOf", () => {
-  it("図 → 本文の節 → 振り返りの順に並べる", () => {
-    const section = {
-      heading: "架空の節",
-      shapeTag: "unspecified",
-      blocks: [{ kind: "text", text: "架空の本文。", fold: "", aside: "" }],
-    } as const
-
-    const drawn = drawnSectionsOf({
-      figure: { kind: "mermaid", title: "", source: "graph TD\n  A-->B", fold: "", aside: "" },
-      sections: [section],
-      retrospective: { kind: "recorded", summary: "架空の結果。", drafts: [], blocks: [] },
-    })
-
-    expect(drawn.map(({ heading }) => heading)).toEqual(["", "架空の節", "振り返り"])
   })
 })

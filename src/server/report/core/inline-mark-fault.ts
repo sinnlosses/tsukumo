@@ -5,12 +5,13 @@ import {
   drawnLeaves,
   type ReportOutline,
   type ReportOutlineLeaf,
+  reportRetrospectiveHeadOf,
 } from "../../../shared/report/report-outline.ts"
 import { retrospectiveDraftsLine } from "../../../shared/report/report-retrospective.ts"
 import { proseTexts } from "./report-prose-rule.ts"
 import type { ReportDraft } from "./report-violation.ts"
 
-type InlineMarkSource = Pick<ReportDraft, "conclusion" | "retrospective">
+type InlineMarkSource = Pick<ReportDraft, "conclusion" | "components">
 
 export function brokenInlineMarks(report: InlineMarkSource, outline: ReportOutline): number {
   const texts = [
@@ -23,14 +24,8 @@ export function brokenInlineMarks(report: InlineMarkSource, outline: ReportOutli
 
 /** 振り返りの要約とドラフトの行。塊（`outline.retrospective`）は葉として別に読む。 */
 function retrospectiveHeadTexts(report: InlineMarkSource): readonly string[] {
-  const { retrospective } = report
-  if (retrospective.kind === "none") {
-    return []
-  }
-  return [
-    retrospective.summary,
-    ...(retrospective.drafts.length === 0 ? [] : [retrospectiveDraftsLine(retrospective.drafts)]),
-  ]
+  const { summary, drafts } = reportRetrospectiveHeadOf(report.components)
+  return [summary, ...(drafts.length === 0 ? [] : [retrospectiveDraftsLine(drafts)])]
 }
 
 function markTexts(leaf: ReportOutlineLeaf): readonly string[] {

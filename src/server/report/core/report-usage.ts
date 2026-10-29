@@ -14,6 +14,7 @@ import type { ReportCheck } from "../../../shared/report/report-check.ts"
 import {
   drawnLeaves,
   type ReportOutlineLeaf,
+  reportFigureOf,
   reportOutline,
   sectionLeaves,
 } from "../../../shared/report/report-outline.ts"
@@ -209,13 +210,14 @@ export function reportUsageEntryOf(
   const outline = reportOutline(event.components)
   const drawn = drawnLeaves(outline)
   const own = sectionLeaves(outline)
+  const figure = reportFigureOf(event.components)
   return {
     at,
     sessionId,
     figure:
-      event.figure.kind === "none"
-        ? { figureKind: "none", noneReason: event.figure.reason }
-        : { figureKind: event.figure.kind },
+      figure.kind === "none"
+        ? { figureKind: "none", noneReason: figure.reason }
+        : { figureKind: figure.kind },
     shapeTags: {
       sectionShapeTags: outline.sections.map(() => "unspecified"),
       sectionBlockKinds: outline.sections.map((section) => kindsOf(section.leaves)),

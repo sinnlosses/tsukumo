@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import type { A2uiReportComponent } from "../../../src/shared/report/a2ui-report-catalog.ts"
 import type { A2uiReportPart } from "../../../src/shared/report/a2ui-report-outline.ts"
-import { reportOutline } from "../../../src/shared/report/report-outline.ts"
+import { reportFigureOf, reportOutline } from "../../../src/shared/report/report-outline.ts"
 
 function note(id: string): A2uiReportComponent {
   return { id, component: "Note", tone: "info", text: "架空の一文", fold: "", aside: "" }
@@ -22,6 +22,38 @@ function report(
 function idsOf(leaves: readonly { readonly id: string }[]): readonly string[] {
   return leaves.map((leaf) => leaf.id)
 }
+
+describe("reportFigureOf", () => {
+  it("図の葉があれば、その種類を返す", () => {
+    const figure: A2uiReportComponent = {
+      id: "f1",
+      component: "Mermaid",
+      title: "架空の図",
+      source: "flowchart TD\n  A --> B",
+      fold: "",
+      aside: "",
+    }
+    expect(reportFigureOf([report({ figure: "f1" }, []), figure])).toEqual({ kind: "mermaid" })
+  })
+
+  it("figureNone は理由つきの none を返す", () => {
+    const root: A2uiReportComponent = {
+      id: "root",
+      component: "Report",
+      children: [],
+      figureNone: "short-answer",
+    }
+    expect(reportFigureOf([root])).toEqual({
+      kind: "none",
+      reason: "short-answer",
+    })
+  })
+
+  it("どちらも無ければ unrecorded の none を返す", () => {
+    expect(reportFigureOf([report({}, [])])).toEqual({ kind: "none", reason: "unrecorded" })
+    expect(reportFigureOf([])).toEqual({ kind: "none", reason: "unrecorded" })
+  })
+})
 
 describe("reportOutline", () => {
   it("根が無ければ空", () => {

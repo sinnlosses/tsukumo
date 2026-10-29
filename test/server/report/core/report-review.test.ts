@@ -34,8 +34,6 @@ const reportOfDraft = (
   reportEvent({
     toolUseId,
     conclusion: draft.conclusion,
-    figure: draft.figure,
-    sections: draft.sections,
     components: draft.components,
     favor: draft.favor,
     checks: draft.checks,

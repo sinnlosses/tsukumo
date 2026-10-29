@@ -3,12 +3,16 @@ import { sumBy } from "remeda"
 import { FIGURE_WEIGHT, SHORT_REPORT_WEIGHT } from "../../../src/browser/domain/reveal/plan.ts"
 import type { FakeSession } from "../../../src/server/session-driver/adapter/fake-session.ts"
 import { reportEvents } from "../../../src/server/session-driver/core/sdk-report-message.ts"
+import { LEAF_COMPONENT_KINDS } from "../../../src/shared/report/a2ui-report-catalog.ts"
 import {
   type TableCell,
   tableRowCells,
 } from "../../../src/shared/report/report-block-comparison.ts"
-import type { ReportBlock, SectionBlock } from "../../../src/shared/report/report-block.ts"
-import { blocksWithChildrenOf, leafBlocksOf } from "../../../src/shared/report/row-panel-block.ts"
+import {
+  type ReportOutlineLeaf,
+  reportOutline,
+  sectionLeaves,
+} from "../../../src/shared/report/report-outline.ts"
 
 /** `table` の塊のうち、状態のセル（`{ status, text }`）を1つでも持つものに付ける印。 */
 const TABLE_WITH_STATUS = "table(status)"
@@ -36,10 +40,8 @@ export function sceneBlockKinds(session: FakeSession): ReadonlyMap<string, reado
       if (report === undefined || report.kind !== "report") {
         continue
       }
-      for (const section of report.sections) {
-        for (const block of blocksWithChildrenOf(section.blocks)) {
-          kinds.add(blockKindLabel(block))
-        }
+      for (const leaf of sectionLeaves(reportOutline(report.components))) {
+        kinds.add(leafKindLabel(leaf))
       }
       if (report.checks.length > 0) {
         kinds.add(CHECKS)
@@ -62,12 +64,7 @@ export function revealForecast(session: FakeSession): ReadonlyMap<string, Reveal
       if (report === undefined || report.kind !== "report") {
         return []
       }
-      return [
-        sumBy(
-          report.sections.flatMap((section) => leafBlocksOf(section.blocks)),
-          blockWeight,
-        ),
-      ]
+      return [sumBy(sectionLeaves(reportOutline(report.components)), leafWeight)]
     })
     result.set(
       scene.name,
@@ -88,11 +85,13 @@ const FIGURE_BLOCK_KINDS: ReadonlySet<string> = new Set([
   "timeline",
 ])
 
-function blockWeight(block: ReportBlock): number {
-  return FIGURE_BLOCK_KINDS.has(block.kind) ? FIGURE_WEIGHT : textLength(block)
+function leafWeight(leaf: ReportOutlineLeaf): number {
+  return FIGURE_BLOCK_KINDS.has(LEAF_COMPONENT_KINDS[leaf.component])
+    ? FIGURE_WEIGHT
+    : textLength(leaf)
 }
 
-/** 塊の中の文字列の長さの合計（`kind` と `style` の値は描かないので数えない）。 */
+/** 葉の中の文字列の長さの合計（`id`・`component` と `style` の値は描かないので数えない）。 */
 function textLength(value: unknown): number {
   if (typeof value === "string") {
     return value.length
@@ -102,17 +101,19 @@ function textLength(value: unknown): number {
   }
   if (typeof value === "object" && value !== null) {
     return sumBy(
-      Object.entries(value).filter(([key]) => key !== "kind" && key !== "style"),
+      Object.entries(value).filter(
+        ([key]) => key !== "kind" && key !== "style" && key !== "id" && key !== "component",
+      ),
       ([, child]) => textLength(child),
     )
   }
   return 0
 }
 
-function blockKindLabel(block: SectionBlock): string {
-  return block.kind === "table" && block.rows.some((row) => tableRowCells(row).some(hasStatus))
+function leafKindLabel(leaf: ReportOutlineLeaf): string {
+  return leaf.component === "Table" && leaf.rows.some((row) => tableRowCells(row).some(hasStatus))
     ? TABLE_WITH_STATUS
-    : block.kind
+    : LEAF_COMPONENT_KINDS[leaf.component]
 }
 
 function hasStatus(cell: TableCell): boolean {

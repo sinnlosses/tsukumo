@@ -82,7 +82,6 @@ const reportOfDraft = (
   reportEvent({
     toolUseId,
     conclusion: draft.conclusion,
-    sections: draft.sections,
     favor: draft.favor,
     checks: draft.checks,
     workPlanClosing: draft.workPlanClosing,

@@ -3,7 +3,6 @@
 import { sumBy } from "remeda"
 
 import { type TableCell, tableRowCells } from "../../../shared/report/report-block-comparison.ts"
-import type { ReportBlock } from "../../../shared/report/report-block.ts"
 import { SENTENCE_CELL_LENGTH } from "../../../shared/report/report-limit.ts"
 import type { ReportOutline, ReportOutlineLeaf } from "../../../shared/report/report-outline.ts"
 import { textLengthOf } from "./markdown-tree.ts"
@@ -11,15 +10,15 @@ import { hasNestedFold } from "./report-markdown-notation.ts"
 import type { CardsFault } from "./report-violation.ts"
 
 /** 流れ・つながり・構造を描く塊か（`no-shape` と合わない塊）。 */
-export function drawsShape(block: ReportBlock): boolean {
-  switch (block.kind) {
-    case "list":
-      return block.style === "flow"
-    case "beforeAfter":
-    case "graph":
-    case "mermaid":
-    case "svg":
-    case "timeline":
+export function drawsShape(leaf: ReportOutlineLeaf): boolean {
+  switch (leaf.component) {
+    case "ItemList":
+      return leaf.style === "flow"
+    case "BeforeAfter":
+    case "Graph":
+    case "Mermaid":
+    case "Svg":
+    case "Timeline":
       return true
     default:
       return false
@@ -29,13 +28,13 @@ export function drawsShape(block: ReportBlock): boolean {
 const MIN_CARDS = 2
 const MAX_CARDS = 4
 
-export function badCardsIn(blocks: readonly ReportBlock[]): readonly CardsFault[] {
-  return blocks.flatMap((block, index) => {
-    if (block.kind !== "list" || block.style !== "cards") {
+export function badCardsIn(leaves: readonly ReportOutlineLeaf[]): readonly CardsFault[] {
+  return leaves.flatMap((leaf, index) => {
+    if (leaf.component !== "ItemList" || leaf.style !== "cards") {
       return []
     }
-    const itemCount = block.items.length
-    const unlabeled = block.items.some((item) => item.label.trim() === "")
+    const itemCount = leaf.items.length
+    const unlabeled = leaf.items.some((item) => item.label.trim() === "")
     return itemCount < MIN_CARDS || itemCount > MAX_CARDS || unlabeled
       ? [{ position: index + 1, itemCount, unlabeled }]
       : []
@@ -47,10 +46,9 @@ const VERDICT_ORDER = {
   adopt: 0,
   consider: 1,
   reject: 2,
-} as const satisfies Record<
-  Extract<ReportBlock, { readonly kind: "options" }>["items"][number]["verdict"],
-  number
->
+} as const satisfies Record<OptionsLeaf["items"][number]["verdict"], number>
+
+type OptionsLeaf = Extract<ReportOutlineLeaf, { readonly component: "Options" }>
 
 /** 葉の平らな並び（配置の部品の中の葉も外側の節へ入る）で、`Note` の直後か見出しの直後にある `Note` の数。 */
 export function crowdedNoteCount(outline: ReportOutline): number {
@@ -76,10 +74,10 @@ export function nestedFoldCount(outline: ReportOutline): number {
 }
 
 /** `beforeAfter` の画像の側の `region` が、画像の外に出る、または幅か高さが 0 以下の塊か。 */
-export function hasBadRegion(block: ReportBlock): boolean {
+export function hasBadRegion(leaf: ReportOutlineLeaf): boolean {
   return (
-    block.kind === "beforeAfter" &&
-    [block.before, block.after].some((side) => {
+    leaf.component === "BeforeAfter" &&
+    [leaf.before, leaf.after].some((side) => {
       if (side.kind !== "image" || side.region === undefined) return false
       const { left, top, width, height } = side.region
       return (
@@ -89,20 +87,18 @@ export function hasBadRegion(block: ReportBlock): boolean {
   )
 }
 
-export function isVerdictOrdered(
-  block: Extract<ReportBlock, { readonly kind: "options" }>,
-): boolean {
-  const ranks = block.items.map((item) => VERDICT_ORDER[item.verdict])
+export function isVerdictOrdered(leaf: OptionsLeaf): boolean {
+  const ranks = leaf.items.map((item) => VERDICT_ORDER[item.verdict])
   return ranks.every((rank, index) => index === 0 || (ranks[index - 1] ?? rank) <= rank)
 }
 
 /** 行のセルの数が列の数と揃わない表か。 */
-export function isRaggedTable(block: ReportBlock): boolean {
-  switch (block.kind) {
-    case "table":
-      return block.rows.some((row) => tableRowCells(row).length !== block.columns.length)
-    case "matrix":
-      return block.rows.some(({ cells }) => cells.length !== block.columns.length)
+export function isRaggedTable(leaf: ReportOutlineLeaf): boolean {
+  switch (leaf.component) {
+    case "Table":
+      return leaf.rows.some((row) => tableRowCells(row).length !== leaf.columns.length)
+    case "Matrix":
+      return leaf.rows.some(({ cells }) => cells.length !== leaf.columns.length)
     default:
       return false
   }
@@ -112,36 +108,37 @@ export function isRaggedTable(block: ReportBlock): boolean {
  * 行が2つ以上で、ある列のセルの平均が {@link SENTENCE_CELL_LENGTH} 字以上の表か。
  * 字数はセルを構文木にした `text` ノードだけを数え、インラインコードとリンクの URL は数えない。
  */
-export function isSentenceTable(block: ReportBlock): boolean {
-  if (block.kind !== "table" || block.rows.length < 2) return false
-  return block.columns.some((_, column) => {
-    const total = block.rows.reduce((sum, row) => {
+export function isSentenceTable(leaf: ReportOutlineLeaf): boolean {
+  if (leaf.component !== "Table" || leaf.rows.length < 2) return false
+  const { rows } = leaf
+  return leaf.columns.some((_, column) => {
+    const total = rows.reduce((sum, row) => {
       const cell = tableRowCells(row)[column]
       return cell === undefined ? sum : sum + cellLength(cell)
     }, 0)
-    return total / block.rows.length >= SENTENCE_CELL_LENGTH
+    return total / rows.length >= SENTENCE_CELL_LENGTH
   })
 }
 
-export function hasShortSeries(block: ReportBlock): boolean {
+export function hasShortSeries(leaf: ReportOutlineLeaf): boolean {
   return (
-    block.kind === "stats" &&
-    block.items.some((item) => item.series.length > 0 && item.series.length < 3)
+    leaf.component === "Stats" &&
+    leaf.items.some((item) => item.series.length > 0 && item.series.length < 3)
   )
 }
 
-/** 系列の値の数が labels の数と揃わない、または arrow・slope・span の系列が2つでない chart の塊か。 */
-export function isRaggedChart(block: ReportBlock): boolean {
+/** 系列の値の数が labels の数と揃わない、または arrow・slope・span の系列が2つでない Chart か。 */
+export function isRaggedChart(leaf: ReportOutlineLeaf): boolean {
   return (
-    block.kind === "chart" &&
-    (block.series.some((series) => series.values.length !== block.labels.length) ||
-      ((block.chartKind === "arrow" || block.chartKind === "slope" || block.chartKind === "span") &&
-        block.series.length !== 2))
+    leaf.component === "Chart" &&
+    (leaf.series.some((series) => series.values.length !== leaf.labels.length) ||
+      ((leaf.chartKind === "arrow" || leaf.chartKind === "slope" || leaf.chartKind === "span") &&
+        leaf.series.length !== 2))
   )
 }
 
-export function hasUnknownEmphasis(block: ReportBlock): boolean {
-  return block.kind === "chart" && block.emphasis.some((name) => !block.labels.includes(name))
+export function hasUnknownEmphasis(leaf: ReportOutlineLeaf): boolean {
+  return leaf.component === "Chart" && leaf.emphasis.some((name) => !leaf.labels.includes(name))
 }
 
 function cellLength(cell: TableCell): number {

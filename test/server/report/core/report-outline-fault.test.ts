@@ -37,7 +37,12 @@ const kindsOf = (report: Parameters<typeof reportDraft>[0], kind: string) =>
 describe("components を入力にした字・印・番号の検査", () => {
   it("Row の中の段落と振り返りの要約の壊れた印を数える", () => {
     const components = parts(
-      { id: "root", component: "Report", children: ["s1"] },
+      {
+        id: "root",
+        component: "Report",
+        children: ["s1"],
+        retrospective: { summary: "架空の {{y}}", drafts: [] },
+      },
       {
         id: "s1",
         component: "Section",
@@ -48,20 +53,9 @@ describe("components を入力にした字・印・番号の検査", () => {
       paragraph("p1", "架空の {{x}}"),
     )
 
-    expect(
-      kindsOf(
-        {
-          components,
-          retrospective: {
-            kind: "recorded",
-            summary: "架空の {{y}}",
-            drafts: [],
-            blocks: [],
-          },
-        },
-        "broken-inline-mark",
-      ),
-    ).toEqual([{ kind: "broken-inline-mark", count: 2 }])
+    expect(kindsOf({ components }, "broken-inline-mark")).toEqual([
+      { kind: "broken-inline-mark", count: 2 },
+    ])
   })
 
   it("Card の先頭の見出しの段落の語を平語として見つける", () => {

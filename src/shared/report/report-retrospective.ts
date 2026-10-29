@@ -8,10 +8,8 @@ import { nonEmpty, omittable } from "./report-block-field.ts"
 import {
   namedWriterBlockSchema,
   parseReportBlocks,
-  type RecordedReportFigure,
   type ReportBlock,
   type ReportSection,
-  sectionsWithFigure,
 } from "./report-block.ts"
 
 export const reportRetrospectiveSchema = z.object({
@@ -53,18 +51,6 @@ export function parseReportRetrospective(value: unknown): ReportRetrospective {
   return parsed.success
     ? { kind: "recorded", ...parsed.data, blocks: parseReportBlocks(parsed.data.blocks) }
     : NO_REPORT_RETROSPECTIVE
-}
-
-/** 画面に描く節の並び（図 → 本文の節 → 振り返り）。画像の棚・図の検査・使用量の記録が同じ並びを読む。 */
-export function drawnSectionsOf(report: {
-  readonly figure: RecordedReportFigure
-  readonly sections: readonly ReportSection[]
-  readonly retrospective: ReportRetrospective
-}): readonly ReportSection[] {
-  return [
-    ...sectionsWithFigure(report.figure, report.sections),
-    ...retrospectiveSections(report.retrospective),
-  ]
 }
 
 /** 振り返りの節の末尾に描く、積んだドラフトの行。 */

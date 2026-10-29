@@ -98,7 +98,7 @@ describe("reportViolations", () => {
         draft([
           graph("A -> B: 語"),
           graph("A -> B\n\nA - B"),
-          graph("秘密の一行 - 秘密の二行"),
+          graph("秘密の一行 - 秘密の二行\nA"),
           graph("+ A\n- A"),
           graph("A | 説明\nB | 一 | 二"),
         ]),

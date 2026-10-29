@@ -6,13 +6,9 @@
 //
 // 本文は節と塊の並びで届くので、塊の種類ごとに数える。
 
+import type { A2uiReportComponent } from "../../../shared/report/a2ui-report-catalog.ts"
 import { markFitsLines, sourceLineCount } from "../../../shared/report/code-mark.ts"
 import { isEmphasisRow } from "../../../shared/report/report-block-comparison.ts"
-import type {
-  RecordedReportFigure,
-  ReportBlock,
-  ReportSection,
-} from "../../../shared/report/report-block.ts"
 import {
   MAX_EMPHASIS_ROWS,
   MAX_FIRST_SENTENCE,
@@ -20,9 +16,15 @@ import {
   MAX_PLAIN_CODE_LINES,
   MAX_TABLE_ROWS,
 } from "../../../shared/report/report-limit.ts"
-import { reportOutline, sectionLeaves } from "../../../shared/report/report-outline.ts"
-import { drawnSectionsOf } from "../../../shared/report/report-retrospective.ts"
-import { leafBlocksOf } from "../../../shared/report/row-panel-block.ts"
+import {
+  drawnLeaves,
+  type ReportOutline,
+  type ReportOutlineLeaf,
+  reportFigureOf,
+  reportOutline,
+  sectionLeaves,
+  timelinesOfLeaves,
+} from "../../../shared/report/report-outline.ts"
 import { codeBlockMatchesFile } from "./code-block-match.ts"
 import { figureNumberFaults } from "./figure-number-fault.ts"
 import { brokenInlineMarks } from "./inline-mark-fault.ts"
@@ -44,10 +46,10 @@ import {
   noteCount,
 } from "./report-block-rule.ts"
 import {
-  graphFaultsInSections,
-  graphToneFaultsInSections,
-  svgFaultsInSections,
-  svgToneFaultsInSections,
+  graphFaultsInLeaves,
+  graphToneFaultsInLeaves,
+  svgFaultsInLeaves,
+  svgToneFaultsInLeaves,
   unknownMermaidCount,
 } from "./report-figure-fault.ts"
 import { notationsInSections } from "./report-markdown-notation.ts"
@@ -66,27 +68,26 @@ import { timelineFaults } from "./timeline-fault.ts"
 /** レポートの規約違反を並べる。空なら違反は無い。 */
 export function reportViolations(report: ReportDraft): readonly ReportViolation[] {
   const outline = reportOutline(report.components)
-  const blocks = report.sections.flatMap((section) => leafBlocksOf(section.blocks))
+  const leaves = sectionLeaves(outline)
   const notations = notationsInSections(outline)
-  const badCards = badCardsIn(blocks)
-  const mismatchedCodeBlocks = blocks
+  const badCards = badCardsIn(leaves)
+  const mismatchedCodeBlocks = leaves
     .filter(
-      (block): block is Extract<ReportBlock, { readonly kind: "code" }> =>
-        block.kind === "code" && block.path.trim() !== "",
+      (leaf): leaf is Extract<ReportOutlineLeaf, { readonly component: "Code" }> =>
+        leaf.component === "Code" && leaf.path.trim() !== "",
     )
-    .filter((block) => {
-      const content = report.fileContents.get(block.path)
-      return content !== undefined && !codeBlockMatchesFile(block, content)
+    .filter((leaf) => {
+      const content = report.fileContents.get(leaf.path)
+      return content !== undefined && !codeBlockMatchesFile(leaf, content)
     })
   const firstSentenceLength = report.conclusionSentenceChars[0] ?? 0
 
-  const drawnSections = drawnSectionsOf(report)
-  const drawnBlocks = drawnSections.flatMap((section) => leafBlocksOf(section.blocks))
-  const svgFaults = svgFaultsInSections(drawnSections)
-  const svgToneFaults = svgToneFaultsInSections(drawnSections)
-  const graphFaults = graphFaultsInSections(drawnSections)
-  const graphToneFaults = graphToneFaultsInSections(drawnSections)
-  const timelineFaultList = timelineFaults(drawnBlocks.filter((block) => block.kind === "timeline"))
+  const drawn = drawnLeaves(outline)
+  const svgFaults = svgFaultsInLeaves(drawn)
+  const svgToneFaults = svgToneFaultsInLeaves(drawn)
+  const graphFaults = graphFaultsInLeaves(drawn)
+  const graphToneFaults = graphToneFaultsInLeaves(drawn)
+  const timelineFaultList = timelineFaults(timelinesOfLeaves(drawn))
 
   const plainWords = plainWordSpellingsIn(report, outline)
   const figureNumberFaultList = figureNumberFaults(report, outline)
@@ -95,57 +96,63 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
 
   const counted = [
     { kind: "long-conclusion", count: report.conclusionSentenceChars.length },
-    { kind: "unknown-mermaid", count: unknownMermaidCount(drawnSections) },
+    { kind: "unknown-mermaid", count: unknownMermaidCount(drawn) },
     { kind: "too-many-notes", count: noteCount(outline) },
     { kind: "crowded-notes", count: crowdedNoteCount(outline) },
     { kind: "nested-fold", count: nestedFoldCount(outline) },
     {
       kind: "unordered-options",
-      count: blocks.filter((block) => block.kind === "options" && !isVerdictOrdered(block)).length,
+      count: leaves.filter((leaf) => leaf.component === "Options" && !isVerdictOrdered(leaf))
+        .length,
     },
-    { kind: "ragged-table", count: blocks.filter((block) => isRaggedTable(block)).length },
+    { kind: "ragged-table", count: leaves.filter((leaf) => isRaggedTable(leaf)).length },
     {
       kind: "long-table",
-      count: blocks.filter(
-        (block) =>
-          block.kind === "table" && block.rows.length > MAX_TABLE_ROWS && block.rest.trim() === "",
+      count: leaves.filter(
+        (leaf) =>
+          leaf.component === "Table" &&
+          leaf.rows.length > MAX_TABLE_ROWS &&
+          leaf.rest.trim() === "",
       ).length,
     },
     {
       kind: "many-emphasis-rows",
-      count: blocks.filter(
-        (block) =>
-          block.kind === "table" && block.rows.filter(isEmphasisRow).length > MAX_EMPHASIS_ROWS,
+      count: leaves.filter(
+        (leaf) =>
+          leaf.component === "Table" && leaf.rows.filter(isEmphasisRow).length > MAX_EMPHASIS_ROWS,
       ).length,
     },
-    { kind: "sentence-table", count: blocks.filter((block) => isSentenceTable(block)).length },
+    { kind: "sentence-table", count: leaves.filter((leaf) => isSentenceTable(leaf)).length },
     {
       kind: "long-list",
-      count: blocks.filter((block) => block.kind === "list" && block.items.length > MAX_LIST_ITEMS)
-        .length,
+      count: leaves.filter(
+        (leaf) => leaf.component === "ItemList" && leaf.items.length > MAX_LIST_ITEMS,
+      ).length,
     },
     { kind: "bad-cards", count: badCards.length, faults: badCards },
     {
       kind: "long-code",
-      count: blocks.filter(
-        (block) =>
-          block.kind === "code" &&
-          block.marks.length === 0 &&
-          sourceLineCount(block.source) > MAX_PLAIN_CODE_LINES,
+      count: leaves.filter(
+        (leaf) =>
+          leaf.component === "Code" &&
+          leaf.marks.length === 0 &&
+          sourceLineCount(leaf.source) > MAX_PLAIN_CODE_LINES,
       ).length,
     },
-    { kind: "ragged-chart", count: drawnBlocks.filter((block) => isRaggedChart(block)).length },
+    { kind: "ragged-chart", count: drawn.filter((leaf) => isRaggedChart(leaf)).length },
     {
       kind: "unknown-emphasis",
-      count: drawnBlocks.filter((block) => hasUnknownEmphasis(block)).length,
+      count: drawn.filter((leaf) => hasUnknownEmphasis(leaf)).length,
     },
-    { kind: "short-series", count: drawnBlocks.filter((block) => hasShortSeries(block)).length },
+    { kind: "short-series", count: drawn.filter((leaf) => hasShortSeries(leaf)).length },
     {
       kind: "untitled-section",
       count:
-        report.sections.length < 2
+        outline.sections.length < 2
           ? 0
-          : report.sections.filter((section) => section.heading.trim() === "").length,
+          : outline.sections.filter(
+              (section) => section.kind === "loose" || section.heading.trim() === "",
+            ).length,
     },
     { kind: "markdown-notation", count: notations.length, notations },
     { kind: "broken-svg", count: svgFaults.length, faults: svgFaults },
@@ -156,17 +163,17 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
     {
       kind: "code-mismatch",
       count: mismatchedCodeBlocks.length,
-      paths: [...new Set(mismatchedCodeBlocks.map((block) => block.path))],
+      paths: [...new Set(mismatchedCodeBlocks.map((leaf) => leaf.path))],
     },
     {
       kind: "code-marks-range",
-      count: blocks.filter(
-        (block) =>
-          block.kind === "code" &&
-          block.marks.some((mark) => !markFitsLines(mark, sourceLineCount(block.source))),
+      count: leaves.filter(
+        (leaf) =>
+          leaf.component === "Code" &&
+          leaf.marks.some((mark) => !markFitsLines(mark, sourceLineCount(leaf.source))),
       ).length,
     },
-    { kind: "region-range", count: drawnBlocks.filter((block) => hasBadRegion(block)).length },
+    { kind: "region-range", count: drawn.filter((leaf) => hasBadRegion(leaf)).length },
     {
       kind: "long-first-sentence",
       count: firstSentenceLength > MAX_FIRST_SENTENCE ? 1 : 0,
@@ -174,7 +181,9 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
     },
     {
       kind: "bad-heading",
-      count: report.sections.filter(({ heading }) => isBadHeading(heading)).length,
+      count: outline.sections.filter(
+        (section) => section.kind === "section" && isBadHeading(section.heading),
+      ).length,
     },
     {
       kind: "unobserved-without-how",
@@ -184,22 +193,23 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
     },
     {
       kind: "arrow-in-prose",
-      count: sectionLeaves(outline).filter((leaf) => proseTexts(leaf).some(hasArrow)).length,
+      count: leaves.filter((leaf) => proseTexts(leaf).some(hasArrow)).length,
     },
     {
       kind: "label-in-item",
-      count: blocks.reduce((total, block) => total + labelInItemCount(block), 0),
+      count: leaves.reduce((total, leaf) => total + labelInItemCount(leaf), 0),
     },
     {
       kind: "labeled-ordered",
-      count: blocks.filter((block) => isLabeledOrdered(block)).length,
+      count: leaves.filter((leaf) => isLabeledOrdered(leaf)).length,
     },
     {
       kind: "non-japanese",
-      count: blocks.filter((block) => block.kind === "text" && isNonJapanese(block.text)).length,
+      count: leaves.filter((leaf) => leaf.component === "Paragraph" && isNonJapanese(leaf.text))
+        .length,
     },
     { kind: "plain-word", count: plainWords.length, spellings: plainWords },
-    figureContradiction(report.figure, report.sections),
+    figureContradiction(report.components, outline),
     {
       kind: "figure-number-mismatch",
       count: figureNumberFaultList.length,
@@ -216,21 +226,21 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
 }
 
 function figureContradiction(
-  figure: RecordedReportFigure,
-  sections: readonly ReportSection[],
+  components: readonly A2uiReportComponent[],
+  outline: ReportOutline,
 ): Extract<ReportViolation, { readonly kind: "figure-contradiction" }> {
-  const blocks = sections.flatMap((section) => leafBlocksOf(section.blocks))
+  const figure = reportFigureOf(components)
   if (figure.kind === "none" && figure.reason === "no-shape") {
     return {
       kind: "figure-contradiction",
-      count: blocks.filter((block) => drawsShape(block)).length,
+      count: sectionLeaves(outline).filter((leaf) => drawsShape(leaf)).length,
       reason: "no-shape",
     }
   }
   if (figure.kind === "none" && figure.reason === "short-answer") {
     return {
       kind: "figure-contradiction",
-      count: sections.length >= 2 ? sections.length : 0,
+      count: outline.sections.length >= 2 ? outline.sections.length : 0,
       reason: "short-answer",
     }
   }

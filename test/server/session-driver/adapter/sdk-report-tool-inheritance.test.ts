@@ -92,8 +92,7 @@ function expectJudgedAsDrawn(draft: ReportDraft | undefined, drawn: ReportCalled
   expect(drawn).toBeDefined()
   expect(draft).toMatchObject({
     conclusion: drawn?.conclusion,
-    figure: drawn?.figure,
-    sections: drawn?.sections,
+    components: drawn?.components,
     favor: drawn?.favor,
     checks: drawn?.checks,
     task: drawn?.task,
@@ -241,7 +240,12 @@ describe("report の差し戻しのあとの出し直し", () => {
       conclusion: ["架空の別の結論"],
       favor: "架空の別のお願い",
     })
-    const resent = await live.call({ conclusion: COMPLETE.conclusion, favor: COMPLETE.favor })
+    // 本文を渡した呼び出しでは図も `components` に載るので、図は渡す。
+    const resent = await live.call({
+      conclusion: COMPLETE.conclusion,
+      favor: COMPLETE.favor,
+      figure: FIGURE,
+    })
 
     expect(accepted.reply.isError).toBe(false)
     expect(nothingNew.reply.text).toContain(REJECTION_PHRASE.nothingNew)

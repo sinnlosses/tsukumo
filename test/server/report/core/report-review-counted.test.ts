@@ -46,8 +46,7 @@ describe("本番の表で数えるだけの条", () => {
       reportEvent({
         toolUseId: "toolu_c1",
         conclusion: contradicting.conclusion,
-        figure: contradicting.figure,
-        sections: contradicting.sections,
+        components: contradicting.components,
         favor: contradicting.favor,
         checks: contradicting.checks,
         workPlanClosing: contradicting.workPlanClosing,

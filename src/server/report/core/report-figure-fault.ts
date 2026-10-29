@@ -2,13 +2,8 @@
 // 位置と字句の名前だけを持ち、書き手のソースの文字は持たない。
 
 import { readGraphSource } from "../../../shared/report/graph-source.ts"
-import {
-  REPORT_MERMAID_KINDS,
-  type ReportGraph,
-} from "../../../shared/report/report-block-diagram.ts"
-import type { ReportBlock, ReportSection } from "../../../shared/report/report-block.ts"
+import { REPORT_MERMAID_KINDS } from "../../../shared/report/report-block-diagram.ts"
 import type { ReportOutlineLeaf } from "../../../shared/report/report-outline.ts"
-import { leafBlocksOf } from "../../../shared/report/row-panel-block.ts"
 
 const MERMAID_KINDS: ReadonlySet<string> = new Set(REPORT_MERMAID_KINDS)
 
@@ -28,10 +23,9 @@ export function mermaidSourcesOfLeaves(leaves: readonly ReportOutlineLeaf[]): re
   })
 }
 
-export function unknownMermaidCount(sections: readonly ReportSection[]): number {
-  return mermaidSourcesInSections(sections).filter(
-    (source) => !MERMAID_KINDS.has(mermaidKind(source)),
-  ).length
+export function unknownMermaidCount(leaves: readonly ReportOutlineLeaf[]): number {
+  return mermaidSourcesOfLeaves(leaves).filter((source) => !MERMAID_KINDS.has(mermaidKind(source)))
+    .length
 }
 
 /**
@@ -55,20 +49,22 @@ export type SvgFault = { readonly block: number; readonly shape: number }
 export type ToneFault = { readonly block: number; readonly tone: string }
 
 type SvgFigure = Pick<
-  Extract<ReportBlock, { readonly kind: "svg" }>,
+  Extract<ReportOutlineLeaf, { readonly component: "Svg" }>,
   "width" | "height" | "shapes" | "legend"
 >
 
-export function svgFaultsInSections(sections: readonly ReportSection[]): readonly SvgFault[] {
-  return svgFiguresInSections(sections).flatMap((figure, figureIndex) =>
+type GraphLeaf = Extract<ReportOutlineLeaf, { readonly component: "Graph" }>
+
+export function svgFaultsInLeaves(leaves: readonly ReportOutlineLeaf[]): readonly SvgFault[] {
+  return svgFiguresOfLeaves(leaves).flatMap((figure, figureIndex) =>
     figure.shapes.flatMap((shape, shapeIndex) =>
       isInsideSvg(shape, figure) ? [] : [{ block: figureIndex + 1, shape: shapeIndex + 1 }],
     ),
   )
 }
 
-export function svgToneFaultsInSections(sections: readonly ReportSection[]): readonly ToneFault[] {
-  return svgFiguresInSections(sections).flatMap((figure, figureIndex) => {
+export function svgToneFaultsInLeaves(leaves: readonly ReportOutlineLeaf[]): readonly ToneFault[] {
+  return svgFiguresOfLeaves(leaves).flatMap((figure, figureIndex) => {
     const legended = new Set(figure.legend.map((entry) => entry.tone))
     const used = figure.shapes.flatMap((shape) =>
       (shape.kind === "rect" || shape.kind === "line") && shape.tone !== "none" ? [shape.tone] : [],
@@ -94,66 +90,44 @@ export function svgFaultPositions(faults: readonly SvgFault[]): string {
 /** `block` は `graph` の塊の出現順の1始まり、`line` は `source` の1始まりの行。 */
 export type GraphFault = { readonly block: number; readonly line: number }
 
-export function graphFaultsInSections(sections: readonly ReportSection[]): readonly GraphFault[] {
-  return sections
-    .flatMap((section) => leafBlocksOf(section.blocks))
-    .flatMap((block): readonly ReportGraph[] => (block.kind === "graph" ? [block] : []))
-    .flatMap((graph, graphIndex) =>
-      readGraphSource(graph.source).brokenLines.map((line) => ({ block: graphIndex + 1, line })),
-    )
+export function graphFaultsInLeaves(leaves: readonly ReportOutlineLeaf[]): readonly GraphFault[] {
+  return graphLeavesOf(leaves).flatMap((graph, graphIndex) =>
+    readGraphSource(graph.source).brokenLines.map((line) => ({ block: graphIndex + 1, line })),
+  )
 }
 
 export function graphFaultPositions(faults: readonly GraphFault[]): string {
   return faults.map((fault) => `${String(fault.block)}個目の ${String(fault.line)} 行目`).join("、")
 }
 
-export function graphToneFaultsInSections(
-  sections: readonly ReportSection[],
+export function graphToneFaultsInLeaves(
+  leaves: readonly ReportOutlineLeaf[],
 ): readonly ToneFault[] {
-  return sections
-    .flatMap((section) => leafBlocksOf(section.blocks))
-    .flatMap((block): readonly ReportGraph[] => (block.kind === "graph" ? [block] : []))
-    .flatMap((graph, graphIndex) => {
-      const { nodes, edges, groups } = readGraphSource(graph.source)
-      const legended = new Set(graph.legend.map((entry) => entry.tone))
-      const used = [...nodes, ...edges, ...groups].map(({ tone }) => tone)
-      return [...new Set(used)]
-        .filter((tone) => tone !== "none" && !legended.has(tone))
-        .map((tone) => ({ block: graphIndex + 1, tone }))
-    })
+  return graphLeavesOf(leaves).flatMap((graph, graphIndex) => {
+    const { nodes, edges, groups } = readGraphSource(graph.source)
+    const legended = new Set(graph.legend.map((entry) => entry.tone))
+    const used = [...nodes, ...edges, ...groups].map(({ tone }) => tone)
+    return [...new Set(used)]
+      .filter((tone) => tone !== "none" && !legended.has(tone))
+      .map((tone) => ({ block: graphIndex + 1, tone }))
+  })
 }
 
-function svgFiguresInSections(sections: readonly ReportSection[]): readonly SvgFigure[] {
-  return sections
-    .flatMap((section) => leafBlocksOf(section.blocks))
-    .flatMap((block): readonly SvgFigure[] => {
-      switch (block.kind) {
-        case "svg":
-          return [block]
-        case "beforeAfter":
-          return [block.before, block.after].flatMap((side) => (side.kind === "svg" ? [side] : []))
-        default:
-          return []
-      }
-    })
+function graphLeavesOf(leaves: readonly ReportOutlineLeaf[]): readonly GraphLeaf[] {
+  return leaves.flatMap((leaf): readonly GraphLeaf[] => (leaf.component === "Graph" ? [leaf] : []))
 }
 
-/** `mermaid` の塊のソース。塊の出現順に並び、`beforeAfter` は前の側が先。 */
-function mermaidSourcesInSections(sections: readonly ReportSection[]): readonly string[] {
-  return sections
-    .flatMap((section) => leafBlocksOf(section.blocks))
-    .flatMap((block) => {
-      switch (block.kind) {
-        case "mermaid":
-          return [block.source]
-        case "beforeAfter":
-          return [block.before, block.after].flatMap((side) =>
-            side.kind === "mermaid" ? [side.source] : [],
-          )
-        default:
-          return []
-      }
-    })
+function svgFiguresOfLeaves(leaves: readonly ReportOutlineLeaf[]): readonly SvgFigure[] {
+  return leaves.flatMap((leaf): readonly SvgFigure[] => {
+    switch (leaf.component) {
+      case "Svg":
+        return [leaf]
+      case "BeforeAfter":
+        return [leaf.before, leaf.after].flatMap((side) => (side.kind === "svg" ? [side] : []))
+      default:
+        return []
+    }
+  })
 }
 
 function isInsideSvg(shape: SvgFigure["shapes"][number], { width, height }: SvgFigure): boolean {

@@ -413,13 +413,22 @@ describe("reportUsageEntryOf", () => {
 
     it("図を置いた回は種類だけを持ち、none の回は理由を持つ（中身は持たない）", () => {
       const placed = reportUsageEntryOf(
-        reportEvent({ figure: image }),
+        reportOfDrawn({ figure: image }),
         "claude-session-1",
         1_000,
         false,
       )
       const none = reportUsageEntryOf(
-        reportEvent({ figure: { kind: "none", reason: "no-material" } }),
+        reportOfDrawn({
+          figure: { kind: "none", reason: "no-material" },
+          sections: [
+            {
+              heading: "",
+              shapeTag: "unspecified",
+              blocks: [{ kind: "text", text: "架空の本文", fold: "", aside: "" }],
+            },
+          ],
+        }),
         "claude-session-1",
         1_000,
         false,

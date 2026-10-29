@@ -11,6 +11,7 @@ import {
 } from "../../../../src/server/session-driver/core/call-review.ts"
 import { toSessionEvents } from "../../../../src/server/session-driver/core/sdk-message.ts"
 import { REPORT_COMPONENT_SCHEMAS } from "../../../../src/shared/report/a2ui-report-catalog.ts"
+import { reportOutline } from "../../../../src/shared/report/report-outline.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import { callTool, mcpRequest } from "../../../fixture/mcp-server.ts"
 import { assistantMessage, REPORT_TOOL_FULL_NAME } from "../../../fixture/sdk-message.ts"
@@ -152,8 +153,12 @@ describe("a2ui の report の受理と差し戻し", () => {
 
     expect(rejected.reply.isError).toBe(true)
     expect(resent.reply.isError).toBe(false)
-    expect(live.drafts.at(-1)?.sections).toMatchObject([
-      { heading: "架空の直した節", blocks: [{ kind: "text", text: "架空の直した本文。" }] },
+    expect(reportOutline(live.drafts.at(-1)?.components ?? []).sections).toMatchObject([
+      {
+        kind: "section",
+        heading: "架空の直した節",
+        leaves: [{ component: "Paragraph", text: "架空の直した本文。" }],
+      },
     ])
     expect(resent.drawn?.sections).toMatchObject([{ heading: "架空の直した節" }])
   })

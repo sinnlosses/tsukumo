@@ -5,10 +5,8 @@ import { keys } from "remeda"
 import type { A2uiReportComponent } from "../../../shared/report/a2ui-report-catalog.ts"
 import type { FigureHardRuleName } from "../../../shared/report/figure-decision.ts"
 import type { KeyFigures } from "../../../shared/report/report-block-comparison.ts"
-import type { RecordedReportFigure, ReportSection } from "../../../shared/report/report-block.ts"
 import type { ReportCheck } from "../../../shared/report/report-check.ts"
 import { MAX_CONCLUSION_SENTENCES } from "../../../shared/report/report-limit.ts"
-import type { ReportRetrospective } from "../../../shared/report/report-retrospective.ts"
 import type { ReportTask } from "../../../shared/report/report-task.ts"
 import type { WorkPlanClosing } from "../../../shared/session/work-plan.ts"
 import type { FigureNumberFault } from "./figure-number-fault.ts"
@@ -17,19 +15,15 @@ import type { MarkdownNotation } from "./report-markdown-notation.ts"
 import type { TemplateMiss } from "./request-template.ts"
 import type { TimelineBlockFault } from "./timeline-fault.ts"
 
-/** 検査にかけるレポート。`sections` と `checks` の「無い」は空の配列、`favor` の「無い」は空の文字列。 */
+/** 検査にかけるレポート。`checks` の「無い」は空の配列、`favor` の「無い」は空の文字列。 */
 export type ReportDraft = {
   readonly conclusion: string
   /** `conclusion` の要素ごとの字数（`ParsedConclusion`）。 */
   readonly conclusionSentenceChars: readonly number[]
   /** 結論の直下に並べる数。「無い」は空の配列。 */
   readonly keyFigures: KeyFigures
-  readonly figure: RecordedReportFigure
-  readonly sections: readonly ReportSection[]
-  /** `Note` の数と隣接・畳みの入れ子の検査が読む部品の一覧。「無い」は空の配列。 */
+  /** 検査が節・図・振り返りの葉を取り出す部品の一覧（`reportOutline`）。「無い」は空の配列。 */
   readonly components: readonly A2uiReportComponent[]
-  /** 図の検査（`svg`・`graph`・`timeline`・`mermaid` など）は、振り返りの塊も `sections` と同じに読む。 */
-  readonly retrospective: ReportRetrospective
   readonly favor: string
   readonly checks: readonly ReportCheck[]
   /** `code` の塊の `path` → 読めたファイルの中身。読めなかった `path` は入らない。 */

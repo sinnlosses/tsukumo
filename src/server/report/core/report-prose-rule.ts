@@ -2,7 +2,6 @@
 
 import { textOutsideInlineMarks } from "../../../shared/report/inline-mark.ts"
 import { tableRowCells } from "../../../shared/report/report-block-comparison.ts"
-import type { ReportBlock } from "../../../shared/report/report-block.ts"
 import { MAX_HEADING, MAX_ITEM_LABEL } from "../../../shared/report/report-limit.ts"
 import type { ReportOutlineLeaf } from "../../../shared/report/report-outline.ts"
 import { withoutInlineCode } from "./markdown-tree.ts"
@@ -57,21 +56,21 @@ export function proseTexts(leaf: ReportOutlineLeaf): readonly string[] {
   }
 }
 
-export function labelInItemCount(block: ReportBlock): number {
-  return block.kind === "list" && block.style !== "flow" && block.style !== "cards"
-    ? block.items.filter((item) => item.label.trim() === "" && ITEM_LABEL.test(item.text.trim()))
+export function labelInItemCount(leaf: ReportOutlineLeaf): number {
+  return leaf.component === "ItemList" && leaf.style !== "flow" && leaf.style !== "cards"
+    ? leaf.items.filter((item) => item.label.trim() === "" && ITEM_LABEL.test(item.text.trim()))
         .length
     : 0
 }
 
 const MIN_FLOW_STAGES = 3
 
-export function isLabeledOrdered(block: ReportBlock): boolean {
+export function isLabeledOrdered(leaf: ReportOutlineLeaf): boolean {
   return (
-    block.kind === "list" &&
-    block.style === "ordered" &&
-    block.items.length >= MIN_FLOW_STAGES &&
-    block.items.every((item) => item.label.trim() !== "")
+    leaf.component === "ItemList" &&
+    leaf.style === "ordered" &&
+    leaf.items.length >= MIN_FLOW_STAGES &&
+    leaf.items.every((item) => item.label.trim() !== "")
   )
 }
 

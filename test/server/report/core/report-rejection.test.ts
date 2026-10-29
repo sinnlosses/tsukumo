@@ -221,8 +221,8 @@ describe("reportRejectionText", () => {
 
   describe("figure の図も図の塊の検査にかける", () => {
     it("figure の graph の読めない行は、描く順の1個目として違反になる", () => {
-      const report: ReportDraft = {
-        ...draft([
+      const report: ReportDraft = draft(
+        [
           {
             kind: "graph",
             title: "",
@@ -232,42 +232,46 @@ describe("reportRejectionText", () => {
             fold: "",
             aside: "",
           },
-        ]),
-        figure: {
+        ],
+        "架空の結論。",
+        undefined,
+        {
           kind: "graph",
           title: "",
           direction: "TD",
           legend: [],
-          source: "A ->",
+          source: "A ->\nB",
           fold: "",
           aside: "",
         },
-      }
+      )
       expect(reportViolations(report)).toEqual([
         { kind: "broken-graph", count: 1, faults: [{ block: 1, line: 1 }] },
       ])
     })
 
     it("figure の svg のはみ出しと mermaid の種類も見る", () => {
-      const report: ReportDraft = {
-        ...draft([]),
-        figure: {
-          kind: "svg",
-          title: "",
-          width: 10,
-          height: 10,
-          shapes: [{ kind: "text", x: 11, y: 0, text: "架空" }],
-          legend: [],
-          fold: "",
-          aside: "",
-        },
-      }
+      const report: ReportDraft = draft([], "架空の結論。", undefined, {
+        kind: "svg",
+        title: "",
+        width: 10,
+        height: 10,
+        shapes: [{ kind: "text", x: 11, y: 0, text: "架空" }],
+        legend: [],
+        fold: "",
+        aside: "",
+      })
       expect(kinds(report)).toEqual(["broken-svg"])
       expect(
-        kinds({
-          ...draft([]),
-          figure: { kind: "mermaid", title: "", source: "flowchart TD", fold: "", aside: "" },
-        }),
+        kinds(
+          draft([], "架空の結論。", undefined, {
+            kind: "mermaid",
+            title: "",
+            source: "flowchart TD",
+            fold: "",
+            aside: "",
+          }),
+        ),
       ).toEqual(["unknown-mermaid"])
     })
   })
@@ -276,10 +280,7 @@ describe("reportRejectionText", () => {
     const withReason = (
       reason: "no-shape" | "short-answer",
       sections: readonly ReportSection[],
-    ): ReportDraft => ({
-      ...draft([], "架空の結論。", sections),
-      figure: { kind: "none", reason },
-    })
+    ): ReportDraft => draft([], "架空の結論。", sections, { kind: "none", reason })
     const flow: ReportBlock = {
       kind: "list",
       style: "flow",
@@ -379,7 +380,7 @@ describe("reportRejectionText", () => {
           aside: "",
         },
       ] as const) {
-        expect(kinds({ ...draft([], "架空の結論。", sections), figure })).toEqual([])
+        expect(kinds(draft([], "架空の結論。", sections, figure))).toEqual([])
       }
     })
   })

@@ -4,7 +4,7 @@ import { reportRejectionText } from "../../../../src/server/report/core/report-r
 import { reportViolations } from "../../../../src/server/report/core/report-violation-check.ts"
 import type { ReportDraft } from "../../../../src/server/report/core/report-violation.ts"
 import type { ReportGenre } from "../../../../src/shared/report/report-task.ts"
-import { reportDraft } from "../../../fixture/report-event.ts"
+import { type ReportDraftInput, reportDraft } from "../../../fixture/report-event.ts"
 
 const taskOf = (genre: ReportGenre | "unspecified"): ReportDraft["task"] => ({
   kind: "task",
@@ -14,7 +14,7 @@ const taskOf = (genre: ReportGenre | "unspecified"): ReportDraft["task"] => ({
   genre,
 })
 
-const missesOf = (overrides: Partial<ReportDraft>) =>
+const missesOf = (overrides: ReportDraftInput) =>
   reportViolations(reportDraft(overrides)).filter((violation) => violation.kind === "template-miss")
 
 describe("依頼の型の雛形", () => {

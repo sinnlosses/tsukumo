@@ -27,13 +27,6 @@ export function arrangedBlockSchemasOf<Leaf extends z.ZodType>(leaf: Leaf) {
   }
 }
 
-/** 節の塊の並びの `row`・`panel` のすぐ後ろに、その子を挟んだ並び。容れ物自身の欄と子の欄の両方を見るときに使う。 */
-export function blocksWithChildrenOf(blocks: readonly SectionBlock[]): readonly SectionBlock[] {
-  return blocks.flatMap((block): readonly SectionBlock[] =>
-    block.kind === "row" || block.kind === "panel" ? [block, ...block.blocks] : [block],
-  )
-}
-
 /** `row`・`panel` を子の並びに開いた葉の部品の並び。書き手の順のまま。 */
 export function leafBlocksOf(blocks: readonly SectionBlock[]): readonly ReportBlock[] {
   return blocks.flatMap((block): readonly ReportBlock[] =>

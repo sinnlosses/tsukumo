@@ -8,7 +8,8 @@ import type { ReportDraft } from "../../src/server/report/core/report-violation.
 import { parseConclusion } from "../../src/server/session-driver/core/conclusion-sentence.ts"
 import { legacyReportComponents } from "../../src/server/session-driver/core/legacy-report-component-list.ts"
 import { a2uiReportComponentSchema } from "../../src/shared/report/a2ui-report-catalog.ts"
-import type { ReportSection } from "../../src/shared/report/report-block.ts"
+import type { RecordedReportFigure, ReportSection } from "../../src/shared/report/report-block.ts"
+import type { ReportRetrospective } from "../../src/shared/report/report-retrospective.ts"
 import type { SessionEvent } from "../../src/shared/session/session-event.ts"
 
 /** `report` ツールの呼び出し1件。 */
@@ -78,23 +79,28 @@ export function reportOfDrawn(
   })
 }
 
+/** `reportDraft` に渡す欄。`components` の代わりに節・図・振り返りで渡すと、本番と同じ組み直しで `components` になる。 */
+export type ReportDraftInput = Partial<ReportDraft> & {
+  readonly sections?: readonly ReportSection[]
+  readonly figure?: RecordedReportFigure
+  readonly retrospective?: ReportRetrospective
+}
+
 /** 記法の検査にかけるレポート1件。 */
-export function reportDraft(overrides: Partial<ReportDraft> = {}): ReportDraft {
+export function reportDraft(input: ReportDraftInput = {}): ReportDraft {
+  const { sections, figure, retrospective, ...overrides } = input
   const conclusion = overrides.conclusion ?? "架空の結論"
   const components =
     overrides.components ??
     componentsOfSections(
-      overrides.sections ?? [],
-      overrides.figure ?? { kind: "none", reason: "unrecorded" },
-      overrides.retrospective ?? { kind: "none" },
+      sections ?? [],
+      figure ?? { kind: "none", reason: "unrecorded" },
+      retrospective ?? { kind: "none" },
     )
   return {
     conclusion,
     conclusionSentenceChars: parseConclusion(conclusion)?.conclusionSentenceChars ?? [],
     keyFigures: [],
-    figure: { kind: "none", reason: "unrecorded" },
-    sections: [],
-    retrospective: { kind: "none" },
     favor: "",
     checks: [],
     fileContents: new Map(),
@@ -111,8 +117,8 @@ export function reportDraft(overrides: Partial<ReportDraft> = {}): ReportDraft {
  */
 function componentsOfSections(
   sections: readonly ReportSection[],
-  figure: ReportDraft["figure"],
-  retrospective: ReportDraft["retrospective"],
+  figure: RecordedReportFigure,
+  retrospective: ReportRetrospective,
 ): ReportDraft["components"] {
   const hasDrawn =
     figure.kind !== "none" || (retrospective.kind === "recorded" && retrospective.blocks.length > 0)
