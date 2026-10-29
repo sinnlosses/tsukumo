@@ -179,7 +179,7 @@ describe("タスクのモーダルの選択", () => {
   it("選んでいた行が絞り込みで消えると先頭へ落ち、そこから飛んで「戻る」と出ていた先頭の行へ戻る", () => {
     renderSelectionBoard(SELECTION_TASKS, OPEN_FIRST)
     fireEvent.click(screen.getByRole("option", { name: /X-002/ }))
-    fireEvent.click(screen.getByRole("button", { name: /^着手できる/ }))
+    fireEvent.click(screen.getByRole("button", { name: /^着手可/ }))
     expect(isShown("X-001")).toBe(true)
 
     fireEvent.click(screen.getByRole("link", { name: "X-002" }))
@@ -192,7 +192,7 @@ describe("タスクのモーダルの選択", () => {
   it("先頭へ落ちたあと絞り込みを外しても先頭のまま。検索で0件にしてから消すと、その前に選んでいた行へ戻る", () => {
     renderSelectionBoard(SELECTION_TASKS, OPEN_FIRST)
     fireEvent.click(screen.getByRole("option", { name: /X-002/ }))
-    fireEvent.click(screen.getByRole("button", { name: /^着手できる/ }))
+    fireEvent.click(screen.getByRole("button", { name: /^着手可/ }))
     fireEvent.click(screen.getByRole("button", { name: /^すべて/ }))
     expect(isShown("X-001")).toBe(true)
 
@@ -208,7 +208,7 @@ describe("タスクのモーダルの選択", () => {
     const board = renderSelectionBoard(SELECTION_TASKS, OPEN_FIRST)
     fireEvent.click(screen.getByRole("link", { name: "X-002" }))
     fireEvent.change(searchBox(), { target: { value: "架空" } })
-    fireEvent.click(screen.getByRole("button", { name: /^着手できる/ }))
+    fireEvent.click(screen.getByRole("button", { name: /^着手可/ }))
     fireEvent.click(screen.getByRole("button", { name: "閉じる" }))
     board.rerenderWith(SELECTION_TASKS, { kind: "closed" })
     board.rerenderWith(SELECTION_TASKS, OPEN_FIRST)
@@ -220,7 +220,7 @@ describe("タスクのモーダルの選択", () => {
     )
     expect(screen.queryByRole("navigation", { name: "タスクのつながり" })).toBeNull()
 
-    fireEvent.click(screen.getByRole("button", { name: /^着手できる/ }))
+    fireEvent.click(screen.getByRole("button", { name: /^着手可/ }))
     board.rerenderWith(SELECTION_TASKS, { kind: "open", focus: { kind: "task", id: "X-002" } })
 
     expect(isShown("X-002")).toBe(true)

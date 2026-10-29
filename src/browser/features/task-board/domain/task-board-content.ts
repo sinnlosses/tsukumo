@@ -253,7 +253,7 @@ function taskStateOf(task: TaskSummaryItem): TaskStateView {
   const readiness = taskReadiness(task)
   if (readiness !== undefined) {
     return readiness.kind === "ready"
-      ? { kind: "ready", text: "着手できる" }
+      ? { kind: "ready", text: "着手可" }
       : { kind: "blocked", text: `待ち ${readiness.blockedBy.join(", ")}` }
   }
 

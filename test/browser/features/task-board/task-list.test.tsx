@@ -161,7 +161,7 @@ describe("taskList", () => {
 
   it("一覧の上に凡例を出し、行の無いとき（不明・タスクが無い）は出さない", () => {
     const { unmount } = render(<TaskList tasks={known(TASKS)} selectedStatus="all" />)
-    for (const word of ["着手できる", "依存待ち", "hold", "ループ可"]) {
+    for (const word of ["着手可", "依存待ち", "保留", "ループ可"]) {
       expect(screen.getByText(word, { exact: false })).toBeDefined()
     }
     unmount()

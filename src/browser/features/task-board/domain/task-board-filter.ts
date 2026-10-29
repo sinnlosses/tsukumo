@@ -5,7 +5,7 @@ import type { TaskBoardFilter, TaskStateView } from "./task-board-view.ts"
 
 export const FILTER_CHIPS = [
   { filter: "all", label: "すべて" },
-  { filter: "ready", label: "着手できる" },
+  { filter: "ready", label: "着手可" },
   { filter: "blocked", label: "待ち" },
   { filter: "hold", label: "保留" },
   { filter: "draft", label: "ドラフト" },

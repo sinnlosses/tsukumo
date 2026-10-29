@@ -41,7 +41,7 @@ function statesOf(items: readonly TaskSummaryItem[]): readonly TaskStateView[] {
 
 describe("boardEntries の状態の言い方", () => {
   it("依存の無い todo は着手できる", () => {
-    expect(statesOf([taskOf("X-001", {})])).toEqual([{ kind: "ready", text: "着手できる" }])
+    expect(statesOf([taskOf("X-001", {})])).toEqual([{ kind: "ready", text: "着手可" }])
   })
 
   it("済んでいない依存を持つ todo は待ちで、その ID を字に添える", () => {
