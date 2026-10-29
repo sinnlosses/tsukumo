@@ -76,21 +76,22 @@
 
 ### 論点 5: 外す型と残す型
 
-| 区分     | 型・関数                                                                                                                                                                                                                                                                                                    | 行き先                                                                                               |
-| -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| 残る     | 葉 19 種の schema（`report-block-prose.ts`・`report-block-comparison.ts`・`report-block-diagram.ts`・`timeline-block.ts`・`figure-grammar.ts`）、`reportFigureSchema`、`REPORT_FIGURE_NONE_REASONS`、`reportSectionSchema` の `heading`、`namedWriterBlockSchema`（振り返りの `blocks` と文法カードが使う） | 部品の schema の部品として残る                                                                       |
-| 残る     | `FigureBlock`・`figureBlockSchema`・`reportSectionsMarkdown` と、それが使う塊 → Markdown の関数                                                                                                                                                                                                             | 質問の添え書き（レポート外）が使う。ADR 0042 の未決 1 が決まるまで                                   |
-| 消える   | `SectionBlock`・`namedSectionBlockSchema`・`sectionBlockSchema`、`rowBlockSchema`・`panelBlockSchema`（`row-panel-block.ts`・`row-panel-markdown.ts`）                                                                                                                                                      | `legacyReportComponents` が `Row`・`Card` に写したあと                                               |
-| 消える   | `parseReportSections`・`parseSectionBlocks`・`looseSectionSchema`・`parseReportBodyContent`・`ParsedReportContent`・`body-fence*.ts`                                                                                                                                                                        | 変換が読む分だけを `legacyReportComponents` の中に畳む                                               |
-| 消える   | `ReportSection` 型・`sectionsWithFigure`・`ReportShapeTag`（`report-shape-tag.ts`）・`isForbiddenBlock`                                                                                                                                                                                                     | `reportOutline` が並びを持つ。`shapeTag` は記録の列だけ残る                                          |
-| 消える   | 面の `leaves`（ADR 0042 の課題 7）、`ReportEvent.sections`、`SessionRecord` の `sections`、`unknownBlockCount` 相当の欄（旧い塊を落とす数。`droppedCount` に一本化）                                                                                                                                        | 検査・記録・描画が移ったあと                                                                         |
-| 確かめる | `filesBlockSchema`                                                                                                                                                                                                                                                                                          | 変更の札（`changed-file-section.ts`）が内部で `kind: "files"` を作るので、その使い方を決めてから消す |
+| 区分     | 型・関数                                                                                                                                                                                                                                                                                                    | 行き先                                                                                                 |
+| -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| 残る     | 葉 19 種の schema（`report-block-prose.ts`・`report-block-comparison.ts`・`report-block-diagram.ts`・`timeline-block.ts`・`figure-grammar.ts`）、`reportFigureSchema`、`REPORT_FIGURE_NONE_REASONS`、`reportSectionSchema` の `heading`、`namedWriterBlockSchema`（振り返りの `blocks` と文法カードが使う） | 部品の schema の部品として残る                                                                         |
+| 残る     | `FigureBlock`・`figureBlockSchema`・`reportSectionsMarkdown` と、それが使う塊 → Markdown の関数                                                                                                                                                                                                             | 質問の添え書き（レポート外）が使う。ADR 0042 の未決 1 が決まるまで                                     |
+| 残る     | 面の図・振り返り・頭の欄の Markdown 化（`reportSectionPieces` が作る `regions.sections[].markdown`・`retrospective`・`markdownLeaves`・`leafValues` と、それを読む `reportRegionsOf`・`draftRegions`・`ReportRoot`・`orderedReportRegions`・先頭欄の取り出し）                                              | 面がこれらの欄の Markdown に頼って描いている。`DrawnSection` から直接描く移行（順 10）が済んでから消す |
+| 消える   | `SectionBlock`・`namedSectionBlockSchema`・`sectionBlockSchema`、`rowBlockSchema`・`panelBlockSchema`（`row-panel-block.ts`・`row-panel-markdown.ts`）                                                                                                                                                      | `legacyReportComponents` が `Row`・`Card` に写したあと                                                 |
+| 消える   | `parseReportSections`・`parseSectionBlocks`・`looseSectionSchema`・`parseReportBodyContent`・`ParsedReportContent`・`body-fence*.ts`                                                                                                                                                                        | 変換が読む分だけを `legacyReportComponents` の中に畳む                                                 |
+| 消える   | `ReportSection` 型・`sectionsWithFigure`・`ReportShapeTag`（`report-shape-tag.ts`）・`isForbiddenBlock`                                                                                                                                                                                                     | `reportOutline` が並びを持つ。`shapeTag` は記録の列だけ残る                                            |
+| 消える   | 面の `leaves`（ADR 0042 の課題 7）、`ReportEvent.sections`、`SessionRecord` の `sections`、`unknownBlockCount` 相当の欄（旧い塊を落とす数。`droppedCount` に一本化）                                                                                                                                        | 検査・記録・描画が移ったあと                                                                           |
+| 確かめる | `filesBlockSchema`                                                                                                                                                                                                                                                                                          | 変更の札（`changed-file-section.ts`）が内部で `kind: "files"` を作るので、その使い方を決めてから消す   |
 
 - `a2ui-report-catalog.ts` は `report-block.ts` の `reportFigureSchema`・`reportSectionSchema` を import している。型を消す前に、この 2 つをカタログ側（`a2ui-report-catalog.ts` か隣の定義）へ移す。移さないとカタログが旧い型に引かれ続ける。
 
 ### 論点 6: 移行の大きさと順
 
-**9 課題に分ける。1 課題 1 コミットで説明が付く大きさにし、読み先を替える課題は、旧い読み先を残したまま新しい読み先を足し、最後に旧いほうを外す。**
+**10 課題に分ける（順 10 は順 9 に着手して「面は欄の Markdown に頼っている」と分かって足した。2026-10-29）。1 課題 1 コミットで説明が付く大きさにし、読み先を替える課題は、旧い読み先を残したまま新しい読み先を足し、最後に旧いほうを外す。**
 
 | 順  | 題                                                                                                                       | 先に要るもの                    | 壊れないもの                                                                               |
 | --- | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------- | ------------------------------------------------------------------------------------------ |
@@ -102,7 +103,8 @@
 | 6   | `ReportEvent.sections`・`SessionRecord` の `sections` を外し、面と草稿を `components` だけから作る                       | 2・3・4・5 と ADR 0042 の課題 7 | 面・目次・演出の DOM                                                                       |
 | 7   | `row`・`panel`・`shapeTag` の型と `ReportSection`・`sectionsWithFigure` を消す                                           | 6                               | 同じ                                                                                       |
 | 8   | `body-fence` と `parseReport*` を旧い記録の組み直しの中へ畳み、`report-block.ts` の旧い合併を消す                        | 7                               | 復元                                                                                       |
-| 9   | 塊 → Markdown の関数の入力を質問の添え書きが使う塊だけに絞り、面だけが使う Markdown 化を外す                             | 6・8                            | 質問の添え書き                                                                             |
+| 10  | 面の図・振り返り・頭の欄を、欄の Markdown に頼らず `DrawnSection` から直接描く                                           | 6                               | 面・目次・演出の DOM                                                                       |
+| 9   | 塊 → Markdown の関数の入力を質問の添え書きが使う塊だけに絞り、面だけが使う Markdown 化を外す                             | 6・8・10                        | 質問の添え書き                                                                             |
 
 - 順 2〜5 は互いに独立で、順 2 が `reportOutline` を作るので先に通す。順 3〜5 は並べて進めてよい。
 - 順 6 は ADR 0042 の課題 7（`leaves` を外す）のあとに通す。`leaves` が `sections` の塊の添字に頼る間は、`sections` を外せない。
@@ -128,11 +130,11 @@
 
 - `ReportEvent` と `SessionRecord` から `sections` が消えるので、`pnpm run test:e2e:update` が要る（順 1 と順 6）。
 - ADR 0039 の論点 3（`reportEvents` が `sections` を作る）と未決 2 は、この ADR が引き取る。論点 3 の「`components` を足す」形は、読み手が移ったあとに `sections` を外す形で完成する。
-- ADR 0042 の未決 2（旧い 3 変種の撤去のあと、Markdown を組む部分をどこまで消せるか）は、論点 4 の組み直しで「面のための Markdown 化は全部消せる。質問の添え書きの分だけ残る」と答えが出る。
+- ADR 0042 の未決 2（旧い 3 変種の撤去のあと、Markdown を組む部分をどこまで消せるか）は、論点 4 の組み直しと順 10（面の欄を `DrawnSection` から直接描く）のあとで「面のための Markdown 化は全部消せる。質問の添え書きの分だけ残る」と答えが出る。順 10 までは、面の図・振り返り・頭の欄が欄の Markdown に頼るので、消せない。
 - 0031（欄ごとの描画と演出・目次の区切り）・0038（部品を減らさず遅延で参照する）・0040（草稿の描画）は覆さない。
 
 ## 登録した課題
 
-論点 6 の順 1〜9 は、そのまま 9 件の課題として登録した。課題の番号はこの ADR に書かない（タスク番号を書かない規約）ので、課題の題は論点 6 の表の題と同じ趣旨で、順ごとの固有の語（`reportEvents`・`reportOutline`・`ReportEvent.sections` など）が共通するので、番号はその語で課題の一覧から引く。
+論点 6 の順 1〜9 は、そのまま 9 件の課題として登録した。順 10 は順 9 に着手して分かった前提の崩れから切り出した課題で、あとから登録した。課題の番号はこの ADR に書かない（タスク番号を書かない規約）ので、課題の題は論点 6 の表の題と同じ趣旨で、順ごとの固有の語（`reportEvents`・`reportOutline`・`ReportEvent.sections` など）が共通するので、番号はその語で課題の一覧から引く。
 
 - 先に要る関係は課題の依存に置いた。順 2 は順 1、順 3〜5 は順 2、順 6 は順 2〜5 と ADR 0042 の課題 7、順 7 は順 6、順 8 は順 7、順 9 は順 6・順 8 と ADR 0042 の課題 7 に依る。
