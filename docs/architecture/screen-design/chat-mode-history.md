@@ -19,7 +19,7 @@
 現れる（`components/page/conversation/components/chat-view/` の `components/chat-typing/chat-typing.tsx` と `components/chat-speech/chat-speech.tsx`）。
 
 - **出す条件は2つ**: 今のターンでまだ `speak` が呼ばれていない（`turnInProgress &&
-!speechCalledInTurn`。`SessionState.speechCalledInTurn` に既にある値で判定できる）、
+  !speechCalledInTurn`。`SessionState.speechCalledInTurn` に既にある値で判定できる）、
   **または**まだ出していない吹き出しが控えている（`hooks/use-speech-reveal.ts` の
   `pending`）。**後者はターンが終わったあとも効く**——1ターンに `speak` を複数回呼んで、
   最後の1件がまだ2秒のゲートで控えたままターンが終わっても、「...」は出続ける。

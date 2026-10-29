@@ -30,8 +30,8 @@
 ## 部品の定義（`src/api.ts`）
 
 ```ts
-import { z } from "zod"
 import { CommonSchemas } from "@a2ui/web_core/v0_9"
+import { z } from "zod"
 
 export const ReportApi = {
   name: "Report",
@@ -65,8 +65,8 @@ export const REPORT_CATALOG_ID = "https://tsukumo.example/prototype/report-catal
 ## React の実装（`src/catalog.tsx` の要点）
 
 ```tsx
-import { Catalog } from "@a2ui/web_core/v0_9"
 import { createComponentImplementation } from "@a2ui/react/v0_9"
+import { Catalog } from "@a2ui/web_core/v0_9"
 
 type ChildRef = string | { id: string; basePath?: string }
 const idOf = (c: ChildRef) => (typeof c === "string" ? c : c.id)
