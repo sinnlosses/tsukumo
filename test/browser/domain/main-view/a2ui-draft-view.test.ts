@@ -153,6 +153,9 @@ describe("mainViewDraftOf", () => {
       "架空の節一",
       "架空の節二",
     ])
-    expect(draft?.regions.head).toContain("架空の結論。")
+    expect(draft?.regions.a2ui.head.lead).toEqual({
+      kind: "conclusion-lead",
+      text: "架空の結論。",
+    })
   })
 })

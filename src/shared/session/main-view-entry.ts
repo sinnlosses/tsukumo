@@ -1,12 +1,10 @@
 // セッションの記録を、メインビューに時系列で流す記録（`MainViewEntry`）へ変える。
 // セッションの状態から導くだけで、別の状態は持たない。
 
-import { changedFilesMarkdown, changedFilesView } from "../report/changed-file-section.ts"
+import { changedFilesView } from "../report/changed-file-section.ts"
 import { reportChecksView } from "../report/report-check-view.ts"
-import { reportChecksViewMarkdown } from "../report/report-check.ts"
 import { joinParts } from "../report/report-inline-markdown.ts"
-import { phaseTimesMarkdown, phaseTimesView } from "../report/report-phase-time.ts"
-import { keyFiguresMarkdown } from "../report/report-stat-markdown.ts"
+import { phaseTimesView } from "../report/report-phase-time.ts"
 import { isBlankText } from "../utils/blank-text.ts"
 import { a2uiReportView } from "./a2ui-report-view.ts"
 import type { MainViewEntry, MainViewReportRegions } from "./main-view-shape.ts"
@@ -141,14 +139,13 @@ function toMainViewEntries(record: SessionRecord, context: TurnContext): readonl
 }
 
 /**
- * `report` の引数を欄に組む。頭は `conclusion` → `keyFigures`（数の札）→ 合図の行と段ごとの所要時間の順で、節は `components` から導く（`drawnReportOf`）。
- * 面（`a2ui`）には頭を結論・数の札・合図の行（`checks`）・段ごとの所要時間と変更したファイル（`status`・`finalStatus`）に分けた値と、お願い（`favor`）も載せる。`head` は旧い記録の経路が読む。
+ * `report` の引数を欄に組む。節は `components` から導く（`drawnReportOf`）。
+ * 面（`a2ui`）には頭を結論・数の札・合図の行（`checks`）・段ごとの所要時間と変更したファイル（`status`・`finalStatus`）に分けた値と、お願い（`favor`）も載せる。
  * 図は見出しの無い先頭の節として描き、図の番号は本文の図と通しで振られる。図が無ければ何も描かない。
- * 旧い経路の合図の行と段ごとの所要時間は {@link statusMarkdown}。段ごとの所要時間は最終のときの頭にだけ、同じ依頼のワークプランの記録（止めて再開した依頼の記録も引き継ぐ。{@link phaseDurations}）と `report` の `workPlanClosing` から描く。
- * `favor` はレポートの記法の「お願い」の塊で包むので、サニタイズも記法の解釈もテキストの本文と同じ経路を通る。
- * `favor` の塊は `favor-<toolUseId>` の `id` を持ち、合図の行の総括行にある印がそこへ飛ぶ。
- * 中身の無い節は欄にしない。`retrospective` は節の最後に足して組み（図と表の番号が通しで続く）、欄が無ければ空文字にする。
- * `conclusion` は、`task` のあるレポートでは見出しの下の一文として `conclusion` の印で、無いレポートでは見出しの代わりとして `conclusion-lead` の印で包む（`task` そのものは本文に組まない）。
+ * 段ごとの所要時間は最終のときの頭にだけ、同じ依頼のワークプランの記録（止めて再開した依頼の記録も引き継ぐ。{@link phaseDurations}）と `report` の `workPlanClosing` から描く。
+ * `favor` の `id` は `favor-<toolUseId>` で、合図の行の総括行にある印がそこへ飛ぶ。
+ * 中身の無い節は欄にしない。
+ * `conclusion` は、`task` のあるレポートでは `conclusion`、無いレポートでは `conclusion-lead` の値になる（`task` そのものは本文に組まない）。
  *
  * 節の並びはここで整形する（`tidyReportOutline`。記録は引数のまま持ち、描くたびに導く）。
  */
@@ -164,35 +161,16 @@ function reportRegionsOf(
     isBlankText(report.favor) ? { kind: "none" } : { kind: "favor", id: favorId },
   )
   const phaseRows = phaseDurations(context.trail, report.time, report.workPlanClosing)
-  const finalRest = joinParts([
-    phaseTimesMarkdown(phaseRows),
-    changedFilesMarkdown(report.changeSummary),
-  ])
-  const checksMarkdown = reportChecksViewMarkdown(checks)
-  const plainStatus = statusMarkdown(checksMarkdown, "")
-  const finalStatus = statusMarkdown(checksMarkdown, finalRest)
-  const head = (statusPart: string) =>
-    [
-      isBlankText(report.conclusion)
-        ? ""
-        : `<div class="${leadKind}">\n\n${report.conclusion}\n\n</div>`,
-      keyFiguresMarkdown(report.keyFigures),
-      statusPart,
-    ]
-      .filter((part) => !isBlankText(part))
-      .join("\n\n")
-  const { drawn, layout, imageSource, pieces, markdowns } = reportDrawnPieces(report)
+  const { drawn, layout, imageSource, pieces } = reportDrawnPieces(report)
   const sections = drawn.sections.filter((section) => section.role !== "retrospective")
   return {
     kind: "regions",
-    head: head(plainStatus),
-    finalHead: head(finalStatus),
     sections: sections.flatMap((section, id) => {
-      const markdown = markdowns[id] ?? ""
-      return markdown === "" ? [] : [{ id, heading: section.heading.trim(), markdown }]
+      const piece = pieces[id]
+      return piece === undefined || joinParts([piece.heading, ...piece.blocks]) === ""
+        ? []
+        : [{ id, heading: section.heading.trim() }]
     }),
-    retrospective: markdowns[sections.length] ?? "",
-    favor: { id: favorId, markdown: report.favor },
     a2ui: a2uiReportView(
       report.components,
       drawn,
@@ -214,16 +192,4 @@ function reportRegionsOf(
       { id: favorId, text: report.favor },
     ),
   }
-}
-
-/**
- * 旧い経路の頭で、結論のすぐ下の合図の行（検証結果の判定）と、その下の残り（段ごとの所要時間の帯と一覧・変更したファイルの畳んだ節）を、結論と本文のあいだの1つのまとまりに包む。
- * すべて空なら包みごと置かない。お願いの本文は末尾のまま動かさない。面ではこの包みと合図の行を部品が描く。
- */
-function statusMarkdown(checks: string, rest: string): string {
-  const verdict = isBlankText(checks)
-    ? ""
-    : `<div class="verdict" role="group" aria-label="検証結果">${checks}</div>`
-  const inner = [verdict, rest].filter((part) => !isBlankText(part)).join("\n\n")
-  return inner === "" ? "" : `<div class="status">\n\n${inner}\n\n</div>`
 }

@@ -87,20 +87,12 @@ export type MainViewEntry =
   | { readonly kind: "aside-answer"; readonly text: string }
 
 /**
- * `report` ツールの本文の欄の並び。描くのは `a2ui` の値で、この Markdown の欄は描く側も判定も読まない。
- * `head` は結論と合図の行、`finalHead` は最終レポートのときの頭で、`head` に段ごとの所要時間を足したもの。
- * `sections` は中身のある節だけを並べる。
- * `retrospective` は振り返りの塊の Markdown（無ければ空文字）。
- * `favor` はお願いの本文（無ければ空文字）と、合図の行の印が飛ぶ先の `id`。
+ * `report` ツールの本文の欄の並び。描くのは `a2ui` の値で、`sections` は中身のある節の `id` と見出しの字だけを持つ。
  * `a2ui` は `a2ui` の版の部品の一覧を A2UI の面で描くための値（{@link MainViewA2uiReport}）。
  */
 export type MainViewReportRegions = {
   readonly kind: "regions"
-  readonly head: string
-  readonly finalHead: string
   readonly sections: readonly MainViewReportSection[]
-  readonly retrospective: string
-  readonly favor: { readonly id: string; readonly markdown: string }
   readonly a2ui: MainViewA2uiReport
 }
 
@@ -141,7 +133,6 @@ export type MainViewA2uiReport =
  * `lead` は結論。`task` のあるレポートでは `conclusion`、無いレポートでは `conclusion-lead`。空なら `none`。
  * `checks` は合図の行（検証結果）。所要時間とお願いへの飛び先は引き当て済み。
  * `status` は包み（`<div class="status">`）の中の合図の行より後ろで、最終でないときは両方 `none`。`finalStatus` は最終レポートのときのもので、段ごとの所要時間と変更したファイル。
- * 旧い記録の経路が読む `head`・`finalHead` は結論と数の札を含む従来の Markdown のまま別に持つ。
  */
 export type MainViewSurfaceHead = {
   readonly lead:
@@ -187,7 +178,6 @@ export type MainViewSurfaceEntry =
 export type MainViewReportSection = {
   readonly id: number
   readonly heading: string
-  readonly markdown: string
 }
 
 /** メインビューの本文。`report` ツールの本文は欄の並びで、ほかの本文（`detail`・段のまとめ）は Markdown 1本の欄。 */

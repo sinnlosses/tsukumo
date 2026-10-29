@@ -1,7 +1,6 @@
 // `mainViewEntries` の記録ごとの結果の持ち回しと、失敗・脇の話の扱い。
 import { describe, expect, it } from "vitest"
 
-import { finalReportBody } from "../../../src/browser/domain/main-view/main-view-report-body.ts"
 import { mainViewTurns } from "../../../src/browser/domain/main-view/main-view.ts"
 import { mainViewEntries } from "../../../src/shared/session/main-view-entry.ts"
 import { type MainViewEntry, turnAsides } from "../../../src/shared/session/main-view-shape.ts"
@@ -12,8 +11,10 @@ import {
   type SessionState,
 } from "../../../src/shared/session/session-state.ts"
 import {
-  bodyMarkdownOf,
   detail,
+  headOf,
+  passedTimesOf,
+  phaseTimesOf,
   question,
   reportOf,
   request,
@@ -68,12 +69,8 @@ describe("mainViewEntries（記録ごとの結果の持ち回し）", () => {
               },
             ],
     })
-  const reportMarkdowns = (entries: readonly MainViewEntry[]) =>
-    entries.flatMap((entry) => (entry.kind === "report" ? [bodyMarkdownOf(entry.regions)] : []))
-  const finalMarkdowns = (entries: readonly MainViewEntry[]) =>
-    entries.flatMap((entry) =>
-      entry.kind === "report" ? [bodyMarkdownOf(finalReportBody(entry.regions))] : [],
-    )
+  const reportHeads = (entries: readonly MainViewEntry[]) =>
+    entries.flatMap((entry) => (entry.kind === "report" ? [headOf(entry.regions)] : []))
 
   it("report の記録は、呼び出しの toolUseId を持ったまま entry になる", () => {
     const entries = mainViewEntries(
@@ -137,12 +134,12 @@ describe("mainViewEntries（記録ごとの結果の持ち回し）", () => {
 
     expect(reportsAfter[0]).toBe(reportsBefore[0])
     expect(reportsAfter[1]).not.toBe(reportsBefore[1])
-    expect(reportMarkdowns(entriesBefore)[1]).not.toContain("5秒")
-    expect(reportMarkdowns(entriesAfter)[1]).toContain('<span class="check-time">5秒</span>')
+    expect(passedTimesOf(reportHeads(entriesBefore)[1])).not.toContain("5秒")
+    expect(passedTimesOf(reportHeads(entriesAfter)[1])).toContain("5秒")
   })
 
   it("ワークプランのある依頼の report の最終レポートの本文には、検証の表の下に段ごとの所要時間の帯と一覧が出る", () => {
-    const markdown = finalMarkdowns(
+    const head = reportHeads(
       mainViewEntries(
         foldTimed([
           [ask, 0],
@@ -155,37 +152,38 @@ describe("mainViewEntries（記録ごとの結果の持ち回し）", () => {
       ),
     )[0]
 
-    expect(markdown).toContain("計 14秒")
-    expect(markdown).toMatch(
-      /1\/2<\/span>架空の段A<\/span>.*?<span class="phase-time-value">10秒<\/span><span class="phase-time-ratio">71%<\/span>/,
-    )
-    expect(markdown).toMatch(
-      /2\/2<\/span>架空の段B<\/span>.*?<span class="phase-time-value">4秒<\/span><span class="phase-time-ratio">29%<\/span>/,
-    )
-    expect(markdown?.indexOf('class="phase-times"')).toBeGreaterThan(
-      markdown?.indexOf('class="verdict"') ?? Infinity,
-    )
+    expect(head?.checks.kind).toBe("checks")
+    expect(phaseTimesOf(head)).toEqual({
+      totalText: "計 14秒",
+      rows: [
+        ["1/2 架空の段A", "10秒", "71%"],
+        ["2/2 架空の段B", "4秒", "29%"],
+      ],
+    })
   })
 
   it("止めて「続けて」で再開した依頼の最終レポートは、段の並びが同じなら前の依頼の段も測れて、待ちは計に入らない", () => {
-    const markdown = finalMarkdowns(
-      mainViewEntries(
-        foldTimed([
-          [ask, 0],
-          [plan(0), 1_000],
-          [plan(1, "架空のまとめ。"), 11_000],
-          [reportEvent({ toolUseId: "toolu_r1", workPlanClosing: "stopped" }), 15_000],
-          [requestEvent("続けて（架空の依頼）"), 100_000],
-          [plan(1), 101_000],
-          [reportEvent({ toolUseId: "toolu_r2", workPlanClosing: "finished" }), 104_000],
-        ]),
-      ),
-    )[1]
+    const times = phaseTimesOf(
+      reportHeads(
+        mainViewEntries(
+          foldTimed([
+            [ask, 0],
+            [plan(0), 1_000],
+            [plan(1, "架空のまとめ。"), 11_000],
+            [reportEvent({ toolUseId: "toolu_r1", workPlanClosing: "stopped" }), 15_000],
+            [requestEvent("続けて（架空の依頼）"), 100_000],
+            [plan(1), 101_000],
+            [reportEvent({ toolUseId: "toolu_r2", workPlanClosing: "finished" }), 104_000],
+          ]),
+        ),
+      )[1],
+    )
 
-    expect(markdown).toContain("計 17秒")
-    expect(markdown).not.toContain("不明")
-    expect(markdown).toMatch(/1\/2<\/span>架空の段A<\/span>.*?<span class="phase-time-value">10秒/)
-    expect(markdown).toMatch(/2\/2<\/span>架空の段B<\/span>.*?<span class="phase-time-value">7秒/)
+    expect(times?.totalText).toBe("計 17秒")
+    expect(times?.rows.map(([label, value]) => [label, value])).toEqual([
+      ["1/2 架空の段A", "10秒"],
+      ["2/2 架空の段B", "7秒"],
+    ])
   })
 
   it("段の並びを変えて再開した依頼の最終レポートは、依頼の中の記録だけで測る", () => {
@@ -199,26 +197,30 @@ describe("mainViewEntries（記録ごとの結果の持ち回し）", () => {
       finishedInGroup: [],
       phaseSummary: "",
     }
-    const markdown = finalMarkdowns(
-      mainViewEntries(
-        foldTimed([
-          [ask, 0],
-          [plan(0), 1_000],
-          [plan(1, "架空のまとめ。"), 11_000],
-          [reportEvent({ toolUseId: "toolu_r1", workPlanClosing: "stopped" }), 15_000],
-          [requestEvent("続けて（架空の依頼）"), 100_000],
-          [reorganized, 101_000],
-          [reportEvent({ toolUseId: "toolu_r2", workPlanClosing: "finished" }), 104_000],
-        ]),
-      ),
-    )[1]
+    const times = phaseTimesOf(
+      reportHeads(
+        mainViewEntries(
+          foldTimed([
+            [ask, 0],
+            [plan(0), 1_000],
+            [plan(1, "架空のまとめ。"), 11_000],
+            [reportEvent({ toolUseId: "toolu_r1", workPlanClosing: "stopped" }), 15_000],
+            [requestEvent("続けて（架空の依頼）"), 100_000],
+            [reorganized, 101_000],
+            [reportEvent({ toolUseId: "toolu_r2", workPlanClosing: "finished" }), 104_000],
+          ]),
+        ),
+      )[1],
+    )
 
-    expect(markdown).toMatch(/1\/3<\/span>架空の段A<\/span>.*?不明/)
-    expect(markdown).toMatch(/2\/3<\/span>架空の段B<\/span>.*?不明/)
+    expect(times?.rows.slice(0, 2).map(([label, value]) => [label, value])).toEqual([
+      ["1/3 架空の段A", "不明"],
+      ["2/3 架空の段B", "不明"],
+    ])
   })
 
   it("ワークプランの無い依頼の report には、段ごとの所要時間の帯と一覧を出さない", () => {
-    const markdown = finalMarkdowns(
+    const head = reportHeads(
       mainViewEntries(
         foldTimed([
           [ask, 0],
@@ -227,7 +229,7 @@ describe("mainViewEntries（記録ごとの結果の持ち回し）", () => {
       ),
     )[0]
 
-    expect(markdown).not.toContain("phase-times")
+    expect(phaseTimesOf(head)).toBeUndefined()
   })
 })
 

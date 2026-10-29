@@ -46,7 +46,6 @@ export function finalReportBody(body: MainViewReportBody): MainViewReportBody {
   const { a2ui } = body
   return {
     ...body,
-    head: body.finalHead,
     a2ui: { ...a2ui, head: { ...a2ui.head, status: a2ui.head.finalStatus } },
   }
 }

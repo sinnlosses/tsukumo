@@ -24,10 +24,10 @@
 ### 本文の欄
 
 - **英語識別子**: `MainViewReportBody`（メインビューの本文。`regions` か `markdown`）/ `MainViewReportRegions`（`report` ツールの本文の欄の並び）/
-  `head`（頭）/ `finalHead`（最終のときの頭）/ `MainViewReportSection`（節の欄。`id`・`heading`・`markdown`）/
-  `retrospective`（振り返りの欄）/ `favor`（お願いの欄）/ `reportDrawsAnything`（本文に描くものがあるか）
-- **定義**: **メインビューの本文を、Markdown 1本に畳まずに分けて持つ単位**。`report` ツールの本文は、頭（結論と合図の行）・
-  節の並び・振り返り・お願いの欄を持つ。最終のときの頭は、頭に段ごとの所要時間を足したもの。節の欄の `id` は、整形して
+  `MainViewReportSection`（節の欄。`id`・`heading`）/ `MainViewA2uiReport`（面の値。頭・図・節・振り返り・お願い）/
+  `reportDrawsAnything`（本文に描くものがあるか）
+- **定義**: **メインビューの本文を、Markdown 1本に畳まずに分けて持つ単位**。`report` ツールの本文は、節の欄（`id` と見出しの字）と、
+  頭（結論・合図の行）・図・節・振り返り・お願いを持つ面の値を持つ。最終のときの頭は、頭に段ごとの所要時間を足したもの。節の欄の `id` は、整形して
   図を先頭に足したあとの節の並びの位置。`report` ツール以外の本文（詳細・段のまとめ）は Markdown 1本の欄にする
 - **注記**: 描く側は欄の Markdown を読まず、面の値（`MainViewReportRegions.a2ui`。頭・お願い・節）から描く。描くものがあるかは `reportDrawsAnything`（`src/browser/domain/main-view/main-view-report-body.ts`）が数える。
   形の決めは `docs/architecture/adr/0031-report-body-as-regions.md`

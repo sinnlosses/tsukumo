@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import {
-  changedFilesMarkdown,
-  changedFilesView,
-} from "../../../src/shared/report/changed-file-section.ts"
+import { changedFilesView } from "../../../src/shared/report/changed-file-section.ts"
 import type { ChangedFile } from "../../../src/shared/report/changed-file.ts"
 import type { ReportChangeSummary } from "../../../src/shared/report/report-change-summary.ts"
 
@@ -22,31 +19,20 @@ const CHANGED: readonly ChangedFile[] = [
   { path: "docs/架空/c.md", change: "deleted" },
 ]
 
-describe("changedFilesMarkdown", () => {
-  it("追加・変更・削除の一覧を、件数つきの畳みの中に files の樹形図で出す", () => {
-    const markdown = changedFilesMarkdown(counted(CHANGED))
+describe("changedFilesView の行", () => {
+  const pathsOf = (changed: readonly ChangedFile[]) => {
+    const view = changedFilesView(counted(changed))
+    return view.kind === "files"
+      ? view.rows.flatMap((row) => (row.kind === "file" ? [row.item.path] : []))
+      : []
+  }
 
-    expect(markdown.startsWith("<details><summary>変更したファイル 3</summary>")).toBe(true)
-    expect(markdown.endsWith("</details>")).toBe(true)
-    expect(markdown).toContain('<div class="files">')
-    expect(markdown).toContain("file-change-added")
-    expect(markdown).toContain("file-change-modified")
-    expect(markdown).toContain("file-change-deleted")
+  it("入力のパスが全部、樹形図の行に残る", () => {
+    expect(pathsOf(CHANGED).toSorted()).toEqual(CHANGED.map(({ path }) => path).toSorted())
   })
 
-  it("入力のパスが全部出力に残る", () => {
-    const markdown = changedFilesMarkdown(counted(CHANGED))
-
-    for (const { path } of CHANGED) {
-      expect(markdown).toContain(`data-file-path="${path}"`)
-    }
-    const dropped = changedFilesMarkdown(counted(CHANGED.slice(1)))
-    expect(dropped).not.toContain(`data-file-path="${CHANGED[0]?.path ?? ""}"`)
-  })
-
-  it("数えていない札と、変更が 0 ファイルの札は空文字", () => {
-    expect(changedFilesMarkdown({ kind: "none" })).toBe("")
-    expect(changedFilesMarkdown(counted([]))).toBe("")
+  it("入力から外したパスは行に残らない", () => {
+    expect(pathsOf(CHANGED.slice(1))).not.toContain(CHANGED[0]?.path ?? "")
   })
 })
 

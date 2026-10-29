@@ -11,7 +11,7 @@ import type {
   MainViewStepBody,
 } from "../../../../../../../src/shared/session/main-view-shape.ts"
 import { INITIAL_SESSION_STATE } from "../../../../../../../src/shared/session/session-state.ts"
-import { bodyMarkdownOf } from "../../../../../../fixture/main-view-entry.ts"
+import { bodyTextOf } from "../../../../../../fixture/main-view-entry.ts"
 import { step, turn, turnBodyText } from "../../../../../../fixture/turn.ts"
 import { typedElement } from "../../../../../../typed-element.ts"
 import { putSession } from "../../../../../session-store.ts"
@@ -21,7 +21,7 @@ vi.mock(
   "../../../../../../../src/browser/components/page/conversation/components/main-view/report.tsx",
   () => ({
     Report: (props: { readonly body: MainViewReportBody }) => (
-      <div data-report-stub="yes">{bodyMarkdownOf(props.body)}</div>
+      <div data-report-stub="yes">{bodyTextOf(props.body)}</div>
     ),
   }),
 )

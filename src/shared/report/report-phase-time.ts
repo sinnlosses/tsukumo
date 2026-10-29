@@ -1,7 +1,7 @@
-// 最終レポートの段ごとの所要時間（1本の帯と一覧）の形と、描く順に並べ終えた値・HTML の組み立て。
+// 最終レポートの段ごとの所要時間（1本の帯と一覧）の形と、描く順に並べ終えた値。
 
 import { formatElapsed, formatMeasured, type MeasuredTime } from "../utils/elapsed-time.ts"
-import { escapeHtml, plainInline } from "./report-inline-markdown.ts"
+import { plainInline } from "./report-inline-markdown.ts"
 
 /**
  * 時間を出さない理由。`none` は理由が無い（測れたか、測れなかった「不明」）。
@@ -158,34 +158,6 @@ export function phaseTimesView(rows: readonly PhaseTimeRow[]): PhaseTimesView {
   }
 }
 
-/** 段ごとの所要時間（1つの HTML の塊）。{@link phaseTimesView} の値を HTML に組む。段が無ければ空文字。 */
-export function phaseTimesMarkdown(rows: readonly PhaseTimeRow[]): string {
-  const view = phaseTimesView(rows)
-  if (view.kind === "none") {
-    return ""
-  }
-  const chart =
-    view.chart.kind === "band"
-      ? `<div class="phase-band" aria-hidden="true">${view.chart.regions.map(bandRegionMarkdown).join("")}</div>`
-      : `<div class="phase-waterfall" aria-hidden="true">${view.chart.lines.map(waterfallLineMarkdown).join("")}</div>`
-  const list = view.rows
-    .map((entry) =>
-      entry.kind === "row"
-        ? listRowMarkdown(entry.row)
-        : `<div class="phase-time-group" role="rowgroup">${listRowMarkdown(entry.head)}` +
-          entry.inner.map(listRowMarkdown).join("") +
-          `</div>`,
-    )
-    .join("")
-  return (
-    `<div class="phase-times">` +
-    `<div class="phase-times-head"><span class="phase-times-heading">段ごとの時間</span>` +
-    `<span class="phase-times-total">${escapeHtml(view.totalText)}</span></div>` +
-    chart +
-    `<div role="table" aria-label="段ごとの所要時間">${list}</div></div>`
-  )
-}
-
 type WaterfallBar = {
   readonly label: string
   readonly start: MeasuredTime
@@ -340,61 +312,4 @@ function labelView(label: string): PhaseLabelView {
 
 function ratioPercent(milliseconds: number, total: number): number {
   return total > 0 ? Math.round((milliseconds / total) * 100) : 0
-}
-
-function bandRegionMarkdown(region: PhaseBandRegionView): string {
-  if (region.kind === "unknown") {
-    return `<span class="phase-band-unknown" title="${attributeText(region.title)}"></span>`
-  }
-  const className = region.longest ? "phase-band-segment phase-band-longest" : "phase-band-segment"
-  return `<span class="${className}" title="${attributeText(region.title)}" style="flex: ${String(region.flexGrow)} 0 0"></span>`
-}
-
-function waterfallLineMarkdown(line: PhaseWaterfallLineView): string {
-  if (line.kind === "bar") {
-    return waterfallItemMarkdown(line)
-  }
-  return `<div class="phase-waterfall-group">${line.items.map(waterfallItemMarkdown).join("")}</div>`
-}
-
-function waterfallItemMarkdown(item: PhaseWaterfallGroupItemView): string {
-  const geometry = `style="margin-left: ${String(item.marginLeftPercent)}%; width: ${String(item.widthPercent)}%"`
-  const title = `title="${attributeText(item.title)}"`
-  if (item.kind === "wall") {
-    const className = item.longest ? "phase-time-wall phase-time-wall-longest" : "phase-time-wall"
-    return `<span class="${className}" ${title} ${geometry}></span>`
-  }
-  const className = {
-    plain: "phase-waterfall-bar",
-    longest: "phase-waterfall-bar phase-waterfall-longest",
-    unknown: "phase-waterfall-bar phase-waterfall-unknown",
-  }[item.mark]
-  return `<div class="phase-waterfall-row"><span class="${className}" ${title} ${geometry}></span></div>`
-}
-
-function listRowMarkdown(row: PhaseListRowView): string {
-  const classes = ["phase-time"]
-  if (row.inner) {
-    classes.push("phase-time-inner")
-  }
-  if (row.longest) {
-    classes.push("phase-time-longest")
-  }
-  if (row.unknown) {
-    classes.push("phase-time-unknown")
-  }
-  const mark = row.inner ? "" : `<span class="phase-time-mark"></span>`
-  const name =
-    row.label.kind === "plain"
-      ? escapeHtml(row.label.text)
-      : `<span class="phase-time-num">${escapeHtml(row.label.num)}</span>${escapeHtml(row.label.name)}`
-  return (
-    `<div class="${classes.join(" ")}" role="row">${mark}<span class="phase-time-label">${name}</span>` +
-    `<span class="phase-time-value">${row.valueText}</span>` +
-    `<span class="phase-time-ratio">${row.ratioText}</span></div>`
-  )
-}
-
-function attributeText(text: string): string {
-  return escapeHtml(text).replaceAll('"', "&quot;")
 }

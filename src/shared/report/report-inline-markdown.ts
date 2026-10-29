@@ -102,7 +102,7 @@ export function htmlInlineSegments(text: string): readonly HtmlInlineSegment[] {
   )
 }
 
-export function escapeHtml(text: string): string {
+function escapeHtml(text: string): string {
   return text.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")
 }
 

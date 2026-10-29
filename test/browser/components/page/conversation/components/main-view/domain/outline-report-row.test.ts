@@ -18,11 +18,7 @@ function textStep(id: number, firstLine: string, task: ReportTask, final: boolea
       kind: "text",
       report: {
         kind: "regions",
-        head: "",
-        finalHead: "",
         sections: [],
-        retrospective: "",
-        favor: { id: "favor-toolu_fictional", markdown: "" },
         a2ui: noRootA2ui(),
       },
       firstLine,

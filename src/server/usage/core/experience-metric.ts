@@ -9,10 +9,10 @@ import {
   type ConversationMoment,
   conversationMoment,
 } from "../../../shared/session/conversation-moment.ts"
-import { reportBodyChars } from "../../../shared/session/report-drawn-markdown.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import type { SessionState } from "../../../shared/session/session-state.ts"
 import type { ClosedMoment, SplitDivider } from "../../../shared/usage/experience-metric-record.ts"
+import { reportBodyChars } from "./report-body-length.ts"
 
 /** 進行の計測値の読み書き口。書けなくても・読めなくても例外を投げない。 */
 export type ExperienceMetricLog = {

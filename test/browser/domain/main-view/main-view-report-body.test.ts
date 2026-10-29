@@ -13,7 +13,7 @@ import { applySessionEvent } from "../../../../src/shared/session/session-fold.t
 import { INITIAL_SESSION_STATE } from "../../../../src/shared/session/session-state.ts"
 import {
   firstLineOf,
-  lead,
+  headOf,
   materialReport,
   noRootA2ui,
   SETTLED,
@@ -32,22 +32,24 @@ import {
 import { reportEvent } from "../../../fixture/report-event.ts"
 import { requestEvent } from "../../../fixture/session-event.ts"
 
-/** 段ごとの所要時間も振り返りもお願いも無い `report` の欄（頭と最終のときの頭が同じ）。 */
+/** 段ごとの所要時間も振り返りもお願いも無い `report` の欄。 */
 const regionsOf = (
-  head: string,
+  leadText: string,
   sections: readonly MainViewReportSection[],
 ): MainViewReportRegions => ({
   kind: "regions",
-  head,
-  finalHead: head,
   sections,
-  retrospective: "",
-  favor: { id: "favor-toolu_r1", markdown: "" },
-  a2ui: noRootA2ui(head),
+  a2ui: noRootA2ui(leadText),
 })
 
+/** やり取りの最後の本文を持つステップの、頭の値。 */
+const headOfTurn = (turn: ReturnType<typeof turnOf>) => {
+  const body = turn?.steps.findLast((step) => step.body.kind === "text")?.body
+  return headOf(body?.kind === "text" ? body.report : undefined)
+}
+
 describe("mainViewTurns（report ツールで受け取ったレポート）", () => {
-  it("checks は結論のすぐ下の合図の行に組み、総括行の印が末尾のお願いの塊を指す。お願いの本文は末尾のまま", () => {
+  it("checks は頭の合図の行の値になり、総括行の印がお願いの塊を指す。お願いの本文は末尾のまま", () => {
     const checks: readonly ReportCheck[] = [
       {
         status: "ok",
@@ -75,27 +77,16 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     const [shown = "", ...rest] = shownReports(turn)
 
     expect(rest).toEqual([])
-    expect(
-      shown.startsWith(
-        `${lead("架空の結論。")}\n\n<div class="status">\n\n` +
-          '<div class="verdict" role="group" aria-label="検証結果"><div class="checks">',
-      ),
-    ).toBe(true)
-    expect(shown).toContain('<span class="checks-summary-favor"><a href="#favor-toolu_r1">')
+    expect(shown).toBe("架空の結論。\n\n架空の根拠。\n\n架空のお願い")
+    const head = headOfTurn(turn)
+    expect(head?.checks.kind === "checks" ? head.checks.summary.favor : undefined).toEqual({
+      kind: "favor",
+      id: "favor-toolu_r1",
+    })
     const body = turn?.steps[0]?.body
     expect(
-      body?.kind === "text" && body.report.kind === "regions" ? body.report.favor : undefined,
-    ).toEqual({
-      id: "favor-toolu_r1",
-      markdown: "架空のお願い",
-    })
-    expect(
-      shown.endsWith(
-        "</div>\n\n</div>\n\n" +
-          '架空の根拠。\n\n<div class="note note-favor">\n\n架空のお願い\n\n</div>',
-      ),
-    ).toBe(true)
-    expect(shown.split('<div class="status">')).toHaveLength(2)
+      body?.kind === "text" && body.report.kind === "regions" ? body.report.a2ui.favor : undefined,
+    ).toEqual({ id: "favor-toolu_r1", text: "架空のお願い" })
     expect(firstLineOf(turn?.steps[0])).toBe("架空の結論。")
   })
 
@@ -148,14 +139,12 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
       (current, [event, at]) => applySessionEvent(current, event, at),
       INITIAL_SESSION_STATE,
     )
-    const [shown] = shownReports(mainViewTurns(mainViewEntries(state), SETTLED, true).at(-1))
+    const head = headOfTurn(mainViewTurns(mainViewEntries(state), SETTLED, true).at(-1))
 
-    expect(shown).toContain(
-      '<span class="check-mark">✓</span><span class="check-label">一致する</span><span class="check-figure"></span><span class="check-time">1分02秒</span>',
-    )
-    expect(shown).toContain(
-      '<span class="check-mark">✓</span><span class="check-label">一致しない</span><span class="check-figure"></span><span class="check-time"></span>',
-    )
+    expect(head?.checks.kind === "checks" ? head.checks.passed : []).toMatchObject([
+      { label: "一致する", time: "1分02秒" },
+      { label: "一致しない", time: "" },
+    ])
   })
 
   it("run_in_background の Bash は完了の知らせまでの時間を添え、知らせが届かなければ空にする", () => {
@@ -206,14 +195,12 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
       (current, [event, at]) => applySessionEvent(current, event, at),
       INITIAL_SESSION_STATE,
     )
-    const [shown] = shownReports(mainViewTurns(mainViewEntries(state), SETTLED, true).at(-1))
+    const head = headOfTurn(mainViewTurns(mainViewEntries(state), SETTLED, true).at(-1))
 
-    expect(shown).toContain(
-      '<span class="check-mark">✓</span><span class="check-label">知らせが届いた</span><span class="check-figure"></span><span class="check-time">1分02秒</span>',
-    )
-    expect(shown).toContain(
-      '<span class="check-mark">✓</span><span class="check-label">知らせが届かない</span><span class="check-figure"></span><span class="check-time"></span>',
-    )
+    expect(head?.checks.kind === "checks" ? head.checks.passed : []).toMatchObject([
+      { label: "知らせが届いた", time: "1分02秒" },
+      { label: "知らせが届かない", time: "" },
+    ])
   })
 
   it("ワークプランを渡したやり取りでは、中間レポートはまとめだけで、最終レポートは結論の下に段ごとの所要時間の帯と一覧を置く", () => {
@@ -242,15 +229,14 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     const [summary, final] = shownReports(turn)
 
     expect(summary).toBe("架空のまとめ。")
+    expect(final).toBe("架空の結論。\n\n架空の根拠。")
+    const times = headOfTurn(turn)?.status.phaseTimes
+    expect(times?.kind).toBe("times")
     expect(
-      final?.startsWith(
-        `${lead("架空の結論。")}\n\n<div class="status">\n\n<div class="phase-times">`,
-      ),
-    ).toBe(true)
-    expect(final).toContain(
-      '<span class="phase-time-label"><span class="phase-time-num">2/2</span>架空の段B</span>',
-    )
-    expect(final?.endsWith("</div>\n\n架空の根拠。")).toBe(true)
+      times?.kind === "times"
+        ? times.rows.map((entry) => (entry.kind === "row" ? entry.row.label : entry.head.label))
+        : [],
+    ).toContainEqual({ kind: "numbered", num: "2/2", name: "架空の段B" })
   })
 
   it("段ごとの所要時間は最終のときの頭にだけ入り、最終レポートの印が立つと本文の頭がそれに替わる", () => {
@@ -277,10 +263,6 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
       step.body.kind === "text" ? [step.body.report] : [],
     )
 
-    expect(regions?.head).toBe(lead("架空の結論。"))
-    expect(regions?.finalHead).toMatch(
-      new RegExp(`^${lead("架空の結論。")}\n\n<div class="status">\n\n<div class="phase-times">`),
-    )
     expect(summary).toEqual({ kind: "markdown", markdown: "架空のまとめ。" })
     const surface = regions?.a2ui.kind === "surface" ? regions.a2ui : undefined
     expect(surface?.head.status).toEqual({
@@ -288,7 +270,6 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
       changedFiles: { kind: "none" },
     })
     expect(surface?.head.finalStatus.phaseTimes).toMatchObject({ kind: "times" })
-    expect(final).toMatchObject({ head: regions?.finalHead })
     expect(
       final?.kind === "regions" && final.a2ui.kind === "surface" && final.a2ui.head.status,
     ).toEqual(surface?.head.finalStatus)
@@ -305,8 +286,8 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
       finishedInGroup: [],
       phaseSummary: "",
     }
-    const finalOf = (workPlanClosing: "stopped" | "none") =>
-      shownReports(
+    const valuesOf = (workPlanClosing: "stopped" | "none") => {
+      const times = headOfTurn(
         turnOf(
           [
             ask,
@@ -317,10 +298,14 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
           SETTLED,
           true,
         ),
-      ).at(-1)
+      )?.status.phaseTimes
+      return times?.kind === "times"
+        ? times.rows.map((entry) => (entry.kind === "row" ? entry.row.valueText : ""))
+        : []
+    }
 
-    expect(finalOf("stopped")).toContain('<span class="phase-time-value">未着手</span>')
-    expect(finalOf("none")).toContain('<span class="phase-time-value">不明</span>')
+    expect(valuesOf("stopped")).toContain("未着手")
+    expect(valuesOf("none")).toContain("不明")
   })
 
   it("やり取りが閉じていないあいだの report には、段ごとの所要時間の帯と一覧を出さない", () => {
@@ -348,7 +333,8 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
 
     const [, last] = shownReports(turn)
 
-    expect(last).toBe(`${lead("架空の結論。")}\n\n架空の根拠。`)
+    expect(last).toBe("架空の結論。\n\n架空の根拠。")
+    expect(headOfTurn(turn)?.status.phaseTimes.kind).toBe("none")
   })
 
   it("task のあるレポートは、結論を一文の印で包み、task を本文に組まずに運ぶ（畳んだときの先頭行は結論）", () => {
@@ -365,12 +351,15 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
       true,
     )
 
-    expect(turn?.steps.find((step) => step.final)?.body).toEqual({
+    const finalBody = turn?.steps.find((step) => step.final)?.body
+    expect(headOf(finalBody?.kind === "text" ? finalBody.report : undefined)?.lead).toEqual({
+      kind: "conclusion",
+      text: "架空の結論。",
+    })
+    expect(finalBody).toEqual({
       kind: "text",
       report: {
-        ...regionsOf(`<div class="conclusion">\n\n架空の結論。\n\n</div>`, [
-          { id: 0, heading: "", markdown: "架空の根拠。" },
-        ]),
+        ...regionsOf("架空の結論。", [{ id: 0, heading: "" }]),
         a2ui: expect.objectContaining({ kind: "surface" }),
       },
       firstLine: "架空の結論。",
@@ -398,15 +387,14 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     const conclusionOnly = turnOf([ask, report("架空の結論だけ。"), finished], SETTLED, true)
 
     expect(shownReports(sectionsOnly)).toEqual(["架空の根拠。"])
-    expect(shownReports(conclusionOnly)).toEqual([lead("架空の結論だけ。")])
+    expect(shownReports(conclusionOnly)).toEqual(["架空の結論だけ。"])
   })
 
   it("checks が無ければお願いだけでも合図の行を出さない（お願いの本文は末尾に出る）", () => {
     const turn = turnOf([ask, report("架空の結論。", "", "架空のお願い"), finished], SETTLED, true)
 
-    expect(shownReports(turn)).toEqual([
-      `${lead("架空の結論。")}\n\n<div class="note note-favor">\n\n架空のお願い\n\n</div>`,
-    ])
+    expect(shownReports(turn)).toEqual(["架空の結論。\n\n架空のお願い"])
+    expect(headOfTurn(turn)?.checks.kind).toBe("none")
   })
 
   it("report が呼ばれたターンではツールの外に書いた本文を出さない（資料も締めのテキストも）", () => {
@@ -424,11 +412,11 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
       true,
     )
 
-    expect(shownReports(turn)).toEqual([lead("架空の結論。")])
+    expect(shownReports(turn)).toEqual(["架空の結論。"])
     expect(turn?.steps.find((step) => step.final)?.body).toEqual({
       kind: "text",
       report: {
-        ...regionsOf(lead("架空の結論。"), []),
+        ...regionsOf("架空の結論。", []),
         a2ui: noRootA2ui("架空の結論。", "favor-toolu_r1"),
       },
       firstLine: "架空の結論。",
@@ -445,7 +433,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
       true,
     )
 
-    expect(shownReports(turn)).toEqual([lead("途中の結論。"), lead("最後の結論。")])
+    expect(shownReports(turn)).toEqual(["途中の結論。", "最後の結論。"])
     expect(turn?.steps.flatMap((step) => firstLineOf(step) ?? [])).toEqual([
       "途中の結論。",
       "最後の結論。",
@@ -466,7 +454,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     expect(turn?.steps.find((step) => step.final)?.body).toEqual({
       kind: "text",
       report: {
-        ...regionsOf(lead("唯一の結論。"), []),
+        ...regionsOf("唯一の結論。", []),
         a2ui: noRootA2ui("唯一の結論。", "favor-toolu_r1"),
       },
       firstLine: "唯一の結論。",
@@ -483,7 +471,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
       false,
     )
 
-    expect(shownReports(running)).toEqual([lead("途中の結論。")])
+    expect(shownReports(running)).toEqual(["途中の結論。"])
     expect(running?.steps.find((step) => step.body.kind === "text")?.interim).toBe(true)
   })
 
@@ -504,7 +492,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     )
 
     expect(turns.map((turn) => shownReports(turn))).toEqual([
-      [lead("前のターンの結論。")],
+      ["前のターンの結論。"],
       ["テキストで書いた答え"],
     ])
   })

@@ -1,5 +1,4 @@
 // 面の頭の段ごとの所要時間（見出しの行・帯か横棒・一覧）を、値から直接描く。
-// 要素・属性・class・text ノードの割れ方は、同じ値を HTML の塊にした `phaseTimesMarkdown` を Markdown で描いたものと同じにする。
 
 import clsx from "clsx"
 import type { ReactElement } from "react"

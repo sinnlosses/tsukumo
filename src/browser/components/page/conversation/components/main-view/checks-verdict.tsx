@@ -1,5 +1,4 @@
 // 面の頭の合図の行（検証結果）を、値から直接描く。
-// 要素・属性・class・text ノードの割れ方は、同じ値を HTML の塊にした `reportChecksViewMarkdown` を Markdown で描いたものと同じにする。
 
 import clsx from "clsx"
 import type { ReactElement } from "react"

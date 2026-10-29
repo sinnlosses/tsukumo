@@ -35,8 +35,7 @@ export const PREVIEW_IMAGE_MISSING_SELECTOR = `${MAIN_REGION_SELECTOR} [role="im
 export const FLOW_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-flow_"]`
 /**
  * 検証結果の表（`report` の `checks`）。class 名でなく role・aria-label で指す
- * （`reportChecksViewMarkdown` と面の `ChecksVerdict` が組む `<div role="table" aria-label="検証結果">`
- * の属性はハッシュ化されない）。落ちた・確かめていない項目は「検証結果の問題」の表で開いて見え、
+ * （面の `ChecksVerdict` が組む `<div role="table" aria-label="検証結果">` の属性はハッシュ化されない）。落ちた・確かめていない項目は「検証結果の問題」の表で開いて見え、
  * 通った項目は「検証結果」の表で `<details>` の中に畳まれる。
  */
 export const CHECKS_SELECTOR = `${MAIN_REGION_SELECTOR} [role="table"][aria-label^="検証結果"]`

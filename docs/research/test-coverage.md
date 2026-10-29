@@ -98,7 +98,7 @@
   **`toCharacterInfo` が `revision` を `characterAssetCacheKey` に渡していること**を守るのはこれだけ。
   消すと引数を落としても誰も落ちない
 - `test/browser/components/domain/sidebar/session-info.test.tsx` の `model が opus のみを含むとき、fable を誤って
-  選択しない` / `model が sonnet / haiku のとき、fable を誤って選択しない` — 同じ分岐を通るが、
+選択しない` / `model が sonnet / haiku のとき、fable を誤って選択しない` — 同じ分岐を通るが、
   **`fable` の誤選択の回帰テスト**なので規約の表では「残す」側
 - `test/browser/components/page/conversation/main-view/markdown/markdown.test.tsx` の CJK の強調の一群（6件）— 同じ
   プラグインの同じ分岐だが、これも回帰テスト（記法のまま出た事故）

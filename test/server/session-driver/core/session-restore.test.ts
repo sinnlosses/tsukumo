@@ -315,11 +315,7 @@ describe("toRestoredEvents", () => {
         kind: "report",
         regions: {
           kind: "regions",
-          head: '<div class="conclusion-lead">\n\n架空の結論。\n\n</div>',
-          finalHead: '<div class="conclusion-lead">\n\n架空の結論。\n\n</div>',
-          sections: [{ id: 0, heading: "", markdown: "架空の根拠。" }],
-          retrospective: "",
-          favor: { id: "favor-r-1", markdown: "" },
+          sections: [{ id: 0, heading: "" }],
           a2ui: expect.objectContaining({ kind: "surface" }),
         },
         conclusion: "架空の結論。",

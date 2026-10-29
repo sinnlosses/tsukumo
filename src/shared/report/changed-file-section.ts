@@ -4,7 +4,7 @@ import { countBy } from "remeda"
 
 import type { ChangedFile } from "./changed-file.ts"
 import type { ReportChangeSummary } from "./report-change-summary.ts"
-import { FILE_CHANGE_ORDER, filesMarkdown } from "./report-file-markdown.ts"
+import { FILE_CHANGE_ORDER } from "./report-file-markdown.ts"
 import { type FileTreeRow, fileTreeRows } from "./report-file-tree.ts"
 
 /**
@@ -40,18 +40,4 @@ export function changedFilesView(summary: ReportChangeSummary): ChangedFilesView
       return count > 0 ? [{ change, count }] : []
     }),
   }
-}
-
-export function changedFilesMarkdown(summary: ReportChangeSummary): string {
-  if (summary.kind === "none" || summary.changed.length === 0) {
-    return ""
-  }
-  const tree = filesMarkdown({
-    kind: "files",
-    items: summary.changed.map(({ path, change }) => ({ path, change, note: "" })),
-    title: "",
-    fold: "",
-    aside: "",
-  })
-  return `<details><summary>変更したファイル ${String(summary.changed.length)}</summary>\n\n${tree}\n\n</details>`
 }

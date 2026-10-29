@@ -1,5 +1,4 @@
 // 面の頭の「変更したファイル n」の畳んだ節（樹形図と種別の合計の札）を、値から直接描く。
-// 要素・属性・class・text ノードの割れ方は、同じ値を HTML の塊にした `changedFilesMarkdown` を Markdown で描いたものと同じにする。
 
 import clsx from "clsx"
 import { Fragment, type ReactElement } from "react"

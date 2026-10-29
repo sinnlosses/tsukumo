@@ -15,7 +15,7 @@ import { applySessionEvent } from "../../../../src/shared/session/session-fold.t
 import { INITIAL_SESSION_STATE } from "../../../../src/shared/session/session-state.ts"
 import {
   firstLineOf,
-  lead,
+  headOf,
   materialReport,
   reportOf,
   SETTLED,
@@ -108,9 +108,6 @@ describe("mainViewTurns（締めの speak → レポートで終える並び）"
 
 const BASIS_BLOCK = { kind: "markdown", markdown: "架空の根拠。", fold: "", aside: "" } as const
 
-/** お願いの欄の Markdown（記法の「お願い」の塊で包む）。 */
-const favorNote = (favor: string) => `<div class="note note-favor">\n\n${favor}\n\n</div>`
-
 describe("mainViewTurns（report ツールで受け取ったレポート）", () => {
   it("conclusion → body → favor（お願いの塊）の順に1つの本文へ組み、最終レポートにする", () => {
     const turn = turnOf(
@@ -119,14 +116,12 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
       true,
     )
 
-    expect(shownReports(turn)).toEqual([
-      `${lead("架空の結論。")}\n\n| 列 |\n| --- |\n| 値 |\n\n${favorNote("架空のお願い")}`,
-    ])
+    expect(shownReports(turn)).toEqual(["架空の結論。\n\n| 列 |\n| --- |\n| 値 |\n\n架空のお願い"])
     expect(turn?.steps.map((step) => step.final)).toEqual([true])
     expect(firstLineOf(turn?.steps[0])).toBe("架空の結論。")
   })
 
-  it("振り返りの見出しは sections の後ろ・favor の前に置く", () => {
+  it("振り返りは sections とは別の欄の値で持ち、本文の字は結論 → 節 → お願いの順", () => {
     const turn = turnOf(
       [
         ask,
@@ -143,12 +138,11 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
       true,
     )
 
-    const [shown] = shownReports(turn)
-    const order = ["架空の根拠。", "## 振り返り", 'class="note note-favor"'].map((part) =>
-      shown?.indexOf(part),
-    )
-    expect(order).toEqual(order.toSorted((a, b) => (a ?? 0) - (b ?? 0)))
-    expect(order.every((index) => index !== undefined && index >= 0)).toBe(true)
+    const body = turn?.steps[0]?.body
+    const a2ui =
+      body?.kind === "text" && body.report.kind === "regions" ? body.report.a2ui : undefined
+    expect(shownReports(turn)).toEqual(["架空の結論。\n\n架空の根拠。\n\n架空のお願い"])
+    expect(a2ui?.kind === "surface" ? a2ui.retrospective.kind : undefined).toBe("leaves")
   })
 
   it("振り返りの塊は見出し「振り返り」の下の欄に、結果のあとに続けて描く", () => {
@@ -174,12 +168,19 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
 
     const body = turn?.steps[0]?.body
     const regions = body?.kind === "text" ? body.report : undefined
-    expect(regions?.kind === "regions" ? regions.retrospective : undefined).toBe(
-      "## 振り返り\n\n架空の結果。\n\n架空の補足。",
-    )
+    const surface = regions?.kind === "regions" ? regions.a2ui : undefined
+    expect(surface?.kind === "surface" ? surface.retrospective : undefined).toMatchObject({
+      kind: "leaves",
+      heading: "## 振り返り",
+      headingText: "振り返り",
+      entries: [
+        { kind: "text", markdown: "架空の結果。" },
+        { kind: "leaf", id: expect.any(String) },
+      ],
+    })
   })
 
-  it("欄は頭・節（並びの位置を ID に持つ）・振り返り・お願いに分かれ、描く順の欄はそれを順に並べたもの", () => {
+  it("節は並びの位置を ID に、見出しの字を前後の空白なしで持ち、お願いは面の値に載る", () => {
     const turn = turnOf(
       [
         ask,
@@ -207,18 +208,16 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
 
     const body = turn?.steps[0]?.body
     const regions = body?.kind === "text" ? body.report : undefined
-    const retrospective = "## 振り返り\n\n架空の結果。"
     expect(regions).toEqual({
       kind: "regions",
-      head: lead("架空の結論。"),
-      finalHead: lead("架空の結論。"),
       sections: [
-        { id: 0, heading: "架空の節A", markdown: "## 架空の節A\n\n架空の本文A。" },
-        { id: 1, heading: "", markdown: "架空の本文B。" },
+        { id: 0, heading: "架空の節A" },
+        { id: 1, heading: "" },
       ],
-      retrospective,
-      favor: { id: "favor-toolu_r1", markdown: "架空のお願い" },
-      a2ui: expect.objectContaining({ kind: "surface" }),
+      a2ui: expect.objectContaining({
+        kind: "surface",
+        favor: { id: "favor-toolu_r1", text: "架空のお願い" },
+      }),
     })
   })
 
@@ -237,9 +236,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
       true,
     )
 
-    const [shown] = shownReports(turn)
-    expect(shown?.startsWith(lead("架空の結論。"))).toBe(true)
-    expect(shown?.endsWith(`</div>\n\n架空の根拠。\n\n${favorNote("架空のお願い")}`)).toBe(true)
+    expect(shownReports(turn)).toEqual(["架空の結論。\n\n架空の根拠。\n\n架空のお願い"])
   })
 
   it("report が呼ばれなかったターンの本文には整形を掛けない", () => {
@@ -305,20 +302,14 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
       }
 
       it("最終の頭にだけ出て、中間の頭には出ない", () => {
-        const regions = regionsOf([{ path: "src/架空/a.ts", change: "added" }])
+        const head = headOf(regionsOf([{ path: "src/架空/a.ts", change: "added" }]))
 
-        expect(regions?.kind === "regions" ? regions.finalHead : "").toContain(
-          "<summary>変更したファイル 1</summary>",
-        )
-        expect(regions?.kind === "regions" ? regions.head : "").not.toContain("変更したファイル")
+        expect(head?.finalStatus.changedFiles).toMatchObject({ kind: "files", count: 1 })
+        expect(head?.status.changedFiles).toEqual({ kind: "none" })
       })
 
       it("一覧が空なら最終の頭にも出ない", () => {
-        const regions = regionsOf([])
-
-        expect(regions?.kind === "regions" ? regions.finalHead : "").not.toContain(
-          "変更したファイル",
-        )
+        expect(headOf(regionsOf([]))?.finalStatus.changedFiles).toEqual({ kind: "none" })
       })
     })
 
@@ -434,27 +425,35 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
         ],
       },
     ]
-    const shownWith = (figure: RecordedReportFigure): string =>
-      shownReports(
-        turnOf(
-          [
-            ask,
-            reportOfDrawn({
-              toolUseId: "toolu_r1",
-              conclusion: "架空の結論。",
-              figure,
-              sections,
-              checks,
-            }),
-            finished,
-          ],
-          SETTLED,
-          true,
-        ),
-      )[0] ?? ""
+    const surfaceWith = (figure: RecordedReportFigure) => {
+      const turn = turnOf(
+        [
+          ask,
+          reportOfDrawn({
+            toolUseId: "toolu_r1",
+            conclusion: "架空の結論。",
+            figure,
+            sections,
+            checks,
+          }),
+          finished,
+        ],
+        SETTLED,
+        true,
+      )
+      const body = turn?.steps.find((step) => step.body.kind === "text")?.body
+      const a2ui =
+        body?.kind === "text" && body.report.kind === "regions" ? body.report.a2ui : undefined
+      if (a2ui?.kind !== "surface") throw new Error("面が無い")
+      return a2ui
+    }
+    const captionOrdinals = (a2ui: ReturnType<typeof surfaceWith>) =>
+      Object.values(a2ui.leafValues).flatMap(({ captionNumber }) =>
+        captionNumber.kind === "none" ? [] : [captionNumber.ordinal],
+      )
 
-    it("figure の図は checks の下・sections の上に「図 1」で描き、sections の図の番号はそのあとに続く", () => {
-      const shown = shownWith({
+    it("figure の図は面の先頭の欄に「図 1」で持ち、sections の図の番号はそのあとに続く", () => {
+      const a2ui = surfaceWith({
         kind: "graph",
         title: "架空の欄の図",
         direction: "LR",
@@ -464,24 +463,24 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
         aside: "",
       })
 
-      const order = [
-        shown.indexOf('aria-label="検証結果"'),
-        shown.indexOf('図 1</span><span class="caption-text">架空の欄の図'),
-        shown.indexOf("架空の根拠。"),
-        shown.indexOf('図 2</span><span class="caption-text">架空の節の図'),
-      ]
-      expect(order.every((index) => index >= 0)).toBe(true)
-      expect(order).toEqual(order.toSorted((a, b) => a - b))
-      expect(shown).not.toContain("checks-summary-favor")
+      const figureLeaf = a2ui.figure.kind === "leaves" ? a2ui.figure.entries[0] : undefined
+      expect(figureLeaf?.kind).toBe("leaf")
+      expect(
+        figureLeaf?.kind === "leaf" ? a2ui.leafValues[figureLeaf.id]?.captionNumber : undefined,
+      ).toEqual({ kind: "figure", ordinal: 1 })
+      expect(captionOrdinals(a2ui).toSorted()).toEqual([1, 2])
+      expect(a2ui.head.checks.kind).toBe("checks")
+      expect(a2ui.favor.text).toBe("")
     })
 
-    it("none は何も描かず、sections の図が「図 1」になる", () => {
-      const withNone = shownWith({ kind: "none", reason: "no-shape" })
+    it("none は何も持たず、sections の図が「図 1」になる", () => {
+      const withNone = surfaceWith({ kind: "none", reason: "no-shape" })
 
-      expect(withNone).toBe(shownWith({ kind: "none", reason: "unrecorded" }))
-      expect(withNone).toContain('図 1</span><span class="caption-text">架空の節の図')
-      expect(withNone).not.toContain("図 2")
-      expect(withNone).not.toContain("no-shape")
+      expect(withNone.figure).toEqual({ kind: "none" })
+      expect(captionOrdinals(withNone)).toEqual([1])
+      expect(withNone.leafValues).toEqual(
+        surfaceWith({ kind: "none", reason: "unrecorded" }).leafValues,
+      )
     })
   })
 })

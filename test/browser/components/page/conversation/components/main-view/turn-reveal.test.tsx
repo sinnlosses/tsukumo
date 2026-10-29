@@ -5,7 +5,7 @@ import { useDraftedReports } from "../../../../../../../src/browser/components/p
 import { mainViewDraftOf } from "../../../../../../../src/browser/domain/main-view/a2ui-draft-view.ts"
 import type { MainViewReportBody } from "../../../../../../../src/shared/session/main-view-shape.ts"
 import { STAGED_PARTS } from "../../../../../../fixture/a2ui-component.ts"
-import { bodyMarkdownOf } from "../../../../../../fixture/main-view-entry.ts"
+import { bodyTextOf } from "../../../../../../fixture/main-view-entry.ts"
 import { step, turn, turnBodyText, TURN_ID } from "../../../../../../fixture/turn.ts"
 
 // 本物の `Report`（react-markdown 一式と演出の配線を持つ）ではなく、どの本文に演出を掛けると
@@ -25,7 +25,7 @@ vi.mock(
       readonly reveal: boolean
       turnId: number
     }) => {
-      const markdown = bodyMarkdownOf(props.body)
+      const markdown = bodyTextOf(props.body)
       revealed.push({ markdown, reveal: props.reveal, turnId: props.turnId })
       return <div data-report-stub="yes">{markdown}</div>
     },
@@ -248,7 +248,7 @@ describe("Turn（書き上げる演出を掛ける相手）", () => {
       />,
     )
 
-    expect(revealed.some((call) => call.markdown.includes("架空の段落一"))).toBe(true)
+    expect(revealed.some((call) => call.markdown.includes("架空の結論。"))).toBe(true)
     expect(revealTargets()).toEqual([])
   })
 

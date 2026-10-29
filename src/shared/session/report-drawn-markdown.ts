@@ -3,7 +3,6 @@
 import type { DrawnReport } from "../report/report-drawn-outline.ts"
 import { drawnReportOf } from "../report/report-drawn-outline.ts"
 import type { ReportImageSource } from "../report/report-image-markdown.ts"
-import { joinParts } from "../report/report-inline-markdown.ts"
 import { type ReportLeafLayout, reportLeafLayoutOf } from "../report/report-leaf-value.ts"
 import { type ReportSectionPieces, reportSectionPieces } from "../report/report-markdown.ts"
 import type { SessionRecord } from "./session-record.ts"
@@ -16,8 +15,6 @@ export type ReportDrawnPieces = {
   readonly imageSource: ReportImageSource
   /** `drawn.sections` と同じ並びの、節の塊ごとの Markdown。 */
   readonly pieces: readonly ReportSectionPieces[]
-  /** `pieces` を節ごとに1本にしたもの。塊が無ければ空文字。 */
-  readonly markdowns: readonly string[]
 }
 
 export function reportDrawnPieces(report: ReportRecord): ReportDrawnPieces {
@@ -39,16 +36,5 @@ export function reportDrawnPieces(report: ReportRecord): ReportDrawnPieces {
     layout,
     imageSource,
     pieces,
-    markdowns: pieces.map((piece) => joinParts([piece.heading, ...piece.blocks])),
   }
-}
-
-/** 振り返りを除く節の Markdown の字数の合計。体験の指標の `bodyChars`。 */
-export function reportBodyChars(report: ReportRecord): number {
-  const { drawn, markdowns } = reportDrawnPieces(report)
-  return drawn.sections.reduce(
-    (total, section, index) =>
-      section.role === "retrospective" ? total : total + (markdowns[index]?.length ?? 0),
-    0,
-  )
 }

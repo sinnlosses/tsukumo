@@ -8,7 +8,7 @@ import { mainViewDraftOf } from "../../../../../../../src/browser/domain/main-vi
 import type { MainViewReportBody } from "../../../../../../../src/shared/session/main-view-shape.ts"
 import { INITIAL_SESSION_STATE } from "../../../../../../../src/shared/session/session-state.ts"
 import { STAGED_PARTS } from "../../../../../../fixture/a2ui-component.ts"
-import { bodyMarkdownOf } from "../../../../../../fixture/main-view-entry.ts"
+import { bodyTextOf } from "../../../../../../fixture/main-view-entry.ts"
 import { step, turn, turnBodyText } from "../../../../../../fixture/turn.ts"
 import { putSession } from "../../../../../session-store.ts"
 
@@ -17,7 +17,7 @@ vi.mock(
   "../../../../../../../src/browser/components/page/conversation/components/main-view/report.tsx",
   () => ({
     Report: (props: { readonly body: MainViewReportBody }) => (
-      <div data-report-stub="yes">{bodyMarkdownOf(props.body)}</div>
+      <div data-report-stub="yes">{bodyTextOf(props.body)}</div>
     ),
   }),
 )
@@ -53,7 +53,7 @@ describe("Turn（report の草稿）", () => {
     expect(sections).toHaveLength(2)
     expect(sections[1]?.hasAttribute(REPORT_DRAFT_ATTRIBUTE)).toBe(true)
     expect(sections[1]?.hasAttribute(REPORT_STEP_ATTRIBUTE)).toBe(false)
-    expect(sections[1]?.textContent).toContain("架空の段落三")
+    expect(sections[1]?.textContent).toContain("架空の結論。")
   })
 
   it("ステップがまだ無くても草稿は描き、草稿が外れると面も消える", () => {

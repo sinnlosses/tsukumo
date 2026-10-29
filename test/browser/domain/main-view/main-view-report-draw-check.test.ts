@@ -26,14 +26,10 @@ const EMPTY_SURFACE: Extract<MainViewA2uiReport, { readonly kind: "surface" }> =
   favor: { id: "favor-toolu_fictional", text: "" },
 }
 
-/** 欄の Markdown は空のまま、面の値だけを替えて確かめる。 */
+/** 節の無い欄に、面の値だけを替えて確かめる。 */
 const regionsWith = (a2ui: MainViewA2uiReport): MainViewReportRegions => ({
   kind: "regions",
-  head: "",
-  finalHead: "",
   sections: [],
-  retrospective: "",
-  favor: { id: "favor-toolu_fictional", markdown: "" },
   a2ui,
 })
 

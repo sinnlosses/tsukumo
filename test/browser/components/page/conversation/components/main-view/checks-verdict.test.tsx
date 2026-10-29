@@ -96,7 +96,7 @@ describe("ChecksVerdict（面の合図の行）", () => {
   it("お願いの印を押すと、location.hash を書かずにお願いの欄へ転がす", () => {
     const body = regionsOf(MIXED, "架空のお願い。")
     const { container } = render(<Report reveal={false} turnId={1} className="" body={body} />)
-    const favor = container.querySelector(`[id="${body.favor.id}"]`)
+    const favor = container.querySelector(`[id="${body.a2ui.favor.id}"]`)
     if (!(favor instanceof HTMLElement)) throw new Error("お願いの欄が無い")
     const scrolled = vi.fn<(options?: ScrollIntoViewOptions | boolean) => void>()
     favor.scrollIntoView = scrolled

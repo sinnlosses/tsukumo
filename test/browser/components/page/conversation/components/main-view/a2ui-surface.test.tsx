@@ -260,7 +260,7 @@ describe("頭とお願い（A2UI の面）", () => {
     expect(head?.querySelector(":scope > div > p")?.textContent).toBe("架空の結論。")
     expect(head?.querySelectorAll("b")[0]?.textContent).toBe("14")
     const favor = container.querySelector('[data-report-region="favor"]')
-    expect(favor?.id).toBe(body.favor.id)
+    expect(favor?.id).toBe(body.a2ui.favor.id)
     expect(favor?.textContent).toContain("お願い")
     expect(favor?.textContent).toContain("架空のお願い。")
     const stubs = [...container.querySelectorAll("[data-markdown-stub]")].map(

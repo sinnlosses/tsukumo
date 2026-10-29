@@ -18,13 +18,6 @@ const BEFORE_CLASS_NAMES = {
   worse: "stat-before stat-worse",
 } as const satisfies Record<StatLayout["beforeTone"], string>
 
-/** 結論の直下に置く数の札（`keyFigures`）。札は `stats` と同じで、包みの `key-figures` だけが違う。無ければ空文字。 */
-export function keyFiguresMarkdown(items: readonly StatItem[]): string {
-  return items.length === 0
-    ? ""
-    : `<div class="key-figures"><div class="stats">${items.map(statMarkdown).join("")}</div></div>`
-}
-
 export function statMarkdown(item: StatItem): string {
   const { before, value, total, label } = item
   const layout = statLayoutOf(item)

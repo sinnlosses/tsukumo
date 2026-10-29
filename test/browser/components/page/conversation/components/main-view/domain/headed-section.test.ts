@@ -19,15 +19,7 @@ function textStep(
       kind: "text",
       report: {
         kind: "regions",
-        head: "",
-        finalHead: "",
-        sections: headings.map((heading, index) => ({
-          id: index,
-          heading,
-          markdown: heading === "" ? "架空の本文" : `## ${heading}`,
-        })),
-        retrospective: "",
-        favor: { id: "favor-toolu_fictional", markdown: "" },
+        sections: headings.map((heading, index) => ({ id: index, heading })),
         a2ui: noRootA2ui(),
       },
       firstLine: "",

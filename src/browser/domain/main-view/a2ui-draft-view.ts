@@ -61,20 +61,13 @@ function draftRegions(
   const layout = reportLeafLayoutOf(tidied)
   const imageSource = { kind: "none" } as const
   const pieces = reportSectionPieces(tidied, imageSource, layout)
-  const head = isBlankText(conclusion)
-    ? ""
-    : `<div class="conclusion-lead">\n\n${conclusion}\n\n</div>`
   return {
     kind: "regions",
-    head,
-    finalHead: head,
     sections: tidied.flatMap((section, id) => {
       const piece = pieces[id]
       const markdown = piece === undefined ? "" : joinParts([piece.heading, ...piece.blocks])
-      return markdown === "" ? [] : [{ id, heading: section.heading.trim(), markdown }]
+      return markdown === "" ? [] : [{ id, heading: section.heading.trim() }]
     }),
-    retrospective: "",
-    favor: { id: `favor-${toolUseId}`, markdown: "" },
     a2ui: a2uiReportView(
       drawn,
       drawnReport,
