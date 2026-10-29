@@ -1,14 +1,14 @@
 // セッションの記録を、メインビューに時系列で流す記録（`MainViewEntry`）へ変える。
 // セッションの状態から導くだけで、別の状態は持たない。
 
-import { changedFilesMarkdown } from "../report/changed-file-section.ts"
+import { changedFilesMarkdown, changedFilesView } from "../report/changed-file-section.ts"
 import { reportChecksView } from "../report/report-check-view.ts"
 import { reportChecksViewMarkdown } from "../report/report-check.ts"
 import { drawnReportOf } from "../report/report-drawn-outline.ts"
 import { joinParts } from "../report/report-inline-markdown.ts"
 import { reportLeafLayoutOf } from "../report/report-leaf-value.ts"
 import { reportSectionPieces } from "../report/report-markdown.ts"
-import { phaseTimesMarkdown } from "../report/report-phase-time.ts"
+import { phaseTimesMarkdown, phaseTimesView } from "../report/report-phase-time.ts"
 import { keyFiguresMarkdown } from "../report/report-stat-markdown.ts"
 import { isBlankText } from "../utils/blank-text.ts"
 import { a2uiReportView } from "./a2ui-report-view.ts"
@@ -144,7 +144,7 @@ function toMainViewEntries(record: SessionRecord, context: TurnContext): readonl
 
 /**
  * `report` の引数を欄に組む。頭は `conclusion` → `keyFigures`（数の札）→ 合図の行と段ごとの所要時間の順で、節は `components` から導く（`drawnReportOf`）。
- * 面（`a2ui`）には頭を結論・数の札・合図の行（`checks`）・残り（`status`）に分けた値も載せる。`head` は旧い記録の経路が読む。
+ * 面（`a2ui`）には頭を結論・数の札・合図の行（`checks`）・段ごとの所要時間と変更したファイル（`status`・`finalStatus`）に分けた値と、お願い（`favor`）も載せる。`head` は旧い記録の経路が読む。
  * 図は見出しの無い先頭の節として描き、図の番号は本文の図と通しで振られる。図が無ければ何も描かない。
  * 旧い経路の合図の行と段ごとの所要時間は {@link statusMarkdown}。段ごとの所要時間は最終のときの頭にだけ、同じ依頼のワークプランの記録（止めて再開した依頼の記録も引き継ぐ。{@link phaseDurations}）と `report` の `workPlanClosing` から描く。
  * `favor` はレポートの記法の「お願い」の塊で包むので、サニタイズも記法の解釈もテキストの本文と同じ経路を通る。
@@ -165,8 +165,9 @@ function reportRegionsOf(
     (command) => bashCommandDuration(context, command),
     isBlankText(report.favor) ? { kind: "none" } : { kind: "favor", id: favorId },
   )
+  const phaseRows = phaseDurations(context.trail, report.time, report.workPlanClosing)
   const finalRest = joinParts([
-    phaseTimesMarkdown(phaseDurations(context.trail, report.time, report.workPlanClosing)),
+    phaseTimesMarkdown(phaseRows),
     changedFilesMarkdown(report.changeSummary),
   ])
   const checksMarkdown = reportChecksViewMarkdown(checks)
@@ -207,15 +208,26 @@ function reportRegionsOf(
     }),
     retrospective: markdowns[sections.length] ?? "",
     favor: { id: favorId, markdown: report.favor },
-    a2ui: a2uiReportView(report.components, drawn, pieces, layout, imageSource, {
-      lead: isBlankText(report.conclusion)
-        ? { kind: "none" }
-        : { kind: leadKind, text: report.conclusion },
-      keyFigures: report.keyFigures,
-      checks,
-      status: "",
-      finalStatus: finalRest,
-    }),
+    a2ui: a2uiReportView(
+      report.components,
+      drawn,
+      pieces,
+      layout,
+      imageSource,
+      {
+        lead: isBlankText(report.conclusion)
+          ? { kind: "none" }
+          : { kind: leadKind, text: report.conclusion },
+        keyFigures: report.keyFigures,
+        checks,
+        status: { phaseTimes: { kind: "none" }, changedFiles: { kind: "none" } },
+        finalStatus: {
+          phaseTimes: phaseTimesView(phaseRows),
+          changedFiles: changedFilesView(report.changeSummary),
+        },
+      },
+      { id: favorId, text: report.favor },
+    ),
   }
 }
 

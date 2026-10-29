@@ -50,7 +50,9 @@ export function CodeSpan(props: {
   readonly path: string
   readonly checksSwatch: boolean
   readonly className: string | undefined
-  readonly attributes: JSX.IntrinsicElements["code"]
+  readonly attributes: JSX.IntrinsicElements["code"] & {
+    readonly [name: `data-${string}`]: string
+  }
   readonly children: ReactNode
 }): ReactElement {
   const { text, path, checksSwatch, className, attributes, children } = props

@@ -7,7 +7,7 @@ import { fileTreeRows } from "./report-file-tree.ts"
 import { htmlAttribute, htmlInline, htmlInlineWithCode } from "./report-inline-markdown.ts"
 
 /** ファイルの変更の種別 → 札の記号・語・見た目の class（色は `report-notation.module.css` 側が持つ）。 */
-const FILE_CHANGE_BADGES = {
+export const FILE_CHANGE_BADGES = {
   added: { symbol: "+", label: "追加", className: "file-change-added" },
   modified: { symbol: "~", label: "変更", className: "file-change-modified" },
   deleted: { symbol: "-", label: "削除", className: "file-change-deleted" },
@@ -18,7 +18,7 @@ const FILE_CHANGE_BADGES = {
 >
 
 /** 塊の頭の合計の札と、行ごとの札を並べる順。 */
-const FILE_CHANGE_ORDER = [
+export const FILE_CHANGE_ORDER = [
   "added",
   "modified",
   "deleted",

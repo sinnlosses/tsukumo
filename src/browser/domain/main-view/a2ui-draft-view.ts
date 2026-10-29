@@ -17,8 +17,15 @@ import { a2uiReportView } from "../../../shared/session/a2ui-report-view.ts"
 import type {
   MainViewDraft,
   MainViewReportRegions,
+  MainViewSurfaceStatus,
 } from "../../../shared/session/main-view-shape.ts"
 import { isBlankText } from "../../../shared/utils/blank-text.ts"
+
+/** 草稿は段ごとの所要時間も変更したファイルも持たない。 */
+const NO_SURFACE_STATUS = {
+  phaseTimes: { kind: "none" },
+  changedFiles: { kind: "none" },
+} as const satisfies MainViewSurfaceStatus
 
 /**
  * 部品の一覧から草稿を作る。根の `Report` が無ければ undefined（根から辿れないので何も描かない）。
@@ -68,14 +75,22 @@ function draftRegions(
     }),
     retrospective: "",
     favor: { id: `favor-${toolUseId}`, markdown: "" },
-    a2ui: a2uiReportView(drawn, drawnReport, pieces, layout, imageSource, {
-      lead: isBlankText(conclusion)
-        ? { kind: "none" }
-        : { kind: "conclusion-lead", text: conclusion },
-      keyFigures: [],
-      checks: { kind: "none" },
-      status: "",
-      finalStatus: "",
-    }),
+    a2ui: a2uiReportView(
+      drawn,
+      drawnReport,
+      pieces,
+      layout,
+      imageSource,
+      {
+        lead: isBlankText(conclusion)
+          ? { kind: "none" }
+          : { kind: "conclusion-lead", text: conclusion },
+        keyFigures: [],
+        checks: { kind: "none" },
+        status: NO_SURFACE_STATUS,
+        finalStatus: NO_SURFACE_STATUS,
+      },
+      { id: `favor-${toolUseId}`, text: "" },
+    ),
   }
 }

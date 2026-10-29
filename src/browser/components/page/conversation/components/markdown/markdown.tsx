@@ -6,7 +6,10 @@
 
 import type { ReactElement } from "react"
 
-import type { REPORT_DRAWN_MARK_NAMES } from "../../../../../../shared/report/report-notation.ts"
+import type {
+  REPORT_DRAWN_MARK_NAMES,
+  ReportFileMarkName,
+} from "../../../../../../shared/report/report-notation.ts"
 import type { TIMELINE_MARK_NAMES } from "../../../../../../shared/report/timeline-markdown.ts"
 import { deferredModule } from "../../../../../hooks/deferred-module.ts"
 import styles from "./markdown.module.css"
@@ -25,6 +28,7 @@ import type {
 } from "./renderer/markdown-renderer.tsx"
 import { MermaidBlock } from "./renderer/mermaid-block.tsx"
 import { NoteLabel as NoteLabelView } from "./renderer/note-label.tsx"
+import { CodeSpan } from "./renderer/report-code.tsx"
 import { BeforeAfterSwap, ReportImage } from "./renderer/report-image.tsx"
 import notationStyles from "./renderer/report-notation.module.css"
 
@@ -228,9 +232,23 @@ export function checksClassName(
   return notationStyles[`report-${name}`]
 }
 
+/** 段ごとの所要時間の部品が付ける class 名（所要時間の HTML の塊と同じ見た目）。 */
+export function phaseTimesClassName(
+  name: Extract<(typeof REPORT_DRAWN_MARK_NAMES)[number], `phase-${string}`>,
+): string | undefined {
+  return notationStyles[`report-${name}`]
+}
+
+/** 変更したファイルの部品が付ける class 名（`files` の HTML の塊と同じ見た目）。 */
+export function filesClassName(name: ReportFileMarkName): string | undefined {
+  return notationStyles[`report-${name}`]
+}
+
 export { ZoomableSvgFigure }
 
 export { BeforeAfterSwap, ReportImage }
+
+export { CodeSpan }
 
 /**
  * mermaid のソースを図に描く。

@@ -282,11 +282,15 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     )
     expect(summary).toEqual({ kind: "markdown", markdown: "架空のまとめ。" })
     const surface = regions?.a2ui.kind === "surface" ? regions.a2ui : undefined
-    expect(surface?.head.status).toBe("")
+    expect(surface?.head.status).toEqual({
+      phaseTimes: { kind: "none" },
+      changedFiles: { kind: "none" },
+    })
+    expect(surface?.head.finalStatus.phaseTimes).toMatchObject({ kind: "times" })
     expect(final).toMatchObject({ head: regions?.finalHead })
     expect(
       final?.kind === "regions" && final.a2ui.kind === "surface" && final.a2ui.head.status,
-    ).toBe(surface?.head.finalStatus)
+    ).toEqual(surface?.head.finalStatus)
   })
 
   it("workPlanClosing が stopped の最終レポートでは、呼ばなかった段が「未着手」と出て、none なら「不明」と出る", () => {

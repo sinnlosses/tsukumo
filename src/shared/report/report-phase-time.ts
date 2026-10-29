@@ -1,7 +1,7 @@
-// 最終レポートの段ごとの所要時間（1本の帯と一覧）の形と、HTML の組み立て。
+// 最終レポートの段ごとの所要時間（1本の帯と一覧）の形と、描く順に並べ終えた値・HTML の組み立て。
 
 import { formatElapsed, formatMeasured, type MeasuredTime } from "../utils/elapsed-time.ts"
-import { htmlAttribute, htmlInline } from "./report-inline-markdown.ts"
+import { escapeHtml, plainInline } from "./report-inline-markdown.ts"
 
 /**
  * 時間を出さない理由。`none` は理由が無い（測れたか、測れなかった「不明」）。
@@ -33,8 +33,86 @@ export type PhaseTimeRow =
     }
 
 /**
- * 段ごとの所要時間（1つの HTML の塊）。段が無ければ空文字。
- * 見出しの行（計）・帯か横棒・一覧の順に出す。
+ * 段ごとの所要時間を描く順に並べ終えた値。段が無ければ `none`。
+ * 字（逃がす前の素の字）・%・見た目の種類まで決めてあり、描く側は算術をしない。
+ */
+export type PhaseTimesView =
+  | { readonly kind: "none" }
+  | {
+      readonly kind: "times"
+      /** 見出しの行の「計 …」の字。 */
+      readonly totalText: string
+      readonly chart: PhaseChartView
+      readonly rows: readonly PhaseListEntryView[]
+    }
+
+/** 並列の段が無い回は1本の帯、ある回は1行1段の横棒（waterfall）。 */
+export type PhaseChartView =
+  | { readonly kind: "band"; readonly regions: readonly PhaseBandRegionView[] }
+  | { readonly kind: "waterfall"; readonly lines: readonly PhaseWaterfallLineView[] }
+
+/** 帯の1区間。`flexGrow` は区間の時間（ミリ秒）。測れない区間は固定幅の斜線。 */
+export type PhaseBandRegionView =
+  | {
+      readonly kind: "segment"
+      readonly title: string
+      readonly longest: boolean
+      readonly flexGrow: number
+    }
+  | { readonly kind: "unknown"; readonly title: string }
+
+/** waterfall の1行。段の棒1本か、並列の段の包み（壁時計の囲みと中の段の棒）。 */
+export type PhaseWaterfallLineView =
+  | PhaseWaterfallBarView
+  | { readonly kind: "group"; readonly items: readonly PhaseWaterfallGroupItemView[] }
+
+/** 並列の段の包みの中身。壁時計が測れない包みには `wall` を置かない。 */
+export type PhaseWaterfallGroupItemView =
+  | {
+      readonly kind: "wall"
+      readonly title: string
+      readonly longest: boolean
+      readonly marginLeftPercent: number
+      readonly widthPercent: number
+    }
+  | PhaseWaterfallBarView
+
+/** waterfall の棒1本。`unknown` は開始か所要が測れなかった斜線の欠片。 */
+export type PhaseWaterfallBarView = {
+  readonly kind: "bar"
+  readonly title: string
+  readonly mark: "plain" | "longest" | "unknown"
+  readonly marginLeftPercent: number
+  readonly widthPercent: number
+}
+
+/** 一覧の1項目。段の行か、並列の段の行と字下げする中の段の行の包み。 */
+export type PhaseListEntryView =
+  | { readonly kind: "row"; readonly row: PhaseListRowView }
+  | {
+      readonly kind: "group"
+      readonly head: PhaseListRowView
+      readonly inner: readonly PhaseListRowView[]
+    }
+
+/** 一覧の1行。`inner` の行は頭の印を持たない。`ratioText` は空欄なら空文字。 */
+export type PhaseListRowView = {
+  readonly inner: boolean
+  readonly longest: boolean
+  readonly unknown: boolean
+  readonly label: PhaseLabelView
+  readonly valueText: string
+  readonly ratioText: string
+}
+
+/** 段の見出しの字。「2/4 段の名前」の形なら番号と名前に分ける。 */
+export type PhaseLabelView =
+  | { readonly kind: "numbered"; readonly num: string; readonly name: string }
+  | { readonly kind: "plain"; readonly text: string }
+
+/**
+ * 段ごとの所要時間を描く順に並べる。段が無ければ `none`。
+ * 見出しの行（計）・帯か横棒・一覧の順に描く。
  * 並列の段が無い回は、段ごとに1区間の1本の帯で、長さは時間の比。測れなかった段は固定幅の斜線の区間で、比には数えない。
  * 並列の段がある回は、帯の代わりに1行1段の横棒（waterfall）を置く。
  * 棒の位置は依頼の頭からの開始、長さは所要で、並列の段は親の棒を描かず、中の段の棒を壁時計の区間の囲みで包む。
@@ -43,9 +121,9 @@ export type PhaseTimeRow =
  * 時間を出さない区間は一覧で「未着手」「飛ばした」「不明」の字にし（{@link PhaseAbsence}）、割合は空欄にする。帯と棒の欠片の `title` も同じ字。
  * 並列の段の中の段は一覧にだけ字下げして並べ、割合は空欄にする。
  */
-export function phaseTimesMarkdown(rows: readonly PhaseTimeRow[]): string {
+export function phaseTimesView(rows: readonly PhaseTimeRow[]): PhaseTimesView {
   if (rows.length === 0) {
-    return ""
+    return { kind: "none" }
   }
   const intervals = rows.map((row) => (row.kind === "phase" ? row.duration : row.wall))
   const knownMilliseconds = intervals.map((duration) =>
@@ -55,30 +133,55 @@ export function phaseTimesMarkdown(rows: readonly PhaseTimeRow[]): string {
   const longest = Math.max(...knownMilliseconds)
   const longestIndex = longest > 0 ? knownMilliseconds.indexOf(longest) : -1
 
-  const band = rows.some((row) => row.kind === "parallel")
-    ? waterfallMarkdown(rows, longestIndex)
-    : bandMarkdown(rows, longestIndex)
-  const list = rows
-    .map((row, index) => {
-      const duration = intervals[index] ?? { kind: "unknown" }
-      const head = listRowMarkdown(
-        { label: row.label, start: row.start, duration, absence: row.absence },
-        { total, longest: index === longestIndex, inner: false },
-      )
-      return row.kind === "phase"
-        ? head
-        : `<div class="phase-time-group" role="rowgroup">${head}` +
-            row.phases
-              .map((phase) => listRowMarkdown(phase, { total, longest: false, inner: true }))
-              .join("") +
-            `</div>`
-    })
+  const chart: PhaseChartView = rows.some((row) => row.kind === "parallel")
+    ? { kind: "waterfall", lines: waterfallLines(rows, longestIndex) }
+    : { kind: "band", regions: bandRegions(rows, longestIndex) }
+  const list = rows.map((row, index): PhaseListEntryView => {
+    const duration = intervals[index] ?? { kind: "unknown" }
+    const head = listRow(
+      { label: row.label, start: row.start, duration, absence: row.absence },
+      { total, longest: index === longestIndex, inner: false },
+    )
+    return row.kind === "phase"
+      ? { kind: "row", row: head }
+      : {
+          kind: "group",
+          head,
+          inner: row.phases.map((phase) => listRow(phase, { total, longest: false, inner: true })),
+        }
+  })
+  return {
+    kind: "times",
+    totalText: `計 ${formatElapsed(Math.round(total / 1000))}`,
+    chart,
+    rows: list,
+  }
+}
+
+/** 段ごとの所要時間（1つの HTML の塊）。{@link phaseTimesView} の値を HTML に組む。段が無ければ空文字。 */
+export function phaseTimesMarkdown(rows: readonly PhaseTimeRow[]): string {
+  const view = phaseTimesView(rows)
+  if (view.kind === "none") {
+    return ""
+  }
+  const chart =
+    view.chart.kind === "band"
+      ? `<div class="phase-band" aria-hidden="true">${view.chart.regions.map(bandRegionMarkdown).join("")}</div>`
+      : `<div class="phase-waterfall" aria-hidden="true">${view.chart.lines.map(waterfallLineMarkdown).join("")}</div>`
+  const list = view.rows
+    .map((entry) =>
+      entry.kind === "row"
+        ? listRowMarkdown(entry.row)
+        : `<div class="phase-time-group" role="rowgroup">${listRowMarkdown(entry.head)}` +
+          entry.inner.map(listRowMarkdown).join("") +
+          `</div>`,
+    )
     .join("")
   return (
     `<div class="phase-times">` +
     `<div class="phase-times-head"><span class="phase-times-heading">段ごとの時間</span>` +
-    `<span class="phase-times-total">計 ${formatElapsed(Math.round(total / 1000))}</span></div>` +
-    band +
+    `<span class="phase-times-total">${escapeHtml(view.totalText)}</span></div>` +
+    chart +
     `<div role="table" aria-label="段ごとの所要時間">${list}</div></div>`
   )
 }
@@ -96,10 +199,14 @@ type WaterfallBar = {
 const UNKNOWN_BAR_PERCENT = 2
 
 /**
- * 行ごとの横棒。並列の段は中の段の棒を包みに入れ、壁時計の区間を囲みの要素で示す。
+ * 行ごとの横棒。並列の段は中の段の棒を包みに入れ、壁時計の区間を囲みで示す。
  * 開始か所要が測れなかった棒は斜線の欠片にして、直前までの棒の終わりに置く。
+ * 壁時計が測れない並列の段は囲みを置かない。
  */
-function waterfallMarkdown(rows: readonly PhaseTimeRow[], longestIndex: number): string {
+function waterfallLines(
+  rows: readonly PhaseTimeRow[],
+  longestIndex: number,
+): readonly PhaseWaterfallLineView[] {
   const barsOfRows = rows.map((row, index): readonly WaterfallBar[] =>
     row.kind === "phase"
       ? [{ ...row, longest: index === longestIndex, wall: false }]
@@ -124,68 +231,70 @@ function waterfallMarkdown(rows: readonly PhaseTimeRow[], longestIndex: number):
   const extent = Math.max(0, ...ends.filter((end) => end !== undefined))
   const percent = (milliseconds: number): number =>
     extent > 0 ? Math.round((milliseconds / extent) * 10_000) / 100 : 0
-  const barMarkdown = (bar: WaterfallBar): string => {
-    const title = `title="${htmlAttribute(bar.label)} ${valueText(bar.duration, bar.absence)}"`
+  const itemOf = (bar: WaterfallBar, barIndex: number): readonly PhaseWaterfallGroupItemView[] => {
+    const title = `${plainInline(bar.label)} ${valueText(bar.duration, bar.absence)}`
     if (bar.start.kind === "known" && bar.duration.kind === "known") {
-      const geometry = `style="margin-left: ${String(percent(bar.start.milliseconds))}%; width: ${String(percent(bar.duration.milliseconds))}%"`
-      if (bar.wall) {
-        const className = bar.longest
-          ? "phase-time-wall phase-time-wall-longest"
-          : "phase-time-wall"
-        return `<span class="${className}" ${title} ${geometry}></span>`
-      }
-      const className = bar.longest
-        ? "phase-waterfall-bar phase-waterfall-longest"
-        : "phase-waterfall-bar"
-      return waterfallRowMarkdown(`<span class="${className}" ${title} ${geometry}></span>`)
+      const marginLeftPercent = percent(bar.start.milliseconds)
+      const widthPercent = percent(bar.duration.milliseconds)
+      return bar.wall
+        ? [{ kind: "wall", title, longest: bar.longest, marginLeftPercent, widthPercent }]
+        : [
+            {
+              kind: "bar",
+              title,
+              mark: bar.longest ? "longest" : "plain",
+              marginLeftPercent,
+              widthPercent,
+            },
+          ]
     }
     if (bar.wall) {
-      return ""
+      return []
     }
-    const before = Math.max(
-      0,
-      ...ends.slice(0, bars.indexOf(bar)).filter((end) => end !== undefined),
-    )
-    const left = Math.min(percent(before), 100 - UNKNOWN_BAR_PERCENT)
-    return waterfallRowMarkdown(
-      `<span class="phase-waterfall-bar phase-waterfall-unknown" ${title} style="margin-left: ${String(left)}%; width: ${String(UNKNOWN_BAR_PERCENT)}%"></span>`,
-    )
+    const before = Math.max(0, ...ends.slice(0, barIndex).filter((end) => end !== undefined))
+    return [
+      {
+        kind: "bar",
+        title,
+        mark: "unknown",
+        marginLeftPercent: Math.min(percent(before), 100 - UNKNOWN_BAR_PERCENT),
+        widthPercent: UNKNOWN_BAR_PERCENT,
+      },
+    ]
   }
-  const lines = rows.map((row, index) => {
-    const html = (barsOfRows[index] ?? []).map(barMarkdown).join("")
-    return row.kind === "phase" ? html : `<div class="phase-waterfall-group">${html}</div>`
+  const firstBarIndexOfRows = barsOfRows.map((_, index) =>
+    barsOfRows.slice(0, index).reduce((count, rowBars) => count + rowBars.length, 0),
+  )
+  return rows.flatMap((row, index): readonly PhaseWaterfallLineView[] => {
+    const first = firstBarIndexOfRows[index] ?? 0
+    const items = (barsOfRows[index] ?? []).flatMap((bar, offset) => itemOf(bar, first + offset))
+    if (row.kind === "parallel") {
+      return [{ kind: "group", items }]
+    }
+    return items.flatMap((item) => (item.kind === "bar" ? [item] : []))
   })
-  return `<div class="phase-waterfall" aria-hidden="true">${lines.join("")}</div>`
 }
 
-function waterfallRowMarkdown(bar: string): string {
-  return `<div class="phase-waterfall-row">${bar}</div>`
-}
-
-function bandMarkdown(rows: readonly PhaseTimeRow[], longestIndex: number): string {
-  const regions = rows.flatMap((row, index) => {
+function bandRegions(
+  rows: readonly PhaseTimeRow[],
+  longestIndex: number,
+): readonly PhaseBandRegionView[] {
+  return rows.flatMap((row, index): readonly PhaseBandRegionView[] => {
     if (row.kind !== "phase") {
       return []
     }
+    const label = plainInline(row.label)
     return row.duration.kind === "known"
-      ? [bandSegmentMarkdown(row.label, row.duration, index === longestIndex)]
-      : [bandUnknownMarkdown(row.label, valueText(row.duration, row.absence))]
+      ? [
+          {
+            kind: "segment",
+            title: `${label} ${formatMeasured(row.duration)}`,
+            longest: index === longestIndex,
+            flexGrow: Math.round(row.duration.milliseconds),
+          },
+        ]
+      : [{ kind: "unknown", title: `${label} ${valueText(row.duration, row.absence)}` }]
   })
-  return `<div class="phase-band" aria-hidden="true">${regions.join("")}</div>`
-}
-
-function bandUnknownMarkdown(label: string, value: string): string {
-  return `<span class="phase-band-unknown" title="${htmlAttribute(label)} ${value}"></span>`
-}
-
-function bandSegmentMarkdown(
-  label: string,
-  duration: Extract<MeasuredTime, { readonly kind: "known" }>,
-  longest: boolean,
-): string {
-  const title = `title="${htmlAttribute(label)} ${formatMeasured(duration)}"`
-  const className = longest ? "phase-band-segment phase-band-longest" : "phase-band-segment"
-  return `<span class="${className}" ${title} style="flex: ${String(Math.round(duration.milliseconds))} 0 0"></span>`
 }
 
 type ListRowOptions = {
@@ -194,30 +303,21 @@ type ListRowOptions = {
   readonly inner: boolean
 }
 
-function listRowMarkdown(
+function listRow(
   { label, duration, absence }: PhaseDuration,
   { total, longest, inner }: ListRowOptions,
-): string {
-  const classes = ["phase-time"]
-  if (inner) {
-    classes.push("phase-time-inner")
+): PhaseListRowView {
+  return {
+    inner,
+    longest,
+    unknown: duration.kind === "unknown",
+    label: labelView(label),
+    valueText: valueText(duration, absence),
+    ratioText:
+      inner || duration.kind === "unknown"
+        ? ""
+        : `${String(ratioPercent(duration.milliseconds, total))}%`,
   }
-  if (longest) {
-    classes.push("phase-time-longest")
-  }
-  if (duration.kind === "unknown") {
-    classes.push("phase-time-unknown")
-  }
-  const mark = inner ? "" : `<span class="phase-time-mark"></span>`
-  const ratio =
-    inner || duration.kind === "unknown"
-      ? ""
-      : `${String(ratioPercent(duration.milliseconds, total))}%`
-  return (
-    `<div class="${classes.join(" ")}" role="row">${mark}${labelMarkdown(label)}` +
-    `<span class="phase-time-value">${valueText(duration, absence)}</span>` +
-    `<span class="phase-time-ratio">${ratio}</span></div>`
-  )
 }
 
 function valueText(duration: MeasuredTime, absence: PhaseAbsence): string {
@@ -231,15 +331,70 @@ function valueText(duration: MeasuredTime, absence: PhaseAbsence): string {
   }
 }
 
-function labelMarkdown(label: string): string {
+function labelView(label: string): PhaseLabelView {
   const match = /^(\d+\/\d+) (.+)$/.exec(label)
-  const name =
-    match === null
-      ? htmlInline(label)
-      : `<span class="phase-time-num">${htmlInline(match[1] ?? "")}</span>${htmlInline(match[2] ?? "")}`
-  return `<span class="phase-time-label">${name}</span>`
+  return match === null
+    ? { kind: "plain", text: plainInline(label) }
+    : { kind: "numbered", num: plainInline(match[1] ?? ""), name: plainInline(match[2] ?? "") }
 }
 
 function ratioPercent(milliseconds: number, total: number): number {
   return total > 0 ? Math.round((milliseconds / total) * 100) : 0
+}
+
+function bandRegionMarkdown(region: PhaseBandRegionView): string {
+  if (region.kind === "unknown") {
+    return `<span class="phase-band-unknown" title="${attributeText(region.title)}"></span>`
+  }
+  const className = region.longest ? "phase-band-segment phase-band-longest" : "phase-band-segment"
+  return `<span class="${className}" title="${attributeText(region.title)}" style="flex: ${String(region.flexGrow)} 0 0"></span>`
+}
+
+function waterfallLineMarkdown(line: PhaseWaterfallLineView): string {
+  if (line.kind === "bar") {
+    return waterfallItemMarkdown(line)
+  }
+  return `<div class="phase-waterfall-group">${line.items.map(waterfallItemMarkdown).join("")}</div>`
+}
+
+function waterfallItemMarkdown(item: PhaseWaterfallGroupItemView): string {
+  const geometry = `style="margin-left: ${String(item.marginLeftPercent)}%; width: ${String(item.widthPercent)}%"`
+  const title = `title="${attributeText(item.title)}"`
+  if (item.kind === "wall") {
+    const className = item.longest ? "phase-time-wall phase-time-wall-longest" : "phase-time-wall"
+    return `<span class="${className}" ${title} ${geometry}></span>`
+  }
+  const className = {
+    plain: "phase-waterfall-bar",
+    longest: "phase-waterfall-bar phase-waterfall-longest",
+    unknown: "phase-waterfall-bar phase-waterfall-unknown",
+  }[item.mark]
+  return `<div class="phase-waterfall-row"><span class="${className}" ${title} ${geometry}></span></div>`
+}
+
+function listRowMarkdown(row: PhaseListRowView): string {
+  const classes = ["phase-time"]
+  if (row.inner) {
+    classes.push("phase-time-inner")
+  }
+  if (row.longest) {
+    classes.push("phase-time-longest")
+  }
+  if (row.unknown) {
+    classes.push("phase-time-unknown")
+  }
+  const mark = row.inner ? "" : `<span class="phase-time-mark"></span>`
+  const name =
+    row.label.kind === "plain"
+      ? escapeHtml(row.label.text)
+      : `<span class="phase-time-num">${escapeHtml(row.label.num)}</span>${escapeHtml(row.label.name)}`
+  return (
+    `<div class="${classes.join(" ")}" role="row">${mark}<span class="phase-time-label">${name}</span>` +
+    `<span class="phase-time-value">${row.valueText}</span>` +
+    `<span class="phase-time-ratio">${row.ratioText}</span></div>`
+  )
+}
+
+function attributeText(text: string): string {
+  return escapeHtml(text).replaceAll('"', "&quot;")
 }

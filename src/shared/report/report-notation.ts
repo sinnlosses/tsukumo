@@ -192,6 +192,12 @@ const REPORT_BLOCK_MARK_NAMES = [
   "gutter-note-label",
 ] as const satisfies readonly string[]
 
+/** `files` の塊（ファイルの樹形図と種別の札）の印の名前。 */
+export type ReportFileMarkName = Extract<
+  (typeof REPORT_BLOCK_MARK_NAMES)[number],
+  `file${string}` | "path-glue"
+>
+
 /** 語彙が挙げる印の名前の全体（`note` の6種 + それ以外）。 */
 export const REPORT_NOTATION_NAMES = [
   ...REPORT_NOTE_KINDS.map(([name]) => name),

@@ -155,11 +155,11 @@ function useReport(): ReportContextValue {
  * 根の `Report` の実装。既定の描画と同じ根と欄の並びを描く。
  * 頭の順に、図・本文の節・振り返り・お願いを並べる。
  * 本文の節は部品の木から、図と振り返りは面の値の塊の並び（`figure`・`retrospective`）から描く。
- * 頭の結論と数の札・お願いは値から直接描き、頭の残り（合図の行など）は Markdown で描く。
+ * 頭とお願いは面の値から直接描き、欄の Markdown を読まない。
  */
 function ReportRoot(): ReactElement {
   const report = useReport()
-  const { body, view } = report
+  const { view } = report
   const bodySections = Object.entries(view.sections).toSorted(
     ([, left], [, right]) => left.regionId - right.regionId,
   )
@@ -181,7 +181,7 @@ function ReportRoot(): ReactElement {
           <LeafRegionContent region={view.retrospective} />
         </RegionBox>
       )}
-      <FavorRegion id={body.favor.id} markdown={body.favor.markdown} />
+      <FavorRegion id={view.favor.id} text={view.favor.text} />
     </ReportFrame>
   )
 }

@@ -30,6 +30,7 @@ export function a2uiReportView(
   layout: ReportLeafLayout,
   imageSource: ReportImageSource,
   head: MainViewSurfaceHead,
+  favor: Extract<MainViewA2uiReport, { readonly kind: "surface" }>["favor"],
 ): MainViewA2uiReport {
   const byId = a2uiPartsById(components)
   if (byId.get(A2UI_ROOT_ID)?.component !== "Report") {
@@ -76,6 +77,7 @@ export function a2uiReportView(
     ),
     imageSource,
     head,
+    favor,
   }
 }
 

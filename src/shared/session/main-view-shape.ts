@@ -2,11 +2,13 @@
 // 形だけを持ち、記録から導く判断は持たない。
 
 import type { A2uiReportComponent } from "../report/a2ui-report-catalog.ts"
+import type { ChangedFilesView } from "../report/changed-file-section.ts"
 import type { ReportBlock } from "../report/report-block.ts"
 import type { ReportChangeSummary } from "../report/report-change-summary.ts"
 import type { ReportChecksView } from "../report/report-check-view.ts"
 import type { ReportImageSource } from "../report/report-image-markdown.ts"
 import type { LeafValue } from "../report/report-leaf-value.ts"
+import type { PhaseTimesView } from "../report/report-phase-time.ts"
 import type { ReportTask } from "../report/report-task.ts"
 import type { RecordedPromptImage } from "../session-driver/prompt-image.ts"
 import type { Question, QuestionAnswer } from "../session-driver/question.ts"
@@ -111,6 +113,7 @@ export type MainViewReportRegions = {
  * 節の葉に加えて `Report.figure` の葉と振り返りの葉も持ち、整形で落ちた葉は持たない。
  * `figure` と `retrospective` は、部品の木に節の入れ物が無い図と振り返りの欄（{@link MainViewSurfaceLeafRegion}）。欄が無ければ `none`。
  * `imageSource` は画像の葉が `src` を作る取り出し元（棚に置いていない本文は `none`）。
+ * `favor` はお願いの本文（無ければ空文字）と、合図の行の印が飛ぶ先の `id`。
  */
 export type MainViewA2uiReport =
   | { readonly kind: "none" }
@@ -126,13 +129,14 @@ export type MainViewA2uiReport =
       readonly retrospective: MainViewSurfaceLeafRegion
       readonly imageSource: ReportImageSource
       readonly head: MainViewSurfaceHead
+      readonly favor: { readonly id: string; readonly text: string }
     }
 
 /**
- * 面の頭を部分ごとに持つ値。結論・数の札・合図の行は値で、段ごとの所要時間と変更したファイルは Markdown のまま持つ。
+ * 面の頭を部分ごとに持つ値。どの部分も値で持つ。
  * `lead` は結論。`task` のあるレポートでは `conclusion`、無いレポートでは `conclusion-lead`。空なら `none`。
  * `checks` は合図の行（検証結果）。所要時間とお願いへの飛び先は引き当て済み。
- * `status` は包み（`<div class="status">`）の中の合図の行より後ろの Markdown で、最終でないときは空文字。`finalStatus` は最終レポートのときのもので、段ごとの所要時間と変更したファイル。
+ * `status` は包み（`<div class="status">`）の中の合図の行より後ろで、最終でないときは両方 `none`。`finalStatus` は最終レポートのときのもので、段ごとの所要時間と変更したファイル。
  * 旧い記録の経路が読む `head`・`finalHead` は結論と数の札を含む従来の Markdown のまま別に持つ。
  */
 export type MainViewSurfaceHead = {
@@ -141,8 +145,14 @@ export type MainViewSurfaceHead = {
     | { readonly kind: "conclusion" | "conclusion-lead"; readonly text: string }
   readonly keyFigures: readonly MainViewKeyFigure[]
   readonly checks: ReportChecksView
-  readonly status: string
-  readonly finalStatus: string
+  readonly status: MainViewSurfaceStatus
+  readonly finalStatus: MainViewSurfaceStatus
+}
+
+/** 包みの中の合図の行より後ろ。段ごとの所要時間と変更したファイル。 */
+export type MainViewSurfaceStatus = {
+  readonly phaseTimes: PhaseTimesView
+  readonly changedFiles: ChangedFilesView
 }
 
 export type MainViewKeyFigure = Extract<ReportBlock, { readonly kind: "stats" }>["items"][number]
