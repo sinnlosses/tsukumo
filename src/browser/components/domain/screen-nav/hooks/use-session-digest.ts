@@ -13,10 +13,15 @@ const DIGEST_STALE_MS = 30_000
 /** まだ届いていないあいだは `loading`（「読めない」と取り違えないための区別）。 */
 export type SessionDigestView = { readonly kind: "loading" } | SessionDigest
 
-export function useSessionDigest(sessionId: string | undefined): SessionDigestView {
+/** 取りに行く相手。`none` のあいだは取りに行かない。 */
+export type SessionDigestTarget =
+  | { readonly kind: "none" }
+  | { readonly kind: "session"; readonly sessionId: string }
+
+export function useSessionDigest(target: SessionDigestTarget): SessionDigestView {
   const query = useQuery(
     rpc.sessionDigest.read.queryOptions({
-      input: sessionId === undefined ? skipToken : { sessionId },
+      input: target.kind === "none" ? skipToken : { sessionId: target.sessionId },
       staleTime: DIGEST_STALE_MS,
       retry: false,
     }),

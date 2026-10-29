@@ -79,8 +79,15 @@ export function usePlanUsage(finishedTurnCount: number): UsePlanUsageResult {
     query.data?.report.kind === "not-applicable" &&
     (query.isPlaceholderData || (seriesAllowed && !isRetrySeriesExhausted(updateCount)))
   return {
-    state: toState(query.isPending || waiting, query.data?.report, query.dataUpdatedAt),
-    source: toSource(query.isPending, query.data, finishedTurnCount),
+    state: toState(
+      query.isPending || waiting,
+      query.data?.report ?? UNAVAILABLE_PLAN_USAGE,
+      query.dataUpdatedAt,
+    ),
+    source:
+      query.data === undefined
+        ? toSourceWithoutData(query.isPending, finishedTurnCount)
+        : { kind: "after", finishedTurnCount: query.data.finishedTurnCount },
     fetching: query.isFetching || waiting,
     retry: () => {
       setManualRetryKey(finishedTurnCount)
@@ -97,24 +104,17 @@ function isRetrySeriesExhausted(updateCount: number): boolean {
 /** 取れるのを待っている間は骨組み、届いていれば結果を描く形に畳む。 */
 function toState(
   isWaiting: boolean,
-  data: PlanUsageReport | undefined,
+  report: PlanUsageReport,
   dataUpdatedAt: number,
 ): PlanUsageState {
   if (isWaiting) {
     return { kind: "pending" }
   }
-  return toReportState(data ?? UNAVAILABLE_PLAN_USAGE, dataUpdatedAt)
+  return toReportState(report, dataUpdatedAt)
 }
 
 /** 値が無いまま失敗した回は、いまの数で取りに行って「取れない」を出している。 */
-function toSource(
-  isPending: boolean,
-  data: FetchedPlanUsage | undefined,
-  finishedTurnCount: number,
-): UsageSource {
-  if (data !== undefined) {
-    return { kind: "after", finishedTurnCount: data.finishedTurnCount }
-  }
+function toSourceWithoutData(isPending: boolean, finishedTurnCount: number): UsageSource {
   return isPending ? { kind: "none" } : { kind: "after", finishedTurnCount }
 }
 
@@ -123,7 +123,11 @@ function toReportState(report: PlanUsageReport, dataUpdatedAt: number): PlanUsag
   const takenAt = dataUpdatedAt === 0 ? undefined : dataUpdatedAt
   if (report.kind === "ready") {
     // ready はここでしか出ない経路なので takenAt は必ずある（0 は現実には起きない値）。
-    return { kind: "ready", usage: report.usage, takenAt: takenAt ?? dataUpdatedAt }
+    return {
+      kind: "ready",
+      usage: report.usage,
+      takenAt: takenAt ?? dataUpdatedAt,
+    }
   }
   return { kind: "unavailable", takenAt }
 }

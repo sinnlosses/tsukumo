@@ -121,7 +121,11 @@ type SessionTagTooltipProps = {
 
 function SessionTagTooltip(props: SessionTagTooltipProps): ReactElement {
   const { identity } = props
-  const digest = useSessionDigest(identity.kind === "known" ? identity.sessionId : undefined)
+  const digest = useSessionDigest(
+    identity.kind === "known"
+      ? { kind: "session", sessionId: identity.sessionId }
+      : { kind: "none" },
+  )
   const parts =
     identity.kind === "known"
       ? [

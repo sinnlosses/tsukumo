@@ -39,7 +39,9 @@ export function useSessionSwitcherSelection(
     selectable.find((row) => row.sessionId === selectedId) ??
     selectable.find((row) => !row.current) ??
     selectable[0]
-  const digest = useSessionDigest(selected?.sessionId)
+  const digest = useSessionDigest(
+    selected === undefined ? { kind: "none" } : { kind: "session", sessionId: selected.sessionId },
+  )
 
   const move = (step: number): void => {
     const index = selectable.findIndex((row) => row.sessionId === selected?.sessionId)

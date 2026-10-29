@@ -28,7 +28,11 @@ export function useWelcomeCards(): WelcomeCards {
 
   const previous = previousSessionOf(sessions, currentSessionId)
   // 札と挨拶が出うる局面（始め方の一覧）のあいだだけ取りに行く。
-  const digest = useSessionDigest(greeting ? previous?.sessionId : undefined)
+  const digest = useSessionDigest(
+    greeting && previous !== undefined
+      ? { kind: "session", sessionId: previous.sessionId }
+      : { kind: "none" },
+  )
   const remaining = digest.kind === "known" ? digest.remaining : undefined
   return {
     cards: welcomeCardsOf(recommendation, previous, remaining, tasks),

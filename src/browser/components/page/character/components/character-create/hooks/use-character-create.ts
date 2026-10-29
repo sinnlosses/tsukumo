@@ -169,7 +169,9 @@ export function useCharacterCreate(open: boolean, onClose: () => void): Characte
     }
     setGenerationStage("write")
     try {
-      return await dispatchAwaited.characterPack.generateFromPortrait({ portrait })
+      return await dispatchAwaited.characterPack.generateFromPortrait({
+        portrait,
+      })
     } catch {
       return undefined
     }
@@ -242,7 +244,8 @@ export function useCharacterCreate(open: boolean, onClose: () => void): Characte
       },
       generation: {
         label: generating ? GENERATING_LABEL : GENERATE_LABEL,
-        progress: toGenerationProgress(generationStage),
+        progress:
+          generationStage === undefined ? { kind: "idle" } : toGenerationProgress(generationStage),
         canGenerate,
         onGenerate: () => {
           void generate()
@@ -272,10 +275,7 @@ export function useCharacterCreate(open: boolean, onClose: () => void): Characte
   }
 }
 
-function toGenerationProgress(current: GenerationStage | undefined): GenerationProgressModel {
-  if (current === undefined) {
-    return { kind: "idle" }
-  }
+function toGenerationProgress(current: GenerationStage): GenerationProgressModel {
   const currentIndex = GENERATION_STAGES.findIndex(({ stage }) => stage === current)
   return {
     kind: "running",

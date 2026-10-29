@@ -112,18 +112,23 @@ function toContextGauge(usage: UseContextUsageResult, finishedTurnCount: number)
 
 function toPlanGauge(planUsage: UsePlanUsageResult): PlanGauge {
   const windows = windowsOf(planUsage.state)
+  const unreadable: WindowDisplay = {
+    utilization: undefined,
+    resetsAt: undefined,
+  }
+  const shown = windows ?? { fiveHour: unreadable, sevenDay: unreadable }
   return {
-    label: planGaugeLabel(windows),
+    label: windows === undefined ? "プラン使用量 取れていない" : planGaugeLabel(windows),
     busy: planUsage.fetching,
     source: planUsage.source,
-    fiveHour: toPlanWindowPie("5h", windows?.fiveHour),
-    sevenDay: toPlanWindowPie("7d", windows?.sevenDay),
+    fiveHour: toPlanWindowPie("5h", shown.fiveHour),
+    sevenDay: toPlanWindowPie("7d", shown.sevenDay),
   }
 }
 
 /** 取れていない枠は扇を塗らず、割合を「—」にする。 */
-function toPlanWindowPie(label: string, window: WindowDisplay | undefined): PlanWindowPieView {
-  const utilization = window?.utilization
+function toPlanWindowPie(label: string, window: WindowDisplay): PlanWindowPieView {
+  const utilization = window.utilization
   return {
     label,
     percentageText: utilization === undefined ? PLACEHOLDER : `${String(Math.round(utilization))}%`,
@@ -131,7 +136,7 @@ function toPlanWindowPie(label: string, window: WindowDisplay | undefined): Plan
       utilization !== undefined && utilization > 0
         ? { kind: "path", d: pieSlicePath(utilization) }
         : { kind: "none" },
-    warn: window !== undefined && isPlanWindowWarn(window),
+    warn: isPlanWindowWarn(window),
   }
 }
 
@@ -158,13 +163,11 @@ function contextGaugeLabel(usage: UseContextUsageResult): string {
   return `コンテキスト ${String(usage.percentage)}%（${formatCount(usage.totalTokens)} / ${formatCount(usage.maxTokens)}）`
 }
 
-/** 円の口の名前。取れない・該当しないときはそれだけを言う（詳しい理由は開いた面の札が持つ）。 */
-function planGaugeLabel(
-  windows: { readonly fiveHour: WindowDisplay; readonly sevenDay: WindowDisplay } | undefined,
-): string {
-  if (windows === undefined) {
-    return "プラン使用量 取れていない"
-  }
+/** 円の口の名前。 */
+function planGaugeLabel(windows: {
+  readonly fiveHour: WindowDisplay
+  readonly sevenDay: WindowDisplay
+}): string {
   return `プラン使用量 5時間 ${windowPercentage(windows.fiveHour)}・7日間 ${windowPercentage(windows.sevenDay)}`
 }
 
