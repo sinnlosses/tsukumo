@@ -14,7 +14,7 @@ import {
 import { MAX_SESSION_STATE_TURNS } from "../../../shared/session/session-record.ts"
 import type { ReportDrafting, TurnBodies } from "../../../shared/session/turn-progress.ts"
 import { mainViewDraftOf } from "./a2ui-draft-view.ts"
-import { finalReportBody, orderedReportRegions } from "./main-view-report-body.ts"
+import { finalReportBody, reportDrawsAnything } from "./main-view-report-body.ts"
 import { groupIntoTurns } from "./main-view-step.ts"
 
 /**
@@ -106,9 +106,7 @@ function selectLastText(turn: MainViewTurn, settled: boolean): MainViewTurn {
   const lastId = settled
     ? turn.steps.findLast(
         (step) =>
-          !step.interim &&
-          step.body.kind === "text" &&
-          orderedReportRegions(step.body.report).length > 0,
+          !step.interim && step.body.kind === "text" && reportDrawsAnything(step.body.report),
       )?.id
     : undefined
   return {

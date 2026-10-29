@@ -6,8 +6,8 @@ import {
   type BrowserErrorRoute,
   DIAGNOSTIC_BROWSER_ERROR_MAX_FRAMES,
   toBrowserErrorName,
-} from "../../../shared/diagnostic/diagnostic-record.ts"
-import { useSession } from "../../stores/session.ts"
+} from "../../shared/diagnostic/diagnostic-record.ts"
+import { useSession } from "./session.ts"
 
 export function reportBrowserError(route: BrowserErrorRoute, error: unknown): void {
   void useSession.getState().dispatch.diagnostic.reportBrowserError({

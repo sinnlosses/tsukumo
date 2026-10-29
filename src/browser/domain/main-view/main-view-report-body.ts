@@ -1,31 +1,30 @@
-// メインビューの本文の欄から、描く順の欄の並びと節の見出しの並びを導く。
+// メインビューの本文から、描くものがあるかと節の見出しの並びを導く。
 
-import type {
-  MainViewReportBody,
-  MainViewReportRegion,
-} from "../../../shared/session/main-view-shape.ts"
+import type { MainViewReportBody } from "../../../shared/session/main-view-shape.ts"
 import { isBlankText } from "../../../shared/utils/blank-text.ts"
 
 /**
- * 本文を描く順の欄に並べる。空の欄は置かない。
- * `report` ツールの本文は、頭 → 節 → 振り返り → お願いの順。
- * お願いは HTML の中に Markdown を入れるので、塊の内側の前後に空行を空ける。
+ * 本文に描くものが1つでもあるか。
+ * `report` ツールの本文は、頭・お願い・節（面の図と振り返りを含む）のどれかが残るかを面の値から数える。
  */
-export function orderedReportRegions(body: MainViewReportBody): readonly MainViewReportRegion[] {
+export function reportDrawsAnything(body: MainViewReportBody): boolean {
   if (body.kind === "markdown") {
-    return isBlankText(body.markdown) ? [] : [{ kind: "markdown", markdown: body.markdown }]
+    return !isBlankText(body.markdown)
   }
-  const regions: readonly MainViewReportRegion[] = [
-    headRegionOf(body),
-    ...body.sections.map((section): MainViewReportRegion => ({
-      kind: "section",
-      id: section.id,
-      markdown: section.markdown,
-    })),
-    { kind: "retrospective", markdown: body.retrospective },
-    favorRegionOf(body),
-  ]
-  return regions.filter((region) => !isBlankText(region.markdown))
+  const { a2ui } = body
+  const { lead, keyFigures, checks, status } = a2ui.head
+  return (
+    lead.kind !== "none" ||
+    keyFigures.length > 0 ||
+    checks.kind !== "none" ||
+    status.phaseTimes.kind !== "none" ||
+    status.changedFiles.kind !== "none" ||
+    !isBlankText(a2ui.favor.text) ||
+    (a2ui.kind === "surface" &&
+      (Object.keys(a2ui.sections).length > 0 ||
+        a2ui.figure.kind === "leaves" ||
+        a2ui.retrospective.kind === "leaves"))
+  )
 }
 
 /** 見出しのある節の欄の ID と見出しの字。見出しの無い節と、`report` ツールの外の本文は数えない。 */
@@ -39,7 +38,7 @@ export function reportHeadedSections(
       )
 }
 
-/** 最終レポートの本文。頭を最終のときの頭に替える。 */
+/** 最終レポートの本文。面の頭の段ごとの所要時間と変更したファイルを、最終のときのものに替える。 */
 export function finalReportBody(body: MainViewReportBody): MainViewReportBody {
   if (body.kind === "markdown") {
     return body
@@ -48,29 +47,6 @@ export function finalReportBody(body: MainViewReportBody): MainViewReportBody {
   return {
     ...body,
     head: body.finalHead,
-    a2ui:
-      a2ui.kind === "surface"
-        ? { ...a2ui, head: { ...a2ui.head, status: a2ui.head.finalStatus } }
-        : a2ui,
-  }
-}
-
-/** 頭の欄。中身が空なら markdown は空文字。 */
-function headRegionOf(
-  body: Extract<MainViewReportBody, { readonly kind: "regions" }>,
-): Extract<MainViewReportRegion, { readonly kind: "head" }> {
-  return { kind: "head", markdown: body.head }
-}
-
-/** お願いの欄。中身が空なら markdown は空文字。 */
-function favorRegionOf(
-  body: Extract<MainViewReportBody, { readonly kind: "regions" }>,
-): Extract<MainViewReportRegion, { readonly kind: "favor" }> {
-  return {
-    kind: "favor",
-    id: body.favor.id,
-    markdown: isBlankText(body.favor.markdown)
-      ? ""
-      : `<div class="note note-favor">\n\n${body.favor.markdown}\n\n</div>`,
+    a2ui: { ...a2ui, head: { ...a2ui.head, status: a2ui.head.finalStatus } },
   }
 }

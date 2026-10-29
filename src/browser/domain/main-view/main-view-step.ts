@@ -20,7 +20,6 @@ import type { PhaseShift } from "../../../shared/session/work-plan-shift.ts"
 import { isBlankText } from "../../../shared/utils/blank-text.ts"
 import { clipWithEllipsis } from "../../../shared/utils/clip-text.ts"
 import type { MeasuredTime } from "../../../shared/utils/elapsed-time.ts"
-import { orderedReportRegions } from "./main-view-report-body.ts"
 
 const NO_PHASE_LABEL = { kind: "none" } as const satisfies MainViewPhaseLabel
 
@@ -237,6 +236,7 @@ const MAX_STEP_SUMMARY_LENGTH = 40
  * 畳んだときの先頭行を取り出す元の文。
  * `report` の本文の頭は結論を包む HTML なので、組む前の結論から取る。
  * 作業の名前は同じ作業の中間レポートで全部同じになり見分けが付かないので、結論が空のときだけ使う。
+ * どちらも無いときは最初の節の見出しの字で、見出しも無ければ空。
  */
 function firstLineSource(
   entry: Extract<StepEntry, { readonly kind: "detail" | "report" }>,
@@ -249,7 +249,7 @@ function firstLineSource(
   }
   return entry.task.kind === "task"
     ? entry.task.name
-    : (orderedReportRegions(entry.regions).at(0)?.markdown ?? "")
+    : (entry.regions.sections.at(0)?.heading ?? "")
 }
 
 /**

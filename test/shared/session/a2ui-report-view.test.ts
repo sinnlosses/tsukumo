@@ -213,7 +213,11 @@ describe("a2ui の版の記録の本文", () => {
   it("根が Report でなければ none", () => {
     const parts = PARTS.filter((part) => part.id !== "root")
 
-    expect(regionsOf(reportOf({ components: parts })).a2ui).toEqual({ kind: "none" })
+    expect(regionsOf(reportOf({ components: parts })).a2ui).toMatchObject({
+      kind: "none",
+      head: { keyFigures: [], checks: { kind: "none" } },
+      favor: { id: "favor-toolu_fictional" },
+    })
   })
 })
 

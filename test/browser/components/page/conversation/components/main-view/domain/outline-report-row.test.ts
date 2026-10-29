@@ -9,6 +9,7 @@ import type {
   MainViewTurn,
 } from "../../../../../../../../src/shared/session/main-view-shape.ts"
 import { STAGED_PARTS } from "../../../../../../../fixture/a2ui-component.ts"
+import { noRootA2ui } from "../../../../../../../fixture/main-view-entry.ts"
 
 function textStep(id: number, firstLine: string, task: ReportTask, final: boolean): MainViewStep {
   return {
@@ -22,7 +23,7 @@ function textStep(id: number, firstLine: string, task: ReportTask, final: boolea
         sections: [],
         retrospective: "",
         favor: { id: "favor-toolu_fictional", markdown: "" },
-        a2ui: { kind: "none" },
+        a2ui: noRootA2ui(),
       },
       firstLine,
       task,

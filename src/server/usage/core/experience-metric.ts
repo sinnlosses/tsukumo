@@ -3,15 +3,13 @@
 // 見るのはイベントの種類と、畳んだあとの姿から導く局面（`conversationMoment`）だけ。
 // 依頼の文面もセリフもツールの引数も、`ExperienceMetricEntry` に口が無いので通らない。
 
-import { sumBy } from "remeda"
-
 import { LEAF_COMPONENT_KINDS } from "../../../shared/report/a2ui-report-catalog.ts"
 import { reportOutline, sectionLeaves } from "../../../shared/report/report-outline.ts"
 import {
   type ConversationMoment,
   conversationMoment,
 } from "../../../shared/session/conversation-moment.ts"
-import { mainViewEntries } from "../../../shared/session/main-view-entry.ts"
+import { reportBodyChars } from "../../../shared/session/report-drawn-markdown.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import type { SessionState } from "../../../shared/session/session-state.ts"
 import type { ClosedMoment, SplitDivider } from "../../../shared/usage/experience-metric-record.ts"
@@ -293,14 +291,8 @@ function readingShapeOf(state: SessionState): ReadingShape {
   }
   const outline = reportOutline(report.components)
   const leaves = sectionLeaves(outline)
-  const shownReport = mainViewEntries(state)
-    .filter((entry) => entry.kind === "report")
-    .at(-1)
   return {
-    bodyChars:
-      shownReport === undefined
-        ? 0
-        : sumBy(shownReport.regions.sections, (section) => section.markdown.length),
+    bodyChars: reportBodyChars(report),
     tableRate:
       leaves.length === 0
         ? 0

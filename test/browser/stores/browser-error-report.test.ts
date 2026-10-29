@@ -1,10 +1,10 @@
 import { act } from "@testing-library/react"
 import { describe, expect, it } from "vitest"
 
-import { reportBrowserError } from "../../../../src/browser/components/app/browser-error-report.ts"
-import { useSession } from "../../../../src/browser/stores/session.ts"
-import { INITIAL_SESSION_STATE } from "../../../../src/shared/session/session-state.ts"
-import { putSession, type SentCommand } from "../../session-store.ts"
+import { reportBrowserError } from "../../../src/browser/stores/browser-error-report.ts"
+import { useSession } from "../../../src/browser/stores/session.ts"
+import { INITIAL_SESSION_STATE } from "../../../src/shared/session/session-state.ts"
+import { putSession, type SentCommand } from "../session-store.ts"
 
 /**
  * 送る内容だけを測る（`docs/architecture.md`「機能の中を分ける」）。画面は丸ごと描かない。

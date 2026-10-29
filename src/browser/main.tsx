@@ -8,13 +8,13 @@ import "./lib/zod-jitless.ts"
 import { createRoot } from "react-dom/client"
 
 import { App } from "./app.tsx"
-import { reportBrowserError } from "./components/app/browser-error-report.ts"
 import { loadMarkdown } from "./components/page/conversation/components/markdown/markdown.tsx"
 import {
   applyAppearanceColorOverride,
   loadAppearanceColorOverride,
 } from "./domain/appearance-color.ts"
 import { loadTaskBody } from "./features/task-board/components/deferred-task-body.tsx"
+import { reportBrowserError } from "./stores/browser-error-report.ts"
 // ページ全体の下地（トークン・body・リンク）。グローバルな CSS はこれだけ。
 import "./styles/theme.css"
 import {

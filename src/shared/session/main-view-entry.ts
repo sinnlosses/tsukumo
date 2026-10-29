@@ -4,16 +4,14 @@
 import { changedFilesMarkdown, changedFilesView } from "../report/changed-file-section.ts"
 import { reportChecksView } from "../report/report-check-view.ts"
 import { reportChecksViewMarkdown } from "../report/report-check.ts"
-import { drawnReportOf } from "../report/report-drawn-outline.ts"
 import { joinParts } from "../report/report-inline-markdown.ts"
-import { reportLeafLayoutOf } from "../report/report-leaf-value.ts"
-import { reportSectionPieces } from "../report/report-markdown.ts"
 import { phaseTimesMarkdown, phaseTimesView } from "../report/report-phase-time.ts"
 import { keyFiguresMarkdown } from "../report/report-stat-markdown.ts"
 import { isBlankText } from "../utils/blank-text.ts"
 import { a2uiReportView } from "./a2ui-report-view.ts"
 import type { MainViewEntry, MainViewReportRegions } from "./main-view-shape.ts"
 import { finishedPhaseDuration, phaseDurations } from "./phase-duration.ts"
+import { reportDrawnPieces } from "./report-drawn-markdown.ts"
 import type { SessionRecord } from "./session-record.ts"
 import type { SessionState } from "./session-state.ts"
 import {
@@ -183,21 +181,8 @@ function reportRegionsOf(
     ]
       .filter((part) => !isBlankText(part))
       .join("\n\n")
-  const drawn = drawnReportOf(report.components, report.conclusion, "whole")
+  const { drawn, layout, imageSource, pieces, markdowns } = reportDrawnPieces(report)
   const sections = drawn.sections.filter((section) => section.role !== "retrospective")
-  const layout = reportLeafLayoutOf(drawn.sections.map((section) => section.section))
-  const imageSource = {
-    kind: "shelved",
-    toolUseId: report.toolUseId,
-    sizes: report.imageSizes,
-    unshelved: report.unshelvedImages,
-  } as const
-  const pieces = reportSectionPieces(
-    drawn.sections.map((section) => section.section),
-    imageSource,
-    layout,
-  )
-  const markdowns = pieces.map((piece) => joinParts([piece.heading, ...piece.blocks]))
   return {
     kind: "regions",
     head: head(plainStatus),

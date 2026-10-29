@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { mainViewDraftOf } from "../../../../../../../src/browser/domain/main-view/a2ui-draft-view.ts"
 import { reportEvents } from "../../../../../../../src/server/session-driver/core/sdk-report-message.ts"
+import type { A2uiReportComponent } from "../../../../../../../src/shared/report/a2ui-report-catalog.ts"
 import { mainViewEntries } from "../../../../../../../src/shared/session/main-view-entry.ts"
 import type { MainViewReportRegions } from "../../../../../../../src/shared/session/main-view-shape.ts"
 import { applySessionEvent } from "../../../../../../../src/shared/session/session-fold.ts"
@@ -42,6 +43,11 @@ vi.mock(
       ),
   }),
 )
+
+const reportBrowserError = vi.hoisted(() => vi.fn<(route: string, error: unknown) => void>())
+vi.mock("../../../../../../../src/browser/stores/browser-error-report.ts", () => ({
+  reportBrowserError,
+}))
 
 const { Report } =
   await import("../../../../../../../src/browser/components/page/conversation/components/main-view/report.tsx")
@@ -267,30 +273,17 @@ describe("頭とお願い（A2UI の面）", () => {
 })
 
 describe("部品の一覧のある本文（A2UI の面）", () => {
-  it("配置の部品の無い一覧は、欄の Markdown で描いたときと本文の根の中の DOM が同じで、面の入れ物が 1 枚だけ挟まる", () => {
-    const withComponents = regionsOf({ components: PARTS })
-    const withoutComponents: MainViewReportRegions = { ...withComponents, a2ui: { kind: "none" } }
-    expect(withComponents.a2ui.kind).toBe("surface")
+  it("配置の部品の無い一覧は、面の入れ物を 1 枚だけ挟んで葉を描く", () => {
+    const body = regionsOf({ components: PARTS })
+    expect(body.a2ui.kind).toBe("surface")
 
-    const bodyWithoutHead = (container: HTMLElement) => {
-      const body = container.querySelector("[data-report-body]")?.cloneNode(true)
-      if (!(body instanceof HTMLElement)) {
-        throw new Error("本文の根が無い")
-      }
-      body.querySelector('[data-report-region="head"]')?.remove()
-      return body.innerHTML
-    }
-    const surface = render(<Report reveal={false} turnId={1} className="" body={withComponents} />)
-    const surfaceBody = bodyWithoutHead(surface.container)
-    const hosts = surface.container.querySelectorAll("a2ui-react-report").length
-    const otherHosts = [...surface.container.querySelectorAll("[data-report-body] *")].filter(
-      (element) => element.localName.startsWith("a2ui-"),
+    const { container } = render(<Report reveal={false} turnId={1} className="" body={body} />)
+    const hosts = container.querySelectorAll("a2ui-react-report").length
+    const otherHosts = [...container.querySelectorAll("[data-report-body] *")].filter((element) =>
+      element.localName.startsWith("a2ui-"),
     ).length
-    cleanup()
-    const plain = render(<Report reveal={false} turnId={1} className="" body={withoutComponents} />)
 
-    expect(surfaceBody).toBe(bodyWithoutHead(plain.container))
-    expect(surfaceBody).toContain("架空の覚え書き。")
+    expect(container.querySelector("[data-report-body]")?.innerHTML).toContain("架空の覚え書き。")
     expect([hosts, otherHosts]).toEqual([1, 0])
   })
 
@@ -333,21 +326,45 @@ describe("部品の一覧のある本文（A2UI の面）", () => {
     expect(region?.firstElementChild?.textContent).toBe("架空の `code` 見出し")
   })
 
-  it("Row のある本文でも、欄の並びと見出しの数は欄の Markdown で描いたときと同じ", () => {
-    const withComponents = regionsOf({ components: ROW_PARTS })
-    const surface = render(<Report reveal={false} turnId={1} className="" body={withComponents} />)
-    const regionsWith = regionAttributes(surface.container)
-    cleanup()
-    const plain = render(
-      <Report
-        reveal={false}
-        turnId={1}
-        className=""
-        body={{ ...withComponents, a2ui: { kind: "none" } }}
-      />,
-    )
+  it("面が作れなかった本文は、節を落として「本文を描けませんでした」を出し、頭とお願いは描いて、原因を診断ログへ送る", () => {
+    const body = regionsOf({ components: withFavor(PARTS) })
+    if (body.a2ui.kind !== "surface") throw new Error("面にならなかった")
+    const broken: MainViewReportRegions = {
+      ...body,
+      a2ui: {
+        ...body.a2ui,
+        components: [...body.a2ui.components, rejectedPart()],
+      },
+    }
 
-    expect(regionsWith).toEqual(regionAttributes(plain.container))
+    const { container } = render(<Report reveal={false} turnId={1} className="" body={broken} />)
+
+    expect(container.textContent).toContain("本文を描けませんでした")
+    expect(container.textContent).not.toContain("架空の覚え書き。")
+    expect(container.querySelector('[data-report-region="head"]')).not.toBeNull()
+    expect(container.querySelector('[data-report-region="favor"]')?.textContent).toContain(
+      "架空のお願い。",
+    )
+    expect(reportBrowserError).toHaveBeenCalledWith("render-failure", expect.anything())
+  })
+
+  it("根の Report が無い一覧は、頭とお願いだけを値から描く", () => {
+    const body = regionsOf({ components: withFavor(PARTS) })
+    if (body.a2ui.kind !== "surface") throw new Error("面にならなかった")
+    const noRoot: MainViewReportRegions = {
+      ...body,
+      a2ui: { kind: "none", head: body.a2ui.head, favor: body.a2ui.favor },
+    }
+
+    const { container } = render(<Report reveal={false} turnId={1} className="" body={noRoot} />)
+
+    expect(container.querySelector('[data-report-region="head"]')?.textContent).toContain(
+      "架空の結論。",
+    )
+    expect(container.querySelector('[data-report-region="favor"]')?.textContent).toContain(
+      "架空のお願い。",
+    )
+    expect(container.querySelector("[data-report-section]")).toBeNull()
   })
 
   it("部品の一覧が伸びた本文で描き直すと、同じ面のまま増えた葉が出る", () => {
@@ -369,6 +386,15 @@ describe("部品の一覧のある本文（A2UI の面）", () => {
   })
 })
 
+function withFavor(parts: typeof PARTS) {
+  return parts.map((part) => (part.id === "root" ? { ...part, favor: "架空のお願い。" } : part))
+}
+
+/** A2UI の検証が拒む部品（`Markdown` の `markdown` が文字列でない）。型の外の値なので JSON から読む。 */
+function rejectedPart(): A2uiReportComponent {
+  return JSON.parse('{"id":"bad","component":"Markdown","markdown":5}')
+}
+
 function regionsOf(input: Readonly<Record<string, unknown>>): MainViewReportRegions {
   const [event] = reportEvents("toolu_fictional", input, [])
   if (event?.kind !== "report") throw new Error("report にならなかった")
@@ -377,11 +403,4 @@ function regionsOf(input: Readonly<Record<string, unknown>>): MainViewReportRegi
   )
   if (entry?.kind !== "report") throw new Error("レポートの記録が無い")
   return entry.regions
-}
-
-function regionAttributes(container: HTMLElement): readonly string[] {
-  return [...container.querySelectorAll("[data-report-region]")].map(
-    (region) =>
-      `${region.getAttribute("data-report-region") ?? ""}:${region.getAttribute("data-report-section") ?? ""}`,
-  )
 }

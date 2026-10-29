@@ -24,14 +24,16 @@ import type {
   MainViewReportRegions,
   MainViewSurfaceLeafRegion,
 } from "../../../../../../shared/session/main-view-shape.ts"
+import { reportBrowserError } from "../../../../../stores/browser-error-report.ts"
 import { Button } from "../../../../ui/button/button.tsx"
 import { Divider } from "../../../../ui/divider/divider.tsx"
 import { arrangedBlockClassNames } from "../markdown/markdown.tsx"
 import { ChoicePicker, InteractiveTable } from "./a2ui-interactive-view.tsx"
-import { MarkdownReport, RegionBox, RegionChunks, ReportFrame } from "./body-region.tsx"
+import { RegionBox, RegionChunks, ReportFrame } from "./body-region.tsx"
 import { DirectLeaf, directLeafViewOf } from "./direct-leaf-view.tsx"
 import { loadReportCatalogApis } from "./domain/a2ui-catalog-load.ts"
 import { isPlainHeadingText } from "./domain/plain-heading.ts"
+import { NoteBody } from "./note-leaf.tsx"
 import { FavorRegion, HeadRegion } from "./report-head-region.tsx"
 
 type SurfaceView = Extract<MainViewA2uiReport, { readonly kind: "surface" }>
@@ -58,19 +60,30 @@ export function A2uiReport(props: A2uiReportProps): ReactElement {
     }
   }, [surface, components])
   if (surface.kind === "failed") {
-    return (
-      <MarkdownReport
-        body={props.body}
-        reveal={props.reveal}
-        turnId={props.turnId}
-        className={props.className}
-      />
-    )
+    return <FailedReport {...props} error={surface.error} />
   }
   return (
     <ReportContext value={{ ...props, parts, dataModel: surface.surface.dataModel }}>
       <A2uiSurface surface={surface.surface} />
     </ReportContext>
+  )
+}
+
+/**
+ * 面が作れなかった本文。頭とお願いは値から描き、節の代わりに「本文を描けなかった」の印を出す。
+ * 原因は診断ログへ送る（運ぶのは経路・`error.name`・スタックの先頭数フレームだけで、本文は入らない）。
+ */
+function FailedReport(props: A2uiReportProps & { readonly error: unknown }): ReactElement {
+  const { view, error } = props
+  useEffect(() => {
+    reportBrowserError("render-failure", error)
+  }, [error])
+  return (
+    <ReportFrame reveal={props.reveal} turnId={props.turnId} className={props.className}>
+      <HeadRegion head={view.head} />
+      <NoteBody tone="ng" text="本文を描けませんでした。" />
+      <FavorRegion id={view.favor.id} text={view.favor.text} />
+    </ReportFrame>
   )
 }
 
@@ -107,7 +120,7 @@ type ReportSurface =
       readonly processor: MessageProcessor<ReactComponentImplementation>
       readonly surface: SurfaceModel<ReactComponentImplementation>
     }
-  | { readonly kind: "failed" }
+  | { readonly kind: "failed"; readonly error: unknown }
 
 function reportSurfaceOf(components: readonly A2uiReportComponent[]): ReportSurface {
   const processor = new MessageProcessor<ReactComponentImplementation>([REPORT_CATALOG])
@@ -116,11 +129,13 @@ function reportSurfaceOf(components: readonly A2uiReportComponent[]): ReportSurf
       { version: "v0.9", createSurface: { surfaceId: SURFACE_ID, catalogId: REPORT_CATALOG.id } },
       { version: "v0.9", updateComponents: { surfaceId: SURFACE_ID, components: [...components] } },
     ])
-  } catch {
-    return { kind: "failed" }
+  } catch (error) {
+    return { kind: "failed", error }
   }
   const surface = processor.model.surfacesMap.get(SURFACE_ID)
-  return surface === undefined ? { kind: "failed" } : { kind: "surface", processor, surface }
+  return surface === undefined
+    ? { kind: "failed", error: new Error("surface-missing") }
+    : { kind: "surface", processor, surface }
 }
 
 /** 面にまだ無い部品を足す。A2UI の検証が拒んだら（`processMessages` が投げる）、それまでの面のままにする。 */

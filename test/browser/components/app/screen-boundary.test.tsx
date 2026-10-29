@@ -2,10 +2,10 @@ import { cleanup, fireEvent, render, screen, within } from "@testing-library/rea
 import type { ReactElement } from "react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-import { reportBrowserError } from "../../../../src/browser/components/app/browser-error-report.ts"
 import { ScreenBoundary } from "../../../../src/browser/components/app/screen-boundary.tsx"
+import { reportBrowserError } from "../../../../src/browser/stores/browser-error-report.ts"
 
-vi.mock("../../../../src/browser/components/app/browser-error-report.ts", () => ({
+vi.mock("../../../../src/browser/stores/browser-error-report.ts", () => ({
   reportBrowserError: vi.fn<() => void>(),
 }))
 

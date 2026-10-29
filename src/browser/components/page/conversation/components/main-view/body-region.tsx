@@ -9,11 +9,7 @@ import clsx from "clsx"
 // oxlint-disable-next-line no-restricted-imports -- 描き直し回数を数える単体テストが Compiler の掛からない Vitest を通るため残す（docs/coding-standards/react.md「手でメモ化しない」）
 import { memo, type ReactElement, type ReactNode } from "react"
 
-import type {
-  MainViewReportBody,
-  MainViewReportRegion,
-} from "../../../../../../shared/session/main-view-shape.ts"
-import { orderedReportRegions } from "../../../../../domain/main-view/main-view-report-body.ts"
+import { isBlankText } from "../../../../../../shared/utils/blank-text.ts"
 import { useReportReveal } from "../../../../../domain/reveal/use-report-reveal.ts"
 import { Button } from "../../../../ui/button/button.tsx"
 import { detailBlockClassName, Markdown } from "../markdown/markdown.tsx"
@@ -66,22 +62,22 @@ export function ReportFrame(props: ReportFrameProps): ReactElement {
   )
 }
 
+/** `report` ツールの外の本文（Markdown 1本）。空白だけなら欄を置かない。 */
 export function MarkdownReport(
-  props: Omit<ReportFrameProps, "children"> & { readonly body: MainViewReportBody },
+  props: Omit<ReportFrameProps, "children"> & { readonly markdown: string },
 ): ReactElement {
   return (
     <ReportFrame reveal={props.reveal} turnId={props.turnId} className={props.className}>
-      {orderedReportRegions(props.body).map((region) => (
-        <ReportRegion
-          key={region.kind === "section" ? `section-${region.id}` : region.kind}
-          region={region}
-        />
-      ))}
+      {!isBlankText(props.markdown) && (
+        <RegionBox region={{ kind: "markdown" }}>
+          <RegionChunks markdown={props.markdown} />
+        </RegionBox>
+      )}
     </ReportFrame>
   )
 }
 
-/** 欄の入れ物が持つ印。Markdown を持つ欄（{@link MainViewReportRegion}）からも、持たない欄からも作れる。 */
+/** 欄の入れ物が持つ印。 */
 export type RegionMark =
   | { readonly kind: "head" | "retrospective" | "markdown" }
   | { readonly kind: "section"; readonly id: number }
@@ -114,14 +110,6 @@ export function RegionChunks(props: { readonly markdown: string }): ReactElement
         <ReportBlock key={block.key} text={block.text} />
       ))}
     </>
-  )
-}
-
-function ReportRegion(props: { readonly region: MainViewReportRegion }): ReactElement {
-  return (
-    <RegionBox region={props.region}>
-      <RegionChunks markdown={props.region.markdown} />
-    </RegionBox>
   )
 }
 

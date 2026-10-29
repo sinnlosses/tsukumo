@@ -39,18 +39,6 @@ function markdownBody(markdown: string): MainViewReportBody {
   return { kind: "markdown", markdown }
 }
 
-function regionsBody(text: string): MainViewReportBody {
-  return {
-    kind: "regions",
-    head: "結論",
-    finalHead: "結論",
-    sections: [{ id: 0, heading: "", markdown: text }],
-    retrospective: "",
-    favor: { id: "favor-fictional", markdown: "" },
-    a2ui: { kind: "none" },
-  }
-}
-
 describe("Report（書き上げる演出を飛ばす口）", () => {
   it("演出を掛けるレポートには「全部出す」の口を置き、掛けないレポートには置かない", () => {
     const { rerender } = render(
@@ -65,7 +53,7 @@ describe("Report（書き上げる演出を飛ばす口）", () => {
   it("本文が phone-hidden のとき、口は本文の兄弟として並ぶ（隠す CSS が `> .phone-hidden[data-revealing]` で口を引ける形）", () => {
     const text = "架空の本文。".repeat(40)
     const { container } = render(
-      <Report reveal={true} turnId={1} className="phone-hidden" body={regionsBody(text)} />,
+      <Report reveal={true} turnId={1} className="phone-hidden" body={markdownBody(text)} />,
     )
 
     const body = container.querySelector("[data-report-body]")
@@ -77,7 +65,7 @@ describe("Report（書き上げる演出を飛ばす口）", () => {
   it("口を押すと、窓で聞いている飛ばしの経路に乗って演出が終わる", () => {
     const text = "架空の本文。".repeat(40)
     const { container } = render(
-      <Report reveal={true} turnId={1} className="" body={regionsBody(text)} />,
+      <Report reveal={true} turnId={1} className="" body={markdownBody(text)} />,
     )
     const body = container.querySelector("[data-report-body]")
     expect(body?.hasAttribute("data-revealing")).toBe(true)

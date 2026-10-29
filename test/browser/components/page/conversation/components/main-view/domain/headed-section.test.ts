@@ -5,6 +5,7 @@ import type {
   MainViewStep,
   MainViewTurn,
 } from "../../../../../../../../src/shared/session/main-view-shape.ts"
+import { noRootA2ui } from "../../../../../../../fixture/main-view-entry.ts"
 
 /** 見出しが空文字の節は、見出しの無い節の欄（ID は並びの位置のまま）。 */
 function textStep(
@@ -27,7 +28,7 @@ function textStep(
         })),
         retrospective: "",
         favor: { id: "favor-toolu_fictional", markdown: "" },
-        a2ui: { kind: "none" },
+        a2ui: noRootA2ui(),
       },
       firstLine: "",
       task: { kind: "none" },

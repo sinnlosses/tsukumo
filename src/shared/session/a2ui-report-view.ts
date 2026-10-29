@@ -34,7 +34,7 @@ export function a2uiReportView(
 ): MainViewA2uiReport {
   const byId = a2uiPartsById(components)
   if (byId.get(A2UI_ROOT_ID)?.component !== "Report") {
-    return { kind: "none" }
+    return { kind: "none", head, favor }
   }
   const regions: readonly DrawnRegion[] = zip(drawn.sections, pieces).map(
     ([section, piece], regionId) => ({ section, piece, regionId }),

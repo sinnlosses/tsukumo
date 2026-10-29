@@ -87,7 +87,7 @@ export type MainViewEntry =
   | { readonly kind: "aside-answer"; readonly text: string }
 
 /**
- * `report` ツールの本文の欄の並び。描く順の並びは `orderedReportRegions` が導く。
+ * `report` ツールの本文の欄の並び。描くのは `a2ui` の値で、この Markdown の欄は描く側も判定も読まない。
  * `head` は結論と合図の行、`finalHead` は最終レポートのときの頭で、`head` に段ごとの所要時間を足したもの。
  * `sections` は中身のある節だけを並べる。
  * `retrospective` は振り返りの塊の Markdown（無ければ空文字）。
@@ -105,7 +105,7 @@ export type MainViewReportRegions = {
 }
 
 /**
- * 部品の一覧で描く本文の値。`none` は一覧の無い記録と、一覧と `sections` の写しが食い違う記録。
+ * 部品の一覧で描く本文の値。`none` は根の `Report` が無い記録で、節は無く、頭とお願いだけを持つ（描くのは頭とお願いだけ）。
  * `sections` は根の子の部品の ID から、その子が写った節の欄の ID と見出しの行（`## …`。見出しの無い節は空文字）。整形で塊の残らない子は持たない。
  * `markdownLeaves` は `Markdown` の葉の部品の ID から、その葉の Markdown（傍注と畳みを包んだもの。整形で落ちた葉は空文字）。
  * 書き手の生 HTML を通す葉だけが文字列で描かれ、ほかの葉は持たない。
@@ -116,7 +116,11 @@ export type MainViewReportRegions = {
  * `favor` はお願いの本文（無ければ空文字）と、合図の行の印が飛ぶ先の `id`。
  */
 export type MainViewA2uiReport =
-  | { readonly kind: "none" }
+  | {
+      readonly kind: "none"
+      readonly head: MainViewSurfaceHead
+      readonly favor: { readonly id: string; readonly text: string }
+    }
   | {
       readonly kind: "surface"
       readonly components: readonly A2uiReportComponent[]
@@ -189,17 +193,6 @@ export type MainViewReportSection = {
 /** メインビューの本文。`report` ツールの本文は欄の並びで、ほかの本文（`detail`・段のまとめ）は Markdown 1本の欄。 */
 export type MainViewReportBody =
   | MainViewReportRegions
-  | { readonly kind: "markdown"; readonly markdown: string }
-
-/**
- * 描く順に並べた欄1つ（`orderedReportRegions`）。`markdown` は空でない。
- * 節の欄の `id` は {@link MainViewReportSection} の `id`、お願いの欄の `id` は合図の行の印が飛ぶ先。
- */
-export type MainViewReportRegion =
-  | { readonly kind: "head"; readonly markdown: string }
-  | { readonly kind: "section"; readonly id: number; readonly markdown: string }
-  | { readonly kind: "retrospective"; readonly markdown: string }
-  | { readonly kind: "favor"; readonly id: string; readonly markdown: string }
   | { readonly kind: "markdown"; readonly markdown: string }
 
 export type MainViewToolRun = Extract<MainViewEntry, { readonly kind: "tool" }>

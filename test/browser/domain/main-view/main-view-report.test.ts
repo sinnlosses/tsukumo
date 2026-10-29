@@ -1,10 +1,7 @@
 // `report` ツールのレポートの組み立て（結論・節・変更の札・図）と、締めの speak で終える並び。
 import { describe, expect, it } from "vitest"
 
-import {
-  orderedReportRegions,
-  reportHeadedSections,
-} from "../../../../src/browser/domain/main-view/main-view-report-body.ts"
+import { reportHeadedSections } from "../../../../src/browser/domain/main-view/main-view-report-body.ts"
 import { mainViewTurns } from "../../../../src/browser/domain/main-view/main-view.ts"
 import type { RecordedReportFigure } from "../../../../src/shared/report/a2ui-report-catalog.ts"
 import type { ChangedFile } from "../../../../src/shared/report/changed-file.ts"
@@ -223,13 +220,6 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
       favor: { id: "favor-toolu_r1", markdown: "架空のお願い" },
       a2ui: expect.objectContaining({ kind: "surface" }),
     })
-    expect(regions === undefined ? undefined : orderedReportRegions(regions)).toEqual([
-      { kind: "head", markdown: lead("架空の結論。") },
-      { kind: "section", id: 0, markdown: "## 架空の節A\n\n架空の本文A。" },
-      { kind: "section", id: 1, markdown: "架空の本文B。" },
-      { kind: "retrospective", markdown: retrospective },
-      { kind: "favor", id: "favor-toolu_r1", markdown: favorNote("架空のお願い") },
-    ])
   })
 
   it("body は整形してから組む（落とせる行は描かず、残りと favor はそのまま）", () => {

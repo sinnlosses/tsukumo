@@ -1,7 +1,6 @@
 // `report` ツールのレポート本文の組み方（合図の行・所要時間・task・ツールの外の本文の扱い）。
 import { describe, expect, it } from "vitest"
 
-import { orderedReportRegions } from "../../../../src/browser/domain/main-view/main-view-report-body.ts"
 import { mainViewTurns } from "../../../../src/browser/domain/main-view/main-view.ts"
 import type { ReportCheck } from "../../../../src/shared/report/report-check.ts"
 import { mainViewEntries } from "../../../../src/shared/session/main-view-entry.ts"
@@ -16,6 +15,7 @@ import {
   firstLineOf,
   lead,
   materialReport,
+  noRootA2ui,
   SETTLED,
   WRITING,
 } from "../../../fixture/main-view-entry.ts"
@@ -43,7 +43,7 @@ const regionsOf = (
   sections,
   retrospective: "",
   favor: { id: "favor-toolu_r1", markdown: "" },
-  a2ui: { kind: "none" },
+  a2ui: noRootA2ui(head),
 })
 
 describe("mainViewTurns（report ツールで受け取ったレポート）", () => {
@@ -83,10 +83,11 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     ).toBe(true)
     expect(shown).toContain('<span class="checks-summary-favor"><a href="#favor-toolu_r1">')
     const body = turn?.steps[0]?.body
-    expect((body?.kind === "text" ? orderedReportRegions(body.report) : []).at(-1)).toEqual({
-      kind: "favor",
+    expect(
+      body?.kind === "text" && body.report.kind === "regions" ? body.report.favor : undefined,
+    ).toEqual({
       id: "favor-toolu_r1",
-      markdown: '<div class="note note-favor">\n\n架空のお願い\n\n</div>',
+      markdown: "架空のお願い",
     })
     expect(
       shown.endsWith(
@@ -426,7 +427,10 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     expect(shownReports(turn)).toEqual([lead("架空の結論。")])
     expect(turn?.steps.find((step) => step.final)?.body).toEqual({
       kind: "text",
-      report: regionsOf(lead("架空の結論。"), []),
+      report: {
+        ...regionsOf(lead("架空の結論。"), []),
+        a2ui: noRootA2ui("架空の結論。", "favor-toolu_r1"),
+      },
       firstLine: "架空の結論。",
       task: { kind: "none" },
       finishedPhase: { kind: "none" },
@@ -461,7 +465,10 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
 
     expect(turn?.steps.find((step) => step.final)?.body).toEqual({
       kind: "text",
-      report: regionsOf(lead("唯一の結論。"), []),
+      report: {
+        ...regionsOf(lead("唯一の結論。"), []),
+        a2ui: noRootA2ui("唯一の結論。", "favor-toolu_r1"),
+      },
       firstLine: "唯一の結論。",
       task: { kind: "none" },
       finishedPhase: { kind: "none" },
@@ -500,55 +507,5 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
       [lead("前のターンの結論。")],
       ["テキストで書いた答え"],
     ])
-  })
-})
-
-describe("orderedReportRegions", () => {
-  it("report の本文は頭 → 節 → 振り返り → お願いの順に並べ、お願いは記法の塊で包んで飛ぶ先の id を欄に持たせる", () => {
-    expect(
-      orderedReportRegions({
-        kind: "regions",
-        head: "架空の頭",
-        finalHead: "架空の最終の頭",
-        sections: [
-          { id: 0, heading: "架空の節", markdown: "## 架空の節\n\n架空の一。" },
-          { id: 2, heading: "", markdown: "架空の二。" },
-        ],
-        retrospective: "架空の振り返り",
-        favor: { id: "favor-toolu_fictional", markdown: "架空のお願い" },
-        a2ui: { kind: "none" },
-      }),
-    ).toEqual([
-      { kind: "head", markdown: "架空の頭" },
-      { kind: "section", id: 0, markdown: "## 架空の節\n\n架空の一。" },
-      { kind: "section", id: 2, markdown: "架空の二。" },
-      { kind: "retrospective", markdown: "架空の振り返り" },
-      {
-        kind: "favor",
-        id: "favor-toolu_fictional",
-        markdown: '<div class="note note-favor">\n\n架空のお願い\n\n</div>',
-      },
-    ])
-  })
-
-  it("空白だけの欄は置かない", () => {
-    expect(
-      orderedReportRegions({
-        kind: "regions",
-        head: " ",
-        finalHead: "",
-        sections: [{ id: 0, heading: "", markdown: "架空の一。" }],
-        retrospective: "",
-        favor: { id: "favor-toolu_fictional", markdown: "\n" },
-        a2ui: { kind: "none" },
-      }),
-    ).toEqual([{ kind: "section", id: 0, markdown: "架空の一。" }])
-  })
-
-  it("Markdown 1本の本文は、空でなければ markdown の欄1つ", () => {
-    expect(orderedReportRegions({ kind: "markdown", markdown: "架空の本文" })).toEqual([
-      { kind: "markdown", markdown: "架空の本文" },
-    ])
-    expect(orderedReportRegions({ kind: "markdown", markdown: "  " })).toEqual([])
   })
 })

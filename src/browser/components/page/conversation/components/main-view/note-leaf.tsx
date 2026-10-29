@@ -51,7 +51,7 @@ export function NoteLeaf(props: {
   )
 }
 
-function NoteBody(props: { readonly tone: NoteTone; readonly text: string }): ReactElement {
+export function NoteBody(props: { readonly tone: NoteTone; readonly text: string }): ReactElement {
   const { kindName, className, pauses } = NOTE_KINDS[props.tone]
   const label = REPORT_NOTE_KINDS.find(([name]) => name === kindName)?.[1] ?? ""
   const content: ReactNode = (
