@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import { reportHeadedSections } from "../../../src/browser/domain/main-view/main-view-report-body.ts"
 import { reportEvents } from "../../../src/server/session-driver/core/sdk-report-message.ts"
+import { reportFigureOf } from "../../../src/shared/report/report-outline.ts"
 import { mainViewEntries } from "../../../src/shared/session/main-view-entry.ts"
 import type { MainViewReportRegions } from "../../../src/shared/session/main-view-shape.ts"
 import type { SessionEvent } from "../../../src/shared/session/session-event.ts"
@@ -44,16 +45,20 @@ describe("a2ui の版の記録の本文", () => {
   const event = reportOf({ components: PARTS })
 
   it("題材の部品は 1 つも落ちずに記録に写る", () => {
-    expect([event.components.length, event.unknownBlockCount]).toEqual([PARTS.length, 0])
+    expect([event.components.length, event.droppedCount]).toEqual([PARTS.length, 0])
   })
 
-  it("components の有無で、見出しのある節の ID と見出しが同じ", () => {
+  it("見出しのある節の ID と見出しは components から導き、components が無ければ面も節も無い", () => {
     const withComponents = regionsOf(event)
     const withoutComponents = regionsOf({ ...event, components: [] })
 
     expect(withComponents.a2ui.kind).toBe("surface")
+    expect(reportHeadedSections(withComponents)).toEqual([
+      { id: 1, heading: "架空の表" },
+      { id: 2, heading: "架空の並び" },
+    ])
     expect(withoutComponents.a2ui.kind).toBe("none")
-    expect(reportHeadedSections(withComponents)).toEqual(reportHeadedSections(withoutComponents))
+    expect(reportHeadedSections(withoutComponents)).toEqual([])
   })
 
   it("markdownLeaves は Markdown の葉だけを持ち、傍注と畳みを包んだ Markdown を当てる", () => {
@@ -144,18 +149,32 @@ describe("a2ui の版の記録の本文", () => {
     )
     const withoutFigure = reportOf({ components: parts })
     const { a2ui } = regionsOf(withoutFigure)
-    expect(withoutFigure.figure.kind).toBe("none")
+    expect(reportFigureOf(withoutFigure.components)).toEqual({
+      kind: "none",
+      reason: "short-answer",
+    })
     if (a2ui.kind !== "surface") throw new Error("面の値が無い")
 
     expect(a2ui.sections.s1?.regionId).toBe(0)
   })
 
-  it("節の葉の数が記録の sections と食い違えば none", () => {
-    const [first, ...rest] = event.sections
-    if (first === undefined) throw new Error("節が無い")
-    const broken = { ...event, sections: [{ ...first, blocks: first.blocks.slice(1) }, ...rest] }
+  it("葉の無い Section があっても、その節を飛ばして面ができる", () => {
+    const parts = [
+      { id: "root", component: "Report", conclusion: ["架空の結論。"], children: ["s0", "s1"] },
+      { id: "s0", component: "Section", heading: "葉の無い節", children: ["gone"] },
+      { id: "s1", component: "Section", heading: "架空の節", children: ["p1"] },
+      { id: "p1", component: "Paragraph", text: "架空の段落。" },
+    ]
+    const { a2ui } = regionsOf(reportOf({ components: parts }))
+    if (a2ui.kind !== "surface") throw new Error("面の値が無い")
 
-    expect(regionsOf(broken).a2ui).toEqual({ kind: "none" })
+    expect(a2ui.sections).toEqual({ s1: { regionId: 0, heading: "## 架空の節" } })
+  })
+
+  it("根が Report でなければ none", () => {
+    const parts = PARTS.filter((part) => part.id !== "root")
+
+    expect(regionsOf(reportOf({ components: parts })).a2ui).toEqual({ kind: "none" })
   })
 })
 

@@ -2,15 +2,13 @@
 // セッションの状態から導くだけで、別の状態は持たない。
 
 import { changedFilesMarkdown } from "../report/changed-file-section.ts"
-import { sectionsWithFigure } from "../report/report-block.ts"
 import { reportChecksMarkdown } from "../report/report-check.ts"
+import { drawnReportOf } from "../report/report-drawn-outline.ts"
 import { joinParts } from "../report/report-inline-markdown.ts"
 import { reportLeafLayoutOf } from "../report/report-leaf-value.ts"
 import { reportSectionPieces } from "../report/report-markdown.ts"
 import { phaseTimesMarkdown } from "../report/report-phase-time.ts"
-import { retrospectiveSections } from "../report/report-retrospective.ts"
 import { keyFiguresMarkdown } from "../report/report-stat-markdown.ts"
-import { tidyReportSections } from "../report/report-tidy.ts"
 import { isBlankText } from "../utils/blank-text.ts"
 import { a2uiReportView } from "./a2ui-report-view.ts"
 import type { MainViewEntry, MainViewReportRegions } from "./main-view-shape.ts"
@@ -144,15 +142,15 @@ function toMainViewEntries(record: SessionRecord, context: TurnContext): readonl
 }
 
 /**
- * `report` の引数を欄に組む。頭は `conclusion` → `keyFigures`（数の札）→ 合図の行と段ごとの所要時間の順で、節は `figure` の図 → `sections` の順。
- * `figure` の図は見出しの無い先頭の節として描き（`sectionsWithFigure`）、図の番号は `sections` の図と通しで振られる。`none` は何も描かない。
+ * `report` の引数を欄に組む。頭は `conclusion` → `keyFigures`（数の札）→ 合図の行と段ごとの所要時間の順で、節は `components` から導く（`drawnReportOf`）。
+ * 図は見出しの無い先頭の節として描き、図の番号は本文の図と通しで振られる。図が無ければ何も描かない。
  * 合図の行と段ごとの所要時間は {@link statusMarkdown}。段ごとの所要時間は最終のときの頭にだけ、同じ依頼のワークプランの記録（止めて再開した依頼の記録も引き継ぐ。{@link phaseDurations}）と `report` の `workPlanClosing` から描く。
  * `favor` はレポートの記法の「お願い」の塊で包むので、サニタイズも記法の解釈もテキストの本文と同じ経路を通る。
  * `favor` の塊は `favor-<toolUseId>` の `id` を持ち、合図の行の総括行にある印がそこへ飛ぶ。
- * 中身の無い節は欄にしない。`retrospective` は節の最後に足して組み（図と表の番号が通しで続く）、欄が無ければ空文字にする（{@link retrospectiveSections}）。
+ * 中身の無い節は欄にしない。`retrospective` は節の最後に足して組み（図と表の番号が通しで続く）、欄が無ければ空文字にする。
  * `conclusion` は、`task` のあるレポートでは見出しの下の一文として `conclusion` の印で、無いレポートでは見出しの代わりとして `conclusion-lead` の印で包む（`task` そのものは本文に組まない）。
  *
- * 節の並びはここで整形する（{@link tidyReportSections}。記録は引数のまま持ち、描くたびに導く）。
+ * 節の並びはここで整形する（`tidyReportOutline`。記録は引数のまま持ち、描くたびに導く）。
  */
 function reportRegionsOf(
   report: Extract<SessionRecord, { readonly kind: "report" }>,
@@ -179,16 +177,20 @@ function reportRegionsOf(
     ]
       .filter((part) => !isBlankText(part))
       .join("\n\n")
-  const sections = reportSectionsOf(report)
-  const drawnSections = [...sections, ...retrospectiveSections(report.retrospective)]
-  const layout = reportLeafLayoutOf(drawnSections)
+  const drawn = drawnReportOf(report.components, report.conclusion, "whole")
+  const sections = drawn.sections.filter((section) => section.role !== "retrospective")
+  const layout = reportLeafLayoutOf(drawn.sections.map((section) => section.section))
   const imageSource = {
     kind: "shelved",
     toolUseId: report.toolUseId,
     sizes: report.imageSizes,
     unshelved: report.unshelvedImages,
   } as const
-  const pieces = reportSectionPieces(drawnSections, imageSource, layout)
+  const pieces = reportSectionPieces(
+    drawn.sections.map((section) => section.section),
+    imageSource,
+    layout,
+  )
   const markdowns = pieces.map((piece) => joinParts([piece.heading, ...piece.blocks]))
   return {
     kind: "regions",
@@ -200,17 +202,8 @@ function reportRegionsOf(
     }),
     retrospective: markdowns[sections.length] ?? "",
     favor: { id: favorId, markdown: report.favor },
-    a2ui: a2uiReportView(report, pieces, layout, imageSource),
+    a2ui: a2uiReportView(report.components, drawn, pieces, layout, imageSource),
   }
-}
-
-/** 本文に描く節。`figure` を先頭の節にし、整形（{@link tidyReportSections}）したあとの並び。 */
-function reportSectionsOf(report: Extract<SessionRecord, { readonly kind: "report" }>) {
-  const tidied = tidyReportSections({
-    conclusion: report.conclusion,
-    sections: report.sections,
-  })
-  return sectionsWithFigure(report.figure, tidied)
 }
 
 /**

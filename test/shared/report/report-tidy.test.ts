@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest"
 
+import type { A2uiReportComponent } from "../../../src/shared/report/a2ui-report-catalog.ts"
 import type { ReportBlock, ReportSection } from "../../../src/shared/report/report-block.ts"
-import { tidyReportSections } from "../../../src/shared/report/report-tidy.ts"
+import { outlineLeafBlock, reportOutline } from "../../../src/shared/report/report-outline.ts"
+import { tidyReportOutline } from "../../../src/shared/report/report-tidy.ts"
 
 const CONCLUSION = "架空の結論。"
 
@@ -23,7 +25,7 @@ const tidy = (body: string, conclusion = CONCLUSION): string =>
     .map((block) => (block.kind === "markdown" ? block.markdown : ""))
     .join("")
 
-describe("tidyReportSections（逃げ道の塊）", () => {
+describe("tidyReportOutline（逃げ道の塊）", () => {
   it("落とすものが無ければ引数のまま返す（空行の連続も詰めない）", () => {
     const body = "## 架空の見出し\n\n架空の本文。\n\n\n\n- 架空の項目\n"
 
@@ -160,7 +162,7 @@ describe("tidyReportSections（逃げ道の塊）", () => {
   })
 })
 
-describe("tidyReportSections（塊と節）", () => {
+describe("tidyReportOutline（塊と節）", () => {
   const tidySections = (sections: readonly ReportSection[]) =>
     tidyReportSections({ conclusion: CONCLUSION, sections })
 
@@ -224,5 +226,85 @@ describe("tidyReportSections（塊と節）", () => {
     ]
 
     expect(tidySections(sections)).toEqual(sections)
+  })
+})
+
+/** 塊の節を `components` に組む（`text` は `Paragraph`、`markdown` は `Markdown`、`note` は `Note`）。 */
+function componentsOf(sections: readonly ReportSection[]): readonly A2uiReportComponent[] {
+  const leaves = sections.flatMap((section, sectionIndex) =>
+    section.blocks.map((block, blockIndex): A2uiReportComponent => {
+      const id = `leaf-${String(sectionIndex)}-${String(blockIndex)}`
+      switch (block.kind) {
+        case "text":
+          return { id, component: "Paragraph", text: block.text, fold: "", aside: "" }
+        case "markdown":
+          return { id, component: "Markdown", markdown: block.markdown, fold: "", aside: "" }
+        case "note":
+          return {
+            id,
+            component: "Note",
+            tone: block.tone,
+            text: block.text,
+            fold: "",
+            aside: "",
+          }
+        default:
+          throw new Error(`この組み立てが扱わない塊: ${block.kind}`)
+      }
+    }),
+  )
+  return [
+    { id: "root", component: "Report", children: sections.map((_, index) => `s-${String(index)}`) },
+    ...sections.map((section, index): A2uiReportComponent => ({
+      id: `s-${String(index)}`,
+      component: "Section",
+      heading: section.heading,
+      children: section.blocks.map(
+        (_, blockIndex) => `leaf-${String(index)}-${String(blockIndex)}`,
+      ),
+    })),
+    ...leaves,
+  ]
+}
+
+/** 塊の節を葉にして整形し、整形後の葉を塊の節に戻す。 */
+function tidyReportSections(report: {
+  readonly conclusion: string
+  readonly sections: readonly ReportSection[]
+}): readonly ReportSection[] {
+  const { outline } = tidyReportOutline({
+    conclusion: report.conclusion,
+    outline: reportOutline(componentsOf(report.sections)),
+  })
+  return outline.sections.map((section) => ({
+    heading: section.kind === "section" ? section.heading : "",
+    shapeTag: "unspecified",
+    blocks: section.leaves.flatMap((leaf) => {
+      const block = outlineLeafBlock(leaf)
+      return block === undefined ? [] : [block]
+    }),
+  }))
+}
+
+describe("tidyReportOutline（落とした葉の ID）", () => {
+  it("落とした葉の ID だけが集合に入り、整形で書き換えた葉の ID は入らない", () => {
+    const sections: readonly ReportSection[] = [
+      {
+        heading: "架空の節",
+        shapeTag: "unspecified",
+        blocks: [text("以上です。"), markdown("以上です。\n\n架空の根拠。"), text("架空の本文。")],
+      },
+      { heading: "全部落ちる節", shapeTag: "unspecified", blocks: [markdown("")] },
+    ]
+
+    const tidied = tidyReportOutline({
+      conclusion: CONCLUSION,
+      outline: reportOutline(componentsOf(sections)),
+    })
+
+    expect([...tidied.droppedLeafIds].toSorted()).toEqual(["leaf-0-0", "leaf-1-0"])
+    expect(tidied.outline.sections.map((section) => section.leaves.map((leaf) => leaf.id))).toEqual(
+      [["leaf-0-1", "leaf-0-2"]],
+    )
   })
 })

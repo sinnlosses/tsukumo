@@ -26,16 +26,13 @@ export function reportEvent(
     conclusionSentenceChars: parseConclusion(conclusion)?.conclusionSentenceChars ?? [],
     conclusionFirstSentence: parseConclusion(conclusion)?.conclusionFirstSentence ?? "",
     keyFigures: [],
-    figure: { kind: "none", reason: "unrecorded" },
-    sections: [],
     favor: "",
-    retrospective: { kind: "none" },
     checks: [],
     task: { kind: "none" },
     workPlanClosing: "none",
     closing: { kind: "none" },
     waitingLine: { kind: "none" },
-    unknownBlockCount: 0,
+    droppedCount: 0,
     brokenFenceCount: 0,
     title: undefined,
     sessionSummary: undefined,
@@ -50,11 +47,10 @@ export function reportEvent(
 /** 節だけを渡す `report` ツールの呼び出し1件。`components` は節から本番と同じ組み直しで作る。 */
 export function reportOfSections(
   sections: readonly ReportSection[],
-  unknownBlockCount = 0,
+  droppedCount = 0,
 ): Extract<SessionEvent, { readonly kind: "report" }> {
   return reportEvent({
-    sections,
-    unknownBlockCount,
+    droppedCount,
     components: componentsOfSections(
       sections,
       { kind: "none", reason: "unrecorded" },
@@ -63,18 +59,25 @@ export function reportOfSections(
   })
 }
 
-/** 節・図・振り返りを渡す `report` ツールの呼び出し1件。`components` はそれらから本番と同じ組み直しで作る。 */
+/**
+ * 節・図・振り返り（塊つき）を渡す `report` ツールの呼び出し1件。`components` はそれらから本番と同じ組み直しで作る。
+ */
 export function reportOfDrawn(
   overrides: Partial<
     Omit<Extract<SessionEvent, { readonly kind: "report" }>, "kind" | "components">
-  >,
+  > & {
+    readonly sections?: readonly ReportSection[]
+    readonly figure?: RecordedReportFigure
+    readonly retrospective?: ReportRetrospective
+  },
 ): Extract<SessionEvent, { readonly kind: "report" }> {
+  const { sections, figure, retrospective, ...rest } = overrides
   return reportEvent({
-    ...overrides,
+    ...rest,
     components: componentsOfSections(
-      overrides.sections ?? [],
-      overrides.figure ?? { kind: "none", reason: "unrecorded" },
-      overrides.retrospective ?? { kind: "none" },
+      sections ?? [],
+      figure ?? { kind: "none", reason: "unrecorded" },
+      retrospective ?? { kind: "none" },
     ),
   })
 }
@@ -115,7 +118,7 @@ export function reportDraft(input: ReportDraftInput = {}): ReportDraft {
  * 旧い形の節・図・振り返りを、本番と同じ組み直し（`legacyReportComponents`）で部品の一覧にする。
  * 節が無いまま図か振り返りの塊だけがあるときは、根の子が空にならないよう空の段落の節を1つ置く。
  */
-function componentsOfSections(
+export function componentsOfSections(
   sections: readonly ReportSection[],
   figure: RecordedReportFigure,
   retrospective: ReportRetrospective,

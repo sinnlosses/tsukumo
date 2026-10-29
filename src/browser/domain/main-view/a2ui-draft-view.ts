@@ -3,18 +3,16 @@
 // 会話の内容がここを通る。ログにもファイルにも書かない。
 
 import type { A2uiReportComponent } from "../../../shared/report/a2ui-report-catalog.ts"
-import { a2uiReportFields } from "../../../shared/report/a2ui-report-input.ts"
 import {
   A2UI_ROOT_ID,
   a2uiLeafIds,
   a2uiPartsById,
   a2uiReachableIds,
 } from "../../../shared/report/a2ui-report-outline.ts"
-import { parseReportSections } from "../../../shared/report/report-block.ts"
+import { drawnReportOf } from "../../../shared/report/report-drawn-outline.ts"
 import { joinParts } from "../../../shared/report/report-inline-markdown.ts"
 import { reportLeafLayoutOf } from "../../../shared/report/report-leaf-value.ts"
 import { reportSectionPieces } from "../../../shared/report/report-markdown.ts"
-import { tidyReportSections } from "../../../shared/report/report-tidy.ts"
 import { a2uiReportView } from "../../../shared/session/a2ui-report-view.ts"
 import type {
   MainViewDraft,
@@ -51,8 +49,8 @@ function draftRegions(
   drawn: readonly A2uiReportComponent[],
 ): MainViewReportRegions {
   const conclusion = (root.conclusion ?? []).join("")
-  const { sections } = parseReportSections(a2uiReportFields(root, a2uiPartsById(drawn)).sections)
-  const tidied = tidyReportSections({ conclusion, sections })
+  const drawnReport = drawnReportOf(drawn, conclusion, "body")
+  const tidied = drawnReport.sections.map((section) => section.section)
   const layout = reportLeafLayoutOf(tidied)
   const imageSource = { kind: "none" } as const
   const pieces = reportSectionPieces(tidied, imageSource, layout)
@@ -70,17 +68,6 @@ function draftRegions(
     }),
     retrospective: "",
     favor: { id: `favor-${toolUseId}`, markdown: "" },
-    a2ui: a2uiReportView(
-      {
-        components: drawn,
-        conclusion,
-        figure: { kind: "none", reason: "unrecorded" },
-        retrospective: { kind: "none" },
-        sections,
-      },
-      pieces,
-      layout,
-      imageSource,
-    ),
+    a2ui: a2uiReportView(drawn, drawnReport, pieces, layout, imageSource),
   }
 }

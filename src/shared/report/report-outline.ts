@@ -1,6 +1,8 @@
 // `components` から、規約の検査が読む節・図・振り返りの葉を取り出す。
 // 葉は `a2uiLeafIds` と同じ平らな並びで、配置の部品（Row・Column・Card・Tabs）の中の葉も外側の節へ並び順に入る。
 
+import { omit } from "remeda"
+
 import { type A2uiReportComponent, LEAF_COMPONENT_KINDS } from "./a2ui-report-catalog.ts"
 import {
   A2UI_ROOT_ID,
@@ -10,7 +12,12 @@ import {
   a2uiPartsById,
 } from "./a2ui-report-outline.ts"
 import type { ReportPlot } from "./figure-grammar.ts"
-import { type RecordedReportFigure, reportFigureSchema } from "./report-block.ts"
+import {
+  parseReportBlocks,
+  type RecordedReportFigure,
+  type ReportBlock,
+  reportFigureSchema,
+} from "./report-block.ts"
 import type { ReportTimeline } from "./timeline-block.ts"
 
 export type ReportOutlineLeaf = Extract<
@@ -18,14 +25,22 @@ export type ReportOutlineLeaf = Extract<
   { readonly component: keyof typeof LEAF_COMPONENT_KINDS }
 >
 
-/** `section` は見出しつきの `Section`、`loose` は見出しの無い節（`Section` でない根の子）。 */
+/**
+ * `section` は見出しつきの `Section`、`loose` は見出しの無い節（`Section` でない根の子）。
+ * `componentId` は節になった根の子の部品の ID。
+ */
 export type ReportOutlineSection =
   | {
       readonly kind: "section"
+      readonly componentId: string
       readonly heading: string
       readonly leaves: readonly ReportOutlineLeaf[]
     }
-  | { readonly kind: "loose"; readonly leaves: readonly ReportOutlineLeaf[] }
+  | {
+      readonly kind: "loose"
+      readonly componentId: string
+      readonly leaves: readonly ReportOutlineLeaf[]
+    }
 
 export type ReportOutline = {
   readonly sections: readonly ReportOutlineSection[]
@@ -54,12 +69,23 @@ export function reportOutline(components: readonly A2uiReportComponent[]): Repor
   return {
     sections: a2uiOutlineSections(root, byId).map((section) =>
       section.kind === "section"
-        ? { kind: "section", heading: section.heading, leaves: leavesOf(section.leafIds) }
-        : { kind: "loose", leaves: leavesOf(section.leafIds) },
+        ? {
+            kind: "section",
+            componentId: section.componentId,
+            heading: section.heading,
+            leaves: leavesOf(section.leafIds),
+          }
+        : { kind: "loose", componentId: section.componentId, leaves: leavesOf(section.leafIds) },
     ),
     figure: leavesOf(root.figure === undefined ? [] : [root.figure]),
     retrospective: leavesOf(root.retrospective?.blocks ?? []),
   }
+}
+
+export function outlineLeafBlock(leaf: ReportOutlineLeaf): ReportBlock | undefined {
+  return parseReportBlocks([
+    { kind: LEAF_COMPONENT_KINDS[leaf.component], ...omit(leaf, ["id", "component"]) },
+  ])[0]
 }
 
 export function sectionLeaves(outline: ReportOutline): readonly ReportOutlineLeaf[] {

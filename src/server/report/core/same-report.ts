@@ -32,7 +32,7 @@ function figureContents(components: ReportDraft["components"]) {
 
 function sectionContents(components: ReportDraft["components"]) {
   return reportOutline(components).sections.map((section) => ({
-    ...omit(section, ["leaves"]),
+    ...omit(section, ["leaves", "componentId"]),
     leaves: section.leaves.map((leaf) => omit(leaf, ["id"])),
   }))
 }

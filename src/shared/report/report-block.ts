@@ -153,19 +153,6 @@ export type RecordedReportFigure =
   | ReportFigure
   | { readonly kind: "none"; readonly reason: "unrecorded" }
 
-/**
- * `figure` の図を見出しの無い先頭の節にした、描く順（figure → sections）の並び。`none` なら `sections` のまま。
- * 図の番号と、図の不具合の位置（何個目か）はこの並びで数える。
- */
-export function sectionsWithFigure(
-  figure: RecordedReportFigure,
-  sections: readonly ReportSection[],
-): readonly ReportSection[] {
-  return figure.kind === "none"
-    ? sections
-    : [{ heading: "", shapeTag: "unspecified", blocks: [figure] }, ...sections]
-}
-
 export const reportSectionSchema = z.object({
   heading: omittable(z.string(), "").describe(
     `その節の結論を言う語（「変更点」「まとめ」のようなどのレポートにも当てはまる語にしない）。${String(MAX_HEADING)}字以内で、疑問文にしない。節が1つなら省いてよく、2つ以上なら全部に付ける`,

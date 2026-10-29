@@ -14,10 +14,10 @@ export type PendingReader = PendingReaderBase &
 
 export const PENDING_READERS: readonly PendingReader[] = [
   {
-    file: "src/shared/report/report-outline.ts",
+    file: "src/shared/report/a2ui-report-input.ts",
     missingReader: "browser",
-    reason: "server からだけ読まれている",
-    removeWhen: "browser のレポートの描画がこのファイルを読んだら",
+    reason: "草稿の組み立てが読まなくなり、server の引数の字数の数え直しだけが読む",
+    removeWhen: "旧い引数の形への組み直しをやめる（ADR 0043 の順 8）",
   },
 ]
 

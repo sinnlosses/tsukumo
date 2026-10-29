@@ -23,13 +23,13 @@ describe("createSessionManager", () => {
     /** 描いた `report` の `SessionEvent`（中身はすべて手で書いた架空のもの）。 */
     function reportWithSections(
       sections: readonly ReportSection[],
-      unknownBlockCount = 0,
+      droppedCount = 0,
     ): SessionEvent {
       return reportOfDrawn({
         toolUseId: "toolu_r1",
         conclusion: "架空の結論。",
         sections,
-        unknownBlockCount,
+        droppedCount,
       })
     }
 

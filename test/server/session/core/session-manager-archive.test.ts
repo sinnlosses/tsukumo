@@ -10,7 +10,7 @@ import type { DiagnosticEntry } from "../../../../src/shared/diagnostic/diagnost
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import { characterChangedEvent } from "../../../fixture/character.ts"
 import { NOOP_CHAT_ARCHIVE } from "../../../fixture/chat.ts"
-import { reportEvent } from "../../../fixture/report-event.ts"
+import { reportOfDrawn } from "../../../fixture/report-event.ts"
 import { createStubDriver } from "../../../fixture/session-driver.ts"
 import { CHARACTER_EVENT, requestEvent } from "../../../fixture/session-event.ts"
 import { launchWith } from "../../../fixture/session-manager-record.ts"
@@ -28,7 +28,7 @@ describe("createSessionManager", () => {
 
     /** `report` の `SessionEvent`（結論だけ差し替えられる。中身はすべて手で書いた架空のもの）。 */
     function reportWithConclusion(conclusion: string): SessionEvent {
-      return reportEvent({
+      return reportOfDrawn({
         toolUseId: "toolu_r1",
         conclusion,
         sections: [
@@ -344,7 +344,7 @@ describe("createSessionManager", () => {
         stub.emit({ kind: "chat-mode-changed", chat })
         stub.emit(requestEvent())
         stub.emit({ kind: "speech", text: "架空のセリフ", expression: "proud" })
-        stub.emit(reportEvent({ toolUseId: "toolu_r1", conclusion: "架空の結論" }))
+        stub.emit(reportOfDrawn({ toolUseId: "toolu_r1", conclusion: "架空の結論" }))
         stub.emit({ kind: "turn-finished", outcome: { kind: "completed" } })
       }
     }

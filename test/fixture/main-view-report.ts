@@ -8,7 +8,7 @@ import { applySessionEvent } from "../../src/shared/session/session-fold.ts"
 import { INITIAL_SESSION_STATE } from "../../src/shared/session/session-state.ts"
 import type { TurnBodies } from "../../src/shared/session/turn-progress.ts"
 import { reportOf } from "./main-view-entry.ts"
-import { reportEvent } from "./report-event.ts"
+import { reportOfDrawn } from "./report-event.ts"
 import { requestEvent } from "./session-event.ts"
 
 export const fold = (events: readonly SessionEvent[]) =>
@@ -27,7 +27,7 @@ export const report = (
   checks: readonly ReportCheck[] = [],
   task: ReportTask = { kind: "none" },
 ): SessionEvent =>
-  reportEvent({
+  reportOfDrawn({
     toolUseId: "toolu_r1",
     conclusion,
     sections: parseReportBody(body).sections,

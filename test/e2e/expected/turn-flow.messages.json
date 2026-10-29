@@ -120,28 +120,7 @@
       ],
       "conclusionFirstSentence": "途中の結論: 目盛りを決めているのは `a.ts` だけだった。",
       "keyFigures": [],
-      "figure": {
-        "kind": "none",
-        "reason": "unrecorded"
-      },
-      "sections": [
-        {
-          "heading": "",
-          "shapeTag": "unspecified",
-          "blocks": [
-            {
-              "kind": "markdown",
-              "markdown": "- 読んだのは `/tmp/dummy/a.ts` と `/tmp/dummy/b.ts` の2つ\n- 目盛りを決めているのは `a.ts` のほう\n- `b.ts` は目盛りを読むだけ",
-              "fold": "",
-              "aside": ""
-            }
-          ]
-        }
-      ],
       "favor": "",
-      "retrospective": {
-        "kind": "none"
-      },
       "checks": [],
       "task": {
         "kind": "none"
@@ -155,7 +134,7 @@
       "waitingLine": {
         "kind": "none"
       },
-      "unknownBlockCount": 0,
+      "droppedCount": 0,
       "brokenFenceCount": 0,
       "sessionRemaining": {
         "kind": "unrecorded"
@@ -299,90 +278,7 @@
       ],
       "conclusionFirstSentence": "架空の結論: 目盛りを 24 に直し、`a.ts` だけで済んだ。",
       "keyFigures": [],
-      "figure": {
-        "kind": "none",
-        "reason": "unrecorded"
-      },
-      "sections": [
-        {
-          "heading": "",
-          "shapeTag": "unspecified",
-          "blocks": [
-            {
-              "kind": "table",
-              "title": "直したファイルと結果（架空の数）",
-              "columns": [
-                "ファイル",
-                "変えたこと",
-                "状態"
-              ],
-              "rows": [
-                [
-                  "`a.ts`",
-                  "目盛りを 12 から 24 へ",
-                  {
-                    "status": "ok",
-                    "text": "OK"
-                  }
-                ],
-                [
-                  "`b.ts`",
-                  "読むだけなので変えない",
-                  {
-                    "status": "warn",
-                    "text": "キャッシュが古いまま"
-                  }
-                ],
-                [
-                  "`c.ts`",
-                  "型の食い違いが残る",
-                  {
-                    "status": "ng",
-                    "text": "NG"
-                  }
-                ]
-              ],
-              "rest": "",
-              "fold": "",
-              "aside": ""
-            },
-            {
-              "kind": "table",
-              "title": "目盛りの数（架空の数）",
-              "columns": [
-                "場所",
-                "前",
-                "後"
-              ],
-              "rows": [
-                [
-                  "帯",
-                  "12",
-                  "24"
-                ],
-                [
-                  "札",
-                  "6",
-                  "12"
-                ]
-              ],
-              "rest": "ほか 3 件（一覧は省略）",
-              "fold": "",
-              "aside": ""
-            },
-            {
-              "kind": "markdown",
-              "markdown": "```diff src/a.ts\n-const TICKS = 12\n+const TICKS = 24\n```\n\n<div class=\"note note-warn\">\n\n`b.ts` のキャッシュは古い目盛りを持ったまま残る。\n\n</div>",
-              "fold": "",
-              "aside": ""
-            }
-          ]
-        }
-      ],
       "favor": "`b.ts` のキャッシュを消してよいか決めてほしい（架空のお願い）。",
-      "retrospective": {
-        "kind": "none"
-      },
       "checks": [
         {
           "status": "ok",
@@ -421,7 +317,7 @@
       "waitingLine": {
         "kind": "none"
       },
-      "unknownBlockCount": 0,
+      "droppedCount": 0,
       "brokenFenceCount": 0,
       "sessionRemaining": {
         "kind": "unrecorded"

@@ -9,13 +9,18 @@
 //
 // 整形は塊ごとに掛ける。逃げ道（`markdown` の塊）は Markdown として構文解析せず、行で見る（フェンスの中は触らない）。
 
-import type { ReportSection, SectionBlock } from "./report-block.ts"
 import { fencedLineFlags } from "./report-fence.ts"
+import type { ReportOutline, ReportOutlineLeaf } from "./report-outline.ts"
 
-/** 整形にかけるレポート。 */
-export type ReportTidyInput = {
+export type ReportOutlineTidyInput = {
   readonly conclusion: string
-  readonly sections: readonly ReportSection[]
+  readonly outline: ReportOutline
+}
+
+export type TidiedReportOutline = {
+  /** 本文の節だけを整形したもの。落とした葉と、葉の残らない節は除く。図・振り返りはそのまま。 */
+  readonly outline: ReportOutline
+  readonly droppedLeafIds: ReadonlySet<string>
 }
 
 /**
@@ -23,61 +28,55 @@ export type ReportTidyInput = {
  * 中身は引数のまま:
  *
  * - 本文の冒頭で `conclusion` を繰り返しているもの（`conclusion` はすぐ上に描かれるので、同じ文が
- *   2度並ぶだけになる）。最初の塊が `text` なら塊ごと、逃げ道なら頭の行
- * - 前置き・締めの定型だけの `text` の塊と、逃げ道の中の定型だけの行（{@link BOILERPLATE_LINES} と丸ごと一致するもの）
- * - 逃げ道の中の中身の無い見出し（文字が無いか、次に来るのが同じか浅い見出し・塊の終わり）
- * - 落として塊の残らない節（見出しごと）
+ *   2度並ぶだけになる）。最初の葉が `Paragraph` なら葉ごと、逃げ道なら頭の行。
+ *   見るのは葉のある最初の節の最初の葉だけ
+ * - 前置き・締めの定型だけの `Paragraph` の葉と、逃げ道の中の定型だけの行（{@link BOILERPLATE_LINES} と丸ごと一致するもの）
+ * - 逃げ道の中の中身の無い見出し（文字が無いか、次に来るのが同じか浅い見出し・葉の終わり）
+ * - 落として葉の残らない節（見出しごと）
  */
-export function tidyReportSections(report: ReportTidyInput): readonly ReportSection[] {
-  return tidiedSectionBlocks(report).flatMap((tidied, sectionIndex) => {
-    const section = report.sections[sectionIndex]
-    const blocks = tidied.flatMap((block) => (block.kind === "kept" ? [block.block] : []))
-    return section === undefined || blocks.length === 0 ? [] : [{ ...section, blocks }]
-  })
-}
-
-export type TidiedBlock =
-  | { readonly kind: "kept"; readonly block: SectionBlock }
-  | { readonly kind: "dropped" }
-
-/**
- * 節ごと・塊ごとの整形の結果。入力の節・塊と同じ並び・同じ長さ。
- * 塊の残らない節を落とすのは {@link tidyReportSections} の側。
- */
-export function tidiedSectionBlocks(report: ReportTidyInput): readonly (readonly TidiedBlock[])[] {
-  return report.sections.map((section, sectionIndex) =>
-    section.blocks.map((block, blockIndex): TidiedBlock => {
-      const [tidied] = tidyBlock(
-        block,
-        sectionIndex === 0 && blockIndex === 0 ? report.conclusion : "",
-      )
-      return tidied === undefined ? { kind: "dropped" } : { kind: "kept", block: tidied }
-    }),
+export function tidyReportOutline(report: ReportOutlineTidyInput): TidiedReportOutline {
+  const [first] = report.outline.sections.filter((section) => section.leaves.length > 0)
+  const firstLeafId = first?.leaves[0]?.id
+  const tidied = report.outline.sections.map((section) =>
+    section.leaves.map((leaf) => tidyLeaf(leaf, leaf.id === firstLeafId ? report.conclusion : "")),
   )
-}
-
-/**
- * 塊1つを整形する。落とすなら空の並び。`conclusion` は本文の冒頭の塊にだけ渡す（冒頭でない
- * 繰り返しは落とさない）。
- */
-function tidyBlock(block: SectionBlock, conclusion: string): readonly SectionBlock[] {
-  switch (block.kind) {
-    case "text":
-      return isBoilerplateLine(block.text) ||
-        (conclusion.trim() !== "" &&
-          joinedText(block.text.split("\n")) === joinedText(conclusion.split("\n")))
-        ? []
-        : [block]
-    case "markdown": {
-      const markdown = tidyMarkdown(block.markdown, conclusion)
-      return markdown.trim() === "" ? [] : [{ ...block, markdown }]
-    }
-    default:
-      return [block]
+  return {
+    outline: {
+      ...report.outline,
+      sections: report.outline.sections.flatMap((section, index) => {
+        const leaves = (tidied[index] ?? []).flatMap((leaf) => (leaf === undefined ? [] : [leaf]))
+        return leaves.length === 0 ? [] : [{ ...section, leaves }]
+      }),
+    },
+    droppedLeafIds: new Set(
+      report.outline.sections.flatMap((section, index) =>
+        section.leaves.flatMap((leaf, position) =>
+          tidied[index]?.[position] === undefined ? [leaf.id] : [],
+        ),
+      ),
+    ),
   }
 }
 
-/** 逃げ道の中身から、意味を変えずに落とせる行を落とす（{@link tidyReportSections} の逃げ道の3つ）。 */
+/** 葉1つを整形する。落とすなら undefined。整形が掛かるのは `Paragraph` と `Markdown` だけ。 */
+function tidyLeaf(leaf: ReportOutlineLeaf, conclusion: string): ReportOutlineLeaf | undefined {
+  switch (leaf.component) {
+    case "Paragraph":
+      return isBoilerplateLine(leaf.text) ||
+        (conclusion.trim() !== "" &&
+          joinedText(leaf.text.split("\n")) === joinedText(conclusion.split("\n")))
+        ? undefined
+        : leaf
+    case "Markdown": {
+      const markdown = tidyMarkdown(leaf.markdown, conclusion)
+      return markdown.trim() === "" ? undefined : { ...leaf, markdown }
+    }
+    default:
+      return leaf
+  }
+}
+
+/** 逃げ道の中身から、意味を変えずに落とせる行を落とす（{@link tidyReportOutline} の逃げ道の3つ）。 */
 function tidyMarkdown(markdown: string, conclusion: string): string {
   const lines = markdown.split("\n")
   const fenced = fencedLineFlags(lines)

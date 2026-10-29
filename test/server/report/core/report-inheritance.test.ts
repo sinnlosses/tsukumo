@@ -109,12 +109,12 @@ describe("ReportInheritance", () => {
     })
   })
 
-  describe("本文の欄（sections と body）", () => {
-    const SECTIONS = [
-      { heading: "", shapeTag: "unspecified", blocks: [] },
-    ] as const satisfies ReportCalled["sections"]
+  describe("本文の欄（sections・body・figure）", () => {
+    const COMPONENTS = [
+      { id: "p", component: "Paragraph", text: "架空の文。", fold: "", aside: "" },
+    ] as const satisfies ReportCalled["components"]
     const rejectedWith = (
-      field: "sections" | "body",
+      field: "sections" | "body" | "figure",
       values: Partial<Omit<ReportCalled, "kind">>,
     ): ReturnType<typeof createReportInheritance> => {
       const inheritance = createReportInheritance()
@@ -123,51 +123,61 @@ describe("ReportInheritance", () => {
       return inheritance
     }
 
-    it("sections を渡した土台は、本文を渡さない呼び出しに引き継ぐ", () => {
-      const inheritance = rejectedWith("sections", { sections: SECTIONS, unknownBlockCount: 2 })
+    it("sections を渡した土台は、本文を渡さない呼び出しに部品の一覧と落とした数ごと引き継ぐ", () => {
+      const inheritance = rejectedWith("sections", { components: COMPONENTS, droppedCount: 2 })
 
       expect(inheritance.pass(called("toolu_r2", []))).toMatchObject({
-        sections: SECTIONS,
-        unknownBlockCount: 2,
+        components: COMPONENTS,
+        droppedCount: 2,
         inheritedFields: ["sections"],
       })
     })
 
     it("body を渡した土台は、本文を渡さない呼び出しに壊れたフェンスの数ごと引き継ぐ", () => {
-      const inheritance = rejectedWith("body", { sections: SECTIONS, brokenFenceCount: 1 })
+      const inheritance = rejectedWith("body", { components: COMPONENTS, brokenFenceCount: 1 })
 
       expect(inheritance.pass(called("toolu_r2", []))).toMatchObject({
-        sections: SECTIONS,
+        components: COMPONENTS,
         brokenFenceCount: 1,
         inheritedFields: ["body"],
       })
     })
 
     it("土台が sections でも、body を渡したら sections を引き継がない", () => {
-      const inheritance = rejectedWith("sections", { sections: SECTIONS, unknownBlockCount: 2 })
+      const inheritance = rejectedWith("sections", { components: COMPONENTS, droppedCount: 2 })
 
       expect(inheritance.pass(called("toolu_r2", ["body"], { brokenFenceCount: 1 }))).toMatchObject(
-        { sections: [], unknownBlockCount: 0, brokenFenceCount: 1, inheritedFields: [] },
+        { components: [], droppedCount: 0, brokenFenceCount: 1, inheritedFields: [] },
       )
     })
 
     it("部品の一覧（components）は本文と一緒に引き継ぎ、本文を渡したら引き継がない", () => {
-      const COMPONENTS = [
-        { id: "p", component: "Paragraph", text: "架空の文。", fold: "", aside: "" },
-      ] as const satisfies ReportCalled["components"]
-      const inheritance = rejectedWith("sections", { sections: SECTIONS, components: COMPONENTS })
+      const inheritance = rejectedWith("sections", { components: COMPONENTS })
 
       expect(inheritance.fill(called("toolu_r2", []))).toMatchObject({ components: COMPONENTS })
       expect(inheritance.fill(called("toolu_r3", ["sections"]))).toMatchObject({ components: [] })
     })
 
     it("土台が body でも、sections を渡したら body を引き継がない", () => {
-      const inheritance = rejectedWith("body", { sections: SECTIONS, brokenFenceCount: 1 })
+      const inheritance = rejectedWith("body", { components: COMPONENTS, brokenFenceCount: 1 })
 
       expect(inheritance.pass(called("toolu_r2", ["sections"]))).toMatchObject({
-        sections: [],
+        components: [],
         brokenFenceCount: 0,
         inheritedFields: [],
+      })
+    })
+
+    it("図は本文と一緒に部品の一覧に載るので、本文を渡した呼び出しに引き継がず、渡さなければ引き継ぐ", () => {
+      const inheritance = rejectedWith("figure", { components: COMPONENTS })
+
+      expect(inheritance.pass(called("toolu_r2", ["sections"]))).toMatchObject({
+        components: [],
+        inheritedFields: [],
+      })
+      expect(inheritance.fill(called("toolu_r3", []))).toMatchObject({
+        components: COMPONENTS,
+        inheritedFields: ["figure"],
       })
     })
   })

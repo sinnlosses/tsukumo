@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest"
 
 import { toSessionEvents } from "../../../../src/server/session-driver/core/sdk-message.ts"
 import { reportArgumentCharsOf } from "../../../../src/shared/report/report-argument-size.ts"
-import { reportEvent } from "../../../fixture/report-event.ts"
+import { reportOutline, reportFigureOf } from "../../../../src/shared/report/report-outline.ts"
+import { reportEvent, reportOfDrawn } from "../../../fixture/report-event.ts"
 import { assistantMessageWithoutUuid, EXPRESSIONS } from "../../../fixture/sdk-assistant-message.ts"
 import { REPORT_TOOL_FULL_NAME } from "../../../fixture/sdk-message.ts"
 
@@ -30,13 +31,6 @@ describe("toSessionEvents（report ツール）", () => {
         toolUseId: "toolu_r1",
         argumentChars: expect.objectContaining({ total: expect.any(Number) }),
         conclusion: "架空の結論。",
-        sections: [
-          {
-            heading: "",
-            shapeTag: "unspecified",
-            blocks: [{ kind: "markdown", markdown: "## 架空の見出し", fold: "", aside: "" }],
-          },
-        ],
         favor: "架空のお願い",
         checks: [
           {
@@ -82,6 +76,34 @@ describe("toSessionEvents（report ツール）", () => {
         { id: "section-1-1", component: "Paragraph", text: "架空。" },
       ],
     })
+  })
+
+  it("components に形に合わない部品を混ぜると、落とした数が droppedCount に出て、残りは components に入る", () => {
+    const message = assistantMessageWithoutUuid([
+      {
+        type: "tool_use",
+        id: "toolu_r1",
+        name: REPORT_TOOL_FULL_NAME,
+        input: {
+          components: [
+            { id: "root", component: "Report", conclusion: ["架空の結論。"], children: ["s1"] },
+            { id: "s1", component: "Section", heading: "架空の節", children: ["p1"] },
+            { id: "p1", component: "Paragraph", text: "架空の段落。" },
+            { id: "x1", component: "架空の部品" },
+            { id: "x2", component: "Paragraph" },
+          ],
+        },
+      },
+    ])
+
+    const [event] = toSessionEvents(message, EXPRESSIONS)
+
+    expect(event).toMatchObject({ kind: "report", droppedCount: 2 })
+    expect(event?.kind === "report" && event.components.map((part) => part.id)).toEqual([
+      "root",
+      "s1",
+      "p1",
+    ])
   })
 
   it("report の workPlanClosing はイベントに乗せ、形の崩れは none に畳む", () => {
@@ -145,26 +167,21 @@ describe("toSessionEvents（report ツール）", () => {
             type: "tool_use",
             id: "toolu_r1",
             name: REPORT_TOOL_FULL_NAME,
-            input: { conclusion: "架空の結論。", ...(figure === undefined ? {} : { figure }) },
+            input: {
+              conclusion: "架空の結論。",
+              sections: [{ blocks: [{ kind: "text", text: "架空の根拠。" }] }],
+              ...(figure === undefined ? {} : { figure }),
+            },
           },
         ]),
         EXPRESSIONS,
       )
-      return event?.kind === "report" ? event.figure : undefined
+      return event?.kind === "report" ? reportFigureOf(event.components) : undefined
     })
 
     const unrecorded = { kind: "none", reason: "unrecorded" }
     expect(figures).toEqual([
-      {
-        kind: "stats",
-        items: [
-          { before: "", value: "1", total: "", label: "架空の数", series: [], better: "" },
-          { before: "", value: "2", total: "", label: "架空の数", series: [], better: "" },
-          { before: "", value: "3", total: "", label: "架空の数", series: [], better: "" },
-        ],
-        fold: "",
-        aside: "",
-      },
+      { kind: "stats" },
       { kind: "none", reason: "single-value" },
       unrecorded,
       unrecorded,
@@ -269,19 +286,17 @@ describe("toSessionEvents（report ツール）", () => {
     expect(toSessionEvents(message, EXPRESSIONS)).toMatchObject([
       {
         kind: "report",
-        sections: [
-          {
-            heading: "架空の節",
-            blocks: [
-              { kind: "text", text: "架空の根拠。", fold: "", aside: "" },
-              { kind: "code", language: "diff", path: "", source: "-a", fold: "", aside: "" },
-            ],
-          },
-        ],
         // 知らない種類（"架空の種類"）だけを数える。既知の種類の値が崩れた「list」「note」は数えない。
-        unknownBlockCount: 1,
+        droppedCount: 1,
       },
     ])
+    const [event] = toSessionEvents(message, EXPRESSIONS)
+    expect(
+      event?.kind === "report" &&
+        reportOutline(event.components).sections.map((section) =>
+          section.leaves.map((leaf) => leaf.component),
+        ),
+    ).toEqual([["Paragraph", "Code"]])
   })
 
   it("body の型つきフェンスを塊に読み、読めないものは素のコードブロックに落として brokenFenceCount で数える", () => {
@@ -302,12 +317,13 @@ describe("toSessionEvents（report ツール）", () => {
     expect(event).toMatchObject({
       kind: "report",
       brokenFenceCount: 1,
-      unknownBlockCount: 0,
+      droppedCount: 0,
       argumentChars: { fields: { body: expect.any(Number) } },
     })
     expect(
-      event?.kind === "report" && event.sections[0]?.blocks.map((block) => block.kind),
-    ).toEqual(["markdown", "graph", "code"])
+      event?.kind === "report" &&
+        reportOutline(event.components).sections[0]?.leaves.map((leaf) => leaf.component),
+    ).toEqual(["Markdown", "Graph", "Code"])
   })
 
   it("sections も body も無いときは節を空に、favor が無いときは空の文字列に、checks が無いときは空の配列に、closing と task が無いときは none に畳む", () => {
@@ -321,7 +337,7 @@ describe("toSessionEvents（report ツール）", () => {
     ])
 
     expect(toSessionEvents(message, EXPRESSIONS)).toEqual([
-      reportEvent({
+      reportOfDrawn({
         toolUseId: "toolu_r1",
         conclusion: "架空の結論。",
         argumentChars: { total: 23, fields: { conclusion: 8 } },
@@ -431,7 +447,7 @@ describe("toSessionEvents（report ツール）", () => {
     ])
 
     expect(toSessionEvents(message, EXPRESSIONS)).toEqual([
-      reportEvent({
+      reportOfDrawn({
         toolUseId: "toolu_r1",
         argumentChars: reportArgumentCharsOf({ favor: "架空のお願い" }),
         conclusion: "",

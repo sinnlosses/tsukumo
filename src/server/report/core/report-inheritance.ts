@@ -88,8 +88,8 @@ const REPORT_INHERITANCE_BOUNDARIES: ReadonlySet<SessionEvent["kind"]> = new Set
   "aside",
 ] as const satisfies readonly SessionEvent["kind"][])
 
-/** 本文を渡す2つの欄。どちらか一方を渡したら、他方は引き継がない。 */
-const BODY_FIELDS = ["sections", "body"] as const satisfies readonly ReportArgumentField[]
+/** 本文を渡す欄。図も本文と一緒に `components` に載るので、どれか1つを渡したら、ほかは引き継がない。 */
+const BODY_FIELDS = ["sections", "body", "figure"] as const satisfies readonly ReportArgumentField[]
 
 function inherited(event: ReportEvent, base: ReportEvent): ReportEvent {
   const passedBody = BODY_FIELDS.some((field) => event.argumentChars.fields[field] !== undefined)
@@ -112,12 +112,9 @@ function inherited(event: ReportEvent, base: ReportEvent): ReportEvent {
     conclusionSentenceChars: from("conclusion").conclusionSentenceChars,
     conclusionFirstSentence: from("conclusion").conclusionFirstSentence,
     keyFigures: from("keyFigures").keyFigures,
-    figure: from("figure").figure,
-    sections: fromBody.sections,
-    unknownBlockCount: fromBody.unknownBlockCount,
+    droppedCount: fromBody.droppedCount,
     brokenFenceCount: fromBody.brokenFenceCount,
     components: fromBody.components,
-    retrospective: from("retrospective").retrospective,
     favor: from("favor").favor,
     checks: from("checks").checks,
     title: from("title").title,

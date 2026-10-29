@@ -357,9 +357,12 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
 
     expect(turn?.steps.find((step) => step.final)?.body).toEqual({
       kind: "text",
-      report: regionsOf(`<div class="conclusion">\n\n架空の結論。\n\n</div>`, [
-        { id: 0, heading: "", markdown: "架空の根拠。" },
-      ]),
+      report: {
+        ...regionsOf(`<div class="conclusion">\n\n架空の結論。\n\n</div>`, [
+          { id: 0, heading: "", markdown: "架空の根拠。" },
+        ]),
+        a2ui: expect.objectContaining({ kind: "surface" }),
+      },
       firstLine: "架空の結論。",
       task,
       finishedPhase: { kind: "none" },

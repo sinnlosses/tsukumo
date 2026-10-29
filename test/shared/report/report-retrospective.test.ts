@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import {
-  parseReportRetrospective,
-  retrospectiveSections,
-} from "../../../src/shared/report/report-retrospective.ts"
+import { parseReportRetrospective } from "../../../src/shared/report/report-retrospective.ts"
 
 describe("parseReportRetrospective", () => {
   it("欄が無い・形が崩れたときは none に畳み、drafts と blocks の無い欄は空の配列にする", () => {
@@ -33,29 +30,5 @@ describe("parseReportRetrospective", () => {
       drafts: [],
       blocks: [{ kind: "text", text: "架空の補足。", fold: "", aside: "" }],
     })
-  })
-})
-
-describe("retrospectiveSections", () => {
-  it("欄が無ければ節は無く、あれば見出し「振り返り」の節に結果・塊・ドラフトの ID をこの順で入れる", () => {
-    expect(retrospectiveSections({ kind: "none" })).toEqual([])
-    expect(
-      retrospectiveSections({
-        kind: "recorded",
-        summary: "架空の結果。",
-        drafts: ["架空-1", "架空-2"],
-        blocks: [{ kind: "text", text: "架空の補足。", fold: "", aside: "" }],
-      }),
-    ).toEqual([
-      {
-        heading: "振り返り",
-        shapeTag: "unspecified",
-        blocks: [
-          { kind: "text", text: "架空の結果。", fold: "", aside: "" },
-          { kind: "text", text: "架空の補足。", fold: "", aside: "" },
-          { kind: "text", text: "積んだドラフト: `架空-1`、`架空-2`", fold: "", aside: "" },
-        ],
-      },
-    ])
   })
 })

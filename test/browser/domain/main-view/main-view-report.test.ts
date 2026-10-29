@@ -35,7 +35,7 @@ import {
   turnOf,
   utteranceEvent,
 } from "../../../fixture/main-view-report.ts"
-import { reportEvent } from "../../../fixture/report-event.ts"
+import { reportOfDrawn } from "../../../fixture/report-event.ts"
 import { requestEvent } from "../../../fixture/session-event.ts"
 
 describe("mainViewTurns（締めの speak → レポートで終える並び）", () => {
@@ -134,7 +134,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     const turn = turnOf(
       [
         ask,
-        reportEvent({
+        reportOfDrawn({
           toolUseId: "toolu_r1",
           conclusion: "架空の結論。",
           sections: parseReportBody("架空の根拠。").sections,
@@ -159,7 +159,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     const turn = turnOf(
       [
         ask,
-        reportEvent({
+        reportOfDrawn({
           toolUseId: "toolu_r1",
           conclusion: "架空の結論。",
           sections: parseReportBody("架空の根拠。").sections,
@@ -187,7 +187,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     const turn = turnOf(
       [
         ask,
-        reportEvent({
+        reportOfDrawn({
           toolUseId: "toolu_r1",
           conclusion: "架空の結論。",
           sections: [
@@ -224,7 +224,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
       ],
       retrospective,
       favor: { id: "favor-toolu_r1", markdown: "架空のお願い" },
-      a2ui: { kind: "none" },
+      a2ui: expect.objectContaining({ kind: "surface" }),
     })
     expect(regions === undefined ? undefined : orderedReportRegions(regions)).toEqual([
       { kind: "head", markdown: lead("架空の結論。") },
@@ -339,9 +339,9 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
       const turn = turnOf(
         [
           ask,
-          reportEvent({ toolUseId: "toolu_first", conclusion: "架空の途中。", task: TASK }),
+          reportOfDrawn({ toolUseId: "toolu_first", conclusion: "架空の途中。", task: TASK }),
           counted("toolu_first"),
-          reportEvent({ toolUseId: "toolu_last", conclusion: "架空の締め。", task: TASK }),
+          reportOfDrawn({ toolUseId: "toolu_last", conclusion: "架空の締め。", task: TASK }),
           finished,
         ],
         SETTLED,
@@ -367,7 +367,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     const turn = turnOf(
       [
         ask,
-        reportEvent({
+        reportOfDrawn({
           toolUseId: "toolu_r1",
           conclusion: "架空の結論。",
           sections: [
@@ -407,7 +407,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     const turn = turnOf(
       [
         ask,
-        reportEvent({
+        reportOfDrawn({
           toolUseId: "toolu_r1",
           conclusion: "架空の結論。",
           sections: [section(""), section("一つ目"), section(""), section("二つ目")],
@@ -456,7 +456,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
         turnOf(
           [
             ask,
-            reportEvent({
+            reportOfDrawn({
               toolUseId: "toolu_r1",
               conclusion: "架空の結論。",
               figure,

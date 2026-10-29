@@ -233,7 +233,7 @@ export function reportUsageEntryOf(
     markdownNotationKinds: notationKindsInMarkdowns(
       event.components.flatMap((part) => (part.component === "Markdown" ? [part.markdown] : [])),
     ),
-    unknownBlockCount: event.unknownBlockCount,
+    unknownBlockCount: event.droppedCount,
     brokenFenceCount: event.brokenFenceCount,
     listStyles: [
       ...new Set(drawn.flatMap((leaf) => (leaf.component === "ItemList" ? [leaf.style] : []))),

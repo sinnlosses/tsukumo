@@ -2,6 +2,11 @@ import { describe, expect, it } from "vitest"
 
 import { a2uiReportInput } from "../../../../src/server/session-driver/core/a2ui-report-message.ts"
 import { reportEvents } from "../../../../src/server/session-driver/core/sdk-report-message.ts"
+import {
+  parseReportFigure,
+  parseReportSections,
+} from "../../../../src/shared/report/report-block.ts"
+import { parseReportRetrospective } from "../../../../src/shared/report/report-retrospective.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 
 type ReportCalled = Extract<SessionEvent, { readonly kind: "report" }>
@@ -119,24 +124,25 @@ describe("a2uiReportInput", () => {
 })
 
 describe("写しの自己テスト", () => {
-  it("入力の葉は全部、出力の節・図・振り返りの根拠に残る", () => {
-    const report = reportOf(COMPONENTS)
+  it("入力の葉は全部、組み直した引数の節・図・振り返りの根拠に残る", () => {
+    const { input } = a2uiReportInput(COMPONENTS)
 
-    expect(missingLeafKinds(COMPONENTS, report)).toEqual([])
+    expect(missingLeafKinds(COMPONENTS, outputKindsOf(input))).toEqual([])
   })
 
   it("出力から塊を 1 つ落とすと、落とした葉を欠けとして拾う", () => {
-    const report = reportOf(COMPONENTS)
-    const [first, ...rest] = report.sections
-    const dropped: ReportCalled = {
-      ...report,
-      sections:
-        first === undefined
-          ? []
-          : [{ ...first, blocks: first.blocks.filter((_, index) => index !== 1) }, ...rest],
-    }
+    const { input } = a2uiReportInput(COMPONENTS)
+    const [first, ...rest] = parseReportSections(input.sections).sections
+    const dropped = [
+      ...(first === undefined
+        ? []
+        : [{ ...first, blocks: first.blocks.filter((_, index) => index !== 1) }]),
+      ...rest,
+    ]
 
-    expect(missingLeafKinds(COMPONENTS, dropped)).toEqual(["table"])
+    expect(missingLeafKinds(COMPONENTS, outputKindsOf({ ...input, sections: dropped }))).toEqual([
+      "table",
+    ])
   })
 })
 
@@ -148,7 +154,6 @@ describe("reportEvents の a2ui の版", () => {
     expect(report.conclusion).toBe("架空の結論。")
     expect(report.favor).toBe("架空のお願い")
     expect(report.closing).toMatchObject({ text: "架空の締め" })
-    expect(report.figure).toMatchObject({ kind: "graph" })
     expect(Object.keys(report.argumentChars.fields)).toEqual(
       expect.arrayContaining(["conclusion", "sections", "figure", "favor"]),
     )
@@ -174,16 +179,25 @@ function reportOf(components: readonly unknown[]): ReportCalled {
   return report
 }
 
-/** 入力の `root` から参照を辿って集めた葉の kind のうち、出力の塊に無いもの（数で突き合わせる）。 */
-function missingLeafKinds(components: readonly unknown[], report: ReportCalled): readonly string[] {
-  const input = leafKindsOfInput(components)
-  const output: readonly string[] = [
-    ...report.sections.flatMap((section) => section.blocks.map((block) => block.kind)),
-    ...(report.figure.kind === "none" ? [] : [report.figure.kind]),
-    ...(report.retrospective.kind === "none"
-      ? []
-      : report.retrospective.blocks.map((block) => block.kind)),
+/** 組み直した引数の節・図・振り返りの塊の kind。 */
+function outputKindsOf(fields: Readonly<Record<string, unknown>>): readonly string[] {
+  const figure = parseReportFigure(fields.figure)
+  const retrospective = parseReportRetrospective(fields.retrospective)
+  return [
+    ...parseReportSections(fields.sections).sections.flatMap((section) =>
+      section.blocks.map((block) => block.kind),
+    ),
+    ...(figure.kind === "none" ? [] : [figure.kind]),
+    ...(retrospective.kind === "none" ? [] : retrospective.blocks.map((block) => block.kind)),
   ]
+}
+
+/** 入力の `root` から参照を辿って集めた葉の kind のうち、出力の塊に無いもの（数で突き合わせる）。 */
+function missingLeafKinds(
+  components: readonly unknown[],
+  output: readonly string[],
+): readonly string[] {
+  const input = leafKindsOfInput(components)
   const remaining = [...output]
   return input.filter((kind) => {
     const found = remaining.indexOf(kind)

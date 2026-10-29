@@ -5,12 +5,7 @@ import { isPlainObject } from "remeda"
 import { z } from "zod"
 
 import { nonEmpty, omittable } from "./report-block-field.ts"
-import {
-  namedWriterBlockSchema,
-  parseReportBlocks,
-  type ReportBlock,
-  type ReportSection,
-} from "./report-block.ts"
+import { namedWriterBlockSchema, parseReportBlocks, type ReportBlock } from "./report-block.ts"
 
 export const reportRetrospectiveSchema = z.object({
   summary: nonEmpty(z.string().trim()).describe("結果を1〜2文で"),
@@ -56,38 +51,4 @@ export function parseReportRetrospective(value: unknown): ReportRetrospective {
 /** 振り返りの節の末尾に描く、積んだドラフトの行。 */
 export function retrospectiveDraftsLine(drafts: readonly string[]): string {
   return `積んだドラフト: ${drafts.map((id) => `\`${id}\``).join("、")}`
-}
-
-/**
- * 振り返りを見出し「振り返り」の節にしたもの。`sections` の後ろ・`favor` の前に描く。
- * 図と表の番号が `sections` から通しで続くよう、描く側は節の並びの最後に足して組む。欄が無ければ節は無い。
- */
-export function retrospectiveSections(
-  retrospective: ReportRetrospective,
-): readonly ReportSection[] {
-  if (retrospective.kind === "none") {
-    return []
-  }
-  const drafts =
-    retrospective.drafts.length === 0
-      ? []
-      : [
-          {
-            kind: "text",
-            text: retrospectiveDraftsLine(retrospective.drafts),
-            fold: "",
-            aside: "",
-          } as const satisfies ReportBlock,
-        ]
-  return [
-    {
-      heading: "振り返り",
-      shapeTag: "unspecified",
-      blocks: [
-        { kind: "text", text: retrospective.summary, fold: "", aside: "" },
-        ...retrospective.blocks,
-        ...drafts,
-      ],
-    },
-  ]
 }

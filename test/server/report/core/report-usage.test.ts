@@ -507,7 +507,7 @@ describe("reportUsageEntryOf", () => {
       ],
     }
     expect(
-      reportUsageEntryOf(reportEvent({ sections: [badgeSection] }), "claude-session-9", 1, false)
+      reportUsageEntryOf(reportOfSections([badgeSection]), "claude-session-9", 1, false)
         .escapeNotations,
     ).toEqual([])
     expect(JSON.stringify([entry.componentNames, entry.markdownNotationKinds])).not.toContain(

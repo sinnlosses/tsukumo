@@ -9,14 +9,7 @@ import { isPlainObject } from "remeda"
 import type { Expression } from "../../../shared/character-pack/expression.ts"
 import { reportArgumentCharsOf } from "../../../shared/report/report-argument-size.ts"
 import { parseKeyFigures } from "../../../shared/report/report-block-comparison.ts"
-import {
-  type ParsedReportContent,
-  parseReportBodyContent,
-  parseReportFigure,
-  parseReportSections,
-} from "../../../shared/report/report-block.ts"
 import { parseReportChecks } from "../../../shared/report/report-check.ts"
-import { parseReportRetrospective } from "../../../shared/report/report-retrospective.ts"
 import { parseReportTask, type ReportTask } from "../../../shared/report/report-task.ts"
 import type { SessionRemaining } from "../../../shared/session/session-digest.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
@@ -30,11 +23,8 @@ import { speechEvents } from "./sdk-speech-message.ts"
 
 /**
  * `report` の引数を取り出す。
- * `sections` は塊ごとに検証して崩れた塊・知らない種類の塊を落とす（{@link parseReportSections}）。
- * `sections` の無い呼び出しは `body`（Markdown。引数が文字列の `body` だったころの transcript も）を節1つに読み、読めない型つきフェンスを数える（{@link parseReportBodyContent}）。
- * `figure` の「無い」（省いた呼び出しと、引数に `figure` が無かったころの transcript）と形の崩れは、理由が `unrecorded` の `none` に畳む（{@link parseReportFigure}）。
+ * 本文の節・図・振り返りの塊は持たず、`components` の葉から導く。
  * `keyFigures` の「無い」と形の崩れ（3〜4個でない）は空の配列に畳む。
- * `retrospective` の「無い」と形の崩れは `none` に畳む。
  * `favor` の「無い」は空の文字列に、`checks` の「無い」は空の配列に畳む（描く側は空の塊を置かないだけで済む）。
  * `task` の「無い」と形の崩れ（引数に `task` が無かったころの transcript も）は `none` に畳む。`workPlanClosing` も同じ。
  * `closing` の「無い」（引数に `closing` が無かったころの transcript）は `none` に畳む。
@@ -77,10 +67,6 @@ export function reportEvents(
   }
 
   const task = parseReportTask(fields.task)
-  const parsed: ParsedReportContent =
-    fields.sections === undefined
-      ? parseReportBodyContent(optionalString(fields.body) ?? "")
-      : { ...parseReportSections(fields.sections), brokenFenceCount: 0 }
 
   return [
     {
@@ -98,10 +84,7 @@ export function reportEvents(
       conclusionSentenceChars: conclusion.conclusionSentenceChars,
       conclusionFirstSentence: conclusion.conclusionFirstSentence,
       keyFigures: parseKeyFigures(fields.keyFigures),
-      figure: parseReportFigure(fields.figure),
-      sections: parsed.sections,
       favor: optionalString(fields.favor) ?? "",
-      retrospective: parseReportRetrospective(fields.retrospective),
       checks: parseReportChecks(fields.checks),
       task,
       workPlanClosing: parseWorkPlanClosing(fields.workPlanClosing),
@@ -109,9 +92,8 @@ export function reportEvents(
       waitingLine: speechEvents(fields.waitingLine, expressions).find(
         (speech) => speech.text.trim() !== "",
       ) ?? { kind: "none" },
-      unknownBlockCount:
-        parsed.unknownBlockCount + (a2ui?.droppedCount ?? 0) + (legacy?.unknownBlockCount ?? 0),
-      brokenFenceCount: parsed.brokenFenceCount + (legacy?.brokenFenceCount ?? 0),
+      droppedCount: (a2ui?.droppedCount ?? 0) + (legacy?.unknownBlockCount ?? 0),
+      brokenFenceCount: legacy?.brokenFenceCount ?? 0,
       title: optionalString(fields.title),
       sessionSummary: nonBlankString(fields.sessionSummary),
       sessionRemaining: sessionRemainingOf(fields.sessionRemaining, task),

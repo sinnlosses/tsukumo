@@ -103,8 +103,8 @@ describe("a2ui の report の受理と差し戻し", () => {
     const { reply, drawn } = await live.call(VALID)
 
     expect(reply).toEqual({ text: "架空の結論。", isError: false, endsTurn: true })
-    expect(drawn?.sections).toMatchObject([
-      { heading: "架空の節", blocks: [{ kind: "text", text: "架空の本文。" }] },
+    expect(reportOutline(drawn?.components ?? []).sections).toMatchObject([
+      { heading: "架空の節", leaves: [{ component: "Paragraph", text: "架空の本文。" }] },
     ])
     expect(drawn?.components).toHaveLength(VALID.length)
   })
@@ -160,7 +160,9 @@ describe("a2ui の report の受理と差し戻し", () => {
         leaves: [{ component: "Paragraph", text: "架空の直した本文。" }],
       },
     ])
-    expect(resent.drawn?.sections).toMatchObject([{ heading: "架空の直した節" }])
+    expect(reportOutline(resent.drawn?.components ?? []).sections).toMatchObject([
+      { heading: "架空の直した節" },
+    ])
   })
 })
 

@@ -2,7 +2,11 @@ import { describe, expect, it } from "vitest"
 
 import { mainViewDraftOf } from "../../../../src/browser/domain/main-view/a2ui-draft-view.ts"
 import type { A2uiReportComponent } from "../../../../src/shared/report/a2ui-report-catalog.ts"
+import { mainViewEntries } from "../../../../src/shared/session/main-view-entry.ts"
+import { applySessionEvent } from "../../../../src/shared/session/session-fold.ts"
+import { INITIAL_SESSION_STATE } from "../../../../src/shared/session/session-state.ts"
 import { a2uiParts, STAGED_PARTS } from "../../../fixture/a2ui-component.ts"
+import { reportEvent } from "../../../fixture/report-event.ts"
 
 const drawnIds = (components: readonly A2uiReportComponent[]) =>
   mainViewDraftOf("toolu_draft", components)?.components.map((part) => part.id)
@@ -102,6 +106,44 @@ describe("mainViewDraftOf", () => {
     )
 
     expect(markdownLeavesOf(parts)).toEqual({ m1: "> 架空の引用" })
+  })
+
+  it("同じ components から、記録の面と草稿の面で markdownLeaves・leafValues・sections が変わらない", () => {
+    const parts = a2uiParts(
+      { id: "root", component: "Report", conclusion: ["架空の結論。"], children: ["s1", "s2"] },
+      { id: "s1", component: "Section", heading: "架空の節一", children: ["m1", "t1", "n1", "m2"] },
+      { id: "m1", component: "Markdown", markdown: "> 架空の引用" },
+      {
+        id: "t1",
+        component: "Table",
+        title: "架空の表",
+        columns: ["列", "数"],
+        rows: [["値", "1"]],
+      },
+      { id: "n1", component: "Note", tone: "memo", text: "架空の覚え書き。" },
+      { id: "m2", component: "Markdown", markdown: "以上です" },
+      { id: "s2", component: "Section", heading: "落ちる節", children: ["p1"] },
+      { id: "p1", component: "Paragraph", text: "以上です。" },
+    )
+    const entry = mainViewEntries(
+      applySessionEvent(
+        INITIAL_SESSION_STATE,
+        reportEvent({ conclusion: "架空の結論。", components: parts }),
+        0,
+      ),
+    ).find((candidate) => candidate.kind === "report")
+    const recorded = entry?.kind === "report" ? entry.regions.a2ui : undefined
+    const drafted = mainViewDraftOf("toolu_draft", parts)?.regions.a2ui
+    if (recorded?.kind !== "surface" || drafted?.kind !== "surface") {
+      throw new Error("面の値が無い")
+    }
+
+    expect(Object.keys(drafted.leafValues).toSorted()).toEqual(["m1", "n1", "t1"])
+    expect(drafted.markdownLeaves).toEqual({ m1: "> 架空の引用", m2: "" })
+    expect(Object.keys(drafted.sections)).toEqual(["s1"])
+    expect(drafted.markdownLeaves).toEqual(recorded.markdownLeaves)
+    expect(drafted.leafValues).toEqual(recorded.leafValues)
+    expect(drafted.sections).toEqual(recorded.sections)
   })
 
   it("節の見出しが、面で描く値に載る", () => {

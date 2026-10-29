@@ -4,11 +4,9 @@ import type { Expression } from "../character-pack/expression.ts"
 import type { ReactionKind } from "../recommendation/reaction.ts"
 import type { A2uiReportComponent } from "../report/a2ui-report-catalog.ts"
 import type { KeyFigures } from "../report/report-block-comparison.ts"
-import type { RecordedReportFigure, ReportSection } from "../report/report-block.ts"
 import type { ReportChangeSummary } from "../report/report-change-summary.ts"
 import type { ReportCheck } from "../report/report-check.ts"
 import type { ReportImageSize } from "../report/report-image.ts"
-import type { ReportRetrospective } from "../report/report-retrospective.ts"
 import type { ReportTask } from "../report/report-task.ts"
 import type { RecordedPromptImage } from "../session-driver/prompt-image.ts"
 import type { Question, QuestionAnswer } from "../session-driver/question.ts"
@@ -119,10 +117,7 @@ export type SessionRecord =
       readonly toolUseId: string
       readonly conclusion: string
       readonly keyFigures: KeyFigures
-      readonly figure: RecordedReportFigure
-      readonly sections: readonly ReportSection[]
       readonly favor: string
-      readonly retrospective: ReportRetrospective
       readonly checks: readonly ReportCheck[]
       readonly task: ReportTask
       /** `report` が渡した段の閉じ方。段ごとの所要時間で、後の段を呼ばなかった段を「未着手」と見分ける。 */
