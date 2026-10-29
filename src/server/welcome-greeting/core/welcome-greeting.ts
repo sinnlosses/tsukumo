@@ -21,7 +21,7 @@ import {
   welcomeLineSchema,
 } from "./welcome-line.ts"
 
-/** 問い合わせを起こすモデル。キャラクターの口調で話す文を書くので、口調が崩れにくい sonnet にする。 */
+/** 問い合わせを起こすモデル。 */
 export const WELCOME_GREETING_MODEL = "sonnet"
 
 /** 書き始め（問い合わせ直しを含めた全体）からの締め切り（ミリ秒）。 */
