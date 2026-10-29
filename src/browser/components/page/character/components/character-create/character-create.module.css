@@ -1,12 +1,12 @@
 .character-create-grid {
   display: grid;
   grid-template-columns: 15rem minmax(0, 1fr);
-  gap: 1.5rem;
+  gap: var(--space-2xl);
 }
 .character-create-portrait {
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: var(--space-sm);
   min-width: 0;
 }
 .character-create-generation-note {
@@ -16,7 +16,7 @@
 .character-create-progress {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: var(--space-sm);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -26,7 +26,7 @@
   color: var(--ink-quiet);
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: var(--space-sm);
 }
 .character-create-progress-item::before {
   content: "";
@@ -54,7 +54,7 @@
 .character-create-fields {
   display: flex;
   flex-direction: column;
-  gap: 1.1rem;
+  gap: var(--space-lg);
   min-width: 0;
 }
 .character-create-input-mono {
@@ -69,7 +69,7 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: var(--space-xl);
 }
 .character-create-body {
   flex: 1 1 auto;
@@ -77,10 +77,10 @@
   overflow: auto;
   /* スクロールバーが入力欄に被らないよう、右に余白を取って置き場を確保する。 */
   scrollbar-gutter: stable;
-  padding-right: 0.75rem;
+  padding-right: var(--space-md);
   /* 入力欄のフォーカスの輪が左で切れないよう、左にも余白を取り、負の margin で字の位置は動かさない。 */
-  padding-left: 0.5rem;
-  margin-left: -0.5rem;
+  padding-left: var(--space-sm);
+  margin-left: calc(-1 * var(--space-sm));
 }
 @media (max-width: 640px) {
   .character-create-grid {
@@ -90,8 +90,8 @@
 .character-create-portrait-picked {
   align-items: center;
   justify-content: center;
-  gap: 0.6rem;
-  padding: 0.75rem;
+  gap: var(--space-sm);
+  padding: var(--space-md);
   color: var(--ink-quiet);
   text-align: center;
   cursor: pointer;

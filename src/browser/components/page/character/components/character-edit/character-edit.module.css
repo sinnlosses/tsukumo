@@ -6,12 +6,12 @@
   container-type: inline-size;
   display: flex;
   flex-direction: column;
-  gap: 1.6rem;
+  gap: var(--space-2xl);
   min-width: 0;
-  padding: 1.5rem 1.75rem;
+  padding: var(--space-2xl) 1.75rem;
   background: var(--surface);
   border: 1px solid var(--rule-quiet);
-  border-radius: 0.875rem;
+  border-radius: var(--radius-xl);
 }
 
 /* 節（表情・差し色・背景）。 */
@@ -23,7 +23,7 @@
 }
 /* 字の段・色・太さは `Text` が持つ。margin だけここに置く。 */
 .character-section-note {
-  margin-left: 0.6rem;
+  margin-left: var(--space-sm);
 }
 .character-section-bar > .character-section-note {
   margin-left: auto;
@@ -33,7 +33,7 @@
 .character-gallery {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 0.75rem;
+  gap: var(--space-md);
 }
 @container (max-width: 52rem) {
   .character-gallery {
@@ -47,7 +47,7 @@
 }
 @media (max-width: 760px) {
   .character-detail {
-    padding: 1rem;
+    padding: var(--space-lg);
   }
 }
 
@@ -57,17 +57,17 @@
   width: min(32.5rem, calc(100vw - 2rem));
   max-height: calc(100vh - 4rem);
   margin: auto;
-  padding: 1.5rem 1.625rem;
+  padding: var(--space-2xl);
   background: var(--surface);
   color: var(--ink);
   border: 1px solid color-mix(in srgb, var(--surface), var(--state-ng) 45%);
-  border-radius: 0.875rem;
+  border-radius: var(--radius-xl);
   overflow: auto;
 }
 .character-delete-head {
   display: flex;
   align-items: center;
-  gap: 0.875rem;
+  gap: var(--space-lg);
 }
 .character-delete-portrait,
 .character-delete-portrait-blank {
@@ -92,20 +92,20 @@
 }
 .character-delete-input {
   height: 2.5rem;
-  padding: 0 0.75rem;
+  padding: 0 var(--space-md);
   border-color: color-mix(in srgb, var(--surface), var(--state-ng) 45%);
   font-family: var(--font-mono);
 }
 .character-delete-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 0.625rem;
+  gap: var(--space-md);
 }
 /* 顔は `<Button variant="solid-danger">` が持つ。箱だけここに置く。 */
 .character-delete-ok {
   height: 2.5rem;
-  padding: 0 1.125rem;
-  border-radius: 0.5625rem;
+  padding: 0 var(--space-xl);
+  border-radius: var(--radius-md);
 }
 
 /* このキャラクターを消す／同梱に戻す帯。
@@ -114,17 +114,17 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 1rem;
-  padding: 0.875rem 1rem;
+  gap: var(--space-lg);
+  padding: var(--space-lg);
   background: color-mix(in srgb, var(--ground), var(--state-ng) 8%);
   border: 1px solid color-mix(in srgb, var(--surface), var(--state-ng) 45%);
-  border-radius: 0.75rem;
+  border-radius: var(--radius-lg);
 }
 .character-delete-band-text {
   display: flex;
   flex: 1 1 16rem;
   flex-direction: column;
-  gap: 0.15rem;
+  gap: var(--space-2xs);
   min-width: 0;
 }
 
@@ -133,7 +133,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 1.1rem;
+  gap: var(--space-lg);
 }
 .character-profile-face,
 .character-profile-face-blank {
@@ -159,7 +159,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 0.4rem 0.75rem;
+  gap: var(--space-sm) var(--space-md);
 }
 /* 字の段・色・太さは `Heading` が持つ。字間だけここに置く。 */
 .character-profile-name {
@@ -171,7 +171,7 @@
   font-family: var(--font-mono);
 }
 .character-in-use {
-  padding: 0.1rem 0.55rem;
+  padding: var(--space-2xs) var(--space-sm);
   background: var(--accent);
   color: var(--ground);
   border-radius: 999px;
@@ -208,7 +208,7 @@
   flex-shrink: 0;
   width: 84px;
   height: 112px;
-  border-radius: 0.625rem;
+  border-radius: var(--radius-lg);
 }
 .character-mini-field-preview {
   border: 1px solid var(--rule-quiet);
@@ -226,7 +226,7 @@
   width: 220px;
   max-width: 100%;
   height: 124px;
-  border-radius: 0.625rem;
+  border-radius: var(--radius-lg);
 }
 .character-background-preview {
   border: 1px solid var(--rule-quiet);
@@ -243,16 +243,16 @@
   width: 22rem;
   max-width: calc(100vw - 2rem);
   margin: auto;
-  padding: 1rem;
+  padding: var(--space-lg);
   background: var(--surface);
   color: var(--ink);
   border: 1px solid color-mix(in srgb, var(--surface), var(--state-ng) 45%);
-  border-radius: 0.875rem;
+  border-radius: var(--radius-xl);
 }
 .item-remove-confirm[open] {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: var(--space-md);
 }
 .item-remove-confirm-thumb {
   flex-shrink: 0;
@@ -260,22 +260,22 @@
   height: 48px;
   object-fit: contain;
   background: var(--ground);
-  border-radius: 0.5rem;
+  border-radius: var(--radius-md);
 }
 .item-remove-confirm-note {
   line-height: 1.7;
 }
 .item-remove-confirm-ok {
   height: 34px;
-  padding: 0 0.875rem;
-  border-radius: 0.5rem;
+  padding: 0 var(--space-lg);
+  border-radius: var(--radius-md);
 }
 
 /* 席の札3枚。広いときは横に並べ、狭いときは1枚ずつ縦に積む。 */
 .item-seats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
-  gap: 0.75rem;
+  gap: var(--space-md);
 }
 .item-seat {
   display: grid;
@@ -284,12 +284,12 @@
     "thumb label"
     "thumb select";
   align-items: center;
-  column-gap: 0.75rem;
-  row-gap: 0.4rem;
-  padding: 0.6rem;
+  column-gap: var(--space-md);
+  row-gap: var(--space-sm);
+  padding: var(--space-sm);
   background: var(--surface);
   border: 1px solid var(--rule-quiet);
-  border-radius: 0.625rem;
+  border-radius: var(--radius-lg);
 }
 .item-seat-thumb,
 .item-seat-blank {
@@ -297,7 +297,7 @@
   grid-area: thumb;
   width: 4rem;
   height: 4rem;
-  border-radius: 0.5rem;
+  border-radius: var(--radius-md);
 }
 .item-seat-thumb {
   object-fit: contain;
@@ -320,9 +320,9 @@
   box-sizing: border-box;
   width: 100%;
   height: 2rem;
-  padding: 0 1.75rem 0 0.5rem;
+  padding: 0 1.75rem 0 var(--space-sm);
   border: 1px solid var(--rule-quiet);
-  border-radius: 0.5rem;
+  border-radius: var(--radius-md);
   background: var(--ground);
   color: var(--ink);
   font-size: var(--font-secondary);
@@ -341,7 +341,7 @@
 .item-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
-  gap: 0.75rem;
+  gap: var(--space-md);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -351,11 +351,11 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.6rem;
+  gap: var(--space-sm);
+  padding: var(--space-sm);
   background: var(--surface);
   border: 1px solid var(--rule-quiet);
-  border-radius: 0.625rem;
+  border-radius: var(--radius-lg);
 }
 .item-card-thumb {
   width: 4.5rem;
@@ -375,7 +375,7 @@
   top: 0.35rem;
   right: 0.35rem;
   opacity: 0;
-  transition: opacity 0.12s ease-out;
+  transition: opacity var(--motion-fast) ease-out;
 }
 .item-card:hover .item-card-actions,
 .item-card:focus-within .item-card-actions {
@@ -393,7 +393,7 @@
   width: 28px;
   height: 28px;
   padding: 0;
-  border-radius: 0.5rem;
+  border-radius: var(--radius-md);
 }
 
 .item-add-cell {
@@ -404,10 +404,10 @@
   flex: 1;
   align-items: center;
   justify-content: center;
-  gap: 0.4rem;
+  gap: var(--space-sm);
   min-height: 7.5rem;
-  padding: 0 0.75rem;
-  border-radius: 0.625rem;
+  padding: 0 var(--space-md);
+  border-radius: var(--radius-lg);
   white-space: nowrap;
 }
 
@@ -416,7 +416,7 @@
   align-items: flex-end;
   justify-content: center;
   height: 10.5rem;
-  padding-top: 0.5rem;
+  padding-top: var(--space-sm);
 }
 /* 立ち絵は枠も地も持たない（カードの地の上に直接置く）。
    大きさはここで決める（`<Portrait>` に className で渡す置き方。キャラビュー側の割合指定は `.character-region` が持つ変数なので、この画面では解決されない）。 */
@@ -426,7 +426,7 @@
   margin: 0;
 }
 .character-card-label {
-  padding: 0.5rem 0.6rem 0.6rem;
+  padding: var(--space-sm);
   border-top: 1px solid var(--rule-quiet);
   font-size: var(--font-secondary);
   text-align: center;
@@ -435,10 +435,10 @@
   position: absolute;
   top: 0.5rem;
   left: 0.5rem;
-  padding: 0.05rem 0.45rem;
+  padding: var(--space-2xs) var(--space-sm);
   background: var(--accent);
   color: var(--ground);
-  border-radius: 0.5rem;
+  border-radius: var(--radius-md);
   font-size: var(--font-label);
   font-weight: bold;
 }
@@ -450,7 +450,7 @@
   width: 30px;
   height: 30px;
   padding: 0;
-  border-radius: 0.5rem;
+  border-radius: var(--radius-md);
 }
 .character-card-clear:focus-visible {
   outline: 2px solid var(--accent);
@@ -467,15 +467,15 @@
   width: 300px;
   max-width: calc(100vw - 2rem);
   margin: 0;
-  padding: 1rem;
+  padding: var(--space-lg);
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: var(--space-md);
   background: var(--surface);
   color: var(--ink);
   border: 1px solid color-mix(in srgb, var(--surface), var(--state-ng) 45%);
-  border-radius: 0.875rem;
-  box-shadow: 0 16px 40px color-mix(in srgb, var(--ground) 70%, transparent);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-overlay);
 }
 /* 画面を暗く覆わない（`<Dialog backdrop="clear">` が既定の暗いベールを消し、外側クリックの読み替えだけ使う）。 */
 .character-clear-confirm-portrait {
@@ -484,7 +484,7 @@
   height: 48px;
   object-fit: contain;
   background: var(--ground);
-  border-radius: 0.5rem;
+  border-radius: var(--radius-md);
 }
 /* 字の段・色は `Text` が持つ。行の高さだけここに置く。 */
 .character-clear-confirm-note {
@@ -493,6 +493,6 @@
 /* 顔は `<Button variant="solid-danger">` が持つ。箱だけここに置く。 */
 .character-clear-confirm-ok {
   height: 34px;
-  padding: 0 0.875rem;
-  border-radius: 0.5rem;
+  padding: 0 var(--space-lg);
+  border-radius: var(--radius-md);
 }
