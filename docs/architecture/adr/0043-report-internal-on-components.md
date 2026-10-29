@@ -109,6 +109,9 @@
 - 順 2〜5 は互いに独立で、順 2 が `reportOutline` を作るので先に通す。順 3〜5 は並べて進めてよい。
 - 順 6 は ADR 0042 の課題 7（`leaves` を外す）のあとに通す。`leaves` が `sections` の塊の添字に頼る間は、`sections` を外せない。
 - 登録した課題との対応は下の「登録した課題」。
+- 順 10 の描画の入力の形（2026-10-29）。面の値（`MainViewA2uiReport` の `surface`）に、図と振り返りの欄を `DrawnSection` の塊の並びのまま持たせる（`figure`・`retrospective`。塊は「葉の ID」か「葉に由来しない塊の Markdown」）。本文の節は従来どおり部品の木から描き、`Markdown` の葉だけが `markdownLeaves` の文字列で描かれる。面の `ReportRoot` は頭 → 図 → 節 → 振り返り → お願いの順に、欄の Markdown（`regions.sections[].markdown`・`retrospective`）を読まずに並べる。`reportRegionsOf`・`draftRegions` は同じ `a2uiReportView` を呼ぶので、2 か所が同じ入力を作る。
+  - 頭とお願いは `DrawnSection` に無い（`report` の引数から組む）ので、引数から組んだ Markdown のまま描く。頭の Markdown 化（`keyFiguresMarkdown`・合図の行など）は面だけが使うので、順 9 が消すには頭を部品で描く別の課題が要る。
+  - 旧い記録（`a2ui` が `none`）の経路と、先頭欄の取り出し・「描く欄があるか」の判定・`bodyChars` は、欄の Markdown（`orderedReportRegions` と `regions.sections[].markdown`）を読み続ける。これらを替えるまで、順 9 は `regions` の Markdown 欄を消せない。
 
 ## 採らなかった案
 

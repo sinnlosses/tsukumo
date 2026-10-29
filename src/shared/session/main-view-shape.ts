@@ -107,6 +107,7 @@ export type MainViewReportRegions = {
  * 書き手の生 HTML を通す葉だけが文字列で描かれ、ほかの葉は持たない。
  * `leafValues` は葉の部品の ID から、その葉の図表番号・表の札の色・寄せられた傍注（{@link LeafValue}）。
  * 節の葉に加えて `Report.figure` の葉と振り返りの葉も持ち、整形で落ちた葉は持たない。
+ * `figure` と `retrospective` は、部品の木に節の入れ物が無い図と振り返りの欄（{@link MainViewSurfaceLeafRegion}）。欄が無ければ `none`。
  * `imageSource` は画像の葉が `src` を作る取り出し元（棚に置いていない本文は `none`）。
  */
 export type MainViewA2uiReport =
@@ -119,8 +120,29 @@ export type MainViewA2uiReport =
       >
       readonly markdownLeaves: Readonly<Record<string, string>>
       readonly leafValues: Readonly<Record<string, LeafValue>>
+      readonly figure: MainViewSurfaceLeafRegion
+      readonly retrospective: MainViewSurfaceLeafRegion
       readonly imageSource: ReportImageSource
     }
+
+/**
+ * 図か振り返りの欄1つを、`DrawnSection` の塊の並びのまま持つ。
+ * `regionId` は節の欄の ID（図は先頭の 0）。`heading` は見出しの行（`## …`。見出しの無い欄は空文字）、`headingText` は見出しの字。
+ * `entries` は描く塊を順に並べたもの。葉に由来する塊は部品の ID（描くのは面の葉の実装）、由来しない塊（振り返りの要約とドラフトの行）は Markdown。
+ */
+export type MainViewSurfaceLeafRegion =
+  | { readonly kind: "none" }
+  | {
+      readonly kind: "leaves"
+      readonly regionId: number
+      readonly heading: string
+      readonly headingText: string
+      readonly entries: readonly MainViewSurfaceEntry[]
+    }
+
+export type MainViewSurfaceEntry =
+  | { readonly kind: "leaf"; readonly id: string }
+  | { readonly kind: "text"; readonly markdown: string }
 
 /**
  * 節の欄。`id` は整形して図を先頭に足したあとの節の並びの位置。

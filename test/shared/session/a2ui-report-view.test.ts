@@ -143,6 +143,45 @@ describe("a2ui の版の記録の本文", () => {
     })
   })
 
+  it("figure と retrospective は塊の並びを持ち、葉に由来しない塊は Markdown、欄が無ければ none", () => {
+    const parts = [
+      {
+        id: "root",
+        component: "Report",
+        conclusion: ["架空の結論。"],
+        figure: "fig",
+        children: ["p1"],
+        retrospective: { summary: "架空の要約。", drafts: [], blocks: ["rt"] },
+      },
+      { id: "fig", component: "Mermaid", title: "", source: "flowchart TD\n  A --> B" },
+      { id: "p1", component: "Paragraph", text: "架空の段落。" },
+      { id: "rt", component: "Markdown", markdown: "> 架空の引用" },
+    ]
+    const { a2ui } = regionsOf(reportOf({ components: parts }))
+    if (a2ui.kind !== "surface") throw new Error("面の値が無い")
+
+    expect(a2ui.figure).toEqual({
+      kind: "leaves",
+      regionId: 0,
+      heading: "",
+      headingText: "",
+      entries: [{ kind: "leaf", id: "fig" }],
+    })
+    expect(a2ui.retrospective).toMatchObject({
+      kind: "leaves",
+      heading: "## 振り返り",
+      headingText: "振り返り",
+      entries: [
+        { kind: "text", markdown: "架空の要約。" },
+        { kind: "leaf", id: "rt" },
+      ],
+    })
+    expect(a2ui.markdownLeaves.rt).toBe("> 架空の引用")
+
+    const plain = regionsOf(reportOf({ components: PARTS.filter((part) => part.id !== "fig") }))
+    expect(plain.a2ui.kind === "surface" ? plain.a2ui.figure : undefined).toEqual({ kind: "none" })
+  })
+
   it("図が無ければ欄の ID は 0 から振る", () => {
     const parts = PARTS.map((part) =>
       part.id === "root" ? { ...part, figure: undefined, figureNone: "short-answer" } : part,

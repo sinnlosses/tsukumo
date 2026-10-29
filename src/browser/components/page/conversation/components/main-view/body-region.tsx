@@ -89,12 +89,18 @@ export function ReportRegion(props: { readonly region: MainViewReportRegion }): 
   )
 }
 
+/** 欄の入れ物が持つ印。Markdown を持つ欄（{@link MainViewReportRegion}）からも、持たない欄からも作れる。 */
+export type RegionMark =
+  | { readonly kind: "head" | "retrospective" | "markdown" }
+  | { readonly kind: "section"; readonly id: number }
+  | { readonly kind: "favor"; readonly id: string }
+
 /**
  * 欄1つの入れ物。`data-report-region` は欄の種類、節の欄は `data-report-section` に欄の ID を持つ（書き上げる演出が読む）。
  * お願いの欄は、合図の行の印が飛ぶ先の `id` を持つ。
  */
 export function RegionBox(props: {
-  readonly region: MainViewReportRegion
+  readonly region: RegionMark
   readonly children: ReactNode
 }): ReactElement {
   const { region } = props

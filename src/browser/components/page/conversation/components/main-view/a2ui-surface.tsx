@@ -22,8 +22,13 @@ import {
 import type {
   MainViewA2uiReport,
   MainViewReportRegions,
+  MainViewSurfaceLeafRegion,
 } from "../../../../../../shared/session/main-view-shape.ts"
-import { orderedReportRegions } from "../../../../../domain/main-view/main-view-report-body.ts"
+import { isBlankText } from "../../../../../../shared/utils/blank-text.ts"
+import {
+  favorRegionOf,
+  headRegionOf,
+} from "../../../../../domain/main-view/main-view-report-body.ts"
 import { Button } from "../../../../ui/button/button.tsx"
 import { Divider } from "../../../../ui/divider/divider.tsx"
 import { arrangedBlockClassNames } from "../markdown/markdown.tsx"
@@ -158,27 +163,59 @@ function useReport(): ReportContextValue {
 
 /**
  * 根の `Report` の実装。既定の描画と同じ根と欄の並びを描く。
- * 部品の写った節の欄はその部品から、それ以外の欄（頭・図・振り返り・お願い）は欄の Markdown から描く。
+ * 頭の順に、図・本文の節・振り返り・お願いを並べる。
+ * 本文の節は部品の木から、図と振り返りは面の値の塊の並び（`figure`・`retrospective`）から描く。
+ * 頭とお願いは `report` の引数から組んだ Markdown で描く。
  */
 function ReportRoot(): ReactElement {
   const report = useReport()
-  const componentOfRegion = new Map(
-    Object.entries(report.view.sections).map(([id, section]) => [section.regionId, id]),
+  const { body, view } = report
+  const head = headRegionOf(body)
+  const favor = favorRegionOf(body)
+  const bodySections = Object.entries(view.sections).toSorted(
+    ([, left], [, right]) => left.regionId - right.regionId,
   )
   return (
     <ReportFrame reveal={report.reveal} turnId={report.turnId} className={report.className}>
-      {orderedReportRegions(report.body).map((region) => {
-        const componentId = region.kind === "section" ? componentOfRegion.get(region.id) : undefined
-        const key = region.kind === "section" ? `section-${region.id}` : region.kind
-        return componentId === undefined ? (
-          <ReportRegion key={key} region={region} />
-        ) : (
-          <RegionBox key={key} region={region}>
-            <SectionContent id={componentId} />
-          </RegionBox>
-        )
-      })}
+      {!isBlankText(head.markdown) && <ReportRegion region={head} />}
+      {view.figure.kind === "leaves" && (
+        <RegionBox region={{ kind: "section", id: view.figure.regionId }}>
+          <LeafRegionContent region={view.figure} />
+        </RegionBox>
+      )}
+      {bodySections.map(([componentId, section]) => (
+        <RegionBox key={section.regionId} region={{ kind: "section", id: section.regionId }}>
+          <SectionContent id={componentId} />
+        </RegionBox>
+      ))}
+      {view.retrospective.kind === "leaves" && (
+        <RegionBox region={{ kind: "retrospective" }}>
+          <LeafRegionContent region={view.retrospective} />
+        </RegionBox>
+      )}
+      {!isBlankText(favor.markdown) && <ReportRegion region={favor} />}
     </ReportFrame>
+  )
+}
+
+/** 図か振り返りの欄の中身。見出しは節と同じ手で描き、塊は並びの順に、葉は面の葉の実装、葉に由来しない塊は Markdown で描く。 */
+function LeafRegionContent(props: {
+  readonly region: Extract<MainViewSurfaceLeafRegion, { readonly kind: "leaves" }>
+}): ReactElement {
+  const { heading, headingText, entries } = props.region
+  const drawnDirectly = heading !== "" && isPlainHeadingText(headingText)
+  return (
+    <>
+      {drawnDirectly && <h4>{headingText}</h4>}
+      {!drawnDirectly && heading !== "" && <RegionChunks markdown={heading} />}
+      {entries.map((entry) =>
+        entry.kind === "leaf" ? (
+          <PartBody key={`leaf-${entry.id}`} id={entry.id} />
+        ) : (
+          <RegionChunks key={`text-${entry.markdown}`} markdown={entry.markdown} />
+        ),
+      )}
+    </>
   )
 }
 

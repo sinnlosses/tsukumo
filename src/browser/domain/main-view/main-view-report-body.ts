@@ -16,22 +16,36 @@ export function orderedReportRegions(body: MainViewReportBody): readonly MainVie
     return isBlankText(body.markdown) ? [] : [{ kind: "markdown", markdown: body.markdown }]
   }
   const regions: readonly MainViewReportRegion[] = [
-    { kind: "head", markdown: body.head },
+    headRegionOf(body),
     ...body.sections.map((section): MainViewReportRegion => ({
       kind: "section",
       id: section.id,
       markdown: section.markdown,
     })),
     { kind: "retrospective", markdown: body.retrospective },
-    {
-      kind: "favor",
-      id: body.favor.id,
-      markdown: isBlankText(body.favor.markdown)
-        ? ""
-        : `<div class="note note-favor">\n\n${body.favor.markdown}\n\n</div>`,
-    },
+    favorRegionOf(body),
   ]
   return regions.filter((region) => !isBlankText(region.markdown))
+}
+
+/** 頭の欄。中身が空なら markdown は空文字。 */
+export function headRegionOf(
+  body: Extract<MainViewReportBody, { readonly kind: "regions" }>,
+): Extract<MainViewReportRegion, { readonly kind: "head" }> {
+  return { kind: "head", markdown: body.head }
+}
+
+/** お願いの欄。中身が空なら markdown は空文字。 */
+export function favorRegionOf(
+  body: Extract<MainViewReportBody, { readonly kind: "regions" }>,
+): Extract<MainViewReportRegion, { readonly kind: "favor" }> {
+  return {
+    kind: "favor",
+    id: body.favor.id,
+    markdown: isBlankText(body.favor.markdown)
+      ? ""
+      : `<div class="note note-favor">\n\n${body.favor.markdown}\n\n</div>`,
+  }
 }
 
 /** 見出しのある節の欄の ID と見出しの字。見出しの無い節と、`report` ツールの外の本文は数えない。 */
