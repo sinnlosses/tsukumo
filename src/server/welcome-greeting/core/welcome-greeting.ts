@@ -25,7 +25,7 @@ import {
 export const WELCOME_GREETING_MODEL = "sonnet"
 
 /** 書き始め（問い合わせ直しを含めた全体）からの締め切り（ミリ秒）。 */
-export const WELCOME_GREETING_TIMEOUT_MS = 15_000
+export const WELCOME_GREETING_TIMEOUT_MS = 60_000
 
 /** 1回目がこの時間（ミリ秒）経っても返らないときに、2回目を並べて起こす。 */
 export const WELCOME_GREETING_HEDGE_MS = 5_000
