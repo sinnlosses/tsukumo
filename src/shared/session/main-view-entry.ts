@@ -143,6 +143,7 @@ function toMainViewEntries(record: SessionRecord, context: TurnContext): readonl
 
 /**
  * `report` の引数を欄に組む。頭は `conclusion` → `keyFigures`（数の札）→ 合図の行と段ごとの所要時間の順で、節は `components` から導く（`drawnReportOf`）。
+ * 面（`a2ui`）には頭を結論・数の札・残り（`status`）に分けた値も載せる。`head` は旧い記録の経路が読む。
  * 図は見出しの無い先頭の節として描き、図の番号は本文の図と通しで振られる。図が無ければ何も描かない。
  * 合図の行と段ごとの所要時間は {@link statusMarkdown}。段ごとの所要時間は最終のときの頭にだけ、同じ依頼のワークプランの記録（止めて再開した依頼の記録も引き継ぐ。{@link phaseDurations}）と `report` の `workPlanClosing` から描く。
  * `favor` はレポートの記法の「お願い」の塊で包むので、サニタイズも記法の解釈もテキストの本文と同じ経路を通る。
@@ -157,23 +158,28 @@ function reportRegionsOf(
   context: TurnContext,
 ): MainViewReportRegions {
   const favorId = `favor-${report.toolUseId}`
-  const head = (withPhaseTimes: boolean) =>
+  const leadKind = report.task.kind === "task" ? "conclusion" : "conclusion-lead"
+  const status = (withPhaseTimes: boolean) =>
+    statusMarkdown(
+      reportChecksMarkdown(
+        report.checks,
+        (command) => bashCommandDuration(context, command),
+        isBlankText(report.favor) ? { kind: "none" } : { kind: "favor", id: favorId },
+      ),
+      withPhaseTimes
+        ? phaseTimesMarkdown(phaseDurations(context.trail, report.time, report.workPlanClosing))
+        : "",
+      withPhaseTimes ? changedFilesMarkdown(report.changeSummary) : "",
+    )
+  const plainStatus = status(false)
+  const finalStatus = status(true)
+  const head = (statusPart: string) =>
     [
       isBlankText(report.conclusion)
         ? ""
-        : `<div class="${report.task.kind === "task" ? "conclusion" : "conclusion-lead"}">\n\n${report.conclusion}\n\n</div>`,
+        : `<div class="${leadKind}">\n\n${report.conclusion}\n\n</div>`,
       keyFiguresMarkdown(report.keyFigures),
-      statusMarkdown(
-        reportChecksMarkdown(
-          report.checks,
-          (command) => bashCommandDuration(context, command),
-          isBlankText(report.favor) ? { kind: "none" } : { kind: "favor", id: favorId },
-        ),
-        withPhaseTimes
-          ? phaseTimesMarkdown(phaseDurations(context.trail, report.time, report.workPlanClosing))
-          : "",
-        withPhaseTimes ? changedFilesMarkdown(report.changeSummary) : "",
-      ),
+      statusPart,
     ]
       .filter((part) => !isBlankText(part))
       .join("\n\n")
@@ -194,15 +200,22 @@ function reportRegionsOf(
   const markdowns = pieces.map((piece) => joinParts([piece.heading, ...piece.blocks]))
   return {
     kind: "regions",
-    head: head(false),
-    finalHead: head(true),
+    head: head(plainStatus),
+    finalHead: head(finalStatus),
     sections: sections.flatMap((section, id) => {
       const markdown = markdowns[id] ?? ""
       return markdown === "" ? [] : [{ id, heading: section.heading.trim(), markdown }]
     }),
     retrospective: markdowns[sections.length] ?? "",
     favor: { id: favorId, markdown: report.favor },
-    a2ui: a2uiReportView(report.components, drawn, pieces, layout, imageSource),
+    a2ui: a2uiReportView(report.components, drawn, pieces, layout, imageSource, {
+      lead: isBlankText(report.conclusion)
+        ? { kind: "none" }
+        : { kind: leadKind, text: report.conclusion },
+      keyFigures: report.keyFigures,
+      status: plainStatus,
+      finalStatus,
+    }),
   }
 }
 

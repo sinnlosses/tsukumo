@@ -13,6 +13,7 @@ import type { ReportSectionPieces } from "../report/report-markdown.ts"
 import type {
   MainViewA2uiReport,
   MainViewSurfaceEntry,
+  MainViewSurfaceHead,
   MainViewSurfaceLeafRegion,
 } from "./main-view-shape.ts"
 
@@ -28,6 +29,7 @@ export function a2uiReportView(
   pieces: readonly ReportSectionPieces[],
   layout: ReportLeafLayout,
   imageSource: ReportImageSource,
+  head: MainViewSurfaceHead,
 ): MainViewA2uiReport {
   const byId = a2uiPartsById(components)
   if (byId.get(A2UI_ROOT_ID)?.component !== "Report") {
@@ -73,6 +75,7 @@ export function a2uiReportView(
       ),
     ),
     imageSource,
+    head,
   }
 }
 

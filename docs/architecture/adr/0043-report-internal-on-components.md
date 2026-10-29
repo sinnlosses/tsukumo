@@ -111,6 +111,7 @@
 - 登録した課題との対応は下の「登録した課題」。
 - 順 10 の描画の入力の形（2026-10-29）。面の値（`MainViewA2uiReport` の `surface`）に、図と振り返りの欄を `DrawnSection` の塊の並びのまま持たせる（`figure`・`retrospective`。塊は「葉の ID」か「葉に由来しない塊の Markdown」）。本文の節は従来どおり部品の木から描き、`Markdown` の葉だけが `markdownLeaves` の文字列で描かれる。面の `ReportRoot` は頭 → 図 → 節 → 振り返り → お願いの順に、欄の Markdown（`regions.sections[].markdown`・`retrospective`）を読まずに並べる。`reportRegionsOf`・`draftRegions` は同じ `a2uiReportView` を呼ぶので、2 か所が同じ入力を作る。
   - 頭とお願いは `DrawnSection` に無い（`report` の引数から組む）ので、引数から組んだ Markdown のまま描く。頭の Markdown 化（`keyFiguresMarkdown`・合図の行など）は面だけが使うので、順 9 が消すには頭を部品で描く別の課題が要る。
+  - 頭の部品化の途中の形（2026-10-29）。面の値に `head`（`MainViewSurfaceHead`）を足し、結論（`lead`。`task` の有無で `conclusion` か `conclusion-lead`）と数の札（`keyFigures`）を値で、頭の残り（合図の行・段ごとの所要時間・変更したファイル）を Markdown の `status`・`finalStatus` で持つ。面の `ReportRoot` は結論と数の札を値から、お願いを `regions.favor` の本文から直接描き、残りだけ `status` を欄の Markdown で描く（最終レポートは `finalReportBody` が `status` を `finalStatus` に替える）。旧い経路が読む `regions.head`・`finalHead` は従来の文字列のまま別に持つので、先頭欄の取り出し（`firstLineSource`）と `main-view-key-figure-list` の読みは変わらない。合図・所要時間・変更したファイルを部品にしたら `status`・`finalStatus` と `head`・`finalHead` の重なりを消す。
   - 旧い記録（`a2ui` が `none`）の経路と、先頭欄の取り出し・「描く欄があるか」の判定・`bodyChars` は、欄の Markdown（`orderedReportRegions` と `regions.sections[].markdown`）を読み続ける。これらを替えるまで、順 9 は `regions` の Markdown 欄を消せない。
 
 ## 採らなかった案

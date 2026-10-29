@@ -24,25 +24,15 @@ import type {
   MainViewReportRegions,
   MainViewSurfaceLeafRegion,
 } from "../../../../../../shared/session/main-view-shape.ts"
-import { isBlankText } from "../../../../../../shared/utils/blank-text.ts"
-import {
-  favorRegionOf,
-  headRegionOf,
-} from "../../../../../domain/main-view/main-view-report-body.ts"
 import { Button } from "../../../../ui/button/button.tsx"
 import { Divider } from "../../../../ui/divider/divider.tsx"
 import { arrangedBlockClassNames } from "../markdown/markdown.tsx"
 import { ChoicePicker, InteractiveTable } from "./a2ui-interactive-view.tsx"
-import {
-  MarkdownReport,
-  RegionBox,
-  RegionChunks,
-  ReportFrame,
-  ReportRegion,
-} from "./body-region.tsx"
+import { MarkdownReport, RegionBox, RegionChunks, ReportFrame } from "./body-region.tsx"
 import { DirectLeaf, directLeafViewOf } from "./direct-leaf-view.tsx"
 import { loadReportCatalogApis } from "./domain/a2ui-catalog-load.ts"
 import { isPlainHeadingText } from "./domain/plain-heading.ts"
+import { FavorRegion, HeadRegion } from "./report-head-region.tsx"
 
 type SurfaceView = Extract<MainViewA2uiReport, { readonly kind: "surface" }>
 
@@ -165,19 +155,17 @@ function useReport(): ReportContextValue {
  * 根の `Report` の実装。既定の描画と同じ根と欄の並びを描く。
  * 頭の順に、図・本文の節・振り返り・お願いを並べる。
  * 本文の節は部品の木から、図と振り返りは面の値の塊の並び（`figure`・`retrospective`）から描く。
- * 頭とお願いは `report` の引数から組んだ Markdown で描く。
+ * 頭の結論と数の札・お願いは値から直接描き、頭の残り（合図の行など）は Markdown で描く。
  */
 function ReportRoot(): ReactElement {
   const report = useReport()
   const { body, view } = report
-  const head = headRegionOf(body)
-  const favor = favorRegionOf(body)
   const bodySections = Object.entries(view.sections).toSorted(
     ([, left], [, right]) => left.regionId - right.regionId,
   )
   return (
     <ReportFrame reveal={report.reveal} turnId={report.turnId} className={report.className}>
-      {!isBlankText(head.markdown) && <ReportRegion region={head} />}
+      <HeadRegion head={view.head} />
       {view.figure.kind === "leaves" && (
         <RegionBox region={{ kind: "section", id: view.figure.regionId }}>
           <LeafRegionContent region={view.figure} />
@@ -193,7 +181,7 @@ function ReportRoot(): ReactElement {
           <LeafRegionContent region={view.retrospective} />
         </RegionBox>
       )}
-      {!isBlankText(favor.markdown) && <ReportRegion region={favor} />}
+      <FavorRegion id={body.favor.id} markdown={body.favor.markdown} />
     </ReportFrame>
   )
 }

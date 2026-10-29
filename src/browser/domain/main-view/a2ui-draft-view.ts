@@ -68,6 +68,13 @@ function draftRegions(
     }),
     retrospective: "",
     favor: { id: `favor-${toolUseId}`, markdown: "" },
-    a2ui: a2uiReportView(drawn, drawnReport, pieces, layout, imageSource),
+    a2ui: a2uiReportView(drawn, drawnReport, pieces, layout, imageSource, {
+      lead: isBlankText(conclusion)
+        ? { kind: "none" }
+        : { kind: "conclusion-lead", text: conclusion },
+      keyFigures: [],
+      status: "",
+      finalStatus: "",
+    }),
   }
 }

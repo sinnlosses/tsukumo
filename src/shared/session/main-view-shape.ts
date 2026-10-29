@@ -2,6 +2,7 @@
 // 形だけを持ち、記録から導く判断は持たない。
 
 import type { A2uiReportComponent } from "../report/a2ui-report-catalog.ts"
+import type { ReportBlock } from "../report/report-block.ts"
 import type { ReportChangeSummary } from "../report/report-change-summary.ts"
 import type { ReportImageSource } from "../report/report-image-markdown.ts"
 import type { LeafValue } from "../report/report-leaf-value.ts"
@@ -123,7 +124,25 @@ export type MainViewA2uiReport =
       readonly figure: MainViewSurfaceLeafRegion
       readonly retrospective: MainViewSurfaceLeafRegion
       readonly imageSource: ReportImageSource
+      readonly head: MainViewSurfaceHead
     }
+
+/**
+ * 面の頭を部分ごとに持つ値。結論と数の札は値で、合図の行・段ごとの所要時間・変更したファイルは Markdown のまま持つ。
+ * `lead` は結論。`task` のあるレポートでは `conclusion`、無いレポートでは `conclusion-lead`。空なら `none`。
+ * `status` は頭の残り（`head` から結論と数の札を除いたもの）、`finalStatus` は最終レポートのときの残りで、`status` に段ごとの所要時間と変更したファイルを足したもの。
+ * 旧い記録の経路が読む `head`・`finalHead` は結論と数の札を含む従来の Markdown のまま別に持つ。
+ */
+export type MainViewSurfaceHead = {
+  readonly lead:
+    | { readonly kind: "none" }
+    | { readonly kind: "conclusion" | "conclusion-lead"; readonly text: string }
+  readonly keyFigures: readonly MainViewKeyFigure[]
+  readonly status: string
+  readonly finalStatus: string
+}
+
+export type MainViewKeyFigure = Extract<ReportBlock, { readonly kind: "stats" }>["items"][number]
 
 /**
  * 図か振り返りの欄1つを、`DrawnSection` の塊の並びのまま持つ。

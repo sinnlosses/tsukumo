@@ -81,14 +81,6 @@ export function MarkdownReport(
   )
 }
 
-export function ReportRegion(props: { readonly region: MainViewReportRegion }): ReactElement {
-  return (
-    <RegionBox region={props.region}>
-      <RegionChunks markdown={props.region.markdown} />
-    </RegionBox>
-  )
-}
-
 /** 欄の入れ物が持つ印。Markdown を持つ欄（{@link MainViewReportRegion}）からも、持たない欄からも作れる。 */
 export type RegionMark =
   | { readonly kind: "head" | "retrospective" | "markdown" }
@@ -122,6 +114,14 @@ export function RegionChunks(props: { readonly markdown: string }): ReactElement
         <ReportBlock key={block.key} text={block.text} />
       ))}
     </>
+  )
+}
+
+function ReportRegion(props: { readonly region: MainViewReportRegion }): ReactElement {
+  return (
+    <RegionBox region={props.region}>
+      <RegionChunks markdown={props.region.markdown} />
+    </RegionBox>
   )
 }
 

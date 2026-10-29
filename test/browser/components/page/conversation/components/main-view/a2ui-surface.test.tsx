@@ -32,6 +32,7 @@ vi.mock(
     FoldedTableBody: (props: { readonly children: ReactNode }) => <tbody>{props.children}</tbody>,
     InlineCodeText: (props: { readonly text: string }) => <>{props.text}</>,
     InlineMarkdown: (props: { readonly text: string }) => <>{props.text}</>,
+    NoteLabel: (props: { readonly label: string }) => <span>{props.label}</span>,
     Markdown: (props: { readonly text: string }) =>
       props.text.startsWith("## ") ? (
         <h4>{props.text.slice(3)}</h4>
@@ -222,7 +223,7 @@ describe("Quote", () => {
     })
     const { container } = render(<Report reveal={false} turnId={1} className="" body={body} />)
 
-    const paragraphs = [...container.querySelectorAll("[data-report-region] p")].map(
+    const paragraphs = [...container.querySelectorAll('[data-report-region="section"] p')].map(
       (paragraph) => paragraph.textContent,
     )
     expect(paragraphs).toEqual(["架空の引用の一文", "— 架空の出典"])
@@ -234,14 +235,52 @@ describe("Quote", () => {
   })
 })
 
+describe("頭とお願い（A2UI の面）", () => {
+  it("結論・数の札・お願いは欄の Markdown を通らず、値から直接描く", () => {
+    const keyFigures = [
+      { before: "", value: "14", total: "", label: "架空の区画", series: [], better: "" },
+      { before: "", value: "9", total: "", label: "架空の未了", series: [], better: "" },
+      { before: "", value: "21", total: "", label: "架空の済み", series: [], better: "" },
+    ]
+    const body = regionsOf({
+      components: PARTS.map((part) =>
+        part.id === "root" ? { ...part, keyFigures, favor: "架空のお願い。" } : part,
+      ),
+    })
+    const { container } = render(<Report reveal={false} turnId={1} className="" body={body} />)
+
+    const head = container.querySelector('[data-report-region="head"]')
+    expect(head?.querySelector(":scope > div > p")?.textContent).toBe("架空の結論。")
+    expect(head?.querySelectorAll("b")[0]?.textContent).toBe("14")
+    const favor = container.querySelector('[data-report-region="favor"]')
+    expect(favor?.id).toBe(body.favor.id)
+    expect(favor?.textContent).toContain("お願い")
+    expect(favor?.textContent).toContain("架空のお願い。")
+    const stubs = [...container.querySelectorAll("[data-markdown-stub]")].map(
+      (stub) => stub.textContent,
+    )
+    expect(stubs.some((text) => text.includes("架空の結論。") || text.includes("架空の区画"))).toBe(
+      false,
+    )
+  })
+})
+
 describe("部品の一覧のある本文（A2UI の面）", () => {
   it("配置の部品の無い一覧は、欄の Markdown で描いたときと本文の根の中の DOM が同じで、面の入れ物が 1 枚だけ挟まる", () => {
     const withComponents = regionsOf({ components: PARTS })
     const withoutComponents: MainViewReportRegions = { ...withComponents, a2ui: { kind: "none" } }
     expect(withComponents.a2ui.kind).toBe("surface")
 
+    const bodyWithoutHead = (container: HTMLElement) => {
+      const body = container.querySelector("[data-report-body]")?.cloneNode(true)
+      if (!(body instanceof HTMLElement)) {
+        throw new Error("本文の根が無い")
+      }
+      body.querySelector('[data-report-region="head"]')?.remove()
+      return body.innerHTML
+    }
     const surface = render(<Report reveal={false} turnId={1} className="" body={withComponents} />)
-    const surfaceBody = surface.container.querySelector("[data-report-body]")?.innerHTML
+    const surfaceBody = bodyWithoutHead(surface.container)
     const hosts = surface.container.querySelectorAll("a2ui-react-report").length
     const otherHosts = [...surface.container.querySelectorAll("[data-report-body] *")].filter(
       (element) => element.localName.startsWith("a2ui-"),
@@ -249,7 +288,7 @@ describe("部品の一覧のある本文（A2UI の面）", () => {
     cleanup()
     const plain = render(<Report reveal={false} turnId={1} className="" body={withoutComponents} />)
 
-    expect(surfaceBody).toBe(plain.container.querySelector("[data-report-body]")?.innerHTML)
+    expect(surfaceBody).toBe(bodyWithoutHead(plain.container))
     expect(surfaceBody).toContain("架空の覚え書き。")
     expect([hosts, otherHosts]).toEqual([1, 0])
   })

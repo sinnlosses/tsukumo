@@ -54,6 +54,8 @@ export const leafFrameClassNames = {
 
 /** 葉を直接描く文字系の部品（一覧・主張）が付ける class 名（Markdown の `labeled-list`・`flow`・`cards`・`claims` などと同じ見た目）。 */
 export const textLeafClassNames = {
+  conclusion: notationStyles["report-conclusion"],
+  conclusionLead: notationStyles["report-conclusion-lead"],
   labeledList: notationStyles["report-labeled-list"],
   listLabel: notationStyles["report-list-label"],
   listText: notationStyles["report-list-text"],
@@ -93,6 +95,7 @@ export const noteLeafClassNames = {
   noteWarn: notationStyles["report-note-warn"],
   noteNg: notationStyles["report-note-ng"],
   noteAsk: notationStyles["report-note-ask"],
+  noteFavor: notationStyles["report-note-favor"],
   options: notationStyles["report-options"],
   option: notationStyles["report-option"],
   optionAdopt: notationStyles["report-option-adopt"],
@@ -149,6 +152,7 @@ export const compareLeafClassNames = {
 /** 葉を直接描く数の部品が付ける class 名（Markdown の `stats`・`stat` と同じ見た目）。 */
 export const statsLeafClassNames = {
   stats: notationStyles["report-stats"],
+  keyFigures: notationStyles["report-key-figures"],
   statsOf3: notationStyles["report-stats-of-3"],
   statsOf4: notationStyles["report-stats-of-4"],
   stat: notationStyles["report-stat"],

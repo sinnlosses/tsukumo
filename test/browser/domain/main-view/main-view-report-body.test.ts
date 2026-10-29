@@ -281,7 +281,12 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
       new RegExp(`^${lead("架空の結論。")}\n\n<div class="status">\n\n<div class="phase-times">`),
     )
     expect(summary).toEqual({ kind: "markdown", markdown: "架空のまとめ。" })
-    expect(final).toEqual({ ...regions, head: regions?.finalHead })
+    const surface = regions?.a2ui.kind === "surface" ? regions.a2ui : undefined
+    expect(surface?.head.status).not.toContain("phase-times")
+    expect(final).toMatchObject({ head: regions?.finalHead })
+    expect(
+      final?.kind === "regions" && final.a2ui.kind === "surface" && final.a2ui.head.status,
+    ).toBe(surface?.head.finalStatus)
   })
 
   it("workPlanClosing が stopped の最終レポートでは、呼ばなかった段が「未着手」と出て、none なら「不明」と出る", () => {

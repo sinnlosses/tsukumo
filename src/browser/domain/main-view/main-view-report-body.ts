@@ -28,26 +28,6 @@ export function orderedReportRegions(body: MainViewReportBody): readonly MainVie
   return regions.filter((region) => !isBlankText(region.markdown))
 }
 
-/** 頭の欄。中身が空なら markdown は空文字。 */
-export function headRegionOf(
-  body: Extract<MainViewReportBody, { readonly kind: "regions" }>,
-): Extract<MainViewReportRegion, { readonly kind: "head" }> {
-  return { kind: "head", markdown: body.head }
-}
-
-/** お願いの欄。中身が空なら markdown は空文字。 */
-export function favorRegionOf(
-  body: Extract<MainViewReportBody, { readonly kind: "regions" }>,
-): Extract<MainViewReportRegion, { readonly kind: "favor" }> {
-  return {
-    kind: "favor",
-    id: body.favor.id,
-    markdown: isBlankText(body.favor.markdown)
-      ? ""
-      : `<div class="note note-favor">\n\n${body.favor.markdown}\n\n</div>`,
-  }
-}
-
 /** 見出しのある節の欄の ID と見出しの字。見出しの無い節と、`report` ツールの外の本文は数えない。 */
 export function reportHeadedSections(
   body: MainViewReportBody,
@@ -61,5 +41,36 @@ export function reportHeadedSections(
 
 /** 最終レポートの本文。頭を最終のときの頭に替える。 */
 export function finalReportBody(body: MainViewReportBody): MainViewReportBody {
-  return body.kind === "markdown" ? body : { ...body, head: body.finalHead }
+  if (body.kind === "markdown") {
+    return body
+  }
+  const { a2ui } = body
+  return {
+    ...body,
+    head: body.finalHead,
+    a2ui:
+      a2ui.kind === "surface"
+        ? { ...a2ui, head: { ...a2ui.head, status: a2ui.head.finalStatus } }
+        : a2ui,
+  }
+}
+
+/** 頭の欄。中身が空なら markdown は空文字。 */
+function headRegionOf(
+  body: Extract<MainViewReportBody, { readonly kind: "regions" }>,
+): Extract<MainViewReportRegion, { readonly kind: "head" }> {
+  return { kind: "head", markdown: body.head }
+}
+
+/** お願いの欄。中身が空なら markdown は空文字。 */
+function favorRegionOf(
+  body: Extract<MainViewReportBody, { readonly kind: "regions" }>,
+): Extract<MainViewReportRegion, { readonly kind: "favor" }> {
+  return {
+    kind: "favor",
+    id: body.favor.id,
+    markdown: isBlankText(body.favor.markdown)
+      ? ""
+      : `<div class="note note-favor">\n\n${body.favor.markdown}\n\n</div>`,
+  }
 }

@@ -14,10 +14,11 @@ import {
   type StatLayout,
   statLayoutOf,
 } from "../../../../../../shared/report/stat-layout.ts"
+import type { MainViewKeyFigure } from "../../../../../../shared/session/main-view-shape.ts"
 import { InlineCodeText, statsLeafClassNames } from "../markdown/markdown.tsx"
 import { FoldedLeafFrame } from "./report-leaf-frame.tsx"
 
-type StatItem = Extract<A2uiReportComponent, { readonly component: "Stats" }>["items"][number]
+type StatItem = MainViewKeyFigure
 
 const BEFORE_CLASS_NAMES = {
   plain: statsLeafClassNames.statBefore,
@@ -41,12 +42,18 @@ export function StatsLeaf(props: {
   }
   return (
     <FoldedLeafFrame value={value} title="" fit={false} fold={part.fold} swap={false}>
-      <div className={clsx(statsLeafClassNames.stats, COUNT_CLASS_NAMES.get(part.items.length))}>
-        {part.items.map((item, index) => (
-          <Stat key={`${String(index)}:${item.label}`} item={item} />
-        ))}
-      </div>
+      <StatCards items={part.items} />
     </FoldedLeafFrame>
+  )
+}
+
+export function StatCards(props: { readonly items: readonly StatItem[] }): ReactElement {
+  return (
+    <div className={clsx(statsLeafClassNames.stats, COUNT_CLASS_NAMES.get(props.items.length))}>
+      {props.items.map((item, index) => (
+        <Stat key={`${String(index)}:${item.label}`} item={item} />
+      ))}
+    </div>
   )
 }
 
