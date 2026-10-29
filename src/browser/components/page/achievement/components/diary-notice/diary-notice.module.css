@@ -11,12 +11,12 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  gap: 14px;
-  padding: 12px 14px 12px 18px;
-  border-radius: 14px;
+  gap: var(--space-lg);
+  padding: var(--space-md) var(--space-lg) var(--space-md) var(--space-xl);
+  border-radius: var(--radius-xl);
   background: var(--surface);
   border: 1px solid var(--rule);
-  box-shadow: 0 16px 40px color-mix(in srgb, var(--ground) 70%, transparent);
+  box-shadow: var(--shadow-overlay);
   box-sizing: border-box;
   max-width: calc(100vw - 32px);
 }
@@ -28,8 +28,8 @@
 /* 顔は `<Button variant="solid-accent">` が持つ。箱だけここに置く。 */
 .diary-notice-open {
   height: 36px;
-  padding: 0 14px;
-  border-radius: 9px;
+  padding: 0 var(--space-lg);
+  border-radius: var(--radius-md);
 }
 
 /* 顔は `<Button variant="ghost">` が持つ。箱・行の高さだけここに置く。
@@ -37,6 +37,6 @@
 .diary-notice-dismiss {
   width: 32px;
   height: 32px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   line-height: 1;
 }

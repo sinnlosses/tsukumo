@@ -2,11 +2,11 @@
 .achievement-diary {
   display: grid;
   grid-template-columns: minmax(7rem, 9.5rem) minmax(0, 1fr);
-  gap: 1.25rem;
+  gap: var(--space-xl);
   align-items: end;
-  padding: 1.25rem 1.5rem;
+  padding: var(--space-xl) var(--space-2xl);
   border: 1px solid color-mix(in srgb, var(--rule), var(--accent) 45%);
-  border-radius: 1rem;
+  border-radius: var(--radius-xl);
   background: var(--surface-accent);
 }
 .achievement-diary.is-fetching {
@@ -19,14 +19,14 @@
 .achievement-diary-body {
   display: flex;
   flex-direction: column;
-  gap: 0.9rem;
+  gap: var(--space-lg);
   min-width: 0;
-  padding-bottom: 0.25rem;
+  padding-bottom: var(--space-xs);
 }
 .achievement-diary-header {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: var(--space-sm);
   flex-wrap: wrap;
 }
 /* 字の段・色は `Text` が持つ。字間だけここに置く。 */
@@ -43,8 +43,8 @@
 /* 吹き出し（明朝体。パックが書体を同梱すれば `--font-diary` がそれに差し替わる）。 */
 .achievement-diary-bubble {
   position: relative;
-  padding: 0.9rem 1.25rem;
-  border-radius: 1rem;
+  padding: var(--space-lg) var(--space-xl);
+  border-radius: var(--radius-xl);
   border: 1.5px solid var(--accent);
   background: var(--surface-accent);
 }
@@ -56,8 +56,8 @@
 }
 /* 日記がまだ無い・書いている・書けなかった、どれも点線の枠。 */
 .achievement-diary-bubble-empty {
-  padding: 0.9rem 1.25rem;
-  border-radius: 1rem;
+  padding: var(--space-lg) var(--space-xl);
+  border-radius: var(--radius-xl);
   border: 1.5px dashed var(--rule);
   min-height: 1.5rem;
 }
@@ -67,7 +67,7 @@
   line-height: 1.8;
 }
 .achievement-diary-bubble-empty p + p {
-  margin-top: 0.5rem;
+  margin-top: var(--space-sm);
   color: var(--ink);
 }
 
@@ -75,7 +75,7 @@
 .achievement-diary-progress {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem 1rem;
+  gap: var(--space-sm) var(--space-lg);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -85,7 +85,7 @@
   color: var(--ink-quiet);
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: var(--space-sm);
 }
 .achievement-diary-progress-item::before {
   content: "";
@@ -115,15 +115,15 @@
 .achievement-cards {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem;
+  gap: var(--space-lg);
 }
 .achievement-card {
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
-  padding: 0.75rem 1rem;
+  gap: var(--space-2xs);
+  padding: var(--space-md) var(--space-lg);
   border: 1px solid var(--rule);
-  border-radius: 0.75rem;
+  border-radius: var(--radius-lg);
   background: var(--surface);
   min-width: 0;
 }
@@ -138,11 +138,11 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 0.4rem;
+  gap: var(--space-sm);
 }
 /* 顔は `<Button variant="outline-accent">`、太さは `Text` が持つ。箱だけここに置く。 */
 .achievement-review-button {
   height: 2.5rem;
-  padding: 0 1.125rem;
-  border-radius: 0.5625rem;
+  padding: 0 var(--space-xl);
+  border-radius: var(--radius-md);
 }

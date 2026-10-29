@@ -25,7 +25,7 @@
 }
 /* 字の段は `Text` が持つ。色は `.diary-book-badge` から継ぐ。 */
 .diary-book-badge-sub {
-  margin-top: 0.15rem;
+  margin-top: var(--space-2xs);
   font-family: var(--font-mono);
 }
 
@@ -60,26 +60,26 @@
   color: var(--diary-gold-ink);
 }
 .diary-book-bookmark-pending {
-  margin: 0.4rem 0 0;
+  margin: var(--space-sm) 0 0;
   font-family: var(--font-serif);
   font-size: var(--font-secondary);
   color: var(--diary-gold-ink-quiet);
 }
 .diary-book-bookmark-task {
-  margin: 0.4rem 0 0;
+  margin: var(--space-sm) 0 0;
   font-family: var(--font-serif);
   font-size: var(--font-subheading);
   color: var(--diary-gold-strong);
   line-height: 1.7;
 }
 .diary-book-bookmark-task-id {
-  margin-right: 0.5rem;
+  margin-right: var(--space-sm);
   font-family: var(--font-mono);
   font-size: var(--font-secondary);
   color: var(--diary-gold-ink-quiet);
 }
 .diary-book-bookmark-reason {
-  margin: 0.3rem 0 0;
+  margin: var(--space-xs) 0 0;
   font-family: var(--font-serif);
   font-size: var(--font-secondary);
   color: var(--diary-gold-ink);
@@ -88,7 +88,7 @@
 
 /* 左ページ — この日に終えたこと。 */
 .diary-book-tasks-heading {
-  margin: 0 0 0.25rem;
+  margin: 0 0 var(--space-xs);
   font-family: var(--font-serif);
   letter-spacing: 0.1em;
 }
@@ -99,9 +99,9 @@
 }
 .diary-book-task-row {
   display: flex;
-  gap: 0.6rem;
+  gap: var(--space-sm);
   align-items: baseline;
-  padding: 0.4rem 0;
+  padding: var(--space-sm) 0;
   border-bottom: 1px solid color-mix(in srgb, var(--ink) 8%, transparent);
 }
 .diary-book-task-id {
@@ -115,7 +115,7 @@
 }
 /* 字の段・色は `Text` が持つ。padding だけここに置く。 */
 .diary-book-tasks-footer {
-  padding-top: 0.4rem;
+  padding-top: var(--space-sm);
 }
 
 .diary-book-left {
@@ -125,26 +125,26 @@
   padding: 1.75rem;
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: var(--space-xl);
   background: var(--diary-gold-surface);
   overflow-y: auto;
 }
 @media (max-width: 760px) {
   .diary-book-left {
-    padding: 1.25rem;
+    padding: var(--space-xl);
   }
 }
 
 .diary-book-review {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: var(--space-sm);
 }
 /* 顔は `<Button variant="solid-accent">` が持つ。箱だけここに置く。 */
 .diary-book-review-button {
   height: 2.75rem;
-  padding: 0 1.25rem;
-  border-radius: 0.875rem;
+  padding: 0 var(--space-xl);
+  border-radius: var(--radius-xl);
 }
 /* 字の段・色は `Text` が持つ。幅だけここに置く。 */
 .diary-book-review-note {
@@ -158,7 +158,7 @@
   padding: 1.75rem;
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: var(--space-xl);
   background: var(--diary-gold-surface);
   overflow-y: auto;
 }
@@ -193,7 +193,7 @@
   text-orientation: mixed;
   display: flex;
   align-items: center;
-  gap: 0.875rem;
+  gap: var(--space-lg);
   width: var(--diary-line);
   flex-shrink: 0;
 }
@@ -213,7 +213,7 @@
   writing-mode: vertical-rl;
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: var(--space-xs);
   font-size: var(--font-action);
   color: color-mix(in srgb, var(--accent) 45%, var(--ink-quiet));
 }
@@ -261,13 +261,13 @@
 .diary-book-signature-portrait {
   display: flex;
   align-items: flex-end;
-  gap: 0.6rem;
+  gap: var(--space-sm);
 }
 .diary-book-signature-image {
   width: 6rem;
 }
 .diary-book-signature-name {
-  padding-bottom: 0.5rem;
+  padding-bottom: var(--space-sm);
   font-family: var(--font-serif);
 }
 @media (max-width: 760px) {
@@ -276,7 +276,7 @@
   }
   /* 右の余白は罫の間隔のまま（本文の列を罫に揃えるため）。 */
   .diary-book-right {
-    padding: 1.25rem var(--diary-line) 1.25rem 1.25rem;
+    padding: var(--space-xl) var(--diary-line) var(--space-xl) var(--space-xl);
   }
   /* ページが低く、左下に重ねると本文の列にかぶる。
      署名は本文の左の列として並べ、本文は下まで使う。 */
@@ -317,20 +317,20 @@
   margin: auto;
   width: min(90vw, 26rem);
   max-height: 80%;
-  padding: 1.25rem;
+  padding: var(--space-xl);
   border: 1px solid var(--rule);
-  border-radius: 0.875rem;
+  border-radius: var(--radius-xl);
   background: var(--surface);
-  box-shadow: 0 20px 50px color-mix(in srgb, var(--ground) 80%, transparent);
+  box-shadow: var(--shadow-overlay);
   overflow-y: auto;
   z-index: 1;
 }
 .diary-book-toc-month {
-  margin-bottom: 1rem;
+  margin-bottom: var(--space-lg);
 }
 /* 字の段・色は `Heading` が持つ。margin だけここに置く。 */
 .diary-book-toc-heading {
-  margin: 0 0 0.4rem;
+  margin: 0 0 var(--space-sm);
 }
 .diary-book-toc-list {
   list-style: none;
@@ -338,14 +338,14 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
+  gap: var(--space-2xs);
 }
 .diary-book-toc-day {
   width: 100%;
   text-align: left;
-  padding: 0.4rem 0.5rem;
+  padding: var(--space-sm);
   border: none;
-  border-radius: 0.5rem;
+  border-radius: var(--radius-md);
   background: transparent;
   color: var(--ink);
   font-family: var(--font-sans);
@@ -371,8 +371,8 @@
 /* 顔は `<Button variant="outline">` が持つ。箱だけここに置く。 */
 .diary-book-topbar-button {
   height: 2.25rem;
-  padding: 0 0.75rem;
-  border-radius: 0.5625rem;
+  padding: 0 var(--space-md);
+  border-radius: var(--radius-md);
   white-space: nowrap;
 }
 
@@ -383,9 +383,9 @@
   min-width: 0;
   height: min(78vh, 42rem);
   border: 1px solid var(--diary-gold-border);
-  border-radius: 0.875rem;
+  border-radius: var(--radius-xl);
   overflow: hidden;
-  box-shadow: 0 20px 50px color-mix(in srgb, var(--ground) 80%, transparent);
+  box-shadow: var(--shadow-overlay);
 }
 
 /* 狭い画面では左右のページを縦に積む（右ページが上）。 */
