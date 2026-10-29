@@ -4,7 +4,6 @@
 
 import { z } from "zod"
 
-import { parseReportBody } from "../../../shared/report/body-fence.ts"
 import { aside, fold, inlineText, omittable } from "../../../shared/report/report-block-field.ts"
 import type { DeepReadonly } from "../../../shared/report/report-block-field.ts"
 import {
@@ -13,6 +12,7 @@ import {
   REPORT_BLOCK_KINDS,
   type ReportBlock,
 } from "../../../shared/report/report-block.ts"
+import { parseReportBody } from "./body-fence.ts"
 
 const rowBlockSchema = z.object({
   kind: z.literal("row"),

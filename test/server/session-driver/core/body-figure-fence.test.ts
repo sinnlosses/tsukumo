@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { readFigureFence } from "../../../src/shared/report/body-figure-fence.ts"
+import { readFigureFence } from "../../../../src/server/session-driver/core/body-figure-fence.ts"
 
 describe("readFigureFence", () => {
   it("名前: 数 の行を、名前の列と値の列の plot に読む（コメントと unit も読む）", () => {

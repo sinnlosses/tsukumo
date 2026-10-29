@@ -7,7 +7,6 @@ import {
 } from "../../../../src/browser/domain/main-view/main-view-report-body.ts"
 import { mainViewTurns } from "../../../../src/browser/domain/main-view/main-view.ts"
 import type { RecordedReportFigure } from "../../../../src/shared/report/a2ui-report-catalog.ts"
-import { parseReportBody } from "../../../../src/shared/report/body-fence.ts"
 import type { ChangedFile } from "../../../../src/shared/report/changed-file.ts"
 import type { ReportBlockSection } from "../../../../src/shared/report/report-block.ts"
 import type { ReportCheck } from "../../../../src/shared/report/report-check.ts"
@@ -110,6 +109,8 @@ describe("mainViewTurns（締めの speak → レポートで終える並び）"
   })
 })
 
+const BASIS_BLOCK = { kind: "markdown", markdown: "架空の根拠。", fold: "", aside: "" } as const
+
 /** お願いの欄の Markdown（記法の「お願い」の塊で包む）。 */
 const favorNote = (favor: string) => `<div class="note note-favor">\n\n${favor}\n\n</div>`
 
@@ -135,7 +136,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
         reportOfDrawn({
           toolUseId: "toolu_r1",
           conclusion: "架空の結論。",
-          sections: [{ heading: "", blocks: parseReportBody("架空の根拠。").blocks }],
+          sections: [{ heading: "", blocks: [BASIS_BLOCK] }],
           retrospective: { kind: "recorded", summary: "架空の結果。", drafts: [], blocks: [] },
           favor: "架空のお願い",
         }),
@@ -160,7 +161,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
         reportOfDrawn({
           toolUseId: "toolu_r1",
           conclusion: "架空の結論。",
-          sections: [{ heading: "", blocks: parseReportBody("架空の根拠。").blocks }],
+          sections: [{ heading: "", blocks: [BASIS_BLOCK] }],
           retrospective: {
             kind: "recorded",
             summary: "架空の結果。",

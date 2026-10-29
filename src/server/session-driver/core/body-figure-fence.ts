@@ -1,7 +1,7 @@
 // 本文の `figure` フェンス（図の申告）を `plot` の塊に読む。
 // 書き手が書くのは問い・関係・データだけで、形は決定表が決める。
 
-import { plotBlockSchema, type ReportPlot } from "./figure-grammar.ts"
+import { plotBlockSchema, type ReportPlot } from "../../../shared/report/figure-grammar.ts"
 
 const KEY_LINE = /^(question|relation|form|unit|keys|data)\s*[:：]\s*(.*)$/
 const COLUMN_TYPES = ["N", "O", "T"] as const

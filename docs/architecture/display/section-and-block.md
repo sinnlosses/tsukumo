@@ -104,7 +104,7 @@
   形ごとの描き方はまだ無く、どの形も `data` を `table` と同じ表として描く（題は `question`）。
 - **`body` は旧い試しの版（`body-fence`）の本文の欄で、いまの受け口は無い。復元が旧い transcript の `body` を読むだけ。** Markdown に型つきフェンスを混ぜて書かれていて、フェンスの種類は `graph`・`mermaid`・`table`・`code`・`callout`・`claims`・`image`（`READER_FENCE_KINDS`）と `figure`。
   読んだ結果は見出し空の節1つで、節の札は持たない。型つきでない言語名のフェンスは散文の一部のまま残す。
-  読めない型つきフェンスは差し戻さず素のコードブロックに落とし、数を記録の `brokenFenceCount` に残す（`src/shared/report/body-fence.ts` の `parseReportBody`）。
+  読めない型つきフェンスは差し戻さず素のコードブロックに落とし、数を記録の `brokenFenceCount` に残す（`src/server/session-driver/core/body-fence.ts` の `parseReportBody`）。
   `body` は `row`・`panel` を扱わない。フェンスの中にフェンスは入れ子にできず、並べる容れ物には新しい記法が要るため。
 - **座標で見せる図は `svg` の塊で書く**（`docs/architecture/adr/0028-report-block-priority.md`「SVG（論点3）」）。
   書き手は題・viewBox の大きさ・図形（`rect`・`line`・`text`）を渡し、SVG の文字列は書かず、描く側が図形から組む。

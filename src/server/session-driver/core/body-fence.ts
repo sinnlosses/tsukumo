@@ -1,9 +1,9 @@
 // `report` の `body`（Markdown）を、散文の塊と型つきフェンスの塊を本文の順に並べて読む。
 // 読めない型つきフェンスは素のコードブロックに落とし、差し戻さず数える。
 
+import type { ReportBlock } from "../../../shared/report/report-block.ts"
 import { READER_FENCE_KINDS, readTypedFence } from "./body-fence-reader.ts"
 import { readFigureFence } from "./body-figure-fence.ts"
-import type { ReportBlock } from "./report-block.ts"
 
 export type ParsedReportBody = {
   readonly blocks: readonly ReportBlock[]

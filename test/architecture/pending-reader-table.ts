@@ -14,24 +14,6 @@ export type PendingReader = PendingReaderBase &
 
 export const PENDING_READERS: readonly PendingReader[] = [
   {
-    file: "src/shared/report/body-fence.ts",
-    missingReader: "browser",
-    reason: "旧い body の読みは旧い記録の組み直し（server）だけが使う",
-    removeWhen: "body-fence を旧い記録の組み直しへ畳む（ADR 0043 の順 7 の次の課題）",
-  },
-  {
-    file: "src/shared/report/body-fence-reader.ts",
-    missingReader: "browser",
-    reason: "旧い body の読みは旧い記録の組み直し（server）だけが使う",
-    removeWhen: "body-fence を旧い記録の組み直しへ畳む（ADR 0043 の順 7 の次の課題）",
-  },
-  {
-    file: "src/shared/report/body-figure-fence.ts",
-    missingReader: "browser",
-    reason: "旧い body の読みは旧い記録の組み直し（server）だけが使う",
-    removeWhen: "body-fence を旧い記録の組み直しへ畳む（ADR 0043 の順 7 の次の課題）",
-  },
-  {
     file: "src/shared/report/a2ui-report-input.ts",
     missingReader: "browser",
     reason: "草稿の組み立てが読まなくなり、server の引数の字数の数え直しだけが読む",
