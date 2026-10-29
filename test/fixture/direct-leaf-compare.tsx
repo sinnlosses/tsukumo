@@ -22,7 +22,7 @@ function sectionOf(block: ReportBlock) {
 }
 
 /** 空白だけの違いと、属性の並びの違いは畳む。 */
-function normalized(html: string): string {
+export function normalized(html: string): string {
   return html
     .replace(/>\s+</g, "><")
     .replace(/<(\w+)((?:\s+[^\s=>]+(?:="[^"]*")?)+)>/g, (_, tag: string, attributes: string) => {
@@ -36,7 +36,7 @@ function normalized(html: string): string {
  * text ノードの字を文書の順に並べる（改行だけの text ノードは除く）。
  * 同じ `innerHTML` でも text ノードが割れていると字の送りが半画素ずれるので、割れ方も突き合わせる。
  */
-function textNodesOf(node: Node): readonly string[] {
+export function textNodesOf(node: Node): readonly string[] {
   return [...node.childNodes].flatMap((child) => {
     if (child.nodeType === Node.TEXT_NODE) {
       const text = child.textContent ?? ""

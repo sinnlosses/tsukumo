@@ -15,7 +15,7 @@
 
 - `conclusion` は `<div class="conclusion">`・`<div class="conclusion-lead">` で、`favor` は
   `<div class="note note-favor">` で、モデルの書いた文字のまま包む（逃がさない）
-- 検証結果は `src/shared/report/report-check.ts` の `reportChecksMarkdown` が HTML の文字列で組み、
+- 検証結果は `src/shared/report/report-check.ts` の `reportChecksViewMarkdown` が HTML の文字列で組み、
   `main-view-entry.ts` が `<div class="status">` で包む
 - 節の境目と「結論・検証結果の終わり」は、`report-markdown.ts` が挟む見た目の無い `<div>` の印
   （`report-section-break`・`report-sections-start`）で表す

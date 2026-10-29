@@ -73,6 +73,7 @@ function draftRegions(
         ? { kind: "none" }
         : { kind: "conclusion-lead", text: conclusion },
       keyFigures: [],
+      checks: { kind: "none" },
       status: "",
       finalStatus: "",
     }),

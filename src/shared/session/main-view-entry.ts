@@ -2,7 +2,8 @@
 // セッションの状態から導くだけで、別の状態は持たない。
 
 import { changedFilesMarkdown } from "../report/changed-file-section.ts"
-import { reportChecksMarkdown } from "../report/report-check.ts"
+import { reportChecksView } from "../report/report-check-view.ts"
+import { reportChecksViewMarkdown } from "../report/report-check.ts"
 import { drawnReportOf } from "../report/report-drawn-outline.ts"
 import { joinParts } from "../report/report-inline-markdown.ts"
 import { reportLeafLayoutOf } from "../report/report-leaf-value.ts"
@@ -143,9 +144,9 @@ function toMainViewEntries(record: SessionRecord, context: TurnContext): readonl
 
 /**
  * `report` の引数を欄に組む。頭は `conclusion` → `keyFigures`（数の札）→ 合図の行と段ごとの所要時間の順で、節は `components` から導く（`drawnReportOf`）。
- * 面（`a2ui`）には頭を結論・数の札・残り（`status`）に分けた値も載せる。`head` は旧い記録の経路が読む。
+ * 面（`a2ui`）には頭を結論・数の札・合図の行（`checks`）・残り（`status`）に分けた値も載せる。`head` は旧い記録の経路が読む。
  * 図は見出しの無い先頭の節として描き、図の番号は本文の図と通しで振られる。図が無ければ何も描かない。
- * 合図の行と段ごとの所要時間は {@link statusMarkdown}。段ごとの所要時間は最終のときの頭にだけ、同じ依頼のワークプランの記録（止めて再開した依頼の記録も引き継ぐ。{@link phaseDurations}）と `report` の `workPlanClosing` から描く。
+ * 旧い経路の合図の行と段ごとの所要時間は {@link statusMarkdown}。段ごとの所要時間は最終のときの頭にだけ、同じ依頼のワークプランの記録（止めて再開した依頼の記録も引き継ぐ。{@link phaseDurations}）と `report` の `workPlanClosing` から描く。
  * `favor` はレポートの記法の「お願い」の塊で包むので、サニタイズも記法の解釈もテキストの本文と同じ経路を通る。
  * `favor` の塊は `favor-<toolUseId>` の `id` を持ち、合図の行の総括行にある印がそこへ飛ぶ。
  * 中身の無い節は欄にしない。`retrospective` は節の最後に足して組み（図と表の番号が通しで続く）、欄が無ければ空文字にする。
@@ -159,20 +160,18 @@ function reportRegionsOf(
 ): MainViewReportRegions {
   const favorId = `favor-${report.toolUseId}`
   const leadKind = report.task.kind === "task" ? "conclusion" : "conclusion-lead"
-  const status = (withPhaseTimes: boolean) =>
-    statusMarkdown(
-      reportChecksMarkdown(
-        report.checks,
-        (command) => bashCommandDuration(context, command),
-        isBlankText(report.favor) ? { kind: "none" } : { kind: "favor", id: favorId },
-      ),
-      withPhaseTimes
-        ? phaseTimesMarkdown(phaseDurations(context.trail, report.time, report.workPlanClosing))
-        : "",
-      withPhaseTimes ? changedFilesMarkdown(report.changeSummary) : "",
-    )
-  const plainStatus = status(false)
-  const finalStatus = status(true)
+  const checks = reportChecksView(
+    report.checks,
+    (command) => bashCommandDuration(context, command),
+    isBlankText(report.favor) ? { kind: "none" } : { kind: "favor", id: favorId },
+  )
+  const finalRest = joinParts([
+    phaseTimesMarkdown(phaseDurations(context.trail, report.time, report.workPlanClosing)),
+    changedFilesMarkdown(report.changeSummary),
+  ])
+  const checksMarkdown = reportChecksViewMarkdown(checks)
+  const plainStatus = statusMarkdown(checksMarkdown, "")
+  const finalStatus = statusMarkdown(checksMarkdown, finalRest)
   const head = (statusPart: string) =>
     [
       isBlankText(report.conclusion)
@@ -213,22 +212,21 @@ function reportRegionsOf(
         ? { kind: "none" }
         : { kind: leadKind, text: report.conclusion },
       keyFigures: report.keyFigures,
-      status: plainStatus,
-      finalStatus,
+      checks,
+      status: "",
+      finalStatus: finalRest,
     }),
   }
 }
 
 /**
- * 結論のすぐ下の合図の行（検証結果の判定）と、その下の段ごとの所要時間の帯と一覧を、結論と本文のあいだの1つのまとまりに包む。
- * 末尾に変更したファイルの畳んだ節を置く。すべて空なら包みごと置かない。お願いの本文は末尾のまま動かさない。
+ * 旧い経路の頭で、結論のすぐ下の合図の行（検証結果の判定）と、その下の残り（段ごとの所要時間の帯と一覧・変更したファイルの畳んだ節）を、結論と本文のあいだの1つのまとまりに包む。
+ * すべて空なら包みごと置かない。お願いの本文は末尾のまま動かさない。面ではこの包みと合図の行を部品が描く。
  */
-function statusMarkdown(checks: string, phaseTimes: string, changedFiles: string): string {
+function statusMarkdown(checks: string, rest: string): string {
   const verdict = isBlankText(checks)
     ? ""
     : `<div class="verdict" role="group" aria-label="検証結果">${checks}</div>`
-  const inner = [verdict, phaseTimes, changedFiles]
-    .filter((part) => !isBlankText(part))
-    .join("\n\n")
+  const inner = [verdict, rest].filter((part) => !isBlankText(part)).join("\n\n")
   return inner === "" ? "" : `<div class="status">\n\n${inner}\n\n</div>`
 }

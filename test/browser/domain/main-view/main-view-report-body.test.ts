@@ -282,7 +282,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     )
     expect(summary).toEqual({ kind: "markdown", markdown: "架空のまとめ。" })
     const surface = regions?.a2ui.kind === "surface" ? regions.a2ui : undefined
-    expect(surface?.head.status).not.toContain("phase-times")
+    expect(surface?.head.status).toBe("")
     expect(final).toMatchObject({ head: regions?.finalHead })
     expect(
       final?.kind === "regions" && final.a2ui.kind === "surface" && final.a2ui.head.status,

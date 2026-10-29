@@ -112,6 +112,11 @@
 - 順 10 の描画の入力の形（2026-10-29）。面の値（`MainViewA2uiReport` の `surface`）に、図と振り返りの欄を `DrawnSection` の塊の並びのまま持たせる（`figure`・`retrospective`。塊は「葉の ID」か「葉に由来しない塊の Markdown」）。本文の節は従来どおり部品の木から描き、`Markdown` の葉だけが `markdownLeaves` の文字列で描かれる。面の `ReportRoot` は頭 → 図 → 節 → 振り返り → お願いの順に、欄の Markdown（`regions.sections[].markdown`・`retrospective`）を読まずに並べる。`reportRegionsOf`・`draftRegions` は同じ `a2uiReportView` を呼ぶので、2 か所が同じ入力を作る。
   - 頭とお願いは `DrawnSection` に無い（`report` の引数から組む）ので、引数から組んだ Markdown のまま描く。頭の Markdown 化（`keyFiguresMarkdown`・合図の行など）は面だけが使うので、順 9 が消すには頭を部品で描く別の課題が要る。
   - 頭の部品化の途中の形（2026-10-29）。面の値に `head`（`MainViewSurfaceHead`）を足し、結論（`lead`。`task` の有無で `conclusion` か `conclusion-lead`）と数の札（`keyFigures`）を値で、頭の残り（合図の行・段ごとの所要時間・変更したファイル）を Markdown の `status`・`finalStatus` で持つ。面の `ReportRoot` は結論と数の札を値から、お願いを `regions.favor` の本文から直接描き、残りだけ `status` を欄の Markdown で描く（最終レポートは `finalReportBody` が `status` を `finalStatus` に替える）。旧い経路が読む `regions.head`・`finalHead` は従来の文字列のまま別に持つので、先頭欄の取り出し（`firstLineSource`）と `main-view-key-figure-list` の読みは変わらない。合図・所要時間・変更したファイルを部品にしたら `status`・`finalStatus` と `head`・`finalHead` の重なりを消す。
+  - 合図の部品化の形（2026-10-29）。面の頭に `checks`（`ReportChecksView`）を足し、合図の行を値から部品で描く。`context` に頼る値は `mainViewEntries` が面の値を作るときに引き当て、部品は `context` を読まない。値は描く順に並べ終えた形で、所要時間は `formatElapsed` 済みの文字列（測れなければ空文字）、お願いへの飛び先は `ReportFavorTarget`（`favor-<toolUseId>`）で持つ。並べ順・件数・所要時間・label の頭・飛び先の計算は `reportChecksView` に切り出し、`reportChecksMarkdown` は値から文字列を組む `reportChecksViewMarkdown` に替えて旧い経路（`regions.head`・`finalHead`）のために残す。面の `status`・`finalStatus` は包み（`<div class="status">`）と合図の行を除いた残りになり、包みと合図の行は部品が描く。合図が頼る入力は部分ごとに次のとおり。
+    - 総括行: `checks` の状態ごとの件数、ok の `figure`、お願いの有無（`report.favor` が空でないか）と飛び先の id（`favor-<toolUseId>`）。`context` に頼らない。
+    - 問題の表: ng・blocked・unobserved の行の `label`・`figure`・`detail`・`howToVerify`（unobserved だけ）と所要時間（`command` を `bashCommandDuration(context, command)` で引く。`command` が空なら引かない）。
+    - 通った項目の畳み: ok の行の `label`、label の頭（最初の「（」より前）、`figure`、所要時間（問題の表と同じ引き方）。
+    - 包み: 合図の行に加えて、段ごとの所要時間（`context.trail`・`report.time`・`workPlanClosing`）と変更したファイル（`report.changeSummary`）を包む。この 2 つは Markdown のまま描く。
   - 旧い記録（`a2ui` が `none`）の経路と、先頭欄の取り出し・「描く欄があるか」の判定・`bodyChars` は、欄の Markdown（`orderedReportRegions` と `regions.sections[].markdown`）を読み続ける。これらを替えるまで、順 9 は `regions` の Markdown 欄を消せない。
 
 ## 採らなかった案

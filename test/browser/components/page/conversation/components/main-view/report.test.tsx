@@ -19,6 +19,7 @@ vi.mock(
     matrixLeafClassNames: {},
     compareLeafClassNames: {},
     statsLeafClassNames: {},
+    checksClassName: () => undefined,
     Markdown: (props: { readonly text: string }) => {
       calls.push(props.text)
       return <div data-markdown-stub="yes">{props.text}</div>

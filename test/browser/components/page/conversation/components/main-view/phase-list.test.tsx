@@ -20,6 +20,7 @@ vi.mock(
     matrixLeafClassNames: {},
     compareLeafClassNames: {},
     statsLeafClassNames: {},
+    checksClassName: () => undefined,
     Markdown: (props: { readonly text: string }) => <div>{props.text}</div>,
   }),
 )

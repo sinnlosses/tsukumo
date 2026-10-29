@@ -28,6 +28,7 @@ vi.mock(
     matrixLeafClassNames: {},
     compareLeafClassNames: {},
     statsLeafClassNames: {},
+    checksClassName: () => undefined,
     tagToneClassName: () => "",
     FoldedTableBody: (props: { readonly children: ReactNode }) => <tbody>{props.children}</tbody>,
     InlineCodeText: (props: { readonly text: string }) => <>{props.text}</>,

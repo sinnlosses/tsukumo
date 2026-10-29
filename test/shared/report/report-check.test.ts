@@ -1,12 +1,22 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  reportChecksView,
+  type ReportFavorTarget,
+} from "../../../src/shared/report/report-check-view.ts"
+import {
   parseReportChecks,
   type ReportCheck,
-  reportChecksMarkdown,
-  type ReportFavorTarget,
+  reportChecksViewMarkdown,
 } from "../../../src/shared/report/report-check.ts"
 import type { MeasuredTime } from "../../../src/shared/utils/elapsed-time.ts"
+
+/** 本番と同じく、値に畳んでから HTML の塊に組む。 */
+const reportChecksMarkdown = (
+  checks: readonly ReportCheck[],
+  commandDuration: (command: string) => MeasuredTime,
+  favor: ReportFavorTarget,
+): string => reportChecksViewMarkdown(reportChecksView(checks, commandDuration, favor))
 
 const UNMEASURED = (): MeasuredTime => ({ kind: "unknown" })
 
@@ -70,7 +80,7 @@ const checksBlock = (summary: string, problems: string, passed: string): string 
     problems === "" ? "" : `<div role="table" aria-label="検証結果の問題">${problems}</div>`
   }${passed}</div>`
 
-describe("reportChecksMarkdown", () => {
+describe("reportChecksViewMarkdown", () => {
   it("総括行 → ng の行 → unobserved の行 → 通った行の <details> の順に組む", () => {
     const markdown = reportChecksMarkdown(
       [

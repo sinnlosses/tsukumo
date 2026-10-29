@@ -6,6 +6,7 @@
 
 import type { ReactElement } from "react"
 
+import type { REPORT_DRAWN_MARK_NAMES } from "../../../../../../shared/report/report-notation.ts"
 import type { TIMELINE_MARK_NAMES } from "../../../../../../shared/report/timeline-markdown.ts"
 import { deferredModule } from "../../../../../hooks/deferred-module.ts"
 import styles from "./markdown.module.css"
@@ -217,6 +218,13 @@ type FigureMarkName =
 
 /** 図の葉の要素に付ける class 名。 */
 export function figureClassName(name: FigureMarkName): string | undefined {
+  return notationStyles[`report-${name}`]
+}
+
+/** 合図の行の部品が付ける class 名（検証結果の HTML の塊と同じ見た目）。 */
+export function checksClassName(
+  name: "status" | "verdict" | Extract<(typeof REPORT_DRAWN_MARK_NAMES)[number], `check${string}`>,
+): string | undefined {
   return notationStyles[`report-${name}`]
 }
 

@@ -4,6 +4,7 @@
 import type { A2uiReportComponent } from "../report/a2ui-report-catalog.ts"
 import type { ReportBlock } from "../report/report-block.ts"
 import type { ReportChangeSummary } from "../report/report-change-summary.ts"
+import type { ReportChecksView } from "../report/report-check-view.ts"
 import type { ReportImageSource } from "../report/report-image-markdown.ts"
 import type { LeafValue } from "../report/report-leaf-value.ts"
 import type { ReportTask } from "../report/report-task.ts"
@@ -128,9 +129,10 @@ export type MainViewA2uiReport =
     }
 
 /**
- * 面の頭を部分ごとに持つ値。結論と数の札は値で、合図の行・段ごとの所要時間・変更したファイルは Markdown のまま持つ。
+ * 面の頭を部分ごとに持つ値。結論・数の札・合図の行は値で、段ごとの所要時間と変更したファイルは Markdown のまま持つ。
  * `lead` は結論。`task` のあるレポートでは `conclusion`、無いレポートでは `conclusion-lead`。空なら `none`。
- * `status` は頭の残り（`head` から結論と数の札を除いたもの）、`finalStatus` は最終レポートのときの残りで、`status` に段ごとの所要時間と変更したファイルを足したもの。
+ * `checks` は合図の行（検証結果）。所要時間とお願いへの飛び先は引き当て済み。
+ * `status` は包み（`<div class="status">`）の中の合図の行より後ろの Markdown で、最終でないときは空文字。`finalStatus` は最終レポートのときのもので、段ごとの所要時間と変更したファイル。
  * 旧い記録の経路が読む `head`・`finalHead` は結論と数の札を含む従来の Markdown のまま別に持つ。
  */
 export type MainViewSurfaceHead = {
@@ -138,6 +140,7 @@ export type MainViewSurfaceHead = {
     | { readonly kind: "none" }
     | { readonly kind: "conclusion" | "conclusion-lead"; readonly text: string }
   readonly keyFigures: readonly MainViewKeyFigure[]
+  readonly checks: ReportChecksView
   readonly status: string
   readonly finalStatus: string
 }

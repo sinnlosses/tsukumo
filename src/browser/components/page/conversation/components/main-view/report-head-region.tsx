@@ -1,5 +1,5 @@
 // 面の頭（結論・数の札・合図の行など）とお願いを、欄の Markdown を通さずに描く。
-// 結論と数の札は値から、お願いは本文の塊を包みの中に並べる。合図の行・段ごとの所要時間・変更したファイルは Markdown のまま描く。
+// 結論・数の札・合図の行は値から、お願いは本文の塊を包みの中に並べる。段ごとの所要時間と変更したファイルは Markdown のまま描く。
 
 import clsx from "clsx"
 import type { ReactElement } from "react"
@@ -8,6 +8,7 @@ import { REPORT_NOTE_KINDS } from "../../../../../../shared/report/report-notati
 import type { MainViewSurfaceHead } from "../../../../../../shared/session/main-view-shape.ts"
 import { isBlankText } from "../../../../../../shared/utils/blank-text.ts"
 import {
+  checksClassName,
   InlineMarkdown,
   NoteLabel,
   noteLeafClassNames,
@@ -15,12 +16,18 @@ import {
   textLeafClassNames,
 } from "../markdown/markdown.tsx"
 import { RegionBox, RegionChunks } from "./body-region.tsx"
+import { ChecksVerdict } from "./checks-verdict.tsx"
 import { StatCards } from "./stats-leaf.tsx"
 
-/** 頭の欄。結論・数の札・残りのどれも無ければ何も描かない。 */
+/** 頭の欄。結論・数の札・合図の行・残りのどれも無ければ何も描かない。 */
 export function HeadRegion(props: { readonly head: MainViewSurfaceHead }): ReactElement {
-  const { lead, keyFigures, status } = props.head
-  if (lead.kind === "none" && keyFigures.length === 0 && isBlankText(status)) {
+  const { lead, keyFigures, checks, status } = props.head
+  if (
+    lead.kind === "none" &&
+    keyFigures.length === 0 &&
+    checks.kind === "none" &&
+    isBlankText(status)
+  ) {
     return <></>
   }
   return (
@@ -43,7 +50,12 @@ export function HeadRegion(props: { readonly head: MainViewSurfaceHead }): React
           <StatCards items={keyFigures} />
         </div>
       )}
-      {!isBlankText(status) && <RegionChunks markdown={status} />}
+      {(checks.kind === "checks" || !isBlankText(status)) && (
+        <div className={checksClassName("status")}>
+          {checks.kind === "checks" && <ChecksVerdict view={checks} />}
+          <RegionChunks markdown={status} />
+        </div>
+      )}
     </RegionBox>
   )
 }
