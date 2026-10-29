@@ -1,5 +1,4 @@
-/* `Stack` の見た目。持つのは並べることだけ（`display: flex` と、向き・間隔・揃え・折り返しの各軸）。
-   間隔の段はトークンを持たないので、rem をここに直書きする。 */
+/* `Stack` の見た目。持つのは並べることだけ（`display: flex` と、向き・間隔・揃え・折り返しの各軸）。 */
 .stack {
   display: flex;
 }
@@ -13,19 +12,19 @@
   gap: 0;
 }
 .stack-gap-xs {
-  gap: 0.25rem;
+  gap: var(--space-xs);
 }
 .stack-gap-sm {
-  gap: 0.5rem;
+  gap: var(--space-sm);
 }
 .stack-gap-md {
-  gap: 0.75rem;
+  gap: var(--space-md);
 }
 .stack-gap-lg {
-  gap: 1rem;
+  gap: var(--space-lg);
 }
 .stack-gap-xl {
-  gap: 1.25rem;
+  gap: var(--space-xl);
 }
 .stack-align-start {
   align-items: flex-start;

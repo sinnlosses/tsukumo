@@ -3,18 +3,18 @@
   box-sizing: border-box;
   max-width: calc(100vw - 2 * var(--page-padding));
   margin: 10vh auto 0;
-  padding: 1rem 1.25rem;
+  padding: var(--space-lg) var(--space-xl);
   width: 28rem;
   background: var(--surface);
   color: var(--ink);
   border: 1px solid var(--state-warn);
-  border-radius: 0.75rem;
+  border-radius: var(--radius-lg);
   line-height: var(--line-height-body);
   overflow-wrap: anywhere;
 }
 
 .screen-failure-reload {
-  margin-top: 0.75rem;
-  padding: 0.4rem 0.9rem;
-  border-radius: 0.5rem;
+  margin-top: var(--space-md);
+  padding: var(--space-sm) var(--space-lg);
+  border-radius: var(--radius-md);
 }

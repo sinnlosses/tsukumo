@@ -168,9 +168,8 @@ describe("design-token", () => {
 
 /** 置き換えの課題が済むまで通す、ファイルごとの直書きの宣言の件数。減る向きにだけ動かす。 */
 const EXCLUDED_DECLARATION_COUNTS: Readonly<Record<string, number>> = {
-  "browser/components/app/screen-boundary.module.css": 6,
-  "browser/components/domain/protocol-mismatch.module.css": 3,
-  "browser/components/domain/skip-link.module.css": 2,
+  "browser/components/app/screen-boundary.module.css": 1,
+  "browser/components/domain/protocol-mismatch.module.css": 1,
   "browser/components/page/character/character.module.css": 1,
   "browser/components/page/conversation/components/character-view/stage/speech-log.css": 1,
   "browser/components/page/conversation/components/dispatch/dispatch.module.css": 1,
@@ -189,11 +188,4 @@ const EXCLUDED_DECLARATION_COUNTS: Readonly<Record<string, number>> = {
   "browser/components/page/conversation/components/markdown/renderer/report-notation-result.css": 46,
   "browser/components/page/conversation/components/markdown/renderer/report-notation-summary.css": 32,
   "browser/components/page/conversation/components/markdown/renderer/report-notation-timeline.css": 4,
-  "browser/components/ui/bottom-sheet/bottom-sheet.module.css": 9,
-  "browser/components/ui/field/field.module.css": 1,
-  "browser/components/ui/image-zoom/image-zoom.module.css": 6,
-  "browser/components/ui/menu/menu.module.css": 8,
-  "browser/components/ui/stack/stack.module.css": 5,
-  "browser/components/ui/text-field/text-field.module.css": 1,
-  "browser/components/ui/typing-dot-list/typing-dot-list.module.css": 1,
 }

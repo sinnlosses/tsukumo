@@ -4,11 +4,11 @@
   top: 0.5rem;
   left: 0.5rem;
   z-index: 100;
-  padding: 0.4rem 0.8rem;
+  padding: var(--space-sm) var(--space-md);
   background: var(--ground);
   color: var(--ink);
   border: 1px solid var(--rule);
-  border-radius: 0.5rem;
+  border-radius: var(--radius-md);
   transform: translateY(-300%);
 }
 .skip-link:focus-visible {
