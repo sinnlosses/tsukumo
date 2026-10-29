@@ -42,19 +42,16 @@ export function requestPromptOf(taskId: string, request: TaskRequest, launchSkil
   switch (request.kind) {
     case "start": {
       const skill = launchSkillOf(launchSkill)
-      const prompt =
-        skill === ""
-          ? `タスク ${taskId} を進めて（bd show ${taskId} で読める）。`
-          : `/${skill} ${taskId}`
+      const prompt = skill === "" ? `タスク ${taskId} を進めて。` : `/${skill} ${taskId}`
       if (!request.held) {
         return prompt
       }
       return skill === "" ? `${prompt}${HELD_NOTE}` : `${prompt} ${HELD_NOTE}`
     }
     case "plan":
-      return `ドラフト ${taskId} を計画して（bd show ${taskId} で読める）。## 完了条件 と ## やること を書いて、着手できる todo にする。`
+      return `ドラフト ${taskId} を計画して。## 完了条件 と ## やること を書いて、着手できる todo にする。`
     case "drop":
-      return `ドラフト ${taskId} を却下して（bd show ${taskId} で読める）。理由を ## 結果 に書いて、dropped で閉じる。`
+      return `ドラフト ${taskId} を却下して。理由を ## 結果 に書いて、dropped で閉じる。`
     case "sort":
       return sortPromptOf(request.plans, request.drops)
   }

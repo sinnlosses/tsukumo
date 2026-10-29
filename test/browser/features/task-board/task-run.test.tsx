@@ -219,7 +219,7 @@ describe("タスクの実行を頼む", () => {
     expect(sent).toEqual([
       {
         procedure: "session.prompt",
-        text: "タスク X-003 を進めて（bd show X-003 で読める）。このタスクは保留なので、着手の前に判断を聞いて。",
+        text: "タスク X-003 を進めて。このタスクは保留なので、着手の前に判断を聞いて。",
         images: [],
       },
     ])
@@ -254,7 +254,7 @@ describe("タスクの実行を頼む", () => {
     expect(sent).toEqual([
       {
         procedure: "session.prompt",
-        text: "ドラフト X-004 を計画して（bd show X-004 で読める）。## 完了条件 と ## やること を書いて、着手できる todo にする。",
+        text: "ドラフト X-004 を計画して。## 完了条件 と ## やること を書いて、着手できる todo にする。",
         images: [],
       },
     ])
@@ -279,7 +279,7 @@ describe("タスクの実行を頼む", () => {
     expect(sent).toEqual([
       {
         procedure: "session.prompt",
-        text: "ドラフト X-004 を却下して（bd show X-004 で読める）。理由を ## 結果 に書いて、dropped で閉じる。",
+        text: "ドラフト X-004 を却下して。理由を ## 結果 に書いて、dropped で閉じる。",
         images: [],
       },
     ])
@@ -308,7 +308,7 @@ describe("タスクの実行を頼む", () => {
     expect(sent).toEqual([
       {
         procedure: "session.prompt",
-        text: "ドラフト X-004 を計画して（bd show X-004 で読める）。## 完了条件 と ## やること を書いて、着手できる todo にする。",
+        text: "ドラフト X-004 を計画して。## 完了条件 と ## やること を書いて、着手できる todo にする。",
         images: [],
       },
     ])
@@ -332,7 +332,7 @@ describe("タスクの実行を頼む", () => {
     expect(sent).toEqual([
       {
         procedure: "session.prompt",
-        text: "ドラフト X-004 を却下して（bd show X-004 で読める）。理由を ## 結果 に書いて、dropped で閉じる。",
+        text: "ドラフト X-004 を却下して。理由を ## 結果 に書いて、dropped で閉じる。",
         images: [],
       },
     ])
@@ -349,7 +349,7 @@ describe("タスクの実行を頼む", () => {
     expect(sent).toEqual([
       {
         procedure: "session.prompt",
-        text: "タスク X-003 を進めて（bd show X-003 で読める）。このタスクは保留なので、着手の前に判断を聞いて。",
+        text: "タスク X-003 を進めて。このタスクは保留なので、着手の前に判断を聞いて。",
         images: [],
       },
     ])
@@ -366,7 +366,7 @@ describe("タスクの実行を頼む", () => {
     expect(sent).toEqual([
       {
         procedure: "session.prompt",
-        text: "タスク X-002 を進めて（bd show X-002 で読める）。",
+        text: "タスク X-002 を進めて。",
         images: [],
       },
     ])

@@ -92,7 +92,7 @@
     "sent": "session.prompt",
     "order": 1,
     "input": {
-      "text": "タスク t-001 を進めて（bd show t-001 で読める）。",
+      "text": "タスク t-001 を進めて。",
       "images": []
     }
   },
@@ -107,7 +107,7 @@
     "at": 1768438800000,
     "event": {
       "kind": "request",
-      "text": "タスク t-001 を進めて（bd show t-001 で読める）。",
+      "text": "タスク t-001 を進めて。",
       "images": []
     }
   },

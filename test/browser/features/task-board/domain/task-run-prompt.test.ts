@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import { requestPromptOf } from "../../../../../src/browser/features/task-board/domain/task-run-prompt.ts"
 
-const FIXED = "タスク ABC-1 を進めて（bd show ABC-1 で読める）。"
+const FIXED = "タスク ABC-1 を進めて。"
 const HELD_NOTE = "このタスクは保留なので、着手の前に判断を聞いて。"
 
 describe("requestPromptOf の sort", () => {

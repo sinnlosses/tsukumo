@@ -101,8 +101,8 @@ describe("おすすめの札", () => {
       READY_TASKS,
     )
     expect(cards.slice(0, 2).map((card) => [card.id, card.reason, card.request])).toEqual([
-      ["X-3", "理由3", "X-3 に着手して"],
-      ["X-1", "理由1", "X-1 に着手して"],
+      ["X-3", "理由3", "タスク X-3 を進めて"],
+      ["X-1", "理由1", "タスク X-1 を進めて"],
     ])
   })
 
@@ -188,7 +188,10 @@ describe("おすすめの札", () => {
         task("X-4", "todo", []),
       ]),
     )
-    expect(cards.map((card) => card.request)).toEqual(["X-3 に着手して", "X-4 に着手して"])
+    expect(cards.map((card) => card.request)).toEqual([
+      "タスク X-3 を進めて",
+      "タスク X-4 を進めて",
+    ])
   })
 
   it("タスクが読めないときも空の帳面のときも、札は無い", () => {

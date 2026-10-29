@@ -64,7 +64,7 @@ describe("Welcome（キーで始める）", () => {
 
     expect(calls).toEqual([
       { procedure: "diagnostic.reportRecommendationPressed", kind: "task" },
-      { procedure: "session.prompt", text: "X-1 に着手して", images: [] },
+      { procedure: "session.prompt", text: "タスク X-1 を進めて", images: [] },
     ])
   })
 

@@ -118,7 +118,7 @@ function readyTaskCards(tasks: TaskSummaryResult): readonly WelcomeCard[] {
       id: task.id,
       title: task.summary,
       reason: "",
-      request: `${task.id} に着手して`,
+      request: `タスク ${task.id} を進めて`,
     }))
 }
 
