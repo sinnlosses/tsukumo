@@ -281,10 +281,7 @@ describe("会話の画面の段", () => {
     await page.mouse.click(195, 40)
     await sheet.waitFor({ state: "hidden" })
 
-    await page
-      .locator('nav[aria-label="画面"]')
-      .getByRole("button", { name: /^手順/u })
-      .click()
+    await page.locator('nav[aria-label="画面"]').getByRole("button", { name: /^手順/u }).click()
     await page.getByRole("dialog", { name: "依頼の手順" }).waitFor()
     expect(await scrollWidth(page)).toBeLessThanOrEqual(390)
     await page.keyboard.press("Escape")

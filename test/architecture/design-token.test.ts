@@ -183,12 +183,8 @@ const EXCLUDED_DECLARATION_COUNTS: Readonly<Record<string, number>> = {
   "browser/components/page/conversation/components/character-view/stage/speech-log.css": 1,
   "browser/components/page/conversation/components/dispatch/dispatch.module.css": 1,
   "browser/components/page/conversation/components/main-view/turn-card/mini-portrait.css": 2,
-  "browser/components/page/conversation/components/markdown/renderer/report-notation-body.css": 23,
-  "browser/components/page/conversation/components/markdown/renderer/report-notation-card-chain.css": 5,
   "browser/components/page/conversation/components/markdown/renderer/report-notation-figure.css": 39,
-  "browser/components/page/conversation/components/markdown/renderer/report-notation-inline.css": 10,
-  "browser/components/page/conversation/components/markdown/renderer/report-notation-prose.css": 25,
+  "browser/components/page/conversation/components/markdown/renderer/report-notation-prose.css": 24,
   "browser/components/page/conversation/components/markdown/renderer/report-notation-result.css": 46,
   "browser/components/page/conversation/components/markdown/renderer/report-notation-summary.css": 31,
-  "browser/components/page/conversation/components/markdown/renderer/report-notation-timeline.css": 4,
 }

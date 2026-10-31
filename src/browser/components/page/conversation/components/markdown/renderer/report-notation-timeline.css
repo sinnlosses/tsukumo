@@ -30,7 +30,7 @@
     position: relative;
   }
   & .report-timeline-lane {
-    padding-block: 0.25rem;
+    padding-block: var(--space-xs);
     font-weight: 600;
     line-height: 1.5;
     color: var(--ink-quiet);
@@ -60,7 +60,7 @@
   & .report-timeline-bar {
     flex: 0 0 auto;
     block-size: 14px;
-    border-radius: 2px;
+    border-radius: var(--radius-sm);
     background: var(--ink-quiet);
   }
   & .report-timeline-bar-emphasis {
@@ -107,8 +107,8 @@
   & .report-timeline-legend {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.25rem 1rem;
-    margin-block-start: 0.5rem;
+    gap: var(--space-xs) var(--space-lg);
+    margin-block-start: var(--space-sm);
     font-size: var(--font-label);
     line-height: 1.5;
     color: var(--ink-quiet);

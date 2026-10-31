@@ -11,14 +11,14 @@
   initial-value: 0px;
 }
 .detail-block {
-  --report-block-gap: 13px;
-  --report-figure-gap: 39px;
-  --report-heading-gap: 13px;
+  --report-block-gap: 12px;
+  --report-figure-gap: 36px;
+  --report-heading-gap: 12px;
   --report-measure: 42em;
   --report-measure-wide: 63em;
   --report-figure-max: 70cqh;
   --report-figure-min-scale: 0.75;
-  margin: 0 0 1rem;
+  margin: 0 0 var(--space-lg);
   line-height: var(--line-height-body);
   text-autospace: normal;
   line-break: strict;
@@ -90,7 +90,7 @@
   padding: 0 0.25em;
   color: var(--ink-bright);
   font-weight: 600;
-  border-radius: 0.2em;
+  border-radius: var(--radius-sm);
   background: color-mix(in srgb, var(--surface), var(--state-info) 10%);
   box-decoration-break: clone;
 }
@@ -102,7 +102,7 @@
 }
 .detail-block {
   & li + li {
-    margin-top: 4px;
+    margin-top: var(--space-xs);
   }
   /* 領域の内幅に入りきらない表は、その表だけ横に転がす（ページ全体は横スクロールさせない）。
    器は Markdown のレンダラ側（`Table`）が作るので、レポートの記法・許可リストは増えていない。 */
@@ -120,7 +120,7 @@
   list-style: none;
 }
 .report-fold-more-button {
-  margin-block: 0.2rem;
+  margin-block: var(--space-xs);
 }
 /* 題を持たない表は、表の幅まで縮めてレポートの幅の中央に置く（題つきの表は包み `.report-captioned` が置く）。 */
 :is(.detail-block, [data-report-region]) > .table-scroll {
@@ -141,7 +141,7 @@
    1列目の左と最終列の右は余白 0 で、本文の左端に揃える。 */
   & th,
   & td {
-    padding: 6px 20px 6px 0;
+    padding: var(--space-sm) var(--space-xl) var(--space-sm) 0;
     border-bottom: 1px solid var(--rule-soft);
     text-align: left;
     font-variant-numeric: tabular-nums;
@@ -162,7 +162,7 @@
     tbody:has(tr:nth-child(6))
     tr:nth-child(5n):not(:last-child)
     td {
-    padding-bottom: 12px;
+    padding-bottom: var(--space-md);
     border-bottom-color: transparent;
   }
   /* 見出し行の下だけ素の `rule`。文字は本文より小さく、読ませる補助の色にする。 */
@@ -185,7 +185,7 @@
   & table:has(.report-cell-status) th,
   & table:has(.report-cell-status) td {
     border-bottom: none;
-    padding: 0.5rem 0.75rem;
+    padding: var(--space-sm) var(--space-md);
   }
   & table:has(.report-cell-status) th {
     padding-top: 0;
@@ -199,7 +199,7 @@
   /* 状態の列にある、状態を持たないセル。地を塗らず読ませる補助の字にし、文の頭をタイルの文の頭（記号とすき間のぶん右）に揃える。 */
   & .report-cell-status-none {
     display: block;
-    padding-left: 1.25rem;
+    padding-left: var(--space-xl);
     color: var(--ink-soft);
   }
   /* 表の状態のセル。記号と文を1行に並べ、角丸のタイルの地で状態を示す。状態語は記号の aria-label が読み上げる。 */
@@ -210,8 +210,8 @@
     gap: 0.35em;
     height: 100%;
     box-sizing: border-box;
-    padding: 0.5rem 0.75rem;
-    border-radius: 8px;
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-md);
     background: var(--cell-status-bg, transparent);
   }
   & .report-cell-status-mark {
@@ -279,26 +279,26 @@
     flex-wrap: wrap;
     justify-content: center;
     max-inline-size: var(--report-measure);
-    gap: 0.25rem 1rem;
-    margin-bottom: 0.3rem;
+    gap: var(--space-xs) var(--space-lg);
+    margin-bottom: var(--space-xs);
     font-size: var(--font-label);
     color: var(--ink-quiet);
   }
   /* 切った残りの1行。表の最終行に続けて、全幅で補助の色で読ませる。 */
   & .report-captioned > .report-table-rest {
-    padding-top: 6px;
+    padding-top: var(--space-sm);
     font-size: var(--font-secondary);
     color: var(--ink-quiet);
   }
   & .report-table-status-legend-item {
     display: inline-flex;
     align-items: center;
-    gap: 0.35rem;
+    gap: var(--space-xs);
   }
   & .report-table-status-legend-swatch {
     width: 0.75rem;
     height: 0.75rem;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     background: var(--cell-status-bg, transparent);
     border: 1px solid color-mix(in srgb, currentcolor 35%, transparent);
   }
@@ -308,15 +308,15 @@
     flex-wrap: wrap;
     justify-content: center;
     max-inline-size: var(--report-measure);
-    gap: 0.25rem 1rem;
-    margin-top: 0.25rem;
+    gap: var(--space-xs) var(--space-lg);
+    margin-top: var(--space-xs);
     font-size: var(--font-label);
     color: var(--ink-quiet);
   }
   & .report-graph-legend-item {
     display: inline-flex;
     align-items: center;
-    gap: 0.35rem;
+    gap: var(--space-xs);
   }
   & .report-graph-legend-swatch {
     width: 1.25rem;
@@ -330,7 +330,7 @@
     border: 1px solid var(--rule);
   }
   & .report-graph-legend-shape-box {
-    border-radius: 0.125rem;
+    border-radius: var(--radius-sm);
   }
   & .report-graph-legend-shape-round {
     border-radius: 999px;
@@ -385,7 +385,7 @@
     justify-content: center;
     width: 1.5rem;
     height: 1.5rem;
-    border-radius: 0.3rem;
+    border-radius: var(--radius-sm);
     font-weight: 700;
     line-height: 1;
   }
@@ -407,14 +407,14 @@
   & .report-matrix-legend {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.4rem 1rem;
+    gap: var(--space-sm) var(--space-lg);
     font-size: var(--font-secondary);
     color: var(--ink-quiet);
   }
   & .report-matrix-legend-item {
     display: inline-flex;
     align-items: center;
-    gap: 0.3rem;
+    gap: var(--space-xs);
   }
   /* 数だけの列のセル。棒を下地に敷き、数字を前面に重ねる。
    `inline-block` にすると数字の桁数で幅が変わり、行どうしの棒の長さを比べられなくなる。 */
@@ -427,7 +427,7 @@
     inset-block: 0.15em;
     inset-inline-end: 0;
     background: var(--surface-raised);
-    border-radius: 0.15rem;
+    border-radius: var(--radius-sm);
   }
   & .report-cell-numeric-value {
     position: relative;

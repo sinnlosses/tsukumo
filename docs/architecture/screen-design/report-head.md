@@ -180,19 +180,19 @@
 
 | あき                                                                  | 値                    | CSS の名前                |
 | --------------------------------------------------------------------- | --------------------- | ------------------------- |
-| 塊と塊の間（段落・箇条書き・note・コード など）                       | 13px                  | `--report-block-gap`      |
-| 題つきの表と図（`.report-captioned`）の上下                           | 39px                  | `--report-figure-gap`     |
-| 見出しの下（`##` は罫から）から、直後の塊まで（直後が表・図でも同じ） | 13px                  | `--report-heading-gap`    |
-| 見出しの上（前の節との区切り）                                        | `##` 52px・`###` 26px | `.detail-block h4` / `h5` |
+| 塊と塊の間（段落・箇条書き・note・コード など）                       | 12px                  | `--report-block-gap`      |
+| 題つきの表と図（`.report-captioned`）の上下                           | 36px                  | `--report-figure-gap`     |
+| 見出しの下（`##` は罫から）から、直後の塊まで（直後が表・図でも同じ） | 12px                  | `--report-heading-gap`    |
+| 見出しの上（前の節との区切り）                                        | `##` 52px・`###` 24px | `.detail-block h4` / `h5` |
 
-**あきの格子は 13 / 26 / 39px（行 26px の半分・1・1.5 倍）**（見本は
+**あきの格子は 12 / 24 / 36px**（見本は
 `docs/history/mockup/report-excellence-2026-10-17/values.html` の B 案）。
 
-- 縦の margin は相殺されるので、表・図の隣は 39px、それ以外の塊どうしは 13px になる。見出しの上は表・図のあきより
+- 縦の margin は相殺されるので、表・図の隣は 36px、それ以外の塊どうしは 12px になる。見出しの上は表・図のあきより
   広くし、見出しが前の節より後ろの塊に付いて見えるようにする
 - 表の中の文字は左揃えで、表の包み（題つきなら `.report-captioned`）は `margin-inline: auto` でレポートの幅の中央に置く
   （`layout.md`「文字の揃え」）。1列目の左と最終列の右の余白は 0。行罫は `rule-soft`、見出し行の下だけ `rule`。6行以上の表は5行ごとに 6px の隙間を入れる
 - 枠を持つ塊（`fold` の `<details>`・合図の行）の内側は塊のあきを使わず、それぞれの padding で決める
 - 塊を足すときは上下の margin に `--report-block-gap`（題つきなら `--report-figure-gap`）を書き、固定の値を書かない。
   器を持たない塊（引用の中の段落）は既定の 1em（15px）が外へ抜けてあきを崩すので、先頭・末尾の margin を 0 にする
-- 本文の隣り合う塊のあきが 13px の倍数であることは E2E（`report-spacing`・`spacing-media`・`spacing-verdict`）が実ブラウザで測る
+- 本文の隣り合う塊のあきが 12px の倍数であることは E2E（`report-spacing`・`spacing-media`・`spacing-verdict`）が実ブラウザで測る

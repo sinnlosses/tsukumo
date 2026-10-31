@@ -96,7 +96,7 @@
   }
   & h5 {
     max-inline-size: var(--report-measure);
-    margin: 26px 0 var(--report-heading-gap);
+    margin: var(--space-2xl) 0 var(--report-heading-gap);
     font-size: var(--report-heading-3);
     font-weight: 700;
     line-height: 1.4;

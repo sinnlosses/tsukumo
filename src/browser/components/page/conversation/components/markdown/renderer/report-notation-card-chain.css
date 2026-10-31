@@ -19,12 +19,12 @@
   & .report-card-chain-card {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: var(--space-xs);
     min-inline-size: min-content;
-    padding: 0.5rem 0.75rem;
+    padding: var(--space-sm) var(--space-md);
     overflow: hidden;
     border: 1px solid var(--rule);
-    border-radius: 0.5rem;
+    border-radius: var(--radius-md);
     background: var(--surface-raised);
     overflow-wrap: break-word;
   }
@@ -40,7 +40,7 @@
   & .report-card-chain-tone {
     display: block;
     block-size: 4px;
-    margin: -0.5rem -0.75rem 0.25rem;
+    margin: calc(var(--space-sm) * -1) calc(var(--space-md) * -1) var(--space-xs);
     background: var(--card-chain-tone);
   }
   & .report-card-chain-tone-a {
@@ -73,7 +73,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 0.1rem;
+    gap: var(--space-2xs);
     min-inline-size: 2em;
     min-block-size: 2em;
     --report-card-chain-arrow-color: var(--ink-quiet);

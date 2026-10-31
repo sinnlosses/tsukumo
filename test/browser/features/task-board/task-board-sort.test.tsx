@@ -81,11 +81,7 @@ function openDraftFilter(): void {
 
 function isHold(taskId: string): boolean {
   const group = screen.getByRole("radiogroup", { name: `${taskId} の仕分け` })
-  return (
-    within(group)
-      .getByRole("radio", { name: /保留/ })
-      .getAttribute("aria-checked") === "true"
-  )
+  return within(group).getByRole("radio", { name: /保留/ }).getAttribute("aria-checked") === "true"
 }
 
 describe("ドラフトの仕分け", () => {

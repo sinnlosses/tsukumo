@@ -7,7 +7,7 @@ const run = useScenarioRun()
 
 describe("レポートの塊のあき（図表）", () => {
   it.each(["report-caption", "report-matrix", "report-svg"])(
-    "本文の隣り合う塊のあきが 13px の倍数になる（%s）",
+    "本文の隣り合う塊のあきが 12px の倍数になる（%s）",
     async (scene) => {
       const room = await run.open(spacingScenario(scene))
       await room.waitForEvent("turn-finished")
