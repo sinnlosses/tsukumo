@@ -115,7 +115,7 @@ export function useTurnStatus(): TurnStatusModel {
           }
         : {
             kind: "send",
-            label: sendLabel(inquiry.kind === "question" ? inquiry.last : undefined),
+            label: inquiry.kind === "question" ? questionSendLabel(inquiry.last) : SEND_LABEL,
             emphasis: inquiry.kind === "question" && !drafted ? "quiet" : "solid",
             disabled: !connected || ended,
             title: sendTitle(inquiry.kind === "question", chatMode),
@@ -179,10 +179,7 @@ function sendTitle(answering: boolean, chatMode: boolean): string {
   return chatMode ? CHAT_SEND_TITLE : WORK_SEND_TITLE
 }
 
-/** 送るボタンの字。答え待ちの質問が無ければ「送信」、あれば最後の1問だけ「答える」で手前は「次へ」。 */
-function sendLabel(lastQuestion: boolean | undefined): string {
-  if (lastQuestion === undefined) {
-    return SEND_LABEL
-  }
+/** 答え待ちの質問があるときの送るボタンの字。最後の1問だけ「答える」で手前は「次へ」。 */
+function questionSendLabel(lastQuestion: boolean): string {
   return lastQuestion ? ANSWER_LABEL : NEXT_LABEL
 }

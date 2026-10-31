@@ -92,6 +92,8 @@ export type ComposerModel = Omit<PromptImageModel, "reset"> & {
 export function useComposer(): ComposerModel {
   const dispatch = useSession((session) => session.dispatch)
   const characterName = useSession((session) => session.state.character?.name)
+  const askerSubject = characterName === undefined ? "" : `${characterName} が`
+  const requestSubject = characterName === undefined ? "" : `${characterName} への`
   const pendingActive = useSession((session) => session.state.pending.length > 0)
   const turnInProgress = useTurnRunning()
   const restartRefused = useRestartRefused()
@@ -211,7 +213,7 @@ export function useComposer(): ComposerModel {
     }
     return {
       kind: "inquiry",
-      text: inquiryBandText(inquiry.kind, characterName),
+      text: inquiryBandText(inquiry.kind, askerSubject),
       onJump: () => requestInquiryJump({ focus: true }),
     }
   }
@@ -228,7 +230,7 @@ export function useComposer(): ComposerModel {
       saveComposerMode(next)
     },
     placeholder:
-      inquiry.kind === "question" ? answerPlaceholder(phone) : composerPlaceholder(characterName),
+      inquiry.kind === "question" ? answerPlaceholder(phone) : composerPlaceholder(requestSubject),
     label: inquiry.kind === "question" ? ANSWER_LABEL : REQUEST_LABEL,
     band: composerBand(),
     answering: inquiry.kind === "question",
@@ -301,11 +303,7 @@ const REQUEST_LABEL = "依頼を書く"
 const ANSWER_LABEL = "質問への答えを書く"
 
 /** `<textarea>` の上の帯の文言。誰が聞いているかを名前で言い、名前が無いパックでは名前を使わずに書く。 */
-function inquiryBandText(
-  kind: "permission" | "question",
-  characterName: string | undefined,
-): string {
-  const subject = characterName === undefined ? "" : `${characterName} が`
+function inquiryBandText(kind: "permission" | "question", subject: string): string {
   return kind === "question"
     ? `↓ ${subject}質問しています。下の選択肢から選ぶか、ここに書いて答えてください`
     : `↓ ${subject}実行の許可を待っています`
@@ -315,8 +313,7 @@ function inquiryBandText(
  * 入力欄のプレースホルダ。依頼先はキャラクターなので、`character.name` から組み立てる。
  * キャラクターがまだ届いていない・名前が無いときは、名前を使わずに依頼を書く操作だけを伝える（`"claude"` へ戻さない）。
  */
-function composerPlaceholder(characterName: string | undefined): string {
-  const subject = characterName === undefined ? "" : `${characterName} への`
+function composerPlaceholder(subject: string): string {
   return `${subject}依頼を書く`
 }
 

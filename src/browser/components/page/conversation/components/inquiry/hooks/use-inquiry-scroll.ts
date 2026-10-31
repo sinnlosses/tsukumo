@@ -4,6 +4,7 @@
 import { useEffect, useRef, type RefObject } from "react"
 
 import type { InquiryJump } from "../../../../../../stores/inquiry-jump.ts"
+import type { InquiryModel } from "../../../stores/inquiry-answer.ts"
 
 /** 札の中で最初にフォーカスを受ける選択肢。 */
 const FIRST_CHOICE_SELECTOR = "input"
@@ -11,17 +12,18 @@ const FIRST_CHOICE_SELECTOR = "input"
 /**
  * お伺いの札に付ける ref。`block: "nearest"` なので、すでに見えている札では動かない。
  *
- * @param askId 答え待ちの id（無ければ undefined）。変わるたびに連れてくる
+ * @param inquiry いまの答え待ち。別の答え待ちに変わるたびに連れてくる
  * @param jump `useInquiryJump` の合図。`signal` が付いたときから変わったときだけ連れてくる。
  *   `focus` のときは最初の選択肢へフォーカスを移す
  */
 export function useInquiryScroll(
-  askId: string | undefined,
+  inquiry: InquiryModel,
   jump: InquiryJump,
 ): RefObject<HTMLElement | null> {
   const cardRef = useRef<HTMLElement>(null)
   // 札が付く前に呼ばれた合図は、あとから付いた札では拾わない（勝手にフォーカスを移さない）。
   const handledSignalRef = useRef(jump.signal)
+  const askId = inquiry.kind === "none" ? undefined : inquiry.id
 
   useEffect(() => {
     if (askId === undefined) {

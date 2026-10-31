@@ -70,7 +70,7 @@ export function InquiryCard(props: { readonly actions: "inline" | "none" }): Rea
   const inquiry = useInquiryAnswer()
   const jump = useInquiryJump((state) => state.jump)
   const askId = inquiry.kind === "none" ? undefined : inquiry.id
-  const cardRef = useInquiryScroll(askId, jump)
+  const cardRef = useInquiryScroll(inquiry, jump)
   useInquiryVisibility(cardRef, askId !== undefined && props.actions === "inline")
   const now = useNowWhile(inquiry.kind !== "none")
 

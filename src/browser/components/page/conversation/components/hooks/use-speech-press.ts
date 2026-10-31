@@ -38,7 +38,7 @@ export function useSpeechPress(onToggle: () => void): SpeechPressView {
       const origin = pressOriginRef.current
       pressOriginRef.current = undefined
       // 文字を選んだだけのときは遡らない（選び終えて手を離すと click も飛ぶ）。
-      if (isSelectionDrag(origin, event)) {
+      if (origin !== undefined && isSelectionDrag(origin, event)) {
         return
       }
       onToggle()
@@ -64,8 +64,8 @@ export function useSpeechPress(onToggle: () => void): SpeechPressView {
  *
  * `detail === 0` はマウスから来ていない click（支援技術が送るもの）で、押し始めの場所を持たないので、押したものとして扱う。
  */
-function isSelectionDrag(origin: PressOrigin | undefined, event: PointerAt): boolean {
-  if (origin === undefined || event.detail === 0) {
+function isSelectionDrag(origin: PressOrigin, event: PointerAt): boolean {
+  if (event.detail === 0) {
     return false
   }
   return Math.hypot(event.clientX - origin.x, event.clientY - origin.y) > DRAG_THRESHOLD_PX
