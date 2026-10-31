@@ -14,7 +14,6 @@ const SUPPORT = [
 
 describe("resolveShownModel", () => {
   it.each([
-    [undefined, SUPPORT, "opus"],
     ["fable", SUPPORT, "fable"],
     ["claude-sonnet-5-5", SUPPORT, "sonnet"],
     ["claude-fable-5-1", SUPPORT, "fable"],

@@ -28,7 +28,7 @@
 | `src/shared/report`           | 60       | 0           | 8                  | 52      |
 | `src/server/character-pack`   | 45       | 36          | 0                  | 9       |
 | `scripts/shared`              | 40       | 0           | 17                 | 23      |
-| `src/browser/domain`          | 34       | 2           | 5                  | 27      |
+| `src/browser/domain`          | 34       | 2           | 2                  | 30      |
 | `src/server/view-server`      | 34       | 30          | 0                  | 4       |
 | `src/shared/session`          | 30       | 0           | 2                  | 28      |
 | `scripts/dev`                 | 28       | 1           | 11                 | 16      |
@@ -68,7 +68,7 @@
 | `src/shared/(root)`           | 1        | 0           | 0                  | 1       |
 | `src/shared/diagnostic`       | 1        | 0           | 1                  | 0       |
 | `src/shared/diary`            | 1        | 0           | 0                  | 1       |
-| **合計**                      | **1166** | **256**     | **157**            | **753** |
+| **合計**                      | **1166** | **256**     | **154**            | **756** |
 
 全件 = 6つに当たる + 消せる + 本物 は、領域ごとにも合計でも成り立つ（表を作った道具で突き合わせた）。
 
@@ -83,7 +83,7 @@
 | R1   | 探索・解析・読み取りの失敗を単一の「無い」で返す戻り値                                                  | 374 | `browser/components/domain/sidebar/components/task-doing-count.tsx:10`・`browser/components/domain/sidebar/domain/plan-window.ts:25`・`browser/components/page/achievement/domain/written-time.ts:5`                                           |
 | R2   | 環境変数・引数・状態ファイル・定義ファイル・SDK/外部 API など外の世界の値の写し、またはそれを受ける入口 | 182 | `browser/components/domain/portrait.tsx:41`・`browser/domain/appearance-color.ts:168`・`browser/features/task-board/domain/task-board-list-width.ts:15`                                                                                        |
 | R3   | DOM 属性・描画の差し込みにそのまま渡す props（例6の趣旨だが `ui/` の外なので表の判定に当たらない）      | 22  | `browser/components/domain/portrait.tsx:30`・`browser/components/domain/screen-nav/components/screen-nav-settings-face-frame.tsx:13`・`browser/components/domain/screen-nav/components/session-switcher.tsx:281`                               |
-| R4   | 持ち主が1つで、「まだ無い／選ばれていない」が1つの意味しか持たない値                                    | 118 | `browser/components/domain/character-face.tsx:13`・`browser/components/domain/portrait.tsx:28`・`browser/components/domain/screen-nav/hooks/use-screen-nav.ts:130`                                                                             |
+| R4   | 持ち主が1つで、「まだ無い／選ばれていない」が1つの意味しか持たない値                                    | 121 | `browser/components/domain/character-face.tsx:13`・`browser/components/domain/portrait.tsx:28`・`browser/components/domain/screen-nav/hooks/use-screen-nav.ts:130`                                                                             |
 | R5   | React・TanStack Query・DOM の外来シグネチャや入れ物（`RefObject` など）で型が決まっているもの           | 6   | `browser/components/page/achievement/hooks/use-achievement.ts:169`・`browser/components/page/conversation/components/dispatch/domain/prompt-image.ts:19`・`browser/components/page/conversation/components/dispatch/domain/prompt-image.ts:37` |
 | R6   | 全域の対応表の「なし」（クラス名を付けない）が意味を持つ値                                              | 10  | `browser/components/ui/button/button.tsx:109`・`browser/components/ui/field/field.tsx:22`・`browser/components/ui/field/field.tsx:27`                                                                                                          |
 | R7   | 位置を保つ配列の穴（読めなかった列を飛ばさず添字を揃える）                                              | 3   | `shared/report/timeline-scale.ts:26`・`shared/report/timeline-scale.ts:33`・`scripts/dev/lib/a2ui-write-trial.ts:346`                                                                                                                          |
@@ -103,7 +103,7 @@
 | `src/shared/report`           | 52   | R1 31（例 `shared/report/a2ui-report-outline.ts:82`）、R4 15（例 `shared/report/code-mark.ts:51`）、R8 2（例 `shared/report/graph-fold.ts:64`）、R7 2（例 `shared/report/timeline-scale.ts:26`）、R3 1（例 `shared/report/graph-fold-html.ts:43`）、R10 1（例 `shared/report/table-view.ts:25`）                                                                                                                                                                                           |
 | `src/server/character-pack`   | 9    | R2 4（例 `server/character-pack/core/character-generation.ts:41`）、R9 3（例 `server/character-pack/core/character-pack-command.ts:22`）、R1 2（例 `server/character-pack/core/character-generation.ts:76`）                                                                                                                                                                                                                                                                               |
 | `scripts/shared`              | 23   | R1 15（例 `scripts/shared/ast-node.ts:8`）、R2 8（例 `scripts/shared/claude-environment.ts:16`）                                                                                                                                                                                                                                                                                                                                                                                           |
-| `src/browser/domain`          | 27   | R1 14（例 `browser/domain/effort-label.ts:45`）、R4 8（例 `browser/domain/appearance-color.ts:20`）、R10 4（例 `browser/domain/reveal/brush-scroll.ts:42`）、R2 1（例 `browser/domain/appearance-color.ts:168`）                                                                                                                                                                                                                                                                           |
+| `src/browser/domain`          | 30   | R1 14（例 `browser/domain/effort-label.ts:45`）、R4 11（例 `browser/domain/appearance-color.ts:20`）、R10 4（例 `browser/domain/reveal/brush-scroll.ts:42`）、R2 1（例 `browser/domain/appearance-color.ts:168`）                                                                                                                                                                                                                                                                          |
 | `src/server/view-server`      | 4    | R2 4（例 `server/view-server/core/connection-grant.ts:7`）                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | `src/shared/session`          | 28   | R2 20（例 `shared/session/main-view-shape.ts:296`）、R1 7（例 `shared/session/model-name.ts:27`）、R3 1（例 `shared/session/session-event-report.ts:77`）                                                                                                                                                                                                                                                                                                                                  |
 | `scripts/dev`                 | 16   | R1 10（例 `scripts/dev/harness-replay.ts:48`）、R2 5（例 `scripts/dev/check.ts:357`）、R7 1（例 `scripts/dev/lib/a2ui-write-trial.ts:346`）                                                                                                                                                                                                                                                                                                                                                |
@@ -137,13 +137,14 @@
 
 ### 数えて分かったこと
 
-- 本物 753 件のうち R1 が 374 件で約半分。戻り値と `Promise<…>` の型引数は、署名と関数名から「見つからない・読めない」を返す形かを見て R1 に入れた（本体は読んでいない）。この形は規約の6つの表に直接の行が無く、例2（TypeScript が生む `undefined`）に準ずるものとして書いてある。表に行を足すかどうかは、この文書の範囲の外。
+- 本物 756 件のうち R1 が 374 件で約半分。戻り値と `Promise<…>` の型引数は、署名と関数名から「見つからない・読めない」を返す形かを見て R1 に入れた（本体は読んでいない）。この形は規約の6つの表に直接の行が無く、例2（TypeScript が生む `undefined`）に準ずるものとして書いてある。表に行を足すかどうかは、この文書の範囲の外。
 - R3 は `className`・`title`・`blockedTitle` など DOM 属性に素通しする props で、例6と同じ性質なのに `src/browser/components/ui/` の外にあるため表の判定に当たらない。例6の範囲を `ui/` の外へ広げるかは別の判断になる。
 
 ### 呼び出し側を読んで本物に移した件
 
 「消せる」と見立てた件のうち、呼び出し側を読んで本物と分かったもの。理由は撮影の道具の入口の10件（R2・R10）と `toReference` の `section`（R2）とセッション駆動の読み取りの4件（R1・R2）と `tableRowFilterTexts` の `column`（R10）を除いて R4（持ち主が1つで、「まだ無い」が1つの意味しか持たない）。
 成果の画面の3件は、持ち主がセッションの状態で、キャラクター定義が届く前という意味しか持たない。畳み先に当たる既定の `CharacterInfo` が無く、消すと `!`・`as` か存在しない既定値が要る。
+表示判定の3件（`characterFaceInfo`・`portraitAppearance`・`resolveEffortSelect`）も R4 で、`character` は定義が届く前、`effort` はまだ読まれていないという意味しか持たない。呼び出し側がその状態をそのまま運び、畳むと各所に同じ分岐を複製するだけになる。
 発話ログ・雑談表示の3件は、`useCharacterClock` の `waitingDueAt` が「待ちの一言の期日が無い」、`useSpeechLog` の `pinnedSpeech` が「何も留めていない」、`advanceReveal` の `lastRevealAt` が「まだ吹き出しを出していない」を表す。
 `Infinity`・`-Infinity` で畳むとタイマーが直ちに鳴り続ける、または状態の形が変わる。`pinnedSpeech` はビューモデルの欄を運ぶ props で、畳むと呼び出し側の型が名指しの外へ広がる。
 フックの書き込み判定の前半の11件は、2つに分かれる。`writeRuleOf` ほか `directory` を受ける8件は、`cd $x`・`popd`・`cd -` で `cd` を追えなくなった状態を、`findWorkTreeWriteRule` のループが持ち回る。同じ値が後半の `scriptRunDirectories`・`readScriptFile`・`absoluteScriptPath` にも渡るので、合併型にしても境で `undefined` への変換が増えるだけ。`workRoot` を受ける3件は、`undefined` が「作業ツリーの根が決まらない」を意味し、このとき Python の判定は走ってシェルの書き込みの判定だけ飛ばす。後半の `isDeniedPythonCode`・`hasUnsafeWrite`・`isLiteralOutsideWorkTree`・`readPythonScripts` が同じ `undefined` を読むので、前半だけ値にすると挙動が変わる。
@@ -190,6 +191,9 @@
 | `server/session-driver/core/session-digest.ts`                                               | `clipped`                      | 引数       | 91  | R1   |
 | `server/session-driver/core/session-title.ts`                                                | `decideSessionTitle`           | 引数       | 51  | R2   |
 | `shared/report/table-view.ts`                                                                | `tableRowFilterTexts`          | 引数       | 25  | R10  |
+| `browser/domain/character-face.ts`                                                           | `characterFaceInfo`            | 引数       | 11  | R4   |
+| `browser/domain/effort-label.ts`                                                             | `resolveEffortSelect`          | 引数       | 77  | R4   |
+| `browser/domain/portrait-appearance.ts`                                                      | `portraitAppearance`           | 引数       | 20  | R4   |
 
 ## 消せるもの
 
@@ -336,15 +340,12 @@
 | `shared/report/timeline-scale.ts`          | `uniqueReasons` | 引数       | 1   | 217      | 入口で畳む                           | 2              |
 | `shared/report/timeline-scale.ts`          | `tickLabel`     | 引数       | 1   | 230      | 入口で畳む                           | 1              |
 
-### `src/browser/domain`（消せる 5 件）
+### `src/browser/domain`（消せる 2 件）
 
-| ファイル                                | 対象                  | 置き場 | 件  | 行  | 消し方     | 呼び出し側の数 |
-| --------------------------------------- | --------------------- | ------ | --- | --- | ---------- | -------------- |
-| `browser/domain/character-face.ts`      | `characterFaceInfo`   | 引数   | 1   | 11  | 入口で畳む | 6              |
-| `browser/domain/effort-label.ts`        | `resolveEffortSelect` | 引数   | 1   | 77  | 入口で畳む | 2              |
-| `browser/domain/model-label.ts`         | `resolveShownModel`   | 引数   | 1   | 44  | 入口で畳む | 1              |
-| `browser/domain/portrait-appearance.ts` | `portraitAppearance`  | 引数   | 1   | 20  | 入口で畳む | 4              |
-| `browser/domain/reveal/brush-tip.ts`    | `stanceOf`            | 引数   | 1   | 119 | 入口で畳む | 1              |
+| ファイル                             | 対象                | 置き場 | 件  | 行  | 消し方     | 呼び出し側の数 |
+| ------------------------------------ | ------------------- | ------ | --- | --- | ---------- | -------------- |
+| `browser/domain/model-label.ts`      | `resolveShownModel` | 引数   | 1   | 44  | 入口で畳む | 1              |
+| `browser/domain/reveal/brush-tip.ts` | `stanceOf`          | 引数   | 1   | 119 | 入口で畳む | 1              |
 
 ### `src/shared/character-pack`（消せる 5 件）
 
@@ -451,10 +452,10 @@
 | undefined を畳む: scripts/dev・document            | `scripts/dev`・`scripts/document`                                                                                    | 12         |                          |
 | undefined を畳む: セッション駆動の読み取り         | `src/server/session-driver`                                                                                          | 5          |                          |
 | undefined を畳む: 報告の記法まわり                 | `src/shared/report`                                                                                                  | 8          |                          |
-| undefined を畳む: ブラウザ側の表示判定             | `src/browser/domain`                                                                                                 | 5          |                          |
+| undefined を畳む: ブラウザ側の表示判定             | `src/browser/domain`                                                                                                 | 2          |                          |
 | undefined を畳む: 現在の作業・設定・タスク盤       | `src/browser/features`                                                                                               | 4          |                          |
 | undefined を畳む: 共有層のキャラ・セッション・診断 | `src/shared/character-pack`・`src/shared/session`・`src/shared/diagnostic`                                           | 8          |                          |
 | undefined を畳む: サーバ側の小さな引数             | `src/server/chat`・`src/server/report`・`src/server/core`・`src/server/system-prompt`・`src/server/welcome-greeting` | 9          |                          |
 | undefined を畳む: 起動依頼の chat と配信の版       | `src/server/session`・`src/(root)`                                                                                   | 2          |                          |
 
-括弧なしの消せる件数の合計は 157 件で、領域の表の合計と一致する。`ast-node.ts` の 4 件は、方針を決めるドラフトでは括弧に入れ、実装のドラフトで数えた。
+括弧なしの消せる件数の合計は 154 件で、領域の表の合計と一致する。`ast-node.ts` の 4 件は、方針を決めるドラフトでは括弧に入れ、実装のドラフトで数えた。

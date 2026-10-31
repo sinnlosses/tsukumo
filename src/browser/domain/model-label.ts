@@ -2,7 +2,6 @@
 
 import type { ModelAlias } from "../../shared/command.ts"
 import { sameModel } from "../../shared/session/model-name.ts"
-import { BUILTIN_SESSION_DEFAULT } from "../../shared/session/session-default.ts"
 import type { ModelEffortSupport } from "../../shared/session/session-event-setting.ts"
 
 /**
@@ -38,16 +37,8 @@ export function modelDescription(model: ModelAlias): ModelDescription {
 /**
  * `session-info` の `model` から、画面に出すモデルを決める。
  * 表で同じモデルに引けるエイリアスがあればそれ、無ければ届いた名前のまま返す。
- * まだ届いていないときだけ既定のモデルを返す。
  */
-export function resolveShownModel(
-  model: string | undefined,
-  support: readonly ModelEffortSupport[],
-): string {
-  if (model === undefined) {
-    return BUILTIN_SESSION_DEFAULT.model
-  }
-
+export function resolveShownModel(model: string, support: readonly ModelEffortSupport[]): string {
   return MODEL_LABELS.find(([alias]) => sameModel(support, model, alias))?.[0] ?? model
 }
 

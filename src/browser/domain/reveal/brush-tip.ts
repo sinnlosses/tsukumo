@@ -96,7 +96,9 @@ export type BrushStance = {
  * 位置は読まない。位置まで購読すると、筆が進むフレームごとに描き直しになる（位置は {@link subscribeBrushTip}）。
  */
 export function useBrushStance(): BrushStance | undefined {
-  return useBrushTipStore(useShallow((state) => stanceOf(state.tip)))
+  return useBrushTipStore(
+    useShallow((state) => (state.tip === undefined ? undefined : stanceOf(state.tip))),
+  )
 }
 
 /**
@@ -116,9 +118,6 @@ type BrushTipState = {
 
 const useBrushTipStore = create<BrushTipState>()(() => ({ tip: undefined }))
 
-function stanceOf(tip: BrushTip | undefined): BrushStance | undefined {
-  if (tip === undefined) {
-    return undefined
-  }
+function stanceOf(tip: BrushTip): BrushStance {
   return { turnId: tip.turnId, motion: tip.phase === "resting" ? "resting" : tip.stroke }
 }
