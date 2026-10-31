@@ -8,6 +8,7 @@ import {
   readCurrentColor,
   saveAppearanceColorOverride,
   type AppearanceColorOverride,
+  type HexColor,
 } from "../../../src/browser/domain/appearance-color.ts"
 import {
   MAX_BACKGROUND_VEIL,
@@ -17,6 +18,17 @@ import {
 const STORAGE_KEY = "tsukumo-appearance-color:v1"
 
 const MIN_CONTRAST = 4.5
+
+// 検査済みの色を作る口は保存値の読み戻しだけなので、そこを通して得る。
+function hex(value: string): HexColor {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({ ground: value }))
+  const color = loadAppearanceColorOverride().ground
+  localStorage.removeItem(STORAGE_KEY)
+  if (color === undefined) {
+    throw new Error(`テストの色が16進でない: ${value}`)
+  }
+  return color
+}
 
 /**
  * 覆いの下に1色の画像があるときの地と、字のコントラスト比（テスト側で独立に計算する。
@@ -71,7 +83,11 @@ describe("loadAppearanceColorOverride", () => {
   })
 
   it("保存した値をそのまま読み戻す", () => {
-    const saved: AppearanceColorOverride = { ground: "#000000", surface: undefined, ink: "#ffffff" }
+    const saved: AppearanceColorOverride = {
+      ground: hex("#000000"),
+      surface: undefined,
+      ink: hex("#ffffff"),
+    }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(saved))
     expect(loadAppearanceColorOverride()).toEqual(saved)
   })
@@ -89,13 +105,21 @@ describe("loadAppearanceColorOverride", () => {
 
 describe("saveAppearanceColorOverride / applyAppearanceColorOverride", () => {
   it("保存した値を loadAppearanceColorOverride で読み戻せる", () => {
-    const value: AppearanceColorOverride = { ground: "#101010", surface: undefined, ink: "#eeeeee" }
+    const value: AppearanceColorOverride = {
+      ground: hex("#101010"),
+      surface: undefined,
+      ink: hex("#eeeeee"),
+    }
     saveAppearanceColorOverride(value)
     expect(loadAppearanceColorOverride()).toEqual(value)
   })
 
   it("documentElement の CSS カスタムプロパティに反映する", () => {
-    applyAppearanceColorOverride({ ground: "#123456", surface: "#654321", ink: undefined })
+    applyAppearanceColorOverride({
+      ground: hex("#123456"),
+      surface: hex("#654321"),
+      ink: undefined,
+    })
     expect(readCurrentColor("ground")).toBe("#123456")
     expect(readCurrentColor("surface")).toBe("#654321")
     // ink は上書き無し（undefined）。既定に落ちて --ink の値（このテストでは疑似 :root）が残る。
@@ -111,14 +135,14 @@ describe("applyAppearanceColorOverride が差す背景の覆いの下限", () =>
   it("地と字が下限ぎりぎりの組では、覆いを不透明まで引き上げる（行き止まらない）", () => {
     // #767676 と #ffffff の比はちょうど 4.5 前後。覆いを薄くするとどちらの端でも割るので、
     // 上限まで上がる。
-    expect(appliedVeilFloor({ ground: "#767676", surface: undefined, ink: "#ffffff" })).toBe(
-      MAX_BACKGROUND_VEIL,
-    )
+    expect(
+      appliedVeilFloor({ ground: hex("#767676"), surface: undefined, ink: hex("#ffffff") }),
+    ).toBe(MAX_BACKGROUND_VEIL)
   })
 
   it("引き上げた覆いは、画像が真っ白でも真っ黒でも 4.5 を満たす", () => {
-    const ground = "#3a3a3a"
-    const ink = "#ffffff"
+    const ground = hex("#3a3a3a")
+    const ink = hex("#ffffff")
     const veil = appliedVeilFloor({ ground, surface: undefined, ink })
 
     expect(veil).toBeGreaterThanOrEqual(MIN_BACKGROUND_VEIL)
@@ -138,8 +162,15 @@ function appliedVeilFloor(override: AppearanceColorOverride): number {
 }
 
 describe("changeAppearanceColor", () => {
+  const SHOWN = { ground: "#191720", ink: "#e8e3ea" }
+
   it("読める組み合わせはそのまま受け取る", () => {
-    const next = changeAppearanceColor(DEFAULT_APPEARANCE_COLOR_OVERRIDE, "ground", "#000000")
+    const next = changeAppearanceColor(
+      DEFAULT_APPEARANCE_COLOR_OVERRIDE,
+      "ground",
+      "#000000",
+      SHOWN,
+    )
     expect(next).toEqual({
       kind: "accepted",
       override: { ground: "#000000", surface: undefined, ink: undefined },
@@ -147,7 +178,12 @@ describe("changeAppearanceColor", () => {
   })
 
   it("surface はコントラストの対象外で、そのまま受け取る", () => {
-    const next = changeAppearanceColor(DEFAULT_APPEARANCE_COLOR_OVERRIDE, "surface", "#e8e3ea")
+    const next = changeAppearanceColor(
+      DEFAULT_APPEARANCE_COLOR_OVERRIDE,
+      "surface",
+      "#e8e3ea",
+      SHOWN,
+    )
     expect(next).toEqual({
       kind: "accepted",
       override: { ground: undefined, surface: "#e8e3ea", ink: undefined },
@@ -156,47 +192,52 @@ describe("changeAppearanceColor", () => {
 
   it("16進として不正な値は受け取らない", () => {
     const current: AppearanceColorOverride = {
-      ground: "#000000",
+      ground: hex("#000000"),
       surface: undefined,
       ink: undefined,
     }
-    expect(changeAppearanceColor(current, "ground", "not-a-color")).toEqual({
+    expect(changeAppearanceColor(current, "ground", "not-a-color", SHOWN)).toEqual({
       kind: "invalid-color",
     })
   })
 
+  it.each(["#fff", "rgb(0, 0, 0)", ""])(
+    "相手側の今の色が %j のように16進6桁でなければ、通さず受け取らない",
+    (token) => {
+      const current = DEFAULT_APPEARANCE_COLOR_OVERRIDE
+      expect(
+        changeAppearanceColor(current, "ground", "#000000", { ground: SHOWN.ground, ink: token }),
+      ).toEqual({ kind: "invalid-color" })
+      expect(
+        changeAppearanceColor(current, "ink", "#ffffff", { ground: token, ink: SHOWN.ink }),
+      ).toEqual({ kind: "invalid-color" })
+    },
+  )
+
   it("ground を ink と同じ色にしようとすると、差が足りないことを理由に受け取らない", () => {
-    // 疑似 :root: --ink は #e8e3ea。ground をそれと同じ色にしようとする。
-    const next = changeAppearanceColor(DEFAULT_APPEARANCE_COLOR_OVERRIDE, "ground", "#e8e3ea")
+    const next = changeAppearanceColor(
+      DEFAULT_APPEARANCE_COLOR_OVERRIDE,
+      "ground",
+      "#e8e3ea",
+      SHOWN,
+    )
     expect(next).toEqual({ kind: "low-contrast", key: "ground" })
   })
 
   it("ink を ground と同じ色にしようとすると、差が足りないことを理由に受け取らない", () => {
-    const next = changeAppearanceColor(DEFAULT_APPEARANCE_COLOR_OVERRIDE, "ink", "#191720")
+    const next = changeAppearanceColor(DEFAULT_APPEARANCE_COLOR_OVERRIDE, "ink", "#191720", SHOWN)
     expect(next).toEqual({ kind: "low-contrast", key: "ink" })
   })
 
   it("地を決めたあとの判定は、決めた地を相手に測る", () => {
-    // 地を先に決めてから、字に「その地と同じ色」を入れて弾かせる。
-    const afterGround = changeAppearanceColor(
-      DEFAULT_APPEARANCE_COLOR_OVERRIDE,
-      "ground",
-      "#101820",
-    )
-    if (afterGround.kind !== "accepted") {
-      throw new Error("地の変更が受け取られなかった")
-    }
-    applyAppearanceColorOverride(afterGround.override)
-
-    expect(changeAppearanceColor(afterGround.override, "ink", "#101820")).toEqual({
-      kind: "low-contrast",
-      key: "ink",
-    })
+    const shown = { ground: "#101820", ink: "#e8e3ea" }
+    expect(
+      changeAppearanceColor(DEFAULT_APPEARANCE_COLOR_OVERRIDE, "ink", "#101820", shown),
+    ).toEqual({ kind: "low-contrast", key: "ink" })
   })
 
   it("読めるところまで離れた色は受け取る", () => {
-    // #f5f5f5 と疑似 :root の --ground（#191720）のコントラスト比は 16 超で下限を大きく超える。
-    const next = changeAppearanceColor(DEFAULT_APPEARANCE_COLOR_OVERRIDE, "ink", "#f5f5f5")
+    const next = changeAppearanceColor(DEFAULT_APPEARANCE_COLOR_OVERRIDE, "ink", "#f5f5f5", SHOWN)
     expect(next).toEqual({
       kind: "accepted",
       override: { ground: undefined, surface: undefined, ink: "#f5f5f5" },

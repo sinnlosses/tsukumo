@@ -85,7 +85,10 @@ export function useAppearanceColor(): AppearanceColor {
   }, APPEARANCE_COLOR_DEBOUNCE_MS)
 
   function changeColor(key: AppearanceColorKey, value: string): void {
-    const change = changeAppearanceColor(override, key, value)
+    const change = changeAppearanceColor(override, key, value, {
+      ground: readCurrentColor("ground"),
+      ink: readCurrentColor("ink"),
+    })
     setColorNotice(colorNoticeOf(change))
     if (change.kind !== "accepted") {
       return

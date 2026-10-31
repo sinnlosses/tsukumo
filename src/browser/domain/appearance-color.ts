@@ -16,10 +16,18 @@ import { relativeLuminance } from "./relative-luminance.ts"
 
 export type AppearanceColorKey = "ground" | "surface" | "ink"
 
+const hexColorSchema = z
+  .string()
+  .regex(/^#[0-9a-f]{6}$/i)
+  .brand<"HexColor">()
+
+/** `#rrggbb` の6桁であることを検査済みの色。作れるのは、このファイルの検査（{@link parseHexColor}、保存値の読み戻し）だけ。 */
+export type HexColor = z.infer<typeof hexColorSchema>
+
 export type AppearanceColorOverride = {
-  readonly ground: string | undefined
-  readonly surface: string | undefined
-  readonly ink: string | undefined
+  readonly ground: HexColor | undefined
+  readonly surface: HexColor | undefined
+  readonly ink: HexColor | undefined
 }
 
 export const DEFAULT_APPEARANCE_COLOR_OVERRIDE: AppearanceColorOverride = {
@@ -31,7 +39,6 @@ export const DEFAULT_APPEARANCE_COLOR_OVERRIDE: AppearanceColorOverride = {
 // `ground` と `ink` の組が本文を読める下限。WCAG 2.1 SC 1.4.3（AA、通常テキスト）と同じ 4.5:1 を採る。
 const MIN_CONTRAST = 4.5
 
-const HEX_COLOR_PATTERN = /^#[0-9a-f]{6}$/i
 const TOKEN_NAME = {
   ground: "--ground",
   surface: "--surface",
@@ -45,9 +52,7 @@ const ACCENT_TOKEN_NAME = "--accent"
 const BACKGROUND_VEIL_FLOOR_TOKEN_NAME = "--character-background-veil-floor"
 
 // 3色は項ごとに畳む（1色が壊れていても他の色は生かす）。キーが欠けた項は `undefined` として項の schema に渡す。
-const hexColorOrUndefined = z
-  .union([z.string().regex(HEX_COLOR_PATTERN), z.undefined()])
-  .catch(undefined)
+const hexColorOrUndefined = z.union([hexColorSchema, z.undefined()]).catch(undefined)
 
 const preference = localPreference(
   "tsukumo-appearance-color:v1",
@@ -79,9 +84,15 @@ export function applyAppearanceColorOverride(value: AppearanceColorOverride): vo
   setOrRemoveToken("ground", value.ground)
   setOrRemoveToken("surface", value.surface)
   setOrRemoveToken("ink", value.ink)
+  const ground = parseHexColor(readCurrentColor("ground"))
+  const ink = parseHexColor(readCurrentColor("ink"))
+  if (ground === undefined || ink === undefined) {
+    document.documentElement.style.removeProperty(BACKGROUND_VEIL_FLOOR_TOKEN_NAME)
+    return
+  }
   document.documentElement.style.setProperty(
     BACKGROUND_VEIL_FLOOR_TOKEN_NAME,
-    String(backgroundVeilFloor(readCurrentColor("ground"), readCurrentColor("ink"))),
+    String(backgroundVeilFloor(ground, ink)),
   )
 }
 
@@ -107,6 +118,12 @@ export type AppearanceColorChange =
   | { readonly kind: "invalid-color" }
   | { readonly kind: "low-contrast"; readonly key: "ground" | "ink" }
 
+/** 変えようとした色の相手側として比べる、今その色に見えている `ground` と `ink`（{@link readCurrentColor} の値）。 */
+export type ShownColors = {
+  readonly ground: string
+  readonly ink: string
+}
+
 /**
  * 使う人が1色を変えようとしたときの境界。
  * `ground` / `ink` は組で検証し、下回ったらその1色を受け取らない。`surface` はコントラストの対象外。
@@ -119,20 +136,25 @@ export function changeAppearanceColor(
   current: AppearanceColorOverride,
   key: AppearanceColorKey,
   value: string,
+  shown: ShownColors,
 ): AppearanceColorChange {
-  if (!isValidHexColor(value)) {
+  const color = parseHexColor(value)
+  if (color === undefined) {
     return { kind: "invalid-color" }
   }
   if (key === "surface") {
-    return { kind: "accepted", override: { ...current, surface: value } }
+    return { kind: "accepted", override: { ...current, surface: color } }
   }
 
-  const ground = key === "ground" ? value : readCurrentColor("ground")
-  const ink = key === "ink" ? value : readCurrentColor("ink")
+  const ground = key === "ground" ? color : parseHexColor(shown.ground)
+  const ink = key === "ink" ? color : parseHexColor(shown.ink)
+  if (ground === undefined || ink === undefined) {
+    return { kind: "invalid-color" }
+  }
   if (contrastRatio(ground, ink) < MIN_CONTRAST) {
     return { kind: "low-contrast", key }
   }
-  return { kind: "accepted", override: { ...current, [key]: value } }
+  return { kind: "accepted", override: { ...current, [key]: color } }
 }
 
 /**
@@ -142,7 +164,7 @@ export function changeAppearanceColor(
  * 定義の側の下限（`MIN_BACKGROUND_VEIL`）から 0.01 ずつ上げ、両端とも満たす最初の値を返す。
  * `ground` と `ink` の組は境界が 4.5 以上に保っているので、覆いが不透明になる端（`MAX_BACKGROUND_VEIL`）まで上げれば必ず満たせる（引き上げが行き止まらない）。
  */
-function backgroundVeilFloor(ground: string, ink: string): number {
+function backgroundVeilFloor(ground: HexColor, ink: HexColor): number {
   const inkLuminance = hexLuminance(ink)
   for (let step = MIN_BACKGROUND_VEIL * VEIL_STEPS; step < VEIL_STEPS; step += 1) {
     const veil = step / VEIL_STEPS
@@ -161,11 +183,12 @@ function readToken(name: string): string {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim()
 }
 
-function isValidHexColor(value: unknown): value is string {
-  return typeof value === "string" && HEX_COLOR_PATTERN.test(value)
+function parseHexColor(value: unknown): HexColor | undefined {
+  const parsed = hexColorSchema.safeParse(value)
+  return parsed.success ? parsed.data : undefined
 }
 
-function setOrRemoveToken(key: AppearanceColorKey, value: string | undefined): void {
+function setOrRemoveToken(key: AppearanceColorKey, value: HexColor | undefined): void {
   if (value === undefined) {
     document.documentElement.style.removeProperty(TOKEN_NAME[key])
   } else {
@@ -174,7 +197,7 @@ function setOrRemoveToken(key: AppearanceColorKey, value: string | undefined): v
 }
 
 /** WCAG 2.1 のコントラスト比（1〜21）。 */
-function contrastRatio(hexA: string, hexB: string): number {
+function contrastRatio(hexA: HexColor, hexB: HexColor): number {
   return contrastOfLuminance(hexLuminance(hexA), hexLuminance(hexB))
 }
 
@@ -184,7 +207,7 @@ function contrastOfLuminance(luminanceA: number, luminanceB: number): number {
   return (lighter + 0.05) / (darker + 0.05)
 }
 
-function hexLuminance(hex: string): number {
+function hexLuminance(hex: HexColor): number {
   return relativeLuminance(
     channelByte(hex, RED_AT) / 255,
     channelByte(hex, GREEN_AT) / 255,
@@ -196,12 +219,12 @@ function hexLuminance(hex: string): number {
  * 覆い（`ground` 一色を `veil` の不透明度にしたもの）の下に、全チャンネルが `channel` の画像が
  * あるときの地の相対輝度。合成は sRGB のまま（ブラウザの重ね合わせと同じ）。
  */
-function veiledLuminance(ground: string, channel: number, veil: number): number {
+function veiledLuminance(ground: HexColor, channel: number, veil: number): number {
   const mixed = (at: number): number => channelByte(ground, at) * veil + channel * (1 - veil)
   return relativeLuminance(mixed(RED_AT) / 255, mixed(GREEN_AT) / 255, mixed(BLUE_AT) / 255)
 }
 
-function channelByte(hex: string, start: number): number {
+function channelByte(hex: HexColor, start: number): number {
   return Number.parseInt(hex.slice(start, start + 2), 16)
 }
 
