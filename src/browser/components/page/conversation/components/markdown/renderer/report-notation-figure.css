@@ -4,7 +4,7 @@
   & .report-compare {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.75rem;
+    gap: var(--space-md);
     margin: var(--report-block-gap) 0;
   }
   @container report-body (max-width: calc(40em + 0.75rem)) {
@@ -14,18 +14,18 @@
   }
   & .report-compare-side {
     min-width: 0;
-    padding: 0.5rem 0.75rem;
+    padding: var(--space-sm) var(--space-md);
     border: 1px solid var(--report-chunk-rule, var(--rule));
-    border-radius: 0.5rem;
+    border-radius: var(--radius-md);
     background: var(--surface-raised);
   }
   & .report-compare-heading {
-    margin-bottom: 0.3rem;
+    margin-bottom: var(--space-xs);
     font-weight: 700;
   }
   & .report-compare-side ul {
     margin: 0;
-    padding-left: 1.1rem;
+    padding-left: var(--space-lg);
   }
   /* 前後（`report` の `beforeAfter` の塊から tsukumo が組む）。
    左に前・右に後の札を同じ幅で並べ、間に矢印を置く。器が狭いときは前を上・後を下に積み、矢印を下向きにする。
@@ -33,7 +33,7 @@
   & .report-before-after {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-    gap: 0.5rem;
+    gap: var(--space-sm);
     align-items: stretch;
   }
   @container report-body (max-width: calc(40em + 0.75rem)) {
@@ -43,9 +43,9 @@
   }
   & .report-before-after-side {
     min-width: 0;
-    padding: 0.5rem 0.75rem 0.75rem;
+    padding: var(--space-sm) var(--space-md) var(--space-md);
     border: 1px solid var(--report-chunk-rule, var(--rule));
-    border-radius: 0.5rem;
+    border-radius: var(--radius-md);
     background: var(--surface-raised);
   }
   & .report-before-after-side > * {
@@ -53,7 +53,7 @@
     margin-bottom: 0;
   }
   & .report-before-after-side > * + * {
-    margin-top: 0.4rem;
+    margin-top: var(--space-sm);
   }
   & .report-before-after-label {
     font-size: var(--font-subheading);
@@ -64,7 +64,7 @@
     color: var(--ink);
   }
   & .report-before-after-side ul {
-    padding-left: 1.1rem;
+    padding-left: var(--space-lg);
   }
   /* 側の mermaid の図は側の幅に収める（`mermaid` の class は `MermaidBlock` が素の名前で付ける）。 */
   & .report-before-after-side pre:global(.mermaid) {
@@ -96,11 +96,11 @@
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: start;
-    row-gap: 0.75rem;
+    row-gap: var(--space-md);
   }
   & .report-captioned.report-before-after-swap > .report-before-after {
     grid-area: 2 / 1 / 3 / -1;
-    gap: 0.75rem;
+    gap: var(--space-md);
     align-items: center;
   }
   & .report-captioned.report-before-after-swap > .report-caption {
@@ -115,17 +115,17 @@
   & .report-captioned.report-before-after-swap .report-before-after-swap-views {
     grid-area: 1 / 2;
     display: inline-flex;
-    gap: 2px;
-    padding: 3px;
+    gap: var(--space-2xs);
+    padding: var(--space-xs);
     border: 1px solid var(--rule-soft);
-    border-radius: 10px;
+    border-radius: var(--radius-lg);
     background: var(--ground);
   }
   & .report-captioned.report-before-after-swap .report-before-after-swap-view {
     min-width: 24px;
     min-height: 26px;
-    padding: 0 12px;
-    border-radius: 7px;
+    padding: 0 var(--space-md);
+    border-radius: var(--radius-md);
   }
   & .report-captioned.report-before-after-swap .report-before-after-side {
     position: relative;
@@ -140,9 +140,9 @@
     display: flex;
     align-items: center;
     height: 22px;
-    padding: 0 9px;
+    padding: 0 var(--space-sm);
     border: 1px solid var(--rule);
-    border-radius: 11px;
+    border-radius: var(--radius-lg);
     background: color-mix(in srgb, var(--ground) 88%, transparent);
     font-size: var(--font-label);
     font-weight: 700;
@@ -160,7 +160,7 @@
     width: 100%;
     max-height: none;
     border: 1px solid var(--rule-soft);
-    border-radius: 10px;
+    border-radius: var(--radius-lg);
   }
   &
     .report-captioned.report-before-after-swap[data-view="side"]
@@ -168,7 +168,7 @@
     .report-image-zoom
     img {
     border-color: var(--rule);
-    box-shadow: 0 10px 26px rgb(0 0 0 / 40%);
+    box-shadow: var(--shadow-raised);
   }
   & .report-captioned.report-before-after-swap .report-before-after-arrow {
     width: 20px;
@@ -178,17 +178,17 @@
   & .report-captioned.report-before-after-swap .report-before-after-swap-thumbs {
     grid-area: 3 / 1 / 4 / -1;
     display: flex;
-    gap: 8px;
+    gap: var(--space-sm);
     justify-content: center;
   }
   & .report-captioned.report-before-after-swap .report-before-after-swap-thumb {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
+    gap: var(--space-xs);
     min-height: 24px;
-    padding: 4px;
-    border-radius: 9px;
+    padding: var(--space-xs);
+    border-radius: var(--radius-md);
   }
   & .report-captioned.report-before-after-swap .report-before-after-swap-thumb img {
     display: block;
@@ -197,7 +197,7 @@
     height: 76px;
     object-fit: contain;
     border: 0;
-    border-radius: 5px;
+    border-radius: var(--radius-sm);
   }
   & .report-captioned.report-before-after-swap[data-view="switch"] > .report-before-after {
     grid-template-columns: minmax(0, 1fr);
@@ -259,14 +259,14 @@
   & .report-svg-legend {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.25rem 1rem;
-    margin: 0.25rem 0 var(--report-block-gap);
+    gap: var(--space-xs) var(--space-lg);
+    margin: var(--space-xs) 0 var(--report-block-gap);
     color: var(--ink-quiet);
   }
   & .report-svg-legend-item {
     display: inline-flex;
     align-items: center;
-    gap: 0.375rem;
+    gap: var(--space-sm);
   }
   & .report-svg-figure svg line {
     stroke: var(--ink-quiet);
@@ -359,7 +359,7 @@
     max-width: 100%;
     height: auto;
     border: 1px solid var(--rule);
-    border-radius: 0.375rem;
+    border-radius: var(--radius-md);
   }
   /* 画像を押すと拡大するボタン。箱は画像そのもの（画像の幅・枠を変えない）。 */
   & .report-image-zoom {
@@ -374,14 +374,14 @@
     max-width: 100%;
     max-height: 20rem;
     border: 1px solid var(--rule);
-    border-radius: 0.375rem;
+    border-radius: var(--radius-md);
   }
   /* 説明の並びを添えた画像（`report` の `image` の塊の `notes` から tsukumo が組む）。
    左に画像（か「出せない」の札）、右に番号つきの説明を並べ、器が狭いときは画像の下に積む。 */
   & .report-image-notes {
     display: grid;
     grid-template-columns: minmax(0, 3fr) minmax(12rem, 2fr);
-    gap: 1rem 1.25rem;
+    gap: var(--space-lg) var(--space-xl);
     align-items: start;
   }
   @container report-body (max-width: calc(40em + 0.75rem)) {
@@ -391,7 +391,7 @@
   }
   & .report-image-note-list {
     display: grid;
-    row-gap: 0.6rem;
+    row-gap: var(--space-sm);
     margin: 0;
     padding: 0;
     list-style: none;
@@ -399,7 +399,7 @@
   & .report-image-note-list > li {
     display: grid;
     grid-template-columns: 22px minmax(0, 1fr);
-    column-gap: 0.6rem;
+    column-gap: var(--space-sm);
     align-items: baseline;
     margin: 0;
   }
@@ -431,13 +431,13 @@
     color: var(--ink-quiet);
   }
   & .report-caption:first-child {
-    margin-bottom: 0.3rem;
+    margin-bottom: var(--space-xs);
   }
   & .report-caption:last-child {
-    margin-top: 0.25rem;
+    margin-top: var(--space-xs);
   }
   & .report-caption-number {
-    margin-inline-end: 10px;
+    margin-inline-end: var(--space-md);
     font-family: var(--font-mono);
     font-size: var(--font-label);
     letter-spacing: 0.08em;
@@ -455,7 +455,7 @@
     width: 100%;
     height: 168px;
     border: 1px solid var(--rule);
-    border-radius: 14px;
+    border-radius: var(--radius-xl);
     background: repeating-linear-gradient(
       135deg,
       color-mix(in srgb, var(--ground), var(--ink) 4%) 0 10px,
@@ -468,7 +468,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 10px;
+    gap: var(--space-md);
   }
   & .report-image-missing-icon {
     width: 44px;
