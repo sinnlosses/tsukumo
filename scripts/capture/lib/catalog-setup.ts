@@ -12,17 +12,8 @@ import { REPOSITORY_ROOT } from "../../shared/repository-root.ts"
 import type { SceneLaunch } from "./capture-source.ts"
 import type { CatalogEntry, HomeSetup } from "./catalog-entry.ts"
 
-/** `bd list --json` の1件の形の架空の課題（`report-task-finished` 場面の `task.id`）。 */
-const FICTIONAL_ISSUE = {
-  id: "t-002",
-  title: "架空のタスク",
-  status: "open",
-  created_at: "2026-01-14T00:00:00Z",
-  dependencies: [],
-  description: "## 目的・背景\n\n架空の本文で、実物のタスクではない。",
-  acceptance_criteria: "",
-  notes: "",
-} satisfies Readonly<Record<string, unknown>>
+const FICTIONAL_ISSUE_COUNT = 8
+const FICTIONAL_ISSUE_STATUSES = ["open", "in_progress", "closed"] as const
 
 /**
  * `--scene` に対応する、画像の作業場所を要る件。同じ `scene` の件に `report-image` があればその最初の件、
@@ -64,7 +55,7 @@ export function workspaceOf(entry: CatalogEntry, outDir: string): string {
   const workspace = path.join(outDir, "workspace", entry.name)
   if (entry.workspaceSetup.kind === "task-list") {
     mkdirSync(path.join(workspace, path.dirname(FAKE_BEADS_ISSUES_PATH)), { recursive: true })
-    writeFileSync(path.join(workspace, FAKE_BEADS_ISSUES_PATH), JSON.stringify([FICTIONAL_ISSUE]))
+    writeFileSync(path.join(workspace, FAKE_BEADS_ISSUES_PATH), JSON.stringify(fictionalIssues()))
     return workspace
   }
   mkdirSync(path.join(workspace, "report-image-fixture"), { recursive: true })
@@ -125,4 +116,22 @@ function diaryEpochMilliseconds(date: string): number {
     timeZone: Temporal.Now.timeZoneId(),
     plainTime: "14:32",
   }).epochMilliseconds
+}
+
+/**
+ * `bd list --json` の形の架空の課題。先頭は `report-task-finished` 場面の `task.id`（t-002）で、
+ * サイドバーのタスク区画が溢れて転がる件数を置く（`FICTIONAL_ISSUE_COUNT`）。
+ */
+function fictionalIssues(): readonly Readonly<Record<string, unknown>>[] {
+  return Array.from({ length: FICTIONAL_ISSUE_COUNT }, (_, index) => ({
+    id: index === 0 ? "t-002" : `t-${String(index + 100)}`,
+    title: index === 0 ? "架空のタスク" : `架空の課題${String(index)}`,
+    status:
+      index === 0 ? "open" : FICTIONAL_ISSUE_STATUSES[index % FICTIONAL_ISSUE_STATUSES.length],
+    created_at: "2026-01-14T00:00:00Z",
+    dependencies: [],
+    description: "## 目的・背景\n\n架空の本文で、実物のタスクではない。",
+    acceptance_criteria: "",
+    notes: "",
+  }))
 }
