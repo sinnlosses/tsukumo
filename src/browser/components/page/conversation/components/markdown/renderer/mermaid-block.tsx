@@ -13,6 +13,7 @@ import { useEffect, useRef, useState, type ReactElement } from "react"
 import { isObjectType, sum } from "remeda"
 
 import { vendorAssetPath } from "../../../../../../../shared/view-server/vendor-asset.ts"
+import { useMountEffect } from "../../../../../../hooks/use-mount-effect.ts"
 import { Text } from "../../../../../ui/text/text.tsx"
 import { mergeRefs } from "../../../domain/merge-ref.ts"
 import { useSeenOnce } from "../hooks/use-seen-once.ts"
@@ -59,9 +60,9 @@ export function MermaidBlock(props: MermaidBlockProps): ReactElement {
 
   const { code } = props
 
-  useEffect(() => {
+  useMountEffect(() => {
     preloadVendorScript(MERMAID_SRC)
-  }, [])
+  })
 
   useEffect(() => {
     let cancelled = false

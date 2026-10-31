@@ -11,9 +11,10 @@
 // 判定に使う時刻はレンダー中に読まず、記録が増えたとき・足止めのタイマーが鳴ったときに effect で読んで state に持つ。
 // レンダー中の `nowEpochMilliseconds()` は引数が無いので、React Compiler が画面を開いたときの1回だけの値に固めてしまう。
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { isDeepEqual } from "remeda"
 
+import { useExternalSync } from "../../../../../../hooks/use-external-sync.ts"
 import { nowEpochMilliseconds } from "../../../../../../utils/clock.ts"
 import type { ChatLogEntry } from "../../../domain/chat-log.ts"
 
@@ -63,7 +64,7 @@ export function useRevealedChatLog(entries: readonly ChatLogEntry[]): RevealedCh
   // 時刻を読み直させるタイマー。記録が増えた直後は今すぐ、足止めしている間は空く時刻に1回だけ鳴らす。
   // 空いたかどうかの判定自体は上のレンダー中の計算がやり直すので、ここは `entries` や出す件数を直接進めない。
   const openAt = advanced.kind === "gated" ? advanced.openAt : undefined
-  useEffect(() => {
+  useExternalSync(() => {
     if (!stale && openAt === undefined) {
       return undefined
     }

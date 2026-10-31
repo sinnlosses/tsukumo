@@ -10,7 +10,7 @@
 // 吹き出し・セリフのログを押すと、そのセリフの表情へ立ち絵が遡る。
 // 留めた状態（`ViewedSpeech`）はここが持ち、セリフのログにも `pinnedSpeech` / `onToggleSpeech` として渡す（床に立つ立ち絵も同じものを共有するため）。
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 
 import type { Expression } from "../../../../../../../shared/character-pack/expression.ts"
 import type { ItemSeatMap } from "../../../../../../../shared/item/item.ts"
@@ -30,6 +30,7 @@ import {
   type PortraitMotion,
   type PortraitMotionInput,
 } from "../../../../../../domain/portrait-motion.ts"
+import { useExternalSync } from "../../../../../../hooks/use-external-sync.ts"
 import { useSession } from "../../../../../../stores/session.ts"
 import { useTurnSelection } from "../../../../../../stores/turn-selection.ts"
 import { nowEpochMilliseconds } from "../../../../../../utils/clock.ts"
@@ -323,7 +324,7 @@ function useCharacterClock(
 ): number {
   const [now, setNow] = useState(() => nowEpochMilliseconds())
 
-  useEffect(() => {
+  useExternalSync(() => {
     let timer: ReturnType<typeof setTimeout> | undefined
 
     const scheduleNext = (): void => {

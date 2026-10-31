@@ -97,6 +97,7 @@ function useSettingDot(mark: SettingMark): SettingDot {
   )
   const key = dotKey(mark)
 
+  // `stores` の箱は `hooks` を読めず、`useExternalSync` に載せられないので生の effect のまま。
   useEffect(() => {
     if (mark.kind !== "confirmed") {
       return

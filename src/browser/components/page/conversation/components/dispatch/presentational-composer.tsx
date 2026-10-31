@@ -15,6 +15,7 @@ import {
 
 import { PROMPT_IMAGE_MEDIA_TYPES } from "../../../../../../shared/session-driver/prompt-image.ts"
 import { deferredModule } from "../../../../../hooks/deferred-module.ts"
+import { useMountEffect } from "../../../../../hooks/use-mount-effect.ts"
 import { usePhoneWidth } from "../../../../../hooks/use-phone-width.ts"
 import { Button } from "../../../../ui/button/button.tsx"
 import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
@@ -299,9 +300,9 @@ function MarkdownSurface({ ref, ...surface }: MarkdownSurfaceProps): ReactElemen
   const state = markdownEditorSurface.useLoadState()
   const pendingHadFocus = useRef(false)
   const ready = state.kind === "ready"
-  useEffect(() => {
+  useMountEffect(() => {
     void markdownEditorSurface.load()
-  }, [])
+  })
   useEffect(() => {
     if (ready && pendingHadFocus.current) {
       pendingHadFocus.current = false

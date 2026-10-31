@@ -17,6 +17,7 @@ export function useDebouncedCallback<Key, Value>(
   // `Value` が `undefined` を取りうる型でも「ためた値が無い」と区別できる（`Map.get` の `undefined` が両方を指してしまうため）。
   const pending = useRef(new Map<Key, { readonly value: Value }>())
 
+  // `utils` の箱は `hooks` を読めず（読むと `hooks` → `utils` → `hooks` の循環になる）、`useUnmountEffect` に載せられないので生の effect のまま。
   useEffect(() => {
     const timersAtMount = timers.current
     const pendingAtMount = pending.current

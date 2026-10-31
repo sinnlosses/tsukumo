@@ -143,6 +143,7 @@ export function useRestartRefused(): boolean {
 
 /** サーバと繋ぎ、届いたフレームを store へ流す。画面の根で1回だけ呼ぶ。 */
 export function useSessionConnection(): void {
+  // `stores` の箱は `hooks` を読めず、`useMountEffect` に載せられないので生の effect のまま。
   useEffect(() => {
     const { receive, setConnection, attachSocket } = useSession.getState()
     const frames = batchByAnimationFrame(receive)
