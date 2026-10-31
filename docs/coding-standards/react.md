@@ -37,7 +37,21 @@ React 19。関数コンポーネントと Hooks だけを使う（クラスコ�
 | 利用者の操作で起きること          | イベントハンドラ                                 |
 | effect から最新の値を読みたいだけ | `useEffectEvent`（React 19.3 にある）            |
 | 外部ストアの購読                  | zustand の store・`useSyncExternalStore`         |
+| メディアクエリの真偽              | `useMediaQuery`                                  |
 | DOM ノードの取り付け・取り外し    | ref コールバック（React 19 は cleanup を返せる） |
+| マウント時に1回・外れるときだけ   | `useMountEffect`・`useUnmountEffect`             |
+| イベントの登録と解除              | `useEventListener`                               |
+| 値が変わるたびに React の外と同期 | `useExternalSync(effect, deps)`                  |
+| 描画前に DOM を測る・書く         | `useBeforePaintSync(effect, deps)`               |
+
+先に考える順は、レンダー中の計算 → ハンドラ → `key` → `useSyncExternalStore`・`useMediaQuery` →
+ref コールバック → 包み hook。包み hook はどれも `src/browser/hooks/` にある。
+
+**生の `useEffect`・`useLayoutEffect` を呼べるのは `src/browser/hooks/` の包みの実装ファイルだけ。**
+包みで足りないときは、生の `useEffect` を書かず、包みを足すか設計を直す。4類型から外れる理由のコメントは、包みの呼び出しの横に書く。
+
+`useLayoutEffect` は、描画前に DOM を測る・書かないと1フレーム崩れて見えるときだけ使う。
+包みは `useBeforePaintSync`。それ以外は `useExternalSync` などの `useEffect` 側の包みを使う。
 
 `useEffectEvent` で包んだ関数は**レンダー中には呼べない**（React が投げる）。呼んでよいのは
 effect の中と、イベントハンドラ・そこで登録した寿命の長いリスナの中
