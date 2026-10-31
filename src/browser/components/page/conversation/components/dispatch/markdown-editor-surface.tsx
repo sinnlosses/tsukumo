@@ -28,14 +28,7 @@ import {
   type DecorationSet,
 } from "@codemirror/view"
 import { tags } from "@lezer/highlight"
-import {
-  useEffect,
-  useEffectEvent,
-  useImperativeHandle,
-  useRef,
-  type ReactElement,
-  type Ref,
-} from "react"
+import { useEffectEvent, useImperativeHandle, useRef, type ReactElement, type Ref } from "react"
 
 import { useExternalSync } from "../../../../../hooks/use-external-sync.ts"
 import type { Draft } from "../../stores/composer-draft.ts"
@@ -206,7 +199,7 @@ export function MarkdownEditorSurface({
     }
   }, [])
 
-  useEffect(() => {
+  useExternalSync(() => {
     const view = viewRef.current
     if (view === null || view.state.doc.toString() === draft.text) {
       return
@@ -218,13 +211,13 @@ export function MarkdownEditorSurface({
     })
   }, [draft.text, draft.caret])
 
-  useEffect(() => {
+  useExternalSync(() => {
     viewRef.current?.dispatch({
       effects: PLACEHOLDER.reconfigure(placeholderExtension(placeholder)),
     })
   }, [placeholder])
 
-  useEffect(() => {
+  useExternalSync(() => {
     viewRef.current?.dispatch({
       effects: LABEL.reconfigure(EditorView.contentAttributes.of({ "aria-label": label })),
     })

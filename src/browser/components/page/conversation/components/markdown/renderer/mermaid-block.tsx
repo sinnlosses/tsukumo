@@ -9,10 +9,11 @@
 // `mermaid.parse()` による事前判定は使わない。読み込み自体の失敗（スクリプトが読めない）も含めて1つの catch で受け止められるため（読み込み失敗は `loadVendorScript` が `Error(src)` を投げるので、エラー文はその URL になる）。
 
 import clsx from "clsx"
-import { useEffect, useRef, useState, type ReactElement } from "react"
+import { useRef, useState, type ReactElement } from "react"
 import { isObjectType, sum } from "remeda"
 
 import { vendorAssetPath } from "../../../../../../../shared/view-server/vendor-asset.ts"
+import { useExternalSync } from "../../../../../../hooks/use-external-sync.ts"
 import { useMountEffect } from "../../../../../../hooks/use-mount-effect.ts"
 import { Text } from "../../../../../ui/text/text.tsx"
 import { mergeRefs } from "../../../domain/merge-ref.ts"
@@ -64,7 +65,7 @@ export function MermaidBlock(props: MermaidBlockProps): ReactElement {
     preloadVendorScript(MERMAID_SRC)
   })
 
-  useEffect(() => {
+  useExternalSync(() => {
     let cancelled = false
 
     const themeNode = nodeRef.current

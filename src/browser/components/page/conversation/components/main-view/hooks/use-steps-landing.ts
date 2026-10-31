@@ -1,8 +1,9 @@
 // 行や段を指して依頼の手順の一覧を開いたとき、指した先へ連れていくフック。
 // 失敗した手順は最初の失敗の行まで転がしてフォーカスを移し、段は一覧の中だけを転がしてその段の区切りを一覧の上端に置く。
 
-import { useEffect, useRef, type RefObject } from "react"
+import { useRef, type RefObject } from "react"
 
+import { useExternalSync } from "../../../../../../hooks/use-external-sync.ts"
 import type { StepsLanding } from "../../../stores/work-strip-step-list.ts"
 
 /** 失敗の行の印（`CurrentWorkStepGroup` の行に付く `data-step-failed`）。 */
@@ -12,7 +13,7 @@ const FAILED_STEP_SUMMARY = "[data-step-failed] summary"
 export function useStepsLanding(landing: StepsLanding): RefObject<HTMLDivElement | null> {
   const listRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
+  useExternalSync(() => {
     const list = listRef.current
     if (list === null || landing.kind === "top") {
       return

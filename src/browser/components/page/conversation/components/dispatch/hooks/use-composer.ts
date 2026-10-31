@@ -14,7 +14,7 @@
 // - 入力欄の下の `/` と `@` のボタンは、キャレットの位置にその1文字を打つのと同じ
 //   （補完が開くかどうかは打ったときと同じ規則で決まる。`@` は前が空白でなければ空白を挟む）
 
-import { useEffect, useRef, useState, type RefObject } from "react"
+import { useRef, useState, type RefObject } from "react"
 
 import type { PromptRouting } from "../../../../../../../shared/contract/session.ts"
 import { FRAME_ERROR_REASON } from "../../../../../../../shared/frame.ts"
@@ -155,7 +155,7 @@ export function useComposer(): ComposerModel {
 
   // 面が文面を書き直したあと、キャレットは文面の末尾へ飛ぶことがある。
   // 文の途中で `@` を確定したときは差し込んだ直後へ戻す（打っている間は位置が一致するので何もしない）。
-  useEffect(() => {
+  useExternalSync(() => {
     const surface = surfaceRef.current
     if (surface !== null && surface.caret() !== draft.caret) {
       surface.placeCaret(draft.caret)

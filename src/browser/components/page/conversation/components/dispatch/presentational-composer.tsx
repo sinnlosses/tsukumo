@@ -4,7 +4,6 @@
 import clsx from "clsx"
 import { AtSign, Heading, ImageIcon, Plus, Slash } from "lucide-react"
 import {
-  useEffect,
   useRef,
   useState,
   type ComponentProps,
@@ -15,6 +14,7 @@ import {
 
 import { PROMPT_IMAGE_MEDIA_TYPES } from "../../../../../../shared/session-driver/prompt-image.ts"
 import { deferredModule } from "../../../../../hooks/deferred-module.ts"
+import { useExternalSync } from "../../../../../hooks/use-external-sync.ts"
 import { useMountEffect } from "../../../../../hooks/use-mount-effect.ts"
 import { usePhoneWidth } from "../../../../../hooks/use-phone-width.ts"
 import { Button } from "../../../../ui/button/button.tsx"
@@ -303,7 +303,7 @@ function MarkdownSurface({ ref, ...surface }: MarkdownSurfaceProps): ReactElemen
   useMountEffect(() => {
     void markdownEditorSurface.load()
   })
-  useEffect(() => {
+  useExternalSync(() => {
     if (ready && pendingHadFocus.current) {
       pendingHadFocus.current = false
       ref.current?.focus()

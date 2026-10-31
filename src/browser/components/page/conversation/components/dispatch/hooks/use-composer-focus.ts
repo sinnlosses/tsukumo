@@ -2,10 +2,11 @@
 // やり取りが閉じているときにマウントされたとき・閉じたとき（会話の画面へ戻ったときも同じ）と、スキップリンクが押されたとき。
 // 狭い画面（760px 以下）は、開いただけでキーボードと吹き出しの畳みを起こさないよう、前の2つでは入れない。
 
-import { useEffect, type RefObject } from "react"
+import type { RefObject } from "react"
 
 import { isExchangeClosed } from "../../../../../../../shared/session/conversation-moment.ts"
 import { isOverlayOpen } from "../../../../../../hooks/open-overlay.ts"
+import { useExternalSync } from "../../../../../../hooks/use-external-sync.ts"
 import { isPhoneWidth } from "../../../../../../hooks/use-phone-width.ts"
 import { useComposerFocus } from "../../../../../../stores/composer-focus.ts"
 import { useSession } from "../../../../../../stores/session.ts"
@@ -16,13 +17,13 @@ export function useComposerFocusTiming(surfaceRef: RefObject<ComposerSurface | n
   const closed = useSession((session) => isExchangeClosed(session.state))
   const signal = useComposerFocus((state) => state.signal)
 
-  useEffect(() => {
+  useExternalSync(() => {
     if (closed && !isPhoneWidth() && !holdsFocusElsewhere()) {
       surfaceRef.current?.focus()
     }
   }, [closed, surfaceRef])
 
-  useEffect(() => {
+  useExternalSync(() => {
     if (signal > 0) {
       surfaceRef.current?.focus()
     }

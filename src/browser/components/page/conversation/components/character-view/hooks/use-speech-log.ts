@@ -11,7 +11,7 @@
 // セリフの行を押すとそのセリフの表情へ立ち絵が遡る。
 // 留めた状態そのものは `useCharacterView` が持ち（床の立ち絵と状態を共有するため）、ここは `pinnedSpeech` / `onToggleSpeech` として受け取って印と押す口へ写すだけ。
 
-import { useEffect, useRef, type RefObject } from "react"
+import { useRef, type RefObject } from "react"
 import { sumBy } from "remeda"
 
 import type {
@@ -19,6 +19,7 @@ import type {
   SessionRecord,
 } from "../../../../../../../shared/session/session-record.ts"
 import { turnSpeeches, type TurnSpeech } from "../../../../../../../shared/session/turn-speech.ts"
+import { useExternalSync } from "../../../../../../hooks/use-external-sync.ts"
 import { useSession } from "../../../../../../stores/session.ts"
 import { useTurnSelection } from "../../../../../../stores/turn-selection.ts"
 import { localTimeZoneId } from "../../../../../../utils/clock.ts"
@@ -96,7 +97,7 @@ export function useSpeechLog(
   // 開いた直後に下端（最新）を見せる。
   // この effect は `<Dialog>` の中の `useModalDialog` の effect より後に走る（`<Dialog>` はこの部品の子なので、React は子の effect を親より先に実行する）。
   // 閉じた `<dialog>` は描かれておらず（`display: none`）、`showModal()` の前に測ると高さが 0 で転がらないので、この順が要る。
-  useEffect(() => {
+  useExternalSync(() => {
     const scroller = scrollerRef.current
     if (open && scroller !== null) {
       scroller.scrollTop = scroller.scrollHeight

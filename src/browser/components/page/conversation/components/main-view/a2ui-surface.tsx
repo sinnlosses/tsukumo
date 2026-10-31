@@ -11,7 +11,7 @@ import {
   type ReactComponentImplementation,
 } from "@a2ui/react/v0_9"
 import { Catalog, MessageProcessor, type SurfaceModel } from "@a2ui/web_core/v0_9"
-import { createContext, type ReactElement, use, useEffect, useState } from "react"
+import { createContext, type ReactElement, use, useState } from "react"
 
 import type { A2uiReportComponent } from "../../../../../../shared/report/a2ui-report-catalog.ts"
 import {
@@ -24,6 +24,7 @@ import type {
   MainViewReportRegions,
   MainViewSurfaceLeafRegion,
 } from "../../../../../../shared/session/main-view-shape.ts"
+import { useExternalSync } from "../../../../../hooks/use-external-sync.ts"
 import { reportBrowserError } from "../../../../../stores/browser-error-report.ts"
 import { Button } from "../../../../ui/button/button.tsx"
 import { Divider } from "../../../../ui/divider/divider.tsx"
@@ -54,7 +55,7 @@ export function A2uiReport(props: A2uiReportProps): ReactElement {
   const [surface] = useState(() => reportSurfaceOf(props.view.components))
   const parts = a2uiPartsById(props.view.components)
   const { components } = props.view
-  useEffect(() => {
+  useExternalSync(() => {
     if (surface.kind === "surface") {
       addMissingComponents(surface, components)
     }
@@ -75,7 +76,7 @@ export function A2uiReport(props: A2uiReportProps): ReactElement {
  */
 function FailedReport(props: A2uiReportProps & { readonly error: unknown }): ReactElement {
   const { view, error } = props
-  useEffect(() => {
+  useExternalSync(() => {
     reportBrowserError("render-failure", error)
   }, [error])
   return (
