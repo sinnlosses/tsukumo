@@ -8,6 +8,9 @@ import { makeTempDirectory, spawnTsukumo, stopTsukumo } from "../e2e/tsukumo-pro
 
 const LAUNCH_TIMEOUT_MS = 15_000
 
+// ヘッダの部屋の名前にポート番号が写るので、回ごとに変わらないよう固定する
+const FIXED_VIEW_PORT = 47_831
+
 type TsukumoFixtures = {
   readonly viewUrl: string
 }
@@ -20,7 +23,13 @@ export const test = base.extend<TsukumoFixtures>({
     const userHome = makeTempDirectory("tsukumo-trial-user-home-")
     const projectDirectory = path.join(cwd.real, "trial-project")
     mkdirSync(projectDirectory)
-    const child = spawnTsukumo("report-blocks", home.real, userHome.real, projectDirectory)
+    const child = spawnTsukumo(
+      "report-blocks",
+      home.real,
+      userHome.real,
+      projectDirectory,
+      FIXED_VIEW_PORT,
+    )
     try {
       await use(await waitForViewUrl(child, home.real, LAUNCH_TIMEOUT_MS))
     } finally {
