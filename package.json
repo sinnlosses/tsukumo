@@ -32,7 +32,8 @@
     "harness-replay": "node scripts/dev/harness-replay.ts",
     "test-against-base": "node scripts/dev/test-against-base.ts",
     "repo-map": "node scripts/dev/repo-map.ts",
-    "find-missing-command": "node scripts/document/find-missing-command.ts"
+    "find-missing-command": "node scripts/document/find-missing-command.ts",
+    "check-undefined-audit": "node scripts/document/find-undefined-audit-count.ts"
   },
   "dependencies": {
     "@a2ui/react": "^0.14.0",
