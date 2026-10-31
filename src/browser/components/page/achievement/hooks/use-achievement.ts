@@ -168,12 +168,19 @@ export function useAchievement(): UseAchievementResult {
     // 新しく開いた日には無関係な値なので、呼ぶ側は `isFetching` と組んで使う。
     placeholderData: (previous: DailyAchievement | undefined) => previous,
     refetchInterval: (current: Query<DailyAchievement>) =>
-      isViewingToday(current.state.data) ? TODAY_REFETCH_INTERVAL_MS : false,
+      current.state.data !== undefined && isViewingToday(current.state.data)
+        ? TODAY_REFETCH_INTERVAL_MS
+        : false,
   })
 
-  const daySwitch = daySwitchOf(query.data)
+  const daySwitch: AchievementDaySwitch =
+    query.data === undefined ? { kind: "unknown" } : daySwitchOf(query.data)
   usePrefetchNeighborDays(daySwitch)
-  const view = viewOf(query.data, query.isPending, query.isError)
+  const view: AchievementView = query.isPending
+    ? { kind: "loading" }
+    : query.data === undefined
+      ? { kind: "failed" }
+      : viewOf(query.data, query.isError)
   const writing = writingViewOf(diaryWriting, daySwitch)
 
   const latestParagraph =
@@ -232,32 +239,57 @@ function diarySectionOf(view: AchievementView, writing: AchievementWriting): Dia
     return { kind: "failed" }
   }
 
-  const written =
-    view.kind === "ready" && view.diary.kind === "written" ? view.diary.diary : undefined
-  const latest = written?.paragraphs.at(-1)
+  const latest = latestParagraphOf(view)
 
   return {
     kind: "shown",
     reviewedLabel:
-      latest === undefined
+      latest.kind === "none"
         ? { kind: "none" }
         : { kind: "shown", label: `振り返り [${writtenTimeOf(latest.writtenAt) ?? ""}]` },
-    canOpenBook: latest !== undefined,
-    bubble: bubbleOf(view, writing, written, latest),
+    canOpenBook: latest.kind === "shown",
+    bubble: bubbleOf(view, writing, latest),
     doneTaskCount: view.kind === "ready" ? String(view.doneTasks.length) : LOADING_VALUE,
+  }
+}
+
+type LatestParagraph =
+  | { readonly kind: "none" }
+  | {
+      readonly kind: "shown"
+      readonly date: string
+      readonly paragraphCount: number
+      readonly writtenAt: string
+      readonly body: string
+    }
+
+function latestParagraphOf(view: AchievementView): LatestParagraph {
+  if (view.kind !== "ready" || view.diary.kind !== "written") {
+    return { kind: "none" }
+  }
+  const { date, paragraphs } = view.diary.diary
+  const latest = paragraphs.at(-1)
+  if (latest === undefined) {
+    return { kind: "none" }
+  }
+  return {
+    kind: "shown",
+    date,
+    paragraphCount: paragraphs.length,
+    writtenAt: latest.writtenAt,
+    body: latest.body,
   }
 }
 
 function bubbleOf(
   view: AchievementView,
   writing: AchievementWriting,
-  written: Extract<DailyDiaryStatus, { readonly kind: "written" }>["diary"] | undefined,
-  latest: { readonly writtenAt: string; readonly body: string } | undefined,
+  latest: LatestParagraph,
 ): DiarySectionBubble {
   if (view.kind !== "ready") {
     return { kind: "blank" }
   }
-  const latestBodies = latest === undefined ? [] : [latest.body]
+  const latestBodies = latest.kind === "none" ? [] : [latest.body]
   if (writing.kind === "writing") {
     return { kind: "notes", notes: latestBodies }
   }
@@ -267,14 +299,14 @@ function bubbleOf(
   if (isEmptyAchievementDay(view.doneTasks)) {
     return { kind: "notes", notes: [EMPTY_DAY_NOTE] }
   }
-  if (latest === undefined) {
+  if (latest.kind === "none") {
     return { kind: "notes", notes: [NO_DIARY_NOTE] }
   }
   return {
     kind: "written",
-    key: `${written?.date ?? ""}-${latest.writtenAt}`,
+    key: `${latest.date}-${latest.writtenAt}`,
     body: latest.body,
-    revisionId: written?.paragraphs.length ?? 0,
+    revisionId: latest.paragraphCount,
   }
 }
 
@@ -355,32 +387,22 @@ function usePrefetchNeighborDays(daySwitch: AchievementDaySwitch): void {
 }
 
 /** 今日を見ているかどうか（`refetchInterval` の判定。まだ分からなければ今日でないとみなす）。 */
-function isViewingToday(data: DailyAchievement | undefined): boolean {
-  return data !== undefined && data.kind === "known" && data.date === data.today
+function isViewingToday(data: DailyAchievement): boolean {
+  return data.kind === "known" && data.date === data.today
 }
 
 /**
  * 日の切り替えの状態。直前に届いた応答から計算する。
  * `data` は `useQuery` の既定の振る舞いで、同じキーの再取得が失敗しても前回成功時の値のまま残る（`isError` は別に立つ）。
  */
-function daySwitchOf(data: DailyAchievement | undefined): AchievementDaySwitch {
-  if (data === undefined || data.kind === "unknown") {
+function daySwitchOf(data: DailyAchievement): AchievementDaySwitch {
+  if (data.kind === "unknown") {
     return { kind: "unknown" }
   }
   return { kind: "known", date: data.date, today: data.today }
 }
 
-function viewOf(
-  data: DailyAchievement | undefined,
-  isPending: boolean,
-  isError: boolean,
-): AchievementView {
-  if (isPending) {
-    return { kind: "loading" }
-  }
-  if (data === undefined) {
-    return { kind: "failed" }
-  }
+function viewOf(data: DailyAchievement, isError: boolean): AchievementView {
   if (data.kind === "unknown") {
     return { kind: "unavailable" }
   }

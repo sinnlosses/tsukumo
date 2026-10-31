@@ -25,9 +25,9 @@ export function useDiaryBookOpenRequest(): DiaryBookOpenRequest | undefined {
  * 描画中に呼んでよい。印は部品の外にあり、同じ合図に対して何度呼んでも同じ結果に畳む。
  */
 export function takeDiaryBookOpenRequest(
-  current: DiaryBookOpenRequest | undefined,
+  current: DiaryBookOpenRequest,
 ): DiaryBookOpenRequest | undefined {
-  if (current === undefined || current.token <= handledToken) {
+  if (current.token <= handledToken) {
     return undefined
   }
   handledToken = current.token

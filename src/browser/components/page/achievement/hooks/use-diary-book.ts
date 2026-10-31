@@ -155,7 +155,9 @@ export function useDiaryBook(params: {
 
   // 書き終わりの知らせの「日記帳で開く」を拾って開く。
   // 拾ったかどうかは `takeDiaryBookOpenRequest` が部品の外に持つ（画面を開き直しても同じ合図で開き直さない）。
-  const pendingRequest = takeDiaryBookOpenRequest(useDiaryBookOpenRequest())
+  const lastRequest = useDiaryBookOpenRequest()
+  const pendingRequest =
+    lastRequest === undefined ? undefined : takeDiaryBookOpenRequest(lastRequest)
   if (pendingRequest !== undefined) {
     setState({ kind: "open", source: "notice", date: pendingRequest.date, tocOpen: false })
   }
@@ -198,18 +200,21 @@ export function useDiaryBook(params: {
 
   const previousDate = closestBefore(diaryDates, state.date)
   const nextDate = closestAfter(diaryDates, state.date)
-  const page = pageOf(
-    state.date,
-    query.data,
-    query.isPending,
-    query.isError,
-    character,
-    characterPacks,
-    diaryWriting,
-    params.onDateSelected,
-    dispatch,
-    onClose,
-  )
+  const page: DiaryBookPage = query.isPending
+    ? { kind: "loading" }
+    : query.data === undefined
+      ? { kind: "failed" }
+      : pageOf(
+          state.date,
+          query.data,
+          query.isError,
+          character,
+          characterPacks,
+          diaryWriting,
+          params.onDateSelected,
+          dispatch,
+          onClose,
+        )
 
   return {
     open: true,
@@ -248,8 +253,7 @@ export function useDiaryBook(params: {
 
 function pageOf(
   date: string,
-  data: DailyAchievement | undefined,
-  isPending: boolean,
+  data: DailyAchievement,
   isError: boolean,
   character: CharacterInfo | undefined,
   characterPacks: readonly CharacterPackEntry[],
@@ -258,10 +262,7 @@ function pageOf(
   dispatch: SessionDispatch,
   onClose: () => void,
 ): DiaryBookPage {
-  if (isPending) {
-    return { kind: "loading" }
-  }
-  if (data === undefined || data.kind === "unknown" || isError) {
+  if (data.kind === "unknown" || isError) {
     return { kind: "failed" }
   }
 

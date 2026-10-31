@@ -20,7 +20,7 @@
 
 | 領域                          | 全件     | 6つに当たる | 要確認のうち消せる | 本物    |
 | ----------------------------- | -------- | ----------- | ------------------ | ------- |
-| `src/browser/components`      | 303      | 39          | 80                 | 184     |
+| `src/browser/components`      | 303      | 39          | 77                 | 187     |
 | `src/server/session-driver`   | 102      | 29          | 9                  | 64      |
 | `src/shared/character-pack`   | 70       | 0           | 5                  | 65      |
 | `scripts/hook`                | 66       | 0           | 22                 | 44      |
@@ -68,7 +68,7 @@
 | `src/shared/(root)`           | 1        | 0           | 0                  | 1       |
 | `src/shared/diagnostic`       | 1        | 0           | 1                  | 0       |
 | `src/shared/diary`            | 1        | 0           | 0                  | 1       |
-| **合計**                      | **1166** | **256**     | **192**            | **718** |
+| **合計**                      | **1166** | **256**     | **189**            | **721** |
 
 全件 = 6つに当たる + 消せる + 本物 は、領域ごとにも合計でも成り立つ（表を作った道具で突き合わせた）。
 
@@ -83,11 +83,11 @@
 | R1   | 探索・解析・読み取りの失敗を単一の「無い」で返す戻り値                                                  | 373 | `browser/components/domain/sidebar/components/task-doing-count.tsx:10`・`browser/components/domain/sidebar/domain/plan-window.ts:25`・`browser/components/page/achievement/domain/written-time.ts:5`                                           |
 | R2   | 環境変数・引数・状態ファイル・定義ファイル・SDK/外部 API など外の世界の値の写し、またはそれを受ける入口 | 173 | `browser/components/domain/portrait.tsx:41`・`browser/domain/appearance-color.ts:168`・`browser/features/task-board/domain/task-board-list-width.ts:15`                                                                                        |
 | R3   | DOM 属性・描画の差し込みにそのまま渡す props（例6の趣旨だが `ui/` の外なので表の判定に当たらない）      | 22  | `browser/components/domain/portrait.tsx:30`・`browser/components/domain/screen-nav/components/screen-nav-settings-face-frame.tsx:13`・`browser/components/domain/screen-nav/components/session-switcher.tsx:281`                               |
-| R4   | 持ち主が1つで、「まだ無い／選ばれていない」が1つの意味しか持たない値                                    | 99  | `browser/components/domain/character-face.tsx:13`・`browser/components/domain/portrait.tsx:28`・`browser/components/domain/screen-nav/hooks/use-screen-nav.ts:130`                                                                             |
+| R4   | 持ち主が1つで、「まだ無い／選ばれていない」が1つの意味しか持たない値                                    | 102 | `browser/components/domain/character-face.tsx:13`・`browser/components/domain/portrait.tsx:28`・`browser/components/domain/screen-nav/hooks/use-screen-nav.ts:130`                                                                             |
 | R5   | React・TanStack Query・DOM の外来シグネチャや入れ物（`RefObject` など）で型が決まっているもの           | 6   | `browser/components/page/achievement/hooks/use-achievement.ts:169`・`browser/components/page/conversation/components/dispatch/domain/prompt-image.ts:19`・`browser/components/page/conversation/components/dispatch/domain/prompt-image.ts:37` |
 | R6   | 全域の対応表の「なし」（クラス名を付けない）が意味を持つ値                                              | 10  | `browser/components/ui/button/button.tsx:109`・`browser/components/ui/field/field.tsx:22`・`browser/components/ui/field/field.tsx:27`                                                                                                          |
 | R7   | 位置を保つ配列の穴（読めなかった列を飛ばさず添字を揃える）                                              | 3   | `shared/report/timeline-scale.ts:26`・`shared/report/timeline-scale.ts:33`・`scripts/dev/lib/a2ui-write-trial.ts:346`                                                                                                                          |
-| R8   | ループの終端・畳み込みの途中経過・蓄積値（例4に準ずる）                                                 | 11  | `browser/components/domain/screen-nav/hooks/use-screen-nav.ts:197`・`browser/components/page/achievement/hooks/use-diary-book.ts:382`・`browser/components/page/achievement/hooks/use-diary-book.ts:392`                                       |
+| R8   | ループの終端・畳み込みの途中経過・蓄積値（例4に準ずる）                                                 | 11  | `browser/components/domain/screen-nav/hooks/use-screen-nav.ts:197`・`browser/components/page/achievement/hooks/use-diary-book.ts:383`・`browser/components/page/achievement/hooks/use-diary-book.ts:393`                                       |
 | R9   | イベントを出さない場合を「無い」で表す口（呼び出し側は無ければ何もしない）                              | 14  | `current-character.ts:63`・`current-character.ts:69`・`current-character.ts:76`                                                                                                                                                                |
 | R10  | `undefined` 自体が「止める・外す・準備なし」という指示の意味を持つ引数                                  | 7   | `browser/domain/reveal/brush-scroll.ts:42`・`browser/domain/reveal/brush-scroll.ts:85`・`browser/domain/reveal/brush-tip.ts:63`                                                                                                                |
 
@@ -95,7 +95,7 @@
 
 | 領域                          | 本物 | 理由の内訳                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | ----------------------------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `src/browser/components`      | 184  | R1 88（例 `browser/components/domain/sidebar/components/task-doing-count.tsx:10`）、R4 59（例 `browser/components/domain/character-face.tsx:13`）、R3 19（例 `browser/components/domain/portrait.tsx:30`）、R6 7（例 `browser/components/ui/button/button.tsx:109`）、R5 6（例 `browser/components/page/achievement/hooks/use-achievement.ts:169`）、R8 4（例 `browser/components/domain/screen-nav/hooks/use-screen-nav.ts:197`）、R2 1（例 `browser/components/domain/portrait.tsx:41`） |
+| `src/browser/components`      | 187  | R1 88（例 `browser/components/domain/sidebar/components/task-doing-count.tsx:10`）、R4 62（例 `browser/components/domain/character-face.tsx:13`）、R3 19（例 `browser/components/domain/portrait.tsx:30`）、R6 7（例 `browser/components/ui/button/button.tsx:109`）、R5 6（例 `browser/components/page/achievement/hooks/use-achievement.ts:169`）、R8 4（例 `browser/components/domain/screen-nav/hooks/use-screen-nav.ts:197`）、R2 1（例 `browser/components/domain/portrait.tsx:41`） |
 | `src/server/session-driver`   | 64   | R1 42（例 `server/session-driver/core/aside-prompt.ts:18`）、R2 21（例 `server/session-driver/core/pending-answer.ts:37`）、R10 1（例 `server/session-driver/core/prompt-delay.ts:14`）                                                                                                                                                                                                                                                                                                    |
 | `src/shared/character-pack`   | 65   | R2 45（例 `shared/character-pack/character-asset.ts:18`）、R1 20（例 `shared/character-pack/character-asset.ts:36`）                                                                                                                                                                                                                                                                                                                                                                       |
 | `scripts/hook`                | 44   | R1 38（例 `scripts/hook/bash-guard.ts:24`）、R2 3（例 `scripts/hook/lib/bash-hook-call.ts:8`）、R8 3（例 `scripts/hook/lib/shell-write-rule.ts:153`）                                                                                                                                                                                                                                                                                                                                      |
@@ -137,14 +137,24 @@
 
 ### 数えて分かったこと
 
-- 本物 718 件のうち R1 が 373 件で約半分。戻り値と `Promise<…>` の型引数は、署名と関数名から「見つからない・読めない」を返す形かを見て R1 に入れた（本体は読んでいない）。この形は規約の6つの表に直接の行が無く、例2（TypeScript が生む `undefined`）に準ずるものとして書いてある。表に行を足すかどうかは、この文書の範囲の外。
+- 本物 721 件のうち R1 が 373 件で約半分。戻り値と `Promise<…>` の型引数は、署名と関数名から「見つからない・読めない」を返す形かを見て R1 に入れた（本体は読んでいない）。この形は規約の6つの表に直接の行が無く、例2（TypeScript が生む `undefined`）に準ずるものとして書いてある。表に行を足すかどうかは、この文書の範囲の外。
 - R3 は `className`・`title`・`blockedTitle` など DOM 属性に素通しする props で、例6と同じ性質なのに `src/browser/components/ui/` の外にあるため表の判定に当たらない。例6の範囲を `ui/` の外へ広げるかは別の判断になる。
+
+### 呼び出し側を読んで本物に移した件
+
+「消せる」と見立てた件のうち、呼び出し側を読んで本物と分かったもの。理由は R4（持ち主がセッションの状態1つで、キャラクター定義が届く前という1つの意味しか持たない）。畳み先に当たる既定の `CharacterInfo` が無く、消すと `!`・`as` か存在しない既定値が要る。
+
+| ファイル                                                       | 対象                      | 置き場 | 行  | 理由 |
+| -------------------------------------------------------------- | ------------------------- | ------ | --- | ---- |
+| `browser/components/page/achievement/domain/diary-writer.ts`   | `currentWriterPortraitOf` | 引数   | 34  | R4   |
+| `browser/components/page/achievement/hooks/use-achievement.ts` | `reviewButtonOf`          | 引数   | 293 | R4   |
+| `browser/components/page/achievement/hooks/use-diary-book.ts`  | `pageOf`                  | 引数   | 254 | R4   |
 
 ## 消せるもの
 
 領域ごとの対象。ドラフトはこの単位で割る。「入口で畳む」は、呼び出し側で分岐するか `??` で既定値にして、関数を必ずある値で受ける形にすること。「（広い）」は呼び出し側が 25 を超えるもので、ドラフトにする前に畳み方の優先を決める。
 
-### `src/browser/components`（消せる 80 件）
+### `src/browser/components`（消せる 77 件）
 
 | ファイル                                                                                      | 対象                       | 置き場 | 件  | 行                 | 消し方     | 呼び出し側の数 |
 | --------------------------------------------------------------------------------------------- | -------------------------- | ------ | --- | ------------------ | ---------- | -------------- |
@@ -153,14 +163,12 @@
 | `browser/components/domain/sidebar/hooks/use-plan-usage.ts`                                   | `toSource`                 | 引数   | 1   | 112                | 入口で畳む | 1              |
 | `browser/components/domain/sidebar/hooks/use-sidebar-footer.ts`                               | `toPlanWindowPie`          | 引数   | 1   | 125                | 入口で畳む | 2              |
 | `browser/components/domain/sidebar/hooks/use-sidebar-footer.ts`                               | `planGaugeLabel`           | 引数   | 1   | 163                | 入口で畳む | 1              |
-| `browser/components/page/achievement/domain/diary-writer.ts`                                  | `currentWriterPortraitOf`  | 引数   | 1   | 34                 | 入口で畳む | 2              |
 | `browser/components/page/achievement/hooks/use-achievement.ts`                                | `bubbleOf`                 | 引数   | 2   | 254・255           | 入口で畳む | 1              |
-| `browser/components/page/achievement/hooks/use-achievement.ts`                                | `reviewButtonOf`           | 引数   | 1   | 293                | 入口で畳む | 1              |
 | `browser/components/page/achievement/hooks/use-achievement.ts`                                | `isViewingToday`           | 引数   | 1   | 358                | 入口で畳む | 1              |
 | `browser/components/page/achievement/hooks/use-achievement.ts`                                | `daySwitchOf`              | 引数   | 1   | 366                | 入口で畳む | 1              |
 | `browser/components/page/achievement/hooks/use-achievement.ts`                                | `viewOf`                   | 引数   | 1   | 374                | 入口で畳む | 1              |
 | `browser/components/page/achievement/hooks/use-diary-book-open-request.ts`                    | `takeDiaryBookOpenRequest` | 引数   | 1   | 28                 | 入口で畳む | 1              |
-| `browser/components/page/achievement/hooks/use-diary-book.ts`                                 | `pageOf`                   | 引数   | 2   | 251・254           | 入口で畳む | 1              |
+| `browser/components/page/achievement/hooks/use-diary-book.ts`                                 | `pageOf`                   | 引数   | 1   | 251                | 入口で畳む | 1              |
 | `browser/components/page/character/components/character-create/hooks/use-character-create.ts` | `toGenerationProgress`     | 引数   | 1   | 275                | 入口で畳む | 1              |
 | `browser/components/page/conversation/components/character-view/domain/pinned-speech.ts`      | `isSpeechSelected`         | 引数   | 3   | 75・78・79         | 入口で畳む | 2              |
 | `browser/components/page/conversation/components/character-view/hooks/use-character-view.ts`  | `balloonSpeeches`          | 引数   | 4   | 254・255・256・257 | 入口で畳む | 1              |
@@ -410,7 +418,7 @@
 | 要約（ドラフトの `--summary`）                     | 領域                                                                                                                 | 消せる件数 | 並び                     |
 | -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- | ---------- | ------------------------ |
 | undefined を畳む: サイドバー・画面ナビ・生成       | `src/browser/components`（サイドバー・画面ナビ・キャラ生成）                                                         | 6          |                          |
-| undefined を畳む: 成果の画面の引数                 | `src/browser/components`（成果の画面）                                                                               | 10         |                          |
+| undefined を畳む: 成果の画面の引数                 | `src/browser/components`（成果の画面）                                                                               | 7          |                          |
 | undefined を畳む: 発話ログ・雑談表示の引数         | `src/browser/components`（発話ログ・雑談表示）                                                                       | 16         |                          |
 | undefined を畳む: 入力欄・問い合わせの引数         | `src/browser/components`（入力欄・問い合わせ）                                                                       | 7          |                          |
 | undefined を畳む: 本文表示の表・スクロール         | `src/browser/components`（本文表示）                                                                                 | 8          |                          |
@@ -432,4 +440,4 @@
 | undefined を畳む: サーバ側の小さな引数             | `src/server/chat`・`src/server/report`・`src/server/core`・`src/server/system-prompt`・`src/server/welcome-greeting` | 9          |                          |
 | undefined を畳む: 起動依頼の chat と配信の版       | `src/server/session`・`src/(root)`                                                                                   | 2          |                          |
 
-括弧なしの消せる件数の合計は 192 件で、領域の表の合計と一致する。`ast-node.ts` の 4 件は、方針を決めるドラフトでは括弧に入れ、実装のドラフトで数えた。
+括弧なしの消せる件数の合計は 189 件で、領域の表の合計と一致する。`ast-node.ts` の 4 件は、方針を決めるドラフトでは括弧に入れ、実装のドラフトで数えた。
