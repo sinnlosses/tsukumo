@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 
 import { mainViewTurns } from "../../../../src/browser/domain/main-view/main-view.ts"
 import { mainViewEntries } from "../../../../src/shared/session/main-view-entry.ts"
+import { isInterimStep } from "../../../../src/shared/session/main-view-shape.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import { applySessionEvent } from "../../../../src/shared/session/session-fold.ts"
 import { INITIAL_SESSION_STATE } from "../../../../src/shared/session/session-state.ts"
@@ -35,8 +36,7 @@ describe("mainViewTurns（段が移ったときの中間レポート）", () => 
     const turn = turnOf([ask, plan(0), plan(1, "架空のまとめ。")], WRITING, false)
     const step = turn?.steps.at(-1)
 
-    expect(step?.interim).toBe(true)
-    expect(step?.superseded).toBe(false)
+    expect(step?.mark).toBe("interim-kept")
     expect(step?.body).toEqual({
       kind: "text",
       report: { kind: "markdown", markdown: "架空のまとめ。" },
@@ -90,8 +90,8 @@ describe("mainViewTurns（段が移ったときの中間レポート）", () => 
     )
     const [summary, final] = (turn?.steps ?? []).filter((step) => step.body.kind === "text")
 
-    expect(summary?.interim && summary.superseded).toBe(true)
-    expect(final?.final).toBe(true)
+    expect(summary?.mark).toBe("interim-folded")
+    expect(final?.mark).toBe("final")
     expect(reportOf(final)?.startsWith("架空の結論。")).toBe(true)
     expect(turn?.hasInterimReport).toBe(true)
   })
@@ -109,8 +109,8 @@ describe("mainViewTurns（段が移ったときの中間レポート）", () => 
       true,
     )
 
-    expect(turn?.steps.filter((step) => step.interim).map(reportOf)).toEqual(["架空のまとめ。"])
-    expect(reportOf(turn?.steps.find((step) => step.final))).toBe("架空の答え")
+    expect(turn?.steps.filter(isInterimStep).map(reportOf)).toEqual(["架空のまとめ。"])
+    expect(reportOf(turn?.steps.find((step) => step.mark === "final"))).toBe("架空の答え")
   })
 
   it("段が戻っても、終えた段のまとめが無ければ何も出ない", () => {
@@ -142,7 +142,7 @@ describe("mainViewTurns（段が移ったときの中間レポート）", () => 
 
     const shown = turn?.steps.filter((step) => step.body.kind === "text") ?? []
 
-    expect(shown.map((step) => step.final)).toEqual([true])
+    expect(shown.map((step) => step.mark === "final")).toEqual([true])
     expect(turn?.hasInterimReport).toBe(false)
   })
 

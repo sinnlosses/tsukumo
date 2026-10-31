@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest"
 
 import { headedSectionIdsOfTurn } from "../../../../../../../../src/browser/components/page/conversation/components/main-view/domain/headed-section.ts"
-import type {
-  MainViewStep,
-  MainViewTurn,
+import {
+  isInterimStep,
+  type MainViewStep,
+  type MainViewTurn,
 } from "../../../../../../../../src/shared/session/main-view-shape.ts"
 import { noRootA2ui } from "../../../../../../../fixture/main-view-entry.ts"
 
@@ -11,7 +12,7 @@ import { noRootA2ui } from "../../../../../../../fixture/main-view-entry.ts"
 function textStep(
   id: number,
   headings: readonly string[],
-  flags: { readonly interim: boolean; readonly final: boolean },
+  mark: MainViewStep["mark"],
 ): MainViewStep {
   return {
     id,
@@ -28,9 +29,7 @@ function textStep(
       changeSummary: { kind: "none" },
     },
     origin: { kind: "tool-report", toolUseId: "toolu_fictional" },
-    interim: flags.interim,
-    superseded: false,
-    final: flags.final,
+    mark,
     actions: [],
     asides: [],
   }
@@ -41,7 +40,7 @@ function turnOf(steps: readonly MainViewStep[]): MainViewTurn {
     id: 0,
     request: undefined,
     steps,
-    hasInterimReport: steps.some((step) => step.interim),
+    hasInterimReport: steps.some(isInterimStep),
     droppedCount: 0,
     failure: { kind: "none" },
     drafts: [],
@@ -50,8 +49,8 @@ function turnOf(steps: readonly MainViewStep[]): MainViewTurn {
 
 describe("headedSectionIdsOfTurn", () => {
   it("見出しのある節の欄の ID を、最終レポートがあればそれから返す", () => {
-    const interim = textStep(0, ["一"], { interim: true, final: false })
-    const closed = textStep(1, ["", "一", "二"], { interim: false, final: true })
+    const interim = textStep(0, ["一"], "interim-kept")
+    const closed = textStep(1, ["", "一", "二"], "final")
 
     expect(headedSectionIdsOfTurn(turnOf([interim, closed]))).toEqual([1, 2])
     expect(headedSectionIdsOfTurn(turnOf([interim]))).toEqual([0])
@@ -59,8 +58,8 @@ describe("headedSectionIdsOfTurn", () => {
   })
 
   it("同じ MainViewTurn の2回目は覚えた結果をそのまま返す（抽出が1回）", () => {
-    const interim = textStep(0, ["一"], { interim: true, final: false })
-    const closed = textStep(1, ["一", "二"], { interim: false, final: true })
+    const interim = textStep(0, ["一"], "interim-kept")
+    const closed = textStep(1, ["一", "二"], "final")
     const turn = turnOf([interim, closed])
 
     expect(headedSectionIdsOfTurn(turn)).toBe(headedSectionIdsOfTurn(turn))

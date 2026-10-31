@@ -50,7 +50,7 @@ describe("Turn（書き上げる演出を掛ける相手）", () => {
   it("出し始めた時点で既にあった本文には掛けない（過去のターン・読み込み直し）", () => {
     render(
       <Turn
-        turn={turn([step({ id: 0, body: turnBodyText("確定した本文"), final: true })])}
+        turn={turn([step({ id: 0, body: turnBodyText("確定した本文"), mark: "final" })])}
         newest
         freshReport={false}
       />,
@@ -62,7 +62,7 @@ describe("Turn（書き上げる演出を掛ける相手）", () => {
   it("地図から入れ替えたばかりのレポートは、出し始めた時点にあった最終レポートにも掛ける", () => {
     render(
       <Turn
-        turn={turn([step({ id: 0, body: turnBodyText("届いた本文"), final: true })])}
+        turn={turn([step({ id: 0, body: turnBodyText("届いた本文"), mark: "final" })])}
         newest
         freshReport
       />,
@@ -74,7 +74,7 @@ describe("Turn（書き上げる演出を掛ける相手）", () => {
   it("本文にはやり取りの番号を渡す（残った筆先が別のやり取りの上へ出ないため）", () => {
     render(
       <Turn
-        turn={turn([step({ id: 0, body: turnBodyText("確定した本文"), final: true })])}
+        turn={turn([step({ id: 0, body: turnBodyText("確定した本文"), mark: "final" })])}
         newest
         freshReport={false}
       />,
@@ -91,7 +91,7 @@ describe("Turn（書き上げる演出を掛ける相手）", () => {
       <Turn
         turn={turn([
           step({ id: 0 }),
-          step({ id: 1, body: turnBodyText("確定した本文"), final: true }),
+          step({ id: 1, body: turnBodyText("確定した本文"), mark: "final" }),
         ])}
         newest
         freshReport={false}
@@ -104,7 +104,7 @@ describe("Turn（書き上げる演出を掛ける相手）", () => {
   it("確定レポートが並んだら、最後の1件だけに掛ける", () => {
     const { rerender } = render(
       <Turn
-        turn={turn([step({ id: 0, body: turnBodyText("1件目"), final: true })])}
+        turn={turn([step({ id: 0, body: turnBodyText("1件目"), mark: "final" })])}
         newest
         freshReport={false}
       />,
@@ -115,7 +115,7 @@ describe("Turn（書き上げる演出を掛ける相手）", () => {
       <Turn
         turn={turn([
           step({ id: 0, body: turnBodyText("1件目") }),
-          step({ id: 1, body: turnBodyText("2件目"), final: true }),
+          step({ id: 1, body: turnBodyText("2件目"), mark: "final" }),
         ])}
         newest
         freshReport={false}
@@ -129,9 +129,9 @@ describe("Turn（書き上げる演出を掛ける相手）", () => {
     render(
       <Turn
         turn={turn([
-          step({ id: 0, body: turnBodyText("中間0"), interim: true, superseded: true }),
-          step({ id: 1, body: turnBodyText("中間1"), interim: true, superseded: true }),
-          step({ id: 2, body: turnBodyText("最終"), final: true }),
+          step({ id: 0, body: turnBodyText("中間0"), mark: "interim-folded" }),
+          step({ id: 1, body: turnBodyText("中間1"), mark: "interim-folded" }),
+          step({ id: 2, body: turnBodyText("最終"), mark: "final" }),
         ])}
         newest
         freshReport
@@ -145,8 +145,8 @@ describe("Turn（書き上げる演出を掛ける相手）", () => {
     const { rerender } = render(
       <Turn
         turn={turn([
-          step({ id: 0, body: turnBodyText("中間0"), interim: true, superseded: true }),
-          step({ id: 1, body: turnBodyText("前の最終"), final: true }),
+          step({ id: 0, body: turnBodyText("中間0"), mark: "interim-folded" }),
+          step({ id: 1, body: turnBodyText("前の最終"), mark: "final" }),
         ])}
         newest
         freshReport={false}
@@ -157,9 +157,9 @@ describe("Turn（書き上げる演出を掛ける相手）", () => {
     rerender(
       <Turn
         turn={turn([
-          step({ id: 0, body: turnBodyText("中間0"), interim: true, superseded: true }),
-          step({ id: 1, body: turnBodyText("前の最終"), interim: true, superseded: true }),
-          step({ id: 2, body: turnBodyText("新しい最終"), final: true }),
+          step({ id: 0, body: turnBodyText("中間0"), mark: "interim-folded" }),
+          step({ id: 1, body: turnBodyText("前の最終"), mark: "interim-folded" }),
+          step({ id: 2, body: turnBodyText("新しい最終"), mark: "final" }),
         ])}
         newest
         freshReport={false}
@@ -177,7 +177,7 @@ describe("Turn（書き上げる演出を掛ける相手）", () => {
       <Turn
         turn={turn([
           step({ id: 0 }),
-          step({ id: 1, body: turnBodyText("途中の資料"), interim: true }),
+          step({ id: 1, body: turnBodyText("途中の資料"), mark: "interim-kept" }),
         ])}
         newest
         freshReport={false}
@@ -197,7 +197,7 @@ describe("Turn（書き上げる演出を掛ける相手）", () => {
       <Turn
         turn={turn([
           step({ id: 0 }),
-          step({ id: 1, body: turnBodyText("確定した本文"), final: true }),
+          step({ id: 1, body: turnBodyText("確定した本文"), mark: "final" }),
         ])}
         newest={false}
         freshReport={false}
@@ -211,7 +211,7 @@ describe("Turn（書き上げる演出を掛ける相手）", () => {
     const { rerender } = render(<Turn turn={turn([step({ id: 0 })])} newest freshReport={false} />)
     const grown = turn([
       step({ id: 0 }),
-      step({ id: 1, body: turnBodyText("確定した本文"), final: true }),
+      step({ id: 1, body: turnBodyText("確定した本文"), mark: "final" }),
     ])
     rerender(<Turn turn={grown} newest freshReport={false} />)
     revealed = []
@@ -239,7 +239,7 @@ describe("Turn（書き上げる演出を掛ける相手）", () => {
           step({
             id: 1,
             body: turnBodyText("確定した本文"),
-            final: true,
+            mark: "final",
             origin: { kind: "tool-report", toolUseId: "toolu_drafted" },
           }),
         ])}
@@ -268,7 +268,7 @@ describe("Turn（書き上げる演出を掛ける相手）", () => {
           step({
             id: 0,
             body: turnBodyText("確定した本文"),
-            final: true,
+            mark: "final",
             origin: { kind: "tool-report", toolUseId: "toolu_drafted" },
           }),
         ])}

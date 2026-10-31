@@ -68,14 +68,21 @@ export type PlannedPhaseState = "done" | "current" | "upcoming"
  * `entry` はその段のある要素の位置で、並列の段の中の段どうしは同じ値を持つ。
  * `key` は名前と同じ名前の段の中で何番目かの組で、組み替えた並びどうしで同じ段を引き当てるのに使う。
  */
-export type PlannedPhase = {
+export type PlannedPhase = PlannedPhaseBase &
+  (
+    | {
+        readonly state: "done"
+        /** 済んだ段のうち飛ばした段（名前が `skippedPhases` にある）。 */
+        readonly skipped: boolean
+      }
+    | { readonly state: "current" | "upcoming"; readonly skipped: false }
+  )
+
+type PlannedPhaseBase = {
   readonly index: number
   readonly name: string
   readonly key: string
   readonly entry: number
-  readonly state: PlannedPhaseState
-  /** 済んだ段のうち飛ばした段（名前が `skippedPhases` にある）。済んでいない段はいつも false。 */
-  readonly skipped: boolean
 }
 
 /**
@@ -222,14 +229,10 @@ export function plannedPhasesOf(
   return flattened.map(({ position, name }, index): PlannedPhase => {
     const occurrence = flattened.slice(0, index).filter((other) => other.name === name).length
     const state = entryPhaseState(plan, position, name)
-    return {
-      index,
-      name,
-      key: `${name}\u0000${String(occurrence)}`,
-      entry: position,
-      state,
-      skipped: state === "done" && skippedPhases.includes(name),
-    }
+    const base = { index, name, key: `${name}\u0000${String(occurrence)}`, entry: position }
+    return state === "done"
+      ? { ...base, state, skipped: skippedPhases.includes(name) }
+      : { ...base, state, skipped: false }
   })
 }
 

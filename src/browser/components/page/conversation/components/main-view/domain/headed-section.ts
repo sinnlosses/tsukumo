@@ -22,7 +22,7 @@ export function headedSectionIdsOfTurn(turn: MainViewTurn): readonly number[] {
 /** 札の本文として見せるステップ。最終レポートがあればそれ、無ければ最後の本文。 */
 export function shownTextStepOf(turn: MainViewTurn): MainViewStep | undefined {
   return (
-    turn.steps.findLast((step) => step.final && step.body.kind === "text") ??
+    turn.steps.findLast((step) => step.mark === "final" && step.body.kind === "text") ??
     turn.steps.findLast((step) => step.body.kind === "text")
   )
 }

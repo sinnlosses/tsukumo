@@ -41,7 +41,7 @@ describe("Turn（report の草稿）", () => {
     const { container } = render(
       <Turn
         turn={{
-          ...turn([step({ id: 0, body: turnBodyText("中間"), interim: true })]),
+          ...turn([step({ id: 0, body: turnBodyText("中間"), mark: "interim-kept" })]),
           drafts: [draft],
         }}
         newest

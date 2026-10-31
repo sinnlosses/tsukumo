@@ -4,9 +4,10 @@ import { describe, expect, it } from "vitest"
 import { mainViewTurns } from "../../../../src/browser/domain/main-view/main-view.ts"
 import type { ReportCheck } from "../../../../src/shared/report/report-check.ts"
 import { mainViewEntries } from "../../../../src/shared/session/main-view-entry.ts"
-import type {
-  MainViewReportRegions,
-  MainViewReportSection,
+import {
+  isInterimStep,
+  type MainViewReportRegions,
+  type MainViewReportSection,
 } from "../../../../src/shared/session/main-view-shape.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import { applySessionEvent } from "../../../../src/shared/session/session-fold.ts"
@@ -351,7 +352,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
       true,
     )
 
-    const finalBody = turn?.steps.find((step) => step.final)?.body
+    const finalBody = turn?.steps.find((step) => step.mark === "final")?.body
     expect(headOf(finalBody?.kind === "text" ? finalBody.report : undefined)?.lead).toEqual({
       kind: "conclusion",
       text: "架空の結論。",
@@ -379,7 +380,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     } as const
     const turn = turnOf([ask, report("", "架空の根拠。", "", [], task), finished], SETTLED, true)
 
-    expect(firstLineOf(turn?.steps.find((step) => step.final))).toBe("架空の作業")
+    expect(firstLineOf(turn?.steps.find((step) => step.mark === "final"))).toBe("架空の作業")
   })
 
   it("結論の無いレポートは節だけ、節の無いレポートは結論だけを出す", () => {
@@ -413,7 +414,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     )
 
     expect(shownReports(turn)).toEqual(["架空の結論。"])
-    expect(turn?.steps.find((step) => step.final)?.body).toEqual({
+    expect(turn?.steps.find((step) => step.mark === "final")?.body).toEqual({
       kind: "text",
       report: {
         ...regionsOf("架空の結論。", []),
@@ -439,8 +440,8 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
       "最後の結論。",
     ])
     const shown = (turn?.steps ?? []).filter((step) => step.body.kind === "text")
-    expect(shown.map((step) => step.interim)).toEqual([true, false])
-    expect(shown.map((step) => step.final)).toEqual([false, true])
+    expect(shown.map(isInterimStep)).toEqual([true, false])
+    expect(shown.map((step) => step.mark === "final")).toEqual([false, true])
     expect(turn?.hasInterimReport).toBe(true)
   })
 
@@ -451,7 +452,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
       true,
     )
 
-    expect(turn?.steps.find((step) => step.final)?.body).toEqual({
+    expect(turn?.steps.find((step) => step.mark === "final")?.body).toEqual({
       kind: "text",
       report: {
         ...regionsOf("唯一の結論。", []),
@@ -472,7 +473,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     )
 
     expect(shownReports(running)).toEqual(["途中の結論。"])
-    expect(running?.steps.find((step) => step.body.kind === "text")?.interim).toBe(true)
+    expect(running?.steps.find((step) => step.body.kind === "text")?.mark).toBe("interim-kept")
   })
 
   it("report が呼ばれなかったターンは、同じセッションでも最後の本文を出す", () => {

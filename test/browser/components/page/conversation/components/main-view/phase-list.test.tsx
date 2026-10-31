@@ -49,9 +49,7 @@ function interim(id: number, title: string, seconds: number, skipped = false): M
       changeSummary: { kind: "none" },
     },
     origin: { kind: "other" },
-    interim: true,
-    superseded: true,
-    final: false,
+    mark: "interim-folded",
     actions: [],
     asides: [],
   }
@@ -119,7 +117,7 @@ describe("PhaseList", () => {
   })
 
   it("最終レポートのあるやり取りでは、中間レポートがあっても何も描かない（経過の畳みで読む）", () => {
-    const finalStep: MainViewStep = { ...interim(2, "最終", 1), interim: false, final: true }
+    const finalStep: MainViewStep = { ...interim(2, "最終", 1), mark: "final" }
     renderList({ ...TURN, steps: [interim(0, "段A", 1), interim(1, "段B", 1), finalStep] })
     expect(document.body.textContent).toBe("")
   })

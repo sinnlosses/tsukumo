@@ -2,6 +2,7 @@
 import { describe, expect, it } from "vitest"
 
 import { mainViewTurns } from "../../../../src/browser/domain/main-view/main-view.ts"
+import { isInterimStep } from "../../../../src/shared/session/main-view-shape.ts"
 import { MAX_SESSION_STATE_TURNS } from "../../../../src/shared/session/session-record.ts"
 import {
   detail,
@@ -168,8 +169,8 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
       undefined,
       "架空の答え。直しておいた。",
     ])
-    expect(steps.map((step) => step.final)).toEqual([false, false, true])
-    expect(steps.map((step) => step.interim)).toEqual([false, false, false])
+    expect(steps.map((step) => step.mark === "final")).toEqual([false, false, true])
+    expect(steps.map(isInterimStep)).toEqual([false, false, false])
     expect(turns[0]?.hasInterimReport).toBe(false)
   })
 
@@ -182,7 +183,7 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
 
     const steps = turns[0]?.steps ?? []
     expect(steps.map((step) => reportOf(step))).toEqual([undefined, "A made-up English line."])
-    expect(steps.map((step) => step.final)).toEqual([false, true])
+    expect(steps.map((step) => step.mark === "final")).toEqual([false, true])
   })
 
   it("空白だけの本文は選ばず、その手前の本文を最終レポートにする", () => {
@@ -194,14 +195,14 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
 
     const steps = turns[0]?.steps ?? []
     expect(steps.map((step) => reportOf(step))).toEqual(["架空の答え。", undefined])
-    expect(steps.map((step) => step.final)).toEqual([true, false])
+    expect(steps.map((step) => step.mark === "final")).toEqual([true, false])
   })
 
   it("短い返事だけのターン（ツールを1度も呼ばない）でも、締めの本文は残る", () => {
     const turns = mainViewTurns([request("依頼"), detail("文章だけで答える")], SETTLED, true)
 
     expect(reportOf(turns[0]?.steps[0])).toBe("文章だけで答える")
-    expect(turns[0]?.steps[0]?.final).toBe(true)
+    expect(turns[0]?.steps[0]?.mark).toBe("final")
   })
 
   it("質問の直前に書いた本文が最後なら、それが最終レポートになる", () => {
@@ -214,7 +215,7 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
     const steps = turns[0]?.steps ?? []
     expect(reportOf(steps[0])).toBe("比べた結果はこう")
     expect(steps[0]?.actions).toHaveLength(1)
-    expect(steps[0]?.interim).toBe(false)
+    expect(steps[0]?.mark).toBe("final")
   })
 
   it("最初の依頼より前の記録も、request 無しのターンとして残す", () => {
@@ -266,8 +267,7 @@ describe("mainViewTurns（追い越された中間レポートを畳む印）", 
     )
 
     const steps = turns[0]?.steps ?? []
-    expect(steps.map((step) => step.interim)).toEqual([true, false])
-    expect(steps.map((step) => step.superseded)).toEqual([true, false])
+    expect(steps.map((step) => step.mark)).toEqual(["interim-folded", "final"])
   })
 
   it("いちばん後ろの中間レポート（まだ追い越されていない）には superseded が立たない", () => {
@@ -283,8 +283,7 @@ describe("mainViewTurns（追い越された中間レポートを畳む印）", 
       false,
     )
 
-    expect(turns[0]?.steps[0]?.interim).toBe(true)
-    expect(turns[0]?.steps[0]?.superseded).toBe(false)
+    expect(turns[0]?.steps[0]?.mark).toBe("interim-kept")
   })
 
   it("<summary> に出す文字列は先頭行から作られる（見出しなら記号を落としてその語）", () => {
@@ -347,8 +346,8 @@ describe("mainViewTurns（最終レポートの印）", () => {
     )
 
     const steps = turns[0]?.steps ?? []
-    expect(steps.map((step) => step.interim)).toEqual([true, false])
-    expect(steps.map((step) => step.final)).toEqual([false, false])
+    expect(steps.map(isInterimStep)).toEqual([true, false])
+    expect(steps.map((step) => step.mark === "final")).toEqual([false, false])
   })
 
   // ターンは `turn-finished` で終わっていて本文は確定扱い（`unsettled.report` は false）だが、
@@ -363,8 +362,8 @@ describe("mainViewTurns（最終レポートの印）", () => {
     )
 
     const steps = turns[0]?.steps ?? []
-    expect(steps.map((step) => step.interim)).toEqual([true, false])
-    expect(steps.map((step) => step.final)).toEqual([false, false])
+    expect(steps.map(isInterimStep)).toEqual([true, false])
+    expect(steps.map((step) => step.mark === "final")).toEqual([false, false])
     expect(turns[0]?.hasInterimReport).toBe(true)
   })
 
@@ -376,7 +375,7 @@ describe("mainViewTurns（最終レポートの印）", () => {
     )
 
     const steps = turns[0]?.steps ?? []
-    expect(steps.map((step) => step.final)).toEqual([false, true])
+    expect(steps.map((step) => step.mark === "final")).toEqual([false, true])
   })
 
   it("前のやり取りは、いちばん新しいやり取りが閉じていなくても final が立ったまま", () => {
@@ -386,7 +385,7 @@ describe("mainViewTurns（最終レポートの印）", () => {
       false,
     )
 
-    expect(turns[0]?.steps[0]?.final).toBe(true)
+    expect(turns[0]?.steps[0]?.mark).toBe("final")
   })
 })
 
@@ -407,8 +406,8 @@ describe("mainViewTurns（report の無いターンが進行中のあいだは�
     const streaming = mainViewTurns([request("依頼"), detail(material)], WRITING, false)
     const settled = mainViewTurns([request("依頼"), detail(material)], SETTLED, true)
 
-    expect(streaming[0]?.steps.map((step) => step.final)).toEqual([false])
-    expect(settled[0]?.steps.map((step) => step.final)).toEqual([true])
+    expect(streaming[0]?.steps.map((step) => step.mark === "final")).toEqual([false])
+    expect(settled[0]?.steps.map((step) => step.mark === "final")).toEqual([true])
   })
 
   it("進行中に隠すのはいちばん新しいターンだけで、前のターンの最終レポートは残る", () => {

@@ -175,7 +175,7 @@ describe("mainViewTurnsOf（最終レポートの札は、やり取りが閉じ�
   const finalStep = (state: SessionState) =>
     mainViewTurnsOf(state)
       .at(-1)
-      ?.steps.find((step) => step.body.kind === "text" && step.final)
+      ?.steps.find((step) => step.body.kind === "text" && step.mark === "final")
 
   it("続きのターンが動いているあいだも final を立てない", () => {
     const running = fold([

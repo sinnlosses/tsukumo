@@ -35,7 +35,7 @@
 
 ### 最終レポート
 
-- **英語識別子**: `final`（`MainViewStep.final`）
+- **英語識別子**: `final`（`MainViewStep.mark` の値）
 - **定義**: **そのやり取りで最後の、中間でない本文**。`report` ツールが呼ばれたターンでは
   最後の呼び出し、呼ばれなかったターンでは最後の本文（`browser/domain/main-view/main-view.ts` の `markFinalReport` /
   `selectLastText`）。ラベル「最終レポート」（目録の1行の頭）が出るのは、同じやり取りに中間レポートがあるときか、
@@ -88,7 +88,7 @@
   時点で中間と決まるのでターンが動いているあいだも出る
 - **注記**: `report` も段のまとめも無いターンには中間レポートは無い（最後の本文だけを出す）。規則は
   `docs/architecture/display.md` 4.2 が正典
-- **注記**: あとに別のレポートが出た中間レポートは `<details>` で畳む（`MainViewStep.superseded` /
+- **注記**: あとに別のレポートが出た中間レポートは `<details>` で畳む（`MainViewStep.mark` の `interim-folded` /
   `firstLine`）。まだ追い越されていない最後の1件だけは開いたまま。規則は `docs/architecture/display.md`
   4.2 が正典
 - **避ける言い方**: 途中経過、進捗レポート、速報

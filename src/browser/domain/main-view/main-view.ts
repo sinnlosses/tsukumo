@@ -5,6 +5,7 @@ import { sum } from "remeda"
 
 import { NO_REPORT_CHANGE_SUMMARY } from "../../../shared/report/report-change-summary.ts"
 import {
+  isInterimStep,
   type MainViewDraft,
   type MainViewEntry,
   type MainViewStep,
@@ -106,7 +107,9 @@ function selectLastText(turn: MainViewTurn, settled: boolean): MainViewTurn {
   const lastId = settled
     ? turn.steps.findLast(
         (step) =>
-          !step.interim && step.body.kind === "text" && reportDrawsAnything(step.body.report),
+          !isInterimStep(step) &&
+          step.body.kind === "text" &&
+          reportDrawsAnything(step.body.report),
       )?.id
     : undefined
   return {
@@ -122,7 +125,7 @@ function selectLastText(turn: MainViewTurn, settled: boolean): MainViewTurn {
  * 段のまとめは届いた時点で中間レポートと決まるので、ターンが動いているあいだも伏せず、最後の本文・最後の `report` の候補にもしない。
  */
 function isDecidedStep(step: MainViewStep): boolean {
-  return step.body.kind === "none" || step.interim
+  return step.body.kind === "none" || isInterimStep(step)
 }
 
 /**
@@ -146,7 +149,7 @@ function selectToolReports(
         return isDecidedStep(step) ? step : { ...step, body: NO_BODY }
       }
       if (step.id !== lastId) {
-        return { ...step, interim: true }
+        return { ...step, mark: "interim-kept" }
       }
       return settled ? step : { ...step, body: NO_BODY }
     }),
@@ -175,9 +178,8 @@ function heldReportDrafts(
 }
 
 /**
- * 各ステップに「自分より後ろに本文を持つステップがあるか」（`superseded`）を立てる。
- * `interim` の判定そのもの（{@link selectToolReports}）は変えず、ここで足すのは「畳むかどうか」の材料だけ。
- * 位置関係だけで決まる値なので、`interim` かどうかを問わず全ステップに立てる（畳む側で `interim` と組み合わせる）。
+ * 自分より後ろに本文を持つステップがある中間レポート（{@link selectToolReports}）を、畳む印（`interim-folded`）に替える。
+ * 中間レポートかどうかの判定そのものは変えない。
  */
 function markSupersededSteps(turn: MainViewTurn): MainViewTurn {
   const { steps } = turn.steps.reduceRight<{
@@ -185,7 +187,12 @@ function markSupersededSteps(turn: MainViewTurn): MainViewTurn {
     followedByReport: boolean
   }>(
     (acc, step) => ({
-      steps: [{ ...step, superseded: acc.followedByReport }, ...acc.steps],
+      steps: [
+        acc.followedByReport && step.mark === "interim-kept"
+          ? { ...step, mark: "interim-folded" }
+          : step,
+        ...acc.steps,
+      ],
       followedByReport: acc.followedByReport || step.body.kind === "text",
     }),
     { steps: [], followedByReport: false },
@@ -203,38 +210,34 @@ function markSupersededSteps(turn: MainViewTurn): MainViewTurn {
  * 印を立てた本文は頭を最終のときの頭に替える（段ごとの所要時間を出すのは最終レポートだけ。{@link finalReportBody}）。
  * 変更の札は印を立てた `task` のある本文にだけ残し、ほかの本文では `none` に戻す。
  *
- * `closed` が false のとき（{@link mainViewTurns} の同名の引数）は `final` を1つも立てない。
+ * `closed` が false のとき（{@link mainViewTurns} の同名の引数）は `final` の印を1つも付けない。
  * やり取りがまだ閉じていないあいだは、次の `report` が来てこの本文が中間レポートへ回るかもしれないので、確定していないものに最終レポートの札（ラベルも箱を外すことも）を立てない。
- * `hasInterimReport` は `closed` に関係なく `interim` の集計のまま。
+ * `hasInterimReport` は `closed` に関係なく中間レポートの集計のまま。
  *
- * `interim` の判定（{@link selectToolReports}）も `superseded`（{@link markSupersededSteps}）も変えない。
+ * 中間レポートの判定（{@link selectToolReports}）も畳む印（{@link markSupersededSteps}）も変えない。
  */
 function markFinalReport(turn: MainViewTurn, closed: boolean): MainViewTurn {
   const finalId = closed
-    ? turn.steps.findLast((step) => step.body.kind === "text" && !step.interim)?.id
+    ? turn.steps.findLast((step) => step.body.kind === "text" && !isInterimStep(step))?.id
     : undefined
   return {
     ...turn,
     steps: turn.steps.map((step) => {
       if (step.body.kind === "none") {
-        return { ...step, final: false }
+        return step
       }
       if (step.id !== finalId) {
-        return {
-          ...step,
-          body: { ...step.body, changeSummary: NO_REPORT_CHANGE_SUMMARY },
-          final: false,
-        }
+        return { ...step, body: { ...step.body, changeSummary: NO_REPORT_CHANGE_SUMMARY } }
       }
       const changeSummary =
         step.body.task.kind === "task" ? step.body.changeSummary : NO_REPORT_CHANGE_SUMMARY
       return {
         ...step,
         body: { ...step.body, report: finalReportBody(step.body.report), changeSummary },
-        final: true,
+        mark: "final",
       }
     }),
-    hasInterimReport: turn.steps.some((step) => step.interim),
+    hasInterimReport: turn.steps.some(isInterimStep),
   }
 }
 

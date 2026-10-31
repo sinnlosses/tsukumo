@@ -204,15 +204,16 @@ export type MainViewTurnFailure =
  *
  * `body` は画面に出す本文（{@link MainViewStepBody}）。
  *
- * `interim` は、その本文が中間レポート（`report` ツールの最後でない呼び出し〔`selectToolReports`〕か、段のまとめ〔`groupIntoSteps`〕）かどうか。`body` が `none` のときは常に false。
+ * `mark` は、その本文の扱い（{@link MainViewStepMark}）。
  *
- * `superseded` は、自分より後ろに本文を持つステップがあるか（`markSupersededSteps`）。
- * `interim && superseded` のときだけ描く側が畳む。本文を持たないステップでも立つ。
+ * `interim-kept` / `interim-folded` は中間レポート（`report` ツールの最後でない呼び出し〔`selectToolReports`〕か、段のまとめ〔`groupIntoSteps`〕）。
+ * 自分より後ろに本文を持つステップがあれば（`markSupersededSteps`）`interim-folded` で、描く側が畳む。
+ * `body` が `none` のステップは常に `plain`。
  *
- * `final` は、その本文が最終レポート（そのやり取りで最後の、中間でない本文）かどうか（`markFinalReport`）。
+ * `final` は、その本文が最終レポート（そのやり取りで最後の、中間でない本文）（`markFinalReport`）。
  * 箱を外してラベルを載せる印（`.main-step.is-final`）で、書き上げる演出を掛ける相手を選ぶのにも使う。
  * ラベルを出すかどうかはこれだけでは決まらない（`MainViewTurn.hasInterimReport` と本文の `task` と組み合わせる）。
- * いちばん新しいやり取りでは、やり取りが閉じているときだけ立つ（`mainViewTurns` の `closed` 引数）。
+ * いちばん新しいやり取りでは、やり取りが閉じているときだけ付く（`mainViewTurns` の `closed` 引数）。
  *
  * `id` は、そのやり取りの中で作られた順に先頭から数えた通し番号。
  * `limitTurnEntries` が上限を超えた分を古いほうから落としても、残ったステップの `id` は変わらない（`groupIntoSteps` で、落とす前に振る）。
@@ -223,12 +224,16 @@ export type MainViewStep = {
   readonly id: number
   readonly body: MainViewStepBody
   readonly origin: MainViewStepOrigin
-  readonly interim: boolean
-  readonly superseded: boolean
-  readonly final: boolean
+  readonly mark: MainViewStepMark
   readonly actions: readonly MainViewAction[]
   /** このステップの後ろに足す脇の話（古い順）。 */
   readonly asides: readonly MainViewAside[]
+}
+
+export type MainViewStepMark = "plain" | "interim-kept" | "interim-folded" | "final"
+
+export function isInterimStep(step: Pick<MainViewStep, "mark">): boolean {
+  return step.mark === "interim-kept" || step.mark === "interim-folded"
 }
 
 /**

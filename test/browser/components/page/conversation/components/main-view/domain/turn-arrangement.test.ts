@@ -5,13 +5,14 @@ import {
   progressFoldSummary,
   type ProgressEntry,
 } from "../../../../../../../../src/browser/components/page/conversation/components/main-view/domain/turn-arrangement.ts"
-import type {
-  MainViewAside,
-  MainViewPhaseLabel,
-  MainViewQuestion,
-  MainViewStep,
-  MainViewTurn,
-  MainViewTurnFailure,
+import {
+  isInterimStep,
+  type MainViewAside,
+  type MainViewPhaseLabel,
+  type MainViewQuestion,
+  type MainViewStep,
+  type MainViewTurn,
+  type MainViewTurnFailure,
 } from "../../../../../../../../src/shared/session/main-view-shape.ts"
 
 type StepShape = {
@@ -44,9 +45,7 @@ function step(id: number, shape: StepShape): MainViewStep {
             changeSummary: { kind: "none" },
           },
     origin: { kind: "other" },
-    interim: shape.kind === "interim",
-    superseded: shape.kind === "interim",
-    final: shape.kind === "final",
+    mark: shape.kind === "interim" ? "interim-folded" : shape.kind === "final" ? "final" : "plain",
     actions: shape.questions,
     asides: shape.asides,
   }
@@ -60,7 +59,7 @@ function turn(
     id: 1,
     request: { text: "架空の依頼", images: [] },
     steps,
-    hasInterimReport: steps.some((entry) => entry.interim),
+    hasInterimReport: steps.some(isInterimStep),
     droppedCount: 0,
     failure,
     drafts: [],

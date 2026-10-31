@@ -25,9 +25,7 @@ export function step(overrides: Partial<MainViewStep> & { readonly id: number })
   return {
     body: { kind: "none" },
     origin: { kind: "other" },
-    interim: false,
-    superseded: false,
-    final: false,
+    mark: "plain",
     actions: [],
     asides: [],
     ...overrides,

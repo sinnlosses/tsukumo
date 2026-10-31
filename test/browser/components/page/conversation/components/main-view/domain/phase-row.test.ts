@@ -41,9 +41,7 @@ function step(
       changeSummary: { kind: "none" },
     },
     origin: { kind: "other" },
-    interim: overrides.interim,
-    superseded: false,
-    final: !overrides.interim,
+    mark: overrides.interim ? "interim-kept" : "final",
     actions: [],
     asides: [],
   }

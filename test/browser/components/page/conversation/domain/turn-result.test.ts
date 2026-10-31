@@ -24,9 +24,7 @@ function reportStep(id: number, task: ReportTask): MainViewStep {
       changeSummary: { kind: "none" },
     },
     origin: { kind: "other" },
-    interim: false,
-    superseded: false,
-    final: true,
+    mark: "final",
     actions: [],
     asides: [],
   }
@@ -37,9 +35,7 @@ function emptyStep(id: number): MainViewStep {
     id,
     body: { kind: "none" },
     origin: { kind: "other" },
-    interim: false,
-    superseded: false,
-    final: false,
+    mark: "plain",
     actions: [],
     asides: [],
   }

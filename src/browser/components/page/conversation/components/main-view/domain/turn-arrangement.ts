@@ -4,13 +4,14 @@
 
 import { sum } from "remeda"
 
-import type {
-  MainViewAction,
-  MainViewAside,
-  MainViewPhaseLabel,
-  MainViewQuestion,
-  MainViewStep,
-  MainViewTurn,
+import {
+  isInterimStep,
+  type MainViewAction,
+  type MainViewAside,
+  type MainViewPhaseLabel,
+  type MainViewQuestion,
+  type MainViewStep,
+  type MainViewTurn,
 } from "../../../../../../../shared/session/main-view-shape.ts"
 import {
   formatMeasured,
@@ -45,9 +46,9 @@ type TurnArrangement =
 
 const ARRIVAL = { kind: "arrival" } as const satisfies TurnArrangement
 
-/** 最終レポートの印（`MainViewStep.final`）が立ったステップがあるときだけ `final-first` にする。 */
+/** 最終レポートの印（`MainViewStep.mark` が `final`）の付いたステップがあるときだけ `final-first` にする。 */
 export function arrangeTurn(turn: MainViewTurn): TurnArrangement {
-  const final = turn.steps.find((step) => step.final)
+  const final = turn.steps.find((step) => step.mark === "final")
   if (final === undefined) {
     return ARRIVAL
   }
@@ -90,7 +91,7 @@ function besidesOf(step: MainViewStep): readonly TurnBeside[] {
 /** ステップごとに、中間レポートの本文、続けてそのステップの質問の記録の順に並べる。 */
 function progressOf(step: MainViewStep): readonly ProgressEntry[] {
   const interim: readonly ProgressEntry[] =
-    step.interim && step.body.kind === "text" ? [{ kind: "interim", step }] : []
+    isInterimStep(step) && step.body.kind === "text" ? [{ kind: "interim", step }] : []
   const questions = step.actions
     .filter(isQuestion)
     .map((entry): ProgressEntry => ({ kind: "question", entry }))

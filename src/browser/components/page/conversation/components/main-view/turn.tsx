@@ -7,11 +7,12 @@ import clsx from "clsx"
 import { Fragment, useState, type ReactElement } from "react"
 
 import type { ReportTask } from "../../../../../../shared/report/report-task.ts"
-import type {
-  MainViewAction,
-  MainViewStep,
-  MainViewStepBody,
-  MainViewTurn,
+import {
+  isInterimStep,
+  type MainViewAction,
+  type MainViewStep,
+  type MainViewStepBody,
+  type MainViewTurn,
 } from "../../../../../../shared/session/main-view-shape.ts"
 import { formatMeasured } from "../../../../../../shared/utils/elapsed-time.ts"
 import { useExternalSync } from "../../../../../hooks/use-external-sync.ts"
@@ -181,12 +182,12 @@ function Step(props: StepProps): ReactElement | null {
 /**
  * ステップの本文と質問の記録の札。
  *
- * 中間レポート（`step.interim`）は話が途中の本文なので、目録の1行にラベルを載せて地と枠を変える（`.main-step.is-interim`）。
+ * 中間レポート（`step.mark` が `interim-kept` か `interim-folded`）は話が途中の本文なので、目録の1行にラベルを載せて地と枠を変える（`.main-step.is-interim`）。
  *
- * 最終レポート（`step.final`）は箱を外し（`.main-step.is-final`）、目録の1行にラベルを載せる。
+ * 最終レポート（`step.mark` が `final`）は箱を外し（`.main-step.is-final`）、目録の1行にラベルを載せる。
  * ラベルを出すのは `finalLabel` が立っているとき（中間レポートのあるやり取りか、本文に `task` があるときだけ。どちらも無ければ「最終」が何も区別しない）。
  *
- * 後ろに別のレポートが現れた中間レポート（`step.superseded`）は、何件も開いたまま積まれると見通しが悪いので畳む。
+ * 後ろに別のレポートが現れた中間レポート（`interim-folded`）は、何件も開いたまま積まれると見通しが悪いので畳む。
  * 畳んだ分は `<details>` にして、開いたときに初めて中身を描き、開いたあとは閉じても DOM に残す。まだ追い越されていない最後の中間レポートは開いた `<section>` のまま。
  * 畳むのは本文だけで、質問の記録は畳みの外に出す。
  */
@@ -197,12 +198,12 @@ function StepCard(props: StepProps): ReactElement {
     <QuestionRecord entry={question} key={question.toolUseId} />
   ))
 
-  if (!(step.interim && step.superseded)) {
+  if (step.mark !== "interim-folded") {
     return (
       <section
         className={clsx(
           stepClassName(step),
-          step.interim && questions.length === 0 && styles["phone-hidden"],
+          isInterimStep(step) && questions.length === 0 && styles["phone-hidden"],
         )}
         {...{ [REPORT_STEP_ATTRIBUTE]: step.body.kind === "text" ? "" : undefined }}
       >
@@ -212,7 +213,7 @@ function StepCard(props: StepProps): ReactElement {
           reveal={props.reveal}
           hasInterimReport={props.hasInterimReport}
           folded={false}
-          phoneHidden={step.interim}
+          phoneHidden={isInterimStep(step)}
         />
         {questionCards}
       </section>
@@ -379,18 +380,18 @@ function reportLabel(
   hasInterimReport: boolean,
   folded: boolean,
 ): ReportLabel {
-  if (step.interim) {
+  if (isInterimStep(step)) {
     return folded ? "none" : "interim"
   }
-  return step.final && (hasInterimReport || task.kind === "task") ? "final" : "none"
+  return step.mark === "final" && (hasInterimReport || task.kind === "task") ? "final" : "none"
 }
 
 /** ステップの器に付ける class。器の形（`is-interim` の破線の箱 / `is-final` の箱なし）は互いに立たない。 */
 function stepClassName(step: MainViewStep): string {
   return clsx(
     styles["main-step"],
-    step.interim && styles["is-interim"],
-    !step.interim && step.final && styles["is-final"],
+    isInterimStep(step) && styles["is-interim"],
+    step.mark === "final" && styles["is-final"],
   )
 }
 
@@ -400,7 +401,7 @@ function stepClassName(step: MainViewStep): string {
  * 選び方そのものは `markFinalReport` が済ませてある。
  */
 function finalReportStep(turn: MainViewTurn): MainViewStep | undefined {
-  return turn.steps.find((step) => step.final)
+  return turn.steps.find((step) => step.mark === "final")
 }
 
 /** 畳んだ中間レポートの `<summary>` に出す文字列。先頭行が無ければラベルだけ。 */

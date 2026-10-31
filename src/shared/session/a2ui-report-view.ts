@@ -48,9 +48,7 @@ export function a2uiReportView(
     components,
     sections: Object.fromEntries(
       regions.flatMap(({ section, piece, regionId }) =>
-        section.role === "body" &&
-        section.componentId !== undefined &&
-        joinParts([piece.heading, ...piece.blocks]) !== ""
+        section.role === "body" && joinParts([piece.heading, ...piece.blocks]) !== ""
           ? [[section.componentId, { regionId, heading: piece.heading }]]
           : [],
       ),

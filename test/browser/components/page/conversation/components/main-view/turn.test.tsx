@@ -110,7 +110,7 @@ describe("Turn（目録の1行と見出し）", () => {
     putSession(INITIAL_SESSION_STATE)
     render(
       <Turn
-        turn={turn([step({ id: 0, body: taskBody("架空の本文"), final: true })])}
+        turn={turn([step({ id: 0, body: taskBody("架空の本文"), mark: "final" })])}
         newest
         freshReport={false}
       />,
@@ -130,7 +130,7 @@ describe("Turn（目録の1行と見出し）", () => {
       mixed: false,
     })
     const { container } = render(
-      <Turn turn={turn([step({ id: 0, body, final: true })])} newest freshReport={false} />,
+      <Turn turn={turn([step({ id: 0, body, mark: "final" })])} newest freshReport={false} />,
     )
 
     expect(container.querySelector("header > p")?.textContent).toBe(
@@ -149,7 +149,7 @@ describe("Turn（目録の1行と見出し）", () => {
       mixed: true,
     })
     const { container } = render(
-      <Turn turn={turn([step({ id: 0, body, final: true })])} newest freshReport={false} />,
+      <Turn turn={turn([step({ id: 0, body, mark: "final" })])} newest freshReport={false} />,
     )
 
     expect(container.querySelector("header > p")?.textContent).toBe(
@@ -161,7 +161,7 @@ describe("Turn（目録の1行と見出し）", () => {
     putSession(INITIAL_SESSION_STATE)
     const { container } = render(
       <Turn
-        turn={turn([step({ id: 0, body: taskBody("架空の本文"), final: true })])}
+        turn={turn([step({ id: 0, body: taskBody("架空の本文"), mark: "final" })])}
         newest
         freshReport={false}
       />,
@@ -196,7 +196,7 @@ describe("Turn（目録の1行と見出し）", () => {
     })
     render(
       <Turn
-        turn={turn([step({ id: 0, body: taskBody("架空の本文"), final: true })])}
+        turn={turn([step({ id: 0, body: taskBody("架空の本文"), mark: "final" })])}
         newest
         freshReport={false}
       />,
@@ -237,8 +237,7 @@ describe("Turn（畳んだ中間レポートの見出し）", () => {
   function phaseStep(id: number, skipped: boolean): MainViewStep {
     return step({
       id,
-      interim: true,
-      superseded: true,
+      mark: "interim-folded",
       body: {
         kind: "text",
         report: { kind: "markdown", markdown: "架空のまとめ" },
@@ -259,7 +258,7 @@ describe("Turn（畳んだ中間レポートの見出し）", () => {
     putSession(INITIAL_SESSION_STATE)
     const { container } = render(
       <Turn
-        turn={turn([phaseStep(0, false), phaseStep(1, true), step({ id: 2, final: true })])}
+        turn={turn([phaseStep(0, false), phaseStep(1, true), step({ id: 2, mark: "final" })])}
         newest
         freshReport={false}
       />,
@@ -283,8 +282,8 @@ describe("Turn（脇の話の欄の位置）", () => {
     const { container } = render(
       <Turn
         turn={turn([
-          step({ id: 0, body: turnBodyText("1つ目の本文"), interim: true, asides: [aside] }),
-          step({ id: 1, body: turnBodyText("2つ目の本文"), interim: true }),
+          step({ id: 0, body: turnBodyText("1つ目の本文"), mark: "interim-kept", asides: [aside] }),
+          step({ id: 1, body: turnBodyText("2つ目の本文"), mark: "interim-kept" }),
         ])}
         newest
         freshReport={false}
@@ -309,11 +308,10 @@ describe("Turn（脇の話の欄の位置）", () => {
           step({
             id: 0,
             body: turnBodyText("中間の本文"),
-            interim: true,
-            superseded: true,
+            mark: "interim-folded",
             asides: [aside],
           }),
-          step({ id: 1, body: turnBodyText("最終の本文"), final: true }),
+          step({ id: 1, body: turnBodyText("最終の本文"), mark: "final" }),
         ])}
         newest
         freshReport={false}
@@ -344,14 +342,14 @@ describe("Turn（脇の話の欄の位置）", () => {
 
 describe("Turn（経過の畳み）", () => {
   const interims = [0, 1, 2].map((id) =>
-    step({ id, body: turnBodyText(`中間${String(id)}`), interim: true, superseded: true }),
+    step({ id, body: turnBodyText(`中間${String(id)}`), mark: "interim-folded" }),
   )
 
   it("閉じたやり取りでは、最終レポートの下に経過の畳みが1つだけ出て、中は届いた順の1行の畳み", () => {
     putSession(INITIAL_SESSION_STATE)
     const { container } = render(
       <Turn
-        turn={turn([...interims, step({ id: 3, body: turnBodyText("最終"), final: true })])}
+        turn={turn([...interims, step({ id: 3, body: turnBodyText("最終"), mark: "final" })])}
         newest
         freshReport={false}
       />,
@@ -384,7 +382,7 @@ describe("Turn（経過の畳み）", () => {
     putSession(INITIAL_SESSION_STATE)
     const { container } = render(
       <Turn
-        turn={turn([...interims, step({ id: 3, body: turnBodyText("最終"), final: true })])}
+        turn={turn([...interims, step({ id: 3, body: turnBodyText("最終"), mark: "final" })])}
         newest
         freshReport={false}
       />,
@@ -403,7 +401,7 @@ describe("Turn（経過の畳み）", () => {
     putSession(INITIAL_SESSION_STATE)
     const closed = render(
       <Turn
-        turn={turn([...interims, step({ id: 3, body: turnBodyText("最終"), final: true })])}
+        turn={turn([...interims, step({ id: 3, body: turnBodyText("最終"), mark: "final" })])}
         newest
         freshReport={false}
       />,
@@ -447,14 +445,13 @@ describe("Turn（経過の畳み）", () => {
           step({
             id: 0,
             body: turnBodyText("中間"),
-            interim: true,
-            superseded: true,
+            mark: "interim-folded",
             actions: [askedStep(0, "中間の質問")],
           }),
           step({
             id: 1,
             body: turnBodyText("最終"),
-            final: true,
+            mark: "final",
             actions: [askedStep(1, "最終の質問")],
           }),
         ])}
@@ -483,7 +480,7 @@ describe("Turn（経過の畳み）", () => {
           step({
             id: 0,
             body: turnBodyText("最終"),
-            final: true,
+            mark: "final",
             actions: [askedStep(0, "ただ1つの質問")],
           }),
         ])}
@@ -517,7 +514,7 @@ describe("Turn（経過の畳み）", () => {
     putSession(INITIAL_SESSION_STATE)
     const { container } = render(
       <Turn
-        turn={turn([step({ id: 0, body: turnBodyText("最終"), final: true })])}
+        turn={turn([step({ id: 0, body: turnBodyText("最終"), mark: "final" })])}
         newest
         freshReport={false}
       />,

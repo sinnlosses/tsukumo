@@ -21,15 +21,20 @@ export type DrawnEntry = {
   readonly block: ReportBlock
 }
 
-export type DrawnSection = {
-  readonly role: "figure" | "body" | "retrospective"
-  /** 本文の節になった根の子の部品の ID。図・振り返りは無い。 */
-  readonly componentId: string | undefined
+type DrawnSectionBase = {
   readonly heading: string
   readonly entries: readonly DrawnEntry[]
   /** `entries` の塊を並べた節。組み立ての関数がこの形を受ける。 */
   readonly section: ReportBlockSection
 }
+
+/** 本文の節は、元になった根の子の部品の ID を持つ。図・振り返りは持たない。 */
+export type DrawnSection =
+  | (DrawnSectionBase & { readonly role: "body"; readonly componentId: string })
+  | (DrawnSectionBase & {
+      readonly role: "figure" | "retrospective"
+      readonly componentId: undefined
+    })
 
 export type DrawnReport = {
   readonly sections: readonly DrawnSection[]
@@ -50,8 +55,7 @@ export function drawnReportOf(
     return entries.length === 0
       ? []
       : [
-          drawnSection(
-            "body",
+          bodySection(
             section.kind === "section" ? section.heading : "",
             entries,
             section.componentId,
@@ -60,7 +64,7 @@ export function drawnReportOf(
   })
   return {
     sections: [
-      ...(figure.length === 0 ? [] : [drawnSection("figure", "", figure, undefined)]),
+      ...(figure.length === 0 ? [] : [drawnSection("figure", "", figure)]),
       ...body,
       ...(scope === "whole" ? retrospectiveOf(components, tidied.outline.retrospective) : []),
     ],
@@ -77,16 +81,11 @@ function retrospectiveOf(
     return []
   }
   return [
-    drawnSection(
-      "retrospective",
-      "振り返り",
-      [
-        synthesized(summary),
-        ...entriesOfLeaves(leaves),
-        ...(drafts.length === 0 ? [] : [synthesized(retrospectiveDraftsLine(drafts))]),
-      ],
-      undefined,
-    ),
+    drawnSection("retrospective", "振り返り", [
+      synthesized(summary),
+      ...entriesOfLeaves(leaves),
+      ...(drafts.length === 0 ? [] : [synthesized(retrospectiveDraftsLine(drafts))]),
+    ]),
   ]
 }
 
@@ -102,16 +101,21 @@ function entriesOfLeaves(leaves: readonly ReportOutlineLeaf[]): readonly DrawnEn
 }
 
 function drawnSection(
-  role: DrawnSection["role"],
+  role: "figure" | "retrospective",
   heading: string,
   entries: readonly DrawnEntry[],
-  componentId: string | undefined,
 ): DrawnSection {
-  return {
-    role,
-    componentId,
-    heading,
-    entries,
-    section: { heading, blocks: entries.map((entry) => entry.block) },
-  }
+  return { role, componentId: undefined, heading, entries, section: sectionOf(heading, entries) }
+}
+
+function bodySection(
+  heading: string,
+  entries: readonly DrawnEntry[],
+  componentId: string,
+): DrawnSection {
+  return { role: "body", componentId, heading, entries, section: sectionOf(heading, entries) }
+}
+
+function sectionOf(heading: string, entries: readonly DrawnEntry[]): ReportBlockSection {
+  return { heading, blocks: entries.map((entry) => entry.block) }
 }

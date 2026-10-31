@@ -6,7 +6,7 @@ import { step, turnBodyText } from "../../../../../../../fixture/turn.ts"
 const FINAL = step({
   id: 2,
   body: turnBodyText("架空の最終"),
-  final: true,
+  mark: "final",
   origin: { kind: "tool-report", toolUseId: "toolu_final" },
 })
 

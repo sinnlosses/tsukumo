@@ -1,11 +1,12 @@
 // 狭い画面の「済んだ段 · 中間レポート」の一覧の行。
 // やり取りのステップのうち本文を持つ中間レポート（段のまとめと `report` ツールの途中の本文）を、古い順に1行ずつにする。
 
-import type {
-  MainViewPhaseLabel,
-  MainViewStep,
-  MainViewStepBody,
-  MainViewTurn,
+import {
+  isInterimStep,
+  type MainViewPhaseLabel,
+  type MainViewStep,
+  type MainViewStepBody,
+  type MainViewTurn,
 } from "../../../../../../../shared/session/main-view-shape.ts"
 import { doneMarkOf } from "../../../../../../domain/phase-mark.ts"
 
@@ -63,7 +64,7 @@ export function neighborRow(
 }
 
 function isInterimText(step: MainViewStep): step is MainViewStep & { readonly body: TextBody } {
-  return step.interim && step.body.kind === "text"
+  return isInterimStep(step) && step.body.kind === "text"
 }
 
 function titleOf(body: TextBody): string {

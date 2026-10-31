@@ -179,7 +179,7 @@ function replaceStep(
   return steps.map((current, currentIndex) => (currentIndex === index ? step : current))
 }
 
-/** 作ったばかりのステップ。印（`interim` / `superseded` / `final`）はあとのパスが立てる。 */
+/** 作ったばかりのステップ。印（`mark`）はあとのパスが付ける。 */
 function newStep(
   id: number,
   body: MainViewStepBody,
@@ -190,9 +190,7 @@ function newStep(
     id,
     body,
     origin,
-    interim: false,
-    superseded: false,
-    final: false,
+    mark: "plain",
     actions,
     asides: [],
   }
@@ -200,7 +198,7 @@ function newStep(
 
 /**
  * 段が移った `work_plan` のステップ。終えた段のまとめがあれば本文にし、届いた時点で中間レポートと決める
- * （あとから最終レポートへ回ることが無いので、`interim` をここで立てる）。
+ * （あとから最終レポートへ回ることが無いので、中間レポートの印をここで付ける）。
  */
 function phaseShiftStep(id: number, shift: PhaseShift, duration: MeasuredTime): MainViewStep {
   const step = newStep(
@@ -225,7 +223,7 @@ function phaseShiftStep(id: number, shift: PhaseShift, duration: MeasuredTime): 
   )
   return {
     ...step,
-    interim: shift.finished.kind === "finished",
+    mark: shift.finished.kind === "finished" ? "interim-kept" : "plain",
   }
 }
 

@@ -9,7 +9,7 @@ import type { ReportBlockSection } from "../../../../src/shared/report/report-bl
 import type { ReportCheck } from "../../../../src/shared/report/report-check.ts"
 import type { ReportTask } from "../../../../src/shared/report/report-task.ts"
 import { mainViewEntries } from "../../../../src/shared/session/main-view-entry.ts"
-import type { MainViewStep } from "../../../../src/shared/session/main-view-shape.ts"
+import { isInterimStep, type MainViewStep } from "../../../../src/shared/session/main-view-shape.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import { applySessionEvent } from "../../../../src/shared/session/session-fold.ts"
 import { INITIAL_SESSION_STATE } from "../../../../src/shared/session/session-state.ts"
@@ -77,8 +77,8 @@ describe("mainViewTurns（締めの speak → レポートで終える並び）"
       undefined,
       materialReport("砂時計の目盛りを直した"),
     ])
-    expect(steps.map((step) => step.final)).toEqual([false, false, true])
-    expect(steps.map((step) => step.interim)).toEqual([false, false, false])
+    expect(steps.map((step) => step.mark === "final")).toEqual([false, false, true])
+    expect(steps.map(isInterimStep)).toEqual([false, false, false])
   })
 
   it("手前の資料は出さず、締めの speak のあとのレポートだけが最終レポートになる", () => {
@@ -90,8 +90,8 @@ describe("mainViewTurns（締めの speak → レポートで終える並び）"
     ])
 
     expect(steps.map((step) => reportOf(step))).toEqual([undefined, materialReport("直した結果")])
-    expect(steps.map((step) => step.interim)).toEqual([false, false])
-    expect(steps.map((step) => step.final)).toEqual([false, true])
+    expect(steps.map(isInterimStep)).toEqual([false, false])
+    expect(steps.map((step) => step.mark === "final")).toEqual([false, true])
   })
 
   it("レポートの無いターンでも、締めの speak のあとの短い答えが最終レポートになる", () => {
@@ -102,7 +102,7 @@ describe("mainViewTurns（締めの speak → レポートで終える並び）"
     ])
 
     expect(reportOf(steps.at(-1))).toBe("`src/a.ts` の1行を直した。")
-    expect(steps.at(-1)?.final).toBe(true)
+    expect(steps.at(-1)?.mark).toBe("final")
   })
 })
 
@@ -117,7 +117,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     )
 
     expect(shownReports(turn)).toEqual(["架空の結論。\n\n| 列 |\n| --- |\n| 値 |\n\n架空のお願い"])
-    expect(turn?.steps.map((step) => step.final)).toEqual([true])
+    expect(turn?.steps.map((step) => step.mark === "final")).toEqual([true])
     expect(firstLineOf(turn?.steps[0])).toBe("架空の結論。")
   })
 

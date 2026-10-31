@@ -24,5 +24,5 @@ export function outlineReportOf(turn: MainViewTurn): OutlineReport {
     .trim()
   return title === ""
     ? NO_REPORT
-    : { kind: "report", label: shown.final ? "final" : "interim", title }
+    : { kind: "report", label: shown.mark === "final" ? "final" : "interim", title }
 }

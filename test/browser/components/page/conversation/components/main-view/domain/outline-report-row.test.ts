@@ -3,10 +3,11 @@ import { describe, expect, it } from "vitest"
 import { outlineReportOf } from "../../../../../../../../src/browser/components/page/conversation/components/main-view/domain/outline-report-row.ts"
 import { mainViewDraftOf } from "../../../../../../../../src/browser/domain/main-view/a2ui-draft-view.ts"
 import type { ReportTask } from "../../../../../../../../src/shared/report/report-task.ts"
-import type {
-  MainViewDraft,
-  MainViewStep,
-  MainViewTurn,
+import {
+  isInterimStep,
+  type MainViewDraft,
+  type MainViewStep,
+  type MainViewTurn,
 } from "../../../../../../../../src/shared/session/main-view-shape.ts"
 import { STAGED_PARTS } from "../../../../../../../fixture/a2ui-component.ts"
 import { noRootA2ui } from "../../../../../../../fixture/main-view-entry.ts"
@@ -27,9 +28,7 @@ function textStep(id: number, firstLine: string, task: ReportTask, final: boolea
       changeSummary: { kind: "none" },
     },
     origin: { kind: "tool-report", toolUseId: "toolu_fictional" },
-    interim: !final,
-    superseded: false,
-    final,
+    mark: final ? "final" : "interim-kept",
     actions: [],
     asides: [],
   }
@@ -43,7 +42,7 @@ function turnOf(
     id: 0,
     request: undefined,
     steps,
-    hasInterimReport: steps.some((step) => step.interim),
+    hasInterimReport: steps.some(isInterimStep),
     droppedCount: 0,
     failure: { kind: "none" },
     drafts,
