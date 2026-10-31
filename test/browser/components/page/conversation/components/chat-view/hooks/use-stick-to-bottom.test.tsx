@@ -1,6 +1,6 @@
-import { cleanup, fireEvent, render } from "@testing-library/react"
+import { cleanup, fireEvent, render, waitFor } from "@testing-library/react"
 import type { ReactElement } from "react"
-import { afterEach, describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { useStickToBottom } from "../../../../../../../../src/browser/components/page/conversation/components/chat-view/hooks/use-stick-to-bottom.ts"
 
@@ -28,6 +28,7 @@ function giveSize(log: HTMLElement, scrollHeight: number, clientHeight: number):
 function renderLog(count: number): {
   readonly log: HTMLElement
   readonly rerender: (count: number) => void
+  readonly unmount: () => void
 } {
   const view = render(<Log count={count} />)
   const log = view.getByTestId("log")
@@ -36,6 +37,7 @@ function renderLog(count: number): {
     rerender: (next) => {
       view.rerender(<Log count={next} />)
     },
+    unmount: view.unmount,
   }
 }
 
@@ -58,6 +60,26 @@ describe("useStickToBottom", () => {
     rerender(2)
 
     expect(log.scrollTop).toBe(100)
+  })
+
+  it("件数が変わらなくても、子要素が増えたら（下端付近なら）最新へ寄せる", async () => {
+    const { log } = renderLog(1)
+    giveSize(log, 1000, 400)
+
+    log.append(document.createElement("p"))
+
+    await waitFor(() => {
+      expect(log.scrollTop).toBe(1000)
+    })
+  })
+
+  it("外れたあとは、スクロールの購読が残らない", () => {
+    const { log, unmount } = renderLog(1)
+    const remove = vi.spyOn(log, "removeEventListener")
+
+    unmount()
+
+    expect(remove).toHaveBeenCalledWith("scroll", expect.any(Function))
   })
 
   it("下端から少しだけ（120px 以内）離れているのは下端付近とみなす", () => {

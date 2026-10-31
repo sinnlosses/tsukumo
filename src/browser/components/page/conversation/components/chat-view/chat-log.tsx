@@ -1,7 +1,7 @@
 // 雑談の会話のログ。古い→新しいの順にそのまま積む。
 
 import clsx from "clsx"
-import type { ReactElement, RefObject } from "react"
+import type { ReactElement, RefCallback } from "react"
 
 import { Text } from "../../../../ui/text/text.tsx"
 import { PromptImageThumbnails } from "../prompt-image/prompt-image.tsx"
@@ -28,7 +28,7 @@ export function ChatLog({
   showTyping,
   showEmptyMessage,
 }: {
-  readonly logRef: RefObject<HTMLDivElement | null>
+  readonly logRef: RefCallback<HTMLDivElement>
   readonly rows: readonly ChatRow[]
   readonly showTyping: boolean
   readonly showEmptyMessage: boolean

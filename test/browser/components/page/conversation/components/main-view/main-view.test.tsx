@@ -217,6 +217,28 @@ describe("MainView（閉じたときの入れ替えとフォーカス）", () =>
     expect(document.activeElement?.hasAttribute("data-main-view")).toBe(true)
   })
 
+  it("中身の種類が変わらない更新では、中にあるフォーカスをメインビューの根へ移さない", () => {
+    renderRunning()
+    act(() => {
+      button("やり取りを開く").focus()
+    })
+    const focused = document.activeElement
+
+    act(() => {
+      putState({
+        ...INITIAL_SESSION_STATE,
+        records: [
+          requestRecord({ text: "架空の依頼", turnId: 0 }),
+          requestRecord({ text: "続きの依頼", turnId: 1 }),
+        ],
+        turn: RUNNING,
+      })
+    })
+
+    expect(shownContent()).toBe("work")
+    expect(document.activeElement).toBe(focused)
+  })
+
   it("中にフォーカスが無ければ、閉じてもメインビューへフォーカスを持ち込まない", () => {
     renderRunning()
     close()

@@ -1,7 +1,7 @@
 // `<ChatView>` のロジック。
 // 立ち絵に出す表情（押して留めた行か、出した吹き出しか）、ログに並べる行（日の区切り・時刻・印・弾む行を畳んだもの）、「...」を出すか、立ち絵をつついたときの送り先を組み立てて返す。
 
-import { useState, type RefObject } from "react"
+import { useState, type RefCallback } from "react"
 
 import type { Expression } from "../../../../../../../shared/character-pack/expression.ts"
 import type { RecordedPromptImage } from "../../../../../../../shared/session-driver/prompt-image.ts"
@@ -65,7 +65,7 @@ export type ChatViewModel = {
   /** 立ち絵をつついたとき。ターン進行中は何も送らない（サーバ側も同じ条件で断る）。 */
   readonly onNudge: () => void
   /** ログの入れ物。下端付近を読んでいたときだけ最新へ寄せる。 */
-  readonly logRef: RefObject<HTMLDivElement | null>
+  readonly logRef: RefCallback<HTMLDivElement>
   readonly rows: readonly ChatRow[]
   /** 返事を待っている間、末尾に「...」を出すか。 */
   readonly showTyping: boolean

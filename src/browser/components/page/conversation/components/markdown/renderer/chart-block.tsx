@@ -2,7 +2,7 @@
 // Chart.js を読み込んで暗い配色へ寄せるのは `loadChart` で、ここが持つのはフェンスの中身を config として渡すところだけ。
 
 import clsx from "clsx"
-import { useEffect, useRef, useState, type ReactElement } from "react"
+import { useState, type ReactElement, type RefCallback } from "react"
 import { omit } from "remeda"
 import { z } from "zod"
 
@@ -19,36 +19,33 @@ type ChartBlockProps = {
 const heightFieldSchema = z.object({ tsukumo: z.object({ height: z.number() }) })
 
 export function ChartBlock(props: ChartBlockProps): ReactElement {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
   const [failed, setFailed] = useState(false)
   const { ref: seenRef, seen } = useSeenOnce<HTMLCanvasElement>()
 
-  useEffect(() => {
+  const chartRef: RefCallback<HTMLCanvasElement> = (canvas) => {
+    if (canvas === null || !seen) {
+      return undefined
+    }
     let cancelled = false
     let chart: { readonly destroy: () => void } | undefined
-    const canvas = canvasRef.current
+    loadChart(canvas)
+      .then(() => {
+        if (cancelled) {
+          return
+        }
 
-    if (seen && canvas !== null) {
-      loadChart(canvas)
-        .then(() => {
-          if (cancelled) {
-            return
-          }
-
-          chart = new Chart(canvas, omit(JSON.parse(props.spec), ["tsukumo"]))
-        })
-        .catch(() => {
-          if (!cancelled) {
-            setFailed(true)
-          }
-        })
-    }
-
+        chart = new Chart(canvas, omit(JSON.parse(props.spec), ["tsukumo"]))
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setFailed(true)
+        }
+      })
     return () => {
       cancelled = true
       chart?.destroy()
     }
-  }, [props.spec, seen])
+  }
 
   return (
     <div
@@ -56,7 +53,7 @@ export function ChartBlock(props: ChartBlockProps): ReactElement {
       style={{ height: heightOf(props.spec) }}
       data-chart-failed={failed ? "yes" : undefined}
     >
-      <canvas ref={mergeRefs(canvasRef, seenRef)} />
+      <canvas ref={mergeRefs(seenRef, chartRef)} />
     </div>
   )
 }

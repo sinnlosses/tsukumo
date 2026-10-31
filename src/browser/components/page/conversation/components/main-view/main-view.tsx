@@ -8,7 +8,6 @@
 // メインビューの中でしか描かないので、ここで1回だけ mount する。
 
 import {
-  useLayoutEffect,
   useRef,
   type KeyboardEvent,
   type ReactElement,
@@ -24,6 +23,7 @@ import {
   plannedPhasesOf,
   type WorkPhase,
 } from "../../../../../../shared/session/work-plan.ts"
+import { useBeforePaintSync } from "../../../../../hooks/use-before-paint-sync.ts"
 import { usePhoneWidth } from "../../../../../hooks/use-phone-width.ts"
 import { useCurrentTurnSteps } from "../../../../../stores/current-turn-step-list.ts"
 import { useInquiryJump } from "../../../../../stores/inquiry-jump.ts"
@@ -234,7 +234,9 @@ function ContentFrame({
   readonly children: ReactNode
 }): ReactElement {
   const frameRef = useRef<HTMLDivElement>(null)
-  useLayoutEffect(() => {
+  // ref コールバックにしないのは、付け直しのたびに記録と復元が走って、再描画でフォーカスを根へ奪うため。
+  // 付け直しを止めるのは Compiler だけで、通さない単体テストでは止まらない。
+  useBeforePaintSync(() => {
     const frame = frameRef.current
     if (carriedFocusRef.current) {
       carriedFocusRef.current = false

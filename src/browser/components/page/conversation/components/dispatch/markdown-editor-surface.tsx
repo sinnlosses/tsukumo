@@ -37,6 +37,7 @@ import {
   type Ref,
 } from "react"
 
+import { useExternalSync } from "../../../../../hooks/use-external-sync.ts"
 import type { Draft } from "../../stores/composer-draft.ts"
 import styles from "./dispatch.module.css"
 import type {
@@ -122,7 +123,9 @@ export function MarkdownEditorSurface({
     [],
   )
 
-  useEffect(() => {
+  // ref コールバックにはできない（下の `useEffectEvent` を ref コールバックの中から呼べない）。
+  // `useMountEffect` でもできない（lint が呼び出しを effect の中と数えない）。マウント時の1回なので `deps` は空。
+  useExternalSync(() => {
     const host = hostRef.current
     if (host === null) {
       return

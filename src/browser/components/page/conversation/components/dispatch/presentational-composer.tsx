@@ -5,7 +5,6 @@ import clsx from "clsx"
 import { AtSign, Heading, ImageIcon, Plus, Slash } from "lucide-react"
 import {
   useEffect,
-  useLayoutEffect,
   useRef,
   useState,
   type ComponentProps,
@@ -319,15 +318,18 @@ function PendingMarkdownSurface({
   hadFocus,
   ...surface
 }: MarkdownSurfaceProps & { readonly hadFocus: RefObject<boolean> }): ReactElement {
-  const frameRef = useRef<HTMLDivElement | null>(null)
-  useLayoutEffect(() => {
-    const frame = frameRef.current
-    return () => {
-      hadFocus.current = frame?.contains(document.activeElement) ?? false
-    }
-  }, [hadFocus])
   return (
-    <div ref={frameRef} className={styles["dispatch-surface-pending"]}>
+    <div
+      ref={(frame) => {
+        if (frame === null) {
+          return undefined
+        }
+        return () => {
+          hadFocus.current = frame.contains(document.activeElement)
+        }
+      }}
+      className={styles["dispatch-surface-pending"]}
+    >
       <div aria-hidden="true" className={styles["dispatch-format-bar-space"]} />
       <TextAreaSurface {...surface} />
     </div>
