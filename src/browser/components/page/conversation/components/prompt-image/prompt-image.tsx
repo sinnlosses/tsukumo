@@ -213,5 +213,5 @@ function RestoredThumbnailItem(
 
 /** 棚の原寸を取りに行く URL。起動トークンはこのページの URL から引き継ぐ。 */
 function shelvedImageUrl(id: string): string {
-  return sessionTokenUrl(promptImagePath(id))
+  return sessionTokenUrl(promptImagePath(id), window.location.href)
 }

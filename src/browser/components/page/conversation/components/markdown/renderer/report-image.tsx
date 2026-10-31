@@ -251,7 +251,7 @@ export function ReportImage(props: ReportImageProps): ReactElement {
       </span>
     )
   }
-  const src = sessionTokenUrl(props.src)
+  const src = sessionTokenUrl(props.src, window.location.href)
   const side = sideOfAlt(alt)
   const region = parseImageRegion(props["data-change-region"])
   const image = (

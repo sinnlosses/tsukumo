@@ -25,7 +25,7 @@ import type {
 } from "../../../../../shared/character-pack/character.ts"
 import type { Diary, DiaryWriting } from "../../../../../shared/diary/diary.ts"
 import type { PortraitAppearance } from "../../../../domain/portrait-appearance.ts"
-import { rpc } from "../../../../domain/rpc.ts"
+import { rpc } from "../../../../stores/rpc.ts"
 import { useSession, type SessionDispatch } from "../../../../stores/session.ts"
 import { dayLabel } from "../../../../utils/day-label.ts"
 import { monthDayLabel } from "../../../../utils/month-day-label.ts"

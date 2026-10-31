@@ -18,7 +18,9 @@ import {
   type ContextUsageReport,
   UNAVAILABLE_CONTEXT_USAGE,
 } from "../../shared/usage/context-usage.ts"
-import { rpc } from "./rpc.ts"
+import type { Rpc } from "./rpc.ts"
+
+export type ContextUsageReportRpc = Rpc["contextUsage"]["report"]
 
 /** 横棒の一区間と、凡例の1行（同じ並びを両方が使うので、色と名前が必ず対になる）。 */
 export type ContextUsageRow = {
@@ -60,11 +62,14 @@ export type UseContextUsageResult =
  * `refetchKey` が変わるたびに取り直す。前の鍵の値は持ち越さない（取り直しの間は `pending`）。マウント時にも1回引く（`staleTime: 0`）。
  * 内訳はターンの実行中に呼んでも待たされない（実測は `CONTEXT_USAGE_DETAIL`）ので、進行中でも同じように取りに行く。
  */
-export function useContextUsage(refetchKey: number): UseContextUsageResult {
+export function useContextUsage(
+  report: ContextUsageReportRpc,
+  refetchKey: number,
+): UseContextUsageResult {
   const query = useQuery(
-    rpc.contextUsage.report.queryOptions({
+    report.queryOptions({
       // 合図を鍵に足す（値が変われば別のクエリとして引き直す）。
-      queryKey: contextUsageQueryKey(refetchKey),
+      queryKey: contextUsageQueryKey(report, refetchKey),
       staleTime: 0,
       // 落ちた応答は再試行せず、すぐ「取れない」に倒す（骨組みのまま待たせない）。
       retry: false,
@@ -79,8 +84,11 @@ export function useContextUsage(refetchKey: number): UseContextUsageResult {
 }
 
 /** 内訳のクエリの鍵（手続きの鍵に、取り直しの合図を足したもの）。 */
-function contextUsageQueryKey(refetchKey: number): readonly unknown[] {
-  return [...rpc.contextUsage.report.queryKey(), refetchKey]
+function contextUsageQueryKey(
+  report: ContextUsageReportRpc,
+  refetchKey: number,
+): readonly unknown[] {
+  return [...report.queryKey(), refetchKey]
 }
 
 /**

@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query"
 
-import { rpc } from "../../../../domain/rpc.ts"
+import { rpc } from "../../../../stores/rpc.ts"
 
 /** 届く前・取れなかったとき・空のときは空文字（札は部屋の名前だけの形になる）。 */
 export function useProjectName(): string {

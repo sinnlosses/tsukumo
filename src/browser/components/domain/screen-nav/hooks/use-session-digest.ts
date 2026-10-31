@@ -6,7 +6,7 @@
 import { skipToken, useQuery } from "@tanstack/react-query"
 
 import type { SessionDigest } from "../../../../../shared/session/session-digest.ts"
-import { rpc } from "../../../../domain/rpc.ts"
+import { rpc } from "../../../../stores/rpc.ts"
 
 const DIGEST_STALE_MS = 30_000
 

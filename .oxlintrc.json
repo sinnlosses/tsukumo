@@ -98,7 +98,7 @@
             "name": "Date",
             "message": "Date を使わず Temporal を使う（docs/coding-standards.md「Date を使わない」）"
           },
-          { "name": "fetch", "message": "fetch を呼ぶのは browser/domain/rpc.ts だけ" }
+          { "name": "fetch", "message": "fetch を呼ぶのは browser/stores/rpc.ts だけ" }
         ],
         "no-restricted-properties": [
           "error",
@@ -120,7 +120,7 @@
           {
             "object": "globalThis",
             "property": "fetch",
-            "message": "fetch を呼ぶのは browser/domain/rpc.ts だけ"
+            "message": "fetch を呼ぶのは browser/stores/rpc.ts だけ"
           },
           { "object": "window", "property": "fetch" },
           { "object": "self", "property": "fetch" },
@@ -337,7 +337,7 @@
     },
     {
       // fetch を許す
-      "files": ["src/browser/domain/rpc.ts"],
+      "files": ["src/browser/stores/rpc.ts"],
       "rules": {
         "no-restricted-globals": [
           "error",

@@ -10,7 +10,7 @@ import {
   type AchievementCalendar,
   type LampLevel,
 } from "../../../../../shared/achievement/achievement-calendar.ts"
-import { rpc } from "../../../../domain/rpc.ts"
+import { rpc } from "../../../../stores/rpc.ts"
 import { monthDayLabel } from "../../../../utils/month-day-label.ts"
 import { LAMP_LABEL } from "../domain/lamp-label.ts"
 

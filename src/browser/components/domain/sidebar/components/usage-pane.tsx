@@ -5,6 +5,7 @@
 import type { ReactElement } from "react"
 
 import { useContextUsage } from "../../../../domain/context-usage.ts"
+import { rpc } from "../../../../stores/rpc.ts"
 import { useSession } from "../../../../stores/session.ts"
 import { usePlanUsage } from "../hooks/use-plan-usage.ts"
 import { ContextUsageRow } from "./context-usage-row.tsx"
@@ -13,7 +14,7 @@ import styles from "./usage-pane.module.css"
 
 export function UsagePane(): ReactElement {
   const finishedTurnCount = useSession((session) => session.state.finishedTurnCount)
-  const contextUsage = useContextUsage(finishedTurnCount)
+  const contextUsage = useContextUsage(rpc.contextUsage.report, finishedTurnCount)
   const planUsage = usePlanUsage(finishedTurnCount)
   return (
     <div className={styles["usage-pane"]}>

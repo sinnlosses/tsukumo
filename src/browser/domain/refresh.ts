@@ -6,22 +6,28 @@
 // `page` はページごと読み込み直す（状態はサーバ側の畳み込みが持っていて、繋ぎ直すと `hello` で戻ってくる）。
 
 import type { RefreshTarget } from "../../shared/frame.ts"
-import { nowEpochMilliseconds } from "../utils/clock.ts"
 
 /** `<link>` の href に足して取り直させるクエリ。値は時刻で、サーバ側では読まない。 */
 const STYLE_REVISION_QUERY_NAME = "r"
 
-export function applyRefresh(target: RefreshTarget): void {
+/** 取り直しが触る外の世界。`stylesheetLinks` は stylesheet の `<link>`（`href` は絶対 URL で読める）。 */
+export type RefreshEnvironment = {
+  readonly reloadPage: () => void
+  readonly stylesheetLinks: readonly { href: string }[]
+  readonly now: () => number
+}
+
+export function applyRefresh(target: RefreshTarget, environment: RefreshEnvironment): void {
   if (target === "page") {
-    window.location.reload()
+    environment.reloadPage()
     return
   }
 
   // 外部ライブラリのテーマ CSS もまとめて取り直すことになるが、`max-age` が効いていて実害が無い。
   // 経路名で選り分けると、その名前を browser 側に書くことになる。
-  for (const link of document.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"]')) {
+  for (const link of environment.stylesheetLinks) {
     const url = new URL(link.href)
-    url.searchParams.set(STYLE_REVISION_QUERY_NAME, String(nowEpochMilliseconds()))
+    url.searchParams.set(STYLE_REVISION_QUERY_NAME, String(environment.now()))
     link.href = url.href
   }
 }

@@ -19,7 +19,7 @@ import {
   type PlanUsageReport,
   UNAVAILABLE_PLAN_USAGE,
 } from "../../../../../shared/usage/plan-usage.ts"
-import { rpc } from "../../../../domain/rpc.ts"
+import { rpc } from "../../../../stores/rpc.ts"
 import type { PlanUsageState } from "../domain/plan-window.ts"
 import type { UsageSource } from "../domain/usage-source.ts"
 

@@ -28,7 +28,7 @@ import type {
   DiaryWriting,
 } from "../../../../../shared/diary/diary.ts"
 import { DEFAULT_CHARACTER_NAME } from "../../../../domain/portrait-appearance.ts"
-import { rpc } from "../../../../domain/rpc.ts"
+import { rpc } from "../../../../stores/rpc.ts"
 import {
   selectAchievementDate,
   selectAchievementToday,

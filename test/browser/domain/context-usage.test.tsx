@@ -2,6 +2,7 @@ import { cleanup, renderHook, waitFor } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { useContextUsage } from "../../../src/browser/domain/context-usage.ts"
+import { rpc } from "../../../src/browser/stores/rpc.ts"
 import { readyContextUsage } from "../../fixture/context-usage.ts"
 import { createTestQueryClient, queryClientWrapper } from "../query-client.tsx"
 import {
@@ -40,7 +41,9 @@ describe("useContextUsage", () => {
   it("内訳の手続きを呼ぶ", async () => {
     stubContextUsageFetch(() => rpcOutput(readyContextUsage()))
 
-    renderHook(() => useContextUsage(0), { wrapper: queryClientWrapper(createTestQueryClient()) })
+    renderHook(() => useContextUsage(rpc.contextUsage.report, 0), {
+      wrapper: queryClientWrapper(createTestQueryClient()),
+    })
 
     await waitFor(() => {
       expect(fetchStub?.calls()[0]?.procedure).toBe("contextUsage/report")
@@ -50,7 +53,7 @@ describe("useContextUsage", () => {
   it("中身・空き・自動圧縮バッファをこの順の1本の並びに畳み、窓の外は別に持つ", async () => {
     stubContextUsageFetch(() => rpcOutput(readyContextUsage()))
 
-    const { result } = renderHook(() => useContextUsage(0), {
+    const { result } = renderHook(() => useContextUsage(rpc.contextUsage.report, 0), {
       wrapper: queryClientWrapper(createTestQueryClient()),
     })
 
@@ -78,7 +81,7 @@ describe("useContextUsage", () => {
   it("応答が落ちたときは「読み込み中」を経てから「取れない」になる", async () => {
     stubContextUsageFetch(() => rpcError(403, "FORBIDDEN"))
 
-    const { result } = renderHook(() => useContextUsage(0), {
+    const { result } = renderHook(() => useContextUsage(rpc.contextUsage.report, 0), {
       wrapper: queryClientWrapper(createTestQueryClient()),
     })
 
@@ -92,10 +95,13 @@ describe("useContextUsage", () => {
   it("refetchKey が変わると取り直す（ターンが終わるたびに1回。完了条件）", async () => {
     stubContextUsageFetch(() => rpcOutput(readyContextUsage()))
 
-    const { result, rerender } = renderHook(({ key }: { key: number }) => useContextUsage(key), {
-      wrapper: queryClientWrapper(createTestQueryClient()),
-      initialProps: { key: 0 },
-    })
+    const { result, rerender } = renderHook(
+      ({ key }: { key: number }) => useContextUsage(rpc.contextUsage.report, key),
+      {
+        wrapper: queryClientWrapper(createTestQueryClient()),
+        initialProps: { key: 0 },
+      },
+    )
 
     await waitFor(() => {
       expect(result.current.kind).toBe("ready")

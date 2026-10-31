@@ -4,7 +4,7 @@
 
 import { useIsMutating, useMutation } from "@tanstack/react-query"
 
-import { rpc } from "../../../domain/rpc.ts"
+import { rpc } from "../../../stores/rpc.ts"
 
 type UseRefreshTasksResult = {
   readonly refreshing: boolean

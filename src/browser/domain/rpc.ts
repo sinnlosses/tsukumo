@@ -1,23 +1,25 @@
-// 手続き（`/rpc`）を呼ぶ型付きの口。起動トークンは `/ws` と同じく `?t=` で付ける（照合はサーバの
-// `rpcGuard`）。型は `rpcContract` から導く（ブラウザはサーバの型を import しない）。
-//
-// `fetch` も呼ぶたびに引く（`RPCLink` は既定では作った時点の `globalThis.fetch` を握る）。
-// client はモジュールに1つだけ置くので、握ったままだとページが後から差し替えた `fetch` を使わない。
+// 手続き（`/rpc`）を呼ぶ型付きの口。型は `rpcContract` から導く（ブラウザはサーバの型を import しない）。
+// 起動トークンを付けた URL と `fetch` は呼ぶ側が渡す（照合はサーバの `rpcGuard`）。
 
 import { createORPCClient } from "@orpc/client"
 import { RPCLink } from "@orpc/client/fetch"
 import { createTanstackQueryUtils } from "@orpc/tanstack-query"
 
-import { RPC_PATH, type RpcClient } from "../../shared/rpc.ts"
-import { sessionTokenUrl } from "./session-token-url.ts"
+import type { RpcClient } from "../../shared/rpc.ts"
 
-export const rpc = createRpc(() => sessionTokenUrl(RPC_PATH))
+export type RpcEnvironment = {
+  /** 手続きの絶対 URL（起動トークン付き）。 */
+  readonly resolveUrl: () => string
+  readonly fetch: (request: Request, init: RequestInit | undefined) => Promise<Response>
+}
 
-// 手続きごとの `queryOptions` / `key` を持つ口を作る。`path` は呼ぶたびに引き、今のページの URL を基準に解決する。
-function createRpc(path: () => string) {
+/** 手続きごとの `queryOptions` / `key` を持つ口。 */
+export type Rpc = ReturnType<typeof createRpc>
+
+export function createRpc(environment: RpcEnvironment) {
   const rpcLink = new RPCLink({
-    url: () => new URL(path(), window.location.href).href,
-    fetch: (request, init) => globalThis.fetch(request, init),
+    url: environment.resolveUrl,
+    fetch: environment.fetch,
   })
   const rpcClient: RpcClient = createORPCClient(rpcLink)
   return createTanstackQueryUtils(rpcClient)

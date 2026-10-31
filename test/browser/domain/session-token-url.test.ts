@@ -1,27 +1,25 @@
 import { describe, expect, it } from "vitest"
 
 import { sessionTokenUrl } from "../../../src/browser/domain/session-token-url.ts"
-import { setPageUrl } from "../../dom-setup.ts"
-
-// `window.location.href` を境界として持つので、`setPageUrl`（happy-dom の URL 差し替え口）で
-// ページの URL を変えてから確かめる。
 
 describe("sessionTokenUrl", () => {
   it("ページの URL にあるトークンを経路へ付ける", () => {
-    setPageUrl("http://127.0.0.1:7517/?t=fictional-token")
-
-    expect(sessionTokenUrl("/repository-file")).toBe("/repository-file?t=fictional-token")
+    expect(sessionTokenUrl("/repository-file", "http://127.0.0.1:7517/?t=fictional-token")).toBe(
+      "/repository-file?t=fictional-token",
+    )
   })
 
   it("トークンが無いときは空文字を付ける（握りつぶさない）", () => {
-    setPageUrl("http://127.0.0.1:7517/")
-
-    expect(sessionTokenUrl("/repository-file")).toBe("/repository-file?t=")
+    expect(sessionTokenUrl("/repository-file", "http://127.0.0.1:7517/")).toBe(
+      "/repository-file?t=",
+    )
   })
 
   it("トークンを含め、値は URL エンコードされる", () => {
-    setPageUrl(`http://127.0.0.1:7517/?t=${encodeURIComponent("space value/slash")}`)
+    const pageUrl = `http://127.0.0.1:7517/?t=${encodeURIComponent("space value/slash")}`
 
-    expect(sessionTokenUrl("/prompt-image/id")).toBe("/prompt-image/id?t=space+value%2Fslash")
+    expect(sessionTokenUrl("/prompt-image/id", pageUrl)).toBe(
+      "/prompt-image/id?t=space+value%2Fslash",
+    )
   })
 })

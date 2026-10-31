@@ -1,50 +1,44 @@
-import { beforeEach, describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 
 import { applyRefresh } from "../../../src/browser/domain/refresh.ts"
 
-// `page` の側（`window.location.reload()`）は借りている DOM では確かめられないので、
-// ここは `style`（CSS だけを取り直す）の側だけを守る。ページごと読み込み直されることは実機で
-// 見る（docs/architecture/testing.md「手で確かめること」）。
-
-function linkHrefs(): readonly string[] {
-  return [...document.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"]')].map(
-    (link) => link.href,
-  )
+function environmentOf(hrefs: readonly string[], now = 1234) {
+  const links = hrefs.map((href) => ({ href }))
+  const reloadPage = vi.fn<() => void>()
+  return { links, reloadPage, environment: { reloadPage, stylesheetLinks: links, now: () => now } }
 }
 
-beforeEach(() => {
-  document.head.innerHTML = `
-<link rel="stylesheet" href="/assets/style.css">
-<link rel="stylesheet" href="/vendor/highlight-theme.min.css">
-<link rel="icon" href="/favicon.ico">
-`
-})
+describe("applyRefresh", () => {
+  it("page はページを読み込み直し、link には触らない", () => {
+    const { links, reloadPage, environment } = environmentOf(["http://localhost/a.css"])
 
-describe("applyRefresh（style）", () => {
-  it("stylesheet の href に版のクエリを足して取り直させる", () => {
-    applyRefresh("style")
+    applyRefresh("page", environment)
 
-    const hrefs = linkHrefs()
-    expect(hrefs).toHaveLength(2)
-    for (const href of hrefs) {
-      expect(new URL(href).searchParams.get("r")).not.toBeNull()
-    }
-    expect(new URL(hrefs[0] ?? "").pathname).toBe("/assets/style.css")
+    expect(reloadPage).toHaveBeenCalledOnce()
+    expect(links[0]?.href).toBe("http://localhost/a.css")
   })
 
-  it("stylesheet でない link には触らない", () => {
-    applyRefresh("style")
+  it("style は読み込み直さず、href に時刻の版のクエリを足して取り直させる", () => {
+    const { links, reloadPage, environment } = environmentOf([
+      "http://localhost/assets/style.css",
+      "http://localhost/vendor/highlight-theme.min.css",
+    ])
 
-    const icon = document.querySelector<HTMLLinkElement>('link[rel="icon"]')
-    expect(new URL(icon?.href ?? "").search).toBe("")
+    applyRefresh("style", environment)
+
+    expect(reloadPage).not.toHaveBeenCalled()
+    expect(links.map((link) => link.href)).toEqual([
+      "http://localhost/assets/style.css?r=1234",
+      "http://localhost/vendor/highlight-theme.min.css?r=1234",
+    ])
   })
 
   it("二度続けて呼んでもクエリが増えず、値だけが入れ替わる", () => {
-    applyRefresh("style")
-    const first = new URL(linkHrefs()[0] ?? "")
-    applyRefresh("style")
-    const second = new URL(linkHrefs()[0] ?? "")
+    const { links, environment } = environmentOf(["http://localhost/a.css"], 1)
+    applyRefresh("style", environment)
 
-    expect([...second.searchParams.keys()]).toEqual([...first.searchParams.keys()])
+    applyRefresh("style", { ...environment, now: () => 2 })
+
+    expect(links[0]?.href).toBe("http://localhost/a.css?r=2")
   })
 })

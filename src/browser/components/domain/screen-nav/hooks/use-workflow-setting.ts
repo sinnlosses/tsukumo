@@ -18,7 +18,7 @@ import type {
   WorkflowSettingStepsField,
   WorkflowSettingView,
 } from "../../../../../shared/workflow-setting/workflow-setting.ts"
-import { rpc } from "../../../../domain/rpc.ts"
+import { rpc } from "../../../../stores/rpc.ts"
 import { useSession } from "../../../../stores/session.ts"
 import { reorderSteps } from "../domain/step-reorder.ts"
 import {

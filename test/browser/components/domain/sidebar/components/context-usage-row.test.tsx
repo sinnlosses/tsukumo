@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it } from "vitest"
 
 import { ContextUsageRow } from "../../../../../../src/browser/components/domain/sidebar/components/context-usage-row.tsx"
 import { useContextUsage } from "../../../../../../src/browser/domain/context-usage.ts"
-import { rpc } from "../../../../../../src/browser/domain/rpc.ts"
+import { rpc } from "../../../../../../src/browser/stores/rpc.ts"
 import { INITIAL_SESSION_STATE } from "../../../../../../src/shared/session/session-state.ts"
 import {
   type ContextUsageReport,
@@ -51,7 +51,7 @@ function renderRow(report: ContextUsageReport | undefined): void {
 
 /** 札が受け取る値は `SidebarFooter` が取る。ここでは同じ取り方で1枚だけ描く。 */
 function ContextUsageRowFromQuery(): ReactElement {
-  return <ContextUsageRow usage={useContextUsage(REFETCH_KEY)} />
+  return <ContextUsageRow usage={useContextUsage(rpc.contextUsage.report, REFETCH_KEY)} />
 }
 
 describe("ContextUsageRow", () => {

@@ -24,7 +24,7 @@ import {
   UNREADABLE_FILE_EXCERPT,
 } from "../../../../../../shared/repository/file-excerpt.ts"
 import { withOccurrenceKeys } from "../../../../../domain/occurrence-key.ts"
-import { rpc } from "../../../../../domain/rpc.ts"
+import { rpc } from "../../../../../stores/rpc.ts"
 import { useSession } from "../../../../../stores/session.ts"
 import { isActivationKey } from "../hooks/activation-key.ts"
 import { useRepositoryFilePaths } from "../hooks/use-repository-file-path-list.ts"

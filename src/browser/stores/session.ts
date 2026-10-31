@@ -22,6 +22,8 @@ import { invalidateAchievement } from "../domain/achievement-cache.ts"
 import { applyRefresh } from "../domain/refresh.ts"
 import { sessionTokenUrl } from "../domain/session-token-url.ts"
 import { type CommandLink, connectSessionSocket, type ConnectionStatus } from "../lib/socket.ts"
+import { nowEpochMilliseconds } from "../utils/clock.ts"
+import { rpc } from "./rpc.ts"
 
 /**
  * コマンドを送る口。契約（`commandContract`）から導いた型付きの client で、`dispatch.session.prompt({ text, images })` のように手続きの名前を辿って呼ぶ。
@@ -144,24 +146,35 @@ export function useSessionConnection(): void {
   useEffect(() => {
     const { receive, setConnection, attachSocket } = useSession.getState()
     const frames = batchByAnimationFrame(receive)
-    const socket = connectSessionSocket(sessionTokenUrl(SESSION_SOCKET_PATH), {
-      // `refresh` は状態ではなくブラウザへの指示なので、畳み込みに入れず手前で捌く（開発中だけ届く）。
-      onFrame: (frame) => {
-        if (frame.type === "refresh") {
-          applyRefresh(frame.target)
-          return
-        }
-        if (
-          frame.type === "hello" ||
-          (frame.type === "events" &&
-            frame.events.some(({ event }) => event.kind === "diary-written"))
-        ) {
-          invalidateAchievement()
-        }
-        frames.push(frame)
+    const socket = connectSessionSocket(
+      sessionTokenUrl(SESSION_SOCKET_PATH, window.location.href),
+      {
+        // `refresh` は状態ではなくブラウザへの指示なので、畳み込みに入れず手前で捌く（開発中だけ届く）。
+        onFrame: (frame) => {
+          if (frame.type === "refresh") {
+            applyRefresh(frame.target, {
+              reloadPage: () => {
+                window.location.reload()
+              },
+              stylesheetLinks: [
+                ...document.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"]'),
+              ],
+              now: nowEpochMilliseconds,
+            })
+            return
+          }
+          if (
+            frame.type === "hello" ||
+            (frame.type === "events" &&
+              frame.events.some(({ event }) => event.kind === "diary-written"))
+          ) {
+            invalidateAchievement(rpc.achievement)
+          }
+          frames.push(frame)
+        },
+        onStatusChange: setConnection,
       },
-      onStatusChange: setConnection,
-    })
+    )
     attachSocket(socket)
     return () => {
       socket.close()

@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query"
 import { useState } from "react"
 
 import { loadLaunchSkill, saveLaunchSkill } from "../../../../domain/launch-skill.ts"
-import { rpc } from "../../../../domain/rpc.ts"
+import { rpc } from "../../../../stores/rpc.ts"
 
 const UNSET_LABEL = "未設定"
 const UNKNOWN_SUFFIX = "（一覧に無い）"

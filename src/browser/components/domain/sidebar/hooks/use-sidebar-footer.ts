@@ -10,6 +10,7 @@ import { useId, useRef, useState, type RefObject } from "react"
 
 import { type UseContextUsageResult, useContextUsage } from "../../../../domain/context-usage.ts"
 import { useDismissSignal } from "../../../../hooks/use-dismiss-signal.ts"
+import { rpc } from "../../../../stores/rpc.ts"
 import { useSession } from "../../../../stores/session.ts"
 import { formatCount } from "../../../../utils/format-count.ts"
 import { isContextUsageWarn } from "../domain/context-usage-warn.ts"
@@ -60,7 +61,7 @@ export type SidebarFooterView = {
 
 export function useSidebarFooter(): SidebarFooterView {
   const finishedTurnCount = useSession((session) => session.state.finishedTurnCount)
-  const contextUsage = useContextUsage(finishedTurnCount)
+  const contextUsage = useContextUsage(rpc.contextUsage.report, finishedTurnCount)
   const planUsage = usePlanUsage(finishedTurnCount)
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)

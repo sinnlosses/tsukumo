@@ -17,6 +17,7 @@ import { useSession } from "./session.ts"
 
 const TURNS_BY_STATE = new WeakMap<SessionState, readonly MainViewTurn[]>()
 
+/** 直前に畳んだ結果。次の姿の畳みで、中身の等しいターンの参照を保つために持つ。 */
 let latestTurns: readonly MainViewTurn[] = []
 
 /** メインビューに出すターン（昇順。末尾が今回）。 */

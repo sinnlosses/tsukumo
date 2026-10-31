@@ -5,7 +5,7 @@
 
 import { useQuery } from "@tanstack/react-query"
 
-import { rpc } from "../../../../../domain/rpc.ts"
+import { rpc } from "../../../../../stores/rpc.ts"
 import { type FileSuggestionIndex, indexFilePaths } from "../../domain/file-suggestion-index.ts"
 
 /**

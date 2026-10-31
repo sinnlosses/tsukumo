@@ -5,7 +5,7 @@ import { QueryClientProvider } from "@tanstack/react-query"
 import type { ReactElement, ReactNode } from "react"
 
 import { RepositoryFileLinkProvider } from "../../src/browser/components/page/conversation/components/repository-link/repository-link.tsx"
-import { rpc } from "../../src/browser/domain/rpc.ts"
+import { rpc } from "../../src/browser/stores/rpc.ts"
 import type { FileExcerpt } from "../../src/shared/repository/file-excerpt.ts"
 import { INITIAL_SESSION_STATE } from "../../src/shared/session/session-state.ts"
 import { createTestQueryClient } from "../browser/query-client.tsx"
