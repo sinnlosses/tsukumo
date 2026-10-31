@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  backgroundWaitPromptText,
   createProgressNudge,
   isProgressNudgePrompt,
   progressNudgePromptText,
@@ -104,6 +105,49 @@ describe("ProgressNudge", () => {
     scene.forEach(([event, at]) => watch.observe(event, at))
 
     expect(takes.map((at) => watch.take(at))).toEqual(expected)
+  })
+
+  describe("背景の Bash だけを待っているとき", () => {
+    const WAITING: Scene = [
+      [requestEvent(), 0],
+      [tasks("shell"), 0],
+      [speech, SPOKEN_AT],
+      [turnFinished, SPOKEN_AT],
+    ]
+    const shellWait = (count: number): ProgressNudgeTake => ({ kind: "shell-wait", count })
+
+    it.each<readonly [string, Scene, readonly number[], readonly ProgressNudgeTake[]]>([
+      [
+        "要約が無くても5分で件数だけの差し込みが出て、5分未満は出ない",
+        WAITING,
+        [DUE_AT - 1, DUE_AT, DUE_AT],
+        [NONE, shellWait(1), NONE],
+      ],
+      [
+        "セリフのあとは測り直す",
+        [...WAITING, [speech, DUE_AT - 10]],
+        [DUE_AT, DUE_AT - 10 + PROGRESS_NUDGE_SILENCE_MS],
+        [NONE, shellWait(1)],
+      ],
+      [
+        "待ちが終わったら出ない",
+        [...WAITING, [{ kind: "background-tasks-changed", tasks: [] }, 2_000]],
+        [DUE_AT],
+        [NONE],
+      ],
+    ])("%s", (_name, scene, takes, expected) => {
+      const watch = createProgressNudge()
+      scene.forEach(([event, at]) => watch.observe(event, at))
+
+      expect(takes.map((at) => watch.take(at))).toEqual(expected)
+    })
+
+    it("文面は件数だけを運び、差し込みの包みとして読める", () => {
+      const text = backgroundWaitPromptText(2)
+
+      expect(text).toContain("背景の Bash を 2 件待っている")
+      expect(isProgressNudgePrompt(text)).toBe(true)
+    })
   })
 
   it("差し込んだあとは、次の要約から差し込んだ時刻を起点に次の5分を測る", () => {

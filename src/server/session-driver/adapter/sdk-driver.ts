@@ -23,7 +23,9 @@ import { createInputLedgerIntake, type InputLedgerIntake } from "../core/input-l
 import { createInterruptMark, type InterruptMark } from "../core/interrupt-mark.ts"
 import { createPendingAnswerQueue, type PendingAnswerQueue } from "../core/pending-answer.ts"
 import {
+  backgroundWaitPromptText,
   createProgressNudge,
+  type ProgressNudgeSend,
   progressNudgePromptText,
   stepLimitPromptText,
 } from "../core/progress-nudge.ts"
@@ -95,8 +97,12 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
   const ending = createSessionEnding(given.onEvent, (error) => {
     failedWithError("event-handler", error)
   })
-  const progressNudge = watchProgressNudge(given.now, (summary) => {
-    sendProgressNudge(progressNudgePromptText(summary))
+  const progressNudge = watchProgressNudge(given.now, (taken) => {
+    sendProgressNudge(
+      taken.kind === "nudge"
+        ? progressNudgePromptText(taken.summary)
+        : backgroundWaitPromptText(taken.count),
+    )
   })
   const stepWatch = createStepWatch(given.turnStepLimit)
   const deliver = (event: SessionEvent): void => {
@@ -291,7 +297,7 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
  */
 function watchProgressNudge(
   now: () => number,
-  send: (summary: string) => void,
+  send: (taken: ProgressNudgeSend) => void,
 ): { readonly observe: (event: SessionEvent) => void; readonly close: () => void } {
   const nudge = createProgressNudge()
   let armedAt: number | undefined = undefined
@@ -311,8 +317,8 @@ function watchProgressNudge(
     armedAt = undefined
     timer = undefined
     const taken = nudge.take(now())
-    if (taken.kind === "nudge") {
-      send(taken.summary)
+    if (taken.kind !== "none") {
+      send(taken)
     }
     rearm()
   }
