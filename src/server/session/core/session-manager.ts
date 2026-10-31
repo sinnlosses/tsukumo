@@ -9,10 +9,7 @@
 //
 // 会話の内容がイベントとして通るが、ログにもファイルにも書かない。配る先は購読しているブラウザだけ。
 
-import {
-  type CharacterPackName,
-  shownCharacterPackName,
-} from "../../../shared/character-pack/character.ts"
+import type { CharacterPackName } from "../../../shared/character-pack/character.ts"
 import { swallowedFailureFootprint } from "../../../shared/diagnostic/swallowed-failure.ts"
 import { FRAME_ERROR_REASON, PROTOCOL_VERSION, type ServerFrame } from "../../../shared/frame.ts"
 import type { RestoredEvent, SessionEvent } from "../../../shared/session/session-event.ts"
@@ -34,6 +31,7 @@ import { noteConsolidationHalt, noteConsolidationOutcome } from "./consolidation
 import { createConsolidationHalt } from "./consolidation-halt.ts"
 import { createEventBatch } from "./event-batch.ts"
 import { shelveEventImages } from "./event-image-shelf.ts"
+import { consolidationPackToStart, isBatched, mayFlowTopics } from "./event-judgement.ts"
 import { createReportChangeCounter } from "./report-change-count.ts"
 import { applyRestoredEvents } from "./restored-event.ts"
 import {
@@ -122,7 +120,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
     const event = shelveEventImages(options, state, driven)
     replaceState(applySessionEvent(state, event, at))
     tally.waitingLineAlarm.set(waitingLineDueAt(state))
-    if (event.kind !== "token-usage" && event.kind !== "speak-drawn") {
+    if (isBatched(event)) {
       tally.batch.add({ at, event })
     }
     diagnostic.add({ flow: "session-event", at, generation: tally.generation, kind: event.kind })
@@ -136,8 +134,8 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       at,
     )
     // 定着を起こす。ターンの終わり（雑談・仕事）で、走っていれば契機を捨てる。待たずに次へ進む。
-    const packName = shownCharacterPackName(state.character)
-    if (event.kind === "turn-finished" && packName !== undefined) {
+    const packName = consolidationPackToStart(event, state)
+    if (packName !== undefined) {
       startConsolidation(packName)
     }
   }
@@ -163,12 +161,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
           generation.emit({ kind: "chat-consolidation-halted", failures: haltedAfter })
         }
       }
-      if (
-        outcome.kind === "written" &&
-        !closed &&
-        state.chatMode &&
-        state.character?.pack === packName
-      ) {
+      if (mayFlowTopics(outcome, closed, state, packName)) {
         generation.emit({ kind: "chat-topics-changed", topics: outcome.topics })
       }
     }

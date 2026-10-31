@@ -18,6 +18,7 @@ import { createReportGate, type ReportGate } from "../../report/core/report-tool
 import { asidePromptText } from "../core/aside-prompt.ts"
 import { type CallReview, createCallReview, passRelayedEvents } from "../core/call-review.ts"
 import { createReportDraftIntake, type ReportDraftIntake } from "../core/draft-component-intake.ts"
+import { effectsOfEvent } from "../core/event-effect.ts"
 import { createExternalToolMark } from "../core/external-tool-mark.ts"
 import { createInputLedgerIntake, type InputLedgerIntake } from "../core/input-ledger.ts"
 import { createInterruptMark, type InterruptMark } from "../core/interrupt-mark.ts"
@@ -44,7 +45,7 @@ import { createSessionTitleIntake, type SessionTitleIntake } from "../core/sessi
 import { createStepWatch } from "../core/step-watch.ts"
 import { createToolHookClock } from "../core/tool-hook-clock.ts"
 import { isVisibleOutputNudge } from "../core/visible-output-nudge.ts"
-import { appendInputLedger } from "./input-ledger-file.ts"
+import { runEventEffect } from "./event-effect-run.ts"
 import { createRtkRewrite } from "./rtk-rewrite.ts"
 import { runAskGuard, withAskGuard } from "./sdk-ask-guard.ts"
 import { readContextUsage } from "./sdk-context-usage.ts"
@@ -66,7 +67,6 @@ import {
 import {
   createSessionTitleWriter,
   createSessionDigestReader,
-  markSession,
   type SessionTitleWriter,
 } from "./sdk-session.ts"
 import { tsukumoServer } from "./sdk-tool.ts"
@@ -390,34 +390,8 @@ async function relayMessages(
           sessionId = event.sessionId
         }
         interruptMark.observe(event)
-        if (event.kind === "turn-finished" && fromMain) {
-          const ledgerEntry = ledgerIntake.finishTurn(message, event.outcome)
-          if (ledgerEntry !== undefined) {
-            appendInputLedger(ledgerEntry)
-          }
-        }
-        if (event.kind === "turn-finished") {
-          // 1ターンに書けるのは1行まで。
-          // ターンの区切りを知っているのはここだけなので、終わるたびに次の1行を受け付けさせる。
-          if (options.mode.kind === "chat") {
-            options.mode.personaMemory.finishTurn()
-          }
-          if (sessionId !== undefined) {
-            void markSession(sessionId, options)
-            const title = titleIntake.take()
-            if (title !== undefined) {
-              void titleWriter.write(sessionId, title, options)
-            }
-          }
-        }
-        if (event.kind === "conversation-cleared") {
-          // `/clear` を見た合図。写しの印を「未渡し」に戻す。
-          // 印はターンが終わるたびにそのときのセッションIDへ付け直されるので、`/clear` のあと1ターン回すと空のほうが印を持つ。
-          // ここで戻さないと、次に起こしたとき記憶が二度と戻らない。
-          if (options.mode.kind === "chat") {
-            options.mode.chatSummary.markUndelivered()
-          }
-          titleWriter.noteConversationCleared()
+        for (const effect of effectsOfEvent(event, fromMain, options.mode, sessionId)) {
+          runEventEffect(effect, message, { options, ledgerIntake, titleIntake, titleWriter })
         }
         options.onEvent(event)
       }
