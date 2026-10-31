@@ -35,35 +35,33 @@ export type WelcomeCard = {
   readonly request: string
 }
 
+export type ResumeSource =
+  | { readonly kind: "none" }
+  | { readonly kind: "available"; readonly session: SessionChoice; readonly remaining: string }
+
 /**
  * 前回の続きの要約を読む相手。無ければ取りに行かない。
  * 同じ作業ツリーの行だけから選ぶ（別の作業ツリーの行は札にしない）。
+ * `otherSessions` はいまのセッションを除いた行。
  */
 export function previousSessionOf(
-  sessions: readonly SessionChoice[],
-  currentSessionId: string | undefined,
+  otherSessions: readonly SessionChoice[],
 ): SessionChoice | undefined {
-  return sessions.find(
-    (session) => session.inCurrentWorktree && session.sessionId !== currentSessionId,
-  )
+  return otherSessions.find((session) => session.inCurrentWorktree)
 }
 
 /** 切り替え画面に、いまのセッション以外の行が1つでもあるか（作業ツリーは問わない）。 */
-export function hasOtherSession(
-  sessions: readonly SessionChoice[],
-  currentSessionId: string | undefined,
-): boolean {
-  return sessions.some((session) => session.sessionId !== currentSessionId)
+export function hasOtherSession(otherSessions: readonly SessionChoice[]): boolean {
+  return otherSessions.length > 0
 }
 
 /** おすすめの並びを先に当て、足りない枠は既定の並びで理由なしに埋める。 */
 export function welcomeCardsOf(
   recommendation: readonly RecommendationCard[],
-  previous: SessionChoice | undefined,
-  previousRemaining: string | undefined,
+  resume: ResumeSource,
   tasks: TaskSummaryResult,
 ): readonly WelcomeCard[] {
-  const available = [...resumeCards(previous, previousRemaining), ...readyTaskCards(tasks)]
+  const available = [...resumeCards(resume), ...readyTaskCards(tasks)]
   const recommended = uniqueByKey(
     recommendation.flatMap((card) => {
       const found = available.find((entry) => entry.key === keyOf(card))
@@ -87,21 +85,18 @@ function keyOf(card: RecommendationCard): string {
   return card.kind === "resume" ? RESUME_KEY : card.taskId
 }
 
-function resumeCards(
-  previous: SessionChoice | undefined,
-  remaining: string | undefined,
-): readonly WelcomeCard[] {
-  if (previous === undefined || remaining === undefined) {
+function resumeCards(resume: ResumeSource): readonly WelcomeCard[] {
+  if (resume.kind === "none") {
     return []
   }
   return [
     {
       kind: "resume",
       key: RESUME_KEY,
-      id: previous.heading ?? NO_HEADING_LABEL,
-      title: remaining,
+      id: resume.session.heading ?? NO_HEADING_LABEL,
+      title: resume.remaining,
       reason: "",
-      request: `前回の続き: ${remaining}`,
+      request: `前回の続き: ${resume.remaining}`,
     },
   ]
 }

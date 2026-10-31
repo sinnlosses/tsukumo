@@ -51,6 +51,14 @@ type UsageReviewStartAvailability =
   | { readonly kind: "available" }
   | { readonly kind: "blocked"; readonly reason: string }
 
+type ReviewPeriod =
+  | { readonly kind: "none" }
+  | { readonly kind: "days"; readonly days: TokenUsageDays }
+
+type ReviewStageSummary =
+  | { readonly kind: "none" }
+  | { readonly kind: "known"; readonly summary: TokenUsageSummary }
+
 /** 段の右に添える数。数える元が無い段（コンテキスト・見直し案）は常に `none`。 */
 type UsageReviewStageCount =
   | { readonly kind: "none" }
@@ -169,7 +177,9 @@ export function useUsageReview(): UseUsageReviewResult {
     usageReview.kind === "running" && usageReview.progress.kind === "stage"
       ? asTokenUsageDays(usageReview.progress.days)
       : undefined
-  const summary = useReviewStageSummary(reviewDays)
+  const summary = useReviewStageSummary(
+    reviewDays === undefined ? { kind: "none" } : { kind: "days", days: reviewDays },
+  )
 
   const ticking = usageReview.kind === "running" || usageProposalRun.kind === "running"
   const now = useNowWhile(ticking)
@@ -316,7 +326,7 @@ function proposalRunView(key: string, actions: ProposalActions): UsageProposalRu
 /** 段の並び（{@link USAGE_REVIEW_STAGES}）より前は済、いまの段は進行中、後は未着手。最初の段が届くまでは全部未着手。 */
 function stageViews(
   progress: UsageReviewProgress,
-  summary: TokenUsageSummary | undefined,
+  summary: ReviewStageSummary,
 ): readonly UsageReviewStageView[] {
   const currentIndex = progress.kind === "stage" ? USAGE_REVIEW_STAGES.indexOf(progress.stage) : -1
   return USAGE_REVIEW_STAGES.map((stage, index) => ({
@@ -328,13 +338,11 @@ function stageViews(
 }
 
 /** モデル・キャッシュ・ツールの3段だけ数を持つ。 */
-function stageCount(
-  stage: UsageReviewStage,
-  summary: TokenUsageSummary | undefined,
-): UsageReviewStageCount {
-  if (summary === undefined) {
+function stageCount(stage: UsageReviewStage, loaded: ReviewStageSummary): UsageReviewStageCount {
+  if (loaded.kind === "none") {
     return { kind: "none" }
   }
+  const { summary } = loaded
   if (stage === "model") {
     return { kind: "shown", label: `${String(summary.byModel.length)} モデル` }
   }
@@ -357,14 +365,14 @@ function asTokenUsageDays(days: number): TokenUsageDays | undefined {
  * 見直し中の段の右の数を引く集計。
  * 画面が使う集計と同じ手続き（`tokenUsage.summary`）を、いまの期間の選択とは別に引く（同じ日数ならキャッシュを分け合う）。
  */
-function useReviewStageSummary(days: TokenUsageDays | undefined): TokenUsageSummary | undefined {
+function useReviewStageSummary(period: ReviewPeriod): ReviewStageSummary {
   const query = useQuery(
     rpc.tokenUsage.summary.queryOptions({
-      input: days === undefined ? skipToken : { days },
+      input: period.kind === "none" ? skipToken : { days: period.days },
       staleTime: 0,
     }),
   )
-  return query.data
+  return query.data === undefined ? { kind: "none" } : { kind: "known", summary: query.data }
 }
 
 /** 「前回の提案（09-16）」の日付部分。この端末のローカルの日で読む。 */

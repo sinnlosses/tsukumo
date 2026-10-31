@@ -21,14 +21,17 @@ type InquiryDraftState = {
 export const useInquiryDraft = create<InquiryDraftState>()(() => ({ draft: undefined }))
 
 /** 詳細の面に出すと触って決めた選択肢。どの答え待ちの何問目かも持ち、別の問に替われば読まない。 */
-export type InquiryFocus = {
-  readonly pendingId: string
-  readonly index: number
-  readonly label: string
-}
+export type InquiryFocus =
+  | { readonly kind: "none" }
+  | {
+      readonly kind: "touched"
+      readonly pendingId: string
+      readonly index: number
+      readonly label: string
+    }
 
 type InquiryFocusState = {
-  readonly focus: InquiryFocus | undefined
+  readonly focus: InquiryFocus
 }
 
-export const useInquiryFocus = create<InquiryFocusState>()(() => ({ focus: undefined }))
+export const useInquiryFocus = create<InquiryFocusState>()(() => ({ focus: { kind: "none" } }))

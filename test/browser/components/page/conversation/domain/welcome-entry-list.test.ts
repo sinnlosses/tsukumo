@@ -5,6 +5,7 @@ import {
   previousSessionOf,
   welcomeCardsOf,
   welcomeHeadOf,
+  type ResumeSource,
 } from "../../../../../../src/browser/components/page/conversation/domain/welcome-entry-list.ts"
 import type { RecommendationCard } from "../../../../../../src/shared/recommendation/recommendation-card.ts"
 import type {
@@ -63,34 +64,38 @@ const READY_TASKS = known([
   task("X-4", "todo", []),
 ])
 
+function resumeOf(session: SessionChoice, remaining: string): ResumeSource {
+  return { kind: "available", session, remaining }
+}
+
+const NO_RESUME: ResumeSource = { kind: "none" }
+
 describe("前回のセッション", () => {
-  it("いまのセッションを除いた先頭を選ぶ", () => {
-    const sessions = [choice("now", "今"), choice("prev", "前")]
-    expect(previousSessionOf(sessions, "now")?.sessionId).toBe("prev")
+  it("いまのセッションを除いた行の先頭を選ぶ", () => {
+    expect(previousSessionOf([choice("prev", "前"), choice("older", "古")])?.sessionId).toBe("prev")
   })
 
-  it("いまのセッションしか無ければ無い", () => {
-    expect(previousSessionOf([choice("now", "今")], "now")).toBeUndefined()
+  it("行が無ければ無い", () => {
+    expect(previousSessionOf([])).toBeUndefined()
   })
 
   it("別の作業ツリーの行は、より新しくても選ばない", () => {
-    const sessions = [choice("other", "別", false), choice("now", "今"), choice("prev", "前")]
-    expect(previousSessionOf(sessions, "now")?.sessionId).toBe("prev")
+    const sessions = [choice("other", "別", false), choice("prev", "前")]
+    expect(previousSessionOf(sessions)?.sessionId).toBe("prev")
   })
 
   it("別の作業ツリーの行しか無ければ無い", () => {
-    expect(previousSessionOf([choice("other", "別", false)], "now")).toBeUndefined()
+    expect(previousSessionOf([choice("other", "別", false)])).toBeUndefined()
   })
 })
 
 describe("切り替え画面で選べる行", () => {
-  it("別の作業ツリーの行しか無くても、いまのセッション以外の行があれば有る", () => {
-    expect(hasOtherSession([choice("other", "別", false)], "now")).toBe(true)
+  it("別の作業ツリーの行しか無くても、行があれば有る", () => {
+    expect(hasOtherSession([choice("other", "別", false)])).toBe(true)
   })
 
-  it("いまのセッションしか無ければ無い", () => {
-    expect(hasOtherSession([choice("now", "今")], "now")).toBe(false)
-    expect(hasOtherSession([], undefined)).toBe(false)
+  it("行が無ければ無い", () => {
+    expect(hasOtherSession([])).toBe(false)
   })
 })
 
@@ -98,8 +103,7 @@ describe("おすすめの札", () => {
   it("おすすめの並びと理由をそのまま当てる", () => {
     const cards = welcomeCardsOf(
       [taskCard("X-3", "理由3"), taskCard("X-1", "理由1")],
-      undefined,
-      undefined,
+      NO_RESUME,
       READY_TASKS,
     )
     expect(cards.slice(0, 2).map((card) => [card.id, card.reason, card.request])).toEqual([
@@ -111,8 +115,7 @@ describe("おすすめの札", () => {
   it("前回の続きの札は ID の席が見出しで、題と依頼の文は前回の残りから作る", () => {
     const cards = welcomeCardsOf(
       [{ kind: "resume", reason: "つながり" }],
-      choice("prev", "架空の題"),
-      "架空の検証",
+      resumeOf(choice("prev", "架空の題"), "架空の検証"),
       NO_TASKS,
     )
     expect(cards).toEqual([
@@ -128,7 +131,7 @@ describe("おすすめの札", () => {
   })
 
   it("見出しが無ければ前回の続きの ID は「（題なし）」", () => {
-    const cards = welcomeCardsOf([], choice("prev", undefined), "架空の残り", NO_TASKS)
+    const cards = welcomeCardsOf([], resumeOf(choice("prev", undefined), "架空の残り"), NO_TASKS)
     expect(cards[0]?.id).toBe("（題なし）")
   })
 
@@ -137,7 +140,7 @@ describe("おすすめの札", () => {
       { kind: "resume", reason: "つながり" },
       taskCard("X-2", "理由2"),
     ]
-    const cards = welcomeCardsOf(recommendation, choice("prev", "題"), undefined, READY_TASKS)
+    const cards = welcomeCardsOf(recommendation, NO_RESUME, READY_TASKS)
     expect(cards.map((card) => [card.id, card.reason])).toEqual([
       ["X-2", "理由2"],
       ["X-1", ""],
@@ -148,15 +151,14 @@ describe("おすすめの札", () => {
   it("いまの着手できる未着手に無いタスクの札は外す", () => {
     const cards = welcomeCardsOf(
       [taskCard("GONE-1", "理由"), taskCard("X-4", "理由4")],
-      undefined,
-      undefined,
+      NO_RESUME,
       READY_TASKS,
     )
     expect(cards.map((card) => card.id)).toEqual(["X-4", "X-1", "X-2"])
   })
 
   it("おすすめが空のあいだは既定の並び（続き → 着手できる未着手の上から）で、理由は空", () => {
-    const cards = welcomeCardsOf([], choice("prev", "題"), "架空の残り", READY_TASKS)
+    const cards = welcomeCardsOf([], resumeOf(choice("prev", "題"), "架空の残り"), READY_TASKS)
     expect(cards.map((card) => [card.id, card.reason])).toEqual([
       ["題", ""],
       ["X-1", ""],
@@ -167,8 +169,7 @@ describe("おすすめの札", () => {
   it("3枚までで、同じ札の重なりは先頭だけ残す", () => {
     const cards = welcomeCardsOf(
       [taskCard("X-1", "a"), taskCard("X-1", "b"), taskCard("X-2", "c"), taskCard("X-3", "d")],
-      undefined,
-      undefined,
+      NO_RESUME,
       READY_TASKS,
     )
     expect(cards.map((card) => [card.id, card.reason])).toEqual([
@@ -181,8 +182,7 @@ describe("おすすめの札", () => {
   it("依存で止まるもの・済んだものは既定の並びに入らない", () => {
     const cards = welcomeCardsOf(
       [],
-      undefined,
-      undefined,
+      NO_RESUME,
       known([
         task("X-1", "done", []),
         task("X-2", "todo", ["X-3"]),
@@ -197,15 +197,15 @@ describe("おすすめの札", () => {
   })
 
   it("タスクが読めないときも空の帳面のときも、札は無い", () => {
-    expect(welcomeCardsOf([], undefined, undefined, { kind: "unknown" })).toEqual([])
-    expect(welcomeCardsOf([], undefined, undefined, { kind: "no-beads" })).toEqual([])
-    expect(welcomeCardsOf([taskCard("X-1", "理由")], undefined, undefined, NO_TASKS)).toEqual([])
+    expect(welcomeCardsOf([], NO_RESUME, { kind: "unknown" })).toEqual([])
+    expect(welcomeCardsOf([], NO_RESUME, { kind: "no-beads" })).toEqual([])
+    expect(welcomeCardsOf([taskCard("X-1", "理由")], NO_RESUME, NO_TASKS)).toEqual([])
   })
 })
 
 describe("迎えの挨拶が名指す先頭の札", () => {
   it("先頭がタスクならその ID", () => {
-    const cards = welcomeCardsOf([taskCard("X-2", "理由")], undefined, undefined, READY_TASKS)
+    const cards = welcomeCardsOf([taskCard("X-2", "理由")], NO_RESUME, READY_TASKS)
 
     expect(welcomeHeadOf(cards)).toEqual({ kind: "card", name: "X-2" })
   })
@@ -213,8 +213,7 @@ describe("迎えの挨拶が名指す先頭の札", () => {
   it("先頭が前回の続きなら見出しではなく「前回の続き」", () => {
     const cards = welcomeCardsOf(
       [{ kind: "resume", reason: "つながり" }],
-      choice("prev", "架空の題"),
-      "架空の検証",
+      resumeOf(choice("prev", "架空の題"), "架空の検証"),
       READY_TASKS,
     )
 

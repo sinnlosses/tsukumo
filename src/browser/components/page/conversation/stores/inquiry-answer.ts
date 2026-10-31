@@ -12,7 +12,7 @@
 import type { FigureBlock } from "../../../../../shared/report/report-block.ts"
 import type { ReportImageSize } from "../../../../../shared/report/report-image.ts"
 import type { StampedPendingAsk } from "../../../../../shared/session-driver/pending-ask.ts"
-import type { QuestionBrief } from "../../../../../shared/session-driver/question-brief.ts"
+import type { QuestionBriefOption } from "../../../../../shared/session-driver/question-brief.ts"
 import {
   FREE_TEXT_OPTION_LABEL,
   isRecommendedLabel,
@@ -200,7 +200,7 @@ function permissionModel(
 function questionModel(
   pending: Extract<StampedPendingAsk, { readonly kind: "question" }>,
   draft: InquiryDraft,
-  touched: InquiryFocus | undefined,
+  touched: InquiryFocus,
   dispatch: SessionDispatch,
 ): InquiryModel {
   const questions = pending.questions
@@ -242,13 +242,13 @@ function questionModel(
 
   const canAnswer = selected.length > 0 || writtenAnswer !== ""
   const brief = pending.briefs.find((candidate) => candidate.header === question.header)
-  const options = optionRows(question, selected, brief)
+  const options = optionRows(question, selected, brief?.options ?? [])
   const touchedLabel =
-    touched?.pendingId === pending.id && touched.index === index
+    touched.kind === "touched" && touched.pendingId === pending.id && touched.index === index
       ? options.find((option) => option.label === touched.label)?.label
       : undefined
   const setFocus = (label: string): void => {
-    useInquiryFocus.setState({ focus: { pendingId: pending.id, index, label } })
+    useInquiryFocus.setState({ focus: { kind: "touched", pendingId: pending.id, index, label } })
   }
 
   return {
@@ -339,13 +339,13 @@ function replaced<T>(values: readonly T[], target: number, value: T, filler: T):
 function optionRows(
   question: Question,
   selected: readonly string[],
-  brief: QuestionBrief | undefined,
+  briefOptions: readonly QuestionBriefOption[],
 ): readonly InquiryOptionRow[] {
   return sortQuestionOptions(question.options)
     .filter((option) => option.label !== FREE_TEXT_OPTION_LABEL)
     .map((option, index) => {
       const text = withoutRecommendedMark(option.label)
-      const briefed = brief?.options.find(
+      const briefed = briefOptions.find(
         (candidate) => withoutRecommendedMark(candidate.label) === text,
       )
       return {

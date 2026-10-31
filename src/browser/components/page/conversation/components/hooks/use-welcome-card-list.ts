@@ -7,6 +7,7 @@ import {
   hasOtherSession,
   previousSessionOf,
   welcomeCardsOf,
+  type ResumeSource,
   type WelcomeCard,
 } from "../../domain/welcome-entry-list.ts"
 
@@ -26,16 +27,20 @@ export function useWelcomeCards(): WelcomeCards {
 
   const greeting = useSession((session) => conversationMoment(session.state) === "greet")
 
-  const previous = previousSessionOf(sessions, currentSessionId)
+  const otherSessions = sessions.filter((session) => session.sessionId !== currentSessionId)
+  const previous = previousSessionOf(otherSessions)
   // 札と挨拶が出うる局面（始め方の一覧）のあいだだけ取りに行く。
   const digest = useSessionDigest(
     greeting && previous !== undefined
       ? { kind: "session", sessionId: previous.sessionId }
       : { kind: "none" },
   )
-  const remaining = digest.kind === "known" ? digest.remaining : undefined
+  const resume: ResumeSource =
+    previous !== undefined && digest.kind === "known" && digest.remaining !== undefined
+      ? { kind: "available", session: previous, remaining: digest.remaining }
+      : { kind: "none" }
   return {
-    cards: welcomeCardsOf(recommendation, previous, remaining, tasks),
-    hasOtherSessions: hasOtherSession(sessions, currentSessionId),
+    cards: welcomeCardsOf(recommendation, resume, tasks),
+    hasOtherSessions: hasOtherSession(otherSessions),
   }
 }
