@@ -7,20 +7,12 @@
 import { mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
-import { fromKeys } from "remeda"
-
-import {
-  type ItemInfo,
-  type ItemSeatMap,
-  parseItemImage,
-  SEAT_KEYS,
-  type SeatKey,
-} from "../../../shared/item/item.ts"
+import { parseItemImage, type SeatKey } from "../../../shared/item/item.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import { writeFileAtomic } from "../../adapter/lib/atomic-file.ts"
 import { isMissingFileError } from "../../adapter/lib/missing-file-error.ts"
 import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
-import { itemAssetPath } from "../../core/item-asset.ts"
+import { shownItems } from "../core/item-display.ts"
 import { addItem, clearSeat, removeItem, setSeat } from "../core/item-edit.ts"
 import {
   EMPTY_ITEMS_FILE,
@@ -122,19 +114,8 @@ export function itemsChangedEvent(dir: string = tsukumoHomePath("items")): Sessi
   if (state.kind !== "ok") {
     return { kind: "items-changed", items: [], seats: {} }
   }
-  const shown = state.file.items.flatMap((entry): readonly ItemInfo[] => {
-    const revision = itemImageRevision(dir, entry.image)
-    return revision === undefined
-      ? []
-      : [{ id: entry.id, name: entry.name, url: itemAssetPath(entry.image, revision) }]
-  })
-  const seats = Object.fromEntries(
-    Object.entries(state.file.seats).map(([pack, row]): [string, ItemSeatMap] => [
-      pack,
-      fromKeys(SEAT_KEYS, (seat) => shown.find((item) => item.id === row[seat])),
-    ]),
-  )
-  return { kind: "items-changed", items: shown, seats }
+  const { items, seats } = shownItems(state.file, (imageFile) => itemImageRevision(dir, imageFile))
+  return { kind: "items-changed", items, seats }
 }
 
 /**

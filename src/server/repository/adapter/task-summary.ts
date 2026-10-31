@@ -8,14 +8,13 @@
 // 見回りは `setWatching(true)` のあいだだけ回る。起こした時点の1回は、画面が無くても読む。
 // 止めているあいだも覚えた状態は残し、再開の1回で変わっていれば `onChange` する。
 
-import { isDeepEqual } from "remeda"
-
 import {
   diffTaskSummary,
   type TaskSummaryChange,
 } from "../../../shared/repository/task-summary-change.ts"
 import type { TaskSummaryResult } from "../../../shared/repository/task-summary.ts"
 import { createServerClock } from "../../adapter/local-time.ts"
+import { decideTaskSummaryPoll } from "../core/task-summary-decision.ts"
 import { createBeadsStampReader, readBeadsIssues } from "./beads.ts"
 import { createFakeBeadsStampReader, readFakeBeadsIssues } from "./fake-beads.ts"
 import { createTaskBeadsSource } from "./task-beads-source.ts"
@@ -27,9 +26,6 @@ import { readTaskSummaryMemory, writeTaskSummaryMemory } from "./task-summary-me
  * タスク一覧はタスクの着手・完了で書き換わるだけなので、秒単位の反映で十分。
  */
 const TASK_SUMMARY_POLL_INTERVAL_MS = 5000
-
-/** 一覧を出しているとき、読めなかった回がこの数だけ続いたら「不明」にする。 */
-const MAX_FAILURE_STREAK_WITH_LIST = 3
 
 export type TaskSummaryWatcher = {
   /** ポーリングを止める。実行中の見回り（`bd` の子プロセス）の終わりまで待つ。 */
@@ -154,31 +150,10 @@ export function watchTaskSummary(
     if (closed) {
       return
     }
-    // 読み元は最初の読みでは、読んだ結果かタイムアウトで諦めた回しか返さない。
-    // まだ何も知らせていないうちの `unchanged` は、読めなかった回として数える。
-    const failed =
-      read.kind === "unchanged" ? notified.kind === "loading" : read.result.kind === "unknown"
-    if (failed) {
-      failureStreak += 1
-    } else if (read.kind === "read") {
-      failureStreak = 0
-    }
-    const showingList = notified.kind === "known" || shownFromMemory?.kind === "known"
-    if (failed && showingList && failureStreak < MAX_FAILURE_STREAK_WITH_LIST) {
-      return
-    }
-    // 一覧を出していない `unchanged` は、画面を読み込み中のままにしないため「不明」で知らせる。
-    const result: TaskSummaryResult = read.kind === "unchanged" ? { kind: "unknown" } : read.result
-    if (read.kind === "unchanged" && notified.kind !== "loading") {
-      return
-    }
-    if (isDeepEqual(result, notified)) {
-      return
-    }
-    const alreadyShown = isDeepEqual(result, shownFromMemory)
-    notified = result
-    shownFromMemory = undefined
-    if (alreadyShown) {
+    const decision = decideTaskSummaryPoll({ notified, shownFromMemory, failureStreak }, read)
+    ;({ notified, shownFromMemory, failureStreak } = decision.state)
+    const { deliver: result } = decision
+    if (result === undefined) {
       return
     }
     if (result.kind === "known") {

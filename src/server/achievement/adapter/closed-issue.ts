@@ -19,6 +19,7 @@ import {
   readBeadsIssues,
   type BeadsStamp,
 } from "../../repository/adapter/beads.ts"
+import { reuseOrReread } from "../core/beads-reread.ts"
 import { dailyAchievementOf } from "../core/daily-achievement.ts"
 
 /** Beads を読んで終えたタスクに畳んだ結果。`missing` は `.beads` が無い、`unavailable` は `.beads` があるのに読めなかった。 */
@@ -69,13 +70,11 @@ export function createAchievementCache(
       }
       const stamp = beadsStamp.stamp
       const at = now()
-      const rereadDue =
-        lastBeadsRead !== undefined && !isWithinRereadInterval(at - lastBeadsRead.at)
-      if (stamp !== undefined && lastBeadsRead?.stamp === stamp && !rereadDue) {
-        return lastDone ?? lastBeadsRead.read
+      const decision = reuseOrReread(lastBeadsRead, stamp, at, isWithinRereadInterval)
+      if (decision.kind === "reuse") {
+        return lastDone ?? decision.last.read
       }
-      // 読み直しの回は印を渡さない（印ごとに覚えた結果を使い回させない）。
-      const read = readAndRemember(rereadDue ? undefined : stamp)
+      const read = readAndRemember(decision.readStamp)
       // 読み始めた時点で覚え、同時に来た読みにも同じ `bd list` を渡す。
       const remembered = stamp === undefined ? undefined : { stamp, at, read }
       lastBeadsRead = remembered
