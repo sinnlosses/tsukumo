@@ -4,11 +4,13 @@
 // 何を閉じるか・閉じたあとどこへフォーカスを戻すかは持たない（呼び出し側が `onDismiss` で決める）。
 // 合図の種類を引数で渡すのは、Esc のときだけフォーカスを押した口へ戻す呼び出し側があるため。
 //
-// 購読は `onDismiss` が変わると載せ直す。
+// 購読は `open` が変わるときだけ載せ直す（`onDismiss` は最新を読む）。
 
-import { useEffect, type RefObject } from "react"
+import type { RefObject } from "react"
 
 import { acquireOverlay } from "./open-overlay.ts"
+import { useEventListener } from "./use-event-listener.ts"
+import { useExternalSync } from "./use-external-sync.ts"
 
 /** 閉じる合図の出どころ。Esc とそれ以外を呼び出し側が区別できるようにする。 */
 export type DismissCause = "outside" | "escape"
@@ -23,31 +25,33 @@ type DismissSignalOptions = {
 export function useDismissSignal(options: DismissSignalOptions): void {
   const { open, rootRef, onDismiss } = options
 
-  useEffect(() => {
+  useExternalSync(() => {
     if (!open) {
       return
     }
+    return acquireOverlay()
+  }, [open])
 
-    function closeOnOutside(event: PointerEvent): void {
+  useEventListener(
+    document,
+    "pointerdown",
+    (event) => {
       const root = rootRef.current
       if (root !== null && event.target instanceof Node && !root.contains(event.target)) {
         onDismiss("outside")
       }
-    }
+    },
+    { enabled: open },
+  )
 
-    function closeOnEscape(event: KeyboardEvent): void {
+  useEventListener(
+    document,
+    "keydown",
+    (event) => {
       if (event.key === "Escape") {
         onDismiss("escape")
       }
-    }
-
-    const releaseOverlay = acquireOverlay()
-    document.addEventListener("pointerdown", closeOnOutside)
-    document.addEventListener("keydown", closeOnEscape)
-    return () => {
-      releaseOverlay()
-      document.removeEventListener("pointerdown", closeOnOutside)
-      document.removeEventListener("keydown", closeOnEscape)
-    }
-  }, [open, rootRef, onDismiss])
+    },
+    { enabled: open },
+  )
 }

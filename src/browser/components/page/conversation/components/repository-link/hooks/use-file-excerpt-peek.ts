@@ -9,6 +9,7 @@ import type {
   FileExcerptRequest,
 } from "../../../../../../../shared/repository/file-excerpt.ts"
 import { useDismissSignal } from "../../../../../../hooks/use-dismiss-signal.ts"
+import { useUnmountEffect } from "../../../../../../hooks/use-mount-effect.ts"
 import type { LineRange, PointedLines } from "../domain/pointed-line-range.ts"
 
 /** 重ねて（フォーカスして）から浮きを出すまでの待ち。 */
@@ -125,13 +126,10 @@ export function useFileExcerptPeek(
   }, [shown])
 
   // 外したあとに待ちの応答が届いても出さない。
-  useEffect(
-    () => () => {
-      clearTimeout(timer.current)
-      generation.current += 1
-    },
-    [],
-  )
+  useUnmountEffect(() => {
+    clearTimeout(timer.current)
+    generation.current += 1
+  })
 
   return { state, anchorRef, ...peek }
 }

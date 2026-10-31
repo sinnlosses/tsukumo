@@ -1,6 +1,8 @@
 // 札の頭（進み具合の帯）の外寸を測り、メインビューの根の `--turn-card-head-height` に書く。
 
-import { useLayoutEffect, type RefObject } from "react"
+import type { RefObject } from "react"
+
+import { useBeforePaintSync } from "../../../../../../hooks/use-before-paint-sync.ts"
 
 const HEIGHT_PROPERTY = "--turn-card-head-height"
 
@@ -8,7 +10,7 @@ export function useTurnCardHeadHeight(
   headRef: RefObject<HTMLElement | null>,
   rootRef: RefObject<HTMLElement | null>,
 ): void {
-  useLayoutEffect(() => {
+  useBeforePaintSync(() => {
     const head = headRef.current
     const root = rootRef.current
     if (head === null || root === null) {

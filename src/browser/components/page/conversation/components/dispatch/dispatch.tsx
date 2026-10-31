@@ -1,8 +1,9 @@
 // 入力欄一式（<Composer>）。
 // 答え待ちの印（タブのタイトルの先頭の「● 」・枠の色）は `state.pending` からここが出す。
 
-import { useEffect, useRef, type ReactElement } from "react"
+import { useRef, type ReactElement } from "react"
 
+import { useExternalSync } from "../../../../../hooks/use-external-sync.ts"
 import { useSession } from "../../../../../stores/session.ts"
 import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
 import { Composer } from "./composer.tsx"
@@ -13,7 +14,7 @@ export function Dispatch(): ReactElement {
   // 最初に読んだ元のタイトルへ戻す（読むのは1回だけ）。
   const originalTitleRef = useRef<string | undefined>(undefined)
 
-  useEffect(() => {
+  useExternalSync(() => {
     if (originalTitleRef.current === undefined) {
       originalTitleRef.current = document.title
     }

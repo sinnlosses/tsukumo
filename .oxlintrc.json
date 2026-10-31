@@ -1,5 +1,8 @@
 {
   "plugins": ["typescript", "react", "unicorn", "oxc", "vitest", "import"],
+  "settings": {
+    "react-hooks": { "additionalEffectHooks": "^(useExternalSync|useBeforePaintSync)$" }
+  },
   "env": {
     "es2024": true
   },
@@ -15,6 +18,10 @@
         "name": "Date",
         "message": "Date を使わず Temporal を使う（docs/coding-standards.md「Date を使わない」）"
       }
+    ],
+    "react/exhaustive-deps": [
+      "error",
+      { "additionalHooks": "^(useExternalSync|useBeforePaintSync)$" }
     ],
     // 欲しいのは import/no-cycle だけ。import プラグインを入れると suspicious で一緒に出る次の3つは使わない
     "import/no-cycle": "error",
@@ -57,6 +64,16 @@
     "eqeqeq": "error"
   },
   "overrides": [
+    {
+      // deps を引数で受けて effect に渡す包み。配列リテラルでないので包みの中では検査できず、呼び手側を additionalHooks で検査する
+      "files": [
+        "src/browser/hooks/use-external-sync.ts",
+        "src/browser/hooks/use-before-paint-sync.ts"
+      ],
+      "rules": {
+        "react/exhaustive-deps": "off"
+      }
+    },
     {
       // declare module で既存の型へ足す形は interface でないと混ざらない（type だと宣言の重複になる）
       "files": [
