@@ -8,9 +8,9 @@ import type { ReactElement } from "react"
 import type { ClockStamp } from "../../domain/clock-stamp.ts"
 import styles from "./chat-view.module.css"
 
-export function ChatTime(props: { readonly time: ClockStamp }): ReactElement | null {
+export function ChatTime(props: { readonly time: ClockStamp }): ReactElement | undefined {
   if (props.time.kind === "unknown") {
-    return null
+    return undefined
   }
   return (
     <time className={styles["chat-time"]} dateTime={props.time.dateTime}>

@@ -54,9 +54,9 @@ type CommandSuggestionsProps = {
  * `/` 補完の候補一覧。`matches` が空のときは何も出さない。
  * `.dispatch-text-wrap` の中で `position: absolute` の重ねポップアップになる。
  */
-export function CommandSuggestions(props: CommandSuggestionsProps): ReactElement | null {
+export function CommandSuggestions(props: CommandSuggestionsProps): ReactElement | undefined {
   if (props.matches.length === 0) {
-    return null
+    return undefined
   }
 
   return (

@@ -190,7 +190,7 @@ function ContextUsageCardSkeleton(): ReactElement {
 
       <div className={styles["context-bar"]}>
         {/* 横棒は中身の文字（`&nbsp;`）ではなく親（`.context-bar`）の高さに合わせて伸ばす（`flex` の既定の `stretch`）ので `SKELETON_TEXT` は入れない。 */}
-        <Skeleton className={styles["context-skeleton-bar"]}>{null}</Skeleton>
+        <Skeleton className={styles["context-skeleton-bar"]}>{undefined}</Skeleton>
       </div>
 
       <dl className={styles["context-legend"]}>
@@ -229,9 +229,9 @@ type ItemTableProps = {
  * 内訳の表1つ（MCP ツール・メモリファイル・スキルで同じ形）。
  * 1件も無いときは見出しごと出さない（空の表が3つ並ぶと、何が載る場所なのか読み取りにくい）。
  */
-function ItemTable(props: ItemTableProps): ReactElement | null {
+function ItemTable(props: ItemTableProps): ReactElement | undefined {
   if (props.items.length === 0) {
-    return null
+    return undefined
   }
 
   return (
@@ -266,9 +266,9 @@ type DeferredTableProps = {
 }
 
 /** 窓の外にあるツールの定義（`deferred`）。使用量には入らないので横棒とは別に、数だけを並べる。 */
-function DeferredTable(props: DeferredTableProps): ReactElement | null {
+function DeferredTable(props: DeferredTableProps): ReactElement | undefined {
   if (props.rows.length === 0) {
-    return null
+    return undefined
   }
 
   return (

@@ -16,10 +16,10 @@ const ASK_HEIGHT_PX = 14
 const ASK_GAP_PX = 0
 const WINDOW_MARGIN_PX = 8
 
-export function SelectionAsk(): ReactElement | null {
+export function SelectionAsk(): ReactElement | undefined {
   const { selection, onAsk } = useSelectionAsk()
   if (selection === undefined) {
-    return null
+    return undefined
   }
   const left = Math.max(
     WINDOW_MARGIN_PX,

@@ -28,14 +28,14 @@ export function useSeenOnce<Element extends HTMLElement>(): {
 
 /**
  * 要素を縦に転がす最も近い祖先。交差は転がる箱の縁で切られるので、余白を先読みにするには根にそれを渡す。
- * 画面全体で転がる（箱が無い）ときは窓が根なので `null`。
+ * 画面全体で転がる（箱が無い）ときは窓が根なので `undefined`。
  */
-function scrollBoxOf(element: Element): Element | null {
+function scrollBoxOf(element: Element): Element | undefined {
   for (let ancestor = element.parentElement; ancestor !== null; ancestor = ancestor.parentElement) {
     const overflowY = getComputedStyle(ancestor).overflowY
     if (overflowY === "auto" || overflowY === "scroll") {
       return ancestor
     }
   }
-  return null
+  return undefined
 }

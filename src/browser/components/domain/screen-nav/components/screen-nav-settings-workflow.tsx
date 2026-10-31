@@ -143,10 +143,10 @@ function WorkflowFieldDescription(props: { readonly text: string }): ReactElemen
 
 function WorkflowFieldNotice(props: {
   readonly row: Pick<ScreenNavWorkflowSettingStepsRow, "notice">
-}): ReactElement | null {
+}): ReactElement | undefined {
   const { notice } = props.row
   if (notice.kind === "none") {
-    return null
+    return undefined
   }
   return (
     <Text element="p" size="label" tone="state-warn" weight="inherit" className={styles["notice"]}>

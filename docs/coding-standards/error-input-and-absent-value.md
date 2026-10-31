@@ -133,10 +133,14 @@ readonly turn:
 
 `null` を書いてよいのは次の3つだけ:
 
-- React の作法 — `useRef<T>(null)` の初期値、「何も描かない」を表す `return null`
-- 外来 API の戻り値をそのまま受ける場所 — `localStorage.getItem`、`child_process` の `error`、
-  SDK の `parent_tool_use_id`
+- React の型が要求する `null` — `useRef<T>(null)` の初期値、`ref=` へ渡す値、`RefCallback` が受ける引数
+- 外来 API の戻り値・SDK の型が要求するものをそのまま受ける場所 — `localStorage.getItem`、
+  `child_process` の `error`、SDK の `parent_tool_use_id`
 - `typeof value === "object" && value !== null` の型ガード
+
+「何も描かない」は `return undefined` で、コンポーネントの戻り値の型は `ReactElement | undefined`。
+リテラルの `null` は `.oxlintrc.json` の `unicorn/no-null` が `src/`・`scripts/` で見る（SDK の型が要求する
+2 ファイルと `test/**` は外す。ref の初期値と `=== null` の比較は見ない）。
 
 自分で定義する型・関数の戻り値・`shared` の型には出さない。外来の `null` は**受け取った境界で
 `undefined` に畳む**。「無い」の表し方が2つあると、チェックが `== null` か `=== undefined` かで

@@ -22,10 +22,10 @@ const NEXT_MARK = "›"
 export function PresentationalPhaseList(props: {
   readonly list: PhaseListModel
   readonly turnId: number
-}): ReactElement | null {
+}): ReactElement | undefined {
   const { list } = props
   if (list.rows.length === 0) {
-    return null
+    return undefined
   }
   const { sheet } = list
 

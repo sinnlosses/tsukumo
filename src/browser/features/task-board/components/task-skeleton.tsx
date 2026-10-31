@@ -13,7 +13,7 @@ export function TaskSkeleton(): ReactElement {
     <div role="status" aria-label="タスクを読み込み中" className={styles["task-skeleton"]}>
       {SKELETON_WIDTHS.map((width) => (
         <Skeleton key={width} className={styles["task-skeleton-bar"]} style={{ width }}>
-          {null}
+          {undefined}
         </Skeleton>
       ))}
     </div>

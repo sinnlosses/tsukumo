@@ -62,7 +62,7 @@ export function MarkdownEditorSurface({
   onDrop,
 }: MarkdownEditorSurfaceProps): ReactElement {
   const hostRef = useRef<HTMLDivElement | null>(null)
-  const viewRef = useRef<EditorView | null>(null)
+  const viewRef = useRef<EditorView | undefined>(undefined)
 
   const initialDraft = useEffectEvent(() => ({ draft, placeholder, label }))
   const changed = useEffectEvent((next: Draft) => {
@@ -74,7 +74,7 @@ export function MarkdownEditorSurface({
   })
   const format: FormatBarProps["onFormat"] = (makeEdit) => {
     const view = viewRef.current
-    if (view === null) {
+    if (view === undefined) {
       return
     }
     const { from, to } = view.state.selection.main
@@ -105,7 +105,7 @@ export function MarkdownEditorSurface({
       caret: () => viewRef.current?.state.selection.main.head ?? 0,
       placeCaret: (caret) => {
         const view = viewRef.current
-        if (view !== null) {
+        if (view !== undefined) {
           view.dispatch({
             selection: { anchor: Math.min(caret, view.state.doc.length) },
             annotations: FROM_DRAFT.of(true),
@@ -195,13 +195,13 @@ export function MarkdownEditorSurface({
     viewRef.current = view
     return () => {
       view.destroy()
-      viewRef.current = null
+      viewRef.current = undefined
     }
   }, [])
 
   useExternalSync(() => {
     const view = viewRef.current
-    if (view === null || view.state.doc.toString() === draft.text) {
+    if (view === undefined || view.state.doc.toString() === draft.text) {
       return
     }
     view.dispatch({

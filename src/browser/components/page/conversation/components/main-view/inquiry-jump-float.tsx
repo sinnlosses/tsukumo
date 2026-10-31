@@ -12,14 +12,14 @@ import styles from "./main-view.module.css"
 
 const FLOAT_LABEL = "お伺い ↓"
 
-export function InquiryJumpFloat(): ReactElement | null {
+export function InquiryJumpFloat(): ReactElement | undefined {
   const phone = usePhoneWidth()
   const inquiry = useInquiryAnswer()
   const visible = useInquiryCardVisibility((state) => state.visible)
   const requestJump = useInquiryJump((state) => state.requestJump)
 
   if (phone || inquiry.kind === "none" || visible) {
-    return null
+    return undefined
   }
 
   return (

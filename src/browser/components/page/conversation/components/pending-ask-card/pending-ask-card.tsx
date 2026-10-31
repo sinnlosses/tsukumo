@@ -12,13 +12,13 @@ import {
 
 const CLOSED_SHEET = { kind: "closed" } satisfies PendingAskSheet
 
-export function PendingAskCard(): ReactElement | null {
+export function PendingAskCard(): ReactElement | undefined {
   const inquiry = useInquiryAnswer()
   const phone = usePhoneWidth()
   const [sheet, setSheet] = useState<PendingAskSheet>(CLOSED_SHEET)
 
   if (inquiry.kind === "none" || !phone) {
-    return null
+    return undefined
   }
   const shown = sheet.kind !== "closed" && sheet.askId === inquiry.id ? sheet : CLOSED_SHEET
   return (

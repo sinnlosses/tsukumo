@@ -24,11 +24,11 @@ import styles from "./main-view.module.css"
 
 export function PresentationalWorkStrip(props: {
   readonly strip: WorkStripModel
-}): ReactElement | null {
+}): ReactElement | undefined {
   const { strip } = props
 
   if (strip.kind === "none") {
-    return null
+    return undefined
   }
 
   return (
@@ -150,10 +150,10 @@ function PhaseTrack(props: {
 const NO_SPAN_HEAD = { kind: "none" } as const satisfies WorkStripSpanHead
 
 /** 群の名。読み上げは丸の `aria-label`（「後1. 受け入れ」）が群を言うので隠す。 */
-function SpanName(props: { readonly spanHead: WorkStripSpanHead }): ReactElement | null {
+function SpanName(props: { readonly spanHead: WorkStripSpanHead }): ReactElement | undefined {
   const { spanHead } = props
   if (spanHead.kind === "none") {
-    return null
+    return undefined
   }
   return (
     <span

@@ -8,10 +8,10 @@ const BOOKMARK_HEADING = "しおり ── この日のいちばん"
 export function Bookmark(props: {
   readonly bookmark: DiaryBookBookmark
   readonly writerName: string
-}): ReactElement | null {
+}): ReactElement | undefined {
   const { bookmark } = props
   if (bookmark.kind === "none") {
-    return null
+    return undefined
   }
   return (
     <div className={styles["diary-book-bookmark"]}>

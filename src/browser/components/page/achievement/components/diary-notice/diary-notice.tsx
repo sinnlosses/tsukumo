@@ -14,10 +14,10 @@ const OPEN_LABEL = "日記帳で開く"
 const DISMISS_LABEL = "×"
 const DISMISS_SR_LABEL = "知らせを消す"
 
-export function DiaryNotice(): ReactElement | null {
+export function DiaryNotice(): ReactElement | undefined {
   const view = useDiaryNotice()
   if (view.kind !== "shown") {
-    return null
+    return undefined
   }
 
   return (

@@ -43,7 +43,7 @@ describe("useSeenOnce", () => {
     inBox.unmount()
 
     render(<Probe />)
-    expect(intersection.instances[1]?.options.root).toBeNull()
+    expect(intersection.instances[1]?.options.root).toBeUndefined()
   })
 
   it("アンマウントで観測をやめる", () => {

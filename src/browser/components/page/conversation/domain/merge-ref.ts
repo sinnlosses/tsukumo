@@ -13,11 +13,13 @@ export function mergeRefs<Element>(...refs: readonly Ref<Element>[]): RefCallbac
         return typeof cleanup === "function"
           ? cleanup
           : () => {
+              // oxlint-disable-next-line unicorn/no-null -- RefCallback の引数の型が null を要求する
               ref(null)
             }
       }
       ref.current = element
       return () => {
+        // oxlint-disable-next-line unicorn/no-null -- RefObject の値の型が null を含む
         ref.current = null
       }
     })

@@ -155,9 +155,9 @@ function HeadLead(props: { readonly subject: string }): ReactElement {
 function Progress(props: {
   readonly inquiry: ActiveInquiry
   readonly pushed: boolean
-}): ReactElement | null {
+}): ReactElement | undefined {
   if (props.inquiry.questionCount <= 1) {
-    return null
+    return undefined
   }
   return (
     <span

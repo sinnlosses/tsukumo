@@ -32,7 +32,7 @@ type ReportHeadProps = {
   readonly className: string
 }
 
-export function ReportHead(props: ReportHeadProps): ReactElement | null {
+export function ReportHead(props: ReportHeadProps): ReactElement | undefined {
   const { label, task, phase, changeSummary } = props
   if (
     label === "none" &&
@@ -40,7 +40,7 @@ export function ReportHead(props: ReportHeadProps): ReactElement | null {
     phase.kind === "none" &&
     changeSummary.kind === "none"
   ) {
-    return null
+    return undefined
   }
 
   const items = [

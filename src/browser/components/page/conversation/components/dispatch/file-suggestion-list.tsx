@@ -58,9 +58,9 @@ type FileSuggestionsProps = {
  * `@` 補完の候補一覧。`matches` が空で一覧も全件のときは何も出さない。
  * 一覧が一部だけのときは、候補が無くても一言を出す（無いファイルと見分けられるように）。
  */
-export function FileSuggestions(props: FileSuggestionsProps): ReactElement | null {
+export function FileSuggestions(props: FileSuggestionsProps): ReactElement | undefined {
   if (props.matches.length === 0 && props.omittedCount === 0) {
-    return null
+    return undefined
   }
 
   return (

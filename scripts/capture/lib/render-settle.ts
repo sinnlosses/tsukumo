@@ -24,7 +24,9 @@ export async function settleRender(page: Pick<Page, "evaluate">): Promise<void> 
     await Promise.race([
       page.evaluate(async () => {
         await document.fonts.ready
-        await Promise.all(Array.from(document.images, (image) => image.decode().catch(() => null)))
+        await Promise.all(
+          Array.from(document.images, (image) => image.decode().catch(() => undefined)),
+        )
         await Promise.all(
           document
             .getAnimations()
@@ -33,7 +35,7 @@ export async function settleRender(page: Pick<Page, "evaluate">): Promise<void> 
                 animation.timeline instanceof DocumentTimeline &&
                 animation.effect?.getComputedTiming().endTime !== Infinity,
             )
-            .map((animation) => animation.finished.catch(() => null)),
+            .map((animation) => animation.finished.catch(() => undefined)),
         )
         await new Promise<void>((resolve) => {
           requestAnimationFrame(() => {

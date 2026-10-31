@@ -46,7 +46,7 @@ type MiniPortraitProps = {
   readonly shownTurnId: number
 }
 
-export function MiniPortrait(props: MiniPortraitProps): ReactElement | null {
+export function MiniPortrait(props: MiniPortraitProps): ReactElement | undefined {
   const stance = useBrushStance()
   const character = useSession((session) => session.state.character)
   const url = character?.mini
@@ -57,7 +57,7 @@ export function MiniPortrait(props: MiniPortraitProps): ReactElement | null {
     character === undefined ||
     url === undefined
   ) {
-    return null
+    return undefined
   }
 
   // 読み上げ上もキャラビューの立ち絵と見分けが付くようにする（同じ姿がもう1体居るため）。

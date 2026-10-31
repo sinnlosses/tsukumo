@@ -5,6 +5,6 @@ import type { ReactElement } from "react"
 import { useCurrentStep } from "./hooks/use-current-step.ts"
 import { PresentationalCurrentStep } from "./presentational-current-step.tsx"
 
-export function CurrentStep(): ReactElement | null {
+export function CurrentStep(): ReactElement | undefined {
   return <PresentationalCurrentStep step={useCurrentStep()} />
 }

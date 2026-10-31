@@ -167,13 +167,13 @@ type StepProps = {
  * ツールの実行（`action.kind === "tool"`）は描かない。
  * `actions` にはツールの記録も残っているが、メインビューに出すのは質問の記録だけ。
  */
-function Step(props: StepProps): ReactElement | null {
+function Step(props: StepProps): ReactElement | undefined {
   const { step } = props
   const hasCard =
     step.body.kind === "text" || (props.showQuestions && step.actions.some(isQuestion))
 
   if (!hasCard) {
-    return null
+    return undefined
   }
 
   return <StepCard {...props} />
@@ -289,10 +289,10 @@ type StepReportProps = {
   readonly phoneHidden: boolean
 }
 
-function StepReport(props: StepReportProps): ReactElement | null {
+function StepReport(props: StepReportProps): ReactElement | undefined {
   const { step } = props
   if (step.body.kind !== "text") {
-    return null
+    return undefined
   }
   const phoneHidden = props.phoneHidden ? styles["phone-hidden"] : ""
   return (

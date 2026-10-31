@@ -8,10 +8,10 @@ import styles from "./main-view.module.css"
 
 export function PresentationalCurrentStep(props: {
   readonly step: CurrentStepModel
-}): ReactElement | null {
+}): ReactElement | undefined {
   const { step } = props
   if (step.kind === "none") {
-    return null
+    return undefined
   }
   const { activity } = step
 

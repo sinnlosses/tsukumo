@@ -19,7 +19,7 @@ const NEAR_BOTTOM_THRESHOLD_PX = 120
  * `count` は並んでいる行の件数で、増えたときに寄せる合図になる。
  */
 export function useStickToBottom(count: number): RefCallback<HTMLDivElement> {
-  const logRef = useRef<HTMLDivElement>(null)
+  const logRef = useRef<HTMLDivElement | undefined>(undefined)
   // 利用者が下端付近を読んでいるかどうか。
   // 新着が来た「あと」に測ったのでは元の位置がわからないので、スクロール操作のたびに更新しておく。
   // 初期値は true（まだ何も積まれていない・積まれたばかりの状態は下端に等しい）。
@@ -32,7 +32,7 @@ export function useStickToBottom(count: number): RefCallback<HTMLDivElement> {
   // oxlint の `react-hooks(exhaustive-deps)` は依存配列の関数が毎回作り直されるかを静的に見るだけで、Compiler が実行時にメモ化することは検査に映らないので、外すと lint が落ちる。
   const stickToBottom = useCallback((): void => {
     const log = logRef.current
-    if (log === null || !nearBottomRef.current) {
+    if (log === undefined || !nearBottomRef.current) {
       return
     }
     log.scrollTop = log.scrollHeight
@@ -65,7 +65,7 @@ export function useStickToBottom(count: number): RefCallback<HTMLDivElement> {
     return () => {
       log.removeEventListener("scroll", updateNearBottom)
       observer.disconnect()
-      logRef.current = null
+      logRef.current = undefined
     }
   }
 }

@@ -61,13 +61,15 @@ const WRITTEN_ANSWER_PREFIX = "入力欄に書いた答え: "
 /** 数字キーで選べる選択肢の数字。 */
 const CHOICE_KEY = /^[1-9]$/
 
-export function Inquiry(): ReactElement | null {
+export function Inquiry(): ReactElement | undefined {
   const phone = usePhoneWidth()
-  return phone ? null : <InquiryCard actions="inline" />
+  return phone ? undefined : <InquiryCard actions="inline" />
 }
 
 /** `actions` が `none` のときは操作の行を出さない（狭い画面の板が、下端に自前の口を置く）。 */
-export function InquiryCard(props: { readonly actions: "inline" | "none" }): ReactElement | null {
+export function InquiryCard(props: {
+  readonly actions: "inline" | "none"
+}): ReactElement | undefined {
   const inquiry = useInquiryAnswer()
   const jump = useInquiryJump((state) => state.jump)
   const askId = inquiry.kind === "none" ? undefined : inquiry.id
@@ -76,7 +78,7 @@ export function InquiryCard(props: { readonly actions: "inline" | "none" }): Rea
   const now = useNowWhile(inquiry.kind !== "none")
 
   if (inquiry.kind === "none") {
-    return null
+    return undefined
   }
 
   const focused = inquiry.options.find((option) => option.label === inquiry.focusedLabel)
@@ -399,9 +401,9 @@ function InquiryPoints(props: {
   readonly mark: string
   readonly tone: "state-ok" | "state-ng"
   readonly items: readonly string[]
-}): ReactElement | null {
+}): ReactElement | undefined {
   if (props.items.length === 0) {
-    return null
+    return undefined
   }
   return (
     <div className={styles["inquiry-points"]}>

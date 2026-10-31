@@ -17,9 +17,9 @@ type SurpriseSectionProps = {
   readonly milestones: readonly AchievementMilestone[]
 }
 
-export function SurpriseSection(props: SurpriseSectionProps): ReactElement | null {
+export function SurpriseSection(props: SurpriseSectionProps): ReactElement | undefined {
   if (props.graduations.length === 0 && props.milestones.length === 0) {
-    return null
+    return undefined
   }
 
   return (

@@ -7,7 +7,7 @@ import { PresentationalPhaseList } from "./presentational-phase-list.tsx"
 
 export function PhaseList(
   props: PhaseListProps & { readonly turnId: number },
-): ReactElement | null {
+): ReactElement | undefined {
   const { turnId, ...listProps } = props
   return <PresentationalPhaseList list={usePhaseList(listProps)} turnId={turnId} />
 }

@@ -12,10 +12,10 @@ import {
 import { astNumber } from "./ast-node.ts"
 import { listSourceFiles, parseSourceProgram, SRC_ROOT } from "./source-file.ts"
 
-// 条件付きの描画は `{条件 && <部品 />}` で書き、JSX の子に `{条件 ? <部品 /> : null}` を書かない
+// 条件付きの描画は `{条件 && <部品 />}` で書き、JSX の子に `{条件 ? <部品 /> : null}` や `: undefined` を書かない
 // （docs/coding-standards/react.md「条件付きの描画は `&&` で書く」）。属性の値と JSX の外の三項は見ない。
 describe("JSX の子の三項", () => {
-  it("src/browser の *.tsx で、片方の枝が null の三項を JSX の子に書かない", () => {
+  it("src/browser の *.tsx で、片方の枝が null か undefined の三項を JSX の子に書かない", () => {
     const browserRoot = `${SRC_ROOT}/browser`
     const offenders = listSourceFiles(browserRoot, browserRoot, [".tsx"]).flatMap((relPath) =>
       nullBranchLines(readFileSync(`${browserRoot}/${relPath}`, "utf8")).map(
@@ -29,6 +29,8 @@ describe("JSX の子の三項", () => {
   it.each([
     ["真の枝が部品で偽の枝が null", "const a = <div>{ok ? <b /> : null}</div>", [1]],
     ["真の枝が null", "const a = <div>{ok ? null : <b />}</div>", [1]],
+    ["偽の枝が undefined", "const a = <div>{ok ? <b /> : undefined}</div>", [1]],
+    ["真の枝が undefined", "const a = <div>{ok ? undefined : <b />}</div>", [1]],
     ["断片の子", "const a = <>{ok ? <b /> : null}</>", [1]],
     [
       "入れ子の子の行番号",
@@ -47,7 +49,7 @@ describe("JSX の子の三項", () => {
     ["&& で書く", "const a = <div>{ok && <b />}</div>"],
     ["属性の値の三項", "const a = <div title={ok ? 'x' : null} />"],
     ["JSX の外の三項", "function f() { return ok ? <b /> : null }"],
-    ["null でない枝", "const a = <div>{ok ? <b /> : undefined}</div>"],
+    ["空でない文字列の枝", "const a = <div>{ok ? <b /> : 'x'}</div>"],
   ])("見本を拾わない: %s", (_name, source) => {
     expect(nullBranchLines(source)).toEqual([])
   })
@@ -76,7 +78,7 @@ function nullBranchConditionals(expression: AstNode | undefined): readonly AstNo
       const consequent = objectField(expression, "consequent")
       const alternate = objectField(expression, "alternate")
       return [
-        ...(isNullLiteral(consequent) || isNullLiteral(alternate) ? [expression] : []),
+        ...(isEmptyBranch(consequent) || isEmptyBranch(alternate) ? [expression] : []),
         ...nullBranchConditionals(consequent),
         ...nullBranchConditionals(alternate),
       ]
@@ -93,8 +95,11 @@ function nullBranchConditionals(expression: AstNode | undefined): readonly AstNo
   }
 }
 
-function isNullLiteral(node: object | undefined): boolean {
-  return stringField(node, "type") === "Literal" && stringField(node, "raw") === "null"
+function isEmptyBranch(node: object | undefined): boolean {
+  return (
+    (stringField(node, "type") === "Literal" && stringField(node, "raw") === "null") ||
+    (stringField(node, "type") === "Identifier" && stringField(node, "name") === "undefined")
+  )
 }
 
 function lineOf(source: string, offset: number): number {

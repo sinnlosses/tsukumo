@@ -13,10 +13,10 @@ type BookmarkSectionProps = {
   readonly writerName: string
 }
 
-export function BookmarkSection(props: BookmarkSectionProps): ReactElement | null {
+export function BookmarkSection(props: BookmarkSectionProps): ReactElement | undefined {
   const { bookmark } = props
   if (bookmark === undefined || bookmark.kind === "none") {
-    return null
+    return undefined
   }
 
   return (

@@ -166,7 +166,7 @@ function stringifyToolInput(input: unknown): string {
     return ""
   }
 
-  const json = JSON.stringify(input, null, 2)
+  const json = JSON.stringify(input, undefined, 2)
   return json ?? String(input)
 }
 

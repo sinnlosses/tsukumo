@@ -61,9 +61,21 @@
     "vitest/no-focused-tests": "error",
     "vitest/no-disabled-tests": "error",
     "vitest/valid-expect": ["error", { "maxArgs": 2 }],
-    "eqeqeq": "error"
+    "eqeqeq": "error",
+    "unicorn/no-null": "error"
   },
   "overrides": [
+    {
+      // SDK の型が null を要求する値を渡す。test/** は別のタスクで直す
+      "files": [
+        "test/**",
+        "src/server/session-driver/adapter/sdk-prompt-stream.ts",
+        "src/server/adapter/sdk-structured-query.ts"
+      ],
+      "rules": {
+        "unicorn/no-null": "off"
+      }
+    },
     {
       // deps を引数で受けて effect に渡す包み。配列リテラルでないので包みの中では検査できず、呼び手側を additionalHooks で検査する
       "files": [

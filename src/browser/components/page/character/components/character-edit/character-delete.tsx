@@ -15,12 +15,12 @@ import styles from "./character-edit.module.css"
 
 export function CharacterDelete(props: {
   readonly band: CharacterDeleteBandModel
-}): ReactElement | null {
+}): ReactElement | undefined {
   const [open, setOpen] = useState(false)
   const { band } = props
 
   if (band.kind === "hidden") {
-    return null
+    return undefined
   }
 
   return (

@@ -16,9 +16,9 @@ type CharacterFaceProps = {
   readonly className: string
 }
 
-export function CharacterFace(props: CharacterFaceProps): ReactElement | null {
+export function CharacterFace(props: CharacterFaceProps): ReactElement | undefined {
   if (props.url === undefined) {
-    return null
+    return undefined
   }
 
   return <img className={props.className} src={props.url} alt={props.alt} />

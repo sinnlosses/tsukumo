@@ -53,5 +53,5 @@ export function parseItemsFile(text: string): ItemsFileReading {
 
 /** `items.json` に書く文字列（2 スペースの整形・末尾改行）。 */
 export function serializeItemsFile(file: ItemsFile): string {
-  return `${JSON.stringify(file, null, 2)}\n`
+  return `${JSON.stringify(file, undefined, 2)}\n`
 }

@@ -12,10 +12,10 @@ export function TaskMark(props: {
   readonly status: TaskSummaryStatus
   /** 依存のうち済んでいないものがある（`waitingFor` が空でない）。`todo` の印だけに効く。 */
   readonly waiting: boolean
-}): ReactElement | null {
+}): ReactElement | undefined {
   const { status } = props
   if (status.kind === "none") {
-    return null
+    return undefined
   }
   if (status.kind === "other") {
     return <span className={styles["task-mark-other"]} title={status.raw} />

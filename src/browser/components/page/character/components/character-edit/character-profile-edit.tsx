@@ -12,12 +12,12 @@ import { CharacterProfileEditDialog } from "./character-profile-edit-dialog.tsx"
 
 export function CharacterProfileEdit(props: {
   readonly edit: CharacterProfileEditModel
-}): ReactElement | null {
+}): ReactElement | undefined {
   const [open, setOpen] = useState(false)
   const { edit } = props
 
   if (edit.kind === "hidden") {
-    return null
+    return undefined
   }
 
   return (

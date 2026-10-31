@@ -148,7 +148,7 @@ function hastToReact(node: ElementContent, index: number): ReactNode {
     return node.value
   }
   if (node.type !== "element") {
-    return null
+    return undefined
   }
   return createElement(
     node.tagName,

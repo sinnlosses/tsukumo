@@ -48,11 +48,11 @@ type PromptImageChipsProps = {
 }
 
 /** 送る前の札（`<textarea>` の上に並ぶ）。縮めた絵（押すと拡大）と、外す `×` を持つ。 */
-export function PromptImageChips(props: PromptImageChipsProps): ReactElement | null {
+export function PromptImageChips(props: PromptImageChipsProps): ReactElement | undefined {
   const [zoomedIndex, setZoomedIndex] = useState<number | undefined>(undefined)
 
   if (props.images.length === 0) {
-    return null
+    return undefined
   }
 
   const zoomedImage = zoomedIndex === undefined ? undefined : props.images[zoomedIndex]
@@ -123,13 +123,13 @@ type PromptImageThumbnailsProps = {
  * 送ったあとの控え（依頼の見出しの下・雑談の吹き出しの中）。
  * 押すと棚の原寸を拡大の面で開き、棚に残っていなければ控えを代わりに出す。
  */
-export function PromptImageThumbnails(props: PromptImageThumbnailsProps): ReactElement | null {
+export function PromptImageThumbnails(props: PromptImageThumbnailsProps): ReactElement | undefined {
   // 開いている控えが何枚目か。id では持たない。
   // 「開いていない」の undefined が、形の崩れた記録の id（undefined）と一致して、閉じられない面が開くため。
   const [zoomedIndex, setZoomedIndex] = useState<number | undefined>(undefined)
 
   if (props.images.length === 0) {
-    return null
+    return undefined
   }
 
   const zoomedImage = zoomedIndex === undefined ? undefined : props.images[zoomedIndex]
@@ -203,10 +203,10 @@ function ThumbnailItem(props: ThumbnailItemProps): ReactElement {
  */
 function RestoredThumbnailItem(
   props: Omit<ThumbnailItemProps, "src"> & { readonly id: string },
-): ReactElement | null {
+): ReactElement | undefined {
   const thumbnail = useRemadeThumbnail(shelvedImageUrl(props.id))
   if (thumbnail.kind !== "made") {
-    return null
+    return undefined
   }
   return <ThumbnailItem src={thumbnail.src} size={props.size} onZoom={props.onZoom} />
 }

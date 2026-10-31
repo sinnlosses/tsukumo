@@ -22,9 +22,9 @@ type PresentationalCharacterEditProps = CharacterEditModel
 
 export function PresentationalCharacterEdit(
   props: PresentationalCharacterEditProps,
-): ReactElement | null {
+): ReactElement | undefined {
   if (props.kind === "waiting") {
-    return null
+    return undefined
   }
 
   return (
