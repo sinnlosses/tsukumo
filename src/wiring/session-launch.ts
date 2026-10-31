@@ -258,7 +258,10 @@ function startRealDriver(
     effort: seed.sessionDefault.effort,
     systemPromptAppend: takeSystemPromptAppend({
       persona: seed.pack.persona ?? "",
-      appearance: appearancePromptPart(seed.pack.dir, seed.pack.definition),
+      appearance:
+        seed.pack.definition === undefined
+          ? ""
+          : appearancePromptPart(seed.pack.dir, seed.pack.definition),
       mode: toSystemPromptMode(mode, memory.readRecent, memory.chatSummary.read, seed.start),
     }),
     start: seed.start,

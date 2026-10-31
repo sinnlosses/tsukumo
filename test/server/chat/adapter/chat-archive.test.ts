@@ -53,8 +53,8 @@ describe("createChatArchive", () => {
       kind: "request",
       at,
       text: REQUEST_TEXT,
-      images: undefined,
-      imageFiles: undefined,
+      images: 0,
+      imageFiles: [],
     })
     chatArchive.append(PACK, {
       mode: "chat",
@@ -62,7 +62,7 @@ describe("createChatArchive", () => {
       at,
       text: REQUEST_TEXT,
       images: 2,
-      imageFiles: undefined,
+      imageFiles: [],
     })
 
     const [record, withImages] = readLines<{ at: string }>(join(root(), PACK, "2026-09-21.jsonl"))
@@ -92,7 +92,7 @@ describe("createChatArchive", () => {
       at,
       text: REQUEST_TEXT,
       project: FICTIONAL_PROJECT,
-      images: undefined,
+      images: 0,
     })
     chatArchive.append(PACK, {
       mode: "work",
@@ -149,16 +149,16 @@ describe("createChatArchive", () => {
       kind: "request",
       at,
       text: "pack-a の依頼",
-      images: undefined,
-      imageFiles: undefined,
+      images: 0,
+      imageFiles: [],
     })
     chatArchive.append(PACK_B, {
       mode: "chat",
       kind: "request",
       at,
       text: "pack-b の依頼",
-      images: undefined,
-      imageFiles: undefined,
+      images: 0,
+      imageFiles: [],
     })
 
     expect(readLines(join(root(), PACK_A, "2026-09-21.jsonl"))).toHaveLength(1)
@@ -173,16 +173,16 @@ describe("createChatArchive", () => {
       kind: "request",
       at: noonOn(2026, 9, 21),
       text: "21日の依頼",
-      images: undefined,
-      imageFiles: undefined,
+      images: 0,
+      imageFiles: [],
     })
     chatArchive.append(PACK, {
       mode: "chat",
       kind: "request",
       at: noonOn(2026, 9, 22),
       text: "22日の依頼",
-      images: undefined,
-      imageFiles: undefined,
+      images: 0,
+      imageFiles: [],
     })
 
     expect(readdirSync(join(root(), PACK)).toSorted()).toEqual([
@@ -208,8 +208,8 @@ describe("createChatArchive", () => {
         kind: "request",
         at: noonOn(2026, 9, 21),
         text: REQUEST_TEXT,
-        images: undefined,
-        imageFiles: undefined,
+        images: 0,
+        imageFiles: [],
       }),
     ).not.toThrow()
   })
@@ -239,8 +239,8 @@ describe("createChatArchive の readRecent", () => {
       kind: "request",
       at: noonOn(2026, 9, 20),
       text: "20日の依頼",
-      images: undefined,
-      imageFiles: undefined,
+      images: 0,
+      imageFiles: [],
     })
     chatArchive.append(PACK, {
       mode: "chat",
@@ -265,8 +265,8 @@ describe("createChatArchive の readRecent", () => {
         kind: "request",
         at: noonOn(2026, 9, 19 + index),
         text,
-        images: undefined,
-        imageFiles: undefined,
+        images: 0,
+        imageFiles: [],
       })
     }
 
@@ -284,8 +284,8 @@ describe("createChatArchive の readRecent", () => {
       kind: "request",
       at: noonOn(2026, 9, 21),
       text: TWELVE_BYTES,
-      images: undefined,
-      imageFiles: undefined,
+      images: 0,
+      imageFiles: [],
     })
 
     expect(chatArchive.readRecent(PACK, withRecentBytes(5))).toEqual([])
@@ -300,7 +300,7 @@ describe("createChatArchive の readRecent", () => {
       at,
       text: REQUEST_TEXT,
       images: 2,
-      imageFiles: undefined,
+      imageFiles: [],
     })
     chatArchive.append(PACK, {
       mode: "chat",
@@ -384,7 +384,7 @@ describe("createChatArchive の readRecent", () => {
       at,
       text: "架空の依頼",
       project,
-      images: undefined,
+      images: 0,
     })
     chatArchive.append(PACK, {
       mode: "work",
@@ -455,16 +455,16 @@ describe("createChatArchive の readRecent", () => {
       kind: "request",
       at,
       text: "pack-a の依頼",
-      images: undefined,
-      imageFiles: undefined,
+      images: 0,
+      imageFiles: [],
     })
     chatArchive.append(PACK_B, {
       mode: "chat",
       kind: "request",
       at,
       text: "pack-b の依頼",
-      images: undefined,
-      imageFiles: undefined,
+      images: 0,
+      imageFiles: [],
     })
 
     expect(chatArchive.readRecent(PACK_A, LIMIT_ALL).map((entry) => entry.text)).toEqual([

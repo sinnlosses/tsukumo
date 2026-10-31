@@ -193,8 +193,11 @@ function toArchiveRecord(packName: CharacterPackName, entry: ChatArchiveEntry): 
     speaker: entry.kind === "request" ? "user" : "character",
     text: entry.text,
     expression: entry.kind === "speech" ? entry.expression : undefined,
-    images: entry.kind === "request" ? entry.images : undefined,
-    imageFiles: entry.kind === "request" && entry.mode === "chat" ? entry.imageFiles : undefined,
+    images: entry.kind === "request" && entry.images > 0 ? entry.images : undefined,
+    imageFiles:
+      entry.kind === "request" && entry.mode === "chat" && entry.imageFiles.length > 0
+        ? entry.imageFiles
+        : undefined,
   }
 }
 

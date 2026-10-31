@@ -52,8 +52,8 @@ describe("createChatArchive の unconsolidated", () => {
       kind: "request",
       at: noonOn(2026, 9, day),
       text,
-      images: undefined,
-      imageFiles: undefined,
+      images: 0,
+      imageFiles: [],
     })
   }
 
@@ -128,8 +128,8 @@ describe("createChatArchive の unconsolidated", () => {
         kind: "request",
         at: noonOn(2026, 9, 20) + offset,
         text,
-        images: undefined,
-        imageFiles: undefined,
+        images: 0,
+        imageFiles: [],
       })
     }
     appendRequest(chatArchive, 21, "21日の依頼")

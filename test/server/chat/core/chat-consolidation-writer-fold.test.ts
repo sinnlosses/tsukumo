@@ -41,8 +41,8 @@ function createHarness() {
       kind: "request",
       at: start + index * 60_000,
       text: fictionalLine(index),
-      images: undefined,
-      imageFiles: undefined,
+      images: 0,
+      imageFiles: [],
     })
   }
   for (let index = 0; index < LINE_COUNT; index += 1) {

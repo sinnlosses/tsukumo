@@ -209,20 +209,21 @@ function firstWritten<T, R>(
 ): Promise<{ readonly index: 0 | 1; readonly attempt: Attempt<T, R> } | undefined> {
   return new Promise((resolve) => {
     let pending = 2
+    const lose = (): void => {
+      pending -= 1
+      if (pending === 0) {
+        resolve(undefined)
+      }
+    }
     const watch = (promise: Promise<Attempt<T, R>>, index: 0 | 1): void => {
-      const settle = (attempt: Attempt<T, R> | undefined): void => {
-        if (attempt?.kind === "written") {
+      const settle = (attempt: Attempt<T, R>): void => {
+        if (attempt.kind === "written") {
           resolve({ index, attempt })
           return
         }
-        pending -= 1
-        if (pending === 0) {
-          resolve(undefined)
-        }
+        lose()
       }
-      promise.then(settle, () => {
-        settle(undefined)
-      })
+      promise.then(settle, lose)
     }
     watch(first, 0)
     watch(second, 1)

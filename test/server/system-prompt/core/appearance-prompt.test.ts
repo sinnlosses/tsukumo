@@ -9,13 +9,19 @@ import { parseCharacterDefinition } from "../../../../src/shared/character-pack/
 const DIR = "/home/someone/.tsukumo/characters/架空"
 
 function definitionOf(json: object) {
-  return parseCharacterDefinition(JSON.stringify(json))
+  return definitionFrom(JSON.stringify(json))
+}
+
+function definitionFrom(content: string) {
+  const definition = parseCharacterDefinition(content)
+  if (definition === undefined) throw new Error("定義として読めない")
+  return definition
 }
 
 describe("appearancePromptPart", () => {
   it("同梱の唐傘のパックから、default.png を含む立ち絵と background.png の絶対パスと Read の案内が入る", () => {
     const dir = join(import.meta.dirname, "../../../../characters/tsukumo")
-    const definition = parseCharacterDefinition(readFileSync(join(dir, "character.json"), "utf8"))
+    const definition = definitionFrom(readFileSync(join(dir, "character.json"), "utf8"))
 
     const part = appearancePromptPart(dir, definition)
 
@@ -31,8 +37,7 @@ describe("appearancePromptPart", () => {
     expect(part).not.toContain("背景:")
   })
 
-  it("立ち絵も背景も無い定義と、定義の無いパックでは節ごと落ちる", () => {
+  it("立ち絵も背景も無い定義では節ごと落ちる", () => {
     expect(appearancePromptPart(DIR, definitionOf({ name: "空" }))).toBe("")
-    expect(appearancePromptPart(DIR, undefined)).toBe("")
   })
 })

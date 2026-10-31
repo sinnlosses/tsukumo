@@ -60,7 +60,7 @@ export function checkWelcomeAnswer<T>(
     return { kind: "accepted", value: parsed.data }
   }
   const [issue] = parsed.error.issues
-  return { kind: "rejected", reason: rejectionOf(issue) }
+  return { kind: "rejected", reason: issue === undefined ? "missing" : rejectionOf(issue) }
 }
 
 export function rejected(reason: WelcomeRejection): {
@@ -70,8 +70,8 @@ export function rejected(reason: WelcomeRejection): {
   return { kind: "rejected", reason }
 }
 
-function rejectionOf(issue: z.core.$ZodIssue | undefined): WelcomeRejection {
-  if (issue === undefined || issue.code === "invalid_type") {
+function rejectionOf(issue: z.core.$ZodIssue): WelcomeRejection {
+  if (issue.code === "invalid_type") {
     return "missing"
   }
   return CHECK_REJECTIONS.find((reason) => reason === issue.message) ?? "missing"

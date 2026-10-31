@@ -41,7 +41,7 @@ export function appendChatArchiveEntry(
   imageSource: ChatArchiveImageSource,
 ): Promise<void> | undefined {
   if (event.kind === "request") {
-    const images = event.images.length > 0 ? event.images.length : undefined
+    const images = event.images.length
     if (mode === "work") {
       chatArchive.append(packName, {
         mode,
@@ -54,14 +54,14 @@ export function appendChatArchiveEntry(
       return undefined
     }
     const request = event.text
-    if (images === undefined) {
+    if (images === 0) {
       chatArchive.append(packName, {
         mode,
         kind: "request",
         at,
         text: request,
         images,
-        imageFiles: undefined,
+        imageFiles: [],
       })
       return undefined
     }
@@ -72,7 +72,7 @@ export function appendChatArchiveEntry(
         at,
         text: request,
         images,
-        imageFiles: written.length > 0 ? written : undefined,
+        imageFiles: written,
       })
     })
   }

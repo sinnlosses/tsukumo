@@ -139,10 +139,10 @@ export type ChatArchiveEntry =
       readonly kind: "request"
       readonly at: number
       readonly text: string
-      /** 添えた画像の枚数。1枚以上あるときだけ値を持つ。 */
-      readonly images: number | undefined
-      /** 書けた画像のファイル名（{@link ChatArchive.writeImage} の戻り値）。1枚以上書けたときだけ値を持つ。 */
-      readonly imageFiles: readonly string[] | undefined
+      /** 添えた画像の枚数。 */
+      readonly images: number
+      /** 書けた画像のファイル名（{@link ChatArchive.writeImage} の戻り値）。 */
+      readonly imageFiles: readonly string[]
     }
   | {
       readonly mode: "chat"
@@ -157,8 +157,8 @@ export type ChatArchiveEntry =
       readonly at: number
       readonly text: string
       readonly project: string
-      /** 添えた画像の枚数。1枚以上あるときだけ値を持つ。 */
-      readonly images: number | undefined
+      /** 添えた画像の枚数。 */
+      readonly images: number
     }
   | {
       readonly mode: "work"

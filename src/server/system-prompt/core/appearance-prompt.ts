@@ -8,12 +8,7 @@ import { EXPRESSIONS } from "../../../shared/character-pack/expression.ts"
  * 立ち絵と背景のパスの節。どちらも定義に無ければ空文字列（節ごと落ちる）。
  * `dir` はパックのディレクトリの絶対パス。
  */
-export function appearancePromptPart(
-  dir: string,
-  definition: CharacterDefinition | undefined,
-): string {
-  if (definition === undefined) return ""
-
+export function appearancePromptPart(dir: string, definition: CharacterDefinition): string {
   const portraitLines = EXPRESSIONS.flatMap((expression) => {
     const file = definition.portraits[expression]
     return file === undefined ? [] : [`- 立ち絵（${expression}）: ${dir}/${file}`]

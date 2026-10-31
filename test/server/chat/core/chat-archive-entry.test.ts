@@ -70,8 +70,8 @@ describe("appendChatArchiveEntry", () => {
           kind: "request",
           at: 1_000,
           text: "架空の依頼",
-          images: undefined,
-          imageFiles: undefined,
+          images: 0,
+          imageFiles: [],
         },
       },
     ])
@@ -119,7 +119,7 @@ describe("appendChatArchiveEntry", () => {
           at: 1_000,
           text,
           project: FICTIONAL_PROJECT,
-          images: undefined,
+          images: 0,
         },
       },
     ])
@@ -316,7 +316,7 @@ describe("appendChatArchiveEntry の画像", () => {
     expect(failures).toEqual([WRITE_ERROR, undefined])
   })
 
-  it("1枚も書けなければ imageFiles を持たない", async () => {
+  it("1枚も書けなければ imageFiles は空", async () => {
     const { archive, calls } = imageRecordingArchive(new Set(["id-1"]))
     const { source } = shelfOf(["id-1"])
 
@@ -330,7 +330,7 @@ describe("appendChatArchiveEntry の画像", () => {
       source,
     )
 
-    expect(calls[0]?.entry).toMatchObject({ imageFiles: undefined })
+    expect(calls[0]?.entry).toMatchObject({ imageFiles: [] })
   })
 
   it("画像の書き出しが解けないあいだは Promise を返して行を足さず、解けてから足す", async () => {

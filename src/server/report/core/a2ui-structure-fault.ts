@@ -81,20 +81,30 @@ export function a2uiStructureFaults(components: readonly unknown[]): readonly A2
   } else {
     reached.add(rootIndex)
     const visit = (index: number, depth: number): void => {
-      for (const reference of referencesOf(parts[index], index)) {
+      const part = parts[index]
+      if (part === undefined) {
+        return
+      }
+      for (const reference of referencesOf(part, index)) {
         const target = indexById.get(reference.id)
         if (target === undefined) {
           faults.push({ kind: "undefined-reference", pointer: reference.pointer })
           continue
         }
         const component = parts[target]?.component
-        const fault = placementFault(reference.slot, component, depth)
+        const fault =
+          component === undefined ? undefined : placementFault(reference.slot, component, depth)
         if (fault !== undefined) {
           faults.push({ kind: fault, pointer: reference.pointer })
         }
         if (!reached.has(target)) {
           reached.add(target)
-          visit(target, isContainer(component) ? childDepth(reference.slot, depth) : depth)
+          visit(
+            target,
+            component !== undefined && isContainer(component)
+              ? childDepth(reference.slot, depth)
+              : depth,
+          )
         }
       }
     }
@@ -188,13 +198,7 @@ function partOf(value: unknown): Part & { readonly props: Readonly<Record<string
 }
 
 /** 部品が持つ参照の欄を、欄の並びどおりに並べる。 */
-function referencesOf(
-  part: ReturnType<typeof partOf> | undefined,
-  index: number,
-): readonly Reference[] {
-  if (part === undefined) {
-    return []
-  }
+function referencesOf(part: ReturnType<typeof partOf>, index: number): readonly Reference[] {
   const base = `/components/${String(index)}`
   const { props } = part
   switch (part.component) {
@@ -248,10 +252,10 @@ function idList(value: unknown, pointer: string, slot: Slot): readonly Reference
 /** 参照の欄に、参照先の種類が置けないときの違反。知らない種類は `unknown-component` で拾い済みなので見ない。 */
 function placementFault(
   slot: Slot,
-  component: string | undefined,
+  component: string,
   depth: number,
 ): A2uiStructureFaultKind | undefined {
-  if (component === undefined || !Object.hasOwn(REPORT_COMPONENT_SCHEMAS, component)) {
+  if (!Object.hasOwn(REPORT_COMPONENT_SCHEMAS, component)) {
     return undefined
   }
   switch (slot) {
@@ -279,8 +283,8 @@ function childDepth(slot: Slot, depth: number): number {
   return slot === "layout" ? depth + 1 : 1
 }
 
-function isContainer(component: string | undefined): boolean {
-  return component !== undefined && CONTAINERS.has(component)
+function isContainer(component: string): boolean {
+  return CONTAINERS.has(component)
 }
 
 function isLeaf(component: string): boolean {

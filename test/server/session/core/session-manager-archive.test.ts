@@ -89,7 +89,8 @@ describe("createSessionManager", () => {
             kind: "request",
             at: 1_000,
             text: "架空の依頼",
-            images: undefined,
+            images: 0,
+            imageFiles: [],
           },
         },
         {
@@ -123,7 +124,7 @@ describe("createSessionManager", () => {
             at: 1_000,
             text: "架空の依頼",
             project: FICTIONAL_PROJECT,
-            images: undefined,
+            images: 0,
           },
         },
         {
@@ -304,7 +305,7 @@ describe("createSessionManager", () => {
           errorCode: "none",
         },
       ])
-      expect(archiveCalls[0]).toMatchObject({ mode: "chat", images: 1, imageFiles: undefined })
+      expect(archiveCalls[0]).toMatchObject({ mode: "chat", images: 1, imageFiles: [] })
     })
   })
 

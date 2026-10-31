@@ -499,7 +499,7 @@ describe("createSessionManager", () => {
             at: 1_000,
             text: "新しい依頼",
             project: FICTIONAL_PROJECT,
-            images: undefined,
+            images: 0,
           },
         },
       },
