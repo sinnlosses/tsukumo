@@ -5,7 +5,7 @@
   & .report-files {
     display: grid;
     grid-template-columns: 64px minmax(0, 340px) minmax(0, 1fr);
-    column-gap: 20px;
+    column-gap: var(--space-xl);
     margin: var(--report-block-gap) 0;
   }
   @container report-body (max-width: calc(40em + 0.75rem)) {
@@ -17,8 +17,8 @@
     grid-column: 1 / -1;
     display: flex;
     justify-content: center;
-    gap: 6px;
-    margin-top: 12px;
+    gap: var(--space-sm);
+    margin-top: var(--space-md);
   }
   & .report-file {
     display: grid;
@@ -26,7 +26,7 @@
     grid-template-columns: subgrid;
     align-items: baseline;
     justify-items: start;
-    padding: 12px 2px;
+    padding: var(--space-md) var(--space-2xs);
   }
   & .report-file + .report-file {
     border-top: 1px solid var(--rule-quiet);
@@ -37,13 +37,13 @@
     grid-column: 2 / -1;
     display: flex;
     align-items: baseline;
-    padding: 4px 2px;
+    padding: var(--space-xs) var(--space-2xs);
     font-family: var(--font-code);
     font-size: var(--font-secondary);
     line-height: 1.5;
   }
   & .report-file:has(> .report-file-entry) {
-    padding-block: 4px;
+    padding-block: var(--space-xs);
     border-top: 0;
   }
   & .report-file-entry {
@@ -95,11 +95,11 @@
   & .report-file-change {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
+    gap: var(--space-xs);
     height: 22px;
-    padding: 0 8px;
+    padding: 0 var(--space-sm);
     border: 1px solid transparent;
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     font-size: var(--font-secondary);
     white-space: nowrap;
   }
@@ -166,7 +166,7 @@
   }
   /* 結論の直下の数の札（`report` の `keyFigures`）。札の格子は `.report-stats` のままで、ここは外側のあきと、4枚を 2×2 に折る幅（下）だけを持つ。 */
   & .report-key-figures {
-    margin: 13px 0;
+    margin: var(--space-md) 0;
   }
   & .report-key-figures .report-stats {
     margin: 0;
@@ -181,7 +181,7 @@
   /* 結論と本文のあいだの、合図の行のまとまり（`report` から tsukumo が組む）。
    上下の margin は隣の段落や見出しの margin と相殺されるので、ここに書いた値がそのままあきになる。 */
   & .report-status {
-    margin: 13px 0 26px;
+    margin: var(--space-md) 0 var(--space-2xl);
   }
   & [data-report-region]:last-child > .report-status:last-child {
     margin-bottom: 0;
@@ -206,9 +206,9 @@
     display: flex;
     flex-wrap: wrap;
     align-items: baseline;
-    column-gap: 20px;
-    row-gap: 4px;
-    padding: 10px 0;
+    column-gap: var(--space-xl);
+    row-gap: var(--space-xs);
+    padding: var(--space-md) 0;
     font-size: var(--font-secondary);
     color: var(--ink-quiet);
   }
@@ -220,7 +220,7 @@
     white-space: nowrap;
   }
   & .report-checks-summary-mark {
-    margin-right: 6px;
+    margin-right: var(--space-sm);
     font-weight: 700;
   }
   & .report-checks-summary-word {
@@ -242,7 +242,7 @@
   }
   /* 通った件数のすぐ後ろに figure を連ねる（列の間の空きより詰める）。 */
   & .report-checks-summary-ok + .report-checks-summary-figures {
-    margin-left: -12px;
+    margin-left: calc(var(--space-md) * -1);
   }
   & .report-checks-summary-figures {
     min-width: 0;
@@ -259,7 +259,7 @@
   & .report-checks-summary-favor > a {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--space-sm);
     min-height: 24px;
     font-weight: 700;
     color: var(--ink);
@@ -274,8 +274,8 @@
     display: flex;
     flex-wrap: wrap;
     align-items: baseline;
-    gap: 10px;
-    padding: 3px 0;
+    gap: var(--space-md);
+    padding: var(--space-xs) 0;
     font-size: var(--font-secondary);
   }
   & .report-check-mark {
@@ -304,15 +304,15 @@
   & .report-checks-problem {
     display: grid;
     grid-template-columns: var(--report-checks-side) minmax(0, 1fr);
-    column-gap: 12px;
-    padding: 10px 0;
+    column-gap: var(--space-md);
+    padding: var(--space-md) 0;
     border-top: var(--report-checks-rule);
   }
   & .report-checks-problem-head {
     display: flex;
     flex-wrap: wrap;
     align-items: baseline;
-    gap: 10px;
+    gap: var(--space-md);
   }
   & .report-checks-problem-mark {
     font-size: var(--font-secondary);
@@ -330,7 +330,7 @@
     color: var(--ink-quiet);
   }
   & .report-checks-problem-word {
-    margin-left: 2px;
+    margin-left: var(--space-2xs);
   }
   & .report-checks-problem-body {
     min-width: 0;
@@ -360,14 +360,14 @@
     color: var(--ink-quiet);
   }
   & .report-checks-problem-detail {
-    margin: 4px 0 0;
+    margin: var(--space-xs) 0 0;
     overflow-wrap: anywhere;
     font-size: var(--font-secondary);
     line-height: 1.75;
     color: var(--ink-soft);
   }
   & .report-checks-problem-how {
-    margin: 2px 0 0;
+    margin: var(--space-2xs) 0 0;
     overflow-wrap: anywhere;
     font-size: var(--font-secondary);
     line-height: 1.75;
@@ -390,11 +390,11 @@
   & .report-checks-passed > details > summary {
     display: grid;
     grid-template-columns: var(--report-checks-side) minmax(0, 1fr);
-    column-gap: 12px;
+    column-gap: var(--space-md);
     align-items: baseline;
     min-height: 24px;
     margin: 0;
-    padding: 10px 0;
+    padding: var(--space-md) 0;
     font-size: var(--font-secondary);
     list-style: none;
   }
@@ -412,20 +412,20 @@
     color: var(--ink-quiet);
   }
   & .report-checks-passed > details > [role="table"] {
-    padding: 0 0 10px calc(var(--report-checks-side) + 12px);
+    padding: 0 0 var(--space-md) calc(var(--report-checks-side) + var(--space-md));
   }
   /* 段ごとの所要時間（検証結果の下に tsukumo が組む）。見出しの行・1本の帯・段の一覧の順に並べる。 */
   & .report-phase-times {
     min-width: 0;
   }
   & .report-verdict + .report-phase-times {
-    margin-top: 12px;
+    margin-top: var(--space-md);
   }
   & .report-phase-times-head {
     display: flex;
     align-items: baseline;
-    gap: 10px;
-    margin-bottom: 14px;
+    gap: var(--space-md);
+    margin-bottom: var(--space-lg);
   }
   & .report-phase-times-heading {
     font-size: var(--font-label);
@@ -439,12 +439,12 @@
   }
   & .report-phase-band {
     display: flex;
-    gap: 3px;
+    gap: var(--space-xs);
   }
   & .report-phase-band-segment {
     min-width: 2px;
     height: 14px;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     background: var(--phase-band);
   }
   & .report-phase-band-longest {
@@ -453,7 +453,7 @@
   & .report-phase-band-unknown {
     flex: 0 0 12px;
     height: 14px;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     background: repeating-linear-gradient(
       135deg,
       var(--phase-band-unknown) 0 4px,
@@ -463,7 +463,7 @@
   & .report-phase-waterfall {
     display: flex;
     flex-direction: column;
-    gap: 3px;
+    gap: var(--space-xs);
   }
   & .report-phase-waterfall-row {
     height: 14px;
@@ -472,22 +472,22 @@
     display: block;
     min-width: 2px;
     height: 14px;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     background: var(--phase-band);
   }
   & .report-phase-waterfall-group {
     position: relative;
     display: flex;
     flex-direction: column;
-    gap: 3px;
-    margin: 6px 0;
+    gap: var(--space-xs);
+    margin: var(--space-sm) 0;
   }
   & .report-phase-time-wall {
     position: absolute;
     top: 0;
     bottom: 0;
     left: 0;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     background: color-mix(in srgb, var(--phase-band-longest) 14%, transparent);
     box-shadow: 0 0 0 4px color-mix(in srgb, var(--phase-band-longest) 14%, transparent);
     outline: 1px solid color-mix(in srgb, var(--phase-band-longest) 40%, transparent);
@@ -510,21 +510,21 @@
     );
   }
   & .report-phase-waterfall + [role="table"] {
-    margin-top: 14px;
+    margin-top: var(--space-lg);
   }
   & .report-phase-time {
     display: grid;
     grid-template-columns: 14px minmax(0, 1fr) auto 3.5em;
     align-items: center;
-    column-gap: 10px;
-    padding: 6px 0;
+    column-gap: var(--space-md);
+    padding: var(--space-sm) 0;
     border-top: 1px solid var(--rule-quiet);
     font-size: var(--font-secondary);
     font-weight: 400;
     color: var(--ink-soft);
   }
   & .report-phase-band + [role="table"] {
-    margin-top: 14px;
+    margin-top: var(--space-lg);
   }
   & .report-phase-time-longest {
     font-weight: 600;
@@ -533,7 +533,7 @@
   & .report-phase-time-mark {
     width: 10px;
     height: 10px;
-    border-radius: 2px;
+    border-radius: var(--radius-sm);
     background: var(--phase-band);
   }
   & .report-phase-time-longest .report-phase-time-mark {
@@ -552,7 +552,7 @@
     overflow-wrap: anywhere;
   }
   & .report-phase-time-num {
-    margin-right: 6px;
+    margin-right: var(--space-sm);
     font-family: var(--font-mono);
     font-size: var(--font-label);
     font-weight: 400;
@@ -585,6 +585,6 @@
   }
   /* 並列の段の中の段は、一覧にだけ名前を字下げして並べる（帯には出さない）。 */
   & .report-phase-time-inner .report-phase-time-label {
-    padding-left: 12px;
+    padding-left: var(--space-md);
   }
 }
