@@ -17,9 +17,12 @@ const LINES = /^\s*(\d+)(?:\s*-\s*(\d+))?\s*$/
 /** `"4-8"`・`"12"` を範囲に読む。読めない・始点が 1 未満・始点が終点より後は `undefined`。 */
 export function readMarkLines(lines: string): LineRange | undefined {
   const match = LINES.exec(lines)
-  const start = Number(match?.[1])
-  const end = match?.[2] === undefined ? start : Number(match[2])
-  return match === null || start < 1 || start > end ? undefined : { start, end }
+  if (match === null) {
+    return undefined
+  }
+  const start = Number(match[1])
+  const end = match[2] === undefined ? start : Number(match[2])
+  return start < 1 || start > end ? undefined : { start, end }
 }
 
 /** 印の `lines` が読めて、ソースの行数以内に収まっているか。 */

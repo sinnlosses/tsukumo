@@ -1,6 +1,10 @@
 // `report` の引数の JSON を断片で受けながら、`components` の配列の要素が閉じるたびに 1 部品を取り出す。
 // 状態は戻り値で運ぶ。閉じていない要素は返さない。
 
+import { z } from "zod"
+
+import { parseJson } from "../../../shared/utils/parse-json.ts"
+
 export type SplitState = {
   /** 文字列の外で開いている `{` と `[` の数。 */
   readonly depth: number
@@ -44,16 +48,14 @@ export function splitComponents(state: SplitState, fragment: string): SplitStep 
   )
 }
 
-/** 切り出した部品の列が、全文を `JSON.parse` した `components` と食い違う件数（数の差も含む）。 */
+const wholeSchema = z.object({ components: z.array(z.unknown()) })
+
+/**
+ * 切り出した部品の列が、全文を JSON として読んだ `components` と食い違う件数（数の差も含む）。
+ * 全文が JSON でない・`components` の配列が無いときは、`components` が空として数える。
+ */
 export function mismatchCount(components: readonly unknown[], wholeText: string): number {
-  const whole: unknown = JSON.parse(wholeText)
-  const expected =
-    typeof whole === "object" &&
-    whole !== null &&
-    "components" in whole &&
-    Array.isArray(whole.components)
-      ? (whole.components as readonly unknown[])
-      : []
+  const expected = wholeSchema.safeParse(parseJson(wholeText)).data?.components ?? []
   const length = Math.max(expected.length, components.length)
   return Array.from({ length }).filter(
     (_, index) => JSON.stringify(expected[index]) !== JSON.stringify(components[index]),

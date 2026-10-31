@@ -16,6 +16,7 @@ const CONTEXT_LINES_AROUND_RANGE = 1
 /**
  * 1行を指したら前後3行、範囲を指したら範囲の前後1行を切り出す（どちらも {@link MAX_EXCERPT_LINES} 行まで）。
  * ファイルの末尾を超えた分は切り詰め、指した行の頭が末尾を超えていたら `out-of-range`。
+ * 事前条件は `1 <= startLine <= endLine`（境界の zod が確かめてから渡す）。
  */
 export function excerptLines(
   text: string,

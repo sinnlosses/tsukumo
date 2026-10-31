@@ -52,7 +52,8 @@ export function toRestoredEvents(
 
   const steps = messages.flatMap((message): readonly RestoringStep[] => {
     const time = messageTime(message)
-    const turn = ledger.turnOf(messageUuid(message) ?? "")
+    const uuid = messageUuid(message)
+    const turn = uuid === undefined ? undefined : ledger.turnOf(uuid)
     return restoredMessageEvents(message, expressions, ledger).map((event) => ({
       event,
       time,
@@ -79,7 +80,9 @@ export function restoredMessageEvents(
     return toSessionEvents(message, expressions)
   }
   // 添えてあった画像は `images` に載せない（棚の id がまだ無い）。原寸は `RestoredEvent.promptImages` で別に運ぶ。
-  switch (ledger.inputKindOf(messageUuid(message) ?? "") ?? kindByWrapping(text)) {
+  const uuid = messageUuid(message)
+  const ledgered = uuid === undefined ? undefined : ledger.inputKindOf(uuid)
+  switch (ledgered ?? kindByWrapping(text)) {
     case "progress-nudge":
       return [{ kind: "turn-resumed" }]
     case "aside":

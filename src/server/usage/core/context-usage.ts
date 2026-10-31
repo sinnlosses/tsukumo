@@ -1,4 +1,4 @@
-// コンテキストの内訳を記録に残すときの書き口の契約と、セッション1つにつき1行だけ書く係（`ContextUsageRecorder`）。
+// コンテキストの内訳を記録に残すときの書き口の契約と、直前に記録したセッションと同じIDでは二度書かない係（`ContextUsageRecorder`）。
 //
 // この係は駆動の世代をまたいで持つ（世代ごとの持ち物には入れない）。
 // 続きから起こして同じセッションIDになったときは同じセッションなので、2行目を書かない。
@@ -21,7 +21,7 @@ import type { SessionDriver } from "../../session-driver/core/session-driver.ts"
  */
 export type ContextUsageEntry = {
   readonly at: number
-  /** claude 側のセッションID。同じIDで二度渡さないのは呼ぶ側の責任。 */
+  /** claude 側のセッションID。直前に記録したセッションと同じIDでは二度書かない（別のセッションを挟んで戻れば、また書く）。 */
   readonly sessionId: string
   readonly mode: TokenUsageMode
   readonly usage: ContextUsage

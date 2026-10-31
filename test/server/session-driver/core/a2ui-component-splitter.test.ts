@@ -49,4 +49,9 @@ describe("部分 JSON から部品を 1 つずつ切り出す読み手", () => {
     expect(mismatchCount(COMPONENTS, WHOLE)).toBe(0)
     expect(mismatchCount(COMPONENTS.slice(1), WHOLE)).toBeGreaterThan(0)
   })
+
+  it("全文が JSON でない・components が無いときは、例外にせず全部を不一致に数える", () => {
+    expect(mismatchCount(COMPONENTS, '{"components":[{"id":')).toBe(COMPONENTS.length)
+    expect(mismatchCount(COMPONENTS, '{"a":1}')).toBe(COMPONENTS.length)
+  })
 })

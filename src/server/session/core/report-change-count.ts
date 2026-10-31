@@ -140,12 +140,13 @@ function countNumstat(
   let removed = 0
   for (const line of texts.flatMap((text) => text.split("\n")).filter((entry) => entry !== "")) {
     const match = NUMSTAT_LINE.exec(line)
-    if (match === null) {
+    const [, addedField, removedField, path] = match ?? []
+    if (addedField === undefined || removedField === undefined || path === undefined) {
       return NO_REPORT_CHANGE_SUMMARY
     }
-    paths.add(match[3] ?? "")
-    added += lineCount(match[1] ?? "-")
-    removed += lineCount(match[2] ?? "-")
+    paths.add(path)
+    added += lineCount(addedField)
+    removed += lineCount(removedField)
   }
   return {
     kind: "counted",

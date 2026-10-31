@@ -64,6 +64,16 @@ describe("toRestoredEvents（入力の控えのあるセッション）", () => 
     ])
   })
 
+  it("uuid の無いメッセージは、空の鍵で控えを引かず包みで見分ける", () => {
+    const aside = asidePromptText("架空の問い")
+    const ledger = inputLedgerOf([{ kind: "input", uuid: "", input: "request" }])
+
+    expect(eventsOf([userMessage(aside)], ledger).map((event) => event.kind)).toEqual([
+      "aside",
+      "turn-finished",
+    ])
+  })
+
   it("控えに無い uuid の入力は、包みで見分ける", () => {
     const ledger = inputLedgerOf([{ kind: "input", uuid: FIRST, input: "request" }])
 

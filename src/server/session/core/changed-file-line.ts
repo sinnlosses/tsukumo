@@ -14,11 +14,11 @@ export function foldNameStatus(texts: readonly string[]): readonly ChangedFile[]
   const byPath = new Map<string, Change>()
   for (const line of texts.flatMap((text) => text.split("\n")).filter((entry) => entry !== "")) {
     const match = NAME_STATUS_LINE.exec(line)
-    if (match === null) {
+    const [, letter, path] = match ?? []
+    if (letter === undefined || path === undefined) {
       return undefined
     }
-    const path = match[2] ?? ""
-    const next = changeOf(match[1] ?? "")
+    const next = changeOf(letter)
     const stacked = stack(byPath.get(path), next)
     if (stacked === undefined) {
       byPath.delete(path)
