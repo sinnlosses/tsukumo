@@ -185,8 +185,10 @@ ADR 0008 が払った「Claude Code 専用になる」代償を取り戻す道�
 推す形は、次の4つが通ることを前提にしている。どれも文書に明記が無く、実機で確かめる。
 
 1. **ワークフローの agent の道具呼び出しに、PreToolUse・SubagentStart・SubagentStop の hook が掛かるか。** 掛からなければ `tw commit-guard` と `tw lap-hook` が効かず、関門と計測を台本の外（送り出しの前の検査）へ移す必要がある
+   - 実機の結果は `docs/research/workflow-script-trial.md`（`PreToolUse` の関門は掛かる。`lap-hook` は `agentType` を指した agent で書かれる）
 2. **ワークフローの agent から、tsukumo の SDK の中の MCP（`phase_result`・`speak`）を呼べるか。** 呼べなければ帯はワークフローの完了の知らせでしか進まない。段・agent 単位の進捗のイベントは公開されていない（`agentProgressSummaries` の `task_progress` が `local_workflow` で出るかも未確認）
 3. **orca の作業ツリーの中で、保存済みワークフローを読めるか。** `projectConfigRoot`（2.1.275 以降）が workflows を本体のチェックアウトから読む。`isolation: 'worktree'` の分岐元も未確認
+   - 実機の結果は `docs/research/workflow-script-trial.md`（分岐元は `origin/main`。名前での呼び出しはこのセッションでは未確認）
 4. **1件あたりのトークンと所要が今と比べてどうか。** タスクの再試集（`docs/research/harness-strategy.md`「3.3 ハーネスのタスクの再試評価」）は、`tw claim` からの委譲・受け入れ・振り返りの流れそのものを再試せず `claude -p` を1回起こすだけ（`docs/architecture/testing/harness-replay.md`「再試しないもの」）なので、流れの前後は比べられない。再試集の一時の作業ツリーに台本版を載せるか、近い実タスクを両方の流れで送り出すかを決めてから、台本版と今の流れを同じ種類のタスクで流して比べる（この項の初版は「再試集で同じタスクを両方で流す」と書いていたが誤りで、2026-11-01 に直した）
 
 あわせて、利用者のプランで Workflow が有効か（Pro は既定でオフ）と、SDK では使用量の上限で agent が失敗する点への備え（Beads に残した段の位置から再開できること）を確かめる。
