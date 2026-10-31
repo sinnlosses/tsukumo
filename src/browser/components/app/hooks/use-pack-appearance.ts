@@ -2,9 +2,8 @@
 // 帯と画面の外まで届かせる値なので、部品の class ではなく `:root` の既定値の上から差し替える。
 // 届いていない・パックが持たないときは変数ごと外し、`theme.css` の既定値に戻す。
 
-import { useEffect } from "react"
-
 import { effectiveAccent } from "../../../../shared/character-pack/character.ts"
+import { useExternalSync } from "../../../hooks/use-external-sync.ts"
 import { useScreen } from "../../../stores/screen.tsx"
 import { useSession } from "../../../stores/session.ts"
 
@@ -27,7 +26,7 @@ function useAccent(): void {
   const accent = useSession((session) =>
     effectiveAccent(session.state.character, onConversation && session.state.chatMode),
   )
-  useEffect(() => {
+  useExternalSync(() => {
     if (accent === undefined) {
       document.documentElement.style.removeProperty("--accent")
     } else {
@@ -43,7 +42,7 @@ function useAccent(): void {
 function useCharacterBackground(): void {
   const backgroundImage = useSession((session) => session.state.character?.background?.image)
   const backgroundVeil = useSession((session) => session.state.character?.background?.veil)
-  useEffect(() => {
+  useExternalSync(() => {
     const style = document.documentElement.style
     if (backgroundImage === undefined || backgroundVeil === undefined) {
       style.removeProperty("--character-background-image")
@@ -61,7 +60,7 @@ function useCharacterBackground(): void {
  */
 function useDiaryFont(): void {
   const diaryFont = useSession((session) => session.state.character?.diaryFont)
-  useEffect(() => {
+  useExternalSync(() => {
     const style = document.documentElement.style
     if (diaryFont === undefined) {
       style.removeProperty("--font-diary")

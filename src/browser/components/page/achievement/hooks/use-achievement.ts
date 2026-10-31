@@ -9,7 +9,6 @@
 // 押しても画面は移らない。`session.reflectAchievement { date }` を送るだけで、進みは `SessionState.diaryWriting` から同じ画面の中に出す。
 
 import { useQuery, useQueryClient, type Query } from "@tanstack/react-query"
-import { useEffect } from "react"
 
 import {
   isEmptyAchievementDay,
@@ -28,6 +27,7 @@ import type {
   DiaryWriting,
 } from "../../../../../shared/diary/diary.ts"
 import { DEFAULT_CHARACTER_NAME } from "../../../../domain/portrait-appearance.ts"
+import { useExternalSync } from "../../../../hooks/use-external-sync.ts"
 import { rpc } from "../../../../stores/rpc.ts"
 import {
   selectAchievementDate,
@@ -374,7 +374,7 @@ function usePrefetchNeighborDays(daySwitch: AchievementDaySwitch): void {
   const viewed = daySwitch.kind === "known" ? daySwitch.date : undefined
   const today = daySwitch.kind === "known" ? daySwitch.today : undefined
 
-  useEffect(() => {
+  useExternalSync(() => {
     if (viewed === undefined) {
       return
     }

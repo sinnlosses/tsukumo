@@ -6,7 +6,9 @@
 // 字の大きさ・罫の間隔・右の余白はどれもこの値を掛けているので（`right-page.module.css` の `.diary-book-right`）、縮めても本文の列は罫に揃ったまま。
 // `MIN_SCALE` まで縮めても収まらないときは、そこで止めて本文を横に送らせる。
 
-import { useLayoutEffect, type RefObject } from "react"
+import type { RefObject } from "react"
+
+import { useBeforePaintSync } from "../../../../../../hooks/use-before-paint-sync.ts"
 
 const SCALE_PROPERTY = "--diary-scale"
 const MIN_SCALE = 0.6
@@ -21,9 +23,8 @@ export function useFitDiaryPage(
   pageRef: RefObject<HTMLElement | null>,
   bodyRef: RefObject<HTMLElement | null>,
 ): void {
-  // `useLayoutEffect` でなければならない。
-  // `useEffect` だと縮める前の本文が1フレームだけはみ出して見える。
-  useLayoutEffect(() => {
+  // 描画の前に測らないと、縮める前の本文が1フレームだけはみ出して見える。
+  useBeforePaintSync(() => {
     const page = pageRef.current
     const body = bodyRef.current
     if (page === null || body === null) {

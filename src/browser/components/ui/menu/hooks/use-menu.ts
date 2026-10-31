@@ -1,9 +1,10 @@
 // 操作の一覧の開閉と、開いた面の中のキーボード。
 // 押せる行は DOM の `[role="menuitem"]` から `aria-disabled` の無いものを拾い、行の並びを state に持たない。
 
-import { useEffect, useRef, useState, type KeyboardEvent, type RefObject } from "react"
+import { useRef, useState, type KeyboardEvent, type RefObject } from "react"
 
 import { useDismissSignal, type DismissCause } from "../../../../hooks/use-dismiss-signal.ts"
+import { useExternalSync } from "../../../../hooks/use-external-sync.ts"
 
 type MenuState = {
   readonly open: boolean
@@ -24,7 +25,7 @@ export function useMenu(): MenuState {
   const triggerRef = useRef<HTMLButtonElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
+  useExternalSync(() => {
     if (!open) {
       return
     }

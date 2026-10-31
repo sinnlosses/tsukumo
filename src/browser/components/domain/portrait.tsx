@@ -9,10 +9,11 @@
 // ここが持つのは中身の収め方と動きだけ。
 
 import clsx from "clsx"
-import { useEffect, type ReactElement } from "react"
+import type { ReactElement } from "react"
 
 import type { Expression } from "../../../shared/character-pack/expression.ts"
 import type { PortraitMotion } from "../../domain/portrait-motion.ts"
+import { useExternalSync } from "../../hooks/use-external-sync.ts"
 import styles from "./portrait.module.css"
 
 export type PortraitProps = {
@@ -39,7 +40,7 @@ export type PortraitProps = {
  * `/character/<pack>/<file>` は `no-store` で配るので、参照が切れた絵はブラウザが読み直すことがある。
  */
 export function usePortraitPreload(portraits: Readonly<Record<string, string>> | undefined): void {
-  useEffect(() => {
+  useExternalSync(() => {
     if (portraits === undefined) {
       return undefined
     }

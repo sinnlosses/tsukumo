@@ -15,10 +15,11 @@
 // （0 のままの初回の描画では検索欄の `autoFocus` を奪わないよう、そのときは戻さない）。
 
 import type { ReactElement } from "react"
-import { useEffect, useRef } from "react"
+import { useRef } from "react"
 
 import { Dialog } from "../../components/ui/dialog/dialog.tsx"
 import { Text } from "../../components/ui/text/text.tsx"
+import { useExternalSync } from "../../hooks/use-external-sync.ts"
 import { TaskBoardAction } from "./components/task-board-action.tsx"
 import { TaskBoardColumns } from "./components/task-board-column-list.tsx"
 import { TaskBoardFilterBar } from "./components/task-board-filter-bar.tsx"
@@ -35,7 +36,7 @@ export function PresentationalTaskBoard(props: TaskBoardView): ReactElement {
   const content = props.content
   const frameRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
+  useExternalSync(() => {
     if (props.focusSignal > 0) {
       frameRef.current?.focus()
     }
