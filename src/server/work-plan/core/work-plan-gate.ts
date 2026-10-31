@@ -2,15 +2,18 @@
 // その依頼で最初の `work_plan` を受け付けるまでのあいだ、メインの `Edit`・`Write` を拒む判定。
 
 import type { ToolVerdict } from "../../core/tool-verdict.ts"
-import { isTsukumoTool, tsukumoToolFullName } from "../../core/tsukumo-tool-name.ts"
+import { tsukumoToolFullName } from "../../core/tsukumo-tool-name.ts"
 
-const READ_ONLY_TOOL_NAMES = ["Read", "Grep", "Glob", "ToolSearch"] as const satisfies string[]
+/** 委譲ゲートが拒まないツールの名前（読み取り）。 */
+export const GATE_EXEMPT_TOOL_NAMES = [
+  "Read",
+  "Grep",
+  "Glob",
+  "ToolSearch",
+] as const satisfies string[]
 
-/**
- * {@link judgeToolAgainstGate} が拒みうるツールの名前（読み取りと tsukumo のツール以外）に当たる PreToolUse の matcher。
- * Claude Code は英数字・`_`・`|`・`,`・空白・`-` 以外を含む matcher を正規表現として名前に当て、正規表現として不正なら当てない。
- */
-export const GATED_TOOL_MATCHER = `^(?!(?:${READ_ONLY_TOOL_NAMES.join("|")})$)(?!${tsukumoToolFullName("")})`
+/** 委譲ゲートが拒まないツールの名前の頭（tsukumo のツール）。 */
+export const GATE_EXEMPT_TOOL_PREFIX = tsukumoToolFullName("")
 
 const DENY_REASON =
   "委譲先の返却が届いています。作業のツールは、`work_plan` で段を進めるか、同じ段のまま呼んでから使います（読み取りと tsukumo のツールはそのまま使えます）。これは利用者には見えない差し戻しです。"
@@ -21,17 +24,21 @@ export function judgeToolAgainstGate(
   inSubagent: boolean,
   bandPosition: string,
 ): ToolVerdict {
-  if (
-    inSubagent ||
-    READ_ONLY_TOOL_NAMES.some((name) => name === toolName) ||
-    isTsukumoTool(toolName)
-  ) {
+  if (inSubagent || !isGatedTool(toolName)) {
     return { kind: "allow" }
   }
   return {
     kind: "deny",
     reason: bandPosition === "" ? DENY_REASON : `${DENY_REASON}${bandPosition}`,
   }
+}
+
+/** 委譲ゲートが拒みうるツールか（読み取りと tsukumo のツール以外）。 */
+export function isGatedTool(toolName: string): boolean {
+  return (
+    !GATE_EXEMPT_TOOL_NAMES.some((name) => name === toolName) &&
+    !toolName.startsWith(GATE_EXEMPT_TOOL_PREFIX)
+  )
 }
 
 const EDIT_TOOL_NAMES = ["Edit", "Write"] as const satisfies string[]

@@ -24,7 +24,9 @@ import { PHASE_RESULT_TOOL_NAME, tsukumoToolFullName } from "../../core/tsukumo-
 import type { ReportGate } from "../../report/core/report-tool.ts"
 import { judgePhaseResultCaller } from "../../work-plan/core/phase-result-tool.ts"
 import {
-  GATED_TOOL_MATCHER,
+  GATE_EXEMPT_TOOL_NAMES,
+  GATE_EXEMPT_TOOL_PREFIX,
+  isGatedTool,
   judgeEditAgainstMissingPlan,
   judgeToolAgainstGate,
 } from "../../work-plan/core/work-plan-gate.ts"
@@ -39,8 +41,11 @@ import {
   toolHookDurationTool,
 } from "../core/tool-hook-clock.ts"
 import { childProcessEnv } from "../core/visible-output-nudge.ts"
+import { matcherExcluding } from "./hook-matcher.ts"
 import { waitForQueuedMessages } from "./queued-message-wait.ts"
 import { figurePluginDir, workflowPluginDir } from "./workflow-plugin.ts"
+
+const GATE_MATCHER = matcherExcluding(GATE_EXEMPT_TOOL_NAMES, GATE_EXEMPT_TOOL_PREFIX)
 
 /** `query()` の `options` のうち、`mcpServers` / `canUseTool`（クロージャが要る）を除いた部分。 */
 export type QuerySeedOptions = {
@@ -121,7 +126,7 @@ export function buildQuerySeedOptions(options: SessionDriverOptions): QuerySeedO
  * 読み取り（`Read`・`Grep`・`Glob`・`ToolSearch`）と `phase_result` 以外の tsukumo のツールには、どれも当たらない。
  * 1つのツールに当たった matcher のフックは並んで走り、どれかの `deny` が勝つ。
  *
- * - 委譲ゲート（{@link GATED_TOOL_MATCHER}）: 外部由来の印を立て、委譲ゲート（`judgeToolAgainstGate`）で拒む。
+ * - 委譲ゲート（読み取りと tsukumo のツール以外）: 外部由来の印を立て、委譲ゲート（`judgeToolAgainstGate`）で拒む。
  *   印は結果のフック（{@link postToolUseHooks}）でも立てる
  * - `mcp__tsukumo__phase_result`: メインの呼び出しを拒む（`judgePhaseResultCaller`）
  * - `Edit|Write`: `planMissing` が真のあいだ、メインの呼び出しを拒む（`judgeEditAgainstMissingPlan`。渡さなければ登録しない）
@@ -144,7 +149,7 @@ export function preToolUseHooks(
   return {
     PreToolUse: [
       {
-        matcher: GATED_TOOL_MATCHER,
+        matcher: GATE_MATCHER,
         hooks: [
           async (input) => {
             if (input.hook_event_name !== "PreToolUse") {
@@ -154,7 +159,7 @@ export function preToolUseHooks(
             // 背景へ回った（detached の）結果では Claude Code が PostToolUse を呼ばずに結果を返すので、ここでも印を立てる。
             externalToolMark.observeTool(input.tool_name)
             const inSubagent = isInSubagent(input)
-            if (judgeToolAgainstGate(input.tool_name, inSubagent, "").kind !== "deny") {
+            if (inSubagent || !isGatedTool(input.tool_name)) {
               return {}
             }
             await waitForQueuedMessages()
