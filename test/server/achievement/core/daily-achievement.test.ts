@@ -5,6 +5,7 @@ import {
   type DailyAchievementInput,
 } from "../../../../src/server/achievement/core/daily-achievement.ts"
 import type { DoneTask } from "../../../../src/shared/repository/task-summary.ts"
+import { dateKey } from "../../../fixture/date-key.ts"
 
 const RANGE = { startEpochMilliseconds: 100_000, endEpochMilliseconds: 200_000 }
 
@@ -13,8 +14,8 @@ function doneTask(id: string, summary: string, closedAtEpochMilliseconds: number
 }
 
 const BASE: Omit<DailyAchievementInput, "done" | "registeredOn"> = {
-  date: "2026-01-02",
-  today: "2026-01-02",
+  date: dateKey("2026-01-02"),
+  today: dateKey("2026-01-02"),
   range: RANGE,
 }
 

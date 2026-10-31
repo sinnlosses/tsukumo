@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it } from "vitest"
 
 import { DaySwitch } from "../../../../../../../src/browser/components/page/achievement/components/day-switch/day-switch.tsx"
 import type { AchievementDaySwitch } from "../../../../../../../src/browser/components/page/achievement/hooks/use-achievement.ts"
+import { dateKey } from "../../../../../../fixture/date-key.ts"
 
 afterEach(() => {
   cleanup()
@@ -10,16 +11,20 @@ afterEach(() => {
 
 const NOOP = (): void => {}
 
-const KNOWN_TODAY: AchievementDaySwitch = { kind: "known", date: "2026-09-24", today: "2026-09-24" }
+const KNOWN_TODAY: AchievementDaySwitch = {
+  kind: "known",
+  date: dateKey("2026-09-24"),
+  today: dateKey("2026-09-24"),
+}
 const KNOWN_YESTERDAY: AchievementDaySwitch = {
   kind: "known",
-  date: "2026-09-23",
-  today: "2026-09-24",
+  date: dateKey("2026-09-23"),
+  today: dateKey("2026-09-24"),
 }
 const KNOWN_OTHER_YEAR: AchievementDaySwitch = {
   kind: "known",
-  date: "2025-01-05",
-  today: "2026-09-24",
+  date: dateKey("2025-01-05"),
+  today: dateKey("2026-09-24"),
 }
 
 function renderSwitch(daySwitch: AchievementDaySwitch): ReturnType<typeof render> {

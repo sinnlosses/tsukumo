@@ -10,6 +10,7 @@ import {
   PresentationalAchievement,
   type PresentationalAchievementProps,
 } from "../../../../../src/browser/components/page/achievement/presentational-achievement.tsx"
+import { dateKey } from "../../../../fixture/date-key.ts"
 
 /**
  * 各区画（`DaySwitch` / `DiarySection` / `BookmarkSection` /
@@ -24,7 +25,11 @@ afterEach(() => {
 const NOOP = (): void => {}
 const NOOP_DATE = (_date: string): void => {}
 
-const KNOWN_TODAY: AchievementDaySwitch = { kind: "known", date: "2026-09-24", today: "2026-09-24" }
+const KNOWN_TODAY: AchievementDaySwitch = {
+  kind: "known",
+  date: dateKey("2026-09-24"),
+  today: dateKey("2026-09-24"),
+}
 
 const AVAILABLE_REVIEW: AchievementReviewButton = {
   label: "架空の名前と振り返る",

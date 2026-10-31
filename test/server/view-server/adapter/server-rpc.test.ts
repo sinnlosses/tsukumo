@@ -17,6 +17,7 @@ import {
   type TokenUsageSummary,
 } from "../../../../src/shared/usage/token-usage-summary.ts"
 import { readyContextUsage } from "../../../fixture/context-usage.ts"
+import { dateKey } from "../../../fixture/date-key.ts"
 import {
   closeRunningView,
   noCharacterAsset,
@@ -197,8 +198,8 @@ describe("startViewServer", () => {
     it("achievement.day は、見る日の選び方をそのまま読み取り側へ渡し、成果を返す", async () => {
       const achievement: DailyAchievement = {
         kind: "known",
-        date: "2026-09-23",
-        today: "2026-09-24",
+        date: dateKey("2026-09-23"),
+        today: dateKey("2026-09-24"),
         doneTasks: [{ id: "T-1", summary: "架空のタスク" }],
         graduations: [],
         milestones: [],
@@ -224,7 +225,7 @@ describe("startViewServer", () => {
     it("achievement.calendar は、暦を返す", async () => {
       const calendar: AchievementCalendar = {
         kind: "known",
-        today: "2026-09-25",
+        today: dateKey("2026-09-25"),
         days: [{ date: "2026-09-25", count: 3 }],
         diaryDates: [],
       }

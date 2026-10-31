@@ -12,7 +12,7 @@ import { basename, dirname, join } from "node:path"
 
 import { identity, sortBy } from "remeda"
 
-import type { DateKey } from "../../../shared/achievement/achievement.ts"
+import type { DateKey } from "../../../shared/diary/date-key.ts"
 import {
   DIARY_VERSION,
   readDiary,

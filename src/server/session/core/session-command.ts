@@ -4,11 +4,11 @@
 import {
   achievementReflectionRequestText,
   type DailyAchievement,
-  type DateKey,
   isEmptyAchievementDay,
 } from "../../../shared/achievement/achievement.ts"
 import type { CommandInputs } from "../../../shared/command.ts"
 import type { PromptRouting, sessionContract } from "../../../shared/contract/session.ts"
+import type { DateKey } from "../../../shared/diary/date-key.ts"
 import { FRAME_ERROR_REASON } from "../../../shared/frame.ts"
 import type { ReactionLine } from "../../../shared/recommendation/reaction.ts"
 import { isWelcomeGreetingLine } from "../../../shared/recommendation/welcome-greeting.ts"
@@ -43,7 +43,7 @@ export type SessionCommandPorts = {
    * 画面が出している手続き `achievement.day` と同じ数え方を使う。
    * `main` が読めない・`git` の呼び出しが失敗したときは undefined。
    */
-  readonly readAchievementDay: (date: string) => Promise<DailyAchievement | undefined>
+  readonly readAchievementDay: (date: DateKey) => Promise<DailyAchievement | undefined>
   /** 成果の日記書きの書き手の出どころ（`DiaryWriterSource`）。疑似セッションでは `dont-write`。 */
   readonly diary: DiaryWriterSource
   /** 選んだセッションのIDを占有ファイルに書いてから、別の窓が使っていないかを確かめる（`SessionClaim.reserve`）。 */
@@ -295,7 +295,7 @@ async function reflectAchievement(
 
 /** `readAchievementDay` が例外を投げても、常駐プロセスは落とさず undefined に畳む。 */
 async function readAchievementDaySafely(
-  date: string,
+  date: DateKey,
   ports: SessionCommandPorts,
 ): Promise<DailyAchievement | undefined> {
   try {

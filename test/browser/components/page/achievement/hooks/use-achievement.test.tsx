@@ -13,6 +13,7 @@ import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../../../../src/shared/session/session-state.ts"
+import { dateKey } from "../../../../../fixture/date-key.ts"
 import { createTestQueryClient, queryClientWrapper } from "../../../../query-client.tsx"
 import {
   rpcError,
@@ -52,8 +53,8 @@ function achievementWrapper(
 
 const KNOWN_TODAY: DailyAchievement = {
   kind: "known",
-  date: "2026-09-24",
-  today: "2026-09-24",
+  date: dateKey("2026-09-24"),
+  today: dateKey("2026-09-24"),
   doneTasks: [{ id: "T-1", summary: "架空のタスク" }],
   graduations: [],
   milestones: [],
@@ -272,7 +273,12 @@ describe("useAchievement（振り返りのボタン）", () => {
       wrapper: achievementWrapper(
         createTestQueryClient(),
         stateWith({
-          diaryWriting: { kind: "writing", date: "2026-09-20", startedAt: 0, stage: "read" },
+          diaryWriting: {
+            kind: "writing",
+            date: dateKey("2026-09-20"),
+            startedAt: 0,
+            stage: "read",
+          },
         }),
         spy,
       ),
@@ -309,7 +315,12 @@ describe("useAchievement（書いている進み）", () => {
       wrapper: achievementWrapper(
         createTestQueryClient(),
         stateWith({
-          diaryWriting: { kind: "writing", date: "2026-09-24", startedAt: 0, stage: "write" },
+          diaryWriting: {
+            kind: "writing",
+            date: dateKey("2026-09-24"),
+            startedAt: 0,
+            stage: "write",
+          },
         }),
       ),
     })
@@ -326,7 +337,12 @@ describe("useAchievement（書いている進み）", () => {
       wrapper: achievementWrapper(
         createTestQueryClient(),
         stateWith({
-          diaryWriting: { kind: "writing", date: "2026-09-20", startedAt: 0, stage: "read" },
+          diaryWriting: {
+            kind: "writing",
+            date: dateKey("2026-09-20"),
+            startedAt: 0,
+            stage: "read",
+          },
         }),
       ),
     })
@@ -342,7 +358,7 @@ describe("useAchievement（書いている進み）", () => {
     const { result } = renderHook(() => useAchievement(), {
       wrapper: achievementWrapper(
         createTestQueryClient(),
-        stateWith({ diaryWriting: { kind: "failed", date: "2026-09-24" } }),
+        stateWith({ diaryWriting: { kind: "failed", date: dateKey("2026-09-24") } }),
       ),
     })
     await waitFor(() => {
@@ -423,7 +439,12 @@ describe("useAchievement（日記の区画）", () => {
       wrapper: achievementWrapper(
         createTestQueryClient(),
         stateWith({
-          diaryWriting: { kind: "writing", date: "2026-09-24", startedAt: 0, stage: "write" },
+          diaryWriting: {
+            kind: "writing",
+            date: dateKey("2026-09-24"),
+            startedAt: 0,
+            stage: "write",
+          },
         }),
       ),
     })
@@ -437,7 +458,7 @@ describe("useAchievement（日記の区画）", () => {
     const failed = renderHook(() => useAchievement(), {
       wrapper: achievementWrapper(
         createTestQueryClient(),
-        stateWith({ diaryWriting: { kind: "failed", date: "2026-09-24" } }),
+        stateWith({ diaryWriting: { kind: "failed", date: dateKey("2026-09-24") } }),
       ),
     })
     await waitFor(() => {
@@ -500,14 +521,14 @@ describe("useAchievement（日記の立ち絵）", () => {
 
 describe("useAchievement（書き上げの演出）", () => {
   const JUST_WRITTEN = stateWith({
-    diaryWriting: { kind: "written", date: "2026-09-24", writtenAt: 0 },
+    diaryWriting: { kind: "written", date: dateKey("2026-09-24"), writtenAt: 0 },
   })
 
   function writtenAt(time: string): DailyAchievement {
     return {
       kind: "known",
-      date: "2026-09-24",
-      today: "2026-09-24",
+      date: dateKey("2026-09-24"),
+      today: dateKey("2026-09-24"),
       doneTasks: [{ id: "T-1", summary: "架空のタスク" }],
       graduations: [],
       milestones: [],

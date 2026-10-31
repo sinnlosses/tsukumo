@@ -11,6 +11,7 @@ import {
   type AchievementCalendar,
 } from "../../../shared/achievement/achievement-calendar.ts"
 import type { DailyAchievement } from "../../../shared/achievement/achievement.ts"
+import type { DateKey } from "../../../shared/diary/date-key.ts"
 import type { DoneTask } from "../../../shared/repository/task-summary.ts"
 import { localDateEpochRange, localDateKey } from "../../adapter/local-time.ts"
 import { doneTasksOfBeadsIssues } from "../../repository/adapter/beads-task.ts"
@@ -107,8 +108,8 @@ export type ReadAchievementCalendarResult = AchievementCalendarRead | BeadsUnava
  * 成果を1日ぶん読む。`dateKey` は見る日、`today` はサーバのローカル時刻の今日で、どちらも検証済みの `YYYY-MM-DD`。
  */
 export function readAchievement(
-  dateKey: string,
-  today: string,
+  dateKey: DateKey,
+  today: DateKey,
   cache: AchievementCache,
 ): Promise<ReadAchievementResult> {
   return readBeadsWith<AchievementRead>(
@@ -132,7 +133,7 @@ export function readAchievement(
  * `diaryDates` は日記が持つ一覧なので、ここでは常に空を返し、実際の値は配線層が差し替える。
  */
 export function readAchievementCalendar(
-  today: string,
+  today: DateKey,
   cache: AchievementCache,
 ): Promise<ReadAchievementCalendarResult> {
   return readBeadsWith<AchievementCalendarRead>(

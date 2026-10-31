@@ -9,7 +9,8 @@ import {
 import { todayLocalDateKey } from "../server/adapter/local-time.ts"
 import { listDiaryDates, readDiaryDay } from "../server/diary/adapter/diary.ts"
 import type { SessionCommandPorts } from "../server/session/core/session-command.ts"
-import { parseDateKey, resolveAchievementDateKey } from "../shared/achievement/achievement.ts"
+import { resolveAchievementDateKey } from "../shared/achievement/achievement.ts"
+import { parseDateKey } from "../shared/diary/date-key.ts"
 import type { WiringContext } from "./wiring-context.ts"
 
 export function wireAchievement(
@@ -41,8 +42,12 @@ export function wireAchievement(
       },
       // 灯りの暦（直近5週ぶん）。日記のある日の一覧もここで合わせる。
       readAchievementCalendar: async () => {
+        const today = parseDateKey(todayLocalDateKey(context.now))
+        if (today === undefined) {
+          return { kind: "unavailable" }
+        }
         const [result, diaryDates] = await Promise.all([
-          readAchievementCalendar(todayLocalDateKey(context.now), achievementCache),
+          readAchievementCalendar(today, achievementCache),
           listDiaryDates(context.cwd),
         ])
         return result.kind === "ok" && result.calendar.kind === "known"
@@ -53,7 +58,11 @@ export function wireAchievement(
     sessionCommands: {
       // 読めなかった・Beads が読めない日は `undefined` に畳み、断る理由はコマンドの受け手が決める。
       readAchievementDay: async (date) => {
-        const result = await readAchievement(date, todayLocalDateKey(context.now), achievementCache)
+        const today = parseDateKey(todayLocalDateKey(context.now))
+        if (today === undefined) {
+          return undefined
+        }
+        const result = await readAchievement(date, today, achievementCache)
         return result.kind === "ok" ? result.achievement : undefined
       },
     },

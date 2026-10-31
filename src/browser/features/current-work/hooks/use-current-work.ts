@@ -9,7 +9,7 @@
 
 import { useState, type RefCallback, type RefObject } from "react"
 
-import type { DiaryWriting } from "../../../../shared/diary/diary.ts"
+import { plainDateOfDateKey, type DateKey } from "../../../../shared/diary/date-key.ts"
 import type { BackgroundTask } from "../../../../shared/session-driver/background-task.ts"
 import type { PendingAsk } from "../../../../shared/session-driver/pending-ask.ts"
 import { reportDraftingOf, type ReportDrafting } from "../../../../shared/session/turn-progress.ts"
@@ -277,7 +277,7 @@ export function useCurrentWork(boundaryRef: RefObject<HTMLElement | null>): Curr
       firstPending,
       runningStep,
       backgroundTasks,
-      diaryWriting,
+      state === "diary" && diaryWriting.kind === "writing" ? diaryWriting.date : undefined,
       reportDrafting,
     ),
     runningStep,
@@ -373,13 +373,13 @@ function toSummaryView(
   firstPending: PendingAsk | undefined,
   runningStep: CurrentWorkRunningStep,
   backgroundTasks: readonly BackgroundTask[],
-  diaryWriting: DiaryWriting,
+  diaryDate: DateKey | undefined,
   reportDrafting: ReportDrafting,
 ): CurrentWorkSummary {
-  if (state === "diary" && diaryWriting.kind === "writing") {
+  if (diaryDate !== undefined) {
     return {
       kind: "text",
-      label: `${monthDayLabel(Temporal.PlainDate.from(diaryWriting.date))}の日記を書いています`,
+      label: `${monthDayLabel(plainDateOfDateKey(diaryDate))}の日記を書いています`,
     }
   }
   if (state === "background") {

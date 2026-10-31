@@ -3,13 +3,14 @@ import { describe, expect, it } from "vitest"
 import { reviewAvailabilityOf } from "../../../../../../src/browser/components/page/achievement/domain/review-availability.ts"
 import type { AchievementTask } from "../../../../../../src/shared/achievement/achievement.ts"
 import type { DiaryWriting } from "../../../../../../src/shared/diary/diary.ts"
+import { dateKey } from "../../../../../fixture/date-key.ts"
 
 const ONE_TASK: readonly AchievementTask[] = [{ id: "T-1", summary: "架空のタスク" }]
 const NO_TASKS: readonly AchievementTask[] = []
 const IDLE: DiaryWriting = { kind: "idle" }
 const WRITING_OTHER_DAY: DiaryWriting = {
   kind: "writing",
-  date: "2026-09-20",
+  date: dateKey("2026-09-20"),
   startedAt: 0,
   stage: "read",
 }
@@ -41,8 +42,8 @@ describe("reviewAvailabilityOf", () => {
   })
 
   it.each([
-    { kind: "written", date: "2026-09-20", writtenAt: 0 },
-    { kind: "failed", date: "2026-09-20" },
+    { kind: "written", date: dateKey("2026-09-20"), writtenAt: 0 },
+    { kind: "failed", date: dateKey("2026-09-20") },
   ] satisfies readonly DiaryWriting[])("日記が $kind なら押せる", (diaryWriting) => {
     expect(reviewAvailabilityOf(ONE_TASK, diaryWriting)).toEqual({ kind: "available" })
   })

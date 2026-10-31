@@ -6,13 +6,14 @@ import { FRAME_ERROR_REASON } from "../src/shared/frame.ts"
 import type { SessionEvent } from "../src/shared/session/session-event.ts"
 import { characterChangedEvent } from "./fixture/character.ts"
 import { REQUEST_EVENT, startRouter } from "./fixture/command-router.ts"
+import { dateKey } from "./fixture/date-key.ts"
 
 describe("createSocketRouter（session）", () => {
   describe("成果の日記書き（session.reflectAchievement。`docs/requirements.md`「日記」）", () => {
     const KNOWN_DAY: DailyAchievement = {
       kind: "known",
-      date: "2026-09-23",
-      today: "2026-09-24",
+      date: dateKey("2026-09-23"),
+      today: dateKey("2026-09-24"),
       doneTasks: [{ id: "T-1", summary: "架空のタスク" }],
       graduations: [],
       milestones: [],

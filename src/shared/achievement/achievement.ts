@@ -3,6 +3,7 @@
 
 import { z } from "zod"
 
+import { dateKeyOf, dateKeySchema, parseDateKey, type DateKey } from "../diary/date-key.ts"
 import { dailyDiaryStatusSchema, type DailyDiaryStatus } from "../diary/diary.ts"
 
 /**
@@ -51,9 +52,9 @@ export type DailyAchievement =
   | {
       readonly kind: "known"
       /** 見た日（`YYYY-MM-DD`）。クエリが無い・読めない・今日より先なら今日に倒した結果。 */
-      readonly date: string
+      readonly date: DateKey
       /** サーバのローカル時刻の今日（`YYYY-MM-DD`）。ブラウザは時計を読まない。 */
-      readonly today: string
+      readonly today: DateKey
       /** その日に閉じた Beads の課題。 */
       readonly doneTasks: readonly AchievementTask[]
       /** 該当が無ければ空の並び。 */
@@ -80,8 +81,8 @@ export const dailyAchievementSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("unknown") }),
   z.object({
     kind: z.literal("known"),
-    date: z.string(),
-    today: z.string(),
+    date: dateKeySchema,
+    today: dateKeySchema,
     doneTasks: z.array(achievementTaskSchema).readonly(),
     graduations: z.array(achievementGraduationSchema).readonly(),
     milestones: z.array(achievementMilestoneSchema).readonly(),
@@ -104,8 +105,8 @@ export function isEmptyAchievementDay(doneTasks: readonly AchievementTask[]): bo
  * 空の日（{@link isEmptyAchievementDay}）には呼ばない。
  */
 export function achievementReflectionRequestText(params: {
-  readonly date: string
-  readonly today: string
+  readonly date: DateKey
+  readonly today: DateKey
   readonly doneTasks: readonly AchievementTask[]
   /** 該当が無ければ空の並び。 */
   readonly graduations: readonly AchievementGraduation[]
@@ -134,12 +135,12 @@ export function achievementReflectionRequestText(params: {
 }
 
 /** 前の日の日付キー（`Temporal.PlainDate` の引き算。時計は読まない）。 */
-export function previousDateKey(dateKey: string): string {
+export function previousDateKey(dateKey: DateKey): string {
   return Temporal.PlainDate.from(dateKey).subtract({ days: 1 }).toString()
 }
 
 /** 次の日の日付キー（`Temporal.PlainDate` の足し算。時計は読まない）。 */
-export function nextDateKey(dateKey: string): string {
+export function nextDateKey(dateKey: DateKey): string {
   return Temporal.PlainDate.from(dateKey).add({ days: 1 }).toString()
 }
 
@@ -162,15 +163,6 @@ export function resolveAchievementDateKey(
   return date > today ? today : date
 }
 
-/** 日付ごとのファイルの名前や置き場になる、実在する日の `YYYY-MM-DD`。作れるのは {@link parseDateKey} と {@link dateKeySchema} だけ。 */
-export type DateKey = string & { readonly __brand: "DateKey" }
-
-export function parseDateKey(value: string): DateKey | undefined {
-  return hasDateKeyShape(value) ? value : undefined
-}
-
-export const dateKeySchema = z.string().refine(hasDateKeyShape)
-
 /** 「小さな驚き:」の下に並べる行（卒業→節目の順）。該当が無ければ空。 */
 function achievementSurpriseLines(
   graduations: readonly AchievementGraduation[],
@@ -187,7 +179,7 @@ function achievementSurpriseLines(
 }
 
 /** 「今日」「昨日」、それより前は「9月21日」の形（曜日は付けない）。 */
-function achievementRequestDayPhrase(date: string, today: string): string {
+function achievementRequestDayPhrase(date: DateKey, today: DateKey): string {
   if (date === today) {
     return "今日"
   }
@@ -204,17 +196,4 @@ function achievementTaskListLines(doneTasks: readonly AchievementTask[]): readon
   const rest = doneTasks.length - shown.length
   const lines = shown.map((task) => `- ${task.id} ${task.summary}`)
   return rest > 0 ? [...lines, `- ほか ${String(rest)} 件`] : lines
-}
-
-function hasDateKeyShape(value: string): value is DateKey {
-  return /^\d{4}-\d{2}-\d{2}$/.test(value) && dateKeyOf(value)?.toString() === value
-}
-
-/** `YYYY-MM-DD` として読めれば {@link Temporal.PlainDate}、読めなければ `undefined`。 */
-function dateKeyOf(value: string): Temporal.PlainDate | undefined {
-  try {
-    return Temporal.PlainDate.from(value)
-  } catch {
-    return undefined
-  }
 }

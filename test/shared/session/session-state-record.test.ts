@@ -8,6 +8,7 @@ import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../src/shared/session/session-state.ts"
+import { dateKey } from "../../fixture/date-key.ts"
 import { requestEvent } from "../../fixture/session-event.ts"
 import { apply } from "../../fixture/session-state.ts"
 
@@ -213,7 +214,7 @@ describe("applySessionEvent（成果の日記書き）", () => {
     )
     const requested = applySessionEvent(
       before,
-      { kind: "diary-requested", date: "2026-09-23" },
+      { kind: "diary-requested", date: dateKey("2026-09-23") },
       100,
     )
     const finished = applySessionEvent(

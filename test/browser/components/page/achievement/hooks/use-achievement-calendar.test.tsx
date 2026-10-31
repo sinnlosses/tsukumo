@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it } from "vitest"
 
 import { useAchievementCalendar } from "../../../../../../src/browser/components/page/achievement/hooks/use-achievement-calendar.ts"
 import type { AchievementCalendar } from "../../../../../../src/shared/achievement/achievement-calendar.ts"
+import { dateKey } from "../../../../../fixture/date-key.ts"
 import { createTestQueryClient, queryClientWrapper } from "../../../../query-client.tsx"
 import {
   rpcError,
@@ -26,7 +27,7 @@ function stubFetch(reply: () => RpcStubReply): void {
 
 const KNOWN: AchievementCalendar = {
   kind: "known",
-  today: "2026-09-24",
+  today: dateKey("2026-09-24"),
   days: [{ date: "2026-09-24", count: 5 }],
   diaryDates: ["2026-09-24"],
 }

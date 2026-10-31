@@ -10,7 +10,7 @@ import {
   listDiaryDates,
   readDiaryDay,
 } from "../../../../src/server/diary/adapter/diary.ts"
-import type { DateKey } from "../../../../src/shared/achievement/achievement.ts"
+import type { DateKey } from "../../../../src/shared/diary/date-key.ts"
 import { dateKey } from "../../../fixture/date-key.ts"
 import { initGitRepository } from "../../../fixture/git-repository.ts"
 import { useTempDir } from "../../../fixture/temp-dir.ts"

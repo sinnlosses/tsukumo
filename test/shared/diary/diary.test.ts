@@ -7,6 +7,7 @@ import {
   type Diary,
   type DiaryWriting,
 } from "../../../src/shared/diary/diary.ts"
+import { dateKey } from "../../fixture/date-key.ts"
 
 const FIXTURE_DIARY = {
   version: DIARY_VERSION,
@@ -48,7 +49,11 @@ describe("readDiary", () => {
 
 describe("applyDiaryEvent", () => {
   const IDLE: DiaryWriting = { kind: "idle" }
-  const requested = applyDiaryEvent(IDLE, { kind: "diary-requested", date: "2026-09-23" }, 100)
+  const requested = applyDiaryEvent(
+    IDLE,
+    { kind: "diary-requested", date: dateKey("2026-09-23") },
+    100,
+  )
 
   it("diary-requested で writing になり、段は read", () => {
     expect(requested).toEqual({
@@ -89,7 +94,9 @@ describe("applyDiaryEvent", () => {
   })
 
   it("diary-written で written になる", () => {
-    expect(applyDiaryEvent(requested, { kind: "diary-written", date: "2026-09-23" }, 400)).toEqual({
+    expect(
+      applyDiaryEvent(requested, { kind: "diary-written", date: dateKey("2026-09-23") }, 400),
+    ).toEqual({
       kind: "written",
       date: "2026-09-23",
       writtenAt: 400,
@@ -97,7 +104,9 @@ describe("applyDiaryEvent", () => {
   })
 
   it("diary-failed で failed になる", () => {
-    expect(applyDiaryEvent(requested, { kind: "diary-failed", date: "2026-09-23" }, 500)).toEqual({
+    expect(
+      applyDiaryEvent(requested, { kind: "diary-failed", date: dateKey("2026-09-23") }, 500),
+    ).toEqual({
       kind: "failed",
       date: "2026-09-23",
     })

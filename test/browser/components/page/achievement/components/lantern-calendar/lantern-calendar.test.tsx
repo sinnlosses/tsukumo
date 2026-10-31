@@ -7,12 +7,13 @@ import type {
   CalendarCell,
 } from "../../../../../../../src/browser/components/page/achievement/hooks/use-achievement-calendar.ts"
 import { achievementCalendarDateKeys } from "../../../../../../../src/shared/achievement/achievement-calendar.ts"
+import { dateKey } from "../../../../../../fixture/date-key.ts"
 
 afterEach(() => {
   cleanup()
 })
 
-const TODAY = "2026-09-24"
+const TODAY = dateKey("2026-09-24")
 const DATE_KEYS = achievementCalendarDateKeys(TODAY)
 
 const DAY_CELLS: readonly CalendarCell[] = DATE_KEYS.map((date): CalendarCell => {

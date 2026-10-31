@@ -3,6 +3,8 @@
 
 import { z } from "zod"
 
+import type { DateKey } from "./date-key.ts"
+
 /** 保存の形の版。読めた版はこれだけで、違えば「読めなかった」に倒す（読み手の {@link readDiary}）。 */
 export const DIARY_VERSION = 1
 
@@ -64,12 +66,12 @@ export type DiaryWriting =
   | { readonly kind: "idle" }
   | {
       readonly kind: "writing"
-      readonly date: string
+      readonly date: DateKey
       readonly startedAt: number
       readonly stage: DiaryStage
     }
-  | { readonly kind: "written"; readonly date: string; readonly writtenAt: number }
-  | { readonly kind: "failed"; readonly date: string }
+  | { readonly kind: "written"; readonly date: DateKey; readonly writtenAt: number }
+  | { readonly kind: "failed"; readonly date: DateKey }
 
 const diaryBookmarkSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("none") }),
@@ -113,13 +115,13 @@ export type DiaryEvent =
    * `diary` ツールが振り返りの日記を1段落受け付けた（保存も済んだ。出し手はツールの handler で、検査を通して保存できたものだけ流す）。
    * `date` は振り返りの対象の日（`YYYY-MM-DD`）。
    */
-  | { readonly kind: "diary-written"; readonly date: string }
+  | { readonly kind: "diary-written"; readonly date: DateKey }
   /**
    * 成果の画面から振り返りを頼まれた（`session.reflectAchievement` コマンド）。
    * その日の成果を数え直し、書き手にその日ぶんを渡した直後に流す。会話とは別の使い捨ての問い合わせなので、会話の `prompt` は通らない。
    * `date` は振り返りの対象の日（`YYYY-MM-DD`）。段は「この日のタスクを読む」（`read`）。
    */
-  | { readonly kind: "diary-requested"; readonly date: string }
+  | { readonly kind: "diary-requested"; readonly date: DateKey }
   /**
    * 会話とは別の使い捨ての問い合わせの `includePartialMessages` の断片で、`diary` の呼び出しの塊が開いた（成果の画面の進みの材料）。
    * 段は「日記を書く」（`write`）。
@@ -131,7 +133,7 @@ export type DiaryEvent =
    */
   | { readonly kind: "diary-stage"; readonly stage: DiaryStage }
   /** 振り返りの使い捨ての問い合わせが `diary` を受け付けられずに終わった（時間切れ・失敗・中断のどれでも）。`date` は振り返りの対象の日。 */
-  | { readonly kind: "diary-failed"; readonly date: string }
+  | { readonly kind: "diary-failed"; readonly date: DateKey }
 
 /** 振り返りのイベント1件を畳む。 */
 export function applyDiaryEvent(

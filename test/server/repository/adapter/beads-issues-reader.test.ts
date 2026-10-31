@@ -23,6 +23,7 @@ import {
   initBeadsWithIssuesOutsideGit,
   useBeadsHome,
 } from "../../../fixture/beads-repository.ts"
+import { dateKey } from "../../../fixture/date-key.ts"
 import {
   addWorktree,
   initBeadsIssues,
@@ -239,8 +240,8 @@ describe("readAchievement", { timeout: 60_000 }, () => {
     ])
 
     const result = await readAchievement(
-      "2026-09-23",
-      "2026-09-24",
+      dateKey("2026-09-23"),
+      dateKey("2026-09-24"),
       createAchievementCache(dir, () => 0, createBeadsStampReader(dir)),
     )
 

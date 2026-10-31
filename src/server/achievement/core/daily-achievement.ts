@@ -2,13 +2,14 @@
 // ローカルの日の範囲は呼び出し側から受け取り、ここでは OS のタイムゾーンを読まない。
 
 import type { DailyAchievement } from "../../../shared/achievement/achievement.ts"
+import type { DateKey } from "../../../shared/diary/date-key.ts"
 import type { DoneTask } from "../../../shared/repository/task-summary.ts"
 import { doneTasksSince, taskMilestoneOf } from "./done-task.ts"
 import { graduationsOf } from "./graduation.ts"
 
 export type DailyAchievementInput = {
-  readonly date: string
-  readonly today: string
+  readonly date: DateKey
+  readonly today: DateKey
   readonly range: { readonly startEpochMilliseconds: number; readonly endEpochMilliseconds: number }
   /** 終えたタスク（その日の一覧はこの順のまま出す）。 */
   readonly done: readonly DoneTask[]

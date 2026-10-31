@@ -13,6 +13,7 @@ import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../../../../src/shared/session/session-state.ts"
+import { dateKey } from "../../../../../fixture/date-key.ts"
 import { createTestQueryClient, queryClientWrapper } from "../../../../query-client.tsx"
 import {
   rpcOutput,
@@ -51,19 +52,19 @@ function wrapper(
 
 const KNOWN_WRITTEN_DAY: AchievementDaySwitch = {
   kind: "known",
-  date: "2026-09-16",
-  today: "2026-09-24",
+  date: dateKey("2026-09-16"),
+  today: dateKey("2026-09-24"),
 }
 const KNOWN_BLANK_DAY: AchievementDaySwitch = {
   kind: "known",
-  date: "2026-09-23",
-  today: "2026-09-24",
+  date: dateKey("2026-09-23"),
+  today: dateKey("2026-09-24"),
 }
 const UNKNOWN_DAY_SWITCH: AchievementDaySwitch = { kind: "unknown" }
 
 const CALENDAR: AchievementCalendarView = {
   kind: "known",
-  today: "2026-09-24",
+  today: dateKey("2026-09-24"),
   days: [],
   diaryDates: ["2026-09-24", "2026-09-16", "2026-08-30", "2026-08-20"],
   cells: [],
@@ -94,8 +95,8 @@ const WRITTEN_DIARY: Diary = {
 
 const WRITTEN_DAY: DailyAchievement = {
   kind: "known",
-  date: "2026-09-16",
-  today: "2026-09-24",
+  date: dateKey("2026-09-16"),
+  today: dateKey("2026-09-24"),
   doneTasks: [{ id: "T-1", summary: "架空のタスク" }],
   graduations: [{ id: "T-2", summary: "架空の卒業", registeredOn: "2026-09-01", days: 15 }],
   milestones: [{ count: 500, taskId: "T-1" }],
@@ -104,8 +105,8 @@ const WRITTEN_DAY: DailyAchievement = {
 
 const BLANK_DAY: DailyAchievement = {
   kind: "known",
-  date: "2026-09-23",
-  today: "2026-09-24",
+  date: dateKey("2026-09-23"),
+  today: dateKey("2026-09-24"),
   doneTasks: [{ id: "T-3", summary: "架空のタスク3" }],
   graduations: [],
   milestones: [],

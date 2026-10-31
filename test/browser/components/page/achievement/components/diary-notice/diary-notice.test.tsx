@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it } from "vitest"
 import { DiaryNotice } from "../../../../../../../src/browser/components/page/achievement/components/diary-notice/diary-notice.tsx"
 import { useDiaryBookOpenRequest } from "../../../../../../../src/browser/components/page/achievement/hooks/use-diary-book-open-request.ts"
 import type { SessionState } from "../../../../../../../src/shared/session/session-state.ts"
+import { dateKey } from "../../../../../../fixture/date-key.ts"
 import { putSession, putState, stateWith } from "../../../../../session-store.ts"
 
 /**
@@ -24,7 +25,12 @@ describe("DiaryNotice", () => {
   it("書いている間は何も出さない", () => {
     renderNotice(
       stateWith({
-        diaryWriting: { kind: "writing", date: "2026-09-20", startedAt: 0, stage: "write" },
+        diaryWriting: {
+          kind: "writing",
+          date: dateKey("2026-09-20"),
+          startedAt: 0,
+          stage: "write",
+        },
       }),
     )
     expect(screen.queryByRole("status")).toBeNull()
@@ -32,7 +38,9 @@ describe("DiaryNotice", () => {
 
   it("書き上がったら日付と2つのボタンを出す", () => {
     renderNotice(
-      stateWith({ diaryWriting: { kind: "written", date: "2026-09-20", writtenAt: 1000 } }),
+      stateWith({
+        diaryWriting: { kind: "written", date: dateKey("2026-09-20"), writtenAt: 1000 },
+      }),
     )
 
     expect(screen.getByRole("status")).toBeDefined()
@@ -43,7 +51,9 @@ describe("DiaryNotice", () => {
 
   it("×を押すと消える", () => {
     renderNotice(
-      stateWith({ diaryWriting: { kind: "written", date: "2026-09-20", writtenAt: 1000 } }),
+      stateWith({
+        diaryWriting: { kind: "written", date: dateKey("2026-09-20"), writtenAt: 1000 },
+      }),
     )
 
     fireEvent.click(screen.getByRole("button", { name: "知らせを消す" }))
@@ -53,7 +63,9 @@ describe("DiaryNotice", () => {
 
   it("「日記帳で開く」を押すと消え、その日へ遷移して見開きを開く合図を送る", () => {
     renderNotice(
-      stateWith({ diaryWriting: { kind: "written", date: "2026-09-20", writtenAt: 1000 } }),
+      stateWith({
+        diaryWriting: { kind: "written", date: dateKey("2026-09-20"), writtenAt: 1000 },
+      }),
     )
 
     fireEvent.click(screen.getByRole("button", { name: "日記帳で開く" }))
@@ -66,14 +78,18 @@ describe("DiaryNotice", () => {
 
   it("消したあとでも、別の日が書き上がれば出し直す", () => {
     renderNotice(
-      stateWith({ diaryWriting: { kind: "written", date: "2026-09-20", writtenAt: 1000 } }),
+      stateWith({
+        diaryWriting: { kind: "written", date: dateKey("2026-09-20"), writtenAt: 1000 },
+      }),
     )
     fireEvent.click(screen.getByRole("button", { name: "知らせを消す" }))
     expect(screen.queryByRole("status")).toBeNull()
 
     act(() => {
       putState(
-        stateWith({ diaryWriting: { kind: "written", date: "2026-09-21", writtenAt: 2000 } }),
+        stateWith({
+          diaryWriting: { kind: "written", date: dateKey("2026-09-21"), writtenAt: 2000 },
+        }),
       )
     })
 

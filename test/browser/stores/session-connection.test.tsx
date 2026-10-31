@@ -14,6 +14,7 @@ import type { StampedPendingAsk } from "../../../src/shared/session-driver/pendi
 import type { SessionEvent } from "../../../src/shared/session/session-event.ts"
 import { applySessionEvent } from "../../../src/shared/session/session-fold.ts"
 import { INITIAL_SESSION_STATE } from "../../../src/shared/session/session-state.ts"
+import { dateKey } from "../../fixture/date-key.ts"
 import { reportEvent } from "../../fixture/report-event.ts"
 import { requestEvent } from "../../fixture/session-event.ts"
 import { putSession, stateWith } from "../session-store.ts"
@@ -128,7 +129,7 @@ describe("useSessionConnection（日記の書き上がり）", () => {
   it("diary-written を含むフレームで、成果の画面のクエリを取り直し対象にする", () => {
     const connected = connect()
 
-    connected.onFrame(eventsFrame({ kind: "diary-written", date: "2026-09-24" }))
+    connected.onFrame(eventsFrame({ kind: "diary-written", date: dateKey("2026-09-24") }))
 
     expect(isInvalidated()).toBe(true)
   })
@@ -148,7 +149,7 @@ describe("useSessionConnection（日記の書き上がり）", () => {
   it("diary-written を含まないフレームでは取り直し対象にしない", () => {
     const connected = connect()
 
-    connected.onFrame(eventsFrame({ kind: "diary-requested", date: "2026-09-24" }))
+    connected.onFrame(eventsFrame({ kind: "diary-requested", date: dateKey("2026-09-24") }))
 
     expect(isInvalidated()).toBe(false)
   })

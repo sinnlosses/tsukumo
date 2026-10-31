@@ -14,6 +14,7 @@ import { readBeadsIssues } from "../../../../src/server/repository/adapter/beads
 import { createTaskBeadsSource } from "../../../../src/server/repository/adapter/task-beads-source.ts"
 import type { AchievementCalendar } from "../../../../src/shared/achievement/achievement-calendar.ts"
 import type { DailyAchievement } from "../../../../src/shared/achievement/achievement.ts"
+import { dateKey } from "../../../fixture/date-key.ts"
 
 /** 印が動かなくても読み直す間隔（`BEADS_REREAD_INTERVAL_MS`）。 */
 const REREAD_INTERVAL_MS = 60_000
@@ -67,7 +68,7 @@ beforeEach(() => {
 const REPOSITORY = "/repo-fake"
 
 // 木曜。今週の月曜からその4週前の月曜までが暦の範囲になる。
-const TODAY = "2026-09-24"
+const TODAY = dateKey("2026-09-24")
 
 const fixedClock = (): number => 0
 
@@ -127,7 +128,11 @@ describe("readAchievement", () => {
     ]
 
     const achievement = known(
-      await readAchievement("2026-09-23", TODAY, createAchievementCache(REPOSITORY, fixedClock)),
+      await readAchievement(
+        dateKey("2026-09-23"),
+        TODAY,
+        createAchievementCache(REPOSITORY, fixedClock),
+      ),
     )
 
     expect(achievement).toMatchObject({
@@ -156,7 +161,11 @@ describe("readAchievement", () => {
     ]
 
     const achievement = known(
-      await readAchievement("2026-09-23", TODAY, createAchievementCache(REPOSITORY, fixedClock)),
+      await readAchievement(
+        dateKey("2026-09-23"),
+        TODAY,
+        createAchievementCache(REPOSITORY, fixedClock),
+      ),
     )
 
     expect(achievement.milestones).toEqual([{ count: 250, taskId: "t-250" }])
@@ -166,7 +175,11 @@ describe("readAchievement", () => {
     fakeIntake.workspace = "missing"
 
     expect(
-      await readAchievement("2026-09-23", TODAY, createAchievementCache(REPOSITORY, fixedClock)),
+      await readAchievement(
+        dateKey("2026-09-23"),
+        TODAY,
+        createAchievementCache(REPOSITORY, fixedClock),
+      ),
     ).toEqual({
       kind: "ok",
       achievement: { kind: "unknown" },
@@ -177,7 +190,11 @@ describe("readAchievement", () => {
     fakeIntake.failed = true
 
     expect(
-      await readAchievement("2026-09-23", TODAY, createAchievementCache(REPOSITORY, fixedClock)),
+      await readAchievement(
+        dateKey("2026-09-23"),
+        TODAY,
+        createAchievementCache(REPOSITORY, fixedClock),
+      ),
     ).toEqual({
       kind: "unavailable",
     })
@@ -216,7 +233,7 @@ describe("readAchievementCalendar", () => {
     })
 
     const doneCount = async (cache: ReturnType<typeof createAchievementCache>): Promise<number> =>
-      known(await readAchievement("2026-09-23", TODAY, cache)).doneTasks.length
+      known(await readAchievement(dateKey("2026-09-23"), TODAY, cache)).doneTasks.length
 
     it("同じ印で一覧と成果を続けて読んでも、bd list は1回", async () => {
       const source = createTaskBeadsSource("/repo-shared", {

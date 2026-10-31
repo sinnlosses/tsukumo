@@ -21,6 +21,7 @@ import {
   type DailyAchievement,
 } from "../../../../../shared/achievement/achievement.ts"
 import type { CharacterInfo } from "../../../../../shared/character-pack/character.ts"
+import type { DateKey } from "../../../../../shared/diary/date-key.ts"
 import type {
   DailyDiaryStatus,
   DiaryStage,
@@ -56,7 +57,7 @@ const TODAY_REFETCH_INTERVAL_MS = 60_000
  */
 export type AchievementDaySwitch =
   | { readonly kind: "unknown" }
-  | { readonly kind: "known"; readonly date: string; readonly today: string }
+  | { readonly kind: "known"; readonly date: DateKey; readonly today: DateKey }
 
 /**
  * 画面の中身。日の切り替えとは別に持つ。
@@ -370,11 +371,11 @@ function writingViewOf(
  */
 function usePrefetchNeighborDays(daySwitch: AchievementDaySwitch): void {
   const queryClient = useQueryClient()
-  const viewed = daySwitch.kind === "known" ? daySwitch.date : ""
-  const today = daySwitch.kind === "known" ? daySwitch.today : ""
+  const viewed = daySwitch.kind === "known" ? daySwitch.date : undefined
+  const today = daySwitch.kind === "known" ? daySwitch.today : undefined
 
   useEffect(() => {
-    if (viewed === "") {
+    if (viewed === undefined) {
       return
     }
     const neighbors = viewed === today ? [] : [nextDateKey(viewed)]

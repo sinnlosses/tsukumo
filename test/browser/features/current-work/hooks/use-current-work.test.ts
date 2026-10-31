@@ -11,6 +11,7 @@ import {
   type SessionState,
 } from "../../../../../src/shared/session/session-state.ts"
 import { characterInfo } from "../../../../fixture/character.ts"
+import { dateKey } from "../../../../fixture/date-key.ts"
 import { requestRecord, toolRecord, workPlanRecord } from "../../../../fixture/session-record.ts"
 import { putSession } from "../../../session-store.ts"
 
@@ -61,7 +62,7 @@ const AGENT_TASK = { taskId: "agent-1", kind: "agent", description: "" } satisfi
 
 const WRITING_DIARY = {
   kind: "writing",
-  date: "2026-09-23",
+  date: dateKey("2026-09-23"),
   startedAt: 0,
   stage: "read",
 } satisfies SessionState["diaryWriting"]
@@ -142,7 +143,7 @@ describe("useCurrentWork の札の語・印・要約（状態の強さの順）"
     ],
     [
       "日記が written は振り返り中にならない",
-      { diaryWriting: { kind: "written", date: "2026-09-23", writtenAt: 0 } },
+      { diaryWriting: { kind: "written", date: dateKey("2026-09-23"), writtenAt: 0 } },
       { word: "依頼待ち" },
     ],
     [

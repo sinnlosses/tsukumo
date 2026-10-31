@@ -4,13 +4,14 @@ import {
   achievementCalendarDateKeys,
   lampLevel,
 } from "../../../src/shared/achievement/achievement-calendar.ts"
+import { dateKey } from "../../fixture/date-key.ts"
 
 // ここで使う日付・数はすべて手で書いた架空のもの（実物の履歴の記録は使わない）。
 
 describe("achievementCalendarDateKeys", () => {
   it("今日を含む週の月曜から4週前の月曜〜今日を、古い順で返す", () => {
     // 木曜を「今日」とする（dayOfWeek=4）。今週の月曜から、その4週前の月曜までが範囲。
-    const dateKeys = achievementCalendarDateKeys("2026-09-24")
+    const dateKeys = achievementCalendarDateKeys(dateKey("2026-09-24"))
 
     expect(dateKeys[0]).toBe("2026-08-24")
     expect(dateKeys.at(-1)).toBe("2026-09-24")
@@ -20,7 +21,7 @@ describe("achievementCalendarDateKeys", () => {
 
   it("今日が月曜のときは、その日を含む週の月曜（今日そのもの）から4週前の月曜まで", () => {
     // 月曜を「今日」とする（dayOfWeek=1）。
-    const dateKeys = achievementCalendarDateKeys("2026-09-21")
+    const dateKeys = achievementCalendarDateKeys(dateKey("2026-09-21"))
 
     expect(dateKeys[0]).toBe("2026-08-24")
     expect(dateKeys.at(-1)).toBe("2026-09-21")

@@ -6,8 +6,8 @@
 //
 // 材料も日記も会話の内容に当たる。ログには出さず、日記の段落を保存する口のほかへは書かない。
 
-import type { DateKey } from "../../../shared/achievement/achievement.ts"
 import type { ExpressionChoice } from "../../../shared/character-pack/expression-choice.ts"
+import type { DateKey } from "../../../shared/diary/date-key.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import {
   createDiaryIntake,

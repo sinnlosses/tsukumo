@@ -6,8 +6,8 @@
 //
 // 3段目の合図（引数の断片から最上位の鍵 `bookmark` を見つける純関数）もここに持つ。
 
-import type { DateKey } from "../../../shared/achievement/achievement.ts"
 import type { Expression } from "../../../shared/character-pack/expression.ts"
+import type { DateKey } from "../../../shared/diary/date-key.ts"
 import type { DiaryBookmark } from "../../../shared/diary/diary.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 

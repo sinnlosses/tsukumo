@@ -3,6 +3,8 @@
 
 import { z } from "zod"
 
+import { dateKeySchema, type DateKey } from "../diary/date-key.ts"
+
 /** 暦の1マス。`count` はその日に閉じた Beads の課題の数。 */
 export type AchievementCalendarDay = {
   readonly date: string
@@ -18,7 +20,7 @@ export type AchievementCalendar =
   | {
       readonly kind: "known"
       /** サーバのローカル時刻の今日（`YYYY-MM-DD`）。ブラウザは時計を読まない。 */
-      readonly today: string
+      readonly today: DateKey
       /** 暦の範囲ぶん（{@link achievementCalendarDateKeys}）、日付の古い順。 */
       readonly days: readonly AchievementCalendarDay[]
       /** 日記のある日のすべて（新しい順。暦の5週に限らない。日記の保存が無ければ空）。 */
@@ -35,7 +37,7 @@ export const achievementCalendarSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("unknown") }),
   z.object({
     kind: z.literal("known"),
-    today: z.string(),
+    today: dateKeySchema,
     days: z.array(achievementCalendarDaySchema).readonly(),
     diaryDates: z.array(z.string()).readonly(),
   }),
@@ -45,7 +47,7 @@ export const achievementCalendarSchema = z.discriminatedUnion("kind", [
  * 暦の範囲。「今日を含む週の月曜から4週前の月曜」〜今日を、日付キーの古い順で返す。
  * 今日より後は含まない（ブラウザが並べるだけで数は無い）。
  */
-export function achievementCalendarDateKeys(today: string): readonly string[] {
+export function achievementCalendarDateKeys(today: DateKey): readonly string[] {
   const todayDate = Temporal.PlainDate.from(today)
   const mondayOfThisWeek = todayDate.subtract({ days: todayDate.dayOfWeek - 1 })
   const start = mondayOfThisWeek.subtract({ weeks: 4 })

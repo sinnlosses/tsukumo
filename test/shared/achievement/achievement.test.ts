@@ -6,7 +6,6 @@ import {
   previousDateKey,
   resolveAchievementDateKey,
   type AchievementTask,
-  parseDateKey,
 } from "../../../src/shared/achievement/achievement.ts"
 import { dateKey } from "../../fixture/date-key.ts"
 
@@ -14,22 +13,13 @@ import { dateKey } from "../../fixture/date-key.ts"
 
 describe("previousDateKey / nextDateKey", () => {
   it("前後の日を1日ぶんだけ動かす", () => {
-    expect(previousDateKey("2026-09-24")).toBe("2026-09-23")
-    expect(nextDateKey("2026-09-24")).toBe("2026-09-25")
+    expect(previousDateKey(dateKey("2026-09-24"))).toBe("2026-09-23")
+    expect(nextDateKey(dateKey("2026-09-24"))).toBe("2026-09-25")
   })
 
   it("月・年をまたぐ", () => {
-    expect(previousDateKey("2026-10-01")).toBe("2026-09-30")
-    expect(nextDateKey("2026-12-31")).toBe("2027-01-01")
-  })
-})
-
-describe("parseDateKey", () => {
-  it("実在する YYYY-MM-DD だけを通す", () => {
-    expect(parseDateKey("2026-09-23")).toBe("2026-09-23")
-    for (const value of ["2026-02-30", "2026/09/23", "../x", "2026-9-23", ""]) {
-      expect(parseDateKey(value)).toBeUndefined()
-    }
+    expect(previousDateKey(dateKey("2026-10-01"))).toBe("2026-09-30")
+    expect(nextDateKey(dateKey("2026-12-31"))).toBe("2027-01-01")
   })
 })
 
@@ -58,8 +48,8 @@ const ONE_TASK: readonly AchievementTask[] = [{ id: "T-1", summary: "架空の�
 
 describe("achievementReflectionRequestText", () => {
   const BASE = {
-    date: "2026-09-24",
-    today: "2026-09-24",
+    date: dateKey("2026-09-24"),
+    today: dateKey("2026-09-24"),
     doneTasks: ONE_TASK,
     graduations: [],
     milestones: [],
@@ -78,10 +68,10 @@ describe("achievementReflectionRequestText", () => {
   })
 
   it("昨日・それより前の言い方", () => {
-    const yesterday = achievementReflectionRequestText({ ...BASE, date: "2026-09-23" })
+    const yesterday = achievementReflectionRequestText({ ...BASE, date: dateKey("2026-09-23") })
     expect(yesterday.startsWith("昨日の成果")).toBe(true)
 
-    const earlier = achievementReflectionRequestText({ ...BASE, date: "2026-09-21" })
+    const earlier = achievementReflectionRequestText({ ...BASE, date: dateKey("2026-09-21") })
     expect(earlier.startsWith("9月21日の成果")).toBe(true)
   })
 
