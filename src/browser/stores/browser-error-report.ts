@@ -12,7 +12,7 @@ import { useSession } from "./session.ts"
 export function reportBrowserError(route: BrowserErrorRoute, error: unknown): void {
   void useSession.getState().dispatch.diagnostic.reportBrowserError({
     route,
-    errorName: toBrowserErrorName(error instanceof Error ? error.name : undefined),
+    errorName: error instanceof Error ? toBrowserErrorName(error.name) : "other",
     frames: stackFrames(error),
   })
 }

@@ -155,8 +155,8 @@ export const diagnosticRecordSchema = z.discriminatedUnion("flow", [
 export type DiagnosticRecord = z.infer<typeof diagnosticRecordSchema>
 
 /** 外から届いた `error.name` を、既知の名前の合併（知らなければ `"other"`）に写す。 */
-export function toBrowserErrorName(name: string | undefined): BrowserErrorName {
-  return name !== undefined && isBrowserErrorName(name) ? name : "other"
+export function toBrowserErrorName(name: string): BrowserErrorName {
+  return isBrowserErrorName(name) ? name : "other"
 }
 
 function isBrowserErrorName(value: string): value is BrowserErrorName {

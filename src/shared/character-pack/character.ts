@@ -165,7 +165,7 @@ export function toCharacterInfo(source: CharacterInfoSource): CharacterInfo {
   const definition = source.definition
   const assetUrl = (fileName: string): string =>
     characterAssetPath(source.pack, fileName, source.revision)
-  const portraits = portraitUrls(definition, assetUrl)
+  const portraits = definition === undefined ? undefined : portraitUrls(definition, assetUrl)
   return {
     pack: source.pack,
     name: definition?.name,
@@ -182,7 +182,10 @@ export function toCharacterInfo(source: CharacterInfoSource): CharacterInfo {
     tagline: definition?.tagline,
     userCall: definition?.userCall,
     miniCall: definition?.miniCall,
-    background: backgroundWithUrl(definition?.background, assetUrl),
+    background:
+      definition?.background === undefined
+        ? undefined
+        : backgroundWithUrl(definition.background, assetUrl),
     diaryFont: definition?.diaryFont === undefined ? undefined : assetUrl(definition.diaryFont),
     editable: source.editable,
   }
@@ -204,12 +207,10 @@ export function effectiveAccent(
 
 /** 背景の素材のファイル名を素材の URL に変える（覆いの濃さはそのまま）。 */
 function backgroundWithUrl(
-  background: CharacterBackground | undefined,
+  background: CharacterBackground,
   assetUrl: (fileName: string) => string,
-): CharacterBackground | undefined {
-  return background === undefined
-    ? undefined
-    : { image: assetUrl(background.image), veil: background.veil }
+): CharacterBackground {
+  return { image: assetUrl(background.image), veil: background.veil }
 }
 
 /**
@@ -217,11 +218,11 @@ function backgroundWithUrl(
  * `default` すら無いパックでは表ごと持たない（落とし先が無いので、他の表情の絵があっても立ち絵なし＝吹き出しだけにフォールバックする）。
  */
 function portraitUrls(
-  definition: CharacterDefinition | undefined,
+  definition: CharacterDefinition,
   assetUrl: (fileName: string) => string,
 ): Readonly<Record<Expression, string>> | undefined {
-  const files = definition?.portraits
-  if (files === undefined || files.default === undefined) {
+  const files = definition.portraits
+  if (files.default === undefined) {
     return undefined
   }
   const fallback = files.default

@@ -22,7 +22,7 @@
 | ----------------------------- | -------- | ----------- | ------------------ | ------- |
 | `src/browser/components`      | 303      | 39          | 72                 | 192     |
 | `src/server/session-driver`   | 102      | 29          | 5                  | 68      |
-| `src/shared/character-pack`   | 70       | 0           | 5                  | 65      |
+| `src/shared/character-pack`   | 70       | 0           | 2                  | 68      |
 | `scripts/hook`                | 66       | 0           | 11                 | 55      |
 | `scripts/capture`             | 62       | 2           | 4                  | 56      |
 | `src/shared/report`           | 60       | 0           | 8                  | 52      |
@@ -30,7 +30,7 @@
 | `scripts/shared`              | 40       | 0           | 17                 | 23      |
 | `src/browser/domain`          | 34       | 2           | 2                  | 30      |
 | `src/server/view-server`      | 34       | 30          | 0                  | 4       |
-| `src/shared/session`          | 30       | 0           | 2                  | 28      |
+| `src/shared/session`          | 30       | 0           | 1                  | 29      |
 | `scripts/dev`                 | 28       | 1           | 11                 | 16      |
 | `src/server/core`             | 25       | 0           | 1                  | 24      |
 | `src/browser/features`        | 24       | 1           | 4                  | 19      |
@@ -68,7 +68,7 @@
 | `src/shared/(root)`           | 1        | 0           | 0                  | 1       |
 | `src/shared/diagnostic`       | 1        | 0           | 1                  | 0       |
 | `src/shared/diary`            | 1        | 0           | 0                  | 1       |
-| **合計**                      | **1166** | **256**     | **154**            | **756** |
+| **合計**                      | **1166** | **256**     | **150**            | **760** |
 
 全件 = 6つに当たる + 消せる + 本物 は、領域ごとにも合計でも成り立つ（表を作った道具で突き合わせた）。
 
@@ -81,9 +81,9 @@
 | 記号 | 理由                                                                                                    | 件  | 代表例                                                                                                                                                                                                                                         |
 | ---- | ------------------------------------------------------------------------------------------------------- | --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | R1   | 探索・解析・読み取りの失敗を単一の「無い」で返す戻り値                                                  | 374 | `browser/components/domain/sidebar/components/task-doing-count.tsx:10`・`browser/components/domain/sidebar/domain/plan-window.ts:25`・`browser/components/page/achievement/domain/written-time.ts:5`                                           |
-| R2   | 環境変数・引数・状態ファイル・定義ファイル・SDK/外部 API など外の世界の値の写し、またはそれを受ける入口 | 182 | `browser/components/domain/portrait.tsx:41`・`browser/domain/appearance-color.ts:168`・`browser/features/task-board/domain/task-board-list-width.ts:15`                                                                                        |
+| R2   | 環境変数・引数・状態ファイル・定義ファイル・SDK/外部 API など外の世界の値の写し、またはそれを受ける入口 | 183 | `browser/components/domain/portrait.tsx:41`・`browser/domain/appearance-color.ts:168`・`browser/features/task-board/domain/task-board-list-width.ts:15`                                                                                        |
 | R3   | DOM 属性・描画の差し込みにそのまま渡す props（例6の趣旨だが `ui/` の外なので表の判定に当たらない）      | 22  | `browser/components/domain/portrait.tsx:30`・`browser/components/domain/screen-nav/components/screen-nav-settings-face-frame.tsx:13`・`browser/components/domain/screen-nav/components/session-switcher.tsx:281`                               |
-| R4   | 持ち主が1つで、「まだ無い／選ばれていない」が1つの意味しか持たない値                                    | 121 | `browser/components/domain/character-face.tsx:13`・`browser/components/domain/portrait.tsx:28`・`browser/components/domain/screen-nav/hooks/use-screen-nav.ts:130`                                                                             |
+| R4   | 持ち主が1つで、「まだ無い／選ばれていない」が1つの意味しか持たない値                                    | 124 | `browser/components/domain/character-face.tsx:13`・`browser/components/domain/portrait.tsx:28`・`browser/components/domain/screen-nav/hooks/use-screen-nav.ts:130`                                                                             |
 | R5   | React・TanStack Query・DOM の外来シグネチャや入れ物（`RefObject` など）で型が決まっているもの           | 6   | `browser/components/page/achievement/hooks/use-achievement.ts:169`・`browser/components/page/conversation/components/dispatch/domain/prompt-image.ts:19`・`browser/components/page/conversation/components/dispatch/domain/prompt-image.ts:37` |
 | R6   | 全域の対応表の「なし」（クラス名を付けない）が意味を持つ値                                              | 10  | `browser/components/ui/button/button.tsx:109`・`browser/components/ui/field/field.tsx:22`・`browser/components/ui/field/field.tsx:27`                                                                                                          |
 | R7   | 位置を保つ配列の穴（読めなかった列を飛ばさず添字を揃える）                                              | 3   | `shared/report/timeline-scale.ts:26`・`shared/report/timeline-scale.ts:33`・`scripts/dev/lib/a2ui-write-trial.ts:346`                                                                                                                          |
@@ -97,7 +97,7 @@
 | ----------------------------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `src/browser/components`      | 192  | R1 88（例 `browser/components/domain/sidebar/components/task-doing-count.tsx:10`）、R4 67（例 `browser/components/domain/character-face.tsx:13`）、R3 19（例 `browser/components/domain/portrait.tsx:30`）、R6 7（例 `browser/components/ui/button/button.tsx:109`）、R5 6（例 `browser/components/page/achievement/hooks/use-achievement.ts:169`）、R8 4（例 `browser/components/domain/screen-nav/hooks/use-screen-nav.ts:197`）、R2 1（例 `browser/components/domain/portrait.tsx:41`） |
 | `src/server/session-driver`   | 68   | R1 43（例 `server/session-driver/core/aside-prompt.ts:18`）、R2 24（例 `server/session-driver/core/pending-answer.ts:37`）、R10 1（例 `server/session-driver/core/prompt-delay.ts:14`）                                                                                                                                                                                                                                                                                                    |
-| `src/shared/character-pack`   | 65   | R2 45（例 `shared/character-pack/character-asset.ts:18`）、R1 20（例 `shared/character-pack/character-asset.ts:36`）                                                                                                                                                                                                                                                                                                                                                                       |
+| `src/shared/character-pack`   | 68   | R2 46（例 `shared/character-pack/character-asset.ts:18`）、R1 20（例 `shared/character-pack/character-asset.ts:36`）、R4 2（例 `shared/character-pack/character.ts:142`）                                                                                                                                                                                                                                                                                                                  |
 | `scripts/hook`                | 55   | R1 38（例 `scripts/hook/bash-guard.ts:24`）、R2 3（例 `scripts/hook/lib/bash-hook-call.ts:8`）、R8 3（例 `scripts/hook/lib/shell-write-rule.ts:153`）、R4 11（例 `scripts/hook/lib/shell-write-rule.ts:166`）                                                                                                                                                                                                                                                                              |
 | `scripts/capture`             | 56   | R1 25（例 `scripts/capture/capture-catalog.ts:262`）、R2 26（例 `scripts/capture/capture-catalog.ts:82`）、R10 5（例 `scripts/capture/lib/scene-end.ts:26`）                                                                                                                                                                                                                                                                                                                               |
 | `src/shared/report`           | 52   | R1 31（例 `shared/report/a2ui-report-outline.ts:82`）、R4 15（例 `shared/report/code-mark.ts:51`）、R8 2（例 `shared/report/graph-fold.ts:64`）、R7 2（例 `shared/report/timeline-scale.ts:26`）、R3 1（例 `shared/report/graph-fold-html.ts:43`）、R10 1（例 `shared/report/table-view.ts:25`）                                                                                                                                                                                           |
@@ -105,7 +105,7 @@
 | `scripts/shared`              | 23   | R1 15（例 `scripts/shared/ast-node.ts:8`）、R2 8（例 `scripts/shared/claude-environment.ts:16`）                                                                                                                                                                                                                                                                                                                                                                                           |
 | `src/browser/domain`          | 30   | R1 14（例 `browser/domain/effort-label.ts:45`）、R4 11（例 `browser/domain/appearance-color.ts:20`）、R10 4（例 `browser/domain/reveal/brush-scroll.ts:42`）、R2 1（例 `browser/domain/appearance-color.ts:168`）                                                                                                                                                                                                                                                                          |
 | `src/server/view-server`      | 4    | R2 4（例 `server/view-server/core/connection-grant.ts:7`）                                                                                                                                                                                                                                                                                                                                                                                                                                 |
-| `src/shared/session`          | 28   | R2 20（例 `shared/session/main-view-shape.ts:296`）、R1 7（例 `shared/session/model-name.ts:27`）、R3 1（例 `shared/session/session-event-report.ts:77`）                                                                                                                                                                                                                                                                                                                                  |
+| `src/shared/session`          | 29   | R2 20（例 `shared/session/main-view-shape.ts:296`）、R1 7（例 `shared/session/model-name.ts:27`）、R3 1（例 `shared/session/session-event-report.ts:77`）、R4 1（例 `shared/session/work-plan.ts:309`）                                                                                                                                                                                                                                                                                    |
 | `scripts/dev`                 | 16   | R1 10（例 `scripts/dev/harness-replay.ts:48`）、R2 5（例 `scripts/dev/check.ts:357`）、R7 1（例 `scripts/dev/lib/a2ui-write-trial.ts:346`）                                                                                                                                                                                                                                                                                                                                                |
 | `src/server/core`             | 24   | R2 16（例 `server/core/config.ts:111`）、R1 6（例 `server/core/config.ts:209`）、R9 2（例 `server/core/command-receiver.ts:21`）                                                                                                                                                                                                                                                                                                                                                           |
 | `src/browser/features`        | 19   | R4 8（例 `browser/features/task-board/components/task-attribute.tsx:24`）、R1 4（例 `browser/features/current-work/domain/current-work-step.ts:105`）、R6 3（例 `browser/features/task-board/components/task-board-sort-choice.tsx:22`）、R2 3（例 `browser/features/task-board/domain/task-board-list-width.ts:15`）、R3 1（例 `browser/features/run-setting/components/run-setting-select.tsx:42`）                                                                                      |
@@ -137,14 +137,15 @@
 
 ### 数えて分かったこと
 
-- 本物 756 件のうち R1 が 374 件で約半分。戻り値と `Promise<…>` の型引数は、署名と関数名から「見つからない・読めない」を返す形かを見て R1 に入れた（本体は読んでいない）。この形は規約の6つの表に直接の行が無く、例2（TypeScript が生む `undefined`）に準ずるものとして書いてある。表に行を足すかどうかは、この文書の範囲の外。
+- 本物 760 件のうち R1 が 374 件で約半分。戻り値と `Promise<…>` の型引数は、署名と関数名から「見つからない・読めない」を返す形かを見て R1 に入れた（本体は読んでいない）。この形は規約の6つの表に直接の行が無く、例2（TypeScript が生む `undefined`）に準ずるものとして書いてある。表に行を足すかどうかは、この文書の範囲の外。
 - R3 は `className`・`title`・`blockedTitle` など DOM 属性に素通しする props で、例6と同じ性質なのに `src/browser/components/ui/` の外にあるため表の判定に当たらない。例6の範囲を `ui/` の外へ広げるかは別の判断になる。
 
 ### 呼び出し側を読んで本物に移した件
 
-「消せる」と見立てた件のうち、呼び出し側を読んで本物と分かったもの。理由は撮影の道具の入口の10件（R2・R10）と `toReference` の `section`（R2）とセッション駆動の読み取りの4件（R1・R2）と `tableRowFilterTexts` の `column`（R10）を除いて R4（持ち主が1つで、「まだ無い」が1つの意味しか持たない）。
+「消せる」と見立てた件のうち、呼び出し側を読んで本物と分かったもの。理由は撮影の道具の入口の10件（R2・R10）と `toReference` の `section`（R2）とセッション駆動の読み取りの4件（R1・R2）と `tableRowFilterTexts` の `column`（R10）と `expressionChoices` の `definition`（R2）を除いて R4（持ち主が1つで、「まだ無い」が1つの意味しか持たない）。
 成果の画面の3件は、持ち主がセッションの状態で、キャラクター定義が届く前という意味しか持たない。畳み先に当たる既定の `CharacterInfo` が無く、消すと `!`・`as` か存在しない既定値が要る。
 表示判定の3件（`characterFaceInfo`・`portraitAppearance`・`resolveEffortSelect`）も R4 で、`character` は定義が届く前、`effort` はまだ読まれていないという意味しか持たない。呼び出し側がその状態をそのまま運び、畳むと各所に同じ分岐を複製するだけになる。
+共有層のキャラ・セッションの4件のうち、`shownCharacterPackName`・`effectiveAccent` の `character` は成果の画面と同じ R4（セッションの状態で、定義が届く前）で、呼び出し側 3 か所が `undefined` をそのまま運ぶ。`settleDelegatedRange` の `returnedCount` も R4 で、`phase_result` がまだ届いていないという 1 つの意味しか持たず、番兵にすると `0`（段が 0）と区別できない。`expressionChoices` の `definition` は R2 で、定義ファイルの読み取りの写し（定義が無い・壊れたパック）を 8 か所が `seed.pack.definition` のまま渡し、畳むと 5 ファイルに同じ分岐を複製する。
 発話ログ・雑談表示の3件は、`useCharacterClock` の `waitingDueAt` が「待ちの一言の期日が無い」、`useSpeechLog` の `pinnedSpeech` が「何も留めていない」、`advanceReveal` の `lastRevealAt` が「まだ吹き出しを出していない」を表す。
 `Infinity`・`-Infinity` で畳むとタイマーが直ちに鳴り続ける、または状態の形が変わる。`pinnedSpeech` はビューモデルの欄を運ぶ props で、畳むと呼び出し側の型が名指しの外へ広がる。
 フックの書き込み判定の前半の11件は、2つに分かれる。`writeRuleOf` ほか `directory` を受ける8件は、`cd $x`・`popd`・`cd -` で `cd` を追えなくなった状態を、`findWorkTreeWriteRule` のループが持ち回る。同じ値が後半の `scriptRunDirectories`・`readScriptFile`・`absoluteScriptPath` にも渡るので、合併型にしても境で `undefined` への変換が増えるだけ。`workRoot` を受ける3件は、`undefined` が「作業ツリーの根が決まらない」を意味し、このとき Python の判定は走ってシェルの書き込みの判定だけ飛ばす。後半の `isDeniedPythonCode`・`hasUnsafeWrite`・`isLiteralOutsideWorkTree`・`readPythonScripts` が同じ `undefined` を読むので、前半だけ値にすると挙動が変わる。
@@ -194,6 +195,10 @@
 | `browser/domain/character-face.ts`                                                           | `characterFaceInfo`            | 引数       | 11  | R4   |
 | `browser/domain/effort-label.ts`                                                             | `resolveEffortSelect`          | 引数       | 77  | R4   |
 | `browser/domain/portrait-appearance.ts`                                                      | `portraitAppearance`           | 引数       | 20  | R4   |
+| `shared/character-pack/character.ts`                                                         | `shownCharacterPackName`       | 引数       | 142 | R4   |
+| `shared/character-pack/character.ts`                                                         | `effectiveAccent`              | 引数       | 196 | R4   |
+| `shared/character-pack/expression-choice.ts`                                                 | `expressionChoices`            | 引数       | 21  | R2   |
+| `shared/session/work-plan.ts`                                                                | `settleDelegatedRange`         | 引数       | 309 | R4   |
 
 ## 消せるもの
 
@@ -347,15 +352,12 @@
 | `browser/domain/model-label.ts`      | `resolveShownModel` | 引数   | 1   | 44  | 入口で畳む | 1              |
 | `browser/domain/reveal/brush-tip.ts` | `stanceOf`          | 引数   | 1   | 119 | 入口で畳む | 1              |
 
-### `src/shared/character-pack`（消せる 5 件）
+### `src/shared/character-pack`（消せる 2 件）
 
-| ファイル                                     | 対象                     | 置き場 | 件  | 行  | 消し方     | 呼び出し側の数 |
-| -------------------------------------------- | ------------------------ | ------ | --- | --- | ---------- | -------------- |
-| `shared/character-pack/character.ts`         | `shownCharacterPackName` | 引数   | 1   | 142 | 入口で畳む | 2              |
-| `shared/character-pack/character.ts`         | `effectiveAccent`        | 引数   | 1   | 196 | 入口で畳む | 1              |
-| `shared/character-pack/character.ts`         | `backgroundWithUrl`      | 引数   | 1   | 207 | 入口で畳む | 1              |
-| `shared/character-pack/character.ts`         | `portraitUrls`           | 引数   | 1   | 220 | 入口で畳む | 1              |
-| `shared/character-pack/expression-choice.ts` | `expressionChoices`      | 引数   | 1   | 21  | 入口で畳む | 8              |
+| ファイル                             | 対象                | 置き場 | 件  | 行  | 消し方     | 呼び出し側の数 |
+| ------------------------------------ | ------------------- | ------ | --- | --- | ---------- | -------------- |
+| `shared/character-pack/character.ts` | `backgroundWithUrl` | 引数   | 1   | 207 | 入口で畳む | 1              |
+| `shared/character-pack/character.ts` | `portraitUrls`      | 引数   | 1   | 220 | 入口で畳む | 1              |
 
 ### `src/browser/features`（消せる 4 件）
 
@@ -374,12 +376,11 @@
 | `server/report/core/a2ui-structure-fault.ts` | `placementFault` | 引数   | 1   | 251 | 入口で畳む | 1              |
 | `server/report/core/a2ui-structure-fault.ts` | `isContainer`    | 引数   | 1   | 282 | 入口で畳む | 2              |
 
-### `src/shared/session`（消せる 2 件）
+### `src/shared/session`（消せる 1 件）
 
-| ファイル                             | 対象                   | 置き場 | 件  | 行  | 消し方     | 呼び出し側の数 |
-| ------------------------------------ | ---------------------- | ------ | --- | --- | ---------- | -------------- |
-| `shared/session/a2ui-report-view.ts` | `leafRegionOf`         | 引数   | 1   | 89  | 入口で畳む | 2              |
-| `shared/session/work-plan.ts`        | `settleDelegatedRange` | 引数   | 1   | 309 | 入口で畳む | 1              |
+| ファイル                             | 対象           | 置き場 | 件  | 行  | 消し方     | 呼び出し側の数 |
+| ------------------------------------ | -------------- | ------ | --- | --- | ---------- | -------------- |
+| `shared/session/a2ui-report-view.ts` | `leafRegionOf` | 引数   | 1   | 89  | 入口で畳む | 2              |
 
 ### `scripts/document`（消せる 1 件）
 

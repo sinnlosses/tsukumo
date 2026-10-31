@@ -63,8 +63,8 @@ export function a2uiReportView(
         ),
       ),
     ]),
-    figure: leafRegionOf(regions.find(({ section }) => section.role === "figure")),
-    retrospective: leafRegionOf(regions.find(({ section }) => section.role === "retrospective")),
+    figure: leafRegionOf(regions, "figure"),
+    retrospective: leafRegionOf(regions, "retrospective"),
     leafValues: Object.fromEntries(
       regions.flatMap(({ section, regionId }) =>
         section.entries.flatMap(({ leafId }, index): readonly (readonly [string, LeafValue])[] => {
@@ -86,7 +86,11 @@ type DrawnRegion = {
 }
 
 /** 中身の塊が残らない欄は `none`。塊の Markdown が空の塊（傍注に寄せた覚え書きなど）は並べない。 */
-function leafRegionOf(region: DrawnRegion | undefined): MainViewSurfaceLeafRegion {
+function leafRegionOf(
+  regions: readonly DrawnRegion[],
+  role: "figure" | "retrospective",
+): MainViewSurfaceLeafRegion {
+  const region = regions.find(({ section }) => section.role === role)
   if (region === undefined || joinParts([region.piece.heading, ...region.piece.blocks]) === "") {
     return { kind: "none" }
   }
