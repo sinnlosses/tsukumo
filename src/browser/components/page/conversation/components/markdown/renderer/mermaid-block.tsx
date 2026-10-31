@@ -14,6 +14,7 @@ import { isObjectType, sum } from "remeda"
 
 import { vendorAssetPath } from "../../../../../../../shared/view-server/vendor-asset.ts"
 import { Text } from "../../../../../ui/text/text.tsx"
+import { mergeRefs } from "../../../domain/merge-ref.ts"
 import { useSeenOnce } from "../hooks/use-seen-once.ts"
 import { figureZoomTriggerProps, SvgZoom } from "./figure-zoom.tsx"
 import styles from "./mermaid-block.module.css"
@@ -54,7 +55,7 @@ export function MermaidBlock(props: MermaidBlockProps): ReactElement {
   const nodeRef = useRef<HTMLPreElement>(null)
   const [error, setError] = useState<string | undefined>(undefined)
   const [zoomed, setZoomed] = useState<SVGSVGElement | undefined>(undefined)
-  const seen = useSeenOnce(nodeRef)
+  const { ref: seenRef, seen } = useSeenOnce<HTMLPreElement>()
 
   const { code } = props
 
@@ -138,7 +139,7 @@ export function MermaidBlock(props: MermaidBlockProps): ReactElement {
   return (
     <>
       <pre
-        ref={nodeRef}
+        ref={mergeRefs(nodeRef, seenRef)}
         className={clsx("mermaid", styles["figure-frame"])}
         data-pending={seen ? undefined : "unseen"}
         style={{ [FRAME_HEIGHT_PROPERTY]: `${mermaidFrameHeight(props.code)}px` }}

@@ -1,34 +1,29 @@
 // 要素が、転がる箱の窓（の少し手前）に一度でも見えたかを返すフック。一度 true になったら戻さない。
-// 畳んだ中・display: none の中は交差しないので、見えるまで false のまま。
+// 畳んだ中・display: none の中は交差しないので、見えるまで false のまま。観測する要素へ `ref` を付ける。
 
-import { useEffect, useState, type RefObject } from "react"
+import { useState, type RefCallback } from "react"
+
+import { useIntersectionObservedRef } from "../../../../../../hooks/use-observed-ref.ts"
 
 const SEEN_MARGIN = "200px"
 
-export function useSeenOnce(ref: RefObject<Element | null>): boolean {
+export function useSeenOnce<Element extends HTMLElement>(): {
+  readonly ref: RefCallback<Element>
+  readonly seen: boolean
+} {
   const [seen, setSeen] = useState(false)
-
-  useEffect(() => {
-    const element = ref.current
-    if (seen || element === null) {
-      return
-    }
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((entry) => entry.isIntersecting)) {
-          setSeen(true)
-          observer.disconnect()
-        }
-      },
-      { root: scrollBoxOf(element), rootMargin: SEEN_MARGIN },
-    )
-    observer.observe(element)
-    return () => {
-      observer.disconnect()
-    }
-  }, [ref, seen])
-
-  return seen
+  const ref = useIntersectionObservedRef<Element>({
+    enabled: !seen,
+    onIntersect: (entries, stop) => {
+      if (entries.some((entry) => entry.isIntersecting)) {
+        setSeen(true)
+        stop()
+      }
+    },
+    init: (element) => ({ root: scrollBoxOf(element), rootMargin: SEEN_MARGIN }),
+    onDetach: () => {},
+  })
+  return { ref, seen }
 }
 
 /**

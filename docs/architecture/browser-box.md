@@ -49,7 +49,9 @@
   `browser/domain/`・`browser/stores/`・`browser/hooks/`、`components/domain/` の直下に「1つの領域（機能）
   だけが読むファイル」が無いことは `test/architecture/browser-box.test.ts` が見る（どの領域・機能も
   読まないもの、領域の外のファイル〔別の `stores/` や `components/domain/` 直下〕も読むものは対象外。
-  `components/ui/<部品>/` は1つの読み手に数え、`hooks/use-modal-dialog.ts` は `ui/dialog/hooks/` にある）
+  `components/ui/<部品>/` は1つの読み手に数え、`hooks/use-modal-dialog.ts` は `ui/dialog/hooks/` にある。
+  `hooks/use-before-paint-sync.ts` は包みの置き場として規約が名指ししているので、読み手が1つの領域でも
+  `hooks/` に残す。テストの `KEPT_SHARED_FILES`）
 - **`domain/` と `lib/` の線は、tsukumo の語彙を名乗るか、固有のライブラリ（`orpc` のような）を
   包むかで引く。** `domain/appearance-color.ts` は `localStorage` を包むが名前が指すのは**画面の色**
   なので `domain/`、`domain/tool-summary.ts` は純関数で `remeda`（用途を問わない汎用ライブラリ）しか

@@ -19,6 +19,7 @@ import { useInquiryJump } from "../../../../../stores/inquiry-jump.ts"
 import { Button } from "../../../../ui/button/button.tsx"
 import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
+import { mergeRefs } from "../../domain/merge-ref.ts"
 import {
   useInquiryAnswer,
   type InquiryBrief as InquiryBriefModel,
@@ -71,7 +72,7 @@ export function InquiryCard(props: { readonly actions: "inline" | "none" }): Rea
   const jump = useInquiryJump((state) => state.jump)
   const askId = inquiry.kind === "none" ? undefined : inquiry.id
   const cardRef = useInquiryScroll(inquiry, jump)
-  useInquiryVisibility(cardRef, askId !== undefined && props.actions === "inline")
+  const visibilityRef = useInquiryVisibility(askId !== undefined && props.actions === "inline")
   const now = useNowWhile(inquiry.kind !== "none")
 
   if (inquiry.kind === "none") {
@@ -103,7 +104,7 @@ export function InquiryCard(props: { readonly actions: "inline" | "none" }): Rea
   return (
     <section
       className={clsx(styles["inquiry"], props.actions === "none" && styles["is-bare"])}
-      ref={cardRef}
+      ref={mergeRefs(cardRef, visibilityRef)}
       tabIndex={-1}
       aria-label={INQUIRY_CHIP}
       onKeyDown={onKeyDown}

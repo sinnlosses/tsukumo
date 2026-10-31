@@ -1,30 +1,11 @@
-// 頭の外寸を測り、板の高さの上限が引く `--phone-head-height` をページの根に書く。
+// 頭の外寸を測り、板の高さの上限が引く `--phone-head-height` をページの根に書く ref コールバック。
 
-import type { RefObject } from "react"
+import type { RefCallback } from "react"
 
-import { useBeforePaintSync } from "../../../../hooks/use-before-paint-sync.ts"
+import { useHeightVariableRef } from "../../../../hooks/use-height-variable-ref.ts"
 
 const HEIGHT_PROPERTY = "--phone-head-height"
 
-export function usePhoneHeadHeight(headRef: RefObject<HTMLElement | null>): void {
-  useBeforePaintSync(() => {
-    const head = headRef.current
-    if (head === null) {
-      return undefined
-    }
-    const root = document.documentElement
-
-    const measure = (): void => {
-      root.style.setProperty(HEIGHT_PROPERTY, `${String(head.offsetHeight)}px`)
-    }
-
-    const resizeObserver = new ResizeObserver(measure)
-    resizeObserver.observe(head)
-    measure()
-
-    return () => {
-      resizeObserver.disconnect()
-      root.style.removeProperty(HEIGHT_PROPERTY)
-    }
-  }, [headRef])
+export function usePhoneHeadHeight(): RefCallback<HTMLElement> {
+  return useHeightVariableRef(HEIGHT_PROPERTY, () => document.documentElement)
 }

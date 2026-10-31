@@ -6,6 +6,7 @@ import { useEffect, useRef, useState, type ReactElement } from "react"
 import { omit } from "remeda"
 import { z } from "zod"
 
+import { mergeRefs } from "../../../domain/merge-ref.ts"
 import { useSeenOnce } from "../hooks/use-seen-once.ts"
 import { loadChart } from "./chart.ts"
 import styles from "./report-notation.module.css"
@@ -20,7 +21,7 @@ const heightFieldSchema = z.object({ tsukumo: z.object({ height: z.number() }) }
 export function ChartBlock(props: ChartBlockProps): ReactElement {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [failed, setFailed] = useState(false)
-  const seen = useSeenOnce(canvasRef)
+  const { ref: seenRef, seen } = useSeenOnce<HTMLCanvasElement>()
 
   useEffect(() => {
     let cancelled = false
@@ -55,7 +56,7 @@ export function ChartBlock(props: ChartBlockProps): ReactElement {
       style={{ height: heightOf(props.spec) }}
       data-chart-failed={failed ? "yes" : undefined}
     >
-      <canvas ref={canvasRef} />
+      <canvas ref={mergeRefs(canvasRef, seenRef)} />
     </div>
   )
 }

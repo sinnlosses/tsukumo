@@ -65,6 +65,11 @@ type BrowserFeature = {
 // 領域ではなく共有の部品」）。
 const SHARED_BROWSER_BOXES = ["lib", "domain", "stores", "hooks"] as const
 
+/** 1つの機能しか読まなくても共有の箱に残すファイルと、その理由。 */
+const KEPT_SHARED_FILES = {
+  "browser/hooks/use-before-paint-sync.ts": "包みの置き場として規約が名指ししている",
+} as const satisfies Record<string, string>
+
 describe("browser/ の機能をまたぐ箱", () => {
   it(
     "browser/lib/・domain/・stores/・hooks/・components/domain/ 直下に、1つの機能だけが読むファイルは無い",
@@ -77,6 +82,9 @@ describe("browser/ の機能をまたぐ箱", () => {
       expect(files.length).toBeGreaterThan(0)
 
       const offenders = files.flatMap((relPath) => {
+        if (relPath in KEPT_SHARED_FILES) {
+          return []
+        }
         const readers = featureReadersOf(
           relPath,
           "browser/",

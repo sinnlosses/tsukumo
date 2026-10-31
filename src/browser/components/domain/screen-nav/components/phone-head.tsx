@@ -5,7 +5,7 @@
 
 import clsx from "clsx"
 import { ChevronDown, ChevronUp } from "lucide-react"
-import { useId, useRef, type ReactElement, type ReactNode } from "react"
+import { useId, type ReactElement, type ReactNode } from "react"
 
 import { CurrentWorkList } from "../../../../features/current-work/components/current-work-list.tsx"
 import type { CurrentWork } from "../../../../features/current-work/hooks/use-current-work.ts"
@@ -34,8 +34,7 @@ export function PhoneHead(props: PhoneHeadProps): ReactElement {
   const { work } = source
   const head = usePhoneHead(source)
   const listId = useId()
-  const headRef = useRef<HTMLDivElement>(null)
-  usePhoneHeadHeight(headRef)
+  const headRef = usePhoneHeadHeight()
 
   return (
     <div className={styles["phone-head"]} ref={headRef}>

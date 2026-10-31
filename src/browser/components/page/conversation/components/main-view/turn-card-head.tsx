@@ -1,16 +1,12 @@
 // 札の頭。進み具合の帯を、転がっても札の右の側の上端に残す。
 
-import { useRef, type ReactElement, type ReactNode, type RefObject } from "react"
+import type { ReactElement, ReactNode } from "react"
 
 import { useTurnCardHeadHeight } from "./hooks/use-turn-card-head-height.ts"
 import styles from "./main-view.module.css"
 
-export function TurnCardHead(props: {
-  readonly rootRef: RefObject<HTMLElement | null>
-  readonly children: ReactNode
-}): ReactElement {
-  const headRef = useRef<HTMLDivElement>(null)
-  useTurnCardHeadHeight(headRef, props.rootRef)
+export function TurnCardHead(props: { readonly children: ReactNode }): ReactElement {
+  const headRef = useTurnCardHeadHeight()
   return (
     <div className={styles["turn-card-head"]} ref={headRef}>
       {props.children}

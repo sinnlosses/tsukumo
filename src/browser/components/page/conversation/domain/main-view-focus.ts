@@ -5,3 +5,9 @@ export function isFocusWithinMainView(): boolean {
   const found = document.activeElement?.closest(`[${MAIN_VIEW_ATTRIBUTE}]`)
   return found !== null && found !== undefined
 }
+
+/** 要素を含むメインビューの根。含むものが無ければ `undefined`。 */
+export function mainViewRootOf(element: Element): HTMLElement | undefined {
+  const root = element.closest<HTMLElement>(`[${MAIN_VIEW_ATTRIBUTE}]`)
+  return root ?? undefined
+}

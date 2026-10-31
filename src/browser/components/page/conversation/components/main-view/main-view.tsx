@@ -170,7 +170,7 @@ export function MainView(): ReactElement {
                 onNotice={onNotice}
               >
                 {!viewingPast && (
-                  <TurnCardHead rootRef={rootRef}>
+                  <TurnCardHead>
                     <WorkStrip />
                   </TurnCardHead>
                 )}

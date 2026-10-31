@@ -1,33 +1,12 @@
-// 札の頭（進み具合の帯）の外寸を測り、メインビューの根の `--turn-card-head-height` に書く。
+// 札の頭（進み具合の帯）の外寸を測り、メインビューの根の `--turn-card-head-height` に書く ref コールバック。
 
-import type { RefObject } from "react"
+import type { RefCallback } from "react"
 
-import { useBeforePaintSync } from "../../../../../../hooks/use-before-paint-sync.ts"
+import { useHeightVariableRef } from "../../../../../../hooks/use-height-variable-ref.ts"
+import { mainViewRootOf } from "../../../domain/main-view-focus.ts"
 
 const HEIGHT_PROPERTY = "--turn-card-head-height"
 
-export function useTurnCardHeadHeight(
-  headRef: RefObject<HTMLElement | null>,
-  rootRef: RefObject<HTMLElement | null>,
-): void {
-  useBeforePaintSync(() => {
-    const head = headRef.current
-    const root = rootRef.current
-    if (head === null || root === null) {
-      return undefined
-    }
-
-    const measure = (): void => {
-      root.style.setProperty(HEIGHT_PROPERTY, `${String(head.offsetHeight)}px`)
-    }
-
-    const resizeObserver = new ResizeObserver(measure)
-    resizeObserver.observe(head)
-    measure()
-
-    return () => {
-      resizeObserver.disconnect()
-      root.style.removeProperty(HEIGHT_PROPERTY)
-    }
-  }, [headRef, rootRef])
+export function useTurnCardHeadHeight(): RefCallback<HTMLElement> {
+  return useHeightVariableRef(HEIGHT_PROPERTY, mainViewRootOf)
 }
