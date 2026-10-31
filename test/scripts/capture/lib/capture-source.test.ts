@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest"
 
-import { sourceOf } from "../../../../scripts/capture/lib/capture-source.ts"
+import { type SceneLaunch, sourceOf } from "../../../../scripts/capture/lib/capture-source.ts"
 import { CATALOG } from "../../../../scripts/capture/lib/catalog-entry.ts"
 import { imageSceneEntry, launchPlaceOf } from "../../../../scripts/capture/lib/catalog-setup.ts"
 
@@ -17,7 +17,7 @@ describe("sourceOf", () => {
       kind: "scene",
       scene: "report",
       until: 3,
-      cwd: undefined,
+      launch: { kind: "by-scene" },
       session: undefined,
     })
   })
@@ -27,7 +27,7 @@ describe("sourceOf", () => {
       kind: "scene",
       scene: "report",
       until: undefined,
-      cwd: "/scratch/a",
+      launch: { kind: "given", cwd: "/scratch/a" },
       session: "/scratch/s.json",
     })
   })
@@ -61,18 +61,13 @@ describe("imageSceneEntry", () => {
   })
 
   test("起こす先は、--cwd があれば渡した先・無ければ画像の件の作業場所・画像の要らない場面は作業ツリー", () => {
-    expect(launchPlaceOf("/scratch/a", "report-before-after", CATALOG)).toEqual({
-      kind: "given",
-      cwd: "/scratch/a",
-    })
-    expect(launchPlaceOf("/scratch/a", "opening", CATALOG)).toEqual({
-      kind: "given",
-      cwd: "/scratch/a",
-    })
-    const image = launchPlaceOf(undefined, "report-before-after", CATALOG)
+    const given: SceneLaunch = { kind: "given", cwd: "/scratch/a" }
+    expect(launchPlaceOf(given, "report-before-after", CATALOG)).toEqual(given)
+    expect(launchPlaceOf(given, "opening", CATALOG)).toEqual(given)
+    const image = launchPlaceOf({ kind: "by-scene" }, "report-before-after", CATALOG)
     expect(image.kind).toBe("image-workspace")
     expect(image.kind === "image-workspace" && image.entry.scene).toBe("report-before-after")
-    expect(launchPlaceOf(undefined, "opening", CATALOG)).toEqual({ kind: "repository" })
+    expect(launchPlaceOf({ kind: "by-scene" }, "opening", CATALOG)).toEqual({ kind: "repository" })
   })
 
   test("画像の場面の件は、同じ場面の中で skipReveal が揃っている", () => {

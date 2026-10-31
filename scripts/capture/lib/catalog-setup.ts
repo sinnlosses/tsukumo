@@ -9,6 +9,7 @@ import { FAKE_BEADS_ISSUES_PATH } from "../../../src/server/repository/adapter/f
 import { parseDateKey } from "../../../src/shared/achievement/achievement.ts"
 import { fictionalPng } from "../../shared/fictional-png.ts"
 import { REPOSITORY_ROOT } from "../../shared/repository-root.ts"
+import type { SceneLaunch } from "./capture-source.ts"
 import type { CatalogEntry, HomeSetup } from "./catalog-entry.ts"
 
 /** `bd list --json` の1件の形の架空の課題（`report-task-finished` 場面の `task.id`）。 */
@@ -44,12 +45,12 @@ export type LaunchPlace =
 
 /** `--cwd` があればそれを優先し、無ければ場面に画像の件があればその作業場所、無ければ作業ツリー。 */
 export function launchPlaceOf(
-  cwd: string | undefined,
+  launch: SceneLaunch,
   scene: string,
   catalog: readonly CatalogEntry[],
 ): LaunchPlace {
-  if (cwd !== undefined) {
-    return { kind: "given", cwd }
+  if (launch.kind === "given") {
+    return { kind: "given", cwd: launch.cwd }
   }
   const entry = imageSceneEntry(scene, catalog)
   return entry === undefined ? { kind: "repository" } : { kind: "image-workspace", entry }

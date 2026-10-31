@@ -41,9 +41,9 @@ export function readHeldProcedure(value: string): string | undefined {
   return PROCEDURE_PATTERN.test(value) ? value : undefined
 }
 
-/** 呼び出し回数（1から数える）が差し替えの範囲に入るか。範囲が無ければ常に入る。 */
-export function isStubbedCall(range: StubRange | undefined, callNumber: number): boolean {
-  return range === undefined || (callNumber >= range.from && callNumber <= range.to)
+/** 呼び出し回数（1から数える）が差し替えの範囲に入るか。 */
+export function isStubbedCall(range: StubRange, callNumber: number): boolean {
+  return callNumber >= range.from && callNumber <= range.to
 }
 
 /** 手続き名（`a.b.c`）を `/rpc/` 以降の URL の道筋（`a/b/c`）に直す。 */

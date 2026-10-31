@@ -108,7 +108,7 @@ async function openSource(source: Source, outDir: string): Promise<OpenedSource 
   }
 
   const imageEntry = imageSceneEntry(source.scene, CATALOG)
-  const place = launchPlaceOf(source.cwd, source.scene, CATALOG)
+  const place = launchPlaceOf(source.launch, source.scene, CATALOG)
   const cwd =
     place.kind === "given"
       ? place.cwd

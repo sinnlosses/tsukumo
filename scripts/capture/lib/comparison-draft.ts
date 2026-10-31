@@ -77,11 +77,16 @@ function describeCapture(capture: VersionCapture): string {
   if (capture.kind === "failed") {
     return `撮れなかった（${capture.reason}）`
   }
-  return `画像 ${capture.image} / 横のはみ出し ${describeNumber(capture.overflow, "px")} / 字数 ${describeNumber(capture.length, "")}`
+  const overflow =
+    capture.overflow === undefined ? UNREADABLE : describeNumber(capture.overflow, "px")
+  const length = capture.length === undefined ? UNREADABLE : describeNumber(capture.length, "")
+  return `画像 ${capture.image} / 横のはみ出し ${overflow} / 字数 ${length}`
 }
 
-function describeNumber(value: number | undefined, unit: string): string {
-  return value === undefined ? "読めず" : `${String(value)}${unit}`
+const UNREADABLE = "読めず"
+
+function describeNumber(value: number, unit: string): string {
+  return `${String(value)}${unit}`
 }
 
 function indent(block: string, prefix: string): readonly string[] {

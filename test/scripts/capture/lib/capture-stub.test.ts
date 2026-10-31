@@ -56,10 +56,6 @@ describe("isStubbedCall", () => {
       false,
     ])
   })
-
-  test("範囲が無ければどの回も入る", () => {
-    expect(isStubbedCall(undefined, 99)).toBe(true)
-  })
 })
 
 describe("readHeldProcedure", () => {

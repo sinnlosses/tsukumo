@@ -9,7 +9,7 @@ export async function stubRpc(page: Page, stub: RpcStub): Promise<void> {
   let calls = 0
   await page.route(`**/rpc/${rpcPathOf(stub.procedure)}**`, async (route) => {
     calls += 1
-    if (!isStubbedCall(stub.range, calls)) {
+    if (stub.range !== undefined && !isStubbedCall(stub.range, calls)) {
       await route.continue()
       return
     }
