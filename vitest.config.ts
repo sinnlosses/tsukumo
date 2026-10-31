@@ -1,5 +1,7 @@
 import { defineConfig } from "vitest/config"
 
+import { WITHOUT_UNUSED_EXPORT_ENV } from "./scripts/dev/lib/check-stage.ts"
+
 // DOM のグローバルを借りるテスト。ほかのテストには happy-dom を読ませない。
 export const DOM_TEST_FILES = [
   "test/browser/**/*.test.{ts,tsx}",
@@ -38,7 +40,14 @@ export default defineConfig({
         extends: true,
         test: {
           name: "node",
-          exclude: ["**/node_modules/**", "test/e2e/**", ...DOM_TEST_FILES],
+          exclude: [
+            "**/node_modules/**",
+            "test/e2e/**",
+            ...DOM_TEST_FILES,
+            ...(process.env[WITHOUT_UNUSED_EXPORT_ENV] === "1"
+              ? ["test/architecture/unused-export.test.ts"]
+              : []),
+          ],
         },
       },
     ],

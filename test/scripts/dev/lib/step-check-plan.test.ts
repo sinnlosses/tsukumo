@@ -8,7 +8,7 @@ describe("planStepCheck", () => {
       ["token-limit"],
       ["typecheck"],
       ["lint"],
-      ["test", "--related", "src/a.ts"],
+      ["test", "--related", "--without-unused-export", "src/a.ts"],
     ])
   })
 

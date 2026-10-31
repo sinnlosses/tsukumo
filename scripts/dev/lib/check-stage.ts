@@ -42,6 +42,12 @@ export type StagePlan = {
 /** 単体の段を関連のテストに絞るときの、`pnpm run test` への先頭の引数。 */
 export const RELATED_FLAG = "--related"
 
+/** `--related` のあとに置くと、規約のテストから unused-export の検査を外す。 */
+export const WITHOUT_UNUSED_EXPORT_FLAG = "--without-unused-export"
+
+/** 立てると vitest の設定が unused-export の規約のテストを外す。 */
+export const WITHOUT_UNUSED_EXPORT_ENV = "TSUKUMO_WITHOUT_UNUSED_EXPORT"
+
 const CODE_DIRECTORIES = ["src/", "test/", "scripts/"]
 
 /**
