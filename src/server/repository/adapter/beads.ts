@@ -14,9 +14,13 @@ import { z } from "zod"
 
 import {
   TASK_DIFFICULTIES,
+  TASK_IMPORTANCES,
   TASK_LOOPABLES,
+  TASK_URGENCIES,
   type TaskDifficulty,
+  type TaskImportance,
   type TaskLoopable,
+  type TaskUrgency,
 } from "../../../shared/repository/task-summary.ts"
 import { nonBlankString } from "../../core/non-blank-string.ts"
 import { memoizeByStamp } from "./beads-stamp-memo.ts"
@@ -39,6 +43,10 @@ export type BeadsIssue = {
   readonly difficulty: TaskDifficulty | undefined
   /** metadata の `loopable`。無い・表に無い値は `undefined`。 */
   readonly loopable: TaskLoopable | undefined
+  /** metadata の `importance`。無い・表に無い値は `normal`。 */
+  readonly importance: TaskImportance
+  /** metadata の `urgency`。無い・表に無い値は `normal`。 */
+  readonly urgency: TaskUrgency
   /** metadata の `draft` が `"Y"`（エージェントが積んだドラフトの印）。それ以外・無いときは偽。 */
   readonly draft: boolean
   readonly createdAtEpochMilliseconds: number
@@ -306,6 +314,8 @@ function listBeadsIssues(cwd: string, args: readonly string[]): Promise<BeadsOut
 const metadataSchema = z.record(z.string(), z.unknown())
 const difficultySchema = z.enum(TASK_DIFFICULTIES)
 const loopableSchema = z.enum(TASK_LOOPABLES)
+const importanceSchema = z.enum(TASK_IMPORTANCES).catch("normal")
+const urgencySchema = z.enum(TASK_URGENCIES).catch("normal")
 const DRAFT_MARK = "Y"
 
 function beadsIssueOf(issue: z.infer<typeof beadsIssueSchema>): BeadsIssue {
@@ -322,6 +332,8 @@ function beadsIssueOf(issue: z.infer<typeof beadsIssueSchema>): BeadsIssue {
     labels: issue.labels ?? [],
     difficulty: difficulty.success ? difficulty.data : undefined,
     loopable: loopable.success ? loopable.data : undefined,
+    importance: importanceSchema.parse(metadata.data?.["importance"]),
+    urgency: urgencySchema.parse(metadata.data?.["urgency"]),
     draft: metadata.data?.["draft"] === DRAFT_MARK,
     createdAtEpochMilliseconds: epochMillisecondsOf(issue.created_at),
     closedAtEpochMilliseconds:

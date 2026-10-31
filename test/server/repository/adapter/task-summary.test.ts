@@ -128,6 +128,8 @@ function plainTodo(id: string, summary: string): Record<string, unknown> {
     dependencies: [],
     waitingFor: [],
     labels: [],
+    importance: "normal",
+    urgency: "normal",
     body: "",
     location: { kind: "none" },
   }

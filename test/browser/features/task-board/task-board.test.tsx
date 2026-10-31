@@ -37,6 +37,8 @@ function beadsTask(location: TaskSummaryItem["location"]): TaskSummaryItem {
     labels: [],
     difficulty: undefined,
     loopable: undefined,
+    importance: "normal",
+    urgency: "normal",
     body: "## 目的・背景\n\n架空の本文。\n",
     location,
   }
@@ -392,6 +394,8 @@ function selectionTask(id: string, status: string, body: string): TaskSummaryIte
     labels: [],
     difficulty: undefined,
     loopable: undefined,
+    importance: "normal",
+    urgency: "normal",
     body,
     location: { kind: "none" },
   }

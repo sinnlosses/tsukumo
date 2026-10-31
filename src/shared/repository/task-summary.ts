@@ -8,6 +8,12 @@ export type TaskDifficulty = (typeof TASK_DIFFICULTIES)[number]
 export const TASK_LOOPABLES = ["Y", "N"] as const
 export type TaskLoopable = (typeof TASK_LOOPABLES)[number]
 
+export const TASK_IMPORTANCES = ["high", "normal", "low"] as const
+export type TaskImportance = (typeof TASK_IMPORTANCES)[number]
+
+export const TASK_URGENCIES = ["high", "normal", "low"] as const
+export type TaskUrgency = (typeof TASK_URGENCIES)[number]
+
 export const TASK_STATUSES = ["todo", "doing", "hold", "draft", "done"] as const
 export type TaskStatus = (typeof TASK_STATUSES)[number]
 
@@ -45,6 +51,10 @@ export type TaskSummaryItem = {
   readonly labels: readonly string[]
   readonly difficulty: TaskDifficulty | undefined
   readonly loopable: TaskLoopable | undefined
+  /** 重要度。読み元に無い・語彙の外は `normal`。 */
+  readonly importance: TaskImportance
+  /** 緊急度。読み元に無い・語彙の外は `normal`。 */
+  readonly urgency: TaskUrgency
   /** タスクの本文（Markdown）。本文が無い課題でも空文字列で持つ（`undefined` にしない）。 */
   readonly body: string
   readonly location: TaskLocation

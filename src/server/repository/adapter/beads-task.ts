@@ -101,6 +101,8 @@ function taskSummaryItemOfBeadsIssue(
     labels: issue.labels,
     difficulty: issue.difficulty,
     loopable: issue.loopable,
+    importance: issue.importance,
+    urgency: issue.urgency,
     body: bodyOfBeadsIssue(issue),
     location: locationOfBeadsIssue(issue),
   }

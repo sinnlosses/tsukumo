@@ -5,7 +5,9 @@ import { z } from "zod"
 
 import {
   TASK_DIFFICULTIES,
+  TASK_IMPORTANCES,
   TASK_LOOPABLES,
+  TASK_URGENCIES,
   TASK_STATUSES,
   type TaskSummaryItem,
 } from "../../../shared/repository/task-summary.ts"
@@ -39,6 +41,8 @@ const taskSummaryItemSchema = z.object({
   labels: z.array(z.string()),
   difficulty: z.enum(TASK_DIFFICULTIES).optional(),
   loopable: z.enum(TASK_LOOPABLES).optional(),
+  importance: z.enum(TASK_IMPORTANCES).catch("normal"),
+  urgency: z.enum(TASK_URGENCIES).catch("normal"),
   body: z.string(),
   location: taskLocationSchema,
 })
@@ -91,6 +95,8 @@ function readEntries(path: string): readonly MemoryEntry[] {
           labels: item.labels,
           difficulty: item.difficulty,
           loopable: item.loopable,
+          importance: item.importance,
+          urgency: item.urgency,
           body: item.body,
           location: item.location,
         }) satisfies TaskSummaryItem,

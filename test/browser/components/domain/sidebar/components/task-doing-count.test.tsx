@@ -30,6 +30,8 @@ function taskOf(id: string, status: TaskSummaryStatus): TaskSummaryItem {
     labels: [],
     difficulty: undefined,
     loopable: undefined,
+    importance: "normal",
+    urgency: "normal",
     body: "",
     location: { kind: "none" },
   }

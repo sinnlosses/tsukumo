@@ -186,6 +186,8 @@ describe("Turn（目録の1行と見出し）", () => {
             labels: [],
             difficulty: undefined,
             loopable: undefined,
+            importance: "normal",
+            urgency: "normal",
             body: "",
             location: { kind: "none" },
           },

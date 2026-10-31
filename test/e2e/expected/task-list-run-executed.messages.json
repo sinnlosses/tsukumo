@@ -58,6 +58,8 @@
             "dependencies": [],
             "waitingFor": [],
             "labels": [],
+            "importance": "normal",
+            "urgency": "normal",
             "body": "## 目的・背景\n\n架空の本文で、実物のタスクではない。\n",
             "location": {
               "kind": "none"
@@ -73,6 +75,8 @@
             "dependencies": [],
             "waitingFor": [],
             "labels": [],
+            "importance": "normal",
+            "urgency": "normal",
             "body": "## 目的・背景\n\n架空の本文で、実物のタスクではない。\n",
             "location": {
               "kind": "none"

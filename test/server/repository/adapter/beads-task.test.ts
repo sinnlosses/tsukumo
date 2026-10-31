@@ -14,6 +14,8 @@ function issue(overrides: Partial<BeadsIssue> & Pick<BeadsIssue, "id" | "status"
     labels: [],
     difficulty: undefined,
     loopable: undefined,
+    importance: "normal",
+    urgency: "normal",
     draft: false,
     createdAtEpochMilliseconds: 0,
     closedAtEpochMilliseconds: undefined,
@@ -120,6 +122,8 @@ describe("knownTaskSummaryOfBeadsIssues の一覧", () => {
       labels: ["任意のタグ"],
       difficulty: "sonnet",
       loopable: "Y",
+      importance: "normal",
+      urgency: "normal",
       body: "",
       location: { kind: "none" },
     })

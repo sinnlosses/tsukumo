@@ -22,6 +22,8 @@ const item = (id: string, summary = `架空の${id}`): TaskSummaryItem => ({
   labels: [],
   difficulty: undefined,
   loopable: undefined,
+  importance: "normal",
+  urgency: "normal",
   body: "",
   location: { kind: "none" },
 })

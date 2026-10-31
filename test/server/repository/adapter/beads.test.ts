@@ -24,6 +24,15 @@ function attributesOf(extra: Record<string, unknown>) {
   return { difficulty: issue.difficulty, loopable: issue.loopable, labels: issue.labels }
 }
 
+function priorityOf(extra: Record<string, unknown>) {
+  const outcome = beadsOutcomeOf(JSON.stringify([issueOf(extra)]))
+  const issue = outcome.kind === "issues" ? outcome.issues[0] : undefined
+  if (issue === undefined) {
+    throw new Error("課題が残るはず")
+  }
+  return { importance: issue.importance, urgency: issue.urgency }
+}
+
 function draftOf(extra: Record<string, unknown>): boolean | undefined {
   const outcome = beadsOutcomeOf(JSON.stringify([issueOf(extra)]))
   return outcome.kind === "issues" ? outcome.issues[0]?.draft : undefined
@@ -41,6 +50,23 @@ describe("beadsOutcomeOf の metadata", () => {
       difficulty: "sonnet",
       loopable: "Y",
     })
+  })
+
+  it("importance と urgency を読む", () => {
+    expect(priorityOf({ metadata: { importance: "high", urgency: "low" } })).toEqual({
+      importance: "high",
+      urgency: "low",
+    })
+  })
+
+  it.each([
+    ["欄なし", {}],
+    ["metadata が null", { metadata: null }],
+    ["キーなし", { metadata: {} }],
+    ["語彙の外", { metadata: { importance: "urgent", urgency: "HIGH" } }],
+    ["文字列でない値", { metadata: { importance: 3, urgency: null } }],
+  ])("importance と urgency は%sなら normal", (_name, extra) => {
+    expect(priorityOf(extra)).toEqual({ importance: "normal", urgency: "normal" })
   })
 
   it("ほかのキーは無視する", () => {

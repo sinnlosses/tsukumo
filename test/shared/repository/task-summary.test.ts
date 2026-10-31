@@ -15,6 +15,8 @@ describe("taskReadiness", () => {
     labels: [],
     difficulty: undefined,
     loopable: undefined,
+    importance: "normal",
+    urgency: "normal",
     body: "",
     location: { kind: "none" },
   })

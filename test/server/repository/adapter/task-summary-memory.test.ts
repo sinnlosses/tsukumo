@@ -27,6 +27,8 @@ function item(id: string, overrides: Partial<TaskSummaryItem> = {}): TaskSummary
     labels: [],
     difficulty: undefined,
     loopable: undefined,
+    importance: "normal",
+    urgency: "normal",
     body: "本文",
     location: { kind: "none" },
     ...overrides,

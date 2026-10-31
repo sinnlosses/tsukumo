@@ -20,6 +20,8 @@ function taskOf(overrides: Partial<TaskSummaryItem>): TaskSummaryItem {
     labels: [],
     difficulty: undefined,
     loopable: undefined,
+    importance: "normal",
+    urgency: "normal",
     body: "",
     location: { kind: "none" },
     ...overrides,
