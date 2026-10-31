@@ -3,23 +3,25 @@
 
 import { isPlainObject } from "remeda"
 
+import type { ToolVerdict } from "../../core/tool-verdict.ts"
+
 const BASH_TOOL_NAME = "Bash"
 
-/** `command` を `rewrite` で差し替えた入力。Bash でない・`command` が文字列でない・差し替えが無い・同じ文字列なら `undefined`。 */
+/** `command` を `rewrite` で差し替える判定。Bash でない・`command` が文字列でない・差し替えが無い・同じ文字列なら `allow`。 */
 export async function rewriteBashCommand(
   toolName: string,
   toolInput: unknown,
   rewrite: (command: string) => Promise<string | undefined>,
-): Promise<Readonly<Record<string, unknown>> | undefined> {
+): Promise<ToolVerdict> {
   if (toolName !== BASH_TOOL_NAME || !isPlainObject(toolInput)) {
-    return undefined
+    return { kind: "allow" }
   }
   const { command } = toolInput
   if (typeof command !== "string" || command.trim() === "") {
-    return undefined
+    return { kind: "allow" }
   }
   const rewritten = await rewrite(command)
   return rewritten === undefined || rewritten === command
-    ? undefined
-    : { ...toolInput, command: rewritten }
+    ? { kind: "allow" }
+    : { kind: "rewrite", input: { ...toolInput, command: rewritten } }
 }

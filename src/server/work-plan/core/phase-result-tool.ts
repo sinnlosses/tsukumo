@@ -2,9 +2,9 @@
 // ツールは仕事のときだけ載る。引数と帯の動かし方の正典は `docs/architecture/workflow-contract.md`「スキルの契約」。
 
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
+import type { ToolVerdict } from "../../core/tool-verdict.ts"
 import { PHASE_RESULT_TOOL_NAME, tsukumoToolFullName } from "../../core/tsukumo-tool-name.ts"
 import { bandPositionText } from "./band-position.ts"
-import type { GateVerdict } from "./work-plan-gate.ts"
 import type { WorkPlanReview } from "./work-plan-review.ts"
 
 /** モデルに見せる `phase_result` ツールの説明。 */
@@ -65,7 +65,7 @@ export function answerPhaseResultCall(
 }
 
 /** `PreToolUse` で、メインの `phase_result` を拒むか。サブエージェントの中の呼び出しとほかのツールは通す。 */
-export function judgePhaseResultCaller(toolName: string, inSubagent: boolean): GateVerdict {
+export function judgePhaseResultCaller(toolName: string, inSubagent: boolean): ToolVerdict {
   return !inSubagent && toolName === tsukumoToolFullName(PHASE_RESULT_TOOL_NAME)
     ? { kind: "deny", reason: PHASE_RESULT_REJECTIONS.main }
     : { kind: "allow" }

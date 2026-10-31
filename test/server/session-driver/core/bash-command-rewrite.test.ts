@@ -8,7 +8,10 @@ describe("rewriteBashCommand", () => {
   it("Bash の command だけを差し替え、ほかのキーは変えない", async () => {
     expect(
       await rewriteBashCommand("Bash", { command: "git status", description: "状態" }, shorten),
-    ).toEqual({ command: "rtk git status", description: "状態" })
+    ).toEqual({
+      kind: "rewrite",
+      input: { command: "rtk git status", description: "状態" },
+    })
   })
 
   it.each([
@@ -22,16 +25,16 @@ describe("rewriteBashCommand", () => {
       called = true
       return shorten(command)
     })
-    expect(result).toBeUndefined()
+    expect(result).toEqual({ kind: "allow" })
     expect(called).toBe(false)
   })
 
   it("rewrite が undefined を返したときと、同じ文字列を返したときは書き換えない", async () => {
     expect(
       await rewriteBashCommand("Bash", { command: "ls" }, () => Promise.resolve(undefined)),
-    ).toBeUndefined()
+    ).toEqual({ kind: "allow" })
     expect(
       await rewriteBashCommand("Bash", { command: "ls" }, () => Promise.resolve("ls")),
-    ).toBeUndefined()
+    ).toEqual({ kind: "allow" })
   })
 })

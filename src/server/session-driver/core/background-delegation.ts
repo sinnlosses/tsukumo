@@ -5,24 +5,22 @@
 
 import { isPlainObject } from "remeda"
 
-const AGENT_TOOL_NAME = "Agent"
+import type { ToolVerdict } from "../../core/tool-verdict.ts"
 
-export type BackgroundDelegation =
-  | { readonly kind: "keep" }
-  | { readonly kind: "rewrite"; readonly input: Readonly<Record<string, unknown>> }
+const AGENT_TOOL_NAME = "Agent"
 
 export function pinToBackground(
   toolName: string,
   toolInput: unknown,
   inSubagent: boolean,
-): BackgroundDelegation {
+): ToolVerdict {
   if (
     toolName !== AGENT_TOOL_NAME ||
     inSubagent ||
     !isPlainObject(toolInput) ||
     toolInput.run_in_background === true
   ) {
-    return { kind: "keep" }
+    return { kind: "allow" }
   }
   return { kind: "rewrite", input: { ...toolInput, run_in_background: true } }
 }

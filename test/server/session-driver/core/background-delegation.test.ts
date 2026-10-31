@@ -23,6 +23,6 @@ describe("pinToBackground", () => {
     ["サブエージェント内の呼び出し", "Agent", { prompt: "手順" }, true],
     ["入力がオブジェクトでない", "Agent", "文字列", false],
   ])("%s は書き換えない", (_name, toolName, toolInput, inSubagent) => {
-    expect(pinToBackground(toolName, toolInput, inSubagent)).toEqual({ kind: "keep" })
+    expect(pinToBackground(toolName, toolInput, inSubagent)).toEqual({ kind: "allow" })
   })
 })

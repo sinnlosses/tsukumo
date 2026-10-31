@@ -19,6 +19,7 @@ import {
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import { bundledFilePath } from "../../adapter/bundled-path.ts"
 import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
+import type { ToolVerdict } from "../../core/tool-verdict.ts"
 import { PHASE_RESULT_TOOL_NAME, tsukumoToolFullName } from "../../core/tsukumo-tool-name.ts"
 import type { ReportGate } from "../../report/core/report-tool.ts"
 import { judgePhaseResultCaller } from "../../work-plan/core/phase-result-tool.ts"
@@ -124,11 +125,11 @@ export function buildQuerySeedOptions(options: SessionDriverOptions): QuerySeedO
  *   印は結果のフック（{@link postToolUseHooks}）でも立てる
  * - `mcp__tsukumo__phase_result`: メインの呼び出しを拒む（`judgePhaseResultCaller`）
  * - `Edit|Write`: `planMissing` が真のあいだ、メインの呼び出しを拒む（`judgeEditAgainstMissingPlan`。渡さなければ登録しない）
- * - `Agent`: メインの呼び出しを背景に固定する（`updatedInput` だけを返し、許可の判定には触らない）
- * - `Bash`: `command` を `rewriteBash` が返した短い出力の版へ差し替える（同じく `updatedInput` だけ。サブエージェントの中の呼び出しも対象）
+ * - `Agent`: メインの呼び出しを背景に固定する（入力の差し替えだけを返し、許可の判定には触らない）
+ * - `Bash`: `command` を `rewriteBash` が返した短い出力の版へ差し替える（同じく入力の差し替えだけ。サブエージェントの中の呼び出しも対象）
  *
  * 委譲ゲートと `phase_result` のフックは、所要を測るために呼ばれた時刻を `hookClock` に控える。
- * `agent_id` はサブエージェント内の呼び出しにだけ付くので、ここで真偽に畳んでから渡す。
+ * サブエージェント内の呼び出しかは、{@link isInSubagent} で真偽に畳んでから渡す。
  *
  * 委譲ゲートの印を読む前に、拒む側に当たったときだけ {@link waitForQueuedMessages} で待つ。
  */
@@ -152,13 +153,15 @@ export function preToolUseHooks(
             hookClock.started(input.tool_use_id)
             // 背景へ回った（detached の）結果では Claude Code が PostToolUse を呼ばずに結果を返すので、ここでも印を立てる。
             externalToolMark.observeTool(input.tool_name)
-            const inSubagent = input.agent_id !== undefined
+            const inSubagent = isInSubagent(input)
             if (judgeToolAgainstGate(input.tool_name, inSubagent, "").kind !== "deny") {
               return {}
             }
             await waitForQueuedMessages()
             const gated = judgeToolAgainstGate(input.tool_name, inSubagent, bandPosition())
-            return gated.kind === "deny" && gateRaised() ? deny(gated.reason) : {}
+            return toPreToolUseOutput(
+              gated.kind === "deny" && gateRaised() ? gated : { kind: "allow" },
+            )
           },
         ],
       },
@@ -170,8 +173,7 @@ export function preToolUseHooks(
               return {}
             }
             hookClock.started(input.tool_use_id)
-            const caller = judgePhaseResultCaller(input.tool_name, input.agent_id !== undefined)
-            return caller.kind === "deny" ? deny(caller.reason) : {}
+            return toPreToolUseOutput(judgePhaseResultCaller(input.tool_name, isInSubagent(input)))
           },
         ],
       },
@@ -185,12 +187,13 @@ export function preToolUseHooks(
                   if (input.hook_event_name !== "PreToolUse" || !planMissing()) {
                     return {}
                   }
-                  const edited = judgeEditAgainstMissingPlan(
-                    input.tool_name,
-                    input.agent_id !== undefined,
-                    filePathOf(input.tool_input),
+                  return toPreToolUseOutput(
+                    judgeEditAgainstMissingPlan(
+                      input.tool_name,
+                      isInSubagent(input),
+                      filePathOf(input.tool_input),
+                    ),
                   )
-                  return edited.kind === "deny" ? deny(edited.reason) : {}
                 },
               ],
             },
@@ -202,14 +205,9 @@ export function preToolUseHooks(
             if (input.hook_event_name !== "PreToolUse") {
               return {}
             }
-            const pinned = pinToBackground(
-              input.tool_name,
-              input.tool_input,
-              input.agent_id !== undefined,
+            return toPreToolUseOutput(
+              pinToBackground(input.tool_name, input.tool_input, isInSubagent(input)),
             )
-            return pinned.kind === "rewrite"
-              ? { hookSpecificOutput: { hookEventName: "PreToolUse", updatedInput: pinned.input } }
-              : {}
           },
         ],
       },
@@ -220,14 +218,9 @@ export function preToolUseHooks(
             if (input.hook_event_name !== "PreToolUse") {
               return {}
             }
-            const shortened = await rewriteBashCommand(
-              input.tool_name,
-              input.tool_input,
-              rewriteBash,
+            return toPreToolUseOutput(
+              await rewriteBashCommand(input.tool_name, input.tool_input, rewriteBash),
             )
-            return shortened === undefined
-              ? {}
-              : { hookSpecificOutput: { hookEventName: "PreToolUse", updatedInput: shortened } }
           },
         ],
       },
@@ -255,7 +248,7 @@ export function postToolUseHooks(
     toolMs: number | undefined,
   ): void => {
     externalToolMark.observeTool(input.tool_name)
-    const inSubagent = input.agent_id !== undefined
+    const inSubagent = isInSubagent(input)
     if (!inSubagent) {
       confirmedSettingEvents(input).forEach(onEvent)
     }
@@ -321,7 +314,7 @@ export function handbackNoteHooks(
       {
         hooks: [
           async (input) => {
-            if (input.hook_event_name !== "UserPromptSubmit" || input.agent_id !== undefined) {
+            if (input.hook_event_name !== "UserPromptSubmit" || isInSubagent(input)) {
               return {}
             }
             await waitForQueuedMessages()
@@ -409,13 +402,24 @@ function confirmedSettingEvents(input: BaseHookInput): readonly SessionEvent[] {
   ]
 }
 
-function deny(reason: string): SyncHookJSONOutput {
-  return {
-    hookSpecificOutput: {
-      hookEventName: "PreToolUse",
-      permissionDecision: "deny",
-      permissionDecisionReason: reason,
-    },
+function isInSubagent(input: BaseHookInput): boolean {
+  return input.agent_id !== undefined
+}
+
+function toPreToolUseOutput(verdict: ToolVerdict): SyncHookJSONOutput {
+  switch (verdict.kind) {
+    case "allow":
+      return {}
+    case "deny":
+      return {
+        hookSpecificOutput: {
+          hookEventName: "PreToolUse",
+          permissionDecision: "deny",
+          permissionDecisionReason: verdict.reason,
+        },
+      }
+    case "rewrite":
+      return { hookSpecificOutput: { hookEventName: "PreToolUse", updatedInput: verdict.input } }
   }
 }
 

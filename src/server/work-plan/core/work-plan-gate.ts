@@ -1,6 +1,7 @@
 // 委譲の返却が届いてからメインが `work_plan` を呼ぶまでのあいだ、メインの作業のツールを拒む判定と、
 // その依頼で最初の `work_plan` を受け付けるまでのあいだ、メインの `Edit`・`Write` を拒む判定。
 
+import type { ToolVerdict } from "../../core/tool-verdict.ts"
 import { isTsukumoTool, tsukumoToolFullName } from "../../core/tsukumo-tool-name.ts"
 
 const READ_ONLY_TOOL_NAMES = ["Read", "Grep", "Glob", "ToolSearch"] as const satisfies string[]
@@ -11,10 +12,6 @@ const READ_ONLY_TOOL_NAMES = ["Read", "Grep", "Glob", "ToolSearch"] as const sat
  */
 export const GATED_TOOL_MATCHER = `^(?!(?:${READ_ONLY_TOOL_NAMES.join("|")})$)(?!${tsukumoToolFullName("")})`
 
-export type GateVerdict =
-  | { readonly kind: "allow" }
-  | { readonly kind: "deny"; readonly reason: string }
-
 const DENY_REASON =
   "委譲先の返却が届いています。作業のツールは、`work_plan` で段を進めるか、同じ段のまま呼んでから使います（読み取りと tsukumo のツールはそのまま使えます）。これは利用者には見えない差し戻しです。"
 
@@ -23,7 +20,7 @@ export function judgeToolAgainstGate(
   toolName: string,
   inSubagent: boolean,
   bandPosition: string,
-): GateVerdict {
+): ToolVerdict {
   if (
     inSubagent ||
     READ_ONLY_TOOL_NAMES.some((name) => name === toolName) ||
@@ -52,7 +49,7 @@ export function judgeEditAgainstMissingPlan(
   toolName: string,
   inSubagent: boolean,
   filePath: string | undefined,
-): GateVerdict {
+): ToolVerdict {
   if (
     inSubagent ||
     !EDIT_TOOL_NAMES.some((name) => name === toolName) ||
