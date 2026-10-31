@@ -27,7 +27,7 @@ describe("createSessionLaunch", () => {
 
     await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
       selection: { by: "initial" },
-      chat: undefined,
+      chat: false,
       resume: { by: "new" },
     })
     await settle()
@@ -84,7 +84,7 @@ describe("createSessionLaunch", () => {
       harness.receiveRestored,
       {
         selection: { by: "initial" },
-        chat: undefined,
+        chat: false,
         resume: PREVIOUS_WORK,
       },
     )
@@ -115,7 +115,7 @@ describe("createSessionLaunch", () => {
 
     await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
       selection: { by: "name", name: "kagami" },
-      chat: undefined,
+      chat: false,
       resume: PREVIOUS_WORK,
     })
     await settle()
@@ -184,7 +184,7 @@ describe("createSessionLaunch", () => {
 
     await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
       selection: { by: "current" },
-      chat: undefined,
+      chat: false,
       resume: { by: "id", sessionId: "other-session" },
     })
     await settle()
@@ -243,7 +243,7 @@ describe("createSessionLaunch", () => {
     const launch = createSessionLaunch(harness.ports)
     await launch(harness.receive, harness.receiveRestored, {
       selection: { by: "initial" },
-      chat: undefined,
+      chat: false,
       resume: { by: "new" },
     })
     calls.length = 0
@@ -277,14 +277,14 @@ describe("createSessionLaunch", () => {
     const launch = createSessionLaunch(harness.ports)
     await launch(harness.receive, harness.receiveRestored, {
       selection: { by: "initial" },
-      chat: undefined,
+      chat: false,
       resume: { by: "new" },
     })
     await settle()
     harness.driverEvents.length = 0
     await launch(harness.receive, harness.receiveRestored, {
       selection: { by: "current" },
-      chat: undefined,
+      chat: false,
       resume: PREVIOUS_WORK,
     })
     await settle()
@@ -303,7 +303,7 @@ describe("createSessionLaunch", () => {
 
     await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
       selection: { by: "initial" },
-      chat: undefined,
+      chat: false,
       resume: { by: "new" },
     })
     await settle()
@@ -327,7 +327,7 @@ describe("createSessionLaunch", () => {
     const launch = createSessionLaunch(harness.ports)
     const request: SessionLaunchRequest = {
       selection: { by: "initial" },
-      chat: undefined,
+      chat: false,
       resume: { by: "new" },
     }
 
@@ -355,7 +355,7 @@ describe("createSessionLaunch", () => {
 
     await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
       selection: { by: "initial" },
-      chat: undefined,
+      chat: false,
       resume: { by: "new" },
     })
     await settle()
@@ -369,14 +369,14 @@ describe("createSessionLaunch", () => {
     const launch = createSessionLaunch(harness.ports)
     await launch(harness.receive, harness.receiveRestored, {
       selection: { by: "initial" },
-      chat: undefined,
+      chat: false,
       resume: { by: "new" },
     })
     await settle()
     harness.driverEvents.length = 0
     await launch(harness.receive, harness.receiveRestored, {
       selection: { by: "current" },
-      chat: undefined,
+      chat: false,
       resume: PREVIOUS_WORK,
     })
     await settle()
@@ -416,7 +416,7 @@ describe("createSessionLaunch", () => {
 
       await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
         selection: { by: "initial" },
-        chat: undefined,
+        chat: false,
         resume,
       })
 
@@ -437,7 +437,7 @@ describe("createSessionLaunch", () => {
 
     await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
       selection: { by: "initial" },
-      chat: undefined,
+      chat: false,
       resume: PREVIOUS_WORK,
     })
     await settle()

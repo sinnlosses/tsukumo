@@ -298,7 +298,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
   let generation = startGeneration(
     {
       selection: { by: "initial" },
-      chat: undefined,
+      chat: false,
       resume: { by: "new" },
     },
     "immediate",
@@ -408,11 +408,7 @@ function rememberedModeSessions(
   if (request.selection.by === "name") {
     return NO_MODE_SESSIONS
   }
-  if (
-    request.chat === undefined ||
-    request.chat === state.chatMode ||
-    state.session.kind === "starting"
-  ) {
+  if (request.chat === state.chatMode || state.session.kind === "starting") {
     return modeSessions
   }
   const remembered = { kind: "remembered", sessionId: state.session.sessionId } as const

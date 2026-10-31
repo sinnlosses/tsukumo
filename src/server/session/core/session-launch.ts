@@ -41,8 +41,8 @@ export type SessionLaunchSeed<Pack extends NamedCharacterPack> = {
 export type SessionLaunchRequest = {
   /** これから起こすパックの決め方。 */
   readonly selection: CharacterSelection
-  /** 雑談モードで起こすか。undefined なら仕事（既定）。 */
-  readonly chat: boolean | undefined
+  /** 雑談モードで起こすか。 */
+  readonly chat: boolean
   /** これから起こすセッションの決め方。 */
   readonly resume: SessionResume
 }
@@ -138,7 +138,7 @@ export function createSessionLaunch<Pack extends NamedCharacterPack>(
     const firstLaunch = !launched
     launched = true
     const { selection } = request
-    const chat = request.chat ?? false
+    const { chat } = request
     const pack = ports.choosePack(selection)
     // 覚えるのは画面から名前が届いたときだけ。
     // 起動時やモードの切り替えでも覚えると、その回だけの指定（`TSUKUMO_CHARACTER`）や同梱の既定が次の起動の初期値として残ってしまう。

@@ -37,7 +37,7 @@ describe("createSessionManager", () => {
     // 起動の1代目は初期パック・新規のセッション（どちらも覚えない側）。
     expect(started[0]?.request).toEqual({
       selection: { by: "initial" },
-      chat: undefined,
+      chat: false,
       resume: { by: "new" },
     })
     // 前の駆動は閉じ、新しい駆動が起きている。
@@ -128,7 +128,7 @@ describe("createSessionManager", () => {
       launchSession: (onEvent, _onRestoredEvents, request) => {
         const stub = createStubDriver()
         stub.attach(onEvent)
-        onEvent({ kind: "chat-mode-changed", chat: request.chat ?? false })
+        onEvent({ kind: "chat-mode-changed", chat: request.chat })
         return new Promise((resolve) => {
           releases.push(() => resolve(stub.driver))
         })

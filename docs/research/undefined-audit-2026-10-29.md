@@ -45,7 +45,7 @@
 | `src/server/diary`            | 12       | 6           | 0                  | 6       |
 | `src/browser/stores`          | 9        | 5           | 0                  | 4       |
 | `src/wiring/(root)`           | 9        | 2           | 0                  | 7       |
-| `src/(root)`                  | 8        | 0           | 1                  | 7       |
+| `src/(root)`                  | 8        | 0           | 0                  | 8       |
 | `scripts/runtime`             | 7        | 0           | 0                  | 7       |
 | `src/shared/session-driver`   | 7        | 0           | 0                  | 7       |
 | `src/server/achievement`      | 6        | 5           | 0                  | 1       |
@@ -68,7 +68,7 @@
 | `src/shared/(root)`           | 1        | 0           | 0                  | 1       |
 | `src/shared/diagnostic`       | 1        | 0           | 1                  | 0       |
 | `src/shared/diary`            | 1        | 0           | 0                  | 1       |
-| **合計**                      | **1166** | **256**     | **150**            | **760** |
+| **合計**                      | **1166** | **256**     | **149**            | **761** |
 
 全件 = 6つに当たる + 消せる + 本物 は、領域ごとにも合計でも成り立つ（表を作った道具で突き合わせた）。
 
@@ -81,7 +81,7 @@
 | 記号 | 理由                                                                                                    | 件  | 代表例                                                                                                                                                                                                                                         |
 | ---- | ------------------------------------------------------------------------------------------------------- | --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | R1   | 探索・解析・読み取りの失敗を単一の「無い」で返す戻り値                                                  | 374 | `browser/components/domain/sidebar/components/task-doing-count.tsx:10`・`browser/components/domain/sidebar/domain/plan-window.ts:25`・`browser/components/page/achievement/domain/written-time.ts:5`                                           |
-| R2   | 環境変数・引数・状態ファイル・定義ファイル・SDK/外部 API など外の世界の値の写し、またはそれを受ける入口 | 183 | `browser/components/domain/portrait.tsx:41`・`browser/domain/appearance-color.ts:168`・`browser/features/task-board/domain/task-board-list-width.ts:15`                                                                                        |
+| R2   | 環境変数・引数・状態ファイル・定義ファイル・SDK/外部 API など外の世界の値の写し、またはそれを受ける入口 | 184 | `browser/components/domain/portrait.tsx:41`・`browser/domain/appearance-color.ts:168`・`browser/features/task-board/domain/task-board-list-width.ts:15`                                                                                        |
 | R3   | DOM 属性・描画の差し込みにそのまま渡す props（例6の趣旨だが `ui/` の外なので表の判定に当たらない）      | 22  | `browser/components/domain/portrait.tsx:30`・`browser/components/domain/screen-nav/components/screen-nav-settings-face-frame.tsx:13`・`browser/components/domain/screen-nav/components/session-switcher.tsx:281`                               |
 | R4   | 持ち主が1つで、「まだ無い／選ばれていない」が1つの意味しか持たない値                                    | 124 | `browser/components/domain/character-face.tsx:13`・`browser/components/domain/portrait.tsx:28`・`browser/components/domain/screen-nav/hooks/use-screen-nav.ts:130`                                                                             |
 | R5   | React・TanStack Query・DOM の外来シグネチャや入れ物（`RefObject` など）で型が決まっているもの           | 6   | `browser/components/page/achievement/hooks/use-achievement.ts:169`・`browser/components/page/conversation/components/dispatch/domain/prompt-image.ts:19`・`browser/components/page/conversation/components/dispatch/domain/prompt-image.ts:37` |
@@ -118,7 +118,7 @@
 | `src/server/diary`            | 6    | R2 3（例 `server/diary/core/diary-tool.ts:193`）、R1 2（例 `server/diary/core/diary-tool.ts:177`）、R4 1（例 `server/diary/core/diary-tool.ts:46`）                                                                                                                                                                                                                                                                                                                                        |
 | `src/browser/stores`          | 4    | R4 2（例 `browser/stores/turn-selection.ts:21`）、R10 1（例 `browser/stores/session.ts:70`）、R1 1（例 `browser/stores/turn-selection.ts:54`）                                                                                                                                                                                                                                                                                                                                             |
 | `src/wiring/(root)`           | 7    | R2 5（例 `wiring/session-launch.ts:206`）、R1 2（例 `wiring/diary.ts:44`）                                                                                                                                                                                                                                                                                                                                                                                                                 |
-| `src/(root)`                  | 7    | R9 4（例 `current-character.ts:63`）、R1 2（例 `cli.ts:90`）、R2 1（例 `main.ts:291`）                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `src/(root)`                  | 8    | R9 4（例 `current-character.ts:63`）、R1 2（例 `cli.ts:90`）、R2 2（例 `main.ts:291`）                                                                                                                                                                                                                                                                                                                                                                                                     |
 | `scripts/runtime`             | 7    | R1 4（例 `scripts/runtime/diagnostic.ts:86`）、R2 3（例 `scripts/runtime/diagnostic.ts:103`）                                                                                                                                                                                                                                                                                                                                                                                              |
 | `src/shared/session-driver`   | 7    | R1 4（例 `shared/session-driver/prompt-image.ts:107`）、R2 3（例 `shared/session-driver/api-trouble.ts:36`）                                                                                                                                                                                                                                                                                                                                                                               |
 | `src/server/achievement`      | 1    | R1 1（例 `server/achievement/core/done-task.ts:38`）                                                                                                                                                                                                                                                                                                                                                                                                                                       |
@@ -137,7 +137,7 @@
 
 ### 数えて分かったこと
 
-- 本物 760 件のうち R1 が 374 件で約半分。戻り値と `Promise<…>` の型引数は、署名と関数名から「見つからない・読めない」を返す形かを見て R1 に入れた（本体は読んでいない）。この形は規約の6つの表に直接の行が無く、例2（TypeScript が生む `undefined`）に準ずるものとして書いてある。表に行を足すかどうかは、この文書の範囲の外。
+- 本物 761 件のうち R1 が 374 件で約半分。戻り値と `Promise<…>` の型引数は、署名と関数名から「見つからない・読めない」を返す形かを見て R1 に入れた（本体は読んでいない）。この形は規約の6つの表に直接の行が無く、例2（TypeScript が生む `undefined`）に準ずるものとして書いてある。表に行を足すかどうかは、この文書の範囲の外。
 - R3 は `className`・`title`・`blockedTitle` など DOM 属性に素通しする props で、例6と同じ性質なのに `src/browser/components/ui/` の外にあるため表の判定に当たらない。例6の範囲を `ui/` の外へ広げるかは別の判断になる。
 
 ### 呼び出し側を読んで本物に移した件
@@ -146,6 +146,7 @@
 成果の画面の3件は、持ち主がセッションの状態で、キャラクター定義が届く前という意味しか持たない。畳み先に当たる既定の `CharacterInfo` が無く、消すと `!`・`as` か存在しない既定値が要る。
 表示判定の3件（`characterFaceInfo`・`portraitAppearance`・`resolveEffortSelect`）も R4 で、`character` は定義が届く前、`effort` はまだ読まれていないという意味しか持たない。呼び出し側がその状態をそのまま運び、畳むと各所に同じ分岐を複製するだけになる。
 共有層のキャラ・セッションの4件のうち、`shownCharacterPackName`・`effectiveAccent` の `character` は成果の画面と同じ R4（セッションの状態で、定義が届く前）で、呼び出し側 3 か所が `undefined` をそのまま運ぶ。`settleDelegatedRange` の `returnedCount` も R4 で、`phase_result` がまだ届いていないという 1 つの意味しか持たず、番兵にすると `0`（段が 0）と区別できない。`expressionChoices` の `definition` は R2 で、定義ファイルの読み取りの写し（定義が無い・壊れたパック）を 8 か所が `seed.pack.definition` のまま渡し、畳むと 5 ファイルに同じ分岐を複製する。
+`serveAsset` の `version` は R2 で、要求の `?v=` が無いという外の世界の値の写し。`ServeCharacterAsset`・`writeCharacterAsset`・`readCharacterAsset` が同じ `string | undefined` を素通しするので、`serveAsset` だけ畳むと空文字の番兵になり、合併型にすると名指しの外の 6 ファイル超へ型が広がる。
 発話ログ・雑談表示の3件は、`useCharacterClock` の `waitingDueAt` が「待ちの一言の期日が無い」、`useSpeechLog` の `pinnedSpeech` が「何も留めていない」、`advanceReveal` の `lastRevealAt` が「まだ吹き出しを出していない」を表す。
 `Infinity`・`-Infinity` で畳むとタイマーが直ちに鳴り続ける、または状態の形が変わる。`pinnedSpeech` はビューモデルの欄を運ぶ props で、畳むと呼び出し側の型が名指しの外へ広がる。
 フックの書き込み判定の前半の11件は、2つに分かれる。`writeRuleOf` ほか `directory` を受ける8件は、`cd $x`・`popd`・`cd -` で `cd` を追えなくなった状態を、`findWorkTreeWriteRule` のループが持ち回る。同じ値が後半の `scriptRunDirectories`・`readScriptFile`・`absoluteScriptPath` にも渡るので、合併型にしても境で `undefined` への変換が増えるだけ。`workRoot` を受ける3件は、`undefined` が「作業ツリーの根が決まらない」を意味し、このとき Python の判定は走ってシェルの書き込みの判定だけ飛ばす。後半の `isDeniedPythonCode`・`hasUnsafeWrite`・`isLiteralOutsideWorkTree`・`readPythonScripts` が同じ `undefined` を読むので、前半だけ値にすると挙動が変わる。
@@ -199,6 +200,7 @@
 | `shared/character-pack/character.ts`                                                         | `effectiveAccent`              | 引数       | 196 | R4   |
 | `shared/character-pack/expression-choice.ts`                                                 | `expressionChoices`            | 引数       | 21  | R2   |
 | `shared/session/work-plan.ts`                                                                | `settleDelegatedRange`         | 引数       | 309 | R4   |
+| `current-character.ts`                                                                       | `serveAsset`                   | 引数       | 89  | R2   |
 
 ## 消せるもの
 
@@ -387,12 +389,6 @@
 | ファイル                                | 対象          | 置き場 | 件  | 行  | 消し方     | 呼び出し側の数 |
 | --------------------------------------- | ------------- | ------ | --- | --- | ---------- | -------------- |
 | `scripts/document/section-reference.ts` | `toReference` | 引数   | 1   | 229 | 入口で畳む | 2              |
-
-### `src/(root)`（消せる 1 件）
-
-| ファイル               | 対象         | 置き場 | 件  | 行  | 消し方     | 呼び出し側の数 |
-| ---------------------- | ------------ | ------ | --- | --- | ---------- | -------------- |
-| `current-character.ts` | `serveAsset` | 引数   | 1   | 89  | 入口で畳む | 1              |
 
 ### `src/server/chat`（消せる 3 件）
 
