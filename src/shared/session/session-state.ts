@@ -58,7 +58,8 @@ export type SessionState = {
   readonly speechCalledInTurn: boolean
   /**
    * SDK のターンの持ち物（{@link SdkTurn}）。依頼・記録を持たないターンの始まり・脇の話・続きのターンで開き、`turn-finished` / `session-ended` で閉じる。
-   * `turn` が `idle` なのに開いている組も型の上では作れるが、開く・閉じるのは `turn` を動かす同じ関数だけなので起きない。
+   * 開いているのは `turn` が `running` のときだけ（`idle`・`finished` なのに開いた組も、`running` なのに閉じた組も起きない）。
+   * 型の上では作れるので、開く・閉じるのは `turn` を動かす同じ関数に限る。
    */
   readonly sdkTurn: SdkTurn
   /** 確定した記録。書きかけの本文は含まない。 */
