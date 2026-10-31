@@ -128,6 +128,72 @@
 
 `/tmp/tsukumo-playwright-trial/snapshots/capture-reveal.trial.ts/` に `report-checks.png`（演出が終わってから）と `report-checks-skipped.png`（`Escape` で打ち切ってから）の 2 枚。リポジトリには置いていない。2 枚を開いて見比べると、どちらも左に「やり取り」の一覧、右に本文の上部（完了の表示・依頼・結論の一文・検証 1 件の行・「架空の比べ方」の節・注意の枠）が写り、違いは目では見つからなかった（画素の差は測っていない。同じ比べで 10 回通っているので、撮り直しの揺れは小さい）。打ち切りで途中の本文が欠けた様子は写っていない。
 
+## E2E 3 本の移行と 37 本ぶんの見積り
+
+期待値の成果物を使う `inquiry`・`session-switch` と、押す的の走査をする `target-size` を、既存の vitest 版は触らずに `*.trial.ts` へ移した記録。3 本の選び方は変えていない（`inquiry` と `session-switch` は `test/e2e/expected/` の期待値を使い、`target-size` は期待値を撮らず `expectReadable` が割れた名前と寸法を `expect` する）。写したのは fake driver の架空の会話だけで、期待値は `test/e2e/expected/` を読むだけで書き換えていない。
+
+### 試作の足場
+
+- `room-fixture.ts`（34 行）が fixture `run` を作る。`run.open(options)` は既存の `openRoom(browser, options, addCleanup, hasTestFailed)`（`scenario-open.ts`）を、Playwright の `browser` で呼ぶだけ。`ScenarioOptions` が `scenario`・`scene`・`viewport`・`domRoots`・`cwdFiles` を持っているので、`tsukumo-fixture.ts` に口を足さずに済んだ。後始末は fixture の teardown で、積んだ順の逆に走らせる。
+- 3 本は `describe/it` を `test`、`run.open` を fixture の `run.open` に替えた機械的な移し。`expect.poll`・`getByRole`・`boundingBox` などは `@playwright/test` の `expect` でそのまま通った。
+- `scenario-open.ts` の `settleAndMatch*`（`settledDom`・`namedDomTreeScript`・`recordMessages` を含む）と `artifact.ts` は書き換えず、そのまま呼んだ。
+
+### 足場の肩代わり／再利用／書き直し
+
+行数は `wc -l`。「使う本」は 3 本が実際に import する経路のもの。
+
+| 足場                                                                                                                                                                                                                                             | 行数                                                            | 判定             | 理由                                                                                                                                                                            |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `scenario-run.ts`・`chrome-launch.ts`                                                                                                                                                                                                            | 68・34（計 102）                                                | 肩代わり         | ブラウザの起動・接続・切断と `afterEach` の後始末。`@playwright/test` の `browser` と fixture の teardown が持つ。`test/e2e-chrome-setup.ts`（22 行）も同じ役で、3 本は呼ばない |
+| `scenario-open.ts`                                                                                                                                                                                                                               | 359                                                             | 再利用           | `browser` を引数に取る関数なので、そのまま呼べた（段 1 の見立ての「書き直し」は外れた）                                                                                         |
+| `artifact.ts`                                                                                                                                                                                                                                    | 230                                                             | 再利用           | `expect` を vitest から import したままで、Playwright の下で動いた（`toEqual` が使える）。壊した版（`ArrowDown` を 1 回足す）で messages の食い違いとして落ちることも確かめた   |
+| `dom-tree.ts`・`message-record.ts`・`scene-schedule.ts`・`scenario-wait.ts`・`fixed-clock.ts`・`announcement-record.ts`・`scenario-viewport.ts`・`tsukumo-process.ts`・`readability-scan.ts`・`task-room.ts`・`dom-pick.ts`・`git-repository.ts` | 260・353・92・61・30・19・20・99・198・275・147・22（計 1,576） | 再利用           | Page / Locator / ファイルだけに依存する。`readability-scan.ts` も vitest の `expect` のまま通った                                                                               |
+| `room-fixture.ts`（新規）                                                                                                                                                                                                                        | 34                                                              | 書き直し（新規） | 肩代わりした 102 行の代わりに書いた分。`run` を `openRoom` につなぐだけ                                                                                                         |
+
+- 再利用は 12 ファイルの計 1,576 行に `scenario-open.ts` 359 と `artifact.ts` 230 を足した 2,165 行（`wc -l` の合計）。肩代わりは 102 行、新しく書いたのは 34 行。
+- 書き換えた既存ファイルは 0。`git status` の差分は `test/playwright-trial/` の追加だけ。
+
+### 現状と試作の数（3 本、10 回ずつ）
+
+手順は両側で同じ。現状は `pnpm exec vitest run --config vitest.e2e.config.ts test/e2e/<名前>.test.ts` を 10 回連続、試作は `pnpm exec playwright test -c test/playwright-trial/playwright.config.ts <名前>.trial.ts --reporter=line` を 10 回連続。所要の「壁時計」は 1 回ごとに `date +%s` の差（pnpm の起動と globalSetup を含む）。ツールの表示は、vitest は最後の 1 回の `Duration` だけ控えた（ほかの回は控えていない）、playwright は 10 回分の `N passed (X s)`。
+
+|                | 現状 inquiry            | 試作 inquiry  | 現状 session-switch    | 試作 session-switch | 現状 target-size        | 試作 target-size   |
+| -------------- | ----------------------- | ------------- | ---------------------- | ------------------- | ----------------------- | ------------------ |
+| テスト本体の行 | 217（7 テスト）         | 210           | 84（2 テスト）         | 73                  | 127（7 テスト）         | 124                |
+| 壁時計（1 回） | 13〜15 秒               | 14〜17 秒     | 4 秒（10 回とも）      | 4〜5 秒             | 15〜16 秒               | 15 秒（10 回とも） |
+| ツールの表示   | 13.99 秒（最後の 1 回） | 13.6〜16.0 秒 | 3.73 秒（最後の 1 回） | 3.6〜4.4 秒         | 15.46 秒（最後の 1 回） | 14.5〜14.9 秒      |
+| 10 回の通過    | 10/10                   | 10/10         | 10/10                  | 10/10               | 10/10                   | 10/10              |
+
+- 所要はほぼ同じ。`design-gallery` では試作が速かった（1.4〜2.1 秒対 3.81〜5.54 秒）が、それは場面の `turn-finished` を待たないためで、疑似セッションの場面を流す 3 本では差が出なかった。時間の削減は期待しない。
+- 行数の差は小さい（3 本の計 428 行が 407 行）。`diff -w -B` で現状とだけ比べた除かれた行・足された行は、`inquiry` 31・24、`session-switch` 20・9、`target-size` 24・21（空白の差と `prettier` の折り返しを除いた概算）。
+
+### 期待値の比べ方（案A と案B）
+
+- 案A（既存の `artifact.ts` を呼ぶ）: `settleAndMatchPicked*` をそのまま呼ぶ。追加の足場は 0 行。`inquiry`・`session-switch` の期待値 4 件（`inquiry-permission-mouse` の dom-pick と messages、`inquiry-question-preview-image` の dom-pick、`session-switch-enter` の dom-pick と messages、`session-switch-occupied` の dom-pick）が、既存と同じ中身で比べられた。失敗の保存（`failures/`）・差分・`E2E_UPDATE=1` の書き直し・部分一致（`missingPicks`）も使える。`E2E_UPDATE=1` を Playwright の下で打つことは試していない。
+- 案B（`toMatchSnapshot`）: `session-switch-enter` の messages だけ試した（`playwright.snapshot.config.ts` と `session-switch-snapshot.snapshot-trial.ts`、計 57 行）。通ったが、`toMatchSnapshot` は名前の `.` を `-` に直す（`session-switch-enter.messages.json` は `session-switch-enter-messages.json` を探す）。本体の期待値の名前では `A snapshot doesn't exist` で落ち、改名した写しを `/tmp` に置いて比べた。部分一致の期待値（dom-pick 37 件）は `toMatchSnapshot` で表せない。
+- 小さいのは案A。案B に移すと、全面一致の 15 件（`dom` 3・`messages` 12）の改名と、`snapshotPathTemplate` の設定が要り、dom-pick 37 件のために `artifact.ts` の一部（`matchPickedArtifact`・置換表）は結局残る。得るのは `recordFailure`・`lineDiff`・`pruneOldFailures`（約 80 行）と `UPDATE_EXPECTED` の肩代わり。
+
+### 衝突と制約
+
+- trace: 設定の `trace: "retain-on-failure"` が `browser.newContext` のコンテキストにも掛かり、`openRoom` の `context.tracing.start` が `Tracing has been already started` で落ちた。3 本は各ファイルの先頭に `test.use({ trace: "off" })` を足して逃げた（`openRoom` が失敗時だけ `trace.zip` を `test/e2e/output/` に残す）。37 本に広げるなら、各ファイルに 1 行ずつ足すか、部屋を使う本だけを別の設定（`trace: "off"`）に分けるか、`openRoom` 側を直すか。どれも測っていない。
+- `workers: 1`: `playwright.config.ts` の設定をそのまま使った。部屋を使う 3 本は `spawnTsukumo` の `port` が省略で 0（OS 任せ）なので、固定ポートは要らなかった。固定ポート（47831）が要るのは `design-image` の画像の比較だけ。複数の worker で動かすことは試していない（成果物は `/tmp/tsukumo-e2e/<シナリオ>/` がシナリオ名ごとで、衝突しない見込みだが未確認）。vitest 側は `maxWorkers: "40%"` でファイルを並列に走らせている。全 37 本を通した所要は測っていない。
+- 期待値 52 個（`dom` 3・`dom-pick` 37・`messages` 12）の改名: 案A なら 0 件。案B に全面一致 15 件を移すなら 15 件。
+
+### 37 本ぶんの見積り
+
+- 37 本すべてが `useScenarioRun` を使う（`grep -l useScenarioRun test/e2e/*.test.ts` が 37）。`run.open` を返す fixture 1 つで足りる見込み。ただし 3 本以外は動かしていない。
+- 3 本の外で目に付く vitest 固有の書き方は、`it.each`/`describe.each` が 6 本（3 本のうち `inquiry` と `target-size` の `it.each` は `for` に直して通った）、`vi.` は 0 本、`expect.poll` は 10 本（そのまま通った）。
+- テスト本体は 37 本で計 3,034 行（`wc -l test/e2e/*.test.ts`）。3 本で `diff -w -B` の除かれた行 75 を 428 行に当てると約 17.5%、37 本に同じ比を当てると約 530 行の書き換え。3 本だけの比なので推定で、測っていない。
+- 足場は 2,165 行の再利用に 34 行の新規と 102 行の肩代わり。vitest 版を消すときに無くなるのは 102 行と `e2e-chrome-setup.ts` 22 行、`artifact.ts`・`readability-scan.ts` の `import { expect } from "vitest"` を替える 2 行。
+- 判定の形ごとの、使うファイルの数（`grep -l`）: `settleAndMatchPickedWithMessages` 10・`settleAndMatchPicked` 14・`settleAndMatchWithMessages` 1・`settleAndMatch` 2・`expectReadable` 3。1 本が複数の形を使うことがあり、足しても 37 にはならない。`settleAndMatchPicked*` が 3 本の試作で通ったので、この 2 形を使うファイルは重なりを除いて 24 本以下で、同じ手で通る見込み。残りの形（完全一致の `settleAndMatch*` と `expectReadable`）は `expectReadable` を除き動かしていない。
+
+### vitest 版を残すか消すか（論点）
+
+- 併存の間は、同じ `test/e2e/expected/` を両方が読む。`E2E_UPDATE=1` の書き直しが両側で同じ出力になるかは試していない。
+- 消すと、`scripts/dev/e2e.ts`・`scripts/dev/e2e-update.ts`・`scripts/shared/e2e-watch.ts`・`tw verify` / `check --full` の段を Playwright に付け替える必要がある。この付け替えの大きさは調べていない。
+- 残すと、同じ判定が二重にあり、`test/e2e/` の保守が 2 系統になる。
+- 先に決める点: 案A（`artifact.ts` を残す）にすると、vitest 版を消したあとも `artifact.ts` の `expect` を `@playwright/test` に替える 1 行で済む（未確認）。
+
 ## 全面移行を検討する条件（案）
 
 この試作の数だけでは移行の可否は決まらないので、利用者が別の課題で決めるときの物差しとして置く。しきい値は案で、実測の裏付けは無い。
