@@ -400,20 +400,22 @@ function svgText(
   }
 }
 
-function toneAttribute(tone: SvgTone | undefined): string {
-  return tone === undefined ? "" : ` data-tone="${tone}"`
+function toneAttribute(tone: SvgTone): string {
+  return ` data-tone="${tone}"`
 }
 
 function svgPrimitiveHtml(primitive: SvgPrimitive): string {
   switch (primitive.kind) {
     case "rect": {
       const strokeWidth = primitive.emphasis ? ' stroke-width="3"' : ""
-      return `<rect x="${String(primitive.x)}" y="${String(primitive.y)}" width="${String(primitive.width)}" height="${String(primitive.height)}" rx="4"${strokeWidth}${toneAttribute(primitive.tone)}></rect>`
+      const tone = primitive.tone === undefined ? "" : toneAttribute(primitive.tone)
+      return `<rect x="${String(primitive.x)}" y="${String(primitive.y)}" width="${String(primitive.width)}" height="${String(primitive.height)}" rx="4"${strokeWidth}${tone}></rect>`
     }
     case "line": {
       const markerEnd = primitive.arrow ? ` marker-end="url(#${SVG_ARROW_MARKER_ID})"` : ""
       const dashArray = primitive.dashed ? ' stroke-dasharray="6 4"' : ""
-      return `<line x1="${String(primitive.x1)}" y1="${String(primitive.y1)}" x2="${String(primitive.x2)}" y2="${String(primitive.y2)}"${markerEnd}${dashArray}${toneAttribute(primitive.tone)}></line>`
+      const tone = primitive.tone === undefined ? "" : toneAttribute(primitive.tone)
+      return `<line x1="${String(primitive.x1)}" y1="${String(primitive.y1)}" x2="${String(primitive.x2)}" y2="${String(primitive.y2)}"${markerEnd}${dashArray}${tone}></line>`
     }
     case "text": {
       const anchor = primitive.centered ? ' text-anchor="middle" dominant-baseline="middle"' : ""

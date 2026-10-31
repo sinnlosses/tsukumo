@@ -66,7 +66,10 @@ export function tableLayoutOf(table: Pick<TableBlock, "columns" | "rows">): Tabl
     aligns: table.columns.map((_, index) => columnAlign(rows, index)),
     bars: table.columns.map((_, index) => columnBar(rows, index)),
     statusColumns: table.columns.map((_, index) =>
-      rows.some((cells) => isStatusCell(cells[index])),
+      rows.some((cells) => {
+        const cell = cells[index]
+        return cell !== undefined && isStatusCell(cell)
+      }),
     ),
     legendStatuses: REPORT_CELL_STATUSES.filter((status) =>
       rows.some((cells) => cells.some((cell) => isStatusCell(cell) && cell.status === status)),
@@ -81,10 +84,8 @@ export function matrixLegendStatuses(block: Pick<MatrixBlock, "rows">): readonly
   )
 }
 
-function isStatusCell(
-  cell: TableCell | undefined,
-): cell is Extract<TableCell, { readonly status: string }> {
-  return cell !== undefined && typeof cell !== "string" && "status" in cell
+function isStatusCell(cell: TableCell): cell is Extract<TableCell, { readonly status: string }> {
+  return typeof cell !== "string" && "status" in cell
 }
 
 type CellRows = readonly (readonly TableCell[])[]

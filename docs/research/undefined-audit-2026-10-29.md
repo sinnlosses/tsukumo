@@ -25,7 +25,7 @@
 | `src/shared/character-pack`   | 70       | 0           | 5                  | 65      |
 | `scripts/hook`                | 66       | 0           | 11                 | 55      |
 | `scripts/capture`             | 62       | 2           | 4                  | 56      |
-| `src/shared/report`           | 60       | 0           | 9                  | 51      |
+| `src/shared/report`           | 60       | 0           | 8                  | 52      |
 | `src/server/character-pack`   | 45       | 36          | 0                  | 9       |
 | `scripts/shared`              | 40       | 0           | 17                 | 23      |
 | `src/browser/domain`          | 34       | 2           | 5                  | 27      |
@@ -68,7 +68,7 @@
 | `src/shared/(root)`           | 1        | 0           | 0                  | 1       |
 | `src/shared/diagnostic`       | 1        | 0           | 1                  | 0       |
 | `src/shared/diary`            | 1        | 0           | 0                  | 1       |
-| **合計**                      | **1166** | **256**     | **158**            | **752** |
+| **合計**                      | **1166** | **256**     | **157**            | **753** |
 
 全件 = 6つに当たる + 消せる + 本物 は、領域ごとにも合計でも成り立つ（表を作った道具で突き合わせた）。
 
@@ -89,7 +89,7 @@
 | R7   | 位置を保つ配列の穴（読めなかった列を飛ばさず添字を揃える）                                              | 3   | `shared/report/timeline-scale.ts:26`・`shared/report/timeline-scale.ts:33`・`scripts/dev/lib/a2ui-write-trial.ts:346`                                                                                                                          |
 | R8   | ループの終端・畳み込みの途中経過・蓄積値（例4に準ずる）                                                 | 11  | `browser/components/domain/screen-nav/hooks/use-screen-nav.ts:197`・`browser/components/page/achievement/hooks/use-diary-book.ts:383`・`browser/components/page/achievement/hooks/use-diary-book.ts:393`                                       |
 | R9   | イベントを出さない場合を「無い」で表す口（呼び出し側は無ければ何もしない）                              | 14  | `current-character.ts:63`・`current-character.ts:69`・`current-character.ts:76`                                                                                                                                                                |
-| R10  | `undefined` 自体が「止める・外す・準備なし」という指示の意味を持つ引数                                  | 12  | `browser/domain/reveal/brush-scroll.ts:42`・`browser/domain/reveal/brush-scroll.ts:85`・`browser/domain/reveal/brush-tip.ts:63`                                                                                                                |
+| R10  | `undefined` 自体が「止める・外す・準備なし」という指示の意味を持つ引数                                  | 13  | `browser/domain/reveal/brush-scroll.ts:42`・`browser/domain/reveal/brush-scroll.ts:85`・`browser/domain/reveal/brush-tip.ts:63`                                                                                                                |
 
 ### 領域ごとの理由
 
@@ -100,7 +100,7 @@
 | `src/shared/character-pack`   | 65   | R2 45（例 `shared/character-pack/character-asset.ts:18`）、R1 20（例 `shared/character-pack/character-asset.ts:36`）                                                                                                                                                                                                                                                                                                                                                                       |
 | `scripts/hook`                | 55   | R1 38（例 `scripts/hook/bash-guard.ts:24`）、R2 3（例 `scripts/hook/lib/bash-hook-call.ts:8`）、R8 3（例 `scripts/hook/lib/shell-write-rule.ts:153`）、R4 11（例 `scripts/hook/lib/shell-write-rule.ts:166`）                                                                                                                                                                                                                                                                              |
 | `scripts/capture`             | 56   | R1 25（例 `scripts/capture/capture-catalog.ts:262`）、R2 26（例 `scripts/capture/capture-catalog.ts:82`）、R10 5（例 `scripts/capture/lib/scene-end.ts:26`）                                                                                                                                                                                                                                                                                                                               |
-| `src/shared/report`           | 51   | R1 31（例 `shared/report/a2ui-report-outline.ts:82`）、R4 15（例 `shared/report/code-mark.ts:51`）、R8 2（例 `shared/report/graph-fold.ts:64`）、R7 2（例 `shared/report/timeline-scale.ts:26`）、R3 1（例 `shared/report/graph-fold-html.ts:43`）                                                                                                                                                                                                                                         |
+| `src/shared/report`           | 52   | R1 31（例 `shared/report/a2ui-report-outline.ts:82`）、R4 15（例 `shared/report/code-mark.ts:51`）、R8 2（例 `shared/report/graph-fold.ts:64`）、R7 2（例 `shared/report/timeline-scale.ts:26`）、R3 1（例 `shared/report/graph-fold-html.ts:43`）、R10 1（例 `shared/report/table-view.ts:25`）                                                                                                                                                                                           |
 | `src/server/character-pack`   | 9    | R2 4（例 `server/character-pack/core/character-generation.ts:41`）、R9 3（例 `server/character-pack/core/character-pack-command.ts:22`）、R1 2（例 `server/character-pack/core/character-generation.ts:76`）                                                                                                                                                                                                                                                                               |
 | `scripts/shared`              | 23   | R1 15（例 `scripts/shared/ast-node.ts:8`）、R2 8（例 `scripts/shared/claude-environment.ts:16`）                                                                                                                                                                                                                                                                                                                                                                                           |
 | `src/browser/domain`          | 27   | R1 14（例 `browser/domain/effort-label.ts:45`）、R4 8（例 `browser/domain/appearance-color.ts:20`）、R10 4（例 `browser/domain/reveal/brush-scroll.ts:42`）、R2 1（例 `browser/domain/appearance-color.ts:168`）                                                                                                                                                                                                                                                                           |
@@ -137,12 +137,12 @@
 
 ### 数えて分かったこと
 
-- 本物 752 件のうち R1 が 374 件で約半分。戻り値と `Promise<…>` の型引数は、署名と関数名から「見つからない・読めない」を返す形かを見て R1 に入れた（本体は読んでいない）。この形は規約の6つの表に直接の行が無く、例2（TypeScript が生む `undefined`）に準ずるものとして書いてある。表に行を足すかどうかは、この文書の範囲の外。
+- 本物 753 件のうち R1 が 374 件で約半分。戻り値と `Promise<…>` の型引数は、署名と関数名から「見つからない・読めない」を返す形かを見て R1 に入れた（本体は読んでいない）。この形は規約の6つの表に直接の行が無く、例2（TypeScript が生む `undefined`）に準ずるものとして書いてある。表に行を足すかどうかは、この文書の範囲の外。
 - R3 は `className`・`title`・`blockedTitle` など DOM 属性に素通しする props で、例6と同じ性質なのに `src/browser/components/ui/` の外にあるため表の判定に当たらない。例6の範囲を `ui/` の外へ広げるかは別の判断になる。
 
 ### 呼び出し側を読んで本物に移した件
 
-「消せる」と見立てた件のうち、呼び出し側を読んで本物と分かったもの。理由は撮影の道具の入口の10件（R2・R10）と `toReference` の `section`（R2）とセッション駆動の読み取りの4件（R1・R2）を除いて R4（持ち主が1つで、「まだ無い」が1つの意味しか持たない）。
+「消せる」と見立てた件のうち、呼び出し側を読んで本物と分かったもの。理由は撮影の道具の入口の10件（R2・R10）と `toReference` の `section`（R2）とセッション駆動の読み取りの4件（R1・R2）と `tableRowFilterTexts` の `column`（R10）を除いて R4（持ち主が1つで、「まだ無い」が1つの意味しか持たない）。
 成果の画面の3件は、持ち主がセッションの状態で、キャラクター定義が届く前という意味しか持たない。畳み先に当たる既定の `CharacterInfo` が無く、消すと `!`・`as` か存在しない既定値が要る。
 発話ログ・雑談表示の3件は、`useCharacterClock` の `waitingDueAt` が「待ちの一言の期日が無い」、`useSpeechLog` の `pinnedSpeech` が「何も留めていない」、`advanceReveal` の `lastRevealAt` が「まだ吹き出しを出していない」を表す。
 `Infinity`・`-Infinity` で畳むとタイマーが直ちに鳴り続ける、または状態の形が変わる。`pinnedSpeech` はビューモデルの欄を運ぶ props で、畳むと呼び出し側の型が名指しの外へ広がる。
@@ -151,6 +151,7 @@
 撮影の道具の入口の10件は、2つに分かれる。`sourceOf` の5引数は、`--url`・`--scene`・`--until-step`・`--cwd`・`--session` が無いという `parseArgs` の値の写しで、有無を判定するのがこの関数そのもの（R2）。`until` の4件（`Source`・`sceneEndTarget`・`sceneEventTimeoutMs`・`countedSteps`）は、`startupSteps` の `sceneUntil` が `undefined` に「場面の手を切らない」の意味を持たせている。`Source.session` は `readFakeSession` の既定引数が `undefined` で同梱のファイルに落ちる（R10）。個数の既定値や番兵値で畳むと、別の意味の値になる。
 `toReference` の `section` は、`REFERENCE_HEAD` の第2群（節番号）が省略できる群の写しで、`SectionReference.section` が番号の無い参照を `undefined` で持つ出力の型でもある。畳むと呼び出し側が番号の無い参照を別の形で持つだけになる。`targetPath`（229）は第1群が必須なので、呼び出し側で畳めた。
 セッション駆動の読み取りの4件は、どれも「無い」が上流の外の値か型から続いている。`planName` の `subscriptionType` は `toPlan(await session.accountInfo())` が SDK の段なし（API キー・Bedrock）をそのまま返す値で、`""` に潰すと番兵になる。`decideSessionTitle` の `currentTitle` は SDK の `customTitle`（題がまだ無い）で、`state.lastWritten` と比べる判断の入力そのもの。`withSessionMark` の `worktree` は `worktreeNameOf` が作業ツリーの名前を決められない状態で、値が要るのは足す行だけ、既存の行の印の更新には要らない。「ある場合にだけ呼ぶ」にすると更新の経路まで止まり、更新と足すに分けると既存の有無の判定が呼び出し側で二重になる（R2）。`clipped` の `text` は `DigestFold.summary`・`conclusionBullets` の戻り値から続く R1 で、入口を `string` にしても 3 呼び出しに分岐が移るだけ。
+`tableRowFilterTexts` の `column` は、サーバの構造検査もブラウザの表の絞り込みも `filterColumn`（省略できる欄）をそのまま渡し、`undefined` が「全列」という指示を表す（R10）。畳むと 2 つの呼び出し側に同じ分岐を複製するだけになる。
 
 | ファイル                                                                                     | 対象                           | 置き場     | 行  | 理由 |
 | -------------------------------------------------------------------------------------------- | ------------------------------ | ---------- | --- | ---- |
@@ -188,6 +189,7 @@
 | `server/session-driver/core/session-catalog.ts`                                              | `withSessionMark`              | 引数       | 148 | R2   |
 | `server/session-driver/core/session-digest.ts`                                               | `clipped`                      | 引数       | 91  | R1   |
 | `server/session-driver/core/session-title.ts`                                                | `decideSessionTitle`           | 引数       | 51  | R2   |
+| `shared/report/table-view.ts`                                                                | `tableRowFilterTexts`          | 引数       | 25  | R10  |
 
 ## 消せるもの
 
@@ -322,18 +324,17 @@
 | `server/session-driver/core/body-figure-fence.ts` | `toNumber`     | 引数   | 1   | 109    | 入口で畳む | 4              |
 | `server/session-driver/core/pending-answer.ts`    | `toPendingAsk` | 引数   | 1   | 196    | 入口で畳む | 1              |
 
-### `src/shared/report`（消せる 9 件）
+### `src/shared/report`（消せる 8 件）
 
-| ファイル                                   | 対象                  | 置き場     | 件  | 行       | 消し方                               | 呼び出し側の数 |
-| ------------------------------------------ | --------------------- | ---------- | --- | -------- | ------------------------------------ | -------------- |
-| `shared/report/graph-source.ts`            | `toneToken`           | 引数       | 1   | 358      | 入口で畳む                           | 1              |
-| `shared/report/report-diagram-markdown.ts` | `toneAttribute`       | 引数       | 1   | 403      | 入口で畳む                           | 2              |
-| `shared/report/report-drawn-outline.ts`    | `drawnSection`        | 引数       | 1   | 108      | 入口で畳む                           | 3              |
-| `shared/report/table-layout.ts`            | `isStatusCell`        | 引数       | 1   | 85       | 入口で畳む                           | 2              |
-| `shared/report/table-view.ts`              | `tableRowFilterTexts` | 引数       | 1   | 25       | 入口で畳む                           | 2              |
-| `shared/report/timeline-scale.ts`          | `PlacedValue`         | プロパティ | 2   | 169・170 | 合併型（読めた値と読めなかった理由） | 1              |
-| `shared/report/timeline-scale.ts`          | `uniqueReasons`       | 引数       | 1   | 217      | 入口で畳む                           | 2              |
-| `shared/report/timeline-scale.ts`          | `tickLabel`           | 引数       | 1   | 230      | 入口で畳む                           | 1              |
+| ファイル                                   | 対象            | 置き場     | 件  | 行       | 消し方                               | 呼び出し側の数 |
+| ------------------------------------------ | --------------- | ---------- | --- | -------- | ------------------------------------ | -------------- |
+| `shared/report/graph-source.ts`            | `toneToken`     | 引数       | 1   | 358      | 入口で畳む                           | 1              |
+| `shared/report/report-diagram-markdown.ts` | `toneAttribute` | 引数       | 1   | 403      | 入口で畳む                           | 2              |
+| `shared/report/report-drawn-outline.ts`    | `drawnSection`  | 引数       | 1   | 108      | 入口で畳む                           | 3              |
+| `shared/report/table-layout.ts`            | `isStatusCell`  | 引数       | 1   | 85       | 入口で畳む                           | 2              |
+| `shared/report/timeline-scale.ts`          | `PlacedValue`   | プロパティ | 2   | 169・170 | 合併型（読めた値と読めなかった理由） | 1              |
+| `shared/report/timeline-scale.ts`          | `uniqueReasons` | 引数       | 1   | 217      | 入口で畳む                           | 2              |
+| `shared/report/timeline-scale.ts`          | `tickLabel`     | 引数       | 1   | 230      | 入口で畳む                           | 1              |
 
 ### `src/browser/domain`（消せる 5 件）
 
@@ -449,11 +450,11 @@
 | undefined を畳む: 撮影の道具の入口                 | `scripts/capture`                                                                                                    | 4          |                          |
 | undefined を畳む: scripts/dev・document            | `scripts/dev`・`scripts/document`                                                                                    | 12         |                          |
 | undefined を畳む: セッション駆動の読み取り         | `src/server/session-driver`                                                                                          | 5          |                          |
-| undefined を畳む: 報告の記法まわり                 | `src/shared/report`                                                                                                  | 9          |                          |
+| undefined を畳む: 報告の記法まわり                 | `src/shared/report`                                                                                                  | 8          |                          |
 | undefined を畳む: ブラウザ側の表示判定             | `src/browser/domain`                                                                                                 | 5          |                          |
 | undefined を畳む: 現在の作業・設定・タスク盤       | `src/browser/features`                                                                                               | 4          |                          |
 | undefined を畳む: 共有層のキャラ・セッション・診断 | `src/shared/character-pack`・`src/shared/session`・`src/shared/diagnostic`                                           | 8          |                          |
 | undefined を畳む: サーバ側の小さな引数             | `src/server/chat`・`src/server/report`・`src/server/core`・`src/server/system-prompt`・`src/server/welcome-greeting` | 9          |                          |
 | undefined を畳む: 起動依頼の chat と配信の版       | `src/server/session`・`src/(root)`                                                                                   | 2          |                          |
 
-括弧なしの消せる件数の合計は 158 件で、領域の表の合計と一致する。`ast-node.ts` の 4 件は、方針を決めるドラフトでは括弧に入れ、実装のドラフトで数えた。
+括弧なしの消せる件数の合計は 157 件で、領域の表の合計と一致する。`ast-node.ts` の 4 件は、方針を決めるドラフトでは括弧に入れ、実装のドラフトで数えた。

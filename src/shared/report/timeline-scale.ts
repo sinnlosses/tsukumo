@@ -77,10 +77,10 @@ export function readTimeline(block: ReportTimeline): TimelineReading {
   const scale = scaleKind === undefined ? "minutes" : scaleOfKind(scaleKind)
   const valueAt = (value: string | number): PlacedValue => {
     const read = readValue(value)
-    if (read === "omitted") return { minutes: undefined, fault: undefined }
-    if (read === undefined) return { minutes: undefined, fault: "unreadable" }
-    if (read.kind !== scaleKind) return { minutes: undefined, fault: "mixed-scale" }
-    return { minutes: read.minutes, fault: undefined }
+    if (read === "omitted") return { kind: "omitted" }
+    if (read === undefined) return { kind: "fault", fault: "unreadable" }
+    if (read.kind !== scaleKind) return { kind: "fault", fault: "mixed-scale" }
+    return { kind: "placed", minutes: read.minutes }
   }
 
   const rowValues = block.rows.map((row) => ({
@@ -89,9 +89,9 @@ export function readTimeline(block: ReportTimeline): TimelineReading {
     extra: row.extra.map(valueAt),
   }))
   const rows = rowValues.map((values): TimelineRowReading => ({
-    start: values.start.minutes,
-    end: values.end.minutes,
-    extra: values.extra.map((value) => value.minutes),
+    start: minutesOf(values.start),
+    end: minutesOf(values.end),
+    extra: values.extra.map(minutesOf),
   }))
   const rowFaults = block.rows.flatMap((row, index): readonly TimelineFault[] => {
     const values = rowValues[index]
@@ -101,15 +101,17 @@ export function readTimeline(block: ReportTimeline): TimelineReading {
       .slice(0, index)
       .flatMap((other, at) => (other.lane === row.lane ? [rows[at]?.start] : []))
       .findLast((start) => start !== undefined)
-    const reasons: readonly (TimelineFaultReason | undefined)[] = [
-      ...[values.start, values.end, ...values.extra].map((value) => value.fault),
-      reading.start !== undefined && previousStart !== undefined && reading.start < previousStart
-        ? "not-ascending"
-        : undefined,
-      reading.start !== undefined && reading.end !== undefined && reading.end < reading.start
-        ? "end-before-start"
-        : undefined,
-      extraAscends(row.end, reading) ? undefined : "not-ascending",
+    const reasons: readonly TimelineFaultReason[] = [
+      ...[values.start, values.end, ...values.extra].flatMap(faultsOf),
+      ...reasonIf(
+        reading.start !== undefined && previousStart !== undefined && reading.start < previousStart,
+        "not-ascending",
+      ),
+      ...reasonIf(
+        reading.start !== undefined && reading.end !== undefined && reading.end < reading.start,
+        "end-before-start",
+      ),
+      ...reasonIf(!extraAscends(row.end, reading), "not-ascending"),
     ]
     return uniqueReasons(reasons).map((reason) => ({
       place: { kind: "row", row: index + 1 },
@@ -118,13 +120,13 @@ export function readTimeline(block: ReportTimeline): TimelineReading {
   })
 
   const eventValues = block.events.map((event) => valueAt(event.at))
-  const events = eventValues.map((value) => value.minutes)
+  const events = eventValues.map(minutesOf)
   const eventFaults = eventValues.flatMap((value, index): readonly TimelineFault[] => {
-    const at = value.minutes
+    const at = minutesOf(value)
     const previous = events.slice(0, index).findLast((other) => other !== undefined)
     const reasons = uniqueReasons([
-      value.fault,
-      at !== undefined && previous !== undefined && at < previous ? "not-ascending" : undefined,
+      ...faultsOf(value),
+      ...reasonIf(at !== undefined && previous !== undefined && at < previous, "not-ascending"),
     ])
     return reasons.map((reason) => ({ place: { kind: "event", event: index + 1 }, reason }))
   })
@@ -157,7 +159,13 @@ export function timelineTicks(
   )
   return {
     interval,
-    ticks: ats.map((at, index) => ({ at, label: tickLabel(at, ats[index - 1], interval, scale) })),
+    ticks: ats.map((at, index) => {
+      const previous = ats[index - 1]
+      return {
+        at,
+        label: tickLabel(at, previous !== undefined && sameUtcDay(previous, at), interval, scale),
+      }
+    }),
   }
 }
 
@@ -165,9 +173,21 @@ type ValueKind = "clock" | "minutes" | `iso${string}`
 
 type ReadValue = { readonly kind: ValueKind; readonly minutes: number }
 
-type PlacedValue = {
-  readonly minutes: number | undefined
-  readonly fault: "unreadable" | "mixed-scale" | undefined
+type PlacedValue =
+  | { readonly kind: "placed"; readonly minutes: number }
+  | { readonly kind: "omitted" }
+  | { readonly kind: "fault"; readonly fault: "unreadable" | "mixed-scale" }
+
+function minutesOf(value: PlacedValue): number | undefined {
+  return value.kind === "placed" ? value.minutes : undefined
+}
+
+function faultsOf(value: PlacedValue): readonly TimelineFaultReason[] {
+  return value.kind === "fault" ? [value.fault] : []
+}
+
+function reasonIf(condition: boolean, reason: TimelineFaultReason): readonly TimelineFaultReason[] {
+  return condition ? [reason] : []
 }
 
 function readValue(value: string | number): ReadValue | "omitted" | undefined {
@@ -213,10 +233,8 @@ function extraAscends(writtenEnd: string | number, reading: TimelineRowReading):
   return chain.every((value, index) => index === 0 || value > (chain[index - 1] ?? value))
 }
 
-function uniqueReasons(
-  reasons: readonly (TimelineFaultReason | undefined)[],
-): readonly TimelineFaultReason[] {
-  return [...new Set(reasons.filter((reason) => reason !== undefined))]
+function uniqueReasons(reasons: readonly TimelineFaultReason[]): readonly TimelineFaultReason[] {
+  return [...new Set(reasons)]
 }
 
 function spanCount(min: number, max: number, interval: number): number {
@@ -225,9 +243,19 @@ function spanCount(min: number, max: number, interval: number): number {
   return Math.max(1, Math.round((to - from) / interval))
 }
 
+function sameUtcDay(a: number, b: number): boolean {
+  return utcDayOf(a).equals(utcDayOf(b))
+}
+
+function utcDayOf(minutes: number): Temporal.PlainDate {
+  return Temporal.Instant.fromEpochMilliseconds(minutes * 60_000)
+    .toZonedDateTimeISO("UTC")
+    .toPlainDate()
+}
+
 function tickLabel(
   at: number,
-  previous: number | undefined,
+  continuesDay: boolean,
   interval: number,
   scale: TimelineScale,
 ): string {
@@ -241,15 +269,7 @@ function tickLabel(
       const day = `${String(date.month)}/${String(date.day)}`
       if (interval >= MINUTES_PER_DAY) return day
       const time = hourMinute(date.hour, date.minute)
-      const previousDay =
-        previous === undefined
-          ? undefined
-          : Temporal.Instant.fromEpochMilliseconds(previous * 60_000)
-              .toZonedDateTimeISO("UTC")
-              .toPlainDate()
-      return previousDay !== undefined && previousDay.equals(date.toPlainDate())
-        ? time
-        : `${day} ${time}`
+      return continuesDay ? time : `${day} ${time}`
     }
   }
 }

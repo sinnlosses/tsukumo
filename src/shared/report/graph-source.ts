@@ -284,7 +284,7 @@ function parseLine(text: string): ParsedLine {
     return { kind: "blank" }
   }
   const toneMatch = TONE_SUFFIX.exec(written)
-  const tone = toneToken(toneMatch?.[1])
+  const tone = toneToken(toneMatch?.[1] ?? "")
   const trimmed = toneMatch === null ? written : written.slice(0, toneMatch.index).trim()
   // 色の目印は行末の1つだけ。名前やラベルの中の ` @` は読めない行にする。
   if (trimmed === "[]") {
@@ -355,7 +355,7 @@ function parseLine(text: string): ParsedLine {
   }
 }
 
-function toneToken(letter: string | undefined): GraphTone {
+function toneToken(letter: string): GraphTone {
   switch (letter) {
     case "a":
     case "b":
