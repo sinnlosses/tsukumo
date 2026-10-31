@@ -4,7 +4,7 @@
 // 失敗で終わったやり取りは、頭に失敗の塊を出す（色だけでなく字で成功と見分ける）。
 
 import clsx from "clsx"
-import { Fragment, useEffect, useState, type ReactElement } from "react"
+import { Fragment, useState, type ReactElement } from "react"
 
 import type { ReportTask } from "../../../../../../shared/report/report-task.ts"
 import type {
@@ -14,6 +14,7 @@ import type {
   MainViewTurn,
 } from "../../../../../../shared/session/main-view-shape.ts"
 import { formatMeasured } from "../../../../../../shared/utils/elapsed-time.ts"
+import { useExternalSync } from "../../../../../hooks/use-external-sync.ts"
 import { Text } from "../../../../ui/text/text.tsx"
 import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
 import { useDraftedReports } from "../../stores/drafted-report.ts"
@@ -52,7 +53,7 @@ export function Turn(props: TurnProps): ReactElement {
   const rememberDrafts = useDraftedReports((state) => state.remember)
   // 草稿は確定版がステップに出た時点で外れ、この部品も中身の切り替えで作り直されるので、描いたことは部品の外の store に書く。
   // 描画中に書くとほかの部品の描画中の更新になるので、描いたあとに書く。
-  useEffect(() => {
+  useExternalSync(() => {
     rememberDrafts(turn.drafts.map((draft) => draft.toolUseId))
   }, [turn.drafts, rememberDrafts])
   const revealStepId = revealStepIdOf({

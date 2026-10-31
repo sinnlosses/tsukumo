@@ -110,19 +110,31 @@ describe("useActiveTurnScroll", () => {
     expect(scrollIntoView).not.toHaveBeenCalled()
   })
 
-  it("画面を隠して戻しても覚えは残り、セッションの世代が変わったら捨てる", () => {
+  it("画面を隠して戻しても（世代が同じなら）覚えは残る", () => {
     const first = renderScroll(report(1))
     first.scrollTo([-300, -40, 200])
     first.move(report(2), [0, 500])
     first.unmount()
 
-    renderScroll(report(2))
-    expect(useReadingPosition.getState().positions[1]).toBeDefined()
+    const view = renderScroll(report(2))
+    view.move(report(1), [120, 900, 1500])
 
+    expect(scrollBy).toHaveBeenCalledWith({ top: 940, behavior: "instant" })
+  })
+
+  it("セッションの世代が変わったら覚えを使わず先頭へ戻る", () => {
+    const view = renderScroll(report(1))
+    view.scrollTo([-300, -40, 200])
+    view.move(report(2), [0, 500])
     act(() => {
       useSession.setState((current) => ({ generation: current.generation + 1 }))
     })
-    expect(useReadingPosition.getState().positions).toEqual({})
+    scrollIntoView.mockClear()
+
+    view.move(report(1), [120, 900, 1500])
+
+    expect(scrollBy).not.toHaveBeenCalled()
+    expect(scrollIntoView).toHaveBeenCalledWith({ block: "start" })
   })
 
   it("覚えた番号の見出しが無くなっていれば先頭から見せる", () => {
@@ -150,7 +162,9 @@ describe("useActiveTurnScroll", () => {
   })
 
   it("働くあいだの札が閉じてレポートに替わるときは、覚えがあっても先頭から見せる", () => {
-    useReadingPosition.getState().remember(1, { headingIndex: 1, offsetPx: -40 })
+    useReadingPosition
+      .getState()
+      .remember(useSession.getState().generation, 1, { headingIndex: 1, offsetPx: -40 })
     const view = renderScroll(work(1))
     scrollIntoView.mockClear()
 

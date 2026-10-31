@@ -18,6 +18,7 @@ import { useEffect, useRef, useState, type RefObject } from "react"
 
 import type { PromptRouting } from "../../../../../../../shared/contract/session.ts"
 import { FRAME_ERROR_REASON } from "../../../../../../../shared/frame.ts"
+import { useExternalSync } from "../../../../../../hooks/use-external-sync.ts"
 import { usePhoneWidth } from "../../../../../../hooks/use-phone-width.ts"
 import { useInquiryJump } from "../../../../../../stores/inquiry-jump.ts"
 import { useRestartRefused, useSession, useTurnRunning } from "../../../../../../stores/session.ts"
@@ -122,7 +123,9 @@ export function useComposer(): ComposerModel {
   }, DRAFT_SAVE_DELAY_MS)
 
   const shownSessionId = useRef<string | undefined>(undefined)
-  useEffect(() => {
+  // sessionId は React の外（フレームの受信）で変わり、差し替え先は zustand の下書きと localStorage。
+  // `key` で作り直しても zustand の下書きは残り、描画中に store を書くと他部品の描画中の更新になるので同期として書く。
+  useExternalSync(() => {
     const previous = shownSessionId.current
     if (sessionId === previous) {
       return

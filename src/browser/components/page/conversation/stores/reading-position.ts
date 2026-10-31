@@ -1,4 +1,6 @@
 // やり取りごとの読み位置。ページを開いているあいだだけ覚える（メモリだけ。本文は持たない）。
+// やり取りの ID はセッションごとに振るので、覚えはセッションの世代（`session.generation`）つきで持つ。
+// 世代が違う覚えは読まれず、書くときに捨てられる（画面を隠して戻しても世代が同じなら残る）。
 
 import { create } from "zustand"
 
@@ -10,29 +12,43 @@ export type ReadingPosition = {
 }
 
 type ReadingPositionState = {
-  /** 覚えがどの世代のセッションのものか。やり取りの ID はセッションごとに振るので、世代が変わったら捨てる。 */
+  /** `positions` がどの世代のものか。 */
   readonly generation: number
   /** やり取りの ID（`MainViewTurn.id`）から引く。 */
   readonly positions: Readonly<Record<number, ReadingPosition>>
-  readonly remember: (turnId: number, position: ReadingPosition) => void
-  readonly forget: (turnId: number) => void
-  /** 覚えがこの世代のものでなければ全部忘れる。同じ世代なら何もしない（画面を隠して戻しても残す）。 */
-  readonly forgetUnlessGeneration: (generation: number) => void
+  readonly remember: (generation: number, turnId: number, position: ReadingPosition) => void
+  readonly forget: (generation: number, turnId: number) => void
 }
 
 export const useReadingPosition = create<ReadingPositionState>()((set) => ({
   generation: -1,
   positions: {},
-  remember: (turnId, position) => {
-    set((state) => ({ positions: { ...state.positions, [turnId]: position } }))
+  remember: (generation, turnId, position) => {
+    set((state) => ({
+      generation,
+      positions: { ...positionsOf(state, generation), [turnId]: position },
+    }))
   },
-  forget: (turnId) => {
+  forget: (generation, turnId) => {
     set((state) => {
-      const { [turnId]: _forgotten, ...rest } = state.positions
-      return { positions: rest }
+      const { [turnId]: _forgotten, ...rest } = positionsOf(state, generation)
+      return { generation, positions: rest }
     })
   },
-  forgetUnlessGeneration: (generation) => {
-    set((state) => (state.generation === generation ? state : { generation, positions: {} }))
-  },
 }))
+
+/** その世代で覚えたやり取りの読み位置。世代が違えば `undefined`。 */
+export function rememberedPosition(
+  state: Pick<ReadingPositionState, "generation" | "positions">,
+  generation: number,
+  turnId: number,
+): ReadingPosition | undefined {
+  return positionsOf(state, generation)[turnId]
+}
+
+function positionsOf(
+  state: Pick<ReadingPositionState, "generation" | "positions">,
+  generation: number,
+): Readonly<Record<number, ReadingPosition>> {
+  return state.generation === generation ? state.positions : {}
+}

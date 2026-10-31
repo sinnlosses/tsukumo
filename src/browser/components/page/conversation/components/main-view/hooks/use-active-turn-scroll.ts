@@ -9,7 +9,11 @@
 import { useEffect, useRef, type RefObject } from "react"
 
 import { useSession } from "../../../../../../stores/session.ts"
-import { useReadingPosition, type ReadingPosition } from "../../../stores/reading-position.ts"
+import {
+  rememberedPosition,
+  useReadingPosition,
+  type ReadingPosition,
+} from "../../../stores/reading-position.ts"
 import { readingPositionOf, scrollDeltaToRestore } from "../domain/reading-position.ts"
 import { readableHeadings } from "../domain/report-heading.ts"
 import { scrollerOf, subscribeScrollFrame } from "./scroll-frame.ts"
@@ -24,22 +28,11 @@ export function useActiveTurnScroll(
   scrollerRef: RefObject<HTMLElement | null>,
   shownTarget: ShownTarget,
 ): void {
-  const generation = useSession((session) => session.generation)
   const shownRef = useRef<ShownTarget>({ kind: "none" })
   const currentRef = useRef<ShownPosition | undefined>(undefined)
   const geometryRef = useRef<ScrollGeometry | undefined>(undefined)
   const shownKind = shownTarget.kind
   const shownTurnId = shownTarget.kind === "none" ? undefined : shownTarget.turnId
-
-  // やり取りの ID はセッションごとに振るので、状態が丸ごと入れ替わったら（世代が変わったら）覚えを捨てる。
-  // 画面を隠して戻したときにもこの effect はやり直されるが、世代が同じなら捨てない。
-  useEffect(() => {
-    const store = useReadingPosition.getState()
-    if (store.generation !== generation) {
-      store.forgetUnlessGeneration(generation)
-      currentRef.current = undefined
-    }
-  }, [generation])
 
   useEffect(() => {
     function resolve(): void {
@@ -52,7 +45,11 @@ export function useActiveTurnScroll(
       if (root === null || current.kind !== "report") {
         return
       }
-      currentRef.current = { turnId: current.turnId, position: measure(root, geometryRef) }
+      currentRef.current = {
+        generation: useSession.getState().generation,
+        turnId: current.turnId,
+        position: measure(root, geometryRef),
+      }
     }
     resolve()
     window.addEventListener("resize", resolve)
@@ -69,12 +66,17 @@ export function useActiveTurnScroll(
     shownRef.current = shown
 
     const store = useReadingPosition.getState()
+    const generation = useSession.getState().generation
     if (previous.kind === "report") {
       const left = currentRef.current
-      if (left?.turnId === previous.turnId && left.position !== undefined) {
-        store.remember(previous.turnId, left.position)
+      if (
+        left?.generation === generation &&
+        left.turnId === previous.turnId &&
+        left.position !== undefined
+      ) {
+        store.remember(generation, previous.turnId, left.position)
       } else {
-        store.forget(previous.turnId)
+        store.forget(generation, previous.turnId)
       }
     }
     currentRef.current = undefined
@@ -84,10 +86,10 @@ export function useActiveTurnScroll(
       return
     }
     const closedJustNow = previous.kind === "work" && previous.turnId === shown.turnId
-    const remembered = store.positions[shown.turnId]
+    const remembered = rememberedPosition(useReadingPosition.getState(), generation, shown.turnId)
     if (shown.kind === "report" && !closedJustNow && remembered !== undefined) {
       if (restore(scroller, remembered, geometryRef)) {
-        currentRef.current = { turnId: shown.turnId, position: remembered }
+        currentRef.current = { generation, turnId: shown.turnId, position: remembered }
         return
       }
     }
@@ -100,6 +102,7 @@ function targetOf(kind: ShownTarget["kind"], turnId: number | undefined): ShownT
 }
 
 type ShownPosition = {
+  readonly generation: number
   readonly turnId: number
   readonly position: ReadingPosition | undefined
 }
