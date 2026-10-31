@@ -1,8 +1,6 @@
 // `query()` に渡す `options` のうち `mcpServers` / `canUseTool`（クロージャが要る）を除いた部分と、
 // `Stop`・`PreToolUse`・`PostToolUse` などのフックの登録を組み立てる。
 
-import { setImmediate } from "node:timers/promises"
-
 import type {
   BaseHookInput,
   HookCallbackMatcher,
@@ -40,6 +38,7 @@ import {
   toolHookDurationTool,
 } from "../core/tool-hook-clock.ts"
 import { childProcessEnv } from "../core/visible-output-nudge.ts"
+import { waitForQueuedMessages } from "./queued-message-wait.ts"
 import { figurePluginDir, workflowPluginDir } from "./workflow-plugin.ts"
 
 /** `query()` の `options` のうち、`mcpServers` / `canUseTool`（クロージャが要る）を除いた部分。 */
@@ -131,8 +130,7 @@ export function buildQuerySeedOptions(options: SessionDriverOptions): QuerySeedO
  * 委譲ゲートと `phase_result` のフックは、所要を測るために呼ばれた時刻を `hookClock` に控える。
  * `agent_id` はサブエージェント内の呼び出しにだけ付くので、ここで真偽に畳んでから渡す。
  *
- * 委譲ゲートの印を読む前に、拒む側に当たったときだけ1回 macrotask を待つ。
- * 返却を運ぶメッセージは `relayMessages` の反復へ渡るまで列に積まれ、フックの呼び出しはそれより先に処理されうる。
+ * 委譲ゲートの印を読む前に、拒む側に当たったときだけ {@link waitForQueuedMessages} で待つ。
  */
 export function preToolUseHooks(
   gateRaised: () => boolean,
@@ -158,7 +156,7 @@ export function preToolUseHooks(
             if (judgeToolAgainstGate(input.tool_name, inSubagent, "").kind !== "deny") {
               return {}
             }
-            await setImmediate()
+            await waitForQueuedMessages()
             const gated = judgeToolAgainstGate(input.tool_name, inSubagent, bandPosition())
             return gated.kind === "deny" && gateRaised() ? deny(gated.reason) : {}
           },
@@ -309,7 +307,7 @@ export function postToolUseHooks(
  * 返却は、メインが手すきでもターンの途中でも `<agent-message` で始まる `prompt` としてこのフックを1回通る。
  * `source` は SDK 0.3.288 の実測で常に undefined なので見ない。
  *
- * 注記を読む前に1回 macrotask を待つ（{@link preToolUseHooks} と同じく、返却を運ぶメッセージが `relayMessages` の反復へ渡るのを待つ）。
+ * 注記を読む前に {@link waitForQueuedMessages} で待つ。
  *
  * フックの入力には返却を見分ける欄が無い（SDK 0.3.288 の実測で、`source` も `origin` も来ない）ので、見分けは包みの頭のまま。
  * 頭の合わないメインの入力が届いたときに注記が溜まったままなら、包みの形が変わったとみて `reportHeadMismatch` を呼ぶ（注記は添えない）。
@@ -326,7 +324,7 @@ export function handbackNoteHooks(
             if (input.hook_event_name !== "UserPromptSubmit" || input.agent_id !== undefined) {
               return {}
             }
-            await setImmediate()
+            await waitForQueuedMessages()
             if (!input.prompt.trimStart().startsWith(HANDBACK_PROMPT_HEAD)) {
               if (review.handbackNotePending()) {
                 reportHeadMismatch()
@@ -360,10 +358,7 @@ const HANDBACK_PROMPT_HEAD = "<agent-message"
  * 見届けた設定（{@link confirmedSettingEvents}）はブロック判定より先に読む。
  * 実測は `docs/history/decision.md`「requirements.md 4.1 Claude Code の駆動（スパイクの実測）」。
  *
- * 関所の判定の前に1回だけ macrotask を待つ。
- * SDK はフックの呼び出し（制御リクエスト）を読んだその場で処理し、それより前に届いたメッセージは列に積んで `relayMessages` の反復へ渡す。
- * 待たないと、止まる直前の本文が関所に届く前に判定しうる。
- * 列を空けるのは microtask だけなので、macrotask を1回待てば足りる（雑談のときはこの待ちも関所の判定も行わない）。
+ * 関所の判定の前に {@link waitForQueuedMessages} で待つ（雑談のときはこの待ちも関所の判定も行わない）。
  */
 export function stopHooks(
   mode: SessionMode,
@@ -383,7 +378,7 @@ export function stopHooks(
             if (mode.kind !== "work") {
               return {}
             }
-            await setImmediate()
+            await waitForQueuedMessages()
             const verdict = gate.verdict(input.stop_hook_active)
             if (verdict.kind !== "block") {
               return {}
