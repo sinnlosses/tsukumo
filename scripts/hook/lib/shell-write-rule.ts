@@ -115,7 +115,7 @@ export function findDeniedBashRule(
     findDeniedCommandRule(command, workRoot, readPythonScripts(command, cwd, workRoot)) ??
     (workRoot === undefined
       ? undefined
-      : findWorkTreeWriteRule(command, startDirectory(cwd, workRoot), workRoot))
+      : findWorkTreeWriteRule(command, startDirectory(cwd ?? workRoot, workRoot), workRoot))
   )
 }
 
@@ -404,8 +404,8 @@ function locatePath(word: ShellWord, directory: string | undefined, workRoot: st
 }
 
 /** 入力の `cwd`（絶対パスのとき）、無ければ作業ツリーの根。 */
-function startDirectory(cwd: string | undefined, workRoot: string): string {
-  return cwd !== undefined && isAbsolute(cwd) ? cwd : workRoot
+function startDirectory(cwd: string, workRoot: string): string {
+  return isAbsolute(cwd) ? cwd : workRoot
 }
 
 /** Python のコードが、書き込み先を作業ツリーの外のリテラルと読めない書き込みを持つか。 */
@@ -452,7 +452,7 @@ function readPythonScripts(
   const runDirectories =
     workRoot === undefined
       ? undefined
-      : scriptRunDirectories(command, startDirectory(cwd, workRoot))
+      : scriptRunDirectories(command, startDirectory(cwd ?? workRoot, workRoot))
   return findPythonScriptPaths(command, findQuotedSpans(command)).flatMap((path) => {
     const directories = runDirectories?.get(path) ?? []
     const [runDirectory] = directories
@@ -560,14 +560,14 @@ function isExecutedPythonCode(command: string, span: QuotedSpan): boolean {
 /** コマンドのうち、直近のコマンドの区切り（`;` `&` `|` `(` 改行、または先頭）から `start` までの部分。 */
 function precedingText(command: string, start: number): string {
   let index = start
-  while (index > 0 && !isCommandBoundary(command[index - 1])) {
+  while (index > 0 && !isCommandBoundary(command.charAt(index - 1))) {
     index -= 1
   }
   return command.slice(index, start).trim()
 }
 
-function isCommandBoundary(character: string | undefined): boolean {
-  return character !== undefined && ";&|(\n".includes(character)
+function isCommandBoundary(character: string): boolean {
+  return ";&|(\n".includes(character)
 }
 
 function baseName(path: string): string {

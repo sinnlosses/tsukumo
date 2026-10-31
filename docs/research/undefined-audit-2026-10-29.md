@@ -23,7 +23,7 @@
 | `src/browser/components`      | 303      | 39          | 72                 | 192     |
 | `src/server/session-driver`   | 102      | 29          | 5                  | 68      |
 | `src/shared/character-pack`   | 70       | 0           | 2                  | 68      |
-| `scripts/hook`                | 66       | 0           | 11                 | 55      |
+| `scripts/hook`                | 66       | 0           | 4                  | 62      |
 | `scripts/capture`             | 62       | 2           | 4                  | 56      |
 | `src/shared/report`           | 60       | 0           | 8                  | 52      |
 | `src/server/character-pack`   | 45       | 36          | 0                  | 9       |
@@ -68,7 +68,7 @@
 | `src/shared/(root)`           | 1        | 0           | 0                  | 1       |
 | `src/shared/diagnostic`       | 1        | 0           | 1                  | 0       |
 | `src/shared/diary`            | 1        | 0           | 0                  | 1       |
-| **合計**                      | **1166** | **256**     | **149**            | **761** |
+| **合計**                      | **1166** | **256**     | **142**            | **768** |
 
 全件 = 6つに当たる + 消せる + 本物 は、領域ごとにも合計でも成り立つ（表を作った道具で突き合わせた）。
 
@@ -83,7 +83,7 @@
 | R1   | 探索・解析・読み取りの失敗を単一の「無い」で返す戻り値                                                  | 374 | `browser/components/domain/sidebar/components/task-doing-count.tsx:10`・`browser/components/domain/sidebar/domain/plan-window.ts:25`・`browser/components/page/achievement/domain/written-time.ts:5`                                           |
 | R2   | 環境変数・引数・状態ファイル・定義ファイル・SDK/外部 API など外の世界の値の写し、またはそれを受ける入口 | 184 | `browser/components/domain/portrait.tsx:41`・`browser/domain/appearance-color.ts:168`・`browser/features/task-board/domain/task-board-list-width.ts:15`                                                                                        |
 | R3   | DOM 属性・描画の差し込みにそのまま渡す props（例6の趣旨だが `ui/` の外なので表の判定に当たらない）      | 22  | `browser/components/domain/portrait.tsx:30`・`browser/components/domain/screen-nav/components/screen-nav-settings-face-frame.tsx:13`・`browser/components/domain/screen-nav/components/session-switcher.tsx:281`                               |
-| R4   | 持ち主が1つで、「まだ無い／選ばれていない」が1つの意味しか持たない値                                    | 124 | `browser/components/domain/character-face.tsx:13`・`browser/components/domain/portrait.tsx:28`・`browser/components/domain/screen-nav/hooks/use-screen-nav.ts:130`                                                                             |
+| R4   | 持ち主が1つで、「まだ無い／選ばれていない」が1つの意味しか持たない値                                    | 131 | `browser/components/domain/character-face.tsx:13`・`browser/components/domain/portrait.tsx:28`・`browser/components/domain/screen-nav/hooks/use-screen-nav.ts:130`                                                                             |
 | R5   | React・TanStack Query・DOM の外来シグネチャや入れ物（`RefObject` など）で型が決まっているもの           | 6   | `browser/components/page/achievement/hooks/use-achievement.ts:169`・`browser/components/page/conversation/components/dispatch/domain/prompt-image.ts:19`・`browser/components/page/conversation/components/dispatch/domain/prompt-image.ts:37` |
 | R6   | 全域の対応表の「なし」（クラス名を付けない）が意味を持つ値                                              | 10  | `browser/components/ui/button/button.tsx:109`・`browser/components/ui/field/field.tsx:22`・`browser/components/ui/field/field.tsx:27`                                                                                                          |
 | R7   | 位置を保つ配列の穴（読めなかった列を飛ばさず添字を揃える）                                              | 3   | `shared/report/timeline-scale.ts:26`・`shared/report/timeline-scale.ts:33`・`scripts/dev/lib/a2ui-write-trial.ts:346`                                                                                                                          |
@@ -98,7 +98,7 @@
 | `src/browser/components`      | 192  | R1 88（例 `browser/components/domain/sidebar/components/task-doing-count.tsx:10`）、R4 67（例 `browser/components/domain/character-face.tsx:13`）、R3 19（例 `browser/components/domain/portrait.tsx:30`）、R6 7（例 `browser/components/ui/button/button.tsx:109`）、R5 6（例 `browser/components/page/achievement/hooks/use-achievement.ts:169`）、R8 4（例 `browser/components/domain/screen-nav/hooks/use-screen-nav.ts:197`）、R2 1（例 `browser/components/domain/portrait.tsx:41`） |
 | `src/server/session-driver`   | 68   | R1 43（例 `server/session-driver/core/aside-prompt.ts:18`）、R2 24（例 `server/session-driver/core/pending-answer.ts:37`）、R10 1（例 `server/session-driver/core/prompt-delay.ts:14`）                                                                                                                                                                                                                                                                                                    |
 | `src/shared/character-pack`   | 68   | R2 46（例 `shared/character-pack/character-asset.ts:18`）、R1 20（例 `shared/character-pack/character-asset.ts:36`）、R4 2（例 `shared/character-pack/character.ts:142`）                                                                                                                                                                                                                                                                                                                  |
-| `scripts/hook`                | 55   | R1 38（例 `scripts/hook/bash-guard.ts:24`）、R2 3（例 `scripts/hook/lib/bash-hook-call.ts:8`）、R8 3（例 `scripts/hook/lib/shell-write-rule.ts:153`）、R4 11（例 `scripts/hook/lib/shell-write-rule.ts:166`）                                                                                                                                                                                                                                                                              |
+| `scripts/hook`                | 62   | R1 38（例 `scripts/hook/bash-guard.ts:24`）、R2 3（例 `scripts/hook/lib/bash-hook-call.ts:8`）、R8 3（例 `scripts/hook/lib/shell-write-rule.ts:153`）、R4 18（例 `scripts/hook/lib/shell-write-rule.ts:166`）                                                                                                                                                                                                                                                                              |
 | `scripts/capture`             | 56   | R1 25（例 `scripts/capture/capture-catalog.ts:262`）、R2 26（例 `scripts/capture/capture-catalog.ts:82`）、R10 5（例 `scripts/capture/lib/scene-end.ts:26`）                                                                                                                                                                                                                                                                                                                               |
 | `src/shared/report`           | 52   | R1 31（例 `shared/report/a2ui-report-outline.ts:82`）、R4 15（例 `shared/report/code-mark.ts:51`）、R8 2（例 `shared/report/graph-fold.ts:64`）、R7 2（例 `shared/report/timeline-scale.ts:26`）、R3 1（例 `shared/report/graph-fold-html.ts:43`）、R10 1（例 `shared/report/table-view.ts:25`）                                                                                                                                                                                           |
 | `src/server/character-pack`   | 9    | R2 4（例 `server/character-pack/core/character-generation.ts:41`）、R9 3（例 `server/character-pack/core/character-pack-command.ts:22`）、R1 2（例 `server/character-pack/core/character-generation.ts:76`）                                                                                                                                                                                                                                                                               |
@@ -137,7 +137,7 @@
 
 ### 数えて分かったこと
 
-- 本物 761 件のうち R1 が 374 件で約半分。戻り値と `Promise<…>` の型引数は、署名と関数名から「見つからない・読めない」を返す形かを見て R1 に入れた（本体は読んでいない）。この形は規約の6つの表に直接の行が無く、例2（TypeScript が生む `undefined`）に準ずるものとして書いてある。表に行を足すかどうかは、この文書の範囲の外。
+- 本物 768 件のうち R1 が 374 件で約半分。戻り値と `Promise<…>` の型引数は、署名と関数名から「見つからない・読めない」を返す形かを見て R1 に入れた（本体は読んでいない）。この形は規約の6つの表に直接の行が無く、例2（TypeScript が生む `undefined`）に準ずるものとして書いてある。表に行を足すかどうかは、この文書の範囲の外。
 - R3 は `className`・`title`・`blockedTitle` など DOM 属性に素通しする props で、例6と同じ性質なのに `src/browser/components/ui/` の外にあるため表の判定に当たらない。例6の範囲を `ui/` の外へ広げるかは別の判断になる。
 
 ### 呼び出し側を読んで本物に移した件
@@ -150,6 +150,7 @@
 発話ログ・雑談表示の3件は、`useCharacterClock` の `waitingDueAt` が「待ちの一言の期日が無い」、`useSpeechLog` の `pinnedSpeech` が「何も留めていない」、`advanceReveal` の `lastRevealAt` が「まだ吹き出しを出していない」を表す。
 `Infinity`・`-Infinity` で畳むとタイマーが直ちに鳴り続ける、または状態の形が変わる。`pinnedSpeech` はビューモデルの欄を運ぶ props で、畳むと呼び出し側の型が名指しの外へ広がる。
 フックの書き込み判定の前半の11件は、2つに分かれる。`writeRuleOf` ほか `directory` を受ける8件は、`cd $x`・`popd`・`cd -` で `cd` を追えなくなった状態を、`findWorkTreeWriteRule` のループが持ち回る。同じ値が後半の `scriptRunDirectories`・`readScriptFile`・`absoluteScriptPath` にも渡るので、合併型にしても境で `undefined` への変換が増えるだけ。`workRoot` を受ける3件は、`undefined` が「作業ツリーの根が決まらない」を意味し、このとき Python の判定は走ってシェルの書き込みの判定だけ飛ばす。後半の `isDeniedPythonCode`・`hasUnsafeWrite`・`isLiteralOutsideWorkTree`・`readPythonScripts` が同じ `undefined` を読むので、前半だけ値にすると挙動が変わる。
+フックの書き込み判定の後半の9件のうち、`startDirectory` の `cwd` と `isCommandBoundary` は畳めた（呼び出し側が `cwd ?? workRoot` を渡す。`index > 0` の中で `charAt` を渡す）。残る7件は R4 で、前半と同じ2つの値の続き。`isDeniedPythonCode`・`hasUnsafeWrite`・`isLiteralOutsideWorkTree`・`readPythonScripts` の `workRoot` は、`undefined` が「作業ツリーの根が決まらない」の1つの意味で、`isLiteralOutsideWorkTree` が偽を返して読めない書き込みを拒む側に倒す。畳むと根の有無で関数を二重に持つか番兵が要る。`readScriptFile`・`absoluteScriptPath`・`readPythonScripts` の `cwd` は、`cd` を追えなくなった状態を持ち回る値で、畳むと境で `undefined` への変換が増えるだけ。
 入力欄の2件は、`draftOnSessionChange` の `previous`・`next` が「セッションが未確定」を表す。同じ `sessionId` を入力欄のフックの ref・effect の依存・下書きの保存と消去も使うので、引数だけを合併型にしても変換が両端に増えるだけで、全部を合併型にすると型が名指しの外へ広がる。
 撮影の道具の入口の10件は、2つに分かれる。`sourceOf` の5引数は、`--url`・`--scene`・`--until-step`・`--cwd`・`--session` が無いという `parseArgs` の値の写しで、有無を判定するのがこの関数そのもの（R2）。`until` の4件（`Source`・`sceneEndTarget`・`sceneEventTimeoutMs`・`countedSteps`）は、`startupSteps` の `sceneUntil` が `undefined` に「場面の手を切らない」の意味を持たせている。`Source.session` は `readFakeSession` の既定引数が `undefined` で同梱のファイルに落ちる（R10）。個数の既定値や番兵値で畳むと、別の意味の値になる。
 `toReference` の `section` は、`REFERENCE_HEAD` の第2群（節番号）が省略できる群の写しで、`SectionReference.section` が番号の無い参照を `undefined` で持つ出力の型でもある。畳むと呼び出し側が番号の無い参照を別の形で持つだけになる。`targetPath`（229）は第1群が必須なので、呼び出し側で畳めた。
@@ -176,6 +177,13 @@
 | `scripts/hook/lib/shell-write-rule.ts`                                                       | `directoryAfter`               | 引数       | 362 | R4   |
 | `scripts/hook/lib/shell-write-rule.ts`                                                       | `directoryAfterUnsure`         | 引数       | 383 | R4   |
 | `scripts/hook/lib/shell-write-rule.ts`                                                       | `locatePath`                   | 引数       | 388 | R4   |
+| `scripts/hook/lib/shell-write-rule.ts`                                                       | `isDeniedPythonCode`           | 引数       | 412 | R4   |
+| `scripts/hook/lib/shell-write-rule.ts`                                                       | `hasUnsafeWrite`               | 引数       | 420 | R4   |
+| `scripts/hook/lib/shell-write-rule.ts`                                                       | `isLiteralOutsideWorkTree`     | 引数       | 430 | R4   |
+| `scripts/hook/lib/shell-write-rule.ts`                                                       | `readPythonScripts`            | 引数       | 449 | R4   |
+| `scripts/hook/lib/shell-write-rule.ts`                                                       | `readPythonScripts`            | 引数       | 450 | R4   |
+| `scripts/hook/lib/shell-write-rule.ts`                                                       | `readScriptFile`               | 引数       | 506 | R4   |
+| `scripts/hook/lib/shell-write-rule.ts`                                                       | `absoluteScriptPath`           | 引数       | 511 | R4   |
 | `scripts/hook/lib/worktree-shell-write.ts`                                                   | `findWorktreeShellWriteDenial` | 引数       | 25  | R4   |
 | `scripts/capture/lib/capture-source.ts`                                                      | `Source`                       | プロパティ | 12  | R10  |
 | `scripts/capture/lib/capture-source.ts`                                                      | `Source`                       | プロパティ | 16  | R10  |
@@ -268,20 +276,14 @@
 | `browser/components/page/token-usage/hooks/use-usage-review.ts`                               | `stageCount`               | 引数   | 1   | 333                | 入口で畳む | 1              |
 | `browser/components/page/token-usage/hooks/use-usage-review.ts`                               | `useReviewStageSummary`    | 引数   | 1   | 360                | 入口で畳む | 1              |
 
-### `scripts/hook`（消せる 11 件）
+### `scripts/hook`（消せる 4 件）
 
-| ファイル                                   | 対象                       | 置き場 | 件  | 行       | 消し方     | 呼び出し側の数 |
-| ------------------------------------------ | -------------------------- | ------ | --- | -------- | ---------- | -------------- |
-| `scripts/hook/lib/foreign-restore.ts`      | `createWorktreeProbe`      | 引数   | 1   | 61       | 入口で畳む | 1              |
-| `scripts/hook/lib/shell-write-rule.ts`     | `startDirectory`           | 引数   | 1   | 407      | 入口で畳む | 2              |
-| `scripts/hook/lib/shell-write-rule.ts`     | `isDeniedPythonCode`       | 引数   | 1   | 412      | 入口で畳む | 2              |
-| `scripts/hook/lib/shell-write-rule.ts`     | `hasUnsafeWrite`           | 引数   | 1   | 420      | 入口で畳む | 2              |
-| `scripts/hook/lib/shell-write-rule.ts`     | `isLiteralOutsideWorkTree` | 引数   | 1   | 430      | 入口で畳む | 1              |
-| `scripts/hook/lib/shell-write-rule.ts`     | `readPythonScripts`        | 引数   | 2   | 449・450 | 入口で畳む | 1              |
-| `scripts/hook/lib/shell-write-rule.ts`     | `readScriptFile`           | 引数   | 1   | 506      | 入口で畳む | 1              |
-| `scripts/hook/lib/shell-write-rule.ts`     | `absoluteScriptPath`       | 引数   | 1   | 511      | 入口で畳む | 3              |
-| `scripts/hook/lib/shell-write-rule.ts`     | `isCommandBoundary`        | 引数   | 1   | 569      | 入口で畳む | 1              |
-| `scripts/hook/lib/worktree-shell-write.ts` | `readWorkRoot`             | 引数   | 1   | 32       | 入口で畳む | 1              |
+| ファイル                                   | 対象                  | 置き場 | 件  | 行  | 消し方     | 呼び出し側の数 |
+| ------------------------------------------ | --------------------- | ------ | --- | --- | ---------- | -------------- |
+| `scripts/hook/lib/foreign-restore.ts`      | `createWorktreeProbe` | 引数   | 1   | 61  | 入口で畳む | 1              |
+| `scripts/hook/lib/shell-write-rule.ts`     | `startDirectory`      | 引数   | 1   | 407 | 入口で畳む | 2              |
+| `scripts/hook/lib/shell-write-rule.ts`     | `isCommandBoundary`   | 引数   | 1   | 569 | 入口で畳む | 1              |
+| `scripts/hook/lib/worktree-shell-write.ts` | `readWorkRoot`        | 引数   | 1   | 32  | 入口で畳む | 1              |
 
 ### `scripts/shared`（消せる 17 件）
 
