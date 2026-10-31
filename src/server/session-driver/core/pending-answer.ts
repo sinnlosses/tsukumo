@@ -117,7 +117,10 @@ export function createPendingAnswerQueue(handlers: PendingAnswerHandlers): Pendi
           return
         }
         const entry: Entry = {
-          ask: toPendingAsk(request, questions, briefing?.briefs ?? []),
+          ask:
+            questions === undefined
+              ? permissionAsk(request)
+              : questionAsk(request, questions, briefing?.briefs ?? []),
           input: request.input,
           resolve,
         }
@@ -188,24 +191,25 @@ type Entry = {
 }
 
 /**
- * 許可要求と質問を見分ける。
  * `AskUserQuestion` でも `questions` の形が読めないときは許可要求として扱う（選択肢を出せないので、許可／拒否で答えてもらうしかない）。
  */
-function toPendingAsk(
+function permissionAsk(request: AskRequest): PendingAsk {
+  return { kind: "permission", id: request.id, toolName: request.toolName, input: request.input }
+}
+
+function questionAsk(
   request: AskRequest,
-  questions: readonly Question[] | undefined,
+  questions: readonly Question[],
   briefs: readonly QuestionBrief[],
 ): PendingAsk {
-  return questions === undefined
-    ? { kind: "permission", id: request.id, toolName: request.toolName, input: request.input }
-    : {
-        kind: "question",
-        id: request.id,
-        questions,
-        briefs,
-        imageSizes: [],
-        unshelvedImages: [],
-      }
+  return {
+    kind: "question",
+    id: request.id,
+    questions,
+    briefs,
+    imageSizes: [],
+    unshelvedImages: [],
+  }
 }
 
 /**

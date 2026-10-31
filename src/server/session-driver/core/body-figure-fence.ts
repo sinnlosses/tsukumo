@@ -24,8 +24,12 @@ export function readFigureFence(content: string): ReportPlot | undefined {
     .slice(dataAt + 1)
     .map((line) => line.trim())
     .filter((line) => line !== "")
-  const keyType = keyTypeOf(header.keys, header.relation)
-  const columns = keyType === undefined ? undefined : columnsOf(rows, keyType, header.unit)
+  const keyType =
+    header.keys === undefined
+      ? defaultKeyTypeOf(header.relation === "trend" || header.relation === "change")
+      : declaredKeyTypeOf(header.keys)
+  const valueName = header.unit === undefined || header.unit === "" ? VALUE_COLUMN : header.unit
+  const columns = keyType === undefined ? undefined : columnsOf(rows, keyType, valueName)
   if (columns === undefined) {
     return undefined
   }
@@ -52,14 +56,11 @@ function headerOf(lines: readonly string[]): Header {
   )
 }
 
-/** 名前の列の型。省けば `trend`・`change` は T、それ以外は N。 */
-function keyTypeOf(
-  keys: string | undefined,
-  relation: string | undefined,
-): (typeof COLUMN_TYPES)[number] | undefined {
-  if (keys === undefined) {
-    return relation === "trend" || relation === "change" ? "T" : "N"
-  }
+function defaultKeyTypeOf(timeLike: boolean): (typeof COLUMN_TYPES)[number] {
+  return timeLike ? "T" : "N"
+}
+
+function declaredKeyTypeOf(keys: string): (typeof COLUMN_TYPES)[number] | undefined {
   return COLUMN_TYPES.find((type) => type === keys)
 }
 
@@ -72,12 +73,11 @@ type Column = {
 function columnsOf(
   rows: readonly string[],
   keyType: string,
-  unit: string | undefined,
+  valueName: string,
 ): readonly Column[] | undefined {
-  const valueName = unit === undefined || unit === "" ? VALUE_COLUMN : unit
   const pairs = rows.map((row) => /^(.+?)\s*[:：]\s*(.+)$/.exec(row))
   if (rows.length > 0 && pairs.every((pair) => pair !== null)) {
-    const values = pairs.map((pair) => toNumber(pair?.[2]))
+    const values = pairs.map((pair) => toNumber(pair?.[2] ?? ""))
     return values.every((value) => value !== undefined)
       ? [
           {
@@ -91,8 +91,8 @@ function columnsOf(
   }
   const cells = rows.map((row) => row.split(/\s*[,，]\s*/))
   if (rows.length > 0 && cells.every((row) => row.length === 2)) {
-    const xs = cells.map((row) => toNumber(row[0]))
-    const ys = cells.map((row) => toNumber(row[1]))
+    const xs = cells.map((row) => toNumber(row[0] ?? ""))
+    const ys = cells.map((row) => toNumber(row[1] ?? ""))
     return xs.every((value) => value !== undefined) && ys.every((value) => value !== undefined)
       ? [
           { name: "x", type: "Q", values: xs },
@@ -106,8 +106,8 @@ function columnsOf(
     : undefined
 }
 
-function toNumber(text: string | undefined): number | undefined {
-  if (text === undefined || text.trim() === "") {
+function toNumber(text: string): number | undefined {
+  if (text.trim() === "") {
     return undefined
   }
   const value = Number(text.trim())
