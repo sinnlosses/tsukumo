@@ -2,7 +2,7 @@
   & .report-cols {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    gap: 0.75rem;
+    gap: var(--space-md);
   }
   /* `cols` の列数は項目数（`cols-of-<n>`。`NotationBlock` が足す）の全部か約数か1列にする（`stats` の列数と同じ決まり）。
    器の幅が列の最小幅 14rem とすき間 0.75rem を足した幅に届くたびに、次に大きい約数の列数へ広げる。 */
@@ -25,9 +25,9 @@
   /* カードは「浮く」塊。
    地を親のステップと同じ surface にすると枠しか効かない。`panel` の枠も同じ見た目にする。 */
   & :is(.report-card, .report-block-panel) {
-    padding: 0.6rem 0.75rem;
+    padding: var(--space-sm) var(--space-md);
     border: 1px solid var(--report-chunk-rule, var(--rule));
-    border-radius: 0.5rem;
+    border-radius: var(--radius-md);
     background: var(--surface-raised);
   }
   /* 読む順・因果の無い並列の区画（`list` の `cards`）と、部品を横に並べる `row`。
@@ -35,7 +35,7 @@
   & :is(.report-cards, .report-block-row) {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    gap: 0.75rem;
+    gap: var(--space-md);
     margin: var(--report-block-gap) 0;
   }
   @container report-body (min-width: 761px) {
@@ -64,7 +64,7 @@
     margin: 0;
   }
   & .report-cards .report-card > p + p {
-    margin-top: 0.4rem;
+    margin-top: var(--space-sm);
   }
   /* 数の要約（KPI タイル）。
    数そのものが結論になる値（件数・前後の差）を、地の文に埋めずに並べる塊。
@@ -75,7 +75,7 @@
   & .report-stats {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    gap: 0.75rem;
+    gap: var(--space-md);
     margin: var(--report-block-gap) 0;
   }
   /* `stats` の列数は、項目数（`stats-of-<n>`。`NotationBlock` が足す）の全部か約数か1列にする（3＋1 のような半端な段を作らない）。
@@ -97,9 +97,9 @@
     }
   }
   & .report-stat {
-    padding: 0.5rem 0.75rem;
+    padding: var(--space-sm) var(--space-md);
     border: 1px solid var(--report-chunk-rule, var(--rule));
-    border-radius: 0.5rem;
+    border-radius: var(--radius-md);
     background: var(--report-chunk-ground, var(--surface));
     font-size: var(--font-label);
     letter-spacing: 0.08em;
@@ -158,7 +158,7 @@
   & .report-stat-meter {
     display: block;
     height: 0.3rem;
-    margin: 0.35rem 0;
+    margin: var(--space-xs) 0;
     border-radius: 999px;
     background: var(--rule);
     overflow: hidden;
@@ -174,7 +174,7 @@
   }
   & .report-badge {
     display: inline-block;
-    padding: 0 0.5rem;
+    padding: 0 var(--space-sm);
     border: 1px solid currentColor;
     border-radius: 999px;
     font-size: var(--font-secondary);
@@ -196,7 +196,7 @@
   & .report-labeled-list > :is(ul, ol) {
     display: grid;
     grid-template-columns: auto 7.5em minmax(0, 1fr);
-    column-gap: 20px;
+    column-gap: var(--space-xl);
     margin: var(--report-block-gap) 0;
     padding-left: 0;
     list-style: none;
@@ -214,7 +214,7 @@
     grid-column: 1 / -1;
     grid-template-columns: subgrid;
     align-items: start;
-    padding: 12px 0;
+    padding: var(--space-md) 0;
     border-top: 1px solid var(--rule-quiet);
     counter-increment: report-labeled-item;
   }
@@ -248,7 +248,7 @@
   @container report-body (max-width: calc(40em + 0.75rem)) {
     & .report-list-text {
       display: block;
-      margin-top: 2px;
+      margin-top: var(--space-2xs);
     }
   }
   & .report-labeled-list code {
@@ -265,7 +265,7 @@
     position: relative;
     display: grid;
     grid-template-columns: 28px minmax(0, 1fr);
-    column-gap: 18px;
+    column-gap: var(--space-xl);
     padding-bottom: 28px;
     font-size: var(--font-subheading);
     line-height: 1.95;
@@ -293,7 +293,7 @@
   }
   /* 段の名前（`<b>`）と本文のあいだの区切り。名前の無い段には `<b>` 自体が無いので掛からない。 */
   & .report-flow-step > span > b {
-    margin-inline-end: 0.3rem;
+    margin-inline-end: var(--space-xs);
   }
   & .report-flow-rail {
     position: absolute;
@@ -301,7 +301,7 @@
     top: 32px;
     bottom: -6px;
     width: 2px;
-    border-radius: 1px;
+    border-radius: var(--radius-pill);
     background: linear-gradient(
       var(--report-sequence-ink),
       color-mix(in srgb, var(--report-sequence-ink), var(--ground) 65%)
@@ -312,7 +312,7 @@
     display: flex;
     flex-wrap: wrap;
     align-items: stretch;
-    gap: 0.75rem 1.5rem;
+    gap: var(--space-md) var(--space-2xl);
   }
   & .report-flow-row .report-flow-step {
     position: relative;
@@ -321,11 +321,11 @@
     display: flex;
     flex: 1 1 7rem;
     min-width: 0;
-    gap: 0.5rem;
+    gap: var(--space-sm);
     align-items: flex-start;
-    padding: 0.55rem 0.75rem;
+    padding: var(--space-sm) var(--space-md);
     border: 1px solid var(--report-chunk-rule, var(--rule));
-    border-radius: 0.5rem;
+    border-radius: var(--radius-md);
     background: var(--surface-raised);
     line-height: 1.6;
   }
@@ -361,7 +361,7 @@
       box-sizing: content-box;
       display: grid;
       align-items: normal;
-      gap: 0 18px;
+      gap: 0 var(--space-xl);
       padding: 0 0 28px;
       border: 0;
       border-radius: 0;
@@ -369,7 +369,7 @@
       line-height: 1.95;
     }
     & .report-flow-row .report-flow-step + .report-flow-step {
-      margin-top: 4px;
+      margin-top: var(--space-xs);
     }
     & .report-flow-row .report-flow-step:last-child {
       padding-bottom: 0;
@@ -395,9 +395,9 @@
   & .report-flow-detailed .report-flow-step > span:not(.report-flow-number, .report-flow-rail) {
     box-sizing: border-box;
     min-width: 0;
-    padding: 0.45rem 0.75rem;
+    padding: var(--space-sm) var(--space-md);
     border: 1px solid var(--report-chunk-rule, var(--rule));
-    border-radius: 0.5rem;
+    border-radius: var(--radius-md);
     background: var(--surface-raised);
     line-height: 1.6;
     overflow-wrap: anywhere;
@@ -409,8 +409,8 @@
   }
   & .report-flow-branch {
     display: block;
-    margin-top: 0.35rem;
-    padding-left: 0.6rem;
+    margin-top: var(--space-xs);
+    padding-left: var(--space-sm);
     border-left: 2px solid var(--rule);
   }
   & .report-flow-branch-warn {
@@ -424,7 +424,7 @@
   }
   @container report-body (max-width: 28em) {
     & .report-flow-detailed .report-flow-step > span:not(.report-flow-number, .report-flow-rail) {
-      padding: 0.35rem 0.5rem;
+      padding: var(--space-xs) var(--space-sm);
     }
   }
   /* 候補の比較（`report` の `options` の塊から tsukumo が組む）。
@@ -439,8 +439,8 @@
   & .report-option {
     display: grid;
     grid-template-columns: 1.4rem 4.5em minmax(0, 1fr);
-    column-gap: 0.75rem;
-    padding: 0.4rem 0;
+    column-gap: var(--space-md);
+    padding: var(--space-sm) 0;
     border-bottom: 1px solid var(--report-chunk-rule, var(--rule-soft));
   }
   & .report-option:last-child {
@@ -495,7 +495,7 @@
     margin: var(--report-block-gap) 0;
   }
   & .report-claim {
-    padding: 0.4rem 0;
+    padding: var(--space-sm) 0;
     border-bottom: 1px solid var(--report-chunk-rule, var(--rule-soft));
   }
   & .report-claim:last-child {
@@ -504,7 +504,7 @@
   & .report-claim > p {
     display: grid;
     grid-template-columns: 5.5em minmax(0, 1fr);
-    column-gap: 0.75rem;
+    column-gap: var(--space-md);
     max-inline-size: none;
     margin: 0;
   }
