@@ -18,19 +18,18 @@ export type CharacterSelection =
   | { readonly by: "current" }
 
 /** 起動時の初期パックを決めるのに要るもの。 */
-export type InitialCharacterPackOptions<Pack extends NamedCharacterPack> = {
-  /** いま選べるパックの一覧。 */
-  readonly packs: readonly Pack[]
-  /** どれにも当たらなかったときのパック（呼ぶ側が既定の名前から決めたもの）。 */
-  readonly fallback: Pack
-  /**
-   * その回の指定（`TSUKUMO_CHARACTER`）。値そのものは使わない。
-   * 指定があるときは呼ぶ側が指定から `fallback` を決めているので、「あるか無いか」だけを見る。
-   */
-  readonly specified: string | undefined
-  /** 前回に画面から選んで覚えたパックの名前を読む。 */
-  readonly readRemembered: () => string | undefined
-}
+export type InitialCharacterPackOptions<Pack extends NamedCharacterPack> =
+  /** その回の指定（`TSUKUMO_CHARACTER`）から呼ぶ側が決めたパック。覚えた値は読まない。 */
+  | { readonly by: "specified"; readonly pack: Pack }
+  | {
+      readonly by: "remembered-or-default"
+      /** いま選べるパックの一覧。 */
+      readonly packs: readonly Pack[]
+      /** どれにも当たらなかったときのパック（呼ぶ側が既定の名前から決めたもの）。 */
+      readonly fallback: Pack
+      /** 前回に画面から選んで覚えたパックの名前を読む。 */
+      readonly readRemembered: () => string | undefined
+    }
 
 /**
  * 起動時の初期パック。優先順位は その回の指定（`TSUKUMO_CHARACTER`）> 覚えた値 > 同梱の既定。
@@ -40,9 +39,9 @@ export type InitialCharacterPackOptions<Pack extends NamedCharacterPack> = {
 export function selectInitialCharacterPack<Pack extends NamedCharacterPack>(
   options: InitialCharacterPackOptions<Pack>,
 ): Pack {
-  return options.specified === undefined
-    ? selectCharacterPack(options.packs, options.fallback, options.readRemembered())
-    : options.fallback
+  return options.by === "specified"
+    ? options.pack
+    : selectCharacterPack(options.packs, options.fallback, options.readRemembered())
 }
 
 /**

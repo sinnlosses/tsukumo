@@ -8,7 +8,7 @@ import type {
 import type { CodeSpanPart } from "../../../domain/code-span.ts"
 import type { DraftSortChoice } from "./draft-sort.ts"
 import type { TaskRunConfirmOutcome } from "./task-run-confirm-outcome.ts"
-import type { TaskRequest } from "./task-run-prompt.ts"
+import type { TaskRunTarget } from "./task-run-prompt.ts"
 
 export type TaskStateKind = "ready" | "blocked" | "hold" | "draft" | "doing" | "done" | "other"
 
@@ -150,11 +150,7 @@ export type TaskBoardContent =
 
 type TaskBoardConfirm =
   | { readonly kind: "closed" }
-  | {
-      readonly kind: "open"
-      readonly taskId: string
-      readonly request: TaskRequest
-    }
+  | { readonly kind: "open"; readonly target: TaskRunTarget }
 
 /** `onKeyDown` がフックの中で読む分だけの、キー入力の形（React の `KeyboardEvent` はそのまま渡せる）。 */
 type TaskBoardKeyEvent = {

@@ -28,7 +28,7 @@ import type {
   TaskStateKind,
   TaskStateView,
 } from "./task-board-view.ts"
-import { isTaskRequestable, type TaskRequest } from "./task-run-prompt.ts"
+import { isTaskRequestable, type SingleTaskRequest, type TaskRequest } from "./task-run-prompt.ts"
 
 /** 一覧の1件と、その状態の言い方（行・札・件数で何度も使うので1回だけ作る）。 */
 export type BoardEntry = {
@@ -39,14 +39,14 @@ export type BoardEntry = {
 type BoardContentInput = {
   readonly query: string
   readonly filter: TaskBoardFilter
-  readonly run: (taskId: string, request: TaskRequest) => void
+  readonly run: (taskId: string, request: SingleTaskRequest) => void
   readonly onJump: (id: string) => void
   readonly breadcrumb: TaskBoardBreadcrumb
   readonly sort: DraftSortState
   readonly onSortChoose: (id: string, choice: DraftSortChoice) => void
   readonly onSortReason: (id: string, reason: string) => void
   readonly onSortReset: () => void
-  readonly onSortRequest: (request: TaskRequest) => void
+  readonly onSortRequest: (request: Extract<TaskRequest, { readonly kind: "sort" }>) => void
 }
 
 /** 「tsukumo に頼む」を押せないときに横に添える理由。保留は待ちが残っているときだけ押せない。 */

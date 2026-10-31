@@ -12,12 +12,12 @@ import { useRef, useState, type KeyboardEvent, type RefObject } from "react"
 import { useDismissSignal, type DismissCause } from "../../../hooks/use-dismiss-signal.ts"
 import { useTaskBoardRequest } from "../../../stores/task-board-request.ts"
 import type { TaskRunConfirmOutcome } from "../domain/task-run-confirm-outcome.ts"
-import type { TaskRequest } from "../domain/task-run-prompt.ts"
+import type { SingleTaskRequest } from "../domain/task-run-prompt.ts"
 
 /** 開いている確認。`request` のあいだ、確認の `<dialog>` が窓の中に組み立てられる。 */
 export type TaskPeekConfirm =
   | { readonly kind: "none" }
-  | { readonly kind: "request"; readonly request: TaskRequest }
+  | { readonly kind: "request"; readonly request: SingleTaskRequest }
 
 type TaskPeekState =
   | { readonly kind: "closed" }
@@ -39,7 +39,7 @@ export type TaskPeekControl = {
   /** 「全文を開く」と本文中の ID。タスクのモーダルをそのタスクを選んで開き、窓は閉じる。 */
   readonly onOpenFull: (id: string) => void
   /** 「これを始める」「計画する」「却下する」。確認を重ねる。 */
-  readonly onRequest: (request: TaskRequest) => void
+  readonly onRequest: (request: SingleTaskRequest) => void
   readonly onConfirmClose: (outcome: TaskRunConfirmOutcome) => void
 }
 

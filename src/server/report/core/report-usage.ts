@@ -35,75 +35,91 @@ import {
 } from "./report-markdown-notation.ts"
 import type { ReportFigureUsage, ReportShapeTagUsage } from "./report-usage-record.ts"
 
-export type ReportUsageEntry = {
-  readonly at: number
-  readonly sessionId: string
-  /** `figure` の欄の種類と、`none` の理由。 */
-  readonly figure: ReportFigureUsage
-  /** 節ごとの塊の種類。札は常に `unspecified` で、札が許さない塊の数は空（過去の行の列を残している）。 */
-  readonly shapeTags: ReportShapeTagUsage
-  /** その回に出た塊の種類（`figure` の図を含む。重複無し）。 */
-  readonly blockKinds: readonly string[]
-  /** その回に出た塊の欄（`figure` の図を含む。重複無し）。 */
-  readonly blockFields: readonly ReportBlockField[]
-  /** その回に逃げ道（`markdown` の塊）の外側に出た記法の種類（重複無し）。 */
-  readonly notations: readonly MarkdownNotation[]
-  /** その回に逃げ道の HTML の容れ物の中に出た記法の種類（重複無し）。 */
-  readonly containedNotations: readonly MarkdownNotation[]
-  /** その回に逃げ道に出た、塊の無い記法の種類（重複無し）。 */
-  readonly escapeNotations: readonly EscapeNotation[]
-  /** その回に使った `a2ui` の部品の名前（重複無し）。 */
-  readonly componentNames: readonly string[]
-  /** その回の `Markdown` の部品の中身に出た記法の種類（重複無し）。 */
-  readonly markdownNotationKinds: readonly string[]
-  readonly unknownBlockCount: number
-  /** `body` の型つきフェンスのうち、読めずに素のコードブロックへ落としたものの数。 */
-  readonly brokenFenceCount: number
-  /** その回に出た `list` の `style`（重複無し）。 */
-  readonly listStyles: readonly string[]
-  /** その回に出た `mermaid` の図の種類（ソースの最初の語。重複無し。`figure` の図を含む）。 */
-  readonly mermaidKinds: readonly string[]
-  /** 常に false。旧い記録との互換のために欄を残す。 */
-  readonly hasModifiedFiles: boolean
-  /** `beforeAfter` か `image` の塊が1つでもあるか（`figure` を含む）。 */
-  readonly hasBeforeAfterOrImage: boolean
-  /** `task` を渡した最終レポートか。 */
-  readonly forTask: boolean
-  /** 段1の図（`image`・`mermaid`・`graph`・`svg`。`beforeAfter` の側と `figure` を含む）が1つでもあるか。 */
-  readonly hasFigure: boolean
-  /** このターンにメインが画像のファイルを `Read` したのに `image` の塊（`beforeAfter` の側と `figure` を含む）が無いか。 */
-  readonly readImageWithoutImageBlock: boolean
-  /** `text` の塊の本文・`list` の項目の text・表のセルに出た強調の対の数の合計。インラインコードの中は数えない。 */
-  readonly emphasisCount: number
-  /** `graph` の辺の数の合計。 */
-  readonly graphEdgeCount: number
-  /** `graph` の辺のうちラベルの無いものの数の合計。 */
-  readonly graphUnlabeledEdgeCount: number
-  /** `graph` の節点数。1レポートに複数あれば最大。 */
-  readonly graphNodeCount: number
-  /** `checks` に `unobserved` の行が1つでもあるか。 */
-  readonly hasUnverifiedCheck: boolean
-  /** `unobserved` の行があり、その全部の `howToVerify` が空でないか。 */
-  readonly hasHowToVerify: boolean
-  /** `task` の報告の種類。`task` の無いレポートは `none`。 */
-  readonly taskGenre: ReportGenre | "unspecified" | "none"
-  /** `task` の終わり方。`task` の無いレポートは `none`。 */
-  readonly taskOutcome: ReportTaskOutcome | "none"
-  /** `favor` が空でないか。 */
-  readonly hasFavor: boolean
-  /** `text` の本文・`list` の項目・表のセル・`note` の本文・`markdown` の中身に URL か `path:line` があるか、`code` の塊に `path` があるか。 */
-  readonly hasSourceReference: boolean
-  /** 行が2つ以下の表が1つでもあるか。 */
-  readonly shortTable: boolean
-  /** `keyFigures` が1つ以上あるか（引き継いだものを含む）。 */
-  readonly hasKeyFigures: boolean
-  /** `keyFigures` が無いのに、結論の文にインラインコードの外の数が3つ以上あるか。 */
-  readonly conclusionNumbersWithoutKeyFigures: boolean
-  /** 引数の字数。全体と最上位の欄ごと。渡した欄だけを数える。 */
-  readonly argumentChars: ReportArgumentChars
-  /** 直前に差し戻した呼び出しから引き継いだ欄の名前。 */
-  readonly inheritedFields: readonly ReportArgumentField[]
-}
+type ReportLeafKind = (typeof LEAF_COMPONENT_KINDS)[keyof typeof LEAF_COMPONENT_KINDS]
+
+type ReportComponentName = Extract<
+  SessionEvent,
+  { readonly kind: "report" }
+>["components"][number]["component"]
+
+type ReportListStyle = Extract<ReportOutlineLeaf, { readonly component: "ItemList" }>["style"]
+
+/** `hasUnverifiedCheck` は `checks` に `unobserved` の行が1つでもあるか。無ければ `howToVerify` の有無は問えない。 */
+type ReportVerifyUsage =
+  | { readonly hasUnverifiedCheck: false; readonly hasHowToVerify: false }
+  | { readonly hasUnverifiedCheck: true; readonly hasHowToVerify: boolean }
+
+/** `forTask` は `task` を渡した最終レポートか。渡さないレポートは報告の種類も終わり方も `none`。 */
+type ReportTaskUsage =
+  | { readonly forTask: false; readonly taskGenre: "none"; readonly taskOutcome: "none" }
+  | {
+      readonly forTask: true
+      readonly taskGenre: ReportGenre | "unspecified"
+      readonly taskOutcome: ReportTaskOutcome
+    }
+
+/** `hasKeyFigures` は `keyFigures` が1つ以上あるか（引き継いだものを含む）。あれば結論の数は問わない。 */
+type ReportKeyFigureUsage =
+  | { readonly hasKeyFigures: true; readonly conclusionNumbersWithoutKeyFigures: false }
+  | { readonly hasKeyFigures: false; readonly conclusionNumbersWithoutKeyFigures: boolean }
+
+export type ReportUsageEntry = ReportVerifyUsage &
+  ReportTaskUsage &
+  ReportKeyFigureUsage & {
+    readonly at: number
+    readonly sessionId: string
+    /** `figure` の欄の種類と、`none` の理由。 */
+    readonly figure: ReportFigureUsage
+    /** 節ごとの塊の種類。札は常に `unspecified` で、札が許さない塊の数は空（過去の行の列を残している）。 */
+    readonly shapeTags: ReportShapeTagUsage
+    /** その回に出た塊の種類（`figure` の図を含む。重複無し）。 */
+    readonly blockKinds: readonly ReportLeafKind[]
+    /** その回に出た塊の欄（`figure` の図を含む。重複無し）。 */
+    readonly blockFields: readonly ReportBlockField[]
+    /** その回に逃げ道（`markdown` の塊）の外側に出た記法の種類（重複無し）。 */
+    readonly notations: readonly MarkdownNotation[]
+    /** その回に逃げ道の HTML の容れ物の中に出た記法の種類（重複無し）。 */
+    readonly containedNotations: readonly MarkdownNotation[]
+    /** その回に逃げ道に出た、塊の無い記法の種類（重複無し）。 */
+    readonly escapeNotations: readonly EscapeNotation[]
+    /** その回に使った `a2ui` の部品の名前（重複無し）。 */
+    readonly componentNames: readonly ReportComponentName[]
+    /** その回の `Markdown` の部品の中身に出た記法の種類（重複無し）。 */
+    readonly markdownNotationKinds: readonly string[]
+    readonly unknownBlockCount: number
+    /** `body` の型つきフェンスのうち、読めずに素のコードブロックへ落としたものの数。 */
+    readonly brokenFenceCount: number
+    /** その回に出た `list` の `style`（重複無し）。 */
+    readonly listStyles: readonly ReportListStyle[]
+    /** その回に出た `mermaid` の図の種類（ソースの最初の語。重複無し。`figure` の図を含む）。 */
+    readonly mermaidKinds: readonly string[]
+    /** 常に false。旧い記録との互換のために欄を残す。 */
+    readonly hasModifiedFiles: boolean
+    /** `beforeAfter` か `image` の塊が1つでもあるか（`figure` を含む）。 */
+    readonly hasBeforeAfterOrImage: boolean
+    /** 段1の図（`image`・`mermaid`・`graph`・`svg`。`beforeAfter` の側と `figure` を含む）が1つでもあるか。 */
+    readonly hasFigure: boolean
+    /** このターンにメインが画像のファイルを `Read` したのに `image` の塊（`beforeAfter` の側と `figure` を含む）が無いか。 */
+    readonly readImageWithoutImageBlock: boolean
+    /** `text` の塊の本文・`list` の項目の text・表のセルに出た強調の対の数の合計。インラインコードの中は数えない。 */
+    readonly emphasisCount: number
+    /** `graph` の辺の数の合計。 */
+    readonly graphEdgeCount: number
+    /** `graph` の辺のうちラベルの無いものの数の合計。 */
+    readonly graphUnlabeledEdgeCount: number
+    /** `graph` の節点数。1レポートに複数あれば最大。 */
+    readonly graphNodeCount: number
+    /** `favor` が空でないか。 */
+    readonly hasFavor: boolean
+    /** `text` の本文・`list` の項目・表のセル・`note` の本文・`markdown` の中身に URL か `path:line` があるか、`code` の塊に `path` があるか。 */
+    readonly hasSourceReference: boolean
+    /** 行が2つ以下の表が1つでもあるか。 */
+    readonly shortTable: boolean
+    /** 引数の字数。全体と最上位の欄ごと。渡した欄だけを数える。 */
+    readonly argumentChars: ReportArgumentChars
+    /** 直前に差し戻した呼び出しから引き継いだ欄の名前。 */
+    readonly inheritedFields: readonly ReportArgumentField[]
+  }
 
 const FIGURE_KINDS: readonly string[] = ["image", "mermaid", "graph", "svg"]
 
@@ -243,7 +259,6 @@ export function reportUsageEntryOf(
     hasBeforeAfterOrImage: drawn.some(
       (leaf) => leaf.component === "BeforeAfter" || leaf.component === "Picture",
     ),
-    forTask: event.task.kind === "task",
     hasFigure: drawn.some(
       (leaf) =>
         FIGURE_KINDS.includes(kindOf(leaf)) ||
@@ -254,14 +269,11 @@ export function reportUsageEntryOf(
     emphasisCount: drawn.reduce((total, leaf) => total + emphasisCountOf(leaf), 0),
     ...graphCountsOf(drawn),
     ...howToVerifyUsageOf(event.checks),
-    taskGenre: event.task.kind === "task" ? event.task.genre : "none",
-    taskOutcome: event.task.kind === "task" ? event.task.outcome : "none",
+    ...taskUsageOf(event.task),
     hasFavor: event.favor.trim() !== "",
     hasSourceReference: own.some(hasSourceReference),
     shortTable: drawn.some((leaf) => leaf.component === "Table" && leaf.rows.length <= 2),
-    hasKeyFigures: event.keyFigures.length > 0,
-    conclusionNumbersWithoutKeyFigures:
-      event.keyFigures.length === 0 && numberCountOutsideCode(event.conclusion) >= 3,
+    ...keyFigureUsageOf(event.keyFigures.length, event.conclusion),
     argumentChars: event.argumentChars,
     inheritedFields: event.inheritedFields,
   }
@@ -369,23 +381,41 @@ function graphCountsOf(
   }
 }
 
-function howToVerifyUsageOf(
-  checks: readonly ReportCheck[],
-): Pick<ReportUsageEntry, "hasUnverifiedCheck" | "hasHowToVerify"> {
+/** `hasHowToVerify` は、`unobserved` の行があり、その全部の `howToVerify` が空でないか。 */
+function howToVerifyUsageOf(checks: readonly ReportCheck[]): ReportVerifyUsage {
   const unobserved = checks.filter((check) => check.status === "unobserved")
-  return {
-    hasUnverifiedCheck: unobserved.length > 0,
-    hasHowToVerify:
-      unobserved.length > 0 && unobserved.every((check) => check.howToVerify.trim() !== ""),
-  }
+  return unobserved.length === 0
+    ? { hasUnverifiedCheck: false, hasHowToVerify: false }
+    : {
+        hasUnverifiedCheck: true,
+        hasHowToVerify: unobserved.every((check) => check.howToVerify.trim() !== ""),
+      }
+}
+
+function taskUsageOf(
+  task: Extract<SessionEvent, { readonly kind: "report" }>["task"],
+): ReportTaskUsage {
+  return task.kind === "task"
+    ? { forTask: true, taskGenre: task.genre, taskOutcome: task.outcome }
+    : { forTask: false, taskGenre: "none", taskOutcome: "none" }
+}
+
+/** `conclusionNumbersWithoutKeyFigures` は、結論の文にインラインコードの外の数が3つ以上あるか。 */
+function keyFigureUsageOf(keyFigureCount: number, conclusion: string): ReportKeyFigureUsage {
+  return keyFigureCount > 0
+    ? { hasKeyFigures: true, conclusionNumbersWithoutKeyFigures: false }
+    : {
+        hasKeyFigures: false,
+        conclusionNumbersWithoutKeyFigures: numberCountOutsideCode(conclusion) >= 3,
+      }
 }
 
 /** 今までの塊の `kind` 名で数える。 */
-function kindOf(leaf: ReportOutlineLeaf): string {
+function kindOf(leaf: ReportOutlineLeaf): ReportLeafKind {
   return LEAF_COMPONENT_KINDS[leaf.component]
 }
 
-function kindsOf(leaves: readonly ReportOutlineLeaf[]): readonly string[] {
+function kindsOf(leaves: readonly ReportOutlineLeaf[]): readonly ReportLeafKind[] {
   return [...new Set(leaves.map(kindOf))]
 }
 

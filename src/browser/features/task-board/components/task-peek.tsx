@@ -16,7 +16,7 @@ import type {
 import { Button } from "../../../components/ui/button/button.tsx"
 import { codeSpanParts } from "../../../domain/code-span.ts"
 import type { TaskRunConfirmOutcome } from "../domain/task-run-confirm-outcome.ts"
-import type { TaskRequest } from "../domain/task-run-prompt.ts"
+import type { SingleTaskRequest } from "../domain/task-run-prompt.ts"
 import type { TaskPeekConfirm } from "../hooks/use-task-peek.ts"
 import { TaskBody } from "./deferred-task-body.tsx"
 import { TaskMark } from "./task-mark.tsx"
@@ -39,7 +39,7 @@ type TaskPeekProps = {
   readonly knownIds: ReadonlySet<string>
   readonly onClose: () => void
   readonly onOpenFull: (id: string) => void
-  readonly onRequest: (request: TaskRequest) => void
+  readonly onRequest: (request: SingleTaskRequest) => void
   readonly onConfirmClose: (outcome: TaskRunConfirmOutcome) => void
 }
 
@@ -151,8 +151,7 @@ export function TaskPeek(props: TaskPeekProps): ReactElement {
       </div>
       {run.kind !== "none" && run.confirm.kind === "request" && (
         <TaskRunConfirm
-          taskId={task.id}
-          request={run.confirm.request}
+          target={{ kind: "task", taskId: task.id, request: run.confirm.request }}
           onClose={props.onConfirmClose}
         />
       )}

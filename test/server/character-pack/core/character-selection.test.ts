@@ -27,27 +27,16 @@ describe("selectCharacterPack", () => {
 
 describe("selectInitialCharacterPack", () => {
   it("その回の指定があるときは、覚えた値を見ずに既定（指定から読んだパック）を使う", () => {
-    let read = 0
-
-    const pack = selectInitialCharacterPack({
-      packs: PACKS,
-      fallback: BUNDLED,
-      specified: "characters/local",
-      readRemembered: () => {
-        read += 1
-        return "kagami"
-      },
-    })
+    const pack = selectInitialCharacterPack({ by: "specified", pack: BUNDLED })
 
     expect(pack).toBe(BUNDLED)
-    expect(read).toBe(0)
   })
 
   it("指定が無ければ、覚えた名前のパックを使う", () => {
     const pack = selectInitialCharacterPack({
+      by: "remembered-or-default",
       packs: PACKS,
       fallback: BUNDLED,
-      specified: undefined,
       readRemembered: () => "kagami",
     })
 

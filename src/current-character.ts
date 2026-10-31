@@ -115,12 +115,16 @@ export function createCurrentCharacter(
   const fallbackPack = (): CharacterPack =>
     packs.find((pack) => pack.name === defaultPack.name) ?? defaultPack
 
-  const initialPack = selectInitialCharacterPack({
-    packs,
-    fallback: fallbackPack(),
-    specified: config.character,
-    readRemembered: readRememberedCharacter,
-  })
+  const initialPack = selectInitialCharacterPack(
+    config.character === undefined
+      ? {
+          by: "remembered-or-default",
+          packs,
+          fallback: fallbackPack(),
+          readRemembered: readRememberedCharacter,
+        }
+      : { by: "specified", pack: fallbackPack() },
+  )
   let current = initialPack
 
   // 一覧を読み直してから組む。画面に配った一覧と、素材を配るときに突き合わせる一覧を

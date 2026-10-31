@@ -14,13 +14,12 @@ import { Text } from "../../../components/ui/text/text.tsx"
 import { loadLaunchSkill } from "../../../domain/launch-skill.ts"
 import { useSession, useTurnRunning } from "../../../stores/session.ts"
 import type { TaskRunConfirmOutcome } from "../domain/task-run-confirm-outcome.ts"
-import { requestPromptOf, type TaskRequest } from "../domain/task-run-prompt.ts"
+import { requestPromptOf, type TaskRequest, type TaskRunTarget } from "../domain/task-run-prompt.ts"
 import styles from "./task-run-confirm.module.css"
 
 type TaskRunConfirmProps = {
-  readonly taskId: string
-  /** 頼みの種類。送る文面を決める（保留の着手には、着手の前に判断を聞く旨が添わる）。 */
-  readonly request: TaskRequest
+  /** 頼みの対象と種類。送る文面を決める（保留の着手には、着手の前に判断を聞く旨が添わる）。 */
+  readonly target: TaskRunTarget
   /**
    * 送ったあと・送らずに閉じたあとのどちらでも呼ばれる（開いているかは呼び出し側が持つ）。
    * タスクのモーダルから開いたときは、`sent` でモーダルも閉じる。
@@ -37,7 +36,8 @@ type TaskRunConfirmProps = {
 export function TaskRunConfirm(props: TaskRunConfirmProps): ReactElement {
   const dispatch = useSession((session) => session.dispatch)
   const turnInProgress = useTurnRunning()
-  const prompt = requestPromptOf(props.taskId, props.request, loadLaunchSkill())
+  const { target } = props
+  const prompt = requestPromptOf(target, loadLaunchSkill())
 
   const run = (): void => {
     dispatch.session.prompt({ text: prompt, images: [] })
@@ -57,7 +57,7 @@ export function TaskRunConfirm(props: TaskRunConfirmProps): ReactElement {
       className={styles["task-run-confirm"]}
     >
       <Text element="p" size="heading" tone="inherit" weight="semibold" className="">
-        {headingOf(props.taskId, props.request)}
+        {headingOf(target)}
       </Text>
       {turnInProgress ? (
         <Text
@@ -102,7 +102,7 @@ export function TaskRunConfirm(props: TaskRunConfirmProps): ReactElement {
             className={styles["task-run-ok"]}
             onClick={run}
           >
-            {OK_LABEL_OF[props.request.kind]}
+            {OK_LABEL_OF[target.request.kind]}
           </Button>
         )}
       </div>
@@ -116,11 +116,11 @@ const HEADING_OF = {
   drop: "の却下を頼みますか",
 } satisfies Record<Exclude<TaskRequest["kind"], "sort">, string>
 
-function headingOf(taskId: string, request: TaskRequest): string {
-  if (request.kind === "sort") {
-    return `ドラフト ${request.plans.length + request.drops.length} 件を仕分けますか`
+function headingOf(target: TaskRunTarget): string {
+  if (target.kind === "sort") {
+    return `ドラフト ${target.request.plans.length + target.request.drops.length} 件を仕分けますか`
   }
-  return `${taskId} ${HEADING_OF[request.kind]}`
+  return `${target.taskId} ${HEADING_OF[target.request.kind]}`
 }
 
 const OK_LABEL_OF = {

@@ -13,7 +13,7 @@ export type DraftDrop = { readonly id: string; readonly reason: string }
 
 /**
  * 頼みの種類。`start` は着手、`plan`・`drop` は1件のドラフトの計画と却下、
- * `sort` は複数のドラフトを1通で仕分ける（`taskId` は使わない）。
+ * `sort` は複数のドラフトを1通で仕分ける。
  */
 export type TaskRequest =
   | { readonly kind: "start"; readonly held: boolean }
@@ -24,6 +24,12 @@ export type TaskRequest =
       readonly plans: readonly string[]
       readonly drops: readonly DraftDrop[]
     }
+
+export type SingleTaskRequest = Exclude<TaskRequest, { readonly kind: "sort" }>
+
+export type TaskRunTarget =
+  | { readonly kind: "task"; readonly taskId: string; readonly request: SingleTaskRequest }
+  | { readonly kind: "sort"; readonly request: Extract<TaskRequest, { readonly kind: "sort" }> }
 
 /** 着手できる `todo` と、待ちの無い保留。保留は文面が着手の前に判断を尋ねさせるので頼める。 */
 export function isTaskRequestable(task: TaskSummaryItem): boolean {
@@ -38,7 +44,11 @@ export function isTaskRequestable(task: TaskSummaryItem): boolean {
  * `launchSkill` は利用者が書いた起動スキル名で、着手のときだけ使う。
  * 先頭の `/` と前後の空白を畳み、空・使えない文字を含む値は未設定として固定の文面にする。
  */
-export function requestPromptOf(taskId: string, request: TaskRequest, launchSkill = ""): string {
+export function requestPromptOf(target: TaskRunTarget, launchSkill = ""): string {
+  if (target.kind === "sort") {
+    return sortPromptOf(target.request.plans, target.request.drops)
+  }
+  const { taskId, request } = target
   switch (request.kind) {
     case "start": {
       const skill = launchSkillOf(launchSkill)
@@ -52,8 +62,6 @@ export function requestPromptOf(taskId: string, request: TaskRequest, launchSkil
       return `ドラフト ${taskId} を計画して。## 完了条件 と ## やること を書いて、着手できる todo にする。`
     case "drop":
       return `ドラフト ${taskId} を却下して。理由を ## 結果 に書いて、dropped で閉じる。`
-    case "sort":
-      return sortPromptOf(request.plans, request.drops)
   }
 }
 

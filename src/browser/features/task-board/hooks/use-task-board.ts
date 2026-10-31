@@ -11,7 +11,7 @@ import type { TaskBoardRequest } from "../../../stores/task-board-request.ts"
 import { boardContent, boardEntries, type BoardEntry } from "../domain/task-board-content.ts"
 import { matchesFilter, matchesQuery } from "../domain/task-board-filter.ts"
 import type { TaskBoardView } from "../domain/task-board-view.ts"
-import type { TaskRequest } from "../domain/task-run-prompt.ts"
+import type { TaskRunTarget } from "../domain/task-run-prompt.ts"
 import {
   boardReducer,
   initialBoardState,
@@ -32,9 +32,7 @@ export function useTaskBoard(
     setRequestShown(request)
     send({ kind: "open", request })
   }
-  const [confirming, setConfirming] = useState<
-    { readonly taskId: string; readonly request: TaskRequest } | undefined
-  >(undefined)
+  const [confirming, setConfirming] = useState<TaskRunTarget | undefined>(undefined)
 
   const { query, filter, chosen } = state
   const items = tasks.kind === "known" ? tasks.items : []
@@ -84,7 +82,7 @@ export function useTaskBoard(
     query,
     filter,
     run: (taskId, taskRequest) => {
-      setConfirming({ taskId, request: taskRequest })
+      setConfirming({ kind: "task", taskId, request: taskRequest })
     },
     onJump: jumpTo,
     breadcrumb:
@@ -102,14 +100,14 @@ export function useTaskBoard(
       send({ kind: "sortReset" })
     },
     onSortRequest: (sortRequest) => {
-      setConfirming({ taskId: "", request: sortRequest })
+      setConfirming({ kind: "sort", request: sortRequest })
     },
   })
 
   return {
     open,
     content,
-    confirm: confirming === undefined ? { kind: "closed" } : { kind: "open", ...confirming },
+    confirm: confirming === undefined ? { kind: "closed" } : { kind: "open", target: confirming },
     onClose: close,
     onQueryChange: (nextQuery) => {
       send({ kind: "query", query: nextQuery, shown })
