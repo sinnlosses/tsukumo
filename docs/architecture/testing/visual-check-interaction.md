@@ -87,7 +87,7 @@ tsukumo を空きポートで自分で起こし、配信 URL を待って撮り�
 に出る塊の `kind` を一覧し、`table` は状態のセル（`{ status, text }` の行）を持つものを
 `table(status)` と区別する。検証結果の表（`report` の `checks`）を持つ場面には `checks` も出る。
 行末の「演出: 掛かる見込み／掛からない見込み」は、書き上げる演出（`--reveal-at` が効くか）が掛かるかの見積もり
-（`report` の節の文字数と図の重みの合計が約200以上なら掛かる。草稿は見ないので、見込みがあっても始まらない場面がある。
+（`report` の節の文字数と図の重みの合計が約200以上なら掛かる。手の並びで `turn-finished` より先に届く `report` は草稿になるので数えない。
 手順は `docs/architecture/testing/visual-check.md`）。
 
 **部品を props で切り替えて並べる道は無い。** 描画の変更の `evidence` は `capture-catalog.ts`

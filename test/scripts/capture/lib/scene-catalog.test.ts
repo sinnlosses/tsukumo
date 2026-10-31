@@ -36,8 +36,12 @@ describe("revealForecast", () => {
     expect(forecast.get("work-plan-parallel")).toBe("unlikely")
   })
 
-  test("図と長い本文を持つ場面は掛かる見込みになる", () => {
-    expect(forecast.get("report-blocks")).toBe("likely")
+  test("report が turn-finished より後に届く場面は掛かる見込みになる", () => {
+    expect(forecast.get("a2ui-reveal-sample")).toBe("likely")
+  })
+
+  test("report が turn-finished より先に届く場面は草稿になるので掛からない見込みになる", () => {
+    expect(forecast.get("report-blocks")).toBe("unlikely")
   })
 
   test("report を持たない場面は掛からない見込みになる", () => {

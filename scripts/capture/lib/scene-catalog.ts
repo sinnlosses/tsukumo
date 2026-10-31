@@ -52,11 +52,15 @@ export function sceneBlockKinds(session: FakeSession): ReadonlyMap<string, reado
   return result
 }
 
-/** 場面ごとに、書き上げる演出が掛かる見込みを返す（節の重みの見積もり。描かないので正確ではない）。 */
+/**
+ * 場面ごとに、書き上げる演出が掛かる見込みを返す（節の重みの見積もり。描かないので正確ではない）。
+ * 手の並びで `turn-finished` より先に届く `report` は草稿として描かれ、確定版に演出が掛からないので数えない。
+ */
 export function revealForecast(session: FakeSession): ReadonlyMap<string, RevealForecast> {
   const result = new Map<string, RevealForecast>()
   for (const scene of session.turns) {
-    const weights = scene.steps.flatMap((step) => {
+    const lastFinished = scene.steps.findLastIndex((step) => step.event.kind === "turn-finished")
+    const weights = scene.steps.slice(lastFinished + 1).flatMap((step) => {
       if (step.event.kind !== "report") {
         return []
       }
