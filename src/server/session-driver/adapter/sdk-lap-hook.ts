@@ -1,5 +1,5 @@
 // 渡された `tw` の `lap-hook` を子として走らせ、
-// 主のセッションの `SubagentStart` と `Skill` の PreToolUse に当てる。
+// 主のセッションの `SubagentStart`・`SubagentStop` と `Skill` の PreToolUse に当てる。
 // どの入力で段を書くかは子が決める。子の出力は委譲先の文脈に入りうるので結果へ写さず、常に `{}` を返す。
 
 import type { HookCallback, HookCallbackMatcher, HookEvent } from "@anthropic-ai/claude-agent-sdk"
@@ -21,7 +21,7 @@ export function runLapHook(twPath: string, stdin: string): Promise<WorkflowTwRes
 
 /**
  * 取り込んだワークフローを載せないとき（`mountWorkflowPlugin` が偽）だけ、
- * `SubagentStart` と `PreToolUse` の `Skill` に `lap-hook` の matcher を足した表を返す。
+ * `SubagentStart`・`SubagentStop` と `PreToolUse` の `Skill` に `lap-hook` の matcher を足した表を返す。
  * 載せるときは plugin の `hooks/hooks.json` が同じ判定をするので、`base` をそのまま返す。
  * 子が失敗して段の記録が残らなかったときは、`report` に場所を渡す。
  */
@@ -39,6 +39,7 @@ export function withLapHook(
     ...base,
     PreToolUse: [...(base.PreToolUse ?? []), { matcher: SKILL_TOOL, hooks: [hook] }],
     SubagentStart: [...(base.SubagentStart ?? []), { hooks: [hook] }],
+    SubagentStop: [...(base.SubagentStop ?? []), { hooks: [hook] }],
   }
 }
 

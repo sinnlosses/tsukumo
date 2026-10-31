@@ -10,6 +10,7 @@ import {
 } from "../../../../src/server/session-driver/adapter/sdk-lap-hook.ts"
 import type { WorkflowTwResult } from "../../../../src/server/session-driver/adapter/sdk-workflow-tw.ts"
 import type { WorkflowTwFailurePlace } from "../../../../src/server/session-driver/core/session-driver.ts"
+import { registeredHookPairs, workflowHookPairs } from "../../../fixture/workflow-hooks-json.ts"
 
 function ok(stdout: string): WorkflowTwResult {
   return { kind: "ok", stdout }
@@ -134,6 +135,48 @@ describe("withLapHook", () => {
     expect(merged.Stop).toBe(base.Stop)
     expect(base.PreToolUse).toHaveLength(1)
     expect(base).not.toHaveProperty("SubagentStart")
+  })
+})
+
+describe("withLapHook と plugin の hooks.json", () => {
+  it("載せないときの登録の組が、hooks.json の lap-hook の組と等しい", () => {
+    const table = withLapHook(
+      {},
+      false,
+      async () => ok(""),
+      () => {},
+    )
+    expect(registeredHookPairs(table)).toEqual(workflowHookPairs("lap-hook"))
+  })
+})
+
+describe("withLapHook の SubagentStop", () => {
+  it("入力が子に渡り結果は空で、失敗すると足跡が残る", async () => {
+    const input = {
+      ...SUBAGENT_START_INPUT,
+      hook_event_name: "SubagentStop",
+      agent_type: "acceptor",
+    }
+    const received: string[] = []
+    const reported: WorkflowTwFailurePlace[] = []
+    const hooks = withLapHook(
+      {},
+      false,
+      async (stdin) => {
+        received.push(stdin)
+        return { kind: "failed" }
+      },
+      (place) => {
+        reported.push(place)
+      },
+    )
+    // @ts-expect-error テストでは最小の入力だけを渡す
+    const result = await hooks.SubagentStop?.[0]?.hooks[0]?.(input, "t-1", {
+      signal: new AbortController().signal,
+    })
+    expect(result).toEqual({})
+    expect(received.map((stdin) => JSON.parse(stdin))).toEqual([input])
+    expect(reported).toEqual(["lap-hook-failed"])
   })
 })
 

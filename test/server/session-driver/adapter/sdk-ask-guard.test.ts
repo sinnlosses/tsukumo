@@ -10,6 +10,7 @@ import {
 } from "../../../../src/server/session-driver/adapter/sdk-ask-guard.ts"
 import type { WorkflowTwResult } from "../../../../src/server/session-driver/adapter/sdk-workflow-tw.ts"
 import type { WorkflowTwFailurePlace } from "../../../../src/server/session-driver/core/session-driver.ts"
+import { registeredHookPairs, workflowHookPairs } from "../../../fixture/workflow-hooks-json.ts"
 
 function ok(stdout: string): WorkflowTwResult {
   return { kind: "ok", stdout }
@@ -47,6 +48,18 @@ async function callWith(
   // @ts-expect-error テストでは最小の入力だけを渡す
   return matcher?.hooks[0]?.(input, "t-1", { signal: new AbortController().signal })
 }
+
+describe("withAskGuard と plugin の hooks.json", () => {
+  it("載せないときの登録の組が、hooks.json の ask-guard の組と等しい", () => {
+    const table = withAskGuard(
+      {},
+      false,
+      async () => ok(""),
+      () => {},
+    )
+    expect(registeredHookPairs(table)).toEqual(workflowHookPairs("ask-guard"))
+  })
+})
 
 describe("withAskGuard の AskUserQuestion の hook", () => {
   it("子の deny の JSON はそのまま返り、入力は cwd を含めて子に渡る", async () => {
