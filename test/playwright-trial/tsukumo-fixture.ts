@@ -12,24 +12,19 @@ const LAUNCH_TIMEOUT_MS = 15_000
 const FIXED_VIEW_PORT = 47_831
 
 type TsukumoFixtures = {
+  readonly scene: string
   readonly viewUrl: string
 }
 
 export const test = base.extend<TsukumoFixtures>({
-  // oxlint-disable-next-line no-empty-pattern -- Playwright は第1引数が分割代入であることを要る
-  viewUrl: async ({}, use) => {
+  scene: ["report-blocks", { option: true }],
+  viewUrl: async ({ scene }, use) => {
     const home = makeTempDirectory("tsukumo-trial-home-")
     const cwd = makeTempDirectory("tsukumo-trial-cwd-")
     const userHome = makeTempDirectory("tsukumo-trial-user-home-")
     const projectDirectory = path.join(cwd.real, "trial-project")
     mkdirSync(projectDirectory)
-    const child = spawnTsukumo(
-      "report-blocks",
-      home.real,
-      userHome.real,
-      projectDirectory,
-      FIXED_VIEW_PORT,
-    )
+    const child = spawnTsukumo(scene, home.real, userHome.real, projectDirectory, FIXED_VIEW_PORT)
     try {
       await use(await waitForViewUrl(child, home.real, LAUNCH_TIMEOUT_MS))
     } finally {

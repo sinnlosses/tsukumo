@@ -84,6 +84,50 @@
   - テスト側: fixture が `TSUKUMO_VIEW_PORT` に固定の空きポートを渡す（または `.screen-nav-room-note` を `mask` する）。作業状態は、場面が終わって `data-work-state` が `idle` になるまで待ってから撮る。高さは `toHaveScreenshot` の安定待ちか明示の待ちで止める。
   - 本体の表示を変える案: 部屋の名前に出すポート番号を、比較する画面では固定の語にする。
 
+## 撮影の待ちの置き換え
+
+撮影の道具（`scripts/capture/`）の「落ち着くまで待つ」と演出の打ち切りを、`@playwright/test` の `expect` の自動待ちで置き換えられるかを、演出の掛かる場面で試した記録。撮影の道具は触っていない。試作は `test/playwright-trial/capture-reveal.trial.ts`（3 本）で、場面は疑似セッション `a2ui-reveal-sample`。
+
+### 演出の掛かる場面
+
+- 撮影の `report-checks` の場面（疑似セッション `report-tool`）には演出が掛からない。2 件目の `report` の前に `report-drafting` が入り、草稿として描いた `report` の確定版は演出の対象から外れる（`draft-reveal.ts` の `revealStepIdOf`）。`reducedMotion` を `reduce`・`no-preference` の両方にして 25 秒採っても `data-revealing` は 0 回だった。表が現れるのは読み込みから約 8.9 秒（2 回採って 8942ms・8949ms）。
+- 演出が掛かって検証結果の表（`aria-label` が完全一致の「検証結果」）を含む場面は `a2ui-reveal-sample`。表は約 1.9 秒で現れ、`data-revealing` は約 11.9 秒まで立って約 12.0 秒に消える（採った 1 回の値）。`report-task-verdict`・`report-task-finished`・`report-blocks` では立たず、`notation` では立つ（検証結果の表は無い）。
+- 試作の設定の `reducedMotion: "reduce"` のままでは演出が掛からない（`use-report-reveal.ts` が `prefersReducedMotion` で止める）。演出を試す側は `test.use({ reducedMotion: "no-preference" })` で上書きする。
+- fixture は、場面名を取る option fixture `scene`（既定 `report-blocks`）を足した。
+
+### 現状の待ち・打ち切りと置き換え
+
+行数は `wc -l`（ファイル全体）と、関数の定義行から閉じ括弧までの行番号の差（関数）。
+
+| 現状の待ち・打ち切り                                                                           | 行数                                           | 役割                                                                               | `@playwright/test` で                                      | 理由・条件                                                                                                                                                                                                                                                                        |
+| ---------------------------------------------------------------------------------------------- | ---------------------------------------------- | ---------------------------------------------------------------------------------- | ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `capture-page.ts` `settleStill`                                                                | 29（134〜162）。ファイル 162                   | 本文の領域を 120ms 間隔で最大 42 回撮り、連続 2 回の一致を待つ                     | 置き換わる見込み（この場面で `toHaveScreenshot` が通った） | `toHaveScreenshot` が連続した 2 枚の一致まで撮り直す。この場面では領域全体を撮って 10 回連続 10/10。領域の縁の 4px を内側へ縮める扱いや、回る輪を止める `animations: "disabled"` は `toHaveScreenshot` の既定（`animations: "disabled"`）が肩代わりするが、縁の扱いは試していない |
+| `stable-sample.ts` `waitUntilStable`                                                           | 17（7〜23）。ファイル 23                       | 見本が連続 2 回一致するまでの繰り返し                                              | 置き換わる見込み                                           | `settleStill` と同じ。`toHaveScreenshot` の内側の撮り直しが同じ役                                                                                                                                                                                                                 |
+| `reveal-end.ts` `waitForRevealEnd`                                                             | 13（10〜22）。ファイル 22                      | `data-revealing` が消えるのを待つ（上限 30 秒、超えても throw しない）             | 置き換わる                                                 | `expect(locator).toHaveCount(0, { timeout })`。試作で約 12 秒の演出を待って 10 回連続通過。超えたときに throw せず進む挙動は `expect` では別に書く必要がある（`expect` は落ちる）                                                                                                 |
+| `capture-page.ts` `revealPageAt`（時計を止めて進める）                                         | 9（50〜58）                                    | `data-revealing` が立つのを待ち、`page.clock.pauseAt`・`runFor` で途中の画へ進める | 置き換えではなく共用                                       | `page.clock` は `playwright-core` と `@playwright/test` で同じ API。試作で `page.clock.install()`・`pauseAt`・`runFor(30_000)` のあと `toHaveCount(0)` が通った。途中の画を撮る側は試していない                                                                                   |
+| `capture-page.ts` `SKIP_REVEAL_KEY`（`Escape` で打ち切り）                                     | 1                                              | 演出を飛ばすキー                                                                   | 置き換えではなく共用                                       | `page.keyboard.press("Escape")` のあと 1 秒以内に `data-revealing` が消えた（10 回連続）                                                                                                                                                                                          |
+| `capture-page.ts` `settlePage`                                                                 | 4（93〜96）                                    | `settleRender` → `settleStill`                                                     | `settleStill` の置き換え次第。`settleRender` は残る        | 下の `settleRender` の行                                                                                                                                                                                                                                                          |
+| `render-settle.ts` `settleRender`                                                              | 36（16〜51）。ファイル 51                      | フォント・画像の decode・終わりのある動き・2 フレームを待つ                        | 残る（試していない）                                       | 試作の場面ではこの待ちを入れずに通った。`toHaveScreenshot` はフォントの読み込みを待つが、画像の decode・終わりのある動きの完了・2 フレームを同じ強さで待つかは試していない。要るかは場面ごとに測る                                                                                |
+| `scene-end.ts` `watchSceneEvents`                                                              | 46（107〜152）。ファイル 164                   | WebSocket の `events` フレームを数えて場面の最後の手まで待つ                       | 試せなかった（今回は使わなかった）                         | 試作は `data-revealing` と表の `toBeAttached` を待つだけで通り、フレーム計数は使っていない。DOM の印が無い場面（最後の手が画面に印を残さない）では残る見込み                                                                                                                      |
+| `scene-end.ts` `sceneEndTarget`・`settleSceneTarget`・`sceneWindowPlan`・`sceneEventTimeoutMs` | 13・9・8・11（23〜35・41〜49・57〜64・70〜80） | 場面の最後の手の種類・件数と上限時間の算出                                         | 試せなかった                                               | `watchSceneEvents` と対。`expect` の待ちに載せるなら、上限時間は `timeout` に相当する                                                                                                                                                                                             |
+| `capture-catalog.ts` `settleScene`                                                             | 27（224〜250）。ファイル 278                   | `settle.kind` ごとに `waitForSelector`（上限 20 秒）か `watch.waitFor`             | `selector` の分岐は置き換わる。場面の終わりの分岐は残る    | `waitForSelector` は `expect(locator).toBeAttached`。表は `toBeVisible` が使えなかった（下の落とし穴）                                                                                                                                                                            |
+
+### 通過数と所要
+
+- `capture-reveal.trial.ts` の 3 本（演出の終わりを待って本文の領域を比べる・`Escape` で打ち切る・`page.clock` で進める）を、基準を書いたあとの 10 回連続で打って 10/10 通過。1 回（3 本分）の所要は playwright の表示で 21.9〜24.8 秒。そのうち演出を待つ 1 本が約 13 秒。基準を書く 1 回目は `A snapshot doesn't exist ... writing actual` で失敗する（打ち直しが要る）。
+- Chart.js の伸びの止めと、作業状態・高さの待ちは、この場面では要らなかった（棒グラフが無く、作業状態の窓も撮る位置に影響しなかった）。この場面だけの結果で、ほかの場面では未確認。
+
+### 落とし穴
+
+- 検証結果の表の locator は、`toBeVisible`・`toHaveScreenshot` が `hidden` と判定する（5 秒待っても変わらない）。表は `getBoundingClientRect` で 630x42.8、`visibility: visible`、`opacity: 1` だが、`checkVisibility()` が `false` を返し、祖先に `display: contents` の `<a2ui-react-report>` がある。Playwright の可視判定が `hidden` になる原因がこの祖先かどうかは未確認。撮影の道具の `waitForSelector`（既定は visible）が同じ表を通す理由も未確認。
+  回避は、表を `toBeAttached` で待ち、画像を `[data-region="main"]` の locator で撮ること。
+- 撮れる範囲は、本文の領域の見えている部分（下の画像は約 1037x514）で、レポート全体ではない。
+- `Date` は lint が拒む（`no-restricted-globals`）。ページ内の時刻の読みは `Temporal.Now.instant().epochMilliseconds`。
+
+### 基準画像
+
+`/tmp/tsukumo-playwright-trial/snapshots/capture-reveal.trial.ts/` に `report-checks.png`（演出が終わってから）と `report-checks-skipped.png`（`Escape` で打ち切ってから）の 2 枚。リポジトリには置いていない。2 枚を開いて見比べると、どちらも左に「やり取り」の一覧、右に本文の上部（完了の表示・依頼・結論の一文・検証 1 件の行・「架空の比べ方」の節・注意の枠）が写り、違いは目では見つからなかった（画素の差は測っていない。同じ比べで 10 回通っているので、撮り直しの揺れは小さい）。打ち切りで途中の本文が欠けた様子は写っていない。
+
 ## 全面移行を検討する条件（案）
 
 この試作の数だけでは移行の可否は決まらないので、利用者が別の課題で決めるときの物差しとして置く。しきい値は案で、実測の裏付けは無い。
