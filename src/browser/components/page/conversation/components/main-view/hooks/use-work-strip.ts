@@ -214,7 +214,7 @@ export function useWorkStrip(): WorkStripModel {
   const plan = turnStepList.kind === "turn" ? turnStepList.plan : NO_PLAN
   const working = content.kind === "work"
   const newestResult = turnResultsOf(turns, moment).at(-1)
-  const result = stripResultOf(newestResult, working, plan, {
+  const result = stripResultOf(newestResult ?? "no-report", working, plan, {
     leftToBackground: turn.kind !== "running" && pending.length === 0 && backgroundTasks.length > 0,
   })
   const shown = content.kind !== "welcome" && result !== undefined
@@ -314,7 +314,7 @@ export function useWorkStrip(): WorkStripModel {
  * 閉じたのに本文が無いやり取りは、ワークプランがあれば段の進みから（途中なら止めた、全部済みなら完了）、無ければ出さない。
  */
 function stripResultOf(
-  newest: TurnResult | undefined,
+  newest: TurnResult,
   working: boolean,
   plan: LatestWorkPlan,
   { leftToBackground }: { readonly leftToBackground: boolean },
@@ -325,7 +325,7 @@ function stripResultOf(
     }
     return leftToBackground ? "background" : "working"
   }
-  if (newest !== undefined && newest !== "no-report") {
+  if (newest !== "no-report") {
     return newest
   }
   if (plan.kind !== "planned") {

@@ -6,7 +6,7 @@
 // `scrollIntoView` は「どの祖先が転がっているか」を呼ぶ側が知らなくても、転がる祖先を全部たどって動かす。
 // 読み位置を戻すときは差を測って動かすので、転がる祖先を自分で探す（`scrollerOf`）。
 
-import { useEffect, useRef, type RefObject } from "react"
+import { useEffect, useRef, useState, type RefObject } from "react"
 
 import { useSession } from "../../../../../../stores/session.ts"
 import {
@@ -31,8 +31,10 @@ export function useActiveTurnScroll(
   const shownRef = useRef<ShownTarget>({ kind: "none" })
   const currentRef = useRef<ShownPosition | undefined>(undefined)
   const geometryRef = useRef<ScrollGeometry | undefined>(undefined)
-  const shownKind = shownTarget.kind
-  const shownTurnId = shownTarget.kind === "none" ? undefined : shownTarget.turnId
+  const [stableTarget, setStableTarget] = useState(shownTarget)
+  if (!isSameTarget(stableTarget, shownTarget)) {
+    setStableTarget(shownTarget)
+  }
 
   useEffect(() => {
     function resolve(): void {
@@ -61,7 +63,7 @@ export function useActiveTurnScroll(
   }, [scrollerRef])
 
   useEffect(() => {
-    const shown = targetOf(shownKind, shownTurnId)
+    const shown = stableTarget
     const previous = shownRef.current
     shownRef.current = shown
 
@@ -94,11 +96,14 @@ export function useActiveTurnScroll(
       }
     }
     scroller.scrollIntoView({ block: "start" })
-  }, [scrollerRef, shownKind, shownTurnId])
+  }, [scrollerRef, stableTarget])
 }
 
-function targetOf(kind: ShownTarget["kind"], turnId: number | undefined): ShownTarget {
-  return kind === "none" || turnId === undefined ? { kind: "none" } : { kind, turnId }
+function isSameTarget(a: ShownTarget, b: ShownTarget): boolean {
+  if (a.kind === "none" || b.kind === "none") {
+    return a.kind === b.kind
+  }
+  return a.kind === b.kind && a.turnId === b.turnId
 }
 
 type ShownPosition = {

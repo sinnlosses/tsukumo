@@ -22,35 +22,42 @@ type TablePart = A2uiReportPart<"Table">
  * 表示する行の元の添字を、表示の順に返す。
  * 絞り込みは、選んだ値のどれかが対象の列（`filterColumn`、なければ全列）のセルの文字に完全一致する行を残す。選びが空なら絞らない。
  */
+export function filteredRowOrder(part: TablePart, filter: readonly string[]): readonly number[] {
+  return keptRows(part, filter).map(({ index }) => index)
+}
+
+/** 絞り込んだ行を `sort` の順に並べた、元の添字。セルが無い行は昇順で最後。 */
 export function visibleRowOrder(
   part: TablePart,
-  sort: TableSort | undefined,
+  sort: TableSort,
   filter: readonly string[],
 ): readonly number[] {
-  const kept = part.rows
+  const sign = sort.direction === "asc" ? 1 : -1
+  return keptRows(part, filter)
+    .toSorted((a, b) => {
+      const left = a.cells[sort.column]
+      const right = b.cells[sort.column]
+      const order =
+        left !== undefined && right !== undefined
+          ? compareCells(left, right)
+          : Number(left === undefined) - Number(right === undefined)
+      return order === 0 ? a.index - b.index : order * sign
+    })
+    .map(({ index }) => index)
+}
+
+function keptRows(part: TablePart, filter: readonly string[]) {
+  return part.rows
     .map((row, index) => ({ index, cells: tableRowCells(row), row }))
     .filter(
       ({ row }) =>
         filter.length === 0 ||
         tableRowFilterTexts(row, part.filterColumn).some((text) => filter.includes(text)),
     )
-  if (sort === undefined) {
-    return kept.map(({ index }) => index)
-  }
-  const sign = sort.direction === "asc" ? 1 : -1
-  return kept
-    .toSorted((a, b) => {
-      const order = compareCells(a.cells[sort.column], b.cells[sort.column])
-      return order === 0 ? a.index - b.index : order * sign
-    })
-    .map(({ index }) => index)
 }
 
-/** 状態のセルは重さの順、数は大きさ、日付は時刻、それ以外は日本語の文字の順。セルが無ければ最後。 */
-function compareCells(a: Cell | undefined, b: Cell | undefined): number {
-  if (a === undefined || b === undefined) {
-    return a === b ? 0 : a === undefined ? 1 : -1
-  }
+/** 状態のセルは重さの順、数は大きさ、日付は時刻、それ以外は日本語の文字の順。 */
+function compareCells(a: Cell, b: Cell): number {
   if (typeof a === "object" && "status" in a && typeof b === "object" && "status" in b) {
     return STATUS_RANK[a.status] - STATUS_RANK[b.status]
   }

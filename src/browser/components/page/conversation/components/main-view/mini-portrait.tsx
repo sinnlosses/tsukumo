@@ -60,6 +60,10 @@ export function MiniPortrait(props: MiniPortraitProps): ReactElement | null {
     return null
   }
 
+  // 読み上げ上もキャラビューの立ち絵と見分けが付くようにする（同じ姿がもう1体居るため）。
+  const call = character.miniCall ?? MINI_CALL_FALLBACK
+  const altText = character.name === undefined ? call : `${character.name}の${call}`
+
   return (
     // 本文の末尾に敷く床。書き終わって本文の下へ降りた立ち絵の立つ場所。
     // これが無いと足元が器の下端をはみ出して、転がさないと見えない（立ち絵は `position: absolute` なので、場所を空けられるのは流れの中にいるこちらだけ）。
@@ -69,7 +73,7 @@ export function MiniPortrait(props: MiniPortraitProps): ReactElement | null {
       <div className={followClassName(stance)} ref={followBrushTip}>
         <Portrait
           url={url}
-          altText={miniAltText(character.name, character.miniCall)}
+          altText={altText}
           expression={MINI_EXPRESSION}
           motion={undefined}
           className={styles["mini-portrait-body"]}
@@ -128,12 +132,6 @@ function followTransform(tip: BrushTip): string {
     return "none"
   }
   return `translate3d(${px(tip.x)}, ${px(tip.bottom)}, 0) translateY(-100%)`
-}
-
-/** 読み上げ上もキャラビューの立ち絵と見分けが付くようにする（同じ姿がもう1体居るため）。 */
-function miniAltText(name: string | undefined, miniCall: string | undefined): string {
-  const call = miniCall ?? MINI_CALL_FALLBACK
-  return name === undefined ? call : `${name}の${call}`
 }
 
 function px(value: number): string {

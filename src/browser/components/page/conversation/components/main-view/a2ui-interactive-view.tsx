@@ -8,7 +8,7 @@ import type { A2uiReportPart } from "../../../../../../shared/report/a2ui-report
 import type { LeafValue } from "../../../../../../shared/report/report-leaf-value.ts"
 import { tableViewPath } from "../../../../../../shared/report/table-view.ts"
 import { Button } from "../../../../ui/button/button.tsx"
-import { type TableSort, visibleRowOrder } from "./domain/a2ui-table-view.ts"
+import { filteredRowOrder, type TableSort, visibleRowOrder } from "./domain/a2ui-table-view.ts"
 import styles from "./main-view.module.css"
 import { TableFigure } from "./table-leaf.tsx"
 
@@ -27,7 +27,8 @@ export function InteractiveTable(props: InteractiveTableProps): ReactElement {
   const sort = useDataPath<TableSort>(dataModel, tableViewPath(part.id, "sort"))
   const filter =
     useDataPath<readonly string[]>(dataModel, tableViewPath(part.id, "filter")) ?? NO_SELECTION
-  const order = visibleRowOrder(part, sort, filter)
+  const order =
+    sort === undefined ? filteredRowOrder(part, filter) : visibleRowOrder(part, sort, filter)
   if (value === undefined) {
     return <></>
   }
@@ -47,7 +48,12 @@ export function InteractiveTable(props: InteractiveTableProps): ReactElement {
                 disclosure={{ kind: "none" }}
                 className={styles["interactive-view-button"]}
                 onClick={() => {
-                  dataModel.set(tableViewPath(part.id, "sort"), nextSort(sort, index))
+                  dataModel.set(
+                    tableViewPath(part.id, "sort"),
+                    sort === undefined
+                      ? { column: index, direction: "asc" }
+                      : nextSort(sort, index),
+                  )
                 }}
               >
                 {column}
@@ -122,8 +128,8 @@ function useDataPath<Value>(dataModel: DataModel, path: string): Value | undefin
 }
 
 /** 同じ列を押すたびに 昇順 → 降順 → 並べ替えなし。 */
-function nextSort(current: TableSort | undefined, column: number): TableSort | undefined {
-  if (current?.column !== column) {
+function nextSort(current: TableSort, column: number): TableSort | undefined {
+  if (current.column !== column) {
     return { column, direction: "asc" }
   }
   return current.direction === "asc" ? { column, direction: "desc" } : undefined

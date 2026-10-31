@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest"
 
-import { visibleRowOrder } from "../../../../../../../../src/browser/components/page/conversation/components/main-view/domain/a2ui-table-view.ts"
+import {
+  filteredRowOrder,
+  visibleRowOrder,
+} from "../../../../../../../../src/browser/components/page/conversation/components/main-view/domain/a2ui-table-view.ts"
 import type { A2uiReportPart } from "../../../../../../../../src/shared/report/a2ui-report-outline.ts"
 
 function table(cells: readonly string[]): A2uiReportPart<"Table"> {
@@ -21,9 +24,9 @@ describe("visibleRowOrder の絞り込み", () => {
   it("filterColumn の列だけを見て、選びが空なら全行を残す", () => {
     const part = { ...table(["甲", "乙", "甲"]), filterColumn: 0 }
 
-    expect(visibleRowOrder(part, undefined, [])).toEqual([0, 1, 2])
-    expect(visibleRowOrder(part, undefined, ["甲"])).toEqual([0, 2])
-    expect(visibleRowOrder(part, undefined, ["x"])).toEqual([])
+    expect(filteredRowOrder(part, [])).toEqual([0, 1, 2])
+    expect(filteredRowOrder(part, ["甲"])).toEqual([0, 2])
+    expect(filteredRowOrder(part, ["x"])).toEqual([])
   })
 
   it("絞り込んだ行だけを並べ替える", () => {
