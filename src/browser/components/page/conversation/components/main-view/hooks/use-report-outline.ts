@@ -8,7 +8,7 @@
 // キーボードでは ↑↓ でやり取りの行・レポートの行・見出しの行を区別なく移り、Enter は行の `<button>` が受ける。
 
 import {
-  useLayoutEffect,
+  useEffectEvent,
   useRef,
   useState,
   type CSSProperties,
@@ -18,6 +18,9 @@ import {
 import { isDeepEqual } from "remeda"
 
 import { REVEAL_PENDING_ATTRIBUTE } from "../../../../../../domain/reveal/paint.ts"
+import { useBeforePaintSync } from "../../../../../../hooks/use-before-paint-sync.ts"
+import { useExternalSync } from "../../../../../../hooks/use-external-sync.ts"
+import { useUnmountEffect } from "../../../../../../hooks/use-mount-effect.ts"
 import { useReadingSection, type HeadingStep } from "../../../../../../stores/reading-section.ts"
 import type { TurnResult } from "../../../domain/turn-result.ts"
 import type { HeadNotice, HeadNoticeAction } from "../domain/head-notice.ts"
@@ -139,8 +142,7 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
   const navRef = useRef<HTMLElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
   const itemsRef = useRef<readonly OutlineItem[]>([])
-  const headedIdsRef = useRef<readonly number[]>([])
-  const readHeadingsRef = useRef<() => void>(() => undefined)
+  const readHeadingsRef = useRef<(headedIds: readonly number[]) => void>(() => undefined)
   const pinnedRef = useRef<{ readonly index: number; readonly top: number } | undefined>(undefined)
 
   const [entries, setEntries] = useState<readonly ReportOutlineEntry[]>([])
@@ -162,15 +164,15 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
   const headedKey = (
     props.turns.find((turn) => turn.id === props.activeTurnId)?.headedSectionIds ?? []
   ).join(",")
-  useLayoutEffect(() => {
-    headedIdsRef.current = headedKey === "" ? [] : headedKey.split(",").map(Number)
-    readHeadingsRef.current()
+  const latestHeadedIds = useEffectEvent((): readonly number[] => headedIdsOf(headedKey))
+  useBeforePaintSync(() => {
+    readHeadingsRef.current(headedIdsOf(headedKey))
   }, [headedKey])
 
   // 本文の DOM（React の外）を購読する。
   // 本文は書き上げる演出や畳みの開閉で React を通らずに変わるので、描き直しの合図では拾えない。
-  // 最初の読み取りは描く前に済ませる（`useLayoutEffect`）。
-  useLayoutEffect(() => {
+  // 最初の読み取りは描く前に済ませる。
+  useBeforePaintSync(() => {
     const found = contentRef.current
     if (found === null) {
       return
@@ -246,9 +248,9 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
       }
     }
 
-    function readHeadings(): void {
+    function readHeadings(headedIds: readonly number[]): void {
       // 筆がまだ届いていない節は並べない。
-      const items = readableOutlineItems(content, headedIdsRef.current)
+      const items = readableOutlineItems(content, headedIds)
       itemsRef.current = items
       const next = items.map((item): ReportOutlineEntry => ({
         level: item.level,
@@ -265,9 +267,11 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
     }
 
     readHeadingsRef.current = readHeadings
-    readHeadings()
+    readHeadings(latestHeadedIds())
     // 見出しの増減と、畳みの開閉・筆の到着の印だけを見る。字が伸びるだけの変化では読み直さない。
-    const observer = new MutationObserver(readHeadings)
+    const observer = new MutationObserver(() => {
+      readHeadings(latestHeadedIds())
+    })
     observer.observe(content, {
       childList: true,
       subtree: true,
@@ -290,8 +294,8 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
   }, [])
 
   // 札の幅（DOM の寸法）を購読する。
-  // 最初の1回は描く前に測る（`useLayoutEffect`）。
-  useLayoutEffect(() => {
+  // 最初の1回は描く前に測る。
+  useBeforePaintSync(() => {
     const frame = frameRef.current
     if (frame === null) {
       return
@@ -339,16 +343,14 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
   const section = readingSectionOf(entries, activeIndex, reached)
   const publish = useReadingSection((state) => state.publish)
   const setMover = useReadingSection((state) => state.setMover)
-  useLayoutEffect(() => {
+  useBeforePaintSync(() => {
     publish(section, collapsed)
   }, [publish, section, collapsed])
-  useLayoutEffect(() => {
-    return () => {
-      publish({ kind: "none" }, false)
-      setMover({ kind: "none" })
-    }
-  }, [publish, setMover])
-  useLayoutEffect(() => {
+  useUnmountEffect(() => {
+    publish({ kind: "none" }, false)
+    setMover({ kind: "none" })
+  })
+  useExternalSync(() => {
     setMover({
       kind: "ready",
       move: (step: HeadingStep) => {
@@ -360,12 +362,12 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
         }
       },
     })
-  })
+  }, [reached, activeIndex, setMover])
 
   // 見ているやり取りの行を、列の中の転がり（DOM）で見える位置へ寄せる。
   // `scrollIntoView` は転がる祖先の本文まで動かすので、列の `scrollTop` だけを動かす。
   const activeTurnId = props.activeTurnId
-  useLayoutEffect(() => {
+  useBeforePaintSync(() => {
     const nav = navRef.current
     if (nav === null || !visible || collapsed) {
       return
@@ -432,6 +434,10 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
       commitPanel((current) => ({ ...current, widthPx: px }))
     },
   }
+}
+
+function headedIdsOf(headedKey: string): readonly number[] {
+  return headedKey === "" ? [] : headedKey.split(",").map(Number)
 }
 
 /**
