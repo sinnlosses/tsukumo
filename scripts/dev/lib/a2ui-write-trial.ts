@@ -1,6 +1,7 @@
 // `report` の `a2ui` の変種を AI に書かせる測定の、条件・依頼の文・判定・集計。
 // 外のプロセスを起こさない純粋な部分だけを持つ。
 
+import { sumBy } from "remeda"
 import { z } from "zod"
 
 import { REPORT_TOOL_NAME } from "../../../src/server/core/tsukumo-tool-name.ts"
@@ -60,22 +61,31 @@ export type Judgement = {
   readonly usedControls: boolean
 }
 
-export type CaseResult = {
+export type CaseBase = {
   readonly id: string
   readonly loading: Loading
   readonly topic: TopicId
   readonly sections: number
   readonly firstFaults: readonly Fault[]
   readonly firstSectionCount: number
-  readonly retryFaults: readonly Fault[] | undefined
   readonly usedControls: boolean
   readonly calls: number
   // 最初の書き出しの前に引いた文法カードの数（`full` は引かないので 0）
   readonly pulledCards: number
-  // 最初の出力と再試行の出力の字数。出力が残っていない結果や再試行しなかった結果は undefined
-  readonly firstChars: number | undefined
-  readonly retryChars: number | undefined
 }
+
+// 再試行しなかった結果（none）、再試行して出力が残っていない結果（unmeasured）、字数まで分かる結果（measured）
+export type MeasuredCaseResult = CaseBase & {
+  readonly retry: "measured"
+  readonly retryFaults: readonly Fault[]
+  readonly firstChars: number
+  readonly retryChars: number
+}
+
+export type CaseResult =
+  | (CaseBase & { readonly retry: "none" })
+  | (CaseBase & { readonly retry: "unmeasured"; readonly retryFaults: readonly Fault[] })
+  | MeasuredCaseResult
 
 type Outcome = "first-pass" | "fixed" | "unfixed"
 
@@ -134,7 +144,7 @@ export function trialConditions(): readonly TrialCondition[] {
 }
 
 /** 書き手に渡す system prompt。`names` は部品名の一覧だけで、型は `CARD <部品名>` で引かせる。 */
-export function systemPromptFor(loading: Loading, example: readonly unknown[] | undefined): string {
+export function systemPromptFor(loading: Loading): string {
   const rules = [
     "あなたは報告を A2UI の部品の平らな一覧で出力する。出力は JSON の配列 1 つだけにする（説明文・コードフェンスは付けない）。",
     `配列は ${REPORT_TOOL_NAME} ツールの components 引数にそのまま渡される。${REPORT_A2UI_COMPONENTS_DESCRIPTION}`,
@@ -157,11 +167,15 @@ export function systemPromptFor(loading: Loading, example: readonly unknown[] | 
             "使える部品の名前は次のとおり。型が要る部品は、先に `CARD <部品名>` だけを 1 行ずつ出力する（そのときは JSON の配列を出さない）。引いた型と例が届いたら、そのあと JSON の配列を出力する。",
             namesListText(Object.keys(COMPONENT_PURPOSES)),
           ]
-  const exampleText =
-    example === undefined
-      ? []
-      : ["出力の例（節の数と中身は依頼に合わせて変える）:", JSON.stringify(example)]
-  return [...rules, ...catalog, ...exampleText].join("\n\n")
+  return [...rules, ...catalog].join("\n\n")
+}
+
+export function systemPromptWithExample(loading: Loading, example: readonly unknown[]): string {
+  return [
+    systemPromptFor(loading),
+    "出力の例（節の数と中身は依頼に合わせて変える）:",
+    JSON.stringify(example),
+  ].join("\n\n")
 }
 
 /** 書き手の返答から、`CARD <部品名>` の行で引かれた部品名を取る。 */
@@ -204,23 +218,9 @@ export type CatalogDocument = {
   readonly components: Readonly<Record<string, unknown>>
 }
 
-/** 出力から JSON の配列を取り出す。コードフェンスや前後の説明は読み飛ばす。無ければ undefined。 */
-export function extractComponents(text: string): readonly unknown[] | undefined {
-  const start = text.indexOf("[")
-  const end = text.lastIndexOf("]")
-  if (start < 0 || end <= start) {
-    return undefined
-  }
-  try {
-    const parsed: unknown = JSON.parse(text.slice(start, end + 1))
-    return Array.isArray(parsed) ? parsed : undefined
-  } catch {
-    return undefined
-  }
-}
-
-/** 本番の `report` の検査と同じ順で判定する。入力検査（部品ごとの形）が先で、通ったら構造の検査。 */
-export function judgeComponents(components: readonly unknown[] | undefined): Judgement {
+/** 書き手の出力の全文を判定する。JSON の配列が取れなければ入力検査の層で落ちる。 */
+export function judgeOutput(text: string): Judgement {
+  const components = extractComponents(text)
   if (components === undefined) {
     return {
       faults: [{ source: "schema", code: "not-a-json-array" }],
@@ -229,34 +229,7 @@ export function judgeComponents(components: readonly unknown[] | undefined): Jud
       usedControls: false,
     }
   }
-  const sectionCount = components.filter(
-    (component) => isRecord(component) && component["component"] === "Section",
-  ).length
-  const usedControls = components.some(usesControl)
-  const issues = components.flatMap((component, index) => {
-    const parsed = a2uiReportComponentSchema.safeParse(component)
-    return parsed.success
-      ? []
-      : parsed.error.issues.map((issue) => ({
-          ...issue,
-          path: ["components", index, ...issue.path],
-        }))
-  })
-  if (issues.length > 0) {
-    return {
-      faults: issues.map((issue) => ({ source: "schema", code: schemaCodeOf(issue) })),
-      retryText: `Input validation error: Invalid arguments for tool ${REPORT_TOOL_NAME}: ${JSON.stringify(issues)}`,
-      sectionCount,
-      usedControls,
-    }
-  }
-  const structure = a2uiStructureFaults(components)
-  return {
-    faults: structure.map((fault) => ({ source: "structure", code: fault.kind })),
-    retryText: structure.length === 0 ? "" : a2uiValidationFailedText(structure),
-    sectionCount,
-    usedControls,
-  }
+  return judgeComponents(components)
 }
 
 /** `components` 引数の定義の字数。`full` は a2uiInputShape と同じ形の JSON Schema 全部、`names` は名前の列挙と引く口。 */
@@ -313,14 +286,12 @@ export function summarizeCases(results: readonly CaseResult[]): readonly Summary
   return [...groups.entries()].toSorted().map(([key, rows]) => {
     const [loading = "", controls = ""] = key.split("\t")
     const outcomes = rows.map(outcomeOf)
-    const retried = rows.filter((row) => row.retryFaults !== undefined)
-    const measured = retried.filter(
-      (row) => row.firstChars !== undefined && row.retryChars !== undefined,
-    )
+    const retried = rows.filter((row) => row.retry !== "none")
+    const measured = rows.filter((row): row is MeasuredCaseResult => row.retry === "measured")
     const faultCodes = rows.flatMap((row) =>
       row.firstFaults.map((fault) => `${fault.source}:${fault.code}`),
     )
-    return {
+    const counts: SummaryCounts = {
       loading,
       controls,
       count: rows.length,
@@ -336,21 +307,29 @@ export function summarizeCases(results: readonly CaseResult[]): readonly Summary
       unpulled: rows.filter((row) => row.pulledCards === 0).length,
       retried: retried.length,
       retryCalls: retried.length,
-      firstCharsAverage: average(measured.map((row) => row.firstChars)),
-      retryCharsAverage: average(measured.map((row) => row.retryChars)),
       reasons: tally(faultCodes),
     }
+    return measured.length === 0
+      ? { ...counts, measured: false }
+      : {
+          ...counts,
+          measured: true,
+          firstCharsAverage: Math.round(sumBy(measured, (row) => row.firstChars) / measured.length),
+          retryCharsAverage: Math.round(sumBy(measured, (row) => row.retryChars) / measured.length),
+        }
   })
 }
 
-function average(sizes: readonly (number | undefined)[]): number | undefined {
-  const known = sizes.filter((size) => size !== undefined)
-  return known.length === 0
-    ? undefined
-    : Math.round(known.reduce((sum, size) => sum + size, 0) / known.length)
-}
+// 字数の平均は、再試行して出力の字数が残っている結果があるときだけ持つ
+export type SummaryRow =
+  | (SummaryCounts & { readonly measured: false })
+  | (SummaryCounts & {
+      readonly measured: true
+      readonly firstCharsAverage: number
+      readonly retryCharsAverage: number
+    })
 
-export type SummaryRow = {
+type SummaryCounts = {
   readonly loading: string
   readonly controls: string
   readonly count: number
@@ -366,9 +345,54 @@ export type SummaryRow = {
   readonly unpulledFaults: number
   readonly retried: number
   readonly retryCalls: number
-  readonly firstCharsAverage: number | undefined
-  readonly retryCharsAverage: number | undefined
   readonly reasons: string
+}
+
+/** 出力から JSON の配列を取り出す。コードフェンスや前後の説明は読み飛ばす。無ければ undefined。 */
+function extractComponents(text: string): readonly unknown[] | undefined {
+  const start = text.indexOf("[")
+  const end = text.lastIndexOf("]")
+  if (start < 0 || end <= start) {
+    return undefined
+  }
+  try {
+    const parsed: unknown = JSON.parse(text.slice(start, end + 1))
+    return Array.isArray(parsed) ? parsed : undefined
+  } catch {
+    return undefined
+  }
+}
+
+/** 本番の `report` の検査と同じ順で判定する。入力検査（部品ごとの形）が先で、通ったら構造の検査。 */
+function judgeComponents(components: readonly unknown[]): Judgement {
+  const sectionCount = components.filter(
+    (component) => isRecord(component) && component["component"] === "Section",
+  ).length
+  const usedControls = components.some(usesControl)
+  const issues = components.flatMap((component, index) => {
+    const parsed = a2uiReportComponentSchema.safeParse(component)
+    return parsed.success
+      ? []
+      : parsed.error.issues.map((issue) => ({
+          ...issue,
+          path: ["components", index, ...issue.path],
+        }))
+  })
+  if (issues.length > 0) {
+    return {
+      faults: issues.map((issue) => ({ source: "schema", code: schemaCodeOf(issue) })),
+      retryText: `Input validation error: Invalid arguments for tool ${REPORT_TOOL_NAME}: ${JSON.stringify(issues)}`,
+      sectionCount,
+      usedControls,
+    }
+  }
+  const structure = a2uiStructureFaults(components)
+  return {
+    faults: structure.map((fault) => ({ source: "structure", code: fault.kind })),
+    retryText: structure.length === 0 ? "" : a2uiValidationFailedText(structure),
+    sectionCount,
+    usedControls,
+  }
 }
 
 function groupLabelOf(topic: TopicId): string {
@@ -378,12 +402,12 @@ function groupLabelOf(topic: TopicId): string {
   return isControlTopic(topic) ? "操作あり" : "操作無し"
 }
 
-/** 一発・直った・直らない。再試行しなかった（一発で通った）ときは `retryFaults` が undefined。 */
+/** 一発・直った・直らない。再試行しなかった（一発で通った）ときは `retry` が `none`。 */
 function outcomeOf(result: CaseResult): Outcome {
   if (result.firstFaults.length === 0) {
     return "first-pass"
   }
-  return result.retryFaults?.length === 0 ? "fixed" : "unfixed"
+  return result.retry !== "none" && result.retryFaults.length === 0 ? "fixed" : "unfixed"
 }
 
 const LOADING_LABELS = { full: "A", names: "B", mixed: "C" } as const satisfies Record<

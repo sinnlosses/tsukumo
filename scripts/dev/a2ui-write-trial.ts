@@ -19,15 +19,16 @@ import { replayEnvironment } from "../shared/claude-environment.ts"
 import { REPOSITORY_ROOT } from "../shared/repository-root.ts"
 import { isControlTopic, requestFor } from "./lib/a2ui-trial-topic.ts"
 import {
+  type CaseBase,
   type CaseResult,
   catalogCard,
-  extractComponents,
-  judgeComponents,
+  judgeOutput,
   type Judgement,
   type Loading,
   requestedCards,
   summarizeCases,
   systemPromptFor,
+  systemPromptWithExample,
   toolDefinitionChars,
   trialConditions,
   type TrialCondition,
@@ -129,18 +130,18 @@ async function runCase(entry: TrialCondition): Promise<{
   readonly outputs: readonly string[]
 }> {
   const examples = readExamples()
-  const example = !entry.withExample
-    ? undefined
-    : isControlTopic(entry.topic)
-      ? examples.control
-      : examples.plain
-  const system = systemPromptFor(entry.loading, example)
+  const system = entry.withExample
+    ? systemPromptWithExample(
+        entry.loading,
+        isControlTopic(entry.topic) ? examples.control : examples.plain,
+      )
+    : systemPromptFor(entry.loading)
   const request = requestFor(entry.topic, entry.sections, true)
   const first = await writeOnce(entry.loading, system, request, examples.cardSources)
-  const firstJudgement = judgeComponents(extractComponents(first.text))
+  const firstJudgement = judgeOutput(first.text)
   if (firstJudgement.faults.length === 0) {
     return {
-      result: resultOf(entry, firstJudgement, undefined, first),
+      result: firstPassResult(entry, firstJudgement, first),
       outputs: [first.text],
     }
   }
@@ -153,9 +154,12 @@ async function runCase(entry: TrialCondition): Promise<{
     "直して components を全部書き直し、JSON の配列だけを出力する。",
   ].join("\n\n")
   const retry = await ask(system, retryUser)
-  const retryJudgement = judgeComponents(extractComponents(retry))
+  const retryJudgement = judgeOutput(retry)
   return {
-    result: resultOf(entry, firstJudgement, retryJudgement, { ...first, calls: first.calls + 1 }),
+    result: retriedResult(entry, firstJudgement, retryJudgement, {
+      ...first,
+      calls: first.calls + 1,
+    }),
     outputs: [first.text, retry],
   }
 }
@@ -188,12 +192,7 @@ type WrittenOnce = {
   readonly pulledCards: number
 }
 
-function resultOf(
-  entry: TrialCondition,
-  first: Judgement,
-  retry: Judgement | undefined,
-  written: WrittenOnce,
-): CaseResult {
+function caseBaseOf(entry: TrialCondition, first: Judgement, written: WrittenOnce): CaseBase {
   return {
     id: entry.id,
     loading: entry.loading,
@@ -201,12 +200,30 @@ function resultOf(
     sections: entry.sections,
     firstFaults: first.faults,
     firstSectionCount: first.sectionCount,
-    retryFaults: retry?.faults,
     usedControls: first.usedControls,
     calls: written.calls,
     pulledCards: written.pulledCards,
-    firstChars: undefined,
-    retryChars: undefined,
+  }
+}
+
+function firstPassResult(
+  entry: TrialCondition,
+  first: Judgement,
+  written: WrittenOnce,
+): CaseResult {
+  return { ...caseBaseOf(entry, first, written), retry: "none" }
+}
+
+function retriedResult(
+  entry: TrialCondition,
+  first: Judgement,
+  retry: Judgement,
+  written: WrittenOnce,
+): CaseResult {
+  return {
+    ...caseBaseOf(entry, first, written),
+    retry: "unmeasured",
+    retryFaults: retry.faults,
   }
 }
 
@@ -299,20 +316,27 @@ function printSummary(out: string): void {
   const results = readdirSync(out)
     .filter((file) => file.endsWith(".json"))
     .map((file) => storedResultSchema.parse(JSON.parse(readFileSync(path.join(out, file), "utf8"))))
-    .map((stored): CaseResult => ({
-      id: stored.id,
-      loading: stored.loading,
-      topic: stored.topic,
-      sections: stored.sections,
-      firstFaults: stored.firstFaults,
-      firstSectionCount: stored.firstSectionCount,
-      retryFaults: stored.retryFaults,
-      usedControls: stored.usedControls,
-      calls: stored.calls,
-      pulledCards: stored.pulledCards ?? 0,
-      firstChars: stored.outputs?.[0]?.length,
-      retryChars: stored.outputs?.[1]?.length,
-    }))
+    .map((stored): CaseResult => {
+      const base: CaseBase = {
+        id: stored.id,
+        loading: stored.loading,
+        topic: stored.topic,
+        sections: stored.sections,
+        firstFaults: stored.firstFaults,
+        firstSectionCount: stored.firstSectionCount,
+        usedControls: stored.usedControls,
+        calls: stored.calls,
+        pulledCards: stored.pulledCards ?? 0,
+      }
+      if (stored.retryFaults === undefined) {
+        return { ...base, retry: "none" }
+      }
+      const firstChars = stored.outputs?.[0]?.length
+      const retryChars = stored.outputs?.[1]?.length
+      return firstChars === undefined || retryChars === undefined
+        ? { ...base, retry: "unmeasured", retryFaults: stored.retryFaults }
+        : { ...base, retry: "measured", retryFaults: stored.retryFaults, firstChars, retryChars }
+    })
   printToolDefinitions()
   process.stdout.write(`最初の呼び出し ${String(results.length)} 件\n`)
   process.stdout.write(
@@ -335,11 +359,13 @@ function printSummary(out: string): void {
         row.unpulledFaults,
         row.retried,
         row.retryCalls,
-        row.firstCharsAverage ?? "-",
-        row.retryCharsAverage ?? "-",
-        row.firstCharsAverage === undefined || row.retryCharsAverage === undefined
-          ? "-"
-          : (row.retryCharsAverage / row.firstCharsAverage).toFixed(2),
+        ...(row.measured
+          ? [
+              row.firstCharsAverage,
+              row.retryCharsAverage,
+              (row.retryCharsAverage / row.firstCharsAverage).toFixed(2),
+            ]
+          : ["-", "-", "-"]),
         row.reasons,
       ].join("\t") + "\n",
     )

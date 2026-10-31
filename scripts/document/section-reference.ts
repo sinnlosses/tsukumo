@@ -103,15 +103,17 @@ export function findSectionReferences(
   const lines = text.split("\n")
   return lines.flatMap((lineText, index) => [
     ...[...lineText.matchAll(REFERENCE_HEAD)].flatMap((match) =>
-      toReference(
-        sourcePath,
-        index + 1,
-        match[1],
-        match[2],
-        lineText.slice(match.index + match[0].length),
-        lines.slice(index + 1, index + 1 + MAX_CONTINUATION_LINES),
-        accepts,
-      ),
+      match[1] === undefined
+        ? []
+        : toReference(
+            sourcePath,
+            index + 1,
+            match[1],
+            match[2],
+            lineText.slice(match.index + match[0].length),
+            lines.slice(index + 1, index + 1 + MAX_CONTINUATION_LINES),
+            accepts,
+          ),
     ),
     ...findReferenceAcrossLineBreak(sourcePath, lines, index, lineText, accepts),
   ])
@@ -208,7 +210,7 @@ function findReferenceAcrossLineBreak(
     return []
   }
   const match = REFERENCE_HEAD_WITHOUT_BRACKET.exec(lineText)
-  if (match === null) {
+  if (match?.[1] === undefined) {
     return []
   }
   return toReference(
@@ -226,13 +228,13 @@ function findReferenceAcrossLineBreak(
 function toReference(
   sourcePath: string,
   line: number,
-  targetPath: string | undefined,
+  targetPath: string,
   section: string | undefined,
   afterOpen: string,
   continuation: readonly string[],
   accepts: (targetPath: string) => boolean,
 ): SectionReference[] {
-  if (targetPath === undefined || !accepts(targetPath)) {
+  if (!accepts(targetPath)) {
     return []
   }
   const phrase = readPhrase(afterOpen, continuation)

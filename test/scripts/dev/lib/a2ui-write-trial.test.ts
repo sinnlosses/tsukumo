@@ -4,12 +4,15 @@ import { z } from "zod"
 import { isFaultTopic, requestFor } from "../../../../scripts/dev/lib/a2ui-trial-topic.ts"
 import {
   catalogCard,
-  extractComponents,
-  judgeComponents,
+  judgeOutput,
   requestedCards,
+  summarizeCases,
   systemPromptFor,
+  systemPromptWithExample,
   toolDefinitionChars,
   trialConditions,
+  type CaseBase,
+  type CaseResult,
   type CatalogDocument,
 } from "../../../../scripts/dev/lib/a2ui-write-trial.ts"
 import {
@@ -25,6 +28,8 @@ const report = {
 }
 const section = { id: "s1", component: "Section", heading: "架空の節", children: ["p1"] }
 const paragraph = { id: "p1", component: "Paragraph", text: "架空の地の文" }
+
+const judgeComponents = (components: readonly unknown[]) => judgeOutput(JSON.stringify(components))
 
 describe("judgeComponents", () => {
   test("規約に沿った一覧は違反が無く、節の数を数える", () => {
@@ -76,23 +81,83 @@ describe("judgeComponents", () => {
   })
 
   test("配列でない出力は入力検査の層で落ちる", () => {
-    expect(judgeComponents(undefined).faults).toEqual([
+    expect(judgeOutput("配列は無い").faults).toEqual([
       { source: "schema", code: "not-a-json-array" },
     ])
   })
 })
 
-describe("extractComponents", () => {
-  test("コードフェンスの中の配列を取る", () => {
-    expect(extractComponents('```json\n[{"id":"root"}]\n```')).toEqual([{ id: "root" }])
+describe("systemPromptWithExample", () => {
+  test("例の文が system prompt の末尾に付く", () => {
+    const prompt = systemPromptWithExample("full", [{ id: "root" }])
+
+    expect(prompt.startsWith(systemPromptFor("full"))).toBe(true)
+    expect(prompt.endsWith('\n\n[{"id":"root"}]')).toBe(true)
+  })
+})
+
+describe("summarizeCases", () => {
+  const base: CaseBase = {
+    id: "A-T1-n2",
+    loading: "full",
+    topic: "T1",
+    sections: 2,
+    firstFaults: [],
+    firstSectionCount: 2,
+    usedControls: false,
+    calls: 1,
+    pulledCards: 0,
+  }
+  const failed = [{ source: "schema", code: "x" }] as const
+
+  test("再試行しなかった結果だけなら字数の平均を持たない", () => {
+    const [row] = summarizeCases([{ ...base, retry: "none" }])
+
+    expect(row).toMatchObject({ firstPass: 1, retried: 0, measured: false })
   })
 
-  test("前後に説明があっても配列を取る", () => {
-    expect(extractComponents('次のとおり。\n[{"id":"a"}]\n以上。')).toEqual([{ id: "a" }])
+  test("再試行して出力が残っていない結果は数えるが字数は測らない", () => {
+    const unmeasured: CaseResult = {
+      ...base,
+      firstFaults: failed,
+      retry: "unmeasured",
+      retryFaults: [],
+    }
+    const [row] = summarizeCases([unmeasured])
+
+    expect(row).toMatchObject({ fixed: 1, retried: 1, measured: false })
   })
 
-  test("配列が無ければ undefined", () => {
-    expect(extractComponents("配列は無い")).toBeUndefined()
+  test("字数が分かる結果の平均を丸めて持つ", () => {
+    const measured = (firstChars: number, retryChars: number): CaseResult => ({
+      ...base,
+      firstFaults: failed,
+      retry: "measured",
+      retryFaults: failed,
+      firstChars,
+      retryChars,
+    })
+    const [row] = summarizeCases([measured(100, 200), measured(101, 201)])
+
+    expect(row).toMatchObject({
+      unfixed: 2,
+      measured: true,
+      firstCharsAverage: 101,
+      retryCharsAverage: 201,
+    })
+  })
+})
+
+describe("judgeOutput", () => {
+  const bare = JSON.stringify([report, section, paragraph])
+
+  test("コードフェンスの中の配列を判定する", () => {
+    expect(judgeOutput(`\`\`\`json\n${bare}\n\`\`\``)).toEqual(judgeOutput(bare))
+  })
+
+  test("前後に説明があっても配列を判定する", () => {
+    expect(judgeOutput(`次のとおり。\n${bare}\n以上。`)).toEqual(judgeOutput(bare))
+    expect(judgeOutput(bare).faults).toEqual([])
   })
 })
 
@@ -134,7 +199,7 @@ describe("catalogCard", () => {
 })
 
 describe("混ぜる形", () => {
-  const prompt = systemPromptFor("mixed", undefined)
+  const prompt = systemPromptFor("mixed")
   const loaded = z
     .object({
       $defs: z.record(z.string(), z.unknown()),

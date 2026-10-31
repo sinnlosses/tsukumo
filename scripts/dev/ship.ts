@@ -66,7 +66,8 @@ if (values.drain && (values.enqueue || values["criteria-file"] !== undefined)) {
   process.stderr.write("--drain は --enqueue・--criteria-file と一緒に使えない\n")
   process.exit(1)
 }
-const criteriaText = readCriteriaFile(values["criteria-file"])
+const criteriaFile = values["criteria-file"]
+const criteriaText = criteriaFile === undefined ? undefined : readCriteriaFile(criteriaFile)
 
 const primaryBranch = PRIMARY_BRANCH
 const commonDirectory = readGitCommonDirectory(ROOT)
@@ -230,10 +231,7 @@ function verifyOnce(worktree: string): number {
   )
 }
 
-function readCriteriaFile(criteriaPath: string | undefined): string | undefined {
-  if (criteriaPath === undefined) {
-    return undefined
-  }
+function readCriteriaFile(criteriaPath: string): string {
   try {
     return readFileSync(criteriaPath, "utf8")
   } catch {

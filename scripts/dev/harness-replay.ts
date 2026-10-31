@@ -31,7 +31,7 @@ if (options === "invalid") {
   process.exit(2)
 }
 
-const brief = readBrief(options.brief)
+const brief = options.brief === undefined ? undefined : readBrief(options.brief)
 
 for (const id of options.tasks) {
   const script = readReplayScript(ROOT, id)
@@ -45,8 +45,7 @@ for (const id of options.tasks) {
   }
 }
 
-function readBrief(path: string | undefined): string | undefined {
-  if (path === undefined) return undefined
+function readBrief(path: string): string {
   try {
     return readFileSync(path, "utf8")
   } catch {
