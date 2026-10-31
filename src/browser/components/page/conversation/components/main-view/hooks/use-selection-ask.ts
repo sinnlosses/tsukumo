@@ -1,7 +1,8 @@
 // `<SelectionAsk>` のロジック。レポートの本文で字を選び終えたときに口の位置と字を持ち、押されたら引用を下書きの頭に入れて入力欄へフォーカスを送る。
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 
+import { useEventListener } from "../../../../../../hooks/use-event-listener.ts"
 import { useComposerFocus } from "../../../../../../stores/composer-focus.ts"
 import { useComposerDraft } from "../../../stores/composer-draft.ts"
 import { quoteOf } from "../domain/selection-quote.ts"
@@ -20,53 +21,36 @@ export function useSelectionAsk(): SelectionAskView {
   const prependToDraft = useComposerDraft((state) => state.prependToDraft)
   const requestFocus = useComposerFocus((state) => state.requestFocus)
 
-  useEffect(() => {
-    function show(): void {
-      setSelection(reportSelectionOf(document.getSelection()))
-    }
-    function hide(): void {
-      setSelection(undefined)
-    }
-    function onPointerUp(): void {
+  function show(): void {
+    setSelection(reportSelectionOf(document.getSelection()))
+  }
+  function hide(): void {
+    setSelection(undefined)
+  }
+  useEventListener(document, "pointerup", show)
+  useEventListener(document, "keyup", (event) => {
+    if (isSelectionKey(event)) {
       show()
     }
-    function onKeyUp(event: KeyboardEvent): void {
-      if (isSelectionKey(event)) {
-        show()
-      }
+  })
+  useEventListener(document, "keydown", (event) => {
+    if (event.key === "Escape") {
+      hide()
     }
-    function onKeyDown(event: KeyboardEvent): void {
-      if (event.key === "Escape") {
-        hide()
-      }
+  })
+  useEventListener(document, "pointerdown", (event) => {
+    if (
+      !(event.target instanceof Element && event.target.closest(`[${SELECTION_ASK_ATTRIBUTE}]`))
+    ) {
+      hide()
     }
-    function onPointerDown(event: PointerEvent): void {
-      if (
-        !(event.target instanceof Element && event.target.closest(`[${SELECTION_ASK_ATTRIBUTE}]`))
-      ) {
-        hide()
-      }
+  })
+  useEventListener(document, "selectionchange", () => {
+    if (reportSelectionOf(document.getSelection()) === undefined) {
+      hide()
     }
-    function onSelectionChange(): void {
-      if (reportSelectionOf(document.getSelection()) === undefined) {
-        hide()
-      }
-    }
-    document.addEventListener("pointerup", onPointerUp)
-    document.addEventListener("keyup", onKeyUp)
-    document.addEventListener("keydown", onKeyDown)
-    document.addEventListener("pointerdown", onPointerDown)
-    document.addEventListener("selectionchange", onSelectionChange)
-    document.addEventListener("scroll", hide, true)
-    return () => {
-      document.removeEventListener("pointerup", onPointerUp)
-      document.removeEventListener("keyup", onKeyUp)
-      document.removeEventListener("keydown", onKeyDown)
-      document.removeEventListener("pointerdown", onPointerDown)
-      document.removeEventListener("selectionchange", onSelectionChange)
-      document.removeEventListener("scroll", hide, true)
-    }
-  }, [])
+  })
+  useEventListener(document, "scroll", hide, { capture: true })
 
   return {
     selection,

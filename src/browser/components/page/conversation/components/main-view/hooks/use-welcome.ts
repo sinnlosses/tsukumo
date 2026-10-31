@@ -1,13 +1,12 @@
 // 始め方の一覧の札と「ほかの始め方」を、状態・前回のセッションの要約・タスク一覧から用意する。
 // 押す口とキーは、どちらも依頼をすぐ送るか、ほかの口（入力欄・タスクのモーダル・切り替え画面）を開く。
 
-import { useEffect } from "react"
-
 import {
   characterFaceInfo,
   type CharacterFaceInfo,
 } from "../../../../../../domain/character-face.ts"
 import { isOverlayOpen } from "../../../../../../hooks/open-overlay.ts"
+import { useEventListener } from "../../../../../../hooks/use-event-listener.ts"
 import { useComposerFocus } from "../../../../../../stores/composer-focus.ts"
 import { useSessionSwitcherRequest } from "../../../../../../stores/session-switcher-request.ts"
 import { useSession } from "../../../../../../stores/session.ts"
@@ -47,40 +46,33 @@ export function useWelcome(): WelcomeModel {
     dispatch.session.prompt({ text: card.request, images: [] })
   }
 
-  // 購読先は `document` の `keydown`（React の外）。
-  useEffect(() => {
-    function onKeyDown(event: KeyboardEvent): void {
-      if (asking || isOverlayOpen()) {
-        return
-      }
-      const key = welcomeKeyOf({
-        key: event.key,
-        metaKey: event.metaKey,
-        ctrlKey: event.ctrlKey,
-        altKey: event.altKey,
-        isComposing: event.isComposing,
-        target: event.target,
-      })
-      if (key === undefined) {
-        return
-      }
-      if (key.kind === "card") {
-        const card = cards[key.index]
-        if (card !== undefined) {
-          event.preventDefault()
-          onStart(card)
-        }
-      } else if (key.kind === "write") {
-        event.preventDefault()
-        requestFocus()
-      } else if (hasOtherSessions) {
-        event.preventDefault()
-        onSeePrevious()
-      }
+  useEventListener(document, "keydown", (event) => {
+    if (asking || isOverlayOpen()) {
+      return
     }
-    document.addEventListener("keydown", onKeyDown)
-    return () => {
-      document.removeEventListener("keydown", onKeyDown)
+    const key = welcomeKeyOf({
+      key: event.key,
+      metaKey: event.metaKey,
+      ctrlKey: event.ctrlKey,
+      altKey: event.altKey,
+      isComposing: event.isComposing,
+      target: event.target,
+    })
+    if (key === undefined) {
+      return
+    }
+    if (key.kind === "card") {
+      const card = cards[key.index]
+      if (card !== undefined) {
+        event.preventDefault()
+        onStart(card)
+      }
+    } else if (key.kind === "write") {
+      event.preventDefault()
+      requestFocus()
+    } else if (hasOtherSessions) {
+      event.preventDefault()
+      onSeePrevious()
     }
   })
 

@@ -17,6 +17,8 @@ let tickTimer: ReturnType<typeof setInterval> | undefined
 export function useNowWhile(active: boolean): number {
   const [now, setNow] = useState(() => nowEpochMilliseconds())
 
+  // `stores` の箱は `hooks` を読めず、`useExternalSync` に載せられないので生の effect のまま。
+  // 部品ごとに最後の刻みを持つため、共有のスナップショットの `useSyncExternalStore` にも載らない。
   useEffect(() => {
     if (!active) {
       return undefined

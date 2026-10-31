@@ -6,7 +6,6 @@
 // 離した瞬間に呼ばれる `on*Commit` だけが state を更新し、`saveSplit` で保存し、体験の記録へ離したことを送る。
 
 import {
-  useEffect,
   useId,
   useRef,
   useState,
@@ -15,6 +14,7 @@ import {
   type RefObject,
 } from "react"
 
+import { useEventListener } from "../../../../../../hooks/use-event-listener.ts"
 import { usePopover } from "../../../../../../hooks/use-popover.ts"
 import { reportSplitRelease } from "../domain/split-release-report.ts"
 import { DEFAULT_SPLIT, isDefaultSplit, loadSplit, saveSplit, type Split } from "../domain/split.ts"
@@ -64,21 +64,17 @@ export function useConversationLayout(collapseCharacter: boolean): UseConversati
   const sidebar = usePopover({ rootRef: sideRef, onReset: () => {} })
   const { open: sidebarOpen, close: closeSidebar } = sidebar
 
-  useEffect(() => {
-    if (!sidebarOpen) {
-      return
-    }
-    const tier = window.matchMedia(RAIL_TIER_QUERY)
-    function closeOutsideTier(): void {
+  const [tier] = useState(() => window.matchMedia(RAIL_TIER_QUERY))
+  useEventListener(
+    tier,
+    "change",
+    () => {
       if (!tier.matches) {
         closeSidebar()
       }
-    }
-    tier.addEventListener("change", closeOutsideTier)
-    return () => {
-      tier.removeEventListener("change", closeOutsideTier)
-    }
-  }, [sidebarOpen, closeSidebar])
+    },
+    { enabled: sidebarOpen },
+  )
 
   // 仕切りを離したとき・既定に戻すときだけ通る、比率の唯一の更新点。
   // ドラッグ中は state を触らないので、ここの `split` は最後に確定した比率そのもの。

@@ -2,13 +2,14 @@
 // 待ち終えてから抜き書きを読みに行き、届いた時点でまだ待っていたら出す。
 // 外へ出る・フォーカスが外れる・Esc・外での押下・スクロールで閉じる。
 
-import { useEffect, useRef, useState, type RefObject } from "react"
+import { useRef, useState, type RefObject } from "react"
 
 import type {
   FileExcerpt,
   FileExcerptRequest,
 } from "../../../../../../../shared/repository/file-excerpt.ts"
 import { useDismissSignal } from "../../../../../../hooks/use-dismiss-signal.ts"
+import { useEventListener } from "../../../../../../hooks/use-event-listener.ts"
 import { useUnmountEffect } from "../../../../../../hooks/use-mount-effect.ts"
 import type { LineRange, PointedLines } from "../domain/pointed-line-range.ts"
 
@@ -110,20 +111,16 @@ export function useFileExcerptPeek(
 
   // 浮きは窓の座標に置くので、スクロールしたら閉じる。
   const shown = state.kind === "shown"
-  useEffect(() => {
-    if (!shown) {
-      return
-    }
-    // 出ている間は待ちが残っていないので、閉じるだけでよい。
-    function closeOnScroll(): void {
+  // 出ている間は待ちが残っていないので、閉じるだけでよい。
+  useEventListener(
+    document,
+    "scroll",
+    () => {
       generation.current += 1
       setState(CLOSED)
-    }
-    document.addEventListener("scroll", closeOnScroll, true)
-    return () => {
-      document.removeEventListener("scroll", closeOnScroll, true)
-    }
-  }, [shown])
+    },
+    { enabled: shown, capture: true },
+  )
 
   // 外したあとに待ちの応答が届いても出さない。
   useUnmountEffect(() => {

@@ -6,8 +6,11 @@
 // `scrollIntoView` は「どの祖先が転がっているか」を呼ぶ側が知らなくても、転がる祖先を全部たどって動かす。
 // 読み位置を戻すときは差を測って動かすので、転がる祖先を自分で探す（`scrollerOf`）。
 
-import { useEffect, useRef, useState, type RefObject } from "react"
+import { useRef, useState, type RefObject } from "react"
 
+import { useEventListener } from "../../../../../../hooks/use-event-listener.ts"
+import { useExternalSync } from "../../../../../../hooks/use-external-sync.ts"
+import { useMountEffect } from "../../../../../../hooks/use-mount-effect.ts"
 import { useSession } from "../../../../../../stores/session.ts"
 import {
   rememberedPosition,
@@ -36,33 +39,30 @@ export function useActiveTurnScroll(
     setStableTarget(shownTarget)
   }
 
-  useEffect(() => {
-    function resolve(): void {
-      const root = scrollerRef.current
-      geometryRef.current = root === null ? undefined : resolveGeometry(root)
+  function resolve(): void {
+    const root = scrollerRef.current
+    geometryRef.current = root === null ? undefined : resolveGeometry(root)
+  }
+  function onScroll(): void {
+    const root = scrollerRef.current
+    const current = shownRef.current
+    if (root === null || current.kind !== "report") {
+      return
     }
-    function onScroll(): void {
-      const root = scrollerRef.current
-      const current = shownRef.current
-      if (root === null || current.kind !== "report") {
-        return
-      }
-      currentRef.current = {
-        generation: useSession.getState().generation,
-        turnId: current.turnId,
-        position: measure(root, geometryRef),
-      }
+    currentRef.current = {
+      generation: useSession.getState().generation,
+      turnId: current.turnId,
+      position: measure(root, geometryRef),
     }
-    resolve()
-    window.addEventListener("resize", resolve)
-    const unsubscribe = subscribeScrollFrame(onScroll)
-    return () => {
-      window.removeEventListener("resize", resolve)
-      unsubscribe()
-    }
-  }, [scrollerRef])
+  }
 
-  useEffect(() => {
+  useMountEffect(() => {
+    resolve()
+    return subscribeScrollFrame(onScroll)
+  })
+  useEventListener(window, "resize", resolve)
+
+  useExternalSync(() => {
     const shown = stableTarget
     const previous = shownRef.current
     shownRef.current = shown
