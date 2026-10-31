@@ -189,7 +189,7 @@ describe("createSessionManager", () => {
       writeGate: Promise<void> = Promise.resolve(),
     ) {
       const stub = createStubDriver()
-      const promptImageShelf = createPromptImageShelf()
+      const promptImageShelf = createPromptImageShelf(() => crypto.randomUUID())
       const [shelved] = promptImageShelf.shelve([
         { full: SYNTHETIC_DATA_URL, thumbnail: SYNTHETIC_DATA_URL },
       ])

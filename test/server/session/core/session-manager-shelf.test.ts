@@ -35,7 +35,7 @@ describe("依頼に添えた画像の棚", () => {
    * 受け取った画像（原寸と id つき）も覚える。
    */
   function startManagerWithShelf() {
-    const shelf: PromptImageShelf = createPromptImageShelf()
+    const shelf: PromptImageShelf = createPromptImageShelf(() => crypto.randomUUID())
     const prompted: ShelvedPromptImage[][] = []
     const manager = createSessionManager({
       promptImageShelf: shelf,
@@ -112,7 +112,7 @@ describe("依頼に添えた画像の棚", () => {
 
   /** 続きから起こした駆動へ、transcript から組み直した再生を流せる形で起こす。 */
   function startRestoringManager() {
-    const shelf: PromptImageShelf = createPromptImageShelf()
+    const shelf: PromptImageShelf = createPromptImageShelf(() => crypto.randomUUID())
     // 棚に置き直した id を覚える（窓から溢れて捨てられたものも、ここに残る）。
     const placedIds: string[] = []
     const stub = createStubDriver()

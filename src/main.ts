@@ -159,7 +159,7 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
 
   // 依頼に添えた画像の原寸の棚と、レポートの画像の棚も1つずつをここで作って両側へ渡す。
   // 両側が同じ棚を見ないと、置いた原寸をビューが引けない。
-  const promptImageShelf = createPromptImageShelf()
+  const promptImageShelf = createPromptImageShelf(() => crypto.randomUUID())
   const reportImageShelf = createReportImageShelf()
   const host = createHost(config.host)
   // 成果の画面が Beads の読みを覚える入れ物も1つで、ビューとセッションの両側が同じものを見る。

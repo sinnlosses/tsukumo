@@ -4,11 +4,20 @@ import {
   createPromptImageShelf,
   releasedPromptImageIds,
 } from "../../../../src/server/session-driver/core/prompt-image-shelf.ts"
-import {
-  type PromptImage,
-  promptImageIdSchema,
-} from "../../../../src/shared/session-driver/prompt-image.ts"
+import type { PromptImage } from "../../../../src/shared/session-driver/prompt-image.ts"
 import type { SessionRecord } from "../../../../src/shared/session/session-record.ts"
+
+function idOf(order: number): string {
+  return `00000000-0000-4000-8000-${String(order).padStart(12, "0")}`
+}
+
+function sequentialIds(): () => string {
+  let order = 0
+  return () => {
+    order += 1
+    return idOf(order)
+  }
+}
 
 function image(label: string): PromptImage {
   return {
@@ -38,7 +47,7 @@ function requestRecord(turnId: number, ids: readonly string[]): SessionRecord {
 
 describe("createPromptImageShelf", () => {
   it("置いた原寸を、返した id で引ける", () => {
-    const shelf = createPromptImageShelf()
+    const shelf = createPromptImageShelf(sequentialIds())
 
     const [shelved] = shelf.shelve([image("A")])
 
@@ -47,25 +56,25 @@ describe("createPromptImageShelf", () => {
     expect(shelf.find(shelved?.id ?? "")).toBe(image("A").full)
   })
 
-  it("id は推測できない値（UUID）で、1枚ごとに違う", () => {
-    const shelf = createPromptImageShelf()
+  it("id は渡された振り方で、1枚ごとに振られる", () => {
+    const shelf = createPromptImageShelf(sequentialIds())
 
     const shelved = shelf.shelve([image("A"), image("B")])
-    const ids = shelved.map((entry) => entry.id)
+    const restored = shelf.shelveRestored([image("C").full])
 
-    expect(ids.every((id) => promptImageIdSchema.safeParse(id).success)).toBe(true)
-    expect(new Set(ids).size).toBe(2)
+    expect(shelved.map((entry) => entry.id)).toEqual([idOf(1), idOf(2)])
+    expect(restored.map((entry) => entry.id)).toEqual([idOf(3)])
   })
 
   it("置いていない id では何も引けない", () => {
-    const shelf = createPromptImageShelf()
+    const shelf = createPromptImageShelf(sequentialIds())
     shelf.shelve([image("A")])
 
     expect(shelf.find("00000000-0000-4000-8000-000000000000")).toBeUndefined()
   })
 
   it("0.5 MiB の画像なら20枚置いても全部残る", () => {
-    const shelf = createPromptImageShelf()
+    const shelf = createPromptImageShelf(sequentialIds())
     const halfMebibyte = 512 * 1024
 
     const entries = Array.from({ length: 20 }, (_, index) =>
@@ -77,7 +86,7 @@ describe("createPromptImageShelf", () => {
   })
 
   it("合計の大きさが上限（128 MiB）を超えるあいだ、古いほうから捨てる", () => {
-    const shelf = createPromptImageShelf()
+    const shelf = createPromptImageShelf(sequentialIds())
     const quarter = (128 * 1024 * 1024) / 4
 
     // 4枚ぶん（ちょうど上限）まではどれも残る。
@@ -99,7 +108,7 @@ describe("createPromptImageShelf", () => {
   })
 
   it("release した id は引けなくなり、他は残る", () => {
-    const shelf = createPromptImageShelf()
+    const shelf = createPromptImageShelf(sequentialIds())
     const [a, b] = shelf.shelve([image("A"), image("B")])
 
     shelf.release([a?.id ?? ""])
@@ -109,7 +118,7 @@ describe("createPromptImageShelf", () => {
   })
 
   it("復元で置き直した原寸は、控えを持たない id として返り、その id で引ける", () => {
-    const shelf = createPromptImageShelf()
+    const shelf = createPromptImageShelf(sequentialIds())
 
     const restored = shelf.shelveRestored([image("A").full, image("B").full])
 

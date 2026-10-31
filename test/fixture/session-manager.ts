@@ -88,7 +88,7 @@ function defaultSessionManagerOptions() {
     diagnosticLog: NOOP_DIAGNOSTIC_LOG,
     contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
     reportUsageLog: NOOP_REPORT_USAGE_LOG,
-    promptImageShelf: createPromptImageShelf(),
+    promptImageShelf: createPromptImageShelf(() => crypto.randomUUID()),
     reportImageShelf: createReportImageShelf(),
     readReportImage: () => undefined,
     rememberSessionDefault: (sessionDefault) => ({

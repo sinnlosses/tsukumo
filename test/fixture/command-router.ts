@@ -107,7 +107,7 @@ export function createRecordingPorts(
     writeResult === "written" ? CHARACTER_EVENT : undefined
   const ports: CommandRouterPorts = {
     session: {
-      promptImageShelf: createPromptImageShelf(),
+      promptImageShelf: createPromptImageShelf(() => crypto.randomUUID()),
       rememberSessionDefault: (sessionDefault) => {
         remembered.push(sessionDefault)
         return { kind: "session-default-changed", sessionDefault }

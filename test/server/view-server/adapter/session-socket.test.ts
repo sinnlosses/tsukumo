@@ -91,7 +91,7 @@ async function start(openFileResult = true): Promise<Started> {
     },
     socketRouter: createSocketRouter({
       session: {
-        promptImageShelf: createPromptImageShelf(),
+        promptImageShelf: createPromptImageShelf(() => crypto.randomUUID()),
         rememberSessionDefault: unexpected,
         readAchievementDay: unexpected,
         diary: { kind: "dont-write" },

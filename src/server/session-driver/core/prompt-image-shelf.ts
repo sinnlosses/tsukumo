@@ -45,7 +45,7 @@ export type PromptImageShelf = {
   readonly release: (ids: readonly string[]) => void
 }
 
-export function createPromptImageShelf(): PromptImageShelf {
+export function createPromptImageShelf(newId: () => string): PromptImageShelf {
   // `Map` は入れた順を保つので、先頭がいちばん古い。
   const shelved = new Map<string, string>()
 
@@ -71,12 +71,12 @@ export function createPromptImageShelf(): PromptImageShelf {
 
   return {
     shelve: (images) => {
-      const entries = images.map((image) => ({ ...image, id: crypto.randomUUID() }))
+      const entries = images.map((image) => ({ ...image, id: newId() }))
       place(entries)
       return entries
     },
     shelveRestored: (fulls) => {
-      const entries = fulls.map((full) => ({ full, id: crypto.randomUUID() }))
+      const entries = fulls.map((full) => ({ full, id: newId() }))
       place(entries)
       return entries.map(({ id }) => ({ kind: "restored", id }))
     },
