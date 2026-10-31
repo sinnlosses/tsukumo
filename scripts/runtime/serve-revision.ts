@@ -11,6 +11,7 @@
 // 使い方:
 //   node scripts/runtime/serve-revision.ts HEAD~1                      # 1つ前のコミットを起こす
 //   node scripts/runtime/serve-revision.ts HEAD~1 --port 7336 --scene notation-figure
+//   node scripts/runtime/serve-revision.ts HEAD~1 > ログ 2>&1 &       # 背景に回す（| tail に繋がない）
 //   node scripts/runtime/stop.ts --port 7338                           # 止める（必ず打つ）
 //
 // 起こしたものは自分では止まらない。撮り終えたら `node scripts/runtime/stop.ts --port` で止める
@@ -31,7 +32,7 @@
 // コメント）なので、貸した `.git` を書き換える心配はない。
 
 import { type ChildProcess, execFileSync } from "node:child_process"
-import { existsSync, mkdirSync, symlinkSync } from "node:fs"
+import { existsSync, fstatSync, mkdirSync, symlinkSync } from "node:fs"
 import path from "node:path"
 import process from "node:process"
 import { parseArgs } from "node:util"
@@ -41,6 +42,7 @@ import { z } from "zod"
 import { spawnFakeTsukumo, waitForViewUrl } from "../shared/fake-tsukumo-process.ts"
 import { positiveIntegerArgument } from "../shared/positive-integer-argument.ts"
 import { REPOSITORY_ROOT } from "../shared/repository-root.ts"
+import { stdoutPipeWarning } from "../shared/stdout-pipe-warning.ts"
 
 /**
  * 取り出し先の親（リポジトリの外）。コミットごとに下に掘るので、同じコミットを何度起こしても
@@ -126,6 +128,10 @@ async function main(argv: readonly string[]): Promise<number> {
     `${revision.sha} を配信中\n  ${url}\n` +
       `止める: node scripts/runtime/stop.ts --port ${String(options.port)}\n`,
   )
+  const pipeWarning = stdoutPipeWarning(fstatSync(process.stdout.fd))
+  if (pipeWarning !== undefined) {
+    process.stderr.write(pipeWarning)
+  }
   return waitForExit(session)
 }
 
