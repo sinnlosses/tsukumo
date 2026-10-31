@@ -29,7 +29,7 @@ export function findWorktreeShellWriteDenial(
 }
 
 /** 作業ツリーの根。`CLAUDE_PROJECT_DIR`、無ければ hook の入力の `cwd`。絶対パスでなければ `undefined`。 */
-export function readWorkRoot(cwd: string | undefined): string | undefined {
-  const candidate = process.env["CLAUDE_PROJECT_DIR"] || cwd
+export function readWorkRoot(call: BashHookCall): string | undefined {
+  const candidate = process.env["CLAUDE_PROJECT_DIR"] || call.cwd
   return candidate !== undefined && isAbsolute(candidate) ? candidate : undefined
 }

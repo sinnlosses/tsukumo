@@ -16,7 +16,7 @@ import { findWorktreeShellWriteDenial, readWorkRoot } from "./lib/worktree-shell
 
 const DENIALS = [
   findBroadKillDenial,
-  (call) => findWorktreeShellWriteDenial(call, readWorkRoot(call.cwd)),
+  (call) => findWorktreeShellWriteDenial(call, readWorkRoot(call)),
   findBackgroundVerifyDenial,
   findStdinWaitCatDenial,
   findForeignRestoreDenial,

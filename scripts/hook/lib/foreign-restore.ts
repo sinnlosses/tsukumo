@@ -3,6 +3,7 @@
 
 import { spawnSync } from "node:child_process"
 import type { SpawnSyncReturns } from "node:child_process"
+import process from "node:process"
 
 import { readOpenClaim } from "../../shared/open-claim.ts"
 import type { BashDenial } from "./bash-denial.ts"
@@ -23,7 +24,7 @@ const REFUSAL = `この作業ツリーには自分の着手の印が無いのに
 /** 未コミットの変更を消しうる git を打つ呼び出しで、印が無く未コミットの変更がある作業ツリーなら拒否を返す。 */
 export function findForeignRestoreDenial(
   call: BashHookCall,
-  probe: WorktreeProbe = createWorktreeProbe(call.cwd),
+  probe: WorktreeProbe = createWorktreeProbe(call.cwd ?? process.cwd()),
 ): BashDenial | undefined {
   const rule = findDestructiveGitRule(call.command)
   if (rule === undefined) {
@@ -58,9 +59,9 @@ function findDestructiveGitRule(bashCommand: string): string | undefined {
 }
 
 /** 実際の作業ツリー（`cwd`）を `git status` と `tw status --claims` で調べる。読めなかった問い合わせは `undefined`。 */
-function createWorktreeProbe(cwd: string | undefined): WorktreeProbe {
+function createWorktreeProbe(cwd: string): WorktreeProbe {
   const options = {
-    ...(cwd === undefined ? {} : { cwd }),
+    cwd,
     encoding: "utf8",
     timeout: 5000,
   } as const
