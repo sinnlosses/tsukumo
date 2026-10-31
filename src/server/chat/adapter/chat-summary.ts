@@ -19,9 +19,9 @@ import type { CharacterPackName } from "../../../shared/character-pack/character
 import { writeFileAtomic } from "../../adapter/lib/atomic-file.ts"
 import { readJsonFile } from "../../adapter/lib/json-file.ts"
 import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
-import { byteLength } from "../../core/byte-length.ts"
 import { CHAT_MEMORY_BUDGET } from "../core/chat-memory-budget.ts"
 import type { ChatSummary, ChatSummaryFold, ChatSummaryRecord } from "../core/chat-memory.ts"
+import { truncatedSummary } from "../core/chat-summary-truncation.ts"
 
 const SUMMARY_FILE_SUFFIX = ".summary.json"
 
@@ -55,7 +55,7 @@ export function createChatSummary(
     readTopics: () => readStored(paths)?.topics ?? [],
     readFold: () => readStored(paths)?.fold ?? UNKNOWN_FOLD,
     write: (summary, topics, foldedThrough) => {
-      const truncated = truncatedSummary(summary)
+      const truncated = truncatedSummary(summary, CHAT_SUMMARY_LIMIT_BYTES)
       const written = store(paths, {
         delivered: readStored(paths)?.delivered ?? false,
         synopsis: truncated.text,
@@ -181,34 +181,4 @@ function entryNames(dir: string): readonly string[] {
   } catch {
     return []
   }
-}
-
-/**
- * {@link CHAT_SUMMARY_LIMIT_BYTES} に収まるよう、要約の本文を行単位で切り詰める。
- * 古いほうの行から落とし、行の途中では切らない。
- *
- * 本文の行は「新しい→古い」の順に積み、収まらなくなったところで古い行を落とす。
- * 要約の文面は「前の要約 + 新しい会話」を毎回まとめ直したものなので、末尾に近いほうが新しい話題という前提。
- *
- * 1行だけで上限を超えるとき（改行が無い）は、その1行をそのまま残す。
- * 空にする（＝要約ごと消える）よりも、上限を少し超えるほうを選ぶ。
- */
-function truncatedSummary(summary: string): {
-  readonly text: string
-  readonly droppedLines: number
-} {
-  const lines = summary.split("\n")
-  const kept: string[] = []
-  let usedBytes = 0
-  for (const line of lines.toReversed()) {
-    const separatorBytes = kept.length > 0 ? 1 : 0
-    const lineBytes = byteLength(line) + separatorBytes
-    if (kept.length > 0 && usedBytes + lineBytes > CHAT_SUMMARY_LIMIT_BYTES) {
-      break
-    }
-    kept.unshift(line)
-    usedBytes += lineBytes
-  }
-
-  return { text: kept.join("\n"), droppedLines: lines.length - kept.length }
 }

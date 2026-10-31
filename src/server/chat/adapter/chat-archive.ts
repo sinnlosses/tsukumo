@@ -37,7 +37,6 @@ import { byteLength } from "../../core/byte-length.ts"
 import type {
   ChatArchive,
   ChatArchiveEntry,
-  ChatArchiveLine,
   ChatArchiveLineOrigin,
   ChatArchiveRecentEntry,
   ChatReadbackLimits,
@@ -46,8 +45,8 @@ import type {
   ChatUnconsolidatedLimits,
 } from "../core/chat-archive-port.ts"
 import { takeWithinBytes } from "../core/chat-byte-budget.ts"
-import { isAfterAt, isBeforeAt } from "../core/chat-instant-order.ts"
 import type { ChatFoldPoint } from "../core/chat-memory.ts"
+import { entriesUntilWindow, type TimedEntry } from "../core/chat-unconsolidated-selection.ts"
 import { CHAT_IMAGE_DIR_NAME, writeChatImage } from "./chat-archive-image.ts"
 
 const CONSOLIDATION_LOCK_FILE_NAME = "consolidation.lock"
@@ -294,15 +293,6 @@ function toTimedEntry(raw: unknown): TimedEntry | undefined {
   }
 }
 
-/**
- * 載せる形に、索引と突き合わせるための時刻を添えたもの。
- * `at` は外へ出さない（{@link ChatArchiveRecentEntry} が持つのは日付までで、時刻は渡さない）。
- */
-type TimedEntry = {
-  readonly at: string
-  readonly line: ChatArchiveLine
-}
-
 /** 読み戻す1件にする。日付は `at` の頭10文字で、行だけで意味が決まる（ファイル名には頼らない）。 */
 function recentEntryOf(timed: TimedEntry): ChatArchiveRecentEntry {
   return { ...timed.line, date: timed.at.slice(0, 10) }
@@ -330,25 +320,16 @@ function readUnconsolidated(
     }),
   )
 
-  function* untilWindow(): Generator<TimedEntry> {
-    for (const timed of all) {
-      if (afterAt !== undefined && !isAfterAt(timed.at, afterAt)) {
-        continue
-      }
-      if (windowStartAt !== undefined && !isBeforeAt(timed.at, windowStartAt)) {
-        return
-      }
-      yield timed
-    }
-  }
-
   // 先頭の1件だけで maxBytes を超えるときは、切らずにその1件だけを単独で渡す。
   // 行の途中では切らないまま、その回で必ず前へ進めるため。
-  const { taken, usedBytes, overflowed } = takeWithinBytes(untilWindow(), {
-    limitBytes: limits.maxBytes,
-    sizeOf: timedEntryBytes,
-    whenFirstExceeds: "take",
-  })
+  const { taken, usedBytes, overflowed } = takeWithinBytes(
+    entriesUntilWindow(all, afterAt, windowStartAt),
+    {
+      limitBytes: limits.maxBytes,
+      sizeOf: timedEntryBytes,
+      whenFirstExceeds: "take",
+    },
+  )
   const entries: readonly ChatUnconsolidatedEntry[] = taken.map((timed) => ({
     ...timed.line,
     at: timed.at,

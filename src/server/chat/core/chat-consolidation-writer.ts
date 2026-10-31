@@ -28,6 +28,7 @@ import type {
   ChatUnconsolidatedEntry,
   ChatUnconsolidatedLimits,
 } from "./chat-archive-port.ts"
+import { isConsolidationDue } from "./chat-consolidation-due.ts"
 import {
   CHAT_CONSOLIDATION_LIMITS,
   CHAT_CONSOLIDATION_TIMEOUT_MS,
@@ -278,10 +279,7 @@ async function consolidateLocked(
     // maxBytes に届いて打ち切ったとき（先頭の1件だけで超えるときを含む）は、契機に届いていなくてもここまでを渡す。
     // 待つと、残りの行がずっと畳まれなくなる。
     const lastEntry = batch.entries.at(-1)
-    if (
-      lastEntry === undefined ||
-      (!batch.overflowed && batch.usedBytes < CHAT_MEMORY_BUDGET.consolidateEveryBytes)
-    ) {
+    if (lastEntry === undefined || !isConsolidationDue(batch)) {
       dueGate.defer(packName, batch.usedBytes)
       return NOT_DUE
     }

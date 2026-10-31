@@ -13,11 +13,6 @@
 
 import { join } from "node:path"
 
-import {
-  REMEMBERED_SECTION_HEADING,
-  rememberedSectionStart,
-} from "../../../shared/character-pack/persona-section.ts"
-import { MAX_REMEMBERED_LINE_LENGTH } from "../../../shared/chat/persona-memory.ts"
 import { writeFileAtomic } from "../../adapter/lib/atomic-file.ts"
 import { readOptionalFile } from "../../adapter/lib/optional-file.ts"
 import { copyPackOnce } from "../../character-pack/adapter/character-edit.ts"
@@ -28,9 +23,14 @@ import {
   PERSONA_FILE_NAME,
 } from "../../character-pack/adapter/character-pack.ts"
 import type { PersonaMemory } from "../core/chat-memory.ts"
-
-/** 節が持てる行数（超えたらいちばん古い行を落とす）。 */
-const MAX_REMEMBERED_LINES = 20
+import {
+  forgetRejection,
+  forgetTarget,
+  personaWithoutRememberedLine,
+  personaWithRememberedLine,
+  rememberedTexts,
+  rememberRejection,
+} from "../core/persona-memory-edit.ts"
 
 /** `persona.md` に書けなかったことの知らせ口。`error` からは `error.name` と code だけを写すこと。 */
 export type PersonaMemoryFailureReport = (
@@ -55,7 +55,7 @@ type PersonaEraseResult =
  * 書かずに返すのは次の5つ:
  *
  * - そのターンで既に1行書いている（{@link PersonaMemory.finishTurn} まで受け付けない）
- * - 空の行・改行を含む行・{@link MAX_REMEMBERED_LINE_LENGTH} を超える行
+ * - 空の行・改行を含む行・`MAX_REMEMBERED_LINE_LENGTH` を超える行
  * - 起動先の `characters/local` と同じ名前のパック（`isEditableCharacterPack`。書いても探索の順で負ける）
  * - 節に同じ文面の行がある（ターンの1行は使わない）
  * - ディスクに書けない（`onFailure` へも知らせる）
@@ -83,17 +83,14 @@ export function createPersonaMemory(
   return {
     remember: (line) => {
       const trimmed = line.trim()
-      if (written) {
-        return "turn-used"
-      }
-      if (!isWritableLine(trimmed)) {
-        return "unwritable-line"
-      }
-      if (!isEditableCharacterPack(pack, cwd)) {
-        return "not-editable"
-      }
-      if (readRememberedLines(pack, root).some((remembered) => remembered.trim() === trimmed)) {
-        return "duplicate"
+      const rejection = rememberRejection({
+        turnUsed: written,
+        line: trimmed,
+        editable: isEditableCharacterPack(pack, cwd),
+        remembered: readRememberedLines(pack, root),
+      })
+      if (rejection !== undefined) {
+        return rejection
       }
 
       const result = writeRememberedLine(pack, join(root, pack.name), trimmed)
@@ -107,14 +104,13 @@ export function createPersonaMemory(
     },
     forget: (line) => {
       const target = forgetTarget(line)
-      if (forgotten) {
-        return "turn-used"
-      }
-      if (!isEditableCharacterPack(pack, cwd)) {
-        return "not-editable"
-      }
-      if (target === "") {
-        return "no-match"
+      const rejection = forgetRejection({
+        turnUsed: forgotten,
+        editable: isEditableCharacterPack(pack, cwd),
+        target,
+      })
+      if (rejection !== undefined) {
+        return rejection
       }
 
       const result = eraseRememberedLine(pack, join(root, pack.name), target)
@@ -146,10 +142,7 @@ export function readRememberedLines(
 ): readonly string[] {
   const path = join(root, pack.name, PERSONA_FILE_NAME)
   const current = readOptionalFile(path) ?? pack.persona ?? ""
-  const start = rememberedSectionStart(current)
-  return start === undefined
-    ? []
-    : rememberedLines(current.slice(start)).map((line) => line.slice(2))
+  return rememberedTexts(current)
 }
 
 /**
@@ -179,11 +172,6 @@ export function forgetRememberedLineFromScreen(
   return result.kind === "erased" ? readRememberedLines(pack, root) : undefined
 }
 
-/** 1行として受け取れる形か（空でない・改行を含まない・長さが上限以内）。 */
-function isWritableLine(line: string): boolean {
-  return line !== "" && !/[\n\r]/.test(line) && [...line].length <= MAX_REMEMBERED_LINE_LENGTH
-}
-
 /** ホームのパックの `persona.md` に1行書き足す。 */
 function writeRememberedLine(pack: CharacterPack, dir: string, line: string): PersonaWriteResult {
   try {
@@ -194,33 +182,6 @@ function writeRememberedLine(pack: CharacterPack, dir: string, line: string): Pe
   } catch (error) {
     return { kind: "failed", error }
   }
-}
-
-/**
- * 節に1行足した `persona.md` の全文。
- * 節が無ければ見出しごと末尾に作り、あれば箇条書きを1行足して {@link MAX_REMEMBERED_LINES} までに詰める（溢れるのはいちばん古い行）。
- *
- * 節より前の文字は足しも引きもしない。節を作るときに足すのは、見出しの前の改行だけ。
- */
-function personaWithRememberedLine(content: string, line: string): string {
-  const start = rememberedSectionStart(content)
-  if (start === undefined) {
-    return `${content}${headingSeparator(content)}${REMEMBERED_SECTION_HEADING}\n\n- ${line}\n`
-  }
-
-  const kept = [...rememberedLines(content.slice(start)), `- ${line}`].slice(-MAX_REMEMBERED_LINES)
-  return `${content.slice(0, start)}${REMEMBERED_SECTION_HEADING}\n\n${kept.join("\n")}\n`
-}
-
-/**
- * 消す行として突き合わせる文面。箇条書きの印（`- `）と前後の空白だけを落とす。
- * モデルは `systemPrompt` に載った節をそのまま写すので、印の付いた形でも来る。
- */
-function forgetTarget(line: string): string {
-  return line
-    .trim()
-    .replace(/^-[ \t]+/, "")
-    .trim()
 }
 
 /**
@@ -244,47 +205,4 @@ function eraseRememberedLine(pack: CharacterPack, dir: string, target: string): 
   } catch (error) {
     return { kind: "failed", error }
   }
-}
-
-/**
- * 節から1行消した `persona.md` の全文（節が無い・一致する行が無いときは undefined）。
- * 同じ文面が2行あるときに消すのはいちばん古い1つだけ。
- *
- * 節より前の文字は足しも引きもしない。
- * 最後の1行を消したときは見出しごと落とす（空の節を `systemPrompt` に載せない）。
- */
-function personaWithoutRememberedLine(content: string, target: string): string | undefined {
-  const start = rememberedSectionStart(content)
-  if (start === undefined) {
-    return undefined
-  }
-
-  const lines = rememberedLines(content.slice(start))
-  const at = lines.findIndex((line) => line.slice(2).trim() === target)
-  if (at < 0) {
-    return undefined
-  }
-
-  const before = content.slice(0, start)
-  const kept = lines.filter((_, index) => index !== at)
-  return kept.length === 0
-    ? before
-    : `${before}${REMEMBERED_SECTION_HEADING}\n\n${kept.join("\n")}\n`
-}
-
-/** 節の中の箇条書きの行（見出しと空行、人が書いた地の文は持ち越さない）。 */
-function rememberedLines(section: string): readonly string[] {
-  return section
-    .split("\n")
-    .map((line) => line.replace(/\r$/, ""))
-    .filter((line) => line.startsWith("- "))
-}
-
-/** 節を新しく作るときに、見出しの前に入れる改行（元の末尾と合わせて空行1つになる形）。 */
-function headingSeparator(content: string): string {
-  if (content === "" || content.endsWith("\n\n")) {
-    return ""
-  }
-
-  return content.endsWith("\n") ? "\n" : "\n\n"
 }
