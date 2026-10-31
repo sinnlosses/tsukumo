@@ -9,6 +9,7 @@ import { positiveIntegerArgument } from "../../shared/positive-integer-argument.
  *
  * - `scroll`: その要素が見えるところまで、それを囲む領域の内側を送る
  * - `click`: 押す（モーダルを開く口・狭い窓のタブ）
+ * - `click-if-shown`: 要素があれば押し、無ければ何もせず当たった扱いにする（窓の幅で出たり出なかったりする口）
  * - `hover`: 触れる（押すと状態が進んでしまう場所）
  * - `type`: 入力欄に打つ（`/` と `@` の補完）
  * - `hash`: `location.hash` を書いて画面を移す（キャラクター画面・作る画面）
@@ -19,6 +20,7 @@ import { positiveIntegerArgument } from "../../shared/positive-integer-argument.
 export type Preparation =
   | { readonly kind: "scroll"; readonly selector: string }
   | { readonly kind: "click"; readonly selector: string }
+  | { readonly kind: "click-if-shown"; readonly selector: string }
   | { readonly kind: "hover"; readonly selector: string }
   | { readonly kind: "type"; readonly selector: string; readonly text: string }
   | { readonly kind: "hash"; readonly hash: string }
@@ -61,6 +63,11 @@ export async function applyPreparation(
       case "click":
         await page.locator(step.selector).first().click({ timeout: timeoutMs })
         break
+      case "click-if-shown":
+        if ((await page.locator(step.selector).count()) > 0) {
+          await page.locator(step.selector).first().click({ timeout: timeoutMs })
+        }
+        break
       case "hover":
         await page.locator(step.selector).first().hover({ timeout: timeoutMs })
         break
@@ -98,6 +105,8 @@ export function describePreparation(step: Preparation): string {
       return `${step.selector} が見えるまで送る`
     case "click":
       return `${step.selector} を押す`
+    case "click-if-shown":
+      return `${step.selector} があれば押す`
     case "hover":
       return `${step.selector} に触れる`
     case "type":

@@ -58,8 +58,7 @@ export const COMPOSER_SELECTOR = "textarea"
 
 /**
  * 狭い窓でだけ出る引き出しを開く口と、その中のタスクのタブ。タスク一覧を開く口もある。
- * 広い窓では引き出しの口もタブも出ないので、この2手は空振りする
- * （空振りは飛ばして次の手へ進む。`applyPreparations` の `continue`）。
+ * 広い窓では引き出しの口もタブも出ない。
  */
 export const DRAWER_TOGGLE_SELECTOR = '[aria-label="やり取りとタスクを開く"]'
 export const DRAWER_TASKS_TAB_SELECTOR = '[role="tab"]:has-text("タスク")'

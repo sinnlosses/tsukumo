@@ -14,10 +14,10 @@ export const SCREEN_ENTRIES: readonly CatalogEntry[] = [
     scene: "report",
     label: "タスク一覧のモーダル",
     homeSetup: { kind: "default" },
-    workspaceSetup: { kind: "repository" },
+    workspaceSetup: { kind: "task-list" },
     prepare: [
-      { kind: "click", selector: DRAWER_TOGGLE_SELECTOR },
-      { kind: "click", selector: DRAWER_TASKS_TAB_SELECTOR },
+      { kind: "click-if-shown", selector: DRAWER_TOGGLE_SELECTOR },
+      { kind: "click-if-shown", selector: DRAWER_TASKS_TAB_SELECTOR },
       { kind: "click", selector: TASK_BOARD_SELECTOR },
     ],
     skipReveal: false,
