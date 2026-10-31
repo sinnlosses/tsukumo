@@ -256,3 +256,57 @@ describe("a2uiStructureFaults", () => {
     expect(a2uiStructureFaults(components)).toEqual(faults)
   })
 })
+
+describe("a2uiStructureFaults の寄せ先の無い memo", () => {
+  const note = (id: string, tone: string) => ({ id, component: "Note", tone, text: "架空の注記。" })
+
+  it.each([
+    {
+      name: "節の子が memo の Note 1つだけ",
+      components: [report(["s"]), section("s", ["n"]), note("n", "memo")],
+      faults: [{ kind: "memo-without-owner", pointer: "/components/1/children/0" }],
+    },
+    {
+      name: "節の先頭が memo の Note で後ろに Paragraph が続く",
+      components: [report(["s"]), section("s", ["n", "p"]), note("n", "memo"), paragraph("p")],
+      faults: [{ kind: "memo-without-owner", pointer: "/components/1/children/0" }],
+    },
+    {
+      name: "配置の部品の先頭にある memo の Note が節の最初の葉",
+      components: [
+        report(["s"]),
+        section("s", ["r", "p"]),
+        { id: "r", component: "Row", children: ["n"] },
+        note("n", "memo"),
+        paragraph("p"),
+      ],
+      faults: [{ kind: "memo-without-owner", pointer: "/components/2/children/0" }],
+    },
+  ])("$name を拾う", ({ components, faults }) => {
+    expect(a2uiStructureFaults(components)).toEqual(faults)
+  })
+
+  it.each([
+    {
+      name: "Paragraph の後ろの memo の Note",
+      components: [report(["s"]), section("s", ["p", "n"]), paragraph("p"), note("n", "memo")],
+    },
+    {
+      name: "先頭の memo 以外の Note",
+      components: [report(["s"]), section("s", ["n"]), note("n", "info")],
+    },
+    {
+      name: "前の節に葉があっても、自分の節の2番目以降にある memo",
+      components: [
+        report(["s1", "s2"]),
+        section("s1", ["p"]),
+        section("s2", ["q", "n"]),
+        paragraph("p"),
+        paragraph("q"),
+        note("n", "memo"),
+      ],
+    },
+  ])("$name は通る", ({ components }) => {
+    expect(a2uiStructureFaults(components)).toEqual([])
+  })
+})

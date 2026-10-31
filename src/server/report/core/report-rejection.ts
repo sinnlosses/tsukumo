@@ -72,6 +72,8 @@ const A2UI_STRUCTURE_FAULT_REASONS = {
   "nested-section": "Section の子に Section は置けない",
   "misplaced-component": "ここに置けない種類の部品",
   "deep-layout": "配置の部品の入れ子は 3 階層まで",
+  "memo-without-owner":
+    "節の先頭に tone が memo の Note は置けない（寄せ先が無く何も描かれない）。Paragraph などを先に置き、その後ろに Note を置く",
   "figure-not-figure-part": "Report.figure には図の部品の id を置く",
   "unreferenced-component": "どこからも参照されない部品",
   "filter-target-missing": "value の path が指す id の Table が無い（/view/<Table の id>/filter）",

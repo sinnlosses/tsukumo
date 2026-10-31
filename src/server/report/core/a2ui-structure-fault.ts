@@ -21,6 +21,7 @@ export type A2uiStructureFaultKind =
   | "nested-section"
   | "misplaced-component"
   | "deep-layout"
+  | "memo-without-owner"
   | "figure-not-figure-part"
   | "unreferenced-component"
   | "filter-target-missing"
@@ -85,6 +86,12 @@ export function a2uiStructureFaults(components: readonly unknown[]): readonly A2
       if (part === undefined) {
         return
       }
+      if (part.component === "Section") {
+        const first = firstLeafReference(part, index, parts, indexById)
+        if (first !== undefined && isMemoNote(parts[first.target])) {
+          faults.push({ kind: "memo-without-owner", pointer: first.pointer })
+        }
+      }
       for (const reference of referencesOf(part, index)) {
         const target = indexById.get(reference.id)
         if (target === undefined) {
@@ -122,6 +129,48 @@ export function a2uiStructureFaults(components: readonly unknown[]): readonly A2
 }
 
 const ROOT_ID = "root"
+
+type LeafReference = { readonly pointer: string; readonly target: number }
+
+/**
+ * 節の中で最初に描かれる葉（配置の部品の中へ降りて並び順に数える）への参照と、その部品の位置。
+ * 葉の前に寄せ先が無いので、これが `memo` の `Note` だと傍注の寄せ先が無い。
+ */
+function firstLeafReference(
+  section: ReturnType<typeof partOf>,
+  sectionIndex: number,
+  parts: readonly ReturnType<typeof partOf>[],
+  indexById: ReadonlyMap<string, number>,
+): LeafReference | undefined {
+  const seen = new Set<number>([sectionIndex])
+  const search = (
+    owner: ReturnType<typeof partOf>,
+    ownerIndex: number,
+  ): LeafReference | undefined => {
+    for (const reference of referencesOf(owner, ownerIndex)) {
+      const target = indexById.get(reference.id)
+      const component = target === undefined ? undefined : parts[target]?.component
+      if (target === undefined || component === undefined || seen.has(target)) {
+        continue
+      }
+      seen.add(target)
+      if (isLeaf(component)) {
+        return { pointer: reference.pointer, target }
+      }
+      const part = parts[target]
+      const found = part !== undefined && isContainer(component) ? search(part, target) : undefined
+      if (found !== undefined) {
+        return found
+      }
+    }
+    return undefined
+  }
+  return search(section, sectionIndex)
+}
+
+function isMemoNote(part: ReturnType<typeof partOf> | undefined): boolean {
+  return part?.component === "Note" && part.props.tone === "memo"
+}
 
 /**
  * `value` を `/view/<TableのID>/filter` に結んだ `ChoicePicker` が、実在する `filterable` な `Table` を指し、
