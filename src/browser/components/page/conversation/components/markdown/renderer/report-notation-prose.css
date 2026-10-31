@@ -19,8 +19,8 @@
     font-size: 0.86em;
     color: var(--ink);
     background: var(--report-code-surface);
-    padding: 1px 5px;
-    border-radius: 4px;
+    padding: var(--space-2xs) var(--space-xs);
+    border-radius: var(--radius-sm);
   }
   /* 情報の塊（素の `note`。結論を言う役）。
    6種（情報・注意・異常・疑問・メモ・お願い）に共通の余白もここが持つ。
@@ -31,7 +31,7 @@
    引用（blockquote）は目立たせないための印なので、灰の縦罫だけで地を染めない。 */
   & .report-note {
     margin: var(--report-block-gap) 0;
-    padding: 0.5rem 0.75rem;
+    padding: var(--space-sm) var(--space-md);
     background: color-mix(in srgb, var(--surface), var(--state-info) 6%);
   }
   & .report-note-warn {
@@ -65,7 +65,7 @@
    罫を持たない情報・疑問・メモは、ラベルの字が種類の色を持つ。罫を持つ注意・異常・お願いは ink 系のまま。 */
   & .report-note-label {
     display: block;
-    margin-bottom: 0.2rem;
+    margin-bottom: var(--space-xs);
     letter-spacing: 0.08em;
   }
   & .report-note-label-info {
@@ -85,7 +85,7 @@
   & h4 {
     max-inline-size: var(--report-measure);
     margin: 52px 0 var(--report-heading-gap);
-    padding-bottom: 6px;
+    padding-bottom: var(--space-sm);
     border-bottom: 1px solid color-mix(in srgb, var(--rule), var(--accent) 60%);
     font-size: var(--report-heading-2);
     font-weight: 700;
@@ -104,7 +104,7 @@
   }
   & blockquote {
     margin: var(--report-block-gap) 0;
-    padding-left: 0.75rem;
+    padding-left: var(--space-md);
     border-left: 3px solid var(--rule);
     color: var(--ink-quiet);
   }
@@ -123,9 +123,9 @@
    地を ground に落とすのは、親の地が surface でも塊として立つため。 */
   & details {
     margin: var(--report-block-gap) 0;
-    padding: 0.5rem 0.75rem;
+    padding: var(--space-sm) var(--space-md);
     border: 1px solid var(--report-chunk-rule, var(--rule));
-    border-radius: 0.5rem;
+    border-radius: var(--radius-md);
     background: var(--ground);
   }
   & summary {
@@ -133,7 +133,7 @@
     color: var(--ink-quiet);
   }
   & details[open] > summary {
-    margin-bottom: 0.5rem;
+    margin-bottom: var(--space-sm);
   }
   /* 枠の内側では、最後の塊の margin が padding に足されて下だけ広く空く。 */
   & details > :last-child:not(summary) {
@@ -161,7 +161,7 @@
     height: 1.1em;
     margin-right: 0.35em;
     border: 1px solid var(--ink-quiet);
-    border-radius: 0.2em;
+    border-radius: var(--radius-sm);
     line-height: 1.1;
     text-align: center;
     vertical-align: -0.15em;
@@ -256,9 +256,9 @@
     margin: var(--report-block-gap) 0;
     font-family: var(--font-code);
     font-size-adjust: none;
-    padding: 0.5rem;
+    padding: var(--space-sm);
     background: var(--ground);
-    border-radius: 0.4rem;
+    border-radius: var(--radius-md);
     white-space: pre-wrap;
     overflow-wrap: anywhere;
     /* 等幅の桁を和欧間アキで崩さない。 */
@@ -281,10 +281,10 @@
   & .code-file-name {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.2rem 0.5rem 0.2rem 0.5rem;
+    gap: var(--space-sm);
+    padding: var(--space-xs) var(--space-sm) var(--space-xs) var(--space-sm);
     background: var(--ground);
-    border-radius: 0.4rem 0.4rem 0 0;
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
     font-family: var(--font-mono);
     font-size: var(--font-secondary);
     color: var(--ink-quiet);
@@ -293,17 +293,17 @@
   /* 帯が上に乗るぶん、コード側の上マージンと上の角を落とす（.detail-block pre の既定を消す）。 */
   & .code-file > pre {
     margin-top: 0;
-    border-radius: 0 0 0.4rem 0.4rem;
+    border-radius: 0 0 var(--radius-md) var(--radius-md);
   }
   /* 行ごとに描くコード（`marks` のある塊と、コマンドの行のある shell の塊）。1行を1つの塊にし、<pre> の左右の余白まで地と罫を伸ばす。
    印の行は地を --surface-raised、左端に 2px の --accent を沈めた罫、ラベルは行の右端に 12px・--ink-quiet。 */
   & .code-line {
     display: flex;
     align-items: baseline;
-    gap: 0.75rem;
+    gap: var(--space-md);
     min-height: 1lh;
-    margin: 0 -0.5rem;
-    padding: 0 0.5rem;
+    margin: 0 calc(var(--space-sm) * -1);
+    padding: 0 var(--space-sm);
   }
   & .code-line-text {
     flex: 1 1 auto;
@@ -350,8 +350,8 @@
   & .code-fold {
     display: block;
     width: calc(100% + 1rem);
-    margin: 0 -0.5rem;
-    padding: 0.1rem 0.5rem;
+    margin: 0 calc(var(--space-sm) * -1);
+    padding: var(--space-2xs) var(--space-sm);
     border-radius: 0;
     text-align: left;
     font-family: var(--font-sans);
@@ -360,10 +360,10 @@
   & .code-copy {
     display: inline-flex;
     align-items: center;
-    gap: 0.25rem;
+    gap: var(--space-xs);
     margin-left: auto;
-    padding: 0.15rem 0.4rem;
-    border-radius: 0.3rem;
+    padding: var(--space-2xs) var(--space-sm);
+    border-radius: var(--radius-sm);
     flex-shrink: 0;
   }
   /* git 管理下のパスを押せる部品にしたときの見た目（inline code・フェンスのファイル名・相対リンクの3か所）。
