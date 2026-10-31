@@ -44,6 +44,7 @@ import {
   pinnedSpeechOf,
   resolvePinnedSpeech,
   toggledViewedSpeech,
+  type MarkedSpeech,
   type PinnedSpeech,
   type SpeechTarget,
   type ViewedSpeech,
@@ -141,7 +142,10 @@ export function useCharacterView(): CharacterViewModel {
 
   const now = useCharacterClock(turn, lastToolFailureAt, waitingDueAt)
   const latestReaction = useShownReaction(welcomeHead, now)
-  const pastTurn = pastTurnSpeech(turns, activeTurnId, newestTurnId)
+  const pastTurn =
+    activeTurnId === undefined || newestTurnId === undefined
+      ? undefined
+      : pastTurnSpeech(turns, activeTurnId, newestTurnId)
   const activeSpeeches = pastTurn === undefined ? speeches : pastTurn.speeches
   // 吹き出しの各件が、留めた行の並びの何番目か。今のターンの吹き出しは反応を含まないので、並びの位置へ写す。
   const lineIndices =
@@ -154,7 +158,6 @@ export function useCharacterView(): CharacterViewModel {
   const reaction: ShownReaction = pastTurn === undefined ? latestReaction : { kind: "none" }
   // 何も留めていないとき、印が付くのは「いま表示しているターン」の最後の吹き出し。
   // 反応を出しているあいだは立ち絵が反応に従うので、どの行にも付けない。
-  const defaultTurnId = activeTurnId
   const defaultIndex = reaction.kind === "none" ? lineIndices?.at(-1) : undefined
   // 過去のターンでは、記録に残った表情（そのターンの最後のセリフのもの）をそのまま当てる。
   const currentExpression = reaction.kind === "shown" ? reaction.line.expression : speechExpression
@@ -166,6 +169,16 @@ export function useCharacterView(): CharacterViewModel {
   // 失効した印を古い行に残すと、表情（最新に戻る）と印の位置が食い違う。
   const pinned = pinnedSpeech === undefined ? undefined : pinnedSpeechOf(viewed)
   const expression = pinnedSpeech?.expression ?? fallbackExpression
+  const marked: MarkedSpeech =
+    pinned !== undefined
+      ? { kind: "at", ...pinned }
+      : activeTurnId !== undefined && defaultIndex !== undefined
+        ? { kind: "at", turnId: activeTurnId, index: defaultIndex }
+        : { kind: "none" }
+  const anchor: BalloonAnchor =
+    activeTurnId === undefined || lineIndices === undefined
+      ? { kind: "none" }
+      : { kind: "anchored", turnId: activeTurnId, lineIndices, marked }
   const toggleSpeech = (turnId: number, index: number): void => {
     const current = pinnedSpeech === undefined ? LATEST_VIEWED_SPEECH : viewed
     setViewed(toggledViewedSpeech(current, turnId, index, speechesOfTurn(turnId)?.length ?? 0))
@@ -179,14 +192,7 @@ export function useCharacterView(): CharacterViewModel {
     altText,
     expression,
     motion,
-    speeches: balloonSpeeches(
-      activeSpeeches,
-      lineIndices,
-      defaultTurnId,
-      pinned,
-      defaultIndex,
-      now,
-    ),
+    speeches: balloonSpeeches(activeSpeeches, anchor, now),
     reaction: balloonReactionOf(reaction, now),
     speakerName: character?.name,
     pinnedSpeech: pinned,
@@ -245,28 +251,40 @@ function balloonReactionOf(reaction: ShownReaction, now: number): BalloonReactio
 }
 
 /**
- * `<BalloonTrack>` がそのまま置ける形に畳む。
+ * 吹き出しが遡る先。
  * `lineIndices` は各件が留めた行の並びの何番目か（{@link balloonLineIndices}）。
- * `turnId` か `lineIndices` が undefined なら遡る先を特定できないので、文面だけ出して押しても何もしない。
+ * 遡る先を特定できない（`none`）ときは、文面だけ出して押しても何もしない。
  */
+type BalloonAnchor =
+  | { readonly kind: "none" }
+  | {
+      readonly kind: "anchored"
+      readonly turnId: number
+      readonly lineIndices: readonly number[]
+      readonly marked: MarkedSpeech
+    }
+
+/** `<BalloonTrack>` がそのまま置ける形に畳む。 */
 function balloonSpeeches(
   speeches: readonly Speech[],
-  lineIndices: readonly number[] | undefined,
-  turnId: number | undefined,
-  pinned: PinnedSpeech | undefined,
-  defaultIndex: number | undefined,
+  anchor: BalloonAnchor,
   now: number,
 ): readonly CharacterViewSpeech[] {
   return speeches.map((speech, position) => {
-    const index = lineIndices?.[position]
+    const text = speech.text
+    const time = recordClockStampWithDay(speech.time, now)
+    if (anchor.kind === "none") {
+      return { text, time, selected: false, target: undefined }
+    }
+    const index = anchor.lineIndices[position]
+    if (index === undefined) {
+      return { text, time, selected: false, target: undefined }
+    }
     return {
-      text: speech.text,
-      time: recordClockStampWithDay(speech.time, now),
-      selected:
-        turnId !== undefined &&
-        index !== undefined &&
-        isSpeechSelected(pinned, turnId, index, turnId, defaultIndex),
-      target: turnId !== undefined && index !== undefined ? { turnId, index } : undefined,
+      text,
+      time,
+      selected: isSpeechSelected(anchor.marked, anchor.turnId, index),
+      target: { turnId: anchor.turnId, index },
     }
   })
 }
@@ -277,10 +295,10 @@ function balloonSpeeches(
  */
 function pastTurnSpeech(
   turns: readonly TurnSpeech[],
-  activeTurnId: number | undefined,
-  newestTurnId: number | undefined,
+  activeTurnId: number,
+  newestTurnId: number,
 ): TurnSpeech | undefined {
-  if (activeTurnId === undefined || activeTurnId === newestTurnId) {
+  if (activeTurnId === newestTurnId) {
     return undefined
   }
   return turns.find((turn) => turn.id === activeTurnId)

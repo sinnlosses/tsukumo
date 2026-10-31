@@ -25,7 +25,12 @@ import { localTimeZoneId } from "../../../../../../utils/clock.ts"
 import { dayLabel } from "../../../../../../utils/day-label.ts"
 import { entryDay, startsNewDay } from "../../../domain/chat-log.ts"
 import { recordClockStamp, type ClockStamp } from "../../../domain/clock-stamp.ts"
-import { isSpeechSelected, type PinnedSpeech, type SpeechTarget } from "../domain/pinned-speech.ts"
+import {
+  isSpeechSelected,
+  type MarkedSpeech,
+  type PinnedSpeech,
+  type SpeechTarget,
+} from "../domain/pinned-speech.ts"
 
 /**
  * セリフの古さの段。最新からいくつ前かで決める。
@@ -98,19 +103,31 @@ export function useSpeechLog(
     }
   }, [open])
 
+  const markBasis: LogMarkBasis =
+    pinnedSpeech !== undefined
+      ? { kind: "pinned", ...pinnedSpeech }
+      : activeTurnId !== undefined
+        ? { kind: "following", turnId: activeTurnId }
+        : { kind: "none" }
+
   return {
     scrollerRef,
-    entries: open ? logEntries(records, localTimeZoneId(), activeTurnId, pinnedSpeech) : [],
+    entries: open ? logEntries(records, localTimeZoneId(), markBasis) : [],
     userCall,
     onToggleSpeech,
   }
 }
 
+/** 印を付ける行の根拠。`following` は何も留めていないときの、いま表示しているターンの最後の行。 */
+type LogMarkBasis =
+  | ({ readonly kind: "pinned" } & PinnedSpeech)
+  | { readonly kind: "following"; readonly turnId: number }
+  | { readonly kind: "none" }
+
 function logEntries(
   records: readonly SessionRecord[],
   timeZone: string,
-  activeTurnId: number | undefined,
-  pinnedSpeech: PinnedSpeech | undefined,
+  markBasis: LogMarkBasis,
 ): readonly SpeechLogEntry[] {
   const turns = turnSpeeches(records).filter((turn) => turn.speeches.length > 0)
   const requestTimes = requestTimesByTurn(records)
@@ -120,9 +137,7 @@ function logEntries(
   const speechDays = turns.flatMap((turn) =>
     turn.speeches.map((speech) => entryDay(speech.time, timeZone)),
   )
-  // 何も留めていないとき、印が付くのは「いま表示しているターン」の最後の行。
-  const activeSpeechCount = turns.find((turn) => turn.id === activeTurnId)?.speeches.length
-  const defaultIndex = activeSpeechCount === undefined ? undefined : activeSpeechCount - 1
+  const marked = markedSpeechOf(markBasis, turns)
 
   return turns.flatMap((turn, turnIndex) => {
     // このターンの先頭のセリフが、全体の古い側から数えて何件目か。
@@ -154,13 +169,28 @@ function logEntries(
           text: speech.text,
           time: recordClockStamp(speech.time, timeZone),
           age: speechAge(speechCount - 1 - (offset + index)),
-          selected: isSpeechSelected(pinnedSpeech, turn.id, index, activeTurnId, defaultIndex),
+          selected: isSpeechSelected(marked, turn.id, index),
           target: { turnId: turn.id, index },
         },
       ]
     })
     return [...requestEntries(turn, time, turn.id === lastTurnId), ...speeches]
   })
+}
+
+function markedSpeechOf(markBasis: LogMarkBasis, turns: readonly TurnSpeech[]): MarkedSpeech {
+  switch (markBasis.kind) {
+    case "pinned":
+      return { kind: "at", turnId: markBasis.turnId, index: markBasis.index }
+    case "following": {
+      const count = turns.find((turn) => turn.id === markBasis.turnId)?.speeches.length
+      return count === undefined
+        ? { kind: "none" }
+        : { kind: "at", turnId: markBasis.turnId, index: count - 1 }
+    }
+    case "none":
+      return { kind: "none" }
+  }
 }
 
 /** 依頼の区切り。依頼より前に届いたセリフのまとまり（起動直後の挨拶など）には区切りを置かない。 */

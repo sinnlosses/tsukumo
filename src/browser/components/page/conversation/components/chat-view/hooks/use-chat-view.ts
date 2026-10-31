@@ -122,8 +122,12 @@ export function useChatView(): ChatViewModel {
   // 待たせている間は、届いたセリフではなくすでに出した吹き出しの表情のままにする。
   // 新しいターンの始まり（まだ何も話していない）も直前の吹き出しの表情を残し、新しいセリフを出したときに替える。
   // 出した吹き出しがまだ無いときだけ `speechExpression` になる。
-  const shownExpression = speechExpressionAt(shown, shownSpeechIndex) ?? speechExpression
-  const expression = speechExpressionAt(shown, pinnedIndex) ?? shownExpression
+  const shownExpression =
+    (shownSpeechIndex === undefined ? undefined : speechExpressionAt(shown, shownSpeechIndex)) ??
+    speechExpression
+  const expression =
+    (pinnedIndex === undefined ? undefined : speechExpressionAt(shown, pinnedIndex)) ??
+    shownExpression
 
   function toggle(index: number): void {
     // 留めた行をもう一度押したら「最新」へ戻す（新しいセリフを待たずに追従へ戻す道）。
@@ -144,7 +148,13 @@ export function useChatView(): ChatViewModel {
     },
     logRef,
     // 日の境目と行ごとの時刻は、画面を見ている人のタイムゾーンで決める。
-    rows: chatRows(shown, localTimeZoneId(), selectedIndex, initialCount, toggle),
+    rows: chatRows(
+      shown,
+      localTimeZoneId(),
+      (index) => index === selectedIndex,
+      initialCount,
+      toggle,
+    ),
     showTyping,
     showEmptyMessage: shown.length === 0 && !showTyping,
     face: characterFaceInfo(character),
@@ -158,7 +168,7 @@ export function useChatView(): ChatViewModel {
 function chatRows(
   entries: readonly ChatLogEntry[],
   timeZone: string,
-  selectedIndex: number | undefined,
+  isSelected: (index: number) => boolean,
   initialCount: number,
   onToggle: (index: number) => void,
 ): readonly ChatRow[] {
@@ -183,7 +193,7 @@ function chatRows(
           kind: "speech",
           key,
           text: entry.text,
-          selected: index === selectedIndex,
+          selected: isSelected(index),
           pop: index >= initialCount,
           time: recordClockStamp(entry.time, timeZone),
           onToggle: () => {
@@ -234,16 +244,13 @@ function lastSpeechIndex(entries: readonly ChatLogEntry[]): number | undefined {
 }
 
 /**
- * その行のセリフに添えられた表情。行を指していなければ undefined（呼び出し側が次の手へ倒す）。
+ * その行のセリフに添えられた表情。行がキャラクターのセリフでなければ undefined（呼び出し側が次の手へ倒す）。
  * 番号が指せるのはキャラクターのセリフだけだが、型の上では外れうる。
  */
 function speechExpressionAt(
   entries: readonly ChatLogEntry[],
-  index: number | undefined,
+  index: number,
 ): Expression | undefined {
-  if (index === undefined) {
-    return undefined
-  }
   const entry = entries[index]
   return entry === undefined || entry.speaker !== "character" ? undefined : entry.expression
 }

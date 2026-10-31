@@ -67,21 +67,13 @@ export function resolvePinnedSpeech(
 }
 
 /**
- * その行に印を付けるか。
- * 留めていればその行だけ、留めていなければ「いま表示しているターン」の最後の行（`defaultTurnId` と `defaultIndex`）。
- * `pinned` は {@link pinnedSpeechOf} が返す形。
+ * 印を付ける行。
+ * 留めていればその行、留めていなければ「いま表示しているターン」の最後の行。どちらも無ければ `none`。
  */
-export function isSpeechSelected(
-  pinned: PinnedSpeech | undefined,
-  turnId: number,
-  index: number,
-  defaultTurnId: number | undefined,
-  defaultIndex: number | undefined,
-): boolean {
-  if (pinned !== undefined) {
-    return pinned.turnId === turnId && pinned.index === index
-  }
-  return defaultTurnId !== undefined && turnId === defaultTurnId && index === defaultIndex
+export type MarkedSpeech = { readonly kind: "none" } | ({ readonly kind: "at" } & SpeechTarget)
+
+export function isSpeechSelected(marked: MarkedSpeech, turnId: number, index: number): boolean {
+  return marked.kind === "at" && marked.turnId === turnId && marked.index === index
 }
 
 /**
