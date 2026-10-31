@@ -9,9 +9,10 @@
 ## 手で確かめること
 
 **入力欄に打つ・押すなど、手を動かさないと出ない状態を撮るときは、`capture-view.ts` に
-`--type <selector> <文字>`・`--click <selector>`・`--hover <selector>`・`--hash <hash>`・`--press <キー名>`・`--wait-after <selector>` を並べる。**
+`--type <selector> <文字>`・`--scroll-element <selector> <px>`・`--click <selector>`・`--hover <selector>`・`--hash <hash>`・`--press <キー名>`・`--wait-after <selector>` を並べる。**
 書いた順に、`--wait-for` の待ちのあと・`--scroll-to` の前に当てる（`--scroll-to` は書く位置を問わず最後）。1つでも当たらなければ
 撮らずに失敗で終わる（撮影のカタログの `prepare` は当たらない手を飛ばして撮る）。
+`--scroll-element` は指した要素自身を上端から px だけ転がす（0 で先頭へ戻す）。区画の内側の一覧が溢れたときの見出しの影（`data-scrolled`）を撮るときに使う。
 **`--press` のキーはフォーカスの置き場所へ届く。** 開いた直後のフォーカスは依頼の入力欄にあり、PageDown などメインビューで効くキーは届かない
 （黙って空振りして、撮った画は変わらない）。置き場所がメインビューの中でもモーダルの中でもないときは、
 「フォーカスがメインビューに無い（textarea など、置き場所）」の行を標準出力に出す（失敗にはしない）。先に `--click '[data-region="main"] h4'` のようにメインビューの中を押してから `--press` を書く。

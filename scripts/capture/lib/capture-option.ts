@@ -42,6 +42,7 @@ export const USAGE = `使い方:
   --wait-for <selector> 要素が出て、演出が終わるまで待ってから撮る（出なければ失敗して終わる）
   --scroll-to <selector> 要素をメインビューの上端へ送ってから撮る（無ければ失敗して終わる。本文の末尾に近い塊も上端へ届くよう、撮影のページだけ末尾に窓の高さ分の余白を足すので、--measure の scrollHeight は余白を含む。2つ以上に当たるとコンマ区切りでも先頭へ転がし、「一致 n 個、先頭へ転がした」の行を出す。準備の手のあとに当たり〔書く位置は問わない〕、転がしたあと偽の時計があれば進めて落ち着くまで待つので、--advance を後ろに足さなくてよい。--reveal-at のときは時計を止めているので待たない）
   --type <selector> <文字>  入力欄に打ってから撮る
+  --scroll-element <selector> <px>  要素自身を上端から px だけ転がしてから撮る（区画の内側の一覧など。0 で先頭へ戻す。--scroll-to はメインビューの上端へ送る別の手）
   --click <selector>    押してから撮る
   --hover <selector>    触れてから撮る
   --hash <hash>         location.hash を書いてから撮る
@@ -50,7 +51,7 @@ export const USAGE = `使い方:
   --clock <ISO 時刻>    ブラウザの時計をその時刻に決めて撮る（日付で表示が変わる画。オフセット付き、例 2026-01-15T12:00:00+09:00。Temporal.Now も従う）
   --reveal-at <ms>      書き上げる演出が始まった時点から偽の時計をミリ秒だけ進めたところで止め、途中の画を撮る（正の整数。--scene と一緒にだけ使う。演出は打ち切らず、--wait-for・--advance などの操作とは併用できない。演出が始まらない場面は 15 秒待って失敗するので、先に --list-scenes の見込みを見る）
   --wait-after <selector> その位置で要素が出るのを待つ（--hash で開いた画面の読み込みなど。出なければ失敗して終わる）
-                        （7つは書いた順に、--wait-for のあと・--scroll-to の前に当てる。当たらなければ失敗して終わる）
+                        （8つは書いた順に、--wait-for のあと・--scroll-to の前に当てる。当たらなければ失敗して終わる）
   --stub-rpc '<手続き>[@<範囲>]=<JSON>'  手続きの応答を差し替えて撮る（何度でも指定できる。例 'planUsage.report={"kind":"not-applicable"}'。範囲は呼び出しの何回目かを1から数えて 3 か 1-2、省くと全部。範囲の外はサーバへ通す）
   --hold-rpc <手続き>   手続きの応答を保留して読み込み中の骨組みを撮る（何度でも指定できる。例 'contextUsage.report'）
   --hold-stream         セッションの購読（/ws）のサーバからのフレームを保留して撮る（タスク一覧の骨組み）
@@ -86,7 +87,7 @@ export type CaptureOptions = {
 
 /**
  * 引数を読む。URL と `--scene` のどちらも無い・両方ある・`--size` が読めないときは undefined
- * （呼び出し側が使い方を出す）。`--type` の2つ目の値でない位置引数は1つだけ URL として読む。
+ * （呼び出し側が使い方を出す）。`--type`・`--scroll-element` の2つ目の値でない位置引数は1つだけ URL として読む。
  */
 export function parseOptions(argv: readonly string[]): Options | undefined {
   try {

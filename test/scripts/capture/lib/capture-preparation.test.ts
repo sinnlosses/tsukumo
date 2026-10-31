@@ -117,6 +117,27 @@ describe("readPreparations", () => {
     expect(readArguments(["--type", "textarea", "--click", "b"])).toBeUndefined()
   })
 
+  test("--scroll-element は直後の位置引数を px にし、その token を使ったと返す", () => {
+    const result = readArguments(["--click", "a", "--scroll-element", "ul", "40", "--hover", "b"])
+    expect(result?.preparations).toEqual([
+      { kind: "click", selector: "a" },
+      { kind: "scroll-element", selector: "ul", top: 40 },
+      { kind: "hover", selector: "b" },
+    ])
+    expect([...(result?.textTokenIndexes ?? [])]).toEqual([2])
+    expect(readArguments(["--scroll-element", "ul", "0"])?.preparations).toEqual([
+      { kind: "scroll-element", selector: "ul", top: 0 },
+    ])
+  })
+
+  test("--scroll-element の px が無い・数でない・小数のときは崩れた引数", () => {
+    expect(readArguments(["--scroll-element", "ul"])).toBeUndefined()
+    expect(readArguments(["--scroll-element", "ul", "--click", "b"])).toBeUndefined()
+    for (const bad of ["abc", "1.5", ""]) {
+      expect(readArguments(["--scroll-element", "ul", bad])).toBeUndefined()
+    }
+  })
+
   test("--advance は正の整数のミリ秒を読む", () => {
     expect(readArguments(["--advance", "130000"])?.preparations).toEqual([
       { kind: "advance", ms: 130000 },
@@ -143,6 +164,16 @@ describe("describeCatalogMiss", () => {
     expect(
       describeCatalogMiss("question-preview-image", "narrow", { kind: "hover", selector: "a" }),
     ).toBe("当てられなかった: question-preview-image（narrow）: a に触れる")
+  })
+
+  test("scroll-element は転がす先の px を言う", () => {
+    expect(
+      describeCatalogMiss("task-board", "wide", {
+        kind: "scroll-element",
+        selector: "ul",
+        top: 40,
+      }),
+    ).toBe("当てられなかった: task-board（wide）: ul を 40px まで転がす")
   })
 
   test("press はキー名を言う", () => {

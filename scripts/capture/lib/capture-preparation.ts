@@ -2,12 +2,14 @@
 
 import type { Page } from "playwright-core"
 
+import { nonNegativeIntegerArgument } from "../../shared/non-negative-integer-argument.ts"
 import { positiveIntegerArgument } from "../../shared/positive-integer-argument.ts"
 
 /**
  * 撮る前に当てる操作。ここに並べたものだけにする。
  *
  * - `scroll`: その要素が見えるところまで、それを囲む領域の内側を送る
+ * - `scroll-element`: その要素自身を上端から指定の px まで転がす（区画の内側の一覧の影）
  * - `click`: 押す（モーダルを開く口・狭い窓のタブ）
  * - `click-if-shown`: 要素があれば押し、無ければ何もせず当たった扱いにする（窓の幅で出たり出なかったりする口）
  * - `hover`: 触れる（押すと状態が進んでしまう場所）
@@ -19,6 +21,7 @@ import { positiveIntegerArgument } from "../../shared/positive-integer-argument.
  */
 export type Preparation =
   | { readonly kind: "scroll"; readonly selector: string }
+  | { readonly kind: "scroll-element"; readonly selector: string; readonly top: number }
   | { readonly kind: "click"; readonly selector: string }
   | { readonly kind: "click-if-shown"; readonly selector: string }
   | { readonly kind: "hover"; readonly selector: string }
@@ -59,6 +62,18 @@ export async function applyPreparation(
     switch (step.kind) {
       case "scroll":
         await page.locator(step.selector).first().scrollIntoViewIfNeeded({ timeout: timeoutMs })
+        break
+      case "scroll-element":
+        await page
+          .locator(step.selector)
+          .first()
+          .evaluate(
+            (element, top) => {
+              element.scrollTop = top
+            },
+            step.top,
+            { timeout: timeoutMs },
+          )
         break
       case "click":
         await page.locator(step.selector).first().click({ timeout: timeoutMs })
@@ -103,6 +118,8 @@ export function describePreparation(step: Preparation): string {
   switch (step.kind) {
     case "scroll":
       return `${step.selector} が見えるまで送る`
+    case "scroll-element":
+      return `${step.selector} を ${String(step.top)}px まで転がす`
     case "click":
       return `${step.selector} を押す`
     case "click-if-shown":
@@ -139,6 +156,7 @@ export const PREPARATION_OPTIONS = {
   press: { type: "string" },
   advance: { type: "string" },
   type: { type: "string" },
+  "scroll-element": { type: "string" },
 } as const
 
 /** `parseArgs` の `tokens` のうち、準備の読みが見る形。 */
@@ -148,9 +166,9 @@ export type ArgumentToken =
   | { readonly kind: "option-terminator" }
 
 /**
- * 準備の旗を、現れた順に操作へ読む。`--type <selector> <text>` は、`--type` の直後の
- * 位置引数を2つ目の値として使い、その token の位置を `textTokenIndexes` に返す。
- * 2つ目の値が無い・`--advance` が正の整数でないときは undefined。
+ * 準備の旗を、現れた順に操作へ読む。`--type <selector> <text>`・`--scroll-element <selector> <px>` は、
+ * 旗の直後の位置引数を2つ目の値として使い、その token の位置を `textTokenIndexes` に返す。
+ * 2つ目の値が無い・`--advance` が正の整数でない・`--scroll-element` の px が 0 以上の整数でないときは undefined。
  */
 export function readPreparations(tokens: readonly ArgumentToken[]):
   | {
@@ -187,6 +205,17 @@ export function readPreparations(tokens: readonly ArgumentToken[]):
           return undefined
         }
         preparations.push({ kind: "advance", ms: ms.data })
+        break
+      }
+      case "scroll-element": {
+        const next = tokens[index + 1]
+        const top =
+          next?.kind === "positional" ? nonNegativeIntegerArgument.safeParse(next.value) : undefined
+        if (top?.success !== true) {
+          return undefined
+        }
+        textTokenIndexes.add(index + 1)
+        preparations.push({ kind: "scroll-element", selector: value, top: top.data })
         break
       }
       case "type": {
