@@ -29,7 +29,7 @@ describe("waitUntilStable", () => {
 
     await vi.advanceTimersByTimeAsync(1000)
 
-    expect(await outcome).toBe(true)
+    expect(await outcome).toEqual({ stable: true })
     expect(calls()).toBe(4)
   })
 
@@ -40,17 +40,21 @@ describe("waitUntilStable", () => {
 
     await vi.advanceTimersByTimeAsync(1000)
 
-    expect(await outcome).toBe(false)
+    expect((await outcome).stable).toBe(false)
   })
 
-  test("一致しないまま回数が尽きたら false を返し、回数を超えて撮らない", async () => {
+  test("一致しないまま回数が尽きたら最後の2回の結果を添えて返し、回数を超えて撮らない", async () => {
     vi.useFakeTimers()
     const { sample, calls } = sampler(["a", "b", "c", "d", "e", "f", "g", "h"])
     const outcome = waitUntilStable(sample, { intervalMs: 100, attempts: 5 })
 
     await vi.advanceTimersByTimeAsync(1000)
 
-    expect(await outcome).toBe(false)
+    expect(await outcome).toEqual({
+      stable: false,
+      before: Buffer.from("d"),
+      last: Buffer.from("e"),
+    })
     expect(calls()).toBe(5)
   })
 })

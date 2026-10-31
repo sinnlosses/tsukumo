@@ -7,6 +7,7 @@ import { pressFocusNotice, readFocusPlace } from "./press-focus.ts"
 import { settleRender } from "./render-settle.ts"
 import { waitForRevealEnd } from "./reveal-end.ts"
 import { waitUntilStable } from "./stable-sample.ts"
+import { describeStillDiff } from "./still-diff.ts"
 
 /**
  * 本文が入る領域（メインビュー）。class 名は組み立てのたびにハッシュ化される（CSS Modules）
@@ -156,7 +157,11 @@ async function settleStill(
     () => page.screenshot({ clip, fullPage: true, animations: "disabled" }),
     { intervalMs: STILL_INTERVAL_MS, attempts: STILL_ATTEMPTS },
   )
-  if (!still) {
-    throw new Error(`静止しなかった: 本文の領域（${String(STILL_ATTEMPTS)}回撮った）`)
+  if (!still.stable) {
+    const diff =
+      still.before === undefined || still.last === undefined
+        ? ""
+        : `。最後の2枚の差: ${describeStillDiff(still.before, still.last)}`
+    throw new Error(`静止しなかった: 本文の領域（${String(STILL_ATTEMPTS)}回撮った）${diff}`)
   }
 }
