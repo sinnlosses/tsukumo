@@ -36,6 +36,11 @@ export type BoardEntry = {
   readonly state: TaskStateView
 }
 
+/** 一覧で選ばれている行。絞り込みで行が無いときは `none`。 */
+export type BoardSelected =
+  | { readonly kind: "none" }
+  | { readonly kind: "some"; readonly entry: BoardEntry }
+
 type BoardContentInput = {
   readonly query: string
   readonly filter: TaskBoardFilter
@@ -72,7 +77,7 @@ export function boardContent(
   entries: readonly BoardEntry[],
   byId: ReadonlyMap<string, BoardEntry>,
   rows: readonly BoardEntry[],
-  selected: BoardEntry | undefined,
+  selected: BoardSelected,
   isVisible: (entry: BoardEntry) => boolean,
   knownIds: ReadonlySet<string>,
   input: BoardContentInput,
@@ -103,15 +108,17 @@ export function boardContent(
       state: entry.state,
       difficulty: entry.task.difficulty,
       loopable: entry.task.loopable,
-      selected: entry === selected,
+      selected: selected.kind === "some" && entry === selected.entry,
       outOfFilter: !isVisible(entry),
       sort: rowSortOf(entry, input),
     })),
     omittedClosedCount: tasks.omittedClosedCount,
     sortBand: sortBandOf(entries, input),
-    activeOptionId: selected === undefined ? undefined : optionIdOf(selected.task.id),
+    activeOptionId: selected.kind === "some" ? optionIdOf(selected.entry.task.id) : undefined,
     selection:
-      selected === undefined ? { kind: "none" } : selectionOf(selected, entries, byId, input),
+      selected.kind === "some"
+        ? selectionOf(selected.entry, entries, byId, input)
+        : { kind: "none" },
     knownIds,
   }
 }

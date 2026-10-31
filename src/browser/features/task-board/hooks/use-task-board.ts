@@ -8,7 +8,12 @@ import { useReducer, useState } from "react"
 
 import type { TaskSummaryResult } from "../../../../shared/repository/task-summary.ts"
 import type { TaskBoardRequest } from "../../../stores/task-board-request.ts"
-import { boardContent, boardEntries, type BoardEntry } from "../domain/task-board-content.ts"
+import {
+  boardContent,
+  boardEntries,
+  type BoardEntry,
+  type BoardSelected,
+} from "../domain/task-board-content.ts"
 import { matchesFilter, matchesQuery } from "../domain/task-board-filter.ts"
 import type { TaskBoardView } from "../domain/task-board-view.ts"
 import type { TaskRunTarget } from "../domain/task-run-prompt.ts"
@@ -78,7 +83,9 @@ export function useTaskBoard(
     }
   }
 
-  const content = boardContent(tasks, entries, byId, rows, selected, isVisible, knownIds, {
+  const selectedView: BoardSelected =
+    selected === undefined ? { kind: "none" } : { kind: "some", entry: selected }
+  const content = boardContent(tasks, entries, byId, rows, selectedView, isVisible, knownIds, {
     query,
     filter,
     run: (taskId, taskRequest) => {

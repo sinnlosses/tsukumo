@@ -9,7 +9,10 @@ import { isModelAlias } from "../../../../shared/command.ts"
 import { permissionModeValue } from "../../../../shared/session/session-info.ts"
 import { EFFORT_PLACEHOLDER_VALUE, effortLabel } from "../../../domain/effort-label.ts"
 import { modelLabel } from "../../../domain/model-label.ts"
-import { permissionModeLabel } from "../../../domain/permission-mode-label.ts"
+import {
+  PERMISSION_MODE_LABELS,
+  permissionModeLabel,
+} from "../../../domain/permission-mode-label.ts"
 import { type SettingDot, useModelPermission } from "../../../stores/model-permission.ts"
 import styles from "./run-setting-group.module.css"
 import {
@@ -89,7 +92,7 @@ export function RunSettingGroup(props: { readonly placement: RunSettingPlacement
         heading="許可モード"
         value={permissionModeValue(control.permissionMode)}
         options={[
-          ...permissionModeSelectOptions(undefined),
+          ...permissionModeSelectOptions(PERMISSION_MODE_LABELS.map(([mode]) => mode)),
           ...(typeof control.permissionMode === "string"
             ? []
             : [unknownPermissionModeOption(control.permissionMode.raw)]),

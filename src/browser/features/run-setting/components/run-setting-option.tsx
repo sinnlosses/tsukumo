@@ -117,38 +117,32 @@ export function unknownPermissionModeOption(raw: string): RunSettingSelectOption
   }
 }
 
-/** `modes` は出す許可モード。`undefined` なら全部。 */
 export function permissionModeSelectOptions(
-  modes: readonly PermissionMode[] | undefined,
+  modes: readonly PermissionMode[],
 ): readonly RunSettingSelectOption[] {
-  return PERMISSION_MODE_LABELS.filter(([value]) => modes?.includes(value) ?? true).map(
-    ([value, label]) => {
-      const PermissionIcon = PERMISSION_MODE_ICON[value]
-      const dangerous = value === "bypassPermissions"
-      return {
-        value,
-        disabled: false,
-        icon: (
-          <span
-            className={styles["run-setting-shield"]}
-            data-fill={permissionModeShieldFill(value)}
-          >
-            <PermissionIcon size={16} strokeWidth={1.9} aria-hidden="true" />
-          </span>
-        ),
-        row: (
-          <>
-            <RunSettingName danger={dangerous}>{label}</RunSettingName>
-            {dangerous && (
-              <span className={clsx(styles["run-setting-select-detail"], styles["is-danger"])}>
-                {BYPASS_PERMISSIONS_NOTICE}
-              </span>
-            )}
-          </>
-        ),
-      }
-    },
-  )
+  return PERMISSION_MODE_LABELS.filter(([value]) => modes.includes(value)).map(([value, label]) => {
+    const PermissionIcon = PERMISSION_MODE_ICON[value]
+    const dangerous = value === "bypassPermissions"
+    return {
+      value,
+      disabled: false,
+      icon: (
+        <span className={styles["run-setting-shield"]} data-fill={permissionModeShieldFill(value)}>
+          <PermissionIcon size={16} strokeWidth={1.9} aria-hidden="true" />
+        </span>
+      ),
+      row: (
+        <>
+          <RunSettingName danger={dangerous}>{label}</RunSettingName>
+          {dangerous && (
+            <span className={clsx(styles["run-setting-select-detail"], styles["is-danger"])}>
+              {BYPASS_PERMISSIONS_NOTICE}
+            </span>
+          )}
+        </>
+      ),
+    }
+  })
 }
 
 /** 吊り札の1行の名前。 */

@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest"
 import {
   boardContent,
   boardEntries,
+  type BoardEntry,
+  type BoardSelected,
 } from "../../../../../src/browser/features/task-board/domain/task-board-content.ts"
 import { matchesFilter } from "../../../../../src/browser/features/task-board/domain/task-board-filter.ts"
 import type {
@@ -106,6 +108,11 @@ describe("boardContent", () => {
     onSortRequest: () => {},
   }
 
+  function selectedOf(entries: readonly BoardEntry[], selectedId: string): BoardSelected {
+    const entry = entries.find((candidate) => candidate.task.id === selectedId)
+    return entry === undefined ? { kind: "none" } : { kind: "some", entry }
+  }
+
   function contentOf(tasks: TaskSummaryResult, selectedId: string): TaskBoardContent {
     const items = tasks.kind === "known" ? tasks.items : []
     const entries = boardEntries(items)
@@ -115,7 +122,7 @@ describe("boardContent", () => {
       entries,
       byId,
       entries,
-      entries.find((entry) => entry.task.id === selectedId),
+      selectedOf(entries, selectedId),
       (entry) => matchesFilter(entry.state, NO_BREADCRUMB.filter),
       new Set(items.map((item) => item.id)),
       NO_BREADCRUMB,
@@ -170,7 +177,7 @@ describe("boardContent", () => {
         entries,
         new Map(entries.map((entry) => [entry.task.id, entry])),
         entries,
-        entries[0],
+        selectedOf(entries, "X-001"),
         () => true,
         new Set(["X-001", "X-002", "X-003"]),
         input,

@@ -9,9 +9,8 @@
 
 import { useState, type RefCallback, type RefObject } from "react"
 
-import { plainDateOfDateKey, type DateKey } from "../../../../shared/diary/date-key.ts"
+import { plainDateOfDateKey } from "../../../../shared/diary/date-key.ts"
 import type { BackgroundTask } from "../../../../shared/session-driver/background-task.ts"
-import type { PendingAsk } from "../../../../shared/session-driver/pending-ask.ts"
 import { reportDraftingOf, type ReportDrafting } from "../../../../shared/session/turn-progress.ts"
 import type { TurnStep, TurnStepList } from "../../../../shared/session/turn-step.ts"
 import {
@@ -38,6 +37,11 @@ import {
   truncateForDisplay,
   type CurrentWorkStepGroup,
 } from "../domain/current-work-step.ts"
+import {
+  questionSummaryLabel,
+  summaryLeadOf,
+  type SummaryLead,
+} from "./current-work-summary-lead.ts"
 
 /** 閉じている間に出す手順の件数（これより多いと「すべて見る」の口が出る）。 */
 const MAX_COLLAPSED_STEPS = 5
@@ -270,14 +274,13 @@ export function useCurrentWork(boundaryRef: RefObject<HTMLElement | null>): Curr
       : WORK_WORD_LABEL[state],
     mark: state === "idle" && !chatIdle ? "○" : "●",
     chatIdle,
-    pendingHint: toPendingHintView(state, firstPending, onGoToInquiry),
+    pendingHint: toPendingHintView(state, onGoToInquiry),
     phase: toPhaseView(turnStepList, state),
     summary: toSummaryView(
       state,
-      firstPending,
+      summaryLeadOf(state, pending, diaryWriting),
       runningStep,
       backgroundTasks,
-      state === "diary" && diaryWriting.kind === "writing" ? diaryWriting.date : undefined,
       reportDrafting,
     ),
     runningStep,
@@ -370,24 +373,23 @@ function toPlanView(turnStepList: TurnStepList, turnInProgress: boolean): Curren
  */
 function toSummaryView(
   state: CurrentWorkState,
-  firstPending: PendingAsk | undefined,
+  lead: SummaryLead,
   runningStep: CurrentWorkRunningStep,
   backgroundTasks: readonly BackgroundTask[],
-  diaryDate: DateKey | undefined,
   reportDrafting: ReportDrafting,
 ): CurrentWorkSummary {
-  if (diaryDate !== undefined) {
+  if (lead.kind === "diary") {
     return {
       kind: "text",
-      label: `${monthDayLabel(plainDateOfDateKey(diaryDate))}の日記を書いています`,
+      label: `${monthDayLabel(plainDateOfDateKey(lead.date))}の日記を書いています`,
     }
   }
   if (state === "background") {
     const label = backgroundSummaryLabel(backgroundTasks)
     return label === undefined ? { kind: "none" } : { kind: "text", label }
   }
-  if (state === "pending" && firstPending?.kind === "question") {
-    const label = questionSummaryLabel(firstPending)
+  if (lead.kind === "question") {
+    const label = questionSummaryLabel(lead.ask)
     if (label !== undefined) {
       return { kind: "text", label }
     }
@@ -398,21 +400,6 @@ function toSummaryView(
   return runningStep.kind === "shown"
     ? { kind: "text", label: runningStep.summaryLabel }
     : { kind: "none" }
-}
-
-/**
- * 質問の要約。1問目の `header` をそのまま使う。
- * `AskUserQuestion` の入力の型（`node_modules/@anthropic-ai/claude-agent-sdk/sdk-tools.d.ts`）で「最大12字」と決まっているので、切り詰める必要が無い。
- * 2問以上あれば「ほか n問」を添える。
- */
-function questionSummaryLabel(
-  pending: Extract<PendingAsk, { readonly kind: "question" }>,
-): string | undefined {
-  const [first, ...rest] = pending.questions
-  if (first === undefined) {
-    return undefined
-  }
-  return rest.length > 0 ? `${first.header} ほか${String(rest.length)}問` : first.header
 }
 
 function toBackgroundListView(tasks: readonly BackgroundTask[]): CurrentWorkBackgroundList {
@@ -432,12 +419,9 @@ function toBackgroundListView(tasks: readonly BackgroundTask[]): CurrentWorkBack
 
 function toPendingHintView(
   state: CurrentWorkState,
-  firstPending: PendingAsk | undefined,
   onGoToInquiry: () => void,
 ): CurrentWorkPendingHint {
-  return state !== "pending" || firstPending === undefined
-    ? { kind: "none" }
-    : { kind: "inquiry", onGoToInquiry }
+  return state === "pending" ? { kind: "inquiry", onGoToInquiry } : { kind: "none" }
 }
 
 function toStepListView(
