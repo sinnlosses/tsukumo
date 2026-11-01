@@ -25,7 +25,7 @@ function violationLines(rejection: string): readonly string[] {
 }
 
 describe("reportRejectionText", () => {
-  it("違反した条と直し方を1行ずつ並べ、直す欄だけで呼び直せることを末尾に添え、レポートの文面は写さない", () => {
+  it("違反した条と直し方を1行ずつ並べ、呼び直し方を末尾に添え、レポートの文面は写さない", () => {
     const report = draft(
       [markdown("# 架空の見出しXYZ")],
       ["架空の1文目XYZ。", "2文目。", "3文目。"],

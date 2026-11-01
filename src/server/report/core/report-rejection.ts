@@ -21,9 +21,9 @@ import { MARKDOWN_NOTATION_NAMES } from "./report-markdown-notation.ts"
 import type { ReportViolation } from "./report-violation.ts"
 import { timelineFaultPositions } from "./timeline-fault.ts"
 
-/** 差し戻しの戻り値に足す、直す欄だけで呼び直せることの1文。 */
+/** 差し戻しの戻り値に足す、呼び直し方（`components` は全部、`Report` の欄は省けば引き継ぐ）の1文。 */
 export const REPORT_CHANGED_FIELDS_ONLY_TEXT =
-  "呼び直すときは直す欄だけを渡せばよい（渡さなかった欄はこの呼び出しの値を引き継ぐ）。"
+  "呼び直すときは `components` を全部渡す（`Report` の欄は、省けばこの呼び出しの値を引き継ぐ）。"
 
 /**
  * 差し戻すときの `report` の戻り値。

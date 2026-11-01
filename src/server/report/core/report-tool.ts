@@ -17,8 +17,8 @@ import { REPORT_CALL_EXAMPLES_TEXT } from "./call-example.ts"
  */
 export const REPORT_TOOL_DESCRIPTION =
   "ターンのレポートをメインビューに出す。task（タスク見出し行と見出し）→ conclusion → keyFigures（数のカード）→ checks（検証結果の表）→ figure → sections → retrospective → favor の順に描かれ、" +
-  "そのあと closing のセリフが吹き出しに出る。受け付けられるとそこでターンが終わる（あとに何も書けない）。" +
-  "差し戻されたら、直す項目だけを渡して呼び直せばよい（渡さなかった項目は、同じターンで直前に差し戻した呼び出しの値を引き継ぐ）。" +
+  "そのあと closing のセリフが吹き出しに出る。" +
+  "差し戻されたあとの呼び出しで省いた Report の欄は、同じターンで直前に差し戻した呼び出しの値を引き継ぐ。" +
   "書き方は「レポートの記法（tsukumo）」の節に従う。" +
   "本文は日本語で書く（識別子・パス・コマンド・コードは英語のままでよい）。\n" +
   REPORT_CALL_EXAMPLES_TEXT
@@ -83,7 +83,7 @@ export function reportFigureDescription(preference: FigurePreference): string {
   )
 }
 
-/** `report` の任意の `keyFigures` 引数（結論の直下に並べる数）の説明。使いどころの条は `REPORT_NOTATION_PROMPT` が持つ。 */
+/** `report` の任意の `keyFigures` 引数（結論の直下に並べる数）の説明。使いどころの条はここだけが持つ。 */
 export const REPORT_KEY_FIGURES_DESCRIPTION =
   "結論に効く数を3〜4個（件数・割合・前後の差）。結論の直下にカードで並ぶ。" +
   "3つに満たなければ省いて結論の文に入れる。項目の形は stats の items と同じ。"
@@ -96,8 +96,7 @@ export const REPORT_SECTIONS_DESCRIPTION =
   "結論のあとの根拠・比較・手順。セクションの並びで、セクションごとに部品を並べる。" +
   "部品の文字で効くのはインラインの記法（inline code・太字・リンク）だけ。" +
   "部品の fold に見出しを書くと畳んで描く（畳んでも結論が通る部品だけ）。" +
-  "部品の aside に出典・どこを見るかを1行で書くと、本文の流れの外（本文の右の余白）に置く。" +
-  "結論と checks に書いたことはセクションで繰り返さず、根拠と中身だけを置く。"
+  "部品の aside に出典・どこを見るかを1行で書くと、本文の流れの外（本文の右の余白）に置く。"
 
 /** `a2ui` の版の `components` 引数（A2UI のカタログの部品の平らな一覧）の説明。 */
 export const REPORT_A2UI_COMPONENTS_DESCRIPTION =
@@ -146,7 +145,7 @@ export const REPORT_SESSION_SUMMARY_DESCRIPTION =
 export const REPORT_SESSION_REMAINING_DESCRIPTION =
   "このセッションで残っていること（次のセッションで続ける作業）を1〜2文で。書き出しに「残り：」は付けない。" +
   "始め方の一覧の「前回の続き」のカードの題と、次のセッションへ送る依頼の文になる。" +
-  "残っていることが無ければ空の文字列にする。task.outcome が finished のときだけ省ける（finished 以外では必須）。"
+  "残っていることが無ければ空の文字列にする。"
 
 /**
  * `Stop` の関所が差し戻すときにモデルへ返す理由。

@@ -108,7 +108,7 @@ describe("createReportReview の judge（送り直し）", () => {
       text:
         "この `report` は、このターンですでに受け取った `report` と同じ引数になっている。" +
         "同じ引数で送り直さず、そのあとに `report` の外に書いた本文の中身を `report` に入れて呼び直すこと。" +
-        "呼び直すときは直す欄だけを渡せばよい（渡さなかった欄はこの呼び出しの値を引き継ぐ）。",
+        "呼び直すときは `components` を全部渡す（`Report` の欄は、省けばこの呼び出しの値を引き継ぐ）。",
       reasons: ["resend"],
     })
   })
@@ -320,7 +320,7 @@ describe("createReportReview の judge（背景のシェルが残っている re
   }
   const BACKGROUND_REJECTION_TAIL =
     "`TaskStop` で止めるか、待つなら待つと決めてから `report` を呼び直すこと。" +
-    "呼び直すときは直す欄だけを渡せばよい（渡さなかった欄はこの呼び出しの値を引き継ぐ）。" +
+    "呼び直すときは `components` を全部渡す（`Report` の欄は、省けばこの呼び出しの値を引き継ぐ）。" +
     "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。"
   const rejectedText = (verdict: ReportVerdict): string =>
     verdict.kind === "rejected" ? verdict.text : ""
