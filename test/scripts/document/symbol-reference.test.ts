@@ -66,8 +66,9 @@ describe("文書が指すシンボルの置き場所", () => {
   })
 
   it("文書が指すシンボルは、すべてそのファイルに実在する", () => {
-    expect(collectStraySymbolReferences(REPOSITORY_ROOT).map(formatStraySymbolReference)).toEqual(
-      [],
-    )
+    expect(
+      collectStraySymbolReferences(REPOSITORY_ROOT).map(formatStraySymbolReference),
+      "これから置くファイルは、ディレクトリとファイル名を分けて書く（`scripts/shared/` に置く `x.ts` のように、パス全体をバッククォートで囲まない。拾う書き方は `scripts/document/source-path-reference.ts` の冒頭）",
+    ).toEqual([])
   })
 })

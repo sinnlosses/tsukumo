@@ -64,6 +64,7 @@ describe("節の参照", () => {
     () => {
       expect(
         collectMissingSourcePathReferences(REPOSITORY_ROOT).map(formatMissingFileReference),
+        "これから置くファイルは、ディレクトリとファイル名を分けて書く（`scripts/shared/` に置く `x.ts` のように、パス全体をバッククォートで囲まない。拾う書き方は `scripts/document/source-path-reference.ts` の冒頭）",
       ).toEqual([])
     },
     REPOSITORY_SCAN_TIMEOUT_MS,
