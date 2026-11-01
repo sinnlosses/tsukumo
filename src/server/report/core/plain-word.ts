@@ -62,6 +62,46 @@ export const PLAIN_WORDS = [
     meaning: "委譲先に任せている作業のどこまで進んだかを見せる表示",
   },
   {
+    spelling: "余白の柱の包み",
+    replacement: "欄外注の列の外枠",
+    meaning: "本文の右の余白に欄外注を並べる列を、画面の中で囲む要素",
+  },
+  {
+    spelling: "傍注の包み",
+    replacement: "欄外注の外枠",
+    meaning: "本文の横の余白に出す欄外注を、画面の中で囲む要素",
+  },
+  {
+    spelling: "傍注の柱",
+    replacement: "欄外注の列",
+    meaning: "レポートの本文の右の余白に、欄外注を並べる列",
+  },
+  {
+    spelling: "余白の柱",
+    replacement: "欄外注の列",
+    meaning: "レポートの本文の右の余白に、欄外注を並べる列",
+  },
+  {
+    spelling: "題つきの包み",
+    replacement: "題つきの外枠",
+    meaning: "番号つきの題を持つ図や表を、画面の中で囲む要素",
+  },
+  {
+    spelling: "並列のフェーズの包み",
+    replacement: "並列のフェーズの外枠",
+    meaning: "同時に走らせるフェーズの棒をまとめて、画面の中で囲む要素",
+  },
+  {
+    spelling: "包み関数",
+    replacement: "ラッパー関数",
+    meaning: "別の関数を呼ぶ前後に処理を足すために、その関数を包んだ関数",
+  },
+  {
+    spelling: "包み hook",
+    replacement: "ラッパー hook",
+    meaning: "React の hook を呼ぶ前後に処理を足すために、その hook を包んだ hook",
+  },
+  {
     spelling: "傍注",
     replacement: "欄外注",
     meaning: "本文の横の余白の欄に添える、出典やどこを見るかを書いた短い注",

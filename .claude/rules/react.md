@@ -10,6 +10,6 @@ paths:
 
 - `memo` / `useCallback` / `useMemo` は手で書かず、メモ化は React Compiler に任せる。残してよい理由は「手でメモ化しない」の2つだけ
 - **条件付きの描画は `{条件 && <部品 />}` で書き、`? … : null` にしない。** 左辺は `boolean` に限る
-- **生の `useEffect`・`useLayoutEffect` は呼ばず、`src/browser/hooks/` の包み（`useMountEffect`・`useUnmountEffect`・`useEventListener`・`useExternalSync`・`useBeforePaintSync`）を使う（`pnpm run lint` が落とす）。** 依存配列を手で間引かない
+- **生の `useEffect`・`useLayoutEffect` は呼ばず、`src/browser/hooks/` のラッパー（`useMountEffect`・`useUnmountEffect`・`useEventListener`・`useExternalSync`・`useBeforePaintSync`）を使う（`pnpm run lint` が落とす）。** 依存配列を手で間引かない
 - **2つ以上の class 名をつなぐときは clsx を使う**。`components/ui/` の部品へ渡す className は除く（`composes` で畳む）
 - **条件つきで上書きしたら宣言を列挙し戻す側も同数**（`browser.md`「CSS」）

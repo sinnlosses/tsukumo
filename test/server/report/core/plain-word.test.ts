@@ -87,6 +87,31 @@ test("塊は複合語の綴りで登録し、単独の綴りは登録しない",
   expect(PLAIN_WORDS.find((word) => word.spelling === "失敗の塊")?.replacement).toBe("失敗の表示")
 })
 
+test("柱・包みは複合語の綴りで登録し、単独の綴りと別の意味の語は登録しない", () => {
+  const spellings = PLAIN_WORDS.map((word) => word.spelling)
+  expect(spellings).not.toContain("柱")
+  expect(spellings).not.toContain("包み")
+  expect(spellings).not.toContain("題の包み")
+  expect(spellings).not.toContain("柱の口")
+  expect(spellings).not.toContain("窓幅の柱")
+  expect(spellings).toEqual(
+    expect.arrayContaining([
+      "余白の柱の包み",
+      "傍注の包み",
+      "傍注の柱",
+      "余白の柱",
+      "題つきの包み",
+      "並列のフェーズの包み",
+      "包み関数",
+      "包み hook",
+    ]),
+  )
+  expect(PLAIN_WORDS.find((word) => word.spelling === "余白の柱")?.replacement).toBe("欄外注の列")
+  expect(PLAIN_WORDS.find((word) => word.spelling === "包み hook")?.replacement).toBe(
+    "ラッパー hook",
+  )
+})
+
 test("長い綴りが、それを含む短い綴りより先に並んでいる", () => {
   expect(
     PLAIN_WORDS.filter((word, index) =>

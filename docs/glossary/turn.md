@@ -76,7 +76,7 @@
 
 - **英語識別子**: `aside`（イベントと記録は `aside`、メインビューのやり取りが持つ並びは `MainViewTurn.asides`・1件は `MainViewAside`。
   入力欄の送り方は `PromptRouting` の `aside-when-background` / `new-request`、脇の話への答えのセリフの印は `answersAside`、
-  脇の話のターンの中かは `SessionState.sdkTurn` の `answeringAside`。部品の欄の `aside` は別物で「余白の柱」）
+  脇の話のターンの中かは `SessionState.sdkTurn` の `answeringAside`。部品の欄の `aside` は別物で「欄外注の列」）
 - **定義**: **バックグラウンドタスク**が残っているあいだに入力欄から送った言葉。新しい依頼にせず、親のやり取りに吊るす。
   カードも「n / N」も増やさず、進み具合のプログレスバー・経過・中間レポートは親のやり取りのまま出し続ける。答えは `speak` で受け、
   吹き出しと、親のカードのプログレスバーの下の欄に「きみ: 言葉 → 答え」の対で出す

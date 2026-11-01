@@ -156,7 +156,7 @@
               {
                 "name": "react",
                 "importNames": ["useEffect", "useLayoutEffect", "useInsertionEffect"],
-                "message": "生の effect を書かず、src/browser/hooks/ の包み（useMountEffect・useEventListener・useExternalSync・useBeforePaintSync など）を使う（docs/coding-standards/react.md「useEffect の代わりに使うもの」）"
+                "message": "生の effect を書かず、src/browser/hooks/ のラッパー（useMountEffect・useEventListener・useExternalSync・useBeforePaintSync など）を使う（docs/coding-standards/react.md「useEffect の代わりに使うもの」）"
               },
               {
                 "name": "@anthropic-ai/claude-agent-sdk",

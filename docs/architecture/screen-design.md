@@ -37,7 +37,7 @@
 | `docs/architecture/screen-design/diary-spread.md`                      | 成果の画面の振り返りのボタンの扱い、書き終わりの知らせ、日記帳の見開き、見本、仮に決めたこと。                                                                                          |
 | `docs/architecture/screen-design/diary.md`                             | 成果の画面（つくもの日記帳）の並び、日記の区画、しおり、小さな驚き、色、灯りの暦、空の日の見え方。                                                                                      |
 | `docs/architecture/screen-design/inquiry.md`                           | 許可要求と質問のカード（お伺い）、迎える局面の始め方の一覧、おすすめのカードの中身の作り方。                                                                                            |
-| `docs/architecture/screen-design/layout.md`                            | 領域の並び・揃え・図の高さ・余白の柱・やり取りの列・中くらいの窓幅と、パック・使う人が差すものの受け渡し。                                                                              |
+| `docs/architecture/screen-design/layout.md`                            | 領域の並び・揃え・図の高さ・欄外注の列・やり取りの列・中くらいの窓幅と、パック・使う人が差すものの受け渡し。                                                                            |
 | `docs/architecture/screen-design/narrow-screen.md`                     | 760px 以下の窓の縦1列の配置、色と書体の宛て先、部品の行き先、頭の形、本文・板・顔と吹き出し・答え待ちのカード・入力欄・引き出し、キーボード、見本に無い場面、画面が増えたときの畳み方。 |
 | `docs/architecture/screen-design/nav-current-work.md`                  | 帯のいまの作業の前半。                                                                                                                                                                  |
 | `docs/architecture/screen-design/nav-gear-and-face.md`                 | 帯の設定の歯車（設定のダイアログの5つの面）、帯の顔、キャラクターの選び口。                                                                                                             |

@@ -106,6 +106,26 @@ describe("plainWordSpellingsIn", () => {
     expect(text).toContain("「並列の段」は「並列のフェーズ」")
   })
 
+  it("柱・包みの複合語は、長い綴りを優先して地の文で見つかる", () => {
+    expect(
+      plainWordSpellingsIn(
+        draft([
+          reportDraftText(
+            "架空の余白の柱の包みと傍注の柱と余白の柱と題つきの包みと包み関数と包み hook。",
+          ),
+        ]),
+      ),
+    ).toEqual(["余白の柱の包み", "傍注の柱", "余白の柱", "題つきの包み", "包み関数", "包み hook"])
+  })
+
+  it("大黒柱・包み紙・包み込む・柱の口・議題の包みは、柱・包みの複合語に当たらない", () => {
+    expect(
+      plainWordSpellingsIn(
+        draft([reportDraftText("架空の大黒柱と包み紙と包み込む形と柱の口と議題の包み。")]),
+      ),
+    ).toEqual([])
+  })
+
   it("帯・傍注・面・葉の複合語もコードと引用の中は見ない", () => {
     expect(
       plainWordSpellingsIn(

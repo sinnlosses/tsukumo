@@ -2,7 +2,7 @@
 
 ステータス: **正典**。入口は `docs/glossary.md`（用語集の方針と、子のファイルの一覧）。
 
-責務: レポートの本文の組み立ての用語（セクション・部品・形の名前・確度つきの主張・余白の柱）と、メインビューのやり取りの列・選択肢の比較の用語を持つ。
+責務: レポートの本文の組み立ての用語（セクション・部品・形の名前・確度つきの主張・欄外注の列）と、メインビューのやり取りの列・選択肢の比較の用語を持つ。
 読む時: レポートの本文のセクション・部品とその欄を指す語の表記に迷ったとき。
 直す時: この範囲の用語を足す・識別子を変えるとき（用語はこの子に足し、親には足さない）。
 
@@ -23,7 +23,7 @@
 ### 部品
 
 - **英語識別子**: `ReportBlock`（`src/shared/report/report-block.ts`）/ `kind`（`text` / `list` /
-  `table` / `matrix` / `compare` / `beforeAfter`（前後）/ `note` / `stats` / `code` / `mermaid` / `graph`（`source` の1行1辺の記法で受ける flowchart。行頭の `+ ` / `- ` / `~ ` が足した・消した・変えたの印。節点だけの行は `名前 | 説明` で説明の1行を足せ、分岐・合流・囲み・点線の無い5節点以下の一本道はカードの連鎖で描く）/ `chart` / `timeline`（時刻の軸に行ごとの帯・延びた分・出来事を並べる図。延び・出来事・一点の無い区間の長さの比べは `chart` の `span`）/ `svg`（座標つきの図形で書く図）/ `plot`（図の申告。`question`〔読者がその図で決めること。全角60字以内の1文〕・`data`〔列の並び。各列は `name`・`type`〔`N` 名義 / `O` 順序 / `T` 時間 / `Q` 量〕・`values`〕・`relation`〔`compare`・`rank`・`part`・`trend`・`change`・`distribution`・`correlate`・`range` の8語〕と任意の `form`〔形の上書き〕を受け、色・座標は書かせない。形は下の「図の決定表」が決め、形ごとの描き方が入るまでは `data` を表として描く）/ `options` / `claims`（確度つきの主張）/ `image`（画面の画像）/ `markdown`。旧い記録にだけ `row`〔2〜4 個の部品を横に並べる〕と `panel`〔`title` つきの枠〕があり、復元が `Row`・`Card` に組み直す）/ `fold`（畳むときの見出し）/ `aside`（部品の傍注。下の「余白の柱」）/
+  `table` / `matrix` / `compare` / `beforeAfter`（前後）/ `note` / `stats` / `code` / `mermaid` / `graph`（`source` の1行1辺の記法で受ける flowchart。行頭の `+ ` / `- ` / `~ ` が足した・消した・変えたの印。節点だけの行は `名前 | 説明` で説明の1行を足せ、分岐・合流・囲み・点線の無い5節点以下の一本道はカードの連鎖で描く）/ `chart` / `timeline`（時刻の軸に行ごとの帯・延びた分・出来事を並べる図。延び・出来事・一点の無い区間の長さの比べは `chart` の `span`）/ `svg`（座標つきの図形で書く図）/ `plot`（図の申告。`question`〔読者がその図で決めること。全角60字以内の1文〕・`data`〔列の並び。各列は `name`・`type`〔`N` 名義 / `O` 順序 / `T` 時間 / `Q` 量〕・`values`〕・`relation`〔`compare`・`rank`・`part`・`trend`・`change`・`distribution`・`correlate`・`range` の8語〕と任意の `form`〔形の上書き〕を受け、色・座標は書かせない。形は下の「図の決定表」が決め、形ごとの描き方が入るまでは `data` を表として描く）/ `options` / `claims`（確度つきの主張）/ `image`（画面の画像）/ `markdown`。旧い記録にだけ `row`〔2〜4 個の部品を横に並べる〕と `panel`〔`title` つきの枠〕があり、復元が `Row`・`Card` に組み直す）/ `fold`（畳むときの見出し）/ `aside`（部品の傍注。下の「欄外注の列」）/
   欄の `from` / `to`（表のセルの前後）・`tag`（表のセルの列挙型のバッジ。同じ字は同じ色）・`emphasis`（表の行の強調。`{ cells, emphasis: true }`で3行まで。超えれば差し戻し）・`before`（`stats` の前の値）・`total`（`stats` の全体の数）・`keyFigures`（`report` の欄。結論の直下に並べる 3〜4 個の数のカードで、項目の形は `stats` の `items` と同じ。部品の欄ではない）・`label`（`list` の項目の名前）・
   `flow`（`list` の `style` の一本道の流れ）・`cards`（`list` の `style` の並列の区画。2〜4項目を横に並べる）・`sides`（`compare` の2つの側。`heading` と `points`）・
   `before` / `after`（`beforeAfter` の前の側と後の側。`kind` が `image`〔`path`と任意の `region`（変わった場所の枠。% の `left`・`top`・`width`・`height`）〕/ `code`〔`language`・`source`〕/ `points` / `mermaid`〔`source`〕/ `svg`〔`width`・`height`・`shapes`〕の合併型）・
@@ -81,15 +81,15 @@
   決定は `docs/architecture/display.md` の「出力の分離（セリフと詳細）」（`display/block-field.md`）
 - **避ける言い方**: `claim` を単独で概念の名前にすること（セッションの占有 `SessionClaim` と紛れる）、確信度
 
-### 余白の柱
+### 欄外注の列
 
-- **英語識別子**: `gutter`（記法の印は `with-gutter`〔部品と傍注の包み〕/ `gutter`〔傍注の並び〕/ `gutter-note`〔傍注1つ〕、
+- **英語識別子**: `gutter`（記法の印は `with-gutter`〔部品と欄外注の外枠〕/ `gutter`〔傍注の並び〕/ `gutter-note`〔傍注1つ〕、
   CSS は `report-gutter` ほか）/ 部品の欄 `aside`（**部品の傍注**。出典・どこを見るかの1行）
 - **定義**: **レポートの本文の列（42em）の右に置く、傍注の列**。出すのは `memo` の `note` と部品の `aside` だけで、
   直前の部品の上端に揃える。本文の列の右に 160px 以上空かないときは、部品の直後の1行として本文の中に畳む
-- **注記**: 部品の欄の `aside` は「脇の話」の `aside` とは別物。「柱」とだけ書くと中くらいの窓幅でサイドバーを畳んだ
-  柱（`rail`）と紛れるので、文書では「余白の柱」と書く
-- **避ける言い方**: 柱（`rail` と紛れる）、サイドノート、脇（脇の話と紛れる）
+- **注記**: 部品の欄の `aside` は「脇の話」の `aside` とは別物。単独の「柱」は中くらいの窓幅でサイドバーを畳んだ
+  柱（`rail`）を指すので、本文の右の余白の列は「欄外注の列」と書く
+- **避ける言い方**: 余白の柱・傍注の柱（以前の呼び名）、単独の柱（`rail` と紛れる）、サイドノート、脇（脇の話と紛れる）
 
 ### やり取りの列
 

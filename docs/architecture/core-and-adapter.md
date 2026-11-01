@@ -26,7 +26,7 @@ doc コメントが正典で、機能の数え方・契機・上限は `docs/req
 形を指定して1回聞くだけのものは共有の箱の `sdk-structured-query.ts` を通す。
 
 - **原則3の例外: 共有の箱の `server/adapter/` 直下の `sdk-*` は、どの機能の語彙も名乗らない使い捨ての問い合わせの口だけ**
-  （`sdk-structured-query.ts` と、足跡を残す包みの `sdk-throwaway-query.ts`）
+  （`sdk-structured-query.ts` と、足跡を残すラッパーの `sdk-throwaway-query.ts`）
 
 - **`sdk-message.ts` は SDK の型を import しない。** 依存を機能の `adapter/` 直下の `sdk-` で始まる
   ファイルに閉じるため、届くメッセージは `unknown` で受けて検証する（外部由来の値なので、どのみち構造は

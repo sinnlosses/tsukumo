@@ -45,14 +45,14 @@ React 19。関数コンポーネントと Hooks だけを使う（クラスコ�
 | 描画前に DOM を測る・書く         | `useBeforePaintSync(effect, deps)`               |
 
 先に考える順は、レンダー中の計算 → ハンドラ → `key` → `useSyncExternalStore`・`useMediaQuery` →
-ref コールバック → 包み hook。包み hook はどれも `src/browser/hooks/` にある。
+ref コールバック → ラッパー hook。ラッパー hook はどれも `src/browser/hooks/` にある。
 
-**生の `useEffect`・`useLayoutEffect` を呼べるのは `src/browser/hooks/` の包みの実装ファイルだけ。**
+**生の `useEffect`・`useLayoutEffect` を呼べるのは `src/browser/hooks/` のラッパーの実装ファイルだけ。**
 それ以外での import は `pnpm run lint`（`.oxlintrc.json` の `no-restricted-imports`）が落とす。
-包みで足りないときは、生の `useEffect` を書かず、包みを足すか設計を直す。4類型から外れる理由のコメントは、包みの呼び出しの横に書く。
+ラッパーで足りないときは、生の `useEffect` を書かず、ラッパーを足すか設計を直す。4類型から外れる理由のコメントは、ラッパーの呼び出しの横に書く。
 
 `useLayoutEffect` は、描画前に DOM を測る・書かないと1フレーム崩れて見えるときだけ使う。
-包みは `useBeforePaintSync`。それ以外は `useExternalSync` などの `useEffect` 側の包みを使う。
+ラッパーは `useBeforePaintSync`。それ以外は `useExternalSync` などの `useEffect` 側のラッパーを使う。
 
 `useEffectEvent` で包んだ関数は**レンダー中には呼べない**（React が投げる）。呼んでよいのは
 effect の中と、イベントハンドラ・そこで登録した寿命の長いリスナの中
