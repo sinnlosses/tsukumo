@@ -1,14 +1,11 @@
 import type { Page } from "playwright-core"
-import { describe, expect, it } from "vitest"
 
-import { useScenarioRun } from "./scenario-run.ts"
+import { expect, test } from "./room-fixture.ts"
 
 // トークンの画面の見直しが会話とは別に走ること（docs/architecture/testing.md「E2E のシナリオの一覧」）。
 // 場面 `work-strip-plan-pending` はターンが進行中のまま止まる。同じ tsukumo をもう1つのタブでトークンの画面に開き、
 // 見直しを始めて結果の札が出るまでを流し、仕事の画面のメインビューが変わらないことを DOM で判定する。
 // 見直しの手順は疑似セッションの `usageReview.review`。期待値は撮らない。
-
-const run = useScenarioRun()
 
 const MAIN_VIEW = '[data-region="main"]'
 
@@ -22,8 +19,10 @@ function mainViewContent(
   }))
 }
 
-describe("トークンの画面の見直し", () => {
-  it("ターンが進行中でも始められ、結果の札が出て、仕事の画面のメインビューは変わらない", async () => {
+test.describe("トークンの画面の見直し", () => {
+  test("ターンが進行中でも始められ、結果の札が出て、仕事の画面のメインビューは変わらない", async ({
+    run,
+  }) => {
     const room = await run.open({
       scenario: "usage-review-own-session",
       scene: "work-strip-plan-pending",

@@ -1,15 +1,13 @@
-import { describe, expect, it } from "vitest"
-
 import { REPORT_COMPONENT_SCHEMAS } from "../../src/shared/report/a2ui-report-catalog.ts"
-import { useScenarioRun } from "./scenario-run.ts"
+import { expect, test } from "./room-fixture.ts"
 
 // 見本帳（`#design`）を開くと、カタログの全部品が本文として並ぶこと
 // （docs/architecture/testing.md「E2E のシナリオの一覧」）。期待値は撮らず DOM で判定する。
 
-const run = useScenarioRun()
-
-describe("見本帳", () => {
-  it("`#design` を開くとカタログの全部品が本文として並び、読み込み中の器が残らない", async () => {
+test.describe("見本帳", () => {
+  test("`#design` を開くとカタログの全部品が本文として並び、読み込み中の器が残らない", async ({
+    run,
+  }) => {
     const room = await run.open({
       scenario: "design-gallery",
       scene: "report-blocks",

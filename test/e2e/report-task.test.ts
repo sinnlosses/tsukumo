@@ -1,18 +1,16 @@
-import { describe, it } from "vitest"
-
-import { useScenarioRun } from "./scenario-run.ts"
+import { test } from "./room-fixture.ts"
 import { openReportTaskRoom } from "./task-room.ts"
 
 // タスクの作業のレポート（`report` の `task`）の結論部。疑似セッションの場面
 // `report-task-finished` は、架空のタスクを終えた終わり方で閉じる（`fixture/fake-session/report-task-finished.json`）。
 
-const run = useScenarioRun()
-
 /** 撮るときの経過（凍らせた瞬間から）。「何秒前」の類いをこの値で揃える。 */
 const ELAPSED_MS = 60_000
 
-describe("タスクの作業のレポートの結論部", () => {
-  it("目録の1行（ラベル・タスクID・完了）と作業の名前の見出しが結論の上に出る", async () => {
+test.describe("タスクの作業のレポートの結論部", () => {
+  test("目録の1行（ラベル・タスクID・完了）と作業の名前の見出しが結論の上に出る", async ({
+    run,
+  }) => {
     const room = await openReportTaskRoom(run, "report-task-finished", "report-task-finished", [
       "main",
     ])

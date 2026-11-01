@@ -1,21 +1,19 @@
 import type { Locator, Page } from "playwright-core"
-import { describe, expect, it } from "vitest"
 
-import { useScenarioRun, VIEWPORTS } from "./scenario-run.ts"
+import { expect, test, VIEWPORTS } from "./room-fixture.ts"
+import type { ScenarioRun } from "./scenario-run.ts"
 import { BLOCKED_TASK_ID, READY_TASK_ID, writeWelcomeTasks } from "./task-room.ts"
 
 // 依頼前のメインビューの始め方の一覧（docs/architecture/testing.md「E2E のシナリオの一覧」）。
 // 札の並びと理由は疑似セッションの場面 `welcome-recommendation`、続きの要約は `sessionDigests`、タスクは cwd の `FAKE_BEADS_ISSUES_PATH` に架空の課題を置いて用意する。
 // 要約は手続き（`/rpc`）の応答で届くので、その応答を待ってから、描かれるまで凍らせた時計を進める。
 
-const run = useScenarioRun()
-
 const ELAPSED_MS = 60_000
 
 const RESUME_CARD = "架空の成果の画面に振り返りの口を置きたい"
 const READY_CARD = new RegExp(`${READY_TASK_ID} を始める`)
 
-async function openWelcomeRoom(scenario: string, viewport: "wide" | "medium") {
+async function openWelcomeRoom(run: ScenarioRun, scenario: string, viewport: "wide" | "medium") {
   const room = await run.open({
     scenario,
     scene: "welcome-recommendation",
@@ -44,9 +42,11 @@ function draft(page: Page): Promise<string> {
   return page.locator("textarea").inputValue()
 }
 
-describe("始め方の一覧", () => {
-  it("理由つきのおすすめの札と「ほかの始め方」が並び、広い窓でも中くらいの窓でも横にあふれない", async () => {
-    const room = await openWelcomeRoom("welcome-doors", "wide")
+test.describe("始め方の一覧", () => {
+  test("理由つきのおすすめの札と「ほかの始め方」が並び、広い窓でも中くらいの窓でも横にあふれない", async ({
+    run,
+  }) => {
+    const room = await openWelcomeRoom(run, "welcome-doors", "wide")
     const page = room.page
     await mainView(page).getByRole("button", { name: READY_CARD }).waitFor()
     expect(
@@ -69,8 +69,8 @@ describe("始め方の一覧", () => {
     expect(mediumOverflow).toBeLessThanOrEqual(0)
   })
 
-  it("「始める」を押すと、入力欄を経由せず依頼が送られ、下書きは残る", async () => {
-    const room = await openWelcomeRoom("welcome-start-button", "wide")
+  test("「始める」を押すと、入力欄を経由せず依頼が送られ、下書きは残る", async ({ run }) => {
+    const room = await openWelcomeRoom(run, "welcome-start-button", "wide")
     await room.page.locator("textarea").fill("打ちかけの架空の依頼")
     await mainView(room.page).getByRole("button", { name: READY_CARD }).click()
     await room.waitForEvent("request")
