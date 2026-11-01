@@ -9,6 +9,7 @@ vi.mock(
   "../../../../../../../../src/browser/components/page/conversation/components/markdown/renderer/theme-color.ts",
   () => ({
     resolveColor: () => "rgb(0, 0, 0)",
+    resolveColorMix: () => "rgb(0, 0, 0)",
     resolveHex: () => "#000000",
     resolveHexOver: () => "#000000",
   }),
@@ -27,8 +28,9 @@ class FakeChart implements Instance {
     color: "",
     maintainAspectRatio: true,
     font: { family: "" },
-    scale: { grid: { color: "", display: true }, border: { color: "" } },
+    scale: { grid: { color: "", display: true }, border: { color: "" }, ticks: { color: "" } },
     plugins: { colors: { enabled: true }, legend: { display: true } },
+    set: vi.fn<() => void>(),
   }
   static readonly register = vi.fn<() => void>()
   readonly destroy = vi.fn<() => void>()

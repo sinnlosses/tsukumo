@@ -6,32 +6,31 @@
 }
 
 .gauge-axis {
-  stroke: var(--accent);
-  stroke-opacity: 0.35;
+  stroke: var(--rule);
   stroke-width: 2;
 }
 
 .gauge-point {
-  fill: var(--accent);
+  fill: var(--chart-series-1);
   fill-opacity: 0.85;
 }
 
 .gauge-band {
-  fill: var(--accent);
+  fill: color-mix(in srgb, var(--ink) 26%, transparent);
 }
 
 .gauge-value {
-  fill: var(--accent);
+  fill: var(--chart-series-1);
 }
 
 .gauge-target {
-  stroke: var(--accent);
+  stroke: var(--ink-bright);
   stroke-width: 3;
 }
 
 .gauge-text {
   font-size: var(--font-label);
-  fill: var(--ink);
+  fill: var(--ink-soft);
 }
 
 .gauge-quiet {

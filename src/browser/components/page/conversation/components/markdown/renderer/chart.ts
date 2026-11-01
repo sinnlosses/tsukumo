@@ -12,10 +12,14 @@ import {
   type ChartPalette,
   type EmphasisAxis,
 } from "./chart-palette.ts"
-import { resolveColor } from "./theme-color.ts"
+import { resolveColor, resolveColorMix } from "./theme-color.ts"
 import { loadVendorScript } from "./vendor-script.ts"
 
 const CHART_SRC = vendorAssetPath("chart.umd.min.js")
+
+const MAX_BAR_THICKNESS = 56
+const BAR_RADIUS = 3
+const MUTED_BAR_PERCENT = 26
 
 const emphasisOptionsSchema = z.object({
   plugins: z.object({
@@ -49,12 +53,18 @@ export function loadChart(element: HTMLElement): Promise<void> {
     // 線は `defaults.borderColor` ではなく目盛りの側（`defaults.scale`）へ書く。
     // chart.js 4.5.0 以降の colors プラグインは「`defaults.borderColor` か `defaults.backgroundColor` が既定から動いていたら色を配らない」。
     // `borderColor` へ書くと系列の色が付かないまま（`undefined`）になり、棒も線も透明で描かれる（4.4.1 と 4.5.1 を並べて実測）。
-    const rule = resolveColor(element, "--rule")
+    // 補助線は値を読む軸（linear）だけに引く。項目の軸（category）は線を引かない。
     Chart.defaults.color = resolveColor(element, "--ink-soft")
-    Chart.defaults.scale.grid.color = rule
-    Chart.defaults.scale.border.color = rule
+    Chart.defaults.scale.grid.color = resolveColor(element, "--rule-quiet")
+    Chart.defaults.scale.border.color = resolveColor(element, "--rule")
+    Chart.defaults.scale.ticks.color = resolveColor(element, "--ink-quiet")
     Chart.defaults.plugins.legend.display = false
     Chart.defaults.scale.grid.display = false
+    Chart.defaults.set("scales.linear", { grid: { display: true } })
+    Chart.defaults.set("datasets.bar", {
+      maxBarThickness: MAX_BAR_THICKNESS,
+      borderRadius: BAR_RADIUS,
+    })
     // アスペクト比を保つ既定だと、pie は入れ物の全幅を高さにも使おうとして縦に伸びすぎる。
     // `.chart-block` の高さ（CSS）に合わせるだけにする。
     Chart.defaults.maintainAspectRatio = false
@@ -63,7 +73,7 @@ export function loadChart(element: HTMLElement): Promise<void> {
     const palette = {
       series: SERIES_PROPERTIES.map((property) => resolveColor(element, property)),
       other: resolveColor(element, "--chart-series-other"),
-      muted: resolveColor(element, "--ink-quiet"),
+      muted: resolveColorMix(element, "--ink", MUTED_BAR_PERCENT),
     } satisfies ChartPalette
     Chart.defaults.plugins.colors.enabled = false
     registerSeriesPlugin(palette)

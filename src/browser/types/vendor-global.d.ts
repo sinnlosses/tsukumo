@@ -58,7 +58,9 @@ declare global {
       readonly scale: {
         readonly grid: { color: string; display: boolean }
         readonly border: { color: string }
+        readonly ticks: { color: string }
       }
+      readonly set: (scope: string, values: Readonly<Record<string, unknown>>) => void
       readonly plugins: {
         readonly colors: { enabled: boolean }
         readonly legend: { display: boolean }

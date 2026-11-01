@@ -69,72 +69,85 @@
   /* 数の要約（KPI タイル）。
    数そのものが結論になる値（件数・前後の差）を、地の文に埋めずに並べる塊。
    `.report-card` と違って中身は1つの数とそのラベルだけなので、器は `.report-cols` より狭く取り、3〜4枚が1行に収まるようにする。
-   タイプスケールの段は増やさないので、「大きい数」は段の上端（--font-heading）と下端（--font-label）の落差・太さ・縦積みで出す。
-   意味を固定した色（state-*）は、`better` を渡したときの前→後の矢印の字だけに使う。
-   数そのものは良し悪しを持たず、良し悪しを言いたいときは同じ塊の中に `.report-badge` を添えるほうが文字でも読める。 */
+   札は左から並べる。数は札の字（--font-secondary）の 2 倍で、段は増やさない。
+   数そのものも前の数も良し悪しの色を持たず、良し悪しを言いたいときは同じ塊の中に `.report-badge` を添えるほうが文字でも読める。 */
   & .report-stats {
     display: grid;
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: minmax(0, max-content);
+    justify-content: start;
     gap: var(--space-md);
     margin: var(--report-block-gap) 0;
+  }
+  /* 題つきの `stats` の包みは札の並びの幅まで縮めて本文の列の左端に置く。題は札の並びの幅の中で中央。 */
+  & .report-captioned:has(> .report-stats) {
+    inline-size: fit-content;
+    max-inline-size: 100%;
+    min-inline-size: 0;
+    margin-inline: 0;
   }
   /* `stats` の列数は、項目数（`stats-of-<n>`。`NotationBlock` が足す）の全部か約数か1列にする（3＋1 のような半端な段を作らない）。
    既定は1列で、器の幅が列の最小幅（10rem。折れ線・値・分母の `36 / 48` が1行に収まる幅）とすき間 0.75rem を足した幅に届くたびに、次に大きい約数の列数へ広げる。
    項目数の class が無いもの（2個、5個以上）は1列のまま。 */
   @container report-body (min-width: calc(2 * 10rem + 0.75rem)) {
     & .report-stats.report-stats-of-4 {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: repeat(2, minmax(0, max-content));
     }
   }
   @container report-body (min-width: calc(3 * 10rem + 2 * 0.75rem)) {
     & .report-stats.report-stats-of-3 {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(3, minmax(0, max-content));
     }
   }
   @container report-body (min-width: calc(4 * 10rem + 3 * 0.75rem)) {
     & .report-stats.report-stats-of-4 {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-columns: repeat(4, minmax(0, max-content));
     }
   }
   & .report-stat {
-    padding: var(--space-sm) var(--space-md);
-    border: 1px solid var(--report-chunk-rule, var(--rule));
+    min-inline-size: 132px;
+    padding: var(--space-md) var(--space-lg);
+    border: 1px solid var(--report-chunk-rule, var(--rule-quiet));
     border-radius: var(--radius-md);
     background: var(--report-chunk-ground, var(--surface));
-    font-size: var(--font-label);
-    letter-spacing: 0.08em;
+    font-size: var(--font-secondary);
     line-height: 1.4;
-    color: var(--ink-quiet);
+    color: var(--ink-soft);
   }
   /* 数の側。
    `<b>` と `<strong>` の両方を受ける（レポートの HTML を書くのはモデルなので、どちらで書かれても同じ見た目になるようにする）。 */
   & .report-stat b,
   & .report-stat strong {
-    display: block;
-    font-size: var(--font-heading);
+    display: inline;
+    font-size: 2em;
     font-weight: 700;
     letter-spacing: normal;
     line-height: 1.3;
     font-variant-numeric: tabular-nums;
     color: var(--ink-bright);
   }
-  /* `stats` の変わる前の数。数の上に添え、矢印の文字でつなぐ（地のタイルと同じ ink-quiet・label の段）。 */
-  & .report-stat-before {
-    display: block;
+  /* 数のあとで行を改め、割合の帯・名前を次の行に送る。 */
+  & .report-stat b::after,
+  & .report-stat strong::after {
+    content: "\A";
+    white-space: pre;
   }
-  & .report-stat-better {
-    color: var(--state-ok);
-  }
+  /* `stats` の変わる前の数。数の左に同じ行で添え、矢印の文字でつなぐ（`ink-quiet` の 14px）。
+   良し悪しは字の色で言わない（better・worse も同じ色）。 */
+  & .report-stat-before,
+  & .report-stat-better,
   & .report-stat-worse {
-    color: var(--state-warn);
+    font-size: var(--font-subheading);
+    font-weight: 500;
+    margin-inline-end: 0.5em;
+    color: var(--ink-quiet);
   }
-  /* `stats` の推移の折れ線。数の左に字の高さの1.2倍・幅4emで置き、最新の点だけ明るくする。 */
+  /* `stats` の推移の折れ線。数の左に幅 2.8em・高さ 0.7em（数 26px で約 73×18）で置き、最新の点だけ明るくする。 */
   & .report-stat b > svg {
     display: inline-block;
-    width: 4em;
-    height: 1.2em;
+    width: 2.8em;
+    height: 0.7em;
     margin-right: 0.4em;
-    vertical-align: -0.1em;
+    vertical-align: baseline;
     overflow: visible;
   }
   & .report-stat b > svg polyline {
@@ -150,23 +163,23 @@
   }
   /* `stats` の全体の数。数の後ろに小さく並べ、割合は下の帯で添える。 */
   & .report-stat-total {
-    font-size: var(--font-label);
-    font-weight: 400;
-    letter-spacing: 0.08em;
+    font-size: var(--font-subheading);
+    font-weight: 500;
+    letter-spacing: normal;
     color: var(--ink-quiet);
   }
   & .report-stat-meter {
     display: block;
-    height: 0.3rem;
-    margin: var(--space-xs) 0;
-    border-radius: 999px;
-    background: var(--rule);
+    height: 4px;
+    margin: var(--space-sm) 0;
+    border-radius: var(--radius-sm);
+    background: var(--surface-raised);
     overflow: hidden;
   }
   & .report-stat-meter-fill {
     display: block;
     height: 100%;
-    background: var(--ink-quiet);
+    background: var(--chart-series-1);
   }
   /* 表の変化したセルの前の値と矢印は取り消し線の補助色、後の値は ink-bright の太字。 */
   & .report-change-from {

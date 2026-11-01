@@ -142,7 +142,8 @@
 見本の22pxの溝・太字は採らず、行頭の字が見本より1字ぶん左に来る
 （地が全幅の帯で記号が赤と緑なので見分けられ、溝は行の器と E2E の DOM を変えるため）。
 ただし **Chart.js と mermaid の色は `theme.css` のトークンの実効値を
-読んで渡す**（`markdown/renderer/chart.ts`・`mermaid-block.tsx`）。Chart.js は軸の字に `--ink-soft`・軸の線に `--rule`（格子線は引かず、凡例も出さない）、
+読んで渡す**（`markdown/renderer/chart.ts`・`mermaid-block.tsx`）。Chart.js は目盛りの字に `--ink-quiet`・値の字に `--ink-soft`（強調の棒の値は `--ink-bright`、12px・600）・軸の線に `--rule`・値の軸の補助線に `--rule-quiet`（項目の軸には引かず、凡例も出さない）。
+棒は幅の上限 56px・角 3px、強調以外の棒は `--ink` の 26%、
 系列に `--chart-series-*`（内蔵の配色は止め、7本目以降は `--chart-series-other`）。mermaid は
 `theme: "base"` + `darkMode: true` に、トークンを hex に解いた `themeVariables`（地は `surface`・
 ノードは `surface-raised` を `surface` に重ねた色・字は `ink`・線は `ink-quiet` を `surface` に重ねた色・
@@ -231,7 +232,11 @@
 - 表の見出し行の下は `rule`、行罫は `rule-quiet`（見出し行の下だけ一段濃い）
 
 素の `accent` は縦罫の1つ（お願い）と、機械が指し示す場所（フォーカスの輪・選んだ選択肢など）に残す。
-`hr`・`details` の枠・カードの枠・引用の縦罫・`report-stat` の枠は `rule` のまま。
+`hr`・`details` の枠・カードの枠・引用の縦罫は `rule` のまま。`report-stat` の枠は `rule-quiet`。
+
+**数の系統（`Chart`・`Plot`・`Stats`・`Timeline`）の色。** 見る項目・区間だけ `chart-series-1`、ほかは `ink` の 26%（`Chart`・`Plot`）か 30%（`Timeline`）で、`accent` は使わない。
+`Stats` の前の数は良し悪しを字の色で言わず、`ink-quiet` に統一した（`better` で色を変えると、色だけが意味を運び、同じ塊の `Badge` の語と二重になるため）。
+延びた分の斜線は `state-warn`、割合の帯の埋めは `chart-series-1`、溝は `surface-raised`。`Chart` には単位を渡す欄が無いので、単位は軸の端に出ない（`Chart` の部品が単位を持つ変更は別の件）。
 
 **採らなかった案**（つまみを足す・行を塗る印を記法に足す・`highlight.js` のテーマを作り直す・
 見出しの文字に色を当てる・最終レポートの枠を `accent` の縦罫にする）の理由は

@@ -25,6 +25,7 @@ const DIRECT_LABEL_PLUGIN_ID = "tsukumo-direct-label"
 
 const LABEL_GAP = 14
 const FONT_SIZE = 12
+const BAR_VALUE_WEIGHT = 600
 const PIE_SIDE_PADDING = 90
 const PIE_VERTICAL_PADDING = 24
 const SLOPE_SIDE_PADDING = 130
@@ -108,6 +109,10 @@ function paddingFor(chart: ChartInstance): Padding {
 
 function labelFont(): string {
   return `${String(FONT_SIZE)}px ${Chart.defaults.font.family}`
+}
+
+function barValueFont(): string {
+  return `${String(BAR_VALUE_WEIGHT)} ${labelFont()}`
 }
 
 function widestText(ctx: CanvasRenderingContext2D, texts: readonly string[]): number {
@@ -247,9 +252,13 @@ function lineEndText(dataset: ChartInstance["data"]["datasets"][number]): string
 
 function drawBarEnds(chart: ChartInstance): void {
   const horizontal = chart.options.indexAxis === "y"
+  const emphasisColor = resolveColor(chart.canvas, "--ink-bright")
+  const quietColor = Chart.defaults.color
+  chart.ctx.font = barValueFont()
   chart.data.datasets.forEach((dataset, index) => {
     chart.getDatasetMeta(index).data.forEach((bar, point) => {
       const text = barTextAt(chart, index, point, dataset.data[point])
+      chart.ctx.fillStyle = emphasizedAt(chart, point) ? emphasisColor : quietColor
       if (horizontal) {
         drawText(chart.ctx, text, bar.x + BAR_END_GAP, bar.y, "left", "middle")
       } else {
@@ -257,6 +266,17 @@ function drawBarEnds(chart: ChartInstance): void {
       }
     })
   })
+}
+
+function emphasizedAt(chart: ChartInstance, point: number): boolean {
+  const option = chart.options.plugins["tsukumo-series"]
+  return (
+    typeof option === "object" &&
+    option !== null &&
+    "emphasis" in option &&
+    Array.isArray(option.emphasis) &&
+    option.emphasis.includes(point)
+  )
 }
 
 function barTextAt(chart: ChartInstance, series: number, point: number, value: unknown): string {
@@ -271,7 +291,7 @@ function barEndTextWidth(chart: ChartInstance): number {
     dataset.data.map((value, point) => barTextAt(chart, series, point, value)),
   )
   chart.ctx.save()
-  chart.ctx.font = labelFont()
+  chart.ctx.font = barValueFont()
   const width = widestText(chart.ctx, texts)
   chart.ctx.restore()
   return width

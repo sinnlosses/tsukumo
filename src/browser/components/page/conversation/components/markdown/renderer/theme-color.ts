@@ -6,11 +6,15 @@
  * Chart.js は受け取った文字列を canvas の色として使うので、式のままでは渡せない。
  */
 export function resolveColor(element: HTMLElement, property: string): string {
-  const before = element.style.color
-  element.style.color = `var(${property})`
-  const resolved = getComputedStyle(element).color
-  element.style.color = before
-  return resolved
+  return resolveColorExpression(element, `var(${property})`)
+}
+
+/** トークンを `percent`% だけ透かした色の実効値。 */
+export function resolveColorMix(element: HTMLElement, property: string, percent: number): string {
+  return resolveColorExpression(
+    element,
+    `color-mix(in srgb, var(${property}) ${String(percent)}%, transparent)`,
+  )
 }
 
 type Rgba = { readonly r: number; readonly g: number; readonly b: number; readonly a: number }
@@ -29,6 +33,14 @@ export function resolveHexOver(element: HTMLElement, property: string, backdrop:
   const front = readPixel(resolveColor(element, property))
   const back = readPixel(resolveColor(element, backdrop))
   return toHex((get) => get(front) * front.a + get(back) * (1 - front.a))
+}
+
+function resolveColorExpression(element: HTMLElement, expression: string): string {
+  const before = element.style.color
+  element.style.color = expression
+  const resolved = getComputedStyle(element).color
+  element.style.color = before
+  return resolved
 }
 
 function toHex(mix: (get: (color: Rgba) => number) => number): string {
