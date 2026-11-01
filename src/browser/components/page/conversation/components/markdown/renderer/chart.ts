@@ -89,7 +89,7 @@ function registerSeriesPlugin(palette: ChartPalette): void {
       chart.config.data?.datasets?.forEach((dataset, index) => {
         const colors =
           emphasis === undefined
-            ? colorsForDataset(dataset, chart.config.type, index, current)
+            ? colorsForDataset(dataset, chart.config.type ?? "", index, current)
             : emphasisColorsForDataset(dataset, index, current, emphasis)
         if (colors !== undefined) {
           dataset.backgroundColor = colors.backgroundColor

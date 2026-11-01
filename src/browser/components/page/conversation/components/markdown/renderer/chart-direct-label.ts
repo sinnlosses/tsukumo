@@ -7,6 +7,7 @@ import {
   BAR_END_GAP,
   barEndPadding,
   barEndText,
+  barValueText,
   LABEL_OFFSET,
   NAME_COLUMN_GAP,
   NAME_ROW_PADDING,
@@ -233,17 +234,22 @@ function visibleEnds(chart: ChartInstance, withValues: boolean) {
       : [
           {
             point,
-            label: withValues ? barEndText(dataset.label, dataset.data.at(-1)) : dataset.label,
+            label: withValues ? lineEndText(dataset) : dataset.label,
           },
         ]
   })
+}
+
+function lineEndText(dataset: ChartInstance["data"]["datasets"][number]): string {
+  const value = dataset.data.at(-1)
+  return dataset.label === undefined ? barValueText(value) : barEndText(dataset.label, value)
 }
 
 function drawBarEnds(chart: ChartInstance): void {
   const horizontal = chart.options.indexAxis === "y"
   chart.data.datasets.forEach((dataset, index) => {
     chart.getDatasetMeta(index).data.forEach((bar, point) => {
-      const text = barEndText(seriesNameAt(chart, index, point), dataset.data[point])
+      const text = barTextAt(chart, index, point, dataset.data[point])
       if (horizontal) {
         drawText(chart.ctx, text, bar.x + BAR_END_GAP, bar.y, "left", "middle")
       } else {
@@ -253,16 +259,16 @@ function drawBarEnds(chart: ChartInstance): void {
   })
 }
 
-function seriesNameAt(chart: ChartInstance, series: number, point: number): string | undefined {
-  return chart.data.datasets.length >= 2 && point === 0
-    ? chart.data.datasets[series]?.label
-    : undefined
+function barTextAt(chart: ChartInstance, series: number, point: number, value: unknown): string {
+  const seriesName =
+    chart.data.datasets.length >= 2 && point === 0 ? chart.data.datasets[series]?.label : undefined
+  return seriesName === undefined ? barValueText(value) : barEndText(seriesName, value)
 }
 
 // 余白は `beforeLayout` で決めるので、描く前の字の幅を測る。
 function barEndTextWidth(chart: ChartInstance): number {
   const texts = chart.data.datasets.flatMap((dataset, series) =>
-    dataset.data.map((value, point) => barEndText(seriesNameAt(chart, series, point), value)),
+    dataset.data.map((value, point) => barTextAt(chart, series, point, value)),
   )
   chart.ctx.save()
   chart.ctx.font = labelFont()

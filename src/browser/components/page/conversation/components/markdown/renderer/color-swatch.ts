@@ -8,6 +8,9 @@ import {
 } from "./color-token-reader.ts"
 import { THEME_TOKEN_NAMES } from "./theme-token-name-set.ts"
 
+/** `surface` が読めないときに、透ける色を重ねる地。 */
+const BLACK: ResolvedColor = { r: 0, g: 0, b: 0, alpha: 1 }
+
 /** 地の色と、その上に載せる文字の側（明るい地には暗い字、暗い地には明るい字）。 */
 type ColorSwatch = {
   readonly background: string
@@ -22,7 +25,7 @@ type ColorSwatch = {
 export function colorSwatch(text: string, readToken: ColorTokenReader): ColorSwatch | undefined {
   const hex = parseHexColor(text)
   if (hex !== undefined) {
-    return { background: text, ink: inkOver(hex, readToken("surface")) }
+    return { background: text, ink: inkOver(hex, readToken("surface") ?? BLACK) }
   }
   const name = TOKEN_PATTERN.exec(text)?.[1]
   if (name === undefined || !THEME_TOKEN_NAMES.has(name)) {
@@ -31,7 +34,7 @@ export function colorSwatch(text: string, readToken: ColorTokenReader): ColorSwa
   const resolved = readToken(name)
   return resolved === undefined
     ? undefined
-    : { background: `var(--${name})`, ink: inkOver(resolved, readToken("surface")) }
+    : { background: `var(--${name})`, ink: inkOver(resolved, readToken("surface") ?? BLACK) }
 }
 
 /** ページのトークンを実効の色に解決して覚える口（{@link colorSwatch} に渡す）。 */
@@ -115,10 +118,8 @@ function parseComputedColor(css: string): ResolvedColor | undefined {
 
 /**
  * 地に載せる字の明暗。透ける色は `surface`（本文の地）に重ねた姿で測る。
- * `surface` が読めないときは黒に重ねたものとして測る。
  */
-function inkOver(color: ResolvedColor, surface: ResolvedColor | undefined): "dark" | "light" {
-  const under = surface ?? { r: 0, g: 0, b: 0, alpha: 1 }
+function inkOver(color: ResolvedColor, under: ResolvedColor): "dark" | "light" {
   const mix = (top: number, bottom: number): number =>
     top * color.alpha + bottom * (1 - color.alpha)
   const luminance = relativeLuminance(

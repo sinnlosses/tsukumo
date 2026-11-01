@@ -252,11 +252,11 @@ const NO_WORD_RANGES: DiffWordRanges = new Map()
  * `marks` のある塊と、コマンドの行のある shell の塊は、行ごとに {@link CodeLines} で描く。
  */
 function Pre(props: PreProps): ReactElement {
-  const codeNode = findCodeChild(props.node)
+  const codeNode = props.node === undefined ? undefined : findCodeChild(props.node)
 
   if (codeNode !== undefined) {
     const language = codeLanguage(codeNode)
-    if (isFenceFigureLanguage(language)) {
+    if (language !== undefined && isFenceFigureLanguage(language)) {
       return <FenceFigure language={language} spec={hastText(codeNode)} />
     }
   }

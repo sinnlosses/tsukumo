@@ -56,11 +56,13 @@ export function arrowPadding(
   return { left: nameWidth + NAME_COLUMN_GAP + overhang, right: overhang, overhang }
 }
 
-/**
- * 棒の端に書く字。系列名があれば値の前に添える（系列が2つ以上のとき、各系列の先頭の棒だけ）。
- */
-export function barEndText(seriesName: string | undefined, value: unknown): string {
-  return seriesName === undefined ? String(value) : `${seriesName}  ${String(value)}`
+/** 棒の端に書く字。系列名を値の前に添える（系列が2つ以上のとき、各系列の先頭の棒だけ）。 */
+export function barEndText(seriesName: string, value: unknown): string {
+  return `${seriesName}  ${String(value)}`
+}
+
+export function barValueText(value: unknown): string {
+  return String(value)
 }
 
 /**

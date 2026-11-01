@@ -11,7 +11,7 @@ import {
   type LineRange,
 } from "../../../../../../../shared/report/code-mark.ts"
 import { Button } from "../../../../../ui/button/button.tsx"
-import { diffLineSide, markDiffSign, type CodeLine, type DiffSide } from "./code-line.ts"
+import { diffLineSide, markDiffSign, type CodeLine } from "./code-line.ts"
 import type { DiffLineWords, DiffWordRanges } from "./diff-pair.ts"
 import { markDiffWords } from "./diff-word-mark.ts"
 import styles from "./report-notation.module.css"
@@ -86,6 +86,9 @@ function CodeLineRow(props: {
     return range !== undefined && props.number >= range.start && props.number <= range.end
   })
   const side = diffLineSide(props.line)
+  const wordLine =
+    props.wordRange === undefined ? props.line : diffWordLine(props.line, props.wordRange)
+  const diffLine = side === undefined ? wordLine : diffSignLine(wordLine)
   return (
     <span
       className={clsx(
@@ -97,9 +100,7 @@ function CodeLineRow(props: {
       )}
     >
       <span className={styles["code-line-text"]}>
-        {props.kind === "output"
-          ? props.line.map(plainText)
-          : diffSignLine(diffWordLine(props.line, props.wordRange), side).map(hastToReact)}
+        {props.kind === "output" ? props.line.map(plainText) : diffLine.map(hastToReact)}
       </span>
       {props.label !== undefined && (
         <span className={styles["code-mark-label"]}>{props.label}</span>
@@ -108,18 +109,16 @@ function CodeLineRow(props: {
   )
 }
 
-function diffSignLine(line: CodeLine, side: DiffSide | undefined): CodeLine {
-  return side === undefined ? line : markDiffSign(line, styles["code-line-sign"])
+function diffSignLine(line: CodeLine): CodeLine {
+  return markDiffSign(line, styles["code-line-sign"])
 }
 
-function diffWordLine(line: CodeLine, words: DiffLineWords | undefined): CodeLine {
-  return words === undefined
-    ? line
-    : markDiffWords(
-        line,
-        words.ranges,
-        words.side === "added" ? styles["code-diff-added"] : styles["code-diff-removed"],
-      )
+function diffWordLine(line: CodeLine, words: DiffLineWords): CodeLine {
+  return markDiffWords(
+    line,
+    words.ranges,
+    words.side === "added" ? styles["code-diff-added"] : styles["code-diff-removed"],
+  )
 }
 
 /** 印ごとに、ラベルを出す行（印の最初の行）。 */

@@ -63,8 +63,6 @@ describe("FenceFigure", () => {
 
   it("図の言語だけを見分ける", () => {
     expect(LANGUAGES.every((language) => isFenceFigureLanguage(language))).toBe(true)
-    expect(
-      ["ts", "text", "", undefined].filter((language) => isFenceFigureLanguage(language)),
-    ).toEqual([])
+    expect(["ts", "text", ""].filter((language) => isFenceFigureLanguage(language))).toEqual([])
   })
 })

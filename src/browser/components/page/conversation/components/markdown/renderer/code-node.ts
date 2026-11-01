@@ -17,8 +17,8 @@ export function codeSourceText(codeNode: Element): string {
   return hastText(codeNode).replace(/\n$/, "")
 }
 
-export function findCodeChild(node: Element | undefined): Element | undefined {
-  return node?.children.find(
+export function findCodeChild(node: Element): Element | undefined {
+  return node.children.find(
     (child): child is Element => child.type === "element" && child.tagName === "code",
   )
 }

@@ -24,7 +24,7 @@ type DatasetShape = {
  */
 export function colorsForDataset(
   dataset: DatasetShape,
-  chartType: string | undefined,
+  chartType: string,
   index: number,
   palette: ChartPalette,
 ): DatasetColors | undefined {

@@ -15,7 +15,7 @@ type TableBodyProps = JSX.IntrinsicElements["tbody"] & ExtraProps
 export function TableBody(props: TableBodyProps): ReactElement {
   const { node, children, ...rest } = props
   return (
-    <FoldedTableBody bodyProps={rest} columnCount={tableColumnCount(node)}>
+    <FoldedTableBody bodyProps={rest} columnCount={node === undefined ? 1 : tableColumnCount(node)}>
       {children}
     </FoldedTableBody>
   )
@@ -37,7 +37,7 @@ type OrderedListProps = JSX.IntrinsicElements["ol"] & ExtraProps
 /** 記法の class を持たない `ol` は 10 項目で切る。脚注の節の `ol` と class を持つ `ol`（段の並びなど）は切らない。 */
 export function OrderedList(props: OrderedListProps): ReactElement {
   const { node } = props
-  if (props.className !== undefined || isFootnoteList(node)) {
+  if (props.className !== undefined || (node !== undefined && isFootnoteList(node))) {
     return <NotationOrderedList {...props} />
   }
   const { node: _node, children, ...rest } = props
@@ -45,16 +45,16 @@ export function OrderedList(props: OrderedListProps): ReactElement {
 }
 
 /** 本体の行のうち最も広い行のセル数。「ほか n 件」の行をその幅に渡す。 */
-function tableColumnCount(body: Element | undefined): number {
-  const cellCounts = (body?.children ?? []).map((row) =>
+function tableColumnCount(body: Element): number {
+  const cellCounts = body.children.map((row) =>
     row.type === "element" ? row.children.filter((cell) => cell.type === "element").length : 0,
   )
   return Math.max(1, ...cellCounts)
 }
 
 /** 脚注の節の一覧か（項目の `id` が `fn-` で始まる。サニタイズが `user-content-` を前置する）。 */
-function isFootnoteList(list: Element | undefined): boolean {
-  return (list?.children ?? []).some(
+function isFootnoteList(list: Element): boolean {
+  return list.children.some(
     (item) =>
       item.type === "element" &&
       /^(user-content-)?fn-/.test(optionalString(item.properties.id) ?? ""),

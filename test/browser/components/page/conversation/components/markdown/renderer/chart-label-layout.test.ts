@@ -4,6 +4,7 @@ import {
   arrowPadding,
   barEndPadding,
   barEndText,
+  barValueText,
   shareLabelRows,
   spreadLabels,
 } from "../../../../../../../../src/browser/components/page/conversation/components/markdown/renderer/chart-label-layout.ts"
@@ -87,7 +88,7 @@ describe("spreadLabels", () => {
 
 describe("barEndText", () => {
   it("系列名が無ければ値だけ、あれば値の前に添える", () => {
-    expect(barEndText(undefined, 35)).toBe("35")
+    expect(barValueText(35)).toBe("35")
     expect(barEndText("架空系列", 35)).toBe("架空系列  35")
   })
 })

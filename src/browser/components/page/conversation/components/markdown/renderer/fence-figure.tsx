@@ -20,9 +20,7 @@ const FENCE_FIGURE_LANGUAGES = [
 export type FenceFigureLanguage = (typeof FENCE_FIGURE_LANGUAGES)[number]
 
 /** 図・グラフのフェンスの言語か。 */
-export function isFenceFigureLanguage(
-  language: string | undefined,
-): language is FenceFigureLanguage {
+export function isFenceFigureLanguage(language: string): language is FenceFigureLanguage {
   return FENCE_FIGURE_LANGUAGES.some((name) => name === language)
 }
 
