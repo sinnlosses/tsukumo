@@ -4,7 +4,7 @@ import { expect } from "./room-fixture.ts"
 import type { ScenarioOptions } from "./scenario-open.ts"
 
 // レポートの本文の塊どうしのあきが、縦の格子 12px の倍数であること
-// （docs/architecture/screen-design.md「レポートの塊のあき」）。寸法は実ブラウザでしか確かめられない。
+// （docs/architecture/screen-design.md「レポートの部品のあき」）。寸法は実ブラウザでしか確かめられない。
 // 期待値は撮らず、外れた隣り合う2つの塊の名前とあきを差分に出す。
 
 /** 縦の格子の単位（px）。`--report-block-gap` と同じ値。 */

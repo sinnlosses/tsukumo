@@ -73,18 +73,18 @@ tsukumo を空きポートで自分で起こし、配信 URL を待って撮り�
 差し戻しの画は `--until-step 5 --wait-for 'text=流れを図にして出すね'`（本文に図が無く、吹き出しに直して出し直す一言が出る）、
 描画の画は `--until-step 8 --wait-for '[class*="is-final_"]'`（図が描かれる）。
 広い窓では吹き出しが1字ずつ出るので、最後の吹き出しの文では待たず、先に出る吹き出しの文を待つ。
-**`svg` の塊（単独と `beforeAfter` の側）の描画は、場面 `report-svg`**（`--until-step 99 --wait-for '[class*="is-final_"]'`。`beforeAfter` は `--scroll-to '[class*="before-after_"]'`）。
+**`svg` の部品（単独と `beforeAfter` の側）の描画は、場面 `report-svg`**（`--until-step 99 --wait-for '[class*="is-final_"]'`。`beforeAfter` は `--scroll-to '[class*="before-after_"]'`）。
 **`graph` の色の目印（` @a`〜` @e`）・点線の辺（`-.>`）・`legend` の描画は、場面 `report-graph-tone`**（`--until-step 99 --wait-for '[class*="is-final_"]'`。群の枠・節点の枠・辺の色と凡例の色見本が合っているかを見る）。
 **節点の多い `graph`（12 節点・囲み 3 つの LR）の幅の段と TD への差し替えは、場面 `report-graph-wide`**（`--until-step 99 --wait-for '[class*="is-final_"]'`。`--paper-metric` で図の文字の最小 px を数える）。
 **入れ子の囲み（2 階層）と複数行の箱を持つ `graph` は場面 `report-graph-nested`、箱に件数を書いた LR の状態の流れ（戻りの辺は点線）が横 1 行に収まるかは場面 `report-graph-states`**（どちらも `--until-step 99 --wait-for '[class*="is-final_"]'`。`--paper-metric` で図の文字の最小 px を数える）。
 **自然幅が読む面を超える `graph`（1 つの起点から 10 本に分かれる TD）の横転がしは、場面 `report-graph-scroll`**（`--until-step 99 --wait-for '[class*="is-final_"]'`。`pre.mermaid` が `data-measure="scroll"` になり、`pre` の中で横に転がる）。
-**縦に長い図の高さと拡大は場面 `report-tall-figure`**（mermaid・svg・画像。`--reveal-at 30000`。拡大は `--click 'pre.mermaid'`）、**中間レポートの箱の中の塊の枠は場面 `report-interim-nested`**（`--click summary` で畳みを開く）。
+**縦に長い図の高さと拡大は場面 `report-tall-figure`**（mermaid・svg・画像。`--reveal-at 30000`。拡大は `--click 'pre.mermaid'`）、**中間レポートの箱の中の部品の枠は場面 `report-interim-nested`**（`--click summary` で畳みを開く）。
 **計画の返却を待つ間のプログレスバー（`delegatedRange` が `pending`。丸が「・」「…」「・」）は、場面 `work-strip-plan-pending`**（`--wait-for 'text=計画を書き直す'`）。
 **幅で画面が切り替わる境目は 1100px と 760px。** 1100px 以下でサイドバーが柱に畳まれ、760px 以下で
 頭・本文・顔と吹き出し・入力欄の縦の1列と引き出しになる。境目は `--size 1100x900` と `--size 1101x900`、`--size 760x900` と `--size 761x900` の両側を撮る
 （`docs/architecture/screen-design.md`「13.4 Layout」「狭い画面（760px 以下）」）。
-**どの場面にどの塊が出るかを引くときは `capture-view.ts --list-scenes`。** 場面ごとに `report`
-に出る塊の `kind` を一覧し、`table` は状態のセル（`{ status, text }` の行）を持つものを
+**どの場面にどの部品が出るかを引くときは `capture-view.ts --list-scenes`。** 場面ごとに `report`
+に出る部品の `kind` を一覧し、`table` は状態のセル（`{ status, text }` の行）を持つものを
 `table(status)` と区別する。検証結果の表（`report` の `checks`）を持つ場面には `checks` も出る。
 行末の「演出: 掛かる見込み／掛からない見込み」は、書き上げる演出（`--reveal-at` が効くか）が掛かるかの見積もり
 （`report` のセクションの文字数と図の重みの合計が約200以上なら掛かる。手の並びで `turn-finished` より先に届く `report` は草稿になるので数えない。

@@ -31,7 +31,7 @@
   図を先頭に足したあとのセクションの並びの位置。`report` ツール以外の本文（詳細・フェーズのまとめ）は Markdown 1本の欄にする
 - **注記**: 描く側は欄の Markdown を読まず、面の値（`MainViewReportRegions.a2ui`。頭・お願い・セクション）から描く。描くものがあるかは `reportDrawsAnything`（`src/browser/domain/main-view/main-view-report-body.ts`）が数える。
   形の決めは `docs/architecture/adr/0031-report-body-as-regions.md`
-- **避ける言い方**: ブロック、塊（セクションの中の `ReportBlock` と紛れる）、パート
+- **避ける言い方**: ブロック、部品（セクションの中の `ReportBlock` と紛れる）、パート
 
 ### 最終レポート
 
@@ -104,10 +104,10 @@
 
 ### お願い
 
-- **英語識別子**: `favor`（`report` ツールの引数の名前。描くときは `note-favor` の塊）
+- **英語識別子**: `favor`（`report` ツールの引数の名前。描くときは `note-favor` の部品）
 - **定義**: **キャラクターから利用者への1件**。利用者にしか決められない・できないこと
   （判断・作業・情報）を、`report` の `favor` に1つだけ入れる。**作業を終えた・止めたあとに残るものに限り**、
-  作業の途中で利用者の手が要るときは `report` を呼ばず `AskUserQuestion` で聞く。レポートの最後に印を付けた塊で描かれ、
+  作業の途中で利用者の手が要るときは `report` を呼ばず `AskUserQuestion` で聞く。レポートの最後に印を付けた部品で描かれ、
   「お願い」のラベルは tsukumo 側（`src/browser/components/page/conversation/components/markdown/renderer/notation.tsx`）が
   文字として付ける
 - **注記**: **向きが「依頼」と逆。** 依頼は利用者からキャラクターへ、お願いは
@@ -136,7 +136,7 @@
 ### 合図の行
 
 - **英語識別子**: `verdict`（描く印の名前。`src/shared/report/report-notation.ts` の `REPORT_DRAWN_MARK_NAMES`）
-- **定義**: レポートの結論のすぐ下に置く、検証結果の塊（総括行と、落ちた・確かめていない行と、通った行の畳み）
+- **定義**: レポートの結論のすぐ下に置く、検証結果の部品（総括行と、落ちた・確かめていない行と、通った行の畳み）
 - **注記**: 検証の無いレポートでは出ない。お願いがあれば総括行の右端に、末尾のお願いへ飛ぶ「お願い 1 ↓」の印を置く。
   規則は `docs/architecture/display/check-result.md`「検証結果は、総括行と開く行で描く」が正典
 - **避ける言い方**: サマリー行（何の要約か分からない）、委譲の返却（別の語。委譲先からの知らせ）

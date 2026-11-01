@@ -208,6 +208,32 @@ describe("plainWordSpellingsIn", () => {
     expect(plainWordSpellingsIn(draft([reportDraftText("架空の複数の札束。")]))).toEqual(["数の札"])
   })
 
+  it("部品を指す塊の複合語は見つかり、氷の塊・岩の塊の数のような普通の語は通る", () => {
+    expect(
+      plainWordSpellingsIn(
+        draft([reportDraftText("架空の失敗の塊とファイルの塊を見て、何個目の塊かを数える。")]),
+      ),
+    ).toEqual(["失敗の塊", "ファイルの塊", "何個目の塊"])
+    expect(
+      plainWordSpellingsIn(
+        draft([
+          reportDraftText("架空の氷の塊の数と岩の塊の間と塊ごとの重さと氷の塊の種類と氷の塊の欄。"),
+        ]),
+      ),
+    ).toEqual([])
+  })
+
+  it("既知の巻き込み: 意図の塊は、部分一致で図の塊に当たる", () => {
+    expect(plainWordSpellingsIn(draft([reportDraftText("架空の意図の塊。")]))).toEqual(["図の塊"])
+  })
+
+  it("塊の複合語の差し戻しは、言い換え先を示す", () => {
+    const text = reportRejectionText(
+      reportViolations(draft([reportDraftText("架空の失敗の塊の話。")])),
+    )
+    expect(text).toContain("「失敗の塊」は「失敗の表示」")
+  })
+
   it("札の複合語の差し戻しは、言い換え先を示す", () => {
     const text = reportRejectionText(
       reportViolations(draft([reportDraftText("架空の答え待ちの札の話。")])),

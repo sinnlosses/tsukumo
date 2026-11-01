@@ -62,6 +62,31 @@ test("札は複合語の綴りで登録し、単独の綴りは登録しない",
   )
 })
 
+test("塊は複合語の綴りで登録し、単独の綴りは登録しない", () => {
+  const spellings = PLAIN_WORDS.map((word) => word.spelling)
+  expect(spellings).not.toContain("塊")
+  expect(spellings).toEqual(
+    expect.arrayContaining([
+      "失敗の塊",
+      "振り返りの塊",
+      "お願いの塊",
+      "逃げ道の塊",
+      "検証結果の塊",
+      "ファイルの塊",
+      "画像の塊",
+      "前後の塊",
+      "図の塊",
+      "何個目の塊",
+    ]),
+  )
+  expect(spellings).not.toContain("塊の種類")
+  expect(spellings).not.toContain("塊の欄")
+  expect(PLAIN_WORDS.find((word) => word.spelling === "節の塊")?.replacement).toBe(
+    "セクションの部品",
+  )
+  expect(PLAIN_WORDS.find((word) => word.spelling === "失敗の塊")?.replacement).toBe("失敗の表示")
+})
+
 test("長い綴りが、それを含む短い綴りより先に並んでいる", () => {
   expect(
     PLAIN_WORDS.filter((word, index) =>

@@ -1,9 +1,9 @@
-# 用語集: レポートのセクションと塊
+# 用語集: レポートのセクションと部品
 
 ステータス: **正典**。入口は `docs/glossary.md`（用語集の方針と、子のファイルの一覧）。
 
-責務: レポートの本文の組み立ての用語（セクション・塊・形の名前・確度つきの主張・余白の柱）と、メインビューのやり取りの列・選択肢の比較の用語を持つ。
-読む時: レポートの本文のセクション・塊とその欄を指す語の表記に迷ったとき。
+責務: レポートの本文の組み立ての用語（セクション・部品・形の名前・確度つきの主張・余白の柱）と、メインビューのやり取りの列・選択肢の比較の用語を持つ。
+読む時: レポートの本文のセクション・部品とその欄を指す語の表記に迷ったとき。
 直す時: この範囲の用語を足す・識別子を変えるとき（用語はこの子に足し、親には足さない）。
 
 ## 表示
@@ -12,19 +12,19 @@
 
 - **英語識別子**: `ReportBlockSection`（`src/shared/report/report-block.ts`。画面に描くセクション）/ `sections`（旧い引数と
   記録の欄）/ `heading`（セクションの見出し）
-- **定義**: **レポートの本文を区切る1段**。見出し（`heading`）と、その下に並ぶ塊の並び（`ReportBlock`）を持つ。
+- **定義**: **レポートの本文を区切る1段**。見出し（`heading`）と、その下に並ぶ部品の並び（`ReportBlock`）を持つ。
   配置は `components` の `Row`・`Card` が持つ。見出しが空のセクションは見出しを描かない
 - **注記**: `report` の引数 `components` の `Section` がこの形に写り、セクションが2つ以上なら全部に見出しを付けさせる（無ければ
   差し戻す）。旧い引数 `sections` や、文字列の `body` だったころの記録は、呼び出しをイベントに変える境目
-  （`sdk-report-message.ts` の `reportEvents`）で見出しの無いセクション1つ・逃げ道の塊1つに畳むので、描く側は文字列の
+  （`sdk-report-message.ts` の `reportEvents`）で見出しの無いセクション1つ・逃げ道の部品1つに畳むので、描く側は文字列の
   本文を見ない。形の案は `docs/research/report-block.md`、決定は `docs/architecture/display.md` 4.2
 - **避ける言い方**: 節（レポートの区切りを指すとき。文書の見出しを指す「節」は直さない）、章
 
-### 塊
+### 部品
 
 - **英語識別子**: `ReportBlock`（`src/shared/report/report-block.ts`）/ `kind`（`text` / `list` /
-  `table` / `matrix` / `compare` / `beforeAfter`（前後）/ `note` / `stats` / `code` / `mermaid` / `graph`（`source` の1行1辺の記法で受ける flowchart。行頭の `+ ` / `- ` / `~ ` が足した・消した・変えたの印。節点だけの行は `名前 | 説明` で説明の1行を足せ、分岐・合流・囲み・点線の無い5節点以下の一本道はカードの連鎖で描く）/ `chart` / `timeline`（時刻の軸に行ごとの帯・延びた分・出来事を並べる図。延び・出来事・一点の無い区間の長さの比べは `chart` の `span`）/ `svg`（座標つきの図形で書く図）/ `plot`（図の申告。`question`〔読者がその図で決めること。全角60字以内の1文〕・`data`〔列の並び。各列は `name`・`type`〔`N` 名義 / `O` 順序 / `T` 時間 / `Q` 量〕・`values`〕・`relation`〔`compare`・`rank`・`part`・`trend`・`change`・`distribution`・`correlate`・`range` の8語〕と任意の `form`〔形の上書き〕を受け、色・座標は書かせない。形は下の「図の決定表」が決め、形ごとの描き方が入るまでは `data` を表として描く）/ `options` / `claims`（確度つきの主張）/ `image`（画面の画像）/ `markdown`。旧い記録にだけ `row`〔2〜4 個の塊を横に並べる〕と `panel`〔`title` つきの枠〕があり、復元が `Row`・`Card` に組み直す）/ `fold`（畳むときの見出し）/ `aside`（塊の傍注。下の「余白の柱」）/
-  欄の `from` / `to`（表のセルの前後）・`tag`（表のセルの列挙型のバッジ。同じ字は同じ色）・`emphasis`（表の行の強調。`{ cells, emphasis: true }`で3行まで。超えれば差し戻し）・`before`（`stats` の前の値）・`total`（`stats` の全体の数）・`keyFigures`（`report` の欄。結論の直下に並べる 3〜4 個の数のカードで、項目の形は `stats` の `items` と同じ。塊の欄ではない）・`label`（`list` の項目の名前）・
+  `table` / `matrix` / `compare` / `beforeAfter`（前後）/ `note` / `stats` / `code` / `mermaid` / `graph`（`source` の1行1辺の記法で受ける flowchart。行頭の `+ ` / `- ` / `~ ` が足した・消した・変えたの印。節点だけの行は `名前 | 説明` で説明の1行を足せ、分岐・合流・囲み・点線の無い5節点以下の一本道はカードの連鎖で描く）/ `chart` / `timeline`（時刻の軸に行ごとの帯・延びた分・出来事を並べる図。延び・出来事・一点の無い区間の長さの比べは `chart` の `span`）/ `svg`（座標つきの図形で書く図）/ `plot`（図の申告。`question`〔読者がその図で決めること。全角60字以内の1文〕・`data`〔列の並び。各列は `name`・`type`〔`N` 名義 / `O` 順序 / `T` 時間 / `Q` 量〕・`values`〕・`relation`〔`compare`・`rank`・`part`・`trend`・`change`・`distribution`・`correlate`・`range` の8語〕と任意の `form`〔形の上書き〕を受け、色・座標は書かせない。形は下の「図の決定表」が決め、形ごとの描き方が入るまでは `data` を表として描く）/ `options` / `claims`（確度つきの主張）/ `image`（画面の画像）/ `markdown`。旧い記録にだけ `row`〔2〜4 個の部品を横に並べる〕と `panel`〔`title` つきの枠〕があり、復元が `Row`・`Card` に組み直す）/ `fold`（畳むときの見出し）/ `aside`（部品の傍注。下の「余白の柱」）/
+  欄の `from` / `to`（表のセルの前後）・`tag`（表のセルの列挙型のバッジ。同じ字は同じ色）・`emphasis`（表の行の強調。`{ cells, emphasis: true }`で3行まで。超えれば差し戻し）・`before`（`stats` の前の値）・`total`（`stats` の全体の数）・`keyFigures`（`report` の欄。結論の直下に並べる 3〜4 個の数のカードで、項目の形は `stats` の `items` と同じ。部品の欄ではない）・`label`（`list` の項目の名前）・
   `flow`（`list` の `style` の一本道の流れ）・`cards`（`list` の `style` の並列の区画。2〜4項目を横に並べる）・`sides`（`compare` の2つの側。`heading` と `points`）・
   `before` / `after`（`beforeAfter` の前の側と後の側。`kind` が `image`〔`path`と任意の `region`（変わった場所の枠。% の `left`・`top`・`width`・`height`）〕/ `code`〔`language`・`source`〕/ `points` / `mermaid`〔`source`〕/ `svg`〔`width`・`height`・`shapes`〕の合併型）・
   `width` / `height`（`svg` の viewBox の大きさ）・`shapes`（`svg` の図形の並び。`kind` が `rect`〔`x`・`y`・`width`・`height`・`label`・`emphasis`〕/ `line`〔`x1`・`y1`・`x2`・`y2`・`arrow`・`label`〕/ `text`〔`x`・`y`・`text`〕の合併型）・`emphasis`（`rect` の枠を強調する真偽値）・`arrow`（`line` の終点に矢じりを付ける真偽値）・
@@ -32,21 +32,21 @@
   `path`（`image` の画像のファイル）・`caption`（`image` の何が見えるかの1行）・`notes`（`image` の番号つきの説明の並び）・
   `chartKind`（`chart` の種類。`bar` / `line` / `pie` / `arrow` / `slope` / `span` / `share`）・`labels`（`chart` の横軸・扇形・項目・部分の名前）・
   `series`（`chart` の系列。`name` と `values`）・`horizontal`（`chart` の `bar` を横棒にする真偽値）・`emphasis`（`chart` で差し色にする項目の名前の並び。`labels` の部分集合。`svg` の `rect` の `emphasis` とは別。`timeline` では差し色にする行の `name` の並び）・
-  `rows`（`timeline` の行の並び。`name`・`start`・`end`〔省くと一点〕・`extra`・`lane`）・`start` / `end`（`timeline` の行の開始と終了。`HH:MM`・ISO の日時・分の数のどれかで、1つの塊の中で混ぜない）・
+  `rows`（`timeline` の行の並び。`name`・`start`・`end`〔省くと一点〕・`extra`・`lane`）・`start` / `end`（`timeline` の行の開始と終了。`HH:MM`・ISO の日時・分の数のどれかで、1つの部品の中で混ぜない）・
   `extra`（`timeline` の行の `end` より後へ延びた区切りの時刻の昇順の並び）・`lane`（`timeline` の行の役ごとのまとまり）・`events`（`timeline` の出来事の印の並び。`at` と `label`）・`at`（出来事の時刻）/
   `ReportBlockField`（使われ方の記録で数える欄の名前）
-- **定義**: **セクションの中に並ぶ、種類の決まった本文の1単位**。種類ごとに決まった形で Markdown に組んで
-  描く（`reportSectionsMarkdown`）。塊の文字は行頭の塊の記法と `<` を逃がし、インラインの記法
-  （inline code・太字・リンク）だけが効く。`fold` のある塊は `<details>` に畳む
-- **注記**: **`markdown` の塊が逃げ道**で、中身は逃がさず今の本文と同じ経路で描き、行を落とす整形
-  （`tidyReportOutline`）もこの塊に掛かる。どの塊にも当てはまらないときだけ使い、逃げ道の外側に塊の
+- **定義**: **セクションの中に並ぶ、種類の決まった本文の1単位**。中身を持つものを内容部品、並びや枠を決めるもの（`Row`・`Card`・`Section`）を配置部品と呼び分け、この項は内容部品（`ReportBlock`）を指す。種類ごとに決まった形で Markdown に組んで
+  描く（`reportSectionsMarkdown`）。部品の文字は行頭の部品の記法と `<` を逃がし、インラインの記法
+  （inline code・太字・リンク）だけが効く。`fold` のある部品は `<details>` に畳む
+- **注記**: **`markdown` の部品が逃げ道**で、中身は逃がさず今の本文と同じ経路で描き、行を落とす整形
+  （`tidyReportOutline`）もこの部品に掛かる。どの部品にも当てはまらないときだけ使い、逃げ道の外側に部品の
   種類がある記法（見出し・表・箇条書き・`note`・`stats`・フェンス）を書いた `report` は
-  差し戻す。崩れた塊・知らない種類の塊は入口で落とす。種類ごとの使いどころは各塊の `describe` が持つ。
+  差し戻す。崩れた部品・知らない種類の部品は入口で落とす。種類ごとの使いどころは各部品の `describe` が持つ。
   **`options` は候補の比較**（候補ごとの判定〔採る / 検討 / 採らない〕と理由を1案1行に積む。書き手の順のまま描く）、
-  **触ったファイルの一覧は書き手の塊ではない**（tsukumo が git の差分から出し、最終レポートの頭の畳んだセクション「変更したファイル n」に置く。旧い記録に残る `files` の塊は読み戻しでだけ描く）。
+  **触ったファイルの一覧は書き手の部品ではない**（tsukumo が git の差分から出し、最終レポートの頭の畳んだセクション「変更したファイル n」に置く。旧い記録に残る `files` の部品は読み戻しでだけ描く）。
   **欄**は事実か判定を言うものだけで（前後の値・名前・流れ・判定）、描き方は tsukumo がその意味から決める。
   段ごとに文が要る一本道は `list` の `flow`、一本道でも段の名前が短ければ・分岐・合流があれば `graph`（`source` の1行1辺の記法〔`A -> B: 語`。節点だけの行は `名前 | 説明`〕で渡し、ID とラベルの引用符は tsukumo が組む。`sequenceDiagram`・`stateDiagram-v2` の 2 種だけが `mermaid`）
-- **避ける言い方**: ブロック（Markdown の block と紛れる）、要素（HTML の要素と紛れる）、`options` を
+- **避ける言い方**: 塊（以前の呼び名）、ブロック（Markdown の block と紛れる）、要素（HTML の要素と紛れる）、`options` を
   「選択肢の比較」と呼ぶこと（質問の `preview` を並べた面の名前と紛れる。`options` は「候補の比較」）
 
 ### 形の名前
@@ -55,9 +55,9 @@
   使われ方の記録のセクションの欄 `shapeTag`（形の名前を省いたセクションは `unspecified`）。
   値は 因果 `cause`・つながり `connection`・位置 `position`・状態 `state`・時間 `time`・順序 `order`・量 `quantity`・
   選択 `choice`・属性の並び `attribute`・対応 `mapping`・見比べ `comparison`・境界 `boundary`・並列 `parallel`・一言 `single`
-- **定義**: **セクションが表す内容の形。** 書き手がセクションごとに1つ言い、形の名前ごとに第一候補・許す代替・許さない塊が決まる。
+- **定義**: **セクションが表す内容の形。** 書き手がセクションごとに1つ言い、形の名前ごとに第一候補・許す代替・許さない部品が決まる。
   許さないのは下の段（`table`・`list`・`text`）だけ
-- **注記**: 旧い `sections` のセクションの欄の仕組みで、`components` の `Section` と旧い `body` は形の名前を持たない（ADR 0038）。前後・確度・所在は形の名前にせず、どの形にも掛かる添え物として扱う（確度は `claims` の塊が受ける）。`svg` の塊の欄 `shapes` と紛れるので、
+- **注記**: 旧い `sections` のセクションの欄の仕組みで、`components` の `Section` と旧い `body` は形の名前を持たない（ADR 0038）。前後・確度・所在は形の名前にせず、どの形にも掛かる添え物として扱う（確度は `claims` の部品が受ける）。`svg` の部品の欄 `shapes` と紛れるので、
   識別子に `shape` を単独で使わない
 - **避ける言い方**: 形の札（以前の呼び名）、タグ、型（`task` の `genre`〔報告の種類〕と紛れる）
 
@@ -74,20 +74,20 @@
 
 ### 確度つきの主張
 
-- **英語識別子**: 塊の `kind` の `claims`（`src/shared/report/report-block-prose.ts` の `claimsBlockSchema`）/ 項目の欄 `claim`（主張）・
+- **英語識別子**: 部品の `kind` の `claims`（`src/shared/report/report-block-prose.ts` の `claimsBlockSchema`）/ 項目の欄 `claim`（主張）・
   `certainty`（確度。確定 `confirmed`・推測 `inferred`・未確認 `unverified`）・`basis`（根拠）・`howToVerify`（確かめ方）
-- **定義**: **主張ごとに確度・根拠・確かめ方を1組で持つ塊。** 確かめていないこと・推測を書く置き場で、確定でない項目は確かめ方を空にできない
-- **注記**: 検証の結果（テスト・型検査）は `checks` に書き、この塊に入れない。`note` の `ask` は答えの出ていない問い1つに使う。
+- **定義**: **主張ごとに確度・根拠・確かめ方を1組で持つ部品。** 確かめていないこと・推測を書く置き場で、確定でない項目は確かめ方を空にできない
+- **注記**: 検証の結果（テスト・型検査）は `checks` に書き、この部品に入れない。`note` の `ask` は答えの出ていない問い1つに使う。
   決定は `docs/architecture/display.md` の「出力の分離（セリフと詳細）」（`display/block-field.md`）
 - **避ける言い方**: `claim` を単独で概念の名前にすること（セッションの占有 `SessionClaim` と紛れる）、確信度
 
 ### 余白の柱
 
-- **英語識別子**: `gutter`（記法の印は `with-gutter`〔塊と傍注の包み〕/ `gutter`〔傍注の並び〕/ `gutter-note`〔傍注1つ〕、
-  CSS は `report-gutter` ほか）/ 塊の欄 `aside`（**塊の傍注**。出典・どこを見るかの1行）
-- **定義**: **レポートの本文の列（42em）の右に置く、傍注の列**。出すのは `memo` の `note` と塊の `aside` だけで、
-  直前の塊の上端に揃える。本文の列の右に 160px 以上空かないときは、塊の直後の1行として本文の中に畳む
-- **注記**: 塊の欄の `aside` は「脇の話」の `aside` とは別物。「柱」とだけ書くと中くらいの窓幅でサイドバーを畳んだ
+- **英語識別子**: `gutter`（記法の印は `with-gutter`〔部品と傍注の包み〕/ `gutter`〔傍注の並び〕/ `gutter-note`〔傍注1つ〕、
+  CSS は `report-gutter` ほか）/ 部品の欄 `aside`（**部品の傍注**。出典・どこを見るかの1行）
+- **定義**: **レポートの本文の列（42em）の右に置く、傍注の列**。出すのは `memo` の `note` と部品の `aside` だけで、
+  直前の部品の上端に揃える。本文の列の右に 160px 以上空かないときは、部品の直後の1行として本文の中に畳む
+- **注記**: 部品の欄の `aside` は「脇の話」の `aside` とは別物。「柱」とだけ書くと中くらいの窓幅でサイドバーを畳んだ
   柱（`rail`）と紛れるので、文書では「余白の柱」と書く
 - **避ける言い方**: 柱（`rail` と紛れる）、サイドノート、脇（脇の話と紛れる）
 
@@ -123,12 +123,12 @@
 - **定義**: **Claude の HTML と tsukumo の `report` を同じ題材で見比べて見つかった、tsukumo で表現できない・粗くなるもの。**
   1件につきドラフトの課題を1件積み、梯子のどの段かを本文に書く
 - **注記**: 本文の型・記録の置き場・採らない穴は `docs/architecture/display/block-criteria.md`「見比べで見つかった穴」
-- **避ける言い方**: ギャップ、不具合（塊の描画の不具合と紛れる）
+- **避ける言い方**: ギャップ、不具合（部品の描画の不具合と紛れる）
 
 ### 梯子
 
 - **英語識別子**: なし
-- **定義**: **穴を置く5段の並び。** 1 今の塊・記法で書ける／2 規約か道案内で足りる／3 欄を足す／4 塊を足す／5 採らない。
+- **定義**: **穴を置く5段の並び。** 1 今の部品・記法で書ける／2 規約か道案内で足りる／3 欄を足す／4 部品を足す／5 採らない。
   上から順に問い、最初に当たった段が穴の扱いになる
-- **注記**: 置き換え済みの ADR 0028 の梯子（塊を上から試す段。ADR 0038 が申告と決定表に替えた）とは別のもの。こちらは穴の扱いの段
+- **注記**: 置き換え済みの ADR 0028 の梯子（部品を上から試す段。ADR 0038 が申告と決定表に替えた）とは別のもの。こちらは穴の扱いの段
 - **避ける言い方**: レベル、ランク

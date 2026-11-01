@@ -237,7 +237,7 @@ describe("reportViolations", () => {
       const violations = reportViolations(
         draft([reportDraftText("架空の段落。"), cards(cardItems(5))]),
       )
-      expect(reportRejectionText(violations)).toContain("2個目の塊は5項目")
+      expect(reportRejectionText(violations)).toContain("2個目の部品は5項目")
     })
 
     it("cards 以外の1項目・5項目の list は cards の差し戻しにならない", () => {

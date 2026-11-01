@@ -136,7 +136,7 @@ export const PLAIN_WORDS = [
   {
     spelling: "レポートの節",
     replacement: "レポートのセクション",
-    meaning: "レポートの本文を区切る、見出しと塊の並びを持つ単位",
+    meaning: "レポートの本文を区切る、見出しと部品の並びを持つ単位",
   },
   {
     spelling: "見出しの無い節",
@@ -145,8 +145,58 @@ export const PLAIN_WORDS = [
   },
   {
     spelling: "節の塊",
-    replacement: "セクションの塊",
+    replacement: "セクションの部品",
     meaning: "レポートの本文の区切りの中に並ぶ、種類の決まった本文の1単位",
+  },
+  {
+    spelling: "失敗の塊",
+    replacement: "失敗の表示",
+    meaning: "失敗で終わったやり取りのレポートの頭に出す、何が起きたかと次の手を載せた表示",
+  },
+  {
+    spelling: "振り返りの塊",
+    replacement: "振り返りの部品",
+    meaning: "レポートの内容部品（文・表・図など中身を持つ部品）のうち、振り返りを書くもの",
+  },
+  {
+    spelling: "お願いの塊",
+    replacement: "お願いの部品",
+    meaning: "レポートの内容部品のうち、利用者へのお願いを書くもの",
+  },
+  {
+    spelling: "逃げ道の塊",
+    replacement: "逃げ道の部品",
+    meaning: "レポートの内容部品のうち、どの種類にも当てはまらないときに使う Markdown の本文",
+  },
+  {
+    spelling: "検証結果の塊",
+    replacement: "検証結果の部品",
+    meaning: "レポートの内容部品のうち、テストや型検査の結果を書くもの",
+  },
+  {
+    spelling: "ファイルの塊",
+    replacement: "ファイルの部品",
+    meaning: "レポートの内容部品のうち、触ったファイルの一覧を樹形図で見せるもの",
+  },
+  {
+    spelling: "画像の塊",
+    replacement: "画像の部品",
+    meaning: "レポートの内容部品のうち、画像を載せるもの",
+  },
+  {
+    spelling: "前後の塊",
+    replacement: "前後の部品",
+    meaning: "レポートの内容部品のうち、変える前と変えた後を並べて見せるもの",
+  },
+  {
+    spelling: "図の塊",
+    replacement: "図の部品",
+    meaning: "レポートの内容部品のうち、図を描くもの",
+  },
+  {
+    spelling: "何個目の塊",
+    replacement: "何個目の部品",
+    meaning: "レポートの本文で、何番目の内容部品かを指す言い方",
   },
   {
     spelling: "節が2つ以上",

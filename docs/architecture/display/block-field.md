@@ -1,8 +1,8 @@
-# 出力の分離（セリフと詳細）: 塊の欄・進み具合・候補とファイル・確度つきの主張
+# 出力の分離（セリフと詳細）: 部品の欄・進み具合・候補とファイル・確度つきの主張
 
 戻り: `docs/architecture/display.md`「出力の分離（セリフと詳細）」
 
-- **「名前: 説明」「A → B」「A → B → C」「12 → 8」は既存の塊の欄で見せる**（
+- **「名前: 説明」「A → B」「A → B → C」「12 → 8」は既存の部品の欄で見せる**（
   `docs/research/report-block-richness.md` 2章）。欄は事実を言うものだけで、差や増減の割合は tsukumo が計算しない
   - 表のセルの `{ from, to }`: 前の値と矢印の文字を `ink-quiet`、後の値を `ink` で描く。状態（`status`）と
     同じセルには持たせない（変化の良し悪しは隣の列の `status` で言う）。前と後がどちらも数なら数の列として右に揃える
@@ -20,7 +20,7 @@
   - `keyFigures`（`report` の欄）: 項目は `stats` と同じ。4個は器 46rem 以下で 2×2
   - `list` の項目の `label`: 印なしのラベルと本文の2列に組み、項目の間を細い横線で区切る
     `bullet` は印を持たないが、`ordered`（番号）と `check`（済み・未了）は順番・済み未了の意味を
-    持つので印を残す。器が狭いとき（screen-design.md 13.4「レポートの塊の横並び」）は1列に積み、ラベルを本文の上に置く
+    持つので印を残す。器が狭いとき（screen-design.md 13.4「レポートの部品の横並び」）は1列に積み、ラベルを本文の上に置く
   - `list` の `style` の `flow`: 項目を `<ol>` にし、段ごとに番号の丸を1本の線でつないで上から下へ積む
     **段ごとに文が要る一本道は `flow`、一本道でも段の名前が短ければ・分岐・合流・戻りがあれば `graph`**
     （段数の上限は無い。長い一本道も縦に積めば足りる）。
@@ -31,12 +31,12 @@
     どれか1段に `source` か `branch` があれば `<ol class="flow flow-detailed">` になり、各段の内側が角丸の枠で囲まれ（`label` が題）、`flow-row` にはならない。欄が全部空の `flow` は変わらない
     丸・線は `aria-hidden` の飾りで、順番は `<ol>` が伝える。寸法・色は `docs/architecture/screen-design.md` 13.2
   - `list` の `style` の `cards`: 読む順・因果の無い2〜4枚の並列（`label` 必須）。器 760px 超で横1行、以下は縦
-  - `text` の塊の説明には「結論に効く数が3つ以上並び前後か推移を見せるなら `stats`」を置く（地の文から数を抜き出して
+  - `text` の部品の説明には「結論に効く数が3つ以上並び前後か推移を見せるなら `stats`」を置く（地の文から数を抜き出して
     タイルにするのは再構成なので、tsukumo は組み替えない）
-- **フェーズの位置は `report` の塊では見せない**（`progress` の塊は直近 28 日で使われた記録が 0 回で外した。フェーズの位置は
-  進み具合のプログレスバーが持つ。旧い記録の `progress` は読み戻しで知らない種類の塊として落とす）
-- **候補の比較は `options` の塊で見せる**（`docs/research/report-block-richness.md` 3章。欄は判定の事実だけ）。
-  触ったファイルの一覧は書き手の塊ではなく、tsukumo が git の差分から出す（`docs/architecture/display/conclusion.md`）
+- **フェーズの位置は `report` の部品では見せない**（`progress` の部品は直近 28 日で使われた記録が 0 回で外した。フェーズの位置は
+  進み具合のプログレスバーが持つ。旧い記録の `progress` は読み戻しで知らない種類の部品として落とす）
+- **候補の比較は `options` の部品で見せる**（`docs/research/report-block-richness.md` 3章。欄は判定の事実だけ）。
+  触ったファイルの一覧は書き手の部品ではなく、tsukumo が git の差分から出す（`docs/architecture/display/conclusion.md`）
   - `options`: `title` と、候補（`name` / `verdict`〔`adopt` / `consider` / `reject`〕/ `reason`）の並び。
     候補を1案1行で縦に積み、行は「1始まりの番号・判定の語（採る / 検討 / 採らない）・名前・理由」の順で、
     行どうしは罫で区切る（カードの枠と地は持たない。器が狭いときは理由を名前の下の行へ落とす）。
@@ -46,17 +46,17 @@
     `state-warn`、「採らない」は行全体の文字を `ink-quiet` に沈める。左罫は持たず、キャラクターの色は
     入れない（`docs/architecture/screen-design.md` 13.2 の3本のまま）
   - `files`（旧い記録の読み戻し専用）: 書き手の `sections` と `retrospective` は受けず、旧い記録の `files` は読み戻しでだけ描く。
-    パスの樹形図と種別のバッジの見た目は `docs/architecture/screen-design/report-head.md`「ファイルの塊」が正典
+    パスの樹形図と種別のバッジの見た目は `docs/architecture/screen-design/report-head.md`「ファイルの部品」が正典
   - 表・箇条書きとの取り違えは差し戻さない（表・箇条書きで描かれるだけで、語や
     パスの形での判定はヒューリスティックになる）。代わりに `list` の `bullet` と `table` の説明が
     `options` を指す。取り違えの程度は使われ方の記録の「塊の種類 × レポート数」で `options` と `table` の比を見る
-- **確かめていないこと・推測は `claims`（確度つきの主張）の塊で見せる**（`docs/research/report-shape-tags.md` 6章。
+- **確かめていないこと・推測は `claims`（確度つきの主張）の部品で見せる**（`docs/research/report-shape-tags.md` 6章。
   言葉だけの確度は解釈が割れるので、主張ごとに印と根拠を付ける）
   - 欄: 項目（`claim` / `certainty`〔`confirmed` 確定 / `inferred` 推測 / `unverified` 未確認〕/ `basis` / `howToVerify`）の並び。
-    **確定でない項目の `howToVerify` が空なら塊を受け付けない**（入口の型の検査。`checks` の `unobserved` の行の確かめ方と同じ考え）
+    **確定でない項目の `howToVerify` が空なら部品を受け付けない**（入口の型の検査。`checks` の `unobserved` の行の確かめ方と同じ考え）
   - 描き方: 1項目1行で、行どうしは罫で区切る。左に確度を記号と語（✓ 確定 / 〜 推測 / ？ 未確認）で、右に主張と、その下に根拠・確かめ方を置く。
     根拠と確かめ方は Markdown の行内として描くので、`path:line` は押すと開き、`[ドメイン](URL)` は出典のバッジになる。空の欄は出さない。
     色は `docs/architecture/screen-design/color.md` の確度の段落
   - `note` の `ask` は残し、答えの出ていない問い1つに狭める（消すと `ask` を持つ過去の記録が読み戻しで落ちる）。
-    検証の結果（テスト・型検査・手で確かめたこと）は今までどおり `checks` に書き、この塊に入れない
-  - TUI には `report` も塊も無いので、出力スタイル（`asuna.md`）の側には何も足さない（「レポートの記法は、TUI と tsukumo で出し分ける」）
+    検証の結果（テスト・型検査・手で確かめたこと）は今までどおり `checks` に書き、この部品に入れない
+  - TUI には `report` も部品も無いので、出力スタイル（`asuna.md`）の側には何も足さない（「レポートの記法は、TUI と tsukumo で出し分ける」）

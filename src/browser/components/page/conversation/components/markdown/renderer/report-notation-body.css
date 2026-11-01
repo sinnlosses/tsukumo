@@ -1,4 +1,4 @@
-/* 塊どうしのあき・題つきの表と図のまわりのあき・見出しから塊までのあき（値は docs/architecture/screen-design.md「レポートの塊のあき」）。
+/* 塊どうしのあき・題つきの表と図のまわりのあき・見出しから塊までのあき（値は docs/architecture/screen-design.md「レポートの部品のあき」）。
    塊ごとの上下の margin をこの3つの値だけで書く。縦の margin は相殺されるので、隣り合う塊のあきは大きいほうの値になる。 */
 @property --report-measure {
   syntax: "<length>";

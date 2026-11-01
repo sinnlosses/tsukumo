@@ -33,8 +33,8 @@
 #### 出力の分離（セリフと詳細）
 
 - `docs/architecture/display/speak-tool.md`: speak と report のツール・部品の書き方を引く report_part_card
-- `docs/architecture/display/section-and-block.md`: 本文のセクションと塊、図の塊
-- `docs/architecture/display/block-field.md`: 塊の欄・進み具合・候補とファイル・確度つきの主張（確かめていないことはこの塊に書く）
+- `docs/architecture/display/section-and-block.md`: 本文のセクションと部品、図の部品
+- `docs/architecture/display/block-field.md`: 部品の欄・進み具合・候補とファイル・確度つきの主張（確かめていないことはこの部品に書く）
 - `docs/architecture/display/block-table.md`: 表・対応表・見比べ・前後
 - `docs/architecture/display/figure-caption.md`: 画像・図と表の題・書き上げる演出・入口の検査
 - `docs/architecture/display/speech-convention.md`: セリフの規約と機械の出来事への反応
@@ -62,7 +62,7 @@
 
 - `docs/architecture/display/reading-time.md`
 
-#### 塊を足す・外す基準
+#### 部品を足す・外す基準
 
 - `docs/architecture/display/block-criteria.md`（節「図の決定表」: `plot` の形を決める行・置かない形・基数の境。節「見比べで見つかった穴」: 梯子・穴ドラフトの型・採らない穴）
 
@@ -70,7 +70,7 @@
 
 - `docs/architecture/display/portrait-and-balloon.md`: 立ち絵と吹き出し
 - `docs/architecture/display/permission-and-question.md`: 許可と質問
-- `docs/architecture/display/main-view.md`: メインビュー（局面・最終と中間のレポート・畳み・本文の流し方・1ターン＝1枚のカード・やり取りの列・脇の話の欄・失敗の塊）
+- `docs/architecture/display/main-view.md`: メインビュー（局面・最終と中間のレポート・畳み・本文の流し方・1ターン＝1枚のカード・やり取りの列・脇の話の欄・失敗の表示）
 - `docs/architecture/display/rich-rendering.md`: レポートの見せ方・パスとコード・色・外部ライブラリ・帯のいまの作業
 - `docs/architecture/display/sidebar.md`: サイドバー
 - `docs/architecture/display/input-box.md`: 入力欄・配り方・フォールバック

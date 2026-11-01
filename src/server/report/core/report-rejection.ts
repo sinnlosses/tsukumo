@@ -97,7 +97,7 @@ function violationLine(violation: ReportViolation): string {
     case "crowded-notes":
       return `隣り合う、または見出しの直後にある \`Note\` が${violation.count}個ある。間に別の部品を挟むか、\`Paragraph\` に直す（\`warn\` / \`ng\` は例外）`
     case "nested-fold":
-      return `\`fold\` と \`<details>\` が入れ子になっている塊が${violation.count}個ある。畳むのは1段だけにする`
+      return `\`fold\` と \`<details>\` が入れ子になっている部品が${violation.count}個ある。畳むのは1段だけにする`
     case "unordered-options":
       return `候補が採る → 検討 → 採らないの順に並んでいない \`Options\` が${violation.count}個ある。採る候補から順に並べ直す`
     case "ragged-table":
@@ -114,7 +114,7 @@ function violationLine(violation: ReportViolation): string {
       return `\`cards\` の \`ItemList\` が項目数 2〜4 か、全項目に \`label\` を付ける形になっていない（${violation.faults
         .map(
           ({ position, itemCount, unlabeled }) =>
-            `${String(position)}個目の塊は${String(itemCount)}項目${unlabeled ? "で `label` の空がある" : ""}`,
+            `${String(position)}個目の部品は${String(itemCount)}項目${unlabeled ? "で `label` の空がある" : ""}`,
         )
         .join("・")}）。2〜4 項目に絞り全項目に題を付けるか、\`bullet\` / \`flow\` に直す`
     case "long-code":
@@ -124,7 +124,7 @@ function violationLine(violation: ReportViolation): string {
     case "unknown-emphasis":
       return `\`emphasis\` に \`labels\` に無い名前がある \`Chart\` が${violation.count}個ある。\`labels\` にある名前だけにする`
     case "short-series":
-      return `\`Stats\` の \`series\` が1〜2個の項目がある塊が${violation.count}個ある。3つ以上にするか省く`
+      return `\`Stats\` の \`series\` が1〜2個の項目がある部品が${violation.count}個ある。3つ以上にするか省く`
     case "untitled-section":
       return `見出しの無いセクションが${violation.count}個ある。セクションが2つ以上なら全部に \`heading\` を付ける`
     case "markdown-notation":
@@ -138,7 +138,7 @@ function violationLine(violation: ReportViolation): string {
     case "code-marks-range":
       return `\`Code\` の \`marks\` の \`lines\` が読めない形か \`source\` の行数の外にある部品が${violation.count}個ある。\`4-8\` か \`12\` の形で、行数以内に直す`
     case "region-range":
-      return `\`BeforeAfter\` の画像の側の \`region\` が画像の外に出る、または \`width\`・\`height\` が 0 以下の塊が${violation.count}個ある。\`left\`・\`top\` は 0 以上、\`left + width\` と \`top + height\` は 100 以下、\`width\`・\`height\` は 0 より大きい%にする`
+      return `\`BeforeAfter\` の画像の側の \`region\` が画像の外に出る、または \`width\`・\`height\` が 0 以下の部品が${violation.count}個ある。\`left\`・\`top\` は 0 以上、\`left + width\` と \`top + height\` は 100 以下、\`width\`・\`height\` は 0 より大きい%にする`
     case "broken-svg":
       return `\`Svg\` の図形が \`width\` × \`height\` の外に出ている（${svgFaultPositions(violation.faults)}）。幅の目安は 480〜640 で、図形の座標と大きさを 0〜\`width\`・0〜\`height\` の内側に収める`
     case "unlegended-svg-tone":
@@ -156,7 +156,7 @@ function violationLine(violation: ReportViolation): string {
     case "unobserved-without-how":
       return `\`checks\` の \`unobserved\` の行のうち \`howToVerify\` が空のものが${violation.count}個ある。知らない人が繰り返せる確かめ方を1〜2文で書く`
     case "arrow-in-prose":
-      return `地の文・表のセルに \`A → B\` と書いた塊が${violation.count}個ある。セルは \`from\` / \`to\`、流れは \`ItemList\` の \`flow\` にする`
+      return `地の文・表のセルに \`A → B\` と書いた部品が${violation.count}個ある。セルは \`from\` / \`to\`、流れは \`ItemList\` の \`flow\` にする`
     case "label-in-item":
       return `\`ItemList\` の項目の \`text\` が「名前: 説明」の形になっているものが${violation.count}個ある。名前を \`label\` に分ける`
     case "labeled-ordered":
@@ -174,13 +174,13 @@ function violationLine(violation: ReportViolation): string {
     case "figure-number-mismatch":
       return `\`Plot\` の値とずれた数が本文にある（${figureNumberFaultPositions(violation.faults)}）。単位と丸めを \`Plot\` の値に揃えて、本文の数を直す`
     case "plot-forbidden-form":
-      return `\`Plot\` の \`form\` が置いてはならない形に当たる塊が${violation.count}個ある（${violation.rules.join("・")}）。\`form\` を省いて決定表の形に任せる`
+      return `\`Plot\` の \`form\` が置いてはならない形に当たる部品が${violation.count}個ある（${violation.rules.join("・")}）。\`form\` を省いて決定表の形に任せる`
     case "plot-title-without-number":
-      return `棒・折れ線・円で描く \`Plot\` の \`question\` に数が無い塊が${violation.count}個ある。題に数と向きで言いたい傾向を1文で書く`
+      return `棒・折れ線・円で描く \`Plot\` の \`question\` に数が無い部品が${violation.count}個ある。題に数と向きで言いたい傾向を1文で書く`
     case "template-miss":
       return `申告した依頼の型の雛形から外れた点がある（${violation.misses.join("・")}）。数の帯 \`keyFigures\` を足すか、図 1 を型の第一候補の種類にする`
     case "plot-form-override":
-      return `\`Plot\` の \`form\` が決定表の形と違う塊が${violation.count}個ある。決定表の形で足りるなら \`form\` を省く`
+      return `\`Plot\` の \`form\` が決定表の形と違う部品が${violation.count}個ある。決定表の形で足りるなら \`form\` を省く`
   }
 }
 
