@@ -9,10 +9,9 @@ import {
   a2uiPartsById,
   a2uiReachableIds,
 } from "../../../shared/report/a2ui-report-outline.ts"
+import { sectionDrawsAnything } from "../../../shared/report/drawn-entry-markdown.ts"
 import { drawnReportOf } from "../../../shared/report/report-drawn-outline.ts"
-import { joinParts } from "../../../shared/report/report-inline-markdown.ts"
 import { reportLeafLayoutOf } from "../../../shared/report/report-leaf-value.ts"
-import { reportSectionPieces } from "../../../shared/report/report-markdown.ts"
 import { a2uiReportView } from "../../../shared/session/a2ui-report-view.ts"
 import type {
   MainViewDraft,
@@ -60,18 +59,16 @@ function draftRegions(
   const tidied = drawnReport.sections.map((section) => section.section)
   const layout = reportLeafLayoutOf(tidied)
   const imageSource = { kind: "none" } as const
-  const pieces = reportSectionPieces(tidied, imageSource, layout)
   return {
     kind: "regions",
-    sections: tidied.flatMap((section, id) => {
-      const piece = pieces[id]
-      const markdown = piece === undefined ? "" : joinParts([piece.heading, ...piece.blocks])
-      return markdown === "" ? [] : [{ id, heading: section.heading.trim() }]
-    }),
+    sections: tidied.flatMap((section, id) =>
+      sectionDrawsAnything(section, layout.values[id] ?? [])
+        ? [{ id, heading: section.heading.trim() }]
+        : [],
+    ),
     a2ui: a2uiReportView(
       drawn,
       drawnReport,
-      pieces,
       layout,
       imageSource,
       {

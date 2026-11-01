@@ -7,7 +7,7 @@ import type { ReactElement, ReactNode } from "react"
 
 import { foldInlineMarks } from "../../../../../../shared/report/inline-mark.ts"
 import type { LeafValue } from "../../../../../../shared/report/report-leaf-value.ts"
-import { PAUSE_POINT_CLASS_NAME } from "../../../../../../shared/report/report-pause-point.ts"
+import { PAUSE_POINT_CLASS_NAME } from "../../domain/report-pause-point.ts"
 import {
   BeforeAfterSwap,
   figureClassName,

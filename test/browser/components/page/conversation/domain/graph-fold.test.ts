@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
-import { graphFoldHtml } from "../../../src/shared/report/graph-fold-html.ts"
-import { graphFoldFigure } from "../../../src/shared/report/graph-fold.ts"
+import { graphFoldHtml } from "../../../../../../src/browser/components/page/conversation/domain/graph-fold-html.ts"
+import { graphFoldFigure } from "../../../../../../src/browser/components/page/conversation/domain/graph-fold.ts"
 
 const LONG = [
   "[甲の群]",

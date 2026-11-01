@@ -3,8 +3,8 @@
 import type { ReactElement } from "react"
 
 import type { A2uiReportComponent } from "../../../../../../shared/report/a2ui-report-catalog.ts"
-import { withSequenceAutonumber } from "../../../../../../shared/report/report-diagram-markdown.ts"
 import type { LeafValue } from "../../../../../../shared/report/report-leaf-value.ts"
+import { withSequenceAutonumber } from "../../domain/report-diagram-markdown.ts"
 import { MermaidFigure } from "../markdown/markdown.tsx"
 import { FoldedLeafFrame } from "./report-leaf-frame.tsx"
 

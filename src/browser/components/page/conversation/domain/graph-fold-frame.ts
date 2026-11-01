@@ -1,5 +1,6 @@
 // 折り返し配置の群の囲み。群が行をまたぐと行ごとに分け、群の外の箱に掛かる囲みは箱ごとに分ける。
 
+import type { GraphSourceReading } from "../../../../../shared/report/graph-source.ts"
 import {
   emptyBox,
   FRAME_PAD,
@@ -8,7 +9,6 @@ import {
   type FoldFrame,
   type FoldSlot,
 } from "./graph-fold-figure.ts"
-import type { GraphSourceReading } from "./graph-source.ts"
 import { groupGrounds } from "./report-graph-markdown.ts"
 
 /**

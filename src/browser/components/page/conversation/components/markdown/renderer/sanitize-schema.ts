@@ -40,7 +40,7 @@ import {
  * DOM に出るのは実際には `h4` / `h5`（`SectionHeading` / `SubHeading` が写す）。
  * ここで `h2`/`h3` を許可リストに残すのは、その書き替えが起きる前に hast-util-sanitize が中身ごと落としてしまう（サニタイズは `components` より前に効く）のを防ぐため。
  *
- * SVG は tsukumo が `svg` の塊と `graph`・`stats` の折れ線で組む要素だけ。
+ * SVG は tsukumo が組む要素だけ。いまの本文では折り返し配置の `graph` が組み、旧い記録の本文の `svg` の塊と `stats` の折れ線も同じ要素で書かれている。
  */
 const ALLOWED_TAG_NAMES: readonly string[] = [
   "div",

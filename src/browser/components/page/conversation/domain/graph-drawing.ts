@@ -1,9 +1,9 @@
 // `graph` の塊を、カードの連鎖・折り返しの図・mermaid のどれで描くかを決める。
 
+import type { ReportGraph } from "../../../../../shared/report/report-block-diagram.ts"
 import { type CardChainItem, cardChainOf } from "./card-chain-markdown.ts"
 import type { GraphFoldFigure } from "./graph-fold-figure.ts"
 import { graphFoldFigure } from "./graph-fold.ts"
-import type { ReportGraph } from "./report-block-diagram.ts"
 import { graphSource } from "./report-graph-markdown.ts"
 
 export type GraphDrawing =

@@ -1,23 +1,23 @@
-// 葉を直接描く部品の出力を、旧い描画（塊 → Markdown → `Markdown`）の出力と突き合わせる道具。
+// 葉を直接描く部品の出力を、図の塊を質問の添え書きと同じ `reportSectionsMarkdown` で Markdown にして `Markdown` で描いた出力と突き合わせる道具。
 // 空白だけの違い（Markdown の改行の文字）は畳んで比べる。
 
-import { cleanup, render } from "@testing-library/react"
+import { cleanup, render, type RenderResult } from "@testing-library/react"
 
 import {
   DirectLeaf,
   directLeafViewOf,
 } from "../../src/browser/components/page/conversation/components/main-view/direct-leaf-view.tsx"
 import { Markdown } from "../../src/browser/components/page/conversation/components/markdown/renderer/markdown-renderer.tsx"
+import { reportSectionsMarkdown } from "../../src/browser/components/page/conversation/domain/report-markdown.ts"
 import type { A2uiReportComponent } from "../../src/shared/report/a2ui-report-catalog.ts"
-import type { ReportBlock } from "../../src/shared/report/report-block.ts"
+import type { FigureBlock, ReportBlock } from "../../src/shared/report/report-block.ts"
 import type { ReportImageSource } from "../../src/shared/report/report-image-markdown.ts"
-import { reportLeafLayoutOf } from "../../src/shared/report/report-leaf-value.ts"
-import { reportSectionPieces } from "../../src/shared/report/report-markdown.ts"
+import { type LeafValue, reportLeafLayoutOf } from "../../src/shared/report/report-leaf-value.ts"
 
 const NO_IMAGES = { kind: "none" } as const
 
 /** 塊1つだけの節。 */
-function sectionOf(block: ReportBlock) {
+function sectionOf<Block extends ReportBlock>(block: Block) {
   return [{ heading: "", blocks: [block] }] as const
 }
 
@@ -54,8 +54,8 @@ function readRendered(container: HTMLElement): Rendered {
   return rendered
 }
 
-function renderOld(block: ReportBlock, imageSource: ReportImageSource): Rendered {
-  const text = reportSectionPieces(sectionOf(block), imageSource)[0]?.blocks[0] ?? ""
+function renderOld(block: FigureBlock, imageSource: ReportImageSource): Rendered {
+  const text = reportSectionsMarkdown(sectionOf(block), imageSource)
   const { container } = render(
     <div data-report-region="section">
       <Markdown text={text} />
@@ -82,9 +82,34 @@ function renderNew(
   return readRendered(container)
 }
 
-/** 旧い描画（欄の直接の子）の `innerHTML`。 */
+/** 番号も傍注も無い葉の値。 */
+export const PLAIN_LEAF_VALUE = {
+  captionNumber: { kind: "none" },
+  tagTones: {},
+  gutterNotes: [],
+  mergedIntoPrevious: false,
+} as const satisfies LeafValue
+
+/** 部品1つを欄の直接の子として直接描く。片付けは呼ぶ側の `cleanup`。 */
+export function renderDirectLeaf(
+  part: A2uiReportComponent,
+  imageSource: ReportImageSource = NO_IMAGES,
+  value: LeafValue = PLAIN_LEAF_VALUE,
+): RenderResult {
+  const view = directLeafViewOf(part)
+  if (view === undefined) {
+    throw new Error(`直接描く部品が無い: ${part.component}`)
+  }
+  return render(
+    <div data-report-region="section">
+      <DirectLeaf part={part} value={value} imageSource={imageSource} view={view} />
+    </div>,
+  )
+}
+
+/** 図の塊を Markdown にして描いたもの（欄の直接の子）の `innerHTML`。 */
 export function oldLeafHtml(
-  block: ReportBlock,
+  block: FigureBlock,
   imageSource: ReportImageSource = NO_IMAGES,
 ): string {
   return renderOld(block, imageSource).html
@@ -99,8 +124,8 @@ export function newLeafHtml(
   return renderNew(block, part, imageSource).html
 }
 
-/** 旧い描画の text ノードの字の並び。 */
-export function oldLeafTextNodes(block: ReportBlock): readonly string[] {
+/** 図の塊を Markdown にして描いたものの text ノードの字の並び。 */
+export function oldLeafTextNodes(block: FigureBlock): readonly string[] {
   return renderOld(block, NO_IMAGES).textNodes
 }
 

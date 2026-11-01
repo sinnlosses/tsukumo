@@ -1,5 +1,7 @@
 // 折り返し配置の図を、`svg` の塊と同じ包みの値と HTML にする。色は data 属性で運び、見た目は CSS が決める。
 
+import type { GraphChange, GraphTone } from "../../../../../shared/report/graph-source.ts"
+import { htmlInline } from "../../../../../shared/report/report-inline-markdown.ts"
 import {
   EDGE_FONT_SIZE,
   EDGE_LINE_HEIGHT,
@@ -12,8 +14,6 @@ import {
   type FoldPath,
   type GraphFoldFigure,
 } from "./graph-fold-figure.ts"
-import type { GraphChange, GraphTone } from "./graph-source.ts"
-import { htmlInline } from "./report-inline-markdown.ts"
 
 const MARKER_ID = "report-svg-arrow"
 

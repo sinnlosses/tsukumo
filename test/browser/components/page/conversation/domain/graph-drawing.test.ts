@@ -1,17 +1,14 @@
 import { describe, expect, it } from "vitest"
 
-import { graphDrawingOf } from "../../../src/shared/report/graph-drawing.ts"
-import { graphFoldDrawingOf } from "../../../src/shared/report/graph-fold-html.ts"
-import { graphFoldFigure } from "../../../src/shared/report/graph-fold.ts"
-import { svgDrawingOf, svgHtml } from "../../../src/shared/report/report-diagram-markdown.ts"
-import { graphLegendItemsOf } from "../../../src/shared/report/report-graph-markdown.ts"
-import {
-  reportImageAttributes,
-  reportImageProps,
-} from "../../../src/shared/report/report-image-markdown.ts"
-import { timelineBlockSchema } from "../../../src/shared/report/timeline-block.ts"
-import { timelineLayoutOf } from "../../../src/shared/report/timeline-markdown.ts"
-import { graphMarkdown } from "../../fixture/report-markdown.ts"
+import { graphDrawingOf } from "../../../../../../src/browser/components/page/conversation/domain/graph-drawing.ts"
+import { graphFoldDrawingOf } from "../../../../../../src/browser/components/page/conversation/domain/graph-fold-html.ts"
+import { graphFoldFigure } from "../../../../../../src/browser/components/page/conversation/domain/graph-fold.ts"
+import { svgDrawingOf } from "../../../../../../src/browser/components/page/conversation/domain/report-diagram-markdown.ts"
+import { graphLegendItemsOf } from "../../../../../../src/browser/components/page/conversation/domain/report-graph-markdown.ts"
+import { reportImageProps } from "../../../../../../src/shared/report/report-image-markdown.ts"
+import { timelineBlockSchema } from "../../../../../../src/shared/report/timeline-block.ts"
+import { timelineLayoutOf } from "../../../../../../src/shared/report/timeline-markdown.ts"
+import { graphMarkdown } from "../../../../../fixture/report-markdown.ts"
 
 const graphOf = (source: string) => ({
   kind: "graph" as const,
@@ -161,7 +158,6 @@ describe("svgDrawingOf", () => {
     expect(
       drawing.primitives.flatMap((primitive) => ("tone" in primitive ? [primitive.tone] : [])),
     ).toEqual(["a", undefined])
-    expect(svgHtml(figure)).toContain('data-tone="a"')
   })
 })
 
@@ -211,8 +207,5 @@ describe("reportImageProps", () => {
     })
     expect(reportImageProps(shelved, "b.png").src).toBeUndefined()
     expect(reportImageProps({ kind: "none" }, "a.png").src).toBeUndefined()
-    expect(reportImageAttributes(shelved, "a.png")).toBe(
-      ' src="/report-image/tool_1/a.png" width="10" height="20"',
-    )
   })
 })

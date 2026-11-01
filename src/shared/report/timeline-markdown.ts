@@ -1,10 +1,9 @@
-// `timeline` の塊の本体（時刻の軸・行ごとの帯・延びた分・出来事・凡例）を、値と HTML の1行に組む。
+// `timeline` の塊の本体（時刻の軸・行ごとの帯・延びた分・出来事・凡例）を、位置を % にした値に組む。
 
-import { htmlAttribute, htmlInline } from "./report-inline-markdown.ts"
 import type { ReportTimeline } from "./timeline-block.ts"
 import { readTimeline, type TimelineRowReading, timelineTicks } from "./timeline-scale.ts"
 
-/** `timelineHtml` が付ける class の名前。描く側はこの名前に見た目を当てる。 */
+/** 時間の図の部品が付ける class の名前。描く側はこの名前に見た目を当てる。 */
 export const TIMELINE_MARK_NAMES = [
   "timeline",
   "timeline-axis",
@@ -137,40 +136,6 @@ export function timelineLayoutOf(block: ReportTimeline): TimelineLayout {
   }
 }
 
-/**
- * 塊の HTML（空行を挟まない1行。挟むと Markdown の HTML の塊が切れる）。位置は `margin-left`・`width` の % だけで書く。
- */
-export function timelineHtml(block: ReportTimeline): string {
-  const layout = timelineLayoutOf(block)
-  const axis = layout.axis
-    .map(
-      (tick) =>
-        `<span class="timeline-tick" style="width: ${String(tick.width)}%">${htmlInline(tick.label)}</span>`,
-    )
-    .join("")
-  const body = layout.lanes
-    .map(({ lane, rows }) => {
-      const heading = lane === "" ? "" : `<div class="timeline-lane">${htmlInline(lane)}</div>`
-      return heading + rows.map(rowHtml).join("")
-    })
-    .join("")
-  const eventHtml =
-    layout.events.length === 0
-      ? ""
-      : `<div class="timeline-events">${layout.events
-          .map(
-            (event) =>
-              `<span class="timeline-event" title="${htmlAttribute(event.title)}" style="margin-left: ${String(event.marginLeft)}%"><span class="timeline-event-label">${htmlInline(event.label)}</span></span>`,
-          )
-          .join("")}</div>`
-
-  return (
-    `<div class="timeline"><div class="timeline-axis">${axis}</div>` +
-    `<div class="timeline-body">${body}${eventHtml}</div></div>` +
-    legendHtml(layout.legend)
-  )
-}
-
 type RowShape =
   | { readonly kind: "point"; readonly start: number }
   | {
@@ -216,22 +181,6 @@ function barLayout(
   }
 }
 
-function rowHtml({ name, track }: TimelineRowLayout): string {
-  return `<div class="timeline-row"><span class="timeline-name" title="${htmlAttribute(name)}">${htmlInline(name)}</span><span class="timeline-track">${trackHtml(track)}</span></div>`
-}
-
-function trackHtml(track: TimelineTrackLayout): string {
-  const tone = track.emphasized ? " timeline-bar-emphasis" : ""
-  if (track.kind === "point") {
-    return `<span class="timeline-point${tone}" title="${htmlAttribute(track.title)}" style="margin-left: ${String(track.marginLeft)}%"></span>`
-  }
-  const bar = `<span class="timeline-bar${tone}" title="${htmlAttribute(track.title)}" style="margin-left: ${String(track.marginLeft)}%; width: ${String(track.width)}%"></span>`
-  const extras = track.extras.map(
-    (width) => `<span class="timeline-extra" style="width: ${String(width)}%"></span>`,
-  )
-  return bar + extras.join("")
-}
-
 function legendOf(
   block: ReportTimeline,
   drawn: readonly { readonly row: Row; readonly shape: RowShape }[],
@@ -254,17 +203,6 @@ function legendOf(
     { swatch: "event", label: "出来事", shown: hasEvents },
   ]
   return items.flatMap(({ swatch, label, shown }) => (shown ? [{ swatch, label }] : []))
-}
-
-function legendHtml(legend: TimelineLayout["legend"]): string {
-  return legend.length === 0
-    ? ""
-    : `<div class="timeline-legend">${legend
-        .map(
-          ({ swatch, label }) =>
-            `<span class="timeline-legend-item"><span class="timeline-legend-swatch timeline-legend-swatch-${swatch}" aria-hidden="true"></span>${label}</span>`,
-        )
-        .join("")}</div>`
 }
 
 function written(value: string | number): string {

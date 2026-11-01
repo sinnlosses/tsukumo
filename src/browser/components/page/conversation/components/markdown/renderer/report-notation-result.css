@@ -60,7 +60,7 @@
     line-height: 1.5;
     color: var(--ink-quiet);
   }
-  /* フォルダの「/」の後には `filesMarkdown` が `<wbr>` を置く。 */
+  /* フォルダの「/」の後には `ChangedFilesFold` の `PathText` が `<wbr>` を置く。 */
   & .report-file code {
     background: none;
     padding: 0;

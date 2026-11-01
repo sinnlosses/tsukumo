@@ -3,12 +3,9 @@
 import type { ReactElement } from "react"
 
 import type { A2uiReportComponent } from "../../../../../../shared/report/a2ui-report-catalog.ts"
-import {
-  type SvgPrimitive,
-  svgDrawingOf,
-} from "../../../../../../shared/report/report-diagram-markdown.ts"
 import { plainInline } from "../../../../../../shared/report/report-inline-markdown.ts"
 import type { LeafValue } from "../../../../../../shared/report/report-leaf-value.ts"
+import { type SvgPrimitive, svgDrawingOf } from "../../domain/report-diagram-markdown.ts"
 import { figureClassName, ZoomableSvgFigure } from "../markdown/markdown.tsx"
 import { FoldedLeafFrame } from "./report-leaf-frame.tsx"
 

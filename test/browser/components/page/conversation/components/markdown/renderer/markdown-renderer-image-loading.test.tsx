@@ -2,8 +2,8 @@ import { cleanup, render } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { Markdown } from "../../../../../../../../src/browser/components/page/conversation/components/markdown/renderer/markdown-renderer.tsx"
-import type { ReportBlock } from "../../../../../../../../src/shared/report/report-block.ts"
-import { reportSectionsMarkdown } from "../../../../../../../../src/shared/report/report-markdown.ts"
+import { reportSectionsMarkdown } from "../../../../../../../../src/browser/components/page/conversation/domain/report-markdown.ts"
+import type { FigureBlock } from "../../../../../../../../src/shared/report/report-block.ts"
 import { typedElement } from "../../../../../../../typed-element.ts"
 
 afterEach(() => {
@@ -12,7 +12,7 @@ afterEach(() => {
 
 describe("Markdown（image の塊の画像の読み方）", () => {
   it("棚の画像は遅延して読み、寸法が分かる画像にだけ width と height が付く", () => {
-    const image = (path: string): ReportBlock => ({
+    const image = (path: string): FigureBlock => ({
       kind: "image",
       path,
       caption: path,

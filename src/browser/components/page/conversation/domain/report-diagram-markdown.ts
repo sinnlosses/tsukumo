@@ -1,7 +1,6 @@
-// 図の塊（`chart`・`svg`・`mermaid`）の本体を組む。Chart.js の設定・SVG・凡例を持つ（`graph` は `graphSource`）。
+// 図の塊（`chart`・`svg`・`mermaid`）の本体の値を組む。Chart.js の設定・SVG の図形の並び・時系列の図の通し番号を持つ（`graph` は `graphSource`）。
 
-import type { ReportBlock } from "./report-block.ts"
-import { htmlInline } from "./report-inline-markdown.ts"
+import type { ReportBlock } from "../../../../../shared/report/report-block.ts"
 
 type ChartConfig = ChartBody | (ChartBody & { readonly tsukumo: { readonly height: number } })
 
@@ -267,22 +266,6 @@ export function svgDrawingOf({ width, height, shapes, legend }: SvgFigure): SvgD
   }
 }
 
-/**
- * 図形を `<svg viewBox="0 0 W H">` の1行に組む（空行を挟むと Markdown の HTML の塊が切れる）。
- * 色は書かない。`report-svg-figure` の下の要素に CSS が当てる（強調の枠は `stroke-width`、`tone` は `data-tone` の属性が目印）。
- * `legend` は図の下に、色の見本と名前の並びで出す。
- */
-export function svgHtml(figure: SvgFigure): string {
-  const drawing = svgDrawingOf(figure)
-  const w = String(drawing.width)
-  const h = String(drawing.height)
-  const marker =
-    `<defs><marker id="${drawing.arrowMarkerId}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">` +
-    `<path d="M0,0 L10,5 L0,10 z"></path></marker></defs>`
-  const body = drawing.primitives.map(svgPrimitiveHtml).join("")
-  return `<div class="svg-figure"><svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">${marker}${body}</svg></div>${svgLegendHtml(drawing.legend)}`
-}
-
 /** 本文から「3 の呼び出し」と指せるよう、時系列の図の矢印に通し番号を振る。書き手が `autonumber` を書いていれば足さない。 */
 export function withSequenceAutonumber(source: string): string {
   const [head = "", ...rest] = source.split("\n")
@@ -296,17 +279,6 @@ export function withSequenceAutonumber(source: string): string {
 function percentagesOf(values: readonly number[]): number[] {
   const total = values.reduce((sum, value) => sum + Math.max(0, value), 0)
   return values.map((value) => (total > 0 ? (Math.max(0, value) / total) * 100 : 0))
-}
-
-function svgLegendHtml(legend: SvgFigure["legend"]): string {
-  if (legend.length === 0) return ""
-  const items = legend
-    .map(
-      ({ tone, label }) =>
-        `<span class="svg-legend-item"><svg viewBox="0 0 16 12" width="16" height="12"><rect data-tone="${tone}" x="1" y="1" width="14" height="10" rx="2"></rect></svg>${htmlInline(label)}</span>`,
-    )
-    .join("")
-  return `<div class="svg-legend">${items}</div>`
 }
 
 function toneOf(tone: Extract<SvgShape, { readonly kind: "rect" }>["tone"]): SvgTone | undefined {
@@ -397,31 +369,6 @@ function svgText(
     fontSize: sub ? SVG_SUB_FONT_SIZE : SVG_LABEL_FONT_SIZE,
     centered,
     sub,
-  }
-}
-
-function toneAttribute(tone: SvgTone): string {
-  return ` data-tone="${tone}"`
-}
-
-function svgPrimitiveHtml(primitive: SvgPrimitive): string {
-  switch (primitive.kind) {
-    case "rect": {
-      const strokeWidth = primitive.emphasis ? ' stroke-width="3"' : ""
-      const tone = primitive.tone === undefined ? "" : toneAttribute(primitive.tone)
-      return `<rect x="${String(primitive.x)}" y="${String(primitive.y)}" width="${String(primitive.width)}" height="${String(primitive.height)}" rx="4"${strokeWidth}${tone}></rect>`
-    }
-    case "line": {
-      const markerEnd = primitive.arrow ? ` marker-end="url(#${SVG_ARROW_MARKER_ID})"` : ""
-      const dashArray = primitive.dashed ? ' stroke-dasharray="6 4"' : ""
-      const tone = primitive.tone === undefined ? "" : toneAttribute(primitive.tone)
-      return `<line x1="${String(primitive.x1)}" y1="${String(primitive.y1)}" x2="${String(primitive.x2)}" y2="${String(primitive.y2)}"${markerEnd}${dashArray}${tone}></line>`
-    }
-    case "text": {
-      const anchor = primitive.centered ? ' text-anchor="middle" dominant-baseline="middle"' : ""
-      const sub = primitive.sub ? " data-sub" : ""
-      return `<text x="${String(primitive.x)}" y="${String(primitive.y)}" font-size="${String(primitive.fontSize)}"${anchor}${sub}>${htmlInline(primitive.text)}</text>`
-    }
   }
 }
 

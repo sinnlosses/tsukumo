@@ -6,7 +6,7 @@ import {
   directLeafViewOf,
 } from "../../../../../../../src/browser/components/page/conversation/components/main-view/direct-leaf-view.tsx"
 import { loadMarkdown } from "../../../../../../../src/browser/components/page/conversation/components/markdown/markdown.tsx"
-import { newLeafHtml, oldLeafHtml } from "../../../../../../fixture/direct-leaf-compare.tsx"
+import { newLeafHtml, renderDirectLeaf } from "../../../../../../fixture/direct-leaf-compare.tsx"
 
 beforeAll(async () => {
   await loadMarkdown()
@@ -18,16 +18,11 @@ afterEach(() => {
 
 type Tone = "info" | "warn" | "ng" | "ask" | "memo"
 
-function pair(tone: Tone, text: string, fold = "") {
+function pair(tone: Tone, text: string) {
   return {
-    block: { kind: "note", tone, text, fold, aside: "" } as const,
-    part: { id: "n1", component: "Note", tone, text, fold, aside: "" } as const,
+    block: { kind: "note", tone, text, fold: "", aside: "" } as const,
+    part: { id: "n1", component: "Note", tone, text, fold: "", aside: "" } as const,
   }
-}
-
-function both(tone: Tone, text: string, fold = "") {
-  const { block, part } = pair(tone, text, fold)
-  return { fresh: newLeafHtml(block, part), old: oldLeafHtml(block) }
 }
 
 function pausePoints(html: string): number {
@@ -35,15 +30,12 @@ function pausePoints(html: string): number {
 }
 
 describe("Note の部品", () => {
-  it.each(["info", "warn", "ng", "ask"] as const)("%s が旧い描画と一致する", (tone) => {
-    const { fresh, old } = both(tone, "架空の注意 `a.ts` と **太字**")
-
-    expect(fresh).toBe(old)
-  })
-
   it("筆を留める印は warn と ng だけに付く", () => {
     expect(
-      (["info", "warn", "ng", "ask"] as const).map((tone) => pausePoints(both(tone, "架空").fresh)),
+      (["info", "warn", "ng", "ask"] as const).map((tone) => {
+        const { block, part } = pair(tone, "架空")
+        return pausePoints(newLeafHtml(block, part))
+      }),
     ).toEqual([0, 1, 1, 0])
   })
 
@@ -98,16 +90,16 @@ describe("Note の部品", () => {
   })
 
   it("字が空の Note は本文を描かず、fold つきでも畳まない", () => {
-    const { fresh, old } = both("warn", "  ", "架空の根拠")
+    const { container } = renderDirectLeaf({
+      id: "n1",
+      component: "Note",
+      tone: "warn",
+      text: "  ",
+      fold: "架空の根拠",
+      aside: "",
+    })
 
-    expect(fresh).not.toContain("report-note")
-    expect(fresh).toBe(old)
-  })
-
-  it("fold つきは details で包む", () => {
-    const { fresh, old } = both("info", "架空の注記", "架空の根拠")
-
-    expect(fresh).toContain("<details>")
-    expect(fresh).toBe(old)
+    expect(container.querySelector("details")).toBeNull()
+    expect(container.textContent?.trim()).toBe("")
   })
 })

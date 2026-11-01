@@ -6,9 +6,9 @@ import {
   type GraphNodeShape,
   type GraphSourceGroup,
   type GraphTone,
-} from "./graph-source.ts"
-import type { ReportGraph } from "./report-block-diagram.ts"
-import { htmlInline } from "./report-inline-markdown.ts"
+} from "../../../../../shared/report/graph-source.ts"
+import type { ReportGraph } from "../../../../../shared/report/report-block-diagram.ts"
+import { htmlInline } from "../../../../../shared/report/report-inline-markdown.ts"
 
 /**
  * 書き手の名前は辺を結ぶためだけに使い、ソースの ID は `n0`, `n1` … を振る（`end` などの予約語を避ける）。

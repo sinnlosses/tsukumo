@@ -2,6 +2,10 @@
 // 置けない図は `undefined` を返し、呼ぶ側が mermaid の flowchart に回す。
 
 import {
+  readGraphSource,
+  type GraphSourceReading,
+} from "../../../../../shared/report/graph-source.ts"
+import {
   LABEL_FONT_SIZE,
   LABEL_LINE_HEIGHT,
   NOTE_FONT_SIZE,
@@ -12,7 +16,6 @@ import {
 } from "./graph-fold-figure.ts"
 import { laidOut } from "./graph-fold-layout.ts"
 import { textWidth, wrapped } from "./graph-fold-text.ts"
-import { readGraphSource, type GraphSourceReading } from "./graph-source.ts"
 
 /** 主経路の節点がこの数以上の図だけを折り返す。少ない図は mermaid のままのほうが読める。 */
 const FOLD_MIN_MAIN_NODES = 6

@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest"
 
-import type { ReportBlock } from "../../../src/shared/report/report-block.ts"
+import { reportSectionsMarkdown } from "../../../src/browser/components/page/conversation/domain/report-markdown.ts"
+import type { FigureBlock } from "../../../src/shared/report/report-block.ts"
 import { reportImagePath } from "../../../src/shared/report/report-image.ts"
-import { reportSectionsMarkdown } from "../../../src/shared/report/report-markdown.ts"
 import { figureCaptioned, markdownOf, section } from "../../fixture/report-markdown.ts"
 
 describe("reportSectionsMarkdown", () => {
   it("image は棚を引く src の img と1行の説明を組み、説明の < は逃がす。頭に図の通し番号が付く", () => {
-    const image: ReportBlock = {
+    const image: FigureBlock = {
       kind: "image",
       path: "架空/after.png",
       caption: "架空の<画面>",
@@ -32,7 +32,7 @@ describe("reportSectionsMarkdown", () => {
   })
 
   it("image は棚の寸法があるパスにだけ width と height を付ける", () => {
-    const image = (path: string): ReportBlock => ({
+    const image = (path: string): FigureBlock => ({
       kind: "image",
       path,
       caption: "架空の画面",
@@ -63,7 +63,7 @@ describe("reportSectionsMarkdown", () => {
   })
 
   it("image の notes は画像の横に1から番号を振った並びになり、< は逃がし、包みは縮めない", () => {
-    const image: ReportBlock = {
+    const image: FigureBlock = {
       kind: "image",
       path: "架空.png",
       caption: "架空の画面",

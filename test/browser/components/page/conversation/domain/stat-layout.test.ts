@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
-import { statLayoutOf } from "../../../src/shared/report/stat-layout.ts"
-import { statItem } from "../../fixture/report-markdown.ts"
+import { statLayoutOf } from "../../../../../../src/browser/components/page/conversation/domain/stat-layout.ts"
+import { statItem } from "../../../../../fixture/report-markdown.ts"
 
 describe("statLayoutOf", () => {
   it.each([

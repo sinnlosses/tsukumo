@@ -1,14 +1,17 @@
-import type { ReportBlock, ReportBlockSection } from "../../src/shared/report/report-block.ts"
+import { reportSectionsMarkdown } from "../../src/browser/components/page/conversation/domain/report-markdown.ts"
+import type { FigureBlock, ReportBlock } from "../../src/shared/report/report-block.ts"
 import type { ReportImageSource } from "../../src/shared/report/report-image-markdown.ts"
-import { reportSectionsMarkdown } from "../../src/shared/report/report-markdown.ts"
 
 export const NO_IMAGES = { kind: "none" } as const satisfies ReportImageSource
 
-export const section = (blocks: readonly ReportBlock[], heading = ""): ReportBlockSection => ({
+export const section = <Block extends ReportBlock>(
+  blocks: readonly Block[],
+  heading = "",
+): { readonly heading: string; readonly blocks: readonly Block[] } => ({
   heading,
   blocks,
 })
-export const markdownOf = (block: ReportBlock): string =>
+export const markdownOf = (block: FigureBlock): string =>
   reportSectionsMarkdown([section([block])], NO_IMAGES)
 export const reportMarkdownText = (value: string): ReportBlock => ({
   kind: "text",
@@ -16,7 +19,7 @@ export const reportMarkdownText = (value: string): ReportBlock => ({
   fold: "",
   aside: "",
 })
-export const captionRow = (label: "図" | "表", ordinal: number, title = ""): string =>
+const captionRow = (label: "図" | "表", ordinal: number, title = ""): string =>
   `<div class="caption"><span class="caption-number">${label} ${String(ordinal)}</span>` +
   `${title === "" ? "" : `<span class="caption-text">${title}</span>`}</div>`
 /** 図の包み。本体が HTML だけなら空行を挟まず、題の行は本体のあと。 */
@@ -38,7 +41,7 @@ export const GRAPH_SHAPE_LEGEND =
     )
     .join("") +
   "</div>"
-export type StatItem = Extract<ReportBlock, { readonly kind: "stats" }>["items"][number]
+type StatItem = Extract<ReportBlock, { readonly kind: "stats" }>["items"][number]
 export const graphMarkdown = (
   source: string,
   title = "",
@@ -53,14 +56,9 @@ export const statItem: StatItem = {
   series: [],
   better: "",
 }
-export const statsCaptioned = (body: string, ordinal = 1): string =>
-  figureCaptioned(body, "", ordinal, false)
-/** 図の包みから、本体のフェンスだけを取り出す。 */
-export const chartFenceOf = (block: ReportBlock): string =>
-  markdownOf(block)
-    .replace(/^<div class="captioned">\n\n/, "")
-    .replace(/\n\n<div class="caption">.*<\/div>\n\n<\/div>$/, "")
-export const captionNumbers = (sections: readonly ReportBlockSection[]): string[] =>
+export const captionNumbers = (
+  sections: readonly { readonly heading: string; readonly blocks: readonly FigureBlock[] }[],
+): string[] =>
   [...reportSectionsMarkdown(sections, NO_IMAGES).matchAll(/class="caption-number">([^<]+)</g)].map(
     ([, label]) => label ?? "",
   )

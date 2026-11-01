@@ -1,30 +1,10 @@
-// 項目の並び（`list`・`options`・`claims`）の塊を Markdown と HTML に組む。
+// 項目の並び（`list`）の塊を Markdown と HTML に組む。
 
-import type { ReportBlock } from "./report-block.ts"
-import { htmlInlineWithCode, joinParts, markdownInline } from "./report-inline-markdown.ts"
-import { PAUSE_POINT_CLASS_NAME } from "./report-pause-point.ts"
-
-/** 候補の判定 → 行の class と、頭に出す語。「採る」は筆を留める対象。 */
-const OPTION_VERDICTS = {
-  adopt: { rowClass: `option option-adopt ${PAUSE_POINT_CLASS_NAME}`, label: "採る" },
-  consider: { rowClass: "option option-consider", label: "検討" },
-  reject: { rowClass: "option option-reject", label: "採らない" },
-} as const satisfies Record<
-  Extract<ReportBlock, { readonly kind: "options" }>["items"][number]["verdict"],
-  { readonly rowClass: string; readonly label: string }
->
-
-type ClaimsBlock = Extract<ReportBlock, { readonly kind: "claims" }>
-
-/** 主張の確度 → 行の class と、頭に出す記号と語。 */
-const CLAIM_CERTAINTIES = {
-  confirmed: { rowClass: "claim claim-confirmed", mark: "✓", label: "確定" },
-  inferred: { rowClass: "claim claim-inferred", mark: "〜", label: "推測" },
-  unverified: { rowClass: "claim claim-unverified", mark: "？", label: "未確認" },
-} as const satisfies Record<
-  ClaimsBlock["items"][number]["certainty"],
-  { readonly rowClass: string; readonly mark: string; readonly label: string }
->
+import type { ReportBlock } from "../../../../../shared/report/report-block.ts"
+import {
+  htmlInlineWithCode,
+  markdownInline,
+} from "../../../../../shared/report/report-inline-markdown.ts"
 
 type ListBlock = Extract<ReportBlock, { readonly kind: "list" }>
 
@@ -48,41 +28,6 @@ export function listMarkdown(block: ListBlock): string {
       : `${marker} ${markdownInline(item.text)}`
   })
   return labeled ? `<div class="labeled-list">\n\n${lines.join("\n")}\n\n</div>` : lines.join("\n")
-}
-
-/**
- * 候補を書き手の順のまま1案1行にし、番号・判定の語・名前・理由の順に並べる。
- * 採る → 検討 → 採らないの順は書き手が守り、崩れていれば `reportViolations` が差し戻す（並べ替えは再構成になるのでしない）。
- */
-export function optionsMarkdown(block: Extract<ReportBlock, { readonly kind: "options" }>): string {
-  const rows = block.items.map(({ name, verdict, reason }, index) => {
-    const { rowClass, label } = OPTION_VERDICTS[verdict]
-    const reasonHtml =
-      reason === "" ? "" : ` <span class="option-reason">${htmlInlineWithCode(reason)}</span>`
-    return `<div class="${rowClass}"><span class="option-number">${String(index + 1)}</span><span class="option-verdict">${label}</span><span class="option-body"><span class="option-name">${htmlInlineWithCode(name)}</span>${reasonHtml}</span></div>`
-  })
-  return joinParts([
-    block.title.trim() === "" ? "" : `**${markdownInline(block.title)}**`,
-    `<div class="options">${rows.join("")}</div>`,
-  ])
-}
-
-/**
- * 主張を書き手の順のまま1項目1行にし、確度（記号と語）・主張・根拠・確かめ方の順に並べる。空の根拠と確かめ方は欄ごと出さない。
- * 行の中身は div の内側を空行で挟んだ段落にする（`path:line` とリンクを Markdown の行内として効かせるため）。
- */
-export function claimsMarkdown(block: ClaimsBlock): string {
-  const rows = block.items.map(({ claim, certainty, basis, howToVerify }) => {
-    const { rowClass, mark, label } = CLAIM_CERTAINTIES[certainty]
-    const line = [
-      `<span class="claim-certainty"><span class="claim-mark" aria-hidden="true">${mark}</span>${label}</span>`,
-      `<span class="claim-text">${markdownInline(claim)}</span>`,
-      claimFieldMarkdown("claim-basis", "根拠", basis),
-      claimFieldMarkdown("claim-how", "確かめ方", howToVerify),
-    ].join("")
-    return `<div class="${rowClass}">\n\n${line}\n\n</div>`
-  })
-  return joinParts(['<div class="claims">', ...rows, "</div>"])
 }
 
 const FLOW_ROW_MAX_STEPS = 5
@@ -151,10 +96,4 @@ function listMarker(
     case "check":
       return done ? "- [x]" : "- [ ]"
   }
-}
-
-function claimFieldMarkdown(className: string, name: string, text: string): string {
-  return text.trim() === ""
-    ? ""
-    : `<span class="${className}"><span class="claim-field">${name}</span>${markdownInline(text)}</span>`
 }

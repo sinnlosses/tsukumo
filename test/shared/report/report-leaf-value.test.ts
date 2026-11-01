@@ -6,7 +6,7 @@ import {
   reportLeafLayoutOf,
   type ReportLeafLayout,
 } from "../../../src/shared/report/report-leaf-value.ts"
-import { captionNumbers, reportMarkdownText, section } from "../../fixture/report-markdown.ts"
+import { reportMarkdownText, section } from "../../fixture/report-markdown.ts"
 
 const memo = (text: string, aside = ""): ReportBlock => ({
   kind: "note",
@@ -132,8 +132,7 @@ describe("reportLeafLayoutOf", () => {
   })
 
   it("plot の番号の種類は描く形に合わせる（グラフは図、表に落ちたものは表）", () => {
-    const sections = [section([barPlot(), tablePlot(), barPlot(), table()])]
-    const [blocks] = reportLeafValues(sections)
+    const [blocks] = reportLeafValues([section([barPlot(), tablePlot(), barPlot(), table()])])
 
     expect(blocks?.map((value) => value.captionNumber)).toEqual([
       { kind: "figure", ordinal: 1 },
@@ -141,6 +140,5 @@ describe("reportLeafLayoutOf", () => {
       { kind: "figure", ordinal: 2 },
       { kind: "table", ordinal: 2 },
     ])
-    expect(captionNumbers(sections)).toEqual(["図 1", "表 1", "図 2", "表 2"])
   })
 })

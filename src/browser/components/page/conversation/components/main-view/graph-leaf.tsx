@@ -4,16 +4,16 @@ import clsx from "clsx"
 import { Fragment, type ReactElement } from "react"
 
 import type { A2uiReportComponent } from "../../../../../../shared/report/a2ui-report-catalog.ts"
-import type { CardChainItem } from "../../../../../../shared/report/card-chain-markdown.ts"
-import { graphDrawingOf } from "../../../../../../shared/report/graph-drawing.ts"
+import { plainInline } from "../../../../../../shared/report/report-inline-markdown.ts"
+import type { LeafValue } from "../../../../../../shared/report/report-leaf-value.ts"
+import type { CardChainItem } from "../../domain/card-chain-markdown.ts"
+import { graphDrawingOf } from "../../domain/graph-drawing.ts"
 import {
   type FoldText,
   type GraphFoldDrawing,
   graphFoldDrawingOf,
-} from "../../../../../../shared/report/graph-fold-html.ts"
-import { graphLegendItemsOf } from "../../../../../../shared/report/report-graph-markdown.ts"
-import { plainInline } from "../../../../../../shared/report/report-inline-markdown.ts"
-import type { LeafValue } from "../../../../../../shared/report/report-leaf-value.ts"
+} from "../../domain/graph-fold-html.ts"
+import { graphLegendItemsOf } from "../../domain/report-graph-markdown.ts"
 import { figureClassName, MermaidFigure, ZoomableSvgFigure } from "../markdown/markdown.tsx"
 import { FoldedLeafFrame } from "./report-leaf-frame.tsx"
 

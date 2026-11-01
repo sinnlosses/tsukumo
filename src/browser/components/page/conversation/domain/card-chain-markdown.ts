@@ -5,8 +5,8 @@ import {
   type GraphChange,
   type GraphSourceReading,
   type GraphTone,
-} from "./graph-source.ts"
-import { htmlInline } from "./report-inline-markdown.ts"
+} from "../../../../../shared/report/graph-source.ts"
+import { htmlInline } from "../../../../../shared/report/report-inline-markdown.ts"
 
 const MAX_CARDS = 5
 

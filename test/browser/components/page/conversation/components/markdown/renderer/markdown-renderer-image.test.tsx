@@ -1,13 +1,24 @@
 import { cleanup, fireEvent, render } from "@testing-library/react"
-import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest"
 
+import { loadMarkdown } from "../../../../../../../../src/browser/components/page/conversation/components/markdown/markdown.tsx"
 import { Markdown } from "../../../../../../../../src/browser/components/page/conversation/components/markdown/renderer/markdown-renderer.tsx"
+import {
+  PLAIN_LEAF_VALUE,
+  renderDirectLeaf,
+} from "../../../../../../../fixture/direct-leaf-compare.tsx"
 import { reportSectionsMarkdown } from "../../../../../../../fixture/report-sections-markdown.ts"
 import { typedElement } from "../../../../../../../typed-element.ts"
+
+beforeAll(async () => {
+  await loadMarkdown()
+})
 
 afterEach(() => {
   cleanup()
 })
+
+const SHELF = { kind: "shelved", toolUseId: "fictional-report", sizes: [], unshelved: [] } as const
 
 describe("Markdown（image の塊の画像）", () => {
   const MISSING_SELECTOR = 'span[role="img"].report-image-missing'
@@ -128,21 +139,21 @@ describe("Markdown（image の塊の画像）", () => {
   })
 
   describe("前後の画像の見せ方", () => {
-    const imagesText = reportSectionsMarkdown([
-      {
-        heading: "",
-        blocks: [
-          {
-            kind: "beforeAfter",
-            title: "架空の前後",
-            before: { kind: "image", path: "架空/before.png" },
-            after: { kind: "image", path: "架空/after.png" },
-            fold: "",
-            aside: "",
-          },
-        ],
-      },
-    ])
+    function renderPair() {
+      return renderDirectLeaf(
+        {
+          id: "b1",
+          component: "BeforeAfter",
+          title: "架空の前後",
+          before: { kind: "image", path: "架空/before.png" },
+          after: { kind: "image", path: "架空/after.png" },
+          fold: "",
+          aside: "",
+        },
+        SHELF,
+        { ...PLAIN_LEAF_VALUE, captionNumber: { kind: "figure", ordinal: 1 } },
+      )
+    }
 
     function swapRoot(container: HTMLElement): HTMLElement {
       return typedElement(
@@ -182,7 +193,7 @@ describe("Markdown（image の塊の画像）", () => {
     })
 
     it("並べるから始まり、「重ねて見る」「並べて見る」の口も入れ替える口も出さない", () => {
-      const { container } = render(<Markdown text={imagesText} />)
+      const { container } = renderPair()
       const root = swapRoot(container)
 
       expect(root.dataset["view"]).toBe("side")
@@ -196,7 +207,7 @@ describe("Markdown（image の塊の画像）", () => {
     })
 
     it("切り替えを選ぶと見本が前・後の2つ出て、見本を押すと見える側が即時に替わり aria-pressed が追従する", () => {
-      const { container } = render(<Markdown text={imagesText} />)
+      const { container } = renderPair()
       const root = swapRoot(container)
 
       fireEvent.click(button(container, "切り替え"))
@@ -220,7 +231,7 @@ describe("Markdown（image の塊の画像）", () => {
     })
 
     it("切り替えで大きな1枚にフォーカスがあるときの Space で前と後がかわり、拡大は開かない", () => {
-      const { container } = render(<Markdown text={imagesText} />)
+      const { container } = renderPair()
       const root = swapRoot(container)
       fireEvent.click(button(container, "切り替え"))
 
@@ -234,7 +245,7 @@ describe("Markdown（image の塊の画像）", () => {
     })
 
     it("見本の Space は大きな1枚の入れかえに数えず、並べるの間は Space で替わらない", () => {
-      const { container } = render(<Markdown text={imagesText} />)
+      const { container } = renderPair()
       const root = swapRoot(container)
 
       fireEvent.keyDown(zoomButton(container), { key: " " })
@@ -246,24 +257,24 @@ describe("Markdown（image の塊の画像）", () => {
     })
 
     it("選んだ見せ方は覚え、描き直しても残る。壊れた値は並べるに落ちる", () => {
-      const first = render(<Markdown text={imagesText} />)
+      const first = renderPair()
       fireEvent.click(button(first.container, "切り替え"))
       expect(localStorage.getItem(VIEW_KEY)).toBe("switch")
       first.unmount()
 
-      const second = render(<Markdown text={imagesText} />)
+      const second = renderPair()
       expect(swapRoot(second.container).dataset["view"]).toBe("switch")
       expectPressed(second.container, "切り替え", "true")
       second.unmount()
 
       localStorage.setItem(VIEW_KEY, "stacked")
-      const third = render(<Markdown text={imagesText} />)
+      const third = renderPair()
       expect(swapRoot(third.container).dataset["view"]).toBe("side")
     })
 
     it("画像が片方でも読めなければ2つ組も見本も出さない（切り替えを覚えていても並べる）", () => {
       localStorage.setItem(VIEW_KEY, "switch")
-      const { container } = render(<Markdown text={imagesText} />)
+      const { container } = renderPair()
       expect(container.querySelectorAll("button").length).toBeGreaterThan(0)
 
       fireEvent.error(typedElement(container.querySelector("img"), HTMLImageElement, "画像"))
@@ -297,7 +308,7 @@ describe("Markdown（image の塊の画像）", () => {
       }
 
       it("押した側から前後の面が開き、塊の題を添える", () => {
-        const { container } = render(<Markdown text={imagesText} />)
+        const { container } = renderPair()
 
         fireEvent.click(typedElement(zoomButtons(container)[1] ?? null, HTMLElement, "後の画像"))
         const dialog = beforeAfterDialog()
@@ -309,7 +320,7 @@ describe("Markdown（image の塊の画像）", () => {
       })
 
       it("前の画像を押すと前から開く", () => {
-        const { container } = render(<Markdown text={imagesText} />)
+        const { container } = renderPair()
 
         fireEvent.click(typedElement(zoomButtons(container)[0] ?? null, HTMLElement, "前の画像"))
 
@@ -317,7 +328,7 @@ describe("Markdown（image の塊の画像）", () => {
       })
 
       it("切り替えでは、見せている側でなく押した画像の側から開く", () => {
-        const { container } = render(<Markdown text={imagesText} />)
+        const { container } = renderPair()
         fireEvent.click(button(container, "切り替え"))
         fireEvent.click(button(container, "後"))
 
@@ -327,7 +338,7 @@ describe("Markdown（image の塊の画像）", () => {
       })
 
       it("面を閉じると、押した画像のボタンにフォーカスが戻る", () => {
-        const { container } = render(<Markdown text={imagesText} />)
+        const { container } = renderPair()
         const afterButton = typedElement(zoomButtons(container)[1] ?? null, HTMLElement, "後の画像")
 
         fireEvent.click(afterButton)
@@ -346,7 +357,7 @@ describe("Markdown（image の塊の画像）", () => {
       })
 
       it("画像が片方札になった塊では、読めた側は今の面（画像ごとの拡大）を開く", () => {
-        const { container } = render(<Markdown text={imagesText} />)
+        const { container } = renderPair()
         fireEvent.error(typedElement(container.querySelector("img"), HTMLImageElement, "画像"))
 
         fireEvent.click(typedElement(zoomButtons(container)[0] ?? null, HTMLElement, "読めた画像"))
@@ -357,22 +368,18 @@ describe("Markdown（image の塊の画像）", () => {
     })
 
     it("片方が画像でない前後には口を出さない", () => {
-      const text = reportSectionsMarkdown([
+      const { container } = renderDirectLeaf(
         {
-          heading: "",
-          blocks: [
-            {
-              kind: "beforeAfter",
-              title: "",
-              before: { kind: "image", path: "架空/before.png" },
-              after: { kind: "points", points: ["架空"] },
-              fold: "",
-              aside: "",
-            },
-          ],
+          id: "b1",
+          component: "BeforeAfter",
+          title: "",
+          before: { kind: "image", path: "架空/before.png" },
+          after: { kind: "points", points: ["架空"] },
+          fold: "",
+          aside: "",
         },
-      ])
-      const { container } = render(<Markdown text={text} />)
+        SHELF,
+      )
 
       expect(container.querySelector("div.report-before-after-swap")).toBeNull()
       expect(container.querySelector('[role="group"][aria-label="見せ方"]')).toBeNull()
@@ -438,41 +445,34 @@ describe("Markdown（image の塊の画像）", () => {
   })
 })
 
-describe("Markdown（svg の塊の拡大）", () => {
+describe("Svg の部品の拡大", () => {
   const FIGURE_NAME = "この図を拡大"
 
   function renderSvg(): HTMLElement {
-    const text = reportSectionsMarkdown([
-      {
-        heading: "",
-        blocks: [
-          {
-            kind: "svg",
-            title: "架空",
-            width: 160,
-            height: 720,
-            shapes: [
-              {
-                kind: "rect",
-                x: 1,
-                y: 1,
-                width: 10,
-                height: 10,
-                label: "架空",
-                sub: "",
-                emphasis: false,
-                labelAt: "center",
-                tone: "none",
-              },
-            ],
-            legend: [],
-            fold: "",
-            aside: "",
-          },
-        ],
-      },
-    ])
-    return render(<Markdown text={text} />).container
+    return renderDirectLeaf({
+      id: "s1",
+      component: "Svg",
+      title: "架空",
+      width: 160,
+      height: 720,
+      shapes: [
+        {
+          kind: "rect",
+          x: 1,
+          y: 1,
+          width: 10,
+          height: 10,
+          label: "架空",
+          sub: "",
+          emphasis: false,
+          labelAt: "center",
+          tone: "none",
+        },
+      ],
+      legend: [],
+      fold: "",
+      aside: "",
+    }).container
   }
 
   it("押せる図で、押すと拡大の面が開き、Esc 相当の閉じるで閉じる", () => {

@@ -46,21 +46,6 @@ export function imageMarkdown(
 }
 
 /**
- * `img` の `src` 属性と、寸法が分かれば `width`・`height` 属性（前の空白つき）。
- * 棚に置いていない本文では空にし、描く側が「出せない」の札にする。
- */
-export function reportImageAttributes(imageSource: ReportImageSource, path: string): string {
-  const props = reportImageProps(imageSource, path)
-  if (props.src === undefined) {
-    return ""
-  }
-  const src = ` src="${htmlAttribute(props.src)}"`
-  return props.size === undefined
-    ? src
-    : `${src} width="${String(props.size.width)}" height="${String(props.size.height)}"`
-}
-
-/**
  * 画像の `src` と、分かれば画素の寸法。棚に置いていない本文・棚に置けなかったパスは `src` を持たない（描く側が「出せない」の札にする）。
  */
 export function reportImageProps(
@@ -84,6 +69,21 @@ export function reportImageProps(
 export function pictureAltOf(caption: string): string {
   const text = caption.trim()
   return text === "" ? "画面の画像" : text
+}
+
+/**
+ * `img` の `src` 属性と、寸法が分かれば `width`・`height` 属性（前の空白つき）。
+ * 棚に置いていない本文では空にし、描く側が「出せない」の札にする。
+ */
+function reportImageAttributes(imageSource: ReportImageSource, path: string): string {
+  const props = reportImageProps(imageSource, path)
+  if (props.src === undefined) {
+    return ""
+  }
+  const src = ` src="${htmlAttribute(props.src)}"`
+  return props.size === undefined
+    ? src
+    : `${src} width="${String(props.size.width)}" height="${String(props.size.height)}"`
 }
 
 function imageNoteListMarkdown(notes: readonly string[]): string {

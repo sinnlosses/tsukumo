@@ -128,12 +128,13 @@ CSS 宣言のうち、葉専用と言い切れるのは `report-notation-timelin
 ## 未決
 
 1. 質問の詳細（候補の図と比較表）を、塊 → Markdown の関数の経由から外して葉の部品で直接描くか。外さない限り、`report-notation-timeline.css`・`report-notation-card-chain.css`・`report-notation-graph-fold.css` の 3 つ（189 宣言）ほか、葉専用に見える描画は `Markdown` の経路で使われ続ける。移行の最後の課題のあとで、使い手が質問の詳細だけになったかを数えて決める。
-2. 旧い 3 つの変種（`json-schema`・`short-type`・`body-fence`）の撤去（ADR 0039 論点 5）のあとに、`reportSectionPieces` の Markdown を組む部分をどこまで消せるか。
+   （2026-11-01）塊 → Markdown の関数の入力は `FigureBlock` に絞られた。葉専用に見える CSS は、面の葉の部品（`timeline-leaf.tsx`・`svg-leaf.tsx`・`graph-leaf.tsx`）も同じ class で使うので、`Markdown` の経路だけのために残っているのではない。
+2. （決まった。2026-11-01）面のための Markdown 化は消えた。面は節の有無と `markdown`・`text` の塊の字を値から取り（ADR 0043 の未決 4）、Markdown を組むのは質問の添え書きだけになった。
 
 ## 影響
 
 - `src/shared/session/a2ui-report-view.ts` が持つ `leaves` が、葉ごとの値（図表番号・札の色・傍注）に置き換わる。`MainViewA2uiReport` の形が変わるので、`pnpm run test:e2e:update` が要る。
-- `src/shared/report/report-markdown.ts` の畳み込みから、番号・札の色・傍注を取り出す。質問の詳細が使う Markdown を組む部分は変えない。
+- `src/browser/components/page/conversation/domain/report-markdown.ts` の畳み込みから、番号・札の色・傍注を取り出す。質問の詳細が使う Markdown を組む部分は変えない。
 - 葉の React の部品が `src/browser/components/` の下に増え、`ui/` の部品（`Surface`・`Badge`・`Divider`）とデザイントークンで組む。
 - `markdown/` の描画は、葉を移しても、頭・振り返り・お願い・質問の詳細・`Markdown` の葉・旧い記録・面が作れなかったときの代替から使われ続ける。CSS の削減は、未決 1 が決まるまで限られる。
 - ADR 0039 の論点 4 の「葉の実装は塊 → Markdown の変換を `Markdown` に通して再利用する」は、この ADR で置き換わる。未決 3 は閉じる。ADR 0040（草稿の描画）は変わらず、番号の振り直しは草稿が伸びるたびの view の作り直しで効く。

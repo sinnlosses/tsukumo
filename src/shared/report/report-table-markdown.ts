@@ -1,4 +1,4 @@
-// 表（`table`）と対応表（`matrix`）の塊を Markdown と HTML に組む。
+// 表（`table`）の塊を Markdown と HTML に組む。
 
 import { unique } from "remeda"
 
@@ -9,9 +9,6 @@ import { htmlInlineWithCode, joinParts, markdownInline } from "./report-inline-m
 import {
   CELL_STATUS_MARKS,
   type ColumnBar,
-  MATRIX_MARKS,
-  type MatrixStatus,
-  matrixLegendStatuses,
   numericCellMagnitude,
   tableLayoutOf,
 } from "./table-layout.ts"
@@ -64,39 +61,6 @@ export function tableMarkdown(
   })
 }
 
-type MatrixBlock = Extract<ReportBlock, { readonly kind: "matrix" }>
-
-/**
- * 行の名前と列の名前だけを見出しにした格子。交点は状態の印だけで、凡例は格子に出た状態だけを添える。
- * 印の名前は表の見出しの読み上げが担うので、`aria-label` は状態の語だけにする。
- */
-export function matrixMarkdown(block: MatrixBlock, ordinal: number): string {
-  const grid = [
-    markdownRow(["", ...block.columns.map(cellTextMarkdown)]),
-    markdownRow(["---", ...block.columns.map(() => ":---:")]),
-    ...block.rows.map(({ name, cells }) =>
-      markdownRow([
-        cellTextMarkdown(name),
-        ...cells.map((status) => matrixMarkMarkdown(status, false)),
-      ]),
-    ),
-  ].join("\n")
-  const legend = matrixLegendStatuses(block)
-    .map(
-      (status) =>
-        `<span class="matrix-legend-item">${matrixMarkMarkdown(status, true)} ${MATRIX_MARKS[status].label}</span>`,
-    )
-    .join("")
-  return captionedMarkdown({
-    kind: "table",
-    ordinal,
-    title: block.title,
-    body: `<div class="matrix">\n\n${grid}\n\n<div class="matrix-legend">${legend}</div>\n\n</div>`,
-    bodyFormat: "markdown",
-    fit: true,
-  })
-}
-
 /** 表のデータ行ごとの Markdown。並びは `table.rows` と同じ。 */
 function tableRowMarkdowns(
   table: Extract<ReportBlock, { readonly kind: "table" }>,
@@ -114,13 +78,7 @@ function tableRowMarkdowns(
   })
 }
 
-function matrixMarkMarkdown(status: MatrixStatus, legend: boolean): string {
-  const { className, symbol, label } = MATRIX_MARKS[status]
-  const attributes = legend ? 'aria-hidden="true"' : `role="img" aria-label="${label}"`
-  return `<span class="matrix-mark ${className}" ${attributes}>${symbol}</span>`
-}
-
-/** 表に出た状態のセルの状態だけを、題と表のあいだの凡例に並べる（`matrix` の凡例と同じ考え方）。 */
+/** 表に出た状態のセルの状態だけを、題と表のあいだの凡例に並べる。 */
 function tableStatusLegendMarkdown(
   statuses: ReturnType<typeof tableLayoutOf>["legendStatuses"],
 ): string {

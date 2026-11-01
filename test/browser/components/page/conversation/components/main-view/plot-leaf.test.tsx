@@ -4,7 +4,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
 import { directLeafViewOf } from "../../../../../../../src/browser/components/page/conversation/components/main-view/direct-leaf-view.tsx"
 import { loadMarkdown } from "../../../../../../../src/browser/components/page/conversation/components/markdown/markdown.tsx"
 import { plotDrawingOf } from "../../../../../../../src/shared/report/plot-drawing.ts"
-import { newLeafHtml, oldLeafHtml } from "../../../../../../fixture/direct-leaf-compare.tsx"
+import { newLeafHtml } from "../../../../../../fixture/direct-leaf-compare.tsx"
 import { stubIntersectionObserver } from "../../../../../../fixture/intersection.ts"
 
 vi.mock(
@@ -29,9 +29,9 @@ type Column = {
 
 type Relation = "part" | "trend" | "distribution" | "compare" | "correlate"
 
-function pair(question: string, relation: Relation, data: Column[], fold = "", aside = "") {
+function pair(question: string, relation: Relation, data: Column[]) {
   return {
-    block: { kind: "plot", question, relation, data, form: "auto", fold, aside } as const,
+    block: { kind: "plot", question, relation, data, form: "auto", fold: "", aside: "" } as const,
     part: {
       id: "p1",
       component: "Plot",
@@ -39,8 +39,8 @@ function pair(question: string, relation: Relation, data: Column[], fold = "", a
       relation,
       data,
       form: "auto",
-      fold,
-      aside,
+      fold: "",
+      aside: "",
     } as const,
   }
 }
@@ -130,69 +130,23 @@ function drawingKindOf(part: ReturnType<typeof build>["part"]): string {
   return plotDrawingOf({ ...part, kind: "plot" }).kind
 }
 
-function build(shape: Shape, fold = "", aside = "") {
+function build(shape: Shape) {
   const [name, relation, data] = shape
   const columns = data.map((column) => ({ ...column, values: [...column.values] }))
-  return pair(`架空の問い: ${name}`, relation, columns, fold, aside)
+  return pair(`架空の問い: ${name}`, relation, columns)
 }
 
 describe("Plot の部品", () => {
-  it.each([
-    ["棒", BAR, "chart-block"],
-    ["折れ線", LINE, "chart-block"],
-    ["数直線", NUMBER_LINE, "number-line"],
-    ["bullet", BULLET, "bullet"],
-    ["散布", SCATTER, "scatter"],
-    ["ヒストグラム", HISTOGRAM, "histogram"],
-  ] as const)("%s が旧い描画と一致する", (_name, shape, marker) => {
-    const { block, part } = build(shape)
-
-    const fresh = newLeafHtml(block, part)
-
-    expect(fresh).toBe(oldLeafHtml(block))
-    expect(fresh).toContain(marker)
-  })
-
   it("図の題は番号つきで本体の下に出る", () => {
     const { block, part } = build(BAR)
 
     expect(newLeafHtml(block, part)).toMatch(/図 1/)
   })
 
-  it("fold と aside が旧い描画と一致する", () => {
-    const { block, part } = build(NUMBER_LINE, "架空の畳み", "架空の傍注")
-
-    const fresh = newLeafHtml(block, part)
-
-    expect(fresh).toBe(oldLeafHtml(block))
-    expect(fresh).toContain("<details>")
-  })
-
   it("描く形は申告から決まる（表に落ちる形と図になる形）", () => {
     expect(drawingKindOf(build(TABLE).part)).toBe("table")
     expect(drawingKindOf(build(TABLE_RICH).part)).toBe("table")
     expect(drawingKindOf(build(BAR).part)).toBe("chart")
-  })
-
-  it.each([
-    ["文字だけの表", TABLE],
-    ["記法・縦棒・数を含む表", TABLE_RICH],
-  ] as const)("表に落ちる形（%s）が旧い描画と一致する", (_name, shape) => {
-    const { block, part } = build(shape)
-
-    const fresh = newLeafHtml(block, part)
-
-    expect(fresh).toBe(oldLeafHtml(block))
-    expect(fresh).toContain("<table")
-  })
-
-  it("表に落ちる形の fold と aside が旧い描画と一致する", () => {
-    const { block, part } = build(TABLE, "架空の畳み", "架空の傍注")
-
-    const fresh = newLeafHtml(block, part)
-
-    expect(fresh).toBe(oldLeafHtml(block))
-    expect(fresh).toContain("<details>")
   })
 
   it("散布の点は申告の行を1つも落とさない", () => {

@@ -3,7 +3,7 @@ import { afterEach, beforeAll, describe, expect, it } from "vitest"
 
 import { loadMarkdown } from "../../../../../../../src/browser/components/page/conversation/components/markdown/markdown.tsx"
 import type { A2uiReportComponent } from "../../../../../../../src/shared/report/a2ui-report-catalog.ts"
-import type { ReportBlock } from "../../../../../../../src/shared/report/report-block.ts"
+import type { FigureBlock } from "../../../../../../../src/shared/report/report-block.ts"
 import {
   newLeafHtml,
   newLeafTextNodes,
@@ -19,7 +19,7 @@ afterEach(() => {
   cleanup()
 })
 
-type Sample = { readonly block: ReportBlock; readonly part: A2uiReportComponent }
+type Sample = { readonly block: FigureBlock; readonly part: A2uiReportComponent }
 
 const TABLE: Sample = (() => {
   const base = {
@@ -39,23 +39,6 @@ const TABLE: Sample = (() => {
   }
 })()
 
-const MATRIX: Sample = (() => {
-  const base = {
-    title: "",
-    columns: ["甲", "乙"],
-    rows: [
-      { name: "架空のA", cells: ["ok", "warn"] },
-      { name: "架空のB", cells: ["ng", "na"] },
-    ],
-    fold: "",
-    aside: "",
-  } satisfies Omit<Extract<A2uiReportComponent, { component: "Matrix" }>, "id" | "component">
-  return {
-    block: { kind: "matrix", ...base },
-    part: { id: "m1", component: "Matrix", ...base },
-  }
-})()
-
 const COMPARE: Sample = (() => {
   const base = {
     title: "",
@@ -69,19 +52,6 @@ const COMPARE: Sample = (() => {
   return {
     block: { kind: "compare", ...base },
     part: { id: "c1", component: "Compare", ...base },
-  }
-})()
-
-const STATS: Sample = (() => {
-  const plain = { before: "", total: "", series: [], better: "" as const }
-  const items = [
-    { ...plain, value: "9", label: "架空の落ちた件数", before: "12", total: "48" },
-    { ...plain, value: "1", label: "架空の一" },
-    { ...plain, value: "2", label: "架空の二", total: "`t`" },
-  ]
-  return {
-    block: { kind: "stats", items, fold: "", aside: "" },
-    part: { id: "s1", component: "Stats", items, fold: "", aside: "" },
   }
 })()
 
@@ -105,27 +75,11 @@ const MESSY_TABLE: Sample = (() => {
   }
 })()
 
-const MESSY_STATS: Sample = (() => {
-  const plain = { before: "", total: "", series: [], better: "" as const }
-  const items = [
-    { ...plain, value: "9", label: "架空の件数", before: " 12\n1 ", total: "4\n8 " },
-    { ...plain, value: "1", label: "架空の一", before: "x\n`y`", total: " `t`\nz" },
-    { ...plain, value: "2", label: "架空の二" },
-  ]
-  return {
-    block: { kind: "stats", items, fold: "", aside: "" },
-    part: { id: "s2", component: "Stats", items, fold: "", aside: "" },
-  }
-})()
-
-describe("4つの内容部品は、旧い描画と同じ text ノードの割れ方で字を描く", () => {
+describe("2つの内容部品は、旧い描画と同じ text ノードの割れ方で字を描く", () => {
   it.each([
     ["Table", TABLE],
-    ["Matrix", MATRIX],
     ["Compare", COMPARE],
-    ["Stats", STATS],
     ["改行・前後の空白を含む Table", MESSY_TABLE],
-    ["改行・前後の空白を含む Stats", MESSY_STATS],
   ] as const)("%s", (_name, { block, part }) => {
     expect(newLeafTextNodes(block, part)).toEqual(oldLeafTextNodes(block))
     expect(newLeafHtml(block, part)).toEqual(oldLeafHtml(block))

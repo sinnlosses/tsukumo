@@ -1,5 +1,9 @@
 // 折り返し配置の座標を、1行の数を1つ決めて組む。主経路を蛇行の行に並べ、上の段・行のあいだの通り道・図の左の外側に辺を回す。
 
+import type {
+  GraphSourceEdge,
+  GraphSourceReading,
+} from "../../../../../shared/report/graph-source.ts"
 import {
   EDGE_FONT_SIZE,
   EDGE_LINE_HEIGHT,
@@ -14,7 +18,6 @@ import {
 } from "./graph-fold-figure.ts"
 import { framesOf } from "./graph-fold-frame.ts"
 import { wrapped } from "./graph-fold-text.ts"
-import type { GraphSourceEdge, GraphSourceReading } from "./graph-source.ts"
 
 const MARGIN = 12
 /** 上の段の箱と主経路の箱のあいだ。辺のラベルが入る高さ。 */

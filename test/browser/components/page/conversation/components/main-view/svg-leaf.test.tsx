@@ -6,7 +6,7 @@ import {
   directLeafViewOf,
 } from "../../../../../../../src/browser/components/page/conversation/components/main-view/direct-leaf-view.tsx"
 import { loadMarkdown } from "../../../../../../../src/browser/components/page/conversation/components/markdown/markdown.tsx"
-import { newLeafHtml, oldLeafHtml } from "../../../../../../fixture/direct-leaf-compare.tsx"
+import type { A2uiReportComponent } from "../../../../../../../src/shared/report/a2ui-report-catalog.ts"
 
 beforeAll(async () => {
   await loadMarkdown()
@@ -55,44 +55,19 @@ const SHAPES = [
   { kind: "text", x: 12, y: 95, text: "架空の注釈" },
 ] as const
 
-function pair(legend: readonly { tone: "a" | "b"; label: string }[], fold = "") {
-  const fields = {
-    title: "架空の図",
-    width: 340,
-    height: 110,
-    shapes: [...SHAPES],
-    legend: [...legend],
-  }
-  return {
-    block: { kind: "svg", ...fields, fold, aside: "" } as const,
-    part: { id: "s1", component: "Svg", ...fields, fold, aside: "" } as const,
-  }
-}
-
 describe("Svg の部品", () => {
-  it.each([
-    ["凡例なし", []],
-    [
-      "凡例あり",
-      [
-        { tone: "a", label: "架空の甲" },
-        { tone: "b", label: "架空の乙" },
-      ],
-    ],
-  ] as const)("%s が旧い描画と一致する", (_, legend) => {
-    const { block, part } = pair(legend)
-
-    expect(newLeafHtml(block, part)).toBe(oldLeafHtml(block))
-  })
-
-  it("畳みがあれば details で包んで旧い描画と一致する", () => {
-    const { block, part } = pair([], "架空の畳み")
-
-    expect(newLeafHtml(block, part)).toBe(oldLeafHtml(block))
-  })
-
   it("図の根に svg があり、色の目印は列挙した値だけが付く", () => {
-    const { part } = pair([])
+    const part = {
+      id: "s1",
+      component: "Svg",
+      title: "架空の図",
+      width: 340,
+      height: 110,
+      shapes: [...SHAPES],
+      legend: [],
+      fold: "",
+      aside: "",
+    } satisfies Extract<A2uiReportComponent, { readonly component: "Svg" }>
     const view = directLeafViewOf(part)
     if (view === undefined) throw new Error("一覧に Svg が無い")
     const { container } = render(

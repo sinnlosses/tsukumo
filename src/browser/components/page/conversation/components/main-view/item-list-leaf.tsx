@@ -5,7 +5,7 @@ import type { ReactElement, ReactNode } from "react"
 
 import type { A2uiReportComponent } from "../../../../../../shared/report/a2ui-report-catalog.ts"
 import type { LeafValue } from "../../../../../../shared/report/report-leaf-value.ts"
-import { flowFitsRow, hasFlowDetail } from "../../../../../../shared/report/report-list-markdown.ts"
+import { flowFitsRow, hasFlowDetail } from "../../domain/report-list-markdown.ts"
 import {
   FoldedList,
   InlineCodeText,

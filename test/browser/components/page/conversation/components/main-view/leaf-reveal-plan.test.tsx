@@ -6,13 +6,11 @@ import {
   directLeafViewOf,
 } from "../../../../../../../src/browser/components/page/conversation/components/main-view/direct-leaf-view.tsx"
 import { loadMarkdown } from "../../../../../../../src/browser/components/page/conversation/components/markdown/markdown.tsx"
-import { Markdown } from "../../../../../../../src/browser/components/page/conversation/components/markdown/renderer/markdown-renderer.tsx"
 import { revealTimingOf } from "../../../../../../../src/browser/domain/reveal-speed.ts"
 import { planReveal } from "../../../../../../../src/browser/domain/reveal/plan.ts"
 import type { A2uiReportComponent } from "../../../../../../../src/shared/report/a2ui-report-catalog.ts"
 import type { ReportBlock } from "../../../../../../../src/shared/report/report-block.ts"
 import { reportLeafLayoutOf } from "../../../../../../../src/shared/report/report-leaf-value.ts"
-import { reportSectionPieces } from "../../../../../../../src/shared/report/report-markdown.ts"
 import { stubIntersectionObserver } from "../../../../../../fixture/intersection.ts"
 
 vi.mock(
@@ -159,20 +157,6 @@ type Plan = ReturnType<typeof planReveal>
 
 const SECTIONS = [{ heading: "", blocks: PAIRS.map((pair) => pair.block) }] as const
 
-function oldPlan(): Plan {
-  const pieces = reportSectionPieces(SECTIONS, NO_IMAGES)[0]?.blocks ?? []
-  const { container } = render(
-    <div>
-      <div data-report-region="section" data-report-section="0">
-        {PAIRS.map((pair, index) => (
-          <Markdown key={pair.part.id} text={pieces[index] ?? ""} />
-        ))}
-      </div>
-    </div>,
-  )
-  return planOf(container)
-}
-
 function newPlan(): Plan {
   const values = reportLeafLayoutOf(SECTIONS).values[0] ?? []
   const { container } = render(
@@ -211,35 +195,7 @@ function pausesOf(plan: Plan) {
 }
 
 describe("直接描いた葉の演出の計画", () => {
-  it("筆を留める回数と長さが旧い描画と同じで、warn と ng の注記と「採る」の行の数に当たる", () => {
-    const fresh = pausesOf(newPlan()).map((pause) => pause.durationMs)
-    cleanup()
-    const old = pausesOf(oldPlan()).map((pause) => pause.durationMs)
-
-    expect(fresh).toEqual(old)
-    expect(fresh).toHaveLength(4)
-  })
-
-  it("塊の数と、塊ごとの要素の並びが旧い描画と同じ", () => {
-    const shape = (plan: Plan) =>
-      plan.map((block) => block.members.map((member) => `${member.element.tagName}:${member.kind}`))
-    const fresh = shape(newPlan())
-    cleanup()
-
-    expect(fresh).toEqual(shape(oldPlan()))
-  })
-
-  it("留める時刻は、旧い描画との差が全体の 1% に収まる", () => {
-    const freshPlan = newPlan()
-    cleanup()
-    const previousPlan = oldPlan()
-    const fresh = pausesOf(freshPlan).map((pause) => pause.atMs)
-    const old = pausesOf(previousPlan).map((pause) => pause.atMs)
-    const span = previousPlan.at(-1)?.endMs ?? 1
-
-    expect(fresh).toHaveLength(old.length)
-    for (const [index, at] of fresh.entries()) {
-      expect(Math.abs(at - (old[index] ?? 0)) / span).toBeLessThan(0.01)
-    }
+  it("筆を留める回数は、warn と ng の注記と「採る」の行の数に当たる", () => {
+    expect(pausesOf(newPlan())).toHaveLength(4)
   })
 })

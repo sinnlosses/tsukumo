@@ -4,7 +4,7 @@ import {
   GRAPH_SHAPE_LEGEND,
   fencedFigureCaptioned,
   graphMarkdown,
-} from "../../fixture/report-markdown.ts"
+} from "../../../../../fixture/report-markdown.ts"
 
 function legend(...items: readonly (readonly [string, string])[]): string {
   return (

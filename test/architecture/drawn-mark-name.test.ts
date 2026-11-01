@@ -11,10 +11,14 @@ import { listSourceFiles, SRC_ROOT } from "./source-file.ts"
 // 読むのは `class="…"` の属性値に直に書いた語だけ。
 // 定数に置いて `${…}` で差し込む語や、`${…}` で組む名前は静的に決まらないので見ない。
 describe("tsukumo が組む class 名", () => {
-  it("src/shared/report/ の class 属性に直に書いた語は、すべて印の名前の一覧に入っている", () => {
+  it("src/shared/report/ と src/browser/components/page/conversation/domain/ の class 属性に直に書いた語は、すべて印の名前の一覧に入っている", () => {
     const known = new Set<string>([...REPORT_NOTATION_NAMES, ...REPORT_DRAWN_MARK_NAMES])
     const words = listSourceFiles(SRC_ROOT)
-      .filter((relPath) => /^shared\/report\/[^/]+\.ts$/.test(relPath))
+      .filter((relPath) =>
+        /^(shared\/report|browser\/components\/page\/conversation\/domain)\/[^/]+\.ts$/.test(
+          relPath,
+        ),
+      )
       .flatMap((relPath) => literalClassNames(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8")))
 
     expect(words.length).toBeGreaterThan(0)

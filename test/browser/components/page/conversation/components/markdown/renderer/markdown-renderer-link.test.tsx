@@ -1,9 +1,11 @@
 import { cleanup, fireEvent, render } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
+import { ChangedFilesFold } from "../../../../../../../../src/browser/components/page/conversation/components/main-view/changed-files-fold.tsx"
 import { Markdown } from "../../../../../../../../src/browser/components/page/conversation/components/markdown/renderer/markdown-renderer.tsx"
+import { changedFilesView } from "../../../../../../../../src/shared/report/changed-file-section.ts"
+import type { ChangedFile } from "../../../../../../../../src/shared/report/changed-file.ts"
 import { UNREADABLE_FILE_EXCERPT } from "../../../../../../../../src/shared/repository/file-excerpt.ts"
-import { reportSectionsMarkdown } from "../../../../../../../fixture/report-sections-markdown.ts"
 import {
   stubRepositoryFileLink,
   type RepositoryFileLinkStub,
@@ -70,23 +72,28 @@ describe("Markdown（レポートのパスを押して Orca のエディタで�
     expect(button.textContent).toBe("src/report-notation.module.css")
   })
 
-  it("files の塊のパスもハイフンの直後に結合子の span を持ち、字は変わらない", () => {
+  /** 変更したファイルの節（面の頭）を描く。 */
+  function renderChangedFiles(
+    wrap: RepositoryFileLinkStub["wrap"],
+    changed: readonly ChangedFile[],
+  ): HTMLElement {
+    const view = changedFilesView({
+      kind: "counted",
+      changed,
+      files: changed.length,
+      added: 0,
+      removed: 0,
+      mixed: false,
+    })
+    if (view.kind !== "files") {
+      throw new Error("変更したファイルが無い")
+    }
+    return render(wrap(<ChangedFilesFold view={view} />)).container
+  }
+
+  it("変更したファイルの節のパスもハイフンの直後に結合子の span を持ち、字は変わらない", () => {
     const { wrap } = withFiles(["src/a-b/c-d.ts"])
-    const text = reportSectionsMarkdown([
-      {
-        heading: "",
-        blocks: [
-          {
-            kind: "files",
-            items: [{ path: "src/a-b/c-d.ts", change: "modified", note: "" }],
-            title: "",
-            fold: "",
-            aside: "",
-          },
-        ],
-      },
-    ])
-    const { container } = render(wrap(<Markdown text={text} />))
+    const container = renderChangedFiles(wrap, [{ path: "src/a-b/c-d.ts", change: "modified" }])
 
     const button = typedElement(
       container.querySelector('[role="button"]'),
@@ -140,35 +147,15 @@ describe("Markdown（レポートのパスを押して Orca のエディタで�
     expect(opened).toEqual(["src/foo.ts"])
   })
 
-  it("files の塊のパスは HTML の中の code でも、一覧にあれば押せるボタンになる", () => {
+  it("変更したファイルの節のパスは、一覧にあれば押せるボタンになる", () => {
     const { wrap, opened } = withFiles(["src/foo.ts"])
-    const text = reportSectionsMarkdown([
-      {
-        heading: "",
-        blocks: [
-          {
-            kind: "files",
-            items: [
-              { path: "src/foo.ts", change: "modified", note: "架空の注記" },
-              { path: "src/gone.ts", change: "deleted", note: "" },
-            ],
-            title: "",
-            fold: "",
-            aside: "",
-          },
-        ],
-      },
+    const container = renderChangedFiles(wrap, [
+      { path: "src/foo.ts", change: "modified" },
+      { path: "src/gone.ts", change: "deleted" },
     ])
-    const { container } = render(wrap(<Markdown text={text} />))
 
-    // 行の子は種別・パス・注記の順（CSS が行を subgrid にして列を揃える）。
     const rows = container.querySelectorAll("div.report-files > div.report-file")
     expect(rows).toHaveLength(2)
-    expect([...(rows[0]?.children ?? [])].map((child) => child.tagName)).toEqual([
-      "SPAN",
-      "SPAN",
-      "SPAN",
-    ])
     // 表示はファイル名だけで、押すとフルパス（`data-file-path`）で開く。
     const button = typedElement(
       rows[0]?.querySelector('[role="button"]'),

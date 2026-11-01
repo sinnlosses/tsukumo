@@ -5,7 +5,6 @@ import { reportViolations } from "../../../src/server/report/core/report-violati
 import { parseReportFigure } from "../../../src/shared/report/a2ui-report-catalog.ts"
 import { parseReportBlocks, type ReportBlock } from "../../../src/shared/report/report-block.ts"
 import { draft } from "../../fixture/report-draft-block.ts"
-import { markdownOf } from "../../fixture/report-markdown.ts"
 
 type Row = { name: string; start: string | number; end?: string | number }
 
@@ -34,14 +33,6 @@ describe("timeline の受け付け", () => {
     const value = timeline([{ name: "架空の工程", start, end }])
     expect(blockOf(value).kind).toBe("timeline")
     expect(parseReportFigure(value).kind).toBe("timeline")
-  })
-
-  it("図 1 の題つきで timeline の包みを出す", () => {
-    const html = markdownOf(
-      blockOf(timeline([{ name: "架空の工程", start: "14:00", end: "14:30" }])),
-    )
-    expect(html).toContain("図 1")
-    expect(html).toContain('class="timeline"')
   })
 })
 

@@ -4,12 +4,9 @@ import {
   htmlInline,
   htmlInlineSegments,
   htmlInlineWithCode,
+  markdownInline,
 } from "../../../src/shared/report/report-inline-markdown.ts"
-import {
-  fencedFigureCaptioned,
-  markdownOf,
-  reportMarkdownText,
-} from "../../fixture/report-markdown.ts"
+import { fencedFigureCaptioned, markdownOf } from "../../fixture/report-markdown.ts"
 
 describe("reportSectionsMarkdown", () => {
   it("コードと mermaid はフェンスで囲み、中のバッククォートより長いフェンスにする", () => {
@@ -53,7 +50,7 @@ describe("reportSectionsMarkdown", () => {
 
   describe("行内の印", () => {
     it("Markdown に埋める文字では印を字のまま残し、HTML に埋める文字では素の文字へ畳む", () => {
-      expect(markdownOf(reportMarkdownText("架空の {{12 → 8}} 秒と {{3 / 5}}"))).toBe(
+      expect(markdownInline("架空の {{12 → 8}} 秒と {{3 / 5}}")).toBe(
         "架空の {{12 → 8}} 秒と {{3 / 5}}",
       )
       expect(htmlInline("架空の {{12 → 8}} 秒と {{3 / 5}}")).toBe("架空の 12 → 8 秒と 3/5")
@@ -118,7 +115,7 @@ describe("reportSectionsMarkdown", () => {
         "```x``` と書く",
       ],
     ])("%s", (_, source, expected) => {
-      expect(markdownOf(reportMarkdownText(source))).toBe(expected)
+      expect(markdownInline(source)).toBe(expected)
     })
 
     it("箇条書きの項目の行頭も逃がす", () => {

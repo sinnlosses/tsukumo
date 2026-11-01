@@ -21,24 +21,21 @@ type Captioned = {
   readonly fit: boolean
 }
 
-/**
- * 本体と、番号つきの題の行を包む。表は題が本体の上、図は本体の下。
- * `swap` は包みに、見せ方（並べる・切り替え）を選ぶ口の印（`before-after-swap`）を付ける。
- */
-export function captionedMarkdown(
-  { kind, ordinal, title, body, bodyFormat, fit }: Captioned,
-  swap = false,
-): string {
+/** 本体と、番号つきの題の行を包む。表は題が本体の上、図は本体の下。 */
+export function captionedMarkdown({
+  kind,
+  ordinal,
+  title,
+  body,
+  bodyFormat,
+  fit,
+}: Captioned): string {
   const text = htmlInlineWithCode(title)
   const caption =
     `<div class="caption"><span class="caption-number">${CAPTION_LABELS[kind]} ${String(ordinal)}</span>` +
     `${text === "" ? "" : `<span class="caption-text">${text}</span>`}</div>`
   const parts = kind === "table" ? [caption, body] : [body, caption]
-  const className = [
-    "captioned",
-    ...(fit ? ["captioned-fit"] : []),
-    ...(swap ? ["before-after-swap"] : []),
-  ].join(" ")
+  const className = fit ? "captioned captioned-fit" : "captioned"
   return bodyFormat === "html"
     ? `<div class="${className}">${parts.join("")}</div>`
     : `<div class="${className}">\n\n${parts.join("\n\n")}\n\n</div>`

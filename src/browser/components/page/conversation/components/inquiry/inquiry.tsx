@@ -11,7 +11,6 @@ import clsx from "clsx"
 import type { KeyboardEvent, ReactElement } from "react"
 
 import type { ReportImageSource } from "../../../../../../shared/report/report-image-markdown.ts"
-import { reportSectionsMarkdown } from "../../../../../../shared/report/report-markdown.ts"
 import { truncateForDisplay } from "../../../../../features/current-work/domain/current-work-step.ts"
 import { usePhoneWidth } from "../../../../../hooks/use-phone-width.ts"
 import { useNowWhile } from "../../../../../stores/clock.ts"
@@ -20,6 +19,7 @@ import { Button } from "../../../../ui/button/button.tsx"
 import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import { mergeRefs } from "../../domain/merge-ref.ts"
+import { reportSectionsMarkdown } from "../../domain/report-markdown.ts"
 import {
   useInquiryAnswer,
   type InquiryBrief as InquiryBriefModel,

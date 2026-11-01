@@ -2,8 +2,8 @@ import { cleanup } from "@testing-library/react"
 import { afterEach, beforeAll, describe, expect, it } from "vitest"
 
 import { loadMarkdown } from "../../../../../../../src/browser/components/page/conversation/components/markdown/markdown.tsx"
-import { chartConfigOf } from "../../../../../../../src/shared/report/report-diagram-markdown.ts"
-import { newLeafHtml, oldLeafHtml } from "../../../../../../fixture/direct-leaf-compare.tsx"
+import { chartConfigOf } from "../../../../../../../src/browser/components/page/conversation/domain/report-diagram-markdown.ts"
+import { newLeafHtml } from "../../../../../../fixture/direct-leaf-compare.tsx"
 import { stubIntersectionObserver } from "../../../../../../fixture/intersection.ts"
 
 beforeAll(async () => {
@@ -48,43 +48,11 @@ function pair(overrides: Overrides) {
   }
 }
 
-function both(overrides: Overrides) {
-  const { block, part } = pair(overrides)
-  return { fresh: newLeafHtml(block, part), old: oldLeafHtml(block) }
-}
-
-const TWO_SERIES = [
-  { name: "架空の前", values: [9, 8, 7] },
-  { name: "架空の後", values: [4, 3, 2] },
-]
-
 describe("Chart の部品", () => {
-  it.each([
-    ["題つきの bar", { title: "架空の題" }],
-    ["題なしの bar", {}],
-    ["横向きの bar", { horizontal: true }],
-    ["emphasis つきの bar", { emphasis: ["架空2"] }],
-    ["line", { chartKind: "line", series: TWO_SERIES }],
-    ["pie", { chartKind: "pie", emphasis: ["架空1"] }],
-    ["arrow", { chartKind: "arrow", series: TWO_SERIES }],
-    ["slope", { chartKind: "slope", series: TWO_SERIES }],
-    ["span", { chartKind: "span", series: TWO_SERIES }],
-    ["share", { chartKind: "share", emphasis: ["架空1"] }],
-    ["fold つき", { title: "架空の題", fold: "架空の畳み" }],
-    ["aside つき", { title: "架空の題", aside: "架空の傍注" }],
-    ["fold と aside の両方", { fold: "架空の畳み", aside: "架空の傍注" }],
-  ] as const satisfies readonly (readonly [string, Overrides])[])(
-    "%s が旧い描画と一致する",
-    (_name, overrides) => {
-      const { fresh, old } = both(overrides)
-
-      expect(fresh).toBe(old)
-      expect(fresh).toContain("chart-block")
-    },
-  )
-
   it("横向きの bar は枠の高さを持つ", () => {
-    expect(both({ horizontal: true }).fresh).toMatch(/style="height: \d+px;?"/)
+    const { block, part } = pair({ horizontal: true })
+
+    expect(newLeafHtml(block, part)).toMatch(/style="height: \d+px;?"/)
   })
 
   it("labels と series の全部が Chart.js の設定に残る", () => {

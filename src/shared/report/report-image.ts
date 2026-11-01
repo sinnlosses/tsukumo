@@ -29,12 +29,9 @@ export type ReportImageSize = {
 export const REPORT_IMAGE_SIZE_PATTERN = /^[1-9]\d{0,5}$/
 
 /**
- * `img` が枠を運ぶ属性の名前（hast のプロパティ名は `dataChangeRegion`）。
- * 会話の画面の4領域が名乗る `data-region` とは別の名前にする。
+ * 許可リストが `img` の `data-change-region` に通す値。`left,top,width,height` の非負の10進。
+ * 属性は会話の画面の4領域が名乗る `data-region` とは別の名前にする。
  */
-export const IMAGE_REGION_ATTRIBUTE = "data-change-region"
-
-/** 許可リストが `data-change-region` に通す値。`left,top,width,height` の非負の10進。 */
 export const IMAGE_REGION_PATTERN = /^\d+(?:\.\d+)?(?:,\d+(?:\.\d+)?){3}$/
 
 /** 枠を `data-change-region` の値に書き出す。小数は4桁で丸める。 */

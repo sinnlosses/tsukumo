@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest"
 
-import type { ReportBlock } from "../../../src/shared/report/report-block.ts"
-import { reportSectionsMarkdown } from "../../../src/shared/report/report-markdown.ts"
+import { reportSectionsMarkdown } from "../../../src/browser/components/page/conversation/domain/report-markdown.ts"
+import type { FigureBlock, ReportBlock } from "../../../src/shared/report/report-block.ts"
 import { markdownOf, NO_IMAGES, section, tableCaptioned } from "../../fixture/report-markdown.ts"
 
 describe("表の tag と強調の行", () => {
   const tableOf = (
     rows: Extract<ReportBlock, { readonly kind: "table" }>["rows"],
-  ): ReportBlock => ({
+  ): FigureBlock => ({
     kind: "table",
     title: "架空の表",
     columns: ["項目", "種別"],
@@ -77,7 +77,7 @@ describe("表の tag と強調の行", () => {
 
 describe("reportSectionsMarkdown", () => {
   it("表は番号つきの題の行のあとに GFM の表で組み、状態のセルは記号と文を1行に並べたタイルにし、題の直下に出た状態だけの凡例を添える（記号は role=img の aria-label で状態語を読み上げる）", () => {
-    const table: ReportBlock = {
+    const table: FigureBlock = {
       kind: "table",
       title: "架空の表",
       columns: ["項目", "結果", "備考"],
@@ -108,7 +108,7 @@ describe("reportSectionsMarkdown", () => {
   })
 
   it("rest がある表は、表のあとに同じ包みの中で切った残りの1行を添える。状態のセルの表でも凡例・表・rest の順", () => {
-    const plain: ReportBlock = {
+    const plain: FigureBlock = {
       kind: "table",
       title: "",
       columns: ["項目", "備考"],
@@ -117,7 +117,7 @@ describe("reportSectionsMarkdown", () => {
       fold: "",
       aside: "",
     }
-    const withStatus: ReportBlock = {
+    const withStatus: FigureBlock = {
       ...plain,
       rows: [["架空の a", { status: "ok", text: "通過" }]],
     }
@@ -139,7 +139,7 @@ describe("reportSectionsMarkdown", () => {
   })
 
   it("変わったセルは前の値と矢印の文字を ink-quiet の span に、後の値を地の文字にし、前後がどちらも数なら列を右に揃える", () => {
-    const table: ReportBlock = {
+    const table: FigureBlock = {
       kind: "table",
       title: "",
       columns: ["項目", "件数", "名前"],
@@ -165,7 +165,7 @@ describe("reportSectionsMarkdown", () => {
   })
 
   it("状態のセルと変わったセルが混じる列は中央に揃えない", () => {
-    const table: ReportBlock = {
+    const table: FigureBlock = {
       kind: "table",
       title: "",
       columns: ["項目", "結果"],
@@ -241,7 +241,7 @@ describe("reportSectionsMarkdown", () => {
       ],
     ],
   ] as const)("%s", (_, columns, rows, lines) => {
-    const table: ReportBlock = {
+    const table: FigureBlock = {
       kind: "table",
       title: "",
       columns,
@@ -253,37 +253,6 @@ describe("reportSectionsMarkdown", () => {
 
     expect(markdownOf(table)).toBe(
       tableCaptioned([`| ${columns.join(" | ")} |`, ...lines].join("\n")),
-    )
-  })
-
-  it("matrix は名前だけの見出しの格子に状態の印を置き、凡例は格子に出た状態だけを並べる", () => {
-    const matrix: ReportBlock = {
-      kind: "matrix",
-      title: "架空の対応",
-      columns: ["列|A", "列B"],
-      rows: [
-        { name: "行1", cells: ["ok", "ng"] },
-        { name: "行2", cells: ["na", "ok"] },
-      ],
-      fold: "",
-      aside: "",
-    }
-
-    const mark = (className: string, label: string, symbol: string): string =>
-      `<span class="matrix-mark ${className}" role="img" aria-label="${label}">${symbol}</span>`
-    expect(markdownOf(matrix)).toBe(
-      tableCaptioned(
-        '<div class="matrix">\n\n' +
-          "|  | 列\\|A | 列B |\n| --- | :---: | :---: |\n" +
-          `| 行1 | ${mark("matrix-mark-ok", "OK", "✓")} | ${mark("matrix-mark-ng", "NG", "✕")} |\n` +
-          `| 行2 | ${mark("matrix-mark-na", "該当なし", "－")} | ${mark("matrix-mark-ok", "OK", "✓")} |\n\n` +
-          '<div class="matrix-legend">' +
-          '<span class="matrix-legend-item"><span class="matrix-mark matrix-mark-ok" aria-hidden="true">✓</span> OK</span>' +
-          '<span class="matrix-legend-item"><span class="matrix-mark matrix-mark-ng" aria-hidden="true">✕</span> NG</span>' +
-          '<span class="matrix-legend-item"><span class="matrix-mark matrix-mark-na" aria-hidden="true">－</span> 該当なし</span>' +
-          "</div>\n\n</div>",
-        "架空の対応",
-      ),
     )
   })
 })

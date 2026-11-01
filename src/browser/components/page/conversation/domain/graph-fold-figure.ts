@@ -1,6 +1,10 @@
 // 折り返し配置の図の形（箱・線・囲み）と、配置と描画が共有する字の寸法。
 
-import type { GraphChange, GraphNodeShape, GraphTone } from "./graph-source.ts"
+import type {
+  GraphChange,
+  GraphNodeShape,
+  GraphTone,
+} from "../../../../../shared/report/graph-source.ts"
 
 export type FoldBox = {
   readonly node: number

@@ -46,15 +46,11 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
   })
 
   it("傍注のある塊は、包みの直の子に本文の段落と余白の柱が並び、傍注の aside が許可リストで落ちない", () => {
-    const text = reportSectionsMarkdown([
-      {
-        heading: "",
-        blocks: [
-          { kind: "text", text: "架空の **本文**。", fold: "", aside: "出どころ: `a.ts:3`" },
-          { kind: "note", tone: "memo", text: "架空の覚え書き。", fold: "", aside: "" },
-        ],
-      },
-    ])
+    const text =
+      '<div class="with-gutter">\n\n架空の **本文**。\n\n<div class="gutter">\n\n' +
+      '<aside class="gutter-note">\n\n出どころ: `a.ts:3`\n\n</aside>\n\n' +
+      '<aside class="gutter-note">\n\n<span class="gutter-note-label">メモ</span>架空の覚え書き。\n\n</aside>\n\n' +
+      "</div>\n\n</div>"
     const { container } = render(<Markdown text={text} />)
 
     expect(
@@ -123,97 +119,6 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
     expect(sides.map((side) => side.querySelectorAll("ul > li").length)).toEqual([2, 1])
   })
 
-  it("前後（beforeAfter）は前の側・矢印・後の側の順に並び、側の中のコードはコードの塊として残る", () => {
-    const text = reportSectionsMarkdown([
-      {
-        heading: "",
-        blocks: [
-          {
-            kind: "beforeAfter",
-            title: "",
-            before: { kind: "points", points: ["架空の一", "架空の二"] },
-            after: { kind: "code", language: "ts", source: "const 架空 = 1" },
-            fold: "",
-            aside: "",
-          },
-        ],
-      },
-    ])
-    const { container } = render(<Markdown text={text} />)
-
-    const parts = [...(container.querySelector("div.report-before-after")?.children ?? [])]
-    expect(parts.map((part) => part.className)).toEqual([
-      "report-before-after-side",
-      "report-before-after-arrow",
-      "report-before-after-side",
-    ])
-    expect(
-      [parts[0], parts[2]].map(
-        (side) => side?.querySelector(".report-before-after-label")?.textContent,
-      ),
-    ).toEqual(["前", "後"])
-    expect(parts[1]?.getAttribute("aria-hidden")).toBe("true")
-    expect(parts[0]?.querySelectorAll("ul > li")).toHaveLength(2)
-    expect(parts[2]?.querySelector("pre code")?.textContent).toBe("const 架空 = 1\n")
-  })
-
-  it("数の要約（stats / stat）が塊のまま通る", () => {
-    const { container } = render(
-      <Markdown
-        text={
-          '<div class="stats"><div class="stat"><b>312</b>通ったテスト</div>' +
-          '<div class="stat"><strong>0</strong>失敗</div></div>'
-        }
-      />,
-    )
-
-    // 器と枚数（class が落ちると数が地の文に並ぶだけになる）。
-    expect(container.querySelectorAll("div.report-stats > div.report-stat")).toHaveLength(2)
-    // 数の側は <b> でも <strong> でも同じ見た目になる（CSS はどちらも受ける）。
-    expect(container.querySelector("div.report-stat > b")?.textContent).toBe("312")
-    expect(container.querySelector("div.report-stat > strong")?.textContent).toBe("0")
-  })
-
-  it("stats の割合の帯は許可リストを通り、幅と aria-hidden が DOM に残る", () => {
-    const { container } = render(
-      <Markdown
-        text={
-          '<div class="stats"><div class="stat"><b>25<span class="stat-total"> / 28</span></b>' +
-          '<span class="stat-meter" aria-hidden="true"><span class="stat-meter-fill" style="width: 89%"></span></span>通った</div>' +
-          '<div class="stat"><b>0</b>失敗</div></div>'
-        }
-      />,
-    )
-
-    const meter = container.querySelector("div.report-stat > span.report-stat-meter")
-    expect(meter?.getAttribute("aria-hidden")).toBe("true")
-    expect(meter?.querySelector("span.report-stat-meter-fill")?.getAttribute("style")).toBe(
-      "width: 89%;",
-    )
-    expect(container.querySelector("b > span.report-stat-total")?.textContent).toBe(" / 28")
-  })
-
-  it("stats の折れ線は許可リストを通り、svg・polyline・circle と class が DOM に残る", () => {
-    const { container } = render(
-      <Markdown
-        text={
-          '<div class="stats"><div class="stat"><span class="stat-before stat-better">12 →</span>' +
-          '<b><svg viewBox="0 0 48 12" aria-hidden="true">' +
-          '<polyline points="1.5,10.5 24,1.5 46.5,6"/>' +
-          '<circle cx="46.5" cy="6" r="1.2"/></svg>8</b>通った</div>' +
-          '<div class="stat"><b>0</b>失敗</div></div>'
-        }
-      />,
-    )
-
-    const svg = container.querySelector("div.report-stat > b > svg")
-    expect(svg?.getAttribute("viewBox")).toBe("0 0 48 12")
-    expect(svg?.getAttribute("aria-hidden")).toBe("true")
-    expect(svg?.querySelector("polyline")?.getAttribute("points")).toBe("1.5,10.5 24,1.5 46.5,6")
-    expect(svg?.querySelector("circle")?.getAttribute("r")).toBe("1.2")
-    expect(container.querySelector("span.report-stat-before.report-stat-better")).not.toBeNull()
-  })
-
   it("名前のある list は、項目ごとに印・名前・説明が li の直下に並び、説明の inline の記法が効く", () => {
     const text = reportSectionsMarkdown([
       {
@@ -257,35 +162,6 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
       "report-list-text",
     ])
     expect(items[0]?.querySelector("span.report-list-text > strong")?.textContent).toBe("説明")
-  })
-
-  it("対応表（matrix）は格子の中に role=img と aria-label を持つ印が残り、凡例の印は読み上げから外れる", () => {
-    const text = reportSectionsMarkdown([
-      {
-        heading: "",
-        blocks: [
-          {
-            kind: "matrix",
-            title: "",
-            columns: ["列A", "列B"],
-            rows: [{ name: "行1", cells: ["ok", "ng"] }],
-            fold: "",
-            aside: "",
-          },
-        ],
-      },
-    ])
-    const { container } = render(<Markdown text={text} />)
-
-    const marks = [...container.querySelectorAll("div.report-matrix td [role='img']")]
-    expect(marks.map((mark) => mark.getAttribute("aria-label"))).toEqual(["OK", "NG"])
-    expect(marks.map((mark) => mark.className.split(" ")[0])).toEqual([
-      "report-matrix-mark",
-      "report-matrix-mark",
-    ])
-    expect(
-      container.querySelectorAll("div.report-matrix-legend [aria-hidden='true']"),
-    ).toHaveLength(2)
   })
 
   it("チェックリストの `- [ ]` と `- [x]` が、済みと未了の分かる印になる", () => {

@@ -2,9 +2,11 @@ import { describe, expect, it } from "vitest"
 
 import { reportUsageEntryOf } from "../../../src/server/report/core/report-usage.ts"
 import { parseReportFigure } from "../../../src/shared/report/a2ui-report-catalog.ts"
+import { plotRows } from "../../../src/shared/report/figure-grammar.ts"
+import { plotDrawingOf } from "../../../src/shared/report/plot-drawing.ts"
 import { parseReportBlocks, type ReportBlock } from "../../../src/shared/report/report-block.ts"
+import { reportLeafLayoutOf } from "../../../src/shared/report/report-leaf-value.ts"
 import { reportOfSections } from "../../fixture/report-event.ts"
-import { markdownOf } from "../../fixture/report-markdown.ts"
 
 const plot = (overrides: Record<string, unknown> = {}): Record<string, unknown> => ({
   kind: "plot",
@@ -21,7 +23,11 @@ const plot = (overrides: Record<string, unknown> = {}): Record<string, unknown> 
 
 const firstBlock = (value: unknown): ReportBlock | undefined => parseReportBlocks([value])[0]
 
-const leafInSections = firstBlock
+const plotIn = (value: unknown): Extract<ReportBlock, { readonly kind: "plot" }> => {
+  const block = firstBlock(value)
+  if (block?.kind !== "plot") throw new Error("plot の塊が受け付けられなかった")
+  return block
+}
 
 /** 入れ子の中の文字・数の葉を、深さを問わず並びで集める。 */
 function leavesOf(value: unknown): readonly (string | number)[] {
@@ -86,37 +92,25 @@ describe("plot の受け付け", () => {
     expect(firstBlock(plot(overrides))).toBeUndefined()
   })
 
-  it("form に table を書くと表として描かれ、題は表の番号つきで question、列名と行は data から起こす", () => {
-    const block = leafInSections(plot({ form: "table" }))
-    if (block === undefined) throw new Error("plot の塊が受け付けられなかった")
+  it("form に table を書くと表として描かれ、番号は表の番号で、行は data から起こす", () => {
+    const block = plotIn(plot({ form: "table" }))
 
-    const table: ReportBlock = {
+    expect(plotDrawingOf(block)).toEqual({ kind: "table" })
+    expect(plotRows(block)).toEqual([
+      ["甲", "12"],
+      ["乙", "30"],
+      ["丙", "7"],
+    ])
+    expect(
+      reportLeafLayoutOf([{ heading: "", blocks: [block] }]).values[0]?.[0]?.captionNumber,
+    ).toEqual({
       kind: "table",
-      title: "架空の三つの工程のどれを先に縮めるか",
-      columns: ["工程", "分"],
-      rows: [
-        ["甲", "12"],
-        ["乙", "30"],
-        ["丙", "7"],
-      ],
-      rest: "",
-      fold: "",
-      aside: "",
-    }
-    const html = markdownOf(block)
-    expect(html).toBe(markdownOf(table))
-    expect(html).toContain("表 1")
-    expect(html).toContain("丙")
+      ordinal: 1,
+    })
   })
 
   it.each([["bar"]])("form に %s を書いても、決定表と同じ形なら省いたときと同じに描く", (form) => {
-    const block = leafInSections(plot({ form }))
-    const auto = leafInSections(plot())
-    if (block === undefined || auto === undefined) {
-      throw new Error("plot の塊が受け付けられなかった")
-    }
-
-    expect(markdownOf(block)).toBe(markdownOf(auto))
+    expect(plotDrawingOf(plotIn(plot({ form })))).toEqual(plotDrawingOf(plotIn(plot())))
   })
 
   it("form が形の語彙の外なら schema で落ちる", () => {

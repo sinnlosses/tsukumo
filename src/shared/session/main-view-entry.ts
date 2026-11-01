@@ -2,8 +2,8 @@
 // セッションの状態から導くだけで、別の状態は持たない。
 
 import { changedFilesView } from "../report/changed-file-section.ts"
+import { sectionDrawsAnything } from "../report/drawn-entry-markdown.ts"
 import { reportChecksView } from "../report/report-check-view.ts"
-import { joinParts } from "../report/report-inline-markdown.ts"
 import { phaseTimesView } from "../report/report-phase-time.ts"
 import { isBlankText } from "../utils/blank-text.ts"
 import { a2uiReportView } from "./a2ui-report-view.ts"
@@ -161,20 +161,19 @@ function reportRegionsOf(
     isBlankText(report.favor) ? { kind: "none" } : { kind: "favor", id: favorId },
   )
   const phaseRows = phaseDurations(context.trail, report.time, report.workPlanClosing)
-  const { drawn, layout, imageSource, pieces } = reportDrawnPieces(report)
+  const { drawn, layout, imageSource } = reportDrawnPieces(report)
   const sections = drawn.sections.filter((section) => section.role !== "retrospective")
   return {
     kind: "regions",
     sections: sections.flatMap((section, id) => {
-      const piece = pieces[id]
-      return piece === undefined || joinParts([piece.heading, ...piece.blocks]) === ""
+      const values = layout.values[id]
+      return values === undefined || !sectionDrawsAnything(section.section, values)
         ? []
         : [{ id, heading: section.heading.trim() }]
     }),
     a2ui: a2uiReportView(
       report.components,
       drawn,
-      pieces,
       layout,
       imageSource,
       {

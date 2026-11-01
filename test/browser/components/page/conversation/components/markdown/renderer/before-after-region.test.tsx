@@ -1,8 +1,12 @@
-import { cleanup, render } from "@testing-library/react"
-import { afterEach, describe, expect, it } from "vitest"
+import { cleanup } from "@testing-library/react"
+import { afterEach, beforeAll, describe, expect, it } from "vitest"
 
-import { Markdown } from "../../../../../../../../src/browser/components/page/conversation/components/markdown/renderer/markdown-renderer.tsx"
-import { reportSectionsMarkdown } from "../../../../../../../fixture/report-sections-markdown.ts"
+import { loadMarkdown } from "../../../../../../../../src/browser/components/page/conversation/components/markdown/markdown.tsx"
+import { renderDirectLeaf } from "../../../../../../../fixture/direct-leaf-compare.tsx"
+
+beforeAll(async () => {
+  await loadMarkdown()
+})
 
 afterEach(() => {
   cleanup()
@@ -10,41 +14,39 @@ afterEach(() => {
 
 const REGION = { left: 29.6, top: 44.6, width: 40.5, height: 10.6 }
 
+const SHELF = { kind: "shelved", toolUseId: "fictional-report", sizes: [], unshelved: [] } as const
+
 function renderBeforeAfter(regions: {
   readonly before?: typeof REGION
   readonly after?: typeof REGION
 }): HTMLElement {
-  const text = reportSectionsMarkdown([
+  return renderDirectLeaf(
     {
-      heading: "",
-      blocks: [
-        {
-          kind: "beforeAfter",
-          title: "架空の前後",
-          before: {
-            kind: "image",
-            path: "架空/before.png",
-            ...(regions.before === undefined ? {} : { region: regions.before }),
-          },
-          after: {
-            kind: "image",
-            path: "架空/after.png",
-            ...(regions.after === undefined ? {} : { region: regions.after }),
-          },
-          fold: "",
-          aside: "",
-        },
-      ],
+      id: "b1",
+      component: "BeforeAfter",
+      title: "架空の前後",
+      before: {
+        kind: "image",
+        path: "架空/before.png",
+        ...(regions.before === undefined ? {} : { region: regions.before }),
+      },
+      after: {
+        kind: "image",
+        path: "架空/after.png",
+        ...(regions.after === undefined ? {} : { region: regions.after }),
+      },
+      fold: "",
+      aside: "",
     },
-  ])
-  return render(<Markdown text={text} />).container
+    SHELF,
+  ).container
 }
 
 function frames(root: ParentNode): readonly HTMLElement[] {
   return [...root.querySelectorAll<HTMLElement>("span.region-frame")]
 }
 
-describe("Markdown（前後の画像の変わった場所の枠）", () => {
+describe("前後の画像の変わった場所の枠", () => {
   it("region のある側の画像にだけ、飾りの枠が画像に対する%の位置で出る", () => {
     const container = renderBeforeAfter({ after: REGION })
 
