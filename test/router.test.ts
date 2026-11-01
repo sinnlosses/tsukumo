@@ -39,7 +39,7 @@ describe("createSocketRouter（session）", () => {
     expect(remembered).toEqual([])
   })
 
-  it("バックグラウンドタスクが残っていて送り方が許すときだけ、仕事の言葉を脇の話として駆動へ渡す", async () => {
+  it("バックグラウンドタスクが残っていて送り方が許すときだけ、仕事の言葉を補足メッセージとして駆動へ渡す", async () => {
     const { commands, stub, observe } = startRouter()
     const prompt = (text: string, routing: PromptRouting) =>
       commands.session.prompt({ text, images: [], routing })

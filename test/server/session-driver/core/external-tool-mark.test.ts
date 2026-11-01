@@ -42,10 +42,10 @@ describe("createExternalToolMark", () => {
     expect(mark.allowsRemember()).toBe(false)
   })
 
-  it("依頼（request・turn-started）を送ると下り、脇の話とターンの終わりでは下りない", () => {
+  it("依頼（request・turn-started）を送ると下り、補足メッセージとターンの終わりでは下りない", () => {
     const mark = createExternalToolMark()
     mark.observeTool("Read")
-    mark.observe({ kind: "aside", text: "架空の脇の話", images: [] })
+    mark.observe({ kind: "aside", text: "架空の補足メッセージ", images: [] })
     mark.observe(FINISHED)
     expect(mark.allowsRemember()).toBe(false)
 

@@ -60,7 +60,7 @@ export function asideRecord(
 ): SessionRecord {
   return {
     kind: "aside",
-    text: "架空の脇の話",
+    text: "架空の補足メッセージ",
     images: [],
     time: STAMPED,
     ...overrides,

@@ -187,7 +187,7 @@ function TurnRow(props: {
       {...{ [TURN_ROW_ATTRIBUTE]: turn.id }}
       data-result={turn.result}
       aria-current={turn.isActive ? "true" : undefined}
-      aria-label={`${result.label}: ${turn.title}${turn.asideCount > 0 ? `（脇の話 ${String(turn.asideCount)}件）` : ""}`}
+      aria-label={`${result.label}: ${turn.title}${turn.asideCount > 0 ? `（補足メッセージ ${String(turn.asideCount)}件）` : ""}`}
       title={turn.title}
       onClick={() => {
         props.onSelectTurn(turn.id)

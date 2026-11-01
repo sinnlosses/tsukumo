@@ -323,7 +323,7 @@ describe("currentTurnSteps（ワークプラン）", () => {
     })
   })
 
-  it("脇の話を挟んでも、ワークプランと手順は親の依頼のまま続く", () => {
+  it("補足メッセージを挟んでも、ワークプランと手順は親の依頼のまま続く", () => {
     const list = currentTurnSteps(
       [
         requestRecord(),

@@ -9,7 +9,7 @@ afterEach(() => {
 })
 
 describe("ReportOutline のやり取りの行", () => {
-  it("脇の話のあるやり取りの行にだけ、2行目の「脇 n」と読み上げの件数を添える", () => {
+  it("補足メッセージのあるやり取りの行にだけ、2行目の「脇 n」と読み上げの件数を添える", () => {
     // 札の幅を測れない環境では列が既定で畳まれるので、開く選択を保存しておく。
     localStorage.setItem("tsukumo-outline-panel:v1", JSON.stringify({ collapse: "open" }))
     render(
@@ -44,7 +44,7 @@ describe("ReportOutline のやり取りの行", () => {
     expect(screen.getByText("脇 2")).toBeTruthy()
     expect(screen.queryByText(/脇 0/)).toBeNull()
     expect(
-      screen.getByRole("button", { name: /架空の委譲の依頼（脇の話 2件）/ }).textContent,
+      screen.getByRole("button", { name: /架空の委譲の依頼（補足メッセージ 2件）/ }).textContent,
     ).toContain("脇 2")
   })
 })

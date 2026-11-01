@@ -129,8 +129,8 @@ describe("shownReaction", () => {
     ["やり取りの前にセリフがある", [SPEECH], "none"],
     ["送った直後", [REQUEST], "writing"],
     ["送ったあと speak が届いた", [REQUEST, SPEECH], "none"],
-    ["セリフのあとに脇の話を送った直後", [REQUEST, SPEECH, ASIDE], "writing"],
-    ["脇の話の答えの speak が届いた", [REQUEST, SPEECH, ASIDE, SPEECH], "none"],
+    ["セリフのあとに補足メッセージを送った直後", [REQUEST, SPEECH, ASIDE], "writing"],
+    ["補足メッセージへの答えの speak が届いた", [REQUEST, SPEECH, ASIDE, SPEECH], "none"],
     ["claude が自分で始めた続きのターン", [REQUEST, SPEECH, COMPLETED, RESUMED], "none"],
     ["呼び直しを待っている", [REACTED, REQUEST, RETRY], "retrying:架空の再試行"],
     [

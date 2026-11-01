@@ -210,7 +210,7 @@ describe("toRestoredEvents", () => {
     ])
   })
 
-  it("包んだ user メッセージは脇の話に戻り、組み直した姿でも札は増えず、知らせのあとの続きのセリフは答えにならない", () => {
+  it("包んだ user メッセージは補足メッセージに戻り、組み直した姿でも札は増えず、知らせのあとの続きのセリフは答えにならない", () => {
     const speak = (id: string, text: string): unknown =>
       assistantMessage([
         {
@@ -322,7 +322,7 @@ describe("toRestoredEvents の添えた画像", () => {
     ])
   })
 
-  it("脇の話に添えた画像も添える", () => {
+  it("補足メッセージに添えた画像も添える", () => {
     const messages = [
       userMessage("架空の依頼"),
       userMessage([

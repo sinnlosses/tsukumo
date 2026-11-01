@@ -37,7 +37,7 @@ export function useAsideThread(
   const open = choice.kind === "chosen" && choice.closed === closed ? choice.open : !closed
 
   return {
-    summary: `脇の話 ${String(asides.length)}件`,
+    summary: `補足メッセージ ${String(asides.length)}件`,
     open,
     rows: asides.map((aside, index) => ({
       key: String(index),

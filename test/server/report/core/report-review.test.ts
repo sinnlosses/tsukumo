@@ -362,7 +362,7 @@ describe("createReportReview の judge（背景のシェルが残っている re
     expect(review.judge(VALID)).toEqual({ kind: "accepted" })
   })
 
-  it("脇の話のターンでは見ない", () => {
+  it("補足メッセージのターンでは見ない", () => {
     const review = withTasks(backgroundTask("task_a", "shell"))
     review.pass({ kind: "aside", text: "架空の問い", images: [] })
 

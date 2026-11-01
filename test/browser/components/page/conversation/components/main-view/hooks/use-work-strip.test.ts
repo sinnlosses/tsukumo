@@ -219,7 +219,7 @@ describe("useWorkStrip（時刻に依るもの）", () => {
     expect(strip).toMatchObject({ kind: "finished", result: "working", headLabel: "架空の段B" })
   })
 
-  it("委譲中に送った脇の話のあいだも、親のワークプラン・今の段・依頼からの経過を出し続ける", () => {
+  it("委譲中に送った補足メッセージのあいだも、親のワークプラン・今の段・依頼からの経過を出し続ける", () => {
     const state = foldTimed([
       [workRequest, START],
       [plan, START + 1_000],

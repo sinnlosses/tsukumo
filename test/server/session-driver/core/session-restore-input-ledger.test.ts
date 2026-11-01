@@ -22,7 +22,7 @@ function reply(text: string, uuid: string): unknown {
 }
 
 describe("toRestoredEvents（入力の控えのあるセッション）", () => {
-  it("控えで依頼と分かる入力は、脇の話や差し込みの包みで始まっても依頼のまま残る", () => {
+  it("控えで依頼と分かる入力は、補足メッセージや差し込みの包みで始まっても依頼のまま残る", () => {
     const aside = asidePromptText("架空の依頼A")
     const progress = progressNudgePromptText("架空の依頼B")
     const ledger = inputLedgerOf([
@@ -38,7 +38,7 @@ describe("toRestoredEvents（入力の控えのあるセッション）", () => 
     ])
   })
 
-  it("控えで脇の話・差し込みと分かる入力は、包みを外した脇の話・続きのターンにする", () => {
+  it("控えで補足メッセージ・差し込みと分かる入力は、包みを外した補足メッセージ・続きのターンにする", () => {
     const ledger = inputLedgerOf([
       { kind: "input", uuid: FIRST, input: "request" },
       { kind: "input", uuid: SECOND, input: "aside" },
@@ -118,7 +118,7 @@ describe("toRestoredEvents（入力の控えのあるセッション）", () => 
     ])
   })
 
-  it("控えで同じターンが受け取ったと分かる脇の話の手前では、ターンを閉じない", () => {
+  it("控えで同じターンが受け取ったと分かる補足メッセージの手前では、ターンを閉じない", () => {
     const ledger = inputLedgerOf([
       { kind: "input", uuid: FIRST, input: "request" },
       { kind: "input", uuid: SECOND, input: "aside" },

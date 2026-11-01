@@ -20,7 +20,7 @@ const DELEGATING = stateWith({
 })
 
 function details(): HTMLDetailsElement {
-  const element = screen.getByText(/^脇の話 2件/).closest("details")
+  const element = screen.getByText(/^補足メッセージ 2件/).closest("details")
   if (element === null) {
     throw new Error("欄が無い")
   }
@@ -42,13 +42,13 @@ describe("AsideThread", () => {
     putSession(DELEGATING)
     const { rerender } = render(<AsideThread asides={ASIDES} newest={true} />)
     expect(details().open).toBe(true)
-    expect(details().querySelector("summary")?.textContent).toBe("脇の話 2件 ▾")
+    expect(details().querySelector("summary")?.textContent).toBe("補足メッセージ 2件 ▾")
 
     act(() => {
       putState(stateWith({ backgroundTasks: [] }))
     })
     expect(details().open).toBe(false)
-    expect(details().querySelector("summary")?.textContent).toBe("脇の話 2件 ▸")
+    expect(details().querySelector("summary")?.textContent).toBe("補足メッセージ 2件 ▸")
 
     rerender(<AsideThread asides={ASIDES} newest={false} />)
     expect(details().open).toBe(false)

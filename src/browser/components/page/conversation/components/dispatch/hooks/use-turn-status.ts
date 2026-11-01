@@ -34,7 +34,7 @@ const SEND_LABEL = "送信"
 const ANSWER_LABEL = "答える"
 const NEXT_LABEL = "次へ"
 const INTERRUPT_LABEL = "中断"
-const WORK_SEND_TITLE = "⌘⏎ で送る（委譲中は脇の話）· ⌘⇧⏎ で新しい依頼として送る"
+const WORK_SEND_TITLE = "⌘⏎ で送る（委譲中は補足メッセージ）· ⌘⇧⏎ で新しい依頼として送る"
 const CHAT_SEND_TITLE = "⌘⏎ で送る"
 const ANSWER_TITLE = "⌘⏎ で答える"
 

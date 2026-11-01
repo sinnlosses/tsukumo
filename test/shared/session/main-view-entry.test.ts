@@ -255,7 +255,7 @@ describe("mainViewTurns（失敗で終わったターン）", () => {
   })
 })
 
-describe("mainViewTurns（脇の話）", () => {
+describe("mainViewTurns（補足メッセージ）", () => {
   const plan = (current: number, phaseSummary: string): SessionEvent => ({
     kind: "work-plan",
     delegatedRange: { kind: "none" },
@@ -288,7 +288,7 @@ describe("mainViewTurns（脇の話）", () => {
       false,
     )
 
-  it("バックグラウンドタスクのあいだの脇の話は札を増やさず、親のやり取りに答えと対で吊るされる", () => {
+  it("バックグラウンドタスクのあいだの補足メッセージは札を増やさず、親のやり取りに答えと対で吊るされる", () => {
     const turns = turnsOf([
       ...delegating,
       { kind: "aside", text: "架空の問い", images: [] },
@@ -307,7 +307,7 @@ describe("mainViewTurns（脇の話）", () => {
     expect(turns[0]?.steps.map(reportOf)).toEqual(["架空のまとめ。"])
   })
 
-  it("脇の話のターンが終わったあとのセリフは答えにならない", () => {
+  it("補足メッセージのターンが終わったあとのセリフは答えにならない", () => {
     const turns = turnsOf([
       ...delegating,
       { kind: "aside", text: "架空の問い", images: [] },
@@ -321,7 +321,7 @@ describe("mainViewTurns（脇の話）", () => {
     ])
   })
 
-  it("中間レポートのあとに送った脇の話はそのステップの後ろに入り、次の中間レポートはさらにその後ろに並ぶ", () => {
+  it("中間レポートのあとに送った補足メッセージはそのステップの後ろに入り、次の中間レポートはさらにその後ろに並ぶ", () => {
     const turns = turnsOf([
       ...delegating.slice(0, 2),
       plan(1, "架空の1段目のまとめ。"),
@@ -339,7 +339,7 @@ describe("mainViewTurns（脇の話）", () => {
     expect(steps.map(reportOf)).toEqual(["架空の1段目のまとめ。", "架空の2段目のまとめ。"])
   })
 
-  it("何も出ていない依頼の直後の脇の話は、本文なしのステップに入る", () => {
+  it("何も出ていない依頼の直後の補足メッセージは、本文なしのステップに入る", () => {
     const turns = turnsOf([requestEvent(), { kind: "aside", text: "架空の問い", images: [] }])
 
     expect(turns[0]?.steps).toHaveLength(1)
@@ -347,7 +347,7 @@ describe("mainViewTurns（脇の話）", () => {
     expect(turns[0]?.steps[0]?.asides.map((aside) => aside.text)).toEqual(["架空の問い"])
   })
 
-  it("脇の話のあとに質問が来ると、質問は脇の話より後ろの別のステップに並ぶ", () => {
+  it("補足メッセージのあとに質問が来ると、質問は補足メッセージより後ろの別のステップに並ぶ", () => {
     const turns = mainViewTurns(
       [
         request("依頼"),
@@ -366,7 +366,7 @@ describe("mainViewTurns（脇の話）", () => {
     ])
   })
 
-  it("次のステップが始まったあとに届いた答えも、最後の脇の話につながる", () => {
+  it("次のステップが始まったあとに届いた答えも、最後の補足メッセージにつながる", () => {
     const turns = turnsOf([
       requestEvent(),
       { kind: "aside", text: "架空の問い", images: [] },

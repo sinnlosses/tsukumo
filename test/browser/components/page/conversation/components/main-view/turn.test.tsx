@@ -275,8 +275,8 @@ describe("Turn（畳んだ中間レポートの見出し）", () => {
   })
 })
 
-describe("Turn（脇の話の欄の位置）", () => {
-  it("働くあいだ（最終レポートが無い）は、脇の話の欄が持ち主のステップの後ろ・次のレポートの前に並ぶ", () => {
+describe("Turn（補足メッセージの欄の位置）", () => {
+  it("働くあいだ（最終レポートが無い）は、補足メッセージの欄が持ち主のステップの後ろ・次のレポートの前に並ぶ", () => {
     putSession(INITIAL_SESSION_STATE)
     const aside = { text: "架空の問い", answer: { kind: "waiting" } } as const
     const { container } = render(
@@ -295,11 +295,11 @@ describe("Turn（脇の話の欄の位置）", () => {
     )
     expect(order).toHaveLength(3)
     expect(order[0]).toBe("1つ目の本文")
-    expect(order[1]).toContain("脇の話 1件")
+    expect(order[1]).toContain("補足メッセージ 1件")
     expect(order[2]).toBe("2つ目の本文")
   })
 
-  it("最終レポートのある閉じたやり取りは、最終レポート → 脇の話の欄 → 経過の畳みの順に並ぶ", () => {
+  it("最終レポートのある閉じたやり取りは、最終レポート → 補足メッセージの欄 → 経過の畳みの順に並ぶ", () => {
     putSession(INITIAL_SESSION_STATE)
     const aside = { text: "架空の問い", answer: { kind: "waiting" } } as const
     const { container } = render(
@@ -323,12 +323,12 @@ describe("Turn（脇の話の欄の位置）", () => {
     )
     expect(top).toHaveLength(3)
     expect(top[0]).toBe("最終の本文")
-    expect(top[1]).toContain("脇の話 1件")
+    expect(top[1]).toContain("補足メッセージ 1件")
     expect(top[2]).toContain("経過 1 件")
     expect(top[2]).toContain("中間の本文")
   })
 
-  it("本文も質問も無いステップの脇の話は、欄だけを描く", () => {
+  it("本文も質問も無いステップの補足メッセージは、欄だけを描く", () => {
     putSession(INITIAL_SESSION_STATE)
     const aside = { text: "架空の問い", answer: { kind: "waiting" } } as const
     const { container } = render(

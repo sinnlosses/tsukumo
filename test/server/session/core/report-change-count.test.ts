@@ -395,7 +395,7 @@ describe("createReportChangeCounter", () => {
       { kind: "turn-started" },
       TASK_REPORT,
       REQUEST,
-      { kind: "aside", text: "架空の脇の話", images: [] },
+      { kind: "aside", text: "架空の補足メッセージ", images: [] },
       TASK_REPORT,
     ])
 

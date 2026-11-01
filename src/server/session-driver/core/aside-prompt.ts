@@ -5,7 +5,7 @@ const ASIDE_OPEN = "<tsukumo-aside>"
 const ASIDE_CLOSE = "</tsukumo-aside>"
 
 const ASIDE_NOTE =
-  "tsukumo の差し込み。委譲中に利用者が送った脇の話。`speak` を 1 回で答え、`report` は呼ばない"
+  "tsukumo の差し込み。委譲中に利用者が送った補足メッセージ。`speak` を 1 回で答え、`report` は呼ばない"
 
 /** 包みの全体。前後の空白だけを許し、包みの外に字があれば脇の話として読まない。 */
 const ASIDE_PROMPT = /^<tsukumo-aside>\n?([\s\S]*?)\n?<\/tsukumo-aside>$/

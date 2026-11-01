@@ -216,7 +216,7 @@ describe("ReportInheritance", () => {
     "ターンの頭（turn-resumed）": { kind: "turn-resumed" },
     "ターンの終わり（turn-finished）": { kind: "turn-finished", outcome: { kind: "completed" } },
     "利用者の依頼（request）": requestEvent(),
-    "脇の話（aside）": { kind: "aside", text: "架空の問い", images: [] },
+    "補足メッセージ（aside）": { kind: "aside", text: "架空の問い", images: [] },
   }
 
   it.each(Object.entries(boundaries))("%s で土台を捨てる", (_name, boundary) => {

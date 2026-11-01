@@ -133,7 +133,7 @@ describe("createReportReview の judge（ワークプランの残った report�
     })
   })
 
-  it("脇の話のターンでは、ワークプランがあっても段の閉じ方の欄が無いことで差し戻さず、ターンが終われば戻る", () => {
+  it("補足メッセージのターンでは、ワークプランがあっても段の閉じ方の欄が無いことで差し戻さず、ターンが終われば戻る", () => {
     const { review } = reviewWith({ kind: "planned", remaining: 2 })
     const aside: SessionEvent = { kind: "aside", text: "架空の問い", images: [] }
 

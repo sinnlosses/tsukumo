@@ -140,7 +140,7 @@ describe("arrangeTurn", () => {
     ).toEqual([1, 2, 3])
   })
 
-  it("脇の話は経過に入れず、中間と最終のステップの分を送った順に besides へ並べる", () => {
+  it("補足メッセージは経過に入れず、中間と最終のステップの分を送った順に besides へ並べる", () => {
     const first = aside("中間のあとの問い")
     const second = aside("最終のあとの問い")
     const interim = step(0, { kind: "interim", ...PLAIN, asides: [first] })

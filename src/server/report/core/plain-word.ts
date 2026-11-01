@@ -483,4 +483,29 @@ export const PLAIN_WORDS = [
     replacement: "通知を送",
     meaning: "委譲先やバックグラウンドタスクへ知らせ（通知）を送ること",
   },
+  {
+    spelling: "脇の話のターン",
+    replacement: "補足メッセージのターン",
+    meaning: "親のターンに付く補足メッセージ（aside）を受けて進むターン",
+  },
+  {
+    spelling: "脇の話の欄",
+    replacement: "補足メッセージの欄",
+    meaning: "親のターンに付く補足メッセージを並べる画面の欄",
+  },
+  {
+    spelling: "脇の話の包み",
+    replacement: "補足メッセージの包み",
+    meaning: "補足メッセージを claude へ送るときに付けるタグの包み",
+  },
+  {
+    spelling: "脇の話の答え",
+    replacement: "補足メッセージへの答え",
+    meaning: "補足メッセージに対する speak の答え",
+  },
+  {
+    spelling: "脇の話のあいだ",
+    replacement: "補足メッセージのあいだ",
+    meaning: "補足メッセージが届いて進んでいる間",
+  },
 ] as const satisfies readonly PlainWord[]

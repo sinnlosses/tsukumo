@@ -172,7 +172,7 @@
     "sent": "session.prompt",
     "order": 1,
     "input": {
-      "text": "いまどこ？（架空の脇の話）",
+      "text": "いまどこ？（架空の補足メッセージ）",
       "images": [],
       "routing": "aside-when-background"
     }
@@ -188,7 +188,7 @@
     "at": 1768438800000,
     "event": {
       "kind": "aside",
-      "text": "いまどこ？（架空の脇の話）",
+      "text": "いまどこ？（架空の補足メッセージ）",
       "images": []
     }
   },

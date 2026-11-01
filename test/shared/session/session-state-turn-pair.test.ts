@@ -33,7 +33,7 @@ describe("SessionState の turn と sdkTurn の組", () => {
       ],
     ],
     [
-      "バックグラウンドタスクが残ったまま turn-finished が先に届き、脇の話と続きのターンが来る",
+      "バックグラウンドタスクが残ったまま turn-finished が先に届き、補足メッセージと続きのターンが来る",
       [
         requestEvent(),
         BACKGROUND_STARTED,

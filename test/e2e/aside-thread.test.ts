@@ -11,7 +11,7 @@ const ELAPSED_MS = 60_000
 /** 脇の話のターンの `turn-finished` が何回目か（委譲したターン + 脇の話のターン）。 */
 const ASIDE_TURN_FINISHED_OCCURRENCE = 2
 
-test.describe("委譲中の脇の話", () => {
+test.describe("委譲中の補足メッセージ", () => {
   test("バックグラウンドタスクが残っているあいだに送っても札は増えず、帯は親のワークプランのまま、欄に答えが対で出る", async ({
     run,
   }) => {
@@ -27,18 +27,18 @@ test.describe("委譲中の脇の話", () => {
     await room.waitForEvent("setting-confirmed")
 
     const textArea = room.page.locator("textarea")
-    await textArea.fill("いまどこ？（架空の脇の話）")
+    await textArea.fill("いまどこ？（架空の補足メッセージ）")
     await textArea.press("Meta+Enter")
 
     await room.waitForEvent("aside")
     await room.waitForEvent("turn-finished", ASIDE_TURN_FINISHED_OCCURRENCE)
-    await main.getByText("脇の話 1件 ▾").waitFor()
+    await main.getByText("補足メッセージ 1件 ▾").waitFor()
 
     expect(await main.locator('section[aria-label="進み具合"]').innerText()).toContain(
       "委譲先に任せる",
     )
     expect(
-      await main.locator("li", { hasText: "いまどこ？（架空の脇の話）" }).innerText(),
+      await main.locator("li", { hasText: "いまどこ？（架空の補足メッセージ）" }).innerText(),
     ).toContain("いまは委譲先が段2を進めているところ。")
     expect(await main.locator("[data-outline-turn]").count()).toBe(1)
     await room.settleAndMatchPickedWithMessages(ELAPSED_MS)

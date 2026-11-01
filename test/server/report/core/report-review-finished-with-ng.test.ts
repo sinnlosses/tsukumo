@@ -72,7 +72,7 @@ describe("createReportReview の judge（ng の確認がある finished の repo
     expect(review.judge(draft)).toMatchObject({ reasons: ["finished-with-ng"] })
   })
 
-  it("脇の話のターンでも差し戻す", () => {
+  it("補足メッセージのターンでも差し戻す", () => {
     const review = createReportReview(noPlan)
     review.pass({ kind: "aside", text: "架空の問い", images: [] })
 

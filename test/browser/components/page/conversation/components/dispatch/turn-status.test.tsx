@@ -160,10 +160,10 @@ describe("TurnStatus", () => {
     expect(screen.getByRole("button").dataset["emphasis"]).toBe("solid")
   })
 
-  it("仕事の「送信」の title だけが、脇の話と ⌘⇧⏎ の新しい依頼を案内する", () => {
+  it("仕事の「送信」の title だけが、補足メッセージと ⌘⇧⏎ の新しい依頼を案内する", () => {
     renderTurnStatus({})
     expect(screen.getByRole("button").title).toBe(
-      "⌘⏎ で送る（委譲中は脇の話）· ⌘⇧⏎ で新しい依頼として送る",
+      "⌘⏎ で送る（委譲中は補足メッセージ）· ⌘⇧⏎ で新しい依頼として送る",
     )
     cleanup()
 

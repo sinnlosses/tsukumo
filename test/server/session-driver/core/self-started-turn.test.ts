@@ -40,7 +40,7 @@ describe("withSelfStartedTurns", () => {
     ])
   })
 
-  it("脇の話で始めたターンの init にも何も補わない", () => {
+  it("補足メッセージで始めたターンの init にも何も補わない", () => {
     const aside: SessionEvent = { kind: "aside", text: "架空の問い", images: [] }
 
     expect(relayedKinds([REQUEST, INIT, FINISHED, aside, INIT, FINISHED])).toEqual([

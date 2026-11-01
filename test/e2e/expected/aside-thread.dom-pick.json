@@ -1,7 +1,7 @@
 {
   "main": [
     { "tag": "main", "attributes": { "data-region": "main", "aria-label": "メインビュー" }, "children": [
-      { "tag": "button", "attributes": { "data-outline-turn": "0", "data-result": "working", "aria-label": "作業中: 架空のタスクに着手して、委譲先に任せたい（架空の依頼）（脇の話 1件）" }, "children": [
+      { "tag": "button", "attributes": { "data-outline-turn": "0", "data-result": "working", "aria-label": "作業中: 架空のタスクに着手して、委譲先に任せたい（架空の依頼）（補足メッセージ 1件）" }, "children": [
         { "tag": "span", "children": ["脇 1"] }
       ] },
       { "tag": "section", "attributes": { "aria-label": "進み具合", "data-work-strip": "working" }, "children": [
@@ -12,10 +12,10 @@
         { "tag": "p", "children": ["背景で 架空の委譲"] }
       ] },
       { "tag": "details", "attributes": { "open": true }, "children": [
-        { "tag": "summary", "children": ["脇の話 1件"] },
+        { "tag": "summary", "children": ["補足メッセージ 1件"] },
         { "tag": "li", "children": [
           "きみ:",
-          "いまどこ？（架空の脇の話）",
+          "いまどこ？（架空の補足メッセージ）",
           "いまは委譲先が段2を進めているところ。落ちたものはまだ無いよ。"
         ] }
       ] }

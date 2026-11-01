@@ -19,7 +19,7 @@ describe("createInterruptMark", () => {
 
   it.each<SessionEvent>([
     requestEvent("依頼"),
-    { kind: "aside", text: "脇の話", images: [] },
+    { kind: "aside", text: "補足メッセージ", images: [] },
     { kind: "turn-started" },
     { kind: "progress-nudged" },
   ])("動いていないときに送った中断の印は、次のターンを始める $kind で下りる", (turnOpening) => {

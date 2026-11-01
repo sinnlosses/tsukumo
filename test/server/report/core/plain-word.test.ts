@@ -171,6 +171,23 @@ test("口は複合語の綴りで登録し、単独の綴りと別の意味の�
   expect(PLAIN_WORDS.find((word) => word.spelling === "押す口")?.replacement).toBe("ボタン")
 })
 
+test("脇の話は複合語の綴りで登録し、単独の綴りと据え置いた語は登録しない", () => {
+  const spellings = PLAIN_WORDS.map((word) => word.spelling)
+  expect(spellings).toEqual(
+    expect.arrayContaining([
+      "脇の話のターン",
+      "脇の話の欄",
+      "脇の話の包み",
+      "脇の話の答え",
+      "脇の話のあいだ",
+    ]),
+  )
+  expect(spellings).not.toContain("脇の話")
+  expect(PLAIN_WORDS.find((word) => word.spelling === "脇の話の欄")?.replacement).toBe(
+    "補足メッセージの欄",
+  )
+})
+
 test("長い綴りが、それを含む短い綴りより先に並んでいる", () => {
   expect(
     PLAIN_WORDS.filter((word, index) =>
