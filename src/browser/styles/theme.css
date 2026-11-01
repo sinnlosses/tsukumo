@@ -63,11 +63,11 @@
   --graph-ground-1: color-mix(in srgb, var(--state-info) 10%, var(--surface));
   --graph-ground-2: color-mix(in srgb, var(--state-ask) 10%, var(--surface));
   --graph-ground-3: color-mix(in srgb, var(--chart-series-4) 10%, var(--surface));
-  --graph-tone-fill-a: color-mix(in srgb, var(--chart-series-1) 22%, var(--surface));
-  --graph-tone-fill-b: color-mix(in srgb, var(--chart-series-2) 22%, var(--surface));
-  --graph-tone-fill-c: color-mix(in srgb, var(--chart-series-3) 22%, var(--surface));
-  --graph-tone-fill-d: color-mix(in srgb, var(--chart-series-4) 22%, var(--surface));
-  --graph-tone-fill-e: color-mix(in srgb, var(--chart-series-5) 22%, var(--surface));
+  --graph-tone-fill-a: color-mix(in srgb, var(--chart-series-1) 12%, var(--surface));
+  --graph-tone-fill-b: color-mix(in srgb, var(--chart-series-2) 12%, var(--surface));
+  --graph-tone-fill-c: color-mix(in srgb, var(--chart-series-3) 12%, var(--surface));
+  --graph-tone-fill-d: color-mix(in srgb, var(--chart-series-4) 12%, var(--surface));
+  --graph-tone-fill-e: color-mix(in srgb, var(--chart-series-5) 12%, var(--surface));
   --graph-return: #f0a35e;
 
   /* 最終レポートの段ごとの時間の帯。一番長い区間だけ `--accent` をわずかに沈めた色、ほかは `--surface` に混ぜて沈めた色で、欠片と色の印も同じ値を読む。

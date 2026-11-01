@@ -36,7 +36,7 @@
   縮尺は svg の箱の幅と高さを `viewBox` の幅と高さで割った小さいほう（高さの上限 70cqh で縮むぶんも含む）。
   どの段でも下回る `flowchart LR`・`graph LR` は、描画側が先頭行を `TD` に置き換えて描き直す（書き手の `direction` は変えず、差し替えたことは図に出さない）。
   それでも下回る図は縮めず自然寸法で描き（高さの上限を外す）、自然幅が 42em の内幅に収まれば 42em のまま（`natural`）、超えれば読む面の幅にして `pre` の中で横に転がす（`scroll`）。
-  拡大の口は変えない。`wide`・`full`・`scroll` の外枠は本文の列の左端から始め、`body`・`natural` は今までどおりレポートの幅の中央に置く。
+  拡大の口は変えない。全部の段の外枠を本文の列の左端から始める（`body`・`natural` も中央には置かない。題は図の下・図の幅の中で中央。`screen-design/layout.md`「文字の揃え」）。実装の CSS は `body`・`natural` を中央に置く規則が残っていて、部品ごとに合わせていく途中。
   段は描いた時点の幅で決め、窓の幅が変わっても測り直さない。前後の部品の側の図は側の幅に収めるので段を当てない。
   確かめる場面は `report-graph-wide`（LR・12 節点）・`report-graph-scroll`（横に転がる TD）、数は `capture-view.ts --paper-metric` の「svg の文字の最小 px」と「11px 未満の図」（差し戻しにはしない）
 - **主経路の長い `graph` は、tsukumo が行を折り返して座標を決める**（`docs/architecture/adr/0034-figure-description-drawn-by-tsukumo.md`）。
