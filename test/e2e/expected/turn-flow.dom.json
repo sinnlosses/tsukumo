@@ -501,7 +501,20 @@
                                                   "tag": "span",
                                                   "attributes": {
                                                     "aria-hidden": "true"
-                                                  }
+                                                  },
+                                                  "children": [
+                                                    {
+                                                      "tag": "span",
+                                                      "attributes": {
+                                                        "data-tone": "ok",
+                                                        "data-shape": "square"
+                                                      },
+                                                      "children": [
+                                                        "✓",
+                                                        "OK"
+                                                      ]
+                                                    }
+                                                  ]
                                                 },
                                                 {
                                                   "tag": "span",
@@ -509,15 +522,18 @@
                                                     "aria-hidden": "true"
                                                   },
                                                   "children": [
-                                                    "✓"
+                                                    {
+                                                      "tag": "span",
+                                                      "attributes": {
+                                                        "data-tone": "warn",
+                                                        "data-shape": "square"
+                                                      },
+                                                      "children": [
+                                                        "！",
+                                                        "要注意"
+                                                      ]
+                                                    }
                                                   ]
-                                                },
-                                                "OK",
-                                                {
-                                                  "tag": "span",
-                                                  "attributes": {
-                                                    "aria-hidden": "true"
-                                                  }
                                                 },
                                                 {
                                                   "tag": "span",
@@ -525,26 +541,19 @@
                                                     "aria-hidden": "true"
                                                   },
                                                   "children": [
-                                                    "！"
+                                                    {
+                                                      "tag": "span",
+                                                      "attributes": {
+                                                        "data-tone": "ng",
+                                                        "data-shape": "square"
+                                                      },
+                                                      "children": [
+                                                        "✕",
+                                                        "NG"
+                                                      ]
+                                                    }
                                                   ]
                                                 },
-                                                "要注意",
-                                                {
-                                                  "tag": "span",
-                                                  "attributes": {
-                                                    "aria-hidden": "true"
-                                                  }
-                                                },
-                                                {
-                                                  "tag": "span",
-                                                  "attributes": {
-                                                    "aria-hidden": "true"
-                                                  },
-                                                  "children": [
-                                                    "✕"
-                                                  ]
-                                                },
-                                                "NG",
                                                 {
                                                   "tag": "table",
                                                   "children": [
@@ -605,14 +614,23 @@
                                                                 {
                                                                   "tag": "span",
                                                                   "attributes": {
-                                                                    "role": "img",
-                                                                    "aria-label": "OK"
+                                                                    "data-tone": "ok",
+                                                                    "data-shape": "square"
                                                                   },
                                                                   "children": [
-                                                                    "✓"
+                                                                    {
+                                                                      "tag": "span",
+                                                                      "attributes": {
+                                                                        "role": "img",
+                                                                        "aria-label": "OK"
+                                                                      },
+                                                                      "children": [
+                                                                        "✓"
+                                                                      ]
+                                                                    },
+                                                                    "OK"
                                                                   ]
-                                                                },
-                                                                "OK"
+                                                                }
                                                               ]
                                                             }
                                                           ]
@@ -643,14 +661,23 @@
                                                                 {
                                                                   "tag": "span",
                                                                   "attributes": {
-                                                                    "role": "img",
-                                                                    "aria-label": "要注意"
+                                                                    "data-tone": "warn",
+                                                                    "data-shape": "square"
                                                                   },
                                                                   "children": [
-                                                                    "！"
+                                                                    {
+                                                                      "tag": "span",
+                                                                      "attributes": {
+                                                                        "role": "img",
+                                                                        "aria-label": "要注意"
+                                                                      },
+                                                                      "children": [
+                                                                        "！"
+                                                                      ]
+                                                                    },
+                                                                    "キャッシュが古いまま"
                                                                   ]
-                                                                },
-                                                                "キャッシュが古いまま"
+                                                                }
                                                               ]
                                                             }
                                                           ]
@@ -681,14 +708,23 @@
                                                                 {
                                                                   "tag": "span",
                                                                   "attributes": {
-                                                                    "role": "img",
-                                                                    "aria-label": "NG"
+                                                                    "data-tone": "ng",
+                                                                    "data-shape": "square"
                                                                   },
                                                                   "children": [
-                                                                    "✕"
+                                                                    {
+                                                                      "tag": "span",
+                                                                      "attributes": {
+                                                                        "role": "img",
+                                                                        "aria-label": "NG"
+                                                                      },
+                                                                      "children": [
+                                                                        "✕"
+                                                                      ]
+                                                                    },
+                                                                    "NG"
                                                                   ]
-                                                                },
-                                                                "NG"
+                                                                }
                                                               ]
                                                             }
                                                           ]

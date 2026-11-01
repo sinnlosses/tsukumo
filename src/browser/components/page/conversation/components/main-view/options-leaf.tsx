@@ -5,19 +5,26 @@ import type { ReactElement } from "react"
 
 import type { A2uiReportComponent } from "../../../../../../shared/report/a2ui-report-catalog.ts"
 import type { LeafValue } from "../../../../../../shared/report/report-leaf-value.ts"
+import { Badge } from "../../../../ui/badge/badge.tsx"
 import { InlineCodeText, InlineMarkdown, noteLeafClassNames } from "../markdown/markdown.tsx"
+import styles from "./main-view.module.css"
 import { LeafFold, ReportLeafFrame, ReportPausePoint } from "./report-leaf-frame.tsx"
 
 type OptionsPart = Extract<A2uiReportComponent, { readonly component: "Options" }>
 type Option = OptionsPart["items"][number]
 
 const VERDICTS = {
-  adopt: { className: noteLeafClassNames.optionAdopt, label: "採る", pauses: true },
-  consider: { className: noteLeafClassNames.optionConsider, label: "検討", pauses: false },
-  reject: { className: noteLeafClassNames.optionReject, label: "採らない", pauses: false },
+  adopt: { className: undefined, label: "採る", tone: "ok", pauses: true },
+  consider: { className: undefined, label: "検討", tone: "warn", pauses: false },
+  reject: {
+    className: noteLeafClassNames.optionReject,
+    label: "採らない",
+    tone: "neutral",
+    pauses: false,
+  },
 } as const satisfies Record<
   Option["verdict"],
-  { className: string | undefined; label: string; pauses: boolean }
+  { className: string | undefined; label: string; tone: "ok" | "warn" | "neutral"; pauses: boolean }
 >
 
 export function OptionsLeaf(props: {
@@ -40,7 +47,7 @@ export function OptionsLeaf(props: {
         )}
         <div className={noteLeafClassNames.options}>
           {part.items.map((item, index) => (
-            <OptionRow key={`${String(index)}:${item.name}`} item={item} index={index} />
+            <OptionRow key={`${String(index)}:${item.name}`} item={item} />
           ))}
         </div>
       </LeafFold>
@@ -48,14 +55,17 @@ export function OptionsLeaf(props: {
   )
 }
 
-function OptionRow(props: { readonly item: Option; readonly index: number }): ReactElement {
+function OptionRow(props: { readonly item: Option }): ReactElement {
   const { name, verdict, reason } = props.item
-  const { className, label, pauses } = VERDICTS[verdict]
+  const { className, label, tone, pauses } = VERDICTS[verdict]
   const rowClassName = clsx(noteLeafClassNames.option, className)
   const row = (
     <>
-      <span className={noteLeafClassNames.optionNumber}>{String(props.index + 1)}</span>
-      <span className={noteLeafClassNames.optionVerdict}>{label}</span>
+      <span>
+        <Badge tone={tone} shape="square" className={styles["verdict-badge"]}>
+          {label}
+        </Badge>
+      </span>
       <span className={noteLeafClassNames.optionBody}>
         <span className={noteLeafClassNames.optionName}>
           <InlineCodeText text={name} />

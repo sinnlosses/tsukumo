@@ -168,9 +168,14 @@
     height: 100%;
     background: var(--ink-quiet);
   }
-  /* 表の変化したセルの前の値と矢印の文字。後の値は地の ink のまま。 */
+  /* 表の変化したセルの前の値と矢印は取り消し線の補助色、後の値は ink-bright の太字。 */
   & .report-change-from {
     color: var(--ink-quiet);
+    text-decoration: line-through;
+  }
+  & .report-change-to {
+    color: var(--ink-bright);
+    font-weight: 600;
   }
   & .report-badge {
     display: inline-block;
@@ -428,9 +433,8 @@
     }
   }
   /* 候補の比較（`report` の `options` の塊から tsukumo が組む）。
-   1案1行の積み。行は「番号・判定の語・名前と理由」の3列で、行どうしは罫で区切る。並びは書き手の順のまま。
-   頭の番号は入力欄の質問の札の番号と同じ見た目にする。
-   判定は頭の語（採る / 検討 / 採らない）が持ち、色は state-ok / state-warn / ink-quiet。採らない行は字全体を弱くする。
+   1案1行の積み。行は「判定の札・名前と理由」の2列で、行どうしは罫で区切る。並びは書き手の順のまま（順序は持たないので番号は付けない）。
+   判定は頭の札（採る＝ok / 検討＝warn / 採らない＝neutral の `Badge`）が持つ。採らない行は名前を ink-soft に弱くする。
    器が狭いときは理由を名前の下の行へ落とす（器の幅で決める）。 */
   & .report-options {
     container: report-options / inline-size;
@@ -438,28 +442,13 @@
   }
   & .report-option {
     display: grid;
-    grid-template-columns: 1.4rem 4.5em minmax(0, 1fr);
+    grid-template-columns: 5.5em minmax(0, 1fr);
     column-gap: var(--space-md);
     padding: var(--space-sm) 0;
-    border-bottom: 1px solid var(--report-chunk-rule, var(--rule-soft));
+    border-bottom: 1px solid var(--report-chunk-rule, var(--rule-quiet));
   }
   & .report-option:last-child {
     border-bottom: none;
-  }
-  & .report-option-number {
-    color: var(--ink-quiet);
-    font-family: var(--font-mono);
-    font-size: var(--font-label);
-  }
-  & .report-option-verdict {
-    font-size: var(--font-label);
-    font-weight: 600;
-  }
-  & .report-option-adopt .report-option-verdict {
-    color: var(--state-ok);
-  }
-  & .report-option-consider .report-option-verdict {
-    color: var(--state-warn);
   }
   & .report-option-body {
     min-width: 0;
@@ -474,7 +463,11 @@
   & .report-option-reason::before {
     content: "— ";
   }
-  & .report-option-reject :is(.report-option-verdict, .report-option-name, .report-option-reason) {
+  & .report-option-reject .report-option-name {
+    color: var(--ink-soft);
+    font-weight: 500;
+  }
+  & .report-option-reject .report-option-reason {
     color: var(--ink-quiet);
   }
   @container report-options (max-width: 30rem) {
@@ -488,7 +481,7 @@
   /* 確度つきの主張（`report` の `claims` の塊から tsukumo が組む）。
    1項目1行の積みで、行どうしは罫で区切る。行の中身は Markdown の段落1つ（`path:line` とリンクを効かせるため）で、
    その段落を「確度・本文」の2列にし、本文の列に主張・根拠・確かめ方を縦に積む。
-   確度は記号と語の字だけが色を持ち（確定 state-ok / 推測 state-warn / 未確認 state-ask）、地は染めない。
+   確度は記号と語の札（確定＝ok / 推測＝warn / 未確認＝neutral の `Badge`）が持つ。
    器が狭いときは確度を主張の上の行に落とす。 */
   & .report-claims {
     container: report-claims / inline-size;
@@ -496,7 +489,7 @@
   }
   & .report-claim {
     padding: var(--space-sm) 0;
-    border-bottom: 1px solid var(--report-chunk-rule, var(--rule-soft));
+    border-bottom: 1px solid var(--report-chunk-rule, var(--rule-quiet));
   }
   & .report-claim:last-child {
     border-bottom: none;
@@ -517,15 +510,6 @@
   }
   & .report-claim-mark {
     margin-right: 0.3em;
-  }
-  & .report-claim-confirmed .report-claim-certainty {
-    color: var(--state-ok);
-  }
-  & .report-claim-inferred .report-claim-certainty {
-    color: var(--state-warn);
-  }
-  & .report-claim-unverified .report-claim-certainty {
-    color: var(--state-ask);
   }
   & :is(.report-claim-text, .report-claim-basis, .report-claim-how) {
     grid-column: 2;

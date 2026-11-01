@@ -304,6 +304,26 @@
   & .report-captioned:has(> :is(.report-compare, .report-before-after)) {
     align-items: stretch;
   }
+  /* 表の包みは左に置き、題と凡例も左に揃える。番号は中立の色。 */
+  & .report-captioned-table {
+    align-items: flex-start;
+    margin-inline: 0 auto;
+  }
+  & .report-captioned.report-captioned-table > :is(.report-caption, .report-table-status-legend) {
+    align-self: flex-start;
+    text-align: left;
+  }
+  & .report-captioned-table > .report-caption .report-caption-number {
+    font-family: inherit;
+    font-size: var(--font-secondary);
+    font-weight: 600;
+    letter-spacing: normal;
+    color: var(--ink-quiet);
+  }
+  & .report-captioned-table > .report-caption .report-caption-text {
+    font-size: var(--font-subheading);
+    color: var(--ink-soft);
+  }
   /* 題と凡例は、本文の列の幅（折り返す幅）で包みの中心に揃える。 */
   & .report-captioned > :is(.report-caption, .report-table-status-legend, .report-graph-legend) {
     align-self: center;

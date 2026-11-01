@@ -60,6 +60,7 @@ export function FoldedLeafFrame(
   const captionedClassName = clsx(
     leafFrameClassNames.captioned,
     props.fit && leafFrameClassNames.captionedFit,
+    captionNumber.kind === "table" && leafFrameClassNames.captionedTable,
     props.swap && figureClassName("before-after-swap"),
   )
   const captioned = (

@@ -1,6 +1,5 @@
 // `Matrix`（行×列の交点が状態だけの対応表）を Markdown に戻さず直接描く。
 
-import clsx from "clsx"
 import type { ReactElement, ReactNode } from "react"
 
 import type { A2uiReportComponent } from "../../../../../../shared/report/a2ui-report-catalog.ts"
@@ -10,16 +9,18 @@ import {
   type MatrixStatus,
   matrixLegendStatuses,
 } from "../../../../../../shared/report/table-layout.ts"
+import { Badge } from "../../../../ui/badge/badge.tsx"
 import { InlineMarkdown, matrixLeafClassNames } from "../markdown/markdown.tsx"
 import { LeafTable, type LeafTableRow } from "./leaf-table.tsx"
+import styles from "./main-view.module.css"
 import { FoldedLeafFrame } from "./report-leaf-frame.tsx"
 
-const MARK_CLASS_NAMES = {
-  ok: matrixLeafClassNames.matrixMarkOk,
-  warn: matrixLeafClassNames.matrixMarkWarn,
-  ng: matrixLeafClassNames.matrixMarkNg,
-  na: matrixLeafClassNames.matrixMarkNa,
-} as const satisfies Record<MatrixStatus, string>
+const BADGE_TONES = {
+  ok: "ok",
+  warn: "warn",
+  ng: "ng",
+  na: "neutral",
+} as const satisfies Record<MatrixStatus, "ok" | "warn" | "ng" | "neutral">
 
 export function MatrixLeaf(props: {
   readonly part: A2uiReportComponent
@@ -79,14 +80,16 @@ function MatrixMark(props: {
   readonly legend: boolean
 }): ReactElement {
   const { symbol, label } = MATRIX_MARKS[props.status]
-  const className = clsx(matrixLeafClassNames.matrixMark, MARK_CLASS_NAMES[props.status])
+  const badge = (
+    <Badge tone={BADGE_TONES[props.status]} shape="square" className={styles["matrix-mark-badge"]}>
+      {symbol}
+    </Badge>
+  )
   return props.legend ? (
-    <span className={className} aria-hidden="true">
-      {symbol}
-    </span>
+    <span aria-hidden="true">{badge}</span>
   ) : (
-    <span className={className} role="img" aria-label={label}>
-      {symbol}
+    <span role="img" aria-label={label}>
+      {badge}
     </span>
   )
 }

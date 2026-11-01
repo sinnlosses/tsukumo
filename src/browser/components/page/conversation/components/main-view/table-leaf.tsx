@@ -20,6 +20,7 @@ import {
   tableLayoutOf,
 } from "../../../../../../shared/report/table-layout.ts"
 import { tableCellTexts } from "../../../../../../shared/report/table-view.ts"
+import { Badge } from "../../../../ui/badge/badge.tsx"
 import {
   InlineCodeText,
   InlineMarkdown,
@@ -27,15 +28,10 @@ import {
   tagToneClassName,
 } from "../markdown/markdown.tsx"
 import { LeafTable, type LeafTableRow } from "./leaf-table.tsx"
+import styles from "./main-view.module.css"
 import { FoldedLeafFrame } from "./report-leaf-frame.tsx"
 
 type TablePart = A2uiReportPart<"Table">
-
-const STATUS_CLASS_NAMES = {
-  ok: tableLeafClassNames.cellStatusOk,
-  warn: tableLeafClassNames.cellStatusWarn,
-  ng: tableLeafClassNames.cellStatusNg,
-} as const satisfies Record<keyof typeof CELL_STATUS_MARKS, string>
 
 const NO_BAR: ColumnBar = { kind: "none" }
 
@@ -65,21 +61,15 @@ export function TableFigure(props: {
           {layout.legendStatuses.map((status) => {
             const { symbol, label } = CELL_STATUS_MARKS[status]
             return (
-              <span key={status} className={tableLeafClassNames.tableStatusLegendItem}>
-                <span
-                  className={clsx(
-                    tableLeafClassNames.tableStatusLegendSwatch,
-                    STATUS_CLASS_NAMES[status],
-                  )}
-                  aria-hidden="true"
-                />
-                <span
-                  className={clsx(tableLeafClassNames.cellStatusMark, STATUS_CLASS_NAMES[status])}
-                  aria-hidden="true"
-                >
-                  {symbol}
-                </span>
-                {` ${label}`}
+              <span
+                key={status}
+                className={tableLeafClassNames.tableStatusLegendItem}
+                aria-hidden="true"
+              >
+                <Badge tone={status} shape="square" className={styles["table-cell-badge"]}>
+                  <span className={tableLeafClassNames.cellStatusMark}>{symbol}</span>
+                  {` ${label}`}
+                </Badge>
               </span>
             )
           })}
@@ -185,7 +175,9 @@ function CellContent(props: {
         <span className={tableLeafClassNames.changeFrom}>
           <InlineMarkdown text={`${flatInline(cell.from)} →`} />
         </span>
-        <ChangeTo text={cell.to} />
+        <span className={tableLeafClassNames.changeTo}>
+          <ChangeTo text={cell.to} />
+        </span>
       </>
     )
   }
@@ -204,18 +196,14 @@ function CellContent(props: {
   const mark = CELL_STATUS_MARKS[cell.status]
   const text = cell.text.trim()
   return (
-    <span className={clsx(tableLeafClassNames.cellStatus, STATUS_CLASS_NAMES[cell.status])}>
-      <span
-        className={clsx(tableLeafClassNames.cellStatusMark, STATUS_CLASS_NAMES[cell.status])}
-        role="img"
-        aria-label={mark.label}
-      >
+    <Badge tone={cell.status} shape="square" className={styles["table-cell-badge"]}>
+      <span className={tableLeafClassNames.cellStatusMark} role="img" aria-label={mark.label}>
         {mark.symbol}
       </span>
       <span className={tableLeafClassNames.cellStatusText}>
         <InlineMarkdown text={text === "" ? mark.label : text} />
       </span>
-    </span>
+    </Badge>
   )
 }
 

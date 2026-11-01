@@ -122,10 +122,10 @@
 .report-fold-more-button {
   margin-block: var(--space-xs);
 }
-/* 題を持たない表は、表の幅まで縮めてレポートの幅の中央に置く（題つきの表は包み `.report-captioned` が置く）。 */
+/* 題を持たない表は、表の幅まで縮めてレポートの幅の左端に置く（題つきの表は包み `.report-captioned` が置く）。 */
 :is(.detail-block, [data-report-region]) > .table-scroll {
   inline-size: fit-content;
-  margin-inline: auto;
+  margin-inline: 0 auto;
 }
 .detail-block {
   & table {
@@ -142,7 +142,7 @@
   & th,
   & td {
     padding: var(--space-sm) var(--space-xl) var(--space-sm) 0;
-    border-bottom: 1px solid var(--rule-soft);
+    border-bottom: 1px solid var(--rule-quiet);
     text-align: left;
     font-variant-numeric: tabular-nums;
   }
@@ -153,15 +153,11 @@
     border-bottom: none;
   }
   /* 切った残りの行（`.report-table-rest`）が続く表は、最後のデータ行の下の罫を残して残りの行を表の最終行に見せる。 */
-  & .table-scroll:has(+ .report-table-rest):not(:has(.report-cell-status)) tbody tr:last-child td {
-    border-bottom: 1px solid var(--rule-soft);
+  & .table-scroll:has(+ .report-table-rest) tbody tr:last-child td {
+    border-bottom: 1px solid var(--rule-quiet);
   }
   /* 6行以上の表は、5行ごとに行の下へ 6px の隙間を入れる（その行の罫は透かす）。 */
-  &
-    table:not(:has(.report-cell-status))
-    tbody:has(tr:nth-child(6))
-    tr:nth-child(5n):not(:last-child)
-    td {
+  & table tbody:has(tr:nth-child(6)) tr:nth-child(5n):not(:last-child) td {
     padding-bottom: var(--space-md);
     border-bottom-color: transparent;
   }
@@ -173,46 +169,17 @@
     font-weight: 500;
     color: var(--ink-soft);
   }
-  /* 状態のセルを持つ表はタイル組みにする（GFM の表は tr/table に class を持てないので :has で拾う）。 */
-  & table:has(.report-cell-status) {
-    border-collapse: separate;
-    border-spacing: 4px;
-    margin: var(--report-block-gap) 0;
-    /* border-spacing の外周ぶんだけ見た目を左へ戻す。負の margin にすると fit-content の包みが表の最大幅より狭く測られる。 */
-    position: relative;
-    inset-inline-start: -4px;
-  }
-  & table:has(.report-cell-status) th,
-  & table:has(.report-cell-status) td {
-    border-bottom: none;
-    padding: var(--space-sm) var(--space-md);
-  }
-  & table:has(.report-cell-status) th {
-    padding-top: 0;
-  }
-  & table:has(.report-cell-status) :is(th, td):first-child {
-    padding-left: 0;
-  }
-  & table:has(.report-cell-status) td:has(.report-cell-status) {
-    padding: 0;
-  }
-  /* 状態の列にある、状態を持たないセル。地を塗らず読ませる補助の字にし、文の頭をタイルの文の頭（記号とすき間のぶん右）に揃える。 */
+  /* 状態の列にある、状態を持たないセル。読ませる補助の字にする。 */
   & .report-cell-status-none {
     display: block;
-    padding-left: var(--space-xl);
     color: var(--ink-soft);
   }
-  /* 表の状態のセル。記号と文を1行に並べ、角丸のタイルの地で状態を示す。状態語は記号の aria-label が読み上げる。 */
+  /* 表の状態のセル。`Badge` の中に記号と文を1行で置く（旧い Markdown の表は地を持たず字の色だけ）。状態語は記号の aria-label が読み上げる。 */
   & .report-cell-status {
-    display: flex;
-    flex-direction: row;
+    display: inline-flex;
     align-items: baseline;
     gap: 0.35em;
-    height: 100%;
-    box-sizing: border-box;
-    padding: var(--space-sm) var(--space-md);
-    border-radius: var(--radius-md);
-    background: var(--cell-status-bg, transparent);
+    white-space: normal;
   }
   & .report-cell-status-mark {
     font-family: var(--font-mono);
@@ -220,18 +187,14 @@
     font-weight: 700;
     letter-spacing: 0.04em;
   }
-  /* 地は NG・要注意が13%、OK が6%。 */
   & .report-cell-status-ok {
     color: var(--state-ok);
-    --cell-status-bg: color-mix(in srgb, var(--state-ok) 6%, transparent);
   }
   & .report-cell-status-warn {
     color: var(--state-warn);
-    --cell-status-bg: color-mix(in srgb, var(--state-warn) 13%, transparent);
   }
   & .report-cell-status-ng {
     color: var(--state-ng);
-    --cell-status-bg: color-mix(in srgb, var(--state-ng) 13%, transparent);
   }
   & .report-cell-status-text {
     color: var(--ink);
@@ -273,11 +236,11 @@
   & tbody tr:has(.report-row-emphasis-mark) .report-cell-bar {
     background: var(--surface-accent);
   }
-  /* 表の凡例。題の直下に中央揃えで置く。 */
+  /* 表の凡例。題の直下に左揃えで置く。 */
   & .report-captioned > .report-table-status-legend {
     display: flex;
     flex-wrap: wrap;
-    justify-content: center;
+    justify-content: flex-start;
     max-inline-size: var(--report-measure);
     gap: var(--space-xs) var(--space-lg);
     margin-bottom: var(--space-xs);
@@ -295,11 +258,12 @@
     align-items: center;
     gap: var(--space-xs);
   }
+  /* 旧い Markdown の表の凡例の見本（葉の表は `Badge` で出すので使わない）。 */
   & .report-table-status-legend-swatch {
     width: 0.75rem;
     height: 0.75rem;
     border-radius: var(--radius-sm);
-    background: var(--cell-status-bg, transparent);
+    background: color-mix(in srgb, currentcolor 13%, transparent);
     border: 1px solid color-mix(in srgb, currentcolor 35%, transparent);
   }
   /* 印つきの `graph` の下の凡例。色は図に当てるテーマの状態の色と同じ。 */
@@ -383,11 +347,11 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 1.5rem;
-    height: 1.5rem;
+    min-width: 1.5rem;
+    padding: var(--space-2xs) var(--space-sm);
     border-radius: var(--radius-sm);
+    box-sizing: border-box;
     font-weight: 700;
-    line-height: 1;
   }
   & .report-matrix-mark-ok {
     color: var(--state-ok);

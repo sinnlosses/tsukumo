@@ -1,0 +1,6 @@
+/* 候補の判定（`Options`）と主張の確度（`Claims`）の `Badge` の置き方だけ。顔は `Badge` が持つ。 */
+
+.verdict-badge {
+  gap: 0.3em;
+  vertical-align: top;
+}

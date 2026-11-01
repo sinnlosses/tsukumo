@@ -21,9 +21,58 @@ function sectionOf<Block extends ReportBlock>(block: Block) {
   return [{ heading: "", blocks: [block] }] as const
 }
 
-/** 空白だけの違いと、属性の並びの違いは畳む。 */
+/**
+ * 表の系統で、直接描く側だけが持つ意匠の違い（旧い Markdown の経路は `Badge` を出せない）を畳む。
+ * 要素の入れ子と字の割れ方は変えない（包みの外し方は子をそのまま親へ移すだけ）。
+ */
+function foldIntendedDifferences(html: string): string {
+  const template = document.createElement("template")
+  template.innerHTML = html
+  const root = template.content
+  for (const element of root.querySelectorAll(".report-captioned-table")) {
+    element.classList.remove("report-captioned-table")
+  }
+  for (const element of root.querySelectorAll(
+    ".report-change-to, .report-table-status-legend .badge",
+  )) {
+    element.replaceWith(...element.childNodes)
+  }
+  for (const element of root.querySelectorAll(".report-table-status-legend-swatch")) {
+    element.remove()
+  }
+  for (const element of root.querySelectorAll(".report-table-status-legend [aria-hidden]")) {
+    element.removeAttribute("aria-hidden")
+  }
+  for (const element of root.querySelectorAll(".report-table-status-legend[aria-hidden]")) {
+    element.removeAttribute("aria-hidden")
+  }
+  for (const element of root.querySelectorAll(".badge")) {
+    const isCellBadge = [...element.classList].some((name) => name.includes("table-cell-badge"))
+    element.classList.remove(
+      ...[...element.classList].filter(
+        (name) =>
+          name === "badge" || name.startsWith("badge-") || name.includes("table-cell-badge"),
+      ),
+    )
+    if (isCellBadge) {
+      element.classList.add("report-cell-status")
+    }
+    element.removeAttribute("data-tone")
+    element.removeAttribute("data-shape")
+  }
+  for (const element of root.querySelectorAll("[class*='report-cell-status-']")) {
+    element.classList.remove(
+      "report-cell-status-ok",
+      "report-cell-status-warn",
+      "report-cell-status-ng",
+    )
+  }
+  return template.innerHTML
+}
+
+/** 空白だけの違いと、属性の並びの違いは畳む。表の系統の意図した意匠の違いも畳む。 */
 export function normalized(html: string): string {
-  return html
+  return foldIntendedDifferences(html)
     .replace(/>\s+</g, "><")
     .replace(/<(\w+)((?:\s+[^\s=>]+(?:="[^"]*")?)+)>/g, (_, tag: string, attributes: string) => {
       const sorted = (attributes.match(/[^\s=>]+(?:="[^"]*")?/g) ?? []).toSorted()

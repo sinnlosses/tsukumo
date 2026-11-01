@@ -1,0 +1,11 @@
+/* 表の系統（`Table`・`Matrix`）の `Badge` の置き方だけ。顔（色・地・角丸・字）は `Badge` が持つ。 */
+
+.table-cell-badge {
+  gap: 0.35em;
+}
+
+.matrix-mark-badge {
+  justify-content: center;
+  min-inline-size: 1.5rem;
+  box-sizing: border-box;
+}

@@ -16,6 +16,8 @@
 @import "./turn-card/selection-ask.css";
 @import "./turn-card/interactive-view.css";
 @import "./turn-card/quote-leaf.css";
+@import "./turn-card/table-badge.css";
+@import "./turn-card/verdict-badge.css";
 @import "./turn-card/turn-card-head.css";
 @import "./turn-card/aside-thread.css";
 @import "./turn-card/question-record.css";

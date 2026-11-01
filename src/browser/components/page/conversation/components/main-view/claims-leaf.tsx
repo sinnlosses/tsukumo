@@ -1,19 +1,20 @@
 // `Claims`（確度つきの主張の並び）を Markdown に戻さず直接描く。
 
-import clsx from "clsx"
 import type { ReactElement } from "react"
 
 import type { A2uiReportComponent } from "../../../../../../shared/report/a2ui-report-catalog.ts"
 import type { LeafValue } from "../../../../../../shared/report/report-leaf-value.ts"
+import { Badge } from "../../../../ui/badge/badge.tsx"
 import { InlineMarkdown, textLeafClassNames } from "../markdown/markdown.tsx"
+import styles from "./main-view.module.css"
 import { LeafFold, ReportLeafFrame } from "./report-leaf-frame.tsx"
 
 type ClaimsPart = Extract<A2uiReportComponent, { readonly component: "Claims" }>
 
 const CERTAINTIES = {
-  confirmed: { className: textLeafClassNames.claimConfirmed, mark: "✓", label: "確定" },
-  inferred: { className: textLeafClassNames.claimInferred, mark: "〜", label: "推測" },
-  unverified: { className: textLeafClassNames.claimUnverified, mark: "？", label: "未確認" },
+  confirmed: { mark: "✓", label: "確定", tone: "ok" },
+  inferred: { mark: "〜", label: "推測", tone: "warn" },
+  unverified: { mark: "？", label: "未確認", tone: "neutral" },
 } as const
 
 export function ClaimsLeaf(props: {
@@ -39,15 +40,17 @@ export function ClaimsLeaf(props: {
 
 function ClaimRow(props: { readonly item: ClaimsPart["items"][number] }): ReactElement {
   const { claim, certainty, basis, howToVerify } = props.item
-  const { className, mark, label } = CERTAINTIES[certainty]
+  const { mark, label, tone } = CERTAINTIES[certainty]
   return (
-    <div className={clsx(textLeafClassNames.claim, className)}>
+    <div className={textLeafClassNames.claim}>
       <p>
         <span className={textLeafClassNames.claimCertainty}>
-          <span className={textLeafClassNames.claimMark} aria-hidden="true">
-            {mark}
-          </span>
-          {label}
+          <Badge tone={tone} shape="square" className={styles["verdict-badge"]}>
+            <span className={textLeafClassNames.claimMark} aria-hidden="true">
+              {mark}
+            </span>
+            {label}
+          </Badge>
         </span>
         <span className={textLeafClassNames.claimText}>
           <InlineMarkdown text={claim} />
