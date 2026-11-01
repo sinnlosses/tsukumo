@@ -11,7 +11,7 @@
   同じことを両方に書くと毎ターンの文脈に2回載る。
 - 本文を A2UI のカタログと部品の平らな一覧（`components`）で受けて描くことは、`docs/architecture/adr/0039-report-via-a2ui-catalog.md` が決める。
   部品の切り方（`Report` の props と葉 20 種、基本カタログから取る 6 部品）は同「論点 2」、変換と `ReportEvent` の形は「論点 3」、ブラウザの描き方は「論点 4」が正典。
-  `report` の受け口はこの `components` だけで、旧い変種（`json-schema`・`short-type`・`body-fence`）の受け口は外した。旧い `sections`・`body` で書かれた過去のセッションの `report` は、復元が読む。
+  `report` が受け付けるのはこの `components` だけで、旧い変種（`json-schema`・`short-type`・`body-fence`）の受け付けは外した。旧い `sections`・`body` で書かれた過去のセッションの `report` は、復元が読む。
 - セクションは `heading` と並んで、省ける欄 `shapeTag`（`docs/glossary.md`「形の名前」）を持つ。省いたセクションは `unspecified` に畳む。
   形の名前と部品の照合は外した。過去の行の扱いは「部品を足す・外す基準」の「形の名前の照合」。
   形の名前は旧い `sections` のセクションの欄で、`components` の `Section` は形の名前を持たず、旧い `body`（下の項）も持たない（どちらも常に `unspecified`）。
@@ -31,7 +31,7 @@
   差し戻しの検査は子にもセクションの部品と同じく掛かり、隣り合う `note` は縦に積む `Card` の中では数え、横に並ぶ `Row` の中では数えない。
   使い方は `report_part_card` の `Row`・`Column`・`Card` のカードが持つ。
   見え方は疑似セッションの場面 `row-panel-decision`（候補の比較）と `row-panel-status`（件数と一覧）で撮る。
-  旧い `sections` の `row`・`panel` は書き手の受け口が無く、旧い transcript の復元だけが読む（`src/server/session-driver/core/legacy-report-section-list.ts`。ADR 0039「追記（2026-10-28）」）。
+  旧い `sections` の `row`・`panel` は書き手が書く欄が無く、旧い transcript の復元だけが読む（`src/server/session-driver/core/legacy-report-section-list.ts`。ADR 0039「追記（2026-10-28）」）。
   読んだ `row` は `Row`、`panel` は題を先頭の段落にした `Card` に組み直す。画面に描くセクションの型 `ReportBlockSection` は葉の部品だけを持つ
 - **数の推移・割合は `chart` の部品で見せる**。書き手は種類（`bar` / `line` / `pie` / `arrow` / `slope` / `span` / `share`）・項目・
   系列・横棒かを渡し、Chart.js の設定は tsukumo が組む。色は書き手が指定しない（配色のトークンから入れる）。`pie` は
@@ -49,7 +49,7 @@
   図の囲い（`.captioned`）が 63em の段なので、`share` を含むグラフは読む面が広ければ 63em まで広がる（狭ければ 100%）
   表の数の列に付く横棒（`block-table.md`「表の描き方は型から決め、書き手は何も選ばない」）と役割が重なるので、数が3つ以上並ぶ表を
   `chart` へ差し戻す検査は足さない（正確な値を読ませたい場面は表のままでよい）
-- **flowchart は `graph` の部品で見せる**（受け口は `source` の文字の記法。
+- **flowchart は `graph` の部品で見せる**（受け付けるのは `source` の文字の記法。
   形が1つのほうがモデルが迷わず、スキーマも短い）。書き手は `direction` と `source` を渡す。`source` は1行1項目で、`A -> B` が辺、
   `A -> B: 語` が辺のラベル、`->` の無い行は節点だけの宣言（空行と行頭・行末の空白は無視）。
   節点の形は名前の括弧で決め、`(名前)` は始点・終点、`{名前}` は分岐、括弧が無ければ処理。名前が同じなら同じ節点で、
@@ -102,7 +102,7 @@
   形は決定表（`src/shared/report/figure-decision.ts` の `plotFormOf`。行と境は `docs/architecture/display/block-criteria.md`「図の決定表」）が申告から決める。
   書き手は任意の欄 `form` で形を上書きでき、置いてはならない形は採らずに決定表の形で描いて `plot-forbidden-form`、図派・文派のどちらの既定で決めた形とも違う形は通して `plot-form-override` と数える（どちらも差し戻さない）。
   形ごとの描き方はまだ無く、どの形も `data` を `table` と同じ表として描く（題は `question`）。
-- **`body` は旧い試しの版（`body-fence`）の本文の欄で、いまの受け口は無い。復元が旧い transcript の `body` を読むだけ。** Markdown に型つきフェンスを混ぜて書かれていて、フェンスの種類は `graph`・`mermaid`・`table`・`code`・`callout`・`claims`・`image`（`READER_FENCE_KINDS`）と `figure`。
+- **`body` は旧い試しの版（`body-fence`）の本文の欄で、いまは受け付けない。復元が旧い transcript の `body` を読むだけ。** Markdown に型つきフェンスを混ぜて書かれていて、フェンスの種類は `graph`・`mermaid`・`table`・`code`・`callout`・`claims`・`image`（`READER_FENCE_KINDS`）と `figure`。
   読んだ結果は見出し空のセクション1つで、セクションの形の名前は持たない。型つきでない言語名のフェンスは散文の一部のまま残す。
   読めない型つきフェンスは差し戻さず素のコードブロックに落とし、数を記録の `brokenFenceCount` に残す（`src/server/session-driver/core/body-fence.ts` の `parseReportBody`）。
   `body` は `row`・`panel` を扱わない。フェンスの中にフェンスは入れ子にできず、並べる容れ物には新しい記法が要るため。

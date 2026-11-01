@@ -53,8 +53,8 @@ react-markdown
 
 - Markdown 一式は**会話の画面の部品 `conversation/components/markdown/`** に置く（読み手が `<Report>`・
   お伺いのカード・質問の記録・タスク見出し行で、お伺いのカードが答え待ちのカードと共有されメインビューの外の部品にまたがるため。
-  形は `docs/architecture/adr/0027-markdown-component-entry.md`）。外から引く口は `markdown.tsx` で、
-  `import()` で読む描画一式は `renderer/` に入る。`.detail-block` の class 名は口が `detailBlockClassName` で公開し、
+  形は `docs/architecture/adr/0027-markdown-component-entry.md`）。外から引く入口は `markdown.tsx` で、
+  `import()` で読む描画一式は `renderer/` に入る。`.detail-block` の class 名は入口が `detailBlockClassName` で公開し、
   外の部品は CSS を import しない。`block-split.ts` は `report/domain/`、`repository-link.tsx` は
   `conversation/components/repository-link/` の部品
 - **`schema` は許可リスト**（Markdown が作る要素と、tsukumo が部品から組む HTML の要素・属性）。SVG は tsukumo が組む要素と座標の属性だけで、色・変形・`g` は通さない。`style` 属性は

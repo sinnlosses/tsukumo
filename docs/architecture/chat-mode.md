@@ -29,12 +29,12 @@
 
 | ファイル                                               | 説明                                                                                                       |
 | ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
-| `docs/architecture/chat-mode/consolidation-failure.md` | 定着が書けなかったあとの扱い（縮みの逃がし口・間引き・止め方・診断ログの足跡）を持つ。                     |
+| `docs/architecture/chat-mode/consolidation-failure.md` | 定着が書けなかったあとの扱い（縮みの逃げ道・間引き・止め方・診断ログの足跡）を持つ。                       |
 | `docs/architecture/chat-mode/consolidation.md`         | 定着がいつ走り、何を渡し、何を受け取り、どう排他するかを持つ。                                             |
 | `docs/architecture/chat-mode/conversation-archive.md`  | アーカイブに何をどんな形で書き、どう読み戻し、いつ消すかを持つ。                                           |
 | `docs/architecture/chat-mode/memory-layers.md`         | 記憶を層で持つ決定、容量の表の値とその根拠、忘却が起きる縁と画面への出し方を持つ。                         |
 | `docs/architecture/chat-mode/mode-and-switch.md`       | 雑談モードの入口の仕様（モードとして分けること、仕事のときから変わるもの、切り替えの道、遡れる幅）を持つ。 |
-| `docs/architecture/chat-mode/persona-writeback.md`     | 書き戻してよい範囲、`remember` / `forget` の口、外部由来の印、上限、書き方と消し方、元に戻す手を持つ。     |
+| `docs/architecture/chat-mode/persona-writeback.md`     | 書き戻してよい範囲、`remember` / `forget` のツール、外部由来の印、上限、書き方と消し方、元に戻す手を持つ。 |
 | `docs/architecture/chat-mode/synopsis-and-topics.md`   | あらすじの置き場・書き直し・載せ分け・話題の見出し・縛りの表を持つ。                                       |
 | `docs/architecture/chat-mode/synopsis-file.md`         | あらすじの写し（`~/.tsukumo/chat-summary/<パック名>.summary.json`）の形と書き方を持つ。                    |
 | `docs/architecture/chat-mode/verbatim-readback.md`     | 作業記憶（直近の逐語）の容量の決め方、画面との入れ子、`systemPrompt` への載せ方を持つ。                    |

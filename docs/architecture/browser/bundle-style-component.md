@@ -22,7 +22,7 @@
 **CDN からは読まない**。
 
 `vite build` の出力は入口の `ui.js` と、**`import()` で分けたチャンク**。
-Markdown を描く口は2つあり、どちらも `import()` で読む。
+Markdown を描く経路は2つあり、どちらも `import()` で読む。
 
 | チャンク                     | 中身                                                                                                               |
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------ |
@@ -36,11 +36,11 @@ CSS は分けず1本。サーバは起動時にすべてメモリに読み、`/a
 配る（要求のパスからファイルを組み立てない）。入口の名前は配る URL と同じにする（チャンクは入口を `./ui.js` で
 import するので、食い違うと入口を別のモジュールとして読み React が2つ動く）。
 
-- 使い手は Markdown の部品の口 `markdown.tsx`（`<Report>`・お伺いと質問の記録の preview）と `deferred-task-body.tsx`
+- 使い手は Markdown の部品の入口 `markdown.tsx`（`<Report>`・お伺いと質問の記録の preview）と `deferred-task-body.tsx`
   （タスクのモーダルの詳細・サイドバーののぞき窓）を使い、描画一式の `renderer/markdown-renderer.tsx`・`task-body.tsx` を直接
   import しない（すると一式が入口に戻る）。読み込みの状態の持ち方は2つとも `hooks/deferred-module.ts` の `deferredModule`。
-  外から引く口の `markdown.tsx` が遅延読み込みの側で、描画一式は中の `renderer/` に入るので、描画一式を外から直に
-  import すると部品の境界の検査（`test/architecture/browser-box.test.ts` の `componentBoundaryViolations`）が落とし、口から
+  外から引く入口の `markdown.tsx` が遅延読み込みの側で、描画一式は中の `renderer/` に入るので、描画一式を外から直に
+  import すると部品の境界の検査（`test/architecture/browser-box.test.ts` の `componentBoundaryViolations`）が落とし、入口から
   `renderer/` を再エクスポートすると再エクスポートの検査が落とす
 - 読み込みは `main.tsx` が最初の描画の前に `loadMarkdown()`・`loadTaskBody()` で1回ずつ起こし、済んだことを zustand の
   store に持つ。読み終わっていれば同じ描画で本体を出し、まだなら高さを持たない空の器に `aria-busy="true"` を出す。
@@ -76,7 +76,7 @@ import する。
 
 class 名は用語集の語（`balloon` / `portrait` / `work-strip` など）を**そのまま**保ち、部品からは
 `styles["balloon-track"]` と引く（キャメルケースへ変換しない）。実際に DOM へ付く名前は
-**組み立てのたびにハッシュ化される**ので、外から要素を指す口が要るところは `data-*` を持つ
+**組み立てのたびにハッシュ化される**ので、外から要素を指す手がかりが要るところは `data-*` を持つ
 （4領域の `data-region`。`scripts/capture/capture-view.ts` が使う）。
 
 **`styles["..."]` の型は、CSS に書いた class 名ごとに生成した型宣言から来る**（`happy-css-modules` が
@@ -105,12 +105,12 @@ CSS に無い名前は `undefined` のままなので、**綴りを間違える�
 **customizable select（`appearance: base-select`）の落とし穴**（先例は `features/run-setting/components/run-setting-select.module.css`）：
 
 - `::picker(select)` に `display` を無条件に書くと、閉じたときのブラウザ既定の `display: none` が
-  上書きされ、閉じた口の上に一覧が残って隣の口のクリックを塞ぐ。**`display` は `:popover-open` の中だけに書く**
+  上書きされ、閉じたときのボタンの上に一覧が残って隣のボタンのクリックを塞ぐ。**`display` は `:popover-open` の中だけに書く**
 - `<option>` に手で `aria-selected` を付けると、↑↓ で動いても Enter で値が確定しない。
   **選ばれた行の見た目は `:checked` で当てる**
-- `position-area` を指定しないと、窓の右端に近い口の一覧が窓の外へはみ出る。
+- `position-area` を指定しないと、窓の右端に近いボタンの一覧が窓の外へはみ出る。
   **`position-area: bottom span-left` で左へ吊り、`margin` で窓の縁から離す**。柱の中など吊る向きが
-  違う口は、修飾子の class で上書きする
+  違うボタンは、修飾子の class で上書きする
 
 **押せる要素（`button`・`a`・`summary` など）を足す・直すときは、高さも幅も 24px 以上にする**（約束は `docs/architecture/screen-design/layout.md` 13.4 の「押せるものは 24x24 以上」。実ブラウザで測らないと分からず単体では拾えないので、守っているのは E2E の `test/e2e/target-size.test.ts`）。足したら `pnpm run test:e2e test/e2e/target-size.test.ts` を単独で流してから全件へ進む。
 
@@ -128,9 +128,9 @@ CSS に無い名前は `undefined` のままなので、**綴りを間違える�
   枠の色は呼び出し側が `className` で渡す。`Field`（名札・入力欄・ヒントを縦に積む欄）は `variant`
   （`form`＝入力の名札、`confirm`＝確かめの問いかけ。名札の字の組が違う）で名札の字を決め、`id` を名札の
   `htmlFor` に渡して入力欄（`TextField` を `children` で受ける）と結ぶ。ヒントの無い欄は `hint` に
-  `undefined` を渡す。**差し込み口の部品**
+  `undefined` を渡す。**差し込み部分を持つ部品**
   （`BottomSheet`。狭い画面の板）は面の形と閉じ方を部品が持ち、頭・中・下端は props の `ReactNode` で受ける。
-  `Menu`（「…」の口から開く操作の一覧）は開閉・キーボード・位置・顔を部品が持ち、行（名前・`danger` の顔・
+  `Menu`（「…」のボタンから開く操作の一覧）は開閉・キーボード・位置・顔を部品が持ち、行（名前・`danger` の顔・
   押せない・前の区切り・選んだときの処理）は props で受ける
 - **1つの prop が1つの軸**。1つの property に写る軸は**値の名前をトークン名そのままにする**
   （`size: "secondary"` → `--font-secondary`）。**複数の property の束（ボタンの顔）は、使っている
@@ -148,7 +148,7 @@ CSS に無い名前は `undefined` のままなので、**綴りを間違える�
   （部品の語彙と画面の語彙が1つの要素の上で競る）。**段に乗らない値も丸めない**——部品に置き換えても
   画面の見た目は変えないのが既定で、丸めると決めたら変わる画面を目視で確かめる
 - **汎用の `as` は持たない**（`href` のような要素固有の属性が型から外れる）。要素を選ぶのは閉じた合併型の
-  prop（`Heading` の `level`・`Stack` の `element`）だけ。`Stack` は `data-*` とイベントの口を持たない
+  prop（`Heading` の `level`・`Stack` の `element`）だけ。`Stack` は `data-*` とイベントの props を持たない
 - **Text と Heading の境目**: 見出しの意味（`level`）と見た目（`size`）を別の props にする。対応表は
   `ui/text/` の1つを読む（二重に持たない）。`<h*>` でない「見出しに見える字」は `Heading` にしない
 - **`VStack` / `HStack`** は向きの決まった並べで、向きを値で切り替える箇所だけ `Stack` を直接使う
