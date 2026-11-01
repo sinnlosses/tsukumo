@@ -165,13 +165,42 @@ describe("plainWordSpellingsIn", () => {
     expect(plainWordSpellingsIn(draft([flow("再演", "")]))).toEqual([])
   })
 
-  it("節点は見つけ、始め方の札や塊（かたまり）のような頻出の語は表に無いので通る", () => {
+  it("節点は見つけ、お札や塊（かたまり）のような頻出の語は表に無いので通る", () => {
     expect(plainWordSpellingsIn(draft([reportDraftText("架空の節点が3つある。")]))).toEqual([
       "節点",
     ])
+    expect(plainWordSpellingsIn(draft([reportDraftText("お札と氷の塊を並べる。")]))).toEqual([])
+  })
+
+  it("札の複合語は、表の順に地の文で見つかる", () => {
     expect(
-      plainWordSpellingsIn(draft([reportDraftText("始め方の札を押す。お札と氷の塊を並べる。")])),
+      plainWordSpellingsIn(
+        draft([
+          reportDraftText(
+            "架空の吊り札を開き、変更の札と形の札を見て、答え待ちの札とプラン使用量の札を押す。",
+          ),
+        ]),
+      ),
+    ).toEqual(["プラン使用量の札", "答え待ちの札", "吊り札", "形の札", "変更の札"])
+  })
+
+  it("お札・名札・改札・入札・表札・札幌・親の札は、札の複合語に当たらない", () => {
+    expect(
+      plainWordSpellingsIn(
+        draft([reportDraftText("架空のお札と名札と改札と入札と表札と札幌と親の札。")]),
+      ),
     ).toEqual([])
+  })
+
+  it("既知の巻き込み: 複数の札束は、部分一致で数の札に当たる", () => {
+    expect(plainWordSpellingsIn(draft([reportDraftText("架空の複数の札束。")]))).toEqual(["数の札"])
+  })
+
+  it("札の複合語の差し戻しは、言い換え先を示す", () => {
+    const text = reportRejectionText(
+      reportViolations(draft([reportDraftText("架空の答え待ちの札の話。")])),
+    )
+    expect(text).toContain("「答え待ちの札」は「答え待ちのカード」")
   })
 
   it("レポートの区切りを指す節の複合語は見つかり、文書の節・節点・節目・季節・小節は通る", () => {

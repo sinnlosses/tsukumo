@@ -35,7 +35,7 @@ export const USAGE_REVIEW_STAGE_TOOL_DESCRIPTION =
 
 /** モデルに見せる `usage_review_result` の説明。 */
 export const USAGE_REVIEW_RESULT_TOOL_DESCRIPTION =
-  "見直しの結果を1回で渡す。tsukumo が提案の札として描く。見直し案をまとめ終えたときに呼ぶ。" +
+  "見直しの結果を1回で渡す。tsukumo が提案のカードとして描く。見直し案をまとめ終えたときに呼ぶ。" +
   `提案は効きめの大きい順に${MAX_USAGE_PROPOSALS}件まで。同じ種類と対象の組を2度入れない。` +
   "受け付けられないときは理由が返るので、直して呼び直す。"
 

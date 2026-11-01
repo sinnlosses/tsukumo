@@ -23,7 +23,7 @@ tsukumo の画面だけになる。
    なる。`applySessionEvent` で畳んだ `SessionState` を、サーバとブラウザが同じ形で持つ
    （「shared」）
 3. **`canUseTool` → 答え待ち → お伺い → 回答**: 許可プロンプトと `AskUserQuestion` はどちらも
-   `canUseTool` に届く。tsukumo は答え待ちの状態にして**メインビューのお伺いの札**に選択肢を出し（キャラは
+   `canUseTool` に届く。tsukumo は答え待ちの状態にして**メインビューのお伺いのカード**に選択肢を出し（キャラは
    吹き出しで聞くだけ）、選ばれた答えを `canUseTool` の戻り値として SDK へ返す
 
 **外へ出る経路は作らない。** SDK は claude を子プロセスとして起こすだけ、`speak` は tsukumo の

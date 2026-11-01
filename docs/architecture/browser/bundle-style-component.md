@@ -156,7 +156,7 @@ CSS に無い名前は `undefined` のままなので、**綴りを間違える�
   沈める顔が要るときは**押せないときの顔ごと variant の1つの値にする**（押せないを別の prop の軸にしない）。**押せる行・押せる文字**（タスクの ID・件数の
   チップ・暦の日・吹き出しのように、中身そのものを押すもの）は `Button` にしない
 - **待ちの見せ方**: 短い操作は `Spinner`（回転）、一覧の読み込みは `Skeleton`（明滅）、遅延読み込みの本体は `aria-busy="true"` の空の器
-- **札（Badge / Chip）・`<details>`・地の段を持つ箱（Card / Surface）は部品にしない**（箱の値が置き場所
+- **バッジ（Badge / Chip）・`<details>`・地の段を持つ箱（Card / Surface）は部品にしない**（箱の値が置き場所
   ごとに違い、値を全部 `className` で渡すことになる。1つずつの理由は `docs/history/decision.md`
   「design.md 2. 全体構成 / `components/ui/` の部品（採らなかった部品）」）
 - テストは `test/browser/components/ui/<部品>/<部品>.test.tsx` で、variant の値 → 付く class・描く要素・

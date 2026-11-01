@@ -57,8 +57,8 @@ Network タブで `/ws` の upgrade が101を返し、`hello` フレーム（購
    `node scripts/capture/open-view.ts <URL>` で開き直せる
 3. **画面の入力欄から依頼を打つ**。送信できること、実行中に中断できること
 4. **再読み込みなしに**吹き出しにセリフが出て、メインビューにレポートが流れること
-5. ツールを使う依頼で、**帯の「いまの作業」の札に進行が出て、押すと依頼の手順の一覧が開く**こと
-6. 許可の要る操作を頼み、**メインビューのプログレスバーの下にお伺いの札が出て、タブのタイトルが変わり、
+5. ツールを使う依頼で、**帯の「いまの作業」のカードに進行が出て、押すと依頼の手順の一覧が開く**こと
+6. 許可の要る操作を頼み、**メインビューのプログレスバーの下にお伺いのカードが出て、タブのタイトルが変わり、
    カードを選んで「これで答える」を押すか、入力欄の帯の「お伺いへ」から 1 と Enter で答えると作業が続く**こと
 7. ウィンドウの幅を変えて、**折り返しがブラウザ側で追従する**こと
 8. `orca` が使えない状況を作っても、プロセスが落ちずに配信を続けること
@@ -90,7 +90,7 @@ Network タブで `/ws` の upgrade が101を返し、`hello` フレーム（購
 フェーズ2を一度も今にしないまま閉じ、最終レポートのフェーズごとの時間でフェーズ2が「不明」になることを見る
 （`docs/architecture/display.md`「ワークプラン」）。
 
-**狭い画面の頭の点と経過（`phone-head-dot`・`phone-head-elapsed`）と、トークンの画面の結果の札
+**狭い画面の頭の点と経過（`phone-head-dot`・`phone-head-elapsed`）と、トークンの画面の結果のカード
 （`usage-review-card` の結果の場面。class は `usage-review-result`）は、場面を足さず次の1コマンドずつで撮れる。**
 点と経過は作業が走っているあいだだけ出るので、場面の終わりでは消えている。`--until-step` で途中の手に止める。
 
@@ -102,12 +102,12 @@ node scripts/capture/capture-view.ts --scene report --size 1400x900 --hash '#tok
   --wait-after '[class*="usage-review-result"]' --measure '[class*="usage-review-result"]'
 ```
 
-札のほうは、疑似セッションの `usageReview.review`（`fixture/fake-session/index.json`）が約2.4秒後に結果を返す。
+カードのほうは、疑似セッションの `usageReview.review`（`fixture/fake-session/index.json`）が約2.4秒後に結果を返す。
 
 **書き終わりの知らせ（`docs/architecture/screen-design.md` 13.10「書き終わりの知らせ」）を確かめるときは
 疑似セッションの場面 `diary-written`（`TSUKUMO_FAKE_SCENE=diary-written`）を使う。** `diary-requested`
 → `diary-drafting` → `diary-stage`（`write` → `pick`）→ `diary-written` と流れ、成果の画面
-（`#achievement?date=2026-09-20`）でも会話の画面でも画面の下中央に札が出ることと、「日記帳で開く」で
+（`#achievement?date=2026-09-20`）でも会話の画面でも画面の下中央にカードが出ることと、「日記帳で開く」で
 その日の見開きが開くこと、× で消えて再読み込みするまで戻らないことを見る。日記の中身（本文・
 しおり）も見るときは、`~/.tsukumo/diary/<リポジトリ>/2026-09-20.json`（`TSUKUMO_HOME` を
 分けていればその下。置き場の形は `src/server/diary/adapter/diary.ts`）に架空の日記を1件置いてから

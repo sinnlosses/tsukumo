@@ -2,7 +2,7 @@
 
 ステータス: **正典**。入口は `docs/glossary.md`（用語集の方針と、子のファイルの一覧）。
 
-責務: レポートの本文の組み立ての用語（セクション・塊・形の札・確度つきの主張・余白の柱）と、メインビューのやり取りの列・選択肢の比較の用語を持つ。
+責務: レポートの本文の組み立ての用語（セクション・塊・形の名前・確度つきの主張・余白の柱）と、メインビューのやり取りの列・選択肢の比較の用語を持つ。
 読む時: レポートの本文のセクション・塊とその欄を指す語の表記に迷ったとき。
 直す時: この範囲の用語を足す・識別子を変えるとき（用語はこの子に足し、親には足さない）。
 
@@ -24,7 +24,7 @@
 
 - **英語識別子**: `ReportBlock`（`src/shared/report/report-block.ts`）/ `kind`（`text` / `list` /
   `table` / `matrix` / `compare` / `beforeAfter`（前後）/ `note` / `stats` / `code` / `mermaid` / `graph`（`source` の1行1辺の記法で受ける flowchart。行頭の `+ ` / `- ` / `~ ` が足した・消した・変えたの印。節点だけの行は `名前 | 説明` で説明の1行を足せ、分岐・合流・囲み・点線の無い5節点以下の一本道はカードの連鎖で描く）/ `chart` / `timeline`（時刻の軸に行ごとの帯・延びた分・出来事を並べる図。延び・出来事・一点の無い区間の長さの比べは `chart` の `span`）/ `svg`（座標つきの図形で書く図）/ `plot`（図の申告。`question`〔読者がその図で決めること。全角60字以内の1文〕・`data`〔列の並び。各列は `name`・`type`〔`N` 名義 / `O` 順序 / `T` 時間 / `Q` 量〕・`values`〕・`relation`〔`compare`・`rank`・`part`・`trend`・`change`・`distribution`・`correlate`・`range` の8語〕と任意の `form`〔形の上書き〕を受け、色・座標は書かせない。形は下の「図の決定表」が決め、形ごとの描き方が入るまでは `data` を表として描く）/ `options` / `claims`（確度つきの主張）/ `image`（画面の画像）/ `markdown`。旧い記録にだけ `row`〔2〜4 個の塊を横に並べる〕と `panel`〔`title` つきの枠〕があり、復元が `Row`・`Card` に組み直す）/ `fold`（畳むときの見出し）/ `aside`（塊の傍注。下の「余白の柱」）/
-  欄の `from` / `to`（表のセルの前後）・`tag`（表のセルの列挙型の札。同じ字は同じ色）・`emphasis`（表の行の強調。`{ cells, emphasis: true }`で3行まで。超えれば差し戻し）・`before`（`stats` の前の値）・`total`（`stats` の全体の数）・`keyFigures`（`report` の欄。結論の直下に並べる 3〜4 個の数の札で、項目の形は `stats` の `items` と同じ。塊の欄ではない）・`label`（`list` の項目の名前）・
+  欄の `from` / `to`（表のセルの前後）・`tag`（表のセルの列挙型のバッジ。同じ字は同じ色）・`emphasis`（表の行の強調。`{ cells, emphasis: true }`で3行まで。超えれば差し戻し）・`before`（`stats` の前の値）・`total`（`stats` の全体の数）・`keyFigures`（`report` の欄。結論の直下に並べる 3〜4 個の数のカードで、項目の形は `stats` の `items` と同じ。塊の欄ではない）・`label`（`list` の項目の名前）・
   `flow`（`list` の `style` の一本道の流れ）・`cards`（`list` の `style` の並列の区画。2〜4項目を横に並べる）・`sides`（`compare` の2つの側。`heading` と `points`）・
   `before` / `after`（`beforeAfter` の前の側と後の側。`kind` が `image`〔`path`と任意の `region`（変わった場所の枠。% の `left`・`top`・`width`・`height`）〕/ `code`〔`language`・`source`〕/ `points` / `mermaid`〔`source`〕/ `svg`〔`width`・`height`・`shapes`〕の合併型）・
   `width` / `height`（`svg` の viewBox の大きさ）・`shapes`（`svg` の図形の並び。`kind` が `rect`〔`x`・`y`・`width`・`height`・`label`・`emphasis`〕/ `line`〔`x1`・`y1`・`x2`・`y2`・`arrow`・`label`〕/ `text`〔`x`・`y`・`text`〕の合併型）・`emphasis`（`rect` の枠を強調する真偽値）・`arrow`（`line` の終点に矢じりを付ける真偽値）・
@@ -49,17 +49,17 @@
 - **避ける言い方**: ブロック（Markdown の block と紛れる）、要素（HTML の要素と紛れる）、`options` を
   「選択肢の比較」と呼ぶこと（質問の `preview` を並べた面の名前と紛れる。`options` は「候補の比較」）
 
-### 形の札
+### 形の名前
 
 - **英語識別子**: 列挙 `REPORT_SHAPE_TAGS`（`src/server/report/core/report-usage-record.ts`。過去の行を読む）/
-  使われ方の記録のセクションの欄 `shapeTag`（札を省いたセクションは `unspecified`）。
+  使われ方の記録のセクションの欄 `shapeTag`（形の名前を省いたセクションは `unspecified`）。
   値は 因果 `cause`・つながり `connection`・位置 `position`・状態 `state`・時間 `time`・順序 `order`・量 `quantity`・
   選択 `choice`・属性の並び `attribute`・対応 `mapping`・見比べ `comparison`・境界 `boundary`・並列 `parallel`・一言 `single`
-- **定義**: **セクションが表す内容の形。** 書き手がセクションごとに1つ言い、札ごとに第一候補・許す代替・許さない塊が決まる。
+- **定義**: **セクションが表す内容の形。** 書き手がセクションごとに1つ言い、形の名前ごとに第一候補・許す代替・許さない塊が決まる。
   許さないのは下の段（`table`・`list`・`text`）だけ
-- **注記**: 旧い `sections` のセクションの欄の仕組みで、`components` の `Section` と旧い `body` は札を持たない（ADR 0038）。前後・確度・所在は札にせず、どの札にも掛かる添え物として扱う（確度は `claims` の塊が受ける）。`svg` の塊の欄 `shapes` と紛れるので、
+- **注記**: 旧い `sections` のセクションの欄の仕組みで、`components` の `Section` と旧い `body` は形の名前を持たない（ADR 0038）。前後・確度・所在は形の名前にせず、どの形にも掛かる添え物として扱う（確度は `claims` の塊が受ける）。`svg` の塊の欄 `shapes` と紛れるので、
   識別子に `shape` を単独で使わない
-- **避ける言い方**: タグ、型（`task` の `genre`〔報告の種類〕と紛れる）
+- **避ける言い方**: 形の札（以前の呼び名）、タグ、型（`task` の `genre`〔報告の種類〕と紛れる）
 
 ### 図の決定表
 
@@ -107,11 +107,11 @@
 
 ### 選択肢の比較
 
-- **英語識別子**: `QuestionOption.preview`（`src/shared/session-driver/question.ts`。札は `<Inquiry>`）
+- **英語識別子**: `QuestionOption.preview`（`src/shared/session-driver/question.ts`。カードは `<Inquiry>`）
 - **定義**: 質問（`AskUserQuestion`）の**選択肢ごとに付く Markdown の本文**と、それをメインビューに
   並べた面。表・図・メリットとデメリットで案を見比べるためのもので、答え待ちの間だけ出る
 - **注記**: **選択肢そのものは入力欄の箱に出たまま**（押す場所と読む場所を分ける。
-  `docs/architecture/display.md` 4.2）。箱で触れた選択肢の札が比較の面で光る
+  `docs/architecture/display.md` 4.2）。箱で触れた選択肢のカードが比較の面で光る
 - **注記**: `preview` は `AskUserQuestion` が元から持つ項目名なので**そのまま使う**。描くのは
   レポートと同じ経路（同じ記法・同じサニタイズ）
 - **避ける言い方**: プレビュー（カタカナだけだと「下書きの見え方」と読める）、選択肢の詳細

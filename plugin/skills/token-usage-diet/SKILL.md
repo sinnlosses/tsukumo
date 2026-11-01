@@ -246,7 +246,7 @@ python3 "${CLAUDE_SKILL_DIR}/scripts/summarize_usage.py" --top 20  # 各一覧�
 
 ツール一覧に `mcp__tsukumo__usage_review_stage` と `mcp__tsukumo__usage_review_result` が
 あるとき（冒頭で確かめた場合分けのとおり）は、本文のレポートではなくこの2つの
-ツールで結果を返す。**tsukumo が結果を札に描く**ので、本文を長く書かない。
+ツールで結果を返す。**tsukumo が結果のカードに描く**ので、本文は短く書く。
 
 ### 7.1 段ごとに `usage_review_stage` を呼ぶ
 

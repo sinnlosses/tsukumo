@@ -7,15 +7,15 @@
 
 - 塊の種類は `src/shared/report/report-block.ts` が持ち、逃げ道は `markdown`。**種類ごとの使いどころは各塊の `describe` が持ち**（欄名・enum・型で読めることは持たない。通る呼び出しの例は `REPORT_TOOL_DESCRIPTION` の末尾）、
   `REPORT_NOTATION_PROMPT` の表には逃げ道に残る記法（引用・区切り線・複数の塊をまとめて畳む `<details>`・
-  互いに独立した区画を見渡させる `cols` / `card`・区画の状態の札 `badge`）だけを置く（板の型が効くかを書かれ方と画で見てから、欄にするかを決める。`docs/research/dashboard-layout-proposal.md` 5.1）。
+  互いに独立した区画を見渡させる `cols` / `card`・区画の状態のバッジ `badge`）だけを置く（板の型が効くかを書かれ方と画で見てから、欄にするかを決める。`docs/research/dashboard-layout-proposal.md` 5.1）。
   同じことを両方に書くと毎ターンの文脈に2回載る。
 - 本文を A2UI のカタログと部品の平らな一覧（`components`）で受けて描くことは、`docs/architecture/adr/0039-report-via-a2ui-catalog.md` が決める。
   部品の切り方（`Report` の props と葉 20 種、基本カタログから取る 6 部品）は同「論点 2」、変換と `ReportEvent` の形は「論点 3」、ブラウザの描き方は「論点 4」が正典。
   `report` の受け口はこの `components` だけで、旧い変種（`json-schema`・`short-type`・`body-fence`）の受け口は外した。旧い `sections`・`body` で書かれた過去のセッションの `report` は、復元が読む。
-- セクションは `heading` と並んで、省ける欄 `shapeTag`（`docs/glossary.md`「形の札」）を持つ。省いたセクションは `unspecified` に畳む。
-  札と塊の照合は外した。過去の行の扱いは「塊を足す・外す基準」の「形の札の照合」。
-  札は旧い `sections` のセクションの欄で、`components` の `Section` は札を持たず、旧い `body`（下の項）も持たない（どちらも常に `unspecified`）。
-  条8は表を持たず、原則 5 つ・条 8 本・通る呼び出しの例 1 つの並びで、札と塊の対応は定義の `describe` と `report_part_card` が引かせる（ADR 0038）。
+- セクションは `heading` と並んで、省ける欄 `shapeTag`（`docs/glossary.md`「形の名前」）を持つ。省いたセクションは `unspecified` に畳む。
+  形の名前と塊の照合は外した。過去の行の扱いは「塊を足す・外す基準」の「形の名前の照合」。
+  形の名前は旧い `sections` のセクションの欄で、`components` の `Section` は形の名前を持たず、旧い `body`（下の項）も持たない（どちらも常に `unspecified`）。
+  条8は表を持たず、原則 5 つ・条 8 本・通る呼び出しの例 1 つの並びで、形の名前と塊の対応は定義の `describe` と `report_part_card` が引かせる（ADR 0038）。
   効いたかは図の欄の `none`（省いた回を含む）と、旧い記録に残る `no-shape` の割合で見る
   （省いた回は旧い記録・形の崩れと同じ `unrecorded` に畳まれ、記録から区別できない。ADR 0036）
   **種類の数に上限は置かない**（足すかは「読む時間を減らす物差しと線引き」、
@@ -94,7 +94,7 @@
   描くのは shared が組む HTML の `div`・`span` で、Chart.js と svg の経路は使わない。読めない値・尺度が混ざる・同じレーンの中で開始が昇順でない・
   出来事が昇順でない・`extra` が昇順でない・終了が開始より前・行に無い名前の `emphasis` は差し戻し（`broken-timeline`）、文面は何個目の塊の何行目かだけを返す。
   延び・出来事・一点のどれも無く、項目ごとの区間の長さを比べるだけなら `chart` の `span`。`mermaid` の `gantt` は見た目を制御できないので
-  形の札 `time` の候補から外した（札の第一候補は `timeline`、許す代替は `mermaid` の `sequenceDiagram` と `list` の `ordered`）。
+  形の名前 `time` の候補から外した（`time` の第一候補は `timeline`、許す代替は `mermaid` の `sequenceDiagram` と `list` の `ordered`）。
   見え方は疑似セッションの場面 `report-timeline` で撮る。
 - **図の形を書き手が選ばず、問い・データ・関係を申告するのは `plot` の塊**（`src/shared/report/figure-grammar.ts`。`Section` の子にも `Report.figure` にも置ける）。
   申告は `question`（全角60字以内の1文）・`data`（列の並び。`name`・`type`〔`N`・`O`・`T`・`Q`〕・`values`）・`relation`（8語）の3つで、色・座標は書けない。
@@ -103,7 +103,7 @@
   書き手は任意の欄 `form` で形を上書きでき、置いてはならない形は採らずに決定表の形で描いて `plot-forbidden-form`、図派・文派のどちらの既定で決めた形とも違う形は通して `plot-form-override` と数える（どちらも差し戻さない）。
   形ごとの描き方はまだ無く、どの形も `data` を `table` と同じ表として描く（題は `question`）。
 - **`body` は旧い試しの版（`body-fence`）の本文の欄で、いまの受け口は無い。復元が旧い transcript の `body` を読むだけ。** Markdown に型つきフェンスを混ぜて書かれていて、フェンスの種類は `graph`・`mermaid`・`table`・`code`・`callout`・`claims`・`image`（`READER_FENCE_KINDS`）と `figure`。
-  読んだ結果は見出し空のセクション1つで、セクションの札は持たない。型つきでない言語名のフェンスは散文の一部のまま残す。
+  読んだ結果は見出し空のセクション1つで、セクションの形の名前は持たない。型つきでない言語名のフェンスは散文の一部のまま残す。
   読めない型つきフェンスは差し戻さず素のコードブロックに落とし、数を記録の `brokenFenceCount` に残す（`src/server/session-driver/core/body-fence.ts` の `parseReportBody`）。
   `body` は `row`・`panel` を扱わない。フェンスの中にフェンスは入れ子にできず、並べる容れ物には新しい記法が要るため。
 - **座標で見せる図は `svg` の塊で書く**（`docs/architecture/adr/0028-report-block-priority.md`「SVG（論点3）」）。

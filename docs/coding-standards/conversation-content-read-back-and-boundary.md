@@ -54,8 +54,8 @@
 - 組み替える前の「残す」旗（`kept.jsonl`）、キャラクターが書いていた見出し（`index.jsonl`）、
   定着が書いていたエピソード索引（`episode.jsonl`）と思い出した記録（`recalled.jsonl`）はもう書かず読まない（残ったファイルは `scripts/runtime/migrate-chat-summary.ts --prune` で消す。`docs/architecture/chat-mode.md` 4.9
   「窓から溢れた会話は定着で畳む」）
-- **おすすめの札の問い合わせには会話を渡さない**（`docs/architecture/screen-design.md` 13.13
-  「おすすめの札の中身」）。前のセッションの `sessionSummary` と残り（`sessionRemaining`）は会話から書いた要約なので、
+- **おすすめのカードの問い合わせには会話を渡さない**（`docs/architecture/screen-design.md` 13.13
+  「おすすめのカードの中身」）。前のセッションの `sessionSummary` と残り（`sessionRemaining`）は会話から書いた要約なので、
   定着と同じ形の使い捨て `query()` でも上の2行に当たらず、**渡さない・キャッシュに書かない**。
   「前回の続き」は中身を持たない固定の候補として渡し、前のセッションや残りが有るかもサーバは
   見ない（有無を見ればそれも会話から導いた値になる）。渡すのはタスク一覧（ID・要約・依存。

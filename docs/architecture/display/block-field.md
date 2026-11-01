@@ -6,7 +6,7 @@
   `docs/research/report-block-richness.md` 2章）。欄は事実を言うものだけで、差や増減の割合は tsukumo が計算しない
   - 表のセルの `{ from, to }`: 前の値と矢印の文字を `ink-quiet`、後の値を `ink` で描く。状態（`status`）と
     同じセルには持たせない（変化の良し悪しは隣の列の `status` で言う）。前と後がどちらも数なら数の列として右に揃える
-  - 表のセルの `{ tag }`: 列挙型の札。同じ字は同じ色（出現順の `--chart-series-1`〜`5`、6 種目から灰）。字は常に見える
+  - 表のセルの `{ tag }`: 列挙型のバッジ。同じ字は同じ色（出現順の `--chart-series-1`〜`5`、6 種目から灰）。字は常に見える
   - `stats` の項目の `before`: 前の値を矢印の文字と一緒に数の上へ添える
   - `stats` の項目の `total`（全体の数）: 数の後ろに「／ 全体」と小さく添え、`value` と `total` がどちらも
     数字で `0 <= value <= total` のときだけ、割合の帯を数とラベルの間に引く（帯は `aria-hidden` で、割合は数と全体の文字が言う）。
@@ -39,14 +39,14 @@
   触ったファイルの一覧は書き手の塊ではなく、tsukumo が git の差分から出す（`docs/architecture/display/conclusion.md`）
   - `options`: `title` と、候補（`name` / `verdict`〔`adopt` / `consider` / `reject`〕/ `reason`）の並び。
     候補を1案1行で縦に積み、行は「1始まりの番号・判定の語（採る / 検討 / 採らない）・名前・理由」の順で、
-    行どうしは罫で区切る（札の枠と地は持たない。器が狭いときは理由を名前の下の行へ落とす）。
+    行どうしは罫で区切る（カードの枠と地は持たない。器が狭いときは理由を名前の下の行へ落とす）。
     **候補は採る → 検討 → 採らないの順に書き手が書き、崩れていれば
     差し戻す**（採る候補が必ず先頭〔上〕に来る。tsukumo が並べ替えるのは
     再構成なのでしない）。描く並びは書き手の順のまま。判定の語は「採る」が `state-ok`、「検討」が
     `state-warn`、「採らない」は行全体の文字を `ink-quiet` に沈める。左罫は持たず、キャラクターの色は
     入れない（`docs/architecture/screen-design.md` 13.2 の3本のまま）
   - `files`（旧い記録の読み戻し専用）: 書き手の `sections` と `retrospective` は受けず、旧い記録の `files` は読み戻しでだけ描く。
-    パスの樹形図と種別の札の見た目は `docs/architecture/screen-design/report-head.md`「ファイルの塊」が正典
+    パスの樹形図と種別のバッジの見た目は `docs/architecture/screen-design/report-head.md`「ファイルの塊」が正典
   - 表・箇条書きとの取り違えは差し戻さない（表・箇条書きで描かれるだけで、語や
     パスの形での判定はヒューリスティックになる）。代わりに `list` の `bullet` と `table` の説明が
     `options` を指す。取り違えの程度は使われ方の記録の「塊の種類 × レポート数」で `options` と `table` の比を見る
@@ -55,7 +55,7 @@
   - 欄: 項目（`claim` / `certainty`〔`confirmed` 確定 / `inferred` 推測 / `unverified` 未確認〕/ `basis` / `howToVerify`）の並び。
     **確定でない項目の `howToVerify` が空なら塊を受け付けない**（入口の型の検査。`checks` の `unobserved` の行の確かめ方と同じ考え）
   - 描き方: 1項目1行で、行どうしは罫で区切る。左に確度を記号と語（✓ 確定 / 〜 推測 / ？ 未確認）で、右に主張と、その下に根拠・確かめ方を置く。
-    根拠と確かめ方は Markdown の行内として描くので、`path:line` は押すと開き、`[ドメイン](URL)` は出典の札になる。空の欄は出さない。
+    根拠と確かめ方は Markdown の行内として描くので、`path:line` は押すと開き、`[ドメイン](URL)` は出典のバッジになる。空の欄は出さない。
     色は `docs/architecture/screen-design/color.md` の確度の段落
   - `note` の `ask` は残し、答えの出ていない問い1つに狭める（消すと `ask` を持つ過去の記録が読み戻しで落ちる）。
     検証の結果（テスト・型検査・手で確かめたこと）は今までどおり `checks` に書き、この塊に入れない

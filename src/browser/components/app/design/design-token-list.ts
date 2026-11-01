@@ -47,12 +47,12 @@ export const RADIUS_TOKENS = [
   { name: "--radius-md", use: "ボタン・入力欄" },
   { name: "--radius-lg", use: "箱・区画" },
   { name: "--radius-xl", use: "ダイアログ" },
-  { name: "--radius-pill", use: "丸い札" },
+  { name: "--radius-pill", use: "丸いバッジ" },
   { name: "--radius-round", use: "丸" },
 ] as const satisfies readonly TokenEntry[]
 
 export const SHADOW_TOKENS = [
-  { name: "--shadow-raised", use: "メニュー・浮かぶ札" },
+  { name: "--shadow-raised", use: "メニュー・浮かぶカード" },
   { name: "--shadow-overlay", use: "ダイアログ・引き出し" },
   { name: "--shadow-ring", use: "選んでいる目印の輪" },
 ] as const satisfies readonly TokenEntry[]

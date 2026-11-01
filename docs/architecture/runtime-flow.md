@@ -74,8 +74,8 @@ transcript の一覧を読み直すのは起こし直し（2代目以降）の�
 
 1. `canUseTool` → `pending-answer.ts` の列 → `pending-changed` イベント → 状態の `pending`
    （畳むときに届いた時刻 `askedAt` を打つ）
-2. お伺いの札（`Inquiry`）が `pending[0]` を `useInquiryAnswer` で描く。答えたら `session.answer({ id, answer })`
-3. 列が解決 → `pending-changed` → 札が消える。解決済みの id への回答は `REFUSED`
+2. お伺いのカード（`Inquiry`）が `pending[0]` を `useInquiryAnswer` で描く。答えたら `session.answer({ id, answer })`
+3. 列が解決 → `pending-changed` → カードが消える。解決済みの id への回答は `REFUSED`
 
 ### 再接続
 

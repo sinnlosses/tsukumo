@@ -69,14 +69,14 @@
 ### 迎えの挨拶
 
 - **英語識別子**: `welcomeGreeting`（状態の欄。イベントは `welcome-greeting-changed`）。挨拶1つは
-  `WelcomeGreeting`、札の名前の差し込み口は `WELCOME_GREETING_CARD_MARK`、書く関数は
+  `WelcomeGreeting`、カードの名前の差し込み口は `WELCOME_GREETING_CARD_MARK`、書く関数は
   `src/server/welcome-greeting/core/welcome-greeting-writer.ts` の `greetWelcome`。書けた挨拶と反応の行をセッションごとに
   覚えて同じセッションへ戻る代で出し直す口は `src/server/welcome-greeting/core/kept-welcome.ts` の `createWelcomeKeeper`
 - **定義**: 迎える局面の吹き出しに出す、セッションを新しく起こすたびと `/clear` のたびに背景の使い捨ての `query()`
-  （`sonnet`）がパックの人格の口調で書く1〜2文の挨拶。札があるときは始め方の一覧の先頭の札を名指す
-- **注記**: 札の名前は書かせず、差し込み口を書かせて画面が出すときに先頭の札の名前を差し込む（札の並びが
+  （`sonnet`）がパックの人格の口調で書く1〜2文の挨拶。カードがあるときは始め方の一覧の先頭のカードを名指す
+- **注記**: カードの名前は書かせず、差し込み口を書かせて画面が出すときに先頭のカードの名前を差し込む（カードの並びが
   後から変わっても名指しが古くならない）。反応の行は持たない（別の問い合わせが書く）。反応と同じく記録に積んでセリフのログに
-  残し、記録の文は画面が表示した1行（札の名前込み。コマンド `recordWelcomeGreeting`・イベント `welcome-greeting-shown`）。いつ書き直すか・書けなかったときはどうするか・続きから起こしたときのおかえりは
+  残し、記録の文は画面が表示した1行（カードの名前込み。コマンド `recordWelcomeGreeting`・イベント `welcome-greeting-shown`）。いつ書き直すか・書けなかったときはどうするか・続きから起こしたときのおかえりは
   `docs/architecture/display.md` 4.2「出力の分離（セリフと詳細）」
 - **避ける言い方**: 自動セリフ、定型の挨拶（毎回書き直すもの）
 

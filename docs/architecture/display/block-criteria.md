@@ -25,7 +25,7 @@
 - 版9: `task` の報告の種類と終わり方、`favor` が空でないか、本文に URL か `path:line` があるか `code` の塊に `path` があるか
 - 版10: 行が2つ以下の表が1つでもあるか
 - 版11・12: `stats` の `series` / `better` と、`aside` が空でない塊を塊の欄で数える（行の形は版10と同じ）
-- 版13: セクションごとの札、札が許さない塊を使ったセクションの数、許さない組ごとの数（「形の札の照合」）
+- 版13: セクションごとの形の名前、形の名前が許さない塊を使ったセクションの数、許さない組ごとの数（「形の名前の照合」）
 - 版14: `report` の引数の字数（JSON にした字数。全体と最上位の欄ごと）。差し戻しの行にも入る。字数だけで中身は持たない。
   受け付けも差し戻しも、モデルが書いた生の引数の字数。差し戻しの行は handler の差し戻しだけでなく、結果が `isError` で返った `report` の呼び出しすべてに付く
   （形の検査で落ちた呼び出しは、handler に届かなかったものも、handler で組んだ値が落ちたものも理由が `tool-error`。
@@ -109,12 +109,14 @@ HTML の字として埋める塊（`htmlInline`・`htmlInlineWithCode`）と、�
 壊れた印は差し戻しの条 `broken-inline-mark` で数える。**`count`（ADR 0028）で、差し戻さず `kind: "counted"` の行に名前だけ残す。**
 除外の上限は 0 で、根拠の行は `docs/history/decision.md`「adr/0028 追記 差し戻しの条ごとの根拠」にある。
 
-## 形の札の照合
+## 形の名前の照合
 
-札は旧い `sections` のセクションの欄の仕組みで、`components` の `Section` と旧い `body` は札を持たない（常に `unspecified`。ADR 0038）。
-使われ方の記録は新しい行の札を `unspecified` 固定で書き、札が許さない塊は数えない（`forbiddenShapeSectionCount` は 0、`forbiddenShapeBlocks` は空。ADR 0043 論点 3）。
+（以前の見出しは「形の札の照合」。ADR 0038 がこの句で引く）
 
-過去の行（版13から）の列は残してあり、集計は読み戻せる。セクションの `shapeTag`（`docs/glossary.md`「形の札」）ごとに許さない塊を照合する表と関数は外した。
+形の名前は旧い `sections` のセクションの欄の仕組みで、`components` の `Section` と旧い `body` は形の名前を持たない（常に `unspecified`。ADR 0038）。
+使われ方の記録は新しい行の形の名前を `unspecified` 固定で書き、形の名前が許さない塊は数えない（`forbiddenShapeSectionCount` は 0、`forbiddenShapeBlocks` は空。ADR 0043 論点 3）。
+
+過去の行（版13から）の列は残してあり、集計は読み戻せる。セクションの `shapeTag`（`docs/glossary.md`「形の名前」）ごとに許さない塊を照合する表と関数は外した。
 照合は差し戻さず、記録で数えるだけだった（ADR 0028 の「順位違反はまず記録で数える」に倣う）。
 
 ## 図の決定表
