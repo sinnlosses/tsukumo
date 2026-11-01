@@ -61,6 +61,10 @@ export function handbackNoteText(lines: readonly string[], current: LatestWorkPl
 /** `phase_result` を呼んだ委譲先の返却に添える1文。帯はその `phase_result` で動いている。 */
 export const RESULT_CALLED_HANDBACK_LINE = "委譲先は `phase_result` で結果を返した。"
 
+/** 台本（`Workflow`）の完了の知らせに添える1文。台本の中の委譲先が呼んだ `phase_result` で、帯は台本の走るあいだに進んでいる。 */
+export const WORKFLOW_FINISHED_HANDBACK_LINE =
+  "台本が完了した。台本の中の委譲先が `phase_result` で返した結果で、帯は進んでいる。"
+
 /** `phase_result` を呼ばなかった委譲先の返却に添える1文。計画だけの回は呼ばない決まりなので、帯が動いていない事実だけを言う。 */
 export const PHASE_RESULT_MISSING_HANDBACK_LINE =
   "委譲先は `phase_result` を呼ばなかったので、返却では帯は動いていない（計画だけの回なら正しい）。"

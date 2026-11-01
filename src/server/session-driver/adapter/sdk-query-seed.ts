@@ -323,7 +323,7 @@ export function handbackNoteHooks(
               return {}
             }
             await waitForQueuedMessages()
-            if (!input.prompt.trimStart().startsWith(HANDBACK_PROMPT_HEAD)) {
+            if (!HANDBACK_PROMPT_HEADS.some((head) => input.prompt.trimStart().startsWith(head))) {
               if (review.handbackNotePending()) {
                 reportHeadMismatch()
               }
@@ -345,8 +345,8 @@ export function handbackNoteHooks(
   }
 }
 
-/** 委譲先の返却を運ぶメインの入力の頭（Claude Code が返却を包む塊）。 */
-const HANDBACK_PROMPT_HEAD = "<agent-message"
+/** 委譲先の返却（`<agent-message`）と台本の完了の知らせ（`<task-notification`）を運ぶメインの入力の頭（Claude Code が包む塊）。 */
+const HANDBACK_PROMPT_HEADS = ["<agent-message", "<task-notification"]
 
 /**
  * `Stop` フックを1つ登録する。

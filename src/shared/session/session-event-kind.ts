@@ -28,6 +28,8 @@ const SESSION_EVENT_KINDS = {
   "delegate-returned": true,
   "phase-result-called": true,
   "delegate-handed-back": true,
+  "workflow-started": true,
+  "task-notified": true,
   "tool-started": true,
   "tool-finished": true,
   "background-tool-finished": true,

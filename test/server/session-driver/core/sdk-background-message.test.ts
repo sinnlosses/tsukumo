@@ -123,7 +123,7 @@ describe("バックグラウンドタスク（実測で届いた順: background_
     expect(edges.flatMap((message) => toSessionEvents(message, EXPRESSIONS))).toEqual([])
   })
 
-  it("tool_use_id のある task_notification を background-tool-finished にする（状態は区別しない）", () => {
+  it("tool_use_id のある task_notification を background-tool-finished と task-notified にする（状態は区別しない）", () => {
     const notification = (status: string) => ({
       type: "system",
       subtype: "task_notification",
@@ -138,14 +138,15 @@ describe("バックグラウンドタスク（実測で届いた順: background_
       ["completed", "failed", "stopped"].flatMap((status) =>
         toSessionEvents(notification(status), EXPRESSIONS),
       ),
-    ).toEqual([
-      { kind: "background-tool-finished", toolUseId: "toolu_1" },
-      { kind: "background-tool-finished", toolUseId: "toolu_1" },
-      { kind: "background-tool-finished", toolUseId: "toolu_1" },
-    ])
+    ).toEqual(
+      Array.from({ length: 3 }, () => [
+        { kind: "background-tool-finished", toolUseId: "toolu_1" },
+        { kind: "task-notified", taskId: "bash-1" },
+      ]).flat(),
+    )
   })
 
-  it("tool_use_id の無い task_notification はイベントにしない（結び付ける記録が無い）", () => {
+  it("tool_use_id の無い task_notification は task-notified だけにする（ツールに結び付ける記録が無い）", () => {
     const message = {
       type: "system",
       subtype: "task_notification",
@@ -155,7 +156,24 @@ describe("バックグラウンドタスク（実測で届いた順: background_
       summary: "架空の要約",
     }
 
-    expect(toSessionEvents(message, EXPRESSIONS)).toEqual([])
+    expect(toSessionEvents(message, EXPRESSIONS)).toEqual([
+      { kind: "task-notified", taskId: "bash-1" },
+    ])
+  })
+
+  it("task_type が local_workflow の task_started だけを workflow-started にする", () => {
+    const started = (taskType: string) => ({
+      type: "system",
+      subtype: "task_started",
+      task_id: "wf-1",
+      description: "架空の台本",
+      task_type: taskType,
+    })
+
+    expect(toSessionEvents(started("local_workflow"), EXPRESSIONS)).toEqual([
+      { kind: "workflow-started", taskId: "wf-1" },
+    ])
+    expect(toSessionEvents(started("local_agent"), EXPRESSIONS)).toEqual([])
   })
 
   it("知らせのあとの続きのターンの result（origin が task-notification）も turn-finished にする", () => {

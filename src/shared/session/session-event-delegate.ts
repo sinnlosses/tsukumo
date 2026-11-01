@@ -34,6 +34,17 @@ export type DelegateEvent =
    * `delegate` は返した委譲先で、同じ委譲先の `phase-result-called` と対にする。
    */
   | { readonly kind: "delegate-handed-back"; readonly delegate: string }
+  /**
+   * 台本（`Workflow`）の走り出し（SDK の `system` / `task_started` のうち `task_type` が `local_workflow` のもの）。サーバの中だけで流れる。
+   * `CallReview.pass` が `taskId` を覚え、同じ `taskId` の `task-notified` と対にして台本の完了を見分ける（畳み込み・ブラウザには届かない）。
+   */
+  | { readonly kind: "workflow-started"; readonly taskId: string }
+  /**
+   * バックグラウンドタスクの完了・失敗・停止の知らせが届いた（SDK の `system` / `task_notification` の `task_id`）。サーバの中だけで流れる。
+   * `task_notification` に `task_type` は無いので、台本のものかは `workflow-started` の `taskId` との突き合わせで決める。
+   * `CallReview.pass` が受けて捨てる（畳み込み・ブラウザには届かない）。
+   */
+  | { readonly kind: "task-notified"; readonly taskId: string }
   | {
       readonly kind: "tool-started"
       readonly toolUseId: string

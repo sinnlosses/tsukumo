@@ -11,6 +11,16 @@ describe("parsePhaseResult", () => {
       phase: 1,
       count: 2,
       outcome: "finished",
+      summary: "",
+    })
+    expect(
+      parsePhaseResult({ phase: 1, count: 2, outcome: "finished", summary: "架空のまとめ。" }),
+    ).toEqual({ phase: 1, count: 2, outcome: "finished", summary: "架空のまとめ。" })
+    expect(parsePhaseResult({ phase: 1, count: 2, outcome: "finished", summary: " " })).toEqual({
+      phase: 1,
+      count: 2,
+      outcome: "finished",
+      summary: "",
     })
     expect(parsePhaseResult({ phase: 2, count: 2, outcome: "skipped" })).toEqual({
       phase: 2,
@@ -30,6 +40,10 @@ describe("parsePhaseResult", () => {
     ["stopped に理由が無い", { phase: 1, count: 2, outcome: "stopped" }],
     ["stopped の理由が空白だけ", { phase: 1, count: 2, outcome: "stopped", reason: " " }],
     ["stopped でないのに理由がある", { phase: 1, count: 2, outcome: "skipped", reason: "架空" }],
+    [
+      "finished でないのにまとめがある",
+      { phase: 1, count: 2, outcome: "skipped", summary: "架空" },
+    ],
   ])("%s は受け付けない", (_, input) => {
     expect(parsePhaseResult(input)).toBeUndefined()
   })
@@ -37,12 +51,15 @@ describe("parsePhaseResult", () => {
 
 describe("delegateReturnOf", () => {
   it("finished は要約の空の段、skipped は飛ばした段、stopped は理由を要約にした止めた返却にする", () => {
-    expect(delegateReturnOf({ phase: 1, count: 2, outcome: "finished" })).toEqual({
+    expect(delegateReturnOf({ phase: 1, count: 2, outcome: "finished", summary: "" })).toEqual({
       kind: "phase-done",
       phase: 1,
       count: 2,
       summary: "",
     })
+    expect(
+      delegateReturnOf({ phase: 1, count: 2, outcome: "finished", summary: "架空のまとめ。" }),
+    ).toEqual({ kind: "phase-done", phase: 1, count: 2, summary: "架空のまとめ。" })
     expect(delegateReturnOf({ phase: 1, count: 2, outcome: "skipped" })).toEqual({
       kind: "phase-skipped",
       phase: 1,

@@ -11,6 +11,7 @@ import type { WorkPlanReview } from "./work-plan-review.ts"
 export const PHASE_RESULT_TOOL_DESCRIPTION =
   "委譲先として段を1つ終えたとき、SubagentHandback の前に1回呼び、段の結果を返す。" +
   "tsukumo が進み具合の帯を進める。結果の中身（したこと・分かったこと）は返さず、タスクの置き場に書く。" +
+  "帯の中間レポートに出す段のまとめだけは summary に1〜2文で渡せる（渡した段は、メインの work_plan の phaseSummary が要らない）。" +
   "メイン（委譲していない側）は呼ばない（段は work_plan で進める）。"
 
 export const PHASE_RESULT_PHASE_DESCRIPTION =
@@ -24,11 +25,14 @@ export const PHASE_RESULT_OUTCOME_DESCRIPTION =
 export const PHASE_RESULT_REASON_DESCRIPTION =
   "止めた理由を1〜2文で。outcome が stopped のときだけ渡し、ほかでは省く"
 
+export const PHASE_RESULT_SUMMARY_DESCRIPTION =
+  "段のまとめを1〜2文で（帯の中間レポートに出る）。outcome が finished のときだけ渡し、ほかでは省く"
+
 /** 差し戻しの種類ごとの直し方。 */
 const PHASE_RESULT_REJECTIONS = {
   malformed:
     "phase は 1 から count までの整数にし、outcome は finished・skipped・stopped のどれかにする。" +
-    "reason は outcome が stopped のときだけ、空でない文で渡す。直して呼び直すこと。" +
+    "reason は outcome が stopped のときだけ、空でない文で渡す。summary は outcome が finished のときだけ渡す。直して呼び直すこと。" +
     "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。",
   main:
     "phase_result は委譲先が段の結果を返すツールで、メインは呼ばない。" +

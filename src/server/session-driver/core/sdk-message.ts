@@ -65,10 +65,11 @@ import { stepUsageEvents, tokenUsageEvents } from "./sdk-usage-message.ts"
  *   `compact_metadata`（`trigger` / `pre_tokens` / `post_tokens` / `duration_ms`）は画面に出さないので運ばない
  * - `system` / `background_tasks_changed` は `background-tasks-changed` にする。`ambient` が true のもの（活動でないもの）は落とす
  * - `task_progress` は `task_id` と空白でない `summary`（`agentProgressSummaries` で委譲先に作らせる進みの1行）があるものだけを `delegate-progress` にする。
- *   `summary` の無い `task_progress` と、`task_started` / `task_updated` は変換しない。
+ *   `summary` の無い `task_progress` と、`task_updated` は変換しない。`task_started` は `task_type` が `local_workflow` のものだけ `workflow-started` にする。
  *   バックグラウンドタスクが動いているかは `background_tasks_changed`（顔ぶれ全体を毎回運ぶ水準の知らせ）だけで分かる。
  *   始まり・終わりの対を数えると、取りこぼしで「動いている」が居残る（SDK の型定義がそう勧めている）
  * - `task_notification` は顔ぶれには使わず、`tool_use_id` があるときだけ `background-tool-finished` にする（`tool_use_id` は Bash の `tool_use` の id と一致する。実測）。
+ *   `task_id` があれば `task-notified` も出す（`task_notification` に `task_type` は無いので、台本の完了かは `workflow-started` の `taskId` との突き合わせで `CallReview` が決める）。
  *   知らせのあとに claude が依頼なしで始める続きのターンは、ここではなく `withSelfStartedTurns` が `init` の届き方から起こす
  * - メインの `assistant` の `message.model` と `init` の `model` / `permissionMode` は、`setting-confirmed`（見届けた合図）にも写す。
  *   `<synthetic>` のような `<` で始まる値は本物のモデル名ではないので出さない
@@ -106,8 +107,18 @@ export function toSessionEvents(
         return backgroundTaskEvents(message.tasks)
       }
       if (message.subtype === "task_notification") {
-        return typeof message.tool_use_id === "string"
-          ? [{ kind: "background-tool-finished", toolUseId: message.tool_use_id }]
+        return [
+          ...(typeof message.tool_use_id === "string"
+            ? [{ kind: "background-tool-finished", toolUseId: message.tool_use_id } as const]
+            : []),
+          ...(typeof message.task_id === "string"
+            ? [{ kind: "task-notified", taskId: message.task_id } as const]
+            : []),
+        ]
+      }
+      if (message.subtype === "task_started") {
+        return message.task_type === "local_workflow" && typeof message.task_id === "string"
+          ? [{ kind: "workflow-started", taskId: message.task_id }]
           : []
       }
       if (message.subtype === "task_progress") {

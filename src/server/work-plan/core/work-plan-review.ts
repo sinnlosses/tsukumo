@@ -6,6 +6,7 @@
 //
 // 判定の窓口は handler だけ（`WorkPlanReview.judge`・`WorkPlanReview.judgeResult`）。
 // 委譲先の返却（`delegate-handed-back`）は本文を読まず、委譲ゲートと注記（`phase-result-called` を受けた委譲先かどうかで文が変わる）だけを立て、イベントは捨てる。
+// 台本（`Workflow`）の完了の知らせ（`workflow-started` で覚えた `taskId` の `task-notified`）も、返却と同じく委譲ゲートと注記を立てて捨てる。
 // 覚えるワークプランは `nextWorkPlan` で畳んだ結果だけで、忘れる区切りも返却と `report` での進め方もここでは決めない。
 //
 // 差し戻したあと同じターンで受け付けた呼び出しが無いことも覚え、`report` の差し戻し（`ReportReview`）が `standing` で読む。
@@ -39,6 +40,7 @@ import {
   handbackNoteText,
   PHASE_RESULT_MISSING_HANDBACK_LINE,
   RESULT_CALLED_HANDBACK_LINE,
+  WORKFLOW_FINISHED_HANDBACK_LINE,
 } from "./band-position.ts"
 import { delegateReturnOf, parsePhaseResult } from "./phase-result.ts"
 
@@ -109,10 +111,14 @@ export function createWorkPlanReview(): WorkPlanReview {
   // 直近の受け付けで `returnedCount` から確定した範囲。`judge` を通らない組み直しでは立たない。
   let confirmedRange: DelegatedRange | undefined = undefined
   let gateRaised = false
+  // 直近の受け付けのあとに、まとめ（`summary`）つきの `phase_result` が帯を動かしたか。
+  let summaryReturned = false
   let handbackLines: readonly string[] = []
   // `phase_result` の `skipped` で付いた飛ばした段の名前と、`phase_result` を呼んで次の返却をまだ返していない委譲先。
   let resultMarks: readonly string[] = []
   let resultCallers: ReadonlySet<string> = new Set()
+  // 走り出して、完了の知らせがまだ届いていない台本（`Workflow`）の `task_id`。
+  let workflowTasks: ReadonlySet<string> = new Set()
 
   /** `plan` の飛ばした段に、`phase_result` で付いた印のうち `plan` で済んでいる段を足す。 */
   const withResultMarks = (plan: WorkPlan): WorkPlan => {
@@ -165,7 +171,11 @@ export function createWorkPlanReview(): WorkPlanReview {
     if (plan === undefined) {
       return { kind: "malformed" }
     }
-    if (isMidWay(plan) && plan.phaseSummary === "") {
+    if (
+      isMidWay(plan) &&
+      plan.phaseSummary === "" &&
+      !writesReturnedSummary(accepted, plan, summaryReturned)
+    ) {
       return { kind: "summary-missing" }
     }
     if (accepted.kind === "planned" && skipsPhase(accepted, plan)) {
@@ -180,6 +190,7 @@ export function createWorkPlanReview(): WorkPlanReview {
     confirmedRange = plan.delegatedRange
     accepted = nextWorkPlan(accepted, { kind: "work-plan", ...withResultMarks(plan) })
     gateRaised = false
+    summaryReturned = false
     handbackLines = []
     return { kind: "accepted", plan }
   }
@@ -207,6 +218,7 @@ export function createWorkPlanReview(): WorkPlanReview {
         return { kind: "accepted", moved: false, handback, plan: accepted }
       }
       accepted = nextWorkPlan(accepted, { kind: "delegate-returned", handback })
+      summaryReturned = handback.kind === "phase-done" && handback.summary !== ""
       if (handback.kind === "phase-skipped" && !resultMarks.includes(returned.phase.name)) {
         resultMarks = [...resultMarks, returned.phase.name]
       }
@@ -273,10 +285,26 @@ export function createWorkPlanReview(): WorkPlanReview {
           }
           return []
         }
+        case "workflow-started":
+          workflowTasks = new Set([...workflowTasks, event.taskId])
+          return []
+        case "task-notified": {
+          if (!workflowTasks.has(event.taskId)) {
+            return []
+          }
+          workflowTasks = new Set([...workflowTasks].filter((taskId) => taskId !== event.taskId))
+          if (accepted.kind === "planned") {
+            gateRaised = true
+            handbackLines = [...handbackLines, WORKFLOW_FINISHED_HANDBACK_LINE]
+          }
+          return []
+        }
         case "request":
           accepted = nextWorkPlan(accepted, event)
+          workflowTasks = new Set()
           returnedCount = undefined
           gateRaised = false
+          summaryReturned = false
           handbackLines = []
           unansweredRejection = false
           resultMarks = []
@@ -285,6 +313,7 @@ export function createWorkPlanReview(): WorkPlanReview {
         case "turn-started":
           returnedCount = undefined
           gateRaised = false
+          summaryReturned = false
           handbackLines = []
           unansweredRejection = false
           return [event]
@@ -302,6 +331,23 @@ export function createWorkPlanReview(): WorkPlanReview {
       }
     },
   }
+}
+
+/**
+ * 返却の `summary` がまとめを運んだ段に、メインが同じ位置で写す `work_plan` か。
+ * 当たれば、メインが `phaseSummary` を渡さなくても途中の呼び出しを差し戻さない（渡してあっても、中間レポートに出るのは返却のまとめ）。
+ */
+function writesReturnedSummary(
+  previous: LatestWorkPlan,
+  next: WorkPlan,
+  summaryReturned: boolean,
+): boolean {
+  return (
+    summaryReturned &&
+    previous.kind === "planned" &&
+    isDeepEqual(previous.phases, next.phases) &&
+    finishedPhaseCount(previous) === finishedPhaseCount(next)
+  )
 }
 
 function skipsPhase(previous: WorkPlan, next: WorkPlan): boolean {

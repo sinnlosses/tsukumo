@@ -9,12 +9,18 @@ import { isBlankText } from "../../../shared/utils/blank-text.ts"
 /** 段の結果。`finished` は済ませた、`skipped` は飛ばした、`stopped` は途中で止めた。 */
 const PHASE_OUTCOMES = ["finished", "skipped", "stopped"] as const
 
-/** 引数を読んだ形。止めた理由は `stopped` だけが持つ。 */
+/** 引数を読んだ形。段のまとめは `finished` だけが、止めた理由は `stopped` だけが持つ（まとめを渡さなければ空の文字列）。 */
 export type PhaseResult =
   | {
       readonly phase: number
       readonly count: number
-      readonly outcome: "finished" | "skipped"
+      readonly outcome: "skipped"
+    }
+  | {
+      readonly phase: number
+      readonly count: number
+      readonly outcome: "finished"
+      readonly summary: string
     }
   | {
       readonly phase: number
@@ -32,11 +38,12 @@ export const phaseResultShape = {
   count: z.number().int().min(1),
   outcome: z.enum(PHASE_OUTCOMES),
   reason: z.string().optional(),
+  summary: z.string().optional(),
 }
 
 /**
  * `phase_result` の引数の形の正典。
- * `phase` が `count` を超える・`stopped` に空でない `reason` が無い・`stopped` でないのに `reason` がある、のどれかなら通らない。
+ * `phase` が `count` を超える・`stopped` に空でない `reason` が無い・`stopped` でないのに `reason` がある・`finished` でないのに `summary` がある、のどれかなら通らない。
  */
 const phaseResultSchema = z.object(phaseResultShape).superRefine((value, context) => {
   const reject = (path: string): void => {
@@ -52,6 +59,9 @@ const phaseResultSchema = z.object(phaseResultShape).superRefine((value, context
   ) {
     reject("reason")
   }
+  if (value.outcome !== "finished" && value.summary !== undefined) {
+    reject("summary")
+  }
 })
 
 /**
@@ -63,15 +73,27 @@ export function parsePhaseResult(value: unknown): PhaseResult | undefined {
   if (!parsed.success) {
     return undefined
   }
-  const { phase, count, outcome, reason = "" } = parsed.data
-  return outcome === "stopped" ? { phase, count, outcome, reason } : { phase, count, outcome }
+  const { phase, count, outcome, reason = "", summary = "" } = parsed.data
+  switch (outcome) {
+    case "stopped":
+      return { phase, count, outcome, reason }
+    case "finished":
+      return { phase, count, outcome, summary: isBlankText(summary) ? "" : summary }
+    case "skipped":
+      return { phase, count, outcome }
+  }
 }
 
-/** 段の結果を、委譲の返却の形にする。`finished` は要約の空の `phase-done`。 */
+/** 段の結果を、委譲の返却の形にする。`finished` は渡されたまとめを要約にした `phase-done`（無ければ空）。 */
 export function delegateReturnOf(result: PhaseResult): DelegateReturn {
   switch (result.outcome) {
     case "finished":
-      return { kind: "phase-done", phase: result.phase, count: result.count, summary: "" }
+      return {
+        kind: "phase-done",
+        phase: result.phase,
+        count: result.count,
+        summary: result.summary,
+      }
     case "skipped":
       return { kind: "phase-skipped", phase: result.phase, count: result.count }
     case "stopped":

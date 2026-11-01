@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 import {
   PHASE_RESULT_MISSING_HANDBACK_LINE,
   RESULT_CALLED_HANDBACK_LINE,
+  WORKFLOW_FINISHED_HANDBACK_LINE,
 } from "../../../../src/server/work-plan/core/band-position.ts"
 import { createWorkPlanReview } from "../../../../src/server/work-plan/core/work-plan-review.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
@@ -36,6 +37,47 @@ describe("WorkPlanReview の委譲の返却", () => {
     expect(review.standing()).toEqual({ kind: "planned", remaining: 3 })
     expect(review.judge(ranged(2)).kind).toBe("summary-missing")
     expect(review.judge(ranged(2, SUMMARY)).kind).toBe("accepted")
+  })
+
+  it("台本の完了の知らせで委譲ゲートと注記が立ち、work_plan で下りる", () => {
+    const review = started()
+
+    review.pass({ kind: "workflow-started", taskId: "wf-1" })
+    expect(review.gateRaised()).toBe(false)
+    review.pass({ kind: "task-notified", taskId: "wf-1" })
+
+    expect(review.gateRaised()).toBe(true)
+    expect(review.takeHandbackNote()).toContain(WORKFLOW_FINISHED_HANDBACK_LINE)
+    review.judge(ranged(1, SUMMARY))
+    expect(review.gateRaised()).toBe(false)
+  })
+
+  it("台本でないタスクの完了の知らせと、走り出しを見ていない知らせは委譲ゲートを立てない", () => {
+    const review = started()
+
+    review.pass({ kind: "task-notified", taskId: "bash-1" })
+    review.pass({ kind: "workflow-started", taskId: "wf-1" })
+    review.pass({ kind: "task-notified", taskId: "wf-2" })
+
+    expect(review.gateRaised()).toBe(false)
+    expect(review.handbackNotePending()).toBe(false)
+  })
+
+  it("まとめつきの phase_result で済んだ段は、phaseSummary の無い work_plan で写せる", () => {
+    const review = started()
+
+    review.judgeResult({ phase: 1, count: 2, outcome: "finished", summary: "架空のまとめ。" })
+
+    expect(review.judge(ranged(2)).kind).toBe("accepted")
+    expect(review.judge(ranged(2)).kind).toBe("summary-missing")
+  })
+
+  it("まとめの無い phase_result で済んだ段は、phaseSummary の無い work_plan を差し戻す", () => {
+    const review = started()
+
+    review.judgeResult({ phase: 1, count: 2, outcome: "finished" })
+
+    expect(review.judge(ranged(2)).kind).toBe("summary-missing")
   })
 
   it("並列の phase_result が続けて届いても、1回の work_plan で写せる", () => {

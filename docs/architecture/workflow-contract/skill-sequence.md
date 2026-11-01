@@ -38,7 +38,12 @@ tsukumo が並びに課す縛りは「1つ以上」だけで、送り出しの�
 
 - **メインで走る段**: `finished`・`skipped` は `work_plan` で次の位置へ進め、`phaseSummary` に段のまとめ（`skipped` なら飛ばしたわけ）を書く。
   `skipped` は、その段の名前を `skippedPhases` に入れる。`stopped` は `report` の `workPlanClosing` に `stopped` を渡す
-- **委譲先で走る段**: 委譲先が `SubagentHandback` の前に `phase_result` を呼ぶ
+- **委譲先で走る段**: 委譲先が `SubagentHandback` の前に `phase_result` を呼ぶ。段のまとめは `finished` の任意の欄 `summary`（1〜2文）で渡せて、渡した段はメインの `phaseSummary` が要らない
+  （結果の中身は Beads に書く決まりは変わらず、`summary` は帯の中間レポートに出す1〜2文だけ）
+
+**並びの値は、スキルの全名のほかに、台本（plugin の `workflows/` の `Workflow`）の段の名前にもなり得る。**
+台本は並びのスキルを呼ぶ代わりに、台本の中の委譲先に段ごとの `phase_result` を呼ばせて帯を進め、完了の知らせでも委譲ゲートが立つ（`docs/architecture/workflow-contract/port-and-return.md`「委譲の返却」）。
+tsukumo は台本の段の名前や委譲先の数を読まない。
 
 飛ばした段の印の決まり（どちらの口でも、印の付いた段は帯で同じに描く）:
 
@@ -77,11 +82,12 @@ tsukumo の `work_plan` が見るのは、呼び出しの中と呼び出しど�
   受け付けた呼び出しの `count` は「返却で知らされた段の数」として、後の `work_plan` の範囲の段の数の確定に使う
 - 帯を動かす判定は handler が行い、帯を動かしたときだけ、結果を読んだ形の返却のイベントを1件流す（画面の帯はそれで動く）
 - 戻り値は `work_plan` と同じく `ok` の次の行に帯の今の段（「帯の今の段は 本 2/2 段の名前。…」）。帯を動かさなかったときは、その行の頭に「帯は動いていない。」を付ける
-- `phase_result` は要約を持たない。返却で済んだ段のまとめは、返却のあとメインが同じ位置で呼ぶ `work_plan` の `phaseSummary` に書く（`phase_result` で進んだ位置でも省けない）。
+- `phase_result` の `finished` が `summary` を持てば、その文が段のまとめになり、メインの `work_plan` は `phaseSummary` を要らない。
+  `summary` を持たない `phase_result` で済んだ段のまとめは、返却のあとメインが同じ位置で呼ぶ `work_plan` の `phaseSummary` に書く（省けない）。
   まとめの空のまま返却で済んだ段は**まとめ待ちの段**になり、次に受け付けた `work_plan` が `phaseSummary` を持ち、その段がまだ済んでいれば、そのまとめをその段の中間レポートにする。
   まとめ待ちの段は1つだけ覚えるので、メインの `work_plan` の前に `phase_result` が2件続けて段を済ませると（並列の段）、先の段はまとめ待ちから外れ、中間レポートが出ない
 - 計画だけの回は `phase_result` を呼ばない（計画だけの回の返却で範囲の差し戻しは掛からない）。段の数はメインが Beads から読んで `delegatedRange` の `count` に渡す
-- 委譲ゲートは今までどおり `SubagentHandback` の返却で立つ。`phase_result` は許可モードによらず呼べるので、`<task-notification>` で返る委譲でも帯は進む（委譲ゲートは立たない）
+- 委譲ゲートは `SubagentHandback` の返却と、台本（`Workflow`）の完了の知らせで立つ。`phase_result` は許可モードによらず呼べるので、`<task-notification>` で返る委譲でも帯は進む（台本でない委譲の完了の知らせでは委譲ゲートは立たない）
 
 ## してよいこと
 

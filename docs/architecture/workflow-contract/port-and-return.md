@@ -75,22 +75,27 @@ tsukumo は帯の段の名前を見ず、欄があるときだけ描く（段の
   （1本道なら `current` を1つ進め、並列の段の中なら `finishedInGroup` に足す。並列の段の最後に残った段なら `current` を進めて空にする）
 - 一足飛び（段 `n` が今の段の集合より先）・もう済んだ段・`stopped`・範囲を宣言していない（`pending` を含む）依頼・`count` が範囲の段の数と違う呼び出しは帯を動かさない
 - `phase_result` では帯を全部済みにしない。最後の段を閉じるのは今までどおり `report` の `workPlanClosing`
-- `phase_result` で進んだあとにメインが同じ位置を渡す `work_plan` は、段のまとめ `phaseSummary` が要る（`phase_result` は要約を持たない。`docs/architecture/workflow-contract/skill-sequence.md`「スキルの契約」）
+- **`phase_result` の `finished` は、任意の欄 `summary`（段のまとめを1〜2文）を持てる。** `summary` のある `finished` で済んだ段は、その文が帯の中間レポートに出て、メインが同じ位置を渡す `work_plan` は `phaseSummary` を要らない。
+  メインが `phaseSummary` を添えても、その段の中間レポートに出るのは `summary`（段は既に済んでいて、メインの文では出し直さない）。`summary` を持たない `finished` で済んだ段は、メインの `work_plan` に `phaseSummary` が要る。
+  `summary` は `skipped`・`stopped` には付けられない（`stopped` の理由は `reason`）。台本のあいだメインは返却を受けないので、段ごとの中間レポートは台本の中の委譲先が `summary` で書く
 
 委譲ゲート:
 
 - **効く範囲**: 仕事のセッション（`work_plan` が載る）で、同じ依頼にメインの受け付けたワークプランがあるときだけ。雑談のセッションの委譲と、
   ワークプランを渡していない依頼（`work_plan` を呼ばない依頼）の返却では立てない。`delegatedRange` の宣言は条件にしない
-- **返却が届いたら印を立て、メインの `work_plan` が受け付けられたら下ろす。** 返却の中身は見ず、届いた事実だけで立てる
-  （`phase_result` を呼ばなかった返却・やり直し・`stopped` でも立つ）。返却の数は数えず、続けて届いても `work_plan` 1回で下りる。差し戻された `work_plan` では下りない
+- **返却か台本（`Workflow`）の完了の知らせが届いたら印を立て、メインの `work_plan` が受け付けられたら下ろす。** 中身は見ず、届いた事実だけで立てる
+  （`phase_result` を呼ばなかった返却・やり直し・`stopped` でも立つ）。台本の完了の知らせは、`task_started` の `task_type` が `local_workflow` だった `task_id` と同じ `task_id` の `task_notification`
+  （完了・失敗・停止を区別しない）で、`task_notification` 自体に `task_type` は無いので走り出しの `task_id` を覚えて突き合わせる。走り出しを見ていない知らせと台本でないタスクの知らせでは立てない。台本の中の委譲先が `phase_result` で進めた帯は、完了の前に既に進んでいる。返却の数は数えず、続けて届いても `work_plan` 1回で下りる。差し戻された `work_plan` では下りない
 - **印が立っているあいだ、メインの作業のツールを拒む。** 通すのは読み取りのツール（`Read`・`Grep`・`Glob`・`ToolSearch`）と
   tsukumo の MCP ツール（`speak`・`work_plan`・`report` など）。委譲先のツールは対象にしない。
   拒否文の末尾に、返却で進んだあとの帯の位置（`work_plan` の戻り値と同じ文）を足す
 - **返却を運ぶメインの入力に、返却の本文とは別の tsukumo の注記を1回だけ添える。** 注記は返却ごとに「`phase_result` で結果を返した」か「`phase_result` を呼ばなかったので帯は動いていない」かを言い、末尾に次の帯の段と
   群ごとの数え方と、本の番号が委譲先の段と同じであることと、セリフで番号を言うのは本の段だけなこと（`work_plan` の戻り値と同じ文）を付ける。返却が続けて届けば、まだ添えていない返却の文を重ねる。
   受け付けた `work_plan`・次の依頼で溜めた注記を捨て、組み直しでは足さない。
-  口は `UserPromptSubmit` のフックで、返却の入力（`<agent-message` で始まる）はメインが手すきでもターンの途中でもここを1回通る
-- 印と注記の元は、委譲先の `SubagentHandback` の呼び出し（`delegate-handed-back`）と `phase_result` の呼び出し（`phase-result-called`）で、委譲先のメッセージのうちこの2つだけを `WorkPlanReview` に通す。
+  台本の完了の知らせの注記は「台本が完了した。台本の中の委譲先が `phase_result` で返した結果で、帯は進んでいる。」と言い、同じ帯の位置の文を末尾に付ける。
+  口は `UserPromptSubmit` のフックで、返却の入力（`<agent-message` で始まる）と台本の完了の入力（`<task-notification` で始まる）はメインが手すきでもターンの途中でもここを1回通る
+- 印と注記の元は、委譲先の `SubagentHandback` の呼び出し（`delegate-handed-back`）と `phase_result` の呼び出し（`phase-result-called`）、台本の走り出し（`workflow-started`）と完了の知らせ（`task-notified`）。
+  委譲先のメッセージのうち前の2つだけを `WorkPlanReview` に通し、あとの2つはメインの `system` メッセージから作る。
   委譲先が `SubagentHandback` で返すのは、許可モードが `auto` で auto に対応するモデルのときだけで、それ以外の返却（`<task-notification>`）では印も注記も立たない
 - 差し戻しの返却を受けて同じ段をやり直させるときは、同じ位置のまま `work_plan` を呼べば下りる
 - 印は組み直しでは戻さない
