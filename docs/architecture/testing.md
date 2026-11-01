@@ -20,7 +20,7 @@
 | `docs/architecture/testing/e2e-artifact-and-expectation.md`       | E2E が判定に使う2つの成果物（DOM の構造・WebSocket のメッセージの列）の形、時計の固定、期待値の置き場所と比べ方、写す部分木の範囲、比べる成果物の選び方。                                      |
 | `docs/architecture/testing/e2e-flake-free-writing.md`             | 過去の揺れと「揺れずに間違った期待値」から取り出した、E2E を書くときの10の条。                                                                                                                 |
 | `docs/architecture/testing/e2e-run.md`                            | E2E のランナーとブラウザ、置き場所、`pnpm run check` の段と選び方、起こし方と後始末、場面の流し方、負荷の抑え方。                                                                              |
-| `docs/architecture/testing/e2e-scenario-conversation-layout.md`   | E2E のシナリオの一覧のうち、お伺い・進み具合の帯・バックグラウンドタスク・委譲中の脇の話・会話の画面の段と局面のシナリオの行。                                                                 |
+| `docs/architecture/testing/e2e-scenario-conversation-layout.md`   | E2E のシナリオの一覧のうち、お伺い・進み具合のプログレスバー・バックグラウンドタスク・委譲中の脇の話・会話の画面の段と局面のシナリオの行。                                                     |
 | `docs/architecture/testing/e2e-scenario-conversation-state.md`    | E2E のシナリオの一覧のうち、押す的と字・始め方の一覧・失敗の塊・会話が終わったあとの入力欄・読み上げとフォーカス・トークンの画面の見直し・タスクの作業のレポートの結論部のシナリオの行。       |
 | `docs/architecture/testing/e2e-scenario-task-chat-and-setting.md` | E2E のシナリオの一覧のうち、タスクの一覧とモーダル・雑談・覚えていること・セッションの切り替え・操作子・歯車の設定・途中のちらつきのシナリオの行と、まだ無いシナリオ。                         |
 | `docs/architecture/testing/e2e-scenario-turn-and-input.md`        | E2E のシナリオの一覧の前置き（1本目と2本目の条件・表の読み方）と、ターン・入力欄・吹き出し・反応・レポート・狭い画面のシナリオの行。                                                           |

@@ -38,11 +38,11 @@ describe("CallReview の委譲ゲートの印", () => {
 
   it("返却は帯の位置を動かさない", () => {
     const review = started()
-    expect(review.bandPosition()).toContain("帯の今の段は 本 1/2 架空の実装A。")
+    expect(review.bandPosition()).toContain("プログレスバーの今の段は 本 1/2 架空の実装A。")
 
     review.pass(handback())
 
-    expect(review.bandPosition()).toContain("帯の今の段は 本 1/2 架空の実装A。")
+    expect(review.bandPosition()).toContain("プログレスバーの今の段は 本 1/2 架空の実装A。")
   })
 
   it("ワークプランが無ければ帯の位置は空", () => {

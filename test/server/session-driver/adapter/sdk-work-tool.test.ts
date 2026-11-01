@@ -112,7 +112,7 @@ describe("phase_result（委譲先の段の結果）", () => {
     })
 
     expect(reply.isError).toBe(false)
-    expect(reply.text).toMatch(/^ok\n帯の今の段は 本 2\/2 架空の実装B。/u)
+    expect(reply.text).toMatch(/^ok\nプログレスバーの今の段は 本 2\/2 架空の実装B。/u)
     expect(events).toEqual([
       {
         kind: "delegate-returned",
@@ -133,7 +133,9 @@ describe("phase_result（委譲先の段の結果）", () => {
       reason: "架空の理由。",
     })
 
-    expect(reply.text).toMatch(/^ok\n帯は動いていない。帯の今の段は 本 1\/2 架空の実装A。/u)
+    expect(reply.text).toMatch(
+      /^ok\nプログレスバーは動いていない。プログレスバーの今の段は 本 1\/2 架空の実装A。/u,
+    )
     expect(events).toEqual([])
   })
 
@@ -164,7 +166,7 @@ describe("work_plan（ワークプラン）", () => {
     })
 
     expect(reply).toEqual({
-      text: "ok\n帯の今の段は 2/2 架空の段B。",
+      text: "ok\nプログレスバーの今の段は 2/2 架空の段B。",
       isError: false,
       endsTurn: false,
     })
@@ -179,7 +181,7 @@ describe("work_plan（ワークプラン）", () => {
     })
 
     expect(reply.text).toBe(
-      "ok\n帯の今の段は 本 1/2 架空の実装A。帯は範囲の前（前）・範囲（本）・範囲の後ろ（後）の群ごとに1から数え、本の番号は委譲先の段の番号と同じ。セリフで番号を言うのは本の段だけで、前・後の段は名前で言う。\n委譲先の段の範囲: first=1 count=2",
+      "ok\nプログレスバーの今の段は 本 1/2 架空の実装A。プログレスバーは範囲の前（前）・範囲（本）・範囲の後ろ（後）の群ごとに1から数え、本の番号は委譲先の段の番号と同じ。セリフで番号を言うのは本の段だけで、前・後の段は名前で言う。\n委譲先の段の範囲: first=1 count=2",
     )
   })
 
@@ -191,7 +193,7 @@ describe("work_plan（ワークプラン）", () => {
     })
 
     expect(reply.text).toBe(
-      "ok\n帯の今の段は 前 1/1 架空の計画。範囲の先頭から後ろの段は番号を持たない（委譲先の段の数が決まるまで）。",
+      "ok\nプログレスバーの今の段は 前 1/1 架空の計画。範囲の先頭から後ろの段は番号を持たない（委譲先の段の数が決まるまで）。",
     )
   })
 
@@ -208,8 +210,8 @@ describe("work_plan（ワークプラン）", () => {
       delegatedRange: { first: 2, count: 2 },
     })
 
-    expect(before.text).toContain("帯の今の段は 前 1/1 架空の計画。")
-    expect(after.text).toContain("帯の今の段は 前 1/2 架空の計画。")
+    expect(before.text).toContain("プログレスバーの今の段は 前 1/1 架空の計画。")
+    expect(after.text).toContain("プログレスバーの今の段は 前 1/2 架空の計画。")
   })
 
   it("途中の位置の呼び出しは、段のまとめがあれば通し、無ければ差し戻す", async () => {

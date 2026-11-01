@@ -101,7 +101,7 @@ export const WORK_PLAN_ENTRIES: readonly CatalogEntry[] = [
   {
     name: "delegated-range",
     scene: "delegated-range",
-    label: "委譲中の帯（範囲の中の段が今）",
+    label: "委譲中のプログレスバー（範囲の中の段が今）",
     homeSetup: { kind: "default" },
     workspaceSetup: { kind: "repository" },
     prepare: [],
@@ -111,7 +111,7 @@ export const WORK_PLAN_ENTRIES: readonly CatalogEntry[] = [
   {
     name: "delegated-range-outside",
     scene: "delegated-range-outside",
-    label: "委譲中の帯（範囲の外の段が今）",
+    label: "委譲中のプログレスバー（範囲の外の段が今）",
     homeSetup: { kind: "default" },
     workspaceSetup: { kind: "repository" },
     prepare: [],
@@ -121,7 +121,7 @@ export const WORK_PLAN_ENTRIES: readonly CatalogEntry[] = [
   {
     name: "delegated-range-trail",
     scene: "delegated-range-trail",
-    label: "委譲中の帯（範囲の後ろの段が今）",
+    label: "委譲中のプログレスバー（範囲の後ろの段が今）",
     homeSetup: { kind: "default" },
     workspaceSetup: { kind: "repository" },
     prepare: [],

@@ -111,7 +111,9 @@ describe("preToolUseHooks（Agent を背景に固定し、委譲ゲートで作�
       hookSpecificOutput: {
         hookEventName: "PreToolUse",
         permissionDecision: "deny",
-        permissionDecisionReason: expect.stringContaining("帯の今の段は 本 1/2 架空の段A。"),
+        permissionDecisionReason: expect.stringContaining(
+          "プログレスバーの今の段は 本 1/2 架空の段A。",
+        ),
       },
     })
     review.judgeWorkPlan({ ...plan, current: 1, phaseSummary: "架空のまとめ。" })

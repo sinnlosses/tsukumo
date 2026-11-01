@@ -34,7 +34,7 @@
   - `text` の塊の説明には「結論に効く数が3つ以上並び前後か推移を見せるなら `stats`」を置く（地の文から数を抜き出して
     タイルにするのは再構成なので、tsukumo は組み替えない）
 - **段（フェーズ）の位置は `report` の塊では見せない**（`progress` の塊は直近 28 日で使われた記録が 0 回で外した。段の位置は
-  進み具合の帯が持つ。旧い記録の `progress` は読み戻しで知らない種類の塊として落とす）
+  進み具合のプログレスバーが持つ。旧い記録の `progress` は読み戻しで知らない種類の塊として落とす）
 - **候補の比較は `options` の塊で見せる**（`docs/research/report-block-richness.md` 3章。欄は判定の事実だけ）。
   触ったファイルの一覧は書き手の塊ではなく、tsukumo が git の差分から出す（`docs/architecture/display/conclusion.md`）
   - `options`: `title` と、候補（`name` / `verdict`〔`adopt` / `consider` / `reject`〕/ `reason`）の並び。

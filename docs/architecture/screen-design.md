@@ -52,4 +52,4 @@
 | `docs/architecture/screen-design/scene-behavior.md`                    | 場面ごとのキャラビューの吹き出し・表情・動きの早見表と、13.13 の採らなかった案。                                                                                                    |
 | `docs/architecture/screen-design/setting-place.md`                     | 13.6 設定の置き場所の前半。                                                                                                                                                         |
 | `docs/architecture/screen-design/token-usage-review.md`                | トークン消費の画面の「減らし方を見てもらう」区画の文言・配置・押せない条件・経過時間の書式と、結果の場面。                                                                          |
-| `docs/architecture/screen-design/work-strip.md`                        | 会話の画面のメインビューの札の頭に固定する進み具合の帯（状態のチップ・段の丸・段の吹き出し・走っている手順・手順の口）。                                                            |
+| `docs/architecture/screen-design/work-strip.md`                        | 会話の画面のメインビューの札の頭に固定する進み具合のプログレスバー（状態のチップ・段の丸・段の吹き出し・走っている手順・手順の口）。                                                |

@@ -3,20 +3,20 @@
 ステータス: **正典**。入口は `docs/glossary.md`（用語集の方針と、子のファイルの一覧）。
 
 責務: サブエージェントへの委譲の用語（委譲の返却・`phase_result` ツール・飛ばした段・委譲先の段の範囲・委譲ゲート・進みの差し込み）を持つ。
-読む時: 委譲とその返却・帯の動かし方を指す語の表記に迷ったとき。
+読む時: 委譲とその返却・プログレスバーの動かし方を指す語の表記に迷ったとき。
 直す時: この範囲の用語を足す・識別子を変えるとき（用語はこの子に足し、親には足さない）。
 
 ## 会話の駆動
 
 ### 委譲の返却
 
-- **英語識別子**: `DelegateReturn`（**`phase_result` ツール**の結果を読んだ形。`skipped` は `phase-skipped`）、`delegate-returned`（`phase_result` が帯を動かしたときの内部のイベント）、`delegate-handed-back`（`SubagentHandback` が届いた事実を運ぶ、サーバの中だけのイベント）
+- **英語識別子**: `DelegateReturn`（**`phase_result` ツール**の結果を読んだ形。`skipped` は `phase-skipped`）、`delegate-returned`（`phase_result` がプログレスバーを動かしたときの内部のイベント）、`delegate-handed-back`（`SubagentHandback` が届いた事実を運ぶ、サーバの中だけのイベント）
 - **定義**: 背景で委譲したサブエージェントがメインへ返す報告。委譲先が `phase_result` で段の結果を返し、`SubagentHandback` の本文は読まない。
-  `phase` に当たる帯の段が今の段の集合に入っているときだけ、その段を済ませる（一足飛び・もう済んだ段・範囲の無い依頼・`count` が宣言した**委譲先の段の範囲**の段の数と違う呼び出しでは帯は動かない）
+  `phase` に当たるプログレスバーの段が今の段の集合に入っているときだけ、その段を済ませる（一足飛び・もう済んだ段・範囲の無い依頼・`count` が宣言した**委譲先の段の範囲**の段の数と違う呼び出しではプログレスバーは動かない）
 - **注記**: 規則の正典は `docs/architecture/workflow-contract.md`「委譲の返却」で、スキルの依頼文は参照するだけ
   （`docs/architecture/adr/0024-no-skill-dependency.md`）。
   ワークプランを渡した仕事の依頼では、返却が届いたらメインが `work_plan` を呼ぶまで作業のツールを拒む委譲ゲートが立つ。
-  委譲先が途中で `SendMessage({ to: "main" })` で送る1行は吹き出しの材料で、帯を動かさない
+  委譲先が途中で `SendMessage({ to: "main" })` で送る1行は吹き出しの材料で、プログレスバーを動かさない
   （`docs/architecture/display.md`「ワークプラン」）
 - **避ける言い方**: 委譲の合図（途中で送る1行と紛れる）、進捗報告・状況報告（`report` と紛れる）
 
@@ -25,14 +25,14 @@
 - **英語識別子**: `phase_result`（ツール名そのもの）、`PhaseResult`（引数を読んだ形）、`phase-result-called`（委譲先の呼び出しを運ぶサーバの中だけのイベント）
 - **定義**: `speak` と同じプロセス内の MCP サーバで提供するツール。委譲先が段ごとに1回呼び、段の結果を返す構造化した返却。
   引数は `phase`（委譲先の段の番号）・`count`（委譲先の段の数）・`outcome`（`finished`・`skipped`・`stopped`）・`reason`（`stopped` のときだけ）・`summary`（`finished` のときだけ。任意）。
-  受け付けた呼び出しは、委譲先の段の範囲の中の `phase` に当たる帯の段が今の段の集合に入っているときだけ帯を動かす
-- **注記**: `summary` を持たない返却は要約が空（**まとめ待ちの段**）。引数と帯の動かし方の正典は `docs/architecture/workflow-contract.md`「スキルの契約」
+  受け付けた呼び出しは、委譲先の段の範囲の中の `phase` に当たるプログレスバーの段が今の段の集合に入っているときだけプログレスバーを動かす
+- **注記**: `summary` を持たない返却は要約が空（**まとめ待ちの段**）。引数とプログレスバーの動かし方の正典は `docs/architecture/workflow-contract.md`「スキルの契約」
 - **避ける言い方**: 返却ツール（`SubagentHandback` と紛れる）、結果報告（`report` と紛れる）
 
 ### 飛ばした段
 
 - **英語識別子**: `skippedPhases`（`work_plan` の引数と `work-plan` の記録の欄。飛ばした段の名前の配列）、`phase-skipped`（`skipped` の **`phase_result` ツール**の結果を読んだ `DelegateReturn`）
-- **定義**: 近道・`loopable` などで要らなかった段。帯では済んだ段に数え、飛ばした印を持ち、済んだ段と見分けて描く。
+- **定義**: 近道・`loopable` などで要らなかった段。プログレスバーでは済んだ段に数え、飛ばした印を持ち、済んだ段と見分けて描く。
   メインで走る段は `work_plan` の `skippedPhases`、委譲先で走る段は `phase_result` の `skipped` で印が付く
 - **注記**: 印の付け方と差し戻しの正典は `docs/architecture/workflow-contract.md`「スキルの契約」の「飛ばした段の印の決まり」。
   描き方は `docs/architecture/display.md`「ワークプラン」
@@ -41,8 +41,8 @@
 ### 委譲先の段の範囲
 
 - **英語識別子**: `delegatedRange`（`work_plan` の引数。`first` と `count`）
-- **定義**: **ワークプラン**のうち、委譲先の段1〜`N` に1つずつ当たる帯の段の範囲。`first` は委譲先の段1に当たる位置
-  （平らにした並びで0始まり）、`count` は段の数。委譲先の段 `n` は `first + n - 1` の帯の段に当たる
+- **定義**: **ワークプラン**のうち、委譲先の段1〜`N` に1つずつ当たるプログレスバーの段の範囲。`first` は委譲先の段1に当たる位置
+  （平らにした並びで0始まり）、`count` は段の数。委譲先の段 `n` は `first + n - 1` のプログレスバーの段に当たる
 - **`pending`**: 計画を委譲先に頼む最初の呼び出しで、`count` を省いた `{ first }`。段の数が未定のあいだ範囲の先頭から後ろの段は番号を持たず、
   範囲の先頭の丸が「…」になり、委譲先の返却では動かない。返却を受けたあとの `work_plan` では、tsukumo が `phase_result` の `count` で `pending` を範囲に確定する
 - **段の番号**: 範囲の前後と範囲で**段の群**（前・本・後）に分かれ、群ごとに1から数える

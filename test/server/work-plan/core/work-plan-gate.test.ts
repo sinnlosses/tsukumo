@@ -83,11 +83,15 @@ describe("judgeToolAgainstGate", () => {
 
   it("拒否文の末尾に帯の位置を足し、位置が空なら足さない", () => {
     const bare = judgeToolAgainstGate("Bash", false, "")
-    const withPosition = judgeToolAgainstGate("Bash", false, "帯の今の段は 3/4 架空の段。")
+    const withPosition = judgeToolAgainstGate(
+      "Bash",
+      false,
+      "プログレスバーの今の段は 3/4 架空の段。",
+    )
 
     expect(bare.kind === "deny" && withPosition.kind === "deny").toBe(true)
     if (bare.kind === "deny" && withPosition.kind === "deny") {
-      expect(withPosition.reason).toBe(`${bare.reason}帯の今の段は 3/4 架空の段。`)
+      expect(withPosition.reason).toBe(`${bare.reason}プログレスバーの今の段は 3/4 架空の段。`)
     }
   })
 })

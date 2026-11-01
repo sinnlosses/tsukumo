@@ -17,14 +17,16 @@ export function bandPositionText(plan: LatestWorkPlan): string {
   }
   const phase = currentPhaseOf(plan)
   const position =
-    phase.kind === "phase" ? `帯の今の段は ${phaseLabel(phase)}。` : "帯の段は全部済んでいる。"
+    phase.kind === "phase"
+      ? `プログレスバーの今の段は ${phaseLabel(phase)}。`
+      : "プログレスバーの段は全部済んでいる。"
   if (plan.delegatedRange.kind === "none") {
     return position
   }
   if (plan.delegatedRange.kind === "pending") {
     return `${position}範囲の先頭から後ろの段は番号を持たない（委譲先の段の数が決まるまで）。`
   }
-  return `${position}帯は範囲の前（前）・範囲（本）・範囲の後ろ（後）の群ごとに1から数え、本の番号は委譲先の段の番号と同じ。セリフで番号を言うのは本の段だけで、前・後の段は名前で言う。`
+  return `${position}プログレスバーは範囲の前（前）・範囲（本）・範囲の後ろ（後）の群ごとに1から数え、本の番号は委譲先の段の番号と同じ。セリフで番号を言うのは本の段だけで、前・後の段は名前で言う。`
 }
 
 const RANGE_LINE_PATTERN = /^委譲先の段の範囲: first=(\d+) count=(\d+)$/mu
@@ -63,8 +65,8 @@ export const RESULT_CALLED_HANDBACK_LINE = "委譲先は `phase_result` で結�
 
 /** 台本（`Workflow`）の完了の知らせに添える1文。台本の中の委譲先が呼んだ `phase_result` で、帯は台本の走るあいだに進んでいる。 */
 export const WORKFLOW_FINISHED_HANDBACK_LINE =
-  "台本が完了した。台本の中の委譲先が `phase_result` で返した結果で、帯は進んでいる。"
+  "台本が完了した。台本の中の委譲先が `phase_result` で返した結果で、プログレスバーは進んでいる。"
 
 /** `phase_result` を呼ばなかった委譲先の返却に添える1文。計画だけの回は呼ばない決まりなので、帯が動いていない事実だけを言う。 */
 export const PHASE_RESULT_MISSING_HANDBACK_LINE =
-  "委譲先は `phase_result` を呼ばなかったので、返却では帯は動いていない（計画だけの回なら正しい）。"
+  "委譲先は `phase_result` を呼ばなかったので、返却ではプログレスバーは動いていない（計画だけの回なら正しい）。"

@@ -209,8 +209,8 @@ describe("WorkPlanReview の返却の注記", () => {
 
     const note = review.takeHandbackNote()
     expect(note).toContain(`${RESULT_CALLED_HANDBACK_LINE}${PHASE_RESULT_MISSING_HANDBACK_LINE}`)
-    expect(note.match(/帯の今の段は/gu)).toHaveLength(1)
-    expect(note).toMatch(/帯の今の段は 本 1–2\/2 架空の実装A・架空の実装B。/u)
+    expect(note.match(/プログレスバーの今の段は/gu)).toHaveLength(1)
+    expect(note).toMatch(/プログレスバーの今の段は 本 1–2\/2 架空の実装A・架空の実装B。/u)
   })
 
   it("受け付けた work_plan・依頼・利用者の送ったターンの始まりのあとは、溜めた注記を捨てる", () => {

@@ -38,8 +38,10 @@ describe("answerPhaseResultCall", () => {
       (event) => events.push(event),
     )
 
-    expect(moved.text.startsWith("ok\n帯の今の段は 本 2/2")).toBe(true)
-    expect(unmoved.text.startsWith("ok\n帯は動いていない。帯の今の段は 本 2/2")).toBe(true)
+    expect(moved.text.startsWith("ok\nプログレスバーの今の段は 本 2/2")).toBe(true)
+    expect(
+      unmoved.text.startsWith("ok\nプログレスバーは動いていない。プログレスバーの今の段は 本 2/2"),
+    ).toBe(true)
     expect(events).toEqual([
       {
         kind: "delegate-returned",

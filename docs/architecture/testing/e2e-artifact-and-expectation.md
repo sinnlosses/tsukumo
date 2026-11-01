@@ -70,7 +70,7 @@ shared の手続き応答に乗る型や DOM の構造を変える計画には�
    | `page`                                     | ページ全体（`body` の子。いまの写しと同じ）                                  |
    | `screen-nav`                               | 帯（`nav[aria-label="画面"]`。中に開くセッションの切り替え画面を含む）       |
    | `main`・`sidebar`・`character`・`dispatch` | 会話の画面の4領域（`[data-region="…"]`）                                     |
-   | `work-strip`                               | 進み具合の帯（`section[aria-label="進み具合"]`）                             |
+   | `work-strip`                               | 進み具合のプログレスバー（`section[aria-label="進み具合"]`）                 |
    | `turn-outline`                             | やり取りの列（`nav[aria-label="やり取り"]`。畳んだ状態は開くの button だけ） |
    | `remembered-lines`                         | サイドバーの覚えていること（`section[aria-label="覚えていること"]`）         |
    | `task-section`                             | サイドバーのタスクの区画（`section[aria-label="タスク"]`）                   |

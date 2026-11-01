@@ -34,7 +34,7 @@
   - 並びは「目録の1行 → 見出し（`task` があるとき）→ 結論 → `keyFigures`（あるとき）→ 合図の行 → 本文の節 → お願い」
   - 合図の行は本文の HTML に組み、頭の欄に置く。書き上げる演出は節にだけ掛かるので、結論と合図の行は
     最初から出る
-  - **所要は合図の行に置かない**（経過と所要は進み具合の帯の1か所。`docs/architecture/screen-design.md` 13.13）
+  - **所要は合図の行に置かない**（経過と所要は進み具合のプログレスバーの1か所。`docs/architecture/screen-design.md` 13.13）
 - **検証結果は、総括行と開く行で描く**（提案書 `docs/research/report-excellence-strategy.md` 3.1「判決の頭」。
   確かめていない行に「どう確かめればよいか」を添え、お願いの印を上端に置くため。見本は
   `docs/history/mockup/report-excellence-2026-10-17/after-first.png`〔題の位置は採らない〕）
