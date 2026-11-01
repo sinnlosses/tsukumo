@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs"
 import path from "node:path"
 
 import { OUTPUT_ROOT } from "../e2e/artifact.ts"
-import { expect, test } from "./room-fixture.ts"
+import { expect, test } from "../e2e/room-fixture.ts"
 
 // settleAndMatchPickedWithMessages が書いた成果物を読み、メッセージの列を toMatchSnapshot でも比べる。
 // openRoom が context の trace を自分で始めるので、設定側の trace は切る

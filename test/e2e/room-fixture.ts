@@ -1,7 +1,7 @@
 import { test as base } from "@playwright/test"
 
-import { openRoom, type ScenarioOptions, type ScenarioRoom } from "../e2e/scenario-open.ts"
-import type { ScenarioRun } from "../e2e/scenario-run.ts"
+import { openRoom, type ScenarioOptions, type ScenarioRoom } from "./scenario-open.ts"
+import type { ScenarioRun } from "./scenario-run.ts"
 
 type RoomFixtures = {
   readonly run: ScenarioRun
@@ -31,4 +31,4 @@ export const test = base.extend<RoomFixtures>({
 })
 
 export { expect } from "@playwright/test"
-export { VIEWPORTS } from "../e2e/scenario-viewport.ts"
+export { VIEWPORTS } from "./scenario-viewport.ts"

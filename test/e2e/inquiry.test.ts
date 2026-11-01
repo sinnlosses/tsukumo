@@ -1,8 +1,7 @@
-import type { Locator, Page } from "playwright-core"
-import { describe, expect, it } from "vitest"
+import type { Locator, Page } from "@playwright/test"
 
 import { fictionalPng } from "../../scripts/shared/fictional-png.ts"
-import { useScenarioRun, VIEWPORTS } from "./scenario-run.ts"
+import { expect, test, VIEWPORTS } from "./room-fixture.ts"
 
 // お伺い（許可要求と質問。docs/architecture/testing.md「E2E のシナリオの一覧」）。
 // 許可は場面 `permission`（本文が長く札が窓の外に出る場合は `inquiry-below-body`）、質問は `question-pair`（単一選択が1問ずつ）・
@@ -11,13 +10,13 @@ import { useScenarioRun, VIEWPORTS } from "./scenario-run.ts"
 // `question-brief`（添え書き付き。広い窓の2列から、窓を狭めて札の1列へ）。
 // どの場面も答え待ちを出したまま、答えると次の `pending-changed` が流れる。
 
-const run = useScenarioRun()
-
 /** 撮るときの経過（凍らせた瞬間から）。「何秒前」の類いをこの値で揃える。 */
 const ELAPSED_MS = 60_000
 
-describe("お伺い", () => {
-  it("許可は、カードを選んで「これで答える」を押すと答えが流れ、札が消える（マウス）", async () => {
+test.describe("お伺い", () => {
+  test("許可は、カードを選んで「これで答える」を押すと答えが流れ、札が消える（マウス）", async ({
+    run,
+  }) => {
     const room = await run.open({
       scenario: "inquiry-permission-mouse",
       scene: "permission",
@@ -37,7 +36,9 @@ describe("お伺い", () => {
     await room.settleAndMatchPickedWithMessages(ELAPSED_MS)
   })
 
-  it("札は本文の末尾に出て、窓の外のあいだ下端の「お伺い ↓」を押すと札が窓に入り、口が消える", async () => {
+  test("札は本文の末尾に出て、窓の外のあいだ下端の「お伺い ↓」を押すと札が窓に入り、口が消える", async ({
+    run,
+  }) => {
     const room = await run.open({
       scenario: "inquiry-below-body",
       scene: "inquiry-below-body",
@@ -69,7 +70,9 @@ describe("お伺い", () => {
     await expect.poll(() => jump.count()).toBe(0)
   })
 
-  it("質問は、カードを選んで「次へ」「これで答える」で1問ずつ答える（マウス）", async () => {
+  test("質問は、カードを選んで「次へ」「これで答える」で1問ずつ答える（マウス）", async ({
+    run,
+  }) => {
     const room = await run.open({
       scenario: "inquiry-question-mouse",
       scene: "question-pair",
@@ -88,12 +91,13 @@ describe("お伺い", () => {
     await expect.poll(() => inquiry.count()).toBe(0)
   })
 
-  it.each([
+  for (const [scenario, scene] of [
     ["inquiry-question-long-medium", "question-long"],
     ["inquiry-question-preview-medium", "question-preview"],
-  ] as const)(
-    "%s: 札の「次へ」「これで答える」はメインビューの中にあり、転がさずに押せる",
-    async (scenario, scene) => {
+  ] as const) {
+    test(`${scenario}: 札の「次へ」「これで答える」はメインビューの中にあり、転がさずに押せる`, async ({
+      run,
+    }) => {
       const room = await run.open({ scenario, scene, viewport: "medium", domRoots: ["main"] })
       const main = room.page.locator('[data-region="main"]')
       const answer = inquiryOf(room.page).getByRole("button", { name: /次へ|これで答える/ })
@@ -108,10 +112,12 @@ describe("お伺い", () => {
         return found !== null && element.contains(found)
       })
       expect(hit).toBe(true)
-    },
-  )
+    })
+  }
 
-  it("添え書き付きの質問は、広い窓で左に選択肢・右に詳細の2列になり、選び替えで詳細が替わり、Enter で次へ進む", async () => {
+  test("添え書き付きの質問は、広い窓で左に選択肢・右に詳細の2列になり、選び替えで詳細が替わり、Enter で次へ進む", async ({
+    run,
+  }) => {
     const room = await run.open({
       scenario: "inquiry-question-brief-wide",
       scene: "question-brief",
@@ -150,7 +156,9 @@ describe("お伺い", () => {
     await expect.poll(() => inquiry.textContent()).toContain("2 / 2")
   })
 
-  it("preview に書いた手元の画像は棚の経路で札の中に出て、外部の URL・data:・置いていない画像は「画像を出せない」の札になる", async () => {
+  test("preview に書いた手元の画像は棚の経路で札の中に出て、外部の URL・data:・置いていない画像は「画像を出せない」の札になる", async ({
+    run,
+  }) => {
     const room = await run.open({
       scenario: "inquiry-question-preview-image",
       scene: "question-preview-image",

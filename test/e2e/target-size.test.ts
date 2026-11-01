@@ -1,11 +1,9 @@
 import { mkdirSync, writeFileSync } from "node:fs"
 import { dirname, join } from "node:path"
 
-import { describe, expect, it } from "vitest"
-
 import { git, initGitRepository } from "../fixture/git-repository.ts"
 import { expectReadable } from "./readability-scan.ts"
-import { useScenarioRun, VIEWPORTS } from "./scenario-run.ts"
+import { expect, test, VIEWPORTS } from "./room-fixture.ts"
 import {
   openTaskBoardRoomWithDrafts,
   openTaskListRoomWithRunningTask,
@@ -15,10 +13,10 @@ import {
 // 会話の画面の押せるものが 24x24 以上で名前を持ち、字が 12px 以上・4.5:1 以上であること
 // （docs/architecture/testing.md「E2E のシナリオの一覧」）。期待値は撮らず、割れたものの名前と寸法を差分に出す。
 
-const run = useScenarioRun()
-
-describe("会話の画面の押す的と字", () => {
-  it("迎える画面とサイドバー、サイドバーのタスクののぞき窓の押せるもの・字が下限を割らない（medium と large）", async () => {
+test.describe("会話の画面の押す的と字", () => {
+  test("迎える画面とサイドバー、サイドバーのタスクののぞき窓の押せるもの・字が下限を割らない（medium と large）", async ({
+    run,
+  }) => {
     const room = await openTaskListRoomWithRunningTask(run, "target-size-welcome", [], "medium")
     await room.page.getByRole("button", { name: "サイドバー", exact: true }).click()
     await room.page.locator('[data-region="sidebar"]').waitFor()
@@ -33,7 +31,9 @@ describe("会話の画面の押す的と字", () => {
     await expectReadable(room.page)
   })
 
-  it("お伺いで選択肢を選んだあとの押せるもの・字が下限を割らない（medium と large）", async () => {
+  test("お伺いで選択肢を選んだあとの押せるもの・字が下限を割らない（medium と large）", async ({
+    run,
+  }) => {
     const room = await run.open({
       scenario: "target-size-inquiry",
       scene: "question-multi",
@@ -51,7 +51,7 @@ describe("会話の画面の押す的と字", () => {
     await expectReadable(room.page)
   })
 
-  it("過去のやり取りを見るときの知らせの行と「最新」の札が下限を割らない", async () => {
+  test("過去のやり取りを見るときの知らせの行と「最新」の札が下限を割らない", async ({ run }) => {
     const room = await run.open({
       scenario: "target-size-head-notice",
       scene: "turn-rail-notice",
@@ -64,23 +64,25 @@ describe("会話の画面の押す的と字", () => {
     await expectReadable(room.page)
   })
 
-  it.each([
+  for (const [name, scene] of [
     ["work-plan", "work-plan-quick"],
     ["verdict", "report-task-verdict"],
-  ] as const)("レポートのワークプランと検証の字が下限を割らない（%s）", async (name, scene) => {
-    const room = await run.open({
-      scenario: `target-size-report-${name}`,
-      scene,
-      viewport: "large",
-      domRoots: [],
+  ] as const) {
+    test(`レポートのワークプランと検証の字が下限を割らない（${name}）`, async ({ run }) => {
+      const room = await run.open({
+        scenario: `target-size-report-${name}`,
+        scene,
+        viewport: "large",
+        domRoots: [],
+      })
+      await room.waitForEvent("turn-finished")
+      await expectReadable(room.page)
     })
-    await room.waitForEvent("turn-finished")
-    await expectReadable(room.page)
-  })
+  }
 })
 
-describe("タスク板のドラフトの仕分けの押す的と字", () => {
-  it("行の3択・却下の理由の欄・下端の帯の押せるもの・字が下限を割らない", async () => {
+test.describe("タスク板のドラフトの仕分けの押す的と字", () => {
+  test("行の3択・却下の理由の欄・下端の帯の押せるもの・字が下限を割らない", async ({ run }) => {
     const room = await openTaskBoardRoomWithDrafts(run, "target-size-draft-sort", [])
     const board = room.page.getByRole("dialog", { name: "タスク" })
     await board.getByRole("button", { name: "ドラフト 2", exact: true }).click()
@@ -94,11 +96,13 @@ describe("タスク板のドラフトの仕分けの押す的と字", () => {
   })
 })
 
-describe("レポートの押せるパスの押す的と字", () => {
+test.describe("レポートの押せるパスの押す的と字", () => {
   const LONG_PATH =
     "src/browser/components/page/conversation/components/main-view/markdown/report-notation.module.css"
 
-  it("記法の一覧の字と、文の中で押せる部品になった git 管理下の長いパスが下限を割らない", async () => {
+  test("記法の一覧の字と、文の中で押せる部品になった git 管理下の長いパスが下限を割らない", async ({
+    run,
+  }) => {
     const room = await run.open({
       scenario: "target-size-report-file-link",
       scene: "notation",

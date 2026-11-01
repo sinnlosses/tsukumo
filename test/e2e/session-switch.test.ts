@@ -2,16 +2,12 @@ import { mkdirSync, writeFileSync } from "node:fs"
 import path from "node:path"
 import process from "node:process"
 
-import { describe, expect, it } from "vitest"
-
 import { TSUKUMO_HOME_PLACES } from "../../src/server/adapter/tsukumo-home.ts"
-import { useScenarioRun } from "./scenario-run.ts"
+import { expect, test } from "./room-fixture.ts"
 
 // セッションの札と切り替え画面（docs/architecture/testing.md「E2E のシナリオの一覧」）。fake driver は claude を
 // 起こさないので切り替え先の一覧を持たない。疑似セッションの場面 `session-list` が作り物の一覧を
 // `sessions-changed` で流す。一覧が届くのを待ってから札を押す（場面が流れ終わるのを時間で待たない）。
-
-const run = useScenarioRun()
 
 /** 撮るときの経過（凍らせた瞬間から）。 */
 const ELAPSED_MS = 60_000
@@ -22,8 +18,10 @@ const SESSION_TAG = /セッション FA。押すとセッションを切り替�
 /** 場面 `session-list` の2行目（7B）のセッションのID。 */
 const OCCUPIED_SESSION_ID = "7b3f0000-0000-4000-8000-000000000001"
 
-describe("セッションの切り替え", () => {
-  it("札で開き、↓ で選んで Enter で切り替えると switchSession が流れて起こし直す", async () => {
+test.describe("セッションの切り替え", () => {
+  test("札で開き、↓ で選んで Enter で切り替えると switchSession が流れて起こし直す", async ({
+    run,
+  }) => {
     const room = await run.open({
       scenario: "session-switch-enter",
       scene: "session-list",
@@ -44,7 +42,9 @@ describe("セッションの切り替え", () => {
   })
 
   // 別の窓の tsukumo の占有ファイルは、このテストのプロセス（生きている）が書いたことにする。
-  it("別の窓が占有ファイルに書いているセッションの行は選べず、開いた直後の選びも ↑↓ も飛ばす", async () => {
+  test("別の窓が占有ファイルに書いているセッションの行は選べず、開いた直後の選びも ↑↓ も飛ばす", async ({
+    run,
+  }) => {
     const room = await run.open({
       scenario: "session-switch-occupied",
       scene: "session-list",

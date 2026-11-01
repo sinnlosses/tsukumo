@@ -91,6 +91,7 @@ describe("selectE2eFiles が全件に倒す変更", () => {
   test.each([
     ["package.json", "E2E の足場"],
     ["vitest.e2e.config.ts", "E2E の足場"],
+    ["playwright.config.ts", "E2E の足場"],
     ["scripts/dev/build-ui.ts", "E2E の足場"],
     ["src/shared/frame.ts", "サーバが読むファイル"],
     ["src/browser/app.tsx", "どの領域の根からも届かないファイル"],

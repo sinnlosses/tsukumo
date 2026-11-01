@@ -15,6 +15,12 @@
   `pnpm exec playwright-core install chromium-headless-shell` で入れる）。**製品版の Google Chrome
   （`channel: "chrome"`）は使わない。起こすたびにデータ保護キーチェーンへ鍵（`com.google.Chrome.unexportable-keys`）を
   2〜5件足し、複数の tsukumo が回すと secd が高負荷になる**。**新しい外部コマンドは足さない**
+- **並行期間（ADR 0044）: ランナーは vitest と `@playwright/test` の2つで、どちらで流すかは `scripts/shared/e2e-runner.ts` の表 `PLAYWRIGHT_E2E_FILES`（`test/e2e/<シナリオ>.test.ts` の並び）1つだけが決める。**
+  表を読むのは `playwright.config.ts` の `testMatch`、`vitest.e2e.config.ts` の `exclude`、入口 `scripts/dev/e2e.ts` の3つで、どのファイルも必ずどちらか一方だけで流れる。
+  入口は渡されたファイルを表で分け、vitest → `@playwright/test` の順に続けて流す（ファイルを渡さない全件は両方を全件で流し、当たるファイルが無い側は起こさない。どちらかが落ちても、もう片方は流す）。
+  `check` が渡す引数（`--bail`・`--maxWorkers`・`--reporter`・`--outputFile.json`）は入口が Playwright の旗に写し（知らない旗は終了コード 2）、
+  Playwright の JSON を vitest の JSON の形に畳んで同じパスへ書くので（`scripts/dev/lib/e2e-argument.ts`・`e2e-report.ts`）、`check` と `tw verify` の読み方は変わらない。
+  表を変えると `playwright.config.ts` が選び方の足場の根（`HARNESS_ROOTS`）に入っているため、`check` の E2E は全件になる。理由は ADR 0044
 - **置き場所は `test/e2e/<シナリオ>.test.ts`**（1ファイル = 1つの機能のまとまり。E2E は1つのファイルの
   振る舞いではないので、`src/` の写しの構成には従わない）
 - **`pnpm run check` の中の別の段にする**（`pnpm run test` は既定の設定が `test/e2e/` を外し、E2E は
