@@ -52,7 +52,7 @@ react-markdown
 ```
 
 - Markdown 一式は**会話の画面の部品 `conversation/components/markdown/`** に置く（読み手が `<Report>`・
-  お伺いのカード・質問の記録・目録の見出しで、お伺いのカードが答え待ちのカードと共有されメインビューの外の部品にまたがるため。
+  お伺いのカード・質問の記録・タスク見出し行で、お伺いのカードが答え待ちのカードと共有されメインビューの外の部品にまたがるため。
   形は `docs/architecture/adr/0027-markdown-component-entry.md`）。外から引く口は `markdown.tsx` で、
   `import()` で読む描画一式は `renderer/` に入る。`.detail-block` の class 名は口が `detailBlockClassName` で公開し、
   外の部品は CSS を import しない。`block-split.ts` は `report/domain/`、`repository-link.tsx` は

@@ -45,7 +45,7 @@ export const REPORT_ENTRIES: readonly CatalogEntry[] = [
   {
     name: "report-task-finished",
     scene: "report-task-finished",
-    label: "最終レポートの目録の1行（タスクIDのリンクの点線の下線・「完了」の札）",
+    label: "最終レポートのタスク見出し行（タスクIDのリンクの点線の下線・「完了」の札）",
     homeSetup: { kind: "default" },
     workspaceSetup: { kind: "task-list" },
     prepare: [],

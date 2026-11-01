@@ -112,6 +112,15 @@ test("柱・包みは複合語の綴りで登録し、単独の綴りと別の�
   )
 })
 
+test("目録は複合語の綴りで登録し、単独の綴りは登録しない", () => {
+  const spellings = PLAIN_WORDS.map((word) => word.spelling)
+  expect(spellings).not.toContain("目録")
+  expect(spellings).toEqual(expect.arrayContaining(["目録の1行", "目録の末尾", "目録の頭"]))
+  expect(PLAIN_WORDS.find((word) => word.spelling === "目録の1行")?.replacement).toBe(
+    "タスク見出し行",
+  )
+})
+
 test("長い綴りが、それを含む短い綴りより先に並んでいる", () => {
   expect(
     PLAIN_WORDS.filter((word, index) =>

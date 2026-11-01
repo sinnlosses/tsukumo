@@ -83,7 +83,7 @@ describe("Turn（失敗で終わったやり取り）", () => {
   })
 })
 
-describe("Turn（目録の1行と見出し）", () => {
+describe("Turn（タスク見出し行と見出し）", () => {
   const TASK = {
     kind: "task",
     id: "X-7",
@@ -119,7 +119,7 @@ describe("Turn（目録の1行と見出し）", () => {
     expect(screen.queryByRole("button", { name: "X-7" })).toBeNull()
   })
 
-  it("変更の札が数を持てば、目録の末尾に「変更 n ファイル +a −b」が出る", () => {
+  it("変更の札が数を持てば、タスク見出し行の末尾に「変更 n ファイル +a −b」が出る", () => {
     putSession(INITIAL_SESSION_STATE)
     const body = taskBody("架空の本文", {
       kind: "counted",
@@ -157,7 +157,7 @@ describe("Turn（目録の1行と見出し）", () => {
     )
   })
 
-  it("変更の札が none なら、目録に「変更」の字は出ない", () => {
+  it("変更の札が none なら、タスク見出し行に「変更」の字は出ない", () => {
     putSession(INITIAL_SESSION_STATE)
     const { container } = render(
       <Turn
@@ -214,7 +214,7 @@ describe("Turn（目録の1行と見出し）", () => {
     ["finished", "X-7·✓ 完了"],
     ["awaiting-answer", "X-7·？ 答え待ち"],
     ["stopped", "X-7"],
-  ] as const)("終わり方 %s の目録の1行は「%s」で、見出しは作業の名前", (outcome, catalog) => {
+  ] as const)("終わり方 %s のタスク見出し行は「%s」で、見出しは作業の名前", (outcome, catalog) => {
     putSession(INITIAL_SESSION_STATE)
     const body: MainViewStepBody = {
       kind: "text",

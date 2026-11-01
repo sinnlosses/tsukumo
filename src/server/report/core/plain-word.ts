@@ -398,4 +398,19 @@ export const PLAIN_WORDS = [
     replacement: "ワークフロースクリプトの中の委譲先",
     meaning: "Claude Code のワークフローのスクリプトが呼ぶ、委譲先のエージェント",
   },
+  {
+    spelling: "目録の1行",
+    replacement: "タスク見出し行",
+    meaning: "レポートの先頭に出る、タスクID・名前・終わり方を並べた1行",
+  },
+  {
+    spelling: "目録の末尾",
+    replacement: "タスク見出し行の末尾",
+    meaning: "レポートの先頭に出るタスクの1行の、右の端",
+  },
+  {
+    spelling: "目録の頭",
+    replacement: "タスク見出し行の頭",
+    meaning: "レポートの先頭に出るタスクの1行の、左の端",
+  },
 ] as const satisfies readonly PlainWord[]

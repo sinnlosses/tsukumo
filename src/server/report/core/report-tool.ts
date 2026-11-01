@@ -16,7 +16,7 @@ import { REPORT_CALL_EXAMPLES_TEXT } from "./call-example.ts"
  * MCP ツールの説明文は既定で 2048 字までしか渡らず、規約の全文は入らない。
  */
 export const REPORT_TOOL_DESCRIPTION =
-  "ターンのレポートをメインビューに出す。task（目録の1行と見出し）→ conclusion → keyFigures（数のカード）→ checks（検証結果の表）→ figure → sections → retrospective → favor の順に描かれ、" +
+  "ターンのレポートをメインビューに出す。task（タスク見出し行と見出し）→ conclusion → keyFigures（数のカード）→ checks（検証結果の表）→ figure → sections → retrospective → favor の順に描かれ、" +
   "そのあと closing のセリフが吹き出しに出る。受け付けられるとそこでターンが終わる（あとに何も書けない）。" +
   "差し戻されたら、直す項目だけを渡して呼び直せばよい（渡さなかった項目は、同じターンで直前に差し戻した呼び出しの値を引き継ぐ）。" +
   "書き方は「レポートの記法（tsukumo）」の節に従う。" +
@@ -43,7 +43,7 @@ export const REPORT_RETROSPECTIVE_DESCRIPTION =
  * `report` の任意の `task` 引数の説明。`conclusion` との書き分けと、報告の種類ごとの既定の節の並びはここだけが持つ。
  */
 export const REPORT_TASK_DESCRIPTION =
-  "タスクの作業のレポートのときだけ渡す（タスクID・作業の名前・終わり方・種類）。結論の上に目録の1行と作業の名前の見出しが描かれる。" +
+  "タスクの作業のレポートのときだけ渡す（タスクID・作業の名前・終わり方・種類）。結論の上にタスク見出し行と作業の名前の見出しが描かれる。" +
   "渡したら conclusion に作業の名前やタスクID、変更の量（tsukumo が git から数える）を書かない。" +
   "genre を入れると、sections のセクションをその種類の既定の並びで書く（セクションの数は縛らない）。" +
   "work: 変化 → 証拠 → 変更の要所 → 限界と変えていないもの → お願い。" +
