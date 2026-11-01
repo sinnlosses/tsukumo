@@ -77,7 +77,7 @@ describe("createInputLedgerIntake", () => {
     ])
   })
 
-  it("セッションの ID が UUID の綴りでない・鍵が1つも無いときは何も書かない", () => {
+  it("セッションの ID の綴りでない・鍵が1つも無いときは何も書かない", () => {
     const intake = createInputLedgerIntake()
     intake.noteSent(REQUEST, "request")
 

@@ -26,7 +26,12 @@ import type { SessionDriver } from "../../session-driver/core/session-driver.ts"
 import { createContextUsageRecorder } from "../../usage/core/context-usage.ts"
 import { createExperienceMetricRecorder, splitEntry } from "../../usage/core/experience-metric.ts"
 import { createTokenUsageRecorder } from "../../usage/core/token-usage.ts"
-import type { CommandSession, ModeSessions } from "./command-session.ts"
+import {
+  type CommandSession,
+  type ModeSessions,
+  NO_MODE_SESSIONS,
+  rememberedModeSessions,
+} from "./command-session.ts"
 import { noteConsolidationHalt, noteConsolidationOutcome } from "./consolidation-footprint.ts"
 import { createConsolidationHalt } from "./consolidation-halt.ts"
 import { createEventBatch } from "./event-batch.ts"
@@ -51,8 +56,6 @@ import {
 import type { SessionLaunchRequest } from "./session-launch.ts"
 import type { SessionManager, SessionManagerOptions } from "./session-manager-port.ts"
 import { createWaitingLineAlarm } from "./waiting-line-alarm.ts"
-
-const NO_MODE_SESSIONS: ModeSessions = { work: { kind: "none" }, chat: { kind: "none" } }
 
 export function createSessionManager(options: SessionManagerOptions): SessionManager {
   const subscribers = new Set<(frame: ServerFrame) => void>()
@@ -394,27 +397,6 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       diagnostic.flush()
     },
   }
-}
-
-/**
- * モードを切り替える起こし直しのときだけ、いま出しているセッションをいまのモードの欄へ書く。
- * パックを名指しする起こし直しでは捨てる（セッションの印はパックごとなので、別のパックで続きにできない）。
- */
-function rememberedModeSessions(
-  modeSessions: ModeSessions,
-  state: SessionState,
-  request: SessionLaunchRequest,
-): ModeSessions {
-  if (request.selection.by === "name") {
-    return NO_MODE_SESSIONS
-  }
-  if (request.chat === state.chatMode || state.session.kind === "starting") {
-    return modeSessions
-  }
-  const remembered = { kind: "remembered", sessionId: state.session.sessionId } as const
-  return state.chatMode
-    ? { ...modeSessions, chat: remembered }
-    : { ...modeSessions, work: remembered }
 }
 
 function consolidationThrew(error: unknown): ChatConsolidationOutcome {

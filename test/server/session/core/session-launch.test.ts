@@ -10,6 +10,7 @@ import {
 import type { RestoredEvent, SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import { knownRestored } from "../../../fixture/restored-event.ts"
 import { createStubDriver } from "../../../fixture/session-driver.ts"
+import { checkedSessionId } from "../../../fixture/session-id.ts"
 import {
   CHAT_TOPICS,
   CHOICES,
@@ -185,7 +186,7 @@ describe("createSessionLaunch", () => {
     await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
       selection: { by: "current" },
       chat: false,
-      resume: { by: "id", sessionId: "other-session" },
+      resume: { by: "id", sessionId: checkedSessionId("other-session") },
     })
     await settle()
 

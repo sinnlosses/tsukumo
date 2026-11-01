@@ -28,13 +28,12 @@ export function appendInputLedger(entry: InputLedgerEntry, root: string = inputL
   appendJsonLines(ledgerPath(root, entry.sessionId), entry.lines)
 }
 
-/** セッション1つの控えを読む。ID の綴りが違う・ファイルが無いときは {@link EMPTY_INPUT_LEDGER}。 */
-export function readInputLedger(sessionId: string, root: string = inputLedgerDir()): InputLedger {
-  const checked = parseSessionId(sessionId)
-  if (checked === undefined) {
-    return EMPTY_INPUT_LEDGER
-  }
-  const lines = readValidLines(ledgerPath(root, checked), inputLedgerLineSchema)
+/** セッション1つの控えを読む。ファイルが無いときは {@link EMPTY_INPUT_LEDGER}。 */
+export function readInputLedger(
+  sessionId: SessionId,
+  root: string = inputLedgerDir(),
+): InputLedger {
+  const lines = readValidLines(ledgerPath(root, sessionId), inputLedgerLineSchema)
   return lines.length === 0 ? EMPTY_INPUT_LEDGER : inputLedgerOf(lines)
 }
 

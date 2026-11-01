@@ -9,19 +9,23 @@ import {
   type SessionDigest,
   UNAVAILABLE_SESSION_DIGEST,
 } from "../../../shared/session/session-digest.ts"
+import { parseSessionId, type SessionId } from "../../session-driver/core/session-id.ts"
 
 /** この機能の手続きが使う口（中身は配線が渡す）。 */
 export type SessionDigestProcedurePorts = {
   /** セッション1件の中身。セッションが繋がるまでは「読めない」を返す。 */
-  readonly readSessionDigest: (sessionId: string) => Promise<SessionDigest>
+  readonly readSessionDigest: (sessionId: SessionId) => Promise<SessionDigest>
 }
 
 export function sessionDigestProcedure(ports: SessionDigestProcedurePorts) {
   const procedure = implement(sessionDigestContract)
   return procedure.router({
     // 読めなかった回は「読めない」をそのまま配る（画面は右の欄を空にするだけ。失敗のエラーにはしない）。
-    read: procedure.read.handler(({ input }) =>
-      ports.readSessionDigest(input.sessionId).catch(() => UNAVAILABLE_SESSION_DIGEST),
-    ),
+    read: procedure.read.handler(({ input }) => {
+      const sessionId = parseSessionId(input.sessionId)
+      return sessionId === undefined
+        ? Promise.resolve(UNAVAILABLE_SESSION_DIGEST)
+        : ports.readSessionDigest(sessionId).catch(() => UNAVAILABLE_SESSION_DIGEST)
+    }),
   })
 }

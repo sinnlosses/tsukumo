@@ -8,6 +8,7 @@ import { UNAVAILABLE_CONTEXT_USAGE } from "../../../shared/usage/context-usage.t
 import { UNAVAILABLE_PLAN_USAGE } from "../../../shared/usage/plan-usage.ts"
 import type { DiagnosticBuffer } from "../../diagnostic/core/diagnostic.ts"
 import type { SessionDriver } from "../../session-driver/core/session-driver.ts"
+import type { SessionId } from "../../session-driver/core/session-id.ts"
 import type { SessionManager } from "./session-manager-port.ts"
 
 type DriverReadPorts = {
@@ -76,7 +77,7 @@ export function createDriverRead(
 }
 
 /** 画面から中身を頼まれてよいセッションか（一覧に載ったものか、いま出しているもの）。 */
-function isReadableSession(state: SessionState, sessionId: string): boolean {
+function isReadableSession(state: SessionState, sessionId: SessionId): boolean {
   return (
     state.sessions.some((session) => session.sessionId === sessionId) ||
     (state.session.kind !== "starting" && state.session.sessionId === sessionId)

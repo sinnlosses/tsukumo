@@ -41,6 +41,7 @@ import type {
   SessionFailurePlace,
 } from "../core/session-driver.ts"
 import { createSessionEnding } from "../core/session-ending.ts"
+import { parseSessionId, type SessionId } from "../core/session-id.ts"
 import { createSessionTitleIntake, type SessionTitleIntake } from "../core/session-title.ts"
 import { createStepWatch } from "../core/step-watch.ts"
 import { createToolHookClock } from "../core/tool-hook-clock.ts"
@@ -363,7 +364,7 @@ async function relayMessages(
   draftIntake: ReportDraftIntake,
 ): Promise<void> {
   // セッションIDは `session-info`（ターンのたびに届く）から取り、ターンが終わるたびに印を付け直す（`markSession`）。
-  let sessionId: string | undefined = undefined
+  let sessionId: SessionId | undefined = undefined
   try {
     for await (const message of session) {
       const fromMain = !isSubagentMessage(message)
@@ -387,7 +388,7 @@ async function relayMessages(
           reportGate.observe(event)
         }
         if (event.kind === "session-info") {
-          sessionId = event.sessionId
+          sessionId = parseSessionId(event.sessionId)
         }
         interruptMark.observe(event)
         for (const effect of effectsOfEvent(event, fromMain, options.mode, sessionId)) {

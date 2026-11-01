@@ -4,9 +4,9 @@
 
 import { isPlainObject } from "remeda"
 
-import { MAX_SESSION_ID_LENGTH } from "../../../shared/session/session-choice.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import type { SessionStart } from "./session-driver.ts"
+import { parseSessionId, type SessionId } from "./session-id.ts"
 
 /** 起こす直前に選んだIDを占有ファイルに書けたか（`reserved`）、別の窓が使っていたか（`occupied`）。 */
 export type SessionReservation = "reserved" | "occupied"
@@ -14,9 +14,9 @@ export type SessionReservation = "reserved" | "occupied"
 /** 占有ファイルの書き置きの口。 */
 export type SessionClaimStore = {
   /** 自分の占有ファイルを書き換える。空なら自分の占有ファイルを消す。投げない。 */
-  readonly write: (sessionIds: readonly string[]) => void
+  readonly write: (sessionIds: readonly SessionId[]) => void
   /** 生きているほかのプロセスが占有ファイルに書いたセッションのID。読めないときは空。 */
-  readonly readOthers: () => Promise<readonly string[]>
+  readonly readOthers: () => Promise<readonly SessionId[]>
 }
 
 export type SessionClaim = {
@@ -31,7 +31,7 @@ export type SessionClaim = {
    * 起こし直す前に、選んだIDを占有ファイルに足してからほかの占有ファイルを読む。
    * ほかに同じIDがあれば足したIDを外して `occupied` を返す（同時に選んだ2つの窓は、少なくとも一方が相手を見る）。
    */
-  readonly reserve: (sessionId: string) => Promise<SessionReservation>
+  readonly reserve: (sessionId: SessionId) => Promise<SessionReservation>
   /** 占有ファイルを消す（起こし直しに失敗したとき・閉じるとき）。 */
   readonly withdraw: () => void
 }
@@ -39,15 +39,15 @@ export type SessionClaim = {
 /** 占有ファイル1つの中身。 */
 export type SessionClaimRecord = {
   readonly pid: number
-  readonly sessionIds: readonly string[]
+  readonly sessionIds: readonly SessionId[]
 }
 
 export function createSessionClaim(store: SessionClaimStore): SessionClaim {
-  let held: readonly string[] = []
+  let held: readonly SessionId[] = []
   // 何代目の駆動の占有ファイルか。`withdraw` のあとに届くイベントを捨てるのに使う。
   let launchCount = 0
 
-  const hold = (sessionIds: readonly string[]): void => {
+  const hold = (sessionIds: readonly SessionId[]): void => {
     if (sameIds(held, sessionIds)) {
       return
     }
@@ -60,15 +60,19 @@ export function createSessionClaim(store: SessionClaimStore): SessionClaim {
       launchCount += 1
       const born = launchCount
       // この代が占有ファイルに書いているID（0か1つ）。起こし直す前に予約したIDは含まない。
-      let own: readonly string[] = start.kind === "resume" ? [start.sessionId] : []
+      let own: readonly SessionId[] = start.kind === "resume" ? [start.sessionId] : []
       hold(own)
       return (event) => {
         if (born !== launchCount) {
           return
         }
         if (event.kind === "session-info") {
-          const next = [event.sessionId]
-          hold([...held.filter((id) => !own.includes(id) && id !== event.sessionId), ...next])
+          const sessionId = parseSessionId(event.sessionId)
+          if (sessionId === undefined) {
+            return
+          }
+          const next = [sessionId]
+          hold([...held.filter((id) => !own.includes(id) && id !== sessionId), ...next])
           own = next
         }
         if (event.kind === "session-ended") {
@@ -103,20 +107,24 @@ export function readSessionClaimRecord(value: unknown): SessionClaimRecord | und
   if (!isPlainObject(value)) {
     return undefined
   }
-  const { pid, sessionIds } = value
-  return typeof pid === "number" &&
-    Number.isSafeInteger(pid) &&
-    pid > 0 &&
-    Array.isArray(sessionIds) &&
-    sessionIds.every(isSessionId)
+  const { pid } = value
+  const sessionIds = parseSessionIds(value.sessionIds)
+  return typeof pid === "number" && Number.isSafeInteger(pid) && pid > 0 && sessionIds !== undefined
     ? { pid, sessionIds }
     : undefined
 }
 
-function sameIds(left: readonly string[], right: readonly string[]): boolean {
+function sameIds(left: readonly SessionId[], right: readonly SessionId[]): boolean {
   return left.length === right.length && left.every((id, index) => right[index] === id)
 }
 
-function isSessionId(value: unknown): value is string {
-  return typeof value === "string" && value !== "" && value.length <= MAX_SESSION_ID_LENGTH
+function parseSessionIds(value: unknown): readonly SessionId[] | undefined {
+  if (!Array.isArray(value)) {
+    return undefined
+  }
+  const parsed = value.flatMap((id: unknown) => {
+    const checked = typeof id === "string" ? parseSessionId(id) : undefined
+    return checked === undefined ? [] : [checked]
+  })
+  return parsed.length === value.length ? parsed : undefined
 }

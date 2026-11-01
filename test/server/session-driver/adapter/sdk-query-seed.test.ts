@@ -5,6 +5,7 @@ import { buildQuerySeedOptions } from "../../../../src/server/session-driver/ada
 import type { SessionDriverOptions } from "../../../../src/server/session-driver/core/session-driver.ts"
 import { BUILTIN_SESSION_DEFAULT } from "../../../../src/shared/session/session-default.ts"
 import { CHAT_MODE, WORK_MODE } from "../../../fixture/sdk-tool.ts"
+import { checkedSessionId } from "../../../fixture/session-id.ts"
 
 // `startSdkDriver` 自体は本物の claude を子プロセスとして起こすので、ここでは呼ばない
 // （docs/requirements.md「起動と設定」 / AGENTS.md「よく使うコマンド」）。`query()` に渡る `options` の
@@ -61,8 +62,10 @@ describe("buildQuerySeedOptions", () => {
   it("続きから始めるセッションのIDを resume として渡す（新規のときは undefined）", () => {
     expect(buildQuerySeedOptions(BASE_OPTIONS).resume).toBeUndefined()
     expect(
-      buildQuerySeedOptions({ ...BASE_OPTIONS, start: { kind: "resume", sessionId: "s-1" } })
-        .resume,
+      buildQuerySeedOptions({
+        ...BASE_OPTIONS,
+        start: { kind: "resume", sessionId: checkedSessionId("s-1") },
+      }).resume,
     ).toBe("s-1")
   })
 

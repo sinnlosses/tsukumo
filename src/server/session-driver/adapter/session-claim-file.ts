@@ -13,6 +13,7 @@ import {
   type SessionClaimRecord,
   type SessionClaimStore,
 } from "../core/session-claim.ts"
+import type { SessionId } from "../core/session-id.ts"
 
 /** 占有ファイルの名前（`<pid>.json`）。 */
 const CLAIM_FILE_NAME = /^\d+\.json$/u
@@ -58,7 +59,9 @@ export function defaultSessionClaimPlace(): SessionClaimPlace {
  * もういないプロセスの占有ファイルは消して捨て、別の利用者のプロセス（`EPERM`）の占有ファイルも捨てる。
  * 置き場が無い・読めないときは空。
  */
-export async function readOccupiedSessionIds(place: SessionClaimPlace): Promise<readonly string[]> {
+export async function readOccupiedSessionIds(
+  place: SessionClaimPlace,
+): Promise<readonly SessionId[]> {
   const names = await readdir(place.dir).catch(() => [])
   const records = await Promise.all(
     names

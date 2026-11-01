@@ -26,6 +26,7 @@ import type { DiaryWriteRequest, DiaryWriterSource } from "../../diary/core/diar
 import type { PromptImageShelf } from "../../session-driver/core/prompt-image-shelf.ts"
 import type { SessionReservation } from "../../session-driver/core/session-claim.ts"
 import type { PromptOpening, SessionDriver } from "../../session-driver/core/session-driver.ts"
+import { parseSessionId, type SessionId } from "../../session-driver/core/session-id.ts"
 import type { CommandReceiver, CommandSession, SessionReceiver } from "./command-session.ts"
 import { ACCEPTED, askDriver, declined, nudge } from "./driver-command.ts"
 
@@ -47,7 +48,7 @@ export type SessionCommandPorts = {
   /** 成果の日記書きの書き手の出どころ（`DiaryWriterSource`）。疑似セッションでは `dont-write`。 */
   readonly diary: DiaryWriterSource
   /** 選んだセッションのIDを占有ファイルに書いてから、別の窓が使っていないかを確かめる（`SessionClaim.reserve`）。 */
-  readonly reserveSession: (sessionId: string) => Promise<SessionReservation>
+  readonly reserveSession: (sessionId: SessionId) => Promise<SessionReservation>
   /** 占有ファイルを消す（起こし直しに失敗したとき）。 */
   readonly withdrawSessionClaim: () => void
 }
@@ -155,13 +156,21 @@ export function sessionCommands(ports: SessionCommandPorts): SessionCommandTable
     switchSession: {
       kind: "session",
       receive: async (input, session) => {
-        if ((await ports.reserveSession(input.sessionId)) === "occupied") {
+        const sessionId = parseSessionId(input.sessionId)
+        if (sessionId === undefined) {
+          return session.restart({
+            selection: { by: "current" },
+            chat: session.state().chatMode,
+            resume: { by: "new" },
+          })
+        }
+        if ((await ports.reserveSession(sessionId)) === "occupied") {
           return declined(FRAME_ERROR_REASON.sessionOccupied)
         }
         const result = await session.restart({
           selection: { by: "current" },
           chat: session.state().chatMode,
-          resume: { by: "id", sessionId: input.sessionId },
+          resume: { by: "id", sessionId },
         })
         if (!result.ok) {
           ports.withdrawSessionClaim()

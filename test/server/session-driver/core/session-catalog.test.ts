@@ -7,6 +7,7 @@ import {
   MAX_SESSION_CHOICES,
   type SessionChoice,
 } from "../../../../src/shared/session/session-choice.ts"
+import { checkedSessionId } from "../../../fixture/session-id.ts"
 
 // 印はキャラクターパックごと・雑談かどうか・ビューのポートごとに違う
 // （`tsukumo:<パック名>@7327` と `tsukumo:<パック名>:chat@7327`。目印はポート番号そのもの）。
@@ -90,7 +91,7 @@ describe("createSessionCatalog", () => {
     const catalog = createSessionCatalog({ read: reads.read, now: () => 1_000, cwd: CWD })
     await catalog.listChoices(TAG)
 
-    catalog.noteMarked("s-new", TAG)
+    catalog.noteMarked(checkedSessionId("s-new"), TAG)
 
     expect((await catalog.listChoices(TAG)).map((choice) => choice.sessionId)).toEqual([
       "s-new",
@@ -105,7 +106,7 @@ describe("createSessionCatalog", () => {
     ])
     const catalog = createSessionCatalog({ read: reads.read, now: () => 1_000, cwd: CWD })
 
-    catalog.noteMarked("s-a", TAG)
+    catalog.noteMarked(checkedSessionId("s-a"), TAG)
 
     expect((await catalog.listChoices(TAG))[0]?.sessionId).toBe("s-a")
   })
@@ -122,7 +123,7 @@ describe("createSessionCatalog", () => {
 
     const refreshing = catalog.refresh()
     now = 2_000
-    catalog.noteMarked("s-marked", TAG)
+    catalog.noteMarked(checkedSessionId("s-marked"), TAG)
     // 読み直した一覧には、読み始めたあとに付いた印がまだ入っていない。
     second.resolve([sessionInfo("s-old", 200, TAG), sessionInfo("s-outside", 300, TAG)])
     await refreshing
@@ -141,13 +142,13 @@ describe("createSessionCatalog", () => {
     let now = 1_000
     const catalog = createSessionCatalog({ read: reads.read, now: () => now, cwd: CWD })
 
-    catalog.noteMarked("s-a", TAG)
+    catalog.noteMarked(checkedSessionId("s-a"), TAG)
     now = 2_000
-    catalog.noteMarked("s-a", SECOND_TAG)
+    catalog.noteMarked(checkedSessionId("s-a"), SECOND_TAG)
     now = 3_000
-    catalog.noteMarked("s-b", TAG)
+    catalog.noteMarked(checkedSessionId("s-b"), TAG)
     now = 4_000
-    catalog.noteMarked("s-a", TAG)
+    catalog.noteMarked(checkedSessionId("s-a"), TAG)
 
     expect(await catalog.listChoices(TAG)).toEqual([
       expect.objectContaining({ sessionId: "s-a", lastModified: 4_000 }),
@@ -160,10 +161,10 @@ describe("createSessionCatalog", () => {
     let now = 1_000
     const catalog = createSessionCatalog({ read: reads.read, now: () => now, cwd: CWD })
 
-    catalog.noteMarked("s-a", TAG)
+    catalog.noteMarked(checkedSessionId("s-a"), TAG)
     now = 2_000
-    catalog.noteMarked("s-a", "架空の読めない印")
-    catalog.noteMarked("s-new", "架空の読めない印")
+    catalog.noteMarked(checkedSessionId("s-a"), "架空の読めない印")
+    catalog.noteMarked(checkedSessionId("s-new"), "架空の読めない印")
 
     expect(await catalog.listChoices(TAG)).toEqual([
       expect.objectContaining({ sessionId: "s-a", lastModified: 1_000 }),
@@ -178,8 +179,8 @@ describe("createSessionCatalog", () => {
     ])
     const catalog = createSessionCatalog({ read: reads.read, now: () => 1_000, cwd: CWD })
 
-    catalog.noteMarked("s-listed", TAG)
-    catalog.noteMarked("s-late", TAG)
+    catalog.noteMarked(checkedSessionId("s-listed"), TAG)
+    catalog.noteMarked(checkedSessionId("s-late"), TAG)
     await catalog.refresh()
     // 載った印は捨てたので、次に一覧が古い値を返しても付け直されない。
     await catalog.refresh()
@@ -364,7 +365,7 @@ describe("createSessionCatalog の切り替え先の一覧", () => {
   it("印を付けた一覧に無いセッションは、いまの作業ツリーの行として並ぶ", async () => {
     const catalog = catalogOf([])
 
-    catalog.noteMarked("s-new", TAG)
+    catalog.noteMarked(checkedSessionId("s-new"), TAG)
 
     expect(await catalog.listChoices(TAG)).toEqual([
       choiceOf("s-new", 1_000, { heading: undefined }),

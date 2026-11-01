@@ -11,6 +11,7 @@ import {
   SPEAK_TOOL_FULL_NAME,
   userMessage,
 } from "../../../fixture/sdk-message.ts"
+import { checkedSessionId } from "../../../fixture/session-id.ts"
 
 const TAG = "tsukumo:架空のパック@7327"
 const CWD = "/work/fictional-tree"
@@ -69,7 +70,7 @@ describe("createFakeSessionCatalog", () => {
 
 describe("readFakeRestoredEvents", () => {
   it("過去の transcript を依頼から始まる並びに組み直す", () => {
-    const events = readFakeRestoredEvents(session(), "past-1", ["default"])
+    const events = readFakeRestoredEvents(session(), checkedSessionId("past-1"), ["default"])
 
     expect(events.map(({ event }) => event.kind)).toEqual([
       "request",
@@ -80,7 +81,9 @@ describe("readFakeRestoredEvents", () => {
   })
 
   it("知らない ID は空", () => {
-    expect(readFakeRestoredEvents(session(), "past-missing", ["default"])).toEqual([])
+    expect(
+      readFakeRestoredEvents(session(), checkedSessionId("past-missing"), ["default"]),
+    ).toEqual([])
   })
 })
 

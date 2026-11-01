@@ -16,6 +16,7 @@ import type { ContextUsageReport } from "../../../shared/usage/context-usage.ts"
 import type { PlanUsageReport } from "../../../shared/usage/plan-usage.ts"
 import type { ChatSummary, PersonaMemory } from "../../chat/core/chat-memory.ts"
 import type { ShelvedPromptImage } from "./prompt-image-shelf.ts"
+import type { SessionId } from "./session-id.ts"
 import type { ToolHookDurationLap } from "./tool-hook-clock.ts"
 
 /** このセッションが仕事か雑談か。 */
@@ -38,7 +39,7 @@ export type SessionStart =
   /** 新規に起こす。 */
   | { readonly kind: "new" }
   /** 続きから始める（`sessionId` が続きのセッションのID）。 */
-  | { readonly kind: "resume"; readonly sessionId: string }
+  | { readonly kind: "resume"; readonly sessionId: SessionId }
 
 export type SessionDriverOptions = {
   /** セッションの作業ディレクトリ。 */
@@ -64,7 +65,7 @@ export type SessionDriverOptions = {
    */
   readonly tag: string
   /** {@link SessionDriverOptions.tag} の印が付いたセッションのID を受け取る口。ここで例外を投げないこと。 */
-  readonly onSessionMarked: (sessionId: string) => void
+  readonly onSessionMarked: (sessionId: SessionId) => void
   readonly mode: SessionMode
   /** 仕事の会話の `query()` から外す組み込みツールの名前（`Config.disallowedTools`）。 */
   readonly disallowedTools: readonly string[]
@@ -161,7 +162,7 @@ export type SessionDriver = {
    * ここは ID を絞らない。呼ぶ側が、読んでよい ID に絞ってから渡す。
    * 読めなかったときは「読めない」を返し、例外を投げない。
    */
-  readonly readSessionDigest: (sessionId: string) => Promise<SessionDigest>
+  readonly readSessionDigest: (sessionId: SessionId) => Promise<SessionDigest>
   /** モデルを切り替える。 */
   readonly setModel: (model: string | undefined) => Promise<void>
   /**

@@ -12,6 +12,7 @@ import {
   REQUEST_EVENT,
   startRouter,
 } from "./fixture/command-router.ts"
+import { checkedSessionId } from "./fixture/session-id.ts"
 
 const TURN_FINISHED_EVENT = {
   kind: "turn-finished",
@@ -54,7 +55,7 @@ describe("createSocketRouter（session）", () => {
   it("session.switchSession で、選ばれたIDの続きから起こし直す（パックもモードも変えない）", async () => {
     const { commands, restarts } = startRouter()
 
-    expect(await commands.session.switchSession({ sessionId: "架空の別セッション" })).toEqual({
+    expect(await commands.session.switchSession({ sessionId: "other-session" })).toEqual({
       ok: true,
     })
 
@@ -64,19 +65,31 @@ describe("createSocketRouter（session）", () => {
       {
         selection: { by: "current" },
         chat: false,
-        resume: { by: "id", sessionId: "架空の別セッション" },
+        resume: { by: "id", sessionId: "other-session" },
       },
     ])
   })
 
+  it("セッションの ID の綴りでない session.switchSession は、予約せず新規で起こし直す", async () => {
+    const { commands, restarts, reserved } = startRouter()
+
+    expect(await commands.session.switchSession({ sessionId: "../other-session" })).toEqual({
+      ok: true,
+    })
+
+    expect(reserved).toEqual([])
+    expect(restarts).toEqual([{ selection: { by: "current" }, chat: false, resume: { by: "new" } }])
+  })
+
   it("別の窓が占有ファイルに書いているセッションへの session.switchSession は定型文の理由で断り、起こし直さない", async () => {
     const { commands, restarts, occupiedElsewhere, reserved, stub } = startRouter()
-    occupiedElsewhere.add("架空の別の窓のセッション")
+    occupiedElsewhere.add("other-window-session")
 
-    expect(await commands.session.switchSession({ sessionId: "架空の別の窓のセッション" })).toEqual(
-      { ok: false, reason: FRAME_ERROR_REASON.sessionOccupied },
-    )
-    expect(reserved).toEqual(["架空の別の窓のセッション"])
+    expect(await commands.session.switchSession({ sessionId: "other-window-session" })).toEqual({
+      ok: false,
+      reason: FRAME_ERROR_REASON.sessionOccupied,
+    })
+    expect(reserved).toEqual(["other-window-session"])
     expect(restarts).toEqual([])
     expect(stub.calls).toEqual([])
   })
@@ -93,7 +106,7 @@ describe("createSocketRouter（session）", () => {
     )
     const commands = createCommandClient(recorded.ports, fake.session)
 
-    expect(await commands.session.switchSession({ sessionId: "架空の別セッション" })).toEqual({
+    expect(await commands.session.switchSession({ sessionId: "other-session" })).toEqual({
       ok: false,
       reason: FRAME_ERROR_REASON.driverFailed,
     })
@@ -104,7 +117,7 @@ describe("createSocketRouter（session）", () => {
     const { commands, restarts, observe } = startRouter()
     observe(REQUEST_EVENT)
 
-    expect(await commands.session.switchSession({ sessionId: "架空の別セッション" })).toEqual({
+    expect(await commands.session.switchSession({ sessionId: "other-session" })).toEqual({
       ok: false,
       reason: FRAME_ERROR_REASON.sessionSwitchDuringTurn,
     })
@@ -112,7 +125,7 @@ describe("createSocketRouter（session）", () => {
 
     observe(TURN_FINISHED_EVENT)
 
-    expect(await commands.session.switchSession({ sessionId: "架空の別セッション" })).toEqual({
+    expect(await commands.session.switchSession({ sessionId: "other-session" })).toEqual({
       ok: true,
     })
     expect(restarts).toHaveLength(1)
@@ -147,7 +160,9 @@ describe("createSocketRouter（session）", () => {
         ...session,
         state: () => ({ ...session.state(), chatMode: true }),
         modeSession: (chat) =>
-          chat ? { kind: "none" } : { kind: "remembered", sessionId: "架空の仕事" },
+          chat
+            ? { kind: "none" }
+            : { kind: "remembered", sessionId: checkedSessionId("work-session") },
       }
     }
 
@@ -167,19 +182,19 @@ describe("createSocketRouter（session）", () => {
 
       expect(await commands.session.setChatMode({ chat: false })).toEqual({ ok: true })
 
-      expect(reserved).toEqual(["架空の仕事"])
+      expect(reserved).toEqual(["work-session"])
       expect(restarts).toEqual([
         {
           selection: { by: "current" },
           chat: false,
-          resume: { by: "id", sessionId: "架空の仕事" },
+          resume: { by: "id", sessionId: "work-session" },
         },
       ])
     })
 
     it("使用中なら新規で起こす", async () => {
       const { commands, restarts, occupiedElsewhere } = startRouterRemembering()
-      occupiedElsewhere.add("架空の仕事")
+      occupiedElsewhere.add("work-session")
 
       expect(await commands.session.setChatMode({ chat: false })).toEqual({ ok: true })
 
@@ -241,7 +256,7 @@ describe("createSocketRouter（session）", () => {
         ok: false,
         reason: FRAME_ERROR_REASON.chatModeSwitchDuringTurn,
       })
-      expect(await commands.session.switchSession({ sessionId: "架空の別セッション" })).toEqual({
+      expect(await commands.session.switchSession({ sessionId: "other-session" })).toEqual({
         ok: false,
         reason: FRAME_ERROR_REASON.sessionSwitchDuringTurn,
       })

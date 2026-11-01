@@ -14,6 +14,7 @@ import type { ReadReportImage, ReportImageShelf } from "../../report/core/report
 import type { ReportUsageLog } from "../../report/core/report-usage.ts"
 import type { PromptImageShelf } from "../../session-driver/core/prompt-image-shelf.ts"
 import type { SessionDriver } from "../../session-driver/core/session-driver.ts"
+import type { SessionId } from "../../session-driver/core/session-id.ts"
 import type { ContextUsageLog } from "../../usage/core/context-usage.ts"
 import type { ExperienceMetricLog, SplitRelease } from "../../usage/core/experience-metric.ts"
 import type { TokenUsageLog } from "../../usage/core/token-usage.ts"
@@ -131,7 +132,7 @@ export type SessionManager = {
    * 画面から届いたIDでよその transcript を読まない。
    * それ以外と、取れなかったときは「読めない」。
    */
-  readonly readSessionDigest: (sessionId: string) => Promise<SessionDigest>
+  readonly readSessionDigest: (sessionId: SessionId) => Promise<SessionDigest>
   /** 接続を購読に加える。まず `hello` を1つ送ってから加え、外すための関数を返す。 */
   readonly subscribe: (send: (frame: ServerFrame) => void) => () => void
   /** 駆動を閉じる（プロセスを終えるとき。claude の子プロセスを残さないため必ず呼ぶ）。 */

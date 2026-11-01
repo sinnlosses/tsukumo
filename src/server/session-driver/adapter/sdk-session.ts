@@ -24,6 +24,7 @@ import type { RestoredEvent } from "../../../shared/session/session-event.ts"
 import { createSessionDigestCache, type TranscriptStamp } from "../core/session-digest-cache.ts"
 import { toSessionDigest } from "../core/session-digest.ts"
 import type { SessionDriverOptions } from "../core/session-driver.ts"
+import type { SessionId } from "../core/session-id.ts"
 import { toRestoredEvents } from "../core/session-restore.ts"
 import {
   decideSessionTitle,
@@ -60,7 +61,7 @@ export async function listRepositorySessions(cwd: string): Promise<unknown> {
  * 入力の種類とターンの終わり方は、そのセッションの入力の控え（`readInputLedger`）から引く。
  */
 export async function readRestoredEvents(
-  sessionId: string,
+  sessionId: SessionId,
   expressions: readonly ExpressionChoice[],
 ): Promise<readonly RestoredEvent[]> {
   try {
@@ -84,7 +85,7 @@ export async function readRestoredEvents(
  */
 export function createSessionDigestReader(
   expressions: readonly ExpressionChoice[],
-): (sessionId: string) => Promise<SessionDigest> {
+): (sessionId: SessionId) => Promise<SessionDigest> {
   const cache = createSessionDigestCache()
 
   return async (sessionId) => {
@@ -116,7 +117,10 @@ export function createSessionDigestReader(
  * ターンが終わるたびに（`result` の直後に）呼ぶ。`init` の直後はまだ transcript が無く、SDK が投げる。
  * 印は末尾 64 KiB の外へ押し出されると消えるので、1回付ければ済むものではない（`docs/requirements.md`「4.8 セッションの復元」）。
  */
-export async function markSession(sessionId: string, options: SessionDriverOptions): Promise<void> {
+export async function markSession(
+  sessionId: SessionId,
+  options: SessionDriverOptions,
+): Promise<void> {
   try {
     await tagSession(sessionId, options.tag, { dir: options.cwd })
     options.onSessionMarked(sessionId)
@@ -132,7 +136,7 @@ export async function markSession(sessionId: string, options: SessionDriverOptio
 export type SessionTitleWriter = {
   /** ターンの終わり（`result` の直後）に、書けそうなら書く。 */
   readonly write: (
-    sessionId: string,
+    sessionId: SessionId,
     candidate: string,
     options: SessionDriverOptions,
   ) => Promise<void>
@@ -151,7 +155,7 @@ export function createSessionTitleWriter(): SessionTitleWriter {
   let state: SessionTitleState = INITIAL_SESSION_TITLE_STATE
 
   const writeTitle = async (
-    sessionId: string,
+    sessionId: SessionId,
     candidate: string,
     options: SessionDriverOptions,
   ): Promise<void> => {
@@ -179,7 +183,7 @@ export function createSessionTitleWriter(): SessionTitleWriter {
 }
 
 /** transcript の印。大きさの分からない保存先・印が読めなかったときは undefined（毎回読む）。 */
-async function readTranscriptStamp(sessionId: string): Promise<TranscriptStamp | undefined> {
+async function readTranscriptStamp(sessionId: SessionId): Promise<TranscriptStamp | undefined> {
   try {
     const info = await getSessionInfo(sessionId)
     return info?.fileSize === undefined

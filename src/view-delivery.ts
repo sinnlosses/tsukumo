@@ -9,6 +9,7 @@ import { createRpcRouter, type RpcRouterPorts } from "./router.ts"
 import type { DiagnosticLog } from "./server/diagnostic/core/diagnostic.ts"
 import type { ReportImageShelf } from "./server/report/core/report-image-shelf.ts"
 import type { PromptImageShelf } from "./server/session-driver/core/prompt-image-shelf.ts"
+import type { SessionId } from "./server/session-driver/core/session-id.ts"
 import type { UiBundle } from "./server/view-server/adapter/bundle.ts"
 import {
   createStartupToken,
@@ -92,7 +93,7 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
   let readContextUsage: () => Promise<ContextUsageReport> = unavailableContextUsage
   let readPlanUsage: () => Promise<PlanUsageReport> = unavailablePlanUsage
   let refreshTasks: () => Promise<void> = noTasksToRefresh
-  let readSessionDigest: (sessionId: string) => Promise<SessionDigest> = unavailableSessionDigest
+  let readSessionDigest: (sessionId: SessionId) => Promise<SessionDigest> = unavailableSessionDigest
 
   const rpcRouter = createRpcRouter({
     ...options.rpc,

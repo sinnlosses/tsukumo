@@ -31,6 +31,7 @@ import {
 } from "../server/session-driver/core/session-catalog.ts"
 import { createSessionClaim } from "../server/session-driver/core/session-claim.ts"
 import type { SessionDriver, SessionMode } from "../server/session-driver/core/session-driver.ts"
+import type { SessionId } from "../server/session-driver/core/session-id.ts"
 import { sessionTag } from "../server/session-driver/core/session-mark.ts"
 import {
   readRememberedSessionDefault,
@@ -212,7 +213,7 @@ function startDriver(options: {
   readonly firstViewer: Promise<void>
   readonly viewPort: number
   /** 印が付いたセッションのIDと、付けた印を受け取る口。 */
-  readonly onSessionMarked: (sessionId: string, tag: string) => void
+  readonly onSessionMarked: (sessionId: SessionId, tag: string) => void
   readonly onEvent: (event: SessionEvent) => void
   /** 握りつぶした失敗を診断ログへ書く口。 */
   readonly reportFailure: (place: SwallowedFailurePlace, error: unknown) => void

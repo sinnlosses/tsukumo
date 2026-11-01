@@ -1,6 +1,6 @@
 // コマンドの受け手に見せるセッションの口。
 // 断る条件は契約の `meta` にあり、見るのは `rpcGuard`。
-// ここは口の形と `session` の行の型、行を呼ぶ `receiveSessionCommand` だけを持つ。
+// ここは口の形と `session` の行の型、行を呼ぶ `receiveSessionCommand` と、モードの直前のセッションを覚え直す `rememberedModeSessions` だけを持つ。
 
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import type { SessionState } from "../../../shared/session/session-state.ts"
@@ -10,6 +10,7 @@ import {
   receiveFeatureCommand,
 } from "../../core/command-receiver.ts"
 import type { SessionDriver } from "../../session-driver/core/session-driver.ts"
+import { parseSessionId, type SessionId } from "../../session-driver/core/session-id.ts"
 import type { SessionLaunchRequest } from "./session-launch.ts"
 
 /**
@@ -25,12 +26,14 @@ export type CommandGeneration = {
 /** モードの直前のセッション。覚えていないときは `none`。 */
 export type RememberedSession =
   | { readonly kind: "none" }
-  | { readonly kind: "remembered"; readonly sessionId: string }
+  | { readonly kind: "remembered"; readonly sessionId: SessionId }
 
 export type ModeSessions = {
   readonly work: RememberedSession
   readonly chat: RememberedSession
 }
+
+export const NO_MODE_SESSIONS: ModeSessions = { work: { kind: "none" }, chat: { kind: "none" } }
 
 /** 受け手が使うセッションの口。この5つだけで、代・束・購読者は見せない。 */
 export type CommandSession = {
@@ -70,4 +73,29 @@ export function receiveSessionCommand<C>(
   return receiver.kind === "session"
     ? receiver.receive(input, session)
     : receiveFeatureCommand(receiver, input, session)
+}
+
+/**
+ * モードを切り替える起こし直しのときだけ、いま出しているセッションをいまのモードの欄へ書く。
+ * パックを名指しする起こし直しでは捨てる（セッションの印はパックごとなので、別のパックで続きにできない）。
+ */
+export function rememberedModeSessions(
+  modeSessions: ModeSessions,
+  state: SessionState,
+  request: SessionLaunchRequest,
+): ModeSessions {
+  if (request.selection.by === "name") {
+    return NO_MODE_SESSIONS
+  }
+  if (request.chat === state.chatMode || state.session.kind === "starting") {
+    return modeSessions
+  }
+  const sessionId = parseSessionId(state.session.sessionId)
+  if (sessionId === undefined) {
+    return modeSessions
+  }
+  const remembered = { kind: "remembered", sessionId } as const
+  return state.chatMode
+    ? { ...modeSessions, chat: remembered }
+    : { ...modeSessions, work: remembered }
 }

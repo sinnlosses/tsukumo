@@ -17,6 +17,7 @@ import type {
 import type { DiagnosticLog } from "../../diagnostic/core/diagnostic.ts"
 import type { SessionCatalogRefresh } from "../../session-driver/core/session-catalog.ts"
 import type { SessionDriver, SessionStart } from "../../session-driver/core/session-driver.ts"
+import type { SessionId } from "../../session-driver/core/session-id.ts"
 
 /** これから起こす駆動の種。 */
 export type SessionLaunchSeed<Pack extends NamedCharacterPack> = {
@@ -53,7 +54,7 @@ export type SessionResume =
    * 画面から選ばれたセッション。探さずに、一覧に出したIDをそのまま続きにする。
    * claude 側が知らないIDだったときは新規のセッションとして起き上がる。
    */
-  | { readonly by: "id"; readonly sessionId: string }
+  | { readonly by: "id"; readonly sessionId: SessionId }
   /** 探さずに新規で起こす。 */
   | { readonly by: "new" }
 
@@ -105,7 +106,7 @@ export type SessionLaunchPorts<Pack extends NamedCharacterPack> = {
    */
   readonly refreshSessions: () => Promise<SessionCatalogRefresh>
   /** 前のセッションの記録を、画面に出す形のイベントに組み直す。 */
-  readonly restoreEvents: (sessionId: string, pack: Pack) => Promise<readonly RestoredEvent[]>
+  readonly restoreEvents: (sessionId: SessionId, pack: Pack) => Promise<readonly RestoredEvent[]>
   /** 診断ログの書き込み口。{@link restoreEvents} が失敗したときだけ使う。 */
   readonly diagnosticLog: DiagnosticLog
   /** いまのエポックミリ秒（診断ログに打つ時刻）。 */
@@ -229,7 +230,7 @@ async function announceRefreshedSessions<Pack extends NamedCharacterPack>(
  */
 async function replayRestoredSession<Pack extends NamedCharacterPack>(
   ports: SessionLaunchPorts<Pack>,
-  sessionId: string,
+  sessionId: SessionId,
   pack: Pack,
   onRestoredEvents: (events: readonly RestoredEvent[]) => void,
 ): Promise<readonly RestoredEvent[]> {

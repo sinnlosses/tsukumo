@@ -8,6 +8,7 @@ import type {
 } from "../../../../src/shared/diagnostic/swallowed-failure.ts"
 import { createStubDriver } from "../../../fixture/session-driver.ts"
 import { requestEvent } from "../../../fixture/session-event.ts"
+import { checkedSessionId } from "../../../fixture/session-id.ts"
 import { launchWith } from "../../../fixture/session-manager-record.ts"
 import { createSessionManager, waitForBatch } from "../../../fixture/session-manager.ts"
 
@@ -160,7 +161,7 @@ describe("createSessionManager", () => {
         },
       })
 
-      await manager.readSessionDigest("fake-current")
+      await manager.readSessionDigest(checkedSessionId("fake-current"))
       await waitForBatch()
 
       // 起こすときに流した sessions-changed の足跡と、失敗の1行の2件。

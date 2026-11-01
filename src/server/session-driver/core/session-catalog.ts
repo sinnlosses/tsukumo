@@ -5,6 +5,7 @@
 import { isPlainObject, omit } from "remeda"
 
 import { MAX_SESSION_CHOICES, type SessionChoice } from "../../../shared/session/session-choice.ts"
+import type { SessionId } from "./session-id.ts"
 import { readSessionMark } from "./session-mark.ts"
 
 /** 印の付いたセッション1件（目印まで揃えた印と、目印を除いた印つき）。 */
@@ -27,7 +28,7 @@ export type SessionCatalog = {
    */
   readonly refresh: () => Promise<SessionCatalogRefresh>
   /** このプロセスが印を付けた（付け直した）ことを、持っている一覧へ写す。 */
-  readonly noteMarked: (sessionId: string, tag: string) => void
+  readonly noteMarked: (sessionId: SessionId, tag: string) => void
 }
 
 /** 読み直した一覧を採ったか（`refreshed`）、持っている一覧のままか（`kept`）。 */
@@ -44,7 +45,7 @@ export function createSessionCatalog(options: {
   readonly now: () => number
   readonly cwd: string
 }): SessionCatalog {
-  type Marked = { readonly sessionId: string; readonly tag: string; readonly at: number }
+  type Marked = { readonly sessionId: SessionId; readonly tag: string; readonly at: number }
   type Reading =
     | { readonly kind: "read"; readonly sessions: readonly TaggedSession[] }
     | { readonly kind: "unreadable" }
@@ -144,7 +145,7 @@ function readTaggedSessions(sessions: unknown, cwd: string): readonly TaggedSess
  */
 function withSessionMark(
   sessions: readonly TaggedSession[],
-  marked: { readonly sessionId: string; readonly tag: string; readonly at: number },
+  marked: { readonly sessionId: SessionId; readonly tag: string; readonly at: number },
   worktree: string | undefined,
 ): readonly TaggedSession[] {
   const mark = readSessionMark(marked.tag)

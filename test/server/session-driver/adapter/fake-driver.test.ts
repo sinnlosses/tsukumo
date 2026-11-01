@@ -21,6 +21,7 @@ import {
 } from "../../../fixture/fake-driver.ts"
 import { reportEvent } from "../../../fixture/report-event.ts"
 import { requestEvent } from "../../../fixture/session-event.ts"
+import { checkedSessionId } from "../../../fixture/session-id.ts"
 
 describe("startFakeSession", () => {
   it.each([
@@ -44,10 +45,12 @@ describe("startFakeSession", () => {
   it("セッションの中身は疑似セッションに書いたものを返し、無いIDは「読めない」", async () => {
     const driver = startWithoutScene(FAKE_SESSION, () => {})
 
-    expect(await driver.readSessionDigest("fake-other")).toEqual(
+    expect(await driver.readSessionDigest(checkedSessionId("fake-other"))).toEqual(
       FAKE_SESSION.sessionDigests["fake-other"],
     )
-    expect(await driver.readSessionDigest("fake-missing")).toEqual({ kind: "unavailable" })
+    expect(await driver.readSessionDigest(checkedSessionId("fake-missing"))).toEqual({
+      kind: "unavailable",
+    })
     driver.close()
   })
 

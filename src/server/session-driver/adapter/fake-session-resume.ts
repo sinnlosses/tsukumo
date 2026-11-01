@@ -5,6 +5,7 @@ import type { Expression } from "../../../shared/character-pack/expression.ts"
 import type { RestoredEvent } from "../../../shared/session/session-event.ts"
 import { EMPTY_INPUT_LEDGER } from "../core/input-ledger.ts"
 import { worktreeNameOf, type SessionCatalog } from "../core/session-catalog.ts"
+import type { SessionId } from "../core/session-id.ts"
 import { readSessionMark } from "../core/session-mark.ts"
 import { toRestoredEvents } from "../core/session-restore.ts"
 import type { FakeSession } from "./fake-session.ts"
@@ -48,7 +49,7 @@ export function createFakeSessionCatalog(
 /** 過去の transcript を画面の履歴の組み直しに通す。知らない ID は空。 */
 export function readFakeRestoredEvents(
   session: FakeSession,
-  sessionId: string,
+  sessionId: SessionId,
   expressions: readonly Expression[],
 ): readonly RestoredEvent[] {
   const past = session.pastSessions.find((candidate) => candidate.sessionId === sessionId)

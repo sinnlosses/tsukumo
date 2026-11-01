@@ -9,6 +9,7 @@ import {
   readOccupiedSessionIds,
   type SessionClaimPlace,
 } from "../../../../src/server/session-driver/adapter/session-claim-file.ts"
+import { checkedSessionId } from "../../../fixture/session-id.ts"
 import { runSubprocessOrThrow } from "../../../fixture/subprocess.ts"
 import { useTempDir } from "../../../fixture/temp-dir.ts"
 
@@ -49,7 +50,7 @@ describe("createSessionClaimFile", () => {
     const store = createSessionClaimFile({ place: place(), reportFailure: (e) => failures.push(e) })
     const path = join(place().dir, `${String(ownPid)}.json`)
 
-    store.write(["架空のセッションA"])
+    store.write([checkedSessionId("session-a")])
     expect(existsSync(path)).toBe(true)
     expect(await store.readOthers()).toEqual([])
 
@@ -64,7 +65,7 @@ describe("createSessionClaimFile", () => {
     writeFileSync(join(dir(), "session-claim"), "")
     const store = createSessionClaimFile({ place: place(), reportFailure: (e) => failures.push(e) })
 
-    store.write(["架空のセッションA"])
+    store.write([checkedSessionId("session-a")])
 
     expect(failures.length).toBe(1)
   })
@@ -72,29 +73,29 @@ describe("createSessionClaimFile", () => {
 
 describe("readOccupiedSessionIds", () => {
   it("生きているほかのプロセスの占有ファイルを使用中にする", async () => {
-    putClaim(process.pid, { pid: process.pid, sessionIds: ["架空のセッションA"] })
+    putClaim(process.pid, { pid: process.pid, sessionIds: ["session-a"] })
 
-    expect(await readOccupiedSessionIds(place())).toEqual(["架空のセッションA"])
+    expect(await readOccupiedSessionIds(place())).toEqual(["session-a"])
   })
 
   it("もういないプロセスの占有ファイルは使用中にせず、ファイルを消す", async () => {
     const pid = await endedPid()
-    const path = putClaim(pid, { pid, sessionIds: ["架空のセッションA"] })
+    const path = putClaim(pid, { pid, sessionIds: ["session-a"] })
 
     expect(await readOccupiedSessionIds(place())).toEqual([])
     expect(existsSync(path)).toBe(false)
   })
 
   it("別の利用者のプロセス（pid 1）の占有ファイルは使用中にせず、ファイルも消さない", async () => {
-    const path = putClaim(1, { pid: 1, sessionIds: ["架空のセッションA"] })
+    const path = putClaim(1, { pid: 1, sessionIds: ["session-a"] })
 
     expect(await readOccupiedSessionIds(place())).toEqual([])
     expect(existsSync(path)).toBe(true)
   })
 
   it("壊れた中身・占有ファイルの形でない名前は読まない", async () => {
-    putClaim(process.pid, { pid: process.pid, sessionIds: "架空のセッションA" })
-    putClaim(process.pid, { pid: process.pid, sessionIds: ["架空のセッションB"] }, "memo.json")
+    putClaim(process.pid, { pid: process.pid, sessionIds: "session-a" })
+    putClaim(process.pid, { pid: process.pid, sessionIds: ["session-b"] }, "memo.json")
     writeFileSync(join(place().dir, "1.json"), "{")
 
     expect(await readOccupiedSessionIds(place())).toEqual([])

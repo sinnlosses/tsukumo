@@ -16,6 +16,7 @@ import {
   type StubDriver,
 } from "../../../fixture/session-driver.ts"
 import { requestEvent } from "../../../fixture/session-event.ts"
+import { checkedSessionId } from "../../../fixture/session-id.ts"
 import {
   createSessionManager,
   RESTORED_REPLAY,
@@ -71,9 +72,15 @@ describe("createSessionManager", () => {
       current: "fake-current",
     })
 
-    expect(await manager.readSessionDigest("fake-listed")).toEqual(FAKE_SESSION_DIGEST)
-    expect(await manager.readSessionDigest("fake-current")).toEqual(FAKE_SESSION_DIGEST)
-    expect(await manager.readSessionDigest("fake-elsewhere")).toEqual(UNAVAILABLE_SESSION_DIGEST)
+    expect(await manager.readSessionDigest(checkedSessionId("fake-listed"))).toEqual(
+      FAKE_SESSION_DIGEST,
+    )
+    expect(await manager.readSessionDigest(checkedSessionId("fake-current"))).toEqual(
+      FAKE_SESSION_DIGEST,
+    )
+    expect(await manager.readSessionDigest(checkedSessionId("fake-elsewhere"))).toEqual(
+      UNAVAILABLE_SESSION_DIGEST,
+    )
     expect(stub.calls).not.toContain("readSessionDigest:fake-elsewhere")
   })
 
@@ -319,38 +326,38 @@ describe("createSessionManager", () => {
 
     it("仕事 → 雑談 → 仕事で、2回目の仕事は最初の仕事のセッションの続きになる", async () => {
       const { manager, launches, identify } = startManagerRecordingLaunches()
-      identify(0, "架空の仕事")
+      identify(0, "work-session")
 
       await manager.commands.session.setChatMode({ chat: true })
       expect(launches[1]?.request.resume).toEqual({ by: "new" })
-      identify(1, "架空の雑談")
+      identify(1, "chat-session")
       await manager.commands.session.setChatMode({ chat: false })
 
       expect(launches[2]?.request).toEqual({
         selection: { by: "current" },
         chat: false,
-        resume: { by: "id", sessionId: "架空の仕事" },
+        resume: { by: "id", sessionId: "work-session" },
       })
     })
 
     it("雑談 → 仕事 → 雑談でも、直前の雑談の続きになる", async () => {
       const { manager, launches, identify } = startManagerRecordingLaunches()
-      identify(0, "架空の仕事")
+      identify(0, "work-session")
       await manager.commands.session.setChatMode({ chat: true })
-      identify(1, "架空の雑談")
+      identify(1, "chat-session")
       await manager.commands.session.setChatMode({ chat: false })
       identify(2, "架空の仕事の続き")
 
       await manager.commands.session.setChatMode({ chat: true })
 
-      expect(launches[3]?.request.resume).toEqual({ by: "id", sessionId: "架空の雑談" })
+      expect(launches[3]?.request.resume).toEqual({ by: "id", sessionId: "chat-session" })
     })
 
     it("キャラクターの切り替えは新規のままで、別のパックでは覚えたセッションを使わない", async () => {
       const { manager, launches, identify } = startManagerRecordingLaunches()
-      identify(0, "架空の仕事")
+      identify(0, "work-session")
       await manager.commands.session.setChatMode({ chat: true })
-      identify(1, "架空の雑談")
+      identify(1, "chat-session")
 
       await manager.commands.session.switchCharacter({ name: "fictional" })
       expect(launches[2]?.request.resume).toEqual({ by: "new" })
@@ -363,9 +370,9 @@ describe("createSessionManager", () => {
 
     it("パックを切り替えたあとは、そのパックで覚え直した雑談の続きになる", async () => {
       const { manager, launches, identify } = startManagerRecordingLaunches()
-      identify(0, "架空の仕事")
+      identify(0, "work-session")
       await manager.commands.session.switchCharacter({ name: "fictional" })
-      identify(1, "架空の別パックの仕事")
+      identify(1, "other-pack-work-session")
       await manager.commands.session.setChatMode({ chat: true })
       identify(2, "架空の別パックの雑談")
 
@@ -373,7 +380,7 @@ describe("createSessionManager", () => {
 
       expect(launches[3]?.request.resume).toEqual({
         by: "id",
-        sessionId: "架空の別パックの仕事",
+        sessionId: "other-pack-work-session",
       })
     })
   })

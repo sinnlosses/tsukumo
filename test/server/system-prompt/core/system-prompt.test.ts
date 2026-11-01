@@ -20,6 +20,7 @@ import {
 } from "../../../../src/server/system-prompt/core/system-prompt.ts"
 import { WORK_PLAN_PROMPT } from "../../../../src/server/work-plan/core/work-plan-tool.ts"
 import { fixedChatSummary, inMemoryChatSummary } from "../../../fixture/chat.ts"
+import { checkedSessionId } from "../../../fixture/session-id.ts"
 
 // `systemPrompt` に何が・どの順で載るかを、3通り（仕事・雑談・続きから始めるとき）で固定する
 // （docs/architecture/character-pack.md「append に入る節の並び」）。本物の駆動を起こして確かめることはできない（`systemPrompt` は
@@ -170,7 +171,7 @@ describe("toSystemPromptMode", () => {
 
     const mode = toSystemPromptMode(sessionMode, READ_RECENT, readChatSummary, {
       kind: "resume",
-      sessionId: "fictional",
+      sessionId: checkedSessionId("fictional"),
     })
 
     expect(mode).toEqual({

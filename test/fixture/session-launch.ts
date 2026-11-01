@@ -7,6 +7,7 @@ import { characterChangedEvent, characterPackEntry, shownPortraits } from "./cha
 import { knownRestored } from "./restored-event.ts"
 import { createStubDriver, type StubDriver } from "./session-driver.ts"
 import { ITEMS_EVENT } from "./session-event.ts"
+import { checkedSessionId } from "./session-id.ts"
 
 // 本物の claude は起こさない（駆動は下の偽物）。
 export type Pack = { readonly name: string }
@@ -37,7 +38,7 @@ export const CHOICES = [
 ] as const
 
 /** 切り替え画面から前の仕事のセッションを選んだときの決め方。 */
-export const PREVIOUS_WORK = { by: "id", sessionId: "prev-work-session" } as const
+export const PREVIOUS_WORK = { by: "id", sessionId: checkedSessionId("prev-work-session") } as const
 
 export const CHAT_TOPICS = ["架空の話題その1", "架空の話題その2"] as const
 
