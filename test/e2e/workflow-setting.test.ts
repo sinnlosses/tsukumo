@@ -2,18 +2,16 @@ import { mkdirSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
 import type { Locator } from "playwright-core"
-import { describe, expect, it } from "vitest"
 
 import { runSubprocess } from "../fixture/subprocess.ts"
-import { type ScenarioRoom, useScenarioRun } from "./scenario-run.ts"
+import { expect, test } from "./room-fixture.ts"
+import type { ScenarioRoom, ScenarioRun } from "./scenario-run.ts"
 
 // 歯車の設定の「ワークフロー」の面（docs/architecture/testing.md「E2E のシナリオの一覧」）。
 // 場面は名指しせず（`opening` のまま）。部屋を開いたあと cwd を git のリポジトリにして `.tw/config.toml` を置き、
 // 画面で並びや選択を変えて保存すると、書き込みが取り込んだワークフローの `tw config set` まで届くことを確かめる。
 // 保存するまでは書かない（断りの理由が出ない）ことも見る。
 // 期待値は撮らず、断りの理由が欄の下に出るかで判定する。
-
-const run = useScenarioRun()
 
 /** サーバが `tw` 1回を待つ上限（`TW_TIMEOUT_MS`）。 */
 const TW_TIMEOUT_MS = 5000
@@ -27,9 +25,10 @@ const REJECTED_NAME_REASON = "候補にも今の値にも無い名前"
 /** 取り込みの `tw config set shell_write_guard` が、`tw`・`project` 以外の値を断るときの理由の一部。 */
 const REJECTED_CHOICE_REASON = "のどちらか"
 
-describe("ワークフローの設定", () => {
-  it("外して足して保存すると、並び全体の書き込みが tw まで届く", async () => {
+test.describe("ワークフローの設定", () => {
+  test("外して足して保存すると、並び全体の書き込みが tw まで届く", async ({ run }) => {
     const { room, dialog } = await openWorkflowFace(
+      run,
       "workflow-setting-steps",
       [stepsField(["架空:甲", "架空:乙"])],
       firstStepMenu,
@@ -43,8 +42,11 @@ describe("ワークフローの設定", () => {
   })
 
   // Space でページが送られないこと、つかんでいるあいだの Esc でダイアログが閉じないことは、実ブラウザの既定の動きで決まる。
-  it("つかむ点で Space・↓・Space と打つと並びが変わり、Esc はつかむ前へ戻してダイアログを閉じない", async () => {
+  test("つかむ点で Space・↓・Space と打つと並びが変わり、Esc はつかむ前へ戻してダイアログを閉じない", async ({
+    run,
+  }) => {
     const { room, dialog } = await openWorkflowFace(
+      run,
       "workflow-setting-keyboard",
       [stepsField(["架空:甲", "架空:乙", "架空:丙"])],
       firstStepMenu,
@@ -94,8 +96,9 @@ describe("ワークフローの設定", () => {
     await expectWrittenAfterSave(room, dialog)
   })
 
-  it("選択を替えて保存すると、値そのままの書き込みが tw まで届く", async () => {
+  test("選択を替えて保存すると、値そのままの書き込みが tw まで届く", async ({ run }) => {
     const { room, dialog } = await openWorkflowFace(
+      run,
       "workflow-setting-choice",
       [guardField()],
       (face) => face.getByRole("radiogroup", { name: "架空の判定" }),
@@ -112,6 +115,7 @@ describe("ワークフローの設定", () => {
  * 書き込みは本物の `tw config set` まで届き、候補に無い名前として断られる理由が欄の下に出ることで、往復を確かめる。
  */
 async function openWorkflowFace(
+  run: ScenarioRun,
   scenario: string,
   fields: readonly object[],
   ready: (dialog: Locator) => Locator,

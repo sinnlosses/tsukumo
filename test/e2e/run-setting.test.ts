@@ -1,6 +1,4 @@
-import { describe, expect, it } from "vitest"
-
-import { useScenarioRun, VIEWPORTS } from "./scenario-run.ts"
+import { expect, test, VIEWPORTS } from "./room-fixture.ts"
 
 // モデル・effort・許可モードの操作子（docs/architecture/testing.md「E2E のシナリオの一覧」）。
 // 場面は名指しせず（`opening` のまま）。広い窓のサイドバー下端と、中くらいの窓幅の柱の両方で、
@@ -9,12 +7,12 @@ import { useScenarioRun, VIEWPORTS } from "./scenario-run.ts"
 // 値が変わったかどうかは `waitForEvent` の回数ではなく `<select>` の value を見て判定する
 // （`opening` の最初の一巡でも `session-info` が1回流れるため、回数を数える待ちは数えズレる）。
 
-const run = useScenarioRun()
-
 const ELAPSED_MS = 60_000
 
-describe("モデル・effort・許可モードの操作子", () => {
-  it("広い窓のサイドバー下端で、クリックで吊り札が開き、選ぶと session.setModel が流れ、Esc で閉じる", async () => {
+test.describe("モデル・effort・許可モードの操作子", () => {
+  test("広い窓のサイドバー下端で、クリックで吊り札が開き、選ぶと session.setModel が流れ、Esc で閉じる", async ({
+    run,
+  }) => {
     const room = await run.open({
       scenario: "run-setting-model-selected",
       scene: "none",

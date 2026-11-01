@@ -1,13 +1,9 @@
-import { describe, expect, it } from "vitest"
-
-import { useScenarioRun } from "./scenario-run.ts"
+import { expect, test } from "./room-fixture.ts"
 
 // 雑談の吹き出しの間（docs/architecture/screen-design.md「セリフは全文で現れ、吹き出しは2秒空ける」）。
 // 場面 `chat-speech-gap` は、雑談に入ってからしばらく後に、3件のセリフを続けて流す。
 // 組み上がったページで走るので、足止めの時刻がレンダー中に読まれて画面を開いた時刻に固定される退行を拾える。
 // ブラウザの時計は凍っているので、進めた分だけ吹き出しが増えることで間を測る。
-
-const run = useScenarioRun()
 
 /** 画面を開いてから、セリフが届くまでに経ったことにする時間（ms）。 */
 const IDLE_MS = 5000
@@ -29,8 +25,8 @@ const CLOCK_STEP_MS = 5
 const CLOCK_POLL_MS = 50
 const CLOCK_POLL_TIMEOUT_MS = 15_000
 
-describe("雑談の吹き出しの間", () => {
-  it("画面を開いて時間が経ったあとに続けて届いたセリフが、2秒ずつ空いて出る", async () => {
+test.describe("雑談の吹き出しの間", () => {
+  test("画面を開いて時間が経ったあとに続けて届いたセリフが、2秒ずつ空いて出る", async ({ run }) => {
     const room = await run.open({
       scenario: "chat-speech-gap",
       scene: "chat-speech-gap",
@@ -57,7 +53,7 @@ describe("雑談の吹き出しの間", () => {
             progress.advancedMs += stepMs
             return bubble(n).count()
           },
-          { interval: CLOCK_POLL_MS, timeout: CLOCK_POLL_TIMEOUT_MS },
+          { intervals: [CLOCK_POLL_MS], timeout: CLOCK_POLL_TIMEOUT_MS },
         )
         .toBe(1)
       return progress.advancedMs

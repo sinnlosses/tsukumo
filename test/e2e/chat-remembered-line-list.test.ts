@@ -1,6 +1,4 @@
-import { describe, expect, it } from "vitest"
-
-import { useScenarioRun } from "./scenario-run.ts"
+import { expect, test } from "./room-fixture.ts"
 
 // 雑談のサイドバー2段目「最近の話題」と3段目「覚えていること」（docs/architecture/screen-design.md「雑談のときのサイドバー」）。
 // 場面 `chat-remembered-lines` は、3段目に短い1行とチップの表示幅を超える長い1行を、
@@ -9,16 +7,14 @@ import { useScenarioRun } from "./scenario-run.ts"
 // 「消す」で送る文面はどの同梱パックの `persona.md` にも無いので、受け口は一致を見つけず
 // ホームの `characters/<pack>/` へ何も書かない（同梱パックを覆わない）。
 
-const run = useScenarioRun()
-
 /** 撮るときの経過（凍らせた瞬間から）。「何秒前」の類いをこの値で揃える。 */
 const ELAPSED_MS = 60_000
 
 const SHORT_LINE = "架空の1行"
 const LONG_LINE = "架空の長い1行".repeat(5)
 
-describe("雑談のサイドバーの「覚えていること」", () => {
-  it("編集で × が出て、キャンセルは何も送らず、確認の「消す」で送る", async () => {
+test.describe("雑談のサイドバーの「覚えていること」", () => {
+  test("編集で × が出て、キャンセルは何も送らず、確認の「消す」で送る", async ({ run }) => {
     const room = await run.open({
       scenario: "chat-remembered-lines-edit",
       scene: "chat-remembered-lines",
@@ -37,7 +33,9 @@ describe("雑談のサイドバーの「覚えていること」", () => {
     await room.settleAndMatchPickedWithMessages(ELAPSED_MS)
   })
 
-  it("長い話題と長い覚えたことを出しても、2段目・3段目の入れ物は横に転がらない", async () => {
+  test("長い話題と長い覚えたことを出しても、2段目・3段目の入れ物は横に転がらない", async ({
+    run,
+  }) => {
     const room = await run.open({
       scenario: "chat-sidebar-no-horizontal-scroll",
       scene: "chat-remembered-lines",
