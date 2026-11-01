@@ -141,8 +141,8 @@ async function settleStill(page: Pick<Page, "locator" | "screenshot">): Promise<
   const region = await main.evaluate((element, inset: number) => {
     const rect = element.getBoundingClientRect()
     return {
-      x: rect.x + window.scrollX + inset,
-      y: rect.y + window.scrollY + inset,
+      x: rect.x + inset,
+      y: rect.y + inset,
       width: rect.width - 2 * inset,
       height: rect.height - 2 * inset,
     }
@@ -152,7 +152,7 @@ async function settleStill(page: Pick<Page, "locator" | "screenshot">): Promise<
   }
   const clip = { x: region.x, y: region.y, width: region.width, height: region.height }
   const still = await waitUntilStable(
-    () => page.screenshot({ clip, fullPage: true, animations: "disabled" }),
+    () => page.screenshot({ clip, fullPage: false, animations: "disabled" }),
     { intervalMs: STILL_INTERVAL_MS, attempts: STILL_ATTEMPTS },
   )
   if (!still.stable) {
