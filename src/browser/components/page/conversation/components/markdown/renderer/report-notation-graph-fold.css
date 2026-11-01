@@ -4,10 +4,11 @@
 .detail-block {
   & .report-svg-figure svg polygon {
     fill: var(--surface-raised);
-    stroke: var(--ink-quiet);
-    stroke-width: 1.5px;
+    stroke: var(--rule-soft);
+    stroke-width: 1px;
   }
   & .report-svg-figure svg polygon[data-tone] {
+    stroke-width: 1.5px;
     stroke: var(--tone-color);
   }
   /* 目印の節点の地は mermaid の経路と同じトークン（`svg` の塊の `rect` の地とは混ぜる先が違う）。 */
@@ -59,7 +60,7 @@
   & .report-svg-figure svg polyline {
     fill: none;
     stroke: var(--ink-quiet);
-    stroke-width: 2px;
+    stroke-width: 1.25px;
   }
   & .report-svg-figure svg polyline[data-tone] {
     stroke: var(--tone-color);

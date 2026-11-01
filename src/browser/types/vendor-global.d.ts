@@ -17,6 +17,8 @@ declare global {
       /** `theme: "base"` のときだけ効く。値は hex のみ（CSS 変数・色名は受け取らない）。 */
       readonly themeVariables: Readonly<Record<string, string | boolean>>
       readonly securityLevel: string
+      /** 図ごとの `<style>` に足す CSS。テーマ変数で消せない箇所（属性で付く `filter` など）に使う。 */
+      readonly themeCSS: string
       /**
        * 失敗したときに mermaid 自身がエラーの絵を `<pre class="mermaid">` の中へ描くのを止める。
        * `true` だと `render()` は絵を描くかわりに Promise を reject する。

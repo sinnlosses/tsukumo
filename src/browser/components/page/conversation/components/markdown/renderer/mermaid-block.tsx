@@ -96,7 +96,7 @@ export function MermaidBlock(props: MermaidBlockProps): ReactElement {
           }
           return
         }
-        initializeFor(themeVariables)
+        initializeFor(themeVariables, themeNode)
         const id = newDiagramId()
         const rendered = await mermaid.render(id, resolveTokens(code, themeNode))
         drawn.set(code, { svg: rendered.svg, id })
@@ -154,6 +154,7 @@ export function MermaidBlock(props: MermaidBlockProps): ReactElement {
 
 const FRAME_HEIGHT_PROPERTY = "--frame-height"
 const NATURAL_WIDTH_PROPERTY = "--natural-width"
+const FIGURE_WIDTH_PROPERTY = "--figure-width"
 
 /** mermaid の SVG の文字は、自然な大きさで 16px。 */
 const SVG_TEXT_PX = 16
@@ -174,12 +175,13 @@ function resolveThemeVariables(node: HTMLElement): Readonly<Record<string, strin
     primaryColor: hexOnSurface("--surface-raised"),
     primaryTextColor: hex("--ink"),
     textColor: hex("--ink"),
-    primaryBorderColor: hex("--rule"),
-    lineColor: hexOnSurface("--ink-soft"),
-    arrowheadColor: hexOnSurface("--ink-soft"),
-    clusterBkg: hexOnSurface("--surface-raised"),
+    primaryBorderColor: hexOnSurface("--rule-soft"),
+    lineColor: hexOnSurface("--ink-quiet"),
+    arrowheadColor: hexOnSurface("--ink-quiet"),
+    dropShadow: "none",
+    useGradient: false,
+    clusterBkg: hex("--surface"),
     clusterBorder: hexOnSurface("--rule-quiet"),
-    edgeLabelBackground: hex("--surface"),
     noteBkgColor: hex("--surface-accent"),
     noteTextColor: hex("--ink"),
     fontFamily: getComputedStyle(node).fontFamily,
@@ -203,8 +205,12 @@ function syncTheme(themeVariables: Readonly<Record<string, string | boolean>>): 
   }
 }
 
-function initializeFor(themeVariables: Readonly<Record<string, string | boolean>>): void {
-  const key = JSON.stringify(themeVariables)
+function initializeFor(
+  themeVariables: Readonly<Record<string, string | boolean>>,
+  themeNode: HTMLElement,
+): void {
+  const themeCSS = figureThemeCss(themeNode)
+  const key = JSON.stringify([themeVariables, themeCSS])
   if (key === initializedTheme) {
     return
   }
@@ -214,10 +220,28 @@ function initializeFor(themeVariables: Readonly<Record<string, string | boolean>
     layout: "dagre",
     theme: "base",
     themeVariables,
+    themeCSS,
     securityLevel: "strict",
     suppressErrorRendering: true,
   })
   initializedTheme = key
+}
+
+/**
+ * テーマ変数で決まらない箱と辺ラベルの見た目を決める `themeCSS`。
+ * 拡大の面は図を画像にして開き、ページのカスタムプロパティを読めないので、色と角は値に解いて書く。
+ * シーケンス図の参加者の箱は `filter` を属性で付けるので、`dropShadow` を外しても影が残る。
+ * 辺ラベルは地の矩形を持たず、字の縁取りで線と分ける（群の地の上でも矩形が浮かない）。
+ * 字は 16px のまま（`figure-caption.md` の文字 12px の下限）。
+ */
+function figureThemeCss(node: HTMLElement): string {
+  const radius = getComputedStyle(node).getPropertyValue("--radius-md").trim()
+  return [
+    "rect, polygon, circle, ellipse, path { filter: none; }",
+    `.node rect, .node .label-container, rect.actor { rx: ${radius}; ry: ${radius}; }`,
+    ".edgeLabel, .edgeLabel p, .edgeLabel span, .labelBkg { background-color: transparent; }",
+    `.edgeLabel span { color: ${resolveHexOver(node, "--ink-soft", "--surface")}; -webkit-text-stroke: 5px ${resolveHex(node, "--surface")}; paint-order: stroke fill; }`,
+  ].join("\n")
 }
 
 /**
@@ -260,7 +284,7 @@ async function fitTopDown(fit: TopDownFit): Promise<void> {
     await loadVendorScript(MERMAID_SRC)
     const cached = drawn.get(topDown)
     if (cached === undefined) {
-      initializeFor(themeVariables)
+      initializeFor(themeVariables, themeNode)
       const id = newDiagramId()
       const rendered = await mermaid.render(id, resolveTokens(topDown, themeNode))
       drawn.set(topDown, { svg: rendered.svg, id })
@@ -286,6 +310,7 @@ function placeInMeasure(node: HTMLPreElement): boolean {
   if (node.closest(".report-before-after-side") !== null) {
     return true
   }
+  releaseFigureWidth(node)
   const measure = pickMeasure((candidate) => {
     node.dataset["measure"] = candidate
     return diagramTextPx(node)
@@ -295,7 +320,27 @@ function placeInMeasure(node: HTMLPreElement): boolean {
   }
   node.dataset["measure"] = measure
   node.style.removeProperty(NATURAL_WIDTH_PROPERTY)
+  holdFigureWidth(node)
   return true
+}
+
+/** 題と凡例が図の幅の中で中央に並ぶよう、`<pre>` を描いた図の幅に縮める（`svg` の幅は百分率で、包みが図の幅を知れない）。 */
+function holdFigureWidth(node: HTMLPreElement): void {
+  const width = node.querySelector("svg")?.getBoundingClientRect().width ?? 0
+  if (width > 0) {
+    setFigureWidth(node, width)
+  }
+}
+
+function setFigureWidth(node: HTMLPreElement, width: number): void {
+  node.style.setProperty(FIGURE_WIDTH_PROPERTY, `${width}px`)
+  node.dataset["figureFit"] = ""
+}
+
+/** 段を測り直す間は、図の幅を持たせず段の幅に戻す。 */
+function releaseFigureWidth(node: HTMLPreElement): void {
+  node.style.removeProperty(FIGURE_WIDTH_PROPERTY)
+  delete node.dataset["figureFit"]
 }
 
 /**
@@ -335,6 +380,9 @@ function scrollAtNaturalWidth(node: HTMLPreElement): void {
   node.dataset["measure"] = naturalWidth > bodyInnerWidth ? "scroll" : "natural"
   if (naturalWidth > 0) {
     node.style.setProperty(NATURAL_WIDTH_PROPERTY, `${naturalWidth}px`)
+    if (node.dataset["measure"] === "natural") {
+      setFigureWidth(node, naturalWidth)
+    }
   }
 }
 

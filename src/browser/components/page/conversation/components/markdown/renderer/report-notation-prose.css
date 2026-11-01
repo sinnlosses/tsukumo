@@ -191,15 +191,15 @@
   /* 図（graph・mermaid・svg・image）の高さは読む面の高さ（`.layout-main` の内寸）の 70% まで。縦横比を保って縮み、全体は拡大で見る。chart は固定の高さのまま。
    縦に長い svg と image は、高さの上限に合わせて縮めると字が読めなくなるので、原寸の幅の `--report-figure-min-scale` 倍より小さくしない。
    そのぶん上限を超える高さは、包みの中で縦に転がして読む（高さが上限に収まる図は包みが転がらず、幅も高さも変わらない）。
-   svg の塊は書き手の `width` の1.5倍まで器の幅へ拡大し、高さの上限に当たるときは幅が縦横比に従う。`attr()` を解さない描画では `width: auto`（書き手の幅まで）に戻る。
-   包みは器の幅まで伸ばす（縮めると `100%` が自分の幅を指して拡大しない）。 */
+   svg の塊は書き手の `width` の1.5倍まで拡大し、高さの上限に当たるときは幅が縦横比に従う。上限は `max-width: 100%` が受けるので、`width` に百分率を混ぜず、図の幅が器の幅と無関係に決まる。
+   包みは図の幅に縮め（`fit-content`）、題は図の幅の中で中央に置く。`attr()` を解さない描画では `width: auto`（書き手の幅まで）に戻る。 */
   & pre:global(.mermaid) svg {
     max-height: var(--report-figure-max);
   }
   & .report-svg-figure {
     display: flex;
     align-self: stretch;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: flex-start;
     max-height: var(--report-figure-max);
     overflow-y: auto;
@@ -209,7 +209,6 @@
     flex-shrink: 0;
     width: auto;
     width: min(
-      100%,
       calc(attr(width px, 9999px) * 1.5),
       max(
         calc(
@@ -263,6 +262,10 @@
     overflow-wrap: anywhere;
     /* 等幅の桁を和欧間アキで崩さない。 */
     text-autospace: no-autospace;
+  }
+  & pre:global(.mermaid) {
+    padding: 0;
+    background: none;
   }
   /* テーマ（github-dark）の `.hljs` が敷く地・余白・block を打ち消し、箱は `pre` の1段だけにする。字の色の規則は触らない。 */
   & pre > code {

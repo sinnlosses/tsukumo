@@ -23,7 +23,7 @@
     min-inline-size: min-content;
     padding: var(--space-sm) var(--space-md);
     overflow: hidden;
-    border: 1px solid var(--rule);
+    border: 1px solid var(--rule-soft);
     border-radius: var(--radius-md);
     background: var(--surface-raised);
     overflow-wrap: break-word;

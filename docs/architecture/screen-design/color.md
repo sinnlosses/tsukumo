@@ -41,9 +41,10 @@
 `rule-soft` はレポートの部品の枠と縦の線（枠は 1px）、`rule-quiet` は **「ここで切れている」とだけ言えばよい**場所（表の行罫・`##` の下の罫・凡例の行）。
 どれも `surface` に `ink` を混ぜた導出値で、混ぜる割合だけが違う（32%・12%・6%）。
 
-**`graph`（`mermaid`・`svg` も同じ）の箱は、地を `surface-raised`・枠を 1px の `rule-soft`・角を 6px にし、影と太い縁を持たない。**
+**`graph`（`mermaid`・`svg` も同じ）の箱は、地を `surface-raised`・枠を 1px の `rule-soft`・角を `radius-md`（8px）にし、影と太い縁を持たない。**
 ` @a`〜` @e` で色の目印を付けた箱だけ、枠を系列色（`chart-series-*`）、地をその系列色の 12%（`graph-tone-fill-a`〜`e`）にする。
 矢印は `ink-quiet` 1.25px、ラベルは 12px・`ink-soft` で、地の色の縁取りを付けて線と重ねない。
+ただし mermaid の経路の辺ラベルは色だけ `ink-soft` で、字は 16px のまま（`display/figure-caption.md` の「文字 12px（自然寸法 × 縮尺）を守る」下限を縮尺で測るので、自然寸法を 12px にすると縮めた図で 11px 未満に落ちる）。
 図を囲む沈んだ暗い枠は持たない（図は読む面の地に直に置く）。
 
 **この表に無い固定の色**が4組ある。**コンテキストの内訳の分類**（`context-*`。分類ごとに違う色で、
@@ -144,8 +145,10 @@
 読んで渡す**（`markdown/renderer/chart.ts`・`mermaid-block.tsx`）。Chart.js は軸の字に `--ink-soft`・軸の線に `--rule`（格子線は引かず、凡例も出さない）、
 系列に `--chart-series-*`（内蔵の配色は止め、7本目以降は `--chart-series-other`）。mermaid は
 `theme: "base"` + `darkMode: true` に、トークンを hex に解いた `themeVariables`（地は `surface`・
-ノードは `surface-raised` を `surface` に重ねた色・字は `ink`・線は `ink-soft` を `surface` に重ねた色・
-囲みは `ground`）を渡す。`themeVariables` は hex しか受け取らない。使う人が地や字の色を差し替えたら、
+ノードは `surface-raised` を `surface` に重ねた色・字は `ink`・線は `ink-quiet` を `surface` に重ねた色・
+囲みは `surface`）を渡し、`dropShadow: "none"`・`useGradient: false` で既定の影と傾斜をやめる。
+辺ラベルは地を持たず、字の縁取り（`surface` の色の `-webkit-text-stroke`）で線と分ける。群の地は節点の地（`surface-raised`）と見分けるため `surface` 側に寄せる（`graph-ground-*` は系列の色を `surface` に 5% 混ぜた色）。節点の角は `radius-md`。属性で付く `filter`（シーケンス図の参加者の箱）は `themeCSS` で消す。
+`themeVariables` は色を hex でしか受け取らない。使う人が地や字の色を差し替えたら、
 覚えた図を捨てて描き直す。
 
 **最終レポートに印を付ける。** 最終レポートは**箱（地・枠・内側の余白）を持たず**、領域の `surface` を紙にする

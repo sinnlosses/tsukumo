@@ -69,7 +69,7 @@ export function graphSource(block: ReportGraph): string {
       nodes.some((node) => node.change === "unchanged" && node.tone === tone),
     ).map(
       ({ tone, color, fill }) =>
-        `  classDef tone-${tone} fill:var(${fill}),${graphStroke(color, false, 3)}`,
+        `  classDef tone-${tone} fill:var(${fill}),${graphStroke(color, false, 1.5)}`,
     ),
   ]
   const classLines = nodes.flatMap((node, index) => {
@@ -86,7 +86,9 @@ export function graphSource(block: ReportGraph): string {
       GRAPH_TONES.find(({ tone }) => tone === edge.tone)?.color
     const dashed = (style?.dashed ?? false) || edge.dashed || edge.returns
     const properties = [
-      ...(color === undefined ? [] : [`stroke:var(${color})`, "stroke-width:2px"]),
+      ...(color === undefined
+        ? []
+        : [`stroke:var(${color})`, `stroke-width:${style === undefined ? "1.25" : "2"}px`]),
       ...(dashed ? ["stroke-dasharray:5 4"] : []),
     ]
     return properties.length === 0 ? [] : [`  linkStyle ${String(index)} ${properties.join(",")}`]
@@ -209,7 +211,7 @@ function graphGroundStyle(ground: number): string {
 
 function graphToneGroupStyle(tone: GraphTone): string {
   const color = GRAPH_TONES.find((entry) => entry.tone === tone)?.color ?? "--rule-quiet"
-  return `fill:var(--surface-raised),stroke:var(${color}),stroke-width:2px`
+  return `fill:var(--surface),stroke:var(${color}),stroke-width:1px`
 }
 
 function mermaidId(index: number): string {

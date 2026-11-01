@@ -223,23 +223,23 @@
    強調した枠は `stroke-width` の属性が目印。 */
   & .report-svg-figure svg rect {
     fill: var(--surface-raised);
-    stroke: var(--ink-quiet);
-    stroke-width: 1.5px;
+    stroke: var(--rule-soft);
+    stroke-width: 1px;
   }
   & .report-svg-figure svg rect[stroke-width] {
     fill: var(--surface-accent);
     stroke: var(--accent);
-    stroke-width: 3px;
+    stroke-width: 1.5px;
   }
   /* `tone` の5色。系列色を枠にし、地は面の色へ薄く混ぜる。凡例の見本（`report-svg-legend`）も同じ規則で描く。 */
   & .report-svg-figure svg rect[data-tone],
   & .report-svg-legend svg rect[data-tone] {
-    fill: color-mix(in srgb, var(--tone-color) 22%, var(--surface-raised));
+    fill: color-mix(in srgb, var(--tone-color) 12%, var(--surface-raised));
     stroke: var(--tone-color);
     stroke-width: 1.5px;
   }
   & .report-svg-figure svg rect[data-tone][stroke-width] {
-    stroke-width: 3px;
+    stroke-width: 2px;
   }
   & svg [data-tone="a"] {
     --tone-color: var(--chart-series-1);
@@ -270,7 +270,7 @@
   }
   & .report-svg-figure svg line {
     stroke: var(--ink-quiet);
-    stroke-width: 2px;
+    stroke-width: 1.25px;
   }
   & .report-svg-figure svg line[data-tone] {
     stroke: var(--tone-color);
@@ -280,6 +280,10 @@
   }
   & .report-svg-figure svg text {
     fill: var(--ink);
+    paint-order: stroke;
+    stroke: var(--surface);
+    stroke-width: 2px;
+    stroke-linejoin: round;
   }
   & .report-svg-figure svg text[data-sub] {
     fill: var(--ink-quiet);
@@ -295,8 +299,8 @@
     max-width: 100%;
     margin: var(--report-figure-gap) auto;
   }
-  /* 縮めた包みは本体の幅まで縮むが、本文の列（42em）より狭くはならない。本体が列より狭ければ列の中央に置く。
-   包みそのものは左右の `auto` でレポートの幅の中央に置く（本文の列より広い本体も）。 */
+  /* 縮めた包みは本体の幅まで縮むが、本文の列（42em）より狭くはならない。
+   図を持つ包みは本文の列の左端から始め、表と画像の包みは左右の `auto` で中央に置く。 */
   & .report-captioned-fit {
     inline-size: max-content;
     min-inline-size: min(100%, var(--report-measure));
@@ -336,10 +340,24 @@
     inline-size: min(100%, var(--figure-measure, var(--report-measure)));
     min-inline-size: 0;
     align-items: stretch;
+    margin-inline: 0;
+  }
+  /* 段が決まって `<pre>` が描いた図の幅を持ったら（`data-figure-fit`）、包みを図の幅に縮め、題を図の幅の中で中央にする。測っている間は段の幅のまま。 */
+  & .report-captioned:has(> pre:global(.mermaid)[data-figure-fit]) {
+    inline-size: fit-content;
+    max-inline-size: 100%;
+  }
+  & .report-captioned:has(> .report-svg-figure) {
+    inline-size: fit-content;
+    max-inline-size: 100%;
+    min-inline-size: 0;
+    margin-inline: 0;
+  }
+  & .report-captioned:has(> :is(.report-svg-figure, pre:global(.mermaid))) > .report-graph-legend {
+    contain: inline-size;
   }
   & .report-captioned:has(> pre:global(.mermaid)[data-measure="wide"]) {
     --figure-measure: var(--report-measure-wide);
-    margin-inline: 0;
   }
   &
     .report-captioned:has(
@@ -347,8 +365,6 @@
       > pre:global(.mermaid)[data-measure="scroll"]
     ) {
     --figure-measure: 100%;
-    max-inline-size: 100%;
-    margin-inline: 0;
   }
   & .report-captioned pre:global(.mermaid):is([data-measure="scroll"], [data-measure="natural"]) {
     overflow-x: auto;
@@ -363,7 +379,9 @@
   }
   & .report-captioned pre:global(.mermaid) svg {
     display: block;
-    margin-inline: auto;
+  }
+  & .report-captioned > pre:global(.mermaid) {
+    inline-size: var(--figure-width, auto);
   }
   /* 拡大の `<dialog>` は図の子として描かれるので除く（上下の margin を 0 にすると、中央寄せの `margin: auto` が効かず上端に貼り付く）。 */
   & .report-captioned > :not(.report-caption, dialog) {
@@ -461,7 +479,7 @@
     font-family: var(--font-mono);
     font-size: var(--font-label);
     letter-spacing: 0.08em;
-    color: var(--report-sequence-ink);
+    color: var(--ink-quiet);
   }
   & .report-caption-text {
     overflow-wrap: anywhere;

@@ -60,9 +60,9 @@
 
   /* レポートの graph の群の地（色の目印の無い群に順に当てる）・色の目印の節点の地・戻り道の線。
      群は囲みの題、目印は凡例の名前、戻り道は凡例の語が必ず添う。戻り道は「変えた」の印（state-warn）と見分ける色にする。 */
-  --graph-ground-1: color-mix(in srgb, var(--state-info) 10%, var(--surface));
-  --graph-ground-2: color-mix(in srgb, var(--state-ask) 10%, var(--surface));
-  --graph-ground-3: color-mix(in srgb, var(--chart-series-4) 10%, var(--surface));
+  --graph-ground-1: color-mix(in srgb, var(--state-info) 5%, var(--surface));
+  --graph-ground-2: color-mix(in srgb, var(--state-ask) 5%, var(--surface));
+  --graph-ground-3: color-mix(in srgb, var(--chart-series-4) 5%, var(--surface));
   --graph-tone-fill-a: color-mix(in srgb, var(--chart-series-1) 12%, var(--surface));
   --graph-tone-fill-b: color-mix(in srgb, var(--chart-series-2) 12%, var(--surface));
   --graph-tone-fill-c: color-mix(in srgb, var(--chart-series-3) 12%, var(--surface));
