@@ -57,6 +57,43 @@ describe("plainWordSpellingsIn", () => {
     ).toEqual(["詳細の面", "葉の部品"])
   })
 
+  it("ワークプランのフェーズの旧称の複合語は、表の順に地の文で見つかる", () => {
+    expect(
+      plainWordSpellingsIn(
+        draft([
+          reportDraftText(
+            "架空のまとめ待ちの段と並列の段と委譲先の段と段ごとの時間と段の群と段の閉じ方。",
+          ),
+        ]),
+      ),
+    ).toEqual(["まとめ待ちの段", "並列の段", "委譲先の段", "段ごとの時間", "段の群", "段の閉じ方"])
+  })
+
+  it("段落・後段・段差・手段・段階は、段の複合語に当たらない", () => {
+    expect(
+      plainWordSpellingsIn(
+        draft([
+          reportDraftText(
+            "架空の1段落と後段と段差と手段の数と最後の段落と今の段階と飛ばした段落。",
+          ),
+        ]),
+      ),
+    ).toEqual([])
+  })
+
+  it("既知の巻き込み: 並列の段階は、部分一致で当たる", () => {
+    expect(plainWordSpellingsIn(draft([reportDraftText("架空の並列の段階。")]))).toEqual([
+      "並列の段",
+    ])
+  })
+
+  it("段の複合語の差し戻しは、言い換え先を示す", () => {
+    const text = reportRejectionText(
+      reportViolations(draft([reportDraftText("架空の並列の段の話。")])),
+    )
+    expect(text).toContain("「並列の段」は「並列のフェーズ」")
+  })
+
   it("帯・傍注・面・葉の複合語もコードと引用の中は見ない", () => {
     expect(
       plainWordSpellingsIn(

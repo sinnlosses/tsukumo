@@ -101,4 +101,34 @@ export const PLAIN_WORDS = [
     replacement: "図の内容部品",
     meaning: "内容部品（文・表・図など中身を持つ部品）のうち、図を描くもの",
   },
+  {
+    spelling: "まとめ待ちの段",
+    replacement: "まとめ待ちのフェーズ",
+    meaning: "済んだが、まとめ（中間レポートの要約）がまだ届いていないフェーズ",
+  },
+  {
+    spelling: "並列の段",
+    replacement: "並列のフェーズ",
+    meaning: "同時に走らせる、複数のフェーズのまとまり",
+  },
+  {
+    spelling: "委譲先の段",
+    replacement: "委譲先のフェーズ",
+    meaning: "委譲先に任せているフェーズ",
+  },
+  {
+    spelling: "段ごとの時間",
+    replacement: "フェーズごとの時間",
+    meaning: "最終レポートに出す、フェーズごとの所要時間",
+  },
+  {
+    spelling: "段の群",
+    replacement: "フェーズのグループ",
+    meaning: "並列に走らせる複数のフェーズをまとめたもの",
+  },
+  {
+    spelling: "段の閉じ方",
+    replacement: "フェーズの閉じ方",
+    meaning: "report でそのターンのフェーズを済ませる・飛ばすことの申告",
+  },
 ] as const satisfies readonly PlainWord[]
