@@ -19,9 +19,8 @@ describe("shellLineKinds", () => {
     expect(shellLineKinds(language, "$ ls")).toEqual(["command"])
   })
 
-  it("shell でない言語・言語なしは分けない", () => {
+  it("shell でない言語は分けない", () => {
     expect(shellLineKinds("ts", "$ ls")).toBeUndefined()
-    expect(shellLineKinds(undefined, "$ ls")).toBeUndefined()
   })
 
   it("`$ ` で始まる行が無い shell は分けない", () => {

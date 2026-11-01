@@ -8,7 +8,7 @@ import styles from "./report-notation.module.css"
  * `kindName` は記法の class 名（`note`・`note-warn` など）。
  */
 export function NoteLabel(props: {
-  readonly kindName: string | undefined
+  readonly kindName: string
   readonly label: string
 }): ReactElement {
   return (
@@ -25,7 +25,7 @@ export function NoteLabel(props: {
 }
 
 /** 罫を持たない種別（情報・疑問・メモ）だけ、ラベルの字に種類の色を付ける。 */
-function noteLabelColorClass(kindName: string | undefined): string | undefined {
+function noteLabelColorClass(kindName: string): string | undefined {
   switch (kindName) {
     case "note":
       return styles["report-note-label-info"]

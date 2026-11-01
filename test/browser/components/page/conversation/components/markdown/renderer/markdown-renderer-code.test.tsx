@@ -13,6 +13,7 @@ vi.mock(
   () => ({
     resolveColor: () => "rgb(0, 0, 0)",
     resolveHex: () => "#000000",
+    resolveHexOver: () => "#000000",
   }),
 )
 
@@ -296,6 +297,11 @@ describe("Markdown（shell の塊）", () => {
     const text = "```ts\n$ not a command\nout\n```"
     const { container } = render(<Markdown text={text} />)
     expect(container.querySelector(".code-line")).toBeNull()
+    expect(await copiedText(text)).toEqual(["$ not a command\nout"])
+  })
+
+  it("言語なしの `$ ` 始まりは分けず、全文を写す", async () => {
+    const text = "```\n$ not a command\nout\n```"
     expect(await copiedText(text)).toEqual(["$ not a command\nout"])
   })
 

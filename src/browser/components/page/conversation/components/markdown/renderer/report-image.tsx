@@ -309,11 +309,12 @@ function sideOfAlt(alt: string): SwapSide {
 }
 
 function readCaption(root: HTMLElement | null): SwapZoom["caption"] {
-  const read = (name: string | undefined): string =>
-    name === undefined ? "" : (root?.querySelector(`.${name}`)?.textContent ?? "")
+  const read = (name: string): string => root?.querySelector(`.${name}`)?.textContent ?? ""
+  const numberClass = styles["report-caption-number"]
+  const textClass = styles["report-caption-text"]
   return {
-    number: read(styles["report-caption-number"]),
-    text: read(styles["report-caption-text"]),
+    number: numberClass === undefined ? "" : read(numberClass),
+    text: textClass === undefined ? "" : read(textClass),
   }
 }
 

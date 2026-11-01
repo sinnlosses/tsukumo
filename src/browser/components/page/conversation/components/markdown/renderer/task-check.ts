@@ -36,11 +36,13 @@ function rewriteContent(node: ElementContent): ElementContent {
     return taskCheckMark(node.properties)
   }
 
+  const itemClass = styles["report-task-item"]
   return {
     ...node,
-    properties: isTaskItem(node)
-      ? withClassName(node.properties, styles["report-task-item"])
-      : node.properties,
+    properties:
+      isTaskItem(node) && itemClass !== undefined
+        ? withClassName(node.properties, itemClass)
+        : node.properties,
     children: node.children.map(rewriteContent),
   }
 }
@@ -81,11 +83,7 @@ function isChecked(properties: Properties): boolean {
   return checked === true || checked === ""
 }
 
-function withClassName(properties: Properties, name: string | undefined): Properties {
-  if (name === undefined) {
-    return properties
-  }
-
+function withClassName(properties: Properties, name: string): Properties {
   const current = properties["className"]
   const names = Array.isArray(current) ? current : typeof current === "string" ? [current] : []
   return { ...properties, className: [...names, name] }

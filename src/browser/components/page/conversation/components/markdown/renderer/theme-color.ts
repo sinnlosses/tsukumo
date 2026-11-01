@@ -18,19 +18,22 @@ type Rgba = { readonly r: number; readonly g: number; readonly b: number; readon
 /**
  * カスタムプロパティの実効値を `#rrggbb` にする。mermaid の `themeVariables` は hex しか受け取らない。
  * 色の表記（`rgb()` / `color(srgb ...)`）は処理系で違うので、文字列は割らず canvas に塗って読む。
- * 透ける色（`ink-soft` など）は `backdrop` のトークンの上に重ねた不透明な色にする。
  */
-export function resolveHex(
-  element: HTMLElement,
-  property: string,
-  backdrop: string | undefined,
-): string {
+export function resolveHex(element: HTMLElement, property: string): string {
   const front = readPixel(resolveColor(element, property))
-  const back = backdrop === undefined ? undefined : readPixel(resolveColor(element, backdrop))
-  const channel = (get: (color: Rgba) => number): string => {
-    const mixed = back === undefined ? get(front) : get(front) * front.a + get(back) * (1 - front.a)
-    return Math.round(mixed).toString(16).padStart(2, "0")
-  }
+  return toHex((get) => get(front))
+}
+
+/** 透ける色（`ink-soft` など）を `backdrop` のトークンの上に重ねた不透明な `#rrggbb` にする。 */
+export function resolveHexOver(element: HTMLElement, property: string, backdrop: string): string {
+  const front = readPixel(resolveColor(element, property))
+  const back = readPixel(resolveColor(element, backdrop))
+  return toHex((get) => get(front) * front.a + get(back) * (1 - front.a))
+}
+
+function toHex(mix: (get: (color: Rgba) => number) => number): string {
+  const channel = (get: (color: Rgba) => number): string =>
+    Math.round(mix(get)).toString(16).padStart(2, "0")
   return `#${channel((color) => color.r)}${channel((color) => color.g)}${channel((color) => color.b)}`
 }
 

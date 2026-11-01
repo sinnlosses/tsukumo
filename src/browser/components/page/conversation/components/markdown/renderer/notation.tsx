@@ -59,10 +59,11 @@ type NotationBlockProps = JSX.IntrinsicElements["div"] & ExtraProps
  */
 export function NotationBlock(props: NotationBlockProps): ReactElement {
   const { node, className: writtenClassName, children, ...rest } = props
-  const className = withItemCountClass(writtenClassName, node)
-  const kind = noteKind(className)
-  const kindName = kind?.[0]
-  const label = kind?.[1]
+  const className =
+    writtenClassName !== undefined && node !== undefined
+      ? withItemCountClass(writtenClassName, node)
+      : writtenClassName
+  const kind = className === undefined ? undefined : noteKind(className)
 
   if (className !== undefined && classNameTokens(className).includes("before-after-swap")) {
     return (
@@ -88,7 +89,7 @@ export function NotationBlock(props: NotationBlockProps): ReactElement {
       {...(isGutter ? { [REVEAL_GUTTER_ATTRIBUTE]: "" } : {})}
       className={resolveNotationClassName(className)}
     >
-      {label !== undefined && <NoteLabel kindName={kindName} label={label} />}
+      {kind !== undefined && <NoteLabel kindName={kind[0]} label={kind[1]} />}
       {children}
     </div>
   )
@@ -147,14 +148,7 @@ export function NotationListItem(props: NotationListItemProps): ReactElement {
 }
 
 /** 列数を項目数で決める塊（`stats` / `cols`）が、列数の決まりを持つ項目数のとき `<名前>-of-<項目数>` を class に足す。 */
-function withItemCountClass(
-  className: string | undefined,
-  node: Element | undefined,
-): string | undefined {
-  if (className === undefined || node === undefined) {
-    return className
-  }
-
+function withItemCountClass(className: string, node: Element): string {
   const tokens = classNameTokens(className)
   const name = COUNTED_BLOCKS.find((counted) => tokens.includes(counted))
   if (name === undefined) {
@@ -179,11 +173,7 @@ function resolveNotationClassName(className: string | undefined): string | undef
 }
 
 /** `note` の塊なら種別のラベルを、そうでなければ何も返さない（`cols` などにはラベルを足さない）。 */
-function noteKind(className: string | undefined): (typeof NOTE_LABELS)[number] | undefined {
-  if (className === undefined) {
-    return undefined
-  }
-
+function noteKind(className: string): (typeof NOTE_LABELS)[number] | undefined {
   const tokens = classNameTokens(className)
 
   return NOTE_LABELS.find(([name]) => tokens.includes(name))

@@ -10,6 +10,7 @@ vi.mock(
   () => ({
     resolveColor: () => "rgb(0, 0, 0)",
     resolveHex: () => "#000000",
+    resolveHexOver: () => "#000000",
   }),
 )
 

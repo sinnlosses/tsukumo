@@ -11,10 +11,10 @@ const COMMAND_PREFIX = "$ "
  * 行末が `\` のコマンドの次の行は、続きなのでコマンドに数える。
  */
 export function shellLineKinds(
-  language: string | undefined,
+  language: string,
   source: string,
 ): readonly ShellLineKind[] | undefined {
-  if (language === undefined || !SHELL_LANGUAGES.includes(language)) {
+  if (!SHELL_LANGUAGES.includes(language)) {
     return undefined
   }
   const rows = source.split("\n")

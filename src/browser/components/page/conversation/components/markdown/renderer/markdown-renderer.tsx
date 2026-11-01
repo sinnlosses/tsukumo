@@ -270,8 +270,9 @@ function Pre(props: PreProps): ReactElement {
   const fileName = codeFileName(codeNode)
   const marks = codeMarks(codeNode)
   const source = codeSourceText(codeNode)
-  const kinds = shellLineKinds(codeLanguage(codeNode), source)
-  const isDiff = codeLanguage(codeNode) === "diff"
+  const language = codeLanguage(codeNode)
+  const kinds = language === undefined ? undefined : shellLineKinds(language, source)
+  const isDiff = language === "diff"
   const wordRanges = isDiff ? diffWordRanges(source) : NO_WORD_RANGES
   return (
     <div className={styles["code-file"]}>

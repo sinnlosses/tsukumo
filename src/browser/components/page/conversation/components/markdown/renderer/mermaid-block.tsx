@@ -22,7 +22,7 @@ import { figureZoomTriggerProps, SvgZoom } from "./figure-zoom.tsx"
 import styles from "./mermaid-block.module.css"
 import { pickMeasure, topDownSource } from "./mermaid-figure-measure.ts"
 import { mermaidFrameHeight } from "./mermaid-frame-height.ts"
-import { resolveHex } from "./theme-color.ts"
+import { resolveHex, resolveHexOver } from "./theme-color.ts"
 import { loadVendorScript, preloadVendorScript } from "./vendor-script.ts"
 
 const MERMAID_SRC = vendorAssetPath("mermaid.min.js")
@@ -166,8 +166,8 @@ function newDiagramId(): string {
  * mermaid の `themeVariables` をページの色のトークンから作る。`base` だけが差せて、値は hex しか受け取らない。
  */
 function resolveThemeVariables(node: HTMLElement): Readonly<Record<string, string | boolean>> {
-  const hex = (property: string): string => resolveHex(node, property, undefined)
-  const hexOnSurface = (property: string): string => resolveHex(node, property, "--surface")
+  const hex = (property: string): string => resolveHex(node, property)
+  const hexOnSurface = (property: string): string => resolveHexOver(node, property, "--surface")
   return {
     darkMode: true,
     background: hex("--surface"),
@@ -191,7 +191,7 @@ function resolveThemeVariables(node: HTMLElement): Readonly<Record<string, strin
  */
 function resolveTokens(code: string, node: HTMLElement): string {
   return code.replace(/var\((--[\w-]+)\)/g, (_, property: string) =>
-    resolveHex(node, property, "--surface"),
+    resolveHexOver(node, property, "--surface"),
   )
 }
 
