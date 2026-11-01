@@ -12,7 +12,7 @@ import {
   figureNumberSlips,
   numbersIn,
 } from "./figure-number.ts"
-import type { ReportDraft } from "./report-violation.ts"
+import type { ReportDraft } from "./rules/draft.ts"
 
 /** `plot` の何個目の何列目と、本文の何番目の数がずれたか。 */
 export type FigureNumberFault = FigureNumberSlip

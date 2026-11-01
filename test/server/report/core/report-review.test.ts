@@ -11,7 +11,7 @@ import type {
   ReportVerdict,
 } from "../../../../src/server/report/core/report-review.ts"
 import { reportViolations } from "../../../../src/server/report/core/report-violation-check.ts"
-import type { ReportDraft } from "../../../../src/server/report/core/report-violation.ts"
+import type { ReportDraft } from "../../../../src/server/report/core/rules/draft.ts"
 import type { BackgroundTask } from "../../../../src/shared/session-driver/background-task.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import { reportDraft, reportEvent } from "../../../fixture/report-event.ts"

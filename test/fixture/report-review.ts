@@ -8,7 +8,7 @@ import {
   createReportReview as createReviewWithNews,
   type ReportReview,
 } from "../../src/server/report/core/report-review.ts"
-import type { ReportDraft } from "../../src/server/report/core/report-violation.ts"
+import type { ReportDraft } from "../../src/server/report/core/rules/draft.ts"
 import type { ReportBlockSection } from "../../src/shared/report/report-block.ts"
 import type { BackgroundTask } from "../../src/shared/session-driver/background-task.ts"
 import type { SessionEvent } from "../../src/shared/session/session-event.ts"

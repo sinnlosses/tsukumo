@@ -7,7 +7,7 @@ import {
   REPORT_MISSING_WORK_PLAN_CLOSING_REJECTION_TEXT,
   REPORT_UNFINISHED_PHASES_REJECTION_TEXT,
 } from "./procedure-rejection.ts"
-import type { ReportDraft } from "./report-violation.ts"
+import type { ReportDraft } from "./rules/draft.ts"
 
 /** 段の閉じ方の判定。合わなければ、当てはまった条の名前と差し戻しの文面。 */
 export type ClosingFit =

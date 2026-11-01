@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import { reportRejectionText } from "../../../../src/server/report/core/report-rejection.ts"
 import { reportViolations } from "../../../../src/server/report/core/report-violation-check.ts"
-import type { ReportDraft } from "../../../../src/server/report/core/report-violation.ts"
+import type { ReportDraft } from "../../../../src/server/report/core/rules/draft.ts"
 import type { TableCell } from "../../../../src/shared/report/report-block-comparison.ts"
 import type { ReportBlock, ReportBlockSection } from "../../../../src/shared/report/report-block.ts"
 import {

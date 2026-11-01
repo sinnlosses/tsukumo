@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import type { ReportDraft } from "../../../../src/server/report/core/report-violation.ts"
+import type { ReportDraft } from "../../../../src/server/report/core/rules/draft.ts"
 import type { ReportTask, ReportTaskOutcome } from "../../../../src/shared/report/report-task.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import type { WorkPlanClosing, WorkPlanStanding } from "../../../../src/shared/session/work-plan.ts"

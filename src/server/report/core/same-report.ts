@@ -4,7 +4,7 @@ import { isDeepEqual, omit } from "remeda"
 
 import { reportFigureOf, reportOutline } from "../../../shared/report/report-outline.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
-import type { ReportDraft } from "./report-violation.ts"
+import type { ReportDraft } from "./rules/draft.ts"
 
 /**
  * 文字列の2つの欄は前後の空白を除いて、`checks` は中身で、

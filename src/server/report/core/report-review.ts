@@ -53,7 +53,7 @@ import {
 import type { ReportRejectionModes, ReportRejectionReason } from "./rejection-mode.ts"
 import { a2uiValidationFailedText, reportRejectionText } from "./report-rejection.ts"
 import { reportViolations } from "./report-violation-check.ts"
-import type { ReportDraft } from "./report-violation.ts"
+import type { ReportDraft } from "./rules/draft.ts"
 import { isSameReport } from "./same-report.ts"
 import { toolErrorFieldsOf } from "./tool-error-field.ts"
 import type { TurnRejection } from "./turn-rejection.ts"

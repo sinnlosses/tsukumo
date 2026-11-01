@@ -61,7 +61,8 @@ import {
   labelInItemCount,
   proseTexts,
 } from "./report-prose-rule.ts"
-import { type ReportDraft, type ReportViolation, VIOLATION_THRESHOLDS } from "./report-violation.ts"
+import { type ReportViolation, VIOLATION_THRESHOLDS } from "./report-violation.ts"
+import type { ReportDraft } from "./rules/draft.ts"
 import { templateMissesOf } from "./template-miss-fault.ts"
 import { timelineFaults } from "./timeline-fault.ts"
 

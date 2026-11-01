@@ -6,7 +6,7 @@ import type { ReportOutline, ReportOutlineLeaf } from "../../../shared/report/re
 import { markdownTreeOf } from "./markdown-tree.ts"
 import { PLAIN_WORDS } from "./plain-word.ts"
 import { proseTexts } from "./report-prose-rule.ts"
-import type { ReportDraft } from "./report-violation.ts"
+import type { ReportDraft } from "./rules/draft.ts"
 
 /**
  * 本文の地の文に出てくる表の綴りを、表の順に返す。同じ箇所は長い綴りにだけ数える。

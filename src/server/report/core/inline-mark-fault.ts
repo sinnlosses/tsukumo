@@ -9,7 +9,7 @@ import {
 } from "../../../shared/report/report-outline.ts"
 import { retrospectiveDraftsLine } from "../../../shared/report/report-retrospective.ts"
 import { proseTexts } from "./report-prose-rule.ts"
-import type { ReportDraft } from "./report-violation.ts"
+import type { ReportDraft } from "./rules/draft.ts"
 
 type InlineMarkSource = Pick<ReportDraft, "conclusion" | "components">
 

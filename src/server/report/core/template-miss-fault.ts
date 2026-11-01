@@ -2,8 +2,8 @@
 
 import { reportFigureOf } from "../../../shared/report/report-outline.ts"
 import { numberCountOutsideCode } from "./number-count.ts"
-import type { ReportDraft } from "./report-violation.ts"
 import { type TemplateMiss, templateMisses } from "./request-template.ts"
+import type { ReportDraft } from "./rules/draft.ts"
 
 /** 申告した型（`task.genre`）の雛形から外れた点。型を申告していない（`unspecified`・タスク無し）なら空。 */
 export function templateMissesOf(

@@ -4,7 +4,7 @@
 
 import { z } from "zod"
 
-import type { ReportDraft } from "../../src/server/report/core/report-violation.ts"
+import type { ReportDraft } from "../../src/server/report/core/rules/draft.ts"
 import { parseConclusion } from "../../src/server/session-driver/core/conclusion-sentence.ts"
 import { legacyReportComponents } from "../../src/server/session-driver/core/legacy-report-component-list.ts"
 import {

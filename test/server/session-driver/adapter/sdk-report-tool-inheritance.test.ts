@@ -3,7 +3,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import type { ReportDraft } from "../../../../src/server/report/core/report-violation.ts"
+import type { ReportDraft } from "../../../../src/server/report/core/rules/draft.ts"
 import {
   type CallReview,
   createCallReview,
