@@ -46,4 +46,59 @@ export const PLAIN_WORDS = [
     replacement: "ブラウザの表示サイズ",
     meaning: "tsukumo の画面を開いたブラウザの、中身を描ける領域の幅と高さ（1440x900 など）",
   },
+  {
+    spelling: "進み具合の帯",
+    replacement: "進み具合のプログレスバー",
+    meaning: "画面の端に出す、いま計画のどこまで進んだかを段の並びで見せる表示",
+  },
+  {
+    spelling: "ワークプランの帯",
+    replacement: "ワークプランのプログレスバー",
+    meaning: "画面の端に出す、ワークプランのどこまで進んだかを段の並びで見せる表示",
+  },
+  {
+    spelling: "委譲中の帯",
+    replacement: "委譲中のプログレスバー",
+    meaning: "委譲先に任せている作業のどこまで進んだかを見せる表示",
+  },
+  {
+    spelling: "傍注",
+    replacement: "欄外注",
+    meaning: "本文の横の余白の欄に添える、出典やどこを見るかを書いた短い注",
+  },
+  {
+    spelling: "ワークフローの面",
+    replacement: "ワークフローの描画領域",
+    meaning: "ワークフローの設定を描く、画面の中の領域",
+  },
+  {
+    spelling: "入力欄の面",
+    replacement: "入力欄の描画領域",
+    meaning: "入力欄を描く、画面の中の領域",
+  },
+  {
+    spelling: "詳細の面",
+    replacement: "詳細の描画領域",
+    meaning: "詳細を描く、画面の中の領域",
+  },
+  {
+    spelling: "並べた面",
+    replacement: "並べた描画領域",
+    meaning: "比べるために並べて描いた、画面の中の領域",
+  },
+  {
+    spelling: "振り返りの葉",
+    replacement: "振り返りの内容部品",
+    meaning: "レポートの節を組む内容部品（文・表・図など中身を持つ部品）のうち、振り返りを書くもの",
+  },
+  {
+    spelling: "葉の部品",
+    replacement: "内容部品",
+    meaning: "レポートの節を組む、文・表・図など中身を持つ部品（配置のための部品は含めない）",
+  },
+  {
+    spelling: "図の葉",
+    replacement: "図の内容部品",
+    meaning: "内容部品（文・表・図など中身を持つ部品）のうち、図を描くもの",
+  },
 ] as const satisfies readonly PlainWord[]

@@ -6,6 +6,12 @@ test("言い換え先は、元の綴りを含まない（含むと言い換え�
   expect(PLAIN_WORDS.filter((word) => word.replacement.includes(word.spelling))).toEqual([])
 })
 
+test("面・葉は複合語の綴りで登録し、単独の綴りは登録しない", () => {
+  const spellings = PLAIN_WORDS.map((word) => word.spelling)
+  expect(spellings).not.toContain("面")
+  expect(spellings).not.toContain("葉")
+})
+
 test("長い綴りが、それを含む短い綴りより先に並んでいる", () => {
   expect(
     PLAIN_WORDS.filter((word, index) =>

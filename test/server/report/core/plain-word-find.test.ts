@@ -35,6 +35,39 @@ describe("plainWordSpellingsIn", () => {
     expect(plainWordSpellingsIn(draft([reportDraftText("架空の再演する流れ。")]))).toEqual(["再演"])
   })
 
+  it("帯・傍注・面・葉の複合語は地の文で見つかる", () => {
+    expect(
+      plainWordSpellingsIn(
+        draft([reportDraftText("架空の進み具合の帯と傍注を、詳細の面の葉の部品で描く。")]),
+      ),
+    ).toEqual(["進み具合の帯", "傍注", "詳細の面", "葉の部品"])
+  })
+
+  it("画面の名前・言葉の選び方・場面・設定の画面・携帯の帯域は、登録した複合語に当たらない", () => {
+    expect(
+      plainWordSpellingsIn(
+        draft([reportDraftText("架空の画面の名前と言葉の選び方と場面と設定の画面と携帯の帯域。")]),
+      ),
+    ).toEqual([])
+  })
+
+  it("既知の巻き込み: 言葉の部品と詳細の面倒は、部分一致で当たる", () => {
+    expect(
+      plainWordSpellingsIn(draft([reportDraftText("架空の言葉の部品と詳細の面倒。")])),
+    ).toEqual(["詳細の面", "葉の部品"])
+  })
+
+  it("帯・傍注・面・葉の複合語もコードと引用の中は見ない", () => {
+    expect(
+      plainWordSpellingsIn(
+        draft([
+          reportDraftText("架空の `進み具合の帯` と `傍注` と `葉の部品`。"),
+          reportDraftText("> 詳細の面の図の葉"),
+        ]),
+      ),
+    ).toEqual([])
+  })
+
   it("インラインコード・コード・引用の中は見ない", () => {
     expect(
       plainWordSpellingsIn(
