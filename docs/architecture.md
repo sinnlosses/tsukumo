@@ -120,4 +120,5 @@
 | `docs/architecture/adr/0041-design-system-tokens-and-gallery.md`    | 画面全体のデザインシステム: 余白・角丸・影・動きのトークンと見本帳                                    | 採用                   |
 | `docs/architecture/adr/0042-report-leaf-direct-react.md`            | `report` の葉の部品を、Markdown に戻さず React の部品で直接描く                                       | 採用                   |
 | `docs/architecture/adr/0043-report-internal-on-components.md`       | `report` の内部の表現を `components` に一本化する                                                     | 採用                   |
+| `docs/architecture/adr/0044-e2e-runner-playwright-test.md`          | E2E のランナーを `@playwright/test` に移し、撮影の道具は待ちの部品だけ借りる                          | 採用                   |
 | `docs/architecture/adr/0045-workflow-script-orchestration.md`       | タスクの段の進め方を、plugin の dynamic workflows の台本に移す                                        | 採用                   |
