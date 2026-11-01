@@ -4,7 +4,6 @@ import type { ReactElement } from "react"
 
 import type { A2uiReportComponent } from "../../../../../../shared/report/a2ui-report-catalog.ts"
 import type { LeafValue } from "../../../../../../shared/report/report-leaf-value.ts"
-import { Surface } from "../../../../ui/surface/surface.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import { InlineMarkdown } from "../markdown/markdown.tsx"
 import styles from "./main-view.module.css"
@@ -23,14 +22,7 @@ export function QuoteLeaf(props: {
     <ReportLeafFrame value={value} title="" fit={false}>
       <LeafFold fold={part.fold} empty={empty}>
         {!empty && (
-          <Surface
-            element="div"
-            tone="surface"
-            space="md"
-            radius="sm"
-            shadow="none"
-            className={styles["quote-leaf"]}
-          >
+          <div className={styles["quote-leaf"]}>
             <Text
               element="p"
               size="body"
@@ -51,7 +43,7 @@ export function QuoteLeaf(props: {
                 — <InlineMarkdown text={part.source} />
               </Text>
             )}
-          </Surface>
+          </div>
         )}
       </LeafFold>
     </ReportLeafFrame>

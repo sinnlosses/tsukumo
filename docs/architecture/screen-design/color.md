@@ -117,10 +117,10 @@
 **`note` は6種（情報・注意・異常・疑問・メモ・お願い）に割り、種別のラベルを tsukumo が文字で
 描く**（`markdown/renderer/notation.tsx`）。色は 情報＝`state-info`（青） / 注意＝`state-warn` /
 異常＝`state-ng` / 疑問＝`state-ask`（紫） / メモ＝`state-memo`（`ink` の白） / お願い＝`accent` で、
-**左の色罫を持つのは注意・異常・お願いの3つだけ**（「読み飛ばされると困る」という1つの意味）。
-お願いのほかの5種は、地をその色で染める。染めは段差で、注意・異常は 13%（`Badge` の地と同じ割合）、情報・疑問・メモは 6%。頻度の高い穏やかな種類を薄くして、注意・異常を立たせる。
-情報・疑問・メモは罫を持たず、種別のラベルの字がその種類の色（`state-info` / `state-ask` / `state-memo`）を運ぶ。
-お願いは縦罫と地を `accent`（10%）にし、枠で囲む。
+お願いのほかの5種は、同じ形で、地をその色の 7% で染め、左に 3px の色罫を引く（右側の角だけ `radius-sm`）。
+種類は色だけで言わず、ラベルの語に記号を添える（情報ⓘ・注意⚠・異常✕・疑問?・メモ※。記号は CSS の `content` で出す飾りで、読み上げにも写しにも出さない。語は今までどおりテキストノードのまま。ADR 0042 の決まりが守るのは語の選択と写し）。ラベルの字もその種類の色で、600 にする。
+注意・異常を立たせるのは地の濃さではなく、色と記号と語である。
+お願いは縦罫と地を `accent`（10%）にし、枠で囲む（角は丸めない）。
 情報＝青・疑問＝紫・メモ＝白にしたのは、結論の塊（情報）に色を持たせ、メモを灰色の側に寄せるため（以前の色割りは `docs/history/decision.md`「screen-design.md 13.x 画面設計の本文から日付を消した経緯6件」）。
 
 **確度つきの主張（`claims` の部品）の確度は、`Badge`（`shape: square`・記号＋語）の札で言う**。確定＝`ok`（✓）/ 推測＝`warn`（〜）/
@@ -130,8 +130,8 @@
 地は `color-mix(in srgb, var(--surface), var(--state-info) 10%)`、左右の余白は 0.25em、角丸は 0.2em。
 付くのは地の文の段落の直下だけで、表・箇条書き・`stats`・`note` の中の `strong` には付かない。
 
-**引用は灰色の縦罫だけで、地を染めない。** 情報もメモも地を染めるので、
-引用とは見分けが付く。
+**引用は 2px の灰色の縦罫（`rule`）だけで、地を染めず、出典は 13px の `ink-quiet`。** `note` は色罫（3px）と地を持つので、
+引用とは見分けが付く。`Quote` の部品も同じ形で、`Surface` は使わない。
 
 **コードの色付けは同梱のテーマのまま残す**（`highlight.js` の `github-dark`。実測で最も情報量が多く読める）。**ただし箱は1段**（テーマの `.hljs` が敷く地・余白は
 `.detail-block` の中で打ち消し、地は `pre` の `ground` だけ）。**差分の行は部品の内幅いっぱいの帯**で、行の器に塗る
@@ -207,21 +207,19 @@
 **見本と揃えなかったもの**は書体（見本の丸ゴシック・IBM Plex Mono。`--font-sans` / `--font-mono` のまま）と、
 タスクID の要素（見本の `<a href="#">` ではなくモーダルを開く `<button>`）。
 
-**流れ（`flow`）の丸・線と、図と表の題の「図 n」「表 n」の番号は専用のトークンを使う**（デザイン
-「流れの塊 案A」。見本は `docs/history/mockup/report-flow-rail-2026-10-02.html`）。値は結論部の
-`report-outcome-finished` と同じ導き方（`accent` から）だが、「完了」とは意味が別なので流用せず、読む順を示す印
-という意味を名に持つ `report-sequence-ink` を別に立てる。暗い側は固定値を持たず
-`color-mix(in srgb, var(--report-sequence-ink), var(--ground) 65%)` で導く。
+**流れ（`flow`）の丸は中立の罫と字で描き、読む順の印の色（`report-sequence-ink`）は `flow-row` の矢印と前後の画像の見比べの印だけが持つ**（見本は `docs/history/mockup/design-system-2026-11/`）。
+値は結論部の `report-outcome-finished` と同じ導き方（`accent` から）だが、「完了」とは意味が別なので流用せず、読む順を示す印
+という意味を名に持つ `report-sequence-ink` を別に立てる。
 
-**寸法**（見本の実測値をそのまま使う。9段のタイプスケールに無い値も固定で書く）: 丸は直径 28px・枠 1.5px・
-番号は等幅 12px。最初の段だけ丸の中を `color-mix(in srgb, var(--surface-raised), var(--report-sequence-ink) 14%)`
-で淡く塗る。本文は 14.5px・行間 1.95、段の間は 28px、線は丸の下端から次の丸の上端まで。左の列は 28px・
-本文との間は 18px（狭い幅でもこの形のまま、本文だけが折り返す）。画像を出せないカードは高さ 168px・角丸 14px。
-横の列（`flow-row`）の箱は角丸 0.5rem・枠 1px（`--report-chunk-rule`）・地 `--surface-raised` で、色は付けない。番号は等幅 12px で箱の中に置き、矢印の字は `report-sequence-ink`。
+**寸法**（9段のタイプスケールに無い値も固定で書く）: 丸は直径 22px・枠 1px `rule`・字は `ink-soft` の等幅 12px で、どの段も塗らない。
+縦の線は 1px の `rule-soft` 単色で、丸の下端から次の丸の上端まで。本文は 14px・行間 1.95、段の間は `--space-xl`、左の列は 22px・本文との間は `--space-lg`（狭い幅でもこの形のまま、本文だけが折り返す）。
+画像を出せないカードは高さ 168px・角丸 14px。
+横の列（`flow-row`）の箱は角丸 `radius-md`（8px）・枠 1px（`--report-chunk-rule`、無ければ `rule-soft`）・地 `--surface-raised` で、色は付けない。番号は等幅 12px で箱の中に置き、矢印の字は `report-sequence-ink`。
 レポートの `image` の画像は押すと拡大して見られる（`ImageZoom`、`size="width"`。原寸を上限に面の幅へ合わせ、縦に長ければ面が縦に流れる。カードには入口を付けない）。前後の部品の中の画像は別の面（`BeforeAfterZoom`）で開き、前／後の2つ組は選んだ側を `accent` の枠と `accent` の薄い地、もう一方を `rule` の枠で描く。暗幕は `Dialog` の `deep`。
 
-`flow` は `--accent` を `ground` へ少し沈めた `report-sequence-ink` を使う。
-出どころ・分岐のある流れ（`flow-detailed`）は、段の内側を `flow-row` の箱と同じ角丸 0.5rem・枠 1px（`--report-chunk-rule`）・地 `--surface-raised` で囲む。出どころの行は `--font-label` の `ink-quiet`、分岐は左に 2px の罫を判定の色（`state-ok`・`state-warn`・`state-ng`）で引き、字は `ink` のまま。
+`report-sequence-ink` は `--accent` を `ground` へ少し沈めた値。
+出どころ・分岐のある流れ（`flow-detailed`）は、段を箱で囲まず平らに置く。出どころの行は等幅（`--font-code`）の `--font-label`・`ink-quiet`、分岐は判定の記号の札（地は判定の色の 13%、`Badge` と同じ割合。ok＝✓・warn＝〜・ng＝✕・色の無い分岐＝→）に、`ink-soft` の語を添える。記号は飾りで、読み上げには出さない。
+`cards`・`Compare`・`BeforeAfter` の枠は 1px の `--report-chunk-rule`（無ければ `rule-soft`）・角 `radius-md`（8px）で、前後のラベルは `--font-label`・600・`ink-quiet`。`Picture` の注の番号の丸は枠も字も `ink-soft`。
 
 **レポートの見出しの線は `rule-quiet` で、キャラクターの色を持たない。** 文字は `ink-bright`・地は `surface` / `surface-raised`・
 図表の番号（「図 n」「表 n」）の字は `ink-quiet` で、読む面は中立のまま（13.1 原則1）:
@@ -232,7 +230,7 @@
 - 表の見出し行の下は `rule`、行罫は `rule-quiet`（見出し行の下だけ一段濃い）
 
 素の `accent` は縦罫の1つ（お願い）と、機械が指し示す場所（フォーカスの輪・選んだ選択肢など）に残す。
-`hr`・`details` の枠・カードの枠・引用の縦罫は `rule` のまま。`report-stat` の枠は `rule-quiet`。
+`hr`・`details` の枠・`panel` など `cards` 以外のカードの枠・引用の縦罫は `rule` のまま。`report-stat` の枠は `rule-quiet`。
 
 **数の系統（`Chart`・`Plot`・`Stats`・`Timeline`）の色。** 見る項目・区間だけ `chart-series-1`、ほかは `ink` の 26%（`Chart`・`Plot`）か 30%（`Timeline`）で、`accent` は使わない。
 `Stats` の前の数は良し悪しを字の色で言わず、`ink-quiet` に統一した（`better` で色を変えると、色だけが意味を運び、同じ塊の `Badge` の語と二重になるため）。

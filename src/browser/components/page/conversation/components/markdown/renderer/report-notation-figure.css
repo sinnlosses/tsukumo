@@ -15,7 +15,7 @@
   & .report-compare-side {
     min-width: 0;
     padding: var(--space-sm) var(--space-md);
-    border: 1px solid var(--report-chunk-rule, var(--rule));
+    border: 1px solid var(--report-chunk-rule, var(--rule-soft));
     border-radius: var(--radius-md);
     background: var(--surface-raised);
   }
@@ -44,7 +44,7 @@
   & .report-before-after-side {
     min-width: 0;
     padding: var(--space-sm) var(--space-md) var(--space-md);
-    border: 1px solid var(--report-chunk-rule, var(--rule));
+    border: 1px solid var(--report-chunk-rule, var(--rule-soft));
     border-radius: var(--radius-md);
     background: var(--surface-raised);
   }
@@ -56,12 +56,9 @@
     margin-top: var(--space-sm);
   }
   & .report-before-after-label {
-    font-size: var(--font-subheading);
-    font-weight: 700;
+    font-size: var(--font-label);
+    font-weight: 600;
     color: var(--ink-quiet);
-  }
-  & .report-before-after-label-after {
-    color: var(--ink);
   }
   & .report-before-after-side ul {
     padding-left: var(--space-lg);
@@ -446,7 +443,7 @@
     align-self: start;
     width: 22px;
     height: 22px;
-    border: 1.5px solid var(--report-sequence-ink);
+    border: 1px solid var(--ink-soft);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -454,7 +451,7 @@
     font-family: var(--font-mono);
     font-size: var(--font-label);
     font-weight: 600;
-    color: var(--report-sequence-ink);
+    color: var(--ink-soft);
   }
   & .report-image-note-text {
     min-width: 0;

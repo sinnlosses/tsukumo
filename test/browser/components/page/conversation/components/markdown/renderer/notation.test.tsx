@@ -44,7 +44,7 @@ describe("NotationBlock（レポートの塊の記法）", () => {
     expect(container.querySelector(".report-note-label")?.textContent).toBe("注意")
   })
 
-  it("罫を持たない情報・疑問・メモのラベルの字だけが種類の色の class を持つ", () => {
+  it("お願いを除く5種のラベルの字だけが種類の色の class を持つ", () => {
     const labelTextClassName = (kind: string): string | null | undefined => {
       const { container } = render(<NotationBlock className={kind}>架空。</NotationBlock>)
       const className = container.querySelector(".report-note-label > span")?.getAttribute("class")
@@ -55,8 +55,8 @@ describe("NotationBlock（レポートの塊の記法）", () => {
     expect(labelTextClassName("note")).toBe("report-note-label-info")
     expect(labelTextClassName("note note-ask")).toBe("report-note-label-ask")
     expect(labelTextClassName("note note-memo")).toBe("report-note-label-memo")
-    expect(labelTextClassName("note note-warn")).toBeNull()
-    expect(labelTextClassName("note note-ng")).toBeNull()
+    expect(labelTextClassName("note note-warn")).toBe("report-note-label-warn")
+    expect(labelTextClassName("note note-ng")).toBe("report-note-label-ng")
     expect(labelTextClassName("note note-favor")).toBeNull()
   })
 

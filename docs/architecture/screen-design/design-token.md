@@ -80,7 +80,7 @@
 
 カタログの部品（`report` の a2ui の面）は、枠を `Surface`・見出しを `Heading`・並べる入れ物を `Stack` 系・印を `Badge` で組む。
 
-**状態の札は全部品で `Badge` の `shape: square`（記号＋語）に揃える。** 地は状態の色を 13% 重ねた割合（`color-mix(in srgb, var(--surface), var(--state-*) 13%)`）で、`neutral` は `surface-raised`。種類は今の 5 つ（`neutral`・`ok`・`warn`・`ng`・`accent`）で足りるので足さない。`Note` のラベル（ⓘ・⚠・✕・?）は `Note` が持ち、`Badge` にしない。`pill` は状態を言わない丸い印のために残す。
+**状態の札は全部品で `Badge` の `shape: square`（記号＋語）に揃える。** 地は状態の色を 13% 重ねた割合（`color-mix(in srgb, var(--surface), var(--state-*) 13%)`）で、`neutral` は `surface-raised`。種類は今の 5 つ（`neutral`・`ok`・`warn`・`ng`・`accent`）で足りるので足さない。`Note` のラベル（ⓘ・⚠・✕・?）は `Note` が持ち、`Badge` にしない。`flow-detailed` の分岐は Markdown の中なので `Badge` を置けず、CSS の札で代え、`Badge` と同じ地（状態の色の 13%、色の無い分岐は `surface-raised`）と角を使う。`pill` は状態を言わない丸い印のために残す。
 
 ### 13.17 見本帳
 

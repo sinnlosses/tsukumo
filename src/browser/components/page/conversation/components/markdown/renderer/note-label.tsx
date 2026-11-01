@@ -24,11 +24,15 @@ export function NoteLabel(props: {
   )
 }
 
-/** 罫を持たない種別（情報・疑問・メモ）だけ、ラベルの字に種類の色を付ける。 */
+/** お願いを除く種別だけ、ラベルの字に種類の色と頭の記号を付ける。 */
 function noteLabelColorClass(kindName: string): string | undefined {
   switch (kindName) {
     case "note":
       return styles["report-note-label-info"]
+    case "note-warn":
+      return styles["report-note-label-warn"]
+    case "note-ng":
+      return styles["report-note-label-ng"]
     case "note-ask":
       return styles["report-note-label-ask"]
     case "note-memo":

@@ -24,32 +24,29 @@
   }
   /* 情報の塊（素の `note`。結論を言う役）。
    6種（情報・注意・異常・疑問・メモ・お願い）に共通の余白もここが持つ。
-   5種は、意味を固定した色で地を染める。
-   染める割合は段差で、注意・異常は 13%、情報・疑問・メモは 6%（表の状態セルと同じ値）。
+   5種は、意味を固定した色で、地を 7% 染め、左に 3px の色罫を引く。
    上に乗る ink は 10:1 以上を保つ。
-   左の色罫は「読み飛ばされると困る」注意・異常とお願いだけが持つ。情報・疑問・メモは種別のラベルの字が種類の色を運ぶ。
    引用（blockquote）は目立たせないための印なので、灰の縦罫だけで地を染めない。 */
   & .report-note {
+    --report-note-tone: var(--state-info);
     margin: var(--report-block-gap) 0;
     padding: var(--space-sm) var(--space-md);
-    background: color-mix(in srgb, var(--surface), var(--state-info) 6%);
+    border-left: 3px solid var(--report-note-tone);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    background: color-mix(in srgb, var(--surface), var(--report-note-tone) 7%);
   }
   & .report-note-warn {
-    border-left: 3px solid var(--state-warn);
-    background: color-mix(in srgb, var(--surface), var(--state-warn) 13%);
+    --report-note-tone: var(--state-warn);
   }
   & .report-note-ng {
-    border-left: 3px solid var(--state-ng);
-    background: color-mix(in srgb, var(--surface), var(--state-ng) 13%);
+    --report-note-tone: var(--state-ng);
   }
-  /* 疑問（答えの出ていない問い）。 */
   & .report-note-ask {
-    background: color-mix(in srgb, var(--surface), var(--state-ask) 6%);
+    --report-note-tone: var(--state-ask);
   }
-  /* メモ（本筋から外れる覚え書き）。
-   色は ink なので、地を染めないと引用（blockquote）と灰どうしで見分けにくい。 */
+  /* メモ（本筋から外れる覚え書き）。 */
   & .report-note-memo {
-    background: color-mix(in srgb, var(--surface), var(--state-memo) 6%);
+    --report-note-tone: var(--state-memo);
   }
   /* お願い（レポートのいちばん最後に置く、利用者にしか決められない・できないこと）。
    縦罫の色・地・枠で他の5種と見分ける。
@@ -58,35 +55,63 @@
   & .report-note-favor {
     border: 1px solid var(--rule);
     border-left: 3px solid var(--accent);
+    border-radius: 0;
     background: color-mix(in srgb, var(--surface), var(--accent) 10%);
   }
   /* 種別のラベル（「情報」「注意」「異常」「疑問」「メモ」「お願い」）。
    6種すべてに tsukumo 側で足すのは、モデルが見出しの語を書き忘れても色だけで伝えないため（文字そのものは `NotationBlock` が描く）。
-   罫を持たない情報・疑問・メモは、ラベルの字が種類の色を持つ。罫を持つ注意・異常・お願いは ink 系のまま。 */
+   お願いを除く5種は、ラベルの字が種類の色を持ち、頭に記号（飾りなので読み上げには出さない）を置く。お願いは ink 系のまま。 */
   & .report-note-label {
     display: block;
     margin-bottom: var(--space-xs);
     letter-spacing: 0.08em;
   }
-  & .report-note-label-info {
-    color: var(--state-info);
+  &
+    :is(
+      .report-note-label-info,
+      .report-note-label-warn,
+      .report-note-label-ng,
+      .report-note-label-ask,
+      .report-note-label-memo
+    ) {
+    color: var(--report-note-tone);
+    font-weight: 600;
   }
-  & .report-note-label-ask {
-    color: var(--state-ask);
+  &
+    :is(
+      .report-note-label-info,
+      .report-note-label-warn,
+      .report-note-label-ng,
+      .report-note-label-ask,
+      .report-note-label-memo
+    )::before {
+    margin-inline-end: var(--space-xs);
+    letter-spacing: 0;
   }
-  & .report-note-label-memo {
-    color: var(--state-memo);
+  & .report-note-label-info::before {
+    content: "ⓘ" / "";
+  }
+  & .report-note-label-warn::before {
+    content: "⚠\FE0E" / "";
+  }
+  & .report-note-label-ng::before {
+    content: "✕" / "";
+  }
+  & .report-note-label-ask::before {
+    content: "?" / "";
+  }
+  & .report-note-label-memo::before {
+    content: "※" / "";
   }
   /* レポートの見出し（`##` / `###`）。
    `SectionHeading` / `SubHeading` が `h4` / `h5` として描く（タグは依頼の全文の見出し `h2` と段が被らないよう一段落としてある）。
-   `##` は領域の幅いっぱいの罫を引き、罫の側にだけキャラクターの色を混ぜる（文字は `ink-bright`）。
-   混ぜる割合は `rule` に6割で、依頼・お願いの縦罫（素の accent）より一段弱い。
+   `##` は下に広（63em）の幅の `rule-quiet` の罫を引く（文字は `ink-bright`、色は混ぜない）。
    `###` は罫を持たず、大きさと上のあきで段の深さを運ぶ。 */
   & h4 {
-    max-inline-size: var(--report-measure);
+    max-inline-size: var(--report-measure-wide);
     margin: 52px 0 var(--report-heading-gap);
     padding-bottom: var(--space-sm);
-    border-bottom: 1px solid color-mix(in srgb, var(--rule), var(--accent) 60%);
+    border-bottom: 1px solid var(--rule-quiet);
     font-size: var(--report-heading-2);
     font-weight: 700;
     line-height: 1.4;
@@ -105,7 +130,7 @@
   & blockquote {
     margin: var(--report-block-gap) 0;
     padding-left: var(--space-md);
-    border-left: 3px solid var(--rule);
+    border-left: 2px solid var(--rule);
     color: var(--ink-quiet);
   }
   /* 引用の中の段落の既定 margin（1em）は引用の外へ抜けて引用の上下を 15px にするので、塊のあきに揃え、先頭と末尾は 0 にする。 */
