@@ -19,6 +19,7 @@ import {
   REPORT_A2UI_COMPONENTS_DESCRIPTION,
   REPORT_CHECKS_DESCRIPTION,
   REPORT_CLOSING_DESCRIPTION,
+  REPORT_FAVOR_DESCRIPTION,
   REPORT_KEY_FIGURES_DESCRIPTION,
   reportFigureDescription,
   REPORT_RETROSPECTIVE_DESCRIPTION,
@@ -172,9 +173,7 @@ function a2uiInputShape(
       .describe(REPORT_WORK_PLAN_CLOSING_DESCRIPTION),
     keyFigures: shape.keyFigures.describe(REPORT_KEY_FIGURES_DESCRIPTION),
     retrospective: shape.retrospective.describe(REPORT_RETROSPECTIVE_DESCRIPTION),
-    favor: shape.favor.describe(
-      "作業を終えた・止めたあとに残る利用者へのお願い（判断・作業・情報）が実際にあるときだけ1つ（2件あってもまとめる）。無ければ省く",
-    ),
+    favor: shape.favor.describe(REPORT_FAVOR_DESCRIPTION),
     checks: shape.checks.describe(REPORT_CHECKS_DESCRIPTION),
     title: shape.title.describe(REPORT_TITLE_DESCRIPTION),
     sessionSummary: shape.sessionSummary.describe(REPORT_SESSION_SUMMARY_DESCRIPTION),

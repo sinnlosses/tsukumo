@@ -83,6 +83,12 @@ export function reportFigureDescription(preference: FigurePreference): string {
   )
 }
 
+/** `report` の任意の `favor` 引数（利用者へのお願い）の説明。出す条件と書き方はここだけが持つ。 */
+export const REPORT_FAVOR_DESCRIPTION =
+  "作業を終えた・止めたあとに、利用者が取る行動が残るときだけ1つ（2件あってもまとめる）。報告・感想・提案は書かず、行動が無ければ省く。" +
+  "行動は書き手が代わりにできないことで、取る手段まで書く（打つコマンドはそのコマンドを inline code で、開く場所・押す操作は場所と名前を）。" +
+  "順番があるときは「1. …　2. …」と番号を振って順に並べる。"
+
 /** `report` の任意の `keyFigures` 引数（結論の直下に並べる数）の説明。使いどころの条はここだけが持つ。 */
 export const REPORT_KEY_FIGURES_DESCRIPTION =
   "結論に効く数を3〜4個（件数・割合・前後の差）。結論の直下にカードで並ぶ。" +
