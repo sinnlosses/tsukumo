@@ -20,6 +20,15 @@ test("節は複合語の綴りで登録し、単独の綴りは登録しない",
   )
 })
 
+test("棚・台本は複合語の綴りで登録し、単独の綴りと別の意味の語（棚卸し・再現の台本）は登録しない", () => {
+  const spellings = PLAIN_WORDS.map((word) => word.spelling)
+  expect(spellings).not.toContain("棚")
+  expect(spellings).not.toContain("台本")
+  expect(spellings).toEqual(
+    expect.arrayContaining(["画像の棚", "棚から", "台本の完了", "台本の中の委譲先"]),
+  )
+})
+
 test("札は複合語の綴りで登録し、単独の綴りは登録しない", () => {
   const spellings = PLAIN_WORDS.map((word) => word.spelling)
   expect(spellings).not.toContain("札")

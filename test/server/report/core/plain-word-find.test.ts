@@ -57,6 +57,18 @@ describe("plainWordSpellingsIn", () => {
     ).toEqual(["詳細の面", "葉の部品"])
   })
 
+  it("棚卸し・再現の台本は、棚・台本の複合語に当たらない", () => {
+    expect(
+      plainWordSpellingsIn(draft([reportDraftText("架空の棚卸しをして、再現の台本を読む。")])),
+    ).toEqual([])
+  })
+
+  it("既知の巻き込み: 本棚から・本棚に置くは、部分一致で当たる", () => {
+    expect(
+      plainWordSpellingsIn(draft([reportDraftText("架空の本を本棚から出し、本棚に置く。")])),
+    ).toEqual(["棚に置", "棚から"])
+  })
+
   it("ワークプランのフェーズの旧称の複合語は、表の順に地の文で見つかる", () => {
     expect(
       plainWordSpellingsIn(

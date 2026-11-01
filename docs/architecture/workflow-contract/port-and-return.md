@@ -77,24 +77,24 @@ tsukumo はプログレスバーのフェーズの名前を見ず、欄がある
 - `phase_result` ではプログレスバーを全部済みにしない。最後のフェーズを閉じるのは今までどおり `report` の `workPlanClosing`
 - **`phase_result` の `finished` は、任意の欄 `summary`（フェーズのまとめを1〜2文）を持てる。** `summary` のある `finished` で済んだフェーズは、その文がプログレスバーの中間レポートに出て、メインが同じ位置を渡す `work_plan` は `phaseSummary` を要らない。
   メインが `phaseSummary` を添えても、そのフェーズの中間レポートに出るのは `summary`（フェーズは既に済んでいて、メインの文では出し直さない）。`summary` を持たない `finished` で済んだフェーズは、メインの `work_plan` に `phaseSummary` が要る。
-  `summary` は `skipped`・`stopped` には付けられない（`stopped` の理由は `reason`）。台本のあいだメインは返却を受けないので、フェーズごとの中間レポートは台本の中の委譲先が `summary` で書く
+  `summary` は `skipped`・`stopped` には付けられない（`stopped` の理由は `reason`）。ワークフロースクリプトのあいだメインは返却を受けないので、フェーズごとの中間レポートはワークフロースクリプトの中の委譲先が `summary` で書く
 
 委譲ゲート:
 
 - **効く範囲**: 仕事のセッション（`work_plan` が載る）で、同じ依頼にメインの受け付けたワークプランがあるときだけ。雑談のセッションの委譲と、
   ワークプランを渡していない依頼（`work_plan` を呼ばない依頼）の返却では立てない。`delegatedRange` の宣言は条件にしない
-- **返却か台本（`Workflow`）の完了の知らせが届いたら印を立て、メインの `work_plan` が受け付けられたら下ろす。** 中身は見ず、届いた事実だけで立てる
-  （`phase_result` を呼ばなかった返却・やり直し・`stopped` でも立つ）。台本の完了の知らせは、`task_started` の `task_type` が `local_workflow` だった `task_id` と同じ `task_id` の `task_notification`
-  （完了・失敗・停止を区別しない）で、`task_notification` 自体に `task_type` は無いので走り出しの `task_id` を覚えて突き合わせる。走り出しを見ていない知らせと台本でないタスクの知らせでは立てない。台本の中の委譲先が `phase_result` で進めたプログレスバーは、完了の前に既に進んでいる。返却の数は数えず、続けて届いても `work_plan` 1回で下りる。差し戻された `work_plan` では下りない
+- **返却かワークフロースクリプト（`Workflow`）の完了の知らせが届いたら印を立て、メインの `work_plan` が受け付けられたら下ろす。** 中身は見ず、届いた事実だけで立てる
+  （`phase_result` を呼ばなかった返却・やり直し・`stopped` でも立つ）。ワークフロースクリプトの完了の知らせは、`task_started` の `task_type` が `local_workflow` だった `task_id` と同じ `task_id` の `task_notification`
+  （完了・失敗・停止を区別しない）で、`task_notification` 自体に `task_type` は無いので走り出しの `task_id` を覚えて突き合わせる。走り出しを見ていない知らせとワークフロースクリプトでないタスクの知らせでは立てない。ワークフロースクリプトの中の委譲先が `phase_result` で進めたプログレスバーは、完了の前に既に進んでいる。返却の数は数えず、続けて届いても `work_plan` 1回で下りる。差し戻された `work_plan` では下りない
 - **印が立っているあいだ、メインの作業のツールを拒む。** 通すのは読み取りのツール（`Read`・`Grep`・`Glob`・`ToolSearch`）と
   tsukumo の MCP ツール（`speak`・`work_plan`・`report` など）。委譲先のツールは対象にしない。
   拒否文の末尾に、返却で進んだあとのプログレスバーの位置（`work_plan` の戻り値と同じ文）を足す
 - **返却を運ぶメインの入力に、返却の本文とは別の tsukumo の注記を1回だけ添える。** 注記は返却ごとに「`phase_result` で結果を返した」か「`phase_result` を呼ばなかったのでプログレスバーは動いていない」かを言い、末尾に次のプログレスバーのフェーズと
   群ごとの数え方と、本の番号が委譲先のフェーズと同じであることと、セリフで番号を言うのは本のフェーズだけなこと（`work_plan` の戻り値と同じ文）を付ける。返却が続けて届けば、まだ添えていない返却の文を重ねる。
   受け付けた `work_plan`・次の依頼で溜めた注記を捨て、組み直しでは足さない。
-  台本の完了の知らせの注記は「台本が完了した。台本の中の委譲先が `phase_result` で返した結果で、プログレスバーは進んでいる。」と言い、同じプログレスバーの位置の文を末尾に付ける。
-  口は `UserPromptSubmit` のフックで、返却の入力（`<agent-message` で始まる）と台本の完了の入力（`<task-notification` で始まる）はメインが手すきでもターンの途中でもここを1回通る
-- 印と注記の元は、委譲先の `SubagentHandback` の呼び出し（`delegate-handed-back`）と `phase_result` の呼び出し（`phase-result-called`）、台本の走り出し（`workflow-started`）と完了の知らせ（`task-notified`）。
+  ワークフロースクリプトの完了の知らせの注記は「ワークフロースクリプトが完了した。ワークフロースクリプトの中の委譲先が `phase_result` で返した結果で、プログレスバーは進んでいる。」と言い、同じプログレスバーの位置の文を末尾に付ける。
+  口は `UserPromptSubmit` のフックで、返却の入力（`<agent-message` で始まる）とワークフロースクリプトの完了の入力（`<task-notification` で始まる）はメインが手すきでもターンの途中でもここを1回通る
+- 印と注記の元は、委譲先の `SubagentHandback` の呼び出し（`delegate-handed-back`）と `phase_result` の呼び出し（`phase-result-called`）、ワークフロースクリプトの走り出し（`workflow-started`）と完了の知らせ（`task-notified`）。
   委譲先のメッセージのうち前の2つだけを `WorkPlanReview` に通し、あとの2つはメインの `system` メッセージから作る。
   委譲先が `SubagentHandback` で返すのは、許可モードが `auto` で auto に対応するモデルのときだけで、それ以外の返却（`<task-notification>`）では印も注記も立たない
 - 差し戻しの返却を受けて同じフェーズをやり直させるときは、同じ位置のまま `work_plan` を呼べば下りる

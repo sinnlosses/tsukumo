@@ -273,4 +273,39 @@ export const PLAIN_WORDS = [
     replacement: "列挙型のバッジ",
     meaning: "表のセルに出す、同じ字は同じ色の小さな印",
   },
+  {
+    spelling: "画像の棚",
+    replacement: "画像の置き場",
+    meaning: "サーバのメモリに、レポートや依頼に添える画像を置いておく場所",
+  },
+  {
+    spelling: "原寸の棚",
+    replacement: "原寸の置き場",
+    meaning: "依頼に添えた画像の原寸を、サーバのメモリに置いておく場所",
+  },
+  {
+    spelling: "棚の原寸",
+    replacement: "置き場の原寸",
+    meaning: "サーバのメモリの置き場に残っている、画像の原寸",
+  },
+  {
+    spelling: "棚に置",
+    replacement: "置き場に置",
+    meaning: "画像をサーバのメモリの置き場に入れること",
+  },
+  {
+    spelling: "棚から",
+    replacement: "置き場から",
+    meaning: "サーバのメモリの置き場から画像を取り出すこと",
+  },
+  {
+    spelling: "台本の完了",
+    replacement: "ワークフロースクリプトの完了",
+    meaning: "Claude Code のワークフローのスクリプトが走り終えたこと",
+  },
+  {
+    spelling: "台本の中の委譲先",
+    replacement: "ワークフロースクリプトの中の委譲先",
+    meaning: "Claude Code のワークフローのスクリプトが呼ぶ、委譲先のエージェント",
+  },
 ] as const satisfies readonly PlainWord[]
