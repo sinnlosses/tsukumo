@@ -1,18 +1,18 @@
 import type { Page } from "playwright-core"
-import { describe, expect, it } from "vitest"
 
-import { useScenarioRun } from "./scenario-run.ts"
+import { expect, test } from "./room-fixture.ts"
 
 // 狭い画面（760px 以下）の答え待ちの札。
 // 位置・板の中の1列の形と横に転がらないことを実ブラウザで確かめる。期待値は撮らない。
-const run = useScenarioRun()
 
 function cardOf(page: Page) {
   return page.getByRole("region", { name: "答え待ち" })
 }
 
-describe("狭い画面の答え待ちの札", () => {
-  it("390x844 で、本文を転がしても札は入力欄のすぐ上から動かず、ページは横にも縦にも転がらない", async () => {
+test.describe("狭い画面の答え待ちの札", () => {
+  test("390x844 で、本文を転がしても札は入力欄のすぐ上から動かず、ページは横にも縦にも転がらない", async ({
+    run,
+  }) => {
     const room = await run.open({
       scenario: "phone-inquiry-fixed",
       scene: "phone-inquiry-pick",
@@ -60,7 +60,9 @@ describe("狭い画面の答え待ちの札", () => {
     expect(await page.getByRole("button", { name: "お伺いへ" }).count()).toBe(0)
   })
 
-  it("「詳しく」の板に1列の形が出て、板の中も横に転がらず、選んで「これで答える」で答えると板が閉じる", async () => {
+  test("「詳しく」の板に1列の形が出て、板の中も横に転がらず、選んで「これで答える」で答えると板が閉じる", async ({
+    run,
+  }) => {
     const room = await run.open({
       scenario: "phone-inquiry-brief-sheet",
       scene: "phone-inquiry-pick",

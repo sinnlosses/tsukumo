@@ -1,6 +1,6 @@
 import type { Page } from "playwright-core"
-import { expect } from "vitest"
 
+import { expect } from "./room-fixture.ts"
 import type { ScenarioOptions } from "./scenario-run.ts"
 
 // レポートの本文の塊どうしのあきが、縦の格子 12px の倍数であること

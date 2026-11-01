@@ -1,19 +1,16 @@
 import type { Locator } from "playwright-core"
-import { describe, expect, it } from "vitest"
 
 import { fictionalPng } from "../../scripts/shared/fictional-png.ts"
-import { useScenarioRun } from "./scenario-run.ts"
+import { expect, test } from "./room-fixture.ts"
 
 // レポートの画像の寸法（docs/architecture/testing.md「E2E のシナリオの一覧」）。
 // 縦長の画像の描画の比（`report-tall-figure`）と、読み込みの前後で次の要素の位置が動かないこと（`report-image`）を、
 // 実ブラウザの寸法で確かめる。判定は期待値のファイルに撮らず `expect` に書く。
 
-const run = useScenarioRun()
-
 const REPORT_IMAGE_ROUTE = "**/report-image/**"
 
-describe("レポートの画像の寸法", () => {
-  it("縦長の画像は高さの上限に当たっても、属性の縦横比のまま描かれる", async () => {
+test.describe("レポートの画像の寸法", () => {
+  test("縦長の画像は高さの上限に当たっても、属性の縦横比のまま描かれる", async ({ run }) => {
     const room = await run.open({
       scenario: "image-layout-tall",
       scene: "report-tall-figure",
@@ -35,7 +32,7 @@ describe("レポートの画像の寸法", () => {
     expect(Math.abs(width / height - 180 / 900) / (180 / 900)).toBeLessThan(0.05)
   })
 
-  it("画像の読み込みの前後で、画像の次の要素の位置が動かない", async () => {
+  test("画像の読み込みの前後で、画像の次の要素の位置が動かない", async ({ run }) => {
     const room = await run.open({
       scenario: "image-layout-shift",
       scene: "report-image",

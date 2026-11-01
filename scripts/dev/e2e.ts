@@ -3,7 +3,7 @@
 // ファイルを渡さない全件は、`TSUKUMO_E2E_FULL=1` を立てた呼び出しだけが通す。
 
 import { type ChildProcess, spawn, spawnSync } from "node:child_process"
-import { readFileSync, rmSync, writeFileSync } from "node:fs"
+import { readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import process from "node:process"
@@ -46,7 +46,7 @@ if (shouldTypecheckBeforeE2e(fullValue)) {
 
 const isFull = argument.files.length === 0
 const split = splitE2eFiles(argument.files)
-const runVitest = isFull || split.vitest.length > 0
+const runVitest = isFull ? vitestOwnsAnyFile() : split.vitest.length > 0
 const runPlaywright = isFull ? PLAYWRIGHT_E2E_FILES.length > 0 : split.playwright.length > 0
 
 const vitestReport = join(tmpdir(), `tsukumo-e2e-${process.pid}-vitest.json`)
@@ -105,6 +105,12 @@ function run(pnpmArgs: readonly string[], env: NodeJS.ProcessEnv): Promise<numbe
       resolve(code ?? 1)
     })
   })
+}
+
+/** 全件のとき、表に載らない（vitest が流す）ファイルが1本でもあるか。無いのに起こすと vitest が「ファイル無し」で落ちる。 */
+function vitestOwnsAnyFile(): boolean {
+  const scenarios = readdirSync(join(ROOT, "test/e2e")).filter((name) => name.endsWith(".test.ts"))
+  return splitE2eFiles(scenarios.map((name) => `test/e2e/${name}`)).vitest.length > 0
 }
 
 function readIfExists(path: string): string | undefined {

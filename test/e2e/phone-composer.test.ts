@@ -1,12 +1,9 @@
 import type { Locator } from "playwright-core"
-import { describe, expect, it } from "vitest"
 
-import { useScenarioRun } from "./scenario-run.ts"
+import { expect, test } from "./room-fixture.ts"
 
 // 狭い画面（760px 以下）の入力欄。
 // 押せる大きさが 40〜44 に収まることと、ソフトウェアキーボードを模した高さでの収まりを実ブラウザで測る。期待値は撮らない。
-
-const run = useScenarioRun()
 
 const MIN_SIZE = 39.95
 const MAX_SIZE = 44.05
@@ -20,8 +17,10 @@ async function expectTouchSize(locator: Locator): Promise<void> {
   expect(box?.height).toBeLessThanOrEqual(MAX_SIZE)
 }
 
-describe("狭い画面の入力欄", () => {
-  it("390x844 で ＋・丸ボタン・＋ の面・■ の確かめの札の押せる大きさが 40〜44 に収まり、■ は確かめてから止める。キーボードを模した低い窓でも入力欄が窓に収まる", async () => {
+test.describe("狭い画面の入力欄", () => {
+  test("390x844 で ＋・丸ボタン・＋ の面・■ の確かめの札の押せる大きさが 40〜44 に収まり、■ は確かめてから止める。キーボードを模した低い窓でも入力欄が窓に収まる", async ({
+    run,
+  }) => {
     const room = await run.open({
       scenario: "phone-composer-size",
       scene: "phone-layout",

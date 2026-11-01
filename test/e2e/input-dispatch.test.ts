@@ -1,19 +1,17 @@
-import { describe, expect, it } from "vitest"
-
-import { useScenarioRun } from "./scenario-run.ts"
+import { expect, test } from "./room-fixture.ts"
 
 // 入力欄から送る（docs/architecture/testing.md「E2E のシナリオの一覧」）。場面は名指しせず
 // （`opening` のまま）、入力欄に文面を書いて ⌘Enter で送る。送った `prompt` コマンドが
 // `request` イベントとして戻り、依頼を受けた疑似セッションの `turns` の先頭（`report`）が
 // 続けて流れることを、DOM の構造とメッセージの列で確かめる。
 
-const run = useScenarioRun()
-
 /** 撮るときの経過（凍らせた瞬間から）。「何秒前」の類いをこの値で揃える。 */
 const ELAPSED_MS = 60_000
 
-describe("入力欄から送る", () => {
-  it("入力欄に書いて ⌘Enter で送ると prompt が流れ、request が戻って続きの場面が流れる", async () => {
+test.describe("入力欄から送る", () => {
+  test("入力欄に書いて ⌘Enter で送ると prompt が流れ、request が戻って続きの場面が流れる", async ({
+    run,
+  }) => {
     const room = await run.open({
       scenario: "input-dispatch",
       scene: "none",
@@ -30,7 +28,7 @@ describe("入力欄から送る", () => {
     await room.settleAndMatchPickedWithMessages(ELAPSED_MS)
   })
 
-  it("入力欄に打っている最中に Esc を押すと、フォーカスが入力欄から外れる", async () => {
+  test("入力欄に打っている最中に Esc を押すと、フォーカスが入力欄から外れる", async ({ run }) => {
     const room = await run.open({
       scenario: "input-dispatch",
       scene: "none",

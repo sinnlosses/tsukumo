@@ -1,6 +1,4 @@
-import { describe, expect, it } from "vitest"
-
-import { useScenarioRun, VIEWPORTS } from "./scenario-run.ts"
+import { expect, test, VIEWPORTS } from "./room-fixture.ts"
 
 // report → メインビュー（docs/architecture/testing.md「E2E のシナリオの一覧」）。
 // `report` ツールの呼び出しがメインビューの Markdown へどう出るかを、疑似セッションの場面で確かめる:
@@ -9,13 +7,11 @@ import { useScenarioRun, VIEWPORTS } from "./scenario-run.ts"
 // `turn-outline`（やり取りの列の上の段のやり取りと結果の印）、
 // `reading-position`（別のやり取りへ移って戻ると読んでいた見出しの位置から見える）。
 
-const run = useScenarioRun()
-
 /** 撮るときの経過（凍らせた瞬間から）。「何秒前」の類いをこの値で揃える。 */
 const ELAPSED_MS = 60_000
 
-describe("report → メインビュー", () => {
-  it("記法の一覧がメインビューに描かれる", async () => {
+test.describe("report → メインビュー", () => {
+  test("記法の一覧がメインビューに描かれる", async ({ run }) => {
     const room = await run.open({
       scenario: "report-notation",
       scene: "notation",
@@ -27,7 +23,7 @@ describe("report → メインビュー", () => {
     await room.settleAndMatchPicked(ELAPSED_MS)
   })
 
-  it("部品の一覧で受けた report が A2UI の面で節・表・図として描かれる", async () => {
+  test("部品の一覧で受けた report が A2UI の面で節・表・図として描かれる", async ({ run }) => {
     const room = await run.open({
       scenario: "a2ui-surface",
       scene: "a2ui-surface-sample",
@@ -39,7 +35,9 @@ describe("report → メインビュー", () => {
     await room.settleAndMatchPicked(ELAPSED_MS)
   })
 
-  it("操作できる Table は、ChoicePicker の選択で行が絞られ、列名のボタンで並べ替わる", async () => {
+  test("操作できる Table は、ChoicePicker の選択で行が絞られ、列名のボタンで並べ替わる", async ({
+    run,
+  }) => {
     const room = await run.open({
       scenario: "a2ui-interactive",
       scene: "a2ui-interactive-sample",
@@ -53,7 +51,7 @@ describe("report → メインビュー", () => {
     await room.settleAndMatchPicked(ELAPSED_MS)
   })
 
-  it("chart の塊が種類ごとにグラフとして描かれる", async () => {
+  test("chart の塊が種類ごとにグラフとして描かれる", async ({ run }) => {
     const room = await run.open({
       scenario: "report-chart",
       scene: "report-chart",
@@ -65,7 +63,7 @@ describe("report → メインビュー", () => {
     await room.settleAndMatchPicked(ELAPSED_MS)
   })
 
-  it("plot の申告が棒・折れ線・円として、値と系列名つきで描かれる", async () => {
+  test("plot の申告が棒・折れ線・円として、値と系列名つきで描かれる", async ({ run }) => {
     const room = await run.open({
       scenario: "report-plot-chart",
       scene: "report-plot-chart",
@@ -77,7 +75,7 @@ describe("report → メインビュー", () => {
     await room.settleAndMatchPicked(ELAPSED_MS)
   })
 
-  it("plot の申告が数直線と bullet として描かれる", async () => {
+  test("plot の申告が数直線と bullet として描かれる", async ({ run }) => {
     const room = await run.open({
       scenario: "report-plot-gauge",
       scene: "report-plot-gauge",
@@ -89,7 +87,7 @@ describe("report → メインビュー", () => {
     await room.settleAndMatchPicked(ELAPSED_MS)
   })
 
-  it("plot の申告が散布図とヒストグラムとして描かれる", async () => {
+  test("plot の申告が散布図とヒストグラムとして描かれる", async ({ run }) => {
     const room = await run.open({
       scenario: "plot-scatter-histogram",
       scene: "plot-scatter-histogram",
@@ -101,7 +99,9 @@ describe("report → メインビュー", () => {
     await room.settleAndMatchPicked(ELAPSED_MS)
   })
 
-  it("レポートの本文の字を選ぶと口が出て、押すと入力欄の頭に引用が入ってフォーカスが移る", async () => {
+  test("レポートの本文の字を選ぶと口が出て、押すと入力欄の頭に引用が入ってフォーカスが移る", async ({
+    run,
+  }) => {
     const room = await run.open({
       scenario: "report-selection-ask",
       scene: "notation",
@@ -127,7 +127,9 @@ describe("report → メインビュー", () => {
     await ask.waitFor({ state: "hidden" })
   })
 
-  it("札の幅が 48rem 未満ではやり取りの列が既定で畳まれ、開くを選ぶと読み込み直しても開いたまま、狭い画面（760px 以下）では列を出さない", async () => {
+  test("札の幅が 48rem 未満ではやり取りの列が既定で畳まれ、開くを選ぶと読み込み直しても開いたまま、狭い画面（760px 以下）では列を出さない", async ({
+    run,
+  }) => {
     const room = await run.open({
       scenario: "report-outline-compact",
       scene: "long-report-quick",
@@ -148,7 +150,9 @@ describe("report → メインビュー", () => {
     await room.page.locator('nav[aria-label="やり取り"]').waitFor({ state: "hidden" })
   })
 
-  it("やり取りの列の上の段にやり取りが結果の印つきで並び、やり取りの行で Enter を押すとそのやり取りへ移る", async () => {
+  test("やり取りの列の上の段にやり取りが結果の印つきで並び、やり取りの行で Enter を押すとそのやり取りへ移る", async ({
+    run,
+  }) => {
     const room = await run.open({
       scenario: "report-turn-outline",
       scene: "turn-outline",
@@ -176,7 +180,9 @@ describe("report → メインビュー", () => {
       .waitFor()
   })
 
-  it("別のやり取りへ移って戻ると、読んでいた見出しが同じ位置にあり、初めて開くやり取りは先頭から見える", async () => {
+  test("別のやり取りへ移って戻ると、読んでいた見出しが同じ位置にあり、初めて開くやり取りは先頭から見える", async ({
+    run,
+  }) => {
     const room = await run.open({
       scenario: "report-reading-position",
       scene: "reading-position",

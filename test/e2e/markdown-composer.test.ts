@@ -1,21 +1,19 @@
-import { describe, expect, it } from "vitest"
-
-import { useScenarioRun } from "./scenario-run.ts"
+import { expect, test } from "./room-fixture.ts"
 
 // 入力欄のマークダウンエディタ（docs/architecture/testing.md「E2E のシナリオの一覧」）。
 // 場面は名指しせず（`opening` のまま）、道具の行のボタンで面を切り替える。
 // 下書きが2つの面の間で引き継がれること・エディタでも `/` の補完が Enter で確定すること・
 // エディタで Enter が改行・Command+Enter が送信になること・日本語の変換の確定を、DOM の構造とメッセージの列で確かめる。
 
-const run = useScenarioRun()
-
 /** 撮るときの経過（凍らせた瞬間から）。「何秒前」の類いをこの値で揃える。 */
 const ELAPSED_MS = 60_000
 
 const TOGGLE_NAME = "マークダウンエディタで書く"
 
-describe("入力欄のマークダウンエディタ", () => {
-  it("切り替えても下書きは1つのまま、`/` の補完は Enter で確定だけし、Enter は改行、Command+Enter で送ると prompt が流れる", async () => {
+test.describe("入力欄のマークダウンエディタ", () => {
+  test("切り替えても下書きは1つのまま、`/` の補完は Enter で確定だけし、Enter は改行、Command+Enter で送ると prompt が流れる", async ({
+    run,
+  }) => {
     const room = await run.open({
       scenario: "markdown-composer-send",
       scene: "none",
@@ -53,7 +51,7 @@ describe("入力欄のマークダウンエディタ", () => {
     await room.settleAndMatchPickedWithMessages(ELAPSED_MS)
   })
 
-  it("隠れた記号を含む行とその隣で、日本語の変換を確定しても文面が壊れない", async () => {
+  test("隠れた記号を含む行とその隣で、日本語の変換を確定しても文面が壊れない", async ({ run }) => {
     const room = await run.open({
       scenario: "markdown-composer-ime",
       scene: "none",
@@ -117,7 +115,9 @@ describe("入力欄のマークダウンエディタ", () => {
     )
   })
 
-  it("キャレットの行でも行頭の `- ` `> ` は見た目だけ替わり、記号の直後の変換は壊れず、Backspace は記号ごと外す", async () => {
+  test("キャレットの行でも行頭の `- ` `> ` は見た目だけ替わり、記号の直後の変換は壊れず、Backspace は記号ごと外す", async ({
+    run,
+  }) => {
     const room = await run.open({
       scenario: "markdown-composer-ime",
       scene: "none",
@@ -206,7 +206,9 @@ describe("入力欄のマークダウンエディタ", () => {
     expect(await draftText()).toBe(">日本")
   })
 
-  it("箇条書き・引用の行の Enter は次の行にも同じ記号を付け、空の行の Enter は記号を消す", async () => {
+  test("箇条書き・引用の行の Enter は次の行にも同じ記号を付け、空の行の Enter は記号を消す", async ({
+    run,
+  }) => {
     const room = await run.open({
       scenario: "markdown-composer-ime",
       scene: "none",
