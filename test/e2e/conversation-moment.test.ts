@@ -1,12 +1,9 @@
 import type { Page } from "playwright-core"
-import { describe, expect, it } from "vitest"
 
-import { useScenarioRun } from "./scenario-run.ts"
+import { expect, test } from "./room-fixture.ts"
 
 // 会話の画面の局面（docs/architecture/testing.md「E2E のシナリオの一覧」）。
 // 名指し無しの場面で、依頼の前・送ったあと・閉じたあとのメインビューの中身（`data-main-view-content`）の移り変わりと、4領域の寸法を測る。
-
-const run = useScenarioRun()
 
 /** 撮るときの経過（凍らせた瞬間から）。「何秒前」の類いをこの値で揃える。 */
 const ELAPSED_MS = 60_000
@@ -20,10 +17,11 @@ type RegionRect = {
   readonly height: number
 }
 
-describe("会話の画面の局面", () => {
-  it.each(["large", "medium"] as const)(
-    "送ると働くあいだの中身、閉じるとレポートへこの順に入れ替わり、4領域の位置と大きさは動かない（%s）",
-    async (viewport) => {
+test.describe("会話の画面の局面", () => {
+  for (const viewport of ["large", "medium"] as const) {
+    test(`送ると働くあいだの中身、閉じるとレポートへこの順に入れ替わり、4領域の位置と大きさは動かない（${viewport}）`, async ({
+      run,
+    }) => {
       const room = await run.open({
         scenario: `conversation-moment-${viewport}`,
         scene: "none",
@@ -51,8 +49,8 @@ describe("会話の画面の局面", () => {
       if (viewport === "large") {
         await room.settleAndMatchPicked(ELAPSED_MS)
       }
-    },
-  )
+    })
+  }
 })
 
 /** メインビューの中身の値が変わるたびに、ページの中の控えに積む。 */

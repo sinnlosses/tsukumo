@@ -1,14 +1,12 @@
 import type { Locator, Page } from "playwright-core"
-import { describe, expect, it } from "vitest"
 
-import { type ScenarioRoom, useScenarioRun, VIEWPORTS } from "./scenario-run.ts"
+import { expect, test, VIEWPORTS } from "./room-fixture.ts"
+import type { ScenarioRoom } from "./scenario-open.ts"
 import { openTaskListRoomWithRunningTask } from "./task-room.ts"
 
 // 会話の画面の段（docs/architecture/testing.md「E2E のシナリオの一覧」）。
 // 761〜1100px ではサイドバーを柱に畳み、柱の口で重ねて開く。それより広い窓と狭い窓には柱を出さない。
 // 760px 以下は頭・本文・顔と吹き出し・入力欄の縦の1列になり、帯とサイドバーの中身は頭の ≡ から右に出る引き出しへ移る。
-
-const run = useScenarioRun()
 
 const ELAPSED_MS = 60_000
 
@@ -86,8 +84,10 @@ async function expectRailOverlay(room: ScenarioRoom, match: boolean): Promise<vo
   expect(await toggle.getAttribute("aria-expanded")).toBe("false")
 }
 
-describe("会話の画面の段", () => {
-  it("中くらいの窓幅（1024px と境目の 1100px）ではサイドバーが柱に畳まれ、柱の口で重ねて開き、Esc と外側で閉じる", async () => {
+test.describe("会話の画面の段", () => {
+  test("中くらいの窓幅（1024px と境目の 1100px）ではサイドバーが柱に畳まれ、柱の口で重ねて開き、Esc と外側で閉じる", async ({
+    run,
+  }) => {
     const room = await openTaskListRoomWithRunningTask(
       run,
       "conversation-tier-medium",
@@ -99,7 +99,9 @@ describe("会話の画面の段", () => {
     await expectRailOverlay(room, false)
   })
 
-  it("狭い窓幅では柱もタブ帯もサイドバーも出さずに頭の「≡」を出し、広い窓幅（1440px と境目の 1101px）では柱を出さずサイドバーと左右の仕切りが並ぶ", async () => {
+  test("狭い窓幅では柱もタブ帯もサイドバーも出さずに頭の「≡」を出し、広い窓幅（1440px と境目の 1101px）では柱を出さずサイドバーと左右の仕切りが並ぶ", async ({
+    run,
+  }) => {
     const room = await openTaskListRoomWithRunningTask(
       run,
       "conversation-tier-narrow",
@@ -124,7 +126,9 @@ describe("会話の画面の段", () => {
     }
   })
 
-  it("390x844 では上から頭・本文・顔と吹き出し・入力欄の縦の1列で、転がるのは本文だけ。吹き出しは3行で切れ、境目の 760px は頭のまま、761px は柱の段に戻る。≡ の引き出しも開閉でき、開いたまま窓を広げても本文が押せる", async () => {
+  test("390x844 では上から頭・本文・顔と吹き出し・入力欄の縦の1列で、転がるのは本文だけ。吹き出しは3行で切れ、境目の 760px は頭のまま、761px は柱の段に戻る。≡ の引き出しも開閉でき、開いたまま窓を広げても本文が押せる", async ({
+    run,
+  }) => {
     const room = await run.open({
       scenario: "conversation-tier-phone",
       scene: "phone-layout",
@@ -239,7 +243,9 @@ describe("会話の画面の段", () => {
     expect(await page.locator('[data-region="main"]').isVisible()).toBe(true)
   }
 
-  it("390x844 で依頼が “ の1行・中間レポートが1行ずつの一覧になり、行を押すと板が上がって ‹ › で前後の段へ移れ、Esc と覆いで閉じ押した行へフォーカスが戻り、頭の「手順 n」も板で開く", async () => {
+  test("390x844 で依頼が “ の1行・中間レポートが1行ずつの一覧になり、行を押すと板が上がって ‹ › で前後の段へ移れ、Esc と覆いで閉じ押した行へフォーカスが戻り、頭の「手順 n」も板で開く", async ({
+    run,
+  }) => {
     const room = await run.open({
       scenario: "conversation-tier-phone-sheet",
       scene: "phone-phases",

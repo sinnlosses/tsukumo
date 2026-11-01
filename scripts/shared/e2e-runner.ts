@@ -2,9 +2,15 @@
 
 /** `@playwright/test` で流す E2E のファイル（`test/e2e/<シナリオ>.test.ts`）。載らないファイルは vitest で流す。 */
 export const PLAYWRIGHT_E2E_FILES: readonly string[] = [
+  "test/e2e/aside-thread.test.ts",
+  "test/e2e/background-task.test.ts",
+  "test/e2e/conversation-moment.test.ts",
+  "test/e2e/conversation-tier.test.ts",
   "test/e2e/inquiry.test.ts",
   "test/e2e/session-switch.test.ts",
   "test/e2e/target-size.test.ts",
+  "test/e2e/work-strip-phase-popover.test.ts",
+  "test/e2e/work-strip.test.ts",
 ]
 
 export type E2eRunnerSplit = {

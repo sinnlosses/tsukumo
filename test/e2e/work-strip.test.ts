@@ -1,8 +1,7 @@
 import type { Locator, Page } from "playwright-core"
-import { describe, expect, it } from "vitest"
 
 import { expectReadable } from "./readability-scan.ts"
-import { useScenarioRun } from "./scenario-run.ts"
+import { expect, test } from "./room-fixture.ts"
 import { LONG_TOOL_OCCURRENCE, phaseStates, stripOf } from "./work-strip-probe.ts"
 
 // 進み具合の帯（docs/architecture/testing.md「E2E のシナリオの一覧」）。
@@ -10,13 +9,11 @@ import { LONG_TOOL_OCCURRENCE, phaseStates, stripOf } from "./work-strip-probe.t
 // `work-strip-ask`・`work-strip-question` は答え待ちが届いたまま 20 秒止まる。
 // `work-strip-long-report-quick` は `turn-finished` まで流す。
 
-const run = useScenarioRun()
-
 /** 撮るときの経過（凍らせた瞬間から）。「何秒前」の類いをこの値で揃える。 */
 const ELAPSED_MS = 60_000
 
-describe("進み具合の帯", () => {
-  it("段が進む・ツールが走るたびに書き換わり、本文を転がしても動かない", async () => {
+test.describe("進み具合の帯", () => {
+  test("段が進む・ツールが走るたびに書き換わり、本文を転がしても動かない", async ({ run }) => {
     const room = await run.open({
       scenario: "work-strip-running",
       scene: "work-strip-running",
@@ -47,7 +44,9 @@ describe("進み具合の帯", () => {
     await expectReadable(room.page)
   })
 
-  it("1024x768 で許可の答え待ちが届くと、今の段の丸が答え待ちになり、2行目が何を待っているかを言い、札の口は覆われない", async () => {
+  test("1024x768 で許可の答え待ちが届くと、今の段の丸が答え待ちになり、2行目が何を待っているかを言い、札の口は覆われない", async ({
+    run,
+  }) => {
     const room = await run.open({
       scenario: "work-strip-ask-medium",
       scene: "work-strip-ask",
@@ -69,7 +68,7 @@ describe("進み具合の帯", () => {
     await room.settleAndMatchPicked(ELAPSED_MS)
   })
 
-  it("1024x768 でも、質問の選択肢と「次へ」は帯にも札にも覆われない", async () => {
+  test("1024x768 でも、質問の選択肢と「次へ」は帯にも札にも覆われない", async ({ run }) => {
     const room = await run.open({
       scenario: "work-strip-question",
       scene: "work-strip-question",
@@ -87,7 +86,7 @@ describe("進み具合の帯", () => {
     await expectUncovered(main.getByRole("button", { name: "次へ", exact: true }))
   })
 
-  it("長いレポートの末尾まで転がすと、最後の段落は帯に覆われない", async () => {
+  test("長いレポートの末尾まで転がすと、最後の段落は帯に覆われない", async ({ run }) => {
     const room = await run.open({
       scenario: "work-strip-long-report",
       scene: "work-strip-long-report-quick",
