@@ -4,12 +4,12 @@
 
 import { z } from "zod"
 
+import { REPORT_BLOCK_KINDS } from "../../../shared/report/a2ui-report-catalog.ts"
 import { aside, fold, inlineText, omittable } from "../../../shared/report/report-block-field.ts"
 import type { DeepReadonly } from "../../../shared/report/report-block-field.ts"
 import {
   namedWriterBlockSchema,
   parseReportBlocks,
-  REPORT_BLOCK_KINDS,
   type ReportBlock,
 } from "../../../shared/report/report-block.ts"
 import { parseReportBody } from "./body-fence.ts"
@@ -41,7 +41,7 @@ export type LegacySection = {
 
 export type ParsedLegacySections = {
   readonly sections: readonly LegacySection[]
-  /** 知らない種類（{@link REPORT_BLOCK_KINDS} に無い `kind`）で落とした塊の数。 */
+  /** 知らない種類（{@link LEGACY_BLOCK_KINDS} に無い `kind`）で落とした塊の数。 */
   readonly unknownBlockCount: number
 }
 
@@ -50,6 +50,9 @@ const looseSectionSchema = z.object({
   heading: omittable(z.string(), ""),
   blocks: z.array(z.unknown()),
 })
+
+// 旧い引数にだけ現れる種類（`files` と、塊を並べる `row`・`panel`）も、知らない種類には数えない
+const LEGACY_BLOCK_KINDS: readonly string[] = [...REPORT_BLOCK_KINDS, "files", "row", "panel"]
 
 const blockKindSchema = z.object({ kind: z.string() })
 
@@ -98,5 +101,5 @@ function parseLegacyBlock(block: unknown): readonly LegacyBlock[] {
 
 function isUnknownKindBlock(block: unknown): boolean {
   const kind = blockKindSchema.safeParse(block)
-  return kind.success && !REPORT_BLOCK_KINDS.some((known) => known === kind.data.kind)
+  return kind.success && !LEGACY_BLOCK_KINDS.some((known) => known === kind.data.kind)
 }

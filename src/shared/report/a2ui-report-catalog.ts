@@ -107,6 +107,9 @@ export const LEAF_COMPONENT_KINDS = {
   Markdown: markdownBlockSchema.shape.kind.value,
 } as const satisfies Record<keyof typeof LEAF_COMPONENTS, string>
 
+/** 書き手に渡す塊の `kind`（葉の部品の写し先）の一覧。 */
+export const REPORT_BLOCK_KINDS: readonly string[] = Object.values(LEAF_COMPONENT_KINDS)
+
 /** `Report.figureNone` に置ける、図を置かない理由。 */
 export const REPORT_FIGURE_NONE_REASONS = [
   "short-answer",

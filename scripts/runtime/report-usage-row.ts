@@ -1,13 +1,13 @@
 // レポートの使われ方の集計が読む記録の1行の形と、疑似セッションの行の見分け方。
-// 読むのは `MIN_FORMAT_VERSION` から現行の版までの行で、形は欄の有無で決まる2つ。
-// 欄を足したら、下限の版の行に無い欄は `.optional()` で足し、下限を上げたら形を畳む。
+// 読むのは `MIN_FORMAT_VERSION` から現行の版までの行。
+// 欄を足したら、下限の版の行に無い欄は `.optional()` で足し、下限を上げたら `.optional()` を外す。
 
 import { z } from "zod"
 
 import { REPORT_USAGE_FORMAT_VERSION } from "../../src/server/report/core/report-usage-record.ts"
 
 /** 読む版の下限。これより古い行は読まない。 */
-const MIN_FORMAT_VERSION = 17
+const MIN_FORMAT_VERSION = 24
 
 const figureFieldSchema = z.union([
   z.object({ figureKind: z.literal("none"), noneReason: z.string() }),
@@ -19,7 +19,7 @@ const argumentCharsSchema = z.object({
   fields: z.record(z.string(), z.number()),
 })
 
-const baseRecordShape = {
+const recordShape = {
   blockKinds: z.array(z.string()),
   notations: z.array(z.string()),
   containedNotations: z.array(z.string()),
@@ -53,27 +53,22 @@ const baseRecordShape = {
 
 const versionSchema = z.number().int().min(MIN_FORMAT_VERSION).max(REPORT_USAGE_FORMAT_VERSION)
 
-const baseRecordSchema = z.object({ v: versionSchema, ...baseRecordShape }).and(figureFieldSchema)
-
-/** 節ごとの塊の欄（`sectionBlockKinds`）を持つ行。`keyFigures` の欄は、記録した行にだけある。 */
-const sectionBlockRecordSchema = z
+/** 受け付けた回の行。`keyFigures` の欄は、記録した行にだけある。 */
+export const recordSchema = z
   .object({
     v: versionSchema,
-    ...baseRecordShape,
+    ...recordShape,
     sectionBlockKinds: z.array(z.array(z.string())),
     listStyles: z.array(z.string()),
     mermaidKinds: z.array(z.string()),
     driver: z.enum(["sdk", "fake"]),
-    componentNames: z.array(z.string()).optional(),
-    markdownNotationKinds: z.array(z.string()).optional(),
+    componentNames: z.array(z.string()),
+    markdownNotationKinds: z.array(z.string()),
     hasKeyFigures: z.boolean().optional(),
     conclusionNumbersWithoutKeyFigures: z.boolean().optional(),
   })
   .and(figureFieldSchema)
-
-export const recordSchema = z.union([sectionBlockRecordSchema, baseRecordSchema])
 export type UsageRecord = z.infer<typeof recordSchema>
-export type SectionBlockRecord = z.infer<typeof sectionBlockRecordSchema>
 
 export type KeyFiguresRow = {
   readonly forTask: boolean
@@ -82,7 +77,7 @@ export type KeyFiguresRow = {
 }
 
 /** `keyFigures` の欄を記録した行だけを、欄の揃った形で返す。 */
-export function keyFiguresRowOf(record: SectionBlockRecord): readonly KeyFiguresRow[] {
+export function keyFiguresRowOf(record: UsageRecord): readonly KeyFiguresRow[] {
   const { forTask, hasKeyFigures, conclusionNumbersWithoutKeyFigures } = record
   return hasKeyFigures === undefined || conclusionNumbersWithoutKeyFigures === undefined
     ? []

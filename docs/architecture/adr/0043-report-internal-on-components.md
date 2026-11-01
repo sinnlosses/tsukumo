@@ -62,7 +62,7 @@
 - 過去の行と今の行を同じ表で集計できる。`blockKinds`・`sectionBlockKinds`・`blockFields` の名前（`text`・`list`・`image`・`beforeAfter`）を部品名（`Paragraph`・`ItemList`・`Picture`）に直すと、過去の行と合わなくなる。
 - `argumentChars.fields` と `inheritedFields` は、旧い欄名（`sections`・`body`）で書かれ続ける。`a2ui` の版では `components` から数える現状を変えない。
 - `shapeTag`（`forbiddenShape*`・`sectionShapeTags`）は `a2ui` では常に `unspecified` で、集計は意味を持っていない。新しい行は `unspecified` を書き、読む側の判定（`isForbiddenBlock`）は外す。過去の行の列は読み戻せるまま残す。
-- 集計スクリプト（`scripts/runtime/report-block-usage.ts`）の行の見出し `REPORT_BLOCK_KINDS` は、`row`・`panel`・`files` を含む今の表のまま残す。過去の行の kind が表から落ちないため。見出しを部品の一覧から作り直すのは、過去の行を捨てる決めをするときで、この ADR は決めない。
+- 集計スクリプト（`scripts/runtime/report-block-usage.ts`）の行の見出し `REPORT_BLOCK_KINDS` は、過去の行を捨てたので部品の一覧（`LEAF_COMPONENT_KINDS`）から作る（未決 2）。
 
 ### 論点 4: 旧い transcript の復元
 
@@ -158,7 +158,7 @@
 ## 未決
 
 1. （決まった。2026-10-29）変更の札の `kind: "files"` の塊は、`changedFilesView` の値を専用の部品が描く形になり、内部で作らなくなった。
-2. 過去の使われ方の記録を捨てる時期。捨てれば `REPORT_BLOCK_KINDS` を部品の一覧から作り直せる。利用者が決める。課題に切り出した。
+2. （決まった。2026-11-02）過去の使われ方の記録（`~/.tsukumo/report-usage/`）は、版 24 より前の行を、受け付け・差し戻し・数えるだけ・直後の依頼の別なく捨てる。`REPORT_BLOCK_KINDS` は `LEAF_COMPONENT_KINDS` の値から作り、集計は版 24 以降の行だけを読む。旧い引数（`sections`）の transcript の組み直しは、`files`・`row`・`panel` を知らない種類に数えない一覧を自分で持つ。体験の指標（`~/.tsukumo/experience-metric/`）の行は塊の種類を持たないので捨てない。
 3. （確かめた。2026-10-29）旧い記録の `body` の素の散文を `Markdown` の部品 1 つにしたときの見た目は、順 1 の目視で崩れがないことを確かめた（変更前の画との並べ比べはしていない）。
 4. （決まった。2026-11-01）面は塊の値から有無を決める。`drawnEntryPresence` が塊ごとの有無（空・空白だけ・描く）、`sectionDrawsAnything` が節の有無を返し、`markdown`・`text` の塊の字は `drawnEntryMarkdown` が組む。これで入力を `FigureBlock` に絞った。想定と違い、空かどうかは画像の棚の有無や表の中身では変わらなかった（画像は棚が無くても札を描き、表は題の包みを必ず描く）。
 

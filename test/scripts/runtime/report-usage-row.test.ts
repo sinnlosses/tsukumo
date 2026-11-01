@@ -26,6 +26,8 @@ describe("集計が読む記録の形", () => {
     unknownBlockCount: 0,
     listStyles: [],
     mermaidKinds: [],
+    componentNames: ["Section", "Markdown"],
+    markdownNotationKinds: ["quote"],
     hasModifiedFiles: false,
     hasBeforeAfterOrImage: false,
     forTask: false,
@@ -46,43 +48,13 @@ describe("集計が読む記録の形", () => {
     inheritedFields: [],
   }
 
-  it("版23の行(部品の名前の欄が無い)も、版24の行(欄がある)も読める", () => {
+  it("版24の行(部品の名前の欄がある)は読め、版23の行は読まない", () => {
+    const current = recordSchema.safeParse({ v: REPORT_USAGE_FORMAT_VERSION, ...acceptedRow })
     const old = recordSchema.safeParse({ v: 23, ...acceptedRow })
-    const current = recordSchema.safeParse({
-      v: REPORT_USAGE_FORMAT_VERSION,
-      ...acceptedRow,
-      componentNames: ["Row", "Markdown"],
-      markdownNotationKinds: ["quote"],
-    })
 
-    expect(old.success).toBe(true)
     expect(current.success).toBe(true)
-    expect(
-      current.success && "componentNames" in current.data && current.data.componentNames,
-    ).toEqual(["Row", "Markdown"])
-  })
-
-  it("札を書いた過去の行(許さない塊の数つき)も、札が unspecified の新しい行も読み戻せる", () => {
-    const past = recordSchema.safeParse({
-      v: 17,
-      ...acceptedRow,
-      sectionShapeTags: ["cause", "unspecified"],
-      sectionBlockKinds: [["table"], ["text"]],
-      forbiddenShapeSectionCount: 1,
-      forbiddenShapeBlocks: [{ shapeTag: "cause", blockKind: "table", count: 1 }],
-    })
-    const current = recordSchema.safeParse({
-      v: REPORT_USAGE_FORMAT_VERSION,
-      ...acceptedRow,
-      sectionShapeTags: ["unspecified"],
-      sectionBlockKinds: [["text"]],
-    })
-
-    expect(past.success).toBe(true)
-    expect(current.success).toBe(true)
-    expect(past.success && past.data.forbiddenShapeBlocks).toEqual([
-      { shapeTag: "cause", blockKind: "table", count: 1 },
-    ])
+    expect(current.success && current.data.componentNames).toEqual(["Section", "Markdown"])
+    expect(old.success).toBe(false)
   })
 
   it("直後の依頼の行(followed)は、どの形にも当たらず読み飛ばされる", () => {

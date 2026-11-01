@@ -6,12 +6,10 @@ import {
   buildReportCatalogDocument,
   FIGURE_COMPONENTS,
   LEAF_COMPONENT_KINDS,
+  REPORT_BLOCK_KINDS,
   REPORT_COMPONENT_SCHEMAS,
 } from "../../../src/shared/report/a2ui-report-catalog.ts"
-import {
-  namedWriterBlockSchema,
-  REPORT_BLOCK_KINDS,
-} from "../../../src/shared/report/report-block.ts"
+import { namedWriterBlockSchema } from "../../../src/shared/report/report-block.ts"
 
 // 書き手に渡す塊の kind と部品名の対応（塊を足したら、ここと実装の表の両方に足す）
 const KIND_TO_COMPONENT = {
@@ -94,11 +92,7 @@ describe("A2UI のカタログ文書", () => {
   const expected = ["Report", "Section", ...Object.values(KIND_TO_COMPONENT), ...BASIC_COMPONENTS]
 
   it("書き手に渡す塊の全種類が部品の対応表にある", () => {
-    const writerKinds = REPORT_BLOCK_KINDS.filter(
-      (kind) => kind !== "files" && kind !== "row" && kind !== "panel",
-    )
-
-    expect(Object.keys(KIND_TO_COMPONENT).toSorted()).toEqual(writerKinds.toSorted())
+    expect(Object.keys(KIND_TO_COMPONENT).toSorted()).toEqual([...REPORT_BLOCK_KINDS].toSorted())
   })
 
   it("根・節・葉 20 種・基本 6 部品の 28 部品が全部残る", () => {

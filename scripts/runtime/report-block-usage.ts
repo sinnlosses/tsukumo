@@ -4,7 +4,6 @@
 // 「報告の種類 × レポート数」「種類ごとに必須の塊が無い割合」
 // 「逃げ道の中の記法 × レポート数」「差し戻しの種類 × 回数」を割合つきで出す。
 // 読むのは `MIN_FORMAT_VERSION` 以降の行だけで、それより古い行は捨てる。
-// 札 × 塊の種類の節数・`list` の style・`mermaid` の図種・駆動の数は、`sectionBlockKinds` を記録した行を分母にする。
 // `keyFigures` の有無と、結論に数が並ぶのに無い割合も、その欄を記録した行が分母。
 // 疑似セッションの行（`driver` が `fake`、無い行は `sessionId` が `fake-session`）は、既定で全部の表から除く。
 //
@@ -29,12 +28,12 @@ import { REPORT_SHAPE_TAGS } from "../../src/server/report/core/report-usage-rec
 import { REPORT_BLOCK_FIELDS } from "../../src/server/report/core/report-usage.ts"
 import { REPORT_VIOLATION_KINDS } from "../../src/server/report/core/report-violation.ts"
 import {
+  REPORT_BLOCK_KINDS,
   REPORT_FIGURE_NONE_REASONS,
   reportFigureSchema,
 } from "../../src/shared/report/a2ui-report-catalog.ts"
 import { REPORT_MERMAID_KINDS } from "../../src/shared/report/report-block-diagram.ts"
 import { listBlockSchema } from "../../src/shared/report/report-block-prose.ts"
-import { REPORT_BLOCK_KINDS } from "../../src/shared/report/report-block.ts"
 import { REPORT_GENRES } from "../../src/shared/report/report-task.ts"
 import { parseDaysOption } from "../shared/days-option.ts"
 import { argumentCharsSection } from "./argument-chars-section.ts"
@@ -49,7 +48,6 @@ import {
   rejectionSchema,
   keyFiguresRowOf,
   type RejectionRecord,
-  type SectionBlockRecord,
   type UsageRecord,
 } from "./report-usage-row.ts"
 import {
@@ -132,12 +130,9 @@ process.stdout.write(shortTableSection(records))
 process.stdout.write("\n\n")
 process.stdout.write(shapeTagSection(records))
 process.stdout.write("\n\n")
-const sectionBlockRecords = records.filter(
-  (record): record is SectionBlockRecord => "sectionBlockKinds" in record,
-)
-process.stdout.write(sectionBlockSection(sectionBlockRecords))
+process.stdout.write(sectionBlockSection(records))
 process.stdout.write("\n\n")
-process.stdout.write(keyFiguresSection(sectionBlockRecords.flatMap(keyFiguresRowOf)))
+process.stdout.write(keyFiguresSection(records.flatMap(keyFiguresRowOf)))
 process.stdout.write("\n\n")
 process.stdout.write(argumentCharsSection(records, rejections))
 process.stdout.write("\n\n")
@@ -414,10 +409,10 @@ function shapeTagSection(rows: readonly UsageRecord[]): string {
 }
 
 /**
- * 札 × 節に出た塊の種類の節数、`list` の style・`mermaid` の図種 × レポート数、駆動 × レポート数。分母は `sectionBlockKinds` を記録した行。
+ * 札 × 節に出た塊の種類の節数、`list` の style・`mermaid` の図種 × レポート数、駆動 × レポート数。
  * 節の数は `sectionShapeTags` と `sectionBlockKinds` の同じ位置を対にして数える。
  */
-function sectionBlockSection(rows: readonly SectionBlockRecord[]): string {
+function sectionBlockSection(rows: readonly UsageRecord[]): string {
   if (rows.length === 0) {
     return "札 × 節に出た塊の種類・list の style・mermaid の図種・駆動: 記録した行が無い"
   }

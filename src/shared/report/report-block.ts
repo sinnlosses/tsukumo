@@ -75,16 +75,6 @@ export type ReportBlock = DeepReadonly<z.infer<typeof reportBlockSchema>>
 // `retrospective.blocks` の要素になる、書き手向けの塊の合併
 export const namedWriterBlockSchema = writerBlockSchema.meta({ id: "ReportBlock" })
 
-/**
- * 使われ方の記録の `blockKinds` に現れうる塊の種類。読み戻しの合併の枝から導き、旧い記録だけにある
- * `row`・`panel` を足す。塊を1種類足してここへ書き忘れる経路を型で塞ぐ。
- */
-export const REPORT_BLOCK_KINDS: readonly string[] = [
-  ...reportBlockSchema.options.map((option) => option.shape.kind.value),
-  "row",
-  "panel",
-]
-
 /** 画面に描く節。見出し（空なら描かない）と葉の塊の並び。 */
 export type ReportBlockSection = {
   readonly heading: string
