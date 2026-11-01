@@ -8,9 +8,11 @@ import {
   writeRecommendationCache,
 } from "../server/recommendation/adapter/recommendation-cache.ts"
 import { createRecommender, type Recommender } from "../server/recommendation/core/recommender.ts"
+import { codeBlockStartLine } from "../server/report/core/code-block-match.ts"
 import type { BeadsStamp } from "../server/repository/adapter/beads.ts"
 import { changeCountGitOf } from "../server/repository/adapter/change-count.ts"
 import { projectNameOf } from "../server/repository/adapter/project-name.ts"
+import { readCodeBlockStart } from "../server/repository/adapter/repository-code-block-start.ts"
 import { readFileExcerpt } from "../server/repository/adapter/repository-file-excerpt.ts"
 import { listRepositoryFiles } from "../server/repository/adapter/repository-file.ts"
 import type { RepositoryProcedurePorts } from "../server/repository/adapter/repository-procedure.ts"
@@ -46,6 +48,13 @@ export function wireRepository(
           context.cwd,
           request,
           async () => (await listRepositoryFiles(context.cwd)).paths,
+        ),
+      readCodeBlockStart: (request) =>
+        readCodeBlockStart(
+          context.cwd,
+          request,
+          async () => (await listRepositoryFiles(context.cwd)).paths,
+          codeBlockStartLine,
         ),
       projectName: () => projectNameOf(context.cwd),
     },

@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest"
 
-import { codeBlockMatchesFile } from "../../../../src/server/report/core/code-block-match.ts"
+import {
+  codeBlockMatchesFile,
+  codeBlockStartLine,
+} from "../../../../src/server/report/core/code-block-match.ts"
 
 const block = (source: string, language = "text") => ({ language, source })
 
@@ -88,5 +91,30 @@ describe("codeBlockMatchesFile", () => {
 
   it("diff で追加した行がファイルに無ければ false", () => {
     expect(codeBlockMatchesFile(block("+架空の行・改変", "diff"), "架空の行")).toBe(false)
+  })
+})
+
+describe("codeBlockStartLine", () => {
+  const file = "一\n二\n三\n四\n五"
+  const blankFile = "一\n\n\n三\n四\n五"
+
+  it.each([
+    ["途中の行から1か所に一致", block("三\n四"), file, 3],
+    ["先頭から一致", block("一\n二"), file, 1],
+    ["行末の空白・CRLF の違いは許す", block("三  \n四"), "一\r\n二\r\n三\r\n四\r\n", 3],
+    ["頭の空行なし・末尾の空行は照合しない", block("三\n四\n"), blankFile, 4],
+    ["頭に空行1つ（塊の1行目の行を返す）", block("\n三\n四\n"), blankFile, 3],
+    ["頭に空行2つ", block("\n\n三\n四\n"), blankFile, 2],
+    ["頭の空行がファイルの空行でない", block("\n三\n四"), file, undefined],
+    ["頭の空行がファイルの先頭より前に出る", block("\n一\n二"), file, undefined],
+    ["一致なし", block("六"), file, undefined],
+    ["一致が2か所", block("あ"), "あ\nい\nあ", undefined],
+    ["重なって2か所に一致", block("あ\nあ"), "あ\nあ\nあ", undefined],
+    ["省略の行がある", block("二\n...\n四"), file, undefined],
+    ["コメント記号つきの省略の行がある", block("二\n// ...\n四"), file, undefined],
+    ["diff（行がそのまま一致しても決めない）", block("三\n四", "diff"), file, undefined],
+    ["空の source", block(""), file, undefined],
+  ])("%s", (_name, input, content, expected) => {
+    expect(codeBlockStartLine(input, content)).toBe(expected)
   })
 })

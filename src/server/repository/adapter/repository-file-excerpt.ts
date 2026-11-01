@@ -27,17 +27,30 @@ export async function readFileExcerpt(
   request: FileExcerptRequest,
   listFiles: () => Promise<readonly string[]>,
 ): Promise<FileExcerpt> {
-  if (!(await isTrackedPath(request.path, listFiles))) {
+  const content = await readTrackedText(cwd, request.path, listFiles)
+  return content.kind === "text" ? excerptLines(content.text, request) : content
+}
+
+type TrackedText =
+  | { readonly kind: "text"; readonly text: string }
+  | { readonly kind: "unavailable"; readonly reason: FileExcerptUnavailableReason }
+
+/** `cwd` 相対の `path` が `listFiles` の一覧にあれば、上限の大きさまでの文字のファイルとして読む。 */
+export async function readTrackedText(
+  cwd: string,
+  path: string,
+  listFiles: () => Promise<readonly string[]>,
+): Promise<TrackedText> {
+  if (!(await isTrackedPath(path, listFiles))) {
     return unavailable("untracked")
   }
-  const content = await readSmallRegularFile(join(cwd, request.path))
+  const content = await readSmallRegularFile(join(cwd, path))
   if (content.kind === "unavailable") {
     return content
   }
-  if (content.bytes.includes(0)) {
-    return unavailable("binary")
-  }
-  return excerptLines(content.bytes.toString("utf8"), request)
+  return content.bytes.includes(0)
+    ? unavailable("binary")
+    : { kind: "text", text: content.bytes.toString("utf8") }
 }
 
 type SmallFileContent =

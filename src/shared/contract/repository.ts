@@ -4,6 +4,10 @@
 import { oc } from "@orpc/contract"
 import { z } from "zod"
 
+import {
+  codeBlockStartRequestSchema,
+  codeBlockStartSchema,
+} from "../repository/code-block-start.ts"
 import { fileExcerptRequestSchema, fileExcerptSchema } from "../repository/file-excerpt.ts"
 
 export const repositoryContract = {
@@ -22,6 +26,11 @@ export const repositoryContract = {
    * 読むのは git 管理下の一覧にあるパスだけで、読めないときは `unavailable`（失敗のエラーにはしない）。
    */
   fileExcerpt: oc.input(fileExcerptRequestSchema).output(fileExcerptSchema),
+  /**
+   * `Code` の塊の頭の行が、git 管理下のファイルの何行目か（行番号の列の始まり）。
+   * 決められないとき（管理下でない・読めない・一致が1か所に決まらない・`diff`・省略の行がある）は `unknown`。
+   */
+  codeBlockStart: oc.input(codeBlockStartRequestSchema).output(codeBlockStartSchema),
   /** 作業ディレクトリの名前（末尾のディレクトリ名）。 */
   projectName: oc.output(z.string()),
   /** タスク一覧を今すぐ1回読み直し、読み終えてから返る。一覧そのものは `tasks-changed` で届く。 */

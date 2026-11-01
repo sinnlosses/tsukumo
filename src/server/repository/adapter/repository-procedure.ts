@@ -5,6 +5,11 @@ import { implement } from "@orpc/server"
 
 import { repositoryContract } from "../../../shared/contract/repository.ts"
 import {
+  type CodeBlockStart,
+  type CodeBlockStartRequest,
+  UNKNOWN_CODE_BLOCK_START,
+} from "../../../shared/repository/code-block-start.ts"
+import {
   type FileExcerpt,
   type FileExcerptRequest,
   UNREADABLE_FILE_EXCERPT,
@@ -20,6 +25,8 @@ export type RepositoryProcedurePorts = {
   readonly listRepositoryFiles: () => Promise<RepositoryFileList>
   /** git 管理下のファイルの、指した行の前後の抜き書き。管理下でない・読めないときは `unavailable`。 */
   readonly readFileExcerpt: (request: FileExcerptRequest) => Promise<FileExcerpt>
+  /** `Code` の塊の頭の行が管理下のファイルの何行目か。決められないときは `unknown`。 */
+  readonly readCodeBlockStart: (request: CodeBlockStartRequest) => Promise<CodeBlockStart>
   /** 作業ディレクトリの名前。 */
   readonly projectName: () => string
   /** タスク一覧を今すぐ1回読み直し、読み終えてから解決する。 */
@@ -36,6 +43,10 @@ export function repositoryProcedure(ports: RepositoryProcedurePorts) {
     // 読めなかった回は抜き書きが出ないだけで、手続きは落とさない。
     fileExcerpt: procedure.fileExcerpt.handler(({ input }) =>
       ports.readFileExcerpt(input).catch(() => UNREADABLE_FILE_EXCERPT),
+    ),
+    // 読めなかった回は行番号が出ないだけで、手続きは落とさない。
+    codeBlockStart: procedure.codeBlockStart.handler(({ input }) =>
+      ports.readCodeBlockStart(input).catch(() => UNKNOWN_CODE_BLOCK_START),
     ),
     projectName: procedure.projectName.handler(() => ports.projectName()),
     // 読めない回は一覧の「不明」が伝えるので、手続きは落とさない。

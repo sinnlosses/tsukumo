@@ -305,23 +305,37 @@
    器は Markdown のレンダラ側（`Pre`）が作るので、レポートの記法・許可リストは増えていない。 */
   & .code-file {
     margin: var(--report-block-gap) 0;
+    background: var(--ground);
+    border: 1px solid var(--report-chunk-rule, var(--rule-soft));
+    border-radius: var(--radius-md);
+    overflow: hidden;
   }
   & .code-file-name {
     display: flex;
     align-items: center;
     gap: var(--space-sm);
     padding: var(--space-xs) var(--space-sm) var(--space-xs) var(--space-sm);
-    background: var(--ground);
-    border-radius: var(--radius-md) var(--radius-md) 0 0;
-    font-family: var(--font-mono);
-    font-size: var(--font-secondary);
-    color: var(--ink-quiet);
+    border-bottom: 1px solid var(--rule-quiet);
+    font-family: var(--font-code);
+    font-size: var(--font-label);
+    color: var(--ink-soft);
     overflow-wrap: anywhere;
   }
-  /* 帯が上に乗るぶん、コード側の上マージンと上の角を落とす（.detail-block pre の既定を消す）。 */
+  /* 枠と帯が箱を作るので、コード側の上マージン・角・地は持たない（.detail-block pre の既定を消す）。 */
   & .code-file > pre {
-    margin-top: 0;
-    border-radius: 0 0 var(--radius-md) var(--radius-md);
+    margin: 0;
+    border-radius: 0;
+    background: none;
+  }
+  /* 行番号の列。行の器の `data-line`（ファイルの何行目か）を生成物で出すので、DOM の文字ではなく、選択・写し・読み上げに混ざらない。 */
+  & .code-line[data-line]::before {
+    content: attr(data-line) / "";
+    flex: none;
+    min-inline-size: 3ch;
+    text-align: end;
+    color: var(--ink-quiet);
+    font-variant-numeric: tabular-nums;
+    user-select: none;
   }
   /* 行ごとに描くコード（`marks` のある塊と、コマンドの行のある shell の塊）。1行を1つの塊にし、<pre> の左右の余白まで地と罫を伸ばす。
    印の行は地を --surface-raised、左端に 2px の --accent を沈めた罫、ラベルは行の右端に 12px・--ink-quiet。 */
@@ -354,6 +368,11 @@
   & .code-line-added .code-line-text > *,
   & .code-line-removed .code-line-text > * {
     background: none;
+  }
+  /* 記号の列。字は原文の1字のままで、あとの空きは幅で作る（選択・写しに空白を混ぜない）。 */
+  & .code-line-sign {
+    display: inline-block;
+    inline-size: 2ch;
   }
   & .code-line-added .code-line-sign {
     color: var(--state-ok);

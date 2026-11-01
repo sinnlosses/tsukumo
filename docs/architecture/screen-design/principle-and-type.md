@@ -93,7 +93,7 @@
   「差をはっきり見せたい」という要求があるときだけで、寄せられるところは寄せる。
   **`test/architecture/font-size.test.ts` が、`theme.css` 以外の `*.css` の `font-size` を `var(--font-*)`・`var(--report-heading-*)`・
   `em`・`%`・`inherit` と、部品の中で `--font-*` から導いた局所のつまみ（日記の `--diary-text`・`--diary-title` は `--font-heading`・`--font-heading-1` に縮める倍率 `--diary-scale` を掛けた値、
-  吹き出しの `--balloon-latest-scale`・`--balloon-past-scale` は `--font-*` を `clamp` で挟んだ値）に限る**。
+  吹き出しの `--balloon-latest-scale`・`--balloon-past-scale` は `--font-*` を `clamp` で挟んだ値、インラインコードの `--inline-code-size` は周りの 0.86 倍を `--font-label`（12px）の下限で受ける `max`）に限る**。
   `px`・`rem`・`clamp`・`calc` を `font-size` に直接書くと落ちる
 - **入力欄の見出し3段は、入力欄のマークダウンエディタの `#`〜`###` にだけ使う**。
   打った段が見て分かるよう2px 刻みにした（1px 刻みでは太字どうし隣り合う段が見分けにくかった）。

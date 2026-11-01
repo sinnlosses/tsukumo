@@ -31,6 +31,7 @@ describe("font-size", () => {
       "85%",
       "inherit",
       "var(--balloon-past-scale)",
+      "var(--inline-code-size)",
     ]
     const rejected = [
       "12px",
@@ -51,6 +52,7 @@ const FONT_SIZE_DECLARATION = /(?<![\w-])font-size\s*:\s*([^;}]+)/
 const LOCAL_FONT_SIZE_VARIABLES = [
   "--diary-text",
   "--diary-title",
+  "--inline-code-size",
   "--balloon-latest-scale",
   "--balloon-past-scale",
 ] as const

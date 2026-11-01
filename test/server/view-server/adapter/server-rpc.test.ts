@@ -126,6 +126,36 @@ describe("startViewServer", () => {
       await failed.close()
     })
 
+    it("repository.codeBlockStart は、塊を口へ渡して頭の行を返す。口が失敗した回は unknown", async () => {
+      const requests: unknown[] = []
+      const found = await startViewWithRpc({
+        readCodeBlockStart: (request) => {
+          requests.push(request)
+          return Promise.resolve({ kind: "line", startLine: 12 })
+        },
+      })
+      const request = { path: "src/cli.ts", language: "ts", source: "架空の行" }
+      expect(await rpcClientOf(found, TOKEN).repository.codeBlockStart(request)).toEqual({
+        kind: "line",
+        startLine: 12,
+      })
+      expect(requests).toEqual([request])
+      // 空のパスは、口へ渡す前に契約が断る。
+      await expect(
+        rpcClientOf(found, TOKEN).repository.codeBlockStart({ ...request, path: "" }),
+      ).rejects.toThrow("Input validation failed")
+      expect(requests).toHaveLength(1)
+      await found.close()
+
+      const failed = await startViewWithRpc({
+        readCodeBlockStart: () => Promise.reject(new Error("架空の失敗")),
+      })
+      expect(await rpcClientOf(failed, TOKEN).repository.codeBlockStart(request)).toEqual({
+        kind: "unknown",
+      })
+      await failed.close()
+    })
+
     it("repository.projectName は、渡された名前を返す", async () => {
       const found = await startViewWithRpc({ projectName: () => "fictional-project" })
       expect(await rpcClientOf(found, TOKEN).repository.projectName()).toBe("fictional-project")

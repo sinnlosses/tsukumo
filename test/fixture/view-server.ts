@@ -37,6 +37,7 @@ export const TEST_CHUNK = "/* テスト用のチャンク */"
 export const EMPTY_RPC_PORTS = {
   listRepositoryFiles: () => Promise.resolve({ paths: [], omittedCount: 0 }),
   readFileExcerpt: () => Promise.resolve(UNREADABLE_FILE_EXCERPT),
+  readCodeBlockStart: () => Promise.resolve({ kind: "unknown" }),
   refreshTasks: () => Promise.resolve(),
   projectName: () => "架空のプロジェクト",
   readTokenUsageSummary: () => EMPTY_TOKEN_USAGE_SUMMARY,

@@ -19,6 +19,11 @@ import {
 } from "react"
 
 import {
+  type CodeBlockStart,
+  type CodeBlockStartRequest,
+  UNKNOWN_CODE_BLOCK_START,
+} from "../../../../../../shared/repository/code-block-start.ts"
+import {
   type FileExcerpt,
   type FileExcerptRequest,
   UNREADABLE_FILE_EXCERPT,
@@ -93,6 +98,7 @@ type RepositoryFileLink = {
   readonly open: (path: string) => void
   /** 指した行の前後の抜き書きを読む（手続き `repository.fileExcerpt`）。 */
   readonly readExcerpt: (request: FileExcerptRequest) => Promise<FileExcerpt>
+  readonly codeBlockStart: (request: CodeBlockStartRequest) => Promise<CodeBlockStart>
 }
 
 /**
@@ -103,6 +109,7 @@ const REPOSITORY_FILE_LINK_DEFAULT: RepositoryFileLink = {
   files: new Set(),
   open: () => {},
   readExcerpt: () => Promise.resolve(UNREADABLE_FILE_EXCERPT),
+  codeBlockStart: () => Promise.resolve(UNKNOWN_CODE_BLOCK_START),
 }
 
 const RepositoryFileLinkContext = createContext<RepositoryFileLink>(REPOSITORY_FILE_LINK_DEFAULT)
@@ -198,6 +205,7 @@ export function RepositoryFileLinkProvider(props: RepositoryFileLinkProviderProp
       dispatch.host.openFile({ path })
     },
     readExcerpt: (request) => rpc.repository.fileExcerpt.call(request),
+    codeBlockStart: (request) => rpc.repository.codeBlockStart.call(request),
   }
 
   return (

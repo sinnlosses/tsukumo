@@ -20,6 +20,38 @@ export function codeBlockMatchesFile(
   return matchesSegments(fileLines, segments)
 }
 
+/**
+ * 塊の頭の行が、ファイルの何行目に当たるか（1 始まり）。
+ * 決められるのは、`diff` でなく、省略の行を含まず、ファイルの行にちょうど1か所だけ連続して現れるとき。
+ * 塊の頭の空行は照合から外すが、返すのは頭の空行も含めた塊の1行目の行（頭の空行がファイルの空行でなければ `undefined`）。
+ * それ以外（一致なし・複数・省略あり・`diff`・空）は `undefined`。
+ */
+export function codeBlockStartLine(
+  block: { readonly language: string; readonly source: string },
+  fileContent: string,
+): number | undefined {
+  if (block.language === "diff") {
+    return undefined
+  }
+  const lines = block.source.split("\n").map(rstrip)
+  if (lines.some((line) => OMISSION_LINE.test(line.trim()))) {
+    return undefined
+  }
+  const [segment] = segmentsOf(lines)
+  if (segment === undefined || segment.length === 0) {
+    return undefined
+  }
+  const fileLines = fileContent.split("\n").map(rstrip)
+  const [only, ...others] = contiguousStarts(fileLines, segment)
+  if (only === undefined || others.length > 0) {
+    return undefined
+  }
+  const leadingBlanks = lines.findIndex((line) => line !== "")
+  const first = only - leadingBlanks
+  const blanksMatch = fileLines.slice(first, only).every((line) => line === "")
+  return first < 0 || !blanksMatch ? undefined : first + 1
+}
+
 function rstrip(line: string): string {
   return line.replace(/[ \t\r]+$/, "")
 }
@@ -72,6 +104,19 @@ function matchesSegments(
     { ok: true, cursor: 0 },
   )
   return result.ok
+}
+
+function contiguousStarts(
+  haystack: readonly string[],
+  needle: readonly string[],
+): readonly number[] {
+  return haystack
+    .map((_, at) => at)
+    .filter(
+      (at) =>
+        at + needle.length <= haystack.length &&
+        needle.every((line, offset) => haystack[at + offset] === line),
+    )
 }
 
 function indexOfContiguous(

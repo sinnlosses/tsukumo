@@ -27,7 +27,7 @@
 // git 管理下のパスを押すと Orca のエディタで開ける（inline code・フェンスのファイル名・相対リンクの3か所。判定は `repositoryFileTarget`）。
 
 import clsx from "clsx"
-import type { Root } from "hast"
+import type { Element, Root } from "hast"
 import type { JSX, ReactElement } from "react"
 import ReactMarkdown, { type Components, type ExtraProps, type Options } from "react-markdown"
 import rehypeHighlight from "rehype-highlight"
@@ -72,6 +72,7 @@ import { REPORT_SANITIZE_SCHEMA } from "./sanitize-schema.ts"
 import { shellCommandText, shellLineKinds } from "./shell-line.ts"
 import { rehypeStyleAllowlist } from "./style-allowlist.ts"
 import { rehypeTaskCheck } from "./task-check.ts"
+import { useCodeStartLine } from "./use-code-start-line.ts"
 
 /** hast の要素をどの部品で描くか。レンダーごとに作り直さない（同じ参照でないと react-markdown が木を作り直す）ので、モジュールの定数に置く。 */
 const REPORT_COMPONENTS = {
@@ -264,9 +265,19 @@ function Pre(props: PreProps): ReactElement {
   // eslint 等の警告を避けるため node は展開して渡さない。
   const { node: _node, ...rest } = props
 
-  if (codeNode === undefined) {
-    return <pre {...rest} />
-  }
+  return codeNode === undefined ? (
+    <pre {...rest} />
+  ) : (
+    <FencedCode codeNode={codeNode} preProps={rest} />
+  )
+}
+
+/** 頭の帯とコード本体。始まりの行が分かる塊は、行ごとに描いて行番号を付ける。 */
+function FencedCode(props: {
+  readonly codeNode: Element
+  readonly preProps: JSX.IntrinsicElements["pre"]
+}): ReactElement {
+  const { codeNode, preProps: rest } = props
   const fileName = codeFileName(codeNode)
   const marks = codeMarks(codeNode)
   const source = codeSourceText(codeNode)
@@ -274,13 +285,15 @@ function Pre(props: PreProps): ReactElement {
   const kinds = language === undefined ? undefined : shellLineKinds(language, source)
   const isDiff = language === "diff"
   const wordRanges = isDiff ? diffWordRanges(source) : NO_WORD_RANGES
+  const found = useCodeStartLine({ path: fileName, language: language ?? "", source })
+  const startLine = isDiff || kinds !== undefined ? undefined : found
   return (
     <div className={styles["code-file"]}>
       <div className={styles["code-file-name"]}>
         {fileName !== undefined && <FileNameLabel fileName={fileName} />}
         <CopyButton text={kinds === undefined ? source : shellCommandText(source, kinds)} />
       </div>
-      {marks.length === 0 && kinds === undefined && !isDiff ? (
+      {marks.length === 0 && kinds === undefined && !isDiff && startLine === undefined ? (
         <pre {...rest} />
       ) : (
         <pre {...rest}>
@@ -290,6 +303,8 @@ function Pre(props: PreProps): ReactElement {
               marks={marks}
               kinds={kinds}
               wordRanges={wordRanges}
+              diff={isDiff}
+              startLine={startLine}
             />
           </code>
         </pre>

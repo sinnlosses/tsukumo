@@ -6,6 +6,10 @@ import type { ReactElement, ReactNode } from "react"
 
 import { RepositoryFileLinkProvider } from "../../src/browser/components/page/conversation/components/repository-link/repository-link.tsx"
 import { rpc } from "../../src/browser/stores/rpc.ts"
+import {
+  type CodeBlockStart,
+  UNKNOWN_CODE_BLOCK_START,
+} from "../../src/shared/repository/code-block-start.ts"
 import type { FileExcerpt } from "../../src/shared/repository/file-excerpt.ts"
 import { INITIAL_SESSION_STATE } from "../../src/shared/session/session-state.ts"
 import { createTestQueryClient } from "../browser/query-client.tsx"
@@ -19,6 +23,8 @@ export type RepositoryFileLinkStub = {
   readonly opened: readonly string[]
   /** 抜き書きの手続きに渡った入力（古い順。呼ばれるたびに伸びる）。 */
   readonly excerptRequests: readonly unknown[]
+  /** 塊の頭の行の手続きに渡った入力（古い順）。 */
+  readonly codeBlockStartRequests: readonly unknown[]
   /** fetch を元に戻す（`afterEach` で呼ぶ）。 */
   readonly restore: () => void
 }
@@ -27,6 +33,7 @@ export type RepositoryFileLinkStub = {
 export function stubRepositoryFileLink(
   paths: readonly string[],
   excerpt: FileExcerpt,
+  codeBlockStart: CodeBlockStart = UNKNOWN_CODE_BLOCK_START,
 ): RepositoryFileLinkStub {
   const client = createTestQueryClient()
   client.setQueryData(rpc.repository.listFiles.queryKey(), { paths, omittedCount: 0 })
@@ -37,7 +44,12 @@ export function stubRepositoryFileLink(
     }
   })
   const excerptRequests: unknown[] = []
+  const codeBlockStartRequests: unknown[] = []
   const fetchStub = stubRpcFetch((call) => {
+    if (call.procedure === "repository/codeBlockStart") {
+      codeBlockStartRequests.push(call.input)
+      return rpcOutput(codeBlockStart)
+    }
     if (call.procedure !== "repository/fileExcerpt") {
       return rpcError(404)
     }
@@ -52,6 +64,7 @@ export function stubRepositoryFileLink(
     ),
     opened,
     excerptRequests,
+    codeBlockStartRequests,
     restore: fetchStub.restore,
   }
 }

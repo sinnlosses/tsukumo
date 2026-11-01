@@ -45,7 +45,10 @@
   /* 機械の名前は本文の上に浮かせる。
    ground に落とすと本文との比が 1.096:1 しかなく、地を敷いている仕組みそのものが見えていなかった（実測）。 */
   & :not(pre) > code {
+    padding: var(--space-2xs) var(--space-xs);
     background: var(--surface-raised);
+    --inline-code-size: max(0.86em, var(--font-label));
+    font-size: var(--inline-code-size);
   }
   & kbd {
     background: var(--surface-raised);

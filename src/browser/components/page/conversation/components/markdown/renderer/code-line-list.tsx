@@ -24,6 +24,9 @@ export function CodeLines(props: {
   readonly kinds: readonly ShellLineKind[] | undefined
   /** `diff` の対の行の、違う語の区間。 */
   readonly wordRanges: DiffWordRanges
+  readonly diff: boolean
+  /** 1 行目がファイルの何行目か。分かるときだけ行番号の列を出す。 */
+  readonly startLine: number | undefined
 }): ReactElement {
   const [opened, setOpened] = useState<readonly number[]>([])
   const folds = foldedRanges(props.lines.length, props.marks)
@@ -40,10 +43,12 @@ export function CodeLines(props: {
         key={number}
         line={line}
         number={number}
+        fileLine={props.startLine === undefined ? undefined : props.startLine + index}
         marks={props.marks}
         label={labels.get(number)}
         kind={props.kinds?.[index]}
         wordRange={props.wordRanges.get(index)}
+        diff={props.diff}
       />,
     ]
   })
@@ -74,8 +79,12 @@ function foldRow(
 }
 
 function CodeLineRow(props: {
+  /** `diff` の塊の行か。文脈の行（先頭が空白）にも記号の列を空けて、`+`・`-` の行と字を揃える。 */
+  readonly diff: boolean
   readonly line: CodeLine
   readonly number: number
+  /** ファイルの何行目か。行番号の列を出さないときは `undefined`。 */
+  readonly fileLine: number | undefined
   readonly marks: readonly CodeMark[]
   readonly label: string | undefined
   readonly kind: ShellLineKind | undefined
@@ -88,9 +97,12 @@ function CodeLineRow(props: {
   const side = diffLineSide(props.line)
   const wordLine =
     props.wordRange === undefined ? props.line : diffWordLine(props.line, props.wordRange)
-  const diffLine = side === undefined ? wordLine : diffSignLine(wordLine)
+  const hasSign =
+    side !== undefined || (props.diff && props.line.map(plainText).join("").startsWith(" "))
+  const diffLine = hasSign ? diffSignLine(wordLine) : wordLine
   return (
     <span
+      data-line={props.fileLine}
       className={clsx(
         styles["code-line"],
         marked && styles["code-line-mark"],
