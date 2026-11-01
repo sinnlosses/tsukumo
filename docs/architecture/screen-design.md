@@ -40,7 +40,7 @@
 | `docs/architecture/screen-design/layout.md`                            | 領域の並び・揃え・図の高さ・欄外注の列・やり取りの列・中くらいの窓幅と、パック・使う人が差すものの受け渡し。                                                                            |
 | `docs/architecture/screen-design/narrow-screen.md`                     | 760px 以下の窓の縦1列の配置、色と書体の宛て先、部品の行き先、頭の形、本文・板・顔と吹き出し・答え待ちのカード・入力欄・引き出し、キーボード、見本に無い場面、画面が増えたときの畳み方。 |
 | `docs/architecture/screen-design/nav-current-work.md`                  | 帯のいまの作業の前半。                                                                                                                                                                  |
-| `docs/architecture/screen-design/nav-gear-and-face.md`                 | 帯の設定の歯車（設定のダイアログの5つの面）、帯の顔、キャラクターの選び口。                                                                                                             |
+| `docs/architecture/screen-design/nav-gear-and-face.md`                 | 帯の設定の歯車（設定のダイアログの5つの面）、帯の顔、キャラクターの選択メニュー。                                                                                                       |
 | `docs/architecture/screen-design/nav-mode-control.md`                  | 帯から変える動き方の操作子。                                                                                                                                                            |
 | `docs/architecture/screen-design/nav-room-and-switch.md`               | 帯の部屋の名前、セッションのラベル、切り替え画面、会話の画面の帯とサイドバーの下端の帯。                                                                                                |
 | `docs/architecture/screen-design/nav-strip.md`                         | 13.9 画面のナビゲーションの本文。                                                                                                                                                       |
@@ -52,4 +52,4 @@
 | `docs/architecture/screen-design/scene-behavior.md`                    | 場面ごとのキャラビューの吹き出し・表情・動きの早見表と、13.13 の採らなかった案。                                                                                                        |
 | `docs/architecture/screen-design/setting-place.md`                     | 13.6 設定の置き場所の前半。                                                                                                                                                             |
 | `docs/architecture/screen-design/token-usage-review.md`                | トークン消費の画面の「減らし方を見てもらう」区画の文言・配置・押せない条件・経過時間の書式と、結果の場面。                                                                              |
-| `docs/architecture/screen-design/work-strip.md`                        | 会話の画面のメインビューのカードの頭に固定する進み具合のプログレスバー（状態のチップ・フェーズの丸・フェーズの吹き出し・走っている手順・手順の口）。                                    |
+| `docs/architecture/screen-design/work-strip.md`                        | 会話の画面のメインビューのカードの頭に固定する進み具合のプログレスバー（状態のチップ・フェーズの丸・フェーズの吹き出し・走っている手順・手順のボタン）。                                |

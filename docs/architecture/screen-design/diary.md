@@ -17,7 +17,7 @@
 数え方・卒業と節目・灯りの段階・依頼の文面は `docs/requirements.md` 4.11、データの受け取り方は
 `docs/architecture/shared-contract.md`「成果は `SessionState` に入れない」、日記の保存の形は `src/server/diary/adapter/diary.ts` の冒頭、語は
 `docs/glossary.md`「日記」「日記帳」「しおり」「灯りの暦」「卒業」「節目」。
-帯の4つ目の口「成果」から開き、hash は `#achievement`（`Screen` の `achievement`）。
+帯の4つ目のボタン「成果」から開き、hash は `#achievement`（`Screen` の `achievement`）。
 **開いただけでは日記を書かせない。**
 
 場面は見本の5つ（下の「見本」）で、上から順に (a) ふだん・(b) 振り返り中・(c) 書き終わり・
