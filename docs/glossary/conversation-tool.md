@@ -27,7 +27,7 @@
 - **英語識別子**: `report`（ツール名そのもの）
 - **定義**: tsukumo が `speak` と同じプロセス内の MCP サーバで提供するツール。引数は
   `task`（タスクの作業のレポートの、タスクID・作業の名前・終わり方・種類。任意。「目録の1行」「報告の種類」）・
-  `conclusion`（結論。必須）・`checks`（検証結果。任意）・`sections`（本文。節と塊の並び。任意）・`favor`（お願い。
+  `conclusion`（結論。必須）・`checks`（検証結果。任意）・`sections`（本文。セクションと塊の並び。任意）・`favor`（お願い。
   任意）・`closing`（締めのセリフ。必須。`speak` と同じ `text` と `expression`）・`waitingLine`（待ちの一言。
   任意。`closing` と同じ形。下の「待ちの一言」）・`title`（セッション一覧の
   見出し。任意）・`sessionSummary`（セッションの要約。任意。描かない）で、**戻り値は `"ok"` か、
@@ -44,7 +44,7 @@
   **呼び出しそのものも検査する**: 機械で判定できる記法の条に違反した呼び出しは描かずに、違反と
   直し方を戻り値で返して呼び直させる（1ターンに1回まで。`src/server/report/core/report-review.ts`）。
   本文は描く前に塊ごとに整形して、意味の変わらないもの（`conclusion` の繰り返し・定型だけの塊と行・
-  逃げ道の中の中身の無い見出し・塊の残らない節）を落とす（`src/shared/report/report-tidy.ts`）
+  逃げ道の中の中身の無い見出し・塊の残らないセクション）を落とす（`src/shared/report/report-tidy.ts`）
 - **避ける言い方**: レポートツール、reply
 
 ### work_plan ツール

@@ -18,7 +18,7 @@ import {
 
 const REJECTION_HEADER = "レポートの記法の規約に次の違反がある。直して `report` を呼び直すこと:"
 const MARKDOWN_NOTATION_LINE =
-  "- `Markdown` に部品で書ける記法（`#` / `##` の見出し）がある。代わりに節の `heading`を使う"
+  "- `Markdown` に部品で書ける記法（`#` / `##` の見出し）がある。代わりにセクションの `heading`を使う"
 
 function violationLines(rejection: string): readonly string[] {
   return rejection.split("\n").slice(1, -1)
@@ -338,7 +338,7 @@ describe("reportRejectionText", () => {
         { kind: "figure-contradiction", count: 2, reason: "short-answer" },
       ])
       expect(violationLines(reportRejectionText(reportViolations(twoSections)))).toEqual([
-        "- `figure` の reason が `short-answer` なのに、節が2つ以上ある。2〜3文で終わる答えでなければ `figure` に図を置くか、合う reason にする",
+        "- `figure` の reason が `short-answer` なのに、セクションが2つ以上ある。2〜3文で終わる答えでなければ `figure` に図を置くか、合う reason にする",
       ])
     })
 

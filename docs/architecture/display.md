@@ -33,7 +33,7 @@
 #### 出力の分離（セリフと詳細）
 
 - `docs/architecture/display/speak-tool.md`: speak と report のツール・部品の書き方を引く report_part_card
-- `docs/architecture/display/section-and-block.md`: 本文の節と塊、図の塊
+- `docs/architecture/display/section-and-block.md`: 本文のセクションと塊、図の塊
 - `docs/architecture/display/block-field.md`: 塊の欄・進み具合・候補とファイル・確度つきの主張（確かめていないことはこの塊に書く）
 - `docs/architecture/display/block-table.md`: 表・対応表・見比べ・前後
 - `docs/architecture/display/figure-caption.md`: 画像・図と表の題・書き上げる演出・入口の検査

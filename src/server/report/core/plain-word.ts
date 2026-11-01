@@ -89,12 +89,14 @@ export const PLAIN_WORDS = [
   {
     spelling: "振り返りの葉",
     replacement: "振り返りの内容部品",
-    meaning: "レポートの節を組む内容部品（文・表・図など中身を持つ部品）のうち、振り返りを書くもの",
+    meaning:
+      "レポートのセクションを組む内容部品（文・表・図など中身を持つ部品）のうち、振り返りを書くもの",
   },
   {
     spelling: "葉の部品",
     replacement: "内容部品",
-    meaning: "レポートの節を組む、文・表・図など中身を持つ部品（配置のための部品は含めない）",
+    meaning:
+      "レポートのセクションを組む、文・表・図など中身を持つ部品（配置のための部品は含めない）",
   },
   {
     spelling: "図の葉",
@@ -130,5 +132,25 @@ export const PLAIN_WORDS = [
     spelling: "段の閉じ方",
     replacement: "フェーズの閉じ方",
     meaning: "report でそのターンのフェーズを済ませる・飛ばすことの申告",
+  },
+  {
+    spelling: "レポートの節",
+    replacement: "レポートのセクション",
+    meaning: "レポートの本文を区切る、見出しと塊の並びを持つ単位",
+  },
+  {
+    spelling: "見出しの無い節",
+    replacement: "見出しの無いセクション",
+    meaning: "見出しを付けていない、レポートの本文の区切り",
+  },
+  {
+    spelling: "節の塊",
+    replacement: "セクションの塊",
+    meaning: "レポートの本文の区切りの中に並ぶ、種類の決まった本文の1単位",
+  },
+  {
+    spelling: "節が2つ以上",
+    replacement: "セクションが2つ以上",
+    meaning: "レポートの本文の区切りが複数あること",
   },
 ] as const satisfies readonly PlainWord[]

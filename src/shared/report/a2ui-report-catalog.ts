@@ -161,7 +161,7 @@ const sectionComponentSchema = z.object({
   id: z.string(),
   component: z.literal("Section"),
   heading: omittable(z.string(), "").describe(
-    `その節の結論を言う語（「変更点」「まとめ」のようなどのレポートにも当てはまる語にしない）。${String(MAX_HEADING)}字以内で、疑問文にしない。節が1つなら省いてよく、2つ以上なら全部に付ける`,
+    `そのセクションの結論を言う語（「変更点」「まとめ」のようなどのレポートにも当てはまる語にしない）。${String(MAX_HEADING)}字以内で、疑問文にしない。セクションが1つなら省いてよく、2つ以上なら全部に付ける`,
   ),
   children: z.array(z.string()).min(1),
 })

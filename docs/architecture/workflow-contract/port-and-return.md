@@ -35,12 +35,12 @@ tsukumo は推し量らない。
 | `workPlanClosing` | フェーズの閉じ方。`work_plan` を渡した依頼では必須。`finished`（最後のフェーズにいるときに渡すと tsukumo がプログレスバーを全部済みにする）／`stopped`（止まったフェーズが「今」のまま残る）                                                                                                                                  |
 | `figure`          | 任意。レポートの図1つ（`image`・`mermaid`・`graph`・`svg`・`beforeAfter`・`chart`・`stats` の塊）。省くと図なしで描く。旧い形の `{ kind: "none", reason }`（`short-answer`／`no-shape`／`single-value`／`no-material`）も読め、理由が本文と合わないと差し戻す（`docs/architecture/display.md`「出力の分離（セリフと詳細）」） |
 
-`retrospective`（任意）は、ワークフローに振り返りのフェーズがあるとき、その結果を本文の節に混ぜずに受ける欄。
-`summary`（結果の1〜2文）と `drafts`（積んだドラフトのタスクID。積まなければ空）、`blocks`（`sections` と同じ塊。図・表・コードが要るときだけ）を持ち、`sections` の後ろ・`favor` の前に見出し「振り返り」の節として描く（目次に載る）。
+`retrospective`（任意）は、ワークフローに振り返りのフェーズがあるとき、その結果を本文のセクションに混ぜずに受ける欄。
+`summary`（結果の1〜2文）と `drafts`（積んだドラフトのタスクID。積まなければ空）、`blocks`（`sections` と同じ塊。図・表・コードが要るときだけ）を持ち、`sections` の後ろ・`favor` の前に見出し「振り返り」のセクションとして描く（目次に載る）。
 tsukumo はプログレスバーのフェーズの名前を見ず、欄があるときだけ描く（フェーズの名前を契約にすると他のワークフローを縛るため）。欄が欠けても差し戻さず、数えない。
 
 `task.outcome` は目録の1行の終わり方で、プログレスバーは閉じない。どこへ送ったかは tsukumo の関心にしない。
-`task.genre` は種類ごとの既定の節の並びを選ぶだけで、描き方も差し戻しも変えない（並びの正典は `REPORT_TASK_DESCRIPTION`）。
+`task.genre` は種類ごとの既定のセクションの並びを選ぶだけで、描き方も差し戻しも変えない（並びの正典は `REPORT_TASK_DESCRIPTION`）。
 `checks` に `ng` の行がある `report` の `finished` は差し戻す（`docs/architecture/display.md`「出力の分離（セリフと詳細）」）。
 
 ## 委譲の返却

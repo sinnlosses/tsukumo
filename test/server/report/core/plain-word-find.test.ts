@@ -174,6 +174,23 @@ describe("plainWordSpellingsIn", () => {
     ).toEqual([])
   })
 
+  it("レポートの区切りを指す節の複合語は見つかり、文書の節・節点・節目・季節・小節は通る", () => {
+    expect(
+      plainWordSpellingsIn(
+        draft([
+          reportDraftText(
+            "架空のレポートの節に、見出しの無い節がある。節の塊を置く。節が2つ以上ある。",
+          ),
+        ]),
+      ),
+    ).toEqual(["レポートの節", "見出しの無い節", "節の塊", "節が2つ以上"])
+    expect(
+      plainWordSpellingsIn(
+        draft([reportDraftText("規約の節に従う。この節は節目の季節に書いた小節を指す。")]),
+      ),
+    ).toEqual([])
+  })
+
   it("枠（Card）の先頭の見出しの語も見つける", () => {
     const panel = {
       kind: "panel",

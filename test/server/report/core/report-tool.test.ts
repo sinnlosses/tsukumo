@@ -39,7 +39,7 @@ describe("reportFigureDescription", () => {
 
   it("text だけが図を置かない既定の文を足し、chart の文とは違う", () => {
     expect(reportFigureDescription("text")).not.toBe(reportFigureDescription("chart"))
-    expect(reportFigureDescription("text")).toContain("節がなければ図は置かない")
+    expect(reportFigureDescription("text")).toContain("セクションがなければ図は置かない")
     expect(reportFigureDescription("chart")).not.toContain("図は置かない")
   })
 

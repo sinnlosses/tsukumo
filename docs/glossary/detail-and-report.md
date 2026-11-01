@@ -24,14 +24,14 @@
 ### 本文の欄
 
 - **英語識別子**: `MainViewReportBody`（メインビューの本文。`regions` か `markdown`）/ `MainViewReportRegions`（`report` ツールの本文の欄の並び）/
-  `MainViewReportSection`（節の欄。`id`・`heading`）/ `MainViewA2uiReport`（面の値。頭・図・節・振り返り・お願い）/
+  `MainViewReportSection`（セクションの欄。`id`・`heading`）/ `MainViewA2uiReport`（面の値。頭・図・セクション・振り返り・お願い）/
   `reportDrawsAnything`（本文に描くものがあるか）
-- **定義**: **メインビューの本文を、Markdown 1本に畳まずに分けて持つ単位**。`report` ツールの本文は、節の欄（`id` と見出しの字）と、
-  頭（結論・合図の行）・図・節・振り返り・お願いを持つ面の値を持つ。最終のときの頭は、頭にフェーズごとの所要時間を足したもの。節の欄の `id` は、整形して
-  図を先頭に足したあとの節の並びの位置。`report` ツール以外の本文（詳細・フェーズのまとめ）は Markdown 1本の欄にする
-- **注記**: 描く側は欄の Markdown を読まず、面の値（`MainViewReportRegions.a2ui`。頭・お願い・節）から描く。描くものがあるかは `reportDrawsAnything`（`src/browser/domain/main-view/main-view-report-body.ts`）が数える。
+- **定義**: **メインビューの本文を、Markdown 1本に畳まずに分けて持つ単位**。`report` ツールの本文は、セクションの欄（`id` と見出しの字）と、
+  頭（結論・合図の行）・図・セクション・振り返り・お願いを持つ面の値を持つ。最終のときの頭は、頭にフェーズごとの所要時間を足したもの。セクションの欄の `id` は、整形して
+  図を先頭に足したあとのセクションの並びの位置。`report` ツール以外の本文（詳細・フェーズのまとめ）は Markdown 1本の欄にする
+- **注記**: 描く側は欄の Markdown を読まず、面の値（`MainViewReportRegions.a2ui`。頭・お願い・セクション）から描く。描くものがあるかは `reportDrawsAnything`（`src/browser/domain/main-view/main-view-report-body.ts`）が数える。
   形の決めは `docs/architecture/adr/0031-report-body-as-regions.md`
-- **避ける言い方**: ブロック、塊（節の中の `ReportBlock` と紛れる）、パート
+- **避ける言い方**: ブロック、塊（セクションの中の `ReportBlock` と紛れる）、パート
 
 ### 最終レポート
 
@@ -62,7 +62,7 @@
 
 - **英語識別子**: `genre`（`report` の `task` の欄）。型は `ReportGenre`、値は `work`（作業）・`decision`（判断）・
   `research`（調べもの）。無い・読めないときは `unspecified`
-- **定義**: **終わった仕事の報告の型**。種類ごとに既定の節の並びを選ぶ（並びの正典は `REPORT_TASK_DESCRIPTION`）。
+- **定義**: **終わった仕事の報告の型**。種類ごとに既定のセクションの並びを選ぶ（並びの正典は `REPORT_TASK_DESCRIPTION`）。
   省略できる。止めた報告（`outcome` の `stopped`）は種類によらず中断の型で、この欄とは別
 - **避ける言い方**: 報告の kind、type（`kind` は `ReportTask` の判別子）
 
@@ -72,7 +72,7 @@
 - **定義**: **`task` のある最終レポートの目録の1行の末尾に出す「変更 n ファイル +a −b」**。依頼の頭の HEAD から
   `git` の `numstat` で tsukumo が数え（件名が `<タスクID>:` のコミットだけ。絞れないときは範囲全体で、数の後ろに
   「※他の変更を含みうる」を添える）、モデルには書かせない。数えられないときは出さない。
-  触ったファイルの一覧（`changed`）も運び、最終レポートの頭に畳んだ節「変更したファイル n」で出す
+  触ったファイルの一覧（`changed`）も運び、最終レポートの頭に畳んだセクション「変更したファイル n」で出す
   （`docs/architecture/display/conclusion.md`「`task` のある最終レポートだけ、目録の末尾に変更の札「変更 n ファイル +a −b」を出す」）
 - **避ける言い方**: diffstat、差分の統計
 

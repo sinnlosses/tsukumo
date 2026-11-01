@@ -37,7 +37,7 @@ export const REPORT_CHECKS_DESCRIPTION =
  * どのワークフローの段かは見ず、欄があるときだけ描く。欠けても差し戻さない。
  */
 export const REPORT_RETROSPECTIVE_DESCRIPTION =
-  "振り返りのフェーズがあったときだけ、その結果を渡す（sections に混ぜない。見出し「振り返り」の節として最後に描く）。"
+  "振り返りのフェーズがあったときだけ、その結果を渡す（sections に混ぜない。見出し「振り返り」のセクションとして最後に描く）。"
 
 /**
  * `report` の任意の `task` 引数の説明。`conclusion` との書き分けと、報告の種類ごとの既定の節の並びはここだけが持つ。
@@ -45,7 +45,7 @@ export const REPORT_RETROSPECTIVE_DESCRIPTION =
 export const REPORT_TASK_DESCRIPTION =
   "タスクの作業のレポートのときだけ渡す（タスクID・作業の名前・終わり方・種類）。結論の上に目録の1行と作業の名前の見出しが描かれる。" +
   "渡したら conclusion に作業の名前やタスクID、変更の量（tsukumo が git から数える）を書かない。" +
-  "genre を入れると、sections の節をその種類の既定の並びで書く（節の数は縛らない）。" +
+  "genre を入れると、sections のセクションをその種類の既定の並びで書く（セクションの数は縛らない）。" +
   "work: 変化 → 証拠 → 変更の要所 → 限界と変えていないもの → お願い。" +
   "decision: 決めたこと → 理由と採らなかった案（options）→ 結果 → 未決。" +
   "research: 分かったこと → 根拠（出典か path:line）→ 何を意味するか → 確かめていないこと（claims）→ 次。" +
@@ -72,8 +72,8 @@ export function reportFigureDescription(preference: FigurePreference): string {
     "名前が3つ以上出てきてつながる・流れや分岐がある・構造の前後がある・数が3つ以上ある"
   if (preference === "text") {
     return (
-      `${head}利用者は文を主に読む設定なので、次のどれかがある節がなければ図は置かない（figure を省く。省くと何も描かれない）: ${conditions}。` +
-      `ある節には${parts}を置いてよい。`
+      `${head}利用者は文を主に読む設定なので、次のどれかがあるセクションがなければ図は置かない（figure を省く。省くと何も描かれない）: ${conditions}。` +
+      `あるセクションには${parts}を置いてよい。`
     )
   }
   return (
@@ -93,11 +93,11 @@ export const REPORT_KEY_FIGURES_DESCRIPTION =
  * 塊の種類ごとの使いどころは各塊の `describe`（`reportBlockSchema`）が持つので、ここに書かない。
  */
 export const REPORT_SECTIONS_DESCRIPTION =
-  "結論のあとの根拠・比較・手順。節の並びで、節ごとに部品を並べる。" +
+  "結論のあとの根拠・比較・手順。セクションの並びで、セクションごとに部品を並べる。" +
   "部品の文字で効くのはインラインの記法（inline code・太字・リンク）だけ。" +
   "部品の fold に見出しを書くと畳んで描く（畳んでも結論が通る部品だけ）。" +
   "部品の aside に出典・どこを見るかを1行で書くと、本文の流れの外（本文の右の余白）に置く。" +
-  "結論と checks に書いたことは節で繰り返さず、根拠と中身だけを置く。"
+  "結論と checks に書いたことはセクションで繰り返さず、根拠と中身だけを置く。"
 
 /** `a2ui` の版の `components` 引数（A2UI のカタログの部品の平らな一覧）の説明。 */
 export const REPORT_A2UI_COMPONENTS_DESCRIPTION =

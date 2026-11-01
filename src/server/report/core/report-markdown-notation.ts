@@ -13,7 +13,7 @@ import { markdownTreeOf, nodesInOrder } from "./markdown-tree.ts"
 
 /** 逃げ道の中の記法 → 差し戻しの文面での呼び名と、代わりに使うもの。 */
 export const MARKDOWN_NOTATION_NAMES = {
-  heading: { written: "`#` / `##` の見出し", replacement: "節の `heading`" },
+  heading: { written: "`#` / `##` の見出し", replacement: "セクションの `heading`" },
   table: { written: "表", replacement: "`Table`" },
   list: { written: "箇条書き", replacement: "`ItemList`" },
   note: { written: "class が `note` の要素", replacement: "`Note`（種別は `tone`）" },

@@ -65,7 +65,7 @@ const CONCLUSION_EXAMPLE = {
 }
 
 const REPORT_CALL_EXAMPLES = [
-  { name: "表と箇条書きの節（作業の最終レポート）", value: SECTIONS_EXAMPLE },
+  { name: "表と箇条書きのセクション（作業の最終レポート）", value: SECTIONS_EXAMPLE },
   { name: "graph の図", value: GRAPH_EXAMPLE },
   { name: "chart の図", value: CHART_EXAMPLE },
   { name: "検証つきの結論", value: CONCLUSION_EXAMPLE },

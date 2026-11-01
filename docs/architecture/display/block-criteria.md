@@ -25,7 +25,7 @@
 - 版9: `task` の報告の種類と終わり方、`favor` が空でないか、本文に URL か `path:line` があるか `code` の塊に `path` があるか
 - 版10: 行が2つ以下の表が1つでもあるか
 - 版11・12: `stats` の `series` / `better` と、`aside` が空でない塊を塊の欄で数える（行の形は版10と同じ）
-- 版13: 節ごとの札、札が許さない塊を使った節の数、許さない組ごとの数（「形の札の照合」）
+- 版13: セクションごとの札、札が許さない塊を使ったセクションの数、許さない組ごとの数（「形の札の照合」）
 - 版14: `report` の引数の字数（JSON にした字数。全体と最上位の欄ごと）。差し戻しの行にも入る。字数だけで中身は持たない。
   受け付けも差し戻しも、モデルが書いた生の引数の字数。差し戻しの行は handler の差し戻しだけでなく、結果が `isError` で返った `report` の呼び出しすべてに付く
   （形の検査で落ちた呼び出しは、handler に届かなかったものも、handler で組んだ値が落ちたものも理由が `tool-error`。
@@ -36,7 +36,7 @@
 - 版17: どの型の渡し方で `report` を受けたか（`reportSchema`。いまは `a2ui` だけ。旧い行には `json-schema`・`short-type`・`body-fence` が残り、読めたままにする）。受け付けと差し戻しの両方の行に入る
 - 版18: 逃げ道の記法を構文木（mdast）で数える（行の形は版17と同じ。版17以前の行とは数え方が違う。
   インラインコードの中の `<div>` で容れ物の深さが狂わず、ブラウザが記法として描かない形は数えない）
-- 版19: 節ごとに出た塊の種類（`sectionBlockKinds`。`sectionShapeTags` と同じ並び）、`list` の style の集合（`listStyles`）、
+- 版19: セクションごとに出た塊の種類（`sectionBlockKinds`。`sectionShapeTags` と同じ並び）、`list` の style の集合（`listStyles`）、
   `mermaid` の図種の集合（`mermaidKinds`）、駆動（`driver`。`sdk` か `fake`）。受け付けと差し戻しの両方の行に `driver` が入る。
   集計スクリプトは疑似セッションの行（`driver` が `fake`、版18以前は `sessionId` が `fake-session`）を既定で除き、`--include-fake` で含める
 - 版20: `keyFigures` が1つ以上あるか（`hasKeyFigures`）、`keyFigures` が無いのに結論の文（インラインコードの外）に数が3つ以上あるか
@@ -77,7 +77,7 @@
 
 ## 図の値と本文の数の照合
 
-`plot` の `Q` 列の値と、同じレポートの本文の数（`conclusion`・`keyFigures` の `before`・`value`・`total`・節の `text` の塊）のずれを、
+`plot` の `Q` 列の値と、同じレポートの本文の数（`conclusion`・`keyFigures` の `before`・`value`・`total`・セクションの `text` の塊）のずれを、
 差し戻しの条 `figure-number-mismatch` で見る。**`count`（ADR 0028）で、差し戻さず `kind: "counted"` の行に名前だけ残す。**
 除外の上限は 0 で、根拠の行は `docs/history/decision.md`「adr/0028 追記 差し戻しの条ごとの根拠」にある。
 `plot` は `Report.figure` にも `Section` の子にも置ける。`plot` か本文の数が無ければ何も見ない。
@@ -111,10 +111,10 @@ HTML の字として埋める塊（`htmlInline`・`htmlInlineWithCode`）と、�
 
 ## 形の札の照合
 
-札は旧い `sections` の節の欄の仕組みで、`components` の `Section` と旧い `body` は札を持たない（常に `unspecified`。ADR 0038）。
+札は旧い `sections` のセクションの欄の仕組みで、`components` の `Section` と旧い `body` は札を持たない（常に `unspecified`。ADR 0038）。
 使われ方の記録は新しい行の札を `unspecified` 固定で書き、札が許さない塊は数えない（`forbiddenShapeSectionCount` は 0、`forbiddenShapeBlocks` は空。ADR 0043 論点 3）。
 
-過去の行（版13から）の列は残してあり、集計は読み戻せる。節の `shapeTag`（`docs/glossary.md`「形の札」）ごとに許さない塊を照合する表と関数は外した。
+過去の行（版13から）の列は残してあり、集計は読み戻せる。セクションの `shapeTag`（`docs/glossary.md`「形の札」）ごとに許さない塊を照合する表と関数は外した。
 照合は差し戻さず、記録で数えるだけだった（ADR 0028 の「順位違反はまず記録で数える」に倣う）。
 
 ## 図の決定表

@@ -73,7 +73,7 @@ const A2UI_STRUCTURE_FAULT_REASONS = {
   "misplaced-component": "ここに置けない種類の部品",
   "deep-layout": "配置の部品の入れ子は 3 階層まで",
   "memo-without-owner":
-    "節の先頭に tone が memo の Note は置けない（寄せ先が無く何も描かれない）。Paragraph などを先に置き、その後ろに Note を置く",
+    "セクションの先頭に tone が memo の Note は置けない（寄せ先が無く何も描かれない）。Paragraph などを先に置き、その後ろに Note を置く",
   "figure-not-figure-part": "Report.figure には図の部品の id を置く",
   "unreferenced-component": "どこからも参照されない部品",
   "filter-target-missing": "value の path が指す id の Table が無い（/view/<Table の id>/filter）",
@@ -126,7 +126,7 @@ function violationLine(violation: ReportViolation): string {
     case "short-series":
       return `\`Stats\` の \`series\` が1〜2個の項目がある塊が${violation.count}個ある。3つ以上にするか省く`
     case "untitled-section":
-      return `見出しの無い節が${violation.count}個ある。節が2つ以上なら全部に \`heading\` を付ける`
+      return `見出しの無いセクションが${violation.count}個ある。セクションが2つ以上なら全部に \`heading\` を付ける`
     case "markdown-notation":
       return `\`Markdown\` に部品で書ける記法（${violation.notations
         .map((notation) => MARKDOWN_NOTATION_NAMES[notation].written)
@@ -152,7 +152,7 @@ function violationLine(violation: ReportViolation): string {
     case "long-first-sentence":
       return `\`conclusion\` の1要素目がいま${String(violation.length)}字で、全角${String(MAX_FIRST_SENTENCE)}字を超える。1要素目を短くし、補足は2要素目か \`Section\` へ移す`
     case "bad-heading":
-      return `見出しが${violation.count}個、${String(MAX_HEADING)}字を超えるか疑問文になっている。その節の結論を言う短い語にする`
+      return `見出しが${violation.count}個、${String(MAX_HEADING)}字を超えるか疑問文になっている。そのセクションの結論を言う短い語にする`
     case "unobserved-without-how":
       return `\`checks\` の \`unobserved\` の行のうち \`howToVerify\` が空のものが${violation.count}個ある。知らない人が繰り返せる確かめ方を1〜2文で書く`
     case "arrow-in-prose":
@@ -168,7 +168,7 @@ function violationLine(violation: ReportViolation): string {
     case "figure-contradiction":
       return violation.reason === "no-shape"
         ? `\`figure\` の reason が \`no-shape\` なのに、\`Section\` に流れ・つながり・構造を描く部品（\`ItemList\` の \`flow\`・\`BeforeAfter\`・\`Graph\`・\`Mermaid\`・\`Svg\`）が${violation.count}個ある。その図を \`figure\` に置くか、合う reason にする`
-        : `\`figure\` の reason が \`short-answer\` なのに、節が2つ以上ある。2〜3文で終わる答えでなければ \`figure\` に図を置くか、合う reason にする`
+        : `\`figure\` の reason が \`short-answer\` なのに、セクションが2つ以上ある。2〜3文で終わる答えでなければ \`figure\` に図を置くか、合う reason にする`
     case "broken-inline-mark":
       return `行内の印の書式（\`{{A → B}}\`・\`{{spark: 数 数 …}}\`・\`{{a / b}}\`）に当たらない \`{{\` が${violation.count}個ある。書式に合わせて直すか、\`{{\` を使わない書き方にする`
     case "figure-number-mismatch":
