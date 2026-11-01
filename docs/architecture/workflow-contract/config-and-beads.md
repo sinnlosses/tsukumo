@@ -24,7 +24,7 @@
 ## 設定コマンド
 
 **ワークフローは、設定の欄を `tw config --schema` で返し、`tw config set` で書かせる。**
-任意の口ではなく契約の義務で、歯車の設定の「ワークフロー」の面はこの2つだけで描いて書く。経緯は
+任意の機能ではなく契約の義務で、歯車の設定の「ワークフロー」の面はこの2つだけで描いて書く。経緯は
 `docs/architecture/adr/0024-no-skill-dependency.md`・`docs/architecture/adr/0025-no-project-settings.md` の「2026-10-14 の改訂」と
 `docs/architecture/adr/0030-workflow-as-skill-sequence.md`。
 

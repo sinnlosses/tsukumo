@@ -72,7 +72,7 @@
   `<script type="module" src="/main.tsx">` を開発サーバの `transformIndexHtml` に通したもので、
   **経路の表に無い要求だけ**を開発サーバへ回す（`/rpc`・`/vendor/`・`/character/`・`/prompt-image/`・`/report-image/` の
   経路と守り方は変わらない。`/assets/` の対は `dev` のあいだ 404）
-- **HMR の WebSocket は `/vite-hmr`**。`/ws` の受け口は合わない upgrade を閉じるので、Vite が受ける
+- **HMR の WebSocket は `/vite-hmr`**。`/ws` を受け取る処理は合わない upgrade を閉じるので、Vite が受ける
   upgrade は触らずに譲る（`ownsUpgrade` / `yieldsUpgrade`）
 - **本番（`tsukumo`・`pnpm run start`）では Vite を読み込まない。** `vite` は `startUiDevServer` の中で
   動的に import し、呼ぶのは `--dev` のときだけ（常に入れると仕事中の保存で画面が差し替わりうる）

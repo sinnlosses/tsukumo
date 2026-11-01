@@ -29,14 +29,14 @@
 | `diary/`            | 日記。`diary` ツールと保存                                                                                                                                                         |
 | `achievement/`      | 成果。終えたタスクを Beads の閉じた課題から数える                                                                                                                                  |
 | `usage/`            | 使用量。トークン消費の記録と集計・コンテキストの内訳の記録・プラン使用量の手続き・進行の計測値の記録と集計・見直し（使い捨ての `query()` の走り・2つのツール・前回の結果・見送り） |
-| `diagnostic/`       | 診断ログ（不具合の経緯を追う足跡）の書き口・束ね・置き場と掃除                                                                                                                     |
+| `diagnostic/`       | 診断ログ（不具合の経緯を追う足跡）の書き込みの関数・束ね・置き場と掃除                                                                                                             |
 | `host/`             | ホストのポートと Orca・`none` の実装、ホストへ渡す前の門番                                                                                                                         |
 | `view-server/`      | ビューサーバ。ポートの決定・http・ws・同梱の外部ライブラリ・ブラウザ側の組み立てと開発サーバ                                                                                       |
-| `repository/`       | 作業ディレクトリの git リポジトリを読む。`git` を起こす口・管理下のファイルと行の抜き書き・タスク一覧                                                                              |
+| `repository/`       | 作業ディレクトリの git リポジトリを読む。`git` を起こす関数・管理下のファイルと行の抜き書き・タスク一覧                                                                            |
 | `recommendation/`   | おすすめのカード。候補・出力の検査・キャッシュ                                                                                                                                     |
 | `welcome-greeting/` | 迎えの挨拶と反応。書き手・覚え・使い捨ての問い合わせの指示文と検査                                                                                                                 |
 | `checkout/`         | 打った場所のチェックアウトと自分の根を比べ、違えば打った側の `bin/tsukumo` へ委ねる                                                                                                |
-| `workflow-setting/` | ワークフローの設定。`tw` の設定コマンドを起こす口と読み書きの手続き                                                                                                                |
+| `workflow-setting/` | ワークフローの設定。`tw` の設定コマンドを起こす関数と読み書きの手続き                                                                                                              |
 | `item/`             | キャラビューの席に置くアイテム。一覧と席の置き場の読み書き・素材を配る判断                                                                                                         |
 
 **機能の下限**: 機能は `core/` と `adapter/` の両方を持つか、`src/shared/<機能>/` を持つ。どちらも
@@ -63,23 +63,23 @@
   まとめる。**外の世界の実装を選んで渡すのは配線（`src/` 直下の `session-start.ts` と `src/wiring/`）**、
   渡されたものを使って順序と状態を持つのが `session/`、という境目
 - **セッションの配線は機能ごとに組み立てる。** `src/wiring/<機能>.ts` の `wire<機能>` が、その機能の
-  「`createSessionManager` へ渡す口」（`manager`）と「`createSocketRouter` へ渡す口」（`commands`、
-  `session` の口の一部なら `sessionCommands`）を返し、`startSession` はそれを spread で結ぶだけにする。
-  `/rpc` の読み口を持つ機能は `rpc` も返し、`src/view-delivery.ts` はそれを spread で結ぶだけにする
-  （セッションが繋がってから本物になる読み口だけは、配信が「取れない」から差し替える形で持つ）。
+  「`createSessionManager` へ渡す関数の組」（`manager`）と「`createSocketRouter` へ渡す関数の組」（`commands`、
+  `session` の関数の一部なら `sessionCommands`）を返し、`startSession` はそれを spread で結ぶだけにする。
+  `/rpc` の読む関数を持つ機能は `rpc` も返し、`src/view-delivery.ts` はそれを spread で結ぶだけにする
+  （セッションが繋がってから本物になる読む関数だけは、配信が「取れない」から差し替える形で持つ）。
   `WiringContext` は `src/main.ts` が作り、`startViewDelivery` と `startSession` の両側の組み立てに渡す。
-  機能を足すときに触るのは、その機能の組み立てと、結ぶ行だけ。口の揃いは結ぶ側の型検査が見る。
+  機能を足すときに触るのは、その機能の組み立てと、結ぶ行だけ。関数の揃いは結ぶ側の型検査が見る。
   2つ以上の組み立てが読む値（作業先・時計・引き継ぐ環境・疑似セッション・会話のアーカイブ）だけを
   `WiringContext`（`src/wiring/wiring-context.ts`）にまとめて渡し、1つの組み立てしか
   読まないもの（成果の入れ物・`.beads` の印の読み手など）はその組み立ての引数に渡す。
-  各欄が2つ以上の `src/wiring/*.ts` から読まれることは `test/architecture/wiring-context.test.ts` が見る。組み立てどうしの受け渡しは口で渡す（起こす組み立てが代を起こすたびに
+  各欄が2つ以上の `src/wiring/*.ts` から読まれることは `test/architecture/wiring-context.test.ts` が見る。組み立てどうしの受け渡しは関数で渡す（起こす組み立てが代を起こすたびに
   日記の組み立ての `noteLaunched` を呼ぶ）。`createSessionManager` の引数を機能ごとの束に変える案は
   採らない（`session-manager.ts` は割らない。`docs/architecture/adr/0021-feature-state-fold-in-feature.md`）。
-  配線には単体テストを持たない（守る振る舞いは E2E が本物のプロセスで、口の揃いは型検査が守り、
-  単体で書くには adapter を差し替える本番に要らない口が要る）
+  配線には単体テストを持たない（守る振る舞いは E2E が本物のプロセスで、関数の揃いは型検査が守り、
+  単体で書くには adapter を差し替える本番に要らない関数が要る）
 - **Agent SDK を import してよいのは、機能の `adapter/` の直下の `sdk-` で始まるファイルだけ**
   （原則3）。1つの箱にはまとめず、**その境界が属する機能に置く**（「core と adapter」）。
-  例外は共有の箱の `server/adapter/` 直下の `sdk-` で始まる、どの機能の語彙も名乗らない使い捨ての問い合わせの口
+  例外は共有の箱の `server/adapter/` 直下の `sdk-` で始まる、どの機能の語彙も名乗らない使い捨ての問い合わせの関数
 - **機能を足すときは、`test/architecture/feature-graph.ts` の機能の一覧と `.dependency-cruiser.cjs` の
   機能の規則に足す**（知らない機能のディレクトリと、`core/` `adapter/` の外に置いたファイルは
   `test/architecture/server-feature.test.ts` が、規則の足し忘れは `test/architecture/dependency-rule.test.ts` が落とす）。

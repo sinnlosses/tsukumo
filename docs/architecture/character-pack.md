@@ -130,7 +130,7 @@ characters/<name>/
 保存後は `event()` の流し直しで画面の本文が変わる。
 
 **一覧を配り直す契機は `character-changed` を組むたび**（`src/current-character.ts` の `event`）。
-パックの集まりを変える口はどれも「書いたら `event()` を返す」だけで一覧が配り直される（口ごとに
+パックの集まりを変える手続きはどれも「書いたら `event()` を返す」だけで一覧が配り直される（手続きごとに
 読み直しを呼ぶ形にしない。1つ呼び忘れると古い一覧が黙って配られる）。素材を配るときに突き合わせる
 一覧も、最後に `event()` で読んだものを使う。
 
@@ -169,11 +169,11 @@ characters/<name>/
 - **`cwd` に依存させない**。**鍵はパックの名前1つだけ**で、`parseCharacterPackName` を通した
   `CharacterPackName` だけをパスに組む。日付のファイルとほかのファイルは**名前で見分ける**（窓の側は `YYYY-MM-DD.jsonl` にだけ
   当たる正規表現でファイルを選ぶ）
-- **口（型）は `session-driver/core/session-driver.ts`、ファイルに触るのは上の adapter、結ぶのは配線層
+- **契約の型は `session-driver/core/session-driver.ts`、ファイルに触るのは上の adapter、結ぶのは配線層
   （`src/session-start.ts` と `src/wiring/`）。** 置き場を差し替えられる `root` 引数も同じ手で持つ（テストがホームを
   汚さない）
 - **アーカイブへ書くのは `session/core/session-event-record.ts` の `recordSessionEvent`**（`session-manager.ts` の
-  `receive` がイベント1件ずつ通すときに呼ぶ）。雑談でも仕事でも書き、行にそのときのモードを持たせる。復元の再生は駆動と別の口
+  `receive` がイベント1件ずつ通すときに呼ぶ）。雑談でも仕事でも書き、行にそのときのモードを持たせる。復元の再生は駆動と別の関数
   （`onRestoredEvents`）でまとめて1回で渡し、`session-manager` は駆動から新しく届いたぶんだけを書く。仕事の
   `conclusion` はターンの終わりまで駆動の代の勘定に預ける。読み戻しはセッションを起こすとき1回だけで、配線層が呼ぶ
 - **判断は `chat/core/` の純関数**（載せる判断・定着の指示文と検査・採点。アダプタは読んで渡すだけ）で、

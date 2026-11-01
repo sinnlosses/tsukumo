@@ -9,7 +9,7 @@
 拾う案とツールの手順からフェーズを推し量る案は採らない（tsukumo から縛れない・推測になる）。
 
 - **入力は `{ phases, current, finishedInGroup, phaseSummary }` で、毎回フェーズの並びごと渡す**（引数の意味は
-  `docs/architecture/workflow-contract.md`「口」。`phases` を省く呼び出しは作らない）。
+  `docs/architecture/workflow-contract/port-and-return.md`「ツール」。`phases` を省く呼び出しは作らない）。
   並列のフェーズは「同時に走るフェーズは、並列のフェーズで受ける」、`phaseSummary`（フェーズのまとめ）は「フェーズが移ったときの
   中間レポート」。空白だけの名前は不可。形の崩れ・`current` が要素の数を超えた呼び出し・フェーズのまとめの足りない
   呼び出しは差し戻す。メインの呼び出しだけを受け、サブエージェントの呼び出しは捨てる。

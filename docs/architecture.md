@@ -67,7 +67,7 @@
 | `docs/architecture/shared-feature.md`          | `src/shared/` を割る機能の置き場と、機能の決め方・辺の規則を持つ。                                                                                                                                                                                  |
 | `docs/architecture/stage-item.md`              | キャラビューの席に置くアイテムの一覧と席の選択の置き場と形、画面から足すときの受け取り方と                                                                                                                                                          |
 | `docs/architecture/testing.md`                 | 対象ごとのテストの方法、E2E（走らせ方・成果物・シナリオ）、手で確かめる手順を持つ。                                                                                                                                                                 |
-| `docs/architecture/workflow-contract.md`       | tsukumo がワークフロー（タスクをフェーズに分けて送り出す手順）に対して定める契約 — 受ける口の名前と引数の意味、                                                                                                                                     |
+| `docs/architecture/workflow-contract.md`       | tsukumo がワークフロー（タスクをフェーズに分けて送り出す手順）に対して定める契約 — 受けるツールの名前と引数の意味、                                                                                                                                 |
 
 ## 設計判断（なぜ今の形なのか）
 

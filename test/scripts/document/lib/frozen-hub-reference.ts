@@ -59,7 +59,7 @@ export const FROZEN_HUB_REFERENCE_COUNTS = {
   "docs/architecture/display/task-modal.md": 3,
   "docs/architecture/display/work-plan-closing.md": 2,
   "docs/architecture/display/work-plan-timing.md": 3,
-  "docs/architecture/display/work-plan.md": 9,
+  "docs/architecture/display/work-plan.md": 8,
   "docs/architecture/overview-and-layer.md": 1,
   "docs/architecture/runtime-flow.md": 1,
   "docs/architecture/screen-design/character-accent-and-create.md": 2,

@@ -1,14 +1,14 @@
-# ワークフローの契約: 口と委譲の返却
+# ワークフローの契約: ツールと委譲の返却
 
 ステータス: **正典**。入口は `docs/architecture/workflow-contract.md`（ワークフローの契約の全体）。
 
-責務: tsukumo がワークフローから受ける2つの口（`work_plan`・`report`）の名前と引数の意味、委譲先の返却（`phase_result`）でのプログレスバーの進め方、委譲ゲートを持つ。
-読む時: 口の引数を変える・使う、プログレスバーの進め方や委譲ゲートを直すとき。
-直す時: 口の引数・委譲の返却の書式とプログレスバーの進め方・委譲ゲートを変えたとき。
+責務: tsukumo がワークフローから受ける2つのツール（`work_plan`・`report`）の名前と引数の意味、委譲先の返却（`phase_result`）でのプログレスバーの進め方、委譲ゲートを持つ。
+読む時: ツールの引数を変える・使う、プログレスバーの進め方や委譲ゲートを直すとき。
+直す時: ツールの引数・委譲の返却の書式とプログレスバーの進め方・委譲ゲートを変えたとき。
 
-## 口
+## ツール
 
-口は MCP ツール `work_plan` と `report`、委譲先が呼ぶ `phase_result`（`docs/architecture/workflow-contract/skill-sequence.md`「スキルの契約」）。意味はツールの説明（`src/server/work-plan/core/work-plan-tool.ts`・
+契約のツールは MCP ツール `work_plan` と `report`、委譲先が呼ぶ `phase_result`（`docs/architecture/workflow-contract/skill-sequence.md`「スキルの契約」）。意味はツールの説明（`src/server/work-plan/core/work-plan-tool.ts`・
 `src/server/report/core/report-tool.ts`・`src/server/work-plan/core/phase-result-tool.ts`）とシステムプロンプトの「ワークプラン（tsukumo）」の節がモデルに教える。
 
 `work_plan`（ワークプラン。毎回フェーズの並びごと渡す）:
@@ -93,13 +93,13 @@ tsukumo はプログレスバーのフェーズの名前を見ず、欄がある
   群ごとの数え方と、本の番号が委譲先のフェーズと同じであることと、セリフで番号を言うのは本のフェーズだけなこと（`work_plan` の戻り値と同じ文）を付ける。返却が続けて届けば、まだ添えていない返却の文を重ねる。
   受け付けた `work_plan`・次の依頼で溜めた注記を捨て、組み直しでは足さない。
   ワークフロースクリプトの完了の知らせの注記は「ワークフロースクリプトが完了した。ワークフロースクリプトの中の委譲先が `phase_result` で返した結果で、プログレスバーは進んでいる。」と言い、同じプログレスバーの位置の文を末尾に付ける。
-  口は `UserPromptSubmit` のフックで、返却の入力（`<agent-message` で始まる）とワークフロースクリプトの完了の入力（`<task-notification` で始まる）はメインが手すきでもターンの途中でもここを1回通る
+  掛かるのは `UserPromptSubmit` のフックで、返却の入力（`<agent-message` で始まる）とワークフロースクリプトの完了の入力（`<task-notification` で始まる）はメインが手すきでもターンの途中でもここを1回通る
 - 印と注記の元は、委譲先の `SubagentHandback` の呼び出し（`delegate-handed-back`）と `phase_result` の呼び出し（`phase-result-called`）、ワークフロースクリプトの走り出し（`workflow-started`）と完了の知らせ（`task-notified`）。
   委譲先のメッセージのうち前の2つだけを `WorkPlanReview` に通し、あとの2つはメインの `system` メッセージから作る。
   委譲先が `SubagentHandback` で返すのは、許可モードが `auto` で auto に対応するモデルのときだけで、それ以外の返却（`<task-notification>`）では印も注記も立たない
 - 差し戻しの返却を受けて同じフェーズをやり直させるときは、同じ位置のまま `work_plan` を呼べば下りる
 - 印は組み直しでは戻さない
-- 許可の口は `PreToolUse` のフック（許可モードによらず毎回呼ばれ、`agent_id` でサブエージェントの中を見分けられる）。疑似セッションは `work_plan` の判定もしないので、委譲ゲートも効かない
+- 許可の判定は `PreToolUse` のフック（許可モードによらず毎回呼ばれ、`agent_id` でサブエージェントの中を見分けられる）。疑似セッションは `work_plan` の判定もしないので、委譲ゲートも効かない
 
 ワークプラン前の編集の門:
 
@@ -109,4 +109,4 @@ tsukumo はプログレスバーのフェーズの名前を見ず、欄がある
 - **拒むもの**: `Edit` と `Write` だけ。`Bash`・`Agent`・`SendMessage`・`NotebookEdit`・読み取りのツール・tsukumo のツールは通す。
   拒否文は `work_plan` を `current: 0`（フェーズ1）で先に渡すよう言い、プログレスバーの位置は足さない。利用者には見えない差し戻し
 - **通すもの**: 自動メモリの置き場（`…/.claude/projects/<1語>/memory/…`。`..` を含むパスは除く）への書き込み
-- 委譲ゲートの印（`gateRaised`）とは別の判定で、意味を混ぜない。口は同じ `PreToolUse` のフック（`judgeEditAgainstMissingPlan`）
+- 委譲ゲートの印（`gateRaised`）とは別の判定で、意味を混ぜない。掛かるのは同じ `PreToolUse` のフック（`judgeEditAgainstMissingPlan`）

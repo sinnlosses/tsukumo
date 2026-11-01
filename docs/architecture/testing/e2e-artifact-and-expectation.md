@@ -32,7 +32,7 @@
   `no-restricted-properties`（`Temporal.Now`。ファイル単位）と `test/architecture/clock.test.ts`（関数単位）がそれを縛る（固定が黙って
   効かなくならないように）
 - **ブラウザの時計は E2E の側だけで差し替える**（`page.clock` は `Temporal.Now` を差し替えないので、
-  初期スクリプトで `Temporal.Now.instant()` を `Date.now()` に従わせる。本番のコードに試験用の口を作らない）。
+  初期スクリプトで `Temporal.Now.instant()` を `Date.now()` に従わせる。本番のコードに試験用の関数・設定を作らない）。
   止めたあとは DOM の構造が2回続けて同じになるまで読み直してから書く
 - **止めた時計の上でも `requestAnimationFrame` は本物の描画のフレームで呼ぶ**（`page.clock` は rAF も止めるので、
   rAF で束ねて渡す届いたフレームが画面に出なくなる）。`followFakeClock` が入れる初期スクリプトが偽と本物の早いほうで1回呼び、
@@ -100,9 +100,9 @@ shared の手続き応答に乗る型や DOM の構造を変える計画には�
 `fake-session.ts` が読むときに通す）と単体テスト（`test/shared/`・`test/server/`）が守る。
 同じコマンドを同じ形で送る場面が2本あれば、比べるのは流れの持ち主の1本だけにする。
 
-**比べる成果物は、撮る口の名前で場面が選ぶ。** `settleAndMatch` は `*.dom.json` だけを比べ、
+**比べる成果物は、撮る関数の名前で場面が選ぶ。** `settleAndMatch` は `*.dom.json` だけを比べ、
 `settleAndMatchWithMessages` は `*.messages.json` も比べ、`settleAndMatchPicked` は `*.dom-pick.json` だけを当て、`settleAndMatchPickedWithMessages` は `*.dom-pick.json` に当てたうえで `*.messages.json` も完全一致で比べる（どれも `test/e2e/scenario-open.ts` の `ScenarioRoom`。シナリオは `test/e2e/room-fixture.ts` の `test` の `run` から読む）。
-部分木の名前の並び（上の決まり2）は `open` の選択肢に書くが、こちらは `test` の本文の撮る口の名前で選ぶ。
+部分木の名前の並び（上の決まり2）は `open` の選択肢に書くが、こちらは `test` の本文の撮る関数の名前で選ぶ。
 どちらも指定は場面のファイルにあり、期待値は写しだけを持つ。
 `settleAndMatch` の場面に `*.messages.json` が残っていると落ちる。`E2E_UPDATE=1` は比べない場面の
 `*.messages.json` を書きも消しもしないので、比べるのをやめた場面の期待値は `git rm` で消す。

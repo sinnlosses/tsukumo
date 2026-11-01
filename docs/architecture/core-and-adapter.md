@@ -3,7 +3,7 @@
 ステータス: **正典**。入口は `docs/architecture.md`（全体構造の入口と、子のファイルの一覧）。
 
 責務: 判断（core）と境界（adapter）の境目、SDK に触るファイルの分け方、代の持ち物、ツールで受け取るものと使い捨ての `query()` の形など、1ファイルを読んでも分からない横断の規則を持つ。
-読む時: サーバ側の判断と境界をどう分けるか、SDK に触るファイルやツールの受け口をどう書くかを決めるとき。
+読む時: サーバ側の判断と境界をどう分けるか、SDK に触るファイルやツールを受け取る手続きをどう書くかを決めるとき。
 直す時: core と adapter の境目・SDK の分け方・代の持ち物・ツールや使い捨ての `query()` の形を変えたとき。
 
 ## core と adapter
@@ -19,13 +19,13 @@ doc コメントが正典で、機能の数え方・契機・上限は `docs/req
 する（`systemPrompt` の append は文字列で受け、組むのは `takeSystemPromptAppend`。`docs/architecture/character-pack.md`）。
 疑似セッションを流す `fake-driver.ts` も同じ契約で、`session-manager` はどちらが動いているかを知らない。
 
-**SDK に触るファイルは、SDK のどの口に触るかで分ける**（import してよい先は
+**SDK に触るファイルは、SDK のどの機能に触るかで分ける**（import してよい先は
 原則3）。駆動の `session-driver/adapter/` に `query()`・ツール・セッションの一覧・
 `/context` の内訳の4つがあり、`sdk-driver.ts` 以外を呼ぶのは駆動と配線だけ。使い捨ての `query()` は、
 ツールを持たせるものはそれを使う判断と同じ機能に置き（`sdk-diary.ts` / `sdk-usage-review.ts`）、
 形を指定して1回聞くだけのものは共有の箱の `sdk-structured-query.ts` を通す。
 
-- **原則3の例外: 共有の箱の `server/adapter/` 直下の `sdk-*` は、どの機能の語彙も名乗らない使い捨ての問い合わせの口だけ**
+- **原則3の例外: 共有の箱の `server/adapter/` 直下の `sdk-*` は、どの機能の語彙も名乗らない使い捨ての問い合わせの関数だけ**
   （`sdk-structured-query.ts` と、足跡を残すラッパーの `sdk-throwaway-query.ts`）
 
 - **`sdk-message.ts` は SDK の型を import しない。** 依存を機能の `adapter/` 直下の `sdk-` で始まる
@@ -51,7 +51,7 @@ doc コメントが正典で、機能の数え方・契機・上限は `docs/req
 閉じたあとに届いたイベントは捨てる。
 
 **イベントを受けて何かを記録するものは、その概念のファイルへ寄せる。** `token-usage.ts` /
-`context-usage.ts` は書き口の契約と走行中の勘定を、`chat-archive-entry.ts` は「どのイベントを
+`context-usage.ts` は書き込みの関数の契約と走行中の勘定を、`chat-archive-entry.ts` は「どのイベントを
 アーカイブの1行にするか」を持つ。どちらのモードか・セッションIDが決まったあとかの門は
 `session-event-record.ts` の `recordSessionEvent` が持ち、`session-manager.ts` に残るのは
 それを呼ぶ順と、復元した再生では呼ばないこと（再生は記録に数えない）だけ。
@@ -74,13 +74,13 @@ doc コメントが正典で、機能の数え方・契機・上限は `docs/req
 
 - `systemPrompt` は文字列で丸ごと置き換え、組み込みのツール・設定・セッションの保存を持たせない。
   ただし見直しと提案の実行は、同梱のスキルを読ませるために `claude_code` の preset に人格と役目を append し、
-  組み込みのツールは `allowedTools` で押す口ごとに絞って `permissionMode: "dontAsk"` でほかを断る
+  組み込みのツールは `allowedTools` で押すボタンごとに絞って `permissionMode: "dontAsk"` でほかを断る
   （`docs/architecture/adr/0029-usage-review-own-query.md`）
 - 使用量はトークン消費の記録に混ぜない（記録は会話の `query()` の累計の差で、混ぜると差が崩れる）。
   1回ごとの種類・所要・トークンの数・結果の種類は、別の「使い捨ての問い合わせの記録」に残す（本文は書かない）
 - 疑似セッション（`TSUKUMO_DRIVER=fake`）では起こさない（書き手の出どころで「起こさない」を選ぶ。
   見直しは疑似セッションに書いた手順を流し直す）
-- 書く口は起こせない・中断・時間切れ・形の崩れでも reject せず、「作れた／作れなかった」に畳む
+- 書く関数は起こせない・中断・時間切れ・形の崩れでも reject せず、「作れた／作れなかった」に畳む
   （常駐プロセスは落ちない）。日記の書き手は代の持ち物で、代を閉じると中断する。見直しの走りは代の持ち物
   ではなく、起こし直しをまたいで続き、流すイベントは流すたびにその時点の代へ届く
 - 渡した文面も受け取ったものもログに書かない（「会話内容と安全」）

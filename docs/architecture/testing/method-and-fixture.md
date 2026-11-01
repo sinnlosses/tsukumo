@@ -14,7 +14,7 @@
 | zod スキーマ                             | 受け付ける形・落とす形を1件ずつ                                                                                                                                                                     | `test/shared/contract/command-input.test.ts` など        |
 | SDK の型との一致                         | `API_ERROR_KINDS` が SDK の `SDKAssistantMessageError` と同じ綴りであること（型レベルの検査）。`PERMISSION_MODES` / `EFFORT_LEVELS` は `sdk-driver.ts` の SDK への受け渡しの型が守る                | `test/server/session-driver/adapter/sdk-driver.test.ts`  |
 | `session-manager`                        | fake driver を差し込み、`hello` → `events` の順序・バッチ・代の寿命（起こし直し・`hello` の配り直し・古い代のイベントを捨てる）と反応の順                                                           | `test/server/session/core/session-manager*.test.ts`      |
-| コマンドの受け手（`createSocketRouter`） | 偽の `CommandSession`（姿は本物の reducer で畳む）を渡し、断る条件（契約の `meta`）・受け手が口へ渡す入力・失敗の定型文の理由・流すイベント・頼む起こし直しの中身                                   | `test/router*.test.ts`                                   |
+| コマンドの受け手（`createSocketRouter`） | 偽の `CommandSession`（姿は本物の reducer で畳む）を渡し、断る条件（契約の `meta`）・受け手が手続きへ渡す入力・失敗の定型文の理由・流すイベント・頼む起こし直しの中身                               | `test/router*.test.ts`                                   |
 | `server`（ws）                           | 購読 → `hello` が先に届き、押した順に取りこぼさず流れる、切断で購読が外れる、トークン無しは 403、Origin 違いは 403、コマンド → 受け手が呼ばれる                                                     | `test/server/view-server/adapter/session-socket.test.ts` |
 | browser の部品                           | Vitest + `happy-dom` + `@testing-library/react`。**役割と文言で当てる**（HTML の文字列一致はしない）                                                                                                | `test/browser/**`                                        |
 | 層の検査                                 | 層の辺・機能どうしの辺・browser の箱と領域の辺（`docs/architecture.md`「全体構成」）。外部ツールは増やさない                                                                                        | `test/architecture/`                                     |
@@ -68,7 +68,7 @@ contenteditable（CodeMirror）・IME の確定。同じ場面と窓で測れる
 
 **本物の `bd` を起こすテストは `test/server/repository/adapter/beads-issues-reader.test.ts` の1ファイルに置く。**
 `bd init` 済みの雛形は `globalSetup`（`test/beads-template-setup.ts`）が実行ごとに1回だけ作り、
-`test/fixture/beads-repository.ts` が `inject("beadsTemplate")` の写しを配る。読むだけの検査は取り込み口のフェイクを使う。
+`test/fixture/beads-repository.ts` が `inject("beadsTemplate")` の写しを配る。読むだけの検査は取り込みの関数のフェイクを使う。
 
 ### E2E に任せず単体テストに残すもの
 

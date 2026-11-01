@@ -33,13 +33,13 @@
   理由を添えた `REFUSED` が応答で返り、受け手は呼ばれない
 - **受け手は3種**（`write` / `call` / `session` の判別可能な合併型。`command-receiver.ts`）。`session` の
   受け手は `CommandSession`（`command-session.ts`）を受け取り、**`session` の表にだけ書ける**（型が
-  `session/core/` にあるので、葉の機能からは物理的に書けない）。書き込み口は各機能の `ports` にあり、
+  `session/core/` にあるので、葉の機能からは物理的に書けない）。書き込みの関数は各機能の `ports` にあり、
   中身を選ぶのはその機能の組み立て（`src/wiring/<機能>.ts`）
 - **束ねるのを配線に置く理由**: 表を `session/core/` で束ねると、`session` が `item` と
   `host` を読む辺（いまの表に無い）が要り、`session` がまた全部を知る場所に戻る。配線なら
   **機能どうしの辺の表は増えない**。葉の機能の表と手続きが読むのは `shared` と共有の `core`
   （`command-receiver.ts`）と自分の機能だけ
-- **葉の機能の手続きが context の `session` から見るのは、イベントを流す口（`CommandEventSink`）だけ。**
+- **葉の機能の手続きが context の `session` から見るのは、イベントを流す関数（`CommandEventSink`）だけ。**
   見直しだけは、提案を識別子で引くのと会話のモデルを読むために、`state()` の欄を3つ（モデル・いまの結果・
   前回の結果）だけ型に足して見る（`UsageReviewSession`）。型は `shared` の `SessionState` から選ぶので、辺は増えない
 - **押し出しも手続き**（購読 `frame.subscribe`）。`/ws` の上は**すべて oRPC の手続きの要求と応答**で、
@@ -61,10 +61,10 @@
 
 **許す依存の辺**（`.dependency-cruiser.cjs` が見る）:
 
-| 辺                                    | 許す場所                                                                                                                |
-| ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `shared` → 外部                       | `zod` と `@orpc/contract`（`@orpc/server`・`node:` は読まない）。手続きより前から読んでいる `remeda` も可               |
-| `@orpc/server` を import してよい場所 | 機能の `adapter/`（`view-server/adapter/` を含む）と配線（`src/router.ts`）だけ。**`core` と共有の箱は禁止**            |
-| `browser` → 外部                      | `@orpc/client`（`/rpc` は `@orpc/client/fetch`、`/ws` は `@orpc/client/websocket`）と `@orpc/tanstack-query`            |
-| `src/router.ts`（配線）               | すべての機能の `<機能>-procedure.ts` と、口の型のための `<機能>-command.ts`。配線なので**機能どうしの辺の表は増えない** |
-| 機能どうしの辺                        | 上の表のまま（受け手が別の機能の判断を要るようになったら、今と同じく表に足す）                                          |
+| 辺                                    | 許す場所                                                                                                                  |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `shared` → 外部                       | `zod` と `@orpc/contract`（`@orpc/server`・`node:` は読まない）。手続きより前から読んでいる `remeda` も可                 |
+| `@orpc/server` を import してよい場所 | 機能の `adapter/`（`view-server/adapter/` を含む）と配線（`src/router.ts`）だけ。**`core` と共有の箱は禁止**              |
+| `browser` → 外部                      | `@orpc/client`（`/rpc` は `@orpc/client/fetch`、`/ws` は `@orpc/client/websocket`）と `@orpc/tanstack-query`              |
+| `src/router.ts`（配線）               | すべての機能の `<機能>-procedure.ts` と、関数の型のための `<機能>-command.ts`。配線なので**機能どうしの辺の表は増えない** |
+| 機能どうしの辺                        | 上の表のまま（受け手が別の機能の判断を要るようになったら、今と同じく表に足す）                                            |

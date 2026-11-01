@@ -15,8 +15,8 @@ export type StubDriver = {
   readonly emit: (event: SessionEvent) => void
   readonly attach: (onEvent: (event: SessionEvent) => void) => void
   /**
-   * 復元の再生（`onRestoredEvents`）をまとめて1回で流す。駆動由来（`emit`）とは別の口
-   * （`docs/architecture/character-pack.md`「復元の再生は駆動と別の口」）。
+   * 復元の再生（`onRestoredEvents`）をまとめて1回で流す。駆動由来（`emit`）とは別の関数
+   * （`docs/architecture/character-pack.md`「復元の再生は駆動と別の関数」）。
    */
   readonly emitRestored: (events: readonly RestoredEvent[]) => void
   readonly attachRestored: (onRestoredEvents: (events: readonly RestoredEvent[]) => void) => void
