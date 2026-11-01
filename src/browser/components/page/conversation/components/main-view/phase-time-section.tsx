@@ -18,7 +18,7 @@ export function PhaseTimes(props: { readonly view: Times }): ReactElement {
   return (
     <div className={phaseTimesClassName("phase-times")}>
       <div className={phaseTimesClassName("phase-times-head")}>
-        <span className={phaseTimesClassName("phase-times-heading")}>段ごとの時間</span>
+        <span className={phaseTimesClassName("phase-times-heading")}>フェーズごとの時間</span>
         <span className={phaseTimesClassName("phase-times-total")}>{totalText}</span>
       </div>
       {chart.kind === "band" && (
@@ -46,7 +46,7 @@ export function PhaseTimes(props: { readonly view: Times }): ReactElement {
           )}
         </div>
       )}
-      <div role="table" aria-label="段ごとの所要時間">
+      <div role="table" aria-label="フェーズごとの所要時間">
         {rows.map((entry, index) =>
           entry.kind === "row" ? (
             <ListRow key={`${String(index)}:${entry.row.valueText}`} row={entry.row} />

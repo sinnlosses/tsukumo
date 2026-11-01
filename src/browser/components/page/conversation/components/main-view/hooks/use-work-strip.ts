@@ -171,7 +171,7 @@ const NAMED = { kind: "named" } as const satisfies PhaseNumber
 
 const PHASE_STATE_SUFFIX = {
   done: "（済）",
-  current: "（今の段）",
+  current: "（今のフェーズ）",
   asking: "（答え待ち）",
   upcoming: "",
 } satisfies Record<WorkStripPhaseState, string>
@@ -185,8 +185,8 @@ const SKIPPED_STATE_WORD = "飛ばした · 所要"
 /** 吹き出しの状態の行の頭。まだの段のほかは、あとに所要か経過を続ける。 */
 const POPOVER_STATE_WORD = {
   done: "済み · 所要",
-  current: "いま · この段",
-  asking: "答え待ち · この段",
+  current: "いま · このフェーズ",
+  asking: "答え待ち · このフェーズ",
   upcoming: "これから",
 } satisfies Record<WorkStripPhaseState, string>
 

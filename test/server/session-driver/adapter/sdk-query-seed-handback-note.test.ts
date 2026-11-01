@@ -60,7 +60,7 @@ describe("handbackNoteHooks（返却を運ぶ入力に注記を添える）", ()
         hookEventName: "UserPromptSubmit",
         additionalContext:
           `tsukumo の注記（委譲先の返却の本文ではない）:${PHASE_RESULT_MISSING_HANDBACK_LINE}` +
-          "プログレスバーの今の段は 本 1/2 架空の実装A。プログレスバーは範囲の前（前）・範囲（本）・範囲の後ろ（後）の群ごとに1から数え、本の番号は委譲先の段の番号と同じ。セリフで番号を言うのは本の段だけで、前・後の段は名前で言う。",
+          "プログレスバーの今のフェーズは 本 1/2 架空の実装A。プログレスバーは範囲の前（前）・範囲（本）・範囲の後ろ（後）の群ごとに1から数え、本の番号は委譲先のフェーズの番号と同じ。セリフで番号を言うのは本だけで、前・後は名前で言う。",
       },
     })
     expect(await runUserPromptSubmit(review, HANDBACK_PROMPT)).toEqual({})

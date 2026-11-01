@@ -9,24 +9,24 @@ import type { WorkPlanReview } from "./work-plan-review.ts"
 
 /** モデルに見せる `phase_result` ツールの説明。 */
 export const PHASE_RESULT_TOOL_DESCRIPTION =
-  "委譲先として段を1つ終えたとき、SubagentHandback の前に1回呼び、段の結果を返す。" +
+  "委譲先としてフェーズを1つ終えたとき、SubagentHandback の前に1回呼び、その結果を返す。" +
   "tsukumo が進み具合のプログレスバーを進める。結果の中身（したこと・分かったこと）は返さず、タスクの置き場に書く。" +
-  "プログレスバーの中間レポートに出す段のまとめだけは summary に1〜2文で渡せる（渡した段は、メインの work_plan の phaseSummary が要らない）。" +
-  "メイン（委譲していない側）は呼ばない（段は work_plan で進める）。"
+  "プログレスバーの中間レポートに出すフェーズのまとめだけは summary に1〜2文で渡せる（渡したフェーズは、メインの work_plan の phaseSummary が要らない）。" +
+  "メイン（委譲していない側）は呼ばない（work_plan で進める）。"
 
 export const PHASE_RESULT_PHASE_DESCRIPTION =
-  "結果を返す段の番号（1始まり）。委譲先の段の並びの中の番号で、count 以下"
+  "結果を返すフェーズの番号（1始まり）。委譲先の並びの中の番号で、count 以下"
 
-export const PHASE_RESULT_COUNT_DESCRIPTION = "委譲先の段の数"
+export const PHASE_RESULT_COUNT_DESCRIPTION = "委譲先のフェーズの数"
 
 export const PHASE_RESULT_OUTCOME_DESCRIPTION =
-  "finished（段を済ませた）・skipped（この段が要らず飛ばした）・stopped（段の途中で止めた。reason を添える）"
+  "finished（済ませた）・skipped（要らず飛ばした）・stopped（途中で止めた。reason を添える）"
 
 export const PHASE_RESULT_REASON_DESCRIPTION =
   "止めた理由を1〜2文で。outcome が stopped のときだけ渡し、ほかでは省く"
 
 export const PHASE_RESULT_SUMMARY_DESCRIPTION =
-  "段のまとめを1〜2文で（プログレスバーの中間レポートに出る）。outcome が finished のときだけ渡し、ほかでは省く"
+  "フェーズのまとめを1〜2文で（プログレスバーの中間レポートに出る）。outcome が finished のときだけ渡し、ほかでは省く"
 
 /** 差し戻しの種類ごとの直し方。 */
 const PHASE_RESULT_REJECTIONS = {
@@ -35,8 +35,8 @@ const PHASE_RESULT_REJECTIONS = {
     "reason は outcome が stopped のときだけ、空でない文で渡す。summary は outcome が finished のときだけ渡す。直して呼び直すこと。" +
     "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。",
   main:
-    "phase_result は委譲先が段の結果を返すツールで、メインは呼ばない。" +
-    "メインで走る段は work_plan で進め、飛ばした段は skippedPhases に入れる。" +
+    "phase_result は委譲先がフェーズの結果を返すツールで、メインは呼ばない。" +
+    "メインで走るフェーズは work_plan で進め、飛ばしたものは skippedPhases に入れる。" +
     "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。",
 } as const
 

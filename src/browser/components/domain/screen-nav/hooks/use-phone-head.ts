@@ -99,7 +99,7 @@ const CHAT_TITLE = "雑談"
 
 const DOT_STATE_SUFFIX = {
   done: "（済）",
-  current: "（今の段）",
+  current: "（今のフェーズ）",
   upcoming: "",
 } satisfies Record<PlannedPhaseState, string>
 

@@ -101,7 +101,7 @@ describe("useWorkStrip（段の吹き出し）", () => {
   it("今の段は「番号. 名前」とこの段の経過だけで、まとめも手順への口も無い", () => {
     expect(popoverAt(openedAt(progressed, 2), 2)).toMatchObject({
       title: "3. 架空の段C",
-      meta: "いま · この段 1分56秒",
+      meta: "いま · このフェーズ 1分56秒",
       summary: "",
       toSteps: { kind: "none" },
     })
@@ -135,7 +135,7 @@ describe("useWorkStrip（段の吹き出し）", () => {
 
     expect(popoverAt(openedAt(asking, 2), 2)).toMatchObject({
       title: "3. 架空の段C",
-      meta: "答え待ち · この段 1分56秒",
+      meta: "答え待ち · このフェーズ 1分56秒",
     })
   })
 
@@ -160,7 +160,7 @@ describe("useWorkStrip（段の吹き出し）", () => {
 
     expect(popoverAt(openedAt(grouped, 2), 2)).toMatchObject({
       title: "3. 架空の段C",
-      meta: "いま · この段 3分55秒",
+      meta: "いま · このフェーズ 3分55秒",
     })
   })
 

@@ -21,7 +21,7 @@ export type CurrentStepModel =
       readonly activity: WorkActivity
     }
 
-const HEADING = "いまの段"
+const HEADING = "いまのフェーズ"
 
 export function useCurrentStep(): CurrentStepModel {
   const turnStepList = useCurrentTurnSteps()

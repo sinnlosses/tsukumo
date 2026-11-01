@@ -86,12 +86,14 @@ describe("judgeToolAgainstGate", () => {
     const withPosition = judgeToolAgainstGate(
       "Bash",
       false,
-      "プログレスバーの今の段は 3/4 架空の段。",
+      "プログレスバーの今のフェーズは 3/4 架空の段。",
     )
 
     expect(bare.kind === "deny" && withPosition.kind === "deny").toBe(true)
     if (bare.kind === "deny" && withPosition.kind === "deny") {
-      expect(withPosition.reason).toBe(`${bare.reason}プログレスバーの今の段は 3/4 架空の段。`)
+      expect(withPosition.reason).toBe(
+        `${bare.reason}プログレスバーの今のフェーズは 3/4 架空の段。`,
+      )
     }
   })
 })

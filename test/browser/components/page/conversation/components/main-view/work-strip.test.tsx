@@ -172,7 +172,7 @@ describe("WorkStrip", () => {
     render(<WorkStrip />)
 
     expect(strip().getAttribute("data-work-strip")).toBe("finished")
-    expect(strip().textContent).toContain("3段すべて済み")
+    expect(strip().textContent).toContain("3フェーズすべて済み")
     const chip = strip().querySelector("[data-result]")
     expect(chip?.getAttribute("data-result")).toBe("done")
     expect(chip?.textContent).toBe("完了")
@@ -223,15 +223,15 @@ describe("WorkStrip（段の丸の吹き出し）", () => {
     expect(popover.textContent).toContain("✓ 架空の段A")
     expect(popover.textContent).toContain("済み · 所要")
     expect(popover.textContent).toContain("架空の段Aのまとめ。")
-    expect(screen.getByRole("button", { name: "この段の手順へ" })).not.toBeNull()
+    expect(screen.getByRole("button", { name: "このフェーズの手順へ" })).not.toBeNull()
   })
 
   it("今の段は名前と経過だけで、まだの段は「これから」だけ。どちらにも「この段の手順へ」は無い", () => {
     renderProgressed()
 
     click(dot(/架空の段B/))
-    expect(screen.getByRole("dialog").textContent).toMatch(/^2\. 架空の段Bいま · この段 /)
-    expect(screen.queryByRole("button", { name: "この段の手順へ" })).toBeNull()
+    expect(screen.getByRole("dialog").textContent).toMatch(/^2\. 架空の段Bいま · このフェーズ /)
+    expect(screen.queryByRole("button", { name: "このフェーズの手順へ" })).toBeNull()
 
     click(dot(/架空の段C/))
     expect(screen.getByRole("dialog").textContent).toBe("3. 架空の段Cこれから")
@@ -259,7 +259,7 @@ describe("WorkStrip（段の丸の吹き出し）", () => {
     expect(popover.textContent).toContain("/ 架空の段A")
     expect(popover.textContent).toContain("飛ばした · 所要")
     expect(popover.textContent).toContain("飛ばしたわけ。")
-    expect(screen.queryByRole("button", { name: "この段の手順へ" })).toBeNull()
+    expect(screen.queryByRole("button", { name: "このフェーズの手順へ" })).toBeNull()
   })
 
   it("済んだ段の丸は飛ばした印を持たず「✓」のまま", () => {
@@ -287,7 +287,7 @@ describe("WorkStrip（段の丸の吹き出し）", () => {
 
     click(dot(/架空の段B（答え待ち）/))
 
-    expect(screen.getByRole("dialog").textContent).toContain("答え待ち · この段 ")
+    expect(screen.getByRole("dialog").textContent).toContain("答え待ち · このフェーズ ")
   })
 
   it("開くのは同時に1つで、別の丸を押すと開き替わり、同じ丸をもう一度押すと閉じる", () => {
@@ -351,7 +351,7 @@ describe("WorkStrip（段の丸の吹き出し）", () => {
     })
 
     click(dot(/架空の段A/))
-    click(screen.getByRole("button", { name: "この段の手順へ" }))
+    click(screen.getByRole("button", { name: "このフェーズの手順へ" }))
 
     expect(screen.queryByRole("dialog")).toBeNull()
     const list = screen.getByRole("region", { name: "依頼の手順" })

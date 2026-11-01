@@ -21,7 +21,7 @@ test.describe("進み具合の帯の段の吹き出し", () => {
     const popover = strip.getByRole("dialog")
     await popover.waitFor()
     expect(await popover.textContent()).toContain("済み · 所要")
-    await popover.getByRole("button", { name: "この段の手順へ" }).click()
+    await popover.getByRole("button", { name: "このフェーズの手順へ" }).click()
 
     await strip.getByRole("region", { name: "依頼の手順" }).waitFor()
     expect(await strip.getByRole("dialog").count()).toBe(0)

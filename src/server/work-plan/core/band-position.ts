@@ -18,25 +18,28 @@ export function bandPositionText(plan: LatestWorkPlan): string {
   const phase = currentPhaseOf(plan)
   const position =
     phase.kind === "phase"
-      ? `プログレスバーの今の段は ${phaseLabel(phase)}。`
-      : "プログレスバーの段は全部済んでいる。"
+      ? `プログレスバーの今のフェーズは ${phaseLabel(phase)}。`
+      : "プログレスバーのフェーズは全部済んでいる。"
   if (plan.delegatedRange.kind === "none") {
     return position
   }
   if (plan.delegatedRange.kind === "pending") {
-    return `${position}範囲の先頭から後ろの段は番号を持たない（委譲先の段の数が決まるまで）。`
+    return `${position}範囲の先頭から後ろは番号を持たない（委譲先のフェーズの数が決まるまで）。`
   }
-  return `${position}プログレスバーは範囲の前（前）・範囲（本）・範囲の後ろ（後）の群ごとに1から数え、本の番号は委譲先の段の番号と同じ。セリフで番号を言うのは本の段だけで、前・後の段は名前で言う。`
+  return `${position}プログレスバーは範囲の前（前）・範囲（本）・範囲の後ろ（後）の群ごとに1から数え、本の番号は委譲先のフェーズの番号と同じ。セリフで番号を言うのは本だけで、前・後は名前で言う。`
 }
 
-const RANGE_LINE_PATTERN = /^委譲先の段の範囲: first=(\d+) count=(\d+)$/mu
+// 言い換える前の transcript の行も読む。
+const RANGE_LINE_PATTERN = /^委譲先の(?:フェーズ|段)の範囲: first=(\d+) count=(\d+)$/mu
 
 /**
  * 受け付けた `work_plan` の答えに添える、tsukumo が確定した委譲先の段の範囲の1行。
  * transcript から組み直すとき、`phase_result` の `count` の代わりにここから範囲を読む（{@link delegatedRangeFromAnswer}）。
  */
 export function delegatedRangeLine(range: DelegatedRange): string {
-  return range.kind === "range" ? `委譲先の段の範囲: first=${range.first} count=${range.count}` : ""
+  return range.kind === "range"
+    ? `委譲先のフェーズの範囲: first=${range.first} count=${range.count}`
+    : ""
 }
 
 /** {@link delegatedRangeLine} の行を答えから読む。無ければ undefined。 */

@@ -20,9 +20,10 @@ export const REJECTION_PHRASE = {
   resend: "同じ引数で送り直さず",
   nothingNew: "伝える新しい事実が無いターン",
   unansweredWorkPlan: "差し戻された `work_plan` に、まだ応えていない",
-  missingWorkPlanClosing: "workPlanClosing に段の閉じ方を入れる",
-  unfinishedPhases: "済んでいない段が2つ以上残っている",
-  finishedButStopped: "workPlanClosing が `stopped` でワークプランに済んでいない段が残っている",
+  missingWorkPlanClosing: "workPlanClosing にフェーズの閉じ方を入れる",
+  unfinishedPhases: "済んでいないフェーズが2つ以上残っている",
+  finishedButStopped:
+    "workPlanClosing が `stopped` でワークプランに済んでいないフェーズが残っている",
   finishedWithNg: "`checks` に `ng` の行がある",
 } as const
 

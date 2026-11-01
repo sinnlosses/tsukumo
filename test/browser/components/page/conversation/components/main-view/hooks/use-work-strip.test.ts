@@ -119,7 +119,7 @@ describe("useWorkStrip（時刻に依るもの）", () => {
 
     expect(strip).toMatchObject({
       kind: "finished",
-      headLabel: "2段すべて済み",
+      headLabel: "2フェーズすべて済み",
       sideLabel: "所要 2分05秒",
     })
   })
@@ -195,8 +195,8 @@ describe("useWorkStrip（時刻に依るもの）", () => {
         START + 6_000,
       )
 
-    expect(closed(3)).toMatchObject({ kind: "finished", headLabel: "4段のうち3段済み" })
-    expect(closed(4)).toMatchObject({ kind: "finished", headLabel: "4段すべて済み" })
+    expect(closed(3)).toMatchObject({ kind: "finished", headLabel: "4フェーズのうち3フェーズ済み" })
+    expect(closed(4)).toMatchObject({ kind: "finished", headLabel: "4フェーズすべて済み" })
   })
 
   it("閉じたあとの続きのターンが走っているあいだは、済み具合でなく今の段の名前を出す", () => {
@@ -318,7 +318,7 @@ describe("useWorkStrip（並列の段）", () => {
 
     expect(stripAt(state, START + 600_000)).toMatchObject({
       kind: "finished",
-      headLabel: "3段すべて済み",
+      headLabel: "3フェーズすべて済み",
       sideLabel: "所要 1分00秒",
     })
   })

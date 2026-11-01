@@ -247,7 +247,7 @@ function PhasePopover(props: {
           className={styles["work-strip-pop-go"]}
           onClick={popover.toSteps.onGo}
         >
-          この段の手順へ
+          このフェーズの手順へ
         </button>
       )}
     </div>

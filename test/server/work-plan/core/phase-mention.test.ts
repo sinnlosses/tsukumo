@@ -6,7 +6,7 @@ import type { DelegatedRange } from "../../../../src/shared/session/work-plan.ts
 const RANGE = { kind: "range", first: 1, count: 3 } as const satisfies DelegatedRange
 const REJECTED = {
   kind: "rejected",
-  text: expect.stringContaining("`phase` が委譲先の段の範囲の外を指している"),
+  text: expect.stringContaining("`phase` が委譲先の範囲の外を指している"),
 } as const
 const ACCEPTED = { kind: "accepted" } as const
 

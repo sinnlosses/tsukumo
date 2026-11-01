@@ -76,7 +76,7 @@ function rangedReview(): CallReview {
 
 describe("speak の phase の差し戻し", () => {
   const rejected = {
-    text: expect.stringContaining("`phase` が委譲先の段の範囲の外を指している"),
+    text: expect.stringContaining("`phase` が委譲先の範囲の外を指している"),
     isError: true,
     endsTurn: false,
   }

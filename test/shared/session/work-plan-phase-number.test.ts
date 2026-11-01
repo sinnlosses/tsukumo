@@ -72,10 +72,10 @@ describe("phaseNumberOf", () => {
       delegatedRange,
     })
 
-    expect(completionText(at(2, none))).toBe("4段のうち3段済み")
-    expect(completionText(at(2, range))).toBe("4段のうち3段済み")
-    expect(completionText(at(3, range))).toBe("4段すべて済み")
-    expect(completionText(at(3, none))).toBe("4段すべて済み")
+    expect(completionText(at(2, none))).toBe("4フェーズのうち3フェーズ済み")
+    expect(completionText(at(2, range))).toBe("4フェーズのうち3フェーズ済み")
+    expect(completionText(at(3, range))).toBe("4フェーズすべて済み")
+    expect(completionText(at(3, none))).toBe("4フェーズすべて済み")
   })
 
   it("pending は範囲の前だけを数え、範囲の先頭から後ろは番号を持たない", () => {

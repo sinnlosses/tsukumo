@@ -4,7 +4,7 @@
       { "tag": "button", "attributes": { "aria-label": "やり取りとタスクを開く", "aria-expanded": "false" } },
       { "tag": "ol", "attributes": { "aria-label": "ワークプラン" }, "children": [
         { "tag": "li", "attributes": { "aria-label": "4. レビューと検証（済）" } },
-        { "tag": "li", "attributes": { "aria-label": "5. 受け入れて架空の置き場を張り替える（今の段）" } }
+        { "tag": "li", "attributes": { "aria-label": "5. 受け入れて架空の置き場を張り替える（今のフェーズ）" } }
       ] },
       { "tag": "button", "children": ["手順", "1"] }
     ] }

@@ -14,7 +14,7 @@ import styles from "./main-view.module.css"
 import { ReportHead } from "./report-head.tsx"
 import { Report } from "./report.tsx"
 
-const HEADING = "済んだ段 · 中間レポート"
+const HEADING = "済んだフェーズ · 中間レポート"
 const SHEET_LABEL = "中間レポート"
 const PREVIOUS_MARK = "‹"
 const NEXT_MARK = "›"
@@ -145,7 +145,7 @@ function MoveButton(props: {
       type="button"
       className={clsx(styles["phase-list-move"], move.kind === "disabled" && styles["is-disabled"])}
       aria-disabled={move.kind === "disabled"}
-      aria-label={`${direction === "previous" ? "前の段" : "次の段"}${move.kind === "move" ? ` ${move.position}` : ""}`}
+      aria-label={`${direction === "previous" ? "前のフェーズ" : "次のフェーズ"}${move.kind === "move" ? ` ${move.position}` : ""}`}
       onClick={() => {
         if (move.kind === "move") {
           props.onOpen(move.row)

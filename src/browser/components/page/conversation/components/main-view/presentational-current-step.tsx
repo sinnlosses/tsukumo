@@ -16,7 +16,7 @@ export function PresentationalCurrentStep(props: {
   const { activity } = step
 
   return (
-    <section className={styles["current-step"]} aria-label="いまの段">
+    <section className={styles["current-step"]} aria-label="いまのフェーズ">
       <h4 className={styles["current-step-heading"]}>{step.heading}</h4>
       <p
         className={clsx(

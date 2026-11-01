@@ -16,7 +16,7 @@ export const GATE_EXEMPT_TOOL_NAMES = [
 export const GATE_EXEMPT_TOOL_PREFIX = tsukumoToolFullName("")
 
 const DENY_REASON =
-  "委譲先の返却が届いています。作業のツールは、`work_plan` で段を進めるか、同じ段のまま呼んでから使います（読み取りと tsukumo のツールはそのまま使えます）。これは利用者には見えない差し戻しです。"
+  "委譲先の返却が届いています。作業のツールは、`work_plan` でフェーズを進めるか、同じ位置のまま呼んでから使います（読み取りと tsukumo のツールはそのまま使えます）。これは利用者には見えない差し戻しです。"
 
 /** 印が立っているときに、メインのこのツール呼び出しを通すか。サブエージェントの中の呼び出しは対象にしない。 */
 export function judgeToolAgainstGate(
@@ -46,7 +46,7 @@ const EDIT_TOOL_NAMES = ["Edit", "Write"] as const satisfies string[]
 const AUTO_MEMORY_PATH = /(^|\/)\.claude\/projects\/[^/]+\/memory\//
 
 const PLAN_MISSING_REASON =
-  "`work_plan` をまだ渡していません。仕事に入る前に、`current: 0`（段1）で `work_plan` を先に渡してください（読み取りと tsukumo のツールはそのまま使えます）。これは利用者には見えない差し戻しです。"
+  "`work_plan` をまだ渡していません。仕事に入る前に、`current: 0` で `work_plan` を先に渡してください（読み取りと tsukumo のツールはそのまま使えます）。これは利用者には見えない差し戻しです。"
 
 /**
  * その依頼で受け付け済みの `work_plan` が無いときに、メインのこのツール呼び出しを通すか。呼ぶ側が無いことを確かめてから呼ぶ。

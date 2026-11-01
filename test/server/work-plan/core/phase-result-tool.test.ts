@@ -38,9 +38,11 @@ describe("answerPhaseResultCall", () => {
       (event) => events.push(event),
     )
 
-    expect(moved.text.startsWith("ok\nプログレスバーの今の段は 本 2/2")).toBe(true)
+    expect(moved.text.startsWith("ok\nプログレスバーの今のフェーズは 本 2/2")).toBe(true)
     expect(
-      unmoved.text.startsWith("ok\nプログレスバーは動いていない。プログレスバーの今の段は 本 2/2"),
+      unmoved.text.startsWith(
+        "ok\nプログレスバーは動いていない。プログレスバーの今のフェーズは 本 2/2",
+      ),
     ).toBe(true)
     expect(events).toEqual([
       {
@@ -70,7 +72,7 @@ describe("judgePhaseResultCaller", () => {
     expect(judgePhaseResultCaller("mcp__tsukumo__phase_result", false)).toEqual({
       kind: "deny",
       reason: expect.stringContaining(
-        "phase_result は委譲先が段の結果を返すツールで、メインは呼ばない",
+        "phase_result は委譲先がフェーズの結果を返すツールで、メインは呼ばない",
       ),
     })
     expect(judgePhaseResultCaller("mcp__tsukumo__phase_result", true)).toEqual({ kind: "allow" })

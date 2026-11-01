@@ -64,8 +64,8 @@ export function completionText(
   const total = phaseCount(plan.phases)
   const finished = finishedPhaseCount(plan)
   return finished >= total
-    ? `${String(total)}段すべて済み`
-    : `${String(total)}段のうち${String(finished)}段済み`
+    ? `${String(total)}フェーズすべて済み`
+    : `${String(total)}フェーズのうち${String(finished)}フェーズ済み`
 }
 
 /** 段の呼び名「後1. 段の名前」（範囲が無ければ「2. 段の名前」、番号を持たない段は名前だけ）。 */

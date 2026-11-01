@@ -112,7 +112,7 @@ describe("preToolUseHooks（Agent を背景に固定し、委譲ゲートで作�
         hookEventName: "PreToolUse",
         permissionDecision: "deny",
         permissionDecisionReason: expect.stringContaining(
-          "プログレスバーの今の段は 本 1/2 架空の段A。",
+          "プログレスバーの今のフェーズは 本 1/2 架空の段A。",
         ),
       },
     })

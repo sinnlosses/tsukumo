@@ -170,7 +170,7 @@ describe("PhoneHead", () => {
     expect(dots.map((dot) => dot.getAttribute("aria-label"))).toEqual([
       "1. 架空の段A（飛ばした）",
       "2. 架空の段B（済）",
-      "3. 架空の段C（今の段）",
+      "3. 架空の段C（今のフェーズ）",
       "4. 架空の段D",
       "5. 架空の段E",
     ])
@@ -182,7 +182,7 @@ describe("PhoneHead", () => {
       records: [requestRecord(), workPlanRecord({ phases: PHASES, current: 5 })],
     })
 
-    expect(title()).toBe("5段すべて済み")
+    expect(title()).toBe("5フェーズすべて済み")
     expect(head.querySelector(".phone-head-position")).toBeNull()
   })
 
@@ -199,7 +199,7 @@ describe("PhoneHead", () => {
       ],
     })
 
-    expect(title()).toBe("5段すべて済み")
+    expect(title()).toBe("5フェーズすべて済み")
     expect(head.querySelector(".phone-head-position")).toBeNull()
   })
 

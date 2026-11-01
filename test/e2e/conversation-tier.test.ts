@@ -270,12 +270,12 @@ test.describe("会話の画面の段", () => {
     expect(sheetBox.height).toBeLessThanOrEqual(600)
     expect(await scrollWidth(page)).toBeLessThanOrEqual(390)
 
-    await sheet.getByRole("button", { name: /^次の段/u }).click()
+    await sheet.getByRole("button", { name: /^次のフェーズ/u }).click()
     expect(await sheet.textContent()).toContain("3/5")
-    await sheet.getByRole("button", { name: /^前の段/u }).click()
-    await sheet.getByRole("button", { name: /^前の段/u }).click()
+    await sheet.getByRole("button", { name: /^前のフェーズ/u }).click()
+    await sheet.getByRole("button", { name: /^前のフェーズ/u }).click()
     expect(
-      await sheet.getByRole("button", { name: /^前の段/u }).getAttribute("aria-disabled"),
+      await sheet.getByRole("button", { name: /^前のフェーズ/u }).getAttribute("aria-disabled"),
     ).toBe("true")
 
     await page.keyboard.press("Escape")

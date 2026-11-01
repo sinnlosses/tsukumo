@@ -107,7 +107,7 @@ describe("PhaseList", () => {
     fireEvent.click(screen.getByRole("button", { name: /段B/u }))
     expect(marks(sheet())).toEqual([["/", true]])
 
-    fireEvent.click(within(sheet()).getByRole("button", { name: /^前の段/u }))
+    fireEvent.click(within(sheet()).getByRole("button", { name: /^前のフェーズ/u }))
     expect(marks(sheet())).toEqual([["✓", false]])
   })
 
@@ -135,16 +135,16 @@ describe("PhaseList", () => {
     renderList()
     fireEvent.click(screen.getByRole("button", { name: /段A/u }))
 
-    const previous = within(sheet()).getByRole("button", { name: /^前の段/u })
+    const previous = within(sheet()).getByRole("button", { name: /^前のフェーズ/u })
     expect(previous.getAttribute("aria-disabled")).toBe("true")
     fireEvent.click(previous)
     expect(within(sheet()).getByText("段Aの本文")).toBeTruthy()
 
-    fireEvent.click(within(sheet()).getByRole("button", { name: "次の段 2/5" }))
+    fireEvent.click(within(sheet()).getByRole("button", { name: "次のフェーズ 2/5" }))
     expect(within(sheet()).getByText("段Bの本文")).toBeTruthy()
 
-    fireEvent.click(within(sheet()).getByRole("button", { name: "次の段 3/5" }))
-    const next = within(sheet()).getByRole("button", { name: /^次の段/u })
+    fireEvent.click(within(sheet()).getByRole("button", { name: "次のフェーズ 3/5" }))
+    const next = within(sheet()).getByRole("button", { name: /^次のフェーズ/u })
     expect(next.getAttribute("aria-disabled")).toBe("true")
   })
 

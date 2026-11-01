@@ -297,7 +297,7 @@ describe("MainView（狭い画面の「いまの段」）", () => {
 
     renderMainView(RUNNING_RECORDS, RUNNING_TURN)
 
-    expect(screen.queryByRole("heading", { name: /^いまの段/u })).toBeNull()
+    expect(screen.queryByRole("heading", { name: /^いまのフェーズ/u })).toBeNull()
   })
 
   it("狭い画面では描く", () => {
@@ -305,7 +305,7 @@ describe("MainView（狭い画面の「いまの段」）", () => {
 
     renderMainView(RUNNING_RECORDS, RUNNING_TURN)
 
-    expect(screen.getByRole("heading", { name: /^いまの段/u })).toBeTruthy()
+    expect(screen.getByRole("heading", { name: /^いまのフェーズ/u })).toBeTruthy()
   })
 })
 

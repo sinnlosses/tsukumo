@@ -54,7 +54,7 @@ describe("CurrentStep", () => {
     )
     render(<CurrentStep />)
 
-    expect(screen.getByRole("heading", { name: "いまの段 · 2 架空の段B" })).toBeTruthy()
+    expect(screen.getByRole("heading", { name: "いまのフェーズ · 2 架空の段B" })).toBeTruthy()
     expect(screen.getByText(/Bash\s+架空のコマンド/u)).toBeTruthy()
   })
 
@@ -94,6 +94,6 @@ describe("CurrentStep", () => {
     putSession(stateAfter([REQUEST]))
     render(<CurrentStep />)
 
-    expect(screen.getByRole("heading", { name: "いまの段" })).toBeTruthy()
+    expect(screen.getByRole("heading", { name: "いまのフェーズ" })).toBeTruthy()
   })
 })

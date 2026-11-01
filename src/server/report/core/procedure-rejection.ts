@@ -39,23 +39,23 @@ export const REPORT_UNANSWERED_WORK_PLAN_REJECTION_TEXT =
 
 /** 同じ依頼にワークプランがあるのに `workPlanClosing` の無い `report` を差し戻すときの戻り値。 */
 export const REPORT_MISSING_WORK_PLAN_CLOSING_REJECTION_TEXT =
-  "この依頼では `work_plan` でワークプランを渡しているので、`report` の workPlanClosing に段の閉じ方を入れる。" +
-  "全部の段を終えたなら `finished`、途中で止めたなら `stopped` を入れて呼び直すこと。" +
+  "この依頼では `work_plan` でワークプランを渡しているので、`report` の workPlanClosing にフェーズの閉じ方を入れる。" +
+  "全部終えたなら `finished`、途中で止めたなら `stopped` を入れて呼び直すこと。" +
   REPORT_CHANGED_FIELDS_ONLY_TEXT +
   "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。"
 
 /** `workPlanClosing` が `finished` なのに段が2つ以上残っている `report` を差し戻すときの戻り値。 */
 export const REPORT_UNFINISHED_PHASES_REJECTION_TEXT =
-  "workPlanClosing が `finished` なのに、ワークプランに済んでいない段が2つ以上残っている。" +
-  "`finished` で tsukumo が閉じるのは最後の段だけなので、同じ応答の中で `report` より先に `work_plan` で段を1つずつ進め、" +
-  "最後の段に来てから `finished` で呼び直す。途中で止めたなら `stopped` にする。" +
+  "workPlanClosing が `finished` なのに、ワークプランに済んでいないフェーズが2つ以上残っている。" +
+  "`finished` で tsukumo が閉じるのは最後のフェーズだけなので、同じ応答の中で `report` より先に `work_plan` で1つずつ進め、" +
+  "最後のフェーズに来てから `finished` で呼び直す。途中で止めたなら `stopped` にする。" +
   REPORT_CHANGED_FIELDS_ONLY_TEXT +
   "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。"
 
 /** `task.outcome` が `finished` なのに `workPlanClosing` が `stopped` で段の残った `report` を差し戻すときの戻り値。 */
 export const REPORT_FINISHED_BUT_STOPPED_REJECTION_TEXT =
-  "`task.outcome` が `finished` なのに、workPlanClosing が `stopped` でワークプランに済んでいない段が残っている。" +
-  "全部の段を終えたなら最後の段まで進めて `finished` にし、途中で止めたなら outcome を `stopped` か `awaiting-answer` にして呼び直すこと。" +
+  "`task.outcome` が `finished` なのに、workPlanClosing が `stopped` でワークプランに済んでいないフェーズが残っている。" +
+  "全部終えたなら最後のフェーズまで進めて `finished` にし、途中で止めたなら outcome を `stopped` か `awaiting-answer` にして呼び直すこと。" +
   REPORT_CHANGED_FIELDS_ONLY_TEXT +
   "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。"
 
