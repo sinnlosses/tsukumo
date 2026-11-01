@@ -132,9 +132,7 @@ export function scrollMatchNotice(selector: string, count: number): string {
  * （動き続けるものは静止しないので、その動きだけを比べから外す。ほかの変化は見る）。
  * 上限まで静止しなければ throw する（撮らずに落とす）。
  */
-async function settleStill(
-  page: Pick<Page, "locator" | "screenshot" | "waitForSelector">,
-): Promise<void> {
+async function settleStill(page: Pick<Page, "locator" | "screenshot">): Promise<void> {
   await waitForRevealEnd(page)
   const main = page.locator(MAIN_REGION_SELECTOR).first()
   if ((await main.count()) === 0) {

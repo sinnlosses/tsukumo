@@ -55,7 +55,8 @@
 指す。操作を当てる前と撮る前には、フォント・画像・終わりのある動きの完了を待ったあと、メインビュー
 （`[data-region="main"]`。立ち絵は含めない）の見た目が連続2回の撮影で一致するまで待つ
 （`settlePage`。比べる撮影は `animations: "disabled"` で、回る輪のような終わりのない動きだけを
-比べから外す）。途中の手を待つ件（`scene-event`）は、窓ごとに場面を起こし直して同じ手を待つ。印が上限まで立たなければ、
+比べから外す）。演出の終わり（`data-revealing` が消える）と `selector` の件の要素の出現は、
+`@playwright/test` の `expect` の自動待ちで待つ（撮影の道具は runner に載せず `expect` だけを借りる）。途中の手を待つ件（`scene-event`）は、窓ごとに場面を起こし直して同じ手を待つ。印が上限まで立たなければ、
 件の名前と窓の名前を添えて失敗で終わる（途中の画を黙って撮らない）。場面を足す段には、その場面を引くカタログの札（`scripts/capture/lib/` の `catalog-*.ts` の `scene`）も同じ段に入れる。答え待ちで終わらない場面の札は `settle` を `phase: "before-prepare"` の `selector` にする（`after-prepare` は操作の前に場面の終わりを待つので、上限で落ちる）。
 
 **要素が出るまで待ってから1枚だけ撮るときは `capture-view.ts --wait-for <selector>`。**

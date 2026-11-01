@@ -41,6 +41,7 @@ import path from "node:path"
 import process from "node:process"
 import { parseArgs } from "node:util"
 
+import { expect } from "@playwright/test"
 import { type Browser, chromium, type Page } from "playwright-core"
 
 import {
@@ -230,8 +231,8 @@ async function settleScene(
 ): Promise<void> {
   const { settle } = entry
   if (settle.kind === "selector" && settle.phase === phase) {
-    await page
-      .waitForSelector(settle.selector, { timeout: SETTLE_SELECTOR_TIMEOUT_MS })
+    await expect(page.locator(settle.selector).first())
+      .toBeVisible({ timeout: SETTLE_SELECTOR_TIMEOUT_MS })
       .catch(() => {
         throw new Error(`現れなかった: ${settle.selector}`)
       })
