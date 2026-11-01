@@ -25,7 +25,7 @@ import {
   type AppearanceColorKey,
   type AppearanceColorOverride,
 } from "../../../../domain/appearance-color.ts"
-import { useDebouncedCallback } from "../../../../utils/debounce.ts"
+import { useDebouncedCallback } from "../../../../hooks/use-debounced-callback.ts"
 
 export type ScreenNavSettingsColor = {
   readonly key: AppearanceColorKey

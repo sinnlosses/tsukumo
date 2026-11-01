@@ -3,7 +3,6 @@
 // サーバは 100ms ごとにフレームを押すので、姿ごと読むとターンが流れている間は毎秒10回描き直しになる。
 
 import { createORPCClient, ORPCError } from "@orpc/client"
-import { useEffect } from "react"
 import { isPlainObject } from "remeda"
 import { create } from "zustand"
 
@@ -21,6 +20,7 @@ import { SESSION_SOCKET_PATH } from "../../shared/view-server/session-socket.ts"
 import { invalidateAchievement } from "../domain/achievement-cache.ts"
 import { applyRefresh } from "../domain/refresh.ts"
 import { sessionTokenUrl } from "../domain/session-token-url.ts"
+import { useMountEffect } from "../hooks/use-mount-effect.ts"
 import { type CommandLink, connectSessionSocket, type ConnectionStatus } from "../lib/socket.ts"
 import { nowEpochMilliseconds } from "../utils/clock.ts"
 import { rpc } from "./rpc.ts"
@@ -143,8 +143,7 @@ export function useRestartRefused(): boolean {
 
 /** サーバと繋ぎ、届いたフレームを store へ流す。画面の根で1回だけ呼ぶ。 */
 export function useSessionConnection(): void {
-  // `stores` の箱は `hooks` を読めず、`useMountEffect` に載せられないので生の effect のまま。
-  useEffect(() => {
+  useMountEffect(() => {
     const { receive, setConnection, attachSocket } = useSession.getState()
     const frames = batchByAnimationFrame(receive)
     const socket = connectSessionSocket(
@@ -182,7 +181,7 @@ export function useSessionConnection(): void {
       frames.cancel()
       attachSocket(undefined)
     }
-  }, [])
+  })
 }
 
 /** `dispatchAwaited` の失敗が、その理由で断られたもの（契約の `REFUSED`）か。 */

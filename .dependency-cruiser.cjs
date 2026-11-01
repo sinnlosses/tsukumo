@@ -88,10 +88,10 @@ const ALLOWED_BROWSER_BOX_IMPORTS = {
   features: ["features", "components/ui", "hooks", "domain", "lib", "utils", "stores"],
   "components/ui": ["components/ui", "hooks", "lib", "utils"],
   hooks: ["hooks", "lib", "utils"],
-  domain: ["domain", "lib", "utils"],
+  domain: ["domain", "hooks", "lib", "utils"],
   lib: ["lib", "utils"],
   utils: ["utils"],
-  stores: ["stores", "domain", "lib", "utils"],
+  stores: ["stores", "domain", "hooks", "lib", "utils"],
 }
 
 const SHARED_PATH = "^src/shared/"

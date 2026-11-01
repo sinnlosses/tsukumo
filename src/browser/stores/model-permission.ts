@@ -3,7 +3,7 @@
 // 表示はサーバから届いた値だけに従い、押した側へ先に倒さない。
 // ターン進行中も変えられる（起こし直さない）ので、押せない状態は持たない（effort の選べない理由は `EffortSelect` が持つ）。
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 
 import { isEffortLevel, isModelAlias, isPermissionMode } from "../../shared/command.ts"
 import type { ModelEffortSupport } from "../../shared/session/session-event-setting.ts"
@@ -12,6 +12,7 @@ import type { SettingMark } from "../../shared/session/setting-mark.ts"
 import { resolveEffortSelect, type EffortSelect } from "../domain/effort-label.ts"
 import { resolveShownModel } from "../domain/model-label.ts"
 import { isDangerousPermissionMode } from "../domain/permission-mode-label.ts"
+import { useExternalSync } from "../hooks/use-external-sync.ts"
 import { nowEpochMilliseconds } from "../utils/clock.ts"
 import { useSession } from "./session.ts"
 
@@ -97,8 +98,7 @@ function useSettingDot(mark: SettingMark): SettingDot {
   )
   const key = dotKey(mark)
 
-  // `stores` の箱は `hooks` を読めず、`useExternalSync` に載せられないので生の effect のまま。
-  useEffect(() => {
+  useExternalSync(() => {
     if (mark.kind !== "confirmed") {
       return
     }

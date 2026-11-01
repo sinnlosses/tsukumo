@@ -5,7 +5,9 @@
 //
 // アンマウント時に待機中の鍵が残っていれば、待たずにそのまま実行する（引きずったまま画面を閉じても、まだ送っていない最後の値を失わない）。
 
-import { useEffectEvent, useEffect, useRef } from "react"
+import { useEffectEvent, useRef } from "react"
+
+import { useUnmountEffect } from "./use-mount-effect.ts"
 
 export function useDebouncedCallback<Key, Value>(
   callback: (key: Key, value: Value) => void,
@@ -17,22 +19,19 @@ export function useDebouncedCallback<Key, Value>(
   // `Value` が `undefined` を取りうる型でも「ためた値が無い」と区別できる（`Map.get` の `undefined` が両方を指してしまうため）。
   const pending = useRef(new Map<Key, { readonly value: Value }>())
 
-  // `utils` の箱は `hooks` を読めず（読むと `hooks` → `utils` → `hooks` の循環になる）、`useUnmountEffect` に載せられないので生の effect のまま。
-  useEffect(() => {
-    const timersAtMount = timers.current
-    const pendingAtMount = pending.current
-    return () => {
-      for (const [key, timer] of timersAtMount) {
-        clearTimeout(timer)
-        const held = pendingAtMount.get(key)
-        if (held !== undefined) {
-          run(key, held.value)
-        }
+  useUnmountEffect(() => {
+    // Map はマウントから変わらない（`.current` は差し替えない）ので、後始末で読んでも同じもの。
+    for (const [key, timer] of timers.current) {
+      clearTimeout(timer)
+      const held = pending.current.get(key)
+      if (held !== undefined) {
+        // oxlint-disable-next-line react/rules-of-hooks -- 後始末の中で呼ぶ（docs/coding-standards/react.md）
+        run(key, held.value)
       }
-      timersAtMount.clear()
-      pendingAtMount.clear()
     }
-  }, [])
+    timers.current.clear()
+    pending.current.clear()
+  })
 
   return (key: Key, value: Value) => {
     pending.current.set(key, { value })

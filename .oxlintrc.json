@@ -155,6 +155,72 @@
                 "message": "手でメモ化しない。React Compiler に任せる（docs/coding-standards/react.md「手でメモ化しない」）"
               },
               {
+                "name": "react",
+                "importNames": ["useEffect", "useLayoutEffect", "useInsertionEffect"],
+                "message": "生の effect を書かず、src/browser/hooks/ の包み（useMountEffect・useEventListener・useExternalSync・useBeforePaintSync など）を使う（docs/coding-standards/react.md「useEffect の代わりに使うもの」）"
+              },
+              {
+                "name": "@anthropic-ai/claude-agent-sdk",
+                "message": "SDK を import するのは機能の adapter/ 直下と共有の箱 server/adapter/ 直下の sdk- で始まるファイルだけ（docs/architecture/code-placement.md）"
+              }
+            ],
+            "patterns": [
+              {
+                "group": ["node:process", "process"],
+                "importNames": ["env", "cwd"],
+                "message": "env・cwd を読むのは cli.ts と tsukumo-home.ts だけ（docs/coding-standards/error-input-and-absent-value.md「外部の入力を読む場所を1つにする」）"
+              },
+              {
+                "group": ["node:os", "os"],
+                "message": "node:os を import するのは server/adapter/tsukumo-home.ts だけ"
+              },
+              {
+                "group": ["**/tsukumo-home.ts"],
+                "importNames": ["tsukumoHomeDir"],
+                "message": "~/.tsukumo の下の置き場は tsukumoHomePath(キー) で引く。ホームの根を直に読まない"
+              },
+              {
+                "group": [
+                  "node:http",
+                  "http",
+                  "node:https",
+                  "https",
+                  "node:http2",
+                  "http2",
+                  "node:net",
+                  "net",
+                  "node:tls",
+                  "tls",
+                  "node:dgram",
+                  "dgram"
+                ],
+                "allowTypeImports": true,
+                "message": "ネットワークの口は server/view-server/adapter/server.ts だけ"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      // 生の effect を許す（包みの実装）。`overrides` は規則を丸ごと置き換えるので、`src/**` のブロックを写して effect の項だけ引く
+      "files": [
+        "src/browser/hooks/use-mount-effect.ts",
+        "src/browser/hooks/use-event-listener.ts",
+        "src/browser/hooks/use-external-sync.ts",
+        "src/browser/hooks/use-before-paint-sync.ts"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {
+                "name": "react",
+                "importNames": ["useMemo", "useCallback", "memo"],
+                "message": "手でメモ化しない。React Compiler に任せる（docs/coding-standards/react.md「手でメモ化しない」）"
+              },
+              {
                 "name": "@anthropic-ai/claude-agent-sdk",
                 "message": "SDK を import するのは機能の adapter/ 直下と共有の箱 server/adapter/ 直下の sdk- で始まるファイルだけ（docs/architecture/code-placement.md）"
               }

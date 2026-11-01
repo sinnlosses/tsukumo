@@ -21,8 +21,9 @@
 //
 // `prefers-reduced-motion: reduce` では演出ごと無効（`theme.css` の規則は CSS のアニメーションにしか効かないので、ここでも見る）。
 
-import { useEffectEvent, useLayoutEffect, useRef, useState, type RefObject } from "react"
+import { useEffectEvent, useRef, useState, type RefObject } from "react"
 
+import { useBeforePaintSync } from "../../hooks/use-before-paint-sync.ts"
 import { loadRevealSpeed, revealTimingOf } from "../reveal-speed.ts"
 import { prefersReducedMotion } from "./reduced-motion.ts"
 import { startReveal } from "./start-reveal.ts"
@@ -49,9 +50,9 @@ export function useReportReveal(
   // `<Activity mode="hidden">` は部品の状態を残したまま効果だけを外すので、戻ってきたときにこの効果がもう一度走る。
   const revealedOnce = useRef(false)
 
-  // `useLayoutEffect` でなければならない。`useEffect` は描画のあとに走るので、隠す前の本文が1フレームだけ全部見えてしまう。
+  // 描画の前に走る `useBeforePaintSync` でなければならない。描画のあとに走る同期だと、隠す前の本文が1フレームだけ全部見えてしまう。
   // 依存はどちらもマウント時に決まったきり変わらない（`<Turn>` はやり取りの番号を `key` に持つので、`turnId` が変わるときは部品ごと作り直される）。
-  useLayoutEffect(() => {
+  useBeforePaintSync(() => {
     const root = rootRef.current
     // 演出を見せる側に立った時点で知らせる（速さが「切る」・動きを減らす設定で書かなくても、見せたことにする）。
     if (revealOnMount) {

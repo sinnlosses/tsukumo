@@ -1,7 +1,8 @@
 // 画面の1秒の時計。購読者がいるあいだだけ `setInterval` を1本立て、次の秒の境目から刻む。
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 
+import { useExternalSync } from "../hooks/use-external-sync.ts"
 import { nowEpochMilliseconds } from "../utils/clock.ts"
 
 const TICK_INTERVAL_MS = 1000
@@ -17,9 +18,8 @@ let tickTimer: ReturnType<typeof setInterval> | undefined
 export function useNowWhile(active: boolean): number {
   const [now, setNow] = useState(() => nowEpochMilliseconds())
 
-  // `stores` の箱は `hooks` を読めず、`useExternalSync` に載せられないので生の effect のまま。
-  // 部品ごとに最後の刻みを持つため、共有のスナップショットの `useSyncExternalStore` にも載らない。
-  useEffect(() => {
+  // 部品ごとに最後の刻みを持つため、共有のスナップショットの `useSyncExternalStore` には載らない。
+  useExternalSync(() => {
     if (!active) {
       return undefined
     }

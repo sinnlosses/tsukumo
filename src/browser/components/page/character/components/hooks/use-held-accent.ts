@@ -6,7 +6,7 @@
 import { useState } from "react"
 import { omitBy } from "remeda"
 
-import { useDebouncedCallback } from "../../../../../utils/debounce.ts"
+import { useDebouncedCallback } from "../../../../../hooks/use-debounced-callback.ts"
 
 /** 差し色の送信をまとめる間隔。ドラッグ中の1回1回を送らず、離れてから1回にする。 */
 const ACCENT_DEBOUNCE_MS = 200

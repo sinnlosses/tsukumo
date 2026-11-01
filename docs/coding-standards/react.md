@@ -48,6 +48,7 @@ React 19。関数コンポーネントと Hooks だけを使う（クラスコ�
 ref コールバック → 包み hook。包み hook はどれも `src/browser/hooks/` にある。
 
 **生の `useEffect`・`useLayoutEffect` を呼べるのは `src/browser/hooks/` の包みの実装ファイルだけ。**
+それ以外での import は `pnpm run lint`（`.oxlintrc.json` の `no-restricted-imports`）が落とす。
 包みで足りないときは、生の `useEffect` を書かず、包みを足すか設計を直す。4類型から外れる理由のコメントは、包みの呼び出しの横に書く。
 
 `useLayoutEffect` は、描画前に DOM を測る・書かないと1フレーム崩れて見えるときだけ使う。
