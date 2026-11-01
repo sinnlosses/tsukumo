@@ -107,6 +107,8 @@ describe("summarizeCases", () => {
     usedControls: false,
     calls: 1,
     pulledCards: 0,
+    guide: "none",
+    componentNames: [],
   }
   const failed = [{ source: "schema", code: "x" }] as const
 
@@ -145,6 +147,28 @@ describe("summarizeCases", () => {
       firstCharsAverage: 101,
       retryCharsAverage: 201,
     })
+  })
+})
+
+describe("部品の選びの測定", () => {
+  test("宣言の行に角括弧があっても、配列の取り出しを狂わせない", () => {
+    const output = [
+      "DECLARE 読み手が決めること: [案] を選ぶか",
+      "DECLARE 材料の形: 2 案の比較",
+      JSON.stringify([report, section, paragraph]),
+    ].join("\n")
+
+    expect(judgeOutput(output).faults).toEqual([])
+    expect(judgeOutput(output).componentNames).toEqual(["Report", "Section", "Paragraph"])
+  })
+
+  test("出力に現れた部品の名前を重複無しで持つ。配列でない出力は空", () => {
+    expect(judgeComponents([report, section, paragraph]).componentNames).toEqual([
+      "Report",
+      "Section",
+      "Paragraph",
+    ])
+    expect(judgeOutput("配列は無い").componentNames).toEqual([])
   })
 })
 

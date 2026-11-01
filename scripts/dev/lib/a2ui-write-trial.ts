@@ -14,6 +14,7 @@ import {
   buildReportCatalogDocument,
   REPORT_COMPONENT_SCHEMAS,
 } from "../../../src/shared/report/a2ui-report-catalog.ts"
+import { stripDeclaration, usedComponentNames, type Guide } from "./a2ui-choice-trial.ts"
 import {
   CONTROL_TOPICS,
   FAULT_TOPICS,
@@ -49,6 +50,7 @@ export type TrialCondition = {
   readonly topic: TopicId
   readonly sections: number
   readonly withExample: boolean
+  readonly guide: Guide
 }
 
 /** 判定で落ちた理由 1 つ。`source` は SDK の入力検査に当たる層（schema）か構造の検査（structure）。 */
@@ -59,6 +61,7 @@ export type Judgement = {
   readonly retryText: string
   readonly sectionCount: number
   readonly usedControls: boolean
+  readonly componentNames: readonly string[]
 }
 
 export type CaseBase = {
@@ -72,6 +75,8 @@ export type CaseBase = {
   readonly calls: number
   // 最初の書き出しの前に引いた文法カードの数（`full` は引かないので 0）
   readonly pulledCards: number
+  readonly guide: Guide
+  readonly componentNames: readonly string[]
 }
 
 // 再試行しなかった結果（none）、再試行して出力が残っていない結果（unmeasured）、字数まで分かる結果（measured）
@@ -220,13 +225,14 @@ export type CatalogDocument = {
 
 /** 書き手の出力の全文を判定する。JSON の配列が取れなければ入力検査の層で落ちる。 */
 export function judgeOutput(text: string): Judgement {
-  const components = extractComponents(text)
+  const components = extractComponents(stripDeclaration(text))
   if (components === undefined) {
     return {
       faults: [{ source: "schema", code: "not-a-json-array" }],
       retryText: `Input validation error: Invalid arguments for tool ${REPORT_TOOL_NAME}: components が JSON の配列になっていない`,
       sectionCount: 0,
       usedControls: false,
+      componentNames: [],
     }
   }
   return judgeComponents(components)
@@ -369,6 +375,7 @@ function judgeComponents(components: readonly unknown[]): Judgement {
     (component) => isRecord(component) && component["component"] === "Section",
   ).length
   const usedControls = components.some(usesControl)
+  const componentNames = usedComponentNames(components)
   const issues = components.flatMap((component, index) => {
     const parsed = a2uiReportComponentSchema.safeParse(component)
     return parsed.success
@@ -384,6 +391,7 @@ function judgeComponents(components: readonly unknown[]): Judgement {
       retryText: `Input validation error: Invalid arguments for tool ${REPORT_TOOL_NAME}: ${JSON.stringify(issues)}`,
       sectionCount,
       usedControls,
+      componentNames,
     }
   }
   const structure = a2uiStructureFaults(components)
@@ -392,6 +400,7 @@ function judgeComponents(components: readonly unknown[]): Judgement {
     retryText: structure.length === 0 ? "" : a2uiValidationFailedText(structure),
     sectionCount,
     usedControls,
+    componentNames,
   }
 }
 
@@ -429,6 +438,7 @@ function condition(
     topic,
     sections,
     withExample,
+    guide: "none",
   }
 }
 

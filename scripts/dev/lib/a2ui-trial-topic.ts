@@ -1,10 +1,24 @@
 // `report` の `a2ui` の変種を AI に書かせる測定の題材（依頼と材料）。すべて架空。
 
-export type TopicId = "T1" | "T2" | "T3" | "T4" | "T5" | "T6" | "T7" | "T8"
+export type TopicId =
+  | "T1"
+  | "T2"
+  | "T3"
+  | "T4"
+  | "T5"
+  | "T6"
+  | "T7"
+  | "T8"
+  | "N1"
+  | "N2"
+  | "N3"
+  | "N4"
 
 export const PLAIN_TOPICS = ["T1", "T2"] as const
 export const CONTROL_TOPICS = ["T3", "T4"] as const
 export const FAULT_TOPICS = ["T5", "T6", "T7", "T8"] as const
+// 部品の形を指定しない題材。材料の形（2 案の比較・流れ・前後の数・状態の一覧）が部品の選びを決める
+export const NEUTRAL_TOPICS = ["N1", "N2", "N3", "N4"] as const
 
 const TOPIC_REQUESTS = {
   T1: {
@@ -52,6 +66,26 @@ const TOPIC_REQUESTS = {
     facts:
       "材料（すべて架空）: 3 つのライブラリを新しい版に上げた。上げたのは parser（2 から 3）、formatter（5 から 6）、watcher（1 から 2）。型検査と単体テスト 85 件が通った。補足は、watcher の旧い設定の名前が使えなくなったこと。",
   },
+  N1: {
+    request: "架空の保存先の検討の報告を書いて。",
+    facts:
+      "材料（すべて架空）: 設定の保存先をファイルにするか小さな DB にするかを検討した。ファイル案は、導入が要らず中身を目で読めるが、同時に書くと壊れうる。DB 案は、同時に書いても壊れないが、導入と移行の手間が要る。ファイル案を選んだ。理由は、書き込みが 1 つの処理からしか起きないと確かめたため。",
+  },
+  N2: {
+    request: "架空の依頼の受け付けから保存までの流れを説明する報告を書いて。",
+    facts:
+      "材料（すべて架空）: 依頼は受付で受け、検査に回す。検査が通れば保存に進み、保存が済んだら通知を送る。検査で落ちたら差し戻しの文を作って受付へ返す。保存に失敗したら 1 回だけ再試行し、それでも失敗すれば通知を送らず記録だけ残す。",
+  },
+  N3: {
+    request: "架空のページの表示を速くした報告を書いて。",
+    facts:
+      "材料（すべて架空）: ページの表示時間を 3.2 秒から 1.1 秒に縮めた。内訳は、画像の読み込みが 1.8 秒から 0.4 秒、スクリプトの実行が 0.9 秒から 0.4 秒、残りが 0.5 秒から 0.3 秒。単体テスト 64 件が通った。",
+  },
+  N4: {
+    request: "架空の移行作業の進み具合の報告を書いて。",
+    facts:
+      "材料（すべて架空）: 8 つのサービスを新しい基盤へ移している。完了は認証・決済・通知・検索・画像の 5 つ、作業中はメールと集計の 2 つ、未着手は管理画面の 1 つ。作業中の 2 つは来週中に終える見込みで、管理画面は仕様の確認待ち。",
+  },
 } as const satisfies Record<TopicId, { request: string; facts: string }>
 
 const FAULT_CLAUSES = {
@@ -74,6 +108,10 @@ export function requestFor(topic: TopicId, sections: number, violate: boolean): 
 
 export function isControlTopic(topic: TopicId): boolean {
   return CONTROL_TOPICS.some((candidate) => candidate === topic)
+}
+
+export function isNeutralTopic(topic: TopicId): boolean {
+  return NEUTRAL_TOPICS.some((candidate) => candidate === topic)
 }
 
 export function isFaultTopic(topic: TopicId): boolean {
