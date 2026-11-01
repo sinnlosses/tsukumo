@@ -48,8 +48,8 @@
 | `docs/architecture/screen-design/nav-work-plan-and-background-task.md` | 帯のいまの作業の後半（ワークプラン・依頼の手順の一覧・範囲・前の依頼の失敗）と、バックグラウンドタスク。                                                                            |
 | `docs/architecture/screen-design/notice-and-failure.md`                | 会話の画面の知らせの行、読み上げとフォーカス、進行の計測値の記録、失敗の塊。                                                                                                        |
 | `docs/architecture/screen-design/principle-and-type.md`                | 画面のデザインの前置き、5つの原則、書体・文字の段・行間と幅。                                                                                                                       |
-| `docs/architecture/screen-design/report-head.md`                       | レポートの頭の合図の行（検証結果・段ごとの時間）、ファイルの塊、レポートの塊のあき。                                                                                                |
+| `docs/architecture/screen-design/report-head.md`                       | レポートの頭の合図の行（検証結果・フェーズごとの時間）、ファイルの塊、レポートの塊のあき。                                                                                          |
 | `docs/architecture/screen-design/scene-behavior.md`                    | 場面ごとのキャラビューの吹き出し・表情・動きの早見表と、13.13 の採らなかった案。                                                                                                    |
 | `docs/architecture/screen-design/setting-place.md`                     | 13.6 設定の置き場所の前半。                                                                                                                                                         |
 | `docs/architecture/screen-design/token-usage-review.md`                | トークン消費の画面の「減らし方を見てもらう」区画の文言・配置・押せない条件・経過時間の書式と、結果の場面。                                                                          |
-| `docs/architecture/screen-design/work-strip.md`                        | 会話の画面のメインビューの札の頭に固定する進み具合のプログレスバー（状態のチップ・段の丸・段の吹き出し・走っている手順・手順の口）。                                                |
+| `docs/architecture/screen-design/work-strip.md`                        | 会話の画面のメインビューの札の頭に固定する進み具合のプログレスバー（状態のチップ・フェーズの丸・フェーズの吹き出し・走っている手順・手順の口）。                                    |

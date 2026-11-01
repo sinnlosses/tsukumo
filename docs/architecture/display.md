@@ -46,9 +46,9 @@
 
 #### ワークプラン
 
-- `docs/architecture/display/work-plan.md`: 入力・段の進め方・委譲中の段
-- `docs/architecture/display/work-plan-closing.md`: 段の閉じ方・閉じていない report の差し戻し・出す場所
-- `docs/architecture/display/work-plan-timing.md`: 段ごとの所要時間・段が移ったときの中間レポート・合図の行・状態
+- `docs/architecture/display/work-plan.md`: 入力・フェーズの進め方・委譲中のフェーズ
+- `docs/architecture/display/work-plan-closing.md`: フェーズの閉じ方・閉じていない report の差し戻し・出す場所
+- `docs/architecture/display/work-plan-timing.md`: フェーズごとの所要時間・フェーズが移ったときの中間レポート・合図の行・状態
 
 #### 脇の話
 

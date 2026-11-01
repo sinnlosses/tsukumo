@@ -27,8 +27,8 @@
   `MainViewReportSection`（節の欄。`id`・`heading`）/ `MainViewA2uiReport`（面の値。頭・図・節・振り返り・お願い）/
   `reportDrawsAnything`（本文に描くものがあるか）
 - **定義**: **メインビューの本文を、Markdown 1本に畳まずに分けて持つ単位**。`report` ツールの本文は、節の欄（`id` と見出しの字）と、
-  頭（結論・合図の行）・図・節・振り返り・お願いを持つ面の値を持つ。最終のときの頭は、頭に段ごとの所要時間を足したもの。節の欄の `id` は、整形して
-  図を先頭に足したあとの節の並びの位置。`report` ツール以外の本文（詳細・段のまとめ）は Markdown 1本の欄にする
+  頭（結論・合図の行）・図・節・振り返り・お願いを持つ面の値を持つ。最終のときの頭は、頭にフェーズごとの所要時間を足したもの。節の欄の `id` は、整形して
+  図を先頭に足したあとの節の並びの位置。`report` ツール以外の本文（詳細・フェーズのまとめ）は Markdown 1本の欄にする
 - **注記**: 描く側は欄の Markdown を読まず、面の値（`MainViewReportRegions.a2ui`。頭・お願い・節）から描く。描くものがあるかは `reportDrawsAnything`（`src/browser/domain/main-view/main-view-report-body.ts`）が数える。
   形の決めは `docs/architecture/adr/0031-report-body-as-regions.md`
 - **避ける言い方**: ブロック、塊（節の中の `ReportBlock` と紛れる）、パート
@@ -81,12 +81,12 @@
 - **英語識別子**: `interim`（`MainViewStep.interim`）
 - **定義**: **ターンの途中で出たレポート**。出どころは2つ: 1つのターンで `report` ツールが何度か
   呼ばれたときの最後でない呼び出し（`src/browser/domain/main-view/main-view.ts` の `selectToolReports`）と、
-  段を進めた `work_plan` の**段のまとめ**（委譲中は `phase_result` では空で、メインが同じ位置で渡す `work_plan` の `phaseSummary` が段のまとめになる。
+  フェーズを進めた `work_plan` の**フェーズのまとめ**（委譲中は `phase_result` では空で、メインが同じ位置で渡す `work_plan` の `phaseSummary` がフェーズのまとめになる。
   `docs/architecture/display.md`「ワークプラン」）。メインビューには印を付けた枠で残る。通った
   `report` はそこで SDK のターンを閉じるので、`report` からの中間レポートはバックグラウンドタスクや委譲の返却で
-  始まる続きのターンをまたいで生まれる。段のまとめからの中間レポートは1つのターンの中で生まれ、届いた
+  始まる続きのターンをまたいで生まれる。フェーズのまとめからの中間レポートは1つのターンの中で生まれ、届いた
   時点で中間と決まるのでターンが動いているあいだも出る
-- **注記**: `report` も段のまとめも無いターンには中間レポートは無い（最後の本文だけを出す）。規則は
+- **注記**: `report` もフェーズのまとめも無いターンには中間レポートは無い（最後の本文だけを出す）。規則は
   `docs/architecture/display.md` 4.2 が正典
 - **注記**: あとに別のレポートが出た中間レポートは `<details>` で畳む（`MainViewStep.mark` の `interim-folded` /
   `firstLine`）。まだ追い越されていない最後の1件だけは開いたまま。規則は `docs/architecture/display.md`
@@ -98,7 +98,7 @@
 - **英語識別子**: `progressFold`（`progressFoldSummary`）
 - **定義**: **最終レポートのある閉じたやり取りで、最終レポートの下に置く1つの畳み**。中に中間レポートを
   届いた順に1行の畳みで入れ（質問の記録も同じ並びに入る）、`<summary>` は「経過 n 件」（n は中間レポートの数）に
-  「 · 質問 m 件」と段の所要を添える。
+  「 · 質問 m 件」とフェーズの所要を添える。
   働くあいだと、最終レポートの無いまま閉じたやり取りには置かない。規則は `docs/architecture/display.md` 4.2 が正典
 - **避ける言い方**: 履歴、ログ（セリフのログ・診断ログと紛れる）
 

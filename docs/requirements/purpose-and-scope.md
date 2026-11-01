@@ -53,7 +53,7 @@
 この形を採る理由は「3. 技術制約」、**TUI を使う形から転換した経緯**と採らなかった案は
 `docs/architecture/adr/0008-sdk-instead-of-tui.md` が正典。
 
-**tsukumo が磨くのは、レポートを分かりやすく表示することと、キャラクターが魅力的に話すこと**（ユーザー決定）。作業を段に分けて測り、プログレスバーとレポートに描くのも tsukumo の機能で、段は tsukumo が定めた口
+**tsukumo が磨くのは、レポートを分かりやすく表示することと、キャラクターが魅力的に話すこと**（ユーザー決定）。作業をフェーズに分けて測り、プログレスバーとレポートに描くのも tsukumo の機能で、フェーズは tsukumo が定めた口
 （`work_plan`・`report`）で受ける。**特定のスキルの約束事には依存しない**（口と Beads の欄は
 `docs/architecture/workflow-contract.md`、境界の判断は `docs/architecture/adr/0024-no-skill-dependency.md`）。
 
