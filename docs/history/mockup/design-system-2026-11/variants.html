@@ -1,0 +1,481 @@
+<!doctype html>
+<!--
+  レポートの部品の意匠の見本（2026-11-01）。中身はすべて架空。
+  ?v=B（静かな業務紙面）・?v=C（カードの分析ノート）で案を切り替える。A は今の実物の画（同じ置き場の A-first-1440.png・A-gallery-1440.png）。
+  窓の幅はレポートの列の幅に合わせて撮る（1440 の画面で約 800px、1920 で約 1280px、狭い画面は 390px）。
+-->
+<html lang="ja" data-v="B">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>レポートの部品の意匠の見本</title>
+<script>
+  const v = new URLSearchParams(location.search).get("v")
+  if (v === "B" || v === "C") document.documentElement.dataset.v = v
+</script>
+<style>
+:root {
+  color-scheme: dark;
+  --ground: #191720;
+  --surface: #221f2b;
+  --ink: #e8e3ea;
+  --accent: #f2b0a0;
+  --ink-quiet: color-mix(in srgb, var(--ink) 60%, transparent);
+  --ink-soft: color-mix(in srgb, var(--ink) 72%, transparent);
+  --ink-bright: #f7f6f8;
+  --rule: color-mix(in srgb, var(--surface), var(--ink) 32%);
+  --rule-soft: color-mix(in srgb, var(--surface), var(--ink) 12%);
+  --rule-quiet: color-mix(in srgb, var(--surface), var(--ink) 6%);
+  --surface-raised: color-mix(in srgb, var(--ink) 10%, transparent);
+  --surface-accent: color-mix(in srgb, var(--surface), var(--accent) 12%);
+  --code-ground: color-mix(in srgb, var(--ground) 70%, black);
+  --ok: #7ee081;
+  --warn: #e3c766;
+  --ng: #f2a0a0;
+  --info: #9cc1ee;
+  --ask: #c7aef0;
+  --s1: #87bafd;
+  --s2: #f49f81;
+  --diff-add: #203524;
+  --diff-del: #372120;
+  --font-body: system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* 案ごとに動かすつまみ */
+  --body-size: 15px;
+  --body-line: 26px;
+  /* 本文 42 字・広 63 字を本文の字の大きさで数える（見出しの字で数えない） */
+  --text-width: calc(42 * var(--body-size));
+  --wide-width: min(100%, calc(63 * var(--body-size)));
+  --gap-part: 24px;
+  --gap-section: 40px;
+  --chip-radius: 4px;
+  --chip-tint: 13%;
+}
+html[data-v="C"] {
+  --body-size: 16px;
+  --body-line: 24px;
+  --gap-part: 20px;
+  --gap-section: 44px;
+  --chip-radius: 999px;
+  --chip-tint: 22%;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--surface);
+  color: var(--ink);
+  font: var(--body-size) / var(--body-line) var(--font-body);
+  font-feature-settings: "palt" 0;
+  -webkit-font-smoothing: antialiased;
+}
+.page { padding: 20px 20px 64px; }
+.scene-mark {
+  margin: 56px 0 20px;
+  padding: 6px 10px;
+  border: 1px dashed var(--rule);
+  border-radius: 6px;
+  color: var(--ink-quiet);
+  font: 12px/1.5 var(--font-mono);
+}
+.scene-mark:first-child { margin-top: 0; }
+.variant-mark { color: var(--ink-quiet); font: 12px/1.5 var(--font-mono); margin-bottom: 16px; }
+
+p { margin: 0; max-width: var(--text-width); }
+code { font: 0.86em/1 var(--font-mono); background: var(--surface-raised); padding: 2px 5px; border-radius: 4px; }
+.report .part { margin-top: var(--gap-part); }
+.wide { max-width: var(--wide-width); }
+.num { font-variant-numeric: tabular-nums; }
+
+/* ── 状態の札（全部品で共通） ── */
+.st {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 0 8px; border-radius: var(--chip-radius);
+  font-size: 13px; line-height: 22px; font-weight: 600; white-space: nowrap;
+  color: var(--tone, var(--ink-soft));
+  background: color-mix(in srgb, var(--tone, var(--ink)) var(--chip-tint), transparent);
+}
+.st.ok { --tone: var(--ok); }
+.st.warn { --tone: var(--warn); }
+.st.ng { --tone: var(--ng); }
+.st.info { --tone: var(--info); }
+.st.ask { --tone: var(--ask); }
+.st.neutral { --tone: var(--ink); color: var(--ink-soft); background: var(--surface-raised); }
+
+/* ── 頭 ── */
+.req { color: var(--ink-quiet); font-size: 13px; line-height: 20px; }
+.req b { font-weight: 500; margin-right: 12px; }
+.task-line { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin-top: 16px; }
+.task-id { white-space: nowrap; font: 12px/20px var(--font-mono); color: var(--ink-soft); border: 1px solid var(--rule-soft); border-radius: 4px; padding: 0 6px; }
+.task-name { margin: 0; font-size: 15px; line-height: 22px; font-weight: 600; color: var(--ink); }
+.conclusion { margin-top: 12px; }
+.conclusion .c1 { font-size: 21px; line-height: 32px; font-weight: 700; color: var(--ink-bright); max-width: 32em; letter-spacing: 0.01em; }
+.check-row > .st { align-self: start; justify-self: start; }
+.conclusion .c2 { margin-top: 4px; color: var(--ink-soft); }
+.kf { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
+.kf-tile { min-width: 132px; padding: 10px 14px 12px; border: 1px solid var(--rule-quiet); border-radius: 8px; }
+.kf-value { display: flex; align-items: baseline; gap: 8px; font-size: 26px; line-height: 32px; font-weight: 700; color: var(--ink-bright); font-variant-numeric: tabular-nums; }
+.kf-before { font-size: 14px; font-weight: 500; color: var(--ink-quiet); }
+.kf-total { font-size: 14px; font-weight: 500; color: var(--ink-quiet); }
+.kf-label { margin-top: 2px; font-size: 13px; line-height: 18px; color: var(--ink-soft); }
+.kf-bar { height: 4px; margin-top: 8px; border-radius: 2px; background: var(--surface-raised); overflow: hidden; }
+.kf-bar i { display: block; height: 100%; background: var(--s1); }
+.checks { margin-top: 16px; max-width: var(--text-width); border-top: 1px solid var(--rule-quiet); }
+.checks-sum { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 0; font-size: 14px; color: var(--ink-soft); }
+.checks-sum .fig { margin-left: 4px; font: 13px var(--font-mono); color: var(--ink-quiet); }
+.check-row { display: grid; grid-template-columns: 9em 1fr; gap: 12px; padding: 10px 0; border-top: 1px solid var(--rule-quiet); font-size: 14px; line-height: 22px; }
+.check-row .t { color: var(--ink-bright); font-weight: 600; }
+.check-row .d { color: var(--ink-soft); }
+.favor { margin-top: 16px; max-width: var(--text-width); padding: 10px 14px; border-left: 3px solid var(--accent); background: var(--surface-accent); border-radius: 0 6px 6px 0; }
+.favor .lb { font-size: 13px; font-weight: 600; color: var(--accent); margin-right: 8px; }
+
+/* ── セクションの見出し ── */
+h2 {
+  margin: var(--gap-section) 0 0; max-width: var(--wide-width);
+  padding-bottom: 8px; border-bottom: 1px solid var(--rule-quiet);
+  font-size: 21px; line-height: 1.4; font-weight: 700; color: var(--ink-bright); letter-spacing: 0.01em;
+}
+.report h2 + .part { margin-top: 16px; }
+
+/* ── 図表の題（上・左揃え） ── */
+.cap { display: flex; gap: 10px; align-items: baseline; margin-bottom: 10px; font-size: 14px; line-height: 20px; color: var(--ink-soft); }
+.cap .n { flex: none; font-size: 13px; font-weight: 600; color: var(--ink-quiet); font-variant-numeric: tabular-nums; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 10px; font-size: 12px; color: var(--ink-quiet); }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+
+/* ── 表 ── */
+.tbl-scroll { overflow-x: auto; }
+table { border-collapse: collapse; font-size: 14px; line-height: 20px; }
+th { padding: 6px 20px 8px 0; text-align: left; font-size: 13px; font-weight: 500; color: var(--ink-soft); border-bottom: 1px solid var(--rule); white-space: nowrap; }
+td { padding: 9px 20px 9px 0; border-bottom: 1px solid var(--rule-quiet); vertical-align: top; min-width: 4em; }
+th:last-child, td:last-child { padding-right: 0; }
+th.r, td.r { text-align: right; font-variant-numeric: tabular-nums; }
+td .from { color: var(--ink-quiet); text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--ink) 30%, transparent); margin-right: 6px; }
+td .to { color: var(--ink-bright); font-weight: 600; }
+
+/* ── 候補・確度 ── */
+.opts, .claims { max-width: var(--wide-width); }
+.opt, .claim { display: grid; grid-template-columns: 6.5em 1fr; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--rule-quiet); }
+.opt:first-of-type, .claim:first-of-type { border-top: 1px solid var(--rule-quiet); }
+.opt .name, .claim .name { color: var(--ink-bright); font-weight: 600; }
+.opt .reason, .claim .basis { color: var(--ink-soft); font-size: 14px; line-height: 22px; }
+.claim .basis b { font-weight: 500; color: var(--ink-quiet); margin-right: 6px; font-size: 12px; }
+.opt.reject .name { color: var(--ink-soft); font-weight: 500; }
+
+/* ── 名前と値の対（DescriptionList） ── */
+.dlist { display: grid; grid-template-columns: minmax(7em, max-content) 1fr; max-width: var(--text-width); margin: 0; }
+.dlist dt, .dlist dd { margin: 0; padding: 8px 0; border-bottom: 1px solid var(--rule-quiet); }
+.dlist dt { padding-right: 24px; color: var(--ink-soft); font-size: 14px; }
+.dlist dd { color: var(--ink); }
+.dlist dt:first-of-type, .dlist dt:first-of-type + dd { border-top: 1px solid var(--rule-quiet); }
+
+/* ── 作業の手順の行（Trace） ── */
+.trace { list-style: none; margin: 0; padding: 0; max-width: var(--wide-width); }
+.trace li { position: relative; display: grid; grid-template-columns: 22px 1fr auto; column-gap: 10px; padding: 7px 0; }
+.trace li::before { content: ""; position: absolute; left: 10px; top: 27px; bottom: -7px; width: 1px; background: var(--rule-soft); }
+.trace li:last-child::before { display: none; }
+.trace .ic { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 700; color: var(--tone); background: color-mix(in srgb, var(--tone) 16%, var(--surface)); position: relative; }
+.trace .ok .ic { --tone: var(--ok); }
+.trace .ng .ic { --tone: var(--ng); }
+.trace .todo .ic { --tone: var(--ink-quiet); background: var(--surface); border: 1px dashed var(--rule); }
+.trace .title { color: var(--ink); }
+.trace .ng .title { color: var(--ink-bright); font-weight: 600; }
+.trace .desc { color: var(--ink-quiet); font: 12px/22px var(--font-mono); white-space: nowrap; }
+.trace details { grid-column: 2 / 4; }
+.trace summary { cursor: pointer; color: var(--ink-soft); font-size: 13px; list-style: none; }
+.trace summary::before { content: "›"; display: inline-block; margin-right: 6px; transition: transform .12s; }
+.trace details[open] summary::before { transform: rotate(90deg); }
+.trace pre { margin: 6px 0 2px; padding: 8px 12px; background: var(--code-ground); border-radius: 6px; font: 12px/18px var(--font-mono); color: var(--ink-soft); overflow-x: auto; }
+
+/* ── 手順（ItemList flow） ── */
+.flow { list-style: none; margin: 0; padding: 0; max-width: var(--text-width); counter-reset: f; }
+.flow li { position: relative; padding: 0 0 16px 36px; counter-increment: f; }
+.flow li::before { content: counter(f); position: absolute; left: 0; top: 2px; width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--rule); display: grid; place-items: center; font-size: 12px; line-height: 1; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.flow li::after { content: ""; position: absolute; left: 11px; top: 28px; bottom: 2px; width: 1px; background: var(--rule-soft); }
+.flow li:last-child::after { display: none; }
+.flow .lb { color: var(--ink-bright); font-weight: 600; margin-right: 8px; }
+.flow .src { display: block; font: 12px/20px var(--font-mono); color: var(--ink-quiet); }
+.flow .br { display: block; margin-top: 4px; font-size: 14px; color: var(--ink-soft); }
+
+/* ── 注意書き（Note） ── */
+.note { max-width: var(--text-width); padding: 10px 14px; border-left: 3px solid var(--tone); background: color-mix(in srgb, var(--tone) 7%, transparent); border-radius: 0 6px 6px 0; }
+.note .lb { display: block; font-size: 13px; line-height: 20px; font-weight: 600; color: var(--tone); }
+.note.warn { --tone: var(--warn); }
+.note.info { --tone: var(--info); }
+.note.ng { --tone: var(--ng); }
+
+/* ── 引用 ── */
+.quote { max-width: var(--text-width); margin: 0; padding: 2px 0 2px 16px; border-left: 2px solid var(--rule); }
+.quote cite { display: block; margin-top: 4px; font-style: normal; font-size: 13px; color: var(--ink-quiet); }
+
+/* ── 見比べ・前後 ── */
+.cmp { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; max-width: var(--wide-width); }
+.cmp-side { padding: 12px 14px; border: 1px solid var(--rule-soft); border-radius: 8px; }
+.cmp-side h4 { margin: 0 0 6px; font-size: 14px; color: var(--ink-bright); }
+.cmp-side ul { margin: 0; padding-left: 1.1em; font-size: 14px; line-height: 22px; color: var(--ink-soft); }
+.ba { display: grid; grid-template-columns: 1fr 24px 1fr; align-items: stretch; gap: 8px; max-width: var(--wide-width); }
+.ba .arrow { display: grid; place-items: center; color: var(--ink-quiet); }
+.ba .side-lb { font-size: 12px; font-weight: 600; color: var(--ink-quiet); margin-bottom: 6px; }
+
+/* ── コード（Code Block の機能） ── */
+.code { max-width: var(--wide-width); border: 1px solid var(--rule-soft); border-radius: 8px; overflow: hidden; background: var(--code-ground); }
+.code-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 6px 12px; border-bottom: 1px solid var(--rule-quiet); font: 12px/20px var(--font-mono); color: var(--ink-soft); }
+.code-head .copy { font-family: var(--font-body); color: var(--ink-quiet); }
+.code pre { margin: 0; padding: 8px 0; font: 13px/20px var(--font-mono); overflow-x: auto; }
+.code .l { display: grid; grid-template-columns: 3.5ch 2ch 1fr; padding-right: 16px; }
+.code .l .ln { text-align: right; color: color-mix(in srgb, var(--ink) 35%, transparent); padding-right: 12px; user-select: none; }
+.code .l .sg { color: var(--ink-quiet); }
+.code .l.add { background: var(--diff-add); }
+.code .l.add .sg { color: var(--ok); }
+.code .l.del { background: var(--diff-del); }
+.code .l.del .sg { color: var(--ng); }
+.code .kw { color: #f49f81; } .code .id { color: #9cc1ee; } .code .nm { color: #aec26f; } .code .cm { color: var(--ink-quiet); }
+
+/* ── 図（Graph） ── */
+.fig-box { max-width: var(--wide-width); }
+svg { display: block; max-width: 100%; height: auto; overflow: visible; }
+.node { fill: var(--surface-raised); stroke: var(--rule-soft); stroke-width: 1; }
+.node.em { stroke: var(--s1); fill: color-mix(in srgb, var(--s1) 12%, transparent); }
+.node-t { fill: var(--ink); font: 13px var(--font-body); text-anchor: middle; dominant-baseline: central; }
+.edge { fill: none; stroke: var(--ink-quiet); stroke-width: 1.25; }
+.edge-t { fill: var(--ink-soft); font: 12px var(--font-body); text-anchor: middle; paint-order: stroke; stroke: var(--surface); stroke-width: 4px; }
+.arrowhead { fill: var(--ink-quiet); }
+
+/* ── グラフ（Chart） ── */
+.grid-line { stroke: var(--rule-quiet); stroke-width: 1; }
+.axis-t { fill: var(--ink-quiet); font: 12px var(--font-body); }
+.axis-t.r { text-anchor: end; }
+.axis-t.c { text-anchor: middle; }
+.bar { fill: color-mix(in srgb, var(--ink) 26%, transparent); }
+.bar.em { fill: var(--s1); }
+.val-t { fill: var(--ink-soft); font: 600 12px var(--font-body); text-anchor: middle; font-variant-numeric: tabular-nums; }
+.val-t.em { fill: var(--ink-bright); }
+
+/* ── 時間（Timeline） ── */
+.tl { max-width: var(--wide-width); }
+.tl-scale, .tl-row { display: grid; grid-template-columns: 5.5em 1fr; gap: 12px; align-items: center; }
+.tl-ticks { position: relative; height: 18px; font-size: 12px; color: var(--ink-quiet); font-variant-numeric: tabular-nums; }
+.tl-ticks span { position: absolute; transform: translateX(-50%); }
+.tl-row { height: 30px; border-top: 1px solid var(--rule-quiet); }
+.tl-name { font-size: 13px; color: var(--ink-soft); }
+.tl-track { position: relative; height: 100%; }
+.tl-bar { position: absolute; top: 10px; height: 10px; border-radius: 5px; background: color-mix(in srgb, var(--ink) 30%, transparent); }
+.tl-bar.em { background: var(--s1); }
+.tl-bar.extra { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--warn) 70%, transparent) 0 3px, transparent 3px 6px); }
+.tl-event { position: absolute; top: 2px; bottom: 2px; width: 0; border-left: 1px dashed var(--rule); }
+.tl-event span { position: absolute; left: 4px; top: -15px; font-size: 12px; line-height: 14px; color: var(--ink-quiet); white-space: nowrap; }
+.tl-ticks span:last-child { transform: translateX(-100%); }
+.tl-ticks span:first-child { transform: none; }
+
+/* ════ 案 C: カードの分析ノート ════ */
+html[data-v="C"] h2 { border-bottom: 0; padding-bottom: 0; font-size: 20px; }
+html[data-v="C"] .report h2 + .part { margin-top: 14px; }
+html[data-v="C"] .card {
+  max-width: var(--wide-width);
+  border: 1px solid var(--rule-quiet);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--ink) 4%, transparent);
+  overflow: hidden;
+}
+html[data-v="C"] .card > .cap { margin: 0; padding: 10px 16px; border-bottom: 1px solid var(--rule-quiet); color: var(--ink); font-weight: 600; }
+html[data-v="C"] .card > .cap .n { padding: 0 8px; border-radius: 999px; background: var(--surface-raised); color: var(--ink-soft); }
+html[data-v="C"] .card > .body { padding: 14px 16px 16px; }
+html[data-v="C"] .card table { width: 100%; }
+html[data-v="C"] .card th { background: var(--surface-raised); padding-left: 12px; border-bottom: 0; }
+html[data-v="C"] .card td { padding-left: 12px; }
+html[data-v="C"] .card .body.flush { padding: 0 0 4px; }
+html[data-v="C"] .kf-tile { min-width: 160px; padding: 14px 18px 16px; border-radius: 12px; background: color-mix(in srgb, var(--ink) 5%, transparent); }
+html[data-v="C"] .kf-value { font-size: 32px; line-height: 38px; }
+html[data-v="C"] .conclusion { padding: 14px 18px; border-radius: 12px; background: color-mix(in srgb, var(--ink) 5%, transparent); border: 1px solid var(--rule-quiet); max-width: var(--wide-width); }
+html[data-v="C"] .note { border-left-width: 1px; border: 1px solid color-mix(in srgb, var(--tone) 40%, transparent); border-radius: 12px; }
+html[data-v="C"] .node { rx: 10; }
+html[data-v="C"] .bar { fill: color-mix(in srgb, var(--s1) 45%, transparent); }
+html[data-v="C"] .bar.em { fill: var(--s1); }
+html[data-v="C"] .cmp-side, html[data-v="C"] .code { border-radius: 12px; }
+html[data-v="C"] .opt, html[data-v="C"] .claim { padding-left: 12px; padding-right: 12px; }
+
+/* ── 狭い幅 ── */
+@media (max-width: 560px) {
+  .page { padding: 16px 14px 48px; }
+  .cmp, .ba { grid-template-columns: 1fr; }
+  .ba .arrow { transform: rotate(90deg); height: 20px; }
+  .dlist { grid-template-columns: 1fr; }
+  .dlist dt { padding-bottom: 0; border-bottom: 0; }
+  .dlist dd { padding-top: 2px; }
+  .check-row, .opt, .claim { grid-template-columns: 1fr; gap: 4px; }
+  .trace li { grid-template-columns: 22px 1fr; }
+  .trace .desc { grid-column: 2; white-space: normal; }
+  .conclusion .c1 { font-size: 17px; line-height: 27px; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+<div class="variant-mark" id="vm"></div>
+<script>document.getElementById("vm").textContent = document.documentElement.dataset.v === "C" ? "案 C カードの分析ノート" : "案 B 静かな業務紙面"</script>
+
+<!-- ═════════ 場面1: 短い作業 ═════════ -->
+<div class="scene-mark">場面 1 短い作業のレポート（架空）</div>
+<article class="report">
+  <div class="req"><b>依頼</b>取り込みが途中で切れるのを直して（架空の依頼）</div>
+  <div class="task-line"><span class="task-id">T-042</span><h1 class="task-name">取り込みの上限を設定ファイルへ移す</h1><span class="st ok">✓ 完了</span></div>
+  <div class="conclusion">
+    <p class="c1">取り込みが 120 件すべて最後まで読めるようになった。</p>
+    <p class="c2">上限を 30 から 60 に上げ、設定ファイルで変えられるようにした。既定の読み込み順は変えていない。</p>
+  </div>
+  <div class="kf">
+    <div class="kf-tile"><div class="kf-value"><span class="kf-before">8 →</span>0</div><div class="kf-label">切れた件数</div></div>
+    <div class="kf-tile"><div class="kf-value">120<span class="kf-total">/ 120</span></div><div class="kf-label">読めた件数</div><div class="kf-bar"><i style="width:100%"></i></div></div>
+    <div class="kf-tile"><div class="kf-value">60</div><div class="kf-label">新しい上限</div></div>
+  </div>
+  <div class="checks">
+    <div class="checks-sum"><span class="st ok">✓ 3件 通った</span><span class="st warn">? 1件 確かめていない</span><span class="fig">単体 3152・E2E 111</span></div>
+    <div class="check-row"><span class="st warn">? 確かめていない</span><div><div class="t">720×900 の窓で取り込みの画面を見る</div><div class="d">確かめ方: 窓を 720 幅にして、件数の表示が折り返さずに出ることを見る</div></div></div>
+  </div>
+
+  <h2>上限は定数から設定ファイルへ移った</h2>
+  <div class="part card fig-box wide">
+    <div class="cap"><span class="n">表 1</span>上限を 30 から 60 にすると、切れる件数が 8 から 0 に減る</div>
+    <div class="body flush tbl-scroll">
+      <table>
+        <thead><tr><th>場所</th><th class="r">上限</th><th class="r">切れた件数</th><th>状態</th></tr></thead>
+        <tbody>
+          <tr><td><code>intake.ts</code></td><td class="r"><span class="from">30</span><span class="to">60</span></td><td class="r"><span class="from">8</span><span class="to">0</span></td><td><span class="st ok">✓ 切れない</span></td></tr>
+          <tr><td><code>config.toml</code></td><td class="r">60</td><td class="r">0</td><td><span class="st ok">✓ 切れない</span></td></tr>
+          <tr><td>環境変数</td><td class="r">なし</td><td class="r">なし</td><td><span class="st neutral">– 読まない</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="part code">
+    <div class="code-head"><span>src/intake/intake.ts</span><span class="copy">コピー</span></div>
+    <pre><span class="l"><span class="ln">40</span><span class="sg"></span><span><span class="kw">import</span> { <span class="id">readConfig</span> } <span class="kw">from</span> <span class="nm">"./config.ts"</span></span></span><span class="l del"><span class="ln">41</span><span class="sg">−</span><span><span class="kw">const</span> <span class="id">LIMIT</span> = <span class="nm">30</span></span></span><span class="l add"><span class="ln">41</span><span class="sg">+</span><span><span class="kw">const</span> <span class="id">LIMIT</span> = <span class="id">readConfig</span>().<span class="id">intakeLimit</span> <span class="cm">// 既定は 60</span></span></span><span class="l"><span class="ln">42</span><span class="sg"></span><span><span class="kw">export function</span> <span class="id">intake</span>(rows) {</span></span></pre>
+  </div>
+
+  <h2>原因は3手で絞った</h2>
+  <ol class="part trace">
+    <li class="ok"><span class="ic">✓</span><span class="title">設定の読み込みの順を確かめた</span><span class="desc">config.ts:42</span></li>
+    <li class="ng"><span class="ic">✕</span><span class="title">120 件で取り込みを打ち、8 件が切れた</span><span class="desc">2.1 秒</span>
+      <details open><summary>出力を見る</summary><pre>intake: read 30 / 38 rows (limit reached)
+intake: read 30 / 34 rows (limit reached)</pre></details></li>
+    <li class="ok"><span class="ic">✓</span><span class="title">上限を 60 にして打ち直し、0 件になった</span><span class="desc">+3 −1 行</span></li>
+    <li class="todo"><span class="ic">○</span><span class="title">720 幅の画面で件数の表示を見る</span><span class="desc">未着手</span></li>
+  </ol>
+</article>
+
+<!-- ═════════ 場面2: 長い調べもの ═════════ -->
+<div class="scene-mark">場面 2 長い調べもののレポート（架空）</div>
+<article class="report">
+  <div class="req"><b>依頼</b>取り込みの待ち時間がどこで延びているか調べて（架空の依頼）</div>
+  <div class="conclusion">
+    <p class="c1">待ち時間の 7 割は、検査の段で同じファイルを 3 回読むことで延びていた。</p>
+    <p class="c2">読み込みを1回にまとめれば、3日目の 20 秒がさらに半分になる見込み（推測）。</p>
+  </div>
+
+  <h2>前提にした環境</h2>
+  <dl class="part dlist">
+    <dt>計測した版</dt><dd><code>v2.4.1</code>（架空）</dd>
+    <dt>入力</dt><dd>120 件・合計 38 MB</dd>
+    <dt>計り方</dt><dd>同じ入力で3日続けて打ち、段ごとの秒を記録の出力から読んだ</dd>
+    <dt>変えていないもの</dt><dd>上限・並列の数・ディスク</dd>
+  </dl>
+
+  <h2>待ち時間は3日で半分になった</h2>
+  <div class="part card fig-box">
+    <div class="cap"><span class="n">図 1</span>架空の待ち時間は 40 秒から 20 秒に減った</div>
+    <div class="body">
+      <svg viewBox="0 0 560 220" width="560" role="img" aria-label="日ごとの待ち時間">
+        <line class="grid-line" x1="40" x2="560" y1="20" y2="20"/><line class="grid-line" x1="40" x2="560" y1="70" y2="70"/><line class="grid-line" x1="40" x2="560" y1="120" y2="120"/><line class="grid-line" x1="40" x2="560" y1="170" y2="170"/>
+        <text class="axis-t r" x="30" y="24">40</text><text class="axis-t r" x="30" y="74">30</text><text class="axis-t r" x="30" y="124">20</text><text class="axis-t r" x="30" y="174">10</text><text class="axis-t r" x="30" y="214">0 秒</text>
+        <line x1="40" x2="560" y1="210" y2="210" stroke="var(--rule)"/>
+        <rect class="bar" x="100" y="20" width="56" height="190" rx="3"/><text class="val-t" x="128" y="12">40</text>
+        <rect class="bar" x="272" y="67.5" width="56" height="142.5" rx="3"/><text class="val-t" x="300" y="60">30</text>
+        <rect class="bar em" x="444" y="115" width="56" height="95" rx="3"/><text class="val-t em" x="472" y="107">20</text>
+        <text class="axis-t c" x="128" y="230">1日目</text><text class="axis-t c" x="300" y="230">2日目</text><text class="axis-t c" x="472" y="230">3日目</text>
+      </svg>
+    </div>
+  </div>
+
+  <div class="part card fig-box">
+    <div class="cap"><span class="n">図 2</span>依頼は検査で2つに分かれ、落ちたものだけ差し戻される</div>
+    <div class="body">
+      <svg viewBox="0 0 560 150" width="560" role="img" aria-label="依頼の流れ">
+        <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="arrowhead" d="M0 0 L10 5 L0 10 z"/></marker></defs>
+        <rect class="node" x="0" y="52" width="104" height="44" rx="6"/><text class="node-t" x="52" y="74">受付</text>
+        <rect class="node em" x="200" y="52" width="104" height="44" rx="6"/><text class="node-t" x="252" y="74">検査</text>
+        <rect class="node" x="420" y="8" width="120" height="44" rx="6"/><text class="node-t" x="480" y="30">保存</text>
+        <rect class="node" x="420" y="98" width="120" height="44" rx="6"/><text class="node-t" x="480" y="120">差し戻し</text>
+        <path class="edge" d="M104 74 H198" marker-end="url(#ah)"/><text class="edge-t" x="151" y="66">渡す</text>
+        <path class="edge" d="M304 66 C360 66 360 30 418 30" marker-end="url(#ah)"/><text class="edge-t" x="362" y="38">通ったもの</text>
+        <path class="edge" d="M304 82 C360 82 360 120 418 120" marker-end="url(#ah)"/><text class="edge-t" x="362" y="118">落ちたもの</text>
+      </svg>
+    </div>
+  </div>
+
+  <div class="part card fig-box">
+    <div class="cap"><span class="n">図 3</span>検査の段が予定より 2 分延びた</div>
+    <div class="body">
+      <div class="tl">
+        <div class="tl-scale"><span></span><div class="tl-ticks"><span style="left:0%">10:00</span><span style="left:25%">10:03</span><span style="left:50%">10:06</span><span style="left:75%">10:09</span><span style="left:100%">10:12</span></div></div>
+        <div class="tl-row"><span class="tl-name">準備</span><div class="tl-track"><i class="tl-bar" style="left:0%;width:30%"></i></div></div>
+        <div class="tl-row"><span class="tl-name">検査</span><div class="tl-track"><i class="tl-bar em" style="left:30%;width:42%"></i><i class="tl-bar extra" style="left:72%;width:17%"></i><span class="tl-event" style="left:72%"><span>再試</span></span></div></div>
+        <div class="tl-row"><span class="tl-name">保存</span><div class="tl-track"><i class="tl-bar" style="left:89%;width:11%"></i></div></div>
+      </div>
+      <div class="legend"><span><i style="background:var(--s1)"></i>見る段</span><span><i style="background:repeating-linear-gradient(135deg,var(--warn) 0 2px,transparent 2px 4px)"></i>延びた分</span></div>
+    </div>
+  </div>
+
+  <h2>根拠と確かめていないこと</h2>
+  <div class="part claims">
+    <div class="claim"><span><span class="st ok">✓ 確定</span></span><div><div class="name">検査は同じファイルを 3 回読む</div><div class="basis"><b>根拠</b><code>check.ts:88</code>・<code>check.ts:131</code>・<code>check.ts:204</code></div></div></div>
+    <div class="claim"><span><span class="st warn">~ 推測</span></span><div><div class="name">1回にまとめると 20 秒が 10 秒前後になる</div><div class="basis"><b>確かめ方</b>読み込みを1回にした枝で同じ入力を3回打つ</div></div></div>
+  </div>
+  <blockquote class="part quote"><p>同じ入力を読む処理は、最初の1回の結果を使い回すこと。</p><cite>架空の設計メモ 第3章</cite></blockquote>
+  <div class="part note info"><span class="lb">ⓘ 結論</span><p>直す前に、3回の読み込みがそれぞれ別の版のファイルを見ていないかを確かめる。</p></div>
+</article>
+
+<!-- ═════════ 場面3: 判断 ═════════ -->
+<div class="scene-mark">場面 3 判断のレポート（架空）</div>
+<article class="report">
+  <div class="req"><b>依頼</b>目盛りの置き場をどこにするか決めて（架空の依頼）</div>
+  <div class="conclusion">
+    <p class="c1">目盛りは設定ファイルへ移す案を採る。</p>
+    <p class="c2">起こし直すだけで変わり、読む場所が1つで済む。環境変数での上書きは次の作業に回す。</p>
+  </div>
+  <div class="favor"><span class="lb">お願い</span>環境変数での上書きを足すかを、次の依頼で決めてほしい。</div>
+
+  <h2>設定ファイルへ移す案を採った</h2>
+  <div class="part opts">
+    <div class="opt"><span><span class="st ok">✓ 採る</span></span><div><div class="name">設定ファイル</div><div class="reason">起こし直すだけで変わり、<code>a.ts</code> の読み口が1つで済む</div></div></div>
+    <div class="opt"><span><span class="st warn">△ 検討</span></span><div><div class="name">環境変数</div><div class="reason">設定ファイルの上書きとしてなら足せる</div></div></div>
+    <div class="opt reject"><span><span class="st neutral">– 採らない</span></span><div><div class="name">定数のまま</div><div class="reason">変えるたびに組み立て直しが要る</div></div></div>
+  </div>
+  <div class="part card fig-box">
+    <div class="cap"><span class="n">表 2</span>設定ファイルは書き出しと読み込みの両方に効く</div>
+    <div class="body flush tbl-scroll">
+      <table>
+        <thead><tr><th>機能</th><th>定数</th><th>設定ファイル</th><th>環境変数</th></tr></thead>
+        <tbody>
+          <tr><td>書き出し</td><td><span class="st ng">✕ 不可</span></td><td><span class="st ok">✓ 可</span></td><td><span class="st warn">! 要注意</span></td></tr>
+          <tr><td>読み込み</td><td><span class="st ok">✓ 可</span></td><td><span class="st ok">✓ 可</span></td><td><span class="st neutral">– 該当なし</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="part note warn"><span class="lb">⚠ 注意</span><p>設定ファイルを増やすなら、読み込む順番を1か所に決めておく。</p></div>
+
+  <h2>移したあとの手順</h2>
+  <div class="part ba">
+    <div class="cmp-side"><div class="side-lb">前</div><ul><li>定数を書き換える</li><li>組み立て直して配る</li></ul></div>
+    <div class="arrow">→</div>
+    <div class="cmp-side"><div class="side-lb">後</div><ul><li><code>config.toml</code> を書き換える</li><li>起こし直す</li></ul></div>
+  </div>
+  <ol class="part flow">
+    <li><span class="lb">受付</span>依頼を1件ずつ受け取る<span class="src">intake.ts</span></li>
+    <li><span class="lb">検査</span>形を確かめる<span class="br"><span class="st warn">崩れあり</span> → 差し戻し</span></li>
+    <li><span class="lb">保存</span>通ったものだけを書く</li>
+  </ol>
+</article>
+</div>
+</body>
+</html>
