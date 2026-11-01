@@ -20,7 +20,7 @@
 
 ### 診断ログ
 
-- **英語識別子**: `diagnostic`（機能は `diagnostic`、記録の1行は `DiagnosticRecord`、書き口は `DiagnosticLog`）
+- **英語識別子**: `diagnostic`（機能は `diagnostic`、記録の1行は `DiagnosticRecord`、書き込みの型は `DiagnosticLog`）
 - **定義**: 不具合の経緯をあとから追うために手元に残す足跡。`~/.tsukumo/diagnostic/<日付>.jsonl` の1本に、
   流れ（`flow`）ごとの行を積む。流れは、畳んだ `SessionEvent` の足跡（種類・時刻・駆動の代）、
   ブラウザの例外の足跡（拾った経路・`error.name`・スタックの先頭数フレームの出どころと行・列）、
@@ -36,7 +36,7 @@
 
 ### 使い捨ての問い合わせの記録
 
-- **英語識別子**: `throwawayQuery`（記録の1行は `ThrowawayQueryRecord`、1回ぶんは `ThrowawayQueryFootprint`、書き口は `ThrowawayQueryRecorder`）
+- **英語識別子**: `throwawayQuery`（記録の1行は `ThrowawayQueryRecord`、1回ぶんは `ThrowawayQueryFootprint`、書き込みの型は `ThrowawayQueryRecorder`）
 - **定義**: 会話とは別に起こす1回限りの `query()`（日記・定着・おすすめのカード・迎えの挨拶・反応・キャラ生成・見直し・提案の実行）の
   回数と費用を追うために手元に残す数。`~/.tsukumo/throwaway-query/<日付>.jsonl` に、`query()` 1回につき1行を積む
 - **注記**: 入るのは種類・開始の時刻・所要・入出力トークン・結果の種類だけで、依頼の文面・指示文・応答は入らない。

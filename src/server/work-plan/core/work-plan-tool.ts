@@ -118,7 +118,7 @@ export const WORK_PLAN_PROMPT = `## ワークプラン（tsukumo）
   途中で止めたら \`stopped\` を渡し、止まったフェーズが「今」のまま残る。欄の無い \`report\`、
   フェーズが2つ以上残った \`finished\`、\`task.outcome\` を \`finished\` で締めるのに \`stopped\` で残った \`report\` は tsukumo が差し戻す
 - **委譲した作業のフェーズは、委譲先の \`phase_result\` で進む**（\`finished\`・\`skipped\` が \`phase\` に当たるフェーズを済ませる）。
-  自分の \`work_plan\` は、並びと委譲先の範囲を渡す口
+  自分の \`work_plan\` では、並びと委譲先の範囲を渡す
   - 並びはいつも \`phases\` で渡す。計画や受け入れをフェーズにするかも自分で決める
   - **計画を委譲先に頼む最初の \`work_plan\` は、\`delegatedRange\` を \`{}\` で渡す**（数が未定のあいだ範囲の先頭から後ろは番号を持たず、委譲先の返却では動かない）
   - **\`phase_result\` を受けたあとは、範囲のフェーズの数を tsukumo が \`count\` で埋める。** 計画だけの回は \`phase_result\` を呼ばないので、

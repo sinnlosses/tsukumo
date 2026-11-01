@@ -28,8 +28,8 @@
 `test/architecture/unused-export.test.ts` がどこからも import されないものを落とす。
 本番の側の読み手は `test/` 以外と、vitest の `globalSetup`・`setupFiles` と文書の検査の入口（`DOCUMENT_CHECK_TEST_PATHS` のディレクトリの下のテスト）。
 型は、読まれる export の型注釈から名指されていれば数えない。
-当たった関数・定数は許可リストに入れず、`export` を外して公開口経由で確かめるか、
-公開口が実ブラウザ・git・標準入力などを要るなら純粋な部品を概念の名前のファイルへ移す。重なるテストは消す。
+当たった関数・定数は許可リストに入れず、`export` を外して公開した関数経由で確かめるか、
+公開した関数が実ブラウザ・git・標準入力などを要るなら純粋な部品を概念の名前のファイルへ移す。重なるテストは消す。
 許可リストに理由を付けて置けるのは、テストだけが読む `<部品>Props` の型だけ（自己テストが縛る）。
 同じファイルの中で使うなら export を外し、使わないなら消す。
 
@@ -47,7 +47,7 @@
 （`docs/architecture.md` 原則2）。
 
 **状態を持つ入れ物（キャッシュなど）を配線から渡すときも同じ**——中の `Map` などを型に出して
-呼び出し先に `.set` させず、作る側の閉包に閉じ込めて、覚える・引く口だけを渡す。
+呼び出し先に `.set` させず、作る側の閉包に閉じ込めて、覚える・引く関数だけを渡す。
 `src/server/achievement/adapter/closed-issue.ts` の `createAchievementCache()` が例（型は
 `readBeads` の関数1つだけを持ち、前に読んだ結果とその印は閉包の中）。
 
@@ -78,7 +78,7 @@ prototype を持つものを見るときだけ `isObjectType` で、`code` の�
 `parse…(value: string): … | undefined` の1つと、契約の入力に使う型述語（`value is …`）つきの
 `refine` だけで、`as` では作らない。パスを組む関数はその型だけを受け、通らない値は境界で
 `undefined` に畳んで内側へ運ばない。通らないときに「何もしない」を残すなら、配線の1か所で
-検査して、何もしない口（`UNAVAILABLE_CHAT_SUMMARY` など）を渡し、core の引数に `| undefined` を
+検査して、何もしない実装（`UNAVAILABLE_CHAT_SUMMARY` など）を渡し、core の引数に `| undefined` を
 持ち込まない。テストでは `test/fixture/` の作り手（`parse…` を通し、
 `undefined` なら throw する）で値を作る。例は `CharacterPackName`・`ItemId`・`DateKey`。
 

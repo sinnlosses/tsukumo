@@ -185,7 +185,7 @@ export const useQuestionScroll = create<QuestionScrollState>()((set) => ({
 返すセレクタには要らない。姿から重い導出を返すときは、`useShallow` ではなく姿をキーに覚える
 （`stores/main-view-turn.ts` の `mainViewTurnsOf`）。
 
-store には値だけでなく、React に属さない口も同じく持たせる（`stores/session.ts` の `dispatch` や
+store には値だけでなく、React に属さない関数も同じく持たせる（`stores/session.ts` の `dispatch` や
 `receive`）。store の外の資源（接続など）は `create()` に渡す関数の閉包に置き、購読させない。
 外の世界と繋ぐ `useEffect` は store の横の hook にして、画面の根で1回呼ぶ（`useSessionConnection`）。
 `location.hash` のように正典が React の外にある値は zustand に写さず、`useSyncExternalStore` で

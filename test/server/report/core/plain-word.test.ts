@@ -121,6 +121,44 @@ test("目録は複合語の綴りで登録し、単独の綴りは登録しな�
   )
 })
 
+test("口は複合語の綴りで登録し、単独の綴りと別の意味の語は登録しない", () => {
+  const spellings = PLAIN_WORDS.map((word) => word.spelling)
+  expect(spellings).toEqual(
+    expect.arrayContaining([
+      "押す口",
+      "押せる口",
+      "開く口",
+      "選び口",
+      "読み書き口",
+      "書き込み口",
+      "受け取り口",
+      "知らせ口",
+      "起こす口",
+      "手続きが使う口",
+    ]),
+  )
+  for (const spelling of [
+    "口",
+    "の口",
+    "入口",
+    "出口",
+    "窓口",
+    "口調",
+    "閉じた口",
+    "開いた口",
+    "読む口",
+    "使う口",
+    "書き口",
+    "読み口",
+    "受け口",
+    "差し込み口",
+    "柱の口",
+  ]) {
+    expect(spellings).not.toContain(spelling)
+  }
+  expect(PLAIN_WORDS.find((word) => word.spelling === "押す口")?.replacement).toBe("ボタン")
+})
+
 test("長い綴りが、それを含む短い綴りより先に並んでいる", () => {
   expect(
     PLAIN_WORDS.filter((word, index) =>

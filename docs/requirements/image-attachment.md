@@ -102,7 +102,7 @@ API 側で決まっている**。
   （**サーバは画像を加工しない**）。復元で控えを作り直すのも同じくブラウザ側で、サーバは transcript から
   読んだ原寸のバイト列を渡すだけ
 - **経路は既にあるものをそのまま使う。** 起動トークンと `Origin` の照合・zod の検証・定型文の
-  `error` が効く WebSocket の `prompt` コマンドに足すだけで、新しい書き込み口（POST）を作らない
+  `error` が効く WebSocket の `prompt` コマンドに足すだけで、新しい書き込みの API（POST）を作らない
   （`docs/architecture/character-pack.md`「画面から作るときの置き場と受け取り方」と同じ判断）
 - **Claude Code が自分の transcript に何を書くかは変わらない**（`~/.claude/`。文面と同じ
   扱いで、4.8 の復元はそこを読む）。添えた画像は利用者の依頼のメッセージに `image` ブロック

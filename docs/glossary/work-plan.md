@@ -89,6 +89,6 @@
 - **英語識別子（予定）**: なし（コマンドの名前 `tw config --schema`・`tw config set` で呼ぶ）
 - **定義**: **ワークフローの設定**を見せて書くために、ワークフローが持つ2つのコマンド。`tw config --schema` が欄の形
   （`schema: 2` の1行の JSON）を返し、`tw config set <キー> <値>` が検査してから書く
-- **注記**: 契約の一部で、任意の口ではない（`docs/architecture/workflow-contract.md`「設定コマンド」）。
+- **注記**: 契約の一部で、任意のコマンドではない（`docs/architecture/workflow-contract.md`「設定コマンド」）。
   tsukumo は `.tw/config.toml` を直に読み書きしない。旧称は「設定の口」
 - **避ける言い方**: 設定の口（旧称。「work_plan・report の口」と並べた呼び方で、コマンドが2つであることが名前から読めなかった）、設定 API、設定のフック（hook と紛れる）

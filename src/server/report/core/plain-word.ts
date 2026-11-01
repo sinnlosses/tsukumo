@@ -413,4 +413,54 @@ export const PLAIN_WORDS = [
     replacement: "タスク見出し行の頭",
     meaning: "レポートの先頭に出るタスクの1行の、左の端",
   },
+  {
+    spelling: "押す口",
+    replacement: "ボタン",
+    meaning: "画面の中で、押すと何かが起きる操作の部品",
+  },
+  {
+    spelling: "押せる口",
+    replacement: "ボタン",
+    meaning: "画面の中で、押すと何かが起きる操作の部品",
+  },
+  {
+    spelling: "開く口",
+    replacement: "開くボタン",
+    meaning: "押すと一覧やダイアログを開く、画面の操作の部品",
+  },
+  {
+    spelling: "選び口",
+    replacement: "選択メニュー",
+    meaning: "押すと開き、キャラクターなどを1つ選ぶ一覧",
+  },
+  {
+    spelling: "読み書き口",
+    replacement: "読み書きの関数",
+    meaning: "記録やファイルを読み書きする関数の組",
+  },
+  {
+    spelling: "書き込み口",
+    replacement: "書き込みの関数",
+    meaning: "記録やファイルに書き込む関数（HTTP なら書き込みの API）",
+  },
+  {
+    spelling: "受け取り口",
+    replacement: "受け取る関数",
+    meaning: "イベントや結果を受け取って処理する関数",
+  },
+  {
+    spelling: "知らせ口",
+    replacement: "知らせる関数",
+    meaning: "失敗などを呼び出し元へ知らせるために渡す関数",
+  },
+  {
+    spelling: "起こす口",
+    replacement: "起こす関数",
+    meaning: "セッションやコマンドを起こす関数",
+  },
+  {
+    spelling: "手続きが使う口",
+    replacement: "手続きが使う関数",
+    meaning: "画面からの手続きを処理するときに使う、配線が渡す関数の組",
+  },
 ] as const satisfies readonly PlainWord[]

@@ -194,7 +194,7 @@
                   "dgram"
                 ],
                 "allowTypeImports": true,
-                "message": "ネットワークの口は server/view-server/adapter/server.ts だけ"
+                "message": "ネットワークのモジュールを読み込むのは server/view-server/adapter/server.ts だけ"
               }
             ]
           }
@@ -255,7 +255,7 @@
                   "dgram"
                 ],
                 "allowTypeImports": true,
-                "message": "ネットワークの口は server/view-server/adapter/server.ts だけ"
+                "message": "ネットワークのモジュールを読み込むのは server/view-server/adapter/server.ts だけ"
               }
             ]
           }

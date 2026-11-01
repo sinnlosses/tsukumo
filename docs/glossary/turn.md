@@ -36,13 +36,13 @@
 
 ### 終わったターンの数
 
-- **英語識別子**: `finishedTurnCount`（`SessionState.finishedTurnCount`。目盛りの口の属性は
+- **英語識別子**: `finishedTurnCount`（`SessionState.finishedTurnCount`。目盛りのボタンの属性は
   `data-finished-turn-count`）
 - **定義**: セッションが始まってから**ターンが終わった回数**。`turn-finished`・`session-ended` が
   実際にターンを終わらせたときだけ1つ増える。続きのターン（`turn-resumed`）が終わったときも増える
 - **注記**: サイドバーの使用量とトークン消費の画面は、この数を取り直しの合図にする。時刻ではなく
   回数にしてあるのは、E2E で止めたサーバの時計の下でもターンごとに違う値になるようにするため。
-  サイドバーの目盛りの口は、出している値をどの回数のときに取ったかを `data-finished-turn-count` に出す
+  サイドバーの目盛りのボタンは、出している値をどの回数のときに取ったかを `data-finished-turn-count` に出す
   （値を出していない取得中は出さない）。ターンの通し番号（`nextTurnId`）はターンの始まりで増えるので別物
 - **避ける言い方**: ターン数（始まった数と区別がつかない）
 

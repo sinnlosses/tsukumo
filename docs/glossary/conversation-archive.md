@@ -32,7 +32,7 @@
 
 ### 作業記憶
 
-- **英語識別子**: `recent`（容量の表の `recentBytes`、読む口の `readRecent`）
+- **英語識別子**: `recent`（容量の表の `recentBytes`、読む関数の `readRecent`）
 - **定義**: 会話のアーカイブの**新しいほうから一定量**の会話（雑談と仕事の行を区別せずに数える）。
   セッションを起こすとき、逐語のまま `systemPrompt` に載せる。量は**雑談 64 KiB（`recentBytes`）・
   仕事 16 KiB（`workRecentBytes`）**（`docs/architecture/chat-mode.md` 4.9「直近の会話は逐語のまま読み戻す」）

@@ -39,7 +39,7 @@ const USAGE = `tsukumo — キャラクターと一緒に仕事をするため�
                       TSUKUMO_VIEW_PORT が未設定のときの既定の帯の起点を差し替える（既定
                       ${String(DEFAULT_VIEW_PORT)}。読めない値は無視して既定のまま）。日常の起動では使わない
                       ——実際の既定の帯を塞がずに「全部塞がっている」経路を確かめる
-                      test/cli.test.ts のための口
+                      test/cli.test.ts のための環境変数
   TSUKUMO_CHARACTER   キャラクターパックのディレクトリ（既定は tsukumo 自身の同梱の
                       characters/tsukumo-spirit。自分の素材を使うときは起動先の
                       characters/local などを指す。相対パスは cwd 相対、絶対パスはそのまま）
@@ -47,7 +47,7 @@ const USAGE = `tsukumo — キャラクターと一緒に仕事をするため�
   TSUKUMO_DRIVER      セッションドライバ（既定 sdk。fake は claude を起こさず疑似セッションを
                       流す）
   TSUKUMO_FAKE_SCENE  fake のとき、起こした直後に流す疑似セッションの場面の名前（既定は流さない。
-                      依頼を送らずにその画面を出すための口で、状態のカタログを撮る
+                      依頼を送らずにその画面を出すための環境変数で、状態のカタログを撮る
                       scripts/capture/capture-catalog.ts が使う）
   TSUKUMO_FAKE_SCENE_UNTIL  名指しした場面の手を先頭から何個まで流すか（正の整数。既定は全部。
                       場面の途中の画を撮る scripts/capture/capture-view.ts の --until-step が使う）
@@ -57,7 +57,7 @@ const USAGE = `tsukumo — キャラクターと一緒に仕事をするため�
                       実物の会話（transcript・SDK のイベント）は渡さない
   TSUKUMO_TW          ワークフローの設定の読み書きと hook（lap-hook・ask-guard）で呼ぶ tw のパス
                       （既定は取り込みの bin/tw。取り込みを載せないときは PATH の tw）。疑似セッションの撮影や
-                      自動テストで、取り込みを書き換えずに偽の tw へ差し替えるための口
+                      自動テストで、取り込みを書き換えずに偽の tw へ差し替えるための環境変数
   TSUKUMO_HOME        tsukumo が自分の持ち物を置くホーム（既定 ~/.tsukumo。覚えたキャラクター・
                       あらすじと会話のアーカイブ・トークンの記録・画面から作ったパックがこの下に並ぶ）。
                       **2つを並行して動かすときだけ**、TSUKUMO_VIEW_PORT と一緒に分けて渡す。

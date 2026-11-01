@@ -190,7 +190,7 @@ function usageReviewTools(intake: UsageReviewIntake) {
               followUp: z
                 .enum(USAGE_PROPOSAL_FOLLOW_UPS)
                 .describe(
-                  "押す口。delegate（tsukumo に頼む。その場で設定やファイルを直せば済む）/ task（タスクにする。あとでやる作業）",
+                  "押すボタン。delegate（tsukumo に頼む。その場で設定やファイルを直せば済む）/ task（タスクにする。あとでやる作業）",
                 ),
             }),
           )

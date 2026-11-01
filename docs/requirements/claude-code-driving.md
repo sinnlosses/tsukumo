@@ -68,10 +68,10 @@
   `docs/coding-standards.md`「会話内容の扱い」）。`rate_limit_event` の使用率は出さない（効いている
   枠1つぶんしか運ばない。枠ごとの使用率は下のプラン使用量が持つ）。`error` の付いた `assistant` の本文は今までどおり本文として扱う（出力の上限で切れた
   本物の本文のこともあり、Claude Code が作ったエラーの文面と見分ける印が無い）
-- **5時間枠と7日間枠の使用状況（プラン使用量）は、知らせを待たずに SDK へ取りに行く**。口は `Query` の `usage_EXPERIMENTAL_MAY_CHANGE_DO_NOT_RELY_ON_THIS_API_YET({ skipBehaviors: true })`
+- **5時間枠と7日間枠の使用状況（プラン使用量）は、知らせを待たずに SDK へ取りに行く**。API は `Query` の `usage_EXPERIMENTAL_MAY_CHANGE_DO_NOT_RELY_ON_THIS_API_YET({ skipBehaviors: true })`
   で、Claude Code が自分のログインで `/usage` と同じ値を取ってくる（60秒以内の取り直しは Claude Code の控えで
   答える）。**tsukumo は認証情報を読まない**。`skipBehaviors` は必ず `true`（手元の transcript の
-  走査を起こさない）。名前のとおり実験中の口なので、呼ぶのは `sdk-` のアダプタ1本に閉じ、読めない形・
+  走査を起こさない）。名前のとおり実験中の API なので、呼ぶのは `sdk-` のアダプタ1本に閉じ、読めない形・
   失敗は「取れない」に畳む。運ぶのは2つの枠の使用率・戻る時刻・取った時刻だけ（出し方は
   `docs/architecture/display.md` 4.2「各表示物」のサイドバー。調べた結果は `docs/research/plan-usage.md`）
 - **SDK も transcript（JSONL）を書くが、tsukumo はそれを読まない**

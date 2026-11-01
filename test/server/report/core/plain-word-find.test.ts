@@ -106,6 +106,56 @@ describe("plainWordSpellingsIn", () => {
     expect(text).toContain("「並列の段」は「並列のフェーズ」")
   })
 
+  it("口の複合語は、表の順に地の文で見つかる", () => {
+    expect(
+      plainWordSpellingsIn(
+        draft([
+          reportDraftText(
+            "架空の押す口と押せる口と開く口と選び口と読み書き口と書き込み口と受け取り口と知らせ口と起こす口と手続きが使う口。",
+          ),
+        ]),
+      ),
+    ).toEqual([
+      "押す口",
+      "押せる口",
+      "開く口",
+      "選び口",
+      "読み書き口",
+      "書き込み口",
+      "受け取り口",
+      "知らせ口",
+      "起こす口",
+      "手続きが使う口",
+    ])
+  })
+
+  it("入口・出口・口調・閉じた口・開いた口・書き口・読み口・受け口・差し込み口は、口の複合語に当たらない", () => {
+    expect(
+      plainWordSpellingsIn(
+        draft([
+          reportDraftText(
+            "架空の入口と出口と口調と閉じた口と開いた口と口パクと書き口と読み口と受け口と差し込み口と読む口調。",
+          ),
+        ]),
+      ),
+    ).toEqual([])
+  })
+
+  it("既知の巻き込み: 押す口調は、部分一致で当たる", () => {
+    expect(plainWordSpellingsIn(draft([reportDraftText("架空の押す口調。")]))).toEqual(["押す口"])
+  })
+
+  it("既知の巻き込み: 窓口は、窓に部分一致で当たる", () => {
+    expect(plainWordSpellingsIn(draft([reportDraftText("架空の窓口。")]))).toEqual(["窓"])
+  })
+
+  it("口の複合語の差し戻しは、言い換え先を示す", () => {
+    const text = reportRejectionText(
+      reportViolations(draft([reportDraftText("架空の押す口の話。")])),
+    )
+    expect(text).toContain("「押す口」は「ボタン」")
+  })
+
   it("柱・包みの複合語は、長い綴りを優先して地の文で見つかる", () => {
     expect(
       plainWordSpellingsIn(
