@@ -19,7 +19,9 @@ export const NOTE_MEMO_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-note-
 export const NOTE_FAVOR_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-note-favor_"]`
 /** 番号つきの題を持つ図と表の包み。 */
 export const CAPTIONED_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-captioned_"]`
-export const CAPTIONED_FIGURE_SELECTOR = `${CAPTIONED_SELECTOR} pre.mermaid svg`
+/** mermaid の包み。画面に入るまで svg を持たないので、送る先はこちら。 */
+export const CAPTIONED_MERMAID_SELECTOR = `${CAPTIONED_SELECTOR} pre.mermaid`
+export const CAPTIONED_FIGURE_SELECTOR = `${CAPTIONED_MERMAID_SELECTOR} svg`
 export const IMAGE_NOTES_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-image-notes_"]`
 /** 前後の塊（`report-before-after` 場面の先頭は画像の前後）と、その中の最初のコード・箇条。 */
 export const BEFORE_AFTER_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-before-after_"]`
