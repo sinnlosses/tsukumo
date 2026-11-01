@@ -1,5 +1,5 @@
+import { expect } from "@playwright/test"
 import type { Page } from "playwright-core"
-import { expect } from "vitest"
 
 import { MIN_FONT_SIZE } from "../../scripts/shared/minimum-font-size.ts"
 

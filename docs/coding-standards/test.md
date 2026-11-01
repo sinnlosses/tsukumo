@@ -17,7 +17,7 @@
   （1つのファイルの振る舞いではないため。形は `docs/architecture/testing.md`「E2E の走らせ方」）。
   同名の対象が別の場所にあるのに鏡の場所に無いテストは、`test/architecture/test-location.test.ts` の
   許す一覧（既存の違反）を除いて落とす。一覧に無いずれが増えたとき、一覧の項目が直ったときに落ちる
-- テストランナーは Vitest。`describe` / `it` / `expect` は `vitest` から import する
+- 単体テストのランナーは Vitest。`describe` / `it` / `expect` は `vitest` から import する。E2E のランナーは `@playwright/test`（`test` / `expect` は `test/e2e/room-fixture.ts` から import する）
 - **モックするのはシステム境界だけ**: ファイルシステム、時刻、端末の能力判定（画像プロトコルが
   使えるか）。Vitest の `vi.fn` / `vi.spyOn` を使う。自分たちのモジュール同士はモックしない
   （`/tdd` の `mocking.md` が正典）
@@ -138,10 +138,10 @@ Standards 軸はこの節から入るので、レビューで見ることをこ�
   なっているか
 - 期待値を撮り直した差分は、`git diff test/e2e/expected/` を開いて**途中の状態が入って
   いないか**を見る
-- 揺れの報告には、**打ち直す前に控えた it の名前と成果物**が添えられているか
+- 揺れの報告には、**打ち直す前に控えた test の名前と成果物**が添えられているか
 - シナリオを足した・待ち方を直した差分には、**続けて回して確かめた回数**が `## 結果` に
   書かれているか
 - 待ちを足した差分が、**時間ではなく条件を待っているか**（`page.waitForTimeout`・`setTimeout` で
   待っていないか。例外は `settledDom` の読み直しの間隔だけ）
-- `vitest.e2e.config.ts` や `it` に **`retry` が足されていないか**
+- `playwright.config.ts` や `test` に **`retries` が足されていないか**
 - 足場や新しいシナリオが、**固定のパス・固定のポート・リポジトリの中のファイル**を使っていないか

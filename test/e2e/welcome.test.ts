@@ -1,7 +1,6 @@
 import type { Locator, Page } from "playwright-core"
 
-import { expect, test, VIEWPORTS } from "./room-fixture.ts"
-import type { ScenarioRun } from "./scenario-run.ts"
+import { expect, type ScenarioRun, test, VIEWPORTS } from "./room-fixture.ts"
 import { BLOCKED_TASK_ID, READY_TASK_ID, writeWelcomeTasks } from "./task-room.ts"
 
 // 依頼前のメインビューの始め方の一覧（docs/architecture/testing.md「E2E のシナリオの一覧」）。

@@ -10,21 +10,19 @@
 
 ### E2E の走らせ方
 
-- **ランナーは Vitest**（単体テストとランナーを共有する）。ブラウザは `playwright-core` の `chromium`
+- **ランナーは `@playwright/test`**（設定は `playwright.config.ts`。`testDir` は `test/e2e`、`testMatch` は `*.test.ts`、`timeout` 60 秒、`expect.timeout` 15 秒、`retries` 0、`workers` は `"40%"`。単体テストは Vitest のままで、ランナーは共有しない。ADR 0044）。ブラウザは `playwright-core` の `chromium`
   （`channel` を渡さない headless。Playwright 同梱の `chromium-headless-shell`を
   `pnpm exec playwright-core install chromium-headless-shell` で入れる）。**製品版の Google Chrome
   （`channel: "chrome"`）は使わない。起こすたびにデータ保護キーチェーンへ鍵（`com.google.Chrome.unexportable-keys`）を
   2〜5件足し、複数の tsukumo が回すと secd が高負荷になる**。**新しい外部コマンドは足さない**
-- **並行期間（ADR 0044）: ランナーは vitest と `@playwright/test` の2つで、どちらで流すかは `scripts/shared/e2e-runner.ts` の表 `PLAYWRIGHT_E2E_FILES`（`test/e2e/<シナリオ>.test.ts` の並び）1つだけが決める。**
-  表を読むのは `playwright.config.ts` の `testMatch`、`vitest.e2e.config.ts` の `exclude`、入口 `scripts/dev/e2e.ts` の3つで、どのファイルも必ずどちらか一方だけで流れる。
-  入口は渡されたファイルを表で分け、vitest → `@playwright/test` の順に続けて流す（ファイルを渡さない全件は両方を全件で流し、当たるファイルが無い側は起こさない。どちらかが落ちても、もう片方は流す）。
+- **入口 `scripts/dev/e2e.ts` は組み立てのあと `playwright test` を起こす。**
   `check` が渡す引数（`--bail`・`--maxWorkers`・`--reporter`・`--outputFile.json`）は入口が Playwright の旗に写し（知らない旗は終了コード 2）、
   Playwright の JSON を vitest の JSON の形に畳んで同じパスへ書くので（`scripts/dev/lib/e2e-argument.ts`・`e2e-report.ts`）、`check` と `tw verify` の読み方は変わらない。
-  表を変えると `playwright.config.ts` が選び方の足場の根（`HARNESS_ROOTS`）に入っているため、`check` の E2E は全件になる。理由は ADR 0044
+  `playwright.config.ts` は選び方の足場の根（`HARNESS_ROOTS`）に入っているため、変えると `check` の E2E は全件になる
 - **置き場所は `test/e2e/<シナリオ>.test.ts`**（1ファイル = 1つの機能のまとまり。E2E は1つのファイルの
   振る舞いではないので、`src/` の写しの構成には従わない）
 - **`pnpm run check` の中の別の段にする**（`pnpm run test` は既定の設定が `test/e2e/` を外し、E2E は
-  `pnpm run test:e2e` が E2E 専用の設定で走らせる）。時間切れの既定を E2E の段だけ延ばし、単体テストを
+  `pnpm run test:e2e` が `playwright.config.ts` で走らせる）。時間切れの既定を E2E の段だけ延ばし、単体テストを
   1ファイル走らせるときに Chrome を要らないままにするため。`pnpm run check` は軽い段（typecheck・lint・format:check・token-limit）と
   重い段（単体と E2E）を全部同時に起こし、1つが落ちると残りを止める。**`--full` でない `check` の単体の段は、変えた `src/`・`test/`・`scripts/` のファイルに関連するテスト
   （`vitest related`）と規約のテストだけ**（`vitest related` は引数を変えたファイルとして読みディレクトリを展開しないので、
@@ -43,9 +41,9 @@
   （入口は `scripts/dev/e2e.ts`。`check` と `test:e2e:update` が立てて通す。1本だけ流すときは
   `pnpm run test:e2e test/e2e/<ファイル>.test.ts` と書き、`--` を前に置かない。置くと絞り込みが効かず全件になる）。
   ひとつの実行の負荷は
-  `maxWorkers` で抑える。E2E の1本は vitest のワーカーに加えて
-  Chrome と `node src/cli.ts` を起こすので、実際に走るプロセスは `maxWorkers` の本数を大きく超える。
-  E2E の設定は `maxWorkers: "40%"`、単体テスト（`vitest.config.ts`）も `"40%"` で、2つ合わせて
+  worker の数（E2E は `workers`、単体は `maxWorkers`）で抑える。E2E の1本は Playwright のワーカーに加えて
+  Chrome と `node src/cli.ts` を起こすので、実際に走るプロセスは worker の本数を大きく超える。
+  E2E の設定は `workers: "40%"`、単体テスト（`vitest.config.ts`）も `"40%"` で、2つ合わせて
   コア数の 80% までに収める（10 コアで各 4、単体 98 秒・E2E 65 秒前後。手元の操作が重く感じたら
   下の `TSUKUMO_CHECK_WORKER_BUDGET` で予算を下げる）。
   単体の `node` project は Vitest の既定（`isolate: true`、ファイルごとに隔離）で走らせる。`isolate: false` は約 13% 速いだけで、`vi.spyOn` やモジュールのトップレベル状態が同じ worker の別ファイルに残る順序依存の通過を許すため採らない（下の「実測の内訳」）。同じファイルの it 間にスパイが残らないよう、`restoreMocks: true` を設定に入れている。
@@ -74,8 +72,8 @@
   - import は構文木で読む（静的 import・`export … from`・`import("…")`・`require("…")`・
     `new URL("…", import.meta.url)`。`?raw` などのクエリは落として解決する）。式つきの `import()`・`require()`・
     `import.meta.glob`、クエリを落としても解決できない指定、構文エラーのファイルは、そこへ届く根からすべてのファイルに届くとみなす（以下の規則で全件や広い選び方に倒れる）
-  - E2E の足場の根（`package.json`・`vitest.e2e.config.ts`・`scripts/dev/build-ui.ts` など）から import で
-    届くファイルは全件。E2E ファイルから import で届くファイル（`test/e2e/scenario-run.ts` と、それが読む
+  - E2E の足場の根（`package.json`・`playwright.config.ts`・`scripts/dev/build-ui.ts` など）から import で
+    届くファイルは全件。E2E ファイルから import で届くファイル（`test/e2e/room-fixture.ts` と、それが読む
     `scenario-open.ts`・`scenario-wait.ts`・`scenario-viewport.ts`、`test/e2e/task-room.ts`・`test/fixture/` など）は、届く元の E2E を選ぶ
   - `src/` は、サーバの入口 `src/cli.ts` から届けば全件（どの E2E もサーバ全体を起こす）。ブラウザだけが
     読むファイルは、見張りの表（`scripts/shared/e2e-watch.ts`）の領域の根から届くかで領域を決め、その領域を
@@ -96,18 +94,18 @@
   実測 3 秒前後）。全件の印を立てて入る `check` と `test:e2e:update` は、型検査の段が別にある
   （`check`）ので省く
 - **`dist/browser/` は E2E の段が自分で組み立てる**（起動は古い成果物でも止まらずに配る〔`docs/architecture/build.md`〕ので、
-  組み立てを前提にすると古い画面を確かめて通ってしまう）。`vitest` を直に流したときは E2E の設定の
+  組み立てを前提にすると古い画面を確かめて通ってしまう）。`playwright test` を直に流したときは `playwright.config.ts` の
   `globalSetup`（`test/built-ui-setup.ts`）が、組み立てたときの指紋が `src/browser/`・`src/shared/` の
   いまの指紋と違う（または指紋・組み立てが無い）とテストの前に落とす。黙って組み立て直さず、`pnpm run build` を打つ。**headless shell が無ければ前提不足で落ちる**
   （飛ばすと黙って守らなくなる）
-- **ブラウザは E2E の実行全体で1つ、tsukumo は1件ごとに1つ起こす**。後始末は自分の pid だけに `SIGTERM` を
-  送り、終わるのを待ってから一時のディレクトリを消す（広いパターンで止めない）。**ブラウザは
-  `globalSetup`（`test/e2e-chrome-setup.ts`）が `chromium.launchServer` で1回起こし、`provide` で配った
-  `wsEndpoint` に各ファイルが `beforeAll` で `connect` する**。ファイルの終わりは切断だけで、
-  Chrome は実行の終わりに `globalSetup` の後始末が kill する（丁寧に閉じると最後のコンテキストを閉じてから
-  約 10 秒待つため。kill しても一時のプロファイルは Playwright が消す）。**スクリーンショットは
+- **ブラウザは Playwright の worker ごとに1つ（`browser` fixture）、ブラウザのコンテキストと tsukumo は1件ごとに1つ起こす**。
+  `test/e2e/room-fixture.ts` の `test` が `run` fixture を足し、後始末は自分の pid だけに `SIGTERM` を
+  送り、終わるのを待ってから一時のディレクトリを消す（広いパターンで止めない。積んだ順の逆に走らせる）。
+  ブラウザを1つだけ起こして共有する形（`globalSetup` で起こして `connectOptions` で繋ぐ）は採らなかった。
+  全件を測ると壁時計は 73 秒・76 秒で、vitest で共有ブラウザを使っていたときの 65〜66 秒より 11〜15% 遅いだけで、
+  替える閾値（2割）に収まったため（下の「E2E 全件の所要」）。**スクリーンショットは
   期待値と食い違って落ちた回（`failures/` の下）と `E2E_UPDATE=1` のときだけ撮る**。
-  **落ちた it だけ、Playwright の trace を `test/e2e/output/<シナリオ>/trace.zip` に残す**
+  **落ちた test だけ、Playwright の trace を `test/e2e/output/<シナリオ>/trace.zip` に残す**
   （`openRoom` が始め、通った回は捨てる。`.gitignore` 済み）。`https://trace.playwright.dev` に
   zip を落として開くと（ブラウザの中だけで読む）、操作ごとの DOM とスクリーンショットを辿れる
 - **起こし方**: fake driver・空きポート・自動オープンなし・**`TSUKUMO_HOME`・`HOME`・cwd は1件ごとの
@@ -153,15 +151,18 @@ Apple M4（10 コア）、ほかのセッションの負荷あり（1 分の平�
 
 #### E2E 全件の所要
 
-E2E 全件（35 ファイル・82 テスト、2 回とも全件通過）を 2 回続けて測った。
+E2E 全件（37 ファイル・87 テスト、2 回とも全件通過）を 2 回続けて測った。
 Apple M4（10 コア）。測る前に共有の git dir の `e2e-full-lock` を `mkdir` で占有し（`check --full` と同じ排他）、`check-running/` が空で 1 分の平均負荷が 6 未満になるのを待ってから打ち、終わるたびに解放した。
-条件は `TSUKUMO_E2E_FULL=1 pnpm run test:e2e`（`check` 経由でなく、`--bail` なし）で、`maxWorkers: "40%"`。壁時計は組み立て（`pnpm run build`）を含む。
+条件は `TSUKUMO_E2E_FULL=1 pnpm run test:e2e`（`check` 経由でなく、`--bail` なし）で、`workers: "40%"`。壁時計は組み立て（`pnpm run build`）を含む。
 
-| 回  | 壁時計 | Vitest の Duration | 開始前の 1 分の平均負荷 |
-| --- | ------ | ------------------ | ----------------------- |
-| 1   | 65s    | 63.36s             | 5.85                    |
-| 2   | 66s    | 64.67s             | 5.77                    |
+| 回  | 壁時計 | Playwright の表示の所要 | 開始前の 1 分の平均負荷 | 終了直後の 1 分の平均負荷 |
+| --- | ------ | ----------------------- | ----------------------- | ------------------------- |
+| 1   | 73s    | 1.2m                    | 3.89                    | 8.47                      |
+| 2   | 76s    | 1.2m                    | 5.13                    | 7.57                      |
 
-1 ファイル平均は、遅いほうの回で 64.67s ÷ 35 ファイル ≒ 1.85s（1 テストあたり ≒ 0.79s）。Duration の内訳は tests 96〜97%・import 3%。
-遅いほうの回でも 5 分（300s）の約 22% で、10 分も大きく下回る。
+最大プロセス数は取っていない（測る手段が測定自体に負荷を足すため）。
+`@playwright/test` に移す前（Vitest、共有ブラウザ、35 ファイル・82 テスト）の値は、壁時計 65s・66s、開始前の 1 分の平均負荷 5.85・5.77 だった。
+ブラウザの起こし方を替える閾値は、壁時計か平均負荷が 2 割を超えて悪くなること（壁時計で 79 秒）にしていた。今回は +11%・+15% で収まったので、worker ごとに起こす標準の形のままにした。
+1 ファイル平均は、遅いほうの回で 76s ÷ 37 ファイル ≒ 2.05s（1 テストあたり ≒ 0.87s）。
+遅いほうの回でも 5 分（300s）の約 25% で、10 分も大きく下回る。
 5 分を切ったので、回数の台帳（着手1件につき 6 回）・委譲先の Bash から起こした E2E の設定を止める門・サブエージェントの Bash の印の hook を外した。`TSUKUMO_E2E_FULL` の門は残す。

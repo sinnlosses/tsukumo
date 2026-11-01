@@ -10,7 +10,7 @@
 
 ## 何が困っていたか
 
-- ブラウザの起動・接続・後始末と、1件ごとの後始末の順を、自前の足場（`test/e2e/scenario-run.ts`・`chrome-launch.ts`・`test/e2e-chrome-setup.ts`、計 124 行）が持っている。`@playwright/test` の fixture と worker が同じ役を持つ
+- ブラウザの起動・接続・後始末と、1件ごとの後始末の順を、自前の足場（scenario-run.ts・chrome-launch.ts・e2e-chrome-setup.ts、計 124 行）が持っている。`@playwright/test` の fixture と worker が同じ役を持つ
 - 失敗の手がかり（trace・レポーター）、`expect` の自動待ち、画像の比較が、ランナーに備わったものを使えず、足場の側で書くか、無いままになっている
 
 ## 前提の裏取り
@@ -57,7 +57,7 @@
 - **`check` は今と同じ引数を `pnpm run test:e2e` に渡し、入口が Playwright 向けに写す。** `--bail=<n>` は `--max-failures=<n>`、`--maxWorkers=<n>` は `--workers=<n>`、`--outputFile.json=<パス>` は `PLAYWRIGHT_JSON_OUTPUT_FILE` に置いた一時のパスと `--reporter=list,json` にする。入口が知らない旗を渡されたら、終了コード 2 で止める（黙って片方にだけ効かせない）
 - **入口は Playwright の JSON を vitest の JSON の形（`testResults[].name`・`status`・`assertionResults[].status`・`fullName`、`numTotalTests`・`numFailedTests`）に畳み、vitest の分と1つに合わせて `--outputFile.json` のパスへ書く**（`scripts/dev/lib/` に新しく置く `e2e-report.ts`）。`fullName` は describe と test の題を空白でつないだもの（vitest と同じ）。だから `scripts/dev/check.ts`・`check-failure.ts`・`stage-verdict.ts`・打ち直しの控え `.check-record.json`・flaky の台帳 `flaky-ledger.jsonl`・`tw verify` の段の読み方は変えない
 - **移す単位は分野（下の5の4つ）。** 1つの分野の本を、試作から `test/e2e/` へ移す fixture（`room-fixture.ts`）の `test` で書き換えるのと、`PLAYWRIGHT_E2E_FILES` に足すのを、同じコミットに入れる。判定の中身（`it` の題・撮る口・期待値）は変えない
-- **切り戻しは、その分野のコミットを戻すこと**（表から外れ、vitest 版が戻る）。並行期間のあいだ vitest 側の足場（`scenario-run.ts`・`chrome-launch.ts`・`test/e2e-chrome-setup.ts`）は消さない
+- **切り戻しは、その分野のコミットを戻すこと**（表から外れ、vitest 版が戻る）。並行期間のあいだ vitest 側の足場（scenario-run.ts・chrome-launch.ts・e2e-chrome-setup.ts）は消さない
 - 移す間の `docs/architecture/testing/e2e-run.md` には、表と入口の分け方の段落だけを足す。正典の書き換えは撤去のときにまとめて行う
 
 理由: 名前を `*.spec.ts` に変えてランナーを名前で分けると、選び方・見張りの表・全件の門・撮り直しの名指し・シナリオの一覧の文書が `.test.ts` を前提にしているため、移す間は両方の名前を受け、終わったら全部を書き換えることになる。表なら、移す間の仕組みは表と入口の分け方と JSON の畳み方の3つに収まり、撤去で表ごと消えて、終わった姿は今のファイルの並びと同じになる。表と中身が食い違ったときは、片方のランナーの書き方がもう片方の下で例外を出して落ちる見込み（ランナーの外では確かめた。ランナーの中では基盤の切り替えで確かめる）。

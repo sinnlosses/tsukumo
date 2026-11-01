@@ -1,6 +1,6 @@
 # `@playwright/test` の試作と計測（2026-10-31）
 
-状態: 試作の結果。全面移行をするかは決めていない。
+状態: 試作の結果。全面移行は済んだ（ADR 0044、`test/e2e/` の 37 本）。試作の置き場は消した。
 
 **この文書は調査メモであって正典ではない。** 見本帳（`#design`）の E2E と画像の比較を `@playwright/test` で2本だけ試作し、
 いまの E2E（vitest + `playwright-core`）と同じ手順で測った記録。写したのは fake driver の架空の会話だけで、画像は `/tmp/tsukumo-playwright-trial/` に出し、リポジトリには置いていない。

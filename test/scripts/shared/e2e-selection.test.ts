@@ -21,10 +21,10 @@ const SOURCE = {
     ["src/browser/app.tsx", ["src/browser/main-view.tsx", "src/browser/chat-view.tsx"]],
     ["src/browser/main-view.tsx", ["src/browser/turn.tsx", "src/browser/button.tsx"]],
     ["src/browser/chat-view.tsx", ["src/browser/button.tsx"]],
-    [REPORT, ["test/e2e/scenario-run.ts", "test/e2e/task-room.ts"]],
-    [CHAT, ["test/e2e/scenario-run.ts"]],
-    [PAGE, ["test/e2e/scenario-run.ts"]],
-    ["test/e2e/scenario-run.ts", ["scripts/shared/fake-process.ts"]],
+    [REPORT, ["test/e2e/room-fixture.ts", "test/e2e/task-room.ts"]],
+    [CHAT, ["test/e2e/room-fixture.ts"]],
+    [PAGE, ["test/e2e/room-fixture.ts"]],
+    ["test/e2e/room-fixture.ts", ["scripts/shared/fake-process.ts"]],
   ]),
   openFiles: new Set<string>(),
   allPaths: new Set<string>(),
@@ -90,7 +90,6 @@ describe("selectE2eFiles が選ぶファイル", () => {
 describe("selectE2eFiles が全件に倒す変更", () => {
   test.each([
     ["package.json", "E2E の足場"],
-    ["vitest.e2e.config.ts", "E2E の足場"],
     ["playwright.config.ts", "E2E の足場"],
     ["scripts/dev/build-ui.ts", "E2E の足場"],
     ["src/shared/frame.ts", "サーバが読むファイル"],
@@ -115,7 +114,7 @@ describe("読み方を決められないファイルがあるとき", () => {
   test("open のファイルに届く変更は、全 E2E に及ぶ", () => {
     const open = {
       ...SOURCE,
-      openFiles: new Set(["test/e2e/scenario-run.ts"]),
+      openFiles: new Set(["test/e2e/room-fixture.ts"]),
       allPaths: new Set(["scripts/shared/unrelated.ts", "test/e2e/other.ts"]),
     }
 

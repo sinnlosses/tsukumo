@@ -141,9 +141,7 @@ describe("場面を開く入口", () => {
 
   test("E2E の足場が export する `run.open` を包む関数は、どれも ROOM_OPENER の名前に合い、task-room.ts にある", () => {
     const wrappers = readdirSync(e2eRoot)
-      .filter(
-        (name) => name.endsWith(".ts") && !name.endsWith(".test.ts") && name !== "scenario-run.ts",
-      )
+      .filter((name) => name.endsWith(".ts") && !name.endsWith(".test.ts"))
       .flatMap((file) =>
         exportedOpeners(readFileSync(`${e2eRoot}/${file}`, "utf8")).map((name) => ({ file, name })),
       )

@@ -14,7 +14,7 @@ import path from "node:path"
 import process from "node:process"
 import { fileURLToPath } from "node:url"
 
-import { expect } from "vitest"
+import { expect } from "@playwright/test"
 
 import { missingPicks, parseDomTreeByRoot } from "../fixture/dom-pick.ts"
 

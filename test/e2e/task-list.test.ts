@@ -1,7 +1,7 @@
 import type { Locator } from "playwright-core"
 
 import { expect, test } from "./room-fixture.ts"
-import type { ScenarioRoom } from "./scenario-run.ts"
+import type { ScenarioRoom } from "./scenario-open.ts"
 import { openTaskListRoom, openTaskListRoomWithDraft } from "./task-room.ts"
 
 /** 撮るときの経過（凍らせた瞬間から）。「何秒前」の類いをこの値で揃える。 */

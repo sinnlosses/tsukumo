@@ -1,4 +1,4 @@
-// `pnpm run test:e2e` の引数を読み、vitest 向けと `@playwright/test` 向けの引数に写す。
+// `pnpm run test:e2e` の引数を読み、`@playwright/test` 向けの引数に写す。
 
 export type E2eArgument =
   | {
@@ -29,27 +29,11 @@ export function parseE2eArgument(args: readonly string[]): E2eArgument {
   }
 }
 
-/** `jsonPath` は vitest の JSON を書かせる一時のパス。JSON を求められていなければ `undefined`。 */
-export function vitestArguments(
-  argument: Extract<E2eArgument, { kind: "run" }>,
-  files: readonly string[],
-  jsonPath: string | undefined,
-): readonly string[] {
-  return [
-    ...files,
-    ...(argument.bail === undefined ? [] : [`--bail=${String(argument.bail)}`]),
-    ...(argument.maxWorkers === undefined ? [] : [`--maxWorkers=${String(argument.maxWorkers)}`]),
-    ...argument.reporters.map((reporter) => `--reporter=${reporter}`),
-    ...(jsonPath === undefined ? [] : [`--outputFile.json=${jsonPath}`]),
-  ]
-}
-
 export function playwrightArguments(
   argument: Extract<E2eArgument, { kind: "run" }>,
-  files: readonly string[],
 ): readonly string[] {
   return [
-    ...files,
+    ...argument.files,
     ...(argument.bail === undefined ? [] : [`--max-failures=${String(argument.bail)}`]),
     ...(argument.maxWorkers === undefined ? [] : [`--workers=${String(argument.maxWorkers)}`]),
     argument.jsonOutputFile === undefined ? "--reporter=list" : "--reporter=list,json",

@@ -1,4 +1,4 @@
-// vitest の JSON レポートと `@playwright/test` の JSON レポートを、vitest の JSON の形（`check` が読む形）に合わせる。
+// `@playwright/test` の JSON レポートを、vitest の JSON の形（`check` が読む形）に合わせる。
 
 import { resolve } from "node:path"
 
@@ -13,35 +13,14 @@ type FileResult = {
   readonly assertionResults: readonly AssertionResult[]
 }
 
-export function mergeE2eReports(
-  vitestJson: string | undefined,
-  playwrightJson: string | undefined,
-): string {
-  const vitest = readVitest(vitestJson)
+export function foldE2eReport(playwrightJson: string | undefined): string {
   const playwright = foldPlaywright(playwrightJson)
-  const playwrightAssertions = playwright.flatMap((file) => file.assertionResults)
+  const assertions = playwright.flatMap((file) => file.assertionResults)
   return JSON.stringify({
-    numTotalTests: vitest.total + playwrightAssertions.length,
-    numFailedTests:
-      vitest.failed + playwrightAssertions.filter(({ status }) => status === "failed").length,
-    testResults: [...vitest.files, ...playwright],
+    numTotalTests: assertions.length,
+    numFailedTests: assertions.filter(({ status }) => status === "failed").length,
+    testResults: playwright,
   })
-}
-
-function readVitest(json: string | undefined): {
-  readonly files: readonly unknown[]
-  readonly total: number
-  readonly failed: number
-} {
-  const report = parseJson(json)
-  if (!isRecord(report) || !Array.isArray(report.testResults)) {
-    return { files: [], total: 0, failed: 0 }
-  }
-  return {
-    files: report.testResults,
-    total: typeof report.numTotalTests === "number" ? report.numTotalTests : 0,
-    failed: typeof report.numFailedTests === "number" ? report.numFailedTests : 0,
-  }
 }
 
 function foldPlaywright(json: string | undefined): readonly FileResult[] {

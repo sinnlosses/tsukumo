@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import {
-  parseE2eArgument,
-  playwrightArguments,
-  vitestArguments,
-} from "../../../../scripts/dev/lib/e2e-argument.ts"
+import { parseE2eArgument, playwrightArguments } from "../../../../scripts/dev/lib/e2e-argument.ts"
 
 const CHECK_ARGS = [
   "test/e2e/a.test.ts",
@@ -50,28 +46,9 @@ describe("parseE2eArgument", () => {
   )
 })
 
-describe("vitestArguments", () => {
-  it("受けた旗をそのまま渡し、JSON の出力先だけ一時のパスに差し替える", () => {
-    expect(vitestArguments(runArgument(CHECK_ARGS), ["test/e2e/a.test.ts"], "/tmp/v.json")).toEqual(
-      [
-        "test/e2e/a.test.ts",
-        "--bail=3",
-        "--maxWorkers=4",
-        "--reporter=default",
-        "--reporter=json",
-        "--outputFile.json=/tmp/v.json",
-      ],
-    )
-  })
-
-  it("JSON を求められていなければ出力先を渡さない", () => {
-    expect(vitestArguments(runArgument([]), [], undefined)).toEqual([])
-  })
-})
-
 describe("playwrightArguments", () => {
   it("bail・maxWorkers・reporter を Playwright の旗に写し、JSON を求められたら json を足す", () => {
-    expect(playwrightArguments(runArgument(CHECK_ARGS), ["test/e2e/a.test.ts"])).toEqual([
+    expect(playwrightArguments(runArgument(CHECK_ARGS))).toEqual([
       "test/e2e/a.test.ts",
       "--max-failures=3",
       "--workers=4",
@@ -80,8 +57,9 @@ describe("playwrightArguments", () => {
   })
 
   it("JSON を求められていなければ list だけ", () => {
-    expect(
-      playwrightArguments(runArgument(["test/e2e/a.test.ts"]), ["test/e2e/a.test.ts"]),
-    ).toEqual(["test/e2e/a.test.ts", "--reporter=list"])
+    expect(playwrightArguments(runArgument(["test/e2e/a.test.ts"]))).toEqual([
+      "test/e2e/a.test.ts",
+      "--reporter=list",
+    ])
   })
 })

@@ -37,7 +37,6 @@ const HARNESS_ROOTS = [
   "mise.toml",
   "tsconfig.json",
   "vite.config.ts",
-  "vitest.e2e.config.ts",
   "playwright.config.ts",
   "scripts/dev/build-ui.ts",
   "test/built-ui-setup.ts",

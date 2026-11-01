@@ -1,7 +1,7 @@
 import type { Page } from "playwright-core"
 
 import { expect } from "./room-fixture.ts"
-import type { ScenarioOptions } from "./scenario-run.ts"
+import type { ScenarioOptions } from "./scenario-open.ts"
 
 // レポートの本文の塊どうしのあきが、縦の格子 12px の倍数であること
 // （docs/architecture/screen-design.md「レポートの塊のあき」）。寸法は実ブラウザでしか確かめられない。

@@ -8,7 +8,7 @@ export const DOM_TEST_FILES = [
   "test/server/report/core/report-notation.test.ts",
 ]
 
-// `test/e2e/` は vitest.e2e.config.ts で走らせる。
+// `test/e2e/` は playwright.config.ts で走らせる。
 // 日付の境目を見るテストが UTC を前提にしているので、ホストが JST でも `TZ` を固定する。
 // React Compiler は足さない。`@vitejs/plugin-react` の `compiler` は consumer が `client` の環境にだけ効き、
 // Vitest の実行（`ssr: true` の変換）には掛からないので、足しても効かない。

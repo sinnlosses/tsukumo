@@ -15,7 +15,7 @@ import {
 import { PENDING_READERS, pendingProductionExports } from "./pending-reader-table.ts"
 import { parseSourceProgram } from "./source-file.ts"
 
-const VITEST_CONFIG_FILES = ["vitest.config.ts", "vitest.e2e.config.ts"] as const
+const VITEST_CONFIG_FILES = ["vitest.config.ts"] as const
 
 // テストの側でない読み手のディレクトリ。
 const PRODUCTION_DIRECTORIES = ["src/", "scripts/"] as const

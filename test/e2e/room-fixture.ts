@@ -1,7 +1,10 @@
 import { test as base } from "@playwright/test"
 
 import { openRoom, type ScenarioOptions, type ScenarioRoom } from "./scenario-open.ts"
-import type { ScenarioRun } from "./scenario-run.ts"
+
+export type ScenarioRun = {
+  readonly open: (options: ScenarioOptions) => Promise<ScenarioRoom>
+}
 
 type RoomFixtures = {
   readonly run: ScenarioRun

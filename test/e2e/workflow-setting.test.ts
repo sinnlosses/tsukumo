@@ -4,8 +4,8 @@ import { join } from "node:path"
 import type { Locator } from "playwright-core"
 
 import { runSubprocess } from "../fixture/subprocess.ts"
-import { expect, test } from "./room-fixture.ts"
-import type { ScenarioRoom, ScenarioRun } from "./scenario-run.ts"
+import { expect, type ScenarioRun, test } from "./room-fixture.ts"
+import type { ScenarioRoom } from "./scenario-open.ts"
 
 // 歯車の設定の「ワークフロー」の面（docs/architecture/testing.md「E2E のシナリオの一覧」）。
 // 場面は名指しせず（`opening` のまま）。部屋を開いたあと cwd を git のリポジトリにして `.tw/config.toml` を置き、

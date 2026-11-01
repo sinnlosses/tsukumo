@@ -14,12 +14,7 @@ import { exportedSymbols } from "../../scripts/shared/export-symbol.ts"
 import { REPOSITORY_ROOT } from "../../scripts/shared/repository-root.ts"
 import { listSourceFiles, parseSourceProgram } from "./source-file.ts"
 
-export const CONFIG_FILES = [
-  "vite.config.ts",
-  "vitest.config.ts",
-  "vitest.e2e.config.ts",
-  "playwright.config.ts",
-] as const
+export const CONFIG_FILES = ["vite.config.ts", "vitest.config.ts", "playwright.config.ts"] as const
 
 const EXPORTER_DIRECTORIES = ["src/", "scripts/"] as const
 

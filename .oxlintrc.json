@@ -98,7 +98,6 @@
       "files": [
         "src/browser/types/customizable-select-global.d.ts",
         "src/browser/types/css-variable.d.ts",
-        "test/e2e-chrome-setup.ts",
         "test/beads-template-setup.ts"
       ],
       "rules": {

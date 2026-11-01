@@ -5,7 +5,7 @@ import {
   parseFailedTests,
   parsePassedTests,
 } from "../../../../scripts/dev/lib/check-failure.ts"
-import { mergeE2eReports } from "../../../../scripts/dev/lib/e2e-report.ts"
+import { foldE2eReport } from "../../../../scripts/dev/lib/e2e-report.ts"
 import { parseSelectedTestCount } from "../../../../scripts/dev/lib/stage-verdict.ts"
 
 const ROOT = "/repo"
@@ -57,63 +57,31 @@ const NESTED: Suite = {
   ],
 }
 
-const VITEST_JSON = JSON.stringify({
-  numTotalTests: 2,
-  numFailedTests: 1,
-  testResults: [
-    {
-      name: "/repo/test/e2e/v.test.ts",
-      status: "failed",
-      assertionResults: [
-        { status: "passed", fullName: "画面 開く" },
-        { status: "failed", fullName: "画面 閉じる" },
-      ],
-    },
-  ],
-})
-
-describe("mergeE2eReports", () => {
-  const merged = mergeE2eReports(
-    VITEST_JSON,
-    playwrightJson([{ file: "a.test.ts", suite: NESTED }]),
-  )
+describe("foldE2eReport", () => {
+  const folded = foldE2eReport(playwrightJson([{ file: "a.test.ts", suite: NESTED }]))
 
   it("Playwright の入れ子の題を空白でつなぎ、check の読み方で `<ファイル> > <題>` になる", () => {
-    expect(parseFailedTests(merged, ROOT)).toEqual([
-      "test/e2e/v.test.ts > 画面 閉じる",
-      "test/e2e/a.test.ts > 外 内 落ちる",
-    ])
-    expect(parsePassedTests(merged, ROOT)).toEqual([
-      "test/e2e/v.test.ts > 画面 開く",
+    expect(parseFailedTests(folded, ROOT)).toEqual(["test/e2e/a.test.ts > 外 内 落ちる"])
+    expect(parsePassedTests(folded, ROOT)).toEqual([
       "test/e2e/a.test.ts > 直下",
       "test/e2e/a.test.ts > 外 内 通る",
     ])
   })
 
-  it("落ちたファイルと数を、vitest の分と合わせる", () => {
-    expect(parseFailedFiles(merged, ROOT)).toEqual({
-      files: ["test/e2e/v.test.ts", "test/e2e/a.test.ts"],
-      failedTestCount: 2,
+  it("落ちたファイルと数を数える", () => {
+    expect(parseFailedFiles(folded, ROOT)).toEqual({
+      files: ["test/e2e/a.test.ts"],
+      failedTestCount: 1,
     })
-    expect(parseSelectedTestCount(merged)).toBe(6)
   })
 
   it("入れ子のどの深さの題も出力に残る（集めた件数と畳んだ件数が一致する）", () => {
-    const playwrightOnly = mergeE2eReports(
-      undefined,
-      playwrightJson([{ file: "a.test.ts", suite: NESTED }]),
-    )
-    expect(parseSelectedTestCount(playwrightOnly)).toBe(countSpecs(NESTED))
+    expect(parseSelectedTestCount(folded)).toBe(countSpecs(NESTED))
   })
 
-  it("片方の JSON が無いときは、もう片方だけで組む", () => {
-    expect(parseSelectedTestCount(mergeE2eReports(VITEST_JSON, undefined))).toBe(2)
-    expect(
-      parseSelectedTestCount(
-        mergeE2eReports(undefined, playwrightJson([{ file: "a.test.ts", suite: NESTED }])),
-      ),
-    ).toBe(4)
-    expect(parseSelectedTestCount(mergeE2eReports("壊れた", undefined))).toBe(0)
+  it("JSON が無いか壊れているときは空の結果になる", () => {
+    expect(parseSelectedTestCount(foldE2eReport(undefined))).toBe(0)
+    expect(parseSelectedTestCount(foldE2eReport("壊れた"))).toBe(0)
   })
 })
 
