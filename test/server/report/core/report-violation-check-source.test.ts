@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest"
 
-import { mermaidSourcesOfLeaves } from "../../../../src/server/report/core/report-figure-fault.ts"
 import { reportRejectionText } from "../../../../src/server/report/core/report-rejection.ts"
 import { reportViolations } from "../../../../src/server/report/core/report-violation-check.ts"
 import type { ReportDraft } from "../../../../src/server/report/core/rules/draft.ts"
+import { mermaidSourcesOfLeaves } from "../../../../src/server/report/core/rules/figure/diagram.ts"
 import { REPORT_MERMAID_KINDS } from "../../../../src/shared/report/report-block-diagram.ts"
 import type { ReportBlock } from "../../../../src/shared/report/report-block.ts"
 import type { ReportOutlineLeaf } from "../../../../src/shared/report/report-outline.ts"

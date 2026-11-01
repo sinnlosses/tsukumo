@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest"
 
-import { reportRejectionText } from "../../../../src/server/report/core/report-rejection.ts"
-import { reportViolations } from "../../../../src/server/report/core/report-violation-check.ts"
-import { plotBlockSchema } from "../../../../src/shared/report/figure-grammar.ts"
-import type { ReportBlock } from "../../../../src/shared/report/report-block.ts"
-import { reportDraft } from "../../../fixture/report-event.ts"
+import { reportRejectionText } from "../../../../../../src/server/report/core/report-rejection.ts"
+import { reportViolations } from "../../../../../../src/server/report/core/report-violation-check.ts"
+import { plotBlockSchema } from "../../../../../../src/shared/report/figure-grammar.ts"
+import type { ReportBlock } from "../../../../../../src/shared/report/report-block.ts"
+import { reportDraft } from "../../../../../fixture/report-event.ts"
 
 /** 架空の工程 5 つの所要。決定表は `part` の行で `bar`（文派は `table`）を返す。 */
 const partPlot = (form: string | undefined) =>

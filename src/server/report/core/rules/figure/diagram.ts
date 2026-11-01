@@ -1,9 +1,9 @@
 // 図の塊（`mermaid`・`svg`・`graph`）の不具合の検出。
 // 位置と字句の名前だけを持ち、書き手のソースの文字は持たない。
 
-import { readGraphSource } from "../../../shared/report/graph-source.ts"
-import { REPORT_MERMAID_KINDS } from "../../../shared/report/report-block-diagram.ts"
-import type { ReportOutlineLeaf } from "../../../shared/report/report-outline.ts"
+import { readGraphSource } from "../../../../../shared/report/graph-source.ts"
+import { REPORT_MERMAID_KINDS } from "../../../../../shared/report/report-block-diagram.ts"
+import type { ReportOutlineLeaf } from "../../../../../shared/report/report-outline.ts"
 
 const MERMAID_KINDS: ReadonlySet<string> = new Set(REPORT_MERMAID_KINDS)
 

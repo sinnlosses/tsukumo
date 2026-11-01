@@ -23,7 +23,6 @@ import type { ToolErrorField } from "../../../shared/report/tool-error-field.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import { numberCountOutsideCode } from "./number-count.ts"
 import type { ReportRejectionMode } from "./rejection-mode.ts"
-import { mermaidKind, mermaidSourcesOfLeaves } from "./report-figure-fault.ts"
 import { reportImagePaths } from "./report-image-shelf.ts"
 import {
   containedNotationsInSections,
@@ -34,6 +33,7 @@ import {
   notationsInSections,
 } from "./report-markdown-notation.ts"
 import type { ReportFigureUsage, ReportShapeTagUsage } from "./report-usage-record.ts"
+import { mermaidKind, mermaidSourcesOfLeaves } from "./rules/figure/diagram.ts"
 
 type ReportLeafKind = (typeof LEAF_COMPONENT_KINDS)[keyof typeof LEAF_COMPONENT_KINDS]
 

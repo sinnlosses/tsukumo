@@ -1,12 +1,15 @@
 // `plot` の `form` の上書きのうち、置いてはならない形として採らなかったものと、決定表と違う形を通したものの数え上げ。
 
-import { type FigureHardRuleName, plotFormOf } from "../../../shared/report/figure-decision.ts"
+import {
+  type FigureHardRuleName,
+  plotFormOf,
+} from "../../../../../shared/report/figure-decision.ts"
 import {
   drawnLeaves,
   plotsOfLeaves,
   type ReportOutline,
-} from "../../../shared/report/report-outline.ts"
-import { FIGURE_PREFERENCES } from "../../../shared/session/session-default.ts"
+} from "../../../../../shared/report/report-outline.ts"
+import { FIGURE_PREFERENCES } from "../../../../../shared/session/session-default.ts"
 
 type PlotFormFaults = {
   /** 採らなかった `plot` ごとの、当たった規則の名前。 */

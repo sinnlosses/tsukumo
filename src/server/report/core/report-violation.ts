@@ -2,13 +2,10 @@
 
 import { keys } from "remeda"
 
-import type { FigureHardRuleName } from "../../../shared/report/figure-decision.ts"
 import { MAX_CONCLUSION_SENTENCES } from "../../../shared/report/report-limit.ts"
-import type { FigureNumberFault } from "./figure-number-fault.ts"
-import type { GraphFault, SvgFault, ToneFault } from "./report-figure-fault.ts"
 import type { MarkdownNotation } from "./report-markdown-notation.ts"
 import type { TemplateMiss } from "./request-template.ts"
-import type { TimelineBlockFault } from "./timeline-fault.ts"
+import type { FigureViolation } from "./rules/figure.ts"
 
 /** 差し戻す `cards` の塊の、塊の並びでの 1 始まりの位置と項目数。`unlabeled` は `label` の空の項目があること。 */
 export type CardsFault = {
@@ -23,10 +20,9 @@ export type CardsFault = {
  * `code-mismatch` の `paths` は `code` の塊の `path`（schema が決めた識別子で、書いた自由文ではない）。
  */
 export type ReportViolation =
+  | FigureViolation
   /** `conclusion` が3要素以上ある（「結論は `conclusion` に1〜2文で書く」）。 */
   | { readonly kind: "long-conclusion"; readonly count: number }
-  /** `mermaid` の塊に、規約が挙げる種類（`REPORT_MERMAID_KINDS`）の外の種類がある。 */
-  | { readonly kind: "unknown-mermaid"; readonly count: number }
   /** `note` の塊が3つ以上ある（「1つのレポートに1〜2個まで」）。 */
   | { readonly kind: "too-many-notes"; readonly count: number }
   /**
@@ -79,36 +75,6 @@ export type ReportViolation =
   | { readonly kind: "code-marks-range"; readonly count: number }
   /** `beforeAfter` の画像の側の `region` が画像の外に出る、または幅か高さが 0 以下。`count` はその塊の数。 */
   | { readonly kind: "region-range"; readonly count: number }
-  /** `svg` の塊の図形が `width` × `height` の外に出る。`faults` は位置だけで、図形の中身は持たない。 */
-  | {
-      readonly kind: "broken-svg"
-      readonly count: number
-      readonly faults: readonly SvgFault[]
-    }
-  /** `svg` の塊の `rect` の `tone` が `legend` に無い。`faults` は位置と `tone` の名前だけ。 */
-  | {
-      readonly kind: "unlegended-svg-tone"
-      readonly count: number
-      readonly faults: readonly ToneFault[]
-    }
-  /** `graph` の塊の ` @a`〜` @e` の色の目印が `legend` に無い。`faults` は位置と `tone` の名前だけ。 */
-  | {
-      readonly kind: "unlegended-graph-tone"
-      readonly count: number
-      readonly faults: readonly ToneFault[]
-    }
-  /** `graph` の塊の `source` に読めない行がある。`faults` は位置だけで、書き手の行は持たない。 */
-  | {
-      readonly kind: "broken-graph"
-      readonly count: number
-      readonly faults: readonly GraphFault[]
-    }
-  /** `timeline` の塊の時刻が読めない・尺度が混ざる・昇順でない・終了が開始より前・`emphasis` が行に無い。`faults` は位置と理由だけで、行の名前と時刻の字は持たない。 */
-  | {
-      readonly kind: "broken-timeline"
-      readonly count: number
-      readonly faults: readonly TimelineBlockFault[]
-    }
   /** `conclusion` の1要素目が全角50字を超える。`count` は1か0、`length` は1要素目の字数。 */
   | { readonly kind: "long-first-sentence"; readonly count: number; readonly length: number }
   /** 節の `heading` が30字を超える、または疑問文（末尾が `?`・`？`）。`count` は該当の節の数。 */
@@ -140,32 +106,10 @@ export type ReportViolation =
       readonly reason: "no-shape" | "short-answer"
     }
   /**
-   * 本文（`conclusion`・`keyFigures`・節の `text`）の数が、どの `plot` の `Q` 列の値とも一致せず、ある列の値と取り違えた形（近い値・桁の単位違い）をしている。
-   * `faults` は位置だけで、本文の字も列の名前も持たない。
-   */
-  | {
-      readonly kind: "figure-number-mismatch"
-      readonly count: number
-      readonly faults: readonly FigureNumberFault[]
-    }
-  /**
-   * `plot` の `form` が置いてはならない形（`FIGURE_HARD_RULES`）に当たり、決定表の形で描いた。
-   * `rules` は当たった `plot` ごとの規則の名前。
-   */
-  | {
-      readonly kind: "plot-forbidden-form"
-      readonly count: number
-      readonly rules: readonly FigureHardRuleName[]
-    }
-  /** `plot` の `form` が、どちらの図の既定で決めた形とも違い、上書きとして通した。 */
-  | { readonly kind: "plot-form-override"; readonly count: number }
-  /**
    * 結論・`text` の塊・`list` の項目・`table` のセルに、行内の印の書式に当たらない `{{` がある。
    * `count` はその `{{` の数で、本文の字は持たない。
    */
   | { readonly kind: "broken-inline-mark"; readonly count: number }
-  /** 棒・折れ線・円で描く `plot` の題に数が無い。 */
-  | { readonly kind: "plot-title-without-number"; readonly count: number }
   /**
    * 申告した依頼の型（`task.genre`）の雛形から外れた。`misses` は外れた点
    * （結論の数が 3 つ以上あるのに数の帯が無い `key-figures`、図 1 が第一候補の種類でない `figure`）。

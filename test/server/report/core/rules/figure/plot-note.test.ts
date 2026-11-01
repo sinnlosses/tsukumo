@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest"
 
-import { reportRejectionText } from "../../../../src/server/report/core/report-rejection.ts"
-import { reportViolations } from "../../../../src/server/report/core/report-violation-check.ts"
-import { plotBlockSchema } from "../../../../src/shared/report/figure-grammar.ts"
-import { reportDraft } from "../../../fixture/report-event.ts"
+import { reportRejectionText } from "../../../../../../src/server/report/core/report-rejection.ts"
+import { reportViolations } from "../../../../../../src/server/report/core/report-violation-check.ts"
+import { plotBlockSchema } from "../../../../../../src/shared/report/figure-grammar.ts"
+import { reportDraft } from "../../../../../fixture/report-event.ts"
 
 const plotOf = (question: string, form?: string) =>
   plotBlockSchema.parse({

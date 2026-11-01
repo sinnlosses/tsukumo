@@ -23,14 +23,10 @@ import {
   reportFigureOf,
   reportOutline,
   sectionLeaves,
-  timelinesOfLeaves,
 } from "../../../shared/report/report-outline.ts"
 import { codeBlockMatchesFile } from "./code-block-match.ts"
-import { figureNumberFaults } from "./figure-number-fault.ts"
 import { brokenInlineMarks } from "./inline-mark-fault.ts"
 import { plainWordSpellingsIn } from "./plain-word-find.ts"
-import { plotFormFaults } from "./plot-form-fault.ts"
-import { plotNoteFaults } from "./plot-note-fault.ts"
 import {
   badCardsIn,
   crowdedNoteCount,
@@ -45,13 +41,6 @@ import {
   nestedFoldCount,
   noteCount,
 } from "./report-block-rule.ts"
-import {
-  graphFaultsInLeaves,
-  graphToneFaultsInLeaves,
-  svgFaultsInLeaves,
-  svgToneFaultsInLeaves,
-  unknownMermaidCount,
-} from "./report-figure-fault.ts"
 import { notationsInSections } from "./report-markdown-notation.ts"
 import {
   hasArrow,
@@ -63,8 +52,8 @@ import {
 } from "./report-prose-rule.ts"
 import { type ReportViolation, VIOLATION_THRESHOLDS } from "./report-violation.ts"
 import type { ReportDraft } from "./rules/draft.ts"
+import { detectFigureViolations } from "./rules/figure.ts"
 import { templateMissesOf } from "./template-miss-fault.ts"
-import { timelineFaults } from "./timeline-fault.ts"
 
 /** レポートの規約違反を並べる。空なら違反は無い。 */
 export function reportViolations(report: ReportDraft): readonly ReportViolation[] {
@@ -84,20 +73,12 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
   const firstSentenceLength = report.conclusionSentenceChars[0] ?? 0
 
   const drawn = drawnLeaves(outline)
-  const svgFaults = svgFaultsInLeaves(drawn)
-  const svgToneFaults = svgToneFaultsInLeaves(drawn)
-  const graphFaults = graphFaultsInLeaves(drawn)
-  const graphToneFaults = graphToneFaultsInLeaves(drawn)
-  const timelineFaultList = timelineFaults(timelinesOfLeaves(drawn))
 
   const plainWords = plainWordSpellingsIn(report, outline)
-  const figureNumberFaultList = figureNumberFaults(report, outline)
   const templateMissList = templateMissesOf(report)
-  const plotForms = plotFormFaults(outline)
 
   const counted = [
     { kind: "long-conclusion", count: report.conclusionSentenceChars.length },
-    { kind: "unknown-mermaid", count: unknownMermaidCount(drawn) },
     { kind: "too-many-notes", count: noteCount(outline) },
     { kind: "crowded-notes", count: crowdedNoteCount(outline) },
     { kind: "nested-fold", count: nestedFoldCount(outline) },
@@ -156,11 +137,7 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
             ).length,
     },
     { kind: "markdown-notation", count: notations.length, notations },
-    { kind: "broken-svg", count: svgFaults.length, faults: svgFaults },
-    { kind: "unlegended-svg-tone", count: svgToneFaults.length, faults: svgToneFaults },
-    { kind: "unlegended-graph-tone", count: graphToneFaults.length, faults: graphToneFaults },
-    { kind: "broken-graph", count: graphFaults.length, faults: graphFaults },
-    { kind: "broken-timeline", count: timelineFaultList.length, faults: timelineFaultList },
+    ...detectFigureViolations(report, outline),
     {
       kind: "code-mismatch",
       count: mismatchedCodeBlocks.length,
@@ -211,15 +188,7 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
     },
     { kind: "plain-word", count: plainWords.length, spellings: plainWords },
     figureContradiction(report.components, outline),
-    {
-      kind: "figure-number-mismatch",
-      count: figureNumberFaultList.length,
-      faults: figureNumberFaultList,
-    },
-    { kind: "plot-forbidden-form", count: plotForms.refused.length, rules: plotForms.refused },
-    { kind: "plot-form-override", count: plotForms.overrides },
     { kind: "broken-inline-mark", count: brokenInlineMarks(report, outline) },
-    { kind: "plot-title-without-number", count: plotNoteFaults(outline) },
     { kind: "template-miss", count: templateMissList.length, misses: templateMissList },
   ] as const satisfies readonly ReportViolation[]
 

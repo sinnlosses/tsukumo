@@ -5,14 +5,9 @@ import {
   plotsOfLeaves,
   type ReportOutline,
   sectionLeaves,
-} from "../../../shared/report/report-outline.ts"
-import {
-  type BodyNumber,
-  type FigureNumberSlip,
-  figureNumberSlips,
-  numbersIn,
-} from "./figure-number.ts"
-import type { ReportDraft } from "./rules/draft.ts"
+} from "../../../../../shared/report/report-outline.ts"
+import type { ReportDraft } from "../draft.ts"
+import { type BodyNumber, type FigureNumberSlip, figureNumberSlips, numbersIn } from "./number.ts"
 
 /** `plot` の何個目の何列目と、本文の何番目の数がずれたか。 */
 export type FigureNumberFault = FigureNumberSlip

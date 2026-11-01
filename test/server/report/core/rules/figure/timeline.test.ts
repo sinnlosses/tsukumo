@@ -3,8 +3,8 @@ import { describe, expect, it } from "vitest"
 import {
   timelineFaultPositions,
   timelineFaults,
-} from "../../../../src/server/report/core/timeline-fault.ts"
-import { timelineBlockSchema } from "../../../../src/shared/report/timeline-block.ts"
+} from "../../../../../../src/server/report/core/rules/figure/timeline.ts"
+import { timelineBlockSchema } from "../../../../../../src/shared/report/timeline-block.ts"
 
 const timeline = (rows: readonly object[], emphasis: readonly string[] = []) =>
   timelineBlockSchema.parse({ kind: "timeline", rows, emphasis })

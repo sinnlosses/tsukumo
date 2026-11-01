@@ -10,16 +10,10 @@ import {
   SENTENCE_CELL_LENGTH,
 } from "../../../shared/report/report-limit.ts"
 import type { A2uiStructureFault, A2uiStructureFaultKind } from "./a2ui-structure-fault.ts"
-import { figureNumberFaultPositions } from "./figure-number-fault.ts"
 import { PLAIN_WORDS } from "./plain-word.ts"
-import {
-  graphFaultPositions,
-  svgFaultPositions,
-  toneFaultPositions,
-} from "./report-figure-fault.ts"
 import { MARKDOWN_NOTATION_NAMES } from "./report-markdown-notation.ts"
 import type { ReportViolation } from "./report-violation.ts"
-import { timelineFaultPositions } from "./timeline-fault.ts"
+import { figureViolationMessage } from "./rules/figure.ts"
 
 /** 差し戻しの戻り値に足す、呼び直し方（`components` は全部、`Report` の欄は省けば引き継ぐ）の1文。 */
 export const REPORT_CHANGED_FIELDS_ONLY_TEXT =
@@ -91,7 +85,16 @@ function violationLine(violation: ReportViolation): string {
     case "long-conclusion":
       return `\`conclusion\` が${violation.count}要素ある。1要素1文で2要素以内にし、残りは \`Section\` へ移す`
     case "unknown-mermaid":
-      return `\`Mermaid\` の図に規約の2種（sequenceDiagram・stateDiagram-v2）の外の種類が${violation.count}個ある。flowchart は \`Graph\` で書き、それ以外の図は \`Table\`・\`ItemList\`・\`Svg\` で書く`
+    case "broken-svg":
+    case "unlegended-svg-tone":
+    case "unlegended-graph-tone":
+    case "broken-graph":
+    case "broken-timeline":
+    case "figure-number-mismatch":
+    case "plot-forbidden-form":
+    case "plot-form-override":
+    case "plot-title-without-number":
+      return figureViolationMessage(violation)
     case "too-many-notes":
       return `\`Note\` が${violation.count}個ある。2個まで減らす`
     case "crowded-notes":
@@ -139,16 +142,6 @@ function violationLine(violation: ReportViolation): string {
       return `\`Code\` の \`marks\` の \`lines\` が読めない形か \`source\` の行数の外にある部品が${violation.count}個ある。\`4-8\` か \`12\` の形で、行数以内に直す`
     case "region-range":
       return `\`BeforeAfter\` の画像の側の \`region\` が画像の外に出る、または \`width\`・\`height\` が 0 以下の部品が${violation.count}個ある。\`left\`・\`top\` は 0 以上、\`left + width\` と \`top + height\` は 100 以下、\`width\`・\`height\` は 0 より大きい%にする`
-    case "broken-svg":
-      return `\`Svg\` の図形が \`width\` × \`height\` の外に出ている（${svgFaultPositions(violation.faults)}）。幅の目安は 480〜640 で、図形の座標と大きさを 0〜\`width\`・0〜\`height\` の内側に収める`
-    case "unlegended-svg-tone":
-      return `\`Svg\` の \`rect\` の \`tone\` が \`legend\` に無い（${toneFaultPositions(violation.faults)}）。\`legend\` に \`tone\` と名前を足す（色だけで意味を言わない）`
-    case "unlegended-graph-tone":
-      return `\`Graph\` の \` @a\`〜\` @e\` の色の目印が \`legend\` に無い（${toneFaultPositions(violation.faults)}）。\`legend\` に \`tone\` と名前を足す（色だけで意味を言わない）`
-    case "broken-graph":
-      return `\`Graph\` の \`source\` に読めない行がある（${graphFaultPositions(violation.faults)}）。1行を \`A -> B: 語\` の形に直す（\`: 語\` は省ける）。囲みは \`[群の名]\` 〜 \`[]\` で、内側を先に \`[]\` で閉じる入れ子は2階層まで（3階層以上と閉じ忘れは読めない）。箱の説明は \`名前 | 一\\n二\` の \`\\n\` で区切って3行まで（空の行も不可）`
-    case "broken-timeline":
-      return `\`Timeline\` の時刻に誤りがある（${timelineFaultPositions(violation.faults)}）。時刻は HH:MM・ISO の日時・分の数のどれか1つに揃え（日をまたぐなら ISO）、同じ lane の行は start の昇順、extra は昇順、end は start より後、出来事は at の昇順にし、\`emphasis\` は行の \`name\` と同じ字にする`
     case "long-first-sentence":
       return `\`conclusion\` の1要素目がいま${String(violation.length)}字で、全角${String(MAX_FIRST_SENTENCE)}字を超える。1要素目を短くし、補足は2要素目か \`Section\` へ移す`
     case "bad-heading":
@@ -171,16 +164,8 @@ function violationLine(violation: ReportViolation): string {
         : `\`figure\` の reason が \`short-answer\` なのに、セクションが2つ以上ある。2〜3文で終わる答えでなければ \`figure\` に図を置くか、合う reason にする`
     case "broken-inline-mark":
       return `行内の印の書式（\`{{A → B}}\`・\`{{spark: 数 数 …}}\`・\`{{a / b}}\`）に当たらない \`{{\` が${violation.count}個ある。書式に合わせて直すか、\`{{\` を使わない書き方にする`
-    case "figure-number-mismatch":
-      return `\`Plot\` の値とずれた数が本文にある（${figureNumberFaultPositions(violation.faults)}）。単位と丸めを \`Plot\` の値に揃えて、本文の数を直す`
-    case "plot-forbidden-form":
-      return `\`Plot\` の \`form\` が置いてはならない形に当たる部品が${violation.count}個ある（${violation.rules.join("・")}）。\`form\` を省いて決定表の形に任せる`
-    case "plot-title-without-number":
-      return `棒・折れ線・円で描く \`Plot\` の \`question\` に数が無い部品が${violation.count}個ある。題に数と向きで言いたい傾向を1文で書く`
     case "template-miss":
       return `申告した依頼の型の雛形から外れた点がある（${violation.misses.join("・")}）。数の帯 \`keyFigures\` を足すか、図 1 を型の第一候補の種類にする`
-    case "plot-form-override":
-      return `\`Plot\` の \`form\` が決定表の形と違う部品が${violation.count}個ある。決定表の形で足りるなら \`form\` を省く`
   }
 }
 
