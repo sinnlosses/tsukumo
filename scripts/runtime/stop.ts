@@ -75,7 +75,9 @@ function listAll(): void {
 function freshnessOf(running: RunningTsukumo): string {
   const current =
     running.cwd === undefined ? undefined : queryGit(running.cwd, ["rev-parse", "HEAD"])?.trim()
-  return describeFreshness(running.startHead, current)
+  return running.startHead === undefined || current === undefined
+    ? "不明"
+    : describeFreshness(running.startHead, current)
 }
 
 /** 名指しされたポートのものだけに SIGTERM を送り、終わったかどうかまで見届ける。 */

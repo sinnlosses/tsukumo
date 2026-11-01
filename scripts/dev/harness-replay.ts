@@ -11,7 +11,7 @@ import process from "node:process"
 
 import { runClaude } from "../shared/claude-run.ts"
 import { parseReplayOptions } from "../shared/replay-option.ts"
-import { buildReplayPrompt } from "../shared/replay-prompt.ts"
+import { buildReplayPrompt, prependReplayBrief } from "../shared/replay-prompt.ts"
 import { readReplayScript, readReplayTaskText, type ReplayScript } from "../shared/replay-script.ts"
 import { formatReplaySummary, summarizeReplay, type ReplayRun } from "../shared/replay-summary.ts"
 import {
@@ -59,7 +59,11 @@ function replayOnce(script: ReplayScript, taskText: string): ReplayRun {
   try {
     linkDependencies(ROOT, worktree)
     overlayHarness(ROOT, worktree)
-    const claude = runClaude(worktree.path, buildReplayPrompt(taskText, brief))
+    const body = buildReplayPrompt(taskText)
+    const claude = runClaude(
+      worktree.path,
+      brief === undefined ? body : prependReplayBrief(brief, body),
+    )
     checkoutCheckFiles(worktree, script.after, script.checkFiles)
     const check = spawnSync("pnpm", script.command.slice(1), {
       cwd: worktree.path,

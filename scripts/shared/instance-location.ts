@@ -14,11 +14,8 @@ export type RunningTsukumo = Listener & {
 const SHORT_HEAD_LENGTH = 7
 
 /** 起動時の HEAD と今の HEAD を比べた表示。どちらかが読めなければ「不明」。 */
-export function describeFreshness(
-  startHead: string | undefined,
-  currentHead: string | undefined,
-): string {
-  if (startHead === undefined || currentHead === undefined || currentHead === "") {
+export function describeFreshness(startHead: string, currentHead: string): string {
+  if (currentHead === "") {
     return "不明"
   }
   return currentHead === startHead

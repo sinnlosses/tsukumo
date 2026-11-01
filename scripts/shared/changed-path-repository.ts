@@ -12,14 +12,13 @@ export function collectChangedPaths(root: string, primaryBranch: string): string
     throw new Error(`${primaryBranch} とのマージベースが見つからない`)
   }
 
-  const diffPaths = splitLines(queryGit(root, ["diff", "--name-only", mergeBase]))
-  const untrackedPaths = splitLines(queryGit(root, ["ls-files", "--others", "--exclude-standard"]))
+  const diffPaths = splitLines(queryGit(root, ["diff", "--name-only", mergeBase]) ?? "")
+  const untrackedPaths = splitLines(
+    queryGit(root, ["ls-files", "--others", "--exclude-standard"]) ?? "",
+  )
   return [...new Set([...diffPaths, ...untrackedPaths])]
 }
 
-function splitLines(output: string | undefined): string[] {
-  if (output === undefined || output === "") {
-    return []
-  }
+function splitLines(output: string): string[] {
   return output.split("\n").filter((line) => line !== "")
 }

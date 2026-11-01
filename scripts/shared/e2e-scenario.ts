@@ -74,23 +74,22 @@ function nameExpressions(nodes: readonly AstNode[]): readonly AstNode[] {
       return []
     }
     const callee = objectField(node, "callee")
+    if (callee === undefined) {
+      return []
+    }
     const name = calleeName(callee)
     const isLocal = stringField(callee, "type") === "Identifier" && localFunctions.has(name ?? "")
     if (name === undefined || !ROOM_OPENER.test(name) || isLocal) {
       return []
     }
     const [first, second] = arrayField(node, "arguments")
-    return (isIdentifierNamed(first, "run") ? second : first) ?? []
+    return (first !== undefined && isIdentifierNamed(first, "run") ? second : first) ?? []
   })
 }
 
 /** 式が、リテラルかテンプレートの頭まで辿れるか。 */
-function isTraceable(
-  expression: AstNode | undefined,
-  nodes: readonly AstNode[],
-  depth: number,
-): boolean {
-  if (expression === undefined || depth === 0) {
+function isTraceable(expression: AstNode, nodes: readonly AstNode[], depth: number): boolean {
+  if (depth === 0) {
     return false
   }
   switch (stringField(expression, "type")) {
@@ -98,15 +97,22 @@ function isTraceable(
       return true
     case "TemplateLiteral":
       return arrayField(expression, "expressions").length === 0 || templateHead(expression) !== ""
-    case "ConditionalExpression":
+    case "ConditionalExpression": {
+      const consequent = objectField(expression, "consequent")
+      const alternate = objectField(expression, "alternate")
       return (
-        isTraceable(objectField(expression, "consequent"), nodes, depth - 1) &&
-        isTraceable(objectField(expression, "alternate"), nodes, depth - 1)
+        consequent !== undefined &&
+        alternate !== undefined &&
+        isTraceable(consequent, nodes, depth - 1) &&
+        isTraceable(alternate, nodes, depth - 1)
       )
+    }
     case "TSAsExpression":
     case "TSSatisfiesExpression":
-    case "ParenthesizedExpression":
-      return isTraceable(objectField(expression, "expression"), nodes, depth - 1)
+    case "ParenthesizedExpression": {
+      const inner = objectField(expression, "expression")
+      return inner !== undefined && isTraceable(inner, nodes, depth - 1)
+    }
     case "Identifier":
       return isIdentifierTraceable(stringField(expression, "name") ?? "", nodes, depth - 1)
     default:
@@ -125,7 +131,10 @@ function isIdentifierTraceable(name: string, nodes: readonly AstNode[], depth: n
     return false
   }
   return (
-    declarators.every((declarator) => isTraceable(objectField(declarator, "init"), nodes, depth)) &&
+    declarators.every((declarator) => {
+      const init = objectField(declarator, "init")
+      return init !== undefined && isTraceable(init, nodes, depth)
+    }) &&
     functions.every((fn) => isParameterTraceable(fn, parameterIndex(fn, name) ?? 0, nodes, depth))
   )
 }
@@ -145,7 +154,10 @@ function isParameterTraceable(
     isOnlyCalled(name, nodes) &&
     nodes
       .filter((node) => isCallTo(node, name))
-      .every((call) => isTraceable(arrayField(call, "arguments")[index], nodes, depth))
+      .every((call) => {
+        const argument = arrayField(call, "arguments")[index]
+        return argument !== undefined && isTraceable(argument, nodes, depth)
+      })
   )
 }
 
@@ -161,16 +173,13 @@ function isEachCallback(fn: AstNode, nodes: readonly AstNode[], depth: number): 
   ) {
     return false
   }
-  return isLiteralTable(arrayField(each, "arguments")[0], nodes, depth)
+  const table = arrayField(each, "arguments")[0]
+  return table !== undefined && isLiteralTable(table, nodes, depth)
 }
 
 /** リテラルだけでできた配列・オブジェクトか。 */
-function isLiteralTable(
-  expression: AstNode | undefined,
-  nodes: readonly AstNode[],
-  depth: number,
-): boolean {
-  if (expression === undefined || depth === 0) {
+function isLiteralTable(expression: AstNode, nodes: readonly AstNode[], depth: number): boolean {
+  if (depth === 0) {
     return false
   }
   switch (stringField(expression, "type")) {
@@ -186,21 +195,26 @@ function isLiteralTable(
       return arrayField(expression, "properties").every((item) =>
         isLiteralTable(item, nodes, depth - 1),
       )
-    case "Property":
-      return isLiteralTable(objectField(expression, "value"), nodes, depth - 1)
+    case "Property": {
+      const value = objectField(expression, "value")
+      return value !== undefined && isLiteralTable(value, nodes, depth - 1)
+    }
     case "TSAsExpression":
     case "TSSatisfiesExpression":
-    case "ParenthesizedExpression":
-      return isLiteralTable(objectField(expression, "expression"), nodes, depth - 1)
+    case "ParenthesizedExpression": {
+      const inner = objectField(expression, "expression")
+      return inner !== undefined && isLiteralTable(inner, nodes, depth - 1)
+    }
     case "Identifier": {
       const name = stringField(expression, "name") ?? ""
       const declarators = nodes.filter((node) => isDeclaratorOf(node, name))
       return (
         !isReassignable(name, nodes) &&
         declarators.length > 0 &&
-        declarators.every((declarator) =>
-          isLiteralTable(objectField(declarator, "init"), nodes, depth - 1),
-        )
+        declarators.every((declarator) => {
+          const init = objectField(declarator, "init")
+          return init !== undefined && isLiteralTable(init, nodes, depth - 1)
+        })
       )
     }
     default:
@@ -244,7 +258,7 @@ function isDeclaratorOf(node: AstNode, name: string): boolean {
   )
 }
 
-function calleeName(callee: AstNode | undefined): string | undefined {
+function calleeName(callee: AstNode): string | undefined {
   return stringField(callee, "type") === "MemberExpression"
     ? stringField(objectField(callee, "property"), "name")
     : stringField(callee, "name")
@@ -280,10 +294,10 @@ function parameterIndex(fn: AstNode, name: string): number | undefined {
   return index === -1 ? undefined : index
 }
 
-function isIdentifierNamed(node: AstNode | undefined, name: string): boolean {
+function isIdentifierNamed(node: AstNode, name: string): boolean {
   return stringField(node, "type") === "Identifier" && stringField(node, "name") === name
 }
 
-function templateHead(template: object | undefined): string {
+function templateHead(template: object): string {
   return stringField(objectField(arrayField(template, "quasis")[0], "value"), "cooked") ?? ""
 }

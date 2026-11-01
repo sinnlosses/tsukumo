@@ -25,8 +25,6 @@ describe("describeFreshness", () => {
   test("同じなら最新、違えば短い HEAD で古い、どちらかが読めなければ不明", () => {
     expect(describeFreshness("abc1234567", "abc1234567")).toBe("最新")
     expect(describeFreshness("abc1234567", "def5678901")).toBe("古い（起動 abc1234 → 今 def5678）")
-    expect(describeFreshness(undefined, "def5678901")).toBe("不明")
-    expect(describeFreshness("abc1234567", undefined)).toBe("不明")
     expect(describeFreshness("abc1234567", "")).toBe("不明")
   })
 })

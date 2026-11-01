@@ -40,6 +40,9 @@ export function readReferences(
 
 function readCall(node: AstNode): readonly string[] {
   const callee = objectField(node, "callee")
+  if (callee === undefined) {
+    return []
+  }
   if (stringField(callee, "type") === "Identifier" && stringField(callee, "name") === "require") {
     const [argument] = arrayField(node, "arguments")
     return [literalString(argument) ?? DYNAMIC]
@@ -59,7 +62,7 @@ function readNewUrl(node: AstNode): readonly string[] {
   return [literalString(target) ?? DYNAMIC]
 }
 
-function isImportMeta(node: AstNode | undefined): boolean {
+function isImportMeta(node: AstNode): boolean {
   return (
     stringField(node, "type") === "MetaProperty" &&
     stringField(objectField(node, "meta"), "name") === "import"
@@ -67,17 +70,21 @@ function isImportMeta(node: AstNode | undefined): boolean {
 }
 
 function isImportMetaUrl(node: AstNode): boolean {
+  const object = objectField(node, "object")
   return (
     stringField(node, "type") === "MemberExpression" &&
-    isImportMeta(objectField(node, "object")) &&
+    object !== undefined &&
+    isImportMeta(object) &&
     stringField(objectField(node, "property"), "name") === "url"
   )
 }
 
-function isImportMetaGlob(callee: AstNode | undefined): boolean {
+function isImportMetaGlob(callee: AstNode): boolean {
+  const object = objectField(callee, "object")
   if (
     stringField(callee, "type") !== "MemberExpression" ||
-    !isImportMeta(objectField(callee, "object"))
+    object === undefined ||
+    !isImportMeta(object)
   ) {
     return false
   }

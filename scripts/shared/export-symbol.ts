@@ -10,14 +10,18 @@ export function exportedSymbols(program: AstNode): readonly ExportedSymbol[] {
       case "ExportDefaultDeclaration":
         return [{ name: "default", local: "default" }]
       case "ExportNamedDeclaration": {
-        const declared = declaredNames(objectField(statement, "declaration")).map((name) => ({
-          name,
-          local: name,
-        }))
-        const specified = arrayField(statement, "specifiers").map((specifier) => ({
-          name: symbolName(objectField(specifier, "exported")),
-          local: symbolName(objectField(specifier, "local")),
-        }))
+        const declaration = objectField(statement, "declaration")
+        const declared = (declaration === undefined ? [] : declaredNames(declaration)).map(
+          (name) => ({ name, local: name }),
+        )
+        const specified = arrayField(statement, "specifiers").map((specifier) => {
+          const exported = objectField(specifier, "exported")
+          const local = objectField(specifier, "local")
+          return {
+            name: exported === undefined ? "" : symbolName(exported),
+            local: local === undefined ? "" : symbolName(local),
+          }
+        })
         return [...declared, ...specified]
       }
       default:
@@ -26,7 +30,7 @@ export function exportedSymbols(program: AstNode): readonly ExportedSymbol[] {
   })
 }
 
-function declaredNames(declaration: AstNode | undefined): readonly string[] {
+function declaredNames(declaration: AstNode): readonly string[] {
   if (stringField(declaration, "type") === "VariableDeclaration") {
     return arrayField(declaration, "declarations").flatMap(
       (declarator) => stringField(objectField(declarator, "id"), "name") ?? [],
@@ -35,6 +39,6 @@ function declaredNames(declaration: AstNode | undefined): readonly string[] {
   return [stringField(objectField(declaration, "id"), "name") ?? []].flat()
 }
 
-function symbolName(node: AstNode | undefined): string {
+function symbolName(node: AstNode): string {
   return stringField(node, "name") ?? stringField(node, "value") ?? ""
 }
