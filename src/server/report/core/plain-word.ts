@@ -463,4 +463,24 @@ export const PLAIN_WORDS = [
     replacement: "手続きが使う関数",
     meaning: "画面からの手続きを処理するときに使う、配線が渡す関数の組",
   },
+  {
+    spelling: "合図が届",
+    replacement: "通知が届",
+    meaning: "委譲先やバックグラウンドタスクからの知らせ（通知）が届くこと",
+  },
+  {
+    spelling: "合図の届",
+    replacement: "通知の届",
+    meaning: "委譲先やバックグラウンドタスクからの知らせ（通知）が届くこと",
+  },
+  {
+    spelling: "合図を受け",
+    replacement: "通知を受け",
+    meaning: "委譲先やバックグラウンドタスクからの知らせ（通知）を受け取ること",
+  },
+  {
+    spelling: "合図を送",
+    replacement: "通知を送",
+    meaning: "委譲先やバックグラウンドタスクへ知らせ（通知）を送ること",
+  },
 ] as const satisfies readonly PlainWord[]

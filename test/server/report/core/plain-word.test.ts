@@ -121,6 +121,18 @@ test("目録は複合語の綴りで登録し、単独の綴りは登録しな�
   )
 })
 
+test("合図は通知を指す複合語の綴りで登録し、単独の綴りと別の意味の語は登録しない", () => {
+  const spellings = PLAIN_WORDS.map((word) => word.spelling)
+  expect(spellings).not.toContain("合図")
+  expect(spellings).toEqual(
+    expect.arrayContaining(["合図が届", "合図の届", "合図を受け", "合図を送"]),
+  )
+  for (const kept of ["合図の行", "合図にする", "合図を鍵に", "合図した", "合図する"]) {
+    expect(spellings.filter((spelling) => kept.includes(spelling))).toEqual([])
+  }
+  expect(PLAIN_WORDS.find((word) => word.spelling === "合図が届")?.replacement).toBe("通知が届")
+})
+
 test("口は複合語の綴りで登録し、単独の綴りと別の意味の語は登録しない", () => {
   const spellings = PLAIN_WORDS.map((word) => word.spelling)
   expect(spellings).toEqual(
