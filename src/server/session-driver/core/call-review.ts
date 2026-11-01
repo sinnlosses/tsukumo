@@ -14,8 +14,10 @@ import type {
   A2uiStructureFault,
   A2uiStructureVerdict,
 } from "../../report/core/a2ui-structure-fault.ts"
+import { plainWordSpellingsInSpeech } from "../../report/core/plain-word-find.ts"
 import { REPORT_REJECTION_MODES } from "../../report/core/rejection-mode.ts"
 import { createReportInheritance } from "../../report/core/report-inheritance.ts"
+import { speechPlainWordRejectionText } from "../../report/core/report-rejection.ts"
 import { createReportReview, type ReportVerdict } from "../../report/core/report-review.ts"
 import type { ReportDraft } from "../../report/core/report-violation.ts"
 import { judgePhaseMention, type PhaseMentionVerdict } from "../../work-plan/core/phase-mention.ts"
@@ -29,6 +31,8 @@ import { createSpeechReview, type SpeechVerdict } from "./speech-review.ts"
 export type CallReview = {
   /** `speak` の handler から。直前に描いたセリフのあとに新しい事実が届いていなければ差し戻す。 */
   readonly judgeSpeak: () => SpeechVerdict
+  /** `speak` の handler から。地の文に言い換え表の語があれば差し戻す。 */
+  readonly judgeSpeechWording: (text: string) => SpeechVerdict
   /** `report` の handler から。{@link CallReview.fillReport} で組んだ値で呼ぶ。 */
   readonly judgeReport: (report: ReportDraft) => ReportVerdict
   /** `report` の `a2ui` の版の handler から、構造の規約の違反があるときだけ `judgeReport` より先に呼ぶ（`ReportReview.judgeStructure`）。 */
@@ -106,6 +110,12 @@ export function createCallReview(): CallReview {
 
   return {
     judgeSpeak: speechReview.judge,
+    judgeSpeechWording: (text) => {
+      const spellings = plainWordSpellingsInSpeech(text)
+      return spellings.length === 0
+        ? { kind: "accepted" }
+        : { kind: "rejected", text: speechPlainWordRejectionText(spellings) }
+    },
     judgeReport: reportReview.judge,
     judgeReportStructure: reportReview.judgeStructure,
     fillReport: reportInheritance.fill,

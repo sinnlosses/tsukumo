@@ -40,12 +40,14 @@ export function speakTool(
       // 0 や負の数も形では通し、範囲の検査の差し戻しで直し方を返す。
       phase: z.number().int().optional().describe(SPEAK_PHASE_DESCRIPTION),
     },
-    async ({ phase }) => {
+    async ({ phase, text }) => {
       const mention =
         mode.kind === "work" && phase !== undefined
           ? review.judgePhaseMention(phase)
           : ACCEPTED_SPEECH
-      const verdict = mode.kind === "work" ? review.judgeSpeak() : ACCEPTED_SPEECH
+      const news = mode.kind === "work" ? review.judgeSpeak() : ACCEPTED_SPEECH
+      const verdict =
+        news.kind === "accepted" && mode.kind === "work" ? review.judgeSpeechWording(text) : news
       const rejection = mention.kind === "rejected" ? mention : verdict
       return rejection.kind === "rejected"
         ? { content: [{ type: "text" as const, text: rejection.text }], isError: true }

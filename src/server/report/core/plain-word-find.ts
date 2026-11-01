@@ -20,7 +20,17 @@ export function plainWordSpellingsIn(
     ...(section.kind === "section" ? [section.heading] : []),
     ...section.leaves.flatMap((leaf) => [...proseTexts(leaf), ...ownProseTexts(leaf)]),
   ])
-  const prose = [report.conclusion, report.favor, ...proseOfBlocks].flatMap(proseSegmentsOf)
+  return plainWordSpellingsOfProse(
+    [report.conclusion, report.favor, ...proseOfBlocks].flatMap(proseSegmentsOf),
+  )
+}
+
+/** `speak` のセリフの地の文に出てくる表の綴りを、表の順に返す。 */
+export function plainWordSpellingsInSpeech(text: string): readonly string[] {
+  return plainWordSpellingsOfProse(proseSegmentsOf(text))
+}
+
+function plainWordSpellingsOfProse(prose: readonly string[]): readonly string[] {
   const remaining = PLAIN_WORDS.reduce(
     (state, word) => ({
       segments: state.segments.flatMap((segment) => segment.split(word.spelling)),

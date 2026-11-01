@@ -81,6 +81,11 @@ const A2UI_STRUCTURE_FAULT_REASONS = {
   "filter-option-not-in-cells": "選択肢の value が、絞り込む Table のセルの文字に無い",
 } as const satisfies Record<A2uiStructureFaultKind, string>
 
+/** `speak` のセリフの地の文に表の語があるときの戻り値。表から取った語だけで、セリフの文面は写さない。 */
+export function speechPlainWordRejectionText(spellings: readonly string[]): string {
+  return `地の文にわかりにくい語がある。${plainWordReplacements(spellings)}。このセリフは画面に出していないので、言い換えて書き直して呼び直す（コード・引用の中は対象外）`
+}
+
 function violationLine(violation: ReportViolation): string {
   switch (violation.kind) {
     case "long-conclusion":
