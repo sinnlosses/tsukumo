@@ -66,9 +66,16 @@
   },
   "overrides": [
     {
-      // SDK の型が null を要求する値を渡す。test/** は別のタスクで直す
+      // SDK の型が null を要求する値を渡す。test は SDK・外来の生データ（JSON）を組む所と、DOM API が null を返す・受ける所だけ許す
       "files": [
-        "test/**",
+        "test/fixture/**",
+        "test/server/session-driver/**",
+        "test/server/diary/**",
+        "test/server/repository/**",
+        "test/server/usage/**",
+        "test/server/workflow-setting/**",
+        "test/browser/**",
+        "test/e2e/**",
         "src/server/session-driver/adapter/sdk-prompt-stream.ts",
         "src/server/adapter/sdk-structured-query.ts"
       ],

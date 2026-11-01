@@ -57,7 +57,7 @@ describe("toCharacterBackground の veil", () => {
     ["負の値は下限へ寄せる", -1, MIN_BACKGROUND_VEIL],
     ["上限を超える値は上限へ寄せる", 3, MAX_BACKGROUND_VEIL],
     ["数でない値は既定に落ちる", "0.8", DEFAULT_BACKGROUND_VEIL],
-    ["null は既定に落ちる", null, DEFAULT_BACKGROUND_VEIL],
+    ["null は既定に落ちる", JSON.parse("null"), DEFAULT_BACKGROUND_VEIL],
     ["NaN は既定に落ちる", Number.NaN, DEFAULT_BACKGROUND_VEIL],
     ["有限でない値は既定に落ちる", Number.POSITIVE_INFINITY, DEFAULT_BACKGROUND_VEIL],
   ])("%s", (_name, veil, expected) => {

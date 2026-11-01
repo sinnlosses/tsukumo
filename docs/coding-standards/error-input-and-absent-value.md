@@ -139,8 +139,9 @@ readonly turn:
 - `typeof value === "object" && value !== null` の型ガード
 
 「何も描かない」は `return undefined` で、コンポーネントの戻り値の型は `ReactElement | undefined`。
-リテラルの `null` は `.oxlintrc.json` の `unicorn/no-null` が `src/`・`scripts/` で見る（SDK の型が要求する
-2 ファイルと `test/**` は外す。ref の初期値と `=== null` の比較は見ない）。
+リテラルの `null` は `.oxlintrc.json` の `unicorn/no-null` が `src/`・`scripts/`・`test/` で見る（SDK の型が要求する
+2 ファイルと、SDK・外来の生データや DOM API の `null` を扱う `test/fixture/`・`test/browser/`・`test/e2e/`・
+`test/server/` の `session-driver`・`diary`・`repository`・`usage`・`workflow-setting` は外す。ref の初期値と `=== null` の比較は見ない）。
 
 自分で定義する型・関数の戻り値・`shared` の型には出さない。外来の `null` は**受け取った境界で
 `undefined` に畳む**。「無い」の表し方が2つあると、チェックが `== null` か `=== undefined` かで

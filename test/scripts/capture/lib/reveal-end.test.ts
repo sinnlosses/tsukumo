@@ -4,7 +4,7 @@ import { waitForRevealEnd } from "../../../../scripts/capture/lib/reveal-end.ts"
 
 describe("waitForRevealEnd", () => {
   test("演出の印が消えるのを待つ", async () => {
-    const waitForSelector = vi.fn<() => Promise<null>>(() => Promise.resolve(null))
+    const waitForSelector = vi.fn<() => Promise<undefined>>(() => Promise.resolve(undefined))
 
     await waitForRevealEnd({ waitForSelector }, 1234)
 

@@ -55,7 +55,7 @@ describe("parseServerFrame（落とす形）", () => {
     expect(parseServerFrame({ type: "hello", protocolVersion: "1", state: {} })).toBeUndefined()
     expect(parseServerFrame({ type: "events", events: [{ at: 1 }] })).toBeUndefined()
     expect(parseServerFrame({ type: "refresh", target: "everything" })).toBeUndefined()
-    expect(parseServerFrame(null)).toBeUndefined()
+    expect(parseServerFrame(JSON.parse("null"))).toBeUndefined()
   })
 
   it("events の束から知らない kind の1件だけを落とし、残りを返す", () => {
