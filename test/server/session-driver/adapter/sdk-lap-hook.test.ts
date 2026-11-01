@@ -146,7 +146,13 @@ describe("withLapHook と plugin の hooks.json", () => {
       async () => ok(""),
       () => {},
     )
-    expect(registeredHookPairs(table)).toEqual(workflowHookPairs("lap-hook"))
+    // plugin は SubagentStart・SubagentStop を委譲先の種類で絞るが、どの入力で段を書くかは tw lap-hook が決めるので、
+    // こちらは matcher なしで全件を渡す。イベントの組だけを比べる。
+    const withoutSubagentMatcher = (pairs: string[]) =>
+      pairs.map((pair) => pair.replace(/^(Subagent(?:Start|Stop)):.*$/, "$1:"))
+    expect(withoutSubagentMatcher(registeredHookPairs(table))).toEqual(
+      withoutSubagentMatcher(workflowHookPairs("lap-hook")),
+    )
   })
 })
 
