@@ -16,7 +16,11 @@ const LEFT_TO_RIGHT_HEAD = /^(\s*(?:flowchart|graph)\s+)LR(\s*;?\s*)$/
 export function pickMeasure(
   textPxAt: (measure: FigureMeasure) => number,
 ): FigureMeasure | undefined {
-  return MEASURES.find((measure) => textPxAt(measure) >= MIN_TEXT_PX)
+  return MEASURES.find((measure) => isReadableTextPx(textPxAt(measure)))
+}
+
+export function isReadableTextPx(textPx: number): boolean {
+  return textPx >= MIN_TEXT_PX
 }
 
 /** 先頭行が `flowchart LR` か `graph LR` のときだけ、先頭行の `LR` を `TD` にしたソースを返す。 */

@@ -1,0 +1,78 @@
+{
+  "name": "a2ui-row-graph-pair",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "架空の通知まわりの依存を、前と後で並べて見せてほしい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 1500,
+      "event": {
+        "kind": "report",
+        "toolUseId": "fake-a2ui-row-graph-pair",
+        "components": [
+          {
+            "id": "root",
+            "component": "Report",
+            "conclusion": ["架空の結論: 循環を切り、入口を notify に絞った。"],
+            "figureNone": "no-shape",
+            "children": ["sec-deps"],
+            "closing": {
+              "text": "架空の絡まりをほどいたよ！",
+              "expression": "proud"
+            }
+          },
+          {
+            "id": "sec-deps",
+            "component": "Section",
+            "heading": "架空の依存の前後",
+            "children": ["deps-row"]
+          },
+          {
+            "id": "deps-row",
+            "component": "Row",
+            "children": ["deps-before", "deps-after"]
+          },
+          {
+            "id": "deps-before",
+            "component": "Graph",
+            "title": "前: 依存は 8 本で、template から notify へ戻る循環がある",
+            "direction": "TD",
+            "legend": [],
+            "source": "api -> mailer: 直に送る\nbatch -> mailer: 直に送る\nbatch -> notify: 通知を頼む\nnotify -> mailer: 送る\nnotify -> push: 送る\nmailer -> template: 文面を引く\npush -> template: 文面を引く\ntemplate -> notify: 戻る"
+          },
+          {
+            "id": "deps-after",
+            "component": "Graph",
+            "title": "後: 依存は 6 本で、循環は無く、mailer への入口は notify だけ",
+            "direction": "TD",
+            "legend": [],
+            "source": "api -> notify: 通知を頼む\nbatch -> notify: 通知を頼む\nnotify -> mailer: 送る\nnotify -> push: 送る\nmailer -> template: 文面を引く\npush -> template: 文面を引く"
+          }
+        ]
+      }
+    },
+    {
+      "afterMs": 1550,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-a2ui-row-graph-pair",
+        "content": "ok",
+        "isError": false
+      }
+    },
+    {
+      "afterMs": 2300,
+      "event": {
+        "kind": "turn-finished",
+        "outcome": {
+          "kind": "completed"
+        }
+      }
+    }
+  ]
+}

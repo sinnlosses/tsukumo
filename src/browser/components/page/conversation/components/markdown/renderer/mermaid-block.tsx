@@ -20,7 +20,7 @@ import { mergeRefs } from "../../../domain/merge-ref.ts"
 import { useSeenOnce } from "../hooks/use-seen-once.ts"
 import { figureZoomTriggerProps, SvgZoom } from "./figure-zoom.tsx"
 import styles from "./mermaid-block.module.css"
-import { pickMeasure, topDownSource } from "./mermaid-figure-measure.ts"
+import { isReadableTextPx, pickMeasure, topDownSource } from "./mermaid-figure-measure.ts"
 import { mermaidFrameHeight } from "./mermaid-frame-height.ts"
 import { resolveHex, resolveHexOver } from "./theme-color.ts"
 import { loadVendorScript, preloadVendorScript } from "./vendor-script.ts"
@@ -277,7 +277,7 @@ type TopDownFit = {
 
 /**
  * どの段でも下回った図を、TD に置き換えたソースで描き直して段に置く（TD の SVG は置き換えたソースを鍵に覚える）。
- * TD にできない図と、TD でも下回る図は、自然寸法で描く。
+ * TD にできない図と、TD でも下回る図は、高さの上限を外して描く。
  * 初めて描くときも覚えた SVG を差すときも、同じソースと幅なら同じ形になる。
  */
 async function fitTopDown(fit: TopDownFit): Promise<void> {
@@ -370,23 +370,37 @@ function naturalSizeOf(node: HTMLPreElement): readonly [number, number] {
 }
 
 /**
- * 縮めずに自然寸法で描く。自然幅が本文の列（body）の内幅に収まれば body の幅のまま（natural）、超えれば読む面の幅にして `<pre>` の中で横に転がす（scroll）。
+ * 高さの上限を外して描く。自然幅が本文の列（body）の内幅に収まれば body の幅のまま自然幅で描く（natural）。
+ * 超えれば読む面の幅にして（scroll）、自然幅が読む面の内幅を超えるとき、内幅まで縮めても字が下限以上なら内幅に縮め、下回るなら自然幅のまま `<pre>` の中で横に転がす。
  */
 function scrollAtNaturalWidth(node: HTMLPreElement): void {
   const [naturalWidth] = naturalSizeOf(node)
   node.dataset["measure"] = "body"
+  if (naturalWidth <= innerWidthOf(node)) {
+    node.dataset["measure"] = "natural"
+    if (naturalWidth > 0) {
+      node.style.setProperty(NATURAL_WIDTH_PROPERTY, `${naturalWidth}px`)
+      setFigureWidth(node, naturalWidth)
+    }
+    return
+  }
+  node.dataset["measure"] = "scroll"
+  const surfaceInnerWidth = innerWidthOf(node)
+  const fitsSurface =
+    surfaceInnerWidth < naturalWidth &&
+    isReadableTextPx((SVG_TEXT_PX * surfaceInnerWidth) / naturalWidth)
+  node.style.setProperty(
+    NATURAL_WIDTH_PROPERTY,
+    `${fitsSurface ? surfaceInnerWidth : naturalWidth}px`,
+  )
+}
+
+function innerWidthOf(node: HTMLPreElement): number {
   const style = getComputedStyle(node)
   const padding = sum(
     [style.paddingLeft, style.paddingRight].map((value) => Number.parseFloat(value) || 0),
   )
-  const bodyInnerWidth = node.clientWidth - padding
-  node.dataset["measure"] = naturalWidth > bodyInnerWidth ? "scroll" : "natural"
-  if (naturalWidth > 0) {
-    node.style.setProperty(NATURAL_WIDTH_PROPERTY, `${naturalWidth}px`)
-    if (node.dataset["measure"] === "natural") {
-      setFigureWidth(node, naturalWidth)
-    }
-  }
+  return node.clientWidth - padding
 }
 
 /**

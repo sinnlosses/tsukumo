@@ -204,6 +204,14 @@ describe("MermaidBlock の幅の段", () => {
     expect(pre.style.getPropertyValue("--natural-width")).toBe("1000px")
   })
 
+  it("自然幅が読む面の内幅を超えても、内幅まで縮めて字が 12px 以上なら内幅に縮める", async () => {
+    stubDrawnWidth(() => 300)
+    vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(750)
+    const pre = await drawn("flowchart LR\n  A9 --> B9")
+    expect(pre.dataset["measure"]).toBe("scroll")
+    expect(pre.style.getPropertyValue("--natural-width")).toBe("750px")
+  })
+
   it("足りなくても自然幅が本文の列の内幅に収まるなら、段を上げず自然寸法で描く", async () => {
     stubDrawnWidth(() => 300)
     vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(1200)
