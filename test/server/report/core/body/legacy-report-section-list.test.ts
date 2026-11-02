@@ -111,7 +111,7 @@ describe("row・panel の受け付け", () => {
     ["子が2個の row", row([text("甲"), text("乙")])],
     ["子が4個の row", row([text("甲"), text("乙"), text("丙"), text("丁")])],
     ["子が1個の panel", panel([text("甲")])],
-  ])("%s は節の塊として通る", (_name, block) => {
+  ])("%s はセクションの部品として通る", (_name, block) => {
     expect(accepted(block)).toBe(true)
   })
 
@@ -167,7 +167,7 @@ describe("row・panel の子への検査", () => {
     )
   })
 
-  it("row の子の image も、画像の棚に載せるパスに入る", () => {
+  it("row の子の image も、画像の置き場に載せるパスに入る", () => {
     const sections = sectionsOf([
       row([{ kind: "image", path: "架空/画面.png", caption: "架空の画面" }, text("架空の一文。")]),
     ])

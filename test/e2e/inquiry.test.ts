@@ -36,7 +36,7 @@ test.describe("お伺い", () => {
     await room.settleAndMatchPickedWithMessages(ELAPSED_MS)
   })
 
-  test("札は本文の末尾に出て、窓の外のあいだ下端の「お伺い ↓」を押すと札が窓に入り、口が消える", async ({
+  test("カードは本文の末尾に出て、ビューポートの外のあいだ下端の「お伺い ↓」を押すとカードがビューポートに入り、ボタンが消える", async ({
     run,
   }) => {
     const room = await run.open({
@@ -115,7 +115,7 @@ test.describe("お伺い", () => {
     })
   }
 
-  test("添え書き付きの質問は、広い窓で左に選択肢・右に詳細の2列になり、選び替えで詳細が替わり、Enter で次へ進む", async ({
+  test("添え書き付きの質問は、広いビューポートで左に選択肢・右に詳細の2列になり、選び替えで詳細が替わり、Enter で次へ進む", async ({
     run,
   }) => {
     const room = await run.open({

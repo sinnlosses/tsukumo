@@ -107,7 +107,7 @@ describe("reportSectionsMarkdown", () => {
     )
   })
 
-  describe("傍注（塊の aside）", () => {
+  describe("欄外注（部品の aside）", () => {
     const asideNote = (value: string): string =>
       `<aside class="gutter-note">\n\n${value}\n\n</aside>`
     const withGutter = (body: string, notes: readonly string[]): string =>
@@ -118,7 +118,7 @@ describe("reportSectionsMarkdown", () => {
         "</div>",
       ].join("\n\n")
 
-    it("aside のある塊は包みの中で、塊のあとに傍注が出る", () => {
+    it("aside のある部品は外枠の中で、部品のあとに欄外注が出る", () => {
       const block = code("const a = 1\n")
 
       expect(markdownOf({ ...block, aside: "出どころ: 架空の `a.ts:3`" })).toBe(
@@ -126,7 +126,7 @@ describe("reportSectionsMarkdown", () => {
       )
     })
 
-    it("fold のある塊は details ごと包み、傍注は details の外に置く", () => {
+    it("fold のある部品は details ごと包み、欄外注は details の外に置く", () => {
       const block = code("const a = 1\n")
 
       expect(markdownOf({ ...block, fold: "架空の畳み", aside: "架空の出典" })).toBe(
@@ -136,7 +136,7 @@ describe("reportSectionsMarkdown", () => {
       )
     })
 
-    it("傍注の文字は逃がし、空白だけの aside は傍注にしない", () => {
+    it("欄外注の文字は逃がし、空白だけの aside は欄外注にしない", () => {
       const block = code("const a = 1\n")
 
       expect(markdownOf({ ...block, aside: "架空の<b>出典</b>" })).toBe(

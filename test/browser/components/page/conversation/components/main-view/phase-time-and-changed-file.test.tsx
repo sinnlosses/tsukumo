@@ -31,7 +31,7 @@ const PHASE_CASES: readonly (readonly [string, readonly PhaseTimeRow[], readonly
     ["架空の段A", "架空の段B", "計 30秒"],
   ],
   [
-    "並列の段のある滝の回",
+    "並列のフェーズのある滝の回",
     [
       phase("1/3 架空の段A", at(0), at(5_000)),
       {

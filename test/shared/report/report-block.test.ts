@@ -292,7 +292,7 @@ describe("parseReportBlocks", () => {
       ).toBe(false)
     })
 
-    it("nodes・edges の旧い形と、節点が1つも無い source は落ちる", () => {
+    it("nodes・edges の旧い形と、ノードが1つも無い source は落ちる", () => {
       const broken = [
         {
           kind: "graph",

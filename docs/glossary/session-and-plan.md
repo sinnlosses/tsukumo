@@ -24,7 +24,7 @@
 
 - **英語識別子**: `SessionClaim`（置き場は `$TSUKUMO_HOME/session-claim/<pid>.json`）/ `occupiedElsewhere`（切り替え画面の行が別のウィンドウで使用中か）
 - **定義**: 動いている tsukumo が、いま持っているセッションのIDを自分の pid と一緒に書き置いたもの。
-  ほかの tsukumo はこれを読み、そのプロセスが生きているものだけを「別の窓で使用中」とする
+  ほかの tsukumo はこれを読み、そのプロセスが生きているものだけを「別のウィンドウで使用中」とする
 - **注記**: 書くのは pid とセッションIDだけ（`docs/requirements.md` 4.8「別の窓で使用中のセッション」）。
   ポートの塞がりと印の目印は使用中の判定に使わない（`docs/architecture/adr/0026-session-claim-file.md`）
 - **避ける言い方**: セッションの名乗り（旧称）、ロック、使用中フラグ

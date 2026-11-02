@@ -29,7 +29,7 @@ describe("useSeenOnce", () => {
     expect(intersection.instances[0]?.disconnect).toHaveBeenCalled()
   })
 
-  it("転がる箱の中にあれば、その箱を根にして余白を付ける（無ければ窓）", () => {
+  it("転がる箱の中にあれば、その箱を根にして余白を付ける（無ければビューポート）", () => {
     const intersection = stubIntersectionObserver(false)
     const inBox = render(
       <div data-box="yes" style={{ overflowY: "auto" }}>

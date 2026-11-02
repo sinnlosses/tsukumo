@@ -61,7 +61,7 @@ describe("useTurnSelection（hash → 選択）", () => {
     expect(current().activeTurnId).toBe(1)
   })
 
-  it("hash が指すターンが窓に無ければ今回を見る", () => {
+  it("hash が指すターンが一覧に無ければ今回を見る", () => {
     window.location.hash = "#?turn=42"
 
     const current = renderSelection(turns(3))

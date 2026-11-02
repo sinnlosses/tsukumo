@@ -62,7 +62,7 @@ export const FRAME_ERROR_REASON = {
     "ターン進行中か委譲中はキャラクターを切り替えられない（中断するか委譲を止めると切り替えられる）",
   sessionSwitchDuringTurn:
     "ターン進行中か委譲中はセッションを切り替えられない（中断するか委譲を止めると切り替えられる）",
-  sessionOccupied: "別の窓で使用中のセッションには切り替えられない",
+  sessionOccupied: "別のウィンドウで使用中のセッションには切り替えられない",
   chatModeSwitchDuringTurn:
     "ターン進行中か委譲中は仕事と雑談を切り替えられない（中断するか委譲を止めると切り替えられる）",
   nudgeDuringTurn: "ターン進行中は話しかけてもらえない（返事を待つ）",

@@ -115,7 +115,7 @@ describe("PromptImageThumbnails", () => {
     expect(document.querySelector(".prompt-images")).toBeNull()
   })
 
-  it("控えを押すと、棚の原寸を起動トークン付きの経路で拡大の面に開く", () => {
+  it("控えを押すと、置き場の原寸を起動トークン付きの経路で拡大の面に開く", () => {
     setPageUrl("http://127.0.0.1:7517/?t=fictional-token")
     render(<PromptImageThumbnails images={[RECORDED_A, RECORDED_B]} size="compact" />)
 
@@ -134,7 +134,7 @@ describe("PromptImageThumbnails", () => {
     )
   })
 
-  it("原寸を読めなかった（棚から消えていた）ときは、控えを出して手放したことを1行添える", () => {
+  it("原寸を読めなかった（置き場から消えていた）ときは、控えを出して手放したことを1行添える", () => {
     render(<PromptImageThumbnails images={[RECORDED_A]} size="compact" />)
 
     fireEvent.click(screen.getByRole("button", { name: "この画像を拡大" }))

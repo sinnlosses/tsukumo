@@ -235,7 +235,7 @@ describe("Markdown（レポートのパスを押して Orca のエディタで�
     expect(container.querySelector("sup > a")?.getAttribute("href")).toBe("#user-content-fn-1")
   })
 
-  it("字がホスト名と同じ外部リンクだけ出典の札の class が付く", () => {
+  it("字がホスト名と同じ外部リンクだけ出典のバッジの class が付く", () => {
     const { container } = render(
       <Markdown text={"[example.com](https://example.com/a) と [解説](https://example.com/b)"} />,
     )

@@ -37,7 +37,7 @@ function pretendEllipsized(): () => void {
 }
 
 describe("RequestBlock", () => {
-  it("1行に収まる短い依頼は、1行目だけ出して開く口を出さない", () => {
+  it("1行に収まる短い依頼は、1行目だけ出して開くボタンを出さない", () => {
     renderBlock(["架空の短い依頼"])
 
     expect(shownLines()).toEqual(["架空の短い依頼"])
@@ -61,7 +61,7 @@ describe("RequestBlock", () => {
     expect(screen.getByRole("button", { name: "全文" })).toBeDefined()
   })
 
-  it("1行でも省略されているときは開く口が出る", () => {
+  it("1行でも省略されているときは開くボタンが出る", () => {
     const restore = pretendEllipsized()
     try {
       renderBlock(["架空の長い1行の依頼"])

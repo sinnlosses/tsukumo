@@ -56,7 +56,7 @@ describe("reportSectionsMarkdown", () => {
     )
   })
 
-  it("image の説明が空なら alt は既定の語で説明の文字は置かず、図の番号だけ付く。棚に置いていない本文では src を付けない", () => {
+  it("image の説明が空なら alt は既定の語で説明の文字は置かず、図の番号だけ付く。置き場に置いていない本文では src を付けない", () => {
     expect(
       markdownOf({ kind: "image", path: "架空.png", caption: " ", notes: [], fold: "", aside: "" }),
     ).toBe(figureCaptioned('<img alt="画面の画像">'))

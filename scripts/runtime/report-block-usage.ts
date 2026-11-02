@@ -251,7 +251,7 @@ function figureFieldSection(rows: readonly UsageRecord[]): string {
 
 function countSection(rows: readonly UsageRecord[]): string {
   if (rows.length === 0) {
-    return "強調の数・ラベルの無い辺の割合・節点数の分布: 記録した行が無い"
+    return "強調の数・ラベルの無いエッジの割合・ノード数の分布: 記録した行が無い"
   }
   const emphasisBuckets = ["0", "1", "2", "3以上"]
   const unlabeledBuckets = ["0%", "1〜49%", "50%以上"]
@@ -269,14 +269,14 @@ function countSection(rows: readonly UsageRecord[]): string {
         emphasisBucket,
       ),
       bucketTable(
-        `graph のあるレポートのラベルの無い辺の割合（${scope}。graph のあるものだけが分母。外す基準の対象ではない）`,
+        `graph のあるレポートのラベルの無いエッジの割合（${scope}。graph のあるものだけが分母。外す基準の対象ではない）`,
         unlabeledBuckets,
         scoped,
         unlabeledBucket,
         hasGraph,
       ),
       bucketTable(
-        `graph の節点数の分布（${scope}。graph のあるものだけが分母。外す基準の対象ではない）`,
+        `graph のノード数の分布（${scope}。graph のあるものだけが分母。外す基準の対象ではない）`,
         nodeBuckets,
         scoped,
         nodeBucket,

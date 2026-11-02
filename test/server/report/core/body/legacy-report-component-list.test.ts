@@ -122,14 +122,14 @@ describe("legacyReportComponents", () => {
     )
     const result = legacyReportComponents({
       sections: [
-        { heading: "", blocks: [{ kind: "text", text: "甲", fold: "畳み", aside: "傍注" }] },
+        { heading: "", blocks: [{ kind: "text", text: "甲", fold: "畳み", aside: "欄外注" }] },
       ],
     })
     expect(result?.components[2]).toMatchObject({
       component: "Paragraph",
       text: "甲",
       fold: "畳み",
-      aside: "傍注",
+      aside: "欄外注",
     })
 
     const leafResult = legacyReportComponents({
@@ -196,7 +196,7 @@ describe("legacyReportComponents", () => {
     expect(none?.components[0]).toMatchObject({ figureNone: "short-answer" })
   })
 
-  it("振り返りの塊は Report.retrospective.blocks が指す部品になる", () => {
+  it("振り返りの部品は Report.retrospective.blocks が指す部品になる", () => {
     const result = legacyReportComponents({
       retrospective: { summary: "架空の結果", blocks: [LEAVES.code] },
       sections: [{ heading: "", blocks: [text("甲")] }],

@@ -29,7 +29,7 @@ describe("topDownSource", () => {
     expect(topDownSource("graph LR;\nA-->B")).toBe("graph TD;\nA-->B")
   })
 
-  it("節点のラベルの中の LR は変えない", () => {
+  it("ノードのラベルの中の LR は変えない", () => {
     expect(topDownSource('flowchart LR\n  A["LR の話"] --> B\n  C["flowchart LR"]')).toBe(
       'flowchart TD\n  A["LR の話"] --> B\n  C["flowchart LR"]',
     )

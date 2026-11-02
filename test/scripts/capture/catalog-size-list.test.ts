@@ -13,13 +13,13 @@ function entryNamed(name: string) {
 }
 
 describe("sizesOf", () => {
-  test("preview の画像の2件は広い窓だけで撮る", () => {
+  test("preview の画像の2件は広いビューポートだけで撮る", () => {
     for (const name of ["question-preview-image", "question-preview-image-missing"]) {
       expect(sizesOf(entryNamed(name)).map((size) => size.name)).toEqual(["wide"])
     }
   })
 
-  test("ほかの件は広い窓と狭い窓の両方を撮る", () => {
+  test("ほかの件は広いビューポートと狭いビューポートの両方を撮る", () => {
     expect(sizesOf(entryNamed("question-preview")).map((size) => size.name)).toEqual([
       "wide",
       "narrow",

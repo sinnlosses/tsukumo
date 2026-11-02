@@ -42,7 +42,7 @@ describe("phaseTimesView", () => {
     expect(phaseTimesView([])).toEqual({ kind: "none" })
   })
 
-  it("並列の段が無い回は帯の区間と一覧の行を、字と割合まで決めた値で持つ", () => {
+  it("並列のフェーズが無い回は帯の区間と一覧の行を、字と割合まで決めた値で持つ", () => {
     const view = phaseTimesView([known("1/2 架空の段A", 20_000), known("2/2 架空の段B", 10_000)])
 
     expect(view).toEqual({
@@ -82,7 +82,7 @@ describe("phaseTimesView", () => {
     })
   })
 
-  it("並列の段のある回は waterfall で、包みに壁時計の囲みと中の段の棒を入れ、測れない棒は直前の棒の終わりに置く", () => {
+  it("並列のフェーズのある回は waterfall で、外枠に壁時計の囲みと中の段の棒を入れ、測れない棒は直前の棒の終わりに置く", () => {
     const view = phaseTimesView([known("1/3 架空の段A", 5_000), parallelRows()])
 
     expect(view.kind === "times" ? view.chart : undefined).toEqual({

@@ -39,7 +39,7 @@ describe("WorkPlanReview の委譲の返却", () => {
     expect(review.judge(ranged(2, SUMMARY)).kind).toBe("accepted")
   })
 
-  it("台本の完了の知らせで委譲ゲートと注記が立ち、work_plan で下りる", () => {
+  it("ワークフロースクリプトの完了の知らせで委譲ゲートと注記が立ち、work_plan で下りる", () => {
     const review = started()
 
     review.pass({ kind: "workflow-started", taskId: "wf-1" })
@@ -144,7 +144,7 @@ describe("WorkPlanReview の委譲の返却", () => {
     expect(review.judge(ranged(0)).kind).toBe("accepted")
   })
 
-  it("範囲が並びをはみ出す・端が並列の段をまたぐ呼び出しは malformed", () => {
+  it("範囲が並びをはみ出す・端が並列のフェーズをまたぐ呼び出しは malformed", () => {
     const review = createWorkPlanReview()
 
     expect(review.judge(ranged(0, "", { first: 3, count: 2 })).kind).toBe("malformed")

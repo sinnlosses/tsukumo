@@ -53,7 +53,7 @@ describe("WorkPlanReview の判定", () => {
     expect(review.judge(inputOf(2)).kind).toBe("accepted")
   })
 
-  it("current が要素の数に等しい呼び出しは closed-by-plan で差し戻し、並列の段は1要素に数える", () => {
+  it("current が要素の数に等しい呼び出しは closed-by-plan で差し戻し、並列のフェーズは1要素に数える", () => {
     const review = createWorkPlanReview()
     const group = ["架空の計画", ["架空の実装A", "架空の実装B"], "架空の受け入れ"]
     review.judge({ phases: group, current: 0 })
@@ -79,7 +79,7 @@ describe("WorkPlanReview の判定", () => {
     )
   })
 
-  it("並列の段の中の段は後ろの番号から1つずつ済ませても通り、残りの数が減っていく", () => {
+  it("並列のフェーズの中の段は後ろの番号から1つずつ済ませても通り、残りの数が減っていく", () => {
     const grouped = ["架空の段A", ["架空の段B", "架空の段C"], "架空の段D"]
     const review = createWorkPlanReview()
     const judge = (current: number, finishedInGroup: readonly string[]) =>
@@ -93,7 +93,7 @@ describe("WorkPlanReview の判定", () => {
     expect(review.standing()).toEqual({ kind: "planned", remaining: 1 })
   })
 
-  it("並列の段の中の段を1回で2つ済ませる呼び出しは差し戻し、途中でまとめが空なら summary-missing で差し戻す", () => {
+  it("並列のフェーズの中の段を1回で2つ済ませる呼び出しは差し戻し、途中でまとめが空なら summary-missing で差し戻す", () => {
     const grouped = ["架空の段A", ["架空の段B", "架空の段C"], "架空の段D"]
     const review = createWorkPlanReview()
     review.judge({ phases: grouped, current: 0 })

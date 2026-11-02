@@ -44,7 +44,7 @@ function fakeSession(value: unknown): {
 }
 
 describe("readContextUsage", () => {
-  it("SDK の形を画面が要る数と名前だけに写す（窓の大きさは rawMaxTokens）", async () => {
+  it("SDK の形を画面が要る数と名前だけに写す（コンテキストウィンドウの大きさは rawMaxTokens）", async () => {
     const report = await readContextUsage(fakeSession(SDK_CONTEXT_USAGE))
 
     expect(report).toEqual({

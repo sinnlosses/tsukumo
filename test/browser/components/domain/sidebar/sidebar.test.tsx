@@ -213,7 +213,7 @@ describe("引き出しへ渡す中身", () => {
     expect(screen.queryByRole("region", { name: "タスク" })).toBeNull()
   })
 
-  it("「使用量」はコンテキストとプラン使用量の札を、押して開く面にせずそのまま並べる", () => {
+  it("「使用量」はコンテキストとプラン使用量のカードを、押して開く面にせずそのまま並べる", () => {
     renderSidebar({}, <UsagePane />)
 
     const text = document.body.textContent ?? ""

@@ -19,7 +19,7 @@ function legend(...items: readonly (readonly [string, string])[]): string {
   )
 }
 
-describe("graph の塊の mermaid のソースと凡例", () => {
+describe("graph の部品の mermaid のソースと凡例", () => {
   it("graph は ID を n0 から振り直し、ラベルを引用符で包んだ flowchart にして図の番号と題を付ける", () => {
     expect(
       graphMarkdown('@a (b) "c" `d` -> (架空の丸)\n架空の丸 -> {架空の分岐}: a|b', "架空の図"),
@@ -42,7 +42,7 @@ describe("graph の塊の mermaid のソースと凡例", () => {
     )
   })
 
-  it("graph の節点の説明はラベルの2行目に小さい字で置き、HTML に読まれる記号は実体にする", () => {
+  it("graph のノードの説明はラベルの2行目に小さい字で置き、HTML に読まれる記号は実体にする", () => {
     const markdown = graphMarkdown("甲 | 説明 <b> & 続き\n甲 -> 乙\n甲 -> 丙")
 
     expect(markdown).toBe(
@@ -61,7 +61,7 @@ describe("graph の塊の mermaid のソースと凡例", () => {
     )
   })
 
-  it("graph の囲みを subgraph にして、群の外の節点を先に宣言し、群ごとに地の色の style を足す", () => {
+  it("graph の囲みを subgraph にして、群の外のノードを先に宣言し、群ごとに地の色の style を足す", () => {
     const markdown = graphMarkdown("A -> B\n[架空の群]\nB -> C\n[]\nD")
 
     expect(markdown).toBe(
@@ -84,7 +84,7 @@ describe("graph の塊の mermaid のソースと凡例", () => {
     )
   })
 
-  it("入れ子の囲みは外側の subgraph の中に内側の subgraph を出し、直の節点は内側のあとに置く", () => {
+  it("入れ子の囲みは外側の subgraph の中に内側の subgraph を出し、直のノードは内側のあとに置く", () => {
     const markdown = graphMarkdown("[外]\n[内]\nA\n[]\nB\n[]\nA -> B")
 
     expect(markdown).toContain(
@@ -221,7 +221,7 @@ describe("graph の塊の mermaid のソースと凡例", () => {
     )
   })
 
-  it("graph の色の目印を系列色の classDef（地は薄い塗り）/ style / linkStyle にし、点線の辺を破線にして、凡例を図の下に並べる", () => {
+  it("graph の色の目印を系列色の classDef（地は薄い塗り）/ style / linkStyle にし、点線のエッジを破線にして、凡例を図の下に並べる", () => {
     const toned = graphMarkdown(
       "[層] @a\nA @b\nB -.> C @c\n[]\nD -> E: 語 @b\nE -.> D\n+ F @a\nF -> A",
       "",

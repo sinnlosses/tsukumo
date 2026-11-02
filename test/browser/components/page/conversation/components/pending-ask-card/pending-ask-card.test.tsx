@@ -132,7 +132,7 @@ function gridOf(): HTMLElement {
   return grid
 }
 
-describe("PendingAskCard（狭い画面の答え待ちの札）", () => {
+describe("PendingAskCard（狭い画面の答え待ちのカード）", () => {
   it("答え待ちが無いとき、広い画面のときは何も描かない", () => {
     expect(renderCard([]).innerHTML).toBe("")
     cleanup()
@@ -141,7 +141,7 @@ describe("PendingAskCard（狭い画面の答え待ちの札）", () => {
     expect(render(<PendingAskCard />).container.innerHTML).toBe("")
   })
 
-  it("許可は問いと対象の等幅の札を出し、「拒否」「許可」の2列で、押した瞬間に答える", () => {
+  it("許可は問いと対象の等幅のバッジを出し、「拒否」「許可」の2列で、押した瞬間に答える", () => {
     const calls: unknown[] = []
     renderCard([PERMISSION_PENDING], (command) => calls.push(command))
 
@@ -240,7 +240,7 @@ describe("PendingAskCard（狭い画面の答え待ちの札）", () => {
     expect(screen.queryByRole("button", { name: "詳しく" })).toBeNull()
   })
 
-  it("等幅の札は6つまでと「ほか n」で、押すと板に全部を並べる", () => {
+  it("等幅のバッジは6つまでと「ほか n」で、押すと板に全部を並べる", () => {
     renderCard([BRIEFED_PENDING])
     expect(screen.getByText("項目6")).toBeDefined()
     expect(screen.queryByText("項目7")).toBeNull()

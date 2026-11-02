@@ -79,7 +79,7 @@ describe("createChatArchive の unconsolidated", () => {
     expect(chatArchive.appendedBytes(characterPackName("other-pack"))).toBe(0)
   })
 
-  it("after が none ならアーカイブの最初から、窓の外の行を古い→新しいで返す", () => {
+  it("after が none ならアーカイブの最初から、コンテキストウィンドウの外の行を古い→新しいで返す", () => {
     const chatArchive = createChatArchive(root())
     appendRequest(chatArchive, 19, "19日の依頼")
     appendRequest(chatArchive, 20, "20日の依頼")

@@ -69,8 +69,8 @@ describe("Code の部品", () => {
     ["未登録の言語", { language: "foo", source: "架空の文\n2行目" }],
     ["原文が空", { source: "" }],
     ["fold つき", { fold: "架空の畳み" }],
-    ["aside つき", { aside: "架空の傍注" }],
-    ["fold と aside の両方", { fold: "架空の畳み", aside: "架空の傍注" }],
+    ["aside つき", { aside: "架空の欄外注" }],
+    ["fold と aside の両方", { fold: "架空の畳み", aside: "架空の欄外注" }],
     ["図の言語の mermaid", { language: "mermaid", source: "sequenceDiagram\n  A->>B: 架空" }],
     [
       "図の言語でパスつき",

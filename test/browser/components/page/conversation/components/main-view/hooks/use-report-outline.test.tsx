@@ -434,11 +434,11 @@ describe("useReportOutline（見出しの観測）", () => {
 })
 
 describe("useReportOutline（器の寸法が変わったときの帯）", () => {
-  it("窓も読む線も変わらず転がる器の下端だけが動いても、帯の下端を引き直す", () => {
+  it("ビューポートも読む線も変わらずスクロールする器の下端だけが動いても、帯の下端を引き直す", () => {
     render(<ScrollerProbe />)
     const scroller = document.querySelector<HTMLElement>('[data-region="main"]')
     if (scroller === null) {
-      throw new Error("転がる器が見つからない")
+      throw new Error("スクロールする器が見つからない")
     }
     const bottomAt = (bottom: number): void => {
       scroller.getBoundingClientRect = () => new DOMRect(0, 0, 100, bottom)
@@ -529,7 +529,7 @@ describe("useReportOutline（読んでいる節と節の移動）", () => {
       render(<ScrollerProbe />)
       const scroller = document.querySelector<HTMLElement>('[data-region="main"]')
       if (scroller === null) {
-        throw new Error("転がる器が見つからない")
+        throw new Error("スクロールする器が見つからない")
       }
       Object.defineProperty(scroller, "clientHeight", { value: 300, configurable: true })
       Object.defineProperty(scroller, "scrollHeight", { value: 1000, configurable: true })

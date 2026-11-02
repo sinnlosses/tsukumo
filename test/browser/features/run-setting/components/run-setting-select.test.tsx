@@ -12,7 +12,11 @@ afterEach(() => {
 })
 
 function select(): HTMLSelectElement {
-  return typedElement(screen.getByLabelText("架空のラベル"), HTMLSelectElement, "吊り札の <select>")
+  return typedElement(
+    screen.getByLabelText("架空のラベル"),
+    HTMLSelectElement,
+    "吊り下げのカードの <select>",
+  )
 }
 
 describe("RunSettingSelect", () => {

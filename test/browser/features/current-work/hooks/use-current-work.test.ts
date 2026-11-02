@@ -226,7 +226,7 @@ describe("useCurrentWork の札の今の段", () => {
       "済",
     ],
     [
-      "委譲先の段の範囲があれば群の名前が付く",
+      "委譲先のフェーズの範囲があれば群の名前が付く",
       {
         turn: RUNNING,
         records: [

@@ -187,7 +187,7 @@ HTML の字として埋める部品（`htmlInline`・`htmlInlineWithCode`）と�
 | `unordered-line`      | T も O も無い申告に line（change の前と後の Q の 2 列は順序に数える） |
 | `single-value-figure` | Q が 1 値だけの申告に text・stats・table 以外                         |
 | `crowded-pie`         | 4 行以上の申告に pie                                                  |
-| `edgeless-graph`      | graph（plot は辺を申告できない）                                      |
+| `edgeless-graph`      | graph（plot はエッジを申告できない）                                  |
 
 <!-- figure-hard-rule-table:end -->
 

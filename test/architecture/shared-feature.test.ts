@@ -83,7 +83,7 @@ describe("shared/ の機能どうしの import", () => {
     expect(offenders).toEqual([])
   })
 
-  it("shared の機能のディレクトリどうしの辺は循環しない", () => {
+  it("shared の機能のディレクトリどうしのエッジは循環しない", () => {
     const cycle = findFeatureCycle(sharedFeatureGraph(), SHARED_FEATURES)
 
     expect(cycle.join(" → ")).toBe("")

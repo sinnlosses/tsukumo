@@ -61,7 +61,7 @@ describe("DiaryNotice", () => {
     expect(screen.queryByRole("status")).toBeNull()
   })
 
-  it("「日記帳で開く」を押すと消え、その日へ遷移して見開きを開く合図を送る", () => {
+  it("「日記帳で開く」を押すと消え、その日へ遷移して見開きを開く通知を送る", () => {
     renderNotice(
       stateWith({
         diaryWriting: { kind: "written", date: dateKey("2026-09-20"), writtenAt: 1000 },

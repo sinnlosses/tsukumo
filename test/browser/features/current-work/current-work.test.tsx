@@ -87,7 +87,7 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
     expect(screen.getByRole("button", { name: "お伺いへ" })).toBeDefined()
   })
 
-  it("「お伺いへ」を押すと、一覧を閉じて会話の画面・最新のやり取りへ戻し、お伺いの札へのスクロールを合図する", () => {
+  it("「お伺いへ」を押すと、一覧を閉じて会話の画面・最新のやり取りへ戻し、お伺いのカードへのスクロールを通知する", () => {
     window.location.hash = "#character?turn=1"
     renderScreenNav({
       pending: [FIXTURE_PENDING],

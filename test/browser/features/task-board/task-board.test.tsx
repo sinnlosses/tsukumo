@@ -104,7 +104,7 @@ describe("タスクのモーダルの置き場所（Beads 方式）", () => {
     expect(open.getAttribute("target")).toBe("_blank")
   })
 
-  it("置き場所の無い課題は、置き場所の行も開く口も出さない", () => {
+  it("置き場所の無い課題は、置き場所の行も開くボタンも出さない", () => {
     renderBoard(beadsTask({ kind: "none" }))
 
     expect(screen.queryByText("Issue")).toBeNull()

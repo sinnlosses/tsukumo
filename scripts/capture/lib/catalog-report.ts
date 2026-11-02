@@ -135,7 +135,7 @@ export const REPORT_ENTRIES: readonly CatalogEntry[] = [
   {
     name: "turn-outline-many",
     scene: "turn-outline-many",
-    label: "やり取りの列（窓に収まらない12件）",
+    label: "やり取りの列（ビューポートに収まらない12件）",
     homeSetup: { kind: "default" },
     workspaceSetup: { kind: "repository" },
     prepare: [],

@@ -147,13 +147,13 @@ describe("ScreenNav", () => {
   })
 
   // 顔の右下の「⌄」で開く（13.9「キャラクターの選択メニュー」）。
-  describe("キャラクターの選び口", () => {
+  describe("キャラクターの選択メニュー", () => {
     const PACKS = [
       characterPackEntry("fictional", "架空の精霊"),
       characterPackEntry("local", "架空の同居人"),
     ]
 
-    it("顔を押すと選び口が開き、ほかのキャラクターを選ぶと switchCharacter を送って閉じる", () => {
+    it("顔を押すと選択メニューが開き、ほかのキャラクターを選ぶと switchCharacter を送って閉じる", () => {
       const sent: SentCommand[] = []
       renderScreenNav(
         {
@@ -321,7 +321,7 @@ describe("ScreenNav", () => {
       expect(document.activeElement).toBe(toggle)
     })
 
-    it("引き出しの中でキャラクターの選び口を開いたまま覆いを押して閉じても、開き直したとき選び口は閉じている", () => {
+    it("引き出しの中でキャラクターの選択メニューを開いたまま覆いで閉じても、開き直すと閉じている", () => {
       renderScreenNav()
       fireEvent.click(drawerToggle())
       const face = typedElement(

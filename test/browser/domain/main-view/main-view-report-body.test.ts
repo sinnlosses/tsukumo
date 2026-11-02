@@ -50,7 +50,7 @@ const headOfTurn = (turn: ReturnType<typeof turnOf>) => {
 }
 
 describe("mainViewTurns（report ツールで受け取ったレポート）", () => {
-  it("checks は頭の合図の行の値になり、総括行の印がお願いの塊を指す。お願いの本文は末尾のまま", () => {
+  it("checks は頭の合図の行の値になり、総括行の印がお願いの部品を指す。お願いの本文は末尾のまま", () => {
     const checks: readonly ReportCheck[] = [
       {
         status: "ok",
@@ -66,7 +66,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
         figure: "",
         command: "",
         detail: "",
-        howToVerify: "架空の窓を開いて見る",
+        howToVerify: "架空のウィンドウを開いて見る",
       },
     ]
     const turn = turnOf(

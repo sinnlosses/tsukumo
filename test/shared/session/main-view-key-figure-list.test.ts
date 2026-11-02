@@ -26,7 +26,7 @@ function headOf(overrides: Parameters<typeof reportEvent>[0]) {
 }
 
 describe("report の頭の値の keyFigures", () => {
-  it("結論と数の札と検証結果を、それぞれ別の値として持つ", () => {
+  it("結論と数のカードと検証結果を、それぞれ別の値として持つ", () => {
     const head = headOf({ keyFigures, checks })
 
     expect(head?.lead).toEqual({ kind: "conclusion-lead", text: "架空の結論。" })

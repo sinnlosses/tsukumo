@@ -18,7 +18,7 @@ describe("useMountEffect", () => {
     expect(cleanup).toHaveBeenCalledTimes(1)
   })
 
-  it("setup→cleanup→setup の再演で、走った数と後始末の数が釣り合う", () => {
+  it("setup→cleanup→setup のやり直しで、走った数と後始末の数が釣り合う", () => {
     const cleanup = vi.fn<() => void>()
     const effect = vi.fn<() => () => void>(() => cleanup)
     const view = renderHook(
@@ -61,7 +61,7 @@ describe("useUnmountEffect", () => {
     expect(second).toHaveBeenCalledTimes(1)
   })
 
-  it("setup→cleanup→setup の再演では、再演の1回と外れる1回で2回走る", () => {
+  it("setup→cleanup→setup のやり直しでは、やり直しの1回と外れる1回で2回走る", () => {
     const cleanup = vi.fn<() => void>()
     const view = renderHook(
       () => {

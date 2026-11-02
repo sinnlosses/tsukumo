@@ -95,7 +95,7 @@ describe("parseReportBody", () => {
     expect(parseReportBody("\n  \n")).toEqual({ blocks: [], brokenFenceCount: 0 })
   })
 
-  it("フェンスの無い本文は逃げ道の塊1つと同じ結果になる", () => {
+  it("フェンスの無い本文は逃げ道の部品1つと同じ結果になる", () => {
     const body = "\n\n## 見出し\n本文  \n"
 
     expect(parseReportBody(body).blocks).toEqual([

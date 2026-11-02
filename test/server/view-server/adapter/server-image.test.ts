@@ -36,7 +36,7 @@ describe("startViewServer", () => {
       })
     }
 
-    it("正しいトークンなら、棚の原寸をデコードして受け取ったときのメディアタイプで配る", async () => {
+    it("正しいトークンなら、置き場の原寸をデコードして受け取ったときのメディアタイプで配る", async () => {
       const server = await startWithShelf()
 
       const response = await fetch(promptImageUrl(server, SHELVED_ID, TOKEN))

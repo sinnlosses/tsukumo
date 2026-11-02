@@ -85,7 +85,7 @@ async function expectRailOverlay(room: ScenarioRoom, match: boolean): Promise<vo
 }
 
 test.describe("会話の画面の段", () => {
-  test("中くらいの窓幅（1024px と境目の 1100px）ではサイドバーが柱に畳まれ、柱の口で重ねて開き、Esc と外側で閉じる", async ({
+  test("中くらいのビューポート幅（1024px と境目の 1100px）ではサイドバーが柱に畳まれ、柱のボタンで重ねて開き、Esc と外側で閉じる", async ({
     run,
   }) => {
     const room = await openTaskListRoomWithRunningTask(
@@ -99,7 +99,7 @@ test.describe("会話の画面の段", () => {
     await expectRailOverlay(room, false)
   })
 
-  test("狭い窓幅では柱もタブ帯もサイドバーも出さずに頭の「≡」を出し、広い窓幅（1440px と境目の 1101px）では柱を出さずサイドバーと左右の仕切りが並ぶ", async ({
+  test("狭いビューポート幅では柱もタブ帯もサイドバーも出さずに頭の「≡」を出し、広いビューポート幅（1440px と境目の 1101px）では柱を出さずサイドバーと左右の仕切りが並ぶ", async ({
     run,
   }) => {
     const room = await openTaskListRoomWithRunningTask(
@@ -126,7 +126,7 @@ test.describe("会話の画面の段", () => {
     }
   })
 
-  test("390x844 では上から頭・本文・顔と吹き出し・入力欄の縦の1列で、転がるのは本文だけ。吹き出しは3行で切れ、境目の 760px は頭のまま、761px は柱の段に戻る。≡ の引き出しも開閉でき、開いたまま窓を広げても本文が押せる", async ({
+  test("390x844 では上から頭・本文・顔と吹き出し・入力欄の縦の1列で、スクロールするのは本文だけ。吹き出しは3行で切れ、境目の 760px は頭のまま、761px は柱の段に戻る。≡ の引き出しも開閉でき、開いたままビューポートを広げても本文が押せる", async ({
     run,
   }) => {
     const room = await run.open({

@@ -80,6 +80,6 @@ describe("delegatedRangeFromAnswer", () => {
   it("delegatedRangeLine が書いた行と、言い換える前の「段」の行の両方から範囲を読む", () => {
     const range = { kind: "range", first: 1, count: 2 } as const
     expect(delegatedRangeFromAnswer(`ok\n${delegatedRangeLine(range)}`)).toEqual(range)
-    expect(delegatedRangeFromAnswer("ok\n委譲先の段の範囲: first=1 count=2")).toEqual(range)
+    expect(delegatedRangeFromAnswer("ok\n委譲先のフェーズの範囲: first=1 count=2")).toEqual(range)
   })
 })

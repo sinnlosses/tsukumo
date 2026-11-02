@@ -136,7 +136,7 @@ describe("advanceWorkPlanTrail", () => {
     expect(shapeOf(trail)).toEqual({ carried: [], times: [at(101)] })
   })
 
-  it("並列の段の中の段が変わった再開も、段の並びが変わったとして引き継がない", () => {
+  it("並列のフェーズの中の段が変わった再開も、段の並びが変わったとして引き継がない", () => {
     const grouped = ["架空の計画", ["架空のサーバ", "架空の画面"], "架空の検証"]
     const trail = trailOf([
       [requestEvent(), 0],

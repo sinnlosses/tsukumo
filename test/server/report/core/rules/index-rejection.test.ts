@@ -95,7 +95,7 @@ describe("reportRejectionText", () => {
       expect(kinds(draft([svg([rect(0, 0, 100, 50)])]))).toEqual([])
     })
 
-    it("はみ出した図形を、何個目の塊の何番目の図形かだけで言う", () => {
+    it("はみ出した図形を、何個目の部品の何番目の図形かだけで言う", () => {
       const report = draft([
         svg([rect(0, 0, 10, 10)]),
         svg([
@@ -145,7 +145,7 @@ describe("reportRejectionText", () => {
       }
     })
 
-    it("legend に無い tone を、何個目の塊のどの tone かだけで言い、legend にあれば通す", () => {
+    it("legend に無い tone を、何個目の部品のどの tone かだけで言い、legend にあれば通す", () => {
       const toned = (
         tone: "a" | "b",
         legend: Extract<ReportBlock, { kind: "svg" }>["legend"],
@@ -161,7 +161,7 @@ describe("reportRejectionText", () => {
       expect(kinds(draft([toned("a", [{ tone: "a", label: "層" }])]))).toEqual([])
     })
 
-    it("graph の色の目印も legend に無ければ、何個目の塊のどの tone かだけで言って差し戻す", () => {
+    it("graph の色の目印も legend に無ければ、何個目の部品のどの tone かだけで言って差し戻す", () => {
       const graph = (
         source: string,
         legend: Extract<ReportBlock, { kind: "graph" }>["legend"],
@@ -222,7 +222,7 @@ describe("reportRejectionText", () => {
     })
   })
 
-  describe("figure の図も図の塊の検査にかける", () => {
+  describe("figure の図も図の部品の検査にかける", () => {
     it("figure の graph の読めない行は、描く順の1個目として違反になる", () => {
       const report: ReportDraft = draft(
         [
@@ -326,7 +326,7 @@ describe("reportRejectionText", () => {
       expect(kinds(withReason("no-shape", [{ heading: "", blocks: [bullet] }]))).toEqual([])
     })
 
-    it("short-answer なのに節が2つ以上あれば違反になる", () => {
+    it("short-answer なのにセクションが2つ以上あれば違反になる", () => {
       const twoSections = withReason("short-answer", [
         {
           heading: "架空の節1",

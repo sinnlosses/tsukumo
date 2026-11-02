@@ -122,7 +122,7 @@ export async function scrollIntoView(page: Page, selector: string): Promise<numb
 
 /** `--scroll-to` が2つ以上の要素に当たったときの知らせの行。1つなら空文字。 */
 export function scrollMatchNotice(selector: string, count: number): string {
-  return count < 2 ? "" : `一致 ${String(count)} 個、先頭へ転がした: ${selector}`
+  return count < 2 ? "" : `一致 ${String(count)} 個、先頭へスクロールした:${selector}`
 }
 
 /**

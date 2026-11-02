@@ -38,13 +38,13 @@ function renderEdit(
 function seatSelect(label: string): HTMLSelectElement {
   const select = screen.getByLabelText(`${label}に置くアイテム`)
   if (!(select instanceof HTMLSelectElement)) {
-    throw new Error("席の選び口が select ではない")
+    throw new Error("席の選択メニューが select ではない")
   }
   return select
 }
 
 describe("アイテムの区画", () => {
-  it("3つの席を並べ、置いているアイテムを選び口の値にする", () => {
+  it("3つの席を並べ、置いているアイテムを選択メニューの値にする", () => {
     renderEdit({
       items: [HAT, CUP],
       itemSeats: {

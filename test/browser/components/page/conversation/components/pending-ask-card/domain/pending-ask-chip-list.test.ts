@@ -74,7 +74,7 @@ function list(count: number): Parameters<typeof row>[0] {
 }
 
 describe("pendingAskChips", () => {
-  it("質問は添え書きの図の塊のうち最初の list の項目を出す", () => {
+  it("質問は添え書きの図の部品のうち最初の list の項目を出す", () => {
     expect(pendingAskChips(question(list(3))).shown).toEqual(["項目1", "項目2", "項目3"])
   })
 

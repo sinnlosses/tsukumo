@@ -22,7 +22,7 @@ import {
 
 describe("server/ の機能どうしの import", () => {
   it(
-    "機能の core/ どうし・adapter/ どうしの辺は、それぞれ循環しない",
+    "機能の core/ どうし・adapter/ どうしのエッジは、それぞれ循環しない",
     () => {
       const cycles = (["core", "adapter"] as const).flatMap((layer) => {
         const cycle = findFeatureCycle(featureGraphOf(serverFeatureEdges(), layer), SERVER_FEATURES)
@@ -117,9 +117,9 @@ function meetsFeatureFloor(feature: ServerFeature, files: readonly string[]): bo
 // 共有モジュールは「どの機能の語彙も名乗らず、読み手が2つ以上ある」ものだけを置く場所なので、
 // 機能を読んではいけない（`.dependency-cruiser.cjs` が見る）し、読み手が
 // 1つの機能だけに絞られたら、その機能の中へ下ろすのが正しい（`browser/domain/` の検査と同じ形）。
-describe("server/ の共有の箱", () => {
+describe("server/ の共有モジュール", () => {
   it(
-    "共有の箱に、1つの機能だけが読むファイルは無い",
+    "共有モジュールに、1つの機能だけが読むファイルは無い",
     () => {
       const files = listSourceFiles(SRC_ROOT).filter(
         (relPath) => relPath.startsWith("server/") && serverPlaceOf(relPath).kind === "shared",

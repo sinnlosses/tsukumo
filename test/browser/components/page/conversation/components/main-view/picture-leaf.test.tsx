@@ -32,8 +32,8 @@ describe("Picture の部品", () => {
   it.each([
     ["棚にある画像（寸法あり）", SHELVED, "/tmp/架空の画面.png", []],
     ["棚にある画像（寸法なし）", SHELVED, "/tmp/別の画面.png", []],
-    ["棚に置けなかった画像（札）", SHELVED, "/tmp/置けない.png", []],
-    ["棚に置いていない本文（札）", { kind: "none" }, "/tmp/架空の画面.png", []],
+    ["置き場に置けなかった画像（カード）", SHELVED, "/tmp/置けない.png", []],
+    ["置き場に置いていない本文（カード）", { kind: "none" }, "/tmp/架空の画面.png", []],
     ["注つき", SHELVED, "/tmp/架空の画面.png", ["左上の `a.ts` の帯", "2 行目のラベル"]],
   ] as const)("%s が旧い描画と一致する", (_, source, path, notes) => {
     const { block, part } = pair(path, notes)
@@ -49,7 +49,7 @@ describe("Picture の部品", () => {
     expect(fresh).toBe(oldLeafHtml(block, SHELVED))
   })
 
-  it("画像の src は棚の経路だけで、棚に置かないものには付けない", () => {
+  it("画像の src は置き場の経路だけで、置き場に置かないものには付けない", () => {
     const shelved = pair("/tmp/架空の画面.png", [])
     const none = pair("/tmp/架空の画面.png", [])
 

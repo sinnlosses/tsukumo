@@ -20,7 +20,7 @@ function mainViewContent(
 }
 
 test.describe("トークンの画面の見直し", () => {
-  test("ターンが進行中でも始められ、結果の札が出て、仕事の画面のメインビューは変わらない", async ({
+  test("ターンが進行中でも始められ、結果のカードが出て、仕事の画面のメインビューは変わらない", async ({
     run,
   }) => {
     const room = await run.open({

@@ -226,7 +226,7 @@ describe("createSessionManager", () => {
       return { stub, request, shelvedId: shelved?.id, writes, archiveCalls, diagnostics }
     }
 
-    it("雑談で届いた依頼の画像は、棚の原寸を書き、書けた名前が行に載る", async () => {
+    it("雑談で届いた依頼の画像は、置き場の原寸を書き、書けた名前が行に載る", async () => {
       const { stub, request, shelvedId, writes, archiveCalls } = startImageManagerWithStub({
         kind: "written",
         fileName: "2026-10-20-fictional.png",

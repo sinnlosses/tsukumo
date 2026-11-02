@@ -261,13 +261,13 @@
       "kind": "report",
       "toolUseId": "fake-report-call-2",
       "argumentChars": {
-        "total": 1237,
+        "total": 1247,
         "fields": {
           "task": 15,
           "conclusion": 35,
           "sections": 642,
           "favor": 37,
-          "checks": 341,
+          "checks": 351,
           "closing": 53
         }
       },
@@ -298,11 +298,11 @@
         },
         {
           "status": "unobserved",
-          "label": "狭い窓での見た目",
+          "label": "狭いビューポートでの見た目",
           "figure": "",
           "command": "",
           "detail": "手で確かめていない",
-          "howToVerify": "窓を 720 幅にして、目盛りの帯が欄からはみ出さないことを見る"
+          "howToVerify": "ビューポートを 720 幅にして、目盛りの帯が欄からはみ出さないことを見る"
         }
       ],
       "task": {
@@ -352,11 +352,11 @@
             },
             {
               "status": "unobserved",
-              "label": "狭い窓での見た目",
+              "label": "狭いビューポートでの見た目",
               "figure": "",
               "command": "",
               "detail": "手で確かめていない",
-              "howToVerify": "窓を 720 幅にして、目盛りの帯が欄からはみ出さないことを見る"
+              "howToVerify": "ビューポートを 720 幅にして、目盛りの帯が欄からはみ出さないことを見る"
             }
           ],
           "closing": {

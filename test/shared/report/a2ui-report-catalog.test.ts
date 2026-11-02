@@ -119,7 +119,7 @@ describe("A2UI のカタログ文書", () => {
     expect(dangling).toEqual([])
   })
 
-  it("葉の部品は、元の塊の塊ぜんたいに掛かる検査（refine・superRefine）を落とさない", () => {
+  it("内容部品は、元の部品ぜんたいに掛かる検査（refine・superRefine）を落とさない", () => {
     const sources = new Map(
       namedWriterBlockSchema.options.map((option) => [option.shape.kind.value, option]),
     )
@@ -171,7 +171,7 @@ describe("A2UI のカタログ文書", () => {
     expect(JSON.stringify(document.components.Claims)).toContain("howToVerify")
   })
 
-  it("葉の部品は id と component を持ち、kind を持たない", () => {
+  it("内容部品は id と component を持ち、kind を持たない", () => {
     const leaf = JSON.stringify(document.components.Table)
 
     expect(leaf).toContain('"id"')
@@ -252,7 +252,7 @@ describe("A2UI のカタログ文書", () => {
     )
   })
 
-  it("葉の部品名は対応表の kind に写る", () => {
+  it("内容部品名は対応表の kind に写る", () => {
     expect(LEAF_COMPONENT_KINDS).toEqual(
       Object.fromEntries(
         Object.entries(KIND_TO_COMPONENT).map(([kind, component]) => [component, kind]),

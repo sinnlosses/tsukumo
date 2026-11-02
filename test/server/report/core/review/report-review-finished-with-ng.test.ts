@@ -81,7 +81,7 @@ describe("createReportReview の judge（ng の確認がある finished の repo
     })
   })
 
-  it("段の閉じ方の差し戻しが先で、ng の差し戻しはそのあと（枠は別に数える）", () => {
+  it("フェーズの閉じ方の差し戻しが先で、ng の差し戻しはそのあと（枠は別に数える）", () => {
     const review = createReportReview(() => ({ kind: "planned", remaining: 1 }))
     const draft = { ...withTask("finished", ["ng"]), workPlanClosing: "stopped" as const }
 

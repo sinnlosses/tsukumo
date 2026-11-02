@@ -24,7 +24,7 @@ function idsOf(leaves: readonly { readonly id: string }[]): readonly string[] {
 }
 
 describe("reportFigureOf", () => {
-  it("図の葉があれば、その種類を返す", () => {
+  it("図の内容部品があれば、その種類を返す", () => {
     const figure: A2uiReportComponent = {
       id: "f1",
       component: "Mermaid",
@@ -90,7 +90,7 @@ describe("reportOutline", () => {
     expect(idsOf(outline.sections[0]?.leaves ?? [])).toEqual(["p1", "n1", "n2", "p2"])
   })
 
-  it("Section でない根の子は、葉が残るときだけ見出しの無い節になる", () => {
+  it("Section でない根の子は、葉が残るときだけ見出しの無いセクションになる", () => {
     const outline = reportOutline([
       report({}, ["row", "empty"]),
       { id: "row", component: "Row", children: ["n1"] },

@@ -52,7 +52,7 @@ describe("phaseNumberOf", () => {
     expect(phaseNumberOf(spannedRange, [6], 7)).toMatchObject({ span: "trail", text: "3/3" })
   })
 
-  it("並列の段は先頭と末尾の番号を「–」でつなぐ", () => {
+  it("並列のフェーズは先頭と末尾の番号を「–」でつなぐ", () => {
     expect(phaseNumberOf(none, [1, 2], 4)).toMatchObject({ ordinals: "2–3", text: "2–3/4" })
     expect(phaseNumberOf(range, [1, 2], 4)).toMatchObject({ ordinals: "1–2", text: "1–2/3" })
   })

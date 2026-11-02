@@ -77,7 +77,7 @@ describe("reportLeafLayoutOf", () => {
     ])
   })
 
-  it("quote の aside は傍注になり、図表番号は付かない", () => {
+  it("quote の aside は欄外注になり、図表番号は付かない", () => {
     const [blocks] = reportLeafValues([
       section([
         { kind: "quote", text: "架空の一文", source: "", fold: "", aside: "架空の出どころ" },
@@ -88,7 +88,7 @@ describe("reportLeafLayoutOf", () => {
     expect(blocks?.[0]?.gutterNotes).toEqual([{ label: "", text: "架空の出どころ" }])
   })
 
-  it("descriptionList の aside は傍注になり、図表番号は付かない", () => {
+  it("descriptionList の aside は欄外注になり、図表番号は付かない", () => {
     const [blocks] = reportLeafValues([
       section([
         {
@@ -104,7 +104,7 @@ describe("reportLeafLayoutOf", () => {
     expect(blocks?.[0]?.gutterNotes).toEqual([{ label: "", text: "架空の出どころ" }])
   })
 
-  it("trace の aside は傍注になり、図表番号は付かない", () => {
+  it("trace の aside は欄外注になり、図表番号は付かない", () => {
     const [blocks] = reportLeafValues([
       section([
         {
@@ -120,7 +120,7 @@ describe("reportLeafLayoutOf", () => {
     expect(blocks?.[0]?.gutterNotes).toEqual([{ label: "", text: "架空の出どころ" }])
   })
 
-  it("memo の傍注は直前の葉へ寄り、memo 自身は寄せたことだけを持つ。節の最初の memo は自分で持つ", () => {
+  it("memo の欄外注は直前の内容部品へ寄り、memo 自身は寄せたことだけを持つ。セクションの最初の memo は自分で持つ", () => {
     const [first, second] = reportLeafValues([
       section([
         memo("架空の頭の覚え書き。"),

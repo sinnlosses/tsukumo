@@ -42,7 +42,7 @@ function draft(page: Page): Promise<string> {
 }
 
 test.describe("始め方の一覧", () => {
-  test("理由つきのおすすめの札と「ほかの始め方」が並び、広い窓でも中くらいの窓でも横にあふれない", async ({
+  test("理由つきのおすすめのカードと「ほかの始め方」が並び、広いビューポートでも中くらいのビューポートでも横にあふれない", async ({
     run,
   }) => {
     const room = await openWelcomeRoom(run, "welcome-doors", "wide")

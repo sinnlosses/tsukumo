@@ -67,7 +67,7 @@ describe("formatImageRegion と parseImageRegion", () => {
 
 describe("isShelvedImageUrl", () => {
   it.each(["架空/a.png", "/tmp/架空/b.png", "../上/c.png"])(
-    "手元のパスは棚から引く（%s）",
+    "手元のパスは置き場から引く（%s）",
     (url) => {
       expect(isShelvedImageUrl(url)).toBe(true)
     },
@@ -79,7 +79,7 @@ describe("isShelvedImageUrl", () => {
     "//example.invalid/a.png",
     "data:image/png;base64,AAAA",
     "file:///tmp/a.png",
-  ])("空・スキームか // で始まる行き先は棚から引かない（%s）", (url) => {
+  ])("空・スキームか // で始まる行き先は置き場から引かない（%s）", (url) => {
     expect(isShelvedImageUrl(url)).toBe(false)
   })
 })

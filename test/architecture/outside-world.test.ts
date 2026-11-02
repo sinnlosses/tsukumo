@@ -90,7 +90,7 @@ const DYNAMIC_COMMAND_SITES = [
   {
     file: "scripts/shared/port-listener.ts",
     commands: ["lsof", "ps"],
-    reason: "包み関数 `run` の中。呼ぶ側のリテラルは `run` の呼び出しとして別に照らす",
+    reason: "ラッパー関数 `run` の中。呼ぶ側のリテラルは `run` の呼び出しとして別に照らす",
   },
 ] satisfies readonly { file: string; commands: readonly string[]; reason: string }[]
 

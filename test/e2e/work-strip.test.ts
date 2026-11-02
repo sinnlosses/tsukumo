@@ -12,8 +12,10 @@ import { LONG_TOOL_OCCURRENCE, phaseStates, stripOf } from "./work-strip-probe.t
 /** 撮るときの経過（凍らせた瞬間から）。「何秒前」の類いをこの値で揃える。 */
 const ELAPSED_MS = 60_000
 
-test.describe("進み具合の帯", () => {
-  test("段が進む・ツールが走るたびに書き換わり、本文を転がしても動かない", async ({ run }) => {
+test.describe("進み具合のプログレスバー", () => {
+  test("フェーズが進む・ツールが走るたびに書き換わり、本文をスクロールしても動かない", async ({
+    run,
+  }) => {
     const room = await run.open({
       scenario: "work-strip-running",
       scene: "work-strip-running",

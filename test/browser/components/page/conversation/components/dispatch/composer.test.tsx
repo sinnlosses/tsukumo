@@ -373,7 +373,7 @@ describe("Composer", () => {
     expect(screen.getByPlaceholderText(/依頼を書く/)).toBeDefined()
   })
 
-  it("帯の「お伺いへ」は、お伺いの札へフォーカスを移す合図を出す", () => {
+  it("帯の「お伺いへ」は、お伺いのカードへフォーカスを移す通知を出す", () => {
     renderComposer({ pending: [PERMISSION_PENDING] })
 
     fireEvent.click(screen.getByRole("button", { name: "お伺いへ" }))

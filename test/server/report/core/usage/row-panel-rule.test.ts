@@ -104,7 +104,7 @@ describe("row・panel の中と外で同じ並べ方の判定", () => {
     })
   })
 
-  describe("傍注の欄の集計", () => {
+  describe("欄外注の欄の集計", () => {
     it.each([
       ["葉の塊の aside", [{ ...reportDraftText("架空"), aside: "架空の出典" }], ["blockAside"]],
       [

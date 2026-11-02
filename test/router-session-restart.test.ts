@@ -81,7 +81,7 @@ describe("createSocketRouter（session）", () => {
     expect(restarts).toEqual([{ selection: { by: "current" }, chat: false, resume: { by: "new" } }])
   })
 
-  it("別の窓が占有ファイルに書いているセッションへの session.switchSession は定型文の理由で断り、起こし直さない", async () => {
+  it("別のウィンドウが占有ファイルに書いているセッションへの session.switchSession は定型文の理由で断り、起こし直さない", async () => {
     const { commands, restarts, occupiedElsewhere, reserved, stub } = startRouter()
     occupiedElsewhere.add("other-window-session")
 

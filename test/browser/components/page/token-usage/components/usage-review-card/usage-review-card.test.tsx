@@ -90,7 +90,7 @@ describe("UsageReviewCard（ふだん）", () => {
     expect(queryByText(/前回の提案/)).toBeNull()
   })
 
-  it("前回の提案があるときは日付つきのリンクが出て、押すと開く口が呼ばれる", () => {
+  it("前回の提案があるときは日付つきのリンクが出て、押すと開く関数が呼ばれる", () => {
     let opened = 0
     const review: UseUsageReviewResult = {
       ...IDLE_AVAILABLE,

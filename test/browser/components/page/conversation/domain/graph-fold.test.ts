@@ -62,11 +62,11 @@ describe("graphFoldFigure", () => {
   it.each([
     ["構成の素材", LONG],
     [
-      "名前の長い12節点の一本道",
+      "名前の長い12ノードの一本道",
       Array.from(
         { length: 11 },
         (_, index) =>
-          `架空のとても長い名前の節点${String(index)} -> 架空のとても長い名前の節点${String(index + 1)}: 架空の長い辺の語`,
+          `架空のとても長い名前のノード${String(index)} -> 架空のとても長い名前のノード${String(index + 1)}: 架空の長いエッジの語`,
       ).join("\n"),
     ],
   ])("行の幅は viewBox の幅の上限 1000 を超えない（%s）", (_, source) => {
@@ -87,7 +87,7 @@ describe("graphFoldFigure", () => {
     expect((figure?.width ?? 0) / (figure?.height ?? 1)).toBeLessThanOrEqual(3)
   })
 
-  it("辺はどれも1本の折れ線になり、戻り道の印を引き継ぐ", () => {
+  it("エッジはどれも1本の折れ線になり、戻り道の印を引き継ぐ", () => {
     const figure = graphFoldFigure(LONG)
 
     expect(figure?.paths).toHaveLength(10)
@@ -112,16 +112,16 @@ describe("graphFoldFigure", () => {
 
   it.each([
     ["主経路が境目より短い", "A -> B\nB -> C\nC -> D\nD -> E\nB -> X"],
-    ["主経路に無い節点どうしの辺", "A -> B\nB -> C\nC -> D\nD -> E\nE -> F\nB -> X\nX -> Y"],
-    ["戻り道でない辺の輪", "A -> B\nB -> C\nC -> D\nD -> E\nE -> F\nF -> A"],
-    ["同じ節点の上の取り合い", "A -> B\nB -> C\nC -> D\nD -> E\nE -> F\nB -> X\nB -> Y"],
+    ["主経路に無いノードどうしのエッジ", "A -> B\nB -> C\nC -> D\nD -> E\nE -> F\nB -> X\nX -> Y"],
+    ["戻り道でないエッジの輪", "A -> B\nB -> C\nC -> D\nD -> E\nE -> F\nF -> A"],
+    ["同じノードの上の取り合い", "A -> B\nB -> C\nC -> D\nD -> E\nE -> F\nB -> X\nB -> Y"],
   ])("%s図は置かない", (_, source) => {
     expect(graphFoldFigure(source)).toBeUndefined()
   })
 })
 
 describe("graphFoldHtml", () => {
-  it("svg の塊と同じ包みで、戻り道・群の地・節点の説明の目印を持つ", () => {
+  it("svg の部品と同じ外枠で、戻り道・群の地・ノードの説明の目印を持つ", () => {
     const figure = graphFoldFigure(LONG)
     const html = figure === undefined ? "" : graphFoldHtml(figure)
 

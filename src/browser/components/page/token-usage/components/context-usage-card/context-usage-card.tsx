@@ -274,7 +274,7 @@ function DeferredTable(props: DeferredTableProps): ReactElement | undefined {
   return (
     <>
       <h3 className={tokenUsageStyles["token-usage-section-label"]}>
-        窓の外（要求されたら読むもの）
+        コンテキストウィンドウの外（要求されたら読むもの）
       </h3>
       <table className={tokenUsageStyles["token-usage-table"]}>
         <tbody>

@@ -20,7 +20,7 @@ describe("resolvePortraitMotion", () => {
     ending: { kind: "failed", failure: { kind: "api-error", error: "overloaded" } },
   } satisfies PortraitMotionInput["turn"]
 
-  it("ターンが失敗で終わった直後（窓の内）は「失敗でびくっ」", () => {
+  it("ターンが失敗で終わった直後（期間の内）は「失敗でびくっ」", () => {
     const input: PortraitMotionInput = {
       turn: FAILED_TURN,
       lastToolFailureAt: undefined,
@@ -29,7 +29,7 @@ describe("resolvePortraitMotion", () => {
     expect(resolvePortraitMotion(input, 1000 + FAILURE_MOTION_WINDOW_MS - 1)).toBe("failure")
   })
 
-  it("失敗で終わったターンには、びくっの窓を過ぎても「完了の反応」を出さない", () => {
+  it("失敗で終わったターンには、びくっの期間を過ぎても「完了の反応」を出さない", () => {
     const input: PortraitMotionInput = {
       turn: FAILED_TURN,
       lastToolFailureAt: undefined,
@@ -60,7 +60,7 @@ describe("resolvePortraitMotion", () => {
     expect(resolvePortraitMotion(input, 0)).toBe("waiting")
   })
 
-  it("ターンが終わった直後（窓の内）は「完了の反応」", () => {
+  it("ターンが終わった直後（期間の内）は「完了の反応」", () => {
     const input: PortraitMotionInput = {
       turn: { kind: "finished", startedAt: 0, finishedAt: 1000, ending: { kind: "ended" } },
       lastToolFailureAt: undefined,
@@ -69,7 +69,7 @@ describe("resolvePortraitMotion", () => {
     expect(resolvePortraitMotion(input, 1000 + SUCCESS_MOTION_WINDOW_MS - 1)).toBe("success")
   })
 
-  it("完了の反応の窓を過ぎたら「読んでいる」に戻る", () => {
+  it("完了の反応の期間を過ぎたら「読んでいる」に戻る", () => {
     const input: PortraitMotionInput = {
       turn: { kind: "finished", startedAt: 0, finishedAt: 1000, ending: { kind: "ended" } },
       lastToolFailureAt: undefined,
@@ -78,7 +78,7 @@ describe("resolvePortraitMotion", () => {
     expect(resolvePortraitMotion(input, 1000 + SUCCESS_MOTION_WINDOW_MS)).toBe("reading")
   })
 
-  it("ツールが失敗した直後（窓の内）は「失敗でびくっ」", () => {
+  it("ツールが失敗した直後（期間の内）は「失敗でびくっ」", () => {
     const input: PortraitMotionInput = {
       turn: { kind: "running", startedAt: 0 },
       lastToolFailureAt: 2000,
@@ -87,7 +87,7 @@ describe("resolvePortraitMotion", () => {
     expect(resolvePortraitMotion(input, 2000 + FAILURE_MOTION_WINDOW_MS - 1)).toBe("failure")
   })
 
-  it("失敗の窓を過ぎたら、ターンが進行中のままなら「待っている」へ戻る", () => {
+  it("失敗の期間を過ぎたら、ターンが進行中のままなら「待っている」へ戻る", () => {
     const input: PortraitMotionInput = {
       turn: { kind: "running", startedAt: 0 },
       lastToolFailureAt: 2000,
@@ -152,7 +152,7 @@ describe("nextPortraitMotionTransitionDelayMs", () => {
     expect(nextPortraitMotionTransitionDelayMs(input, 0)).toBeUndefined()
   })
 
-  it("窓をすでに過ぎていれば undefined", () => {
+  it("期間をすでに過ぎていれば undefined", () => {
     const input: PortraitMotionInput = {
       turn: { kind: "finished", startedAt: 0, finishedAt: 0, ending: { kind: "ended" } },
       lastToolFailureAt: undefined,
@@ -161,7 +161,7 @@ describe("nextPortraitMotionTransitionDelayMs", () => {
     expect(nextPortraitMotionTransitionDelayMs(input, SUCCESS_MOTION_WINDOW_MS)).toBeUndefined()
   })
 
-  it("完了の反応の窓が残っていれば、その残り時間を返す", () => {
+  it("完了の反応の期間が残っていれば、その残り時間を返す", () => {
     const input: PortraitMotionInput = {
       turn: { kind: "finished", startedAt: 0, finishedAt: 1000, ending: { kind: "ended" } },
       lastToolFailureAt: undefined,
@@ -170,7 +170,7 @@ describe("nextPortraitMotionTransitionDelayMs", () => {
     expect(nextPortraitMotionTransitionDelayMs(input, 1200)).toBe(SUCCESS_MOTION_WINDOW_MS - 200)
   })
 
-  it("失敗の窓のほうが早く終わるなら、そちらの残り時間を返す", () => {
+  it("失敗の期間のほうが早く終わるなら、そちらの残り時間を返す", () => {
     const input: PortraitMotionInput = {
       turn: { kind: "finished", startedAt: 0, finishedAt: 1000, ending: { kind: "ended" } },
       lastToolFailureAt: 1000,

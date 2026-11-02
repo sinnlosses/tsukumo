@@ -180,7 +180,7 @@ describe("turnSpeeches（通し番号）", () => {
     ])
   })
 
-  it(`直近${String(MAX_MAIN_VIEW_TURNS)}ターンに絞られたあとも、窓の中の番号でそのターンのセリフが引ける`, () => {
+  it(`直近${String(MAX_MAIN_VIEW_TURNS)}ターンに絞られたあとも、集計期間の中の番号でそのターンのセリフが引ける`, () => {
     const turnCount = MAX_MAIN_VIEW_TURNS + 2
     const records: readonly SessionRecord[] = Array.from({ length: turnCount }, (_, index) => [
       requestRecord({ text: `依頼${String(index)}`, turnId: index }),

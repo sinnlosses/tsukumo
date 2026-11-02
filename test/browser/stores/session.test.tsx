@@ -45,7 +45,7 @@ function renderInquiry(countCommit: () => void): void {
 }
 
 describe("姿の store の購読", () => {
-  it("答え待ちが動かないフレームでは、答え待ちしか読まないお伺いの札を描き直さない", () => {
+  it("答え待ちが動かないフレームでは、答え待ちしか読まないお伺いのカードを描き直さない", () => {
     let commits = 0
     putSession({ ...INITIAL_SESSION_STATE, pending: [FIXTURE_PERMISSION] })
     renderInquiry(() => {

@@ -34,7 +34,7 @@ describe("usageProposalKey", () => {
 })
 
 describe("usageProposalRequestText", () => {
-  it("押す口ごとに頼み方が変わり、見出し・やること・根拠が入る", () => {
+  it("ボタンごとに頼み方が変わり、見出し・やること・根拠が入る", () => {
     const delegate = usageProposalRequestText(PROPOSAL)
     const task = usageProposalRequestText({ ...PROPOSAL, followUp: "task" })
 

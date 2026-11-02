@@ -30,7 +30,7 @@
           "expression": "proud"
         },
         "toolUseId": "fake-report-graph-scroll-1",
-        "conclusion": "架空の結論: 横に広がる図は縮めず、包みの中で横に転がして見られる。",
+        "conclusion": "架空の結論: 横に広がる図は縮めず、包みの中で横にスクロールして見られる。",
         "sections": [
           {
             "heading": "架空の広がる図",

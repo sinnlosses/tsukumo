@@ -66,7 +66,7 @@ describe(".dependency-cruiser.cjs の規則", () => {
     expect(allowedNames.filter((name) => !known.has(name))).toEqual([])
   })
 
-  describe("子ディレクトリの辺 (server-child-edge:)", () => {
+  describe("子ディレクトリのエッジ (server-child-edge:)", () => {
     const CHILD_PREFIX = "server-child-edge:report/core/"
     const CORE = "src/server/report/core"
     const allChildRules = config.forbidden.filter((rule) =>
@@ -84,7 +84,7 @@ describe(".dependency-cruiser.cjs の規則", () => {
       })
     }
 
-    it("逆向きの import を落とし、許す辺と同じ子の中は通す", () => {
+    it("逆向きの import を落とし、許すエッジと同じ子の中は通す", () => {
       expect(childEdgeForbidden("rules/a.ts", "review/b.ts")).toBe(true)
       expect(childEdgeForbidden("review/a.ts", "usage/b.ts")).toBe(true)
       expect(childEdgeForbidden("image/a.ts", "usage/b.ts")).toBe(true)
@@ -286,7 +286,7 @@ describe(".dependency-cruiser.cjs の規則", () => {
       },
     )
 
-    it("共有の箱の core/ の規則の子は実際のディレクトリと過不足なく一致する", () => {
+    it("共有モジュールの core/ の規則の子は実際のディレクトリと過不足なく一致する", () => {
       const prefix = "server-child-edge:core/"
       const ruleChildren = allChildRules
         .filter((rule) => rule.name.startsWith(prefix))

@@ -289,7 +289,7 @@ describe("MermaidBlock の幅の段", () => {
     expect(renderDiagram).toHaveBeenCalledTimes(2)
   })
 
-  it("前後の塊の側の図には段を当てない", async () => {
+  it("前後の部品の側の図にはフェーズを当てない", async () => {
     stubDrawnWidth(() => 300)
     const side = document.createElement("div")
     side.className = "report-before-after-side"

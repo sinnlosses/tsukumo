@@ -105,7 +105,7 @@
       "afterMs": 3800,
       "event": {
         "kind": "speech",
-        "text": "1つ目の合図が届いた。まだ続けてるよ。",
+        "text": "1つ目の通知が届いた。まだ続けてるよ。",
         "expression": "default"
       }
     },

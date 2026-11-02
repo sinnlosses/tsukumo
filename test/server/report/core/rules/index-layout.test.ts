@@ -48,7 +48,7 @@ describe("reportViolations", () => {
       expect(kinds(draft([info(), reportDraftText("架空の段落。"), info()]))).toEqual([])
     })
 
-    it("見出しのある節の先頭の note は違反、見出しの無い節の先頭は通る", () => {
+    it("見出しのあるセクションの先頭の note は違反、見出しの無いセクションの先頭は通る", () => {
       const titled: readonly ReportBlockSection[] = [{ heading: "架空の見出し", blocks: [info()] }]
       expect(kinds(draft([], "架空の結論。", titled))).toEqual(["crowded-notes"])
       expect(kinds(draft([info()]))).toEqual([])

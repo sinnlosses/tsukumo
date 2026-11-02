@@ -14,7 +14,7 @@ import {
 // （docs/architecture/testing.md「E2E のシナリオの一覧」）。期待値は撮らず、割れたものの名前と寸法を差分に出す。
 
 test.describe("会話の画面の押す的と字", () => {
-  test("迎える画面とサイドバー、サイドバーのタスクののぞき窓の押せるもの・字が下限を割らない（medium と large）", async ({
+  test("迎える画面とサイドバー、サイドバーのタスクのプレビューの押せるもの・字が下限を割らない（medium と large）", async ({
     run,
   }) => {
     const room = await openTaskListRoomWithRunningTask(run, "target-size-welcome", [], "medium")

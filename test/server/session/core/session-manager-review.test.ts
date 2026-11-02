@@ -192,7 +192,7 @@ describe("タスク一覧の見張り", () => {
     expect(watch.watching.at(-1)).toBe(false)
   })
 
-  it("起こし直しの hello にそれまでのタスク一覧とおすすめの札が残り、そのあと届いた一覧も新しい代に入る", async () => {
+  it("起こし直しの hello にそれまでのタスク一覧とおすすめのカードが残り、そのあと届いた一覧も新しい代に入る", async () => {
     const { manager, watch } = startManagerWithTaskWatch()
     const cards = [{ kind: "resume", reason: "架空の理由" }] as const
     watch.emit({

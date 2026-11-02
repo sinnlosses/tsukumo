@@ -9,10 +9,10 @@ describe("scrollMatchNotice", () => {
     expect(scrollMatchNotice("h4", 1)).toBe("")
   })
 
-  test("2個以上に当たったときは個数と、先頭へ転がしたことを知らせる", () => {
+  test("2個以上に当たったときは個数と、先頭へスクロールしたことを知らせる", () => {
     const notice = scrollMatchNotice("h4, h5", 3)
     expect(notice).toContain("一致 3 個")
-    expect(notice).toContain("先頭へ転がした")
+    expect(notice).toContain("先頭へスクロールした")
     expect(notice).toContain("h4, h5")
   })
 })

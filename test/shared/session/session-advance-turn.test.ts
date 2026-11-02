@@ -341,7 +341,7 @@ describe("applySessionEvent（report を書いている間）", () => {
     })
   })
 
-  it("report の段の閉じ方は記録に写る", () => {
+  it("report のフェーズの閉じ方は記録に写る", () => {
     const state = apply(REQUEST, reportEvent({ toolUseId: "toolu_r1", workPlanClosing: "stopped" }))
 
     expect(state.records.at(-1)).toMatchObject({ kind: "report", workPlanClosing: "stopped" })

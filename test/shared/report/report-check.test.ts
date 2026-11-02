@@ -37,7 +37,7 @@ describe("parseReportChecks", () => {
   it("howToVerify があれば残す", () => {
     const stored = check("unobserved", "架空", {
       detail: "架空の理由",
-      howToVerify: "架空の窓を開いて見る",
+      howToVerify: "架空のウィンドウを開いて見る",
     })
 
     expect(parseReportChecks([stored])).toEqual([stored])

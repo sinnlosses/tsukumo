@@ -193,7 +193,7 @@ describe("taskList", () => {
     expect(screen.getByText("未完了のタスクが無い")).toBeDefined()
   })
 
-  it("行を押すとのぞき窓が開き、もう一度押すと閉じる", () => {
+  it("行を押すとプレビューが開き、もう一度押すと閉じる", () => {
     render(<TaskList tasks={known(TASKS)} selectedStatus="all" />)
 
     fireEvent.click(row("X-001"))
@@ -207,7 +207,7 @@ describe("taskList", () => {
     expect(peek()).toBeNull()
   })
 
-  it("のぞき窓は状態・ID・題・本文の頭・「全文を開く」を持ち、作った人とラベルは出さない", () => {
+  it("プレビューは状態・ID・題・本文の頭・「全文を開く」を持ち、作った人とラベルは出さない", () => {
     const items: readonly TaskSummaryItem[] = [
       {
         ...taskOf("X-007", "todo"),
@@ -249,7 +249,7 @@ describe("taskList", () => {
     }
   })
 
-  it("進行中のカードを押しても同じ窓が開く", () => {
+  it("進行中のカードを押しても同じプレビューが開く", () => {
     render(<TaskList tasks={known(TASKS)} selectedStatus="all" />)
 
     fireEvent.click(row("X-004"))
@@ -287,7 +287,7 @@ describe("taskList", () => {
     expect(peekTitle()).toBe("X-004 の詳細")
   })
 
-  it("閉じている間の ↑↓ では窓を開かない", () => {
+  it("閉じている間の ↑↓ ではプレビューを開かない", () => {
     render(<TaskList tasks={known(TASKS)} selectedStatus="all" />)
 
     fireEvent.keyDown(row("X-001"), { key: "ArrowDown" })
@@ -320,7 +320,7 @@ describe("taskList", () => {
     expect(peek()).toBeNull()
   })
 
-  it("「全文を開く」はタスクのモーダルをそのタスクを選んで開くよう頼み、窓を閉じる", () => {
+  it("「全文を開く」はタスクのモーダルをそのタスクを選んで開くよう頼み、プレビューを閉じる", () => {
     render(<TaskList tasks={known(TASKS)} selectedStatus="all" />)
 
     fireEvent.click(row("X-002"))

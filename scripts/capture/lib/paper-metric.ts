@@ -215,7 +215,7 @@ export function formatPaperMetric(metric: PaperMetric): readonly string[] {
   const stacked = metric.stackedBlocks
   const rows: readonly (readonly [string, string])[] = [
     ["左の色罫", String(metric.leftRules)],
-    ["数の札の列", String(metric.statStrips)],
+    ["数のカードの列", String(metric.statStrips)],
     ["番号の列", String(metric.numberedLists)],
     ["絵文字", String(metric.emoji)],
     [

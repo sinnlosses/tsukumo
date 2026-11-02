@@ -61,7 +61,7 @@ describe("a2ui の版の記録の本文", () => {
     expect(reportHeadedSections(withoutComponents)).toEqual([])
   })
 
-  it("markdownLeaves は Markdown の葉だけを持ち、傍注と畳みを包んだ Markdown を当てる", () => {
+  it("markdownLeaves は Markdown の葉だけを持ち、欄外注と畳みを包んだ Markdown を当てる", () => {
     const reported = reportOf({ components: MARKDOWN_PARTS })
     const { a2ui } = regionsOf(reported)
     if (a2ui.kind !== "surface") throw new Error("面の値が無い")
@@ -69,7 +69,7 @@ describe("a2ui の版の記録の本文", () => {
     expect(Object.keys(a2ui.markdownLeaves).toSorted()).toEqual(["m1", "m2"])
     expect(a2ui.markdownLeaves.m1).toBe("> 架空の引用")
     expect(a2ui.markdownLeaves.m2).toContain("架空の畳み")
-    expect(a2ui.markdownLeaves.m2).toContain("架空の傍注")
+    expect(a2ui.markdownLeaves.m2).toContain("架空の欄外注")
   })
 
   it("整形で落ちた Markdown の葉は空文字で、ほかの葉は持たない", () => {
@@ -96,7 +96,7 @@ describe("a2ui の版の記録の本文", () => {
     })
   })
 
-  it("leafValues は図の葉・節の葉・振り返りの葉に、通しの番号と寄せた傍注を持つ", () => {
+  it("leafValues は図の内容部品・節の内容部品・振り返りの内容部品に、通しの番号と寄せた欄外注を持つ", () => {
     const parts = [
       {
         id: "root",
@@ -231,7 +231,7 @@ const MARKDOWN_PARTS = [
     component: "Markdown",
     markdown: "架空の本文。",
     fold: "架空の畳み",
-    aside: "架空の傍注",
+    aside: "架空の欄外注",
   },
 ]
 

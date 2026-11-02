@@ -60,7 +60,7 @@ describe("NotationBlock（レポートの塊の記法）", () => {
     expect(labelTextClassName("note note-favor")).toBeNull()
   })
 
-  it("余白の柱の並び（gutter）にだけ演出の印が付き、包み（with-gutter）には付かない", () => {
+  it("欄外注の列の並び（gutter）にだけ演出の印が付き、外枠（with-gutter）には付かない", () => {
     const { container } = render(
       <NotationBlock className="with-gutter">
         <NotationBlock className="gutter">

@@ -217,7 +217,7 @@ export const NOTATION_ENTRIES: readonly CatalogEntry[] = [
   {
     name: "report-before-after-image",
     scene: "report-before-after",
-    label: "前後の塊（画像の前後。前が左・後が右・間に矢印）",
+    label: "前後の部品（画像の前後。前が左・後が右・間に矢印）",
     homeSetup: { kind: "default" },
     workspaceSetup: { kind: "report-image" },
     prepare: [{ kind: "scroll", selector: BEFORE_AFTER_SELECTOR }],
@@ -227,7 +227,7 @@ export const NOTATION_ENTRIES: readonly CatalogEntry[] = [
   {
     name: "report-before-after-code",
     scene: "report-before-after",
-    label: "前後の塊（コードの前後と箇条の前後）",
+    label: "前後の部品（コードの前後と箇条の前後）",
     homeSetup: { kind: "default" },
     workspaceSetup: { kind: "report-image" },
     prepare: [{ kind: "scroll", selector: BEFORE_AFTER_CODE_SELECTOR }],
@@ -237,7 +237,7 @@ export const NOTATION_ENTRIES: readonly CatalogEntry[] = [
   {
     name: "report-before-after-points",
     scene: "report-before-after",
-    label: "前後の塊（箇条の前後と、箇条から置いていない画像への前後）",
+    label: "前後の部品（箇条の前後と、箇条から置いていない画像への前後）",
     homeSetup: { kind: "default" },
     workspaceSetup: { kind: "report-image" },
     prepare: [{ kind: "scroll", selector: BEFORE_AFTER_POINTS_SELECTOR }],

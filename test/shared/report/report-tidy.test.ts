@@ -25,7 +25,7 @@ const tidy = (body: string, conclusion = CONCLUSION): string =>
     .map((block) => (block.kind === "markdown" ? block.markdown : ""))
     .join("")
 
-describe("tidyReportOutline（逃げ道の塊）", () => {
+describe("tidyReportOutline（逃げ道の部品）", () => {
   it("落とすものが無ければ引数のまま返す（空行の連続も詰めない）", () => {
     const body = "## 架空の見出し\n\n架空の本文。\n\n\n\n- 架空の項目\n"
 

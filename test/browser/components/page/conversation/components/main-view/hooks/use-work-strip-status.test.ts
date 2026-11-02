@@ -242,7 +242,7 @@ describe("useWorkStrip（回る弧）", () => {
     expect(spinningOf(stripAt(foldTimed([[workRequest, START]]), START + 5_000))).toEqual([])
   })
 
-  it("並列の段で今の段が複数なら、今の段の丸がすべて回る", () => {
+  it("並列のフェーズで今の段が複数なら、今の段の丸がすべて回る", () => {
     const grouped: SessionEvent = {
       kind: "work-plan",
       delegatedRange: { kind: "none" },

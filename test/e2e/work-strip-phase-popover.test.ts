@@ -3,7 +3,7 @@ import { LONG_TOOL_OCCURRENCE, phaseStates, stripOf } from "./work-strip-probe.t
 
 // 進み具合のプログレスバーの段の吹き出し（場面は `work-strip-running`）。
 
-test.describe("進み具合の帯の段の吹き出し", () => {
+test.describe("進み具合のプログレスバーのフェーズの吹き出し", () => {
   test("済んだ段の丸を押すと吹き出しが出て、「この段の手順へ」で依頼の手順の一覧が開く", async ({
     run,
   }) => {

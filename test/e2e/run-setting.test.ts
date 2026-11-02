@@ -10,7 +10,7 @@ import { expect, test, VIEWPORTS } from "./room-fixture.ts"
 const ELAPSED_MS = 60_000
 
 test.describe("モデル・effort・許可モードの操作子", () => {
-  test("広い窓のサイドバー下端で、クリックで吊り札が開き、選ぶと session.setModel が流れ、Esc で閉じる", async ({
+  test("広いビューポートのサイドバー下端で、クリックで吊り下げのカードが開き、選ぶと session.setModel が流れ、Esc で閉じる", async ({
     run,
   }) => {
     const room = await run.open({

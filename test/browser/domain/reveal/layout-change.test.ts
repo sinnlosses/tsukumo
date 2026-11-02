@@ -6,7 +6,7 @@ import { watchLayoutChange } from "../../../../src/browser/domain/reveal/layout-
 // 書いている最中にビューポートや領域の大きさを変えたときの追従は目視で確かめる（`docs/architecture/testing.md`「手で確かめること」）。
 
 describe("watchLayoutChange（測った box が古くなる出来事）", () => {
-  it("窓の大きさが変わったら知らせ、外したあとは知らせない", () => {
+  it("ビューポートの大きさが変わったら知らせ、外したあとは知らせない", () => {
     let calls = 0
     const layoutWatch = watchLayoutChange([], () => {
       calls += 1

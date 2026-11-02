@@ -8,7 +8,7 @@ import { expect, test } from "./room-fixture.ts"
 
 const FAILURE_REQUEST = "API のサーバが不調な日に頼む（架空の依頼）"
 
-test.describe("失敗の塊", () => {
+test.describe("失敗の表示", () => {
   test("理由を人の言葉で出し、同じ依頼を入力欄に戻せる（送らない）。入力欄の下段は1段のまま", async ({
     run,
   }) => {

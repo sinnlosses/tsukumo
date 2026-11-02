@@ -229,7 +229,7 @@ describe("phaseDurations（止めて再開した依頼の引き継ぎ）", () =>
   })
 })
 
-describe("phaseDurations（並列の段）", () => {
+describe("phaseDurations（並列のフェーズ）", () => {
   const overlapped = [
     plan(0, at(0), GROUPED),
     plan(1, at(10), GROUPED),
@@ -238,7 +238,7 @@ describe("phaseDurations（並列の段）", () => {
     plan(3, at(25), GROUPED),
   ]
 
-  it("重なって走った段はそれぞれの所要が出て、並列の段の所要は中の段の和ではなく壁時計", () => {
+  it("重なって走った段はそれぞれの所要が出て、並列のフェーズの所要は中の段の和ではなく壁時計", () => {
     expect(phaseDurations(within(overlapped), at(99))).toEqual([
       row("1/4 架空の調べ", known(10), known(0)),
       {
@@ -256,11 +256,11 @@ describe("phaseDurations（並列の段）", () => {
     ])
   })
 
-  it("中間レポートの所要は、並列の段の中の段もその段の区間で探す", () => {
+  it("中間レポートの所要は、並列のフェーズの中の段もその段の区間で探す", () => {
     expect(finishedPhaseDuration(within(overlapped), "3/4 架空の画面", at(99))).toEqual(known(6))
   })
 
-  it("依頼の最初の記録が並列の段の途中なら、並列の段と中の段は不明", () => {
+  it("依頼の最初の記録が並列のフェーズの途中なら、並列のフェーズと中の段は不明", () => {
     expect(
       phaseDurations(
         within([plan(1, at(0), GROUPED, ["架空の画面"]), plan(2, at(4), GROUPED)]),
@@ -387,7 +387,7 @@ describe("phaseDurations（未着手と飛ばした）", () => {
     ])
   })
 
-  it("並列の段の中が全部未着手なら並列の行も未着手で、一部だけなら時間も不明のまま", () => {
+  it("並列のフェーズの中が全部未着手なら並列の行も未着手で、一部だけなら時間も不明のまま", () => {
     const stopped = phaseDurations(within([plan(0, at(0), GROUPED)]), at(10), "stopped")
 
     expect(stopped.at(1)).toEqual({

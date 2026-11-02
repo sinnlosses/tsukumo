@@ -21,7 +21,7 @@ describe("REPORT_TOOL_DESCRIPTION", () => {
 
 describe("reportFigureDescription", () => {
   it.each(["chart", "text"] as const)(
-    "%s でも、figure に置ける図の塊の種類をすべて名指し、none の理由は書き手に見せない",
+    "%s でも、figure に置ける図の部品の種類をすべて名指し、none の理由は書き手に見せない",
     (preference) => {
       const description = reportFigureDescription(preference)
       const blockKinds = reportFigureSchema.options

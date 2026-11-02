@@ -5,7 +5,7 @@
       "afterMs": 0,
       "event": {
         "kind": "request",
-        "text": "前後の塊の見え方を確かめたい（架空の依頼）",
+        "text": "前後の部品の見え方を確かめたい（架空の依頼）",
         "images": []
       }
     },
@@ -115,7 +115,7 @@
                 "title": "架空の文言から画面へ",
                 "before": {
                   "kind": "points",
-                  "points": ["押す口の文言は「送る」だった"]
+                  "points": ["ボタンの文言は「送る」だった"]
                 },
                 "after": {
                   "kind": "image",

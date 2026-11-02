@@ -9,8 +9,8 @@ function cardOf(page: Page) {
   return page.getByRole("region", { name: "答え待ち" })
 }
 
-test.describe("狭い画面の答え待ちの札", () => {
-  test("390x844 で、本文を転がしても札は入力欄のすぐ上から動かず、ページは横にも縦にも転がらない", async ({
+test.describe("狭い画面の答え待ちのカード", () => {
+  test("390x844 で、本文をスクロールしてもカードは入力欄のすぐ上から動かず、ページは横にも縦にもスクロールしない", async ({
     run,
   }) => {
     const room = await run.open({

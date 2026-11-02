@@ -137,7 +137,7 @@ describe("applySessionEvent（委譲の返却で進むワークプラン）", ()
   })
 })
 
-describe("applySessionEvent（report の段の閉じ方とワークプラン）", () => {
+describe("applySessionEvent（report のフェーズの閉じ方とワークプラン）", () => {
   const request = requestEvent()
   const PHASES = ["架空の段A", "架空の段B", "架空の段C"]
   const mainPlan = (current: number): SessionEvent => ({

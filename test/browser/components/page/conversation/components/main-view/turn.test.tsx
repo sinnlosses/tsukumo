@@ -42,7 +42,7 @@ afterEach(() => {
 })
 
 describe("Turn（失敗で終わったやり取り）", () => {
-  it("本文が1つも無いまま失敗したやり取りでも、失敗の塊は出す", () => {
+  it("本文が1つも無いまま失敗したやり取りでも、失敗の表示は出す", () => {
     putSession(INITIAL_SESSION_STATE)
     render(
       <Turn
@@ -119,7 +119,7 @@ describe("Turn（タスク見出し行と見出し）", () => {
     expect(screen.queryByRole("button", { name: "X-7" })).toBeNull()
   })
 
-  it("変更の札が数を持てば、タスク見出し行の末尾に「変更 n ファイル +a −b」が出る", () => {
+  it("変更のラベルが数を持てば、タスク見出し行の末尾に「変更 n ファイル +a −b」が出る", () => {
     putSession(INITIAL_SESSION_STATE)
     const body = taskBody("架空の本文", {
       kind: "counted",
@@ -138,7 +138,7 @@ describe("Turn（タスク見出し行と見出し）", () => {
     )
   })
 
-  it("変更の札が mixed なら、数の後ろに「※他の変更を含みうる」の注記が出る", () => {
+  it("変更のラベルが mixed なら、数の後ろに「※他の変更を含みうる」の注記が出る", () => {
     putSession(INITIAL_SESSION_STATE)
     const body = taskBody("架空の本文", {
       kind: "counted",
@@ -157,7 +157,7 @@ describe("Turn（タスク見出し行と見出し）", () => {
     )
   })
 
-  it("変更の札が none なら、タスク見出し行に「変更」の字は出ない", () => {
+  it("変更のラベルが none なら、タスク見出し行に「変更」の字は出ない", () => {
     putSession(INITIAL_SESSION_STATE)
     const { container } = render(
       <Turn

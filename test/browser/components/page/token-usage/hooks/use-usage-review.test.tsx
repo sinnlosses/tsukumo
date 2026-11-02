@@ -307,7 +307,7 @@ describe("useUsageReview（結果）", () => {
     ])
   })
 
-  it("実行した提案の札にだけ実行の様子が出て、止めるは usageReview.interrupt を送る", () => {
+  it("実行した提案のカードにだけ実行の様子が出て、止めるは usageReview.interrupt を送る", () => {
     const sent: unknown[] = []
     const other = { ...FIXTURE_PROPOSAL, target: "別の架空ツール" }
     const state = stateWith({

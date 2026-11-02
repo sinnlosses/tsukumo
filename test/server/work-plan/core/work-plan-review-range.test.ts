@@ -5,7 +5,7 @@ import { answerWorkPlanCall } from "../../../../src/server/work-plan/core/work-p
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import { REQUEST, SUMMARY } from "../../../fixture/work-plan-review.ts"
 
-describe("WorkPlanReview の委譲先の段の範囲の確定", () => {
+describe("WorkPlanReview の委譲先のフェーズの範囲の確定", () => {
   const FOUR = ["架空の計画", "架空の実装A", "架空の実装B", "架空の受け入れ"]
   const ranged = (current: number, phaseSummary = "", range: unknown = { first: 1, count: 2 }) => ({
     phases: FOUR,

@@ -24,7 +24,7 @@ function count(text: string, part: string): number {
 }
 
 describe("indexHtml", () => {
-  test("同じ件の広い窓と狭い窓は1つの節に画像2枚で並ぶ", () => {
+  test("同じ件の広いビューポートと狭いビューポートは1つの節に画像2枚で並ぶ", () => {
     const entry = entryOf("a", "件A")
     const html = indexHtml([
       { entry, size: WIDE, file: "/out/a-wide.png" },

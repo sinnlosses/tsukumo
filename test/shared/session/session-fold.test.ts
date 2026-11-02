@@ -131,7 +131,7 @@ describe("applySessionEvent の反応の記録", () => {
     ])
   })
 
-  it("出す時刻より前に合図が届いても積まない", () => {
+  it("出す時刻より前に通知が届いても積まない", () => {
     const state = stateAfter([
       [1, REQUEST],
       [2, WAITING_REPORT],
@@ -346,7 +346,7 @@ describe("applySessionEvent の反応の記録", () => {
       expect(balloonAndLog(stateAfter(events), now)).toEqual([expected, expected])
     })
 
-    it("待ちの一言は、合図が届く前に画面の時計で出した時刻と、届いたあとに積んだ記録の時刻が同じ", () => {
+    it("待ちの一言は、通知が届く前に画面の時計で出した時刻と、届いたあとに積んだ記録の時刻が同じ", () => {
       const due = 2 + WAITING_LINE_DELAY_MS
       const before = stateAfter([
         [0, REACTED],

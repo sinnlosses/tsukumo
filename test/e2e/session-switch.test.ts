@@ -42,7 +42,7 @@ test.describe("セッションの切り替え", () => {
   })
 
   // 別のウィンドウの tsukumo の占有ファイルは、このテストのプロセス（生きている）が書いたことにする。
-  test("別の窓が占有ファイルに書いているセッションの行は選べず、開いた直後の選びも ↑↓ も飛ばす", async ({
+  test("別のウィンドウが占有ファイルに書いているセッションの行は選べず、開いた直後の選びも ↑↓ も飛ばす", async ({
     run,
   }) => {
     const room = await run.open({
@@ -60,7 +60,7 @@ test.describe("セッションの切り替え", () => {
     )
 
     const list = room.page.getByRole("listbox", { name: "セッション" })
-    const occupied = list.getByRole("option", { name: /別の窓で使用中/u })
+    const occupied = list.getByRole("option", { name: /別のウィンドウで使用中/u })
     // 時計が止まっているので、使用中の応答を React Query が配るのに要るタイマーは応答のあとで進める。
     await room.revealAfterResponse(occupied, {
       response: "sessionClaim/occupied",

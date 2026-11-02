@@ -71,7 +71,7 @@ function conclusion(): HTMLElement {
 function figure(): HTMLElement {
   const node = root().querySelector(".chart-block")
   if (!(node instanceof HTMLElement)) {
-    throw new Error("図の塊が見つからない")
+    throw new Error("図の部品が見つからない")
   }
   return node
 }

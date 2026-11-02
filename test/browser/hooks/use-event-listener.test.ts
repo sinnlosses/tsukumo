@@ -73,7 +73,7 @@ describe("useEventListener", () => {
     expect(remove).toHaveBeenCalledWith("ping", expect.any(Function), { capture: true })
   })
 
-  it("setup→cleanup→setup の再演で、張った数と解いた数が釣り合う", () => {
+  it("setup→cleanup→setup のやり直しで、張った数と解いた数が釣り合う", () => {
     const target = new EventTarget()
     const add = vi.spyOn(target, "addEventListener")
     const remove = vi.spyOn(target, "removeEventListener")

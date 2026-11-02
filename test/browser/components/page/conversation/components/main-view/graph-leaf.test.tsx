@@ -52,7 +52,7 @@ function pair(source: string, legend: readonly { tone: "a" | "b"; label: string 
 }
 
 describe("Graph の部品", () => {
-  it("5 節点以下の一本道はカードの連鎖で、旧い描画と一致する", () => {
+  it("5 ノード以下の一本道はカードの連鎖で、旧い描画と一致する", () => {
     const { block, part } = pair(CHAIN, [{ tone: "a", label: "架空の色" }])
     const fresh = newLeafHtml(block, part)
 

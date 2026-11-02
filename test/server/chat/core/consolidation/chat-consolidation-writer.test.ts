@@ -148,7 +148,7 @@ const NEVER_ABORTED = new AbortController().signal
 const LOCKED_AT = Temporal.Instant.from("2026-09-26T00:00:00Z")
 
 describe("createChatConsolidationWriter", () => {
-  it("未定着の行が契機に届かなければ query() を起こさず not-due（窓の外を契機の2倍まで読む）", async () => {
+  it("未定着の行が契機に届かなければ query() を起こさず not-due（コンテキストウィンドウの外を契機の2倍まで読む）", async () => {
     const ports = createPorts(
       { ...DUE_BATCH, usedBytes: CHAT_MEMORY_BUDGET.consolidateEveryBytes - 1 },
       () => Promise.resolve(VALID_OUTPUT),

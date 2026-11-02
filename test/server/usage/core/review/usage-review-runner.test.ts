@@ -188,7 +188,7 @@ describe("createUsageReviewRunner（見直し）", () => {
 })
 
 describe("createUsageReviewRunner（提案の実行）", () => {
-  it("走りきったら済んだで終わり、依頼文と押す口を問い合わせへ渡す", async () => {
+  it("走りきったら済んだで終わり、依頼文とボタンを問い合わせへ渡す", async () => {
     const requests: UsageProposalQueryRequest[] = []
     const runner = createUsageReviewRunner(
       ports(

@@ -118,7 +118,7 @@ describe("planReveal（トピックへのまとめ方と時間の割り当て）
     expect(tagsOf(root)).toEqual([["TABLE", "PRE"]])
   })
 
-  it("余白の柱の包みは対象にせず中の塊を対象にし、柱は最初から見える（包みの中の題つきの図表にも降りる）", () => {
+  it("欄外注の列の外枠は対象にせず中の部品を対象にし、欄外注の列は最初から見える（外枠の中の題つきの図表にも降りる）", () => {
     const root = rootWith(
       '<div class="with-gutter"><p>あ</p><div data-reveal-gutter=""><aside>出典</aside></div></div>' +
         '<div class="with-gutter"><div class="captioned"><pre class="mermaid">flowchart TD</pre>' +

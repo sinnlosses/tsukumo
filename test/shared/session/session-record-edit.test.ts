@@ -13,7 +13,7 @@ import { apply } from "../../fixture/session-state.ts"
 const MAX_MAIN_VIEW_TURNS = MAX_SESSION_STATE_TURNS.work
 
 describe("applySessionEvent", () => {
-  it("記録はターン数の窓（直近20ターン）だけを残し、古いターンは落とす", () => {
+  it("記録はターン数の集計期間（直近20ターン）だけを残し、古いターンは落とす", () => {
     const events: SessionEvent[] = []
     for (let turn = 0; turn < 25; turn += 1) {
       events.push(requestEvent(`依頼${String(turn)}`))
@@ -30,7 +30,7 @@ describe("applySessionEvent", () => {
     expect(requestTexts.at(-1)).toBe("依頼24")
   })
 
-  it("雑談モードでは窓が100ターンに広がる（仕事の20ターンより後ろまで残る）", () => {
+  it("雑談モードでは集計期間が100ターンに広がる（仕事の20ターンより後ろまで残る）", () => {
     const events: SessionEvent[] = [{ kind: "chat-mode-changed", chat: true }]
     for (let turn = 0; turn < 105; turn += 1) {
       events.push(requestEvent(`依頼${String(turn)}`))
@@ -47,7 +47,7 @@ describe("applySessionEvent", () => {
     expect(requestTexts.at(-1)).toBe("依頼104")
   })
 
-  it("窓がいっぱいになっても、ターンの通し番号は止まらずに増え続ける", () => {
+  it("集計期間がいっぱいになっても、ターンの通し番号は止まらずに増え続ける", () => {
     // 番号を位置で決めていたころは、集計期間（20ターン）を超えるといちばん新しいターンの番号が
     // 19 で止まり、描く側が `key` に使っているせいで部品が作り直されず、書き上げる演出が
     // 二度と起動しなかった（`useReportReveal`）。
@@ -67,7 +67,7 @@ describe("applySessionEvent", () => {
     )
   })
 
-  it("圧縮の区切り（compact-boundary）を挟んでも、窓の数え方（request の数）は変わらない", () => {
+  it("圧縮の区切り（compact-boundary）を挟んでも、集計期間の数え方（request の数）は変わらない", () => {
     const events: SessionEvent[] = []
     for (let turn = 0; turn < 25; turn += 1) {
       events.push(requestEvent(`依頼${String(turn)}`))
@@ -87,7 +87,7 @@ describe("applySessionEvent", () => {
   })
 })
 
-describe("applySessionEvent（変更の札）", () => {
+describe("applySessionEvent（変更のラベル）", () => {
   const REQUEST = requestEvent()
   const COUNTED: SessionEvent = {
     kind: "report-change-summary",

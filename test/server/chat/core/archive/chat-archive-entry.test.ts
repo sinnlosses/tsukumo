@@ -256,7 +256,7 @@ describe("appendChatArchiveEntry の画像", () => {
     }
   }
 
-  it("雑談の依頼は、棚の原寸を書いてから、書けたファイル名を行に載せる", async () => {
+  it("雑談の依頼は、置き場の原寸を書いてから、書けたファイル名を行に載せる", async () => {
     const { archive, calls, writes } = imageRecordingArchive(new Set())
     const { source, failures } = shelfOf(["id-1", "id-2"])
 
@@ -298,7 +298,7 @@ describe("appendChatArchiveEntry の画像", () => {
     expect(calls[0]?.entry).not.toHaveProperty("imageFiles")
   })
 
-  it("書けなかった1枚と棚から落ちていた1枚は行に載せず、知らせたうえで行は書く", async () => {
+  it("書けなかった1枚と置き場から落ちていた1枚は行に載せず、知らせたうえで行は書く", async () => {
     const { archive, calls } = imageRecordingArchive(new Set(["id-failing"]))
     const { source, failures } = shelfOf(["id-ok", "id-failing"])
 

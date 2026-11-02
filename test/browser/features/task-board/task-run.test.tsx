@@ -131,17 +131,20 @@ describe("タスクの実行を頼む", () => {
         fireEvent(dialog, new Event("close"))
       },
     ],
-  ])("区画の一覧の確認を %s で閉じると、何も送らず確認だけ閉じて、のぞき窓は残る", (_, dismiss) => {
-    const sent: unknown[] = []
-    renderList(collectInto(sent), {})
+  ])(
+    "区画の一覧の確認を %s で閉じると、何も送らず確認だけ閉じて、プレビューは残る",
+    (_, dismiss) => {
+      const sent: unknown[] = []
+      renderList(collectInto(sent), {})
 
-    startFromPeek("X-002")
-    dismiss()
+      startFromPeek("X-002")
+      dismiss()
 
-    expect(sent).toEqual([])
-    expect(confirmDialog()).toBeNull()
-    expect(document.querySelector('dialog[aria-label="X-002 の詳細"]')).not.toBeNull()
-  })
+      expect(sent).toEqual([])
+      expect(confirmDialog()).toBeNull()
+      expect(document.querySelector('dialog[aria-label="X-002 の詳細"]')).not.toBeNull()
+    },
+  )
 
   it("モーダルから断ったときは確認だけ閉じ、一覧へ戻れる", () => {
     const closed: string[] = []
@@ -231,7 +234,7 @@ describe("タスクの実行を頼む", () => {
     ])
   })
 
-  it("ドラフトののぞき窓には「計画する」「却下する」が出て、「これを始める」は出ない", () => {
+  it("ドラフトのプレビューには「計画する」「却下する」が出て、「これを始める」は出ない", () => {
     putSession(INITIAL_SESSION_STATE, () => {})
     render(<TaskList tasks={known([...TASKS, draftTask("X-004")])} selectedStatus="all" />)
 
@@ -245,7 +248,7 @@ describe("タスクの実行を頼む", () => {
     expect(screen.queryByRole("button", { name: "計画する" })).toBeNull()
   })
 
-  it("ドラフトの「計画する」は確認の「頼む」で計画の文面を送り、窓を閉じる", () => {
+  it("ドラフトの「計画する」は確認の「頼む」で計画の文面を送り、プレビューを閉じる", () => {
     const sent: unknown[] = []
     renderWithStore(
       <TaskList tasks={known([...TASKS, draftTask("X-004")])} selectedStatus="all" />,
@@ -267,7 +270,7 @@ describe("タスクの実行を頼む", () => {
     expect(screen.queryByRole("dialog", { name: "X-004 の詳細" })).toBeNull()
   })
 
-  it("ドラフトの「却下する」は却下の文面を送り、キャンセルでは送らず窓が残る", () => {
+  it("ドラフトの「却下する」は却下の文面を送り、キャンセルでは送らずプレビューが残る", () => {
     const sent: unknown[] = []
     renderWithStore(
       <TaskList tasks={known([...TASKS, draftTask("X-004")])} selectedStatus="all" />,

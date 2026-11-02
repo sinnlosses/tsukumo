@@ -105,7 +105,7 @@ describe("createSocketRouter（session）", () => {
     expect(await commands.session.prompt({ text: "架空の依頼", images: [] })).toEqual({ ok: true })
   })
 
-  it("prompt の原寸を棚に置き、振った id を駆動へ渡す（棚から同じ原寸が引ける）", async () => {
+  it("prompt の原寸を置き場に置き、振った id を駆動へ渡す（置き場から同じ原寸が引ける）", async () => {
     const prompted: ShelvedPromptImage[][] = []
     const stub = createStubDriver()
     const fake = createFakeSession({

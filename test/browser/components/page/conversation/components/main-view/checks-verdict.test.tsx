@@ -34,9 +34,9 @@ const MIXED = [
   check("ok", "架空の単体（全件）", { figure: "単体 12" }),
   check("ng", "架空の E2E", { figure: "3 件中 1 件", detail: "架空の1件が落ちた" }),
   check("blocked", "架空の夜間", { detail: "架空の前提が止まっている" }),
-  check("unobserved", "架空の狭い窓", {
+  check("unobserved", "架空の狭いビューポート", {
     detail: "手で確かめていない",
-    howToVerify: "架空の窓を開いて帯を見る",
+    howToVerify: "架空のウィンドウを開いて帯を見る",
   }),
   check("ok", "架空の型"),
 ]

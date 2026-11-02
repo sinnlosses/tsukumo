@@ -8,7 +8,7 @@ import {
 } from "../../../src/shared/session/work-plan.ts"
 import { GROUPED, next, PHASES, planned } from "../../fixture/work-plan-draft.ts"
 
-describe("並列の段の中の段を済ませる順", () => {
+describe("並列のフェーズの中の段を済ませる順", () => {
   const stateOf = (plan: LatestWorkPlan) =>
     plan.kind === "planned" ? plannedPhasesOf(plan).map((phase) => phase.state) : []
 
@@ -122,7 +122,7 @@ describe("phaseShiftOf", () => {
     expect(phaseShiftOf(planned(PHASES, 1), next(appended, 1, "架空のまとめ。"))).toEqual(nothing)
   })
 
-  it("まとめ待ちの段が済んだままなら、位置の同じ呼び出しのまとめをその段の中間レポートにする", () => {
+  it("まとめ待ちのフェーズが済んだままなら、位置の同じ呼び出しのまとめをその段の中間レポートにする", () => {
     const awaiting: LatestWorkPlan = {
       kind: "planned",
       ...next(PHASES, 1),

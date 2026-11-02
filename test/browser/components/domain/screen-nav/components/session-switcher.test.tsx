@@ -121,7 +121,7 @@ function searchBox(): HTMLElement {
   return screen.getByRole("combobox", { name: "セッションを探す" })
 }
 
-describe("セッションの札と切り替え画面", () => {
+describe("セッションのラベルと切り替え画面", () => {
   it("押せるのは短縮IDだけで、部屋の名前はボタンの外に出る", () => {
     renderNav({})
     const [tag] = screen.getAllByRole("button", { name: /セッション FA。/u })
@@ -272,16 +272,16 @@ describe("セッションの札と切り替え画面", () => {
     ).toBe("true")
   })
 
-  it("別の窓で使用中の行は「別の窓で使用中」と出て選べず、選びも ↑↓ も飛ばす。いまの行は使用中にしない", async () => {
+  it("別のウィンドウで使用中の行は「別のウィンドウで使用中」と出て選べず、選びも ↑↓ も飛ばす。いまの行は使用中にしない", async () => {
     const sent: SentCommand[] = []
     renderNav({}, (command) => sent.push(command), ["fa000000-0000", "7b000000-0000"])
     openByTag()
 
     const occupiedRow = within(sessionList()).getByRole("option", { name: /架空の昨日の作業/u })
-    await within(occupiedRow).findByText("別の窓で使用中")
+    await within(occupiedRow).findByText("別のウィンドウで使用中")
     expect(occupiedRow.getAttribute("aria-disabled")).toBe("true")
     const current = within(sessionList()).getByRole("option", { name: /架空のいまの作業/u })
-    expect(current.textContent).not.toContain("別の窓で使用中")
+    expect(current.textContent).not.toContain("別のウィンドウで使用中")
     expect(selectedHeading()).toContain("架空の古い作業")
 
     fireEvent.keyDown(searchBox(), { key: "ArrowUp" })

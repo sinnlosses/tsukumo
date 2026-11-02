@@ -50,7 +50,7 @@ describe("useContextUsage", () => {
     })
   })
 
-  it("中身・空き・自動圧縮バッファをこの順の1本の並びに畳み、窓の外は別に持つ", async () => {
+  it("中身・空き・自動圧縮バッファをこの順の1本の並びに畳み、コンテキストウィンドウの外は別に持つ", async () => {
     stubContextUsageFetch(() => rpcOutput(readyContextUsage()))
 
     const { result } = renderHook(() => useContextUsage(rpc.contextUsage.report, 0), {

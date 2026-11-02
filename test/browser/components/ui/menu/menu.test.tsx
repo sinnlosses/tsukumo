@@ -38,7 +38,7 @@ function openMenu(props: MenuProps): HTMLElement {
 }
 
 describe("Menu", () => {
-  it("押す口で開閉し、aria-expanded が追随する", () => {
+  it("ボタンで開閉し、aria-expanded が追随する", () => {
     render(<Menu {...BASE_PROPS} />)
     const trigger = screen.getByRole("button", { name: "架空の操作" })
     expect(trigger.getAttribute("aria-expanded")).toBe("false")
@@ -67,7 +67,7 @@ describe("Menu", () => {
     expect(document.activeElement).toBe(screen.getByRole("menuitem", { name: "甲" }))
   })
 
-  it("Enter で onSelect を呼んで閉じ、押す口へフォーカスを戻す", () => {
+  it("Enter で onSelect を呼んで閉じ、ボタンへフォーカスを戻す", () => {
     const onSelect = vi.fn<() => void>()
     const trigger = openMenu({ ...BASE_PROPS, items: [item("甲", { onSelect })] })
     fireEvent.keyDown(screen.getByRole("menuitem", { name: "甲" }), { key: "Enter" })
@@ -87,7 +87,7 @@ describe("Menu", () => {
     expect(screen.getByRole("menu")).toBeTruthy()
   })
 
-  it("Esc で閉じて押す口へ戻り、keydown の既定の動作を止める", () => {
+  it("Esc で閉じてボタンへ戻り、keydown の既定の動作を止める", () => {
     const trigger = openMenu(BASE_PROPS)
     const event = new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true })
     const first = screen.getByRole("menuitem", { name: "甲" })

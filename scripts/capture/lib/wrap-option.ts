@@ -13,7 +13,7 @@ export const WRAP_USAGE = `使い方:
 
   --before <URL>   変更前のビュー（scripts/runtime/serve-revision.ts が出す URL など）
   --after <URL>    変更後のビュー
-  --size           窓の大きさ（窓ごとに前後を測る）
+  --size           ビューポートの大きさ（ビューポートごとに前後を測る）
   操作             capture-view.ts と同じ --click・--hover・--type <selector> <文字>・--wait-after・--hash・--press・--advance・--scroll-element <selector> <px>。前後の両方に同じ手を当てる
 `
 

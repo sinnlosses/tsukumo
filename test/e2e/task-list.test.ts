@@ -8,7 +8,7 @@ import { openTaskListRoom, openTaskListRoomWithDraft } from "./task-room.ts"
 const ELAPSED_MS = 60_000
 
 test.describe("タスクの一覧", () => {
-  test("のぞき窓の「これを始める」から確認の「実行する」を押すと既定の文面で依頼が送られて確認とのぞき窓が閉じる", async ({
+  test("プレビューの「これを始める」から確認の「実行する」を押すと既定の文面で依頼が送られて確認とプレビューが閉じる", async ({
     run,
   }) => {
     const room = await openTaskListRoom(run, "task-list-run-executed", [
@@ -26,7 +26,7 @@ test.describe("タスクの一覧", () => {
     await room.settleAndMatchPickedWithMessages(ELAPSED_MS)
   })
 
-  test("ドラフトのチップで絞り、のぞき窓の「計画する」から確認の「頼む」を押すと計画の文面で依頼が送られる", async ({
+  test("ドラフトのチップで絞り、プレビューの「計画する」から確認の「頼む」を押すと計画の文面で依頼が送られる", async ({
     run,
   }) => {
     const room = await openTaskListRoomWithDraft(run, "task-list-draft-plan", [

@@ -90,7 +90,7 @@ describe("question_brief", () => {
   })
 })
 
-describe("phase_result（委譲先の段の結果）", () => {
+describe("phase_result（委譲先のフェーズの結果）", () => {
   const planned = async (review: CallReview) => {
     await callTool(workServer([], [], review), "work_plan", {
       phases: ["架空の計画", "架空の実装A", "架空の実装B", "架空の受け入れ"],
@@ -235,7 +235,7 @@ describe("work_plan（ワークプラン）", () => {
     expect(withoutSummary.endsTurn).toBe(false)
   })
 
-  it("委譲先の段の範囲は形の検査を通り、並びをはみ出す範囲と整数でない範囲は差し戻す", async () => {
+  it("委譲先のフェーズの範囲は形の検査を通り、並びをはみ出す範囲と整数でない範囲は差し戻す", async () => {
     const phases = ["架空の計画", "架空の実装", "架空の受け入れ"]
     const ok = await callTool(workServer(), "work_plan", {
       phases,
@@ -258,7 +258,7 @@ describe("work_plan（ワークプラン）", () => {
     expect(zero.isError).toBe(true)
   })
 
-  it("並列の段と finishedInGroup は形の検査を通り、1段だけの並列の段は落ちる", async () => {
+  it("並列のフェーズと finishedInGroup は形の検査を通り、1段だけの並列のフェーズは落ちる", async () => {
     const review = createCallReview()
     await callTool(workServer([], [], review), "work_plan", {
       phases: ["架空の段A", ["架空の段B", "架空の段C"]],
@@ -314,7 +314,7 @@ describe("work_plan（ワークプラン）", () => {
   it.each([
     { name: "1段", input: { phases: ["架空の段A"], current: 0 } },
     {
-      name: "並列の段の途中",
+      name: "並列のフェーズの途中",
       input: {
         phases: ["架空の段A", ["架空の段B", "架空の段C"]],
         current: 1,
@@ -334,11 +334,11 @@ describe("work_plan（ワークプラン）", () => {
     { name: "空白だけの名前", input: { phases: ["架空の段A", "  "], current: 0 } },
     { name: "位置が段の数を超える", input: { phases: ["架空の段A"], current: 2 } },
     {
-      name: "並列の段の中の名前の重なり",
+      name: "並列のフェーズの中の名前の重なり",
       input: { phases: [["架空の段A", "架空の段A"]], current: 0 },
     },
     {
-      name: "並列の段の中の段を全部済んだと渡す",
+      name: "並列のフェーズの中の段を全部済んだと渡す",
       input: {
         phases: [["架空の段A", "架空の段B"], "架空の段C"],
         current: 0,
@@ -355,7 +355,7 @@ describe("work_plan（ワークプラン）", () => {
       },
     },
     {
-      name: "範囲が並列の段をまたぐ",
+      name: "範囲が並列のフェーズをまたぐ",
       input: {
         phases: ["架空の段A", ["架空の段B", "架空の段C"]],
         current: 0,

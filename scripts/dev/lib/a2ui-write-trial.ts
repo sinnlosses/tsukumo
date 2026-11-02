@@ -103,7 +103,7 @@ const COMPONENT_PURPOSES = {
   Compare: "案の比較",
   BeforeAfter: "前後の対",
   Note: "注記の枠",
-  Stats: "数の札",
+  Stats: "数のカード",
   Code: "コードの断片",
   Mermaid: "sequenceDiagram か stateDiagram-v2 の図",
   Graph: "矢印でつないだ図",

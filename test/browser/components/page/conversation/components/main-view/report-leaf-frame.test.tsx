@@ -32,7 +32,7 @@ function frame(value: FrameValue, title: string, fold = "") {
 }
 
 describe("FoldedLeafFrame", () => {
-  it("番号も傍注も無い葉は、本体だけを欄の直接の子に返す", () => {
+  it("番号も欄外注も無い内容部品は、本体だけを欄の直接の子に返す", () => {
     const { container } = frame({ captionNumber: NO_CAPTION, gutterNotes: [] }, "架空の題")
 
     const region = container.querySelector("[data-report-region]")
@@ -65,13 +65,13 @@ describe("FoldedLeafFrame", () => {
     expect(caption?.textContent).toBe("表 1")
   })
 
-  it("傍注は柱の印を付けた包みに、ラベルと字をテキストとして出し、本体と並べる", () => {
+  it("欄外注は欄外注の列の印を付けた外枠に、ラベルと字をテキストとして出し、本体と並べる", () => {
     const { container } = frame(
       {
         captionNumber: NO_CAPTION,
         gutterNotes: [
-          { label: "メモ", text: "架空の傍注" },
-          { label: "", text: "ラベルの無い傍注" },
+          { label: "メモ", text: "架空の欄外注" },
+          { label: "", text: "ラベルの無い欄外注" },
         ],
       },
       "",
@@ -82,14 +82,14 @@ describe("FoldedLeafFrame", () => {
     expect(outer?.firstElementChild?.tagName).toBe("P")
     expect(gutter?.parentElement).toBe(outer)
     expect([...(gutter?.querySelectorAll("aside") ?? [])].map((note) => note.textContent)).toEqual([
-      "メモ架空の傍注",
-      "ラベルの無い傍注",
+      "メモ架空の欄外注",
+      "ラベルの無い欄外注",
     ])
   })
 
-  it("傍注の字の inline code は code 要素で描く", () => {
+  it("欄外注の字の inline code は code 要素で描く", () => {
     const { container } = frame(
-      { captionNumber: NO_CAPTION, gutterNotes: [{ label: "", text: "架空の傍注 `a.ts`" }] },
+      { captionNumber: NO_CAPTION, gutterNotes: [{ label: "", text: "架空の欄外注 `a.ts`" }] },
       "",
     )
 
@@ -105,11 +105,11 @@ describe("FoldedLeafFrame", () => {
     expect(container.querySelector("[data-reveal-caption] code")?.textContent).toBe("a.ts")
   })
 
-  it("fold があれば題つきの包みを details で畳み、傍注の柱は details の外に置く", () => {
+  it("fold があれば題つきの外枠を details で畳み、欄外注の列は details の外に置く", () => {
     const { container } = frame(
       {
         captionNumber: { kind: "table", ordinal: 1 },
-        gutterNotes: [{ label: "", text: "架空の傍注" }],
+        gutterNotes: [{ label: "", text: "架空の欄外注" }],
       },
       "架空の題",
       "架空の畳み",
@@ -123,11 +123,11 @@ describe("FoldedLeafFrame", () => {
     expect(outer?.lastElementChild?.hasAttribute("data-reveal-gutter")).toBe(true)
   })
 
-  it("題と傍注の両方があれば、題つきの包みを傍注の包みが外から囲む", () => {
+  it("題と欄外注の両方があれば、題つきの外枠を欄外注の外枠が外から囲む", () => {
     const { container } = frame(
       {
         captionNumber: { kind: "figure", ordinal: 2 },
-        gutterNotes: [{ label: "", text: "架空の傍注" }],
+        gutterNotes: [{ label: "", text: "架空の欄外注" }],
       },
       "架空の題",
     )

@@ -125,7 +125,7 @@ describe("MainView（やり取りの移動）", () => {
     expect(screen.queryByRole("button", { name: "お伺いが届いた" })).toBeNull()
   })
 
-  it("最新が答え待ちのとき、お伺いの札は本文より後ろに出る", () => {
+  it("最新が答え待ちのとき、お伺いのカードは本文より後ろに出る", () => {
     renderMainView(threeTurns(), ASKING_TURN, PERMISSION)
 
     const body = document.querySelector('[class*="turn-card-body"]')
@@ -141,7 +141,7 @@ describe("MainView（やり取りの移動）", () => {
       useInquiryCardVisibility.setState(useInquiryCardVisibility.getInitialState(), true)
     })
 
-    it("答え待ちで札が窓の外にあるあいだだけ出る", () => {
+    it("答え待ちでカードがビューポートの外にあるあいだだけ出る", () => {
       renderMainView(threeTurns(), ASKING_TURN, PERMISSION)
       expect(screen.queryByRole("button", { name: "お伺い ↓" })).toBeNull()
 
@@ -188,7 +188,7 @@ describe("MainView（やり取りの移動）", () => {
     })
   })
 
-  it("最新が答え待ちでも、過去のやり取りを見ているあいだはお伺いの札を出さない", () => {
+  it("最新が答え待ちでも、過去のやり取りを見ているあいだはお伺いのカードを出さない", () => {
     renderMainView(threeTurns(), ASKING_TURN, PERMISSION)
     expect(screen.queryByRole("region", { name: "お伺い" })).not.toBeNull()
 

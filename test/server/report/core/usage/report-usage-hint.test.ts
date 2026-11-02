@@ -240,7 +240,7 @@ describe("reportUsageEntryOf", () => {
       expect(entry.emphasisCount).toBe(7)
     })
 
-    it("graph が2つあれば辺とラベルの無い辺を合計し、節点数は多いほうにする", () => {
+    it("graph が2つあればエッジとラベルの無いエッジを合計し、ノード数は多いほうにする", () => {
       const graph = (source: string): ReportBlock => ({
         kind: "graph",
         title: "",
@@ -280,12 +280,14 @@ describe("reportUsageEntryOf", () => {
       expect(flagsOf([])).toEqual([false, false])
       expect(flagsOf([check("ok", ""), check("ng", "")])).toEqual([false, false])
       expect(
-        flagsOf([check("unobserved", "架空の窓を開く"), check("unobserved", "架空の札を見る")]),
+        flagsOf([
+          check("unobserved", "架空のウィンドウを開く"),
+          check("unobserved", "架空のカードを見る"),
+        ]),
       ).toEqual([true, true])
-      expect(flagsOf([check("unobserved", "架空の窓を開く"), check("unobserved", " ")])).toEqual([
-        true,
-        false,
-      ])
+      expect(
+        flagsOf([check("unobserved", "架空のウィンドウを開く"), check("unobserved", " ")]),
+      ).toEqual([true, false])
     })
   })
 

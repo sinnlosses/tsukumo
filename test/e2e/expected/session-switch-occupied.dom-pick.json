@@ -4,7 +4,7 @@
       { "tag": "input", "attributes": { "role": "combobox", "aria-expanded": "true" } },
       { "tag": "div", "attributes": { "role": "listbox", "aria-label": "セッション" }, "children": [
         { "tag": "div", "attributes": { "role": "option", "aria-selected": "false", "aria-disabled": "false", "data-current": "true", "data-occupied": "false" }, "children": ["FA", "入力欄の送信ボタンの位置を架空に直す"] },
-        { "tag": "div", "attributes": { "role": "option", "aria-selected": "false", "aria-disabled": "true", "data-current": "false", "data-occupied": "true" }, "children": ["7B", "架空の成果の画面に振り返りの口を置きたい", "別の窓で使用中"] },
+        { "tag": "div", "attributes": { "role": "option", "aria-selected": "false", "aria-disabled": "true", "data-current": "false", "data-occupied": "true" }, "children": ["7B", "架空の成果の画面に振り返りの口を置きたい", "別のウィンドウで使用中"] },
         { "tag": "div", "attributes": { "role": "option", "aria-selected": "true", "aria-disabled": "false", "data-occupied": "false" }, "children": ["C3", "/retrospect"] },
         { "tag": "div", "attributes": { "role": "option", "aria-selected": "false", "data-occupied": "false" }, "children": ["2D", "（題なし）"] },
         { "tag": "div", "attributes": { "role": "option", "data-occupied": "false" }, "children": ["E1"] },

@@ -404,7 +404,7 @@ describe("createSessionLaunch", () => {
       [],
     ],
   ])(
-    "駆動を起こす口に渡す restored は、%s代の流し終えた履歴で解ける",
+    "駆動を起こす関数に渡す restored は、%s代の流し終えた履歴で解ける",
     async (_, resume, overrides, kinds) => {
       let restored: Promise<readonly RestoredEvent[]> = Promise.resolve([])
       const harness = createHarness({

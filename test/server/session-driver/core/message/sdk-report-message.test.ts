@@ -11,7 +11,7 @@ import {
 import { REPORT_TOOL_FULL_NAME } from "../../../../fixture/sdk-message.ts"
 
 describe("toSessionEvents（report ツール）", () => {
-  it("メインの report の呼び出しはレポートにする（ツールの開始にはしない。文字列の body は逃げ道の塊1つの節に畳む）", () => {
+  it("メインの report の呼び出しはレポートにする（ツールの開始にはしない。文字列の body は逃げ道の部品1つのセクションに畳む）", () => {
     const message = assistantMessageWithoutUuid([
       {
         type: "tool_use",
@@ -149,7 +149,7 @@ describe("toSessionEvents（report ツール）", () => {
     expect(waitingLines).toEqual([{ kind: "none" }, { kind: "none" }])
   })
 
-  it("report の figure は図の塊と none の理由を運び、無い（古い transcript）・崩れたものは unrecorded に畳む", () => {
+  it("report の figure は図の部品と none の理由を運び、無い（古い transcript）・崩れたものは unrecorded に畳む", () => {
     const figures = [
       {
         kind: "stats",

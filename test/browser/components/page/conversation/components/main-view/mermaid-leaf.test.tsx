@@ -32,8 +32,8 @@ describe("Mermaid の部品", () => {
     ["書き手が autonumber を書いた", "sequenceDiagram\n  autonumber\n  A->>B: 架空", "", "", ""],
     ["stateDiagram-v2", "stateDiagram-v2\n  [*] --> A", "架空の状態", "", ""],
     ["fold つき", "sequenceDiagram\n  A->>B: 架空", "架空の題", "架空の畳み", ""],
-    ["aside つき", "sequenceDiagram\n  A->>B: 架空", "架空の題", "", "架空の傍注"],
-    ["fold と aside の両方", "sequenceDiagram\n  A->>B: 架空", "", "架空の畳み", "架空の傍注"],
+    ["aside つき", "sequenceDiagram\n  A->>B: 架空", "架空の題", "", "架空の欄外注"],
+    ["fold と aside の両方", "sequenceDiagram\n  A->>B: 架空", "", "架空の畳み", "架空の欄外注"],
   ] as const)("%s が旧い描画と一致する", (_name, source, title, fold, aside) => {
     const { fresh, old } = both(source, title, fold, aside)
 
@@ -41,8 +41,13 @@ describe("Mermaid の部品", () => {
     expect(fresh).not.toBe("")
   })
 
-  it("fold は with-gutter の中で題つきの包みごと畳む", () => {
-    const { fresh } = both("sequenceDiagram\n  A->>B: 架空", "架空の題", "架空の畳み", "架空の傍注")
+  it("fold は with-gutter の中で題つきの外枠ごと畳む", () => {
+    const { fresh } = both(
+      "sequenceDiagram\n  A->>B: 架空",
+      "架空の題",
+      "架空の畳み",
+      "架空の欄外注",
+    )
 
     expect(fresh).toMatch(
       /<div class="report-with-gutter"><details><summary>架空の畳み<\/summary><div class="report-captioned">/,

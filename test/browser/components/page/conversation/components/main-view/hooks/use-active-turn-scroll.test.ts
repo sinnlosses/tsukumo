@@ -161,7 +161,7 @@ describe("useActiveTurnScroll", () => {
     expect(scrollIntoView).toHaveBeenCalledWith({ block: "start" })
   })
 
-  it("働くあいだの札が閉じてレポートに替わるときは、覚えがあっても先頭から見せる", () => {
+  it("働くあいだのカードが閉じてレポートに替わるときは、覚えがあっても先頭から見せる", () => {
     useReadingPosition
       .getState()
       .remember(useSession.getState().generation, 1, { headingIndex: 1, offsetPx: -40 })

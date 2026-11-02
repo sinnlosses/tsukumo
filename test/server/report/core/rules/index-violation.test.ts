@@ -109,7 +109,7 @@ describe("reportViolations", () => {
       })
       expect(kinds(withCheck("unobserved", ""))).toEqual(["unobserved-without-how"])
       expect(kinds(withCheck("unobserved", "  "))).toEqual(["unobserved-without-how"])
-      expect(kinds(withCheck("unobserved", "架空の窓を開いて札を見る"))).toEqual([])
+      expect(kinds(withCheck("unobserved", "架空のウィンドウを開いてカードを見る"))).toEqual([])
       expect(kinds(withCheck("ok", ""))).toEqual([])
       expect(kinds(withCheck("ng", ""))).toEqual([])
     })
@@ -234,7 +234,7 @@ describe("reportViolations", () => {
       expect(kinds(draft([cards(cardItems(4))]))).toEqual([])
     })
 
-    it("1項目・5項目・題の空の項目は差し戻し、文面は何個目の塊かと項目数を言う", () => {
+    it("1項目・5項目・題の空の項目は差し戻し、文面は何個目の部品かと項目数を言う", () => {
       expect(kinds(draft([cards(cardItems(1))]))).toEqual(["bad-cards"])
       expect(kinds(draft([cards(cardItems(5))]))).toEqual(["bad-cards"])
       expect(kinds(draft([cards(cardItems(3, ""))]))).toEqual(["bad-cards"])
@@ -315,8 +315,8 @@ describe("reportViolations", () => {
     })
   })
 
-  describe("節が2つ以上なら全部に見出し", () => {
-    it("見出しの無い節があれば違反", () => {
+  describe("セクションが2つ以上なら全部に見出し", () => {
+    it("見出しの無いセクションがあれば違反", () => {
       const sections: readonly ReportBlockSection[] = [
         { heading: "架空の節", blocks: [reportDraftText("架空の一。")] },
         { heading: " ", blocks: [reportDraftText("架空の二。")] },

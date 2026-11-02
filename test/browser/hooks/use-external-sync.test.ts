@@ -28,7 +28,7 @@ describe.each([
     expect(cleanup).toHaveBeenCalledTimes(2)
   })
 
-  it("setup→cleanup→setup の再演で、走った数と後始末の数が釣り合う", () => {
+  it("setup→cleanup→setup のやり直しで、走った数と後始末の数が釣り合う", () => {
     const cleanup = vi.fn<() => void>()
     const effect = vi.fn<() => () => void>(() => cleanup)
     const view = renderHook(

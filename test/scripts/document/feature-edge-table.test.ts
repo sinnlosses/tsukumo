@@ -68,7 +68,7 @@ describe("rewriteFeatureEdgeTable", () => {
   })
 })
 
-describe("server-feature.md の機能どうしの辺の表", () => {
+describe("server-feature.md の機能どうしのエッジの表", () => {
   test("規則から書き直した行と同じ（pnpm run format で直す）", () => {
     const table = readFeatureEdgeTable()
 

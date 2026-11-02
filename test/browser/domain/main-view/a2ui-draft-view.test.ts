@@ -64,7 +64,7 @@ describe("mainViewDraftOf", () => {
     expect(new Set(drawnIds(all))).toEqual(reachableFromRoot(all))
   })
 
-  it("草稿の葉の値は、記録と同じ関数で番号と傍注を持つ", () => {
+  it("草稿の内容部品の値は、記録と同じ関数で番号と欄外注を持つ", () => {
     const parts = a2uiParts(
       {
         id: "root",
@@ -90,7 +90,7 @@ describe("mainViewDraftOf", () => {
     expect(a2ui.leafValues.m1?.mergedIntoPrevious).toBe(true)
   })
 
-  it("草稿の画像の取り出し元は none（棚に置いていない本文）", () => {
+  it("草稿の画像の取り出し元は none（置き場に置いていない本文）", () => {
     const a2ui = mainViewDraftOf("toolu_draft", STAGED_PARTS)?.regions.a2ui
     if (a2ui?.kind !== "surface") throw new Error("面の値が無い")
 

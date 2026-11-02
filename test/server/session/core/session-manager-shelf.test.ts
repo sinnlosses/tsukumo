@@ -20,7 +20,7 @@ import { createStubDriver } from "../../../fixture/session-driver.ts"
 import { requestEvent } from "../../../fixture/session-event.ts"
 import { createSessionManager, waitForBatch } from "../../../fixture/session-manager.ts"
 
-describe("依頼に添えた画像の棚", () => {
+describe("依頼に添えた画像の置き場", () => {
   // 原寸は手で組んだ大きめの架空の data URL（実物の画像は使わない）。hello に載っていれば
   // 長さで分かるように、控えより桁違いに長くしてある。
   function fullImage(label: string): PromptImage {
@@ -83,7 +83,7 @@ describe("依頼に添えた画像の棚", () => {
     expect(twoHello.length - oneHello.length).toBeLessThan(fullImage("A").full.length)
   })
 
-  it("記録の窓から依頼が落ちたら、その原寸を棚から捨てる", async () => {
+  it("集計期間から依頼が落ちたら、その原寸を置き場から捨てる", async () => {
     const { shelf, prompted, prompt } = startManagerWithShelf()
 
     await prompt([fullImage("old")])
@@ -98,7 +98,7 @@ describe("依頼に添えた画像の棚", () => {
     expect(shelf.find(oldId)).toBeUndefined()
   })
 
-  it("起こし直して記録が空に戻ったら、それまでの原寸を棚から捨てる", async () => {
+  it("起こし直して記録が空に戻ったら、それまでの原寸を置き場から捨てる", async () => {
     const { manager, shelf, prompted, prompt } = startManagerWithShelf()
 
     await prompt([fullImage("A")])
@@ -139,7 +139,7 @@ describe("依頼に添えた画像の棚", () => {
     return { manager, shelf, stub, placedIds, restoredRequest }
   }
 
-  it("復元した依頼の原寸を棚に置き、記録には控えの無い id だけを載せる", async () => {
+  it("復元した依頼の原寸を置き場に置き、記録には控えの無い id だけを載せる", async () => {
     const { manager, shelf, stub, restoredRequest } = startRestoringManager()
     await waitForBatch()
     const frames: ServerFrame[] = []
@@ -162,7 +162,7 @@ describe("依頼に添えた画像の棚", () => {
     expect(lastHello).not.toContain(fullImage("A").full)
   })
 
-  it("復元した依頼のうち記録の窓から溢れたものの原寸は、棚に残さない", async () => {
+  it("復元した依頼のうち集計期間から溢れたものの原寸は、置き場に残さない", async () => {
     const { manager, shelf, stub, placedIds, restoredRequest } = startRestoringManager()
     await waitForBatch()
 
@@ -182,7 +182,7 @@ describe("依頼に添えた画像の棚", () => {
   })
 })
 
-describe("レポートの画像の棚", () => {
+describe("レポートの画像の置き場", () => {
   // 画像は架空のバイト列（実物の画像は使わない）。
   const FICTIONAL_IMAGE: ReportImage = {
     mediaType: "image/png",
@@ -243,7 +243,7 @@ describe("レポートの画像の棚", () => {
     return { manager, stub, shelf, readPaths }
   }
 
-  it("駆動から届いた report の画像を棚に置く", async () => {
+  it("駆動から届いた report の画像を置き場に置く", async () => {
     const { stub, shelf, readPaths } = startManagerWithReportImageShelf()
     await waitForBatch()
 
@@ -254,7 +254,7 @@ describe("レポートの画像の棚", () => {
     expect(shelf.find("toolu_live", "fictional/after.png")).toEqual(FICTIONAL_IMAGE)
   })
 
-  it("復元した report のうち、棚に残るのは記録の窓に残る24時間以内のものだけ（古いもの・時刻が分からないものは読みにも行かない）", async () => {
+  it("復元した report のうち、置き場に残るのは集計期間に残る24時間以内のものだけ（古いもの・時刻が分からないものは読みにも行かない）", async () => {
     const { stub, shelf, readPaths } = startManagerWithReportImageShelf()
     await waitForBatch()
     const recent = NOW - DAY
@@ -289,7 +289,7 @@ describe("レポートの画像の棚", () => {
     expect(readPaths).toHaveLength(1)
   })
 
-  it("復元した report より後に更新されたファイルの画像は棚に置かない", async () => {
+  it("復元した report より後に更新されたファイルの画像は置き場に置かない", async () => {
     const { stub, shelf } = startManagerWithReportImageShelf(NOW - 1)
     await waitForBatch()
 
@@ -299,7 +299,7 @@ describe("レポートの画像の棚", () => {
     expect(shelf.find("toolu_rewritten", "fictional/after.png")).toBeUndefined()
   })
 
-  it("棚に置けなかった・寸法を測れなかった画像のパスを、配る report と記録に載せる", async () => {
+  it("置き場に置けなかった・寸法を測れなかった画像のパスを、配る report と記録に載せる", async () => {
     const { manager, stub } = startManagerWithReportImageShelf()
     await waitForBatch()
     const frames: ServerFrame[] = []
@@ -337,7 +337,7 @@ describe("レポートの画像の棚", () => {
     })
   })
 
-  it("report の figure に置いた画像も棚に置く", async () => {
+  it("report の figure に置いた画像も置き場に置く", async () => {
     const { stub, shelf } = startManagerWithReportImageShelf()
     await waitForBatch()
 
@@ -359,7 +359,7 @@ describe("レポートの画像の棚", () => {
     expect(shelf.find("toolu_figure", "fictional/figure.png")).toEqual(FICTIONAL_IMAGE)
   })
 
-  it("棚に置いたときに測れた寸法を、配る report と記録に載せる", async () => {
+  it("置き場に置いたときに測れた寸法を、配る report と記録に載せる", async () => {
     const { manager, stub } = startManagerWithReportImageShelf(0, SIZED_IMAGE)
     await waitForBatch()
     const frames: ServerFrame[] = []
@@ -379,7 +379,7 @@ describe("レポートの画像の棚", () => {
     })
   })
 
-  it("復元した report の記録にも、棚に置き直したときに測れた寸法を載せる", async () => {
+  it("復元した report の記録にも、置き場に置き直したときに測れた寸法を載せる", async () => {
     const { manager, stub } = startManagerWithReportImageShelf(0, SIZED_IMAGE)
     await waitForBatch()
 
@@ -392,7 +392,7 @@ describe("レポートの画像の棚", () => {
     })
   })
 
-  it("起こし直して記録からレポートが消えたら、その画像を棚から捨てる", async () => {
+  it("起こし直して記録からレポートが消えたら、その画像を置き場から捨てる", async () => {
     const { manager, stub, shelf } = startManagerWithReportImageShelf()
     await waitForBatch()
     stub.emit(imageReportEvent("toolu_live"))
@@ -430,7 +430,7 @@ describe("レポートの画像の棚", () => {
     }
   }
 
-  it("新しく積まれた質問の preview の画像を1回だけ棚に置き、答えて記録に移っても残す", async () => {
+  it("新しく積まれた質問の preview の画像を1回だけ置き場に置き、答えて記録に移っても残す", async () => {
     const { stub, shelf, readPaths } = startManagerWithReportImageShelf()
     await waitForBatch()
 
@@ -450,7 +450,7 @@ describe("レポートの画像の棚", () => {
     expect(shelf.find("toolu_q2", "fictional/after.png")).toEqual(FICTIONAL_IMAGE)
   })
 
-  it("質問の画像に棚に置いたときに測れた寸法を載せ、積み直しても引き継ぐ", async () => {
+  it("質問の画像に置き場に置いたときに測れた寸法を載せ、積み直しても引き継ぐ", async () => {
     const { manager, stub } = startManagerWithReportImageShelf(0, SIZED_IMAGE)
     await waitForBatch()
 
@@ -466,7 +466,7 @@ describe("レポートの画像の棚", () => {
     ])
   })
 
-  it("答えずに答え待ちから抜けた質問の画像は棚から捨てる", async () => {
+  it("答えずに答え待ちから抜けた質問の画像は置き場から捨てる", async () => {
     const { stub, shelf } = startManagerWithReportImageShelf()
     await waitForBatch()
 

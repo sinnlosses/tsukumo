@@ -131,7 +131,7 @@ describe("createPromptImageShelf", () => {
 })
 
 describe("releasedPromptImageIds", () => {
-  it("前の記録にあって後の記録から消えた id だけを返す（窓から落ちた依頼の原寸）", () => {
+  it("前の記録にあって後の記録から消えた id だけを返す（集計期間から落ちた依頼の原寸）", () => {
     const before = [requestRecord(0, ["old-1", "old-2"]), requestRecord(1, ["kept"])]
     const after = [requestRecord(1, ["kept"]), requestRecord(2, ["new"])]
 

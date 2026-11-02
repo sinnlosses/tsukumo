@@ -34,7 +34,7 @@ function optionsOf(label: RegExp): readonly HTMLOptionElement[] {
   return [...select.querySelectorAll("option")]
 }
 
-describe("RunSettingGroup（吊り札の行）", () => {
+describe("RunSettingGroup（吊り下げのカードの行）", () => {
   it("effort の行は、いまの段までの棒だけが灯る", () => {
     renderGroup()
 
@@ -87,7 +87,7 @@ function dotOf(label: RegExp): string | undefined {
 }
 
 describe("RunSettingGroup（知らないモデル）", () => {
-  it("既定のモデルに畳まず、届いた名前を口の名前と吊り札の行にする", () => {
+  it("既定のモデルに畳まず、届いた名前をボタンの名前と吊り下げのカードの行にする", () => {
     putSession({
       ...INITIAL_SESSION_STATE,
       model: "claude-opus-4-8",

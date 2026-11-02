@@ -370,7 +370,7 @@ describe("useAchievement（書いている進み）", () => {
 })
 
 describe("useAchievement（日記の区画）", () => {
-  it("日記が書き上がっていれば、最後の段落と時刻の字・数の札を畳む", async () => {
+  it("日記が書き上がっていれば、最後の段落と時刻の字・数のカードを畳む", async () => {
     stubAchievementFetch(() => rpcOutput(WRITTEN_TODAY))
     const { result } = renderHook(() => useAchievement(), {
       wrapper: achievementWrapper(createTestQueryClient()),

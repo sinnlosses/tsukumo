@@ -18,7 +18,7 @@ async function expectTouchSize(locator: Locator): Promise<void> {
 }
 
 test.describe("狭い画面の入力欄", () => {
-  test("390x844 で ＋・丸ボタン・＋ の面・■ の確かめの札の押せる大きさが 40〜44 に収まり、■ は確かめてから止める。キーボードを模した低い窓でも入力欄が窓に収まる", async ({
+  test("390x844 で ＋・丸ボタン・＋ の面・■ の確かめのカードの押せる大きさが 40〜44 に収まり、■ は確かめてから止める。キーボードを模した低いビューポートでも入力欄がビューポートに収まる", async ({
     run,
   }) => {
     const room = await run.open({

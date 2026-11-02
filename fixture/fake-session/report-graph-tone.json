@@ -30,7 +30,7 @@
           "expression": "proud"
         },
         "toolUseId": "fake-report-graph-tone-1",
-        "conclusion": "架空の結論: 群と節点の色が凡例とそろって見える。",
+        "conclusion": "架空の結論: 群とノードの色が凡例とそろって見える。",
         "sections": [
           {
             "heading": "架空の層の図",

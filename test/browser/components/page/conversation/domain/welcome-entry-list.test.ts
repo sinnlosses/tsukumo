@@ -99,7 +99,7 @@ describe("切り替え画面で選べる行", () => {
   })
 })
 
-describe("おすすめの札", () => {
+describe("おすすめのカード", () => {
   it("おすすめの並びと理由をそのまま当てる", () => {
     const cards = welcomeCardsOf(
       [taskCard("X-3", "理由3"), taskCard("X-1", "理由1")],

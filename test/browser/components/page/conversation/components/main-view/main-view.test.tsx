@@ -88,7 +88,7 @@ describe("MainView（依頼の全文）", () => {
     return screen.getByRole("heading", { level: 2, name: "依頼" }).closest("section")?.textContent
   }
 
-  it("2行の依頼は、塊に1行目だけ出て、開く口「全文」で全行が出る", () => {
+  it("2行の依頼は、部品に1行目だけ出て、開くボタン「全文」で全行が出る", () => {
     renderMainView([
       requestRecord({ text: "架空の依頼の1行目\n1. 起こす", turnId: 0 }),
       detailRecord("本文"),
@@ -248,7 +248,7 @@ describe("MainView（閉じたときの入れ替えとフォーカス）", () =>
   })
 })
 
-describe("MainView（失敗の塊から帯の手順へ）", () => {
+describe("MainView（失敗の表示から帯の手順へ）", () => {
   it("失敗した手順を見る口を押すと、帯の手順の一覧が開き、失敗の行が1つ出る", () => {
     renderMainView(
       [
@@ -398,7 +398,7 @@ describe("MainView（レポートを欄ごとに描く）", () => {
     )
   })
 
-  it("節の逃げ道の塊に閉じない <details> があっても、次の節は畳みの中に入らない", () => {
+  it("セクションの逃げ道の部品に閉じない <details> があっても、次のセクションは畳みの中に入らない", () => {
     renderMainView([
       requestRecord({ text: "架空の依頼", turnId: 0 }),
       regionedReport("架空の結論", {

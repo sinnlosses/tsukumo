@@ -122,7 +122,7 @@ describe("brushScroller（ミニ立ち絵の立つ位置を画面の中に保つ
     brush.stop()
   })
 
-  it("見張りを外したあとは、手で転がしても降りない（合図の口が残らない）", () => {
+  it("見張りを外したあとは、手でスクロールしても降りない（通知の関数が残らない）", () => {
     const scroller = scrollerWith({ top: 0, bottom: 500 })
     scroller.scrollTop = 100
     const brush = measuredScroller(scroller)

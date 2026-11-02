@@ -76,7 +76,7 @@ const WITH_DROPPED: readonly A2uiReportComponent[] = [
   { id: "root", component: "Report", children: ["s1", "s2", "l1"], figure: "f1" },
   section("s1", "落ちる節", ["p1", "p2"]),
   section("s2", "残る節", ["p3"]),
-  paragraph("l1", "見出しの無い節の本文。"),
+  paragraph("l1", "見出しの無いセクションの本文。"),
   paragraph("p1", CONCLUSION),
   paragraph("p2", "以上です。"),
   paragraph("p3", "架空の根拠。"),

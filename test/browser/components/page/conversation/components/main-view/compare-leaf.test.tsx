@@ -76,7 +76,7 @@ describe("Compare の部品", () => {
     ["題つき", SIDES, { title: "架空の `b.ts` の見比べ" }],
     ["見出しの inline code", [{ heading: "`x`", points: ["架空"] }, SIDES[1] ?? SIDES[0]!], {}],
     ["fold", SIDES, { fold: "架空の畳み" }],
-    ["fold と題と傍注", SIDES, { fold: "架空の畳み", title: "架空の題", aside: "架空の傍注" }],
+    ["fold と題と欄外注", SIDES, { fold: "架空の畳み", title: "架空の題", aside: "架空の欄外注" }],
     ["箇条が 12 項目の側", MANY_POINTS, {}],
     [
       "太字の記号は効かせず字のまま",

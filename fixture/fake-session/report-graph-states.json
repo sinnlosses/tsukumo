@@ -13,7 +13,7 @@
       "afterMs": 300,
       "event": {
         "kind": "speech",
-        "text": "4つの状態を横一列に並べて、戻りの辺は点線にするね。",
+        "text": "4つの状態を横一列に並べて、戻りのエッジは点線にするね。",
         "expression": "default"
       }
     },

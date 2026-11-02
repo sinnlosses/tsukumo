@@ -28,7 +28,7 @@ const ROWS: readonly (readonly [string, readonly ReportBlock[], readonly DrawnEn
   [
     ["空白の text", [text("  ")], ["empty"]],
     ["text", [text("架空の本文。")], ["drawn"]],
-    ["傍注のある空白の text", [text(" ", "架空の傍注")], ["drawn"]],
+    ["欄外注のある空白の text", [text(" ", "架空の欄外注")], ["drawn"]],
     ["空の markdown", [markdown("")], ["empty"]],
     ["空白だけの markdown", [markdown("  \n")], ["blank"]],
     ["markdown", [markdown("架空の **本文**")], ["drawn"]],
@@ -282,7 +282,7 @@ describe("sectionDrawsAnything", () => {
 
 const GUTTER_TEXT =
   '<div class="with-gutter">\n\n架空の本文。\n\n<div class="gutter">\n\n' +
-  '<aside class="gutter-note">\n\n架空の傍注\n\n</aside>\n\n</div>\n\n</div>'
+  '<aside class="gutter-note">\n\n架空の欄外注\n\n</aside>\n\n</div>\n\n</div>'
 
 const MEMO_MERGED =
   '<div class="with-gutter">\n\n架空の本文\n\n<div class="gutter">\n\n' +
@@ -297,8 +297,8 @@ describe("drawnEntryMarkdown", () => {
       "<details><summary>架空の畳み</summary>\n\n架空\n\n</details>",
     ],
     [
-      "傍注のある text",
-      { kind: "text", text: "架空の本文。", fold: "", aside: "架空の傍注" },
+      "欄外注のある text",
+      { kind: "text", text: "架空の本文。", fold: "", aside: "架空の欄外注" },
       GUTTER_TEXT,
     ],
     ["空白だけの markdown", { kind: "markdown", markdown: "  \n", ...PLAIN }, "  \n"],
@@ -315,7 +315,7 @@ describe("drawnEntryMarkdown", () => {
     expect(value === undefined ? "" : drawnEntryMarkdown(block, value)).toBe(expected)
   })
 
-  it("memo を寄せた塊は傍注の包みを持ち、寄せた memo の側は空になる", () => {
+  it("memo を寄せた部品は欄外注の外枠を持ち、寄せた memo の側は空になる", () => {
     const blocks = [
       { kind: "markdown", markdown: "架空の本文", ...PLAIN },
       { kind: "note", tone: "memo", text: "架空の覚え書き", ...PLAIN },

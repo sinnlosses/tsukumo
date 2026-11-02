@@ -62,7 +62,7 @@ describe("Report（書き上げる演出を飛ばす口）", () => {
     expect(screen.getByRole("button", { name: "全部出す" }).parentElement).toBe(body?.parentElement)
   })
 
-  it("口を押すと、窓で聞いている飛ばしの経路に乗って演出が終わる", () => {
+  it("ボタンを押すと、ウィンドウで聞いている飛ばしの経路に乗って演出が終わる", () => {
     const text = "架空の本文。".repeat(40)
     const { container } = render(
       <Report reveal={true} turnId={1} className="" body={markdownBody(text)} />,

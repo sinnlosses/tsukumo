@@ -233,7 +233,7 @@ describe("createExperienceMetricRecorder", () => {
     it.each([
       ["figure の図", { figure: { kind: "mermaid", title: "", source: "x", fold: "", aside: "" } }],
       [
-        "節の中の図の塊",
+        "セクションの中の図の部品",
         {
           sections: [
             {

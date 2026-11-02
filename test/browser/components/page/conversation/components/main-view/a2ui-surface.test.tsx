@@ -270,7 +270,7 @@ describe("DescriptionList", () => {
 })
 
 describe("頭とお願い（A2UI の面）", () => {
-  it("結論・数の札・お願いは欄の Markdown を通らず、値から直接描く", () => {
+  it("結論・数のカード・お願いは欄の Markdown を通らず、値から直接描く", () => {
     const keyFigures = [
       { before: "", value: "14", total: "", label: "架空の区画", series: [], better: "" },
       { before: "", value: "9", total: "", label: "架空の未了", series: [], better: "" },

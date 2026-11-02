@@ -26,6 +26,6 @@ export function workToggle(): HTMLElement {
   return typedElement(
     document.querySelector(".screen-nav > .screen-nav-work-slot .current-work-toggle"),
     HTMLElement,
-    "帯のいまの作業の札",
+    "帯のいまの作業のカード",
   )
 }

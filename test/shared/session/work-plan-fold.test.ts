@@ -38,7 +38,7 @@ describe("nextWorkPlan（finished の report で閉じる）", () => {
     expect(closed(next(PHASES, 3))).toEqual({ kind: "planned", ...next(PHASES, 3) })
   })
 
-  it("最後の並列の段は、残りが1段になってから閉じる", () => {
+  it("最後の並列のフェーズは、残りが1段になってから閉じる", () => {
     const group = ["架空の段A", ["架空の段B", "架空の段C"]] as const
 
     expect(closed(next(group, 1, "架空のまとめ。"))).toEqual({
@@ -101,7 +101,7 @@ describe("nextWorkPlan（委譲の返却で進める）", () => {
     })
   })
 
-  it("並列の段の中の段は finishedInGroup に足し、最後の段で current を進めて空にする", () => {
+  it("並列のフェーズの中の段は finishedInGroup に足し、最後の段で current を進めて空にする", () => {
     const grouped: readonly WorkPlanEntry[] = [
       "架空の計画",
       ["架空の実装A", "架空の実装B"],

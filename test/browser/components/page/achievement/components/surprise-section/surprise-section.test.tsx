@@ -27,7 +27,7 @@ describe("SurpriseSection", () => {
     expect(container.firstChild).toBeNull()
   })
 
-  it("卒業の札は ID・summary・登録からの日数・登録日を出す", () => {
+  it("卒業のカードは ID・summary・登録からの日数・登録日を出す", () => {
     render(<SurpriseSection graduations={[GRADUATION]} milestones={[]} />)
 
     expect(screen.getByText("先輩タスクの卒業")).toBeDefined()

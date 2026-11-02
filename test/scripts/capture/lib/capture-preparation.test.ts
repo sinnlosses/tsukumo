@@ -157,7 +157,7 @@ describe("readPreparations", () => {
 })
 
 describe("describeCatalogMiss", () => {
-  test("件の名前と窓の名前を手の説明の前に置く", () => {
+  test("件の名前とビューポートの名前を手の説明の前に置く", () => {
     expect(
       describeCatalogMiss("question-multi", "wide", { kind: "click", selector: "button" }),
     ).toBe("当てられなかった: question-multi（wide）: button を押す")

@@ -38,8 +38,11 @@ const CATEGORY_LOOKS = new Map<string, CategoryLook>([
   ["Messages", { label: "メッセージ", tone: "messages" }],
   ["Free space", { label: "空き", tone: "free" }],
   ["Autocompact buffer", { label: "自動圧縮バッファ", tone: "buffer" }],
-  ["MCP tools (deferred)", { label: "MCP ツール（窓の外）", tone: "other" }],
-  ["System tools (deferred)", { label: "システムツール（窓の外）", tone: "other" }],
+  ["MCP tools (deferred)", { label: "MCP ツール（コンテキストウィンドウの外）", tone: "other" }],
+  [
+    "System tools (deferred)",
+    { label: "システムツール（コンテキストウィンドウの外）", tone: "other" },
+  ],
 ])
 
 /** 知らない分類の見せ方（名前は英語のまま、色は1つの「その他」に寄せる）。 */

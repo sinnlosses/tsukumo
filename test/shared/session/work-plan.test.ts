@@ -46,8 +46,8 @@ describe("parseWorkPlan の段のまとめ", () => {
   })
 })
 
-describe("parseWorkPlan の並列の段", () => {
-  it("段の名前と並列の段の混ざった並びと、今の並列の段の中で済んだ段を読む", () => {
+describe("parseWorkPlan の並列のフェーズ", () => {
+  it("段の名前と並列のフェーズの混ざった並びと、今の並列のフェーズの中で済んだ段を読む", () => {
     expect(
       parseWorkPlan({
         phases: GROUPED,
@@ -67,13 +67,13 @@ describe("parseWorkPlan の並列の段", () => {
     )
   })
 
-  it("1段だけ・名前の重なる・空白だけの名前を含む並列の段は受け付けない", () => {
+  it("1段だけ・名前の重なる・空白だけの名前を含む並列のフェーズは受け付けない", () => {
     for (const group of [["架空の段B"], ["架空の段B", "架空の段B"], ["架空の段B", " "]]) {
       expect(parseWorkPlan({ phases: ["架空の段A", group], current: 0 })).toBeUndefined()
     }
   })
 
-  it("finishedInGroup は今の並列の段の一部の名前だけを受け付ける", () => {
+  it("finishedInGroup は今の並列のフェーズの一部の名前だけを受け付ける", () => {
     const summary = "架空のまとめ。"
     for (const [current, finishedInGroup] of [
       [0, ["架空の段B"]],
@@ -87,7 +87,7 @@ describe("parseWorkPlan の並列の段", () => {
     }
   })
 
-  it("並列の段の中の段が済んだ途中の位置は、まとめが無くても読める", () => {
+  it("並列のフェーズの中の段が済んだ途中の位置は、まとめが無くても読める", () => {
     expect(
       parseWorkPlan({
         phases: [["架空の段A", "架空の段B"]],
@@ -198,7 +198,7 @@ describe("parseWorkPlanClosing", () => {
   })
 })
 
-describe("parseWorkPlan の委譲先の段の範囲", () => {
+describe("parseWorkPlan の委譲先のフェーズの範囲", () => {
   const read = (delegatedRange: unknown, phases: readonly WorkPlanEntry[] = GROUPED) =>
     parseWorkPlan({ phases, current: 0, delegatedRange })?.delegatedRange
 
@@ -211,7 +211,7 @@ describe("parseWorkPlan の委譲先の段の範囲", () => {
     expect(read({ first: 1 })).toEqual({ kind: "pending", first: 1 })
   })
 
-  it("範囲の端が並列の段の端に揃っていれば、範囲の中に並列の段を含んでよい", () => {
+  it("範囲の端が並列のフェーズの端に揃っていれば、範囲の中に並列のフェーズを含んでよい", () => {
     expect(read({ first: 0, count: 4 })).toEqual({ kind: "range", first: 0, count: 4 })
     expect(read({ first: 1, count: 3 })).toEqual({ kind: "range", first: 1, count: 3 })
   })
@@ -227,7 +227,7 @@ describe("parseWorkPlan の委譲先の段の範囲", () => {
     { first: 2 },
     { first: 5 },
     "range",
-  ])("並列の段をまたぐ・並びをはみ出す・整数でない範囲は受け付けない: %j", (range) => {
+  ])("並列のフェーズをまたぐ・並びをはみ出す・整数でない範囲は受け付けない: %j", (range) => {
     expect(parseWorkPlan({ phases: GROUPED, current: 0, delegatedRange: range })).toBeUndefined()
   })
 })

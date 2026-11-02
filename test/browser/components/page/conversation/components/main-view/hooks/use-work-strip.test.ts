@@ -250,7 +250,7 @@ describe("useWorkStrip（時刻に依るもの）", () => {
   })
 })
 
-describe("useWorkStrip（並列の段）", () => {
+describe("useWorkStrip（並列のフェーズ）", () => {
   const groupedPlan = (current: number, finishedInGroup: readonly string[]): SessionEvent => ({
     kind: "work-plan",
     delegatedRange: { kind: "none" },
@@ -262,7 +262,7 @@ describe("useWorkStrip（並列の段）", () => {
     phaseSummary: current > 0 || finishedInGroup.length > 0 ? "架空のまとめ。" : "",
   })
 
-  it("並列の段は中の段の丸を1つにまとめ、今の段が2つなら頭の字と位置をつなぐ", () => {
+  it("並列のフェーズは中の段の丸を1つにまとめ、今の段が2つなら頭の字と位置をつなぐ", () => {
     const state = foldTimed([
       [workRequest, START],
       [groupedPlan(1, []), START + 1_000],

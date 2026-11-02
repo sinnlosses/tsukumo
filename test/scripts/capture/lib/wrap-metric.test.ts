@@ -50,12 +50,14 @@ describe("formatWrapDiff", () => {
       onlyBefore: 0,
       onlyAfter: 0,
     })
-    expect(text).toBe("窓 360x900\np:nth-of-type(1): 行数 1→2\n省略が出た: span:nth-of-type(1)\n")
+    expect(text).toBe(
+      "ビューポート 360x900\np:nth-of-type(1): 行数 1→2\n省略が出た: span:nth-of-type(1)\n",
+    )
   })
 
   test("増えたものが無ければその旨を1行出す", () => {
     expect(
       formatWrapDiff("360x900", { grown: [], newlyEllipsed: [], onlyBefore: 0, onlyAfter: 0 }),
-    ).toBe("窓 360x900\n折れの増加なし\n")
+    ).toBe("ビューポート 360x900\n折れの増加なし\n")
   })
 })

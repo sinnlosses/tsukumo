@@ -148,7 +148,7 @@ describe("useWorkStrip（段の吹き出し）", () => {
     expect(popoverAt(openedAt(midway, 0), 0)).toMatchObject({ meta: "済み · 所要 不明" })
   })
 
-  it("並列の段の中の丸も押せて、同じ形の吹き出しが出る", () => {
+  it("並列のフェーズの中の丸も押せて、同じ形の吹き出しが出る", () => {
     const grouped = foldTimed([
       [workRequest, START],
       [workPlan(["架空の段A", ["架空の段B", "架空の段C"]], 0, ""), START + 1_000],

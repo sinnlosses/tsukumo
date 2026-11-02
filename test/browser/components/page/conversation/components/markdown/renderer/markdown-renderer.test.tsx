@@ -45,7 +45,7 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
     expect(container.querySelectorAll("div.table-scroll + div.report-table-rest")).toHaveLength(1)
   })
 
-  it("傍注のある塊は、包みの直の子に本文の段落と余白の柱が並び、傍注の aside が許可リストで落ちない", () => {
+  it("欄外注のある部品は、外枠の直の子に本文の段落と欄外注の列が並び、欄外注の aside が許可リストで落ちない", () => {
     const text =
       '<div class="with-gutter">\n\n架空の **本文**。\n\n<div class="gutter">\n\n' +
       '<aside class="gutter-note">\n\n出どころ: `a.ts:3`\n\n</aside>\n\n' +

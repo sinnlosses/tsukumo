@@ -91,11 +91,11 @@ describe("DescriptionList の部品", () => {
     expect(container.querySelector("details dl dt")?.textContent).toBe("架空の上限")
   })
 
-  it("傍注があれば柱の傍注が付く", () => {
+  it("欄外注があれば欄外注の列に欄外注が付く", () => {
     const container = drawn({
-      value: { ...VALUE, gutterNotes: [{ label: "", text: "架空の傍注" }] },
+      value: { ...VALUE, gutterNotes: [{ label: "", text: "架空の欄外注" }] },
     })
 
-    expect(container.querySelector("aside")?.textContent).toBe("架空の傍注")
+    expect(container.querySelector("aside")?.textContent).toBe("架空の欄外注")
   })
 })

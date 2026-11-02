@@ -39,7 +39,7 @@ const LONG = [
 ].join("\n")
 
 describe("graphDrawingOf", () => {
-  it("5 節点以下の一本道はカードの連鎖", () => {
+  it("5 ノード以下の一本道はカードの連鎖", () => {
     const drawing = graphDrawingOf(graphOf("甲 -> 乙: 渡す\n乙 -> 丙"))
 
     expect(drawing.kind).toBe("chain")
@@ -52,7 +52,7 @@ describe("graphDrawingOf", () => {
     ])
   })
 
-  it("6 節点以上の長い主経路で折り返して置ける図は折り返し", () => {
+  it("6 ノード以上の長い主経路で折り返して置ける図は折り返し", () => {
     expect(graphDrawingOf(graphOf(LONG)).kind).toBe("fold")
   })
 
@@ -200,7 +200,7 @@ describe("reportImageProps", () => {
     unshelved: ["b.png"],
   } as const
 
-  it("棚にある画像は src と寸法、棚に置けなかった・棚が無いときは src を持たない", () => {
+  it("置き場にある画像は src と寸法、置き場に置けなかった・置き場が無いときは src を持たない", () => {
     expect(reportImageProps(shelved, "a.png")).toEqual({
       src: "/report-image/tool_1/a.png",
       size: { width: 10, height: 20 },

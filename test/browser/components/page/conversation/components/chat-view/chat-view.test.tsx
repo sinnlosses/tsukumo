@@ -257,7 +257,7 @@ describe("ChatView のセリフを遡る", () => {
     expect(firstSpeech.getAttribute("aria-pressed")).toBe("true")
   })
 
-  it("窓から古い記録が落ちて並びが前へ詰まっても、選択は失効して最新へ戻る", () => {
+  it("表示範囲から古い記録が落ちて並びが前へ詰まっても、選択は失効して最新へ戻る", () => {
     renderChatView({
       records: RECORDS,
       character: FIXTURE_CHARACTER,

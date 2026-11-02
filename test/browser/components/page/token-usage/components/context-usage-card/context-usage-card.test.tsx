@@ -59,7 +59,7 @@ function readyCard(overrides: Partial<Parameters<typeof contextUsage>[0]> = {}):
 type UsageRow = Extract<UseContextUsageResult, { kind: "ready" }>["rows"][number]
 
 describe("ContextUsageCard", () => {
-  it("横棒は中身・空き・自動圧縮バッファだけを積む（窓の外の分類は積まない）", () => {
+  it("横棒は中身・空き・自動圧縮バッファだけを積む（コンテキストウィンドウの外の分類は積まない）", () => {
     const { container } = render(<ContextUsageCard {...readyCard()} />)
 
     // 架空の内訳は used が4つ・free が1つ・buffer が1つ（deferred の1つは入らない）。
@@ -90,7 +90,7 @@ describe("ContextUsageCard", () => {
     expect(queryByText("Something new")).not.toBeNull()
   })
 
-  it("使っている量・窓の大きさ・割合と、自動圧縮までの残りを出す", () => {
+  it("使っている量・コンテキストウィンドウの大きさ・割合と、自動圧縮までの残りを出す", () => {
     const { container, queryByText } = render(<ContextUsageCard {...readyCard()} />)
 
     expect(queryByText("60.0k")).not.toBeNull()
@@ -100,13 +100,13 @@ describe("ContextUsageCard", () => {
     expect(container.querySelector(".context-until")?.textContent).toBe("自動圧縮まで あと 95.0k")
   })
 
-  it("窓の外の分類は畳んだ内訳の中に出す", () => {
+  it("コンテキストウィンドウの外の分類は畳んだ内訳の中に出す", () => {
     const { queryByText } = render(<ContextUsageCard {...readyCard()} />)
 
-    expect(queryByText("MCP ツール（窓の外）")).not.toBeNull()
+    expect(queryByText("MCP ツール（コンテキストウィンドウの外）")).not.toBeNull()
   })
 
-  it("取れなかったときは札を出さず、一言だけにする", () => {
+  it("取れなかったときはカードを出さず、一言だけにする", () => {
     const { container, queryByText } = render(<ContextUsageCard card={{ kind: "unavailable" }} />)
 
     expect(container.querySelectorAll(".context-card")).toHaveLength(0)
@@ -123,7 +123,7 @@ describe("ContextUsageCard", () => {
     expect(queryByText("いまのコンテキストはまだ取れていない")).toBeNull()
   })
 
-  it("骨組みの凡例は8行（中身6分類 + 空き + 自動圧縮バッファ。窓の外は数えない）", () => {
+  it("骨組みの凡例は8行（中身6分類 + 空き + 自動圧縮バッファ。コンテキストウィンドウの外は数えない）", () => {
     const { container } = render(<ContextUsageCard card={{ kind: "pending" }} />)
 
     expect(container.querySelectorAll(".context-legend-row")).toHaveLength(8)

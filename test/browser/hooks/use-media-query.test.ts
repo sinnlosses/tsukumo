@@ -73,7 +73,7 @@ describe("useMediaQuery", () => {
     expect(media.listening()).toBe(0)
   })
 
-  it("setup→cleanup→setup の再演で、購読が1つだけ残る", () => {
+  it("setup→cleanup→setup のやり直しで、購読が1つだけ残る", () => {
     const media = stubMediaQuery(false)
     const view = renderHook(() => useMediaQuery("(max-width: 1px)"), { wrapper: StrictMode })
     expect(media.listening()).toBe(1)

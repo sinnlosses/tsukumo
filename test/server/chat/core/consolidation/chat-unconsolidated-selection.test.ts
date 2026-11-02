@@ -14,7 +14,7 @@ const B = entryAt("2026-01-01T11:00:00+09:00")
 const C = entryAt("2026-01-01T12:00:00+09:00")
 
 describe("entriesUntilWindow", () => {
-  it("印も窓も無ければ全部を返す", () => {
+  it("印もコンテキストウィンドウも無ければ全部を返す", () => {
     expect(entriesUntilWindow([A, B, C], undefined, undefined)).toEqual([A, B, C])
   })
 
@@ -22,7 +22,7 @@ describe("entriesUntilWindow", () => {
     expect(entriesUntilWindow([A, B, C], B.at, undefined)).toEqual([C])
   })
 
-  it("窓の先頭の行からは含めない", () => {
+  it("コンテキストウィンドウの先頭の行からは含めない", () => {
     expect(entriesUntilWindow([A, B, C], undefined, C.at)).toEqual([A, B])
   })
 
@@ -32,7 +32,7 @@ describe("entriesUntilWindow", () => {
     ])
   })
 
-  it("印より後が窓に埋まっていれば空", () => {
+  it("印より後がコンテキストウィンドウに埋まっていれば空", () => {
     expect(entriesUntilWindow([A, B], B.at, B.at)).toEqual([])
   })
 })

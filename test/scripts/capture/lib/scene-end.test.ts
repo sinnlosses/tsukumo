@@ -208,12 +208,12 @@ describe("watchSceneEvents", () => {
 })
 
 describe("sceneWindowPlan", () => {
-  test("最後の手まで待つ件は、最初の窓だけ待ち、場面は起こし直さない", () => {
+  test("最後の手まで待つ件は、最初のビューポートだけ待ち、場面は起こし直さない", () => {
     expect(sceneWindowPlan({ kind: "scene-end" }, 0)).toEqual({ relaunches: false, waits: true })
     expect(sceneWindowPlan({ kind: "scene-end" }, 1)).toEqual({ relaunches: false, waits: false })
   })
 
-  test("途中の手を待つ件は、2枚目の窓から場面を起こし直し、どの窓でも同じ手を待つ", () => {
+  test("途中の手を待つ件は、2枚目のビューポートから場面を起こし直し、どのビューポートでも同じ手を待つ", () => {
     const settle = { kind: "scene-event", eventKind: "tool-started", occurrence: 4 } as const
 
     expect(sceneWindowPlan(settle, 0)).toEqual({ relaunches: false, waits: true })

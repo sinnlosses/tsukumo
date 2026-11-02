@@ -385,7 +385,7 @@ describe("createSessionManager", () => {
     })
   })
 
-  describe("変更の札", () => {
+  describe("変更のラベル", () => {
     it("report は数を待たずに配られ、数は report-change-summary であとから届いて記録に畳まれる", async () => {
       const stub = createStubDriver()
       let resolveNumstat: (output: NumstatOutput) => void = () => {}

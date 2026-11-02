@@ -265,7 +265,7 @@ export const FIGURE_HARD_RULES = [
   },
   {
     name: "edgeless-graph",
-    rule: "graph（plot は辺を申告できない）",
+    rule: "graph（plot はエッジを申告できない）",
     violates: (_shape: DeclarationShape, form: FigureForm) => form === "graph",
   },
 ] as const satisfies readonly FigureHardRule[]

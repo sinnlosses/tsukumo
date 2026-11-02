@@ -52,7 +52,7 @@ describe("createWelcomeKeeper", () => {
     expect(back.events).toEqual([GREETING_WRITTEN, REACTIONS_WRITTEN])
   })
 
-  it("書き手の出来事はその代の受け取り口へそのまま流す", () => {
+  it("書き手の出来事はその代の受け取る関数へそのまま流す", () => {
     const received: WelcomeWritingEvent[] = []
     const launch = createWelcomeKeeper().noteLaunched({ kind: "new" }, (event) => {
       received.push(event)

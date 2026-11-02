@@ -70,7 +70,7 @@ function card(): HTMLElement {
   return screen.getByRole("region", { name: "お伺い" })
 }
 
-describe("Inquiry（メインビューのお伺いの札）", () => {
+describe("Inquiry（メインビューのお伺いのカード）", () => {
   it("答え待ちが無いときは何も描かない", () => {
     expect(renderInquiry([]).innerHTML).toBe("")
   })
@@ -92,7 +92,7 @@ describe("Inquiry（メインビューのお伺いの札）", () => {
     spy.mockRestore()
   })
 
-  it("札が窓に見えているかを観測して store に写し、札が消えると見えているに戻す", () => {
+  it("カードがビューポートに見えているかを観測して store に写し、カードが消えると見えているに戻す", () => {
     type FakeCallback = (entries: readonly { readonly isIntersecting: boolean }[]) => void
     const callbacks: FakeCallback[] = []
     class FakeObserver {
@@ -283,7 +283,7 @@ describe("Inquiry（メインビューのお伺いの札）", () => {
   })
 })
 
-describe("Inquiry の添え書きと詳細の面", () => {
+describe("Inquiry の添え書きと詳細のサーフェス", () => {
   const brief = {
     header: "架空の選択",
     background: "架空の背景の文",
@@ -355,7 +355,7 @@ describe("Inquiry の添え書きと詳細の面", () => {
     expect(screen.getByText(/架空の良い点B/)).toBeDefined()
   })
 
-  it("添え書きが無い質問は、背景・表を出さず、詳細の面に説明を出す", () => {
+  it("添え書きが無い質問は、背景・表を出さず、詳細のサーフェスに説明を出す", () => {
     renderBriefed([])
 
     expect(screen.queryByText("背景")).toBeNull()

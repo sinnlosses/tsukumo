@@ -109,7 +109,7 @@ describe("mainViewTurns（締めの speak → レポートで終える並び）"
 const BASIS_BLOCK = { kind: "markdown", markdown: "架空の根拠。", fold: "", aside: "" } as const
 
 describe("mainViewTurns（report ツールで受け取ったレポート）", () => {
-  it("conclusion → body → favor（お願いの塊）の順に1つの本文へ組み、最終レポートにする", () => {
+  it("conclusion → body → favor（お願いの部品）の順に1つの本文へ組み、最終レポートにする", () => {
     const turn = turnOf(
       [ask, report("架空の結論。", "| 列 |\n| --- |\n| 値 |", "架空のお願い"), finished],
       SETTLED,
@@ -145,7 +145,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     expect(a2ui?.kind === "surface" ? a2ui.retrospective.kind : undefined).toBe("leaves")
   })
 
-  it("振り返りの塊は見出し「振り返り」の下の欄に、結果のあとに続けて描く", () => {
+  it("振り返りの部品は見出し「振り返り」の下の欄に、結果のあとに続けて描く", () => {
     const turn = turnOf(
       [
         ask,
@@ -249,7 +249,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     expect(shownReports(turn)).toEqual(["架空の答え。\n\n以上です。"])
   })
 
-  describe("変更の札", () => {
+  describe("変更のラベル", () => {
     const TASK: ReportTask = {
       kind: "task",
       id: "t-001",
@@ -340,7 +340,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     })
   })
 
-  it("本文の節の見出しの並びは節の `heading` の字そのもの（記号を含んでも逃がさない）で、見出しの無い節は数えない", () => {
+  it("本文のセクションの見出しの並びはセクションの `heading` の字そのもの（記号を含んでも逃がさない）で、見出しの無いセクションは数えない", () => {
     const heading = "`tw accept` の判定 a<b & *c* _d_ [e](x) \\f"
     const turn = turnOf(
       [
@@ -374,7 +374,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     ])
   })
 
-  it("見出しのある節の欄の ID は節の並びの位置で、見出しの無い節の位置を飛ばさず、`markdown` 本文は空になる", () => {
+  it("見出しのあるセクションの欄の ID はセクションの並びの位置で、見出しの無いセクションの位置を飛ばさず、`markdown` 本文は空になる", () => {
     const section = (heading: string): ReportBlockSection => ({
       heading,
       blocks: [{ kind: "text", text: "架空の本文。", fold: "", aside: "" }],

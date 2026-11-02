@@ -92,7 +92,7 @@ export function diffWrapRows(before: readonly WrapRow[], after: readonly WrapRow
 
 /** ビューポートごとの差を出力の行にする。 */
 export function formatWrapDiff(size: string, diff: WrapDiff): string {
-  const lines = [`窓 ${size}`]
+  const lines = [`ビューポート ${size}`]
   if (diff.grown.length === 0 && diff.newlyEllipsed.length === 0) {
     lines.push("折れの増加なし")
   }

@@ -113,8 +113,8 @@ describe("Table の部品", () => {
     ["強調の行", [{ cells: ["架空のA", "10"], emphasis: true }, ["架空のB", "5"]], {}],
     ["rest", SIMPLE, { rest: "ほか 3 件は `x.ts` に省略" }],
     ["fold", SIMPLE, { fold: "架空の畳み" }],
-    ["fold と題と傍注", SIMPLE, { fold: "架空の畳み", title: "架空の題", aside: "架空の傍注" }],
-    ["傍注", SIMPLE, { aside: "架空の傍注" }],
+    ["fold と題と欄外注", SIMPLE, { fold: "架空の畳み", title: "架空の題", aside: "架空の欄外注" }],
+    ["欄外注", SIMPLE, { aside: "架空の欄外注" }],
     ["行が 10 を超える表", MANY, {}],
     [
       "セルの太字・inline code・リンク",

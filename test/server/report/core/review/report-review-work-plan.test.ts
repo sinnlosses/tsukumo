@@ -59,7 +59,7 @@ describe("createReportReview の judge（ワークプランの残った report�
     expect(review.judge(closing("finished"))).toEqual({ kind: "accepted" })
   })
 
-  it("ワークプランがあって段の閉じ方の欄が無ければ差し戻す（全部済みのあとでも）", () => {
+  it("ワークプランがあってフェーズの閉じ方の欄が無ければ差し戻す（全部済みのあとでも）", () => {
     for (const remaining of [2, 1, 0]) {
       expect(reviewWith({ kind: "planned", remaining }).review.judge(VALID)).toEqual({
         kind: "rejected",
@@ -116,7 +116,7 @@ describe("createReportReview の judge（ワークプランの残った report�
     ).toEqual({ kind: "accepted" })
   })
 
-  it("段の閉じ方の枠は1ターンに1回で、規約違反の枠とは別に数え、次のターンで戻る", () => {
+  it("フェーズの閉じ方の枠は1ターンに1回で、規約違反の枠とは別に数え、次のターンで戻る", () => {
     const { review } = reviewWith({ kind: "planned", remaining: 2 })
 
     expect(review.judge(INVALID)).toEqual({
@@ -136,7 +136,7 @@ describe("createReportReview の judge（ワークプランの残った report�
     })
   })
 
-  it("補足メッセージのターンでは、ワークプランがあっても段の閉じ方の欄が無いことで差し戻さず、ターンが終われば戻る", () => {
+  it("補足メッセージのターンでは、ワークプランがあってもフェーズの閉じ方の欄が無いことで差し戻さず、ターンが終われば戻る", () => {
     const { review } = reviewWith({ kind: "planned", remaining: 2 })
     const aside: SessionEvent = { kind: "aside", text: "架空の問い", images: [] }
 
