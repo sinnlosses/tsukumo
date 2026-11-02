@@ -147,7 +147,8 @@ export async function capture(
     }
 
     for (const selector of options.measures) {
-      process.stdout.write(`${selector}: ${await describeElement(page, selector)}\n`)
+      const [first = "", ...others] = await describeElement(page, selector)
+      process.stdout.write(`${[`${selector}: ${first}`, ...others].join("\n")}\n`)
     }
 
     for (const selector of options.textLengths) {

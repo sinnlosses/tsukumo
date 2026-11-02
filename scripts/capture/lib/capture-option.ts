@@ -37,7 +37,7 @@ export const USAGE = `使い方:
   --list-scenes         場面ごとに report に出る部品の kind と、書き上げる演出が掛かる見込みを一覧して終わる（撮らない。見込みは節の文字数からの見積もりで、描いて確かめてはいない）
   --out <path>          画像の出力先（既定 ${DEFAULT_OUT}）
   --size <幅>x<高さ>    ビューポートの大きさ（既定 ${String(DEFAULT_WIDTH)}x${String(DEFAULT_HEIGHT)}）
-  --measure <selector>  位置と大きさ（と scrollHeight・clientHeight）を数値で出す要素（何度でも指定できる）
+  --measure <selector>  位置と大きさ（と scrollHeight・clientHeight）を数値で出す要素（何度でも指定できる。複数に当たったら「<n>件」の行に続けて全件の位置と大きさを1件1行で出す。画面の外では描かない要素〔share の図など〕は、--scroll-to で送るか、要素より十分に縦長の --size で撮る）
   --text-length <selector> 要素（複数に当たれば先頭）の見えている文字数を「字数 <selector>: n」で出す（何度でも指定できる。当たらなければ「無し」）
   --wait-for <selector> 要素が出て、演出が終わるまで待ってから撮る（出なければ失敗して終わる）
   --scroll-to <selector> 要素をメインビューの上端へ送ってから撮る（無ければ失敗して終わる。本文の末尾に近い部品も上端へ届くよう、撮影のページだけ末尾にビューポートの高さ分の余白を足すので、--measure の scrollHeight は余白を含む。2つ以上に当たるとコンマ区切りでも先頭へスクロールし、「一致 n 個、先頭へスクロールした」の行を出す。準備の手のあとに当たり〔書く位置は問わない〕、スクロールしたあと偽の時計があれば進めて落ち着くまで待つので、--advance を後ろに足さなくてよい。--reveal-at のときは時計を止めているので待たない）
