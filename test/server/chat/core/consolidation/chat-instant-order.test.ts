@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest"
 
-import { isAfterAt, isBeforeAt } from "../../../../src/server/chat/core/chat-instant-order.ts"
+import {
+  isAfterAt,
+  isBeforeAt,
+} from "../../../../../src/server/chat/core/consolidation/chat-instant-order.ts"
 
 describe("isAfterAt / isBeforeAt", () => {
   it("オフセットが違っても同じ時刻は前でも後でもなく、ずれていれば正しく比べる", () => {

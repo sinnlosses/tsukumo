@@ -4,18 +4,18 @@ import type {
   ChatArchive,
   ChatArchiveRecentEntry,
   ChatReadbackLimits,
-} from "../../../../src/server/chat/core/chat-archive-port.ts"
-import { CHAT_MEMORY_BUDGET } from "../../../../src/server/chat/core/chat-memory-budget.ts"
+} from "../../../../../src/server/chat/core/archive/chat-archive-port.ts"
 import {
   takeChatMemoryPromptParts,
   workMemoryPromptParts,
-} from "../../../../src/server/chat/core/chat-memory-prompt.ts"
+} from "../../../../../src/server/chat/core/archive/chat-memory-prompt.ts"
+import { CHAT_MEMORY_BUDGET } from "../../../../../src/server/chat/core/memory/chat-memory-budget.ts"
 import type {
   ChatSummary,
   ChatSummaryRecord,
-} from "../../../../src/server/chat/core/chat-memory.ts"
-import { characterPackName } from "../../../fixture/character.ts"
-import { inMemoryChatSummary, NOOP_CHAT_ARCHIVE } from "../../../fixture/chat.ts"
+} from "../../../../../src/server/chat/core/memory/chat-memory.ts"
+import { characterPackName } from "../../../../fixture/character.ts"
+import { inMemoryChatSummary, NOOP_CHAT_ARCHIVE } from "../../../../fixture/chat.ts"
 
 const SUMMARY = "利用者と最近読んだ本の話をした。次は続きの巻の感想を聞きたがっていた。"
 const RECENT: readonly ChatArchiveRecentEntry[] = [

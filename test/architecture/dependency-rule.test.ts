@@ -303,6 +303,38 @@ describe(".dependency-cruiser.cjs の規則", () => {
       expect(forbids(`${CORE_DIR}/review/a.ts`, `${CORE_DIR}/review/b.ts`)).toBe(false)
     })
 
+    it("chat/core/ の規則の子は実際のディレクトリと過不足なく一致する", () => {
+      const prefix = "server-child-edge:chat/core/"
+      const ruleChildren = allChildRules
+        .filter((rule) => rule.name.startsWith(prefix))
+        .map((rule) => rule.name.slice(prefix.length))
+      const directories = readdirSync(`${SRC_ROOT}/server/chat/core`, { withFileTypes: true })
+        .filter((entry) => entry.isDirectory())
+        .map((entry) => entry.name)
+
+      expect(ruleChildren.toSorted()).toEqual(directories.toSorted())
+    })
+
+    it("chat/core/ は逆向きの import を落とし、consolidation → archive → memory の向きと core/ 直下への import は通す", () => {
+      const forbids = (from: string, to: string): boolean =>
+        allChildRules.some(
+          (rule) =>
+            new RegExp(rule.from.path ?? "(?!)").test(from) &&
+            new RegExp(rule.to.path ?? "(?!)").test(to) &&
+            !new RegExp(rule.to.pathNot ?? "(?!)").test(to),
+        )
+      const CORE_DIR = "src/server/chat/core"
+
+      expect(forbids(`${CORE_DIR}/memory/a.ts`, `${CORE_DIR}/archive/b.ts`)).toBe(true)
+      expect(forbids(`${CORE_DIR}/memory/a.ts`, `${CORE_DIR}/consolidation/b.ts`)).toBe(true)
+      expect(forbids(`${CORE_DIR}/archive/a.ts`, `${CORE_DIR}/consolidation/b.ts`)).toBe(true)
+      expect(forbids(`${CORE_DIR}/archive/a.ts`, `${CORE_DIR}/memory/b.ts`)).toBe(false)
+      expect(forbids(`${CORE_DIR}/consolidation/a.ts`, `${CORE_DIR}/memory/b.ts`)).toBe(false)
+      expect(forbids(`${CORE_DIR}/consolidation/a.ts`, `${CORE_DIR}/archive/b.ts`)).toBe(false)
+      expect(forbids(`${CORE_DIR}/consolidation/a.ts`, `${CORE_DIR}/chat-command.ts`)).toBe(false)
+      expect(forbids(`${CORE_DIR}/memory/a.ts`, `${CORE_DIR}/memory/b.ts`)).toBe(false)
+    })
+
     it("許す先は表の子だけ", () => {
       const children = new Set(childRules.map((rule) => rule.name.slice(CHILD_PREFIX.length)))
       const allowed = childRules.flatMap((rule) =>

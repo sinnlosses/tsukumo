@@ -4,7 +4,7 @@ import { join } from "node:path"
 import { describe, expect, it } from "vitest"
 
 import { createChatArchive } from "../../../../src/server/chat/adapter/chat-archive.ts"
-import type { ChatReadbackLimits } from "../../../../src/server/chat/core/chat-archive-port.ts"
+import type { ChatReadbackLimits } from "../../../../src/server/chat/core/archive/chat-archive-port.ts"
 import { characterPackName } from "../../../fixture/character.ts"
 import { useTempDir } from "../../../fixture/temp-dir.ts"
 

@@ -1,8 +1,8 @@
 // 雑談と仕事の会話のアーカイブと、定着が使う口の型。ここにあるのは型だけ。
 
-import type { CharacterPackName } from "../../../shared/character-pack/character.ts"
-import type { Expression } from "../../../shared/character-pack/expression.ts"
-import type { ChatFoldPoint } from "./chat-memory.ts"
+import type { CharacterPackName } from "../../../../shared/character-pack/character.ts"
+import type { Expression } from "../../../../shared/character-pack/expression.ts"
+import type { ChatFoldPoint } from "../memory/chat-memory.ts"
 
 /**
  * 雑談と仕事の会話のアーカイブの読み書き口。

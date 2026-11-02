@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest"
 import type {
   ChatConsolidationOutcome,
   ChatConsolidationSource,
-} from "../../../../src/server/chat/core/chat-consolidation-writer.ts"
+} from "../../../../src/server/chat/core/consolidation/chat-consolidation-writer.ts"
 import type { SessionManagerOptions } from "../../../../src/server/session/core/session-manager-port.ts"
 import type { DiagnosticEntry } from "../../../../src/shared/diagnostic/diagnostic-record.ts"
 import { swallowedFailureFootprintSchema } from "../../../../src/shared/diagnostic/swallowed-failure.ts"

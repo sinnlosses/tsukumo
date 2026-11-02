@@ -4,7 +4,7 @@ import type {
   ChatArchive,
   ChatArchiveEntry,
   ChatArchiveImageWriteResult,
-} from "../../../../src/server/chat/core/chat-archive-port.ts"
+} from "../../../../src/server/chat/core/archive/chat-archive-port.ts"
 import { createPromptImageShelf } from "../../../../src/server/session-driver/core/prompt-image-shelf.ts"
 import type { DiagnosticEntry } from "../../../../src/shared/diagnostic/diagnostic-record.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"

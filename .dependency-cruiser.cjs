@@ -61,6 +61,11 @@ const SERVER_CHILD_IMPORTS = {
   "usage/adapter": {
     review: [],
   },
+  "chat/core": {
+    memory: [],
+    archive: ["memory"],
+    consolidation: ["memory", "archive"],
+  },
 }
 
 const BROWSER_FRAMES = ["components/domain/screen-nav", "components/domain/sidebar"]

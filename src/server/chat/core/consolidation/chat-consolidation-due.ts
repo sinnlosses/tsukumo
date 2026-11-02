@@ -1,7 +1,7 @@
 // 読んだ未定着の行が、畳む契機に届いたかの判定。
 
-import type { ChatUnconsolidatedBatch } from "./chat-archive-port.ts"
-import { CHAT_MEMORY_BUDGET } from "./chat-memory-budget.ts"
+import type { ChatUnconsolidatedBatch } from "../archive/chat-archive-port.ts"
+import { CHAT_MEMORY_BUDGET } from "../memory/chat-memory-budget.ts"
 
 /**
  * 読んだ未定着の行が、畳む契機（`consolidateEveryBytes`）に届いたか。

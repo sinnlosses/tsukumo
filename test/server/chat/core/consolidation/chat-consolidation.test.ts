@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import type { ChatUnconsolidatedEntry } from "../../../../src/server/chat/core/chat-archive-port.ts"
+import type { ChatUnconsolidatedEntry } from "../../../../../src/server/chat/core/archive/chat-archive-port.ts"
 import {
   CHAT_CONSOLIDATION_LIMITS,
   type ChatConsolidationResult,
@@ -8,9 +8,9 @@ import {
   chatSynopsisShrunk,
   parseChatConsolidationResult as parseResult,
   readChatTopics,
-} from "../../../../src/server/chat/core/chat-consolidation.ts"
-import { CHAT_MEMORY_BUDGET } from "../../../../src/server/chat/core/chat-memory-budget.ts"
-import { fixedChatSummary, inMemoryChatSummary } from "../../../fixture/chat.ts"
+} from "../../../../../src/server/chat/core/consolidation/chat-consolidation.ts"
+import { CHAT_MEMORY_BUDGET } from "../../../../../src/server/chat/core/memory/chat-memory-budget.ts"
+import { fixedChatSummary, inMemoryChatSummary } from "../../../../fixture/chat.ts"
 
 /** 通れば検査を通った出力、落ちれば undefined。落ちた理由を見るテストは `parseResult` を直に呼ぶ。 */
 function parseChatConsolidationResult(value: unknown): ChatConsolidationResult | undefined {

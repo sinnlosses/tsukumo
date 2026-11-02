@@ -7,8 +7,8 @@ import {
 import type {
   ChatConsolidationOutcome,
   ChatConsolidationResultKind,
-} from "../../chat/core/chat-consolidation-writer.ts"
-import type { ChatConsolidationRejection } from "../../chat/core/chat-consolidation.ts"
+} from "../../chat/core/consolidation/chat-consolidation-writer.ts"
+import type { ChatConsolidationRejection } from "../../chat/core/consolidation/chat-consolidation.ts"
 import type { DiagnosticBuffer } from "../../diagnostic/core/diagnostic.ts"
 
 const CONSOLIDATION_FAILURE_PLACES = {

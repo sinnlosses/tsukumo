@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import type { ChatConsolidationOutcome } from "../../../../../src/server/chat/core/chat-consolidation-writer.ts"
+import type { ChatConsolidationOutcome } from "../../../../../src/server/chat/core/consolidation/chat-consolidation-writer.ts"
 import {
   consolidationPackToStart,
   isBatched,

@@ -1,6 +1,6 @@
 // 読み込み済みの行から、定着の入力にする行を選ぶ。
 
-import type { ChatArchiveLine } from "./chat-archive-port.ts"
+import type { ChatArchiveLine } from "../archive/chat-archive-port.ts"
 import { isAfterAt, isBeforeAt } from "./chat-instant-order.ts"
 
 /**

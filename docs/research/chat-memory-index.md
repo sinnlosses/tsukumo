@@ -22,15 +22,15 @@
 
 ## 着手時に確かめた前提（2026-09-25 のコード）
 
-| 前提                   | いまのコード                                                                                                                                                                                           |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 記憶の層               | 要約（`/compact` の写し 8 KiB）・旗（`keep` 8 KiB）・逐語の窓（64 KiB）を、新規に起こすときだけ `systemPrompt` に載せる（`src/server/chat/core/chat-memory-prompt.ts` の `takeChatMemoryPromptParts`） |
-| 要約の口               | 走行合計が 128 KiB を超えたターンの終わりに `/compact` を投げ、`PostCompact` フックで写す（`chat-compact.ts`・`sdk-driver.ts` の `chatSummaryHooks`）                                                  |
-| 索引                   | キャラクターが `index` で1日に何行でも見出しを書き、`recall` が小文字の部分一致で当たった日を新しい順に 8 KiB まで開く（`chat/adapter/chat-archive.ts`）                                               |
-| 容量の定数             | `src/browser/components/page/conversation/domain/chat-log.ts` に `CHAT_COMPACT_THRESHOLD_BYTES` など4つが別々の `const` で並ぶ                                                                         |
-| 使い捨ての `query()`   | 日記（`src/server/diary/adapter/sdk-diary.ts`）と訪問の台本（`src/server/visit/adapter/sdk-visit-script.ts`）が `persistSession: false`・`settingSources: []` で使っている                             |
-| 同じ claude へ渡すこと | `docs/requirements.md` 2.2 は、同じマシンの claude の子プロセスが受ける `query()` を外部送信に数えない（2026-09-25、訪問の台本のとき）                                                                 |
-| 雑談の消費（実測）     | `~/.tsukumo/token-usage/` の 2026-09-22〜25 の雑談 82 ターンで、1ターンあたり呼び出し 5.4 回・キャッシュ読み出し約 88 万トークン・約 $0.62。1回の呼び出しで読む文脈は平均約 16 万トークン              |
+| 前提                   | いまのコード                                                                                                                                                                                                   |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 記憶の層               | 要約（`/compact` の写し 8 KiB）・旗（`keep` 8 KiB）・逐語の窓（64 KiB）を、新規に起こすときだけ `systemPrompt` に載せる（`src/server/chat/core/archive/chat-memory-prompt.ts` の `takeChatMemoryPromptParts`） |
+| 要約の口               | 走行合計が 128 KiB を超えたターンの終わりに `/compact` を投げ、`PostCompact` フックで写す（`chat-compact.ts`・`sdk-driver.ts` の `chatSummaryHooks`）                                                          |
+| 索引                   | キャラクターが `index` で1日に何行でも見出しを書き、`recall` が小文字の部分一致で当たった日を新しい順に 8 KiB まで開く（`chat/adapter/chat-archive.ts`）                                                       |
+| 容量の定数             | `src/browser/components/page/conversation/domain/chat-log.ts` に `CHAT_COMPACT_THRESHOLD_BYTES` など4つが別々の `const` で並ぶ                                                                                 |
+| 使い捨ての `query()`   | 日記（`src/server/diary/adapter/sdk-diary.ts`）と訪問の台本（`src/server/visit/adapter/sdk-visit-script.ts`）が `persistSession: false`・`settingSources: []` で使っている                                     |
+| 同じ claude へ渡すこと | `docs/requirements.md` 2.2 は、同じマシンの claude の子プロセスが受ける `query()` を外部送信に数えない（2026-09-25、訪問の台本のとき）                                                                         |
+| 雑談の消費（実測）     | `~/.tsukumo/token-usage/` の 2026-09-22〜25 の雑談 82 ターンで、1ターンあたり呼び出し 5.4 回・キャッシュ読み出し約 88 万トークン・約 $0.62。1回の呼び出しで読む文脈は平均約 16 万トークン                      |
 
 ## 全体: 4つの層と、引いたときだけ載る2段
 
@@ -61,7 +61,7 @@ flowchart TD
 **容量はすべて1つの定数の表に置き、値を書き換えるだけで上げ下げできるようにする**（ユーザーの指示）。
 ほかの値（定着の契機など）は表から導き、別の定数として持たない。
 
-```ts src/server/chat/core/chat-memory-budget.ts
+```ts src/server/chat/core/memory/chat-memory-budget.ts
 export const CHAT_MEMORY_BUDGET = {
   /** 作業記憶: 起こすときに逐語で載せる直近の量 */
   recentBytes: 65_536,

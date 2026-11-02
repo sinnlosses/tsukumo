@@ -3,21 +3,21 @@ import { describe, expect, it } from "vitest"
 import type {
   ChatUnconsolidatedBatch,
   ChatUnconsolidatedLimits,
-} from "../../../../src/server/chat/core/chat-archive-port.ts"
-import { createChatConsolidationWriter } from "../../../../src/server/chat/core/chat-consolidation-writer.ts"
-import { CHAT_CONSOLIDATION_LIMITS } from "../../../../src/server/chat/core/chat-consolidation.ts"
-import { CHAT_MEMORY_BUDGET } from "../../../../src/server/chat/core/chat-memory-budget.ts"
+} from "../../../../../src/server/chat/core/archive/chat-archive-port.ts"
+import { createChatConsolidationWriter } from "../../../../../src/server/chat/core/consolidation/chat-consolidation-writer.ts"
+import { CHAT_CONSOLIDATION_LIMITS } from "../../../../../src/server/chat/core/consolidation/chat-consolidation.ts"
+import { CHAT_MEMORY_BUDGET } from "../../../../../src/server/chat/core/memory/chat-memory-budget.ts"
 import type {
   ChatFoldPoint,
   ChatSummary,
   ChatSummaryFold,
-} from "../../../../src/server/chat/core/chat-memory.ts"
+} from "../../../../../src/server/chat/core/memory/chat-memory.ts"
 import {
   type StructuredQuery,
   StructuredQueryResultError,
-} from "../../../../src/server/core/structured-query.ts"
-import type { CharacterPackName } from "../../../../src/shared/character-pack/character.ts"
-import { characterPackName } from "../../../fixture/character.ts"
+} from "../../../../../src/server/core/structured-query.ts"
+import type { CharacterPackName } from "../../../../../src/shared/character-pack/character.ts"
+import { characterPackName } from "../../../../fixture/character.ts"
 
 const PACK = characterPackName("fictional")
 

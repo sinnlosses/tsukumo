@@ -7,7 +7,7 @@ import {
   personaWithRememberedLine,
   rememberedTexts,
   rememberRejection,
-} from "../../../../src/server/chat/core/persona-memory-edit.ts"
+} from "../../../../../src/server/chat/core/memory/persona-memory-edit.ts"
 
 const HEADING = "## 覚えたこと"
 

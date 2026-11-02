@@ -43,10 +43,13 @@ import type {
   ChatUnconsolidatedBatch,
   ChatUnconsolidatedEntry,
   ChatUnconsolidatedLimits,
-} from "../core/chat-archive-port.ts"
-import { takeWithinBytes } from "../core/chat-byte-budget.ts"
-import type { ChatFoldPoint } from "../core/chat-memory.ts"
-import { entriesUntilWindow, type TimedEntry } from "../core/chat-unconsolidated-selection.ts"
+} from "../core/archive/chat-archive-port.ts"
+import {
+  entriesUntilWindow,
+  type TimedEntry,
+} from "../core/consolidation/chat-unconsolidated-selection.ts"
+import { takeWithinBytes } from "../core/memory/chat-byte-budget.ts"
+import type { ChatFoldPoint } from "../core/memory/chat-memory.ts"
 import { CHAT_IMAGE_DIR_NAME, writeChatImage } from "./chat-archive-image.ts"
 
 const CONSOLIDATION_LOCK_FILE_NAME = "consolidation.lock"

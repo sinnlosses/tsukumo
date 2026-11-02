@@ -19,9 +19,9 @@ import type { CharacterPackName } from "../../../shared/character-pack/character
 import { writeFileAtomic } from "../../adapter/lib/atomic-file.ts"
 import { readJsonFile } from "../../adapter/lib/json-file.ts"
 import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
-import { CHAT_MEMORY_BUDGET } from "../core/chat-memory-budget.ts"
-import type { ChatSummary, ChatSummaryFold, ChatSummaryRecord } from "../core/chat-memory.ts"
-import { truncatedSummary } from "../core/chat-summary-truncation.ts"
+import { truncatedSummary } from "../core/consolidation/chat-summary-truncation.ts"
+import { CHAT_MEMORY_BUDGET } from "../core/memory/chat-memory-budget.ts"
+import type { ChatSummary, ChatSummaryFold, ChatSummaryRecord } from "../core/memory/chat-memory.ts"
 
 const SUMMARY_FILE_SUFFIX = ".summary.json"
 

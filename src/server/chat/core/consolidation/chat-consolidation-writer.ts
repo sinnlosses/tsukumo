@@ -11,23 +11,25 @@
 // メモリにだけ持ち、書くのはあらすじのファイルだけで、ログには出さない。
 // 書いてよい範囲と定着の `query()` へ渡してよい範囲は `docs/coding-standards.md`「会話内容の扱い」の例外の表が決めている。
 
-import type { CharacterPackName } from "../../../shared/character-pack/character.ts"
+import type { CharacterPackName } from "../../../../shared/character-pack/character.ts"
 import {
   runWithDeadline,
   type StructuredQuery,
   StructuredQueryResultError,
-} from "../../core/structured-query.ts"
+} from "../../../core/structured-query.ts"
 import {
   createQueryBackoff,
   type QueryBackoffEffect,
   type QueryBackoffPolicy,
   type QueryLockPort,
-} from "../../core/throwaway-query.ts"
+} from "../../../core/throwaway-query.ts"
 import type {
   ChatArchive,
   ChatUnconsolidatedEntry,
   ChatUnconsolidatedLimits,
-} from "./chat-archive-port.ts"
+} from "../archive/chat-archive-port.ts"
+import { CHAT_MEMORY_BUDGET } from "../memory/chat-memory-budget.ts"
+import type { ChatFoldPoint, ChatSummary, ChatSummaryFold } from "../memory/chat-memory.ts"
 import { isConsolidationDue } from "./chat-consolidation-due.ts"
 import {
   CHAT_CONSOLIDATION_LIMITS,
@@ -39,8 +41,6 @@ import {
   parseChatConsolidationResult,
   readChatTopics,
 } from "./chat-consolidation.ts"
-import { CHAT_MEMORY_BUDGET } from "./chat-memory-budget.ts"
-import type { ChatFoldPoint, ChatSummary, ChatSummaryFold } from "./chat-memory.ts"
 
 /**
  * 1回ぶんの結果。

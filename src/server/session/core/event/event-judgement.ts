@@ -4,7 +4,7 @@ import type { CharacterPackName } from "../../../../shared/character-pack/charac
 import { shownCharacterPackName } from "../../../../shared/character-pack/character.ts"
 import type { SessionEvent } from "../../../../shared/session/session-event.ts"
 import type { SessionState } from "../../../../shared/session/session-state.ts"
-import type { ChatConsolidationOutcome } from "../../../chat/core/chat-consolidation-writer.ts"
+import type { ChatConsolidationOutcome } from "../../../chat/core/consolidation/chat-consolidation-writer.ts"
 
 /** 束に積んでブラウザへ配るか。計測のためだけのイベントは積まない。 */
 export function isBatched(event: SessionEvent): boolean {

@@ -5,7 +5,7 @@ import {
   CHAT_CONSOLIDATION_BACKOFF,
   chatConsolidationBackoffEffect,
   type ChatConsolidationOutcome,
-} from "../../chat/core/chat-consolidation-writer.ts"
+} from "../../chat/core/consolidation/chat-consolidation-writer.ts"
 
 export type ConsolidationHalt = {
   /** 止めているか。 */

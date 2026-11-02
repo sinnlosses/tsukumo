@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest"
 import {
   entriesUntilWindow,
   type TimedEntry,
-} from "../../../../src/server/chat/core/chat-unconsolidated-selection.ts"
+} from "../../../../../src/server/chat/core/consolidation/chat-unconsolidated-selection.ts"
 
 function entryAt(at: string): TimedEntry {
   return { at, line: { kind: "speech", text: "架空の発言", origin: { mode: "chat" } } }

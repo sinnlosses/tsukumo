@@ -1,5 +1,5 @@
 import type { CommandRouterPorts } from "../../src/router.ts"
-import type { ChatConsolidationSource } from "../../src/server/chat/core/chat-consolidation-writer.ts"
+import type { ChatConsolidationSource } from "../../src/server/chat/core/consolidation/chat-consolidation-writer.ts"
 import { IDLE_CHANGE_COUNT_GIT } from "../../src/server/core/change-count-git.ts"
 import type { DiagnosticLog } from "../../src/server/diagnostic/core/diagnostic.ts"
 import type { DiaryWriterSource } from "../../src/server/diary/core/diary-writer.ts"

@@ -3,18 +3,18 @@ import { describe, expect, it } from "vitest"
 import {
   appendChatArchiveConclusion,
   appendChatArchiveEntry,
-} from "../../../../src/server/chat/core/chat-archive-entry.ts"
+} from "../../../../../src/server/chat/core/archive/chat-archive-entry.ts"
 import type {
   ChatArchive,
   ChatArchiveEntry,
   ChatArchiveImage,
   ChatArchiveImageWriteResult,
-} from "../../../../src/server/chat/core/chat-archive-port.ts"
-import { CHAT_MEMORY_BUDGET } from "../../../../src/server/chat/core/chat-memory-budget.ts"
-import type { CharacterPackName } from "../../../../src/shared/character-pack/character.ts"
-import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
-import { characterPackName } from "../../../fixture/character.ts"
-import { NOOP_CHAT_ARCHIVE } from "../../../fixture/chat.ts"
+} from "../../../../../src/server/chat/core/archive/chat-archive-port.ts"
+import { CHAT_MEMORY_BUDGET } from "../../../../../src/server/chat/core/memory/chat-memory-budget.ts"
+import type { CharacterPackName } from "../../../../../src/shared/character-pack/character.ts"
+import type { SessionEvent } from "../../../../../src/shared/session/session-event.ts"
+import { characterPackName } from "../../../../fixture/character.ts"
+import { NOOP_CHAT_ARCHIVE } from "../../../../fixture/chat.ts"
 
 const PACK = characterPackName("fictional-pack")
 

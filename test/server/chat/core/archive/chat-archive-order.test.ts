@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { createChatArchiveOrder } from "../../../../src/server/chat/core/chat-archive-order.ts"
+import { createChatArchiveOrder } from "../../../../../src/server/chat/core/archive/chat-archive-order.ts"
 
 describe("createChatArchiveOrder", () => {
   it("手前に未完の追記が無ければ、その場で同期に走らせる", () => {

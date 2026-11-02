@@ -6,17 +6,17 @@ import { join } from "node:path"
 
 import { describe, expect, it } from "vitest"
 
-import { createChatArchive } from "../../../../src/server/chat/adapter/chat-archive.ts"
-import { createChatSummary } from "../../../../src/server/chat/adapter/chat-summary.ts"
-import type { ChatArchive } from "../../../../src/server/chat/core/chat-archive-port.ts"
+import { createChatArchive } from "../../../../../src/server/chat/adapter/chat-archive.ts"
+import { createChatSummary } from "../../../../../src/server/chat/adapter/chat-summary.ts"
+import type { ChatArchive } from "../../../../../src/server/chat/core/archive/chat-archive-port.ts"
 import {
   type ChatConsolidationOutcome,
   createChatConsolidationWriter,
-} from "../../../../src/server/chat/core/chat-consolidation-writer.ts"
-import type { ChatSummary } from "../../../../src/server/chat/core/chat-memory.ts"
-import type { StructuredQuery } from "../../../../src/server/core/structured-query.ts"
-import { characterPackName } from "../../../fixture/character.ts"
-import { useTempDir } from "../../../fixture/temp-dir.ts"
+} from "../../../../../src/server/chat/core/consolidation/chat-consolidation-writer.ts"
+import type { ChatSummary } from "../../../../../src/server/chat/core/memory/chat-memory.ts"
+import type { StructuredQuery } from "../../../../../src/server/core/structured-query.ts"
+import { characterPackName } from "../../../../fixture/character.ts"
+import { useTempDir } from "../../../../fixture/temp-dir.ts"
 
 const PACK = characterPackName("fictional")
 

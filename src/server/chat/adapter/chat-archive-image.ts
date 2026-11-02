@@ -11,7 +11,10 @@ import {
   type PromptImageMediaType,
 } from "../../../shared/session-driver/prompt-image.ts"
 import { localDateKey } from "../../adapter/local-time.ts"
-import type { ChatArchiveImage, ChatArchiveImageWriteResult } from "../core/chat-archive-port.ts"
+import type {
+  ChatArchiveImage,
+  ChatArchiveImageWriteResult,
+} from "../core/archive/chat-archive-port.ts"
 
 /** パックの下の、雑談の画像の置き場のディレクトリ名。 */
 export const CHAT_IMAGE_DIR_NAME = "images"

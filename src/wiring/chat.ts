@@ -9,7 +9,7 @@ import type { ChatCommandPorts } from "../server/chat/core/chat-command.ts"
 import {
   type ChatConsolidationSource,
   createChatConsolidationWriter,
-} from "../server/chat/core/chat-consolidation-writer.ts"
+} from "../server/chat/core/consolidation/chat-consolidation-writer.ts"
 import type { SessionManagerOptions } from "../server/session/core/session-manager-port.ts"
 import type { WiringContext } from "./wiring-context.ts"
 

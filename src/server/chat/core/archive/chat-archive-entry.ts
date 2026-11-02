@@ -6,12 +6,12 @@
 // 「会話内容の扱い」の例外の表が決めている。
 // 会話の文面と画像が引数として通るが、ログには出さない。
 
-import type { CharacterPackName } from "../../../shared/character-pack/character.ts"
-import type { RecordedPromptImage } from "../../../shared/session-driver/prompt-image.ts"
-import type { SessionEvent } from "../../../shared/session/session-event.ts"
-import { clipWithEllipsis } from "../../../shared/utils/clip-text.ts"
+import type { CharacterPackName } from "../../../../shared/character-pack/character.ts"
+import type { RecordedPromptImage } from "../../../../shared/session-driver/prompt-image.ts"
+import type { SessionEvent } from "../../../../shared/session/session-event.ts"
+import { clipWithEllipsis } from "../../../../shared/utils/clip-text.ts"
+import { CHAT_MEMORY_BUDGET } from "../memory/chat-memory-budget.ts"
 import type { ChatArchive } from "./chat-archive-port.ts"
-import { CHAT_MEMORY_BUDGET } from "./chat-memory-budget.ts"
 
 /** 雑談の依頼に添えた画像の原寸を棚から引く口と、書けなかった1枚を知らせる口。 */
 export type ChatArchiveImageSource = {

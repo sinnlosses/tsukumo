@@ -6,8 +6,8 @@ import type { RestoredEvent, SessionEvent } from "../../../shared/session/sessio
 import type { ContextUsageReport } from "../../../shared/usage/context-usage.ts"
 import type { PlanUsageReport } from "../../../shared/usage/plan-usage.ts"
 import type { PreviousUsageReview } from "../../../shared/usage/usage-review.ts"
-import type { ChatArchive } from "../../chat/core/chat-archive-port.ts"
-import type { ChatConsolidationSource } from "../../chat/core/chat-consolidation-writer.ts"
+import type { ChatArchive } from "../../chat/core/archive/chat-archive-port.ts"
+import type { ChatConsolidationSource } from "../../chat/core/consolidation/chat-consolidation-writer.ts"
 import type { ChangeCountGit } from "../../core/change-count-git.ts"
 import type { DiagnosticLog } from "../../diagnostic/core/diagnostic.ts"
 import type {

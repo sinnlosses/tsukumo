@@ -2,7 +2,7 @@
 
 import type { TurnOutcome } from "../../../../shared/session-driver/turn-failure.ts"
 import type { SessionEvent } from "../../../../shared/session/session-event.ts"
-import type { ChatSummary, PersonaMemory } from "../../../chat/core/chat-memory.ts"
+import type { ChatSummary, PersonaMemory } from "../../../chat/core/memory/chat-memory.ts"
 import type { SessionMode } from "../session-driver.ts"
 import type { SessionId } from "../session-id.ts"
 

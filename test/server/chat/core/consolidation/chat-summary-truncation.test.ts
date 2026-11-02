@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { truncatedSummary } from "../../../../src/server/chat/core/chat-summary-truncation.ts"
+import { truncatedSummary } from "../../../../../src/server/chat/core/consolidation/chat-summary-truncation.ts"
 
 describe("truncatedSummary", () => {
   it("収まるなら全文をそのまま返す", () => {

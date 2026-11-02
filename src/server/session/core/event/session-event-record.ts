@@ -10,8 +10,8 @@ import type { SessionState } from "../../../../shared/session/session-state.ts"
 import {
   appendChatArchiveConclusion,
   appendChatArchiveEntry,
-} from "../../../chat/core/chat-archive-entry.ts"
-import type { ChatArchiveOrder } from "../../../chat/core/chat-archive-order.ts"
+} from "../../../chat/core/archive/chat-archive-entry.ts"
+import type { ChatArchiveOrder } from "../../../chat/core/archive/chat-archive-order.ts"
 import type { DiagnosticBuffer } from "../../../diagnostic/core/diagnostic.ts"
 import {
   isMainImageFileRead,

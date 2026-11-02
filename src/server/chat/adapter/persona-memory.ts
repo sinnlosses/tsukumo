@@ -22,7 +22,7 @@ import {
   isEditableCharacterPack,
   PERSONA_FILE_NAME,
 } from "../../character-pack/adapter/character-pack.ts"
-import type { PersonaMemory } from "../core/chat-memory.ts"
+import type { PersonaMemory } from "../core/memory/chat-memory.ts"
 import {
   forgetRejection,
   forgetTarget,
@@ -30,7 +30,7 @@ import {
   personaWithRememberedLine,
   rememberedTexts,
   rememberRejection,
-} from "../core/persona-memory-edit.ts"
+} from "../core/memory/persona-memory-edit.ts"
 
 /** `persona.md` に書けなかったことの知らせ口。`error` からは `error.name` と code だけを写すこと。 */
 export type PersonaMemoryFailureReport = (

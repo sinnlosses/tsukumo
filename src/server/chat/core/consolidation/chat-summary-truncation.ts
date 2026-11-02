@@ -1,6 +1,6 @@
 // あらすじの本文を、上限のバイト数に収まるよう行単位で切り詰める。
 
-import { byteLength } from "../../core/byte-length.ts"
+import { byteLength } from "../../../core/byte-length.ts"
 
 /**
  * `limitBytes` に収まるよう、要約の本文を行単位で切り詰める。

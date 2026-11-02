@@ -1,12 +1,12 @@
 // 雑談の記憶の口（`ChatSummary` / `ChatArchive`）の代役。
 // 呼ばれ方を覚えたいテストは、ここの代役を広げて覚えたい口だけを差し替える。
 
-import type { ChatArchive } from "../../src/server/chat/core/chat-archive-port.ts"
+import type { ChatArchive } from "../../src/server/chat/core/archive/chat-archive-port.ts"
 import type {
   ChatSummary,
   ChatSummaryFold,
   ChatSummaryRecord,
-} from "../../src/server/chat/core/chat-memory.ts"
+} from "../../src/server/chat/core/memory/chat-memory.ts"
 
 /** 何も書かず（画像は書けなかったと返す）、読むと空を返し、定着の錠はいつでも取れる `ChatArchive`。 */
 export const NOOP_CHAT_ARCHIVE = {

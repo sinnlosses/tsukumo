@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
-import { isConsolidationDue } from "../../../../src/server/chat/core/chat-consolidation-due.ts"
-import { CHAT_MEMORY_BUDGET } from "../../../../src/server/chat/core/chat-memory-budget.ts"
+import { isConsolidationDue } from "../../../../../src/server/chat/core/consolidation/chat-consolidation-due.ts"
+import { CHAT_MEMORY_BUDGET } from "../../../../../src/server/chat/core/memory/chat-memory-budget.ts"
 
 const EVERY = CHAT_MEMORY_BUDGET.consolidateEveryBytes
 

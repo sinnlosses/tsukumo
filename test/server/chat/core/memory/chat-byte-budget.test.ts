@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { takeWithinBytes } from "../../../../src/server/chat/core/chat-byte-budget.ts"
+import { takeWithinBytes } from "../../../../../src/server/chat/core/memory/chat-byte-budget.ts"
 
 const sizeOf = (n: number): number => n
 
