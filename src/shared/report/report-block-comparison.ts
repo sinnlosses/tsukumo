@@ -19,7 +19,11 @@ const cellSchema = z.union([
 
 const tableRowSchema = z.union([
   z.array(cellSchema),
-  z.object({ cells: z.array(cellSchema), emphasis: z.literal(true) }),
+  z.object({
+    cells: z.array(cellSchema),
+    emphasis: z.literal(true).optional(),
+    detail: inlineText.optional().describe("セルに入らない行ごとの詳しい中身。開いて読む"),
+  }),
 ])
 
 type TableRow = DeepReadonly<z.infer<typeof tableRowSchema>>
@@ -30,7 +34,11 @@ export function tableRowCells(row: TableRow): readonly TableCell[] {
 }
 
 export function isEmphasisRow(row: TableRow): boolean {
-  return "cells" in row
+  return "emphasis" in row && row.emphasis === true
+}
+
+export function tableRowDetail(row: TableRow): string | undefined {
+  return "detail" in row ? row.detail : undefined
 }
 
 export const tableBlockSchema = z

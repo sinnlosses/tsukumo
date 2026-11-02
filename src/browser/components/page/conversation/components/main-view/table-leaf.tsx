@@ -10,6 +10,7 @@ import {
   isEmphasisRow,
   type TableCell,
   tableRowCells,
+  tableRowDetail,
 } from "../../../../../../shared/report/report-block-comparison.ts"
 import { flatInline } from "../../../../../../shared/report/report-inline-markdown.ts"
 import type { LeafValue } from "../../../../../../shared/report/report-leaf-value.ts"
@@ -136,9 +137,17 @@ function bodyRows(
       </ColumnMarked>
     ))
     const [first, ...rest] = cells
+    const detail = tableRowDetail(row)
     return [
       {
         key: String(index),
+        detail:
+          detail === undefined
+            ? undefined
+            : {
+                label: tableCellTexts(tableRowCells(row)[0]).join(" "),
+                content: <InlineMarkdown text={detail} />,
+              },
         cells:
           isEmphasisRow(row) && first !== undefined
             ? [

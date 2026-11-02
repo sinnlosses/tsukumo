@@ -39,6 +39,19 @@ describe("reportViolations", () => {
       expect(reportViolations(draft([tableOf({ cells: ["b", "2"], emphasis: true })]))).toEqual([])
     })
 
+    it("detail だけの行は強調に数えない", () => {
+      const table: ReportBlock = {
+        kind: "table",
+        title: "架空の表",
+        columns: ["列", "値"],
+        rows: Array.from({ length: 5 }, () => ({ cells: ["a", "1"], detail: "架空の中身" })),
+        rest: "",
+        fold: "",
+        aside: "",
+      }
+      expect(reportViolations(draft([table]))).toEqual([])
+    })
+
     it("強調の行は3行までで、4行以上は many-emphasis-rows の差し戻しになり文面に上限を載せる", () => {
       const tableOf = (emphasized: number): ReportBlock => ({
         kind: "table",

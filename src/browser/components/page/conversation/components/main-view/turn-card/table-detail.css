@@ -1,0 +1,21 @@
+/* 表の行の開け閉めの押しボタンと、開いたとき行の直下に全列を通して出す詳しい中身の置き方だけ。 */
+
+.table-detail-toggle {
+  min-inline-size: var(--space-xl);
+  margin-inline-end: var(--space-xs);
+  padding: 0;
+}
+
+/* 詳しい中身のある行を持つ表で、無い行の1列目を押しボタンの幅だけ右へ寄せて揃える。 */
+.table-detail-spacer {
+  display: inline-block;
+  inline-size: calc(var(--space-xl) + var(--space-xs));
+}
+
+.table-detail-row > .table-detail-cell {
+  padding: var(--space-xs) 0 var(--space-md) calc(var(--space-xl) + var(--space-xs));
+  color: var(--ink-soft);
+  font-size: var(--font-secondary);
+  line-height: 1.7;
+  white-space: normal;
+}

@@ -95,6 +95,43 @@ describe("表の tag と強調の行", () => {
   })
 })
 
+describe("表の行の詳しい中身", () => {
+  const tableOf = (
+    rows: Extract<ReportBlock, { readonly kind: "table" }>["rows"],
+  ): FigureBlock => ({
+    kind: "table",
+    title: "架空の表",
+    columns: ["項目", "種別"],
+    rows,
+    rest: "",
+    fold: "",
+    aside: "",
+  })
+
+  it("detail のある行だけ、表の下に「行の名前: 中身」の箇条で出す", () => {
+    const markdown = markdownOf(
+      tableOf([
+        ["a", "1"],
+        { cells: ["b", "2"], detail: "b の詳しい中身" },
+        { cells: ["c", "3"], emphasis: true, detail: "c の詳しい中身" },
+      ]),
+    )
+
+    expect(markdown).toContain("</span> |\n\n- b: b の詳しい中身\n- c: c の詳しい中身\n")
+    expect(markdown).not.toContain("- a:")
+  })
+
+  it("detail が無い表は箇条を出さない", () => {
+    expect(markdownOf(tableOf([["a", "1"]]))).not.toContain("\n- ")
+  })
+
+  it("detail のある行が強調でなければ、強調の印は付かない", () => {
+    expect(markdownOf(tableOf([{ cells: ["a", "1"], detail: "中身" }]))).not.toContain(
+      "row-emphasis-mark",
+    )
+  })
+})
+
 describe("reportSectionsMarkdown", () => {
   it("表は番号つきの題の行のあとに GFM の表で組み、状態のセルは記号と文を1行に並べたタイルにし、題の直下に出た状態だけの凡例を添える（記号は role=img の aria-label で状態語を読み上げる）", () => {
     const table: FigureBlock = {

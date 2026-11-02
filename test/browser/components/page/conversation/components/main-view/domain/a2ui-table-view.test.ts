@@ -40,6 +40,20 @@ describe("visibleRowOrder の絞り込み", () => {
   })
 })
 
+describe("detail を持つ行", () => {
+  it("絞り込みと並べ替えを通っても元の添字で並び、detail の字は絞り込みに使わない", () => {
+    const part = {
+      ...table([]),
+      filterColumn: 0,
+      rows: [{ cells: ["3", "x"], detail: "甲" }, ["1", "x"], { cells: ["2", "x"], detail: "乙" }],
+    }
+
+    expect(visibleRowOrder(part, { column: 0, direction: "asc" }, [])).toEqual([1, 2, 0])
+    expect(filteredRowOrder(part, ["3"])).toEqual([0])
+    expect(filteredRowOrder(part, ["甲"])).toEqual([])
+  })
+})
+
 describe("visibleRowOrder の並べ替え", () => {
   it("日付の字は時刻の順に並ぶ（日付だけは 0 時として扱う）", () => {
     const part = table(["2026-10-02", "2026-09-28 10:00", "2026-09-28"])

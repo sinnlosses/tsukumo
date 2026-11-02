@@ -5,6 +5,7 @@ import {
   DirectLeaf,
   directLeafViewOf,
 } from "../../../../../../../src/browser/components/page/conversation/components/main-view/direct-leaf-view.tsx"
+import { TableFigure } from "../../../../../../../src/browser/components/page/conversation/components/main-view/table-leaf.tsx"
 import { loadMarkdown } from "../../../../../../../src/browser/components/page/conversation/components/markdown/markdown.tsx"
 import type { A2uiReportComponent } from "../../../../../../../src/shared/report/a2ui-report-catalog.ts"
 import type { LeafValue } from "../../../../../../../src/shared/report/report-leaf-value.ts"
@@ -192,6 +193,90 @@ describe("Table の部品", () => {
 
     expect(screen.getByRole("img", { name: "要注意" }).textContent).toBe("！")
     expect(screen.getByRole("img", { name: "NG" }).textContent).toBe("✕")
+  })
+})
+
+describe("Table の行の詳しい中身", () => {
+  const DETAILED: TablePart["rows"] = [
+    ["架空のA", "1"],
+    { cells: ["架空のB", "2"], detail: "Bの詳しい中身" },
+    ["架空のC", "3"],
+    { cells: ["架空のD", "4"], emphasis: true, detail: "Dの詳しい中身" },
+    ["架空のE", "5"],
+  ]
+  const toggles = (container: HTMLElement) =>
+    [...container.querySelectorAll("button[aria-expanded]")].filter(
+      (element) => element instanceof HTMLButtonElement,
+    )
+
+  it("detail のある行だけに閉じた状態の押しボタンが出て、中身はまだ出ない", () => {
+    const { container } = renderPart(pair(DETAILED).part)
+
+    expect(toggles(container).map((button) => button.getAttribute("aria-expanded"))).toEqual([
+      "false",
+      "false",
+    ])
+    expect(container.textContent).not.toContain("Bの詳しい中身")
+  })
+
+  it("押すと行の直下に全列を通した 1 行で中身が出て、もう一度押すと閉じる", () => {
+    const { container } = renderPart(pair(DETAILED).part)
+    const [first] = toggles(container)
+    if (first === undefined) {
+      throw new Error("押しボタンが無い")
+    }
+    fireEvent.click(first)
+
+    const detailCell = first.closest("tr")?.nextElementSibling?.querySelector("td")
+    expect(first.getAttribute("aria-expanded")).toBe("true")
+    expect(detailCell?.getAttribute("colspan")).toBe("2")
+    expect(detailCell?.textContent).toBe("Bの詳しい中身")
+    fireEvent.click(first)
+    expect(container.textContent).not.toContain("Bの詳しい中身")
+  })
+
+  it("detail を書かない表には押しボタンを出さない", () => {
+    expect(toggles(renderPart(pair(SIMPLE).part).container)).toEqual([])
+  })
+
+  it("並べ替え・絞り込みで行の順が変わっても、開いた中身は元の行に付いている", () => {
+    const { part } = pair(DETAILED)
+    const view = (rowOrder: readonly number[]) => (
+      <div data-report-region="section">
+        <TableFigure part={part} value={PLAIN_VALUE} rowOrder={rowOrder} />
+      </div>
+    )
+    const { container, rerender } = render(view([0, 1, 2, 3, 4]))
+    const [, second] = toggles(container)
+    if (second === undefined) {
+      throw new Error("押しボタンが無い")
+    }
+    fireEvent.click(second)
+    expect(container.textContent).toContain("Dの詳しい中身")
+
+    rerender(view([4, 3, 1, 0]))
+    const rows = [...container.querySelectorAll("tbody tr")].map((row) => row.textContent)
+    expect(rows).toEqual(["架空のE5", "▾架空のD4", "Dの詳しい中身", "▸架空のB2", "架空のA1"])
+    expect(toggles(container).map((button) => button.getAttribute("aria-expanded"))).toEqual([
+      "true",
+      "false",
+    ])
+  })
+
+  it("10 行の畳みは中身の行を数えず、畳まれた行の押しボタンは「ほか n 件」のあとに出る", () => {
+    const rows: TablePart["rows"] = Array.from({ length: 12 }, (_, index) =>
+      index === 0 || index === 11
+        ? { cells: [`架空の行${String(index + 1)}`, "1"], detail: "架空の中身" }
+        : [`架空の行${String(index + 1)}`, "1"],
+    )
+    const { container } = renderPart(pair(rows).part)
+
+    expect(toggles(container)).toHaveLength(1)
+    fireEvent.click(toggles(container)[0] ?? container)
+    expect(container.querySelectorAll("tbody tr")).toHaveLength(12)
+    fireEvent.click(screen.getByRole("button", { name: /ほか 2 件/ }))
+    expect(toggles(container)).toHaveLength(2)
+    expect(container.querySelectorAll("tbody tr")).toHaveLength(13)
   })
 })
 

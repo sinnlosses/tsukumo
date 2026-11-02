@@ -150,6 +150,20 @@ describe("reportViolations", () => {
       expect(kinds(draft([table("架空の旧 → 架空の新")]))).toEqual(["arrow-in-prose"])
     })
 
+    it("行の詳しい中身の A → B も差し戻す", () => {
+      const withDetail = (detail: string): ReportBlock => ({
+        kind: "table",
+        title: "架空の表",
+        columns: ["列", "値"],
+        rows: [{ cells: ["a", "1"], detail }],
+        rest: "",
+        fold: "",
+        aside: "",
+      })
+      expect(kinds(draft([withDetail("架空の旧 → 架空の新")]))).toEqual(["arrow-in-prose"])
+      expect(kinds(draft([withDetail("架空の詳しい中身")]))).toEqual([])
+    })
+
     it("インラインコードの中・from/to・flow の項目・矢印の無い文は通る", () => {
       expect(kinds(draft([reportDraftText("`a → b` と書く。")]))).toEqual([])
       expect(kinds(draft([table({ from: "架空の旧", to: "架空の新" })]))).toEqual([])

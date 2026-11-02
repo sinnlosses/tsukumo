@@ -1,16 +1,20 @@
 // 表と対応表を直接描く部品が共有する表の骨組み。
 // 横スクロールの器・見出しの行・10 行で切る本体を、旧い Markdown の表と同じ要素で返す。
 
-import type { ReactElement, ReactNode } from "react"
+import { type ReactElement, type ReactNode, useState } from "react"
 
 import type { ColumnAlign } from "../../../../../../shared/report/table-layout.ts"
+import { Button } from "../../../../ui/button/button.tsx"
 import { FoldedTableBody, tableLeafClassNames } from "../markdown/markdown.tsx"
+import styles from "./main-view.module.css"
 
 export type LeafTableAlign = ColumnAlign | "center"
 
 export type LeafTableRow = {
   readonly key: string
   readonly cells: readonly ReactNode[]
+  /** 開け閉めの印を出す行の詳しい中身。`label` は押しボタンの名前に使う行の名前。 */
+  readonly detail: { readonly label: string; readonly content: ReactNode } | undefined
 }
 
 type LeafTableProps = {
@@ -47,17 +51,65 @@ export function LeafTable(props: LeafTableProps): ReactElement {
             columnCount={Math.max(1, ...props.rows.map((row) => row.cells.length))}
           >
             {props.rows.map((row) => (
-              <tr key={row.key}>
-                {row.cells.map((cell, index) => (
-                  <td key={`${row.key}-${String(index)}`} {...attributesOf(index)}>
-                    {cell}
-                  </td>
-                ))}
-              </tr>
+              <BodyRow
+                key={row.key}
+                row={row}
+                attributesOf={attributesOf}
+                spaced={props.rows.some((other) => other.detail !== undefined)}
+              />
             ))}
           </FoldedTableBody>
         )}
       </table>
     </div>
+  )
+}
+
+/** 開け閉めの状態はこの部品が持つので、`row.key` は並べ替えで変わらない元の行の添字にする。 */
+function BodyRow(props: {
+  readonly row: LeafTableRow
+  readonly attributesOf: (index: number) => object
+  /** 表のどこかに詳しい中身のある行があるか。無い行の1列目を押しボタンの幅だけ寄せる。 */
+  readonly spaced: boolean
+}): ReactElement {
+  const { row, attributesOf, spaced } = props
+  const [open, setOpen] = useState(false)
+  const { detail } = row
+  return (
+    <>
+      <tr>
+        {row.cells.map((cell, index) => (
+          <td key={`${row.key}-${String(index)}`} {...attributesOf(index)}>
+            {index === 0 && detail !== undefined && (
+              <Button
+                variant="ghost"
+                size="label"
+                pressed="none"
+                disabled={false}
+                ariaLabel={`${detail.label}の詳しい中身`}
+                disclosure={{ kind: "expander", expanded: open }}
+                className={styles["table-detail-toggle"]}
+                onClick={() => {
+                  setOpen(!open)
+                }}
+              >
+                {open ? "▾" : "▸"}
+              </Button>
+            )}
+            {index === 0 && spaced && detail === undefined && (
+              <span className={styles["table-detail-spacer"]} aria-hidden="true" />
+            )}
+            {cell}
+          </td>
+        ))}
+      </tr>
+      {detail !== undefined && open && (
+        <tr className={styles["table-detail-row"]}>
+          <td colSpan={Math.max(1, row.cells.length)} className={styles["table-detail-cell"]}>
+            {detail.content}
+          </td>
+        </tr>
+      )}
+    </>
   )
 }

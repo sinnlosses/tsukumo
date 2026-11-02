@@ -1,7 +1,10 @@
 // レポートの検査のうち、地の文・見出し・項目の書き方を判定する述語。
 
 import { textOutsideInlineMarks } from "../../../../../shared/report/inline-mark.ts"
-import { tableRowCells } from "../../../../../shared/report/report-block-comparison.ts"
+import {
+  tableRowCells,
+  tableRowDetail,
+} from "../../../../../shared/report/report-block-comparison.ts"
 import { MAX_HEADING, MAX_ITEM_LABEL } from "../../../../../shared/report/report-limit.ts"
 import type { ReportOutlineLeaf } from "../../../../../shared/report/report-outline.ts"
 import { withoutInlineCode } from "../draft.ts"
@@ -40,9 +43,9 @@ export function proseTexts(leaf: ReportOutlineLeaf): readonly string[] {
     case "Paragraph":
       return [leaf.text]
     case "Table":
-      return leaf.rows
-        .flatMap(tableRowCells)
-        .map((cell) =>
+      return leaf.rows.flatMap((row) => {
+        const detail = tableRowDetail(row)
+        const cells = tableRowCells(row).map((cell) =>
           typeof cell === "string"
             ? cell
             : "text" in cell
@@ -51,6 +54,8 @@ export function proseTexts(leaf: ReportOutlineLeaf): readonly string[] {
                 ? cell.tag
                 : "",
         )
+        return detail === undefined ? cells : [...cells, detail]
+      })
     default:
       return []
   }

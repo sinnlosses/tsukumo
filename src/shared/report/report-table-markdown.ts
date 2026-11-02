@@ -2,7 +2,12 @@
 
 import { unique } from "remeda"
 
-import { isEmphasisRow, type TableCell, tableRowCells } from "./report-block-comparison.ts"
+import {
+  isEmphasisRow,
+  type TableCell,
+  tableRowCells,
+  tableRowDetail,
+} from "./report-block-comparison.ts"
 import type { ReportBlock } from "./report-block.ts"
 import { captionedMarkdown } from "./report-caption.ts"
 import { htmlInlineWithCode, joinParts, markdownInline } from "./report-inline-markdown.ts"
@@ -12,6 +17,7 @@ import {
   numericCellMagnitude,
   tableLayoutOf,
 } from "./table-layout.ts"
+import { tableCellTexts } from "./table-view.ts"
 
 /** 強調の行の先頭のセルに置く印。地の色は CSS が `tr:has()` で行に当てる。 */
 const EMPHASIS_ROW_MARK = '<span class="row-emphasis-mark" aria-hidden="true"></span>'
@@ -58,6 +64,7 @@ export function tableMarkdown(
         markdownRow(aligns.map((align) => (align === "right" ? "---:" : "---"))),
         ...tableRowMarkdowns(table, tagTones),
       ].join("\n"),
+      tableRowDetailsMarkdown(table),
       table.rest.trim() === ""
         ? ""
         : `<div class="table-rest">${htmlInlineWithCode(table.rest)}</div>`,
@@ -86,6 +93,16 @@ function tableRowMarkdowns(
     const [first = "", ...rest] = cells
     return markdownRow(isEmphasisRow(row) ? [`${EMPHASIS_ROW_MARK}${first}`, ...rest] : cells)
   })
+}
+
+function tableRowDetailsMarkdown(table: Extract<ReportBlock, { readonly kind: "table" }>): string {
+  return table.rows
+    .flatMap((row) => {
+      const detail = tableRowDetail(row)
+      const name = tableCellTexts(tableRowCells(row)[0]).join(" ")
+      return detail === undefined ? [] : [`- ${markdownInline(name)}: ${markdownInline(detail)}`]
+    })
+    .join("\n")
 }
 
 function columnMarked(cell: string, index: number, emphasisColumn: number | undefined): string {

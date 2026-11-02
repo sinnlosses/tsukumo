@@ -71,6 +71,7 @@ function bodyRows(rows: MatrixPart["rows"]): readonly LeafTableRow[] {
         <MatrixMark key={`${String(index)}:${status}`} status={status} legend={false} />
       )),
     ],
+    detail: undefined,
   }))
 }
 
