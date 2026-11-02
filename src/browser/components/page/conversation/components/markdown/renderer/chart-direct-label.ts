@@ -1,6 +1,7 @@
 // グラフの凡例を出さない代わりに、系列名・項目名を線と棒の端に直接書く Chart.js の plugin。
 // arrow・slope・span・share の種類と系列名は `options.plugins["tsukumo-direct-label"]` から読む。
 
+import { SHARE_BAR_THICKNESS } from "../../../domain/report-diagram-markdown.ts"
 import {
   ARROW_HEAD,
   arrowPadding,
@@ -32,6 +33,7 @@ const SLOPE_SIDE_PADDING = 130
 const NAME_COLUMN_SHARE = 0.4
 const SHARE_ROW_HEIGHT = 18
 const SHARE_ROW_GAP = 8
+const SHARE_BAR_MARGIN = 12
 
 type DirectLabelOption = {
   readonly mode: "arrow" | "slope" | "span" | "share" | "values"
@@ -41,7 +43,11 @@ type DirectLabelOption = {
 export const directLabelPlugin = {
   id: DIRECT_LABEL_PLUGIN_ID,
   beforeLayout: (chart: ChartInstance): void => {
-    chart.options.layout.padding = paddingFor(chart)
+    const padding = paddingFor(chart)
+    chart.options.layout.padding = padding
+    if (directLabelOptionOf(chart.options.plugins[DIRECT_LABEL_PLUGIN_ID])?.mode === "share") {
+      fitShareHeight(chart, padding.bottom)
+    }
   },
   afterDatasetsDraw: (chart: ChartInstance): void => {
     const { ctx } = chart
@@ -66,6 +72,13 @@ export const directLabelPlugin = {
     }
     ctx.restore()
   },
+}
+
+function fitShareHeight(chart: ChartInstance, labelPadding: number): void {
+  const container = chart.canvas.parentElement
+  if (container !== null) {
+    container.style.height = `${String(SHARE_BAR_MARGIN * 2 + SHARE_BAR_THICKNESS + labelPadding)}px`
+  }
 }
 
 function paddingFor(chart: ChartInstance): Padding {

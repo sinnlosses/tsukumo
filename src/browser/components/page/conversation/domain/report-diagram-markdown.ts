@@ -71,7 +71,7 @@ type DirectLabelPlugins = {
 
 const ARROW_BAR_THICKNESS = 4
 const SPAN_BAR_THICKNESS = 12
-const SHARE_BAR_THICKNESS = 36
+export const SHARE_BAR_THICKNESS = 36
 const CHART_MIN_HEIGHT = 320
 const CHART_ROW_HEIGHT = 28
 const CHART_FRAME_HEIGHT = 48
