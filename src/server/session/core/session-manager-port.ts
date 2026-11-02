@@ -21,8 +21,7 @@ import type { SessionId } from "../../session-driver/core/session-id.ts"
 import type { ContextUsageLog } from "../../usage/core/context-usage.ts"
 import type { ExperienceMetricLog, SplitRelease } from "../../usage/core/experience-metric.ts"
 import type { TokenUsageLog } from "../../usage/core/token-usage.ts"
-import type { CommandSession } from "./command-session.ts"
-import type { SessionLaunchRequest } from "./session-launch.ts"
+import type { CommandSession, SessionLaunchRequest } from "./command-session-port.ts"
 
 export type SessionManagerOptions = {
   /** 現在時刻（エポックミリ秒）を返す関数（呼び出し側が時計を渡す。テストは偽の時計を渡す）。 */

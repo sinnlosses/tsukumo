@@ -2,10 +2,10 @@ import { describe, expect, it } from "vitest"
 
 import { createSessionCatalog } from "../../../../src/server/session-driver/core/session/session-catalog.ts"
 import { sessionTag } from "../../../../src/server/session-driver/core/session/session-mark.ts"
+import type { SessionLaunchRequest } from "../../../../src/server/session/core/command-session-port.ts"
 import {
   createSessionLaunch,
   type SessionLaunchPorts,
-  type SessionLaunchRequest,
 } from "../../../../src/server/session/core/session-launch.ts"
 import type { RestoredEvent, SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import { knownRestored } from "../../../fixture/restored-event.ts"

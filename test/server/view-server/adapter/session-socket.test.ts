@@ -9,7 +9,7 @@ import WebSocket from "ws"
 
 import { createSocketRouter } from "../../../../src/router.ts"
 import { createPromptImageShelf } from "../../../../src/server/session-driver/core/prompt-image-shelf.ts"
-import type { CommandSession } from "../../../../src/server/session/core/command-session.ts"
+import type { CommandSession } from "../../../../src/server/session/core/command-session-port.ts"
 import { createStartupToken } from "../../../../src/server/view-server/adapter/server.ts"
 import {
   attachSessionSocket,

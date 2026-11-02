@@ -17,7 +17,7 @@ import {
 } from "../../../shared/command.ts"
 import { restartRefused, type SessionState } from "../../../shared/session/session-state.ts"
 import { SESSION_TOKEN_QUERY_NAME } from "../../../shared/view-server/session-socket.ts"
-import type { CommandSession } from "../../session/core/command-session.ts"
+import type { CommandSession } from "../../session/core/command-session-port.ts"
 import { isConnectionGranted } from "../core/connection-grant.ts"
 import type { SubscribeFrames } from "./frame-procedure.ts"
 

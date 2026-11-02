@@ -2,31 +2,18 @@
 // 断る条件は契約の `meta` にあり、見るのは `rpcGuard`。
 // ここは口の形と `session` の行の型、行を呼ぶ `receiveSessionCommand` と、モードの直前のセッションを覚え直す `rememberedModeSessions` だけを持つ。
 
-import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import type { SessionState } from "../../../shared/session/session-state.ts"
 import {
   type DispatchResult,
   type FeatureReceiver,
   receiveFeatureCommand,
 } from "../../core/command-receiver.ts"
-import type { SessionDriver } from "../../session-driver/core/session-driver.ts"
-import { parseSessionId, type SessionId } from "../../session-driver/core/session-id.ts"
-import type { SessionLaunchRequest } from "./session-launch.ts"
-
-/**
- * いまの代に固定した口。
- * 長く続く受け手は、起こし直しをまたいで新しい代に混ざらないために、始めたときに1回取って持ち回る（`emit` は代が閉じたら黙って捨てる）。
- */
-export type CommandGeneration = {
-  readonly emit: (event: SessionEvent) => void
-  /** 振り返りの書き手を中断する信号（代を閉じると中断される）。 */
-  readonly diarySignal: AbortSignal
-}
-
-/** モードの直前のセッション。覚えていないときは `none`。 */
-export type RememberedSession =
-  | { readonly kind: "none" }
-  | { readonly kind: "remembered"; readonly sessionId: SessionId }
+import { parseSessionId } from "../../session-driver/core/session-id.ts"
+import type {
+  CommandSession,
+  RememberedSession,
+  SessionLaunchRequest,
+} from "./command-session-port.ts"
 
 export type ModeSessions = {
   readonly work: RememberedSession
@@ -34,23 +21,6 @@ export type ModeSessions = {
 }
 
 export const NO_MODE_SESSIONS: ModeSessions = { work: { kind: "none" }, chat: { kind: "none" } }
-
-/** 受け手が使うセッションの口。この5つだけで、代・束・購読者は見せない。 */
-export type CommandSession = {
-  /** いまの姿。 */
-  readonly state: () => SessionState
-  /**
-   * 指したモードの直前のセッション。モードを切り替えて起こし直す直前に、そのとき出していたセッションを覚える。
-   * 起こし直しでは残り、プロセスを越えては覚えない。ブラウザへは配らない。
-   */
-  readonly modeSession: (chat: boolean) => RememberedSession
-  /** いまの代の駆動が起き上がるのを待つ。 */
-  readonly driver: () => Promise<SessionDriver>
-  /** 起こし直す（失敗しても投げず、定型文の理由を返す）。 */
-  readonly restart: (request: SessionLaunchRequest) => Promise<DispatchResult>
-  /** いまの代に固定した口。 */
-  readonly generation: () => CommandGeneration
-}
 
 /**
  * セッションの口を受け取る行。型がここにあるので、`session` の表にだけ書ける。

@@ -18,6 +18,7 @@ import type { DiagnosticLog } from "../../diagnostic/core/diagnostic.ts"
 import type { SessionDriver, SessionStart } from "../../session-driver/core/session-driver.ts"
 import type { SessionId } from "../../session-driver/core/session-id.ts"
 import type { SessionCatalogRefresh } from "../../session-driver/core/session/session-catalog.ts"
+import type { SessionLaunchRequest, SessionResume } from "./command-session-port.ts"
 
 /** これから起こす駆動の種。 */
 export type SessionLaunchSeed<Pack extends NamedCharacterPack> = {
@@ -34,29 +35,6 @@ export type SessionLaunchSeed<Pack extends NamedCharacterPack> = {
    */
   readonly sessionDefault: SessionDefault
 }
-
-/**
- * 起こす（起こし直す）ときの指定。
- * パックの決め方（{@link CharacterSelection}）が、そのまま「覚えるかどうか」も分ける。覚えるのは `name` のときだけ。
- */
-export type SessionLaunchRequest = {
-  /** これから起こすパックの決め方。 */
-  readonly selection: CharacterSelection
-  /** 雑談モードで起こすか。 */
-  readonly chat: boolean
-  /** これから起こすセッションの決め方。 */
-  readonly resume: SessionResume
-}
-
-/** これから起こすセッションの決め方。 */
-export type SessionResume =
-  /**
-   * 画面から選ばれたセッション。探さずに、一覧に出したIDをそのまま続きにする。
-   * claude 側が知らないIDだったときは新規のセッションとして起き上がる。
-   */
-  | { readonly by: "id"; readonly sessionId: SessionId }
-  /** 探さずに新規で起こす。 */
-  | { readonly by: "new" }
 
 /** 一続きの中で外の世界に頼むこと。 */
 export type SessionLaunchPorts<Pack extends NamedCharacterPack> = {

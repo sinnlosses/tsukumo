@@ -4,8 +4,10 @@ import type { CommandRouterPorts } from "../../src/router.ts"
 import type { DispatchResult } from "../../src/server/core/command-receiver.ts"
 import type { DiaryWriterSource } from "../../src/server/diary/core/diary-writer.ts"
 import { createPromptImageShelf } from "../../src/server/session-driver/core/prompt-image-shelf.ts"
-import type { CommandSession } from "../../src/server/session/core/command-session.ts"
-import type { SessionLaunchRequest } from "../../src/server/session/core/session-launch.ts"
+import type {
+  CommandSession,
+  SessionLaunchRequest,
+} from "../../src/server/session/core/command-session-port.ts"
 import type { DailyAchievement } from "../../src/shared/achievement/achievement.ts"
 import type { GeneratedCharacter } from "../../src/shared/character-pack/generated-character.ts"
 import type {

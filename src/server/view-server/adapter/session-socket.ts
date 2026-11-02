@@ -18,7 +18,7 @@ import { type RawData, WebSocketServer } from "ws"
 
 import type { socketContract } from "../../../shared/rpc.ts"
 import { SESSION_SOCKET_PATH } from "../../../shared/view-server/session-socket.ts"
-import type { CommandSession } from "../../session/core/command-session.ts"
+import type { CommandSession } from "../../session/core/command-session-port.ts"
 import { isConnectionGranted } from "../core/connection-grant.ts"
 import type { SubscribeFrames } from "./frame-procedure.ts"
 import { rpcContextOf, type SocketRpcContext } from "./rpc-guard.ts"

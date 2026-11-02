@@ -32,7 +32,7 @@
   理由は `FRAME_ERROR_REASON`（`shared/frame.ts`）の値。**条件と理由を同じ所に書く**。断ったときは
   理由を添えた `REFUSED` が応答で返り、受け手は呼ばれない
 - **受け手は3種**（`write` / `call` / `session` の判別可能な合併型。`command-receiver.ts`）。`session` の
-  受け手は `CommandSession`（`command-session.ts`）を受け取り、**`session` の表にだけ書ける**（型が
+  受け手は `CommandSession`（`command-session-port.ts`）を受け取り、**`session` の表にだけ書ける**（型が
   `session/core/` にあるので、葉の機能からは物理的に書けない）。書き込みの関数は各機能の `ports` にあり、
   中身を選ぶのはその機能の組み立て（`src/wiring/<機能>.ts`）
 - **束ねるのを配線に置く理由**: 表を `session/core/` で束ねると、`session` が `item` と

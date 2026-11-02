@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import type { CommandSession } from "../src/server/session/core/command-session.ts"
+import type { CommandSession } from "../src/server/session/core/command-session-port.ts"
 import { FRAME_ERROR_REASON } from "../src/shared/frame.ts"
 import type { SessionEvent } from "../src/shared/session/session-event.ts"
 import { createCommandClient } from "./fixture/command-client.ts"

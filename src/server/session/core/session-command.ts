@@ -27,7 +27,8 @@ import type { PromptImageShelf } from "../../session-driver/core/prompt-image-sh
 import type { PromptOpening, SessionDriver } from "../../session-driver/core/session-driver.ts"
 import { parseSessionId, type SessionId } from "../../session-driver/core/session-id.ts"
 import type { SessionReservation } from "../../session-driver/core/session/session-claim.ts"
-import type { CommandReceiver, CommandSession, SessionReceiver } from "./command-session.ts"
+import type { CommandSession } from "./command-session-port.ts"
+import type { CommandReceiver, SessionReceiver } from "./command-session.ts"
 import { ACCEPTED, askDriver, declined, nudge } from "./driver-command.ts"
 
 export type SessionCommandPorts = {

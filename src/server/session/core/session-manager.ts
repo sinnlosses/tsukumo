@@ -26,12 +26,8 @@ import type { SessionDriver } from "../../session-driver/core/session-driver.ts"
 import { createContextUsageRecorder } from "../../usage/core/context-usage.ts"
 import { createExperienceMetricRecorder, splitEntry } from "../../usage/core/experience-metric.ts"
 import { createTokenUsageRecorder } from "../../usage/core/token-usage.ts"
-import {
-  type CommandSession,
-  type ModeSessions,
-  NO_MODE_SESSIONS,
-  rememberedModeSessions,
-} from "./command-session.ts"
+import type { CommandSession, SessionLaunchRequest } from "./command-session-port.ts"
+import { type ModeSessions, NO_MODE_SESSIONS, rememberedModeSessions } from "./command-session.ts"
 import { noteConsolidationHalt, noteConsolidationOutcome } from "./consolidation-footprint.ts"
 import { createConsolidationHalt } from "./consolidation-halt.ts"
 import { createEventBatch } from "./event-batch.ts"
@@ -53,7 +49,6 @@ import {
   type GenerationTally,
   type SessionGeneration,
 } from "./session-generation.ts"
-import type { SessionLaunchRequest } from "./session-launch.ts"
 import type { SessionManager, SessionManagerOptions } from "./session-manager-port.ts"
 import { createWaitingLineAlarm } from "./waiting-line-alarm.ts"
 

@@ -6,7 +6,8 @@ import { implement } from "@orpc/server"
 
 import { sessionContract } from "../../../shared/contract/session.ts"
 import { refusedUnlessAccepted } from "../../adapter/command-refusal.ts"
-import { type CommandSession, receiveSessionCommand } from "../core/command-session.ts"
+import type { CommandSession } from "../core/command-session-port.ts"
+import { receiveSessionCommand } from "../core/command-session.ts"
 import { type SessionCommandPorts, sessionCommands } from "../core/session-command.ts"
 
 export function sessionProcedure(ports: SessionCommandPorts) {
