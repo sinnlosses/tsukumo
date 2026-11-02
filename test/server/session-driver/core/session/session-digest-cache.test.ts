@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest"
 
-import { createSessionDigestCache } from "../../../../src/server/session-driver/core/session-digest-cache.ts"
+import { createSessionDigestCache } from "../../../../../src/server/session-driver/core/session/session-digest-cache.ts"
 import {
   type SessionDigest,
   UNAVAILABLE_SESSION_DIGEST,
-} from "../../../../src/shared/session/session-digest.ts"
-import { checkedSessionId } from "../../../fixture/session-id.ts"
+} from "../../../../../src/shared/session/session-digest.ts"
+import { checkedSessionId } from "../../../../fixture/session-id.ts"
 
 const S1 = checkedSessionId("s-1")
 const S2 = checkedSessionId("s-2")

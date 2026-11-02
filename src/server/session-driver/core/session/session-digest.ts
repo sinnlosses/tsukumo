@@ -7,18 +7,18 @@
 // （これは復元の履歴には無い、この畳みだけの組み立て）。
 // 読んだものはどこにも書き出さない。
 
-import type { Expression } from "../../../shared/character-pack/expression.ts"
-import { foldInlineMarks } from "../../../shared/report/inline-mark.ts"
+import type { Expression } from "../../../../shared/character-pack/expression.ts"
+import { foldInlineMarks } from "../../../../shared/report/inline-mark.ts"
 import {
   MAX_SESSION_SUMMARY_LENGTH,
   type SessionDigest,
   type SessionRemaining,
   summaryParagraphs,
   UNAVAILABLE_SESSION_DIGEST,
-} from "../../../shared/session/session-digest.ts"
-import type { SessionEvent } from "../../../shared/session/session-event.ts"
-import { clipWithEllipsis } from "../../../shared/utils/clip-text.ts"
-import { createReportInheritance } from "../../report/core/review/report-inheritance.ts"
+} from "../../../../shared/session/session-digest.ts"
+import type { SessionEvent } from "../../../../shared/session/session-event.ts"
+import { clipWithEllipsis } from "../../../../shared/utils/clip-text.ts"
+import { createReportInheritance } from "../../../report/core/review/report-inheritance.ts"
 import { EMPTY_INPUT_LEDGER } from "./input-ledger.ts"
 import { restoredMessageEvents } from "./session-restore.ts"
 

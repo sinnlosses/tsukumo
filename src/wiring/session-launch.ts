@@ -25,14 +25,14 @@ import {
   createSessionClaimFile,
   defaultSessionClaimPlace,
 } from "../server/session-driver/adapter/session-claim-file.ts"
+import type { SessionDriver, SessionMode } from "../server/session-driver/core/session-driver.ts"
+import type { SessionId } from "../server/session-driver/core/session-id.ts"
 import {
   createSessionCatalog,
   type SessionCatalog,
-} from "../server/session-driver/core/session-catalog.ts"
-import { createSessionClaim } from "../server/session-driver/core/session-claim.ts"
-import type { SessionDriver, SessionMode } from "../server/session-driver/core/session-driver.ts"
-import type { SessionId } from "../server/session-driver/core/session-id.ts"
-import { sessionTag } from "../server/session-driver/core/session-mark.ts"
+} from "../server/session-driver/core/session/session-catalog.ts"
+import { createSessionClaim } from "../server/session-driver/core/session/session-claim.ts"
+import { sessionTag } from "../server/session-driver/core/session/session-mark.ts"
 import {
   readRememberedSessionDefault,
   writeRememberedSessionDefault,

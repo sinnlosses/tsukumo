@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest"
 
-import { asidePromptText } from "../../../../src/server/session-driver/core/aside-prompt.ts"
-import { inputLedgerOf } from "../../../../src/server/session-driver/core/input-ledger.ts"
-import { progressNudgePromptText } from "../../../../src/server/session-driver/core/progress-nudge.ts"
-import { assistantMessage, userMessage } from "../../../fixture/sdk-message.ts"
-import { requestEvent } from "../../../fixture/session-event.ts"
-import { eventsOf } from "../../../fixture/session-restore.ts"
+import { asidePromptText } from "../../../../../src/server/session-driver/core/aside-prompt.ts"
+import { progressNudgePromptText } from "../../../../../src/server/session-driver/core/progress-nudge.ts"
+import { inputLedgerOf } from "../../../../../src/server/session-driver/core/session/input-ledger.ts"
+import { assistantMessage, userMessage } from "../../../../fixture/sdk-message.ts"
+import { requestEvent } from "../../../../fixture/session-event.ts"
+import { eventsOf } from "../../../../fixture/session-restore.ts"
 
 const FIRST = "00000000-0000-4000-8000-000000000001"
 const SECOND = "00000000-0000-4000-8000-000000000002"

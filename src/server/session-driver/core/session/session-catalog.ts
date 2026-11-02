@@ -4,8 +4,11 @@
 
 import { isPlainObject, omit } from "remeda"
 
-import { MAX_SESSION_CHOICES, type SessionChoice } from "../../../shared/session/session-choice.ts"
-import type { SessionId } from "./session-id.ts"
+import {
+  MAX_SESSION_CHOICES,
+  type SessionChoice,
+} from "../../../../shared/session/session-choice.ts"
+import type { SessionId } from "../session-id.ts"
 import { readSessionMark } from "./session-mark.ts"
 
 /** 印の付いたセッション1件（目印まで揃えた印と、目印を除いた印つき）。 */

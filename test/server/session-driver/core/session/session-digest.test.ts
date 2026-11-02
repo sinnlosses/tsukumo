@@ -1,16 +1,16 @@
 import { describe, expect, it } from "vitest"
 
-import { EMPTY_INPUT_LEDGER } from "../../../../src/server/session-driver/core/input-ledger.ts"
-import { toSessionDigest } from "../../../../src/server/session-driver/core/session-digest.ts"
-import { toRestoredEvents } from "../../../../src/server/session-driver/core/session-restore.ts"
-import type { Expression } from "../../../../src/shared/character-pack/expression.ts"
-import { MAX_SESSION_SUMMARY_LENGTH } from "../../../../src/shared/session/session-digest.ts"
+import { EMPTY_INPUT_LEDGER } from "../../../../../src/server/session-driver/core/session/input-ledger.ts"
+import { toSessionDigest } from "../../../../../src/server/session-driver/core/session/session-digest.ts"
+import { toRestoredEvents } from "../../../../../src/server/session-driver/core/session/session-restore.ts"
+import type { Expression } from "../../../../../src/shared/character-pack/expression.ts"
+import { MAX_SESSION_SUMMARY_LENGTH } from "../../../../../src/shared/session/session-digest.ts"
 import {
   assistantMessage,
   REPORT_TOOL_FULL_NAME,
   SPEAK_TOOL_FULL_NAME,
   userMessage,
-} from "../../../fixture/sdk-message.ts"
+} from "../../../../fixture/sdk-message.ts"
 
 const EXPRESSIONS: readonly Expression[] = ["default", "proud"]
 

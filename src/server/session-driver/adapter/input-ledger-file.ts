@@ -6,14 +6,14 @@ import { join } from "node:path"
 
 import { appendJsonLines, readValidLines } from "../../adapter/lib/jsonl.ts"
 import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
+import { parseSessionId, type SessionId } from "../core/session-id.ts"
 import {
   EMPTY_INPUT_LEDGER,
   type InputLedger,
   type InputLedgerEntry,
   inputLedgerLineSchema,
   inputLedgerOf,
-} from "../core/input-ledger.ts"
-import { parseSessionId, type SessionId } from "../core/session-id.ts"
+} from "../core/session/input-ledger.ts"
 
 /** 更新時刻からこの日数を過ぎた控えを消す。 */
 const INPUT_LEDGER_RETENTION_DAYS = 14

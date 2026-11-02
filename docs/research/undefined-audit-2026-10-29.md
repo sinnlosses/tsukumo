@@ -201,9 +201,9 @@
 | `scripts/capture/lib/scene-end.ts`                                                           | `countedSteps`                 | 引数       | 161 | R10  |
 | `scripts/document/section-reference.ts`                                                      | `toReference`                  | 引数       | 230 | R2   |
 | `server/session-driver/core/plan.ts`                                                         | `planName`                     | 引数       | 27  | R2   |
-| `server/session-driver/core/session-catalog.ts`                                              | `withSessionMark`              | 引数       | 148 | R2   |
-| `server/session-driver/core/session-digest.ts`                                               | `clipped`                      | 引数       | 91  | R1   |
-| `server/session-driver/core/session-title.ts`                                                | `decideSessionTitle`           | 引数       | 51  | R2   |
+| `server/session-driver/core/session/session-catalog.ts`                                      | `withSessionMark`              | 引数       | 148 | R2   |
+| `server/session-driver/core/session/session-digest.ts`                                       | `clipped`                      | 引数       | 91  | R1   |
+| `server/session-driver/core/session/session-title.ts`                                        | `decideSessionTitle`           | 引数       | 51  | R2   |
 | `shared/report/table-view.ts`                                                                | `tableRowFilterTexts`          | 引数       | 25  | R10  |
 | `browser/domain/character-face.ts`                                                           | `characterFaceInfo`            | 引数       | 11  | R4   |
 | `browser/domain/effort-label.ts`                                                             | `resolveEffortSelect`          | 引数       | 77  | R4   |

@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest"
 
+import type { SessionId } from "../../../../../src/server/session-driver/core/session-id.ts"
 import {
   createSessionClaim,
   readSessionClaimRecord,
   type SessionClaimStore,
-} from "../../../../src/server/session-driver/core/session-claim.ts"
-import type { SessionId } from "../../../../src/server/session-driver/core/session-id.ts"
-import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
-import { checkedSessionId } from "../../../fixture/session-id.ts"
+} from "../../../../../src/server/session-driver/core/session/session-claim.ts"
+import type { SessionEvent } from "../../../../../src/shared/session/session-event.ts"
+import { checkedSessionId } from "../../../../fixture/session-id.ts"
 
 const SESSION_A = checkedSessionId("session-a")
 const SESSION_B = checkedSessionId("session-b")

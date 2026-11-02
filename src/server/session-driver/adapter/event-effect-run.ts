@@ -1,9 +1,9 @@
 // `effectsOfEvent` が決めたやることを、駆動の持ち物に対して実行する。
 
-import type { EventEffect } from "../core/event-effect.ts"
-import type { InputLedgerIntake } from "../core/input-ledger.ts"
 import type { SessionDriverOptions } from "../core/session-driver.ts"
-import type { SessionTitleIntake } from "../core/session-title.ts"
+import type { EventEffect } from "../core/session/event-effect.ts"
+import type { InputLedgerIntake } from "../core/session/input-ledger.ts"
+import type { SessionTitleIntake } from "../core/session/session-title.ts"
 import { appendInputLedger } from "./input-ledger-file.ts"
 import { markSession, type SessionTitleWriter } from "./sdk-session.ts"
 

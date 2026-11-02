@@ -5,8 +5,8 @@
 import { isPlainObject } from "remeda"
 import { z } from "zod"
 
-import type { TurnOutcome } from "../../../shared/session-driver/turn-failure.ts"
-import { parseSessionId, type SessionId } from "./session-id.ts"
+import type { TurnOutcome } from "../../../../shared/session-driver/turn-failure.ts"
+import { parseSessionId, type SessionId } from "../session-id.ts"
 
 /** 控えに残す入力の種類。 */
 export type LedgeredInputKind = "request" | "aside" | "progress-nudge"

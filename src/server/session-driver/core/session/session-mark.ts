@@ -1,7 +1,7 @@
 // セッションの印（SDK の `tagSession`）の組み立てと読み取り。
 // 外の世界（claude の transcript）に書かれる値なので、組み立てと読み取りを1箇所に集める。
 
-import { DEFAULT_VIEW_PORT, MAX_PORT_NUMBER } from "../../view-server/core/port-resolution.ts"
+import { DEFAULT_VIEW_PORT, MAX_PORT_NUMBER } from "../../../view-server/core/port-resolution.ts"
 
 /** セッションの印の前置き。組み立ては {@link sessionTag} だけ（文字列を他所で作らない）。 */
 const SESSION_TAG_PREFIX = "tsukumo"

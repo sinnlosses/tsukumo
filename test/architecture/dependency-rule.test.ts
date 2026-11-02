@@ -117,6 +117,22 @@ describe(".dependency-cruiser.cjs の規則", () => {
       expect(forbids(`${CORE_DIR}/message/a.ts`, `${CORE_DIR}/other/b.ts`)).toBe(true)
     })
 
+    it("session/ から core/ 直下のファイルと message/ を読む import は通し、逆向きと別の子への import は落とす", () => {
+      const forbids = (from: string, to: string): boolean =>
+        allChildRules.some(
+          (rule) =>
+            new RegExp(rule.from.path ?? "(?!)").test(from) &&
+            new RegExp(rule.to.path ?? "(?!)").test(to) &&
+            !new RegExp(rule.to.pathNot ?? "(?!)").test(to),
+        )
+      const CORE_DIR = "src/server/session-driver/core"
+
+      expect(forbids(`${CORE_DIR}/session/a.ts`, `${CORE_DIR}/session-driver.ts`)).toBe(false)
+      expect(forbids(`${CORE_DIR}/session/a.ts`, `${CORE_DIR}/message/b.ts`)).toBe(false)
+      expect(forbids(`${CORE_DIR}/message/a.ts`, `${CORE_DIR}/session/b.ts`)).toBe(true)
+      expect(forbids(`${CORE_DIR}/session/a.ts`, `${CORE_DIR}/other/b.ts`)).toBe(true)
+    })
+
     it("session-driver/core/ の規則の子は実際のディレクトリと過不足なく一致する", () => {
       const prefix = "server-child-edge:session-driver/core/"
       const ruleChildren = allChildRules

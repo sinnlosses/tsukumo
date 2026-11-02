@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
-import { createSessionCatalog } from "../../../../src/server/session-driver/core/session-catalog.ts"
-import { sessionTag } from "../../../../src/server/session-driver/core/session-mark.ts"
+import { createSessionCatalog } from "../../../../src/server/session-driver/core/session/session-catalog.ts"
+import { sessionTag } from "../../../../src/server/session-driver/core/session/session-mark.ts"
 import {
   createSessionLaunch,
   type SessionLaunchPorts,

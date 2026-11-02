@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
-import { createSessionEnding } from "../../../../src/server/session-driver/core/session-ending.ts"
-import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
+import { createSessionEnding } from "../../../../../src/server/session-driver/core/session/session-ending.ts"
+import type { SessionEvent } from "../../../../../src/shared/session/session-event.ts"
 
 const UTTERANCE: SessionEvent = { kind: "utterance", text: "架空の本文" }
 const ENDED: SessionEvent = { kind: "session-ended", reason: "架空の理由" }

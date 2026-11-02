@@ -15,9 +15,9 @@ import type {
   NamedCharacterPack,
 } from "../../character-pack/core/character-selection.ts"
 import type { DiagnosticLog } from "../../diagnostic/core/diagnostic.ts"
-import type { SessionCatalogRefresh } from "../../session-driver/core/session-catalog.ts"
 import type { SessionDriver, SessionStart } from "../../session-driver/core/session-driver.ts"
 import type { SessionId } from "../../session-driver/core/session-id.ts"
+import type { SessionCatalogRefresh } from "../../session-driver/core/session/session-catalog.ts"
 
 /** これから起こす駆動の種。 */
 export type SessionLaunchSeed<Pack extends NamedCharacterPack> = {

@@ -5,7 +5,7 @@ import {
   EMPTY_INPUT_LEDGER,
   inputLedgerLineSchema,
   inputLedgerOf,
-} from "../../../../src/server/session-driver/core/input-ledger.ts"
+} from "../../../../../src/server/session-driver/core/session/input-ledger.ts"
 
 const SESSION = "00000000-0000-4000-8000-0000000000aa"
 const REQUEST = "00000000-0000-4000-8000-000000000001"

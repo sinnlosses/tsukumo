@@ -32,7 +32,7 @@ characters/<name>/
   入れ替わる。`startSdkDriver` が `mcpServers` を毎回組み直すので `setMcpServers` は要らない）。
   起こすのは新規のセッションで、そのパックの前のセッションへは切り替え画面から戻る
 - **キャラクターごと・モードごとに別のセッションを持つ**（印の形と切り替え先の一覧は `docs/requirements.md`
-  4.8「鍵」）。印の組み立ても読み取りも `session-driver/core/session-mark.ts` の `sessionTag` /
+  4.8「鍵」）。印の組み立ても読み取りも `session-driver/core/session/session-mark.ts` の `sessionTag` /
   `readSessionMark` 1箇所で、配線（`src/wiring/session-launch.ts`）はそれを一覧を出す側と付ける側の両方に渡す
 
 **探索先は3箇所で、同名は後ろが勝つ**（`listCharacterPacks`）:

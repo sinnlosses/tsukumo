@@ -1,23 +1,23 @@
 import { describe, expect, it } from "vitest"
 
-import { mainViewTurns } from "../../../../src/browser/domain/main-view/main-view.ts"
-import { asidePromptText } from "../../../../src/server/session-driver/core/aside-prompt.ts"
-import { EMPTY_INPUT_LEDGER } from "../../../../src/server/session-driver/core/input-ledger.ts"
-import { progressNudgePromptText } from "../../../../src/server/session-driver/core/progress-nudge.ts"
-import { toRestoredEvents } from "../../../../src/server/session-driver/core/session-restore.ts"
-import { applyRestoredEvents } from "../../../../src/server/session/core/restored-event.ts"
-import { mainViewEntries } from "../../../../src/shared/session/main-view-entry.ts"
-import { turnAsides } from "../../../../src/shared/session/main-view-shape.ts"
-import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
-import { INITIAL_SESSION_STATE } from "../../../../src/shared/session/session-state.ts"
-import { EXPRESSIONS } from "../../../fixture/sdk-assistant-message.ts"
+import { mainViewTurns } from "../../../../../src/browser/domain/main-view/main-view.ts"
+import { asidePromptText } from "../../../../../src/server/session-driver/core/aside-prompt.ts"
+import { progressNudgePromptText } from "../../../../../src/server/session-driver/core/progress-nudge.ts"
+import { EMPTY_INPUT_LEDGER } from "../../../../../src/server/session-driver/core/session/input-ledger.ts"
+import { toRestoredEvents } from "../../../../../src/server/session-driver/core/session/session-restore.ts"
+import { applyRestoredEvents } from "../../../../../src/server/session/core/restored-event.ts"
+import { mainViewEntries } from "../../../../../src/shared/session/main-view-entry.ts"
+import { turnAsides } from "../../../../../src/shared/session/main-view-shape.ts"
+import type { SessionEvent } from "../../../../../src/shared/session/session-event.ts"
+import { INITIAL_SESSION_STATE } from "../../../../../src/shared/session/session-state.ts"
+import { EXPRESSIONS } from "../../../../fixture/sdk-assistant-message.ts"
 import {
   assistantMessage,
   SPEAK_TOOL_FULL_NAME,
   userMessage,
-} from "../../../fixture/sdk-message.ts"
-import { requestEvent } from "../../../fixture/session-event.ts"
-import { eventsOf } from "../../../fixture/session-restore.ts"
+} from "../../../../fixture/sdk-message.ts"
+import { requestEvent } from "../../../../fixture/session-event.ts"
+import { eventsOf } from "../../../../fixture/session-restore.ts"
 
 /** `getSessionMessages` がメッセージに載せる出自の欄（`is_meta`・`origin`・`isCompletedLocalCommand`）を足す。 */
 function withFields(message: unknown, fields: Readonly<Record<string, unknown>>): unknown {

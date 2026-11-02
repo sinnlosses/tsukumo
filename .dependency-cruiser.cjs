@@ -37,6 +37,7 @@ const SERVER_CHILD_IMPORTS = {
   },
   "session-driver/core": {
     message: [],
+    session: ["message"],
   },
 }
 

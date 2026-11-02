@@ -4,9 +4,9 @@
 
 import { isPlainObject } from "remeda"
 
-import type { SessionEvent } from "../../../shared/session/session-event.ts"
-import type { SessionStart } from "./session-driver.ts"
-import { parseSessionId, type SessionId } from "./session-id.ts"
+import type { SessionEvent } from "../../../../shared/session/session-event.ts"
+import type { SessionStart } from "../session-driver.ts"
+import { parseSessionId, type SessionId } from "../session-id.ts"
 
 /** 起こす直前に選んだIDを占有ファイルに書けたか（`reserved`）、別の窓が使っていたか（`occupied`）。 */
 export type SessionReservation = "reserved" | "occupied"

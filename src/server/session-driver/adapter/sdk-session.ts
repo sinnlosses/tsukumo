@@ -21,17 +21,20 @@ import {
   UNAVAILABLE_SESSION_DIGEST,
 } from "../../../shared/session/session-digest.ts"
 import type { RestoredEvent } from "../../../shared/session/session-event.ts"
-import { createSessionDigestCache, type TranscriptStamp } from "../core/session-digest-cache.ts"
-import { toSessionDigest } from "../core/session-digest.ts"
 import type { SessionDriverOptions } from "../core/session-driver.ts"
 import type { SessionId } from "../core/session-id.ts"
-import { toRestoredEvents } from "../core/session-restore.ts"
+import {
+  createSessionDigestCache,
+  type TranscriptStamp,
+} from "../core/session/session-digest-cache.ts"
+import { toSessionDigest } from "../core/session/session-digest.ts"
+import { toRestoredEvents } from "../core/session/session-restore.ts"
 import {
   decideSessionTitle,
   INITIAL_SESSION_TITLE_STATE,
   noteConversationCleared,
   type SessionTitleState,
-} from "../core/session-title.ts"
+} from "../core/session/session-title.ts"
 import { readInputLedger } from "./input-ledger-file.ts"
 
 /**

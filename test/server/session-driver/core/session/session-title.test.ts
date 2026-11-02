@@ -6,8 +6,8 @@ import {
   INITIAL_SESSION_TITLE_STATE,
   noteConversationCleared,
   type SessionTitleState,
-} from "../../../../src/server/session-driver/core/session-title.ts"
-import { MAX_SESSION_HEADING_LENGTH } from "../../../../src/shared/session/session-choice.ts"
+} from "../../../../../src/server/session-driver/core/session/session-title.ts"
+import { MAX_SESSION_HEADING_LENGTH } from "../../../../../src/shared/session/session-choice.ts"
 
 describe("decideSessionTitle", () => {
   it("現在値が無ければ書く", () => {

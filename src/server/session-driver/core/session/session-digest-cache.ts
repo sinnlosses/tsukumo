@@ -1,8 +1,8 @@
 // 読み終えたセッションの中身を、transcript の更新時刻と大きさを添えて覚える。
 // 覚えるのは中身（`known`）だけで、読めなかった回は残さない。
 
-import type { SessionDigest } from "../../../shared/session/session-digest.ts"
-import type { SessionId } from "./session-id.ts"
+import type { SessionDigest } from "../../../../shared/session/session-digest.ts"
+import type { SessionId } from "../session-id.ts"
 
 /** transcript のファイルが変わったかを見分ける印。 */
 export type TranscriptStamp = {

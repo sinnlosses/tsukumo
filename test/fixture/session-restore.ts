@@ -1,8 +1,8 @@
 import {
   EMPTY_INPUT_LEDGER,
   type InputLedger,
-} from "../../src/server/session-driver/core/input-ledger.ts"
-import { toRestoredEvents } from "../../src/server/session-driver/core/session-restore.ts"
+} from "../../src/server/session-driver/core/session/input-ledger.ts"
+import { toRestoredEvents } from "../../src/server/session-driver/core/session/session-restore.ts"
 import type { SessionEvent } from "../../src/shared/session/session-event.ts"
 import { EXPRESSIONS } from "./sdk-assistant-message.ts"
 

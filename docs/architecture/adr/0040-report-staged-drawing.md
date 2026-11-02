@@ -27,7 +27,7 @@
 - ブラウザは、同じ `toolUseId` の確定版がステップとして画面に出るまで、記録の部品で草稿の面を描き続ける（いちばん新しい `report` は確定するまで伏せられるため。`selectToolReports`）。伏せた `report` の草稿は `src/browser/domain/main-view/main-view.ts` の `heldReportDrafts`、書いている途中の草稿は `withReportDrafting` が `MainViewTurn.drafts` に載せる。草稿の見え方は `src/browser/domain/main-view/a2ui-draft-view.ts` が作る。
 - 草稿の面と確定版の面は同じ要素として引き継がない。入れ替わる 1 回だけ再マウントと高さ・位置の揺れを許す（確定版は `turn-finished` か次の `report` の記録まで伏せられ、閉じたやり取りは final-first に並べ替わるため）。揺れは、確定版が出るまで記録の部品で同じ面を描き続けて空白の間を作らないことと、面の `key` を `toolUseId` にして駆動の草稿から記録の部品へ移っても再マウントしないことで抑える。
 - 理由: 差し戻した呼び出しは記録にも `report` のイベントにも残らない。草稿だけ残すと画面が記録と食い違う。
-- 復元は変わらない。差し戻された `report` は transcript に `tool_use` として残り、復元はそれを `createCallReview().pass` に通して今も捨てている（`src/server/session-driver/core/session-restore.ts`）。
+- 復元は変わらない。差し戻された `report` は transcript に `tool_use` として残り、復元はそれを `createCallReview().pass` に通して今も捨てている（`src/server/session-driver/core/session/session-restore.ts`）。
 
 ### 論点 2: 構造の規約
 

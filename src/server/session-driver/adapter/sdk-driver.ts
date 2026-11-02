@@ -21,9 +21,7 @@ import {
 import { createReportGate, type ReportGate } from "../../report/core/prompt/report-tool.ts"
 import { asidePromptText } from "../core/aside-prompt.ts"
 import { type CallReview, createCallReview, passRelayedEvents } from "../core/call-review.ts"
-import { effectsOfEvent } from "../core/event-effect.ts"
 import { createExternalToolMark } from "../core/external-tool-mark.ts"
-import { createInputLedgerIntake, type InputLedgerIntake } from "../core/input-ledger.ts"
 import { createInterruptMark, type InterruptMark } from "../core/interrupt-mark.ts"
 import { isSubagentMessage, toSessionEvents } from "../core/message/sdk-message.ts"
 import { createPendingAnswerQueue, type PendingAnswerQueue } from "../core/pending-answer.ts"
@@ -43,9 +41,11 @@ import type {
   SessionDriverOptions,
   SessionFailurePlace,
 } from "../core/session-driver.ts"
-import { createSessionEnding } from "../core/session-ending.ts"
 import { parseSessionId, type SessionId } from "../core/session-id.ts"
-import { createSessionTitleIntake, type SessionTitleIntake } from "../core/session-title.ts"
+import { effectsOfEvent } from "../core/session/event-effect.ts"
+import { createInputLedgerIntake, type InputLedgerIntake } from "../core/session/input-ledger.ts"
+import { createSessionEnding } from "../core/session/session-ending.ts"
+import { createSessionTitleIntake, type SessionTitleIntake } from "../core/session/session-title.ts"
 import { createStepWatch } from "../core/step-watch.ts"
 import { createToolHookClock } from "../core/tool-hook-clock.ts"
 import { isVisibleOutputNudge } from "../core/visible-output-nudge.ts"

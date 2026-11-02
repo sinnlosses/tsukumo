@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest"
 
-import { createSessionCatalog } from "../../../../src/server/session-driver/core/session-catalog.ts"
-import { sessionTag } from "../../../../src/server/session-driver/core/session-mark.ts"
-import { DEFAULT_VIEW_PORT } from "../../../../src/server/view-server/core/port-resolution.ts"
+import { createSessionCatalog } from "../../../../../src/server/session-driver/core/session/session-catalog.ts"
+import { sessionTag } from "../../../../../src/server/session-driver/core/session/session-mark.ts"
+import { DEFAULT_VIEW_PORT } from "../../../../../src/server/view-server/core/port-resolution.ts"
 import {
   MAX_SESSION_CHOICES,
   type SessionChoice,
-} from "../../../../src/shared/session/session-choice.ts"
-import { checkedSessionId } from "../../../fixture/session-id.ts"
+} from "../../../../../src/shared/session/session-choice.ts"
+import { checkedSessionId } from "../../../../fixture/session-id.ts"
 
 // 印はキャラクターパックごと・雑談かどうか・ビューのポートごとに違う
 // （`tsukumo:<パック名>@7327` と `tsukumo:<パック名>:chat@7327`。目印はポート番号そのもの）。

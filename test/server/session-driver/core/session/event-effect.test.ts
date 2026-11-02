@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest"
 
-import { effectsOfEvent } from "../../../../src/server/session-driver/core/event-effect.ts"
-import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
-import { CHAT_MODE, WORK_MODE } from "../../../fixture/sdk-tool.ts"
-import { checkedSessionId } from "../../../fixture/session-id.ts"
+import { effectsOfEvent } from "../../../../../src/server/session-driver/core/session/event-effect.ts"
+import type { SessionEvent } from "../../../../../src/shared/session/session-event.ts"
+import { CHAT_MODE, WORK_MODE } from "../../../../fixture/sdk-tool.ts"
+import { checkedSessionId } from "../../../../fixture/session-id.ts"
 
 const S1 = checkedSessionId("s1")
 const OUTCOME = { kind: "interrupted" } as const

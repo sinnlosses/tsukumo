@@ -3,11 +3,11 @@
 
 import type { Expression } from "../../../shared/character-pack/expression.ts"
 import type { RestoredEvent } from "../../../shared/session/session-event.ts"
-import { EMPTY_INPUT_LEDGER } from "../core/input-ledger.ts"
-import { worktreeNameOf, type SessionCatalog } from "../core/session-catalog.ts"
 import type { SessionId } from "../core/session-id.ts"
-import { readSessionMark } from "../core/session-mark.ts"
-import { toRestoredEvents } from "../core/session-restore.ts"
+import { EMPTY_INPUT_LEDGER } from "../core/session/input-ledger.ts"
+import { worktreeNameOf, type SessionCatalog } from "../core/session/session-catalog.ts"
+import { readSessionMark } from "../core/session/session-mark.ts"
+import { toRestoredEvents } from "../core/session/session-restore.ts"
 import type { FakeSession } from "./fake-session.ts"
 
 /**

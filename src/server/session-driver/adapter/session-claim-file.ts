@@ -8,12 +8,12 @@ import process from "node:process"
 
 import { writeFileAtomic } from "../../adapter/lib/atomic-file.ts"
 import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
+import type { SessionId } from "../core/session-id.ts"
 import {
   readSessionClaimRecord,
   type SessionClaimRecord,
   type SessionClaimStore,
-} from "../core/session-claim.ts"
-import type { SessionId } from "../core/session-id.ts"
+} from "../core/session/session-claim.ts"
 
 /** 占有ファイルの名前（`<pid>.json`）。 */
 const CLAIM_FILE_NAME = /^\d+\.json$/u

@@ -1,22 +1,22 @@
 import { describe, expect, it } from "vitest"
 
-import { EMPTY_INPUT_LEDGER } from "../../../../src/server/session-driver/core/input-ledger.ts"
-import { toRestoredEvents } from "../../../../src/server/session-driver/core/session-restore.ts"
-import { applyRestoredEvents } from "../../../../src/server/session/core/restored-event.ts"
-import { mainViewEntries } from "../../../../src/shared/session/main-view-entry.ts"
-import { applySessionEvent } from "../../../../src/shared/session/session-fold.ts"
-import { INITIAL_SESSION_STATE } from "../../../../src/shared/session/session-state.ts"
-import { reportEvent } from "../../../fixture/report-event.ts"
-import { EXPRESSIONS } from "../../../fixture/sdk-assistant-message.ts"
+import { EMPTY_INPUT_LEDGER } from "../../../../../src/server/session-driver/core/session/input-ledger.ts"
+import { toRestoredEvents } from "../../../../../src/server/session-driver/core/session/session-restore.ts"
+import { applyRestoredEvents } from "../../../../../src/server/session/core/restored-event.ts"
+import { mainViewEntries } from "../../../../../src/shared/session/main-view-entry.ts"
+import { applySessionEvent } from "../../../../../src/shared/session/session-fold.ts"
+import { INITIAL_SESSION_STATE } from "../../../../../src/shared/session/session-state.ts"
+import { reportEvent } from "../../../../fixture/report-event.ts"
+import { EXPRESSIONS } from "../../../../fixture/sdk-assistant-message.ts"
 import {
   assistantMessage,
   REPORT_TOOL_FULL_NAME,
   SPEAK_TOOL_FULL_NAME,
   userMessage,
   WORK_PLAN_TOOL_FULL_NAME,
-} from "../../../fixture/sdk-message.ts"
-import { requestEvent } from "../../../fixture/session-event.ts"
-import { eventsOf, stamped } from "../../../fixture/session-restore.ts"
+} from "../../../../fixture/sdk-message.ts"
+import { requestEvent } from "../../../../fixture/session-event.ts"
+import { eventsOf, stamped } from "../../../../fixture/session-restore.ts"
 
 describe("toRestoredEvents", () => {
   it("組み直せたものが無ければ空", () => {

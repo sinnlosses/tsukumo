@@ -1,6 +1,6 @@
 // 駆動が送り出すイベントの出口。会話が終わったことを覚え、受け手の例外で反復を止めない。
 
-import type { SessionEvent } from "../../../shared/session/session-event.ts"
+import type { SessionEvent } from "../../../../shared/session/session-event.ts"
 
 export type SessionEnding = {
   /** イベントを受け手へ1件流す。受け手が投げたら `onHandlerFailed` へ渡し、投げ直さない。 */
