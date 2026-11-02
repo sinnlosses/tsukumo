@@ -17,8 +17,8 @@ const SCANNED_DIRECTORIES = ["src", "test", "scripts", "docs"] as const satisfie
 // 親が何であっても（ドットで始まる親の下も含めて）、この名前のディレクトリの中は読まない。
 const SKIPPED_DIRECTORY_NAMES = new Set(["node_modules", "dist", ".git"])
 
-// `docs/history/` は名前ではなく場所で除く（同じ名前のディレクトリを巻き込まないため）。
-const SKIPPED_PATH = "docs/history"
+// 名前ではなく場所で除く（同じ名前のディレクトリを巻き込まないため）。
+const SKIPPED_PATHS = ["docs/history", "test/e2e/output"] as const satisfies readonly string[]
 
 /** `root` 以下の `src/` / `test/` / `scripts/` / `docs/` を読み、迷子のタスク番号をすべて返す。 */
 export function collectStrayTaskMentions(root: string): TaskMention[] {
@@ -42,8 +42,9 @@ function listSourcePaths(root: string, directory: string): string[] {
     const path = relative(root, join(entry.parentPath, entry.name))
     return (
       path.split(sep).some((segment) => SKIPPED_DIRECTORY_NAMES.has(segment)) ||
-      path === SKIPPED_PATH ||
-      path.startsWith(`${SKIPPED_PATH}${sep}`)
+      SKIPPED_PATHS.some(
+        (skippedPath) => path === skippedPath || path.startsWith(`${skippedPath}${sep}`),
+      )
     )
   }
   return [`${directory}/**/{*,.*}.{ts,tsx,css,md}`, `${directory}/**/.*/**/{*,.*}.{ts,tsx,css,md}`]

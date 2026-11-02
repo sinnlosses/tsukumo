@@ -255,6 +255,23 @@ describe("collectStrayTaskMentions", () => {
     }
   })
 
+  test("test/e2e/output/ 以下は拾わない", () => {
+    const dir = mkdtempSync(join(tmpdir(), "tsukumo-task-mention-"))
+    try {
+      mkdirSync(join(dir, "src"), { recursive: true })
+      mkdirSync(join(dir, "test", "e2e", "output", "x"), { recursive: true })
+      mkdirSync(join(dir, "scripts"), { recursive: true })
+      mkdirSync(join(dir, "docs"), { recursive: true })
+      writeFileSync(join(dir, "src", "a.ts"), `// ${SAMPLE_ID} を直した\n`)
+      writeFileSync(join(dir, "test", "e2e", "output", "x", "a.md"), `<!-- ${SAMPLE_ID} -->\n`)
+      expect(
+        collectStrayTaskMentions(dir).map(({ sourcePath, id }) => ({ sourcePath, id })),
+      ).toEqual([{ sourcePath: "src/a.ts", id: SAMPLE_ID }])
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
   test("docs/requirements.md「7. 未決事項」の対応タスク列は許すが、未決事項列は許さない", () => {
     const dir = mkdtempSync(join(tmpdir(), "tsukumo-task-mention-"))
     try {
