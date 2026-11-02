@@ -16,7 +16,6 @@ import type { TaskSummaryResult } from "../../../shared/repository/task-summary.
 import { createServerClock } from "../../adapter/local-time.ts"
 import { decideTaskSummaryPoll } from "../core/task-summary-decision.ts"
 import { createBeadsStampReader, readBeadsIssues } from "./beads.ts"
-import { createFakeBeadsStampReader, readFakeBeadsIssues } from "./fake-beads.ts"
 import { createTaskBeadsSource } from "./task-beads-source.ts"
 import type { TaskSource } from "./task-source.ts"
 import { readTaskSummaryMemory, writeTaskSummaryMemory } from "./task-summary-memory.ts"
@@ -79,31 +78,11 @@ const REAL_TASK_SUMMARY_PORTS = {
   },
 } satisfies TaskSummaryPorts
 
-/**
- * 疑似セッションの見回りの間隔。読むのはファイル1つだけなので、
- * E2E の足場が置いた一覧を待たせずに届ける。
- */
-const FAKE_TASK_SUMMARY_POLL_INTERVAL_MS = 200
-
-/**
- * 見張りの間隔と口。ふだん（`real`）は `bd` を読み、疑似セッション（`fake`）は `bd` の代わりに
- * `readFakeBeadsIssues` のファイルを読む。時計はどちらも本物。
- */
-export function taskSummaryOptionsOf(driver: "real" | "fake"): TaskSummaryOptions {
-  switch (driver) {
-    case "real":
-      return { intervalMs: TASK_SUMMARY_POLL_INTERVAL_MS, ports: REAL_TASK_SUMMARY_PORTS }
-    case "fake":
-      return {
-        intervalMs: FAKE_TASK_SUMMARY_POLL_INTERVAL_MS,
-        ports: {
-          ...REAL_TASK_SUMMARY_PORTS,
-          readBeadsIssues: readFakeBeadsIssues,
-          createBeadsStampReader: createFakeBeadsStampReader,
-        },
-      }
-  }
-}
+/** 見張りの間隔と口。`bd` を読み、時計は本物。 */
+export const REAL_TASK_SUMMARY_OPTIONS = {
+  intervalMs: TASK_SUMMARY_POLL_INTERVAL_MS,
+  ports: REAL_TASK_SUMMARY_PORTS,
+} satisfies TaskSummaryOptions
 
 /**
  * タスク一覧を見張り始める。
@@ -115,7 +94,7 @@ export function taskSummaryOptionsOf(driver: "real" | "fake"): TaskSummaryOption
 export function watchTaskSummary(
   cwd: string,
   onChange: (result: TaskSummaryResult, change: TaskSummaryChange) => void,
-  options: TaskSummaryOptions = taskSummaryOptionsOf("real"),
+  options: TaskSummaryOptions = REAL_TASK_SUMMARY_OPTIONS,
   onFailure: (error: unknown) => void = () => {},
 ): TaskSummaryWatcher {
   const { intervalMs, ports } = options

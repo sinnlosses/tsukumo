@@ -2,16 +2,14 @@ import { join } from "node:path"
 
 import { afterEach, describe, expect, it } from "vitest"
 
-import {
-  beadsOutcomeOf,
-  type BeadsOutcome,
-} from "../../../../src/server/repository/adapter/beads.ts"
+import type { BeadsOutcome } from "../../../../src/server/repository/adapter/beads-port.ts"
+import { beadsOutcomeOf } from "../../../../src/server/repository/adapter/beads.ts"
 import {
   readTaskSummaryMemory,
   writeTaskSummaryMemory,
 } from "../../../../src/server/repository/adapter/task-summary-memory.ts"
 import {
-  taskSummaryOptionsOf,
+  REAL_TASK_SUMMARY_OPTIONS,
   watchTaskSummary,
   type TaskSummaryPorts,
   type TaskSummaryWatcher,
@@ -72,7 +70,7 @@ function fakeIntake(initial: readonly Readonly<Record<string, unknown>>[]): {
 /** 本物の口のうち、覚える口だけを一時ディレクトリへ向ける（利用者のホームへ書かない）。 */
 function testPorts(): TaskSummaryPorts {
   const memoryPath = join(root(), "task-summary.json")
-  const real = taskSummaryOptionsOf("real").ports
+  const real = REAL_TASK_SUMMARY_OPTIONS.ports
   return {
     ...real,
     clock: {

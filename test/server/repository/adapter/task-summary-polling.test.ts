@@ -1,7 +1,10 @@
 import { afterEach, describe, expect, it } from "vitest"
 
+import type {
+  BeadsIssue,
+  BeadsOutcome,
+} from "../../../../src/server/repository/adapter/beads-port.ts"
 import { knownTaskSummaryOfBeadsIssues } from "../../../../src/server/repository/adapter/beads-task.ts"
-import type { BeadsIssue, BeadsOutcome } from "../../../../src/server/repository/adapter/beads.ts"
 import {
   watchTaskSummary,
   type TaskSummaryPorts,

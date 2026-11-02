@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
+import type { BeadsOutcome } from "../../../../src/server/repository/adapter/beads-port.ts"
 import { memoizeByStamp } from "../../../../src/server/repository/adapter/beads-stamp-memo.ts"
-import type { BeadsOutcome } from "../../../../src/server/repository/adapter/beads.ts"
 
 describe("memoizeByStamp", () => {
   function countedReader(outcomes: readonly BeadsOutcome[] = []) {

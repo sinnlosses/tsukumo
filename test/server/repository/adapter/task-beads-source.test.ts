@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 
-import type { BeadsOutcome, BeadsStamp } from "../../../../src/server/repository/adapter/beads.ts"
+import type { BeadsOutcome } from "../../../../src/server/repository/adapter/beads-port.ts"
+import type { BeadsStamp } from "../../../../src/server/repository/adapter/beads.ts"
 import { createTaskBeadsSource } from "../../../../src/server/repository/adapter/task-beads-source.ts"
 
 /** 印が動かなくても読み直す間隔（`BEADS_REREAD_INTERVAL_MS`）。 */

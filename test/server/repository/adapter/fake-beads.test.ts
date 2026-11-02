@@ -4,6 +4,7 @@ import { dirname, join } from "node:path"
 import { afterEach, describe, expect, it } from "vitest"
 
 import {
+  createFakeBeadsStampReader,
   FAKE_BEADS_ISSUES_PATH,
   readFakeBeadsIssues,
 } from "../../../../src/server/repository/adapter/fake-beads.ts"
@@ -12,7 +13,7 @@ import {
   writeTaskSummaryMemory,
 } from "../../../../src/server/repository/adapter/task-summary-memory.ts"
 import {
-  taskSummaryOptionsOf,
+  REAL_TASK_SUMMARY_OPTIONS,
   watchTaskSummary,
   type TaskSummaryWatcher,
 } from "../../../../src/server/repository/adapter/task-summary.ts"
@@ -79,12 +80,13 @@ describe("疑似セッションの見張り", () => {
 
 function watchFake(dir: string): TaskSummaryResult[] {
   const changes: TaskSummaryResult[] = []
-  const options = taskSummaryOptionsOf("fake")
   const memoryPath = join(dir, "task-summary-memory.json")
   watcher = watchTaskSummary(dir, (result) => changes.push(result), {
-    ...options,
+    intervalMs: FAKE_POLL_INTERVAL_MS,
     ports: {
-      ...options.ports,
+      ...REAL_TASK_SUMMARY_OPTIONS.ports,
+      readBeadsIssues: readFakeBeadsIssues,
+      createBeadsStampReader: createFakeBeadsStampReader,
       readTaskSummaryMemory: (memoryCwd) => readTaskSummaryMemory(memoryCwd, memoryPath),
       writeTaskSummaryMemory: (memoryCwd, items) => {
         writeTaskSummaryMemory(memoryCwd, items, memoryPath)

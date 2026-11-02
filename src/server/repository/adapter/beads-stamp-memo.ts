@@ -2,7 +2,7 @@
 //
 // ここはファイルI/Oも `bd` も持たない。
 
-import type { BeadsIssuesReader, BeadsOutcome } from "./beads.ts"
+import type { BeadsIssuesReader, BeadsOutcome } from "./beads-port.ts"
 
 /**
  * `read` を、同じ `cwd` に同じ `stamp` が続く間は読み直さない形にする。

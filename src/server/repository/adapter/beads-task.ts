@@ -12,7 +12,8 @@ import type {
   TaskSummaryResult,
   TaskSummaryStatus,
 } from "../../../shared/repository/task-summary.ts"
-import { CLOSED_TASK_DISPLAY_LIMIT, type BeadsIssue } from "./beads.ts"
+import type { BeadsIssue } from "./beads-port.ts"
+import { CLOSED_TASK_DISPLAY_LIMIT } from "./beads.ts"
 
 /**
  * 読めた一覧の結果。{@link taskSummaryItemsOfBeadsIssues} の一覧に、閉じた課題を上限で落とした件数を添える

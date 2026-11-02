@@ -8,8 +8,9 @@ import {
   type ReadAchievementCalendarResult,
   type ReadAchievementResult,
 } from "../../../../src/server/achievement/adapter/closed-issue.ts"
+import type { BeadsOutcome } from "../../../../src/server/repository/adapter/beads-port.ts"
 import type * as BeadsAdapter from "../../../../src/server/repository/adapter/beads.ts"
-import type { BeadsOutcome, BeadsStamp } from "../../../../src/server/repository/adapter/beads.ts"
+import type { BeadsStamp } from "../../../../src/server/repository/adapter/beads.ts"
 import { readBeadsIssues } from "../../../../src/server/repository/adapter/beads.ts"
 import { createTaskBeadsSource } from "../../../../src/server/repository/adapter/task-beads-source.ts"
 import type { AchievementCalendar } from "../../../../src/shared/achievement/achievement-calendar.ts"

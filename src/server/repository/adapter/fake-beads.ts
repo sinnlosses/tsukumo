@@ -5,7 +5,8 @@
 import { access, readFile } from "node:fs/promises"
 import { join } from "node:path"
 
-import { beadsOutcomeOf, type BeadsOutcome, type BeadsStamp } from "./beads.ts"
+import type { BeadsOutcome } from "./beads-port.ts"
+import { beadsOutcomeOf, type BeadsStamp } from "./beads.ts"
 
 /** 課題を置くファイルの、cwd からの相対パス。 */
 export const FAKE_BEADS_ISSUES_PATH = ".tsukumo/fake-beads-issues.json"

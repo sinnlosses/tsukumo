@@ -11,13 +11,17 @@ import { createRecommender, type Recommender } from "../server/recommendation/co
 import { codeBlockStartLine } from "../server/report/core/rules/block/code-match.ts"
 import type { BeadsStamp } from "../server/repository/adapter/beads.ts"
 import { changeCountGitOf } from "../server/repository/adapter/change-count.ts"
+import {
+  createFakeBeadsStampReader,
+  readFakeBeadsIssues,
+} from "../server/repository/adapter/fake-beads.ts"
 import { projectNameOf } from "../server/repository/adapter/project-name.ts"
 import { readCodeBlockStart } from "../server/repository/adapter/repository-code-block-start.ts"
 import { readFileExcerpt } from "../server/repository/adapter/repository-file-excerpt.ts"
 import { listRepositoryFiles } from "../server/repository/adapter/repository-file.ts"
 import type { RepositoryProcedurePorts } from "../server/repository/adapter/repository-procedure.ts"
 import {
-  taskSummaryOptionsOf,
+  REAL_TASK_SUMMARY_OPTIONS,
   watchTaskSummary,
   type TaskSummaryOptions,
 } from "../server/repository/adapter/task-summary.ts"
@@ -87,6 +91,12 @@ export function wireRepository(
   }
 }
 
+/**
+ * 疑似セッションの見回りの間隔。読むのはファイル1つだけなので、
+ * E2E の足場が置いた一覧を待たせずに届ける。
+ */
+const FAKE_TASK_SUMMARY_POLL_INTERVAL_MS = 200
+
 /** 疑似セッションは偽の読み元のまま。ふだんは成果のキャッシュと共有する印の読み手を使う。 */
 function taskSummaryOptionsOfContext(
   context: WiringContext,
@@ -95,14 +105,22 @@ function taskSummaryOptionsOfContext(
   const { driver } = context
   switch (driver.kind) {
     case "fake":
-      return taskSummaryOptionsOf("fake")
-    case "sdk": {
-      const options = taskSummaryOptionsOf("real")
       return {
-        ...options,
-        ports: { ...options.ports, createBeadsStampReader: () => readBeadsStamp },
+        intervalMs: FAKE_TASK_SUMMARY_POLL_INTERVAL_MS,
+        ports: {
+          ...REAL_TASK_SUMMARY_OPTIONS.ports,
+          readBeadsIssues: readFakeBeadsIssues,
+          createBeadsStampReader: createFakeBeadsStampReader,
+        },
       }
-    }
+    case "sdk":
+      return {
+        ...REAL_TASK_SUMMARY_OPTIONS,
+        ports: {
+          ...REAL_TASK_SUMMARY_OPTIONS.ports,
+          createBeadsStampReader: () => readBeadsStamp,
+        },
+      }
     default:
       return driver satisfies never
   }

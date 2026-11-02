@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest"
 
+import type { BeadsIssue } from "../../../../src/server/repository/adapter/beads-port.ts"
 import {
   doneTasksOfBeadsIssues,
   knownTaskSummaryOfBeadsIssues,
 } from "../../../../src/server/repository/adapter/beads-task.ts"
-import type { BeadsIssue } from "../../../../src/server/repository/adapter/beads.ts"
 import type { TaskSummaryItem } from "../../../../src/shared/repository/task-summary.ts"
 
 function issue(overrides: Partial<BeadsIssue> & Pick<BeadsIssue, "id" | "status">): BeadsIssue {
