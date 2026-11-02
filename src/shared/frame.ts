@@ -81,7 +81,11 @@ export const FRAME_ERROR_REASON = {
   welcomeGreetingNotShown: "いま出している迎えの挨拶から組める文ではない",
 } as const
 
-/** 受け取ったフレームの封筒だけを確かめるスキーマ。`state` と `events[].event` は「オブジェクトであること」までしか見ない。 */
+/**
+ * 受け取ったフレームの封筒だけを確かめるスキーマ。`state` と `events[].event` は「オブジェクトであること」までしか見ない。
+ * 事前条件: 送り手は同じビルドのサーバで、`state` は `SessionState`、`event` は `SessionEvent` の形を守る。
+ * 版の違う送り手は `protocolVersion` で見分ける。中身の欄が壊れていても、ここでは見分けない。
+ */
 const serverFrameSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("hello"),

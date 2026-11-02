@@ -170,8 +170,8 @@ export type RestoredEvent = {
 }
 
 /**
- * 外から届いた値を {@link SessionEvent} として受け取るための封筒だけのスキーマ（`kind` を持つオブジェクトであること）。
- * 中身は検証しない（union を zod で二重に持つと、イベントにフィールドを足すたびに型とスキーマの2か所を直すことになる）。
+ * 同じリポジトリの送り手（サーバのフレーム・疑似セッションの定義）から届いた値を {@link SessionEvent} として受け取るための封筒だけのスキーマ（`kind` を持つオブジェクトであること）。
+ * 事前条件: 送り手は `kind` に合った {@link SessionEvent} の欄を守る。`kind` 以外の欄は検証しない。
  */
 export const sessionEventSchema = z.custom<SessionEvent>(
   (value) => isPlainObject(value) && typeof value.kind === "string",

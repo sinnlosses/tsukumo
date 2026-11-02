@@ -10,9 +10,9 @@
 
 **zod を使うのは境界の書き込み側と封筒だけ。**
 コマンドの契約の入力（`src/shared/contract/<機能>.ts`）は**全部 zod が正典**（ブラウザから届く書き込みの
-経路なので厳密に見る。`text` の上限もここ）。`ServerFrame` は**封筒（`type` / `protocolVersion`）だけ** zod で、中身
-（`state` / `events`）は検証しない。**`SessionEvent` と `SessionState` は zod にしない**（TS の型のまま。
-状態にフィールドを1つ足すたびにスキーマを二重に直す手間のほうが効いてくるため）。
+経路なので厳密に見る。`text` の上限もここ）。`ServerFrame` は**封筒だけ** zod で、中身
+（`state` / `events`）は送り手を信頼して検証しない。**`SessionEvent` と `SessionState` は zod にしない**（TS の型のまま。
+確かめる範囲と壊れたフレームの扱いは `docs/coding-standards/error-input-and-absent-value.md`「同じコードベースの送り手を信頼する」）。
 ツールの引数の検査（`work_plan` の `workPlanSchema`）も境界の入力なので zod が正典で、ツールの形はそこから作る。
 使い捨ての `query()` に渡す構造化出力の schema も、受け取った値を検査する zod の形から導く（`src/server/core/structured-output-schema.ts`）。
 境界（WebSocket の両端）で1回だけ検証し、中では検証済みの型を使う。`shared` の中に `node:` も

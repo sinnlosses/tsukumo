@@ -4,7 +4,7 @@ import { parseServerFrame, PROTOCOL_VERSION } from "../../src/shared/frame.ts"
 import { INITIAL_SESSION_STATE } from "../../src/shared/session/session-state.ts"
 
 // フレームの中身（state / events）は封筒どまりの検証で、union は TS の型のまま
-// （docs/architecture.md「shared」）。ここで確かめるのはその封筒。
+// （error-input-and-absent-value.md「同じコードベースの送り手を信頼する」）。ここで確かめるのはその封筒。
 describe("parseServerFrame（受け付ける形）", () => {
   it("hello を受け付け、版と状態がそのまま読める", () => {
     const frame = parseServerFrame({
@@ -58,6 +58,16 @@ describe("parseServerFrame（落とす形）", () => {
     expect(parseServerFrame(JSON.parse("null"))).toBeUndefined()
   })
 
+  it("state・event がオブジェクトでない・kind が文字列でないフレームは undefined", () => {
+    expect(
+      parseServerFrame({ type: "hello", protocolVersion: PROTOCOL_VERSION, state: "壊れた状態" }),
+    ).toBeUndefined()
+    expect(parseServerFrame({ type: "events", events: [{ at: 1, event: [] }] })).toBeUndefined()
+    expect(
+      parseServerFrame({ type: "events", events: [{ at: 1, event: { kind: 1 } }] }),
+    ).toBeUndefined()
+  })
+
   it("events の束から知らない kind の1件だけを落とし、残りを返す", () => {
     const speech = { kind: "speech", text: "架空のセリフ", expression: "default" }
 
@@ -77,5 +87,22 @@ describe("parseServerFrame（落とす形）", () => {
         { at: 3, event: speech },
       ],
     })
+  })
+})
+
+describe("parseServerFrame（送り手を信頼して見分けない形）", () => {
+  it("知っている kind で欄の欠けた event は、そのまま渡す", () => {
+    const broken = { kind: "speech" }
+
+    expect(parseServerFrame({ type: "events", events: [{ at: 1, event: broken }] })).toEqual({
+      type: "events",
+      events: [{ at: 1, event: broken }],
+    })
+  })
+
+  it("SessionState の欄が欠けた hello の state は、そのまま渡す", () => {
+    const frame = { type: "hello", protocolVersion: PROTOCOL_VERSION, state: {} }
+
+    expect(parseServerFrame(frame)).toEqual(frame)
   })
 })
