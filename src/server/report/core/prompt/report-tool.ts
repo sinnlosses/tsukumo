@@ -34,7 +34,7 @@ export const REPORT_CHECKS_DESCRIPTION =
 
 /**
  * `report` の任意の `retrospective` 引数の説明。
- * どのワークフローの段かは見ず、欄があるときだけ描く。欠けても差し戻さない。
+ * どのワークフローのフェーズかは見ず、欄があるときだけ描く。欠けても差し戻さない。
  */
 export const REPORT_RETROSPECTIVE_DESCRIPTION =
   "振り返りのフェーズがあったときだけ、その結果を渡す（sections に混ぜない。見出し「振り返り」のセクションとして最後に描く）。"
@@ -53,7 +53,7 @@ export const REPORT_TASK_DESCRIPTION =
   "stopped は種類によらず: どこで止まったか → 原因 → 残したものと戻したもの → 再開に要るもの（favor）。" +
   "genre を省くと並びは縛らない。タスクに紐付かないターンでは task を省く。"
 
-/** `report` の任意の `workPlanClosing` 引数（段の閉じ方）の説明。 */
+/** `report` の任意の `workPlanClosing` 引数（フェーズの閉じ方）の説明。 */
 export const REPORT_WORK_PLAN_CLOSING_DESCRIPTION =
   "フェーズの閉じ方。同じ依頼で work_plan を渡したときは必ず入れる。" +
   "finished（全部終えた。最後のフェーズにいるときに渡すと tsukumo がプログレスバーを全部済みにする）/ " +
@@ -61,7 +61,7 @@ export const REPORT_WORK_PLAN_CLOSING_DESCRIPTION =
 
 /**
  * `report` の `figure` 引数（レポートの図1つか、置かない理由）の説明。
- * 図を置く条件と作業のレポートの最小形はここだけが持つ。図の塊ごとの使いどころは各塊の `describe` が持つ。
+ * 図を置く条件と作業のレポートの最小形はここだけが持つ。図の部品ごとの使いどころは各部品の `describe` が持つ。
  */
 export function reportFigureDescription(preference: FigurePreference): string {
   const head =
@@ -95,8 +95,8 @@ export const REPORT_KEY_FIGURES_DESCRIPTION =
   "3つに満たなければ省いて結論の文に入れる。項目の形は stats の items と同じ。"
 
 /**
- * `report` の任意の `sections` 引数（本文。節と塊の並び）の説明。
- * 塊の種類ごとの使いどころは各塊の `describe`（`reportBlockSchema`）が持つので、ここに書かない。
+ * `report` の任意の `sections` 引数（本文。セクションと部品の並び）の説明。
+ * 部品の種類ごとの使いどころは各部品の `describe`（`reportBlockSchema`）が持つので、ここに書かない。
  */
 export const REPORT_SECTIONS_DESCRIPTION =
   "結論のあとの根拠・比較・手順。セクションの並びで、セクションごとに部品を並べる。" +
@@ -107,7 +107,7 @@ export const REPORT_SECTIONS_DESCRIPTION =
 /** `a2ui` の版の `components` 引数（A2UI のカタログの部品の平らな一覧）の説明。 */
 export const REPORT_A2UI_COMPONENTS_DESCRIPTION =
   "レポートを A2UI の部品の平らな一覧で書く。根は id が root の Report で、結論ほかの欄は Report の props に書き、Report.children に Section の ID を並べる。" +
-  "Section.children は葉か配置の部品（Row・Column・Card・Tabs・ChoicePicker・Divider）の ID、図は Report.figure に図の部品の ID を置く。呼び直すときも一覧を全部渡す。"
+  "Section.children は内容部品か配置の部品（Row・Column・Card・Tabs・ChoicePicker・Divider）の ID、図は Report.figure に図の部品の ID を置く。呼び直すときも一覧を全部渡す。"
 
 /**
  * `report` の `closing` 引数（締めのセリフ）の説明。
@@ -168,7 +168,7 @@ const REPORT_GATE_REASON =
  * 届いたイベントを {@link ReportGate.observe} で見て、SDK のターンの頭から書いた本文を覚えておき、止まろうとしたときに {@link ReportGate.verdict} が差し戻すか（と、その理由）を決める。
  * `report` が届いたら覚えた本文を捨てる（通った `report` はターンを閉じるので、そのターンの本文は `report` の前に書いたものだけ）。
  *
- * - ターンの頭は `session-info`（`init` は SDK のターンの頭に毎回届く。依頼で始まるターンも、バックグラウンドタスクやサブエージェントの合図で claude が自分で始めるターンも同じ）。`turn-finished` でも空に戻す（`init` が来ない経路があっても前のターンの本文を持ち越さない）
+ * - ターンの頭は `session-info`（`init` は SDK のターンの頭に毎回届く。依頼で始まるターンも、バックグラウンドタスクやサブエージェントの通知で claude が自分で始めるターンも同じ）。`turn-finished` でも空に戻す（`init` が来ない経路があっても前のターンの本文を持ち越さない）
  * - 本文は `utterance` だけを数える（書きかけの断片は、同じ本文が `utterance` で届き直す）
  * - 呼ぶ側はサブエージェントの中の本文を渡さない（画面に出すかの判断はメインの本文で決まる）
  */
