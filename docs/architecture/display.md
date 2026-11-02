@@ -65,6 +65,7 @@
 #### 部品を足す・外す基準
 
 - `docs/architecture/display/block-criteria.md`（節「図の決定表」: `plot` の形を決める行・置かない形・基数の境。節「見比べで見つかった穴」: 梯子・穴ドラフトの型・採らない穴）
+- 足す前に落ちる上限の余白（常設文章・`report` の schema の字数・大きなファイルのトークン）は `node scripts/dev/addition-margin.ts` で出す
 
 #### 各表示物
 

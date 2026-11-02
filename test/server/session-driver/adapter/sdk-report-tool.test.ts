@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 import { z } from "zod"
 
+import { REPORT_INPUT_SCHEMA_MAX_CHARS } from "../../../../scripts/shared/addition-budget.ts"
 import {
   type CallReview,
   createCallReview,
@@ -359,9 +360,6 @@ describe("report の title", () => {
     expect(titles).toEqual([])
   })
 })
-
-/** `report` の引数の schema（部品 30 種の判別合併と、`Report` の欄の説明）の字数の上限。いまの形（25,224字）に余白を持たせている。 */
-const REPORT_INPUT_SCHEMA_MAX_CHARS = 25_600
 
 /** `tools/list` の応答のうち、引数の schema を丸ごと読む形。 */
 const TOOLS_WHOLE_SCHEMA_REPLY = z.object({

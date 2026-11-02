@@ -5,17 +5,16 @@ import { readdirSync, readFileSync } from "node:fs"
 
 import { describe, expect, it } from "vitest"
 
+import {
+  SYSTEM_PROMPT_TEXTS,
+  SYSTEM_PROMPT_TOTAL_LIMIT,
+} from "../../scripts/shared/addition-budget.ts"
 import { REPOSITORY_ROOT } from "../../scripts/shared/repository-root.ts"
-import { QUESTION_NOTATION_PROMPT } from "../../src/server/question/core/question-notation.ts"
-import { REPORT_NOTATION_PROMPT } from "../../src/server/report/core/prompt/report-notation.ts"
-import { SPEECH_CADENCE_PROMPT } from "../../src/server/system-prompt/core/speech-cadence.ts"
-import { WORK_PLAN_PROMPT } from "../../src/server/work-plan/core/work-plan-tool.ts"
 
 const RULES_DIR = `${REPOSITORY_ROOT}/.claude/rules`
 
 const AGENTS_MD_LIMIT = 4000
 const RULES_TOTAL_LIMIT = 2400
-const SYSTEM_PROMPT_TOTAL_LIMIT = 6304
 const IMPLEMENTER_BRIEF_LIMIT = 9623
 const TASK_WRITING_LIMIT = 9220
 
@@ -40,14 +39,9 @@ describe("常設の文章の字数", () => {
   })
 
   it("systemPrompt の規約 4 本の合計は上限以内", () => {
-    const texts = [
-      SPEECH_CADENCE_PROMPT,
-      WORK_PLAN_PROMPT,
-      REPORT_NOTATION_PROMPT,
-      QUESTION_NOTATION_PROMPT,
-    ]
-
-    expect(overBudget("systemPrompt の規約 4 本の合計", texts, SYSTEM_PROMPT_TOTAL_LIMIT)).toBe("")
+    expect(
+      overBudget("systemPrompt の規約 4 本の合計", SYSTEM_PROMPT_TEXTS, SYSTEM_PROMPT_TOTAL_LIMIT),
+    ).toBe("")
   })
 
   it("implementer-brief.md は上限以内", () => {
