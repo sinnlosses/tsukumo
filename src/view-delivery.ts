@@ -11,12 +11,8 @@ import type { ReportImageShelf } from "./server/report/core/image/report-image-s
 import type { PromptImageShelf } from "./server/session-driver/core/prompt-image-shelf.ts"
 import type { SessionId } from "./server/session-driver/core/session-id.ts"
 import type { UiBundle } from "./server/view-server/adapter/bundle.ts"
-import {
-  createStartupToken,
-  type ServeItemAsset,
-  startViewServer,
-  type ViewUi,
-} from "./server/view-server/adapter/server.ts"
+import type { ServeItemAsset, ViewUi } from "./server/view-server/adapter/server-port.ts"
+import { createStartupToken, startViewServer } from "./server/view-server/adapter/server.ts"
 import { attachSessionSocket } from "./server/view-server/adapter/session-socket.ts"
 import { startUiDevServer } from "./server/view-server/adapter/ui-dev-server.ts"
 import {

@@ -68,7 +68,7 @@
 `src/server/view-server/adapter/ui-dev-server.ts` が Vite の開発サーバを **middleware mode** で起こし、
 ビューサーバ（`node:http`）に差し込む。設定は組み立てと同じ `vite.config.ts` で、root は `src/browser/`。
 
-- **配り方は `server.ts` の `ViewUi` の合併型**（`bundle` / `dev`）。`dev` のとき、ページは
+- **配り方は `server-port.ts` の `ViewUi` の合併型**（`bundle` / `dev`）。`dev` のとき、ページは
   `<script type="module" src="/main.tsx">` を開発サーバの `transformIndexHtml` に通したもので、
   **経路の表に無い要求だけ**を開発サーバへ回す（`/rpc`・`/vendor/`・`/character/`・`/prompt-image/`・`/report-image/` の
   経路と守り方は変わらない。`/assets/` の対は `dev` のあいだ 404）

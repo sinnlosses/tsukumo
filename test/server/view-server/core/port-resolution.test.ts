@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest"
 
 import { createRpcRouter } from "../../../../src/router.ts"
+import type { ViewUi } from "../../../../src/server/view-server/adapter/server-port.ts"
 import {
   startViewServer,
   type ViewServer,
   type ViewServerOptions,
-  type ViewUi,
 } from "../../../../src/server/view-server/adapter/server.ts"
 import {
   DEFAULT_VIEW_PORT,

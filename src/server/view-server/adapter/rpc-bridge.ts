@@ -6,7 +6,7 @@ import { BodyLimitPlugin, RPCHandler } from "@orpc/server/fetch"
 
 import { RPC_PATH } from "../../../shared/rpc.ts"
 import { type RpcContext, rpcContextOf } from "./rpc-guard.ts"
-import type { RpcRouter } from "./server.ts"
+import type { RpcRouter } from "./server-port.ts"
 
 /**
  * `/rpc` の要求の本文の上限。手続きの入力は小さい JSON だけ（画像は `/ws` で運ぶ）なので、

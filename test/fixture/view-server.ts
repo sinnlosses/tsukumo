@@ -1,11 +1,13 @@
 // 会話は流さない（配るのはページ・同梱物・立ち絵と、架空のファイル一覧だけ）。
 
 import { createRpcRouter, type RpcRouterPorts } from "../../src/router.ts"
+import type {
+  FindReportImage,
+  ServeCharacterAsset,
+  ServeItemAsset,
+} from "../../src/server/view-server/adapter/server-port.ts"
 import {
   createStartupToken,
-  type FindReportImage,
-  type ServeCharacterAsset,
-  type ServeItemAsset,
   startViewServer,
   type ViewServer,
 } from "../../src/server/view-server/adapter/server.ts"

@@ -16,24 +16,26 @@ import { randomBytes } from "node:crypto"
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http"
 import process from "node:process"
 
-import type { Router } from "@orpc/server"
 import type { RPCHandler } from "@orpc/server/fetch"
 import { isPlainObject } from "remeda"
 
-import {
-  CHARACTER_ASSET_PATH_PREFIX,
-  type CharacterAssetLocation,
-} from "../../../shared/character-pack/character-asset.ts"
+import { CHARACTER_ASSET_PATH_PREFIX } from "../../../shared/character-pack/character-asset.ts"
 import { REPORT_IMAGE_PATH_PREFIX } from "../../../shared/report/report-image.ts"
-import { RPC_PATH, type rpcContract } from "../../../shared/rpc.ts"
+import { RPC_PATH } from "../../../shared/rpc.ts"
 import { PROMPT_IMAGE_PATH_PREFIX } from "../../../shared/session-driver/prompt-image.ts"
 import { SESSION_TOKEN_QUERY_NAME } from "../../../shared/view-server/session-socket.ts"
 import { VENDOR_PATH_PREFIX } from "../../../shared/view-server/vendor-asset.ts"
 import { ITEM_ASSET_PATH_PREFIX } from "../../core/item-asset.ts"
-import type { UiBundle } from "./bundle.ts"
 import { createRpcHandler, serveRpc } from "./rpc-bridge.ts"
 import type { RpcContext } from "./rpc-guard.ts"
-import type { UiDevServer } from "./ui-dev-server.ts"
+import type {
+  FindPromptImage,
+  FindReportImage,
+  RpcRouter,
+  ServeCharacterAsset,
+  ServeItemAsset,
+  ViewUi,
+} from "./server-port.ts"
 import { createVendorAssetReader, type VendorAssetFile } from "./vendor-asset.ts"
 import {
   ASSET_PATH_PREFIX,
@@ -60,67 +62,6 @@ export function createStartupToken(): string {
 
 /** レイアウトページの URL パス。利用者が開くのはこの1本だけ。 */
 export const LAYOUT_PATH = "/"
-
-/**
- * ブラウザ側をどこから配るか。`bundle` は組み立て済みのスクリプトと CSS の対を `/assets/` から、
- * `dev` は Vite の開発サーバが入口から辿るモジュールを、ここの経路に無い要求として配る。
- */
-export type ViewUi =
-  | { readonly kind: "bundle"; readonly bundle: UiBundle }
-  | { readonly kind: "dev"; readonly devServer: UiDevServer }
-
-/** `/character/<pack>/<file>` を1件配るために要るもの。中身はキャラクターパックを読むアダプタが決める。 */
-export type CharacterAssetFile = {
-  readonly contentType: string
-  readonly content: Buffer
-  /** 要求の `?v=` が素材の今の版と一致した（ブラウザに長期に持たせてよい）。 */
-  readonly versioned: boolean
-}
-
-/**
- * `/character/<pack>/<file>` の1件を配ってよい形にする（`readCharacterAsset` を束ねる）。
- * `version` は要求の `?v=`（無ければ undefined）。
- * 無いパック・allowlist に無い・ディスクに無いときは undefined（呼び出し側が404にする）。
- */
-export type ServeCharacterAsset = (
-  location: CharacterAssetLocation,
-  version: string | undefined,
-) => CharacterAssetFile | undefined
-
-/** `/item/<file>` を1件配るために要るもの。中身はアイテムの置き場を読むアダプタが決める。 */
-export type ItemAssetFile = {
-  readonly contentType: string
-  readonly content: Buffer
-  /** 要求の `?v=` が素材の今の版と一致した（ブラウザに長期に持たせてよい）。 */
-  readonly versioned: boolean
-}
-
-/**
- * `/item/<file>` の1件を配ってよい形にする。`version` は要求の `?v=`（無ければ undefined）。
- * 一覧に載っていない・ディスクに無いときは undefined（呼び出し側が404にする）。
- */
-export type ServeItemAsset = (
-  fileName: string,
-  version: string | undefined,
-) => ItemAssetFile | undefined
-
-/**
- * 棚から、id が指す原寸の data URL を引く。
- * 棚に無い（捨てた・知らない）ときは undefined（配る側が 404 にする）。
- */
-export type FindPromptImage = (id: string) => string | undefined
-
-/**
- * 棚から、レポートの呼び出しの id と塊のパスの組が指す画像を引く。
- * 棚に無い（捨てた・読めなかった・知らない）ときは undefined（配る側が 404 にする）。
- */
-export type FindReportImage = (
-  toolUseId: string,
-  path: string,
-) => { readonly mediaType: string; readonly content: Uint8Array } | undefined
-
-/** `/rpc` に載せるルータ（全機能の手続きを束ね、照合のミドルウェアを掛けたもの）。ここはどの手続きがあるかを知らない。 */
-export type RpcRouter = Router<typeof rpcContract, RpcContext>
 
 // 外から届かないようにループバックにだけバインドする。ここを 0.0.0.0 に変えない。
 const BIND_HOST = "127.0.0.1"

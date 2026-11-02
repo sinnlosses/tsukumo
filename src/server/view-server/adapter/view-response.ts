@@ -17,7 +17,7 @@ import type {
   ServeCharacterAsset,
   ServeItemAsset,
   ViewUi,
-} from "./server.ts"
+} from "./server-port.ts"
 import type { VendorAssetFile } from "./vendor-asset.ts"
 
 /**
