@@ -1,19 +1,10 @@
 // 規約違反を、差し戻すときの `report` の戻り値の文面にする。
 
-import {
-  MAX_EMPHASIS_ROWS,
-  MAX_HEADING,
-  MAX_FIRST_SENTENCE,
-  MAX_LIST_ITEMS,
-  MAX_PLAIN_CODE_LINES,
-  MAX_TABLE_ROWS,
-  SENTENCE_CELL_LENGTH,
-} from "../../../shared/report/report-limit.ts"
 import type { A2uiStructureFault, A2uiStructureFaultKind } from "./a2ui-structure-fault.ts"
-import { PLAIN_WORDS } from "./plain-word.ts"
-import { MARKDOWN_NOTATION_NAMES } from "./report-markdown-notation.ts"
 import type { ReportViolation } from "./report-violation.ts"
+import { blockViolationMessage } from "./rules/block.ts"
 import { figureViolationMessage } from "./rules/figure.ts"
+import { plainWordReplacements, proseViolationMessage } from "./rules/prose.ts"
 
 /** 差し戻しの戻り値に足す、呼び直し方（`components` は全部、`Report` の欄は省けば引き継ぐ）の1文。 */
 export const REPORT_CHANGED_FIELDS_ONLY_TEXT =
@@ -83,7 +74,17 @@ export function speechPlainWordRejectionText(spellings: readonly string[]): stri
 function violationLine(violation: ReportViolation): string {
   switch (violation.kind) {
     case "long-conclusion":
-      return `\`conclusion\` が${violation.count}要素ある。1要素1文で2要素以内にし、残りは \`Section\` へ移す`
+    case "untitled-section":
+    case "markdown-notation":
+    case "long-first-sentence":
+    case "bad-heading":
+    case "arrow-in-prose":
+    case "label-in-item":
+    case "labeled-ordered":
+    case "non-japanese":
+    case "plain-word":
+    case "broken-inline-mark":
+      return proseViolationMessage(violation)
     case "unknown-mermaid":
     case "broken-svg":
     case "unlegended-svg-tone":
@@ -96,85 +97,27 @@ function violationLine(violation: ReportViolation): string {
     case "plot-title-without-number":
       return figureViolationMessage(violation)
     case "too-many-notes":
-      return `\`Note\` が${violation.count}個ある。2個まで減らす`
     case "crowded-notes":
-      return `隣り合う、または見出しの直後にある \`Note\` が${violation.count}個ある。間に別の部品を挟むか、\`Paragraph\` に直す（\`warn\` / \`ng\` は例外）`
     case "nested-fold":
-      return `\`fold\` と \`<details>\` が入れ子になっている部品が${violation.count}個ある。畳むのは1段だけにする`
     case "unordered-options":
-      return `候補が採る → 検討 → 採らないの順に並んでいない \`Options\` が${violation.count}個ある。採る候補から順に並べ直す`
     case "ragged-table":
-      return `行のセルの数が \`columns\` と揃わない表（\`Matrix\` を含む）が${violation.count}個ある。セルの数を揃える`
     case "long-table":
-      return `行が${String(MAX_TABLE_ROWS + 1)}以上で \`rest\` が空の表が${violation.count}個ある。上位${String(MAX_TABLE_ROWS)}行までを残し、残りを \`rest\` に書く`
     case "many-emphasis-rows":
-      return `強調の行（\`emphasis\`）が${String(MAX_EMPHASIS_ROWS + 1)}行以上の表が${violation.count}個ある。強調は${String(MAX_EMPHASIS_ROWS)}行までに絞る`
     case "sentence-table":
-      return `セルの平均が${String(SENTENCE_CELL_LENGTH)}字以上の列がある表が${violation.count}個ある。その列を \`label\` 付きの \`ItemList\` か \`Paragraph\` へ移すか、セルを語句・数・状態に縮める`
     case "long-list":
-      return `項目が${String(MAX_LIST_ITEMS + 1)}件以上の \`ItemList\` が${violation.count}個ある。上位を残し、最後の項目を「ほか n 件」にして${String(MAX_LIST_ITEMS)}件までにする`
     case "bad-cards":
-      return `\`cards\` の \`ItemList\` が項目数 2〜4 か、全項目に \`label\` を付ける形になっていない（${violation.faults
-        .map(
-          ({ position, itemCount, unlabeled }) =>
-            `${String(position)}個目の部品は${String(itemCount)}項目${unlabeled ? "で `label` の空がある" : ""}`,
-        )
-        .join("・")}）。2〜4 項目に絞り全項目に題を付けるか、\`bullet\` / \`flow\` に直す`
     case "long-code":
-      return `\`marks\` が無く${String(MAX_PLAIN_CODE_LINES + 1)}行以上の \`Code\` が${violation.count}個ある。要る範囲だけを引く（${String(MAX_PLAIN_CODE_LINES)}行まで）`
     case "ragged-chart":
-      return `\`series\` の \`values\` の数が \`labels\` と揃わない、または \`arrow\`・\`slope\`・\`span\` の \`series\` が前と後（span は始まりと終わり）の2つでない \`Chart\` が${violation.count}個ある。数を揃える`
     case "unknown-emphasis":
-      return `\`emphasis\` に \`labels\` に無い名前がある \`Chart\` が${violation.count}個ある。\`labels\` にある名前だけにする`
     case "short-series":
-      return `\`Stats\` の \`series\` が1〜2個の項目がある部品が${violation.count}個ある。3つ以上にするか省く`
-    case "untitled-section":
-      return `見出しの無いセクションが${violation.count}個ある。セクションが2つ以上なら全部に \`heading\` を付ける`
-    case "markdown-notation":
-      return `\`Markdown\` に部品で書ける記法（${violation.notations
-        .map((notation) => MARKDOWN_NOTATION_NAMES[notation].written)
-        .join("・")}）がある。代わりに${violation.notations
-        .map((notation) => MARKDOWN_NOTATION_NAMES[notation].replacement)
-        .join("・")}を使う`
     case "code-mismatch":
-      return `\`path\` 付きの \`Code\` が${violation.count}個、ファイルの中身と一致しない（${violation.paths.join("・")}）。実物を読み直して直すか \`path\` を外す`
     case "code-marks-range":
-      return `\`Code\` の \`marks\` の \`lines\` が読めない形か \`source\` の行数の外にある部品が${violation.count}個ある。\`4-8\` か \`12\` の形で、行数以内に直す`
     case "region-range":
-      return `\`BeforeAfter\` の画像の側の \`region\` が画像の外に出る、または \`width\`・\`height\` が 0 以下の部品が${violation.count}個ある。\`left\`・\`top\` は 0 以上、\`left + width\` と \`top + height\` は 100 以下、\`width\`・\`height\` は 0 より大きい%にする`
-    case "long-first-sentence":
-      return `\`conclusion\` の1要素目がいま${String(violation.length)}字で、全角${String(MAX_FIRST_SENTENCE)}字を超える。1要素目を短くし、補足は2要素目か \`Section\` へ移す`
-    case "bad-heading":
-      return `見出しが${violation.count}個、${String(MAX_HEADING)}字を超えるか疑問文になっている。そのセクションの結論を言う短い語にする`
+    case "figure-contradiction":
+      return blockViolationMessage(violation)
     case "unobserved-without-how":
       return `\`checks\` の \`unobserved\` の行のうち \`howToVerify\` が空のものが${violation.count}個ある。知らない人が繰り返せる確かめ方を1〜2文で書く`
-    case "arrow-in-prose":
-      return `地の文・表のセルに \`A → B\` と書いた部品が${violation.count}個ある。セルは \`from\` / \`to\`、流れは \`ItemList\` の \`flow\` にする`
-    case "label-in-item":
-      return `\`ItemList\` の項目の \`text\` が「名前: 説明」の形になっているものが${violation.count}個ある。名前を \`label\` に分ける（名前と値だけの並びは \`DescriptionList\`）`
-    case "labeled-ordered":
-      return `全部の項目に \`label\` がある3段以上の \`ordered\` の \`ItemList\` が${violation.count}個ある。名前の付いた段を辿る流れは \`flow\` にする`
-    case "non-japanese":
-      return `仮名も漢字も無い英語の地の文が${violation.count}個ある。日本語で書き直す（識別子・パス・コマンド・コードは \`\` で囲めば英語のままでよい）`
-    case "plain-word":
-      return `地の文にわかりにくい語がある。${plainWordReplacements(violation.spellings)}。言い換えて書き直す（コード・引用の中は対象外）`
-    case "figure-contradiction":
-      return violation.reason === "no-shape"
-        ? `\`figure\` の reason が \`no-shape\` なのに、\`Section\` に流れ・つながり・構造を描く部品（\`ItemList\` の \`flow\`・\`BeforeAfter\`・\`Graph\`・\`Mermaid\`・\`Svg\`）が${violation.count}個ある。その図を \`figure\` に置くか、合う reason にする`
-        : `\`figure\` の reason が \`short-answer\` なのに、セクションが2つ以上ある。2〜3文で終わる答えでなければ \`figure\` に図を置くか、合う reason にする`
-    case "broken-inline-mark":
-      return `行内の印の書式（\`{{A → B}}\`・\`{{spark: 数 数 …}}\`・\`{{a / b}}\`）に当たらない \`{{\` が${violation.count}個ある。書式に合わせて直すか、\`{{\` を使わない書き方にする`
     case "template-miss":
       return `申告した依頼の型の雛形から外れた点がある（${violation.misses.join("・")}）。数の帯 \`keyFigures\` を足すか、図 1 を型の第一候補の種類にする`
   }
-}
-
-/** 見つけた綴りごとに「綴り → 言い換え先」を並べる。表から取った語だけで、書かれた文面は写さない。 */
-function plainWordReplacements(spellings: readonly string[]): string {
-  return spellings
-    .map((spelling) => {
-      const word = PLAIN_WORDS.find((entry) => entry.spelling === spelling)
-      return word === undefined ? spelling : `「${spelling}」は「${word.replacement}」`
-    })
-    .join("・")
 }

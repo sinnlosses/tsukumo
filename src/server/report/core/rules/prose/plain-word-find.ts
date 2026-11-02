@@ -2,11 +2,13 @@
 
 import type { Nodes } from "mdast"
 
-import type { ReportOutline, ReportOutlineLeaf } from "../../../shared/report/report-outline.ts"
-import { markdownTreeOf } from "./markdown-tree.ts"
-import { PLAIN_WORDS } from "./plain-word.ts"
-import { proseTexts } from "./report-prose-rule.ts"
-import type { ReportDraft } from "./rules/draft.ts"
+import type {
+  ReportOutline,
+  ReportOutlineLeaf,
+} from "../../../../../shared/report/report-outline.ts"
+import { markdownTreeOf, type ReportDraft } from "../draft.ts"
+import { PLAIN_WORDS } from "../plain-word.ts"
+import { proseTexts } from "./sentence.ts"
 
 /**
  * 本文の地の文に出てくる表の綴りを、表の順に返す。同じ箇所は長い綴りにだけ数える。

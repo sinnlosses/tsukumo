@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest"
 
-import { plainWordSpellingsIn as spellingsOf } from "../../../../src/server/report/core/plain-word-find.ts"
-import { reportRejectionText } from "../../../../src/server/report/core/report-rejection.ts"
-import { reportViolations } from "../../../../src/server/report/core/report-violation-check.ts"
-import type { ReportDraft } from "../../../../src/server/report/core/rules/draft.ts"
-import type { ReportBlock } from "../../../../src/shared/report/report-block.ts"
-import { reportOutline } from "../../../../src/shared/report/report-outline.ts"
-import { draft, markdown, reportDraftText } from "../../../fixture/report-draft-block.ts"
-import { reportDraft } from "../../../fixture/report-event.ts"
+import { reportRejectionText } from "../../../../../../src/server/report/core/report-rejection.ts"
+import { reportViolations } from "../../../../../../src/server/report/core/report-violation-check.ts"
+import type { ReportDraft } from "../../../../../../src/server/report/core/rules/draft.ts"
+import { plainWordSpellingsIn as spellingsOf } from "../../../../../../src/server/report/core/rules/prose/plain-word-find.ts"
+import type { ReportBlock } from "../../../../../../src/shared/report/report-block.ts"
+import { reportOutline } from "../../../../../../src/shared/report/report-outline.ts"
+import { draft, markdown, reportDraftText } from "../../../../../fixture/report-draft-block.ts"
+import { reportDraft } from "../../../../../fixture/report-event.ts"
 
 const plainWordSpellingsIn = (report: ReportDraft) =>
   spellingsOf(report, reportOutline(report.components))

@@ -8,8 +8,8 @@ import {
   type ReportOutline,
   type ReportOutlineLeaf,
   sectionLeaves,
-} from "../../../shared/report/report-outline.ts"
-import { markdownTreeOf, nodesInOrder } from "./markdown-tree.ts"
+} from "../../../../../shared/report/report-outline.ts"
+import { markdownTreeOf, nodesInOrder } from "../draft.ts"
 
 /** 逃げ道の中の記法 → 差し戻しの文面での呼び名と、代わりに使うもの。 */
 export const MARKDOWN_NOTATION_NAMES = {

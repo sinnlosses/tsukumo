@@ -8,7 +8,7 @@ import {
   writeRecommendationCache,
 } from "../server/recommendation/adapter/recommendation-cache.ts"
 import { createRecommender, type Recommender } from "../server/recommendation/core/recommender.ts"
-import { codeBlockStartLine } from "../server/report/core/code-block-match.ts"
+import { codeBlockStartLine } from "../server/report/core/rules/block/code-match.ts"
 import type { BeadsStamp } from "../server/repository/adapter/beads.ts"
 import { changeCountGitOf } from "../server/repository/adapter/change-count.ts"
 import { projectNameOf } from "../server/repository/adapter/project-name.ts"

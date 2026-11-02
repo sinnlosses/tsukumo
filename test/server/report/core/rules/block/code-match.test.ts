@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest"
 import {
   codeBlockMatchesFile,
   codeBlockStartLine,
-} from "../../../../src/server/report/core/code-block-match.ts"
+} from "../../../../../../src/server/report/core/rules/block/code-match.ts"
 
 const block = (source: string, language = "text") => ({ language, source })
 

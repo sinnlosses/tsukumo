@@ -1,10 +1,10 @@
 // レポートの検査のうち、地の文・見出し・項目の書き方を判定する述語。
 
-import { textOutsideInlineMarks } from "../../../shared/report/inline-mark.ts"
-import { tableRowCells } from "../../../shared/report/report-block-comparison.ts"
-import { MAX_HEADING, MAX_ITEM_LABEL } from "../../../shared/report/report-limit.ts"
-import type { ReportOutlineLeaf } from "../../../shared/report/report-outline.ts"
-import { withoutInlineCode } from "./markdown-tree.ts"
+import { textOutsideInlineMarks } from "../../../../../shared/report/inline-mark.ts"
+import { tableRowCells } from "../../../../../shared/report/report-block-comparison.ts"
+import { MAX_HEADING, MAX_ITEM_LABEL } from "../../../../../shared/report/report-limit.ts"
+import type { ReportOutlineLeaf } from "../../../../../shared/report/report-outline.ts"
+import { withoutInlineCode } from "../draft.ts"
 
 /** 英語の地の文とみなす語の数の下限。 */
 const MIN_ENGLISH_WORDS = 3

@@ -21,9 +21,11 @@ import {
 import type { ReportGenre, ReportTaskOutcome } from "../../../shared/report/report-task.ts"
 import type { ToolErrorField } from "../../../shared/report/tool-error-field.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
-import { numberCountOutsideCode } from "./number-count.ts"
 import type { ReportRejectionMode } from "./rejection-mode.ts"
 import { reportImagePaths } from "./report-image-shelf.ts"
+import type { ReportFigureUsage, ReportShapeTagUsage } from "./report-usage-record.ts"
+import { numberCountOutsideCode } from "./rules/draft.ts"
+import { mermaidKind, mermaidSourcesOfLeaves } from "./rules/figure/diagram.ts"
 import {
   containedNotationsInSections,
   escapeNotationsInSections,
@@ -31,9 +33,7 @@ import {
   type MarkdownNotation,
   notationKindsInMarkdowns,
   notationsInSections,
-} from "./report-markdown-notation.ts"
-import type { ReportFigureUsage, ReportShapeTagUsage } from "./report-usage-record.ts"
-import { mermaidKind, mermaidSourcesOfLeaves } from "./rules/figure/diagram.ts"
+} from "./rules/prose/notation.ts"
 
 type ReportLeafKind = (typeof LEAF_COMPONENT_KINDS)[keyof typeof LEAF_COMPONENT_KINDS]
 

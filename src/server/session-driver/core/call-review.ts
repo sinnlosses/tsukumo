@@ -14,12 +14,12 @@ import type {
   A2uiStructureFault,
   A2uiStructureVerdict,
 } from "../../report/core/a2ui-structure-fault.ts"
-import { plainWordSpellingsInSpeech } from "../../report/core/plain-word-find.ts"
 import { REPORT_REJECTION_MODES } from "../../report/core/rejection-mode.ts"
 import { createReportInheritance } from "../../report/core/report-inheritance.ts"
 import { speechPlainWordRejectionText } from "../../report/core/report-rejection.ts"
 import { createReportReview, type ReportVerdict } from "../../report/core/report-review.ts"
 import type { ReportDraft } from "../../report/core/rules/draft.ts"
+import { plainWordSpellingsInSpeech } from "../../report/core/rules/prose/plain-word-find.ts"
 import { judgePhaseMention, type PhaseMentionVerdict } from "../../work-plan/core/phase-mention.ts"
 import {
   createWorkPlanReview,

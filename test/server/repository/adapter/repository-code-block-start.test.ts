@@ -4,7 +4,7 @@ import { join } from "node:path"
 
 import { describe, expect, it } from "vitest"
 
-import { codeBlockStartLine } from "../../../../src/server/report/core/code-block-match.ts"
+import { codeBlockStartLine } from "../../../../src/server/report/core/rules/block/code-match.ts"
 import { readCodeBlockStart } from "../../../../src/server/repository/adapter/repository-code-block-start.ts"
 
 function fictionalWorkspace(files: Readonly<Record<string, string | Buffer>>): string {

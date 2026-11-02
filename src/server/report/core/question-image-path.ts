@@ -6,7 +6,7 @@ import { visit } from "unist-util-visit"
 
 import { isShelvedImageUrl } from "../../../shared/report/report-image.ts"
 import type { PendingAsk } from "../../../shared/session-driver/pending-ask.ts"
-import { markdownTreeOf } from "./markdown-tree.ts"
+import { markdownTreeOf } from "./rules/draft.ts"
 
 /** 質問の全選択肢の `preview` と添え書きの `image` の塊が指す、棚に置く画像のパス（重複なし）。 */
 export function questionImagePaths(

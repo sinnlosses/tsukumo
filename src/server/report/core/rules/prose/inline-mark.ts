@@ -1,15 +1,15 @@
 // 行内の印を置ける場所（結論・`text` の塊・`list` の項目・`table` のセル）にある、書式に当たらない `{{` の数。数だけを持ち、本文の字は持たない。
 
-import { brokenInlineMarkCount } from "../../../shared/report/inline-mark.ts"
+import { brokenInlineMarkCount } from "../../../../../shared/report/inline-mark.ts"
 import {
   drawnLeaves,
   type ReportOutline,
   type ReportOutlineLeaf,
   reportRetrospectiveHeadOf,
-} from "../../../shared/report/report-outline.ts"
-import { retrospectiveDraftsLine } from "../../../shared/report/report-retrospective.ts"
-import { proseTexts } from "./report-prose-rule.ts"
-import type { ReportDraft } from "./rules/draft.ts"
+} from "../../../../../shared/report/report-outline.ts"
+import { retrospectiveDraftsLine } from "../../../../../shared/report/report-retrospective.ts"
+import type { ReportDraft } from "../draft.ts"
+import { proseTexts } from "./sentence.ts"
 
 type InlineMarkSource = Pick<ReportDraft, "conclusion" | "components">
 

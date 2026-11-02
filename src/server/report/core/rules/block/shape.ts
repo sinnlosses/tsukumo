@@ -2,12 +2,18 @@
 
 import { sumBy } from "remeda"
 
-import { type TableCell, tableRowCells } from "../../../shared/report/report-block-comparison.ts"
-import { SENTENCE_CELL_LENGTH } from "../../../shared/report/report-limit.ts"
-import type { ReportOutline, ReportOutlineLeaf } from "../../../shared/report/report-outline.ts"
-import { textLengthOf } from "./markdown-tree.ts"
-import { hasNestedFold } from "./report-markdown-notation.ts"
-import type { CardsFault } from "./report-violation.ts"
+import {
+  type TableCell,
+  tableRowCells,
+} from "../../../../../shared/report/report-block-comparison.ts"
+import { SENTENCE_CELL_LENGTH } from "../../../../../shared/report/report-limit.ts"
+import type {
+  ReportOutline,
+  ReportOutlineLeaf,
+} from "../../../../../shared/report/report-outline.ts"
+import type { CardsFault } from "../block.ts"
+import { textLengthOf } from "../draft.ts"
+import { hasNestedFold } from "../prose/notation.ts"
 
 /** 流れ・つながり・構造を描く塊か（`no-shape` と合わない塊）。 */
 export function drawsShape(leaf: ReportOutlineLeaf): boolean {
