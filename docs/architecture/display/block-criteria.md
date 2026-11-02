@@ -82,6 +82,18 @@
 列が 3 つ以上か見出し行が要るなら `table`、段ごとに文が要る一本道は `list` の `flow`。`list` の `label` は箇条の中の名前を言うときだけ使う。
 `DescriptionList` は `Section.children` に置け、`Report.figure` には置けない。字は他の内容部品と同じインラインの記法（inline code・太字・リンク）だけ。
 
+## 作業の手順の部品
+
+並びの形が似た4つは、何が中身かで言い分ける。
+
+- `list` の `flow`: 番号の丸と、段ごとに文が要る一本道。段の順そのものが中身で、状態を持たない
+- `list` の `check`: 済み・未了の印だけの並び（確かめる項目・残りの作業）。順・補足・出力を持たない
+- `Trace`: 作業でした手の経過（調べた順・試した順）。行ごとに1行の題（`title`）・状態（`status`。`ok` 済み / `ng` 落ちた / `notStarted` 未着手）・右の補足（`supplement`。所要・差分の行数・場所）・開いて見る出力（`output`。記法を通さない字）を持つ
+- `Timeline`: 時刻や所要の区間を軸の上に並べる。いつ・どれだけ掛かったかが中身
+
+検証の結果は `checks` に書き、`Trace` の行に同じ検証を書いて二重にしない。`Trace` は入れ子を持たず、深い経過は `Section` を分けるか `fold` で畳む。
+`Trace` は `Section.children` に置け、`Report.figure` には置けない。
+
 ## 図の値と本文の数の照合
 
 `plot` の `Q` 列の値と、同じレポートの本文の数（`conclusion`・`keyFigures` の `before`・`value`・`total`・セクションの `text` の部品）のずれを、

@@ -43,7 +43,7 @@ function plainWordSpellingsOfProse(prose: readonly string[]): readonly string[] 
   return remaining.spellings
 }
 
-/** `proseTexts` が数えない、利用者が読む地の文（`note`・`markdown`・`list` の項目の本文と題・`descriptionList` の名前と値）。 */
+/** `proseTexts` が数えない、利用者が読む地の文（`note`・`markdown`・`list` の項目の本文と題・`descriptionList` の名前と値・`trace` の行の題と補足）。 */
 function ownProseTexts(leaf: ReportOutlineLeaf): readonly string[] {
   switch (leaf.component) {
     case "Note":
@@ -54,6 +54,8 @@ function ownProseTexts(leaf: ReportOutlineLeaf): readonly string[] {
       return leaf.items.flatMap((item) => [item.label, item.text, item.branch])
     case "DescriptionList":
       return leaf.items.flatMap((item) => [item.term, item.description])
+    case "Trace":
+      return leaf.items.flatMap((item) => [item.title, item.supplement])
     default:
       return []
   }

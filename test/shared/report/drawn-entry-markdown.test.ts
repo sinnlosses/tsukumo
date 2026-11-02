@@ -50,6 +50,17 @@ const ROWS: readonly (readonly [string, readonly ReportBlock[], readonly DrawnEn
       ],
       ["drawn"],
     ],
+    [
+      "trace",
+      [
+        {
+          kind: "trace",
+          items: [{ title: "架空の手", status: "ok", supplement: "", output: "" }],
+          ...PLAIN,
+        },
+      ],
+      ["drawn"],
+    ],
     ["項目の無い list", [{ kind: "list", style: "bullet", items: [], ...PLAIN }], ["empty"]],
     [
       "list",

@@ -79,6 +79,10 @@ const LEAVES: Readonly<Record<string, unknown>> = {
     kind: "descriptionList",
     items: [{ term: "架空の名前", description: "架空の値" }],
   },
+  trace: {
+    kind: "trace",
+    items: [{ title: "架空の手", status: "ok" }],
+  },
   image: { kind: "image", path: "/架空/a.png", caption: "架空" },
   plot: {
     kind: "plot",

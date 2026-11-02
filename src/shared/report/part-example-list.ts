@@ -146,6 +146,19 @@ const LEAF_BLOCK_EXAMPLES = {
       { term: "読み込む場所", description: "`架空.ts`" },
     ],
   },
+  trace: {
+    kind: "trace",
+    items: [
+      { title: "架空の設定の読み込みの順を確かめた", status: "ok", supplement: "架空.ts:42" },
+      {
+        title: "120 件で架空の取り込みを打ち、8 件が切れた",
+        status: "ng",
+        supplement: "2.1 秒",
+        output: "架空: 38 件中 30 件を読んだ（上限）",
+      },
+      { title: "720 幅の架空の画面で件数を見る", status: "notStarted", supplement: "未着手" },
+    ],
+  },
   markdown: { kind: "markdown", markdown: "架空の **一行**" },
 } satisfies LeafExamples
 

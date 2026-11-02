@@ -360,8 +360,8 @@ describe("report の title", () => {
   })
 })
 
-/** `report` の引数の schema（部品 29 種の判別合併と、`Report` の欄の説明）の字数の上限。いまの形（24,597字）に余白を持たせている。 */
-const REPORT_INPUT_SCHEMA_MAX_CHARS = 25_000
+/** `report` の引数の schema（部品 30 種の判別合併と、`Report` の欄の説明）の字数の上限。いまの形（25,224字）に余白を持たせている。 */
+const REPORT_INPUT_SCHEMA_MAX_CHARS = 25_600
 
 /** `tools/list` の応答のうち、引数の schema を丸ごと読む形。 */
 const TOOLS_WHOLE_SCHEMA_REPLY = z.object({

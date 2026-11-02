@@ -220,6 +220,23 @@ describe("plainWordSpellingsIn", () => {
     expect(plainWordSpellingsIn(draft([list]))).toEqual(["再演", "有界な自律"])
   })
 
+  it("trace の行の題と補足の中の語は見つけ、出力の中は見ない", () => {
+    const trace: ReportBlock = {
+      kind: "trace",
+      items: [
+        {
+          title: "架空の再演",
+          status: "ok",
+          supplement: "架空の有界な自律",
+          output: "架空の再演の出力",
+        },
+      ],
+      fold: "",
+      aside: "",
+    }
+    expect(plainWordSpellingsIn(draft([trace]))).toEqual(["再演", "有界な自律"])
+  })
+
   it("note・markdown・節の見出しの中の語も見つける", () => {
     const note: ReportBlock = {
       kind: "note",

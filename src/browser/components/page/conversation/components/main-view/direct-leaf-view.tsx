@@ -26,6 +26,7 @@ import { StatsLeaf } from "./stats-leaf.tsx"
 import { SvgLeaf } from "./svg-leaf.tsx"
 import { TableLeaf } from "./table-leaf.tsx"
 import { TimelineLeaf } from "./timeline-leaf.tsx"
+import { TraceLeaf } from "./trace-leaf.tsx"
 
 type DirectLeafViewProps = {
   readonly part: A2uiReportComponent
@@ -42,6 +43,7 @@ const DIRECT_LEAF_VIEWS: ReadonlyMap<A2uiReportComponent["component"], DirectLea
   ["Claims", ClaimsLeaf],
   ["Quote", QuoteLeaf],
   ["DescriptionList", DescriptionListLeaf],
+  ["Trace", TraceLeaf],
   ["Note", NoteLeaf],
   ["Options", OptionsLeaf],
   ["Table", TableLeaf],

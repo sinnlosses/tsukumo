@@ -152,7 +152,39 @@
             "id": "s3",
             "component": "Section",
             "heading": "架空の並び",
-            "children": ["p3", "r1"]
+            "children": ["p3", "r1", "tr1"]
+          },
+          {
+            "id": "tr1",
+            "component": "Trace",
+            "items": [
+              {
+                "title": "架空の設定の読み込みの順を確かめた",
+                "status": "ok",
+                "supplement": "架空の設定.ts:42"
+              },
+              {
+                "title": "120 件で架空の取り込みを打ち、8 件が切れた",
+                "status": "ng",
+                "supplement": "2.1 秒",
+                "output": "架空: 38 件中 30 件を読んだ（上限）\n架空: 34 件中 30 件を読んだ（上限）"
+              },
+              {
+                "title": "上限を 60 にして打ち直し、0 件になった",
+                "status": "ok",
+                "supplement": "+3 −1 行"
+              },
+              {
+                "title": "架空の長い題の手をここに置く。何度も折り返す長さの題で、丸と線と補足の位置が崩れないかを確かめる",
+                "status": "ok",
+                "supplement": "架空の/とても/長い/場所/の/補足.ts:1234"
+              },
+              {
+                "title": "720 幅の架空の画面で件数の表示を見る",
+                "status": "notStarted",
+                "supplement": "未着手"
+              }
+            ]
           },
           {
             "id": "p3",

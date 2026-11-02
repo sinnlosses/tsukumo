@@ -104,6 +104,22 @@ describe("reportLeafLayoutOf", () => {
     expect(blocks?.[0]?.gutterNotes).toEqual([{ label: "", text: "架空の出どころ" }])
   })
 
+  it("trace の aside は傍注になり、図表番号は付かない", () => {
+    const [blocks] = reportLeafValues([
+      section([
+        {
+          kind: "trace",
+          items: [{ title: "架空の手", status: "ok", supplement: "", output: "" }],
+          fold: "",
+          aside: "架空の出どころ",
+        },
+      ]),
+    ])
+
+    expect(blocks?.[0]?.captionNumber).toEqual({ kind: "none" })
+    expect(blocks?.[0]?.gutterNotes).toEqual([{ label: "", text: "架空の出どころ" }])
+  })
+
   it("memo の傍注は直前の葉へ寄り、memo 自身は寄せたことだけを持つ。節の最初の memo は自分で持つ", () => {
     const [first, second] = reportLeafValues([
       section([

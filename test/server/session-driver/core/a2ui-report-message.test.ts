@@ -142,6 +142,29 @@ describe("a2uiReportInput", () => {
       },
     ])
   })
+
+  it("Trace は塊 trace に items を写し、省いた補足と出力は空文字で埋める", () => {
+    const { input } = a2uiReportInput([
+      { id: "root", component: "Report", conclusion: ["架空。"], children: ["s"] },
+      { id: "s", component: "Section", heading: "架空の節", children: ["r"] },
+      {
+        id: "r",
+        component: "Trace",
+        items: [{ title: "架空の手", status: "ng", output: "架空の出力" }],
+      },
+    ])
+
+    expect(input.sections).toMatchObject([
+      {
+        blocks: [
+          {
+            kind: "trace",
+            items: [{ title: "架空の手", status: "ng", supplement: "", output: "架空の出力" }],
+          },
+        ],
+      },
+    ])
+  })
 })
 
 describe("写しの自己テスト", () => {

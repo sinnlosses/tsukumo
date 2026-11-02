@@ -1,0 +1,124 @@
+/* 作業でした手の並びの置き方。状態の丸を縦の線 `--rule-soft` でつなぎ、枠と地は持たない。
+   欄の中の `details`・`summary`・`pre`・`li` には Markdown 向けの規則（markdown/renderer/report-notation-prose.css・report-notation-body.css）が当たるので、
+   枠・地・余白を、欄の中に限って同じ要素より強い組み合わせで打ち消す。 */
+[data-report-region] .trace-leaf {
+  max-inline-size: min(100%, var(--report-measure-wide));
+  margin: var(--report-block-gap) 0;
+  padding: 0;
+  list-style: none;
+}
+[data-report-region] .trace-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) auto;
+  column-gap: var(--space-md);
+  max-inline-size: none;
+  margin: 0;
+  padding: var(--space-sm) 0;
+}
+[data-report-region] .trace-row::before {
+  content: "";
+  position: absolute;
+  left: 10px;
+  top: calc(var(--space-sm) + 22px);
+  bottom: calc(-1 * var(--space-sm));
+  width: 1px;
+  background: var(--rule-soft);
+}
+[data-report-region] .trace-row:last-child::before {
+  display: none;
+}
+[data-report-region] .trace-mark {
+  --trace-tone: var(--ink-quiet);
+  position: relative;
+  box-sizing: border-box;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-round);
+  color: var(--trace-tone);
+  background: color-mix(in srgb, var(--trace-tone) 16%, var(--surface));
+  font-size: var(--font-label);
+  font-weight: 700;
+}
+[data-report-region] .trace-row-ok .trace-mark {
+  --trace-tone: var(--state-ok);
+}
+[data-report-region] .trace-row-ng .trace-mark {
+  --trace-tone: var(--state-ng);
+}
+[data-report-region] .trace-row-not-started .trace-mark {
+  background: var(--surface);
+  border: 1px dashed var(--rule);
+}
+[data-report-region] .trace-title,
+[data-report-region] .trace-supplement {
+  align-self: baseline;
+}
+[data-report-region] .trace-title {
+  min-inline-size: 0;
+  color: var(--ink);
+  font-size: var(--font-body);
+  overflow-wrap: anywhere;
+}
+[data-report-region] .trace-row-ng .trace-title {
+  color: var(--ink-bright);
+  font-weight: 600;
+}
+[data-report-region] .trace-supplement {
+  grid-column: auto;
+  color: var(--ink-quiet);
+  font-family: var(--font-mono);
+  font-size: var(--font-label);
+  white-space: nowrap;
+}
+[data-report-region] .trace-output {
+  grid-column: 2 / -1;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+}
+[data-report-region] .trace-output > summary {
+  cursor: pointer;
+  color: var(--ink-soft);
+  font-size: var(--font-secondary);
+  list-style: none;
+}
+[data-report-region] .trace-output > summary::-webkit-details-marker {
+  display: none;
+}
+[data-report-region] .trace-output > summary::before {
+  content: "›";
+  display: inline-block;
+  margin-inline-end: var(--space-xs);
+  transition: transform var(--motion-fast) ease-out;
+}
+[data-report-region] .trace-output[open] > summary {
+  margin-bottom: 0;
+}
+[data-report-region] .trace-output[open] > summary::before {
+  transform: rotate(90deg);
+}
+[data-report-region] .trace-output[open] > pre {
+  margin: var(--space-xs) 0 var(--space-2xs);
+  padding: var(--space-sm) var(--space-md);
+  color: var(--ink-soft);
+  font-family: var(--font-code);
+  font-size: var(--font-label);
+  border-radius: var(--radius-md);
+  background: var(--ground);
+  white-space: pre;
+  overflow-x: auto;
+}
+@container report-body (max-width: calc(40em + 0.75rem)) {
+  [data-report-region] .trace-row {
+    grid-template-columns: 22px minmax(0, 1fr);
+  }
+  [data-report-region] .trace-supplement {
+    grid-column: 2;
+    white-space: normal;
+  }
+}

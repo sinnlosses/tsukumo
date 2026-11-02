@@ -152,6 +152,29 @@ describe("a2uiStructureFaults の DescriptionList", () => {
   })
 })
 
+describe("a2uiStructureFaults の Trace", () => {
+  const trace = {
+    id: "r",
+    component: "Trace",
+    items: [{ title: "架空の手", status: "ok" }],
+  }
+
+  it.each([
+    {
+      name: "Section の子",
+      components: [report(["s"]), section("s", ["r"]), trace],
+      faults: [],
+    },
+    {
+      name: "Report.figure",
+      components: [report(["s"], { figure: "r" }), section("s", ["p"]), paragraph("p"), trace],
+      faults: [{ kind: "figure-not-figure-part", pointer: "/components/0/figure" }],
+    },
+  ])("$name に置いたときの違反", ({ components, faults }) => {
+    expect(a2uiStructureFaults(components)).toEqual(faults)
+  })
+})
+
 describe("a2uiStructureFaults の Quote", () => {
   const quote = { id: "q", component: "Quote", text: "架空の一文" }
 

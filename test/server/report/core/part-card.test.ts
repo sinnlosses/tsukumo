@@ -55,8 +55,16 @@ describe("partCardOf", () => {
     },
   )
 
-  it("引ける名前は 29 部品", () => {
-    expect(NAMES).toHaveLength(29)
+  it("引ける名前は 30 部品", () => {
+    expect(NAMES).toHaveLength(30)
+  })
+
+  it("Trace のカードに、状態と出力の欄と例が載る", () => {
+    const text = cardText("Trace")
+
+    expect(text).toContain('"status"')
+    expect(text).toContain('"output"')
+    expect(examplesIn(text)[0]?.component).toBe("Trace")
   })
 
   it("DescriptionList のカードに、名前と値の欄と例が載る", () => {

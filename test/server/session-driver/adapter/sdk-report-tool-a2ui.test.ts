@@ -174,7 +174,7 @@ describe("a2ui の report の定義", () => {
     expect(Object.keys(report.inputSchema.properties)).toEqual(["components"])
   })
 
-  it("components の要素はカタログの 29 部品のどれか", async () => {
+  it("components の要素はカタログの 30 部品のどれか", async () => {
     const report = await listedReport()
 
     expect(componentNames(report).toSorted()).toEqual(

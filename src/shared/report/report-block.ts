@@ -31,6 +31,7 @@ import {
   textBlockSchema,
 } from "./report-block-prose.ts"
 import { timelineBlockSchema } from "./timeline-block.ts"
+import { traceBlockSchema } from "./trace-block.ts"
 
 // ツール定義の中で `retrospective.blocks` の合併に入る塊の、定義上の名前
 const namedBeforeAfter = beforeAfterBlockSchema.meta({ id: "BeforeAfterBlock" })
@@ -62,6 +63,7 @@ const writerBlockBranches = [
   claimsBlockSchema,
   quoteBlockSchema,
   descriptionListBlockSchema,
+  traceBlockSchema,
   namedImage,
   namedPlot,
   markdownBlockSchema,
