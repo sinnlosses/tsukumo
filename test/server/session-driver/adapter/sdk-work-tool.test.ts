@@ -4,7 +4,7 @@ import {
   type CallReview,
   createCallReview,
 } from "../../../../src/server/session-driver/core/call-review.ts"
-import { toSessionEvents } from "../../../../src/server/session-driver/core/sdk-message.ts"
+import { toSessionEvents } from "../../../../src/server/session-driver/core/message/sdk-message.ts"
 import type { QuestionBrief } from "../../../../src/shared/session-driver/question-brief.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import { callTool } from "../../../fixture/mcp-server.ts"

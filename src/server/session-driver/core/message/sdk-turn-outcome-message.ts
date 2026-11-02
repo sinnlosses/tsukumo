@@ -1,7 +1,7 @@
 // `result` メッセージを、ターンの終わり方（`TurnOutcome`）に畳む。
 // メッセージは外部由来の値なので、unknown で受けて検証する。
 
-import type { TurnOutcome } from "../../../shared/session-driver/turn-failure.ts"
+import type { TurnOutcome } from "../../../../shared/session-driver/turn-failure.ts"
 
 /**
  * `result` を終わり方に畳む（`TurnOutcome`）。

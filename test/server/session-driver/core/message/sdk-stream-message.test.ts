@@ -1,7 +1,7 @@
 import { expect, it } from "vitest"
 
-import { toSessionEvents } from "../../../../src/server/session-driver/core/sdk-message.ts"
-import { EXPRESSIONS } from "../../../fixture/sdk-assistant-message.ts"
+import { toSessionEvents } from "../../../../../src/server/session-driver/core/message/sdk-message.ts"
+import { EXPRESSIONS } from "../../../../fixture/sdk-assistant-message.ts"
 
 it("stream_event の text_delta を書きかけの本文にする", () => {
   const message = {

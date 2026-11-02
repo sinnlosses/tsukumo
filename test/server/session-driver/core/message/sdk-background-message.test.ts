@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
-import { toSessionEvents } from "../../../../src/server/session-driver/core/sdk-message.ts"
-import { EXPRESSIONS } from "../../../fixture/sdk-assistant-message.ts"
+import { toSessionEvents } from "../../../../../src/server/session-driver/core/message/sdk-message.ts"
+import { EXPRESSIONS } from "../../../../fixture/sdk-assistant-message.ts"
 
 describe("バックグラウンドタスク（実測で届いた順: background_tasks_changed → task_started → … → background_tasks_changed → task_updated → task_notification）", () => {
   it("background_tasks_changed を background-tasks-changed にする（種類を3つに畳む）", () => {

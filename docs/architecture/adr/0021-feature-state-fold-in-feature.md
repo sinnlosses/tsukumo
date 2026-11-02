@@ -52,7 +52,7 @@
 
 ## 同じ設計で分けないと決めたもの
 
-- **`src/server/session-driver/core/sdk-message.ts`**: インターフェースは「SDK のメッセージ1件を
+- **`src/server/session-driver/core/message/sdk-message.ts`**: インターフェースは「SDK のメッセージ1件を
   イベントの並びへ」の `toSessionEvents` 1つで状態を持たず、中はすでにメッセージの種類ごとの小さな関数に
   割れている。変わる軸は機能ではなく SDK のメッセージの種類なので、機能で割ると同じ検証の語彙を
   共有する浅いモジュールが並ぶだけになる

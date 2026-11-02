@@ -6,7 +6,7 @@ import { describe, expect, it } from "vitest"
 
 import { mainViewTurnsOf } from "../../../src/browser/stores/main-view-turn.ts"
 import { createCallReview } from "../../../src/server/session-driver/core/call-review.ts"
-import { reportEvents } from "../../../src/server/session-driver/core/sdk-report-message.ts"
+import { reportEvents } from "../../../src/server/session-driver/core/message/sdk-report-message.ts"
 import type { SessionEvent } from "../../../src/shared/session/session-event.ts"
 import { applySessionEvent } from "../../../src/shared/session/session-fold.ts"
 import {

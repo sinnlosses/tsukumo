@@ -61,7 +61,7 @@
 断片に引数の JSON は入り、部品を 1 つずつ切り出すこともできる。採るかの決定は利用者。材料を並べる。
 
 - 採るなら変えるもの:
-  - 駆動: `reportDraftingEvents`（`src/server/session-driver/core/sdk-stream-message.ts`）の隣で、メインの `report` の塊の `input_json_delta` を足して読み手に渡す。塊ごとに状態を持つ。
+  - 駆動: `reportDraftingEvents`（`src/server/session-driver/core/message/sdk-stream-message.ts`）の隣で、メインの `report` の塊の `input_json_delta` を足して読み手に渡す。塊ごとに状態を持つ。
   - イベント: `report-drafting` は引数の断片を運ばない。部品の断片を運ぶイベントを足す（セッションイベントの種類が増え、E2E の期待値も変わる）。
   - ブラウザ: 部品が届くたびに `updateComponents` を流して描く。親が先に描かれ、子が届くたびに埋まる動きは試作で確かめ済み（`docs/research/a2ui-report-prototype-2026-10-28/index.md`）。
 - 効果: 長い報告で最初の部品が見えるまでの時間が、この測定では約 15 秒短くなる。節の数が少ない短い報告では差が小さい。

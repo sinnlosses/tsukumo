@@ -3,8 +3,8 @@
 
 import { isPlainObject } from "remeda"
 
-import type { SessionEvent } from "../../../shared/session/session-event.ts"
-import type { ModelTokenUsage } from "../../../shared/usage/token-usage.ts"
+import type { SessionEvent } from "../../../../shared/session/session-event.ts"
+import type { ModelTokenUsage } from "../../../../shared/usage/token-usage.ts"
 
 /**
  * `assistant` の `message.usage`（そのステップぶんの使用量）を1つのイベントにする。

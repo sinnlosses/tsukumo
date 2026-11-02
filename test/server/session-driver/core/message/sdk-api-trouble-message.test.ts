@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest"
 
-import { toSessionEvents } from "../../../../src/server/session-driver/core/sdk-message.ts"
-import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
-import { assistantMessageWithoutUuid, EXPRESSIONS } from "../../../fixture/sdk-assistant-message.ts"
+import { toSessionEvents } from "../../../../../src/server/session-driver/core/message/sdk-message.ts"
+import type { SessionEvent } from "../../../../../src/shared/session/session-event.ts"
+import {
+  assistantMessageWithoutUuid,
+  EXPRESSIONS,
+} from "../../../../fixture/sdk-assistant-message.ts"
 
 describe("API の不調と失敗（docs/requirements.md 4.1）", () => {
   it("result の success でも is_error が true なら API のエラーの失敗にする", () => {

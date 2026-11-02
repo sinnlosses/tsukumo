@@ -4,7 +4,7 @@ import {
   toCommandDescriptions,
   toModelEffortSupport,
   toPlan,
-} from "../../../../src/server/session-driver/core/sdk-query-reply.ts"
+} from "../../../../../src/server/session-driver/core/message/sdk-query-reply.ts"
 
 describe("toCommandDescriptions", () => {
   it("名前と説明の組にする", () => {

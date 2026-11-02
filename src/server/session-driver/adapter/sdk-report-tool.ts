@@ -33,7 +33,7 @@ import { hasReportField } from "../../report/core/review/report-inheritance.ts"
 import { REPORT_CHANGED_FIELDS_ONLY_TEXT } from "../../report/core/rules/procedure-rejection.ts"
 import { a2uiStructureFaults } from "../../report/core/rules/structure.ts"
 import type { CallReview } from "../core/call-review.ts"
-import { reportEvents } from "../core/sdk-report-message.ts"
+import { reportEvents } from "../core/message/sdk-report-message.ts"
 import { speechShape } from "./sdk-speech-tool.ts"
 
 /**

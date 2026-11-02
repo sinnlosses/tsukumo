@@ -6,7 +6,7 @@
 
 ## 何が困っていたか
 
-- `report` の受け口は `components` だけになった（ADR 0039 の段 6）が、受けたあとに `a2uiReportFields`（`src/shared/report/a2ui-report-input.ts`）が `components` を旧い引数の形（`sections` と塊）に組み直し、`reportEvents`（`src/server/session-driver/core/sdk-report-message.ts`）が `ReportEvent.sections` を作る。検査・使われ方の記録・Markdown 化・草稿は、この `sections` の塊から読む。
+- `report` の受け口は `components` だけになった（ADR 0039 の段 6）が、受けたあとに `a2uiReportFields`（`src/shared/report/a2ui-report-input.ts`）が `components` を旧い引数の形（`sections` と塊）に組み直し、`reportEvents`（`src/server/session-driver/core/message/sdk-report-message.ts`）が `ReportEvent.sections` を作る。検査・使われ方の記録・Markdown 化・草稿は、この `sections` の塊から読む。
 - カタログに部品を足すたびに、旧い塊の型にも対応を足すことになる。旧い塊の型（`src/shared/report/report-block.ts`）を import するファイルは `src/` に 39 個ある。
 - `components` はすでに `ReportEvent.components` と `SessionRecord` の `report` に載っていて、ブラウザの面（`a2uiReportView`）は `components` と `sections` の両方を読む。両方を読むせいで、`components` から作った節と葉の数が `sections` と合わないと面ごと作れなくなる（`src/shared/session/a2ui-report-view.ts`）。
 

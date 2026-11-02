@@ -11,8 +11,8 @@ import type { SessionDefault } from "../../../shared/session/session-default.ts"
 import { UNAVAILABLE_SESSION_DIGEST } from "../../../shared/session/session-digest.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import { createCallReview } from "../core/call-review.ts"
+import { reportEvents } from "../core/message/sdk-report-message.ts"
 import { recordedPromptImages } from "../core/prompt-image-shelf.ts"
-import { reportEvents } from "../core/sdk-report-message.ts"
 import type { SessionDriver } from "../core/session-driver.ts"
 import {
   FAKE_CONTEXT_USAGE,

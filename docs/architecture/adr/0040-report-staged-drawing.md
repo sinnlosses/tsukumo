@@ -9,7 +9,7 @@
 ## 何が困っていたか
 
 - 計測（`docs/research/a2ui-streaming-2026-10-28.md`）で、引数の断片は入り、部品を 1 つずつ閉じた時点で切り出せ、21 部品が全文の読みと一致した。長い報告では最初の部品が約 15 秒早く描ける。
-- いまの駆動は `content_block_start` の合図だけを `report-drafting` にして断片を捨てている（`src/server/session-driver/core/sdk-stream-message.ts` の `reportDraftingEvents`）。
+- いまの駆動は `content_block_start` の合図だけを `report-drafting` にして断片を捨てている（`src/server/session-driver/core/message/sdk-stream-message.ts` の `reportDraftingEvents`）。
 - 記録の「採らない理由になりうる点」にある 3 つが決まっていない。先に描いた部品が呼び出し全体の判定で差し戻されること、構造の規約は部品が揃うまで判定できないこと、目次・演出・復元が完成した報告を前提にしていること。
 - ADR 0039 は論点 4 (d) で段階描画を別の測定に預けた。測定が済んだので、描き方を決める。
 

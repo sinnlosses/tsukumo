@@ -11,7 +11,7 @@ const INVISIBLE_CODE_POINTS: ReadonlySet<number> = new Set([0x200b, 0x200c, 0x20
 
 /** 見えない文字そのものを入力や期待値にしているファイル → 理由。 */
 const ALLOWED_FILES: Readonly<Record<string, string>> = {
-  "test/server/session-driver/core/sdk-message.test.ts":
+  "test/server/session-driver/core/message/sdk-message.test.ts":
     "ゼロ幅スペースと BOM を含む入力を正規化する検証",
   "test/shared/session/session-advance-speech.test.ts":
     "ゼロ幅スペースだけのセリフを空として扱う検証",

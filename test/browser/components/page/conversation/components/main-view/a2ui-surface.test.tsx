@@ -3,7 +3,7 @@ import type { ReactNode } from "react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { mainViewDraftOf } from "../../../../../../../src/browser/domain/main-view/a2ui-draft-view.ts"
-import { reportEvents } from "../../../../../../../src/server/session-driver/core/sdk-report-message.ts"
+import { reportEvents } from "../../../../../../../src/server/session-driver/core/message/sdk-report-message.ts"
 import type { A2uiReportComponent } from "../../../../../../../src/shared/report/a2ui-report-catalog.ts"
 import { mainViewEntries } from "../../../../../../../src/shared/session/main-view-entry.ts"
 import type { MainViewReportRegions } from "../../../../../../../src/shared/session/main-view-shape.ts"

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import { reportHeadedSections } from "../../../src/browser/domain/main-view/main-view-report-body.ts"
-import { reportEvents } from "../../../src/server/session-driver/core/sdk-report-message.ts"
+import { reportEvents } from "../../../src/server/session-driver/core/message/sdk-report-message.ts"
 import { reportFigureOf } from "../../../src/shared/report/report-outline.ts"
 import { mainViewEntries } from "../../../src/shared/session/main-view-entry.ts"
 import type { MainViewReportRegions } from "../../../src/shared/session/main-view-shape.ts"

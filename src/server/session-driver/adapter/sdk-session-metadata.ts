@@ -1,8 +1,12 @@
 // セッションの起動直後に1回だけ SDK へ問い合わせる付帯情報（コマンドの説明・プラン・モデルごとの effort の対応）を内部イベントにして流す。
 // どれも取れなくてもセッションは続ける。
 
+import {
+  toCommandDescriptions,
+  toModelEffortSupport,
+  toPlan,
+} from "../core/message/sdk-query-reply.ts"
 import { type ClaudeAccountTier, planName } from "../core/plan.ts"
-import { toCommandDescriptions, toModelEffortSupport, toPlan } from "../core/sdk-query-reply.ts"
 import type { SessionDriverOptions } from "../core/session-driver.ts"
 import { readClaudeAccountTier } from "./claude-account.ts"
 

@@ -6,7 +6,7 @@
 
 import { isPlainObject } from "remeda"
 
-import type { SessionEvent } from "../../../shared/session/session-event.ts"
+import type { SessionEvent } from "../../../../shared/session/session-event.ts"
 
 export function toolResultEvents(message: unknown): readonly SessionEvent[] {
   if (!isPlainObject(message) || !Array.isArray(message.content)) {

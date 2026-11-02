@@ -112,7 +112,7 @@ shared の手続き応答に乗る型や DOM の構造を変える計画には�
 比べる場面の列にも例外があり、`session-info` の `slashCommands`・`terminalSlashCommands` と `command-descriptions` の
 `descriptions`（コマンド一覧）は、`collapseCommandCatalog`（`test/e2e/message-record.ts`）が固定の印に
 畳む。一覧が画面に届くことは `markdown-composer` の `/` の補完の確定が通し、中身の写しは
-`test/server/session-driver/core/sdk-message.test.ts` と `test/shared/session/command-suggestion.test.ts` が持つ。
+`test/server/session-driver/core/message/sdk-message.test.ts` と `test/shared/session/command-suggestion.test.ts` が持つ。
 
 ### 部分一致の期待値
 

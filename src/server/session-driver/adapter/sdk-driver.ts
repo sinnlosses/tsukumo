@@ -22,6 +22,7 @@ import { effectsOfEvent } from "../core/event-effect.ts"
 import { createExternalToolMark } from "../core/external-tool-mark.ts"
 import { createInputLedgerIntake, type InputLedgerIntake } from "../core/input-ledger.ts"
 import { createInterruptMark, type InterruptMark } from "../core/interrupt-mark.ts"
+import { isSubagentMessage, toSessionEvents } from "../core/message/sdk-message.ts"
 import { createPendingAnswerQueue, type PendingAnswerQueue } from "../core/pending-answer.ts"
 import {
   backgroundWaitPromptText,
@@ -33,7 +34,6 @@ import {
 import { createPromptDelayWatch, type PromptDelayWatch } from "../core/prompt-delay.ts"
 import { handOffPrompt } from "../core/prompt-handoff.ts"
 import { recordedPromptImages } from "../core/prompt-image-shelf.ts"
-import { isSubagentMessage, toSessionEvents } from "../core/sdk-message.ts"
 import { withSelfStartedTurns } from "../core/self-started-turn.ts"
 import type {
   SessionDriver,

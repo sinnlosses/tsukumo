@@ -3,7 +3,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
 
 import { Report } from "../../../../../../../src/browser/components/page/conversation/components/main-view/report.tsx"
 import { loadMarkdown } from "../../../../../../../src/browser/components/page/conversation/components/markdown/markdown.tsx"
-import { reportEvents } from "../../../../../../../src/server/session-driver/core/sdk-report-message.ts"
+import { reportEvents } from "../../../../../../../src/server/session-driver/core/message/sdk-report-message.ts"
 import { mainViewEntries } from "../../../../../../../src/shared/session/main-view-entry.ts"
 import type { MainViewReportRegions } from "../../../../../../../src/shared/session/main-view-shape.ts"
 import { applySessionEvent } from "../../../../../../../src/shared/session/session-fold.ts"

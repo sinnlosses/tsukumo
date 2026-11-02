@@ -1,7 +1,7 @@
 import { expect, it } from "vitest"
 
-import { toSessionEvents } from "../../../../src/server/session-driver/core/sdk-message.ts"
-import { EXPRESSIONS } from "../../../fixture/sdk-assistant-message.ts"
+import { toSessionEvents } from "../../../../../src/server/session-driver/core/message/sdk-message.ts"
+import { EXPRESSIONS } from "../../../../fixture/sdk-assistant-message.ts"
 
 it("tool_result をツールの終了にする", () => {
   const message = {

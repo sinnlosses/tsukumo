@@ -1,7 +1,10 @@
 import { expect, it } from "vitest"
 
-import { toSessionEvents } from "../../../../src/server/session-driver/core/sdk-message.ts"
-import { assistantMessageWithoutUuid, EXPRESSIONS } from "../../../fixture/sdk-assistant-message.ts"
+import { toSessionEvents } from "../../../../../src/server/session-driver/core/message/sdk-message.ts"
+import {
+  assistantMessageWithoutUuid,
+  EXPRESSIONS,
+} from "../../../../fixture/sdk-assistant-message.ts"
 
 // ステップごとの使用量。ターンの中を持ち場ごとに割れるのはこの経路だけなので、
 // `message.id` と持ち場が付いて出ることを固定する。

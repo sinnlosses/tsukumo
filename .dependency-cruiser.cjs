@@ -25,6 +25,7 @@ const SERVER_FEATURE_IMPORTS = {
 }
 
 // キーは `<機能>/<層>`、値は子ディレクトリごとの、読んでよい同じ層の子。子を切ったら1行足す。
+// 層の直下のファイル（子ではない）は、どの子からも読んでよい。
 const SERVER_CHILD_IMPORTS = {
   "report/core": {
     rules: [],
@@ -32,6 +33,9 @@ const SERVER_CHILD_IMPORTS = {
     usage: ["rules", "image"],
     image: ["rules"],
     prompt: [],
+  },
+  "session-driver/core": {
+    message: [],
   },
 }
 
@@ -201,7 +205,7 @@ const serverFeatureRules = [
         `server-child-edge:${place}/${child}`,
         { path: `^src/server/${place}/${child}/` },
         {
-          path: `^src/server/${place}/`,
+          path: `^src/server/${place}/[^/]+/`,
           pathNot: `^src/server/${place}/${alternation([child, ...allowed])}/`,
         },
       ),

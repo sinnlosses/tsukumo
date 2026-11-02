@@ -1,8 +1,11 @@
 import { expect, it } from "vitest"
 
-import { toSessionEvents } from "../../../../src/server/session-driver/core/sdk-message.ts"
-import { assistantMessageWithoutUuid, EXPRESSIONS } from "../../../fixture/sdk-assistant-message.ts"
-import { SPEAK_TOOL_FULL_NAME } from "../../../fixture/sdk-message.ts"
+import { toSessionEvents } from "../../../../../src/server/session-driver/core/message/sdk-message.ts"
+import {
+  assistantMessageWithoutUuid,
+  EXPRESSIONS,
+} from "../../../../fixture/sdk-assistant-message.ts"
+import { SPEAK_TOOL_FULL_NAME } from "../../../../fixture/sdk-message.ts"
 
 it("メインの speak の呼び出しは、呼び出しの id 付きのセリフにする（ツールの開始にはしない）", () => {
   const message = assistantMessageWithoutUuid([

@@ -48,7 +48,7 @@
 （`report/core/rules/prose/` が最深。それより深くは切らない）。切るのは、①同じ家族のファイルが3本以上、
 ②家族の内部 import が外への import より多い、③子どうしの辺が一方向にそろう、の3つが揃うとき。
 名前は家族の語（単数形でなくてよい）。`core/` 直下の子どうしの許す辺は `.dependency-cruiser.cjs` の
-`SERVER_CHILD_IMPORTS`（規則は `server-child-edge:`）が持ち、子を切ったら表に1行足す。いまの対象は `report/core/` の5つ。
+`SERVER_CHILD_IMPORTS`（規則は `server-child-edge:`）が持ち、子を切ったら表に1行足す。いまの対象は `report/core/` の5つと `session-driver/core/message/`。
 
 **どの機能にも属さない共有のもの**は、`server/core/` と `server/adapter/` の**直下**に置く
 （いまあるものは `ls src/server/core/ src/server/adapter/`）。置いてよいのは**どの機能の語彙も名乗らず、読み手が

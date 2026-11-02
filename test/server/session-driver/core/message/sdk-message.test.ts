@@ -3,10 +3,13 @@ import { describe, expect, it } from "vitest"
 import {
   isSubagentMessage,
   toSessionEvents,
-} from "../../../../src/server/session-driver/core/sdk-message.ts"
-import { MAX_TOOL_TEXT_LENGTH } from "../../../../src/shared/session/session-record.ts"
-import { assistantMessageWithoutUuid, EXPRESSIONS } from "../../../fixture/sdk-assistant-message.ts"
-import { WORK_PLAN_TOOL_FULL_NAME } from "../../../fixture/sdk-message.ts"
+} from "../../../../../src/server/session-driver/core/message/sdk-message.ts"
+import { MAX_TOOL_TEXT_LENGTH } from "../../../../../src/shared/session/session-record.ts"
+import {
+  assistantMessageWithoutUuid,
+  EXPRESSIONS,
+} from "../../../../fixture/sdk-assistant-message.ts"
+import { WORK_PLAN_TOOL_FULL_NAME } from "../../../../fixture/sdk-message.ts"
 
 describe("toSessionEvents", () => {
   it("assistant のテキストをターンの本文にする", () => {

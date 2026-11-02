@@ -3,10 +3,10 @@
 
 import { isPlainObject } from "remeda"
 
-import { type EffortLevel, isEffortLevel } from "../../../shared/command.ts"
-import type { ModelEffortSupport } from "../../../shared/session/session-event-setting.ts"
-import type { CommandDescription } from "../../../shared/session/session-event.ts"
-import { optionalString } from "../../../shared/utils/optional-string.ts"
+import { type EffortLevel, isEffortLevel } from "../../../../shared/command.ts"
+import type { ModelEffortSupport } from "../../../../shared/session/session-event-setting.ts"
+import type { CommandDescription } from "../../../../shared/session/session-event.ts"
+import { optionalString } from "../../../../shared/utils/optional-string.ts"
 
 /**
  * SDK が返すコマンド一覧（`supportedCommands()` の戻り値と `commands_changed` の `commands`）を検証して内部の型に変える。

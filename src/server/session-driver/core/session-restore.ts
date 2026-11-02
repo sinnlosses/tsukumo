@@ -14,8 +14,8 @@ import { nonBlankString } from "../../core/non-blank-string.ts"
 import { asideTextOf } from "./aside-prompt.ts"
 import { createCallReview } from "./call-review.ts"
 import type { InputLedger, LedgeredInputKind, LedgeredTurn } from "./input-ledger.ts"
+import { toSessionEvents } from "./message/sdk-message.ts"
 import { isProgressNudgePrompt } from "./progress-nudge.ts"
-import { toSessionEvents } from "./sdk-message.ts"
 
 /**
  * 控えに終わり方の無いターンの終わり方。transcript には `result`（ターンの終わり）が残らない。

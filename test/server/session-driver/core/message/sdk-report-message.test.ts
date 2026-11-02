@@ -1,11 +1,14 @@
 import { describe, expect, it } from "vitest"
 
-import { toSessionEvents } from "../../../../src/server/session-driver/core/sdk-message.ts"
-import { reportArgumentCharsOf } from "../../../../src/shared/report/report-argument-size.ts"
-import { reportOutline, reportFigureOf } from "../../../../src/shared/report/report-outline.ts"
-import { reportEvent, reportOfDrawn } from "../../../fixture/report-event.ts"
-import { assistantMessageWithoutUuid, EXPRESSIONS } from "../../../fixture/sdk-assistant-message.ts"
-import { REPORT_TOOL_FULL_NAME } from "../../../fixture/sdk-message.ts"
+import { toSessionEvents } from "../../../../../src/server/session-driver/core/message/sdk-message.ts"
+import { reportArgumentCharsOf } from "../../../../../src/shared/report/report-argument-size.ts"
+import { reportOutline, reportFigureOf } from "../../../../../src/shared/report/report-outline.ts"
+import { reportEvent, reportOfDrawn } from "../../../../fixture/report-event.ts"
+import {
+  assistantMessageWithoutUuid,
+  EXPRESSIONS,
+} from "../../../../fixture/sdk-assistant-message.ts"
+import { REPORT_TOOL_FULL_NAME } from "../../../../fixture/sdk-message.ts"
 
 describe("toSessionEvents（report ツール）", () => {
   it("メインの report の呼び出しはレポートにする（ツールの開始にはしない。文字列の body は逃げ道の塊1つの節に畳む）", () => {

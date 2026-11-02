@@ -3,7 +3,7 @@
 import { describe, expect, it } from "vitest"
 
 import { createCallReview } from "../../../../src/server/session-driver/core/call-review.ts"
-import { toSessionEvents } from "../../../../src/server/session-driver/core/sdk-message.ts"
+import { toSessionEvents } from "../../../../src/server/session-driver/core/message/sdk-message.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import { callReport, reportInput } from "../../../fixture/a2ui-report.ts"
 import { callTool } from "../../../fixture/mcp-server.ts"

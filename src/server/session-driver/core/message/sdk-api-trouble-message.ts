@@ -3,9 +3,12 @@
 
 import { isPlainObject } from "remeda"
 
-import { API_ERROR_KINDS, type ApiErrorKind } from "../../../shared/session-driver/api-trouble.ts"
-import type { RateLimit, RateLimitBucket } from "../../../shared/session-driver/rate-limit.ts"
-import type { SessionEvent } from "../../../shared/session/session-event.ts"
+import {
+  API_ERROR_KINDS,
+  type ApiErrorKind,
+} from "../../../../shared/session-driver/api-trouble.ts"
+import type { RateLimit, RateLimitBucket } from "../../../../shared/session-driver/rate-limit.ts"
+import type { SessionEvent } from "../../../../shared/session/session-event.ts"
 
 /**
  * `assistant` の `error` を `api-error` にする。

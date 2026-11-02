@@ -69,7 +69,10 @@ describe(".dependency-cruiser.cjs の規則", () => {
   describe("子ディレクトリの辺 (server-child-edge:)", () => {
     const CHILD_PREFIX = "server-child-edge:report/core/"
     const CORE = "src/server/report/core"
-    const childRules = config.forbidden.filter((rule) => rule.name.startsWith(CHILD_PREFIX))
+    const allChildRules = config.forbidden.filter((rule) =>
+      rule.name.startsWith("server-child-edge:"),
+    )
+    const childRules = allChildRules.filter((rule) => rule.name.startsWith(CHILD_PREFIX))
 
     function childEdgeForbidden(from: string, to: string): boolean {
       return childRules.some((rule) => {
@@ -95,6 +98,35 @@ describe(".dependency-cruiser.cjs の規則", () => {
     it("規則の子は report/core/ の実際のディレクトリと過不足なく一致する", () => {
       const ruleChildren = childRules.map((rule) => rule.name.slice(CHILD_PREFIX.length))
       const directories = readdirSync(`${SRC_ROOT}/server/report/core`)
+
+      expect(ruleChildren.toSorted()).toEqual(directories.toSorted())
+    })
+
+    it("message/ から core/ 直下のファイルを読む import は通し、別の子への import は落とす", () => {
+      const forbids = (from: string, to: string): boolean =>
+        allChildRules.some(
+          (rule) =>
+            new RegExp(rule.from.path ?? "(?!)").test(from) &&
+            new RegExp(rule.to.path ?? "(?!)").test(to) &&
+            !new RegExp(rule.to.pathNot ?? "(?!)").test(to),
+        )
+      const CORE_DIR = "src/server/session-driver/core"
+
+      expect(forbids(`${CORE_DIR}/message/a.ts`, `${CORE_DIR}/a2ui-report-message.ts`)).toBe(false)
+      expect(forbids(`${CORE_DIR}/message/a.ts`, `${CORE_DIR}/message/b.ts`)).toBe(false)
+      expect(forbids(`${CORE_DIR}/message/a.ts`, `${CORE_DIR}/other/b.ts`)).toBe(true)
+    })
+
+    it("session-driver/core/ の規則の子は実際のディレクトリと過不足なく一致する", () => {
+      const prefix = "server-child-edge:session-driver/core/"
+      const ruleChildren = allChildRules
+        .filter((rule) => rule.name.startsWith(prefix))
+        .map((rule) => rule.name.slice(prefix.length))
+      const directories = readdirSync(`${SRC_ROOT}/server/session-driver/core`, {
+        withFileTypes: true,
+      })
+        .filter((entry) => entry.isDirectory())
+        .map((entry) => entry.name)
 
       expect(ruleChildren.toSorted()).toEqual(directories.toSorted())
     })
