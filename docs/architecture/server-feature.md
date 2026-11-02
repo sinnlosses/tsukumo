@@ -12,7 +12,7 @@
 
 `src/server/` は**機能のまとまりで割り、機能の中を層（`core/` と `adapter/`）で割る**。機能の名前は
 `docs/glossary.md` の語（単数形）で、**1つの機能 = 1つのディレクトリ**。機能の中は `core/`（判断）と
-`adapter/`（境界）の2段だけで、中身の無い段は作らない。機能の中のファイルは
+`adapter/`（境界）の2層で、中身の無い層は作らない。層の下の子は下の「層の下の子ディレクトリ」で切る。機能の中のファイルは
 `ls src/server/<機能>/core/ src/server/<機能>/adapter/` が正典で、各ファイルの持ち物はそのファイルの
 冒頭のコメント（「core と adapter」）。
 
@@ -43,6 +43,12 @@
 満たさないまとまりは機能にせず、読み手の機能へ入れる。例外は名指しの3つ（`question`・`system-prompt`・
 `work-plan`。どれも `core/` だけで shared を持たない）。検査は `test/architecture/server-feature.test.ts`
 （例外の一覧 `FEATURE_FLOOR_EXCEPTIONS`）。
+
+**層の下の子ディレクトリ**: `core/`・`adapter/` の直下に子を切り、その子の中にもう1階層まで切れる
+（`report/core/rules/prose/` が最深。それより深くは切らない）。切るのは、①同じ家族のファイルが3本以上、
+②家族の内部 import が外への import より多い、③子どうしの辺が一方向にそろう、の3つが揃うとき。
+名前は家族の語（単数形でなくてよい）。`core/` 直下の子どうしの許す辺は `.dependency-cruiser.cjs` の
+`SERVER_CHILD_IMPORTS`（規則は `server-child-edge:`）が持ち、子を切ったら表に1行足す。いまの対象は `report/core/` の5つ。
 
 **どの機能にも属さない共有のもの**は、`server/core/` と `server/adapter/` の**直下**に置く
 （いまあるものは `ls src/server/core/ src/server/adapter/`）。置いてよいのは**どの機能の語彙も名乗らず、読み手が

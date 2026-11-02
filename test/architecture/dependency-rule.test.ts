@@ -1,12 +1,15 @@
+import { readdirSync } from "node:fs"
 import { createRequire } from "node:module"
 
 import { describe, expect, it } from "vitest"
 
 import { buildFeatureEdgeTable, type EdgeRule } from "../../scripts/document/feature-edge-table.ts"
 import { SERVER_FEATURES } from "./feature-graph.ts"
+import { SRC_ROOT } from "./source-file.ts"
 
 type Rule = EdgeRule & {
   readonly severity: string
+  readonly from: { readonly path?: string }
   readonly to: { readonly path?: string; readonly pathNot?: string }
 }
 
@@ -61,6 +64,51 @@ describe(".dependency-cruiser.cjs の規則", () => {
     )
 
     expect(allowedNames.filter((name) => !known.has(name))).toEqual([])
+  })
+
+  describe("子ディレクトリの辺 (server-child-edge:)", () => {
+    const CHILD_PREFIX = "server-child-edge:report/core/"
+    const CORE = "src/server/report/core"
+    const childRules = config.forbidden.filter((rule) => rule.name.startsWith(CHILD_PREFIX))
+
+    function childEdgeForbidden(from: string, to: string): boolean {
+      return childRules.some((rule) => {
+        return (
+          new RegExp(rule.from.path ?? "(?!)").test(`${CORE}/${from}`) &&
+          new RegExp(rule.to.path ?? "(?!)").test(`${CORE}/${to}`) &&
+          !new RegExp(rule.to.pathNot ?? "(?!)").test(`${CORE}/${to}`)
+        )
+      })
+    }
+
+    it("逆向きの import を落とし、許す辺と同じ子の中は通す", () => {
+      expect(childEdgeForbidden("rules/a.ts", "review/b.ts")).toBe(true)
+      expect(childEdgeForbidden("review/a.ts", "usage/b.ts")).toBe(true)
+      expect(childEdgeForbidden("image/a.ts", "usage/b.ts")).toBe(true)
+      expect(childEdgeForbidden("prompt/a.ts", "rules/b.ts")).toBe(true)
+      expect(childEdgeForbidden("review/a.ts", "rules/draft.ts")).toBe(false)
+      expect(childEdgeForbidden("usage/a.ts", "image/b.ts")).toBe(false)
+      expect(childEdgeForbidden("usage/a.ts", "rules/figure/diagram.ts")).toBe(false)
+      expect(childEdgeForbidden("rules/block/a.ts", "rules/prose/b.ts")).toBe(false)
+    })
+
+    it("規則の子は report/core/ の実際のディレクトリと過不足なく一致する", () => {
+      const ruleChildren = childRules.map((rule) => rule.name.slice(CHILD_PREFIX.length))
+      const directories = readdirSync(`${SRC_ROOT}/server/report/core`)
+
+      expect(ruleChildren.toSorted()).toEqual(directories.toSorted())
+    })
+
+    it("許す先は表の子だけ", () => {
+      const children = new Set(childRules.map((rule) => rule.name.slice(CHILD_PREFIX.length)))
+      const allowed = childRules.flatMap((rule) =>
+        [...(rule.to.pathNot ?? "").matchAll(/\(\?:([^)]+)\)/g)].flatMap((match) =>
+          (match[1] ?? "").split("|"),
+        ),
+      )
+
+      expect(allowed.filter((name) => !children.has(name))).toEqual([])
+    })
   })
 
   it("`@orpc/server` を読む規則は、解決できた道と解決できない名前の両方に当たる", () => {

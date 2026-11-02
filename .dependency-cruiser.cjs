@@ -24,6 +24,17 @@ const SERVER_FEATURE_IMPORTS = {
   question: [],
 }
 
+// キーは `<機能>/<層>`、値は子ディレクトリごとの、読んでよい同じ層の子。子を切ったら1行足す。
+const SERVER_CHILD_IMPORTS = {
+  "report/core": {
+    rules: [],
+    review: ["rules"],
+    usage: ["rules", "image"],
+    image: ["rules"],
+    prompt: [],
+  },
+}
+
 const BROWSER_FRAMES = ["components/domain/screen-nav", "components/domain/sidebar"]
 const BROWSER_SCREENS = [
   "components/page/conversation",
@@ -182,6 +193,18 @@ const serverFeatureRules = [
         path: FEATURE_DIRECTORY_PATH,
         pathNot: `^src/server/${alternation([feature, ...allowed])}/`,
       },
+    ),
+  ),
+  ...Object.entries(SERVER_CHILD_IMPORTS).flatMap(([place, children]) =>
+    Object.entries(children).map(([child, allowed]) =>
+      rule(
+        `server-child-edge:${place}/${child}`,
+        { path: `^src/server/${place}/${child}/` },
+        {
+          path: `^src/server/${place}/`,
+          pathNot: `^src/server/${place}/${alternation([child, ...allowed])}/`,
+        },
+      ),
     ),
   ),
   rule(
