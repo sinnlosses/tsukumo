@@ -9,12 +9,12 @@ import {
 } from "../server/recommendation/adapter/recommendation-cache.ts"
 import { createRecommender, type Recommender } from "../server/recommendation/core/recommender.ts"
 import { codeBlockStartLine } from "../server/report/core/rules/block/code-match.ts"
-import type { BeadsStamp } from "../server/repository/adapter/beads.ts"
-import { changeCountGitOf } from "../server/repository/adapter/change-count.ts"
+import type { BeadsStamp } from "../server/repository/adapter/beads/beads.ts"
 import {
   createFakeBeadsStampReader,
   readFakeBeadsIssues,
-} from "../server/repository/adapter/fake-beads.ts"
+} from "../server/repository/adapter/beads/fake-beads.ts"
+import { changeCountGitOf } from "../server/repository/adapter/change-count.ts"
 import { projectNameOf } from "../server/repository/adapter/project-name.ts"
 import { readCodeBlockStart } from "../server/repository/adapter/repository-code-block-start.ts"
 import { readFileExcerpt } from "../server/repository/adapter/repository-file-excerpt.ts"
@@ -24,7 +24,7 @@ import {
   REAL_TASK_SUMMARY_OPTIONS,
   watchTaskSummary,
   type TaskSummaryOptions,
-} from "../server/repository/adapter/task-summary.ts"
+} from "../server/repository/adapter/task/task-summary.ts"
 import type { SessionManagerOptions } from "../server/session/core/session-manager-port.ts"
 import type { SessionEvent } from "../shared/session/session-event.ts"
 import { failureDiagnostic } from "./failure-diagnostic.ts"

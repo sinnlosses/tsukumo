@@ -1,7 +1,7 @@
 import { mkdirSync, renameSync, writeFileSync } from "node:fs"
 import { dirname, join } from "node:path"
 
-import { FAKE_BEADS_ISSUES_PATH } from "../../src/server/repository/adapter/fake-beads.ts"
+import { FAKE_BEADS_ISSUES_PATH } from "../../src/server/repository/adapter/beads/fake-beads.ts"
 import type { TaskDifficulty, TaskLoopable } from "../../src/shared/repository/task-summary.ts"
 import type { DomRootName } from "./dom-tree.ts"
 import type { ScenarioRun } from "./room-fixture.ts"

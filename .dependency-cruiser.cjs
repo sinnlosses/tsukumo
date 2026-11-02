@@ -50,6 +50,10 @@ const SERVER_CHILD_IMPORTS = {
     build: [],
     rpc: [],
   },
+  "repository/adapter": {
+    task: ["beads"],
+    beads: [],
+  },
 }
 
 const BROWSER_FRAMES = ["components/domain/screen-nav", "components/domain/sidebar"]
@@ -134,7 +138,7 @@ const CHILD_PROCESS_FILES = [
   "src/server/host/adapter/browser-host.ts",
   "src/server/view-server/adapter/build/vite-build.ts",
   "src/server/repository/adapter/git.ts",
-  "src/server/repository/adapter/beads.ts",
+  "src/server/repository/adapter/beads/beads.ts",
   "src/server/session-driver/adapter/sdk/rtk-rewrite.ts",
   "src/server/session-driver/adapter/sdk/sdk-workflow-tw.ts",
   "src/server/workflow-setting/adapter/tw-config.ts",

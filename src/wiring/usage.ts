@@ -11,7 +11,7 @@ import type { CharacterPack } from "../server/character-pack/adapter/character-p
 import type { Config } from "../server/core/config.ts"
 import { createDiagnosticLog } from "../server/diagnostic/adapter/diagnostic-log.ts"
 import { createReportUsageLog } from "../server/report/adapter/report-usage-log.ts"
-import { readBeadsWorkspace } from "../server/repository/adapter/beads.ts"
+import { readBeadsWorkspace } from "../server/repository/adapter/beads/beads.ts"
 import type { SessionLaunchSeed } from "../server/session/core/session-launch.ts"
 import type { SessionManagerOptions } from "../server/session/core/session-manager-port.ts"
 import { createContextUsageLog } from "../server/usage/adapter/context-usage-log.ts"

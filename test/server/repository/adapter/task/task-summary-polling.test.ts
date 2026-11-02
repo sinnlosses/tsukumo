@@ -3,15 +3,15 @@ import { afterEach, describe, expect, it } from "vitest"
 import type {
   BeadsIssue,
   BeadsOutcome,
-} from "../../../../src/server/repository/adapter/beads-port.ts"
-import { knownTaskSummaryOfBeadsIssues } from "../../../../src/server/repository/adapter/beads-task.ts"
+} from "../../../../../src/server/repository/adapter/beads/beads-port.ts"
+import { knownTaskSummaryOfBeadsIssues } from "../../../../../src/server/repository/adapter/beads/beads-task.ts"
 import {
   watchTaskSummary,
   type TaskSummaryPorts,
   type TaskSummaryWatcher,
-} from "../../../../src/server/repository/adapter/task-summary.ts"
-import type { TaskSummaryItem } from "../../../../src/shared/repository/task-summary.ts"
-import { createManualClock } from "../../../fixture/manual-clock.ts"
+} from "../../../../../src/server/repository/adapter/task/task-summary.ts"
+import type { TaskSummaryItem } from "../../../../../src/shared/repository/task-summary.ts"
+import { createManualClock } from "../../../../fixture/manual-clock.ts"
 
 // 偽の口と手で進める時計で、見回りが子プロセスを起こした回数を数える。
 

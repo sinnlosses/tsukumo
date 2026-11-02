@@ -11,7 +11,7 @@ import type {
   TaskSummaryItem,
   TaskSummaryResult,
   TaskSummaryStatus,
-} from "../../../shared/repository/task-summary.ts"
+} from "../../../../shared/repository/task-summary.ts"
 import type { BeadsIssue } from "./beads-port.ts"
 import { CLOSED_TASK_DISPLAY_LIMIT } from "./beads.ts"
 

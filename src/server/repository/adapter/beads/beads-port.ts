@@ -5,7 +5,7 @@ import type {
   TaskImportance,
   TaskLoopable,
   TaskUrgency,
-} from "../../../shared/repository/task-summary.ts"
+} from "../../../../shared/repository/task-summary.ts"
 
 /**
  * `bd list --json` の1件のうち、Beads の組み込みの欄でこの読み手が使うものだけ。

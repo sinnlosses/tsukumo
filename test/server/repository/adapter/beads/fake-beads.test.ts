@@ -7,18 +7,18 @@ import {
   createFakeBeadsStampReader,
   FAKE_BEADS_ISSUES_PATH,
   readFakeBeadsIssues,
-} from "../../../../src/server/repository/adapter/fake-beads.ts"
+} from "../../../../../src/server/repository/adapter/beads/fake-beads.ts"
 import {
   readTaskSummaryMemory,
   writeTaskSummaryMemory,
-} from "../../../../src/server/repository/adapter/task-summary-memory.ts"
+} from "../../../../../src/server/repository/adapter/task/task-summary-memory.ts"
 import {
   REAL_TASK_SUMMARY_OPTIONS,
   watchTaskSummary,
   type TaskSummaryWatcher,
-} from "../../../../src/server/repository/adapter/task-summary.ts"
-import type { TaskSummaryResult } from "../../../../src/shared/repository/task-summary.ts"
-import { useTempDir } from "../../../fixture/temp-dir.ts"
+} from "../../../../../src/server/repository/adapter/task/task-summary.ts"
+import type { TaskSummaryResult } from "../../../../../src/shared/repository/task-summary.ts"
+import { useTempDir } from "../../../../fixture/temp-dir.ts"
 
 // 疑似セッションの見張りは `bd` を起こさず、cwd のファイルの課題を出す。ふだんの見張りは今どおり `bd` を読む。
 // 課題は架空のものだけにする。

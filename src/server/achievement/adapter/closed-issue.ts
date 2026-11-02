@@ -14,12 +14,12 @@ import type { DailyAchievement } from "../../../shared/achievement/achievement.t
 import type { DateKey } from "../../../shared/diary/date-key.ts"
 import type { DoneTask } from "../../../shared/repository/task-summary.ts"
 import { localDateEpochRange, localDateKey } from "../../adapter/local-time.ts"
-import { doneTasksOfBeadsIssues } from "../../repository/adapter/beads-task.ts"
+import { doneTasksOfBeadsIssues } from "../../repository/adapter/beads/beads-task.ts"
 import {
   isWithinRereadInterval,
   readBeadsIssues,
   type BeadsStamp,
-} from "../../repository/adapter/beads.ts"
+} from "../../repository/adapter/beads/beads.ts"
 import { reuseOrReread } from "../core/beads-reread.ts"
 import { dailyAchievementOf } from "../core/daily-achievement.ts"
 

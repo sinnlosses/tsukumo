@@ -1,6 +1,6 @@
 // 手で進める時計。実際の時間を待たずに、時計に掛けた起こしの間隔を越えるために使う。
 
-import type { TaskSummaryClock } from "../../src/server/repository/adapter/task-summary.ts"
+import type { TaskSummaryClock } from "../../src/server/repository/adapter/task/task-summary.ts"
 
 export type ManualClock = {
   readonly clock: TaskSummaryClock

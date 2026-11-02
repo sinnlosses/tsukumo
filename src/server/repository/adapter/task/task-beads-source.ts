@@ -6,9 +6,9 @@
 // `.beads` があって `bd` が読めないとき（`bd` が無い含む）は「不明」にし、印は覚えず次の見回りで打ち直す。
 // タイムアウトしたときはその回を諦める。
 
-import type { BeadsIssuesReader } from "./beads-port.ts"
-import { knownTaskSummaryOfBeadsIssues } from "./beads-task.ts"
-import { isWithinRereadInterval, type BeadsStamp } from "./beads.ts"
+import type { BeadsIssuesReader } from "../beads/beads-port.ts"
+import { knownTaskSummaryOfBeadsIssues } from "../beads/beads-task.ts"
+import { isWithinRereadInterval, type BeadsStamp } from "../beads/beads.ts"
 import type { TaskSource } from "./task-source.ts"
 
 export type TaskBeadsSourcePorts = {

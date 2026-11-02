@@ -11,11 +11,11 @@
 import {
   diffTaskSummary,
   type TaskSummaryChange,
-} from "../../../shared/repository/task-summary-change.ts"
-import type { TaskSummaryResult } from "../../../shared/repository/task-summary.ts"
-import { createServerClock } from "../../adapter/local-time.ts"
-import { decideTaskSummaryPoll } from "../core/task-summary-decision.ts"
-import { createBeadsStampReader, readBeadsIssues } from "./beads.ts"
+} from "../../../../shared/repository/task-summary-change.ts"
+import type { TaskSummaryResult } from "../../../../shared/repository/task-summary.ts"
+import { createServerClock } from "../../../adapter/local-time.ts"
+import { decideTaskSummaryPoll } from "../../core/task-summary-decision.ts"
+import { createBeadsStampReader, readBeadsIssues } from "../beads/beads.ts"
 import { createTaskBeadsSource } from "./task-beads-source.ts"
 import type { TaskSource } from "./task-source.ts"
 import { readTaskSummaryMemory, writeTaskSummaryMemory } from "./task-summary-memory.ts"

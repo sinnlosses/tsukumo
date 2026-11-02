@@ -8,11 +8,11 @@ import {
   type ReadAchievementCalendarResult,
   type ReadAchievementResult,
 } from "../../../../src/server/achievement/adapter/closed-issue.ts"
-import type { BeadsOutcome } from "../../../../src/server/repository/adapter/beads-port.ts"
-import type * as BeadsAdapter from "../../../../src/server/repository/adapter/beads.ts"
-import type { BeadsStamp } from "../../../../src/server/repository/adapter/beads.ts"
-import { readBeadsIssues } from "../../../../src/server/repository/adapter/beads.ts"
-import { createTaskBeadsSource } from "../../../../src/server/repository/adapter/task-beads-source.ts"
+import type { BeadsOutcome } from "../../../../src/server/repository/adapter/beads/beads-port.ts"
+import type * as BeadsAdapter from "../../../../src/server/repository/adapter/beads/beads.ts"
+import type { BeadsStamp } from "../../../../src/server/repository/adapter/beads/beads.ts"
+import { readBeadsIssues } from "../../../../src/server/repository/adapter/beads/beads.ts"
+import { createTaskBeadsSource } from "../../../../src/server/repository/adapter/task/task-beads-source.ts"
 import type { AchievementCalendar } from "../../../../src/shared/achievement/achievement-calendar.ts"
 import type { DailyAchievement } from "../../../../src/shared/achievement/achievement.ts"
 import { dateKey } from "../../../fixture/date-key.ts"
@@ -31,10 +31,10 @@ const fakeIntake = vi.hoisted(
   } => ({ workspace: "found", failed: false, stamp: undefined, listCalls: 0, issues: [] }),
 )
 
-vi.mock("../../../../src/server/repository/adapter/beads.ts", async (importOriginal) => {
+vi.mock("../../../../src/server/repository/adapter/beads/beads.ts", async (importOriginal) => {
   const actual = await importOriginal<typeof BeadsAdapter>()
   const { memoizeByStamp } =
-    await import("../../../../src/server/repository/adapter/beads-stamp-memo.ts")
+    await import("../../../../src/server/repository/adapter/beads/beads-stamp-memo.ts")
   const fakeRead = memoizeByStamp((): Promise<BeadsOutcome> => {
     fakeIntake.listCalls += 1
     return Promise.resolve(

@@ -238,6 +238,37 @@ describe(".dependency-cruiser.cjs の規則", () => {
       expect(forbids(`${ADAPTER_DIR}/rpc/a.ts`, `${ADAPTER_DIR}/rpc/b.ts`)).toBe(false)
     })
 
+    it("repository/adapter/ の規則の子は実際のディレクトリと過不足なく一致する", () => {
+      const prefix = "server-child-edge:repository/adapter/"
+      const ruleChildren = allChildRules
+        .filter((rule) => rule.name.startsWith(prefix))
+        .map((rule) => rule.name.slice(prefix.length))
+      const directories = readdirSync(`${SRC_ROOT}/server/repository/adapter`, {
+        withFileTypes: true,
+      })
+        .filter((entry) => entry.isDirectory())
+        .map((entry) => entry.name)
+
+      expect(ruleChildren.toSorted()).toEqual(directories.toSorted())
+    })
+
+    it("task/ から beads/ と adapter/ 直下のファイルを読む import は通し、逆向きと別の子への import は落とす", () => {
+      const forbids = (from: string, to: string): boolean =>
+        allChildRules.some(
+          (rule) =>
+            new RegExp(rule.from.path ?? "(?!)").test(from) &&
+            new RegExp(rule.to.path ?? "(?!)").test(to) &&
+            !new RegExp(rule.to.pathNot ?? "(?!)").test(to),
+        )
+      const ADAPTER_DIR = "src/server/repository/adapter"
+
+      expect(forbids(`${ADAPTER_DIR}/task/a.ts`, `${ADAPTER_DIR}/beads/b.ts`)).toBe(false)
+      expect(forbids(`${ADAPTER_DIR}/task/a.ts`, `${ADAPTER_DIR}/git.ts`)).toBe(false)
+      expect(forbids(`${ADAPTER_DIR}/beads/a.ts`, `${ADAPTER_DIR}/git.ts`)).toBe(false)
+      expect(forbids(`${ADAPTER_DIR}/beads/a.ts`, `${ADAPTER_DIR}/task/b.ts`)).toBe(true)
+      expect(forbids(`${ADAPTER_DIR}/task/a.ts`, `${ADAPTER_DIR}/other/b.ts`)).toBe(true)
+    })
+
     it("許す先は表の子だけ", () => {
       const children = new Set(childRules.map((rule) => rule.name.slice(CHILD_PREFIX.length)))
       const allowed = childRules.flatMap((rule) =>

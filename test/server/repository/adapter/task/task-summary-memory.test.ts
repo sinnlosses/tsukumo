@@ -6,10 +6,10 @@ import { describe, expect, it } from "vitest"
 import {
   readTaskSummaryMemory,
   writeTaskSummaryMemory,
-} from "../../../../src/server/repository/adapter/task-summary-memory.ts"
-import type { TaskSummaryItem } from "../../../../src/shared/repository/task-summary.ts"
-import { taskStatusOfWord } from "../../../fixture/session-state.ts"
-import { useTempDir } from "../../../fixture/temp-dir.ts"
+} from "../../../../../src/server/repository/adapter/task/task-summary-memory.ts"
+import type { TaskSummaryItem } from "../../../../../src/shared/repository/task-summary.ts"
+import { taskStatusOfWord } from "../../../../fixture/session-state.ts"
+import { useTempDir } from "../../../../fixture/temp-dir.ts"
 
 const root = useTempDir("task-summary-memory")
 

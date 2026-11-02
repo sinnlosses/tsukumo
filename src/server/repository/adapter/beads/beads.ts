@@ -17,11 +17,11 @@ import {
   TASK_IMPORTANCES,
   TASK_LOOPABLES,
   TASK_URGENCIES,
-} from "../../../shared/repository/task-summary.ts"
-import { nonBlankString } from "../../core/non-blank-string.ts"
+} from "../../../../shared/repository/task-summary.ts"
+import { nonBlankString } from "../../../core/non-blank-string.ts"
+import { GIT_TIMEOUT_MS, MAX_OUTPUT_BYTES } from "../git.ts"
 import type { BeadsIssue, BeadsIssuesReader, BeadsOutcome } from "./beads-port.ts"
 import { memoizeByStamp } from "./beads-stamp-memo.ts"
-import { GIT_TIMEOUT_MS, MAX_OUTPUT_BYTES } from "./git.ts"
 
 /** タスク板に残す、閉じた課題の件数。 */
 export const CLOSED_TASK_DISPLAY_LIMIT = 10

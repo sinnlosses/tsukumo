@@ -216,7 +216,7 @@ tsukumo のゴールは、レポートを分かりやすく表示し、キャラ
 
 - 読むのは `difficulty`（`haiku`・`sonnet`・`opus`）と `loopable`（`Y`・`N`）だけ。label の字（`difficulty:`・`loopable:`）からは読まない
 - 値が無い・表に無いときは属性を「無い」（`undefined`）とし、課題ごと落とさない
-- 読む場所は Beads アダプタ `src/server/repository/adapter/beads.ts` の1か所。shared・画面・各機能の core は写したあとの `TaskSummaryItem` だけを扱う
+- 読む場所は Beads アダプタ `src/server/repository/adapter/beads/beads.ts` の1か所。shared・画面・各機能の core は写したあとの `TaskSummaryItem` だけを扱う
 - 属性は板に出すだけで、おすすめの選び・並べ替え・絞り込みには使わない。`labels` は今までどおり字のまま並べ、属性とは別の欄に出す
 - 戻したのはこの2つだけで、担当・スキルの独自の状態・本文の節の書式・ID の書き換えは読まないまま
 

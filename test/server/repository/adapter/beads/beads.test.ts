@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { beadsOutcomeOf } from "../../../../src/server/repository/adapter/beads.ts"
+import { beadsOutcomeOf } from "../../../../../src/server/repository/adapter/beads/beads.ts"
 
 function issueOf(extra: Record<string, unknown>): unknown {
   return {

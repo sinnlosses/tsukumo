@@ -8,7 +8,7 @@ import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 import { CATALOG } from "../../../../scripts/capture/lib/catalog-entry.ts"
 import { workspaceOf } from "../../../../scripts/capture/lib/catalog-setup.ts"
-import { FAKE_BEADS_ISSUES_PATH } from "../../../../src/server/repository/adapter/fake-beads.ts"
+import { FAKE_BEADS_ISSUES_PATH } from "../../../../src/server/repository/adapter/beads/fake-beads.ts"
 
 let outDir = ""
 

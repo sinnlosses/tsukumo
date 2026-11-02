@@ -9,34 +9,34 @@ import { z } from "zod"
 import {
   createAchievementCache,
   readAchievement,
-} from "../../../../src/server/achievement/adapter/closed-issue.ts"
+} from "../../../../../src/server/achievement/adapter/closed-issue.ts"
 import {
   CLOSED_TASK_DISPLAY_LIMIT,
   createBeadsStampReader,
   readBeadsIssues,
   readBeadsWorkspace,
-} from "../../../../src/server/repository/adapter/beads.ts"
-import type * as GitAdapter from "../../../../src/server/repository/adapter/git.ts"
+} from "../../../../../src/server/repository/adapter/beads/beads.ts"
+import type * as GitAdapter from "../../../../../src/server/repository/adapter/git.ts"
 import {
   bd,
   initBeads,
   initBeadsWithIssuesOutsideGit,
   useBeadsHome,
-} from "../../../fixture/beads-repository.ts"
-import { dateKey } from "../../../fixture/date-key.ts"
+} from "../../../../fixture/beads-repository.ts"
+import { dateKey } from "../../../../fixture/date-key.ts"
 import {
   addWorktree,
   initBeadsIssues,
   initRepository,
   openIssue,
-} from "../../../fixture/task-summary-repository.ts"
-import { useTempDir } from "../../../fixture/temp-dir.ts"
+} from "../../../../fixture/task-summary-repository.ts"
+import { useTempDir } from "../../../../fixture/temp-dir.ts"
 
 // 本物の `bd` を起こすテストはこのファイルだけに置く（ほかは取り込み口のフェイクで済ませる）。
 // `HOME` は一時ディレクトリへ向け（`useBeadsHome`）、リポジトリは一時ディレクトリに毎回作り、中身は架空の課題だけにする。
 
 // 本物の `bd` は負荷で5秒を超えうるので、製品の上限だけ延ばす。
-vi.mock("../../../../src/server/repository/adapter/git.ts", async (importOriginal) => ({
+vi.mock("../../../../../src/server/repository/adapter/git.ts", async (importOriginal) => ({
   ...(await importOriginal<typeof GitAdapter>()),
   GIT_TIMEOUT_MS: 60_000,
 }))

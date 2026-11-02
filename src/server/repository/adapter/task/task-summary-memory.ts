@@ -10,9 +10,9 @@ import {
   TASK_URGENCIES,
   TASK_STATUSES,
   type TaskSummaryItem,
-} from "../../../shared/repository/task-summary.ts"
-import { readJsonFile, writeJsonFile } from "../../adapter/lib/json-file.ts"
-import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
+} from "../../../../shared/repository/task-summary.ts"
+import { readJsonFile, writeJsonFile } from "../../../adapter/lib/json-file.ts"
+import { tsukumoHomePath } from "../../../adapter/tsukumo-home.ts"
 
 /** ファイルの形の版。形を変えたら上げ、古いファイルと見分ける。 */
 const TASK_SUMMARY_MEMORY_FORMAT_VERSION = 6 satisfies number

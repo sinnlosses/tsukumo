@@ -2,20 +2,20 @@ import { join } from "node:path"
 
 import { afterEach, describe, expect, it } from "vitest"
 
-import type { BeadsOutcome } from "../../../../src/server/repository/adapter/beads-port.ts"
-import { beadsOutcomeOf } from "../../../../src/server/repository/adapter/beads.ts"
+import type { BeadsOutcome } from "../../../../../src/server/repository/adapter/beads/beads-port.ts"
+import { beadsOutcomeOf } from "../../../../../src/server/repository/adapter/beads/beads.ts"
 import {
   readTaskSummaryMemory,
   writeTaskSummaryMemory,
-} from "../../../../src/server/repository/adapter/task-summary-memory.ts"
+} from "../../../../../src/server/repository/adapter/task/task-summary-memory.ts"
 import {
   REAL_TASK_SUMMARY_OPTIONS,
   watchTaskSummary,
   type TaskSummaryPorts,
   type TaskSummaryWatcher,
-} from "../../../../src/server/repository/adapter/task-summary.ts"
-import { openIssue } from "../../../fixture/task-summary-repository.ts"
-import { useTempDir } from "../../../fixture/temp-dir.ts"
+} from "../../../../../src/server/repository/adapter/task/task-summary.ts"
+import { openIssue } from "../../../../fixture/task-summary-repository.ts"
+import { useTempDir } from "../../../../fixture/temp-dir.ts"
 
 // 実際のポーリング間隔（TASK_SUMMARY_POLL_INTERVAL_MS）を待つとテストが遅くなるので、
 // テストだけ短い間隔に差し替える。

@@ -36,7 +36,7 @@ vendor/tsukumo-plugins/       取り込んだ tsukumo-plugins（git submodule。
 「tsukumo に頼む」の文面は、`browser/features/task-board/domain/task-run-prompt.ts` の `requestPromptOf` が作る。
 着手の文面だけは、歯車の「タスクの実行」に利用者が書いたスキル名があれば「/スキル名 ID」になる（同じ ADR の「2026-10-24 の改訂」）。
 
-**タスク一覧の読み元は Beads だけ**（`server/repository/adapter/task-beads-source.ts`。`bd` の課題）。
+**タスク一覧の読み元は Beads だけ**（`server/repository/adapter/task/task-beads-source.ts`。`bd` の課題）。
 **課題の解釈は Beads アダプタの1か所に閉じる**（`docs/architecture/adr/0024-no-skill-dependency.md`）。
 Beads アダプタ（`server/**/adapter/` の Beads を読むファイル）が、Beads の組み込みの欄だけ（読む欄と読まないものは
 `docs/architecture/workflow-contract.md`「Beads の欄」）をタスク一般の形（`TaskSummaryItem`・`DoneTask`。判定済みの `waitingFor` を含む。

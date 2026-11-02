@@ -4,7 +4,7 @@ import {
   createBeadsStampReader,
   type BeadsStampReaders,
   type BeadsWorkspace,
-} from "../../../../src/server/repository/adapter/beads.ts"
+} from "../../../../../src/server/repository/adapter/beads/beads.ts"
 
 type Counting = {
   readonly readers: BeadsStampReaders
