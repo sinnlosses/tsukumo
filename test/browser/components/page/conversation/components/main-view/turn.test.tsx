@@ -134,7 +134,7 @@ describe("Turn（タスク見出し行と見出し）", () => {
     )
 
     expect(container.querySelector("header > p")?.textContent).toBe(
-      "最終レポート·X-7·✓ 完了·変更 3 ファイル +12 −4",
+      "最終レポート変更 3 ファイル +12 −4",
     )
   })
 
@@ -153,7 +153,7 @@ describe("Turn（タスク見出し行と見出し）", () => {
     )
 
     expect(container.querySelector("header > p")?.textContent).toBe(
-      "最終レポート·X-7·✓ 完了·変更 3 ファイル +12 −4 ※他の変更を含みうる",
+      "最終レポート変更 3 ファイル +12 −4 ※他の変更を含みうる",
     )
   })
 
@@ -211,10 +211,10 @@ describe("Turn（タスク見出し行と見出し）", () => {
   })
 
   it.each([
-    ["finished", "X-7·✓ 完了"],
-    ["awaiting-answer", "X-7·？ 答え待ち"],
-    ["stopped", "X-7"],
-  ] as const)("終わり方 %s のタスク見出し行は「%s」で、見出しは作業の名前", (outcome, catalog) => {
+    ["finished", "X-7架空の作業 a/b を直す✓ 完了"],
+    ["awaiting-answer", "X-7架空の作業 a/b を直す？ 答え待ち"],
+    ["stopped", "X-7架空の作業 a/b を直す"],
+  ] as const)("終わり方 %s のタスク見出し行は「%s」で、見出しは作業の名前", (outcome, titleRow) => {
     putSession(INITIAL_SESSION_STATE)
     const body: MainViewStepBody = {
       kind: "text",
@@ -228,7 +228,7 @@ describe("Turn（タスク見出し行と見出し）", () => {
       <Turn turn={turn([step({ id: 0, body })])} newest freshReport={false} />,
     )
 
-    expect(container.querySelector("header > p")?.textContent).toBe(catalog)
+    expect(container.querySelector("header > div")?.textContent).toBe(titleRow)
     expect(screen.getByRole("heading", { level: 3 }).textContent).toBe("架空の作業 a/b を直す")
   })
 })

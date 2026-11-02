@@ -1,7 +1,7 @@
 /* 依頼の1行。値は見本 `docs/history/mockup/report-reading-tool-2026-10-18/reading-tool.html` の `.request`。
    地も枠も左罫も持たず、字の段は `Text`・`Heading` が持つ。 */
 .request-block {
-  color: var(--ink-soft);
+  color: var(--ink-quiet);
 }
 .request-row {
   display: flex;

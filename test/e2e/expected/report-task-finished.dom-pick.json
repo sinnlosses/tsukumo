@@ -2,16 +2,14 @@
   "main": [
     { "tag": "section", "attributes": { "data-report-step": "" }, "children": [
       { "tag": "header", "children": [
-        { "tag": "p", "children": [
-          "最終レポート",
-          { "tag": "button", "children": ["t-002"] },
-          "✓", "完了"
-        ] },
+        { "tag": "button", "children": ["t-002"] },
         { "tag": "h3", "children": [
           "架空の札に段が1つでも",
           { "tag": "code", "children": ["1/1"] },
           "のように位置を出す"
-        ] }
+        ] },
+        { "tag": "span", "attributes": { "data-tone": "ok" }, "children": ["✓", "完了"] },
+        { "tag": "p", "children": ["最終レポート"] }
       ] },
       { "tag": "div", "attributes": { "data-report-body": "" } }
     ] }

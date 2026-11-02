@@ -203,7 +203,7 @@ export const REPORT_NOTATION_NAMES = [
  * tsukumo が `report` の欄から組む印（モデルには教えないので、文面に書き足す決まりの外）。
  * `key-figures` は結論の直下に並べる数の札の包み（`report` の `keyFigures` から組み、中身は `stats` と同じ）。
  * `verdict` は結論のすぐ下の合図の行（検証結果の判定だけを運ぶ）。
- * `checks` は検証結果の塊で、上から総括行（`checks-summary`。部分は `checks-summary-part`、お願いの印は `checks-summary-favor`）、
+ * `checks` は検証結果の塊で、上から総括行（`checks-summary`。お願いの印は `checks-summary-favor`）、
  * 問題の項目（`checks-problem`。確かめ方は `checks-problem-how`）、通った項目を畳んだ `<details>`（`checks-passed`。開くと `check` の行の一覧）。
  * `phase-times` は検証結果の下の段ごとの所要時間（見出しの行・帯 `phase-band`（測れない段は `phase-band-unknown`）か並列の段のある回の横棒 `phase-waterfall`・一覧）で、`phase-time` が一覧の1行。`phase-time-group` は一覧の並列の段の包み。waterfall の並列の段は `phase-waterfall-group` が中の段の棒を包み、壁時計の区間を `phase-time-wall` が囲む。
  * `conclusion` は `task` のあるレポートの結論の一文、`conclusion-lead` は `task` の無いレポートの結論。
@@ -216,13 +216,6 @@ export const REPORT_DRAWN_MARK_NAMES = [
   "checks",
   "checks-summary",
   "checks-summary-lead",
-  "checks-summary-part",
-  "checks-summary-ok",
-  "checks-summary-unobserved",
-  "checks-summary-blocked",
-  "checks-summary-ng",
-  "checks-summary-mark",
-  "checks-summary-word",
   "checks-summary-figures",
   "checks-summary-favor",
   "checks-summary-favor-mark",

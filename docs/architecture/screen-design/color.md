@@ -170,8 +170,8 @@
   ——閉じていないあいだは、次の `report` でいま最後の本文が中間レポートへ
   回るかもしれない。箱を外すのも同じ条件で見送る（中間レポートの破線の枠にもしない）
 
-**フェーズのまとめの中間レポートは、タスク見出し行にラベルの次へ終えたフェーズの見出し**（「1/3 フェーズの名前」）を `·` でつないで添え、
-そのあとへ「所要 X」（測れなければ「不明」）を同じく `·` でつないで添える。
+**フェーズのまとめの中間レポートは、タスク見出し行の2行目にラベルの次へ終えたフェーズの見出し**（「1/3 フェーズの名前」）を並べ、
+そのあとへ「所要 X」（測れなければ「不明」）を並べる（中黒ではつながない）。
 畳んだ `<summary>` にも終えたフェーズの見出しのあとへ「· 所要 X」を出す（`docs/architecture/display.md`「ワークプラン」の節）。
 
 **ラベルは結論部のタスク見出し行の頭に置く**（見本は
@@ -186,18 +186,18 @@
 
 **結論部の色のうち、見本の浅葱だった役は `accent` から `color-mix` で導き**（見本の浅葱は `accent`
 そのものだった。新しいつまみは足さない）、字と地は見本の16進を固定の値として置く
-（トークン消費の画面と同じ扱い。値は `theme.css`）。導く側は `report-task-id`（`accent` を `ink` へ寄せて明るく）・
-`report-task-id-rule`（`surface` へ沈める）・`report-outcome-finished`（`accent` をわずかに `ground` へ沈める）の3つで、
-`report-sequence-ink`・`phase-band-longest`・`phase-band` も同じ考え方で導く。答え待ちの金は固定のまま:
+（トークン消費の画面と同じ扱い。値は `theme.css`）。導く側は `report-outcome-finished`（`accent` をわずかに `ground` へ沈める。
+変更したファイルの「変更」の札が使う）で、`report-sequence-ink`・`phase-band-longest`・`phase-band` も同じ考え方で導く。
+タスクの見出しの行の終わり方（完了・答え待ち）は専用の色を持たず、`Badge`（`shape: square`。完了は `ok`・答え待ちは `warn`）が持つ:
 
-| 塗るもの                               | トークン                                                     |
-| -------------------------------------- | ------------------------------------------------------------ |
-| タスク見出し行の字 / 区切りの `·`      | `ink-quiet` / `report-catalog-separator`                     |
-| タスクID / その点線の下線              | `report-task-id` / `report-task-id-rule`                     |
-| 終わり方（完了 / 答え待ち）            | `report-outcome-finished` / `report-outcome-awaiting-answer` |
-| 変更のラベルの `+a` / `−b`             | `report-change-added` / `report-change-removed`              |
-| 見出し / 一文とインラインコードの字    | `ink-bright` / `ink`                                         |
-| 見出しと一文の中のインラインコードの地 | `report-code-surface`                                        |
+| 塗るもの                               | トークン                                        |
+| -------------------------------------- | ----------------------------------------------- |
+| タスク見出し行の字（メタの行）         | `ink-quiet`                                     |
+| タスクID（枠と字）                     | `rule-soft` / `ink-soft`                        |
+| 終わり方（完了 / 答え待ち）            | `Badge` の `ok` / `warn`                        |
+| 変更のラベルの `+a` / `−b`             | `report-change-added` / `report-change-removed` |
+| 見出し / 一文とインラインコードの字    | `ink-bright` / `ink`                            |
+| 見出しと一文の中のインラインコードの地 | `report-code-surface`                           |
 
 **レポートの字の色は `ink-bright`・`ink`・`ink-soft`・`ink-quiet` の4段と、色で意味を運ぶ印の色だけ**（印の色は `state-*`・`accent`・`report-*`・`ground`）。`ink-bright` は
 拾う字（見出し・太字・`stats` の数）で、固定の `#f7f6f8`（`surface` 上で約 15:1）。見出しが本文より暗く、

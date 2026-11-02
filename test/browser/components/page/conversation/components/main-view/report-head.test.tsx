@@ -28,7 +28,7 @@ describe("ReportHead の終えた段", () => {
         duration: { kind: "known", milliseconds: 12_000 },
         skipped: false,
       }),
-    ).toBe("中間レポート·1/3 架空の段A·所要 12秒")
+    ).toBe("中間レポート1/3 架空の段A所要 12秒")
   })
 
   it("飛ばした段は所要の前に「飛ばした」を添え、所要は残す", () => {
@@ -39,6 +39,6 @@ describe("ReportHead の終えた段", () => {
         duration: { kind: "known", milliseconds: 0 },
         skipped: true,
       }),
-    ).toBe("中間レポート·1/3 架空の段A·飛ばした·所要 0秒")
+    ).toBe("中間レポート1/3 架空の段A飛ばした所要 0秒")
   })
 })

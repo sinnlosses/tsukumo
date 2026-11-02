@@ -1,9 +1,22 @@
 .detail-block {
   /* `task` のあるレポートの結論の一文。見出し（`turn-card/report-head.css`）のすぐ下に描く。 */
   & .report-conclusion {
-    font-size: var(--font-subheading);
-    line-height: 1.85;
-    color: var(--ink);
+    font-size: var(--font-body);
+    line-height: 1.7;
+    color: var(--ink-soft);
+  }
+  /* 大胆さを使う1か所。1文目だけを大きく太くし、2文目以降は上の字のまま下に置く。 */
+  & .report-conclusion-first {
+    display: block;
+    font-size: var(--report-heading-2);
+    line-height: 1.5;
+    font-weight: 700;
+    color: var(--ink-bright);
+    text-wrap: balance;
+  }
+  & .report-conclusion-rest {
+    display: block;
+    margin-top: var(--space-xs);
   }
   /* `task` の無いレポートの結論。見出しの代わりに頭に置く。 */
   & .report-conclusion-lead {

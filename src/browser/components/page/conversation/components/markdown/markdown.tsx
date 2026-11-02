@@ -62,6 +62,8 @@ export const leafFrameClassNames = {
 export const textLeafClassNames = {
   conclusion: notationStyles["report-conclusion"],
   conclusionLead: notationStyles["report-conclusion-lead"],
+  conclusionFirst: notationStyles["report-conclusion-first"],
+  conclusionRest: notationStyles["report-conclusion-rest"],
   labeledList: notationStyles["report-labeled-list"],
   listLabel: notationStyles["report-list-label"],
   listText: notationStyles["report-list-text"],

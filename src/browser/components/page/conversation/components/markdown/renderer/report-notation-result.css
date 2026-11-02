@@ -201,13 +201,12 @@
     border-top: var(--report-checks-rule);
     border-bottom: var(--report-checks-rule);
   }
-  /* 総括行。部分どうしは空けて並べ、お願いの印だけ右端へ寄せる。幅が足りなければ折り返す。 */
+  /* 総括行。判定の札を左から並べ、数の列を続け、お願いの印だけ右端へ寄せる。幅が足りなければ折り返す。 */
   & .report-checks-summary {
     display: flex;
     flex-wrap: wrap;
-    align-items: baseline;
-    column-gap: var(--space-xl);
-    row-gap: var(--space-xs);
+    align-items: center;
+    gap: var(--space-sm) var(--space-md);
     padding: var(--space-md) 0;
     font-size: var(--font-secondary);
     color: var(--ink-quiet);
@@ -216,40 +215,14 @@
     font-weight: 700;
     color: var(--ink);
   }
-  & .report-checks-summary-part {
-    white-space: nowrap;
-  }
-  & .report-checks-summary-mark {
-    margin-right: var(--space-sm);
-    font-weight: 700;
-  }
-  & .report-checks-summary-word {
-    font-weight: 700;
-  }
-  & .report-checks-summary-ok :is(.report-checks-summary-mark, .report-checks-summary-word) {
-    color: var(--state-ok);
-  }
-  &
-    .report-checks-summary-unobserved
-    :is(.report-checks-summary-mark, .report-checks-summary-word) {
-    color: var(--state-warn);
-  }
-  & .report-checks-summary-blocked :is(.report-checks-summary-mark, .report-checks-summary-word) {
-    color: var(--ink-quiet);
-  }
-  & .report-checks-summary-ng :is(.report-checks-summary-mark, .report-checks-summary-word) {
-    color: var(--state-ng);
-  }
-  /* 通った件数のすぐ後ろに figure を連ねる（列の間の空きより詰める）。 */
-  & .report-checks-summary-ok + .report-checks-summary-figures {
-    margin-left: calc(var(--space-md) * -1);
-  }
   & .report-checks-summary-figures {
     min-width: 0;
     overflow-wrap: anywhere;
-    font-family: var(--font-mono);
-    font-size: var(--font-label);
+    font-family: var(--font-mono), var(--font-sans);
+    font-size: var(--font-secondary);
+    font-weight: 400;
     font-variant-numeric: tabular-nums;
+    color: var(--ink-quiet);
   }
   /* お願いの印。押す的を 24px 以上にし、末尾のお願いの塊へ転がす（`Anchor`）。 */
   & .report-checks-summary-favor {

@@ -408,16 +408,37 @@
                                                     "aria-label": "検証結果"
                                                   },
                                                   "children": [
-                                                    "✓",
-                                                    "検証 1件",
-                                                    "通った",
+                                                    {
+                                                      "tag": "span",
+                                                      "attributes": {
+                                                        "data-tone": "ok",
+                                                        "data-shape": "square"
+                                                      },
+                                                      "children": [
+                                                        "✓ 1件 通った"
+                                                      ]
+                                                    },
+                                                    {
+                                                      "tag": "span",
+                                                      "attributes": {
+                                                        "data-tone": "warn",
+                                                        "data-shape": "square"
+                                                      },
+                                                      "children": [
+                                                        "？ 1件 確かめていない"
+                                                      ]
+                                                    },
+                                                    {
+                                                      "tag": "span",
+                                                      "attributes": {
+                                                        "data-tone": "ng",
+                                                        "data-shape": "square"
+                                                      },
+                                                      "children": [
+                                                        "✕ 1件 落ちた"
+                                                      ]
+                                                    },
                                                     "1234 件",
-                                                    "？",
-                                                    "1件",
-                                                    "確かめていない",
-                                                    "✕",
-                                                    "1件",
-                                                    "落ちた",
                                                     {
                                                       "tag": "a",
                                                       "attributes": {

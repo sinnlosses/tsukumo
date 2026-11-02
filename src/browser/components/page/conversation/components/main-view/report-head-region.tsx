@@ -18,6 +18,7 @@ import {
 import { RegionBox, RegionChunks } from "./body-region.tsx"
 import { ChangedFilesFold } from "./changed-files-fold.tsx"
 import { ChecksVerdict } from "./checks-verdict.tsx"
+import { splitConclusion } from "./domain/split-conclusion.ts"
 import { PhaseTimes } from "./phase-time-section.tsx"
 import { StatCards } from "./stats-leaf.tsx"
 
@@ -40,9 +41,7 @@ export function HeadRegion(props: { readonly head: MainViewSurfaceHead }): React
               : textLeafClassNames.conclusionLead
           }
         >
-          <p>
-            <InlineMarkdown text={lead.text} />
-          </p>
+          <ConclusionText text={lead.text} split={lead.kind === "conclusion"} />
         </div>
       )}
       {keyFigures.length > 0 && (
@@ -74,5 +73,28 @@ export function FavorRegion(props: { readonly id: string; readonly text: string 
         <RegionChunks markdown={props.text} />
       </div>
     </RegionBox>
+  )
+}
+
+/** 結論の文。`split` なら1文目を大きく、2文目以降を控えめに描く（本文の文字列は割る前と同じ）。 */
+function ConclusionText(props: { readonly text: string; readonly split: boolean }): ReactElement {
+  const { first, rest } = props.split
+    ? splitConclusion(props.text)
+    : { first: props.text, rest: "" }
+  return (
+    <p>
+      {props.split ? (
+        <span className={textLeafClassNames.conclusionFirst}>
+          <InlineMarkdown text={first} />
+        </span>
+      ) : (
+        <InlineMarkdown text={first} />
+      )}
+      {rest !== "" && (
+        <span className={textLeafClassNames.conclusionRest}>
+          <InlineMarkdown text={rest} />
+        </span>
+      )}
+    </p>
   )
 }

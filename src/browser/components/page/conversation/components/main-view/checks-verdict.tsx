@@ -11,9 +11,17 @@ import {
   type ReportChecksView,
 } from "../../../../../../shared/report/report-check-view.ts"
 import { plainInline } from "../../../../../../shared/report/report-inline-markdown.ts"
+import { Badge } from "../../../../ui/badge/badge.tsx"
 import { checksClassName } from "../markdown/markdown.tsx"
+import styles from "./main-view.module.css"
 
 type Checks = Extract<ReportChecksView, { readonly kind: "checks" }>
+
+const PROBLEM_TONE = {
+  ng: "ng",
+  unobserved: "warn",
+  blocked: "neutral",
+} as const satisfies Record<keyof typeof REPORT_CHECK_PROBLEM_WORDS, "ng" | "warn" | "neutral">
 
 export function ChecksVerdict(props: { readonly view: Checks }): ReactElement {
   const { summary, problems, passed } = props.view
@@ -42,37 +50,23 @@ function ChecksSummary(props: { readonly summary: Checks["summary"] }): ReactEle
     <div className={checksClassName("checks-summary")}>
       {passedCount === 0 && <span className={checksClassName("checks-summary-lead")}>検証</span>}
       {passedCount > 0 && (
-        <span
-          className={clsx(
-            checksClassName("checks-summary-part"),
-            checksClassName("checks-summary-ok"),
-          )}
-        >
-          <span className={checksClassName("checks-summary-mark")}>✓</span>
-          {`検証 ${String(passedCount)}件 `}
-          <span className={checksClassName("checks-summary-word")}>通った</span>
-        </span>
+        <Badge tone="ok" shape="square" className={styles["verdict-badge"]}>
+          {`✓ ${String(passedCount)}件 通った`}
+        </Badge>
       )}
+      {problems.map(({ status, count }) => (
+        <Badge
+          key={status}
+          tone={PROBLEM_TONE[status]}
+          shape="square"
+          className={styles["verdict-badge"]}
+        >
+          {`${REPORT_CHECK_PROBLEM_MARKS[status]} ${String(count)}件 ${REPORT_CHECK_PROBLEM_WORDS[status]}`}
+        </Badge>
+      ))}
       {passedCount > 0 && figureText !== "" && (
         <span className={checksClassName("checks-summary-figures")}>{figureText}</span>
       )}
-      {problems.map(({ status, count }) => (
-        <span
-          key={status}
-          className={clsx(
-            checksClassName("checks-summary-part"),
-            checksClassName(`checks-summary-${status}`),
-          )}
-        >
-          <span className={checksClassName("checks-summary-mark")}>
-            {REPORT_CHECK_PROBLEM_MARKS[status]}
-          </span>
-          {`${String(count)}件 `}
-          <span className={checksClassName("checks-summary-word")}>
-            {REPORT_CHECK_PROBLEM_WORDS[status]}
-          </span>
-        </span>
-      ))}
       {favor.kind === "favor" && (
         <span className={checksClassName("checks-summary-favor")}>
           <a

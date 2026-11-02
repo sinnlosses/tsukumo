@@ -1,5 +1,5 @@
-// レポートの結論部の頭（目録の1行と見出し）。結論の一文はこの下のレポート本文の先頭にある。
-// 目録の1行はラベル・終えた段・タスクID・終わり方・変更の札のうちあるものだけを `·` でつなぎ、1つも無ければ何も描かない。
+// レポートの結論部の頭（タスクの見出しの行とメタの行）。結論の一文はこの下のレポート本文の先頭にある。
+// 見出しの行はタスクID・作業の名前・終わり方の札、メタの行はラベル・終えた段・変更の札のうちあるものだけを描き、1つも無ければ何も描かない。
 // 終わり方の `stopped` は描かない。
 
 import clsx from "clsx"
@@ -16,6 +16,7 @@ import { codeSpanParts } from "../../../../../domain/code-span.ts"
 import { withOccurrenceKeys } from "../../../../../domain/occurrence-key.ts"
 import { useSession } from "../../../../../stores/session.ts"
 import { useTaskBoardRequest } from "../../../../../stores/task-board-request.ts"
+import { Badge } from "../../../../ui/badge/badge.tsx"
 import styles from "./main-view.module.css"
 
 /** 目録の頭に置く、何のレポートかの語。 */
@@ -43,7 +44,7 @@ export function ReportHead(props: ReportHeadProps): ReactElement | undefined {
     return undefined
   }
 
-  const items = [
+  const meta = [
     ...(label === "none" ? [] : [<span key="label">{LABEL_TEXT[label]}</span>]),
     ...(phase.kind === "none"
       ? []
@@ -52,12 +53,6 @@ export function ReportHead(props: ReportHeadProps): ReactElement | undefined {
           ...(phase.skipped ? [<span key="phase-skipped">飛ばした</span>] : []),
           <span key="phase-time">所要 {formatMeasured(phase.duration)}</span>,
         ]),
-    ...(task.kind === "none"
-      ? []
-      : [
-          <TaskId id={task.id} key="id" />,
-          ...(task.outcome === "stopped" ? [] : [<Outcome outcome={task.outcome} key="outcome" />]),
-        ]),
     ...(changeSummary.kind === "none"
       ? []
       : [<ChangeSummary summary={changeSummary} key="change-summary" />]),
@@ -65,32 +60,27 @@ export function ReportHead(props: ReportHeadProps): ReactElement | undefined {
 
   return (
     <header className={clsx(styles["report-head"], props.className)}>
-      <p className={styles["report-catalog"]}>
-        {items.map((item, index) => (
-          <Fragment key={item.key}>
-            {index > 0 && (
-              <span className={styles["report-catalog-separator"]} aria-hidden="true">
-                ·
-              </span>
-            )}
-            {item}
-          </Fragment>
-        ))}
-      </p>
-      {task.kind === "task" && (
-        <h3 className={styles["report-headline"]}>
-          {withOccurrenceKeys(codeSpanParts(task.name), (part) => part.text).map(
-            ({ key, item: part }) =>
-              part.kind === "code" ? (
-                <code key={key} className={styles["report-headline-code"]}>
-                  {part.text}
-                </code>
-              ) : (
-                <Fragment key={key}>{part.text}</Fragment>
-              ),
+      {task.kind !== "none" && (
+        <div className={styles["report-title-row"]}>
+          <TaskId id={task.id} />
+          {task.kind === "task" && (
+            <h3 className={styles["report-headline"]}>
+              {withOccurrenceKeys(codeSpanParts(task.name), (part) => part.text).map(
+                ({ key, item: part }) =>
+                  part.kind === "code" ? (
+                    <code key={key} className={styles["report-headline-code"]}>
+                      {part.text}
+                    </code>
+                  ) : (
+                    <Fragment key={key}>{part.text}</Fragment>
+                  ),
+              )}
+            </h3>
           )}
-        </h3>
+          {task.outcome !== "stopped" && <Outcome outcome={task.outcome} />}
+        </div>
       )}
+      {meta.length > 0 && <p className={styles["report-meta"]}>{meta}</p>}
     </header>
   )
 }
@@ -101,11 +91,11 @@ const LABEL_TEXT = {
 } as const satisfies Record<Exclude<ReportLabel, "none">, string>
 
 const OUTCOME_VIEW = {
-  finished: { mark: "✓", text: "完了", className: "report-outcome-finished" },
-  "awaiting-answer": { mark: "？", text: "答え待ち", className: "report-outcome-awaiting-answer" },
+  finished: { mark: "✓", text: "完了", tone: "ok" },
+  "awaiting-answer": { mark: "？", text: "答え待ち", tone: "warn" },
 } as const satisfies Record<
   DrawnOutcome,
-  { readonly mark: string; readonly text: string; readonly className: string }
+  { readonly mark: string; readonly text: string; readonly tone: "ok" | "warn" }
 >
 
 type DrawnOutcome = Exclude<ReportTaskOutcome, "stopped">
@@ -113,9 +103,9 @@ type DrawnOutcome = Exclude<ReportTaskOutcome, "stopped">
 function Outcome(props: { readonly outcome: DrawnOutcome }): ReactElement {
   const view = OUTCOME_VIEW[props.outcome]
   return (
-    <span className={clsx(styles["report-outcome"], styles[view.className])}>
+    <Badge tone={view.tone} shape="square" className={styles["report-outcome"]}>
       {view.mark} {view.text}
-    </span>
+    </Badge>
   )
 }
 
