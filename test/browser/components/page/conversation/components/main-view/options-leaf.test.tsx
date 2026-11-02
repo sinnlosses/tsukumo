@@ -45,12 +45,12 @@ describe("Options の部品", () => {
     expect(fresh.split("report-pause-point")).toHaveLength(3)
   })
 
-  it("番号は出さず、判定の語を札で出す", () => {
+  it("番号は出さず、判定を記号つきの札で出す", () => {
     const fresh = freshHtml("架空の題", ITEMS)
 
     expect(fresh).not.toContain(">1</span>")
-    expect(fresh).toContain('verdict-badge">採る</span>')
-    expect(fresh).toContain('verdict-badge">検討</span>')
-    expect(fresh).toContain('verdict-badge">採らない</span>')
+    expect(fresh).toContain('<span aria-hidden="true">✓</span>採る</span>')
+    expect(fresh).toContain('<span aria-hidden="true">〜</span>検討</span>')
+    expect(fresh).toContain('<span aria-hidden="true">–</span>採らない</span>')
   })
 })

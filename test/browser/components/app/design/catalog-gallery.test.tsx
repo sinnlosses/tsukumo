@@ -25,6 +25,13 @@ describe("カタログの見本", () => {
     expect(container.textContent).not.toContain(FALLBACK)
   })
 
+  it("節を持たない部品の例は、部品の本体の前に別の見出しを出さない", () => {
+    const { container } = render(<CatalogGallery examples={CATALOG_EXAMPLES} />)
+
+    const note = container.querySelector('[data-catalog-part="Note"]')
+    expect(note?.querySelector("h4")).toBeNull()
+  })
+
   it("見本帳に無い部品があると、カタログとの突き合わせが落ちる", () => {
     const { Report: _omitted, ...withoutReport } = CATALOG_EXAMPLES
     const { container } = render(<CatalogGallery examples={withoutReport} />)

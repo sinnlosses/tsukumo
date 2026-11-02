@@ -90,18 +90,11 @@ function ChecksSummary(props: { readonly summary: Checks["summary"] }): ReactEle
 function ProblemRow(props: { readonly row: ReportCheckProblemRow }): ReactElement {
   const { row } = props
   return (
-    <div
-      className={clsx(
-        checksClassName("checks-problem"),
-        checksClassName(`checks-problem-${row.status}`),
-      )}
-      role="row"
-    >
+    <div className={checksClassName("checks-problem")} role="row">
       <span className={checksClassName("checks-problem-mark")}>
-        {`${REPORT_CHECK_PROBLEM_MARKS[row.status]} `}
-        <span className={checksClassName("checks-problem-word")}>
-          {REPORT_CHECK_PROBLEM_WORDS[row.status]}
-        </span>
+        <Badge tone={PROBLEM_TONE[row.status]} shape="square" className={styles["verdict-badge"]}>
+          {`${REPORT_CHECK_PROBLEM_MARKS[row.status]} ${REPORT_CHECK_PROBLEM_WORDS[row.status]}`}
+        </Badge>
       </span>
       <div className={checksClassName("checks-problem-body")}>
         <div className={checksClassName("checks-problem-head")}>
@@ -133,7 +126,9 @@ function PassedFold(props: { readonly passed: readonly ReportCheckPassedRow[] })
       <details>
         <summary>
           <span className={checksClassName("checks-passed-mark")}>
-            {`✓ 通った ${String(passed.length)}件`}
+            <Badge tone="ok" shape="square" className={styles["verdict-badge"]}>
+              {`✓ 通った ${String(passed.length)}件`}
+            </Badge>
           </span>
           <span className={checksClassName("checks-passed-labels")}>
             {passed.map((row) => plainInline(row.labelHead)).join(" · ")}

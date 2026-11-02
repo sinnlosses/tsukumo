@@ -37,7 +37,6 @@ function wrapped(parts: readonly A2uiReportComponent[]): readonly A2uiReportComp
   const section = a2uiReportComponentSchema.parse({
     id: GALLERY_SECTION_ID,
     component: "Section",
-    heading: "例",
     children: topLevelIds(parts),
   })
   return [root, section, ...parts]

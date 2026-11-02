@@ -288,22 +288,7 @@
     gap: var(--space-md);
   }
   & .report-checks-problem-mark {
-    font-size: var(--font-secondary);
-    font-weight: 700;
-    line-height: 1.75;
     white-space: nowrap;
-  }
-  & .report-checks-problem-ng .report-checks-problem-mark {
-    color: var(--state-ng);
-  }
-  & .report-checks-problem-unobserved .report-checks-problem-mark {
-    color: var(--state-warn);
-  }
-  & .report-checks-problem-blocked .report-checks-problem-mark {
-    color: var(--ink-quiet);
-  }
-  & .report-checks-problem-word {
-    margin-left: var(--space-2xs);
   }
   & .report-checks-problem-body {
     min-width: 0;
@@ -375,9 +360,7 @@
     display: none;
   }
   & .report-checks-passed-mark {
-    font-weight: 700;
     white-space: nowrap;
-    color: var(--state-ok);
   }
   & .report-checks-passed-labels {
     min-width: 0;
