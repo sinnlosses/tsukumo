@@ -1,6 +1,6 @@
 // `git diff --name-status`・`git show --name-status` の出力を、触ったファイルの一覧に読む。
 
-import type { ChangedFile } from "../../../shared/report/changed-file.ts"
+import type { ChangedFile } from "../../../../shared/report/changed-file.ts"
 
 const NAME_STATUS_LINE = /^([A-Z])\d*\t(.+)$/
 

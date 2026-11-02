@@ -2,25 +2,25 @@
 // どのイベントをどの記録口へ、どちらのモード・セッションIDが決まったあとかで渡すかの門がここにある。
 // 復元した再生はここを通らない（呼ぶ側が呼ばない）。
 
-import { shownCharacterPackName } from "../../../shared/character-pack/character.ts"
-import { swallowedFailureFootprint } from "../../../shared/diagnostic/swallowed-failure.ts"
-import { conclusionWithTaskName } from "../../../shared/report/report-task.ts"
-import type { SessionEvent } from "../../../shared/session/session-event.ts"
-import type { SessionState } from "../../../shared/session/session-state.ts"
+import { shownCharacterPackName } from "../../../../shared/character-pack/character.ts"
+import { swallowedFailureFootprint } from "../../../../shared/diagnostic/swallowed-failure.ts"
+import { conclusionWithTaskName } from "../../../../shared/report/report-task.ts"
+import type { SessionEvent } from "../../../../shared/session/session-event.ts"
+import type { SessionState } from "../../../../shared/session/session-state.ts"
 import {
   appendChatArchiveConclusion,
   appendChatArchiveEntry,
-} from "../../chat/core/chat-archive-entry.ts"
-import type { ChatArchiveOrder } from "../../chat/core/chat-archive-order.ts"
-import type { DiagnosticBuffer } from "../../diagnostic/core/diagnostic.ts"
+} from "../../../chat/core/chat-archive-entry.ts"
+import type { ChatArchiveOrder } from "../../../chat/core/chat-archive-order.ts"
+import type { DiagnosticBuffer } from "../../../diagnostic/core/diagnostic.ts"
 import {
   isMainImageFileRead,
   isRestatementRequest,
   reportUsageEntryOf,
-} from "../../report/core/usage/report-usage.ts"
-import type { ContextUsageRecorder } from "../../usage/core/context-usage.ts"
+} from "../../../report/core/usage/report-usage.ts"
+import type { ContextUsageRecorder } from "../../../usage/core/context-usage.ts"
+import type { SessionManagerOptions } from "../session-manager-port.ts"
 import type { GenerationTally } from "./session-generation.ts"
-import type { SessionManagerOptions } from "./session-manager-port.ts"
 
 type EventRecordPorts = Pick<
   SessionManagerOptions,

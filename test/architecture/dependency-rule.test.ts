@@ -161,6 +161,35 @@ describe(".dependency-cruiser.cjs の規則", () => {
       expect(ruleChildren.toSorted()).toEqual(directories.toSorted())
     })
 
+    it("session/core/ の規則の子は実際のディレクトリと過不足なく一致する", () => {
+      const prefix = "server-child-edge:session/core/"
+      const ruleChildren = allChildRules
+        .filter((rule) => rule.name.startsWith(prefix))
+        .map((rule) => rule.name.slice(prefix.length))
+      const directories = readdirSync(`${SRC_ROOT}/server/session/core`, {
+        withFileTypes: true,
+      })
+        .filter((entry) => entry.isDirectory())
+        .map((entry) => entry.name)
+
+      expect(ruleChildren.toSorted()).toEqual(directories.toSorted())
+    })
+
+    it("event/ から core/ 直下の port を読む import は通し、別の子への import は落とす", () => {
+      const forbids = (from: string, to: string): boolean =>
+        allChildRules.some(
+          (rule) =>
+            new RegExp(rule.from.path ?? "(?!)").test(from) &&
+            new RegExp(rule.to.path ?? "(?!)").test(to) &&
+            !new RegExp(rule.to.pathNot ?? "(?!)").test(to),
+        )
+      const CORE_DIR = "src/server/session/core"
+
+      expect(forbids(`${CORE_DIR}/event/a.ts`, `${CORE_DIR}/session-manager-port.ts`)).toBe(false)
+      expect(forbids(`${CORE_DIR}/event/a.ts`, `${CORE_DIR}/event/b.ts`)).toBe(false)
+      expect(forbids(`${CORE_DIR}/event/a.ts`, `${CORE_DIR}/other/b.ts`)).toBe(true)
+    })
+
     it("sdk/ と fake/ は互いを読む import を落とし、adapter/ 直下のファイルは通す", () => {
       const forbids = (from: string, to: string): boolean =>
         allChildRules.some(

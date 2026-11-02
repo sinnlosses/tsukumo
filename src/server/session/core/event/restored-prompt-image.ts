@@ -1,11 +1,11 @@
 // 続きから復元した再生の依頼・脇の話に、transcript から読み戻した原寸を棚へ置いて写す。
 
-import type { RestoredEvent } from "../../../shared/session/session-event.ts"
-import type { SessionRecord } from "../../../shared/session/session-record.ts"
+import type { RestoredEvent } from "../../../../shared/session/session-event.ts"
+import type { SessionRecord } from "../../../../shared/session/session-record.ts"
 import {
   type PromptImageShelf,
   recordedPromptImageIds,
-} from "../../session-driver/core/prompt-image-shelf.ts"
+} from "../../../session-driver/core/prompt-image-shelf.ts"
 
 /** 原寸を棚に置き、振られた id を依頼・脇の話の `images` に写した再生を返す。 */
 export function shelveRestoredPromptImages(

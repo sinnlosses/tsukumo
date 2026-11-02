@@ -5,7 +5,7 @@ import { asidePromptText } from "../../../../../src/server/session-driver/core/a
 import { progressNudgePromptText } from "../../../../../src/server/session-driver/core/progress-nudge.ts"
 import { EMPTY_INPUT_LEDGER } from "../../../../../src/server/session-driver/core/session/input-ledger.ts"
 import { toRestoredEvents } from "../../../../../src/server/session-driver/core/session/session-restore.ts"
-import { applyRestoredEvents } from "../../../../../src/server/session/core/restored-event.ts"
+import { applyRestoredEvents } from "../../../../../src/server/session/core/event/restored-event.ts"
 import { mainViewEntries } from "../../../../../src/shared/session/main-view-entry.ts"
 import { turnAsides } from "../../../../../src/shared/session/main-view-shape.ts"
 import type { SessionEvent } from "../../../../../src/shared/session/session-event.ts"

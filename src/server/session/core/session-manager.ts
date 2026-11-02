@@ -30,27 +30,27 @@ import type { CommandSession, SessionLaunchRequest } from "./command-session-por
 import { type ModeSessions, NO_MODE_SESSIONS, rememberedModeSessions } from "./command-session.ts"
 import { noteConsolidationHalt, noteConsolidationOutcome } from "./consolidation-footprint.ts"
 import { createConsolidationHalt } from "./consolidation-halt.ts"
-import { createEventBatch } from "./event-batch.ts"
-import { shelveEventImages } from "./event-image-shelf.ts"
-import { consolidationPackToStart, isBatched, mayFlowTopics } from "./event-judgement.ts"
-import { createReportChangeCounter } from "./report-change-count.ts"
-import { applyRestoredEvents } from "./restored-event.ts"
+import { createEventBatch } from "./event/event-batch.ts"
+import { shelveEventImages } from "./event/event-image-shelf.ts"
+import { consolidationPackToStart, isBatched, mayFlowTopics } from "./event/event-judgement.ts"
+import { createReportChangeCounter } from "./event/report-change-count.ts"
+import { applyRestoredEvents } from "./event/restored-event.ts"
 import {
   shelveRestoredPromptImages,
   unrecordedRestoredPromptImageIds,
-} from "./restored-prompt-image.ts"
-import { shelveRestoredReportImages } from "./restored-report-image.ts"
-import { createDriverRead } from "./session-driver-read.ts"
-import { recordSessionEvent } from "./session-event-record.ts"
+} from "./event/restored-prompt-image.ts"
+import { shelveRestoredReportImages } from "./event/restored-report-image.ts"
+import { recordSessionEvent } from "./event/session-event-record.ts"
 import {
   createConfirmedSettings,
   createPendingConclusion,
   createTurnImageRead,
   type GenerationTally,
   type SessionGeneration,
-} from "./session-generation.ts"
+} from "./event/session-generation.ts"
+import { createWaitingLineAlarm } from "./event/waiting-line-alarm.ts"
+import { createDriverRead } from "./session-driver-read.ts"
 import type { SessionManager, SessionManagerOptions } from "./session-manager-port.ts"
-import { createWaitingLineAlarm } from "./waiting-line-alarm.ts"
 
 export function createSessionManager(options: SessionManagerOptions): SessionManager {
   const subscribers = new Set<(frame: ServerFrame) => void>()

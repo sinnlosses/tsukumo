@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-import { createWaitingLineAlarm } from "../../../../src/server/session/core/waiting-line-alarm.ts"
+import { createWaitingLineAlarm } from "../../../../../src/server/session/core/event/waiting-line-alarm.ts"
 
 describe("createWaitingLineAlarm", () => {
   beforeEach(() => {

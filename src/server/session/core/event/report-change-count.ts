@@ -4,18 +4,18 @@
 // 数えるのは待たずに裏で走らせるので、`report` そのものは遅れない。
 // 数えられないとき（HEAD が読めない・控えた HEAD がいまの HEAD の祖先でない・git が打てない・出力が読めない）は何も流さない。
 
-import type { ChangedFile } from "../../../shared/report/changed-file.ts"
+import type { ChangedFile } from "../../../../shared/report/changed-file.ts"
 import {
   NO_REPORT_CHANGE_SUMMARY,
   type ReportChangeSummary,
-} from "../../../shared/report/report-change-summary.ts"
-import type { SessionEvent } from "../../../shared/session/session-event.ts"
+} from "../../../../shared/report/report-change-summary.ts"
+import type { SessionEvent } from "../../../../shared/session/session-event.ts"
 import type {
   ChangeCountGit,
   CommitListOutput,
   GitHead,
   NumstatOutput,
-} from "../../core/change-count-git.ts"
+} from "../../../core/change-count-git.ts"
 import { foldNameStatus } from "./changed-file-line.ts"
 
 export type ReportChangeCounter = {

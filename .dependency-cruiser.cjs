@@ -39,6 +39,9 @@ const SERVER_CHILD_IMPORTS = {
     message: [],
     session: ["message"],
   },
+  "session/core": {
+    event: [],
+  },
   "session-driver/adapter": {
     sdk: [],
     fake: [],

@@ -5,11 +5,11 @@ import type {
   CommitListOutput,
   GitHead,
   NumstatOutput,
-} from "../../../../src/server/core/change-count-git.ts"
-import { createReportChangeCounter } from "../../../../src/server/session/core/report-change-count.ts"
-import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
-import { reportEvent } from "../../../fixture/report-event.ts"
-import { requestEvent } from "../../../fixture/session-event.ts"
+} from "../../../../../src/server/core/change-count-git.ts"
+import { createReportChangeCounter } from "../../../../../src/server/session/core/event/report-change-count.ts"
+import type { SessionEvent } from "../../../../../src/shared/session/session-event.ts"
+import { reportEvent } from "../../../../fixture/report-event.ts"
+import { requestEvent } from "../../../../fixture/session-event.ts"
 
 const REQUEST = requestEvent()
 

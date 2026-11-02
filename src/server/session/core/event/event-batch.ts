@@ -6,7 +6,7 @@
 //
 // 会話の内容がイベントとして通るが、ログにもファイルにも書かない。配る先は渡された `EventBatchOptions.deliver` だけ。
 
-import type { StampedEvent } from "../../../shared/session/session-event.ts"
+import type { StampedEvent } from "../../../../shared/session/session-event.ts"
 
 /** イベントをまとめて配る間隔。 */
 export const EVENT_BATCH_INTERVAL_MS = 100

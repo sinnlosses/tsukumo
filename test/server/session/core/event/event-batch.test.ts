@@ -3,8 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import {
   createEventBatch,
   EVENT_BATCH_INTERVAL_MS,
-} from "../../../../src/server/session/core/event-batch.ts"
-import type { SessionEvent, StampedEvent } from "../../../../src/shared/session/session-event.ts"
+} from "../../../../../src/server/session/core/event/event-batch.ts"
+import type { SessionEvent, StampedEvent } from "../../../../../src/shared/session/session-event.ts"
 
 const SPEECH: SessionEvent = { kind: "speech", text: "架空のセリフ", expression: "default" }
 const TURN_FINISHED: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }

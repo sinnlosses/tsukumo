@@ -1,14 +1,14 @@
 // 駆動から届いたイベントが指す画像（`report` の画像の塊と、積まれた質問の preview）を棚へ置く。
 
-import { drawnLeaves, reportOutline } from "../../../shared/report/report-outline.ts"
-import type { SessionEvent } from "../../../shared/session/session-event.ts"
-import type { SessionState } from "../../../shared/session/session-state.ts"
-import { questionImagePaths } from "../../report/core/image/question-image-path.ts"
+import { drawnLeaves, reportOutline } from "../../../../shared/report/report-outline.ts"
+import type { SessionEvent } from "../../../../shared/session/session-event.ts"
+import type { SessionState } from "../../../../shared/session/session-state.ts"
+import { questionImagePaths } from "../../../report/core/image/question-image-path.ts"
 import {
   type ReadReportImagePath,
   reportImagePaths,
-} from "../../report/core/image/report-image-shelf.ts"
-import type { SessionManagerOptions } from "./session-manager-port.ts"
+} from "../../../report/core/image/report-image-shelf.ts"
+import type { SessionManagerOptions } from "../session-manager-port.ts"
 
 /**
  * 画像を置いて、畳むイベントを返す。`report` は測れた寸法と置けなかったパスを `imageSizes`・`unshelvedImages` に載せたもの、

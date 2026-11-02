@@ -1,10 +1,13 @@
 // 続きから復元した再生のうち、記録の窓に残った24時間以内の `report` の画像を棚へ置き直す。
 
-import { drawnLeaves, reportOutline } from "../../../shared/report/report-outline.ts"
-import type { RestoredEvent } from "../../../shared/session/session-event.ts"
-import type { SessionState } from "../../../shared/session/session-state.ts"
-import { reportImagePaths, type ShelvedImages } from "../../report/core/image/report-image-shelf.ts"
-import type { SessionManagerOptions } from "./session-manager-port.ts"
+import { drawnLeaves, reportOutline } from "../../../../shared/report/report-outline.ts"
+import type { RestoredEvent } from "../../../../shared/session/session-event.ts"
+import type { SessionState } from "../../../../shared/session/session-state.ts"
+import {
+  reportImagePaths,
+  type ShelvedImages,
+} from "../../../report/core/image/report-image-shelf.ts"
+import type { SessionManagerOptions } from "../session-manager-port.ts"
 
 /** 続きから復元した report の画像を読み直す、復元した時点からの遡り幅。 */
 const RESTORED_REPORT_IMAGE_WINDOW_MS = 24 * 60 * 60 * 1000

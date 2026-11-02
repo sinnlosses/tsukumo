@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { applyRestoredEvents } from "../../../src/server/session/core/restored-event.ts"
+import { applyRestoredEvents } from "../../../src/server/session/core/event/restored-event.ts"
 import type { WrittenReactions } from "../../../src/shared/recommendation/reaction.ts"
 import {
   NO_WELCOME_HEAD,

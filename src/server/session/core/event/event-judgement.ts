@@ -1,10 +1,10 @@
 // 駆動から届いたイベントと、定着の結果に対する、セッションを持つ係の判断。
 
-import type { CharacterPackName } from "../../../shared/character-pack/character.ts"
-import { shownCharacterPackName } from "../../../shared/character-pack/character.ts"
-import type { SessionEvent } from "../../../shared/session/session-event.ts"
-import type { SessionState } from "../../../shared/session/session-state.ts"
-import type { ChatConsolidationOutcome } from "../../chat/core/chat-consolidation-writer.ts"
+import type { CharacterPackName } from "../../../../shared/character-pack/character.ts"
+import { shownCharacterPackName } from "../../../../shared/character-pack/character.ts"
+import type { SessionEvent } from "../../../../shared/session/session-event.ts"
+import type { SessionState } from "../../../../shared/session/session-state.ts"
+import type { ChatConsolidationOutcome } from "../../../chat/core/chat-consolidation-writer.ts"
 
 /** 束に積んでブラウザへ配るか。計測のためだけのイベントは積まない。 */
 export function isBatched(event: SessionEvent): boolean {

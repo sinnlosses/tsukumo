@@ -11,7 +11,7 @@ import { readReportImageFile } from "./server/report/adapter/report-image-file.t
 import type { ReportImageShelf } from "./server/report/core/image/report-image-shelf.ts"
 import { runGit } from "./server/repository/adapter/git.ts"
 import type { PromptImageShelf } from "./server/session-driver/core/prompt-image-shelf.ts"
-import { EVENT_BATCH_INTERVAL_MS } from "./server/session/core/event-batch.ts"
+import { EVENT_BATCH_INTERVAL_MS } from "./server/session/core/event/event-batch.ts"
 import type { SessionManager } from "./server/session/core/session-manager-port.ts"
 import { createSessionManager } from "./server/session/core/session-manager.ts"
 import type { SocketRouter } from "./server/view-server/adapter/session-socket.ts"

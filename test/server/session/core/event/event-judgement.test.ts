@@ -1,17 +1,17 @@
 import { describe, expect, it } from "vitest"
 
-import type { ChatConsolidationOutcome } from "../../../../src/server/chat/core/chat-consolidation-writer.ts"
+import type { ChatConsolidationOutcome } from "../../../../../src/server/chat/core/chat-consolidation-writer.ts"
 import {
   consolidationPackToStart,
   isBatched,
   mayFlowTopics,
-} from "../../../../src/server/session/core/event-judgement.ts"
-import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
+} from "../../../../../src/server/session/core/event/event-judgement.ts"
+import type { SessionEvent } from "../../../../../src/shared/session/session-event.ts"
 import {
   INITIAL_SESSION_STATE,
   type SessionState,
-} from "../../../../src/shared/session/session-state.ts"
-import { characterInfo, characterPackName } from "../../../fixture/character.ts"
+} from "../../../../../src/shared/session/session-state.ts"
+import { characterInfo, characterPackName } from "../../../../fixture/character.ts"
 
 const TURN_FINISHED: SessionEvent = { kind: "turn-finished", outcome: { kind: "interrupted" } }
 const SPEAK_DRAWN: SessionEvent = { kind: "speak-drawn" }

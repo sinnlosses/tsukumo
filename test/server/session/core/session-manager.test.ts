@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import type { NumstatOutput } from "../../../../src/server/core/change-count-git.ts"
 import type { SessionLaunchRequest } from "../../../../src/server/session/core/command-session-port.ts"
-import { applyRestoredEvents } from "../../../../src/server/session/core/restored-event.ts"
+import { applyRestoredEvents } from "../../../../src/server/session/core/event/restored-event.ts"
 import { PROTOCOL_VERSION, type ServerFrame } from "../../../../src/shared/frame.ts"
 import { UNAVAILABLE_SESSION_DIGEST } from "../../../../src/shared/session/session-digest.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
