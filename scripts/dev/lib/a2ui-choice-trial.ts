@@ -3,10 +3,14 @@
 
 import { isPlainObject, sumBy } from "remeda"
 
+import { REPORT_PART_CHOICE_GUIDE } from "../../../src/server/report/core/report-notation.ts"
 import { NEUTRAL_TOPICS, type TopicId } from "./a2ui-trial-topic.ts"
 
-/** 書く前の手引き。`declare` は材料の形を先に書かせるだけ、`decide` は材料の形から部品を引く目安も添える。 */
-export type Guide = "none" | "declare" | "decide"
+/**
+ * 書く前の手引き。`declare` は材料の形を先に書かせるだけ、`decide` は材料の形から部品を引く目安も依頼文に添える。
+ * `shipped` は記法の条の文面を、本番と同じ system prompt の末尾に足す。
+ */
+export type Guide = "none" | "declare" | "decide" | "shipped"
 
 const DECLARATION_PREFIX = "DECLARE"
 
@@ -14,16 +18,6 @@ const DECLARE_CLAUSE = [
   `書き始める前に、次の 2 行を先に出力する。各行は ${DECLARATION_PREFIX} で始め、角括弧は使わない。そのあとで JSON の配列を出力する。`,
   `${DECLARATION_PREFIX} 読み手が決めること: <1 文>`,
   `${DECLARATION_PREFIX} 材料の形: <件数・型（名前・順序・時間・量）・関係（比べる・順位・内訳・推移・手順）を 1 文>`,
-].join("\n")
-
-const DECIDE_CLAUSE = [
-  "部品は、材料の形から次の目安で選ぶ。目安に当たらないときだけ自分で選ぶ。",
-  "- 2 案の特徴を並べて比べる: Compare。案の採否と理由: Options",
-  "- 3 つ以上の名前が矢印でつながる流れ・分岐: Graph",
-  "- 3 つ以上の数の大きさ・前後の比べ: Chart。結論に効く数の札: Report の keyFigures",
-  "- 項目ごとの状態（済み・未了）の並び: ItemList の check",
-  "- 同じ項目を複数の観点で揃えて比べる（3 行以上）: Table",
-  "- 文で足りる説明: Paragraph",
 ].join("\n")
 
 const LAYOUT_COMPONENTS: readonly string[] = ["Row", "Column", "Card", "Tabs"]
@@ -73,9 +67,9 @@ export type ChoiceRow = {
   readonly chars: number
 }
 
-/** 部品の選びを測る条件。形を指定しない題材を、手引きの 3 通りで書かせる（載せ方は全部載せ、例つき、節は 3）。 */
+/** 部品の選びを測る条件。形を指定しない題材を、手引きの 4 通りで書かせる（載せ方は全部載せ、例つき、節は 3）。 */
 export function choiceTrialConditions(): readonly ChoiceCondition[] {
-  const guides: readonly Guide[] = ["none", "declare", "decide"]
+  const guides: readonly Guide[] = ["none", "declare", "decide", "shipped"]
   return NEUTRAL_TOPICS.flatMap((topic) =>
     guides.flatMap((guide) =>
       [1, 2].map((repeat): ChoiceCondition => ({
@@ -90,12 +84,22 @@ export function choiceTrialConditions(): readonly ChoiceCondition[] {
   )
 }
 
-/** 依頼文の後ろに足す手引き。`none` は何も足さない。 */
+/** 依頼文の後ろに足す手引き。`none` と `shipped` は何も足さない。 */
 export function guideClause(guide: Guide): string {
-  if (guide === "none") {
-    return ""
+  switch (guide) {
+    case "none":
+    case "shipped":
+      return ""
+    case "declare":
+      return `\n\n${DECLARE_CLAUSE}`
+    case "decide":
+      return `\n\n${DECLARE_CLAUSE}\n\n${REPORT_PART_CHOICE_GUIDE}`
   }
-  return guide === "declare" ? `\n\n${DECLARE_CLAUSE}` : `\n\n${DECLARE_CLAUSE}\n\n${DECIDE_CLAUSE}`
+}
+
+/** system prompt の末尾に足す手引き。`shipped` だけが、記法の条の文面を足す。 */
+export function guideSystemClause(guide: Guide): string {
+  return guide === "shipped" ? `\n\n${REPORT_PART_CHOICE_GUIDE}` : ""
 }
 
 /** 書き手の返答から、書く前の宣言の行（`DECLARE` で始まる行）を除く。 */

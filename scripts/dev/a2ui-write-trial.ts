@@ -21,6 +21,7 @@ import {
   type ChoiceResult,
   choiceTrialConditions,
   guideClause,
+  guideSystemClause,
   summarizeChoice,
 } from "./lib/a2ui-choice-trial.ts"
 import { isControlTopic, isNeutralTopic, requestFor } from "./lib/a2ui-trial-topic.ts"
@@ -63,7 +64,7 @@ const storedResultSchema = z.object({
   loading: z.enum(["full", "names", "mixed"]),
   pulledCards: z.number().optional(),
   topic: z.enum(["T1", "T2", "T3", "T4", "T5", "T6", "T7", "T8", "N1", "N2", "N3", "N4"]),
-  guide: z.enum(["none", "declare", "decide"]).optional(),
+  guide: z.enum(["none", "declare", "decide", "shipped"]).optional(),
   componentNames: z.array(z.string()).optional(),
   sections: z.number(),
   firstFaults: z.array(faultSchema),
@@ -153,12 +154,13 @@ async function runCase(
   readonly outputs: readonly string[]
 }> {
   const examples = readExamples()
-  const system = entry.withExample
+  const baseSystem = entry.withExample
     ? systemPromptWithExample(
         entry.loading,
         isControlTopic(entry.topic) ? examples.control : examples.plain,
       )
     : systemPromptFor(entry.loading)
+  const system = `${baseSystem}${guideSystemClause(entry.guide)}`
   const clause = guideClause(entry.guide)
   const request = `${requestFor(entry.topic, entry.sections, true)}${clause}`
   const first = await writeOnce(writer, entry.loading, system, request, examples.cardSources)

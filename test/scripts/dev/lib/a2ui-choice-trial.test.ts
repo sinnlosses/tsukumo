@@ -3,9 +3,14 @@ import { describe, expect, test } from "vitest"
 import {
   choiceTrialConditions,
   guideClause,
+  guideSystemClause,
   summarizeChoice,
   type ChoiceResult,
 } from "../../../../scripts/dev/lib/a2ui-choice-trial.ts"
+import {
+  REPORT_NOTATION_PROMPT,
+  REPORT_PART_CHOICE_GUIDE,
+} from "../../../../src/server/report/core/report-notation.ts"
 
 describe("部品の選びの測定", () => {
   const caseOf = (
@@ -18,19 +23,26 @@ describe("部品の選びの測定", () => {
     firstChars: componentNames.length * 100,
   })
 
-  test("条件は形を指定しない題材 × 手引き 3 通り × 2 回で、id が重ならない", () => {
+  test("条件は形を指定しない題材 × 手引き 4 通り × 2 回で、id が重ならない", () => {
     const conditions = choiceTrialConditions()
 
-    expect(conditions).toHaveLength(24)
-    expect(new Set(conditions.map((condition) => condition.id)).size).toBe(24)
+    expect(conditions).toHaveLength(32)
+    expect(new Set(conditions.map((condition) => condition.id)).size).toBe(32)
     expect(conditions.every((condition) => condition.loading === "full")).toBe(true)
   })
 
-  test("手引きは none で何も足さず、decide は declare の文に目安を足す", () => {
+  test("手引きは none で何も足さず、decide は declare の文に記法の条の文面を足す", () => {
     expect(guideClause("none")).toBe("")
     expect(guideClause("declare")).toContain("DECLARE 材料の形")
     expect(guideClause("decide").startsWith(guideClause("declare"))).toBe(true)
-    expect(guideClause("decide")).toContain("Compare")
+    expect(guideClause("decide")).toContain(REPORT_PART_CHOICE_GUIDE)
+  })
+
+  test("shipped は依頼文に足さず、system prompt の末尾に記法の条の文面だけを足す", () => {
+    expect(guideClause("shipped")).toBe("")
+    expect(guideSystemClause("shipped")).toBe(`\n\n${REPORT_PART_CHOICE_GUIDE}`)
+    expect(guideSystemClause("decide")).toBe("")
+    expect(REPORT_NOTATION_PROMPT).toContain(REPORT_PART_CHOICE_GUIDE)
   })
 
   test("手引きごとに、Table・配置・図の部品を使った件数を数える", () => {
