@@ -8,30 +8,28 @@
 // 許可要求の入力と質問の本文は会話の内容そのものなので、ここから外へ出す経路は作らない。
 
 import clsx from "clsx"
+import { useRef, useState } from "react"
 import type { KeyboardEvent, ReactElement } from "react"
 
-import type { ReportImageSource } from "../../../../../../shared/report/report-image-markdown.ts"
 import { truncateForDisplay } from "../../../../../features/current-work/domain/current-work-step.ts"
 import { usePhoneWidth } from "../../../../../hooks/use-phone-width.ts"
 import { useNowWhile } from "../../../../../stores/clock.ts"
 import { useInquiryJump } from "../../../../../stores/inquiry-jump.ts"
 import { Button } from "../../../../ui/button/button.tsx"
+import { Dialog } from "../../../../ui/dialog/dialog.tsx"
 import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import { mergeRefs } from "../../domain/merge-ref.ts"
-import { reportSectionsMarkdown } from "../../domain/report-markdown.ts"
 import {
   useInquiryAnswer,
   type InquiryBrief as InquiryBriefModel,
   type InquiryModel,
   type InquiryOptionRow,
 } from "../../stores/inquiry-answer.ts"
-import { detailBlockClassName, Markdown, QuestionPreviewMarkdown } from "../markdown/markdown.tsx"
 import { useInquiryScroll } from "./hooks/use-inquiry-scroll.ts"
 import { useInquiryVisibility } from "./hooks/use-inquiry-visibility.ts"
+import { InquiryCompare, InquiryDetail, type ShelvedSource } from "./inquiry-detail.tsx"
 import styles from "./inquiry.module.css"
-
-type ShelvedSource = Extract<ReportImageSource, { readonly kind: "shelved" }>
 
 const INQUIRY_CHIP = "お伺い"
 const KIND_LABEL = {
@@ -39,6 +37,9 @@ const KIND_LABEL = {
   question: "質問",
 } satisfies Record<Exclude<InquiryModel["kind"], "none">, string>
 const BACK_LABEL = "戻る"
+const EXPAND_LABEL = "広げる"
+const COLLAPSE_LABEL = "閉じる"
+const BOARD_LABEL = "お伺い（広げた板）"
 const FREE_TEXT_HINT = "選択肢にない答えは、下の入力欄に書いて送れます"
 const RECOMMENDED_BADGE = "おすすめ"
 const ANSWER_LABEL = "これで答える"
@@ -49,11 +50,7 @@ const WAITED_PREFIX = "待って"
 const BACKGROUND_LABEL = "背景"
 const AXES_LABEL = "判断の軸"
 const AXES_SEPARATOR = " / "
-const PROS_LABEL = "良い点"
-const CONS_LABEL = "悪い点"
 const IRREVERSIBLE_BADGE = "⚠ 戻せない"
-const DETAIL_SUFFIX = " の詳細"
-const COMPARE_SUMMARY = "並べて比べる"
 /** 単一選択の radio をひとまとまりにする名前（札は1問ずつしか出ないので1つで足りる）。 */
 const OPTION_GROUP_NAME = "inquiry-option"
 /** 入力欄に書いて記録した答え（まだ送っていない問のぶん）の前置き。 */
@@ -66,14 +63,20 @@ export function Inquiry(): ReactElement | undefined {
   return phone ? undefined : <InquiryCard actions="inline" />
 }
 
-/** `actions` が `none` のときは操作の行を出さない（狭い画面の板が、下端に自前の口を置く）。 */
+/**
+ * `actions` が `none` のときは操作の行を出さない（狭い画面の板が、下端に自前の口を置く）。
+ * `inline` の札の頭には「広げる」を置き、押すと同じ中身を画面いっぱいの板に出す。
+ * 札と板は同じ選択の状態を見る。
+ */
 export function InquiryCard(props: {
   readonly actions: "inline" | "none"
 }): ReactElement | undefined {
   const inquiry = useInquiryAnswer()
   const jump = useInquiryJump((state) => state.jump)
+  const [expanded, setExpanded] = useState(false)
   const askId = inquiry.kind === "none" ? undefined : inquiry.id
   const cardRef = useInquiryScroll(inquiry, jump)
+  const boardRef = useRef<HTMLElement>(null)
   const visibilityRef = useInquiryVisibility(askId !== undefined && props.actions === "inline")
   const now = useNowWhile(inquiry.kind !== "none")
 
@@ -81,37 +84,120 @@ export function InquiryCard(props: {
     return undefined
   }
 
-  const focused = inquiry.options.find((option) => option.label === inquiry.focusedLabel)
-
-  const onKeyDown = (event: KeyboardEvent<HTMLElement>): void => {
-    if (event.nativeEvent.isComposing || event.metaKey || event.ctrlKey || event.altKey) {
-      return
-    }
-    if (CHOICE_KEY.test(event.key)) {
-      const option = inquiry.options.find((candidate) => String(candidate.number) === event.key)
-      if (option !== undefined) {
-        event.preventDefault()
-        inquiry.onToggle(option.label)
-      }
-      return
-    }
-    if (event.key === "Enter" && !(event.target instanceof HTMLButtonElement)) {
-      event.preventDefault()
-      // 次の問へ進むと、フォーカスしていた選択肢は作り直されて外れる。札そのものへ預けて、続けてキーを受ける。
-      cardRef.current?.focus({ preventScroll: true })
-      inquiry.onAnswer()
+  const closeBoard = (): void => setExpanded(false)
+  const answerOnBoard = (): void => {
+    inquiry.onAnswer()
+    if (inquiry.last && inquiry.canAnswer) {
+      closeBoard()
     }
   }
 
   return (
-    <section
-      className={clsx(styles["inquiry"], props.actions === "none" && styles["is-bare"])}
-      ref={mergeRefs(cardRef, visibilityRef)}
-      tabIndex={-1}
-      aria-label={INQUIRY_CHIP}
-      onKeyDown={onKeyDown}
-    >
-      {props.actions === "inline" && (
+    <>
+      <section
+        className={clsx(styles["inquiry"], props.actions === "none" && styles["is-bare"])}
+        ref={mergeRefs(cardRef, visibilityRef)}
+        tabIndex={-1}
+        aria-label={INQUIRY_CHIP}
+        onKeyDown={(event) =>
+          answerKey(event, inquiry, inquiry.onAnswer, () =>
+            cardRef.current?.focus({ preventScroll: true }),
+          )
+        }
+      >
+        <InquiryFace
+          inquiry={inquiry}
+          now={now}
+          layout={props.actions === "inline" ? "card" : "sheet"}
+          expand={
+            props.actions === "inline"
+              ? { kind: "open", onOpen: () => setExpanded(true) }
+              : { kind: "none" }
+          }
+          onAnswer={inquiry.onAnswer}
+        />
+      </section>
+      {expanded && (
+        <Dialog
+          open={true}
+          ariaLabel={BOARD_LABEL}
+          backdrop="dim"
+          placement={{ kind: "auto" }}
+          onClose={closeBoard}
+          className={styles["inquiry-board"]}
+        >
+          <section
+            className={clsx(styles["inquiry"], styles["is-board"])}
+            ref={boardRef}
+            tabIndex={-1}
+            aria-label={INQUIRY_CHIP}
+            onKeyDown={(event) =>
+              answerKey(event, inquiry, answerOnBoard, () =>
+                boardRef.current?.focus({ preventScroll: true }),
+              )
+            }
+          >
+            <InquiryFace
+              inquiry={inquiry}
+              now={now}
+              layout="board"
+              expand={{ kind: "close", onClose: closeBoard }}
+              onAnswer={answerOnBoard}
+            />
+          </section>
+        </Dialog>
+      )}
+    </>
+  )
+}
+
+type OpenInquiry = Exclude<InquiryModel, { readonly kind: "none" }>
+
+type InquiryExpand =
+  | { readonly kind: "none" }
+  | { readonly kind: "open"; readonly onOpen: () => void }
+  | { readonly kind: "close"; readonly onClose: () => void }
+
+/** 数字キーで選び、Enter で答える。`holdFocus` は答える前にフォーカスを札（または板）へ預ける。 */
+function answerKey(
+  event: KeyboardEvent<HTMLElement>,
+  inquiry: OpenInquiry,
+  onAnswer: () => void,
+  holdFocus: () => void,
+): void {
+  if (event.nativeEvent.isComposing || event.metaKey || event.ctrlKey || event.altKey) {
+    return
+  }
+  if (CHOICE_KEY.test(event.key)) {
+    const option = inquiry.options.find((candidate) => String(candidate.number) === event.key)
+    if (option !== undefined) {
+      event.preventDefault()
+      inquiry.onToggle(option.label)
+    }
+    return
+  }
+  if (event.key === "Enter" && !(event.target instanceof HTMLButtonElement)) {
+    event.preventDefault()
+    // 次の問へ進むと、フォーカスしていた選択肢は作り直されて外れる。札そのものへ預けて、続けてキーを受ける。
+    holdFocus()
+    onAnswer()
+  }
+}
+
+/** 札・狭い画面の板・広げた板の中身。`sheet` は頭と操作の行を持たない。 */
+function InquiryFace(props: {
+  readonly inquiry: OpenInquiry
+  readonly now: number
+  readonly layout: "card" | "sheet" | "board"
+  readonly expand: InquiryExpand
+  readonly onAnswer: () => void
+}): ReactElement {
+  const { inquiry, now } = props
+  const focused = inquiry.options.find((option) => option.label === inquiry.focusedLabel)
+
+  return (
+    <>
+      {props.layout !== "sheet" && (
         <HStack
           element="header"
           name={{ kind: "none" }}
@@ -162,6 +248,19 @@ export function InquiryCard(props: {
           >
             {inquiry.progressLabel} · {WAITED_PREFIX} {waitedText(now - inquiry.askedAt)}
           </Text>
+          {props.expand.kind !== "none" && (
+            <Button
+              variant="outline-hover-warn"
+              size="label"
+              pressed="none"
+              disabled={false}
+              disclosure={props.expand.kind === "open" ? { kind: "dialog" } : { kind: "none" }}
+              className={styles["inquiry-expand"]}
+              onClick={props.expand.kind === "open" ? props.expand.onOpen : props.expand.onClose}
+            >
+              {props.expand.kind === "open" ? EXPAND_LABEL : COLLAPSE_LABEL}
+            </Button>
+          )}
         </HStack>
       )}
       <div className={styles["inquiry-body"]}>
@@ -224,7 +323,7 @@ export function InquiryCard(props: {
           </Text>
         )}
       </div>
-      {props.actions === "inline" && (
+      {props.layout !== "sheet" && (
         <HStack
           element="footer"
           name={{ kind: "none" }}
@@ -265,7 +364,7 @@ export function InquiryCard(props: {
             disabled={!inquiry.canAnswer}
             disclosure={{ kind: "none" }}
             className={styles["inquiry-answer"]}
-            onClick={inquiry.onAnswer}
+            onClick={props.onAnswer}
           >
             <Text element="span" size="inherit" tone="inherit" weight="bold" className="">
               {inquiry.last ? ANSWER_LABEL : NEXT_LABEL}
@@ -276,7 +375,7 @@ export function InquiryCard(props: {
           </Button>
         </HStack>
       )}
-    </section>
+    </>
   )
 }
 
@@ -338,130 +437,6 @@ function imageSourceOf(inquiry: Exclude<InquiryModel, { readonly kind: "none" }>
     sizes: inquiry.kind === "question" ? inquiry.imageSizes : [],
     unshelved: inquiry.kind === "question" ? inquiry.unshelvedImages : [],
   }
-}
-
-/** フォーカスした選択肢の詳細のサーフェス。高さは切らず、札の本文が内側で転がる。 */
-function InquiryDetail(props: {
-  readonly askId: string
-  readonly imageSource: ShelvedSource
-  readonly option: InquiryOptionRow
-}): ReactElement {
-  const { option } = props
-  const figures =
-    option.figures.length === 0
-      ? ""
-      : reportSectionsMarkdown([{ heading: "", blocks: option.figures }], props.imageSource)
-
-  return (
-    <div
-      className={styles["inquiry-detail"]}
-      role="group"
-      aria-label={`${option.text}${DETAIL_SUFFIX}`}
-    >
-      <Text
-        element="p"
-        size="inherit"
-        tone="inherit"
-        weight="bold"
-        className={styles["inquiry-detail-title"]}
-      >
-        {option.text}
-        {DETAIL_SUFFIX}
-      </Text>
-      {option.description !== "" && (
-        <Text
-          element="p"
-          size="secondary"
-          tone="ink-quiet"
-          weight="inherit"
-          className={styles["inquiry-detail-description"]}
-        >
-          {option.description}
-        </Text>
-      )}
-      <InquiryPoints label={PROS_LABEL} mark="＋" tone="state-ok" items={option.pros} />
-      <InquiryPoints label={CONS_LABEL} mark="－" tone="state-ng" items={option.cons} />
-      {option.preview !== undefined && (
-        <div className={clsx(detailBlockClassName, styles["detail-block"])}>
-          <QuestionPreviewMarkdown text={option.preview} toolUseId={props.askId} />
-        </div>
-      )}
-      {figures !== "" && (
-        <div className={clsx(detailBlockClassName, styles["detail-block"])}>
-          <Markdown text={figures} />
-        </div>
-      )}
-    </div>
-  )
-}
-
-/** 良い点・悪い点の箇条書き。字の前の記号は色が見えなくても読める。 */
-function InquiryPoints(props: {
-  readonly label: string
-  readonly mark: string
-  readonly tone: "state-ok" | "state-ng"
-  readonly items: readonly string[]
-}): ReactElement | undefined {
-  if (props.items.length === 0) {
-    return undefined
-  }
-  return (
-    <div className={styles["inquiry-points"]}>
-      <Text element="p" size="label" tone={props.tone} weight="bold" className="">
-        {props.label}
-      </Text>
-      <ul className={styles["inquiry-points-list"]}>
-        {props.items.map((item) => (
-          <li key={item}>
-            <Text element="span" size="inherit" tone={props.tone} weight="bold" className="">
-              {props.mark}
-            </Text>{" "}
-            {item}
-          </li>
-        ))}
-      </ul>
-    </div>
-  )
-}
-
-function InquiryCompare(props: {
-  readonly imageSource: ShelvedSource
-  readonly brief: InquiryBriefModel
-  readonly options: readonly InquiryOptionRow[]
-}): ReactElement {
-  const table = reportSectionsMarkdown(
-    [
-      {
-        heading: "",
-        blocks: [
-          {
-            kind: "table",
-            title: "",
-            columns: ["", ...props.options.map((option) => option.text)],
-            rows: props.brief.axes.map((axis, index) => [
-              axis,
-              ...props.options.map((option) => option.byAxis[index] ?? ""),
-            ]),
-            rest: "",
-            fold: "",
-            aside: "",
-          },
-        ],
-      },
-    ],
-    props.imageSource,
-  )
-
-  return (
-    <details className={styles["inquiry-compare"]}>
-      <Text element="summary" size="secondary" tone="ink-quiet" weight="bold" className="">
-        {COMPARE_SUMMARY}
-      </Text>
-      <div className={clsx(detailBlockClassName, styles["detail-block"])}>
-        <Markdown text={table} />
-      </div>
-    </details>
-  )
 }
 
 /** 選択肢1つぶんの行。ボタンは `<input>` と `<label>` の組（単一選択は radio、複数選択はチェックボックス）。 */

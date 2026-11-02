@@ -26,6 +26,32 @@
   border: none;
   background: none;
 }
+/* 広げた板。窓いっぱいに取り、中の札が高さの上限と枠を持たず、本文の側が板の内側で転がる。 */
+.inquiry-board {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  width: calc(100vw - 2rem);
+  max-width: none;
+  height: calc(100vh - 2rem);
+  max-height: none;
+  margin: auto;
+  padding: var(--space-md) var(--space-lg);
+  border: 1px solid var(--state-warn);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--surface), var(--state-warn) 6%);
+  color: var(--ink);
+  overflow: hidden;
+}
+.inquiry.is-board {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+}
 /* 札そのものにフォーカスがあるときは輪を出さない。 */
 .inquiry:focus {
   outline: none;
@@ -47,6 +73,11 @@
 }
 .inquiry-kind {
   flex: 0 0 auto;
+}
+/* 「広げる」「閉じる」は頭の行の右端。 */
+.inquiry-expand {
+  flex: 0 0 auto;
+  margin-left: auto;
 }
 /* 字の段・色は `Text` が持つ。伸び縮みだけここに置く。 */
 .inquiry-subject,

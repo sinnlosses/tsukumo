@@ -156,6 +156,39 @@ test.describe("お伺い", () => {
     await expect.poll(() => inquiry.textContent()).toContain("2 / 2")
   })
 
+  test("札の「広げる」は同じ中身を画面いっぱいの板に出し、板の中で選んで答えると板が閉じ、Esc で閉じても選んだものは札に残る", async ({
+    run,
+  }) => {
+    const room = await run.open({
+      scenario: "inquiry-question-brief-board",
+      scene: "question-brief",
+      viewport: "wide",
+      domRoots: ["main"],
+    })
+    const card = inquiryOf(room.page)
+    const board = room.page.getByRole("dialog", { name: "お伺い（広げた板）" })
+
+    await card.getByRole("button", { name: "広げる" }).click()
+    await expect.poll(() => board.count()).toBe(1)
+    const box = await board.boundingBox()
+    expect(box !== null && box.width > VIEWPORTS.wide.width - 40).toBe(true)
+
+    await board.getByRole("radio", { name: /B に置く/ }).click()
+    await room.page.keyboard.press("Escape")
+    await expect.poll(() => board.count()).toBe(0)
+    await expect(card.getByRole("radio", { name: /B に置く/ })).toBeChecked()
+
+    await card.getByRole("button", { name: "広げる" }).click()
+    await board.getByRole("button", { name: /次へ/ }).click()
+    await expect.poll(() => board.textContent()).toContain("2 / 2")
+    await board.getByRole("radio").first().click()
+    await board.getByRole("button", { name: /これで答える/ }).click()
+
+    await room.waitForEvent("question-answered")
+    await expect.poll(() => board.count()).toBe(0)
+    await expect.poll(() => card.count()).toBe(0)
+  })
+
   test("preview に書いた手元の画像は棚の経路で札の中に出て、外部の URL・data:・置いていない画像は「画像を出せない」の札になる", async ({
     run,
   }) => {
