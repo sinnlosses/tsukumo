@@ -236,11 +236,14 @@ function initializeFor(
  */
 function figureThemeCss(node: HTMLElement): string {
   const radius = getComputedStyle(node).getPropertyValue("--radius-md").trim()
+  const soft = resolveHexOver(node, "--ink-soft", "--surface")
   return [
     "rect, polygon, circle, ellipse, path { filter: none; }",
     `.node rect, .node .label-container, rect.actor { rx: ${radius}; ry: ${radius}; }`,
     ".edgeLabel, .edgeLabel p, .edgeLabel span, .labelBkg { background-color: transparent; }",
-    `.edgeLabel span { color: ${resolveHexOver(node, "--ink-soft", "--surface")}; -webkit-text-stroke: 5px ${resolveHex(node, "--surface")}; paint-order: stroke fill; }`,
+    // 状態遷移の span.edgeLabel は mermaid の `.label div .edgeLabel`（詳細度が上）が色を決めるので、同じ詳細度で後に並べる
+    `.edgeLabel span, .label div .edgeLabel { color: ${soft}; -webkit-text-stroke: 5px ${resolveHex(node, "--surface")}; paint-order: stroke fill; }`,
+    `.messageText { fill: ${soft}; }`,
   ].join("\n")
 }
 
