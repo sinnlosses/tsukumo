@@ -27,14 +27,14 @@ export const PLAIN_WORDS = [
   },
   {
     spelling: "辺",
-    replacement: "矢印",
+    replacement: "エッジ",
     meaning:
-      "図の中で、点（ファイルや部品の名前）と点をつなぐ線。「A が B に値を渡す」というつながりを表す",
+      "図の中で、ノード（ファイルや部品の名前を置く点）とノードをつなぐ線。「A が B に値を渡す」というつながりを表す",
   },
   {
     spelling: "節点",
-    replacement: "箱",
-    meaning: "図の中で、ファイルや部品の名前を1つ置く点。矢印の両端になる",
+    replacement: "ノード",
+    meaning: "図の中で、ファイルや部品の名前を1つ置く点。エッジの両端になる",
   },
   {
     spelling: "転がして",
@@ -43,8 +43,9 @@ export const PLAIN_WORDS = [
   },
   {
     spelling: "窓",
-    replacement: "ブラウザの表示サイズ",
-    meaning: "tsukumo の画面を開いたブラウザの、中身を描ける領域の幅と高さ（1440x900 など）",
+    replacement: "ビューポート",
+    meaning:
+      "tsukumo の画面を開いたブラウザの、中身を描ける領域の幅と高さ（1440x900 など）。別のブラウザの窓はウィンドウ、記録の窓は集計期間、のぞき窓はプレビューと書く",
   },
   {
     spelling: "進み具合の帯",
@@ -108,23 +109,23 @@ export const PLAIN_WORDS = [
   },
   {
     spelling: "ワークフローの面",
-    replacement: "ワークフローの描画領域",
-    meaning: "ワークフローの設定を描く、画面の中の領域",
+    replacement: "ワークフローのサーフェス",
+    meaning: "ワークフローの設定を描く、画面の中の領域（A2UI の surface）",
   },
   {
     spelling: "入力欄の面",
-    replacement: "入力欄の描画領域",
-    meaning: "入力欄を描く、画面の中の領域",
+    replacement: "入力欄のサーフェス",
+    meaning: "入力欄を描く、画面の中の領域（A2UI の surface）",
   },
   {
     spelling: "詳細の面",
-    replacement: "詳細の描画領域",
-    meaning: "詳細を描く、画面の中の領域",
+    replacement: "詳細のサーフェス",
+    meaning: "詳細を描く、画面の中の領域（A2UI の surface）",
   },
   {
     spelling: "並べた面",
-    replacement: "並べた描画領域",
-    meaning: "比べるために並べて描いた、画面の中の領域",
+    replacement: "並べたサーフェス",
+    meaning: "比べるために並べて描いた、画面の中の領域（A2UI の surface）",
   },
   {
     spelling: "振り返りの葉",
