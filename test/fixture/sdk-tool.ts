@@ -1,6 +1,6 @@
 import type { McpSdkServerConfigWithInstance } from "@anthropic-ai/claude-agent-sdk"
 
-import { tsukumoServer } from "../../src/server/session-driver/adapter/sdk-tool.ts"
+import { tsukumoServer } from "../../src/server/session-driver/adapter/sdk/sdk-tool.ts"
 import {
   type CallReview,
   createCallReview,

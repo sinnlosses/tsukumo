@@ -47,7 +47,7 @@ import { type Browser, chromium, type Page } from "playwright-core"
 import {
   type FakeSession,
   readFakeSession,
-} from "../../src/server/session-driver/adapter/fake-session.ts"
+} from "../../src/server/session-driver/adapter/fake/fake-session.ts"
 import { applyPreparations, openPage, SKIP_REVEAL_KEY, settlePage } from "./lib/capture-page.ts"
 import { describeCatalogMiss } from "./lib/capture-preparation.ts"
 import { type CatalogEntry, type CatalogSize, CATALOG, sizesOf } from "./lib/catalog-entry.ts"

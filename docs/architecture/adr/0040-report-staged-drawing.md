@@ -67,7 +67,7 @@
 
 **塊ごとの切り出しの状態は、駆動のセッション 1 つにつき 1 つの intake（`ReportDraftIntake`）が持つ。**
 
-- `relayMessages` が既に `titleIntake`・`ledgerIntake` を持つ（`src/server/session-driver/adapter/sdk-driver.ts`）。同じ置き方で、`observe(message)` が `SessionEvent` の並びを返す。
+- `relayMessages` が既に `titleIntake`・`ledgerIntake` を持つ（`src/server/session-driver/adapter/sdk/sdk-driver.ts`）。同じ置き方で、`observe(message)` が `SessionEvent` の並びを返す。
 - `toSessionEvents` と `reportDraftingEvents` は状態を持たない関数のまま残す。`stream_event` の分岐は復元（`session-restore.ts`）も通る共有の変換なので、状態を足さない。
 - intake は、メインの `report` の `content_block_start` で `index → { toolUseId, 切り出しの状態 }` を登録し、同じ `index` の `input_json_delta` の `partial_json` を読み手に渡す。閉じた部品を `safeParse` して `report-draft-component` にする。`content_block_stop` と `message_start` で登録を捨てる。`parent_tool_use_id` があるもの（サブエージェント）は見ない。
 - 読み手は計測の道具として `scripts/runtime/` に置かれていて、`src/` から読めなかった。作り直さず、同じ読み手を `src/server/report/core/body/a2ui-component-splitter.ts` に移した。

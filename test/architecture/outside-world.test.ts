@@ -67,7 +67,7 @@ const UNAPPROVED_EXISTING_COMMANDS = ["lsof", "ps"] as const
  */
 const DYNAMIC_COMMAND_SITES = [
   {
-    file: "src/server/session-driver/adapter/sdk-workflow-tw.ts",
+    file: "src/server/session-driver/adapter/sdk/sdk-workflow-tw.ts",
     commands: ["tw"],
     reason: "取り込んだ `bin/tw` の絶対パス",
   },

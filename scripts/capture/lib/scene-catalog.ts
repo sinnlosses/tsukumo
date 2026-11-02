@@ -1,7 +1,7 @@
 import { sumBy } from "remeda"
 
 import { FIGURE_WEIGHT, SHORT_REPORT_WEIGHT } from "../../../src/browser/domain/reveal/plan.ts"
-import type { FakeSession } from "../../../src/server/session-driver/adapter/fake-session.ts"
+import type { FakeSession } from "../../../src/server/session-driver/adapter/fake/fake-session.ts"
 import { reportEvents } from "../../../src/server/session-driver/core/message/sdk-report-message.ts"
 import { LEAF_COMPONENT_KINDS } from "../../../src/shared/report/a2ui-report-catalog.ts"
 import {

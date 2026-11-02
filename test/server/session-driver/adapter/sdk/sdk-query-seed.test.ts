@@ -1,0 +1,123 @@
+import { describe, expect, it } from "vitest"
+
+import { tsukumoHomePath } from "../../../../../src/server/adapter/tsukumo-home.ts"
+import { buildQuerySeedOptions } from "../../../../../src/server/session-driver/adapter/sdk/sdk-query-seed.ts"
+import type { SessionDriverOptions } from "../../../../../src/server/session-driver/core/session-driver.ts"
+import { BUILTIN_SESSION_DEFAULT } from "../../../../../src/shared/session/session-default.ts"
+import { CHAT_MODE, WORK_MODE } from "../../../../fixture/sdk-tool.ts"
+import { checkedSessionId } from "../../../../fixture/session-id.ts"
+
+// `startSdkDriver` 自体は本物の claude を子プロセスとして起こすので、ここでは呼ばない
+// （docs/requirements.md「起動と設定」 / AGENTS.md「よく使うコマンド」）。`query()` に渡る `options` の
+// うち、クロージャを含まない部分（`buildQuerySeedOptions`）だけを検査する。
+const BASE_OPTIONS: SessionDriverOptions = {
+  cwd: "/tmp/tsukumo-test",
+  expressions: [{ name: "default", label: "通常" }],
+  permissionMode: BUILTIN_SESSION_DEFAULT.permissionMode,
+  model: BUILTIN_SESSION_DEFAULT.model,
+  effort: BUILTIN_SESSION_DEFAULT.effort,
+  systemPromptAppend: "（テスト用の追記。会話の内容は含まない）",
+  start: { kind: "new" },
+  tag: "tsukumo-test",
+  onSessionMarked: () => {},
+  mode: WORK_MODE,
+  disallowedTools: ["NotebookEdit", "Artifact"],
+  turnStepLimit: 200,
+  inheritedEnv: { PATH: "/usr/bin", HOME: "/tmp/tsukumo-home" },
+  claudeConfigDir: undefined,
+  mountWorkflowPlugin: true,
+  mountFigurePlugin: false,
+  workflowTw: "tw",
+  onEvent: () => {},
+  now: () => 0,
+  diagnose: () => {},
+}
+
+describe("buildQuerySeedOptions", () => {
+  // 覚えた既定（`~/.tsukumo/state.json`）は配線層が読んで `SessionDriverOptions` に載せる
+  // （`startSession`）。ここで見るのは、その値がそのまま `query()` へ渡ること。
+  it("cwd・permissionMode・model・effort は渡された SessionDriverOptions の値をそのまま使う", () => {
+    const seed = buildQuerySeedOptions({
+      ...BASE_OPTIONS,
+      cwd: "/tmp/tsukumo-other",
+      permissionMode: "plan",
+      model: "sonnet",
+      effort: "high",
+    })
+
+    expect(seed.cwd).toBe("/tmp/tsukumo-other")
+    expect(seed.permissionMode).toBe("plan")
+    expect(seed.model).toBe("sonnet")
+    expect(seed.effort).toBe("high")
+  })
+
+  // 対応しないモデル（haiku）でも渡すかどうかをここで出し分けない（`query()` 自身の判断に任せる）。
+  it("対応しないモデルの effort でも渡す（渡すかどうかをモデルごとに出し分けない）", () => {
+    const seed = buildQuerySeedOptions({ ...BASE_OPTIONS, model: "haiku", effort: "high" })
+
+    expect(seed.model).toBe("haiku")
+    expect(seed.effort).toBe("high")
+  })
+
+  it("続きから始めるセッションのIDを resume として渡す（新規のときは undefined）", () => {
+    expect(buildQuerySeedOptions(BASE_OPTIONS).resume).toBeUndefined()
+    expect(
+      buildQuerySeedOptions({
+        ...BASE_OPTIONS,
+        start: { kind: "resume", sessionId: checkedSessionId("s-1") },
+      }).resume,
+    ).toBe("s-1")
+  })
+
+  it("キャラクターパックの置き場だけを cwd の外の読める場所として渡す", () => {
+    expect(buildQuerySeedOptions(BASE_OPTIONS).additionalDirectories).toEqual([
+      tsukumoHomePath("characters"),
+    ])
+  })
+
+  it("settings.language を japanese 固定で渡す", () => {
+    expect(buildQuerySeedOptions(BASE_OPTIONS).settings).toEqual({ language: "japanese" })
+  })
+
+  it("引き継いだ環境変数に Claude Code の催促を止める2つの変数を足して子プロセスへ渡す", () => {
+    // SDK の `env` は `process.env` と混ぜずに丸ごと置き換えるので、引き継ぎが落ちていないことも見る
+    // （`childProcessEnv`）。
+    expect(buildQuerySeedOptions(BASE_OPTIONS).env).toEqual({
+      PATH: "/usr/bin",
+      HOME: "/tmp/tsukumo-home",
+      CLAUDE_CODE_TERMINAL_MCP_TOOLS: "mcp__tsukumo__speak",
+      CLAUDE_CODE_SILENT_TURN_REMINDER: "0",
+    })
+  })
+
+  it("外す組み込みツールは仕事の会話にだけ渡し、雑談には渡さない", () => {
+    expect(buildQuerySeedOptions(BASE_OPTIONS).disallowedTools).toEqual([
+      "NotebookEdit",
+      "Artifact",
+    ])
+    expect(buildQuerySeedOptions({ ...BASE_OPTIONS, mode: CHAT_MODE }).disallowedTools).toEqual([])
+  })
+
+  it("取り込んだ tsukumo-plugins は mountWorkflowPlugin のときだけ plugins に載せる", () => {
+    const mounted = buildQuerySeedOptions(BASE_OPTIONS).plugins.map((plugin) => plugin.path)
+    const unmounted = buildQuerySeedOptions({
+      ...BASE_OPTIONS,
+      mountWorkflowPlugin: false,
+    }).plugins.map((plugin) => plugin.path)
+
+    expect(mounted).toHaveLength(2)
+    expect(mounted[1]).toMatch(/vendor\/tsukumo-plugins$/)
+    expect(unmounted).toEqual([mounted[0]])
+  })
+
+  it("図のプラグインは mountFigurePlugin のときだけ、mountWorkflowPlugin と独立に plugins に載せる", () => {
+    const paths = (override: Partial<SessionDriverOptions>): string[] =>
+      buildQuerySeedOptions({ ...BASE_OPTIONS, ...override }).plugins.map((plugin) => plugin.path)
+
+    expect(paths({ mountFigurePlugin: false })).toHaveLength(2)
+    const figureOnly = paths({ mountWorkflowPlugin: false, mountFigurePlugin: true })
+    expect(figureOnly).toHaveLength(2)
+    expect(figureOnly[1]).toMatch(/vendor\/tsukumo-plugins\/plugins\/tsukumo-figure$/)
+    expect(paths({ mountFigurePlugin: true })).toHaveLength(3)
+  })
+})

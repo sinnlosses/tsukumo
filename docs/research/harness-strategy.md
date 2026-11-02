@@ -124,7 +124,7 @@ format・単体だけ（E2E 無し）。`origin/main` は手元の main より 8
 | summary の 40 字は tw が知らせるだけ（長い summary 37 件）                                                 | `docs/workflow.md`                                                   |
 | CLAUDE.md・docs が `task` コマンド（今は `tw`）を指す                                                      | `CLAUDE.md`、`docs/workflow.md`                                      |
 | メモリ 29 件のうち 5 件の前提が消えている                                                                  | `~/.claude/projects/…/memory/`                                       |
-| tw の版が2つ（PATH の tw と `vendor/tsukumo-plugins` の ask-guard）                                        | `src/server/session-driver/adapter/sdk-ask-guard.ts`                 |
+| tw の版が2つ（PATH の tw と `vendor/tsukumo-plugins` の ask-guard）                                        | `src/server/session-driver/adapter/sdk/sdk-ask-guard.ts`             |
 | スキルどうしの食い違い（verifying-before-completion「差分を読む」と task-model「メインは差分を読まない」） | `~/.claude/skills/`                                                  |
 
 ## 2. 外の仕組みから借りる原則

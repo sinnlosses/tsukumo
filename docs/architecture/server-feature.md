@@ -47,7 +47,7 @@
 **層の下の子ディレクトリ**: `core/`・`adapter/` の直下に子を切り、その子の中にもう1階層まで切れる
 （`report/core/rules/prose/` が最深。それより深くは切らない）。切るのは、①同じ家族のファイルが3本以上、
 ②家族の内部 import が外への import より多い、③子どうしの辺が一方向にそろう、の3つが揃うとき。
-名前は家族の語（単数形でなくてよい）。`core/` 直下の子どうしの許す辺は `.dependency-cruiser.cjs` の
+名前は家族の語（単数形でなくてよい）。`core/`・`adapter/` 直下の子どうしの許す辺は `.dependency-cruiser.cjs` の
 `SERVER_CHILD_IMPORTS`（規則は `server-child-edge:`）が持ち、子を切ったら表に1行足す。いまの対象は `SERVER_CHILD_IMPORTS` の表に載っている子。
 
 **どの機能にも属さない共有のもの**は、`server/core/` と `server/adapter/` の**直下**に置く
@@ -83,7 +83,7 @@
   採らない（`session-manager.ts` は割らない。`docs/architecture/adr/0021-feature-state-fold-in-feature.md`）。
   配線には単体テストを持たない（守る振る舞いは E2E が本物のプロセスで、関数の揃いは型検査が守り、
   単体で書くには adapter を差し替える本番に要らない関数が要る）
-- **Agent SDK を import してよいのは、機能の `adapter/` の直下の `sdk-` で始まるファイルだけ**
+- **Agent SDK を import してよいのは、機能の `adapter/` の直下（または `adapter/sdk/`）の `sdk-` で始まるファイルだけ**
   （原則3）。1つの箱にはまとめず、**その境界が属する機能に置く**（「core と adapter」）。
   例外は共有の箱の `server/adapter/` 直下の `sdk-` で始まる、どの機能の語彙も名乗らない使い捨ての問い合わせの関数
 - **機能を足すときは、`test/architecture/feature-graph.ts` の機能の一覧と `.dependency-cruiser.cjs` の

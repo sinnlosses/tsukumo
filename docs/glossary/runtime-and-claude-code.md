@@ -128,5 +128,5 @@
 - **定義**: Claude Code の応答の人格・口調を定義する設定。実測環境では `Asuna` が有効
 - **注記**: **`speak` を呼ぶタイミングの規約もここに書く**（`docs/architecture/display.md` 4.2）
 - **注記**: **人格は毎ターン `systemPrompt` の append として渡っている**
-  （`src/server/session-driver/adapter/sdk-driver.ts` が `{ type: "preset", preset: "claude_code", append }` を組む）。
+  （`src/server/session-driver/adapter/sdk/sdk-driver.ts` が `{ type: "preset", preset: "claude_code", append }` を組む）。
   スパイクで確かめてあり、未決ではない

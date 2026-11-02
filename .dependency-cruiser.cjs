@@ -39,6 +39,10 @@ const SERVER_CHILD_IMPORTS = {
     message: [],
     session: ["message"],
   },
+  "session-driver/adapter": {
+    sdk: [],
+    fake: [],
+  },
 }
 
 const BROWSER_FRAMES = ["components/domain/screen-nav", "components/domain/sidebar"]
@@ -124,8 +128,8 @@ const CHILD_PROCESS_FILES = [
   "src/server/view-server/adapter/vite-build.ts",
   "src/server/repository/adapter/git.ts",
   "src/server/repository/adapter/beads.ts",
-  "src/server/session-driver/adapter/rtk-rewrite.ts",
-  "src/server/session-driver/adapter/sdk-workflow-tw.ts",
+  "src/server/session-driver/adapter/sdk/rtk-rewrite.ts",
+  "src/server/session-driver/adapter/sdk/sdk-workflow-tw.ts",
   "src/server/workflow-setting/adapter/tw-config.ts",
   "src/server/usage/adapter/tw-claim-list.ts",
 ]

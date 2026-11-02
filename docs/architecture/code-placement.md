@@ -51,13 +51,11 @@ HTTP/WebSocket・ホスト・ファイル・子プロセス）に触るならそ
   （`docs/architecture/adr/0015-single-host-port.md`）。**Agent SDK
   （`@anthropic-ai/claude-agent-sdk`）だけは、1つの境界が1ファイルに収まらない**（駆動の本体・
   tsukumo のツール・セッションの一覧と印・コンテキストの内訳）ので、**import してよい先を
-  ファイル名で決める: 機能の `adapter/` 直下の `sdk-` で始まるファイルだけ**（いまは
+  ファイル名で決める: 機能の `adapter/` 直下（または `adapter/sdk/`）の `sdk-` で始まるファイルだけ**（いまは
   `session-driver/`・`diary/`・`usage/`）。例外は共有の箱の `server/adapter/` 直下の `sdk-` で始まるファイルで、
   どの機能の語彙も名乗らない使い捨ての問い合わせの関数だけを置く（「core と adapter」）。一覧ではなく
   名前で決めるのは、ファイルを足しても検査を直さずに済み、名前で SDK の境界を名乗らずに import
-  すれば `.oxlintrc.json` の `no-restricted-imports` が落とすから。`adapter/sdk/` のようなディレクトリに切らない
-  のは、`adapter/` の直下が境界の並びで、その下の段は境界を名乗らない `lib/` だけと決めてある
-  から（「`lib/` と `utils/` に置く基準」）。**SDK の境界を1つの機能にまとめない**
+  すれば `.oxlintrc.json` の `no-restricted-imports` が落とすから。**SDK の境界を1つの機能にまとめない**
   のは、日記を書かせる使い捨ての `query()` が日記の判断とだけ組になっていて、駆動の側に
   置くと日記を追うのに2つの機能を開くことになるから
 - **原則4**: **キャラクターの中身をコードに書かない。** 立ち絵のパス、表情と hook イベントの

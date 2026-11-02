@@ -3,7 +3,7 @@
 
 import type { ChatArchive } from "../server/chat/core/chat-archive-port.ts"
 import type { ThrowawayQueryRecorder } from "../server/core/throwaway-query.ts"
-import type { FakeSession } from "../server/session-driver/adapter/fake-session.ts"
+import type { FakeSession } from "../server/session-driver/adapter/fake/fake-session.ts"
 
 export type WiringDriver =
   | { readonly kind: "sdk" }

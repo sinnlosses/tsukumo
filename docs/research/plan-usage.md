@@ -136,4 +136,4 @@ tsukumo の都合で起こさない。`docs/coding-standards.md`「会話内容�
   `SDKControlGetUsageRequest`、`SDKControlGetUsageResponse`、`SDKRateLimitInfo`、`SDKUsageReport`
 - 同梱の本体（`@anthropic-ai/claude-agent-sdk-darwin-arm64` の `claude`）の文字列 — `get_usage` の処理、
   `/api/oauth/usage` の取得、60秒と1時間の控え、`rate_limit_info` のスキーマ（`unifiedWindows` の説明）
-- `src/server/session-driver/adapter/sdk-context-usage.ts` — 同じ形の問い合わせの前例
+- `src/server/session-driver/adapter/sdk/sdk-context-usage.ts` — 同じ形の問い合わせの前例

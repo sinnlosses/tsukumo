@@ -20,7 +20,7 @@ import { readItemAsset } from "./server/item/adapter/item-asset.ts"
 import { createReportImageShelf } from "./server/report/core/image/report-image-shelf.ts"
 import { createBeadsStampReader } from "./server/repository/adapter/beads.ts"
 import { readHeadSha } from "./server/repository/adapter/change-count.ts"
-import { readFakeSession } from "./server/session-driver/adapter/fake-session.ts"
+import { readFakeSession } from "./server/session-driver/adapter/fake/fake-session.ts"
 import { pruneInputLedgerFiles } from "./server/session-driver/adapter/input-ledger-file.ts"
 import {
   figurePluginDir,

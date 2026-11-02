@@ -3,7 +3,7 @@
 import {
   type FakeSession,
   readFakeSession,
-} from "../../../src/server/session-driver/adapter/fake-session.ts"
+} from "../../../src/server/session-driver/adapter/fake/fake-session.ts"
 
 export type SceneSessionReading =
   | { readonly kind: "read"; readonly session: FakeSession }

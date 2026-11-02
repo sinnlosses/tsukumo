@@ -12,7 +12,7 @@ import {
 import type {
   FakeSession,
   FakeSessionStep,
-} from "../../../../src/server/session-driver/adapter/fake-session.ts"
+} from "../../../../src/server/session-driver/adapter/fake/fake-session.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import { eventsFrame } from "../../../fixture/events-frame.ts"
 

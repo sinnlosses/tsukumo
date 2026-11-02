@@ -5,7 +5,7 @@ import { countBy } from "remeda"
 import {
   type FakeSessionStep,
   startupSteps,
-} from "../../src/server/session-driver/adapter/fake-session.ts"
+} from "../../src/server/session-driver/adapter/fake/fake-session.ts"
 import { bundledFakeSession } from "../fixture/bundled-fake-session.ts"
 import type { MessageRecord } from "./message-record.ts"
 

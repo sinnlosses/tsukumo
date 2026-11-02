@@ -5,7 +5,7 @@ import {
   type FakeSession,
   type FakeSessionStep,
   startupSteps,
-} from "../../../src/server/session-driver/adapter/fake-session.ts"
+} from "../../../src/server/session-driver/adapter/fake/fake-session.ts"
 import type { SessionEvent } from "../../../src/shared/session/session-event.ts"
 import type { Settle } from "./catalog-entry.ts"
 import { countEventKinds } from "./event-kind-count.ts"

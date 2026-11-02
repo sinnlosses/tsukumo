@@ -1,13 +1,13 @@
-import { startFakeSession } from "../../src/server/session-driver/adapter/fake-driver.ts"
+import { startFakeSession } from "../../src/server/session-driver/adapter/fake/fake-driver.ts"
 import {
   FAKE_DEFAULT_EFFORT,
   FAKE_MODEL_EFFORT_SUPPORT,
-} from "../../src/server/session-driver/adapter/fake-fixed-reply.ts"
+} from "../../src/server/session-driver/adapter/fake/fake-fixed-reply.ts"
 import type {
   FakeSession,
   FakeSessionScene,
   FakeSessionStep,
-} from "../../src/server/session-driver/adapter/fake-session.ts"
+} from "../../src/server/session-driver/adapter/fake/fake-session.ts"
 import type { SessionDriver } from "../../src/server/session-driver/core/session-driver.ts"
 import { BUILTIN_SESSION_DEFAULT } from "../../src/shared/session/session-default.ts"
 import type { SessionEvent } from "../../src/shared/session/session-event.ts"

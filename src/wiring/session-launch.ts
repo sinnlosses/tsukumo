@@ -11,16 +11,16 @@ import type { ReadRecent } from "../server/chat/core/chat-memory-prompt.ts"
 import type { ChatSummary } from "../server/chat/core/chat-memory.ts"
 import type { Config } from "../server/core/config.ts"
 import type { DiagnosticLog } from "../server/diagnostic/core/diagnostic.ts"
-import { startFakeSession } from "../server/session-driver/adapter/fake-driver.ts"
+import { startFakeSession } from "../server/session-driver/adapter/fake/fake-driver.ts"
 import {
   createFakeSessionCatalog,
   readFakeRestoredEvents,
-} from "../server/session-driver/adapter/fake-session-resume.ts"
-import { startSdkDriver } from "../server/session-driver/adapter/sdk-driver.ts"
+} from "../server/session-driver/adapter/fake/fake-session-resume.ts"
+import { startSdkDriver } from "../server/session-driver/adapter/sdk/sdk-driver.ts"
 import {
   listRepositorySessions,
   readRestoredEvents,
-} from "../server/session-driver/adapter/sdk-session.ts"
+} from "../server/session-driver/adapter/sdk/sdk-session.ts"
 import {
   createSessionClaimFile,
   defaultSessionClaimPlace,

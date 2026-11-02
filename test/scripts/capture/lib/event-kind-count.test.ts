@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest"
 
 import { countEventKinds } from "../../../../scripts/capture/lib/event-kind-count.ts"
-import { startupSteps } from "../../../../src/server/session-driver/adapter/fake-session.ts"
+import { startupSteps } from "../../../../src/server/session-driver/adapter/fake/fake-session.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import { bundledFakeSession } from "../../../fixture/bundled-fake-session.ts"
 import { eventsFrame } from "../../../fixture/events-frame.ts"

@@ -10,7 +10,7 @@ import type {
 import {
   postToolUseHooks,
   preToolUseHooks,
-} from "../../src/server/session-driver/adapter/sdk-query-seed.ts"
+} from "../../src/server/session-driver/adapter/sdk/sdk-query-seed.ts"
 import {
   createExternalToolMark,
   type ExternalToolMark,

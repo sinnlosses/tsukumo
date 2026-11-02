@@ -28,7 +28,7 @@ doc コメントが正典で、機能の数え方・契機・上限は `docs/req
 - **原則3の例外: 共有の箱の `server/adapter/` 直下の `sdk-*` は、どの機能の語彙も名乗らない使い捨ての問い合わせの関数だけ**
   （`sdk-structured-query.ts` と、足跡を残すラッパーの `sdk-throwaway-query.ts`）
 
-- **`sdk-message.ts` は SDK の型を import しない。** 依存を機能の `adapter/` 直下の `sdk-` で始まる
+- **`sdk-message.ts` は SDK の型を import しない。** 依存を機能の `adapter/` 直下（または `adapter/sdk/`）の `sdk-` で始まる
   ファイルに閉じるため、届くメッセージは `unknown` で受けて検証する（外部由来の値なので、どのみち構造は
   信用しない）。おかげで変換のテストは SDK を起動しない
 - **SDK のイベント種別は増えうる。** 旧方針で transcript の `type` が実際に増えたのを観測して

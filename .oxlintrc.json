@@ -77,7 +77,7 @@
         "test/server/workflow-setting/**",
         "test/browser/**",
         "test/e2e/**",
-        "src/server/session-driver/adapter/sdk-prompt-stream.ts",
+        "src/server/session-driver/adapter/sdk/sdk-prompt-stream.ts",
         "src/server/adapter/sdk-structured-query.ts"
       ],
       "rules": {
@@ -161,7 +161,7 @@
               },
               {
                 "name": "@anthropic-ai/claude-agent-sdk",
-                "message": "SDK を import するのは機能の adapter/ 直下と共有の箱 server/adapter/ 直下の sdk- で始まるファイルだけ（docs/architecture/code-placement.md）"
+                "message": "SDK を import するのは機能の adapter/ 直下（または adapter/sdk/）と共有の箱 server/adapter/ 直下の sdk- で始まるファイルだけ（docs/architecture/code-placement.md）"
               }
             ],
             "patterns": [
@@ -222,7 +222,7 @@
               },
               {
                 "name": "@anthropic-ai/claude-agent-sdk",
-                "message": "SDK を import するのは機能の adapter/ 直下と共有の箱 server/adapter/ 直下の sdk- で始まるファイルだけ（docs/architecture/code-placement.md）"
+                "message": "SDK を import するのは機能の adapter/ 直下（または adapter/sdk/）と共有の箱 server/adapter/ 直下の sdk- で始まるファイルだけ（docs/architecture/code-placement.md）"
               }
             ],
             "patterns": [
@@ -309,7 +309,11 @@
     },
     {
       // SDK を許す
-      "files": ["src/server/*/adapter/sdk-*.ts", "src/server/adapter/sdk-*.ts"],
+      "files": [
+        "src/server/*/adapter/sdk-*.ts",
+        "src/server/*/adapter/sdk/sdk-*.ts",
+        "src/server/adapter/sdk-*.ts"
+      ],
       "rules": {
         "no-restricted-imports": [
           "error",

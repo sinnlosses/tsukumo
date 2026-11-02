@@ -85,7 +85,7 @@
 
 - **英語識別子**: `startFakeSession`（引数の型 `FakeDriverOptions`。`TSUKUMO_DRIVER=fake`）
 - **定義**: `SessionDriver`（`src/server/session-driver/core/session-driver.ts` の契約）と同じ形で、手で書いた
-  疑似セッションどおりにイベントを流す実装（`src/server/session-driver/adapter/fake-driver.ts`）。claude を起こさずに
+  疑似セッションどおりにイベントを流す実装（`src/server/session-driver/adapter/fake/fake-driver.ts`）。claude を起こさずに
   画面全体を動かすための道具
 - **注記**: 疑似セッションは**架空の会話だけ**（`docs/coding-standards.md`「会話内容の扱い」）
 - **避ける言い方**: モック（テストの中の置き換え一般と紛れる）、スタブ
@@ -93,7 +93,7 @@
 ### 疑似セッション
 
 - **英語識別子**: `fakeSession`
-- **定義**: fake driver（`src/server/session-driver/adapter/fake-driver.ts`）が流すために手で書いた架空のイベント列
+- **定義**: fake driver（`src/server/session-driver/adapter/fake/fake-driver.ts`）が流すために手で書いた架空のイベント列
   （`fixture/fake-session/`。索引の `index.json` と、場面1つにつき `<場面名>.json`）。claude を起こさずに画面全体を動かすための材料
 - **注記**: 疑似セッションは**架空の会話だけ**（`docs/coding-standards.md`「会話内容の扱い」）
 - **避ける言い方**: シナリオ、スクリプト（脚本という含みが強すぎる）
