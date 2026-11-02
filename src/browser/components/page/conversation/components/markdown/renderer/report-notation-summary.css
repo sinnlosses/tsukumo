@@ -226,7 +226,7 @@
    器が狭いときは、同じ理由で1列に積み、ラベル（と番号・チェック）を本文の上の行に置く。 */
   & .report-labeled-list > :is(ul, ol) {
     display: grid;
-    grid-template-columns: auto 7.5em minmax(0, 1fr);
+    grid-template-columns: auto fit-content(11em) minmax(0, 1fr);
     column-gap: var(--space-xl);
     margin: var(--report-block-gap) 0;
     padding-left: 0;
@@ -263,10 +263,12 @@
   }
   & .report-list-label {
     grid-column: 2;
+    min-width: calc(7.5 * var(--font-body));
     color: var(--ink-quiet);
     font-size: var(--font-secondary);
     font-weight: 700;
     line-height: 1.85;
+    overflow-wrap: break-word;
   }
   & .report-list-text {
     grid-column: 3;
