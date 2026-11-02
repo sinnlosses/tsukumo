@@ -1,6 +1,7 @@
 // 表と対応表を直接描く部品が共有する表の骨組み。
 // 横スクロールの器・見出しの行・10 行で切る本体を、旧い Markdown の表と同じ要素で返す。
 
+import clsx from "clsx"
 import { type ReactElement, type ReactNode, useState } from "react"
 
 import type { ColumnAlign } from "../../../../../../shared/report/table-layout.ts"
@@ -104,7 +105,7 @@ function BodyRow(props: {
         ))}
       </tr>
       {detail !== undefined && open && (
-        <tr className={styles["table-detail-row"]}>
+        <tr className={clsx(styles["table-detail-row"], tableLeafClassNames.tableDetailRow)}>
           <td colSpan={Math.max(1, row.cells.length)} className={styles["table-detail-cell"]}>
             {detail.content}
           </td>

@@ -124,6 +124,7 @@ export const tableLeafClassNames = {
   rowEmphasisMark: notationStyles["report-row-emphasis-mark"],
   columnEmphasisMark: notationStyles["report-column-emphasis-mark"],
   tableRest: notationStyles["report-table-rest"],
+  tableDetailRow: notationStyles["report-table-detail-row"],
   tableStatusLegend: notationStyles["report-table-status-legend"],
   tableStatusLegendItem: notationStyles["report-table-status-legend-item"],
 } as const

@@ -1,0 +1,102 @@
+{
+  "name": "report-table-detail",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "詳しい中身のある表の5行ごとの隙間を見たい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 1500,
+      "event": {
+        "kind": "report",
+        "toolUseId": "fake-table-detail-1",
+        "components": [
+          {
+            "id": "root",
+            "component": "Report",
+            "conclusion": [
+              "架空の結論: 詳しい中身を開いても、5行ごとの隙間は元の行の5行ごとに入る。"
+            ],
+            "checks": [],
+            "children": ["s1"],
+            "closing": { "text": "並べたよ！", "expression": "proud" }
+          },
+          {
+            "id": "s1",
+            "component": "Section",
+            "heading": "架空の表",
+            "children": ["tdet", "tplain", "tshort"]
+          },
+          {
+            "id": "tdet",
+            "component": "Table",
+            "title": "詳しい中身のある8行の表",
+            "columns": ["架空の項目", "架空の件数"],
+            "rows": [
+              { "cells": ["行1", "11"] },
+              { "cells": ["行2", "12"], "detail": "行2の詳しい中身。架空の補足の一文。" },
+              { "cells": ["行3", "13"], "detail": "行3の詳しい中身。架空の補足の一文。" },
+              { "cells": ["行4", "14"] },
+              {
+                "cells": ["行5", "15"],
+                "detail": "行5の詳しい中身。5行目を開いたときの隙間の置き場を比べる。"
+              },
+              { "cells": ["行6", "16"] },
+              { "cells": ["行7", "17"] },
+              {
+                "cells": ["行8", "18"],
+                "detail": "行8の詳しい中身。最終行を開いたときの罫を見る。"
+              }
+            ]
+          },
+          {
+            "id": "tplain",
+            "component": "Table",
+            "title": "詳しい中身のない8行の表",
+            "columns": ["架空の項目", "架空の件数"],
+            "rows": [
+              ["行1", "11"],
+              ["行2", "12"],
+              ["行3", "13"],
+              ["行4", "14"],
+              ["行5", "15"],
+              ["行6", "16"],
+              ["行7", "17"],
+              ["行8", "18"]
+            ]
+          },
+          {
+            "id": "tshort",
+            "component": "Table",
+            "title": "詳しい中身のある5行の表",
+            "columns": ["架空の項目", "架空の件数"],
+            "rows": [
+              { "cells": ["短1", "11"] },
+              {
+                "cells": ["短2", "12"],
+                "detail": "短2の詳しい中身。5行の表でも開くと tr が6本になる。"
+              },
+              { "cells": ["短3", "13"] },
+              { "cells": ["短4", "14"] },
+              { "cells": ["短5", "15"] }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "afterMs": 1550,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-table-detail-1",
+        "content": "ok",
+        "isError": false
+      }
+    },
+    { "afterMs": 2300, "event": { "kind": "turn-finished", "outcome": { "kind": "completed" } } }
+  ]
+}
