@@ -166,6 +166,11 @@
 .inquiry-detail-description {
   margin: var(--space-xs) 0 0;
 }
+/* 何も触っていないあいだの案内の1行。詳細の枠と同じ位置に置く。 */
+.inquiry-detail-hint {
+  margin: 0;
+  padding: var(--space-sm) var(--space-md);
+}
 .inquiry-points {
   margin-top: var(--space-sm);
 }
@@ -206,6 +211,14 @@
 /* キーボードで触れていて詳細に出ている行。選んだ行の枠は変えない。 */
 .inquiry-option:focus-within:not(.is-selected) {
   border-color: var(--ink-quiet);
+}
+/* 入力欄に字を書いているあいだ（単一選択）。押せる・数字キーは生かしたまま薄くする。 */
+.inquiry-option.is-dimmed {
+  opacity: 0.55;
+}
+/* 入力欄の答えで答える旨の1行。 */
+.inquiry-writing-note {
+  margin: 0;
 }
 /* ボタン（番号・印・ラベル・バッジ）。ラベルが折り返すので、印は行の中央ではなく1行目の文字に揃える（baseline）。 */
 .inquiry-option-choose {

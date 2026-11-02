@@ -13,7 +13,7 @@ const COMMON = {
   questionCount: 1,
   showBack: false,
   last: true,
-  focusedLabel: "",
+  focusedLabel: { kind: "none" },
   onFocus: () => {},
   canAnswer: false,
   onToggle: () => {},
@@ -49,6 +49,7 @@ function question(figures: Parameters<typeof row>[0]): InquiryModel {
     unshelvedImages: [],
     text: "t",
     writtenAnswer: "",
+    writing: false,
     onAnswerWithText: () => {},
     options: [row(figures)],
   }

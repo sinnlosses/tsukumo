@@ -1,6 +1,7 @@
 import { act, cleanup, renderHook } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
+import { useComposerDraft } from "../../../../../../src/browser/components/page/conversation/stores/composer-draft.ts"
 import {
   useInquiryAnswer,
   type InquiryModel,
@@ -379,6 +380,95 @@ describe("useInquiryAnswer の質問の答え方", () => {
   })
 })
 
+describe("useInquiryAnswer と入力欄の字", () => {
+  afterEach(() => {
+    useComposerDraft.setState(useComposerDraft.getInitialState(), true)
+  })
+
+  function write(text: string): void {
+    act(() => useComposerDraft.getState().setDraft({ text, caret: text.length }))
+  }
+
+  it("単一選択は、字があるあいだ writing で、選択が外れ、字を消すと writing だけ戻って選択は戻らない", () => {
+    const result = renderModel([questionPending([question()])])
+    act(() => asking(result.current).onToggle("A案"))
+    expect(asking(result.current).writing).toBe(false)
+
+    write("架空の答え")
+    expect(asking(result.current).writing).toBe(true)
+    expect(asking(result.current).options.map((row) => row.selected)).toEqual([false, false])
+
+    write("")
+    expect(asking(result.current).writing).toBe(false)
+    expect(asking(result.current).options.map((row) => row.selected)).toEqual([false, false])
+  })
+
+  it("書いているあいだに選択肢を押すと選択は付くが、入力欄の答えで答えると選択肢は使わない", () => {
+    const { result, calls } = renderRecording([questionPending([question()])])
+    write("架空の答え")
+    act(() => asking(result.current).onToggle("B案"))
+    expect(asking(result.current).options.map((row) => row.selected)).toEqual([false, true])
+
+    act(() => asking(result.current).onAnswerWithText("架空の答え"))
+    expect(calls).toEqual([
+      {
+        procedure: "session.answer",
+        id: "ask-1",
+        answer: { kind: "answers", labels: [["架空の答え"]] },
+      },
+    ])
+  })
+
+  it("書いているあいだに押して付けた選択は、部品の付け直し・答え待ちの作り直し・板の開閉のどれでも、入力欄を空に戻すまで残る", () => {
+    const pending = questionPending([question()])
+    const result = renderModel([pending])
+    write("架空の答え")
+    act(() => asking(result.current).onToggle("B案"))
+    expect(asking(result.current).options.map((row) => row.selected)).toEqual([false, true])
+
+    // 札や板（`useInquiryAnswer` を呼ぶ部品）が付き直しても外れない。
+    const another = renderHook(() => useInquiryAnswer())
+    expect(asking(another.result.current).options.map((row) => row.selected)).toEqual([false, true])
+    another.unmount()
+    const again = renderHook(() => useInquiryAnswer())
+    expect(asking(again.result.current).options.map((row) => row.selected)).toEqual([false, true])
+
+    // `pending-changed` で同じ答え待ちが作り直されても外れない。
+    putSession({ ...INITIAL_SESSION_STATE, pending: [{ ...pending }] })
+    expect(asking(result.current).options.map((row) => row.selected)).toEqual([false, true])
+
+    // 空に戻して、もう一度書き始めたときだけ外れる。
+    write("")
+    expect(asking(result.current).options.map((row) => row.selected)).toEqual([false, true])
+    write("また書く")
+    expect(asking(result.current).options.map((row) => row.selected)).toEqual([false, false])
+  })
+
+  it("字が入っているあいだに別の答え待ちが届いても、その答え待ちで付けた選択は外れない", () => {
+    const result = renderModel([questionPending([question()])])
+    write("架空の答え")
+    putSession({
+      ...INITIAL_SESSION_STATE,
+      pending: [{ ...questionPending([question()]), id: "ask-2" }],
+    })
+    act(() => asking(result.current).onToggle("A案"))
+    putSession({
+      ...INITIAL_SESSION_STATE,
+      pending: [{ ...questionPending([question()]), id: "ask-2" }],
+    })
+    expect(asking(result.current).options.map((row) => row.selected)).toEqual([true, false])
+  })
+
+  it("複数選択は、字を書いても writing にならず選択は残る", () => {
+    const result = renderModel([questionPending([question({ multiSelect: true })])])
+    act(() => asking(result.current).onToggle("A案"))
+    write("架空の答え")
+
+    expect(asking(result.current).writing).toBe(false)
+    expect(asking(result.current).options.map((row) => row.selected)).toEqual([true, false])
+  })
+})
+
 describe("useInquiryAnswer の添え書き", () => {
   const brief = {
     header: "架空の選択",
@@ -427,14 +517,14 @@ describe("useInquiryAnswer の添え書き", () => {
     }
   })
 
-  it("詳細に出す選択肢は、触った選択肢、無ければ最後に選んだもの、それも無ければ先頭", () => {
+  it("詳細に出す選択肢は、触る前は無し、触ったあとは触った選択肢、選んだあとは最後に選んだもの", () => {
     const result = renderModel([briefedPending([brief])])
-    expect(asking(result.current).focusedLabel).toBe("A案")
+    expect(asking(result.current).focusedLabel).toEqual({ kind: "none" })
 
     act(() => asking(result.current).onFocus("B案"))
-    expect(asking(result.current).focusedLabel).toBe("B案")
+    expect(asking(result.current).focusedLabel).toEqual({ kind: "option", label: "B案" })
 
     act(() => asking(result.current).onToggle("A案"))
-    expect(asking(result.current).focusedLabel).toBe("A案")
+    expect(asking(result.current).focusedLabel).toEqual({ kind: "option", label: "A案" })
   })
 })

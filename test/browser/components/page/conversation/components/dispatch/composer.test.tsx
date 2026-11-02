@@ -433,6 +433,22 @@ describe("Composer", () => {
     expect(calls).toEqual([])
   })
 
+  it("質問に答えている間に入力欄へ字が入ると、単一選択で選んでいた札の選択が外れる", () => {
+    renderComposer({ pending: [QUESTION_PENDING], turn: { kind: "running", startedAt: 0 } })
+    useInquiryDraft.setState({
+      draft: {
+        pendingId: "ask-question",
+        answer: { index: 0, selections: [["A案"]], writtenAnswers: [] },
+      },
+    })
+
+    fireEvent.change(screen.getByPlaceholderText("選択肢以外の答えを書く…"), {
+      target: { value: "架空の自由な答え" },
+    })
+
+    expect(useInquiryDraft.getState().draft?.answer.selections).toEqual([[]])
+  })
+
   it("質問に答えている間の Command+Enter は、依頼ではなく自由入力の答えとして届く", () => {
     const calls: unknown[] = []
     renderComposer(

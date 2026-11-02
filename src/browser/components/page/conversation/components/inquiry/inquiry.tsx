@@ -28,7 +28,12 @@ import {
 } from "../../stores/inquiry-answer.ts"
 import { useInquiryScroll } from "./hooks/use-inquiry-scroll.ts"
 import { useInquiryVisibility } from "./hooks/use-inquiry-visibility.ts"
-import { InquiryCompare, InquiryDetail, type ShelvedSource } from "./inquiry-detail.tsx"
+import {
+  InquiryCompare,
+  InquiryDetail,
+  InquiryDetailHint,
+  type ShelvedSource,
+} from "./inquiry-detail.tsx"
 import styles from "./inquiry.module.css"
 
 const INQUIRY_CHIP = "お伺い"
@@ -41,6 +46,7 @@ const EXPAND_LABEL = "広げる"
 const COLLAPSE_LABEL = "閉じる"
 const BOARD_LABEL = "お伺い（広げた板）"
 const FREE_TEXT_HINT = "選択肢にない答えは、下の入力欄に書いて送れます"
+const WRITING_NOTE = "入力欄の答えで答えます"
 const RECOMMENDED_BADGE = "おすすめ"
 const ANSWER_LABEL = "これで答える"
 const NEXT_LABEL = "次へ"
@@ -193,7 +199,13 @@ function InquiryFace(props: {
   readonly onAnswer: () => void
 }): ReactElement {
   const { inquiry, now } = props
-  const focused = inquiry.options.find((option) => option.label === inquiry.focusedLabel)
+  const focusedLabel = inquiry.focusedLabel
+  const focused =
+    focusedLabel.kind === "option"
+      ? inquiry.options.find((option) => option.label === focusedLabel.label)
+      : undefined
+  const axes = inquiry.kind === "question" ? (inquiry.brief?.axes ?? []) : []
+  const untouched = focusedLabel.kind === "none"
 
   return (
     <>
@@ -281,12 +293,24 @@ function InquiryFace(props: {
         {inquiry.kind === "question" && inquiry.brief !== undefined && (
           <InquiryBrief brief={inquiry.brief} />
         )}
+        {inquiry.kind === "question" && inquiry.writing && (
+          <Text
+            element="p"
+            size="secondary"
+            tone="state-warn"
+            weight="bold"
+            className={styles["inquiry-writing-note"]}
+          >
+            {WRITING_NOTE}
+          </Text>
+        )}
         <div className={styles["inquiry-choose"]}>
           <ul className={styles["inquiry-options"]}>
             {inquiry.options.map((option) => (
               <InquiryOption
                 option={option}
                 multiSelect={inquiry.multiSelect}
+                dimmed={inquiry.kind === "question" && inquiry.writing}
                 onToggle={inquiry.onToggle}
                 onFocus={inquiry.onFocus}
                 key={option.label}
@@ -300,14 +324,30 @@ function InquiryFace(props: {
               option={focused}
             />
           )}
+          {untouched &&
+            inquiry.kind === "question" &&
+            inquiry.brief !== undefined &&
+            axes.length > 0 && (
+              <InquiryCompare
+                imageSource={imageSourceOf(inquiry)}
+                brief={inquiry.brief}
+                options={inquiry.options}
+                open={true}
+              />
+            )}
+          {untouched && axes.length === 0 && inquiry.options.some(hasDetail) && (
+            <InquiryDetailHint />
+          )}
         </div>
-        {inquiry.kind === "question" &&
+        {!untouched &&
+          inquiry.kind === "question" &&
           inquiry.brief !== undefined &&
-          inquiry.brief.axes.length > 0 && (
+          axes.length > 0 && (
             <InquiryCompare
               imageSource={imageSourceOf(inquiry)}
               brief={inquiry.brief}
               options={inquiry.options}
+              open={false}
             />
           )}
         {inquiry.kind === "question" && inquiry.writtenAnswer !== "" && (
@@ -443,13 +483,20 @@ function imageSourceOf(inquiry: Exclude<InquiryModel, { readonly kind: "none" }>
 function InquiryOption(props: {
   readonly option: InquiryOptionRow
   readonly multiSelect: boolean
+  readonly dimmed: boolean
   readonly onToggle: (label: string) => void
   readonly onFocus: (label: string) => void
 }): ReactElement {
   const { option } = props
 
   return (
-    <li className={clsx(styles["inquiry-option"], option.selected && styles["is-selected"])}>
+    <li
+      className={clsx(
+        styles["inquiry-option"],
+        option.selected && styles["is-selected"],
+        props.dimmed && styles["is-dimmed"],
+      )}
+    >
       <HStack
         element="label"
         name={{ kind: "none" }}

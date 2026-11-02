@@ -19,6 +19,7 @@ const PROS_LABEL = "良い点"
 const CONS_LABEL = "悪い点"
 const DETAIL_SUFFIX = " の詳細"
 const COMPARE_SUMMARY = "並べて比べる"
+const DETAIL_HINT = "選択肢を押すと詳細が出ます"
 
 /** フォーカスした選択肢の詳細のサーフェス。高さは切らず、札の本文が内側で転がる。 */
 export function InquiryDetail(props: {
@@ -75,7 +76,23 @@ export function InquiryDetail(props: {
   )
 }
 
+/** 何も触っていないあいだ、詳細の欄に出す案内の1行。 */
+export function InquiryDetailHint(): ReactElement {
+  return (
+    <Text
+      element="p"
+      size="secondary"
+      tone="ink-quiet"
+      weight="inherit"
+      className={styles["inquiry-detail-hint"]}
+    >
+      {DETAIL_HINT}
+    </Text>
+  )
+}
+
 export function InquiryCompare(props: {
+  readonly open: boolean
   readonly imageSource: ShelvedSource
   readonly brief: InquiryBriefModel
   readonly options: readonly InquiryOptionRow[]
@@ -104,7 +121,7 @@ export function InquiryCompare(props: {
   )
 
   return (
-    <details className={styles["inquiry-compare"]}>
+    <details className={styles["inquiry-compare"]} open={props.open}>
       <Text element="summary" size="secondary" tone="ink-quiet" weight="bold" className="">
         {COMPARE_SUMMARY}
       </Text>

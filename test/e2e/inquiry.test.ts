@@ -127,8 +127,13 @@ test.describe("お伺い", () => {
     const inquiry = inquiryOf(room.page)
     const detail = inquiry.getByRole("group", { name: /の詳細$/ })
 
-    await expect.poll(() => detail.count()).toBe(1)
+    // 触る前は詳細を出さず、軸があるので比べる表が開いて出る。
+    await expect.poll(() => inquiry.locator("details table").count()).toBe(1)
+    expect(await detail.count()).toBe(0)
     expect(await inquiry.getByText("⚠ 戻せない").count()).toBe(1)
+
+    await inquiry.getByRole("radio", { name: /B に置く/ }).click()
+    await expect.poll(() => detail.count()).toBe(1)
     const [options, panel] = await Promise.all([
       inquiry.getByRole("radio", { name: /B に置く/ }).boundingBox(),
       detail.boundingBox(),
@@ -154,6 +159,39 @@ test.describe("お伺い", () => {
 
     await room.page.keyboard.press("Enter")
     await expect.poll(() => inquiry.textContent()).toContain("2 / 2")
+  })
+
+  test("単一選択で選んだあとに入力欄へ字を書くと、選択が外れて選択肢が薄くなり、字を消すと薄いのは戻って選択は戻らない（広げた板の中も同じ）", async ({
+    run,
+  }) => {
+    const room = await run.open({
+      scenario: "inquiry-question-brief-writing",
+      scene: "question-brief",
+      viewport: "wide",
+      domRoots: ["main"],
+    })
+    const inquiry = inquiryOf(room.page)
+    const answer = room.page.getByPlaceholder("選択肢以外の答えを書く…")
+    const dimmed = inquiry.locator('li[class*="is-dimmed"]')
+    const checked = inquiry.locator('input[type="radio"]:checked')
+
+    await inquiry.getByRole("radio", { name: /B に置く/ }).click()
+    await expect(checked).toHaveCount(1)
+    expect(await dimmed.count()).toBe(0)
+
+    await answer.fill("架空の自由な答え")
+    await expect(checked).toHaveCount(0)
+    await expect.poll(() => dimmed.count()).toBe(3)
+    await expect(inquiry.getByText("入力欄の答えで答えます")).toBeVisible()
+
+    await inquiry.getByRole("button", { name: "広げる" }).click()
+    const board = room.page.getByRole("dialog", { name: "お伺い（広げた板）" })
+    await expect.poll(() => board.locator('li[class*="is-dimmed"]').count()).toBe(3)
+    await room.page.keyboard.press("Escape")
+
+    await answer.fill("")
+    await expect.poll(() => dimmed.count()).toBe(0)
+    await expect(checked).toHaveCount(0)
   })
 
   test("札の「広げる」は同じ中身を画面いっぱいの板に出し、板の中で選んで答えると板が閉じ、Esc で閉じても選んだものは札に残る", async ({

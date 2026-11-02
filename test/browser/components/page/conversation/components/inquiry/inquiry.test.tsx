@@ -2,6 +2,7 @@ import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { Inquiry } from "../../../../../../../src/browser/components/page/conversation/components/inquiry/inquiry.tsx"
+import { useComposerDraft } from "../../../../../../../src/browser/components/page/conversation/stores/composer-draft.ts"
 import { useInquiryCardVisibility } from "../../../../../../../src/browser/components/page/conversation/stores/inquiry-card-visibility.ts"
 import {
   useInquiryDraft,
@@ -22,6 +23,7 @@ afterEach(() => {
   // 組み立て中の答えはモジュール単位で残るので、次のテストへ持ち越さない。
   useInquiryDraft.setState(useInquiryDraft.getInitialState(), true)
   useInquiryFocus.setState(useInquiryFocus.getInitialState(), true)
+  useComposerDraft.setState(useComposerDraft.getInitialState(), true)
   // 呼ばれた回数はモジュール単位で残るので、次のテストへ持ち越さない。
   useInquiryJump.setState(useInquiryJump.getInitialState(), true)
 })
@@ -326,12 +328,35 @@ describe("Inquiry の添え書きと詳細のサーフェス", () => {
     render(<Inquiry />)
   }
 
-  it("背景・判断の軸・戻せない選択肢の字つきの印・畳んだ比較表を出し、詳細は先頭の選択肢の良い点と悪い点", () => {
+  it("触る前は詳細を出さず、軸があれば比べる表を開いて出す", () => {
     renderBriefed([brief])
 
     expect(screen.getByText(/架空の背景の文/)).toBeDefined()
     expect(screen.getByText(/速さ \/ 戻しやすさ/)).toBeDefined()
     expect(screen.getAllByText("⚠ 戻せない")).toHaveLength(1)
+    expect(screen.queryByText(/架空の良い点A/)).toBeNull()
+    expect(screen.queryByRole("group", { name: /の詳細$/ })).toBeNull()
+    expect(screen.queryByText("選択肢を押すと詳細が出ます")).toBeNull()
+    expect(card().querySelector("details")?.open).toBe(true)
+  })
+
+  it("単一選択は入力欄に字があるあいだ、案内の1行を出して選択肢を薄くし、字を消すと戻る", () => {
+    renderBriefed([brief])
+
+    act(() => useComposerDraft.getState().setDraft({ text: "架空", caret: 2 }))
+    expect(screen.getByText("入力欄の答えで答えます")).toBeDefined()
+    expect(card().querySelectorAll('li[class*="is-dimmed"]')).toHaveLength(2)
+
+    act(() => useComposerDraft.setState(useComposerDraft.getInitialState(), true))
+    expect(screen.queryByText("入力欄の答えで答えます")).toBeNull()
+    expect(card().querySelectorAll('li[class*="is-dimmed"]')).toHaveLength(0)
+  })
+
+  it("押したあとは先頭でなく押した選択肢の良い点と悪い点を出し、比べる表は畳む", () => {
+    renderBriefed([brief])
+
+    fireEvent.click(screen.getByRole("radio", { name: /A案/ }))
+
     expect(screen.getByText(/架空の良い点A/)).toBeDefined()
     expect(screen.getByText(/架空の悪い点A/)).toBeDefined()
     expect(screen.queryByText(/架空の良い点B/)).toBeNull()
@@ -355,12 +380,16 @@ describe("Inquiry の添え書きと詳細のサーフェス", () => {
     expect(screen.getByText(/架空の良い点B/)).toBeDefined()
   })
 
-  it("添え書きが無い質問は、背景・表を出さず、詳細のサーフェスに説明を出す", () => {
+  it("添え書きが無い質問は、背景・表を出さず、触る前は案内の1行、押したあとは説明を出す", () => {
     renderBriefed([])
 
     expect(screen.queryByText("背景")).toBeNull()
     expect(card().querySelector("details")).toBeNull()
+    expect(screen.getByText("選択肢を押すと詳細が出ます")).toBeDefined()
+    expect(screen.queryByText("架空の説明（A案）")).toBeNull()
+    fireEvent.click(screen.getByRole("radio", { name: /A案/ }))
     expect(screen.getByText("架空の説明（A案）")).toBeDefined()
+    expect(screen.queryByText("選択肢を押すと詳細が出ます")).toBeNull()
     expect(screen.queryByText("⚠ 戻せない")).toBeNull()
   })
 })

@@ -22,6 +22,7 @@ import {
 } from "../../../../../shared/session-driver/question.ts"
 import { toolInputText } from "../../../../domain/tool-summary.ts"
 import { useSession, type SessionDispatch } from "../../../../stores/session.ts"
+import { useComposerDraft } from "./composer-draft.ts"
 import {
   useInquiryDraft,
   useInquiryFocus,
@@ -57,6 +58,10 @@ export type InquiryBrief = {
   readonly axes: readonly string[]
 }
 
+export type InquiryFocusedLabel =
+  | { readonly kind: "none" }
+  | { readonly kind: "option"; readonly label: string }
+
 /** 許可要求と質問のどちらにもある欄。 */
 type InquiryCommon = {
   /** 答え待ちの id（`PendingAsk.id`）。別の答え待ちに入れ替わった合図として読む。 */
@@ -72,8 +77,8 @@ type InquiryCommon = {
   /** いま見ているのが最後の1問か（答えると全問ぶんを送る）。 */
   readonly last: boolean
   readonly options: readonly InquiryOptionRow[]
-  /** 詳細のサーフェスに出す選択肢の `label`。触った選択肢、無ければ最後に選んだもの、それも無ければ先頭。 */
-  readonly focusedLabel: string
+  /** 詳細のサーフェスに出す選択肢。触った選択肢、無ければ最後に選んだもの。どちらも無ければ `none`（詳細は出さない）。 */
+  readonly focusedLabel: InquiryFocusedLabel
   readonly onFocus: (label: string) => void
   /** 「これで答える」を押せるか（何も選ばず何も書いていなければ押せない）。 */
   readonly canAnswer: boolean
@@ -104,6 +109,8 @@ export type InquiryModel =
       readonly text: string
       /** この問に対して入力欄に書いて記録した答え（まだ送っていない。無ければ空文字）。 */
       readonly writtenAnswer: string
+      /** 単一選択の問で、入力欄に字があるあいだ true（札は選択肢を薄くして入力欄の答えで答える旨を出す）。 */
+      readonly writing: boolean
       /** 入力欄に書いた字でこの問に答える（最後の1問なら全問ぶんを送る）。 */
       readonly onAnswerWithText: (text: string) => void
     })
@@ -113,6 +120,7 @@ export function useInquiryAnswer(): InquiryModel {
   const dispatch = useSession((session) => session.dispatch)
   const draft = useInquiryDraft((state) => state.draft)
   const touched = useInquiryFocus((state) => state.focus)
+  const composerWriting = useComposerDraft((state) => state.draft.text !== "")
 
   if (pending === undefined) {
     return { kind: "none" }
@@ -124,7 +132,7 @@ export function useInquiryAnswer(): InquiryModel {
   }
   return pending.kind === "permission"
     ? permissionModel(pending, { answer, setAnswer }, dispatch)
-    : questionModel(pending, { answer, setAnswer }, touched, dispatch)
+    : questionModel(pending, { answer, setAnswer }, touched, composerWriting, dispatch)
 }
 
 /** 許可要求の選択肢のラベル。並びがそのまま番号になる。 */
@@ -157,7 +165,7 @@ function permissionModel(
     questionCount: 1,
     showBack: false,
     last: true,
-    focusedLabel: chosen ?? ALLOW_LABEL,
+    focusedLabel: { kind: "option", label: chosen ?? ALLOW_LABEL },
     onFocus: () => {},
     options: labels.map((label, index) => ({
       number: index + 1,
@@ -201,6 +209,7 @@ function questionModel(
   pending: Extract<StampedPendingAsk, { readonly kind: "question" }>,
   draft: InquiryDraft,
   touched: InquiryFocus,
+  composerWriting: boolean,
   dispatch: SessionDispatch,
 ): InquiryModel {
   const questions = pending.questions
@@ -266,9 +275,10 @@ function questionModel(
     showBack: index > 0,
     last,
     options,
-    focusedLabel: touchedLabel ?? selected.at(-1) ?? options[0]?.label ?? "",
+    focusedLabel: focusedLabelOf(touchedLabel ?? selected.at(-1)),
     onFocus: setFocus,
     writtenAnswer,
+    writing: !question.multiSelect && composerWriting,
     canAnswer,
     onToggle: (label) => {
       setFocus(label)
@@ -312,6 +322,10 @@ function questionModel(
       advance(question.multiSelect ? selected : [], trimmed)
     },
   }
+}
+
+function focusedLabelOf(label: string | undefined): InquiryFocusedLabel {
+  return label === undefined ? { kind: "none" } : { kind: "option", label }
 }
 
 /** `target` 番目の答え（選んだラベル + 入力欄に書いた答え）。 */

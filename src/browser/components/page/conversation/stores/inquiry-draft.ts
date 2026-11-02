@@ -3,6 +3,8 @@
 
 import { create } from "zustand"
 
+import { useSession } from "../../../../stores/session.ts"
+
 /**
  * 組み立て中の答え。問ごとに持ち続ける（「戻る」で前の問に戻ったとき、選んだものが残っているように）。
  * `selections[i]` / `writtenAnswers[i]` は `questions[i]` に対応し、まだ触っていない問の位置は空のまま（読む側が `?? []` / `?? ""` で受ける）。
@@ -35,3 +37,26 @@ type InquiryFocusState = {
 }
 
 export const useInquiryFocus = create<InquiryFocusState>()(() => ({ focus: { kind: "none" } }))
+
+/**
+ * 入力欄が空から字ありに変わった瞬間に、見ている問（単一選択）の選択だけを外す。
+ * 入力欄の下書きの store が、その変わり目に1度だけ呼ぶ（部品が付くことや答え待ちの作り直しでは呼ばれない）。
+ */
+export function dropSelectionOnWritingStart(): void {
+  const pending = useSession.getState().state.pending[0]
+  const stored = useInquiryDraft.getState().draft
+  if (pending?.kind !== "question" || stored?.pendingId !== pending.id) {
+    return
+  }
+  const index = Math.min(stored.answer.index, pending.questions.length - 1)
+  if (
+    pending.questions[index]?.multiSelect !== false ||
+    (stored.answer.selections[index] ?? []).length === 0
+  ) {
+    return
+  }
+  const selections = stored.answer.selections.map((chosen, i) => (i === index ? [] : chosen))
+  useInquiryDraft.setState({
+    draft: { pendingId: pending.id, answer: { ...stored.answer, selections } },
+  })
+}
