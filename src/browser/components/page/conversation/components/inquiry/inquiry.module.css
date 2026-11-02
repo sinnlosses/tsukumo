@@ -26,7 +26,7 @@
   border: none;
   background: none;
 }
-/* 広げた板。窓いっぱいに取り、中の札が高さの上限と枠を持たず、本文の側が板の内側で転がる。 */
+/* 広げた板。ビューポートいっぱいに取り、中の札が高さの上限と枠を持たず、本文の側が板の内側で転がる。 */
 .inquiry-board {
   box-sizing: border-box;
   display: flex;
