@@ -2,9 +2,13 @@ import { describe, expect, it } from "vitest"
 
 import {
   filteredRowOrder,
+  filterBadges,
+  hasBoundChoicePicker,
   visibleRowOrder,
 } from "../../../../../../../../src/browser/components/page/conversation/components/main-view/domain/a2ui-table-view.ts"
+import type { A2uiReportComponent } from "../../../../../../../../src/shared/report/a2ui-report-catalog.ts"
 import type { A2uiReportPart } from "../../../../../../../../src/shared/report/a2ui-report-outline.ts"
+import type { TableCell } from "../../../../../../../../src/shared/report/report-block-comparison.ts"
 
 function table(cells: readonly string[]): A2uiReportPart<"Table"> {
   return {
@@ -53,5 +57,101 @@ describe("visibleRowOrder の並べ替え", () => {
     const part = table(["1,000", "9", "9", "100"])
 
     expect(visibleRowOrder(part, { column: 0, direction: "desc" }, [])).toEqual([0, 3, 1, 2])
+  })
+})
+
+type TableRows = A2uiReportPart<"Table">["rows"]
+
+function badgeTable(
+  rows: TableRows,
+  extra: Partial<A2uiReportPart<"Table">> = {},
+): A2uiReportPart<"Table"> {
+  return {
+    ...table([]),
+    rows,
+    filterable: true,
+    filterColumn: 0,
+    ...extra,
+  }
+}
+
+function repeated(count: number, cell: TableCell): TableRows {
+  return Array.from({ length: count }, () => [cell, "x"])
+}
+
+describe("filterBadges", () => {
+  it("状態のセルは text を値として、初めて現れた順に件数を数える", () => {
+    const rows = [
+      ...repeated(3, { status: "ng", text: "落ちた" }),
+      ...repeated(12, { status: "ok", text: "通った" }),
+    ]
+
+    expect(filterBadges(badgeTable(rows))).toEqual([
+      { value: "落ちた", count: 3 },
+      { value: "通った", count: 12 },
+    ])
+  })
+
+  it("重複した文字列は 1 つの値にまとめ、初出の順を保つ", () => {
+    const rows = [
+      ["甲", "x"],
+      ["乙", "x"],
+      ["甲", "x"],
+    ]
+
+    expect(filterBadges(badgeTable(rows))).toEqual([
+      { value: "甲", count: 2 },
+      { value: "乙", count: 1 },
+    ])
+  })
+
+  it("値が 1 種類なら空", () => {
+    expect(filterBadges(badgeTable(repeated(3, "甲")))).toEqual([])
+  })
+
+  it("値が 6 種類までは出し、7 種類は空", () => {
+    const kinds = (count: number) => ["甲", "乙", "丙", "丁", "戊", "己", "庚"].slice(0, count)
+
+    expect(filterBadges(badgeTable(kinds(6).map((cell) => [cell, "x"])))).toHaveLength(6)
+    expect(filterBadges(badgeTable(kinds(7).map((cell) => [cell, "x"])))).toEqual([])
+  })
+
+  it("filterable が偽・filterColumn が無い・列が表の外なら空", () => {
+    const rows = [
+      ["甲", "x"],
+      ["乙", "x"],
+    ]
+
+    expect(filterBadges(badgeTable(rows, { filterable: false }))).toEqual([])
+    expect(filterBadges(badgeTable(rows, { filterColumn: undefined }))).toEqual([])
+    expect(filterBadges(badgeTable(rows, { filterColumn: 5 }))).toEqual([])
+  })
+
+  it("変わったセルは from と to の両方の値として数える", () => {
+    const rows = [
+      [{ from: "甲", to: "乙" }, "x"],
+      ["乙", "x"],
+    ]
+
+    expect(filterBadges(badgeTable(rows))).toEqual([
+      { value: "甲", count: 1 },
+      { value: "乙", count: 2 },
+    ])
+  })
+})
+
+describe("hasBoundChoicePicker", () => {
+  const picker = (value: A2uiReportPart<"ChoicePicker">["value"]): A2uiReportComponent => ({
+    id: "pick",
+    component: "ChoicePicker",
+    options: [],
+    value,
+  })
+
+  it("同じ表の filter path に結んだ ChoicePicker だけを真とする", () => {
+    expect(hasBoundChoicePicker([picker({ path: "/view/t/filter" })], "t")).toBe(true)
+    expect(hasBoundChoicePicker([picker({ path: "/view/other/filter" })], "t")).toBe(false)
+    expect(hasBoundChoicePicker([picker(["甲"])], "t")).toBe(false)
+    expect(hasBoundChoicePicker([], "t")).toBe(false)
   })
 })

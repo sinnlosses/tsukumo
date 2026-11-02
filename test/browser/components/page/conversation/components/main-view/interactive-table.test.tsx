@@ -51,7 +51,7 @@ function reportParts(table: Readonly<Record<string, unknown>>, withPicker = true
       rows: ROWS,
       ...table,
     },
-  ]
+  ].filter((part) => withPicker || part.id !== "pick")
 }
 
 const INTERACTIVE = { sortable: true, filterable: true }
@@ -126,6 +126,41 @@ describe("操作できる Table", () => {
       "架空の数",
     ])
     expect(screen.getByText("該当する行はありません")).toBeTruthy()
+  })
+
+  it("結んだ ChoicePicker が無い表は値と件数のバッジを出し、押すと絞り、もう一度押すと全行に戻る", () => {
+    const rows = [
+      ["ぼ", "甲", "1"],
+      ["あ", "乙", "2"],
+      ["ん", "甲", "3"],
+    ]
+    const { container } = renderRegions(
+      regionsOf(reportParts({ ...INTERACTIVE, rows, filterColumn: 1 }, false)),
+    )
+    expect(screen.getByRole("group", { name: "絞り込み" })).toBeTruthy()
+
+    fireEvent.click(screen.getByRole("button", { name: "甲 2件" }))
+    expect(names(container)).toEqual(["ぼ", "ん"])
+
+    fireEvent.click(screen.getByRole("button", { name: "甲 2件" }))
+    expect(names(container)).toEqual(["ぼ", "あ", "ん"])
+  })
+
+  it("結んだ ChoicePicker がある表・filterColumn が無い表・値が 1 種類の表はバッジを出さない", () => {
+    const bound = renderRegions(regionsOf(reportParts({ ...INTERACTIVE, filterColumn: 1 }, true)))
+    expect(screen.queryByRole("group", { name: "絞り込み" })).toBeNull()
+    expect(bound.container.querySelector("button")).not.toBeNull()
+    cleanup()
+
+    renderRegions(regionsOf(reportParts(INTERACTIVE, false)))
+    expect(screen.queryByRole("group", { name: "絞り込み" })).toBeNull()
+    cleanup()
+
+    const same = ["ぼ", "甲", "1"]
+    renderRegions(
+      regionsOf(reportParts({ ...INTERACTIVE, rows: [same, same], filterColumn: 1 }, false)),
+    )
+    expect(screen.queryByRole("group", { name: "絞り込み" })).toBeNull()
   })
 
   it("10 行を超える表で「ほか n 件」を押したあとに並べ替えても、展開は保たれる", () => {

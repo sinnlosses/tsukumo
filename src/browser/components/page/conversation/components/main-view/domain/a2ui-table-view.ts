@@ -1,5 +1,6 @@
 // 操作できる `Table`（`sortable`・`filterable`）の、並べ替えと絞り込みの判定。
 
+import type { A2uiReportComponent } from "../../../../../../../shared/report/a2ui-report-catalog.ts"
 import type { A2uiReportPart } from "../../../../../../../shared/report/a2ui-report-outline.ts"
 import {
   type TableCell as Cell,
@@ -11,6 +12,7 @@ import {
 } from "../../../../../../../shared/report/table-layout.ts"
 import {
   tableCellTexts,
+  tableIdOfFilterPath,
   tableRowFilterTexts,
 } from "../../../../../../../shared/report/table-view.ts"
 
@@ -24,6 +26,43 @@ type TablePart = A2uiReportPart<"Table">
  */
 export function filteredRowOrder(part: TablePart, filter: readonly string[]): readonly number[] {
   return keptRows(part, filter).map(({ index }) => index)
+}
+
+const MIN_BADGES = 2
+const MAX_BADGES = 6
+
+export type FilterBadge = { readonly value: string; readonly count: number }
+
+/**
+ * `filterable` と `filterColumn` を持つ表の、列の値と行数を初出の順に返す。
+ * 値の種類が 2 から 6 でなければ空。
+ */
+export function filterBadges(part: TablePart): readonly FilterBadge[] {
+  if (part.filterable !== true || part.filterColumn === undefined) {
+    return []
+  }
+  const counts = new Map<string, number>()
+  for (const row of part.rows) {
+    for (const text of new Set(tableRowFilterTexts(row, part.filterColumn))) {
+      counts.set(text, (counts.get(text) ?? 0) + 1)
+    }
+  }
+  return counts.size >= MIN_BADGES && counts.size <= MAX_BADGES
+    ? [...counts].map(([value, count]) => ({ value, count }))
+    : []
+}
+
+/** `/view/<tableId>/filter` に `value` を結んだ `ChoicePicker` があるか。 */
+export function hasBoundChoicePicker(
+  parts: Iterable<A2uiReportComponent>,
+  tableId: string,
+): boolean {
+  return [...parts].some(
+    (part) =>
+      part.component === "ChoicePicker" &&
+      !Array.isArray(part.value) &&
+      tableIdOfFilterPath(part.value.path) === tableId,
+  )
 }
 
 /** 絞り込んだ行を `sort` の順に並べた、元の添字。セルが無い行は昇順で最後。 */

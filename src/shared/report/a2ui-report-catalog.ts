@@ -56,14 +56,14 @@ const LEAF_COMPONENTS = {
       .boolean()
       .optional()
       .describe(
-        'true で ChoicePicker の value を {path: "/view/<この表のID>/filter"} に結ぶと行が絞られる',
+        'true と filterColumn で、その列の値と件数のバッジ（2〜6 種類）が出て押すと絞れる。ChoicePicker の value を {path: "/view/<この表のID>/filter"} に結ぶとバッジは出ず、そちらで絞る',
       ),
     filterColumn: z
       .number()
       .int()
       .min(0)
       .optional()
-      .describe("絞り込みで見る列の位置（0 始まり）。省略すると全列"),
+      .describe("絞り込みで見る列の位置（0 始まり）。省略すると全列でバッジは出ない"),
   }),
   Matrix: leafComponent("Matrix", matrixBlockSchema),
   Compare: leafComponent("Compare", compareBlockSchema),

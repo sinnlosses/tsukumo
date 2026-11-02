@@ -8,7 +8,12 @@ import type { A2uiReportPart } from "../../../../../../shared/report/a2ui-report
 import type { LeafValue } from "../../../../../../shared/report/report-leaf-value.ts"
 import { tableViewPath } from "../../../../../../shared/report/table-view.ts"
 import { Button } from "../../../../ui/button/button.tsx"
-import { filteredRowOrder, type TableSort, visibleRowOrder } from "./domain/a2ui-table-view.ts"
+import {
+  type FilterBadge,
+  filteredRowOrder,
+  type TableSort,
+  visibleRowOrder,
+} from "./domain/a2ui-table-view.ts"
 import styles from "./main-view.module.css"
 import { TableFigure } from "./table-leaf.tsx"
 
@@ -19,11 +24,12 @@ type InteractiveTableProps = {
   readonly part: A2uiReportPart<"Table">
   /** 葉の図表番号・札の色・欄外注。整形で落ちた表は値を持たず、何も描かない。 */
   readonly value: LeafValue | undefined
+  readonly badges: readonly FilterBadge[]
 }
 
 /** 見出しごとの並べ替えの押しボタンと、並べ替え・絞り込みを当てた表。使わない `Table` はここを通らない。 */
 export function InteractiveTable(props: InteractiveTableProps): ReactElement {
-  const { dataModel, part, value } = props
+  const { dataModel, part, value, badges } = props
   const sort = useDataPath<TableSort>(dataModel, tableViewPath(part.id, "sort"))
   const filter =
     useDataPath<readonly string[]>(dataModel, tableViewPath(part.id, "filter")) ?? NO_SELECTION
@@ -58,6 +64,33 @@ export function InteractiveTable(props: InteractiveTableProps): ReactElement {
               >
                 {column}
                 {active && (sort.direction === "asc" ? " ▲" : " ▼")}
+              </Button>
+            )
+          })}
+        </div>
+      )}
+      {badges.length > 0 && (
+        <div role="group" aria-label="絞り込み" className={styles["interactive-view-group"]}>
+          {badges.map((badge) => {
+            const on = filter.includes(badge.value)
+            return (
+              <Button
+                key={badge.value}
+                variant={on ? "tinted-accent" : "outline"}
+                size="action"
+                pressed={on ? "on" : "off"}
+                disabled={false}
+                disclosure={{ kind: "none" }}
+                className={styles["interactive-view-button"]}
+                onClick={() => {
+                  dataModel.set(
+                    tableViewPath(part.id, "filter"),
+                    nextSelection(filter, badge.value, false),
+                  )
+                }}
+              >
+                {badge.value}
+                <span className={styles["interactive-view-count"]}>{badge.count}件</span>
               </Button>
             )
           })}

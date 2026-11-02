@@ -33,6 +33,7 @@ import { ChoicePicker, InteractiveTable } from "./a2ui-interactive-view.tsx"
 import { RegionBox, RegionChunks, ReportFrame } from "./body-region.tsx"
 import { DirectLeaf, directLeafViewOf } from "./direct-leaf-view.tsx"
 import { loadReportCatalogApis } from "./domain/a2ui-catalog-load.ts"
+import { filterBadges, hasBoundChoicePicker } from "./domain/a2ui-table-view.ts"
 import { isPlainHeadingText } from "./domain/plain-heading.ts"
 import { NoteBody } from "./note-leaf.tsx"
 import { FavorRegion, HeadRegion } from "./report-head-region.tsx"
@@ -344,6 +345,7 @@ function LayoutPart(props: { readonly id: string }): ReactElement {
             dataModel={report.dataModel}
             part={part}
             value={report.view.leafValues[part.id]}
+            badges={hasBoundChoicePicker(report.parts.values(), part.id) ? [] : filterBadges(part)}
           />
         )
       }

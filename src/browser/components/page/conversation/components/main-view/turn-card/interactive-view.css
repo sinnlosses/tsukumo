@@ -5,6 +5,10 @@
   gap: var(--space-sm);
   margin: var(--space-sm) 0;
 }
+.interactive-view-count {
+  margin-left: var(--space-xs);
+  opacity: 0.75;
+}
 .interactive-view-button {
   min-height: 1.75rem;
   padding: var(--space-xs) var(--space-md);
