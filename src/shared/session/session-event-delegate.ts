@@ -36,7 +36,7 @@ export type DelegateEvent =
   | { readonly kind: "delegate-handed-back"; readonly delegate: string }
   /**
    * 台本（`Workflow`）の走り出し（SDK の `system` / `task_started` のうち `task_type` が `local_workflow` のもの）。サーバの中だけで流れる。
-   * `CallReview.pass` が `taskId` を覚え、同じ `taskId` の `task-notified` と対にして台本の完了を見分ける（畳み込み・ブラウザには届かない）。
+   * `CallReview.pass` が `taskId` を覚え、同じ `taskId` の `task-notified` と対にしてワークフロースクリプトの完了を見分ける（畳み込み・ブラウザには届かない）。
    */
   | { readonly kind: "workflow-started"; readonly taskId: string }
   /**

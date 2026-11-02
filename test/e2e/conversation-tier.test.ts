@@ -5,7 +5,7 @@ import type { ScenarioRoom } from "./scenario-open.ts"
 import { openTaskListRoomWithRunningTask } from "./task-room.ts"
 
 // 会話の画面の段（docs/architecture/testing.md「E2E のシナリオの一覧」）。
-// 761〜1100px ではサイドバーを柱に畳み、柱の口で重ねて開く。それより広い窓と狭い窓には柱を出さない。
+// 761〜1100px ではサイドバーを柱に畳み、柱の口で重ねて開く。それより広いビューポートと狭いビューポートには柱を出さない。
 // 760px 以下は頭・本文・顔と吹き出し・入力欄の縦の1列になり、帯とサイドバーの中身は頭の ≡ から右に出る引き出しへ移る。
 
 const ELAPSED_MS = 60_000
@@ -45,7 +45,7 @@ async function leftEdge(locator: Locator): Promise<number> {
   return locator.evaluate((element) => element.getBoundingClientRect().left)
 }
 
-/** ページの横の幅（窓より広ければ横に転がる）。 */
+/** ページの横の幅（ビューポートより広ければ横にスクロールする）。 */
 async function scrollWidth(page: Page): Promise<number> {
   return page.evaluate(() => document.documentElement.scrollWidth)
 }

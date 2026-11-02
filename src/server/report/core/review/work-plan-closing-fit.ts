@@ -1,4 +1,4 @@
-// `report` の段の閉じ方（`workPlanClosing`）が、同じ依頼のワークプランの残りの段と合うかの判定。
+// `report` のフェーズの閉じ方（`workPlanClosing`）が、同じ依頼のワークプランの残りの段と合うかの判定。
 
 import type { ReportTask } from "../../../../shared/report/report-task.ts"
 import type { ReportDraft } from "../rules/draft.ts"
@@ -9,7 +9,7 @@ import {
   REPORT_UNFINISHED_PHASES_REJECTION_TEXT,
 } from "../rules/procedure-rejection.ts"
 
-/** 段の閉じ方の判定。合わなければ、当てはまった条の名前と差し戻しの文面。 */
+/** フェーズの閉じ方の判定。合わなければ、当てはまった条の名前と差し戻しの文面。 */
 export type ClosingFit =
   | { readonly kind: "fit" }
   | {
@@ -18,7 +18,7 @@ export type ClosingFit =
       readonly text: string
     }
 
-/** 同じ依頼にワークプランがあるときの、段の閉じ方だけで見た判定。`remaining` は済んでいない段の数（全部済みなら 0）。 */
+/** 同じ依頼にワークプランがあるときの、フェーズの閉じ方だけで見た判定。`remaining` は済んでいない段の数（全部済みなら 0）。 */
 export function judgeWorkPlanClosing(report: ReportDraft, remaining: number): ClosingFit {
   if (report.workPlanClosing === "none") {
     return {

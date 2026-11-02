@@ -22,7 +22,7 @@ export type ReportCheckInput = {
   readonly howToVerify: string
 }
 
-/** お願いがあるときの、総括行の印が飛ぶ先（お願いの塊の `id`）。 */
+/** お願いがあるときの、総括行の印が飛ぶ先（お願いの部品の `id`）。 */
 export type ReportFavorTarget =
   | { readonly kind: "none" }
   | { readonly kind: "favor"; readonly id: string }

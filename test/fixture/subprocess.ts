@@ -1,4 +1,4 @@
-// テストの中で子プロセス（`git`・`node` など）を起こす口。同期版（`execFileSync` /
+// テストの中で子プロセス（`git`・`node` など）を起こす関数。同期版（`execFileSync` /
 // `spawnSync`）は使わない（`.oxlintrc.json` が test/ で止める）。
 //
 // 同期で待つと、子が詰まったときにテストの時間切れが効かず、1件の詰まりが `pnpm run check`

@@ -14,9 +14,9 @@
 // バックグラウンドタスクの終わりはターンの外で届くので、これだけはターンの区切りで戻さない。
 // サブエージェントの `SendMessage` の合図は流れに見えないので数えない。
 //
-// 差し戻しの枠の一覧と見る順、脇の話のターン（`aside` から次の依頼・続きのターン・ターンの終わりまで）で見る枠は `ReportReview.judge` が正典。
+// 差し戻しの枠の一覧と見る順、補足メッセージのターン（`aside` から次の依頼・続きのターン・ターンの終わりまで）で見る枠は `ReportReview.judge` が正典。
 // 枠は規約違反の枠とは別に数える（規約違反で差し戻して直した `report` を送り直す形もある）。
-// ワークプランの立ち位置は `WorkPlanReview.standing` から受け取る。段の閉じ方は同じ依頼にワークプランがあるときだけ見る。
+// ワークプランの立ち位置は `WorkPlanReview.standing` から受け取る。フェーズの閉じ方は同じ依頼にワークプランがあるときだけ見る。
 // 背景のシェルの差し戻しの文面には ID と `description` を載せるが、記録に残すのは種類の名前だけ。
 //
 // 判定の窓口は `report` の handler だけ（`ReportReview.judge`）。
@@ -86,10 +86,10 @@ export type ReportReview = {
   /**
    * `report` の handler から。
    * このターンで描いた `report` の送り直し、直前に描いた `report` のあとに新しい事実の届いていない呼び出し、
-   * 応えていない `work_plan` の差し戻し、合わない段の閉じ方、`ng` のある `finished`、背景のシェル、規約違反のどれかなら、
+   * 応えていない `work_plan` の差し戻し、合わないフェーズの閉じ方、`ng` のある `finished`、背景のシェル、規約違反のどれかなら、
    * この順に見て差し戻す（枠はそれぞれ1ターンに1回。使い切っていれば通す）。
-   * 脇の話のターンでは、合わない段の閉じ方・背景のシェルを見ない（ほかは見る）。
-   * 記録に残す種類の名前は `REPORT_PROCEDURE_REJECTIONS`（段の閉じ方は3つの名前が1つの枠を共有する）。
+   * 補足メッセージのターンでは、合わないフェーズの閉じ方・背景のシェルを見ない（ほかは見る）。
+   * 記録に残す種類の名前は `REPORT_PROCEDURE_REJECTIONS`（フェーズの閉じ方は3つの名前が1つの枠を共有する）。
    * 段が `count` の条は、枠の残りに関わらず当てはまれば預け、枠を使わずに次の条へ進む（差し戻した呼び出しの預かりは捨てる）。
    */
   readonly judge: (report: ReportDraft) => ReportVerdict
@@ -140,7 +140,7 @@ export function createReportReview(
   let handlerCounted: readonly ReportRejectionReason[] = []
   // このターンで出した（描いた）`report`。送り直しの判定にだけ使う。
   let drawn: readonly ReportEvent[] = []
-  // 脇の話（`aside`）で始まったターンか。ターンの頭の `session-info` は脇の話のターンの頭にも届くので、そこでは戻さない。
+  // 補足メッセージ（`aside`）で始まったターンか。ターンの頭の `session-info` は補足メッセージのターンの頭にも届くので、そこでは戻さない。
   let asideTurn = false
 
   /** `isError` で返った呼び出しの記録。判定の差し戻しなら理由の名前、判定まで届かなかった呼び出しは `tool-error`。 */

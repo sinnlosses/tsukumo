@@ -31,7 +31,7 @@ export type SessionManagerOptions = {
   readonly now: () => number
   /** イベントをまとめる間隔（ミリ秒）。既定は `EVENT_BATCH_INTERVAL_MS`。 */
   readonly batchIntervalMs: number
-  /** 会話のアーカイブの書き込み口（雑談と仕事の両方が書く）。 */
+  /** 会話のアーカイブの書き込みの関数（雑談と仕事の両方が書く）。 */
   readonly chatArchive: ChatArchive
   /**
    * 仕事の行に付ける `project`（アーカイブの `docs/architecture/chat-mode.md`「会話のアーカイブ」）。
@@ -44,30 +44,30 @@ export type SessionManagerOptions = {
    */
   readonly chatConsolidation: ChatConsolidationSource
   /**
-   * トークン消費の書き込み口。
+   * トークン消費の書き込みの関数。
    * 前の `result` からの増分を出すのは `TokenUsageRecorder`（駆動1代ぶんの持ち物として前回の累計を覚えている）で、渡した先は「どこに・どんな形で書くか」しか持たない。
    */
   readonly tokenUsageLog: TokenUsageLog
   /**
-   * コンテキストの内訳の書き込み口。
+   * コンテキストの内訳の書き込みの関数。
    * セッション1つにつき1行で、いつ書くか（＝そのセッションでまだ書いていない最初のターンの終わり）を決めるのは `createContextUsageRecorder` が返す係。
    * 渡した先は「どこに・どんな形で書くか」しか持たない。
    */
   readonly contextUsageLog: ContextUsageLog
-  /** 進行の計測値の書き込み口。何を1行にするかは `createExperienceMetricRecorder` が返す係が決める。 */
+  /** 進行の計測値の書き込みの関数。何を1行にするかは `createExperienceMetricRecorder` が返す係が決める。 */
   readonly experienceMetricLog: ExperienceMetricLog
-  /** 診断ログの書き込み口。畳んだイベントの種類・時刻・駆動の代だけを1件ずつ渡す。 */
+  /** 診断ログの書き込みの関数。畳んだイベントの種類・時刻・駆動の代だけを1件ずつ渡す。 */
   readonly diagnosticLog: DiagnosticLog
   /** 描いた `report` 1回につき1行、塊の使われ方を書く口。 */
   readonly reportUsageLog: ReportUsageLog
   /**
-   * 依頼に添えた画像の原寸の棚。`/prompt-image/<id>` で配る側と同じ棚を渡すこと。
+   * 依頼に添えた画像の原寸の置き場。`/prompt-image/<id>` で配る側と同じ置き場を渡すこと。
    * 置くのと捨てるのはここで、`prompt` を受けたときに置き、記録から依頼が消えたときに捨てる。
    */
   readonly promptImageShelf: PromptImageShelf
   /**
-   * `image` の塊と質問の preview の画像の棚。`/report-image/` で配る側と同じ棚を渡すこと。
-   * 駆動から届いた `report` と新しく積まれた質問を受けたときに置き（続きから復元した再生では、記録の窓に残った時刻が分かり24時間以内の `report` の画像を、更新時刻がその時刻以前のものだけ読み直して置く）、記録にも答え待ちにも無くなったときに捨てる。
+   * `image` の部品と質問の preview の画像の置き場。`/report-image/` で配る側と同じ置き場を渡すこと。
+   * 駆動から届いた `report` と新しく積まれた質問を受けたときに置き（続きから復元した再生では、記録の集計期間に残った時刻が分かり24時間以内の `report` の画像を、更新時刻がその時刻以前のものだけ読み直して置く）、記録にも答え待ちにも無くなったときに捨てる。
    */
   readonly reportImageShelf: ReportImageShelf
   /** `image` の塊と質問の preview の画像のパスを読む口（cwd から解く）。 */
@@ -97,7 +97,7 @@ export type SessionManagerOptions = {
    * 流すイベントは、そのときの代の駆動のイベントと同じ扱いで畳む。
    */
   readonly watchTasks: (onEvent: (event: SessionEvent) => void) => SessionWatcher
-  /** 最終レポートの変更の札を数える、作業ディレクトリの git の口。 */
+  /** 最終レポートの変更のラベルを数える、作業ディレクトリの git の口。 */
   readonly changeCountGit: ChangeCountGit
 }
 

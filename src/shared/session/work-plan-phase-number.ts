@@ -10,7 +10,7 @@ import {
 } from "./work-plan.ts"
 
 /**
- * 段の群。範囲が無ければ並び全体の `whole`、範囲があれば範囲の前の `lead`・範囲の `delegated`・範囲の後ろの `trail`。
+ * フェーズのグループ。範囲が無ければ並び全体の `whole`、範囲があれば範囲の前の `lead`・範囲の `delegated`・範囲の後ろの `trail`。
  * 段の番号は群ごとに1から数える。
  */
 export type PhaseSpan = "whole" | "lead" | "delegated" | "trail"
@@ -113,7 +113,7 @@ export function phasePosition(phase: Extract<WorkPhase, { readonly kind: "phase"
   return phaseNumberOf(phase.range, phase.indexes, phase.count)
 }
 
-/** 並列の段の中の段は平らにした並びで隣り合うので、2つ以上なら先頭と末尾の番号を「–」でつなぐ。 */
+/** 並列のフェーズの中の段は平らにした並びで隣り合うので、2つ以上なら先頭と末尾の番号を「–」でつなぐ。 */
 function numbered(
   span: PhaseSpan,
   indexes: readonly number[],

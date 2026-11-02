@@ -4,10 +4,10 @@ import { fictionalPng } from "../../scripts/shared/fictional-png.ts"
 import { expect, test, VIEWPORTS } from "./room-fixture.ts"
 
 // お伺い（許可要求と質問。docs/architecture/testing.md「E2E のシナリオの一覧」）。
-// 許可は場面 `permission`（本文が長く札が窓の外に出る場合は `inquiry-below-body`）、質問は `question-pair`（単一選択が1問ずつ）・
+// 許可は場面 `permission`（本文が長くカードがビューポートの外に出る場合は `inquiry-below-body`）、質問は `question-pair`（単一選択が1問ずつ）・
 // `question-long`（長いラベルと長い説明）・`question-preview`（選択肢ごとの比較）・
 // `question-preview-image`（preview に書いた手元の画像と、描かない画像）・
-// `question-brief`（添え書き付き。広い窓の2列から、窓を狭めて札の1列へ）。
+// `question-brief`（添え書き付き。広いビューポートの2列から、ビューポートを狭めてカードの1列へ）。
 // どの場面も答え待ちを出したまま、答えると次の `pending-changed` が流れる。
 
 /** 撮るときの経過（凍らせた瞬間から）。「何秒前」の類いをこの値で揃える。 */
@@ -173,7 +173,7 @@ test.describe("お伺い", () => {
     const inquiry = inquiryOf(room.page)
 
     await room.waitForPending("fake-ask-preview-image")
-    // 詳細の面に出るのは選んでいる選択肢の preview だけなので、画像のある選択肢を順に選ぶ。
+    // 詳細のサーフェスに出るのは選んでいる選択肢の preview だけなので、画像のある選択肢を順に選ぶ。
     for (const [choice, alt] of [
       [/横長の案/, "架空の横長の画面"],
       [/縦長の案/, "架空の縦長の画面"],

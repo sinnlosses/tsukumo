@@ -1,7 +1,7 @@
-// 1つのやり取り。ステップの並び（レポート・質問の記録と、届いた位置に足す脇の話の欄）を縦に1本で積む（番号は振らない）。
+// 1つのやり取り。ステップの並び（レポート・質問の記録と、届いた位置に足す補足メッセージの欄）を縦に1本で積む（番号は振らない）。
 // 最終レポートのある閉じたやり取りは、最終レポート → 脇の話 → 経過の畳み（中間レポートと質問の記録）の順にする（`arrangeTurn`）。
 // ツールの実行は描かない（進行は帯の「いまの作業」が持つ）。
-// 失敗で終わったやり取りは、頭に失敗の塊を出す（色だけでなく字で成功と見分ける）。
+// 失敗で終わったやり取りは、頭に失敗の表示を出す（色だけでなく字で成功と見分ける）。
 
 import clsx from "clsx"
 import { Fragment, useState, type ReactElement } from "react"
@@ -182,9 +182,9 @@ function Step(props: StepProps): ReactElement | undefined {
 /**
  * ステップの本文と質問の記録の札。
  *
- * 中間レポート（`step.mark` が `interim-kept` か `interim-folded`）は話が途中の本文なので、目録の1行にラベルを載せて地と枠を変える（`.main-step.is-interim`）。
+ * 中間レポート（`step.mark` が `interim-kept` か `interim-folded`）は話が途中の本文なので、タスク見出し行にラベルを載せて地と枠を変える（`.main-step.is-interim`）。
  *
- * 最終レポート（`step.mark` が `final`）は箱を外し（`.main-step.is-final`）、目録の1行にラベルを載せる。
+ * 最終レポート（`step.mark` が `final`）は箱を外し（`.main-step.is-final`）、タスク見出し行にラベルを載せる。
  * ラベルを出すのは `finalLabel` が立っているとき（中間レポートのあるやり取りか、本文に `task` があるときだけ。どちらも無ければ「最終」が何も区別しない）。
  *
  * 後ろに別のレポートが現れた中間レポート（`interim-folded`）は、何件も開いたまま積まれると見通しが悪いので畳む。
@@ -370,7 +370,7 @@ function ProgressFold(props: ProgressFoldProps): ReactElement {
 }
 
 /**
- * 目録の1行の頭に置くラベル。
+ * タスク見出し行の頭に置くラベル。
  * 畳んだ中間レポートは `<summary>` がラベルを持つので置かない。
  * 最終レポートのラベルは、中間レポートのあるやり取りか、`task` があるときだけ。
  */

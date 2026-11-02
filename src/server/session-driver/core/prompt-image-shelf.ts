@@ -1,13 +1,13 @@
-// 依頼に添えた画像の原寸の棚。
+// 依頼に添えた画像の原寸の置き場。
 // 送った原寸を直近の数枚だけプロセスのメモリに持ち、控えを押したブラウザへ `/prompt-image/<id>` で配れるようにする。
 //
 // 記録（`SessionState`）と `hello` には原寸を載せない。
 // 載るのは控えと id の組（`RecordedPromptImage`）だけで、原寸はここにしか無い。
 // 原寸は会話の内容なので、棚はディスクに書かない。
-// 雑談の依頼の原寸だけは、会話のアーカイブがこの棚から引いて別に書く（`docs/coding-standards.md`「会話内容の扱い」の例外の表）。
+// 雑談の依頼の原寸だけは、会話のアーカイブがこの置き場から引いて別に書く（`docs/coding-standards.md`「会話内容の扱い」の例外の表）。
 //
 // 捨てる契機は2つ:
-//   - 記録の窓（`MAX_SESSION_STATE_TURNS`）から依頼が落ちたとき（`releasedPromptImageIds`）
+//   - 記録の集計期間（`MAX_SESSION_STATE_TURNS`）から依頼が落ちたとき（`releasedPromptImageIds`）
 //   - 持っている原寸の合計の大きさが `MAX_SHELVED_PROMPT_IMAGE_BYTES` を超えたとき（古いほうから）
 
 import { sumBy } from "remeda"
@@ -19,23 +19,23 @@ import type {
 import type { SessionRecord } from "../../../shared/session/session-record.ts"
 
 /**
- * 棚に置く原寸の合計の大きさ（data URL の文字列の長さの合計）の上限。
+ * 置き場に置く原寸の合計の大きさ（data URL の文字列の長さの合計）の上限。
  * 枚数で切ると1枚の上限（`MAX_PROMPT_IMAGE_BYTES`）を基準にした最悪値で決めるしかなく、実際のスクリーンショット（1枚 0.5 MiB 前後）では天井のごく一部しか使わないまま原寸が落ちる。
  * 大きさで切れば、小さい画像ほど多く残る。
  */
 const MAX_SHELVED_PROMPT_IMAGE_BYTES = 128 * 1024 * 1024
 
-/** 棚に置いた1枚。原寸と控えの対に、棚が振った id を添えたもの（駆動へはこの形で渡す）。 */
+/** 置き場に置いた1枚。原寸と控えの対に、棚が振った id を添えたもの（駆動へはこの形で渡す）。 */
 export type ShelvedPromptImage = PromptImage & { readonly id: string }
 
 export type PromptImageShelf = {
   /**
-   * 原寸を棚に置き、1枚ごとに id を振って返す（並びは受け取った順のまま）。
+   * 原寸を置き場に置き、1枚ごとに id を振って返す（並びは受け取った順のまま）。
    * 合計の大きさが上限を超えるあいだ、いま置いた画像を除いて古いほうから捨てる。
    */
   readonly shelve: (images: readonly PromptImage[]) => readonly ShelvedPromptImage[]
   /**
-   * 続きからの復元で transcript から読み戻した原寸（data URL）を棚に置き、記録に載せる形で返す（控えはブラウザが作り直す）。
+   * 続きからの復元で transcript から読み戻した原寸（data URL）を置き場に置き、記録に載せる形で返す（控えはブラウザが作り直す）。
    * 上限の扱いは {@link PromptImageShelf.shelve} と同じ。
    */
   readonly shelveRestored: (fulls: readonly string[]) => readonly RecordedPromptImage[]
@@ -90,7 +90,7 @@ export function createPromptImageShelf(newId: () => string): PromptImageShelf {
 }
 
 /**
- * 棚に置いた画像を、記録（`request` のイベント）に載せる形へ落とす。原寸をここで外す。
+ * 置き場に置いた画像を、記録（`request` のイベント）に載せる形へ落とす。原寸をここで外す。
  * 駆動（本物も疑似も）はこれを通してから `request` を流すこと。原寸が記録へ紛れ込む口を1つに決めるため。
  */
 export function recordedPromptImages(
@@ -101,10 +101,10 @@ export function recordedPromptImages(
 
 /**
  * 記録が `before` から `after` へ変わったときに、記録から消えた依頼の画像の id。
- * 窓から古い依頼が落ちたとき・起こし直して記録が空に戻ったときに、その原寸を棚から捨てるのに使う。
+ * 集計期間から古い依頼が落ちたとき・起こし直して記録が空に戻ったときに、その原寸を置き場から捨てるのに使う。
  *
  * 「後の記録に無い id」ではなく「前にあって後に無い id」を返す。
- * 棚に置いてから `request` のイベントが畳まれるまでの間は、その id がまだどちらの記録にも無い。
+ * 置き場に置いてから `request` のイベントが畳まれるまでの間は、その id がまだどちらの記録にも無い。
  * その間に別のイベントが畳まれても、置いたばかりの原寸を捨てないため。
  */
 export function releasedPromptImageIds(

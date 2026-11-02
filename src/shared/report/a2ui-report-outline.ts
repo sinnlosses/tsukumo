@@ -11,7 +11,7 @@ export type A2uiReportPart<Component extends A2uiReportComponent["component"]> =
 >
 
 /**
- * 根の子 1 つが写る節。`Section` は見出しつきの節、それ以外は見出しの無い節になる。
+ * 根の子 1 つが写る節。`Section` は見出しつきの節、それ以外は見出しの無いセクションになる。
  * `leafIds` は節に並ぶ葉の ID で、`Section` と配置の部品の中へ降りて並び順に平らにしたもの。
  */
 export type A2uiOutlineSection =
@@ -78,7 +78,7 @@ export function a2uiReachableIds(
     : new Set()
 }
 
-/** 葉の部品なら写す先の塊の `kind`、葉でなければ undefined。 */
+/** 内容部品なら写す先の塊の `kind`、葉でなければ undefined。 */
 export function a2uiLeafKind(part: A2uiReportComponent): string | undefined {
   return LEAF_KINDS.get(part.component)
 }

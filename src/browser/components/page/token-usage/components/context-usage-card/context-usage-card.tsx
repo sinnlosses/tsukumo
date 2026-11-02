@@ -3,7 +3,7 @@
 // 出すのはいまのセッションの内訳だけ（過去の推移は出さない）。
 // 横棒は中身の分類を積み、続けて空き、最後に自動圧縮バッファ。
 // 凡例は横棒と同じ並びを見るので、色と分類名が必ず対になる。
-// 窓の外のツールの定義（`deferred`）は横棒に積まず、畳んだ内訳の中に入れる。
+// コンテキストウィンドウの外のツールの定義（`deferred`）は横棒に積まず、畳んだ内訳の中に入れる。
 //
 // 画面に会話の文面は出ない。メッセージは分類1行の数としてだけ出る（`ContextUsage`）。
 //
@@ -265,7 +265,7 @@ type DeferredTableProps = {
   readonly rows: readonly ContextUsageRow[]
 }
 
-/** 窓の外にあるツールの定義（`deferred`）。使用量には入らないので横棒とは別に、数だけを並べる。 */
+/** コンテキストウィンドウの外にあるツールの定義（`deferred`）。使用量には入らないので横棒とは別に、数だけを並べる。 */
 function DeferredTable(props: DeferredTableProps): ReactElement | undefined {
   if (props.rows.length === 0) {
     return undefined

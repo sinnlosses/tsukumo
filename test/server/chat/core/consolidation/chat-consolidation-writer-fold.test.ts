@@ -22,7 +22,7 @@ const PACK = characterPackName("fictional")
 
 const dir = useTempDir("chat-consolidation-fold")
 
-/** 1行がおよそ 1 KiB の架空の発言（窓の 16 KiB と1回の 16 KiB に収まる行数が読める大きさ）。 */
+/** 1行がおよそ 1 KiB の架空の発言（範囲の 16 KiB と1回の 16 KiB に収まる行数が読める大きさ）。 */
 function fictionalLine(index: number): string {
   return `架空の発言${String(index).padStart(2, "0")}${"あ".repeat(340)}`
 }

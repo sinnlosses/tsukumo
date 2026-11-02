@@ -100,7 +100,7 @@ describe("PromptImageThumbnails", () => {
     return zoomDialog()?.querySelector("img") ?? null
   }
 
-  /** 拡大した絵が `<img>` の読み込みに失敗した（棚から消えていて 404 だった）ことにする。 */
+  /** 拡大した絵が `<img>` の読み込みに失敗した（置き場から消えていて 404 だった）ことにする。 */
   function failZoomedImage(): void {
     const image = zoomedImage()
     if (image === null) {
@@ -167,7 +167,7 @@ describe("PromptImageThumbnails（続きから復元した依頼）", () => {
     kind: "restored",
     id: "3e2d1c0b-9a8f-4e7d-8c6b-5a4f3e2d1c0b",
   } as const satisfies RecordedPromptImage
-  /** ブラウザの画像の読み込みの代役。jsdom は画像を読み込まないので、読み込みを `error` で終わらせる（棚から原寸が消えていた）。 */
+  /** ブラウザの画像の読み込みの代役。jsdom は画像を読み込まないので、読み込みを `error` で終わらせる（置き場から原寸が消えていた）。 */
   class UnreadableImage extends EventTarget {
     readonly naturalWidth = 0
     readonly naturalHeight = 0

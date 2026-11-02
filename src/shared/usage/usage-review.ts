@@ -50,7 +50,7 @@ export const USAGE_PROPOSAL_IMPACTS = ["large", "medium", "small"] as const
 
 export type UsageProposalImpact = (typeof USAGE_PROPOSAL_IMPACTS)[number]
 
-/** 押す口。`delegate` は「tsukumo に頼む」、`task` は「タスクにする」。 */
+/** ボタン。`delegate` は「tsukumo に頼む」、`task` は「タスクにする」。 */
 export const USAGE_PROPOSAL_FOLLOW_UPS = ["delegate", "task"] as const
 
 export type UsageProposalFollowUp = (typeof USAGE_PROPOSAL_FOLLOW_UPS)[number]
@@ -178,8 +178,8 @@ export const USAGE_REVIEW_REQUEST_TEXT =
   "トークン消費の減らし方を見てほしい。直近の使い方（モデル・ツール・キャッシュ・コンテキスト）から、効きそうな見直しを挙げて。"
 
 /**
- * 押す口を押したときに提案の実行の問い合わせへ渡す依頼文。提案に依頼文を持たせないのは、スキルが書く欄を
- * 増やさず、押す口ごとの頼み方を1箇所で揃えるため。
+ * ボタンを押したときに提案の実行の問い合わせへ渡す依頼文。提案に依頼文を持たせないのは、スキルが書く欄を
+ * 増やさず、ボタンごとの頼み方を1箇所で揃えるため。
  */
 export function usageProposalRequestText(proposal: UsageProposal): string {
   return [

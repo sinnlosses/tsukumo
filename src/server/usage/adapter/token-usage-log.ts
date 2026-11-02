@@ -25,7 +25,7 @@ import type { TokenUsageEntry, TokenUsageLog } from "../core/token-usage.ts"
 import type { OpenTaskReader } from "./tw-claim-list.ts"
 
 /**
- * 記録の読み書き口を作る。`openTask` はこの作業ツリーで着手中のタスクを読む口（{@link OpenTaskReader}）、`root` は置き場（既定は {@link tokenUsageDir}）。
+ * 記録の読み書きの関数を作る。`openTask` はこの作業ツリーで着手中のタスクを読む口（{@link OpenTaskReader}）、`root` は置き場（既定は {@link tokenUsageDir}）。
  * 1つの口を日をまたいで使い回せる（`append` のたびに `entry.at` から行き先を組み立てる）。
  */
 export function createTokenUsageLog(

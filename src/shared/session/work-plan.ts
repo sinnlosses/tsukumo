@@ -4,7 +4,7 @@ import { z } from "zod"
 
 import { isBlankText } from "../utils/blank-text.ts"
 
-/** 並列の段。同時に走る段の名前の並びで、{@link MIN_PHASE_GROUP_SIZE} 個以上の重ならない名前を持つ。 */
+/** 並列のフェーズ。同時に走る段の名前の並びで、{@link MIN_PHASE_GROUP_SIZE} 個以上の重ならない名前を持つ。 */
 export type PhaseGroup = readonly string[]
 
 export type WorkPlanEntry = string | PhaseGroup
@@ -12,11 +12,11 @@ export type WorkPlanEntry = string | PhaseGroup
 /**
  * 段の並びと今の位置。
  * `current` は要素の0始まりの位置で、全部の段が済んだら `phases.length`。
- * `finishedInGroup` は `current` が指す並列の段の中で済んだ段の名前で、並列の段を指していなければ空。
+ * `finishedInGroup` は `current` が指す並列のフェーズの中で済んだ段の名前で、並列のフェーズを指していなければ空。
  * `phaseSummary` は終えた段のまとめ（段のまとめ）で、無ければ空の文字列。
- * `delegatedRange` は委譲先の段の範囲で、委譲しなければ `none`。
+ * `delegatedRange` は委譲先のフェーズの範囲で、委譲しなければ `none`。
  * `skippedPhases` は済んだ段のうち飛ばした段の名前（同じ名前の段は見分けない）。
- * `awaitingSummary` はまとめ待ちの段（{@link AwaitingSummary}）。
+ * `awaitingSummary` はまとめ待ちのフェーズ（{@link AwaitingSummary}）。
  */
 export type WorkPlan = {
   readonly phases: readonly WorkPlanEntry[]
@@ -39,8 +39,8 @@ export type AwaitingSummary =
 export const NO_AWAITING_SUMMARY = { kind: "none" } as const satisfies AwaitingSummary
 
 /**
- * 委譲先の段の範囲。`first` は委譲先の段1に当たる位置（平らにした並びで0始まり）、`count` は委譲先の段の数。
- * 委譲先の段 `n` は平らにした並びの `first + n - 1` の段に当たる。
+ * 委譲先のフェーズの範囲。`first` は委譲先のフェーズ1に当たる位置（平らにした並びで0始まり）、`count` は委譲先のフェーズの数。
+ * 委譲先のフェーズ `n` は平らにした並びの `first + n - 1` の段に当たる。
  * `pending` は `first` だけが決まり、`count` が未定の間（計画の返却を待つ間）で、どの段にも番号を付けない。
  */
 export type DelegatedRange =
@@ -53,7 +53,7 @@ export const NO_DELEGATED_RANGE = { kind: "none" } as const satisfies DelegatedR
 /** ワークプランが持つ段の数の下限。段が無いワークプランは位置を言う意味が無いので受け付けない。 */
 const MIN_WORK_PLAN_PHASES = 1
 
-/** 並列の段が持つ段の数の下限。1段だけの並列の段は段と同じなので受け付けない。 */
+/** 並列のフェーズが持つ段の数の下限。1段だけの並列のフェーズは段と同じなので受け付けない。 */
 const MIN_PHASE_GROUP_SIZE = 2
 
 /** 記録の範囲で最後に渡されたワークプラン。1度も渡されていなければ `none`。 */
@@ -65,7 +65,7 @@ export type PlannedPhaseState = "done" | "current" | "upcoming"
 
 /**
  * 並びを平らにした段1つ。`index` は平らにした並びでの0始まりの位置（段の番号は `phaseNumberOf` が導く）。
- * `entry` はその段のある要素の位置で、並列の段の中の段どうしは同じ値を持つ。
+ * `entry` はその段のある要素の位置で、並列のフェーズの中の段どうしは同じ値を持つ。
  * `key` は名前と同じ名前の段の中で何番目かの組で、組み替えた並びどうしで同じ段を引き当てるのに使う。
  */
 export type PlannedPhase = PlannedPhaseBase &
@@ -88,8 +88,8 @@ type PlannedPhaseBase = {
 /**
  * 手順1件が始まったときの段。
  * ワークプランがまだ無い・全部の段が済んだあとなら `none`。
- * `indexes` は今の段（並列の段の中なら済んでいない段のすべて）の平らにした並びでの0始まりの位置、`count` は段の数、
- * `name` は今の段の名前を「・」でつないだもの、`range` はワークプランの委譲先の段の範囲（番号の数え方を決める）。
+ * `indexes` は今の段（並列のフェーズの中なら済んでいない段のすべて）の平らにした並びでの0始まりの位置、`count` は段の数、
+ * `name` は今の段の名前を「・」でつないだもの、`range` はワークプランの委譲先のフェーズの範囲（番号の数え方を決める）。
  */
 export type WorkPhase =
   | { readonly kind: "none" }
@@ -127,9 +127,9 @@ export const workPlanShape = {
  * `work_plan` の引数の形の正典。
  * 次のどれかなら通らない:
  * 要素が {@link MIN_WORK_PLAN_PHASES} 個より少ない・空白だけの名前がある・
- * 並列の段の中の段が {@link MIN_PHASE_GROUP_SIZE} 個より少ないか名前が重なる・位置が0から要素の数までの整数でない・
- * `finishedInGroup` が今の並列の段の重ならない名前の一部でない・
- * 委譲先の段の範囲が整数でない・並びをはみ出す・並列の段の端をまたぐ・
+ * 並列のフェーズの中の段が {@link MIN_PHASE_GROUP_SIZE} 個より少ないか名前が重なる・位置が0から要素の数までの整数でない・
+ * `finishedInGroup` が今の並列のフェーズの重ならない名前の一部でない・
+ * 委譲先のフェーズの範囲が整数でない・並びをはみ出す・並列のフェーズの端をまたぐ・
  * 飛ばした段の名前が重なるか、この呼び出しで済んでいる段の名前でない。
  * 途中なのに段のまとめが無いことは、ここでは見ず `WorkPlanReview` が `summary-missing` で差し戻す。
  */
@@ -269,10 +269,10 @@ export type WorkPlanStanding =
   | { readonly kind: "rejected" }
   | { readonly kind: "planned"; readonly remaining: number }
 
-/** `report` の欄 `workPlanClosing` で渡せる段の閉じ方。`finished` は全部の段を終えた、`stopped` は途中で止めた。 */
+/** `report` の欄 `workPlanClosing` で渡せるフェーズの閉じ方。`finished` は全部の段を終えた、`stopped` は途中で止めた。 */
 export const WORK_PLAN_CLOSINGS = ["finished", "stopped"] as const
 
-/** `report` が渡した段の閉じ方。欄の無い `report` と、欄を持たなかったころの記録は `none`。 */
+/** `report` が渡したフェーズの閉じ方。欄の無い `report` と、欄を持たなかったころの記録は `none`。 */
 export type WorkPlanClosing = "none" | (typeof WORK_PLAN_CLOSINGS)[number]
 
 /** `report` の引数の `workPlanClosing` を読む。「無い」と形の崩れは `none` に畳む。 */
@@ -304,7 +304,7 @@ const PHASE_NAME_SEPARATOR = "・"
  * `work_plan` の呼び出しの範囲を確定させたワークプラン。
  * 先頭は、渡された `first` → `inherited`（受け付け済みの範囲）の `first` → 今の位置の次、の順に当てる。
  * 段の数は `returnedCount`（委譲先の返却で知らされた数）があればそれ、無ければ渡された `count`。
- * 範囲が無く返却の数も無ければ、呼び出しのまま返す。確定した範囲が並びをはみ出すか並列の段の端をまたぐなら undefined。
+ * 範囲が無く返却の数も無ければ、呼び出しのまま返す。確定した範囲が並びをはみ出すか並列のフェーズの端をまたぐなら undefined。
  */
 export function settleDelegatedRange(
   call: WorkPlanCall,

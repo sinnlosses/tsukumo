@@ -1,4 +1,4 @@
-// 委譲先の段の範囲があるあいだ、`speak` の `phase`（セリフが番号で言う委譲先の段）が範囲の外を指していないかの検査。
+// 委譲先のフェーズの範囲があるあいだ、`speak` の `phase`（セリフが番号で言う委譲先のフェーズ）が範囲の外を指していないかの検査。
 
 import type { DelegatedRange } from "../../../shared/session/work-plan.ts"
 

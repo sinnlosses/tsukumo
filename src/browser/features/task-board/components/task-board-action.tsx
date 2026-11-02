@@ -1,4 +1,4 @@
-// タスクのモーダルの下の操作の帯。ID をコピー・置き場所を開く口・「tsukumo に頼む」（ドラフトでは「却下する」「計画する」）。
+// タスクのモーダルの下の操作の帯。ID をコピー・置き場所を開くボタン・「tsukumo に頼む」（ドラフトでは「却下する」「計画する」）。
 // 「tsukumo に頼む」を押せないときは薄くし、横に理由を添える。
 
 import { Copy, ExternalLink, MessageCircle } from "lucide-react"

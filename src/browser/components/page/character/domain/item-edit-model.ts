@@ -8,7 +8,7 @@ export type SeatPickModel = {
   /** 札の字（「左上」「キャラの左下」「キャラの右下」）。 */
   readonly label: string
   readonly current: ItemInfo | undefined
-  /** 選び口の選択肢（一覧）。先頭の「置かない」は部品が足す。 */
+  /** 選択メニューの選択肢（一覧）。先頭の「置かない」は部品が足す。 */
   readonly options: readonly ItemInfo[]
   /** 空文字は「置かない」。 */
   readonly onPick: (id: string) => void

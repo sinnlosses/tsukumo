@@ -32,7 +32,7 @@ import type { CommandReceiver, SessionReceiver } from "./command-session.ts"
 import { ACCEPTED, askDriver, declined, nudge } from "./driver-command.ts"
 
 export type SessionCommandPorts = {
-  /** 依頼に添えた画像の原寸の棚（`prompt` を受けたときに置く。捨てるのはセッションの管理側）。 */
+  /** 依頼に添えた画像の原寸の置き場（`prompt` を受けたときに置く。捨てるのはセッションの管理側）。 */
   readonly promptImageShelf: PromptImageShelf
   /**
    * 新しいセッションの既定（モデル・effort・許可モード・図の既定）を覚え、画面へ流す `session-default-changed` イベントを返す。
@@ -48,7 +48,7 @@ export type SessionCommandPorts = {
   readonly readAchievementDay: (date: DateKey) => Promise<DailyAchievement | undefined>
   /** 成果の日記書きの書き手の出どころ（`DiaryWriterSource`）。疑似セッションでは `dont-write`。 */
   readonly diary: DiaryWriterSource
-  /** 選んだセッションのIDを占有ファイルに書いてから、別の窓が使っていないかを確かめる（`SessionClaim.reserve`）。 */
+  /** 選んだセッションのIDを占有ファイルに書いてから、別のウィンドウが使っていないかを確かめる（`SessionClaim.reserve`）。 */
   readonly reserveSession: (sessionId: SessionId) => Promise<SessionReservation>
   /** 占有ファイルを消す（起こし直しに失敗したとき）。 */
   readonly withdrawSessionClaim: () => void

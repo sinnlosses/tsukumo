@@ -23,7 +23,7 @@ import styles from "./report-notation.module.css"
  * モデルが書く class 名 → tsukumo が装飾に使う class 名（report-notation.module.css のもの。組み立て時にハッシュ化される）。
  * ここに無い名前は素通しする。
  * 印の名前の集合は `REPORT_NOTATION_NAMES` が持つ（`report-<名前>` が CSS 側の綴りの規則）。
- * tsukumo が組む印（検証結果の塊）も同じ表で解決する。
+ * tsukumo が組む印（検証結果の部品）も同じ表で解決する。
  */
 const NOTATION_CLASS_NAMES: ReadonlyMap<string, string> = new Map(
   [...REPORT_NOTATION_NAMES, ...REPORT_DRAWN_MARK_NAMES].map((name) => [
@@ -44,7 +44,7 @@ const COUNTED_BLOCKS = ["stats", "cols"] as const
 /** 書き上げる演出（`planReveal`）が題の行を見分ける印の属性。class はハッシュ名になり domain の層から選べない。 */
 const REVEAL_CAPTION_ATTRIBUTE = "data-reveal-caption"
 
-/** 書き上げる演出が余白の柱（傍注の並び）を見分ける印の属性。余白の柱は最初から出す。 */
+/** 書き上げる演出が欄外注の列（欄外注の並び）を見分ける印の属性。欄外注の列は最初から出す。 */
 const REVEAL_GUTTER_ATTRIBUTE = "data-reveal-gutter"
 
 type NotationBlockProps = JSX.IntrinsicElements["div"] & ExtraProps
@@ -90,7 +90,7 @@ export function NotationBlock(props: NotationBlockProps): ReactElement {
 
 type NotationAsideProps = JSX.IntrinsicElements["aside"] & ExtraProps
 
-/** レポートの `aside`（余白の柱の傍注1つ）。 */
+/** レポートの `aside`（欄外注の列の欄外注1つ）。 */
 export function NotationAside(props: NotationAsideProps): ReactElement {
   const { node: _node, className, children, ...rest } = props
 

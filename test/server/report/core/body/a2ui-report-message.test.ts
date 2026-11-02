@@ -223,7 +223,7 @@ function reportOf(components: readonly unknown[]): ReportCalled {
   return report
 }
 
-/** 組み直した引数の節・図・振り返りの塊の kind。 */
+/** 組み直した引数の節・図・振り返りの部品の kind。 */
 function outputKindsOf(fields: Readonly<Record<string, unknown>>): readonly string[] {
   const figure = parseReportFigure(fields.figure)
   const retrospective = parseReportRetrospective(fields.retrospective)

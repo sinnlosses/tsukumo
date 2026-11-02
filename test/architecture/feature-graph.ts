@@ -1,10 +1,10 @@
-// 層の判定と、機能どうしの辺のグラフ。
+// 層の判定と、機能どうしのエッジのグラフ。
 
 export type Layer = "shared" | "core" | "adapter" | "browser" | "cli" | "ambient"
 
 // サーバの機能（docs/architecture/server-feature.md「サーバの機能と、機能どうしのエッジ」の1つめの表）。機能を足す
 // ときは、ここと `.dependency-cruiser.cjs` の `server-feature-edge:` の規則に足す（一覧に無いディレクトリを `server/` の下に
-// 作ると `layerOf` が throw する）。まだ移していないファイルは共有の箱（`server/core/`
+// 作ると `layerOf` が throw する）。まだ移していないファイルは共有モジュール（`server/core/`
 // `server/adapter/` の直下）に居るまま動く。
 export const SERVER_FEATURES = [
   "report",
@@ -32,12 +32,12 @@ export type ServerFeature = (typeof SERVER_FEATURES)[number]
 
 export type ServerLayer = "core" | "adapter"
 
-/** `server/` の下のファイルの置き場。共有の箱か、機能の層か。 */
+/** `server/` の下のファイルの置き場。共有モジュールか、機能の層か。 */
 export type ServerPlace =
   | { readonly kind: "shared"; readonly layer: ServerLayer }
   | { readonly kind: "feature"; readonly feature: ServerFeature; readonly layer: ServerLayer }
 
-/** 機能 A から別の機能 B への import 1本（同じ機能の中の辺は含めない）。 */
+/** 機能 A から別の機能 B への import 1本（同じ機能の中のエッジは含めない）。 */
 export type ServerFeatureEdge = {
   readonly fromPath: string
   readonly fromFeature: ServerFeature
@@ -75,7 +75,7 @@ export function layerOf(relPath: string): Layer {
 
 /**
  * `server/` の下のファイルの置き場を決める。`server/core/` `server/adapter/` の下（`lib/` を含む）は
- * 共有の箱、`server/<機能>/core/` `server/<機能>/adapter/` の下は機能の層。`SERVER_FEATURES` に
+ * 共有モジュール、`server/<機能>/core/` `server/<機能>/adapter/` の下は機能の層。`SERVER_FEATURES` に
  * 無いディレクトリ、機能の中で `core/` `adapter/` の外に置いたファイル、`server/` の直下の
  * ファイルは `throw`（判断か境界かを名乗っていないものと、足し忘れた機能を素通りさせない）。
  */
@@ -96,7 +96,7 @@ export function serverPlaceOf(relPath: string): ServerPlace {
   throw new Error(`src/${relPath} は機能 ${feature} の core/ か adapter/ の下に置く`)
 }
 
-/** 機能どうしの辺のうち、両端が同じ層（`core/` どうし・`adapter/` どうし）のものを機能のグラフにする。 */
+/** 機能どうしのエッジのうち、両端が同じ層（`core/` どうし・`adapter/` どうし）のものを機能のグラフにする。 */
 export function featureGraphOf(
   edges: readonly ServerFeatureEdge[],
   layer: ServerLayer,

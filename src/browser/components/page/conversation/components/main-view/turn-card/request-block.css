@@ -21,7 +21,7 @@
   white-space: nowrap;
   line-height: 20px;
 }
-/* 開いたあとは全行を折り返して出し、長いときは窓の 40% で内側に転がす。 */
+/* 開いたあとは全行を折り返して出し、長いときはビューポートの 40% で内側に転がす。 */
 .request-lines.is-expanded {
   max-height: 40vh;
   overflow-y: auto;

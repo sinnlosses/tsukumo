@@ -8,7 +8,7 @@ import type { SessionEvent } from "../../../../shared/session/session-event.ts"
 import type { SessionStart } from "../session-driver.ts"
 import { parseSessionId, type SessionId } from "../session-id.ts"
 
-/** 起こす直前に選んだIDを占有ファイルに書けたか（`reserved`）、別の窓が使っていたか（`occupied`）。 */
+/** 起こす直前に選んだIDを占有ファイルに書けたか（`reserved`）、別のウィンドウが使っていたか（`occupied`）。 */
 export type SessionReservation = "reserved" | "occupied"
 
 /** 占有ファイルの書き置きの口。 */
@@ -29,7 +29,7 @@ export type SessionClaim = {
   readonly noteLaunched: (start: SessionStart) => (event: SessionEvent) => void
   /**
    * 起こし直す前に、選んだIDを占有ファイルに足してからほかの占有ファイルを読む。
-   * ほかに同じIDがあれば足したIDを外して `occupied` を返す（同時に選んだ2つの窓は、少なくとも一方が相手を見る）。
+   * ほかに同じIDがあれば足したIDを外して `occupied` を返す（同時に選んだ2つのウィンドウは、少なくとも一方が相手を見る）。
    */
   readonly reserve: (sessionId: SessionId) => Promise<SessionReservation>
   /** 占有ファイルを消す（起こし直しに失敗したとき・閉じるとき）。 */

@@ -44,7 +44,7 @@
 }
 /* 吹き出しの列。
    左右と下端はキャラビューの `.balloon-track` に重ね（最新の吹き出しの下端がキャラビューと同じ高さに来る）、上端だけ枠の上端まで伸ばす。
-   並びは古い→新しいを上→下で、開いた直後に下端へ転がしてある。 */
+   並びは古い→新しいを上→下で、開いた直後に下端へスクロールしてある。 */
 .speech-log-scroller {
   position: fixed;
   position-anchor: --speech-log-track;
@@ -188,7 +188,7 @@
   margin: 0;
 }
 /* 並び本体。
-   転がせないほど短いときは下端に寄せる（`margin-top: auto`。`justify-content: flex-end` だと、溢れたときに上端が転がしても届かない側へはみ出す）。 */
+   転がせないほど短いときは下端に寄せる（`margin-top: auto`。`justify-content: flex-end` だと、溢れたときに上端がスクロールしても届かない側へはみ出す）。 */
 .speech-log-entries {
   display: flex;
   flex-direction: column;
@@ -269,7 +269,7 @@
   border-radius: var(--radius-md);
   font-size: var(--font-action);
 }
-/* 狭い画面（760px 以下）。開く口は「ログ」ではなく入力欄の上の吹き出しで、ログは画面いっぱいに開く（立ち絵の床は出さない）。 */
+/* 狭い画面（760px 以下）。開くボタンは「ログ」ではなく入力欄の上の吹き出しで、ログは画面いっぱいに開く（立ち絵の床は出さない）。 */
 @media (max-width: 760px) {
   .speech-log-open {
     display: none;

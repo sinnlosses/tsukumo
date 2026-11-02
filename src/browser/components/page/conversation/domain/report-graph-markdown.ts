@@ -11,8 +11,8 @@ import type { ReportGraph } from "../../../../../shared/report/report-block-diag
 import { htmlInline } from "../../../../../shared/report/report-inline-markdown.ts"
 
 /**
- * 書き手の名前は辺を結ぶためだけに使い、ソースの ID は `n0`, `n1` … を振る（`end` などの予約語を避ける）。
- * ラベルは節点も辺も必ず引用符で包む（`@`・`(`・`|` などを構文と読ませない）。
+ * 書き手の名前はエッジを結ぶためだけに使い、ソースの ID は `n0`, `n1` … を振る（`end` などの予約語を避ける）。
+ * ラベルはノードもエッジも必ず引用符で包む（`@`・`(`・`|` などを構文と読ませない）。
  * 読めない行は呼び出し側が先に差し戻す前提で、ここでは飛ばす。
  */
 export function graphSource(block: ReportGraph): string {
@@ -121,7 +121,7 @@ const GRAPH_RETURN_COLOR = "--graph-return"
 /** 色の目印の無い群に順に当てる地の色の数（`--graph-ground-1` 〜）。 */
 const GRAPH_GROUND_COUNT = 3
 
-/** 色の目印 → 系列色のトークン（`svg` の `tone` と同じ）と、節点の地のトークン。 */
+/** 色の目印 → 系列色のトークン（`svg` の `tone` と同じ）と、ノードの地のトークン。 */
 const GRAPH_TONES = [
   { tone: "a", color: "--chart-series-1", fill: "--graph-tone-fill-a" },
   { tone: "b", color: "--chart-series-2", fill: "--graph-tone-fill-b" },
@@ -218,7 +218,7 @@ function mermaidId(index: number): string {
   return `n${String(index)}`
 }
 
-/** 名前の下に小さい字で説明を置く節点のラベル。HTML として読まれるので `<` `>` `&` は実体にする。 */
+/** 名前の下に小さい字で説明を置くノードのラベル。HTML として読まれるので `<` `>` `&` は実体にする。 */
 function noteLabel(name: string, note: string): string {
   const lines = note.split("\n").map(escapedForLabel).join("<br/>")
   return quoted(`${escapedForLabel(name)}<br/><small>${lines}</small>`)

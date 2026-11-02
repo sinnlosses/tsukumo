@@ -1,4 +1,4 @@
-/* 脇の話の欄（`AsideThread`）。 */
+/* 補足メッセージの欄（`AsideThread`）。 */
 .aside-thread {
   margin: 0;
   padding: var(--space-sm) var(--space-md);

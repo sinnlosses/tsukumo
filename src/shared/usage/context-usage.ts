@@ -6,7 +6,7 @@ import { z } from "zod"
 
 /**
  * 分類1行の種別。分類の判定はこれで行い、`name`（英語の表示名）では判定しない（SDK の型の説明に明記されている）。
- * `used` は窓を占める中身、`free` は残り、`buffer` は自動圧縮のために空けてある分、`deferred` は窓の外にあるツールの定義（数えはするが使用量には入らない）。
+ * `used` はコンテキストウィンドウを占める中身、`free` は残り、`buffer` は自動圧縮のために空けてある分、`deferred` はコンテキストウィンドウの外にあるツールの定義（数えはするが使用量には入らない）。
  */
 export const CONTEXT_CATEGORY_KINDS = ["used", "free", "buffer", "deferred"] as const
 
@@ -35,7 +35,7 @@ export type ContextUsage = {
   readonly model: string
   /** 使っている量の見積もり（`used` の分類の合計）。 */
   readonly totalTokens: number
-  /** 使用量を測る相手になる窓の大きさ（SDK の `rawMaxTokens`）。 */
+  /** 使用量を測る相手になるコンテキストウィンドウの大きさ（SDK の `rawMaxTokens`）。 */
   readonly maxTokens: number
   /** 使っている割合（0〜100+。SDK が丸めた値をそのまま）。 */
   readonly percentage: number

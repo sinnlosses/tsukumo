@@ -1,4 +1,4 @@
-// `mainViewTurns` の窓・ステップへのまとめ・本文の選び方と最終レポートの印。
+// `mainViewTurns` の集計期間・ステップへのまとめ・本文の選び方と最終レポートの印。
 import { describe, expect, it } from "vitest"
 
 import { mainViewTurns } from "../../../../src/browser/domain/main-view/main-view.ts"
@@ -17,7 +17,7 @@ import {
   WRITING,
 } from "../../../fixture/main-view-entry.ts"
 
-/** メインビューに出すやり取りの数（仕事の記録の窓と同じ）。 */
+/** メインビューに出すやり取りの数（仕事の記録の集計期間と同じ）。 */
 const MAX_MAIN_VIEW_TURNS = MAX_SESSION_STATE_TURNS.work
 
 describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {

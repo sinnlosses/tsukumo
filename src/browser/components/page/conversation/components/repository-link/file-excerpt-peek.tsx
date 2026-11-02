@@ -1,5 +1,5 @@
 // 押せるパスの下（下が足りなければ上）に浮かせる、指した行の前後の抜き書き。
-// 照らし合わせ用で、押せる要素を持たない。窓の座標で置くので `document.body` に出す。
+// 照らし合わせ用で、押せる要素を持たない。ビューポートの座標で置くので `document.body` に出す。
 
 import clsx from "clsx"
 import type { ReactElement } from "react"
@@ -11,7 +11,7 @@ import styles from "./repository-link.module.css"
 
 /** 押せるパスと浮きのあき（px）。 */
 const GAP_PX = 6
-/** 窓の端から空ける幅（px）。 */
+/** ビューポートの端から空ける幅（px）。 */
 const WINDOW_MARGIN_PX = 8
 
 type FileExcerptPeekProps = {
@@ -96,7 +96,7 @@ function noteOf(excerpt: Exclude<ShownFileExcerpt, { kind: "lines" }>, pointed: 
   }
 }
 
-/** 押せるパスの最後の行の下へ、窓の左右の端からはみ出さないように置く。下が足りなければ上へ。 */
+/** 押せるパスの最後の行の下へ、ビューポートの左右の端からはみ出さないように置く。下が足りなければ上へ。 */
 function placeNearAnchor(node: HTMLDivElement | null, anchor: PeekAnchor): void {
   if (node === null) {
     return

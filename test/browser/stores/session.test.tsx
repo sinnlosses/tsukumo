@@ -64,7 +64,7 @@ describe("姿の store の購読", () => {
       })
     })
 
-    // 姿は確かに動いた（記録が1件増えた）が、お伺いの札は描き直していない。
+    // 姿は確かに動いた（記録が1件増えた）が、お伺いのカードは描き直していない。
     expect(screen.getByText("記録1件")).toBeDefined()
     expect(commits).toBe(afterFirstRender)
   })

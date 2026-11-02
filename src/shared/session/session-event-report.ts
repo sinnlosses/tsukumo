@@ -39,7 +39,7 @@ export type ReportEvent =
     }
   /**
    * `report` ツールの呼び出し。メインが呼んだものだけが届く（サブエージェントの呼び出しは変換で捨てる）。
-   * `checks`（検証結果）は無ければ空の配列、`favor` は無ければ空の文字列、`task` と `workPlanClosing`（段の閉じ方）は無ければ `none`。
+   * `checks`（検証結果）は無ければ空の配列、`favor` は無ければ空の文字列、`task` と `workPlanClosing`（フェーズの閉じ方）は無ければ `none`。
    * `keyFigures`（結論の直下に並べる数）は無ければ空の配列。
    * `toolUseId` は呼び出しの id で、差し戻しが同じ呼び出しの `tool-finished` と突き合わせるのに使う。
    * `closing`（締めのセリフ）は描いたあとに差し戻しが `speech` として出すもので、画面の状態はこの欄を読まない。
@@ -54,8 +54,8 @@ export type ReportEvent =
    * `conclusionSentenceChars` は `conclusion` の要素ごとの字数で、記法の検査だけが読む。
    * `conclusionFirstSentence` は `conclusion` の1要素目で、通った `report` のツール結果の文になる。
    * `title`（セッション一覧の見出し）は書かれていなければ undefined。画面の状態は読まず、差し戻しのあとの出し直しで引き継ぐためだけに持つ（書き込むのは handler）。
-   * `components` は `a2ui` の版で受け付けた部品の一覧で、旧い版の呼び出しでは空。本文の節・図・振り返りの塊は、この一覧の葉から導く。
-   * `imageSizes` と `unshelvedImages` は `report` の引数ではなく、サーバが画像を棚に置いたときに測った寸法と、棚に置けなかった・寸法を測れなかったパス。駆動は空で渡し、セッションの管理が畳む前に埋める。
+   * `components` は `a2ui` の版で受け付けた部品の一覧で、旧い版の呼び出しでは空。本文の節・図・振り返りの部品は、この一覧の葉から導く。
+   * `imageSizes` と `unshelvedImages` は `report` の引数ではなく、サーバが画像を置き場に置いたときに測った寸法と、置き場に置けなかった・寸法を測れなかったパス。駆動は空で渡し、セッションの管理が畳む前に埋める。
    */
   | {
       readonly kind: "report"

@@ -30,7 +30,7 @@ export type ScreenNavSettingsProps = {
   readonly settings: ScreenNavSettings
 }
 
-/** 既定の吊り札に出す許可モード。「全部許す」は既定には選べないので落とす（帯の吊り札からはその都度選べる）。 */
+/** 既定の吊り下げのカードに出す許可モード。「全部許す」は既定には選べないので落とす（帯の吊り下げのカードからはその都度選べる）。 */
 const SESSION_DEFAULT_PERMISSION_MODES = PERMISSION_MODE_LABELS.map(([value]) => value).filter(
   isSessionDefaultPermissionMode,
 )

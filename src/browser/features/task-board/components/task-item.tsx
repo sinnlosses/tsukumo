@@ -1,6 +1,6 @@
-// 区画の一覧1件分（進行中を除いた「残り」）。行全体が1つのボタンで、押すとのぞき窓が開く。
+// 区画の一覧1件分（進行中を除いた「残り」）。行全体が1つのボタンで、押すとプレビューが開く。
 // 印・ID・題（1行で末尾「…」）・`↻`・`›` の5列の grid。属性のうち `loopable` だけを `↻` で出し（難しさは出さない）、`todo` と `hold` の行に限る。
-// 開いているときは、窓をボタンの後ろ（同じ `<li>` の中）に置く。
+// 開いているときは、プレビューをボタンの後ろ（同じ `<li>` の中）に置く。
 
 import clsx from "clsx"
 import { ChevronRight } from "lucide-react"
@@ -83,7 +83,7 @@ function TaskLoopMark(props: { readonly task: TaskSummaryItem }): ReactElement {
   )
 }
 
-/** 行の窓。開いているときは、窓の DOM の id（`aria-controls`）と窓そのもの。 */
+/** 行のプレビュー。開いているときは、プレビューの DOM の id（`aria-controls`）とプレビューそのもの。 */
 export type TaskItemPeek =
   | { readonly kind: "closed" }
   | { readonly kind: "open"; readonly controls: string; readonly element: ReactNode }

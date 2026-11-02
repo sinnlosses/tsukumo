@@ -19,7 +19,7 @@ import { INITIAL_SESSION_STATE } from "../../../../../../src/shared/session/sess
 import { type CommandSpy, putSession } from "../../../../session-store.ts"
 
 /**
- * お伺い（答え待ちの許可要求と質問）に対して組み立てる答え（メインビューの札と入力欄の両方が読み書きする1つの
+ * お伺い（答え待ちの許可要求と質問）に対して組み立てる答え（メインビューのカードと入力欄の両方が読み書きする1つの
  * 状態。docs/architecture/browser.md「状態の持ち方」）を、部品を描かずに測る。
  */
 

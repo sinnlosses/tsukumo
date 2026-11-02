@@ -28,7 +28,7 @@ export function contextUsageDir(): string {
 }
 
 /**
- * 記録の書き込み口を作る。`root` は置き場（既定は {@link contextUsageDir}）。
+ * 記録の書き込みの関数を作る。`root` は置き場（既定は {@link contextUsageDir}）。
  * 1つの口を日をまたいで使い回せる（`append` のたびに `entry.at` から行き先を組み立てる）。
  */
 export function createContextUsageLog(

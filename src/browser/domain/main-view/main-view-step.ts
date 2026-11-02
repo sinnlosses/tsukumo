@@ -137,7 +137,7 @@ function groupIntoSteps(entries: readonly StepEntry[]): GroupedSteps {
 
       const step = steps.at(-1)
       // レポートより前に起きたことは、レポートを持たないステップにまとめる。
-      // 脇の話が最後に出ているステップへ足すと脇の話の欄より上に描かれるので、新しいステップに入れる。
+      // 脇の話が最後に出ているステップへ足すと補足メッセージの欄より上に描かれるので、新しいステップに入れる。
       return {
         steps:
           step === undefined || step.asides.length > 0

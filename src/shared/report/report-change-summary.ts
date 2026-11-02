@@ -1,4 +1,4 @@
-// 最終レポートの目録の末尾に出す変更の札の形。数えるのは tsukumo で、モデルには書かせない。
+// 最終レポートのタスク見出し行の末尾に出す変更のラベルの形。数えるのは tsukumo で、モデルには書かせない。
 
 import type { ChangedFile } from "./changed-file.ts"
 
@@ -15,7 +15,7 @@ export type ReportChangeCount = {
 }
 
 /**
- * レポートが持つ変更の札。数えられなかった・まだ届いていない・復元した記録は `none`。
+ * レポートが持つ変更のラベル。数えられなかった・まだ届いていない・復元した記録は `none`。
  * `none` と `counted` の 0 ファイルは別物（0 は数えた結果）。
  */
 export type ReportChangeSummary =

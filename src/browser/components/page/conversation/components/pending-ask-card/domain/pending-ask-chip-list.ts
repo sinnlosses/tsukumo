@@ -1,6 +1,6 @@
 import type { InquiryModel } from "../../../stores/inquiry-answer.ts"
 
-/** 等幅の札で出す項目の上限。超えたぶんは「ほか n」にまとめる。 */
+/** 等幅のバッジで出す項目の上限。超えたぶんは「ほか n」にまとめる。 */
 const MAX_SHOWN_CHIPS = 6
 
 export type PendingAskChips = {
@@ -11,7 +11,7 @@ export type PendingAskChips = {
 }
 
 /**
- * 質問は添え書きの図の塊のうち最初の `list` の項目、許可は対象の1行。
+ * 質問は添え書きの図の部品のうち最初の `list` の項目、許可は対象の1行。
  * どちらも無ければ空。
  */
 export function pendingAskChips(inquiry: InquiryModel): PendingAskChips {

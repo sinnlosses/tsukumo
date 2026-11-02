@@ -1,4 +1,4 @@
-// 一覧のタスクを、行・絞り込みの札・選んだタスクの詳細・操作の帯へ畳む。
+// 一覧のタスクを、行・絞り込みのバッジ・選んだタスクの詳細・操作の帯へ畳む。
 
 import {
   taskReadiness,
@@ -186,7 +186,7 @@ function selectionOf(
     },
     breadcrumb: input.breadcrumb,
     onCopy: () => {
-      // 書けなかったとき（窓にフォーカスが無いなど）は何もしない。押し直せば済む。
+      // 書けなかったとき（ウィンドウにフォーカスが無いなど）は何もしない。押し直せば済む。
       void navigator.clipboard.writeText(task.id).catch(() => {})
     },
     onJump: input.onJump,

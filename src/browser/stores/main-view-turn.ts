@@ -51,7 +51,7 @@ export function mainViewTurnsOf(state: SessionState): readonly MainViewTurn[] {
  *
  * 伸びうるのは、いま走っている SDK のターンで届いた本文だけ（`SessionState.sdkTurn` の `bodies`）。
  * サブエージェントの `SendMessage` やバックグラウンドタスクの通知で claude が自分で続きのターンを始めると `running` に戻る。
- * そこで前の SDK ターンで確定した `report` まで伏せると、合図が届くたびに出ていた中間レポートが消えて、ターンが終わると同じものが出直す（画面で出た）。
+ * そこで前の SDK ターンで確定した `report` まで伏せると、通知が届くたびに出ていた中間レポートが消えて、ターンが終わると同じものが出直す（画面で出た）。
  *
  * ターンが `running` かどうかだけでは足りない。
  * 背景の仕事（サブエージェント・背景のコマンド）を待って黙ると SDK が `result` を出すので `turn-finished` が届き、`finished` に落ちる。

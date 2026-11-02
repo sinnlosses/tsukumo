@@ -13,7 +13,7 @@ export const TIME_ZONE = "Asia/Tokyo"
 /**
  * ブラウザの時計を凍らせた瞬間から始める。`page.clock.install` だけでは `pauseAt` を
  * 呼ぶまで実時間で進み、止まったサーバの時計（`TSUKUMO_FIXED_CLOCK`）とずれて、
- * `SUCCESS_MOTION_WINDOW_MS` のような時間の窓の判定が実行の速さで揺れる。
+ * `SUCCESS_MOTION_WINDOW_MS` のような期間の判定が実行の速さで揺れる。
  *
  * `page.clock.install` は `Date.now()` を差し替えるが `Temporal.Now` は差し替えないので、
  * `Temporal.Now.instant()` を `Date.now()` に従わせる（ブラウザで「いま」を読むのは

@@ -20,7 +20,7 @@ import { groupIntoTurns } from "./main-view-step.ts"
 
 /**
  * 出すやり取りの数。
- * 値は {@link MAX_SESSION_STATE_TURNS}.work から導く（メインビューの窓が記録の窓を超えない関係を導出で保つ。別々の定数にすると、どちらかだけを直したときに関係が黙って崩れる）。
+ * 値は {@link MAX_SESSION_STATE_TURNS}.work から導く（メインビューの集計期間が記録の集計期間を超えない関係を導出で保つ。別々の定数にすると、どちらかだけを直したときに関係が黙って崩れる）。
  */
 const MAX_MAIN_VIEW_TURNS = MAX_SESSION_STATE_TURNS.work
 
@@ -208,7 +208,7 @@ function markSupersededSteps(turn: MainViewTurn): MainViewTurn {
  * 最終レポートなら常に箱を外し、ラベル（「最終レポート」）は中間レポートのあるやり取りか、本文に `task` があるときだけ出す。
  *
  * 印を立てた本文は頭を最終のときの頭に替える（段ごとの所要時間を出すのは最終レポートだけ。{@link finalReportBody}）。
- * 変更の札は印を立てた `task` のある本文にだけ残し、ほかの本文では `none` に戻す。
+ * 変更のラベルは印を立てた `task` のある本文にだけ残し、ほかの本文では `none` に戻す。
  *
  * `closed` が false のとき（{@link mainViewTurns} の同名の引数）は `final` の印を1つも付けない。
  * やり取りがまだ閉じていないあいだは、次の `report` が来てこの本文が中間レポートへ回るかもしれないので、確定していないものに最終レポートの札（ラベルも箱を外すことも）を立てない。

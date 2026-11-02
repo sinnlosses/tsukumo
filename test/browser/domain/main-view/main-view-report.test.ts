@@ -1,4 +1,4 @@
-// `report` ツールのレポートの組み立て（結論・節・変更の札・図）と、締めの speak で終える並び。
+// `report` ツールのレポートの組み立て（結論・節・変更のラベル・図）と、締めの speak で終える並び。
 import { describe, expect, it } from "vitest"
 
 import { reportHeadedSections } from "../../../../src/browser/domain/main-view/main-view-report-body.ts"

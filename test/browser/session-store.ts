@@ -10,7 +10,7 @@ import { PROTOCOL_VERSION } from "../../src/shared/frame.ts"
 import { INITIAL_SESSION_STATE, type SessionState } from "../../src/shared/session/session-state.ts"
 
 /**
- * 部品が送ったコマンドの受け取り口。手続きの名前（`session.prompt` のように `.` で繋いだもの）を
+ * 部品が送ったコマンドを受け取る関数。手続きの名前（`session.prompt` のように `.` で繋いだもの）を
  * `procedure` に、入力のフィールドを同じ階層に平らに並べた記録を受け取る（入力の無い手続きは
  * `procedure` だけ）。Promise を返すと手続きの結果になり、reject すれば断りを再現できる。
  */

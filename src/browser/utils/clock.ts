@@ -5,7 +5,7 @@
 
 /**
  * いまのエポックミリ秒。`Temporal.Instant` のままでは返さない。
- * 経過時間の比較と引き算に使う相手（立ち絵の動きの窓・`SessionState` の `at`）が数の契約だから。
+ * 経過時間の比較と引き算に使う相手（立ち絵の動きの期間・`SessionState` の `at`）が数の契約だから。
  */
 export function nowEpochMilliseconds(): number {
   return Temporal.Now.instant().epochMilliseconds

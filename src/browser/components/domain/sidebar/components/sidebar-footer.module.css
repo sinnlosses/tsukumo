@@ -33,7 +33,7 @@
   background: var(--rule-quiet);
 }
 /* 目盛りか円を押すと、帯の真上に重ねて開く詳しい面。タスクの区画を押し下げない。
-   プラン使用量の札が280px未満で棒を畳むための基準（`@container`）もここ。 */
+   プラン使用量のカードが280px未満で棒を畳むための基準（`@container`）もここ。 */
 .sidebar-footer-detail {
   position: absolute;
   right: 0.75rem;

@@ -1,4 +1,4 @@
-// 件ごとに撮る窓の大きさを選ぶ判断を検証する。
+// 件ごとに撮るビューポートの大きさを選ぶ判断を検証する。
 
 import { describe, expect, test } from "vitest"
 

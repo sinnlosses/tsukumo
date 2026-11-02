@@ -15,7 +15,7 @@ export const MODEL_LABELS = [
   ["haiku", "Haiku"],
 ] satisfies readonly (readonly [ModelAlias, string])[]
 
-/** モデルの吊り札の行に出す、1行の用途と重さ（狐火の●の数）。 */
+/** モデルの吊り下げのカードの行に出す、1行の用途と重さ（狐火の●の数）。 */
 type ModelDescription = {
   readonly summary: string
   readonly weight: number

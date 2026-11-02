@@ -84,11 +84,11 @@ export type SessionDriverOptions = {
   readonly mountFigurePlugin: boolean
   /** ワークフローの `tw` のパス。hook の `lap-hook`・`ask-guard` を起こす。 */
   readonly workflowTw: string
-  /** 内部イベントの受け取り口。投げても反復は止まらず、投げた失敗は `diagnose` へ渡る。 */
+  /** 内部イベントを受け取る関数。投げても反復は止まらず、投げた失敗は `diagnose` へ渡る。 */
   readonly onEvent: (event: SessionEvent) => void
   /** 現在時刻（エポックミリ秒）を返す時計。 */
   readonly now: () => number
-  /** 駆動が診断ログへ残したいことの受け取り口。ここで例外を投げないこと。 */
+  /** 駆動が診断ログへ残したいことを受け取る関数。ここで例外を投げないこと。 */
   readonly diagnose: (diagnostic: DriverDiagnostic) => void
 }
 
@@ -129,7 +129,7 @@ export type PromptOpening = "request" | "aside"
 export type SessionDriver = {
   /**
    * 利用者の言葉を1つ送る（ストリーミング入力への追加）。`opening` と同じ種類のイベント（`request` か `aside`）も同時に流れる。
-   * `images` は呼ぶ側が棚に置いたあとのもの（原寸と控えの対に、棚が振った id を添えたもの）。
+   * `images` は呼ぶ側が置き場に置いたあとのもの（原寸と控えの対に、棚が振った id を添えたもの）。
    * 原寸はモデルへ渡すだけで、イベントには控えと id だけを載せる（分けるのは `recordedPromptImages`）。
    */
   readonly prompt: (

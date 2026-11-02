@@ -79,9 +79,9 @@
     height: 320px;
     margin: var(--report-block-gap) 0;
   }
-  /* 余白の柱（塊の `aside` と `memo` の `note` の傍注。値は docs/architecture/screen-design/layout.md「欄外注の列」）。
-   `with-gutter` が塊1つと傍注の並び `gutter` を包む。
-   既定は、傍注を塊の直後に 12px の1行ずつで畳む（上の負の margin は、塊の下のあきと相殺して塊に寄せる）。 */
+  /* 欄外注の列（塊の `aside` と `memo` の `note` の欄外注。値は docs/architecture/screen-design/layout.md「欄外注の列」）。
+   `with-gutter` が塊1つと欄外注の並び `gutter` を包む。
+   既定は、欄外注を塊の直後に 12px の1行ずつで畳む（上の負の margin は、塊の下のあきと相殺して塊に寄せる）。 */
   & .report-gutter {
     margin: calc(var(--space-sm) * -1) 0 var(--report-block-gap);
   }
@@ -103,10 +103,10 @@
     font-weight: 600;
     color: var(--ink-soft);
   }
-  /* 本文の列（42em）の右に 160px 以上空くときだけ、傍注を本文の列の右の余白の柱に出す（器はメインビューの本文）。
-   包みを2列の grid にし、余白の柱は塊と同じ行に置いて上端を揃える（行は高いほうに伸び、次の塊に重ならない）。
-   grid の中では margin が相殺しないので、塊の上下のあきは包みが持ち、中の塊と余白の柱の上下の margin は落とす。
-   余白の柱を持つ塊は、表と図でも本文の列に収まる。余白の柱は 1920 幅でも本文の列のすぐ右に置く。
+  /* 本文の列（42em）の右に 160px 以上空くときだけ、欄外注を本文の列の右の欄外注の列に出す（器はメインビューの本文）。
+   包みを2列の grid にし、欄外注の列は塊と同じ行に置いて上端を揃える（行は高いほうに伸び、次の塊に重ならない）。
+   grid の中では margin が相殺しないので、塊の上下のあきは包みが持ち、中の塊と欄外注の列の上下の margin は落とす。
+   欄外注の列を持つ塊は、表と図でも本文の列に収まる。欄外注の列は 1920 幅でも本文の列のすぐ右に置く。
    `body.css` の `:is(.detail-block, …) > .report-with-gutter > :is(p, ul, ol)` と同じ詳細度なので、勝たせるために末尾に置く。 */
   @container report-gutter (min-width: calc(42em + 160px)) {
     & .report-with-gutter {

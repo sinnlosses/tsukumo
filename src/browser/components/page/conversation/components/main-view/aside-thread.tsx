@@ -1,4 +1,4 @@
-// 脇の話の欄の入口。
+// 補足メッセージの欄の入口。
 
 import type { ReactElement } from "react"
 

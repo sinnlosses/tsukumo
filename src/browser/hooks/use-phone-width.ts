@@ -1,4 +1,4 @@
-// 窓が狭い画面の幅（760px 以下）か。
+// ビューポートが狭い画面の幅（760px 以下）か。
 
 import { useMediaQuery } from "./use-media-query.ts"
 

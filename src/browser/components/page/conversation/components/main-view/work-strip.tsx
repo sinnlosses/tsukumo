@@ -1,4 +1,4 @@
-// 進み具合の帯の入口。
+// 進み具合のプログレスバーの入口。
 
 import type { ReactElement } from "react"
 

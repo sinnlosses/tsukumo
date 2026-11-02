@@ -7,7 +7,7 @@ import {
   recordedPromptImageIds,
 } from "../../../session-driver/core/prompt-image-shelf.ts"
 
-/** 原寸を棚に置き、振られた id を依頼・脇の話の `images` に写した再生を返す。 */
+/** 原寸を置き場に置き、振られた id を依頼・脇の話の `images` に写した再生を返す。 */
 export function shelveRestoredPromptImages(
   shelf: Pick<PromptImageShelf, "shelveRestored">,
   events: readonly RestoredEvent[],
@@ -21,7 +21,7 @@ export function shelveRestoredPromptImages(
   })
 }
 
-/** 再生で棚に置いた原寸のうち、畳んだ記録に残らなかった（記録の窓から溢れた）ものの id。 */
+/** 再生で置き場に置いた原寸のうち、畳んだ記録に残らなかった（記録の集計期間から溢れた）ものの id。 */
 export function unrecordedRestoredPromptImageIds(
   events: readonly RestoredEvent[],
   records: readonly SessionRecord[],

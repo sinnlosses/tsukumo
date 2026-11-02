@@ -24,7 +24,7 @@ const cardChainOf = (names: readonly string[]): string =>
     .map((name) => `<li class="card-chain-card"><span class="card-chain-name">${name}</span></li>`)
     .join('<li class="card-chain-arrow" aria-hidden="true"></li>')}</ol>`
 
-/** カードの連鎖に並んだ節点の名前（上から順）。一本道でなければ `undefined`。 */
+/** カードの連鎖に並んだノードの名前（上から順）。一本道でなければ `undefined`。 */
 const cardNamesOf = (source: string): readonly string[] | undefined => {
   const html = cardChainHtml(source)
   return html === undefined

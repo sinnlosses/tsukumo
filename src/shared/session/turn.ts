@@ -65,7 +65,7 @@ export function splitIntoTurns<T extends TurnItem>(records: readonly T[]): reado
 
 /**
  * ターンの通し番号。
- * 依頼で始まるターンは依頼が持つ番号をそのまま使い（`SessionState.nextTurnId` が振ったもの。窓から古い記録が落ちてもずれない）、`pre-request` は {@link PRE_REQUEST_TURN_ID}。
+ * 依頼で始まるターンは依頼が持つ番号をそのまま使い（`SessionState.nextTurnId` が振ったもの。集計期間から古い記録が落ちてもずれない）、`pre-request` は {@link PRE_REQUEST_TURN_ID}。
  */
 export function turnIdOf<T extends TurnItem>(turn: Turn<T>): number {
   return turn.kind === "pre-request" ? PRE_REQUEST_TURN_ID : turn.request.turnId

@@ -244,7 +244,7 @@
   flex-direction: column;
   gap: var(--space-md);
 }
-/* 提案の札1枚。地は `--usage-well`（区画全体の染めより1段沈め、区画の地とは別の面だと分かるようにする）。 */
+/* 提案のカード1枚。地は `--usage-well`（区画全体の染めより1段沈め、区画の地とは別の面だと分かるようにする）。 */
 .usage-review-proposal {
   display: flex;
   align-items: flex-start;
@@ -380,7 +380,7 @@
   .usage-review-blocked {
     text-align: left;
   }
-  /* 結果の頭の行・提案の札も同じ境目で折り返す。 */
+  /* 結果の頭の行・提案のカードも同じ境目で折り返す。 */
   .usage-review-result-head {
     flex-wrap: wrap;
   }

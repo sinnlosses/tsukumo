@@ -24,7 +24,7 @@ import type {
 } from "../../../shared/usage/token-usage.ts"
 import { byteLength } from "../../core/byte-length.ts"
 
-/** トークン消費の読み書き口。書けなくても例外を投げず、受け付けたかどうかは返さない。 */
+/** トークン消費の読み書きの関数。書けなくても例外を投げず、受け付けたかどうかは返さない。 */
 export type TokenUsageLog = {
   /** 子プロセスを起こさない。着手中のタスクは `prefetchOpenTask` が控えたものだけを結ぶ。 */
   readonly append: (entry: TokenUsageEntry) => void

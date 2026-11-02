@@ -13,7 +13,7 @@ export type DispatchResult =
   | { readonly ok: false; readonly reason: CommandRefusalReason }
 
 /**
- * 書き込み口を呼び、返ったイベントを流す行。`undefined` が返ったとき・投げたときは `failure` で断る。
+ * 書き込みの関数を呼び、返ったイベントを流す行。`undefined` が返ったとき・投げたときは `failure` で断る。
  * イベントを流すのは {@link receiveFeatureCommand} で、行は流し方を知らない。
  */
 export type WriteReceiver<C> = {
@@ -39,7 +39,7 @@ export type FeatureCommandTable<T extends CommandContract> = {
 
 /**
  * 葉の機能の手続きが受ける口（手続きの context の `session`）。
- * セッションの口（`CommandSession`）のうちイベントを流す1つだけを型にしてあるので、葉の機能は `session` の型を読まずに済む（機能どうしの辺を増やさない）。
+ * セッションの口（`CommandSession`）のうちイベントを流す1つだけを型にしてあるので、葉の機能は `session` の型を読まずに済む（機能どうしのエッジを増やさない）。
  */
 export type CommandEventSink = {
   /** いまの代に固定した口（呼んだ時点の代の `emit`）。 */

@@ -116,10 +116,10 @@ export type SessionState = {
    */
   readonly finishedTurnCount: number
   /**
-   * 次に始まるターンに振る通し番号。ターンが始まるたびに1つ増え、記録が窓から落ちても
+   * 次に始まるターンに振る通し番号。ターンが始まるたびに1つ増え、記録が集計期間から落ちても
    * 戻らないので、同じターンはセッションが続くかぎり同じ番号になる。
    *
-   * 番号を位置（何番目のターンか）で決めると、窓（`MAX_SESSION_STATE_TURNS`）がいっぱいになったあといちばん新しいターンの番号が止まる。
+   * 番号を位置（何番目のターンか）で決めると、集計期間（`MAX_SESSION_STATE_TURNS`）がいっぱいになったあといちばん新しいターンの番号が止まる。
    * 描く側はその番号を React の `key` に使っているので、止まると別のターンが同じ部品として使い回され、書き上げる演出（マウント時にしか走らない）が二度と起動しなくなる（実測）。
    */
   readonly nextTurnId: number
@@ -128,7 +128,7 @@ export type SessionState = {
    */
   readonly tasks: TaskSummaryResult
   /**
-   * 始め方の一覧のおすすめの札（おすすめの順、`MAX_RECOMMENDATION_CARDS` 枚まで）。
+   * 始め方の一覧のおすすめのカード（おすすめの順、`MAX_RECOMMENDATION_CARDS` 枚まで）。
    * 源は `recommendation-changed` だけで、届くたびに丸ごと置き換える。空は「まだ無い」で、画面は既定の並びを出す。
    * `tasks` と同じく起こし直しをまたいで残す。
    */
@@ -172,7 +172,7 @@ export type SessionState = {
   /**
    * 直近でツールが失敗した時刻（`tool-finished` の `isError` が true のときの `at`）。まだ一度も失敗していなければ undefined。
    * 立ち絵の「失敗でびくっ」の判定にだけ使う。
-   * 次のターンが始まっても戻さない（時間の窓が過ぎれば判定の側で自然に「今は失敗直後ではない」に戻る）。
+   * 次のターンが始まっても戻さない（期間が過ぎれば判定の側で自然に「今は失敗直後ではない」に戻る）。
    */
   readonly lastToolFailureAt: number | undefined
   /**

@@ -1,4 +1,4 @@
-// `vite build` を起こす口。
+// `vite build` を起こす関数。
 //
 // `vite` は JS API ではなく CLI を `node` の子プロセスで起こす。
 // 組み立ての JS API は同じプロセスの `process.env.NODE_ENV` を `production` に書き換えるので、

@@ -1,6 +1,6 @@
 // 質問の選択肢の `preview` が Markdown の画像で指す手元のパスを構文木から拾い、添え書きの `image` の塊のパスと合わせる。
 //
-// 拾うのは mdast の `image` の節点だけなので、コードフェンス・コードスパン・エスケープの中の記法と生の `<img>` は拾わない。
+// 拾うのは mdast の `image` のノードだけなので、コードフェンス・コードスパン・エスケープの中の記法と生の `<img>` は拾わない。
 
 import { visit } from "unist-util-visit"
 
@@ -8,7 +8,7 @@ import { isShelvedImageUrl } from "../../../../shared/report/report-image.ts"
 import type { PendingAsk } from "../../../../shared/session-driver/pending-ask.ts"
 import { markdownTreeOf } from "../rules/draft.ts"
 
-/** 質問の全選択肢の `preview` と添え書きの `image` の塊が指す、棚に置く画像のパス（重複なし）。 */
+/** 質問の全選択肢の `preview` と添え書きの `image` の部品が指す、置き場に置く画像のパス（重複なし）。 */
 export function questionImagePaths(
   ask: Pick<QuestionPendingAsk, "questions" | "briefs">,
 ): readonly string[] {

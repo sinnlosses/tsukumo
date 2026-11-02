@@ -1,5 +1,5 @@
 // `report` の記録が持つ部品の一覧を、A2UI の面で描くための値にする。
-// 節の有無と `Markdown` の葉の字は、描く節の塊の値（`drawnReportOf` と `reportLeafLayoutOf`）から決め、部品の ID に当てる。
+// 節の有無と `Markdown` の葉の字は、描くセクションの部品の値（`drawnReportOf` と `reportLeafLayoutOf`）から決め、部品の ID に当てる。
 
 import type { A2uiReportComponent } from "../report/a2ui-report-catalog.ts"
 import { A2UI_ROOT_ID, a2uiPartsById } from "../report/a2ui-report-outline.ts"
@@ -93,7 +93,7 @@ type DrawnRegion = {
   readonly regionId: number
 }
 
-/** 中身の塊が残らない欄は `none`。Markdown が空になる塊（傍注に寄せた覚え書きなど）は並べない。 */
+/** 中身の塊が残らない欄は `none`。Markdown が空になる塊（欄外注に寄せた覚え書きなど）は並べない。 */
 function leafRegionOf(
   regions: readonly DrawnRegion[],
   role: "figure" | "retrospective",

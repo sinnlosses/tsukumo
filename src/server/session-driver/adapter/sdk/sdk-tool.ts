@@ -39,7 +39,7 @@ import { phaseResultTool, questionBriefTool, workPlanTool } from "./sdk-work-too
  * `report_part_card` も仕事のときだけで、返すのは部品の文法カード（JSON Schema と例）か、引ける名前の一覧だけ。
  *
  * セリフそのものは、この handler ではなく `assistant` メッセージの変換から取り出す（`toSessionEvents`）。
- * 受け取り口を1つにしておくと、イベントの流れが1本で済む。
+ * 受け取る関数を1つにしておくと、イベントの流れが1本で済む。
  * `report` と `work_plan` の引数も同じで、handler が引数を読むのは差し戻すかと返す文を決めるためだけ。
  * 差し戻した `report` の記録（`report-rejected`）は handler ではなく `CallReview.pass` が `isError` の結果を見て作る。
  */

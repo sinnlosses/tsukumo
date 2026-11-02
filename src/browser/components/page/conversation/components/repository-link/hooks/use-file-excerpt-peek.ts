@@ -16,7 +16,7 @@ import type { LineRange, PointedLines } from "../domain/pointed-line-range.ts"
 /** 重ねて（フォーカスして）から浮きを出すまでの待ち。 */
 const FILE_EXCERPT_PEEK_DELAY_MS = 500
 
-/** 押せるパスの最後の行の箱（窓の座標）。浮きはこの下か上に置く。 */
+/** 押せるパスの最後の行の箱（ビューポートの座標）。浮きはこの下か上に置く。 */
 export type PeekAnchor = {
   readonly left: number
   readonly top: number
@@ -109,7 +109,7 @@ export function useFileExcerptPeek(
 
   useDismissSignal({ open: state.kind === "shown", rootRef: anchorRef, onDismiss: dismiss })
 
-  // 浮きは窓の座標に置くので、スクロールしたら閉じる。
+  // 浮きはビューポートの座標に置くので、スクロールしたら閉じる。
   const shown = state.kind === "shown"
   // 出ている間は待ちが残っていないので、閉じるだけでよい。
   useEventListener(

@@ -94,7 +94,7 @@
   border: none;
   border-top: 1px solid var(--rule-quiet);
 }
-/* のぞき窓の本文の頭。値は見本 `docs/history/mockup/sidebar-task-peek-2026-10-04.html` の本文で、見出しは小さなラベルに組む。 */
+/* プレビューの本文の頭。値は見本 `docs/history/mockup/sidebar-task-peek-2026-10-04.html` の本文で、見出しは小さなラベルに組む。 */
 .task-body.task-body-peek {
   color: var(--ink-soft);
   font-size: var(--font-secondary);

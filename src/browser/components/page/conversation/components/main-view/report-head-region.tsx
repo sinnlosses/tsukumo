@@ -1,4 +1,4 @@
-// 面の頭（結論・数の札・合図の行・段ごとの所要時間・変更したファイル）とお願いを、欄の Markdown を通さずに描く。
+// 面の頭（結論・数のカード・合図の行・段ごとの所要時間・変更したファイル）とお願いを、欄の Markdown を通さずに描く。
 // 頭はどの部分も値から、お願いは本文の塊を包みの中に並べる。
 
 import clsx from "clsx"
@@ -22,7 +22,7 @@ import { splitConclusion } from "./domain/split-conclusion.ts"
 import { PhaseTimes } from "./phase-time-section.tsx"
 import { StatCards } from "./stats-leaf.tsx"
 
-/** 頭の欄。結論・数の札・合図の行・段ごとの所要時間・変更したファイルのどれも無ければ何も描かない。 */
+/** 頭の欄。結論・数のカード・合図の行・段ごとの所要時間・変更したファイルのどれも無ければ何も描かない。 */
 export function HeadRegion(props: { readonly head: MainViewSurfaceHead }): ReactElement {
   const { lead, keyFigures, checks, status } = props.head
   const { phaseTimes, changedFiles } = status

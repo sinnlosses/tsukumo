@@ -11,7 +11,7 @@ export type GraphDrawing =
   | { readonly kind: "fold"; readonly figure: GraphFoldFigure }
   | { readonly kind: "mermaid"; readonly source: string }
 
-/** 5 節点以下の一本道はカードの連鎖、折り返して置ける図は折り返し、それ以外は mermaid。 */
+/** 5 ノード以下の一本道はカードの連鎖、折り返して置ける図は折り返し、それ以外は mermaid。 */
 export function graphDrawingOf(block: ReportGraph): GraphDrawing {
   const chain = cardChainOf(block.source)
   if (chain !== undefined) {

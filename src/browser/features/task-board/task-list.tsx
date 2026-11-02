@@ -1,5 +1,5 @@
 // サイドバーの「タスク一覧」。進行中（doing）だけ先頭のカードにまとめ、残りは一覧の順で出す（todo と done は混ざったまま）。
-// `done` は薄く打ち消し線で出す。行とカードは押すとのぞき窓が開き、「これを始める」を出すのは依存が済んだ `todo` と保留だけ。
+// `done` は薄く打ち消し線で出す。行とカードは押すとプレビューが開き、「これを始める」を出すのは依存が済んだ `todo` と保留だけ。
 // 絞り込みで隠れた依存も止めるので、着手できるかは絞る前の全件で判定する。
 // 読めない・まだ届いていないときは undefined。
 //
@@ -134,7 +134,7 @@ export function TaskList(props: TaskListProps): ReactElement {
 
 const EMPTY_ORDER: TaskSidebarOrder = { running: [], rest: [] }
 
-/** 行ごとの窓を組むのに要る、一覧全体で1つの値。 */
+/** 行ごとのプレビューを組むのに要る、一覧全体で1つの値。 */
 type PeekContext = {
   readonly peek: TaskPeekControl
   readonly knownIds: ReadonlySet<string>

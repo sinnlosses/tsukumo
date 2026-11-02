@@ -222,9 +222,9 @@ function countSpeeches(entries: readonly ChatLogEntry[]): number {
 
 /**
  * 押して留めている行。
- * 押した時点から件数が変わっていれば undefined（新しいセリフが来た、または窓から古い記録が落ちた）で、印も立ち絵も「最新」の側へ戻る。
+ * 押した時点から件数が変わっていれば undefined（新しいセリフが来た、または集計期間から古い記録が落ちた）で、印も立ち絵も「最新」の側へ戻る。
  *
- * 件数1つで両方を捌けるのは、セリフは末尾に積むだけで、窓（`MAX_SESSION_STATE_TURNS`）を当てるのは利用者の発言が来たときだけだから（`applySessionEvent` の `speech` と `request`）。
+ * 件数1つで両方を捌けるのは、セリフは末尾に積むだけで、集計期間（`MAX_SESSION_STATE_TURNS`）を当てるのは利用者の発言が来たときだけだから（`applySessionEvent` の `speech` と `request`）。
  * つまり件数が同じなら並びは前へ詰まっておらず、押した番号は押した行を指したままになる。
  */
 function pinnedSpeechIndex(viewed: ViewedSpeech, speechCount: number): number | undefined {

@@ -1,6 +1,6 @@
-// 葉を直接描く部品が共通で使う枠（題・番号・傍注の包み）。
+// 葉を直接描く部品が共通で使う枠（題・番号・欄外注の外枠）。
 // 欄（`[data-report-region]`）の直接の子として、旧い Markdown の描画と同じ class の要素を返す。包みの要素は足さない。
-// 図表番号と傍注は組み立ての段が振った値（`LeafValue`）を描くだけで、数えない。
+// 図表番号と欄外注は組み立ての段が振った値（`LeafValue`）を描くだけで、数えない。
 
 import clsx from "clsx"
 import type { ReactElement, ReactNode } from "react"
@@ -16,14 +16,14 @@ import {
   leafFrameClassNames,
 } from "../markdown/markdown.tsx"
 
-/** 書き上げる演出（`planReveal`）が題の行・傍注の柱を見分ける印の属性。 */
+/** 書き上げる演出（`planReveal`）が題の行・欄外注の列を見分ける印の属性。 */
 const REVEAL_CAPTION_ATTRIBUTE = "data-reveal-caption"
 const REVEAL_GUTTER_ATTRIBUTE = "data-reveal-gutter"
 
 const CAPTION_LABELS = { figure: "図", table: "表" } as const
 
 type ReportLeafFrameProps = {
-  /** 葉の図表番号と傍注。 */
+  /** 葉の図表番号と欄外注。 */
   readonly value: Pick<LeafValue, "captionNumber" | "gutterNotes">
   /** 題の字。空なら番号だけを描く。番号の無い葉では描かない。 */
   readonly title: string
@@ -34,7 +34,7 @@ type ReportLeafFrameProps = {
 }
 
 /**
- * 題つきの包み（番号のある葉）と、傍注の柱を持つ包み（傍注のある葉）。
+ * 題つきの外枠（番号のある葉）と、欄外注の列を持つ包み（欄外注のある葉）。
  * 表は題が本体の上、図は本体の下。どちらも無い葉は本体をそのまま返す。
  */
 export function ReportLeafFrame(props: ReportLeafFrameProps): ReactElement {
@@ -42,9 +42,9 @@ export function ReportLeafFrame(props: ReportLeafFrameProps): ReactElement {
 }
 
 /**
- * 題の包みごと `details` で畳む枠（図の葉・表の葉。畳みの外に傍注の柱が付く）。
+ * 題の包みごと `details` で畳む枠（図の内容部品・表の葉。畳みの外に欄外注の列が付く）。
  * `fold` が空なら畳まない。
- * `swap` が真なら題の包みを、並べる・切り替えの口を持つ `BeforeAfterSwap` にする（両側が画像の前後の塊）。
+ * `swap` が真なら題の包みを、並べる・切り替えの口を持つ `BeforeAfterSwap` にする（両側が画像の前後の部品）。
  */
 export function FoldedLeafFrame(
   props: ReportLeafFrameProps & { readonly fold: string; readonly swap: boolean },

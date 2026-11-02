@@ -44,7 +44,7 @@ export const arrangedBlockClassNames = {
   panel: notationStyles["report-block-panel"],
 } as const
 
-/** 葉を直接描く部品が題・番号・傍注の包みに付ける class 名（Markdown の `captioned`・`caption`・`with-gutter`・`gutter` などと同じ見た目）。 */
+/** 葉を直接描く部品が題・番号・欄外注の外枠に付ける class 名（Markdown の `captioned`・`caption`・`with-gutter`・`gutter` などと同じ見た目）。 */
 export const leafFrameClassNames = {
   captioned: notationStyles["report-captioned"],
   captionedFit: notationStyles["report-captioned-fit"],
@@ -169,7 +169,7 @@ export function tagToneClassName(tone: string): string {
   return TAG_TONE_CLASS_NAMES.get(tone) ?? notationStyles["report-tag-none"]
 }
 
-/** 図の葉が使う印の名前（Markdown の描画が同じ名前に当てる class と同じ見た目）。 */
+/** 図の内容部品が使う印の名前（Markdown の描画が同じ名前に当てる class と同じ見た目）。 */
 type FigureMarkName =
   | "svg-figure"
   | "svg-legend"
@@ -207,7 +207,7 @@ type FigureMarkName =
   | "graph-legend-shape"
   | `graph-legend-shape-${"round" | "box" | "decision"}`
 
-/** 図の葉の要素に付ける class 名。 */
+/** 図の内容部品の要素に付ける class 名。 */
 export function figureClassName(name: FigureMarkName): string | undefined {
   return notationStyles[`report-${name}`]
 }

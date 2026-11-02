@@ -2,7 +2,7 @@
    狭い画面で帯から消す規則は `screen-nav.module.css` の @media が持つ。 */
 
 /* 設定の歯車。帯のいちばん右端で、モデル・許可モードの右に付く。
-   会話の画面では左隣のいまの作業の札もモデル・許可モードも帯に無いので、自分で右端へ寄る（`margin-left: auto`）。 */
+   会話の画面では左隣のいまの作業のカードもモデル・許可モードも帯に無いので、自分で右端へ寄る（`margin-left: auto`）。 */
 .screen-nav-settings {
   display: flex;
   flex: none;

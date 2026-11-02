@@ -1,4 +1,4 @@
-// `report` の欄 `task`（タスクの作業のレポートの、目録の1行と見出しに出すもの）の形。形の出どころはここだけ。
+// `report` の欄 `task`（タスクの作業のレポートの、タスク見出し行と見出しに出すもの）の形。形の出どころはここだけ。
 
 import { isPlainObject } from "remeda"
 import { z } from "zod"

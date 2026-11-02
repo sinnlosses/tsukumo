@@ -52,13 +52,13 @@ export type ServeItemAsset = (
 ) => ItemAssetFile | undefined
 
 /**
- * 棚から、id が指す原寸の data URL を引く。
+ * 置き場から、id が指す原寸の data URL を引く。
  * 棚に無い（捨てた・知らない）ときは undefined（配る側が 404 にする）。
  */
 export type FindPromptImage = (id: string) => string | undefined
 
 /**
- * 棚から、レポートの呼び出しの id と塊のパスの組が指す画像を引く。
+ * 置き場から、レポートの呼び出しの id と部品のパスの組が指す画像を引く。
  * 棚に無い（捨てた・読めなかった・知らない）ときは undefined（配る側が 404 にする）。
  */
 export type FindReportImage = (

@@ -5,7 +5,7 @@
   outline-offset: -1px;
 }
 
-/* 窓に入ってから描き終わるまでの間だけ、枠に文言を出す（data-pending="unseen" の間は出さない）。 */
+/* ビューポートに入ってから描き終わるまでの間だけ、枠に文言を出す（data-pending="unseen" の間は出さない）。 */
 .figure-frame:not([data-processed]):not([data-pending])::before {
   content: "図を描いています";
   color: var(--ink-quiet);

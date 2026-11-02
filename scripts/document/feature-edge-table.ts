@@ -1,4 +1,4 @@
-// サーバの機能どうしの辺の表を、`.dependency-cruiser.cjs` の `server-feature-edge:` の規則から組み立てる。
+// サーバの機能どうしのエッジの表を、`.dependency-cruiser.cjs` の `server-feature-edge:` の規則から組み立てる。
 // 表の範囲は、開始と終了の印のコメントに挟まれた行。
 
 import { createRequire } from "node:module"
@@ -46,7 +46,7 @@ export function readFeatureEdgeTable(): MarkedTable {
   return buildFeatureEdgeTable(config.forbidden)
 }
 
-/** 文書の印に挟まれた範囲を、機能どうしの辺の表に書き直す。印が無ければ変えない。 */
+/** 文書の印に挟まれた範囲を、機能どうしのエッジの表に書き直す。印が無ければ変えない。 */
 export function rewriteFeatureEdgeTable(text: string): string {
   return rewriteMarkedTable(text, readFeatureEdgeTable())
 }

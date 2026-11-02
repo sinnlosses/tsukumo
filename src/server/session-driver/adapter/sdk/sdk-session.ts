@@ -144,7 +144,7 @@ export type SessionTitleWriter = {
     options: SessionDriverOptions,
   ) => Promise<void>
   /**
-   * `/clear` の合図を受けたことを伝える。
+   * `/clear` の通知を受けたことを伝える。
    * Claude Code が前のセッションの題を新しいセッションへ書き写すため、次に書くときだけ現在値を tsukumo が最後に書いたものとみなす（{@link noteConversationCleared}）。
    */
   readonly noteConversationCleared: () => void

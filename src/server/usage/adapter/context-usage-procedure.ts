@@ -9,7 +9,7 @@ import {
   UNAVAILABLE_CONTEXT_USAGE,
 } from "../../../shared/usage/context-usage.ts"
 
-/** この機能の手続きが使う口（中身は配線が渡す）。 */
+/** この機能の手続きが使う関数（中身は配線が渡す）。 */
 export type ContextUsageProcedurePorts = {
   /** いまのセッションの内訳。セッションが繋がるまでは「取れない」を返す。 */
   readonly readContextUsage: () => Promise<ContextUsageReport>

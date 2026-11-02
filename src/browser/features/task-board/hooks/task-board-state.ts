@@ -1,4 +1,4 @@
-// タスクのモーダルの表示上の状態（検索の文字・絞り込みの札・選んでいる行）と、その移り方。
+// タスクのモーダルの表示上の状態（検索の文字・絞り込みのバッジ・選んでいる行）と、その移り方。
 
 import { omit } from "remeda"
 
@@ -10,7 +10,7 @@ import {
 } from "../domain/draft-sort.ts"
 import type { TaskBoardFilter } from "../domain/task-board-view.ts"
 
-/** 検索の文字・絞り込みの札・選んでいる行と、詳細を押して切り替えた回数。閉じると `focusSignal` 以外を初めに戻す。 */
+/** 検索の文字・絞り込みのバッジ・選んでいる行と、詳細を押して切り替えた回数。閉じると `focusSignal` 以外を初めに戻す。 */
 type BoardState = {
   readonly query: string
   readonly filter: TaskBoardFilter

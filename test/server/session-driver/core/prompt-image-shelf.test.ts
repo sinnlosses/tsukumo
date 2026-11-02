@@ -145,7 +145,7 @@ describe("releasedPromptImageIds", () => {
   })
 
   it("まだ記録に載っていない id（依頼のイベントが届く前）は返さない", () => {
-    // 棚に置いてから `request` が畳まれるまでの間に別のイベントが来ても、その id は
+    // 置き場に置いてから `request` が畳まれるまでの間に別のイベントが来ても、その id は
     // 前の記録にも後の記録にも無いので捨てられない。
     const records = [requestRecord(0, ["a"])]
 

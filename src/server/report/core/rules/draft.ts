@@ -17,7 +17,7 @@ export type ReportDraft = {
   readonly conclusionSentenceChars: readonly number[]
   /** 結論の直下に並べる数。「無い」は空の配列。 */
   readonly keyFigures: KeyFigures
-  /** 検査が節・図・振り返りの葉を取り出す部品の一覧（`reportOutline`）。「無い」は空の配列。 */
+  /** 検査が節・図・振り返りの内容部品を取り出す部品の一覧（`reportOutline`）。「無い」は空の配列。 */
   readonly components: readonly A2uiReportComponent[]
   readonly favor: string
   readonly checks: readonly ReportCheck[]
@@ -25,7 +25,7 @@ export type ReportDraft = {
   readonly fileContents: ReadonlyMap<string, string>
   /** 載せたタスク。記法の検査には使わず、段の残りの差し戻し（`ReportReview`）が終わり方を読む。 */
   readonly task: ReportTask
-  /** 段の閉じ方。記法の検査には使わず、段の閉じ方の差し戻し（`ReportReview`）が読む。 */
+  /** フェーズの閉じ方。記法の検査には使わず、フェーズの閉じ方の差し戻し（`ReportReview`）が読む。 */
   readonly workPlanClosing: WorkPlanClosing
 }
 
@@ -40,7 +40,7 @@ export function markdownTreeOf(markdown: string): Root {
   return MARKDOWN_PARSER.parse(markdown)
 }
 
-/** 木の節点を文書の順（親が先）に並べたもの。 */
+/** 木のノードを文書の順（親が先）に並べたもの。 */
 export function nodesInOrder(node: Nodes): readonly Nodes[] {
   return [node, ...("children" in node ? node.children.flatMap(nodesInOrder) : [])]
 }

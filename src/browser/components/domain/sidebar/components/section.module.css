@@ -51,7 +51,7 @@
   overflow-y: auto;
   padding: var(--space-xs) 0;
 }
-/* 見出しの右端に並ぶ押せる口（タスク一覧の「一覧を見る」）。枠なしのリンク風にする。 */
+/* 見出しの右端に並ぶボタン（タスク一覧の「一覧を見る」）。枠なしのリンク風にする。 */
 .sidebar-block-title {
   flex: 1 1 auto;
   min-width: 0;

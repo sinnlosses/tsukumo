@@ -64,7 +64,7 @@ let fetchStub: RpcFetchStub | undefined = undefined
 
 let restorePhoneWidth: (() => void) | undefined
 
-/** 窓が狭い画面（760px 以下）に当たる、という答えを `matchMedia` に返させる。 */
+/** ビューポートが狭い画面（760px 以下）に当たる、という答えを `matchMedia` に返させる。 */
 function stubPhoneWidth(): void {
   const spy = vi.spyOn(window, "matchMedia").mockImplementation((query) => ({
     matches: true,

@@ -1,4 +1,4 @@
-// タスクの本文（Markdown）を、タスクのモーダルの詳細とサイドバーののぞき窓に描く。
+// タスクの本文（Markdown）を、タスクのモーダルの詳細とサイドバーのプレビューに描く。
 //
 // 読むのは `remark-gfm`（表・チェック・取り消し線・自動リンク）と `remark-cjk-friendly`（約物の隣の強調）だけ。
 // 生の HTML は解釈せず字のまま出す（`rehype-raw` を差さないと、react-markdown は HTML を字に戻す）。
@@ -23,7 +23,7 @@ import remarkGfm from "remark-gfm"
 import { linkTaskBodyIds, taskLinkId } from "../domain/task-body-link.ts"
 import styles from "./task-body.module.css"
 
-/** `detail` はタスクのモーダルの詳細、`peek` はサイドバーののぞき窓（字を一段小さく組む）。 */
+/** `detail` はタスクのモーダルの詳細、`peek` はサイドバーのプレビュー（字を一段小さく組む）。 */
 type TaskBodyTypesetting = "detail" | "peek"
 
 export type TaskBodyProps = {

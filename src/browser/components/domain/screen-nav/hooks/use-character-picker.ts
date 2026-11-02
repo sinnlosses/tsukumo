@@ -1,7 +1,7 @@
-// 帯の左上のキャラクターの顔と、押すと開くキャラクターの選び口のロジック。
+// 帯の左上のキャラクターの顔と、押すと開くキャラクターの選択メニューのロジック。
 // 送るのは `session.switchCharacter`（起こし直し）。
 //
-// 選び口は2箇所に描かれる（広い画面の帯・狭い画面の引き出しの中）。
+// 選択メニューは2箇所に描かれる（広い画面の帯・狭い画面の引き出しの中）。
 // 開閉は `usePopover` に任せる。
 
 import type { RefCallback, RefObject } from "react"
@@ -30,7 +30,7 @@ export type ScreenNavCharacterPicker = {
   readonly blocked: boolean
   readonly blockedTitle: string | undefined
   readonly onToggle: () => void
-  /** フォーカスは動かさずに閉じる（引き出しを閉じたときに、中で開いていた選び口を残さない）。 */
+  /** フォーカスは動かさずに閉じる（引き出しを閉じたときに、中で開いていた選択メニューを残さない）。 */
   readonly close: () => void
   readonly onPick: (name: string) => void
   /** Esc で閉じたときにフォーカスを戻す顔の DOM を預ける口（2箇所に描かれる）。 */

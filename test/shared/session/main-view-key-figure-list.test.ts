@@ -1,4 +1,4 @@
-// `report` の `keyFigures`（結論の直下の数の札）が面の頭の値にどう載るか。
+// `report` の `keyFigures`（結論の直下の数のカード）が面の頭の値にどう載るか。
 import { describe, expect, it } from "vitest"
 
 import type { ReportCheck } from "../../../src/shared/report/report-check.ts"

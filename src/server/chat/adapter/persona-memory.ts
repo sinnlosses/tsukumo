@@ -32,7 +32,7 @@ import {
   rememberRejection,
 } from "../core/memory/persona-memory-edit.ts"
 
-/** `persona.md` に書けなかったことの知らせ口。`error` からは `error.name` と code だけを写すこと。 */
+/** `persona.md` に書けなかったことを知らせる関数。`error` からは `error.name` と code だけを写すこと。 */
 export type PersonaMemoryFailureReport = (
   place: "persona-remember" | "persona-forget",
   error: unknown,

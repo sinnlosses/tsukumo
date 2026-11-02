@@ -164,14 +164,14 @@
     font-size: var(--font-secondary);
     color: var(--ink-quiet);
   }
-  /* 結論の直下の数の札（`report` の `keyFigures`）。札の格子は `.report-stats` のままで、ここは外側のあきと、4枚を 2×2 に折る幅（下）だけを持つ。 */
+  /* 結論の直下の数のカード（`report` の `keyFigures`）。札の格子は `.report-stats` のままで、ここは外側のあきと、4枚を 2×2 に折る幅（下）だけを持つ。 */
   & .report-key-figures {
     margin: var(--space-md) 0;
   }
   & .report-key-figures .report-stats {
     margin: 0;
   }
-  /* 4枚は器が 46rem（約 736px）以下で 2×2 に折る（窓幅 760px の器は約 716px）。
+  /* 4枚は器が 46rem（約 736px）以下で 2×2 に折る（ビューポート幅 760px の器は約 716px）。
    本文の `stats` が 4 列に広げる 43.25rem より広い幅で折るので、43.25rem〜46rem では `keyFigures` だけが 2×2 になる。 */
   @container report-body (max-width: 46rem) {
     & .report-key-figures .report-stats.report-stats-of-4 {
@@ -224,7 +224,7 @@
     font-variant-numeric: tabular-nums;
     color: var(--ink-quiet);
   }
-  /* お願いの印。押す的を 24px 以上にし、末尾のお願いの塊へ転がす（`Anchor`）。 */
+  /* お願いの印。押す的を 24px 以上にし、末尾のお願いの部品へ転がす（`Anchor`）。 */
   & .report-checks-summary-favor {
     margin-left: auto;
     white-space: nowrap;
@@ -539,7 +539,7 @@
   & .report-phase-time-group {
     min-width: 0;
   }
-  /* 並列の段の中の段は、一覧にだけ名前を字下げして並べる（帯には出さない）。 */
+  /* 並列のフェーズの中の段は、一覧にだけ名前を字下げして並べる（帯には出さない）。 */
   & .report-phase-time-inner .report-phase-time-label {
     padding-left: var(--space-md);
   }

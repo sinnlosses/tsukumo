@@ -25,10 +25,10 @@ export const CATALOG: readonly CatalogEntry[] = [
 ]
 
 /**
- * 撮る窓の大きさ。広いほうは1枚だけ撮る道具の既定と同じで、狭いほうは切り替えの規則
+ * 撮るビューポートの大きさ。広いほうは1枚だけ撮る道具の既定と同じで、狭いほうは切り替えの規則
  * （各機能の `*.module.css` の `max-width: 760px`）の内側に入る幅にしてある。
  *
- * 狭いほうだけページ全体を撮る。縦に積み替わるので、窓に収まる範囲だけでは下の領域
+ * 狭いほうだけページ全体を撮る。縦に積み替わるので、ビューポートに収まる範囲だけでは下の領域
  * （吹き出しと答え待ちの箱）が1枚に入らない。
  */
 const SIZES = [
@@ -39,9 +39,9 @@ const SIZES = [
 export type CatalogSize = (typeof SIZES)[number]
 
 /**
- * 広い窓だけで撮る件。狭い窓は選択肢が角丸のボタンの縦並びで preview の面が出ない。
- * `report-question-mixed` は、狭い窓では選択肢が label でなくなり、同じ手順で答えられない。
- * `turn-headings`・`turn-running-report` は、狭い窓ではやり取りの列を出さず、小節の行とラベルが撮れない。
+ * 広いビューポートだけで撮る件。狭いビューポートは選択肢が角丸のボタンの縦並びで preview の面が出ない。
+ * `report-question-mixed` は、狭いビューポートでは選択肢が label でなくなり、同じ手順で答えられない。
+ * `turn-headings`・`turn-running-report` は、狭いビューポートではやり取りの列を出さず、小節の行とラベルが撮れない。
  */
 const WIDE_ONLY_NAMES: ReadonlySet<string> = new Set([
   "report-question-mixed",

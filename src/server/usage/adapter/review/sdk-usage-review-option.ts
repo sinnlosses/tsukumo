@@ -53,7 +53,7 @@ const USAGE_REVIEW_DAYS = z.number().int().positive().describe("見た期間。�
 const REVIEW_BUILTIN_TOOLS = ["Skill", "Read", "Bash"]
 const REVIEW_ALLOWED_BUILTIN_TOOLS = ["Skill", "Read", "Bash(python3:*)"]
 
-/** 提案の実行で、押す口ごとに許す組み込みの道具。`task` はタスクを1件登録するだけ。 */
+/** 提案の実行で、ボタンごとに許す組み込みの道具。`task` はタスクを1件登録するだけ。 */
 const PROPOSAL_TOOLS = {
   delegate: {
     tools: ["Read", "Edit", "Write", "Glob", "Grep"],

@@ -26,9 +26,9 @@ export type WelcomeGreetingWriterPorts = RetriedQueryPorts & {
   /** 直近の挨拶を丸ごと書く。失敗しても例外を投げない。 */
   readonly writeRecent: (recent: readonly WelcomeGreetingText[]) => void
   readonly emit: (state: WelcomeGreetingState) => void
-  /** 書けなかった理由の知らせ口（中断では呼ばない）。`error` は問い合わせの失敗のときだけ実物が入る。 */
+  /** 書けなかった理由を知らせる関数（中断では呼ばない）。`error` は問い合わせの失敗のときだけ実物が入る。 */
   readonly onUnwritten: (place: GreetingUnwrittenPlace, error: unknown) => void
-  /** 書き込みを1回終えた足跡の知らせ口（書けても書けなくても1回。中断では呼ばない）。 */
+  /** 書き込みを1回終えた足跡を知らせる関数（書けても書けなくても1回。中断では呼ばない）。 */
   readonly report: (footprint: WelcomeWritingFootprint) => void
 }
 

@@ -57,7 +57,7 @@ export type UsageReviewQueryRequest = {
   readonly prompt: string
 } & UsageReviewRunnerContext
 
-/** 提案の実行の問い合わせに渡すもの。押す口で許す道具が変わる。 */
+/** 提案の実行の問い合わせに渡すもの。ボタンで許す道具が変わる。 */
 export type UsageProposalQueryRequest = UsageReviewQueryRequest & {
   readonly followUp: UsageProposalFollowUp
 }

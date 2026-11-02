@@ -47,7 +47,7 @@
   gap: var(--space-2xs);
   min-width: 0;
 }
-/* いまの作業の札を置く箱。口の右に置き、幅が足りないときに最初に縮む。
+/* いまの作業のカードを置く箱。口の右に置き、幅が足りないときに最初に縮む。
    モデル・許可モードは `margin-left: auto` で右端へ寄せるだけで縮めない。 */
 .screen-nav-work-slot {
   display: flex;
@@ -74,7 +74,7 @@
     flex: none;
     margin: 0;
   }
-  /* 口・仕切り・ドロップダウン・左端の名乗りは引き出しへ、いまの作業の札は頭へ移る。 */
+  /* 口・仕切り・ドロップダウン・左端の名乗りは引き出しへ、いまの作業のカードは頭へ移る。 */
   .screen-nav-gates,
   .screen-nav > .screen-nav-identity,
   .screen-nav > .screen-nav-work-slot,
@@ -88,7 +88,7 @@
     height: 28px;
     box-shadow: none;
   }
-  /* キャラクターの選び口は、顔の真下ではなく名乗りの行の下に、引き出しの幅いっぱい（左右 16 を残す）で重ねる。
+  /* キャラクターの選択メニューは、顔の真下ではなく名乗りの行の下に、引き出しの幅いっぱい（左右 16 を残す）で重ねる。
      基準を名乗りの行へ移すため、顔の入れ物は静的に置く。 */
   .nav-drawer-identity .screen-nav-character-picker {
     position: static;

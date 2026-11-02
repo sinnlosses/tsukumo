@@ -83,7 +83,7 @@
 :is(.detail-block, [data-report-region]) > .report-with-gutter > :is(p, ul, ol) {
   margin: var(--report-block-gap) 0;
 }
-/* 地付きの強調は地の文の段落の直下だけ（余白の柱の包みの中の段落を含む）。
+/* 地付きの強調は地の文の段落の直下だけ（欄外注の列の外枠の中の段落を含む）。
    表・箇条書き・`stats`・`note` の中の `strong` は本文の直の子（欄の入れ物の直の子）の `p` の下にならないので掛からない。 */
 :is(.detail-block, [data-report-region]) > p :is(strong, b),
 :is(.detail-block, [data-report-region]) > .report-with-gutter > p :is(strong, b) {
@@ -115,7 +115,7 @@
     margin-block: 0;
   }
 }
-/* 10 件で切った表・一覧の末尾の「ほか n 件」。押す口の顔は `<Button variant="link">` が持ち、ここは行の見え方だけ。 */
+/* 10 件で切った表・一覧の末尾の「ほか n 件」。ボタンの顔は `<Button variant="link">` が持ち、ここは行の見え方だけ。 */
 .report-fold-more {
   list-style: none;
 }
@@ -199,7 +199,7 @@
   & .report-cell-status-text {
     color: var(--ink);
   }
-  /* 列挙型の札。同じ字は同じ色（tsukumo が出現順に 1〜5 を当て、6 種目以降は灰）。字が常に見えるので色だけで意味を言わない。 */
+  /* 列挙型のバッジ。同じ字は同じ色（tsukumo が出現順に 1〜5 を当て、6 種目以降は灰）。字が常に見えるので色だけで意味を言わない。 */
   & .report-tag {
     display: inline-block;
     padding: 0.1em 0.55em;

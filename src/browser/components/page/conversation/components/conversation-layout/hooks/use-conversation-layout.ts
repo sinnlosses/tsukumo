@@ -19,7 +19,7 @@ import { usePopover } from "../../../../../../hooks/use-popover.ts"
 import { reportSplitRelease } from "../domain/split-release-report.ts"
 import { DEFAULT_SPLIT, isDefaultSplit, loadSplit, saveSplit, type Split } from "../domain/split.ts"
 
-// 柱を出す中くらいの窓幅の `@media` と同じ字にする。
+// 柱を出す中くらいのビューポート幅の `@media` と同じ字にする。
 const RAIL_TIER_QUERY = "(min-width: 761px) and (max-width: 1100px)"
 
 export type UseConversationLayoutResult = {
@@ -44,7 +44,7 @@ export type UseConversationLayoutResult = {
   /** 柱とサイドバーを包む要素。この外を押すと、柱から開いたサイドバーが閉じる。 */
   readonly sideRef: RefObject<HTMLDivElement | null>
   readonly sidebarId: string
-  /** 中くらいの窓幅で、柱からサイドバーを重ねて開いているか。 */
+  /** 中くらいのビューポート幅で、柱からサイドバーを重ねて開いているか。 */
   readonly sidebarOpen: boolean
   readonly onToggleSidebar: () => void
   readonly sidebarToggleRef: RefCallback<HTMLButtonElement>

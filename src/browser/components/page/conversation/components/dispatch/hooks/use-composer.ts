@@ -44,8 +44,8 @@ import {
 
 /**
  * `<textarea>` の上の帯。接続が切れているあいだ・会話が終わったあと・`/clear` に続く文を止めたあと・答え待ち（お伺い）があるあいだだけ出す（この順に先）。
- * 答えはメインビューのお伺いの札で選ぶ（質問ならここに書いて送ってもよい）。
- * `onJump` は「お伺いへ」の口で、お伺いの札の最初の選択肢へフォーカスを移す。
+ * 答えはメインビューのお伺いのカードで選ぶ（質問ならここに書いて送ってもよい）。
+ * `onJump` は「お伺いへ」の口で、お伺いのカードの最初の選択肢へフォーカスを移す。
  */
 type ComposerBand =
   | { readonly kind: "none" }
@@ -59,7 +59,7 @@ type ComposerBand =
  * 画像まわりは `PromptImageModel` のまま（`reset` は container の中だけで使うので外へは出さない）。
  */
 export type ComposerModel = Omit<PromptImageModel, "reset"> & {
-  /** 入力欄の面。確定・送信のあとにフォーカスを戻し、キャレットを置き直す。 */
+  /** 入力欄のサーフェス。確定・送信のあとにフォーカスを戻し、キャレットを置き直す。 */
   readonly surfaceRef: RefObject<ComposerSurface | null>
   readonly mode: ComposerMode
   /** 面を `<textarea>` とマークダウンエディタの間で切り替える。下書きはそのまま引き継ぐ。 */

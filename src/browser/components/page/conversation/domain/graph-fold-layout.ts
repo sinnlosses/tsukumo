@@ -1,4 +1,4 @@
-// 折り返し配置の座標を、1行の数を1つ決めて組む。主経路を蛇行の行に並べ、上の段・行のあいだの通り道・図の左の外側に辺を回す。
+// 折り返し配置の座標を、1行の数を1つ決めて組む。主経路を蛇行の行に並べ、上の段・行のあいだの通り道・図の左の外側にエッジを回す。
 
 import type {
   GraphSourceEdge,
@@ -20,9 +20,9 @@ import { framesOf } from "./graph-fold-frame.ts"
 import { wrapped } from "./graph-fold-text.ts"
 
 const MARGIN = 12
-/** 上の段の箱と主経路の箱のあいだ。辺のラベルが入る高さ。 */
+/** 上の段の箱と主経路の箱のあいだ。エッジのラベルが入る高さ。 */
 const SIDE_GAP = 30
-/** 行のあいだの帯の、最初の通り道までの高さ（折り返しの辺のラベルが入る）。 */
+/** 行のあいだの帯の、最初の通り道までの高さ（折り返しのエッジのラベルが入る）。 */
 const BAND_TOP = 26
 const TRACK_GAP = 20
 const BAND_MIN = 32
@@ -33,7 +33,7 @@ type Attach = {
   readonly top: boolean
 }
 
-/** 1行に `perRow` 個ずつ並べた座標。上の段の節点が行の先頭（折り返して入る列）に付けば置けず `undefined`。 */
+/** 1行に `perRow` 個ずつ並べた座標。上の段のノードが行の先頭（折り返して入る列）に付けば置けず `undefined`。 */
 export function laidOut(
   reading: GraphSourceReading,
   main: readonly number[],
@@ -93,7 +93,7 @@ export function laidOut(
   )
   const firstTrack = (band: number): number => (band === 0 ? BAND_TOP - TRACK_GAP / 2 : BAND_TOP)
   const sideRows = new Set([...anchors.keys()].map((at) => slots.get(at)?.row ?? -1))
-  // 上の段と主経路の箱のあいだには、辺のラベルと主経路の箱の群の題が縦に並ぶ。
+  // 上の段と主経路の箱のあいだには、エッジのラベルと主経路の箱の群の題が縦に並ぶ。
   const sideGap = SIDE_GAP + titled
   const bandTop: number[] = []
   const rowTop: number[] = []
@@ -213,14 +213,14 @@ export function laidOut(
   }
 }
 
-/** 行の先頭の節点（上の行から折り返して入る列）。 */
+/** 行の先頭のノード（上の行から折り返して入る列）。 */
 function isWrapEntry(main: readonly number[], perRow: number, at: number): boolean {
   const position = main.indexOf(at)
   return position >= perRow && position % perRow === 0
 }
 
 /**
- * 回す辺の出入りの口。上の段の箱は上の帯からだけ、主経路の箱は下の帯（上の段が空いていれば上の帯も）から出入りする。
+ * 回すエッジの出入りの口。上の段の箱は上の帯からだけ、主経路の箱は下の帯（上の段が空いていれば上の帯も）から出入りする。
  * 出る帯と入る帯を同じにできればそうする。
  */
 function attachOf(

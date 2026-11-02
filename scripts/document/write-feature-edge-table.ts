@@ -1,4 +1,4 @@
-// サーバの機能どうしの辺の表を、`.dependency-cruiser.cjs` の規則から書き直す（`pnpm run format` が打つ）。
+// サーバの機能どうしのエッジの表を、`.dependency-cruiser.cjs` の規則から書き直す（`pnpm run format` が打つ）。
 
 import { readFileSync, writeFileSync } from "node:fs"
 import { join } from "node:path"

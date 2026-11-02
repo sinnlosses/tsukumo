@@ -1,6 +1,6 @@
 import type { ReportUsageEntry } from "../../src/server/report/core/usage/report-usage.ts"
 
-/** 記録の書き込み口のテストが使う、架空の `report` 1件ぶん。 */
+/** 記録の書き込みの関数のテストが使う、架空の `report` 1件ぶん。 */
 export function reportUsageEntry(
   when: number,
   sessionId = "claude-session-1",

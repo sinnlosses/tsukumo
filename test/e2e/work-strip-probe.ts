@@ -1,4 +1,4 @@
-// 進み具合の帯の取り方と読み取り。
+// 進み具合のプログレスバーの取り方と読み取り。
 
 import type { Locator, Page } from "playwright-core"
 

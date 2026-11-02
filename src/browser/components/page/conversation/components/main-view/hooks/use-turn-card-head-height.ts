@@ -1,4 +1,4 @@
-// 札の頭（進み具合の帯）の外寸を測り、メインビューの根の `--turn-card-head-height` に書く ref コールバック。
+// 札の頭（進み具合のプログレスバー）の外寸を測り、メインビューの根の `--turn-card-head-height` に書く ref コールバック。
 
 import type { RefCallback } from "react"
 

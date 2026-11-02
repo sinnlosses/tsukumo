@@ -62,7 +62,7 @@ export function settleUtterance(state: SessionState): SessionState {
   }
 }
 
-/** 同じ `toolUseId` の `report` の記録の変更の札を数に差し替える。記録の窓に無ければ姿を変えない。 */
+/** 同じ `toolUseId` の `report` の記録の変更のラベルを数に差し替える。記録の集計期間に無ければ姿を変えない。 */
 export function withReportChangeSummary(
   state: SessionState,
   event: Extract<SessionEvent, { readonly kind: "report-change-summary" }>,
@@ -87,9 +87,9 @@ export function withReportChangeSummary(
 }
 
 /**
- * 直近何ターンぶんだけを残す。ターンの境目は `request`（{@link splitIntoTurns}）なので、古いターンから数えて窓の外に出たものをまとめて落とす。
- * 窓の広さは `chatMode` で選ぶ（{@link MAX_SESSION_STATE_TURNS}）。
- * 依頼より前の記録はターンに数えず、窓を超えて古いターンを落とすときに一緒に落とす。
+ * 直近何ターンぶんだけを残す。ターンの境目は `request`（{@link splitIntoTurns}）なので、古いターンから数えて集計期間の外に出たものをまとめて落とす。
+ * 集計期間の広さは `chatMode` で選ぶ（{@link MAX_SESSION_STATE_TURNS}）。
+ * 依頼より前の記録はターンに数えず、集計期間を超えて古いターンを落とすときに一緒に落とす。
  */
 export function trimToRecentTurns(
   records: readonly SessionRecord[],

@@ -1,4 +1,4 @@
-// `timeline` の塊の差し戻しの位置（何個目の塊のどこか）。行の名前・時刻の字は持たない。
+// `timeline` の部品の差し戻しの位置（何個目の部品のどこか）。行の名前・時刻の字は持たない。
 
 import type { ReportTimeline } from "../../../../../shared/report/timeline-block.ts"
 import { readTimeline, type TimelineFault } from "../../../../../shared/report/timeline-scale.ts"

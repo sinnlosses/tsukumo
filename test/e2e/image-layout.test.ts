@@ -67,7 +67,7 @@ function naturalWidthOf(image: Locator): Promise<number> {
   )
 }
 
-/** 画像から祖先をたどって最初に見つかる「次の兄弟」の、窓の上端からの位置。 */
+/** 画像から祖先をたどって最初に見つかる「次の兄弟」の、ビューポートの上端からの位置。 */
 function nextElementTop(image: Locator): Promise<number> {
   return image.evaluate((element) => {
     for (let node: Element | null = element; node !== null; node = node.parentElement) {

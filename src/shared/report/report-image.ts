@@ -18,7 +18,7 @@ export type ImageRegion = {
   readonly height: number
 }
 
-/** サーバが棚に置いた画像の、書かれたままのパスと画素の幅・高さ。 */
+/** サーバが置き場に置いた画像の、書かれたままのパスと画素の幅・高さ。 */
 export type ReportImageSize = {
   readonly path: string
   readonly width: number
@@ -61,8 +61,8 @@ const reportImageToolUseIdSchema = z.string().regex(/^[A-Za-z0-9_-]{1,128}$/)
 const NOT_LOCAL_URL = /^(?:[A-Za-z][A-Za-z0-9+.-]*:|\/\/)/
 
 /**
- * 質問の preview の Markdown の画像の行き先のうち、棚から引くもの（手元のファイルのパス）か。
- * サーバが棚に置くパスを拾うときと、ブラウザが `src` を棚の経路に替えるときの両方がこれで決める。
+ * 質問の preview の Markdown の画像の行き先のうち、置き場から引くもの（手元のファイルのパス）か。
+ * サーバが置き場に置くパスを拾うときと、ブラウザが `src` を棚の経路に替えるときの両方がこれで決める。
  */
 export function isShelvedImageUrl(url: string): boolean {
   return url !== "" && !NOT_LOCAL_URL.test(url)

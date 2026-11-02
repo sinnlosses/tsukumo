@@ -11,7 +11,7 @@ import {
 } from "../../../shared/session/session-digest.ts"
 import { parseSessionId, type SessionId } from "../../session-driver/core/session-id.ts"
 
-/** この機能の手続きが使う口（中身は配線が渡す）。 */
+/** この機能の手続きが使う関数（中身は配線が渡す）。 */
 export type SessionDigestProcedurePorts = {
   /** セッション1件の中身。セッションが繋がるまでは「読めない」を返す。 */
   readonly readSessionDigest: (sessionId: SessionId) => Promise<SessionDigest>

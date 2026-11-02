@@ -90,7 +90,7 @@ describe("依頼に添えた画像の棚", () => {
     const oldId = prompted[0]?.[0]?.id ?? ""
     expect(shelf.find(oldId)).toBeDefined()
 
-    // 仕事の窓は MAX_SESSION_STATE_TURNS.work ターン。画像の無い依頼で押し出す。
+    // 仕事の集計期間は MAX_SESSION_STATE_TURNS.work ターン。画像の無い依頼で押し出す。
     for (let turn = 0; turn < MAX_SESSION_STATE_TURNS.work; turn += 1) {
       await prompt([])
     }
@@ -113,7 +113,7 @@ describe("依頼に添えた画像の棚", () => {
   /** 続きから起こした駆動へ、transcript から組み直した再生を流せる形で起こす。 */
   function startRestoringManager() {
     const shelf: PromptImageShelf = createPromptImageShelf(() => crypto.randomUUID())
-    // 棚に置き直した id を覚える（窓から溢れて捨てられたものも、ここに残る）。
+    // 置き場に置き直した id を覚える（集計期間から溢れて捨てられたものも、ここに残る）。
     const placedIds: string[] = []
     const stub = createStubDriver()
     const manager = createSessionManager({

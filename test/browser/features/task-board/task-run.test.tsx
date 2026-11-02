@@ -95,7 +95,7 @@ function renderWithStore(
   render(<>{node}</>, { wrapper: queryClientWrapper() })
 }
 
-/** 送られたコマンドを配列に溜める受け取り口。 */
+/** 送られたコマンドを配列に溜める、受け取る関数。 */
 function collectInto(sent: unknown[]): CommandSpy {
   return (command) => {
     sent.push(command)
@@ -451,7 +451,7 @@ function rowOf(taskId: string): HTMLElement {
   return element
 }
 
-/** 区画の一覧で `taskId` の行を押してのぞき窓を開き、「これを始める」を押す。 */
+/** 区画の一覧で `taskId` の行を押してプレビューを開き、「これを始める」を押す。 */
 function startFromPeek(taskId: string): void {
   fireEvent.click(rowOf(taskId))
   fireEvent.click(screen.getByRole("button", { name: "これを始める →" }))

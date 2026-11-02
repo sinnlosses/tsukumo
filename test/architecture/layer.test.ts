@@ -6,7 +6,7 @@ import { withoutComments } from "./comment-line.ts"
 import { layerOf } from "./feature-graph.ts"
 import { importSpecifiers, listSourceFiles, SRC_ROOT } from "./source-file.ts"
 
-// 層の辺は `.dependency-cruiser.cjs` が見る。ここは import の辺でない層の制約を `vite` の `parseSync` の構文木と
+// 層のエッジは `.dependency-cruiser.cjs` が見る。ここは import のエッジでない層の制約を `vite` の `parseSync` の構文木と
 // node:fs で落とす。
 
 describe("shared の制約", () => {

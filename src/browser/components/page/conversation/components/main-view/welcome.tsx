@@ -1,4 +1,4 @@
-// 迎える局面のメインビューの中身。見出しと、おすすめの札（押すとすぐ依頼が送られる）と、ほかの始め方を出す。
+// 迎える局面のメインビューの中身。見出しと、おすすめのカード（押すとすぐ依頼が送られる）と、ほかの始め方を出す。
 
 import clsx from "clsx"
 import type { ReactElement, ReactNode } from "react"

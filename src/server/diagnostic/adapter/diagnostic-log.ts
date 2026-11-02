@@ -26,7 +26,7 @@ export function diagnosticDir(): string {
 }
 
 /**
- * 記録の読み書き口を作る。`root` は置き場（既定は {@link diagnosticDir}）。
+ * 記録の読み書きの関数を作る。`root` は置き場（既定は {@link diagnosticDir}）。
  * 1つの口を日をまたいで使い回せる（件ごとに `at` から行き先を組み立てる）。
  */
 export function createDiagnosticLog(

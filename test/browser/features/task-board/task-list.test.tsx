@@ -343,7 +343,7 @@ function row(id: string): HTMLElement {
   return element
 }
 
-/** 開いているのぞき窓（無ければ `null`）。 */
+/** 開いているプレビュー（無ければ `null`）。 */
 function peek(): Element | null {
   return document.querySelector('dialog[aria-label$=" の詳細"]')
 }

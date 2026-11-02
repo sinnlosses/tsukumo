@@ -42,7 +42,7 @@ function leafOf(id: string, block: BlockFields) {
 
 /**
  * `report` に渡す入力（`components`）。
- * 節ごとに `Section`、塊ごとに葉の部品を作り、`figure` は根の `figure`（図を置かない理由なら `figureNone`）に写す。
+ * 節ごとに `Section`、部品ごとに内容部品を作り、`figure` は根の `figure`（図を置かない理由なら `figureNone`）に写す。
  * `sections` を省くと、地の文1つの節を1つ置く。
  */
 export function reportInput(fields: ReportFields = {}) {

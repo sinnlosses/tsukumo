@@ -44,11 +44,11 @@ export type ViewDeliveryOptions = {
     "refreshTasks" | "readContextUsage" | "readPlanUsage" | "readSessionDigest"
   >
   /**
-   * 依頼に添えた画像の原寸の棚（`/prompt-image/<id>` に配る原寸の出どころ）。
+   * 依頼に添えた画像の原寸の置き場（`/prompt-image/<id>` に配る原寸の出どころ）。
    * ここは引くだけで、置くのと捨てるのはセッションの側。
    */
   readonly promptImageShelf: PromptImageShelf
-  /** `image` の塊の画像の棚（`/report-image/` に配る画像の出どころ）。ここは引くだけ。 */
+  /** `image` の部品の画像の置き場（`/report-image/` に配る画像の出どころ）。ここは引くだけ。 */
   readonly reportImageShelf: ReportImageShelf
   /** 診断ログの口。 */
   readonly diagnosticLog: DiagnosticLog

@@ -9,7 +9,7 @@ import { reportEvent } from "../../fixture/report-event.ts"
 import { requestEvent } from "../../fixture/session-event.ts"
 import { apply } from "../../fixture/session-state.ts"
 
-/** メインビューに出すやり取りの数（仕事の記録の窓と同じ）。 */
+/** メインビューに出すやり取りの数（仕事の記録の集計期間と同じ）。 */
 const MAX_MAIN_VIEW_TURNS = MAX_SESSION_STATE_TURNS.work
 
 describe("applySessionEvent", () => {
@@ -48,7 +48,7 @@ describe("applySessionEvent", () => {
   })
 
   it("窓がいっぱいになっても、ターンの通し番号は止まらずに増え続ける", () => {
-    // 番号を位置で決めていたころは、窓（20ターン）を超えるといちばん新しいターンの番号が
+    // 番号を位置で決めていたころは、集計期間（20ターン）を超えるといちばん新しいターンの番号が
     // 19 で止まり、描く側が `key` に使っているせいで部品が作り直されず、書き上げる演出が
     // 二度と起動しなかった（`useReportReveal`）。
     const events: SessionEvent[] = []

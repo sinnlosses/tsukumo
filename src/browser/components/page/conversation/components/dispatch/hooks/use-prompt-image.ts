@@ -1,4 +1,4 @@
-// `<Composer>` に添える画像の持ち方と、貼り付け・ドロップ・ファイルを選ぶ窓からの取り込み。
+// `<Composer>` に添える画像の持ち方と、貼り付け・ドロップ・ファイルを選ぶウィンドウからの取り込み。
 // ここは state とイベントの読み替えだけを持ち、読み込みそのもの（原寸と控えを作る・添えられる種類か見分ける）は `readPromptImage` などの純関数が持つ。
 
 import { useRef, useState, type RefObject } from "react"
@@ -28,9 +28,9 @@ export type PromptImageModel = {
   readonly onPaste: (event: Pick<ClipboardEvent, "clipboardData" | "preventDefault">) => void
   readonly onDragOver: (event: Pick<DragEvent, "dataTransfer" | "preventDefault">) => void
   readonly onDrop: (event: Pick<DragEvent, "dataTransfer" | "preventDefault">) => void
-  /** 画像のボタン。ファイルを選ぶ窓を開く。 */
+  /** 画像のボタン。ファイルを選ぶウィンドウを開く。 */
   readonly onPickImages: () => void
-  /** ファイルを選ぶ窓で選び終えたとき。 */
+  /** ファイルを選ぶウィンドウで選び終えたとき。 */
   readonly onImagesChosen: (event: { readonly target: HTMLInputElement }) => void
   /** 送った・送信を諦めたときに呼ぶ（送った時点で原寸を手放す。札が消え、以降どこからも開けない）。 */
   readonly reset: () => void
@@ -71,7 +71,7 @@ export function usePromptImage(args: UsePromptImageArgs): PromptImageModel {
       attachFiles(files)
     },
     onDragOver: (event) => {
-      // ファイルを掴んできたときだけ落とせるようにする（文字のドラッグは入力欄の面の既定の振る舞いのまま）。
+      // ファイルを掴んできたときだけ落とせるようにする（文字のドラッグは入力欄のサーフェスの既定の振る舞いのまま）。
       if (carriesFiles(event.dataTransfer)) {
         event.preventDefault()
       }

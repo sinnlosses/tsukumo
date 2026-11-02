@@ -3,7 +3,7 @@
 
 import type { DiagnosticEntry } from "../../../shared/diagnostic/diagnostic-record.ts"
 
-/** 診断ログの読み書き口。書けなくても・読めなくても例外を投げない。 */
+/** 診断ログの読み書きの関数。書けなくても・読めなくても例外を投げない。 */
 export type DiagnosticLog = {
   readonly append: (entries: readonly DiagnosticEntry[]) => void
   /** 範囲に入る件を時刻の順に返す。壊れた行・版が違う行は読まずに落とす。 */

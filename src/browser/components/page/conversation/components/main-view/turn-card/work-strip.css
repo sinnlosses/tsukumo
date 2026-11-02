@@ -1,4 +1,4 @@
-/* 進み具合の帯。札の頭の中身として、札の右の側の上端に貼り付く。 */
+/* 進み具合のプログレスバー。札の頭の中身として、札の右の側の上端に貼り付く。 */
 
 .work-strip {
   position: relative;
@@ -9,7 +9,7 @@
   border-bottom: 1px solid var(--rule-quiet);
   background: var(--ground);
 }
-/* 1行目。丸の並びは縮めず、今の段の名前だけが縮んで末尾を「…」にする（7段でも狭い窓でも1行）。 */
+/* 1行目。丸の並びは縮めず、今の段の名前だけが縮んで末尾を「…」にする（7段でも狭いビューポートでも1行）。 */
 .work-strip-line {
   display: flex;
   align-items: center;
@@ -70,7 +70,7 @@
   padding: 0;
   list-style: none;
 }
-/* 丸（と並列の段の囲み）のあいだの線は、2つ目以降の左に描く。済んだ段までの線だけ差し色にする。 */
+/* 丸（と並列のフェーズの囲み）のあいだの線は、2つ目以降の左に描く。済んだ段までの線だけ差し色にする。 */
 .work-strip-slot,
 .work-strip-phase {
   display: flex;
@@ -111,7 +111,7 @@
   border-radius: 999px;
   list-style: none;
 }
-/* 段の丸を押す口。押す的は 24px 四方で、はみ出すぶんを負の margin で打ち消し、並びの寸法は丸の大きさのまま保つ。
+/* 段の丸のボタン。押す的は 24px 四方で、はみ出すぶんを負の margin で打ち消し、並びの寸法は丸の大きさのまま保つ。
    見える丸は中の span。 */
 .work-strip-phase-dot {
   display: inline-flex;

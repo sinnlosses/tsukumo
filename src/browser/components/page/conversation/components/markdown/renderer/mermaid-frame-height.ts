@@ -41,7 +41,7 @@ export function mermaidFrameHeight(code: string): number {
   return lines.length * FALLBACK_LINE_PX + FALLBACK_EXTRA_PX
 }
 
-/** 辺の並びから、いちばん長い道の節点数を数える（輪があれば辿りきった所で止める）。 */
+/** エッジの並びから、いちばん長い道のノード数を数える（輪があれば辿りきった所で止める）。 */
 function flowRanks(lines: readonly string[]): number {
   const next = new Map<string, Set<string>>()
   for (const line of lines) {

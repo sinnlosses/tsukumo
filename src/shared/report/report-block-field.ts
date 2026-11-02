@@ -28,7 +28,7 @@ export const positiveNumber = z
 // （ここに `.describe` を足すと塊の数だけ繰り返されて JSON Schema が膨らむ）。
 export const fold = omittable(z.string(), "")
 
-// 塊の傍注（余白の柱に置く1行）。説明は `fold` と同じく `REPORT_SECTIONS_DESCRIPTION` に1回だけ書く。
+// 塊の欄外注（欄外注の列に置く1行）。説明は `fold` と同じく `REPORT_SECTIONS_DESCRIPTION` に1回だけ書く。
 export const aside = omittable(z.string(), "")
 
 /**

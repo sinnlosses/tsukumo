@@ -71,12 +71,12 @@ const SECTION_REGION_SELECTOR = "[data-report-section]"
  */
 export const SHORT_REPORT_WEIGHT = 200
 
-/** 最初から出す要素。節の見出し（`SectionHeading` の `h4`・`SubHeading` の `h5`）と図表の題と余白の柱。 */
+/** 最初から出す要素。節の見出し（`SectionHeading` の `h4`・`SubHeading` の `h5`）と図表の題と欄外注の列。 */
 const UNWRITTEN_SELECTOR = "h4, h5, [data-reveal-caption], [data-reveal-gutter]"
 
 /**
- * 題つきの図表の包みと、塊と余白の柱の包み。包みごと隠すと題・余白の柱も隠れるので、包みは対象にせず中の本体を対象にする。
- * 題の行と余白の柱の印は `NotationBlock` が足す（語彙の class 名はハッシュ名に置き換わるため）。
+ * 題つきの図表の包みと、塊と欄外注の列の外枠。包みごと隠すと題・欄外注の列も隠れるので、包みは対象にせず中の本体を対象にする。
+ * 題の行と欄外注の列の印は `NotationBlock` が足す（語彙の class 名はハッシュ名に置き換わるため）。
  */
 const WRAPPER_SELECTOR = ":has(> [data-reveal-caption]), :has(> [data-reveal-gutter])"
 
@@ -203,7 +203,7 @@ function memberOf(element: RevealElement): RevealMember {
   return { element, kind: blockKind(element) }
 }
 
-/** 包み（{@link WRAPPER_SELECTOR}）なら中の要素に降りる。余白の柱の包みの中の題つきの包みにも降りる。 */
+/** 包み（{@link WRAPPER_SELECTOR}）なら中の要素に降りる。欄外注の列の外枠の中の題つきの外枠にも降りる。 */
 function unwrapped(element: RevealElement): readonly RevealElement[] {
   return element.matches(WRAPPER_SELECTOR)
     ? [...element.children].filter(isRevealElement).flatMap(unwrapped)

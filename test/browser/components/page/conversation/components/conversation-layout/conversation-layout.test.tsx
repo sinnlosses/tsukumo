@@ -10,7 +10,7 @@ import {
 
 /**
  * 4領域は中身の判別さえできればよいので、部品名の文字列だけ渡す
- * （`<ConversationLayout>` は他の `features/` を import しない。層の辺の検査が守る）。
+ * （`<ConversationLayout>` は他の `features/` を import しない。層のエッジの検査が守る）。
  */
 function renderLayout(collapseCharacter = false, mainAsGround = collapseCharacter): void {
   render(

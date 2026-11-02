@@ -1,4 +1,4 @@
-// 葉を直接描く部品の出力を、図の塊を質問の添え書きと同じ `reportSectionsMarkdown` で Markdown にして `Markdown` で描いた出力と突き合わせる道具。
+// 葉を直接描く部品の出力を、図の部品を質問の添え書きと同じ `reportSectionsMarkdown` で Markdown にして `Markdown` で描いた出力と突き合わせる道具。
 // 空白だけの違い（Markdown の改行の文字）は畳んで比べる。
 
 import { cleanup, render, type RenderResult } from "@testing-library/react"
@@ -131,7 +131,7 @@ function renderNew(
   return readRendered(container)
 }
 
-/** 番号も傍注も無い葉の値。 */
+/** 番号も欄外注も無い葉の値。 */
 export const PLAIN_LEAF_VALUE = {
   captionNumber: { kind: "none" },
   tagTones: {},
@@ -156,7 +156,7 @@ export function renderDirectLeaf(
   )
 }
 
-/** 図の塊を Markdown にして描いたもの（欄の直接の子）の `innerHTML`。 */
+/** 図の部品を Markdown にして描いたもの（欄の直接の子）の `innerHTML`。 */
 export function oldLeafHtml(
   block: FigureBlock,
   imageSource: ReportImageSource = NO_IMAGES,
@@ -173,7 +173,7 @@ export function newLeafHtml(
   return renderNew(block, part, imageSource).html
 }
 
-/** 図の塊を Markdown にして描いたものの text ノードの字の並び。 */
+/** 図の部品を Markdown にして描いたものの text ノードの字の並び。 */
 export function oldLeafTextNodes(block: FigureBlock): readonly string[] {
   return renderOld(block, NO_IMAGES).textNodes
 }

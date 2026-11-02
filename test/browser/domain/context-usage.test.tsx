@@ -73,7 +73,7 @@ describe("useContextUsage", () => {
       "buffer",
     ])
     expect(card.deferredRows.map((row) => row.name)).toEqual(["MCP tools (deferred)"])
-    // 架空の内訳は空きが 95,000 / 窓が 200,000。
+    // 架空の内訳は空きが 95,000 / コンテキストウィンドウが 200,000。
     expect(card.untilCompactTokens).toBe(95_000)
     expect(card.rows[0]?.share).toBeCloseTo(4)
   })

@@ -6,10 +6,10 @@ import {
   type PortraitMotionInput,
 } from "../../../src/browser/domain/portrait-motion.ts"
 
-/** 失敗の動きが当たる窓（失敗の直後から）。 */
+/** 失敗の動きが当たる期間（失敗の直後から）。 */
 const FAILURE_MOTION_WINDOW_MS = 400
 
-/** 完了の動きが当たる窓（ターンが終わった直後から）。 */
+/** 完了の動きが当たる期間（ターンが終わった直後から）。 */
 const SUCCESS_MOTION_WINDOW_MS = 700
 
 describe("resolvePortraitMotion", () => {

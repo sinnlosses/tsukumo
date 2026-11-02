@@ -8,7 +8,7 @@ import {
 } from "../../../../../../../../src/shared/session/main-view-shape.ts"
 import { noRootA2ui } from "../../../../../../../fixture/main-view-entry.ts"
 
-/** 見出しが空文字の節は、見出しの無い節の欄（ID は並びの位置のまま）。 */
+/** 見出しが空文字の節は、見出しの無いセクションの欄（ID は並びの位置のまま）。 */
 function textStep(
   id: number,
   headings: readonly string[],

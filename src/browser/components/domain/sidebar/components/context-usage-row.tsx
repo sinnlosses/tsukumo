@@ -1,7 +1,7 @@
 // サイドバーの下端の帯の詳しい面の中で、いまのコンテキストの使用量を1枚の札で出す。
 // 押せるのは右端の `›`（ホバー中は「詳しく ›」）だけで、押すとトークン消費の画面（`#token-usage`）へ移る。
 //
-// 出す数は札の「使っている量」と同じ（`usage.totalTokens` / `usage.maxTokens` / `usage.percentage`。自動圧縮バッファ・窓の外の分類は含めない）。
+// 出す数は札の「使っている量」と同じ（`usage.totalTokens` / `usage.maxTokens` / `usage.percentage`。自動圧縮バッファ・コンテキストウィンドウの外の分類は含めない）。
 //
 // 取れないとき・まだ届いていないときも札の高さは変わらない。
 // 3段の骨組みはいつも同じで、1段目の割合は「—」、量の場所に一言（`PENDING_TEXT` / `UNAVAILABLE_TEXT`）を出し、3段目は空けて高さだけ保つ。
@@ -87,7 +87,7 @@ function percentageText(usage: UseContextUsageResult): string {
   return usage.kind === "ready" ? `${usage.percentage}%` : PERCENTAGE_PLACEHOLDER
 }
 
-/** 1段目の「使っている量 / 窓の大きさ」。取れないときはその場所に一言を出す。 */
+/** 1段目の「使っている量 / コンテキストウィンドウの大きさ」。取れないときはその場所に一言を出す。 */
 function valueText(usage: UseContextUsageResult): string {
   if (usage.kind === "pending") {
     return PENDING_TEXT

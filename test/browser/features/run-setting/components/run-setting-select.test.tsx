@@ -1,4 +1,4 @@
-// 吊り札の開くリストを持つ選択の口（`RunSettingSelect`）。選択肢の描画・`onChange`・disabled の
+// 吊り下げのカードの開くリストを持つ選択の口（`RunSettingSelect`）。選択肢の描画・`onChange`・disabled の
 // 絞り込みをここで測る。地・枠・角などの見た目は目視で確かめる（`docs/architecture/testing.md`）。
 
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"

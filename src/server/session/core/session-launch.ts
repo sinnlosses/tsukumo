@@ -85,7 +85,7 @@ export type SessionLaunchPorts<Pack extends NamedCharacterPack> = {
   readonly refreshSessions: () => Promise<SessionCatalogRefresh>
   /** 前のセッションの記録を、画面に出す形のイベントに組み直す。 */
   readonly restoreEvents: (sessionId: SessionId, pack: Pack) => Promise<readonly RestoredEvent[]>
-  /** 診断ログの書き込み口。{@link restoreEvents} が失敗したときだけ使う。 */
+  /** 診断ログの書き込みの関数。{@link restoreEvents} が失敗したときだけ使う。 */
   readonly diagnosticLog: DiagnosticLog
   /** いまのエポックミリ秒（診断ログに打つ時刻）。 */
   readonly now: () => number

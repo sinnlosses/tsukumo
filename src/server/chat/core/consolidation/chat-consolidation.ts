@@ -45,7 +45,7 @@ export const CHAT_CONSOLIDATION_LIMITS = {
 
 /**
  * 注入文の包みの印。あらすじに含まれていたら拒む。
- * `<topics>` は話題を本文に埋め込んでいた古い形、`<tsukumo-aside>` は脇の話の包み、`<tsukumo-progress>` は進みの差し込みの包み、`<agent-message` は委譲の引き継ぎの頭、
+ * `<topics>` は話題を本文に埋め込んでいた古い形、`<tsukumo-aside>` は補足メッセージの包み、`<tsukumo-progress>` は進みの差し込みの包み、`<agent-message` は委譲の引き継ぎの頭、
  * `<command-name>` などの3つは SDK が展開したスラッシュコマンド、`<system-reminder>`・`<task-notification>`・`<local-command-stdout>` は Claude Code が差し込む印。
  */
 const CHAT_SYNOPSIS_RESERVED_TAGS = [

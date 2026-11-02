@@ -15,7 +15,7 @@ import {
   speechRecord,
 } from "../../fixture/session-record.ts"
 
-/** メインビューに出すやり取りの数（仕事の記録の窓と同じ）。 */
+/** メインビューに出すやり取りの数（仕事の記録の集計期間と同じ）。 */
 const MAX_MAIN_VIEW_TURNS = MAX_SESSION_STATE_TURNS.work
 
 /** 依頼より前のまとまりの番号。 */

@@ -1,4 +1,4 @@
-// 撮影の道具が最狭の窓で測る、文字を持つ要素の行数と省略の有無。前後の差を折れとして出す。
+// 撮影の道具が最狭のビューポートで測る、文字を持つ要素の行数と省略の有無。前後の差を折れとして出す。
 
 export type WrapRow = {
   readonly key: string
@@ -90,7 +90,7 @@ export function diffWrapRows(before: readonly WrapRow[], after: readonly WrapRow
   return { grown, newlyEllipsed, onlyBefore, onlyAfter }
 }
 
-/** 窓ごとの差を出力の行にする。 */
+/** ビューポートごとの差を出力の行にする。 */
 export function formatWrapDiff(size: string, diff: WrapDiff): string {
   const lines = [`窓 ${size}`]
   if (diff.grown.length === 0 && diff.newlyEllipsed.length === 0) {

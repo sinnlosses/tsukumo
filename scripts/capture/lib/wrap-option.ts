@@ -5,7 +5,7 @@ import { parseArgs } from "node:util"
 import { PREPARATION_OPTIONS, type Preparation, readPreparations } from "./capture-preparation.ts"
 import { parseSize, type WindowSize } from "./capture-size.ts"
 
-/** 既定の窓。最狭の幅で折れを見る。 */
+/** 既定のビューポート。最狭の幅で折れを見る。 */
 const DEFAULT_SIZE: WindowSize = { width: 360, height: 900 }
 
 export const WRAP_USAGE = `使い方:
@@ -24,7 +24,7 @@ export type WrapOptions = {
   readonly preparations: readonly Preparation[]
 }
 
-/** 崩れた引数・足りない URL・読めない窓や操作は undefined（呼び出し側が使い方を出す）。 */
+/** 崩れた引数・足りない URL・読めないビューポートや操作は undefined（呼び出し側が使い方を出す）。 */
 export function parseWrapOptions(argv: readonly string[]): WrapOptions | undefined {
   try {
     const { values, tokens } = parseArgs({

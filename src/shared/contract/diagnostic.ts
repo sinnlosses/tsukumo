@@ -10,7 +10,7 @@ import { RECOMMENDATION_CARD_KINDS } from "../recommendation/recommendation-card
 export const diagnosticContract = {
   /** `/ws` の接続が無い間（繋ぐ前と切れている間）は送らずに捨てる。 */
   reportBrowserError: commandBase.input(browserErrorReportSchema),
-  /** 始め方の札が押されたこと。押した札の種類だけを送り、依頼そのものは `session.prompt` で送る。 */
+  /** 始め方のカードが押されたこと。押した札の種類だけを送り、依頼そのものは `session.prompt` で送る。 */
   reportRecommendationPressed: commandBase.input(
     z.object({ kind: z.enum(RECOMMENDATION_CARD_KINDS) }),
   ),

@@ -36,7 +36,7 @@ export type GenerationTally = {
   readonly confirmedSettings: ConfirmedSettings
   /** 待ちの一言を出す時刻に `waiting-line-due` を流す目覚まし。代を閉じたら止める。 */
   readonly waitingLineAlarm: WaitingLineAlarm
-  /** 依頼の頭の HEAD を控え、`task` のある `report` の変更の札を数える係。 */
+  /** 依頼の頭の HEAD を控え、`task` のある `report` の変更のラベルを数える係。 */
   readonly reportChangeCounter: ReportChangeCounter
 }
 

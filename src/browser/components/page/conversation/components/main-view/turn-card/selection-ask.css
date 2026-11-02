@@ -1,4 +1,4 @@
-/* 選択の下端に添える口。窓の座標で置くので fixed。 */
+/* 選択の下端に添える口。ビューポートの座標で置くので fixed。 */
 .selection-ask {
   position: fixed;
   z-index: 3;

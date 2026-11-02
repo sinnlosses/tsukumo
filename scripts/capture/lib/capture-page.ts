@@ -110,7 +110,7 @@ export async function scrollIntoView(page: Page, selector: string): Promise<numb
   if (count === 0) {
     return 0
   }
-  // 末尾に近い塊も上端へ届くよう、撮影のページだけ末尾に窓の高さ分の余白を足す
+  // 末尾に近い部品も上端へ届くよう、撮影のページだけ末尾にビューポートの高さ分の余白を足す
   await page.addStyleTag({
     content: `${MAIN_REGION_SELECTOR}::after { content: ""; display: block; height: ${String(page.viewportSize()?.height ?? 0)}px; flex: none; }`,
   })

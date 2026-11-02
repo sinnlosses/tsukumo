@@ -5,7 +5,7 @@ import { implement } from "@orpc/server"
 import { planUsageContract } from "../../../shared/contract/plan-usage.ts"
 import { type PlanUsageReport, UNAVAILABLE_PLAN_USAGE } from "../../../shared/usage/plan-usage.ts"
 
-/** この機能の手続きが使う口（中身は配線が渡す）。 */
+/** この機能の手続きが使う関数（中身は配線が渡す）。 */
 export type PlanUsageProcedurePorts = {
   /** いまのセッションのプラン使用量。セッションが繋がるまでは「取れない」を返す。 */
   readonly readPlanUsage: () => Promise<PlanUsageReport>

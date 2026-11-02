@@ -34,7 +34,7 @@ export type PhaseShift = {
  *   段は名前と同じ名前の段の中で何番目かで探すので、段を進めながら後ろの段を組み替えても終えた段を見失わず、
  *   同じ名前の済んだ段を今の段と取り違えない。
  *   戻った・組み替えただけで前の今の段が済んでいない（今の段以降にある・並びから消えた）ときは出さない
- * - そのほか、前のワークプランのまとめ待ちの段が新しい並びで済んでいれば、新しいまとめをその段の中間レポートにする
+ * - そのほか、前のワークプランのまとめ待ちのフェーズが新しい並びで済んでいれば、新しいまとめをその段の中間レポートにする
  */
 export function phaseShiftOf(previous: LatestWorkPlan, next: WorkPlan): PhaseShift {
   const shifted = shiftedPhaseOf(previous, next)

@@ -157,7 +157,7 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
     reportFailure({ feature: "chat", place }, error)
   })
 
-  // 依頼に添えた画像の原寸の棚と、レポートの画像の棚も1つずつをここで作って両側へ渡す。
+  // 依頼に添えた画像の原寸の置き場と、レポートの画像の置き場も1つずつをここで作って両側へ渡す。
   // 両側が同じ棚を見ないと、置いた原寸をビューが引けない。
   const promptImageShelf = createPromptImageShelf(() => crypto.randomUUID())
   const reportImageShelf = createReportImageShelf()

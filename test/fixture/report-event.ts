@@ -125,7 +125,7 @@ export function reportDraft(input: ReportDraftInput = {}): ReportDraft {
 
 /**
  * 旧い形の節・図・振り返りを、本番と同じ組み直し（`legacyReportComponents`）で部品の一覧にする。
- * 節が無いまま図か振り返りの塊だけがあるときは、根の子が空にならないよう空の段落の節を1つ置く。
+ * 節が無いまま図か振り返りの部品だけがあるときは、根の子が空にならないよう空の段落の節を1つ置く。
  */
 export function componentsOfSections(
   sections: readonly LegacySectionInput[],

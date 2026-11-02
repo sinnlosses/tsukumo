@@ -17,7 +17,7 @@
 .task-run-prompt {
   font-family: var(--font-mono);
 }
-/* 押す口は右寄せで、実行するほうを端に置く（キャンセルが先に来る）。 */
+/* ボタンは右寄せで、実行するほうを端に置く（キャンセルが先に来る）。 */
 .task-run-actions {
   display: flex;
   justify-content: flex-end;

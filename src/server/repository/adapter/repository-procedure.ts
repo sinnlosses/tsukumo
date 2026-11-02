@@ -19,7 +19,7 @@ import {
   type RepositoryFileList,
 } from "../../../shared/repository/repository-file-list.ts"
 
-/** この機能の手続きが使う口（中身は配線が渡す）。 */
+/** この機能の手続きが使う関数（中身は配線が渡す）。 */
 export type RepositoryProcedurePorts = {
   /** git 管理下のファイルのパス（作業ディレクトリからの相対）と、上限で落とした件数。git 管理下でない・`git` が無いときはパスが空。 */
   readonly listRepositoryFiles: () => Promise<RepositoryFileList>

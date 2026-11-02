@@ -1,4 +1,4 @@
-// `report` の記録の部品の一覧から、描く節の並びと、その節の塊の値を導く。
+// `report` の記録の部品の一覧から、描く節の並びと、そのセクションの部品の値を導く。
 
 import type { DrawnReport } from "../report/report-drawn-outline.ts"
 import { drawnReportOf } from "../report/report-drawn-outline.ts"

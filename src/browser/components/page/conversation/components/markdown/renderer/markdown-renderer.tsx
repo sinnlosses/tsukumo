@@ -109,7 +109,7 @@ const FOOTNOTE_OPTIONS = {
 // remark-cjk-friendly は remark-gfm より後（README の使用例どおり）。
 // 効くのは `` と `*` だけで、GFM の取り消し線 `~~` には効かない（あちらは micromark-extension-gfm-strikethrough の別の判定を通るため。直すには remark-cjk-friendly-gfm-strikethrough が要る）。
 // 取り消し線はレポートの記法（`REPORT_NOTATION_PROMPT`）が勧めていないので、穴のまま置いてある。
-// この2段は、サーバが質問の preview から棚に置く画像を拾う読み方（`questionImagePaths`）とそろえる。
+// この2段は、サーバが質問の preview から置き場に置く画像を拾う読み方（`questionImagePaths`）とそろえる。
 const REPORT_REMARK_PLUGINS = [remarkGfm, remarkCjkFriendly] satisfies NonNullable<
   Options["remarkPlugins"]
 >
@@ -144,7 +144,7 @@ export type QuestionPreviewMarkdownProps = {
   readonly toolUseId: string
 }
 
-/** 質問の選択肢の `preview` の Markdown を、レポートと同じ経路で描く。手元の画像はその質問の棚から引く。 */
+/** 質問の選択肢の `preview` の Markdown を、レポートと同じ経路で描く。手元の画像はその質問の置き場から引く。 */
 export function QuestionPreviewMarkdown(props: QuestionPreviewMarkdownProps): ReactElement {
   return (
     <ReportMarkdown
@@ -180,7 +180,7 @@ export function CodeFence(props: CodeFenceProps): ReactElement {
 }
 
 /**
- * 段落の `p` を外して、行内の記法だけを描く（葉の部品が1行の字を `p` や `li` の中に置くときに使う）。
+ * 段落の `p` を外して、行内の記法だけを描く（内容部品が1行の字を `p` や `li` の中に置くときに使う）。
  * 描き終えた木は覚えない（覚える鍵は塊の Markdown で、段落の木と混ざる）。
  */
 export function InlineMarkdown(props: MarkdownProps): ReactElement {

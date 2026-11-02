@@ -70,7 +70,7 @@
 .run-setting-select-closed {
   display: contents;
 }
-/* 吊り札の頭の見出し。閉じているあいだは `<select>` の直下の子として非表示、開いたときだけ出る。 */
+/* 吊り下げのカードの頭の見出し。閉じているあいだは `<select>` の直下の子として非表示、開いたときだけ出る。 */
 .run-setting-select-heading {
   padding: var(--space-sm) var(--space-md) var(--space-2xs);
   color: var(--ink-quiet);
@@ -78,7 +78,7 @@
   font-weight: 600;
 }
 
-/* 吊り札そのもの。`appearance: base-select` を当てた picker に地・枠・角を描く。
+/* 吊り下げのカードそのもの。`appearance: base-select` を当てた picker に地・枠・角を描く。
    `display` は `:popover-open` のときだけ書く — 閉じているあいだも書くと、ブラウザが
    閉じたときに隠す既定（`display: none`）を上書きしてしまい、閉じた口の上に一覧が乗って見える・
    他の口を塞いでしまう。 */
@@ -90,8 +90,8 @@
   border-radius: var(--radius-lg);
   background: var(--surface);
   box-shadow: var(--shadow-raised);
-  /* 既定の anchor は口の右端に合わせて右へ伸びるので、広い窓で右端の口（許可モード）が
-     窓の外へ出る。左へ伸ばし、窓の縁からの余白を margin で持つ。 */
+  /* 既定の anchor は口の右端に合わせて右へ伸びるので、広いビューポートで右端の口（許可モード）が
+     ビューポートの外へ出る。左へ伸ばし、ビューポートの縁からの余白を margin で持つ。 */
   position-area: bottom span-left;
   margin: var(--space-sm);
 }
@@ -154,7 +154,7 @@
   display: none;
 }
 
-/* 中くらいの窓幅の柱では、横へ吊る。柱は窓の右端にあるので左へ吊り、縦は口の高さに合わせて中央へ揃える
+/* 中くらいのビューポート幅の柱では、横へ吊る。柱はビューポートの右端にあるので左へ吊り、縦は口の高さに合わせて中央へ揃える
    （`span-bottom` だと口の下端から下へ伸び、縦の位置が口からずれる実測）。 */
 .run-setting-select.is-rail::picker(select) {
   position-area: left;

@@ -56,12 +56,12 @@ export function resolvePortraitMotion(input: PortraitMotionInput, now: number): 
 
 /**
  * 「失敗でびくっ」「完了の反応」が続く残り時間のうち、いちばん早く終わるものまでのミリ秒を返す。
- * どちらも起きていない・時間の窓をすでに過ぎているときは undefined（時間経過だけで動きが変わることはない）。
+ * どちらも起きていない・期間をすでに過ぎているときは undefined（時間経過だけで動きが変わることはない）。
  *
- * 時間の窓が「過ぎた瞬間」には何のイベントも来ない。
+ * 期間が「過ぎた瞬間」には何のイベントも来ない。
  * 呼び出し側はこの戻り値ぶん先に1回だけ描き直して、「読んでいる」「待っている」へ戻す。
  *
- * `draftingReport` は受け取らない（「書いている」には時間の窓が無く、値が変われば描画自体が {@link resolvePortraitMotion} を呼び直す）。
+ * `draftingReport` は受け取らない（「書いている」には期間が無く、値が変われば描画自体が {@link resolvePortraitMotion} を呼び直す）。
  */
 export function nextPortraitMotionTransitionDelayMs(
   input: Pick<PortraitMotionInput, "turn" | "lastToolFailureAt">,

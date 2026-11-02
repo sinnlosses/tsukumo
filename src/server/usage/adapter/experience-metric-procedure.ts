@@ -5,7 +5,7 @@ import { implement } from "@orpc/server"
 import { experienceMetricContract } from "../../../shared/contract/experience-metric.ts"
 import type { SplitRelease } from "../core/experience/experience-metric.ts"
 
-/** この機能の手続きが使う口（中身は配線が渡す）。 */
+/** この機能の手続きが使う関数（中身は配線が渡す）。 */
 export type ExperienceMetricProcedurePorts = {
   readonly recordSplit: (release: SplitRelease) => void
 }

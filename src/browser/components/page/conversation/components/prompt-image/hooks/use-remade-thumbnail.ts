@@ -1,10 +1,10 @@
-// 続きから復元した依頼の控え。記録は控えを持たないので、棚の原寸を取りに行ってブラウザで縮め直す。
+// 続きから復元した依頼の控え。記録は控えを持たないので、置き場の原寸を取りに行ってブラウザで縮め直す。
 
 import { useQuery } from "@tanstack/react-query"
 
 import { shrinkToThumbnail } from "../../../domain/prompt-image-thumbnail.ts"
 
-/** 作り直した控え。棚から原寸が消えていた・読めなかったときは `unavailable`。 */
+/** 作り直した控え。置き場から原寸が消えていた・読めなかったときは `unavailable`。 */
 export type RemadeThumbnail =
   | { readonly kind: "pending" }
   | { readonly kind: "made"; readonly src: string }
@@ -13,7 +13,7 @@ export type RemadeThumbnail =
 const PENDING: RemadeThumbnail = { kind: "pending" }
 
 /**
- * `fullUrl` は棚の原寸を配る経路の URL（起動トークンつき）。
+ * `fullUrl` は置き場の原寸を配る経路の URL（起動トークンつき）。
  * 同じ原寸から作る控えは変わらないので、ページの一生で1回だけ作り、取り直さない。
  */
 export function useRemadeThumbnail(fullUrl: string): RemadeThumbnail {

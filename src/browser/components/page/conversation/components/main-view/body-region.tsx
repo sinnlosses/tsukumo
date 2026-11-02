@@ -33,7 +33,7 @@ export function ReportFrame(props: ReportFrameProps): ReactElement {
 
   return (
     <>
-      {/* 飛ばす操作そのもの（押す・キー）は `useReportReveal` が窓で聞いているので、押された時点で残りは出ている。
+      {/* 飛ばす操作そのもの（押す・キー）は `useReportReveal` がウィンドウで聞いているので、押された時点で残りは出ている。
           口は「飛ばせる」と知らせる顔で、演出中の表示は CSS が `data-revealing` を見て決める。 */}
       {props.reveal && (
         <Button

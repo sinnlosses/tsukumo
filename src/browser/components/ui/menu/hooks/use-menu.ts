@@ -12,7 +12,7 @@ type MenuState = {
   readonly triggerRef: RefObject<HTMLButtonElement | null>
   readonly panelRef: RefObject<HTMLDivElement | null>
   readonly onToggle: () => void
-  /** 閉じて押す口へフォーカスを戻してから `onSelect` を呼ぶ（`onSelect` が行ごと部品を外してもよい）。 */
+  /** 閉じてボタンへフォーカスを戻してから `onSelect` を呼ぶ（`onSelect` が行ごと部品を外してもよい）。 */
   readonly select: (onSelect: () => void) => void
   readonly onPanelKeyDown: (event: KeyboardEvent<HTMLDivElement>) => void
 }

@@ -167,7 +167,7 @@ function sharedFeatureEdges(): readonly {
     })
 }
 
-/** shared の機能どうしの辺をグラフにする（shared は層が1つなので、サーバの `featureGraphOf` と違い層は問わない）。 */
+/** shared の機能どうしのエッジをグラフにする（shared は層が1つなので、サーバの `featureGraphOf` と違い層は問わない）。 */
 function sharedFeatureGraph(): ReadonlyMap<SharedFeature, ReadonlySet<SharedFeature>> {
   const edges = sharedFeatureEdges()
   return new Map(

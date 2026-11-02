@@ -1,6 +1,6 @@
 import { vi } from "vitest"
 
-/** 窓が狭い画面（760px 以下）に当たるか、という `matchMedia` の答えを差し替える。戻すのは `vi.restoreAllMocks()`。 */
+/** ビューポートが狭い画面（760px 以下）に当たるか、という `matchMedia` の答えを差し替える。戻すのは `vi.restoreAllMocks()`。 */
 export function stubPhoneWidth(matches: boolean): void {
   vi.spyOn(window, "matchMedia").mockImplementation((query) => ({
     matches,

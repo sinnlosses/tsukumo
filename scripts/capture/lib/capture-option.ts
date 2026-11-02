@@ -11,11 +11,11 @@ import { parseSize, type WindowSize } from "./capture-size.ts"
 import { type Source, sourceOf } from "./capture-source.ts"
 import { readHeldProcedure, readRpcStub, type RpcStub } from "./capture-stub.ts"
 
-/** 既定の窓の大きさ。実機の目視で使ってきた値に揃えてある。 */
+/** 既定のビューポートの大きさ。実機の目視で使ってきた値に揃えてある。 */
 const DEFAULT_WIDTH = 1400
 const DEFAULT_HEIGHT = 900
 
-/** `--paper-metric` が `--viewport` の指定なしで測る窓の並び。 */
+/** `--paper-metric` が `--viewport` の指定なしで測るビューポートの並び。 */
 const DEFAULT_PAPER_METRIC_VIEWPORTS: readonly WindowSize[] = [
   { width: 1440, height: 900 },
   { width: 1920, height: 1080 },

@@ -5,7 +5,7 @@ import type { z } from "zod"
 
 import { LEAF_COMPONENT_KINDS, type REPORT_COMPONENT_SCHEMAS } from "./a2ui-report-catalog.ts"
 
-/** 葉の部品の入力から `id`・`component` を除き、写す先の `kind` を足した形（例の鍵は `kind`）。 */
+/** 内容部品の入力から `id`・`component` を除き、写す先の `kind` を足した形（例の鍵は `kind`）。 */
 type LeafExamples = {
   readonly [C in keyof typeof LEAF_COMPONENT_KINDS as (typeof LEAF_COMPONENT_KINDS)[C]]: Omit<
     z.input<(typeof REPORT_COMPONENT_SCHEMAS)[C]>,
@@ -162,7 +162,7 @@ const LEAF_BLOCK_EXAMPLES = {
   markdown: { kind: "markdown", markdown: "架空の **一行**" },
 } satisfies LeafExamples
 
-/** 葉の部品の例。塊の例から `kind` を除き、`id` と `component` を足す。 */
+/** 内容部品の例。塊の例から `kind` を除き、`id` と `component` を足す。 */
 const LEAF_EXAMPLES = mapValues(LEAF_COMPONENT_KINDS, (kind, component) => [
   { id: "p1", component, ...omit(LEAF_BLOCK_EXAMPLES[kind], ["kind"]) },
 ])

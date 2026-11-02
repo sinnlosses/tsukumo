@@ -2,7 +2,7 @@ import type { Page } from "playwright-core"
 
 import { expect, test } from "./room-fixture.ts"
 
-// 狭い画面（760px 以下）の答え待ちの札。
+// 狭い画面（760px 以下）の答え待ちのカード。
 // 位置・板の中の1列の形と横に転がらないことを実ブラウザで確かめる。期待値は撮らない。
 
 function cardOf(page: Page) {

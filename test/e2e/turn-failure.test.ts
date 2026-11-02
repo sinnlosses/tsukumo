@@ -3,7 +3,7 @@ import type { Locator, Page } from "playwright-core"
 import { expectReadable } from "./readability-scan.ts"
 import { expect, test } from "./room-fixture.ts"
 
-// 失敗で終わったやり取りの頭の失敗の塊と、その次の手（docs/architecture/testing.md「E2E のシナリオの一覧」）。
+// 失敗で終わったやり取りの頭の失敗の表示と、その次の手（docs/architecture/testing.md「E2E のシナリオの一覧」）。
 // 場面 `api-failure` は `turn-finished` で流れ終わる。
 
 const FAILURE_REQUEST = "API のサーバが不調な日に頼む（架空の依頼）"
@@ -44,7 +44,7 @@ function draft(page: Page): Promise<string> {
   return page.locator("textarea").inputValue()
 }
 
-/** 失敗の塊が札の本文の先頭にあるか（レポートより前）。 */
+/** 失敗の表示がカードの本文の先頭にあるか（レポートより前）。 */
 function isAtHeadOfCard(block: Locator): Promise<boolean> {
   return block.evaluate((element) => {
     const card = element.closest("article")

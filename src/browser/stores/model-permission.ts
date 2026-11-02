@@ -29,7 +29,7 @@ export type ModelPermissionControl = {
   readonly onSetModel: (value: string) => void
   /** 押した値へ先に倒さない。選べる段・いまの値はサーバから届いた値（`model-effort-support` / `effort-changed`）だけに従う。 */
   readonly effort: EffortSelect
-  /** モデルごとの effort 対応表。いまのモデル以外の行（吊り札の一覧）が「effort なし」を書けるかの判定に使う。 */
+  /** モデルごとの effort 対応表。いまのモデル以外の行（吊り下げのカードの一覧）が「effort なし」を書けるかの判定に使う。 */
   readonly modelEffortSupport: readonly ModelEffortSupport[]
   readonly onSetEffort: (value: string) => void
   readonly permissionMode: ReportedPermissionMode

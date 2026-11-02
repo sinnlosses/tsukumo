@@ -25,23 +25,23 @@ const BATCH_MS = 5
 /** 会話のアーカイブに書く仕事の行の `project`（架空のリポジトリの名前）。 */
 export const FICTIONAL_PROJECT = "架空プロジェクト"
 
-/** トークン消費の記録を気にしないテストに渡す、何もしない書き込み口。 */
+/** トークン消費の記録を気にしないテストに渡す、何もしない書き込みの関数。 */
 const NOOP_TOKEN_USAGE_LOG: TokenUsageLog = {
   append: () => {},
   prefetchOpenTask: () => {},
   readRange: () => [],
 }
 
-/** 進行の計測値の記録を気にしないテストに渡す、何もしない書き込み口。 */
+/** 進行の計測値の記録を気にしないテストに渡す、何もしない書き込みの関数。 */
 const NOOP_EXPERIENCE_METRIC_LOG: ExperienceMetricLog = { append: () => {}, readRange: () => [] }
 
-/** 診断ログを気にしないテストに渡す、何もしない書き込み口。 */
+/** 診断ログを気にしないテストに渡す、何もしない書き込みの関数。 */
 const NOOP_DIAGNOSTIC_LOG: DiagnosticLog = { append: () => {}, readRange: () => [] }
 
-/** コンテキストの内訳の記録を気にしないテストに渡す、何もしない書き込み口。 */
+/** コンテキストの内訳の記録を気にしないテストに渡す、何もしない書き込みの関数。 */
 const NOOP_CONTEXT_USAGE_LOG: ContextUsageLog = { append: () => {} }
 
-/** `report` の塊の使われ方の記録を気にしないテストに渡す、何もしない書き込み口。 */
+/** `report` の部品の使われ方の記録を気にしないテストに渡す、何もしない書き込みの関数。 */
 const NOOP_REPORT_USAGE_LOG: ReportUsageLog = {
   append: () => {},
   appendRejection: () => {},

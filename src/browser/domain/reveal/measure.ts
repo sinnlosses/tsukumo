@@ -64,7 +64,7 @@ export function endLineOf(block: RevealBlock, base: Element): LineBox | undefine
 
 /**
  * 要素の中の行（ビューポート座標）。文字そのものの矩形だけを返す。
- * 文字の要素に `range.selectNodeContents` をかけると、箇条書きの `<li>` や表の `<tr>` のようなブロックの箱まで混じって右端が行の幅ではなく欄の幅になるので、文字の節点を1つずつ測る。
+ * 文字の要素に `range.selectNodeContents` をかけると、箇条書きの `<li>` や表の `<tr>` のようなブロックの箱まで混じって右端が行の幅ではなく欄の幅になるので、文字のノードを1つずつ測る。
  *
  * 図・グラフは行を持たないので、その要素の box をまるごと1行として扱う（筆はその上を1画で通る）。
  * ただし右端は入れ物ではなく描かれた `svg` / `canvas` の右端を使う。
@@ -134,7 +134,7 @@ function drawnOf(element: RevealElement): Element | undefined {
     : (element.querySelector("svg, canvas") ?? undefined)
 }
 
-/** 要素の下にある文字の節点。空白だけのもの（タグのあいだの改行）は数えない。 */
+/** 要素の下にある文字のノード。空白だけのもの（タグのあいだの改行）は数えない。 */
 function textNodesOf(element: RevealElement): readonly Node[] {
   const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT)
   const nodes: Node[] = []

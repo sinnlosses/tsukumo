@@ -1,4 +1,4 @@
-// 最終レポートの頭に出す「変更したファイル n」の畳んだ節。一覧は変更の札（`ReportChangeSummary`）の `changed`。
+// 最終レポートの頭に出す「変更したファイル n」の畳んだ節。一覧は変更のラベル（`ReportChangeSummary`）の `changed`。
 
 import { countBy } from "remeda"
 

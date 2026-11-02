@@ -33,7 +33,7 @@ export function isDangerousPermissionMode(mode: ReportedPermissionMode): boolean
 
 const DANGEROUS_PERMISSION_MODE: PermissionMode = "bypassPermissions"
 
-/** 許可モードの吊り札の行で、盾をどう塗るか。 */
+/** 許可モードの吊り下げのカードの行で、盾をどう塗るか。 */
 type PermissionModeShieldFill = "empty" | "dashed" | "filled"
 
 /** 並びは `PERMISSION_MODE_LABELS` と同じ（緩い側が下）。 */

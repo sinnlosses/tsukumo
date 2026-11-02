@@ -17,11 +17,11 @@ import {
 import { laidOut } from "./graph-fold-layout.ts"
 import { textWidth, wrapped } from "./graph-fold-text.ts"
 
-/** 主経路の節点がこの数以上の図だけを折り返す。少ない図は mermaid のままのほうが読める。 */
+/** 主経路のノードがこの数以上の図だけを折り返す。少ない図は mermaid のままのほうが読める。 */
 const FOLD_MIN_MAIN_NODES = 6
 
 /**
- * 行の数を選ぶときに見込む器の寸法（1440x900 の窓のレポートの幅と、図の高さの上限）。
+ * 行の数を選ぶときに見込む器の寸法（1440x900 のビューポートのレポートの幅と、図の高さの上限）。
  * 図は縦横比を保ってこの中に収まるよう縮むので、縮みがいちばん小さい行の数を採る。
  */
 const FIT_WIDTH = 630
@@ -76,8 +76,8 @@ function fitScale({ width, height }: GraphFoldFigure): number {
 }
 
 /**
- * 戻り道でない辺で辿る最長の一本道（節点の添字の並び）。戻り道でない辺が輪になっていれば `undefined`。
- * 同じ長さなら、先に書いた節点を採る。
+ * 戻り道でないエッジで辿る最長の一本道（ノードの添字の並び）。戻り道でないエッジが輪になっていれば `undefined`。
+ * 同じ長さなら、先に書いたノードを採る。
  */
 function mainPathOf({ nodes, edges }: GraphSourceReading): readonly number[] | undefined {
   const forward = edges.filter((edge) => !edge.returns && edge.from !== edge.to)
@@ -126,8 +126,8 @@ function mainPathOf({ nodes, edges }: GraphSourceReading): readonly number[] | u
 }
 
 /**
- * 主経路に無い節点ごとの、上の段に置く先の主経路の節点（最初につながる辺の相手）。
- * 主経路に無い節点どうしの辺・どこにもつながらない節点・同じ節点の上の取り合いがあれば `undefined`。
+ * 主経路に無いノードごとの、上の段に置く先の主経路のノード（最初につながるエッジの相手）。
+ * 主経路に無いノードどうしのエッジ・どこにもつながらないノード・同じノードの上の取り合いがあれば `undefined`。
  */
 function sideAnchorsOf(
   { nodes, edges }: GraphSourceReading,
@@ -175,7 +175,7 @@ function metricsOf({ nodes, edges }: GraphSourceReading, main: readonly number[]
         (notes[at]?.length ?? 0) * NOTE_LINE_HEIGHT,
     ),
   )
-  // 列のあいだに入るのは主経路の隣どうしの辺のラベルだけ。収まらなければ2行に折る。
+  // 列のあいだに入るのは主経路の隣どうしのエッジのラベルだけ。収まらなければ2行に折る。
   const labelWidest = Math.max(
     0,
     ...edges

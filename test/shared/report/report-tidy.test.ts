@@ -15,7 +15,7 @@ const markdown = (body: string): ReportBlock => ({
 })
 const text = (value: string): ReportBlock => ({ kind: "text", text: value, fold: "", aside: "" })
 
-/** 逃げ道の塊1つだけの本文を整形し、残った中身を返す（塊ごと落ちたら空）。 */
+/** 逃げ道の部品1つだけの本文を整形し、残った中身を返す（部品ごと落ちたら空）。 */
 const tidy = (body: string, conclusion = CONCLUSION): string =>
   tidyReportBlockSections({
     conclusion,

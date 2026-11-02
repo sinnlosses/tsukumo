@@ -1,5 +1,5 @@
 // 入力欄本体の器。
-// 入力欄の面（`<textarea>` かマークダウンエディタ）と補完の候補一覧を内包し、その下に道具の行（画像・`/`・`@`・面の切り替えのボタン、経過時間と送信⇄中断の <TurnStatus>）を置いた `<form>` を置く。
+// 入力欄のサーフェス（`<textarea>` かマークダウンエディタ）と補完の候補一覧を内包し、その下に道具の行（画像・`/`・`@`・面の切り替えのボタン、経過時間と送信⇄中断の <TurnStatus>）を置いた `<form>` を置く。
 
 import clsx from "clsx"
 import { AtSign, Heading, ImageIcon, Plus, Slash } from "lucide-react"
@@ -114,7 +114,7 @@ export function PresentationalComposer({
           </Button>
         </HStack>
       )}
-      {/* 答え待ちのあいだだけ出る帯（誰が何を待っているか）と、お伺いの札へフォーカスを移す口。 */}
+      {/* 答え待ちのあいだだけ出る帯（誰が何を待っているか）と、お伺いのカードへフォーカスを移す口。 */}
       {band.kind === "inquiry" && (
         <HStack
           element="div"

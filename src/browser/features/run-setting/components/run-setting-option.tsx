@@ -1,4 +1,4 @@
-// モデル・effort・許可モードの吊り札の選択肢（`RunSettingSelectOption`）の組み立て。
+// モデル・effort・許可モードの吊り下げのカードの選択肢（`RunSettingSelectOption`）の組み立て。
 // サイドバーの帯の操作子（`RunSettingGroup`）と設定の「セッションの既定」が、同じ行の中身を使う。
 //
 // 絵は道具の線画なのでコードに置く（キャラクターの中身ではない）。
@@ -145,7 +145,7 @@ export function permissionModeSelectOptions(
   })
 }
 
-/** 吊り札の1行の名前。 */
+/** 吊り下げのカードの1行の名前。 */
 export function RunSettingName(props: {
   readonly children: string
   readonly danger: boolean

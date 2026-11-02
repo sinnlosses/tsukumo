@@ -1,4 +1,4 @@
-// ワークフローの設定コマンド（`tw config --schema`・`tw config --json`・`tw config set`）を起こす口。
+// ワークフローの設定コマンド（`tw config --schema`・`tw config --json`・`tw config set`）を起こす関数。
 // シェルを通さずに起こし、例外を投げない。
 
 import { execFile } from "node:child_process"

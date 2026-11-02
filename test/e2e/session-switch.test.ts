@@ -5,7 +5,7 @@ import process from "node:process"
 import { TSUKUMO_HOME_PLACES } from "../../src/server/adapter/tsukumo-home.ts"
 import { expect, test } from "./room-fixture.ts"
 
-// セッションの札と切り替え画面（docs/architecture/testing.md「E2E のシナリオの一覧」）。fake driver は claude を
+// セッションのラベルと切り替え画面（docs/architecture/testing.md「E2E のシナリオの一覧」）。fake driver は claude を
 // 起こさないので切り替え先の一覧を持たない。疑似セッションの場面 `session-list` が作り物の一覧を
 // `sessions-changed` で流す。一覧が届くのを待ってから札を押す（場面が流れ終わるのを時間で待たない）。
 
@@ -41,7 +41,7 @@ test.describe("セッションの切り替え", () => {
     await room.settleAndMatchPickedWithMessages(ELAPSED_MS)
   })
 
-  // 別の窓の tsukumo の占有ファイルは、このテストのプロセス（生きている）が書いたことにする。
+  // 別のウィンドウの tsukumo の占有ファイルは、このテストのプロセス（生きている）が書いたことにする。
   test("別の窓が占有ファイルに書いているセッションの行は選べず、開いた直後の選びも ↑↓ も飛ばす", async ({
     run,
   }) => {

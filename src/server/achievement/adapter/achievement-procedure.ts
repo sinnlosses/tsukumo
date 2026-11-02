@@ -9,7 +9,7 @@ import type { AchievementDaySelection } from "../../../shared/achievement/achiev
 import { achievementContract } from "../../../shared/contract/achievement.ts"
 import type { ReadAchievementCalendarResult, ReadAchievementResult } from "./closed-issue.ts"
 
-/** この機能の手続きが使う口（中身は配線が渡す）。 */
+/** この機能の手続きが使う関数（中身は配線が渡す）。 */
 export type AchievementProcedurePorts = {
   /**
    * 1日ぶんの成果（`readAchievement` と日記を束ねたもの）。

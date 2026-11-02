@@ -8,7 +8,7 @@ import {
 import type { WorkPhase } from "../../../../../../../shared/session/work-plan.ts"
 import type { MainViewContent } from "../../../stores/main-view-content.ts"
 
-/** `to-newest` は最新のやり取りへ移り、`to-inquiry` は移ったあとお伺いの札まで転がす。 */
+/** `to-newest` は最新のやり取りへ移り、`to-inquiry` は移ったあとお伺いのカードまで転がす。 */
 export type HeadNoticeAction = "to-newest" | "to-inquiry"
 
 export type HeadNotice =

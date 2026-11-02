@@ -111,7 +111,7 @@ type UsageReviewResultClose =
   | { readonly kind: "none" }
   | { readonly kind: "shown"; readonly onClose: () => void }
 
-/** 結果の札1枚ぶんの見た目。 */
+/** 結果のカード1枚ぶんの見た目。 */
 export type UsageReviewResultProposalView = {
   /** `usageProposalKey`。React の `key` と `usageReview.dismissProposal` の的の両方に使う。 */
   readonly key: string
@@ -119,7 +119,7 @@ export type UsageReviewResultProposalView = {
   readonly title: string
   readonly basis: string
   readonly action: string
-  /** 主ボタンの押す口（`delegate` / `task`）。文言は見た目の側が持つ。 */
+  /** 主ボタンの種類（`delegate` / `task`）。文言は見た目の側が持つ。 */
   readonly followUp: UsageProposalFollowUp
   /** 主ボタンを押すと `usageReview.runProposal` を1回送る。 */
   readonly onPrimary: () => void
@@ -306,7 +306,7 @@ function proposalTarget(proposal: UsageProposal): Pick<UsageProposal, "kind" | "
   return { kind: proposal.kind, target: proposal.target }
 }
 
-/** 提案の実行の様子を、実行した提案の札にだけ出す。 */
+/** 提案の実行の様子を、実行した提案のカードにだけ出す。 */
 function proposalRunView(key: string, actions: ProposalActions): UsageProposalRunView {
   const { run } = actions
   if (run.kind === "idle" || run.key !== key) {

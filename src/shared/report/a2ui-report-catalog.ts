@@ -87,7 +87,7 @@ const LEAF_COMPONENTS = {
   Markdown: leafComponent("Markdown", markdownBlockSchema),
 } as const
 
-/** 葉の部品名と、写す先の塊の `kind`。 */
+/** 内容部品名と、写す先の塊の `kind`。 */
 export const LEAF_COMPONENT_KINDS = {
   Paragraph: textBlockSchema.shape.kind.value,
   ItemList: listBlockSchema.shape.kind.value,
@@ -113,7 +113,7 @@ export const LEAF_COMPONENT_KINDS = {
   Markdown: markdownBlockSchema.shape.kind.value,
 } as const satisfies Record<keyof typeof LEAF_COMPONENTS, string>
 
-/** 書き手に渡す塊の `kind`（葉の部品の写し先）の一覧。 */
+/** 書き手に渡す塊の `kind`（内容部品の写し先）の一覧。 */
 export const REPORT_BLOCK_KINDS: readonly string[] = Object.values(LEAF_COMPONENT_KINDS)
 
 /** `Report.figureNone` に置ける、図を置かない理由。 */
@@ -124,7 +124,7 @@ export const REPORT_FIGURE_NONE_REASONS = [
   "no-material",
 ] as const
 
-/** 図の葉（レポートの図1つか、置かない理由）。図の葉は節の同じ種類の葉と同じ形。 */
+/** 図の内容部品（レポートの図1つか、置かない理由）。図の内容部品は節の同じ種類の葉と同じ形。 */
 export const reportFigureSchema = z.discriminatedUnion("kind", [
   imageBlockSchema,
   mermaidBlockSchema,
@@ -158,7 +158,7 @@ const FIGURE_KINDS: readonly string[] = reportFigureSchema.options.map(
   (option) => option.shape.kind.value,
 )
 
-/** `Report.figure` に置ける葉の部品名。 */
+/** `Report.figure` に置ける内容部品名。 */
 export const FIGURE_COMPONENTS: readonly string[] = Object.entries(LEAF_COMPONENT_KINDS)
   .filter(([, kind]) => FIGURE_KINDS.includes(kind))
   .map(([component]) => component)

@@ -99,7 +99,7 @@ export const SEAT_LABEL = {
   belowRight: "キャラの右下",
 } as const satisfies Record<SeatKey, string>
 
-/** 席の選び口の先頭（何も置かない）。 */
+/** 席の選択メニューの先頭（何も置かない）。 */
 export const SEAT_EMPTY_OPTION = "置かない"
 
 export const ITEM_ADD_FULL_TITLE = `アイテムは ${String(MAX_ITEMS)} 個まで。足すには先にどれかを消してください`

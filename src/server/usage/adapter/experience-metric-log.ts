@@ -25,7 +25,7 @@ export function experienceMetricDir(): string {
 }
 
 /**
- * 記録の読み書き口を作る。`root` は置き場（既定は {@link experienceMetricDir}）。
+ * 記録の読み書きの関数を作る。`root` は置き場（既定は {@link experienceMetricDir}）。
  * 1つの口を日をまたいで使い回せる（`append` のたびに `entry.at` から行き先を組み立てる）。
  */
 export function createExperienceMetricLog(

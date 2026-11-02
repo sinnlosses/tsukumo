@@ -98,9 +98,9 @@ const readingRecordSchema = z
     readingSeconds: z.number(),
     /** 本文（節）の字数。 */
     bodyChars: z.number(),
-    /** 節の塊のうち表の割合（0〜1）。塊が無ければ 0。 */
+    /** セクションの部品のうち表の割合（0〜1）。塊が無ければ 0。 */
     tableRate: z.number(),
-    /** 図（図の塊か `figure`）があったか。 */
+    /** 図（図の部品か `figure`）があったか。 */
     hasDiagram: z.boolean(),
   })
   .readonly()

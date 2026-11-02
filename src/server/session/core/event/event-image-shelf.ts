@@ -1,4 +1,4 @@
-// 駆動から届いたイベントが指す画像（`report` の画像の塊と、積まれた質問の preview）を棚へ置く。
+// 駆動から届いたイベントが指す画像（`report` の画像の部品と、積まれた質問の preview）を置き場へ置く。
 
 import { drawnLeaves, reportOutline } from "../../../../shared/report/report-outline.ts"
 import type { SessionEvent } from "../../../../shared/session/session-event.ts"

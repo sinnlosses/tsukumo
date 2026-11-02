@@ -52,7 +52,7 @@ export type GraphFoldFigure = {
   readonly frames: readonly FoldFrame[]
 }
 
-/** 節点ごとの折った字と、どの節点にも揃える箱の寸法・列のあいだ。 */
+/** ノードごとの折った字と、どのノードにも揃える箱の寸法・列のあいだ。 */
 export type FoldMetrics = {
   readonly boxWidth: number
   readonly boxHeight: number
@@ -61,7 +61,7 @@ export type FoldMetrics = {
   readonly notes: readonly (readonly string[])[]
 }
 
-/** 節点の置き場。`side` は主経路の節点の上の段。 */
+/** ノードの置き場。`side` は主経路のノードの上の段。 */
 export type FoldSlot = {
   readonly row: number
   readonly column: number

@@ -18,7 +18,7 @@ export type WelcomeWritingEvent = Extract<
 
 /** プロセスに1つ持つ。 */
 export type WelcomeKeeper = {
-  /** 代を起こすたびに呼ぶ。`emit` はその代の受け取り口。 */
+  /** 代を起こすたびに呼ぶ。`emit` はその代で受け取る関数。 */
   readonly noteLaunched: (
     start: WelcomeLaunchStart,
     emit: (event: WelcomeWritingEvent) => void,
@@ -29,9 +29,9 @@ export type WelcomeKeeper = {
 export type KeptWelcomeLaunch = {
   /** このセッションで覚えた挨拶があれば、反応の行（覚えていれば）と一緒に流し直して true。無ければ何も流さず false。 */
   readonly replay: () => boolean
-  /** 書き手の出来事を受け取り口へ流し、書けた挨拶・反応の行を覚える（受け取り口が代を閉じて捨てても覚える）。 */
+  /** 書き手の出来事を受け取る関数へ流し、書けた挨拶・反応の行を覚える（受け取る関数が代を閉じて捨てても覚える）。 */
   readonly emit: (event: WelcomeWritingEvent) => void
-  /** その代の受け取り口に流れた出来事を観る。`session-info` でセッションIDを結び、`/clear` で覚えた挨拶を外す。 */
+  /** その代で受け取る関数に流れた出来事を観る。`session-info` でセッションIDを結び、`/clear` で覚えた挨拶を外す。 */
   readonly observe: (event: SessionEvent) => void
 }
 

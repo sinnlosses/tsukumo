@@ -1,5 +1,5 @@
 // 画面の状態のカタログを一括で撮る道具。fake driver（`TSUKUMO_DRIVER=fake`）の場面を
-// 名前で名指しして tsukumo を1件ずつ起こし、広い窓と狭い窓の2枚を撮って、並べて見るための
+// 名前で名指しして tsukumo を1件ずつ起こし、広いビューポートと狭いビューポートの2枚を撮って、並べて見るための
 // 索引 HTML を書き出す。描画に関わる変更の `evidence`（`docs/architecture/testing.md`
 // 「手で確かめること」）を作るための道具で、tsukumo 本体からは呼ばれないので scripts/ に置く。
 //
@@ -22,7 +22,7 @@
 //   node scripts/capture/capture-catalog.ts --only question-multi  # 1つだけ
 //   node scripts/capture/capture-catalog.ts --out /tmp/別の置き場
 //
-// オプション無しで実行するとカタログ全部（広い窓・狭い窓の2枚ずつ）を撮る。 60秒では
+// オプション無しで実行するとカタログ全部（広いビューポート・狭いビューポートの2枚ずつ）を撮る。 60秒では
 // 終わらないので、一覧が欲しいだけなら `--help` を使う。
 //
 // `--help` は専用のフラグとして実装していない。`parseOptions` が知らない引数・値の無い
@@ -199,7 +199,7 @@ async function captureShot(
     }
     // 描き直しの途中で押すと、あとから伸びる部品の分だけ狙った位置がずれる（scroll など）。
     await settlePage(page)
-    // 当てられなくても撮る。窓の大きさによっては出ていない口がある（狭い窓でしか出ないタブ）ので、
+    // 当てられなくても撮る。ビューポートの大きさによっては出ていない口がある（狭いビューポートでしか出ないタブ）ので、
     // 当たらなかったことだけを出す。撮れた画像を見れば何が出ていないか分かる。
     for (const missed of await applyPreparations(page, entry.prepare, "continue")) {
       process.stdout.write(`${describeCatalogMiss(entry.name, size.name, missed)}\n`)
@@ -214,7 +214,7 @@ async function captureShot(
 
 type SceneWait = {
   readonly fakeSession: FakeSession
-  /** この窓のページで場面が流れ終わるのを待つか（件の最初の窓だけ）。 */
+  /** このビューポートのページで場面が流れ終わるのを待つか（件の最初のビューポートだけ）。 */
   readonly waitsForScene: boolean
 }
 

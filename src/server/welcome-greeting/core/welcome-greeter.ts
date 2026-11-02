@@ -24,7 +24,7 @@ import {
 export type WelcomeGreeterPorts = Omit<WelcomeGreetingWriterPorts, "onUnwritten"> & {
   /** 反応の行が書けたときだけ呼ぶ。 */
   readonly emitReactions: (reactions: WrittenReactions) => void
-  /** 書けなかった理由の知らせ口（中断では呼ばない）。`error` は問い合わせの失敗のときだけ実物が入る。 */
+  /** 書けなかった理由を知らせる関数（中断では呼ばない）。`error` は問い合わせの失敗のときだけ実物が入る。 */
   readonly onUnwritten: (place: UnwrittenPlace, error: unknown) => void
 }
 

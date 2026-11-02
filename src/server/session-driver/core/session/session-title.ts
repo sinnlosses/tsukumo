@@ -12,7 +12,7 @@ import { clipText } from "../../../../shared/utils/clip-text.ts"
 export type SessionTitleState = {
   readonly lastWritten: string | undefined
   /**
-   * `/clear` の合図を受けてから、まだ {@link decideSessionTitle} を呼んでいない。
+   * `/clear` の通知を受けてから、まだ {@link decideSessionTitle} を呼んでいない。
    * Claude Code は `/clear` のたびに前のセッションの題を新しいセッションへ書き写すので、次の判断だけは現在値を tsukumo が最後に書いたものとみなす。
    */
   readonly adoptCurrentTitleNext: boolean
@@ -26,7 +26,7 @@ export const INITIAL_SESSION_TITLE_STATE: SessionTitleState = {
 
 /**
  * `/clear` の合図（`conversation-cleared`）を受けたことを状態へ持ち越す。
- * 合図を受けた時点では新しいセッションIDも書き写された題もまだ無いことがあるため、実際の判断は次に {@link decideSessionTitle} を呼ぶときまで遅らせる。
+ * 通知を受けた時点では新しいセッションIDも書き写された題もまだ無いことがあるため、実際の判断は次に {@link decideSessionTitle} を呼ぶときまで遅らせる。
  */
 export function noteConversationCleared(state: SessionTitleState): SessionTitleState {
   return { ...state, adoptCurrentTitleNext: true }

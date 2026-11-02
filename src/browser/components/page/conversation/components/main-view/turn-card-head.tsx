@@ -1,4 +1,4 @@
-// 札の頭。進み具合の帯を、転がっても札の右の側の上端に残す。
+// 札の頭。進み具合のプログレスバーを、転がっても札の右の側の上端に残す。
 
 import type { ReactElement, ReactNode } from "react"
 

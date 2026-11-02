@@ -1,4 +1,4 @@
-// 節の並びを畳み込んで、葉ごとの図表番号・表の札の色・余白の柱の傍注を決める。
+// 節の並びを畳み込んで、葉ごとの図表番号・表の札の色・欄外注を決める。
 //
 // 番号は節をまたいで並びの順に通しで数える。
 
@@ -14,14 +14,14 @@ export type LeafCaptionNumber =
   | { readonly kind: "none" }
   | { readonly kind: CaptionKind; readonly ordinal: number }
 
-/** 余白の柱の傍注1つ。`label` が空なら頭のラベルは付けない。`text` は Markdown の前の字そのもの。 */
+/** 欄外注1つ。`label` が空なら頭のラベルは付けない。`text` は Markdown の前の字そのもの。 */
 export type LeafGutterNote = { readonly label: string; readonly text: string }
 
 /**
  * 葉1つの値。
  * `tagTones` は表の葉が使う `tag` の字 → 札の色の class（表以外は空）。
- * `gutterNotes` は葉に寄った傍注（葉の `aside` と、直後の `memo` の `note`）。
- * `mergedIntoPrevious` は直前の葉へ傍注を寄せた `memo` の葉で、この葉自身は何も描かず `gutterNotes` も空。
+ * `gutterNotes` は葉に寄った欄外注（葉の `aside` と、直後の `memo` の `note`）。
+ * `mergedIntoPrevious` は直前の葉へ欄外注を寄せた `memo` の葉で、この葉自身は何も描かず `gutterNotes` も空。
  */
 export type LeafValue = {
   readonly captionNumber: LeafCaptionNumber
@@ -35,17 +35,17 @@ type CaptionCounts = Readonly<Record<CaptionKind, number>>
 type BlocksFold = {
   readonly values: readonly LeafValue[]
   readonly counts: CaptionCounts
-  /** 傍注を受ける、直前の包みの `values` の位置。無ければ -1。 */
+  /** 欄外注を受ける、直前の包みの `values` の位置。無ければ -1。 */
   readonly ownerIndex: number
 }
 
-/** 傍注にした `memo` の頭に付けるラベル。 */
+/** 欄外注にした `memo` の頭に付けるラベル。 */
 const MEMO_LABEL = new Map(REPORT_NOTE_KINDS).get("note-memo") ?? ""
 
 /**
  * 節の並びから導いた、札の色の割り当て（`tagTones`）と葉ごとの値（`values`）。
  * `values` は入力の節・塊と同じ並び・同じ長さ。
- * 図と表の番号は題が空でも、`fold` の中でも数える。`memo` の `note` は直前の葉の傍注へ寄せる。
+ * 図と表の番号は題が空でも、`fold` の中でも数える。`memo` の `note` は直前の葉の欄外注へ寄せる。
  */
 export type ReportLeafLayout = {
   readonly tagTones: TagTones

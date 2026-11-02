@@ -23,7 +23,7 @@ export type MenuItem = {
 }
 
 export type MenuProps = {
-  /** 押す口の `aria-label` と `title`。開いた面の名前にも使う。 */
+  /** ボタンの `aria-label` と `title`。開いた面の名前にも使う。 */
   readonly triggerLabel: string
   readonly disabled: boolean
   readonly items: readonly MenuItem[]

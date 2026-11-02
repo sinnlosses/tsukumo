@@ -83,7 +83,7 @@ function dependenciesOf(record: SessionRecord, context: TurnContext): readonly E
 /**
  * `SessionRecord` 1件をメインビューに出す形へ変える（出さないものは空で返す）。
  *
- * `speech` は落とす（セリフは吹き出しだけに出し、レポートに混ぜない）。脇の話への答えのセリフだけは、脇の話の欄に出すので `aside-answer` にする。
+ * `speech` は落とす（セリフは吹き出しだけに出し、レポートに混ぜない）。脇の話への答えのセリフだけは、補足メッセージの欄に出すので `aside-answer` にする。
  * ターンの通し番号は `request` の記録が持っているので、何を落としても番号はずれない。
  *
  * `compact-boundary` も落とす（圧縮の区切りは雑談のログだけに出す）。`reaction` も落とす（セリフのログだけに出す）。
@@ -140,7 +140,7 @@ function toMainViewEntries(record: SessionRecord, context: TurnContext): readonl
 
 /**
  * `report` の引数を欄に組む。節は `components` から導く（`drawnReportOf`）。
- * 面（`a2ui`）には頭を結論・数の札・合図の行（`checks`）・段ごとの所要時間と変更したファイル（`status`・`finalStatus`）に分けた値と、お願い（`favor`）も載せる。
+ * 面（`a2ui`）には頭を結論・数のカード・合図の行（`checks`）・段ごとの所要時間と変更したファイル（`status`・`finalStatus`）に分けた値と、お願い（`favor`）も載せる。
  * 図は見出しの無い先頭の節として描き、図の番号は本文の図と通しで振られる。図が無ければ何も描かない。
  * 段ごとの所要時間は最終のときの頭にだけ、同じ依頼のワークプランの記録（止めて再開した依頼の記録も引き継ぐ。{@link phaseDurations}）と `report` の `workPlanClosing` から描く。
  * `favor` の `id` は `favor-<toolUseId>` で、合図の行の総括行にある印がそこへ飛ぶ。

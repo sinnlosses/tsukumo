@@ -1,4 +1,4 @@
-// モデル・effort・許可モード・書き上げる速さの吊り札。
+// モデル・effort・許可モード・書き上げる速さの吊り下げのカード。
 // `appearance: base-select`（customizable select）で描き、キーボードの操作（↑↓・Enter・Esc）・
 // 選択肢の開き方・`change` の発火はブラウザに任せる。
 //
@@ -26,14 +26,14 @@ export type RunSettingSelectOption = {
 type RunSettingSelectProps = {
   readonly id: string
   readonly ariaLabel: string
-  /** 吊り札の頭の見出し（「モデル」「effort」「許可モード」）。 */
+  /** 吊り下げのカードの頭の見出し（「モデル」「effort」「許可モード」）。 */
   readonly heading: string
   readonly value: string
   readonly options: readonly RunSettingSelectOption[]
   readonly disabled: boolean
   /** 「全部許す」のときだけ絵と字に意味の色を載せる。呼び出し側が渡す。 */
   readonly danger: boolean
-  /** 中くらいの窓幅の柱では、吊り札を横へ吊る。 */
+  /** 中くらいのビューポート幅の柱では、吊り下げのカードを横へ吊る。 */
   readonly rail: boolean
   /** `row` は選択肢を横に並べる（effort の5本の棒）。閉じた口の絵（`icon`）は列の形では出さない。 */
   readonly layout: "list" | "row"

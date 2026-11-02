@@ -1,4 +1,4 @@
-// `Stats`（数の札の並び）を Markdown に戻さず直接描く。
+// `Stats`（数のカードの並び）を Markdown に戻さず直接描く。
 // 前の値の色・折れ線・帯の幅は `statLayoutOf` が決め、ここは描くだけ。
 
 import clsx from "clsx"

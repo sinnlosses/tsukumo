@@ -85,7 +85,7 @@ export type BlockViolation =
   /**
    * `figure` の `none` の理由が本文と合わない。
    * `no-shape` なのに `sections` に流れ・つながり・構造を描く塊（`list` の `flow`・`beforeAfter`・`graph`・`mermaid`・`svg`）がある（`count` はその塊の数）か、
-   * `short-answer` なのに節が2つ以上ある（`count` はその節の数）。
+   * `short-answer` なのにセクションが2つ以上ある（`count` はそのセクションの数）。
    */
   | {
       readonly kind: "figure-contradiction"

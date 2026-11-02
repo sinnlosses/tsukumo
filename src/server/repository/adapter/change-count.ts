@@ -1,4 +1,4 @@
-// 変更の札を数えるための git の口（`ChangeCountGit`）を、作業ディレクトリ1つに向けて作る。
+// 変更のラベルを数えるための git の口（`ChangeCountGit`）を、作業ディレクトリ1つに向けて作る。
 // 打つのは `rev-parse HEAD`・`merge-base --is-ancestor`・`diff --numstat`・`log`・`show --numstat` と、その `--name-status` 版だけで、出力は数えずに返す。
 // `git diff --numstat <HEAD>` は未追跡のファイルを出さないので、それは数えない。
 

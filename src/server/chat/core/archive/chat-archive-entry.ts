@@ -13,7 +13,7 @@ import { clipWithEllipsis } from "../../../../shared/utils/clip-text.ts"
 import { CHAT_MEMORY_BUDGET } from "../memory/chat-memory-budget.ts"
 import type { ChatArchive } from "./chat-archive-port.ts"
 
-/** 雑談の依頼に添えた画像の原寸を棚から引く口と、書けなかった1枚を知らせる口。 */
+/** 雑談の依頼に添えた画像の原寸を置き場から引く口と、書けなかった1枚を知らせる口。 */
 export type ChatArchiveImageSource = {
   /** id が指す原寸の data URL。棚に無ければ undefined。 */
   readonly find: (id: string) => string | undefined
@@ -107,7 +107,7 @@ export function appendChatArchiveConclusion(
   })
 }
 
-/** 添えた順に1枚ずつ書き、書けたファイル名を返す。棚から落ちていた1枚も書けなかったものとして知らせる。 */
+/** 添えた順に1枚ずつ書き、書けたファイル名を返す。置き場から落ちていた1枚も書けなかったものとして知らせる。 */
 async function writeChatImages(
   chatArchive: ChatArchive,
   packName: CharacterPackName,

@@ -69,7 +69,7 @@ import { stepUsageEvents, tokenUsageEvents } from "./sdk-usage-message.ts"
  *   バックグラウンドタスクが動いているかは `background_tasks_changed`（顔ぶれ全体を毎回運ぶ水準の知らせ）だけで分かる。
  *   始まり・終わりの対を数えると、取りこぼしで「動いている」が居残る（SDK の型定義がそう勧めている）
  * - `task_notification` は顔ぶれには使わず、`tool_use_id` があるときだけ `background-tool-finished` にする（`tool_use_id` は Bash の `tool_use` の id と一致する。実測）。
- *   `task_id` があれば `task-notified` も出す（`task_notification` に `task_type` は無いので、台本の完了かは `workflow-started` の `taskId` との突き合わせで `CallReview` が決める）。
+ *   `task_id` があれば `task-notified` も出す（`task_notification` に `task_type` は無いので、ワークフロースクリプトの完了かは `workflow-started` の `taskId` との突き合わせで `CallReview` が決める）。
  *   知らせのあとに claude が依頼なしで始める続きのターンは、ここではなく `withSelfStartedTurns` が `init` の届き方から起こす
  * - メインの `assistant` の `message.model` と `init` の `model` / `permissionMode` は、`setting-confirmed`（見届けた合図）にも写す。
  *   `<synthetic>` のような `<` で始まる値は本物のモデル名ではないので出さない

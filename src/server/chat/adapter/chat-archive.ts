@@ -9,7 +9,7 @@
 //
 // 書けなくても例外を投げない。
 //
-// 直近の窓を読む口は `readRecent` の1つだけ。
+// 直近の範囲を読む口は `readRecent` の1つだけ。
 // 読んだものの行き先は雑談と仕事のセッションの `systemPrompt` だけで、画面にも手続きの応答にも stderr にも出さない。
 // どこまで読むかは呼ぶ側が渡すバイト数で、ここは遡って集めることと並べ替えだけをする（文面を読んで載せる・載せないを決めない）。
 
@@ -136,7 +136,7 @@ export function pruneChatImages(
 }
 
 /**
- * アーカイブの読み書き口を作る。`root` は置き場の親（既定は {@link chatArchiveDir}）。
+ * アーカイブの読み書きの関数を作る。`root` は置き場の親（既定は {@link chatArchiveDir}）。
  *
  * 1つの口を複数のパック・複数の日にまたいで使い回せる。
  * `append` のたびに `packName` と `entry.at`（ローカル日付）から行き先のパスを組み立てるので、パックの切り替えをまたいでも作り直す必要が無い。
@@ -216,7 +216,7 @@ function entryNames(dir: string, onFailure: (error: unknown) => void): readonly 
   }
 }
 
-/** 直近の窓を読む（{@link ChatArchive.readRecent} の実装）。 */
+/** 直近の範囲を読む（{@link ChatArchive.readRecent} の実装）。 */
 function readReadback(
   root: string,
   packName: CharacterPackName,
@@ -306,7 +306,7 @@ function recentEntryOf(timed: TimedEntry): ChatArchiveRecentEntry {
 
 /**
  * 定着の入力の行を読む（{@link ChatArchive.unconsolidated} の実装）。
- * `after` の時刻より後で、直近の窓（{@link readRecentEntries} が拾う範囲）の外にある行だけを、古いほうから `maxBytes` まで集める。
+ * `after` の時刻より後で、直近の範囲（{@link readRecentEntries} が拾う範囲）の外にある行だけを、古いほうから `maxBytes` まで集める。
  * `after` の日付より前のファイルは開かない。
  */
 function readUnconsolidated(

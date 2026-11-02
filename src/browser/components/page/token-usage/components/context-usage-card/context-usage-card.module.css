@@ -44,7 +44,7 @@
   font-family: var(--font-mono);
   font-size: var(--font-label);
 }
-/* 使っている量・窓の大きさ・割合。数が主で、右の2つは小さく静かに。 */
+/* 使っている量・コンテキストウィンドウの大きさ・割合。数が主で、右の2つは小さく静かに。 */
 .context-total {
   display: flex;
   align-items: baseline;
@@ -57,7 +57,7 @@
   font-size: var(--font-heading);
   font-variant-numeric: tabular-nums;
 }
-/* 窓の大きさ（`/ 200k`）より割合を1段明るく（割合のほうが読みたい数）。 */
+/* コンテキストウィンドウの大きさ（`/ 200k`）より割合を1段明るく（割合のほうが読みたい数）。 */
 .context-total-max,
 .context-total-share {
   color: var(--usage-ink-note);
@@ -71,7 +71,7 @@
 
 /* 横棒1本。
    区間の幅は行ごとの `--context-share`（割合をそのまま幅にする）。
-   窓を超えた回は合計が100%を超えるので、はみ出しはここで切る。 */
+   コンテキストウィンドウを超えた回は合計が100%を超えるので、はみ出しはここで切る。 */
 /* 区間どうしは隙間で切る（見本。塗りが隣り合うと、色の違いが境目の見分けを1つだけで担うことになる）。両端だけ丸める。 */
 .context-bar {
   display: flex;

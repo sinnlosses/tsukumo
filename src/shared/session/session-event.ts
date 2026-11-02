@@ -75,7 +75,7 @@ export type SessionEvent =
   /**
    * 利用者が送った依頼。ターンの境目になる（駆動側が送信時に起こす）。
    *
-   * `images` は添えた画像の控えと、棚の原寸を指す id の組（添えていなければ空）。
+   * `images` は添えた画像の控えと、置き場の原寸を指す id の組（添えていなければ空）。
    * 原寸はここに載らない（原寸はモデルへ渡り、あとは棚が直近ぶんだけメモリで持つ）。
    */
   | {
@@ -104,7 +104,7 @@ export type SessionEvent =
    * 実測: `task_notification` のあと、依頼を送らなくても `init` → `assistant` → `result` が届く。
    *
    * 記録を持たない。新しいターンではなく同じやり取りの続きなので、吹き出しのセリフと表情は持ち越す
-   * （空にすると、合図が届くたびに吹き出しが消える）。
+   * （空にすると、通知が届くたびに吹き出しが消える）。
    */
   | { readonly kind: "turn-resumed" }
   /** 書きかけのターンの本文。完成した本文が来るまでの仮。 */
@@ -124,7 +124,7 @@ export type SessionEvent =
    *
    * `answers[i]` は `questions[i]` に対して選んだ答えの並び（{@link QuestionAnswer}）。
    * 質問文も答えも会話の内容なので、ログに出さない・外へ出さない。
-   * `toolUseId` は答え待ちのときの `PendingAsk` の `id` と同じで、preview の画像の棚の鍵になる。
+   * `toolUseId` は答え待ちのときの `PendingAsk` の `id` と同じで、preview の画像の置き場の鍵になる。
    */
   | {
       readonly kind: "question-answered"
@@ -164,7 +164,7 @@ export type RestoredEvent = {
   readonly time: { readonly kind: "known"; readonly at: number } | { readonly kind: "unknown" }
   /**
    * 依頼・脇の話に添えてあった原寸の data URL（transcript から読み戻したもの。ほかの出来事では空）。
-   * 組み直した時点では棚の id がまだ無いので `event.images` は空で、棚に置いて写すのは受け手。
+   * 組み直した時点では棚の id がまだ無いので `event.images` は空で、置き場に置いて写すのは受け手。
    */
   readonly promptImages: readonly string[]
 }

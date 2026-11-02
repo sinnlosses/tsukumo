@@ -17,7 +17,7 @@ export type SurroundingEvent =
    */
   | { readonly kind: "tasks-changed"; readonly tasks: TaskSummaryChange }
   /**
-   * おすすめの札が変わった（タスク一覧が届いて候補が変わったとき。出し手はサーバの推薦役）。
+   * おすすめのカードが変わった（タスク一覧が届いて候補が変わったとき。出し手はサーバの推薦役）。
    * 候補が前と同じなら流れない。空の並びは「まだ無い」で、候補が変わってキャッシュに無いときに一度流れ、問い合わせが通ればその結果がもう一度流れる。
    */
   | { readonly kind: "recommendation-changed"; readonly cards: readonly RecommendationCard[] }

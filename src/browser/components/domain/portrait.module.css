@@ -111,7 +111,7 @@
     transform: translateX(calc(-1 * var(--portrait-write-amount)));
   }
 }
-/* 完了の反応。ターンが終わった直後の窓（`SUCCESS_MOTION_WINDOW_MS`）だけ当たる一度きりの動き。 */
+/* 完了の反応。ターンが終わった直後の期間（`SUCCESS_MOTION_WINDOW_MS`）だけ当たる一度きりの動き。 */
 @keyframes portrait-bounce {
   0%,
   100% {
@@ -124,7 +124,7 @@
     transform: translateY(calc(var(--portrait-bounce-amount) * 0.2));
   }
 }
-/* 失敗でびくっ。ツールが失敗した直後の窓（`FAILURE_MOTION_WINDOW_MS`）だけ当たる一度きりの動き。 */
+/* 失敗でびくっ。ツールが失敗した直後の期間（`FAILURE_MOTION_WINDOW_MS`）だけ当たる一度きりの動き。 */
 @keyframes portrait-flinch {
   0%,
   100% {

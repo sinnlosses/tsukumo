@@ -5,7 +5,7 @@ const REPORT_BODY_ATTRIBUTE = "data-report-body"
 
 export type ReportSelection = {
   readonly text: string
-  /** 選択の最後の行の左端と下端（窓の座標）。 */
+  /** 選択の最後の行の左端と下端（ビューポートの座標）。 */
   readonly anchor: { readonly left: number; readonly bottom: number }
 }
 

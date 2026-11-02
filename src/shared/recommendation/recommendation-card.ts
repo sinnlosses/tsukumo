@@ -1,4 +1,4 @@
-// おすすめの札1枚の形。
+// おすすめのカード1枚の形。
 // 中身は会話を含まない（理由の1行はタスク一覧と中身の無い「前回の続き」だけから書かれる）。
 
 /** 始め方の一覧に並べる札の上限。 */
@@ -8,7 +8,7 @@ export const MAX_RECOMMENDATION_CARDS = 3
 export const RECOMMENDATION_CARD_KINDS = ["resume", "task"] as const satisfies readonly string[]
 
 /**
- * おすすめの札1枚。並びの順がおすすめの順。
+ * おすすめのカード1枚。並びの順がおすすめの順。
  * `resume` は前回の続きで、残りの中身は持たない（画面が前のセッションの `SessionDigest` の `remaining` から読む）。
  */
 export type RecommendationCard =

@@ -1,4 +1,4 @@
-// 状態のカタログのうち、帯の「いまの作業」・ワークプラン・委譲中の帯の場面。
+// 状態のカタログのうち、帯の「いまの作業」・ワークプラン・委譲中のプログレスバーの場面。
 
 import { WORK_PLAN_FINAL_SELECTOR, WORK_TOGGLE_SELECTOR } from "./catalog-selector.ts"
 import { SCENE_END_SETTLE, type CatalogEntry } from "./catalog-type.ts"

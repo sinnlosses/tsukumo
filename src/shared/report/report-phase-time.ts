@@ -18,8 +18,8 @@ export type PhaseDuration = {
 }
 
 /**
- * 帯と一覧の1行ぶん。段の行か、並列の段の行。
- * 並列の段の行の `label` は「並列 2–3」、`start` と `wall` は並列の段の壁時計の開始と所要、`phases` は中の段。
+ * 帯と一覧の1行ぶん。段の行か、並列のフェーズの行。
+ * 並列のフェーズの行の `label` は「並列 2–3」、`start` と `wall` は並列のフェーズの壁時計の開始と所要、`phases` は中の段。
  */
 export type PhaseTimeRow =
   | ({ readonly kind: "phase" } & PhaseDuration)
@@ -46,7 +46,7 @@ export type PhaseTimesView =
       readonly rows: readonly PhaseListEntryView[]
     }
 
-/** 並列の段が無い回は1本の帯、ある回は1行1段の横棒（waterfall）。 */
+/** 並列のフェーズが無い回は1本の帯、ある回は1行1段の横棒（waterfall）。 */
 export type PhaseChartView =
   | { readonly kind: "band"; readonly regions: readonly PhaseBandRegionView[] }
   | { readonly kind: "waterfall"; readonly lines: readonly PhaseWaterfallLineView[] }
@@ -61,12 +61,12 @@ export type PhaseBandRegionView =
     }
   | { readonly kind: "unknown"; readonly title: string }
 
-/** waterfall の1行。段の棒1本か、並列の段の包み（壁時計の囲みと中の段の棒）。 */
+/** waterfall の1行。段の棒1本か、並列のフェーズの外枠（壁時計の囲みと中の段の棒）。 */
 export type PhaseWaterfallLineView =
   | PhaseWaterfallBarView
   | { readonly kind: "group"; readonly items: readonly PhaseWaterfallGroupItemView[] }
 
-/** 並列の段の包みの中身。壁時計が測れない包みには `wall` を置かない。 */
+/** 並列のフェーズの外枠の中身。壁時計が測れない包みには `wall` を置かない。 */
 export type PhaseWaterfallGroupItemView =
   | {
       readonly kind: "wall"
@@ -86,7 +86,7 @@ export type PhaseWaterfallBarView = {
   readonly widthPercent: number
 }
 
-/** 一覧の1項目。段の行か、並列の段の行と字下げする中の段の行の包み。 */
+/** 一覧の1項目。段の行か、並列のフェーズの行と字下げする中の段の行の包み。 */
 export type PhaseListEntryView =
   | { readonly kind: "row"; readonly row: PhaseListRowView }
   | {
@@ -113,13 +113,13 @@ export type PhaseLabelView =
 /**
  * 段ごとの所要時間を描く順に並べる。段が無ければ `none`。
  * 見出しの行（計）・帯か横棒・一覧の順に描く。
- * 並列の段が無い回は、段ごとに1区間の1本の帯で、長さは時間の比。測れなかった段は固定幅の斜線の区間で、比には数えない。
- * 並列の段がある回は、帯の代わりに1行1段の横棒（waterfall）を置く。
- * 棒の位置は依頼の頭からの開始、長さは所要で、並列の段は親の棒を描かず、中の段の棒を壁時計の区間の囲みで包む。
+ * 並列のフェーズが無い回は、段ごとに1区間の1本の帯で、長さは時間の比。測れなかった段は固定幅の斜線の区間で、比には数えない。
+ * 並列のフェーズがある回は、帯の代わりに1行1段の横棒（waterfall）を置く。
+ * 棒の位置は依頼の頭からの開始、長さは所要で、並列のフェーズは親の棒を描かず、中の段の棒を壁時計の区間の囲みで包む。
  * 測れなかった段は斜線の欠片で位置だけ示す。
- * 計は段（並列の段は壁時計の1区間）の測れた区間の和、割合はその区間の時間÷計の整数%、一番長い区間だけ強める。
+ * 計は段（並列のフェーズは壁時計の1区間）の測れた区間の和、割合はその区間の時間÷計の整数%、一番長い区間だけ強める。
  * 時間を出さない区間は一覧で「未着手」「飛ばした」「不明」の字にし（{@link PhaseAbsence}）、割合は空欄にする。帯と棒の欠片の `title` も同じ字。
- * 並列の段の中の段は一覧にだけ字下げして並べ、割合は空欄にする。
+ * 並列のフェーズの中の段は一覧にだけ字下げして並べ、割合は空欄にする。
  */
 export function phaseTimesView(rows: readonly PhaseTimeRow[]): PhaseTimesView {
   if (rows.length === 0) {
@@ -171,9 +171,9 @@ type WaterfallBar = {
 const UNKNOWN_BAR_PERCENT = 2
 
 /**
- * 行ごとの横棒。並列の段は中の段の棒を包みに入れ、壁時計の区間を囲みで示す。
+ * 行ごとの横棒。並列のフェーズは中の段の棒を包みに入れ、壁時計の区間を囲みで示す。
  * 開始か所要が測れなかった棒は斜線の欠片にして、直前までの棒の終わりに置く。
- * 壁時計が測れない並列の段は囲みを置かない。
+ * 壁時計が測れない並列のフェーズは囲みを置かない。
  */
 function waterfallLines(
   rows: readonly PhaseTimeRow[],

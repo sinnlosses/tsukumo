@@ -1,11 +1,11 @@
-// `image` の塊と、質問の選択肢の `preview` に書いた画像の棚。
+// `image` の部品と、質問の選択肢の `preview` に書いた画像の置き場。
 // 描いた `report` と積まれた質問を受けた時点で書き手のファイルを1回読み、プロセスのメモリにだけ持つ。
-// 続きから復元した再生では、記録の窓に残った `report` のうち時刻が分かり24時間以内のものだけ、更新時刻がその時刻以前のファイルを読み直して置く。
+// 続きから復元した再生では、記録の集計期間に残った `report` のうち時刻が分かり24時間以内のものだけ、更新時刻がその時刻以前のファイルを読み直して置く。
 // 画像には会話の中身が写るので、tsukumo はどこにも書き出さない。
 //
 // 鍵は `report` の呼び出しか質問の tool use id と、書かれたままのパスの組（`reportImagePath` と同じ組）。
 // 捨てる契機は3つ:
-//   - レポートか質問が、記録（窓は `MAX_SESSION_STATE_TURNS`）にも答え待ちにも無くなったとき（`releasedImageToolUseIds`）
+//   - レポートか質問が、記録（集計期間は `MAX_SESSION_STATE_TURNS`）にも答え待ちにも無くなったとき（`releasedImageToolUseIds`）
 //   - 持っている画像の合計が `MAX_SHELVED_REPORT_IMAGE_BYTES` を超えたとき（古く置いたものから）
 //   - プロセスの終わり
 
@@ -20,7 +20,7 @@ import { imageSizeOf } from "./image-size.ts"
 /** 1枚の上限。これを超えるファイルは読まない。 */
 export const MAX_REPORT_IMAGE_BYTES = 5 * 1024 * 1024
 
-/** 棚に置く画像の合計の上限。 */
+/** 置き場に置く画像の合計の上限。 */
 const MAX_SHELVED_REPORT_IMAGE_BYTES = 64 * 1024 * 1024
 
 export type ReportImage = {
@@ -121,7 +121,7 @@ export function reportImagePaths(leaves: readonly ReportOutlineLeaf[]): readonly
 
 /**
  * 状態が `before` から `after` へ変わったときに、記録にも答え待ちにも無くなったレポートと質問の id。
- * 「前にあって後に無い」で取るのは、棚に置いてからイベントが畳まれるまでの間に別のイベントが畳まれても、置いたばかりの画像を捨てないため。
+ * 「前にあって後に無い」で取るのは、置き場に置いてからイベントが畳まれるまでの間に別のイベントが畳まれても、置いたばかりの画像を捨てないため。
  * 答えた質問は記録が先に積まれてから答え待ちを抜けるので、答えたあとも捨てない。
  */
 export function releasedImageToolUseIds(

@@ -1,4 +1,4 @@
-// 面が描く節の塊について、描くものがあるかと、面が Markdown の字で受ける塊の字を、塊の値から決める。
+// 面が描くセクションの部品について、描くものがあるかと、面が Markdown の字で受ける塊の字を、塊の値から決める。
 
 import type { ReportBlock, ReportBlockSection } from "./report-block.ts"
 import { htmlInline, joinParts, markdownInline } from "./report-inline-markdown.ts"
@@ -6,7 +6,7 @@ import type { LeafGutterNote, LeafValue } from "./report-leaf-value.ts"
 
 /**
  * 塊1つの Markdown が空（`""`）か、空白だけか、描くものがあるか。
- * 空白だけになるのは、空白だけの `markdown` の塊で傍注の無いときだけ。
+ * 空白だけになるのは、空白だけの `markdown` の塊で欄外注の無いときだけ。
  */
 type DrawnEntryPresence = "empty" | "blank" | "drawn"
 
@@ -35,12 +35,12 @@ export function drawnEntryPresence(block: ReportBlock, value: LeafValue): DrawnE
   }
 }
 
-/** 節の見出しの行。見出しの無い節は空文字。 */
+/** 節の見出しの行。見出しの無いセクションは空文字。 */
 export function sectionHeadingMarkdown(heading: string): string {
   return heading.trim() === "" ? "" : `## ${markdownInline(heading)}`
 }
 
-/** 見出しか、描くものがある塊が1つでもあるか。`values` は節の塊と同じ並び。 */
+/** 見出しか、描くものがある塊が1つでもあるか。`values` はセクションの部品と同じ並び。 */
 export function sectionDrawsAnything(
   section: ReportBlockSection,
   values: readonly LeafValue[],

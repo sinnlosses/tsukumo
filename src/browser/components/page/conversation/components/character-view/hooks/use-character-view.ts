@@ -95,7 +95,7 @@ export type CharacterViewModel = {
   readonly pinnedSpeech: PinnedSpeech | undefined
   /** セリフのログの行を押したとき（`<SpeechLog>` から呼ぶ。吹き出しと同じ状態を動かす）。 */
   readonly onToggleSpeech: (turnId: number, index: number) => void
-  /** セリフのログが開いているか。開く口は「ログ」と狭い画面の吹き出しの2つ。 */
+  /** セリフのログが開いているか。開くボタンは「ログ」と狭い画面の吹き出しの2つ。 */
   readonly speechLogOpen: boolean
   readonly onOpenSpeechLog: () => void
   readonly onCloseSpeechLog: () => void
@@ -307,9 +307,9 @@ function pastTurnSpeech(
 
 /**
  * 立ち絵の動きと待ちの一言が時間だけで変わる瞬間に読み直すための時計。いまの時刻を返す。
- * 完了の反応・失敗でびくっの時間の窓が過ぎた瞬間と、待ちの一言を出し始める時刻（`waitingDueAt`）にだけ描き直す。
+ * 完了の反応・失敗でびくっの期間が過ぎた瞬間と、待ちの一言を出し始める時刻（`waitingDueAt`）にだけ描き直す。
  *
- * 窓と期日は同時に効いていることがある（ツールが失敗した直後にターンが終わる、など）。
+ * 期間と期日は同時に効いていることがある（ツールが失敗した直後にターンが終わる、など）。
  * 次の描き直しまでの遅延はいちばん早いものだけなので、1回だけのタイマーだと、発火して `now` を進めたあとに残りがあっても次のタイマーが立たないまま止まる。
  * `lastToolFailureAt` / `turn` / `waitingDueAt` 自体はその後変わらないので、依存配列では再計算のきっかけにならない。
  * そこで、タイマーが発火するたびに次までの遅延を計算し直して、無くなるまで立て直す。

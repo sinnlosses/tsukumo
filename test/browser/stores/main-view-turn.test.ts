@@ -83,7 +83,7 @@ describe("mainViewTurnsOf", () => {
 
 // サブエージェントの `SendMessage` やバックグラウンドタスクの通知で、claude は同じやり取りの続きを自分で
 // 始める（`turn-resumed`）。そのたびに前の SDK ターンで出た `report` まで伏せていたので、
-// 合図が届くたびに中間レポートが消え、ターンが終わると同じものが出直していた。
+// 通知が届くたびに中間レポートが消え、ターンが終わると同じものが出直していた。
 describe("mainViewTurnsOf（claude が自分で始めた続きのターン）", () => {
   const fold = (events: readonly SessionEvent[]) =>
     events.reduce((current, event) => applySessionEvent(current, event, 0), INITIAL_SESSION_STATE)

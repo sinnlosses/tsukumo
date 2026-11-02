@@ -12,7 +12,7 @@ import {
 } from "./source-file.ts"
 
 // 画面を組み立てる部品のまとまり（`docs/architecture.md`「領域の機能と、置かれる機能」）の一覧。
-// まとまりどうしの辺は `.dependency-cruiser.cjs` が見て、ここは一覧に無いディレクトリを `throw` で落とす。
+// まとまりどうしのエッジは `.dependency-cruiser.cjs` が見て、ここは一覧に無いディレクトリを `throw` で落とす。
 //
 // - 枠（`BROWSER_FRAMES`）: 全画面で共有する枠（`components/domain/<枠>/`）。差し込み口は
 //   props で受け、画面を知らない。枠どうしは import しない
@@ -65,7 +65,7 @@ type BrowserFeature = {
 // 領域ではなく共有の部品」）。
 const SHARED_BROWSER_BOXES = ["lib", "domain", "stores", "hooks"] as const
 
-/** 1つの機能しか読まなくても共有の箱に残すファイルと、その理由。 */
+/** 1つの機能しか読まなくても共有モジュールに残すファイルと、その理由。 */
 const KEPT_SHARED_FILES = {
   "browser/hooks/use-before-paint-sync.ts": "包みの置き場として規約が名指ししている",
 } as const satisfies Record<string, string>

@@ -12,7 +12,7 @@ import { turnFailureBlockOf, type TurnFailureBlockModel } from "../domain/turn-f
 type TurnFailureBlockView = TurnFailureBlockModel & {
   /** 依頼の文を入力欄の下書きの末尾に足す。送らない。 */
   readonly onRetry: (request: string) => void
-  /** 進み具合の帯の手順の一覧を、失敗した手順を指して開く。 */
+  /** 進み具合のプログレスバーの手順の一覧を、失敗した手順を指して開く。 */
   readonly onShowFailedSteps: () => void
 }
 

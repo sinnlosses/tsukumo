@@ -1,4 +1,4 @@
-/* 押せるパスの近くに浮かせる抜き書き。窓の座標で置くので fixed。 */
+/* 押せるパスの近くに浮かせる抜き書き。ビューポートの座標で置くので fixed。 */
 .file-excerpt-peek {
   position: fixed;
   z-index: 3;

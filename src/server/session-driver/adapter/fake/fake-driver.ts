@@ -49,7 +49,7 @@ export type FakeDriverOptions = {
   readonly firstViewer: Promise<void>
   /** キャラクターパックにある表情名。`report` の `closing` の表情を本物と同じに畳む。 */
   readonly expressions: readonly Expression[]
-  /** 内部イベントの受け取り口（本物の駆動と同じ契約）。 */
+  /** 内部イベントを受け取る関数（本物の駆動と同じ契約）。 */
   readonly onEvent: (event: SessionEvent) => void
 }
 

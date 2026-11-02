@@ -11,7 +11,7 @@ import type {
   WorkflowSettingView,
 } from "../../../shared/workflow-setting/workflow-setting.ts"
 
-/** この機能の手続きが使う口（中身は配線が渡す）。どちらも例外を投げない。 */
+/** この機能の手続きが使う関数（中身は配線が渡す）。どちらも例外を投げない。 */
 export type WorkflowSettingProcedurePorts = {
   readonly readWorkflowSetting: () => Promise<WorkflowSettingView>
   readonly readWorkflowEntries: () => Promise<readonly WorkflowEntry[]>

@@ -89,7 +89,7 @@ export type ScenarioRoom = {
   readonly cwd: string
   /**
    * 起こした tsukumo の `TSUKUMO_HOME`（`realpath` を通した絶対パス。テストが終わると消える）。
-   * 別の窓の tsukumo の占有ファイルのように、ホームの中身そのものが元になるシナリオだけがここへ書き足す。
+   * 別のウィンドウの tsukumo の占有ファイルのように、ホームの中身そのものが元になるシナリオだけがここへ書き足す。
    * 書き足すのは `open` が部屋を渡したあとにする。
    */
   readonly home: string
@@ -126,7 +126,7 @@ export type ScenarioRoom = {
   /** `pending-changed` の答え待ちに `id` の札が載るまで待つ（何回目の `pending-changed` かでは待たない）。 */
   readonly waitForPending: (id: string) => Promise<void>
   /**
-   * 窓の大きさを変え、窓の幅・高さが渡した値になるまで待つ。
+   * ビューポートの大きさを変え、ビューポートの幅・高さが渡した値になるまで待つ。
    */
   readonly resize: (viewport: { readonly width: number; readonly height: number }) => Promise<void>
   /** 読み上げの領域（`[data-live-announcer]`）に、ページを開いてからいままでに挿入された文。 */

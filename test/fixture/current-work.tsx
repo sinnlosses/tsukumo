@@ -10,7 +10,7 @@ import { putSession } from "../browser/session-store.ts"
 import { typedElement } from "../typed-element.ts"
 
 /**
- * 帯の札を描く。会話の画面の帯には札が無い（メインビューの進み具合の帯が代わる）ので、hash が空ならキャラクター画面で見る。
+ * 帯のカードを描く。会話の画面の帯にはカードが無い（メインビューの進み具合のプログレスバーが代わる）ので、hash が空ならキャラクター画面で見る。
  * 画面を自分で決めたいテストは、呼ぶ前に hash を書く。
  */
 export function renderScreenNav(state: Partial<SessionState> = {}): void {

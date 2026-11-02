@@ -16,7 +16,7 @@ import {
  * 根の `Report` の props を旧い版の最上位の欄に、`Report.children` を節に、
  * `figure` と `retrospective.blocks` の ID の葉を塊に写す。
  * 辿れない参照は飛ばし、入れ子の `Section` と配置の部品の中の葉は外側の節へ並び順に平らに入れ、
- * 根の子の葉は見出しの無い節に入れる。
+ * 根の子の葉は見出しの無いセクションに入れる。
  */
 export function a2uiReportFields(
   root: A2uiReportPart<"Report">,

@@ -49,8 +49,8 @@ export const FAKE_DEFAULT_EFFORT: EffortLevel = "medium"
 /**
  * fake driver が返すコンテキストの内訳の数。
  * 会話の内容ではないので疑似セッションの JSON には持たせず、ここに直接書く。
- * 架空の値だが、分類の並びと種別・合計と窓の関係だけは本物に合わせてある。
- * `used` の合計が `totalTokens`、それに `buffer` と `free` を足すと窓の大きさになる。
+ * 架空の値だが、分類の並びと種別・合計とコンテキストウィンドウの関係だけは本物に合わせてある。
+ * `used` の合計が `totalTokens`、それに `buffer` と `free` を足すとコンテキストウィンドウの大きさになる。
  */
 export const FAKE_CONTEXT_USAGE = {
   totalTokens: 121_500,

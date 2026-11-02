@@ -1,4 +1,4 @@
-// `--paper-metric` の出力。窓ごとに紙面の物差しを表で出す。
+// `--paper-metric` の出力。ビューポートごとに紙面の物差しを表で出す。
 
 import process from "node:process"
 
@@ -8,7 +8,7 @@ import { MAIN_REGION_SELECTOR, SKIP_REVEAL_KEY, settlePage } from "./capture-pag
 import type { WindowSize } from "./capture-size.ts"
 import { formatPaperMetric, measurePaperMetric } from "./paper-metric.ts"
 
-/** 窓ごとに演出を打ち切って落ち着かせ、紙面の物差しを表で出す。測れなければ理由を出して 1。 */
+/** ビューポートごとに演出を打ち切って落ち着かせ、紙面の物差しを表で出す。測れなければ理由を出して 1。 */
 export async function printPaperMetrics(
   page: Page,
   viewports: readonly WindowSize[],

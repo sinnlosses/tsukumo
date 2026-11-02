@@ -84,7 +84,7 @@ function NavDrawerBody(props: NavDrawerProps): ReactElement {
 
   return (
     <div className={styles["nav-drawer-frame"]}>
-      {/* `shellStyles` の class は見た目を持たず、`screen-nav.module.css` の `@media` の選択子（顔の大きさ・選び口の位置）を当てるためだけに重ねる。 */}
+      {/* `shellStyles` の class は見た目を持たず、`screen-nav.module.css` の `@media` の選択子（顔の大きさ・選択メニューの位置）を当てるためだけに重ねる。 */}
       <div className={clsx(styles["nav-drawer-identity"], shellStyles["nav-drawer-identity"])}>
         <ScreenNavCharacterPicker picker={parts.character} />
         <ScreenNavSessionTag tag={parts.sessionTag} placement="nav-drawer" />

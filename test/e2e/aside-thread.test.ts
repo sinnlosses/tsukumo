@@ -8,7 +8,7 @@ import { expect, test } from "./room-fixture.ts"
 /** 撮るときの経過（凍らせた瞬間から）。「何秒前」の類いをこの値で揃える。 */
 const ELAPSED_MS = 60_000
 
-/** 脇の話のターンの `turn-finished` が何回目か（委譲したターン + 脇の話のターン）。 */
+/** 補足メッセージのターンの `turn-finished` が何回目か（委譲したターン + 補足メッセージのターン）。 */
 const ASIDE_TURN_FINISHED_OCCURRENCE = 2
 
 test.describe("委譲中の補足メッセージ", () => {

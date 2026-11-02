@@ -1,5 +1,5 @@
 // いま何をしているかの1行(走っている手順・答え待ち・再試行・バックグラウンドタスク)。
-// 広い画面の進み具合の帯の2行目と、狭い画面の「いまの段」の下の1行が同じものを読む。
+// 広い画面の進み具合のプログレスバーの2行目と、狭い画面の「いまの段」の下の1行が同じものを読む。
 
 import type { ApiTrouble } from "../../../../../../../shared/session-driver/api-trouble.ts"
 import type { BackgroundTask } from "../../../../../../../shared/session-driver/background-task.ts"

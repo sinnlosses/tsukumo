@@ -23,7 +23,7 @@ import {
 export type ProseViolation =
   /** `conclusion` が3要素以上ある（「結論は `conclusion` に1〜2文で書く」）。 */
   | { readonly kind: "long-conclusion"; readonly count: number }
-  /** 節が2つ以上あるのに見出しの無い節がある。`count` は見出しの無い節の数。 */
+  /** セクションが2つ以上あるのに見出しの無いセクションがある。`count` は見出しの無いセクションの数。 */
   | { readonly kind: "untitled-section"; readonly count: number }
   /**
    * 逃げ道の外側（HTML の塊の中でないところ）に、塊の種類がある記法を書いた。

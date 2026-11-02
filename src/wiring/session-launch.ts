@@ -78,16 +78,16 @@ export function wireSessionLaunch(options: {
   /** 最初のタブが繋がったら解ける約束。fake driver は疑似セッションをここから流し始める。本物の駆動は待たない。 */
   readonly firstViewer: Promise<void>
   /**
-   * 駆動を起こす直前に、起こす代の種とその代の受け取り口を受け取る口。
+   * 駆動を起こす直前に、起こす代の種とその代で受け取る関数を受け取る口。
    * `restored` は、その代で組み直して流し終えた履歴で解ける（新規で起こした・読めなかったときは空）。
-   * 戻り値は、その代の受け取り口に流れた出来事を観る口（その代が続くあいだ、流れた出来事ごとに呼ぶ）。
+   * 戻り値は、その代で受け取る関数に流れた出来事を観る口（その代が続くあいだ、流れた出来事ごとに呼ぶ）。
    */
   readonly onLaunch: (
     seed: SessionLaunchSeed<CharacterPack>,
     onEvent: (event: SessionEvent) => void,
     restored: Promise<readonly RestoredEvent[]>,
   ) => (event: SessionEvent) => void
-  /** 診断ログの書き込み口。握りつぶした失敗（履歴の組み直し・覚えたことの書き込み）を書く。 */
+  /** 診断ログの書き込みの関数。握りつぶした失敗（履歴の組み直し・覚えたことの書き込み）を書く。 */
   readonly diagnosticLog: DiagnosticLog
 }): {
   readonly manager: Pick<SessionManagerOptions, "launchSession">

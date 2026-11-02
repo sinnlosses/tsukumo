@@ -38,9 +38,9 @@ export type SessionStartOptions = {
   readonly repository: ReturnType<typeof wireRepository>
   /** 日付ごとの記録の口。ビューの配信が引く token-usage・diagnostic と同じものを渡す（`wireUsageLogs`）。 */
   readonly usageLogs: WiredUsageLogs
-  /** 依頼に添えた画像の原寸の棚。ビューの配信が引く棚と同じ1つを渡す。 */
+  /** 依頼に添えた画像の原寸の置き場。ビューの配信が引く置き場と同じ1つを渡す。 */
   readonly promptImageShelf: PromptImageShelf
-  /** `image` の塊の画像の棚。ビューの配信が引く棚と同じ1つを渡す。 */
+  /** `image` の部品の画像の置き場。ビューの配信が引く置き場と同じ1つを渡す。 */
   readonly reportImageShelf: ReportImageShelf
   /** ビューが実際に待ち受けているポート。セッションの印の目印がここから決まる（`sessionTag`）。 */
   readonly viewPort: number
@@ -59,7 +59,7 @@ export type SessionStartOptions = {
 /** 起こしたセッションと、開いたタブがそれを触るコマンドの手続き。 */
 export type StartedSession = {
   readonly manager: SessionManager
-  /** `/ws` に載せるルータ。書き込み口の中身はここで選んで渡す。 */
+  /** `/ws` に載せるルータ。書き込みの関数の中身はここで選んで渡す。 */
   readonly socketRouter: SocketRouter
   /** ここで作った追記の口を閉じ、書き残しがファイルに渡るのを待つ。プロセスを終える前に待つ。 */
   readonly closeLogs: () => Promise<void>

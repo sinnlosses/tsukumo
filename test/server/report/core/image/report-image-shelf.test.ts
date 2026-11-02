@@ -11,7 +11,7 @@ import { drawnLeaves, reportOutline } from "../../../../../src/shared/report/rep
 import type { StampedPendingAsk } from "../../../../../src/shared/session-driver/pending-ask.ts"
 import type { SessionRecord } from "../../../../../src/shared/session/session-record.ts"
 
-/** 棚に置く画像の合計の上限。 */
+/** 置き場に置く画像の合計の上限。 */
 const SHELF_LIMIT_BYTES = 64 * 1024 * 1024
 import { reportOfSections } from "../../../../fixture/report-event.ts"
 import { reportRecord, requestRecord } from "../../../../fixture/session-record.ts"

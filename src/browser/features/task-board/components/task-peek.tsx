@@ -1,9 +1,9 @@
-// サイドバーのタスクの行から開くのぞき窓。
+// サイドバーのタスクの行から開くプレビュー。
 // 上から、状態の印と語・ID・閉じる口 → 題 → 関わるタスク（依存があるときだけ）→ 本文の頭 → 「全文を開く」「これを始める」。
 //
 // モーダルでない `<dialog open>` を `position: fixed` で行の左に置く。
-// `show()` は窓の中の口へフォーカスを移すので使わない（フォーカスは押した行に残す）。
-// 位置は行のボタン（`anchorId`）の矩形から決めて style の変数へ書き、窓の大きさ・画面の大きさ・スクロールが変わるたびに書き直す。
+// `show()` はプレビューの中の口へフォーカスを移すので使わない（フォーカスは押した行に残す）。
+// 位置は行のボタン（`anchorId`）の矩形から決めて style の変数へ書き、プレビューの大きさ・画面の大きさ・スクロールが変わるたびに書き直す。
 
 import { X } from "lucide-react"
 import type { ReactElement } from "react"
@@ -24,7 +24,7 @@ import styles from "./task-peek.module.css"
 import { TaskRunConfirm } from "./task-run-confirm.tsx"
 import { TaskSummaryText } from "./task-summary-text.tsx"
 
-/** 窓の下端の頼みの口。`available` は「これを始める」（頼めるタスクだけ）、`draft` は「却下する」「計画する」。 */
+/** プレビューの下端の頼みの口。`available` は「これを始める」（頼めるタスクだけ）、`draft` は「却下する」「計画する」。 */
 export type TaskPeekRun =
   | { readonly kind: "none" }
   | { readonly kind: "available"; readonly held: boolean; readonly confirm: TaskPeekConfirm }
@@ -179,14 +179,14 @@ function statusWordOf(status: TaskSummaryStatus): string {
   }
 }
 
-/** 行の左端から窓の右端まで。行はサイドバーの枠から約 22px 内にあり、窓と枠のあいだを約 20px 空ける。 */
+/** 行の左端からプレビューの右端まで。行はサイドバーの枠から約 22px 内にあり、プレビューと枠のあいだを約 20px 空ける。 */
 const GAP_FROM_ROW = 42
 /** 画面の端から空ける幅。 */
 const VIEWPORT_MARGIN = 8
-/** 尾を窓の上下の角から離す幅。 */
+/** 尾をプレビューの上下の角から離す幅。 */
 const TAIL_MARGIN = 20
 
-/** 窓を行の左に置き、行が動く・窓の大きさが変わるたびに置き直す。外す関数を返す。 */
+/** プレビューを行の左に置き、行が動く・プレビューの大きさが変わるたびに置き直す。外す関数を返す。 */
 function trackAnchor(peek: HTMLDialogElement, anchorId: string): () => void {
   const view = peek.ownerDocument.defaultView
   const place = (): void => {
@@ -208,8 +208,8 @@ function trackAnchor(peek: HTMLDialogElement, anchorId: string): () => void {
 }
 
 /**
- * 窓の右端を行の左に、縦は窓の中央を行の中央に合わせてから画面の上下の内へ寄せ、尾を行の中央の高さに置く。
- * 左に窓が入りきらない幅では左端に寄せて行に重ね、尾を出さない。
+ * プレビューの右端を行の左に、縦はプレビューの中央を行の中央に合わせてから画面の上下の内へ寄せ、尾を行の中央の高さに置く。
+ * 左にプレビューが入りきらない幅では左端に寄せて行に重ね、尾を出さない。
  */
 function placeBesideRow(peek: HTMLElement, row: DOMRect, view: Window): void {
   const width = peek.offsetWidth

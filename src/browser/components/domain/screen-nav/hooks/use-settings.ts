@@ -43,7 +43,7 @@ type ScreenNavSettingsSessionDefault = {
    * 対応表（`modelEffortSupport`）は駆動が起動直後に届けるモデル横断の一覧なので、ここで選んでいる既定のモデルの対応も同じ関数で引ける。
    */
   readonly effort: EffortSelect
-  /** モデルの吊り札の行に「effort なし」を添えるための対応表。 */
+  /** モデルの吊り下げのカードの行に「effort なし」を添えるための対応表。 */
   readonly modelEffortSupport: readonly ModelEffortSupport[]
   readonly onChangeEffort: (value: string) => void
   readonly permissionMode: SessionDefaultPermissionMode

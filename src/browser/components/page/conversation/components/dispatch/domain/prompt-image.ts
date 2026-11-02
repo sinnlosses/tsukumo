@@ -1,4 +1,4 @@
-// 貼り付け・ドロップ・ファイルを選ぶ窓で届いたファイルを、依頼に添える画像（`PromptImage`）にする。
+// 貼り付け・ドロップ・ファイルを選ぶウィンドウで届いたファイルを、依頼に添える画像（`PromptImage`）にする。
 //
 // 控えを作るのは「原寸を手放しても依頼の記録が読める」ようにするためで、押して拡大する面は作らない（作ろうとしても開くものが無い）。
 //
@@ -23,7 +23,7 @@ export function promptImageFiles(transfer: DataTransfer | null | undefined): rea
 }
 
 /**
- * ファイルを選ぶ窓（`<input type="file">`）で選ばれたものから、依頼に添えられる画像だけを拾う。
+ * ファイルを選ぶウィンドウ（`<input type="file">`）で選ばれたものから、依頼に添えられる画像だけを拾う。
  * 外来の `null`（何も選ばなかった）はここで空に畳む。
  */
 export function chosenPromptImageFiles(files: FileList | null): readonly File[] {

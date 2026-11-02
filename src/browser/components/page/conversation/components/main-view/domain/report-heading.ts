@@ -31,7 +31,7 @@ export function readableHeadings(content: HTMLElement): readonly HTMLElement[] {
 
 /**
  * 目次の行にする見出し。見出しのある節の欄（`headedSectionIds`）の最初の `h4` が `section`。
- * 欄の中のほかの `h4` は `sub`、欄の外の `h4` と見出しの無い節の欄の中の `h4` は `h4` なら `section`、`h5` なら `sub`。
+ * 欄の中のほかの `h4` は `sub`、欄の外の `h4` と見出しの無いセクションの欄の中の `h4` は `h4` なら `section`、`h5` なら `sub`。
  */
 export function readableOutlineItems(
   content: HTMLElement,

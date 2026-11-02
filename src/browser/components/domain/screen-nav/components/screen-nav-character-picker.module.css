@@ -1,14 +1,14 @@
-/* 帯の左端のキャラクターの顔と、押すと開く選び口。
+/* 帯の左端のキャラクターの顔と、押すと開く選択メニュー。
    値は見本 `docs/history/mockup/session-switch-2026-09-27/HD-4-IdTag.dc.html` の inline style を `theme.css` のトークンに写したもの。
    引き出しの中での大きさと位置は `screen-nav.module.css` の @media が持つ。 */
 
-/* 選び口（.screen-nav-character-picker-panel）を顔の真下に重ねる基準。 */
+/* 選択メニュー（.screen-nav-character-picker-panel）を顔の真下に重ねる基準。 */
 .screen-nav-character-picker {
   position: relative;
   display: flex;
   flex: none;
 }
-/* 顔そのものが押す口の箱だけ（顔は `<Button variant="ghost">` が持つ）。右下の「⌄」が選べることを示す。 */
+/* 顔そのものがボタンの箱だけ（顔は `<Button variant="ghost">` が持つ）。右下の「⌄」が選べることを示す。 */
 .screen-nav-character-picker-toggle {
   position: relative;
   display: flex;
@@ -49,7 +49,7 @@
 .screen-nav-character-picker-toggle:hover .screen-nav-character-picker-mark {
   border-color: var(--accent);
 }
-/* 選び口。顔の真下に、左端を揃えて重ねる（下の領域を押し下げない）。 */
+/* 選択メニュー。顔の真下に、左端を揃えて重ねる（下の領域を押し下げない）。 */
 .screen-nav-character-picker-panel {
   position: absolute;
   top: calc(100% + 0.4rem);

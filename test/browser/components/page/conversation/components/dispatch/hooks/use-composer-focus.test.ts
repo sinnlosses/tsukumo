@@ -29,7 +29,7 @@ afterEach(() => {
   document.body.innerHTML = ""
 })
 
-/** 動いているやり取りで入力欄のフォーカスの時機を回し、入力欄の面が受けたフォーカスの回数を返す口を渡す。 */
+/** 動いているやり取りで入力欄のフォーカスの時機を回し、入力欄のサーフェスが受けたフォーカスの回数を返す口を渡す。 */
 function renderWhileRunning(): () => number {
   let focused = 0
   const surface: ComposerSurface = {

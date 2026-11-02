@@ -1,4 +1,4 @@
-// お伺いの札（答え待ちの許可要求と質問。メインビューの、いまのやり取りの本文の末尾）。
+// お伺いのカード（答え待ちの許可要求と質問。メインビューの、いまのやり取りの本文の末尾）。
 // 頭に「お伺い」のチップ・種類・`header` かツール名・「n / N」と待っている時間、本文に問いの文か対象の全文・添え書きの背景と軸・左に選択肢の縦の並びと右にフォーカスした選択肢の詳細・畳める比較表、下端に操作の行を置く。
 // 操作の行は札の下端に残り、本文と選択肢の側が札の内側で転がる。
 //
@@ -43,7 +43,7 @@ const FREE_TEXT_HINT = "選択肢にない答えは、下の入力欄に書い�
 const RECOMMENDED_BADGE = "おすすめ"
 const ANSWER_LABEL = "これで答える"
 const NEXT_LABEL = "次へ"
-/** 押せる口に添えるキーの字。 */
+/** ボタンに添えるキーの字。 */
 const ENTER_KEY_HINT = "⏎"
 const WAITED_PREFIX = "待って"
 const BACKGROUND_LABEL = "背景"
@@ -320,7 +320,7 @@ function InquiryBrief(props: { readonly brief: InquiryBriefModel }): ReactElemen
   )
 }
 
-/** 詳細の面に出すものがあるか（許可の「許可」「拒否」には無い）。 */
+/** 詳細のサーフェスに出すものがあるか（許可の「許可」「拒否」には無い）。 */
 function hasDetail(option: InquiryOptionRow): boolean {
   return (
     option.description !== "" ||
@@ -340,7 +340,7 @@ function imageSourceOf(inquiry: Exclude<InquiryModel, { readonly kind: "none" }>
   }
 }
 
-/** フォーカスした選択肢の詳細の面。高さは切らず、札の本文が内側で転がる。 */
+/** フォーカスした選択肢の詳細のサーフェス。高さは切らず、札の本文が内側で転がる。 */
 function InquiryDetail(props: {
   readonly askId: string
   readonly imageSource: ShelvedSource
@@ -464,7 +464,7 @@ function InquiryCompare(props: {
   )
 }
 
-/** 選択肢1つぶんの行。押す口は `<input>` と `<label>` の組（単一選択は radio、複数選択はチェックボックス）。 */
+/** 選択肢1つぶんの行。ボタンは `<input>` と `<label>` の組（単一選択は radio、複数選択はチェックボックス）。 */
 function InquiryOption(props: {
   readonly option: InquiryOptionRow
   readonly multiSelect: boolean

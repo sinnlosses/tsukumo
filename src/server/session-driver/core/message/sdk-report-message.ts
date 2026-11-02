@@ -23,7 +23,7 @@ import { speechEvents } from "./sdk-speech-message.ts"
 
 /**
  * `report` の引数を取り出す。
- * 本文の節・図・振り返りの塊は持たず、`components` の葉から導く。
+ * 本文の節・図・振り返りの部品は持たず、`components` の内容部品から導く。
  * `keyFigures` の「無い」と形の崩れ（3〜4個でない）は空の配列に畳む。
  * `favor` の「無い」は空の文字列に、`checks` の「無い」は空の配列に畳む（描く側は空の塊を置かないだけで済む）。
  * `task` の「無い」と形の崩れ（引数に `task` が無かったころの transcript も）は `none` に畳む。`workPlanClosing` も同じ。

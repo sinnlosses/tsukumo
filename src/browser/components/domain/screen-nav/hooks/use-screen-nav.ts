@@ -128,7 +128,7 @@ export type ScreenNavView = {
   readonly drawer: NavDrawerView
   /** 狭い画面の頭の材料。広い画面では頭を描かないので `undefined`。 */
   readonly headSource: PhoneHeadSource | undefined
-  /** 帯の外側を押したかを見るための入れ物（キャラクターの選び口などを閉じる判定に使う）。 */
+  /** 帯の外側を押したかを見るための入れ物（キャラクターの選択メニューなどを閉じる判定に使う）。 */
   readonly ref: RefObject<HTMLElement | null>
 }
 
@@ -226,7 +226,7 @@ export function useScreenNav(): ScreenNavView {
   })
 
   // `<dialog>` の `close` はどの閉じ方（覆い・Esc・中から閉じる）でも届くので、≡ へ戻すのはここ1箇所。
-  // 覆いを押した先は `<nav>` の中の `<dialog>` なので、中で開いていたキャラクターの選び口は自分では閉じない。ここで一緒に閉じる。
+  // 覆いを押した先は `<nav>` の中の `<dialog>` なので、中で開いていたキャラクターの選択メニューは自分では閉じない。ここで一緒に閉じる。
   function onCloseDrawer(): void {
     closeDrawer()
     character.close()

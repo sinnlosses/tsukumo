@@ -19,7 +19,7 @@ afterEach(closeRunningView)
 
 describe("startViewServer", () => {
   describe("/prompt-image/<id>", () => {
-    // 棚に置いた原寸の代役。中身は手で書いた数バイト（実物の画像は使わない）。
+    // 置き場に置いた原寸の代役。中身は手で書いた数バイト（実物の画像は使わない）。
     const SHELVED_ID = "0b6f7a52-3c1e-4d7a-9f2b-5e8c1d4a6b3f"
     const SHELVED_BYTES = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x01, 0x02, 0x03])
     const SHELVED_DATA_URL = `data:image/png;base64,${SHELVED_BYTES.toString("base64")}`
@@ -87,7 +87,7 @@ describe("startViewServer", () => {
   })
 
   describe("/report-image/<toolUseId>/<path>", () => {
-    // 棚に置いた画像の代役。中身は手で書いた数バイト（実物の画像は使わない）。
+    // 置き場に置いた画像の代役。中身は手で書いた数バイト（実物の画像は使わない）。
     const SHELVED_TOOL_USE_ID = "toolu_fictional"
     const SHELVED_PATH = "架空/after.png"
     const SHELVED_BYTES = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x01, 0x02, 0x03])

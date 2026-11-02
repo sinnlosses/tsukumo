@@ -1,8 +1,8 @@
 // `<ReportOutline>` のロジック。
-// 上の段に窓の中のやり取りを並べ、見ているやり取りの行の下に、そのレポートに描かれた見出し（`##` の `h4` と `###` の `h5`）を DOM から拾って並べる。
+// 上の段に集計期間の中のやり取りを並べ、見ているやり取りの行の下に、そのレポートに描かれた見出し（`##` の `h4` と `###` の `h5`）を DOM から拾って並べる。
 //
 // 見出しの出どころを Markdown の文字ではなく描いた DOM にするのは、押したときに転がす先と、いま読んでいる見出しを決める位置が、どちらも DOM の要素そのものだから。
-// 畳んだ `<details>` の中の見出しは転がしても見えないので拾わない。
+// 畳んだ `<details>` の中の見出しはスクロールしても見えないので拾わない。
 //
 // 列の幅と畳んだ状態は利用者が変えられ、`localStorage` に保つ。
 // キーボードでは ↑↓ でやり取りの行・レポートの行・見出しの行を区別なく移り、Enter は行の `<button>` が受ける。
@@ -61,7 +61,7 @@ type ReportOutlineTurn = {
 }
 
 export type ReportOutlineProps = {
-  /** 窓の中のやり取り。古い順（末尾が最新）。 */
+  /** 集計期間の中のやり取り。古い順（末尾が最新）。 */
   readonly turns: readonly ReportOutlineTurn[]
   readonly activeTurnId: number
   readonly onSelectTurn: (turnId: number) => void
@@ -279,7 +279,7 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
       attributeFilter: ["open", REVEAL_PENDING_ATTRIBUTE],
     })
     const unsubscribeScroll = subscribeScrollFrame(onFrame)
-    // 窓・上下の境界・キャラ欄の畳みなど、どの経路でも器の寸法が変われば読む線と帯を引き直す。
+    // ビューポート・上下の境界・キャラ欄の畳みなど、どの経路でも器の寸法が変われば読む線と帯を引き直す。
     const resizeObserver = new ResizeObserver(onFrame)
     resizeObserver.observe(scrollerOfContent ?? content)
     if (navRef.current !== null) {

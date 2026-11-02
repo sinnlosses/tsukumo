@@ -1,4 +1,4 @@
-// お伺いに対して組み立て中の答えと、詳細の面に出すと触って決めた選択肢を持つ store。
+// お伺いに対して組み立て中の答えと、詳細のサーフェスに出すと触って決めた選択肢を持つ store。
 // どちらもどの答え待ち（`PendingAsk.id`）に対するものかを一緒に持ち、別の答え待ちに替われば読む側が読まない。
 
 import { create } from "zustand"
@@ -20,7 +20,7 @@ type InquiryDraftState = {
 
 export const useInquiryDraft = create<InquiryDraftState>()(() => ({ draft: undefined }))
 
-/** 詳細の面に出すと触って決めた選択肢。どの答え待ちの何問目かも持ち、別の問に替われば読まない。 */
+/** 詳細のサーフェスに出すと触って決めた選択肢。どの答え待ちの何問目かも持ち、別の問に替われば読まない。 */
 export type InquiryFocus =
   | { readonly kind: "none" }
   | {

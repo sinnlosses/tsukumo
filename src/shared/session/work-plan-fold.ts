@@ -23,7 +23,7 @@ export type WorkPlanEvent = Extract<
 
 /**
  * イベント1件を受けたあとの今のワークプラン。
- * 依頼で忘れ、`work-plan` で置き換え、委譲の返却は {@link advancedByReturn}、段の閉じ方が `finished` の `report` は {@link closedByReport} で畳む。
+ * 依頼で忘れ、`work-plan` で置き換え、委譲の返却は {@link advancedByReturn}、フェーズの閉じ方が `finished` の `report` は {@link closedByReport} で畳む。
  */
 export function nextWorkPlan(plan: LatestWorkPlan, event: WorkPlanEvent): LatestWorkPlan {
   switch (event.kind) {

@@ -85,7 +85,7 @@ describe("createChatArchive の unconsolidated", () => {
     appendRequest(chatArchive, 20, "20日の依頼")
     appendRequest(chatArchive, 21, "21日の依頼")
 
-    // 窓（recentBytes）には最新の1件だけが収まる大きさにする。
+    // 範囲（recentBytes）には最新の1件だけが収まる大きさにする。
     const recentBytes = Buffer.byteLength("21日の依頼")
     const { entries, usedBytes, overflowed } = chatArchive.unconsolidated(
       PACK,
@@ -105,7 +105,7 @@ describe("createChatArchive の unconsolidated", () => {
     appendRequest(chatArchive, 20, "20日の依頼")
     appendRequest(chatArchive, 21, "21日の依頼")
 
-    // 窓は使い切れないほど広く取り、after より後かどうかだけを見る。
+    // 範囲は使い切れないほど広く取り、after より後かどうかだけを見る。
     const { entries } = chatArchive.unconsolidated(
       PACK,
       { recentBytes: 0, maxBytes: 1024 },

@@ -1,4 +1,4 @@
-// `graph` の塊の `source`（1行1項目の文字の記法）を、節点の並びと辺の並びに読む。
+// `graph` の塊の `source`（1行1項目の文字の記法）を、ノードの並びとエッジの並びに読む。
 
 export type GraphNodeShape = "box" | "round" | "decision"
 
@@ -18,11 +18,11 @@ const TONE_SUFFIX = /\s@([a-e])$/
 export type GraphSourceNode = {
   readonly name: string
   readonly shape: GraphNodeShape
-  /** 節点だけの行に付いた印。辺の行の印は端の節点に掛けない。 */
+  /** ノードだけの行に付いた印。エッジの行の印は端のノードに掛けない。 */
   readonly change: GraphChange
-  /** 節点だけの行に付いた色の目印。辺の行の目印は端の節点に掛けない。 */
+  /** ノードだけの行に付いた色の目印。エッジの行の目印は端のノードに掛けない。 */
   readonly tone: GraphTone
-  /** 節点だけの行に `名前 | 説明` で書いた説明。`\n` で改行した行を実際の改行でつなぐ（3行まで）。無ければ空。 */
+  /** ノードだけの行に `名前 | 説明` で書いた説明。`\n` で改行した行を実際の改行でつなぐ（3行まで）。無ければ空。 */
   readonly note: string
 }
 
@@ -33,14 +33,14 @@ export type GraphSourceEdge = {
   readonly label: string
   readonly change: GraphChange
   readonly tone: GraphTone
-  /** `-.>` で書いた点線の辺。 */
+  /** `-.>` で書いた点線のエッジ。 */
   readonly dashed: boolean
   /** `A <- B` で書いた戻り道（`from` が B、`to` が A）。 */
   readonly returns: boolean
 }
 
 /**
- * 囲み（`[群の名]` 〜 `[]`）。`nodes` は `GraphSourceReading.nodes` の添字で、直に書いた節点だけ。
+ * 囲み（`[群の名]` 〜 `[]`）。`nodes` は `GraphSourceReading.nodes` の添字で、直に書いたノードだけ。
  * 入れ子は2階層まで。`inner` は直に入れた囲みの `GraphSourceReading.groups` の添字（内側が先に閉じるので外側より小さい）。
  */
 export type GraphSourceGroup = {
@@ -69,7 +69,7 @@ const ARROW_OR_DASHED = /(-\.>|->|<-)/
 
 const RETURN_ARROW = "<-"
 
-/** `-` や `=>` だけの語。矢印を書き損じた行を節点の宣言と読まないために弾く。 */
+/** `-` や `=>` だけの語。矢印を書き損じた行をノードの宣言と読まないために弾く。 */
 const STRAY_ARROW = /(?:^|\s)(?:-+>?|=+>|→)(?:\s|$)/
 
 type ParsedName = {
@@ -242,7 +242,7 @@ export function readGraphSource(source: string): GraphSourceReading {
         }
         const [left, right] = line.names.map(indexOf)
         if (left !== undefined && right !== undefined) {
-          // `A <- B` は B から A へ戻る辺。節点の並びは書いた順のまま、辺の向きだけを B → A にする。
+          // `A <- B` は B から A へ戻るエッジ。ノードの並びは書いた順のまま、エッジの向きだけを B → A にする。
           edges.push({
             from: line.returns ? right : left,
             to: line.returns ? left : right,
@@ -336,7 +336,7 @@ function parseLine(text: string): ParsedLine {
   const colon = right.indexOf(":")
   const target = colon < 0 ? right : right.slice(0, colon)
   const label = colon < 0 ? "" : right.slice(colon + 1).trim()
-  // 説明の `|` は節点だけの行のもの。辺の端の名前には書けない（ラベルの `|` は文字として通す）。
+  // 説明の `|` はノードだけの行のもの。エッジの端の名前には書けない（ラベルの `|` は文字として通す）。
   const from = left.includes("|") ? undefined : parseName(left)
   const to = target.includes("|") ? undefined : parseName(target)
   if (from === undefined || to === undefined) {

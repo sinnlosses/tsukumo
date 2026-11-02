@@ -27,7 +27,7 @@ export function reportDrawsAnything(body: MainViewReportBody): boolean {
   )
 }
 
-/** 見出しのある節の欄の ID と見出しの字。見出しの無い節と、`report` ツールの外の本文は数えない。 */
+/** 見出しのある節の欄の ID と見出しの字。見出しの無いセクションと、`report` ツールの外の本文は数えない。 */
 export function reportHeadedSections(
   body: MainViewReportBody,
 ): readonly { readonly id: number; readonly heading: string }[] {

@@ -4,7 +4,7 @@ import { expectReadable } from "./readability-scan.ts"
 import { expect, test } from "./room-fixture.ts"
 import { LONG_TOOL_OCCURRENCE, phaseStates, stripOf } from "./work-strip-probe.ts"
 
-// 進み具合の帯（docs/architecture/testing.md「E2E のシナリオの一覧」）。
+// 進み具合のプログレスバー（docs/architecture/testing.md「E2E のシナリオの一覧」）。
 // 場面 `work-strip-running` は1つ目の手順のあと間を空け、4つ目の手順（長い Bash）が十数秒走るので、そこで撮る。
 // `work-strip-ask`・`work-strip-question` は答え待ちが届いたまま 20 秒止まる。
 // `work-strip-long-report-quick` は `turn-finished` まで流す。

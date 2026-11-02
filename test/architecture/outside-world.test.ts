@@ -12,9 +12,9 @@ import { importSpecifiers, listSourceFiles, parseSourceProgram, SRC_ROOT } from 
 // `node:child_process` を起こすのはホスト（orca）・ビルド（vite build）・`git` を起こす1つの口
 // （`main` の上のタスク一覧・成果の集計・git 管理下のファイルの列挙のどれもがここを使う）・
 // `bd` を起こす1つの口（Beads 方式のタスク一覧と成果の集計）・別のチェックアウトの
-// `bin/tsukumo` へ委ねる口・取り込んだワークフローの `bin/tw` の hook のサブコマンド（`ask-guard`・`lap-hook`）を起こす口・
-// ワークフローの設定コマンド（`tw config`）を起こす口・着手中のタスクを読む `tw status --claims` を起こす口・
-// Bash の出力を縮める `rtk rewrite` を起こす口の9つの境界に閉じ込める（docs/architecture/overview-and-layer.md「1ファイル = 1つの境界」）。
+// `bin/tsukumo` へ委ねる口・取り込んだワークフローの `bin/tw` の hook のサブコマンド（`ask-guard`・`lap-hook`）を起こす関数・
+// ワークフローの設定コマンド（`tw config`）を起こす関数・着手中のタスクを読む `tw status --claims` を起こす関数・
+// Bash の出力を縮める `rtk rewrite` を起こす関数の9つの境界に閉じ込める（docs/architecture/overview-and-layer.md「1ファイル = 1つの境界」）。
 // そのうち `orca` コマンドを起こすのは orca-host.ts だけ、`open` コマンドを起こすのは browser-host.ts だけ。
 // `execFile("orca", …)` のような呼び出しは必ずコマンド名の文字列リテラル "orca" を伴うので、その字面で探す。
 // ファイル名やバッククォートで囲んだ日本語の説明文はクォートされた文字列リテラルではないので拾わない。
@@ -63,7 +63,7 @@ const UNAPPROVED_EXISTING_COMMANDS = ["lsof", "ps"] as const
 
 /**
  * 第1引数が文字列リテラルにも同じファイルの最上位 `const` にも解けない呼び出しがあるファイルと、
- * その呼び出しが実際に起こすコマンド（包み関数の先まで追った実体）。
+ * その呼び出しが実際に起こすコマンド（ラッパー関数の先まで追った実体）。
  */
 const DYNAMIC_COMMAND_SITES = [
   {
@@ -94,7 +94,7 @@ const DYNAMIC_COMMAND_SITES = [
   },
 ] satisfies readonly { file: string; commands: readonly string[]; reason: string }[]
 
-/** 第1引数にコマンド名を取る自前の包み関数。呼び出しの第1引数を `execFile` と同じに照らす。 */
+/** 第1引数にコマンド名を取る自前のラッパー関数。呼び出しの第1引数を `execFile` と同じに照らす。 */
 const SPAWN_WRAPPERS = [{ file: "scripts/shared/port-listener.ts", name: "run" }] as const
 
 const SPAWN_FUNCTIONS = new Set([

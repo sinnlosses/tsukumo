@@ -77,7 +77,7 @@ export async function readContextUsage(
  * 読めない形のときは「取れない」（届く形が変わっても画面は札を1枚落とすだけで、他は動き続ける）。
  *
  * `skills` は1件ずつの並びではなく、まとめの中の `skillFrontmatter` に入っているので、そこから取り出して他の2つと同じ形に揃える。
- * `rawMaxTokens` のほうを窓の大きさに使うのは、使用量を測る相手がそれだと SDK の型の説明にあるため。
+ * `rawMaxTokens` のほうをコンテキストウィンドウの大きさに使うのは、使用量を測る相手がそれだと SDK の型の説明にあるため。
  */
 function toContextUsage(value: unknown): ContextUsageReport {
   const parsed = sdkContextUsageSchema.safeParse(value)

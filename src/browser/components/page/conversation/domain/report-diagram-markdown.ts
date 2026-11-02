@@ -1,4 +1,4 @@
-// 図の塊（`chart`・`svg`・`mermaid`）の本体の値を組む。Chart.js の設定・SVG の図形の並び・時系列の図の通し番号を持つ（`graph` は `graphSource`）。
+// 図の部品（`chart`・`svg`・`mermaid`）の本体の値を組む。Chart.js の設定・SVG の図形の並び・時系列の図の通し番号を持つ（`graph` は `graphSource`）。
 
 import type { ReportBlock } from "../../../../../shared/report/report-block.ts"
 

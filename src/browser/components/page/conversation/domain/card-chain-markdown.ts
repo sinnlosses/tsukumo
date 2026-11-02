@@ -1,4 +1,4 @@
-// 5 節点以下の一本道の `graph` を、mermaid ではなくカードの連鎖（HTML）で組む。
+// 5 ノード以下の一本道の `graph` を、mermaid ではなくカードの連鎖（HTML）で組む。
 
 import {
   readGraphSource,
@@ -83,7 +83,7 @@ export function cardChainHtml(chain: readonly CardChainItem[]): string {
 }
 
 /**
- * 一本道（分岐・合流・囲み・点線が無く、辺が節点数 − 1 本）で節点が 2〜5 のとき、始点から辿った節点の添字の並び。
+ * 一本道（分岐・合流・囲み・点線が無く、エッジがノード数 − 1 本）でノードが 2〜5 のとき、始点から辿ったノードの添字の並び。
  * 当たらなければ `undefined`。
  */
 function cardChainOrder(reading: GraphSourceReading): readonly number[] | undefined {

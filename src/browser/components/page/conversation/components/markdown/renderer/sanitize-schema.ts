@@ -27,13 +27,13 @@ import {
 /**
  * 通してよい要素（46個）。ここに無い要素は、中身のテキストだけを残してタグが落ちる。
  *
- * `img` は通すが、`src` は tsukumo のサーバが棚から配る `/report-image/` だけを通す（外部の URL・`data:`・ほかのパスは属性ごと落ちる）。
+ * `img` は通すが、`src` は tsukumo のサーバが置き場から配る `/report-image/` だけを通す（外部の URL・`data:`・ほかのパスは属性ごと落ちる）。
  *
  * 操作できる要素は1つも無い（`input` / `button` / `meter` / `progress`）。
  * レポートは読む面で、押せるように見えて何も起きないものを混ぜない。
  * チェックリスト（`- [ ]`）の `<input type="checkbox">` は、ここへ来る前に `rehypeTaskCheck` が静的な印の `<span>` に畳む。
  *
- * `aside` は tsukumo が余白の柱の傍注（`gutter-note`）に使い、見た目はその class にだけ当てる。
+ * `aside` は tsukumo が欄外注の列の欄外注（`gutter-note`）に使い、見た目はその class にだけ当てる。
  * `section` / `sup` は Markdown の脚注が作る。
  *
  * `h2` / `h3` は記法が勧める見出し（`##` / `###`）が hast に変換されたときのタグ名（`h1` は、記法が「レポートの見出しに `#` は使わない」と決めているため通さない）。

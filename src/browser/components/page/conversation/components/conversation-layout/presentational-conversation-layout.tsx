@@ -7,7 +7,7 @@
 //
 // 狭い画面では縦の1列に積み、サイドバーと仕切りを出さない。
 // 何を隠すかは CSS の `@media` が決めるので、ここは幅を測らない。
-// 中くらいの窓幅ではサイドバーを柱に畳む。柱を出すか・サイドバーを重ねるかも CSS が決め、ここは開閉の印（`data-sidebar-open`）を立てるだけ。
+// 中くらいのビューポート幅ではサイドバーを柱に畳む。柱を出すか・サイドバーを重ねるかも CSS が決め、ここは開閉の印（`data-sidebar-open`）を立てるだけ。
 
 import clsx from "clsx"
 import { PanelRightClose, PanelRightOpen, RotateCw } from "lucide-react"
@@ -24,11 +24,11 @@ type PresentationalConversationLayoutProps = UseConversationLayoutResult & {
   readonly sidebar: ReactNode
   readonly character: ReactNode
   readonly dispatch: ReactNode
-  /** 狭い画面で顔と吹き出しと入力欄のあいだに固定する、答え待ちの札。 */
+  /** 狭い画面で顔と吹き出しと入力欄のあいだに固定する、答え待ちのカード。 */
   readonly inquiry: ReactNode
-  /** 中くらいの窓幅の柱の、開く口の中に置くもの。 */
+  /** 中くらいのビューポート幅の柱の、開くボタンの中に置くもの。 */
   readonly railBadge: ReactNode
-  /** 中くらいの窓幅の柱の、開く口の下に並べるもの。 */
+  /** 中くらいのビューポート幅の柱の、開くボタンの下に並べるもの。 */
   readonly railTools: ReactNode
   /** キャラビューの領域を畳み、下段を入力欄だけにするか。立ち絵が上段へ移ったとき（雑談モード）に使う。 */
   readonly collapseCharacter: boolean

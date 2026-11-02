@@ -1,4 +1,4 @@
-// 失敗の塊に出す理由の語と、押せる次の手を決める。
+// 失敗の表示に出す理由の語と、押せる次の手を決める。
 
 import type { RateLimit } from "../../../../../../../shared/session-driver/rate-limit.ts"
 import type { TurnFailure } from "../../../../../../../shared/session-driver/turn-failure.ts"
@@ -20,7 +20,7 @@ type TurnFailureRetry =
       readonly request: string
     }
 
-/** 進み具合の帯の手順の一覧で、失敗した手順を開く口。 */
+/** 進み具合のプログレスバーの手順の一覧で、失敗した手順を開くボタン。 */
 type TurnFailureStepsDoor =
   | { readonly kind: "none" }
   | { readonly kind: "shown"; readonly label: string }

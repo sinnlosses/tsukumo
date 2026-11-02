@@ -94,8 +94,8 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
 
   /**
    * 状態を差し替える。
-   * 記録から消えた依頼の原寸とレポートの画像は、ここで棚から捨てる（窓から落ちた・起こし直して空に戻った）。
-   * 状態を書き換えるのはここだけにして、棚の寿命が記録の窓から外れないようにする。
+   * 記録から消えた依頼の原寸とレポートの画像は、ここで置き場から捨てる（集計期間から落ちた・起こし直して空に戻った）。
+   * 状態を書き換えるのはここだけにして、置き場の寿命が記録の集計期間から外れないようにする。
    */
   const replaceState = (next: SessionState): void => {
     if (next.records !== state.records) {

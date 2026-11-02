@@ -10,7 +10,7 @@ import { useSelectionAsk } from "./hooks/use-selection-ask.ts"
 import styles from "./main-view.module.css"
 
 const ASK_LABEL = "引いて聞く"
-/** 口の幅と高さのおおよそ（窓の端へ収めるための余白）。 */
+/** 口の幅と高さのおおよそ（ビューポートの端へ収めるための余白）。 */
 const ASK_WIDTH_PX = 88
 const ASK_HEIGHT_PX = 14
 const ASK_GAP_PX = 0

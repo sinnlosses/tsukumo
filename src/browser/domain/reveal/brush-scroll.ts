@@ -25,7 +25,7 @@ const KEEP_MARGIN_PX = 96
  * ミニ立ち絵が立つ位置の縦の範囲。`brushScroller` に渡した基準の要素の左上が原点。
  *
  * `tipBottom` は帯の下端（ミニ立ち絵の足元）、`tipHeight` はそこから立ち絵の高さぶん上までの見積もりで、呼ぶ側が固定値で渡す。
- * 実際の高さは窓幅で 60〜96px に変わるが（`turn-card/mini-portrait.css` の `--mini-portrait-height`）、ここで DOM を測ると、立ち絵が出ない状況（素材が無い・印が見つからない）の分岐まで持ち込むことになる。
+ * 実際の高さはビューポート幅で 60〜96px に変わるが（`turn-card/mini-portrait.css` の `--mini-portrait-height`）、ここで DOM を測ると、立ち絵が出ない状況（素材が無い・印が見つからない）の分岐まで持ち込むことになる。
  */
 type BrushTipRange = {
   readonly tipBottom: number
@@ -114,7 +114,7 @@ export function brushScroller(root: Element, base: Element): BrushScroller {
 /** 器の中身の座標での基準の上端と、器の見える高さ。 */
 type ScrollerPlace = {
   readonly baseTop: number
-  /** 自動送りで転がしてよい上限。根の上端（結論）から余白ぶん手前で、これを超えて送ると結論が画面の上へ出る。 */
+  /** 自動送りでスクロールしてよい上限。根の上端（結論）から余白ぶん手前で、これを超えて送ると結論が画面の上へ出る。 */
   readonly headScrollTop: number
   readonly viewHeight: number
 }

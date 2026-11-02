@@ -79,7 +79,7 @@
   padding: 0 var(--space-md);
   border-radius: var(--radius-pill);
 }
-/* 窓が狭いと入力欄の幅が道具の列・区切り・札・送信を1段に並べるには足りないので、「新規」の字を隠して絵だけにする（`title` と `aria-label` は残る）。 */
+/* ビューポートが狭いと入力欄の幅が道具の列・区切り・札・送信を1段に並べるには足りないので、「新規」の字を隠して絵だけにする（`title` と `aria-label` は残る）。 */
 @media (max-width: 1000px) {
   .dispatch-new-session-label {
     display: none;

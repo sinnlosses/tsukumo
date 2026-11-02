@@ -1,4 +1,4 @@
-/* 狭い画面の答え待ちの札。高さの上限を超えたら問いと等幅の札の側が転がり、答えのボタンは下端に残す。 */
+/* 狭い画面の答え待ちのカード。高さの上限を超えたら問いと等幅のバッジの側が転がり、答えのボタンは下端に残す。 */
 .pending-ask-card {
   display: flex;
   flex-direction: column;
@@ -76,7 +76,7 @@
   padding: 0;
   list-style: none;
 }
-/* 入力欄にフォーカスがあるあいだ（ソフトウェアキーボードで窓が低い）は、並びを1行に畳む。 */
+/* 入力欄にフォーカスがあるあいだ（ソフトウェアキーボードでビューポートが低い）は、並びを1行に畳む。 */
 @media (max-width: 760px) {
   body:has([data-region="dispatch"] textarea:focus) .pending-ask-card-chips {
     flex-wrap: nowrap;

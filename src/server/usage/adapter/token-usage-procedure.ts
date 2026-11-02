@@ -9,7 +9,7 @@ import type {
   TokenUsageSummary,
 } from "../../../shared/usage/token-usage-summary.ts"
 
-/** この機能の手続きが使う口（中身は配線が渡す）。 */
+/** この機能の手続きが使う関数（中身は配線が渡す）。 */
 export type TokenUsageProcedurePorts = {
   /** 今日を含む直近 `days` 日の集計。読めない・記録が無いときは空の集計を返す。 */
   readonly readTokenUsageSummary: (days: TokenUsageDays) => TokenUsageSummary

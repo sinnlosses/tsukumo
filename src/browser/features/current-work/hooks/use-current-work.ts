@@ -82,7 +82,7 @@ export type CurrentWorkPlanPhase = {
 }
 
 /**
- * 一覧の頭の段の群1つ（前・本・後）。`name` は「前」「本」「後」で、範囲が無い依頼の並び全体の群は空の文字列。
+ * 一覧の頭のフェーズのグループ1つ（前・本・後）。`name` は「前」「本」「後」で、範囲が無い依頼の並び全体の群は空の文字列。
  * `current` は今の段がその群にあるか。
  */
 export type CurrentWorkPlanSpan = {
@@ -173,7 +173,7 @@ type CurrentWorkStepList =
 
 /**
  * 一覧の見出しの下に出す、答えの場所への口。
- * 答え待ち（許可要求・質問）のときだけ「お伺いへ」を出し、押すとメインビューのお伺いの札へ連れていく。
+ * 答え待ち（許可要求・質問）のときだけ「お伺いへ」を出し、押すとメインビューのお伺いのカードへ連れていく。
  */
 type CurrentWorkPendingHint =
   | { readonly kind: "none" }
@@ -203,7 +203,7 @@ export type CurrentWork = {
   /** 一覧を閉じる(フォーカスは動かさない)。 */
   readonly onClose: () => void
   /**
-   * 開く口の `<button>` を預ける口（Esc で閉じたときのフォーカスの戻り先）。
+   * 開くボタンの `<button>` を預ける口（Esc で閉じたときのフォーカスの戻り先）。
    * 付いている口を全部集め、Esc のときは全部へ `.focus()` を呼ぶ（見えていない口は `display: none` で効かない）。
    */
   readonly toggleRef: RefCallback<HTMLButtonElement>
@@ -234,7 +234,7 @@ export function useCurrentWork(boundaryRef: RefObject<HTMLElement | null>): Curr
     setExpanded((wasExpanded) => !wasExpanded)
   }
 
-  // お伺いへ。一覧を閉じ、ほかの画面を見ていれば会話の画面へ戻し、過去のやり取りを見ていれば最新へ戻してから、メインビューのお伺いの札までスクロールさせる。
+  // お伺いへ。一覧を閉じ、ほかの画面を見ていれば会話の画面へ戻し、過去のやり取りを見ていれば最新へ戻してから、メインビューのお伺いのカードまでスクロールさせる。
   function onGoToInquiry(): void {
     close()
     if (screen !== "conversation") {

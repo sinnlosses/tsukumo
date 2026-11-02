@@ -89,7 +89,7 @@ export function createRecordingPorts(
   const remembered: SessionDefault[] = []
   const forgottenLines: string[] = []
   const openedFiles: string[] = []
-  /** 別の窓が占有ファイルに書いていることにするセッションのID。 */
+  /** 別のウィンドウが占有ファイルに書いていることにするセッションのID。 */
   const occupiedElsewhere = new Set<string>()
   const reserved: string[] = []
   let withdrawCount = 0

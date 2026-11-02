@@ -1,4 +1,4 @@
-/* お伺いの札。
+/* お伺いのカード。
    `.inquiry-option .detail-block` の打ち消しは、`.detail-block` 自体の見た目（report-notation.module.css）とは別ファイルなので、`InquiryOption` がその両方の class を同じ要素に重ねて付ける。
 
    答えると消える一時的な塊なので、地も枠も答え待ちの色（--state-warn）の系統にして、いま答えるものだと分かるようにする。
@@ -176,7 +176,7 @@
 .inquiry-option:focus-within:not(.is-selected) {
   border-color: var(--ink-quiet);
 }
-/* 押す口（番号・印・ラベル・バッジ）。ラベルが折り返すので、印は行の中央ではなく1行目の文字に揃える（baseline）。 */
+/* ボタン（番号・印・ラベル・バッジ）。ラベルが折り返すので、印は行の中央ではなく1行目の文字に揃える（baseline）。 */
 .inquiry-option-choose {
   min-width: 0;
   cursor: pointer;
@@ -205,7 +205,7 @@
   border: 1px solid var(--state-warn);
   border-radius: var(--radius-sm);
 }
-/* 詳細の面の preview と図の Markdown。レポートと同じ語彙（`.detail-block`）に乗せ、余白の打ち消しだけここに置く。 */
+/* 詳細のサーフェスの preview と図の Markdown。レポートと同じ語彙（`.detail-block`）に乗せ、余白の打ち消しだけここに置く。 */
 .inquiry-detail .detail-block,
 .inquiry-compare .detail-block {
   margin-top: var(--space-sm);
@@ -239,7 +239,7 @@
   padding: var(--space-sm) var(--space-xl);
   border-radius: var(--radius-md);
 }
-/* 押せる口に添える Enter の字。 */
+/* ボタンに添える Enter の字。 */
 .inquiry-key {
   margin-left: var(--space-sm);
   font-family: var(--font-mono);

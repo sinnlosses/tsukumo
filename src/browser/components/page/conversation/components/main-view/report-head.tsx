@@ -1,5 +1,5 @@
 // レポートの結論部の頭（タスクの見出しの行とメタの行）。結論の一文はこの下のレポート本文の先頭にある。
-// 見出しの行はタスクID・作業の名前・終わり方の札、メタの行はラベル・終えた段・変更の札のうちあるものだけを描き、1つも無ければ何も描かない。
+// 見出しの行はタスクID・作業の名前・終わり方の札、メタの行はラベル・終えた段・変更のラベルのうちあるものだけを描き、1つも無ければ何も描かない。
 // 終わり方の `stopped` は描かない。
 
 import clsx from "clsx"
@@ -19,7 +19,7 @@ import { useTaskBoardRequest } from "../../../../../stores/task-board-request.ts
 import { Badge } from "../../../../ui/badge/badge.tsx"
 import styles from "./main-view.module.css"
 
-/** 目録の頭に置く、何のレポートかの語。 */
+/** タスク見出し行の頭に置く、何のレポートかの語。 */
 export type ReportLabel = "none" | "interim" | "final"
 
 type ReportHeadProps = {
@@ -27,7 +27,7 @@ type ReportHeadProps = {
   readonly task: ReportTask
   /** 段のまとめなら、終えた段の見出し。 */
   readonly phase: MainViewPhaseLabel
-  /** 目録の末尾に出す変更の札。 */
+  /** タスク見出し行の末尾に出す変更のラベル。 */
   readonly changeSummary: ReportChangeSummary
   /** 置く側が足す class(狭い画面で隠すなど)。 */
   readonly className: string
@@ -109,7 +109,7 @@ function Outcome(props: { readonly outcome: DrawnOutcome }): ReactElement {
   )
 }
 
-/** 変更の札「変更 n ファイル +a −b」。`−` は U+2212。範囲に別の変更が混ざりうるときは末尾に控えめな注記を添える。 */
+/** 変更のラベル「変更 n ファイル +a −b」。`−` は U+2212。範囲に別の変更が混ざりうるときは末尾に控えめな注記を添える。 */
 function ChangeSummary(props: { readonly summary: ReportChangeCount }): ReactElement {
   const { files, added, removed, mixed } = props.summary
   return (

@@ -1,7 +1,7 @@
 /* 狭い画面（760px 以下）の頭の ≡ と、押すと右から出る引き出し。
    値は見本 `docs/history/mockup/phone-layout-2026-10-09/PHONE-1.dc.html` の2枚目の inline style を `theme.css` のトークンに写したもの。
    覆いは `<Dialog backdrop="veil">` が持つ。
-   名乗りの行の中の顔と選び口の大きさ・位置は `screen-nav.module.css` の @media が持つ。 */
+   名乗りの行の中の顔と選択メニューの大きさ・位置は `screen-nav.module.css` の @media が持つ。 */
 
 @media (max-width: 760px) {
   .nav-drawer-toggle {
@@ -46,7 +46,7 @@
     gap: var(--space-md);
     height: 100%;
   }
-  /* 名乗りの行。選び口を行の真下に重ねる基準。 */
+  /* 名乗りの行。選択メニューを行の真下に重ねる基準。 */
   .nav-drawer-identity {
     position: relative;
     display: flex;

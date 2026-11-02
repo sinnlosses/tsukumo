@@ -103,11 +103,11 @@ export type ReportUsageEntry = ReportVerifyUsage &
     readonly readImageWithoutImageBlock: boolean
     /** `text` の塊の本文・`list` の項目の text・表のセルに出た強調の対の数の合計。インラインコードの中は数えない。 */
     readonly emphasisCount: number
-    /** `graph` の辺の数の合計。 */
+    /** `graph` のエッジの数の合計。 */
     readonly graphEdgeCount: number
-    /** `graph` の辺のうちラベルの無いものの数の合計。 */
+    /** `graph` のエッジのうちラベルの無いものの数の合計。 */
     readonly graphUnlabeledEdgeCount: number
-    /** `graph` の節点数。1レポートに複数あれば最大。 */
+    /** `graph` のノード数。1レポートに複数あれば最大。 */
     readonly graphNodeCount: number
     /** `favor` が空でないか。 */
     readonly hasFavor: boolean

@@ -45,7 +45,7 @@ const COMPONENT_OF_KIND: ReadonlyMap<string, string> = new Map(
 /**
  * 旧い引数を部品の一覧に組み直す。`sections` があればそれを、無ければ `body`（Markdown）を、今の読みで塊にして写す。
  * 節は `Section`、葉は同名の部品、`row` は `Row`、`panel` は `Card` と `Column`（題は先頭の `Paragraph`）、
- * `figure` は `Report.figure` と `figureNone`、振り返りの塊は `Report.retrospective.blocks` に写す。部品の ID は並びの位置から振る。
+ * `figure` は `Report.figure` と `figureNone`、振り返りの部品は `Report.retrospective.blocks` に写す。部品の ID は並びの位置から振る。
  * 失うのは `shapeTag`・`files` の塊・知らない種類で落とした塊・`row`/`panel` の `fold`/`aside`。
  * 節が1つも残らない引数は、`Report.children` を空にできないので undefined。
  */
@@ -135,7 +135,7 @@ export function legacyReportComponents(
 
 type Part = Readonly<Record<string, unknown>> & { readonly id: string }
 
-/** 節の塊 1 つが写る部品。`id` は節の子として参照する部品、`parts` はその部品と、その下に降りる部品。 */
+/** セクションの部品 1 つが写る部品。`id` は節の子として参照する部品、`parts` はその部品と、その下に降りる部品。 */
 type BlockParts = { readonly id: string; readonly parts: readonly Part[] }
 
 function blockParts(id: string, block: LegacyBlock): readonly BlockParts[] {

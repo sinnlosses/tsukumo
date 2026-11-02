@@ -1,4 +1,4 @@
-// `components` から、規約の検査が読む節・図・振り返りの葉を取り出す。
+// `components` から、規約の検査が読む節・図・振り返りの内容部品を取り出す。
 // 葉は `a2uiLeafIds` と同じ平らな並びで、配置の部品（Row・Column・Card・Tabs）の中の葉も外側の節へ並び順に入る。
 
 import { omit } from "remeda"
@@ -26,7 +26,7 @@ export type ReportOutlineLeaf = Extract<
 >
 
 /**
- * `section` は見出しつきの `Section`、`loose` は見出しの無い節（`Section` でない根の子）。
+ * `section` は見出しつきの `Section`、`loose` は見出しの無いセクション（`Section` でない根の子）。
  * `componentId` は節になった根の子の部品の ID。
  */
 export type ReportOutlineSection =
@@ -123,7 +123,7 @@ export function timelinesOfLeaves(leaves: readonly ReportOutlineLeaf[]): readonl
 }
 
 /**
- * 図の申告。図の葉があればその種類、無ければ `figureNone` の理由つきの `none`、
+ * 図の申告。図の内容部品があればその種類、無ければ `figureNone` の理由つきの `none`、
  * どちらも無ければ `unrecorded`。
  */
 export function reportFigureOf(

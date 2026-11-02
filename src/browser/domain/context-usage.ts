@@ -28,7 +28,7 @@ export type ContextUsageRow = {
   readonly name: string
   readonly kind: ContextCategoryKind
   readonly tokens: number
-  /** 窓の大きさに対する割合（%）。横棒の幅になる。 */
+  /** コンテキストウィンドウの大きさに対する割合（%）。横棒の幅になる。 */
   readonly share: number
 }
 
@@ -49,7 +49,7 @@ export type UseContextUsageResult =
       readonly untilCompactTokens: number
       /** 横棒と凡例（中身 → 空き → 自動圧縮バッファの順）。 */
       readonly rows: readonly ContextUsageRow[]
-      /** 窓の外にあるツールの定義（横棒には積まない）。 */
+      /** コンテキストウィンドウの外にあるツールの定義（横棒には積まない）。 */
       readonly deferredRows: readonly ContextUsageRow[]
       readonly mcpTools: readonly ContextUsageItem[]
       readonly memoryFiles: readonly ContextUsageItem[]
@@ -93,7 +93,7 @@ function contextUsageQueryKey(
 
 /**
  * 届いた内訳を描く形へ畳む。
- * 横棒と凡例が同じ並びを見るように、中身・空き・自動圧縮バッファをこの順で1本の並びにする（`deferred` は窓の外なので別の並び）。
+ * 横棒と凡例が同じ並びを見るように、中身・空き・自動圧縮バッファをこの順で1本の並びにする（`deferred` はコンテキストウィンドウの外なので別の並び）。
  */
 function toCard(report: ContextUsageReport, takenAt: number): UseContextUsageResult {
   if (report.kind !== "ready") {
@@ -120,7 +120,7 @@ function toCard(report: ContextUsageReport, takenAt: number): UseContextUsageRes
 }
 
 /**
- * ある種別の分類を、窓に対する割合つきの行にする。
+ * ある種別の分類を、コンテキストウィンドウに対する割合つきの行にする。
  * トークンが0の行は落とす（凡例に意味の無い行が並ばないように）。並びは SDK が返した順のまま。
  */
 function toRows(usage: ContextUsage, kind: ContextCategoryKind): readonly ContextUsageRow[] {

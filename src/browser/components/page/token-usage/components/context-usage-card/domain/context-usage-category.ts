@@ -49,7 +49,7 @@ export function categoryLook(name: string): CategoryLook {
 
 /**
  * 読み込み中の骨組みが凡例に並べる分類の名前。
- * 窓の外（`deferred`）は除く（届く札でも横棒には積まないので、骨組みでも数えない）。
+ * コンテキストウィンドウの外（`deferred`）は除く（届く札でも横棒には積まないので、骨組みでも数えない）。
  * 並びは届く札の並び（`used` → `free` → `buffer`）に合わせる。
  */
 export const SKELETON_ROW_NAMES = [

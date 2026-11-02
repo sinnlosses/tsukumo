@@ -1,4 +1,4 @@
-// 図の塊（質問の添え書きが運ぶ `FigureBlock`）の節の並びから Markdown を組む決まり。
+// 図の部品（質問の添え書きが運ぶ `FigureBlock`）の節の並びから Markdown を組む決まり。
 
 import { zip } from "remeda"
 
@@ -30,7 +30,7 @@ import { listMarkdown } from "./report-list-markdown.ts"
 
 /**
  * 節の並びを1つの Markdown に組む。空の塊・空の節は置かず、節の間は空行で区切る。
- * 題の番号は節をまたいで並びの順に数える。塊の `aside` は傍注になり、その塊と一緒に包む（{@link gutterGroupMarkdown}）。
+ * 題の番号は節をまたいで並びの順に数える。塊の `aside` は欄外注になり、その塊と一緒に包む（{@link gutterGroupMarkdown}）。
  */
 export function reportSectionsMarkdown(
   sections: readonly { readonly heading: string; readonly blocks: readonly FigureBlock[] }[],

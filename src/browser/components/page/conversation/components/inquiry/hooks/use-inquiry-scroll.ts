@@ -1,4 +1,4 @@
-// お伺いの札まで連れてくるフック。
+// お伺いのカードまで連れてくるフック。
 // 合図は2つで、新しい答え待ちが来たとき（`askId` が変わる）と、`useInquiryJump` の合図が変わったとき。
 
 import { useRef, type RefObject } from "react"
@@ -11,7 +11,7 @@ import type { InquiryModel } from "../../../stores/inquiry-answer.ts"
 const FIRST_CHOICE_SELECTOR = "input"
 
 /**
- * お伺いの札に付ける ref。`block: "nearest"` なので、すでに見えている札では動かない。
+ * お伺いのカードに付ける ref。`block: "nearest"` なので、すでに見えている札では動かない。
  *
  * @param inquiry いまの答え待ち。別の答え待ちに変わるたびに連れてくる
  * @param jump `useInquiryJump` の合図。`signal` が付いたときから変わったときだけ連れてくる。

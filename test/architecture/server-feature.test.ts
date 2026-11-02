@@ -113,8 +113,8 @@ function meetsFeatureFloor(feature: ServerFeature, files: readonly string[]): bo
 }
 
 // `server/core/` `server/adapter/` の直下（`lib/` を含む）に置いてよいのは、どの機能にも
-// 属さない共有の箱のファイルだけ（docs/architecture.md「サーバの機能と、機能どうしのエッジ」）。
-// 共有の箱は「どの機能の語彙も名乗らず、読み手が2つ以上ある」ものだけを置く場所なので、
+// 属さない共有モジュールのファイルだけ（docs/architecture.md「サーバの機能と、機能どうしのエッジ」）。
+// 共有モジュールは「どの機能の語彙も名乗らず、読み手が2つ以上ある」ものだけを置く場所なので、
 // 機能を読んではいけない（`.dependency-cruiser.cjs` が見る）し、読み手が
 // 1つの機能だけに絞られたら、その機能の中へ下ろすのが正しい（`browser/domain/` の検査と同じ形）。
 describe("server/ の共有の箱", () => {

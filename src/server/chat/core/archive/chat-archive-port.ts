@@ -5,7 +5,7 @@ import type { Expression } from "../../../../shared/character-pack/expression.ts
 import type { ChatFoldPoint } from "../memory/chat-memory.ts"
 
 /**
- * 雑談と仕事の会話のアーカイブの読み書き口。
+ * 雑談と仕事の会話のアーカイブの読み書きの関数。
  * 会話の文面を読み戻す口は {@link ChatArchive.readRecent}・{@link ChatArchive.unconsolidated} の2つに限る。
  * 読み戻しの口を足すにはユーザーの決定が要る（`docs/coding-standards.md`「会話内容の扱い」）。
  */
@@ -36,7 +36,7 @@ export type ChatArchive = {
   ) => readonly ChatArchiveRecentEntry[]
   /**
    * 定着の入力の行を、古いほうから {@link ChatUnconsolidatedLimits.maxBytes} まで返す。
-   * {@link ChatUnconsolidatedLimits.recentBytes} の窓の外にあり、`after` より後の行だけを対象にする（`none` ならアーカイブの最初から）。
+   * {@link ChatUnconsolidatedLimits.recentBytes} の範囲の外にあり、`after` より後の行だけを対象にする（`none` ならアーカイブの最初から）。
    * 行番号はここでは振らない（振るのは渡す側）。
    * 契機（`consolidateEveryBytes`）に届いたかは、呼び出し側が {@link ChatUnconsolidatedBatch.usedBytes} で比べる。
    */
@@ -56,7 +56,7 @@ export type ChatArchive = {
  * {@link ChatArchive.unconsolidated} に渡す上限（どちらも文面の UTF-8 バイト数）。
  */
 export type ChatUnconsolidatedLimits = {
-  /** 作業記憶の窓（この量より新しい行は「窓の中」として除く）。 */
+  /** 作業記憶の範囲（この量より新しい行は「範囲の中」として除く）。 */
   readonly recentBytes: number
   /** ここまで読む上限。 */
   readonly maxBytes: number
@@ -109,7 +109,7 @@ export type ChatArchiveLineOrigin =
  * 雑談は `CHAT_MEMORY_BUDGET.recentBytes`、仕事は `workRecentBytes`）。
  */
 export type ChatReadbackLimits = {
-  /** 直近の窓（古い順に落ちる側）。 */
+  /** 直近の範囲（古い順に落ちる側）。 */
   readonly recentBytes: number
 }
 

@@ -13,8 +13,8 @@ export const CHART_SELECTOR = `${MAIN_REGION_SELECTOR} canvas`
  * （`docs/architecture/testing.md`「手で確かめること」）。
  */
 export const NOTE_KINDS_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-note_"]`
-/** お願いの塊（レポートの末尾）。 */
-/** メモの塊。狭い窓では種別の並びの1枚（`notation-note`）に入りきらない。 */
+/** お願いの部品（レポートの末尾）。 */
+/** メモの部品。狭いビューポートでは種別の並びの1枚（`notation-note`）に入りきらない。 */
 export const NOTE_MEMO_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-note-memo_"]`
 export const NOTE_FAVOR_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-note-favor_"]`
 /** 番号つきの題を持つ図と表の包み。 */
@@ -23,7 +23,7 @@ export const CAPTIONED_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-capti
 export const CAPTIONED_MERMAID_SELECTOR = `${CAPTIONED_SELECTOR} pre.mermaid`
 export const CAPTIONED_FIGURE_SELECTOR = `${CAPTIONED_MERMAID_SELECTOR} svg`
 export const IMAGE_NOTES_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-image-notes_"]`
-/** 前後の塊（`report-before-after` 場面の先頭は画像の前後）と、その中の最初のコード・箇条。 */
+/** 前後の部品（`report-before-after` 場面の先頭は画像の前後）と、その中の最初のコード・箇条。 */
 export const BEFORE_AFTER_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-before-after_"]`
 export const BEFORE_AFTER_CODE_SELECTOR = `${BEFORE_AFTER_SELECTOR} pre`
 export const BEFORE_AFTER_POINTS_SELECTOR = `${BEFORE_AFTER_SELECTOR} ul`
@@ -43,7 +43,7 @@ export const FLOW_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-flow_"]`
 export const CHECKS_SELECTOR = `${MAIN_REGION_SELECTOR} [role="table"][aria-label^="検証結果"]`
 /** ファイル名の帯つきの diff の塊。帯と `pre` を包む器を指す。 */
 export const DIFF_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="code-file_"]`
-/** 結論のすぐ下の合図の行（`mainViewTurns` が組む。総括行・問題の項目・通った項目の畳みを含む検証結果の塊）。 */
+/** 結論のすぐ下の合図の行（`mainViewTurns` が組む。総括行・問題の項目・通った項目の畳みを含む検証結果の部品）。 */
 export const VERDICT_SELECTOR = `${MAIN_REGION_SELECTOR} [role="group"][aria-label="検証結果"]`
 
 /** 最終レポートのある閉じたやり取りの経過の畳み（`<details>`）の `<summary>`。 */
@@ -59,15 +59,15 @@ export const DIARY_BODY_SELECTOR = '[class*="diary-book-body_"]'
 export const COMPOSER_SELECTOR = "textarea"
 
 /**
- * 狭い窓でだけ出る引き出しを開く口と、その中のタスクのタブ。タスク一覧を開く口もある。
- * 広い窓では引き出しの口もタブも出ない。
+ * 狭いビューポートでだけ出る引き出しを開くボタンと、その中のタスクのタブ。タスク一覧を開くボタンもある。
+ * 広いビューポートでは引き出しの口もタブも出ない。
  */
 export const DRAWER_TOGGLE_SELECTOR = '[aria-label="やり取りとタスクを開く"]'
 export const DRAWER_TASKS_TAB_SELECTOR = '[role="tab"]:has-text("タスク")'
 export const TASK_BOARD_SELECTOR = 'button:has-text("一覧を見る")'
 
 /**
- * 帯の「いまの作業」の外枠（`data-work-state` を持つ div）の中の押す口（`CurrentWorkPill`）。
+ * 帯の「いまの作業」の外枠（`data-work-state` を持つ div）の中のボタン（`CurrentWorkPill`）。
  * 見えているものだけを `:visible` で絞る。狭い画面には帯の札が無いので、この手は空振りする
  * （`applyPreparations` の `continue` が当たらなかった手を飛ばす）。
  */

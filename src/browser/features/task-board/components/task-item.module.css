@@ -26,7 +26,7 @@
 .task-item-row[aria-expanded="true"] > :last-child {
   color: var(--accent);
 }
-/* 窓を開いている行。色だけで伝えないよう、細い枠も添える。 */
+/* プレビューを開いている行。色だけで伝えないよう、細い枠も添える。 */
 .task-item-row[aria-expanded="true"] {
   background: var(--surface-accent);
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--rule), var(--accent) 45%);

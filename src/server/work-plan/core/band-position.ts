@@ -1,4 +1,4 @@
-// 進み具合の帯の現在位置を、モデルに返す1文にする。
+// 進み具合のプログレスバーの現在位置を、モデルに返す1文にする。
 // 帯・札・一覧と同じ `currentPhaseOf` の結果を言い、帯の段の数え方を別に持たない。
 
 import { phaseLabel } from "../../../shared/session/work-plan-phase-number.ts"
@@ -33,7 +33,7 @@ export function bandPositionText(plan: LatestWorkPlan): string {
 const RANGE_LINE_PATTERN = /^委譲先の(?:フェーズ|段)の範囲: first=(\d+) count=(\d+)$/mu
 
 /**
- * 受け付けた `work_plan` の答えに添える、tsukumo が確定した委譲先の段の範囲の1行。
+ * 受け付けた `work_plan` の答えに添える、tsukumo が確定した委譲先のフェーズの範囲の1行。
  * transcript から組み直すとき、`phase_result` の `count` の代わりにここから範囲を読む（{@link delegatedRangeFromAnswer}）。
  */
 export function delegatedRangeLine(range: DelegatedRange): string {

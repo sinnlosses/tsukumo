@@ -113,7 +113,7 @@ export type ChatConsolidationWriterPorts = {
   readonly archive: Pick<ChatArchive, "unconsolidated" | "appendedBytes">
   /** そのパックの定着の錠を取る（鍵はパック名）。 */
   readonly lockConsolidation: QueryLockPort<CharacterPackName>
-  /** パック1つぶんのあらすじの読み書き口（書くのは起こした時点のパックのファイル）。 */
+  /** パック1つぶんのあらすじの読み書きの関数（書くのは起こした時点のパックのファイル）。 */
   readonly chatSummary: (packName: CharacterPackName) => ChatSummary
   /** 使い捨ての `query()`。返すのは `structured_output` のまま（検査はここでする）。 */
   readonly query: (request: StructuredQuery, signal: AbortSignal) => Promise<unknown>

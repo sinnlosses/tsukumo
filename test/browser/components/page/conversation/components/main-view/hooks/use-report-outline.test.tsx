@@ -208,7 +208,7 @@ describe("useReportOutline（押した見出しの固定）", () => {
     stubRect(heading2, 999)
     fireEvent.click(row(2))
 
-    // 利用者が自分で転がして、固定していた見出しの位置が動いた場面を模す。
+    // 利用者が自分でスクロールして、固定していた見出しの位置が動いた場面を模す。
     stubRect(heading2, 500)
     fireEvent.scroll(document)
     await nextFrame()

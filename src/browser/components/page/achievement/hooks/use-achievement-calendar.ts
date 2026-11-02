@@ -1,7 +1,7 @@
 // 灯りの暦の取得。
 // 手続き `achievement.calendar` は常に「今日を含む直近5週」を配るので、見ている日とは独立に1回だけ取りに行く。
 //
-// 取り直す契機は、開いたとき・窓にフォーカスが戻ったとき（`staleTime: 0` と React Query の既定の `refetchOnWindowFocus`）・60秒ごと（常に今日が範囲に入るので無条件）・日記が書き上がったとき（`useAchievement` が無効化する）。
+// 取り直す契機は、開いたとき・ウィンドウにフォーカスが戻ったとき（`staleTime: 0` と React Query の既定の `refetchOnWindowFocus`）・60秒ごと（常に今日が範囲に入るので無条件）・日記が書き上がったとき（`useAchievement` が無効化する）。
 
 import { useQuery } from "@tanstack/react-query"
 

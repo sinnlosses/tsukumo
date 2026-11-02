@@ -32,7 +32,7 @@ export type MainViewEntry =
   /**
    * キャラクターからの質問（AskUserQuestion）と、それに対する答え。`answers[i]` は
    * `questions[i]` に対して選んだ答えの並び（{@link QuestionAnswer}。選ばなかった質問は空）。
-   * `toolUseId` は preview の画像の棚を引く鍵。
+   * `toolUseId` は preview の画像の置き場を引く鍵。
    */
   | {
       readonly kind: "question"
@@ -50,9 +50,9 @@ export type MainViewEntry =
   /**
    * `report` ツールで受け取ったレポート。引数はここで欄に組んである（`reportRegionsOf`）。
    * `detail` と分けてあるのは、このレポートがあるやり取りでは本文（`detail`）を出さないため（`selectToolReports`）。
-   * `task` は本文に組まず、描く側が目録の1行と見出しに出す。
+   * `task` は本文に組まず、描く側がタスク見出し行と見出しに出す。
    * `conclusion` は組む前の結論で、畳んだときの先頭行に使う（`groupIntoSteps`）。
-   * `changeSummary` は記録の変更の札をそのまま通したもの。
+   * `changeSummary` は記録の変更のラベルをそのまま通したもの。
    * `toolUseId` は `report` ツールの呼び出しの ID。
    */
   | {
@@ -98,13 +98,13 @@ export type MainViewReportRegions = {
 
 /**
  * 部品の一覧で描く本文の値。`none` は根の `Report` が無い記録で、節は無く、頭とお願いだけを持つ（描くのは頭とお願いだけ）。
- * `sections` は根の子の部品の ID から、その子が写った節の欄の ID と見出しの行（`## …`。見出しの無い節は空文字）。整形で塊の残らない子は持たない。
- * `markdownLeaves` は `Markdown` の葉の部品の ID から、その葉の Markdown（傍注と畳みを包んだもの。整形で落ちた葉は空文字）。
+ * `sections` は根の子の部品の ID から、その子が写った節の欄の ID と見出しの行（`## …`。見出しの無いセクションは空文字）。整形で塊の残らない子は持たない。
+ * `markdownLeaves` は `Markdown` の内容部品の ID から、その葉の Markdown（欄外注と畳みを包んだもの。整形で落ちた葉は空文字）。
  * 書き手の生 HTML を通す葉だけが文字列で描かれ、ほかの葉は持たない。
- * `leafValues` は葉の部品の ID から、その葉の図表番号・表の札の色・寄せられた傍注（{@link LeafValue}）。
- * 節の葉に加えて `Report.figure` の葉と振り返りの葉も持ち、整形で落ちた葉は持たない。
+ * `leafValues` は内容部品の ID から、その葉の図表番号・表の札の色・寄せられた欄外注（{@link LeafValue}）。
+ * 節の葉に加えて `Report.figure` の葉と振り返りの内容部品も持ち、整形で落ちた葉は持たない。
  * `figure` と `retrospective` は、部品の木に節の入れ物が無い図と振り返りの欄（{@link MainViewSurfaceLeafRegion}）。欄が無ければ `none`。
- * `imageSource` は画像の葉が `src` を作る取り出し元（棚に置いていない本文は `none`）。
+ * `imageSource` は画像の葉が `src` を作る取り出し元（置き場に置いていない本文は `none`）。
  * `favor` はお願いの本文（無ければ空文字）と、合図の行の印が飛ぶ先の `id`。
  */
 export type MainViewA2uiReport =
@@ -173,7 +173,7 @@ export type MainViewSurfaceEntry =
 
 /**
  * 節の欄。`id` は整形して図を先頭に足したあとの節の並びの位置。
- * `heading` は節の `heading` の字そのもの（前後の空白を除く。見出しの無い節は空文字）。
+ * `heading` は節の `heading` の字そのもの（前後の空白を除く。見出しの無いセクションは空文字）。
  */
 export type MainViewReportSection = {
   readonly id: number
@@ -256,10 +256,10 @@ export type MainViewPhaseLabel =
 /**
  * ステップの本文。本文が無い（レポートより前に起きたことをまとめたステップか、出さないと決めた本文）なら `none`。
  * `firstLine` は畳んだときの `<summary>` に出す1行で、段のまとめなら終えた段の見出し、`report` なら結論（空なら作業の名前）、どちらも無ければ本文の先頭行（`extractFirstLine`）。
- * `task` は目録の1行と見出しに出すタスクで、`report` ツールの外の本文では常に `none`。
- * `finishedPhase` は目録の1行に添える終えた段の見出しで、段のまとめだけが持つ。
+ * `task` はタスク見出し行と見出しに出すタスクで、`report` ツールの外の本文では常に `none`。
+ * `finishedPhase` はタスク見出し行に添える終えた段の見出しで、段のまとめだけが持つ。
  * `report` は最終レポートの印が立つと、頭を最終のときの頭に替える（`markFinalReport`）。
- * `changeSummary` は目録の末尾に出す変更の札。`task` のある最終レポートだけが数を持ち、ほかは `none`（`markFinalReport`）。
+ * `changeSummary` はタスク見出し行の末尾に出す変更のラベル。`task` のある最終レポートだけが数を持ち、ほかは `none`（`markFinalReport`）。
  */
 export type MainViewStepBody =
   | { readonly kind: "none" }

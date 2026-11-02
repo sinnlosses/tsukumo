@@ -18,7 +18,7 @@ import { putSession } from "../../../../session-store.ts"
 
 /**
  * サイドバー「セッション情報」の使用量の行。出す数は札
- * （成果の使用量の札）と同じ出どころ
+ * （成果の使用量のカード）と同じ出どころ
  * （`usage.totalTokens` / `usage.maxTokens` / `usage.percentage`）なので、ここでは70%以上の
  * 警告・届く前・取れないときの高さだけを測る。
  *

@@ -2,7 +2,7 @@
 // 設定ファイル・環境変数から上書きする口は作らない。
 
 export type ChatMemoryBudget = {
-  /** 雑談のセッションの作業記憶（逐語のまま読み戻す窓）の上限バイト数。 */
+  /** 雑談のセッションの作業記憶（逐語のまま読み戻す範囲）の上限バイト数。 */
   readonly recentBytes: number
   /** 仕事のセッションの作業記憶の上限バイト数。定着が畳む境目もこれ。 */
   readonly workRecentBytes: number

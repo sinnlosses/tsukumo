@@ -28,7 +28,7 @@
 .run-setting-effort-bar.is-lit {
   background: currentColor;
 }
-/* 許可モードの盾。`data-fill` は吊り札の行の塗り区分（空・点線・塗り）を添え、絵そのもの（`lucide-react` の
+/* 許可モードの盾。`data-fill` は吊り下げのカードの行の塗り区分（空・点線・塗り）を添え、絵そのもの（`lucide-react` の
    `Shield*`）は変えない。 */
 .run-setting-shield {
   display: flex;
@@ -44,7 +44,7 @@
   border-radius: 50%;
   background: color-mix(in srgb, var(--state-ng) 20%, transparent);
 }
-/* 吊り札の1行の名前・用途・重さ・注意。 */
+/* 吊り下げのカードの1行の名前・用途・重さ・注意。 */
 .run-setting-select-name {
   flex: none;
   font-weight: 600;

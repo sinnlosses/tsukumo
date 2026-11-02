@@ -1,4 +1,4 @@
-// 数の札（`stats` の項目）の、前の値の色・折れ線の点・割合の帯の幅。
+// 数のカード（`stats` の項目）の、前の値の色・折れ線の点・割合の帯の幅。
 // Markdown に組む側と React の部品が、同じ決まりを読む。
 
 import type { ReportBlock } from "../../../../../shared/report/report-block.ts"

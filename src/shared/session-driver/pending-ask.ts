@@ -22,7 +22,7 @@ export type PendingAsk =
       readonly questions: readonly Question[]
       /** 質問と突き合わせが合った添え書き。各件の `header` は `questions` のどれか1つだけを指す。無ければ空。 */
       readonly briefs: readonly QuestionBrief[]
-      /** サーバが画像を棚に置いたときに測った寸法と、置けなかった・測れなかったパス。駆動は空で渡し、セッションの管理が埋める。 */
+      /** サーバが画像を置き場に置いたときに測った寸法と、置けなかった・測れなかったパス。駆動は空で渡し、セッションの管理が埋める。 */
       readonly imageSizes: readonly ReportImageSize[]
       readonly unshelvedImages: readonly string[]
     }

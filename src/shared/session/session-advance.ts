@@ -242,7 +242,7 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
       })
     case "report":
       // `tool-started` と同じく、届いた位置に積むだけ（吹き出しにも帯の「いまの作業」にも出さない）。
-      // 段の閉じ方が `finished` なら、閉じたワークプランの記録をその直前に積む。
+      // フェーズの閉じ方が `finished` なら、閉じたワークプランの記録をその直前に積む。
       return {
         ...withOpenSdkTurn(settleReportDrafting(state, event.toolUseId), (open) => ({
           ...open,
@@ -316,7 +316,7 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
       return { ...state, pending: stampPending(state.pending, event.pending, at) }
     case "question-answered":
       // 答えが確定した1回だけ積む（未回答の質問は記録に残さない）。
-      // 窓の切り詰めは要らない（質問はやり取りの境目にならないので、次の `request` が来たときに一緒に古いぶんが落ちる）。
+      // 集計期間の切り詰めは要らない（質問はやり取りの境目にならないので、次の `request` が来たときに一緒に古いぶんが落ちる）。
       return {
         ...state,
         records: [

@@ -54,7 +54,7 @@ const RUN_OUTCOME_LABELS = {
   interrupted: "止めた",
 } as const satisfies Record<UsageProposalRunOutcome, string>
 
-/** 主ボタンの文言（押す口は2つに固定）。 */
+/** 主ボタンの文言（ボタンは2つに固定）。 */
 const FOLLOW_UP_LABELS = {
   delegate: "tsukumo に頼む",
   task: "タスクにする",

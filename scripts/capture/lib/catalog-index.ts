@@ -54,7 +54,7 @@ ${sections}
 `
 }
 
-/** 撮れた順のまま、1件につき1つだけ取り出す（同じ件は広い窓と狭い窓で2枚ある）。 */
+/** 撮れた順のまま、1件につき1つだけ取り出す（同じ件は広いビューポートと狭いビューポートで2枚ある）。 */
 function catalogEntriesOf(shots: readonly Shot[]): readonly CatalogEntry[] {
   return shots
     .map((shot) => shot.entry)

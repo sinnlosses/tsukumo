@@ -5,9 +5,9 @@
 // 原寸の出どころは2つで、
 //
 // - 札: 送る前なので原寸はブラウザのメモリにある（サーバへは取りに行かない）
-// - 控え: 記録に載っているのは控えと id だけなので、押したときに id でサーバの棚から取りに行く（`/prompt-image/<id>`。WebSocket のフレームには原寸を載せない）。
+// - 控え: 記録に載っているのは控えと id だけなので、押したときに id でサーバの置き場から取りに行く（`/prompt-image/<id>`。WebSocket のフレームには原寸を載せない）。
 //   棚は直近の数枚しか持たないので、取れなかったら（404）控えを拡大の面に出し、原寸はもう手放したと1行添える（ブラウザは棚の中身を知らないので、取りに行ってから決める）。
-//   続きから復元した依頼は控えを持たないので、棚の原寸から控えを作り直して描く
+//   続きから復元した依頼は控えを持たないので、置き場の原寸から控えを作り直して描く
 //
 // 1枚も無いときは何も描かないので、常設の枠にならない。
 
@@ -109,7 +109,7 @@ export function PromptImageChips(props: PromptImageChipsProps): ReactElement | u
 }
 
 type PromptImageThumbnailsProps = {
-  /** 控えと、棚の原寸を指す id の組の並び（記録に残っているのはこれだけ）。 */
+  /** 控えと、置き場の原寸を指す id の組の並び（記録に残っているのはこれだけ）。 */
   readonly images: readonly RecordedPromptImage[]
   /**
    * 控えの大きさ。
@@ -121,7 +121,7 @@ type PromptImageThumbnailsProps = {
 
 /**
  * 送ったあとの控え（依頼の見出しの下・雑談の吹き出しの中）。
- * 押すと棚の原寸を拡大の面で開き、棚に残っていなければ控えを代わりに出す。
+ * 押すと置き場の原寸を拡大の面で開き、置き場に残っていなければ控えを代わりに出す。
  */
 export function PromptImageThumbnails(props: PromptImageThumbnailsProps): ReactElement | undefined {
   // 開いている控えが何枚目か。id では持たない。
@@ -198,8 +198,8 @@ function ThumbnailItem(props: ThumbnailItemProps): ReactElement {
 }
 
 /**
- * 続きから復元した依頼の控え1枚。棚の原寸からブラウザで作り直し、作れるまでと作れなかったときは何も描かない
- * （棚から原寸が消えていれば、見せられる絵がどこにも無い）。
+ * 続きから復元した依頼の控え1枚。置き場の原寸からブラウザで作り直し、作れるまでと作れなかったときは何も描かない
+ * （置き場から原寸が消えていれば、見せられる絵がどこにも無い）。
  */
 function RestoredThumbnailItem(
   props: Omit<ThumbnailItemProps, "src"> & { readonly id: string },
@@ -211,7 +211,7 @@ function RestoredThumbnailItem(
   return <ThumbnailItem src={thumbnail.src} size={props.size} onZoom={props.onZoom} />
 }
 
-/** 棚の原寸を取りに行く URL。起動トークンはこのページの URL から引き継ぐ。 */
+/** 置き場の原寸を取りに行く URL。起動トークンはこのページの URL から引き継ぐ。 */
 function shelvedImageUrl(id: string): string {
   return sessionTokenUrl(promptImagePath(id), window.location.href)
 }

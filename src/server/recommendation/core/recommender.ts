@@ -34,7 +34,7 @@ export type RecommenderPorts = {
   /** 札の並びを配る（空は「まだ無い」）。 */
   readonly emit: (cards: readonly RecommendationCard[]) => void
   /**
-   * 問い合わせが失敗したことの知らせ口（中断・時間切れは `recommend-aborted`）。
+   * 問い合わせが失敗したことを知らせる関数（中断・時間切れは `recommend-aborted`）。
    * `error` からは `error.name` と code だけを写すこと。
    */
   readonly onFailure: (place: "recommend-aborted" | "recommend-failed", error: unknown) => void

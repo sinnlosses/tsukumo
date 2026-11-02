@@ -45,7 +45,7 @@ const PAST_REPORT_SCHEMA_VARIANTS = [
 
 const reportSchemaVariantSchema = z.enum(PAST_REPORT_SCHEMA_VARIANTS)
 
-/** 形の札（節が表す内容の形）の名前。過去の行が持つ札を読み戻すために残す。 */
+/** 形の名前（節が表す内容の形）。過去の行が持つ形の名前を読み戻すために残す。 */
 export const REPORT_SHAPE_TAGS = [
   "cause",
   "connection",
@@ -100,7 +100,7 @@ const noneFigureFields = {
 }
 
 /**
- * `figure` の欄の記録（版6から）。`figureKind` は図の塊の `kind` か `none`、`noneReason` は `none` のときだけ。
+ * `figure` の欄の記録（版6から）。`figureKind` は図の部品の `kind` か `none`、`noneReason` は `none` のときだけ。
  * 中身は持たない。
  */
 const reportFigureUsageSchema = z.union([
@@ -153,11 +153,11 @@ const acceptedFields = reportShapeTagUsageSchema.unwrap().extend({
   readImageWithoutImageBlock: z.boolean(),
   /** `text`・`list`・表のセルに出た強調の対の数の合計（版7から）。 */
   emphasisCount: z.number(),
-  /** `graph` の辺の数の合計（版7から）。 */
+  /** `graph` のエッジの数の合計（版7から）。 */
   graphEdgeCount: z.number(),
-  /** `graph` の辺のうちラベルの無いものの数の合計（版7から）。 */
+  /** `graph` のエッジのうちラベルの無いものの数の合計（版7から）。 */
   graphUnlabeledEdgeCount: z.number(),
-  /** `graph` の節点数。複数あれば最大（版7から）。 */
+  /** `graph` のノード数。複数あれば最大（版7から）。 */
   graphNodeCount: z.number(),
   /** `checks` に `unverified` の行が1つでもあるか（版8から）。 */
   hasUnverifiedCheck: z.boolean(),

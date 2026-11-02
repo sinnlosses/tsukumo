@@ -113,7 +113,7 @@ describe("createWelcomeKeeper", () => {
   })
 })
 
-/** 続きから `sessionId` へ戻る代を起こし、その代の受け取り口に流れた出来事を `events` に貯める。 */
+/** 続きから `sessionId` へ戻る代を起こし、その代で受け取る関数に流れた出来事を `events` に貯める。 */
 function recorded(
   keeper: WelcomeKeeper,
   sessionId: string,
@@ -143,5 +143,5 @@ function sessionInfo(sessionId: string): SessionEvent {
 }
 
 function ignore(): void {
-  // 受け取り口が捨てる（閉じた代）。
+  // 受け取る関数が捨てる（閉じた代）。
 }

@@ -3,7 +3,7 @@
    ここに書いた var() の第2引数（フォールバック値）は `DEFAULT_SPLIT` と一致させること。
 
    狭い画面での積み方（画面の高さに固定し、本文・顔と吹き出し・入力欄を縦の1列にする）は、このファイルの末尾の@media にある（他の領域のぶんはそれぞれの *.module.css の末尾）。
-   中くらいの窓幅（761〜1100px）でサイドバーを柱に畳む形は、その手前の @media にある。 */
+   中くらいのビューポート幅（761〜1100px）でサイドバーを柱に畳む形は、その手前の @media にある。 */
 .layout-grid {
   position: relative;
   display: grid;
@@ -30,7 +30,7 @@
 .layout-row-bottom {
   grid-template-columns: var(--layout-bottom-left, 50fr) auto var(--layout-bottom-right, 50fr);
 }
-/* 答え待ちの札の席。狭い画面でだけ出す。 */
+/* 答え待ちのカードの席。狭い画面でだけ出す。 */
 .layout-inquiry {
   display: none;
 }
@@ -44,7 +44,7 @@
    横に長いものは、中身の側が自前のスクロール容器を持つ（レポートの表は .table-scroll、コードは pre-wrap、svg は max-width: 100%、長い語は overflow-wrap: anywhere で折り返す）。 */
 .layout-region {
   /* 中身の側が「領域の内側の余白」を知るための変数。
-     メインビューの札の頭（`position: sticky`）はこれだけ上へずらして、転がっても余白の帯から本文が覗かないようにする（`main-view.module.css`）。 */
+     メインビューのカードの頭（`position: sticky`）はこれだけ上へずらして、転がっても余白の帯から本文が覗かないようにする（`main-view.module.css`）。 */
   --region-padding: 0.75rem;
   min-width: 0;
   min-height: 0;
@@ -55,7 +55,7 @@
   overflow-x: hidden;
   overflow-y: auto;
 }
-/* メインビューの内寸を、中身（お伺いの札の高さの上限）が `cqh` で読む。 */
+/* メインビューの内寸を、中身（お伺いのカードの高さの上限）が `cqh` で読む。 */
 .layout-main {
   container-type: size;
 }
@@ -133,7 +133,7 @@
 .layout-side {
   display: contents;
 }
-/* 中くらいの窓幅でだけ出る柱。 */
+/* 中くらいのビューポート幅でだけ出る柱。 */
 .layout-rail {
   display: none;
 }
@@ -146,7 +146,7 @@
   border-radius: var(--radius-md);
 }
 
-/* 中くらいの窓幅。サイドバーを右端の柱に畳み、柱の口で上段に重ねて開く。
+/* 中くらいのビューポート幅。サイドバーを右端の柱に畳み、柱の口で上段に重ねて開く。
    問い合わせの字は `RAIL_TIER_QUERY` と同じにする。 */
 @media (min-width: 761px) and (max-width: 1100px) {
   .layout-row-top {

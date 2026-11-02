@@ -41,7 +41,7 @@ export const UNAVAILABLE_CHAT_SUMMARY: ChatSummary = {
 }
 
 /**
- * パック1つぶんの写しの読み書き口を作る。
+ * パック1つぶんの写しの読み書きの関数を作る。
  *
  * `root` は書き込み先の親（既定は {@link chatSummaryDir}）。
  */

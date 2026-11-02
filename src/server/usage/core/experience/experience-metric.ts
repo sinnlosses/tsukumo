@@ -17,7 +17,7 @@ import type {
 } from "../../../../shared/usage/experience-metric-record.ts"
 import { reportBodyChars } from "./report-body-length.ts"
 
-/** 進行の計測値の読み書き口。書けなくても・読めなくても例外を投げない。 */
+/** 進行の計測値の読み書きの関数。書けなくても・読めなくても例外を投げない。 */
 export type ExperienceMetricLog = {
   readonly append: (entry: ExperienceMetricEntry) => void
   /** 期間に入る行を古い→新しい順に返す。壊れた行・版が違う行は読まずに落とす。 */

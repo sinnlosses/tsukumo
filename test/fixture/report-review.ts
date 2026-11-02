@@ -29,7 +29,7 @@ export const REJECTION_PHRASE = {
 
 export const noPlan = (): WorkPlanStanding => ({ kind: "none" })
 
-/** 逃げ道の塊1つの節（中身は架空）。 */
+/** 逃げ道の部品1つの節（中身は架空）。 */
 export const sectionsOf = (markdown: string): readonly ReportBlockSection[] => [
   {
     heading: "",

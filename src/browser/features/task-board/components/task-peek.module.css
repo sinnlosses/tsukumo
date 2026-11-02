@@ -1,4 +1,4 @@
-/* サイドバーのタスクののぞき窓。値は見本 `docs/history/mockup/sidebar-task-peek-2026-10-04.html` の場面3の inline style を `theme.css` のトークンに写したもの
+/* サイドバーのタスクのプレビュー。値は見本 `docs/history/mockup/sidebar-task-peek-2026-10-04.html` の場面3の inline style を `theme.css` のトークンに写したもの
    （見本の #1f1e28 は --surface、#3a3946 は --rule、#2a2933 は --rule-quiet、浅葱 #66d1be は --accent、字 #0d201c は --ground に当たる）。
    見本で 12px を割る字（状態の語・ID・関わるタスク 11.5px）は --font-label へ上げてある。
    left・top・尾の高さと出すかどうかは `placeBesideRow` が style の変数へ書く。 */
@@ -79,7 +79,7 @@
 .task-peek-related-id {
   font-family: var(--font-mono);
 }
-/* 本文の頭。高さの上限で切り、下の 40px を窓の地へ溶かす。 */
+/* 本文の頭。高さの上限で切り、下の 40px をプレビューの地へ溶かす。 */
 .task-peek-body {
   position: relative;
   max-height: 170px;

@@ -345,7 +345,7 @@ export function handbackNoteHooks(
   }
 }
 
-/** 委譲先の返却（`<agent-message`）と台本の完了の知らせ（`<task-notification`）を運ぶメインの入力の頭（Claude Code が包む塊）。 */
+/** 委譲先の返却（`<agent-message`）とワークフロースクリプトの完了の知らせ（`<task-notification`）を運ぶメインの入力の頭（Claude Code が包む塊）。 */
 const HANDBACK_PROMPT_HEADS = ["<agent-message", "<task-notification"]
 
 /**

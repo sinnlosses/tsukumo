@@ -13,9 +13,9 @@ export type TimedEntry = {
 }
 
 /**
- * 古い→新しいの順に並んだ `all` から、`afterAt` より後で、直近の窓の先頭（`windowStartAt`）より前にある行だけを集める。
+ * 古い→新しいの順に並んだ `all` から、`afterAt` より後で、直近の範囲の先頭（`windowStartAt`）より前にある行だけを集める。
  * `afterAt` が無ければ先頭から、`windowStartAt` が無ければ末尾まで。
- * 窓の先頭に届いたところで打ち切る。
+ * 範囲の先頭に届いたところで打ち切る。
  */
 export function entriesUntilWindow(
   all: readonly TimedEntry[],

@@ -1,4 +1,4 @@
-// 図の塊（`mermaid`・`svg`・`graph`）の不具合の検出。
+// 図の部品（`mermaid`・`svg`・`graph`）の不具合の検出。
 // 位置と字句の名前だけを持ち、書き手のソースの文字は持たない。
 
 import { readGraphSource } from "../../../../../shared/report/graph-source.ts"
@@ -75,12 +75,12 @@ export function svgToneFaultsInLeaves(leaves: readonly ReportOutlineLeaf[]): rea
   })
 }
 
-/** 凡例に無い `tone` の位置（何個目の塊のどの `tone` か）の並び。 */
+/** 凡例に無い `tone` の位置（何個目の部品のどの `tone` か）の並び。 */
 export function toneFaultPositions(faults: readonly ToneFault[]): string {
   return faults.map((fault) => `${String(fault.block)}個目の ${fault.tone}`).join("、")
 }
 
-/** はみ出した図形の位置（何個目の塊の何番目の図形か）の並び。 */
+/** はみ出した図形の位置（何個目の部品の何番目の図形か）の並び。 */
 export function svgFaultPositions(faults: readonly SvgFault[]): string {
   return faults
     .map((fault) => `${String(fault.block)}個目の ${String(fault.shape)} 番目`)

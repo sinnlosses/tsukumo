@@ -75,7 +75,7 @@ type AchievementView =
       readonly diary: DailyDiaryStatus
     }
 
-/** 振り返りのボタン1つぶんの見た目と押す口。 */
+/** 振り返りのボタン1つぶんの見た目と押したときの扱い。 */
 export type AchievementReviewButton = {
   /** 「<パックの名前>と振り返る」。 */
   readonly label: string

@@ -108,7 +108,7 @@ const ORIGIN_BOX = [0, 50, 400, 600] as const
 
 /**
  * happy-dom はレイアウトを持たない（どの矩形も 0）ので、筆先の居場所を見る回だけ測れる値に
- * 差し替える。図の塊（`.chart-block`）は行ではなく box をそのまま1行として測られる
+ * 差し替える。図の部品（`.chart-block`）は行ではなく box をそのまま1行として測られる
  * （`lineBoxesOf`）ので、文字の行を作らずに行を並べられる。
  */
 function measureBoxes(): () => void {
@@ -138,7 +138,7 @@ function LinesProbe(): ReactElement {
       {LINE_BOXES.map((_line, index) => (
         // oxlint-disable-next-line react/no-array-index-key -- 並びが変わらない固定の矩形
         <div className="chart-block" data-line={index} key={index}>
-          {/* `measure.ts` の `lineBoxesOf` が図の塊で測るのは入れ物ではなく描かれた
+          {/* `measure.ts` の `lineBoxesOf` が図の部品で測るのは入れ物ではなく描かれた
               `canvas` 自身なので、行に見立てた矩形はこちらにも付ける。 */}
           <canvas data-line={index} />
         </div>

@@ -1,15 +1,15 @@
 // `<SpeechLog>` のロジック。
 // 確定した記録（`SessionRecord`）を並べるだけの形に畳む。
-// 開いているかどうかは `useCharacterView` が持つ（開く口が「ログ」と狭い画面の吹き出しの2つあるため）。
+// 開いているかどうかは `useCharacterView` が持つ（開くボタンが「ログ」と狭い画面の吹き出しの2つあるため）。
 //
 // 並びは `turnSpeeches` で引き直し、別に溜めない。
 // 古い→新しいを上→下に、依頼の区切りとセリフを1本に並べる。
-// 開いた直後は並びの下端（最新）へ転がしておく。
+// 開いた直後は並びの下端（最新）へスクロールしておく。
 //
 // 並びを組み立てるのは開いている間だけ（閉じているときに記録が伸びるたびに作り直さない）。
 //
 // セリフの行を押すとそのセリフの表情へ立ち絵が遡る。
-// 留めた状態そのものは `useCharacterView` が持ち（床の立ち絵と状態を共有するため）、ここは `pinnedSpeech` / `onToggleSpeech` として受け取って印と押す口へ写すだけ。
+// 留めた状態そのものは `useCharacterView` が持ち（床の立ち絵と状態を共有するため）、ここは `pinnedSpeech` / `onToggleSpeech` として受け取って印とボタンへ写すだけ。
 
 import { useRef, type RefObject } from "react"
 import { sumBy } from "remeda"

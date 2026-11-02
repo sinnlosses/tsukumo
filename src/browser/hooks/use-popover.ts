@@ -1,5 +1,5 @@
 // 押すと開くポップオーバーの開閉。
-// 押す口を2つ以上持てるので、押した口はコールバック ref で集める。
+// ボタンを2つ以上持てるので、押した口はコールバック ref で集める。
 
 import { useRef, useState, type RefCallback, type RefObject } from "react"
 

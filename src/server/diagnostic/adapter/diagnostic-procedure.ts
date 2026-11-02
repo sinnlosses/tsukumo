@@ -6,7 +6,7 @@ import { diagnosticContract } from "../../../shared/contract/diagnostic.ts"
 import type { BrowserErrorReport } from "../../../shared/diagnostic/diagnostic-record.ts"
 import type { RecommendationCard } from "../../../shared/recommendation/recommendation-card.ts"
 
-/** この機能の手続きが使う口（中身は配線が渡す）。 */
+/** この機能の手続きが使う関数（中身は配線が渡す）。 */
 export type DiagnosticProcedurePorts = {
   readonly reportBrowserError: (report: BrowserErrorReport) => void
   readonly reportRecommendationPressed: (kind: RecommendationCard["kind"]) => void

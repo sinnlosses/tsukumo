@@ -1,4 +1,4 @@
-// 帯の左上の部屋の名前の札と、押すと開く切り替え画面のロジック。
+// 帯の左上の部屋の名前のラベルと、押すと開く切り替え画面のロジック。
 // 札と切り替え画面が同じ開閉の状態（`useSessionSwitcherRequest`）を読む。
 //
 // 一覧（`SessionState.sessions`）は軽いもの（ID・見出し・時刻）だけで、依頼の数・要約・最後のセリフは選んだ1件ぶんだけ取りに行く（`useSessionDigest`）。
@@ -38,7 +38,7 @@ export type SessionSwitcherRow = {
   readonly current: boolean
   readonly worktree: string
   readonly inCurrentWorktree: boolean
-  /** 別の窓の tsukumo がいま開いているか。いまの行は使用中にしない。 */
+  /** 別のウィンドウの tsukumo がいま開いているか。いまの行は使用中にしない。 */
   readonly occupiedElsewhere: boolean
 }
 
@@ -153,7 +153,7 @@ export function useSessionSwitcher(room: string, project: string): SessionSwitch
         if (sessionId === currentSessionId) {
           return
         }
-        // 開いたあとで別の窓が開いたセッションは、サーバが起こす直前に断る。
+        // 開いたあとで別のウィンドウが開いたセッションは、サーバが起こす直前に断る。
         // 開き直すと使用中を聞き直すので、その行が使用中で出る。ほかの失敗は画面に出さない。
         dispatchAwaited.session.switchSession({ sessionId }).catch((error: unknown) => {
           if (isRefusedFor(error, FRAME_ERROR_REASON.sessionOccupied)) {

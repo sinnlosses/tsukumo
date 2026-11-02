@@ -2,7 +2,7 @@
    値は見本 `docs/history/mockup/session-switch-2026-09-27/HD-5-Switcher.dc.html` の inline style を `theme.css` のトークンに写したもの（見本の #66d1be は --accent、#1f1e28 は --surface、#3a3946 は --rule、#15141b は --ground に当たる）。
    背景は `<Dialog backdrop="dim">` が持つ。 */
 
-/* 箱。見本は 1040x600 で、帯の下に少し空けて横の中央に置く。窓より大きくしない。 */
+/* 箱。見本は 1040x600 で、帯の下に少し空けて横の中央に置く。ビューポートより大きくしない。 */
 .session-switcher {
   box-sizing: border-box;
   width: min(65rem, calc(100vw - 2rem));
@@ -115,7 +115,7 @@
 .session-switcher-row[data-current="true"] .session-switcher-row-id {
   color: var(--ink);
 }
-/* 別の窓で使用中の行は選べない。押せそうに見せない。 */
+/* 別のウィンドウで使用中の行は選べない。押せそうに見せない。 */
 .session-switcher-row[data-occupied="true"] {
   cursor: not-allowed;
 }

@@ -1,5 +1,5 @@
 // レポートの ```mermaid フェンスの中身を図として描く。
-// mermaid は tsukumo 自身のサーバから配り、図が現れたら手すきに `<script>` を読み込み、描くのは窓の少し手前に見えたときだけ。
+// mermaid は tsukumo 自身のサーバから配り、図が現れたら手すきに `<script>` を読み込み、描くのはビューポートの少し手前に見えたときだけ。
 //
 // 1つのレポートに複数の図があっても、描くのは1つずつ（`drawing` の鎖）。
 // 同じソースの図は描いた SVG を覚え、2回目以降は描かずに差し込む（失敗は覚えない）。
@@ -228,10 +228,10 @@ function initializeFor(
 }
 
 /**
- * テーマ変数で決まらない箱と辺ラベルの見た目を決める `themeCSS`。
+ * テーマ変数で決まらない箱とエッジラベルの見た目を決める `themeCSS`。
  * 拡大の面は図を画像にして開き、ページのカスタムプロパティを読めないので、色と角は値に解いて書く。
  * シーケンス図の参加者の箱は `filter` を属性で付けるので、`dropShadow` を外しても影が残る。
- * 辺ラベルは地の矩形を持たず、字の縁取りで線と分ける（群の地の上でも矩形が浮かない）。
+ * エッジラベルは地の矩形を持たず、字の縁取りで線と分ける（群の地の上でも矩形が浮かない）。
  * 字は 16px のまま（`figure-caption.md` の文字 12px の下限）。
  */
 function figureThemeCss(node: HTMLElement): string {
@@ -307,7 +307,7 @@ async function fitTopDown(fit: TopDownFit): Promise<void> {
  * 差した SVG を、字が下限以上になる最も狭い幅の段に置く。どの段でも下回れば置かずに false を返す。
  * 段は `data-measure` に当てて、描画後の幅と `viewBox` の幅から縮尺を測る（高さの上限による縮みも含む）。
  * 寸法を持たない描画（まだ配置されていない・`viewBox` が無い）は測れないので、足りるものとして扱う。
- * 前後の塊の側の図は側の幅に収めるので、段を当てない。
+ * 前後の部品の側の図は側の幅に収めるので、段を当てない。
  */
 function placeInMeasure(node: HTMLPreElement): boolean {
   if (node.closest(".report-before-after-side") !== null) {

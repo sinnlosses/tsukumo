@@ -16,7 +16,7 @@ const THUMBNAIL_MEDIA_TYPE = "image/webp"
 const THUMBNAIL_QUALITY = 0.8
 
 /**
- * 原寸（data URL か、棚の原寸を配る経路の URL）から控えを作る。
+ * 原寸（data URL か、置き場の原寸を配る経路の URL）から控えを作る。
  * 長いほうの辺を {@link THUMBNAIL_MAX_EDGE_PX} に収め、上限に収まったものだけを返す（読めない・収まらなければ undefined）。
  */
 export async function shrinkToThumbnail(full: string): Promise<string | undefined> {

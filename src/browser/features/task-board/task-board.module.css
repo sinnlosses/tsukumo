@@ -71,12 +71,12 @@
 }
 /* done は色を薄くし、打ち消し線を引く。
    テキスト装飾は行のボタンの子（ID・summary）にも見た目上つながって出る（CSS の text-decoration は子孫の描画にまたがる）。
-   のぞき窓は `position: fixed` なので打ち消し線はつながらない。 */
+   プレビューは `position: fixed` なので打ち消し線はつながらない。 */
 .task-item.task-done {
   color: var(--ink-quiet);
   text-decoration: line-through;
 }
-/* 行の右端の `›`。押せることの合図で、ホバー・フォーカス・窓を開いている行でだけ見える。 */
+/* 行の右端の `›`。押せることの合図で、ホバー・フォーカス・プレビューを開いている行でだけ見える。 */
 .task-row-chevron {
   color: transparent;
 }
@@ -101,7 +101,7 @@
    字の大きさは見本のまま（このモーダルの中だけの値で、字の段に丸めない）。
    背景は `<Dialog backdrop="dim">` が持つ。 */
 
-/* 箱。見本は 1320x780 で、帯の下に少し空けて横の中央に置く。窓より大きくしない。 */
+/* 箱。見本は 1320x780 で、帯の下に少し空けて横の中央に置く。ビューポートより大きくしない。 */
 .task-board {
   box-sizing: border-box;
   width: min(1320px, calc(100vw - 2rem));

@@ -1,4 +1,4 @@
-// セッションの記録（`SessionRecord`）と、記録が持つ時刻・ツールの進みの型。記録の窓と、記録に入れる失敗の出力の長さの上限もここ。
+// セッションの記録（`SessionRecord`）と、記録が持つ時刻・ツールの進みの型。記録の集計期間と、記録に入れる失敗の出力の長さの上限もここ。
 
 import type { Expression } from "../character-pack/expression.ts"
 import type { ReactionKind } from "../recommendation/reaction.ts"
@@ -16,7 +16,7 @@ import type { ReportWaitingLine } from "./session-event-report.ts"
 import type { WorkPlan, WorkPlanClosing } from "./work-plan.ts"
 
 /**
- * メインビューに残す記録の窓（直近何ターンぶんを持ち続けるか）。常駐プロセスが動き続ける以上、記録自体も無限に増やさない。
+ * メインビューに残す記録の集計期間（直近何ターンぶんを持ち続けるか）。常駐プロセスが動き続ける以上、記録自体も無限に増やさない。
  * `work` は `MAX_MAIN_VIEW_TURNS` の導出元。
  * 雑談の1ターンはセリフ1〜2件で軽く、仕事と同じ往復数では会話として短すぎるため、雑談だけ多く持つ。
  */
@@ -82,11 +82,11 @@ export function recordTimeAt(time: RecordTime): number | undefined {
  */
 export type SessionRecord =
   /**
-   * 利用者の依頼。`images` は添えた画像の控えと、棚の原寸を指す id の組。
-   * 原寸は記録に入らない（`hello` に載せない）。拡大して見るときは id で棚から取りに行く（`promptImagePath`）。
+   * 利用者の依頼。`images` は添えた画像の控えと、置き場の原寸を指す id の組。
+   * 原寸は記録に入らない（`hello` に載せない）。拡大して見るときは id で置き場から取りに行く（`promptImagePath`）。
    *
    * `turnId` はそのターンの通し番号（`SessionState.nextTurnId`）。
-   * 窓から古い記録が落ちても番号は振り直されないので、同じターンはセッションが続くかぎり同じ番号になる。
+   * 集計期間から古い記録が落ちても番号は振り直されないので、同じターンはセッションが続くかぎり同じ番号になる。
    */
   | {
       readonly kind: "request"
@@ -109,7 +109,7 @@ export type SessionRecord =
   /**
    * `report` ツールで受け取ったレポート。引数をそのまま持ち、1つの本文に組むのはメインビューの導出。
    * 本文（`detail`）とは別の種類にしてあるのは、このレポートがあるターンでは本文を出さないという判定に、どちらから来たかが要るため。
-   * `toolUseId` は `image` の塊の画像を棚から引く鍵（`reportImagePath`）。
+   * `toolUseId` は `image` の塊の画像を置き場から引く鍵（`reportImagePath`）。
    * `waitingLine` はメインビューには描かず、依頼を待つ間の吹き出しが読む（`shownReaction`）。
    */
   | {
@@ -120,14 +120,14 @@ export type SessionRecord =
       readonly favor: string
       readonly checks: readonly ReportCheck[]
       readonly task: ReportTask
-      /** `report` が渡した段の閉じ方。段ごとの所要時間で、後の段を呼ばなかった段を「未着手」と見分ける。 */
+      /** `report` が渡したフェーズの閉じ方。段ごとの所要時間で、後の段を呼ばなかった段を「未着手」と見分ける。 */
       readonly workPlanClosing: WorkPlanClosing
       readonly waitingLine: ReportWaitingLine
-      /** 変更の札。積んだときは `none` で、同じ `toolUseId` の `report-change-summary` が届いたら数に差し替わる。 */
+      /** 変更のラベル。積んだときは `none` で、同じ `toolUseId` の `report-change-summary` が届いたら数に差し替わる。 */
       readonly changeSummary: ReportChangeSummary
-      /** サーバが棚に置いたときに測れた画像の寸法。続きから復元した記録では、棚に置き直したときに埋まる。 */
+      /** サーバが置き場に置いたときに測れた画像の寸法。続きから復元した記録では、置き場に置き直したときに埋まる。 */
       readonly imageSizes: readonly ReportImageSize[]
-      /** サーバが棚に置けなかった・寸法を測れなかった画像のパス。描く側は最初から「出せない」の札にする。復元では置き直したときに埋まる。 */
+      /** サーバが置き場に置けなかった・寸法を測れなかった画像のパス。描く側は最初から「出せない」の札にする。復元では置き直したときに埋まる。 */
       readonly unshelvedImages: readonly string[]
       /** `a2ui` の版で受け付けた部品の一覧（旧い版では空）。 */
       readonly components: readonly A2uiReportComponent[]
@@ -158,7 +158,7 @@ export type SessionRecord =
       readonly text: string
       readonly expression: Expression
       readonly time: RecordTime
-      /** 脇の話のターン（`SessionState.sdkTurn` の `answeringAside`）で呼ばれた、脇の話への答えか。 */
+      /** 補足メッセージのターン（`SessionState.sdkTurn` の `answeringAside`）で呼ばれた、脇の話への答えか。 */
       readonly answersAside: boolean
     }
   /**
@@ -185,7 +185,7 @@ export type SessionRecord =
     }
   /**
    * 圧縮の区切り（`compact-boundary`）。中身を持たない（画面に出すのは細い線1本だけで、文言も数値も添えない）。
-   * `trimToRecentTurns` の数え方（`request` の数）は変えない（他の記録と同じく、窓から外れれば一緒に落ちる）。
+   * `trimToRecentTurns` の数え方（`request` の数）は変えない（他の記録と同じく、集計期間から外れれば一緒に落ちる）。
    */
   | { readonly kind: "compact-boundary" }
   /**

@@ -1,8 +1,8 @@
-// サイドバーのタスクの行から開くのぞき窓の開閉と、開いている間のキー。
+// サイドバーのタスクの行から開くプレビューの開閉と、開いている間のキー。
 //
-// 窓を開いてもフォーカスは押した行に残り、↑↓ は一覧の器（`rootRef`）が受けて隣の行へ移す。
-// 窓は開いている行の `<li>` の中に置くので、窓の中の口で打った ↑↓ も器へ届く。
-// 確認（モーダルの `<dialog>`）も窓の中に組み立てられるので、確認を開いている間は ↑↓ を受けず、
+// プレビューを開いてもフォーカスは押した行に残り、↑↓ は一覧の器（`rootRef`）が受けて隣の行へ移す。
+// プレビューは開いている行の `<li>` の中に置くので、プレビューの中の口で打った ↑↓ も器へ届く。
+// 確認（モーダルの `<dialog>`）もプレビューの中に組み立てられるので、確認を開いている間は ↑↓ を受けず、
 // Esc と外側の `pointerdown` の購読も止める（Esc は上の確認だけを閉じる）。
 //
 // 開いている行が絞り込み後の行から消えたら閉じる。
@@ -14,7 +14,7 @@ import { useTaskBoardRequest } from "../../../stores/task-board-request.ts"
 import type { TaskRunConfirmOutcome } from "../domain/task-run-confirm-outcome.ts"
 import type { SingleTaskRequest } from "../domain/task-run-prompt.ts"
 
-/** 開いている確認。`request` のあいだ、確認の `<dialog>` が窓の中に組み立てられる。 */
+/** 開いている確認。`request` のあいだ、確認の `<dialog>` がプレビューの中に組み立てられる。 */
 export type TaskPeekConfirm =
   | { readonly kind: "none" }
   | { readonly kind: "request"; readonly request: SingleTaskRequest }
@@ -24,7 +24,7 @@ type TaskPeekState =
   | { readonly kind: "open"; readonly id: string; readonly confirm: TaskPeekConfirm }
 
 export type TaskPeek = {
-  /** 行と窓をまとめる器。この中の `pointerdown` では閉じない。 */
+  /** 行とプレビューをまとめる器。この中の `pointerdown` では閉じない。 */
   readonly rootRef: RefObject<HTMLDivElement | null>
   readonly control: TaskPeekControl
 }
@@ -32,23 +32,23 @@ export type TaskPeek = {
 export type TaskPeekControl = {
   readonly state: TaskPeekState
   readonly onKeyDown: (event: KeyboardEvent<HTMLElement>) => void
-  /** 行を押したとき。開いている行なら閉じ、別の行なら窓をそちらへ移す。 */
+  /** 行を押したとき。開いている行なら閉じ、別の行ならプレビューをそちらへ移す。 */
   readonly onToggle: (id: string) => void
   /** 「×」。押した行へフォーカスを戻す。 */
   readonly onClose: () => void
-  /** 「全文を開く」と本文中の ID。タスクのモーダルをそのタスクを選んで開き、窓は閉じる。 */
+  /** 「全文を開く」と本文中の ID。タスクのモーダルをそのタスクを選んで開き、プレビューは閉じる。 */
   readonly onOpenFull: (id: string) => void
   /** 「これを始める」「計画する」「却下する」。確認を重ねる。 */
   readonly onRequest: (request: SingleTaskRequest) => void
   readonly onConfirmClose: (outcome: TaskRunConfirmOutcome) => void
 }
 
-/** 行のボタンの DOM の id。窓の位置の基準と、閉じたときにフォーカスを戻す先。 */
+/** 行のボタンの DOM の id。プレビューの位置の基準と、閉じたときにフォーカスを戻す先。 */
 export function taskRowDomId(taskId: string): string {
   return `task-row-${taskId}`
 }
 
-/** 窓の DOM の id（行の `aria-controls` が指す）。 */
+/** プレビューの DOM の id（行の `aria-controls` が指す）。 */
 export function taskPeekDomId(taskId: string): string {
   return `task-peek-${taskId}`
 }

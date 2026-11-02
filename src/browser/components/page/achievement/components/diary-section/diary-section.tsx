@@ -1,5 +1,5 @@
 // 日記の区画。
-// 立ち絵・頭の行・吹き出し・数の札・振り返りのボタン（または3段の進み）を持つ。
+// 立ち絵・頭の行・吹き出し・数のカード・振り返りのボタン（または3段の進み）を持つ。
 
 import clsx from "clsx"
 import type { ReactElement } from "react"

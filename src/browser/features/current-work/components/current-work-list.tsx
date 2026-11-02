@@ -17,7 +17,7 @@ import styles from "./current-work-list.module.css"
 import { CurrentWorkStepGroup } from "./current-work-step-group.tsx"
 
 type CurrentWorkListProps = {
-  /** 開く口の `aria-controls` が指す id。 */
+  /** 開くボタンの `aria-controls` が指す id。 */
   readonly id: string
   readonly work: CurrentWork
   readonly className: string

@@ -197,7 +197,7 @@
   outline-color: var(--state-warn);
   border-color: color-mix(in srgb, var(--state-warn) 60%, var(--rule));
 }
-/* 狭い画面では答え待ちでも入力欄の枠と余白を変えない（答え待ちの札が受け持つ）。 */
+/* 狭い画面では答え待ちでも入力欄の枠と余白を変えない（答え待ちのカードが受け持つ）。 */
 @media (max-width: 760px) {
   .dispatch-form.is-answering {
     padding: var(--space-sm) var(--space-md) calc(var(--space-sm) + env(safe-area-inset-bottom));

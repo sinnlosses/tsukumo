@@ -35,7 +35,7 @@ async function* framesOf(
   signal: AbortSignal | undefined,
 ): AsyncGenerator<ServerFrame> {
   const buffered: ServerFrame[] = []
-  // 次のフレーム（か中断）を待っている読み手を起こす口。待っていない間は空。
+  // 次のフレーム（か中断）を待っている読み手を起こす関数。待っていない間は空。
   let wake: (() => void) | undefined = undefined
   const unsubscribe = subscribe((frame) => {
     buffered.push(frame)
