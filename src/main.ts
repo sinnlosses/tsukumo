@@ -31,7 +31,7 @@ import {
 } from "./server/session-driver/adapter/workflow-plugin.ts"
 import { createPromptImageShelf } from "./server/session-driver/core/prompt-image-shelf.ts"
 import { createOpenTaskReader, twClaimsRunner } from "./server/usage/adapter/tw-claim-list.ts"
-import { builtUiDir, readUiBundle } from "./server/view-server/adapter/bundle.ts"
+import { builtUiDir, readUiBundle } from "./server/view-server/adapter/build/bundle.ts"
 import {
   defaultInstanceLocationDir,
   writeInstanceLocation,

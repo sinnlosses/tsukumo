@@ -16,7 +16,7 @@ import { createHash } from "node:crypto"
 import { readdir, readFile, writeFile } from "node:fs/promises"
 import { join } from "node:path"
 
-import { bundledFilePath } from "../../adapter/bundled-path.ts"
+import { bundledFilePath } from "../../../adapter/bundled-path.ts"
 import { sourceFingerprint } from "./source-fingerprint.ts"
 import { runViteBuild } from "./vite-build.ts"
 

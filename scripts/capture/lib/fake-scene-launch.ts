@@ -3,7 +3,7 @@
 import path from "node:path"
 
 import { tsukumoHomeDir } from "../../../src/server/adapter/tsukumo-home.ts"
-import { builtUiDir } from "../../../src/server/view-server/adapter/bundle.ts"
+import { builtUiDir } from "../../../src/server/view-server/adapter/build/bundle.ts"
 import { assertBuiltUiFresh } from "../../dev/lib/built-ui-freshness.ts"
 import { spawnFakeTsukumo, waitForViewUrl } from "../../shared/fake-tsukumo-process.ts"
 import { REPOSITORY_ROOT } from "../../shared/repository-root.ts"

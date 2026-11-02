@@ -8,7 +8,7 @@ import { join } from "node:path"
 import {
   bundledSourceFingerprint,
   readUiBundle,
-} from "../../../src/server/view-server/adapter/bundle.ts"
+} from "../../../src/server/view-server/adapter/build/bundle.ts"
 
 const BUILD_INPUT_FINGERPRINT_FILE_NAME = "build-input-fingerprint.txt"
 

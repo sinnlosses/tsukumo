@@ -7,23 +7,23 @@ import type { ContractRouterClient } from "@orpc/contract"
 import { afterEach, describe, expect, it } from "vitest"
 import WebSocket from "ws"
 
-import { createSocketRouter } from "../../../../src/router.ts"
-import { createPromptImageShelf } from "../../../../src/server/session-driver/core/prompt-image-shelf.ts"
-import type { CommandSession } from "../../../../src/server/session/core/command-session-port.ts"
-import { createStartupToken } from "../../../../src/server/view-server/adapter/server.ts"
+import { createSocketRouter } from "../../../../../src/router.ts"
+import { createPromptImageShelf } from "../../../../../src/server/session-driver/core/prompt-image-shelf.ts"
+import type { CommandSession } from "../../../../../src/server/session/core/command-session-port.ts"
 import {
   attachSessionSocket,
   type SessionSocket,
-} from "../../../../src/server/view-server/adapter/session-socket.ts"
-import type { CommandRefusalReason } from "../../../../src/shared/command.ts"
+} from "../../../../../src/server/view-server/adapter/rpc/session-socket.ts"
+import { createStartupToken } from "../../../../../src/server/view-server/adapter/server.ts"
+import type { CommandRefusalReason } from "../../../../../src/shared/command.ts"
 import {
   FRAME_ERROR_REASON,
   PROTOCOL_VERSION,
   type ServerFrame,
-} from "../../../../src/shared/frame.ts"
-import type { socketContract } from "../../../../src/shared/rpc.ts"
-import { INITIAL_SESSION_STATE } from "../../../../src/shared/session/session-state.ts"
-import { SESSION_SOCKET_PATH } from "../../../../src/shared/view-server/session-socket.ts"
+} from "../../../../../src/shared/frame.ts"
+import type { socketContract } from "../../../../../src/shared/rpc.ts"
+import { INITIAL_SESSION_STATE } from "../../../../../src/shared/session/session-state.ts"
+import { SESSION_SOCKET_PATH } from "../../../../../src/shared/view-server/session-socket.ts"
 
 // 会話は流さない（フレームの中身は初期状態と架空のセリフだけ）。
 const TOKEN = createStartupToken()

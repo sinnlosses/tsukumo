@@ -4,7 +4,7 @@ import { join } from "node:path"
 
 import { describe, expect, it } from "vitest"
 
-import { sourceFingerprint } from "../../../../src/server/view-server/adapter/source-fingerprint.ts"
+import { sourceFingerprint } from "../../../../../src/server/view-server/adapter/build/source-fingerprint.ts"
 
 // 開発サーバつきの起動（`pnpm run dev`）で、画面へ差分を当ててよいかを決める指紋。
 // 一時ディレクトリに `browser/` と `shared/` を模した木を作って確かめる。

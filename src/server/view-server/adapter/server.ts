@@ -27,7 +27,7 @@ import { SESSION_TOKEN_QUERY_NAME } from "../../../shared/view-server/session-so
 import { VENDOR_PATH_PREFIX } from "../../../shared/view-server/vendor-asset.ts"
 import { ITEM_ASSET_PATH_PREFIX } from "../../core/item-asset.ts"
 import { createRpcHandler, serveRpc } from "./rpc-bridge.ts"
-import type { RpcContext } from "./rpc-guard.ts"
+import type { RpcContext } from "./rpc/rpc-guard.ts"
 import type {
   FindPromptImage,
   FindReportImage,

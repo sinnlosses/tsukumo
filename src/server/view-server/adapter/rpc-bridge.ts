@@ -5,7 +5,7 @@ import type { IncomingMessage, ServerResponse } from "node:http"
 import { BodyLimitPlugin, RPCHandler } from "@orpc/server/fetch"
 
 import { RPC_PATH } from "../../../shared/rpc.ts"
-import { type RpcContext, rpcContextOf } from "./rpc-guard.ts"
+import { type RpcContext, rpcContextOf } from "./rpc/rpc-guard.ts"
 import type { RpcRouter } from "./server-port.ts"
 
 /**

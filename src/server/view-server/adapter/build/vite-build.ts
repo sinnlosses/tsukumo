@@ -10,8 +10,8 @@
 import { execFile } from "node:child_process"
 import { stripVTControlCharacters } from "node:util"
 
-import { clipText } from "../../../shared/utils/clip-text.ts"
-import { bundledFilePath } from "../../adapter/bundled-path.ts"
+import { clipText } from "../../../../shared/utils/clip-text.ts"
+import { bundledFilePath } from "../../../adapter/bundled-path.ts"
 
 /** Vite の設定ファイル。入口のファイル名と、出す2つのファイル名はここに書いてある。 */
 export const VITE_CONFIG_RELATIVE_PATH: readonly string[] = ["vite.config.ts"]

@@ -207,6 +207,37 @@ describe(".dependency-cruiser.cjs の規則", () => {
       expect(forbids(`${ADAPTER_DIR}/sdk/a.ts`, `${ADAPTER_DIR}/sdk/b.ts`)).toBe(false)
     })
 
+    it("view-server/adapter/ の規則の子は実際のディレクトリと過不足なく一致する", () => {
+      const prefix = "server-child-edge:view-server/adapter/"
+      const ruleChildren = allChildRules
+        .filter((rule) => rule.name.startsWith(prefix))
+        .map((rule) => rule.name.slice(prefix.length))
+      const directories = readdirSync(`${SRC_ROOT}/server/view-server/adapter`, {
+        withFileTypes: true,
+      })
+        .filter((entry) => entry.isDirectory())
+        .map((entry) => entry.name)
+
+      expect(ruleChildren.toSorted()).toEqual(directories.toSorted())
+    })
+
+    it("build/ と rpc/ は互いを読む import を落とし、adapter/ 直下のファイルは通す", () => {
+      const forbids = (from: string, to: string): boolean =>
+        allChildRules.some(
+          (rule) =>
+            new RegExp(rule.from.path ?? "(?!)").test(from) &&
+            new RegExp(rule.to.path ?? "(?!)").test(to) &&
+            !new RegExp(rule.to.pathNot ?? "(?!)").test(to),
+        )
+      const ADAPTER_DIR = "src/server/view-server/adapter"
+
+      expect(forbids(`${ADAPTER_DIR}/build/a.ts`, `${ADAPTER_DIR}/rpc/b.ts`)).toBe(true)
+      expect(forbids(`${ADAPTER_DIR}/rpc/a.ts`, `${ADAPTER_DIR}/build/b.ts`)).toBe(true)
+      expect(forbids(`${ADAPTER_DIR}/build/a.ts`, `${ADAPTER_DIR}/server-port.ts`)).toBe(false)
+      expect(forbids(`${ADAPTER_DIR}/rpc/a.ts`, `${ADAPTER_DIR}/server-port.ts`)).toBe(false)
+      expect(forbids(`${ADAPTER_DIR}/rpc/a.ts`, `${ADAPTER_DIR}/rpc/b.ts`)).toBe(false)
+    })
+
     it("許す先は表の子だけ", () => {
       const children = new Set(childRules.map((rule) => rule.name.slice(CHILD_PREFIX.length)))
       const allowed = childRules.flatMap((rule) =>

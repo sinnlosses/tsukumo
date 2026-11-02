@@ -4,7 +4,7 @@ import { join } from "node:path"
 import { describe, expect, test } from "vitest"
 
 import { isBuiltUiCurrent, recordBuildInputs } from "../../../../scripts/dev/lib/build-ui-skip.ts"
-import { bundledSourceFingerprint } from "../../../../src/server/view-server/adapter/bundle.ts"
+import { bundledSourceFingerprint } from "../../../../src/server/view-server/adapter/build/bundle.ts"
 import { useTempDir } from "../../../fixture/temp-dir.ts"
 
 /** 組み立てたときのソースの指紋を置くファイル（`SOURCE_FINGERPRINT_FILE_NAME`）。 */

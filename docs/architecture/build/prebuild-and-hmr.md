@@ -65,7 +65,7 @@
 ### 作り直しを押す仕組み
 
 **作り直しを押す仕組み。** 開発中は HMR で差し替える。`pnpm run dev`（= `pnpm run build && node src/cli.ts --dev`）で起こすと、
-`src/server/view-server/adapter/ui-dev-server.ts` が Vite の開発サーバを **middleware mode** で起こし、
+`src/server/view-server/adapter/build/ui-dev-server.ts` が Vite の開発サーバを **middleware mode** で起こし、
 ビューサーバ（`node:http`）に差し込む。設定は組み立てと同じ `vite.config.ts` で、root は `src/browser/`。
 
 - **配り方は `server-port.ts` の `ViewUi` の合併型**（`bundle` / `dev`）。`dev` のとき、ページは

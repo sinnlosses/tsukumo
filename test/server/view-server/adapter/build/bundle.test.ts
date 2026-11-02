@@ -8,7 +8,7 @@ import {
   buildUiBundle,
   builtUiDir,
   readUiBundle,
-} from "../../../../src/server/view-server/adapter/bundle.ts"
+} from "../../../../../src/server/view-server/adapter/build/bundle.ts"
 
 // `vite build` を実際に起こす統合的なテスト。src/browser/ が壊れていないことも合わせて確かめる
 // （本物のリポジトリのファイルを対象にする。CLI 起動を最後までしない別のテストと

@@ -10,7 +10,7 @@
 import { join } from "node:path"
 import process from "node:process"
 
-import { buildUiBundle, builtUiDir } from "../../src/server/view-server/adapter/bundle.ts"
+import { buildUiBundle, builtUiDir } from "../../src/server/view-server/adapter/build/bundle.ts"
 import { REPOSITORY_ROOT } from "../shared/repository-root.ts"
 import { isBuiltUiCurrent, recordBuildInputs } from "./lib/build-ui-skip.ts"
 import { stripCssCommentInFile } from "./lib/strip-css-comment.ts"

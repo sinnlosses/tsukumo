@@ -4,9 +4,9 @@ import type { Router } from "@orpc/server"
 
 import type { CharacterAssetLocation } from "../../../shared/character-pack/character-asset.ts"
 import type { rpcContract } from "../../../shared/rpc.ts"
-import type { UiBundle } from "./bundle.ts"
-import type { RpcContext } from "./rpc-guard.ts"
-import type { UiDevServer } from "./ui-dev-server.ts"
+import type { UiBundle } from "./build/bundle.ts"
+import type { UiDevServer } from "./build/ui-dev-server.ts"
+import type { RpcContext } from "./rpc/rpc-guard.ts"
 
 /**
  * ブラウザ側をどこから配るか。`bundle` は組み立て済みのスクリプトと CSS の対を `/assets/` から、

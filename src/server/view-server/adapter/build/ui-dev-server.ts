@@ -14,7 +14,7 @@
 
 import type { IncomingMessage, Server, ServerResponse } from "node:http"
 
-import { bundledFilePath } from "../../adapter/bundled-path.ts"
+import { bundledFilePath } from "../../../adapter/bundled-path.ts"
 import { UI_SOURCE_DIR_RELATIVE_PATH } from "./bundle.ts"
 import { sourceFingerprint } from "./source-fingerprint.ts"
 import { VITE_CONFIG_RELATIVE_PATH } from "./vite-build.ts"

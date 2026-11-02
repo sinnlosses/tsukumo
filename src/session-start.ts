@@ -14,7 +14,7 @@ import type { PromptImageShelf } from "./server/session-driver/core/prompt-image
 import { EVENT_BATCH_INTERVAL_MS } from "./server/session/core/event/event-batch.ts"
 import type { SessionManager } from "./server/session/core/session-manager-port.ts"
 import { createSessionManager } from "./server/session/core/session-manager.ts"
-import type { SocketRouter } from "./server/view-server/adapter/session-socket.ts"
+import type { SocketRouter } from "./server/view-server/adapter/rpc/session-socket.ts"
 import type { WorkflowSettingProcedurePorts } from "./server/workflow-setting/adapter/workflow-setting-procedure.ts"
 import type { wireAchievement } from "./wiring/achievement.ts"
 import { wireCharacterPack } from "./wiring/character-pack.ts"

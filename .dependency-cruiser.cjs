@@ -46,6 +46,10 @@ const SERVER_CHILD_IMPORTS = {
     sdk: [],
     fake: [],
   },
+  "view-server/adapter": {
+    build: [],
+    rpc: [],
+  },
 }
 
 const BROWSER_FRAMES = ["components/domain/screen-nav", "components/domain/sidebar"]
@@ -128,7 +132,7 @@ const CHILD_PROCESS_FILES = [
   "src/server/checkout/adapter/checkout-launch.ts",
   "src/server/host/adapter/orca-host.ts",
   "src/server/host/adapter/browser-host.ts",
-  "src/server/view-server/adapter/vite-build.ts",
+  "src/server/view-server/adapter/build/vite-build.ts",
   "src/server/repository/adapter/git.ts",
   "src/server/repository/adapter/beads.ts",
   "src/server/session-driver/adapter/sdk/rtk-rewrite.ts",

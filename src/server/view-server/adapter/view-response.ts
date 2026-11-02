@@ -10,7 +10,7 @@ import {
 } from "../../../shared/session-driver/prompt-image.ts"
 import { vendorAssetPath } from "../../../shared/view-server/vendor-asset.ts"
 import { readItemAssetPath } from "../../core/item-asset.ts"
-import type { UiBundle } from "./bundle.ts"
+import type { UiBundle } from "./build/bundle.ts"
 import type {
   FindPromptImage,
   FindReportImage,

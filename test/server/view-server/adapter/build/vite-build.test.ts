@@ -4,8 +4,8 @@ import { join } from "node:path"
 
 import { describe, expect, it } from "vitest"
 
-import { readUiBundle } from "../../../../src/server/view-server/adapter/bundle.ts"
-import { runViteBuild } from "../../../../src/server/view-server/adapter/vite-build.ts"
+import { readUiBundle } from "../../../../../src/server/view-server/adapter/build/bundle.ts"
+import { runViteBuild } from "../../../../../src/server/view-server/adapter/build/vite-build.ts"
 
 // `vite build` を実際に起こす。src/browser/ を壊さず、一時ディレクトリに書いた入口ファイルで失敗の側を確かめる。
 

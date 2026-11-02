@@ -4,7 +4,7 @@ import { join } from "node:path"
 import { describe, expect, test } from "vitest"
 
 import { assertBuiltUiFresh } from "../../../../scripts/dev/lib/built-ui-freshness.ts"
-import { bundledSourceFingerprint } from "../../../../src/server/view-server/adapter/bundle.ts"
+import { bundledSourceFingerprint } from "../../../../src/server/view-server/adapter/build/bundle.ts"
 import { useTempDir } from "../../../fixture/temp-dir.ts"
 
 const FAR_FUTURE_SECONDS = 4_000_000_000

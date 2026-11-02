@@ -19,13 +19,13 @@
 `<機能>/adapter/<機能>-procedure.ts`（委ね先）→ `<機能>/core/`（コマンドなら `<機能>-command.ts` の
 行）。**どのコマンドでも同じ4段**。
 
-| 置くもの                                        | 場所                                            |
-| ----------------------------------------------- | ----------------------------------------------- |
-| 契約（形・**断る条件の `meta`**）               | `src/shared/contract/<機能>.ts`                 |
-| 機能の表（コマンドだけ）                        | `src/server/<機能>/core/<機能>-command.ts`      |
-| 行の型と、葉の行を呼ぶ関数                      | `src/server/core/command-receiver.ts`           |
-| 手続き（`implement(contract.<機能>)` の受け手） | `src/server/<機能>/adapter/<機能>-procedure.ts` |
-| 照合と断る条件のミドルウェア                    | `src/server/view-server/adapter/rpc-guard.ts`   |
+| 置くもの                                        | 場所                                              |
+| ----------------------------------------------- | ------------------------------------------------- |
+| 契約（形・**断る条件の `meta`**）               | `src/shared/contract/<機能>.ts`                   |
+| 機能の表（コマンドだけ）                        | `src/server/<機能>/core/<機能>-command.ts`        |
+| 行の型と、葉の行を呼ぶ関数                      | `src/server/core/command-receiver.ts`             |
+| 手続き（`implement(contract.<機能>)` の受け手） | `src/server/<機能>/adapter/<機能>-procedure.ts`   |
+| 照合と断る条件のミドルウェア                    | `src/server/view-server/adapter/rpc/rpc-guard.ts` |
 
 - **断る条件は契約の `meta` に書く**（行には持たない。二重に持たない）。形は
   `{ chatOnly: false | 理由, idleTurn: false | 理由 }`（`src/shared/command.ts` の `CommandMeta`）で、

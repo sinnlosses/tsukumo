@@ -26,7 +26,7 @@
 **機能の決め方**（上から順に当てる。数えるのはファイル名と import で、読み手の数は数えない）:
 
 1. **サーバのある機能が同じ語彙を持つなら、その機能**。手がかりは、サーバのその機能に同じ名前の
-   ファイルがある（`view-server/adapter/session-socket.ts` → `shared/view-server/`）・ファイル名が
+   ファイルがある（`view-server/adapter/rpc/session-socket.ts` → `shared/view-server/`）・ファイル名が
    機能の名前で始まる（`report-block.ts` → `shared/report/`）・サーバでその値を組み立てる（外から来た
    値を検証して型にする）のがその機能（`api-trouble.ts` は SDK のメッセージを畳む `session-driver`）
 2. 手がかりが食い違ったら、**shared の機能どうしの辺が輪にならないほう**（`character-diary-font.ts` は

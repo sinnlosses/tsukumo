@@ -54,14 +54,14 @@ import {
 } from "./server/usage/adapter/token-usage-procedure.ts"
 import { usageReviewProcedure } from "./server/usage/adapter/usage-review-procedure.ts"
 import type { UsageReviewCommandPorts } from "./server/usage/core/usage-review-command.ts"
-import { frameProcedure } from "./server/view-server/adapter/frame-procedure.ts"
+import { frameProcedure } from "./server/view-server/adapter/rpc/frame-procedure.ts"
 import {
   commandGuard,
   type CommandRpcContext,
   type RpcContext,
   rpcGuard,
   type SocketRpcContext,
-} from "./server/view-server/adapter/rpc-guard.ts"
+} from "./server/view-server/adapter/rpc/rpc-guard.ts"
 import {
   workflowSettingCommandProcedure,
   type WorkflowSettingProcedurePorts,
