@@ -16,6 +16,8 @@ import {
 /** 強調の行の先頭のセルに置く印。地の色は CSS が `tr:has()` で行に当てる。 */
 const EMPHASIS_ROW_MARK = '<span class="row-emphasis-mark" aria-hidden="true"></span>'
 
+const EMPHASIS_COLUMN_MARK = '<span class="column-emphasis-mark" aria-hidden="true"></span>'
+
 const TAG_TONE_COUNT = 5
 const TAG_TONE_NONE = "tag-none"
 
@@ -48,7 +50,11 @@ export function tableMarkdown(
     body: joinParts([
       tableStatusLegendMarkdown(legendStatuses),
       [
-        markdownRow(table.columns.map((column) => cellMarkdown(column, NO_BAR, tagTones))),
+        markdownRow(
+          table.columns.map((column, index) =>
+            columnMarked(cellMarkdown(column, NO_BAR, tagTones), index, table.emphasisColumn),
+          ),
+        ),
         markdownRow(aligns.map((align) => (align === "right" ? "---:" : "---"))),
         ...tableRowMarkdowns(table, tagTones),
       ].join("\n"),
@@ -68,14 +74,22 @@ function tableRowMarkdowns(
 ): readonly string[] {
   const { bars, statusColumns } = tableLayoutOf(table)
   const bodyCellMarkdown = (cell: TableCell, index: number): string =>
-    statusColumns[index] === true && typeof cell === "string"
-      ? `<span class="cell-status-none">${cellTextMarkdown(cell)}</span>`
-      : cellMarkdown(cell, bars[index] ?? NO_BAR, tagTones)
+    columnMarked(
+      statusColumns[index] === true && typeof cell === "string"
+        ? `<span class="cell-status-none">${cellTextMarkdown(cell)}</span>`
+        : cellMarkdown(cell, bars[index] ?? NO_BAR, tagTones),
+      index,
+      table.emphasisColumn,
+    )
   return table.rows.map((row) => {
     const cells = tableRowCells(row).map(bodyCellMarkdown)
     const [first = "", ...rest] = cells
     return markdownRow(isEmphasisRow(row) ? [`${EMPHASIS_ROW_MARK}${first}`, ...rest] : cells)
   })
+}
+
+function columnMarked(cell: string, index: number, emphasisColumn: number | undefined): string {
+  return index === emphasisColumn ? `${EMPHASIS_COLUMN_MARK}${cell}` : cell
 }
 
 /** 表に出た状態のセルの状態だけを、題と表のあいだの凡例に並べる。 */

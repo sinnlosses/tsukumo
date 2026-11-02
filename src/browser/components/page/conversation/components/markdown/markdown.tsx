@@ -122,6 +122,7 @@ export const tableLeafClassNames = {
   changeTo: notationStyles["report-change-to"],
   tag: notationStyles["report-tag"],
   rowEmphasisMark: notationStyles["report-row-emphasis-mark"],
+  columnEmphasisMark: notationStyles["report-column-emphasis-mark"],
   tableRest: notationStyles["report-table-rest"],
   tableStatusLegend: notationStyles["report-table-status-legend"],
   tableStatusLegendItem: notationStyles["report-table-status-legend-item"],

@@ -93,6 +93,7 @@ const REPORT_BLOCK_MARK_NAMES = [
   "tag-5",
   "tag-none",
   "row-emphasis-mark",
+  "column-emphasis-mark",
   "file-diff",
   "cell-numeric",
   "cell-bar",

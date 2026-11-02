@@ -110,6 +110,15 @@ export function isRaggedTable(leaf: ReportOutlineLeaf): boolean {
   }
 }
 
+/** `emphasisColumn` が列の数以上の `Table` か。 */
+export function isEmphasisColumnOutOfRange(leaf: ReportOutlineLeaf): boolean {
+  return (
+    leaf.component === "Table" &&
+    leaf.emphasisColumn !== undefined &&
+    leaf.emphasisColumn >= leaf.columns.length
+  )
+}
+
 /**
  * 行が2つ以上で、ある列のセルの平均が {@link SENTENCE_CELL_LENGTH} 字以上の表か。
  * 字数はセルを構文木にした `text` ノードだけを数え、インラインコードとリンクの URL は数えない。

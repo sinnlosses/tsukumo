@@ -24,6 +24,7 @@ import {
   hasBadRegion,
   hasShortSeries,
   hasUnknownEmphasis,
+  isEmphasisColumnOutOfRange,
   isRaggedChart,
   isRaggedTable,
   isSentenceTable,
@@ -58,6 +59,8 @@ export type BlockViolation =
   | { readonly kind: "long-table"; readonly count: number }
   /** 強調の行（`emphasis`）が上限を超える `table` がある。`count` は表の数。 */
   | { readonly kind: "many-emphasis-rows"; readonly count: number }
+  /** `emphasisColumn` が列の数以上の `table` がある。`count` は表の数。 */
+  | { readonly kind: "emphasis-column-range"; readonly count: number }
   /** 行が2つ以上で、ある列のセルの平均が全角 `SENTENCE_CELL_LENGTH` 字以上の `table` がある（インラインコードとリンクの URL は数えない）。`count` は表の数。 */
   | { readonly kind: "sentence-table"; readonly count: number }
   /** 項目が上限を超える `list` がある。`count` は塊の数。 */
@@ -137,6 +140,10 @@ export function detectBlockViolations(
           leaf.component === "Table" && leaf.rows.filter(isEmphasisRow).length > MAX_EMPHASIS_ROWS,
       ).length,
     },
+    {
+      kind: "emphasis-column-range",
+      count: leaves.filter((leaf) => isEmphasisColumnOutOfRange(leaf)).length,
+    },
     { kind: "sentence-table", count: leaves.filter((leaf) => isSentenceTable(leaf)).length },
     {
       kind: "long-list",
@@ -186,6 +193,7 @@ const BLOCK_KINDS: ReadonlySet<string> = new Set<BlockViolation["kind"]>([
   "ragged-table",
   "long-table",
   "many-emphasis-rows",
+  "emphasis-column-range",
   "sentence-table",
   "long-list",
   "bad-cards",
@@ -237,6 +245,8 @@ export function blockViolationMessage(violation: BlockViolation): string {
       return `\`marks\` が無く${String(MAX_PLAIN_CODE_LINES + 1)}行以上の \`Code\` が${violation.count}個ある。要る範囲だけを引く（${String(MAX_PLAIN_CODE_LINES)}行まで）`
     case "ragged-chart":
       return `\`series\` の \`values\` の数が \`labels\` と揃わない、または \`arrow\`・\`slope\`・\`span\` の \`series\` が前と後（span は始まりと終わり）の2つでない \`Chart\` が${violation.count}個ある。数を揃える`
+    case "emphasis-column-range":
+      return `\`emphasisColumn\` が列の数以上の表が${violation.count}個ある。列の数より小さい位置（0 始まり）にする`
     case "unknown-emphasis":
       return `\`emphasis\` に \`labels\` に無い名前がある \`Chart\` が${violation.count}個ある。\`labels\` にある名前だけにする`
     case "short-series":

@@ -91,14 +91,24 @@ export function TableFigure(props: {
 
 function headCells(part: TablePart, value: LeafValue): readonly ReactNode[] {
   return part.columns.map((column, index) => (
-    <CellContent
-      key={`${String(index)}:${column}`}
-      cell={column}
-      bar={NO_BAR}
-      statusColumn={false}
-      value={value}
-    />
+    <ColumnMarked key={`${String(index)}:${column}`} marked={index === part.emphasisColumn}>
+      <CellContent cell={column} bar={NO_BAR} statusColumn={false} value={value} />
+    </ColumnMarked>
   ))
+}
+
+function ColumnMarked(props: {
+  readonly marked: boolean
+  readonly children: ReactNode
+}): ReactElement {
+  return (
+    <>
+      {props.marked && (
+        <span className={tableLeafClassNames.columnEmphasisMark} aria-hidden="true" />
+      )}
+      {props.children}
+    </>
+  )
 }
 
 function bodyRows(
@@ -113,13 +123,17 @@ function bodyRows(
       return []
     }
     const cells = tableRowCells(row).map((cell, column) => (
-      <CellContent
+      <ColumnMarked
         key={`${String(column)}:${tableCellTexts(cell).join("|")}`}
-        cell={cell}
-        bar={layout.bars[column] ?? NO_BAR}
-        statusColumn={layout.statusColumns[column] === true}
-        value={value}
-      />
+        marked={column === part.emphasisColumn}
+      >
+        <CellContent
+          cell={cell}
+          bar={layout.bars[column] ?? NO_BAR}
+          statusColumn={layout.statusColumns[column] === true}
+          value={value}
+        />
+      </ColumnMarked>
     ))
     const [first, ...rest] = cells
     return [

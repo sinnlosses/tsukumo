@@ -236,6 +236,20 @@
   & tbody tr:has(.report-row-emphasis-mark) .report-cell-bar {
     background: var(--surface-accent);
   }
+  /* 強調の列。列の印を持つ見出しとセルに差し色の薄い地を敷く。行の強調と重なるセルは、行の地の上に差し色を重ねて両方を残す。 */
+  & th:has(.report-column-emphasis-mark),
+  & td:has(.report-column-emphasis-mark) {
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
+  }
+  & tbody td:has(.report-column-emphasis-mark) .report-cell-bar {
+    background: color-mix(in srgb, var(--accent) 34%, transparent);
+  }
+  & tbody tr:has(.report-row-emphasis-mark) td:has(.report-column-emphasis-mark) {
+    background: color-mix(in srgb, var(--accent) 22%, var(--surface-raised));
+  }
+  & tbody tr:has(.report-row-emphasis-mark) td:has(.report-column-emphasis-mark) .report-cell-bar {
+    background: color-mix(in srgb, var(--accent) 48%, transparent);
+  }
   /* 表の凡例。題の直下に左揃えで置く。 */
   & .report-captioned > .report-table-status-legend {
     display: flex;

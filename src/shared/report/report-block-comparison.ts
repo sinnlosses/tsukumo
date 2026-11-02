@@ -45,6 +45,12 @@ export const tableBlockSchema = z
       .min(1)
       .describe("行ごとのセル。数は columns と揃える。セルは1行、空にせず「なし」と書く"),
     rest: omittable(inlineText, ""),
+    emphasisColumn: z
+      .number()
+      .int()
+      .min(0)
+      .optional()
+      .describe("案を列に並べた表で採った案の列（0始まり）"),
     fold,
     aside,
   })

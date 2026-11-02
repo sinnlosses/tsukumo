@@ -7,11 +7,13 @@ import { markdownOf, NO_IMAGES, section, tableCaptioned } from "../../fixture/re
 describe("表の tag と強調の行", () => {
   const tableOf = (
     rows: Extract<ReportBlock, { readonly kind: "table" }>["rows"],
+    emphasisColumn?: number,
   ): FigureBlock => ({
     kind: "table",
     title: "架空の表",
     columns: ["項目", "種別"],
     rows,
+    emphasisColumn,
     rest: "",
     fold: "",
     aside: "",
@@ -62,6 +64,24 @@ describe("表の tag と強調の行", () => {
     for (const value of ["alpha\\|1", "beta"]) {
       expect(markdown).toContain(`>${value}</span>`)
     }
+  })
+
+  it("強調の列の見出しと各データセルに印が付き、ほかの列と欄なしの表には付かない", () => {
+    const withColumn = markdownOf(
+      tableOf(
+        [
+          ["a", "1"],
+          ["b", "2"],
+        ],
+        1,
+      ),
+    )
+    const mark = '<span class="column-emphasis-mark" aria-hidden="true"></span>'
+
+    expect(withColumn.match(/column-emphasis-mark/g)).toHaveLength(3)
+    expect(withColumn).toContain(`| b | ${mark}<span class="cell-numeric">`)
+    expect(withColumn).toContain(`| 項目 | ${mark}種別 |`)
+    expect(markdownOf(tableOf([["a", "1"]]))).not.toContain("column-emphasis-mark")
   })
 
   it("強調の行の先頭のセルにだけ印が付き、ほかの行には付かない", () => {

@@ -57,6 +57,30 @@ describe("reportViolations", () => {
       expect(reportRejectionText(violations)).toContain("強調は3行までに絞る")
     })
 
+    it.each([
+      ["列の数と同じ位置", 2, [{ kind: "emphasis-column-range", count: 1 }]],
+      ["列の数を超える位置", 5, [{ kind: "emphasis-column-range", count: 1 }]],
+      ["最後の列", 1, []],
+      ["先頭の列", 0, []],
+      ["欄なし", undefined, []],
+    ])("強調する列が %s のとき", (_, emphasisColumn, expected) => {
+      const table: ReportBlock = {
+        kind: "table",
+        title: "架空の表",
+        columns: ["列", "値"],
+        rows: [["a", "1"]],
+        rest: "",
+        fold: "",
+        aside: "",
+        emphasisColumn,
+      }
+      const violations = reportViolations(draft([table]))
+      expect(violations).toEqual(expected)
+      if (expected.length > 0) {
+        expect(reportRejectionText(violations)).toContain("列の数")
+      }
+    })
+
     it("セルの数が揃わない行のある matrix も違反", () => {
       const matrix: ReportBlock = {
         kind: "matrix",

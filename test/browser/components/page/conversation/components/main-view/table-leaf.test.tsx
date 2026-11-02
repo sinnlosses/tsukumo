@@ -27,6 +27,7 @@ type TableFields = {
   rest?: string
   fold?: string
   aside?: string
+  emphasisColumn?: number
 }
 
 function pair(rows: TablePart["rows"], fields: TableFields = {}) {
@@ -37,6 +38,7 @@ function pair(rows: TablePart["rows"], fields: TableFields = {}) {
     rest: fields.rest ?? "",
     fold: fields.fold ?? "",
     aside: fields.aside ?? "",
+    emphasisColumn: fields.emphasisColumn,
   }
   const part: TablePart = { id: "t1", component: "Table", ...base }
   return { block: { kind: "table", ...base } as const, part }
@@ -111,6 +113,12 @@ describe("Table の部品", () => {
       {},
     ],
     ["強調の行", [{ cells: ["架空のA", "10"], emphasis: true }, ["架空のB", "5"]], {}],
+    ["強調の列", SIMPLE, { emphasisColumn: 1 }],
+    [
+      "強調の列と強調の行が重なる",
+      [{ cells: ["架空のA", "10"], emphasis: true }, ["架空のB", "5"]],
+      { emphasisColumn: 0 },
+    ],
     ["rest", SIMPLE, { rest: "ほか 3 件は `x.ts` に省略" }],
     ["fold", SIMPLE, { fold: "架空の畳み" }],
     ["fold と題と欄外注", SIMPLE, { fold: "架空の畳み", title: "架空の題", aside: "架空の欄外注" }],
@@ -128,6 +136,13 @@ describe("Table の部品", () => {
     const { fresh, old } = both(rows, fields)
 
     expect(fresh).toBe(old)
+  })
+
+  it("強調の列は見出しと各データセルに印を1つずつ置き、欄を書かない表には置かない", () => {
+    const marks = (html: string) => html.match(/column-emphasis-mark/g)?.length ?? 0
+
+    expect(marks(both(SIMPLE, { emphasisColumn: 1 }).fresh)).toBe(3)
+    expect(marks(both(SIMPLE).fresh)).toBe(0)
   })
 
   it("10 行を超える表は 10 行で切り、「ほか n 件」を押すと全行が出る", () => {

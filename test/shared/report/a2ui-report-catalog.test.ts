@@ -167,6 +167,23 @@ describe("A2UI のカタログ文書", () => {
     expect(JSON.stringify(document.components.Table)).toContain("filterColumn")
   })
 
+  it("Table は emphasisColumn を任意の 0 以上の整数で受ける", () => {
+    const base = {
+      id: "t",
+      component: "Table",
+      title: "件数",
+      columns: ["名前", "数"],
+      rows: [["a", "1"]],
+    }
+    const schema = REPORT_COMPONENT_SCHEMAS.Table
+
+    expect(schema.safeParse(base).success).toBe(true)
+    expect(schema.safeParse({ ...base, emphasisColumn: 0 }).success).toBe(true)
+    expect(schema.safeParse({ ...base, emphasisColumn: -1 }).success).toBe(false)
+    expect(schema.safeParse({ ...base, emphasisColumn: 1.5 }).success).toBe(false)
+    expect(JSON.stringify(document.components.Table)).toContain("emphasisColumn")
+  })
+
   it("元の zod の説明が部品の props に運ばれる", () => {
     expect(JSON.stringify(document.components.Claims)).toContain("howToVerify")
   })
