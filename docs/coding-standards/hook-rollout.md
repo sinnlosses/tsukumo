@@ -2,7 +2,7 @@
 
 ステータス: **正典**。入口は `docs/coding-standards.md`（規約の理由と例外の入口と、子のファイルの一覧）。
 
-責務: ツールの呼び出しを拒む新しい hook を log-only から入れて block に上げる手順を持つ。
+責務: ツールの呼び出しを拒む・結果を切る新しい hook を log-only から入れて block に上げる手順を持つ。
 読む時: `scripts/hook/lib/` に拒む判定を足すとき、hook を block に上げるとき。
 直す時: mode の読み方・記録の形・再生の台本を変えたとき。
 
@@ -22,3 +22,13 @@ block で入れた hook は、誤って拒む形が後から見つかる（`deny
 5. 誤検知が無ければ `LOG_ONLY_HOOKS` から名前を外して block に上げる
 
 `hook-denial-tally.ts` の拒否の回数には log-only の行を数えない（拒んでいないため）。
+
+## ツールの結果を切る hook
+
+Claude Code の PostToolUse は組み込みのツール（Bash など）の結果を差し替えられない（差し替えられるのは MCP のツールの結果だけ）。
+結果を切る hook は、log-only の間は PostToolUse の入口 `scripts/hook/truncate-bash-output.ts` で結果の行数を数えて記録し、
+block に上げるときは PreToolUse でコマンドを包み直して切る。
+
+- 記録は拒む hook と同じ `hook-denials/` に、`mode: "log-only"` と切ったであろう行数 `cutLines` つきで残す。規則のキーは、そのコマンドを包み直せる形か（`wrappable`・`heredoc`・`background`）
+- `hook-denial-replay.ts` は規則のキーごとに、切るはずだった行数の合計を添える
+- block に上げる前に、`wrappable` 以外の形が切る対象に入らないことを再生で確かめる

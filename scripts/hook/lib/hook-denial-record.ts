@@ -23,15 +23,20 @@ export type HookDenial = {
   readonly mode?: "log-only"
 }
 
+/** ツールの結果を切る hook の行。切ったであろう行数を持つ。 */
+export type HookOverflow = HookDenial & { readonly cutLines: number }
+
 /** 呼び手の欄が無い旧い行の呼び手。 */
 export const UNKNOWN_ACTOR = "不明"
 
 export type RecordedHookDenial = Omit<HookDenial, "actor" | "mode"> & {
   readonly actor: DenialActor | typeof UNKNOWN_ACTOR
   readonly logOnly: boolean
+  /** 切ったであろう行数の欄が無い行は 0。 */
+  readonly cutLines: number
 }
 
-export function recordHookDenial(denial: Omit<HookDenial, "at">): void {
+export function recordHookDenial(denial: Omit<HookDenial, "at"> | Omit<HookOverflow, "at">): void {
   if (process.env["TSUKUMO_HOOK_DENIAL_RECORD"] === "off") {
     return
   }
@@ -81,7 +86,9 @@ function parseDenial(line: string): readonly RecordedHookDenial[] {
           ? value.actor
           : UNKNOWN_ACTOR
       const logOnly = "mode" in value && value.mode === "log-only"
-      return [{ at: value.at, hook: value.hook, rule: value.rule, actor, logOnly }]
+      const cutLines =
+        "cutLines" in value && typeof value.cutLines === "number" ? value.cutLines : 0
+      return [{ at: value.at, hook: value.hook, rule: value.rule, actor, logOnly, cutLines }]
     }
   } catch {
     // 壊れた行は数えない

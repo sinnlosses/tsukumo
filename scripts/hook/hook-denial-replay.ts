@@ -1,11 +1,11 @@
 // log-only で走らせた hook が「拒むはずだった形」を、記録から一覧する。
 // 使い方: node scripts/hook/hook-denial-replay.ts [--days N]（既定 7）
 // 記録にコマンドの全文は無いので、形は hook の名前と規則のキーで出す。
-// 規則のキーごとに、件数・呼び手の内訳・最初と最後の時刻を並べる。
+// 規則のキーごとに、件数・呼び手の内訳・最初と最後の時刻（結果を切る hook は切るはずだった行数の合計も）を並べる。
 
 import process from "node:process"
 
-import { countBy, groupBy } from "remeda"
+import { countBy, groupBy, sumBy } from "remeda"
 
 import { readHookDenials, type RecordedHookDenial } from "./lib/hook-denial-record.ts"
 import { readDays } from "./lib/read-period.ts"
@@ -29,7 +29,9 @@ function formatReplay(logOnly: readonly RecordedHookDenial[], periodDays: number
         .map(([actor, count]) => `${actor} ${count}`)
         .join(" / ")
       const times = group.map((denial) => denial.at).toSorted()
-      return `${key}: ${group.length}（${breakdown}）${times[0]} 〜 ${times.at(-1)}`
+      const cutLines = sumBy(group, (denial) => denial.cutLines)
+      const cut = cutLines > 0 ? ` 切るはずだった行 ${cutLines}` : ""
+      return `${key}: ${group.length}（${breakdown}）${times[0]} 〜 ${times.at(-1)}${cut}`
     },
   )
   return `直近 ${periodDays} 日に、log-only で拒むはずだった形\n${lines.join("\n")}\n`

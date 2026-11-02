@@ -2,13 +2,22 @@
 
 import process from "node:process"
 
-import { type BashHookCall, parseBashHookCall } from "./bash-hook-call.ts"
+import {
+  type BashHookCall,
+  type BashHookResult,
+  parseBashHookCall,
+  parseBashHookResult,
+} from "./bash-hook-call.ts"
 import { recordHookDenial } from "./hook-denial-record.ts"
 import { readHookMode } from "./hook-mode.ts"
 import { parseWebFetchHookCall, type WebFetchHookCall } from "./web-fetch-hook-call.ts"
 
 export async function readBashHookCall(): Promise<BashHookCall | undefined> {
   return parseBashHookCall(await readStdin())
+}
+
+export async function readBashHookResult(): Promise<BashHookResult | undefined> {
+  return parseBashHookResult(await readStdin())
 }
 
 export async function readWebFetchHookCall(): Promise<WebFetchHookCall | undefined> {
