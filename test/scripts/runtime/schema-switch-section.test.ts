@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import { schemaSwitchSection } from "../../../scripts/runtime/schema-switch-section.ts"
-import { REPORT_USAGE_FORMAT_VERSION } from "../../../src/server/report/core/report-usage-record.ts"
+import { REPORT_USAGE_FORMAT_VERSION } from "../../../src/server/report/core/usage/report-usage-record.ts"
 
 const accepted = (at: string, sessionId = "s1") => ({ at, sessionId, driver: "sdk" })
 const rejected = (

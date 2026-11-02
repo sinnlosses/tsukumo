@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest"
 import {
   createReportImageShelf,
   type ReportImage,
-} from "../../../../src/server/report/core/report-image-shelf.ts"
+} from "../../../../src/server/report/core/image/report-image-shelf.ts"
 import {
   createPromptImageShelf,
   type PromptImageShelf,

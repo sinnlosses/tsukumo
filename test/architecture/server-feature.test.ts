@@ -36,7 +36,7 @@ describe("server/ の機能どうしの import", () => {
 
   // 上の2つが黙って空振りしないことの確かめ（検査の道具そのものの振る舞い）。
   it("層の判定は、知らない機能・機能の中で core/ adapter/ の外・server/ の直下で throw する", () => {
-    expect(layerOf("server/report/core/report-tool.ts")).toBe("core")
+    expect(layerOf("server/report/core/prompt/report-tool.ts")).toBe("core")
     expect(layerOf("server/core/config.ts")).toBe("core")
     expect(layerOf("server/adapter/lib/json-file.ts")).toBe("adapter")
     expect(() => layerOf("server/unknown-feature/core/x.ts")).toThrow("の置き場を判定できない")

@@ -5,7 +5,7 @@ import {
   recordSchema,
   rejectionSchema,
 } from "../../../scripts/runtime/report-usage-row.ts"
-import { REPORT_USAGE_FORMAT_VERSION } from "../../../src/server/report/core/report-usage-record.ts"
+import { REPORT_USAGE_FORMAT_VERSION } from "../../../src/server/report/core/usage/report-usage-record.ts"
 
 describe("集計が読む記録の形", () => {
   const acceptedRow = {

@@ -15,7 +15,7 @@
     （モデル自身が書いた文を返すだけで、`conclusion` 配列の1要素目を返す。orca の通知が最後のツール結果を
     本文に使うので、差し戻しの文を通知に残さないため）。描けたか・どこに出たかといった
     画面の状態は載せない（レポートの出力を「検査 → 整形 → 描画」に分けた検査の段。
-    `src/server/report/core/report-review.ts`）。差し戻しは次のそれぞれで別に1ターンに1回まで:
+    `src/server/report/core/review/report-review.ts`）。差し戻しは次のそれぞれで別に1ターンに1回まで:
     - 「レポートの記法」の条のうち機械で判定できるもの。文字の並びで判定する条は、`conclusion` の3要素以上・
       見出しが30字超か疑問文・地の文と表のセルの `A → B`（インラインコードの中・`from` / `to`・
       `flow` は通す）・`list` の項目の頭の「名前: 説明」（URL・時刻・インラインコードの頭・20字を超える頭は通す。`cards` は除く）・
@@ -139,7 +139,7 @@
 
 - カタログの部品の名前（`component` の値。30 種）を1つ渡すと、その部品の**文法カード**（JSON Schema と、架空の値で書いた `components` の例1つ）を返す。
   知らない名前には、引ける名前の一覧を `isError` 付きで返す。返すのはこの2つだけで、tsukumo の内部の状態は返さない。
-  組むのは `partCardOf`（`src/server/report/core/part-card.ts`）。
+  組むのは `partCardOf`（`src/server/report/core/prompt/part-card.ts`）。
 - JSON Schema は `report` の定義の部品と同じ zod から出す（`z.toJSONSchema`）。欄の説明は全部残り、手で二重に書かない。
   部品は減らさず、`report` の定義の説明もこのツールのために変えない。
   定義の説明の重複を削るのは、書き手がこのツールを引いているかを使われ方の記録で見てからにする（引かれないまま削ると表現力が落ちる）。

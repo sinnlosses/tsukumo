@@ -14,7 +14,7 @@ import {
   type ReportUsageDriver,
   type ReportUsageRecord,
   reportUsageRecordSchema,
-} from "../core/report-usage-record.ts"
+} from "../core/usage/report-usage-record.ts"
 import {
   nextCallOfAccepted,
   nextCallOfRejected,
@@ -22,7 +22,7 @@ import {
   type ReportRejectionEntry,
   type ReportUsageEntry,
   type ReportUsageLog,
-} from "../core/report-usage.ts"
+} from "../core/usage/report-usage.ts"
 
 export function reportUsageDir(): string {
   return tsukumoHomePath("reportUsage")

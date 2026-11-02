@@ -18,7 +18,7 @@ import {
 } from "../../../shared/session/session-digest.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import { clipWithEllipsis } from "../../../shared/utils/clip-text.ts"
-import { createReportInheritance } from "../../report/core/report-inheritance.ts"
+import { createReportInheritance } from "../../report/core/review/report-inheritance.ts"
 import { EMPTY_INPUT_LEDGER } from "./input-ledger.ts"
 import { restoredMessageEvents } from "./session-restore.ts"
 

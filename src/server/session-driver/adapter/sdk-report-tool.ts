@@ -12,8 +12,6 @@ import type { FigurePreference } from "../../../shared/session/session-default.t
 import { WORK_PLAN_CLOSINGS } from "../../../shared/session/work-plan.ts"
 import { REPORT_TOOL_NAME } from "../../core/tsukumo-tool-name.ts"
 import { readReportBlockFiles } from "../../report/adapter/report-file.ts"
-import { REPORT_CHANGED_FIELDS_ONLY_TEXT } from "../../report/core/procedure-rejection.ts"
-import { hasReportField } from "../../report/core/report-inheritance.ts"
 import {
   REPORT_A2UI_COMPONENTS_DESCRIPTION,
   REPORT_CHECKS_DESCRIPTION,
@@ -30,7 +28,9 @@ import {
   REPORT_TOOL_DESCRIPTION,
   REPORT_WAITING_LINE_DESCRIPTION,
   REPORT_WORK_PLAN_CLOSING_DESCRIPTION,
-} from "../../report/core/report-tool.ts"
+} from "../../report/core/prompt/report-tool.ts"
+import { hasReportField } from "../../report/core/review/report-inheritance.ts"
+import { REPORT_CHANGED_FIELDS_ONLY_TEXT } from "../../report/core/rules/procedure-rejection.ts"
 import { a2uiStructureFaults } from "../../report/core/rules/structure.ts"
 import type { CallReview } from "../core/call-review.ts"
 import { reportEvents } from "../core/sdk-report-message.ts"

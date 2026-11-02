@@ -7,7 +7,7 @@
 ## 何が困っていたか
 
 - 書き手は塊 21 種と節の札 14 種（`REPORT_SHAPE_TAGS`）を選ぶ。`json-schema` 版の定義は schema 22699 字（`node scripts/runtime/definition-size.ts`）で、毎ターンの文脈に載る。
-- 差し戻しの条は 48 あり、reject が 35、数えるだけの count が 13（`src/server/report/core/rejection-mode.ts` の `REPORT_REJECTION_MODES`）。体裁の条が多く、書き手は条を避けるために文面を曲げる。
+- 差し戻しの条は 48 あり、reject が 35、数えるだけの count が 13（`src/server/report/core/rules/rejection-mode.ts` の `REPORT_REJECTION_MODES`）。体裁の条が多く、書き手は条を避けるために文面を曲げる。
 - 札は「機械が正しさを確かめられない」申告で、許さない塊を使った節を数えるだけ（`docs/architecture/display/block-criteria.md`「形の札の照合」）に留まった。
 - 調査と先例は `docs/research/report-rethink-2026-10-26/index.html` の 5・7・8 節が持つ。
 

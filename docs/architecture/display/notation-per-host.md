@@ -14,7 +14,7 @@
 - **レポートの文体は tsukumo が決める**。**本文は中立の技術文**にし、
   キャラクターの口調を担うのは `speak` のセリフのほうにする。どのパックに切り替えても
   本文の読みやすさが変わらないようにするため（**長く読み続ける面**なので、読みやすさを
-  キャラクター性より優先する）。書く場所は `src/server/report/core/report-notation.ts` で、
+  キャラクター性より優先する）。書く場所は `src/server/report/core/prompt/report-notation.ts` で、
   **`persona.md` の側には書かない**
 - **レポートは必ず日本語で書かせる**。`AGENTS.md` の「対話言語」だけでは
   本文が英語で出たことがあるため、同じ `report-notation.ts` の文面で縛り、検査でも差し戻す。
@@ -38,4 +38,4 @@
 出力スタイルを2ファイルに分けて選ぶ案と、1ファイルのまま条件分岐で書く案は採らない（理由は `docs/history/decision.md`
 「requirements.md 4.2 表示 / レポートの記法は、TUI と tsukumo で出し分ける」）。
 
-**文面は `src/server/report/core/report-notation.ts` の `REPORT_NOTATION_PROMPT` にあり、セッションの駆動が `query()` の `systemPrompt` へ渡す。**
+**文面は `src/server/report/core/prompt/report-notation.ts` の `REPORT_NOTATION_PROMPT` にあり、セッションの駆動が `query()` の `systemPrompt` へ渡す。**

@@ -4,7 +4,7 @@
 
 **この文書は提案であって正典ではない。** 正典は `docs/architecture/display.md`「各表示物」（メインビュー・
 レポートの見せ方）と `docs/architecture/screen-design.md` 13章（色・字・レイアウト）、記法の文面は
-`src/server/report/core/report-notation.ts`。**採用が決まるまでコードは1行も変わらない。**
+`src/server/report/core/prompt/report-notation.ts`。**採用が決まるまでコードは1行も変わらない。**
 
 問いの出どころはユーザーの指示（2026-10-02）「つくものレポートを正典にとらわれず、人にとって最も可読性の高い、
 視覚的に理解しやすい、デザイン性の高いものになる改善案を出してほしい」。物差しは正典のまま

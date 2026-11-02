@@ -9,7 +9,7 @@
 ## ツール
 
 契約のツールは MCP ツール `work_plan` と `report`、委譲先が呼ぶ `phase_result`（`docs/architecture/workflow-contract/skill-sequence.md`「スキルの契約」）。意味はツールの説明（`src/server/work-plan/core/work-plan-tool.ts`・
-`src/server/report/core/report-tool.ts`・`src/server/work-plan/core/phase-result-tool.ts`）とシステムプロンプトの「ワークプラン（tsukumo）」の節がモデルに教える。
+`src/server/report/core/prompt/report-tool.ts`・`src/server/work-plan/core/phase-result-tool.ts`）とシステムプロンプトの「ワークプラン（tsukumo）」の節がモデルに教える。
 
 `work_plan`（ワークプラン。毎回フェーズの並びごと渡す）:
 

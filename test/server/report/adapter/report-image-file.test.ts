@@ -5,7 +5,7 @@ import { join } from "node:path"
 import { describe, expect, it } from "vitest"
 
 import { readReportImageFile } from "../../../../src/server/report/adapter/report-image-file.ts"
-import { MAX_REPORT_IMAGE_BYTES } from "../../../../src/server/report/core/report-image-shelf.ts"
+import { MAX_REPORT_IMAGE_BYTES } from "../../../../src/server/report/core/image/report-image-shelf.ts"
 
 // 画像は先頭の印だけを手で組んだ架空のバイト列（実物の画像は使わない）。
 const PNG_BYTES = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x01, 0x02]

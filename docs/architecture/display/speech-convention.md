@@ -8,7 +8,7 @@
 
 **tsukumo の中でのセリフの規約は3か所に分かれる**: **呼ぶ回数・契機**は
 `src/server/system-prompt/core/speech-cadence.ts`、**ターンの締め方**（`report` は作業を終えてから最後に1回呼び、締めのセリフは
-`closing` に入れる。新しい事実の無いターンは `report` を呼ばない、など）は `src/server/report/core/report-notation.ts`、**口調・
+`closing` に入れる。新しい事実の無いターンは `report` を呼ばない、など）は `src/server/report/core/prompt/report-notation.ts`、**口調・
 言い回し**はキャラクターパックの `persona.md` が持つ。3つとも `systemPrompt` の append として
 毎ターン渡る（「レポートの記法は、TUI と tsukumo で出し分ける」と同じ切り分け）。
 
@@ -23,7 +23,7 @@
 - **セリフに入れるのは役割で決める**（掛け声・呼びかけ・リアクション・感想・完了報告）。
   レポートに入るのは事実・根拠・手順・コード・表・判断とその理由
 - **文体は役割で分ける。** セリフはキャラクターの口調、**レポートの本文は中立の技術文**
-  規約を書く場所は `src/server/report/core/report-notation.ts` で、`persona.md` には
+  規約を書く場所は `src/server/report/core/prompt/report-notation.ts` で、`persona.md` には
   書かない（「読む時間を減らす物差しと線引き」）
 - **tsukumo 側のヒューリスティック分類（コードブロックは詳細、地の文はセリフ等）は採らない。**
   判定が壊れやすい。**小さいモデルに分離・整形させる案も採らない**（コスト・遅延に加えて、

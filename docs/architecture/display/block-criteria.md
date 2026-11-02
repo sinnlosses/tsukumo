@@ -13,7 +13,7 @@
 差し戻しではなく別に数える）・**部品の無い記法**（`svg`・`dl`・引用・区切り線・`<details>` そのものなど。
 部品に当てはまらないので昇格のきっかけになる）。知らない種類で境界で落とした部品の数も同じ行に足す。
 
-行は版を持ち、版ごとに次の数と真偽値を足した（欄の名前と形は `src/server/report/core/report-usage.ts` が持つ）:
+行は版を持ち、版ごとに次の数と真偽値を足した（欄の名前と形は `src/server/report/core/usage/report-usage.ts` が持つ）:
 
 - 版4: `files` に `modified` の項目があるか（`hasModifiedFiles`。書き手が `files` を渡せなくなったため、新規は常に false で、型と欄だけ残す）・
   `beforeAfter` か `image` の部品があるか・`task` を渡した最終レポートか
@@ -56,7 +56,7 @@
 
 数えるだけで差し戻しにはしない。中身は一切持たない
 ——数と名前だけ（`docs/coding-standards.md`「会話内容の扱い」）。書くのは
-`src/server/report/adapter/report-usage-log.ts`、何を1行にするかは `src/server/report/core/report-usage.ts` が持つ。
+`src/server/report/adapter/report-usage-log.ts`、何を1行にするかは `src/server/report/core/usage/report-usage.ts` が持つ。
 
 **集計するスクリプトは `scripts/runtime/report-block-usage.ts`**（`node scripts/runtime/report-block-usage.ts
 --days <日数>`、既定28日）。部品の種類・部品の欄・逃げ道の記法（外・容れ物の中・部品の無い記法）ごとのレポート数と、上の版ごとの数の表を、

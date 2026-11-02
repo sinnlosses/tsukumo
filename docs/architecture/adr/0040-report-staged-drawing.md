@@ -19,7 +19,7 @@
 
 **草稿は暫定の表示。同じ `toolUseId` の `report` が届けば確定版に置き換え、`tool-finished` が `isError` で届けば草稿を消す。**
 
-- `ReportReview.pass` は `report` を同じ `toolUseId` の `tool-finished` まで預かる。通すときは `[report, tool-finished, ...]` の順、差し戻すときは `report` を捨てて `[tool-finished, report-rejected]` を出す（`src/server/report/core/report-review.ts` の `pass`）。
+- `ReportReview.pass` は `report` を同じ `toolUseId` の `tool-finished` まで預かる。通すときは `[report, tool-finished, ...]` の順、差し戻すときは `report` を捨てて `[tool-finished, report-rejected]` を出す（`src/server/report/core/review/report-review.ts` の `pass`）。
 - 草稿を下ろす手は既にある。`report` の畳み込みと `tool-finished` の畳み込みがどちらも `settleReportDrafting` を呼ぶ（`src/shared/session/session-advance.ts`）。通した場合は `report` が届いた 1 手で草稿が確定版に入れ替わり、差し戻した場合は `tool-finished` の 1 手で消える。
 - 草稿を畳む見え方は「消す」。薄く残さない。差し戻しで草稿もステップも消え、出し直しの草稿が新しく描かれることは、疑似セッション `a2ui-staged-rejected` で目視した。
 - 出し直しは別の `toolUseId` で、新しい `report-drafting` から空の草稿で始める。

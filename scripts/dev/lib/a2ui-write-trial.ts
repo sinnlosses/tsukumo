@@ -5,8 +5,8 @@ import { sumBy } from "remeda"
 import { z } from "zod"
 
 import { REPORT_TOOL_NAME } from "../../../src/server/core/tsukumo-tool-name.ts"
-import { PART_CARD_TOOL_DESCRIPTION } from "../../../src/server/report/core/part-card.ts"
-import { REPORT_A2UI_COMPONENTS_DESCRIPTION } from "../../../src/server/report/core/report-tool.ts"
+import { PART_CARD_TOOL_DESCRIPTION } from "../../../src/server/report/core/prompt/part-card.ts"
+import { REPORT_A2UI_COMPONENTS_DESCRIPTION } from "../../../src/server/report/core/prompt/report-tool.ts"
 import { a2uiValidationFailedText } from "../../../src/server/report/core/rules/index.ts"
 import { a2uiStructureFaults } from "../../../src/server/report/core/rules/structure.ts"
 import {
@@ -28,8 +28,7 @@ export type Loading = "full" | "names" | "mixed"
 
 /**
  * 混ぜる形で JSON Schema を載せる部品。
- * 構造の 2 つ（Report・Section）と、~/.tsukumo/report-usage/ の記録で本文の部品として使われた回数の上位
- * （text・table・list・graph・claims・markdown・note・options に当たる部品）。
+ * 構造の 2 つ（Report・Section）と、~/.tsukumo/report-usage/ の記録で本文の部品として使われた回数の上位。
  */
 const MIXED_FULL_COMPONENTS = [
   "Report",

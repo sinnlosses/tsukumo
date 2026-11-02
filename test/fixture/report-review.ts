@@ -1,14 +1,14 @@
 // `ReportReview` の単体テストが共有する、手で書いた架空の下書き・イベントと、新しい事実の帳面を手で動かせる `ReportReview`。
 
 import {
-  REPORT_REJECTION_MODES,
-  type ReportRejectionModes,
-} from "../../src/server/report/core/rejection-mode.ts"
-import {
   createReportReview as createReviewWithNews,
   type ReportReview,
-} from "../../src/server/report/core/report-review.ts"
+} from "../../src/server/report/core/review/report-review.ts"
 import type { ReportDraft } from "../../src/server/report/core/rules/draft.ts"
+import {
+  REPORT_REJECTION_MODES,
+  type ReportRejectionModes,
+} from "../../src/server/report/core/rules/rejection-mode.ts"
 import type { ReportBlockSection } from "../../src/shared/report/report-block.ts"
 import type { BackgroundTask } from "../../src/shared/session-driver/background-task.ts"
 import type { SessionEvent } from "../../src/shared/session/session-event.ts"

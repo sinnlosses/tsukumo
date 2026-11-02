@@ -7,7 +7,7 @@ import { readFileSync, statSync } from "node:fs"
 import { extname, resolve } from "node:path"
 
 import type { PromptImageMediaType } from "../../../shared/session-driver/prompt-image.ts"
-import { MAX_REPORT_IMAGE_BYTES, type ReportImage } from "../core/report-image-shelf.ts"
+import { MAX_REPORT_IMAGE_BYTES, type ReportImage } from "../core/image/report-image-shelf.ts"
 
 type ImageSignature = { readonly offset: number; readonly bytes: readonly number[] }
 

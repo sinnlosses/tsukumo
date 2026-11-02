@@ -7,7 +7,7 @@ import { describe, expect, it } from "vitest"
 
 import { REPOSITORY_ROOT } from "../../scripts/shared/repository-root.ts"
 import { QUESTION_NOTATION_PROMPT } from "../../src/server/question/core/question-notation.ts"
-import { REPORT_NOTATION_PROMPT } from "../../src/server/report/core/report-notation.ts"
+import { REPORT_NOTATION_PROMPT } from "../../src/server/report/core/prompt/report-notation.ts"
 import { SPEECH_CADENCE_PROMPT } from "../../src/server/system-prompt/core/speech-cadence.ts"
 import { WORK_PLAN_PROMPT } from "../../src/server/work-plan/core/work-plan-tool.ts"
 

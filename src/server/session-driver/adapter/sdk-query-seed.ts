@@ -21,7 +21,7 @@ import { bundledFilePath } from "../../adapter/bundled-path.ts"
 import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
 import type { ToolVerdict } from "../../core/tool-verdict.ts"
 import { PHASE_RESULT_TOOL_NAME, tsukumoToolFullName } from "../../core/tsukumo-tool-name.ts"
-import type { ReportGate } from "../../report/core/report-tool.ts"
+import type { ReportGate } from "../../report/core/prompt/report-tool.ts"
 import { judgePhaseResultCaller } from "../../work-plan/core/phase-result-tool.ts"
 import {
   GATE_EXEMPT_TOOL_NAMES,

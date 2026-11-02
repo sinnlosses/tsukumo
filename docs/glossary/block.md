@@ -52,7 +52,7 @@
 
 ### 形の名前
 
-- **英語識別子**: 列挙 `REPORT_SHAPE_TAGS`（`src/server/report/core/report-usage-record.ts`。過去の行を読む）/
+- **英語識別子**: 列挙 `REPORT_SHAPE_TAGS`（`src/server/report/core/usage/report-usage-record.ts`。過去の行を読む）/
   使われ方の記録のセクションの欄 `shapeTag`（形の名前を省いたセクションは `unspecified`）。
   値は 因果 `cause`・つながり `connection`・位置 `position`・状態 `state`・時間 `time`・順序 `order`・量 `quantity`・
   選択 `choice`・属性の並び `attribute`・対応 `mapping`・見比べ `comparison`・境界 `boundary`・並列 `parallel`・一言 `single`

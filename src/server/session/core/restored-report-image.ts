@@ -3,7 +3,7 @@
 import { drawnLeaves, reportOutline } from "../../../shared/report/report-outline.ts"
 import type { RestoredEvent } from "../../../shared/session/session-event.ts"
 import type { SessionState } from "../../../shared/session/session-state.ts"
-import { reportImagePaths, type ShelvedImages } from "../../report/core/report-image-shelf.ts"
+import { reportImagePaths, type ShelvedImages } from "../../report/core/image/report-image-shelf.ts"
 import type { SessionManagerOptions } from "./session-manager-port.ts"
 
 /** 続きから復元した report の画像を読み直す、復元した時点からの遡り幅。 */

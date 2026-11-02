@@ -18,7 +18,7 @@ package.json に定義したり」で、cdnjs から落としたものを `vendo
 `src/shared/` には名前と Content-Type しか置かない（パス解決は外の世界に触る仕事なので
 adapter 側）。**mermaid と chart.js は `package.json` で版を固定する**（`^` を付けない）。素の
 JavaScript をそのままブラウザへ配っていて描けるかどうかは目で見るまで分からず、mermaid の版は
-`src/server/report/core/report-notation.ts` が挙げる図の10種の根拠でもあるため。highlight.js のテーマだけは
+`src/server/report/core/prompt/report-notation.ts` が挙げる図の10種の根拠でもあるため。highlight.js のテーマだけは
 `^` で上げてよい（色を当てる class を出すのは `rehype-highlight`（`lowlight`）が抱えるほうなので、
 **テーマの中身が食い違っていないか**だけを見る。2026-09-22 時点では配る 11.12.0 と `lowlight` の
 11.11.2 でバイト一致）。

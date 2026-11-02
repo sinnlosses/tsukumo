@@ -19,9 +19,9 @@
 のあと（または `report` 無し）に、1行を超える本文を書いてターンを終えた」という同じ形だった。
 利用者は**推測へ戻さず、この形を仕組みで塞いでから同じ条件で試し直す**と決めた:
 
-1. **`Stop` の関所**（`src/server/report/core/report-tool.ts`）: SDK のターンの終わりに、最後の
+1. **`Stop` の関所**（`src/server/report/core/prompt/report-tool.ts`）: SDK のターンの終わりに、最後の
    `report` のあとの本文が1行を超えていたら `block` にして渡し直させる
-2. **検査**（`src/server/report/core/report-review.ts`）: `report` の引数を機械で判定できる規約違反で
+2. **検査**（`src/server/report/core/review/report-review.ts`）: `report` の引数を機械で判定できる規約違反で
    検査し、違反と直し方を戻り値で返して書き直させる
 3. **整形**（`src/shared/report/report-tidy.ts`）: 意味を変えずに落とせるもの（定型の前置き・締めの行・
    余分な空行）を落として描く

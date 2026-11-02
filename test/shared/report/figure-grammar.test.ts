@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { reportUsageEntryOf } from "../../../src/server/report/core/report-usage.ts"
+import { reportUsageEntryOf } from "../../../src/server/report/core/usage/report-usage.ts"
 import { parseReportFigure } from "../../../src/shared/report/a2ui-report-catalog.ts"
 import { plotRows } from "../../../src/shared/report/figure-grammar.ts"
 import { plotDrawingOf } from "../../../src/shared/report/plot-drawing.ts"

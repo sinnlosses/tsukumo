@@ -1,0 +1,467 @@
+import { describe, expect, it } from "vitest"
+
+import type {
+  ReportReview,
+  ReportVerdict,
+} from "../../../../../src/server/report/core/review/report-review.ts"
+import type { ReportDraft } from "../../../../../src/server/report/core/rules/draft.ts"
+import { reportRejectionText } from "../../../../../src/server/report/core/rules/index.ts"
+import { reportViolations } from "../../../../../src/server/report/core/rules/index.ts"
+import {
+  REPORT_REJECTION_MODES,
+  type ReportRejectionModes,
+  type ReportRejectionReason,
+} from "../../../../../src/server/report/core/rules/rejection-mode.ts"
+import type { BackgroundTask } from "../../../../../src/shared/session-driver/background-task.ts"
+import type { SessionEvent } from "../../../../../src/shared/session/session-event.ts"
+import { reportDraft, reportEvent } from "../../../../fixture/report-event.ts"
+import {
+  createReportReview,
+  FINISHED,
+  INVALID,
+  noPlan,
+  SESSION_INFO,
+  sectionsOf,
+  type TestReview,
+  VALID,
+} from "../../../../fixture/report-review.ts"
+
+/** handler に届いた引数を、呼び出しをイベントに変える側と同じ形のイベントにする。 */
+const reportOfDraft = (
+  toolUseId: string,
+  draft: ReportDraft,
+): Extract<SessionEvent, { kind: "report" }> =>
+  reportEvent({
+    toolUseId,
+    conclusion: draft.conclusion,
+    components: draft.components,
+    favor: draft.favor,
+    checks: draft.checks,
+    workPlanClosing: draft.workPlanClosing,
+  })
+const finished = (toolUseId: string, isError: boolean): SessionEvent => ({
+  kind: "tool-finished",
+  toolUseId,
+  content: isError ? "架空の差し戻し" : "ok",
+  isError,
+})
+
+/** `report` を handler で通して描かせる（pass に呼び出しと結果を流す）。 */
+const draw = (review: ReportReview, toolUseId: string, draft: ReportDraft): void => {
+  expect(review.judge(draft)).toEqual({ kind: "accepted" })
+  review.pass(reportOfDraft(toolUseId, draft))
+  review.pass(finished(toolUseId, false))
+}
+
+/** メインが `speak` / `report` 以外のツールの結果を受け取った（新しい事実が届いた）。 */
+const runTool = (review: TestReview): void => {
+  review.raiseNews()
+}
+
+describe("createReportReview の judge", () => {
+  it("違反の無い report は通す", () => {
+    expect(createReportReview(noPlan).judge(VALID)).toEqual({ kind: "accepted" })
+  })
+
+  it("違反のある report は、違反した条を文面にして差し戻す", () => {
+    const verdict = createReportReview(noPlan).judge(INVALID)
+
+    expect(verdict).toMatchObject({
+      kind: "rejected",
+      text: reportRejectionText(reportViolations(INVALID)),
+    })
+  })
+
+  it("差し戻すのは1ターンに1回まで（2回目は違反があっても通す）", () => {
+    const review = createReportReview(noPlan)
+
+    expect(review.judge(INVALID).kind).toBe("rejected")
+    expect(review.judge(INVALID)).toEqual({ kind: "accepted" })
+    expect(review.judge(INVALID)).toEqual({ kind: "accepted" })
+  })
+
+  it("ターンの区切り（session-info / turn-finished）で回数が戻る", () => {
+    const review = createReportReview(noPlan)
+
+    expect(review.judge(INVALID).kind).toBe("rejected")
+    review.pass(FINISHED)
+    expect(review.judge(INVALID).kind).toBe("rejected")
+    review.pass(SESSION_INFO)
+    expect(review.judge(INVALID).kind).toBe("rejected")
+  })
+})
+
+describe("createReportReview の judge（送り直し）", () => {
+  const OTHER: ReportDraft = reportDraft({
+    conclusion: "別の架空の結論。",
+    sections: sectionsOf("架空の根拠。"),
+  })
+
+  it("このターンで描いた report と同じ引数の呼び出しは、固定の文面で差し戻す", () => {
+    const review = createReportReview(noPlan)
+    draw(review, "toolu_r1", VALID)
+
+    const verdict = review.judge(VALID)
+
+    expect(verdict).toEqual({
+      kind: "rejected",
+      text:
+        "この `report` は、このターンですでに受け取った `report` と同じ引数になっている。" +
+        "同じ引数で送り直さず、そのあとに `report` の外に書いた本文の中身を `report` に入れて呼び直すこと。" +
+        "呼び直すときは `components` を全部渡す（`Report` の欄は、省けばこの呼び出しの値を引き継ぐ）。",
+      reasons: ["resend"],
+    })
+  })
+
+  it("前後の空白だけが違う呼び出しも送り直しとして差し戻す", () => {
+    const review = createReportReview(noPlan)
+    draw(review, "toolu_r1", OTHER)
+
+    const padded: ReportDraft = reportDraft({
+      conclusion: `  ${OTHER.conclusion}\n`,
+      sections: sectionsOf("架空の根拠。"),
+      favor: " ",
+    })
+    expect(review.judge(padded).kind).toBe("rejected")
+  })
+
+  it("中身の違う呼び直しは通す", () => {
+    const review = createReportReview(noPlan)
+    draw(review, "toolu_r1", VALID)
+    runTool(review)
+
+    expect(review.judge(OTHER)).toEqual({ kind: "accepted" })
+    expect(review.judge({ ...VALID, favor: "架空のお願い。" })).toEqual({ kind: "accepted" })
+    expect(
+      review.judge({
+        ...VALID,
+        checks: [
+          {
+            status: "ng",
+            label: "架空の検査",
+            figure: "",
+            command: "",
+            detail: "",
+            howToVerify: "",
+          },
+        ],
+      }),
+    ).toEqual({ kind: "accepted" })
+  })
+
+  it("送り直しを差し戻すのは1ターンに1回まで（2回目の送り直しは通す）", () => {
+    const review = createReportReview(noPlan)
+    draw(review, "toolu_r1", VALID)
+    runTool(review)
+
+    expect(review.judge(VALID).kind).toBe("rejected")
+    expect(review.judge(VALID)).toEqual({ kind: "accepted" })
+    expect(review.judge(VALID)).toEqual({ kind: "accepted" })
+  })
+
+  it("規約違反の差し戻しとは別に数える（違反で差し戻して直したあとの送り直しも差し戻す）", () => {
+    const review = createReportReview(noPlan)
+
+    expect(review.judge(INVALID).kind).toBe("rejected")
+    draw(review, "toolu_r2", VALID)
+    expect(review.judge(VALID)).toMatchObject({ kind: "rejected", reasons: ["resend"] })
+  })
+
+  it("送り直しを差し戻したあとも、規約違反の1回は残る", () => {
+    const review = createReportReview(noPlan)
+    draw(review, "toolu_r1", VALID)
+
+    expect(review.judge(VALID).kind).toBe("rejected")
+    runTool(review)
+    expect(review.judge(INVALID)).toMatchObject({
+      kind: "rejected",
+      text: reportRejectionText(reportViolations(INVALID)),
+    })
+  })
+
+  it("差し戻して描かなかった report とは比べない", () => {
+    const review = createReportReview(noPlan)
+    review.pass(reportOfDraft("toolu_r1", VALID))
+    review.pass(finished("toolu_r1", true))
+
+    expect(review.judge(VALID)).toEqual({ kind: "accepted" })
+  })
+
+  it("ターンの区切り（session-info / turn-finished）で描いた report を忘れる", () => {
+    const review = createReportReview(noPlan)
+    draw(review, "toolu_r1", VALID)
+    runTool(review)
+    review.pass(FINISHED)
+    expect(review.judge(VALID)).toEqual({ kind: "accepted" })
+
+    draw(review, "toolu_r2", OTHER)
+    runTool(review)
+    review.pass(SESSION_INFO)
+    expect(review.judge(OTHER)).toEqual({ kind: "accepted" })
+  })
+
+  it("report の来ない流れ（切り替えないとき）では、同じ引数の呼び出しを差し戻さない", () => {
+    const review = createReportReview(noPlan)
+    const events: readonly SessionEvent[] = [
+      SESSION_INFO,
+      { kind: "utterance", text: "架空の本文" },
+      { kind: "speech", text: "架空の締め", expression: "default" },
+    ]
+
+    expect(events.flatMap((event) => review.pass(event))).toEqual([...events])
+    expect(review.judge(VALID)).toEqual({ kind: "accepted" })
+    expect(review.judge(VALID)).toEqual({ kind: "accepted" })
+  })
+})
+
+describe("createReportReview の judge（新しい事実の無い report）", () => {
+  const OTHER: ReportDraft = reportDraft({ conclusion: "別の架空の結論。" })
+  it("描いた report のあと何も届かずに別の中身の report を呼ぶと、固定の文面で差し戻す", () => {
+    const review = createReportReview(noPlan)
+    draw(review, "toolu_r1", VALID)
+
+    const verdict = review.judge(OTHER)
+
+    expect(verdict).toEqual({
+      kind: "rejected",
+      text:
+        "直前の `report` のあと、新しい依頼もツールの結果もバックグラウンドタスクの終わりも届いていないので、" +
+        "この `report` は画面に出していない。伝える新しい事実が無いターンは、`report` を" +
+        "呼ばず、何も書かずに終えてよい。言い回しを変えて同じ中身の `report` を送り直さないこと。" +
+        "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。",
+      reasons: ["nothing-new"],
+    })
+  })
+
+  it("差し戻したあとは nothingNewRejected が true になり、次のターンの頭で false に戻る", () => {
+    const review = createReportReview(noPlan)
+    draw(review, "toolu_r1", VALID)
+    expect(review.nothingNewRejected()).toBe(false)
+
+    review.judge(OTHER)
+    expect(review.nothingNewRejected()).toBe(true)
+
+    review.pass(SESSION_INFO)
+    expect(review.nothingNewRejected()).toBe(false)
+  })
+
+  it("メインのツールの結果が届いたあとの report は通す（中間レポートを落とさない）", () => {
+    const review = createReportReview(noPlan)
+    draw(review, "toolu_r1", VALID)
+    runTool(review)
+
+    expect(review.judge(OTHER)).toEqual({ kind: "accepted" })
+  })
+
+  it("差し戻すのは1ターンに1回まで（押し切った2回目は通す）で、次のターンで枠が戻る", () => {
+    const review = createReportReview(noPlan)
+    draw(review, "toolu_r1", VALID)
+
+    expect(review.judge(OTHER).kind).toBe("rejected")
+    expect(review.judge(OTHER)).toEqual({ kind: "accepted" })
+    ;[FINISHED, SESSION_INFO].forEach((event) => review.pass(event))
+    expect(review.judge(OTHER).kind).toBe("rejected")
+  })
+
+  it("差し戻して描かなかった report のあとでも、新しい事実の届いた印は残る", () => {
+    const review = createReportReview(noPlan)
+    review.pass(reportOfDraft("toolu_r1", INVALID))
+    review.pass(finished("toolu_r1", true))
+
+    expect(review.judge(VALID)).toEqual({ kind: "accepted" })
+  })
+})
+
+describe("createReportReview の judge（差し戻しの種類）", () => {
+  it("記法の違反は、当たった違反の種類を重複無しで持つ（文面も本文も入らない）", () => {
+    const verdict = createReportReview(noPlan).judge(INVALID)
+
+    expect(verdict.kind === "rejected" ? verdict.reasons : []).toEqual(["markdown-notation"])
+  })
+
+  it("手続きの差し戻しは、その種類の名前を1つ持つ", () => {
+    const resend = createReportReview(noPlan)
+    draw(resend, "toolu_r1", VALID)
+    expect(resend.judge(VALID)).toMatchObject({ reasons: ["resend"] })
+
+    const nothingNew = createReportReview(noPlan)
+    draw(nothingNew, "toolu_r1", VALID)
+    expect(nothingNew.judge(reportDraft({ conclusion: "架空の別の結論。" }))).toMatchObject({
+      reasons: ["nothing-new"],
+    })
+
+    expect(createReportReview(() => ({ kind: "rejected" })).judge(VALID)).toMatchObject({
+      reasons: ["unanswered-work-plan"],
+    })
+    expect(
+      createReportReview(() => ({ kind: "planned", remaining: 1 })).judge(
+        reportDraft({
+          conclusion: "架空の結論。",
+          task: { kind: "task", id: "架空", name: "架空", outcome: "finished", genre: "work" },
+          workPlanClosing: "stopped",
+        }),
+      ),
+    ).toMatchObject({ reasons: ["finished-but-stopped"] })
+  })
+})
+
+describe("createReportReview の judge（背景のシェルが残っている report）", () => {
+  const OTHER: ReportDraft = reportDraft({ conclusion: "別の架空の結論。" })
+  const backgroundTask = (
+    taskId: string,
+    kind: BackgroundTask["kind"],
+    description = "架空の背景",
+  ): BackgroundTask => ({ taskId, kind, description })
+  const withTasks = (...tasks: readonly BackgroundTask[]): TestReview => {
+    const review = createReportReview(noPlan)
+    review.pass(SESSION_INFO)
+    review.setTasks(tasks)
+    return review
+  }
+  const BACKGROUND_REJECTION_TAIL =
+    "`TaskStop` で止めるか、待つなら待つと決めてから `report` を呼び直すこと。" +
+    "呼び直すときは `components` を全部渡す（`Report` の欄は、省けばこの呼び出しの値を引き継ぐ）。" +
+    "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。"
+  const rejectedText = (verdict: ReportVerdict): string =>
+    verdict.kind === "rejected" ? verdict.text : ""
+
+  it("kind が shell のバックグラウンドタスクが残っていて初めての report は、ID と description を載せて差し戻す", () => {
+    const verdict = withTasks(backgroundTask("task_a", "shell", "架空の書き出し")).judge(VALID)
+
+    expect(verdict).toMatchObject({ kind: "rejected", reasons: ["background-running"] })
+    expect(rejectedText(verdict)).toBe(
+      `背景で動いているコマンドが残っている: \`task_a\`（架空の書き出し）。${BACKGROUND_REJECTION_TAIL}`,
+    )
+  })
+
+  it("同じターンの2回目の report は通し、次のターンで枠が戻る", () => {
+    const review = withTasks(backgroundTask("task_a", "shell"))
+
+    expect(review.judge(VALID).kind).toBe("rejected")
+    expect(review.judge(VALID)).toEqual({ kind: "accepted" })
+    review.pass(SESSION_INFO)
+    expect(review.judge(VALID).kind).toBe("rejected")
+  })
+
+  it("description が空のシェルは「背景のコマンド」と ID で載せる", () => {
+    const text = rejectedText(withTasks(backgroundTask("task_a", "shell", "")).judge(VALID))
+
+    expect(text).toBe(
+      `背景で動いているコマンドが残っている: \`task_a\`（背景のコマンド）。${BACKGROUND_REJECTION_TAIL}`,
+    )
+  })
+
+  it.each(["agent", "other"] as const)("残っているのが %s だけなら通す", (kind) => {
+    expect(withTasks(backgroundTask("task_a", kind)).judge(VALID)).toEqual({ kind: "accepted" })
+  })
+
+  it("シェルが終わって顔ぶれが空になったあとは通す", () => {
+    const review = withTasks(backgroundTask("task_a", "shell"))
+    review.setTasks([])
+
+    expect(review.judge(VALID)).toEqual({ kind: "accepted" })
+  })
+
+  it("補足メッセージのターンでは見ない", () => {
+    const review = withTasks(backgroundTask("task_a", "shell"))
+    review.pass({ kind: "aside", text: "架空の問い", images: [] })
+
+    expect(review.judge(VALID)).toEqual({ kind: "accepted" })
+  })
+
+  it("新しい事実の無い report の差し戻しが先で、背景の差し戻しはそのあと", () => {
+    const review = createReportReview(noPlan)
+    draw(review, "toolu_r1", VALID)
+    review.setTasks([backgroundTask("task_a", "shell")])
+
+    expect(review.judge(OTHER)).toMatchObject({ reasons: ["nothing-new"] })
+    review.raiseNews()
+    expect(review.judge(OTHER)).toMatchObject({ reasons: ["background-running"] })
+  })
+})
+
+describe("createReportReview の judge（数えるだけの条）", () => {
+  /** 本番の表のうち `reasons` だけを数えるだけの条にした、架空の表。 */
+  const countingOnly = (...reasons: readonly ReportRejectionReason[]): ReportRejectionModes => ({
+    ...REPORT_REJECTION_MODES,
+    ...Object.fromEntries(reasons.map((reason) => [reason, "count"])),
+  })
+  /** 見出しの違反（`markdown-notation`）と、3要素の結論（`long-conclusion`）を両方持つ下書き。 */
+  const TWO_VIOLATIONS: ReportDraft = { ...INVALID, conclusionSentenceChars: [5, 5, 5] }
+
+  it("数えるだけの条に当たった report は通し、描いた report の後ろに条の名前の記録を出す", () => {
+    const review = createReportReview(noPlan, countingOnly("markdown-notation"))
+    const report = reportOfDraft("toolu_c1", INVALID)
+
+    expect(review.judge(INVALID)).toEqual({ kind: "accepted" })
+    review.pass(report)
+    expect(review.pass(finished("toolu_c1", false))).toEqual([
+      report,
+      finished("toolu_c1", false),
+      {
+        kind: "report-counted",
+        reasons: ["markdown-notation"],
+        argumentChars: report.argumentChars,
+        inheritedFields: report.inheritedFields,
+      },
+    ])
+  })
+
+  it("数えるだけの条は枠を使わず、同じターンの差し戻す条はまだ差し戻す", () => {
+    const review = createReportReview(noPlan, countingOnly("markdown-notation"))
+
+    expect(review.judge(INVALID)).toEqual({ kind: "accepted" })
+    expect(review.judge(TWO_VIOLATIONS)).toMatchObject({
+      kind: "rejected",
+      reasons: ["long-conclusion"],
+    })
+  })
+
+  it("差し戻す条と数えるだけの条が両方ある report は、差し戻す条だけで差し戻し、数えた記録を出さない", () => {
+    const review = createReportReview(noPlan, countingOnly("markdown-notation"))
+    const report = reportOfDraft("toolu_c1", TWO_VIOLATIONS)
+
+    const verdict = review.judge(TWO_VIOLATIONS)
+    review.pass(report)
+    const passed = review.pass(finished("toolu_c1", true))
+
+    expect(verdict).toMatchObject({
+      kind: "rejected",
+      reasons: ["long-conclusion"],
+      text: reportRejectionText(
+        reportViolations(TWO_VIOLATIONS).filter(
+          (violation) => violation.kind === "long-conclusion",
+        ),
+      ),
+    })
+    expect(passed.map((event) => event.kind)).toEqual(["tool-finished", "report-rejected"])
+    expect(passed[1]).toMatchObject({ reasons: ["long-conclusion"] })
+  })
+
+  it("手続きの条も数えるだけにでき、送り直しを通して条の名前を記録する", () => {
+    const review = createReportReview(noPlan, countingOnly("resend"))
+    draw(review, "toolu_c1", VALID)
+    runTool(review)
+
+    expect(review.judge(VALID)).toEqual({ kind: "accepted" })
+    review.pass(reportOfDraft("toolu_c2", VALID))
+    expect(review.pass(finished("toolu_c2", false)).at(-1)).toMatchObject({
+      kind: "report-counted",
+      reasons: ["resend"],
+    })
+  })
+
+  it("本番の表では数えた記録を出さない", () => {
+    const review = createReportReview(noPlan)
+    draw(review, "toolu_c1", VALID)
+    runTool(review)
+
+    review.judge(OTHER_THAN_VALID)
+    review.pass(reportOfDraft("toolu_c2", OTHER_THAN_VALID))
+    expect(
+      review.pass(finished("toolu_c2", false)).filter((event) => event.kind === "report-counted"),
+    ).toEqual([])
+  })
+})
+
+const OTHER_THAN_VALID: ReportDraft = reportDraft({ conclusion: "架空の別の結論。" })

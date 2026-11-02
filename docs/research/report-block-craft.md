@@ -3,7 +3,7 @@
 状態: 採用
 
 **この文書は調査の記録であって正典ではない。** 正典は `docs/architecture/display.md`「各表示物」「塊を足す・外す基準」と `src/shared/report/report-block.ts`
-（塊の欄と `describe`）・`src/server/report/core/report-notation.ts`（記法の条）で、**採用が決まるまでコードは1行も変わらない**。
+（塊の欄と `describe`）・`src/server/report/core/prompt/report-notation.ts`（記法の条）で、**採用が決まるまでコードは1行も変わらない**。
 
 **主題**: `report` の塊（図・数・表・コード・差分・画像・注意書き・動き・時間）ごとに、一次資料が言う「最も速く伝わる形」と
 図の作法を集め、いまの描き方との差を出す。`docs/history/research/report-structure-for-skimming-readers.md`（NN/g・GOV.UK・Tufte・

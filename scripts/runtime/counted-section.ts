@@ -3,7 +3,7 @@
 import {
   REPORT_REJECTION_MODES,
   type ReportRejectionMode,
-} from "../../src/server/report/core/rejection-mode.ts"
+} from "../../src/server/report/core/rules/rejection-mode.ts"
 import { table } from "./count-table.ts"
 import type { CountedRecord } from "./report-usage-row.ts"
 

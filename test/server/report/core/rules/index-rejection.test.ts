@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest"
 
-import { REPORT_CHANGED_FIELDS_ONLY_TEXT } from "../../../../../src/server/report/core/procedure-rejection.ts"
 import type { ReportDraft } from "../../../../../src/server/report/core/rules/draft.ts"
 import {
   reportRejectionText,
   reportViolations,
 } from "../../../../../src/server/report/core/rules/index.ts"
+import { REPORT_CHANGED_FIELDS_ONLY_TEXT } from "../../../../../src/server/report/core/rules/procedure-rejection.ts"
 import type {
   ReportBlock,
   ReportBlockSection,

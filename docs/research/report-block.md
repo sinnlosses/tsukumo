@@ -3,7 +3,7 @@
 状態: 採用
 
 **この文書は提案であって正典ではない。** 正典は `src/server/session-driver/adapter/sdk-report-tool.ts`（`report` の引数の形）・
-`src/server/report/core/report-notation.ts`（記法の文面）・`docs/display.md` 4.2（決定の記録）・
+`src/server/report/core/prompt/report-notation.ts`（記法の文面）・`docs/display.md` 4.2（決定の記録）・
 `docs/glossary.md`「report ツール」で、**採用が決まるまでコードは1行も変わらない**。
 
 **きっかけ**: `report` の `body`（Markdown の文字列）を、型の付いた塊の配列として受け取り、塊の種類ごとに

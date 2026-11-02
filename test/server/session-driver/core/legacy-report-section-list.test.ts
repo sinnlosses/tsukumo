@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { reportImagePaths } from "../../../../src/server/report/core/report-image-shelf.ts"
+import { reportImagePaths } from "../../../../src/server/report/core/image/report-image-shelf.ts"
 import { reportViolations } from "../../../../src/server/report/core/rules/index.ts"
 import {
   parseLegacyBody,

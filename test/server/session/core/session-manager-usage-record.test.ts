@@ -4,7 +4,7 @@ import type {
   ReportFollowUpEntry,
   ReportRejectionEntry,
   ReportUsageEntry,
-} from "../../../../src/server/report/core/report-usage.ts"
+} from "../../../../src/server/report/core/usage/report-usage.ts"
 import type { ReportBlockSection } from "../../../../src/shared/report/report-block.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import { reportOfDrawn } from "../../../fixture/report-event.ts"

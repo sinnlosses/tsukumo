@@ -5,7 +5,7 @@ import { WITHOUT_UNUSED_EXPORT_ENV } from "./scripts/dev/lib/check-stage.ts"
 // DOM のグローバルを借りるテスト。ほかのテストには happy-dom を読ませない。
 export const DOM_TEST_FILES = [
   "test/browser/**/*.test.{ts,tsx}",
-  "test/server/report/core/report-notation.test.ts",
+  "test/server/report/core/prompt/report-notation.test.ts",
 ]
 
 // `test/e2e/` は playwright.config.ts で走らせる。

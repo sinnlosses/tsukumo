@@ -3,7 +3,7 @@
 
 import { isPlainObject, sumBy } from "remeda"
 
-import { REPORT_PART_CHOICE_GUIDE } from "../../../src/server/report/core/report-notation.ts"
+import { REPORT_PART_CHOICE_GUIDE } from "../../../src/server/report/core/prompt/report-notation.ts"
 import { NEUTRAL_TOPICS, type TopicId } from "./a2ui-trial-topic.ts"
 
 /**

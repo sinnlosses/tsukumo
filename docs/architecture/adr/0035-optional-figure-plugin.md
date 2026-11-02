@@ -18,7 +18,7 @@ ADR 0034 は図を「書き手が構造だけを書き、tsukumo が描く」と
 
 - 読む口 `src/server/report/adapter/report-image-file.ts:61-86` が見るのは、拡張子（`.png` など）・先頭の印・普通のファイルか・
   `MAX_REPORT_IMAGE_BYTES`（5 MiB）以下か・`notModifiedAfter` より後に更新されていないか、だけ。写っているものが画面かは見ない
-- 棚 `src/server/report/core/report-image-shelf.ts:78-93` は、読めて寸法を測れた画像を置くだけ
+- 棚 `src/server/report/core/image/report-image-shelf.ts:78-93` は、読めて寸法を測れた画像を置くだけ
 - `image` の塊に掛かる違反規則は無い。画像に関わる規則は、`beforeAfter` の `region` の範囲（`region-range`。`report-block-rule.ts:67-79`）と、
   `src/browser/` の `.tsx`・`.css` を変えたのに画像が無い `browser-change-without-image`（`report-violation-check.ts:201-227`。画像が1枚でもあれば通る）の2つ
 - `image` の塊の引数は `path`・`caption`・`notes`・`fold`・`aside`（`src/shared/report/report-block-diagram.ts:154-170`）で、画面を撮ったかを問う欄が無い

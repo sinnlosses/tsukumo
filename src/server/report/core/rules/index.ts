@@ -9,7 +9,6 @@ import { keys } from "remeda"
 
 import { MAX_CONCLUSION_SENTENCES } from "../../../../shared/report/report-limit.ts"
 import { type ReportOutline, reportOutline } from "../../../../shared/report/report-outline.ts"
-import { REPORT_CHANGED_FIELDS_ONLY_TEXT } from "../procedure-rejection.ts"
 import {
   type BlockViolation,
   blockViolationMessage,
@@ -29,6 +28,7 @@ import {
   figureViolationMessage,
   isFigureViolation,
 } from "./figure.ts"
+import { REPORT_CHANGED_FIELDS_ONLY_TEXT } from "./procedure-rejection.ts"
 import {
   detectProseViolations,
   isProseViolation,

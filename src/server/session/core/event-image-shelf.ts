@@ -3,8 +3,11 @@
 import { drawnLeaves, reportOutline } from "../../../shared/report/report-outline.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import type { SessionState } from "../../../shared/session/session-state.ts"
-import { questionImagePaths } from "../../report/core/question-image-path.ts"
-import { type ReadReportImagePath, reportImagePaths } from "../../report/core/report-image-shelf.ts"
+import { questionImagePaths } from "../../report/core/image/question-image-path.ts"
+import {
+  type ReadReportImagePath,
+  reportImagePaths,
+} from "../../report/core/image/report-image-shelf.ts"
 import type { SessionManagerOptions } from "./session-manager-port.ts"
 
 /**

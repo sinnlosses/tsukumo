@@ -17,7 +17,7 @@ import {
   isMainImageFileRead,
   isRestatementRequest,
   reportUsageEntryOf,
-} from "../../report/core/report-usage.ts"
+} from "../../report/core/usage/report-usage.ts"
 import type { ContextUsageRecorder } from "../../usage/core/context-usage.ts"
 import type { GenerationTally } from "./session-generation.ts"
 import type { SessionManagerOptions } from "./session-manager-port.ts"

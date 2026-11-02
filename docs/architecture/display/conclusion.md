@@ -13,7 +13,7 @@
   （「`/clear` に続けて文を書いて送ろうとしたとき」）**だけ**（依頼の先頭トークンがちょうど `/clear` のあいだ
   「考えている」の代わりに「会話を片付けている」を出す。`conversation_reset` を待たず、依頼が進んでいるあいだずっと出る）。
   **`/compact` では届かない**ので、要約では何もリセットされない
-- **レポートの構造は tsukumo 側の規約（`src/server/report/core/report-notation.ts`）と `report` の
+- **レポートの構造は tsukumo 側の規約（`src/server/report/core/prompt/report-notation.ts`）と `report` の
   部品の形（`src/shared/report/report-block.ts`）で決める**（正典は「レポートの記法は、TUI と tsukumo で出し分ける」）。
   内容の種類ごとに使う構造は部品の種類と各部品の説明が持ち、部品に無い記法（`svg` など）だけを規約の表で示す。
   結論は `report` の `conclusion` に、1ターンのレポートは最後に1つ、とした。**図とグラフは同梱した
@@ -52,7 +52,7 @@
   入れ、`conclusion` と本文に書かない」と「結論は、したことではなく読み手から見た変化で書く」を、
   図の置き方は原則（「図の有無は利用者の既定に従う」）に移した。
   確かめていないことは条4で `claims` に確度つきで書き、確かめなかった画面の変更は `checks` の `unobserved` に添える。
-  条は見出しの太字の名前で引き、番号は並びの目印で外から参照しない（`src/server/report/core/report-notation.ts`）
+  条は見出しの太字の名前で引き、番号は並びの目印で外から参照しない（`src/server/report/core/prompt/report-notation.ts`）
 - **タスクの作業のレポートは、結論部を「タスク見出し行・見出し・一文」の3段にする**（見本は `docs/history/mockup/report-conclusion-2026-09-30.html` の案A）。
   - **書き手が `report` の任意の引数 `task`（`id` / `name` / `outcome` / `genre`）で渡す。** `outcome` は `finished`
     （作業を終えた）/ `stopped`（止めた）/ `awaiting-answer`（答え待ち）の3つ。どこへ送ったか（主ブランチ・push）は

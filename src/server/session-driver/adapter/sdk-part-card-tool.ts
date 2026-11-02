@@ -8,7 +8,7 @@ import {
   PART_CARD_COMPONENT_DESCRIPTION,
   PART_CARD_TOOL_DESCRIPTION,
   partCardOf,
-} from "../../report/core/part-card.ts"
+} from "../../report/core/prompt/part-card.ts"
 
 /** 部品の名前を受けて、その部品の文法カードを返すツール。知らない名前は、引ける名前の一覧を `isError` 付きで返す。 */
 export function partCardTool() {

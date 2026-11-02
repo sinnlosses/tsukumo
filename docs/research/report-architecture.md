@@ -3,7 +3,7 @@
 状態: 採用
 
 **この文書は提案であって正典ではない。** 正典は `docs/display.md` 4.2（「塊を足す・外す基準」「読む時間を減らすために足すのは、規約の側」）・
-`src/shared/report/report-block.ts`（塊の形と組み立て）・`src/server/report/core/report-notation.ts`
+`src/shared/report/report-block.ts`（塊の形と組み立て）・`src/server/report/core/prompt/report-notation.ts`
 （記法の文面）で、**採用が決まるまでコードは1行も変わらない**。
 
 **きっかけ**: 利用者の着想「タスクの性質ごとに HTML テンプレートを複数用意し、Claude の応答の JSON を

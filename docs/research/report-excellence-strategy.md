@@ -3,7 +3,7 @@
 状態: 採用
 
 **この文書は提案であって正典ではない。** 正典は `docs/architecture/display.md`（レポートの記法・各表示物・塊を足す・外す基準）、
-`docs/architecture/screen-design.md` 13章（色・字・レイアウト・13.13 のレポートの頭）、`src/server/report/core/report-notation.ts`
+`docs/architecture/screen-design.md` 13章（色・字・レイアウト・13.13 のレポートの頭）、`src/server/report/core/prompt/report-notation.ts`
 （書き手の規約）、`src/shared/report/report-block.ts`（塊の欄）。**採用が決まるまでコードは1行も変わらない。**
 
 問いの出どころは利用者の依頼（2026-10-17）「タスクのレポートのクオリティを世界中の人が感動するレベルにしたい。今の形に囚われず、

@@ -10,7 +10,7 @@ import {
 } from "../../../../src/server/chat/core/chat-memory-prompt.ts"
 import type { ChatSummary } from "../../../../src/server/chat/core/chat-memory.ts"
 import { QUESTION_NOTATION_PROMPT } from "../../../../src/server/question/core/question-notation.ts"
-import { REPORT_NOTATION_PROMPT } from "../../../../src/server/report/core/report-notation.ts"
+import { REPORT_NOTATION_PROMPT } from "../../../../src/server/report/core/prompt/report-notation.ts"
 import type { SessionMode } from "../../../../src/server/session-driver/core/session-driver.ts"
 import { SPEECH_CADENCE_PROMPT } from "../../../../src/server/system-prompt/core/speech-cadence.ts"
 import {

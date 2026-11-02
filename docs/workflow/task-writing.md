@@ -31,7 +31,7 @@
   重なると所要がぶれ、揺れる E2E が落ちる。
 - **描画を変えるタスクは、DOM に足す class・属性が、記法の語彙の検査と E2E の DOM の期待値にどう響くかを
   計画の段で先に確かめ、期待値の更新（`pnpm run test:e2e:update`）を1回にまとめる。**
-  語彙の検査は `test/server/report/core/report-notation.test.ts`、期待値は `test/e2e/expected/`。
+  語彙の検査は `test/server/report/core/prompt/report-notation.test.ts`、期待値は `test/e2e/expected/`。
   DOM に残る class は CSS Modules のハッシュ名で選べず、class の置き換えは `div`・`span`・`ol`・`li`
   にだけ掛かって svg の要素の class はハッシュ名にならない。印は2つに分ける。
   選ぶためだけの印（CSS の規則を持たない印）は、語彙（`REPORT_NOTATION_NAMES`）に足すと
@@ -40,8 +40,8 @@
   `.report-<名前>` の CSS を一緒に足す。属性を足すと期待値のファイルが動き、更新と `tw verify` の
   打ち直しが E2E 全件の所要を増やす。
 - **`report` の説明文または塊（型の定義）を足す計画は、字数を測るテストを全部挙げ、今の字数と上限の差を数えて段に書く。**
-  測るのは3か所で、`test/server/report/core/report-notation.test.ts` が `REPORT_NOTATION_PROMPT` を
-  4600字以下に、`test/server/report/core/report-tool.test.ts` が `REPORT_TOOL_DESCRIPTION` を
+  測るのは3か所で、`test/server/report/core/prompt/report-notation.test.ts` が `REPORT_NOTATION_PROMPT` を
+  4600字以下に、`test/server/report/core/prompt/report-tool.test.ts` が `REPORT_TOOL_DESCRIPTION` を
   2048字未満（MCP ツールの説明文の既定の上限）に、`test/server/session-driver/adapter/sdk-report-tool.test.ts` の
   `REPORT_INPUT_SCHEMA_MAX_CHARS`（21300字）が引数 schema の JSON 全体
   （`REPORT_TASK_DESCRIPTION` などの説明文を含む）を抑える。
@@ -56,7 +56,7 @@
   名指すファイルに入れる。** 洗うには直近に足した欄の名前と版の定数で引く
   （`grep -rln 'shortTable\|hasHowToVerify\|REPORT_USAGE_FORMAT_VERSION' test src scripts`）。
   `test/server/session/core/session-manager-record.test.ts` は1行を欄の値ごと丸ごと比べ、
-  `test/server/report/core/report-usage.test.ts` と `report-usage-hint.test.ts` は欄ごとの導出と
+  `test/server/report/core/usage/report-usage.test.ts` と `report-usage-hint.test.ts` は欄ごとの導出と
   1行の既定値を比べるので、欄が増えたら全部直す。`test/server/report/adapter/report-usage-log.test.ts` は欄名の一覧を比べ、版は
   `REPORT_USAGE_FORMAT_VERSION` の参照なので、欄が増えたら一覧を直し、版だけ上げるなら無修正で通る。
   版を上げるときは `scripts/runtime/report-block-usage.ts` の版別の枝（定数・`recordSchema` の union・

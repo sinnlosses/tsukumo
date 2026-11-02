@@ -10,7 +10,7 @@ import {
 import {
   REPORT_NOTATION_PROMPT,
   REPORT_PART_CHOICE_GUIDE,
-} from "../../../../src/server/report/core/report-notation.ts"
+} from "../../../../src/server/report/core/prompt/report-notation.ts"
 
 describe("部品の選びの測定", () => {
   const caseOf = (

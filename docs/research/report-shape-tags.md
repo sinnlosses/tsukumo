@@ -5,7 +5,7 @@
 実装は ADR 0038 に置き換わった。
 
 **この文書は調査の記録であって正典ではない。** 正典は `docs/architecture/display.md`「各表示物」「塊を足す・外す基準」と `src/shared/report/report-block.ts`
-（塊の欄と `describe`）・`src/server/report/core/report-notation.ts`（記法の条8）で、**採用が決まるまでコードは1行も変わらない**。
+（塊の欄と `describe`）・`src/server/report/core/prompt/report-notation.ts`（記法の条8）で、**採用が決まるまでコードは1行も変わらない**。
 
 **主題**: レポートが図で描ける内容を表と文字列で書いてしまう癖を、仕組みで減らす。節ごとに「その節が表す内容の形」
 （札）を書き手に言わせ、札ごとに「第一候補・許す代替・許さない」塊を決めておき、許さない塊を機械で照合する。

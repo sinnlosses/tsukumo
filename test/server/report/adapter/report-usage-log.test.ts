@@ -8,7 +8,7 @@ import { createReportUsageLog } from "../../../../src/server/report/adapter/repo
 import {
   REPORT_USAGE_FORMAT_VERSION,
   reportUsageRecordSchema,
-} from "../../../../src/server/report/core/report-usage-record.ts"
+} from "../../../../src/server/report/core/usage/report-usage-record.ts"
 import { keysOf, readJsonLines } from "../../../fixture/jsonl.ts"
 import { expectEveryFieldKept } from "../../../fixture/record-field.ts"
 import { reportUsageEntry as entry } from "../../../fixture/report-usage-entry.ts"

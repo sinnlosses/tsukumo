@@ -16,7 +16,7 @@
   - **`work_plan` で `current` にフェーズの数を渡す呼び出しは受け付けたまま残す**（組み直した古い transcript と、メインが自分で
     閉じた呼び出しを壊さない）。閉じたあとの `finished` は残りが 0 なので何もしない。条と引数の説明では、`current` に
     フェーズの数を渡す頼み方をしない
-- **ワークプランの閉じていない `report` を差し戻す**（`src/server/report/core/report-review.ts`）。
+- **ワークプランの閉じていない `report` を差し戻す**（`src/server/report/core/review/report-review.ts`）。
   `report` を通すとターンが閉じ、差し戻しに応える番が来ないため
   - **同じターンで差し戻した `work_plan` にまだ応えていない `report`**: 受け付けた `work_plan` の呼び出しがあれば
     応えたことになり、通る。差し戻しの覚えはターンの区切りで戻る

@@ -4,7 +4,7 @@ import { join } from "node:path"
 import { describe, expect, it } from "vitest"
 
 import { REPOSITORY_ROOT } from "../../../scripts/shared/repository-root.ts"
-import { REPORT_REJECTION_MODES } from "../../../src/server/report/core/rejection-mode.ts"
+import { REPORT_REJECTION_MODES } from "../../../src/server/report/core/rules/rejection-mode.ts"
 
 // `report` の差し戻しの条（`REPORT_REJECTION_MODES` の鍵）のどれにも、設計判断のアーカイブの根拠の節に1行があることを保つ。
 // 条を足したら、その節に数えた記録の数と日付か「導入時は数えていない」を `- `名前`: …` の形で1行書く。

@@ -38,10 +38,10 @@
 「仕組み」の実例:
 
 - `.dependency-cruiser.cjs`: 層・機能・箱をまたぐ `import` を許した辺の宣言（dependency-cruiser。`pnpm run lint` で打つ）で検査し、許した辺以外を落とす。静的 import・`export … from`・動的 `import()`・`require()` を拾う
-- `src/server/report/core/report-review.ts`: 規約違反のある `report` 呼び出しを handler が差し戻す。
+- `src/server/report/core/review/report-review.ts`: 規約違反のある `report` 呼び出しを handler が差し戻す。
   差し戻しの枠を足すときは、`REPORT_PROCEDURE_REJECTIONS` と `ReportReview.judge` の JSDoc（順と補足メッセージの扱い）を直し、
   `docs/architecture/display/work-plan-closing.md` の「枠の数え方」と補足メッセージの節の列挙を同じ順・同じ枠に合わせる
-- `src/server/report/core/report-tool.ts` の `Stop` フックの関所: ターンの最後に `report` を
+- `src/server/report/core/prompt/report-tool.ts` の `Stop` フックの関所: ターンの最後に `report` を
   通さない本文で止まろうとしたら差し戻す
 - `.oxlintrc.json` の `no-restricted-globals`: `Date` の使用を lint で落とす
 - `package.json` の `lint` の `--deny-warnings`: 警告が1件でもあれば `pnpm run lint` が落ちる。規則を丸ごと切るのは `.oxlintrc.json` の `overrides` の3規則だけで、切る理由は規則の直前のコメントに書く

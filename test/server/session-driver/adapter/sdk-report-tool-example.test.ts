@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest"
 import { z } from "zod"
 
-import { REPORT_CALL_EXAMPLES_TEXT } from "../../../../src/server/report/core/call-example.ts"
-import { REPORT_TOOL_DESCRIPTION } from "../../../../src/server/report/core/report-tool.ts"
+import { REPORT_CALL_EXAMPLES_TEXT } from "../../../../src/server/report/core/prompt/call-example.ts"
+import { REPORT_TOOL_DESCRIPTION } from "../../../../src/server/report/core/prompt/report-tool.ts"
 import { callReport } from "../../../fixture/a2ui-report.ts"
 import {
   CLOSING,

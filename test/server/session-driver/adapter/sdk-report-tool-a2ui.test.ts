@@ -3,7 +3,7 @@
 import { describe, expect, it } from "vitest"
 import { z } from "zod"
 
-import { REPORT_TOOL_DESCRIPTION } from "../../../../src/server/report/core/report-tool.ts"
+import { REPORT_TOOL_DESCRIPTION } from "../../../../src/server/report/core/prompt/report-tool.ts"
 import type { ReportDraft } from "../../../../src/server/report/core/rules/draft.ts"
 import {
   type CallReview,

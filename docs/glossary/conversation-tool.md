@@ -36,13 +36,13 @@
   ターンを閉じる**（結果の `_meta["claude/endTurn"]`。差し戻しでは閉じない）
 - **注記**: **仕事のセッションには常に載り、雑談には載らない**（試行から採用へ移った）。
   `report` は作業を終えてから最後に1回呼び、途中の経過は `speak` で言う。伝える
-  新しい事実が無いターンは `report` を呼ばずに終えてよい（条は `src/server/report/core/report-notation.ts`）。レポートにするのはメインの呼び出しだけで、
+  新しい事実が無いターンは `report` を呼ばずに終えてよい（条は `src/server/report/core/prompt/report-notation.ts`）。レポートにするのはメインの呼び出しだけで、
   サブエージェントの呼び出しは捨てる。1つでも呼ばれたターンではツールの外に書いた本文を出さず、
   最後の呼び出しが最終レポート、それより前が中間レポートになる。`Stop` フックの関所は
-  `src/server/report/core/report-tool.ts` にあり、背景の仕事（シェル・サブエージェントなど）が
+  `src/server/report/core/prompt/report-tool.ts` にあり、背景の仕事（シェル・サブエージェントなど）が
   走っていないのに `report` を呼ばずに本文を書いて止まろうとしたターンを差し戻し、`report` で渡し直させる。
   **呼び出しそのものも検査する**: 機械で判定できる記法の条に違反した呼び出しは描かずに、違反と
-  直し方を戻り値で返して呼び直させる（1ターンに1回まで。`src/server/report/core/report-review.ts`）。
+  直し方を戻り値で返して呼び直させる（1ターンに1回まで。`src/server/report/core/review/report-review.ts`）。
   本文は描く前に部品ごとに整形して、意味の変わらないもの（`conclusion` の繰り返し・定型だけの部品と行・
   逃げ道の中の中身の無い見出し・部品の残らないセクション）を落とす（`src/shared/report/report-tidy.ts`）
 - **避ける言い方**: レポートツール、reply
@@ -86,7 +86,7 @@
 
 ### 文法カード
 
-- **英語識別子**: `partCard`（組む関数は `partCardOf`。`src/server/report/core/part-card.ts`）
+- **英語識別子**: `partCard`（組む関数は `partCardOf`。`src/server/report/core/prompt/part-card.ts`）
 - **定義**: `report` の部品1種類の JSON Schema（欄の説明を全部残す）と、架空の値で書いた `components` の例1つを並べた文。
   JSON Schema は `report` の定義と同じ zod から出し、説明を手で二重に書かない
 - **避ける言い方**: 部品の説明書、スキーマの抜粋
@@ -100,7 +100,7 @@
 - **注記**: `Stop` フックで止まろうとしたターンを差し戻す `report` の関所（`ReportGate`）はこれに含めず、
   この一式の結果を読む側に置く。**委譲ゲート**の印はこの一式が出す。
   差し戻した `report` のあとの出し直しは直す欄だけを渡せばよく、渡さなかった欄は同じターンで直前に差し戻した
-  呼び出しの値を引き継ぐ（`ReportInheritance`。`src/server/report/core/report-inheritance.ts`。描く値と handler の判定は同じ土台を読む。
+  呼び出しの値を引き継ぐ（`ReportInheritance`。`src/server/report/core/review/report-inheritance.ts`。描く値と handler の判定は同じ土台を読む。
   決まりは `docs/architecture/display/speak-tool.md` の `report` の項）。差し戻しの判定そのものは引き継ぎで変わらない。
   `report` の条はそれぞれ段（`ReportRejectionMode`。表は `REPORT_REJECTION_MODES`）を持ち、`reject` は差し戻し、`count` は差し戻さず
   通した呼び出しの記録（`report-counted`）に名前を残すだけ
