@@ -1,0 +1,108 @@
+{
+  "name": "report-plot-target",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "目標や上限に対する値の見え方を確かめたい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 300,
+      "event": {
+        "kind": "speech",
+        "text": "値と上限を並べて書くね。",
+        "expression": "default"
+      }
+    },
+    {
+      "afterMs": 1000,
+      "event": {
+        "kind": "report",
+        "task": { "kind": "none" },
+        "closing": { "kind": "speech", "text": "書けたよ！", "expression": "proud" },
+        "toolUseId": "fake-report-plot-target-1",
+        "conclusion": "架空の結論: 目標や上限に対する値の見え方を確かめた。",
+        "sections": [
+          {
+            "heading": "架空の値と上限",
+            "shapeTag": "quantity",
+            "blocks": [
+              {
+                "kind": "plot",
+                "question": "架空の印刷は 1 台の上限 100 枚に対しピークが 90 枚で収まるか",
+                "relation": "compare",
+                "data": [
+                  { "name": "架空の項目", "type": "N", "values": ["ピークの枚数"] },
+                  { "name": "枚", "type": "Q", "values": [90] },
+                  { "name": "上限", "type": "Q", "values": [100] }
+                ],
+                "fold": "",
+                "aside": ""
+              },
+              {
+                "kind": "plot",
+                "question": "架空の 2 案のうち残り 9 営業日に収まるのはどちらか",
+                "relation": "compare",
+                "data": [
+                  {
+                    "name": "架空の案",
+                    "type": "N",
+                    "values": ["案A（並行なし）", "案B（並行あり）"]
+                  },
+                  { "name": "日", "type": "Q", "values": [5.3, 3.7] },
+                  { "name": "残りの営業日", "type": "Q", "values": [9, 9] }
+                ],
+                "fold": "",
+                "aside": ""
+              },
+              {
+                "kind": "plot",
+                "question": "架空の接続は読み取り 60 本と書き込み 40 本で上限 100 本に当たるか",
+                "relation": "compare",
+                "data": [
+                  { "name": "架空の接続", "type": "N", "values": ["読み取り", "書き込み"] },
+                  { "name": "本", "type": "Q", "values": [60, 40] },
+                  { "name": "上限", "type": "Q", "values": [100, 100] }
+                ],
+                "fold": "",
+                "aside": ""
+              },
+              {
+                "kind": "plot",
+                "question": "架空の接続は合計 100 本が上限 100 本に当たるか",
+                "relation": "part",
+                "data": [
+                  { "name": "架空の接続", "type": "N", "values": ["読み取り", "書き込み"] },
+                  { "name": "本", "type": "Q", "values": [60, 40] }
+                ],
+                "fold": "",
+                "aside": ""
+              }
+            ]
+          }
+        ],
+        "favor": "",
+        "checks": []
+      }
+    },
+    {
+      "afterMs": 1050,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-report-plot-target-1",
+        "content": "ok",
+        "isError": false
+      }
+    },
+    {
+      "afterMs": 2300,
+      "event": {
+        "kind": "turn-finished",
+        "outcome": { "kind": "completed" }
+      }
+    }
+  ]
+}

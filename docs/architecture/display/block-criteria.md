@@ -146,7 +146,7 @@ HTML の字として埋める部品（`htmlInline`・`htmlInlineWithCode`）と�
 書き手の `form` が下の「置かない形」に当たれば採らずに決定表の形で描き、`plot-forbidden-form` と数える。図派・文派のどちらの既定で決めた形とも違う形は通して `plot-form-override` と数える（どちらも `count`）。
 基数の境は `CARDINALITY_BOUNDS` の 1 か所に集めた目安で、実証された閾値ではない。上書きの数を見て動かす。
 決定表が `bar`・`line`・`pie` を返した `plot` は、`plotChartOf`（`src/shared/report/plot-chart.ts`）が既存の `chart` の部品へ写して描く（始まりと終わりの量の `range` は `span`、前と後の量の `change` の `line` は `slope`、写せない申告は表）。
-`numberLine`・`bullet` を返した `plot` は、`plotGaugeOf`（`src/shared/report/plot-gauge.ts`）が `number-line`・`bullet` のフェンスへ写す（bullet の区間は申告に無いので 0 から目標までの 1 つ。写せない申告は表）。座標と色は書き手に開かず、描画側が決める。
+`numberLine`・`bullet` を返した `plot` は、`plotGaugeOf`（`src/shared/report/plot-gauge.ts`）が `number-line`・`bullet` のフェンスへ写す（bullet の区間は申告に無いので 0 から目標までの 1 つ。写せない申告は表）。座標と色は書き手に開かず、描画側が決める。値の列の名前は軸の端の単位として出る。目標・上限に対する値は、場面 `report-plot-target` で 1 対ずつの形が読めると確かめた（2 つの値の合計と上限は 1 枚の bullet に積めないので、書き手が合計を値の 1 行にする）。
 ブラウザは `GaugeBlock`（`gauge-block.tsx`）が自前の SVG で描く。位置は `gauge-layout.ts` が軸の範囲から割合で決め、色は値・点が `--chart-series-1`、区間の帯が `--ink` の 26% の濃淡だけ（定性区間は 1〜5 個で、濃いほうから薄いほうへ）。
 `scatter`・`histogram` を返した `plot` は、`plotScatterOf`（`src/shared/report/plot-scatter.ts`）・`plotHistogramOf`（`src/shared/report/plot-histogram.ts`）が `scatter`・`histogram` のフェンスへ写す。
 散布は先頭の量を x、次を y にし、x か y が四分位範囲の 1.5 倍の柵の外にある点を外れ値として名前を添える（外れ値があるのに名前の列が無い申告は表）。
