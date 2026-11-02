@@ -5,7 +5,7 @@
 // - Enter は改行、Command+Enter で送信。IME の変換確定の Command+Enter は送らない
 //   （`isComposing` と、対応していない古いブラウザ向けの `keyCode === 229` の両方を見る）
 // - Command+Enter と送信ボタンはバックグラウンドタスクが残っていれば脇の話になる送り方で、Command+Shift+Enter はいつも新しい依頼として送る
-//   （脇の話にするかを決めるのはサーバ。`docs/architecture/display.md`「脇の話」）
+//   （脇の話にするかを決めるのはサーバ。`docs/architecture/display.md`「補足メッセージ」）
 // - 送信後は入力欄を空にしてフォーカスを残す
 // - 打ちかけは入力が止まったら `localStorage` に保ち（セッションごと・直近10件）、再読み込み後に入力欄が空なら戻す。送信すると消す
 // - `/` 補完は前方一致→部分一致、Tab / Enter は確定だけ（送信しない）。選択の上下移動は

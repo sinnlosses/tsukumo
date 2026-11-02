@@ -32,7 +32,7 @@
 | `docs/architecture/screen-design/chat-mode-screen.md`                  | 13.7 雑談モードの画面の本文。                                                                                                                                                           |
 | `docs/architecture/screen-design/chat-mode-sidebar-and-speech.md`      | 13.7 雑談モードの画面のうち、雑談のときのサイドバー、セリフを全文で出して吹き出しを2秒空ける決まり、時刻と日の区切り。                                                                  |
 | `docs/architecture/screen-design/color.md`                             | 13.2 Color。                                                                                                                                                                            |
-| `docs/architecture/screen-design/conversation-phase.md`                | 会話の画面のメインビューの中身を局面で入れ替える約束、局面の判定、遷移、カードを移るキーと送るキー、脇の話の欄。                                                                        |
+| `docs/architecture/screen-design/conversation-phase.md`                | 会話の画面のメインビューの中身を局面で入れ替える約束、局面の判定、遷移、カードを移るキーと送るキー、補足メッセージの欄。                                                                |
 | `docs/architecture/screen-design/design-token.md`                      | 余白・角丸・影・動きのデザイントークンの段と値、使い分け、直書きの許す範囲、`ui/` の箱の部品（`Surface`・`Badge`・`Divider`）、見本帳（`#design`）の置き場を持つ。                      |
 | `docs/architecture/screen-design/diary-spread.md`                      | 成果の画面の振り返りのボタンの扱い、書き終わりの知らせ、日記帳の見開き、見本、仮に決めたこと。                                                                                          |
 | `docs/architecture/screen-design/diary.md`                             | 成果の画面（つくもの日記帳）の並び、日記の区画、しおり、小さな驚き、色、灯りの暦、空の日の見え方。                                                                                      |

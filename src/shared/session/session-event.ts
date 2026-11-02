@@ -86,7 +86,7 @@ export type SessionEvent =
   /**
    * バックグラウンドタスクが残っているあいだに利用者が送った言葉（脇の話）。
    * `request` と違ってターンの境目にならず、親のやり取りに吊るす（ターンの通し番号も進めない）。
-   * 脇の話かどうかはサーバが送った瞬間に決める（`docs/architecture/display.md`「脇の話」）。
+   * 脇の話かどうかはサーバが送った瞬間に決める（`docs/architecture/display.md`「補足メッセージ」）。
    */
   | {
       readonly kind: "aside"

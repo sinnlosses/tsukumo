@@ -50,7 +50,7 @@
 - `docs/architecture/display/work-plan-closing.md`: フェーズの閉じ方・閉じていない report の差し戻し・出す場所
 - `docs/architecture/display/work-plan-timing.md`: フェーズごとの所要時間・フェーズが移ったときの中間レポート・合図の行・状態
 
-#### 脇の話
+#### 補足メッセージ
 
 - `docs/architecture/display/aside.md`
 
@@ -70,7 +70,7 @@
 
 - `docs/architecture/display/portrait-and-balloon.md`: 立ち絵と吹き出し
 - `docs/architecture/display/permission-and-question.md`: 許可と質問
-- `docs/architecture/display/main-view.md`: メインビュー（局面・最終と中間のレポート・畳み・本文の流し方・1ターン＝1枚のカード・やり取りの列・脇の話の欄・失敗の表示）
+- `docs/architecture/display/main-view.md`: メインビュー（局面・最終と中間のレポート・畳み・本文の流し方・1ターン＝1枚のカード・やり取りの列・補足メッセージの欄・失敗の表示）
 - `docs/architecture/display/rich-rendering.md`: レポートの見せ方・パスとコード・色・外部ライブラリ・帯のいまの作業
 - `docs/architecture/display/sidebar.md`: サイドバー
 - `docs/architecture/display/input-box.md`: 入力欄・配り方・フォールバック

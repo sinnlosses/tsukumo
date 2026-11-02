@@ -77,7 +77,7 @@
 - **検査は丸ごと**。1か所でも崩れていたらその回は何も書かず、行は未定着のまま残る。長すぎる
   あらすじも検査で落とし（`failed`）、書くときの古い行の切り詰めは検査をすり抜けた分の最後の防波堤
 - **予約タグは、tsukumo と Claude Code が依頼に差し込む印の全件**（`CHAT_SYNOPSIS_RESERVED_TAGS`）。
-  tsukumo の脇の話のラッパー（`<tsukumo-aside>`）・委譲の引き継ぎの頭（`<agent-message`）・SDK が展開した
+  tsukumo の補足メッセージのラッパー（`<tsukumo-aside>`）・委譲の引き継ぎの頭（`<agent-message`）・SDK が展開した
   スラッシュコマンドの3タグ（`<command-name>` など）・話題を本文に埋め込んでいた古い形（`<topics>`）に、
   Claude Code が差し込む `<system-reminder>`・`<task-notification>`・`<local-command-stdout>` を加える。
   印の形を正規表現で広く拒むことはしない — 地の文の `<` まで拒み、逃げ道の無い止まりを作る
