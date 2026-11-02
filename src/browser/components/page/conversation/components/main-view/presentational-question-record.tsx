@@ -7,9 +7,11 @@ import type { ReactElement } from "react"
 
 import { Heading } from "../../../../ui/heading/heading.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
+import { hasDetail, InquiryBrief, InquiryCompare, InquiryDetail } from "../inquiry/inquiry.tsx"
 import { detailBlockClassName, QuestionPreviewMarkdown } from "../markdown/markdown.tsx"
 import type {
   QuestionRecordAnswerRow,
+  QuestionRecordBriefModel,
   QuestionRecordModel,
   QuestionRecordPreviewRow,
   QuestionRecordQuestionModel,
@@ -18,6 +20,7 @@ import styles from "./main-view.module.css"
 
 const FREE_TEXT_SUFFIX = "（自由入力）"
 const PREVIEWS_SUMMARY = "比べた内容"
+const BRIEF_SUMMARY = "質問のときの詳細"
 
 type PresentationalQuestionRecordProps = QuestionRecordModel
 
@@ -55,6 +58,9 @@ function QuestionBlock(props: {
           <AnswerRow row={row} multiSelect={question.multiSelect} key={row.key} />
         ))}
       </ul>
+      {question.brief !== undefined && (
+        <BriefDetails toolUseId={props.toolUseId} brief={question.brief} />
+      )}
       {question.previews.length > 0 && (
         // 開くまで中身を描かない。一度開いたあとは閉じても外さない（`useQuestionRecord`）。
         <details className={styles["question-previews"]} onToggle={question.onTogglePreviews}>
@@ -73,6 +79,42 @@ function QuestionBlock(props: {
         </details>
       )}
     </div>
+  )
+}
+
+function BriefDetails(props: {
+  readonly toolUseId: string
+  readonly brief: QuestionRecordBriefModel
+}): ReactElement {
+  const { brief } = props
+
+  return (
+    <details className={styles["question-previews"]} onToggle={brief.onToggle}>
+      <Text element="summary" size="secondary" tone="ink-quiet" weight="inherit" className="">
+        {BRIEF_SUMMARY}
+      </Text>
+      {brief.opened && (
+        <>
+          <InquiryBrief brief={brief.brief} />
+          {brief.options.filter(hasDetail).map((option) => (
+            <InquiryDetail
+              askId={props.toolUseId}
+              imageSource={brief.imageSource}
+              option={option}
+              key={option.label}
+            />
+          ))}
+          {brief.brief.axes.length > 0 && (
+            <InquiryCompare
+              open={false}
+              imageSource={brief.imageSource}
+              brief={brief.brief}
+              options={brief.options}
+            />
+          )}
+        </>
+      )}
+    </details>
   )
 }
 

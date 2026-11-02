@@ -20,6 +20,53 @@ const CONS_LABEL = "悪い点"
 const DETAIL_SUFFIX = " の詳細"
 const COMPARE_SUMMARY = "並べて比べる"
 const DETAIL_HINT = "選択肢を押すと詳細が出ます"
+const BACKGROUND_LABEL = "背景"
+const AXES_LABEL = "判断の軸"
+const AXES_SEPARATOR = " / "
+
+export function InquiryBrief(props: { readonly brief: InquiryBriefModel }): ReactElement {
+  return (
+    <div className={styles["inquiry-brief"]}>
+      <Text
+        element="p"
+        size="secondary"
+        tone="inherit"
+        weight="inherit"
+        className={styles["inquiry-brief-line"]}
+      >
+        <Text element="span" size="label" tone="ink-quiet" weight="bold" className="">
+          {BACKGROUND_LABEL}
+        </Text>{" "}
+        {props.brief.background}
+      </Text>
+      {props.brief.axes.length > 0 && (
+        <Text
+          element="p"
+          size="secondary"
+          tone="inherit"
+          weight="inherit"
+          className={styles["inquiry-brief-line"]}
+        >
+          <Text element="span" size="label" tone="ink-quiet" weight="bold" className="">
+            {AXES_LABEL}
+          </Text>{" "}
+          {props.brief.axes.join(AXES_SEPARATOR)}
+        </Text>
+      )}
+    </div>
+  )
+}
+
+/** 詳細のサーフェスに出すものがあるか（許可の「許可」「拒否」には無い）。 */
+export function hasDetail(option: InquiryOptionRow): boolean {
+  return (
+    option.description !== "" ||
+    option.preview !== undefined ||
+    option.pros.length > 0 ||
+    option.cons.length > 0 ||
+    option.figures.length > 0
+  )
+}
 
 /** フォーカスした選択肢の詳細のサーフェス。高さは切らず、札の本文が内側で転がる。 */
 export function InquiryDetail(props: {

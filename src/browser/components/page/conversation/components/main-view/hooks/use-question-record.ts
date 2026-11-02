@@ -7,18 +7,25 @@
 // 開いたままにしないのは、preview が1問あたり数十行になるため。
 // 1回開いたら、閉じても中身は描いたままにする。
 // ```chart の `<canvas>` は `display: none` の中だと大きさが0のまま描かれ、開いても測り直さないので、閉じたまま組み立てると潰れたグラフが残る。
-// 質問ごとに独立して開閉するので、開いた索引を `Set` で持つ。
+// 質問ごとに独立して開閉するので、開いた索引を `Set` で持つ。質問のときの添え書きの畳みも同じ作りで、索引は `preview` の畳みとは別に持つ。
 //
 // `<details onToggle>` は開閉のたびに発火するので、開いたとき（`event.currentTarget.open`）だけ拾う。
 
 import { useState, type ToggleEvent } from "react"
 
+import type { QuestionBrief } from "../../../../../../../shared/session-driver/question-brief.ts"
 import {
   sortQuestionOptions,
   type Question,
   type QuestionAnswer,
 } from "../../../../../../../shared/session-driver/question.ts"
 import type { MainViewQuestion } from "../../../../../../../shared/session/main-view-shape.ts"
+import {
+  optionRows,
+  type InquiryBrief,
+  type InquiryOptionRow,
+} from "../../../stores/inquiry-answer.ts"
+import type { ShelvedSource } from "../../inquiry/inquiry.tsx"
 
 export type QuestionRecordProps = {
   readonly entry: MainViewQuestion
@@ -39,6 +46,14 @@ export type QuestionRecordPreviewRow = {
   readonly chosen: boolean
 }
 
+export type QuestionRecordBriefModel = {
+  readonly brief: InquiryBrief
+  readonly options: readonly InquiryOptionRow[]
+  readonly imageSource: ShelvedSource
+  readonly opened: boolean
+  readonly onToggle: (event: ToggleEvent<HTMLDetailsElement>) => void
+}
+
 /** 1問ぶんが画面に出す形。 */
 export type QuestionRecordQuestionModel = {
   readonly key: string
@@ -51,6 +66,7 @@ export type QuestionRecordQuestionModel = {
   readonly previews: readonly QuestionRecordPreviewRow[]
   readonly previewsOpened: boolean
   readonly onTogglePreviews: (event: ToggleEvent<HTMLDetailsElement>) => void
+  readonly brief: QuestionRecordBriefModel | undefined
 }
 
 export type QuestionRecordModel = {
@@ -61,12 +77,29 @@ export type QuestionRecordModel = {
 
 export function useQuestionRecord(props: QuestionRecordProps): QuestionRecordModel {
   const [openedIndexes, setOpenedIndexes] = useState<ReadonlySet<number>>(new Set())
+  const [briefOpenedIndexes, setBriefOpenedIndexes] = useState<ReadonlySet<number>>(new Set())
 
   return {
     toolUseId: props.entry.toolUseId,
     questions: props.entry.questions.map((question, index) => {
       const answer = props.entry.answers[index] ?? []
+      const brief = props.entry.briefs.find((candidate) => candidate.header === question.header)
       return {
+        brief:
+          brief === undefined
+            ? undefined
+            : briefModel({
+                entry: props.entry,
+                question,
+                answer,
+                brief,
+                opened: briefOpenedIndexes.has(index),
+                onToggle: (event) => {
+                  if (event.currentTarget.open) {
+                    setBriefOpenedIndexes((current) => new Set(current).add(index))
+                  }
+                },
+              }),
         key: `${question.header}-${String(index)}`,
         header: question.header,
         text: question.text,
@@ -84,6 +117,28 @@ export function useQuestionRecord(props: QuestionRecordProps): QuestionRecordMod
   }
 }
 
+function briefModel(given: {
+  readonly entry: MainViewQuestion
+  readonly question: Question
+  readonly answer: QuestionAnswer
+  readonly brief: QuestionBrief
+  readonly opened: boolean
+  readonly onToggle: (event: ToggleEvent<HTMLDetailsElement>) => void
+}): QuestionRecordBriefModel {
+  return {
+    brief: { background: given.brief.background, axes: given.brief.axes },
+    options: optionRows(given.question, given.answer, given.brief.options),
+    imageSource: {
+      kind: "shelved",
+      toolUseId: given.entry.toolUseId,
+      sizes: given.entry.imageSizes,
+      unshelved: given.entry.unshelvedImages,
+    },
+    opened: given.opened,
+    onToggle: given.onToggle,
+  }
+}
+
 /**
  * 1問ぶんの選択肢と答えの行。
  * 選択肢そのものは札と同じ並び（`sortQuestionOptions`）で並べ、選択肢に無い答え（自由入力）は末尾に足す。
@@ -93,7 +148,7 @@ function answerRows(
   question: Question,
   answer: QuestionAnswer,
 ): readonly QuestionRecordAnswerRow[] {
-  const optionRows = sortQuestionOptions(question.options).map((option) => ({
+  const choiceRows = sortQuestionOptions(question.options).map((option) => ({
     key: option.label,
     label: option.label,
     chosen: answer.includes(option.label),
@@ -102,7 +157,7 @@ function answerRows(
   const freeTextRows = answer
     .filter((value) => !question.options.some((option) => option.label === value))
     .map((text) => ({ key: text, label: text, chosen: true, isFreeText: true }))
-  return [...optionRows, ...freeTextRows]
+  return [...choiceRows, ...freeTextRows]
 }
 
 /** 比べた `preview` を持つ選択肢だけ、選択肢と同じ並びで残す。 */

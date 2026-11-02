@@ -9,6 +9,7 @@ import type { ReportCheck } from "../report/report-check.ts"
 import type { ReportImageSize } from "../report/report-image.ts"
 import type { ReportTask } from "../report/report-task.ts"
 import type { RecordedPromptImage } from "../session-driver/prompt-image.ts"
+import type { QuestionBrief } from "../session-driver/question-brief.ts"
 import type { Question, QuestionAnswer } from "../session-driver/question.ts"
 import type { TurnFailure } from "../session-driver/turn-failure.ts"
 import type { ClippedText } from "../utils/clip-text.ts"
@@ -152,6 +153,9 @@ export type SessionRecord =
       readonly toolUseId: string
       readonly questions: readonly Question[]
       readonly answers: readonly QuestionAnswer[]
+      readonly briefs: readonly QuestionBrief[]
+      readonly imageSizes: readonly ReportImageSize[]
+      readonly unshelvedImages: readonly string[]
     }
   | {
       readonly kind: "speech"

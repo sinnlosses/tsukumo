@@ -135,6 +135,41 @@ export function useInquiryAnswer(): InquiryModel {
     : questionModel(pending, { answer, setAnswer }, touched, composerWriting, dispatch)
 }
 
+/**
+ * 選択肢を札の行へ畳む。並びはおすすめ → それ以外の辞書順（`sortQuestionOptions`）で、番号はその並びで振る。
+ *
+ * 自由入力（「その他」）の選択肢は札に出さない（自由入力は入力欄が担うので、押しても意味のない札になる）。
+ * `sortQuestionOptions` はそれでも通すので、モデルが「その他」を含めてきたかどうかで残りの並びは変わらない。
+ */
+export function optionRows(
+  question: Question,
+  selected: readonly string[],
+  briefOptions: readonly QuestionBriefOption[],
+): readonly InquiryOptionRow[] {
+  return sortQuestionOptions(question.options)
+    .filter((option) => option.label !== FREE_TEXT_OPTION_LABEL)
+    .map((option, index) => {
+      const text = withoutRecommendedMark(option.label)
+      const briefed = briefOptions.find(
+        (candidate) => withoutRecommendedMark(candidate.label) === text,
+      )
+      return {
+        number: index + 1,
+        label: option.label,
+        text,
+        recommended: isRecommendedLabel(option.label),
+        description: option.description,
+        preview: option.preview,
+        selected: selected.includes(option.label),
+        irreversible: briefed?.irreversible ?? false,
+        pros: briefed?.pros ?? [],
+        cons: briefed?.cons ?? [],
+        byAxis: briefed?.byAxis ?? [],
+        figures: briefed?.figures ?? [],
+      }
+    })
+}
+
 /** 許可要求の選択肢のラベル。並びがそのまま番号になる。 */
 const ALLOW_LABEL = "許可"
 const DENY_LABEL = "拒否"
@@ -342,39 +377,4 @@ function answerFor(answer: DraftAnswer, target: number): readonly string[] {
 function replaced<T>(values: readonly T[], target: number, value: T, filler: T): readonly T[] {
   const length = Math.max(values.length, target + 1)
   return Array.from({ length }, (_, i) => (i === target ? value : (values[i] ?? filler)))
-}
-
-/**
- * 選択肢を札の行へ畳む。並びはおすすめ → それ以外の辞書順（`sortQuestionOptions`）で、番号はその並びで振る。
- *
- * 自由入力（「その他」）の選択肢は札に出さない（自由入力は入力欄が担うので、押しても意味のない札になる）。
- * `sortQuestionOptions` はそれでも通すので、モデルが「その他」を含めてきたかどうかで残りの並びは変わらない。
- */
-function optionRows(
-  question: Question,
-  selected: readonly string[],
-  briefOptions: readonly QuestionBriefOption[],
-): readonly InquiryOptionRow[] {
-  return sortQuestionOptions(question.options)
-    .filter((option) => option.label !== FREE_TEXT_OPTION_LABEL)
-    .map((option, index) => {
-      const text = withoutRecommendedMark(option.label)
-      const briefed = briefOptions.find(
-        (candidate) => withoutRecommendedMark(candidate.label) === text,
-      )
-      return {
-        number: index + 1,
-        label: option.label,
-        text,
-        recommended: isRecommendedLabel(option.label),
-        description: option.description,
-        preview: option.preview,
-        selected: selected.includes(option.label),
-        irreversible: briefed?.irreversible ?? false,
-        pros: briefed?.pros ?? [],
-        cons: briefed?.cons ?? [],
-        byAxis: briefed?.byAxis ?? [],
-        figures: briefed?.figures ?? [],
-      }
-    })
 }

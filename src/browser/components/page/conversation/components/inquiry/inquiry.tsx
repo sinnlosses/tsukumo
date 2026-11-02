@@ -22,13 +22,14 @@ import { Text } from "../../../../ui/text/text.tsx"
 import { mergeRefs } from "../../domain/merge-ref.ts"
 import {
   useInquiryAnswer,
-  type InquiryBrief as InquiryBriefModel,
   type InquiryModel,
   type InquiryOptionRow,
 } from "../../stores/inquiry-answer.ts"
 import { useInquiryScroll } from "./hooks/use-inquiry-scroll.ts"
 import { useInquiryVisibility } from "./hooks/use-inquiry-visibility.ts"
 import {
+  hasDetail,
+  InquiryBrief,
   InquiryCompare,
   InquiryDetail,
   InquiryDetailHint,
@@ -53,9 +54,6 @@ const NEXT_LABEL = "次へ"
 /** ボタンに添えるキーの字。 */
 const ENTER_KEY_HINT = "⏎"
 const WAITED_PREFIX = "待って"
-const BACKGROUND_LABEL = "背景"
-const AXES_LABEL = "判断の軸"
-const AXES_SEPARATOR = " / "
 const IRREVERSIBLE_BADGE = "⚠ 戻せない"
 /** 単一選択の radio をひとまとまりにする名前（札は1問ずつしか出ないので1つで足りる）。 */
 const OPTION_GROUP_NAME = "inquiry-option"
@@ -63,6 +61,8 @@ const OPTION_GROUP_NAME = "inquiry-option"
 const WRITTEN_ANSWER_PREFIX = "入力欄に書いた答え: "
 /** 数字キーで選べる選択肢の数字。 */
 const CHOICE_KEY = /^[1-9]$/
+
+export { hasDetail, InquiryBrief, InquiryCompare, InquiryDetail, type ShelvedSource }
 
 export function Inquiry(): ReactElement | undefined {
   const phone = usePhoneWidth()
@@ -424,50 +424,6 @@ function waitedText(elapsedMs: number): string {
   const seconds = Math.max(0, Math.floor(elapsedMs / 1000))
   const minutes = Math.floor(seconds / 60)
   return `${String(minutes)}:${String(seconds % 60).padStart(2, "0")}`
-}
-
-function InquiryBrief(props: { readonly brief: InquiryBriefModel }): ReactElement {
-  return (
-    <div className={styles["inquiry-brief"]}>
-      <Text
-        element="p"
-        size="secondary"
-        tone="inherit"
-        weight="inherit"
-        className={styles["inquiry-brief-line"]}
-      >
-        <Text element="span" size="label" tone="ink-quiet" weight="bold" className="">
-          {BACKGROUND_LABEL}
-        </Text>{" "}
-        {props.brief.background}
-      </Text>
-      {props.brief.axes.length > 0 && (
-        <Text
-          element="p"
-          size="secondary"
-          tone="inherit"
-          weight="inherit"
-          className={styles["inquiry-brief-line"]}
-        >
-          <Text element="span" size="label" tone="ink-quiet" weight="bold" className="">
-            {AXES_LABEL}
-          </Text>{" "}
-          {props.brief.axes.join(AXES_SEPARATOR)}
-        </Text>
-      )}
-    </div>
-  )
-}
-
-/** 詳細のサーフェスに出すものがあるか（許可の「許可」「拒否」には無い）。 */
-function hasDetail(option: InquiryOptionRow): boolean {
-  return (
-    option.description !== "" ||
-    option.preview !== undefined ||
-    option.pros.length > 0 ||
-    option.cons.length > 0 ||
-    option.figures.length > 0
-  )
 }
 
 function imageSourceOf(inquiry: Exclude<InquiryModel, { readonly kind: "none" }>): ShelvedSource {

@@ -6,8 +6,10 @@ import { isPlainObject } from "remeda"
 import { z } from "zod"
 
 import type { DiaryEvent } from "../diary/diary.ts"
+import type { ReportImageSize } from "../report/report-image.ts"
 import type { PendingAsk } from "../session-driver/pending-ask.ts"
 import type { RecordedPromptImage } from "../session-driver/prompt-image.ts"
+import type { QuestionBrief } from "../session-driver/question-brief.ts"
 import type { Question, QuestionAnswer } from "../session-driver/question.ts"
 import type { UsageReviewEvent } from "../usage/usage-review.ts"
 import type { DelegateEvent } from "./session-event-delegate.ts"
@@ -124,13 +126,19 @@ export type SessionEvent =
    *
    * `answers[i]` は `questions[i]` に対して選んだ答えの並び（{@link QuestionAnswer}）。
    * 質問文も答えも会話の内容なので、ログに出さない・外へ出さない。
-   * `toolUseId` は答え待ちのときの `PendingAsk` の `id` と同じで、preview の画像の置き場の鍵になる。
+   * `toolUseId` は答え待ちのときの `PendingAsk` の `id` と同じで、preview と添え書きの図の画像の置き場の鍵になる。
+   *
+   * `briefs` は答え待ちのときの添え書き（無ければ空）。
+   * `imageSizes`・`unshelvedImages` は駆動が空で流し、セッションの管理が答え待ちの同じ id の質問から写す。
    */
   | {
       readonly kind: "question-answered"
       readonly toolUseId: string
       readonly questions: readonly Question[]
       readonly answers: readonly QuestionAnswer[]
+      readonly briefs: readonly QuestionBrief[]
+      readonly imageSizes: readonly ReportImageSize[]
+      readonly unshelvedImages: readonly string[]
     }
   | TurnHealthEvent
   /**

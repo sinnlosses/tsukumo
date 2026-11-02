@@ -25,6 +25,8 @@ afterEach(() => {
   cleanup()
 })
 
+const NO_BRIEF = { briefs: [], imageSizes: [], unshelvedImages: [] } as const
+
 function question(header: string, text: string): MainViewQuestion["questions"][number] {
   return {
     header,
@@ -48,6 +50,7 @@ describe("QuestionRecord（選んだ印の色）", () => {
       toolUseId: "toolu_fictional",
       questions: [question("確認", "どちらにする？")],
       answers: [["案B"]],
+      ...NO_BRIEF,
     }
 
     const { container } = render(<QuestionRecord entry={entry} />)
@@ -78,6 +81,7 @@ describe("QuestionRecord（単一選択と複数選択で印が変わる）", ()
         },
       ],
       answers: [["案B"]],
+      ...NO_BRIEF,
     }
 
     const { container } = render(<QuestionRecord entry={entry} />)
@@ -117,6 +121,7 @@ describe("QuestionRecord（答えの突き合わせ）", () => {
         },
       ],
       answers: [["案A", "案C"]],
+      ...NO_BRIEF,
     }
 
     const { container } = render(<QuestionRecord entry={entry} />)
@@ -134,6 +139,7 @@ describe("QuestionRecord（答えの突き合わせ）", () => {
       toolUseId: "toolu_fictional",
       questions: [question("確認", "どちらにする？")],
       answers: [["どちらでもない架空の答え"]],
+      ...NO_BRIEF,
     }
 
     const { container } = render(<QuestionRecord entry={entry} />)
@@ -161,6 +167,7 @@ describe("QuestionRecord（答えの突き合わせ）", () => {
         },
       ],
       answers: [["案B"]],
+      ...NO_BRIEF,
     }
 
     const { container } = render(<QuestionRecord entry={entry} />)
@@ -181,6 +188,7 @@ describe("QuestionRecord（答えの突き合わせ）", () => {
         },
       ],
       answers: [["案B"], ["案A"]],
+      ...NO_BRIEF,
     }
 
     const { container } = render(<QuestionRecord entry={entry} />)
@@ -207,6 +215,7 @@ describe("QuestionRecord（残す preview）", () => {
         },
       ],
       answers: [["案B"]],
+      ...NO_BRIEF,
     }
   }
 
@@ -227,6 +236,7 @@ describe("QuestionRecord（残す preview）", () => {
       toolUseId: "toolu_fictional",
       questions: [question("確認", "どちらにする？")],
       answers: [["案B"]],
+      ...NO_BRIEF,
     }
 
     const { container } = render(<QuestionRecord entry={entry} />)

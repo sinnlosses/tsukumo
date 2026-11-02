@@ -45,7 +45,15 @@ function imageSections(...paths: readonly string[]): readonly ReportBlockSection
 }
 
 function questionRecord(toolUseId: string): SessionRecord {
-  return { kind: "question", toolUseId, questions: [], answers: [] }
+  return {
+    kind: "question",
+    toolUseId,
+    questions: [],
+    answers: [],
+    briefs: [],
+    imageSizes: [],
+    unshelvedImages: [],
+  }
 }
 
 function pendingQuestion(id: string): StampedPendingAsk {

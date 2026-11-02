@@ -67,7 +67,15 @@ function turn(
 }
 
 function question(toolUseId: string): MainViewQuestion {
-  return { kind: "question", toolUseId, questions: [], answers: [] }
+  return {
+    kind: "question",
+    toolUseId,
+    questions: [],
+    answers: [],
+    briefs: [],
+    imageSizes: [],
+    unshelvedImages: [],
+  }
 }
 
 function aside(text: string): MainViewAside {

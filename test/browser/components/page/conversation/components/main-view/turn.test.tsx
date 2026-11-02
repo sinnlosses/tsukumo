@@ -434,6 +434,9 @@ describe("Turn（経過の畳み）", () => {
         },
       ],
       answers: [["選んだ答え"]],
+      briefs: [],
+      imageSizes: [],
+      unshelvedImages: [],
     }
   }
 

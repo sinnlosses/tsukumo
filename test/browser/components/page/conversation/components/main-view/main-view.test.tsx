@@ -326,6 +326,9 @@ describe("MainView（答えた質問の記録）", () => {
         },
       ],
       answers: [["案A"]],
+      briefs: [],
+      imageSizes: [],
+      unshelvedImages: [],
     }
   }
 

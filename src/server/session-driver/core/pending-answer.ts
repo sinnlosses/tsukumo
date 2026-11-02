@@ -48,6 +48,7 @@ export type PendingAnswerHandlers = {
     toolUseId: string,
     questions: readonly Question[],
     answers: readonly QuestionAnswer[],
+    briefs: readonly QuestionBrief[],
   ) => void
 }
 
@@ -173,7 +174,7 @@ export function createPendingAnswerQueue(handlers: PendingAnswerHandlers): Pendi
       // 質問の記録は答えが確定したここ1回だけ知らせる（未回答のまま終わった質問は残さない）。
       // 解決より先に知らせるので、答えを受けて動き出したツールのイベントより前に記録が積まれる。
       if (entry.ask.kind === "question" && answer.kind === "answers") {
-        handlers.onAnswered(id, entry.ask.questions, answer.labels)
+        handlers.onAnswered(id, entry.ask.questions, answer.labels, entry.ask.briefs)
       }
 
       settle(id, entry, result)

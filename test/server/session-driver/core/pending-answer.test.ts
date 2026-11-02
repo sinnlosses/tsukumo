@@ -192,8 +192,8 @@ describe("createPendingAnswerQueue", () => {
     const answered: unknown[] = []
     const queue = briefedQueue({
       onChange: () => {},
-      onAnswered: (toolUseId, questions, answers) =>
-        answered.push({ toolUseId, questions, answers }),
+      onAnswered: (toolUseId, questions, answers, briefs) =>
+        answered.push({ toolUseId, questions, answers, briefs }),
     })
 
     void queue.ask(questionRequest())
@@ -216,6 +216,7 @@ describe("createPendingAnswerQueue", () => {
           },
         ],
         answers: [["こっち", "自由入力の答え（架空）"]],
+        briefs: [BRIEF],
       },
     ])
   })
@@ -485,6 +486,19 @@ describe("選択肢が2つ以上の質問は添え書きが無いと断る", () 
     void queue.ask(requestOf(SINGLE_OPTION_QUESTION))
 
     expect(queue.list().map((ask) => ask.kind)).toEqual(["question"])
+  })
+
+  it("添え書きの無い質問に答えると、合図の添え書きは空で流れる", () => {
+    const briefs: unknown[] = []
+    const queue = createPendingAnswerQueue({
+      onChange: () => {},
+      onAnswered: (_id, _questions, _answers, given) => briefs.push(given),
+    })
+
+    void queue.ask(requestOf(SINGLE_OPTION_QUESTION))
+    queue.answer("toolu_q", { kind: "answers", labels: [["こっち"]] })
+
+    expect(briefs).toEqual([[]])
   })
 
   it("選択肢が1つだけの質問に合わない添え書きは捨てて積む", () => {

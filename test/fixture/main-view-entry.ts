@@ -123,4 +123,7 @@ export const question = (text: string): MainViewEntry => ({
   toolUseId: "toolu_fictional",
   questions: [{ header: "架空", text, multiSelect: false, options: [] }],
   answers: [],
+  briefs: [],
+  imageSizes: [],
+  unshelvedImages: [],
 })

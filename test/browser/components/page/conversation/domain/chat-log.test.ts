@@ -29,7 +29,15 @@ describe("chatLogEntries", () => {
         status: { kind: "running" },
         backgroundEnd: { kind: "foreground" },
       },
-      { kind: "question", toolUseId: "toolu_fictional", questions: [], answers: [] },
+      {
+        kind: "question",
+        toolUseId: "toolu_fictional",
+        questions: [],
+        answers: [],
+        briefs: [],
+        imageSizes: [],
+        unshelvedImages: [],
+      },
       speechRecord({ text: "架空のセリフ" }),
     ])
 

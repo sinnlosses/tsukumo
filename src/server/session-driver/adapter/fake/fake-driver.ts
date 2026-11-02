@@ -166,6 +166,9 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
         toolUseId: ask.id,
         questions: ask.questions,
         answers: answer.labels,
+        briefs: ask.briefs,
+        imageSizes: [],
+        unshelvedImages: [],
       })
     }
     emit({ kind: "pending-changed", pending: pending.filter((candidate) => candidate.id !== id) })

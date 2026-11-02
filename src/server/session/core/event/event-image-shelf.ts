@@ -12,7 +12,7 @@ import type { SessionManagerOptions } from "../session-manager-port.ts"
 
 /**
  * 画像を置いて、畳むイベントを返す。`report` は測れた寸法と置けなかったパスを `imageSizes`・`unshelvedImages` に載せたもの、
- * `pending-changed` は積まれた質問に同じ2つを載せたもの、ほかは受けたまま。
+ * `pending-changed` は積まれた質問に同じ2つを載せたもの、`question-answered` は答え待ちの同じ id の質問の2つを写したもの、ほかは受けたまま。
  * 寸法は同じ `report` のイベントに載せる（別のイベントにすると、束の先頭の1件だけが先に配られ、寸法の無いレポートが描かれる）。
  * `state` は畳む前の姿で、答え待ちに既にある質問は置き直さない。
  */
@@ -30,6 +30,12 @@ export function shelveEventImages(
       read,
     )
     return { ...event, imageSizes: sizes, unshelvedImages: unshelved }
+  }
+  if (event.kind === "question-answered") {
+    const asked = state.pending.find((ask) => ask.id === event.toolUseId)
+    return asked?.kind === "question"
+      ? { ...event, imageSizes: asked.imageSizes, unshelvedImages: asked.unshelvedImages }
+      : event
   }
   if (event.kind === "pending-changed") {
     const shelvedAsks = new Map(state.pending.map((ask) => [ask.id, ask]))

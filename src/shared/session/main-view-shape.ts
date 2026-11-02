@@ -7,10 +7,12 @@ import type { ReportBlock } from "../report/report-block.ts"
 import type { ReportChangeSummary } from "../report/report-change-summary.ts"
 import type { ReportChecksView } from "../report/report-check-view.ts"
 import type { ReportImageSource } from "../report/report-image-markdown.ts"
+import type { ReportImageSize } from "../report/report-image.ts"
 import type { LeafValue } from "../report/report-leaf-value.ts"
 import type { PhaseTimesView } from "../report/report-phase-time.ts"
 import type { ReportTask } from "../report/report-task.ts"
 import type { RecordedPromptImage } from "../session-driver/prompt-image.ts"
+import type { QuestionBrief } from "../session-driver/question-brief.ts"
 import type { Question, QuestionAnswer } from "../session-driver/question.ts"
 import type { TurnFailure } from "../session-driver/turn-failure.ts"
 import type { MeasuredTime } from "../utils/elapsed-time.ts"
@@ -32,13 +34,17 @@ export type MainViewEntry =
   /**
    * キャラクターからの質問（AskUserQuestion）と、それに対する答え。`answers[i]` は
    * `questions[i]` に対して選んだ答えの並び（{@link QuestionAnswer}。選ばなかった質問は空）。
-   * `toolUseId` は preview の画像の置き場を引く鍵。
+   * `toolUseId` は preview と添え書きの図の画像の置き場を引く鍵。
+   * `briefs` は答え待ちのときの添え書き（無ければ空）で、`imageSizes`・`unshelvedImages` はその図の寸法と置けなかったパス。
    */
   | {
       readonly kind: "question"
       readonly toolUseId: string
       readonly questions: readonly Question[]
       readonly answers: readonly QuestionAnswer[]
+      readonly briefs: readonly QuestionBrief[]
+      readonly imageSizes: readonly ReportImageSize[]
+      readonly unshelvedImages: readonly string[]
     }
   | {
       readonly kind: "tool"

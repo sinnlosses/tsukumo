@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest"
 
-import { mainViewEntries } from "../../../src/shared/session/main-view-entry.ts"
 import { advanceSessionState } from "../../../src/shared/session/session-advance.ts"
 import type { SessionEvent, StampedEvent } from "../../../src/shared/session/session-event.ts"
 import { applySessionEvent } from "../../../src/shared/session/session-fold.ts"
@@ -31,101 +30,6 @@ describe("applySessionEvent（覚えていること）", () => {
     )
 
     expect(view.rememberedLines).toEqual(["架空の新しい1行", "架空の二番目の1行"])
-  })
-})
-
-describe("applySessionEvent（質問の記録）", () => {
-  const singleQuestion = {
-    header: "確認",
-    text: "どちらの案で進める？",
-    multiSelect: false,
-    options: [
-      { label: "案A", description: "架空の説明A", preview: undefined },
-      { label: "案B", description: "架空の説明B", preview: undefined },
-    ],
-  }
-
-  const multiQuestion = {
-    header: "確認",
-    text: "どれを試す？",
-    multiSelect: true,
-    options: [
-      { label: "案A", description: "架空の説明A", preview: undefined },
-      { label: "案B", description: "架空の説明B", preview: undefined },
-      { label: "案C", description: "架空の説明C", preview: undefined },
-    ],
-  }
-
-  function questionEntries(...events: readonly SessionEvent[]) {
-    return mainViewEntries(apply(...events)).filter((entry) => entry.kind === "question")
-  }
-
-  it("質問に答えると、そのやり取りの記録に質問1件が残る", () => {
-    const entries = questionEntries(requestEvent(), {
-      kind: "question-answered",
-      toolUseId: "toolu_q",
-      questions: [singleQuestion],
-      answers: [["案B"]],
-    })
-
-    expect(entries).toEqual([
-      { kind: "question", toolUseId: "toolu_q", questions: [singleQuestion], answers: [["案B"]] },
-    ])
-  })
-
-  it("複数選択の答えは1つの文字列に畳まれず、選んだぶんだけ並ぶ", () => {
-    const entries = questionEntries(requestEvent(), {
-      kind: "question-answered",
-      toolUseId: "toolu_q",
-      questions: [multiQuestion],
-      answers: [["案A", "案C"]],
-    })
-
-    expect(entries).toEqual([
-      {
-        kind: "question",
-        toolUseId: "toolu_q",
-        questions: [multiQuestion],
-        answers: [["案A", "案C"]],
-      },
-    ])
-  })
-
-  it("答えていない質問（pending-changed だけ）は記録に残らない", () => {
-    const entries = questionEntries(requestEvent(), {
-      kind: "pending-changed",
-      pending: [
-        {
-          kind: "question",
-          id: "toolu_q",
-          questions: [singleQuestion],
-          briefs: [],
-          imageSizes: [],
-          unshelvedImages: [],
-        },
-      ],
-    })
-
-    expect(entries).toEqual([])
-  })
-
-  it("記録は前のやり取りに残り、次の依頼で消えない", () => {
-    const view = apply(
-      requestEvent("架空の依頼1"),
-      {
-        kind: "question-answered",
-        toolUseId: "toolu_q",
-        questions: [singleQuestion],
-        answers: [["案A"]],
-      },
-      requestEvent("架空の依頼2"),
-    )
-
-    expect(mainViewEntries(view).map((entry) => entry.kind)).toEqual([
-      "request",
-      "question",
-      "request",
-    ])
   })
 })
 

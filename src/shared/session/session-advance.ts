@@ -326,6 +326,9 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
             toolUseId: event.toolUseId,
             questions: event.questions,
             answers: event.answers,
+            briefs: event.briefs,
+            imageSizes: event.imageSizes,
+            unshelvedImages: event.unshelvedImages,
           },
         ],
       }

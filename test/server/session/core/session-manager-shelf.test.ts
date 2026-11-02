@@ -441,6 +441,9 @@ describe("レポートの画像の置き場", () => {
       toolUseId: "toolu_q1",
       questions: [],
       answers: [],
+      briefs: [],
+      imageSizes: [],
+      unshelvedImages: [],
     })
     stub.emit(imageQuestionPending("toolu_q2"))
     await waitForBatch()
@@ -448,6 +451,35 @@ describe("レポートの画像の置き場", () => {
     expect(readPaths).toEqual(["fictional/after.png", "fictional/after.png"])
     expect(shelf.find("toolu_q1", "fictional/after.png")).toEqual(FICTIONAL_IMAGE)
     expect(shelf.find("toolu_q2", "fictional/after.png")).toEqual(FICTIONAL_IMAGE)
+  })
+
+  it("答えた質問の記録に、答え待ちのときに測れた寸法を載せる。答え待ちに無い id は空", async () => {
+    const { manager, stub } = startManagerWithReportImageShelf(0, SIZED_IMAGE)
+    await waitForBatch()
+
+    stub.emit(imageQuestionPending("toolu_q1"))
+    await waitForBatch()
+    const answered = (toolUseId: string): SessionEvent => ({
+      kind: "question-answered",
+      toolUseId,
+      questions: [],
+      answers: [],
+      briefs: [],
+      imageSizes: [],
+      unshelvedImages: [],
+    })
+    stub.emit(answered("toolu_q1"))
+    stub.emit(answered("toolu_unknown"))
+    await waitForBatch()
+
+    const sizes = [{ path: "fictional/after.png", width: 320, height: 180 }]
+    const questions = manager.commandSession
+      .state()
+      .records.flatMap((record) => (record.kind === "question" ? [record] : []))
+    expect(questions).toMatchObject([
+      { toolUseId: "toolu_q1", imageSizes: sizes, unshelvedImages: [] },
+      { toolUseId: "toolu_unknown", imageSizes: [], unshelvedImages: [] },
+    ])
   })
 
   it("質問の画像に置き場に置いたときに測れた寸法を載せ、積み直しても引き継ぐ", async () => {
