@@ -39,11 +39,6 @@ import type { BackgroundTask } from "../../../shared/session-driver/background-t
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import type { WorkPlanStanding } from "../../../shared/session/work-plan.ts"
 import {
-  type A2uiStructureFault,
-  a2uiStructureFaultField,
-  type A2uiStructureVerdict,
-} from "./a2ui-structure-fault.ts"
-import {
   REPORT_FINISHED_WITH_NG_REJECTION_TEXT,
   REPORT_NOTHING_NEW_REJECTION_TEXT,
   REPORT_RESEND_REJECTION_TEXT,
@@ -51,9 +46,13 @@ import {
   reportBackgroundRunningRejectionText,
 } from "./procedure-rejection.ts"
 import type { ReportRejectionModes, ReportRejectionReason } from "./rejection-mode.ts"
-import { a2uiValidationFailedText, reportRejectionText } from "./report-rejection.ts"
-import { reportViolations } from "./report-violation-check.ts"
 import type { ReportDraft } from "./rules/draft.ts"
+import { a2uiValidationFailedText, reportRejectionText, reportViolations } from "./rules/index.ts"
+import {
+  type A2uiStructureFault,
+  a2uiStructureFaultField,
+  type A2uiStructureVerdict,
+} from "./rules/structure.ts"
 import { isSameReport } from "./same-report.ts"
 import { toolErrorFieldsOf } from "./tool-error-field.ts"
 import type { TurnRejection } from "./turn-rejection.ts"

@@ -121,6 +121,25 @@ export function detectFigureViolations(
   ]
 }
 
+const FIGURE_KINDS: ReadonlySet<string> = new Set<FigureViolation["kind"]>([
+  "unknown-mermaid",
+  "broken-svg",
+  "unlegended-svg-tone",
+  "unlegended-graph-tone",
+  "broken-graph",
+  "broken-timeline",
+  "figure-number-mismatch",
+  "plot-forbidden-form",
+  "plot-form-override",
+  "plot-title-without-number",
+])
+
+export function isFigureViolation(violation: {
+  readonly kind: string
+}): violation is FigureViolation {
+  return FIGURE_KINDS.has(violation.kind)
+}
+
 /** 図の違反を、差し戻すときの1行の文面にする。 */
 export function figureViolationMessage(violation: FigureViolation): string {
   switch (violation.kind) {

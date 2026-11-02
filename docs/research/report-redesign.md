@@ -248,7 +248,7 @@ body {
 | 1   | 骨格: 合図の行・検証の畳みと並び替え・中間レポートを最終の下へ・箱を外す・札の頭の「いま: 節」                                        | `src/shared/report/report-check.ts`、`report-head.tsx`、`main-view.tsx` と `main-view.module.css`、`turn-header`、E2E の期待値、`display.md`「各表示物」・`screen-design.md` 13.13 | opus       | —                          |
 | 2   | 字と密度: 見出しの3段・行長 42em・行間・和文 CSS・`ink-soft`・表と箇条書きの詰め・表の題を添え書きに・コードの畳み                    | `report-notation.module.css`、`theme.css`、`report-markdown.ts`（表の題）、`screen-design.md` 13.3、E2E の期待値                                                                   | sonnet     | 1 と独立。並行できる       |
 | 3   | 色: 状態色の最小の変更・系列色 6 色・Mermaid のテーマ変数・格子と目盛り                                                               | `theme.css`、`chart.ts`、`mermaid-block.tsx`、`screen-design.md` 13.2                                                                                                              | sonnet     | 2 の `ink-soft` のあと     |
-| 4   | 書体と規約: `font-size-adjust`、（承認があれば）Plex Mono の同梱、規約の7条と差し戻しの検査（`note` の数・`fold` の入れ子・候補の数） | `theme.css`、`vendor-asset.ts`、`package.json`、`report-notation.ts`、`report-violation.ts`、`screen-design.md` 13.3                                                               | sonnet     | 依存を足すのは利用者の承認 |
+| 4   | 書体と規約: `font-size-adjust`、（承認があれば）Plex Mono の同梱、規約の7条と差し戻しの検査（`note` の数・`fold` の入れ子・候補の数） | `theme.css`、`vendor-asset.ts`、`package.json`、`report-notation.ts`、`rules/index.ts`、`screen-design.md` 13.3                                                                    | sonnet     | 依存を足すのは利用者の承認 |
 
 1 と 2 で最初の1画面と行長が直るので、読む時間の大半はここで戻る。3 と 4 は目に付く差は小さいが、どれも1日の作業ではない。
 

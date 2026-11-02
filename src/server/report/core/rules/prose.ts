@@ -113,6 +113,26 @@ export function detectProseViolations(
   ]
 }
 
+const PROSE_KINDS: ReadonlySet<string> = new Set<ProseViolation["kind"]>([
+  "long-conclusion",
+  "untitled-section",
+  "markdown-notation",
+  "long-first-sentence",
+  "bad-heading",
+  "arrow-in-prose",
+  "label-in-item",
+  "labeled-ordered",
+  "non-japanese",
+  "plain-word",
+  "broken-inline-mark",
+])
+
+export function isProseViolation(violation: {
+  readonly kind: string
+}): violation is ProseViolation {
+  return PROSE_KINDS.has(violation.kind)
+}
+
 /** 文章の違反を、差し戻すときの1行の文面にする。 */
 export function proseViolationMessage(violation: ProseViolation): string {
   switch (violation.kind) {
@@ -145,8 +165,13 @@ export function proseViolationMessage(violation: ProseViolation): string {
   }
 }
 
+/** `speak` のセリフの地の文に表の語があるときの戻り値。表から取った語だけで、セリフの文面は写さない。 */
+export function speechPlainWordRejectionText(spellings: readonly string[]): string {
+  return `地の文にわかりにくい語がある。${plainWordReplacements(spellings)}。このセリフは画面に出していないので、言い換えて書き直して呼び直す（コード・引用の中は対象外）`
+}
+
 /** 見つけた綴りごとに「綴り → 言い換え先」を並べる。表から取った語だけで、書かれた文面は写さない。 */
-export function plainWordReplacements(spellings: readonly string[]): string {
+function plainWordReplacements(spellings: readonly string[]): string {
   return spellings
     .map((spelling) => {
       const word = PLAIN_WORDS.find((entry) => entry.spelling === spelling)

@@ -2,7 +2,10 @@
 // 文面は固定で、モデルが書いた本文も画面の状態（描けたか・どこに出たか）も写さない。判定の順は `ReportReview.judge` が持つ。
 
 import type { BackgroundTask } from "../../../shared/session-driver/background-task.ts"
-import { REPORT_CHANGED_FIELDS_ONLY_TEXT } from "./report-rejection.ts"
+
+/** 差し戻しの戻り値に足す、呼び直し方（`components` は全部、`Report` の欄は省けば引き継ぐ）の1文。 */
+export const REPORT_CHANGED_FIELDS_ONLY_TEXT =
+  "呼び直すときは `components` を全部渡す（`Report` の欄は、省けばこの呼び出しの値を引き継ぐ）。"
 
 export const REPORT_PROCEDURE_REJECTIONS = [
   "resend",

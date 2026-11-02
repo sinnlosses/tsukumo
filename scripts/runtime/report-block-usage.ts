@@ -22,7 +22,7 @@ import { REPORT_PROCEDURE_REJECTIONS } from "../../src/server/report/core/proced
 import { A2UI_STRUCTURE_REJECTION_REASONS } from "../../src/server/report/core/report-review.ts"
 import { REPORT_SHAPE_TAGS } from "../../src/server/report/core/report-usage-record.ts"
 import { REPORT_BLOCK_FIELDS } from "../../src/server/report/core/report-usage.ts"
-import { REPORT_VIOLATION_KINDS } from "../../src/server/report/core/report-violation.ts"
+import { REPORT_VIOLATION_KINDS } from "../../src/server/report/core/rules/index.ts"
 import {
   ESCAPE_NOTATIONS,
   MARKDOWN_NOTATIONS,

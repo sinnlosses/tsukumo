@@ -5,10 +5,10 @@ import { sumBy } from "remeda"
 import { z } from "zod"
 
 import { REPORT_TOOL_NAME } from "../../../src/server/core/tsukumo-tool-name.ts"
-import { a2uiStructureFaults } from "../../../src/server/report/core/a2ui-structure-fault.ts"
 import { PART_CARD_TOOL_DESCRIPTION } from "../../../src/server/report/core/part-card.ts"
-import { a2uiValidationFailedText } from "../../../src/server/report/core/report-rejection.ts"
 import { REPORT_A2UI_COMPONENTS_DESCRIPTION } from "../../../src/server/report/core/report-tool.ts"
+import { a2uiValidationFailedText } from "../../../src/server/report/core/rules/index.ts"
+import { a2uiStructureFaults } from "../../../src/server/report/core/rules/structure.ts"
 import {
   a2uiReportComponentSchema,
   buildReportCatalogDocument,

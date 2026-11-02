@@ -10,16 +10,13 @@
 
 import type { BackgroundTask } from "../../../shared/session-driver/background-task.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
-import type {
-  A2uiStructureFault,
-  A2uiStructureVerdict,
-} from "../../report/core/a2ui-structure-fault.ts"
 import { REPORT_REJECTION_MODES } from "../../report/core/rejection-mode.ts"
 import { createReportInheritance } from "../../report/core/report-inheritance.ts"
-import { speechPlainWordRejectionText } from "../../report/core/report-rejection.ts"
 import { createReportReview, type ReportVerdict } from "../../report/core/report-review.ts"
 import type { ReportDraft } from "../../report/core/rules/draft.ts"
+import { speechPlainWordRejectionText } from "../../report/core/rules/prose.ts"
 import { plainWordSpellingsInSpeech } from "../../report/core/rules/prose/plain-word-find.ts"
+import type { A2uiStructureFault, A2uiStructureVerdict } from "../../report/core/rules/structure.ts"
 import { judgePhaseMention, type PhaseMentionVerdict } from "../../work-plan/core/phase-mention.ts"
 import {
   createWorkPlanReview,

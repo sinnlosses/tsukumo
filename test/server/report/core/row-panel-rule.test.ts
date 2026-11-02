@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import { reportUsageEntryOf } from "../../../../src/server/report/core/report-usage.ts"
-import { reportViolations } from "../../../../src/server/report/core/report-violation-check.ts"
+import { reportViolations } from "../../../../src/server/report/core/rules/index.ts"
 import type { A2uiReportComponent } from "../../../../src/shared/report/a2ui-report-catalog.ts"
 import type { ReportBlock } from "../../../../src/shared/report/report-block.ts"
 import { draft, markdown, reportDraftText } from "../../../fixture/report-draft-block.ts"

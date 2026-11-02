@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest"
 
-import { reportRejectionText } from "../../../../../../src/server/report/core/report-rejection.ts"
-import { reportViolations } from "../../../../../../src/server/report/core/report-violation-check.ts"
+import {
+  reportRejectionText,
+  reportViolations,
+} from "../../../../../../src/server/report/core/rules/index.ts"
 import { plotBlockSchema } from "../../../../../../src/shared/report/figure-grammar.ts"
 import { reportDraft } from "../../../../../fixture/report-event.ts"
 

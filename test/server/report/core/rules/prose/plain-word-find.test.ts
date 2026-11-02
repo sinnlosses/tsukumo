@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest"
 
-import { reportRejectionText } from "../../../../../../src/server/report/core/report-rejection.ts"
-import { reportViolations } from "../../../../../../src/server/report/core/report-violation-check.ts"
 import type { ReportDraft } from "../../../../../../src/server/report/core/rules/draft.ts"
+import {
+  reportRejectionText,
+  reportViolations,
+} from "../../../../../../src/server/report/core/rules/index.ts"
 import { plainWordSpellingsIn as spellingsOf } from "../../../../../../src/server/report/core/rules/prose/plain-word-find.ts"
 import type { ReportBlock } from "../../../../../../src/shared/report/report-block.ts"
 import { reportOutline } from "../../../../../../src/shared/report/report-outline.ts"

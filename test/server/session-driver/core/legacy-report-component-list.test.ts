@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { a2uiStructureFaults } from "../../../../src/server/report/core/a2ui-structure-fault.ts"
+import { a2uiStructureFaults } from "../../../../src/server/report/core/rules/structure.ts"
 import { legacyReportComponents } from "../../../../src/server/session-driver/core/legacy-report-component-list.ts"
 import {
   a2uiReportComponentSchema,

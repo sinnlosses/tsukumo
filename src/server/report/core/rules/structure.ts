@@ -1,4 +1,4 @@
-// `report` の `a2ui` の版で受けた部品の一覧の、スキーマで言えない構造の規約の検査。
+// `report` の `a2ui` の版で受けた部品の一覧の、スキーマで言えない構造の規約の検査の家族。違反の型・検出・差し戻し文を持つ。
 // 部品の props の文面は読まず、ID・`component`・参照の欄だけを見る。
 
 import { isPlainObject } from "remeda"
@@ -7,9 +7,9 @@ import {
   FIGURE_COMPONENTS,
   LEAF_COMPONENT_KINDS,
   REPORT_COMPONENT_SCHEMAS,
-} from "../../../shared/report/a2ui-report-catalog.ts"
-import { tableIdOfFilterPath, tableRowFilterTexts } from "../../../shared/report/table-view.ts"
-import type { ToolErrorField } from "../../../shared/report/tool-error-field.ts"
+} from "../../../../shared/report/a2ui-report-catalog.ts"
+import { tableIdOfFilterPath, tableRowFilterTexts } from "../../../../shared/report/table-view.ts"
+import type { ToolErrorField } from "../../../../shared/report/tool-error-field.ts"
 
 export type A2uiStructureFaultKind =
   | "unknown-component"
@@ -49,6 +49,22 @@ export function a2uiStructureFaultField(fault: A2uiStructureFault): ToolErrorFie
       .join("."),
     code: fault.kind,
   }
+}
+
+/**
+ * 違反 1 つを A2UI の `VALIDATION_FAILED` のエラーのメッセージ 1 行（JSON）にする。
+ * 理由は種類ごとの固定の文だけを載せ、書き手の ID・文面は写さない。
+ */
+export function a2uiStructureFaultMessage(fault: A2uiStructureFault): string {
+  return JSON.stringify({
+    version: A2UI_VERSION,
+    error: {
+      code: "VALIDATION_FAILED",
+      surfaceId: A2UI_REPORT_SURFACE_ID,
+      path: fault.pointer,
+      message: A2UI_STRUCTURE_FAULT_REASONS[fault.kind],
+    },
+  })
 }
 
 /**
@@ -127,6 +143,29 @@ export function a2uiStructureFaults(components: readonly unknown[]): readonly A2
   faults.push(...filterBindingFaults(parts, indexById))
   return faults
 }
+
+const A2UI_VERSION = "v0.9"
+
+const A2UI_REPORT_SURFACE_ID = "report"
+
+const A2UI_STRUCTURE_FAULT_REASONS = {
+  "unknown-component": "カタログに無い部品",
+  "duplicate-id": "同じ id の部品がほかにある",
+  "missing-root": "id が root の Report が無い",
+  "root-not-report": "id が root の部品は Report にする",
+  "undefined-reference": "参照先の id の部品が無い",
+  "report-child-not-section": "Report.children には Section の id だけを置く",
+  "nested-section": "Section の子に Section は置けない",
+  "misplaced-component": "ここに置けない種類の部品",
+  "deep-layout": "配置の部品の入れ子は 3 階層まで",
+  "memo-without-owner":
+    "セクションの先頭に tone が memo の Note は置けない（寄せ先が無く何も描かれない）。Paragraph などを先に置き、その後ろに Note を置く",
+  "figure-not-figure-part": "Report.figure には図の部品の id を置く",
+  "unreferenced-component": "どこからも参照されない部品",
+  "filter-target-missing": "value の path が指す id の Table が無い（/view/<Table の id>/filter）",
+  "filter-target-not-filterable": "value の path が指す Table に filterable: true が無い",
+  "filter-option-not-in-cells": "選択肢の value が、絞り込む Table のセルの文字に無い",
+} as const satisfies Record<A2uiStructureFaultKind, string>
 
 const ROOT_ID = "root"
 

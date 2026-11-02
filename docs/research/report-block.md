@@ -30,7 +30,7 @@
 
 ## 1. いまの流れと、条の守られ方
 
-流れは「検査（`report-review.ts` / `report-violation.ts`）→ 記録（引数のまま）→ 整形
+流れは「検査（`report-review.ts` / `rules/index.ts`）→ 記録（引数のまま）→ 整形
 （`src/shared/report/report-tidy.ts`）→ 組み立て（`src/browser/domain/main-view/main-view.ts` の `reportMarkdown`）→ Markdown の描画
 （`src/browser/components/page/conversation/components/main-view/markdown/`）」。
 
@@ -225,7 +225,7 @@ sections: z.array(reportSectionSchema).min(1).optional()
 `chart`）で描く。節の中の1つの塊として置くので、逃げ道を使っても見出しと他の塊の型は崩れない。
 
 **逃げ道の中に、塊の種類がある記法を書いたら差し戻す**（表・箇条書き・`note`・`stats`・mermaid・
-フェンス・見出し）。行で見る判定は `report-violation.ts` の `splitFences` と行頭の正規表現がそのまま
+フェンス・見出し）。行で見る判定は `rules/index.ts` の `splitFences` と行頭の正規表現がそのまま
 使える。これが無いと、モデルが本文を丸ごと逃げ道に入れて型を素通りする。差し戻しの1回の枠は今と共有。
 
 **回し方（数えて足す・外す）**

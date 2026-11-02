@@ -1,10 +1,15 @@
 import { describe, expect, it } from "vitest"
 
-import { reportRejectionText } from "../../../../src/server/report/core/report-rejection.ts"
-import { reportViolations } from "../../../../src/server/report/core/report-violation-check.ts"
-import type { ReportDraft } from "../../../../src/server/report/core/rules/draft.ts"
-import type { TableCell } from "../../../../src/shared/report/report-block-comparison.ts"
-import type { ReportBlock, ReportBlockSection } from "../../../../src/shared/report/report-block.ts"
+import type { ReportDraft } from "../../../../../src/server/report/core/rules/draft.ts"
+import {
+  reportRejectionText,
+  reportViolations,
+} from "../../../../../src/server/report/core/rules/index.ts"
+import type { TableCell } from "../../../../../src/shared/report/report-block-comparison.ts"
+import type {
+  ReportBlock,
+  ReportBlockSection,
+} from "../../../../../src/shared/report/report-block.ts"
 import {
   draft,
   kinds,
@@ -12,7 +17,7 @@ import {
   mermaid,
   note,
   reportDraftText,
-} from "../../../fixture/report-draft-block.ts"
+} from "../../../../fixture/report-draft-block.ts"
 
 describe("reportViolations", () => {
   it("規約どおりのレポートには違反が無い", () => {

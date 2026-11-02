@@ -1,5 +1,5 @@
-import { reportViolations } from "../../src/server/report/core/report-violation-check.ts"
 import type { ReportDraft } from "../../src/server/report/core/rules/draft.ts"
+import { reportViolations } from "../../src/server/report/core/rules/index.ts"
 import { parseConclusion } from "../../src/server/session-driver/core/conclusion-sentence.ts"
 import type { RecordedReportFigure } from "../../src/shared/report/a2ui-report-catalog.ts"
 import type { ReportBlock } from "../../src/shared/report/report-block.ts"

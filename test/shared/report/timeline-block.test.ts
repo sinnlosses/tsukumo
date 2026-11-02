@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest"
 
-import { reportRejectionText } from "../../../src/server/report/core/report-rejection.ts"
-import { reportViolations } from "../../../src/server/report/core/report-violation-check.ts"
+import {
+  reportRejectionText,
+  reportViolations,
+} from "../../../src/server/report/core/rules/index.ts"
 import { parseReportFigure } from "../../../src/shared/report/a2ui-report-catalog.ts"
 import { parseReportBlocks, type ReportBlock } from "../../../src/shared/report/report-block.ts"
 import { draft } from "../../fixture/report-draft-block.ts"

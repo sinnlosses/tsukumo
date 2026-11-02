@@ -178,6 +178,33 @@ export function detectBlockViolations(
   ]
 }
 
+const BLOCK_KINDS: ReadonlySet<string> = new Set<BlockViolation["kind"]>([
+  "too-many-notes",
+  "crowded-notes",
+  "nested-fold",
+  "unordered-options",
+  "ragged-table",
+  "long-table",
+  "many-emphasis-rows",
+  "sentence-table",
+  "long-list",
+  "bad-cards",
+  "long-code",
+  "ragged-chart",
+  "unknown-emphasis",
+  "short-series",
+  "code-mismatch",
+  "code-marks-range",
+  "region-range",
+  "figure-contradiction",
+])
+
+export function isBlockViolation(violation: {
+  readonly kind: string
+}): violation is BlockViolation {
+  return BLOCK_KINDS.has(violation.kind)
+}
+
 /** 塊の違反を、差し戻すときの1行の文面にする。 */
 export function blockViolationMessage(violation: BlockViolation): string {
   switch (violation.kind) {

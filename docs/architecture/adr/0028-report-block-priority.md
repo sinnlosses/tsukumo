@@ -221,7 +221,7 @@
 
 ## 追記: 依頼の型ごとの雛形と、型の申告の口
 
-**型の申告は `task.genre` を 3 つから 8 つに広げて受ける（`work`・`decision`・`research` に `diagnosis`・`timeline`・`structure`・`screen`・`status` を足す）。型ごとの数の帯の要否と図 1 の第一候補は `src/server/report/core/request-template.ts` の表が正典で、条 8 に型の表は戻さない。**
+**型の申告は `task.genre` を 3 つから 8 つに広げて受ける（`work`・`decision`・`research` に `diagnosis`・`timeline`・`structure`・`screen`・`status` を足す）。型ごとの数の帯の要否と図 1 の第一候補は `src/server/report/core/rules/template.ts` の表が正典で、条 8 に型の表は戻さない。**
 
 - 口: `task` は 4 つの変種が同じ定義を共有するので 1 か所で足りる。新しい欄を足す案は変種ごとの定義と字数が増え、型を図の種類と `shapeTag` から推す案は、図を検査する雛形が図から型を引くことになり循環する
 - 既存の `work`・`decision`・`research` は作業の完了・判断・調べものの型にそのまま当たり、記録も読み戻せる。新しい 5 つの節の並びは `work`（診断・時間・構成・画面）と `research`（一覧と状態）に寄せる

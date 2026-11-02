@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest"
 
-import { reportRejectionText } from "../../../../src/server/report/core/report-rejection.ts"
-import { reportViolations } from "../../../../src/server/report/core/report-violation-check.ts"
-import type { ReportDraft } from "../../../../src/server/report/core/rules/draft.ts"
-import type { ReportGenre } from "../../../../src/shared/report/report-task.ts"
-import { type ReportDraftInput, reportDraft } from "../../../fixture/report-event.ts"
+import type { ReportDraft } from "../../../../../src/server/report/core/rules/draft.ts"
+import {
+  reportRejectionText,
+  reportViolations,
+} from "../../../../../src/server/report/core/rules/index.ts"
+import type { ReportGenre } from "../../../../../src/shared/report/report-task.ts"
+import { type ReportDraftInput, reportDraft } from "../../../../fixture/report-event.ts"
 
 const taskOf = (genre: ReportGenre | "unspecified"): ReportDraft["task"] => ({
   kind: "task",

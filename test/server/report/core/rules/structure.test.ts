@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { a2uiStructureFaults } from "../../../../src/server/report/core/a2ui-structure-fault.ts"
+import { a2uiStructureFaults } from "../../../../../src/server/report/core/rules/structure.ts"
 
 // 正しい一覧。節 2 つ、`Row` の中に `Card`、図と振り返りの根拠が葉を参照する。
 const VALID = [

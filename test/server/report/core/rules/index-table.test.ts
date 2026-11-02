@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest"
 
-import { reportRejectionText } from "../../../../src/server/report/core/report-rejection.ts"
-import { reportViolations } from "../../../../src/server/report/core/report-violation-check.ts"
-import type { ReportBlock } from "../../../../src/shared/report/report-block.ts"
-import { code, draft, kinds } from "../../../fixture/report-draft-block.ts"
+import {
+  reportRejectionText,
+  reportViolations,
+} from "../../../../../src/server/report/core/rules/index.ts"
+import type { ReportBlock } from "../../../../../src/shared/report/report-block.ts"
+import { code, draft, kinds } from "../../../../fixture/report-draft-block.ts"
 
 describe("reportViolations", () => {
   describe("表の行の長さは columns と揃える", () => {
@@ -162,7 +164,7 @@ describe("reportViolations", () => {
         tableWith(
           ["ファイル", "変更"],
           [
-            ["`src/server/report/core/report-violation-check.ts`", "架空"],
+            ["`src/server/report/core/rules/index.ts`", "架空"],
             ["`src/server/report/core/report-markdown-notation.ts`", "架空"],
           ],
         ),

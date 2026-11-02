@@ -1,12 +1,15 @@
 import { describe, expect, it } from "vitest"
 
+import { REPORT_CHANGED_FIELDS_ONLY_TEXT } from "../../../../../src/server/report/core/procedure-rejection.ts"
+import type { ReportDraft } from "../../../../../src/server/report/core/rules/draft.ts"
 import {
-  REPORT_CHANGED_FIELDS_ONLY_TEXT,
   reportRejectionText,
-} from "../../../../src/server/report/core/report-rejection.ts"
-import { reportViolations } from "../../../../src/server/report/core/report-violation-check.ts"
-import type { ReportDraft } from "../../../../src/server/report/core/rules/draft.ts"
-import type { ReportBlock, ReportBlockSection } from "../../../../src/shared/report/report-block.ts"
+  reportViolations,
+} from "../../../../../src/server/report/core/rules/index.ts"
+import type {
+  ReportBlock,
+  ReportBlockSection,
+} from "../../../../../src/shared/report/report-block.ts"
 import {
   code,
   draft,
@@ -14,7 +17,7 @@ import {
   markdown,
   mermaid,
   reportDraftText,
-} from "../../../fixture/report-draft-block.ts"
+} from "../../../../fixture/report-draft-block.ts"
 
 const REJECTION_HEADER = "レポートの記法の規約に次の違反がある。直して `report` を呼び直すこと:"
 const MARKDOWN_NOTATION_LINE =
