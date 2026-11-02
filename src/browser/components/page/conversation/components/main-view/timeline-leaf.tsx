@@ -14,6 +14,8 @@ import {
 import { figureClassName } from "../markdown/markdown.tsx"
 import { FoldedLeafFrame } from "./report-leaf-frame.tsx"
 
+const LEVEL_HEIGHT_EM = 1.3
+
 export function TimelineLeaf(props: {
   readonly part: A2uiReportComponent
   readonly value: LeafValue
@@ -23,6 +25,7 @@ export function TimelineLeaf(props: {
     return <></>
   }
   const layout = timelineLayoutOf({ ...part, kind: "timeline" })
+  const deepestLevel = Math.max(0, ...layout.events.map((event) => event.level))
   return (
     <FoldedLeafFrame value={value} title={part.title} fit={false} fold={part.fold} swap={false}>
       <div className={figureClassName("timeline")}>
@@ -37,7 +40,16 @@ export function TimelineLeaf(props: {
             </span>
           ))}
         </div>
-        <div className={figureClassName("timeline-body")}>
+        <div
+          className={figureClassName("timeline-body")}
+          style={
+            deepestLevel > 0
+              ? {
+                  paddingBlockStart: `calc(var(--space-lg) + ${String(deepestLevel * LEVEL_HEIGHT_EM)}em)`,
+                }
+              : undefined
+          }
+        >
           {layout.lanes.map(({ lane, rows }) => (
             <LaneView key={lane} lane={lane} rows={rows} />
           ))}
@@ -48,7 +60,10 @@ export function TimelineLeaf(props: {
                   key={`${String(index)}:${event.label}`}
                   className={figureClassName("timeline-event")}
                   title={plainInline(event.title)}
-                  style={{ marginLeft: percent(event.marginLeft) }}
+                  style={{
+                    marginLeft: percent(event.marginLeft),
+                    insetBlockStart: `${String(event.level * LEVEL_HEIGHT_EM)}em`,
+                  }}
                 >
                   <span className={figureClassName("timeline-event-label")}>
                     {plainInline(event.label)}

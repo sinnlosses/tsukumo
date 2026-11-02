@@ -103,7 +103,7 @@
   }
   & .report-timeline-event {
     position: absolute;
-    inset-block: 0;
+    inset-block-end: 0;
     inset-inline-start: 0;
     border-inline-start: 1px dotted var(--ink-quiet);
   }

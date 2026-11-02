@@ -69,6 +69,8 @@ export type TimelineLayout = {
     readonly label: string
     readonly title: string
     readonly marginLeft: number
+    /** ラベルを置く段（0 が最上段）。前の出来事のラベルと重なるものは次の段へ送る。 */
+    readonly level: number
   }[]
   readonly legend: readonly { readonly swatch: TimelineLegendSwatch; readonly label: string }[]
 }
@@ -127,13 +129,58 @@ export function timelineLayoutOf(block: ReportTimeline): TimelineLayout {
       width: index === ticks.length - 1 ? 0 : share(interval),
     })),
     lanes,
-    events: events.map(({ event, at }) => ({
-      label: event.label,
-      title: `${written(event.at)} ${event.label}`,
-      marginLeft: percent(at),
-    })),
+    events: eventsOf(
+      events.map(({ event, at }) => ({
+        label: event.label,
+        title: `${written(event.at)} ${event.label}`,
+        marginLeft: percent(at),
+      })),
+    ),
     legend: legendOf(block, drawn, events.length > 0),
   }
+}
+
+/** 軸の幅を 700px 前後、字の大きさを 14px 前後と見て、全角 1 字が占める軸の % の見積もり。 */
+const LABEL_PERCENT_PER_FULL_WIDTH_CHAR = 2
+/** 半角 1 字が全角 1 字に対して占める割合の見積もり。 */
+const HALF_WIDTH_RATIO = 0.55
+/** ラベルの右端と次のラベルの左端のあいだに空ける % 。 */
+const LABEL_GAP_PERCENT = 1
+/** 先頭から順に空きを探す段の数。全部埋まったら、重ねずに下へ段を足す。 */
+const TIMELINE_EVENT_REUSED_LEVELS = 4
+
+function labelWidthPercent(label: string): number {
+  const em = [...label].reduce(
+    (sum, char) => sum + (char.charCodeAt(0) < 0x100 ? HALF_WIDTH_RATIO : 1),
+    0,
+  )
+  return em * LABEL_PERCENT_PER_FULL_WIDTH_CHAR
+}
+
+function eventsOf(
+  events: readonly {
+    readonly label: string
+    readonly title: string
+    readonly marginLeft: number
+  }[],
+): TimelineLayout["events"] {
+  const order = events
+    .map((_, index) => index)
+    .toSorted((a, b) => (events[a]?.marginLeft ?? 0) - (events[b]?.marginLeft ?? 0))
+  const rightEdges: number[] = []
+  const levels = new Map<number, number>()
+  for (const index of order) {
+    const event = events[index]
+    if (event === undefined) continue
+    const free = rightEdges.findIndex(
+      (edge, level) =>
+        level < TIMELINE_EVENT_REUSED_LEVELS && edge + LABEL_GAP_PERCENT <= event.marginLeft,
+    )
+    const level = free === -1 ? rightEdges.length : free
+    rightEdges[level] = event.marginLeft + labelWidthPercent(event.label)
+    levels.set(index, level)
+  }
+  return events.map((event, index) => ({ ...event, level: levels.get(index) ?? 0 }))
 }
 
 type RowShape =
