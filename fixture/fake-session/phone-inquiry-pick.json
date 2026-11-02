@@ -65,35 +65,67 @@
                         "items": [
                           {
                             "label": "next-task",
-                            "text": ""
+                            "text": "",
+                            "done": false,
+                            "source": "",
+                            "branch": "",
+                            "branchTone": "warn"
                           },
                           {
                             "label": "plan-tasks",
-                            "text": ""
+                            "text": "",
+                            "done": false,
+                            "source": "",
+                            "branch": "",
+                            "branchTone": "warn"
                           },
                           {
                             "label": "list-tasks",
-                            "text": ""
+                            "text": "",
+                            "done": false,
+                            "source": "",
+                            "branch": "",
+                            "branchTone": "warn"
                           },
                           {
                             "label": "setup-tasks",
-                            "text": ""
+                            "text": "",
+                            "done": false,
+                            "source": "",
+                            "branch": "",
+                            "branchTone": "warn"
                           },
                           {
                             "label": "task-workflow",
-                            "text": ""
+                            "text": "",
+                            "done": false,
+                            "source": "",
+                            "branch": "",
+                            "branchTone": "warn"
                           },
                           {
                             "label": "retro",
-                            "text": ""
+                            "text": "",
+                            "done": false,
+                            "source": "",
+                            "branch": "",
+                            "branchTone": "warn"
                           },
                           {
                             "label": "tdd",
-                            "text": ""
+                            "text": "",
+                            "done": false,
+                            "source": "",
+                            "branch": "",
+                            "branchTone": "warn"
                           },
                           {
                             "label": "research",
-                            "text": ""
+                            "text": "",
+                            "done": false,
+                            "source": "",
+                            "branch": "",
+                            "branchTone": "warn"
                           }
                         ],
                         "fold": "",

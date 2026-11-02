@@ -1,10 +1,12 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import path from "node:path"
+import { isDeepStrictEqual } from "node:util"
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { readFakeSession } from "../../../../../src/server/session-driver/adapter/fake/fake-session.ts"
+import { questionBriefSchema } from "../../../../../src/shared/session-driver/question-brief.ts"
 import { applySessionEvent } from "../../../../../src/shared/session/session-fold.ts"
 import { INITIAL_SESSION_STATE } from "../../../../../src/shared/session/session-state.ts"
 import { currentWorkPlan } from "../../../../../src/shared/session/work-plan-fold.ts"
@@ -168,6 +170,41 @@ describe("同梱の疑似セッションのワークプラン", () => {
         awaitingSummary: plan.awaitingSummary,
       })
     }
+  })
+})
+
+describe("同梱の疑似セッションの質問の添え書き", () => {
+  it("全ての添え書きが、questionBriefSchema で読んだ結果と同じ全欄を持つ", () => {
+    const session = bundledFakeSession()
+    const scenes = [{ name: "opening", steps: session.opening }, ...session.turns]
+    const briefs = scenes.flatMap((scene) =>
+      scene.steps.flatMap(({ event }, stepIndex) => {
+        const found =
+          event.kind === "pending-changed"
+            ? event.pending.flatMap((ask) => (ask.kind === "question" ? ask.briefs : []))
+            : event.kind === "question-answered"
+              ? event.briefs
+              : []
+        return found.map((brief) => ({ where: `${scene.name} 手${String(stepIndex)}`, brief }))
+      }),
+    )
+
+    expect(briefs.length).toBeGreaterThan(0)
+    const problems = briefs.flatMap(({ where, brief }) => {
+      const parsed = questionBriefSchema.safeParse(brief)
+      if (!parsed.success) {
+        return [
+          `${where}: ${parsed.error.issues.map((issue) => `${issue.path.join(".")} ${issue.message}`).join(" / ")}`,
+        ]
+      }
+      return brief.options.flatMap((option, optionIndex) =>
+        isDeepStrictEqual(parsed.data.options[optionIndex], option)
+          ? []
+          : [`${where}: 選択肢 ${option.label} が、読むと既定値で補われる欄を欠く`],
+      )
+    })
+
+    expect(problems).toEqual([])
   })
 })
 
