@@ -149,6 +149,7 @@ export const statsLeafClassNames = {
   statsOf4: notationStyles["report-stats-of-4"],
   stat: notationStyles["report-stat"],
   statBefore: notationStyles["report-stat-before"],
+  statTrend: notationStyles["report-stat-trend"],
   statBetter: notationStyles["report-stat-better"],
   statWorse: notationStyles["report-stat-worse"],
   statTotal: notationStyles["report-stat-total"],

@@ -60,15 +60,22 @@ export function StatCards(props: { readonly items: readonly StatItem[] }): React
 function Stat(props: { readonly item: StatItem }): ReactElement {
   const { item } = props
   const layout = statLayoutOf(item)
+  const before = item.before.trim() !== "" && (
+    <span className={BEFORE_CLASS_NAMES[layout.beforeTone]}>
+      <AffixedCodeText lead="" text={item.before} tail=" →" />
+    </span>
+  )
   return (
     <div className={statsLeafClassNames.stat}>
-      {item.before.trim() !== "" && (
-        <span className={BEFORE_CLASS_NAMES[layout.beforeTone]}>
-          <AffixedCodeText lead="" text={item.before} tail=" →" />
+      {layout.spark.kind === "none" ? (
+        before
+      ) : (
+        <span className={statsLeafClassNames.statTrend}>
+          {before}
+          <Spark spark={layout.spark} />
         </span>
       )}
       <b>
-        <Spark spark={layout.spark} />
         <InlineCodeText text={item.value} />
         {item.total.trim() !== "" && (
           <span className={statsLeafClassNames.statTotal}>

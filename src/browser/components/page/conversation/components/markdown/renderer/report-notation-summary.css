@@ -73,7 +73,7 @@
    数そのものも前の数も良し悪しの色を持たず、良し悪しを言いたいときは同じ塊の中に `.report-badge` を添えるほうが文字でも読める。 */
   & .report-stats {
     display: grid;
-    grid-template-columns: minmax(0, max-content);
+    grid-template-columns: minmax(min-content, max-content);
     justify-content: start;
     gap: var(--space-md);
     margin: var(--report-block-gap) 0;
@@ -90,17 +90,17 @@
    項目数の class が無いもの（2個、5個以上）は1列のまま。 */
   @container report-body (min-width: calc(2 * 10rem + 0.75rem)) {
     & .report-stats.report-stats-of-4 {
-      grid-template-columns: repeat(2, minmax(0, max-content));
+      grid-template-columns: repeat(2, minmax(min-content, max-content));
     }
   }
   @container report-body (min-width: calc(3 * 10rem + 2 * 0.75rem)) {
     & .report-stats.report-stats-of-3 {
-      grid-template-columns: repeat(3, minmax(0, max-content));
+      grid-template-columns: repeat(3, minmax(min-content, max-content));
     }
   }
   @container report-body (min-width: calc(4 * 10rem + 3 * 0.75rem)) {
     & .report-stats.report-stats-of-4 {
-      grid-template-columns: repeat(4, minmax(0, max-content));
+      grid-template-columns: repeat(4, minmax(min-content, max-content));
     }
   }
   & .report-stat {
@@ -122,6 +122,7 @@
     font-weight: 700;
     letter-spacing: normal;
     line-height: 1.3;
+    white-space: nowrap;
     font-variant-numeric: tabular-nums;
     color: var(--ink-bright);
   }
@@ -131,7 +132,7 @@
     content: "\A";
     white-space: pre;
   }
-  /* `stats` の変わる前の数。数の左に同じ行で添え、矢印の文字でつなぐ（`ink-quiet` の 14px）。
+  /* `stats` の変わる前の数。矢印の文字でつなぎ、折れ線が無い札では数の左に同じ行で、ある札では折れ線の左に添える（`ink-quiet` の 14px）。
    良し悪しは字の色で言わない（better・worse も同じ色）。 */
   & .report-stat-before,
   & .report-stat-better,
@@ -141,7 +142,17 @@
     margin-inline-end: 0.5em;
     color: var(--ink-quiet);
   }
-  /* `stats` の推移の折れ線。数の左に幅 2.8em・高さ 0.7em（数 26px で約 73×18）で置き、最新の点だけ明るくする。 */
+  /* `stats` の推移の折れ線。前の数と同じ1行目に幅 5.6em・高さ 1.4em（約 73×18）で置き、数は次の行。最新の点だけ明るくする。 */
+  & .report-stat-trend {
+    display: flex;
+    align-items: center;
+  }
+  & .report-stat-trend > svg {
+    flex: none;
+    width: 5.6em;
+    height: 1.4em;
+    overflow: visible;
+  }
   & .report-stat b > svg {
     display: inline-block;
     width: 2.8em;
@@ -150,7 +161,8 @@
     vertical-align: baseline;
     overflow: visible;
   }
-  & .report-stat b > svg polyline {
+  & .report-stat b > svg polyline,
+  & .report-stat-trend > svg polyline {
     fill: none;
     stroke: var(--ink-quiet);
     stroke-width: 1.5;
@@ -158,7 +170,8 @@
     stroke-linecap: round;
     vector-effect: non-scaling-stroke;
   }
-  & .report-stat b > svg circle {
+  & .report-stat b > svg circle,
+  & .report-stat-trend > svg circle {
     fill: var(--ink-bright);
   }
   /* `stats` の全体の数。数の後ろに小さく並べ、割合は下の帯で添える。 */

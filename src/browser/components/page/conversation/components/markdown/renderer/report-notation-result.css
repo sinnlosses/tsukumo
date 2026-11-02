@@ -175,7 +175,7 @@
    本文の `stats` が 4 列に広げる 43.25rem より広い幅で折るので、43.25rem〜46rem では `keyFigures` だけが 2×2 になる。 */
   @container report-body (max-width: 46rem) {
     & .report-key-figures .report-stats.report-stats-of-4 {
-      grid-template-columns: repeat(2, minmax(0, max-content));
+      grid-template-columns: repeat(2, minmax(min-content, max-content));
     }
   }
   /* 結論と本文のあいだの、合図の行のまとまり（`report` から tsukumo が組む）。
