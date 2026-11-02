@@ -14,7 +14,7 @@ import {
   mismatchCount,
   splitComponents,
   type SplitState,
-} from "../../src/server/session-driver/core/a2ui-component-splitter.ts"
+} from "../../src/server/report/core/body/a2ui-component-splitter.ts"
 
 const DEFAULT_INPUT = "/tmp/a2ui-streaming/fragments.jsonl"
 

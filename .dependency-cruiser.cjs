@@ -33,6 +33,7 @@ const SERVER_CHILD_IMPORTS = {
     usage: ["rules", "image"],
     image: ["rules"],
     prompt: [],
+    body: [],
   },
   "session-driver/core": {
     message: [],

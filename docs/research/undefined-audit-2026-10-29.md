@@ -336,12 +336,12 @@
 
 ### `src/server/session-driver`（消せる 5 件）
 
-| ファイル                                          | 対象           | 置き場 | 件  | 行     | 消し方     | 呼び出し側の数 |
-| ------------------------------------------------- | -------------- | ------ | --- | ------ | ---------- | -------------- |
-| `server/session-driver/core/body-figure-fence.ts` | `keyTypeOf`    | 引数   | 2   | 57・58 | 入口で畳む | 1              |
-| `server/session-driver/core/body-figure-fence.ts` | `columnsOf`    | 引数   | 1   | 75     | 入口で畳む | 1              |
-| `server/session-driver/core/body-figure-fence.ts` | `toNumber`     | 引数   | 1   | 109    | 入口で畳む | 4              |
-| `server/session-driver/core/pending-answer.ts`    | `toPendingAsk` | 引数   | 1   | 196    | 入口で畳む | 1              |
+| ファイル                                       | 対象           | 置き場 | 件  | 行     | 消し方     | 呼び出し側の数 |
+| ---------------------------------------------- | -------------- | ------ | --- | ------ | ---------- | -------------- |
+| `server/report/core/body/body-figure-fence.ts` | `keyTypeOf`    | 引数   | 2   | 57・58 | 入口で畳む | 1              |
+| `server/report/core/body/body-figure-fence.ts` | `columnsOf`    | 引数   | 1   | 75     | 入口で畳む | 1              |
+| `server/report/core/body/body-figure-fence.ts` | `toNumber`     | 引数   | 1   | 109    | 入口で畳む | 4              |
+| `server/session-driver/core/pending-answer.ts` | `toPendingAsk` | 引数   | 1   | 196    | 入口で畳む | 1              |
 
 ### `src/shared/report`（消せる 8 件）
 

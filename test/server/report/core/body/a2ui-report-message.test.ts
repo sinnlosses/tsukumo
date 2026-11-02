@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest"
 
-import { a2uiReportInput } from "../../../../src/server/session-driver/core/a2ui-report-message.ts"
-import { parseLegacySections } from "../../../../src/server/session-driver/core/legacy-report-section-list.ts"
-import { reportEvents } from "../../../../src/server/session-driver/core/message/sdk-report-message.ts"
-import { parseReportFigure } from "../../../../src/shared/report/a2ui-report-catalog.ts"
-import { parseReportRetrospective } from "../../../../src/shared/report/report-retrospective.ts"
-import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
+import { a2uiReportInput } from "../../../../../src/server/report/core/body/a2ui-report-message.ts"
+import { parseLegacySections } from "../../../../../src/server/report/core/body/legacy-report-section-list.ts"
+import { reportEvents } from "../../../../../src/server/session-driver/core/message/sdk-report-message.ts"
+import { parseReportFigure } from "../../../../../src/shared/report/a2ui-report-catalog.ts"
+import { parseReportRetrospective } from "../../../../../src/shared/report/report-retrospective.ts"
+import type { SessionEvent } from "../../../../../src/shared/session/session-event.ts"
 
 type ReportCalled = Extract<SessionEvent, { readonly kind: "report" }>
 

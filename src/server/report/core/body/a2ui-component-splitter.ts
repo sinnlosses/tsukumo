@@ -3,7 +3,7 @@
 
 import { z } from "zod"
 
-import { parseJson } from "../../../shared/utils/parse-json.ts"
+import { parseJson } from "../../../../shared/utils/parse-json.ts"
 
 export type SplitState = {
   /** 文字列の外で開いている `{` と `[` の数。 */

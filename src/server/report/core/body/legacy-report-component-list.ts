@@ -9,12 +9,12 @@ import {
   LEAF_COMPONENT_KINDS,
   parseReportFigure,
   REPORT_COMPONENT_SCHEMAS,
-} from "../../../shared/report/a2ui-report-catalog.ts"
-import { A2UI_ROOT_ID } from "../../../shared/report/a2ui-report-outline.ts"
-import { parseKeyFigures } from "../../../shared/report/report-block-comparison.ts"
-import type { ReportBlock } from "../../../shared/report/report-block.ts"
-import { parseReportChecks } from "../../../shared/report/report-check.ts"
-import { parseReportRetrospective } from "../../../shared/report/report-retrospective.ts"
+} from "../../../../shared/report/a2ui-report-catalog.ts"
+import { A2UI_ROOT_ID } from "../../../../shared/report/a2ui-report-outline.ts"
+import { parseKeyFigures } from "../../../../shared/report/report-block-comparison.ts"
+import type { ReportBlock } from "../../../../shared/report/report-block.ts"
+import { parseReportChecks } from "../../../../shared/report/report-check.ts"
+import { parseReportRetrospective } from "../../../../shared/report/report-retrospective.ts"
 import {
   type LegacyBlock,
   parseLegacyBody,

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { parseReportBody } from "../../../../src/server/session-driver/core/body-fence.ts"
+import { parseReportBody } from "../../../../../src/server/report/core/body/body-fence.ts"
 
 const FENCE = "```"
 

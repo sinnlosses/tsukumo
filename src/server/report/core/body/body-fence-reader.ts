@@ -3,18 +3,18 @@
 
 import type { z } from "zod"
 
-import { readGraphSource } from "../../../shared/report/graph-source.ts"
-import { tableBlockSchema } from "../../../shared/report/report-block-comparison.ts"
+import { readGraphSource } from "../../../../shared/report/graph-source.ts"
+import { tableBlockSchema } from "../../../../shared/report/report-block-comparison.ts"
 import {
   imageBlockSchema,
   graphBlockSchema,
   mermaidBlockSchema,
-} from "../../../shared/report/report-block-diagram.ts"
+} from "../../../../shared/report/report-block-diagram.ts"
 import {
   claimsBlockSchema,
   codeBlockSchema,
   noteBlockSchema,
-} from "../../../shared/report/report-block-prose.ts"
+} from "../../../../shared/report/report-block-prose.ts"
 
 /** 本文の型つきフェンスの種類（`figure` は `readFigureFence` が読む）。 */
 export const READER_FENCE_KINDS = [

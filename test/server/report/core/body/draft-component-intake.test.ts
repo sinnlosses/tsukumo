@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest"
 
-import { createReportDraftIntake } from "../../../../src/server/session-driver/core/draft-component-intake.ts"
-import { a2uiReportComponentSchema } from "../../../../src/shared/report/a2ui-report-catalog.ts"
-import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
+import { createReportDraftIntake } from "../../../../../src/server/report/core/body/draft-component-intake.ts"
+import { a2uiReportComponentSchema } from "../../../../../src/shared/report/a2ui-report-catalog.ts"
+import type { SessionEvent } from "../../../../../src/shared/session/session-event.ts"
 
 const REPORT_NAME = "mcp__tsukumo__report"
 

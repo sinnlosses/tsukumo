@@ -16,9 +16,9 @@ import type { SessionEvent } from "../../../../shared/session/session-event.ts"
 import { parseWorkPlanClosing } from "../../../../shared/session/work-plan.ts"
 import { optionalString } from "../../../../shared/utils/optional-string.ts"
 import { nonBlankString } from "../../../core/non-blank-string.ts"
-import { a2uiReportInput } from "../a2ui-report-message.ts"
-import { parseConclusion } from "../conclusion-sentence.ts"
-import { legacyReportComponents } from "../legacy-report-component-list.ts"
+import { a2uiReportInput } from "../../../report/core/body/a2ui-report-message.ts"
+import { parseConclusion } from "../../../report/core/body/conclusion-sentence.ts"
+import { legacyReportComponents } from "../../../report/core/body/legacy-report-component-list.ts"
 import { speechEvents } from "./sdk-speech-message.ts"
 
 /**

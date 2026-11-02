@@ -70,6 +70,7 @@
       "files": [
         "test/fixture/**",
         "test/server/session-driver/**",
+        "test/server/report/core/body/draft-component-intake.test.ts",
         "test/server/diary/**",
         "test/server/repository/**",
         "test/server/usage/**",

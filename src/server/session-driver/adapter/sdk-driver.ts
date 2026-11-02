@@ -14,10 +14,13 @@ import { type PermissionResult, query } from "@anthropic-ai/claude-agent-sdk"
 import { expressionNames as toExpressionNames } from "../../../shared/character-pack/expression-choice.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import { TSUKUMO_MCP_SERVER_NAME } from "../../core/tsukumo-tool-name.ts"
+import {
+  createReportDraftIntake,
+  type ReportDraftIntake,
+} from "../../report/core/body/draft-component-intake.ts"
 import { createReportGate, type ReportGate } from "../../report/core/prompt/report-tool.ts"
 import { asidePromptText } from "../core/aside-prompt.ts"
 import { type CallReview, createCallReview, passRelayedEvents } from "../core/call-review.ts"
-import { createReportDraftIntake, type ReportDraftIntake } from "../core/draft-component-intake.ts"
 import { effectsOfEvent } from "../core/event-effect.ts"
 import { createExternalToolMark } from "../core/external-tool-mark.ts"
 import { createInputLedgerIntake, type InputLedgerIntake } from "../core/input-ledger.ts"

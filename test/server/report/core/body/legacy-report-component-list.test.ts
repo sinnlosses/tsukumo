@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest"
 
-import { a2uiStructureFaults } from "../../../../src/server/report/core/rules/structure.ts"
-import { legacyReportComponents } from "../../../../src/server/session-driver/core/legacy-report-component-list.ts"
+import { legacyReportComponents } from "../../../../../src/server/report/core/body/legacy-report-component-list.ts"
+import { a2uiStructureFaults } from "../../../../../src/server/report/core/rules/structure.ts"
 import {
   a2uiReportComponentSchema,
   LEAF_COMPONENT_KINDS,
-} from "../../../../src/shared/report/a2ui-report-catalog.ts"
+} from "../../../../../src/shared/report/a2ui-report-catalog.ts"
 
 const text = (value: string): unknown => ({ kind: "text", text: value })
 

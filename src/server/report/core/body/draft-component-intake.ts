@@ -7,9 +7,9 @@
 
 import { isPlainObject } from "remeda"
 
-import { a2uiReportComponentSchema } from "../../../shared/report/a2ui-report-catalog.ts"
-import type { SessionEvent } from "../../../shared/session/session-event.ts"
-import { REPORT_TOOL_NAME, tsukumoToolFullName } from "../../core/tsukumo-tool-name.ts"
+import { a2uiReportComponentSchema } from "../../../../shared/report/a2ui-report-catalog.ts"
+import type { SessionEvent } from "../../../../shared/session/session-event.ts"
+import { REPORT_TOOL_NAME, tsukumoToolFullName } from "../../../core/tsukumo-tool-name.ts"
 import { INITIAL_SPLIT_STATE, splitComponents, type SplitState } from "./a2ui-component-splitter.ts"
 
 /** 開いている `report` の塊 1 つ分（`index` は塊の位置）。 */

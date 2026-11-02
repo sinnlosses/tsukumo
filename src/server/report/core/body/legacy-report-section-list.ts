@@ -4,14 +4,14 @@
 
 import { z } from "zod"
 
-import { REPORT_BLOCK_KINDS } from "../../../shared/report/a2ui-report-catalog.ts"
-import { aside, fold, inlineText, omittable } from "../../../shared/report/report-block-field.ts"
-import type { DeepReadonly } from "../../../shared/report/report-block-field.ts"
+import { REPORT_BLOCK_KINDS } from "../../../../shared/report/a2ui-report-catalog.ts"
+import { aside, fold, inlineText, omittable } from "../../../../shared/report/report-block-field.ts"
+import type { DeepReadonly } from "../../../../shared/report/report-block-field.ts"
 import {
   namedWriterBlockSchema,
   parseReportBlocks,
   type ReportBlock,
-} from "../../../shared/report/report-block.ts"
+} from "../../../../shared/report/report-block.ts"
 import { parseReportBody } from "./body-fence.ts"
 
 const rowBlockSchema = z.object({

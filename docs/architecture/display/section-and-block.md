@@ -31,7 +31,7 @@
   差し戻しの検査は子にもセクションの部品と同じく掛かり、隣り合う `note` は縦に積む `Card` の中では数え、横に並ぶ `Row` の中では数えない。
   使い方は `report_part_card` の `Row`・`Column`・`Card` のカードが持つ。
   見え方は疑似セッションの場面 `row-panel-decision`（候補の比較）と `row-panel-status`（件数と一覧）で撮る。
-  旧い `sections` の `row`・`panel` は書き手が書く欄が無く、旧い transcript の復元だけが読む（`src/server/session-driver/core/legacy-report-section-list.ts`。ADR 0039「追記（2026-10-28）」）。
+  旧い `sections` の `row`・`panel` は書き手が書く欄が無く、旧い transcript の復元だけが読む（`src/server/report/core/body/legacy-report-section-list.ts`。ADR 0039「追記（2026-10-28）」）。
   読んだ `row` は `Row`、`panel` は題を先頭の段落にした `Card` に組み直す。画面に描くセクションの型 `ReportBlockSection` は葉の部品だけを持つ
 - **数の推移・割合は `chart` の部品で見せる**。書き手は種類（`bar` / `line` / `pie` / `arrow` / `slope` / `span` / `share`）・項目・
   系列・横棒かを渡し、Chart.js の設定は tsukumo が組む。色は書き手が指定しない（配色のトークンから入れる）。`pie` は
@@ -104,7 +104,7 @@
   形ごとの描き方はまだ無く、どの形も `data` を `table` と同じ表として描く（題は `question`）。
 - **`body` は旧い試しの版（`body-fence`）の本文の欄で、いまは受け付けない。復元が旧い transcript の `body` を読むだけ。** Markdown に型つきフェンスを混ぜて書かれていて、フェンスの種類は `graph`・`mermaid`・`table`・`code`・`callout`・`claims`・`image`（`READER_FENCE_KINDS`）と `figure`。
   読んだ結果は見出し空のセクション1つで、セクションの形の名前は持たない。型つきでない言語名のフェンスは散文の一部のまま残す。
-  読めない型つきフェンスは差し戻さず素のコードブロックに落とし、数を記録の `brokenFenceCount` に残す（`src/server/session-driver/core/body-fence.ts` の `parseReportBody`）。
+  読めない型つきフェンスは差し戻さず素のコードブロックに落とし、数を記録の `brokenFenceCount` に残す（`src/server/report/core/body/body-fence.ts` の `parseReportBody`）。
   `body` は `row`・`panel` を扱わない。フェンスの中にフェンスは入れ子にできず、並べる容れ物には新しい記法が要るため。
 - **座標で見せる図は `svg` の部品で書く**（`docs/architecture/adr/0028-report-block-priority.md`「SVG（論点3）」）。
   書き手は題・viewBox の大きさ・図形（`rect`・`line`・`text`）を渡し、SVG の文字列は書かず、描く側が図形から組む。

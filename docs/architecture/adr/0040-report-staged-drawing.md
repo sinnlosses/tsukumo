@@ -70,7 +70,7 @@
 - `relayMessages` が既に `titleIntake`・`ledgerIntake` を持つ（`src/server/session-driver/adapter/sdk-driver.ts`）。同じ置き方で、`observe(message)` が `SessionEvent` の並びを返す。
 - `toSessionEvents` と `reportDraftingEvents` は状態を持たない関数のまま残す。`stream_event` の分岐は復元（`session-restore.ts`）も通る共有の変換なので、状態を足さない。
 - intake は、メインの `report` の `content_block_start` で `index → { toolUseId, 切り出しの状態 }` を登録し、同じ `index` の `input_json_delta` の `partial_json` を読み手に渡す。閉じた部品を `safeParse` して `report-draft-component` にする。`content_block_stop` と `message_start` で登録を捨てる。`parent_tool_use_id` があるもの（サブエージェント）は見ない。
-- 読み手は計測の道具として `scripts/runtime/` に置かれていて、`src/` から読めなかった。作り直さず、同じ読み手を `src/server/session-driver/core/a2ui-component-splitter.ts` に移した。
+- 読み手は計測の道具として `scripts/runtime/` に置かれていて、`src/` から読めなかった。作り直さず、同じ読み手を `src/server/report/core/body/a2ui-component-splitter.ts` に移した。
 - 旧い版の `report` は `components` のキーを持たないので、読み手は何も出さない。「対象は `a2ui` の版だけ」は引数の形で自然に成り立つ。
 - 会話の内容: 断片と切り出した JSON 文字列は intake のメモリだけに置き、ログにもファイルにも書かない。出てくるのは検証済みの部品だけで、いまの `report` イベントと同じ取り扱い（`docs/coding-standards/conversation-content.md`）。
 
@@ -90,7 +90,7 @@
 
 1. 確定版との見た目のずれを許容できるか。草稿の葉は図表番号・傍注の番号なしの Markdown になる（番号は部品の並び全体から取るので途中では付けられない。`src/shared/session/a2ui-report-view.ts`）。確定版への入れ替わりで番号が現れ、頭の欄（時間・合図の行）が足され、最終レポートは final-first の並びに入れ替わることがある（これは今の確定版の着地と同じ動き）。ブラウザの実装が目視で確かめ、許容できるかを決める。
    - 結果（2026-10-28、疑似セッション `a2ui-staged-draft` の目視）: 許容した。草稿の葉の番号は届いた範囲の通し番号になり（届いた表に「表 1」が付く）、図・合図の行・所要時間は確定版で足される。確定版への入れ替わりで検証結果の欄が足され、最終レポートが先頭へ移る。スクロール位置は先頭のままで、横のはみ出しは 1440・600 の幅とも 0px だった。
-2. 許容できないときの番号つきの草稿。部品の一覧から旧い版の引数の形を組む `a2uiReportInput`（`src/server/session-driver/core/a2ui-report-message.ts`）を `src/shared/` へ移し、ブラウザが草稿の部品から番号つきの見え方を作る。移すと共有層に変換が増えるので、必要と分かってから別の課題にする。
+2. 許容できないときの番号つきの草稿。部品の一覧から旧い版の引数の形を組む `a2uiReportInput`（`src/server/report/core/body/a2ui-report-message.ts`）を `src/shared/` へ移し、ブラウザが草稿の部品から番号つきの見え方を作る。移すと共有層に変換が増えるので、必要と分かってから別の課題にする。
    - 結果: 草稿にも番号を付けるため、部品の一覧から欄の引数を組む変換を `src/shared/report/a2ui-report-input.ts`（`a2uiReportFields`）へ移した。駆動の `a2ui-report-message.ts` とブラウザの `a2ui-draft-view.ts` の両方が読む。
 3. 草稿の部品の増え方が演出の代わりとして足りるか。短い報告では差が小さい（記録の「効果」）。使われ方を見て、段階描画を長い報告だけに絞るかを利用者が決める。
 4. `a2ui` の `report` で書き上げる演出をどう扱うか。現状を `capture-view.ts --scene <場面> --reveal-at 300` で測った（2026-10-28）。

@@ -7,9 +7,9 @@
 import {
   type A2uiReportComponent,
   a2uiReportComponentSchema,
-} from "../../../shared/report/a2ui-report-catalog.ts"
-import { a2uiReportFields } from "../../../shared/report/a2ui-report-input.ts"
-import { A2UI_ROOT_ID, a2uiPartsById } from "../../../shared/report/a2ui-report-outline.ts"
+} from "../../../../shared/report/a2ui-report-catalog.ts"
+import { a2uiReportFields } from "../../../../shared/report/a2ui-report-input.ts"
+import { A2UI_ROOT_ID, a2uiPartsById } from "../../../../shared/report/a2ui-report-outline.ts"
 
 /** 組み直した結果。`input` は旧い版の引数の形、`droppedCount` は部品の形に合わず落とした要素の数。 */
 export type A2uiReportInput = {

@@ -4,9 +4,9 @@
 
 import { z } from "zod"
 
+import { parseConclusion } from "../../src/server/report/core/body/conclusion-sentence.ts"
+import { legacyReportComponents } from "../../src/server/report/core/body/legacy-report-component-list.ts"
 import type { ReportDraft } from "../../src/server/report/core/rules/draft.ts"
-import { parseConclusion } from "../../src/server/session-driver/core/conclusion-sentence.ts"
-import { legacyReportComponents } from "../../src/server/session-driver/core/legacy-report-component-list.ts"
 import {
   a2uiReportComponentSchema,
   type RecordedReportFigure,

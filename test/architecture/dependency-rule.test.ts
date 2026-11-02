@@ -112,7 +112,7 @@ describe(".dependency-cruiser.cjs の規則", () => {
         )
       const CORE_DIR = "src/server/session-driver/core"
 
-      expect(forbids(`${CORE_DIR}/message/a.ts`, `${CORE_DIR}/a2ui-report-message.ts`)).toBe(false)
+      expect(forbids(`${CORE_DIR}/message/a.ts`, `${CORE_DIR}/session-driver.ts`)).toBe(false)
       expect(forbids(`${CORE_DIR}/message/a.ts`, `${CORE_DIR}/message/b.ts`)).toBe(false)
       expect(forbids(`${CORE_DIR}/message/a.ts`, `${CORE_DIR}/other/b.ts`)).toBe(true)
     })
