@@ -53,16 +53,6 @@ export const PLAIN_WORDS = [
     meaning: "画面の端に出す、いま計画のどこまで進んだかをフェーズの並びで見せる表示",
   },
   {
-    spelling: "ワークプランの帯",
-    replacement: "ワークプランのプログレスバー",
-    meaning: "画面の端に出す、ワークプランのどこまで進んだかをフェーズの並びで見せる表示",
-  },
-  {
-    spelling: "委譲中の帯",
-    replacement: "委譲中のプログレスバー",
-    meaning: "委譲先に任せている作業のどこまで進んだかを見せる表示",
-  },
-  {
     spelling: "余白の柱の包み",
     replacement: "欄外注の列の外枠",
     meaning: "本文の右の余白に欄外注を並べる列を、画面の中で囲む要素",
@@ -126,12 +116,6 @@ export const PLAIN_WORDS = [
     spelling: "並べた面",
     replacement: "並べたサーフェス",
     meaning: "比べるために並べて描いた、画面の中の領域（A2UI の surface）",
-  },
-  {
-    spelling: "振り返りの葉",
-    replacement: "振り返りの内容部品",
-    meaning:
-      "レポートのセクションを組む内容部品（文・表・図など中身を持つ部品）のうち、振り返りを書くもの",
   },
   {
     spelling: "葉の部品",
@@ -368,16 +352,6 @@ export const PLAIN_WORDS = [
     spelling: "画像の棚",
     replacement: "画像の置き場",
     meaning: "サーバのメモリに、レポートや依頼に添える画像を置いておく場所",
-  },
-  {
-    spelling: "原寸の棚",
-    replacement: "原寸の置き場",
-    meaning: "依頼に添えた画像の原寸を、サーバのメモリに置いておく場所",
-  },
-  {
-    spelling: "棚の原寸",
-    replacement: "置き場の原寸",
-    meaning: "サーバのメモリの置き場に残っている、画像の原寸",
   },
   {
     spelling: "棚に置",
