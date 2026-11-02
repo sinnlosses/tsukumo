@@ -297,10 +297,14 @@
     margin: var(--report-figure-gap) auto;
   }
   /* 縮めた包みは本体の幅まで縮むが、本文の列（42em）より狭くはならない。
-   図を持つ包みは本文の列の左端から始め、表と画像の包みは左右の `auto` で中央に置く。 */
+   図を持つ包みと表の包みは本文の列の左端から始める。画像の包みは画像の幅まで縮め、題はその幅の中で中央にする。 */
   & .report-captioned-fit {
     inline-size: max-content;
     min-inline-size: min(100%, var(--report-measure));
+  }
+  & .report-captioned-fit:has(> :is(.report-image-zoom, .report-image-missing)) {
+    min-inline-size: 0;
+    margin-inline: 0 auto;
   }
   & .report-captioned:has(> :is(.report-compare, .report-before-after)) {
     align-items: stretch;
