@@ -9,7 +9,7 @@ import { createPromptImageShelf } from "../../src/server/session-driver/core/pro
 import type { SessionManagerOptions } from "../../src/server/session/core/session-manager-port.ts"
 import { createSessionManager as createSessionManagerWithoutCommands } from "../../src/server/session/core/session-manager.ts"
 import type { ContextUsageLog } from "../../src/server/usage/core/context-usage.ts"
-import type { ExperienceMetricLog } from "../../src/server/usage/core/experience-metric.ts"
+import type { ExperienceMetricLog } from "../../src/server/usage/core/experience/experience-metric.ts"
 import type { TokenUsageLog } from "../../src/server/usage/core/token-usage.ts"
 import type { CharacterEdit } from "../../src/shared/contract/character-pack.ts"
 import type { UsageProposalKeyInput } from "../../src/shared/contract/usage-review.ts"

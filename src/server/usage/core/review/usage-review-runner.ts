@@ -4,8 +4,8 @@
 // 走らせる口は決して reject させない（起こせない・中断・時間切れはどれも終わりのイベント1つに落ちる）。
 // 依頼文・セリフ・結果の本文はログにもファイルにも書かない。ホームに書くのは受け付けた見直しの結果だけ。
 
-import type { ExpressionChoice } from "../../../shared/character-pack/expression-choice.ts"
-import type { SessionEvent } from "../../../shared/session/session-event.ts"
+import type { ExpressionChoice } from "../../../../shared/character-pack/expression-choice.ts"
+import type { SessionEvent } from "../../../../shared/session/session-event.ts"
 import {
   USAGE_REVIEW_REQUEST_TEXT,
   type UsageProposal,
@@ -14,7 +14,7 @@ import {
   type UsageReviewFindings,
   usageProposalKey,
   usageProposalRequestText,
-} from "../../../shared/usage/usage-review.ts"
+} from "../../../../shared/usage/usage-review.ts"
 import { createUsageReviewIntake, type UsageReviewIntake } from "./usage-review-tool.ts"
 
 /** 見直しは 10 分で諦める（仮）。 */

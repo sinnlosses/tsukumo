@@ -19,23 +19,26 @@ import { createExperienceMetricLog } from "../server/usage/adapter/experience-me
 import {
   readPreviousUsageReview,
   writePreviousUsageReview,
-} from "../server/usage/adapter/previous-usage-review.ts"
-import { queryUsageProposal, queryUsageReview } from "../server/usage/adapter/sdk-usage-review.ts"
-import { createTokenUsageLog } from "../server/usage/adapter/token-usage-log.ts"
-import type { TokenUsageProcedurePorts } from "../server/usage/adapter/token-usage-procedure.ts"
-import type { OpenTaskReader } from "../server/usage/adapter/tw-claim-list.ts"
+} from "../server/usage/adapter/review/previous-usage-review.ts"
+import {
+  queryUsageProposal,
+  queryUsageReview,
+} from "../server/usage/adapter/review/sdk-usage-review.ts"
 import {
   readDismissedUsageProposalKeys,
   writeDismissedUsageProposalKey,
-} from "../server/usage/adapter/usage-proposal-dismissal.ts"
-import { summarizeRecentTokenUsage } from "../server/usage/core/token-usage-summary.ts"
-import type { TokenUsageLog } from "../server/usage/core/token-usage.ts"
-import type { UsageReviewCommandPorts } from "../server/usage/core/usage-review-command.ts"
+} from "../server/usage/adapter/review/usage-proposal-dismissal.ts"
+import { createTokenUsageLog } from "../server/usage/adapter/token-usage-log.ts"
+import type { TokenUsageProcedurePorts } from "../server/usage/adapter/token-usage-procedure.ts"
+import type { OpenTaskReader } from "../server/usage/adapter/tw-claim-list.ts"
+import type { UsageReviewCommandPorts } from "../server/usage/core/review/usage-review-command.ts"
 import {
   createUsageReviewRunner,
   type UsageReviewPackContext,
   type UsageReviewSource,
-} from "../server/usage/core/usage-review-runner.ts"
+} from "../server/usage/core/review/usage-review-runner.ts"
+import { summarizeRecentTokenUsage } from "../server/usage/core/token-usage-summary.ts"
+import type { TokenUsageLog } from "../server/usage/core/token-usage.ts"
 import { expressionChoices } from "../shared/character-pack/expression-choice.ts"
 import type { UsageProposalKeyInput } from "../shared/contract/usage-review.ts"
 import type { SessionEvent } from "../shared/session/session-event.ts"

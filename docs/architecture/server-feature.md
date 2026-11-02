@@ -83,7 +83,7 @@
   採らない（`session-manager.ts` は割らない。`docs/architecture/adr/0021-feature-state-fold-in-feature.md`）。
   配線には単体テストを持たない（守る振る舞いは E2E が本物のプロセスで、関数の揃いは型検査が守り、
   単体で書くには adapter を差し替える本番に要らない関数が要る）
-- **Agent SDK を import してよいのは、機能の `adapter/` の直下（または `adapter/sdk/`）の `sdk-` で始まるファイルだけ**
+- **Agent SDK を import してよいのは、機能の `adapter/` の直下（または `adapter/sdk/`。`usage/` は `adapter/review/` も）の `sdk-` で始まるファイルだけ**
   （原則3）。1つの箱にはまとめず、**その境界が属する機能に置く**（「core と adapter」）。
   例外は共有の箱の `server/adapter/` 直下の `sdk-` で始まる、どの機能の語彙も名乗らない使い捨ての問い合わせの関数
 - **機能を足すときは、`test/architecture/feature-graph.ts` の機能の一覧と `.dependency-cruiser.cjs` の

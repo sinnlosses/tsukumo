@@ -312,6 +312,7 @@
       "files": [
         "src/server/*/adapter/sdk-*.ts",
         "src/server/*/adapter/sdk/sdk-*.ts",
+        "src/server/usage/adapter/review/sdk-*.ts",
         "src/server/adapter/sdk-*.ts"
       ],
       "rules": {

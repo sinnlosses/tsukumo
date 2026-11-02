@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import type { SessionDriver } from "../../../../src/server/session-driver/core/session-driver.ts"
 import type { ContextUsageEntry } from "../../../../src/server/usage/core/context-usage.ts"
-import type { ExperienceMetricEntry } from "../../../../src/server/usage/core/experience-metric.ts"
+import type { ExperienceMetricEntry } from "../../../../src/server/usage/core/experience/experience-metric.ts"
 import type { TokenUsageEntry } from "../../../../src/server/usage/core/token-usage.ts"
 import {
   type ContextUsageReport,

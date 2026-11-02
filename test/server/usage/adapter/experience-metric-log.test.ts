@@ -8,7 +8,7 @@ import {
   type ConclusionEntry,
   type RecoveryEntry,
   splitEntry,
-} from "../../../../src/server/usage/core/experience-metric.ts"
+} from "../../../../src/server/usage/core/experience/experience-metric.ts"
 import { EXPERIENCE_METRIC_FORMAT_VERSION } from "../../../../src/shared/usage/experience-metric-record.ts"
 import { keysOf, readJsonLines } from "../../../fixture/jsonl.ts"
 import { expectEveryFieldKept } from "../../../fixture/record-field.ts"

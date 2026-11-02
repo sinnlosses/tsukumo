@@ -1,7 +1,7 @@
 // 体験の指標 `bodyChars`: 振り返りを除く描く節の、見出しと塊の文字列の値の字数。
 
-import { drawnReportOf } from "../../../shared/report/report-drawn-outline.ts"
-import type { SessionRecord } from "../../../shared/session/session-record.ts"
+import { drawnReportOf } from "../../../../shared/report/report-drawn-outline.ts"
+import type { SessionRecord } from "../../../../shared/session/session-record.ts"
 
 type ReportRecord = Extract<SessionRecord, { readonly kind: "report" }>
 

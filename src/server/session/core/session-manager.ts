@@ -24,7 +24,10 @@ import { releasedImageToolUseIds } from "../../report/core/image/report-image-sh
 import { releasedPromptImageIds } from "../../session-driver/core/prompt-image-shelf.ts"
 import type { SessionDriver } from "../../session-driver/core/session-driver.ts"
 import { createContextUsageRecorder } from "../../usage/core/context-usage.ts"
-import { createExperienceMetricRecorder, splitEntry } from "../../usage/core/experience-metric.ts"
+import {
+  createExperienceMetricRecorder,
+  splitEntry,
+} from "../../usage/core/experience/experience-metric.ts"
 import { createTokenUsageRecorder } from "../../usage/core/token-usage.ts"
 import type { CommandSession, SessionLaunchRequest } from "./command-session-port.ts"
 import { type ModeSessions, NO_MODE_SESSIONS, rememberedModeSessions } from "./command-session.ts"

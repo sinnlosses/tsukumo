@@ -4,7 +4,7 @@
 // 引数の形（型・列挙・整数）は zod の形で SDK が先に検査する（崩れていれば handler は呼ばれず、SDK が理由を `isError` 付きで返す）。
 // ここで見るのは形の外の条（空の欄・件数・識別子の重なり・見送った提案）だけ。
 
-import type { SessionEvent } from "../../../shared/session/session-event.ts"
+import type { SessionEvent } from "../../../../shared/session/session-event.ts"
 import {
   USAGE_PROPOSAL_KIND_TARGETS,
   USAGE_PROPOSAL_KINDS,
@@ -13,7 +13,7 @@ import {
   type UsageReviewFindings,
   type UsageReviewStage,
   usageProposalKey,
-} from "../../../shared/usage/usage-review.ts"
+} from "../../../../shared/usage/usage-review.ts"
 
 /** 段の進みを受け取るツールの名前。 */
 export const USAGE_REVIEW_STAGE_TOOL_NAME = "usage_review_stage"

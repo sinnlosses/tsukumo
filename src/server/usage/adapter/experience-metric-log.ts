@@ -12,7 +12,10 @@ import {
 import { createDatedRecordLog, type DatedRecordLog } from "../../adapter/lib/dated-record-log.ts"
 import { isoWithOffset, localDateKey } from "../../adapter/local-time.ts"
 import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
-import type { ExperienceMetricEntry, ExperienceMetricLog } from "../core/experience-metric.ts"
+import type {
+  ExperienceMetricEntry,
+  ExperienceMetricLog,
+} from "../core/experience/experience-metric.ts"
 
 const EXPERIENCE_METRIC_RETENTION_DAYS = 90
 

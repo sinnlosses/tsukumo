@@ -4,11 +4,11 @@ import { describe, expect, it } from "vitest"
 import {
   usageProposalQueryOptions,
   usageReviewQueryOptions,
-} from "../../../../src/server/usage/adapter/sdk-usage-review-option.ts"
-import type { UsageReviewQueryRequest } from "../../../../src/server/usage/core/usage-review-runner.ts"
-import { createUsageReviewIntake } from "../../../../src/server/usage/core/usage-review-tool.ts"
-import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
-import { callTool, listedToolNames } from "../../../fixture/mcp-server.ts"
+} from "../../../../../src/server/usage/adapter/review/sdk-usage-review-option.ts"
+import type { UsageReviewQueryRequest } from "../../../../../src/server/usage/core/review/usage-review-runner.ts"
+import { createUsageReviewIntake } from "../../../../../src/server/usage/core/review/usage-review-tool.ts"
+import type { SessionEvent } from "../../../../../src/shared/session/session-event.ts"
+import { callTool, listedToolNames } from "../../../../fixture/mcp-server.ts"
 
 // 確かめるのは渡す `options`（許す道具と設定）と、載せる MCP サーバの口だけ。フィクスチャはすべて手で書いた架空の値。
 

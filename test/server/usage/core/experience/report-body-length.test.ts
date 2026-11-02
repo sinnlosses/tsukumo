@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest"
 
-import { reportBodyChars } from "../../../../src/server/usage/core/report-body-length.ts"
-import type { ReportBlock } from "../../../../src/shared/report/report-block.ts"
-import { applySessionEvent } from "../../../../src/shared/session/session-fold.ts"
-import { INITIAL_SESSION_STATE } from "../../../../src/shared/session/session-state.ts"
-import { reportOfDrawn } from "../../../fixture/report-event.ts"
+import { reportBodyChars } from "../../../../../src/server/usage/core/experience/report-body-length.ts"
+import type { ReportBlock } from "../../../../../src/shared/report/report-block.ts"
+import { applySessionEvent } from "../../../../../src/shared/session/session-fold.ts"
+import { INITIAL_SESSION_STATE } from "../../../../../src/shared/session/session-state.ts"
+import { reportOfDrawn } from "../../../../fixture/report-event.ts"
 
 type Drawn = Parameters<typeof reportOfDrawn>[0]
 

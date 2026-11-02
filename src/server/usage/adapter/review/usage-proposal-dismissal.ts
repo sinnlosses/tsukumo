@@ -6,8 +6,8 @@
 
 import { z } from "zod"
 
-import { readJsonFile, writeJsonFile } from "../../adapter/lib/json-file.ts"
-import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
+import { readJsonFile, writeJsonFile } from "../../../adapter/lib/json-file.ts"
+import { tsukumoHomePath } from "../../../adapter/tsukumo-home.ts"
 
 /** ファイルの形の版。形を変えたら上げる。 */
 const DISMISSED_USAGE_PROPOSAL_FORMAT_VERSION = 1 satisfies number

@@ -6,9 +6,9 @@ import { describe, expect, it } from "vitest"
 import {
   readPreviousUsageReview,
   writePreviousUsageReview,
-} from "../../../../src/server/usage/adapter/previous-usage-review.ts"
-import type { UsageReviewFindings } from "../../../../src/shared/usage/usage-review.ts"
-import { useTempDir } from "../../../fixture/temp-dir.ts"
+} from "../../../../../src/server/usage/adapter/review/previous-usage-review.ts"
+import type { UsageReviewFindings } from "../../../../../src/shared/usage/usage-review.ts"
+import { useTempDir } from "../../../../fixture/temp-dir.ts"
 
 const dir = useTempDir("previous-usage-review")
 

@@ -3,16 +3,16 @@
 
 import { implement } from "@orpc/server"
 
-import { usageReviewContract } from "../../../shared/contract/usage-review.ts"
-import { FRAME_ERROR_REASON } from "../../../shared/frame.ts"
-import { refusedUnlessAccepted } from "../../adapter/command-refusal.ts"
-import { receiveFeatureCommand } from "../../core/command-receiver.ts"
+import { usageReviewContract } from "../../../../shared/contract/usage-review.ts"
+import { FRAME_ERROR_REASON } from "../../../../shared/frame.ts"
+import { refusedUnlessAccepted } from "../../../adapter/command-refusal.ts"
+import { receiveFeatureCommand } from "../../../core/command-receiver.ts"
 import {
   findUsageProposal,
   type UsageReviewCommandPorts,
   type UsageReviewSession,
   usageReviewCommands,
-} from "../core/usage-review-command.ts"
+} from "../../core/review/usage-review-command.ts"
 
 export function usageReviewProcedure(ports: UsageReviewCommandPorts) {
   const procedure = implement(usageReviewContract).$context<{

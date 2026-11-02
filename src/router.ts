@@ -48,12 +48,12 @@ import {
   type PlanUsageProcedurePorts,
   planUsageProcedure,
 } from "./server/usage/adapter/plan-usage-procedure.ts"
+import { usageReviewProcedure } from "./server/usage/adapter/review/usage-review-procedure.ts"
 import {
   type TokenUsageProcedurePorts,
   tokenUsageProcedure,
 } from "./server/usage/adapter/token-usage-procedure.ts"
-import { usageReviewProcedure } from "./server/usage/adapter/usage-review-procedure.ts"
-import type { UsageReviewCommandPorts } from "./server/usage/core/usage-review-command.ts"
+import type { UsageReviewCommandPorts } from "./server/usage/core/review/usage-review-command.ts"
 import { frameProcedure } from "./server/view-server/adapter/rpc/frame-procedure.ts"
 import {
   commandGuard,

@@ -3,7 +3,7 @@
 
 import { sortBy, sumBy } from "remeda"
 
-import type { SplitDivider } from "../../../shared/usage/experience-metric-record.ts"
+import type { SplitDivider } from "../../../../shared/usage/experience-metric-record.ts"
 import type { ExperienceMetricEntry, SplitEntry } from "./experience-metric.ts"
 
 /** 畳み方。境目（エポックミリ秒）の前後に分けるか、全体を1つにするか。 */

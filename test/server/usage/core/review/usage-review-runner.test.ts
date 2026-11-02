@@ -7,15 +7,15 @@ import {
   type UsageReviewPackContext,
   type UsageReviewRunnerPorts,
   type UsageReviewSource,
-} from "../../../../src/server/usage/core/usage-review-runner.ts"
-import type { UsageReviewIntake } from "../../../../src/server/usage/core/usage-review-tool.ts"
-import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
+} from "../../../../../src/server/usage/core/review/usage-review-runner.ts"
+import type { UsageReviewIntake } from "../../../../../src/server/usage/core/review/usage-review-tool.ts"
+import type { SessionEvent } from "../../../../../src/shared/session/session-event.ts"
 import {
   USAGE_REVIEW_REQUEST_TEXT,
   type UsageProposal,
   type UsageReviewFindings,
   usageProposalKey,
-} from "../../../../src/shared/usage/usage-review.ts"
+} from "../../../../../src/shared/usage/usage-review.ts"
 
 // フィクスチャはすべて手で書いた架空の値。
 

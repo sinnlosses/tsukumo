@@ -54,6 +54,13 @@ const SERVER_CHILD_IMPORTS = {
     task: ["beads"],
     beads: [],
   },
+  "usage/core": {
+    experience: [],
+    review: [],
+  },
+  "usage/adapter": {
+    review: [],
+  },
 }
 
 const BROWSER_FRAMES = ["components/domain/screen-nav", "components/domain/sidebar"]

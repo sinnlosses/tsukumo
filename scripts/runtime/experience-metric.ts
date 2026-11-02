@@ -28,7 +28,7 @@ import {
   type PercentRange,
   type Spread,
   summarizeExperienceMetric,
-} from "../../src/server/usage/core/experience-metric-summary.ts"
+} from "../../src/server/usage/core/experience/experience-metric-summary.ts"
 import {
   SPLIT_DIVIDERS,
   type SplitDivider,

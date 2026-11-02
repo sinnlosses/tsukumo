@@ -3,17 +3,17 @@ import { describe, expect, it } from "vitest"
 import {
   createExperienceMetricRecorder,
   type ExperienceMetricEntry,
-} from "../../../../src/server/usage/core/experience-metric.ts"
-import type { ReportBlockSection } from "../../../../src/shared/report/report-block.ts"
-import type { PendingAsk } from "../../../../src/shared/session-driver/pending-ask.ts"
-import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
-import { applySessionEvent } from "../../../../src/shared/session/session-fold.ts"
+} from "../../../../../src/server/usage/core/experience/experience-metric.ts"
+import type { ReportBlockSection } from "../../../../../src/shared/report/report-block.ts"
+import type { PendingAsk } from "../../../../../src/shared/session-driver/pending-ask.ts"
+import type { SessionEvent } from "../../../../../src/shared/session/session-event.ts"
+import { applySessionEvent } from "../../../../../src/shared/session/session-fold.ts"
 import {
   INITIAL_SESSION_STATE,
   type SessionState,
-} from "../../../../src/shared/session/session-state.ts"
-import { reportOfDrawn } from "../../../fixture/report-event.ts"
-import { requestEvent } from "../../../fixture/session-event.ts"
+} from "../../../../../src/shared/session/session-state.ts"
+import { reportOfDrawn } from "../../../../fixture/report-event.ts"
+import { requestEvent } from "../../../../fixture/session-event.ts"
 
 /** 依頼の文面に入れる目印。記録の行に出てはいけない。 */
 const REQUEST_MARK = "架空の依頼の目印・青い傘"

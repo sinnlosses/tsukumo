@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest"
 
-import { summarizeExperienceMetric } from "../../../../src/server/usage/core/experience-metric-summary.ts"
+import { summarizeExperienceMetric } from "../../../../../src/server/usage/core/experience/experience-metric-summary.ts"
 import type {
   ConclusionEntry,
   RecoveryEntry,
   SplitEntry,
-} from "../../../../src/server/usage/core/experience-metric.ts"
+} from "../../../../../src/server/usage/core/experience/experience-metric.ts"
 
 function conclusion(
   at: number,

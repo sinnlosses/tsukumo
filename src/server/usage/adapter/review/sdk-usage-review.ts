@@ -3,17 +3,17 @@
 
 import { query, type Options } from "@anthropic-ai/claude-agent-sdk"
 
-import type { SessionEvent } from "../../../shared/session/session-event.ts"
+import type { SessionEvent } from "../../../../shared/session/session-event.ts"
 import {
   abortControllerFor,
   recordedMessages,
   type ThrowawayQueryWatch,
-} from "../../adapter/sdk-throwaway-query.ts"
+} from "../../../adapter/sdk-throwaway-query.ts"
 import type {
   UsageProposalQueryRequest,
   UsageReviewQueryRequest,
-} from "../core/usage-review-runner.ts"
-import type { UsageReviewIntake } from "../core/usage-review-tool.ts"
+} from "../../core/review/usage-review-runner.ts"
+import type { UsageReviewIntake } from "../../core/review/usage-review-tool.ts"
 import { usageProposalQueryOptions, usageReviewQueryOptions } from "./sdk-usage-review-option.ts"
 
 /** 足跡を残す先（種類は見直し・提案の実行の側で決める）。 */

@@ -6,8 +6,8 @@ import { describe, expect, it } from "vitest"
 import {
   readDismissedUsageProposalKeys,
   writeDismissedUsageProposalKey,
-} from "../../../../src/server/usage/adapter/usage-proposal-dismissal.ts"
-import { useTempDir } from "../../../fixture/temp-dir.ts"
+} from "../../../../../src/server/usage/adapter/review/usage-proposal-dismissal.ts"
+import { useTempDir } from "../../../../fixture/temp-dir.ts"
 
 const dir = useTempDir("usage-proposal-dismissal")
 

@@ -15,9 +15,9 @@ import {
   USAGE_PROPOSAL_IMPACTS,
   USAGE_PROPOSAL_KINDS,
   type UsageReviewFindings,
-} from "../../../shared/usage/usage-review.ts"
-import { readJsonFile, writeJsonFile } from "../../adapter/lib/json-file.ts"
-import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
+} from "../../../../shared/usage/usage-review.ts"
+import { readJsonFile, writeJsonFile } from "../../../adapter/lib/json-file.ts"
+import { tsukumoHomePath } from "../../../adapter/tsukumo-home.ts"
 
 /** ファイルの形の版。形を変えたら上げ、古いファイルと見分ける。 */
 const PREVIOUS_USAGE_REVIEW_FORMAT_VERSION = 1 satisfies number

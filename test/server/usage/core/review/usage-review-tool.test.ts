@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest"
 
-import { createUsageReviewIntake } from "../../../../src/server/usage/core/usage-review-tool.ts"
-import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
-import { usageProposalKey } from "../../../../src/shared/usage/usage-review.ts"
+import { createUsageReviewIntake } from "../../../../../src/server/usage/core/review/usage-review-tool.ts"
+import type { SessionEvent } from "../../../../../src/shared/session/session-event.ts"
+import { usageProposalKey } from "../../../../../src/shared/usage/usage-review.ts"
 
 const DISMISSED_PROPOSAL = {
   kind: "session-length",

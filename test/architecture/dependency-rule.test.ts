@@ -269,6 +269,40 @@ describe(".dependency-cruiser.cjs の規則", () => {
       expect(forbids(`${ADAPTER_DIR}/task/a.ts`, `${ADAPTER_DIR}/other/b.ts`)).toBe(true)
     })
 
+    it.each(["core", "adapter"])(
+      "usage/%s/ の規則の子は実際のディレクトリと過不足なく一致する",
+      (layer) => {
+        const prefix = `server-child-edge:usage/${layer}/`
+        const ruleChildren = allChildRules
+          .filter((rule) => rule.name.startsWith(prefix))
+          .map((rule) => rule.name.slice(prefix.length))
+        const directories = readdirSync(`${SRC_ROOT}/server/usage/${layer}`, {
+          withFileTypes: true,
+        })
+          .filter((entry) => entry.isDirectory())
+          .map((entry) => entry.name)
+
+        expect(ruleChildren.toSorted()).toEqual(directories.toSorted())
+      },
+    )
+
+    it("usage/core/ の experience/ と review/ は互いを読む import を落とし、core/ 直下のファイルは通す", () => {
+      const forbids = (from: string, to: string): boolean =>
+        allChildRules.some(
+          (rule) =>
+            new RegExp(rule.from.path ?? "(?!)").test(from) &&
+            new RegExp(rule.to.path ?? "(?!)").test(to) &&
+            !new RegExp(rule.to.pathNot ?? "(?!)").test(to),
+        )
+      const CORE_DIR = "src/server/usage/core"
+
+      expect(forbids(`${CORE_DIR}/experience/a.ts`, `${CORE_DIR}/review/b.ts`)).toBe(true)
+      expect(forbids(`${CORE_DIR}/review/a.ts`, `${CORE_DIR}/experience/b.ts`)).toBe(true)
+      expect(forbids(`${CORE_DIR}/experience/a.ts`, `${CORE_DIR}/token-usage.ts`)).toBe(false)
+      expect(forbids(`${CORE_DIR}/review/a.ts`, `${CORE_DIR}/token-usage.ts`)).toBe(false)
+      expect(forbids(`${CORE_DIR}/review/a.ts`, `${CORE_DIR}/review/b.ts`)).toBe(false)
+    })
+
     it("許す先は表の子だけ", () => {
       const children = new Set(childRules.map((rule) => rule.name.slice(CHILD_PREFIX.length)))
       const allowed = childRules.flatMap((rule) =>

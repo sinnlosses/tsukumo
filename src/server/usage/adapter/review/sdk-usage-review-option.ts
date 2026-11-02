@@ -12,26 +12,26 @@ import {
   type ExpressionChoice,
   expressionEnumForSpeak,
   expressionGuideForSpeak,
-} from "../../../shared/character-pack/expression-choice.ts"
-import type { SessionEvent } from "../../../shared/session/session-event.ts"
+} from "../../../../shared/character-pack/expression-choice.ts"
+import type { SessionEvent } from "../../../../shared/session/session-event.ts"
 import {
   USAGE_PROPOSAL_FOLLOW_UPS,
   USAGE_PROPOSAL_IMPACTS,
   USAGE_PROPOSAL_KINDS,
   USAGE_REVIEW_STAGES,
   type UsageProposalFollowUp,
-} from "../../../shared/usage/usage-review.ts"
-import { bundledFilePath } from "../../adapter/bundled-path.ts"
+} from "../../../../shared/usage/usage-review.ts"
+import { bundledFilePath } from "../../../adapter/bundled-path.ts"
 import {
   SPEAK_TOOL_NAME,
   TSUKUMO_MCP_SERVER_NAME,
   tsukumoToolFullName,
-} from "../../core/tsukumo-tool-name.ts"
-import { workflowPluginDir } from "../../session-driver/adapter/workflow-plugin.ts"
+} from "../../../core/tsukumo-tool-name.ts"
+import { workflowPluginDir } from "../../../session-driver/adapter/workflow-plugin.ts"
 import type {
   UsageProposalQueryRequest,
   UsageReviewQueryRequest,
-} from "../core/usage-review-runner.ts"
+} from "../../core/review/usage-review-runner.ts"
 import {
   USAGE_REVIEW_RESULT_TOOL_DESCRIPTION,
   USAGE_REVIEW_RESULT_TOOL_NAME,
@@ -40,7 +40,7 @@ import {
   type UsageReviewIntake,
   usageProposalKindGuide,
   usageReviewStageGuide,
-} from "../core/usage-review-tool.ts"
+} from "../../core/review/usage-review-tool.ts"
 
 /** モデルに見せる、この問い合わせの `speak` の説明。 */
 const USAGE_REVIEW_SPEAK_DESCRIPTION =
