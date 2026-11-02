@@ -2,7 +2,7 @@
 // 締め切りの中で1回走らせる手順・最大2回走らせて先に書けたほうを使う手順。
 // 答えの検査は呼ぶ側が渡し、足跡に要る所要と各回の結果も一緒に返す。
 
-import type { PromptImageSource } from "../../shared/session-driver/prompt-image.ts"
+import type { PromptImageSource } from "../../../shared/session-driver/prompt-image.ts"
 import type { ThrowawayQueryKind } from "./throwaway-query.ts"
 
 /** `query()` に渡すもの（記録の種類・モデル・指示文・依頼の文面・添える画像・出力の形）。 */

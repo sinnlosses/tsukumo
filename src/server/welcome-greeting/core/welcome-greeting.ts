@@ -11,8 +11,8 @@ import {
   WELCOME_GREETING_CARD_MARK,
   type WelcomeGreeting,
 } from "../../../shared/recommendation/welcome-greeting.ts"
-import { structuredOutputSchema } from "../../core/structured-output-schema.ts"
-import type { CheckedAnswer, StructuredQuery } from "../../core/structured-query.ts"
+import { structuredOutputSchema } from "../../core/query/structured-output-schema.ts"
+import type { CheckedAnswer, StructuredQuery } from "../../core/query/structured-query.ts"
 import {
   checkWelcomeAnswer,
   rejected,

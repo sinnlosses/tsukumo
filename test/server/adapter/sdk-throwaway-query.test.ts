@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import { recordedMessages } from "../../../src/server/adapter/sdk-throwaway-query.ts"
-import type { ThrowawayQueryFootprint } from "../../../src/server/core/throwaway-query.ts"
+import type { ThrowawayQueryFootprint } from "../../../src/server/core/query/throwaway-query.ts"
 
 /** 呼ぶたびに `step` ずつ進む時計。 */
 function steppingClock(step: number): () => number {

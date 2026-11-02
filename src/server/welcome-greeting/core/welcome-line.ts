@@ -8,7 +8,7 @@ import {
 } from "../../../shared/character-pack/expression-choice.ts"
 import type { WelcomeRejection } from "../../../shared/diagnostic/welcome-writing.ts"
 import { WELCOME_GREETING_CARD_MARK } from "../../../shared/recommendation/welcome-greeting.ts"
-import type { CheckedAnswer } from "../../core/structured-query.ts"
+import type { CheckedAnswer } from "../../core/query/structured-query.ts"
 
 /** 1行を検査する上限（文字。差し込み口も数える）。 */
 const WELCOME_LINE_CHARS = 60

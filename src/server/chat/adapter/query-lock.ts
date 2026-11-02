@@ -4,8 +4,8 @@
 import { mkdirSync, rmSync, statSync, writeFileSync } from "node:fs"
 import { dirname } from "node:path"
 
-import type { QueryLock, QueryLockPort } from "../core/throwaway-query.ts"
-import { isoWithOffset } from "./local-time.ts"
+import { isoWithOffset } from "../../adapter/local-time.ts"
+import type { QueryLock, QueryLockPort } from "../../core/query/throwaway-query.ts"
 
 /**
  * 錠を取る口を作る。`pathOf` は鍵から錠のファイルのパスを決める。

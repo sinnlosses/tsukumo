@@ -6,7 +6,6 @@
 // - 見直し。前回の結果の読み書きと、見直しの走りと、トークン消費の画面から届くコマンドの中身を選ぶ（`wireUsageReview`）。
 
 import { todayLocalDateKey } from "../server/adapter/local-time.ts"
-import { createThrowawayQueryLog } from "../server/adapter/throwaway-query-log.ts"
 import type { CharacterPack } from "../server/character-pack/adapter/character-pack.ts"
 import type { Config } from "../server/core/config.ts"
 import { createDiagnosticLog } from "../server/diagnostic/adapter/diagnostic-log.ts"
@@ -28,6 +27,7 @@ import {
   readDismissedUsageProposalKeys,
   writeDismissedUsageProposalKey,
 } from "../server/usage/adapter/review/usage-proposal-dismissal.ts"
+import { createThrowawayQueryLog } from "../server/usage/adapter/throwaway-query-log.ts"
 import { createTokenUsageLog } from "../server/usage/adapter/token-usage-log.ts"
 import type { TokenUsageProcedurePorts } from "../server/usage/adapter/token-usage-procedure.ts"
 import type { OpenTaskReader } from "../server/usage/adapter/tw-claim-list.ts"

@@ -8,8 +8,8 @@ import {
   MAX_RECOMMENDATION_CARDS,
   type RecommendationCard,
 } from "../../../shared/recommendation/recommendation-card.ts"
-import { structuredOutputSchema } from "../../core/structured-output-schema.ts"
-import type { StructuredQuery } from "../../core/structured-query.ts"
+import { structuredOutputSchema } from "../../core/query/structured-output-schema.ts"
+import type { StructuredQuery } from "../../core/query/structured-query.ts"
 import type {
   RecommendationCandidate,
   RecommendationCandidates,

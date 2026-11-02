@@ -7,8 +7,8 @@
 import { z } from "zod"
 
 import { byteLength } from "../../../core/byte-length.ts"
-import { structuredOutputSchema } from "../../../core/structured-output-schema.ts"
-import type { StructuredQuery } from "../../../core/structured-query.ts"
+import { structuredOutputSchema } from "../../../core/query/structured-output-schema.ts"
+import type { StructuredQuery } from "../../../core/query/structured-query.ts"
 import type { ChatUnconsolidatedEntry } from "../archive/chat-archive-port.ts"
 import { chatLineText } from "../archive/chat-memory-prompt.ts"
 import { CHAT_MEMORY_BUDGET } from "../memory/chat-memory-budget.ts"

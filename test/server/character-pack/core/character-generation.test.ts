@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import { generateCharacter } from "../../../../src/server/character-pack/core/character-generation.ts"
-import type { StructuredQuery } from "../../../../src/server/core/structured-query.ts"
+import type { StructuredQuery } from "../../../../src/server/core/query/structured-query.ts"
 import { MAX_CHARACTER_NAME_LENGTH } from "../../../../src/shared/character-pack/character-definition.ts"
 import {
   MAX_PERSONA_BODY_LENGTH,

@@ -4,16 +4,16 @@
 //
 // 書けなくても例外を投げない。
 
+import { createDatedRecordLog, type DatedRecordLog } from "../../adapter/lib/dated-record-log.ts"
+import { isoWithOffset, localDateKey } from "../../adapter/local-time.ts"
+import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
 import {
   type ThrowawayQueryFootprint,
   type ThrowawayQueryRecord,
   type ThrowawayQueryRecorder,
   THROWAWAY_QUERY_FORMAT_VERSION,
   throwawayQueryRecordSchema,
-} from "../core/throwaway-query.ts"
-import { createDatedRecordLog, type DatedRecordLog } from "./lib/dated-record-log.ts"
-import { isoWithOffset, localDateKey } from "./local-time.ts"
-import { tsukumoHomePath } from "./tsukumo-home.ts"
+} from "../../core/query/throwaway-query.ts"
 
 const THROWAWAY_QUERY_RETENTION_DAYS = 90
 

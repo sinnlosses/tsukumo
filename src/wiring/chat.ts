@@ -1,10 +1,10 @@
 // 雑談の配線。ターンの終わりの定着と、「覚えていること」から1行消すコマンドの中身を選ぶ。
 
 import type { CurrentCharacter } from "../current-character.ts"
-import { createQueryLock } from "../server/adapter/query-lock.ts"
 import { queryStructured } from "../server/adapter/sdk-structured-query.ts"
 import { chatConsolidationLockPath } from "../server/chat/adapter/chat-archive.ts"
 import { createChatSummary } from "../server/chat/adapter/chat-summary.ts"
+import { createQueryLock } from "../server/chat/adapter/query-lock.ts"
 import type { ChatCommandPorts } from "../server/chat/core/chat-command.ts"
 import {
   type ChatConsolidationSource,

@@ -286,6 +286,18 @@ describe(".dependency-cruiser.cjs の規則", () => {
       },
     )
 
+    it("共有の箱の core/ の規則の子は実際のディレクトリと過不足なく一致する", () => {
+      const prefix = "server-child-edge:core/"
+      const ruleChildren = allChildRules
+        .filter((rule) => rule.name.startsWith(prefix))
+        .map((rule) => rule.name.slice(prefix.length))
+      const directories = readdirSync(`${SRC_ROOT}/server/core`, { withFileTypes: true })
+        .filter((entry) => entry.isDirectory())
+        .map((entry) => entry.name)
+
+      expect(ruleChildren.toSorted()).toEqual(directories.toSorted())
+    })
+
     it("usage/core/ の experience/ と review/ は互いを読む import を落とし、core/ 直下のファイルは通す", () => {
       const forbids = (from: string, to: string): boolean =>
         allChildRules.some(

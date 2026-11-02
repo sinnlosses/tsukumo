@@ -357,7 +357,7 @@ const WRITE_FILE_SYNC_ALLOWED = [
   "server/item/adapter/item-store.ts",
   "server/character-pack/adapter/character-edit.ts",
   // `wx` で排他的に作る錠
-  "server/adapter/query-lock.ts",
+  "server/chat/adapter/query-lock.ts",
 ]
 
 describe("ファイルの書き出し", () => {

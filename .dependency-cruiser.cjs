@@ -24,7 +24,7 @@ const SERVER_FEATURE_IMPORTS = {
   question: [],
 }
 
-// キーは `<機能>/<層>`、値は子ディレクトリごとの、読んでよい同じ層の子。子を切ったら1行足す。
+// キーは `<機能>/<層>`（共有の箱は層だけ）、値は子ディレクトリごとの、読んでよい同じ層の子。子を切ったら1行足す。
 // 層の直下のファイル（子ではない）は、どの子からも読んでよい。
 const SERVER_CHILD_IMPORTS = {
   "report/core": {
@@ -53,6 +53,9 @@ const SERVER_CHILD_IMPORTS = {
   "repository/adapter": {
     task: ["beads"],
     beads: [],
+  },
+  core: {
+    query: [],
   },
   "usage/core": {
     experience: [],

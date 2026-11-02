@@ -10,7 +10,7 @@ import {
   type RetriedQueryPorts,
   type RetriedQueryTrace,
   runRetriedQuery,
-} from "../../core/structured-query.ts"
+} from "../../core/query/structured-query.ts"
 import {
   parseWelcomeGreeting,
   WELCOME_GREETING_HEDGE_MS,

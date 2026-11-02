@@ -15,8 +15,8 @@ import {
   parsePromptImage,
   type PromptImageSource,
 } from "../../../shared/session-driver/prompt-image.ts"
-import { structuredOutputSchema } from "../../core/structured-output-schema.ts"
-import { runWithDeadline, type StructuredQuery } from "../../core/structured-query.ts"
+import { structuredOutputSchema } from "../../core/query/structured-output-schema.ts"
+import { runWithDeadline, type StructuredQuery } from "../../core/query/structured-query.ts"
 
 /** 問い合わせを起こすモデル。 */
 const CHARACTER_GENERATION_MODEL = "opus" satisfies ModelAlias

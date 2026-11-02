@@ -51,7 +51,7 @@
 `SERVER_CHILD_IMPORTS`（規則は `server-child-edge:`）が持ち、子を切ったら表に1行足す。いまの対象は `SERVER_CHILD_IMPORTS` の表に載っている子。
 
 **どの機能にも属さない共有のもの**は、`server/core/` と `server/adapter/` の**直下**に置く
-（いまあるものは `ls src/server/core/ src/server/adapter/`）。置いてよいのは**どの機能の語彙も名乗らず、読み手が
+（いまあるものは `ls src/server/core/ src/server/adapter/`。使い捨ての問い合わせの家族は `server/core/query/`）。置いてよいのは**どの機能の語彙も名乗らず、読み手が
 2つ以上ある（機能・共有の箱・配線のどれでも数える）もの**だけで、読み手が1つの機能だけに
 なったらその機能へ下ろす（`browser/domain/` と同じ引き金）。
 

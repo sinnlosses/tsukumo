@@ -15,7 +15,7 @@ import type {
 import {
   type StructuredQuery,
   StructuredQueryResultError,
-} from "../../../../../src/server/core/structured-query.ts"
+} from "../../../../../src/server/core/query/structured-query.ts"
 import type { CharacterPackName } from "../../../../../src/shared/character-pack/character.ts"
 import { characterPackName } from "../../../../fixture/character.ts"
 

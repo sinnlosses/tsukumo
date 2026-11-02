@@ -3,14 +3,14 @@ import { join } from "node:path"
 
 import { describe, expect, it } from "vitest"
 
-import { createThrowawayQueryLog } from "../../../src/server/adapter/throwaway-query-log.ts"
 import {
   THROWAWAY_QUERY_FORMAT_VERSION,
   type ThrowawayQueryFootprint,
-} from "../../../src/server/core/throwaway-query.ts"
-import { keysOf, readJsonLines } from "../../fixture/jsonl.ts"
-import { expectEveryFieldKept } from "../../fixture/record-field.ts"
-import { useTempDir } from "../../fixture/temp-dir.ts"
+} from "../../../../src/server/core/query/throwaway-query.ts"
+import { createThrowawayQueryLog } from "../../../../src/server/usage/adapter/throwaway-query-log.ts"
+import { keysOf, readJsonLines } from "../../../fixture/jsonl.ts"
+import { expectEveryFieldKept } from "../../../fixture/record-field.ts"
+import { useTempDir } from "../../../fixture/temp-dir.ts"
 
 const dir = useTempDir("throwaway-query")
 

@@ -2,7 +2,7 @@
 // 2つ以上の組み立てが読むものだけを置き、1つの組み立てしか読まないものは、その組み立ての中で作るか引数に渡す。
 
 import type { ChatArchive } from "../server/chat/core/archive/chat-archive-port.ts"
-import type { ThrowawayQueryRecorder } from "../server/core/throwaway-query.ts"
+import type { ThrowawayQueryRecorder } from "../server/core/query/throwaway-query.ts"
 import type { FakeSession } from "../server/session-driver/adapter/fake/fake-session.ts"
 
 export type WiringDriver =

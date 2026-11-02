@@ -6,7 +6,7 @@ import { join } from "node:path"
 
 import { z } from "zod"
 
-import { structuredOutputSchema } from "../../../src/server/core/structured-output-schema.ts"
+import { structuredOutputSchema } from "../../../src/server/core/query/structured-output-schema.ts"
 
 const REVIEWED_PATH_PREFIXES = ["src/", "scripts/", "test/"] as const satisfies readonly string[]
 const ACCEPTED_DIRECTORY = "accepted"

@@ -16,13 +16,13 @@ import {
   runWithDeadline,
   type StructuredQuery,
   StructuredQueryResultError,
-} from "../../../core/structured-query.ts"
+} from "../../../core/query/structured-query.ts"
 import {
   createQueryBackoff,
   type QueryBackoffEffect,
   type QueryBackoffPolicy,
   type QueryLockPort,
-} from "../../../core/throwaway-query.ts"
+} from "../../../core/query/throwaway-query.ts"
 import type {
   ChatArchive,
   ChatUnconsolidatedEntry,

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import type { StructuredQuery } from "../../../../src/server/core/structured-query.ts"
+import type { StructuredQuery } from "../../../../src/server/core/query/structured-query.ts"
 import {
   recommendationCandidates,
   recommendationKey,

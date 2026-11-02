@@ -7,7 +7,7 @@ import {
 } from "../../../../../src/server/chat/core/consolidation/chat-consolidation-writer.ts"
 import { CHAT_MEMORY_BUDGET } from "../../../../../src/server/chat/core/memory/chat-memory-budget.ts"
 import type { ChatSummary } from "../../../../../src/server/chat/core/memory/chat-memory.ts"
-import { StructuredQueryResultError } from "../../../../../src/server/core/structured-query.ts"
+import { StructuredQueryResultError } from "../../../../../src/server/core/query/structured-query.ts"
 import type { CharacterPackName } from "../../../../../src/shared/character-pack/character.ts"
 import { characterPackName } from "../../../../fixture/character.ts"
 

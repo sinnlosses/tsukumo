@@ -3,8 +3,8 @@ import { join } from "node:path"
 
 import { describe, expect, it } from "vitest"
 
-import { createQueryLock } from "../../../src/server/adapter/query-lock.ts"
-import { useTempDir } from "../../fixture/temp-dir.ts"
+import { createQueryLock } from "../../../../src/server/chat/adapter/query-lock.ts"
+import { useTempDir } from "../../../fixture/temp-dir.ts"
 
 const KEY = "fictional-key"
 

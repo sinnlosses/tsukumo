@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 import { z } from "zod"
 
-import { structuredOutputSchema } from "../../../src/server/core/structured-output-schema.ts"
+import { structuredOutputSchema } from "../../../../src/server/core/query/structured-output-schema.ts"
 
 describe("structuredOutputSchema", () => {
   it("$schema は draft-07 で出す（2020-12 だと SDK の子プロセスが no schema with key or ref で落ちる）", () => {

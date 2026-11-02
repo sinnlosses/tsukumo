@@ -4,7 +4,7 @@ import {
   runRetriedQuery,
   runWithDeadline,
   type CheckedAnswer,
-} from "../../../src/server/core/structured-query.ts"
+} from "../../../../src/server/core/query/structured-query.ts"
 
 describe("runWithDeadline", () => {
   it("締め切りが来たら、走りの終わりを待たずに aborted で返り、走りには中断が届く", async () => {

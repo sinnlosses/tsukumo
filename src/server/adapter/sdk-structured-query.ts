@@ -13,8 +13,8 @@
 
 import { query, type SDKUserMessage } from "@anthropic-ai/claude-agent-sdk"
 
-import { type StructuredQuery, StructuredQueryResultError } from "../core/structured-query.ts"
-import type { ThrowawayQueryRecorder } from "../core/throwaway-query.ts"
+import { type StructuredQuery, StructuredQueryResultError } from "../core/query/structured-query.ts"
+import type { ThrowawayQueryRecorder } from "../core/query/throwaway-query.ts"
 import { abortControllerFor, recordedMessages } from "./sdk-throwaway-query.ts"
 
 /** 子プロセスを起こす場所と環境変数（会話のセッションと同じものを引き継ぐ）と、足跡を残す先。 */

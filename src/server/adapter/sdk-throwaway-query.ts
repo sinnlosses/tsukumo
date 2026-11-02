@@ -13,7 +13,7 @@ import {
   type ThrowawayQueryRecorder,
   type ThrowawayQueryResultOutcome,
   type ThrowawayQueryUnfinishedOutcome,
-} from "../core/throwaway-query.ts"
+} from "../core/query/throwaway-query.ts"
 
 /** 足跡を残す先と、その問い合わせの種類。 */
 export type ThrowawayQueryWatch = {
