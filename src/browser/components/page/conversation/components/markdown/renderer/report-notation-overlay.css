@@ -1,0 +1,52 @@
+.detail-block {
+  /* 両側が画像の前後の「重ねる」。前と後を同じ枠に重ね、後は `--overlay-position` から右だけを見せる。
+   境の縦線は前の画像のボタンの疑似要素で引き、つまみ（range）は画像の下の行に置く。 */
+  & .report-captioned.report-before-after-swap[data-view="overlay"] > .report-caption {
+    grid-row: 4;
+  }
+  & .report-captioned.report-before-after-swap[data-view="overlay"] > .report-before-after {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  &
+    .report-captioned.report-before-after-swap[data-view="overlay"]
+    .report-before-after-side:nth-child(1)
+    .report-image-zoom {
+    position: relative;
+  }
+  &
+    .report-captioned.report-before-after-swap[data-view="overlay"]
+    .report-before-after-side:nth-child(1)
+    .report-image-zoom::after {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 var(--overlay-position);
+    z-index: 1;
+    width: 2px;
+    translate: -1px 0;
+    background: var(--accent);
+    pointer-events: none;
+  }
+  & .report-captioned.report-before-after-swap[data-view="overlay"] .report-before-after-arrow {
+    display: none;
+  }
+  & .report-captioned.report-before-after-swap[data-view="overlay"] .report-before-after-side {
+    grid-area: 1 / 1;
+  }
+  &
+    .report-captioned.report-before-after-swap[data-view="overlay"]
+    .report-before-after-side:nth-child(3) {
+    clip-path: inset(0 0 0 var(--overlay-position));
+  }
+  &
+    .report-captioned.report-before-after-swap[data-view="overlay"]
+    .report-before-after-side:nth-child(3)
+    .report-before-after-label {
+    inset: 10px 10px auto auto;
+  }
+  & .report-captioned.report-before-after-swap .report-before-after-swap-slider {
+    grid-area: 3 / 1 / 4 / -1;
+    width: 100%;
+    margin: 0;
+    accent-color: var(--accent);
+  }
+}

@@ -20,6 +20,8 @@ describe("loadBeforeAfterView", () => {
   it("保存した見せ方を読み戻す", () => {
     saveBeforeAfterView("switch")
     expect(loadBeforeAfterView()).toBe("switch")
+    saveBeforeAfterView("overlay")
+    expect(loadBeforeAfterView()).toBe("overlay")
     saveBeforeAfterView("side")
     expect(loadBeforeAfterView()).toBe("side")
   })

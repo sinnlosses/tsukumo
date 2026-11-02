@@ -1,0 +1,69 @@
+{
+  "name": "report-before-after-overlay",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "前後の画を重ねて見たい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 300,
+      "event": {
+        "kind": "speech",
+        "text": "同じ大きさの前後を書くね。",
+        "expression": "default"
+      }
+    },
+    {
+      "afterMs": 1500,
+      "event": {
+        "kind": "report",
+        "task": {
+          "kind": "none"
+        },
+        "closing": {
+          "kind": "speech",
+          "text": "書けたよ！",
+          "expression": "proud"
+        },
+        "toolUseId": "fake-report-before-after-overlay-1",
+        "conclusion": "架空の結論: 同じ大きさの前後の画を並べた。",
+        "sections": [
+          {
+            "heading": "架空の同じ大きさの前後",
+            "blocks": [
+              {
+                "kind": "beforeAfter",
+                "title": "架空の色の違う同じ大きさの画面",
+                "before": {
+                  "kind": "image",
+                  "path": "report-image-fixture/same-before.png"
+                },
+                "after": {
+                  "kind": "image",
+                  "path": "report-image-fixture/same-after.png"
+                },
+                "fold": "",
+                "aside": ""
+              }
+            ]
+          }
+        ],
+        "favor": "",
+        "checks": []
+      }
+    },
+    {
+      "afterMs": 2300,
+      "event": {
+        "kind": "turn-finished",
+        "outcome": {
+          "kind": "completed"
+        }
+      }
+    }
+  ]
+}

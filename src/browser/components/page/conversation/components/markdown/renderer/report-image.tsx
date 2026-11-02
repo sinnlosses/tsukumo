@@ -52,6 +52,12 @@ type SwapThumb = {
   readonly region: ImageRegion | undefined
 }
 
+type NaturalSize = { readonly width: number; readonly height: number }
+
+const OVERLAY_RATIO_TOLERANCE = 0.01
+
+const OVERLAY_START_POSITION = 50
+
 /**
  * 画像を押したときの拡大の先。`swap` は塊の前後の面（押した側と、戻すフォーカスの先を渡す）、`own` は画像ごとの拡大。
  */
@@ -69,12 +75,14 @@ type ImageZoomTarget =
 type BeforeAfterSwapContextValue = {
   readonly reportMissing: () => void
   readonly reportImage: (thumb: SwapThumb) => void
+  readonly reportSize: (side: SwapSide, size: NaturalSize) => void
   readonly zoom: ImageZoomTarget
 }
 
 const BeforeAfterSwapContext = createContext<BeforeAfterSwapContextValue>({
   reportMissing: () => undefined,
   reportImage: () => undefined,
+  reportSize: () => undefined,
   zoom: { kind: "own" },
 })
 
@@ -87,12 +95,13 @@ const SWAP_SIDE_LABEL = { before: "前", after: "後" } as const satisfies Recor
 
 const SWAP_SIDES = ["before", "after"] as const satisfies readonly SwapSide[]
 
-const SWAP_VIEW_LABEL = { side: "並べる", switch: "切り替え" } as const satisfies Record<
-  BeforeAfterView,
-  string
->
+const SWAP_VIEW_LABEL = {
+  side: "並べる",
+  switch: "切り替え",
+  overlay: "重ねる",
+} as const satisfies Record<BeforeAfterView, string>
 
-const SWAP_VIEWS = ["side", "switch"] as const satisfies readonly BeforeAfterView[]
+const SWAP_VIEWS = ["side", "switch", "overlay"] as const satisfies readonly BeforeAfterView[]
 
 type BeforeAfterSwapProps = {
   readonly className: string | undefined
@@ -100,18 +109,23 @@ type BeforeAfterSwapProps = {
 }
 
 /**
- * 両側が画像の `beforeAfter` の包み。題の行の右の2つ組で「並べる」「切り替え」を選び、選び方を覚える。
+ * 両側が画像の `beforeAfter` の包み。題の行の右の組で「並べる」「切り替え」「重ねる」を選び、選び方を覚える。
  * 切り替えでは大きな1枚（前か後）と前・後の見本が並び、見本か、大きな1枚にフォーカスがあるときの Space で入れかわる。
- * 画像が一枚でも札になったら2つ組も見本も出さず、並べる形に落とす。
+ * 重ねるでは前の上に後を重ね、つまみ（range）の位置から右だけ後を見せる。両側の縦横比が揃う（差が 1% 以内）ときだけ選べる。
+ * 画像が一枚でも札になったら押しボタンも見本も出さず、並べる形に落とす。
  */
 export function BeforeAfterSwap(props: BeforeAfterSwapProps): ReactElement {
-  const [view, setView] = useState<BeforeAfterView>(loadBeforeAfterView)
+  const [chosen, setChosen] = useState<BeforeAfterView>(loadBeforeAfterView)
   const [shown, setShown] = useState<SwapSide>("before")
   const [missing, setMissing] = useState(false)
   const [thumbs, setThumbs] = useState<readonly SwapThumb[]>([])
+  const [sizes, setSizes] = useState<Partial<Record<SwapSide, NaturalSize>>>({})
+  const [position, setPosition] = useState(OVERLAY_START_POSITION)
   const [zoom, setZoom] = useState<SwapZoom | undefined>(undefined)
   const rootRef = useRef<HTMLDivElement>(null)
   const openerRef = useRef<HTMLElement | undefined>(undefined)
+  const overlayable = !missing && sameRatio(sizes.before, sizes.after)
+  const view = chosen === "overlay" && !overlayable ? "side" : chosen
   const switches = view === "switch" && !missing
 
   function openZoom(side: SwapSide, opener: HTMLElement | undefined): void {
@@ -125,7 +139,7 @@ export function BeforeAfterSwap(props: BeforeAfterSwapProps): ReactElement {
   }
 
   function chooseView(next: BeforeAfterView): void {
-    setView(next)
+    setChosen(next)
     saveBeforeAfterView(next)
   }
 
@@ -146,14 +160,16 @@ export function BeforeAfterSwap(props: BeforeAfterSwapProps): ReactElement {
       value={{
         reportMissing: () => setMissing(true),
         reportImage: (thumb) => setThumbs((current) => withThumb(current, thumb)),
+        reportSize: (side, size) => setSizes((current) => ({ ...current, [side]: size })),
         zoom: missing ? { kind: "own" } : { kind: "swap", open: openZoom },
       }}
     >
       <div
         ref={rootRef}
         className={props.className}
-        data-view={switches ? "switch" : "side"}
+        data-view={missing ? "side" : view}
         data-shown={shown}
+        style={{ "--overlay-position": `${String(position)}%` }}
         onKeyDown={toggleShown}
       >
         {props.children}
@@ -163,7 +179,7 @@ export function BeforeAfterSwap(props: BeforeAfterSwapProps): ReactElement {
             aria-label="見せ方"
             className={styles["report-before-after-swap-views"]}
           >
-            {SWAP_VIEWS.map((choice) => (
+            {SWAP_VIEWS.filter((choice) => choice !== "overlay" || overlayable).map((choice) => (
               <Button
                 key={choice}
                 variant="ghost"
@@ -178,6 +194,18 @@ export function BeforeAfterSwap(props: BeforeAfterSwapProps): ReactElement {
               </Button>
             ))}
           </div>
+        )}
+        {view === "overlay" && (
+          <input
+            type="range"
+            min={0}
+            max={100}
+            step={1}
+            value={position}
+            aria-label="前後の境"
+            className={styles["report-before-after-swap-slider"]}
+            onChange={(event) => setPosition(event.currentTarget.valueAsNumber)}
+          />
         )}
         {switches && (
           <div className={styles["report-before-after-swap-thumbs"]}>
@@ -219,7 +247,7 @@ export function BeforeAfterSwap(props: BeforeAfterSwapProps): ReactElement {
 export function ReportImage(props: ReportImageProps): ReactElement {
   const [failed, setFailed] = useState(false)
   const [zoomed, setZoomed] = useState(false)
-  const { reportMissing, reportImage, zoom } = use(BeforeAfterSwapContext)
+  const { reportMissing, reportImage, reportSize, zoom } = use(BeforeAfterSwapContext)
   const imageRef = useRef<HTMLImageElement | null>(null)
   const alt = props.alt ?? ""
 
@@ -268,6 +296,12 @@ export function ReportImage(props: ReportImageProps): ReactElement {
           reportImage({ side, src, alt, region })
         }
       }}
+      onLoad={(event) =>
+        reportSize(side, {
+          width: event.currentTarget.naturalWidth,
+          height: event.currentTarget.naturalHeight,
+        })
+      }
       onError={() => setFailed(true)}
     />
   )
@@ -316,6 +350,15 @@ function readCaption(root: HTMLElement | null): SwapZoom["caption"] {
     number: numberClass === undefined ? "" : read(numberClass),
     text: textClass === undefined ? "" : read(textClass),
   }
+}
+
+function sameRatio(a: NaturalSize | undefined, b: NaturalSize | undefined): boolean {
+  if (a === undefined || b === undefined || a.height === 0 || b.height === 0) {
+    return false
+  }
+  const ratioA = a.width / a.height
+  const ratioB = b.width / b.height
+  return Math.abs(ratioA - ratioB) / ratioB <= OVERLAY_RATIO_TOLERANCE
 }
 
 function withThumb(thumbs: readonly SwapThumb[], next: SwapThumb): readonly SwapThumb[] {

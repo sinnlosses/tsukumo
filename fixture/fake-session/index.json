@@ -80,6 +80,7 @@
     "flow-source-branch",
     "report-matrix",
     "report-before-after",
+    "report-before-after-overlay",
     "report-image",
     "report-tall-figure",
     "report-interim-nested",

@@ -62,6 +62,14 @@ export function workspaceOf(entry: CatalogEntry, outDir: string): string {
   writeFileSync(path.join(workspace, "report-image-fixture", "before.png"), fictionalPng(240, 180))
   writeFileSync(path.join(workspace, "report-image-fixture", "after.png"), fictionalPng(320, 180))
   writeFileSync(path.join(workspace, "report-image-fixture", "tall.png"), fictionalPng(180, 900))
+  writeFileSync(
+    path.join(workspace, "report-image-fixture", "same-before.png"),
+    fictionalPng(320, 180, [0x5b, 0x8d, 0xa6]),
+  )
+  writeFileSync(
+    path.join(workspace, "report-image-fixture", "same-after.png"),
+    fictionalPng(320, 180, [0xd6, 0x8a, 0x5c]),
+  )
   return workspace
 }
 

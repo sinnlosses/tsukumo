@@ -1,5 +1,5 @@
 // `BeforeAfter`（変更の前と後を並べる）を Markdown に戻さず直接描く。
-// 側ごとに画像・コード・箇条・mermaid・svg のどれか。両側が画像のときだけ、並べる・切り替えの口を持つ包みにする。
+// 側ごとに画像・コード・箇条・mermaid・svg のどれか。両側が画像のときだけ、並べる・切り替え・重ねるの口を持つ包みにする。
 
 import clsx from "clsx"
 import type { ReactElement } from "react"

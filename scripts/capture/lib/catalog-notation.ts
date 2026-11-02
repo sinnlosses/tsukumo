@@ -19,6 +19,9 @@ import {
 } from "./catalog-selector.ts"
 import { SCENE_END_SETTLE, type CatalogEntry } from "./catalog-type.ts"
 
+const OVERLAY_CHOICE_SELECTOR = '[aria-label="見せ方"] button:has-text("重ねる")'
+const OVERLAY_SLIDER_SELECTOR = 'input[aria-label="前後の境"]'
+
 export const NOTATION_ENTRIES: readonly CatalogEntry[] = [
   {
     name: "notation",
@@ -221,6 +224,63 @@ export const NOTATION_ENTRIES: readonly CatalogEntry[] = [
     homeSetup: { kind: "default" },
     workspaceSetup: { kind: "report-image" },
     prepare: [{ kind: "scroll", selector: BEFORE_AFTER_SELECTOR }],
+    skipReveal: true,
+    settle: { kind: "selector", selector: BEFORE_AFTER_SELECTOR, phase: "before-prepare" },
+  },
+  {
+    name: "report-before-after-image-overlay-saved",
+    scene: "report-before-after",
+    label:
+      "前後の部品（画像の縦横比が違う。見せ方の保存値が重ねるでも、重ねるの押しボタンは出ず並べるで描く）",
+    homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "report-image" },
+    prepare: [
+      { kind: "local-storage", key: "tsukumo-before-after-view:v1", value: "overlay" },
+      { kind: "wait", selector: BEFORE_AFTER_SELECTOR },
+      { kind: "scroll", selector: BEFORE_AFTER_SELECTOR },
+    ],
+    skipReveal: true,
+    settle: { kind: "selector", selector: BEFORE_AFTER_SELECTOR, phase: "before-prepare" },
+  },
+  {
+    name: "report-before-after-overlay-left",
+    scene: "report-before-after-overlay",
+    label: "前後の部品（重ねる。つまみが左寄りで、後が広く見える）",
+    homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "report-image" },
+    prepare: [
+      { kind: "click", selector: OVERLAY_CHOICE_SELECTOR },
+      { kind: "click", selector: OVERLAY_SLIDER_SELECTOR },
+      { kind: "press", key: "PageDown" },
+      { kind: "press", key: "PageDown" },
+      { kind: "press", key: "PageDown" },
+    ],
+    skipReveal: true,
+    settle: { kind: "selector", selector: BEFORE_AFTER_SELECTOR, phase: "before-prepare" },
+  },
+  {
+    name: "report-before-after-overlay-center",
+    scene: "report-before-after-overlay",
+    label: "前後の部品（重ねる。つまみが中央で、前と後が半分ずつ）",
+    homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "report-image" },
+    prepare: [{ kind: "click", selector: OVERLAY_CHOICE_SELECTOR }],
+    skipReveal: true,
+    settle: { kind: "selector", selector: BEFORE_AFTER_SELECTOR, phase: "before-prepare" },
+  },
+  {
+    name: "report-before-after-overlay-right",
+    scene: "report-before-after-overlay",
+    label: "前後の部品（重ねる。つまみが右寄りで、前が広く見える）",
+    homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "report-image" },
+    prepare: [
+      { kind: "click", selector: OVERLAY_CHOICE_SELECTOR },
+      { kind: "click", selector: OVERLAY_SLIDER_SELECTOR },
+      { kind: "press", key: "PageUp" },
+      { kind: "press", key: "PageUp" },
+      { kind: "press", key: "PageUp" },
+    ],
     skipReveal: true,
     settle: { kind: "selector", selector: BEFORE_AFTER_SELECTOR, phase: "before-prepare" },
   },

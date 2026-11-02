@@ -18,6 +18,7 @@ import { positiveIntegerArgument } from "../../shared/positive-integer-argument.
  * - `press`: キーを押す（モーダルの Esc での閉じ）
  * - `advance`: 偽の時計をミリ秒だけ進める（時間が経つと出る画）
  * - `wait`: 要素が出るのを待つ（`hash` で開いた画面の読み込みなど）
+ * - `local-storage`: `localStorage` に値を書いてページを読み直す（利用者の端末に覚えた選び方が効く画）
  */
 export type Preparation =
   | { readonly kind: "scroll"; readonly selector: string }
@@ -30,6 +31,7 @@ export type Preparation =
   | { readonly kind: "press"; readonly key: string }
   | { readonly kind: "advance"; readonly ms: number }
   | { readonly kind: "wait"; readonly selector: string }
+  | { readonly kind: "local-storage"; readonly key: string; readonly value: string }
 
 /** `wait` が要素の出現を待つ上限（ミリ秒）。`bd` の読みなど、ほかの手より遅いものを待つ。 */
 const WAIT_TIMEOUT_MS = 40_000
@@ -106,6 +108,15 @@ export async function applyPreparation(
           window.location.hash = hash
         }, step.hash)
         break
+      case "local-storage":
+        await page.evaluate(
+          ([key, value]: readonly [string, string]) => {
+            window.localStorage.setItem(key, value)
+          },
+          [step.key, step.value] as const,
+        )
+        await page.reload()
+        break
     }
     return true
   } catch {
@@ -136,6 +147,8 @@ export function describePreparation(step: Preparation): string {
       return `時計を ${String(step.ms)}ms 進める`
     case "wait":
       return `${step.selector} が出るのを待つ`
+    case "local-storage":
+      return `localStorage の ${step.key} に ${step.value} を書いて読み直す`
   }
 }
 
