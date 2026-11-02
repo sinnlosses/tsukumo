@@ -206,6 +206,7 @@ export function useWorkStrip(): WorkStripModel {
   const apiTrouble = useSession((session) => session.state.apiTrouble)
   const reportDrafting = useSession((session) => reportDraftingOf(session.state.sdkTurn))
   const backgroundTasks = useSession((session) => session.state.backgroundTasks)
+  const workflowSteps = useSession((session) => session.state.workflowSteps)
   const opened = useWorkStripSteps((state) => state.opened)
   const toggle = useWorkStripSteps((state) => state.toggle)
   const openAtPhase = useWorkStripSteps((state) => state.openAtPhase)
@@ -300,6 +301,7 @@ export function useWorkStrip(): WorkStripModel {
       firstPending,
       reportDrafting,
       backgroundTasks,
+      workflowSteps,
       turn,
       apiTrouble,
       records,

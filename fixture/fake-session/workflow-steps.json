@@ -1,0 +1,182 @@
+{
+  "name": "workflow-steps",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "ワークフロースクリプトで進めたい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 100,
+      "event": {
+        "kind": "speech",
+        "text": "ワークフロースクリプトで進めるね。",
+        "expression": "default"
+      }
+    },
+    {
+      "afterMs": 200,
+      "event": {
+        "kind": "work-plan",
+        "delegatedRange": {
+          "kind": "none"
+        },
+        "skippedPhases": [],
+        "awaitingSummary": {
+          "kind": "none"
+        },
+        "phases": ["計画を確かめる", "ワークフロースクリプトで進める", "受け入れる"],
+        "current": 1,
+        "finishedInGroup": [],
+        "phaseSummary": "架空の計画は3つの段で、ワークフロースクリプトにそのまま渡せる形だった。"
+      }
+    },
+    {
+      "afterMs": 300,
+      "event": {
+        "kind": "tool-started",
+        "toolUseId": "fake-workflow-1",
+        "name": "Workflow",
+        "input": {
+          "name": "架空のワークフロースクリプト"
+        }
+      }
+    },
+    {
+      "afterMs": 400,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-workflow-1",
+        "content": "架空のワークフロースクリプトの受付（ID: fake-workflow-task-1）",
+        "isError": false
+      }
+    },
+    {
+      "afterMs": 400,
+      "event": {
+        "kind": "background-tasks-changed",
+        "tasks": [
+          {
+            "taskId": "fake-workflow-task-1",
+            "kind": "workflow",
+            "description": "架空のワークフロースクリプト"
+          }
+        ]
+      }
+    },
+    {
+      "afterMs": 500,
+      "event": {
+        "kind": "speech",
+        "text": "ワークフロースクリプトが終わるまで待ってるね。",
+        "expression": "default"
+      }
+    },
+    {
+      "afterMs": 600,
+      "event": {
+        "kind": "turn-finished",
+        "outcome": {
+          "kind": "completed"
+        }
+      }
+    },
+    {
+      "afterMs": 3000,
+      "event": {
+        "kind": "workflow-step-started",
+        "name": "Read",
+        "input": {
+          "file_path": "/架空/src/example.ts"
+        }
+      }
+    },
+    {
+      "afterMs": 6000,
+      "event": {
+        "kind": "workflow-step-started",
+        "name": "Bash",
+        "input": {
+          "command": "pnpm run test 架空のテスト"
+        }
+      }
+    },
+    {
+      "afterMs": 9000,
+      "event": {
+        "kind": "workflow-step-started",
+        "name": "Grep",
+        "input": {
+          "pattern": "架空の語"
+        }
+      }
+    },
+    {
+      "afterMs": 12000,
+      "event": {
+        "kind": "workflow-step-started",
+        "name": "Edit",
+        "input": {
+          "file_path": "/架空/src/example.ts"
+        }
+      }
+    },
+    {
+      "afterMs": 16000,
+      "event": {
+        "kind": "background-tasks-changed",
+        "tasks": []
+      }
+    },
+    {
+      "afterMs": 16100,
+      "event": {
+        "kind": "turn-resumed"
+      }
+    },
+    {
+      "afterMs": 16500,
+      "event": {
+        "kind": "speech",
+        "text": "ワークフロースクリプトが終わったよ。",
+        "expression": "proud"
+      }
+    },
+    {
+      "afterMs": 16600,
+      "event": {
+        "kind": "work-plan",
+        "delegatedRange": {
+          "kind": "none"
+        },
+        "skippedPhases": [],
+        "awaitingSummary": {
+          "kind": "none"
+        },
+        "phases": ["計画を確かめる", "ワークフロースクリプトで進める", "受け入れる"],
+        "current": 2,
+        "finishedInGroup": [],
+        "phaseSummary": "架空のワークフロースクリプトが4つの手順で走り終えた。"
+      }
+    },
+    {
+      "afterMs": 17000,
+      "event": {
+        "kind": "utterance",
+        "text": "## ワークフロースクリプトが終わった\n\nこれは架空の本文で、実物の会話ではない。"
+      }
+    },
+    {
+      "afterMs": 17300,
+      "event": {
+        "kind": "turn-finished",
+        "outcome": {
+          "kind": "completed"
+        }
+      }
+    }
+  ]
+}

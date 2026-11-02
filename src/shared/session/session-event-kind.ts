@@ -30,6 +30,7 @@ const SESSION_EVENT_KINDS = {
   "delegate-handed-back": true,
   "workflow-started": true,
   "task-notified": true,
+  "workflow-step-started": true,
   "tool-started": true,
   "tool-finished": true,
   "background-tool-finished": true,

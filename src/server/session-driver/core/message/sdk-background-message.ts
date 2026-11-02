@@ -50,8 +50,8 @@ export function delegateProgressEvents(
 }
 
 /**
- * SDK の `task_type` を3つに畳む（{@link BackgroundTaskKind}）。
- * 実測で見たのは `local_bash`（`run_in_background` の Bash）と `local_agent`（背景のサブエージェント）の2つ。
+ * SDK の `task_type` を4つに畳む（{@link BackgroundTaskKind}）。
+ * 実測で見たのは `local_bash`（`run_in_background` の Bash）と `local_agent`（背景のサブエージェント）と `local_workflow`（ワークフロースクリプト）の3つ。
  */
 function backgroundTaskKind(taskType: unknown): BackgroundTaskKind {
   switch (taskType) {
@@ -59,6 +59,8 @@ function backgroundTaskKind(taskType: unknown): BackgroundTaskKind {
       return "shell"
     case "local_agent":
       return "agent"
+    case "local_workflow":
+      return "workflow"
     default:
       return "other"
   }

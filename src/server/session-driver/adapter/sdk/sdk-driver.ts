@@ -170,6 +170,7 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
               createRtkRewrite(),
               options.mode.kind === "work" ? callReview.planMissing : undefined,
               toolHookClock,
+              options.onEvent,
             ),
             ...postToolUseHooks(options.onEvent, externalToolMark, toolHookClock, diagnose),
             ...handbackNoteHooks(callReview, () => {

@@ -16,6 +16,7 @@ import type {
   TurnProgress,
 } from "../../../../../../../shared/session/turn-progress.ts"
 import type { TurnStep, TurnStepList } from "../../../../../../../shared/session/turn-step.ts"
+import type { WorkflowStep } from "../../../../../../../shared/session/workflow-step.ts"
 import { formatElapsed } from "../../../../../../../shared/utils/elapsed-time.ts"
 import { summarizeToolInput } from "../../../../../../domain/tool-summary.ts"
 import { backgroundSummaryLabel } from "../../../../../../features/current-work/domain/current-work-step.ts"
@@ -42,6 +43,7 @@ type WorkActivitySource = {
   readonly firstPending: StampedPendingAsk | undefined
   readonly reportDrafting: ReportDrafting
   readonly backgroundTasks: readonly BackgroundTask[]
+  readonly workflowSteps: readonly WorkflowStep[]
   readonly turn: TurnProgress
   readonly apiTrouble: ApiTrouble
   readonly records: readonly SessionRecord[]
@@ -49,7 +51,8 @@ type WorkActivitySource = {
 }
 
 /**
- * 強い順に1つ: 答え待ち → report を書いている途中 → 走っている手順 → バックグラウンドタスク →
+ * 強い順に1つ: 答え待ち → report を書いている途中 → 走っている手順 →
+ * 背景のサブエージェントの直前の手順 → 背景のワークフロースクリプトの中の手順 → バックグラウンドタスク →
  * 考えている（依頼が会話の片付けのときは「会話を片付けている」）。
  * 答え待ちの秒は、答え待ちが届いた時刻から数える。
  */
@@ -89,6 +92,15 @@ export function workActivityOf(source: WorkActivitySource): WorkActivity {
       retry,
     }
   }
+  const workflowStep = latestWorkflowStep(source.backgroundTasks, source.workflowSteps)
+  if (workflowStep !== undefined) {
+    return {
+      text: `背景で · ${toolLine(workflowStep.name, workflowStep.input)}`,
+      tone: "quiet",
+      mono: true,
+      retry,
+    }
+  }
   const background = backgroundSummaryLabel(source.backgroundTasks)
   if (background !== undefined) {
     return { text: `背景で ${background}`, tone: "quiet", mono: false, retry }
@@ -121,6 +133,17 @@ function lastDelegatedStep(
 ): TurnStep | undefined {
   return backgroundTasks.at(-1)?.kind === "agent"
     ? steps.findLast((step) => step.nested)
+    : undefined
+}
+
+/** いちばん新しいバックグラウンドタスクがワークフロースクリプトなら、その中でいちばん新しく始まった手順。 */
+function latestWorkflowStep(
+  backgroundTasks: readonly BackgroundTask[],
+  workflowSteps: readonly WorkflowStep[],
+): WorkflowStep | undefined {
+  const newest = backgroundTasks.at(-1)
+  return newest?.kind === "workflow"
+    ? workflowSteps.find((step) => step.taskId === newest.taskId)
     : undefined
 }
 

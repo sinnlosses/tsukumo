@@ -31,6 +31,7 @@ import {
   type TurnProgress,
 } from "./turn-progress.ts"
 import type { Speech } from "./turn-speech.ts"
+import type { WorkflowStep } from "./workflow-step.ts"
 
 export type ChatConsolidationHalt =
   | { readonly halted: false }
@@ -214,6 +215,12 @@ export type SessionState = {
    */
   readonly backgroundTasks: readonly BackgroundTask[]
   /**
+   * {@link backgroundTasks} のうちワークフロースクリプトごとの、いちばん新しく始まった手順（1本につき高々1件）。
+   * 源は `workflow-step-started` で、差し替え方は `withWorkflowStep`。
+   * `background-tasks-changed` で顔ぶれから外れた分を落とし、`session-ended` で空にする。
+   */
+  readonly workflowSteps: readonly WorkflowStep[]
+  /**
    * 見直しの状態。源は見直しのイベント（`UsageReviewEvent`）だけ。
    * 見直しは会話とは別の使い捨ての問い合わせで走るので、会話の `turn-finished` / `session-ended` では動かさず、起こし直しでも残す。
    * 前回の結果を出すのはこの状態ではない。
@@ -292,6 +299,7 @@ export const INITIAL_SESSION_STATE: SessionState = {
   sessionDefault: BUILTIN_SESSION_DEFAULT,
   plan: undefined,
   backgroundTasks: [],
+  workflowSteps: [],
   usageReview: { kind: "idle" },
   previousUsageReview: { kind: "none" },
   usageProposalRun: { kind: "idle" },

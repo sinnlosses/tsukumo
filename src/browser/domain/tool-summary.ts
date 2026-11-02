@@ -1,23 +1,10 @@
 // ツール名＋入力を、画面に出してよい1行の要約にする。入力の全文は返さない。
 
-import { isPlainObject } from "remeda"
-
 import { clipWithEllipsis } from "../../shared/utils/clip-text.ts"
-import { optionalString } from "../../shared/utils/optional-string.ts"
+import { toolSummaryField } from "../../shared/utils/tool-summary-field.ts"
 
 /** ツール入力の要約に出す1行の長さの上限（目安）。 */
 const MAX_TOOL_SUMMARY_LENGTH = 120
-
-/**
- * ツール入力の要約に使うフィールド名。Bash は `command`、Edit / Write / Read は `file_path`。
- * 載っていないツールは最初に見つかった文字列値に落ちる。
- */
-const TOOL_SUMMARY_FIELD_BY_TOOL: Readonly<Record<string, string>> = {
-  Bash: "command",
-  Edit: "file_path",
-  Write: "file_path",
-  Read: "file_path",
-}
 
 /**
  * ツール名＋入力を、画面に出してよい1行の要約にする。入力がオブジェクトの形でないときは空文字。
@@ -36,24 +23,5 @@ export function summarizeToolInput(toolName: string, input: unknown): string {
  * 入力がオブジェクトの形でない・欄が見つからないときは空文字。
  */
 export function toolInputText(toolName: string, input: unknown): string {
-  if (!isPlainObject(input)) {
-    return ""
-  }
-
-  const field = TOOL_SUMMARY_FIELD_BY_TOOL[toolName]
-  const value = field === undefined ? firstStringValue(input) : stringField(input, field)
-  return value ?? ""
-}
-
-function firstStringValue(input: Readonly<Record<string, unknown>>): string | undefined {
-  for (const value of Object.values(input)) {
-    if (typeof value === "string") {
-      return value
-    }
-  }
-  return undefined
-}
-
-function stringField(input: Readonly<Record<string, unknown>>, field: string): string | undefined {
-  return optionalString(input[field])
+  return toolSummaryField(toolName, input)?.value ?? ""
 }

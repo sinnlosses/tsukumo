@@ -17,6 +17,7 @@ import {
   type PermissionMode,
 } from "../../../../shared/command.ts"
 import type { SessionEvent } from "../../../../shared/session/session-event.ts"
+import { toolSummaryInput } from "../../../../shared/utils/tool-summary-field.ts"
 import { bundledFilePath } from "../../../adapter/bundled-path.ts"
 import { tsukumoHomePath } from "../../../adapter/tsukumo-home.ts"
 import type { ToolVerdict } from "../../../core/tool-verdict.ts"
@@ -123,9 +124,10 @@ export function buildQuerySeedOptions(options: SessionDriverOptions): QuerySeedO
 
 /**
  * `PreToolUse` フックを、当てるツールごとの matcher に分けて登録する。
- * 読み取り（`Read`・`Grep`・`Glob`・`ToolSearch`）と `phase_result` 以外の tsukumo のツールには、どれも当たらない。
+ * 読み取り（`Read`・`Grep`・`Glob`・`ToolSearch`）と `phase_result` 以外の tsukumo のツールには、ワークフロースクリプトの手順のフックのほかは当たらない。
  * 1つのツールに当たった matcher のフックは並んで走り、どれかの `deny` が勝つ。
  *
+ * - ワークフロースクリプトの手順（matcher なし）: ワークフロースクリプトの中の委譲先の呼び出しなら `workflow-step-started` を `onEvent` へ流す。入力は要約に使う欄だけに絞る
  * - 委譲ゲート（読み取りと tsukumo のツール以外）: 外部由来の印を立て、委譲ゲート（`judgeToolAgainstGate`）で拒む。
  *   印は結果のフック（{@link postToolUseHooks}）でも立てる
  * - `mcp__tsukumo__phase_result`: メインの呼び出しを拒む（`judgePhaseResultCaller`）
@@ -145,9 +147,24 @@ export function preToolUseHooks(
   rewriteBash: (command: string) => Promise<string | undefined>,
   planMissing: (() => boolean) | undefined,
   hookClock: Pick<ToolHookClock, "started">,
+  onEvent: (event: SessionEvent) => void,
 ): Partial<Record<HookEvent, HookCallbackMatcher[]>> {
   return {
     PreToolUse: [
+      {
+        hooks: [
+          async (input) => {
+            if (input.hook_event_name === "PreToolUse" && isInWorkflow(input)) {
+              onEvent({
+                kind: "workflow-step-started",
+                name: input.tool_name,
+                input: toolSummaryInput(input.tool_name, input.tool_input),
+              })
+            }
+            return {}
+          },
+        ],
+      },
       {
         matcher: GATE_MATCHER,
         hooks: [
@@ -410,6 +427,13 @@ function confirmedSettingEvents(input: BaseHookInput): readonly SessionEvent[] {
 function isInSubagent(input: BaseHookInput): boolean {
   return input.agent_id !== undefined
 }
+
+/** ワークフロースクリプトの中の委譲先の呼び出しか（`agent_type` の値は SDK 0.3.312 の実測）。 */
+function isInWorkflow(input: BaseHookInput): boolean {
+  return isInSubagent(input) && input.agent_type === WORKFLOW_AGENT_TYPE
+}
+
+const WORKFLOW_AGENT_TYPE = "workflow-subagent"
 
 function toPreToolUseOutput(verdict: ToolVerdict): SyncHookJSONOutput {
   switch (verdict.kind) {

@@ -45,6 +45,16 @@ export type DelegateEvent =
    * `CallReview.pass` が受けて捨てる（畳み込み・ブラウザには届かない）。
    */
   | { readonly kind: "task-notified"; readonly taskId: string }
+  /**
+   * ワークフロースクリプトの中の委譲先がツールを使い始めた（`PreToolUse` のフックのうち、`agent_type` がワークフロースクリプトの委譲先のもの）。
+   * どのワークフロースクリプトに当てるかは `withWorkflowStep`。
+   * `input` は要約に使う欄1つだけに絞ってある（`toolSummaryInput`）。
+   */
+  | {
+      readonly kind: "workflow-step-started"
+      readonly name: string
+      readonly input: Readonly<Record<string, string>>
+    }
   | {
       readonly kind: "tool-started"
       readonly toolUseId: string

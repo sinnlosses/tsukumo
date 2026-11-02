@@ -130,7 +130,7 @@ type CurrentWorkSummary =
 
 export type CurrentWorkBackgroundTask = {
   readonly key: string
-  /** 種類の語（「シェル」「サブエージェント」「その他」）。 */
+  /** 種類の語（「シェル」「サブエージェント」「ワークフロースクリプト」「その他」）。 */
   readonly kindLabel: string
   /** claude が添えた説明。無ければ空（行には種類の語だけが出る）。 */
   readonly description: string

@@ -53,6 +53,7 @@ export type CurrentWorkStepGroup = {
 export const BACKGROUND_TASK_KIND_LABEL = {
   shell: "シェル",
   agent: "サブエージェント",
+  workflow: "ワークフロースクリプト",
   other: "その他",
 } satisfies Record<BackgroundTaskKind, string>
 

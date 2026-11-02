@@ -46,9 +46,10 @@ export type PreToolUseSetup = {
   readonly rewriteBash: (command: string) => Promise<string | undefined>
   readonly planMissing: (() => boolean) | undefined
   readonly hookClock: ToolHookClock
+  readonly onEvent: (event: SessionEvent) => void
 }
 
-/** 渡さなかった口を既定（印は下り、差し替えず、時計は 0）で埋めた `preToolUseHooks` の表。 */
+/** 渡さなかった口を既定（印は下り、差し替えず、時計は 0、出来事は捨てる）で埋めた `preToolUseHooks` の表。 */
 export function preTable(
   setup: Partial<PreToolUseSetup>,
 ): Partial<Record<HookEvent, HookCallbackMatcher[]>> {
@@ -59,6 +60,7 @@ export function preTable(
     setup.rewriteBash ?? (() => Promise.resolve(undefined)),
     setup.planMissing,
     setup.hookClock ?? createToolHookClock(() => 0),
+    setup.onEvent ?? (() => {}),
   )
 }
 
@@ -68,6 +70,7 @@ export async function runPreToolUse(
   toolInput: unknown,
   agentId?: string,
   setup: Partial<PreToolUseSetup> = {},
+  agentType?: string,
 ): Promise<unknown> {
   const outputs = await runMatched(preTable(setup), "PreToolUse", {
     ...BASE_INPUT,
@@ -76,6 +79,7 @@ export async function runPreToolUse(
     tool_input: toolInput,
     tool_use_id: TOOL_USE_ID,
     ...(agentId === undefined ? {} : { agent_id: agentId }),
+    ...(agentType === undefined ? {} : { agent_type: agentType }),
   })
   return outputs.find(isDeny) ?? outputs.find(isNonEmpty) ?? {}
 }

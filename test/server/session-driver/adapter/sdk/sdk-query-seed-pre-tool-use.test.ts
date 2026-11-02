@@ -3,16 +3,23 @@ import { describe, expect, it } from "vitest"
 import { createCallReview } from "../../../../../src/server/session-driver/core/call-review.ts"
 import { createExternalToolMark } from "../../../../../src/server/session-driver/core/external-tool-mark.ts"
 import { createToolHookClock } from "../../../../../src/server/session-driver/core/tool-hook-clock.ts"
+import type { SessionEvent } from "../../../../../src/shared/session/session-event.ts"
 import { requestEvent } from "../../../../fixture/session-event.ts"
 import { matcherHits, preTable, runPreToolUse } from "../../../../fixture/tool-use-hook-table.ts"
 
 describe("preToolUseHooks（matcher で当てるツールを分ける）", () => {
+  const entries = () =>
+    (preTable({ planMissing: () => true }).PreToolUse ?? []).filter(
+      (entry) => entry.matcher !== undefined,
+    )
   const hitCount = (toolName: string) =>
-    (preTable({ planMissing: () => true }).PreToolUse ?? []).filter((entry) =>
-      matcherHits(entry.matcher, toolName),
-    ).length
+    entries().filter((entry) => matcherHits(entry.matcher, toolName)).length
 
-  it("Read・Grep・Glob・ToolSearch には、どの PreToolUse のフックも当たらない", () => {
+  it("matcher の無いフックはワークフロースクリプトの手順の1つだけ", () => {
+    expect(preTable({ planMissing: () => true }).PreToolUse?.length).toBe(entries().length + 1)
+  })
+
+  it("Read・Grep・Glob・ToolSearch には、matcher のある PreToolUse のフックが当たらない", () => {
     expect(hitCount("Read")).toBe(0)
     expect(hitCount("Grep")).toBe(0)
     expect(hitCount("Glob")).toBe(0)
@@ -248,5 +255,50 @@ describe("preToolUseHooks（メインの phase_result を拒む）", () => {
         gateRaised: () => true,
       }),
     ).toEqual({})
+  })
+})
+
+describe("preToolUseHooks（ワークフロースクリプトの中の手順を出来事にする）", () => {
+  const eventsOf = async (
+    toolName: string,
+    input: unknown,
+    agentId: string | undefined,
+    agentType: string | undefined,
+  ): Promise<readonly SessionEvent[]> => {
+    const events: SessionEvent[] = []
+    await runPreToolUse(
+      toolName,
+      input,
+      agentId,
+      { onEvent: (event) => events.push(event) },
+      agentType,
+    )
+    return events
+  }
+
+  it("ワークフロースクリプトの委譲先の呼び出しは、要約に使う欄だけに絞った入力で workflow-step-started にする", async () => {
+    expect(
+      await eventsOf(
+        "Bash",
+        { command: "架空のコマンド", description: "架空の説明" },
+        "wf-agent-1",
+        "workflow-subagent",
+      ),
+    ).toEqual([
+      { kind: "workflow-step-started", name: "Bash", input: { command: "架空のコマンド" } },
+    ])
+    expect(
+      await eventsOf(
+        "Read",
+        { file_path: "/架空/a.ts", limit: 10 },
+        "wf-agent-1",
+        "workflow-subagent",
+      ),
+    ).toEqual([{ kind: "workflow-step-started", name: "Read", input: { file_path: "/架空/a.ts" } }])
+  })
+
+  it("メインの呼び出しと、ワークフロースクリプトの外のサブエージェントの呼び出しは出来事にしない", async () => {
+    expect(await eventsOf("Bash", { command: "ls" }, undefined, undefined)).toEqual([])
+    expect(await eventsOf("Bash", { command: "ls" }, "sub-1", "general-purpose")).toEqual([])
   })
 })

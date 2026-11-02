@@ -29,6 +29,7 @@ export function useCurrentStep(): CurrentStepModel {
   const pending = useSession((session) => session.state.pending)
   const reportDrafting = useSession((session) => reportDraftingOf(session.state.sdkTurn))
   const backgroundTasks = useSession((session) => session.state.backgroundTasks)
+  const workflowSteps = useSession((session) => session.state.workflowSteps)
   const apiTrouble = useSession((session) => session.state.apiTrouble)
   const records = useSession((session) => session.state.records)
   const now = useNowWhile(isTurnCounting(turn, backgroundTasks.length))
@@ -45,6 +46,7 @@ export function useCurrentStep(): CurrentStepModel {
       firstPending: pending[0],
       reportDrafting,
       backgroundTasks,
+      workflowSteps,
       turn,
       apiTrouble,
       records,

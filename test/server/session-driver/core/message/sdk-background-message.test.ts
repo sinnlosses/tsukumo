@@ -4,13 +4,14 @@ import { toSessionEvents } from "../../../../../src/server/session-driver/core/m
 import { EXPRESSIONS } from "../../../../fixture/sdk-assistant-message.ts"
 
 describe("バックグラウンドタスク（実測で届いた順: background_tasks_changed → task_started → … → background_tasks_changed → task_updated → task_notification）", () => {
-  it("background_tasks_changed を background-tasks-changed にする（種類を3つに畳む）", () => {
+  it("background_tasks_changed を background-tasks-changed にする（種類を4つに畳む）", () => {
     const message = {
       type: "system",
       subtype: "background_tasks_changed",
       tasks: [
         { task_id: "bash-1", task_type: "local_bash", description: "架空の待ち" },
         { task_id: "agent-1", task_type: "local_agent", description: "架空の調べ物" },
+        { task_id: "wf-1", task_type: "local_workflow", description: "架空の流れ" },
         { task_id: "other-1", task_type: "架空の未知の種類", description: "架空の何か" },
       ],
       uuid: "u-1",
@@ -23,6 +24,7 @@ describe("バックグラウンドタスク（実測で届いた順: background_
         tasks: [
           { taskId: "bash-1", kind: "shell", description: "架空の待ち" },
           { taskId: "agent-1", kind: "agent", description: "架空の調べ物" },
+          { taskId: "wf-1", kind: "workflow", description: "架空の流れ" },
           { taskId: "other-1", kind: "other", description: "架空の何か" },
         ],
       },
