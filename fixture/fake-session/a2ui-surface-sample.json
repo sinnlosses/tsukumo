@@ -56,7 +56,19 @@
             "id": "s1",
             "component": "Section",
             "heading": "架空の表",
-            "children": ["t1", "dv1", "x1", "p1", "q1", "m1"]
+            "children": ["t1", "dv1", "x1", "p1", "q1", "dl1", "m1"]
+          },
+          {
+            "id": "dl1",
+            "component": "DescriptionList",
+            "items": [
+              { "term": "架空の上限", "description": "60" },
+              { "term": "読み込む場所", "description": "`架空の設定.ts` の `LIMIT`" },
+              {
+                "term": "架空の長い名前の項目をここに置く",
+                "description": "架空の長い値。何度も折り返す長さの説明をここに入れて、名前の列と値の列が崩れないかを確かめる。**太字** も読める。"
+              }
+            ]
           },
           {
             "id": "q1",

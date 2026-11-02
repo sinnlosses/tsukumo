@@ -1,0 +1,48 @@
+/* 名前と値の対の部品の置き方。罫 `--rule-quiet` だけで区切り、地は持たない。
+   行は <div> で包み、名前の列の幅を行どうしで揃えるために subgrid を使う。
+   Markdown の `dl` に当たる `.detail-block dl`・`dt`・`dd` の規則（markdown/renderer/report-notation-inline.css）を
+   打ち消すため、欄の中に限って同じ要素より強い組み合わせで書く。 */
+[data-report-region] .description-list-leaf {
+  display: grid;
+  grid-template-columns: minmax(7em, max-content) 1fr;
+  gap: 0;
+  max-inline-size: var(--report-measure);
+  margin: var(--report-block-gap) 0;
+  border-top: 1px solid var(--rule-quiet);
+}
+[data-report-region] .description-list-row {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  border-bottom: 1px solid var(--rule-quiet);
+}
+[data-report-region] .description-list-term,
+[data-report-region] .description-list-description {
+  grid-column: auto;
+  margin: 0;
+  padding: var(--space-sm) 0;
+  overflow-wrap: anywhere;
+}
+[data-report-region] .description-list-term {
+  padding-inline-end: var(--space-lg);
+  color: var(--ink-soft);
+  font-size: var(--font-subheading);
+  font-weight: 400;
+}
+[data-report-region] .description-list-description {
+  min-inline-size: 0;
+  color: var(--ink);
+  font-size: var(--font-body);
+}
+@container report-body (max-width: calc(40em + 0.75rem)) {
+  [data-report-region] .description-list-leaf,
+  [data-report-region] .description-list-row {
+    display: block;
+  }
+  [data-report-region] .description-list-term {
+    padding-block-end: 0;
+  }
+  [data-report-region] .description-list-description {
+    padding-block-start: var(--space-xs);
+  }
+}

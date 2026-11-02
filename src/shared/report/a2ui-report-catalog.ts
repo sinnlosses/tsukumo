@@ -26,6 +26,7 @@ import { type DeepReadonly, omittable } from "./report-block-field.ts"
 import {
   claimsBlockSchema,
   codeBlockSchema,
+  descriptionListBlockSchema,
   listBlockSchema,
   markdownBlockSchema,
   noteBlockSchema,
@@ -44,7 +45,7 @@ import { reportRetrospectiveSchema } from "./report-retrospective.ts"
 import { reportTaskSchema } from "./report-task.ts"
 import { timelineBlockSchema } from "./timeline-block.ts"
 
-/** 部品名と schema。`writerBlockBranches` の 20 種と 1 対 1。 */
+/** 部品名と schema。`writerBlockBranches` の 21 種と 1 対 1。 */
 const LEAF_COMPONENTS = {
   Paragraph: leafComponent("Paragraph", textBlockSchema),
   ItemList: leafComponent("ItemList", listBlockSchema),
@@ -77,6 +78,7 @@ const LEAF_COMPONENTS = {
   Options: leafComponent("Options", optionsBlockSchema),
   Claims: leafComponent("Claims", claimsBlockSchema),
   Quote: leafComponent("Quote", quoteBlockSchema),
+  DescriptionList: leafComponent("DescriptionList", descriptionListBlockSchema),
   Picture: leafComponent("Picture", imageBlockSchema),
   // leafComponent は塊ぜんたいに掛かる検査（superRefine）を写さないので、Plot の data の検査はここで掛け直す
   Plot: leafComponent("Plot", plotBlockSchema).superRefine(addPlotDataIssues),
@@ -102,6 +104,7 @@ export const LEAF_COMPONENT_KINDS = {
   Options: optionsBlockSchema.shape.kind.value,
   Claims: claimsBlockSchema.shape.kind.value,
   Quote: quoteBlockSchema.shape.kind.value,
+  DescriptionList: descriptionListBlockSchema.shape.kind.value,
   Picture: imageBlockSchema.shape.kind.value,
   Plot: plotBlockSchema.shape.kind.value,
   Markdown: markdownBlockSchema.shape.kind.value,
@@ -208,13 +211,13 @@ const OWN_COMPONENT_SCHEMAS = {
   ...LEAF_COMPONENTS,
 } as const
 
-/** 部品名と受理の形。根・節・葉 20 種・基本 6 部品の 28。 */
+/** 部品名と受理の形。根・節・葉 21 種・基本 6 部品の 29。 */
 export const REPORT_COMPONENT_SCHEMAS = {
   ...OWN_COMPONENT_SCHEMAS,
   ...BASIC_PART_SCHEMAS,
 } as const
 
-/** 部品 1 つの受理の形（28 部品のどれか）。 */
+/** 部品 1 つの受理の形（29 部品のどれか）。 */
 export const a2uiReportComponentSchema = z.discriminatedUnion("component", [
   reportComponentSchema,
   sectionComponentSchema,

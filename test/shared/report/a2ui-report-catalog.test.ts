@@ -30,6 +30,7 @@ const KIND_TO_COMPONENT = {
   options: "Options",
   claims: "Claims",
   quote: "Quote",
+  descriptionList: "DescriptionList",
   image: "Picture",
   plot: "Plot",
   markdown: "Markdown",
@@ -95,8 +96,8 @@ describe("A2UI のカタログ文書", () => {
     expect(Object.keys(KIND_TO_COMPONENT).toSorted()).toEqual([...REPORT_BLOCK_KINDS].toSorted())
   })
 
-  it("根・節・葉 20 種・基本 6 部品の 28 部品が全部残る", () => {
-    expect(expected).toHaveLength(28)
+  it("根・節・葉 21 種・基本 6 部品の 29 部品が全部残る", () => {
+    expect(expected).toHaveLength(29)
     expect(findMissingComponents(document, expected)).toEqual([])
   })
 
@@ -176,8 +177,31 @@ describe("A2UI のカタログ文書", () => {
     expect(leaf).not.toContain('"kind"')
   })
 
-  it("受理の形の表は文書と同じ 28 部品を持つ", () => {
+  it("受理の形の表は文書と同じ 29 部品を持つ", () => {
     expect(Object.keys(REPORT_COMPONENT_SCHEMAS).toSorted()).toEqual(expected.toSorted())
+  })
+
+  it("DescriptionList は 1 対で通り、items が空か term が無ければ拒み、fold・aside を受ける", () => {
+    const list = REPORT_COMPONENT_SCHEMAS.DescriptionList
+    const item = { term: "架空の名前", description: "架空の値" }
+
+    expect(list.safeParse({ id: "d", component: "DescriptionList", items: [item] }).success).toBe(
+      true,
+    )
+    expect(list.safeParse({ id: "d", component: "DescriptionList", items: [] }).success).toBe(false)
+    expect(
+      list.safeParse({ id: "d", component: "DescriptionList", items: [{ description: "値" }] })
+        .success,
+    ).toBe(false)
+    expect(
+      list.safeParse({
+        id: "d",
+        component: "DescriptionList",
+        items: [item],
+        fold: "",
+        aside: "",
+      }).success,
+    ).toBe(true)
   })
 
   it("Quote は text だけで通り、text が無ければ拒み、source・fold・aside を受ける", () => {

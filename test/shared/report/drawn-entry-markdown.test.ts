@@ -39,6 +39,17 @@ const ROWS: readonly (readonly [string, readonly ReportBlock[], readonly DrawnEn
     ["warn", [{ kind: "note", tone: "warn", text: "架空の注意", ...PLAIN }], ["drawn"]],
     ["空白の quote", [{ kind: "quote", text: " ", source: "架空", ...PLAIN }], ["empty"]],
     ["quote", [{ kind: "quote", text: "架空の引用", source: "", ...PLAIN }], ["drawn"]],
+    [
+      "descriptionList",
+      [
+        {
+          kind: "descriptionList",
+          items: [{ term: "架空の名前", description: "架空の値" }],
+          ...PLAIN,
+        },
+      ],
+      ["drawn"],
+    ],
     ["項目の無い list", [{ kind: "list", style: "bullet", items: [], ...PLAIN }], ["empty"]],
     [
       "list",

@@ -119,7 +119,7 @@ export const NOTATION_ENTRIES: readonly CatalogEntry[] = [
     name: "a2ui-surface-sample",
     scene: "a2ui-surface-sample",
     label:
-      "部品の一覧（a2ui）の本文を A2UI の面で描く（罫と引用を除いて a2ui-sections-sample と同じ中身）",
+      "部品の一覧（a2ui）の本文を A2UI の面で描く（罫・引用・名前と値の対を除いて a2ui-sections-sample と同じ中身）",
     homeSetup: { kind: "default" },
     workspaceSetup: { kind: "repository" },
     prepare: [],
@@ -129,7 +129,8 @@ export const NOTATION_ENTRIES: readonly CatalogEntry[] = [
   {
     name: "a2ui-sections-sample",
     scene: "a2ui-sections-sample",
-    label: "a2ui-surface-sample から罫と引用を除いた同じ中身を節の引数（既定の変種）で描く",
+    label:
+      "a2ui-surface-sample から罫・引用・名前と値の対を除いた同じ中身を節の引数（既定の変種）で描く",
     homeSetup: { kind: "default" },
     workspaceSetup: { kind: "repository" },
     prepare: [],

@@ -22,6 +22,7 @@ import type { DeepReadonly } from "./report-block-field.ts"
 import {
   claimsBlockSchema,
   codeBlockSchema,
+  descriptionListBlockSchema,
   filesBlockSchema,
   listBlockSchema,
   markdownBlockSchema,
@@ -60,6 +61,7 @@ const writerBlockBranches = [
   optionsBlockSchema,
   claimsBlockSchema,
   quoteBlockSchema,
+  descriptionListBlockSchema,
   namedImage,
   namedPlot,
   markdownBlockSchema,

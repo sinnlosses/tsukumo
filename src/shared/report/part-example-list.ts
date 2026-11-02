@@ -139,6 +139,13 @@ const LEAF_BLOCK_EXAMPLES = {
     relation: "compare",
   },
   quote: { kind: "quote", text: "架空の一文", source: "架空の出典" },
+  descriptionList: {
+    kind: "descriptionList",
+    items: [
+      { term: "架空の上限", description: "60" },
+      { term: "読み込む場所", description: "`架空.ts`" },
+    ],
+  },
   markdown: { kind: "markdown", markdown: "架空の **一行**" },
 } satisfies LeafExamples
 

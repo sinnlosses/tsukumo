@@ -114,6 +114,7 @@ const COMPONENT_PURPOSES = {
   Options: "候補の並び",
   Claims: "確度つきの主張の並び",
   Quote: "引用の文と出典の1行",
+  DescriptionList: "名前と値の対の並び",
   Picture: "手元の画像",
   Plot: "散布図などの統計の図",
   Markdown: "Markdown の本文",

@@ -119,6 +119,29 @@ describe("a2uiReportInput", () => {
       { blocks: [{ kind: "quote", text: "架空の一文", source: "架空の出典" }] },
     ])
   })
+
+  it("DescriptionList は塊 descriptionList に items を写す", () => {
+    const { input } = a2uiReportInput([
+      { id: "root", component: "Report", conclusion: ["架空。"], children: ["s"] },
+      { id: "s", component: "Section", heading: "架空の節", children: ["d"] },
+      {
+        id: "d",
+        component: "DescriptionList",
+        items: [{ term: "架空の名前", description: "架空の値" }],
+      },
+    ])
+
+    expect(input.sections).toMatchObject([
+      {
+        blocks: [
+          {
+            kind: "descriptionList",
+            items: [{ term: "架空の名前", description: "架空の値" }],
+          },
+        ],
+      },
+    ])
+  })
 })
 
 describe("写しの自己テスト", () => {

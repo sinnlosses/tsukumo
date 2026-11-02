@@ -28,7 +28,7 @@
   `flow`（`list` の `style` の一本道の流れ）・`cards`（`list` の `style` の並列の区画。2〜4項目を横に並べる）・`sides`（`compare` の2つの側。`heading` と `points`）・
   `before` / `after`（`beforeAfter` の前の側と後の側。`kind` が `image`〔`path`と任意の `region`（変わった場所の枠。% の `left`・`top`・`width`・`height`）〕/ `code`〔`language`・`source`〕/ `points` / `mermaid`〔`source`〕/ `svg`〔`width`・`height`・`shapes`〕の合併型）・
   `width` / `height`（`svg` の viewBox の大きさ）・`shapes`（`svg` の図形の並び。`kind` が `rect`〔`x`・`y`・`width`・`height`・`label`・`emphasis`〕/ `line`〔`x1`・`y1`・`x2`・`y2`・`arrow`・`label`〕/ `text`〔`x`・`y`・`text`〕の合併型）・`emphasis`（`rect` の枠を強調する真偽値）・`arrow`（`line` の終点に矢じりを付ける真偽値）・
-  `verdict`（`options` の候補の判定）・`claim` / `certainty` / `basis` / `howToVerify`（`claims` の項目。下の「確度つきの主張」）・
+  `verdict`（`options` の候補の判定）・`claim` / `certainty` / `basis` / `howToVerify`（`claims` の項目。下の「確度つきの主張」）・`descriptionList`（名前と値の対の並びの `kind`）の項目の `term`（名前）/ `description`（値。質問の選択肢の `description` とは別）・
   `path`（`image` の画像のファイル）・`caption`（`image` の何が見えるかの1行）・`notes`（`image` の番号つきの説明の並び）・
   `chartKind`（`chart` の種類。`bar` / `line` / `pie` / `arrow` / `slope` / `span` / `share`）・`labels`（`chart` の横軸・扇形・項目・部分の名前）・
   `series`（`chart` の系列。`name` と `values`）・`horizontal`（`chart` の `bar` を横棒にする真偽値）・`emphasis`（`chart` で差し色にする項目の名前の並び。`labels` の部分集合。`svg` の `rect` の `emphasis` とは別。`timeline` では差し色にする行の `name` の並び）・

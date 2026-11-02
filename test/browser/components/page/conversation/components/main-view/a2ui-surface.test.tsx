@@ -242,6 +242,33 @@ describe("Quote", () => {
   })
 })
 
+describe("DescriptionList", () => {
+  it("Section の中の DescriptionList は欄の Markdown を通らず、dl で直接描く", () => {
+    const body = regionsOf({
+      components: [
+        { id: "root", component: "Report", conclusion: ["架空の結論。"], children: ["s1"] },
+        { id: "s1", component: "Section", heading: "架空の前提", children: ["d1"] },
+        {
+          id: "d1",
+          component: "DescriptionList",
+          items: [{ term: "架空の上限", description: "60" }],
+        },
+      ],
+    })
+    const { container } = render(<Report reveal={false} turnId={1} className="" body={body} />)
+
+    expect(container.querySelector('[data-report-region="section"] dl dt')?.textContent).toBe(
+      "架空の上限",
+    )
+    expect(container.querySelector('[data-report-region="section"] dl dd')?.textContent).toBe("60")
+    expect(
+      [...container.querySelectorAll("[data-markdown-stub]")].some((stub) =>
+        stub.textContent.includes("架空の上限"),
+      ),
+    ).toBe(false)
+  })
+})
+
 describe("頭とお願い（A2UI の面）", () => {
   it("結論・数の札・お願いは欄の Markdown を通らず、値から直接描く", () => {
     const keyFigures = [

@@ -11,6 +11,7 @@ import { ChartLeaf } from "./chart-leaf.tsx"
 import { ClaimsLeaf } from "./claims-leaf.tsx"
 import { CodeLeaf } from "./code-leaf.tsx"
 import { CompareLeaf } from "./compare-leaf.tsx"
+import { DescriptionListLeaf } from "./description-list-leaf.tsx"
 import { GraphLeaf } from "./graph-leaf.tsx"
 import { ItemListLeaf } from "./item-list-leaf.tsx"
 import { MatrixLeaf } from "./matrix-leaf.tsx"
@@ -40,6 +41,7 @@ const DIRECT_LEAF_VIEWS: ReadonlyMap<A2uiReportComponent["component"], DirectLea
   ["ItemList", ItemListLeaf],
   ["Claims", ClaimsLeaf],
   ["Quote", QuoteLeaf],
+  ["DescriptionList", DescriptionListLeaf],
   ["Note", NoteLeaf],
   ["Options", OptionsLeaf],
   ["Table", TableLeaf],

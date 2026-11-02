@@ -151,7 +151,7 @@ function violationLine(violation: ReportViolation): string {
     case "arrow-in-prose":
       return `地の文・表のセルに \`A → B\` と書いた部品が${violation.count}個ある。セルは \`from\` / \`to\`、流れは \`ItemList\` の \`flow\` にする`
     case "label-in-item":
-      return `\`ItemList\` の項目の \`text\` が「名前: 説明」の形になっているものが${violation.count}個ある。名前を \`label\` に分ける`
+      return `\`ItemList\` の項目の \`text\` が「名前: 説明」の形になっているものが${violation.count}個ある。名前を \`label\` に分ける（名前と値だけの並びは \`DescriptionList\`）`
     case "labeled-ordered":
       return `全部の項目に \`label\` がある3段以上の \`ordered\` の \`ItemList\` が${violation.count}個ある。名前の付いた段を辿る流れは \`flow\` にする`
     case "non-japanese":

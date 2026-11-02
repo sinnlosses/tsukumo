@@ -27,7 +27,7 @@ export const listBlockSchema = z.object({
     .array(
       z.object({
         label: omittable(inlineText, "").describe(
-          `名前と説明の対の名前（「名前: 説明」と text に書かず、名前をここに分ける。${String(MAX_ITEM_LABEL)}字以内）`,
+          `箇条の中の名前（「名前: 説明」と text に書かず、名前をここに分ける。${String(MAX_ITEM_LABEL)}字以内）。名前と値だけの並びは descriptionList`,
         ),
         text: inlineText,
         done: omittable(z.boolean(), false),
@@ -137,6 +137,23 @@ export const quoteBlockSchema = z.object({
   kind: z.literal("quote"),
   text: inlineText,
   source: omittable(inlineText, ""),
+  fold,
+  aside,
+})
+
+export const descriptionListBlockSchema = z.object({
+  kind: z.literal("descriptionList"),
+  items: z
+    .array(
+      z.object({
+        term: inlineText.describe("名前"),
+        description: inlineText.describe("値"),
+      }),
+    )
+    .min(1)
+    .describe(
+      "見出し行の要らない名前と値の対（設定・環境・前提）。列が3つ以上か見出し行が要るなら table",
+    ),
   fold,
   aside,
 })

@@ -210,6 +210,16 @@ describe("plainWordSpellingsIn", () => {
     expect(plainWordSpellingsIn(draft([quote]))).toEqual([])
   })
 
+  it("descriptionList の名前と値の中の語も見つける", () => {
+    const list: ReportBlock = {
+      kind: "descriptionList",
+      items: [{ term: "架空の再演", description: "架空の有界な自律" }],
+      fold: "",
+      aside: "",
+    }
+    expect(plainWordSpellingsIn(draft([list]))).toEqual(["再演", "有界な自律"])
+  })
+
   it("note・markdown・節の見出しの中の語も見つける", () => {
     const note: ReportBlock = {
       kind: "note",
