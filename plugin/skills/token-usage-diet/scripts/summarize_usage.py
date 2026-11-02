@@ -361,7 +361,7 @@ def tools(records: list[dict]) -> dict:
 
 
 def context(sessions: list[dict]) -> dict:
-    """セッションごとの内訳を畳む。判定は kind で行い name では行わない。deferred は窓の外。"""
+    """セッションごとの内訳を畳む。"""
     if not sessions:
         return {"sessions": 0, "categories": [], "items": {}, "models": {}}
     category_totals: dict[tuple[str, str], dict] = {}
@@ -657,9 +657,9 @@ def session_timelines(turns: list[dict]) -> dict[str, list[dict]]:
 def unused_mcp_estimates(
     by_session: dict[str, list[dict]], contexts: dict, unused: dict, coverage_info: dict
 ) -> list[dict]:
-    """未使用の MCP ツールをサーバごと外したら。deferred は窓の外なので、各セッションの
-    MCP の分類の used / (used + deferred) の比で窓に入っているぶんだけを数える
-    （どのツールが deferred かは記録に無いので按分する）。"""
+    """未使用の MCP ツールをサーバごと外したら。deferred はコンテキストウィンドウの外なので、各セッションの
+    MCP の分類の used / (used + deferred) の比で入っているぶんだけを数える
+    （deferred の別は記録に無いので按分する）。"""
     unused_names = {r["name"]: r["server"] for r in unused.get("rows", [])}
     servers = sorted({s for s in unused_names.values()})
     items = []
@@ -987,7 +987,7 @@ def render(report: dict, top: int) -> str:
         add("  内訳の記録がこの期間に1件も無い。**メモリファイル・スキル・MCP 定義の重さは出せない。**")
         add("  このままだと『定義は重いが呼ばれていないツール』も出せないので、断って答える")
     else:
-        add(f"  セッション {ctx['sessions']} 件 / 窓 {num(ctx['avgMaxTokens'])} / 使用 {num(ctx['avgUsedTokens'])}（deferred {num(ctx['avgDeferredTokens'])} は窓の外）")
+        add(f"  セッション {ctx['sessions']} 件 / コンテキストウィンドウ {num(ctx['avgMaxTokens'])} / 使用 {num(ctx['avgUsedTokens'])}（deferred {num(ctx['avgDeferredTokens'])} はコンテキストウィンドウの外）")
         for row in ctx["categories"]:
             add(f"    {row['name']:26s} {num(row['avgTokens']):>9s}  [{row['kind']}]")
         add("")

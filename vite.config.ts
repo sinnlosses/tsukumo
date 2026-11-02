@@ -1,5 +1,5 @@
 // ブラウザ側（`src/browser/`）を組み立てる設定。
-// 組み立てを起こす口は `bundleWithVite` だけで、
+// 組み立てを起こす関数は `bundleWithVite` だけで、
 // 入口の置き場（root）と出し先（outDir）は起こす側が CLI の引数で渡す。
 //
 // 出す名前は入口の `ui.js` と `main.css`、`import()` で分けたチャンクの `[name].js` に固定する（ハッシュを付けない）。

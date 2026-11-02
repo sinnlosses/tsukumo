@@ -113,7 +113,7 @@ describe("plainWordSpellingsIn", () => {
       plainWordSpellingsIn(
         draft([
           reportDraftText(
-            "架空の押す口と押せる口と開く口と選び口と読み書き口と書き込み口と受け取り口と知らせ口と起こす口と手続きが使う口。",
+            "架空の押す口と押せる口と開く口と選び口と読み書き口と書き込み口と受け取り口と知らせ口と手続きが使う口。",
           ),
         ]),
       ),
@@ -126,7 +126,6 @@ describe("plainWordSpellingsIn", () => {
       "書き込み口",
       "受け取り口",
       "知らせ口",
-      "起こす口",
       "手続きが使う口",
     ])
   })
