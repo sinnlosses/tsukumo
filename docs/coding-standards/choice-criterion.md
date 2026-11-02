@@ -24,7 +24,7 @@
 **提案で案を並べるときは、この3つでの優劣と理由を必ず添える**（並べただけで終わらせない）。
 
 **例: メインビューのスクロール位置を親へ戻す3案では、`scrollIntoView` を使う案が勝った。**
-呼ぶ側が「どの祖先の要素が実際に転がっているか」を知らずに済み、開くファイルも1つで済み、
+呼ぶ側が「どの祖先の要素が実際にスクロールしているか」を知らずに済み、開くファイルも1つで済み、
 画面幅が変わって祖先の構造が変わっても黙って効かなくなることがなかったため。
 
 ## 仕組みをヒューリスティックより優先する
@@ -37,7 +37,7 @@
 **優先の順**: 機械的な仕組み ＞ 仕組みで塞げない部分だけを文面の条で補う。このリポジトリにある
 「仕組み」の実例:
 
-- `.dependency-cruiser.cjs`: 層・機能・箱をまたぐ `import` を許した辺の宣言（dependency-cruiser。`pnpm run lint` で打つ）で検査し、許した辺以外を落とす。静的 import・`export … from`・動的 `import()`・`require()` を拾う
+- `.dependency-cruiser.cjs`: 層・機能・箱をまたぐ `import` を許したエッジの宣言（dependency-cruiser。`pnpm run lint` で打つ）で検査し、許したエッジ以外を落とす。静的 import・`export … from`・動的 `import()`・`require()` を拾う
 - `src/server/report/core/review/report-review.ts`: 規約違反のある `report` 呼び出しを handler が差し戻す。
   差し戻しの枠を足すときは、`REPORT_PROCEDURE_REJECTIONS` と `ReportReview.judge` の JSDoc（順と補足メッセージの扱い）を直し、
   `docs/architecture/display/work-plan-closing.md` の「枠の数え方」と補足メッセージの節の列挙を同じ順・同じ枠に合わせる

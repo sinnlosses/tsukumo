@@ -50,10 +50,10 @@
 
 ### タスク見出し行
 
-- **英語識別子**: `ReportHead`（`report-head.tsx`。タスクID・名前・終わり方の札の行は `report-title-row`、ラベルと変更のラベルの行は `report-meta`）。載せるタスクは `ReportTask`
+- **英語識別子**: `ReportHead`（`report-head.tsx`。タスクID・名前・終わり方のバッジの行は `report-title-row`、ラベルと変更のラベルの行は `report-meta`）。載せるタスクは `ReportTask`
   （`report` の `task`。終わり方は `outcome`）
 - **定義**: **レポートの結論部のいちばん上の2行**。1行目はタスクID・作業の名前（見出し）・
-  終わり方の札（✓ 完了〔`finished`〕 / ？ 答え待ち。`stopped` は描かない）、2行目はラベル（「中間レポート」「最終レポート」）・
+  終わり方のバッジ（✓ 完了〔`finished`〕 / ？ 答え待ち。`stopped` は描かない）、2行目はラベル（「中間レポート」「最終レポート」）・
   変更のラベルのうち、あるものだけを並べる（中黒ではつながない）（`docs/architecture/display/conclusion.md`
   「タスクの作業のレポートは、結論部を「タスク見出し行・見出し・一文」の3段にする」）
 - **避ける言い方**: パンくず、メタ情報（パンくずはタスクのモーダルの「戻る」の呼び名）

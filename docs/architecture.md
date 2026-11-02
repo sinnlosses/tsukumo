@@ -2,11 +2,11 @@
 
 ステータス: **正典**。
 
-責務: 層と機能の辺・置き場所の基準・プロトコルの不変条件・動きの順序・安全の境界など、コードを
+責務: 層と機能のエッジ・置き場所の基準・プロトコルの不変条件・動きの順序・安全の境界など、コードを
 1ファイル読んでも分からない構造の規則だけを持つ、全体構造の入口。ブラウザ側・キャラクターパック・
 テスト・ビルドの詳細は `docs/architecture/` へ、個々の設計判断の本文は `docs/architecture/adr/` へ分けている。
-読む時: 新しい機能の置き場所に迷ったとき、層や機能どうしの辺を確かめたいとき、「なぜ今の形なのか」を確かめたいとき。
-直す時: 層・機能の辺や置き場所の基準を変えたとき、設計判断を新しく記録する・ADR の一覧を更新するとき。
+読む時: 新しい機能の置き場所に迷ったとき、層や機能どうしのエッジを確かめたいとき、「なぜ今の形なのか」を確かめたいとき。
+直す時: 層・機能のエッジや置き場所の基準を変えたとき、設計判断を新しく記録する・ADR の一覧を更新するとき。
 
 ほかは持ち主へ返す:
 
@@ -45,13 +45,13 @@
 
 | ファイル                                       | 説明                                                                                                                                                                                                                                                |
 | ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `docs/architecture/browser-box.md`             | `src/browser/` の箱ごとに置くものと import してよい先、上げる・下ろす引き金、領域の機能（枠・画面）と置かれる機能の辺を持つ（ディレクトリの節の後半と、領域の機能の節）。                                                                           |
+| `docs/architecture/browser-box.md`             | `src/browser/` の箱ごとに置くものと import してよい先、上げる・下ろす引き金、領域の機能（枠・画面）と置かれる機能のエッジを持つ（ディレクトリの節の後半と、領域の機能の節）。                                                                       |
 | `docs/architecture/browser.md`                 | ブラウザ側（`src/browser/`）の中の規則。                                                                                                                                                                                                            |
 | `docs/architecture/build.md`                   | 事前の組み立て、作り直しを押す仕組み（HMR）、足す依存の一覧、リポジトリの外に置いたものを持つ。                                                                                                                                                     |
 | `docs/architecture/character-pack.md`          | キャラクターパックの形・探索順・`systemPrompt` の append の並び、画面から書くときの                                                                                                                                                                 |
 | `docs/architecture/chat-mode.md`               | レポートを出さない場としての雑談モードの仕様（遡れる幅、記憶の層と忘却、定着、                                                                                                                                                                      |
 | `docs/architecture/code-placement.md`          | 新しいコードを置くディレクトリの割り当てと、置き場所を決める原則1〜5の判断材料を持つ。                                                                                                                                                              |
-| `docs/architecture/command-procedure.md`       | 画面からのコマンドと読み取りの手続き（oRPC）を、どの機能が受け、どの条件で断るかの置き方と、許す依存の辺を持つ。                                                                                                                                    |
+| `docs/architecture/command-procedure.md`       | 画面からのコマンドと読み取りの手続き（oRPC）を、どの機能が受け、どの条件で断るかの置き方と、許す依存のエッジを持つ。                                                                                                                                |
 | `docs/architecture/container-presenter.md`     | ブラウザ側の機能（枠・画面・置かれる機能）の中を、振る舞いの種類の数で container / presenter と `hooks/`・`domain/` に割る基準を持つ。                                                                                                              |
 | `docs/architecture/conversation-safety.md`     | 会話内容と安全の表（バインド先・Origin・起動トークン・ディスク・ブラウザ側のメモリ・CSP・ログ、雑談の記憶、計測・診断の記録、手元の記録）と、テストのフィクスチャ、表のあとの前提（生の会話・127.0.0.1 の割り切り・`~/.tsukumo/` の再利用）を持つ。 |
 | `docs/architecture/core-and-adapter.md`        | 判断（core）と境界（adapter）の境目、SDK に触るファイルの分け方、代の持ち物、ツールで受け取るものと使い捨ての `query()` の形など、1ファイルを読んでも分からない横断の規則を持つ。                                                                   |
@@ -61,10 +61,10 @@
 | `docs/architecture/overview-and-layer.md`      | 全体構成の前置き（1つのプロセス・データの流れ3本・外へ出る経路を作らないこと・層の図）と、層と依存の向きを持つ。                                                                                                                                    |
 | `docs/architecture/runtime-flow.md`            | 起動・接続・依頼・答え待ち・再接続の順序を持つ。                                                                                                                                                                                                    |
 | `docs/architecture/screen-design.md`           | 見た目（色・書体・レイアウトの計画とトークン、誰が差せるか、雑談モードの画面、背景、                                                                                                                                                                |
-| `docs/architecture/server-feature.md`          | `src/server/` を割る機能の一覧と、どの機能にも属さない共有の箱、機能どうしの import の規則と辺の表を持つ。                                                                                                                                          |
+| `docs/architecture/server-feature.md`          | `src/server/` を割る機能の一覧と、どの機能にも属さない共有モジュール、機能どうしの import の規則とエッジの表を持つ。                                                                                                                                |
 | `docs/architecture/session-restore.md`         | 復元を新しい形に載せる仕組みと、複数化をやらないこと、ビューの本文の持ち方と再接続を持つ。                                                                                                                                                          |
 | `docs/architecture/shared-contract.md`         | サーバとブラウザが共有する契約（イベント・状態・コマンド・フレーム・版）について、コードから読み取れない決定を持つ。                                                                                                                                |
-| `docs/architecture/shared-feature.md`          | `src/shared/` を割る機能の置き場と、機能の決め方・辺の規則を持つ。                                                                                                                                                                                  |
+| `docs/architecture/shared-feature.md`          | `src/shared/` を割る機能の置き場と、機能の決め方・エッジの規則を持つ。                                                                                                                                                                              |
 | `docs/architecture/stage-item.md`              | キャラビューの席に置くアイテムの一覧と席の選択の置き場と形、画面から足すときの受け取り方と                                                                                                                                                          |
 | `docs/architecture/testing.md`                 | 対象ごとのテストの方法、E2E（走らせ方・成果物・シナリオ）、手で確かめる手順を持つ。                                                                                                                                                                 |
 | `docs/architecture/workflow-contract.md`       | tsukumo がワークフロー（タスクをフェーズに分けて送り出す手順）に対して定める契約 — 受けるツールの名前と引数の意味、                                                                                                                                 |

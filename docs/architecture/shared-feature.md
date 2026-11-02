@@ -2,9 +2,9 @@
 
 ステータス: **正典**。入口は `docs/architecture.md`（全体構造の入口と、子のファイルの一覧）。
 
-責務: `src/shared/` を割る機能の置き場と、機能の決め方・辺の規則を持つ。
+責務: `src/shared/` を割る機能の置き場と、機能の決め方・エッジの規則を持つ。
 読む時: `src/shared/` にファイルを足すとき、どの機能に置くか迷ったとき。
-直す時: shared の機能の置き方・辺の規則を変えたとき（辺は `.dependency-cruiser.cjs`、一覧と輪は `test/architecture/shared-feature.test.ts` が見る）。
+直す時: shared の機能の置き方・エッジの規則を変えたとき（エッジは `.dependency-cruiser.cjs`、一覧と輪は `test/architecture/shared-feature.test.ts` が見る）。
 
 ## 全体構成
 
@@ -15,13 +15,13 @@
 1つの層なので、機能の中は層で割らずファイルを平らに置き、サブディレクトリを作らない。置く物の無い
 機能（`system-prompt` `host` など）のディレクトリは作らない。
 
-| 置き場                      | 置くもの                                                                                                                                                                                                                                  |
-| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `shared/<機能>/`            | その機能の語彙（型・検証・純粋な導出）と、その機能だけが動かす `SessionState` の欄の畳み方（「SessionState」）                                                                                                                            |
-| `shared/session/`           | `SessionEvent` / `SessionState` / `applySessionEvent` と、**`SessionState` から純粋に導くだけのもの**（`turn-step.ts` `turn-speech.ts` など）。サーバの `session/` と同じく**各機能の語彙を束ねる**ので、ほかの機能を読む向きの辺が集まる |
-| `shared/` の直下            | **どの機能にも属さないプロトコル**だけ: フレームの封筒（`frame.ts`）・コマンドの共通の形（`command.ts`）・手続きの束（`rpc.ts`）                                                                                                          |
-| `shared/contract/<名前>.ts` | 手続きの契約。**名前は手続きの名前**（`rpc.ts` の鍵と `<名前>-procedure.ts`）で、機能の名前とは1対1でないので機能のディレクトリへは寄せない                                                                                               |
-| `shared/utils/` `lib/`      | tsukumo の語彙を名乗らない道具（「`lib/` と `utils/` に置く基準」）                                                                                                                                                                       |
+| 置き場                      | 置くもの                                                                                                                                                                                                                                      |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `shared/<機能>/`            | その機能の語彙（型・検証・純粋な導出）と、その機能だけが動かす `SessionState` の欄の畳み方（「SessionState」）                                                                                                                                |
+| `shared/session/`           | `SessionEvent` / `SessionState` / `applySessionEvent` と、**`SessionState` から純粋に導くだけのもの**（`turn-step.ts` `turn-speech.ts` など）。サーバの `session/` と同じく**各機能の語彙を束ねる**ので、ほかの機能を読む向きのエッジが集まる |
+| `shared/` の直下            | **どの機能にも属さないプロトコル**だけ: フレームの封筒（`frame.ts`）・コマンドの共通の形（`command.ts`）・手続きの束（`rpc.ts`）                                                                                                              |
+| `shared/contract/<名前>.ts` | 手続きの契約。**名前は手続きの名前**（`rpc.ts` の鍵と `<名前>-procedure.ts`）で、機能の名前とは1対1でないので機能のディレクトリへは寄せない                                                                                                   |
+| `shared/utils/` `lib/`      | tsukumo の語彙を名乗らない道具（「`lib/` と `utils/` に置く基準」）                                                                                                                                                                           |
 
 **機能の決め方**（上から順に当てる。数えるのはファイル名と import で、読み手の数は数えない）:
 
@@ -29,16 +29,16 @@
    ファイルがある（`view-server/adapter/rpc/session-socket.ts` → `shared/view-server/`）・ファイル名が
    機能の名前で始まる（`report-block.ts` → `shared/report/`）・サーバでその値を組み立てる（外から来た
    値を検証して型にする）のがその機能（`api-trouble.ts` は SDK のメッセージを畳む `session-driver`）
-2. 手がかりが食い違ったら、**shared の機能どうしの辺が輪にならないほう**（`character-diary-font.ts` は
+2. 手がかりが食い違ったら、**shared の機能どうしのエッジが輪にならないほう**（`character-diary-font.ts` は
    `character-definition.ts` が読むので、`diary` ではなく `character-pack`）
 3. 1に当たらず、`SessionState` / `SessionEvent` から導くだけのものは `session/`
 4. tsukumo の語彙を名乗らない道具は `utils/`（歯止めの3つを満たすもの）、残る封筒と束は直下
 
-**辺の規則**:
+**エッジの規則**:
 
-- **shared の機能どうしの辺は輪にしない**（`session/` が束ね、ほかの機能は `session/` を読まないのが
+- **shared の機能どうしのエッジは輪にしない**（`session/` が束ね、ほかの機能は `session/` を読まないのが
   既定。`diagnostic/diagnostic-record.ts` のように `SessionEvent` を扱う機能の語彙は `session/` を読んでよい）。
-  サーバのような「読んでよい機能」の表は持たない（層が1つで、辺の向きは輪が無いことだけで決まる）
+  サーバのような「読んでよい機能」の表は持たない（層が1つで、エッジの向きは輪が無いことだけで決まる）
 - **機能のディレクトリは `contract/` と `rpc.ts` を読まない**（契約と束が機能の語彙を読む一方向）。
   直下の `frame.ts` `command.ts` は機能から読んでよい（断る理由 `FRAME_ERROR_REASON` と、権限・モデル・
   思考の段の語彙を持つため）

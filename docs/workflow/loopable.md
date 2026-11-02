@@ -52,7 +52,7 @@ PreToolUse hook（`scripts/hook/bash-guard.ts` の `findWorktreeShellWriteDenial
 `--body-file` でそのパスを渡すか、`--body-file -` へ heredoc を渡す。作業ツリーの中のパスには書かない。
 `pnpm`・`git`・作業ツリーの中のスクリプトのように、ツールの中で書くものは止めない。
 hook は書き込みの形を事前に列挙して拒む。Bash の前後の作業ツリーの差を見る事後の検査は、
-同じ作業ツリーで並行する書き手（並列の段・背景のコマンド）の変更と区別できないので置かない。
+同じ作業ツリーで並行する書き手（並列のフェーズ・背景のコマンド）の変更と区別できないので置かない。
 
 委譲先（サブエージェント）が `tw verify`（検査の全段。3〜4分）を `run_in_background: true` で
 打つと PreToolUse hook（`scripts/hook/bash-guard.ts` の `findBackgroundVerifyDenial`）が拒否し、前景で `timeout` 引数

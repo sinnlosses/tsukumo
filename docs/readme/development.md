@@ -43,9 +43,9 @@
 └── package.json
 ```
 
-**層はディレクトリで表し、許した依存の辺以外は `test/architecture/` が落とします。**
+**層はディレクトリで表し、許した依存のエッジ以外は `test/architecture/` が落とします。**
 各ファイルの責務はそのファイルの冒頭のコメントが正典です。機能の一覧と置き場所の基準は
-[`docs/architecture.md`](../architecture.md)「サーバの機能と、機能どうしの辺」「ディレクトリ」にあります。
+[`docs/architecture.md`](../architecture.md)「サーバの機能と、機能どうしのエッジ」「ディレクトリ」にあります。
 
 ### ドキュメント
 

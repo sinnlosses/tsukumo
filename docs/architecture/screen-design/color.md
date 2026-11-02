@@ -34,7 +34,7 @@
 | `chart-series-1`〜`6`    | レポートのグラフの系列色（OKLCH の L 0.78・C 0.11。`accent` の色相は使わない）                    | **固定**                              |
 | `chart-series-other`     | 7本目以降の系列・7点目以降のデータ点（色相を持たない灰）                                          | **固定**                              |
 | `graph-ground-1`〜`3`    | `graph` の色の目印の無い群の地（群の順に巡らせる）                                                | 固定（`state-*` などから導出 10%）    |
-| `graph-tone-fill-a`〜`e` | `graph` の ` @a`〜` @e` の節点の地                                                                | 固定（`chart-series-*` から導出 12%） |
+| `graph-tone-fill-a`〜`e` | `graph` の ` @a`〜` @e` のノードの地                                                              | 固定（`chart-series-*` から導出 12%） |
 | `graph-return`           | `graph` の戻り道（`A <- B`）の破線と凡例                                                          | **固定**                              |
 
 **罫線は3段ある。** `rule` は**線そのものが輪郭を担う**場所（押せる部品の縁・領域の境目・レポートの表の見出し行の下）、
@@ -44,7 +44,7 @@
 **`graph`（`mermaid`・`svg` も同じ）の箱は、地を `surface-raised`・枠を 1px の `rule-soft`・角を `radius-md`（8px）にし、影と太い縁を持たない。**
 ` @a`〜` @e` で色の目印を付けた箱だけ、枠を系列色（`chart-series-*`）、地をその系列色の 12%（`graph-tone-fill-a`〜`e`）にする。
 矢印は `ink-quiet` 1.25px、ラベルは 12px・`ink-soft` で、地の色の縁取りを付けて線と重ねない。
-ただし mermaid の経路の辺ラベルは色だけ `ink-soft` で、字は 16px のまま（`display/figure-caption.md` の「文字 12px（自然寸法 × 縮尺）を守る」下限を縮尺で測るので、自然寸法を 12px にすると縮めた図で 11px 未満に落ちる）。
+ただし mermaid の経路のエッジラベルは色だけ `ink-soft` で、字は 16px のまま（`display/figure-caption.md` の「文字 12px（自然寸法 × 縮尺）を守る」下限を縮尺で測るので、自然寸法を 12px にすると縮めた図で 11px 未満に落ちる）。
 図を囲む沈んだ暗い枠は持たない（図は読む面の地に直に置く）。
 
 **この表に無い固定の色**が4組ある。**コンテキストの内訳の分類**（`context-*`。分類ごとに違う色で、
@@ -123,7 +123,7 @@
 お願いは縦罫と地を `accent`（10%）にし、枠で囲む（角は丸めない）。
 情報＝青・疑問＝紫・メモ＝白にしたのは、結論の塊（情報）に色を持たせ、メモを灰色の側に寄せるため（以前の色割りは `docs/history/decision.md`「screen-design.md 13.x 画面設計の本文から日付を消した経緯6件」）。
 
-**確度つきの主張（`claims` の部品）の確度は、`Badge`（`shape: square`・記号＋語）の札で言う**。確定＝`ok`（✓）/ 推測＝`warn`（〜）/
+**確度つきの主張（`claims` の部品）の確度は、`Badge`（`shape: square`・記号＋語）で言う**。確定＝`ok`（✓）/ 推測＝`warn`（〜）/
 未確認＝`neutral`（？）。行どうしは `options` と同じ行罫（`rule-quiet`）で区切る。色だけで言わず、語（確定・推測・未確認）を必ず添える。
 
 **地の文の `strong` / `b` は、`state-info` の薄い地で結論の語を拾わせる。**
@@ -148,7 +148,7 @@
 `theme: "base"` + `darkMode: true` に、トークンを hex に解いた `themeVariables`（地は `surface`・
 ノードは `surface-raised` を `surface` に重ねた色・字は `ink`・線は `ink-quiet` を `surface` に重ねた色・
 囲みは `surface`）を渡し、`dropShadow: "none"`・`useGradient: false` で既定の影と傾斜をやめる。
-辺ラベルは地を持たず、字の縁取り（`surface` の色の `-webkit-text-stroke`）で線と分ける。群の地は節点の地（`surface-raised`）と見分けるため `surface` 側に寄せる（`graph-ground-*` は系列の色を `surface` に 5% 混ぜた色）。節点の角は `radius-md`。属性で付く `filter`（シーケンス図の参加者の箱）は `themeCSS` で消す。
+エッジラベルは地を持たず、字の縁取り（`surface` の色の `-webkit-text-stroke`）で線と分ける。群の地はノードの地（`surface-raised`）と見分けるため `surface` 側に寄せる（`graph-ground-*` は系列の色を `surface` に 5% 混ぜた色）。ノードの角は `radius-md`。属性で付く `filter`（シーケンス図の参加者の箱）は `themeCSS` で消す。
 `themeVariables` は色を hex でしか受け取らない。使う人が地や字の色を差し替えたら、
 覚えた図を捨てて描き直す。
 
@@ -178,7 +178,7 @@
 `docs/history/mockup/report-conclusion-2026-09-30.html` の案A。仕組みと出す条件は
 `docs/architecture/display/conclusion.md`「タスクの作業のレポートは、結論部を「タスク見出し行・見出し・一文」の3段にする」）。
 タスクの作業のレポートは、結論部をタスク見出し行（ラベル・タスクID・終わり方・変更のラベル）・見出し（作業の名前）・一文の
-3段で描く。寸法はタスク見出し行 `--font-action`（12px）、見出し（作業の名前）はタスクの ID・状態の札と同じ行に
+3段で描く。寸法はタスク見出し行 `--font-action`（12px）、見出し（作業の名前）はタスクの ID・状態のバッジと同じ行に
 `--font-body`（15px）・600・`ink-bright`、一文のうち**結論の1文目**が `--report-heading-2`（21px。レポート専用のつまみ）・行間 32px・700・`ink-bright`
 （結論部の大胆さはここ1か所）、2文目が 15px・`ink-soft`。見出しと一文の中のインラインコードは
 0.86em。**見出しは終わり方で色を変えない**（読みやすさを優先する）。終わり方は記号・言葉・色の3つで
@@ -187,7 +187,7 @@
 **結論部の色のうち、見本の浅葱だった役は `accent` から `color-mix` で導き**（見本の浅葱は `accent`
 そのものだった。新しいつまみは足さない）、字と地は見本の16進を固定の値として置く
 （トークン消費の画面と同じ扱い。値は `theme.css`）。導く側は `report-outcome-finished`（`accent` をわずかに `ground` へ沈める。
-変更したファイルの「変更」の札が使う）で、`report-sequence-ink`・`phase-band-longest`・`phase-band` も同じ考え方で導く。
+変更したファイルの「変更」のラベルが使う）で、`report-sequence-ink`・`phase-band-longest`・`phase-band` も同じ考え方で導く。
 タスクの見出しの行の終わり方（完了・答え待ち）は専用の色を持たず、`Badge`（`shape: square`。完了は `ok`・答え待ちは `warn`）が持つ:
 
 | 塗るもの                               | トークン                                        |
@@ -218,7 +218,7 @@
 レポートの `image` の画像は押すと拡大して見られる（`ImageZoom`、`size="width"`。原寸を上限に面の幅へ合わせ、縦に長ければ面が縦に流れる。カードには入口を付けない）。前後の部品の中の画像は別の面（`BeforeAfterZoom`）で開き、前／後の2つ組は選んだ側を `accent` の枠と `accent` の薄い地、もう一方を `rule` の枠で描く。暗幕は `Dialog` の `deep`。
 
 `report-sequence-ink` は `--accent` を `ground` へ少し沈めた値。
-出どころ・分岐のある流れ（`flow-detailed`）は、段を箱で囲まず平らに置く。出どころの行は等幅（`--font-code`）の `--font-label`・`ink-quiet`、分岐は判定の記号の札（地は判定の色の 13%、`Badge` と同じ割合。ok＝✓・warn＝〜・ng＝✕・色の無い分岐＝→）に、`ink-soft` の語を添える。記号は飾りで、読み上げには出さない。
+出どころ・分岐のある流れ（`flow-detailed`）は、段を箱で囲まず平らに置く。出どころの行は等幅（`--font-code`）の `--font-label`・`ink-quiet`、分岐は判定の記号のバッジ（地は判定の色の 13%、`Badge` と同じ割合。ok＝✓・warn＝〜・ng＝✕・色の無い分岐＝→）に、`ink-soft` の語を添える。記号は飾りで、読み上げには出さない。
 `cards`・`Compare`・`BeforeAfter` の枠は 1px の `--report-chunk-rule`（無ければ `rule-soft`）・角 `radius-md`（8px）で、前後のラベルは `--font-label`・600・`ink-quiet`。`Picture` の注の番号の丸は枠も字も `ink-soft`。
 
 **レポートの見出しの線は `rule-quiet` で、キャラクターの色を持たない。** 文字は `ink-bright`・地は `surface` / `surface-raised`・

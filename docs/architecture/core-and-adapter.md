@@ -9,7 +9,7 @@
 ## core と adapter
 
 サーバ側は機能ごとのディレクトリの中が `core/`（判断）と `adapter/`（外の世界に触る境界）に
-分かれている（「サーバの機能と、機能どうしの辺」）。各ファイルの持ち物はそのファイルの冒頭と
+分かれている（「サーバの機能と、機能どうしのエッジ」）。各ファイルの持ち物はそのファイルの冒頭と
 doc コメントが正典で、機能の数え方・契機・上限は `docs/requirements.md`（成果と日記は 4.11、
 見直しは 4.12）。ここには、1ファイルを読んでも分からない横断の規則だけを置く。
 
@@ -23,9 +23,9 @@ doc コメントが正典で、機能の数え方・契機・上限は `docs/req
 原則3）。駆動の `session-driver/adapter/` に `query()`・ツール・セッションの一覧・
 `/context` の内訳の4つがあり、`sdk-driver.ts` 以外を呼ぶのは駆動と配線だけ。使い捨ての `query()` は、
 ツールを持たせるものはそれを使う判断と同じ機能に置き（`sdk-diary.ts` / `sdk-usage-review.ts`）、
-形を指定して1回聞くだけのものは共有の箱の `sdk-structured-query.ts` を通す。
+形を指定して1回聞くだけのものは共有モジュールの `sdk-structured-query.ts` を通す。
 
-- **原則3の例外: 共有の箱の `server/adapter/` 直下の `sdk-*` は、どの機能の語彙も名乗らない使い捨ての問い合わせの関数だけ**
+- **原則3の例外: 共有モジュールの `server/adapter/` 直下の `sdk-*` は、どの機能の語彙も名乗らない使い捨ての問い合わせの関数だけ**
   （`sdk-structured-query.ts` と、足跡を残すラッパーの `sdk-throwaway-query.ts`）
 
 - **`sdk-message.ts` は SDK の型を import しない。** 依存を機能の `adapter/` 直下（または `adapter/sdk/`）の `sdk-` で始まる
@@ -41,7 +41,7 @@ doc コメントが正典で、機能の数え方・契機・上限は `docs/req
 
 **2つのファイルが共有する定数は、読む側の層で置き場を決める。** `core` と `adapter` の両方が読む
 ものは `core` に置き、`adapter` がそこから取る（`TSUKUMO_MCP_SERVER_NAME` / `SPEAK_TOOL_NAME` は
-共有の箱の `src/server/core/tsukumo-tool-name.ts`。`core → adapter` は禁止なので逆には置けない）。両側と画面が読む既定値は
+共有モジュールの `src/server/core/tsukumo-tool-name.ts`。`core → adapter` は禁止なので逆には置けない）。両側と画面が読む既定値は
 `shared` の1箇所（既定の effort は `BUILTIN_SESSION_DEFAULT.effort`）で、adapter は自分の定数を持たない。
 
 **代のあいだだけ意味のある勘定は、駆動1代ぶんの持ち物（`SessionGeneration`）に集める。**

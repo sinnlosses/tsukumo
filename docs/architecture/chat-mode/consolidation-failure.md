@@ -1,6 +1,6 @@
 # 雑談モード: 定着が落ちたとき
 
-戻り: `docs/architecture/chat-mode/consolidation.md`「窓から溢れた会話は定着で畳む」
+戻り: `docs/architecture/chat-mode/consolidation.md`「ウィンドウから溢れた会話は定着で畳む」
 
 定着の結果が検査に落ちたときの逃げ道、続けて落ちたパックの契機の間引きと止め方、落ちた理由の残し方。
 

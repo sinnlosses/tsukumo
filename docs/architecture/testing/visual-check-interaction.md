@@ -12,7 +12,7 @@
 `--type <selector> <文字>`・`--scroll-element <selector> <px>`・`--click <selector>`・`--hover <selector>`・`--hash <hash>`・`--press <キー名>`・`--wait-after <selector>` を並べる。**
 書いた順に、`--wait-for` の待ちのあと・`--scroll-to` の前に当てる（`--scroll-to` は書く位置を問わず最後）。1つでも当たらなければ
 撮らずに失敗で終わる（撮影のカタログの `prepare` は当たらない手を飛ばして撮る）。
-`--scroll-element` は指した要素自身を上端から px だけ転がす（0 で先頭へ戻す）。区画の内側の一覧が溢れたときの見出しの影（`data-scrolled`）を撮るときに使う。
+`--scroll-element` は指した要素自身を上端から px だけスクロールする（0 で先頭へ戻す）。区画の内側の一覧が溢れたときの見出しの影（`data-scrolled`）を撮るときに使う。
 **`--press` のキーはフォーカスの置き場所へ届く。** 開いた直後のフォーカスは依頼の入力欄にあり、PageDown などメインビューで効くキーは届かない
 （黙って空振りして、撮った画は変わらない）。置き場所がメインビューの中でもモーダルの中でもないときは、
 「フォーカスがメインビューに無い（textarea など、置き場所）」の行を標準出力に出す（失敗にはしない）。先に `--click '[data-region="main"] h4'` のようにメインビューの中を押してから `--press` を書く。
@@ -23,16 +23,16 @@
 見本帳の `Chart` は `--scene report-blocks --hash '#design' --wait-after '[data-catalog-part="Chart"] canvas' --scroll-to '[data-catalog-part="Chart"]' --advance 3000` で、棒が伸び終わった画が撮れる。
 **起動先（`.beads` の有無・課題ファイル）で出し分ける画は `--scene <場面> --cwd <dir>` で、スクラッチに作った
 ディレクトリを起動先にして撮る**（既定はこの作業ツリー。ただし手元の画像を置く場面〔`report-image`・`report-before-after`・`question-preview-image`〕は、`--out` の隣に架空の PNG を置いた作業場所を立てて起こす。件が `skipReveal` の場面〔`question-preview-image` 以外〕は、`--cwd` の有無に関わらず書き上げの演出を打ち切ってから撮る。`--cwd` は `--scene` と一緒にだけ使い、渡せば作業場所はそちらが優先）。
-タスクの一覧・詳細を撮るときは、作業ツリーの根の `.tsukumo/fake-beads-issues.json` に架空の課題を `bd list --json` の形の配列で置く（撮ったら消す。実データを写さないため）。一覧を開いて行を押すには `capture-view.ts --scene report --click 'button:has-text("一覧を見る")' --click '[role="option"]:has-text("架空の文字")'` の形で当たる（`li:has-text(…)` は当たらない）。狭い窓（720px）では、先に引き出しを開いて（`button[aria-label="やり取りとタスクを開く"]`）タスクのタブ（`[role="tab"]:has-text("タスク")`。話題モードでは「話題」）を押す。
+タスクの一覧・詳細を撮るときは、作業ツリーの根の `.tsukumo/fake-beads-issues.json` に架空の課題を `bd list --json` の形の配列で置く（撮ったら消す。実データを写さないため）。一覧を開いて行を押すには `capture-view.ts --scene report --click 'button:has-text("一覧を見る")' --click '[role="option"]:has-text("架空の文字")'` の形で当たる（`li:has-text(…)` は当たらない）。狭いビューポート（720px）では、先に引き出しを開いて（`button[aria-label="やり取りとタスクを開く"]`）タスクのタブ（`[role="tab"]:has-text("タスク")`。話題モードでは「話題」）を押す。
 セリフのログのモーダルを開いた画は `capture-view.ts --scene welcome-greeting-cleared --until-step 2 --click 'button:has-text("ログ")'`（空のログ）で撮れる。`--wait-for` は `--click` より前に待つのでモーダルの中の要素は指せず、開いたあとの要素は `--wait-after` で待つ。
 **ワークフローの設定の面（歯車の `tw config` を読み書きする画）を、`tw` の出力を変えて撮るには `TSUKUMO_TW=<偽の tw の絶対パス>` を付ける**（schema 2 の面など、取り込みの `tw` が出さない形を撮るとき）。
 偽の `tw` はスクラッチ（作業ツリーの外）に Write で書いて実行権を付ける。`vendor/tsukumo-plugins/bin/tw` は書き換えない（戻し忘れが main に混ざる）。PATH に偽の `tw` を置いても効かない（取り込みの `bin/tw` が先に選ばれる）。
 `--scene` の `capture-view.ts` は起こす tsukumo に自分の環境変数を引き継ぐので、`TSUKUMO_TW=… node scripts/capture/capture-view.ts --scene <場面> …` の形で効く。`--scene` を付けずに起こし済みの tsukumo へ撮りに行くときは、その tsukumo を起こすときに付ける。
 設定の面は hash では開かないので、歯車を押して開き、並びの欄を待つ（`--click 'button[aria-label="設定"]' --click 'nav[aria-label="設定の項目"] button:has-text("ワークフロー")' --wait-after 'ol[aria-label="並び"]'`）。
 偽の `tw` は `config --schema` に schema 2 の JSON、`config --json` に `config` と `keys` を持つ JSON を返す（形は `workflow-setting-reading.ts` の `configSchemaSchema`・`configOutputSchema`）。形が違うと並びの欄は出ず、「tw が並び（schema 2）の設定コマンドを返さない」などの断りが出る。
-ワークフローの面は 761px 以上の設定のダイアログにだけあり、760px 以下の引き出しの設定の面には無い。
-狭い窓（720px）でセッションの切り替え画面を開くには、引き出しを開いたあとに `--click '[aria-label="引き出し"] button[aria-haspopup="dialog"]'` を足す（`--click 'button[aria-label="やり取りとタスクを開く"]'` のあと）。
-**続きから復元した画面（`session-resume` の過去のやり取り）を撮るには、切り替え画面を開いて要求を選び、「切り替える」を押してから、復元された依頼の文を `--wait-after` で待つ。** 広い窓（900px 以上）では次の形で当たる（撮った画で、続きの最終レポートまで出ることを確かめた）。
+ワークフローのサーフェスは 761px 以上の設定のダイアログにだけあり、760px 以下の引き出しの設定の面には無い。
+狭いビューポート（720px）でセッションの切り替え画面を開くには、引き出しを開いたあとに `--click '[aria-label="引き出し"] button[aria-haspopup="dialog"]'` を足す（`--click 'button[aria-label="やり取りとタスクを開く"]'` のあと）。
+**続きから復元した画面（`session-resume` の過去のやり取り）を撮るには、切り替え画面を開いて要求を選び、「切り替える」を押してから、復元された依頼の文を `--wait-after` で待つ。** 広いビューポート（900px 以上）では次の形で当たる（撮った画で、続きの最終レポートまで出ることを確かめた）。
 
 ```bash
 node scripts/capture/capture-view.ts --scene session-resume --size 900x900 \
@@ -42,7 +42,7 @@ node scripts/capture/capture-view.ts --scene session-resume --size 900x900 \
   --wait-after 'text=前のセッションの架空の依頼その1'
 ```
 
-`[role="option"]` は要求の一覧の行（最初の1件）。押すのは行で選ぶだけで、切り替わるのは「切り替える」を押したあと。`--wait-for` は先頭で当たるので、切り替え画面の前には使えない（`--wait-after` を使う）。**狭い窓（760px 以下）では、切り替えたあとも引き出しが開いたままなので、`--press Escape` で閉じてから `--wait-after` で待つ。** 閉じる前に待つと、引き出しの中の一覧の依頼の文に当たって偽の成功になる。閉じたあとの本文に出るのは続きの最後の依頼（その3）なので、待つ文もそれにする。720px で撮った画で、引き出しが閉じて続きの最終レポートまで出ることを確かめた。
+`[role="option"]` は要求の一覧の行（最初の1件）。押すのは行で選ぶだけで、切り替わるのは「切り替える」を押したあと。`--wait-for` は先頭で当たるので、切り替え画面の前には使えない（`--wait-after` を使う）。**狭いビューポート（760px 以下）では、切り替えたあとも引き出しが開いたままなので、`--press Escape` で閉じてから `--wait-after` で待つ。** 閉じる前に待つと、引き出しの中の一覧の依頼の文に当たって偽の成功になる。閉じたあとの本文に出るのは続きの最後の依頼（その3）なので、待つ文もそれにする。720px で撮った画で、引き出しが閉じて続きの最終レポートまで出ることを確かめた。
 
 ```bash
 node scripts/capture/capture-view.ts --scene session-resume --size 720x900 \
@@ -54,7 +54,7 @@ node scripts/capture/capture-view.ts --scene session-resume --size 720x900 \
   --wait-after 'text=前のセッションの架空の結論その3'
 ```
 
-この手順を `--size 761x900` で走らせると、761px 以上では引き出しのボタン（≡）が無いので、最初の `--click` で「当てられなかった」と出て失敗する。広い窓の手順の 761px での当たりは未確認。
+この手順を `--size 761x900` で走らせると、761px 以上では引き出しのボタン（≡）が無いので、最初の `--click` で「当てられなかった」と出て失敗する。広いビューポートの手順の 761px での当たりは未確認。
 **待ち時間が経たないと出ない画（待ちの一言など）は `--advance <ms>` で偽の時計を進めて撮る。**
 `Temporal.Now` も進んだ時刻に従うので、経過の秒数のような時刻の表示も進んだ値で描かれる。
 **日付で表示が変わる部品（セッション切り替えの「今日/昨日」・プラン使用量の「…に戻る」）は `--clock <ISO 時刻>`（オフセット付き。例 `2026-01-15T12:00:00+09:00`）でブラウザの時計を決めて撮る。** 疑似セッションの日付と別の日を指せば区切りが変わる。
@@ -73,12 +73,12 @@ tsukumo を空きポートで自分で起こし、配信 URL を待って撮り�
 **差し戻された `report` と直した `report` の描画は、場面 `report-mermaid-rejected`**（疑似セッションは判定せず、場面の `tool-finished` の `isError` に従う）。
 差し戻しの画は `--until-step 5 --wait-for 'text=流れを図にして出すね'`（本文に図が無く、吹き出しに直して出し直す一言が出る）、
 描画の画は `--until-step 8 --wait-for '[class*="is-final_"]'`（図が描かれる）。
-広い窓では吹き出しが1字ずつ出るので、最後の吹き出しの文では待たず、先に出る吹き出しの文を待つ。
+広いビューポートでは吹き出しが1字ずつ出るので、最後の吹き出しの文では待たず、先に出る吹き出しの文を待つ。
 **`svg` の部品（単独と `beforeAfter` の側）の描画は、場面 `report-svg`**（`--until-step 99 --wait-for '[class*="is-final_"]'`。`beforeAfter` は `--scroll-to '[class*="before-after_"]'`）。
-**`graph` の色の目印（` @a`〜` @e`）・点線の辺（`-.>`）・`legend` の描画は、場面 `report-graph-tone`**（`--until-step 99 --wait-for '[class*="is-final_"]'`。群の枠・節点の枠・辺の色と凡例の色見本が合っているかを見る）。
-**節点の多い `graph`（12 節点・囲み 3 つの LR）の幅の段と TD への差し替えは、場面 `report-graph-wide`**（`--until-step 99 --wait-for '[class*="is-final_"]'`。`--paper-metric` で図の文字の最小 px を数える）。
-**入れ子の囲み（2 階層）と複数行の箱を持つ `graph` は場面 `report-graph-nested`、箱に件数を書いた LR の状態の流れ（戻りの辺は点線）が横 1 行に収まるかは場面 `report-graph-states`**（どちらも `--until-step 99 --wait-for '[class*="is-final_"]'`。`--paper-metric` で図の文字の最小 px を数える）。
-**自然幅が読む面を超える `graph`（1 つの起点から 10 本に分かれる TD）の横転がしは、場面 `report-graph-scroll`**（`--until-step 99 --wait-for '[class*="is-final_"]'`。`pre.mermaid` が `data-measure="scroll"` になり、`pre` の中で横に転がる）。
+**`graph` の色の目印（` @a`〜` @e`）・点線のエッジ（`-.>`）・`legend` の描画は、場面 `report-graph-tone`**（`--until-step 99 --wait-for '[class*="is-final_"]'`。群の枠・ノードの枠・エッジの色と凡例の色見本が合っているかを見る）。
+**ノードの多い `graph`（12 ノード・囲み 3 つの LR）の幅の段と TD への差し替えは、場面 `report-graph-wide`**（`--until-step 99 --wait-for '[class*="is-final_"]'`。`--paper-metric` で図の文字の最小 px を数える）。
+**入れ子の囲み（2 階層）と複数行の箱を持つ `graph` は場面 `report-graph-nested`、箱に件数を書いた LR の状態の流れ（戻りのエッジは点線）が横 1 行に収まるかは場面 `report-graph-states`**（どちらも `--until-step 99 --wait-for '[class*="is-final_"]'`。`--paper-metric` で図の文字の最小 px を数える）。
+**自然幅が読む面を超える `graph`（1 つの起点から 10 本に分かれる TD）の横スクロールは、場面 `report-graph-scroll`**（`--until-step 99 --wait-for '[class*="is-final_"]'`。`pre.mermaid` が `data-measure="scroll"` になり、`pre` の中で横にスクロールする）。
 **縦に長い図の高さと拡大は場面 `report-tall-figure`**（mermaid・svg・画像。`--reveal-at 30000`。拡大は `--click 'pre.mermaid'`）、**中間レポートの箱の中の部品の枠は場面 `report-interim-nested`**（`--click summary` で畳みを開く）。
 **計画の返却を待つ間のプログレスバー（`delegatedRange` が `pending`。丸が「・」「…」「・」）は、場面 `work-strip-plan-pending`**（`--wait-for 'text=計画を書き直す'`）。
 **幅で画面が切り替わる境目は 1100px と 760px。** 1100px 以下でサイドバーが柱に畳まれ、760px 以下で

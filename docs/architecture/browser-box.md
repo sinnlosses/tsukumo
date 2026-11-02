@@ -2,9 +2,9 @@
 
 ステータス: **正典**。入口は `docs/architecture.md`（全体構造の入口と、子のファイルの一覧）。
 
-責務: `src/browser/` の箱ごとに置くものと import してよい先、上げる・下ろす引き金、領域の機能（枠・画面）と置かれる機能の辺を持つ（ディレクトリの節の後半と、領域の機能の節）。
+責務: `src/browser/` の箱ごとに置くものと import してよい先、上げる・下ろす引き金、領域の機能（枠・画面）と置かれる機能のエッジを持つ（ディレクトリの節の後半と、領域の機能の節）。
 読む時: ブラウザ側のファイルをどの箱に置くか迷ったとき、領域や置かれる機能どうしの import を確かめたいとき。
-直す時: 箱や領域の一覧・辺を変えたとき（辺は `.dependency-cruiser.cjs`、1機能しか読まない検査と `components/` の形は `test/architecture/browser-box.test.ts`）。
+直す時: 箱や領域の一覧・エッジを変えたとき（エッジは `.dependency-cruiser.cjs`、1機能しか読まない検査と `components/` の形は `test/architecture/browser-box.test.ts`）。
 
 ## 全体構成
 
@@ -32,7 +32,7 @@
 - **部品の箱の向きは `app.tsx` → `components/app` → `components/page` → `components/domain` → `features` →
   `components/ui` の一方通行**。`components/domain` は画面を知らず、`features/` は自分を置く枠も画面も
   知らず、`components/ui` は tsukumo の語彙を知らない。**画面の組み立てを `components/domain/` へ移さない**
-  （枠が画面を import する逆向きの辺になるので、`page` より上の段 `components/app/` に置く）
+  （枠が画面を import する逆向きのエッジになるので、`page` より上の段 `components/app/` に置く）
 - **`components/domain` と `components/ui` の線は、tsukumo の語彙を持つかで引く**（`Portrait` は `domain`、
   `Select`・`Button`・`ImageZoom` は `ui`）
 - **`stores/` は「状態ライブラリの置き場」ではなく「画面全体で共有する状態の置き場」**（`docs/architecture/browser.md`「状態の持ち方」）。置くのは
@@ -56,14 +56,14 @@
   包むかで引く。** `domain/appearance-color.ts` は `localStorage` を包むが名前が指すのは**画面の色**
   なので `domain/`、`domain/tool-summary.ts` は純関数で `remeda`（用途を問わない汎用ライブラリ）しか
   使わず、`shared/` の型にも依存する（`utils/` の歯止め3を満たさない）ので、`lib/` ではなく `domain/`
-- 辺の検査は `.dependency-cruiser.cjs`（領域と置かれる機能の一覧が横の辺を、箱の一覧が縦の辺を落とす）。1機能しか読まない検査と `components/` の形は `test/architecture/browser-box.test.ts`
+- エッジの検査は `.dependency-cruiser.cjs`（領域と置かれる機能の一覧が横のエッジを、箱の一覧が縦のエッジを落とす）。1機能しか読まない検査と `components/` の形は `test/architecture/browser-box.test.ts`
 
 ### 領域の機能と、置かれる機能
 
-画面を組み立てる部品のまとまりは3種類ある。**まとまりどうしの辺は「枠・画面 → 置かれる機能」と
+画面を組み立てる部品のまとまりは3種類ある。**まとまりどうしのエッジは「枠・画面 → 置かれる機能」と
 「画面 → 枠」だけ**を許し、それ以外は落とす。
 
-| 種類                       | どういうものか                                                       | 置き場                    | 辺                                                                                                         | いまの中身                                                   |
+| 種類                       | どういうものか                                                       | 置き場                    | エッジ                                                                                                     | いまの中身                                                   |
 | -------------------------- | -------------------------------------------------------------------- | ------------------------- | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
 | **枠**（frame）            | 全画面で共有する枠。差し込み部分は props で受け、画面を知らない      | `components/domain/<枠>/` | 画面と `<Layout>` から import してよい。**枠どうしは import しない**                                       | `screen-nav` / `sidebar`                                     |
 | **画面**（screen）         | 1つの画面 = 1つのページ。**どの画面を出すかを決めるのは `<Layout>`** | `components/page/<画面>/` | `<Layout>` だけが import する。**画面どうしは import しない**                                              | `conversation` / `character` / `token-usage` / `achievement` |

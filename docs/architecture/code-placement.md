@@ -11,7 +11,7 @@
 **新しいコードは `src/shared/` / `src/server/<機能>/core/` / `src/server/<機能>/adapter/` /
 `src/browser/` に置く**（「全体構成」）。**層の名前は「どの実行環境で動くか」を表す**
 （`docs/history/architecture-placement.md`）。サーバ側は**まずどの機能かを決め**
-（機能の一覧は「サーバの機能と、機能どうしの辺」）、**外の世界（SDK・
+（機能の一覧は「サーバの機能と、機能どうしのエッジ」）、**外の世界（SDK・
 HTTP/WebSocket・ホスト・ファイル・子プロセス）に触るならその機能の `adapter/`、触らない判断なら
 `core/`。** どの機能にも属さず2つ以上の読み手を持つものだけ、共有の `src/server/core/` /
 `src/server/adapter/` の直下に置く。
@@ -41,18 +41,18 @@ HTTP/WebSocket・ホスト・ファイル・子プロセス）に触るならそ
 - **原則2**: **両側で共有する契約（`shared`）／サーバ（`core` と `adapter`）／
   クライアント（`browser`）に分け、層をディレクトリで表す**（詳細と理由の正典は
   「全体構成」）。サーバ側は機能ごとのディレクトリ（`src/server/<機能>/`）の中で
-  `core` と `adapter` に割り、機能どうしの辺は「全体構成」の表にある組だけにする。`shared` に置くのは両側の契約と、`SessionState` から純粋に導ける
+  `core` と `adapter` に割り、機能どうしのエッジは「全体構成」の表にある組だけにする。`shared` に置くのは両側の契約と、`SessionState` から純粋に導ける
   ものだけで、「受け取る／決める／描く」という役割の分割ではない。**サーバ側は判断（`core`）と
   外の世界に触る境界（`adapter`）に割れていて、`core → adapter` は禁止**（結ぶのは `src/` 直下と
-  `src/wiring/` の配線だけ）。**許した依存の辺以外は `test/architecture/` が落とす**
+  `src/wiring/` の配線だけ）。**許した依存のエッジ以外は `test/architecture/` が落とす**
 - **原則3**: ホスト（ターミナル環境）・外部コマンド・OSに依存するものは
-  **`adapter/`（機能の中か共有の箱）の1ファイルに閉じ込める**（1ファイル = 1つの境界）。ホストが Orca から
+  **`adapter/`（機能の中か共有モジュール）の1ファイルに閉じ込める**（1ファイル = 1つの境界）。ホストが Orca から
   別のものに変わっても、差し替えがここだけで済むようにする
   （`docs/architecture/adr/0015-single-host-port.md`）。**Agent SDK
   （`@anthropic-ai/claude-agent-sdk`）だけは、1つの境界が1ファイルに収まらない**（駆動の本体・
   tsukumo のツール・セッションの一覧と印・コンテキストの内訳）ので、**import してよい先を
   ファイル名で決める: 機能の `adapter/` 直下（または `adapter/sdk/`）の `sdk-` で始まるファイルだけ**（いまは
-  `session-driver/`・`diary/`・`usage/`。`usage/` だけは `adapter/review/` の `sdk-` で始まるファイルも許す）。例外は共有の箱の `server/adapter/` 直下の `sdk-` で始まるファイルで、
+  `session-driver/`・`diary/`・`usage/`。`usage/` だけは `adapter/review/` の `sdk-` で始まるファイルも許す）。例外は共有モジュールの `server/adapter/` 直下の `sdk-` で始まるファイルで、
   どの機能の語彙も名乗らない使い捨ての問い合わせの関数だけを置く（「core と adapter」）。一覧ではなく
   名前で決めるのは、ファイルを足しても検査を直さずに済み、名前で SDK の境界を名乗らずに import
   すれば `.oxlintrc.json` の `no-restricted-imports` が落とすから。**SDK の境界を1つの機能にまとめない**

@@ -1,14 +1,14 @@
-# アーキテクチャ詳細: サーバの機能と、機能どうしの辺
+# アーキテクチャ詳細: サーバの機能と、機能どうしのエッジ
 
 ステータス: **正典**。入口は `docs/architecture.md`（全体構造の入口と、子のファイルの一覧）。
 
-責務: `src/server/` を割る機能の一覧と、どの機能にも属さない共有の箱、機能どうしの import の規則と辺の表を持つ。
+責務: `src/server/` を割る機能の一覧と、どの機能にも属さない共有モジュール、機能どうしの import の規則とエッジの表を持つ。
 読む時: サーバに機能を足すとき、機能どうしの import が許されるかを確かめたいとき。
-直す時: 機能を足す・消すとき、機能どうしの辺を変えたとき（辺の規則は `.dependency-cruiser.cjs` が持ち、表は `pnpm run format` が書き直す）。
+直す時: 機能を足す・消すとき、機能どうしのエッジを変えたとき（エッジの規則は `.dependency-cruiser.cjs` が持ち、表は `pnpm run format` が書き直す）。
 
 ## 全体構成
 
-### サーバの機能と、機能どうしの辺
+### サーバの機能と、機能どうしのエッジ
 
 `src/server/` は**機能のまとまりで割り、機能の中を層（`core/` と `adapter/`）で割る**。機能の名前は
 `docs/glossary.md` の語（単数形）で、**1つの機能 = 1つのディレクトリ**。機能の中は `core/`（判断）と
@@ -46,24 +46,24 @@
 
 **層の下の子ディレクトリ**: `core/`・`adapter/` の直下に子を切り、その子の中にもう1階層まで切れる
 （`report/core/rules/prose/` が最深。それより深くは切らない）。切るのは、①同じ家族のファイルが3本以上、
-②家族の内部 import が外への import より多い、③子どうしの辺が一方向にそろう、の3つが揃うとき。
-名前は家族の語（単数形でなくてよい）。`core/`・`adapter/` 直下の子どうしの許す辺は `.dependency-cruiser.cjs` の
+②家族の内部 import が外への import より多い、③子どうしのエッジが一方向にそろう、の3つが揃うとき。
+名前は家族の語（単数形でなくてよい）。`core/`・`adapter/` 直下の子どうしの許すエッジは `.dependency-cruiser.cjs` の
 `SERVER_CHILD_IMPORTS`（規則は `server-child-edge:`）が持ち、子を切ったら表に1行足す。いまの対象は `SERVER_CHILD_IMPORTS` の表に載っている子。
 
 **どの機能にも属さない共有のもの**は、`server/core/` と `server/adapter/` の**直下**に置く
 （いまあるものは `ls src/server/core/ src/server/adapter/`。使い捨ての問い合わせの家族は `server/core/query/`）。置いてよいのは**どの機能の語彙も名乗らず、読み手が
-2つ以上ある（機能・共有の箱・配線のどれでも数える）もの**だけで、読み手が1つの機能だけに
+2つ以上ある（機能・共有モジュール・配線のどれでも数える）もの**だけで、読み手が1つの機能だけに
 なったらその機能へ下ろす（`browser/domain/` と同じ引き金）。
 
 **機能どうしの import の規則**:
 
 - **層の規則が先に効く。** `core/` は、どの機能のものでも `adapter/` を import しない
-- **機能 A が機能 B を import してよいのは、下の表にある組だけ。** 共有の箱はどの機能からも
-  読んでよく、**共有の箱は機能を読まない**
-- **層ごとに循環させない。** 機能の `core/` どうしの辺と、機能の `adapter/` どうしの辺は、それぞれ
+- **機能 A が機能 B を import してよいのは、下の表にある組だけ。** 共有モジュールはどの機能からも
+  読んでよく、**共有モジュールは機能を読まない**
+- **層ごとに循環させない。** 機能の `core/` どうしのエッジと、機能の `adapter/` どうしのエッジは、それぞれ
   一方通行（表はその順に並ぶ）。機能の単位で見ると輪が1つある
   （`view-server` → `session` → `session-driver` → `view-server`）が、1本が
-  `adapter → 別の機能の core` で層の辺と同じ向きなので、ファイルの単位では輪にならない
+  `adapter → 別の機能の core` で層のエッジと同じ向きなので、ファイルの単位では輪にならない
 - **束ねる機能は `session/` の1つ。** `session-manager.ts` は外の世界に触らないので `core` だが、
   各機能の判断（日記・トークン消費・会話のアーカイブ）を読んで1つのセッションに
   まとめる。**外の世界の実装を選んで渡すのは配線（`src/` 直下の `session-start.ts` と `src/wiring/`）**、
@@ -85,13 +85,13 @@
   単体で書くには adapter を差し替える本番に要らない関数が要る）
 - **Agent SDK を import してよいのは、機能の `adapter/` の直下（または `adapter/sdk/`。`usage/` は `adapter/review/` も）の `sdk-` で始まるファイルだけ**
   （原則3）。1つの箱にはまとめず、**その境界が属する機能に置く**（「core と adapter」）。
-  例外は共有の箱の `server/adapter/` 直下の `sdk-` で始まる、どの機能の語彙も名乗らない使い捨ての問い合わせの関数
+  例外は共有モジュールの `server/adapter/` 直下の `sdk-` で始まる、どの機能の語彙も名乗らない使い捨ての問い合わせの関数
 - **機能を足すときは、`test/architecture/feature-graph.ts` の機能の一覧と `.dependency-cruiser.cjs` の
   機能の規則に足す**（知らない機能のディレクトリと、`core/` `adapter/` の外に置いたファイルは
   `test/architecture/server-feature.test.ts` が、規則の足し忘れは `test/architecture/dependency-rule.test.ts` が落とす）。
   下の表は規則から書き直される
 
-#### 機能どうしの辺の表
+#### 機能どうしのエッジの表
 
 <!-- feature-edge-table:start -->
 
@@ -110,4 +110,4 @@
 <!-- feature-edge-table:end -->
 
 表は `.dependency-cruiser.cjs` の `server-feature-edge:` の規則から `pnpm run format` が書き直す。使われない組を落とす検査は持たない（`docs/architecture/adr/0037-dependency-cruiser-edge-check.md`）。
-辺が `core` と `adapter` のどちらからどちらへ向かうかは表に持たず、実際の import が正典。
+エッジが `core` と `adapter` のどちらからどちらへ向かうかは表に持たず、実際の import が正典。

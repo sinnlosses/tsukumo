@@ -3,7 +3,7 @@
 ステータス: **正典**。入口は `docs/architecture.md`（全体構造の入口と、子のファイルの一覧）。
 
 責務: 全体構成の前置き（1つのプロセス・データの流れ3本・外へ出る経路を作らないこと・層の図）と、層と依存の向きを持つ。
-読む時: 層（shared / server / browser）や `core` と `adapter` の辺を確かめたいとき。
+読む時: 層（shared / server / browser）や `core` と `adapter` のエッジを確かめたいとき。
 直す時: 層の分け方・層どうしの import の規則を変えたとき。
 
 ## 全体構成
@@ -44,7 +44,7 @@ server/<機能>/adapter（外の世界に触る場所。1ファイル = 1境界�
 Claude Code（SDK が起こす子プロセス）
 
 shared（語彙・イベント・状態・reducer・zod スキーマ）は browser と core の両方が import する。
-辺は adapter ──▶ core ──▶ shared ◀── browser（core → adapter は禁止。結ぶのは src/ 直下と src/wiring/ の配線だけ）
+エッジは adapter ──▶ core ──▶ shared ◀── browser（core → adapter は禁止。結ぶのは src/ 直下と src/wiring/ の配線だけ）
 ```
 
 ### 層と依存の向き
@@ -60,7 +60,7 @@ shared（語彙・イベント・状態・reducer・zod スキーマ）は brows
 ディレクトリ（`src/server/` を機能で割った）」。
 
 **層はパッケージ（pnpm workspace）には割らない。** `package.json` は1つのまま、層をディレクトリで表す。
-パッケージの境界が足す検査は「宣言していない依存を解決できない」ことだけで、辺の検査は割っても
+パッケージの境界が足す検査は「宣言していない依存を解決できない」ことだけで、エッジの検査は割っても
 `test/architecture/` が要るため。比べた案と、割る目安は `docs/research/package-split.md`。
 
 | 層               | 置くもの                                                                                                                                               | import してよい先                                       | 実行場所         |
@@ -72,7 +72,7 @@ shared（語彙・イベント・状態・reducer・zod スキーマ）は brows
 | `src/` 直下      | 配線（composition root。`cli.ts` / `main.ts` と起動の段取り。機能ごとの組み立ての `src/wiring/` を含む）                                               | すべて                                                  | サーバ           |
 
 - **`core` と `browser` は互いを import しない。** 両者が知っているのは `shared` だけ
-- **`core → adapter` は禁止。** 辺は `adapter ──▶ core ──▶ shared ◀── browser` の一方通行で、
+- **`core → adapter` は禁止。** エッジは `adapter ──▶ core ──▶ shared ◀── browser` の一方通行で、
   `core` と `adapter` を結ぶのは `src/` 直下と `src/wiring/` の配線だけ。**機能をまたいでも同じ**で、どの機能の
   `core/` もどの機能の `adapter/` も import しない（層は機能より先に効く）。**`core` は `node:` / SDK（`@anthropic-ai/*`）/
   `ws` を import しない**ので、`core` から外の世界へ出る道は無い
@@ -81,7 +81,7 @@ shared（語彙・イベント・状態・reducer・zod スキーマ）は brows
   `server/host/core/host.ts`）
 - **`shared` は `node:` も `document` も触らない。** 好みではなく**物理的な制約**で、`shared` は
   サーバとブラウザの両方で読み込まれるので、片方にしか無い API に触れた時点でもう片方で動かなくなる
-- 許した辺以外は `.dependency-cruiser.cjs` が落とす（層の辺は上の4本。サーバ側の機能どうしの辺は
+- 許したエッジ以外は `.dependency-cruiser.cjs` が落とす（層のエッジは上の4本。サーバ側の機能どうしのエッジは
   次の節の表）。import の拾い方は dependency-cruiser で、静的 import・`export … from`・動的 `import()`・`require()` の
   specifier を引用符の違いに関係なく拾う。`shared` と `core` が外の世界（`node:` と `node:` なしの組み込み・`ws`・
   `@anthropic-ai/*`）を読む道も同じ規則で塞ぐ。`process.env`・`process.cwd` を読む形のうち、`process.env`・分割代入・`process["env"]` は

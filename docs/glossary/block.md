@@ -23,7 +23,7 @@
 ### 部品
 
 - **英語識別子**: `ReportBlock`（`src/shared/report/report-block.ts`）/ `kind`（`text` / `list` /
-  `table` / `matrix` / `compare` / `beforeAfter`（前後）/ `note` / `stats` / `code` / `mermaid` / `graph`（`source` の1行1辺の記法で受ける flowchart。行頭の `+ ` / `- ` / `~ ` が足した・消した・変えたの印。節点だけの行は `名前 | 説明` で説明の1行を足せ、分岐・合流・囲み・点線の無い5節点以下の一本道はカードの連鎖で描く）/ `chart` / `timeline`（時刻の軸に行ごとの帯・延びた分・出来事を並べる図。延び・出来事・一点の無い区間の長さの比べは `chart` の `span`）/ `svg`（座標つきの図形で書く図）/ `plot`（図の申告。`question`〔読者がその図で決めること。全角60字以内の1文〕・`data`〔列の並び。各列は `name`・`type`〔`N` 名義 / `O` 順序 / `T` 時間 / `Q` 量〕・`values`〕・`relation`〔`compare`・`rank`・`part`・`trend`・`change`・`distribution`・`correlate`・`range` の8語〕と任意の `form`〔形の上書き〕を受け、色・座標は書かせない。形は下の「図の決定表」が決め、形ごとの描き方が入るまでは `data` を表として描く）/ `options` / `claims`（確度つきの主張）/ `image`（画面の画像）/ `markdown`。旧い記録にだけ `row`〔2〜4 個の部品を横に並べる〕と `panel`〔`title` つきの枠〕があり、復元が `Row`・`Card` に組み直す）/ `fold`（畳むときの見出し）/ `aside`（部品の傍注。下の「欄外注の列」）/
+  `table` / `matrix` / `compare` / `beforeAfter`（前後）/ `note` / `stats` / `code` / `mermaid` / `graph`（`source` の1行1エッジの記法で受ける flowchart。行頭の `+ ` / `- ` / `~ ` が足した・消した・変えたの印。ノードだけの行は `名前 | 説明` で説明の1行を足せ、分岐・合流・囲み・点線の無い5ノード以下の一本道はカードの連鎖で描く）/ `chart` / `timeline`（時刻の軸に行ごとの帯・延びた分・出来事を並べる図。延び・出来事・一点の無い区間の長さの比べは `chart` の `span`）/ `svg`（座標つきの図形で書く図）/ `plot`（図の申告。`question`〔読者がその図で決めること。全角60字以内の1文〕・`data`〔列の並び。各列は `name`・`type`〔`N` 名義 / `O` 順序 / `T` 時間 / `Q` 量〕・`values`〕・`relation`〔`compare`・`rank`・`part`・`trend`・`change`・`distribution`・`correlate`・`range` の8語〕と任意の `form`〔形の上書き〕を受け、色・座標は書かせない。形は下の「図の決定表」が決め、形ごとの描き方が入るまでは `data` を表として描く）/ `options` / `claims`（確度つきの主張）/ `image`（画面の画像）/ `markdown`。旧い記録にだけ `row`〔2〜4 個の部品を横に並べる〕と `panel`〔`title` つきの枠〕があり、復元が `Row`・`Card` に組み直す）/ `fold`（畳むときの見出し）/ `aside`（部品の欄外注。下の「欄外注の列」）/
   欄の `from` / `to`（表のセルの前後）・`tag`（表のセルの列挙型のバッジ。同じ字は同じ色）・`emphasis`（表の行の強調。`{ cells, emphasis: true }`で3行まで。超えれば差し戻し）・`before`（`stats` の前の値）・`total`（`stats` の全体の数）・`keyFigures`（`report` の欄。結論の直下に並べる 3〜4 個の数のカードで、項目の形は `stats` の `items` と同じ。部品の欄ではない）・`label`（`list` の項目の名前）・
   `flow`（`list` の `style` の一本道の流れ）・`cards`（`list` の `style` の並列の区画。2〜4項目を横に並べる）・`sides`（`compare` の2つの側。`heading` と `points`）・
   `before` / `after`（`beforeAfter` の前の側と後の側。`kind` が `image`〔`path`と任意の `region`（変わった場所の枠。% の `left`・`top`・`width`・`height`）〕/ `code`〔`language`・`source`〕/ `points` / `mermaid`〔`source`〕/ `svg`〔`width`・`height`・`shapes`〕の合併型）・
@@ -46,9 +46,9 @@
   **`options` は候補の比較**（候補ごとの判定〔採る / 検討 / 採らない〕と理由を1案1行に積む。書き手の順のまま描く）、
   **触ったファイルの一覧は書き手の部品ではない**（tsukumo が git の差分から出し、最終レポートの頭の畳んだセクション「変更したファイル n」に置く。旧い記録に残る `files` の部品は読み戻しでだけ描く）。
   **欄**は事実か判定を言うものだけで（前後の値・名前・流れ・判定）、描き方は tsukumo がその意味から決める。
-  段ごとに文が要る一本道は `list` の `flow`、一本道でも段の名前が短ければ・分岐・合流があれば `graph`（`source` の1行1辺の記法〔`A -> B: 語`。節点だけの行は `名前 | 説明`〕で渡し、ID とラベルの引用符は tsukumo が組む。`sequenceDiagram`・`stateDiagram-v2` の 2 種だけが `mermaid`）
+  段ごとに文が要る一本道は `list` の `flow`、一本道でも段の名前が短ければ・分岐・合流があれば `graph`（`source` の1行1エッジの記法〔`A -> B: 語`。ノードだけの行は `名前 | 説明`〕で渡し、ID とラベルの引用符は tsukumo が組む。`sequenceDiagram`・`stateDiagram-v2` の 2 種だけが `mermaid`）
 - **避ける言い方**: 塊（以前の呼び名）、ブロック（Markdown の block と紛れる）、要素（HTML の要素と紛れる）、`options` を
-  「選択肢の比較」と呼ぶこと（質問の `preview` を並べた面の名前と紛れる。`options` は「候補の比較」）
+  「選択肢の比較」と呼ぶこと（質問の `preview` を並べたサーフェスの名前と紛れる。`options` は「候補の比較」）
 
 ### 形の名前
 
@@ -84,11 +84,11 @@
 
 ### 欄外注の列
 
-- **英語識別子**: `gutter`（記法の印は `with-gutter`〔部品と欄外注の外枠〕/ `gutter`〔傍注の並び〕/ `gutter-note`〔傍注1つ〕、
-  CSS は `report-gutter` ほか）/ 部品の欄 `aside`（**部品の傍注**。出典・どこを見るかの1行）
-- **定義**: **レポートの本文の列（42em）の右に置く、傍注の列**。出すのは `memo` の `note` と部品の `aside` だけで、
+- **英語識別子**: `gutter`（記法の印は `with-gutter`〔部品と欄外注の外枠〕/ `gutter`〔欄外注の並び〕/ `gutter-note`〔欄外注1つ〕、
+  CSS は `report-gutter` ほか）/ 部品の欄 `aside`（**部品の欄外注**。出典・どこを見るかの1行）
+- **定義**: **レポートの本文の列（42em）の右に置く、欄外注の列**。出すのは `memo` の `note` と部品の `aside` だけで、
   直前の部品の上端に揃える。本文の列の右に 160px 以上空かないときは、部品の直後の1行として本文の中に畳む
-- **注記**: 部品の欄の `aside` は「補足メッセージ」の `aside` とは別物。単独の「柱」は中くらいの窓幅でサイドバーを畳んだ
+- **注記**: 部品の欄の `aside` は「補足メッセージ」の `aside` とは別物。単独の「柱」は中くらいのビューポート幅でサイドバーを畳んだ
   柱（`rail`）を指すので、本文の右の余白の列は「欄外注の列」と書く
 - **避ける言い方**: 余白の柱・傍注の柱（以前の呼び名）、単独の柱（`rail` と紛れる）、サイドノート、脇（補足メッセージと紛れる）
 
@@ -97,8 +97,8 @@
 - **英語識別子**: `ReportOutline`（部品。`main-view/report-outline.tsx`）/
   `ReportOutlineEntry`（見出し1つ。`level` は `section`〔`##`〕/ `sub`〔`###`〕）/
   `OutlineReport`（レポートの行の材料。`main-view/domain/outline-report-row.ts`）
-- **定義**: **メインビューの左の列**。窓の中のやり取りの一覧と、見ているやり取りのレポートの行・見出しの
-  並び（レポート → `##` → `###` の3段）を、本文を押しのける列として置く。押すとそのやり取り・レポートの頭・見出しへ転がす。名前は「やり取り」
+- **定義**: **メインビューの左の列**。記録ウィンドウの中のやり取りの一覧と、見ているやり取りのレポートの行・見出しの
+  並び（レポート → `##` → `###` の3段）を、本文を押しのける列として置く。押すとそのやり取り・レポートの頭・見出しへスクロールする。名前は「やり取り」
   （以前は「目次」）
 - **注記**: 見出しは描いた本文の DOM（`h4` / `h5`）から拾い、畳んだ `<details>` の中のものは数えない。
   列は隠さず常に出し、幅が足りないときは畳んだ細い列になる。出し方の規則は `docs/architecture/display.md` 4.2、
@@ -110,7 +110,7 @@
 
 - **英語識別子**: `QuestionOption.preview`（`src/shared/session-driver/question.ts`。カードは `<Inquiry>`）
 - **定義**: 質問（`AskUserQuestion`）の**選択肢ごとに付く Markdown の本文**と、それをメインビューに
-  並べた面。表・図・メリットとデメリットで案を見比べるためのもので、答え待ちの間だけ出る
+  並べたサーフェス。表・図・メリットとデメリットで案を見比べるためのもので、答え待ちの間だけ出る
 - **注記**: **選択肢そのものは入力欄の箱に出たまま**（押す場所と読む場所を分ける。
   `docs/architecture/display.md` 4.2）。箱で触れた選択肢のカードが比較の面で光る
 - **注記**: `preview` は `AskUserQuestion` が元から持つ項目名なので**そのまま使う**。描くのは

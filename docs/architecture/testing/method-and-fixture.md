@@ -17,10 +17,10 @@
 | コマンドの受け手（`createSocketRouter`） | 偽の `CommandSession`（姿は本物の reducer で畳む）を渡し、断る条件（契約の `meta`）・受け手が手続きへ渡す入力・失敗の定型文の理由・流すイベント・頼む起こし直しの中身                               | `test/router*.test.ts`                                       |
 | `server`（ws）                           | 購読 → `hello` が先に届き、押した順に取りこぼさず流れる、切断で購読が外れる、トークン無しは 403、Origin 違いは 403、コマンド → 受け手が呼ばれる                                                     | `test/server/view-server/adapter/rpc/session-socket.test.ts` |
 | browser の部品                           | Vitest + `happy-dom` + `@testing-library/react`。**役割と文言で当てる**（HTML の文字列一致はしない）                                                                                                | `test/browser/**`                                            |
-| 層の検査                                 | 層の辺・機能どうしの辺・browser の箱と領域の辺（`docs/architecture.md`「全体構成」）。外部ツールは増やさない                                                                                        | `test/architecture/`                                         |
+| 層の検査                                 | 層のエッジ・機能どうしのエッジ・browser の箱と領域のエッジ（`docs/architecture.md`「全体構成」）。外部ツールは増やさない                                                                            | `test/architecture/`                                         |
 | 関数の並びの検査                         | `export` する関数が `export` しない関数より前に並ぶ（`docs/coding-standards.md`「関数の並び順」）                                                                                                   | `test/architecture/function-order.test.ts`                   |
 | 画面の見た目                             | **fake driver で起こした tsukumo に Playwright**（`webapp-testing` スキル）。数値で読めるものは CDP で読む。色・間合いは人の目                                                                      | `scripts/`（本体から呼ばれない）                             |
-| 状態のカタログ                           | 疑似セッションの場面を名指しして起こし直し、広い窓と狭い窓で撮って索引 HTML に並べる（`TSUKUMO_FAKE_SCENE`）                                                                                        | `scripts/capture/capture-catalog.ts`                         |
+| 状態のカタログ                           | 疑似セッションの場面を名指しして起こし直し、広いビューポートと狭いビューポートで撮って索引 HTML に並べる（`TSUKUMO_FAKE_SCENE`）                                                                    | `scripts/capture/capture-catalog.ts`                         |
 | E2E                                      | **fake driver で起こした tsukumo を Playwright の headless shell で開き、利用者に見える流れを1本ずつと、実ブラウザでしか確かめられないもの（寸法・入力・サーバとの往復）を確かめる**（下の「E2E」） | `test/e2e/`                                                  |
 
 - **`server.ts` / `session-socket.ts` はテストする。** 「描く」側の入り口だが、配った結果は HTTP と WebSocket の
@@ -54,10 +54,10 @@
 出し分けと DOM の細部は部品・フックの単体で守り、見た目（色・崩れ・間合い）は目視で確かめる。**
 1つの流れに E2E を2本以上置くのは、その1本が次のどれかを名指せるときだけ: 実ブラウザの寸法・計算されたスタイル・
 メディアクエリ・コンテナクエリ・当たり判定／画面の操作がサーバへ届いて書き込み・起こし直し・置き場の配信を経て画面が変わる往復／
-contenteditable（CodeMirror）・IME の確定。同じ場面と窓で測れるものは1本にまとめる。E2E が判定に
+contenteditable（CodeMirror）・IME の確定。同じ場面とビューポートで測れるものは1本にまとめる。E2E が判定に
 使うのは DOM の構造と WebSocket のメッセージの列だけで、スクリーンショットは目視の添え物（判定しない）。
 目視の手順は下の「手で確かめること」。足場（起こす・開く・成果物を書く・比べる）は
-`test/e2e/room-fixture.ts` の `test` を入口にし（部屋を組み立てる `scenario-open.ts`・待ちの `scenario-wait.ts`・窓の大きさの `scenario-viewport.ts` を読む。成果物・DOM の木・記録などは同じ置き場の概念ごとのファイル）、
+`test/e2e/room-fixture.ts` の `test` を入口にし（部屋を組み立てる `scenario-open.ts`・待ちの `scenario-wait.ts`・ビューポートの大きさの `scenario-viewport.ts` を読む。成果物・DOM の木・記録などは同じ置き場の概念ごとのファイル）、
 シナリオは入口を呼ぶだけにする。
 
 ### フィクスチャ

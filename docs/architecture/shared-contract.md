@@ -71,9 +71,9 @@
 同じ store に相乗りさせて配る。
 
 **畳み込みの規則は `shared` の側が持つ**（`speeches.slice(-1)`・`speechCalledInTurn`・
-`MAX_SESSION_STATE_TURNS` の窓）。**記録（`SessionRecord`）を依頼の区切りでターンに割るのは
-`src/shared/session/turn.ts` の `splitIntoTurns` だけ**で、メインビュー・ターンごとのセリフ・依頼の手順・記録の
-窓はその並びの上で自分の形に変え、依頼より前の記録（`PRE_REQUEST_TURN_ID`）をどう扱うかも各所が決める。
+`MAX_SESSION_STATE_TURNS` の記録ウィンドウ）。**記録（`SessionRecord`）を依頼の区切りでターンに割るのは
+`src/shared/session/turn.ts` の `splitIntoTurns` だけ**で、メインビュー・ターンごとのセリフ・依頼の手順・記録
+ウィンドウはその並びの上で自分の形に変え、依頼より前の記録（`PRE_REQUEST_TURN_ID`）をどう扱うかも各所が決める。
 
 **成果は `SessionState` に入れない。** 成果の画面の中身は、画面が開いているときにブラウザが読み取りの
 手続き（`achievement.day` / `achievement.calendar`）で取りに行く（状態に入れるとどの画面でもフレームと
@@ -96,7 +96,7 @@
   来ないので、応答が届いたことを合図の代わりにする
 - **`rateLimit`**（`src/shared/session-driver/rate-limit.ts`）は**セッションを通した**状態で、次の
   `rate-limit-changed` が来るまで持つ（戻る時刻を過ぎても、戻ったかは次の知らせでしか分からない）
-- **失敗の理由**は `turn` の `finished` の `ending`（次の依頼まで）と、記録の `turn-failure`（記録の窓から
+- **失敗の理由**は `turn` の `finished` の `ending`（次の依頼まで）と、記録の `turn-failure`（記録ウィンドウから
   落ちるまで）の2か所に残す
 
 **記録の時刻**。記録のうち**依頼（`request`）とセリフ（`speech`）の2種類だけ**が `time: RecordTime` を

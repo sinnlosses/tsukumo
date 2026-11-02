@@ -16,7 +16,7 @@
 | highlight.js                                                       | `rehype-highlight`（`lowlight` の common 言語）を束ねる。テーマ CSS だけ `/vendor/` で配る    | 束ねる / `/vendor/` |
 | mermaid（5.3MB）・Chart.js                                         | **束ねず `/vendor/` で配る**。`MermaidBlock` / `ChartBlock` が `useEffect` で描く（下の段落） | `/vendor/`          |
 
-**Chart.js はその図が窓の少し手前に見えたときだけ `<script>` で読み、mermaid は図が現れたら手すきに読み込みだけ先に済ませて、描くのは窓の少し手前に見えてから。** mermaid は同じソースの図の SVG を覚え、描き直さない。描き終わるまで、ソースから見積もった高さの枠に「図を描いています」を出す。
+**Chart.js はその図がビューポートの少し手前に見えたときだけ `<script>` で読み、mermaid は図が現れたら手すきに読み込みだけ先に済ませて、描くのはビューポートの少し手前に見えてから。** mermaid は同じソースの図の SVG を覚え、描き直さない。描き終わるまで、ソースから見積もった高さの枠に「図を描いています」を出す。
 
 `/vendor/<name>` が返すのは `node_modules` の実ファイル（`src/server/view-server/adapter/vendor-asset.ts`）で、
 **CDN からは読まない**。
@@ -37,7 +37,7 @@ CSS は分けず1本。サーバは起動時にすべてメモリに読み、`/a
 import するので、食い違うと入口を別のモジュールとして読み React が2つ動く）。
 
 - 使い手は Markdown の部品の入口 `markdown.tsx`（`<Report>`・お伺いと質問の記録の preview）と `deferred-task-body.tsx`
-  （タスクのモーダルの詳細・サイドバーののぞき窓）を使い、描画一式の `renderer/markdown-renderer.tsx`・`task-body.tsx` を直接
+  （タスクのモーダルの詳細・サイドバーのプレビュー）を使い、描画一式の `renderer/markdown-renderer.tsx`・`task-body.tsx` を直接
   import しない（すると一式が入口に戻る）。読み込みの状態の持ち方は2つとも `hooks/deferred-module.ts` の `deferredModule`。
   外から引く入口の `markdown.tsx` が遅延読み込みの側で、描画一式は中の `renderer/` に入るので、描画一式を外から直に
   import すると部品の境界の検査（`test/architecture/browser-box.test.ts` の `componentBoundaryViolations`）が落とし、入口から
@@ -108,8 +108,8 @@ CSS に無い名前は `undefined` のままなので、**綴りを間違える�
   上書きされ、閉じたときのボタンの上に一覧が残って隣のボタンのクリックを塞ぐ。**`display` は `:popover-open` の中だけに書く**
 - `<option>` に手で `aria-selected` を付けると、↑↓ で動いても Enter で値が確定しない。
   **選ばれた行の見た目は `:checked` で当てる**
-- `position-area` を指定しないと、窓の右端に近いボタンの一覧が窓の外へはみ出る。
-  **`position-area: bottom span-left` で左へ吊り、`margin` で窓の縁から離す**。柱の中など吊る向きが
+- `position-area` を指定しないと、ビューポートの右端に近いボタンの一覧がビューポートの外へはみ出る。
+  **`position-area: bottom span-left` で左へ吊り、`margin` でビューポートの縁から離す**。柱の中など吊る向きが
   違うボタンは、修飾子の class で上書きする
 
 **押せる要素（`button`・`a`・`summary` など）を足す・直すときは、高さも幅も 24px 以上にする**（約束は `docs/architecture/screen-design/layout.md` 13.4 の「押せるものは 24x24 以上」。実ブラウザで測らないと分からず単体では拾えないので、守っているのは E2E の `test/e2e/target-size.test.ts`）。足したら `pnpm run test:e2e test/e2e/target-size.test.ts` を単独で流してから全件へ進む。
@@ -163,7 +163,7 @@ CSS に無い名前は `undefined` のままなので、**綴りを間違える�
   振る舞いまで。**対応表は全行を写さず、軸ごとに1つの値で配線だけを見る**（表の全域は `satisfies`、
   class の綴りは CSS の型宣言が守る）。**E2E の期待値に出る属性（`aria-*`・`type`）の受け渡しは単体で
   重ねない**。**色や寸法が効いているか（絵）は守らない**（置き換えのたびに目視で確かめる）
-- **部品の振る舞いは呼び手の単体で再演しない**。`Button` の押せないときに `onClick` を呼ばない・
+- **部品の振る舞いは呼び手の単体でなぞらない**。`Button` の押せないときに `onClick` を呼ばない・
   ネイティブの `disabled` を持たずフォーカスが残る、`Dialog` の `open`・Esc・backdrop・中のクリックは
   部品のテストが持つ。呼び手の単体が見るのは、押せない条件（`aria-disabled`）と `onClose` の配線を
   1つずつだけ

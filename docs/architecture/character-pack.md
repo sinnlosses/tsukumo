@@ -96,7 +96,7 @@ characters/<name>/
   `persona.md` が無いパックでも、書けば作る。上限は 8000 文字。効くのは次に起こすセッションから。
   作るときもペルソナを受け取り、空でなければ `persona.md` を書く
 - **書き込まない手続きが1つある: 立ち絵からの生成（`generateFromPortrait`）。** 作るダイアログに置いた
-  立ち絵1枚から、id・名前・差し色2つ・ペルソナを Opus の使い捨ての `query()` 1回（共有の箱の `sdk-structured-query.ts`）で
+  立ち絵1枚から、id・名前・差し色2つ・ペルソナを Opus の使い捨ての `query()` 1回（共有モジュールの `sdk-structured-query.ts`）で
   書かせて返すだけで、ファイルには触らない。入力は利用者の画像1枚だけ（会話・人格・ほかのパックを混ぜない）。
   画像の形式と上限は依頼に添える画像と同じ `parsePromptImage` で見るので、`.svg` は画面が `<canvas>` で png に
   直してから送る（外部の変換コマンドは使わない）。値を返すので `/ws` の上で応答を待つ（「コマンドの受け手と
@@ -167,7 +167,7 @@ characters/<name>/
 - **パックのディレクトリの中に置かない**（覚えたことを除く）。会話に由来する文章を混ぜると**パックを
   渡すことが会話を渡すことになる**。覚えたことはキャラクターの属性1行で、「画面から作るときの置き場と受け取り方」の道に乗る
 - **`cwd` に依存させない**。**鍵はパックの名前1つだけ**で、`parseCharacterPackName` を通した
-  `CharacterPackName` だけをパスに組む。日付のファイルとほかのファイルは**名前で見分ける**（窓の側は `YYYY-MM-DD.jsonl` にだけ
+  `CharacterPackName` だけをパスに組む。日付のファイルとほかのファイルは**名前で見分ける**（ウィンドウの側は `YYYY-MM-DD.jsonl` にだけ
   当たる正規表現でファイルを選ぶ）
 - **契約の型は `session-driver/core/session-driver.ts`、ファイルに触るのは上の adapter、結ぶのは配線層
   （`src/session-start.ts` と `src/wiring/`）。** 置き場を差し替えられる `root` 引数も同じ手で持つ（テストがホームを
@@ -180,5 +180,5 @@ characters/<name>/
   **定着の契機（雑談・仕事のターンの終わり・同時に1本）は `session-manager` が持つ**。走っているかどうかの1ビットは
   駆動の代ではなく `session-manager` 自身が持つ（起こし直しで代だけを作り直しても、同じ行を2本で畳まない）。
   **プロセスをまたいだ1本は錠のファイル**で持つ（形と取り直しは `docs/architecture/chat-mode.md` 4.9
-  「窓から溢れた会話は定着で畳む」）。
+  「ウィンドウから溢れた会話は定着で畳む」）。
   容量の表と採点の係数は `chat` と `system-prompt` が読むので `src/server/chat/core/memory/chat-memory-budget.ts`

@@ -13,14 +13,14 @@
 ```
 src/                          配線（composition root）。cli.ts（入口）・main.ts（起動の段取り）・
                               router.ts（全機能の手続きを束ねる）ほか、起動と接続を進める数ファイル
-  wiring/<機能>.ts            セッションの配線を機能ごとに組み立てる（上の「サーバの機能と、機能どうしの辺」）
+  wiring/<機能>.ts            セッションの配線を機能ごとに組み立てる（上の「サーバの機能と、機能どうしのエッジ」）
   types/                      どの層にも属さない ambient 宣言（import されない *.d.ts）だけを置く
   shared/                     契約・イベント・状態・reducer・zod スキーマ（両側が読む語彙）。直下はプロトコルだけ
     <機能>/                   機能の語彙。名前はサーバの機能と同じ（上の「shared の機能」）
     contract/<名前>.ts        手続きの契約（形・断る条件の meta）
   server/
     core/ adapter/            どの機能にも属さない共有の判断・境界
-    <機能>/core/ adapter/     機能の判断・境界（上の「サーバの機能と、機能どうしの辺」）
+    <機能>/core/ adapter/     機能の判断・境界（上の「サーバの機能と、機能どうしのエッジ」）
   browser/                    React の部品・hooks・CSS（下の「`src/browser/` の箱と、置く基準」）
 test/                         src/<相対パス>.ts → test/<相対パス>.test.ts
 fixture/fake-session/         疑似セッション（索引 index.json と、場面1つにつき <場面名>.json。TSUKUMO_FAKE_SESSION の既定）
