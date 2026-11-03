@@ -10,6 +10,7 @@
 
 import type { BackgroundTask } from "../../../shared/session-driver/background-task.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
+import type { LatestWorkPlan } from "../../../shared/session/work-plan.ts"
 import { createReportInheritance } from "../../report/core/review/report-inheritance.ts"
 import { createReportReview, type ReportVerdict } from "../../report/core/review/report-review.ts"
 import type { ReportDraft } from "../../report/core/rules/draft.ts"
@@ -55,6 +56,10 @@ export type CallReview = {
   readonly gateRaised: () => boolean
   /** その依頼で受け付け済みの `work_plan` が無いあいだ真（`WorkPlanReview.planMissing`）。 */
   readonly planMissing: () => boolean
+  /** 受け付け済みのワークプラン（`WorkPlanReview.latestPlan`）。 */
+  readonly latestPlan: () => LatestWorkPlan
+  /** 台本の写しでの agent のいる段の題（`WorkPlanReview.workflowAgentPhase`）。 */
+  readonly workflowAgentPhase: (agentId: string) => string | undefined
   /** 委譲ゲートの拒否文に足す帯の位置の文。ワークプランが無ければ空。 */
   readonly bandPosition: () => string
   /** 返却を運ぶメインの入力に添える注記を取り出す（`WorkPlanReview.takeHandbackNote`）。 */
@@ -126,6 +131,8 @@ export function createCallReview(): CallReview {
     },
     gateRaised: workPlanReview.gateRaised,
     planMissing: workPlanReview.planMissing,
+    latestPlan: workPlanReview.latestPlan,
+    workflowAgentPhase: workPlanReview.workflowAgentPhase,
     bandPosition: workPlanReview.bandPosition,
     takeHandbackNote: workPlanReview.takeHandbackNote,
     handbackNotePending: workPlanReview.handbackNotePending,

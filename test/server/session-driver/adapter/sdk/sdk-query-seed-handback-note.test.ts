@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { handbackNoteHooks } from "../../../../../src/server/session-driver/adapter/sdk/sdk-query-seed.ts"
+import { handbackNoteHooks } from "../../../../../src/server/session-driver/adapter/sdk/sdk-handback-note-hook.ts"
 import {
   type CallReview,
   createCallReview,

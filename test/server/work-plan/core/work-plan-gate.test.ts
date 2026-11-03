@@ -2,8 +2,11 @@ import { describe, expect, it } from "vitest"
 
 import {
   judgeEditAgainstMissingPlan,
+  judgeImplementerStop,
   judgeToolAgainstGate,
+  judgeWorkflowPhaseIds,
 } from "../../../../src/server/work-plan/core/work-plan-gate.ts"
+import type { LatestWorkPlan } from "../../../../src/shared/session/work-plan.ts"
 
 describe("judgeEditAgainstMissingPlan", () => {
   it.each(["Edit", "Write"])(
@@ -95,5 +98,84 @@ describe("judgeToolAgainstGate", () => {
         `${bare.reason}プログレスバーの今のフェーズは 3/4 架空の段。`,
       )
     }
+  })
+})
+
+const plan: LatestWorkPlan = {
+  kind: "planned",
+  phases: ["計画", "実装1", "実装2", "受け入れ", "振り返り"],
+  phaseIds: ["plan", "impl-1", "impl-2", "accept", "retrospect"],
+  current: 1,
+  finishedInGroup: [],
+  phaseSummary: "",
+  delegatedRange: { kind: "range", first: 1, count: 2 },
+  skippedPhases: [],
+  awaitingSummary: { kind: "none" },
+}
+
+describe("judgeImplementerStop", () => {
+  it("実装の範囲の最後の段が済んでいる agent は終われる", () => {
+    expect(judgeImplementerStop("impl-1", { ...plan, current: 3 }, false).kind).toBe("allow")
+  })
+
+  it("一度止められたあとの終わりは通す（plan-check の agent や stopped の実装役を止め続けない）", () => {
+    expect(judgeImplementerStop("impl-1", { ...plan, current: 1 }, true).kind).toBe("allow")
+  })
+
+  it("途中の agent は、残りの段の id を添えて止める", () => {
+    const verdict = judgeImplementerStop("impl-1", { ...plan, current: 2 }, false)
+
+    expect(verdict.kind).toBe("block")
+    if (verdict.kind === "block") {
+      expect(verdict.reason).toContain('["impl-2"]')
+    }
+  })
+
+  it("実装の範囲の外の agent と、写しに無い agent は止めない", () => {
+    expect(judgeImplementerStop("accept", plan, false).kind).toBe("allow")
+    expect(judgeImplementerStop(undefined, plan, false).kind).toBe("allow")
+  })
+})
+
+describe("judgeWorkflowPhaseIds", () => {
+  it("並びが一致すれば通す（{ id, name } の形でも）", () => {
+    expect(
+      judgeWorkflowPhaseIds(
+        "Workflow",
+        {
+          args: {
+            phaseIds: [
+              { id: "plan", name: "計画" },
+              "impl-1",
+              "impl-2",
+              { id: "accept", name: "受け入れ" },
+              "retrospect",
+            ],
+          },
+        },
+        false,
+        plan,
+      ).kind,
+    ).toBe("allow")
+  })
+
+  it("並びが違えば、正しい並びを添えて拒む", () => {
+    const verdict = judgeWorkflowPhaseIds(
+      "Workflow",
+      { args: { phaseIds: ["impl-1", "accept"] } },
+      false,
+      plan,
+    )
+
+    expect(verdict.kind).toBe("deny")
+    if (verdict.kind === "deny") {
+      expect(verdict.reason).toContain('["plan","impl-1","impl-2","accept","retrospect"]')
+    }
+  })
+
+  it("phaseIds が無い起動は通す", () => {
+    expect(judgeWorkflowPhaseIds("Workflow", { args: { taskId: "T" } }, false, plan).kind).toBe(
+      "allow",
+    )
   })
 })

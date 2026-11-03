@@ -56,12 +56,13 @@ import { runEventEffect } from "./event-effect-run.ts"
 import { createRtkRewrite } from "./rtk-rewrite.ts"
 import { runAskGuard, withAskGuard } from "./sdk-ask-guard.ts"
 import { readContextUsage } from "./sdk-context-usage.ts"
+import { handbackNoteHooks } from "./sdk-handback-note-hook.ts"
+import { implementerStopHooks } from "./sdk-implementer-stop-hook.ts"
 import { runLapHook, withLapHook } from "./sdk-lap-hook.ts"
 import { readPlanUsage } from "./sdk-plan-usage.ts"
 import { createPromptStream, type PromptContentBlock, toImageBlocks } from "./sdk-prompt-stream.ts"
 import {
   buildQuerySeedOptions,
-  handbackNoteHooks,
   postToolUseHooks,
   preToolUseHooks,
   stopHooks,
@@ -171,8 +172,10 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
               options.mode.kind === "work" ? callReview.planMissing : undefined,
               toolHookClock,
               options.onEvent,
+              callReview.latestPlan,
             ),
             ...postToolUseHooks(options.onEvent, externalToolMark, toolHookClock, diagnose),
+            ...implementerStopHooks(callReview),
             ...handbackNoteHooks(callReview, () => {
               failedWithoutError("handback-head-mismatch")
             }),

@@ -85,6 +85,10 @@ export type WorkPlanReview = {
   readonly gateRaised: () => boolean
   /** 受け付け済みのワークプランが無いあいだ真。差し戻されただけでは真のまま、`request` で真に戻る。 */
   readonly planMissing: () => boolean
+  /** 受け付け済みのワークプラン（返却や台本の写しで進めた位置を含む）。無ければ `none`。 */
+  readonly latestPlan: () => LatestWorkPlan
+  /** 台本の写しで、この agent がいる段の題（段の id）。写しに無ければ undefined。 */
+  readonly workflowAgentPhase: (agentId: string) => string | undefined
   /** 受け付け済みのワークプランの委譲先のフェーズの範囲。ワークプランが無ければ `none`。 */
   readonly delegatedRange: () => DelegatedRange
   /** 受け付け済みのワークプランのプログレスバーの位置の文（返却で進めた位置を含む）。ワークプランが無ければ空。 */
@@ -124,6 +128,8 @@ export function createWorkPlanReview(): WorkPlanReview {
   let resultCallers: ReadonlySet<string> = new Set()
   // 走り出して、完了の知らせがまだ届いていない台本（`Workflow`）の `task_id`。
   let workflowTasks: ReadonlySet<string> = new Set()
+  // 台本の写しで見えた agent の id と、いる段の題。
+  const workflowAgentPhases = new Map<string, string>()
 
   /** `plan` の飛ばした段に、`phase_result` で付いた印のうち `plan` で済んでいる段を足す。 */
   const withResultMarks = (plan: WorkPlan): WorkPlan => {
@@ -245,6 +251,8 @@ export function createWorkPlanReview(): WorkPlanReview {
     },
     gateRaised: () => gateRaised,
     planMissing: () => accepted.kind === "none",
+    latestPlan: () => accepted,
+    workflowAgentPhase: (agentId) => workflowAgentPhases.get(agentId),
     delegatedRange: () =>
       accepted.kind === "planned" ? accepted.delegatedRange : NO_DELEGATED_RANGE,
     bandPosition: () => bandPositionText(accepted),
@@ -275,8 +283,13 @@ export function createWorkPlanReview(): WorkPlanReview {
                 event,
               ]
         }
-        case "report":
         case "workflow-progress":
+          event.progress.agents.forEach((agent) => {
+            workflowAgentPhases.set(agent.agentId, agent.phaseTitle)
+          })
+          accepted = nextWorkPlan(accepted, event)
+          return [event]
+        case "report":
           accepted = nextWorkPlan(accepted, event)
           return [event]
         case "phase-result-called":

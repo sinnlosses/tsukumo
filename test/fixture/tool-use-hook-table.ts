@@ -21,6 +21,7 @@ import {
   type ToolHookDurationLap,
 } from "../../src/server/session-driver/core/tool-hook-clock.ts"
 import type { SessionEvent } from "../../src/shared/session/session-event.ts"
+import type { LatestWorkPlan } from "../../src/shared/session/work-plan.ts"
 
 /**
  * Claude Code がツールのイベントの matcher をツール名に当てる規則。
@@ -47,6 +48,7 @@ export type PreToolUseSetup = {
   readonly planMissing: (() => boolean) | undefined
   readonly hookClock: ToolHookClock
   readonly onEvent: (event: SessionEvent) => void
+  readonly latestPlan: () => LatestWorkPlan
 }
 
 /** 渡さなかった口を既定（印は下り、差し替えず、時計は 0、出来事は捨てる）で埋めた `preToolUseHooks` の表。 */
@@ -61,6 +63,7 @@ export function preTable(
     setup.planMissing,
     setup.hookClock ?? createToolHookClock(() => 0),
     setup.onEvent ?? (() => {}),
+    setup.latestPlan ?? (() => ({ kind: "none" })),
   )
 }
 
