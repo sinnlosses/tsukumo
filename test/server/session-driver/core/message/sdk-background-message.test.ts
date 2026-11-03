@@ -111,6 +111,8 @@ describe("バックグラウンドタスク（実測で届いた順: background_
       index: 0,
       state: "start",
       agentId: "agent-1",
+      phaseIndex: 0,
+      phaseTitle: "架空の段A",
       label: "架空の名札",
       lastToolSummary: "架空の要約",
       ...overrides,
@@ -133,7 +135,7 @@ describe("バックグラウンドタスク（実測で届いた順: background_
         { type: "workflow_phase", index: 0, title: "架空の段A" },
         agent({ index: 0, agentId: "agent-1", state: "start" }),
         { type: "workflow_phase", index: 1, title: "架空の段B" },
-        agent({ index: 1, agentId: "agent-2", state: "done" }),
+        agent({ index: 1, agentId: "agent-2", state: "done", phaseTitle: "架空の段B" }),
         agent({ index: 2, agentId: "agent-0", state: "error" }),
         agent({ index: 3, agentId: "agent-3", state: "progress" }),
       ]
@@ -148,10 +150,10 @@ describe("バックグラウンドタスク（実測で届いた順: background_
               { index: 1, title: "架空の段B" },
             ],
             agents: [
-              { index: 0, agentId: "agent-1", state: "start" },
-              { index: 1, agentId: "agent-2", state: "done" },
-              { index: 2, agentId: "agent-0", state: "error" },
-              { index: 3, agentId: "agent-3", state: "progress" },
+              { index: 0, agentId: "agent-1", state: "start", phaseTitle: "架空の段A" },
+              { index: 1, agentId: "agent-2", state: "done", phaseTitle: "架空の段B" },
+              { index: 2, agentId: "agent-0", state: "error", phaseTitle: "架空の段A" },
+              { index: 3, agentId: "agent-3", state: "progress", phaseTitle: "架空の段A" },
             ],
           },
         },
@@ -168,7 +170,7 @@ describe("バックグラウンドタスク（実測で届いた順: background_
         agent({ index: 1, state: "paused" }),
         agent({ index: undefined }),
         agent({ index: 3, agentId: 7 }),
-        agent({ index: 4, agentId: "agent-4", state: "progress" }),
+        agent({ index: 4, agentId: "agent-4", state: "progress", phaseTitle: 4 }),
         { type: "workflow_log", index: 5, title: "架空のログ", agentId: "agent-5", state: "start" },
         { index: 6, title: "type の無い要素" },
         "壊れた要素",
@@ -181,7 +183,7 @@ describe("バックグラウンドタスク（実測で届いた順: background_
           progress: {
             taskId: "wf-1",
             phases: [{ index: 3, title: "残る段" }],
-            agents: [{ index: 4, agentId: "agent-4", state: "progress" }],
+            agents: [{ index: 4, agentId: "agent-4", state: "progress", phaseTitle: "" }],
           },
         },
       ])
@@ -203,7 +205,7 @@ describe("バックグラウンドタスク（実測で届いた順: background_
           progress: {
             taskId: "wf-1",
             phases: [],
-            agents: [{ index: 0, agentId: "agent-1", state: "start" }],
+            agents: [{ index: 0, agentId: "agent-1", state: "start", phaseTitle: "架空の段A" }],
           },
         },
       ])

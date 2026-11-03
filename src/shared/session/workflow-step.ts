@@ -25,6 +25,7 @@ export const WORKFLOW_AGENT_STATES = [
 /**
  * ワークフロースクリプト1本の段と agent の写し（SDK の `task_progress` の `workflow_progress`）。
  * `agents` は agent の hook の `agent_id` と突き合わせる id を持つものだけで、入力の順のまま。
+ * agent の `phaseTitle` はその agent が走る段の題で、欄が無いか文字列でなければ空の文字列。
  */
 export type WorkflowProgress = {
   readonly taskId: string
@@ -33,6 +34,7 @@ export type WorkflowProgress = {
     readonly index: number
     readonly agentId: string
     readonly state: WorkflowAgentState
+    readonly phaseTitle: string
   }[]
 }
 

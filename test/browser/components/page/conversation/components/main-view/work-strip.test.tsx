@@ -34,6 +34,7 @@ function plan(
     delegatedRange: { kind: "none" },
     skippedPhases: [],
     awaitingSummary: { kind: "none" },
+    phaseIds: [],
     phases,
     current,
     finishedInGroup: [],

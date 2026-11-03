@@ -13,6 +13,7 @@
       "afterMs": 100,
       "event": {
         "kind": "work-plan",
+        "phaseIds": [],
         "delegatedRange": {
           "kind": "none"
         },
@@ -50,6 +51,7 @@
       "afterMs": 500,
       "event": {
         "kind": "work-plan",
+        "phaseIds": [],
         "delegatedRange": {
           "kind": "none"
         },
@@ -67,6 +69,7 @@
       "afterMs": 700,
       "event": {
         "kind": "work-plan",
+        "phaseIds": [],
         "delegatedRange": {
           "kind": "none"
         },

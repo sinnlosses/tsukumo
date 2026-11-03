@@ -116,6 +116,7 @@ function planAt(
 ): WorkPlan {
   return {
     phases: SERIAL,
+    phaseIds: [],
     current,
     finishedInGroup: [],
     phaseSummary,

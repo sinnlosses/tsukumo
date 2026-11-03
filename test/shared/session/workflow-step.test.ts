@@ -30,7 +30,12 @@ const progressOf = (taskId: string, ...agentIds: readonly string[]): SessionEven
   progress: {
     taskId,
     phases: [{ index: 0, title: "架空の段" }],
-    agents: agentIds.map((agentId, index) => ({ index, agentId, state: "progress" })),
+    agents: agentIds.map((agentId, index) => ({
+      index,
+      agentId,
+      state: "progress",
+      phaseTitle: "架空の段",
+    })),
   },
 })
 const stepStarted = (agentId: string, name = "Bash"): SessionEvent => ({
@@ -58,8 +63,8 @@ describe("applySessionEvent（台本の段と agent の写し）", () => {
     )
 
     expect(progresses.map((progress) => [progress.taskId, progress.agents])).toEqual([
-      ["wf-2", [{ index: 0, agentId: "agent-3", state: "progress" }]],
-      ["wf-1", [{ index: 0, agentId: "agent-4", state: "progress" }]],
+      ["wf-2", [{ index: 0, agentId: "agent-3", state: "progress", phaseTitle: "架空の段" }]],
+      ["wf-1", [{ index: 0, agentId: "agent-4", state: "progress", phaseTitle: "架空の段" }]],
     ])
   })
 

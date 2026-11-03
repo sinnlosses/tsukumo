@@ -248,6 +248,7 @@ describe("useWorkStrip（回る弧）", () => {
       delegatedRange: { kind: "none" },
       skippedPhases: [],
       awaitingSummary: { kind: "none" },
+      phaseIds: [],
       phases: ["架空の段A", ["架空の段B", "架空の段C"]],
       current: 1,
       finishedInGroup: [],

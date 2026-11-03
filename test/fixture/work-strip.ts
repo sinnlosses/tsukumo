@@ -20,6 +20,7 @@ export const plan: Extract<SessionEvent, { readonly kind: "work-plan" }> = {
   skippedPhases: [],
   awaitingSummary: { kind: "none" },
   phases: ["架空の段A", "架空の段B"],
+  phaseIds: [],
   current: 0,
   finishedInGroup: [],
   phaseSummary: "",

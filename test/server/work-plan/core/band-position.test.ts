@@ -17,6 +17,7 @@ const planned = (overrides: Partial<Parameters<typeof workPlanOf>[0]>) =>
     delegatedRange: { kind: "none" },
     skippedPhases: [],
     awaitingSummary: { kind: "none" },
+    phaseIds: [],
     ...overrides,
   })
 

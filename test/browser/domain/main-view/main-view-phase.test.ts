@@ -24,6 +24,7 @@ describe("mainViewTurns（段が移ったときの中間レポート）", () => 
     delegatedRange: { kind: "none" },
     skippedPhases: [],
     awaitingSummary: { kind: "none" },
+    phaseIds: [],
     phases: names,
     current,
     finishedInGroup: [],

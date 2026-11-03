@@ -18,6 +18,7 @@ export function planned(
   return {
     kind: "planned",
     phases,
+    phaseIds: [],
     current,
     finishedInGroup,
     phaseSummary: "",
@@ -35,6 +36,7 @@ export function next(
 ): WorkPlan {
   return {
     phases,
+    phaseIds: [],
     current,
     finishedInGroup,
     phaseSummary,

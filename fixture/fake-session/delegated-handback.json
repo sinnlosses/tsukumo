@@ -13,6 +13,7 @@
       "afterMs": 100,
       "event": {
         "kind": "work-plan",
+        "phaseIds": [],
         "phases": ["計画を確かめる", "委譲先のフェーズ1", "委譲先のフェーズ2", "受け入れる"],
         "current": 1,
         "finishedInGroup": [],

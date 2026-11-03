@@ -408,3 +408,30 @@ describe("WorkPlanReview の phase_result", () => {
     expect(emitted(review, ranged(3, SUMMARY))).toEqual(["架空の実装A"])
   })
 })
+
+describe("WorkPlanReview の台本の写し", () => {
+  it("写しはそのまま流し、段の題が段の id に当たる agent で帯の位置が進む", () => {
+    const review = createWorkPlanReview()
+    review.pass(REQUEST)
+    review.judge({
+      phases: [
+        { id: "plan", name: "架空の計画" },
+        { id: "impl-1", name: "架空の実装A" },
+        { id: "accept", name: "架空の受け入れ" },
+      ],
+      current: 0,
+    })
+    const progress: SessionEvent = {
+      kind: "workflow-progress",
+      progress: {
+        taskId: "wf-1",
+        phases: [],
+        agents: [{ index: 0, agentId: "agent-1", state: "start", phaseTitle: "accept" }],
+      },
+    }
+
+    expect(review.bandPosition()).toContain("架空の計画")
+    expect(review.pass(progress)).toEqual([progress])
+    expect(review.bandPosition()).toContain("架空の受け入れ")
+  })
+})

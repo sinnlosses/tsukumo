@@ -207,6 +207,7 @@ describe("toRestoredEvents", () => {
       {
         kind: "work-plan",
         phases,
+        phaseIds: [],
         current: 0,
         finishedInGroup: [],
         phaseSummary: "",
@@ -217,6 +218,7 @@ describe("toRestoredEvents", () => {
       {
         kind: "work-plan",
         phases,
+        phaseIds: [],
         current: 1,
         finishedInGroup: [],
         phaseSummary: "架空のまとめ。",

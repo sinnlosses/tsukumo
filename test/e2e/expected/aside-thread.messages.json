@@ -63,6 +63,7 @@
     "at": 1768438800000,
     "event": {
       "kind": "work-plan",
+      "phaseIds": [],
       "delegatedRange": {
         "kind": "none"
       },
@@ -85,6 +86,7 @@
     "at": 1768438800000,
     "event": {
       "kind": "work-plan",
+      "phaseIds": [],
       "delegatedRange": {
         "kind": "none"
       },

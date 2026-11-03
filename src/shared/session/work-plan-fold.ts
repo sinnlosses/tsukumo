@@ -14,16 +14,20 @@ import {
   plannedPhasesOf,
   type WorkPlan,
 } from "./work-plan.ts"
+import type { WorkflowProgress } from "./workflow-step.ts"
 
 /** 今のワークプランを動かすイベント。ほかのイベント（`turn-started` も）はワークプランを動かさない。 */
 export type WorkPlanEvent = Extract<
   SessionEvent,
-  { readonly kind: "request" | "work-plan" | "delegate-returned" | "report" }
+  {
+    readonly kind: "request" | "work-plan" | "delegate-returned" | "report" | "workflow-progress"
+  }
 >
 
 /**
  * イベント1件を受けたあとの今のワークプラン。
- * 依頼で忘れ、`work-plan` で置き換え、委譲の返却は {@link advancedByReturn}、フェーズの閉じ方が `finished` の `report` は {@link closedByReport} で畳む。
+ * 依頼で忘れ、`work-plan` で置き換え、委譲の返却は {@link advancedByReturn}、台本の写しは {@link advancedByWorkflowProgress}、
+ * フェーズの閉じ方が `finished` の `report` は {@link closedByReport} で畳む。
  */
 export function nextWorkPlan(plan: LatestWorkPlan, event: WorkPlanEvent): LatestWorkPlan {
   switch (event.kind) {
@@ -33,6 +37,8 @@ export function nextWorkPlan(plan: LatestWorkPlan, event: WorkPlanEvent): Latest
       return withLeadPhasesFinished(plan, workPlanOf(event))
     case "delegate-returned":
       return plan.kind === "none" ? plan : advancedByReturn(plan, event.handback)
+    case "workflow-progress":
+      return plan.kind === "none" ? plan : advancedByWorkflowProgress(plan, event.progress)
     case "report":
       return plan.kind === "none" || event.workPlanClosing !== "finished"
         ? plan
@@ -56,6 +62,7 @@ export function workPlanOf(plan: WorkPlan): PlannedWorkPlan {
   return {
     kind: "planned",
     phases: plan.phases,
+    phaseIds: plan.phaseIds,
     current: plan.current,
     finishedInGroup: plan.finishedInGroup,
     phaseSummary: plan.phaseSummary,
@@ -85,6 +92,25 @@ export type ReturnedPhase =
   | { readonly kind: "finished"; readonly phase: PlannedPhase }
 
 const UNMOVED = { kind: "unmoved" } as const satisfies ReturnedPhase
+
+/** 委譲の返却1件が、段の id を持つワークプランで済んだ段（戻り）かまだの段（飛ばし）を申告したか（段は {@link reportedPhaseOf}）。 */
+export function isOutOfOrderReturn(plan: WorkPlan, handback: DelegateReturn): boolean {
+  const phase = plan.phaseIds.length === 0 ? undefined : reportedPhaseOf(plan, handback)
+  return phase !== undefined && phase.state !== "current"
+}
+
+/** 範囲があり `count` が範囲の段の数と同じ `phase-done`・`phase-skipped` の `phase` に当たる段。当たらなければ undefined。 */
+function reportedPhaseOf(plan: WorkPlan, handback: DelegateReturn): PlannedPhase | undefined {
+  if (
+    (handback.kind !== "phase-done" && handback.kind !== "phase-skipped") ||
+    plan.delegatedRange.kind !== "range" ||
+    plan.delegatedRange.count !== handback.count
+  ) {
+    return undefined
+  }
+  const target = plan.delegatedRange.first + handback.phase - 1
+  return plannedPhasesOf(plan).find((candidate) => candidate.index === target)
+}
 
 /**
  * 範囲を初めて宣言した `work-plan` は、範囲の前の段（計画）を済ませた位置に直す。
@@ -122,15 +148,7 @@ function returnedByReturn(
       readonly phase: PlannedPhase
       readonly advanced: PlannedWorkPlan
     } {
-  if (
-    (handback.kind !== "phase-done" && handback.kind !== "phase-skipped") ||
-    plan.delegatedRange.kind !== "range" ||
-    plan.delegatedRange.count !== handback.count
-  ) {
-    return UNMOVED
-  }
-  const target = plan.delegatedRange.first + handback.phase - 1
-  const phase = plannedPhasesOf(plan).find((candidate) => candidate.index === target)
+  const phase = reportedPhaseOf(plan, handback)
   if (phase === undefined || phase.state !== "current") {
     return UNMOVED
   }
@@ -156,6 +174,39 @@ function returnedByReturn(
 }
 
 /**
+ * 台本の写しで進めたワークプラン。
+ * 写しの agent のうち `phaseTitle` が `phaseIds` のどれかに一致するもの（`state` を問わない）で、平らにした並びのいちばん後ろの段を台本が入った段とする。
+ * その段の要素が今の要素より後ろのときだけ、その要素を今の要素にして前の段をすべて済ませる。
+ * 飛び越えた段に飛ばした印は付けず、段のまとめは空にして直前に済んだ段をまとめ待ちにする。
+ * `workflow_phase` の並びは段の題が起動時に先に振られるので見ない。
+ */
+function advancedByWorkflowProgress(
+  plan: PlannedWorkPlan,
+  progress: WorkflowProgress,
+): PlannedWorkPlan {
+  const entered = Math.max(
+    -1,
+    ...progress.agents.map((agent) => plan.phaseIds.indexOf(agent.phaseTitle)),
+  )
+  const phases = plannedPhasesOf(plan)
+  const target = phases[entered]
+  if (target === undefined || target.entry <= plan.current) {
+    return plan
+  }
+  const lastFinished = phases.findLast((phase) => phase.entry === target.entry - 1)
+  return {
+    ...plan,
+    current: target.entry,
+    finishedInGroup: [],
+    phaseSummary: "",
+    awaitingSummary:
+      lastFinished === undefined
+        ? NO_AWAITING_SUMMARY
+        : { kind: "awaiting", key: lastFinished.key },
+  }
+}
+
+/**
  * `finished` の `report` 1回で閉じたワークプラン。
  * 残りが1段のときだけ、段の並びはそのままで全部の段を終えた位置にする（最後の段のまとめは最終レポートが担うので持たない）。
  * 段が2つ以上残っている・全部の段を終えた位置では `plan` をそのまま返す。
@@ -165,6 +216,7 @@ function closedByReport(plan: PlannedWorkPlan): PlannedWorkPlan {
     ? {
         kind: "planned",
         phases: plan.phases,
+        phaseIds: plan.phaseIds,
         current: plan.phases.length,
         finishedInGroup: [],
         phaseSummary: "",

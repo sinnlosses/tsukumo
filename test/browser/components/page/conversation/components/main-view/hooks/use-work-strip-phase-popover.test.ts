@@ -31,6 +31,7 @@ describe("useWorkStrip（段の吹き出し）", () => {
       delegatedRange: { kind: "none" },
       skippedPhases: [],
       awaitingSummary: { kind: "none" },
+      phaseIds: [],
       phases,
       current,
       finishedInGroup: [],

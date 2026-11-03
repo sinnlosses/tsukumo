@@ -3,6 +3,12 @@
 import { z } from "zod"
 
 import { isBlankText } from "../utils/blank-text.ts"
+import {
+  hasConsistentPhaseIds,
+  phaseElementSchema,
+  phaseIdsOf,
+  phaseNameEntriesOf,
+} from "./work-plan-phase-id.ts"
 
 /** 並列のフェーズ。同時に走る段の名前の並びで、{@link MIN_PHASE_GROUP_SIZE} 個以上の重ならない名前を持つ。 */
 export type PhaseGroup = readonly string[]
@@ -17,9 +23,11 @@ export type WorkPlanEntry = string | PhaseGroup
  * `delegatedRange` は委譲先のフェーズの範囲で、委譲しなければ `none`。
  * `skippedPhases` は済んだ段のうち飛ばした段の名前（同じ名前の段は見分けない）。
  * `awaitingSummary` はまとめ待ちのフェーズ（{@link AwaitingSummary}）。
+ * `phaseIds` は並びを平らにした読み順の段の id で、`work_plan` が id を渡さなければ空。
  */
 export type WorkPlan = {
   readonly phases: readonly WorkPlanEntry[]
+  readonly phaseIds: readonly string[]
   readonly current: number
   readonly finishedInGroup: readonly string[]
   readonly phaseSummary: string
@@ -109,7 +117,7 @@ const phaseNameSchema = z.string().refine((name) => !isBlankText(name))
  */
 export const workPlanShape = {
   phases: z
-    .array(z.union([phaseNameSchema, z.array(phaseNameSchema).min(MIN_PHASE_GROUP_SIZE)]))
+    .array(z.union([phaseElementSchema, z.array(phaseElementSchema).min(MIN_PHASE_GROUP_SIZE)]))
     .min(MIN_WORK_PLAN_PHASES),
   current: z.number().int().min(0),
   finishedInGroup: z.array(z.string()).optional(),
@@ -127,6 +135,7 @@ export const workPlanShape = {
  * `work_plan` の引数の形の正典。
  * 次のどれかなら通らない:
  * 要素が {@link MIN_WORK_PLAN_PHASES} 個より少ない・空白だけの名前がある・
+ * 段の id が一部の段にしか無いか、空白だけか、重なる・
  * 並列のフェーズの中の段が {@link MIN_PHASE_GROUP_SIZE} 個より少ないか名前が重なる・位置が0から要素の数までの整数でない・
  * `finishedInGroup` が今の並列のフェーズの重ならない名前の一部でない・
  * 委譲先のフェーズの範囲が整数でない・並びをはみ出す・並列のフェーズの端をまたぐ・
@@ -134,9 +143,13 @@ export const workPlanShape = {
  * 途中なのに段のまとめが無いことは、ここでは見ず `WorkPlanReview` が `summary-missing` で差し戻す。
  */
 const workPlanSchema = z.object(workPlanShape).superRefine((value, context) => {
-  const { phases, current, finishedInGroup = [], delegatedRange, skippedPhases = [] } = value
+  const { current, finishedInGroup = [], delegatedRange, skippedPhases = [] } = value
+  const phases = phaseNameEntriesOf(value.phases)
   const reject = (path: string): void => {
     context.addIssue({ code: "custom", message: "invalid work plan", path: [path] })
+  }
+  if (!hasConsistentPhaseIds(value.phases)) {
+    reject("phases")
   }
   if (phases.some((entry) => typeof entry !== "string" && new Set(entry).size !== entry.length)) {
     reject("phases")
@@ -200,7 +213,8 @@ export function parseWorkPlanCall(value: unknown): WorkPlanCall | undefined {
   } = parsed.data
   return {
     plan: {
-      phases,
+      phases: phaseNameEntriesOf(phases),
+      phaseIds: phaseIdsOf(phases),
       current,
       finishedInGroup,
       phaseSummary: isBlankText(phaseSummary) ? "" : phaseSummary,

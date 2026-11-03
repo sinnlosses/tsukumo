@@ -22,6 +22,7 @@ describe("applySessionEvent（委譲とワークプラン）", () => {
     delegatedRange: { kind: "none" },
     skippedPhases: [],
     awaitingSummary: { kind: "none" },
+    phaseIds: [],
     phases: PHASES,
     current,
     finishedInGroup: [],
@@ -70,6 +71,7 @@ describe("applySessionEvent（委譲の返却で進むワークプラン）", ()
     delegatedRange,
     skippedPhases: [],
     awaitingSummary: { kind: "none" },
+    phaseIds: [],
   })
   const RANGE = { kind: "range", first: 1, count: 2 } as const
   const returned = (handback: DelegateReturn): SessionEvent => ({
@@ -137,6 +139,45 @@ describe("applySessionEvent（委譲の返却で進むワークプラン）", ()
   })
 })
 
+describe("applySessionEvent（台本の写しで進むワークプラン）", () => {
+  const request = requestEvent()
+  const plan: SessionEvent = {
+    kind: "work-plan",
+    phases: ["架空の計画", "架空の実装", "架空の受け入れ"],
+    phaseIds: ["plan", "impl-1", "accept"],
+    current: 0,
+    finishedInGroup: [],
+    phaseSummary: "",
+    delegatedRange: { kind: "none" },
+    skippedPhases: [],
+    awaitingSummary: { kind: "none" },
+  }
+  const progress = (phaseTitle: string): SessionEvent => ({
+    kind: "workflow-progress",
+    progress: {
+      taskId: "wf-1",
+      phases: [],
+      agents: [{ index: 0, agentId: "agent-1", state: "start", phaseTitle }],
+    },
+  })
+
+  it("写しの agent が後ろの段に入ると、届いた時刻で今の段を進めた記録を積み、同じ写しでは積み直さない", () => {
+    const planned = applySessionEvent(
+      applySessionEvent(INITIAL_SESSION_STATE, request, 1_000),
+      plan,
+      2_000,
+    )
+    const state = applySessionEvent(planned, progress("accept"), 9_000)
+
+    expect(state.records.at(-1)).toMatchObject({
+      kind: "work-plan",
+      current: 2,
+      time: { kind: "stamped", at: 9_000 },
+    })
+    expect(applySessionEvent(state, progress("accept"), 9_500).records).toEqual(state.records)
+  })
+})
+
 describe("applySessionEvent（report のフェーズの閉じ方とワークプラン）", () => {
   const request = requestEvent()
   const PHASES = ["架空の段A", "架空の段B", "架空の段C"]
@@ -145,6 +186,7 @@ describe("applySessionEvent（report のフェーズの閉じ方とワークプ�
     delegatedRange: { kind: "none" },
     skippedPhases: [],
     awaitingSummary: { kind: "none" },
+    phaseIds: [],
     phases: PHASES,
     current,
     finishedInGroup: [],
@@ -166,6 +208,7 @@ describe("applySessionEvent（report のフェーズの閉じ方とワークプ�
       delegatedRange: { kind: "none" },
       skippedPhases: [],
       awaitingSummary: { kind: "none" },
+      phaseIds: [],
     })
     expect(state.records.at(-1)?.kind).toBe("report")
   })
@@ -198,6 +241,7 @@ describe("applySessionEvent（ワークプランとレポートの時刻）", ()
     delegatedRange: { kind: "none" },
     skippedPhases: [],
     awaitingSummary: { kind: "none" },
+    phaseIds: [],
     phases: ["架空の計画", "架空の実装", "架空の受け入れ"],
     current,
     finishedInGroup: [],

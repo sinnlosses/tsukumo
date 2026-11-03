@@ -36,7 +36,12 @@ const progressOf = (taskId: string, ...agentIds: readonly string[]): SessionEven
   progress: {
     taskId,
     phases: [],
-    agents: agentIds.map((agentId, index) => ({ index, agentId, state: "progress" })),
+    agents: agentIds.map((agentId, index) => ({
+      index,
+      agentId,
+      state: "progress",
+      phaseTitle: "架空の段",
+    })),
   },
 })
 const WORKFLOW_PROGRESS = progressOf("wf-1", "agent-1")

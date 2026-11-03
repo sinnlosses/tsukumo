@@ -13,6 +13,7 @@
       "afterMs": 100,
       "event": {
         "kind": "work-plan",
+        "phaseIds": [],
         "delegatedRange": {
           "kind": "none"
         },

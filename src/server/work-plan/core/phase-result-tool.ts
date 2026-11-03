@@ -34,6 +34,10 @@ const PHASE_RESULT_REJECTIONS = {
     "phase は 1 から count までの整数にし、outcome は finished・skipped・stopped のどれかにする。" +
     "reason は outcome が stopped のときだけ、空でない文で渡す。summary は outcome が finished のときだけ渡す。直して呼び直すこと。" +
     "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。",
+  outOfOrder:
+    "phase は今のフェーズの番号にする。済んだフェーズへの戻りと、先のフェーズへの飛ばしは受け付けない。" +
+    "今のフェーズを済ませてから、次のフェーズの結果を返すこと。" +
+    "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。",
   main:
     "phase_result は委譲先がフェーズの結果を返すツールで、メインは呼ばない。" +
     "メインで走るフェーズは work_plan で進め、飛ばしたものは skippedPhases に入れる。" +
@@ -55,6 +59,9 @@ export function answerPhaseResultCall(
   onEvent: (event: SessionEvent) => void,
 ): PhaseResultAnswer {
   const verdict = review.judgePhaseResult(input)
+  if (verdict.kind === "out-of-order") {
+    return { text: PHASE_RESULT_REJECTIONS.outOfOrder, isError: true }
+  }
   if (verdict.kind !== "accepted") {
     return { text: PHASE_RESULT_REJECTIONS.malformed, isError: true }
   }

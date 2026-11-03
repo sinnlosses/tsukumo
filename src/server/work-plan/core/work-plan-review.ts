@@ -19,7 +19,11 @@ import { isDeepEqual } from "remeda"
 
 import type { DelegateReturn } from "../../../shared/session/delegate-return.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
-import { nextWorkPlan, phaseFinishedByReturn } from "../../../shared/session/work-plan-fold.ts"
+import {
+  isOutOfOrderReturn,
+  nextWorkPlan,
+  phaseFinishedByReturn,
+} from "../../../shared/session/work-plan-fold.ts"
 import {
   type DelegatedRange,
   finishedPhaseCount,
@@ -55,7 +59,7 @@ export type WorkPlanVerdict =
 
 /**
  * `phase_result` の判定。`accepted` の `moved` は帯を動かしたか、`handback` は結果を返却の形にしたもの、`plan` は判定のあとのワークプラン。
- * 帯を動かさない呼び出しも差し戻さない。
+ * 帯を動かさない呼び出しも差し戻さないが、段の id を持つワークプランで順を外れた申告は `out-of-order` で差し戻す。
  */
 export type PhaseResultVerdict =
   | {
@@ -65,6 +69,7 @@ export type PhaseResultVerdict =
       readonly plan: LatestWorkPlan
     }
   | { readonly kind: "malformed" }
+  | { readonly kind: "out-of-order" }
 
 export type WorkPlanReview = {
   /** `work_plan` の handler から、届いた引数のままで呼ぶ。 */
@@ -211,6 +216,9 @@ export function createWorkPlanReview(): WorkPlanReview {
         return { kind: "malformed" }
       }
       const handback = delegateReturnOf(result)
+      if (accepted.kind === "planned" && isOutOfOrderReturn(accepted, handback)) {
+        return { kind: "out-of-order" }
+      }
       returnedCount = result.count
       const returned =
         accepted.kind === "planned" ? phaseFinishedByReturn(accepted, handback) : undefined
@@ -268,6 +276,7 @@ export function createWorkPlanReview(): WorkPlanReview {
               ]
         }
         case "report":
+        case "workflow-progress":
           accepted = nextWorkPlan(accepted, event)
           return [event]
         case "phase-result-called":

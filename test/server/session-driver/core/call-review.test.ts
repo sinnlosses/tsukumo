@@ -15,6 +15,7 @@ import type { SessionEvent } from "../../../../src/shared/session/session-event.
 import { reportDraft, reportEvent } from "../../../fixture/report-event.ts"
 import { REJECTION_PHRASE } from "../../../fixture/report-review.ts"
 import { requestEvent } from "../../../fixture/session-event.ts"
+import { next } from "../../../fixture/work-plan-draft.ts"
 
 type SpeechEvent = Extract<SessionEvent, { kind: "speech" }>
 type ReportCalled = Extract<SessionEvent, { kind: "report" }>
@@ -97,15 +98,7 @@ const planInput = (current: number) => ({
 const planCalled = (toolUseId: string, current: number): SessionEvent => ({
   kind: "work-plan-called",
   toolUseId,
-  plan: {
-    delegatedRange: { kind: "none" },
-    phases: PHASES,
-    current,
-    finishedInGroup: [],
-    phaseSummary: current > 0 ? "架空のまとめ。" : "",
-    skippedPhases: [],
-    awaitingSummary: { kind: "none" },
-  },
+  plan: next(PHASES, current, current > 0 ? "架空のまとめ。" : ""),
 })
 const planOf = (current: number): SessionEvent => {
   const called = planCalled("unused", current)

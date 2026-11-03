@@ -189,6 +189,7 @@ describe("toSessionEvents", () => {
         toolUseId: "toolu_3",
         plan: {
           phases: ["架空の段A", "架空の段B"],
+          phaseIds: [],
           current: 1,
           finishedInGroup: [],
           phaseSummary: "架空のまとめ。",

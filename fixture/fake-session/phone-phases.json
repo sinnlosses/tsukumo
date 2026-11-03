@@ -13,6 +13,7 @@
       "afterMs": 100,
       "event": {
         "kind": "work-plan",
+        "phaseIds": [],
         "delegatedRange": {
           "kind": "none"
         },
@@ -36,6 +37,7 @@
       "afterMs": 200,
       "event": {
         "kind": "work-plan",
+        "phaseIds": [],
         "delegatedRange": {
           "kind": "none"
         },
@@ -59,6 +61,7 @@
       "afterMs": 300,
       "event": {
         "kind": "work-plan",
+        "phaseIds": [],
         "delegatedRange": {
           "kind": "none"
         },
@@ -82,6 +85,7 @@
       "afterMs": 400,
       "event": {
         "kind": "work-plan",
+        "phaseIds": [],
         "delegatedRange": {
           "kind": "none"
         },
@@ -105,6 +109,7 @@
       "afterMs": 500,
       "event": {
         "kind": "work-plan",
+        "phaseIds": [],
         "delegatedRange": {
           "kind": "none"
         },

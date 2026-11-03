@@ -102,6 +102,7 @@ export function workPlanRecord(
   return {
     kind: "work-plan",
     phases: ["架空の段A", "架空の段B"],
+    phaseIds: [],
     current: 0,
     finishedInGroup: [],
     phaseSummary: "",

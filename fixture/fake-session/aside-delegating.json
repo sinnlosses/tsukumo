@@ -21,6 +21,7 @@
       "afterMs": 200,
       "event": {
         "kind": "work-plan",
+        "phaseIds": [],
         "delegatedRange": {
           "kind": "none"
         },
@@ -38,6 +39,7 @@
       "afterMs": 300,
       "event": {
         "kind": "work-plan",
+        "phaseIds": [],
         "delegatedRange": {
           "kind": "none"
         },

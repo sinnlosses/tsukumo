@@ -11,11 +11,14 @@ import { splitIntoTurns } from "./turn.ts"
 import { currentWorkPlan, nextWorkPlan, type WorkPlanEvent } from "./work-plan-fold.ts"
 
 /**
- * 委譲の返却か `report` 1件で積む記録。記録から畳んだ今のワークプランを {@link nextWorkPlan} で畳み、変わったときだけそのワークプランを届いた時刻で1件積む。
+ * 委譲の返却・`report`・台本の写し1件で積む記録。記録から畳んだ今のワークプランを {@link nextWorkPlan} で畳み、変わったときだけそのワークプランを届いた時刻で1件積む。
  */
 export function workPlanRecords(
   records: readonly SessionRecord[],
-  event: Extract<WorkPlanEvent, { readonly kind: "delegate-returned" | "report" }>,
+  event: Extract<
+    WorkPlanEvent,
+    { readonly kind: "delegate-returned" | "report" | "workflow-progress" }
+  >,
   at: number,
 ): readonly SessionRecord[] {
   const current = currentWorkPlan(records)
@@ -39,6 +42,7 @@ export function workPlanRecordOf(
   return {
     kind: "work-plan",
     phases: event.phases,
+    phaseIds: event.phaseIds,
     current: next.kind === "planned" ? next.current : event.current,
     finishedInGroup: event.finishedInGroup,
     phaseSummary: event.phaseSummary,

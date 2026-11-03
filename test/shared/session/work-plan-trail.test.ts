@@ -28,6 +28,7 @@ function plan(
     delegatedRange,
     skippedPhases: [],
     awaitingSummary: { kind: "none" },
+    phaseIds: [],
     phases,
     current,
     finishedInGroup: [],

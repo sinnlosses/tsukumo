@@ -74,6 +74,7 @@ describe("nextWorkPlan（委譲の返却で進める）", () => {
     delegatedRange,
     skippedPhases: [],
     awaitingSummary: { kind: "none" },
+    phaseIds: [],
   })
   const phaseDone = (phase: number, count = 2, summary = "架空の要約。"): DelegateReturn => ({
     kind: "phase-done",
@@ -217,6 +218,7 @@ describe("nextWorkPlan（範囲を初めて宣言した work-plan）", () => {
     delegatedRange: range,
     skippedPhases: [],
     awaitingSummary: { kind: "none" },
+    phaseIds: [],
   })
   const event = (plan: WorkPlan): WorkPlanEvent => ({ kind: "work-plan", ...plan })
 
@@ -250,6 +252,73 @@ describe("nextWorkPlan（範囲を初めて宣言した work-plan）", () => {
   it("範囲を宣言済みなら位置を動かさない", () => {
     const before = nextWorkPlan(planned(SERIAL, 0), event(declared(0)))
     expect(nextWorkPlan(before, event(declared(0)))).toMatchObject({ current: 0 })
+  })
+})
+
+describe("nextWorkPlan（台本の写しで進める）", () => {
+  const SERIAL = ["架空の計画", "架空の実装A", "架空の実装B", "架空の受け入れ", "架空の振り返り"]
+  const IDS = ["plan", "impl-1", "impl-2", "accept", "retrospect"]
+  const planAt = (current: number, phaseIds: readonly string[] = IDS): LatestWorkPlan => ({
+    kind: "planned",
+    ...next(SERIAL, current),
+    phaseIds,
+  })
+  const progressed = (
+    plan: LatestWorkPlan,
+    ...agents: readonly (readonly [string, "start" | "progress" | "done"])[]
+  ): LatestWorkPlan =>
+    nextWorkPlan(plan, {
+      kind: "workflow-progress",
+      progress: {
+        taskId: "wf-1",
+        phases: [],
+        agents: agents.map(([phaseTitle, state], index) => ({
+          index,
+          agentId: `agent-${String(index)}`,
+          state,
+          phaseTitle,
+        })),
+      },
+    })
+
+  it("phase_result が届かなくても、impl-1 の agent が写しに載ると impl-1 が今の段になり、前の段をまとめ待ちにする", () => {
+    expect(progressed(planAt(0), ["impl-1", "start"])).toEqual({
+      ...planAt(1),
+      awaitingSummary: { kind: "awaiting", key: "架空の計画\u00000" },
+    })
+  })
+
+  it("accept・retrospect の agent が start で載ると、完了の通知を待たずにその段が今の段になる", () => {
+    expect(
+      progressed(planAt(1), ["impl-1", "done"], ["impl-2", "done"], ["accept", "start"]),
+    ).toMatchObject({ current: 3, finishedInGroup: [], phaseSummary: "" })
+    expect(
+      progressed(planAt(3), ["impl-1", "done"], ["accept", "done"], ["retrospect", "start"]),
+    ).toMatchObject({ current: 4 })
+  })
+
+  it("進んだ位置より前か同じ段の agent しか無い写しでは戻らない", () => {
+    expect(progressed(planAt(3), ["impl-1", "progress"], ["impl-2", "done"])).toEqual(planAt(3))
+    expect(progressed(planAt(3), ["accept", "progress"])).toEqual(planAt(3))
+  })
+
+  it("phase N に伏せた題・段の id の無いワークプラン・ワークプランの無いときは動かさない", () => {
+    expect(progressed(planAt(0), ["phase 2", "start"])).toEqual(planAt(0))
+    expect(progressed(planAt(0, []), ["impl-1", "start"])).toEqual(planAt(0, []))
+    expect(progressed({ kind: "none" }, ["impl-1", "start"])).toEqual({ kind: "none" })
+  })
+
+  it("並列のフェーズへ入ると、その要素を今の要素にして中の済んだ段を空にする", () => {
+    const grouped: LatestWorkPlan = {
+      kind: "planned",
+      ...next(["架空の計画", ["架空の実装A", "架空の実装B"], "架空の受け入れ"], 0),
+      phaseIds: ["plan", "impl-1", "impl-2", "accept"],
+    }
+
+    expect(progressed(grouped, ["impl-2", "start"])).toMatchObject({
+      current: 1,
+      finishedInGroup: [],
+    })
   })
 })
 

@@ -11,6 +11,7 @@ import { applyUsageReviewEvent } from "../usage/usage-review.ts"
 import { isBlankText } from "../utils/blank-text.ts"
 import { clipText } from "../utils/clip-text.ts"
 import { commandCandidates } from "./command-suggestion.ts"
+import { advanceByWorkflowProgress, advanceByWorkflowStep } from "./session-advance-workflow.ts"
 import { isSessionEventKind } from "./session-event-kind.ts"
 import type { SessionEvent } from "./session-event.ts"
 import { permissionModeValue } from "./session-info.ts"
@@ -40,7 +41,7 @@ import {
   turnEnding,
   withOpenSdkTurn,
 } from "./turn-progress.ts"
-import { withWorkflowProgress, withWorkflowStep, workflowItemsOfTasks } from "./workflow-step.ts"
+import { workflowItemsOfTasks } from "./workflow-step.ts"
 
 /**
  * モデルが何かを出したと言えるイベント。届いたら {@link SessionState.apiTrouble} を下ろす
@@ -216,25 +217,9 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
     case "task-notified":
       return state
     case "workflow-step-started":
-      return {
-        ...state,
-        workflowSteps: withWorkflowStep(
-          state.workflowSteps,
-          state.workflowProgress,
-          event.agentId,
-          event.name,
-          event.input,
-        ),
-      }
+      return advanceByWorkflowStep(state, event)
     case "workflow-progress":
-      return {
-        ...state,
-        workflowProgress: withWorkflowProgress(
-          state.workflowProgress,
-          state.backgroundTasks,
-          event.progress,
-        ),
-      }
+      return advanceByWorkflowProgress(state, event, at)
     case "delegate-returned":
       return { ...state, records: [...state.records, ...workPlanRecords(state.records, event, at)] }
     case "report-malformed":

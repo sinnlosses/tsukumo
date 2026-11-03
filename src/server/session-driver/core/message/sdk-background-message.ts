@@ -102,9 +102,10 @@ function workflowAgent(element: unknown): WorkflowProgress["agents"] {
   const index = integerOrUndefined(element.index)
   const agentId = optionalString(element.agentId)
   const state = WORKFLOW_AGENT_STATES.find((candidate) => candidate === element.state)
+  const phaseTitle = optionalString(element.phaseTitle) ?? ""
   return index === undefined || agentId === undefined || state === undefined
     ? []
-    : [{ index, agentId, state }]
+    : [{ index, agentId, state, phaseTitle }]
 }
 
 function integerOrUndefined(value: unknown): number | undefined {

@@ -24,6 +24,7 @@ const planOf = (current: number): Extract<SessionEvent, { kind: "work-plan" }> =
   phaseSummary: current > 0 ? SUMMARY : "",
   skippedPhases: [],
   awaitingSummary: { kind: "none" },
+  phaseIds: [],
 })
 
 /** `work_plan` ツールの引数の形（範囲を渡さない）。 */

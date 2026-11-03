@@ -256,6 +256,7 @@ describe("useWorkStrip（並列のフェーズ）", () => {
     delegatedRange: { kind: "none" },
     skippedPhases: [],
     awaitingSummary: { kind: "none" },
+    phaseIds: [],
     phases: ["架空の段A", ["架空の段B", "架空の段C"]],
     current,
     finishedInGroup,

@@ -21,6 +21,7 @@
       "afterMs": 200,
       "event": {
         "kind": "work-plan",
+        "phaseIds": [],
         "delegatedRange": {
           "kind": "none"
         },
@@ -74,7 +75,14 @@
         "progress": {
           "taskId": "fake-workflow-task-1",
           "phases": [{ "index": 0, "title": "架空の段" }],
-          "agents": [{ "index": 0, "agentId": "fake-workflow-agent-1", "state": "start" }]
+          "agents": [
+            {
+              "index": 0,
+              "agentId": "fake-workflow-agent-1",
+              "state": "start",
+              "phaseTitle": "架空の段"
+            }
+          ]
         }
       }
     },
@@ -175,6 +183,7 @@
       "afterMs": 16600,
       "event": {
         "kind": "work-plan",
+        "phaseIds": [],
         "delegatedRange": {
           "kind": "none"
         },

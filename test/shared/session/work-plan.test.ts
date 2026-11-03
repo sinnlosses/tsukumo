@@ -15,6 +15,7 @@ describe("parseWorkPlan の段のまとめ", () => {
   it("空白だけのまとめは無いものに畳む", () => {
     expect(parseWorkPlan({ phases: PHASES, current: 0, phaseSummary: " \n" })).toEqual({
       phases: PHASES,
+      phaseIds: [],
       current: 0,
       finishedInGroup: [],
       phaseSummary: "",
@@ -120,6 +121,42 @@ describe("parseWorkPlan の飛ばした段", () => {
     expect(
       parseWorkPlan({ phases: GROUPED, current: 1, phaseSummary: "架空のまとめ。", skippedPhases }),
     ).toBeUndefined()
+  })
+})
+
+describe("parseWorkPlan の段の id", () => {
+  const withId = (id: string, name: string) => ({ id, name })
+
+  it("{ id, name } の並びは名前の並びに写し、id を並列のフェーズの中も含めて読み順に平らにして持つ", () => {
+    expect(
+      parseWorkPlan({
+        phases: [
+          withId("架空のid1", "架空の段A"),
+          [withId("架空のid2", "架空の段B"), withId("架空のid3", "架空の段C")],
+          withId("架空のid4", "架空の段D"),
+        ],
+        current: 0,
+      }),
+    ).toEqual({
+      ...next(GROUPED, 0),
+      phaseIds: ["架空のid1", "架空のid2", "架空のid3", "架空のid4"],
+    })
+  })
+
+  it("名前だけの並びは今までどおり読み、phaseIds は空", () => {
+    expect(parseWorkPlan({ phases: GROUPED, current: 0 })).toEqual(next(GROUPED, 0))
+  })
+
+  it.each([
+    ["一部の段にだけ id がある", [withId("架空のid1", "架空の段A"), "架空の段B"]],
+    [
+      "並列のフェーズの中で id が欠ける",
+      [withId("架空のid1", "架空の段A"), [withId("架空のid2", "架空の段B"), "架空の段C"]],
+    ],
+    ["id が重なる", [withId("架空のid1", "架空の段A"), withId("架空のid1", "架空の段B")]],
+    ["空白だけの id を持つ", [withId(" ", "架空の段A"), withId("架空のid2", "架空の段B")]],
+  ])("%s並びは受け付けない", (_, phases) => {
+    expect(parseWorkPlan({ phases, current: 0 })).toBeUndefined()
   })
 })
 

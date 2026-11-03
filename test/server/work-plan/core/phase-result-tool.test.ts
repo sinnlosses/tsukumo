@@ -65,6 +65,34 @@ describe("answerPhaseResultCall", () => {
     })
     expect(events).toEqual([])
   })
+
+  it("段の id を持つワークプランでは、戻り・飛ばしの申告を差し戻して帯を動かさず、今の段の申告は進める", () => {
+    const review = createCallReview()
+    review.pass(requestEvent())
+    review.judgeWorkPlan({
+      phases: PHASES.map((name, index) => ({ id: `架空のid${String(index)}`, name })),
+      current: 1,
+      phaseSummary: "架空のまとめ。",
+      delegatedRange: { first: 1, count: 2 },
+    })
+    const events: SessionEvent[] = []
+    const answer = (phase: number) =>
+      answerPhaseResultCall(review, { phase, count: 2, outcome: "finished" }, (event) =>
+        events.push(event),
+      )
+    const OUT_OF_ORDER = {
+      text: expect.stringContaining(
+        "済んだフェーズへの戻りと、先のフェーズへの飛ばしは受け付けない",
+      ),
+      isError: true,
+    }
+
+    expect(answer(2)).toEqual(OUT_OF_ORDER)
+    expect(events).toEqual([])
+    expect(answer(1).text.startsWith("ok\nプログレスバーの今のフェーズは 本 2/2")).toBe(true)
+    expect(answer(1)).toEqual(OUT_OF_ORDER)
+    expect(events).toHaveLength(1)
+  })
 })
 
 describe("judgePhaseResultCaller", () => {

@@ -162,6 +162,7 @@ describe("同梱の疑似セッションのワークプラン", () => {
 
       expect(parsed).toEqual({
         phases,
+        phaseIds: plan.phaseIds,
         current,
         finishedInGroup,
         phaseSummary,
