@@ -169,7 +169,7 @@ function saveRecord(results: readonly StageRunResult[]): void {
       formatLedgerLine(flaky, tree, now),
     ),
   )
-  writeCheckRecord(ROOT, nextRecord(tree, rerunPlan.stages, results))
+  writeCheckRecord(ROOT, nextRecord(previousRecord, tree, rerunPlan.stages, results))
 }
 
 /** 走らせている段。`stop` は自分が起こした子の pid だけに `SIGTERM` を送る。 */

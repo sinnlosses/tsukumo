@@ -29,3 +29,13 @@
 
 契約を満たすワークフローは、`tsukumo-plugins` のものも利用者独自のものも同じ立場で tsukumo に当てられる。
 `tsukumo-plugins` のものは契約に型の合う1つの例で、tsukumo の一部ではない。core は契約だけを見る。
+
+## 検証の控え
+
+tsukumo のサーバが見る、`pnpm run check` の控え（作業ツリーの根の `.check-record.json`）の形。書くのはプロジェクトの検証のスクリプトで、スキルでも `tw` でもない。判断の経緯は `docs/architecture/adr/0046-verification-stages-from-check-record.md`。
+
+- `tree`: 控えを取った作業ツリーの木の SHA（文字列）。サーバは report の時点の木と一致したときだけ控えを使う
+- `stages`: 段の配列。各要素の `name`（段名。表示名は持たない）・`result`（`passed`・`carried`・`failed` のいずれか）・`count`（数値。その木で通ったテストの全数）を読む
+- `count` は数えた段の `passed` と、同じ木で飛ばした段（前の控えの件数を引き継ぐ）にだけ入る。数えない段・落ちたファイルだけに絞って通した段・`failed` の段には欄を置かない
+- `count` の無い旧い控えも読める。形が違う・欄が欠ける控えは無いものとして扱う
+- 控えに置くのは段名・成否・件数・木の SHA だけで、会話の中身は入らない

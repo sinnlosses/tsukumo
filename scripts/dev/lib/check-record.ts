@@ -19,6 +19,8 @@ export type RecordedStage = {
   readonly retryFiles: readonly string[]
   /** 落ちたテストの `<ファイル> > <テスト名>`。次の回で通ったら flaky として台帳に残す。 */
   readonly failedTests: readonly string[]
+  /** その木で通ったテストの全数。数えない段・絞って通した段・落ちた段は undefined（JSON には書かない）。 */
+  readonly count: number | undefined
 }
 
 export type CheckRecord = {
@@ -116,6 +118,7 @@ export function planRerun(stages: readonly Stage[], record: CheckRecord, tree: s
 
 /** 止めた段と、走らなかった段（`results` に無い段）は控えに入れない。 */
 export function nextRecord(
+  previous: CheckRecord,
   tree: string,
   planned: readonly PlannedStage[],
   results: readonly StageRunResult[],
@@ -123,7 +126,15 @@ export function nextRecord(
   const stages = planned.flatMap((entry): readonly RecordedStage[] => {
     const key = { name: entry.planned.name, args: entry.planned.args }
     if (entry.kind === "skip") {
-      return [{ ...key, result: "carried", retryFiles: [], failedTests: [] }]
+      return [
+        {
+          ...key,
+          result: "carried",
+          retryFiles: [],
+          failedTests: [],
+          count: previous.stages.find((recorded) => isSameStage(recorded, entry.planned))?.count,
+        },
+      ]
     }
     const result = results.find((candidate) => candidate.name === entry.planned.name)
     if (result === undefined || result.stopped) {
@@ -136,6 +147,10 @@ export function nextRecord(
           result: entry.kind === "narrowed" ? "carried" : "passed",
           retryFiles: [],
           failedTests: [],
+          count:
+            entry.kind === "narrowed" || result.passedTests.length === 0
+              ? undefined
+              : result.passedTests.length,
         },
       ]
     }
@@ -145,6 +160,7 @@ export function nextRecord(
         result: "failed",
         retryFiles: retryFilesOf(result),
         failedTests: result.failedTests,
+        count: undefined,
       },
     ]
   })
@@ -152,9 +168,11 @@ export function nextRecord(
 }
 
 function findRecorded(record: CheckRecord, stage: Stage) {
-  return record.stages.find(
-    (recorded) => recorded.name === stage.name && isDeepEqual(recorded.args, stage.args),
-  )
+  return record.stages.find((recorded) => isSameStage(recorded, stage))
+}
+
+function isSameStage(recorded: RecordedStage, stage: Stage): boolean {
+  return recorded.name === stage.name && isDeepEqual(recorded.args, stage.args)
 }
 
 /** bail が発火した回は、打ち切られたファイルが通ったと書かれるので絞らない。 */

@@ -76,10 +76,29 @@ describe("readCheckRecord と writeCheckRecord", () => {
       expect(readCheckRecord(root)).toEqual(EMPTY_CHECK_RECORD)
       const record = {
         tree: "abc",
-        stages: [{ name: "lint", args: [], result: "passed", retryFiles: [], failedTests: [] }],
+        stages: [
+          {
+            name: "lint",
+            args: [],
+            result: "passed",
+            retryFiles: [],
+            failedTests: [],
+            count: undefined,
+          },
+          { name: "test", args: [], result: "passed", retryFiles: [], failedTests: [], count: 12 },
+        ],
       } as const
       writeCheckRecord(root, record)
       expect(readCheckRecord(root)).toEqual(record)
+
+      // count の無い旧い控えも読める
+      const old = { name: "test", args: [], result: "passed", retryFiles: [], failedTests: [] }
+      writeFileSync(
+        join(root, ".check-record.json"),
+        JSON.stringify({ tree: "abc", stages: [old] }),
+      )
+      expect(readCheckRecord(root).stages[0]?.count).toBeUndefined()
+      expect(readCheckRecord(root).stages).toHaveLength(1)
 
       writeFileSync(join(root, ".check-record.json"), "{")
       expect(readCheckRecord(root)).toEqual(EMPTY_CHECK_RECORD)

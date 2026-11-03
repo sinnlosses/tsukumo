@@ -50,10 +50,43 @@ function recordAfter(
   results: readonly StageRunResult[],
   stages = STAGES,
 ): CheckRecord {
-  return nextRecord(TREE, planRerun(stages, record, TREE).stages, results)
+  return nextRecord(record, TREE, planRerun(stages, record, TREE).stages, results)
 }
 
 describe("planRerun と nextRecord", () => {
+  test("通ったテストの数が段の count になり、数えない段・落ちた段には置かない", () => {
+    const counted = ALL_PASSED.map((entry) =>
+      entry.name === "test" ? { ...entry, passedTests: ["a", "b", "c"] } : entry,
+    )
+    const record = recordAfter(EMPTY_CHECK_RECORD, counted)
+    expect(record.stages.map((stage) => stage.count)).toEqual([
+      undefined,
+      undefined,
+      undefined,
+      3,
+      undefined,
+    ])
+    const failed = recordAfter(EMPTY_CHECK_RECORD, [{ ...result("test", 1), passedTests: ["a"] }])
+    expect(failed.stages[0]?.count).toBeUndefined()
+  })
+
+  test("同じ木で飛ばした段は前の件数を引き継ぎ、絞って通した E2E には置かない", () => {
+    const first = recordAfter(
+      EMPTY_CHECK_RECORD,
+      ALL_PASSED.map((entry) => ({ ...entry, passedTests: ["a", "b"] })),
+    )
+    const skipped = recordAfter(first, [])
+    expect(skipped.stages.map((stage) => stage.count)).toEqual([2, 2, 2, 2, 2])
+
+    const e2eFailed = recordAfter(EMPTY_CHECK_RECORD, [
+      ...ALL_PASSED.slice(0, 4).map((entry) => ({ ...entry, passedTests: ["a"] })),
+      result("test:e2e", 1, ["test/e2e/b.test.ts"]),
+    ])
+    const narrowed = recordAfter(e2eFailed, [{ ...result("test:e2e"), passedTests: ["x"] }])
+    expect(narrowed.stages.at(-1)).toMatchObject({ result: "carried", count: undefined })
+    expect(narrowed.stages[3]).toMatchObject({ result: "carried", count: 1 })
+  })
+
   test("同じ木で全段が通った控えなら、2回目は全段を飛ばし、知らせの行に段の名前が出る", () => {
     const first = recordAfter(EMPTY_CHECK_RECORD, ALL_PASSED)
     const second = planRerun(STAGES, first, TREE)

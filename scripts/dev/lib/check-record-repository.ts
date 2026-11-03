@@ -118,9 +118,17 @@ function parseStage(value: unknown): RecordedStage | undefined {
   }
   const result = RECORDED_RESULTS.find((candidate) => candidate === value.result)
   const failedTests = isStringArray(value.failedTests) ? value.failedTests : []
+  const count = typeof value.count === "number" ? value.count : undefined
   return result === undefined
     ? undefined
-    : { name: value.name, args: value.args, result, retryFiles: value.retryFiles, failedTests }
+    : {
+        name: value.name,
+        args: value.args,
+        result,
+        retryFiles: value.retryFiles,
+        failedTests,
+        count,
+      }
 }
 
 function isStringArray(value: unknown): value is readonly string[] {
