@@ -271,6 +271,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     expect(surface?.head.status).toEqual({
       phaseTimes: { kind: "none" },
       changedFiles: { kind: "none" },
+      verification: { kind: "none" },
     })
     expect(surface?.head.finalStatus.phaseTimes).toMatchObject({ kind: "times" })
     expect(

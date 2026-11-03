@@ -5,6 +5,7 @@ import type { CharacterInfo } from "../character-pack/character.ts"
 import { isModelAlias } from "../command.ts"
 import { applyDiaryEvent } from "../diary/diary.ts"
 import { NO_REPORT_CHANGE_SUMMARY } from "../report/report-change-summary.ts"
+import { NO_REPORT_VERIFICATION } from "../report/report-verification.ts"
 import { applyTaskSummaryChange } from "../repository/task-summary-change.ts"
 import type { PendingAsk, StampedPendingAsk } from "../session-driver/pending-ask.ts"
 import { applyUsageReviewEvent } from "../usage/usage-review.ts"
@@ -19,6 +20,7 @@ import {
   settleUtterance,
   trimToRecentTurns,
   withReportChangeSummary,
+  withReportVerification,
   workPlanRecordOf,
   workPlanRecords,
 } from "./session-record-edit.ts"
@@ -269,6 +271,7 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
             workPlanClosing: event.workPlanClosing,
             waitingLine: event.waitingLine,
             changeSummary: NO_REPORT_CHANGE_SUMMARY,
+            verification: NO_REPORT_VERIFICATION,
             imageSizes: event.imageSizes,
             unshelvedImages: event.unshelvedImages,
             components: event.components,
@@ -278,6 +281,8 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
       }
     case "report-change-summary":
       return withReportChangeSummary(state, event)
+    case "report-verification":
+      return withReportVerification(state, event)
     case "work-plan":
       return {
         ...state,

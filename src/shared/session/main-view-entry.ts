@@ -5,6 +5,7 @@ import { changedFilesView } from "../report/changed-file-section.ts"
 import { sectionDrawsAnything } from "../report/drawn-entry-markdown.ts"
 import { reportChecksView } from "../report/report-check-view.ts"
 import { phaseTimesView } from "../report/report-phase-time.ts"
+import { NO_REPORT_VERIFICATION } from "../report/report-verification.ts"
 import { isBlankText } from "../utils/blank-text.ts"
 import { a2uiReportView } from "./a2ui-report-view.ts"
 import type { MainViewEntry, MainViewReportRegions } from "./main-view-shape.ts"
@@ -182,10 +183,15 @@ function reportRegionsOf(
           : { kind: leadKind, text: report.conclusion },
         keyFigures: report.keyFigures,
         checks,
-        status: { phaseTimes: { kind: "none" }, changedFiles: { kind: "none" } },
+        status: {
+          phaseTimes: { kind: "none" },
+          changedFiles: { kind: "none" },
+          verification: NO_REPORT_VERIFICATION,
+        },
         finalStatus: {
           phaseTimes: phaseTimesView(phaseRows),
           changedFiles: changedFilesView(report.changeSummary),
+          verification: report.verification,
         },
       },
       { id: favorId, text: report.favor },

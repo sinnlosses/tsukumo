@@ -72,6 +72,7 @@ describe("reportDrawsAnything", () => {
     const plain = regionsWith(noRootA2ui())
     const finalStatus = {
       phaseTimes: { kind: "none" },
+      verification: { kind: "none" },
       changedFiles: {
         kind: "files",
         count: 1,

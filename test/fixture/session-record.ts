@@ -88,6 +88,7 @@ export function reportRecord(conclusion = "架空の結論"): SessionRecord {
     workPlanClosing: "none",
     waitingLine: { kind: "none" },
     changeSummary: { kind: "none" },
+    verification: { kind: "none" },
     imageSizes: [],
     unshelvedImages: [],
     components: [],

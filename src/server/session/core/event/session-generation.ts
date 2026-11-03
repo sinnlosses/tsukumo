@@ -7,6 +7,7 @@ import type { SessionDriver } from "../../../session-driver/core/session-driver.
 import type { TokenUsageRecorder } from "../../../usage/core/token-usage.ts"
 import type { EventBatch } from "./event-batch.ts"
 import type { ReportChangeCounter } from "./report-change-count.ts"
+import type { ReportVerifier } from "./report-verification.ts"
 import type { WaitingLineAlarm } from "./waiting-line-alarm.ts"
 
 /**
@@ -38,6 +39,8 @@ export type GenerationTally = {
   readonly waitingLineAlarm: WaitingLineAlarm
   /** 依頼の頭の HEAD を控え、`task` のある `report` の変更のラベルを数える係。 */
   readonly reportChangeCounter: ReportChangeCounter
+  /** `task` のある `report` の時点の木と検証の控えを照らし、段と件数を運ぶ係。 */
+  readonly reportVerifier: ReportVerifier
 }
 
 type ConfirmedSettings = {

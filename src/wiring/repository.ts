@@ -2,6 +2,10 @@
 
 import { queryStructured } from "../server/adapter/sdk-structured-query.ts"
 import { IDLE_CHANGE_COUNT_GIT } from "../server/core/change-count-git.ts"
+import {
+  type CheckRecordSource,
+  IDLE_CHECK_RECORD_SOURCE,
+} from "../server/core/check-record-source.ts"
 import type { DiagnosticLog } from "../server/diagnostic/core/diagnostic.ts"
 import {
   readRecommendationCache,
@@ -15,6 +19,7 @@ import {
   readFakeBeadsIssues,
 } from "../server/repository/adapter/beads/fake-beads.ts"
 import { changeCountGitOf } from "../server/repository/adapter/change-count.ts"
+import { checkRecordSourceOf } from "../server/repository/adapter/check-record.ts"
 import { projectNameOf } from "../server/repository/adapter/project-name.ts"
 import { readCodeBlockStart } from "../server/repository/adapter/repository-code-block-start.ts"
 import { readFileExcerpt } from "../server/repository/adapter/repository-file-excerpt.ts"
@@ -42,7 +47,10 @@ export function wireRepository(
   readBeadsStamp: () => Promise<BeadsStamp>,
 ): {
   readonly rpc: Omit<RepositoryProcedurePorts, "refreshTasks">
-  readonly manager: Pick<SessionManagerOptions, "watchTasks" | "changeCountGit">
+  readonly manager: Pick<
+    SessionManagerOptions,
+    "watchTasks" | "changeCountGit" | "checkRecordSource"
+  >
 } {
   return {
     rpc: {
@@ -64,6 +72,7 @@ export function wireRepository(
     },
     manager: {
       changeCountGit: changeCountGitOfContext(context),
+      checkRecordSource: checkRecordSourceOfContext(context),
       watchTasks: (onEvent) => {
         const recommender = startRecommender(context, diagnosticLog, onEvent)
         const reportFailure = failureDiagnostic(diagnosticLog, context.now)
@@ -133,6 +142,18 @@ function changeCountGitOfContext(context: WiringContext): ReturnType<typeof chan
       return changeCountGitOf(context.cwd)
     case "fake":
       return IDLE_CHANGE_COUNT_GIT
+    default:
+      return driver satisfies never
+  }
+}
+
+function checkRecordSourceOfContext(context: WiringContext): CheckRecordSource {
+  const { driver } = context
+  switch (driver.kind) {
+    case "sdk":
+      return checkRecordSourceOf(context.cwd, context.inheritedEnv)
+    case "fake":
+      return IDLE_CHECK_RECORD_SOURCE
     default:
       return driver satisfies never
   }

@@ -1,6 +1,7 @@
 import type { CommandRouterPorts } from "../../src/router.ts"
 import type { ChatConsolidationSource } from "../../src/server/chat/core/consolidation/chat-consolidation-writer.ts"
 import { IDLE_CHANGE_COUNT_GIT } from "../../src/server/core/change-count-git.ts"
+import { IDLE_CHECK_RECORD_SOURCE } from "../../src/server/core/check-record-source.ts"
 import type { DiagnosticLog } from "../../src/server/diagnostic/core/diagnostic.ts"
 import type { DiaryWriterSource } from "../../src/server/diary/core/diary-writer.ts"
 import { createReportImageShelf } from "../../src/server/report/core/image/report-image-shelf.ts"
@@ -101,6 +102,7 @@ function defaultSessionManagerOptions() {
     forgetRememberedLine: () => Promise.resolve(undefined),
     readPreviousUsageReview: (): PreviousUsageReview => ({ kind: "none" }),
     changeCountGit: IDLE_CHANGE_COUNT_GIT,
+    checkRecordSource: IDLE_CHECK_RECORD_SOURCE,
     dismissUsageProposal: (dismiss) => ({
       kind: "usage-proposal-dismissed",
       key: usageProposalKey(dismiss),

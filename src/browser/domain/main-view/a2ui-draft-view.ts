@@ -24,6 +24,7 @@ import { isBlankText } from "../../../shared/utils/blank-text.ts"
 const NO_SURFACE_STATUS = {
   phaseTimes: { kind: "none" },
   changedFiles: { kind: "none" },
+  verification: { kind: "none" },
 } as const satisfies MainViewSurfaceStatus
 
 /**

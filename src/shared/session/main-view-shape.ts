@@ -11,6 +11,7 @@ import type { ReportImageSize } from "../report/report-image.ts"
 import type { LeafValue } from "../report/report-leaf-value.ts"
 import type { PhaseTimesView } from "../report/report-phase-time.ts"
 import type { ReportTask } from "../report/report-task.ts"
+import type { ReportVerification } from "../report/report-verification.ts"
 import type { RecordedPromptImage } from "../session-driver/prompt-image.ts"
 import type { QuestionBrief } from "../session-driver/question-brief.ts"
 import type { Question, QuestionAnswer } from "../session-driver/question.ts"
@@ -152,10 +153,11 @@ export type MainViewSurfaceHead = {
   readonly finalStatus: MainViewSurfaceStatus
 }
 
-/** 包みの中の合図の行より後ろ。段ごとの所要時間と変更したファイル。 */
+/** 包みの中の合図の行より後ろ。段ごとの所要時間と変更したファイルと、検証の控えから運んだ検証の段と件数。 */
 export type MainViewSurfaceStatus = {
   readonly phaseTimes: PhaseTimesView
   readonly changedFiles: ChangedFilesView
+  readonly verification: ReportVerification
 }
 
 export type MainViewKeyFigure = Extract<ReportBlock, { readonly kind: "stats" }>["items"][number]

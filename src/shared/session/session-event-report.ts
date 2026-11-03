@@ -7,6 +7,7 @@ import type { ReportChangeCount } from "../report/report-change-summary.ts"
 import type { ReportCheck } from "../report/report-check.ts"
 import type { ReportImageSize } from "../report/report-image.ts"
 import type { ReportTask } from "../report/report-task.ts"
+import type { VerificationStage } from "../report/report-verification.ts"
 import type { ToolErrorField } from "../report/tool-error-field.ts"
 import type { SessionRemaining } from "./session-digest.ts"
 import type { SpeechEvent } from "./session-event-speech.ts"
@@ -122,3 +123,12 @@ export type ReportEvent =
       readonly kind: "report-change-summary"
       readonly toolUseId: string
     } & ReportChangeCount)
+  /**
+   * `task` のある受理された `report` のあとに、作業ツリーの根の検証の控えの木が `report` の時点の作業ツリーの木と一致したとき、控えの段と件数を届ける。
+   * `toolUseId` はその `report` の呼び出しの id。控えが無い・読めない・形が違う・木が合わない・git が打てないときは流れず、transcript からの復元でも流れない。
+   */
+  | {
+      readonly kind: "report-verification"
+      readonly toolUseId: string
+      readonly stages: readonly VerificationStage[]
+    }

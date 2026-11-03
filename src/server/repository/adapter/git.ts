@@ -17,12 +17,16 @@ export type GitOutcome =
   | { readonly kind: "timed-out" }
 
 /** `git` を起こす。例外を投げない（失敗は `failed` / `timed-out` として返す）。 */
-export function runGit(cwd: string, args: readonly string[]): Promise<GitOutcome> {
+export function runGit(
+  cwd: string,
+  args: readonly string[],
+  env: Readonly<Record<string, string | undefined>> | undefined = undefined,
+): Promise<GitOutcome> {
   return new Promise((resolve) => {
     execFile(
       "git",
       args,
-      { cwd, timeout: GIT_TIMEOUT_MS, maxBuffer: MAX_OUTPUT_BYTES, encoding: "utf8" },
+      { cwd, env, timeout: GIT_TIMEOUT_MS, maxBuffer: MAX_OUTPUT_BYTES, encoding: "utf8" },
       (error, stdout) => {
         if (error === null) {
           resolve({ kind: "output", stdout })

@@ -37,6 +37,7 @@ import { createEventBatch } from "./event/event-batch.ts"
 import { shelveEventImages } from "./event/event-image-shelf.ts"
 import { consolidationPackToStart, isBatched, mayFlowTopics } from "./event/event-judgement.ts"
 import { createReportChangeCounter } from "./event/report-change-count.ts"
+import { createReportVerifier } from "./event/report-verification.ts"
 import { applyRestoredEvents } from "./event/restored-event.ts"
 import {
   shelveRestoredPromptImages,
@@ -127,6 +128,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
     diagnostic.add({ flow: "session-event", at, generation: tally.generation, kind: event.kind })
     experienceMetric.observe(event, state, at)
     tally.reportChangeCounter.observe(event)
+    tally.reportVerifier.observe(event)
     recordSessionEvent(
       { ...options, contextUsage, diagnostic, archiveOrder },
       tally,
@@ -222,6 +224,9 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
         },
       }),
       reportChangeCounter: createReportChangeCounter(options.changeCountGit, (event) => {
+        receiveIfCurrent(event)
+      }),
+      reportVerifier: createReportVerifier(options.checkRecordSource, (event) => {
         receiveIfCurrent(event)
       }),
     }

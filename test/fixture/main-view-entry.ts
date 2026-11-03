@@ -18,6 +18,7 @@ export const WRITING = { report: true, utterance: true } as const satisfies Turn
 const NO_SURFACE_STATUS = {
   phaseTimes: { kind: "none" },
   changedFiles: { kind: "none" },
+  verification: { kind: "none" },
 } as const satisfies MainViewSurfaceStatus
 
 /** 根の `Report` が無い記録の面の値。`leadText` が空なら頭に結論を持たない。 */

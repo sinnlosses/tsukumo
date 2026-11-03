@@ -8,6 +8,7 @@ import type { ReportChangeSummary } from "../report/report-change-summary.ts"
 import type { ReportCheck } from "../report/report-check.ts"
 import type { ReportImageSize } from "../report/report-image.ts"
 import type { ReportTask } from "../report/report-task.ts"
+import type { ReportVerification } from "../report/report-verification.ts"
 import type { RecordedPromptImage } from "../session-driver/prompt-image.ts"
 import type { QuestionBrief } from "../session-driver/question-brief.ts"
 import type { Question, QuestionAnswer } from "../session-driver/question.ts"
@@ -126,6 +127,8 @@ export type SessionRecord =
       readonly waitingLine: ReportWaitingLine
       /** 変更のラベル。積んだときは `none` で、同じ `toolUseId` の `report-change-summary` が届いたら数に差し替わる。 */
       readonly changeSummary: ReportChangeSummary
+      /** 検証の段と件数。積んだときは `none` で、同じ `toolUseId` の `report-verification` が届いたら段に差し替わる。 */
+      readonly verification: ReportVerification
       /** サーバが置き場に置いたときに測れた画像の寸法。続きから復元した記録では、置き場に置き直したときに埋まる。 */
       readonly imageSizes: readonly ReportImageSize[]
       /** サーバが置き場に置けなかった・寸法を測れなかった画像のパス。描く側は最初から「出せない」の札にする。復元では置き直したときに埋まる。 */

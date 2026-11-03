@@ -3,6 +3,7 @@
 import { isDeepEqual } from "remeda"
 
 import type { ReportChangeSummary } from "../report/report-change-summary.ts"
+import type { ReportVerification } from "../report/report-verification.ts"
 import { isBlankText } from "../utils/blank-text.ts"
 import type { SessionEvent } from "./session-event.ts"
 import { MAX_SESSION_STATE_TURNS, type SessionRecord } from "./session-record.ts"
@@ -86,6 +87,26 @@ export function withReportChangeSummary(
     ...state,
     records: state.records.map((record) =>
       isReportOf(record, event.toolUseId) ? { ...record, changeSummary } : record,
+    ),
+  }
+}
+
+/** 同じ `toolUseId` の `report` の記録の検証を届いた段に差し替える。記録の集計期間に無ければ姿を変えない。 */
+export function withReportVerification(
+  state: SessionState,
+  event: Extract<SessionEvent, { readonly kind: "report-verification" }>,
+): SessionState {
+  if (!state.records.some((record) => isReportOf(record, event.toolUseId))) {
+    return state
+  }
+  const verification = {
+    kind: "checked",
+    stages: event.stages,
+  } as const satisfies ReportVerification
+  return {
+    ...state,
+    records: state.records.map((record) =>
+      isReportOf(record, event.toolUseId) ? { ...record, verification } : record,
     ),
   }
 }

@@ -17,6 +17,7 @@ afterEach(() => {
 const EMPTY_STATUS = {
   phaseTimes: { kind: "none" },
   changedFiles: { kind: "none" },
+  verification: { kind: "none" },
 } as const
 
 const CHANGED = changedFilesView({
@@ -89,7 +90,7 @@ describe("作業の記録", () => {
     const all = head({
       workDone: "架空の `file.ts` を直した。",
       checks: CHECKS,
-      status: { phaseTimes: TIMES, changedFiles: CHANGED },
+      status: { ...EMPTY_STATUS, phaseTimes: TIMES, changedFiles: CHANGED },
     })
     const cases: readonly (readonly [string, MainViewSurfaceHead, readonly string[]])[] = [
       ["4行とも", all, ["したこと", "変えたファイル", "確かめたこと", "かかった時間"]],
@@ -116,7 +117,9 @@ describe("作業の記録", () => {
 
   it("変えたファイルの題に n ファイル +a −b と注記、かかった時間の頭に合計とフェーズの数が出る", () => {
     const { container } = render(
-      <HeadRegion head={head({ status: { phaseTimes: TIMES, changedFiles: CHANGED } })} />,
+      <HeadRegion
+        head={head({ status: { ...EMPTY_STATUS, phaseTimes: TIMES, changedFiles: CHANGED } })}
+      />,
     )
 
     expect(container.textContent).toContain("1 ファイル+7−2※他の変更を含みうる")
@@ -139,7 +142,7 @@ describe("作業の記録", () => {
           lead: { kind: "conclusion-lead", text: "架空の結論。" },
           workDone: "架空のしたこと",
           checks: CHECKS,
-          status: { phaseTimes: TIMES, changedFiles: CHANGED },
+          status: { ...EMPTY_STATUS, phaseTimes: TIMES, changedFiles: CHANGED },
         })}
       />,
     )

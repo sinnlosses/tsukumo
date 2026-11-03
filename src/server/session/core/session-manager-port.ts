@@ -9,6 +9,7 @@ import type { PreviousUsageReview } from "../../../shared/usage/usage-review.ts"
 import type { ChatArchive } from "../../chat/core/archive/chat-archive-port.ts"
 import type { ChatConsolidationSource } from "../../chat/core/consolidation/chat-consolidation-writer.ts"
 import type { ChangeCountGit } from "../../core/change-count-git.ts"
+import type { CheckRecordSource } from "../../core/check-record-source.ts"
 import type { DiagnosticLog } from "../../diagnostic/core/diagnostic.ts"
 import type {
   ReadReportImage,
@@ -99,6 +100,8 @@ export type SessionManagerOptions = {
   readonly watchTasks: (onEvent: (event: SessionEvent) => void) => SessionWatcher
   /** 最終レポートの変更のラベルを数える、作業ディレクトリの git の口。 */
   readonly changeCountGit: ChangeCountGit
+  /** 最終レポートの検証の段と件数を運ぶ、作業ディレクトリの控えと git の口。 */
+  readonly checkRecordSource: CheckRecordSource
 }
 
 /** 閉じるまで生きている見張り。 */
