@@ -1,0 +1,63 @@
+{
+  "name": "report-table-heat",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "曜日と時間帯ごとの障害の件数を濃淡で見たい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 1500,
+      "event": {
+        "kind": "report",
+        "toolUseId": "fake-table-heat-1",
+        "components": [
+          {
+            "id": "root",
+            "component": "Report",
+            "conclusion": [
+              "架空の結論: 障害は水曜の 6-12 時に 41 件と集中し、週の 158 件の 4 分の 1 を占める。"
+            ],
+            "checks": [],
+            "children": ["s1"],
+            "closing": { "text": "塗り分けたよ！", "expression": "proud" }
+          },
+          {
+            "id": "s1",
+            "component": "Section",
+            "heading": "架空の曜日×時間帯",
+            "children": ["theat"]
+          },
+          {
+            "id": "theat",
+            "component": "Table",
+            "title": "曜日×時間帯の障害の件数（濃いほど多い）",
+            "columns": ["曜日", "0-6", "6-12", "12-18", "18-24"],
+            "rows": [
+              ["月", "2", "9", "6", "3"],
+              ["火", "1", "12", "8", "2"],
+              ["水", "3", "41", "22", "4"],
+              ["木", "2", "10", "7", "3"],
+              ["金", "1", "8", "9", "5"]
+            ],
+            "heat": { "from": 1, "to": 4 },
+            "totals": true
+          }
+        ]
+      }
+    },
+    {
+      "afterMs": 1550,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-table-heat-1",
+        "content": "ok",
+        "isError": false
+      }
+    },
+    { "afterMs": 2300, "event": { "kind": "turn-finished", "outcome": { "kind": "completed" } } }
+  ]
+}

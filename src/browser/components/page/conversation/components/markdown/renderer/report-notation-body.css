@@ -266,6 +266,63 @@
   & tbody tr:has(.report-row-emphasis-mark) td:has(.report-column-emphasis-mark) .report-cell-bar {
     background: color-mix(in srgb, var(--accent) 48%, transparent);
   }
+  /* 数の列の濃淡（6段）。セルの中の段の印でセルの地を塗り、濃い2段は字を地の色に沈めて読ませる。凡例の見本も同じ段の印を持つ。 */
+  & td:has(> .report-heat-0),
+  & .report-heat-legend-swatch.report-heat-0 {
+    background: color-mix(in srgb, var(--ink) 4%, transparent);
+  }
+  & td:has(> .report-heat-1),
+  & .report-heat-legend-swatch.report-heat-1 {
+    background: color-mix(in srgb, var(--chart-series-1) 20%, transparent);
+  }
+  & td:has(> .report-heat-2),
+  & .report-heat-legend-swatch.report-heat-2 {
+    background: color-mix(in srgb, var(--chart-series-1) 36%, transparent);
+  }
+  & td:has(> .report-heat-3),
+  & .report-heat-legend-swatch.report-heat-3 {
+    background: color-mix(in srgb, var(--chart-series-1) 54%, transparent);
+  }
+  & td:has(> .report-heat-4),
+  & .report-heat-legend-swatch.report-heat-4 {
+    background: color-mix(in srgb, var(--chart-series-1) 76%, transparent);
+  }
+  & td:has(> .report-heat-5),
+  & .report-heat-legend-swatch.report-heat-5 {
+    background: var(--chart-series-1);
+  }
+  & td:has(> .report-heat-4),
+  & td:has(> .report-heat-5) {
+    color: var(--ground);
+  }
+  /* 範囲の最大のセル。罫に重ならないよう枠をセルの内側に引く。 */
+  & td:has(> .report-heat-peak) {
+    outline: 2px solid var(--ink-bright);
+    outline-offset: -2px;
+  }
+  & .report-captioned > .report-heat-legend {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-xs) var(--space-sm);
+    padding-top: var(--space-sm);
+    font-size: var(--font-secondary);
+    color: var(--ink-quiet);
+  }
+  & .report-heat-legend-swatch {
+    width: 1.5rem;
+    height: 0.75rem;
+    border-radius: var(--radius-sm);
+  }
+  /* 合計の行と列。合計の行は本体の行と罫で切る。 */
+  & .report-table-total {
+    font-weight: 700;
+    color: var(--ink-bright);
+  }
+  & tfoot td {
+    border-top: 1px solid var(--rule);
+    color: var(--ink-soft);
+  }
   /* 表の凡例。題の直下に左揃えで置く。 */
   & .report-captioned > .report-table-status-legend {
     display: flex;

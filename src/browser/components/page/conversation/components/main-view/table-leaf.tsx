@@ -1,5 +1,5 @@
 // `Table`（表）を Markdown に戻さず直接描く。
-// 列の揃え・数の棒・状態の凡例は全行から決め、札の色は葉の値から受ける。数えない。
+// 列の揃え・数の棒・状態の凡例・濃淡の段は全行から決め、札の色は葉の値から受ける。数えない。
 
 import clsx from "clsx"
 import { Fragment, type ReactElement, type ReactNode } from "react"
@@ -17,7 +17,13 @@ import type { LeafValue } from "../../../../../../shared/report/report-leaf-valu
 import {
   CELL_STATUS_MARKS,
   type ColumnBar,
+  heatLevelOf,
+  isHeatColumn,
+  isHeatPeak,
   numericCellMagnitude,
+  type TableHeat,
+  type TableTotals,
+  tableHeatOf,
   tableLayoutOf,
 } from "../../../../../../shared/report/table-layout.ts"
 import { tableCellTexts } from "../../../../../../shared/report/table-view.ts"
@@ -28,6 +34,7 @@ import {
   tableLeafClassNames,
   tagToneClassName,
 } from "../markdown/markdown.tsx"
+import { visibleTableTotals } from "./domain/a2ui-table-view.ts"
 import { LeafTable, type LeafTableRow } from "./leaf-table.tsx"
 import styles from "./main-view.module.css"
 import { FoldedLeafFrame } from "./report-leaf-frame.tsx"
@@ -47,7 +54,10 @@ export function TableLeaf(props: {
   return <TableFigure part={part} value={value} rowOrder={part.rows.map((_, index) => index)} />
 }
 
-/** `rowOrder` は見せる行の元の添字を見せる順に並べたもの。棒・揃え・凡例は見せない行も含めた全行から決める。 */
+/**
+ * `rowOrder` は見せる行の元の添字を見せる順に並べたもの。
+ * 棒・揃え・凡例・濃淡の段は見せない行も含めた全行から決め、合計は見せる行だけを足す。
+ */
 export function TableFigure(props: {
   readonly part: TablePart
   readonly value: LeafValue
@@ -55,6 +65,9 @@ export function TableFigure(props: {
 }): ReactElement {
   const { part, value, rowOrder } = props
   const layout = tableLayoutOf(part)
+  const heat = tableHeatOf(part)
+  const totals = visibleTableTotals(part, rowOrder)
+  const totalled = totals.kind === "totals"
   return (
     <FoldedLeafFrame value={value} title={part.title} fit fold={part.fold} swap={false}>
       {layout.legendStatuses.length > 0 && (
@@ -77,10 +90,12 @@ export function TableFigure(props: {
         </div>
       )}
       <LeafTable
-        head={headCells(part, value)}
-        aligns={layout.aligns}
-        rows={bodyRows(part, layout, value, rowOrder)}
+        head={totalled ? [...headCells(part, value), TOTAL_LABEL] : headCells(part, value)}
+        aligns={totalled ? [...layout.aligns, "right"] : layout.aligns}
+        rows={bodyRows(part, { layout, heat, totals }, value, rowOrder)}
+        foot={totals.kind === "totals" ? footCells(part.columns.length, heat, totals) : []}
       />
+      {heat.kind === "heat" && <HeatLegend part={part} heat={heat} />}
       {part.rest.trim() !== "" && (
         <div className={tableLeafClassNames.tableRest}>
           <InlineCodeText text={part.rest} />
@@ -112,30 +127,104 @@ function ColumnMarked(props: {
   )
 }
 
+const TOTAL_LABEL = "計"
+
+/** 合計の行。`heat` の範囲の列に列の合計、1列目に「計」、最後に総計を置き、ほかの列は空ける。 */
+function footCells(
+  columnCount: number,
+  heat: TableHeat,
+  totals: Extract<TableTotals, { readonly kind: "totals" }>,
+): readonly ReactNode[] {
+  if (heat.kind !== "heat") {
+    return []
+  }
+  const cells = Array.from({ length: columnCount }, (_, column) => {
+    if (isHeatColumn(heat, column)) {
+      return <TotalValue key={column} text={totals.columns[column - heat.from] ?? ""} />
+    }
+    return column === 0 ? TOTAL_LABEL : ""
+  })
+  return [...cells, <TotalValue key="grand" text={totals.grand} />]
+}
+
+function TotalValue(props: { readonly text: string }): ReactElement {
+  return <span className={tableLeafClassNames.tableTotal}>{props.text}</span>
+}
+
+function HeatLegend(props: {
+  readonly part: TablePart
+  readonly heat: Extract<TableHeat, { readonly kind: "heat" }>
+}): ReactElement {
+  const { part, heat } = props
+  const peak = part.rows
+    .flatMap((row) => tableRowCells(row).slice(heat.from, heat.to + 1))
+    .find((cell) => isHeatPeak(heat, cell))
+  return (
+    <div className={tableLeafClassNames.heatLegend}>
+      <span>少</span>
+      {tableLeafClassNames.heatLevels.map((className) => (
+        <span
+          key={className}
+          className={clsx(tableLeafClassNames.heatLegendSwatch, className)}
+          aria-hidden="true"
+        />
+      ))}
+      <span>多{typeof peak === "string" && `（最大 ${peak} に枠）`}</span>
+    </div>
+  )
+}
+
+type FigureLayout = {
+  readonly layout: ReturnType<typeof tableLayoutOf>
+  readonly heat: TableHeat
+  readonly totals: TableTotals
+}
+
 function bodyRows(
   part: TablePart,
-  layout: ReturnType<typeof tableLayoutOf>,
+  figure: FigureLayout,
   value: LeafValue,
   rowOrder: readonly number[],
 ): readonly LeafTableRow[] {
-  return rowOrder.flatMap((index) => {
+  const { layout, heat, totals } = figure
+  return rowOrder.flatMap((index, position) => {
     const row = part.rows[index]
     if (row === undefined) {
       return []
     }
-    const cells = tableRowCells(row).map((cell, column) => (
-      <ColumnMarked
-        key={`${String(column)}:${tableCellTexts(cell).join("|")}`}
-        marked={column === part.emphasisColumn}
-      >
+    const drawn = tableRowCells(row).map((cell, column) => {
+      const content = (
         <CellContent
           cell={cell}
           bar={layout.bars[column] ?? NO_BAR}
           statusColumn={layout.statusColumns[column] === true}
           value={value}
         />
-      </ColumnMarked>
-    ))
+      )
+      return (
+        <ColumnMarked
+          key={`${String(column)}:${tableCellTexts(cell).join("|")}`}
+          marked={column === part.emphasisColumn}
+        >
+          {heat.kind === "heat" && isHeatColumn(heat, column) ? (
+            <span
+              className={clsx(
+                tableLeafClassNames.heatLevels[heatLevelOf(heat, cell)],
+                isHeatPeak(heat, cell) && tableLeafClassNames.heatPeak,
+              )}
+            >
+              {content}
+            </span>
+          ) : (
+            content
+          )}
+        </ColumnMarked>
+      )
+    })
+    const cells =
+      totals.kind === "totals"
+        ? [...drawn, <TotalValue key="total" text={totals.rows[position] ?? ""} />]
+        : drawn
     const [first, ...rest] = cells
     const detail = tableRowDetail(row)
     return [

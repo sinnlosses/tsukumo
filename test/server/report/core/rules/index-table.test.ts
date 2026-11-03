@@ -71,6 +71,41 @@ describe("reportViolations", () => {
     })
 
     it.each([
+      ["数の範囲に濃淡と合計", { from: 1, to: 2 }, true, [["a", "1", "2,000"]], true],
+      ["合計なしで % の範囲", { from: 1, to: 2 }, undefined, [["a", "1%", "2%"]], true],
+      ["範囲に字の列", { from: 0, to: 2 }, undefined, [["a", "1", "2"]], false],
+      ["範囲に負の数", { from: 1, to: 2 }, undefined, [["a", "-1", "2"]], false],
+      [
+        "範囲に変化のセル",
+        { from: 1, to: 2 },
+        undefined,
+        [["a", { from: "1", to: "2" }, "2"]],
+        false,
+      ],
+      ["範囲が列の外", { from: 1, to: 3 }, undefined, [["a", "1", "2"]], false],
+      ["範囲が逆順", { from: 2, to: 1 }, undefined, [["a", "1", "2"]], false],
+      ["濃淡なしの合計", undefined, true, [["a", "1", "2"]], false],
+      ["合計の範囲に %", { from: 1, to: 2 }, true, [["a", "1%", "2%"]], false],
+    ] as const)("濃淡と合計: %s", (_, heat, totals, rows, accepted) => {
+      const table: ReportBlock = {
+        kind: "table",
+        title: "架空の表",
+        columns: ["列", "甲", "乙"],
+        rows,
+        rest: "",
+        fold: "",
+        aside: "",
+        heat,
+        totals,
+      }
+      const violations = reportViolations(draft([table]))
+      expect(violations).toEqual(accepted ? [] : [{ kind: "heat-range", count: 1 }])
+      if (!accepted) {
+        expect(reportRejectionText(violations)).toContain("`heat`")
+      }
+    })
+
+    it.each([
       ["列の数と同じ位置", 2, [{ kind: "emphasis-column-range", count: 1 }]],
       ["列の数を超える位置", 5, [{ kind: "emphasis-column-range", count: 1 }]],
       ["最後の列", 1, []],

@@ -9,6 +9,8 @@ import {
 import {
   NUMERIC_CELL_PATTERN,
   numericCellMagnitude,
+  type TableTotals,
+  tableTotalsOf,
 } from "../../../../../../../shared/report/table-layout.ts"
 import {
   tableCellTexts,
@@ -83,6 +85,21 @@ export function visibleRowOrder(
       return order === 0 ? a.index - b.index : order * sign
     })
     .map(({ index }) => index)
+}
+
+/**
+ * 見せる行（`rowOrder` の元の添字）だけを足した合計。
+ * 合計の行と列は `rows` に入らないので並べ替え・絞り込みの対象にならず、表の最後に残る。
+ */
+export function visibleTableTotals(part: TablePart, rowOrder: readonly number[]): TableTotals {
+  return tableTotalsOf({
+    heat: part.heat,
+    totals: part.totals,
+    rows: rowOrder.flatMap((index) => {
+      const row = part.rows[index]
+      return row === undefined ? [] : [row]
+    }),
+  })
 }
 
 function keptRows(part: TablePart, filter: readonly string[]) {

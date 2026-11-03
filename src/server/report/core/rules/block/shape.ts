@@ -12,6 +12,7 @@ import type {
   ReportOutline,
   ReportOutlineLeaf,
 } from "../../../../../shared/report/report-outline.ts"
+import { isHeatCell } from "../../../../../shared/report/table-layout.ts"
 import type { CardsFault } from "../block.ts"
 import { textLengthOf } from "../draft.ts"
 import { hasNestedFold } from "../prose/notation.ts"
@@ -116,6 +117,22 @@ export function isEmphasisColumnOutOfRange(leaf: ReportOutlineLeaf): boolean {
     leaf.component === "Table" &&
     leaf.emphasisColumn !== undefined &&
     leaf.emphasisColumn >= leaf.columns.length
+  )
+}
+
+/**
+ * `heat` の範囲が列の外か逆順、範囲に 0 以上の素の数でないセルがある、
+ * または `totals` があるのに `heat` が無いか範囲に `%` のセルがある `Table` か。
+ */
+export function isBadHeat(leaf: ReportOutlineLeaf): boolean {
+  if (leaf.component !== "Table") return false
+  const { heat } = leaf
+  if (heat === undefined) return leaf.totals === true
+  if (heat.from > heat.to || heat.to >= leaf.columns.length) return true
+  return leaf.rows.some((row) =>
+    tableRowCells(row)
+      .slice(heat.from, heat.to + 1)
+      .some((cell) => !isHeatCell(cell) || (leaf.totals === true && cell.endsWith("%"))),
   )
 }
 

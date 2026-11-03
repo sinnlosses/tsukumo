@@ -1,5 +1,7 @@
-// 表（`table`）と対応表（`matrix`）の、全行から決まる値（列の揃え・数の棒・状態の列・凡例の並び）と、状態の印の表。
+// 表（`table`）と対応表（`matrix`）の、全行から決まる値（列の揃え・数の棒・状態の列・凡例の並び・濃淡の段・合計）と、状態の印の表。
 // Markdown に組む側と React の部品が、同じ決まりを読む。
+
+import { sum } from "remeda"
 
 import {
   REPORT_CELL_STATUSES,
@@ -60,11 +62,14 @@ type TableLayout = {
   readonly legendStatuses: readonly CellStatus[]
 }
 
-export function tableLayoutOf(table: Pick<TableBlock, "columns" | "rows">): TableLayout {
+export function tableLayoutOf(table: Pick<TableBlock, "columns" | "rows" | "heat">): TableLayout {
   const rows = table.rows.map(tableRowCells)
+  const heat = tableHeatOf(table)
   return {
     aligns: table.columns.map((_, index) => columnAlign(rows, index)),
-    bars: table.columns.map((_, index) => columnBar(rows, index)),
+    bars: table.columns.map((_, index) =>
+      isHeatColumn(heat, index) ? NO_BAR : columnBar(rows, index),
+    ),
     statusColumns: table.columns.map((_, index) =>
       rows.some((cells) => {
         const cell = cells[index]
@@ -82,6 +87,108 @@ export function matrixLegendStatuses(block: Pick<MatrixBlock, "rows">): readonly
   return REPORT_MATRIX_STATUSES.filter((status) =>
     block.rows.some(({ cells }) => cells.includes(status)),
   )
+}
+
+/** 濃淡の段の数。段 0 がいちばん薄い。 */
+const HEAT_LEVEL_COUNT = 6
+
+export type TableHeat =
+  | { readonly kind: "none" }
+  | { readonly kind: "heat"; readonly from: number; readonly to: number; readonly max: number }
+
+/** `heat` の範囲と、範囲の全行のセルの最大値。 */
+export function tableHeatOf(table: Pick<TableBlock, "rows" | "heat">): TableHeat {
+  const { heat } = table
+  if (heat === undefined) {
+    return { kind: "none" }
+  }
+  const magnitudes = table.rows.flatMap((row) =>
+    heatRange(tableRowCells(row), heat).map(heatMagnitude),
+  )
+  return { kind: "heat", from: heat.from, to: heat.to, max: Math.max(0, ...magnitudes) }
+}
+
+export function isHeatColumn(heat: TableHeat, index: number): boolean {
+  return heat.kind === "heat" && index >= heat.from && index <= heat.to
+}
+
+/** 濃淡を塗れるセル: 0 以上の素の数。 */
+export function isHeatCell(cell: TableCell): cell is string {
+  return typeof cell === "string" && NUMERIC_CELL_PATTERN.test(cell) && !cell.startsWith("-")
+}
+
+/** セルの濃淡の段（0 から `HEAT_LEVEL_COUNT - 1`）。最大値を `HEAT_LEVEL_COUNT` 等分した帯で決める。 */
+export function heatLevelOf(
+  heat: Extract<TableHeat, { readonly kind: "heat" }>,
+  cell: TableCell,
+): number {
+  if (heat.max <= 0) {
+    return 0
+  }
+  const level = Math.floor((heatMagnitude(cell) / heat.max) * HEAT_LEVEL_COUNT)
+  return Math.min(HEAT_LEVEL_COUNT - 1, level)
+}
+
+/** 範囲の最大値と等しいセルか（同じ値が複数あれば全部）。最大値が 0 のときはどれも当たらない。 */
+export function isHeatPeak(
+  heat: Extract<TableHeat, { readonly kind: "heat" }>,
+  cell: TableCell,
+): boolean {
+  return heat.max > 0 && heatMagnitude(cell) === heat.max
+}
+
+export type TableTotals =
+  | { readonly kind: "none" }
+  | {
+      readonly kind: "totals"
+      /** 行ごとの、`heat` の範囲のセルの合計。行の並びと同じ長さ。 */
+      readonly rows: readonly string[]
+      /** `heat` の範囲の列ごとの合計。範囲の左から。 */
+      readonly columns: readonly string[]
+      readonly grand: string
+    }
+
+/**
+ * `totals` と `heat` があるときの合計。渡した行だけを足す。
+ * 小数の桁はセルのいちばん長い桁に、桁区切りはセルに 1 つでもあれば付ける。
+ */
+export function tableTotalsOf(table: Pick<TableBlock, "rows" | "heat" | "totals">): TableTotals {
+  const { heat } = table
+  if (heat === undefined || table.totals !== true) {
+    return { kind: "none" }
+  }
+  const grid = table.rows.map((row) => heatRange(tableRowCells(row), heat))
+  const texts = grid.flat().filter(isHeatCell)
+  const digits = Math.max(0, ...texts.map(fractionDigits))
+  const format = new Intl.NumberFormat("en-US", {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+    useGrouping: texts.some((text) => text.includes(",")),
+  })
+  const rowSums = grid.map((cells) => sum(cells.map(heatMagnitude)))
+  const columnSums = Array.from({ length: heat.to - heat.from + 1 }, (_, offset) =>
+    sum(grid.map((cells) => heatMagnitude(cells[offset] ?? "0"))),
+  )
+  return {
+    kind: "totals",
+    rows: rowSums.map((value) => format.format(value)),
+    columns: columnSums.map((value) => format.format(value)),
+    grand: format.format(sum(rowSums)),
+  }
+}
+
+type HeatRange = NonNullable<TableBlock["heat"]>
+
+function heatRange(cells: readonly TableCell[], heat: HeatRange): readonly TableCell[] {
+  return cells.slice(heat.from, heat.to + 1)
+}
+
+function heatMagnitude(cell: TableCell): number {
+  return isHeatCell(cell) ? numericCellMagnitude(cell) : 0
+}
+
+function fractionDigits(text: string): number {
+  return /\.(\d+)/.exec(text)?.[1]?.length ?? 0
 }
 
 function isStatusCell(cell: TableCell): cell is Extract<TableCell, { readonly status: string }> {

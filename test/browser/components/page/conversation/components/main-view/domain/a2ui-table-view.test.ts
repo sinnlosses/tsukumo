@@ -5,6 +5,7 @@ import {
   filterBadges,
   hasBoundChoicePicker,
   visibleRowOrder,
+  visibleTableTotals,
 } from "../../../../../../../../src/browser/components/page/conversation/components/main-view/domain/a2ui-table-view.ts"
 import type { A2uiReportComponent } from "../../../../../../../../src/shared/report/a2ui-report-catalog.ts"
 import type { A2uiReportPart } from "../../../../../../../../src/shared/report/a2ui-report-outline.ts"
@@ -151,6 +152,42 @@ describe("filterBadges", () => {
       { value: "甲", count: 1 },
       { value: "乙", count: 2 },
     ])
+  })
+})
+
+describe("visibleTableTotals", () => {
+  const part: A2uiReportPart<"Table"> = {
+    ...table([]),
+    columns: ["曜日", "前半", "後半"],
+    rows: [
+      ["月", "2", "9"],
+      ["火", "1", "12"],
+      ["水", "3", "41"],
+    ],
+    heat: { from: 1, to: 2 },
+    totals: true,
+    filterColumn: 0,
+  }
+
+  it("並べ替えた行の順に行の合計を並べ、列の合計は順に依らない", () => {
+    const order = visibleRowOrder(part, { column: 2, direction: "desc" }, [])
+
+    expect(order).toEqual([2, 1, 0])
+    expect(visibleTableTotals(part, order)).toEqual({
+      kind: "totals",
+      rows: ["44", "13", "11"],
+      columns: ["6", "62"],
+      grand: "68",
+    })
+  })
+
+  it("絞り込んだ行だけを足す", () => {
+    expect(visibleTableTotals(part, filteredRowOrder(part, ["水"]))).toEqual({
+      kind: "totals",
+      rows: ["44"],
+      columns: ["3", "41"],
+      grand: "44",
+    })
   })
 })
 

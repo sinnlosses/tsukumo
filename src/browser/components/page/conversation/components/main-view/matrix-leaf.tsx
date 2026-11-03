@@ -37,6 +37,7 @@ export function MatrixLeaf(props: {
           head={headCells(part.columns)}
           aligns={["left", ...part.columns.map(() => "center" as const)]}
           rows={bodyRows(part.rows)}
+          foot={[]}
         />
         <div className={matrixLeafClassNames.matrixLegend}>
           {matrixLegendStatuses(part).map((status) => (

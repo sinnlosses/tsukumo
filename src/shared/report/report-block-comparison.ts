@@ -61,6 +61,11 @@ export const tableBlockSchema = z
       .min(0)
       .optional()
       .describe("案を列に並べた表で採った案の列（0始まり）"),
+    heat: z
+      .object({ from: z.number().int().min(0), to: z.number().int().min(0) })
+      .optional()
+      .describe("数の列の範囲（0始まり・両端含む）を濃淡で塗る。範囲は0以上の数だけ"),
+    totals: z.literal(true).optional().describe("heat の範囲の行と列の合計「計」を描く側が足す"),
     fold,
     aside,
   })

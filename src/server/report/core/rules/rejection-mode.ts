@@ -33,6 +33,7 @@ export const REPORT_REJECTION_MODES = {
   "long-table": "count",
   "many-emphasis-rows": "count",
   "emphasis-column-range": "reject",
+  "heat-range": "reject",
   "sentence-table": "count",
   "long-list": "count",
   "bad-cards": "reject",

@@ -280,6 +280,68 @@ describe("Table の行の詳しい中身", () => {
   })
 })
 
+describe("Table の濃淡と合計", () => {
+  const WEEK: TablePart = {
+    id: "week",
+    component: "Table",
+    title: "",
+    columns: ["曜日", "0-6", "6-12", "12-18"],
+    rows: [
+      ["月", "2", "9", "6"],
+      ["火", "1", "12", "8"],
+      ["水", "3", "41", "22"],
+    ],
+    rest: "",
+    fold: "",
+    aside: "",
+    heat: { from: 1, to: 3 },
+    totals: true,
+  }
+  const levelOf = (cell: Element | undefined) =>
+    /report-heat-(\d)/.exec(cell?.innerHTML ?? "")?.[1] ?? "なし"
+
+  it("範囲のセルに段の印を置き、最大のセルにだけ山の印を置き、棒は出さない", () => {
+    const { container } = renderPart(WEEK)
+    const cells = [...container.querySelectorAll("tbody tr:nth-child(3) td")]
+
+    expect(cells.map(levelOf)).toEqual(["なし", "0", "5", "3", "なし"])
+    expect(container.querySelectorAll("[class*='report-heat-peak']")).toHaveLength(1)
+    expect(container.querySelector("[class*='report-cell-bar']")).toBeNull()
+    expect(container.querySelector("[class*='report-heat-legend']")?.textContent).toBe(
+      "少多（最大 41 に枠）",
+    )
+  })
+
+  it("見出しの右に「計」の列、本体の下に列の合計の行を出す", () => {
+    const { container } = renderPart(WEEK)
+    const textsOf = (selector: string) =>
+      [...container.querySelectorAll(selector)].map((cell) => cell.textContent)
+
+    expect(textsOf("thead th")).toEqual(["曜日", "0-6", "6-12", "12-18", "計"])
+    expect(textsOf("tbody td:last-child")).toEqual(["17", "21", "66"])
+    expect(textsOf("tfoot td")).toEqual(["計", "6", "62", "36", "104"])
+  })
+
+  it("並べ替え・絞り込みのあとも合計の行は最後に残り、見せる行だけを足す", () => {
+    const { container } = render(
+      <div data-report-region="section">
+        <TableFigure part={WEEK} value={PLAIN_VALUE} rowOrder={[2, 0]} />
+      </div>,
+    )
+    const rows = [...container.querySelectorAll("tr")].map((row) => row.textContent)
+
+    expect(rows.at(-1)).toBe("計5502883")
+    expect(rows.slice(1, -1)).toEqual(["水3412266", "月29617"])
+  })
+
+  it("濃淡も合計も書かない表には印も合計も出さない", () => {
+    const { container } = renderPart({ ...WEEK, heat: undefined, totals: undefined })
+
+    expect(container.querySelector("[class*='report-heat']")).toBeNull()
+    expect(container.querySelector("tfoot")).toBeNull()
+  })
+})
+
 const PLAIN_VALUE: LeafValue = {
   captionNumber: { kind: "none" },
   tagTones: {},

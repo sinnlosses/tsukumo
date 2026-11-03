@@ -22,6 +22,8 @@ type LeafTableProps = {
   readonly head: readonly ReactNode[]
   readonly aligns: readonly LeafTableAlign[]
   readonly rows: readonly LeafTableRow[]
+  /** 本体の 10 行の切りに入らない最後の行（合計の行）。空なら `tfoot` を出さない。 */
+  readonly foot: readonly ReactNode[]
 }
 
 /** 左揃えは何も付けない（旧い GFM の表は、右と中央を `style` の `text-align` で出す）。 */
@@ -60,6 +62,17 @@ export function LeafTable(props: LeafTableProps): ReactElement {
               />
             ))}
           </FoldedTableBody>
+        )}
+        {props.foot.length > 0 && (
+          <tfoot>
+            <tr>
+              {props.foot.map((cell, index) => (
+                <td key={`foot-${String(index)}`} {...attributesOf(index)}>
+                  {cell}
+                </td>
+              ))}
+            </tr>
+          </tfoot>
         )}
       </table>
     </div>
