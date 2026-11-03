@@ -5,9 +5,51 @@ import {
   barEndPadding,
   barEndText,
   barValueText,
+  lineEndLabelLines,
+  lineEndPadding,
+  SERIES_SIDE_PADDING,
   shareLabelRows,
   spreadLabels,
 } from "../../../../../../../../src/browser/components/page/conversation/components/markdown/renderer/chart-label-layout.ts"
+
+const measure = (text: string): number => text.length * 12
+
+describe("線端の系列名の札", () => {
+  const widthsOf = (text: string) =>
+    lineEndLabelLines(text, measure, SERIES_SIDE_PADDING).map(measure)
+
+  it("短い名前は1行で、余白が上限より狭い", () => {
+    expect(lineEndLabelLines("稼働率（%）", measure, SERIES_SIDE_PADDING)).toEqual(["稼働率（%）"])
+    expect(lineEndPadding(widthsOf("稼働率（%）"), SERIES_SIDE_PADDING)).toBeLessThan(
+      SERIES_SIDE_PADDING,
+    )
+  })
+
+  it("長い名前は最後の開き括弧の前で2行に折れ、余白が上限以下", () => {
+    expect(lineEndLabelLines("画像の容量（TB）", measure, SERIES_SIDE_PADDING)).toEqual([
+      "画像の容量",
+      "（TB）",
+    ])
+    expect(lineEndPadding(widthsOf("画像の容量（TB）"), SERIES_SIDE_PADDING)).toBeLessThanOrEqual(
+      SERIES_SIDE_PADDING,
+    )
+  })
+
+  it("括弧の無い長い名前は1行のままで、余白は上限で止まる", () => {
+    const name = "とても長い系列の名前です"
+    expect(lineEndLabelLines(name, measure, SERIES_SIDE_PADDING)).toEqual([name])
+    expect(lineEndPadding(widthsOf(name), SERIES_SIDE_PADDING)).toBe(SERIES_SIDE_PADDING)
+  })
+
+  it("札が無ければ余白は 0", () => {
+    expect(lineEndPadding([], SERIES_SIDE_PADDING)).toBe(0)
+  })
+
+  it("2行の札と隣の札は縦に重ならない", () => {
+    const [first, second] = spreadLabels([100, 102], 14, [28, 14])
+    expect((second ?? 0) - (first ?? 0)).toBe(21)
+  })
+})
 
 describe("shareLabelRows", () => {
   it("幅に収まる部分は棒の中に、部分の中心へ置く", () => {

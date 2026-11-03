@@ -29,18 +29,47 @@ export type ShareLabelPlace = {
 export type Padding = ChartInstance["options"]["layout"]["padding"]
 
 /**
- * 縦の位置 `ys` が `gap` より近いものを、上から順に押し下げて離す。返す並びは入力と同じ順。
+ * 縦の位置 `ys` が近いものを、上から順に押し下げて離す。返す並びは入力と同じ順。
+ * 隣り合う札の中心の間は、2つの高さ（`heights`。省くと `gap`）の平均を空ける。
  */
-export function spreadLabels(ys: readonly number[], gap: number): number[] {
+export function spreadLabels(
+  ys: readonly number[],
+  gap: number,
+  heights: readonly number[] = ys.map(() => gap),
+): number[] {
   const order = ys.map((_, index) => index).toSorted((a, b) => (ys[a] ?? 0) - (ys[b] ?? 0))
   const spread = [...ys]
   let previous = Number.NEGATIVE_INFINITY
+  let previousHeight = gap
   for (const index of order) {
-    const placed = Math.max(ys[index] ?? 0, previous + gap)
+    const height = heights[index] ?? gap
+    const placed = Math.max(ys[index] ?? 0, previous + (previousHeight + height) / 2)
     spread[index] = placed
     previous = placed
+    previousHeight = height
   }
   return spread
+}
+
+/**
+ * 線端の系列名の札を行に分ける。`limit`（右の余白の上限）に収まるなら1行。
+ * 収まらず、先頭より後ろに開き括弧があるときは、最後の開き括弧の前で2行に折る。括弧が無ければ1行のまま。
+ */
+export function lineEndLabelLines(
+  text: string,
+  measure: (text: string) => number,
+  limit: number,
+): string[] {
+  if (measure(text) + LABEL_OFFSET <= limit) {
+    return [text]
+  }
+  const open = Math.max(text.lastIndexOf("（"), text.lastIndexOf("("))
+  return open > 0 ? [text.slice(0, open), text.slice(open)] : [text]
+}
+
+/** 線端の札の右の余白。折ったあとの行の幅の最大に字の間隔を足し、`limit` を上限にする。札が無ければ 0。 */
+export function lineEndPadding(lineWidths: readonly number[], limit: number): number {
+  return lineWidths.length === 0 ? 0 : Math.min(limit, Math.max(...lineWidths) + LABEL_OFFSET)
 }
 
 /**

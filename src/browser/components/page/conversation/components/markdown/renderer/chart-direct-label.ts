@@ -14,7 +14,6 @@ import {
   NAME_COLUMN_GAP,
   NAME_ROW_PADDING,
   type Padding,
-  SERIES_SIDE_PADDING,
   SHARE_MARK_SIZE,
   SHARE_MARK_WIDTH,
   type ShareLabelPlace,
@@ -22,18 +21,19 @@ import {
   spreadLabels,
 } from "./chart-label-layout.ts"
 import {
-  chartMarksOf,
-  drawAnnotations,
-  drawReferences,
-  referenceLabelsOf,
-  widenToReferences,
-} from "./chart-reference-mark.ts"
+  drawLineEnds,
+  drawText,
+  labelFont,
+  LABEL_GAP,
+  lineEndSeriesPadding,
+  measuredWidth,
+  widestText,
+} from "./chart-line-end.ts"
+import { chartMarksOf, drawAnnotations, widenToReferences } from "./chart-reference-mark.ts"
 import { resolveColor } from "./theme-color.ts"
 
 const DIRECT_LABEL_PLUGIN_ID = "tsukumo-direct-label"
 
-const LABEL_GAP = 14
-const FONT_SIZE = 12
 const BAR_VALUE_WEIGHT = 600
 const PIE_SIDE_PADDING = 90
 const PIE_VERTICAL_PADDING = 24
@@ -126,16 +126,18 @@ function paddingFor(chart: ChartInstance): Padding {
       }
     case "line": {
       const references = chartMarksOf(chart).references
-      if (references.length > 0) {
-        const labelWidth = measuredWidth(
-          chart.ctx,
-          references.map(({ label }) => label),
-        )
-        return { ...none, right: Math.max(SERIES_SIDE_PADDING, LABEL_OFFSET + labelWidth) }
+      const referenceWidth =
+        references.length === 0
+          ? 0
+          : LABEL_OFFSET +
+            measuredWidth(
+              chart.ctx,
+              references.map(({ label }) => label),
+            )
+      return {
+        ...none,
+        right: Math.max(lineEndSeriesPadding(chart, option?.mode === "values"), referenceWidth),
       }
-      return seriesCount > 1 || option?.mode === "values"
-        ? { ...none, right: SERIES_SIDE_PADDING }
-        : none
     }
     case "bar":
       return barEndPadding(chart.options.indexAxis === "y", seriesCount, barEndTextWidth(chart))
@@ -144,24 +146,8 @@ function paddingFor(chart: ChartInstance): Padding {
   }
 }
 
-function labelFont(): string {
-  return `${String(FONT_SIZE)}px ${Chart.defaults.font.family}`
-}
-
 function barValueFont(): string {
   return `${String(BAR_VALUE_WEIGHT)} ${labelFont()}`
-}
-
-function widestText(ctx: CanvasRenderingContext2D, texts: readonly string[]): number {
-  return Math.max(0, ...texts.map((text) => ctx.measureText(text).width))
-}
-
-function measuredWidth(ctx: CanvasRenderingContext2D, texts: readonly string[]): number {
-  ctx.save()
-  ctx.font = labelFont()
-  const width = widestText(ctx, texts)
-  ctx.restore()
-  return width
 }
 
 // 項目名と前後の数字の字の幅から、左右の余白を決める。`beforeLayout` でも呼ぶので、描く領域（`chartArea`）はまだ無く、読まない。
@@ -216,19 +202,6 @@ function directLabelOptionOf(value: unknown): DirectLabelOption | undefined {
   return { mode, names }
 }
 
-function drawText(
-  ctx: CanvasRenderingContext2D,
-  text: string,
-  x: number,
-  y: number,
-  align: CanvasTextAlign,
-  baseline: CanvasTextBaseline,
-): void {
-  ctx.textAlign = align
-  ctx.textBaseline = baseline
-  ctx.fillText(text, x, y)
-}
-
 // 幅が `maxWidth` を超えるときは、字を詰めて収める。
 function drawNameInColumn(
   ctx: CanvasRenderingContext2D,
@@ -257,42 +230,6 @@ function drawPie(chart: ChartInstance, withValues: boolean): void {
       "middle",
     )
   })
-}
-
-// 基準線があるときは系列が1つでも系列名を書き、基準線の名前と合わせて縦に離す。
-function drawLineEnds(chart: ChartInstance, withValues: boolean): void {
-  const references = referenceLabelsOf(chart)
-  if (chart.data.datasets.length < 2 && !withValues && references.length === 0) {
-    return
-  }
-  const ends = visibleEnds(chart, withValues)
-  const ys = spreadLabels(
-    [...ends.map(({ point }) => point.y), ...references.map(({ y }) => y)],
-    LABEL_GAP,
-  )
-  ends.forEach(({ point, label }, index) => {
-    drawText(chart.ctx, label, point.x + LABEL_OFFSET, ys[index] ?? point.y, "left", "middle")
-  })
-  drawReferences(chart, references, ys.slice(ends.length))
-}
-
-function visibleEnds(chart: ChartInstance, withValues: boolean) {
-  return chart.data.datasets.flatMap((dataset, index) => {
-    const point = chart.getDatasetMeta(index).data.at(-1)
-    return point === undefined || !chart.isDatasetVisible(index)
-      ? []
-      : [
-          {
-            point,
-            label: withValues ? lineEndText(dataset) : dataset.label,
-          },
-        ]
-  })
-}
-
-function lineEndText(dataset: ChartInstance["data"]["datasets"][number]): string {
-  const value = dataset.data.at(-1)
-  return dataset.label === undefined ? barValueText(value) : barEndText(dataset.label, value)
 }
 
 function drawBarEnds(chart: ChartInstance): void {
