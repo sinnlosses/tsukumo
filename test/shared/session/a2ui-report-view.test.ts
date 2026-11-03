@@ -210,6 +210,17 @@ describe("a2ui の版の記録の本文", () => {
     expect(a2ui.sections).toEqual({ s1: { regionId: 0, heading: "## 架空の節" } })
   })
 
+  it("Report.workDone が面の頭の workDone に載り、省くと空文字になる", () => {
+    const withWorkDone = PARTS.map((part) =>
+      part.id === "root" ? { ...part, workDone: "架空の `file.ts` を直した。" } : part,
+    )
+    const given = regionsOf(reportOf({ components: withWorkDone })).a2ui
+    const omitted = regionsOf(reportOf({ components: PARTS })).a2ui
+
+    expect(given.head.workDone).toBe("架空の `file.ts` を直した。")
+    expect(omitted.head.workDone).toBe("")
+  })
+
   it("根が Report でなければ none", () => {
     const parts = PARTS.filter((part) => part.id !== "root")
 

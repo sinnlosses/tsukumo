@@ -145,6 +145,8 @@ export type MainViewSurfaceHead = {
     | { readonly kind: "none" }
     | { readonly kind: "conclusion" | "conclusion-lead"; readonly text: string }
   readonly keyFigures: readonly MainViewKeyFigure[]
+  /** `Report.workDone`（したこと）の字。省かれていれば空文字。 */
+  readonly workDone: string
   readonly checks: ReportChecksView
   readonly status: MainViewSurfaceStatus
   readonly finalStatus: MainViewSurfaceStatus

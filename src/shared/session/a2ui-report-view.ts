@@ -31,11 +31,16 @@ export function a2uiReportView(
   drawn: DrawnReport,
   layout: ReportLeafLayout,
   imageSource: ReportImageSource,
-  head: MainViewSurfaceHead,
+  headWithoutWorkDone: Omit<MainViewSurfaceHead, "workDone">,
   favor: Extract<MainViewA2uiReport, { readonly kind: "surface" }>["favor"],
 ): MainViewA2uiReport {
   const byId = a2uiPartsById(components)
-  if (byId.get(A2UI_ROOT_ID)?.component !== "Report") {
+  const root = byId.get(A2UI_ROOT_ID)
+  const head: MainViewSurfaceHead = {
+    ...headWithoutWorkDone,
+    workDone: root?.component === "Report" ? (root.workDone ?? "").trim() : "",
+  }
+  if (root?.component !== "Report") {
     return { kind: "none", head, favor }
   }
   const regions: readonly DrawnRegion[] = drawn.sections.map((section, regionId) => ({

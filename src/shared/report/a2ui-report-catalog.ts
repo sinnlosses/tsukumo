@@ -188,6 +188,7 @@ const reportComponentSchema = z.object({
       `結論。レポートの冒頭の文を1要素1文（句点まで）で1〜${String(MAX_CONCLUSION_SENTENCES)}要素。1文目は全角${String(MAX_FIRST_SENTENCE)}字以内（目安は${String(FIRST_SENTENCE_TARGET)}字、読点は${String(FIRST_SENTENCE_TARGET_COMMAS)}つまで）。悪い例: 「設定の読み込みを共通化し、型を整理し、テストも足して、起動の流れを書き換えた」（変更の列挙）。良い例: 「次から設定の書き間違いが起動時に分かる」（読み手から見た変化）。2文目は「それで何が良いか」か「変えていないもの」。例: ["…分かる。", "読み方は変えていない。"]`,
     ),
   keyFigures: keyFiguresSchema.optional(),
+  workDone: z.string().optional().describe("task時のしたこと1段落"),
   figure: z.string().optional(),
   figureNone: z.enum(REPORT_FIGURE_NONE_REASONS).optional(),
   children: z.array(z.string()).min(1),
