@@ -8,7 +8,10 @@ import { REPOSITORY_ROOT } from "../../scripts/shared/repository-root.ts"
 
 export const SRC_ROOT = `${REPOSITORY_ROOT}/src`
 
-/** `src/` 配下の `.ts` / `.tsx` を再帰的に集める。相対パス（`shared/<機能>/<名前>.ts`）で返す。 */
+// 並んで走る e2e が書いて消す生成物。走査で拾うと stat の前にファイルが消えて落ちる。
+const GENERATED_DIRECTORIES = [`${REPOSITORY_ROOT}/test/e2e/output`]
+
+/** `src/` 配下の `.ts` / `.tsx` を再帰的に集める（生成物のディレクトリは下りない）。相対パス（`shared/<機能>/<名前>.ts`）で返す。 */
 export function listSourceFiles(
   root: string,
   dir = root,
@@ -16,6 +19,9 @@ export function listSourceFiles(
 ): readonly string[] {
   return readdirSync(dir).flatMap((name) => {
     const fullPath = `${dir}/${name}`
+    if (GENERATED_DIRECTORIES.includes(fullPath)) {
+      return []
+    }
     if (statSync(fullPath).isDirectory()) {
       return listSourceFiles(root, fullPath, extensions)
     }
