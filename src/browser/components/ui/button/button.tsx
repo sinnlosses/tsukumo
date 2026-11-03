@@ -34,6 +34,7 @@ type ButtonVariant =
   | "ghost"
   | "ghost-hover-accent"
   | "ghost-hover-outline"
+  | "ghost-hover-rule-soft"
   | "link"
   | "text-accent"
 type ButtonSize = Exclude<TextSize, "heading" | "inherit">
@@ -98,6 +99,7 @@ const BUTTON_VARIANT_CLASS = {
   ghost: styles["button-variant-ghost"],
   "ghost-hover-accent": styles["button-variant-ghost-hover-accent"],
   "ghost-hover-outline": styles["button-variant-ghost-hover-outline"],
+  "ghost-hover-rule-soft": styles["button-variant-ghost-hover-rule-soft"],
   link: styles["button-variant-link"],
   "text-accent": styles["button-variant-text-accent"],
 } satisfies Record<ButtonVariant, string>

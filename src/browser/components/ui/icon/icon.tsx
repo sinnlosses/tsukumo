@@ -7,6 +7,7 @@ import {
   Briefcase,
   Coins,
   List,
+  Maximize2,
   MessageCircle,
   Pencil,
   Plus,
@@ -52,6 +53,11 @@ export function RefreshIcon(): ReactElement {
 /** 始める・進む（右向きの矢印）。 */
 export function ArrowRightIcon(): ReactElement {
   return <ArrowRight {...ICON_ATTRIBUTES} />
+}
+
+/** 広げる（四隅を指す矢印）。 */
+export function MaximizeIcon(): ReactElement {
+  return <Maximize2 {...ICON_ATTRIBUTES} />
 }
 
 /** 一覧から選ぶ（行の並び）。 */

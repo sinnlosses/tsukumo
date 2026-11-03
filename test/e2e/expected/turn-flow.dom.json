@@ -381,6 +381,9 @@
                                         "type": "button"
                                       },
                                       "children": [
+                                        {
+                                          "tag": "svg"
+                                        },
                                         "広げる"
                                       ]
                                     },

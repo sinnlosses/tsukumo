@@ -18,6 +18,7 @@ import { formatMeasured } from "../../../../../../shared/utils/elapsed-time.ts"
 import { useExternalSync } from "../../../../../hooks/use-external-sync.ts"
 import { Button } from "../../../../ui/button/button.tsx"
 import { Dialog } from "../../../../ui/dialog/dialog.tsx"
+import { MaximizeIcon } from "../../../../ui/icon/icon.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
 import { useDraftedReports } from "../../stores/drafted-report.ts"
@@ -344,7 +345,7 @@ function ExpandableHead(props: ExpandableHeadProps): ReactElement {
       <div className={styles["report-head-frame"]}>
         {props.head}
         <Button
-          variant="outline-hover-warn"
+          variant="ghost-hover-rule-soft"
           size="label"
           pressed="none"
           disabled={false}
@@ -352,7 +353,7 @@ function ExpandableHead(props: ExpandableHeadProps): ReactElement {
           className={styles["report-expand"]}
           onClick={() => setExpanded(true)}
         >
-          {EXPAND_LABEL}
+          <MaximizeIcon /> {EXPAND_LABEL}
         </Button>
       </div>
       {expanded && (
@@ -364,22 +365,24 @@ function ExpandableHead(props: ExpandableHeadProps): ReactElement {
           onClose={close}
           className={styles["report-board"]}
         >
+          <div className={styles["report-board-body"]}>
+            <div className={styles["report-board-column"]}>
+              {props.head}
+              <Report body={body.report} reveal={false} turnId={props.turnId} className="" />
+            </div>
+          </div>
           <div className={styles["report-board-bar"]}>
             <Button
-              variant="outline-hover-warn"
-              size="label"
+              variant="outline-surface"
+              size="secondary"
               pressed="none"
               disabled={false}
               disclosure={{ kind: "none" }}
-              className=""
+              className={styles["report-board-close"]}
               onClick={close}
             >
               {COLLAPSE_LABEL}
             </Button>
-          </div>
-          <div className={styles["report-board-body"]}>
-            {props.head}
-            <Report body={body.report} reveal={false} turnId={props.turnId} className="" />
           </div>
         </Dialog>
       )}

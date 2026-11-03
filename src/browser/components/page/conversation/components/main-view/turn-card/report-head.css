@@ -51,8 +51,13 @@
   min-width: 0;
 }
 .report-expand {
+  display: inline-flex;
   flex: 0 0 auto;
+  align-items: center;
+  gap: var(--space-xs);
   margin-left: auto;
+  padding: var(--space-2xs) var(--space-sm);
+  border-radius: var(--radius-sm);
 }
 /* 広げた板。ビューポートいっぱいに取り、レポートは板の内側で転がる。 */
 .report-board {
@@ -71,11 +76,24 @@
   color: var(--ink);
   overflow: hidden;
 }
+/* 下端の帯。本文が転がっても残る。 */
 .report-board-bar {
   display: flex;
   justify-content: flex-end;
   flex: 0 0 auto;
-  margin-bottom: var(--space-md);
+  margin-top: var(--space-md);
+  padding-top: var(--space-sm);
+  border-top: 1px solid var(--rule-soft);
+}
+.report-board-close {
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-md);
+}
+/* 板の中だけ、レポートの列を 63em で中央に置く（段落は 42em のまま、表と図は列の幅まで）。 */
+.report-board-column {
+  box-sizing: border-box;
+  max-inline-size: 63em;
+  margin-inline: auto;
 }
 .report-board-body {
   flex: 1 1 auto;

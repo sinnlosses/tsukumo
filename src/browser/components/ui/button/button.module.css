@@ -273,6 +273,19 @@
   color: var(--accent);
 }
 
+/* 地も枠も無い `--ink-quiet` の字。hover と開いている間に `--rule-soft` の細い枠が出て、字が `--ink-bright` になる。 */
+.button-variant-ghost-hover-rule-soft {
+  border: 1px solid transparent;
+  background: none;
+  color: var(--ink-quiet);
+}
+.button-variant-ghost-hover-rule-soft:hover,
+.button-variant-ghost-hover-rule-soft:focus-visible,
+.button-variant-ghost-hover-rule-soft[aria-expanded="true"] {
+  border-color: var(--rule-soft);
+  color: var(--ink-bright);
+}
+
 /* 地が無く、枠は透明な ink の字。hover と開いている間だけ枠が `--rule` で見える。 */
 .button-variant-ghost-hover-outline {
   border: 1px solid transparent;
