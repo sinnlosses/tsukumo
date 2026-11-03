@@ -16,6 +16,8 @@ import {
 } from "../../../../../../shared/session/main-view-shape.ts"
 import { formatMeasured } from "../../../../../../shared/utils/elapsed-time.ts"
 import { useExternalSync } from "../../../../../hooks/use-external-sync.ts"
+import { Button } from "../../../../ui/button/button.tsx"
+import { Dialog } from "../../../../ui/dialog/dialog.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
 import { useDraftedReports } from "../../stores/drafted-report.ts"
@@ -295,21 +297,92 @@ function StepReport(props: StepReportProps): ReactElement | undefined {
     return undefined
   }
   const phoneHidden = props.phoneHidden ? styles["phone-hidden"] : ""
+  const label = reportLabel(step, step.body.task, props.hasInterimReport, props.folded)
+  const head = (
+    <ReportHead
+      label={label}
+      task={step.body.task}
+      phase={step.body.finishedPhase}
+      changeSummary={step.body.changeSummary}
+      className={phoneHidden}
+    />
+  )
   return (
     <>
-      <ReportHead
-        label={reportLabel(step, step.body.task, props.hasInterimReport, props.folded)}
-        task={step.body.task}
-        phase={step.body.finishedPhase}
-        changeSummary={step.body.changeSummary}
-        className={phoneHidden}
-      />
+      {label === "final" && !props.phoneHidden ? (
+        <ExpandableHead body={step.body} turnId={props.turnId} head={head} />
+      ) : (
+        head
+      )}
       <Report
         body={step.body.report}
         reveal={props.reveal}
         turnId={props.turnId}
         className={phoneHidden}
       />
+    </>
+  )
+}
+
+const EXPAND_LABEL = "広げる"
+const COLLAPSE_LABEL = "閉じる"
+const BOARD_LABEL = "最終レポート"
+
+type ExpandableHeadProps = {
+  readonly turnId: number
+  readonly body: Extract<MainViewStepBody, { readonly kind: "text" }>
+  readonly head: ReactElement
+}
+
+/** 最終レポートの見出しの行の右上に「広げる」を置き、押すと同じレポートを画面いっぱいの板で出す。板に書き上げの演出は掛けない。 */
+function ExpandableHead(props: ExpandableHeadProps): ReactElement {
+  const [expanded, setExpanded] = useState(false)
+  const { body } = props
+  const close = (): void => setExpanded(false)
+  return (
+    <>
+      <div className={styles["report-head-frame"]}>
+        {props.head}
+        <Button
+          variant="outline-hover-warn"
+          size="label"
+          pressed="none"
+          disabled={false}
+          disclosure={{ kind: "dialog" }}
+          className={styles["report-expand"]}
+          onClick={() => setExpanded(true)}
+        >
+          {EXPAND_LABEL}
+        </Button>
+      </div>
+      {expanded && (
+        <Dialog
+          open={true}
+          ariaLabel={BOARD_LABEL}
+          backdrop="dim"
+          placement={{ kind: "auto" }}
+          onClose={close}
+          className={styles["report-board"]}
+        >
+          <div className={styles["report-board-bar"]}>
+            <Button
+              variant="outline-hover-warn"
+              size="label"
+              pressed="none"
+              disabled={false}
+              disclosure={{ kind: "none" }}
+              className=""
+              onClick={close}
+            >
+              {COLLAPSE_LABEL}
+            </Button>
+          </div>
+          <div className={styles["report-board-body"]}>
+            {props.head}
+            <Report body={body.report} reveal={false} turnId={props.turnId} className="" />
+          </div>
+        </Dialog>
+      )}
     </>
   )
 }

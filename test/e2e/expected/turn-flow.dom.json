@@ -374,6 +374,17 @@
                                       ]
                                     },
                                     {
+                                      "tag": "button",
+                                      "attributes": {
+                                        "aria-disabled": "false",
+                                        "aria-haspopup": "dialog",
+                                        "type": "button"
+                                      },
+                                      "children": [
+                                        "広げる"
+                                      ]
+                                    },
+                                    {
                                       "tag": "a2ui-react-report",
                                       "children": [
                                         {
