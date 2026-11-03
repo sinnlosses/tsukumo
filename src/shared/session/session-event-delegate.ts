@@ -54,8 +54,18 @@ export type DelegateEvent =
   | {
       readonly kind: "workflow-step-started"
       readonly agentId: string
+      readonly toolUseId: string
       readonly name: string
       readonly input: Readonly<Record<string, string>>
+    }
+  /**
+   * サブエージェントの中のツールが終わった（`PostToolUse`・`PostToolUseFailure` のフックのうち `agent_id` のあるもの）。
+   * `toolUseId` が同じ `workflow-step-started` の手順だけを終わりにする（`finishWorkflowStep`）。
+   */
+  | {
+      readonly kind: "workflow-step-finished"
+      readonly agentId: string
+      readonly toolUseId: string
     }
   /**
    * 台本の段と agent の写しが届いた（SDK の `system` / `task_progress` の `workflow_progress`）。

@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest"
 
 import type { BackgroundTask } from "../../../src/shared/session-driver/background-task.ts"
 import type { SessionEvent } from "../../../src/shared/session/session-event.ts"
+import { applySessionEvent } from "../../../src/shared/session/session-fold.ts"
+import { INITIAL_SESSION_STATE } from "../../../src/shared/session/session-state.ts"
 import type { WorkflowProgress } from "../../../src/shared/session/workflow-step.ts"
 import { apply } from "../../fixture/session-state.ts"
 
@@ -38,12 +40,34 @@ const progressOf = (taskId: string, ...agentIds: readonly string[]): SessionEven
     })),
   },
 })
-const stepStarted = (agentId: string, name = "Bash"): SessionEvent => ({
+const stepStarted = (
+  agentId: string,
+  name = "Bash",
+  toolUseId = `${agentId}-${name}`,
+): SessionEvent => ({
   kind: "workflow-step-started",
   agentId,
+  toolUseId,
   name,
   input: { command: "架空のコマンド" },
 })
+const stepFinished = (agentId: string, toolUseId: string): SessionEvent => ({
+  kind: "workflow-step-finished",
+  agentId,
+  toolUseId,
+})
+const agentStateOf = (
+  taskId: string,
+  agentId: string,
+  state: "start" | "progress" | "done" | "error",
+): SessionEvent => ({
+  kind: "workflow-progress",
+  progress: { taskId, phases: [], agents: [{ index: 0, agentId, state, phaseTitle: "" }] },
+})
+
+function runningOf(...events: readonly SessionEvent[]): readonly boolean[] {
+  return apply(...events).workflowSteps.map((step) => step.running)
+}
 
 function progressesOf(...events: readonly SessionEvent[]): readonly WorkflowProgress[] {
   return apply(...events).workflowProgress
@@ -143,5 +167,62 @@ describe("applySessionEvent（台本の agent の手順）", () => {
     expect(
       stepsOf(tasksChanged(WORKFLOW_1), stepStarted("agent-1"), progressOf("wf-1", "agent-1")),
     ).toEqual([])
+  })
+})
+
+describe("applySessionEvent（台本の手順の終わり）", () => {
+  const setup = [tasksChanged(WORKFLOW_1), progressOf("wf-1", "agent-1")]
+
+  it("始まった時刻は畳み込みの at で控え、走っている手順として置く", () => {
+    const state = [...setup, stepStarted("agent-1", "Bash", "tu-1")].reduce(
+      (view, event) => applySessionEvent(view, event, 1234),
+      INITIAL_SESSION_STATE,
+    )
+
+    expect(state.workflowSteps.map((step) => [step.startedAt, step.running])).toEqual([
+      [1234, true],
+    ])
+  })
+
+  it("toolUseId が同じ終わりで手順が終わる", () => {
+    expect(
+      runningOf(...setup, stepStarted("agent-1", "Bash", "tu-1"), stepFinished("agent-1", "tu-1")),
+    ).toEqual([false])
+  })
+
+  it("古い手順の終わり（toolUseId の不一致）と台本の agent でない終わりでは変わらない", () => {
+    expect(
+      runningOf(
+        ...setup,
+        stepStarted("agent-1", "Read", "tu-1"),
+        stepStarted("agent-1", "Bash", "tu-2"),
+        stepFinished("agent-1", "tu-1"),
+        stepFinished("subagent-1", "tu-9"),
+      ),
+    ).toEqual([true])
+  })
+
+  it("agent の state が done・error になると、その agent の走っている手順が終わる", () => {
+    expect(
+      runningOf(
+        ...setup,
+        stepStarted("agent-1", "Bash", "tu-1"),
+        agentStateOf("wf-1", "agent-1", "done"),
+      ),
+    ).toEqual([false])
+    expect(
+      runningOf(
+        ...setup,
+        stepStarted("agent-1", "Bash", "tu-1"),
+        agentStateOf("wf-1", "agent-1", "error"),
+      ),
+    ).toEqual([false])
+    expect(
+      runningOf(
+        ...setup,
+        stepStarted("agent-1", "Bash", "tu-1"),
+        agentStateOf("wf-1", "agent-1", "progress"),
+      ),
+    ).toEqual([true])
   })
 })

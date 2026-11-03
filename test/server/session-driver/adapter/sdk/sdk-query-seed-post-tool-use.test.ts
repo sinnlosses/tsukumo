@@ -42,7 +42,21 @@ describe("postToolUseHooks が見届けた設定を流す", () => {
       { onEvent: (event) => subEvents.push(event) },
       { effort: { level: "high" }, permission_mode: "plan" },
     )
-    expect(subEvents).toEqual([])
+    expect(subEvents).toEqual([
+      { kind: "workflow-step-finished", agentId: "sub-1", toolUseId: "t-1" },
+    ])
+  })
+
+  it("agent_id のある PostToolUse・PostToolUseFailure は workflow-step-finished にし、無いものは流さない", async () => {
+    const events: SessionEvent[] = []
+    const onEvent = (event: SessionEvent) => events.push(event)
+    await runPostToolUse("Bash", "wf-agent-1", { onEvent })
+    await runPostToolUse("Bash", "wf-agent-2", { onEvent }, {}, true)
+    await runPostToolUse("Bash", undefined, { onEvent })
+    expect(events).toEqual([
+      { kind: "workflow-step-finished", agentId: "wf-agent-1", toolUseId: "t-1" },
+      { kind: "workflow-step-finished", agentId: "wf-agent-2", toolUseId: "t-1" },
+    ])
   })
 })
 

@@ -217,6 +217,7 @@ export type SessionState = {
   /**
    * {@link backgroundTasks} のうちワークフロースクリプトごとの、いちばん新しく始まった手順（1本につき高々1件）。
    * 源は `workflow-step-started` のうち `agentId` が {@link workflowProgress} の agent にあるものだけで、差し替え方は `withWorkflowStep`。
+   * 終わりは `workflow-step-finished`（`finishWorkflowStep`）と、`workflow-progress` で agent が done・error になったとき（`finishStepsOfEndedAgents`）に付き、終わった手順も残る。
    * `background-tasks-changed` で顔ぶれから外れた分を落とし、`session-ended` で空にする。
    */
   readonly workflowSteps: readonly WorkflowStep[]

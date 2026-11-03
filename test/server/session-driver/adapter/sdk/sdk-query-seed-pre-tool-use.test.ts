@@ -288,6 +288,7 @@ describe("preToolUseHooks（ワークフロースクリプトの中の手順を�
       {
         kind: "workflow-step-started",
         agentId: "wf-agent-1",
+        toolUseId: "t-1",
         name: "Bash",
         input: { command: "架空のコマンド" },
       },
@@ -303,6 +304,7 @@ describe("preToolUseHooks（ワークフロースクリプトの中の手順を�
       {
         kind: "workflow-step-started",
         agentId: "wf-agent-2",
+        toolUseId: "t-1",
         name: "Read",
         input: { file_path: "/架空/a.ts" },
       },

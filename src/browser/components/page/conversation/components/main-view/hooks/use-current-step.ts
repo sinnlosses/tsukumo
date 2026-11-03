@@ -30,6 +30,7 @@ export function useCurrentStep(): CurrentStepModel {
   const reportDrafting = useSession((session) => reportDraftingOf(session.state.sdkTurn))
   const backgroundTasks = useSession((session) => session.state.backgroundTasks)
   const workflowSteps = useSession((session) => session.state.workflowSteps)
+  const workflowProgress = useSession((session) => session.state.workflowProgress)
   const apiTrouble = useSession((session) => session.state.apiTrouble)
   const records = useSession((session) => session.state.records)
   const now = useNowWhile(isTurnCounting(turn, backgroundTasks.length))
@@ -47,6 +48,7 @@ export function useCurrentStep(): CurrentStepModel {
       reportDrafting,
       backgroundTasks,
       workflowSteps,
+      workflowProgress,
       turn,
       apiTrouble,
       records,

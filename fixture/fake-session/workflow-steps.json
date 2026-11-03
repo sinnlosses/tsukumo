@@ -108,6 +108,7 @@
       "event": {
         "kind": "workflow-step-started",
         "agentId": "fake-workflow-agent-1",
+        "toolUseId": "fake-step-1",
         "name": "Read",
         "input": {
           "file_path": "/架空/src/example.ts"
@@ -115,10 +116,19 @@
       }
     },
     {
+      "afterMs": 4500,
+      "event": {
+        "kind": "workflow-step-finished",
+        "agentId": "fake-workflow-agent-1",
+        "toolUseId": "fake-step-1"
+      }
+    },
+    {
       "afterMs": 6000,
       "event": {
         "kind": "workflow-step-started",
         "agentId": "fake-workflow-agent-1",
+        "toolUseId": "fake-step-2",
         "name": "Bash",
         "input": {
           "command": "pnpm run test 架空のテスト"
@@ -130,6 +140,7 @@
       "event": {
         "kind": "workflow-step-started",
         "agentId": "fake-other-subagent",
+        "toolUseId": "fake-other-step-1",
         "name": "Read",
         "input": {
           "file_path": "/架空/src/other-subagent.ts"
@@ -137,10 +148,19 @@
       }
     },
     {
+      "afterMs": 8000,
+      "event": {
+        "kind": "workflow-step-finished",
+        "agentId": "fake-workflow-agent-1",
+        "toolUseId": "fake-step-2"
+      }
+    },
+    {
       "afterMs": 9000,
       "event": {
         "kind": "workflow-step-started",
         "agentId": "fake-workflow-agent-1",
+        "toolUseId": "fake-step-3",
         "name": "Grep",
         "input": {
           "pattern": "架空の語"
@@ -148,13 +168,33 @@
       }
     },
     {
+      "afterMs": 10500,
+      "event": {
+        "kind": "workflow-step-finished",
+        "agentId": "fake-workflow-agent-1",
+        "toolUseId": "fake-step-3"
+      }
+    },
+    {
       "afterMs": 12000,
       "event": {
         "kind": "workflow-step-started",
         "agentId": "fake-workflow-agent-1",
+        "toolUseId": "fake-step-4",
         "name": "Edit",
         "input": {
           "file_path": "/架空/src/example.ts"
+        }
+      }
+    },
+    {
+      "afterMs": 14000,
+      "event": {
+        "kind": "workflow-progress",
+        "progress": {
+          "taskId": "fake-workflow-task-1",
+          "phases": [{ "index": 0, "title": "架空の段" }],
+          "agents": [{ "index": 0, "agentId": "fake-workflow-agent-1", "state": "done" }]
         }
       }
     },

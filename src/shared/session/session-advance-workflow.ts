@@ -3,22 +3,17 @@
 import type { SessionEvent } from "./session-event.ts"
 import { workPlanRecords } from "./session-record-edit.ts"
 import type { SessionState } from "./session-state.ts"
-import { withWorkflowProgress, withWorkflowStep } from "./workflow-step.ts"
+import { foldWorkflowEvent } from "./workflow-step.ts"
 
 export function advanceByWorkflowStep(
   state: SessionState,
-  event: Extract<SessionEvent, { readonly kind: "workflow-step-started" }>,
+  event: Extract<
+    SessionEvent,
+    { readonly kind: "workflow-step-started" | "workflow-step-finished" }
+  >,
+  at: number,
 ): SessionState {
-  return {
-    ...state,
-    workflowSteps: withWorkflowStep(
-      state.workflowSteps,
-      state.workflowProgress,
-      event.agentId,
-      event.name,
-      event.input,
-    ),
-  }
+  return { ...state, ...foldWorkflowEvent(state, event, at) }
 }
 
 /** 写しを差し替え、写しで今のワークプランが進んだらその記録を積む。 */
@@ -29,11 +24,7 @@ export function advanceByWorkflowProgress(
 ): SessionState {
   return {
     ...state,
-    workflowProgress: withWorkflowProgress(
-      state.workflowProgress,
-      state.backgroundTasks,
-      event.progress,
-    ),
+    ...foldWorkflowEvent(state, event, at),
     records: [...state.records, ...workPlanRecords(state.records, event, at)],
   }
 }

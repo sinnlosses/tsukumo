@@ -159,6 +159,7 @@ export function preToolUseHooks(
               onEvent({
                 kind: "workflow-step-started",
                 agentId: input.agent_id,
+                toolUseId: input.tool_use_id,
                 name: input.tool_name,
                 input: toolSummaryInput(input.tool_name, input.tool_input),
               })
@@ -275,6 +276,13 @@ export function postToolUseHooks(
     const inSubagent = isInSubagent(input)
     if (!inSubagent) {
       confirmedSettingEvents(input).forEach(onEvent)
+    }
+    if (input.agent_id !== undefined) {
+      onEvent({
+        kind: "workflow-step-finished",
+        agentId: input.agent_id,
+        toolUseId: input.tool_use_id,
+      })
     }
     if (toolMs === undefined) {
       return

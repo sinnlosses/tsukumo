@@ -52,8 +52,14 @@ const stepStarted = (
 ): SessionEvent => ({
   kind: "workflow-step-started",
   agentId,
+  toolUseId: `tu-${name}`,
   name,
   input,
+})
+const stepFinished = (name: string, agentId = "agent-1"): SessionEvent => ({
+  kind: "workflow-step-finished",
+  agentId,
+  toolUseId: `tu-${name}`,
 })
 const completed: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
 
@@ -79,7 +85,7 @@ describe("useWorkStrip（ワークフロースクリプトの中の手順）", (
         completed,
         stepStarted("Bash", { command: "架空のコマンド" }),
       ),
-    ).toBe("背景で · Bash  架空のコマンド")
+    ).toBe("背景で · Bash  架空のコマンド · 55秒")
     expect(
       activityAfter(
         tasksChanged(WORKFLOW),
@@ -88,7 +94,33 @@ describe("useWorkStrip（ワークフロースクリプトの中の手順）", (
         stepStarted("Bash", { command: "架空のコマンド" }),
         stepStarted("Read", { file_path: "/架空/a.ts" }),
       ),
-    ).toBe("背景で · Read  /架空/a.ts")
+    ).toBe("背景で · Read  /架空/a.ts · 54秒")
+  })
+
+  it("手順が終わって agent が走っていれば「背景で · 考えている」、agent が全部 done なら台本の説明に戻る", () => {
+    const base = [
+      tasksChanged(WORKFLOW),
+      WORKFLOW_PROGRESS,
+      stepStarted("Bash", { command: "架空のコマンド" }),
+    ]
+    expect(activityAfter(...base, stepFinished("Bash"))).toBe("背景で · 考えている")
+    expect(
+      activityAfter(
+        ...base,
+        stepFinished("Bash"),
+        stepStarted("Read", { file_path: "/架空/a.ts" }),
+      ),
+    ).toBe("背景で · Read  /架空/a.ts · 54秒")
+    expect(
+      activityAfter(...base, stepFinished("Bash"), {
+        kind: "workflow-progress",
+        progress: {
+          taskId: "wf-1",
+          phases: [],
+          agents: [{ index: 0, agentId: "agent-1", state: "done", phaseTitle: "" }],
+        },
+      }),
+    ).toBe("背景で 架空の流れ")
   })
 
   it("ワークフロースクリプトが顔ぶれから外れると手順は消え、同じ id で始め直しても前の手順は出ない", () => {
@@ -142,7 +174,27 @@ describe("useWorkStrip（ワークフロースクリプトの中の手順）", (
         stepStarted("Read", { file_path: "/架空/a.ts" }, "subagent-1"),
         completed,
       ),
-    ).toBe("背景で · Bash  架空のコマンド")
+    ).toBe("背景で · Bash  架空のコマンド · 56秒")
+  })
+
+  it("背景のサブエージェントの手順が済んでいれば「背景で · 考えている」にする", () => {
+    expect(
+      activityAfter(
+        {
+          kind: "background-tasks-changed",
+          tasks: [{ taskId: "agent-task-1", kind: "agent", description: "架空の委譲" }],
+        },
+        {
+          kind: "tool-started",
+          toolUseId: "nested-1",
+          name: "Read",
+          input: { file_path: "/架空/a.ts" },
+          parentToolUseId: "parent-1",
+        },
+        { kind: "tool-finished", toolUseId: "nested-1", content: "架空の結果", isError: false },
+        completed,
+      ),
+    ).toBe("背景で · 考えている")
   })
 
   it("台本の写しが届く前の手順は捨てる", () => {

@@ -16,12 +16,17 @@ import type {
   TurnProgress,
 } from "../../../../../../../shared/session/turn-progress.ts"
 import type { TurnStep, TurnStepList } from "../../../../../../../shared/session/turn-step.ts"
-import type { WorkflowStep } from "../../../../../../../shared/session/workflow-step.ts"
+import type {
+  WorkflowProgress,
+  WorkflowStep,
+} from "../../../../../../../shared/session/workflow-step.ts"
 import { formatElapsed } from "../../../../../../../shared/utils/elapsed-time.ts"
 import { summarizeToolInput } from "../../../../../../domain/tool-summary.ts"
 import { backgroundSummaryLabel } from "../../../../../../features/current-work/domain/current-work-step.ts"
 import { apiRetryNotice } from "../../../domain/api-error-label.ts"
 import { isSlashClear } from "../../../domain/slash-clear.ts"
+
+const BACKGROUND_THINKING = "背景で · 考えている"
 
 /** 再試行の知らせ。 */
 type WorkRetry =
@@ -44,6 +49,7 @@ type WorkActivitySource = {
   readonly reportDrafting: ReportDrafting
   readonly backgroundTasks: readonly BackgroundTask[]
   readonly workflowSteps: readonly WorkflowStep[]
+  readonly workflowProgress: readonly WorkflowProgress[]
   readonly turn: TurnProgress
   readonly apiTrouble: ApiTrouble
   readonly records: readonly SessionRecord[]
@@ -52,7 +58,7 @@ type WorkActivitySource = {
 
 /**
  * 強い順に1つ: 答え待ち → report を書いている途中 → 走っている手順 →
- * 背景のサブエージェントの直前の手順 → 背景のワークフロースクリプトの中の手順 → バックグラウンドタスク →
+ * 背景のサブエージェント（「背景で · 考えている」）→ 背景のワークフロースクリプト（走っている手順と秒、手順の合間は「背景で · 考えている」）→ バックグラウンドタスク →
  * 考えている（依頼が会話の片付けのときは「会話を片付けている」）。
  * 答え待ちの秒は、答え待ちが届いた時刻から数える。
  */
@@ -83,22 +89,23 @@ export function workActivityOf(source: WorkActivitySource): WorkActivity {
       retry,
     }
   }
-  const lastDelegated = lastDelegatedStep(source.backgroundTasks, turnStepList.steps)
-  if (lastDelegated !== undefined) {
-    return {
-      text: `背景で · 直前 ${toolLine(lastDelegated.name, lastDelegated.input)}`,
-      tone: "quiet",
-      mono: true,
-      retry,
-    }
+  if (delegatedStepsDone(source.backgroundTasks, turnStepList.steps)) {
+    return { text: BACKGROUND_THINKING, tone: "quiet", mono: false, retry }
   }
-  const workflowStep = latestWorkflowStep(source.backgroundTasks, source.workflowSteps)
-  if (workflowStep !== undefined) {
-    return {
-      text: `背景で · ${toolLine(workflowStep.name, workflowStep.input)}`,
-      tone: "quiet",
-      mono: true,
-      retry,
+  const workflow = latestWorkflow(source)
+  if (workflow !== undefined) {
+    const { step, thinking } = workflow
+    if (step?.running === true) {
+      const seconds = formatElapsed(Math.max(0, Math.floor((now - step.startedAt) / 1000)))
+      return {
+        text: `背景で · ${toolLine(step.name, step.input)} · ${seconds}`,
+        tone: "quiet",
+        mono: true,
+        retry,
+      }
+    }
+    if (thinking) {
+      return { text: BACKGROUND_THINKING, tone: "quiet", mono: false, retry }
     }
   }
   const background = backgroundSummaryLabel(source.backgroundTasks)
@@ -124,27 +131,34 @@ function currentRequestTextOf(records: readonly SessionRecord[]): string {
 }
 
 /**
- * いちばん新しいバックグラウンドタスクがサブエージェントなら、その依頼でサブエージェントの中で最後に動いた手順。
+ * いちばん新しいバックグラウンドタスクがサブエージェントで、その依頼でサブエージェントの中の手順が1つでもあり、どれも走っていないか
+ * （走っているものは呼び出し側が先に拾う）。
  * サブエージェントの説明は起こしたときのまま変わらず、同じサブエージェントに続きを頼むと段と食い違うので、説明より先に使う。
  */
-function lastDelegatedStep(
+function delegatedStepsDone(
   backgroundTasks: readonly BackgroundTask[],
   steps: readonly TurnStep[],
-): TurnStep | undefined {
-  return backgroundTasks.at(-1)?.kind === "agent"
-    ? steps.findLast((step) => step.nested)
-    : undefined
+): boolean {
+  return backgroundTasks.at(-1)?.kind === "agent" && steps.some((step) => step.nested)
 }
 
-/** いちばん新しいバックグラウンドタスクがワークフロースクリプトなら、その中でいちばん新しく始まった手順。 */
-function latestWorkflowStep(
-  backgroundTasks: readonly BackgroundTask[],
-  workflowSteps: readonly WorkflowStep[],
-): WorkflowStep | undefined {
-  const newest = backgroundTasks.at(-1)
-  return newest?.kind === "workflow"
-    ? workflowSteps.find((step) => step.taskId === newest.taskId)
-    : undefined
+/**
+ * いちばん新しいバックグラウンドタスクがワークフロースクリプトなら、その中でいちばん新しく始まった手順と、
+ * 手順が1つでも始まったうえで走っている agent（start・progress）がいる（手順の合間に考えている）か。
+ */
+function latestWorkflow(
+  source: Pick<WorkActivitySource, "backgroundTasks" | "workflowSteps" | "workflowProgress">,
+): { readonly step: WorkflowStep | undefined; readonly thinking: boolean } | undefined {
+  const newest = source.backgroundTasks.at(-1)
+  if (newest?.kind !== "workflow") {
+    return undefined
+  }
+  const step = source.workflowSteps.find((candidate) => candidate.taskId === newest.taskId)
+  const agentRunning =
+    source.workflowProgress
+      .find((progress) => progress.taskId === newest.taskId)
+      ?.agents.some((agent) => agent.state === "start" || agent.state === "progress") === true
+  return { step, thinking: step !== undefined && agentRunning }
 }
 
 function pendingLabel(pending: PendingAsk): string {

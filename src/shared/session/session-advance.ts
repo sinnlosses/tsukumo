@@ -217,7 +217,8 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
     case "task-notified":
       return state
     case "workflow-step-started":
-      return advanceByWorkflowStep(state, event)
+    case "workflow-step-finished":
+      return advanceByWorkflowStep(state, event, at)
     case "workflow-progress":
       return advanceByWorkflowProgress(state, event, at)
     case "delegate-returned":
