@@ -1,10 +1,16 @@
-import { cleanup, render } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { ReportHead } from "../../../../../../../src/browser/components/page/conversation/components/main-view/report-head.tsx"
+import { useTaskBoardRequest } from "../../../../../../../src/browser/stores/task-board-request.ts"
 import type { MainViewPhaseLabel } from "../../../../../../../src/shared/session/main-view-shape.ts"
+import { knownTaskSummary, taskStatusOfWord } from "../../../../../../fixture/session-state.ts"
+import { putSession, stateWith } from "../../../../../session-store.ts"
 
-afterEach(cleanup)
+afterEach(() => {
+  cleanup()
+  useTaskBoardRequest.setState(useTaskBoardRequest.getInitialState(), true)
+})
 
 function catalog(phase: MainViewPhaseLabel): string {
   const { container } = render(
@@ -40,5 +46,60 @@ describe("ReportHead の終えた段", () => {
         skipped: true,
       }),
     ).toBe("中間レポート1/3 架空の段A飛ばした所要 0秒")
+  })
+})
+
+describe("ReportHead のタスクID", () => {
+  function renderWithTask(reportId: string): void {
+    putSession(
+      stateWith({
+        tasks: knownTaskSummary([
+          {
+            id: "xy-12",
+            summary: "架空のタスク",
+            status: taskStatusOfWord("todo"),
+            dependencies: [],
+            waitingFor: [],
+            labels: [],
+            difficulty: undefined,
+            loopable: undefined,
+            importance: "normal",
+            urgency: "normal",
+            body: "",
+            location: { kind: "none" },
+          },
+        ]),
+      }),
+    )
+    render(
+      <ReportHead
+        label="final"
+        task={{
+          kind: "task",
+          id: reportId,
+          name: "架空",
+          outcome: "finished",
+          genre: "unspecified",
+        }}
+        phase={{ kind: "none" }}
+        changeSummary={{ kind: "none" }}
+        className=""
+      />,
+    )
+  }
+
+  it("一覧の ID と大文字小文字が違ってもボタンになり、押すと一覧の ID でモーダルを開く", () => {
+    renderWithTask("XY-12")
+    fireEvent.click(screen.getByRole("button", { name: "XY-12" }))
+    expect(useTaskBoardRequest.getState().request).toEqual({
+      kind: "open",
+      focus: { kind: "task", id: "xy-12" },
+    })
+  })
+
+  it("一覧に無い ID は字だけのまま", () => {
+    renderWithTask("XY-99")
+    expect(screen.queryByRole("button")).toBeNull()
+    expect(screen.getByText("XY-99")).toBeTruthy()
   })
 })

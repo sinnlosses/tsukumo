@@ -123,14 +123,15 @@ function ChangeSummary(props: { readonly summary: ReportChangeCount }): ReactEle
 
 /** タスクID。一覧にあるタスクなら押すとタスクのモーダルをそのタスクを選んで開き、無ければ字だけ。 */
 function TaskId(props: { readonly id: string }): ReactElement {
-  const listed = useSession(
-    (session) =>
-      session.state.tasks.kind === "known" &&
-      session.state.tasks.items.some((item) => item.id === props.id),
+  const listedId = useSession((session) =>
+    session.state.tasks.kind === "known"
+      ? session.state.tasks.items.find((item) => item.id.toLowerCase() === props.id.toLowerCase())
+          ?.id
+      : undefined,
   )
   const openTask = useTaskBoardRequest((state) => state.openTask)
 
-  if (!listed) {
+  if (listedId === undefined) {
     return <span className={styles["report-task-id"]}>{props.id}</span>
   }
   return (
@@ -139,7 +140,7 @@ function TaskId(props: { readonly id: string }): ReactElement {
       className={clsx(styles["report-task-id"], styles["report-task-id-link"])}
       aria-haspopup="dialog"
       onClick={() => {
-        openTask(props.id)
+        openTask(listedId)
       }}
     >
       {props.id}
