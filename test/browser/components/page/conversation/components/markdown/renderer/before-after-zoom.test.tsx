@@ -17,6 +17,8 @@ const BOTH = [
 
 const CAPTION = { number: "図 1", text: "架空の配置の前後" }
 
+const BEFORE_AFTER_LABELS = { before: "前", after: "後" } as const
+
 function renderZoom(
   overrides: {
     readonly images?: readonly BeforeAfterZoomImage[]
@@ -29,6 +31,7 @@ function renderZoom(
     <BeforeAfterZoom
       images={overrides.images ?? BOTH}
       start={overrides.start ?? "after"}
+      labels={BEFORE_AFTER_LABELS}
       caption={overrides.caption ?? CAPTION}
       onClose={overrides.onClose ?? (() => {})}
     />,
@@ -100,7 +103,13 @@ describe("BeforeAfterZoom", () => {
     const { container } = render(
       <div className="detail-block">
         <div className="report-captioned">
-          <BeforeAfterZoom images={BOTH} start="after" caption={CAPTION} onClose={() => {}} />
+          <BeforeAfterZoom
+            images={BOTH}
+            start="after"
+            labels={BEFORE_AFTER_LABELS}
+            caption={CAPTION}
+            onClose={() => {}}
+          />
         </div>
       </div>,
     )

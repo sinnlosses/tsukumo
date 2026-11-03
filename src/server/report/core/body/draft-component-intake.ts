@@ -3,11 +3,12 @@
 //
 // 会話の内容がここを通る。
 // 断片と切り出した JSON はこのファイルのメモリだけに置き、ログにもファイルにも書かない。
-// 出すのは `a2uiReportComponentSchema` を通った部品だけ。
+// 出すのは `a2uiReportComponentSchema` を通った部品だけで、`BeforeAfter` は `Compare` の前後に写す。
 
 import { isPlainObject } from "remeda"
 
 import { a2uiReportComponentSchema } from "../../../../shared/report/a2ui-report-catalog.ts"
+import { compareOfBeforeAfter } from "../../../../shared/report/before-after-compare.ts"
 import type { SessionEvent } from "../../../../shared/session/session-event.ts"
 import { REPORT_TOOL_NAME, tsukumoToolFullName } from "../../../core/tsukumo-tool-name.ts"
 import { INITIAL_SPLIT_STATE, splitComponents, type SplitState } from "./a2ui-component-splitter.ts"
@@ -78,7 +79,13 @@ export function createReportDraftIntake(): ReportDraftIntake {
       return step.components.flatMap((component): readonly SessionEvent[] => {
         const parsed = a2uiReportComponentSchema.safeParse(component)
         return parsed.success
-          ? [{ kind: "report-draft-component", toolUseId: open.toolUseId, component: parsed.data }]
+          ? [
+              {
+                kind: "report-draft-component",
+                toolUseId: open.toolUseId,
+                component: compareOfBeforeAfter(parsed.data),
+              },
+            ]
           : []
       })
     } catch {

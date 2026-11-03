@@ -70,7 +70,7 @@ type ImageZoomTarget =
 
 /**
  * 前後の画像の部品の中の画像が、札に替わったことと、読めた画像の `src`・`alt` を塊へ知らせる口と、押したときの拡大の先。
- * `alt` の先頭の字（前の画面・後の画面）が前か後かを言う。塊の外では何もせず、拡大は画像ごと。
+ * 画像がどちらの側かは {@link SwapSideContext} が言い、無ければ `alt` の先頭の字（前の画面・後の画面）で決める。塊の外では何もせず、拡大は画像ごと。
  */
 type BeforeAfterSwapContextValue = {
   readonly reportMissing: () => void
@@ -91,7 +91,16 @@ type SwapZoom = {
   readonly caption: { readonly number: string; readonly text: string }
 }
 
-const SWAP_SIDE_LABEL = { before: "前", after: "後" } as const satisfies Record<SwapSide, string>
+/** 見比べの包みの中の画像がどちらの側か。`by-alt` は包みの側が言わない画像で、`alt` から決める。 */
+export const SwapSideContext = createContext<SwapSide | "by-alt">("by-alt")
+
+/** 両側が画像の見比べの包みの設定。`labels` は見本と拡大の面の札、`overlay` は「重ねる」を出すか。 */
+export type SwapSettings = {
+  readonly labels: Readonly<Record<SwapSide, string>>
+  readonly overlay: boolean
+}
+
+const AFTER_ALT_PREFIX = "後"
 
 const SWAP_SIDES = ["before", "after"] as const satisfies readonly SwapSide[]
 
@@ -105,13 +114,14 @@ const SWAP_VIEWS = ["side", "switch", "overlay"] as const satisfies readonly Bef
 
 type BeforeAfterSwapProps = {
   readonly className: string | undefined
+  readonly settings: SwapSettings
   readonly children: ReactNode
 }
 
 /**
- * 両側が画像の `beforeAfter` の包み。題の行の右の組で「並べる」「切り替え」「重ねる」を選び、選び方を覚える。
- * 切り替えでは大きな1枚（前か後）と前・後の見本が並び、見本か、大きな1枚にフォーカスがあるときの Space で入れかわる。
- * 重ねるでは前の上に後を重ね、つまみ（range）の位置から右だけ後を見せる。両側の縦横比が揃う（差が 1% 以内）ときだけ選べる。
+ * 両側が画像の見比べの包み。題の行の右の組で「並べる」「切り替え」「重ねる」を選び、選び方を覚える。
+ * 切り替えでは大きな1枚（左か右）と両側の見本が並び、見本か、大きな1枚にフォーカスがあるときの Space で入れかわる。
+ * 重ねるでは左の上に右を重ね、つまみ（range）の位置から右だけ右の側を見せる。`overlay` が真で、両側の縦横比が揃う（差が 1% 以内）ときだけ選べる。
  * 画像が一枚でも札になったら押しボタンも見本も出さず、並べる形に落とす。
  */
 export function BeforeAfterSwap(props: BeforeAfterSwapProps): ReactElement {
@@ -124,7 +134,7 @@ export function BeforeAfterSwap(props: BeforeAfterSwapProps): ReactElement {
   const [zoom, setZoom] = useState<SwapZoom | undefined>(undefined)
   const rootRef = useRef<HTMLDivElement>(null)
   const openerRef = useRef<HTMLElement | undefined>(undefined)
-  const overlayable = !missing && sameRatio(sizes.before, sizes.after)
+  const overlayable = props.settings.overlay && !missing && sameRatio(sizes.before, sizes.after)
   const view = chosen === "overlay" && !overlayable ? "side" : chosen
   const switches = view === "switch" && !missing
 
@@ -224,7 +234,7 @@ export function BeforeAfterSwap(props: BeforeAfterSwapProps): ReactElement {
                     onClick={() => setShown(side)}
                   >
                     <img src={thumb.src} alt="" />
-                    <span>{SWAP_SIDE_LABEL[side]}</span>
+                    <span>{props.settings.labels[side]}</span>
                   </Button>
                 )
               )
@@ -235,6 +245,7 @@ export function BeforeAfterSwap(props: BeforeAfterSwapProps): ReactElement {
           <BeforeAfterZoom
             images={thumbs}
             start={zoom.side}
+            labels={props.settings.labels}
             caption={zoom.caption}
             onClose={closeZoom}
           />
@@ -248,12 +259,14 @@ export function ReportImage(props: ReportImageProps): ReactElement {
   const [failed, setFailed] = useState(false)
   const [zoomed, setZoomed] = useState(false)
   const { reportMissing, reportImage, reportSize, zoom } = use(BeforeAfterSwapContext)
+  const sideScope = use(SwapSideContext)
   const imageRef = useRef<HTMLImageElement | null>(null)
   const alt = props.alt ?? ""
+  const side = sideScope === "by-alt" ? sideOfAlt(alt) : sideScope
 
   function openZoom(): void {
     if (zoom.kind === "swap") {
-      zoom.open(sideOfAlt(alt), imageRef.current?.closest("button") ?? undefined)
+      zoom.open(side, imageRef.current?.closest("button") ?? undefined)
     } else {
       setZoomed(true)
     }
@@ -280,7 +293,6 @@ export function ReportImage(props: ReportImageProps): ReactElement {
     )
   }
   const src = sessionTokenUrl(props.src, window.location.href)
-  const side = sideOfAlt(alt)
   const region = parseImageRegion(props["data-change-region"])
   const image = (
     <img
@@ -339,7 +351,7 @@ export function ReportImage(props: ReportImageProps): ReactElement {
 }
 
 function sideOfAlt(alt: string): SwapSide {
-  return alt.startsWith(SWAP_SIDE_LABEL.after) ? "after" : "before"
+  return alt.startsWith(AFTER_ALT_PREFIX) ? "after" : "before"
 }
 
 function readCaption(root: HTMLElement | null): SwapZoom["caption"] {

@@ -7,6 +7,7 @@ import {
   compareBlockSchema,
   matrixBlockSchema,
   optionsBlockSchema,
+  pointsCompareBlockSchema,
   statsBlockSchema,
   tableBlockSchema,
 } from "./report-block-comparison.ts"
@@ -100,7 +101,7 @@ export function parseReportBlocks(value: unknown): readonly ReportBlock[] {
 export const figureBlockSchema = z.discriminatedUnion("kind", [
   listBlockSchema,
   tableBlockSchema,
-  compareBlockSchema,
+  pointsCompareBlockSchema,
   mermaidBlockSchema,
   graphBlockSchema,
   codeBlockSchema,

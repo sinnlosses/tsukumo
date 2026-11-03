@@ -1,7 +1,9 @@
 // 表・対応表・見比べ・数・候補の採否の塊の形。
 
+import { isPlainObject } from "remeda"
 import { z } from "zod"
 
+import { beforeAfterSideSchema } from "./report-block-diagram.ts"
 import { aside, type DeepReadonly, fold, inlineText, omittable } from "./report-block-field.ts"
 
 export const REPORT_CELL_STATUSES = ["ok", "warn", "ng"] as const
@@ -81,7 +83,29 @@ export const matrixBlockSchema = z
   })
   .describe("行×列の交点が状態だけの対応表（機能×条件）。交点に文や数が要るなら table")
 
+const COMPARE_RELATIONS = ["versus", "before-after"] as const
+
+// kind の無い側（旧い形）は points として読む
+const compareSideSchema = z.preprocess(
+  (side) => (isPlainObject(side) && side.kind === undefined ? { ...side, kind: "points" } : side),
+  beforeAfterSideSchema.and(z.object({ heading: omittable(inlineText, "") })),
+)
+
 export const compareBlockSchema = z
+  .object({
+    kind: z.literal("compare"),
+    title: inlineText,
+    relation: omittable(z.enum(COMPARE_RELATIONS), "versus"),
+    sides: z.array(compareSideSchema).min(2).max(2),
+    fold,
+    aside,
+  })
+  .describe(
+    "2つを左右に並べて見比べる（案A と案B も、画面の撮影・構造の前と後も）。relation が versus（既定）なら対等な2つで、側の heading が札。before-after なら左が前・右が後で間に矢印、札は「前」「後」（heading は札に添える）。側ごとに image / code / points / mermaid / svg のどれか（左右で違ってよい。時間の順の前後は mermaid の側）。1行の設定や文言の変更には使わない。ファイル名の箇条書きで変更を説明しない。採否は options、値を揃えるなら table（3つ以上も table）。数の前後は stats の before、行ごとの差分は code の diff",
+  )
+
+/** 質問の添え書きの `compare`。書けるのは対等な2つの見出しと箇条だけで、読んだ値は `compare` の塊と同じ形。 */
+export const pointsCompareBlockSchema = z
   .object({
     kind: z.literal("compare"),
     title: inlineText,
@@ -100,6 +124,11 @@ export const compareBlockSchema = z
   .describe(
     "2つを同時に見比べる（案A と案B。変更の前と後は beforeAfter）。側ごとに見出しと短い箇条。採否は options、値を揃えるなら table（3つ以上も table）",
   )
+  .transform((block) => ({
+    ...block,
+    relation: "versus" as const,
+    sides: block.sides.map((side) => ({ kind: "points" as const, ...side })),
+  }))
 
 const statItemsSchema = z
   .array(

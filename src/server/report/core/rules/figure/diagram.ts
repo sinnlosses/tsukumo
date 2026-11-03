@@ -1,26 +1,20 @@
 // 図の部品（`mermaid`・`svg`・`graph`）の不具合の検出。
 // 位置と字句の名前だけを持ち、書き手のソースの文字は持たない。
 
+import { comparisonSidesOf } from "../../../../../shared/report/before-after-compare.ts"
 import { readGraphSource } from "../../../../../shared/report/graph-source.ts"
 import { REPORT_MERMAID_KINDS } from "../../../../../shared/report/report-block-diagram.ts"
 import type { ReportOutlineLeaf } from "../../../../../shared/report/report-outline.ts"
 
 const MERMAID_KINDS: ReadonlySet<string> = new Set(REPORT_MERMAID_KINDS)
 
-/** `Mermaid` の葉のソース。葉の出現順に並び、`BeforeAfter` は前の側が先。 */
+/** `Mermaid` の葉のソース。葉の出現順に並び、見比べの部品は左の側が先。 */
 export function mermaidSourcesOfLeaves(leaves: readonly ReportOutlineLeaf[]): readonly string[] {
-  return leaves.flatMap((leaf) => {
-    switch (leaf.component) {
-      case "Mermaid":
-        return [leaf.source]
-      case "BeforeAfter":
-        return [leaf.before, leaf.after].flatMap((side) =>
-          side.kind === "mermaid" ? [side.source] : [],
-        )
-      default:
-        return []
-    }
-  })
+  return leaves.flatMap((leaf) =>
+    leaf.component === "Mermaid"
+      ? [leaf.source]
+      : comparisonSidesOf(leaf).flatMap((side) => (side.kind === "mermaid" ? [side.source] : [])),
+  )
 }
 
 export function unknownMermaidCount(leaves: readonly ReportOutlineLeaf[]): number {
@@ -42,7 +36,7 @@ export function mermaidKind(source: string): string {
   return first?.split(/\s/)[0] ?? ""
 }
 
-/** `block` は `svg` の塊（`beforeAfter` の側を含む）の出現順の1始まり、`shape` は `shapes` の中の1始まり。 */
+/** `block` は `svg` の塊（見比べの部品の側を含む）の出現順の1始まり、`shape` は `shapes` の中の1始まり。 */
 export type SvgFault = { readonly block: number; readonly shape: number }
 
 /** `block` は `svg`（`graph`）の塊の出現順の1始まり、`tone` は凡例に無い色の目印。 */
@@ -118,16 +112,11 @@ function graphLeavesOf(leaves: readonly ReportOutlineLeaf[]): readonly GraphLeaf
 }
 
 function svgFiguresOfLeaves(leaves: readonly ReportOutlineLeaf[]): readonly SvgFigure[] {
-  return leaves.flatMap((leaf): readonly SvgFigure[] => {
-    switch (leaf.component) {
-      case "Svg":
-        return [leaf]
-      case "BeforeAfter":
-        return [leaf.before, leaf.after].flatMap((side) => (side.kind === "svg" ? [side] : []))
-      default:
-        return []
-    }
-  })
+  return leaves.flatMap((leaf): readonly SvgFigure[] =>
+    leaf.component === "Svg"
+      ? [leaf]
+      : comparisonSidesOf(leaf).flatMap((side) => (side.kind === "svg" ? [side] : [])),
+  )
 }
 
 function isInsideSvg(shape: SvgFigure["shapes"][number], { width, height }: SvgFigure): boolean {

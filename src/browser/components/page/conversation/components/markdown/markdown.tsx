@@ -29,7 +29,12 @@ import type {
 import { MermaidBlock } from "./renderer/mermaid-block.tsx"
 import { NoteLabel as NoteLabelView } from "./renderer/note-label.tsx"
 import { CodeSpan } from "./renderer/report-code.tsx"
-import { BeforeAfterSwap, ReportImage } from "./renderer/report-image.tsx"
+import {
+  BeforeAfterSwap,
+  ReportImage,
+  type SwapSettings,
+  SwapSideContext,
+} from "./renderer/report-image.tsx"
 import notationStyles from "./renderer/report-notation.module.css"
 
 const markdownRenderer = deferredModule(() => import("./renderer/markdown-renderer.tsx"))
@@ -183,6 +188,7 @@ type FigureMarkName =
   | "before-after-label-after"
   | "before-after-arrow"
   | "before-after-swap"
+  | "before-after-versus"
   | "image-notes"
   | "image-note-list"
   | "image-note-number"
@@ -243,7 +249,7 @@ export function filesClassName(name: ReportFileMarkName): string | undefined {
 
 export { ZoomableSvgFigure }
 
-export { BeforeAfterSwap, ReportImage }
+export { BeforeAfterSwap, ReportImage, type SwapSettings, SwapSideContext }
 
 export { CodeSpan }
 

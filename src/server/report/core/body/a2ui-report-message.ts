@@ -10,6 +10,7 @@ import {
 } from "../../../../shared/report/a2ui-report-catalog.ts"
 import { a2uiReportFields } from "../../../../shared/report/a2ui-report-input.ts"
 import { A2UI_ROOT_ID, a2uiPartsById } from "../../../../shared/report/a2ui-report-outline.ts"
+import { compareOfBeforeAfter } from "../../../../shared/report/before-after-compare.ts"
 
 /** 組み直した結果。`input` は旧い版の引数の形、`droppedCount` は部品の形に合わず落とした要素の数。 */
 export type A2uiReportInput = {
@@ -19,13 +20,13 @@ export type A2uiReportInput = {
 }
 
 /**
- * 部品の一覧を組み直す。部品の形に合わない要素は落として数える。
+ * 部品の一覧を組み直す。部品の形に合わない要素は落として数える。`BeforeAfter` は `Compare` の前後に写す（{@link compareOfBeforeAfter}）。
  * 欄への写し方は {@link a2uiReportFields}。構造の規約に外れた一覧も落ちずに写す。根が無ければ欄の無い引数になる。
  */
 export function a2uiReportInput(components: readonly unknown[]): A2uiReportInput {
   const parsed = components.flatMap((component) => {
     const result = a2uiReportComponentSchema.safeParse(component)
-    return result.success ? [result.data] : []
+    return result.success ? [compareOfBeforeAfter(result.data)] : []
   })
   const byId = a2uiPartsById(parsed)
   const root = byId.get(A2UI_ROOT_ID)

@@ -157,7 +157,8 @@
     "a2ui-staged-draft",
     "a2ui-staged-rejected",
     "a2ui-same-update",
-    "workflow-steps"
+    "workflow-steps",
+    "report-compare-versus"
   ],
   "pastSessions": [
     {

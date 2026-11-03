@@ -317,7 +317,7 @@ describe("reportRejectionText", () => {
       expect(violations).toEqual([{ kind: "figure-contradiction", count: 2, reason: "no-shape" }])
       const rejection = reportRejectionText(violations)
       expect(violationLines(rejection)).toEqual([
-        "- `figure` の reason が `no-shape` なのに、`Section` に流れ・つながり・構造を描く部品（`ItemList` の `flow`・`BeforeAfter`・`Graph`・`Mermaid`・`Svg`）が2個ある。その図を `figure` に置くか、合う reason にする",
+        "- `figure` の reason が `no-shape` なのに、`Section` に流れ・つながり・構造を描く部品（`ItemList` の `flow`・`Compare` の `before-after`・`BeforeAfter`・`Graph`・`Mermaid`・`Svg`）が2個ある。その図を `figure` に置くか、合う reason にする",
       ])
     })
 

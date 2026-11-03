@@ -6,7 +6,6 @@ import type { ReactElement } from "react"
 import type { A2uiReportComponent } from "../../../../../../shared/report/a2ui-report-catalog.ts"
 import type { ReportImageSource } from "../../../../../../shared/report/report-image-markdown.ts"
 import type { LeafValue } from "../../../../../../shared/report/report-leaf-value.ts"
-import { BeforeAfterLeaf } from "./before-after-leaf.tsx"
 import { ChartLeaf } from "./chart-leaf.tsx"
 import { ClaimsLeaf } from "./claims-leaf.tsx"
 import { CodeLeaf } from "./code-leaf.tsx"
@@ -54,7 +53,7 @@ const DIRECT_LEAF_VIEWS: ReadonlyMap<A2uiReportComponent["component"], DirectLea
   ["Timeline", TimelineLeaf],
   ["Graph", GraphLeaf],
   ["Picture", PictureLeaf],
-  ["BeforeAfter", BeforeAfterLeaf],
+  ["BeforeAfter", CompareLeaf],
   ["Mermaid", MermaidLeaf],
   ["Chart", ChartLeaf],
   ["Plot", PlotLeaf],

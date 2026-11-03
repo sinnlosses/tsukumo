@@ -11,6 +11,7 @@ import {
   REPORT_COMPONENT_SCHEMAS,
 } from "../../../../shared/report/a2ui-report-catalog.ts"
 import { A2UI_ROOT_ID } from "../../../../shared/report/a2ui-report-outline.ts"
+import { beforeAfterCompareFields } from "../../../../shared/report/before-after-compare.ts"
 import { parseKeyFigures } from "../../../../shared/report/report-block-comparison.ts"
 import type { ReportBlock } from "../../../../shared/report/report-block.ts"
 import { parseReportChecks } from "../../../../shared/report/report-check.ts"
@@ -44,7 +45,7 @@ const COMPONENT_OF_KIND: ReadonlyMap<string, string> = new Map(
 
 /**
  * 旧い引数を部品の一覧に組み直す。`sections` があればそれを、無ければ `body`（Markdown）を、今の読みで塊にして写す。
- * 節は `Section`、葉は同名の部品、`row` は `Row`、`panel` は `Card` と `Column`（題は先頭の `Paragraph`）、
+ * 節は `Section`、葉は同名の部品（`beforeAfter` は `Compare` の前後）、`row` は `Row`、`panel` は `Card` と `Column`（題は先頭の `Paragraph`）、
  * `figure` は `Report.figure` と `figureNone`、振り返りの部品は `Report.retrospective.blocks` に写す。部品の ID は並びの位置から振る。
  * 失うのは `shapeTag`・`files` の塊・知らない種類で落とした塊・`row`/`panel` の `fold`/`aside`。
  * 節が1つも残らない引数は、`Report.children` を空にできないので undefined。
@@ -175,8 +176,11 @@ function blockParts(id: string, block: LegacyBlock): readonly BlockParts[] {
   return leafPart(id, block).map((part) => ({ id, parts: [part] }))
 }
 
-/** 葉の塊 1 つが写る部品。部品の無い種類（`files`）は空。 */
+/** 葉の塊 1 つが写る部品。部品の無い種類（`files`）は空。`beforeAfter` は `Compare` の前後。 */
 function leafPart(id: string, block: ReportBlock): readonly Part[] {
+  if (block.kind === "beforeAfter") {
+    return [{ id, ...beforeAfterCompareFields(block) }]
+  }
   const component = COMPONENT_OF_KIND.get(block.kind)
   return component === undefined ? [] : [{ id, component, ...omit(block, ["kind"]) }]
 }

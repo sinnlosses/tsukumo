@@ -286,6 +286,7 @@ describe("A2UI のカタログ文書", () => {
         "Svg",
         "Timeline",
         "BeforeAfter",
+        "Compare",
         "Chart",
         "Stats",
         "Plot",

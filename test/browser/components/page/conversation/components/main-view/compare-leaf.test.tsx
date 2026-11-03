@@ -22,33 +22,37 @@ type ComparePart = Extract<A2uiReportComponent, { readonly component: "Compare" 
 
 type CompareFields = { title?: string; fold?: string; aside?: string }
 
-function pair(sides: ComparePart["sides"], fields: CompareFields = {}) {
+type PointsSide = { kind: "points"; heading: string; points: string[] }
+
+function pair(sides: PointsSide[], fields: CompareFields = {}) {
   const base = {
     title: fields.title ?? "",
+    relation: "versus",
     sides,
     fold: fields.fold ?? "",
     aside: fields.aside ?? "",
-  }
+  } as const
   const part: ComparePart = { id: "c1", component: "Compare", ...base }
   return { block: { kind: "compare", ...base } as const, part }
 }
 
-function both(sides: ComparePart["sides"], fields: CompareFields = {}) {
+function both(sides: PointsSide[], fields: CompareFields = {}) {
   const { block, part } = pair(sides, fields)
   return { fresh: newLeafHtml(block, part), old: oldLeafHtml(block) }
 }
 
-const SIDES: ComparePart["sides"] = [
-  { heading: "架空の案A", points: ["架空の利点", "架空の `a.ts` の欠点"] },
-  { heading: "架空の案B", points: ["架空の別の点"] },
+const SIDES: PointsSide[] = [
+  { kind: "points", heading: "架空の案A", points: ["架空の利点", "架空の `a.ts` の欠点"] },
+  { kind: "points", heading: "架空の案B", points: ["架空の別の点"] },
 ]
 
-const MANY_POINTS: ComparePart["sides"] = [
+const MANY_POINTS: PointsSide[] = [
   {
+    kind: "points",
     heading: "架空の案A",
     points: Array.from({ length: 12 }, (_, index) => `架空の点${String(index + 1)}`),
   },
-  { heading: "架空の案B", points: ["架空の別の点"] },
+  { kind: "points", heading: "架空の案B", points: ["架空の別の点"] },
 ]
 
 const PLAIN_VALUE: LeafValue = {
@@ -71,16 +75,20 @@ function renderPart(part: ComparePart) {
 }
 
 describe("Compare の部品", () => {
-  it.each<[string, ComparePart["sides"], CompareFields]>([
+  it.each<[string, PointsSide[], CompareFields]>([
     ["2 つの側", SIDES, {}],
     ["題つき", SIDES, { title: "架空の `b.ts` の見比べ" }],
-    ["見出しの inline code", [{ heading: "`x`", points: ["架空"] }, SIDES[1] ?? SIDES[0]!], {}],
+    [
+      "見出しの inline code",
+      [{ kind: "points", heading: "`x`", points: ["架空"] }, SIDES[1] ?? SIDES[0]!],
+      {},
+    ],
     ["fold", SIDES, { fold: "架空の畳み" }],
     ["fold と題と欄外注", SIDES, { fold: "架空の畳み", title: "架空の題", aside: "架空の欄外注" }],
     ["箇条が 12 項目の側", MANY_POINTS, {}],
     [
       "太字の記号は効かせず字のまま",
-      [{ heading: "**A**", points: ["**x**"] }, SIDES[1] ?? SIDES[0]!],
+      [{ kind: "points", heading: "**A**", points: ["**x**"] }, SIDES[1] ?? SIDES[0]!],
       {},
     ],
   ])("%s は旧い描き方と同じ DOM", (_, sides, fields) => {

@@ -11,6 +11,7 @@
 
 import { sumBy } from "remeda"
 
+import { comparisonSidesOf } from "../../../../shared/report/before-after-compare.ts"
 import type { ReportImageSize } from "../../../../shared/report/report-image.ts"
 import type { ReportOutlineLeaf } from "../../../../shared/report/report-outline.ts"
 import type { PromptImageMediaType } from "../../../../shared/session-driver/prompt-image.ts"
@@ -101,21 +102,14 @@ export function createReportImageShelf(): ReportImageShelf {
   }
 }
 
-/** レポートの `image` の塊と `beforeAfter` の画像の側が指すパス（空のパスは除く）。 */
+/** レポートの `image` の塊と見比べの部品の画像の側が指すパス（空のパスは除く）。 */
 export function reportImagePaths(leaves: readonly ReportOutlineLeaf[]): readonly string[] {
   return leaves
-    .flatMap((leaf) => {
-      switch (leaf.component) {
-        case "Picture":
-          return [leaf.path]
-        case "BeforeAfter":
-          return [leaf.before, leaf.after].flatMap((side) =>
-            side.kind === "image" ? [side.path] : [],
-          )
-        default:
-          return []
-      }
-    })
+    .flatMap((leaf) =>
+      leaf.component === "Picture"
+        ? [leaf.path]
+        : comparisonSidesOf(leaf).flatMap((side) => (side.kind === "image" ? [side.path] : [])),
+    )
     .filter((path) => path !== "")
 }
 

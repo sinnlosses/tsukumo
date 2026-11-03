@@ -42,9 +42,10 @@ const TABLE: Sample = (() => {
 const COMPARE: Sample = (() => {
   const base = {
     title: "",
+    relation: "versus",
     sides: [
-      { heading: "架空の案A", points: ["架空の利点", "架空の `a.ts` の欠点"] },
-      { heading: "架空の案B", points: ["架空の別の点"] },
+      { kind: "points", heading: "架空の案A", points: ["架空の利点", "架空の `a.ts` の欠点"] },
+      { kind: "points", heading: "架空の案B", points: ["架空の別の点"] },
     ],
     fold: "",
     aside: "",

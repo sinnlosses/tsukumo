@@ -123,3 +123,4 @@
 | `docs/architecture/adr/0044-e2e-runner-playwright-test.md`            | E2E のランナーを `@playwright/test` に移し、撮影の道具は待ちの部品だけ借りる                          | 採用                   |
 | `docs/architecture/adr/0045-workflow-script-orchestration.md`         | タスクの段の進め方を、plugin の dynamic workflows の台本に移す                                        | 採用                   |
 | `docs/architecture/adr/0046-verification-stages-from-check-record.md` | 作業の記録の「確かめたこと」の段と件数を、検証の控え `.check-record.json` から木の SHA で照らして運ぶ | 採用                   |
+| `docs/architecture/adr/0047-compare-relation.md`                      | 見比べの部品を `Compare` 1つにまとめ、側の中身と `relation` で対等と前後を描き分ける                  | 採用                   |

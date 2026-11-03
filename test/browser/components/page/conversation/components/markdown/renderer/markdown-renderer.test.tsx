@@ -99,9 +99,10 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
           {
             kind: "compare",
             title: "",
+            relation: "versus",
             sides: [
-              { heading: "変更前", points: ["架空の一", "架空の二"] },
-              { heading: "変更後", points: ["架空の三"] },
+              { kind: "points", heading: "変更前", points: ["架空の一", "架空の二"] },
+              { kind: "points", heading: "変更後", points: ["架空の三"] },
             ],
             fold: "",
             aside: "",

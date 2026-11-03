@@ -115,7 +115,7 @@ describe("legacyReportComponents", () => {
     })
   })
 
-  it("葉の塊は同名の部品に写り、fold と aside も残る", () => {
+  it("葉の塊は同名の部品（beforeAfter は Compare）に写り、fold と aside も残る", () => {
     const entries = Object.entries(LEAVES)
     expect(entries.map(([kind]) => kind).toSorted()).toEqual(
       Object.values(LEAF_COMPONENT_KINDS).toSorted(),
@@ -139,7 +139,7 @@ describe("legacyReportComponents", () => {
     expect(leafComponents.map((part) => part.component)).toEqual(
       Object.entries(LEAF_COMPONENT_KINDS)
         .filter(([, kind]) => kind in LEAVES)
-        .map(([component]) => component),
+        .map(([component]) => (component === "BeforeAfter" ? "Compare" : component)),
     )
     expect(leafResult?.unknownBlockCount).toBe(0)
   })

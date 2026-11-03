@@ -1,0 +1,108 @@
+{
+  "name": "report-compare-versus",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "2つの案を画面とコードで並べて見たい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 300,
+      "event": {
+        "kind": "speech",
+        "text": "2つを並べて書くね。",
+        "expression": "default"
+      }
+    },
+    {
+      "afterMs": 1500,
+      "event": {
+        "kind": "report",
+        "task": {
+          "kind": "none"
+        },
+        "closing": {
+          "kind": "speech",
+          "text": "書けたよ！",
+          "expression": "proud"
+        },
+        "toolUseId": "fake-report-compare-versus-1",
+        "conclusion": "架空の結論: 架空の案A と案B を画面とコードで並べた。",
+        "sections": [
+          {
+            "heading": "架空の2つの画面",
+            "blocks": [
+              {
+                "kind": "compare",
+                "title": "架空の案A と案B の画面",
+                "relation": "versus",
+                "sides": [
+                  {
+                    "heading": "架空の案A",
+                    "kind": "image",
+                    "path": "report-image-fixture/same-before.png"
+                  },
+                  {
+                    "heading": "架空の案B",
+                    "kind": "image",
+                    "path": "report-image-fixture/same-after.png"
+                  }
+                ],
+                "fold": "",
+                "aside": ""
+              }
+            ]
+          },
+          {
+            "heading": "架空の2つの書き方",
+            "blocks": [
+              {
+                "kind": "compare",
+                "title": "架空の読み込みの書き方",
+                "sides": [
+                  {
+                    "heading": "架空の案A",
+                    "kind": "code",
+                    "language": "ts",
+                    "source": "const cache = new Map<string, string>()\nexport function load(key: string): string {\n  return cache.get(key) ?? read(key)\n}\n"
+                  },
+                  {
+                    "heading": "架空の案B",
+                    "kind": "code",
+                    "language": "ts",
+                    "source": "export function load(key: string): string {\n  return read(key)\n}\n"
+                  }
+                ],
+                "fold": "",
+                "aside": ""
+              }
+            ]
+          }
+        ],
+        "favor": "",
+        "checks": []
+      }
+    },
+    {
+      "afterMs": 1550,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-report-compare-versus-1",
+        "content": "ok",
+        "isError": false
+      }
+    },
+    {
+      "afterMs": 2300,
+      "event": {
+        "kind": "turn-finished",
+        "outcome": {
+          "kind": "completed"
+        }
+      }
+    }
+  ]
+}

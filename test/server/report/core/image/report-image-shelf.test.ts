@@ -150,6 +150,29 @@ describe("reportImagePaths", () => {
 
     expect(reportImagePaths(leavesOf(sections))).toEqual(["架空/before.png", "架空/after.png"])
   })
+
+  it("対等な compare の画像の側のパスも拾い、箇条の側は拾わない", () => {
+    const sections: readonly ReportBlockSection[] = [
+      {
+        heading: "",
+        blocks: [
+          {
+            kind: "compare",
+            title: "",
+            relation: "versus",
+            sides: [
+              { heading: "架空の案A", kind: "image", path: "架空/a.png" },
+              { heading: "架空の案B", kind: "points", points: ["架空の1行"] },
+            ],
+            fold: "",
+            aside: "",
+          },
+        ],
+      },
+    ]
+
+    expect(reportImagePaths(leavesOf(sections))).toEqual(["架空/a.png"])
+  })
 })
 
 describe("releasedImageToolUseIds", () => {

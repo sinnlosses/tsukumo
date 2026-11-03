@@ -119,9 +119,10 @@ const ROWS: readonly (readonly [string, readonly ReportBlock[], readonly DrawnEn
         {
           kind: "compare",
           title: "",
+          relation: "versus",
           sides: [
-            { heading: "架空A", points: ["架空"] },
-            { heading: "架空B", points: ["架空"] },
+            { kind: "points", heading: "架空A", points: ["架空"] },
+            { kind: "points", heading: "架空B", points: ["架空"] },
           ],
           ...PLAIN,
         },

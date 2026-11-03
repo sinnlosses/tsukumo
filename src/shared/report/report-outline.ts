@@ -88,6 +88,15 @@ export function outlineLeafBlock(leaf: ReportOutlineLeaf): ReportBlock | undefin
   ])[0]
 }
 
+/** 葉の塊の `kind`。前後（`before-after`）の `Compare` は、写す前と同じに `beforeAfter` と数える。 */
+export function outlineLeafKind(
+  leaf: ReportOutlineLeaf,
+): (typeof LEAF_COMPONENT_KINDS)[keyof typeof LEAF_COMPONENT_KINDS] {
+  return leaf.component === "Compare" && leaf.relation === "before-after"
+    ? LEAF_COMPONENT_KINDS.BeforeAfter
+    : LEAF_COMPONENT_KINDS[leaf.component]
+}
+
 export function sectionLeaves(outline: ReportOutline): readonly ReportOutlineLeaf[] {
   return outline.sections.flatMap((section) => section.leaves)
 }
@@ -158,7 +167,7 @@ function isPlacedFigureKind(kind: string): kind is PlacedFigureKind {
 
 /** `Report.figure` に置けない部品の葉は、スキーマが先に落とすのでここへは来ない。 */
 function figureOfLeaf(leaf: ReportOutlineLeaf): ReportFigureDeclaration {
-  const kind = LEAF_COMPONENT_KINDS[leaf.component]
+  const kind = outlineLeafKind(leaf)
   return isPlacedFigureKind(kind) ? { kind } : UNRECORDED_FIGURE
 }
 

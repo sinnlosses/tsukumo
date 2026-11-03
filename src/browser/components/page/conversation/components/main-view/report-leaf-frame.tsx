@@ -14,6 +14,7 @@ import {
   InlineCodeText,
   InlineMarkdown,
   leafFrameClassNames,
+  type SwapSettings,
 } from "../markdown/markdown.tsx"
 
 /** 書き上げる演出（`planReveal`）が題の行・欄外注の列を見分ける印の属性。 */
@@ -44,10 +45,10 @@ export function ReportLeafFrame(props: ReportLeafFrameProps): ReactElement {
 /**
  * 題の包みごと `details` で畳む枠（図の内容部品・表の葉。畳みの外に欄外注の列が付く）。
  * `fold` が空なら畳まない。
- * `swap` が真なら題の包みを、並べる・切り替えの口を持つ `BeforeAfterSwap` にする（両側が画像の前後の部品）。
+ * `swap` が設定なら題の包みを、並べる・切り替えの口を持つ `BeforeAfterSwap` にする（両側が画像の見比べの部品）。
  */
 export function FoldedLeafFrame(
-  props: ReportLeafFrameProps & { readonly fold: string; readonly swap: boolean },
+  props: ReportLeafFrameProps & { readonly fold: string; readonly swap: false | SwapSettings },
 ): ReactElement {
   const { captionNumber, gutterNotes } = props.value
   const caption =
@@ -61,7 +62,7 @@ export function FoldedLeafFrame(
     leafFrameClassNames.captioned,
     props.fit && leafFrameClassNames.captionedFit,
     captionNumber.kind === "table" && leafFrameClassNames.captionedTable,
-    props.swap && figureClassName("before-after-swap"),
+    props.swap !== false && figureClassName("before-after-swap"),
   )
   const captioned = (
     <LeafFold fold={props.fold} empty={false}>
@@ -131,11 +132,13 @@ export function ReportPausePoint(props: {
 
 function CaptionedBox(props: {
   readonly className: string
-  readonly swap: boolean
+  readonly swap: false | SwapSettings
   readonly children: ReactNode
 }): ReactElement {
-  return props.swap ? (
-    <BeforeAfterSwap className={props.className}>{props.children}</BeforeAfterSwap>
+  return props.swap !== false ? (
+    <BeforeAfterSwap className={props.className} settings={props.swap}>
+      {props.children}
+    </BeforeAfterSwap>
   ) : (
     <div className={props.className}>{props.children}</div>
   )

@@ -2,6 +2,7 @@
 
 import { sumBy } from "remeda"
 
+import { comparisonSidesOf } from "../../../../../shared/report/before-after-compare.ts"
 import {
   type TableCell,
   tableRowCells,
@@ -20,6 +21,8 @@ export function drawsShape(leaf: ReportOutlineLeaf): boolean {
   switch (leaf.component) {
     case "ItemList":
       return leaf.style === "flow"
+    case "Compare":
+      return leaf.relation === "before-after"
     case "BeforeAfter":
     case "Graph":
     case "Mermaid":
@@ -79,18 +82,15 @@ export function nestedFoldCount(outline: ReportOutline): number {
   )
 }
 
-/** `beforeAfter` の画像の側の `region` が、画像の外に出る、または幅か高さが 0 以下の塊か。 */
+/** 見比べの画像の側の `region` が、画像の外に出る、または幅か高さが 0 以下の塊か。 */
 export function hasBadRegion(leaf: ReportOutlineLeaf): boolean {
-  return (
-    leaf.component === "BeforeAfter" &&
-    [leaf.before, leaf.after].some((side) => {
-      if (side.kind !== "image" || side.region === undefined) return false
-      const { left, top, width, height } = side.region
-      return (
-        width <= 0 || height <= 0 || left < 0 || top < 0 || left + width > 100 || top + height > 100
-      )
-    })
-  )
+  return comparisonSidesOf(leaf).some((side) => {
+    if (side.kind !== "image" || side.region === undefined) return false
+    const { left, top, width, height } = side.region
+    return (
+      width <= 0 || height <= 0 || left < 0 || top < 0 || left + width > 100 || top + height > 100
+    )
+  })
 }
 
 export function isVerdictOrdered(leaf: OptionsLeaf): boolean {

@@ -8,9 +8,10 @@ describe("reportSectionsMarkdown", () => {
     const compare: FigureBlock = {
       kind: "compare",
       title: "架空の見比べ",
+      relation: "versus",
       sides: [
-        { heading: "変更前", points: ["`a` を呼ぶ", "架空の<行>"] },
-        { heading: "変更後", points: ["架空の1行"] },
+        { kind: "points", heading: "変更前", points: ["`a` を呼ぶ", "架空の<行>"] },
+        { kind: "points", heading: "変更後", points: ["架空の1行"] },
       ],
       fold: "",
       aside: "",

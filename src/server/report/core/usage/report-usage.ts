@@ -3,7 +3,8 @@
 
 import { isPlainObject } from "remeda"
 
-import { LEAF_COMPONENT_KINDS } from "../../../../shared/report/a2ui-report-catalog.ts"
+import type { LEAF_COMPONENT_KINDS } from "../../../../shared/report/a2ui-report-catalog.ts"
+import { comparisonSidesOf } from "../../../../shared/report/before-after-compare.ts"
 import { readGraphSource } from "../../../../shared/report/graph-source.ts"
 import type {
   ReportArgumentChars,
@@ -13,6 +14,7 @@ import { tableRowCells } from "../../../../shared/report/report-block-comparison
 import type { ReportCheck } from "../../../../shared/report/report-check.ts"
 import {
   drawnLeaves,
+  outlineLeafKind,
   type ReportOutlineLeaf,
   reportFigureOf,
   reportOutline,
@@ -138,7 +140,7 @@ const IMAGE_FILE_EXTENSIONS: readonly string[] = [".png", ".jpg", ".jpeg", ".gif
  * - imageNotes: `image` の `notes`
  * - codeMarks: `code` の `marks`
  * - blockAside: 塊の `aside`
- * - beforeAfterRegion: `beforeAfter` の画像の側の `region`
+ * - beforeAfterRegion: 見比べの部品（`compare`・`beforeAfter`）の画像の側の `region`
  */
 export const REPORT_BLOCK_FIELDS = [
   "tableChange",
@@ -245,7 +247,7 @@ export function reportUsageEntryOf(
     notations: notationsInSections(outline),
     containedNotations: containedNotationsInSections(outline),
     escapeNotations: escapeNotationsInSections(outline),
-    componentNames: [...new Set(event.components.map((part) => part.component))],
+    componentNames: [...new Set(event.components.map(recordedComponentName))],
     markdownNotationKinds: notationKindsInMarkdowns(
       event.components.flatMap((part) => (part.component === "Markdown" ? [part.markdown] : [])),
     ),
@@ -257,13 +259,12 @@ export function reportUsageEntryOf(
     mermaidKinds: [...new Set(mermaidSourcesOfLeaves(drawn).map(mermaidKind))],
     hasModifiedFiles: false,
     hasBeforeAfterOrImage: drawn.some(
-      (leaf) => leaf.component === "BeforeAfter" || leaf.component === "Picture",
+      (leaf) => kindOf(leaf) === "beforeAfter" || leaf.component === "Picture",
     ),
     hasFigure: drawn.some(
       (leaf) =>
         FIGURE_KINDS.includes(kindOf(leaf)) ||
-        (leaf.component === "BeforeAfter" &&
-          [leaf.before, leaf.after].some((side) => FIGURE_KINDS.includes(side.kind))),
+        comparisonSidesOf(leaf).some((side) => FIGURE_KINDS.includes(side.kind)),
     ),
     readImageWithoutImageBlock: mainReadImageFile && reportImagePaths(drawn).length === 0,
     emphasisCount: drawn.reduce((total, leaf) => total + emphasisCountOf(leaf), 0),
@@ -412,7 +413,16 @@ function keyFigureUsageOf(keyFigureCount: number, conclusion: string): ReportKey
 
 /** 今までの塊の `kind` 名で数える。 */
 function kindOf(leaf: ReportOutlineLeaf): ReportLeafKind {
-  return LEAF_COMPONENT_KINDS[leaf.component]
+  return outlineLeafKind(leaf)
+}
+
+/** 部品名。前後の `Compare` は、写す前と同じに `BeforeAfter` と数える。 */
+function recordedComponentName(
+  part: Extract<SessionEvent, { readonly kind: "report" }>["components"][number],
+): ReportComponentName {
+  return part.component === "Compare" && part.relation === "before-after"
+    ? "BeforeAfter"
+    : part.component
 }
 
 function kindsOf(leaves: readonly ReportOutlineLeaf[]): readonly ReportLeafKind[] {
@@ -449,9 +459,8 @@ function hasField(leaf: ReportOutlineLeaf, field: ReportBlockField): boolean {
     case "blockAside":
       return leaf.aside.trim() !== ""
     case "beforeAfterRegion":
-      return (
-        leaf.component === "BeforeAfter" &&
-        [leaf.before, leaf.after].some((side) => side.kind === "image" && side.region !== undefined)
+      return comparisonSidesOf(leaf).some(
+        (side) => side.kind === "image" && side.region !== undefined,
       )
   }
 }

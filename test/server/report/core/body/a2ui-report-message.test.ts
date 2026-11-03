@@ -44,6 +44,91 @@ const COMPONENTS = [
   paragraph("retro", "架空の根拠。"),
 ]
 
+describe("a2uiReportInput の見比べの部品", () => {
+  const root = {
+    id: "root",
+    component: "Report",
+    conclusion: ["架空の結論。"],
+    figure: "fig",
+    children: ["sec"],
+  }
+  const beforeAfter = {
+    title: "架空の前後",
+    before: { kind: "image", path: "架空/前.png" },
+    after: { kind: "code", language: "ts", source: "const a = 1\n" },
+  }
+
+  it("BeforeAfter は節でも図でも Compare の before-after に写り、側の見出しは空になる", () => {
+    const { components, droppedCount } = a2uiReportInput([
+      root,
+      { id: "sec", component: "Section", heading: "", children: ["ba"] },
+      { id: "ba", component: "BeforeAfter", ...beforeAfter },
+      { id: "fig", component: "BeforeAfter", ...beforeAfter },
+    ])
+    const expected = {
+      component: "Compare",
+      title: "架空の前後",
+      relation: "before-after",
+      sides: [
+        { heading: "", kind: "image", path: "架空/前.png" },
+        { heading: "", kind: "code", language: "ts", source: "const a = 1\n" },
+      ],
+      fold: "",
+      aside: "",
+    }
+
+    expect(droppedCount).toBe(0)
+    expect(components.filter((part) => part.component === "BeforeAfter")).toEqual([])
+    expect(components.find((part) => part.id === "ba")).toEqual({ id: "ba", ...expected })
+    expect(components.find((part) => part.id === "fig")).toEqual({ id: "fig", ...expected })
+  })
+
+  it("Compare は relation を省くと versus、kind の無い旧い側は points として受ける", () => {
+    const { components, droppedCount } = a2uiReportInput([
+      root,
+      { id: "sec", component: "Section", heading: "", children: ["fig"] },
+      {
+        id: "fig",
+        component: "Compare",
+        title: "架空の見比べ",
+        sides: [
+          { heading: "架空の案A", points: ["架空の1行"] },
+          { heading: "架空の案B", kind: "image", path: "架空/b.png" },
+        ],
+      },
+    ])
+
+    expect(droppedCount).toBe(0)
+    expect(components.find((part) => part.id === "fig")).toMatchObject({
+      relation: "versus",
+      sides: [
+        { heading: "架空の案A", kind: "points", points: ["架空の1行"] },
+        { heading: "架空の案B", kind: "image", path: "架空/b.png" },
+      ],
+    })
+  })
+
+  it("旧い引数の beforeAfter の塊も Compare の before-after に写る", () => {
+    const [event] = reportEvents(
+      "toolu_1",
+      {
+        conclusion: "架空の結論。",
+        sections: [{ heading: "", blocks: [{ kind: "beforeAfter", ...beforeAfter }] }],
+      },
+      [],
+    )
+
+    expect(event?.kind === "report" ? event.components.map((part) => part.component) : []).toEqual([
+      "Report",
+      "Section",
+      "Compare",
+    ])
+    expect(event?.kind === "report" ? event.components[2] : undefined).toMatchObject({
+      relation: "before-after",
+    })
+  })
+})
+
 describe("a2uiReportInput", () => {
   it("Report の props を最上位の欄に、Section を節に、配置の部品の中の葉を節へ並び順に写す", () => {
     const { input, droppedCount } = a2uiReportInput(COMPONENTS)

@@ -139,6 +139,7 @@ const REPORT_BLOCK_MARK_NAMES = [
   "before-after-label-after",
   "before-after-arrow",
   "before-after-swap",
+  "before-after-versus",
   "svg-figure",
   "svg-legend",
   "svg-legend-item",

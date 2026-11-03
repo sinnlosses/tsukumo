@@ -69,7 +69,8 @@ const svgFields = {
   legend: omittable(toneLegendSchema, []),
 }
 
-const beforeAfterSideSchema = z
+/** 見比べの側の中身（`BeforeAfter` の側と、`Compare` の側の見出しを除いた欄）。 */
+export const beforeAfterSideSchema = z
   .discriminatedUnion("kind", [
     z.object({ kind: z.literal("svg"), ...svgFields }),
     z.object({ kind: z.literal("mermaid"), source: z.string() }),

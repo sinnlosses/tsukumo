@@ -132,6 +132,7 @@ export const reportFigureSchema = z.discriminatedUnion("kind", [
   svgBlockSchema,
   timelineBlockSchema,
   beforeAfterBlockSchema,
+  compareBlockSchema,
   chartBlockSchema,
   statsBlockSchema,
   plotBlockSchema,

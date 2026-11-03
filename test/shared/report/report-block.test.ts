@@ -147,11 +147,18 @@ describe("parseReportBlocks", () => {
     expect(firstOf(beforeAfter(graph, mermaid))).toBeUndefined()
   })
 
-  it("compare の塊は側がちょうど2つで箇条があるときだけ受ける", () => {
+  it("compare の塊は側がちょうど2つで箇条があるときだけ受け、kind の無い旧い側は対等な2つの箇条として読む", () => {
     const side = { heading: "案A", points: ["架空の1行"] }
     const compare = { kind: "compare", title: "", sides: [side, side], fold: "", aside: "" }
 
-    expect(firstOf(compare)).toEqual(compare)
+    expect(firstOf(compare)).toEqual({
+      ...compare,
+      relation: "versus",
+      sides: [
+        { kind: "points", ...side },
+        { kind: "points", ...side },
+      ],
+    })
     for (const broken of [
       { ...compare, sides: [side] },
       { ...compare, sides: [side, side, side] },

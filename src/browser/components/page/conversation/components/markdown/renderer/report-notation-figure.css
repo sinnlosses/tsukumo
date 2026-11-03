@@ -36,8 +36,13 @@
     gap: var(--space-sm);
     align-items: stretch;
   }
+  /* 対等な2つ（`relation` が versus）は矢印を置かず、2つの側を同じ幅で並べる。 */
+  & .report-before-after-versus {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
   @container report-body (max-width: calc(40em + 0.75rem)) {
-    & .report-before-after {
+    & .report-before-after,
+    & .report-before-after-versus {
       grid-template-columns: minmax(0, 1fr);
     }
   }
@@ -161,7 +166,8 @@
   }
   &
     .report-captioned.report-before-after-swap[data-view="side"]
-    .report-before-after-side:nth-child(3)
+    .report-before-after:not(.report-before-after-versus)
+    > .report-before-after-side[data-side="after"]
     .report-image-zoom
     img {
     border-color: var(--rule);
@@ -209,10 +215,10 @@
   }
   &
     .report-captioned.report-before-after-swap[data-view="switch"][data-shown="before"]
-    .report-before-after-side:nth-child(1),
+    .report-before-after-side[data-side="before"],
   &
     .report-captioned.report-before-after-swap[data-view="switch"][data-shown="after"]
-    .report-before-after-side:nth-child(3) {
+    .report-before-after-side[data-side="after"] {
     opacity: 1;
     visibility: visible;
   }

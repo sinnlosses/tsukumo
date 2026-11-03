@@ -3,12 +3,12 @@ import { sumBy } from "remeda"
 import { FIGURE_WEIGHT, SHORT_REPORT_WEIGHT } from "../../../src/browser/domain/reveal/plan.ts"
 import type { FakeSession } from "../../../src/server/session-driver/adapter/fake/fake-session.ts"
 import { reportEvents } from "../../../src/server/session-driver/core/message/sdk-report-message.ts"
-import { LEAF_COMPONENT_KINDS } from "../../../src/shared/report/a2ui-report-catalog.ts"
 import {
   type TableCell,
   tableRowCells,
 } from "../../../src/shared/report/report-block-comparison.ts"
 import {
+  outlineLeafKind,
   type ReportOutlineLeaf,
   reportOutline,
   sectionLeaves,
@@ -90,9 +90,7 @@ const FIGURE_BLOCK_KINDS: ReadonlySet<string> = new Set([
 ])
 
 function leafWeight(leaf: ReportOutlineLeaf): number {
-  return FIGURE_BLOCK_KINDS.has(LEAF_COMPONENT_KINDS[leaf.component])
-    ? FIGURE_WEIGHT
-    : textLength(leaf)
+  return FIGURE_BLOCK_KINDS.has(outlineLeafKind(leaf)) ? FIGURE_WEIGHT : textLength(leaf)
 }
 
 /** 葉の中の文字列の長さの合計（`id`・`component` と `style` の値は描かないので数えない）。 */
@@ -117,7 +115,7 @@ function textLength(value: unknown): number {
 function leafKindLabel(leaf: ReportOutlineLeaf): string {
   return leaf.component === "Table" && leaf.rows.some((row) => tableRowCells(row).some(hasStatus))
     ? TABLE_WITH_STATUS
-    : LEAF_COMPONENT_KINDS[leaf.component]
+    : outlineLeafKind(leaf)
 }
 
 function hasStatus(cell: TableCell): boolean {

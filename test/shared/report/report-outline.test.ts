@@ -36,6 +36,28 @@ describe("reportFigureOf", () => {
     expect(reportFigureOf([report({ figure: "f1" }, []), figure])).toEqual({ kind: "mermaid" })
   })
 
+  it("Compare は前後なら今までの beforeAfter、対等なら compare として返す", () => {
+    const compare = (relation: "versus" | "before-after"): A2uiReportComponent => ({
+      id: "f1",
+      component: "Compare",
+      title: "架空の見比べ",
+      relation,
+      sides: [
+        { heading: "", kind: "image", path: "架空/a.png" },
+        { heading: "", kind: "image", path: "架空/b.png" },
+      ],
+      fold: "",
+      aside: "",
+    })
+
+    expect(reportFigureOf([report({ figure: "f1" }, []), compare("before-after")])).toEqual({
+      kind: "beforeAfter",
+    })
+    expect(reportFigureOf([report({ figure: "f1" }, []), compare("versus")])).toEqual({
+      kind: "compare",
+    })
+  })
+
   it("figureNone は理由つきの none を返す", () => {
     const root: A2uiReportComponent = {
       id: "root",

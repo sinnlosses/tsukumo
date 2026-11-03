@@ -285,6 +285,27 @@ export const NOTATION_ENTRIES: readonly CatalogEntry[] = [
     settle: { kind: "selector", selector: BEFORE_AFTER_SELECTOR, phase: "before-prepare" },
   },
   {
+    name: "report-compare-versus-image",
+    scene: "report-compare-versus",
+    label:
+      "対等な2つの見比べ（画像。札は側の見出しで矢印が無く、縦横比が揃っても重ねるの押しボタンは出ない）",
+    homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "report-image" },
+    prepare: [{ kind: "scroll", selector: BEFORE_AFTER_SELECTOR }],
+    skipReveal: true,
+    settle: { kind: "selector", selector: BEFORE_AFTER_SELECTOR, phase: "before-prepare" },
+  },
+  {
+    name: "report-compare-versus-code",
+    scene: "report-compare-versus",
+    label: "対等な2つの見比べ（コード。札は側の見出しで矢印が無い）",
+    homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "report-image" },
+    prepare: [{ kind: "scroll", selector: BEFORE_AFTER_CODE_SELECTOR }],
+    skipReveal: true,
+    settle: { kind: "selector", selector: BEFORE_AFTER_CODE_SELECTOR, phase: "before-prepare" },
+  },
+  {
     name: "report-before-after-code",
     scene: "report-before-after",
     label: "前後の部品（コードの前後と箇条の前後）",
