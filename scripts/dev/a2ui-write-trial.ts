@@ -6,7 +6,6 @@
 //   node scripts/dev/a2ui-write-trial.ts --out /tmp/a2ui-trial/runs --summary
 // 題材は架空のものだけを渡す。実物の会話は渡さない。
 
-import { execFile } from "node:child_process"
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs"
 import path from "node:path"
 import process from "node:process"
@@ -15,7 +14,6 @@ import { parseArgs } from "node:util"
 import { z } from "zod"
 
 import { buildReportCatalogDocument } from "../../src/shared/report/a2ui-report-catalog.ts"
-import { replayEnvironment } from "../shared/claude-environment.ts"
 import { REPOSITORY_ROOT } from "../shared/repository-root.ts"
 import {
   type ChoiceResult,
@@ -40,10 +38,9 @@ import {
   trialConditions,
   type TrialCondition,
 } from "./lib/a2ui-write-trial.ts"
+import { askPlainClaude, runWriterPool, type Writer } from "./lib/plain-claude-writer.ts"
 
-const CLAUDE_TIMEOUT_MS = 300_000
 const CONCURRENCY = 4
-const MAX_OUTPUT_BYTES = 16 * 1024 * 1024
 const FIXTURE_DIRECTORY = path.join(REPOSITORY_ROOT, "fixture/fake-session")
 const PLAIN_EXAMPLE_FILE = "a2ui-sections-sample.json"
 const CONTROL_EXAMPLE_FILE = "a2ui-interactive-sample.json"
@@ -112,33 +109,22 @@ async function main(argv: readonly string[]): Promise<number> {
   return runPool(values.out, pending, { model: values.model ?? "sonnet", effort: values.effort })
 }
 
-type Writer = { readonly model: string; readonly effort: string | undefined }
-
 async function runPool(
   out: string,
   conditions: readonly TrialCondition[],
   writer: Writer,
 ): Promise<number> {
-  const queue = [...conditions]
-  let failure = ""
-  const worker = async (): Promise<void> => {
-    for (let next = queue.shift(); next !== undefined && failure === ""; next = queue.shift()) {
-      const file = path.join(out, `${next.id}.json`)
-      if (existsSync(file)) {
-        continue
-      }
-      try {
-        const done = await runCase(next, writer)
-        writeFileSync(file, JSON.stringify({ ...done.result, outputs: done.outputs }))
-        process.stdout.write(
-          `${next.id}: ${done.result.firstFaults.length === 0 ? "一発" : "差し戻し"}\n`,
-        )
-      } catch (error) {
-        failure = `${next.id}: ${error instanceof Error ? error.message : String(error)}`
-      }
+  const failure = await runWriterPool(conditions, CONCURRENCY, async (next) => {
+    const file = path.join(out, `${next.id}.json`)
+    if (existsSync(file)) {
+      return
     }
-  }
-  await Promise.all(Array.from({ length: CONCURRENCY }, worker))
+    const done = await runCase(next, writer)
+    writeFileSync(file, JSON.stringify({ ...done.result, outputs: done.outputs }))
+    process.stdout.write(
+      `${next.id}: ${done.result.firstFaults.length === 0 ? "一発" : "差し戻し"}\n`,
+    )
+  })
   if (failure !== "") {
     process.stderr.write(`止めた: ${failure}\n`)
     return 1
@@ -179,7 +165,7 @@ async function runCase(
     firstJudgement.retryText,
     "直して components を全部書き直し、JSON の配列だけを出力する。",
   ].join("\n\n")
-  const retry = await ask(writer, system, retryUser)
+  const retry = await askPlainClaude(writer, system, retryUser)
   const retryJudgement = judgeOutput(retry)
   return {
     result: retriedResult(entry, firstJudgement, retryJudgement, {
@@ -198,7 +184,7 @@ async function writeOnce(
   request: string,
   cardSources: readonly unknown[],
 ): Promise<WrittenOnce> {
-  const reply = await ask(writer, system, request)
+  const reply = await askPlainClaude(writer, system, request)
   if (loading === "full") {
     return { text: reply, calls: 1, context: request, pulledCards: 0 }
   }
@@ -209,7 +195,12 @@ async function writeOnce(
   const document = buildReportCatalogDocument()
   const cards = names.map((name) => catalogCard(name, document, exampleOf(name, cardSources)).text)
   const context = `${request}\n\n引いた文法カード:\n${cards.join("\n")}`
-  return { text: await ask(writer, system, context), calls: 2, context, pulledCards: names.length }
+  return {
+    text: await askPlainClaude(writer, system, context),
+    calls: 2,
+    context,
+    pulledCards: names.length,
+  }
 }
 
 type WrittenOnce = {
@@ -254,45 +245,6 @@ function retriedResult(
     retry: "unmeasured",
     retryFaults: retry.faults,
   }
-}
-
-function ask(writer: Writer, system: string, user: string): Promise<string> {
-  const effortArgs = writer.effort === undefined ? [] : ["--effort", writer.effort]
-  return new Promise((resolve, reject) => {
-    const child = execFile(
-      "claude",
-      [
-        "-p",
-        "--model",
-        writer.model,
-        ...effortArgs,
-        "--tools",
-        "",
-        "--disable-slash-commands",
-        "--setting-sources",
-        "",
-        "--strict-mcp-config",
-        "--no-session-persistence",
-        "--system-prompt",
-        system,
-        user,
-      ],
-      {
-        env: replayEnvironment(process.env),
-        timeout: CLAUDE_TIMEOUT_MS,
-        maxBuffer: MAX_OUTPUT_BYTES,
-        encoding: "utf8",
-      },
-      (error, stdout) => {
-        if (error !== null) {
-          reject(error)
-        } else {
-          resolve(stdout)
-        }
-      },
-    )
-    child.stdin?.end()
-  })
 }
 
 function readExamples(): {

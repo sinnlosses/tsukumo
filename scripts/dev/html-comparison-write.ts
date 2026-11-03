@@ -4,7 +4,6 @@
 //   node scripts/dev/html-comparison-write.ts --topics <題材の json> --out /tmp/html-comparison/<日付> [--only <id>] [--model <名>] [--effort <段>]
 // 題材は架空のものだけを渡す。実物の会話は渡さない。出力は <out> にだけ置き、リポジトリには入れない。
 
-import { execFile } from "node:child_process"
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import path from "node:path"
 import process from "node:process"
@@ -12,7 +11,6 @@ import { parseArgs } from "node:util"
 
 import { z } from "zod"
 
-import { replayEnvironment } from "../shared/claude-environment.ts"
 import { REPOSITORY_ROOT } from "../shared/repository-root.ts"
 import {
   type ComparisonTopic,
@@ -26,17 +24,14 @@ import {
   sessionIndexFor,
   writerRequest,
 } from "./lib/html-comparison-write.ts"
+import { askPlainClaude, runWriterPool, type Writer } from "./lib/plain-claude-writer.ts"
 
-const CLAUDE_TIMEOUT_MS = 600_000
 const CONCURRENCY = 3
-const MAX_OUTPUT_BYTES = 16 * 1024 * 1024
 const MAX_REPORT_CALLS = 4
 const BASE_INDEX = path.join(REPOSITORY_ROOT, "fixture/fake-session/index.json")
 
 const USAGE =
   "使い方: node scripts/dev/html-comparison-write.ts --topics <json> --out <dir> [--only <id>] [--model <名>（既定 opus）] [--effort <段>]\n"
-
-type Writer = { readonly model: string; readonly effort: string | undefined }
 
 const reportRecordSchema = z.object({
   accepted: z.boolean(),
@@ -69,7 +64,9 @@ async function main(argv: readonly string[]): Promise<number> {
   const pending = only === undefined ? topics : topics.filter((topic) => topic.id === only)
   const writer = { model: values.model ?? "opus", effort: values.effort }
 
-  const failure = await runPool(out, pending, writer)
+  const failure = await runWriterPool(pending, CONCURRENCY, (topic) =>
+    writeTopic(out, topic, writer),
+  )
   writeSession(out, topics)
   printSummary(out, topics)
   if (failure !== "") {
@@ -77,26 +74,6 @@ async function main(argv: readonly string[]): Promise<number> {
     return 1
   }
   return 0
-}
-
-async function runPool(
-  out: string,
-  topics: readonly ComparisonTopic[],
-  writer: Writer,
-): Promise<string> {
-  const queue = [...topics]
-  let failure = ""
-  const worker = async (): Promise<void> => {
-    for (let next = queue.shift(); next !== undefined && failure === ""; next = queue.shift()) {
-      try {
-        await writeTopic(out, next, writer)
-      } catch (error) {
-        failure = `${next.id}: ${error instanceof Error ? error.message : String(error)}`
-      }
-    }
-  }
-  await Promise.all(Array.from({ length: CONCURRENCY }, worker))
-  return failure
 }
 
 /** 1つの題材の2版を書かせる。書き終えた版のファイルがあれば飛ばす。 */
@@ -113,7 +90,7 @@ async function writeTopic(out: string, topic: ComparisonTopic, writer: Writer): 
 }
 
 async function writeHtml(file: string, topic: ComparisonTopic, writer: Writer): Promise<void> {
-  const reply = await ask(writer, htmlSystemPrompt(), writerRequest(topic))
+  const reply = await askPlainClaude(writer, htmlSystemPrompt(), writerRequest(topic))
   const html = extractHtml(reply)
   if (html === undefined) {
     throw new Error("HTML 版の出力に <html> が無い")
@@ -130,7 +107,7 @@ async function writeReport(file: string, topic: ComparisonTopic, writer: Writer)
   let spent: ReadonlySet<RejectionStage> = new Set()
   let user = request
   for (let call = 1; call <= MAX_REPORT_CALLS; call += 1) {
-    const reply = await ask(writer, system, user)
+    const reply = await askPlainClaude(writer, system, user)
     outputs = [...outputs, reply]
     const judged = judgeReport(reply, spent)
     if (judged.kind === "accepted") {
@@ -206,45 +183,6 @@ function readRecord(out: string, topic: ComparisonTopic): ReportRecord | undefin
   return existsSync(file)
     ? reportRecordSchema.parse(JSON.parse(readFileSync(file, "utf8")))
     : undefined
-}
-
-function ask(writer: Writer, system: string, user: string): Promise<string> {
-  const effortArgs = writer.effort === undefined ? [] : ["--effort", writer.effort]
-  return new Promise((resolve, reject) => {
-    const child = execFile(
-      "claude",
-      [
-        "-p",
-        "--model",
-        writer.model,
-        ...effortArgs,
-        "--tools",
-        "",
-        "--disable-slash-commands",
-        "--setting-sources",
-        "",
-        "--strict-mcp-config",
-        "--no-session-persistence",
-        "--system-prompt",
-        system,
-        user,
-      ],
-      {
-        env: replayEnvironment(process.env),
-        timeout: CLAUDE_TIMEOUT_MS,
-        maxBuffer: MAX_OUTPUT_BYTES,
-        encoding: "utf8",
-      },
-      (error, stdout) => {
-        if (error !== null) {
-          reject(error)
-        } else {
-          resolve(stdout)
-        }
-      },
-    )
-    child.stdin?.end()
-  })
 }
 
 const exitCode = await main(process.argv.slice(2))

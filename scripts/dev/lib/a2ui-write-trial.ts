@@ -15,6 +15,7 @@ import {
   REPORT_COMPONENT_SCHEMAS,
 } from "../../../src/shared/report/a2ui-report-catalog.ts"
 import { stripDeclaration, usedComponentNames, type Guide } from "./a2ui-choice-trial.ts"
+import { A2UI_STRUCTURE_RULES } from "./a2ui-structure-rule.ts"
 import {
   CONTROL_TOPICS,
   FAULT_TOPICS,
@@ -154,7 +155,7 @@ export function systemPromptFor(loading: Loading): string {
   const rules = [
     "あなたは報告を A2UI の部品の平らな一覧で出力する。出力は JSON の配列 1 つだけにする（説明文・コードフェンスは付けない）。",
     `配列は ${REPORT_TOOL_NAME} ツールの components 引数にそのまま渡される。${REPORT_A2UI_COMPONENTS_DESCRIPTION}`,
-    "規則: 根は id が root の Report。Report.children には Section の id だけを置く。Section の子に Section は置けない。配置の部品（Row・Column・Card・Tabs）の入れ子は 3 階層まで。参照されない部品・同じ id・参照先の無い id は置けない。",
+    A2UI_STRUCTURE_RULES,
   ]
   const catalog =
     loading === "full"

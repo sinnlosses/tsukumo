@@ -16,6 +16,7 @@ import { REPORT_REJECTION_MODES } from "../../../src/server/report/core/rules/re
 import { reportEvents } from "../../../src/server/session-driver/core/message/sdk-report-message.ts"
 import { EXPRESSIONS } from "../../../src/shared/character-pack/expression.ts"
 import { buildReportCatalogDocument } from "../../../src/shared/report/a2ui-report-catalog.ts"
+import { A2UI_STRUCTURE_RULES } from "./a2ui-structure-rule.ts"
 import { extractComponents, judgeOutput } from "./a2ui-write-trial.ts"
 
 export type ComparisonTopic = {
@@ -78,7 +79,7 @@ export function reportSystemPrompt(): string {
     "あなたは作業の報告を tsukumo の report ツールの components 引数として書く。出力は JSON の配列 1 つだけにする（説明文・コードフェンスは付けない）。",
     `report ツールの説明: ${REPORT_TOOL_DESCRIPTION}`,
     `components 引数の説明: ${REPORT_A2UI_COMPONENTS_DESCRIPTION}`,
-    "規則: 根は id が root の Report。Report.children には Section の id だけを置く。Section の子に Section は置けない。配置の部品（Row・Column・Card・Tabs）の入れ子は 3 階層まで。参照されない部品・同じ id・参照先の無い id は置けない。",
+    A2UI_STRUCTURE_RULES,
     "使える部品は次のカタログに定義されたものだけ。",
     JSON.stringify(buildReportCatalogDocument()),
     REPORT_NOTATION_PROMPT,
