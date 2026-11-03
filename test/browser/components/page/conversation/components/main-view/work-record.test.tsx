@@ -60,11 +60,21 @@ const CHECKS: ReportChecksView = {
       label: "架空の画面の確認",
       figure: "",
       time: "",
+      viaCommand: false,
       detail: "",
       howToVerify: "架空の画面を開く",
     },
   ],
-  passed: [{ label: "架空の検証", labelHead: "架空の検証", figure: "3件", time: "" }],
+  passed: [
+    { label: "架空の検証", labelHead: "架空の検証", figure: "3件", time: "", viaCommand: false },
+    {
+      label: "架空のコマンドの検証",
+      labelHead: "架空のコマンドの検証",
+      figure: "",
+      time: "",
+      viaCommand: true,
+    },
+  ],
 }
 
 function head(overrides: Partial<MainViewSurfaceHead>): MainViewSurfaceHead {
@@ -133,6 +143,81 @@ describe("作業の記録", () => {
     expect(screen.getByText("架空の検証（3件）")).toBeTruthy()
     expect(screen.getByText("架空の画面の確認")).toBeTruthy()
     expect(screen.getByText("確かめ方: 架空の画面を開く")).toBeTruthy()
+  })
+
+  it("段が届いたレポートは札を表示名と件数で並べ、コマンドの検証の行は重ねて出さない", () => {
+    const { container } = render(
+      <HeadRegion
+        head={head({
+          checks: CHECKS,
+          status: {
+            ...EMPTY_STATUS,
+            verification: {
+              kind: "checked",
+              stages: [
+                { name: "typecheck", result: "passed", count: { kind: "none" } },
+                { name: "format:check", result: "carried", count: { kind: "none" } },
+                { name: "test", result: "passed", count: { kind: "counted", tests: 3152 } },
+                { name: "架空の段", result: "failed", count: { kind: "none" } },
+                { name: "test:e2e", result: "passed", count: { kind: "counted", tests: 71 } },
+              ],
+            },
+          },
+        })}
+      />,
+    )
+
+    const tags = [...container.querySelectorAll("ul > li")].map((li) => li.textContent)
+    expect(tags).toEqual(["型検査", "整形", "単体3,152", "架空の段", "E2E71"])
+    expect(screen.getByText("架空の検証（3件）")).toBeTruthy()
+    expect(screen.queryByText("架空のコマンドの検証")).toBeNull()
+  })
+
+  it("段が届いても、落ちた・確かめていないコマンドの検証の行は隠さない", () => {
+    const checks: ReportChecksView = {
+      kind: "checks",
+      summary: {
+        passedCount: 0,
+        figures: [],
+        problems: [{ status: "ng", count: 1 }],
+        favor: { kind: "none" },
+      },
+      passed: [],
+      problems: [
+        {
+          status: "ng",
+          label: "架空の別コマンド",
+          figure: "",
+          time: "",
+          viaCommand: true,
+          detail: "",
+          howToVerify: "",
+        },
+      ],
+    }
+    render(
+      <HeadRegion
+        head={head({
+          checks,
+          status: {
+            ...EMPTY_STATUS,
+            verification: {
+              kind: "checked",
+              stages: [{ name: "typecheck", result: "passed", count: { kind: "none" } }],
+            },
+          },
+        })}
+      />,
+    )
+
+    expect(screen.getByText("架空の別コマンド")).toBeTruthy()
+  })
+
+  it("段が届かないレポートはコマンドの検証の行も今のまま出す", () => {
+    const { container } = render(<HeadRegion head={head({ checks: CHECKS })} />)
+
+    expect(container.querySelector("ul")).toBeNull()
+    expect(screen.getByText("架空のコマンドの検証")).toBeTruthy()
   })
 
   it("task の無いレポートは記録を組まず、今の頭のまま", () => {

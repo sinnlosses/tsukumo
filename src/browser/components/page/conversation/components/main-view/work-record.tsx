@@ -11,18 +11,21 @@ import {
   type ReportChecksView,
 } from "../../../../../../shared/report/report-check-view.ts"
 import { plainInline } from "../../../../../../shared/report/report-inline-markdown.ts"
+import type {
+  VerificationStage,
+  ReportVerification,
+} from "../../../../../../shared/report/report-verification.ts"
 import type { MainViewSurfaceHead } from "../../../../../../shared/session/main-view-shape.ts"
 import { isBlankText } from "../../../../../../shared/utils/blank-text.ts"
 import { InlineMarkdown, workRecordClassName } from "../markdown/markdown.tsx"
 import { ChangedFilesFold } from "./changed-files-fold.tsx"
 import { FavorJump } from "./checks-verdict.tsx"
+import styles from "./main-view.module.css"
 import { PhaseTimes } from "./phase-time-section.tsx"
-
-type Checks = Extract<ReportChecksView, { readonly kind: "checks" }>
 
 export function WorkRecord(props: { readonly head: MainViewSurfaceHead }): ReactElement {
   const { workDone, checks, status } = props.head
-  const { changedFiles, phaseTimes } = status
+  const { changedFiles, phaseTimes, verification } = status
   const rows: readonly {
     readonly key: string
     readonly title: string
@@ -50,8 +53,14 @@ export function WorkRecord(props: { readonly head: MainViewSurfaceHead }): React
           },
         ]
       : []),
-    ...(checks.kind === "checks"
-      ? [{ key: "checks", title: "確かめたこと", body: <CheckLines view={checks} /> }]
+    ...(checks.kind === "checks" || verification.kind === "checked"
+      ? [
+          {
+            key: "checks",
+            title: "確かめたこと",
+            body: <CheckLines view={checks} verification={verification} />,
+          },
+        ]
       : []),
     ...(phaseTimes.kind === "times"
       ? [{ key: "phase-times", title: "かかった時間", body: <PhaseTimes view={phaseTimes} /> }]
@@ -72,21 +81,69 @@ export function WorkRecord(props: { readonly head: MainViewSurfaceHead }): React
   )
 }
 
-/** 通った・確かめていない（止まっている含む）・落ちた の順に1項目1行で並べる。お願いがあれば末尾に飛び印を添える。 */
-function CheckLines(props: { readonly view: Checks }): ReactElement {
-  const { passed, problems, summary } = props.view
+/** 控えの段名から表示名への置き換え。表に無い段名はそのまま出す。 */
+const STAGE_DISPLAY_NAMES: ReadonlyMap<string, string> = new Map([
+  ["typecheck", "型検査"],
+  ["lint", "lint"],
+  ["format:check", "整形"],
+  ["token-limit", "字数の上限"],
+  ["test", "単体"],
+  ["test:e2e", "E2E"],
+])
+
+function stageDisplayName(name: string): string {
+  return STAGE_DISPLAY_NAMES.get(name) ?? name
+}
+
+/**
+ * 段の札の列（届いたときだけ）の下に、通った・確かめていない（止まっている含む）・落ちた の順に1項目1行で並べる。
+ * 札の列があるときは、通ったコマンドの検証の行だけを札と重ねて出さない（落ちた・確かめていない行は隠さない）。お願いがあれば末尾に飛び印を添える。
+ */
+function CheckLines(props: {
+  readonly view: ReportChecksView
+  readonly verification: ReportVerification
+}): ReactElement {
+  const { view, verification } = props
+  const hasStages = verification.kind === "checked"
+  const keep = (row: { readonly viaCommand: boolean }): boolean => !(hasStages && row.viaCommand)
+  const rows = view.kind === "checks" ? view : undefined
+  const passed = rows === undefined ? [] : rows.passed.filter(keep)
+  const problems = rows === undefined ? [] : rows.problems
   const notNg = problems.filter((row) => row.status !== "ng")
   const ng = problems.filter((row) => row.status === "ng")
   return (
     <>
-      {passed.map((row, index) => (
-        <PassedLine key={`${String(index)}:${row.label}`} row={row} />
-      ))}
-      {[...notNg, ...ng].map((row, index) => (
-        <ProblemLine key={`${String(index)}:${row.label}`} row={row} />
-      ))}
-      <FavorJump favor={summary.favor} />
+      {verification.kind === "checked" && <StageTags stages={verification.stages} />}
+      <div className={hasStages ? styles.other : undefined}>
+        {passed.map((row, index) => (
+          <PassedLine key={`${String(index)}:${row.label}`} row={row} />
+        ))}
+        {[...notNg, ...ng].map((row, index) => (
+          <ProblemLine key={`${String(index)}:${row.label}`} row={row} />
+        ))}
+      </div>
+      {rows !== undefined && <FavorJump favor={rows.summary.favor} />}
     </>
+  )
+}
+
+function StageTags(props: { readonly stages: readonly VerificationStage[] }): ReactElement {
+  return (
+    <ul className={styles.stages}>
+      {props.stages.map((stage) => (
+        <li
+          key={stage.name}
+          className={clsx(styles.stage, stage.result === "failed" && styles["stage-failed"])}
+        >
+          {stageDisplayName(stage.name)}
+          {stage.count.kind === "counted" && (
+            <strong className={styles["stage-count"]}>
+              {stage.count.tests.toLocaleString("en-US")}
+            </strong>
+          )}
+        </li>
+      ))}
+    </ul>
   )
 }
 

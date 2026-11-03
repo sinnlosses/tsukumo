@@ -70,6 +70,21 @@
       }
     },
     {
+      "afterMs": 1150,
+      "event": {
+        "kind": "report-verification",
+        "toolUseId": "fake-report-task-finished",
+        "stages": [
+          { "name": "typecheck", "result": "passed", "count": { "kind": "none" } },
+          { "name": "lint", "result": "passed", "count": { "kind": "none" } },
+          { "name": "format:check", "result": "passed", "count": { "kind": "none" } },
+          { "name": "token-limit", "result": "passed", "count": { "kind": "none" } },
+          { "name": "test", "result": "passed", "count": { "kind": "counted", "tests": 3152 } },
+          { "name": "test:e2e", "result": "passed", "count": { "kind": "counted", "tests": 71 } }
+        ]
+      }
+    },
+    {
       "afterMs": 2300,
       "event": {
         "kind": "turn-finished",

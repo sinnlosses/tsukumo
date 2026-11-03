@@ -29,7 +29,9 @@ export function HeadRegion(props: { readonly head: MainViewSurfaceHead }): React
   const { phaseTimes, changedFiles } = status
   const hasStatus =
     checks.kind === "checks" || phaseTimes.kind !== "none" || changedFiles.kind !== "none"
-  const hasRecord = lead.kind === "conclusion" && (hasStatus || !isBlankText(props.head.workDone))
+  const hasRecord =
+    lead.kind === "conclusion" &&
+    (hasStatus || status.verification.kind === "checked" || !isBlankText(props.head.workDone))
   if (lead.kind === "none" && keyFigures.length === 0 && !hasStatus) {
     return <></>
   }

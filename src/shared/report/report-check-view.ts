@@ -29,7 +29,7 @@ export type ReportFavorTarget =
 
 /**
  * 問題の1項目。字はバッククォートを落としただけの逃がす前の字。
- * `time` は `command` から測った所要時間の字で、測れなければ空文字。
+ * `time` は `command` から測った所要時間の字で、測れなければ空文字。`viaCommand` は `command` が空白だけでないこと。
  * `detail` は空白だけなら空文字、`howToVerify` は `unobserved` で空白だけでないときだけ残す。
  */
 export type ReportCheckProblemRow = {
@@ -37,6 +37,7 @@ export type ReportCheckProblemRow = {
   readonly label: string
   readonly figure: string
   readonly time: string
+  readonly viaCommand: boolean
   readonly detail: string
   readonly howToVerify: string
 }
@@ -47,6 +48,7 @@ export type ReportCheckPassedRow = {
   readonly labelHead: string
   readonly figure: string
   readonly time: string
+  readonly viaCommand: boolean
 }
 
 /**
@@ -130,6 +132,7 @@ export function reportChecksView(
           label: check.label,
           figure: check.figure,
           time: timeOf(check),
+          viaCommand: check.command.trim() !== "",
           detail: check.detail.trim() === "" ? "" : check.detail,
           howToVerify:
             check.status !== "unobserved" || check.howToVerify.trim() === ""
@@ -144,6 +147,7 @@ export function reportChecksView(
         labelHead: headIndex === -1 ? check.label : check.label.slice(0, headIndex),
         figure: check.figure,
         time: timeOf(check),
+        viaCommand: check.command.trim() !== "",
       }
     }),
   }

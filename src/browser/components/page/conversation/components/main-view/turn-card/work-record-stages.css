@@ -1,0 +1,44 @@
+/* 確かめたことの頭に並べる検証の段の札。通った札は ✓ を頭に付け、落ちた札は ✕ を赤で付ける。 */
+.stages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stage {
+  display: inline-flex;
+  gap: var(--space-xs);
+  align-items: baseline;
+  padding: var(--space-xs) var(--space-md);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-secondary);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-soft);
+  background: var(--surface-raised);
+
+  &::before {
+    content: "✓";
+    color: var(--state-ok);
+  }
+}
+
+.stage-failed {
+  color: var(--state-ng);
+
+  &::before {
+    content: "✕";
+    color: var(--state-ng);
+  }
+}
+
+.stage-count {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.other:not(:empty) {
+  margin-top: var(--space-md);
+}
