@@ -176,6 +176,13 @@ describe("nextWorkPlan（委譲の返却で進める）", () => {
     expect(returned(pending, skipped(1))).toEqual(pending)
   })
 
+  it("範囲が pending のあいだは、count つきの phase-done でも範囲が確定せず帯も動かない（メインが work_plan で count を渡すまで pending のまま）", () => {
+    const pending = planAt(1, SERIAL, [], { kind: "pending", first: 1 })
+
+    expect(returned(pending, phaseDone(1, 3))).toEqual(pending)
+    expect(returned(pending, phaseDone(1, 2))).toEqual(pending)
+  })
+
   it("phaseFinishedByReturn は返却で済む帯の段を返し、帯を動かさない返却では unmoved", () => {
     const serial = next(SERIAL, 1)
     const ranged: WorkPlan = { ...serial, delegatedRange: RANGE }

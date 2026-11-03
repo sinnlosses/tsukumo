@@ -49,7 +49,7 @@ export const NO_AWAITING_SUMMARY = { kind: "none" } as const satisfies AwaitingS
 /**
  * 委譲先のフェーズの範囲。`first` は委譲先のフェーズ1に当たる位置（平らにした並びで0始まり）、`count` は委譲先のフェーズの数。
  * 委譲先のフェーズ `n` は平らにした並びの `first + n - 1` の段に当たる。
- * `pending` は `first` だけが決まり、`count` が未定の間（計画の返却を待つ間）で、どの段にも番号を付けない。
+ * `pending` は `first` だけが決まり、`count` が未定の間（計画の返却を待つ間）で、範囲の要素（並びに1つだけある）には番号を付けず、範囲の前と後ろは群ごとに数える。
  */
 export type DelegatedRange =
   | { readonly kind: "none" }

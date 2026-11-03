@@ -141,6 +141,7 @@
     "delegated-range",
     "delegated-range-outside",
     "delegated-range-trail",
+    "delegated-range-pending",
     "welcome-greeting",
     "welcome-greeting-cleared",
     "report-meter",

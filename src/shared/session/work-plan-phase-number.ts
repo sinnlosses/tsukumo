@@ -17,7 +17,7 @@ export type PhaseSpan = "whole" | "lead" | "delegated" | "trail"
 
 /**
  * 段の番号。`numbered` は群 `span` と、群の中の `ordinals`「2」（段が2つ以上なら「2–3」）と `text`「2/4」（「2–3/4」）、
- * `named` は番号を持たず名前だけで呼ぶ段（範囲の段の数が決まるまでの、範囲の先頭から後ろ）。
+ * `named` は番号を持たず名前だけで呼ぶ段（範囲の段の数が決まるまでの、範囲の1要素）。
  */
 export type PhaseNumber =
   | {
@@ -80,7 +80,7 @@ export function plannedPhaseTitle(
 /**
  * 平らにした並びでの位置 `indexes`（全部で `total` 段）の段の番号。段の番号を組む唯一の場所。
  * 範囲が無ければ並び全体の通し番号。範囲があれば、範囲の前・範囲・範囲の後ろの群ごとに、群の先頭を1として群の段の数で数える。
- * 範囲の段の数が決まるまで（`pending`）は範囲の前だけを数え、範囲の先頭から後ろは `named`。
+ * 範囲の段の数が決まるまで（`pending`）は、範囲を並びの1要素とみなして範囲の前と後ろを数え、その1要素だけが `named`。
  */
 export function phaseNumberOf(
   range: DelegatedRange,
@@ -95,7 +95,9 @@ export function phaseNumberOf(
     return numbered("lead", indexes, 0, range.first)
   }
   if (range.kind === "pending") {
-    return { kind: "named" }
+    return lead === range.first
+      ? { kind: "named" }
+      : numbered("trail", indexes, range.first + 1, total - range.first - 1)
   }
   const end = range.first + range.count
   return lead < end

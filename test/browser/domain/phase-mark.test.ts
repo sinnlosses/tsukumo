@@ -26,7 +26,7 @@ describe("phaseMarkOf", () => {
     expect(plannedPhasesOf(plan).map((phase) => phaseMarkOf(plan, phase))).toEqual(["1", "2", "3"])
   })
 
-  it("範囲の先頭から後ろの段（番号を持たない段）は「…」", () => {
+  it("数が未定の範囲の要素は「…」で、後ろの段は後の群の序数", () => {
     const plan: PlannedWorkPlan = {
       kind: "planned",
       ...next(GROUPED, 1),
@@ -35,8 +35,8 @@ describe("phaseMarkOf", () => {
     expect(plannedPhasesOf(plan).map((phase) => phaseMarkOf(plan, phase))).toEqual([
       "✓",
       "…",
-      "…",
-      "…",
+      "1",
+      "2",
     ])
   })
 

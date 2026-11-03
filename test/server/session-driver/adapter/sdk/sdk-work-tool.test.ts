@@ -185,7 +185,7 @@ describe("work_plan（ワークプラン）", () => {
     )
   })
 
-  it("count を省いた delegatedRange（pending）を受け付け、範囲の先頭から後ろは番号を持たないと言う", async () => {
+  it("count を省いた delegatedRange（pending）を受け付け、範囲の要素だけが番号を持たないと言う", async () => {
     const reply = await callTool(workServer(), "work_plan", {
       phases: ["架空の計画", "架空の実装", "架空の受け入れ"],
       current: 0,
@@ -193,7 +193,7 @@ describe("work_plan（ワークプラン）", () => {
     })
 
     expect(reply.text).toBe(
-      "ok\nプログレスバーの今のフェーズは 前 1/1 架空の計画。範囲の先頭から後ろは番号を持たない（委譲先のフェーズの数が決まるまで）。",
+      "ok\nプログレスバーの今のフェーズは 前 1/1 架空の計画。範囲の要素だけが番号を持たない（委譲先のフェーズの数が決まるまで）。範囲の前と後ろは群ごとに1から数える。",
     )
   })
 

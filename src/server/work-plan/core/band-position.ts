@@ -24,7 +24,7 @@ export function bandPositionText(plan: LatestWorkPlan): string {
     return position
   }
   if (plan.delegatedRange.kind === "pending") {
-    return `${position}範囲の先頭から後ろは番号を持たない（委譲先のフェーズの数が決まるまで）。`
+    return `${position}範囲の要素だけが番号を持たない（委譲先のフェーズの数が決まるまで）。範囲の前と後ろは群ごとに1から数える。`
   }
   return `${position}プログレスバーは範囲の前（前）・範囲（本）・範囲の後ろ（後）の群ごとに1から数え、本の番号は委譲先のフェーズの番号と同じ。セリフで番号を言うのは本だけで、前・後は名前で言う。`
 }

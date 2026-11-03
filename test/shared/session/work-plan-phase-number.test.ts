@@ -78,10 +78,12 @@ describe("phaseNumberOf", () => {
     expect(completionText(at(3, none))).toBe("4フェーズすべて済み")
   })
 
-  it("pending は範囲の前だけを数え、範囲の先頭から後ろは番号を持たない", () => {
+  it("pending は範囲を1要素とみなして前と後ろを数え、範囲の要素だけが番号を持たない", () => {
     const pending = { kind: "pending", first: 1 } as const
-    expect(phaseNumberOf(pending, [0], 4)).toMatchObject({ span: "lead", text: "1/1" })
-    expect(phaseNumberOf(pending, [1, 2], 4)).toEqual({ kind: "named" })
+    expect(phaseNumberOf(pending, [0], 5)).toMatchObject({ span: "lead", text: "1/1" })
+    expect(phaseNumberOf(pending, [1], 5)).toEqual({ kind: "named" })
+    expect(phaseNumberOf(pending, [2], 5)).toMatchObject({ span: "trail", text: "1/3" })
+    expect(phaseNumberOf(pending, [4], 5)).toMatchObject({ span: "trail", text: "3/3" })
   })
 
   it("見出しは群の名と番号と名前で言う", () => {

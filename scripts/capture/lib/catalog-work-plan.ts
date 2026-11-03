@@ -128,4 +128,14 @@ export const WORK_PLAN_ENTRIES: readonly CatalogEntry[] = [
     skipReveal: false,
     settle: SCENE_END_SETTLE,
   },
+  {
+    name: "delegated-range-pending",
+    scene: "delegated-range-pending",
+    label: "委譲中のプログレスバー（範囲の段の数が未定）",
+    homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "repository" },
+    prepare: [],
+    skipReveal: false,
+    settle: SCENE_END_SETTLE,
+  },
 ]

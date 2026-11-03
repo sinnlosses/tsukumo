@@ -85,7 +85,7 @@ const LABELED_PHASES = {
   lead: [labeled([0], 6, RANGE)],
   delegated: [labeled([3], 6, RANGE), labeled([2, 3], 6, RANGE)],
   trail: [labeled([5], 6, RANGE)],
-  named: [labeled([3], 6, { kind: "pending", first: 2 })],
+  named: [labeled([2], 6, { kind: "pending", first: 2 })],
 } as const satisfies Record<PhaseSpan | "named", readonly LabeledPhase[]>
 
 function spanKeyOf(number: PhaseNumber): PhaseSpan | "named" {

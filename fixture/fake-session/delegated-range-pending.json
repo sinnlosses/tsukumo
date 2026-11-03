@@ -1,0 +1,43 @@
+{
+  "name": "delegated-range-pending",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "架空のタスクを委譲先に任せて進めたい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 100,
+      "event": {
+        "kind": "work-plan",
+        "phaseIds": [],
+        "delegatedRange": {
+          "kind": "pending",
+          "first": 1
+        },
+        "skippedPhases": [],
+        "awaitingSummary": {
+          "kind": "none"
+        },
+        "phases": ["計画", "実装", "受け入れ", "振り返り", "送り出し"],
+        "current": 1,
+        "finishedInGroup": [],
+        "phaseSummary": ""
+      }
+    },
+    {
+      "afterMs": 200,
+      "event": {
+        "kind": "tool-started",
+        "toolUseId": "fake-delegated-range-pending-1",
+        "name": "Bash",
+        "input": {
+          "command": "ls"
+        }
+      }
+    }
+  ]
+}

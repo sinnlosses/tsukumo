@@ -146,7 +146,7 @@ describe("useWorkStrip（時刻に依るもの）", () => {
     expect(
       strip.kind === "working" &&
         strip.phases.map((slot) => slot.kind === "phase" && slot.phase.mark),
-    ).toEqual(["1", "…", "…"])
+    ).toEqual(["1", "…", "1"])
   })
 
   it("範囲があれば、群の先頭の丸に群の名を付け、今の群の名を目立たせ、右端に群の中の位置を出す", () => {
