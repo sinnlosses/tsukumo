@@ -276,29 +276,41 @@ describe("preToolUseHooks（ワークフロースクリプトの中の手順を�
     return events
   }
 
-  it("ワークフロースクリプトの委譲先の呼び出しは、要約に使う欄だけに絞った入力で workflow-step-started にする", async () => {
+  it("agent_id のある呼び出しは、agent_type によらず、agentId を添え要約に使う欄だけに絞った入力で workflow-step-started にする", async () => {
     expect(
       await eventsOf(
         "Bash",
         { command: "架空のコマンド", description: "架空の説明" },
         "wf-agent-1",
-        "workflow-subagent",
+        "tsukumo-workflow:no-delegate",
       ),
     ).toEqual([
-      { kind: "workflow-step-started", name: "Bash", input: { command: "架空のコマンド" } },
+      {
+        kind: "workflow-step-started",
+        agentId: "wf-agent-1",
+        name: "Bash",
+        input: { command: "架空のコマンド" },
+      },
     ])
     expect(
       await eventsOf(
         "Read",
         { file_path: "/架空/a.ts", limit: 10 },
-        "wf-agent-1",
-        "workflow-subagent",
+        "wf-agent-2",
+        "general-purpose",
       ),
-    ).toEqual([{ kind: "workflow-step-started", name: "Read", input: { file_path: "/架空/a.ts" } }])
+    ).toEqual([
+      {
+        kind: "workflow-step-started",
+        agentId: "wf-agent-2",
+        name: "Read",
+        input: { file_path: "/架空/a.ts" },
+      },
+    ])
   })
 
-  it("メインの呼び出しと、ワークフロースクリプトの外のサブエージェントの呼び出しは出来事にしない", async () => {
+  it("agent_id の無いメインの呼び出しは出来事にしない", async () => {
     expect(await eventsOf("Bash", { command: "ls" }, undefined, undefined)).toEqual([])
-    expect(await eventsOf("Bash", { command: "ls" }, "sub-1", "general-purpose")).toEqual([])
+    expect(await eventsOf("Bash", { command: "ls" }, undefined, "general-purpose")).toEqual([])
   })
 })

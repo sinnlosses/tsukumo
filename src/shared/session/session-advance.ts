@@ -40,7 +40,7 @@ import {
   turnEnding,
   withOpenSdkTurn,
 } from "./turn-progress.ts"
-import { withWorkflowStep, workflowStepsOfTasks } from "./workflow-step.ts"
+import { withWorkflowProgress, withWorkflowStep, workflowItemsOfTasks } from "./workflow-step.ts"
 
 /**
  * モデルが何かを出したと言えるイベント。届いたら {@link SessionState.apiTrouble} を下ろす
@@ -220,9 +220,19 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
         ...state,
         workflowSteps: withWorkflowStep(
           state.workflowSteps,
-          state.backgroundTasks,
+          state.workflowProgress,
+          event.agentId,
           event.name,
           event.input,
+        ),
+      }
+    case "workflow-progress":
+      return {
+        ...state,
+        workflowProgress: withWorkflowProgress(
+          state.workflowProgress,
+          state.backgroundTasks,
+          event.progress,
         ),
       }
     case "delegate-returned":
@@ -365,6 +375,7 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
         finishedTurnCount: finishedTurnCountOf(state),
         backgroundTasks: [],
         workflowSteps: [],
+        workflowProgress: [],
         apiTrouble: { kind: "none" },
       }
     case "api-retry":
@@ -439,7 +450,8 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
       return {
         ...state,
         backgroundTasks: event.tasks,
-        workflowSteps: workflowStepsOfTasks(state.workflowSteps, event.tasks),
+        workflowSteps: workflowItemsOfTasks(state.workflowSteps, event.tasks),
+        workflowProgress: workflowItemsOfTasks(state.workflowProgress, event.tasks),
       }
     case "usage-review-started":
     case "usage-review-stage":

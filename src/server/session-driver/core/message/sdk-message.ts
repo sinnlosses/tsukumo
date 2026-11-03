@@ -26,7 +26,7 @@ import {
 } from "../../../core/tsukumo-tool-name.ts"
 import { parsePhaseResult } from "../../../work-plan/core/phase-result.ts"
 import { apiErrorEvents, apiRetryEvents, rateLimitEvents } from "./sdk-api-trouble-message.ts"
-import { backgroundTaskEvents, delegateProgressEvents } from "./sdk-background-message.ts"
+import { backgroundTaskEvents, taskProgressEvents } from "./sdk-background-message.ts"
 import { toCommandDescriptions } from "./sdk-query-reply.ts"
 import { reportEvents } from "./sdk-report-message.ts"
 import { speakToolFullName, speechEvents } from "./sdk-speech-message.ts"
@@ -64,8 +64,8 @@ import { stepUsageEvents, tokenUsageEvents } from "./sdk-usage-message.ts"
  * - `system` / `compact_boundary` は `compact-boundary` にする。
  *   `compact_metadata`（`trigger` / `pre_tokens` / `post_tokens` / `duration_ms`）は画面に出さないので運ばない
  * - `system` / `background_tasks_changed` は `background-tasks-changed` にする。`ambient` が true のもの（活動でないもの）は落とす
- * - `task_progress` は `task_id` と空白でない `summary`（`agentProgressSummaries` で委譲先に作らせる進みの1行）があるものだけを `delegate-progress` にする。
- *   `summary` の無い `task_progress` と、`task_updated` は変換しない。`task_started` は `task_type` が `local_workflow` のものだけ `workflow-started` にする。
+ * - `task_progress` は `task_id` があるものだけ、空白でない `summary`（`agentProgressSummaries` で委譲先に作らせる進みの1行）を `delegate-progress` に、配列の `workflow_progress`（台本の段と agent の写し）を `workflow-progress` にする。
+ *   どちらも無い `task_progress` と、`task_updated` は変換しない。`task_started` は `task_type` が `local_workflow` のものだけ `workflow-started` にする。
  *   バックグラウンドタスクが動いているかは `background_tasks_changed`（顔ぶれ全体を毎回運ぶ水準の知らせ）だけで分かる。
  *   始まり・終わりの対を数えると、取りこぼしで「動いている」が居残る（SDK の型定義がそう勧めている）
  * - `task_notification` は顔ぶれには使わず、`tool_use_id` があるときだけ `background-tool-finished` にする（`tool_use_id` は Bash の `tool_use` の id と一致する。実測）。
@@ -122,7 +122,7 @@ export function toSessionEvents(
           : []
       }
       if (message.subtype === "task_progress") {
-        return delegateProgressEvents(message)
+        return taskProgressEvents(message)
       }
       if (message.subtype === "api_retry") {
         return apiRetryEvents(message)

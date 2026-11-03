@@ -8,6 +8,10 @@ import type {
   BackgroundTaskKind,
 } from "../../../../shared/session-driver/background-task.ts"
 import type { SessionEvent } from "../../../../shared/session/session-event.ts"
+import {
+  WORKFLOW_AGENT_STATES,
+  type WorkflowProgress,
+} from "../../../../shared/session/workflow-step.ts"
 import { optionalString } from "../../../../shared/utils/optional-string.ts"
 import { nonBlankString } from "../../../core/non-blank-string.ts"
 
@@ -40,13 +44,71 @@ export function backgroundTaskEvents(tasks: unknown): readonly SessionEvent[] {
   ]
 }
 
-export function delegateProgressEvents(
+/**
+ * `workflow_progress` は SDK の公開の型に無い欄なので、要素ごとに形を確かめ、外れた要素は捨てる。
+ * `lastToolSummary` など会話の断片になりうる欄は写さない。
+ */
+export function taskProgressEvents(
   message: Readonly<Record<string, unknown>>,
 ): readonly SessionEvent[] {
+  const taskId = message.task_id
+  if (typeof taskId !== "string") {
+    return []
+  }
+
   const summary = nonBlankString(message.summary)
-  return typeof message.task_id !== "string" || summary === undefined
+  return [
+    ...(summary === undefined ? [] : delegateProgressEvents(taskId, summary)),
+    ...workflowProgressEvents(taskId, message.workflow_progress),
+  ]
+}
+
+function delegateProgressEvents(taskId: string, summary: string): readonly SessionEvent[] {
+  return [{ kind: "delegate-progress", taskId, summary }]
+}
+
+function workflowProgressEvents(taskId: string, elements: unknown): readonly SessionEvent[] {
+  if (!Array.isArray(elements)) {
+    return []
+  }
+
+  return [
+    {
+      kind: "workflow-progress",
+      progress: {
+        taskId,
+        phases: elements.flatMap(workflowPhase),
+        agents: elements.flatMap(workflowAgent),
+      },
+    },
+  ]
+}
+
+function workflowPhase(element: unknown): WorkflowProgress["phases"] {
+  if (!isPlainObject(element) || element.type !== "workflow_phase") {
+    return []
+  }
+
+  const index = integerOrUndefined(element.index)
+  const title = optionalString(element.title)
+  return index === undefined || title === undefined ? [] : [{ index, title }]
+}
+
+function workflowAgent(element: unknown): WorkflowProgress["agents"] {
+  if (!isPlainObject(element) || element.type !== "workflow_agent") {
+    return []
+  }
+
+  const index = integerOrUndefined(element.index)
+  const agentId = optionalString(element.agentId)
+  const state = WORKFLOW_AGENT_STATES.find((candidate) => candidate === element.state)
+  return index === undefined || agentId === undefined || state === undefined
     ? []
-    : [{ kind: "delegate-progress", taskId: message.task_id, summary }]
+    : [{ index, agentId, state }]
+}
+
+function integerOrUndefined(value: unknown): number | undefined {
+  return typeof value === "number" && Number.isInteger(value) ? value : undefined
 }
 
 /**

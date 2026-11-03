@@ -31,8 +31,22 @@ const tasksChanged = (...tasks: readonly BackgroundTask[]): SessionEvent => ({
   kind: "background-tasks-changed",
   tasks,
 })
-const stepStarted = (name: string, input: Readonly<Record<string, string>>): SessionEvent => ({
+const progressOf = (taskId: string, ...agentIds: readonly string[]): SessionEvent => ({
+  kind: "workflow-progress",
+  progress: {
+    taskId,
+    phases: [],
+    agents: agentIds.map((agentId, index) => ({ index, agentId, state: "progress" })),
+  },
+})
+const WORKFLOW_PROGRESS = progressOf("wf-1", "agent-1")
+const stepStarted = (
+  name: string,
+  input: Readonly<Record<string, string>>,
+  agentId = "agent-1",
+): SessionEvent => ({
   kind: "workflow-step-started",
+  agentId,
   name,
   input,
 })
@@ -50,10 +64,13 @@ function activityAfter(...events: readonly SessionEvent[]): string | undefined {
 
 describe("useWorkStrip（ワークフロースクリプトの中の手順）", () => {
   it("手順が届くまでは説明、届いたらいちばん新しく始まった手順の要約に書き換わる", () => {
-    expect(activityAfter(tasksChanged(WORKFLOW), completed)).toBe("背景で 架空の流れ")
+    expect(activityAfter(tasksChanged(WORKFLOW), WORKFLOW_PROGRESS, completed)).toBe(
+      "背景で 架空の流れ",
+    )
     expect(
       activityAfter(
         tasksChanged(WORKFLOW),
+        WORKFLOW_PROGRESS,
         completed,
         stepStarted("Bash", { command: "架空のコマンド" }),
       ),
@@ -61,6 +78,7 @@ describe("useWorkStrip（ワークフロースクリプトの中の手順）", (
     expect(
       activityAfter(
         tasksChanged(WORKFLOW),
+        WORKFLOW_PROGRESS,
         completed,
         stepStarted("Bash", { command: "架空のコマンド" }),
         stepStarted("Read", { file_path: "/架空/a.ts" }),
@@ -71,6 +89,7 @@ describe("useWorkStrip（ワークフロースクリプトの中の手順）", (
   it("ワークフロースクリプトが顔ぶれから外れると手順は消え、同じ id で始め直しても前の手順は出ない", () => {
     const events = [
       tasksChanged(WORKFLOW),
+      WORKFLOW_PROGRESS,
       stepStarted("Bash", { command: "架空のコマンド" }),
       tasksChanged(),
     ]
@@ -82,6 +101,7 @@ describe("useWorkStrip（ワークフロースクリプトの中の手順）", (
     expect(
       activityAfter(
         tasksChanged(WORKFLOW),
+        WORKFLOW_PROGRESS,
         stepStarted("Bash", { command: "架空のコマンド" }),
         { kind: "session-ended", reason: "セッションが終了した" },
         workRequest,
@@ -95,6 +115,7 @@ describe("useWorkStrip（ワークフロースクリプトの中の手順）", (
     expect(
       activityAfter(
         tasksChanged(WORKFLOW),
+        WORKFLOW_PROGRESS,
         stepStarted("Bash", { command: "架空のコマンド" }),
         tasksChanged(WORKFLOW, SHELL),
       ),
@@ -104,6 +125,29 @@ describe("useWorkStrip（ワークフロースクリプトの中の手順）", (
   it("ワークフロースクリプトが動いていないときに届いた手順は捨てる", () => {
     expect(
       activityAfter(stepStarted("Bash", { command: "架空のコマンド" }), tasksChanged(WORKFLOW)),
+    ).toBe("背景で 架空の流れ")
+  })
+
+  it("台本の agent でない agent_id の手順では2行目が替わらない", () => {
+    expect(
+      activityAfter(
+        tasksChanged(WORKFLOW),
+        WORKFLOW_PROGRESS,
+        stepStarted("Bash", { command: "架空のコマンド" }),
+        stepStarted("Read", { file_path: "/架空/a.ts" }, "subagent-1"),
+        completed,
+      ),
+    ).toBe("背景で · Bash  架空のコマンド")
+  })
+
+  it("台本の写しが届く前の手順は捨てる", () => {
+    expect(
+      activityAfter(
+        tasksChanged(WORKFLOW),
+        stepStarted("Bash", { command: "架空のコマンド" }),
+        WORKFLOW_PROGRESS,
+        completed,
+      ),
     ).toBe("背景で 架空の流れ")
   })
 })

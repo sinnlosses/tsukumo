@@ -68,6 +68,17 @@
       }
     },
     {
+      "afterMs": 400,
+      "event": {
+        "kind": "workflow-progress",
+        "progress": {
+          "taskId": "fake-workflow-task-1",
+          "phases": [{ "index": 0, "title": "架空の段" }],
+          "agents": [{ "index": 0, "agentId": "fake-workflow-agent-1", "state": "start" }]
+        }
+      }
+    },
+    {
       "afterMs": 500,
       "event": {
         "kind": "speech",
@@ -88,6 +99,7 @@
       "afterMs": 3000,
       "event": {
         "kind": "workflow-step-started",
+        "agentId": "fake-workflow-agent-1",
         "name": "Read",
         "input": {
           "file_path": "/架空/src/example.ts"
@@ -98,6 +110,7 @@
       "afterMs": 6000,
       "event": {
         "kind": "workflow-step-started",
+        "agentId": "fake-workflow-agent-1",
         "name": "Bash",
         "input": {
           "command": "pnpm run test 架空のテスト"
@@ -105,9 +118,21 @@
       }
     },
     {
+      "afterMs": 7500,
+      "event": {
+        "kind": "workflow-step-started",
+        "agentId": "fake-other-subagent",
+        "name": "Read",
+        "input": {
+          "file_path": "/架空/src/other-subagent.ts"
+        }
+      }
+    },
+    {
       "afterMs": 9000,
       "event": {
         "kind": "workflow-step-started",
+        "agentId": "fake-workflow-agent-1",
         "name": "Grep",
         "input": {
           "pattern": "架空の語"
@@ -118,6 +143,7 @@
       "afterMs": 12000,
       "event": {
         "kind": "workflow-step-started",
+        "agentId": "fake-workflow-agent-1",
         "name": "Edit",
         "input": {
           "file_path": "/架空/src/example.ts"

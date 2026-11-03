@@ -3,6 +3,7 @@
 import type { BackgroundTask } from "../session-driver/background-task.ts"
 import type { DelegateReturn } from "./delegate-return.ts"
 import type { WorkPlan } from "./work-plan.ts"
+import type { WorkflowProgress } from "./workflow-step.ts"
 
 export type DelegateEvent =
   /**
@@ -46,15 +47,21 @@ export type DelegateEvent =
    */
   | { readonly kind: "task-notified"; readonly taskId: string }
   /**
-   * ワークフロースクリプトの中の委譲先がツールを使い始めた（`PreToolUse` のフックのうち、`agent_type` がワークフロースクリプトの委譲先のもの）。
-   * どのワークフロースクリプトに当てるかは `withWorkflowStep`。
+   * サブエージェントの中でツールを使い始めた（`PreToolUse` のフックのうち `agent_id` のあるもの）。
+   * `agentId` はそのフックの `agent_id` で、ワークフロースクリプトの agent かとどのワークフロースクリプトに当てるかは `withWorkflowStep` が決める。
    * `input` は要約に使う欄1つだけに絞ってある（`toolSummaryInput`）。
    */
   | {
       readonly kind: "workflow-step-started"
+      readonly agentId: string
       readonly name: string
       readonly input: Readonly<Record<string, string>>
     }
+  /**
+   * 台本の段と agent の写しが届いた（SDK の `system` / `task_progress` の `workflow_progress`）。
+   * 毎回全体の写しで、受け取る側は同じ `taskId` のものを丸ごと置き換える。
+   */
+  | { readonly kind: "workflow-progress"; readonly progress: WorkflowProgress }
   | {
       readonly kind: "tool-started"
       readonly toolUseId: string

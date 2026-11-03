@@ -96,6 +96,120 @@ describe("バックグラウンドタスク（実測で届いた順: background_
     ).toEqual([])
   })
 
+  describe("workflow_progress（SDK の公開の型に無い欄。形を確かめ、外れた要素は捨てる）", () => {
+    const workflowProgress = (workflow_progress: unknown, extra: Record<string, unknown> = {}) => ({
+      type: "system",
+      subtype: "task_progress",
+      task_id: "wf-1",
+      description: "架空の台本",
+      usage: { total_tokens: 1, tool_uses: 0, duration_ms: 1 },
+      workflow_progress,
+      ...extra,
+    })
+    const agent = (overrides: Record<string, unknown> = {}) => ({
+      type: "workflow_agent",
+      index: 0,
+      state: "start",
+      agentId: "agent-1",
+      label: "架空の名札",
+      lastToolSummary: "架空の要約",
+      ...overrides,
+    })
+
+    it("workflow_progress が無い・配列でないときは workflow-progress を出さない（summary があれば delegate-progress だけ）", () => {
+      expect(toSessionEvents(workflowProgress(undefined), EXPRESSIONS)).toEqual([])
+      expect(toSessionEvents(workflowProgress({ type: "workflow_agent" }), EXPRESSIONS)).toEqual([])
+      expect(
+        toSessionEvents(workflowProgress("架空", { summary: "架空の進み" }), EXPRESSIONS),
+      ).toEqual([{ kind: "delegate-progress", taskId: "wf-1", summary: "架空の進み" }])
+    })
+
+    it("task_id が文字列でないときは workflow-progress を出さない", () => {
+      expect(toSessionEvents(workflowProgress([agent()], { task_id: 1 }), EXPRESSIONS)).toEqual([])
+    })
+
+    it("workflow_phase と workflow_agent を phases と agents に入れる（入力の順のまま。会話の断片になりうる欄は写さない）", () => {
+      const elements = [
+        { type: "workflow_phase", index: 0, title: "架空の段A" },
+        agent({ index: 0, agentId: "agent-1", state: "start" }),
+        { type: "workflow_phase", index: 1, title: "架空の段B" },
+        agent({ index: 1, agentId: "agent-2", state: "done" }),
+        agent({ index: 2, agentId: "agent-0", state: "error" }),
+        agent({ index: 3, agentId: "agent-3", state: "progress" }),
+      ]
+
+      expect(toSessionEvents(workflowProgress(elements), EXPRESSIONS)).toEqual([
+        {
+          kind: "workflow-progress",
+          progress: {
+            taskId: "wf-1",
+            phases: [
+              { index: 0, title: "架空の段A" },
+              { index: 1, title: "架空の段B" },
+            ],
+            agents: [
+              { index: 0, agentId: "agent-1", state: "start" },
+              { index: 1, agentId: "agent-2", state: "done" },
+              { index: 2, agentId: "agent-0", state: "error" },
+              { index: 3, agentId: "agent-3", state: "progress" },
+            ],
+          },
+        },
+      ])
+    })
+
+    it("形の外れた要素だけを捨てる（agentId の無い待ち行列の写し・知らない state・index の欠け・知らない type・オブジェクトでない要素）", () => {
+      const elements = [
+        { type: "workflow_phase", index: "0", title: "架空の段" },
+        { type: "workflow_phase", index: 1.5, title: "架空の段" },
+        { type: "workflow_phase", index: 2, title: 3 },
+        { type: "workflow_phase", index: 3, title: "残る段" },
+        { type: "workflow_agent", index: 0, state: "start", queuedAt: 1 },
+        agent({ index: 1, state: "paused" }),
+        agent({ index: undefined }),
+        agent({ index: 3, agentId: 7 }),
+        agent({ index: 4, agentId: "agent-4", state: "progress" }),
+        { type: "workflow_log", index: 5, title: "架空のログ", agentId: "agent-5", state: "start" },
+        { index: 6, title: "type の無い要素" },
+        "壊れた要素",
+        null,
+      ]
+
+      expect(toSessionEvents(workflowProgress(elements), EXPRESSIONS)).toEqual([
+        {
+          kind: "workflow-progress",
+          progress: {
+            taskId: "wf-1",
+            phases: [{ index: 3, title: "残る段" }],
+            agents: [{ index: 4, agentId: "agent-4", state: "progress" }],
+          },
+        },
+      ])
+    })
+
+    it("空の配列は空の phases と agents の workflow-progress にする（丸ごと置き換える合図）", () => {
+      expect(toSessionEvents(workflowProgress([]), EXPRESSIONS)).toEqual([
+        { kind: "workflow-progress", progress: { taskId: "wf-1", phases: [], agents: [] } },
+      ])
+    })
+
+    it("summary と workflow_progress の両方があれば delegate-progress と workflow-progress の両方にする", () => {
+      expect(
+        toSessionEvents(workflowProgress([agent()], { summary: "架空の進み" }), EXPRESSIONS),
+      ).toEqual([
+        { kind: "delegate-progress", taskId: "wf-1", summary: "架空の進み" },
+        {
+          kind: "workflow-progress",
+          progress: {
+            taskId: "wf-1",
+            phases: [],
+            agents: [{ index: 0, agentId: "agent-1", state: "start" }],
+          },
+        },
+      ])
+    })
+  })
+
   it("task_started / summary の無い task_progress / task_updated はイベントにしない（顔ぶれは background_tasks_changed だけで分かる）", () => {
     const edges = [
       {

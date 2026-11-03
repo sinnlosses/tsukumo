@@ -31,6 +31,7 @@ const SESSION_EVENT_KINDS = {
   "workflow-started": true,
   "task-notified": true,
   "workflow-step-started": true,
+  "workflow-progress": true,
   "tool-started": true,
   "tool-finished": true,
   "background-tool-finished": true,
