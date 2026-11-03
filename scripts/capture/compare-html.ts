@@ -3,7 +3,9 @@
 //
 // 使い方:
 //   node scripts/capture/compare-html.ts --html /tmp/page.html --scene <場面> \
-//     --topic <題材名> --date <YYYY-MM-DD> [--session <ファイル>] [--widths 390,1400] [--out-dir <dir>]
+//     --topic <題材名> --date <YYYY-MM-DD> [--session <ファイル>] [--widths 390,1400] [--height 900] [--out-dir <dir>]
+//
+// レポート版はメインビューの中でスクロールするので、窓に入った分しか写らない。全体を撮るときは --height を伸ばす。
 //
 // 画像は会話の内容が写るので、既定の出力先は /tmp（リポジトリに置かない）。
 // 疑似セッションの架空の会話と、Claude に書かせた架空の題材だけを渡す。
@@ -27,14 +29,15 @@ import {
 } from "./lib/comparison-draft.ts"
 
 const DEFAULT_WIDTHS = [390, 1400] as const
-const WINDOW_HEIGHT = 900
+const DEFAULT_HEIGHT = 900
 const DEFAULT_OUT_DIR = "/tmp/html-comparison"
 const CAPTURE_TIMEOUT_MS = 180_000
 const CAPTURE_VIEW = path.join(REPOSITORY_ROOT, "scripts/capture/capture-view.ts")
 
 const USAGE = `使い方:
   node scripts/capture/compare-html.ts --html <ファイル> --scene <場面> --topic <題材名> --date <YYYY-MM-DD>
-    [--session <ファイル>] [--widths <幅,幅,…>（既定 ${DEFAULT_WIDTHS.join(",")}）] [--out-dir <dir>（既定 ${DEFAULT_OUT_DIR}）]
+    [--session <ファイル>] [--widths <幅,幅,…>（既定 ${DEFAULT_WIDTHS.join(",")}）] [--height <高さ>（既定 ${String(DEFAULT_HEIGHT)}）]
+    [--out-dir <dir>（既定 ${DEFAULT_OUT_DIR}）]
 `
 
 type Arguments = {
@@ -44,6 +47,7 @@ type Arguments = {
   readonly date: string
   readonly session: string | undefined
   readonly widths: readonly number[]
+  readonly height: number
   readonly outDir: string
 }
 
@@ -75,7 +79,7 @@ async function main(argv: readonly string[]): Promise<number> {
 
 /** 1つの幅で2版を続けて撮る。撮れなかった版は理由を残して続ける。 */
 async function compareAt(given: Arguments, width: number): Promise<WidthComparison> {
-  const size = `${String(width)}x${String(WINDOW_HEIGHT)}`
+  const size = `${String(width)}x${String(given.height)}`
   const reportImage = path.join(given.outDir, `report-${String(width)}.png`)
   const htmlImage = path.join(given.outDir, `html-${String(width)}.png`)
 
@@ -162,14 +166,17 @@ function readArguments(argv: readonly string[]): Arguments | undefined {
         date: { type: "string" },
         session: { type: "string" },
         widths: { type: "string" },
+        height: { type: "string" },
         "out-dir": { type: "string" },
       },
     })
     const parsedWidths = values.widths
       ?.split(",")
       .map((value) => positiveIntegerArgument.safeParse(value))
+    const parsedHeight = positiveIntegerArgument.safeParse(values.height ?? String(DEFAULT_HEIGHT))
     if (
       parsedWidths?.some((width) => !width.success) === true ||
+      !parsedHeight.success ||
       positionals.length > 0 ||
       values.html === undefined ||
       values.scene === undefined ||
@@ -187,6 +194,7 @@ function readArguments(argv: readonly string[]): Arguments | undefined {
       session: values.session === undefined ? undefined : path.resolve(values.session),
       widths:
         parsedWidths?.flatMap((width) => (width.success ? [width.data] : [])) ?? DEFAULT_WIDTHS,
+      height: parsedHeight.data,
       outDir: path.resolve(values["out-dir"] ?? DEFAULT_OUT_DIR),
     }
   } catch {

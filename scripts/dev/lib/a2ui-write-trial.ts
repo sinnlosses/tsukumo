@@ -356,7 +356,7 @@ type SummaryCounts = {
 }
 
 /** 出力から JSON の配列を取り出す。コードフェンスや前後の説明は読み飛ばす。無ければ undefined。 */
-function extractComponents(text: string): readonly unknown[] | undefined {
+export function extractComponents(text: string): readonly unknown[] | undefined {
   const start = text.indexOf("[")
   const end = text.lastIndexOf("]")
   if (start < 0 || end <= start) {

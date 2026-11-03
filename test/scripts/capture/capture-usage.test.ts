@@ -62,6 +62,19 @@ describe("capture の入口の崩れた引数", () => {
       "--widths",
       "390,abc",
     ],
+    [
+      "compare-html.ts",
+      "--html",
+      "a.html",
+      "--scene",
+      "x",
+      "--topic",
+      "t",
+      "--date",
+      "2026-01-02",
+      "--height",
+      "高い",
+    ],
   ])("%s %s は使い方を出して終了コード 2 で止まる", async (script, ...args) => {
     const result = await runSubprocess("node", [`scripts/capture/${script}`, ...args], {
       cwd: ROOT,
