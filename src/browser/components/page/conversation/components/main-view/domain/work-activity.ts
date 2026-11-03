@@ -58,7 +58,9 @@ type WorkActivitySource = {
 
 /**
  * 強い順に1つ: 答え待ち → report を書いている途中 → 走っている手順 →
- * 背景のサブエージェント（「背景で · 考えている」）→ 背景のワークフロースクリプト（走っている手順と秒、手順の合間は「背景で · 考えている」）→ バックグラウンドタスク →
+ * 手順を持つバックグラウンドタスクのうちいちばん新しく手順が始まったもの
+ * （サブエージェントは「背景で · 考えている」、ワークフロースクリプトは走っている手順と秒、手順の合間は「背景で · 考えている」）→
+ * 手順を持たないものも含めたバックグラウンドタスクの説明 →
  * 考えている（依頼が会話の片付けのときは「会話を片付けている」）。
  * 答え待ちの秒は、答え待ちが届いた時刻から数える。
  */
@@ -89,13 +91,17 @@ export function workActivityOf(source: WorkActivitySource): WorkActivity {
       retry,
     }
   }
-  if (delegatedStepsDone(source.backgroundTasks, turnStepList.steps)) {
+  const stepped = latestSteppedBackground({
+    backgroundTasks: source.backgroundTasks,
+    workflowSteps: source.workflowSteps,
+    steps: turnStepList.steps,
+  })
+  if (stepped?.kind === "agent") {
     return { text: BACKGROUND_THINKING, tone: "quiet", mono: false, retry }
   }
-  const workflow = latestWorkflow(source)
-  if (workflow !== undefined) {
-    const { step, thinking } = workflow
-    if (step?.running === true) {
+  if (stepped !== undefined) {
+    const { step } = stepped
+    if (step.running) {
       const seconds = formatElapsed(Math.max(0, Math.floor((now - step.startedAt) / 1000)))
       return {
         text: `背景で · ${toolLine(step.name, step.input)} · ${seconds}`,
@@ -104,7 +110,7 @@ export function workActivityOf(source: WorkActivitySource): WorkActivity {
         retry,
       }
     }
-    if (thinking) {
+    if (workflowThinking(source.workflowProgress, stepped.taskId)) {
       return { text: BACKGROUND_THINKING, tone: "quiet", mono: false, retry }
     }
   }
@@ -130,35 +136,54 @@ function currentRequestTextOf(records: readonly SessionRecord[]): string {
   return records.findLast((record) => record.kind === "request")?.text ?? ""
 }
 
+type SteppedBackground =
+  | { readonly kind: "agent" }
+  | { readonly kind: "workflow"; readonly taskId: string; readonly step: WorkflowStep }
+
 /**
- * いちばん新しいバックグラウンドタスクがサブエージェントで、その依頼でサブエージェントの中の手順が1つでもあり、どれも走っていないか
- * （走っているものは呼び出し側が先に拾う）。
- * サブエージェントの説明は起こしたときのまま変わらず、同じサブエージェントに続きを頼むと段と食い違うので、説明より先に使う。
+ * 手順を持つバックグラウンドタスク（台本・サブエージェント）のうち、いちばん新しく手順が始まったもの。同時刻なら顔ぶれの後ろの方。
+ * サブエージェントの手順はタスクに結ばれないので、サブエージェント全体で1つの候補とし、始まりは中の手順の最後のもの
+ * （復元した手順は始まりが分からず、最古として扱う）。
  */
-function delegatedStepsDone(
-  backgroundTasks: readonly BackgroundTask[],
-  steps: readonly TurnStep[],
-): boolean {
-  return backgroundTasks.at(-1)?.kind === "agent" && steps.some((step) => step.nested)
+function latestSteppedBackground(
+  source: Pick<WorkActivitySource, "backgroundTasks" | "workflowSteps"> & {
+    readonly steps: readonly TurnStep[]
+  },
+): SteppedBackground | undefined {
+  const nested = source.steps.filter((step) => step.nested)
+  const agentStartedAt = Math.max(
+    ...nested.map((step) => recordTimeAt(step.startedAt) ?? Number.NEGATIVE_INFINITY),
+  )
+  const lastAgentIndex = source.backgroundTasks.findLastIndex((task) => task.kind === "agent")
+  const candidates = source.backgroundTasks.flatMap(
+    (task, index): readonly { readonly startedAt: number; readonly found: SteppedBackground }[] => {
+      if (task.kind === "workflow") {
+        const step = source.workflowSteps.find((candidate) => candidate.taskId === task.taskId)
+        return step === undefined
+          ? []
+          : [{ startedAt: step.startedAt, found: { kind: "workflow", taskId: task.taskId, step } }]
+      }
+      return index === lastAgentIndex && nested.length > 0
+        ? [{ startedAt: agentStartedAt, found: { kind: "agent" } }]
+        : []
+    },
+  )
+  return candidates.reduce<(typeof candidates)[number] | undefined>(
+    (best, candidate) =>
+      best === undefined || candidate.startedAt >= best.startedAt ? candidate : best,
+    undefined,
+  )?.found
 }
 
 /**
- * いちばん新しいバックグラウンドタスクがワークフロースクリプトなら、その中でいちばん新しく始まった手順と、
- * 手順が1つでも始まったうえで走っている agent（start・progress）がいる（手順の合間に考えている）か。
+ * 選んだ台本の中で、手順が1つでも始まったうえで走っている agent（start・progress）がいる（手順の合間に考えている）か。
  */
-function latestWorkflow(
-  source: Pick<WorkActivitySource, "backgroundTasks" | "workflowSteps" | "workflowProgress">,
-): { readonly step: WorkflowStep | undefined; readonly thinking: boolean } | undefined {
-  const newest = source.backgroundTasks.at(-1)
-  if (newest?.kind !== "workflow") {
-    return undefined
-  }
-  const step = source.workflowSteps.find((candidate) => candidate.taskId === newest.taskId)
-  const agentRunning =
-    source.workflowProgress
-      .find((progress) => progress.taskId === newest.taskId)
+function workflowThinking(workflowProgress: readonly WorkflowProgress[], taskId: string): boolean {
+  return (
+    workflowProgress
+      .find((progress) => progress.taskId === taskId)
       ?.agents.some((agent) => agent.state === "start" || agent.state === "progress") === true
-  return { step, thinking: step !== undefined && agentRunning }
+  )
 }
 
 function pendingLabel(pending: PendingAsk): string {

@@ -148,7 +148,7 @@ describe("useWorkStrip（ワークフロースクリプトの中の手順）", (
     ).toBe("背景で 架空の流れ")
   })
 
-  it("いちばん新しいバックグラウンドタスクがワークフロースクリプトでなければ、手順は出さない", () => {
+  it("台本の手順が届いたあとに背景の Bash が立っても、2行目は台本の手順のまま", () => {
     expect(
       activityAfter(
         tasksChanged(WORKFLOW),
@@ -156,7 +156,47 @@ describe("useWorkStrip（ワークフロースクリプトの中の手順）", (
         stepStarted("Bash", { command: "架空のコマンド" }),
         tasksChanged(WORKFLOW, SHELL),
       ),
-    ).toBe("背景で 架空の待ち ほか1件")
+    ).toBe("背景で · Bash  架空のコマンド · 56秒")
+  })
+
+  it("手順を持つ台本とサブエージェントがいれば、新しく始まった方を出す", () => {
+    const agentTask = {
+      taskId: "agent-task-1",
+      kind: "agent",
+      description: "架空の委譲",
+    } satisfies BackgroundTask
+    const nestedRead: readonly SessionEvent[] = [
+      {
+        kind: "tool-started",
+        toolUseId: "nested-1",
+        name: "Read",
+        input: { file_path: "/架空/a.ts" },
+        parentToolUseId: "parent-1",
+      },
+      { kind: "tool-finished", toolUseId: "nested-1", content: "架空の結果", isError: false },
+    ]
+    const bash = stepStarted("Bash", { command: "架空のコマンド" })
+    const head = [tasksChanged(WORKFLOW, agentTask), WORKFLOW_PROGRESS]
+    expect(activityAfter(...head, ...nestedRead, bash)).toBe("背景で · Bash  架空のコマンド · 54秒")
+    expect(activityAfter(...head, bash, ...nestedRead)).toBe("背景で · 考えている")
+  })
+
+  it("手順を持つ台本が2本あれば、新しく始まった方を出す", () => {
+    const second = {
+      taskId: "wf-2",
+      kind: "workflow",
+      description: "架空の別の流れ",
+    } satisfies BackgroundTask
+    expect(
+      activityAfter(
+        tasksChanged(WORKFLOW, second),
+        WORKFLOW_PROGRESS,
+        progressOf("wf-2", "agent-2"),
+        stepStarted("Bash", { command: "架空のコマンド" }),
+        stepStarted("Read", { file_path: "/架空/a.ts" }, "agent-2"),
+        stepStarted("Glob", { pattern: "架空" }),
+      ),
+    ).toBe("背景で · Glob  架空 · 53秒")
   })
 
   it("ワークフロースクリプトが動いていないときに届いた手順は捨てる", () => {
