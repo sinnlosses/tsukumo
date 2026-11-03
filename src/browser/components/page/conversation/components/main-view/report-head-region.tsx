@@ -21,6 +21,7 @@ import { ChecksVerdict } from "./checks-verdict.tsx"
 import { splitConclusion } from "./domain/split-conclusion.ts"
 import { PhaseTimes } from "./phase-time-section.tsx"
 import { StatCards } from "./stats-leaf.tsx"
+import { WorkRecord } from "./work-record.tsx"
 
 /** 頭の欄。結論・数のカード・合図の行・段ごとの所要時間・変更したファイルのどれも無ければ何も描かない。 */
 export function HeadRegion(props: { readonly head: MainViewSurfaceHead }): ReactElement {
@@ -28,6 +29,7 @@ export function HeadRegion(props: { readonly head: MainViewSurfaceHead }): React
   const { phaseTimes, changedFiles } = status
   const hasStatus =
     checks.kind === "checks" || phaseTimes.kind !== "none" || changedFiles.kind !== "none"
+  const hasRecord = lead.kind === "conclusion" && (hasStatus || !isBlankText(props.head.workDone))
   if (lead.kind === "none" && keyFigures.length === 0 && !hasStatus) {
     return <></>
   }
@@ -49,7 +51,8 @@ export function HeadRegion(props: { readonly head: MainViewSurfaceHead }): React
           <StatCards items={keyFigures} />
         </div>
       )}
-      {hasStatus && (
+      {hasRecord && <WorkRecord head={props.head} />}
+      {hasStatus && !hasRecord && (
         <div className={checksClassName("status")}>
           {checks.kind === "checks" && <ChecksVerdict view={checks} />}
           {phaseTimes.kind === "times" && <PhaseTimes view={phaseTimes} />}

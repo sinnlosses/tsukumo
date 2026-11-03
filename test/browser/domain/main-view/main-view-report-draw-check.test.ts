@@ -72,7 +72,15 @@ describe("reportDrawsAnything", () => {
     const plain = regionsWith(noRootA2ui())
     const finalStatus = {
       phaseTimes: { kind: "none" },
-      changedFiles: { kind: "files", count: 1, rows: [], totals: [] },
+      changedFiles: {
+        kind: "files",
+        count: 1,
+        added: 0,
+        removed: 0,
+        mixed: false,
+        rows: [],
+        totals: [],
+      },
     } as const
     const withFinal: MainViewReportBody = {
       ...plain,

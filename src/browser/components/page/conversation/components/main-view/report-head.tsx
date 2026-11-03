@@ -1,14 +1,10 @@
 // レポートの結論部の頭（タスクの見出しの行とメタの行）。結論の一文はこの下のレポート本文の先頭にある。
-// 見出しの行はタスクID・作業の名前・終わり方の札、メタの行はラベル・終えた段・変更のラベルのうちあるものだけを描き、1つも無ければ何も描かない。
+// 見出しの行はタスクID・作業の名前・終わり方の札、メタの行はラベル・終えた段のうちあるものだけを描き、1つも無ければ何も描かない。
 // 終わり方の `stopped` は描かない。
 
 import clsx from "clsx"
 import { Fragment, type ReactElement } from "react"
 
-import type {
-  ReportChangeCount,
-  ReportChangeSummary,
-} from "../../../../../../shared/report/report-change-summary.ts"
 import type { ReportTask, ReportTaskOutcome } from "../../../../../../shared/report/report-task.ts"
 import type { MainViewPhaseLabel } from "../../../../../../shared/session/main-view-shape.ts"
 import { formatMeasured } from "../../../../../../shared/utils/elapsed-time.ts"
@@ -27,20 +23,13 @@ type ReportHeadProps = {
   readonly task: ReportTask
   /** 段のまとめなら、終えた段の見出し。 */
   readonly phase: MainViewPhaseLabel
-  /** タスク見出し行の末尾に出す変更のラベル。 */
-  readonly changeSummary: ReportChangeSummary
   /** 置く側が足す class(狭い画面で隠すなど)。 */
   readonly className: string
 }
 
 export function ReportHead(props: ReportHeadProps): ReactElement | undefined {
-  const { label, task, phase, changeSummary } = props
-  if (
-    label === "none" &&
-    task.kind === "none" &&
-    phase.kind === "none" &&
-    changeSummary.kind === "none"
-  ) {
+  const { label, task, phase } = props
+  if (label === "none" && task.kind === "none" && phase.kind === "none") {
     return undefined
   }
 
@@ -53,9 +42,6 @@ export function ReportHead(props: ReportHeadProps): ReactElement | undefined {
           ...(phase.skipped ? [<span key="phase-skipped">飛ばした</span>] : []),
           <span key="phase-time">所要 {formatMeasured(phase.duration)}</span>,
         ]),
-    ...(changeSummary.kind === "none"
-      ? []
-      : [<ChangeSummary summary={changeSummary} key="change-summary" />]),
   ]
 
   return (
@@ -106,18 +92,6 @@ function Outcome(props: { readonly outcome: DrawnOutcome }): ReactElement {
     <Badge tone={view.tone} shape="square" className={styles["report-outcome"]}>
       {view.mark} {view.text}
     </Badge>
-  )
-}
-
-/** 変更のラベル「変更 n ファイル +a −b」。`−` は U+2212。範囲に別の変更が混ざりうるときは末尾に控えめな注記を添える。 */
-function ChangeSummary(props: { readonly summary: ReportChangeCount }): ReactElement {
-  const { files, added, removed, mixed } = props.summary
-  return (
-    <span className={styles["report-change-summary"]}>
-      変更 {files} ファイル <span className={styles["report-change-added"]}>+{added}</span>{" "}
-      <span className={styles["report-change-removed"]}>−{removed}</span>
-      {mixed && <span className={styles["report-change-mixed"]}> ※他の変更を含みうる</span>}
-    </span>
   )
 }
 

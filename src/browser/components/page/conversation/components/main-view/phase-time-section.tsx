@@ -1,7 +1,8 @@
-// 面の頭の段ごとの所要時間（見出しの行・帯か横棒・一覧）を、値から直接描く。
+// 面の頭の段ごとの所要時間（合計とフェーズの数の行・帯か横棒・一覧）を、値から直接描く。
 
 import clsx from "clsx"
 import type { ReactElement } from "react"
+import { sumBy } from "remeda"
 
 import type {
   PhaseBandRegionView,
@@ -18,8 +19,10 @@ export function PhaseTimes(props: { readonly view: Times }): ReactElement {
   return (
     <div className={phaseTimesClassName("phase-times")}>
       <div className={phaseTimesClassName("phase-times-head")}>
-        <span className={phaseTimesClassName("phase-times-heading")}>フェーズごとの時間</span>
         <span className={phaseTimesClassName("phase-times-total")}>{totalText}</span>
+        <span className={phaseTimesClassName("phase-times-count")}>
+          {`${String(phaseCount(rows))} フェーズ`}
+        </span>
       </div>
       {chart.kind === "band" && (
         <div className={phaseTimesClassName("phase-band")} aria-hidden="true">
@@ -66,6 +69,11 @@ export function PhaseTimes(props: { readonly view: Times }): ReactElement {
       </div>
     </div>
   )
+}
+
+/** 一覧の行の数。並列のフェーズは頭の行（壁時計の区間）を数えず、中の段を数える。 */
+function phaseCount(rows: Times["rows"]): number {
+  return sumBy(rows, (entry) => (entry.kind === "row" ? 1 : entry.inner.length))
 }
 
 function BandRegion(props: { readonly region: PhaseBandRegionView }): ReactElement {

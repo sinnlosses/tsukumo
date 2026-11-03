@@ -8,6 +8,7 @@ import {
   REPORT_CHECK_PROBLEM_WORDS,
   type ReportCheckPassedRow,
   type ReportCheckProblemRow,
+  type ReportFavorTarget,
   type ReportChecksView,
 } from "../../../../../../shared/report/report-check-view.ts"
 import { plainInline } from "../../../../../../shared/report/report-inline-markdown.ts"
@@ -42,6 +43,30 @@ export function ChecksVerdict(props: { readonly view: Checks }): ReactElement {
   )
 }
 
+/** お願いの印。押すと `location.hash` を書かずに飛び先の要素へ転がす（`location.hash` は見ているターンの経路）。お願いが無ければ何も描かない。 */
+export function FavorJump(props: { readonly favor: ReportFavorTarget }): ReactElement {
+  const { favor } = props
+  if (favor.kind === "none") {
+    return <></>
+  }
+  return (
+    <span className={checksClassName("checks-summary-favor")}>
+      <a
+        href={`#${favor.id}`}
+        onClick={(event) => {
+          event.preventDefault()
+          event.currentTarget.ownerDocument
+            .getElementById(favor.id)
+            ?.scrollIntoView({ block: "start" })
+        }}
+      >
+        <span className={checksClassName("checks-summary-favor-mark")}>●</span>
+        お願い 1 ↓
+      </a>
+    </span>
+  )
+}
+
 /** 総括行。お願いの印は押すと `location.hash` を書かずに飛び先の要素へ転がす（`location.hash` は見ているターンの経路）。 */
 function ChecksSummary(props: { readonly summary: Checks["summary"] }): ReactElement {
   const { passedCount, figures, problems, favor } = props.summary
@@ -67,22 +92,7 @@ function ChecksSummary(props: { readonly summary: Checks["summary"] }): ReactEle
       {passedCount > 0 && figureText !== "" && (
         <span className={checksClassName("checks-summary-figures")}>{figureText}</span>
       )}
-      {favor.kind === "favor" && (
-        <span className={checksClassName("checks-summary-favor")}>
-          <a
-            href={`#${favor.id}`}
-            onClick={(event) => {
-              event.preventDefault()
-              event.currentTarget.ownerDocument
-                .getElementById(favor.id)
-                ?.scrollIntoView({ block: "start" })
-            }}
-          >
-            <span className={checksClassName("checks-summary-favor-mark")}>●</span>
-            お願い 1 ↓
-          </a>
-        </span>
-      )}
+      <FavorJump favor={favor} />
     </div>
   )
 }

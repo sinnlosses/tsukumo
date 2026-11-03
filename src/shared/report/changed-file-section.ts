@@ -1,4 +1,4 @@
-// 最終レポートの頭に出す「変更したファイル n」の畳んだ節。一覧は変更のラベル（`ReportChangeSummary`）の `changed`。
+// 最終レポートの頭に出す「変えたファイル」の畳んだ節。一覧は変更のラベル（`ReportChangeSummary`）の `changed`。
 
 import { countBy } from "remeda"
 
@@ -16,6 +16,9 @@ export type ChangedFilesView =
   | {
       readonly kind: "files"
       readonly count: number
+      readonly added: number
+      readonly removed: number
+      readonly mixed: boolean
       readonly rows: readonly FileTreeRow<ChangedFile>[]
       readonly totals: readonly {
         readonly change: ChangedFile["change"]
@@ -31,6 +34,9 @@ export function changedFilesView(summary: ReportChangeSummary): ChangedFilesView
   return {
     kind: "files",
     count: summary.changed.length,
+    added: summary.added,
+    removed: summary.removed,
+    mixed: summary.mixed,
     rows: fileTreeRows(summary.changed, (file) => file.path),
     totals: FILE_CHANGE_ORDER.flatMap((change) => {
       if (change === "read") {

@@ -42,6 +42,19 @@ describe("changedFilesView", () => {
     expect(changedFilesView(counted([]))).toEqual({ kind: "none" })
   })
 
+  it("+a −b と mixed を変更のラベルから写す", () => {
+    const view = changedFilesView({
+      kind: "counted",
+      changed: CHANGED,
+      files: 3,
+      added: 12,
+      removed: 4,
+      mixed: true,
+    })
+
+    expect(view).toMatchObject({ kind: "files", added: 12, removed: 4, mixed: true })
+  })
+
   it("件数と樹形図の行と、件数のある種別だけの合計の札を追加・変更・削除の順で持つ", () => {
     const view = changedFilesView(
       counted([
@@ -54,6 +67,9 @@ describe("changedFilesView", () => {
     expect(view).toEqual({
       kind: "files",
       count: 3,
+      added: 0,
+      removed: 0,
+      mixed: false,
       rows: [
         { kind: "folder", guide: "", name: "src/架空/" },
         {

@@ -304,7 +304,6 @@ function StepReport(props: StepReportProps): ReactElement | undefined {
       label={label}
       task={step.body.task}
       phase={step.body.finishedPhase}
-      changeSummary={step.body.changeSummary}
       className={phoneHidden}
     />
   )

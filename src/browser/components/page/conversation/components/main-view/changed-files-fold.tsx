@@ -1,4 +1,4 @@
-// 面の頭の「変更したファイル n」の畳んだ節（樹形図と種別の合計の札）を、値から直接描く。
+// 面の頭の「n ファイル +a −b」を題にした変更したファイルの畳んだ節（樹形図と種別の合計の札）を、値から直接描く。
 
 import clsx from "clsx"
 import { Fragment, type ReactElement } from "react"
@@ -8,14 +8,25 @@ import type { ChangedFile } from "../../../../../../shared/report/changed-file.t
 import { FILE_CHANGE_BADGES } from "../../../../../../shared/report/report-file-markdown.ts"
 import type { FileTreeRow } from "../../../../../../shared/report/report-file-tree.ts"
 import { plainInline } from "../../../../../../shared/report/report-inline-markdown.ts"
-import { CodeSpan, filesClassName } from "../markdown/markdown.tsx"
+import { CodeSpan, filesClassName, workRecordClassName } from "../markdown/markdown.tsx"
 
 type Files = Extract<ChangedFilesView, { readonly kind: "files" }>
 export function ChangedFilesFold(props: { readonly view: Files }): ReactElement {
-  const { count, rows, totals } = props.view
+  const { count, added, removed, mixed, rows, totals } = props.view
   return (
     <details>
-      <summary>{`変更したファイル ${String(count)}`}</summary>
+      <summary>
+        <span className={workRecordClassName("work-record-fold-title")}>
+          <span>{`${String(count)} ファイル`}</span>
+          <span className={workRecordClassName("work-record-added")}>{`+${String(added)}`}</span>
+          <span
+            className={workRecordClassName("work-record-removed")}
+          >{`−${String(removed)}`}</span>
+          {mixed && (
+            <span className={workRecordClassName("work-record-mixed")}>※他の変更を含みうる</span>
+          )}
+        </span>
+      </summary>
       <div className={filesClassName("files")}>
         {rows.map((row, index) => (
           <TreeRow key={`${String(index)}:${row.guide}${row.name}`} row={row} />

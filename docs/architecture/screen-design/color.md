@@ -177,7 +177,7 @@
 **ラベルは結論部のタスク見出し行の頭に置く**（見本は
 `docs/history/mockup/report-conclusion-2026-09-30.html` の案A。仕組みと出す条件は
 `docs/architecture/display/conclusion.md`「タスクの作業のレポートは、結論部を「タスク見出し行・見出し・一文」の3段にする」）。
-タスクの作業のレポートは、結論部をタスク見出し行（ラベル・タスクID・終わり方・変更のラベル）・見出し（作業の名前）・一文の
+タスクの作業のレポートは、結論部をタスク見出し行（ラベル・タスクID・終わり方）・見出し（作業の名前）・一文の
 3段で描く。寸法はタスク見出し行 `--font-action`（12px）、見出し（作業の名前）はタスクの ID・状態のバッジと同じ行に
 `--font-body`（15px）・600・`ink-bright`、一文のうち**結論の1文目**が `--report-heading-2`（21px。レポート専用のつまみ）・行間 32px・700・`ink-bright`
 （結論部の大胆さはここ1か所）、2文目が 15px・`ink-soft`。見出しと一文の中のインラインコードは
@@ -195,7 +195,7 @@
 | タスク見出し行の字（メタの行）         | `ink-quiet`                                     |
 | タスクID（枠と字）                     | `rule-soft` / `ink-soft`                        |
 | 終わり方（完了 / 答え待ち）            | `Badge` の `ok` / `warn`                        |
-| 変更のラベルの `+a` / `−b`             | `report-change-added` / `report-change-removed` |
+| 変えたファイルの題の `+a` / `−b`       | `report-change-added` / `report-change-removed` |
 | 見出し / 一文とインラインコードの字    | `ink-bright` / `ink`                            |
 | 見出しと一文の中のインラインコードの地 | `report-code-surface`                           |
 

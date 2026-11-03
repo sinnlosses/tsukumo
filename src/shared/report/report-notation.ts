@@ -207,6 +207,7 @@ export const REPORT_NOTATION_NAMES = [
  * `checks` は検証結果の部品で、上から総括行（`checks-summary`。お願いの印は `checks-summary-favor`）、
  * 問題の項目（`checks-problem`。確かめ方は `checks-problem-how`）、通った項目を畳んだ `<details>`（`checks-passed`。開くと `check` の行の一覧）。
  * `phase-times` は検証結果の下の段ごとの所要時間（見出しの行・帯 `phase-band`（測れない段は `phase-band-unknown`）か並列のフェーズのある回の横棒 `phase-waterfall`・一覧）で、`phase-time` が一覧の1行。`phase-time-group` は一覧の並列のフェーズの外枠。waterfall の並列のフェーズは `phase-waterfall-group` が中の段の棒を包み、壁時計の区間を `phase-time-wall` が囲む。
+ * `work-record` は `task` のあるレポートの結論の下の作業の記録（題を左・中身を右に置く行 `work-record-row` の並び）。
  * `conclusion` は `task` のあるレポートの結論の一文、`conclusion-lead` は `task` の無いレポートの結論。
  * 見た目は語彙と同じく `report-notation.module.css` の `report-<名前>`。
  * `src/shared/report/` と `src/browser/components/page/conversation/domain/` に文字どおり書いた class 名の足し忘れは、アーキテクチャテスト「tsukumo が組む class 名」が落とす。
@@ -241,8 +242,8 @@ export const REPORT_DRAWN_MARK_NAMES = [
   "checks-passed-labels",
   "phase-times",
   "phase-times-head",
-  "phase-times-heading",
   "phase-times-total",
+  "phase-times-count",
   "phase-band",
   "phase-band-segment",
   "phase-band-longest",
@@ -265,6 +266,21 @@ export const REPORT_DRAWN_MARK_NAMES = [
   "phase-time-group",
   "phase-time-wall",
   "phase-time-wall-longest",
+  "work-record",
+  "work-record-row",
+  "work-record-key",
+  "work-record-value",
+  "work-record-prose",
+  "work-record-fold-title",
+  "work-record-added",
+  "work-record-removed",
+  "work-record-mixed",
+  "work-record-check",
+  "work-record-check-mark",
+  "work-record-check-mark-ng",
+  "work-record-check-mark-ok",
+  "work-record-check-mark-warn",
+  "work-record-check-how",
   "conclusion",
   "conclusion-lead",
 ] as const satisfies readonly string[]

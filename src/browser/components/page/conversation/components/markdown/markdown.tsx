@@ -229,6 +229,13 @@ export function phaseTimesClassName(
   return notationStyles[`report-${name}`]
 }
 
+/** 作業の記録の部品が付ける class 名。 */
+export function workRecordClassName(
+  name: Extract<(typeof REPORT_DRAWN_MARK_NAMES)[number], `work-record${string}`>,
+): string | undefined {
+  return notationStyles[`report-${name}`]
+}
+
 /** 変更したファイルの部品が付ける class 名（`files` の HTML の塊と同じ見た目）。 */
 export function filesClassName(name: ReportFileMarkName): string | undefined {
   return notationStyles[`report-${name}`]

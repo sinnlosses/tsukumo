@@ -267,7 +267,7 @@ export type MainViewPhaseLabel =
  * `task` はタスク見出し行と見出しに出すタスクで、`report` ツールの外の本文では常に `none`。
  * `finishedPhase` はタスク見出し行に添える終えた段の見出しで、段のまとめだけが持つ。
  * `report` は最終レポートの印が立つと、頭を最終のときの頭に替える（`markFinalReport`）。
- * `changeSummary` はタスク見出し行の末尾に出す変更のラベル。`task` のある最終レポートだけが数を持ち、ほかは `none`（`markFinalReport`）。
+ * `changeSummary` は最終レポートの変更のラベル（「変えたファイル」の題の数）。`task` のある最終レポートだけが数を持ち、ほかは `none`（`markFinalReport`）。
  */
 export type MainViewStepBody =
   | { readonly kind: "none" }

@@ -107,21 +107,6 @@
   flex-shrink: 0;
 }
 
-.report-change-summary {
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-}
-.report-change-added {
-  color: var(--report-change-added);
-}
-.report-change-removed {
-  color: var(--report-change-removed);
-}
-.report-change-mixed {
-  color: var(--ink-quiet);
-  font-family: var(--font-sans);
-}
-
 .report-headline {
   min-width: 0;
   margin: 0;

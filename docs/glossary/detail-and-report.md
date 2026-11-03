@@ -50,11 +50,11 @@
 
 ### タスク見出し行
 
-- **英語識別子**: `ReportHead`（`report-head.tsx`。タスクID・名前・終わり方のバッジの行は `report-title-row`、ラベルと変更のラベルの行は `report-meta`）。載せるタスクは `ReportTask`
+- **英語識別子**: `ReportHead`（`report-head.tsx`。タスクID・名前・終わり方のバッジの行は `report-title-row`、ラベルと終えたフェーズの行は `report-meta`）。載せるタスクは `ReportTask`
   （`report` の `task`。終わり方は `outcome`）
 - **定義**: **レポートの結論部のいちばん上の2行**。1行目はタスクID・作業の名前（見出し）・
   終わり方のバッジ（✓ 完了〔`finished`〕 / ？ 答え待ち。`stopped` は描かない）、2行目はラベル（「中間レポート」「最終レポート」）・
-  変更のラベルのうち、あるものだけを並べる（中黒ではつながない）（`docs/architecture/display/conclusion.md`
+  終えたフェーズのうち、あるものだけを並べる（中黒ではつながない）（`docs/architecture/display/conclusion.md`
   「タスクの作業のレポートは、結論部を「タスク見出し行・見出し・一文」の3段にする」）
 - **避ける言い方**: パンくず、メタ情報（パンくずはタスクのモーダルの「戻る」の呼び名）
 
@@ -69,11 +69,11 @@
 ### 変更のラベル
 
 - **英語識別子**: `changeSummary`（型は `ReportChangeSummary`、配る出来事は `report-change-summary`）
-- **定義**: **`task` のある最終レポートのタスク見出し行の末尾に出す「変更 n ファイル +a −b」**。依頼の頭の HEAD から
+- **定義**: **`task` のある最終レポートの作業の記録の「変えたファイル」の畳みの題に出す「n ファイル +a −b」**。依頼の頭の HEAD から
   `git` の `numstat` で tsukumo が数え（件名が `<タスクID>:` のコミットだけ。絞れないときは範囲全体で、数の後ろに
   「※他の変更を含みうる」を添える）、モデルには書かせない。数えられないときは出さない。
-  触ったファイルの一覧（`changed`）も運び、最終レポートの頭に畳んだセクション「変更したファイル n」で出す
-  （`docs/architecture/display/conclusion.md`「`task` のある最終レポートだけ、タスク見出し行の末尾に変更のラベル「変更 n ファイル +a −b」を出す」）
+  触ったファイルの一覧（`changed`）も運び、最終レポートの頭の「変えたファイル」の畳みで出す
+  （`docs/architecture/display/conclusion.md`「`task` のある最終レポートだけ、結論の直後の作業の記録の「変えたファイル」に「n ファイル +a −b」を出す」）
 - **避ける言い方**: 変更の札（以前の呼び名）、diffstat、差分の統計
 
 ### 中間レポート

@@ -77,7 +77,6 @@ export function PresentationalPhaseList(props: {
               label="none"
               task={sheet.row.body.task}
               phase={{ kind: "none" }}
-              changeSummary={sheet.row.body.changeSummary}
               className=""
             />
             <Report

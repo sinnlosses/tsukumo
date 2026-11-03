@@ -186,6 +186,101 @@
   & [data-report-region]:last-child > .report-status:last-child {
     margin-bottom: 0;
   }
+  /* 作業の記録（`task` のあるレポートの結論の下）。題を左・中身を右に置く行を破線で区切り、狭い幅では題を中身の上に積む。 */
+  & .report-work-record {
+    margin: var(--space-md) 0 var(--space-2xl);
+    padding: var(--space-xs) 0;
+    border-top: 1px solid var(--rule-quiet);
+    border-bottom: 1px solid var(--rule-quiet);
+  }
+  & [data-report-region]:last-child > .report-work-record:last-child {
+    margin-bottom: 0;
+  }
+  & .report-work-record-row {
+    display: grid;
+    grid-template-columns: 7.5em minmax(0, 1fr);
+    column-gap: var(--space-xl);
+    padding: var(--space-md) 0;
+  }
+  & .report-work-record-row + .report-work-record-row {
+    border-top: 1px dashed var(--rule-quiet);
+  }
+  & .report-work-record-key {
+    font-size: var(--font-secondary);
+    color: var(--ink-quiet);
+  }
+  & .report-work-record-value {
+    min-width: 0;
+    font-size: var(--font-subheading);
+  }
+  & .report-work-record-prose {
+    margin: 0;
+    max-width: 38em;
+    color: var(--ink);
+  }
+  & .report-work-record details {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+  }
+  & .report-work-record details > summary {
+    cursor: pointer;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+  }
+  & .report-work-record-fold-title {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs) var(--space-md);
+    align-items: baseline;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+  }
+  & .report-work-record-added {
+    color: var(--report-change-added);
+  }
+  & .report-work-record-removed {
+    color: var(--report-change-removed);
+  }
+  & .report-work-record-mixed {
+    font-size: var(--font-secondary);
+    color: var(--ink-quiet);
+  }
+  & .report-work-record-check {
+    display: grid;
+    grid-template-columns: 1.2em minmax(0, 1fr);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  & .report-work-record-check + .report-work-record-check {
+    margin-top: var(--space-xs);
+  }
+  & .report-work-record-check-mark {
+    font-weight: 700;
+  }
+  & .report-work-record-check-mark-ok {
+    color: var(--state-ok);
+  }
+  & .report-work-record-check-mark-warn {
+    color: var(--state-warn);
+  }
+  & .report-work-record-check-mark-ng {
+    color: var(--state-ng);
+  }
+  & .report-work-record-check-how {
+    grid-column: 2;
+    font-size: var(--font-secondary);
+    color: var(--ink-quiet);
+  }
+  @container report-body (max-width: 35rem) {
+    & .report-work-record-row {
+      grid-template-columns: minmax(0, 1fr);
+      row-gap: var(--space-xs);
+    }
+  }
   /* 合図の行（検証結果の判定だけを運ぶ）。中身は `.report-checks` そのもの。 */
   & .report-verdict {
     display: block;
@@ -383,15 +478,15 @@
     gap: var(--space-md);
     margin-bottom: var(--space-lg);
   }
-  & .report-phase-times-heading {
-    font-size: var(--font-label);
-    letter-spacing: 0.08em;
-    color: var(--ink-quiet);
-  }
   & .report-phase-times-total {
     font-family: var(--font-mono);
-    font-size: var(--font-label);
-    color: var(--ink-soft);
+    font-size: var(--font-body);
+    font-weight: 700;
+    color: var(--ink-bright);
+  }
+  & .report-phase-times-count {
+    font-size: var(--font-secondary);
+    color: var(--ink-quiet);
   }
   & .report-phase-band {
     display: flex;

@@ -71,7 +71,7 @@ const FILE_CASES: readonly (readonly [string, readonly ChangedFile[], readonly s
       { path: "src/架空-例/深い/c.ts", change: "added" },
       { path: "docs/架空.md", change: "deleted" },
     ],
-    ["変更したファイル 3", "a-b.ts", "c.ts", "架空.md"],
+    ["3 ファイル", "a-b.ts", "c.ts", "架空.md"],
   ],
   [
     "フォルダの無い変更ファイル",
@@ -79,7 +79,7 @@ const FILE_CASES: readonly (readonly [string, readonly ChangedFile[], readonly s
       { path: "架空-a.ts", change: "added" },
       { path: "架空b.md", change: "modified" },
     ],
-    ["変更したファイル 2", "架空-a.ts", "架空b.md"],
+    ["2 ファイル", "架空-a.ts", "架空b.md"],
   ],
   [
     "added/modified/deleted を含む札",
@@ -89,7 +89,7 @@ const FILE_CASES: readonly (readonly [string, readonly ChangedFile[], readonly s
       { path: "src/架空/c.ts", change: "deleted" },
       { path: "src/架空/d.ts", change: "modified" },
     ],
-    ["変更したファイル 4", "a.ts", "b.ts", "c.ts", "d.ts"],
+    ["4 ファイル", "a.ts", "b.ts", "c.ts", "d.ts"],
   ],
 ]
 

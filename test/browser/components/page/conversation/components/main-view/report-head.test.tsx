@@ -14,13 +14,7 @@ afterEach(() => {
 
 function catalog(phase: MainViewPhaseLabel): string {
   const { container } = render(
-    <ReportHead
-      label="interim"
-      task={{ kind: "none" }}
-      phase={phase}
-      changeSummary={{ kind: "none" }}
-      className=""
-    />,
+    <ReportHead label="interim" task={{ kind: "none" }} phase={phase} className="" />,
   )
   return container.querySelector("p")?.textContent ?? ""
 }
@@ -82,7 +76,6 @@ describe("ReportHead のタスクID", () => {
           genre: "unspecified",
         }}
         phase={{ kind: "none" }}
-        changeSummary={{ kind: "none" }}
         className=""
       />,
     )
