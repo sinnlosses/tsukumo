@@ -37,6 +37,13 @@
     .report-before-after-side:nth-child(3) {
     clip-path: inset(0 0 0 var(--overlay-position));
   }
+  /* 重ねた2枚は同じ枠に入るので、札は画像の上の角に浮かせてどちらの側かを示す。 */
+  & .report-captioned.report-before-after-swap[data-view="overlay"] .report-before-after-label {
+    position: absolute;
+    inset: 10px auto auto 10px;
+    z-index: 1;
+    margin-bottom: 0;
+  }
   &
     .report-captioned.report-before-after-swap[data-view="overlay"]
     .report-before-after-side:nth-child(3)

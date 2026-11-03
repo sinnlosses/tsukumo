@@ -136,11 +136,9 @@
     background: none;
   }
   & .report-captioned.report-before-after-swap .report-before-after-label {
-    position: absolute;
-    inset: 10px auto auto 10px;
-    z-index: 1;
-    display: flex;
+    display: inline-flex;
     align-items: center;
+    margin-bottom: var(--space-xs);
     height: 22px;
     padding: 0 var(--space-sm);
     border: 1px solid var(--rule);
