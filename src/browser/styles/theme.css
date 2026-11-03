@@ -141,6 +141,7 @@
     var(--accent) 92%,
     var(--ground)
   ); /* 流れ（flow）の丸・線、画像の部品の「図 n」の番号 */
+  --report-chart-reference: var(--graph-return); /* グラフの基準線（目標・上限）の点線と名前 */
 
   /* タイプスケール。字の下限は 12px。 */
   --font-label: 0.75rem;

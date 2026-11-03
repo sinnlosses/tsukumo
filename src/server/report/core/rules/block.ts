@@ -21,6 +21,7 @@ import {
   badCardsIn,
   crowdedNoteCount,
   drawsShape,
+  hasBadChartAnnotation,
   hasBadRegion,
   hasShortSeries,
   hasUnknownEmphasis,
@@ -77,6 +78,8 @@ export type BlockViolation =
   | { readonly kind: "ragged-chart"; readonly count: number }
   /** `emphasis` に `labels` に無い名前がある `chart` の塊がある。`count` は塊の数。 */
   | { readonly kind: "unknown-emphasis"; readonly count: number }
+  /** `references`・`annotations` を `line` 以外に付けた、または `annotations` の `label` が `series` に無いか `index` が `labels` の外の `chart` の塊がある。`count` は塊の数。 */
+  | { readonly kind: "chart-annotation-range"; readonly count: number }
   /** `stats` の項目の `series` が1〜2個のものがある塊がある。`count` は塊の数。 */
   | { readonly kind: "short-series"; readonly count: number }
   /** `path` を付けた `code` の塊が、そのファイルの中身と一致しない。`paths` は一致しなかった `path`（重複無し）。 */
@@ -166,6 +169,10 @@ export function detectBlockViolations(
       kind: "unknown-emphasis",
       count: drawn.filter((leaf) => hasUnknownEmphasis(leaf)).length,
     },
+    {
+      kind: "chart-annotation-range",
+      count: drawn.filter((leaf) => hasBadChartAnnotation(leaf)).length,
+    },
     { kind: "short-series", count: drawn.filter((leaf) => hasShortSeries(leaf)).length },
     {
       kind: "code-mismatch",
@@ -200,6 +207,7 @@ const BLOCK_KINDS: ReadonlySet<string> = new Set<BlockViolation["kind"]>([
   "long-code",
   "ragged-chart",
   "unknown-emphasis",
+  "chart-annotation-range",
   "short-series",
   "code-mismatch",
   "code-marks-range",
@@ -249,6 +257,8 @@ export function blockViolationMessage(violation: BlockViolation): string {
       return `\`emphasisColumn\` が列の数以上の表が${violation.count}個ある。列の数より小さい位置（0 始まり）にする`
     case "unknown-emphasis":
       return `\`emphasis\` に \`labels\` に無い名前がある \`Chart\` が${violation.count}個ある。\`labels\` にある名前だけにする`
+    case "chart-annotation-range":
+      return `\`references\`・\`annotations\` を \`line\` 以外に付けた、または \`annotations\` の \`label\` が \`series\` の \`name\` に無いか \`index\` が \`labels\` の外の \`Chart\` が${violation.count}個ある。\`line\` に付け、\`label\` は \`series\` の \`name\`、\`index\` は \`labels\` の数より小さい位置（0 始まり）にする`
     case "short-series":
       return `\`Stats\` の \`series\` が1〜2個の項目がある部品が${violation.count}個ある。3つ以上にするか省く`
     case "code-mismatch":

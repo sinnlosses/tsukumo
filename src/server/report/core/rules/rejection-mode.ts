@@ -39,6 +39,7 @@ export const REPORT_REJECTION_MODES = {
   "long-code": "reject",
   "ragged-chart": "reject",
   "unknown-emphasis": "reject",
+  "chart-annotation-range": "reject",
   "short-series": "reject",
   "untitled-section": "count",
   "markdown-notation": "reject",

@@ -179,6 +179,24 @@ export const chartBlockSchema = z
     emphasis: omittable(inlineText.array(), []).describe(
       "題の主語だけ（labels の一部）。bar・pie・share で差し色",
     ),
+    references: z
+      .array(z.object({ value: z.number(), label: inlineText }))
+      .optional()
+      .describe(
+        "line だけ。目標・上限の水平の基準線（label は右端の名前）。目標を全部同じ値の2本目の series で書かず、ここに書く",
+      ),
+    annotations: z
+      .array(
+        z.object({
+          label: inlineText,
+          index: z.number().int().min(0),
+          text: inlineText,
+        }),
+      )
+      .optional()
+      .describe(
+        "line だけ。基準線を越えた点などの注記（label は series の name、index は labels の 0 始まりの位置、text は値と一言）",
+      ),
     fold,
     aside,
   })

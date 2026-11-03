@@ -34,6 +34,9 @@ type ChartBody = {
       }
     | Record<string, never>
     | { readonly plugins: SeriesPlugins }
+    | { readonly plugins: MarksPlugins }
+    | { readonly plugins: DirectLabelPlugins }
+    | { readonly plugins: DirectLabelPlugins & MarksPlugins }
     | {
         readonly indexAxis: "y"
         readonly scales: { readonly y: { readonly display: false } }
@@ -69,6 +72,18 @@ type DirectLabelPlugins = {
   }
 }
 
+/** `series` は `datasets` の位置。 */
+export type ChartMarks = {
+  readonly references: readonly { readonly value: number; readonly label: string }[]
+  readonly annotations: readonly {
+    readonly series: number
+    readonly index: number
+    readonly text: string
+  }[]
+}
+
+type MarksPlugins = { readonly "tsukumo-chart-marks": ChartMarks }
+
 const ARROW_BAR_THICKNESS = 4
 const SPAN_BAR_THICKNESS = 12
 export const SHARE_BAR_THICKNESS = 36
@@ -82,6 +97,7 @@ const CHART_FRAME_HEIGHT = 48
  * `span` は項目ごとの始まり〜終わりを矢じりの無い太い浮き棒にする。`share` は先頭の系列を百分率にして、部分ごとに1系列の積み上げ横棒1本にする。
  * どれも項目名・部分の名前は plugin が書くので、縦の軸（`y`）は出さない。
  * `annotation.values` は `plot` 由来の印で、line は線端に系列名と終点の値、pie は項目名と値を plugin に書かせる。
+ * line の基準線（`references`）と点の注記（`annotations`）も plugin に描かせる。
  */
 export function chartConfigOf(
   block: Extract<ReportBlock, { readonly kind: "chart" }>,
@@ -170,7 +186,21 @@ export function chartConfigOf(
       },
     }
   }
-  if (annotation.values && (block.chartKind === "line" || block.chartKind === "pie")) {
+  if (block.chartKind === "line") {
+    const marks = marksPluginsOf(block)
+    if (!annotation.values) {
+      return { type: block.chartKind, data, options: marks }
+    }
+    const direct = {
+      "tsukumo-direct-label": { mode: "values", names: [] },
+    } satisfies DirectLabelPlugins
+    return {
+      type: block.chartKind,
+      data,
+      options: { plugins: "plugins" in marks ? { ...direct, ...marks.plugins } : direct },
+    }
+  }
+  if (annotation.values && block.chartKind === "pie") {
     return {
       type: block.chartKind,
       data,
@@ -370,6 +400,20 @@ function svgText(
     centered,
     sub,
   }
+}
+
+/** 基準線と点の注記を、描く側の plugin に渡す。注記の系列は `series` の位置に直し、名指しの外れた注記は描かない。 */
+function marksPluginsOf(
+  block: Extract<ReportBlock, { readonly kind: "chart" }>,
+): { readonly plugins: MarksPlugins } | Record<string, never> {
+  const references = block.references ?? []
+  const annotations = (block.annotations ?? []).flatMap(({ label, index, text }) => {
+    const series = block.series.findIndex(({ name }) => name === label)
+    return series < 0 || index >= block.labels.length ? [] : [{ series, index, text }]
+  })
+  return references.length === 0 && annotations.length === 0
+    ? {}
+    : { plugins: { "tsukumo-chart-marks": { references: [...references], annotations } } }
 }
 
 /**

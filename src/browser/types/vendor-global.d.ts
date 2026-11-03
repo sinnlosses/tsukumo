@@ -72,6 +72,11 @@ declare global {
     readonly register: (plugin: {
       readonly id: string
       readonly beforeLayout?: (chart: ChartInstance) => void
+      /** 軸がデータから値の範囲を決めた直後。`scale.min`・`scale.max` を書き換えると、目盛りはその範囲で組まれる。 */
+      readonly afterDataLimits?: (
+        chart: ChartInstance,
+        args: { readonly scale: { readonly id: string; min: number; max: number } },
+      ) => void
       readonly afterDatasetsDraw?: (chart: ChartInstance) => void
       readonly beforeUpdate?: (chart: {
         readonly config: {
@@ -94,8 +99,13 @@ declare global {
   type ChartInstance = {
     readonly ctx: CanvasRenderingContext2D
     readonly canvas: HTMLCanvasElement
-    /** 描く領域（余白の内側）の左端の座標と、canvas 全体の幅。 */
-    readonly chartArea: { readonly left: number }
+    /** 描く領域（余白の内側）の四辺の座標と、canvas 全体の幅。 */
+    readonly chartArea: {
+      readonly left: number
+      readonly right: number
+      readonly top: number
+      readonly bottom: number
+    }
     readonly width: number
     readonly config: { readonly type: string }
     readonly data: {

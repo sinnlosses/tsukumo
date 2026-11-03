@@ -289,4 +289,37 @@ describe("chartConfigOf", () => {
     expect(chartConfigOf(chartOf("bar", one, false))).not.toHaveProperty("tsukumo")
     expect(chartConfigOf(chartOf("share", one, true))).not.toHaveProperty("tsukumo")
   })
+
+  describe("line の基準線と点の注記", () => {
+    const reference = { value: 1.5, label: "架空の目標" }
+    const marked: ChartBlock = {
+      ...chartOf("line", two, false),
+      references: [reference],
+      annotations: [
+        { label: "架空系列2", index: 1, text: "架空の注記" },
+        { label: "架空系列3", index: 0, text: "系列名の外れ" },
+        { label: "架空系列1", index: 2, text: "位置の外れ" },
+      ],
+    }
+    const marks = {
+      "tsukumo-chart-marks": {
+        references: [reference],
+        annotations: [{ series: 1, index: 1, text: "架空の注記" }],
+      },
+    }
+
+    it("系列名を datasets の位置に直して plugin に渡し、名指しの外れた注記は落とす", () => {
+      expect(chartConfigOf(marked).options).toEqual({ plugins: marks })
+    })
+
+    it("plot 由来の値の印と並べて渡す", () => {
+      expect(chartConfigOf(marked, { values: true }).options).toEqual({
+        plugins: { "tsukumo-direct-label": { mode: "values", names: [] }, ...marks },
+      })
+    })
+
+    it("基準線も注記も無ければ何も足さない", () => {
+      expect(chartConfigOf(chartOf("line", one, false)).options).toEqual({})
+    })
+  })
 })

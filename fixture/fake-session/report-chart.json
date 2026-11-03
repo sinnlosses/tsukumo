@@ -84,6 +84,32 @@
               },
               {
                 "kind": "chart",
+                "chartKind": "line",
+                "labels": [
+                  "架空5か月前",
+                  "架空4か月前",
+                  "架空3か月前",
+                  "架空2か月前",
+                  "架空先月",
+                  "架空今月"
+                ],
+                "series": [
+                  {
+                    "name": "架空稼働率",
+                    "values": [99.95, 99.94, 99.88, 99.98, 99.92, 99.82]
+                  }
+                ],
+                "references": [{ "value": 99.9, "label": "架空目標 99.9" }],
+                "annotations": [
+                  { "label": "架空稼働率", "index": 2, "text": "99.88 一度目の割れ込み" },
+                  { "label": "架空稼働率", "index": 5, "text": "今月 99.82（−0.08）" }
+                ],
+                "horizontal": false,
+                "fold": "",
+                "aside": ""
+              },
+              {
+                "kind": "chart",
                 "chartKind": "pie",
                 "labels": ["架空内訳A", "架空内訳B", "架空内訳C"],
                 "series": [

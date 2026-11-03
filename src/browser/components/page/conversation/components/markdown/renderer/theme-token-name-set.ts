@@ -77,6 +77,7 @@ export const THEME_TOKEN_NAMES: ReadonlySet<string> = new Set([
   "radius-xl",
   "report-change-added",
   "report-change-removed",
+  "report-chart-reference",
   "report-code-surface",
   "report-heading-2",
   "report-heading-3",

@@ -189,6 +189,36 @@ describe("A2UI のカタログ文書", () => {
     expect(JSON.stringify(document.components.Table)).toContain("emphasisColumn")
   })
 
+  it("Chart は基準線と注記を任意で受け、目標を references で書くと説明する", () => {
+    const base = {
+      id: "c",
+      component: "Chart",
+      chartKind: "line",
+      labels: ["前月", "今月"],
+      series: [{ name: "稼働率", values: [99.95, 99.82] }],
+    }
+    const schema = REPORT_COMPONENT_SCHEMAS.Chart
+    const annotation = { label: "稼働率", index: 1, text: "今月 99.82" }
+
+    expect(schema.safeParse(base).success).toBe(true)
+    expect(
+      schema.safeParse({
+        ...base,
+        references: [{ value: 99.9, label: "目標 99.9" }],
+        annotations: [annotation],
+      }).success,
+    ).toBe(true)
+    expect(schema.safeParse({ ...base, annotations: [{ ...annotation, index: -1 }] }).success).toBe(
+      false,
+    )
+    expect(
+      schema.safeParse({ ...base, annotations: [{ ...annotation, index: 0.5 }] }).success,
+    ).toBe(false)
+    expect(JSON.stringify(document.components.Chart)).toContain(
+      "目標を全部同じ値の2本目の series で書かず",
+    )
+  })
+
   it("元の zod の説明が部品の props に運ばれる", () => {
     expect(JSON.stringify(document.components.Claims)).toContain("howToVerify")
   })

@@ -152,6 +152,21 @@ export function isRaggedChart(leaf: ReportOutlineLeaf): boolean {
   )
 }
 
+/**
+ * 基準線・注記を line 以外に付けた、または注記の系列名が series に無いか位置が labels の外の Chart か。
+ */
+export function hasBadChartAnnotation(leaf: ReportOutlineLeaf): boolean {
+  if (leaf.component !== "Chart") return false
+  const references = leaf.references ?? []
+  const annotations = leaf.annotations ?? []
+  if (leaf.chartKind !== "line") return references.length > 0 || annotations.length > 0
+  const seriesNames = leaf.series.map((series) => series.name)
+  return annotations.some(
+    (annotation) =>
+      !seriesNames.includes(annotation.label) || annotation.index >= leaf.labels.length,
+  )
+}
+
 export function hasUnknownEmphasis(leaf: ReportOutlineLeaf): boolean {
   return leaf.component === "Chart" && leaf.emphasis.some((name) => !leaf.labels.includes(name))
 }

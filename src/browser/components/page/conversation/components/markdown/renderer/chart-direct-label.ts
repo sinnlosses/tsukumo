@@ -1,5 +1,6 @@
 // グラフの凡例を出さない代わりに、系列名・項目名を線と棒の端に直接書く Chart.js の plugin。
 // arrow・slope・span・share の種類と系列名は `options.plugins["tsukumo-direct-label"]` から読む。
+// 折れ線の基準線と点の注記も、系列名の札と重ならないよう同じ plugin で描く。
 
 import { SHARE_BAR_THICKNESS } from "../../../domain/report-diagram-markdown.ts"
 import {
@@ -20,6 +21,13 @@ import {
   shareLabelRows,
   spreadLabels,
 } from "./chart-label-layout.ts"
+import {
+  chartMarksOf,
+  drawAnnotations,
+  drawReferences,
+  referenceLabelsOf,
+  widenToReferences,
+} from "./chart-reference-mark.ts"
 import { resolveColor } from "./theme-color.ts"
 
 const DIRECT_LABEL_PLUGIN_ID = "tsukumo-direct-label"
@@ -49,6 +57,12 @@ export const directLabelPlugin = {
       fitShareHeight(chart, padding.bottom)
     }
   },
+  afterDataLimits: (
+    chart: ChartInstance,
+    { scale }: { readonly scale: { readonly id: string; min: number; max: number } },
+  ): void => {
+    widenToReferences(chart, scale)
+  },
   afterDatasetsDraw: (chart: ChartInstance): void => {
     const { ctx } = chart
     ctx.save()
@@ -67,6 +81,7 @@ export const directLabelPlugin = {
       drawPie(chart, option?.mode === "values")
     } else if (chart.config.type === "line") {
       drawLineEnds(chart, option?.mode === "values")
+      drawAnnotations(chart)
     } else if (chart.config.type === "bar") {
       drawBarEnds(chart)
     }
@@ -109,10 +124,19 @@ function paddingFor(chart: ChartInstance): Padding {
         top: PIE_VERTICAL_PADDING,
         bottom: PIE_VERTICAL_PADDING,
       }
-    case "line":
+    case "line": {
+      const references = chartMarksOf(chart).references
+      if (references.length > 0) {
+        const labelWidth = measuredWidth(
+          chart.ctx,
+          references.map(({ label }) => label),
+        )
+        return { ...none, right: Math.max(SERIES_SIDE_PADDING, LABEL_OFFSET + labelWidth) }
+      }
       return seriesCount > 1 || option?.mode === "values"
         ? { ...none, right: SERIES_SIDE_PADDING }
         : none
+    }
     case "bar":
       return barEndPadding(chart.options.indexAxis === "y", seriesCount, barEndTextWidth(chart))
     default:
@@ -132,17 +156,22 @@ function widestText(ctx: CanvasRenderingContext2D, texts: readonly string[]): nu
   return Math.max(0, ...texts.map((text) => ctx.measureText(text).width))
 }
 
+function measuredWidth(ctx: CanvasRenderingContext2D, texts: readonly string[]): number {
+  ctx.save()
+  ctx.font = labelFont()
+  const width = widestText(ctx, texts)
+  ctx.restore()
+  return width
+}
+
 // 項目名と前後の数字の字の幅から、左右の余白を決める。`beforeLayout` でも呼ぶので、描く領域（`chartArea`）はまだ無く、読まない。
 function arrowExtent(chart: ChartInstance, head: number) {
   const { ctx } = chart
   const values = (chart.data.datasets[0]?.data ?? []).flatMap((pair) =>
     Array.isArray(pair) ? pair.filter((value) => typeof value === "number").map(String) : [],
   )
-  ctx.save()
-  ctx.font = labelFont()
-  const names = widestText(ctx, chart.data.labels)
-  const valueWidth = widestText(ctx, values)
-  ctx.restore()
+  const names = measuredWidth(ctx, chart.data.labels)
+  const valueWidth = measuredWidth(ctx, values)
   const nameWidth = Math.min(names, chart.width * NAME_COLUMN_SHARE)
   return { ...arrowPadding(nameWidth, valueWidth, head), nameWidth }
 }
@@ -230,18 +259,21 @@ function drawPie(chart: ChartInstance, withValues: boolean): void {
   })
 }
 
+// 基準線があるときは系列が1つでも系列名を書き、基準線の名前と合わせて縦に離す。
 function drawLineEnds(chart: ChartInstance, withValues: boolean): void {
-  if (chart.data.datasets.length < 2 && !withValues) {
+  const references = referenceLabelsOf(chart)
+  if (chart.data.datasets.length < 2 && !withValues && references.length === 0) {
     return
   }
   const ends = visibleEnds(chart, withValues)
   const ys = spreadLabels(
-    ends.map(({ point }) => point.y),
+    [...ends.map(({ point }) => point.y), ...references.map(({ y }) => y)],
     LABEL_GAP,
   )
   ends.forEach(({ point, label }, index) => {
     drawText(chart.ctx, label, point.x + LABEL_OFFSET, ys[index] ?? point.y, "left", "middle")
   })
+  drawReferences(chart, references, ys.slice(ends.length))
 }
 
 function visibleEnds(chart: ChartInstance, withValues: boolean) {

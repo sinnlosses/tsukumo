@@ -73,6 +73,7 @@ const VIOLATION_THRESHOLDS = {
   "long-code": 0,
   "ragged-chart": 0,
   "unknown-emphasis": 0,
+  "chart-annotation-range": 0,
   "short-series": 0,
   "untitled-section": 0,
   "markdown-notation": 0,
