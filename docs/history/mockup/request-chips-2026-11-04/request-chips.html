@@ -1,0 +1,130 @@
+<!doctype html>
+<!-- 依頼の塊の見本。採ったのは右下の案C「依頼を札にほどく」。ほかの3枚は比べた残り。
+     案C には「全文」の口を描き漏らしている（地の文が3行以上のときだけ出す）。 -->
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<style>
+  :root{
+    --ground:#191720; --surface:#221f2b; --ink:#e8e3ea; --accent:#f2b0a0;
+    --ink-quiet:color-mix(in srgb,var(--ink) 60%,transparent);
+    --ink-soft:color-mix(in srgb,var(--ink) 72%,transparent);
+    --ink-bright:#f7f6f8;
+    --rule-quiet:color-mix(in srgb,var(--surface),var(--ink) 6%);
+    --rule-soft:color-mix(in srgb,var(--surface),var(--ink) 12%);
+    --rule:color-mix(in srgb,var(--surface),var(--ink) 32%);
+    --surface-raised:color-mix(in srgb,var(--ink) 10%,transparent);
+    --surface-accent:color-mix(in srgb,var(--surface),var(--accent) 12%);
+    --sans:system-ui,"Hiragino Sans",sans-serif;
+    --serif:"Hiragino Mincho ProN","Yu Mincho",serif;
+    --mono:"IBM Plex Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.75;padding:28px}
+  .grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:22px;max-width:1500px}
+  .plate{background:var(--surface);border:1px solid var(--rule-quiet);border-radius:10px;padding:22px 26px 24px}
+  .plate-name{font-size:13px;color:var(--ink-soft);margin:0 0 4px}
+  .plate-name b{color:var(--ink-bright);font-weight:600;margin-right:8px}
+  .plate-aim{font-size:12px;color:var(--ink-quiet);margin:0 0 18px;line-height:1.6}
+  .card{border-top:1px solid var(--rule-quiet);padding-top:18px}
+  .concl{font-size:17px;font-weight:600;color:var(--ink-bright);margin:0 0 10px;line-height:1.6}
+  .sec{font-size:13px;color:var(--ink-quiet);margin:0}
+  .sec::before{content:"";display:block;height:8px;width:62%;background:var(--rule-soft);border-radius:4px;margin:10px 0 7px}
+  .sec::after{content:"";display:block;height:8px;width:44%;background:var(--rule-soft);border-radius:4px}
+  .more{color:var(--accent);font-size:12px;white-space:nowrap;display:inline-flex;align-items:center;gap:4px}
+  .more::before{content:"";width:10px;height:10px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:translateY(-3px) rotate(45deg) scale(.7)}
+
+  .now{display:flex;align-items:baseline;gap:12px;color:var(--ink-quiet);font-size:13px;margin-bottom:18px}
+  .now .lab{flex:none}
+  .now .line{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+  .qa{display:grid;grid-template-columns:3.2em 1fr;column-gap:14px;row-gap:14px;align-items:baseline}
+  .qa .k{font-size:12px;color:var(--ink-quiet);text-align:right}
+  .qa .q{font-size:14.5px;color:var(--ink-soft);line-height:1.7;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .qa .q-foot{grid-column:2;margin-top:-10px;display:flex;gap:14px;align-items:center;font-size:12px;color:var(--ink-quiet)}
+  .qa .a{font-size:17px;font-weight:600;color:var(--ink-bright);line-height:1.6}
+  .qa .rule{grid-column:1/-1;height:1px;background:var(--rule-quiet)}
+
+  .slip{position:relative;margin:2px 0 22px;padding:14px 20px 12px 22px;
+    background:
+      repeating-linear-gradient(to bottom,transparent 0 27px,color-mix(in srgb,var(--ink) 7%,transparent) 27px 28px),
+      color-mix(in srgb,var(--surface),var(--ink) 5%);
+    background-position:0 10px;
+    border-radius:3px;
+    clip-path:polygon(0 0,calc(100% - 18px) 0,100% 18px,100% 100%,0 100%);
+    transform:rotate(-.35deg);
+    font-family:var(--serif);font-size:16px;line-height:28px;color:var(--ink);
+  }
+  .slip::after{content:"";position:absolute;right:0;top:0;width:18px;height:18px;background:color-mix(in srgb,var(--surface),var(--ink) 14%);clip-path:polygon(0 0,0 100%,100% 100%)}
+  .slip .from{font-family:var(--sans);font-size:12px;color:var(--ink-quiet);display:flex;justify-content:space-between;line-height:20px;margin-bottom:4px}
+  .slip .txt{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+  .slip .foot{font-family:var(--sans);display:flex;justify-content:flex-end;margin-top:2px}
+
+  .tags{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:8px}
+  .chip{font-size:12px;line-height:22px;padding:0 9px;border-radius:6px;background:var(--surface-raised);color:var(--ink-soft)}
+  .chip.cmd{font-family:var(--mono);color:var(--ink)}
+  .chip.task{background:var(--surface-accent);color:var(--accent);font-family:var(--mono)}
+  .thumbs{display:flex;gap:6px}
+  .thumb{width:44px;height:30px;border-radius:4px;background:linear-gradient(135deg,#3a3646,#2b2836);outline:1px solid var(--rule-quiet)}
+  .c-text{font-size:14.5px;color:var(--ink-soft);line-height:1.7;margin:0 0 18px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+</style>
+</head>
+<body>
+<div class="grid">
+
+  <section class="plate">
+    <p class="plate-name"><b>今</b>見出し・1行目・「全文」を1行に</p>
+    <p class="plate-aim">2行目以降と画像は開くまで見えない。依頼が何だったかは1行目の切れ端で推すことになる。</p>
+    <div class="now"><span class="lab">依頼</span><span class="line">設定画面で「保存」を押しても何も起きないことがある。ネットワークのタブを見ると保存の要求が飛んでいないので、押した判定のところから原因を探して直してほしい。直したら、</span><span class="more">全文</span></div>
+    <div class="card">
+      <p class="concl">保存ボタンが、入力の直後でも1回で効くようになった。</p>
+      <p class="sec">原因は入力の確定待ち</p>
+    </div>
+  </section>
+
+  <section class="plate">
+    <p class="plate-name"><b>案A</b>問いと答えの段組み</p>
+    <p class="plate-aim">「依頼」と「結論」を同じ吊り下げの列に並べ、問い→答えの対として読ませる。依頼は2行まで見せる。</p>
+    <div class="qa">
+      <span class="k">依頼</span>
+      <span class="q">設定画面で「保存」を押しても何も起きないことがある。ネットワークのタブを見ると保存の要求が飛んでいないので、押した判定のところから原因を探して直してほしい。直したら、何が原因だったか教えて。</span>
+      <span class="q-foot"><span>画像 2枚</span><span class="more">全文</span></span>
+      <span class="rule"></span>
+      <span class="k">結論</span>
+      <span class="a">保存ボタンが、入力の直後でも1回で効くようになった。</span>
+    </div>
+    <p class="sec" style="margin-left:calc(3.2em + 14px)">原因は入力の確定待ち</p>
+  </section>
+
+  <section class="plate">
+    <p class="plate-name"><b>案B</b>手渡しの紙片</p>
+    <p class="plate-aim">依頼だけ帳面の罫と明朝で書き、「きみが渡した紙」と「ボクが書いた報告」の声を分ける。</p>
+    <div class="slip">
+      <div class="from"><span>きみの依頼　11月4日 14:32</span><span>画像 2枚</span></div>
+      <div class="txt">設定画面で「保存」を押しても何も起きないことがある。ネットワークのタブを見ると保存の要求が飛んでいないので、押した判定のところから原因を探して直してほしい。直したら、何が原因だったか教えて。</div>
+      <div class="foot"><span class="more">全文</span></div>
+    </div>
+    <div class="card" style="border-top:0;padding-top:6px">
+      <p class="concl">保存ボタンが、入力の直後でも1回で効くようになった。</p>
+      <p class="sec">原因は入力の確定待ち</p>
+    </div>
+  </section>
+
+  <section class="plate">
+    <p class="plate-name"><b>案C</b>依頼を札にほどく</p>
+    <p class="plate-aim">slash コマンド・タスクID・添えた画像を札に起こし、残りの地の文だけを字で見せる。コマンドだけの依頼でも何を頼んだかが読める。</p>
+    <div class="tags">
+      <span class="chip cmd">/next-task</span><span class="chip task">GH-2100</span>
+      <span class="chip">台本の計画の段数を届ける</span>
+      <span class="thumbs"><span class="thumb"></span><span class="thumb"></span></span>
+    </div>
+    <p class="c-text">計画のあとも実装の段に番号が付くようにしてほしい。</p>
+    <div class="card">
+      <p class="concl">台本で計画を書き直しても、実装の段に段の数の番号が付く。</p>
+      <p class="sec">段の数を届ける場面を足した</p>
+    </div>
+  </section>
+
+</div>
+</body>
+</html>
