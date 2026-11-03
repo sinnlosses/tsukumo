@@ -22,12 +22,11 @@ const DECLARE_CLAUSE = [
 
 const LAYOUT_COMPONENTS: readonly string[] = ["Row", "Column", "Card", "Tabs"]
 
-// 使われ方の記録の集計の「図の部品」（Graph・Chart・Picture・BeforeAfter・Compare）に、図に当たる未使用の部品を足した
+// 使われ方の記録の集計の「図の部品」（Graph・Chart・Picture・Compare）に、図に当たる未使用の部品を足した
 const FIGURE_COMPONENTS: readonly string[] = [
   "Graph",
   "Chart",
   "Picture",
-  "BeforeAfter",
   "Compare",
   "Stats",
   "Timeline",

@@ -74,7 +74,7 @@ node scripts/capture/compare-html.ts --html /tmp/html-comparison/<日付>/<id>/p
 
 ### 6. 結果を報告する
 
-- 題材ごとに、2枚の画像（同じ幅）と観点の表を並べる。画像は `report` の `BeforeAfter`（image の両側）か `Picture` で載せる
+- 題材ごとに、2枚の画像（同じ幅）と観点の表を並べる。画像は `report` の `Compare`（`relation: versus`、側は image）か `Picture` で載せる
 - 全体は「観点 × 題材」で HTML が勝った数を数え、多い観点から並べる。積んだドラフトの ID を添える
 - 利用者が記録を残したいと言ったら、`docs/research/html-comparison-<日付>/index.md` に表と画像を置く（画像は架空の題材なので写してよい）
 

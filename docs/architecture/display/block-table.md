@@ -34,9 +34,9 @@
   文字だけで、判定の色は持たない。**カードの中はインラインの文字の箇条だけ**（コードは `code` の `diff`、図は
   `mermaid`、値を揃えるなら `table`）。使い分けは、判定（採る・検討・採らない）を付けるなら `options`、項目ごとに
   両側の値を揃えるなら `table`（セルの `from` / `to` は1つの値の前後）、3つ以上は `table`、**向きのある変化（前 → 後）は
-  `beforeAfter`**（`compare` は向きの無い2つ〔案A と案B〕に絞り、側の見出しは書き手が付けるまま）。
+  `compare` の `relation: before-after`**（`relation` が `versus`〔既定〕なら向きの無い2つ〔案A と案B〕で、側の見出しは書き手が付けるまま）。
   取り違えは差し戻さず、同じ記録で見る
-- **変更の前と後は `beforeAfter`（前後）の部品で左右に並べる**（`title`・`before`・`after` を受け、
+- **変更の前と後は `compare` の `relation: before-after` で左右に並べる**（`title`・`sides`〔左が前・右が後〕を受ける。旧い `beforeAfter`〔`before`・`after`〕は読み戻しで `compare` に写す。`docs/architecture/adr/0047-compare-relation.md`。
   側はちょうど2つ。3つ以上の並びは `table`）。側は `kind` で判別する合併型で、`image`〔`path`と任意の `region`〕/ `code`〔`language`・
   `source`。`diff` にせずその側の中身をそのまま書く〕/ `points`〔短い1行の並び〕/ `mermaid`〔`source` だけ。
   `sequenceDiagram`・`stateDiagram-v2` で、時間の順の前後に使う。種類の外なら差し戻し、位置は `mermaid` のソースの出現順で言う〕/
@@ -74,8 +74,8 @@
   - 使い分けは、向きの無い2つは `compare`、1つの値の前後は表のセルの `from` / `to` か
     `stats` の `before`、行ごとの差分は `code` の `diff`、構造の前後は `graph` の印。
     書き手への規約（記法の「図の有無は利用者の既定に従う」の原則と「確かめたことは断定し…」の条）は、図の問いと関係の申告を言い、画面を変えた作業は撮った画像を `image` で載せ、
-    同じ場面の2枚は `beforeAfter` で並べる（見た目に出ない・撮れないときは `checks` の `unobserved` に理由）。
-    1行の変更に使わせない旨は `beforeAfter` の `describe` が持つ。
+    同じ場面の前後の2枚は `compare` の `relation: before-after` で並べる（見た目に出ない・撮れないときは `checks` の `unobserved` に理由）。
+    1行の変更に使わせない旨は `compare` の `describe` が持つ。
   - 箇条の側が6つ以上なら `options`・`compare` と同じ違反で差し戻す。取り違えは差し戻さず、
     使われ方の記録の「塊の種類 × レポート数」で見る
 - **問い・データ・関係を申告する図は `plot` の部品で受け、形ごとの描き方が入るまでは表として描く**（`question`・`data` の列・`relation` と任意の `form`。

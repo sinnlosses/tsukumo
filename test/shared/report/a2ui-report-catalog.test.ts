@@ -91,14 +91,19 @@ function withoutComponent(document: Document, name: string): { components: objec
 
 describe("A2UI のカタログ文書", () => {
   const document = buildReportCatalogDocument()
-  const expected = ["Report", "Section", ...Object.values(KIND_TO_COMPONENT), ...BASIC_COMPONENTS]
+  const expected = [
+    "Report",
+    "Section",
+    ...Object.values(KIND_TO_COMPONENT).filter((component) => component !== "BeforeAfter"),
+    ...BASIC_COMPONENTS,
+  ]
 
   it("書き手に渡す塊の全種類が部品の対応表にある", () => {
     expect(Object.keys(KIND_TO_COMPONENT).toSorted()).toEqual([...REPORT_BLOCK_KINDS].toSorted())
   })
 
-  it("根・節・葉 22 種・基本 6 部品の 30 部品が全部残る", () => {
-    expect(expected).toHaveLength(30)
+  it("根・節・葉 21 種・基本 6 部品の 29 部品が全部残る", () => {
+    expect(expected).toHaveLength(29)
     expect(findMissingComponents(document, expected)).toEqual([])
   })
 
@@ -195,7 +200,7 @@ describe("A2UI のカタログ文書", () => {
     expect(leaf).not.toContain('"kind"')
   })
 
-  it("受理の形の表は文書と同じ 30 部品を持つ", () => {
+  it("受理の形の表は文書と同じ 29 部品を持つ", () => {
     expect(Object.keys(REPORT_COMPONENT_SCHEMAS).toSorted()).toEqual(expected.toSorted())
   })
 

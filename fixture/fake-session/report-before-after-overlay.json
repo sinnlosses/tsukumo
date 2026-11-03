@@ -36,16 +36,19 @@
             "heading": "架空の同じ大きさの前後",
             "blocks": [
               {
-                "kind": "beforeAfter",
+                "kind": "compare",
+                "relation": "before-after",
                 "title": "架空の色の違う同じ大きさの画面",
-                "before": {
-                  "kind": "image",
-                  "path": "report-image-fixture/same-before.png"
-                },
-                "after": {
-                  "kind": "image",
-                  "path": "report-image-fixture/same-after.png"
-                },
+                "sides": [
+                  {
+                    "kind": "image",
+                    "path": "report-image-fixture/same-before.png"
+                  },
+                  {
+                    "kind": "image",
+                    "path": "report-image-fixture/same-after.png"
+                  }
+                ],
                 "fold": "",
                 "aside": ""
               }

@@ -5,7 +5,7 @@
 - **寸法は専用の部品を持たない**（`dimension`〔寸法図〕の部品は直近 28 日で使われた記録が 0 回で外した。寸法は `table` か、
   位置・重なりなら `svg` で書く。旧い記録の `dimension` は読み戻しで知らない種類の部品として落とす）
 - **手で確かめた画面は `image` の部品で画像として見せる**（`path`〔撮ったファイル。絶対か cwd からの
-  相対〕・`caption`〔何が見えるかの1行〕を受け、1つの部品に1枚）。**前後は `beforeAfter` の部品で左右に並べる**。
+  相対〕・`caption`〔何が見えるかの1行〕を受け、1つの部品に1枚）。**前後は `compare` の `relation: before-after` で左右に並べる**（旧い `beforeAfter` は読み戻しで写す。`docs/architecture/adr/0047-compare-relation.md`）。
   **`checks` の行とは結ばない**（何を確かめた画像かは `caption` に書く）。
   画像は描いた `report` を受けた時点でサーバが1回読んでメモリの置き場に置き（復元のあとの読み直しは「画像を描く条件」）、
   鍵は `report` の呼び出しの id と部品に書かれたままのパスの組。ブラウザは `/report-image/<toolUseId>/<path>`（起動トークン付き）で
@@ -23,13 +23,13 @@
   並びは親の幅を取るので外枠を縮めない（`notes` が空なら本体の幅に縮める）。画像が読めないときも、並びは
   「画像を出せない」のカードの横に残る。6つ以上は `options`・`compare` と同じ違反で差し戻す
 - **図と表には番号つきの題を付ける**。図（`image`・
-  `compare`・`beforeAfter`・`mermaid`・`graph`・`chart`・`timeline`・`svg`・`stats`）は題を本体の**下**に「図 n」、表（`table`・`matrix`・表として描く間の `plot`）は
+  `compare`・`mermaid`・`graph`・`chart`・`timeline`・`svg`・`stats`）は題を本体の**下**に「図 n」、表（`table`・`matrix`・表として描く間の `plot`）は
   題を本体の**上**に「表 n」。番号は図と表を別々に、セクションをまたいで部品の並びの順に1から数える。
   `options` は候補の採否のカードなので数えない。**題が空でも番号は出し**（題の有無で番号の振り方が変わらない）、
   **`fold` で畳んだ中も数える**（畳んでも番号が飛ばない）。引数は `title`（`image` だけ `caption`）で、`mermaid`・`graph`・`chart`・`timeline`・`svg` は
   `title` を省いてよい。`stats` は `title` を持たないので、番号だけの題の行になる。
   **題は本体の幅を超えない**: `image`・`table`・`matrix`・`svg` は外枠が本体の幅に縮み（20rem を下限にして、
-  短い表の題が何行にも折れないようにする）、題の行は外枠の幅で折り返す。親の幅を取る `chart`・`timeline`・`stats`・`compare`・`beforeAfter` と、
+  短い表の題が何行にも折れないようにする）、題の行は外枠の幅で折り返す。親の幅を取る `chart`・`timeline`・`stats`・`compare` と、
   `pre` に描く `mermaid`・`graph` は、題と凡例の幅を図の幅の段にそろえる（段の選び方は次の項）。題の文字は inline code だけを解く（太字・リンクは効かない）
 - **`mermaid`・`graph` の図は、文字 12px（CSS px。svg の自然な文字 16px × 縮尺）を守る幅の段で描く**。
   図を差したあと、描画後の svg の縮尺を 42em（`body`）→ 63em（`wide`）→ 読む面（`full`）の順に当てて測り、12px 以上になる最初の段にする。

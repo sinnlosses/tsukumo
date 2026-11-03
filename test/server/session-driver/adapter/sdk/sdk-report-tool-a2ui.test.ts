@@ -126,6 +126,27 @@ describe("a2ui の report の受理と差し戻し", () => {
     })
   })
 
+  it("書き手の目録に無い BeforeAfter をツール経由で書くと、入力の検査で差し戻し、描かない", async () => {
+    const live = session()
+    const beforeAfter = {
+      id: "ba",
+      component: "BeforeAfter",
+      before: { points: ["架空の前"] },
+      after: { points: ["架空の後"] },
+    }
+
+    const { reply, drawn } = await live.call([
+      ROOT,
+      { id: "sec", component: "Section", heading: "架空の節", children: ["ba"] },
+      beforeAfter,
+    ])
+
+    expect(reply.isError).toBe(true)
+    expect(reply.text).toContain("Input validation error")
+    expect(drawn).toBeUndefined()
+    expect(live.drafts).toEqual([])
+  })
+
   it("同じターンの 2 回目の構造の違反は差し戻さず、判定へ進む", async () => {
     const live = session()
 

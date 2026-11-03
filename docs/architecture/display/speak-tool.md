@@ -121,7 +121,7 @@
     記録を読み戻す側は、欄が無いものも読める。
     `report` の記録に写り、transcript から組み直しても同じ値が戻る。
   - **任意の引数 `figure` にはレポートの図を1つ置く。置かないときは省く**（ADR 0036）。
-    形は図の部品1つ（`image`・`mermaid`・`graph`・`svg`・`beforeAfter`・`chart`・`timeline`・`stats`・`plot`。`sections` の同じ部品と同じ形）。
+    形は図の部品1つ（`image`・`mermaid`・`graph`・`svg`・`compare`・`chart`・`timeline`・`stats`・`plot`。`sections` の同じ部品と同じ形）。
     旧い形の `{ kind: "none", reason }`（`reason` は `short-answer`・`no-shape`・`single-value`・`no-material` の4つ）も受け、書き手には理由を言わせない。
     図を置く条件は引数の説明だけが持ち、図を置くかの既定（図派 `chart`／文派 `text`）は新しいセッションの既定の4つ目（`figurePreference`）で、
     起こすときの値が説明の文を変える（`text` は同じ置く条件を「なければ図は置かない・あるセクションには置いてよい」の言い方にする。図の部品を拒む検査は無い）。
@@ -129,7 +129,7 @@
     図は `checks` の下・`sections` の上に、見出しの無い先頭のセクションとして描き、図の番号は `sections` の図と通しで振る（`figure` の図が「図 1」）。
     省いた呼び出しと `none` は何も描かない（空の枠やカードも置かない）。図の部品の検査（構文・はみ出し・種類）と画像の置き場も、`figure` を先頭に含めて見る。
     理由を書いた `none` が本文と合わない回は差し戻す（規約違反の1ターン1回の枠。`no-shape` なのに `sections` に
-    `list` の `flow`・`beforeAfter`・`graph`・`mermaid`・`svg` がある回と、`short-answer` なのにセクションが2つ以上ある回）。
+    `list` の `flow`・`compare`・`graph`・`mermaid`・`svg` がある回と、`short-answer` なのにセクションが2つ以上ある回）。
     省いた呼び出し・欄の無い古い transcript の `report`・形の崩れは、理由が `unrecorded` の `none` に畳んで読む（`unrecorded` は書き手には出さない）
 - ターンの途中の経過は `speak` で言う。雑談には `report` を使わない（1ターンに `speak` を何度か呼ぶのが普通の形なので、
   閉じるツールを置くと切れる）。`report` の外に書いたターンの本文（`assistant` のテキスト）は、`report` が1つでも

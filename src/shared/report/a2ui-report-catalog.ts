@@ -46,7 +46,7 @@ import { reportTaskSchema } from "./report-task.ts"
 import { timelineBlockSchema } from "./timeline-block.ts"
 import { traceBlockSchema } from "./trace-block.ts"
 
-/** 部品名と schema。`writerBlockBranches` の 22 種と 1 対 1。 */
+/** 部品名と schema。`LEGACY_LEAF_COMPONENTS` の 1 種と合わせて、`writerBlockBranches` の 22 種と対応する。 */
 const LEAF_COMPONENTS = {
   Paragraph: leafComponent("Paragraph", textBlockSchema),
   ItemList: leafComponent("ItemList", listBlockSchema),
@@ -67,7 +67,6 @@ const LEAF_COMPONENTS = {
   }),
   Matrix: leafComponent("Matrix", matrixBlockSchema),
   Compare: leafComponent("Compare", compareBlockSchema),
-  BeforeAfter: leafComponent("BeforeAfter", beforeAfterBlockSchema),
   Note: leafComponent("Note", noteBlockSchema),
   Stats: leafComponent("Stats", statsBlockSchema),
   Code: leafComponent("Code", codeBlockSchema),
@@ -85,6 +84,11 @@ const LEAF_COMPONENTS = {
   // leafComponent は塊ぜんたいに掛かる検査（superRefine）を写さないので、Plot の data の検査はここで掛け直す
   Plot: leafComponent("Plot", plotBlockSchema).superRefine(addPlotDataIssues),
   Markdown: leafComponent("Markdown", markdownBlockSchema),
+} as const
+
+/** 書き手の目録には出さず、旧い transcript の読み戻しだけが受ける内容部品。 */
+const LEGACY_LEAF_COMPONENTS = {
+  BeforeAfter: leafComponent("BeforeAfter", beforeAfterBlockSchema),
 } as const
 
 /** 内容部品名と、写す先の塊の `kind`。 */
@@ -111,7 +115,10 @@ export const LEAF_COMPONENT_KINDS = {
   Picture: imageBlockSchema.shape.kind.value,
   Plot: plotBlockSchema.shape.kind.value,
   Markdown: markdownBlockSchema.shape.kind.value,
-} as const satisfies Record<keyof typeof LEAF_COMPONENTS, string>
+} as const satisfies Record<
+  keyof typeof LEAF_COMPONENTS | keyof typeof LEGACY_LEAF_COMPONENTS,
+  string
+>
 
 /** 書き手に渡す塊の `kind`（内容部品の写し先）の一覧。 */
 export const REPORT_BLOCK_KINDS: readonly string[] = Object.values(LEAF_COMPONENT_KINDS)
@@ -216,17 +223,18 @@ const OWN_COMPONENT_SCHEMAS = {
   ...LEAF_COMPONENTS,
 } as const
 
-/** 部品名と受理の形。根・節・葉 22 種・基本 6 部品の 30。 */
+/** 部品名と受理の形。根・節・葉 21 種・基本 6 部品の 29。 */
 export const REPORT_COMPONENT_SCHEMAS = {
   ...OWN_COMPONENT_SCHEMAS,
   ...BASIC_PART_SCHEMAS,
 } as const
 
-/** 部品 1 つの受理の形（30 部品のどれか）。 */
+/** 部品 1 つの受理の形（書き手に見える 29 部品と旧い BeforeAfter のどれか）。 */
 export const a2uiReportComponentSchema = z.discriminatedUnion("component", [
   reportComponentSchema,
   sectionComponentSchema,
   ...Object.values(LEAF_COMPONENTS),
+  ...Object.values(LEGACY_LEAF_COMPONENTS),
   ...Object.values(BASIC_PART_SCHEMAS),
 ])
 

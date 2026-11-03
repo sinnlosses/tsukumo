@@ -113,7 +113,7 @@
   `line` の `label` は線の中点の上に中央寄せで固定で、位置は選べない。12px ほどの間隔の線に付けた語は重なって読めない（見え方は疑似セッションの場面 `svg-line-label` で撮る）ので、近い線に語を付けるときは `label` を空にして `text` を並べる。
   色そのものは書けず、`rect`・`line` の `tone`（`a`〜`e`。既定 `none`）で意味の目印だけ書く（`line` は `dashed: true` で点線にもでき、矢じりは線の色に合う）。描く側が `a`〜`e` を `--chart-series-1`〜`--chart-series-5` に当て（`data-tone` が目印）、
   図の `legend`（`tone` と名前の並び）を図の下に色見本つきで出す。**色だけで意味を言わない**ので、使った `tone` が `legend` に無い図は差し戻し、文面は何個目の部品のどの `tone` かだけを返す（見え方は疑似セッションの場面 `report-svg-tone` で撮る）。図形が viewBox の外に出れば差し戻し、文面は何個目の部品の何番目の図形かだけを返す。
-  `beforeAfter` の側にも置ける。段の条件は位置・重なりそのもので、つながりだけなら `graph`・`mermaid`
+  `compare` の側にも置ける。段の条件は位置・重なりそのもので、つながりだけなら `graph`・`mermaid`
 - **`mermaid` の部品の構文は、サーバでは検査しない**（足していたサーバの構文検査〔worker〕は、直近 28 日の記録で `mermaid` の部品 2 件・差し戻し 0 件のため外した）。
   種類の外（`REPORT_MERMAID_KINDS` の 2 種以外）は `unknown-mermaid` で差し戻し、構文が割れた図はブラウザの既存のエラー表示が
   ソースをコードとして出す（`MermaidBlock` の `mermaid-broken`）。質問の添え書き（`figures`）の `mermaid` の図も同じ

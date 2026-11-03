@@ -208,8 +208,8 @@ describe("catalogCard", () => {
     }
   })
 
-  test("定義を持つ部品（BeforeAfter）のカードは、その定義を含む", () => {
-    expect(catalogCard("BeforeAfter", document, undefined).definitions).toContain("BeforeAfterSide")
+  test("定義を持つ部品（Compare）のカードは、その定義を含む", () => {
+    expect(catalogCard("Compare", document, undefined).definitions).toContain("BeforeAfterSide")
   })
 
   test("参照先の定義が文書に欠けていれば投げる", () => {
@@ -218,7 +218,7 @@ describe("catalogCard", () => {
     )
     const broken: CatalogDocument = { ...document, $defs: rest }
 
-    expect(() => catalogCard("BeforeAfter", broken, undefined)).toThrow("BeforeAfterSide")
+    expect(() => catalogCard("Compare", broken, undefined)).toThrow("BeforeAfterSide")
   })
 })
 

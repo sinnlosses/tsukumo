@@ -7,11 +7,14 @@ import { LEAF_COMPONENT_KINDS, type REPORT_COMPONENT_SCHEMAS } from "./a2ui-repo
 
 /** 内容部品の入力から `id`・`component` を除き、写す先の `kind` を足した形（例の鍵は `kind`）。 */
 type LeafExamples = {
-  readonly [C in keyof typeof LEAF_COMPONENT_KINDS as (typeof LEAF_COMPONENT_KINDS)[C]]: Omit<
+  readonly [C in keyof WriterLeafKinds as WriterLeafKinds[C]]: Omit<
     z.input<(typeof REPORT_COMPONENT_SCHEMAS)[C]>,
     "id" | "component"
-  > & { readonly kind: (typeof LEAF_COMPONENT_KINDS)[C] }
+  > & { readonly kind: WriterLeafKinds[C] }
 }
+
+/** 書き手の目録にある内容部品（旧い BeforeAfter は受け口だけ）。 */
+type WriterLeafKinds = Omit<typeof LEAF_COMPONENT_KINDS, "BeforeAfter">
 
 const LEAF_BLOCK_EXAMPLES = {
   text: { kind: "text", text: "架空の取り込みは 120 件中 8 件が上限で切れていた。" },
@@ -44,17 +47,12 @@ const LEAF_BLOCK_EXAMPLES = {
   },
   compare: {
     kind: "compare",
-    title: "架空の置き場の案",
+    title: "架空の手順の前後（relation を省くと対等な2つの versus）",
+    relation: "before-after",
     sides: [
-      { heading: "案A: 1つのファイル", points: ["読む場所が1つ", "行が多い"] },
-      { heading: "案B: 種類ごとのファイル", points: ["探しやすい", "参照が増える"] },
+      { kind: "points", points: ["手で3回打つ"] },
+      { kind: "code", language: "sh", source: "make all" },
     ],
-  },
-  beforeAfter: {
-    kind: "beforeAfter",
-    title: "架空の手順の前後",
-    before: { kind: "points", points: ["手で3回打つ"] },
-    after: { kind: "code", language: "sh", source: "make all" },
   },
   note: { kind: "note", tone: "warn", text: "架空の書き出しは戻せない。" },
   stats: {
@@ -163,7 +161,7 @@ const LEAF_BLOCK_EXAMPLES = {
 } satisfies LeafExamples
 
 /** 内容部品の例。塊の例から `kind` を除き、`id` と `component` を足す。 */
-const LEAF_EXAMPLES = mapValues(LEAF_COMPONENT_KINDS, (kind, component) => [
+const LEAF_EXAMPLES = mapValues(omit(LEAF_COMPONENT_KINDS, ["BeforeAfter"]), (kind, component) => [
   { id: "p1", component, ...omit(LEAF_BLOCK_EXAMPLES[kind], ["kind"]) },
 ])
 

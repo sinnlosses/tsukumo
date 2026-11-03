@@ -26,7 +26,7 @@ describe("reportFigureDescription", () => {
       const description = reportFigureDescription(preference)
       const blockKinds = reportFigureSchema.options
         .map((option) => option.shape.kind.value)
-        .filter((kind) => kind !== "none")
+        .filter((kind) => kind !== "none" && kind !== "beforeAfter")
 
       for (const name of blockKinds) {
         expect(description).toContain(name)

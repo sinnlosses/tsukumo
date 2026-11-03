@@ -122,7 +122,7 @@ export const pointsCompareBlockSchema = z
     aside,
   })
   .describe(
-    "2つを同時に見比べる（案A と案B。変更の前と後は beforeAfter）。側ごとに見出しと短い箇条。採否は options、値を揃えるなら table（3つ以上も table）",
+    "2つを同時に見比べる（案A と案B）。変更の前と後は、画像・コードの側も書ける report の Compare（relation: before-after）。側ごとに見出しと短い箇条。採否は options、値を揃えるなら table（3つ以上も table）",
   )
   .transform((block) => ({
     ...block,

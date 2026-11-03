@@ -38,7 +38,7 @@ describe("partCardOf", () => {
   })
 
   it("$defs を持つ部品のカードは $defs ごと載せる", () => {
-    for (const name of ["BeforeAfter", "Graph", "Svg"]) {
+    for (const name of ["Compare", "Graph", "Svg"]) {
       expect(cardText(name)).toContain('"$defs"')
     }
   })
@@ -55,8 +55,8 @@ describe("partCardOf", () => {
     },
   )
 
-  it("引ける名前は 30 部品", () => {
-    expect(NAMES).toHaveLength(30)
+  it("引ける名前は 29 部品", () => {
+    expect(NAMES).toHaveLength(29)
   })
 
   it("Trace のカードに、状態と出力の欄と例が載る", () => {
