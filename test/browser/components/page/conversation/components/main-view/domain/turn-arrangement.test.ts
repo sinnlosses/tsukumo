@@ -98,7 +98,20 @@ describe("arrangeTurn", () => {
       arrangeTurn(
         turn([step(0, { kind: "interim", ...PLAIN }), step(1, { kind: "interim", ...PLAIN })]),
       ),
-    ).toEqual({ kind: "arrival" })
+    ).toEqual({ kind: "arrival", asides: [] })
+  })
+
+  it("最終レポートの無いやり取りでは、ステップをまたいだ補足メッセージが送った順に1つへまとまる", () => {
+    const first = aside("1つ目の問い")
+    const second = aside("2つ目の問い")
+    expect(
+      arrangeTurn(
+        turn([
+          step(0, { kind: "interim", ...PLAIN, asides: [first] }),
+          step(1, { kind: "interim", ...PLAIN, asides: [second] }),
+        ]),
+      ),
+    ).toEqual({ kind: "arrival", asides: [first, second] })
   })
 
   it("最終レポートの無いまま失敗で閉じたやり取りも届いた順のまま", () => {
@@ -109,7 +122,7 @@ describe("arrangeTurn", () => {
           failure: { kind: "max-turns" },
         }),
       ),
-    ).toEqual({ kind: "arrival" })
+    ).toEqual({ kind: "arrival", asides: [] })
   })
 
   it("中間レポートが無ければ、最終レポートだけで経過は空", () => {
@@ -117,7 +130,6 @@ describe("arrangeTurn", () => {
     expect(arrangeTurn(turn([final]))).toEqual({
       kind: "final-first",
       final,
-      besides: [],
       progress: [],
     })
   })
@@ -128,7 +140,6 @@ describe("arrangeTurn", () => {
     expect(arrangeTurn(turn([interim, final]))).toEqual({
       kind: "final-first",
       final,
-      besides: [],
       progress: [{ kind: "interim", step: interim }],
     })
   })
@@ -148,7 +159,7 @@ describe("arrangeTurn", () => {
     ).toEqual([1, 2, 3])
   })
 
-  it("補足メッセージは経過に入れず、中間と最終のステップの分を送った順に besides へ並べる", () => {
+  it("2つのステップに分かれた補足メッセージは送った順に1項へまとまり、経過の末尾に入る", () => {
     const first = aside("中間のあとの問い")
     const second = aside("最終のあとの問い")
     const interim = step(0, { kind: "interim", ...PLAIN, asides: [first] })
@@ -156,15 +167,24 @@ describe("arrangeTurn", () => {
     expect(arrangeTurn(turn([interim, final]))).toEqual({
       kind: "final-first",
       final,
-      besides: [
-        { kind: "asides", stepId: 0, asides: [first] },
-        { kind: "asides", stepId: 1, asides: [second] },
+      progress: [
+        { kind: "interim", step: interim },
+        { kind: "asides", asides: [first, second] },
       ],
-      progress: [{ kind: "interim", step: interim }],
     })
   })
 
-  it("質問の記録は最終のステップのものも含め besides に出さず、経過へ中間レポートと届いた順に混ぜて入れる", () => {
+  it("補足メッセージだけで中間レポートも質問も無くても、経過に補足の項が入る", () => {
+    const only = aside("問い")
+    const final = step(0, { kind: "final", ...PLAIN, asides: [only] })
+    expect(arrangeTurn(turn([final]))).toEqual({
+      kind: "final-first",
+      final,
+      progress: [{ kind: "asides", asides: [only] }],
+    })
+  })
+
+  it("質問の記録は最終のステップのものも含め、経過へ中間レポートと届いた順に混ぜて入れる", () => {
     const early = question("q0")
     const middle = question("q1")
     const last = question("q2")
@@ -176,7 +196,6 @@ describe("arrangeTurn", () => {
         step(2, { kind: "final", ...PLAIN, questions: [last] }),
       ]),
     )
-    expect(arrangement.kind === "final-first" && arrangement.besides).toEqual([])
     expect(arrangement.kind === "final-first" && arrangement.progress).toEqual([
       { kind: "question", entry: early },
       { kind: "interim", step: interim },
@@ -216,6 +235,25 @@ describe("progressFoldSummary", () => {
         ["q0"],
       ),
     ).toBe("経過 1 件 · 質問 1 件 · 所要 9秒（1/1 架空の段 9秒）")
+  })
+
+  it("補足メッセージがあれば、件数は欄の中の件数で「 · 補足 k 件」が付く", () => {
+    const asides: ProgressEntry = { kind: "asides", asides: [aside("a"), aside("b")] }
+    expect(progressFoldSummary([asides])).toBe("経過 0 件 · 補足 2 件")
+    expect(
+      progressFoldSummary([
+        {
+          kind: "interim",
+          step: step(0, {
+            kind: "interim",
+            ...PLAIN,
+            finishedPhase: phase("1/1 架空の段", 9_000),
+          }),
+        },
+        { kind: "question", entry: question("q0") },
+        asides,
+      ]),
+    ).toBe("経過 1 件 · 質問 1 件 · 補足 2 件 · 所要 9秒（1/1 架空の段 9秒）")
   })
 
   it("段のまとめが無ければ件数だけ", () => {

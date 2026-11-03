@@ -242,14 +242,20 @@ describe("Turn（畳んだ中間レポートの見出し）", () => {
 })
 
 describe("Turn（補足メッセージの欄の位置）", () => {
-  it("働くあいだ（最終レポートが無い）は、補足メッセージの欄が持ち主のステップの後ろ・次のレポートの前に並ぶ", () => {
+  it("働くあいだ（最終レポートが無い）は、2つのステップに分かれた補足メッセージが、レポートの後ろの1つの欄にまとまる", () => {
     putSession(INITIAL_SESSION_STATE)
-    const aside = { text: "架空の問い", answer: { kind: "waiting" } } as const
+    const first = { text: "1つ目の問い", answer: { kind: "waiting" } } as const
+    const second = { text: "2つ目の問い", answer: { kind: "waiting" } } as const
     const { container } = render(
       <Turn
         turn={turn([
-          step({ id: 0, body: turnBodyText("1つ目の本文"), mark: "interim-kept", asides: [aside] }),
-          step({ id: 1, body: turnBodyText("2つ目の本文"), mark: "interim-kept" }),
+          step({ id: 0, body: turnBodyText("1つ目の本文"), mark: "interim-kept", asides: [first] }),
+          step({
+            id: 1,
+            body: turnBodyText("2つ目の本文"),
+            mark: "interim-kept",
+            asides: [second],
+          }),
         ])}
         newest
         freshReport={false}
@@ -261,13 +267,14 @@ describe("Turn（補足メッセージの欄の位置）", () => {
     )
     expect(order).toHaveLength(3)
     expect(order[0]).toBe("1つ目の本文")
-    expect(order[1]).toContain("補足メッセージ 1件")
-    expect(order[2]).toBe("2つ目の本文")
+    expect(order[1]).toBe("2つ目の本文")
+    expect(order[2]).toContain("補足メッセージ 2件")
   })
 
-  it("最終レポートのある閉じたやり取りは、最終レポート → 補足メッセージの欄 → 経過の畳みの順に並ぶ", () => {
+  it("最終レポートのある閉じたやり取りは、補足メッセージの欄が経過の畳みの中の末尾に1つあり、題に補足の件数が出る", () => {
     putSession(INITIAL_SESSION_STATE)
-    const aside = { text: "架空の問い", answer: { kind: "waiting" } } as const
+    const first = { text: "1つ目の問い", answer: { kind: "waiting" } } as const
+    const second = { text: "2つ目の問い", answer: { kind: "waiting" } } as const
     const { container } = render(
       <Turn
         turn={turn([
@@ -275,9 +282,9 @@ describe("Turn（補足メッセージの欄の位置）", () => {
             id: 0,
             body: turnBodyText("中間の本文"),
             mark: "interim-folded",
-            asides: [aside],
+            asides: [first],
           }),
-          step({ id: 1, body: turnBodyText("最終の本文"), mark: "final" }),
+          step({ id: 1, body: turnBodyText("最終の本文"), mark: "final", asides: [second] }),
         ])}
         newest
         freshReport={false}
@@ -287,11 +294,13 @@ describe("Turn（補足メッセージの欄の位置）", () => {
     const top = [...container.querySelectorAll(":scope > div > div > *")].map(
       (element) => element.textContent,
     )
-    expect(top).toHaveLength(3)
+    expect(top).toHaveLength(2)
     expect(top[0]).toBe("最終の本文")
-    expect(top[1]).toContain("補足メッセージ 1件")
-    expect(top[2]).toContain("経過 1 件")
-    expect(top[2]).toContain("中間の本文")
+    expect(top[1]).toContain("経過 1 件 · 補足 2 件")
+    expect(top[1]).toContain("中間の本文")
+    const inFold = container.querySelectorAll(".progress-fold-steps > details")
+    expect(inFold).toHaveLength(2)
+    expect(inFold[1]?.textContent).toContain("補足メッセージ 2件")
   })
 
   it("本文も質問も無いステップの補足メッセージは、欄だけを描く", () => {
