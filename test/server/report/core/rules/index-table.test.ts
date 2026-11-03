@@ -434,12 +434,13 @@ describe("reportViolations", () => {
   })
 
   describe("stats の series は3つ以上", () => {
+    const EMPTY = { before: "", total: "", better: "", target: "", targetGap: "" } as const
     const statsOf = (series: readonly number[]): ReportBlock => ({
       kind: "stats",
       items: [
-        { before: "", value: "1", total: "", label: "架空A", series, better: "" },
-        { before: "", value: "2", total: "", label: "架空B", series: [], better: "" },
-        { before: "", value: "3", total: "", label: "架空C", series: [], better: "" },
+        { ...EMPTY, value: "1", label: "架空A", series },
+        { ...EMPTY, value: "2", label: "架空B", series: [] },
+        { ...EMPTY, value: "3", label: "架空C", series: [] },
       ],
       fold: "",
       aside: "",

@@ -162,6 +162,11 @@ export const statsLeafClassNames = {
   statTotal: notationStyles["report-stat-total"],
   statMeter: notationStyles["report-stat-meter"],
   statMeterFill: notationStyles["report-stat-meter-fill"],
+  statTarget: notationStyles["report-stat-target"],
+  statVerdict: notationStyles["report-stat-verdict"],
+  statVerdictMet: notationStyles["report-stat-verdict-met"],
+  statVerdictMissed: notationStyles["report-stat-verdict-missed"],
+  statMissed: notationStyles["report-stat-missed"],
 } as const
 
 const TAG_TONE_CLASS_NAMES = new Map([

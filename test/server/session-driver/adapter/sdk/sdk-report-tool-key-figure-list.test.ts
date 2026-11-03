@@ -68,6 +68,8 @@ describe("report の keyFigures のイベントへの変換と引き継ぎ", () 
       label: "架空の数",
       series: [1, 2, 3],
       better: "up",
+      target: "25",
+      targetGap: "−5",
     }
 
     expect(convert({ conclusion: "架空の結論。" })?.keyFigures).toEqual([])
@@ -75,6 +77,25 @@ describe("report の keyFigures のイベントへの変換と引き継ぎ", () 
       convert({ conclusion: "架空の結論。", keyFigures: [item, item, item] })?.keyFigures,
     ).toEqual([item, item, item])
     expect(convert({ conclusion: "架空の結論。", keyFigures: [item] })?.keyFigures).toEqual([])
+  })
+
+  it("目標と比べられない項目（数でない・単位が違う・better が空）も帯ごと残す", () => {
+    const base = {
+      before: "",
+      value: "99.82%",
+      total: "",
+      label: "架空の率",
+      series: [],
+      better: "up",
+      targetGap: "",
+    }
+    const items = [
+      { ...base, target: "未定" },
+      { ...base, target: "500ms" },
+      { ...base, target: "99.9%", better: "" },
+    ]
+
+    expect(convert({ conclusion: "架空の結論。", keyFigures: items })?.keyFigures).toEqual(items)
   })
 
   it("keyFigures を省いた出し直しは、直前に差し戻した呼び出しの keyFigures を引き継ぐ", async () => {

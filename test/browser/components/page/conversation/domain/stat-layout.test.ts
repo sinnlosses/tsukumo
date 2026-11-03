@@ -16,6 +16,30 @@ describe("statLayoutOf", () => {
     expect(statLayoutOf({ ...statItem, better, before, value }).beforeTone).toBe(tone)
   })
 
+  it.each([
+    ["up", "99.95%", "99.9%", "met"],
+    ["down", "420ms", "500ms", "met"],
+    ["up", "99.9%", "99.9%", "met"],
+    ["down", "500ms", "500ms", "met"],
+    ["up", "99.82%", "99.9%", "missed"],
+    ["down", "1,200 件", "1,000 件", "missed"],
+    ["up", "99.82%", "未定", "unknown"],
+    ["down", "420ms", "0.5s", "unknown"],
+    ["", "99.82%", "99.9%", "unknown"],
+    ["up", "約99%", "99.9%", "unknown"],
+  ] as const)("better=%s の %s は目標 %s に対して %s", (better, value, target, verdict) => {
+    expect(statLayoutOf({ ...statItem, better, value, target }).target).toEqual({
+      kind: "target",
+      verdict,
+    })
+  })
+
+  it("目標が空なら目標の行の値を持たない", () => {
+    expect(statLayoutOf({ ...statItem, better: "up", value: "3" }).target).toEqual({
+      kind: "none",
+    })
+  })
+
   it("折れ線は 3 点から出し、最大が上・最新の点が末尾になる", () => {
     const layout = statLayoutOf({ ...statItem, series: [1, 3, 2] })
 

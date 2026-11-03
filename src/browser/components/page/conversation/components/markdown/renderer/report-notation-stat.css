@@ -1,0 +1,157 @@
+.detail-block {
+  /* 数の要約（KPI タイル）。
+   数そのものが結論になる値（件数・前後の差）を、地の文に埋めずに並べる塊。
+   `.report-card` と違って中身は1つの数とそのラベルだけなので、器は `.report-cols` より狭く取り、3〜4枚が1行に収まるようにする。
+   札は左から並べる。数は札の字（--font-secondary）の 2 倍で、段は増やさない。
+   数そのものも前の数も良し悪しの色を持たない。色を持つのは目標の達否の印と、未達の札の枠だけで、印は「✓ 達成」「✕ 未達」の字でも読める。 */
+  & .report-stats {
+    display: grid;
+    grid-template-columns: minmax(min-content, max-content);
+    justify-content: start;
+    gap: var(--space-md);
+    margin: var(--report-block-gap) 0;
+  }
+  /* 題つきの `stats` の包みは札の並びの幅まで縮めて本文の列の左端に置く。題は札の並びの幅の中で中央。 */
+  & .report-captioned:has(> .report-stats) {
+    inline-size: fit-content;
+    max-inline-size: 100%;
+    min-inline-size: 0;
+    margin-inline: 0;
+  }
+  /* `stats` の列数は、項目数（`stats-of-<n>`。`NotationBlock` が足す）の全部か約数か1列にする（3＋1 のような半端な段を作らない）。
+   既定は1列で、器の幅が列の最小幅（10rem。折れ線・値・分母の `36 / 48` が1行に収まる幅）とすき間 0.75rem を足した幅に届くたびに、次に大きい約数の列数へ広げる。
+   項目数の class が無いもの（2個、5個以上）は1列のまま。 */
+  @container report-body (min-width: calc(2 * 10rem + 0.75rem)) {
+    & .report-stats.report-stats-of-4 {
+      grid-template-columns: repeat(2, minmax(min-content, max-content));
+    }
+  }
+  @container report-body (min-width: calc(3 * 10rem + 2 * 0.75rem)) {
+    & .report-stats.report-stats-of-3 {
+      grid-template-columns: repeat(3, minmax(min-content, max-content));
+    }
+  }
+  @container report-body (min-width: calc(4 * 10rem + 3 * 0.75rem)) {
+    & .report-stats.report-stats-of-4 {
+      grid-template-columns: repeat(4, minmax(min-content, max-content));
+    }
+  }
+  & .report-stat {
+    min-inline-size: 132px;
+    padding: var(--space-md) var(--space-lg);
+    border: 1px solid var(--report-chunk-rule, var(--rule-quiet));
+    border-radius: var(--radius-md);
+    background: var(--report-chunk-ground, var(--surface));
+    font-size: var(--font-secondary);
+    line-height: 1.4;
+    color: var(--ink-soft);
+  }
+  /* 数の側。
+   `<b>` と `<strong>` の両方を受ける（レポートの HTML を書くのはモデルなので、どちらで書かれても同じ見た目になるようにする）。 */
+  & .report-stat b,
+  & .report-stat strong {
+    display: inline;
+    font-size: 2em;
+    font-weight: 700;
+    letter-spacing: normal;
+    line-height: 1.3;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-bright);
+  }
+  /* 数のあとで行を改め、割合の帯・名前を次の行に送る。 */
+  & .report-stat b::after,
+  & .report-stat strong::after {
+    content: "\A";
+    white-space: pre;
+  }
+  /* `stats` の変わる前の数。矢印の文字でつなぎ、折れ線が無い札では数の左に同じ行で、ある札では折れ線の左に添える（`ink-quiet` の 14px）。
+   良し悪しは字の色で言わない（better・worse も同じ色）。 */
+  & .report-stat-before,
+  & .report-stat-better,
+  & .report-stat-worse {
+    font-size: var(--font-subheading);
+    font-weight: 500;
+    margin-inline-end: 0.5em;
+    color: var(--ink-quiet);
+  }
+  /* `stats` の推移の折れ線。前の数と同じ1行目に幅 5.6em・高さ 1.4em（約 73×18）で置き、数は次の行。最新の点だけ明るくする。 */
+  & .report-stat-trend {
+    display: flex;
+    align-items: center;
+  }
+  & .report-stat-trend > svg {
+    flex: none;
+    width: 5.6em;
+    height: 1.4em;
+    overflow: visible;
+  }
+  & .report-stat b > svg {
+    display: inline-block;
+    width: 2.8em;
+    height: 0.7em;
+    margin-right: 0.4em;
+    vertical-align: baseline;
+    overflow: visible;
+  }
+  & .report-stat b > svg polyline,
+  & .report-stat-trend > svg polyline {
+    fill: none;
+    stroke: var(--ink-quiet);
+    stroke-width: 1.5;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+    vector-effect: non-scaling-stroke;
+  }
+  & .report-stat b > svg circle,
+  & .report-stat-trend > svg circle {
+    fill: var(--ink-bright);
+  }
+  /* `stats` の全体の数。数の後ろに小さく並べ、割合は下の帯で添える。 */
+  & .report-stat-total {
+    font-size: var(--font-subheading);
+    font-weight: 500;
+    letter-spacing: normal;
+    color: var(--ink-quiet);
+  }
+  & .report-stat-meter {
+    display: block;
+    height: 4px;
+    margin: var(--space-sm) 0;
+    border-radius: var(--radius-sm);
+    background: var(--surface-raised);
+    overflow: hidden;
+  }
+  & .report-stat-meter-fill {
+    display: block;
+    height: 100%;
+    background: var(--chart-series-1);
+  }
+  /* `stats` の目標の行。label の下に破線で分けて置き、達否の印はその下の行。 */
+  & .report-stat-target {
+    margin-block-start: var(--space-sm);
+    padding-block-start: var(--space-sm);
+    border-block-start: 1px dashed var(--rule-quiet);
+    color: var(--ink-quiet);
+  }
+  & .report-stat-verdict {
+    display: block;
+    inline-size: fit-content;
+    margin-block-start: var(--space-xs);
+    padding: var(--space-2xs) var(--space-sm);
+    border-radius: var(--radius-sm);
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  & .report-stat-verdict-met {
+    color: var(--state-ok);
+    background: color-mix(in srgb, var(--state-ok) 14%, transparent);
+  }
+  & .report-stat-verdict-missed {
+    color: var(--state-ng);
+    background: color-mix(in srgb, var(--state-ng) 14%, transparent);
+  }
+  & .report-stat.report-stat-missed {
+    border-color: var(--state-ng);
+  }
+}

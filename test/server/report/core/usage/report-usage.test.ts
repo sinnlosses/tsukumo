@@ -188,6 +188,8 @@ describe("reportUsageEntryOf", () => {
         label,
         series: [],
         better: "",
+        target: "",
+        targetGap: "",
       })
       return {
         kind: "stats",
@@ -520,6 +522,8 @@ describe("reportUsageEntryOf", () => {
       label: "架空",
       series: [],
       better: "" as const,
+      target: "",
+      targetGap: "",
     }
     const entry = reportUsageEntryOf(
       reportEvent({

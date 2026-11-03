@@ -20,6 +20,17 @@ const plotOf = (...values: number[]) =>
 
 const textBlock = (text: string): ReportBlock => ({ kind: "text", text, fold: "", aside: "" })
 
+const keyFigureOf = (value: string, target = "", targetGap = "") => ({
+  before: "",
+  value,
+  total: "",
+  label: "架空",
+  series: [],
+  better: "" as const,
+  target,
+  targetGap,
+})
+
 const sectionOf = (...blocks: ReportBlock[]) => ({ heading: "", blocks }) as const
 
 const mismatchOf = (report: Parameters<typeof reportDraft>[0]) =>
@@ -38,12 +49,22 @@ describe("figure-number-mismatch", () => {
     expect(
       mismatchOf({
         conclusion: "架空の結論。",
-        keyFigures: [{ before: "", value: "46", total: "", label: "架空", series: [], better: "" }],
+        keyFigures: [keyFigureOf("46")],
         sections: [sectionOf(plotOf(45))],
       }),
     ).toEqual([
       { kind: "figure-number-mismatch", count: 1, faults: [{ plot: 1, column: 1, bodyNumber: 1 }] },
     ])
+  })
+
+  it("keyFigures の target と targetGap は本文の数として読まない", () => {
+    expect(
+      mismatchOf({
+        conclusion: "架空の結論。",
+        keyFigures: [keyFigureOf("45", "46", "-1")],
+        sections: [sectionOf(plotOf(45))],
+      }),
+    ).toEqual([])
   })
 
   it("節の text の数がずれても数える", () => {

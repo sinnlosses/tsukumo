@@ -134,7 +134,18 @@ const ROWS: readonly (readonly [string, readonly ReportBlock[], readonly DrawnEn
       [
         {
           kind: "stats",
-          items: [{ before: "", value: "1", total: "", label: "架空", series: [], better: "" }],
+          items: [
+            {
+              before: "",
+              value: "1",
+              total: "",
+              label: "架空",
+              series: [],
+              better: "",
+              target: "",
+              targetGap: "",
+            },
+          ],
           ...PLAIN,
         },
       ],

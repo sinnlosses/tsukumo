@@ -43,7 +43,10 @@
                     "value": "36",
                     "total": "48",
                     "label": "架空の通った件数",
-                    "series": [20, 28, 31, 36]
+                    "series": [20, 28, 31, 36],
+                    "better": "up",
+                    "target": "40",
+                    "targetGap": "−4"
                   },
                   {
                     "before": "12",
@@ -51,7 +54,9 @@
                     "total": "48",
                     "label": "架空の落ちた件数",
                     "series": [14, 12, 13, 9],
-                    "better": "down"
+                    "better": "down",
+                    "target": "10",
+                    "targetGap": "−1"
                   },
                   {
                     "before": "",

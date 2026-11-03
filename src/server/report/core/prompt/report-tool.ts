@@ -92,7 +92,8 @@ export const REPORT_FAVOR_DESCRIPTION =
 /** `report` の任意の `keyFigures` 引数（結論の直下に並べる数）の説明。使いどころの条はここだけが持つ。 */
 export const REPORT_KEY_FIGURES_DESCRIPTION =
   "結論に効く数を3〜4個（件数・割合・前後の差）。結論の直下にカードで並ぶ。" +
-  "3つに満たなければ省いて結論の文に入れる。項目の形は stats の items と同じ。"
+  "3つに満たなければ省いて結論の文に入れる。項目の形は stats の items と同じ。" +
+  "目標があれば target と better、差は targetGap。"
 
 /**
  * `report` の任意の `sections` 引数（本文。セクションと部品の並び）の説明。

@@ -145,6 +145,12 @@ const statItemsSchema = z
       better: omittable(z.enum(["up", "down", ""]), "").describe(
         "before と value が数のとき、増えて良いなら up・減って良いなら down",
       ),
+      target: omittable(z.string(), "").describe(
+        "目標の値（value と同じ単位の数だけ。例: 99.9%）。以上か以下かは better が言う（up は以上、down は以下）。達否は tsukumo が value と比べて印にする",
+      ),
+      targetGap: omittable(z.string(), "").describe(
+        "目標との差（例: −0.08pt）。書き手が書き、tsukumo は計算しない。省いてよい",
+      ),
     }),
   )
   .min(3)
@@ -169,7 +175,7 @@ export const statsBlockSchema = z
     aside,
   })
   .describe(
-    "結論に効く数（件数・前後の差）。数が3〜4個並び、前後か推移を見せるとき。推移の形が要る数には series、増減の良い向きが要る数には better",
+    "結論に効く数（件数・前後の差）。数が3〜4個並び、前後か推移を見せるとき。推移の形が要る数には series、増減の良い向きが要る数には better、目標と比べるなら target",
   )
 
 const REPORT_OPTION_VERDICTS = ["adopt", "consider", "reject"] as const

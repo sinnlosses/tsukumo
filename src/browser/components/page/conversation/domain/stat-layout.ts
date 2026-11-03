@@ -1,4 +1,4 @@
-// 数のカード（`stats` の項目）の、前の値の色・折れ線の点・割合の帯の幅。
+// 数のカード（`stats` の項目）の、前の値の色・折れ線の点・割合の帯の幅・目標の達否。
 // Markdown に組む側と React の部品が、同じ決まりを読む。
 
 import type { ReportBlock } from "../../../../../shared/report/report-block.ts"
@@ -17,6 +17,9 @@ export type StatLayout = {
     | { readonly kind: "none" }
     | { readonly kind: "line"; readonly points: readonly Point[]; readonly last: Point }
   readonly meter: { readonly kind: "none" } | { readonly kind: "meter"; readonly percent: number }
+  readonly target:
+    | { readonly kind: "none" }
+    | { readonly kind: "target"; readonly verdict: "met" | "missed" | "unknown" }
 }
 
 export const STAT_SPARK_WIDTH = 48
@@ -30,6 +33,7 @@ export function statLayoutOf(item: StatItem): StatLayout {
     beforeTone: beforeToneOf(item),
     spark: sparkOf(item.series),
     meter: meterOf(item.value, item.total),
+    target: targetOf(item),
   }
 }
 
@@ -85,4 +89,42 @@ function meterOf(value: string, total: string): StatLayout["meter"] {
     return { kind: "none" }
   }
   return { kind: "meter", percent: Math.round((part / whole) * 100) }
+}
+
+/**
+ * 数と目標がどちらも単位の同じ数で `better` があるときだけ、`up` なら以上・`down` なら以下で達否を決める（等しければ達成）。
+ * 比べられないときは `unknown`。差は計算しない。
+ */
+function targetOf({ value, target, better }: StatItem): StatLayout["target"] {
+  if (target.trim() === "") {
+    return { kind: "none" }
+  }
+  const actual = unitNumberOf(value)
+  const goal = unitNumberOf(target)
+  if (
+    better === "" ||
+    actual.kind === "none" ||
+    goal.kind === "none" ||
+    actual.unit !== goal.unit
+  ) {
+    return { kind: "target", verdict: "unknown" }
+  }
+  const met = better === "up" ? actual.number >= goal.number : actual.number <= goal.number
+  return { kind: "target", verdict: met ? "met" : "missed" }
+}
+
+const UNIT_NUMBER_PATTERN = /^(?<number>-?\d[\d,]*(?:\.\d+)?)\s*(?<unit>\S*)$/
+
+/** `99.9%`・`500ms`・`312 件` を数と末尾の単位の字に割る。 */
+function unitNumberOf(
+  text: string,
+):
+  | { readonly kind: "none" }
+  | { readonly kind: "number"; readonly number: number; readonly unit: string } {
+  const groups = UNIT_NUMBER_PATTERN.exec(text.trim())?.groups
+  const number = groups?.["number"]
+  if (groups === undefined || number === undefined) {
+    return { kind: "none" }
+  }
+  return { kind: "number", number: numericCellMagnitude(number), unit: groups["unit"] ?? "" }
 }

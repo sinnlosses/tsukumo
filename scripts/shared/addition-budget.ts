@@ -5,7 +5,7 @@ import { WORK_PLAN_PROMPT } from "../../src/server/work-plan/core/work-plan-tool
 
 export const SYSTEM_PROMPT_TOTAL_LIMIT = 6304
 
-export const REPORT_INPUT_SCHEMA_MAX_CHARS = 25_700
+export const REPORT_INPUT_SCHEMA_MAX_CHARS = 25_800
 
 export const SYSTEM_PROMPT_TEXTS = [
   SPEECH_CADENCE_PROMPT,

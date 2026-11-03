@@ -110,7 +110,7 @@
   先頭に数のカードを置くのが 9 本中 6 本に対して tsukumo は 1 本だった）
   - 頭の欄の並びは「結論 → `keyFigures` → 検証結果（合図の行）」。`figure` とは別で、図 1 は図のままセクションの先頭に回る。
     `keyFigures` は省ける（無ければ外枠ごと出さない）。引き継ぎは他の欄と同じ
-  - 形は `stats` の `items` と同じ（3〜4 個。`before`・`total`・`better`・`series` も使える）。カードの描き方は `stats` と同じで、
+  - 形は `stats` の `items` と同じ（3〜4 個。`before`・`total`・`better`・`series`・`target`・`targetGap` も使える）。カードの描き方は `stats` と同じで、
     外枠の class `key-figures` が違う。列数は `stats` の項目数の決まりに従うが、4個は器 46rem 以下で 2×2 に折る
     （`stats` は 43.25rem 以下。ビューポート幅 760px の器が約 716px で 4 列のままになるのを避けるため）
   - **「`stats` は数が3つ以上で、前後か推移を見せるとき」の条は `keyFigures` に掛けない。** 代わりに「結論に効く数が3つ以上なら `keyFigures` に出す」の条が持つ

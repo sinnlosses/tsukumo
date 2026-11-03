@@ -1,5 +1,5 @@
 // `Stats`（数のカードの並び）を Markdown に戻さず直接描く。
-// 前の値の色・折れ線・帯の幅は `statLayoutOf` が決め、ここは描くだけ。
+// 前の値の色・折れ線・帯の幅・目標の達否は `statLayoutOf` が決め、ここは描くだけ。
 
 import clsx from "clsx"
 import type { ReactElement } from "react"
@@ -48,25 +48,27 @@ export function StatsLeaf(props: {
 }
 
 export function StatCards(props: { readonly items: readonly StatItem[] }): ReactElement {
+  const targeted = props.items.some((item) => item.target.trim() !== "")
   return (
     <div className={clsx(statsLeafClassNames.stats, COUNT_CLASS_NAMES.get(props.items.length))}>
       {props.items.map((item, index) => (
-        <Stat key={`${String(index)}:${item.label}`} item={item} />
+        <Stat key={`${String(index)}:${item.label}`} item={item} targeted={targeted} />
       ))}
     </div>
   )
 }
 
-function Stat(props: { readonly item: StatItem }): ReactElement {
+function Stat(props: { readonly item: StatItem; readonly targeted: boolean }): ReactElement {
   const { item } = props
   const layout = statLayoutOf(item)
+  const missed = layout.target.kind === "target" && layout.target.verdict === "missed"
   const before = item.before.trim() !== "" && (
     <span className={BEFORE_CLASS_NAMES[layout.beforeTone]}>
       <AffixedCodeText lead="" text={item.before} tail=" →" />
     </span>
   )
   return (
-    <div className={statsLeafClassNames.stat}>
+    <div className={clsx(statsLeafClassNames.stat, missed && statsLeafClassNames.statMissed)}>
       {layout.spark.kind === "none" ? (
         before
       ) : (
@@ -92,7 +94,49 @@ function Stat(props: { readonly item: StatItem }): ReactElement {
         </span>
       )}
       <InlineCodeText text={item.label} />
+      {props.targeted && <TargetLine item={item} target={layout.target} />}
     </div>
+  )
+}
+
+const TARGET_DIRECTION_WORDS = {
+  up: " 以上",
+  down: " 以下",
+  "": "",
+} as const satisfies Record<StatItem["better"], string>
+
+const VERDICT_MARKS = {
+  met: { lead: "✓ 達成", className: statsLeafClassNames.statVerdictMet },
+  missed: { lead: "✕ 未達", className: statsLeafClassNames.statVerdictMissed },
+} as const
+
+/** label の下の目標の行と、比べられたときの達否の印。目標の無い札は「目標なし」。 */
+function TargetLine(props: {
+  readonly item: StatItem
+  readonly target: StatLayout["target"]
+}): ReactElement {
+  const { item, target } = props
+  if (target.kind === "none") {
+    return <div className={statsLeafClassNames.statTarget}>目標なし</div>
+  }
+  const { verdict } = target
+  return (
+    <div className={statsLeafClassNames.statTarget}>
+      <AffixedCodeText lead="目標 " text={item.target} tail={TARGET_DIRECTION_WORDS[item.better]} />
+      {verdict !== "unknown" && <Verdict verdict={verdict} gap={item.targetGap} />}
+    </div>
+  )
+}
+
+function Verdict(props: {
+  readonly verdict: keyof typeof VERDICT_MARKS
+  readonly gap: string
+}): ReactElement {
+  const { lead, className } = VERDICT_MARKS[props.verdict]
+  return (
+    <span className={clsx(statsLeafClassNames.statVerdict, className)}>
+      {props.gap.trim() === "" ? lead : `${lead} ${props.gap}`}
+    </span>
   )
 }
 

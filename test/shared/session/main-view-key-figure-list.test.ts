@@ -13,6 +13,8 @@ const keyFigures = ["架空の数A", "架空の数B", "架空の数C"].map((labe
   label,
   series: [],
   better: "" as const,
+  target: "",
+  targetGap: "",
 }))
 const checks: readonly ReportCheck[] = [
   { status: "ok", label: "架空の検査", figure: "", command: "", detail: "", howToVerify: "" },
