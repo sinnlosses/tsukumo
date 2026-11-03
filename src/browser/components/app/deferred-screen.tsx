@@ -5,7 +5,6 @@
 import type { ComponentType, ReactElement } from "react"
 
 import { deferredModule } from "../../hooks/deferred-module.ts"
-import { useMountEffect } from "../../hooks/use-mount-effect.ts"
 
 /** `importScreen` は `import()` を1つだけ呼んで、画面の部品を返す関数。 */
 export function deferredScreen(importScreen: () => Promise<ComponentType>): ComponentType {
@@ -13,9 +12,6 @@ export function deferredScreen(importScreen: () => Promise<ComponentType>): Comp
 
   return function DeferredScreen(): ReactElement {
     const state = screenModule.useLoadState()
-    useMountEffect(() => {
-      void screenModule.load()
-    })
     switch (state.kind) {
       case "loading":
         return <div aria-busy="true" />
