@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <title>最終レポートの作業の記録の見本（2026-11-03 合意）</title>
+    <style>
+      :root {
+        --surface: #221f2b;
+        --surface-raised: rgba(232, 227, 234, 0.06);
+        --ink: #e8e3ea;
+        --ink-bright: #f7f6f8;
+        --ink-soft: rgba(232, 227, 234, 0.72);
+        --ink-quiet: rgba(232, 227, 234, 0.55);
+        --rule: rgba(232, 227, 234, 0.1);
+        --accent: #6fd3b9;
+        --accent-dim: rgba(111, 211, 185, 0.35);
+        --ok: #86d99a;
+        --warn: #e7c46b;
+        --add: #7fd88f;
+        --del: #f08a8a;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: #17151d;
+        color: var(--ink);
+        font:
+          15px/1.73 system-ui,
+          "Hiragino Sans",
+          sans-serif;
+        padding: 28px;
+      }
+      .paper {
+        max-width: 760px;
+        background: var(--surface);
+        border-radius: 12px;
+        padding: 28px 32px 36px;
+      }
+      .request {
+        color: var(--ink-quiet);
+        font-size: 13px;
+        margin-bottom: 14px;
+      }
+      .request b {
+        font-weight: 400;
+        color: var(--ink-soft);
+        margin-left: 8px;
+      }
+
+      .title-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px 12px;
+      }
+      .tid,
+      .done {
+        white-space: nowrap;
+        flex: none;
+      }
+      .tid {
+        font:
+          12px/1 ui-monospace,
+          monospace;
+        color: var(--accent);
+        border: 1px solid var(--accent-dim);
+        border-radius: 5px;
+        padding: 5px 7px;
+        text-decoration: none;
+      }
+      .name {
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--ink-bright);
+        margin: 0;
+      }
+      .done {
+        font-size: 12px;
+        color: var(--ok);
+        background: rgba(134, 217, 154, 0.12);
+        border-radius: 4px;
+        padding: 2px 7px;
+      }
+      .label {
+        font-size: 12px;
+        color: var(--ink-quiet);
+        margin: 10px 0 6px;
+      }
+
+      .c1 {
+        font-size: 24px;
+        line-height: 1.45;
+        font-weight: 700;
+        color: var(--ink-bright);
+        margin: 0 0 6px;
+        max-width: 26em;
+      }
+      .c2 {
+        font-size: 15px;
+        color: var(--ink-soft);
+        margin: 0 0 22px;
+        max-width: 40em;
+      }
+
+      .record {
+        border-top: 1px solid var(--rule);
+        border-bottom: 1px solid var(--rule);
+        padding: 6px 0;
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 7.5em 1fr;
+        gap: 0 18px;
+        padding: 14px 0;
+      }
+      .row + .row {
+        border-top: 1px dashed var(--rule);
+      }
+      .key {
+        font-size: 13px;
+        color: var(--ink-quiet);
+        padding-top: 1px;
+      }
+      .val {
+        min-width: 0;
+      }
+      .prose {
+        margin: 0;
+        color: var(--ink);
+        max-width: 38em;
+      }
+      code {
+        font:
+          13px ui-monospace,
+          monospace;
+        background: var(--surface-raised);
+        padding: 1px 5px;
+        border-radius: 4px;
+      }
+
+      .files summary {
+        cursor: pointer;
+        list-style: none;
+        display: inline-flex;
+        gap: 10px;
+        align-items: baseline;
+      }
+      .files summary::-webkit-details-marker {
+        display: none;
+      }
+      .files summary::before {
+        content: "▸";
+        color: var(--ink-quiet);
+        font-size: 11px;
+      }
+      .files[open] summary::before {
+        content: "▾";
+      }
+      .num {
+        font-variant-numeric: tabular-nums;
+      }
+      .add {
+        color: var(--add);
+      }
+      .del {
+        color: var(--del);
+      }
+      .tree {
+        margin: 8px 0 0 16px;
+        font:
+          13px/1.9 ui-monospace,
+          monospace;
+        color: var(--ink-soft);
+      }
+      .tree .dir {
+        color: var(--ink-quiet);
+      }
+      .tree .m {
+        color: var(--warn);
+        font-size: 11px;
+        margin-right: 6px;
+      }
+
+      .stages {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 6px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+      .stage {
+        display: inline-flex;
+        gap: 6px;
+        align-items: baseline;
+        font-size: 13px;
+        padding: 3px 9px;
+        border-radius: 4px;
+        background: var(--surface-raised);
+        color: var(--ink-soft);
+      }
+      .stage::before {
+        content: "✓";
+        color: var(--ok);
+      }
+      .stage strong {
+        color: var(--ink-bright);
+        font-weight: 600;
+      }
+      .other {
+        margin: 10px 0 0;
+        padding: 0;
+        list-style: none;
+        font-size: 14px;
+      }
+      .other li {
+        display: grid;
+        grid-template-columns: 1.2em 1fr;
+      }
+      .other .okm {
+        color: var(--ok);
+      }
+      .other .q {
+        color: var(--warn);
+      }
+      .other .how {
+        grid-column: 2;
+        font-size: 13px;
+        color: var(--ink-quiet);
+      }
+
+      .band {
+        display: flex;
+        gap: 3px;
+        height: 8px;
+        margin: 6px 0 10px;
+      }
+      .band span {
+        border-radius: 2px;
+        background: var(--accent-dim);
+      }
+      .band span.lead {
+        background: var(--accent);
+      }
+      .phases {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 2px 16px;
+        font-size: 14px;
+      }
+      .phases .t {
+        text-align: right;
+        color: var(--ink-soft);
+      }
+      .phases .lead {
+        color: var(--ink-bright);
+        font-weight: 600;
+      }
+      .sum {
+        margin: 0 0 4px;
+        display: flex;
+        gap: 10px;
+        align-items: baseline;
+      }
+      .sum strong {
+        font-size: 18px;
+        color: var(--ink-bright);
+      }
+      .sum span {
+        font-size: 13px;
+        color: var(--ink-quiet);
+      }
+      .variant {
+        margin-top: 36px;
+        border-top: 1px solid var(--rule);
+        padding-top: 18px;
+      }
+      .variant-h {
+        font-size: 13px;
+        color: var(--ink-quiet);
+        margin: 0 0 4px;
+      }
+      .said {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        font-size: 14px;
+      }
+      .said li {
+        display: grid;
+        grid-template-columns: 1.2em 1fr;
+      }
+      .said .okm {
+        color: var(--ok);
+      }
+      .said .cmd {
+        grid-column: 2;
+        font-size: 12px;
+        color: var(--ink-quiet);
+      }
+
+      .section-h {
+        font-size: 19px;
+        font-weight: 700;
+        margin: 30px 0 8px;
+        color: var(--ink-bright);
+      }
+      .section-p {
+        color: var(--ink-soft);
+        margin: 0;
+      }
+      @media (max-width: 560px) {
+        body {
+          padding: 12px;
+        }
+        .paper {
+          padding: 20px 18px 28px;
+        }
+        .row {
+          grid-template-columns: 1fr;
+          gap: 6px;
+        }
+        .c1 {
+          font-size: 21px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="paper">
+      <div class="request">依頼<b>/next-task gh-2068</b></div>
+
+      <div class="title-row">
+        <a class="tid" href="#">GH-2068</a>
+        <h3 class="name">レポートの見出しのタスクIDを押せばタスクのモーダルが開くようにする</h3>
+        <span class="done">✓ 完了</span>
+      </div>
+      <div class="label">最終レポート</div>
+
+      <p class="c1">次のレポートから、一覧にあるタスクのIDを押すとそのタスクのモーダルが開く。</p>
+      <p class="c2">
+        閉じたタスクのうち一覧に載るのは新しい10件までで、それより古いものはこれまでどおり字のまま。
+      </p>
+
+      <section class="record" aria-label="作業の記録">
+        <div class="row">
+          <div class="key">したこと</div>
+          <div class="val">
+            <p class="prose">
+              <code>report-head.tsx</code> の <code>TaskId</code> は、一覧の
+              ID（<code>gh-2068</code>）を大文字小文字によらず探し、当たった一覧の ID を
+              <code>openTask</code> に渡すようになった。ボタンの字はレポートの
+              <code>GH-2068</code> のまま。
+            </p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="key">変えたファイル</div>
+          <div class="val">
+            <details class="files" open>
+              <summary>
+                <span class="num">2 ファイル</span><span class="num add">+70</span
+                ><span class="num del">−8</span>
+              </summary>
+              <div class="tree">
+                <div class="dir">src/browser/…/main-view/</div>
+                <div>
+                  　└ <span class="m">変更</span>report-head.tsx <span class="add">+7</span>
+                  <span class="del">−6</span>
+                </div>
+                <div class="dir">test/browser/…/main-view/</div>
+                <div>
+                  　└ <span class="m">変更</span>report-head.test.tsx <span class="add">+63</span>
+                  <span class="del">−2</span>
+                </div>
+              </div>
+            </details>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="key">確かめたこと</div>
+          <div class="val">
+            <ul class="stages">
+              <li class="stage">型検査</li>
+              <li class="stage">lint</li>
+              <li class="stage">整形</li>
+              <li class="stage">字数の上限</li>
+              <li class="stage">単体 <strong class="num">3,152</strong></li>
+              <li class="stage">E2E <strong class="num">71</strong></li>
+            </ul>
+            <ul class="other">
+              <li><span class="okm">✓</span><span>受け入れ役の判定（指摘 0 件）</span></li>
+              <li>
+                <span class="q">？</span><span>実際の画面でタスクIDを押す</span>
+                <span class="how"
+                  >確かめ方: このレポートの GH-2068 を押し、モーダルが GH-2068
+                  を選んで開けばよい</span
+                >
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="key">かかった時間</div>
+          <div class="val">
+            <p class="sum"><strong class="num">5分46秒</strong><span>4フェーズ</span></p>
+            <div class="band" aria-hidden="true">
+              <span class="lead" style="flex: 218"></span><span style="flex: 52"></span
+              ><span style="flex: 36"></span><span style="flex: 40"></span>
+            </div>
+            <div class="phases">
+              <span class="lead">実装</span><span class="t lead num">3分38秒</span>
+              <span>受け入れ</span><span class="t num">52秒</span> <span>振り返り</span
+              ><span class="t num">36秒</span> <span>送り出し</span><span class="t num">40秒</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <h2 class="section-h">一覧に無い古いタスクは字のまま残した</h2>
+      <p class="section-p">（ここから下は、いまと同じ書き手の Section が続く）</p>
+
+      <div class="variant">
+        <p class="variant-h">tsukumo 以外のリポジトリのとき（「確かめたこと」の行だけ）</p>
+        <div class="row">
+          <div class="key">確かめたこと</div>
+          <div class="val">
+            <ul class="said">
+              <li>
+                <span class="okm">✓</span><span>リポジトリの検証（自己テストと整合の検査）</span
+                ><span class="cmd"><code>./check.sh</code></span>
+              </li>
+              <li><span class="okm">✓</span><span>受け入れ役の判定（指摘 0 件）</span></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
