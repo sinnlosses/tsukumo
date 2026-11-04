@@ -2,7 +2,7 @@
   "main": [
     { "tag": "section", "attributes": { "data-report-step": "" }, "children": [
       { "tag": "header", "children": [
-        { "tag": "button", "children": ["t-002"] },
+        { "tag": "button", "children": ["T-002"] },
         { "tag": "h3", "children": [
           "架空の札に段が1つでも",
           { "tag": "code", "children": ["1/1"] },

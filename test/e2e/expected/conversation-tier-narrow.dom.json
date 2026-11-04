@@ -112,11 +112,11 @@
                             {
                               "tag": "li",
                               "children": [
-                                "t-001",
+                                "T-001",
                                 "いちばんのおすすめ",
                                 "架空のタスク（未着手）",
                                 "送られる依頼",
-                                "タスク t-001 を進めて",
+                                "タスク T-001 を進めて",
                                 {
                                   "tag": "kbd",
                                   "children": [
@@ -127,7 +127,7 @@
                                   "tag": "button",
                                   "attributes": {
                                     "aria-disabled": "false",
-                                    "aria-label": "t-001 を始める（すぐ送る）",
+                                    "aria-label": "T-001 を始める（すぐ送る）",
                                     "type": "button"
                                   },
                                   "children": [

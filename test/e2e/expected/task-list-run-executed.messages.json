@@ -49,7 +49,7 @@
         "kind": "known",
         "upserted": [
           {
-            "id": "t-001",
+            "id": "T-001",
             "summary": "架空のタスク（未着手）",
             "status": {
               "kind": "known",
@@ -66,7 +66,7 @@
             }
           },
           {
-            "id": "t-002",
+            "id": "T-002",
             "summary": "架空のタスク（完了）",
             "status": {
               "kind": "known",
@@ -85,8 +85,8 @@
         ],
         "removed": [],
         "order": [
-          "t-001",
-          "t-002"
+          "T-001",
+          "T-002"
         ],
         "omittedClosedCount": 0
       }
@@ -96,7 +96,7 @@
     "sent": "session.prompt",
     "order": 1,
     "input": {
-      "text": "タスク t-001 を進めて。",
+      "text": "タスク T-001 を進めて。",
       "images": []
     }
   },
@@ -111,7 +111,7 @@
     "at": 1768438800000,
     "event": {
       "kind": "request",
-      "text": "タスク t-001 を進めて。",
+      "text": "タスク T-001 を進めて。",
       "images": []
     }
   },

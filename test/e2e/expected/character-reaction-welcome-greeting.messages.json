@@ -96,7 +96,7 @@
         "kind": "known",
         "upserted": [
           {
-            "id": "t-001",
+            "id": "T-001",
             "summary": "架空のタスク（着手できる）",
             "status": {
               "kind": "known",
@@ -113,17 +113,17 @@
             }
           },
           {
-            "id": "t-002",
+            "id": "T-002",
             "summary": "架空のタスク（依存で止まる）",
             "status": {
               "kind": "known",
               "status": "todo"
             },
             "dependencies": [
-              "t-001"
+              "T-001"
             ],
             "waitingFor": [
-              "t-001"
+              "T-001"
             ],
             "labels": [],
             "importance": "normal",
@@ -136,8 +136,8 @@
         ],
         "removed": [],
         "order": [
-          "t-001",
-          "t-002"
+          "T-001",
+          "T-002"
         ],
         "omittedClosedCount": 0
       }
@@ -147,7 +147,7 @@
     "sent": "session.recordWelcomeGreeting",
     "order": 2,
     "input": {
-      "text": "架空の挨拶、t-001 からどう？",
+      "text": "架空の挨拶、T-001 からどう？",
       "expression": "excited"
     }
   },
@@ -163,7 +163,7 @@
     "event": {
       "kind": "welcome-greeting-shown",
       "line": {
-        "text": "架空の挨拶、t-001 からどう？",
+        "text": "架空の挨拶、T-001 からどう？",
         "expression": "excited"
       }
     }
@@ -265,7 +265,7 @@
     "sent": "session.recordWelcomeGreeting",
     "order": 4,
     "input": {
-      "text": "架空の書き直した挨拶、t-001 はどう？",
+      "text": "架空の書き直した挨拶、T-001 はどう？",
       "expression": "curious"
     }
   },
@@ -281,7 +281,7 @@
     "event": {
       "kind": "welcome-greeting-shown",
       "line": {
-        "text": "架空の書き直した挨拶、t-001 はどう？",
+        "text": "架空の書き直した挨拶、T-001 はどう？",
         "expression": "curious"
       }
     }

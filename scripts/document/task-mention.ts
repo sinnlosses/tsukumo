@@ -55,8 +55,14 @@ const ALLOWED_DATA_FILES = [
   "test/server/achievement/core/graduation.test.ts",
   "test/server/achievement/core/daily-achievement.test.ts",
   "test/shared/repository/task-summary.test.ts",
+  "test/server/repository/adapter/beads/beads-task.test.ts",
+  "test/server/repository/adapter/beads/beads-issues-reader.test.ts",
+  "test/server/repository/adapter/task/task-summary.test.ts",
+  "test/server/achievement/adapter/closed-issue.test.ts",
   "test/shared/achievement/achievement.test.ts",
   "test/e2e/task-board.test.ts",
+  "test/e2e/task-list.test.ts",
+  "test/e2e/task-room.ts",
   "test/e2e/report-task.test.ts",
 ] as const satisfies readonly string[]
 

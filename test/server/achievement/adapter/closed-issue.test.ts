@@ -138,10 +138,10 @@ describe("readAchievement", () => {
 
     expect(achievement).toMatchObject({
       doneTasks: [
-        { id: "t-002", summary: "今日済んだ" },
-        { id: "t-003", summary: "やめた" },
+        { id: "T-002", summary: "今日済んだ" },
+        { id: "T-003", summary: "やめた" },
       ],
-      graduations: [{ id: "t-002", registeredOn: "2026-09-01", days: 22 }],
+      graduations: [{ id: "T-002", registeredOn: "2026-09-01", days: 22 }],
       milestones: [],
     })
   })
@@ -169,7 +169,7 @@ describe("readAchievement", () => {
       ),
     )
 
-    expect(achievement.milestones).toEqual([{ count: 250, taskId: "t-250" }])
+    expect(achievement.milestones).toEqual([{ count: 250, taskId: "T-250" }])
   })
 
   it(".beads が無ければ「不明」", async () => {

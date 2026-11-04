@@ -4,8 +4,8 @@
       { "tag": "ul", "attributes": { "aria-label": "絞り込み" }, "children": [
         { "tag": "button", "attributes": { "aria-pressed": "true" }, "children": ["すべて", "2"] }
       ] },
-      { "tag": "button", "attributes": { "aria-haspopup": "dialog", "aria-expanded": "false" }, "children": ["t-001", "架空のタスク（未着手）"] },
-      { "tag": "button", "attributes": { "aria-haspopup": "dialog", "aria-expanded": "false" }, "children": ["t-002", "架空のタスク（完了）"] }
+      { "tag": "button", "attributes": { "aria-haspopup": "dialog", "aria-expanded": "false" }, "children": ["T-001", "架空のタスク（未着手）"] },
+      { "tag": "button", "attributes": { "aria-haspopup": "dialog", "aria-expanded": "false" }, "children": ["T-002", "架空のタスク（完了）"] }
     ] }
   ]
 }

@@ -100,7 +100,7 @@ describe("knownTaskSummaryOfBeadsIssues の一覧", () => {
     ])
   })
 
-  it("ID・題・依存・ラベルは課題の字のまま写す", () => {
+  it("番号つきの ID と依存は tw と同じ大文字の形にし、番号の無い ID・題・ラベルは字のまま写す", () => {
     const [item] = itemsOf([
       issue({
         id: "gh-12",
@@ -114,10 +114,10 @@ describe("knownTaskSummaryOfBeadsIssues の一覧", () => {
     ])
 
     expect(item).toEqual({
-      id: "gh-12",
+      id: "GH-12",
       summary: "架空の題",
       status: { kind: "known", status: "doing" },
-      dependencies: ["gh-3", "t-a1b2"],
+      dependencies: ["GH-3", "t-a1b2"],
       waitingFor: [],
       labels: ["任意のタグ"],
       difficulty: "sonnet",
@@ -163,16 +163,16 @@ describe("knownTaskSummaryOfBeadsIssues の一覧", () => {
     const items = itemsOf(closedIssues)
 
     expect(items.map((item) => item.id)).toEqual([
-      "t-102",
-      "t-103",
-      "t-104",
-      "t-105",
-      "t-106",
-      "t-107",
-      "t-108",
-      "t-109",
-      "t-110",
-      "t-111",
+      "T-102",
+      "T-103",
+      "T-104",
+      "T-105",
+      "T-106",
+      "T-107",
+      "T-108",
+      "T-109",
+      "T-110",
+      "T-111",
     ])
   })
 
@@ -213,18 +213,18 @@ describe("knownTaskSummaryOfBeadsIssues の一覧", () => {
     const known = knownTaskSummaryOfBeadsIssues(issues)
 
     expect(known.items.map((item) => item.id)).toEqual([
-      "t-100",
-      "t-102",
-      "t-103",
-      "t-104",
-      "t-105",
-      "t-106",
-      "t-107",
-      "t-108",
-      "t-109",
-      "t-110",
-      "t-111",
-      "t-200",
+      "T-100",
+      "T-102",
+      "T-103",
+      "T-104",
+      "T-105",
+      "T-106",
+      "T-107",
+      "T-108",
+      "T-109",
+      "T-110",
+      "T-111",
+      "T-200",
     ])
     expect(known.omittedClosedCount).toBe(1)
   })
@@ -256,6 +256,20 @@ describe("knownTaskSummaryOfBeadsIssues の一覧", () => {
       ["t-3", []],
       ["t-4", ["t-3", "t-2"]],
       ["t-5", []],
+    ])
+  })
+
+  it("waitingFor も tw と同じ大文字の形で載せ、t- は番号が3桁以上のときだけ大文字にする", () => {
+    const items = itemsOf([
+      issue({ id: "gh-7", status: "open" }),
+      issue({ id: "t-12", status: "open" }),
+      issue({ id: "t-123", status: "open", blockedBy: ["gh-7", "t-12"] }),
+    ])
+
+    expect(items.map((item) => [item.id, item.waitingFor])).toEqual([
+      ["GH-7", []],
+      ["t-12", []],
+      ["T-123", ["GH-7", "t-12"]],
     ])
   })
 })
@@ -312,5 +326,13 @@ describe("doneTasksOfBeadsIssues", () => {
         closedAtEpochMilliseconds: 1000,
       },
     ])
+  })
+
+  it("番号つきの ID は tw と同じ大文字の形で載せる", () => {
+    const done = doneTasksOfBeadsIssues([
+      issue({ id: "gh-2105", status: "closed", closedAtEpochMilliseconds: 1 }),
+    ])
+
+    expect(done.map((task) => task.id)).toEqual(["GH-2105"])
   })
 })

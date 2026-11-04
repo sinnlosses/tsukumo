@@ -34,7 +34,7 @@ export function doneTasksOfBeadsIssues(issues: readonly BeadsIssue[]): readonly 
     issue.status === CLOSED_STATUS && issue.closedAtEpochMilliseconds !== undefined
       ? [
           {
-            id: issue.id,
+            id: taskIdOfBeadsId(issue.id),
             summary: issue.title,
             createdAtEpochMilliseconds: issue.createdAtEpochMilliseconds,
             closedAtEpochMilliseconds: issue.closedAtEpochMilliseconds,
@@ -87,18 +87,30 @@ function numberOfTaskId(id: string): number | undefined {
   return matched?.[1] === undefined ? undefined : Number(matched[1])
 }
 
+/**
+ * Beads の課題の ID（小文字）を、tw がタスクID として見せる形にする。
+ * tw の `to_task_id` と同じ型の番号つきの ID だけを大文字にし、ほかはそのまま返す。
+ */
+function taskIdOfBeadsId(beadsId: string): string {
+  return NUMBERED_BEADS_ID.test(beadsId) ? beadsId.toUpperCase() : beadsId
+}
+
+const NUMBERED_BEADS_ID = /^(?:t-\d{3,}|gh-\d+|[a-z][a-z0-9_]+-\d+)$/
+
 /** 依存のうち `unfinished`（閉じていない課題の ID）に無いもの（閉じた課題・課題に無い ID）は着手を止めない。 */
 function taskSummaryItemOfBeadsIssue(
   issue: BeadsIssue,
   unfinished: ReadonlySet<string>,
 ): TaskSummaryItem {
   return {
-    id: issue.id,
+    id: taskIdOfBeadsId(issue.id),
     summary: issue.title,
     status: taskStatusOf(issue),
-    dependencies: issue.blockedBy,
+    dependencies: issue.blockedBy.map(taskIdOfBeadsId),
     waitingFor:
-      issue.status === CLOSED_STATUS ? [] : issue.blockedBy.filter((id) => unfinished.has(id)),
+      issue.status === CLOSED_STATUS
+        ? []
+        : issue.blockedBy.filter((id) => unfinished.has(id)).map(taskIdOfBeadsId),
     labels: issue.labels,
     difficulty: issue.difficulty,
     loopable: issue.loopable,

@@ -55,7 +55,7 @@
         "kind": "report",
         "task": {
           "kind": "task",
-          "id": "t-002",
+          "id": "T-002",
           "name": "架空の札に段が1つでも `1/1` のように位置を出す",
           "outcome": "finished",
           "genre": "work"

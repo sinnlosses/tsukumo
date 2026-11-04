@@ -102,6 +102,7 @@ export type ScenarioRoom = {
   readonly waitForEvent: (kind: string, occurrence?: number) => Promise<void>
   /**
    * `tasks-changed` が、一覧（`tasks.kind === "known"`）に `ids` をすべて含む1件まで待つ。
+   * 一覧は Beads の ID を表示の形（大文字）にして載せるので、大文字小文字を無視して突き合わせる。
    * 課題のファイルを置く前の見回りは `unknown` を返しうるので、
    * `waitForEvent("tasks-changed")`（既定 occurrence=1）は狙いの一覧より前の1件で抜けうる。
    * 課題を置く足場はこちらを使う。
@@ -271,8 +272,8 @@ export async function openRoom(
           return false
         }
         const order = Array.isArray(tasks["order"]) ? tasks["order"] : []
-        const presentIds = new Set(order.map(String))
-        return ids.every((id) => presentIds.has(id))
+        const presentIds = new Set(order.map((id) => String(id).toLowerCase()))
+        return ids.every((id) => presentIds.has(id.toLowerCase()))
       })
       await nextAnimationFrame(page)
     },

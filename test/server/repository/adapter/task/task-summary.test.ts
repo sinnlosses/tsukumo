@@ -153,15 +153,15 @@ describe("watchTaskSummary", () => {
 
     expect(changes).toEqual([
       known(
-        { ...plainTodo("t-001", "済み"), status: { kind: "known", status: "done" } },
-        { ...plainTodo("t-002", "保留"), status: { kind: "known", status: "hold" } },
+        { ...plainTodo("T-001", "済み"), status: { kind: "known", status: "done" } },
+        { ...plainTodo("T-002", "保留"), status: { kind: "known", status: "hold" } },
         {
-          ...plainTodo("t-003", "着手中"),
+          ...plainTodo("T-003", "着手中"),
           status: { kind: "known", status: "doing" },
-          dependencies: ["t-010"],
-          waitingFor: ["t-010"],
+          dependencies: ["T-010"],
+          waitingFor: ["T-010"],
         },
-        { ...plainTodo("t-010", "未着手"), labels: ["任意のタグ"] },
+        { ...plainTodo("T-010", "未着手"), labels: ["任意のタグ"] },
       ),
     ])
   })
@@ -178,8 +178,8 @@ describe("watchTaskSummary", () => {
     await waitForChanges(changes, 2)
 
     expect(changes).toEqual([
-      known(plainTodo("t-001", "閉じる前")),
-      known({ ...plainTodo("t-001", "閉じる前"), status: { kind: "known", status: "done" } }),
+      known(plainTodo("T-001", "閉じる前")),
+      known({ ...plainTodo("T-001", "閉じる前"), status: { kind: "known", status: "done" } }),
     ])
   })
 
@@ -201,23 +201,23 @@ describe("watchTaskSummary", () => {
     expect(changes).toEqual([
       {
         kind: "known",
-        upserted: [plainTodo("t-001", "一つ目"), plainTodo("t-002", "二つ目")],
+        upserted: [plainTodo("T-001", "一つ目"), plainTodo("T-002", "二つ目")],
         removed: [],
-        order: ["t-001", "t-002"],
+        order: ["T-001", "T-002"],
         omittedClosedCount: 0,
       },
       {
         kind: "known",
-        upserted: [plainTodo("t-002", "二つ目を直した")],
+        upserted: [plainTodo("T-002", "二つ目を直した")],
         removed: [],
-        order: ["t-001", "t-002"],
+        order: ["T-001", "T-002"],
         omittedClosedCount: 0,
       },
       {
         kind: "known",
         upserted: [],
-        removed: ["t-001"],
-        order: ["t-002"],
+        removed: ["T-001"],
+        order: ["T-002"],
         omittedClosedCount: 0,
       },
     ])

@@ -15,14 +15,14 @@ test.describe("タスクの一覧", () => {
       "task-section",
       "task-run-confirm",
     ])
-    await taskRow(room, "t-001").click()
+    await taskRow(room, "T-001").click()
     await room.page.getByRole("button", { name: "これを始める →", exact: true }).click()
     await room.page.getByRole("dialog", { name: "タスクの実行" }).waitFor()
     await room.page.getByRole("button", { name: "実行する", exact: true }).click()
     await room.waitForEvent("request")
     await room.waitForEvent("turn-finished")
     expect(await room.page.getByRole("dialog", { name: "タスクの実行" }).count()).toBe(0)
-    expect(await room.page.getByRole("dialog", { name: "t-001 の詳細" }).count()).toBe(0)
+    expect(await room.page.getByRole("dialog", { name: "T-001 の詳細" }).count()).toBe(0)
     await room.settleAndMatchPickedWithMessages(ELAPSED_MS)
   })
 
@@ -34,7 +34,7 @@ test.describe("タスクの一覧", () => {
       "task-run-confirm",
     ])
     await room.page.getByRole("button", { name: "ドラフト 1", exact: true }).click()
-    await taskRow(room, "t-003").click()
+    await taskRow(room, "T-003").click()
     await room.page.getByRole("button", { name: "計画する", exact: true }).click()
     await room.page.getByRole("dialog", { name: "タスクの実行" }).waitFor()
     await room.page.getByRole("button", { name: "頼む", exact: true }).click()

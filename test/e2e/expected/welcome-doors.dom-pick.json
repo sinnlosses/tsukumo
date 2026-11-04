@@ -9,7 +9,7 @@
         ] },
         { "tag": "li", "children": [
           "架空のタスク（着手できる）",
-          { "tag": "button", "attributes": { "aria-label": "t-001 を始める（すぐ送る）" } }
+          { "tag": "button", "attributes": { "aria-label": "T-001 を始める（すぐ送る）" } }
         ] }
       ] },
       "ほかの始め方",

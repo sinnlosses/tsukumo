@@ -247,7 +247,7 @@ describe("readAchievement", { timeout: 60_000 }, () => {
 
     expect(result).toMatchObject({
       kind: "ok",
-      achievement: { kind: "known", doneTasks: [{ id: "t-001", summary: "今日済んだ" }] },
+      achievement: { kind: "known", doneTasks: [{ id: "T-001", summary: "今日済んだ" }] },
     })
   })
 })

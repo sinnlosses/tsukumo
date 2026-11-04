@@ -6,6 +6,11 @@
   margin: 0;
   padding: 0;
   list-style: none;
+
+  /* 本文の箇条の間隔（`.detail-block li + li`）が札にも掛かり、1枚目だけ背が伸びるので、それより強い詳細度で消す。 */
+  & > .stage {
+    margin: 0;
+  }
 }
 
 .stage {
@@ -39,6 +44,6 @@
   color: var(--ink);
 }
 
-.other:not(:empty) {
+.check-rest:not(:empty) {
   margin-top: var(--space-md);
 }

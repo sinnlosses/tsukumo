@@ -2,11 +2,11 @@
   "task-board": [
     { "tag": "dialog", "attributes": { "aria-label": "タスク", "open": true }, "children": [
       { "tag": "ul", "attributes": { "role": "listbox", "aria-label": "タスク" }, "children": [
-        { "tag": "li", "attributes": { "role": "option", "aria-selected": "true", "data-state": "ready" }, "children": ["t-001"] },
-        { "tag": "li", "attributes": { "role": "option", "aria-selected": "false" }, "children": ["t-002"] },
-        { "tag": "li", "attributes": { "role": "option", "aria-selected": "false" }, "children": ["t-005"] }
+        { "tag": "li", "attributes": { "role": "option", "aria-selected": "true", "data-state": "ready" }, "children": ["T-001"] },
+        { "tag": "li", "attributes": { "role": "option", "aria-selected": "false" }, "children": ["T-002"] },
+        { "tag": "li", "attributes": { "role": "option", "aria-selected": "false" }, "children": ["T-005"] }
       ] },
-      { "tag": "section", "attributes": { "aria-label": "t-001 の詳細" }, "children": [
+      { "tag": "section", "attributes": { "aria-label": "T-001 の詳細" }, "children": [
         { "tag": "h3", "children": ["架空のタスク（", { "tag": "code", "children": ["code"] }, "を含む要約）"] },
         { "tag": "article", "attributes": { "aria-label": "本文" }, "children": [
           { "tag": "h4", "children": ["目的・背景"] },
