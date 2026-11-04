@@ -15,6 +15,7 @@ import { deferredModule } from "../../../../../hooks/deferred-module.ts"
 import styles from "./markdown.module.css"
 import type { FenceFigureLanguage } from "./renderer/fence-figure.tsx"
 import { ZoomableSvgFigure } from "./renderer/figure-zoom.tsx"
+import { diffLines, sideLines, type SideLineDiff } from "./renderer/line-diff.ts"
 import {
   FoldedList as LongBlockFoldedList,
   FoldedTableBody as LongBlockFoldedTableBody,
@@ -158,6 +159,10 @@ export const compareLeafClassNames = {
   compare: notationStyles["report-compare"],
   compareSide: notationStyles["report-compare-side"],
   compareHeading: notationStyles["report-compare-heading"],
+  codeLegend: notationStyles["report-compare-code-legend"],
+  codeLegendItem: notationStyles["report-compare-code-legend-item"],
+  codeLegendBefore: notationStyles["report-compare-code-legend-before"],
+  codeLegendAfter: notationStyles["report-compare-code-legend-after"],
 } as const
 
 /** 葉を直接描く数の部品が付ける class 名（Markdown の `stats`・`stat` と同じ見た目）。 */
@@ -269,6 +274,8 @@ export { ZoomableSvgFigure }
 export { BeforeAfterSwap, ReportImage, type SwapSettings, SwapSideContext }
 
 export { CodeSpan }
+
+export { diffLines, sideLines, type SideLineDiff }
 
 /**
  * mermaid のソースを図に描く。

@@ -1,8 +1,8 @@
-// フェンス付きコードの中身を行ごとに描く。印の行（`marks`）の地とラベルと、無印の長い範囲の畳みと、shell の出力の行の字の色と、`diff` の行の中の違う語の地を持つ。
+// フェンス付きコードの中身を行ごとに描く。印の行（`marks`）の地とラベルと、無印の長い範囲の畳みと、shell の出力の行の字の色と、`diff` の行の中の違う語の地と、前後の見比べの行の印を持つ。
 
 import clsx from "clsx"
 import type { Element, ElementContent } from "hast"
-import { createElement, useState, type ReactElement, type ReactNode } from "react"
+import { createContext, createElement, useState, type ReactElement, type ReactNode } from "react"
 
 import {
   foldedRanges,
@@ -14,8 +14,14 @@ import { Button } from "../../../../../ui/button/button.tsx"
 import { diffLineSide, markDiffSign, type CodeLine } from "./code-line.ts"
 import type { DiffLineWords, DiffWordRanges } from "./diff-pair.ts"
 import { markDiffWords } from "./diff-word-mark.ts"
+import type { SideLine, SideLineDiff } from "./line-diff.ts"
 import styles from "./report-notation.module.css"
 import type { ShellLineKind } from "./shell-line.ts"
+
+/** 前後の見比べの片側の行の並び。hast の属性には載せず、塊の外から行の描き手まで運ぶ。 */
+export const CodeLineDiffContext = createContext<SideLineDiff | undefined>(undefined)
+
+type CompareLineMark = "before" | "after" | "added"
 
 export function CodeLines(props: {
   readonly lines: readonly CodeLine[]
@@ -27,10 +33,43 @@ export function CodeLines(props: {
   readonly diff: boolean
   /** 1 行目がファイルの何行目か。分かるときだけ行番号の列を出す。 */
   readonly startLine: number | undefined
+  /** 前後の見比べの片側の行の並び。見比べでない塊は `undefined`。 */
+  readonly lineDiff: SideLineDiff | undefined
 }): ReactElement {
   const [opened, setOpened] = useState<readonly number[]>([])
   const folds = foldedRanges(props.lines.length, props.marks)
   const labels = markLabels(props.marks)
+
+  if (props.lineDiff !== undefined) {
+    const { side } = props.lineDiff
+    return (
+      <>
+        {props.lineDiff.lines.map((row, position) =>
+          row.kind === "gap" ? (
+            <span
+              key={`gap-${String(position)}`}
+              className={styles["code-line"]}
+              data-compare="gap"
+              aria-hidden="true"
+            />
+          ) : (
+            <CodeLineRow
+              key={row.index + 1}
+              line={props.lines[row.index] ?? []}
+              number={row.index + 1}
+              fileLine={undefined}
+              marks={[]}
+              label={undefined}
+              kind={undefined}
+              wordRange={undefined}
+              diff={false}
+              compare={compareLineMark(side, row)}
+            />
+          ),
+        )}
+      </>
+    )
+  }
 
   const rows = props.lines.flatMap((line, index): readonly ReactNode[] => {
     const number = index + 1
@@ -49,11 +88,25 @@ export function CodeLines(props: {
         kind={props.kinds?.[index]}
         wordRange={props.wordRanges.get(index)}
         diff={props.diff}
+        compare={undefined}
       />,
     ]
   })
 
   return <>{rows}</>
+}
+
+function compareLineMark(
+  side: SideLineDiff["side"],
+  row: Extract<SideLine, { readonly kind: "line" }>,
+): CompareLineMark | undefined {
+  if (row.change === "same") {
+    return undefined
+  }
+  if (side === "before") {
+    return "before"
+  }
+  return row.change === "added" ? "added" : "after"
 }
 
 function foldRow(
@@ -89,6 +142,8 @@ function CodeLineRow(props: {
   readonly label: string | undefined
   readonly kind: ShellLineKind | undefined
   readonly wordRange: DiffLineWords | undefined
+  /** 前後の見比べの行の印。印の無い行と見比べでない塊は `undefined`。 */
+  readonly compare: CompareLineMark | undefined
 }): ReactElement {
   const marked = props.marks.some((mark) => {
     const range = readMarkLines(mark.lines)
@@ -103,6 +158,7 @@ function CodeLineRow(props: {
   return (
     <span
       data-line={props.fileLine}
+      data-compare={props.compare}
       className={clsx(
         styles["code-line"],
         marked && styles["code-line-mark"],
@@ -113,6 +169,7 @@ function CodeLineRow(props: {
     >
       <span className={styles["code-line-text"]}>
         {props.kind === "output" ? props.line.map(plainText) : diffLine.map(hastToReact)}
+        {props.compare === "added" && <span className={styles["code-line-new"]}>新設</span>}
       </span>
       {props.label !== undefined && (
         <span className={styles["code-mark-label"]}>{props.label}</span>

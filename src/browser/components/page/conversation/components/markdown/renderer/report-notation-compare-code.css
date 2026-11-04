@@ -1,0 +1,55 @@
+.detail-block {
+  /* 前後の両側が code の見比べの行の印（行の器の `data-compare`）。
+   前の側の変えた・消した行は ng、後の側の変えた・足した行は ok の地と左の線。 */
+  & .code-line[data-compare="before"] {
+    background: var(--code-diff-line-removed);
+    box-shadow: inset 3px 0 0 var(--state-ng);
+  }
+  & .code-line:is([data-compare="after"], [data-compare="added"]) {
+    background: var(--code-diff-line-added);
+    box-shadow: inset 3px 0 0 var(--state-ok);
+  }
+  /* 向かいの側にだけある行の高さを揃える空の行。前後を縦に積むときは揃える相手が無いので描かない。 */
+  @container report-body (max-width: calc(40em + 0.75rem)) {
+    & .code-line[data-compare="gap"] {
+      display: none;
+    }
+  }
+  /* 足した行の札。選択・写しに混ぜない。 */
+  & .code-line-new {
+    margin-inline-start: var(--space-sm);
+    padding: 0 var(--space-xs);
+    border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--state-ok) 18%, transparent);
+    font-family: var(--font-sans);
+    font-size: var(--font-label);
+    color: var(--state-ok);
+    user-select: none;
+  }
+  & .report-compare-code-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm) var(--space-lg);
+    margin-top: var(--space-sm);
+    font-size: var(--font-secondary);
+    color: var(--ink-quiet);
+  }
+  & .report-compare-code-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+  }
+  & .report-compare-code-legend-before,
+  & .report-compare-code-legend-after {
+    flex: none;
+    inline-size: 0.8em;
+    block-size: 0.8em;
+    border-radius: var(--radius-sm);
+  }
+  & .report-compare-code-legend-before {
+    background: var(--state-ng);
+  }
+  & .report-compare-code-legend-after {
+    background: var(--state-ok);
+  }
+}

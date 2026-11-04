@@ -14,12 +14,16 @@ import { fencedMarkdown } from "../../../../../../shared/report/report-inline-ma
 import type { LeafValue } from "../../../../../../shared/report/report-leaf-value.ts"
 import { comparisonImageAltOf } from "../../domain/report-comparison-markdown.ts"
 import {
+  CodeFence,
   compareLeafClassNames,
+  diffLines,
   figureClassName,
   FoldedList,
   InlineCodeText,
   Markdown,
   MermaidFigure,
+  type SideLineDiff,
+  sideLines,
   type SwapSettings,
   SwapSideContext,
 } from "../markdown/markdown.tsx"
@@ -62,6 +66,7 @@ export function CompareLeaf(props: {
   if (part.relation === "versus" && part.sides.every((side) => side.kind === "points")) {
     return <PointsCompare part={part} value={props.value} />
   }
+  const lineDiffs = lineDiffsOf(part.relation, before, after)
   const labels = POSITIONS.map((position, index) =>
     sideLabelOf(part.relation, position, part.sides[index]?.heading ?? ""),
   )
@@ -92,6 +97,7 @@ export function CompareLeaf(props: {
           label={labels[0] ?? ""}
           accent={false}
           content={before}
+          lineDiff={lineDiffs?.before}
           title={part.title}
           imageSource={props.imageSource}
         />
@@ -105,11 +111,80 @@ export function CompareLeaf(props: {
           label={labels[1] ?? ""}
           accent={part.relation === "before-after"}
           content={after}
+          lineDiff={lineDiffs?.after}
           title={part.title}
           imageSource={props.imageSource}
         />
       </div>
+      {lineDiffs !== undefined && <CodeDiffLegend lineDiffs={lineDiffs} />}
     </FoldedLeafFrame>
+  )
+}
+
+type LineDiffPair = { readonly before: SideLineDiff; readonly after: SideLineDiff }
+
+/** 前後の両側が code のときだけ行の差を取る。比べない（上限超え）なら `undefined`。 */
+function lineDiffsOf(
+  relation: ComparePart["relation"],
+  before: CompareSide,
+  after: CompareSide,
+): LineDiffPair | undefined {
+  if (relation !== "before-after" || before.kind !== "code" || after.kind !== "code") {
+    return undefined
+  }
+  const aligned = diffLines(before.source, after.source)
+  return aligned === undefined
+    ? undefined
+    : {
+        before: { side: "before", lines: sideLines(aligned, "before") },
+        after: { side: "after", lines: sideLines(aligned, "after") },
+      }
+}
+
+const LEGEND_CHANGE_WORDS = {
+  before: { changed: "変えた", other: "消した", position: "前" },
+  after: { changed: "変えた", other: "足した", position: "後" },
+} as const satisfies Record<
+  SidePosition,
+  { readonly changed: string; readonly other: string; readonly position: string }
+>
+
+/** 印の付いた種別だけを語にする。印の行が1つも無い側は項目を出さない。 */
+function CodeDiffLegend(props: { readonly lineDiffs: LineDiffPair }): ReactElement {
+  const items = POSITIONS.flatMap((position) => {
+    const changes = new Set(
+      props.lineDiffs[position].lines.flatMap((line) =>
+        line.kind === "line" && line.change !== "same" ? [line.change] : [],
+      ),
+    )
+    const words = LEGEND_CHANGE_WORDS[position]
+    const named = [
+      ...(changes.has("changed") ? [words.changed] : []),
+      ...(changes.has("removed") || changes.has("added") ? [words.other] : []),
+    ]
+    return named.length === 0
+      ? []
+      : [{ position, text: `${named.join("・")}行（${words.position}）` }]
+  })
+  if (items.length === 0) {
+    return <></>
+  }
+  return (
+    <div className={compareLeafClassNames.codeLegend}>
+      {items.map((item) => (
+        <span key={item.position} className={compareLeafClassNames.codeLegendItem}>
+          <span
+            className={
+              item.position === "before"
+                ? compareLeafClassNames.codeLegendBefore
+                : compareLeafClassNames.codeLegendAfter
+            }
+            aria-hidden="true"
+          />
+          {item.text}
+        </span>
+      ))}
+    </div>
   )
 }
 
@@ -170,6 +245,8 @@ function SideView(props: {
   readonly label: string
   readonly accent: boolean
   readonly content: CompareSide
+  /** 前後の両側が code のときの、この側の行の並び。 */
+  readonly lineDiff: SideLineDiff | undefined
   readonly title: string
   readonly imageSource: ReportImageSource
 }): ReactElement {
@@ -187,6 +264,7 @@ function SideView(props: {
         )}
         <SideContent
           content={props.content}
+          lineDiff={props.lineDiff}
           imageLabel={`${props.label || VERSUS_FALLBACK_LABELS[props.position]}の画面`}
           title={props.title}
           imageSource={props.imageSource}
@@ -198,6 +276,7 @@ function SideView(props: {
 
 function SideContent(props: {
   readonly content: CompareSide
+  readonly lineDiff: SideLineDiff | undefined
   readonly imageLabel: string
   readonly title: string
   readonly imageSource: ReportImageSource
@@ -214,7 +293,17 @@ function SideContent(props: {
         />
       )
     case "code":
-      return <Markdown text={fencedMarkdown(content.language, content.source)} />
+      return props.lineDiff === undefined ? (
+        <Markdown text={fencedMarkdown(content.language, content.source)} />
+      ) : (
+        <CodeFence
+          language={content.language}
+          path=""
+          marks={[]}
+          source={content.source}
+          lineDiff={props.lineDiff}
+        />
+      )
     case "points":
       return (
         <ul>

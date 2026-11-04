@@ -22,11 +22,22 @@ export function diffWords(before: string, after: string): WordDiff {
   if (left.length > WORD_DIFF_MAX_WORDS || right.length > WORD_DIFF_MAX_WORDS) {
     return { before: [], after: [] }
   }
-  const common = commonPairs(left, right, commonLengths(left, right), 0, 0)
+  const common = commonIndexPairs(
+    left.map((word) => word.text),
+    right.map((word) => word.text),
+  )
   return {
     before: unmatchedRanges(left, new Set(common.map(([index]) => index))),
     after: unmatchedRanges(right, new Set(common.map(([, index]) => index))),
   }
+}
+
+/** LCS で共通の要素の添字の対（left の添字, right の添字）を前から順に返す。 */
+export function commonIndexPairs(
+  left: readonly string[],
+  right: readonly string[],
+): readonly (readonly [number, number])[] {
+  return commonPairs(left, right, commonLengths(left, right), 0, 0)
 }
 
 function splitWords(text: string): readonly Word[] {
@@ -38,18 +49,16 @@ function splitWords(text: string): readonly Word[] {
 
 /** `lengths[i][j]` は left[i..] と right[j..] の共通部分列の長さ。 */
 function commonLengths(
-  left: readonly Word[],
-  right: readonly Word[],
+  left: readonly string[],
+  right: readonly string[],
 ): readonly (readonly number[])[] {
   const emptyRow: readonly number[] = Array.from({ length: right.length + 1 }, () => 0)
   return left.reduceRight<readonly (readonly number[])[]>(
-    (below, leftWord) => {
+    (below, leftText) => {
       const next = below[0] ?? emptyRow
       const row = right.reduceRight<readonly number[]>(
-        (done, rightWord, j) => [
-          leftWord.text === rightWord.text
-            ? (next[j + 1] ?? 0) + 1
-            : Math.max(next[j] ?? 0, done[0] ?? 0),
+        (done, rightText, j) => [
+          leftText === rightText ? (next[j + 1] ?? 0) + 1 : Math.max(next[j] ?? 0, done[0] ?? 0),
           ...done,
         ],
         [0],
@@ -60,10 +69,9 @@ function commonLengths(
   )
 }
 
-/** 共通の語の添字の対（left の添字, right の添字）を前から順に返す。 */
 function commonPairs(
-  left: readonly Word[],
-  right: readonly Word[],
+  left: readonly string[],
+  right: readonly string[],
   lengths: readonly (readonly number[])[],
   i: number,
   j: number,
@@ -71,7 +79,7 @@ function commonPairs(
   if (i >= left.length || j >= right.length) {
     return []
   }
-  if (left[i]?.text === right[j]?.text) {
+  if (left[i] === right[j]) {
     return [[i, j], ...commonPairs(left, right, lengths, i + 1, j + 1)]
   }
   const down = lengths[i + 1]?.[j] ?? 0

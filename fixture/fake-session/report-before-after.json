@@ -81,6 +81,27 @@
                 },
                 "fold": "",
                 "aside": ""
+              },
+              {
+                "kind": "compare",
+                "title": "架空の再試行の設定",
+                "relation": "before-after",
+                "sides": [
+                  {
+                    "kind": "code",
+                    "heading": "",
+                    "language": "yaml",
+                    "source": "retry:\n  max: 3\n  backoff: 200ms\ntimeout: 5s\n"
+                  },
+                  {
+                    "kind": "code",
+                    "heading": "",
+                    "language": "yaml",
+                    "source": "retry:\n  max: 5\n  backoff: 200ms\n  jitter: true\ntimeout: 5s\n"
+                  }
+                ],
+                "fold": "",
+                "aside": ""
               }
             ]
           },

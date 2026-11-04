@@ -28,7 +28,7 @@
 
 import clsx from "clsx"
 import type { Element, Root } from "hast"
-import type { JSX, ReactElement } from "react"
+import { use, type JSX, type ReactElement } from "react"
 import ReactMarkdown, { type Components, type ExtraProps, type Options } from "react-markdown"
 import rehypeHighlight from "rehype-highlight"
 import rehypeRaw from "rehype-raw"
@@ -46,7 +46,7 @@ import {
 } from "../../repository-link/repository-link.tsx"
 import { codeFenceTree } from "./code-fence-tree.ts"
 import { rehypeCodeFileName } from "./code-file-name.ts"
-import { CodeLines } from "./code-line-list.tsx"
+import { CodeLineDiffContext, CodeLines } from "./code-line-list.tsx"
 import { splitCodeLines } from "./code-line.ts"
 import {
   codeFileName,
@@ -61,6 +61,7 @@ import { diffWordRanges, type DiffWordRanges } from "./diff-pair.ts"
 import { FenceFigure, isFenceFigureLanguage } from "./fence-figure.tsx"
 import { OrderedList, TableBody, UnorderedList } from "./folded-block.tsx"
 import { REPORT_HAST_CACHE, type HastCache } from "./hast-cache.ts"
+import type { SideLineDiff } from "./line-diff.ts"
 import { NotationAside, NotationBlock, NotationInline, NotationListItem } from "./notation.tsx"
 import { remarkPreviewImage } from "./preview-image.ts"
 import { rehypeInlineMark } from "./rehype-inline-mark.ts"
@@ -160,6 +161,8 @@ export type CodeFenceProps = {
   readonly path: string
   readonly marks: readonly CodeMark[]
   readonly source: string
+  /** 前後の見比べの片側の行の並び。見比べでない塊は `undefined`。 */
+  readonly lineDiff: SideLineDiff | undefined
 }
 
 /**
@@ -169,13 +172,15 @@ export type CodeFenceProps = {
 export function CodeFence(props: CodeFenceProps): ReactElement {
   const tree = codeFenceTree(props)
   return (
-    <ReactMarkdown
-      rehypePlugins={[() => () => tree, rehypeHighlight]}
-      remarkRehypeOptions={FOOTNOTE_OPTIONS}
-      components={REPORT_COMPONENTS}
-    >
-      {""}
-    </ReactMarkdown>
+    <CodeLineDiffContext value={props.lineDiff}>
+      <ReactMarkdown
+        rehypePlugins={[() => () => tree, rehypeHighlight]}
+        remarkRehypeOptions={FOOTNOTE_OPTIONS}
+        components={REPORT_COMPONENTS}
+      >
+        {""}
+      </ReactMarkdown>
+    </CodeLineDiffContext>
   )
 }
 
@@ -287,13 +292,18 @@ function FencedCode(props: {
   const wordRanges = isDiff ? diffWordRanges(source) : NO_WORD_RANGES
   const found = useCodeStartLine({ path: fileName, language: language ?? "", source })
   const startLine = isDiff || kinds !== undefined ? undefined : found
+  const lineDiff = use(CodeLineDiffContext)
   return (
     <div className={styles["code-file"]}>
       <div className={styles["code-file-name"]}>
         {fileName !== undefined && <FileNameLabel fileName={fileName} />}
         <CopyButton text={kinds === undefined ? source : shellCommandText(source, kinds)} />
       </div>
-      {marks.length === 0 && kinds === undefined && !isDiff && startLine === undefined ? (
+      {marks.length === 0 &&
+      kinds === undefined &&
+      !isDiff &&
+      startLine === undefined &&
+      lineDiff === undefined ? (
         <pre {...rest} />
       ) : (
         <pre {...rest}>
@@ -305,6 +315,7 @@ function FencedCode(props: {
               wordRanges={wordRanges}
               diff={isDiff}
               startLine={startLine}
+              lineDiff={lineDiff}
             />
           </code>
         </pre>

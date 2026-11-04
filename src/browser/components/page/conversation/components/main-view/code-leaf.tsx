@@ -22,6 +22,7 @@ export function CodeLeaf(props: {
         path={part.path}
         marks={part.marks}
         source={part.source}
+        lineDiff={undefined}
       />
     </FoldedLeafFrame>
   )
