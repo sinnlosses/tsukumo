@@ -36,13 +36,13 @@ export type DelegateEvent =
    */
   | { readonly kind: "delegate-handed-back"; readonly delegate: string }
   /**
-   * 台本（`Workflow`）の走り出し（SDK の `system` / `task_started` のうち `task_type` が `local_workflow` のもの）。サーバの中だけで流れる。
+   * ワークフロースクリプト（`Workflow`）の走り出し（SDK の `system` / `task_started` のうち `task_type` が `local_workflow` のもの）。サーバの中だけで流れる。
    * `CallReview.pass` が `taskId` を覚え、同じ `taskId` の `task-notified` と対にしてワークフロースクリプトの完了を見分ける（畳み込み・ブラウザには届かない）。
    */
   | { readonly kind: "workflow-started"; readonly taskId: string }
   /**
    * バックグラウンドタスクの完了・失敗・停止の知らせが届いた（SDK の `system` / `task_notification` の `task_id`）。サーバの中だけで流れる。
-   * `task_notification` に `task_type` は無いので、台本のものかは `workflow-started` の `taskId` との突き合わせで決める。
+   * `task_notification` に `task_type` は無いので、ワークフロースクリプトのものかは `workflow-started` の `taskId` との突き合わせで決める。
    * `CallReview.pass` が受けて捨てる（畳み込み・ブラウザには届かない）。
    */
   | { readonly kind: "task-notified"; readonly taskId: string }
@@ -68,7 +68,7 @@ export type DelegateEvent =
       readonly toolUseId: string
     }
   /**
-   * 台本の段と agent の写しが届いた（SDK の `system` / `task_progress` の `workflow_progress`）。
+   * ワークフロースクリプトの段と agent の写しが届いた（SDK の `system` / `task_progress` の `workflow_progress`）。
    * 毎回全体の写しで、受け取る側は同じ `taskId` のものを丸ごと置き換える。
    */
   | { readonly kind: "workflow-progress"; readonly progress: WorkflowProgress }

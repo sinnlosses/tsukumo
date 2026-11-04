@@ -52,7 +52,7 @@ describe("WorkPlanReview の委譲の返却", () => {
     expect(review.gateRaised()).toBe(false)
   })
 
-  it("台本でないタスクの完了の知らせと、走り出しを見ていない知らせは委譲ゲートを立てない", () => {
+  it("ワークフロースクリプトでないタスクの完了の知らせと、走り出しを見ていない知らせは委譲ゲートを立てない", () => {
     const review = started()
 
     review.pass({ kind: "task-notified", taskId: "bash-1" })
@@ -409,7 +409,7 @@ describe("WorkPlanReview の phase_result", () => {
   })
 })
 
-describe("WorkPlanReview の台本の写し", () => {
+describe("WorkPlanReview のワークフロースクリプトの写し", () => {
   it("写しはそのまま流し、段の題が段の id に当たる agent で帯の位置が進む", () => {
     const review = createWorkPlanReview()
     review.pass(REQUEST)

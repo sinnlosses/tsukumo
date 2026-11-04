@@ -262,7 +262,7 @@ describe("nextWorkPlan（範囲を初めて宣言した work-plan）", () => {
   })
 })
 
-describe("nextWorkPlan（台本の写しで進める）", () => {
+describe("nextWorkPlan（ワークフロースクリプトの写しで進める）", () => {
   const SERIAL = ["架空の計画", "架空の実装A", "架空の実装B", "架空の受け入れ", "架空の振り返り"]
   const IDS = ["plan", "impl-1", "impl-2", "accept", "retrospect"]
   const planAt = (current: number, phaseIds: readonly string[] = IDS): LatestWorkPlan => ({

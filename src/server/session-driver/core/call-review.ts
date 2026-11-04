@@ -58,7 +58,7 @@ export type CallReview = {
   readonly planMissing: () => boolean
   /** 受け付け済みのワークプラン（`WorkPlanReview.latestPlan`）。 */
   readonly latestPlan: () => LatestWorkPlan
-  /** 台本の写しでの agent のいる段の題（`WorkPlanReview.workflowAgentPhase`）。 */
+  /** ワークフロースクリプトの写しでの agent のいる段の題（`WorkPlanReview.workflowAgentPhase`）。 */
   readonly workflowAgentPhase: (agentId: string) => string | undefined
   /** 委譲ゲートの拒否文に足す帯の位置の文。ワークプランが無ければ空。 */
   readonly bandPosition: () => string

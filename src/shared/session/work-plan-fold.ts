@@ -26,7 +26,7 @@ export type WorkPlanEvent = Extract<
 
 /**
  * イベント1件を受けたあとの今のワークプラン。
- * 依頼で忘れ、`work-plan` で置き換え、委譲の返却は {@link advancedByReturn}、台本の写しは {@link advancedByWorkflowProgress}、
+ * 依頼で忘れ、`work-plan` で置き換え、委譲の返却は {@link advancedByReturn}、ワークフロースクリプトの写しは {@link advancedByWorkflowProgress}、
  * フェーズの閉じ方が `finished` の `report` は {@link closedByReport} で畳む。
  */
 export function nextWorkPlan(plan: LatestWorkPlan, event: WorkPlanEvent): LatestWorkPlan {
@@ -174,8 +174,8 @@ function returnedByReturn(
 }
 
 /**
- * 台本の写しで進めたワークプラン。
- * 写しの agent のうち `phaseTitle` が `phaseIds` のどれかに一致するもの（`state` を問わない）で、平らにした並びのいちばん後ろの段を台本が入った段とする。
+ * ワークフロースクリプトの写しで進めたワークプラン。
+ * 写しの agent のうち `phaseTitle` が `phaseIds` のどれかに一致するもの（`state` を問わない）で、平らにした並びのいちばん後ろの段をワークフロースクリプトが入った段とする。
  * その段の要素が今の要素より後ろのときだけ、その要素を今の要素にして前の段をすべて済ませる。
  * 飛び越えた段に飛ばした印は付けず、段のまとめは空にして直前に済んだ段をまとめ待ちにする。
  * `workflow_phase` の並びは段の題が起動時に先に振られるので見ない。

@@ -6,7 +6,7 @@
 //
 // 判定の窓口は handler だけ（`WorkPlanReview.judge`・`WorkPlanReview.judgeResult`）。
 // 委譲先の返却（`delegate-handed-back`）は本文を読まず、委譲ゲートと注記（`phase-result-called` を受けた委譲先かどうかで文が変わる）だけを立て、イベントは捨てる。
-// 台本（`Workflow`）の完了の知らせ（`workflow-started` で覚えた `taskId` の `task-notified`）も、返却と同じく委譲ゲートと注記を立てて捨てる。
+// ワークフロースクリプト（`Workflow`）の完了の知らせ（`workflow-started` で覚えた `taskId` の `task-notified`）も、返却と同じく委譲ゲートと注記を立てて捨てる。
 // 覚えるワークプランは `nextWorkPlan` で畳んだ結果だけで、忘れる区切りも返却と `report` での進め方もここでは決めない。
 //
 // 差し戻したあと同じターンで受け付けた呼び出しが無いことも覚え、`report` の差し戻し（`ReportReview`）が `standing` で読む。
@@ -85,9 +85,9 @@ export type WorkPlanReview = {
   readonly gateRaised: () => boolean
   /** 受け付け済みのワークプランが無いあいだ真。差し戻されただけでは真のまま、`request` で真に戻る。 */
   readonly planMissing: () => boolean
-  /** 受け付け済みのワークプラン（返却や台本の写しで進めた位置を含む）。無ければ `none`。 */
+  /** 受け付け済みのワークプラン（返却やワークフロースクリプトの写しで進めた位置を含む）。無ければ `none`。 */
   readonly latestPlan: () => LatestWorkPlan
-  /** 台本の写しで、この agent がいる段の題（段の id）。写しに無ければ undefined。 */
+  /** ワークフロースクリプトの写しで、この agent がいる段の題（段の id）。写しに無ければ undefined。 */
   readonly workflowAgentPhase: (agentId: string) => string | undefined
   /** 受け付け済みのワークプランの委譲先のフェーズの範囲。ワークプランが無ければ `none`。 */
   readonly delegatedRange: () => DelegatedRange
@@ -126,9 +126,9 @@ export function createWorkPlanReview(): WorkPlanReview {
   // `phase_result` の `skipped` で付いた飛ばした段の名前と、`phase_result` を呼んで次の返却をまだ返していない委譲先。
   let resultMarks: readonly string[] = []
   let resultCallers: ReadonlySet<string> = new Set()
-  // 走り出して、完了の知らせがまだ届いていない台本（`Workflow`）の `task_id`。
+  // 走り出して、完了の知らせがまだ届いていないワークフロースクリプト（`Workflow`）の `task_id`。
   let workflowTasks: ReadonlySet<string> = new Set()
-  // 台本の写しで見えた agent の id と、いる段の題。
+  // ワークフロースクリプトの写しで見えた agent の id と、いる段の題。
   const workflowAgentPhases = new Map<string, string>()
 
   /** `plan` の飛ばした段に、`phase_result` で付いた印のうち `plan` で済んでいる段を足す。 */

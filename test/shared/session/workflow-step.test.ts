@@ -77,8 +77,8 @@ function stepsOf(...events: readonly SessionEvent[]): readonly (readonly [string
   return apply(...events).workflowSteps.map((step) => [step.taskId, step.name] as const)
 }
 
-describe("applySessionEvent（台本の段と agent の写し）", () => {
-  it("顔ぶれにある台本の写しは、同じ taskId のものを丸ごと置き換える", () => {
+describe("applySessionEvent（ワークフロースクリプトの段と agent の写し）", () => {
+  it("顔ぶれにあるワークフロースクリプトの写しは、同じ taskId のものを丸ごと置き換える", () => {
     const progresses = progressesOf(
       tasksChanged(WORKFLOW_1, WORKFLOW_2),
       progressOf("wf-1", "agent-1", "agent-2"),
@@ -92,13 +92,13 @@ describe("applySessionEvent（台本の段と agent の写し）", () => {
     ])
   })
 
-  it("顔ぶれに無い taskId の写しと、台本でないタスクの taskId の写しは捨てる", () => {
+  it("顔ぶれに無い taskId の写しと、ワークフロースクリプトでないタスクの taskId の写しは捨てる", () => {
     expect(progressesOf(progressOf("wf-1", "agent-1"))).toEqual([])
     expect(progressesOf(tasksChanged(WORKFLOW_1, SHELL), progressOf("wf-9", "agent-1"))).toEqual([])
     expect(progressesOf(tasksChanged(SHELL), progressOf("bash-1", "agent-1"))).toEqual([])
   })
 
-  it("background-tasks-changed で顔ぶれから外れた台本の写しと手順が落ちる", () => {
+  it("background-tasks-changed で顔ぶれから外れたワークフロースクリプトの写しと手順が落ちる", () => {
     const state = apply(
       tasksChanged(WORKFLOW_1, WORKFLOW_2),
       progressOf("wf-1", "agent-1"),
@@ -124,8 +124,8 @@ describe("applySessionEvent（台本の段と agent の写し）", () => {
   })
 })
 
-describe("applySessionEvent（台本の agent の手順）", () => {
-  it("写しに agentId のある台本の手順が、その agent のツール呼び出しで替わる（agent_type は見ない）", () => {
+describe("applySessionEvent（ワークフロースクリプトの agent の手順）", () => {
+  it("写しに agentId のあるワークフロースクリプトの手順が、その agent のツール呼び出しで替わる（agent_type は見ない）", () => {
     expect(
       stepsOf(
         tasksChanged(WORKFLOW_1),
@@ -136,7 +136,7 @@ describe("applySessionEvent（台本の agent の手順）", () => {
     ).toEqual([["wf-1", "Bash"]])
   })
 
-  it("台本が2本あっても、名指された agent を持つ台本の手順だけが替わる（いちばん新しい台本ではない）", () => {
+  it("ワークフロースクリプトが2本あっても、名指された agent を持つものの手順だけが替わる（いちばん新しいものではない）", () => {
     expect(
       stepsOf(
         tasksChanged(WORKFLOW_1, WORKFLOW_2),
@@ -151,7 +151,7 @@ describe("applySessionEvent（台本の agent の手順）", () => {
     ])
   })
 
-  it("どの台本の写しにも無い agentId（メインが Agent で起こしたサブエージェント）では替わらない", () => {
+  it("どのワークフロースクリプトの写しにも無い agentId（メインが Agent で起こしたサブエージェント）では替わらない", () => {
     expect(
       stepsOf(
         tasksChanged(WORKFLOW_1),
@@ -170,7 +170,7 @@ describe("applySessionEvent（台本の agent の手順）", () => {
   })
 })
 
-describe("applySessionEvent（台本の手順の終わり）", () => {
+describe("applySessionEvent（ワークフロースクリプトの手順の終わり）", () => {
   const setup = [tasksChanged(WORKFLOW_1), progressOf("wf-1", "agent-1")]
 
   it("始まった時刻は畳み込みの at で控え、走っている手順として置く", () => {
@@ -190,7 +190,7 @@ describe("applySessionEvent（台本の手順の終わり）", () => {
     ).toEqual([false])
   })
 
-  it("古い手順の終わり（toolUseId の不一致）と台本の agent でない終わりでは変わらない", () => {
+  it("古い手順の終わり（toolUseId の不一致）とワークフロースクリプトの agent でない終わりでは変わらない", () => {
     expect(
       runningOf(
         ...setup,

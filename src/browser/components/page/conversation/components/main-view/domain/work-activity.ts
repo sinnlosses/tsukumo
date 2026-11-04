@@ -141,7 +141,7 @@ type SteppedBackground =
   | { readonly kind: "workflow"; readonly taskId: string; readonly step: WorkflowStep }
 
 /**
- * 手順を持つバックグラウンドタスク（台本・サブエージェント）のうち、いちばん新しく手順が始まったもの。同時刻なら顔ぶれの後ろの方。
+ * 手順を持つバックグラウンドタスク（ワークフロースクリプト・サブエージェント）のうち、いちばん新しく手順が始まったもの。同時刻なら顔ぶれの後ろの方。
  * サブエージェントの手順はタスクに結ばれないので、サブエージェント全体で1つの候補とし、始まりは中の手順の最後のもの
  * （復元した手順は始まりが分からず、最古として扱う）。
  */
@@ -176,7 +176,7 @@ function latestSteppedBackground(
 }
 
 /**
- * 選んだ台本の中で、手順が1つでも始まったうえで走っている agent（start・progress）がいる（手順の合間に考えている）か。
+ * 選んだワークフロースクリプトの中で、手順が1つでも始まったうえで走っている agent（start・progress）がいる（手順の合間に考えている）か。
  */
 function workflowThinking(workflowProgress: readonly WorkflowProgress[], taskId: string): boolean {
   return (

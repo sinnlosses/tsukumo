@@ -1,4 +1,4 @@
-// ワークフロースクリプト（台本）ごとの、いちばん新しく始まった手順（`WorkflowStep`）と、SDK が運ぶ段と agent の写し（`WorkflowProgress`）。
+// ワークフロースクリプトごとの、いちばん新しく始まった手順（`WorkflowStep`）と、SDK が運ぶ段と agent の写し（`WorkflowProgress`）。
 
 import type { BackgroundTask } from "../session-driver/background-task.ts"
 import type { SessionEvent } from "./session-event.ts"
@@ -20,7 +20,7 @@ export type WorkflowStep = {
   readonly running: boolean
 }
 
-/** 台本の agent の状態（SDK の `workflow_progress` の `workflow_agent.state`）。 */
+/** ワークフロースクリプトの agent の状態（SDK の `workflow_progress` の `workflow_agent.state`）。 */
 export type WorkflowAgentState = "start" | "progress" | "done" | "error"
 
 export const WORKFLOW_AGENT_STATES = [
@@ -46,7 +46,7 @@ export type WorkflowProgress = {
   }[]
 }
 
-/** 台本の手順・写しに関する出来事1件を畳み、変わる欄だけを返す。 */
+/** ワークフロースクリプトの手順・写しに関する出来事1件を畳み、変わる欄だけを返す。 */
 export function foldWorkflowEvent(
   state: Pick<SessionState, "workflowSteps" | "workflowProgress" | "backgroundTasks">,
   event: Extract<
@@ -96,7 +96,7 @@ export function workflowItemsOfTasks<Item extends { readonly taskId: string }>(
   return items.filter((item) => tasks.some((task) => task.taskId === item.taskId))
 }
 
-/** 顔ぶれにある台本の写しだけを受け、同じ `taskId` の写しを丸ごと置き換える。 */
+/** 顔ぶれにあるワークフロースクリプトの写しだけを受け、同じ `taskId` の写しを丸ごと置き換える。 */
 function withWorkflowProgress(
   progresses: readonly WorkflowProgress[],
   tasks: readonly BackgroundTask[],
@@ -130,7 +130,7 @@ function withWorkflowStep(
 }
 
 /**
- * `toolUseId` が同じ手順だけを終わりにする。古い手順の終わり（新しい手順に差し替わったあとに届くもの）と台本の agent でない終わりは、何も変えない。
+ * `toolUseId` が同じ手順だけを終わりにする。古い手順の終わり（新しい手順に差し替わったあとに届くもの）とワークフロースクリプトの agent でない終わりは、何も変えない。
  */
 function finishWorkflowStep(
   steps: readonly WorkflowStep[],

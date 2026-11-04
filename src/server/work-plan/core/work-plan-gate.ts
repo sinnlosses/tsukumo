@@ -77,8 +77,8 @@ export type ImplementerStopVerdict =
   | { readonly kind: "block"; readonly reason: string }
 
 /**
- * 台本の agent が終わろうとするときに、実装の範囲の最後の段の id まで `phase_result` の申告が届いているかを、受け付け済みのワークプランで照らす。
- * `agentPhaseTitle` は台本の写しでその agent がいる段の題（段の id）で、写しに無ければ undefined。
+ * ワークフロースクリプトの agent が終わろうとするときに、実装の範囲の最後の段の id まで `phase_result` の申告が届いているかを、受け付け済みのワークプランで照らす。
+ * `agentPhaseTitle` はワークフロースクリプトの写しでその agent がいる段の題（段の id）で、写しに無ければ undefined。
  * 届いていなければ、残りの段の id を添えて止める。
  * 写しに無い agent、段の id を持たないワークプラン、委譲の範囲が確定していないワークプラン、実装の範囲の外の agent は止めない。
  * 一度止められたあと（`stopHookActive`）の終わりも通す。実装の段の題で走っても `phase_result` を呼ばない agent（計画の判定など）と、`stopped` で止めた実装役を止め続けないため。

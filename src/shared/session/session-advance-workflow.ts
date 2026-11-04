@@ -1,4 +1,4 @@
-// ワークフロースクリプト（台本）の手順と写しのイベントを畳んで次のセッションの姿を返す純粋関数。
+// ワークフロースクリプトの手順と写しのイベントを畳んで次のセッションの姿を返す純粋関数。
 
 import type { SessionEvent } from "./session-event.ts"
 import { workPlanRecords } from "./session-record-edit.ts"

@@ -139,7 +139,7 @@ describe("applySessionEvent（委譲の返却で進むワークプラン）", ()
   })
 })
 
-describe("applySessionEvent（台本の写しで進むワークプラン）", () => {
+describe("applySessionEvent（ワークフロースクリプトの写しで進むワークプラン）", () => {
   const request = requestEvent()
   const plan: SessionEvent = {
     kind: "work-plan",

@@ -97,7 +97,7 @@ describe("useWorkStrip（ワークフロースクリプトの中の手順）", (
     ).toBe("背景で · Read  /架空/a.ts · 54秒")
   })
 
-  it("手順が終わって agent が走っていれば「背景で · 考えている」、agent が全部 done なら台本の説明に戻る", () => {
+  it("手順が終わって agent が走っていれば「背景で · 考えている」、agent が全部 done ならワークフロースクリプトの説明に戻る", () => {
     const base = [
       tasksChanged(WORKFLOW),
       WORKFLOW_PROGRESS,
@@ -148,7 +148,7 @@ describe("useWorkStrip（ワークフロースクリプトの中の手順）", (
     ).toBe("背景で 架空の流れ")
   })
 
-  it("台本の手順が届いたあとに背景の Bash が立っても、2行目は台本の手順のまま", () => {
+  it("ワークフロースクリプトの手順が届いたあとに背景の Bash が立っても、2行目はその手順のまま", () => {
     expect(
       activityAfter(
         tasksChanged(WORKFLOW),
@@ -159,7 +159,7 @@ describe("useWorkStrip（ワークフロースクリプトの中の手順）", (
     ).toBe("背景で · Bash  架空のコマンド · 56秒")
   })
 
-  it("手順を持つ台本とサブエージェントがいれば、新しく始まった方を出す", () => {
+  it("手順を持つワークフロースクリプトとサブエージェントがいれば、新しく始まった方を出す", () => {
     const agentTask = {
       taskId: "agent-task-1",
       kind: "agent",
@@ -181,7 +181,7 @@ describe("useWorkStrip（ワークフロースクリプトの中の手順）", (
     expect(activityAfter(...head, bash, ...nestedRead)).toBe("背景で · 考えている")
   })
 
-  it("手順を持つ台本が2本あれば、新しく始まった方を出す", () => {
+  it("手順を持つワークフロースクリプトが2本あれば、新しく始まった方を出す", () => {
     const second = {
       taskId: "wf-2",
       kind: "workflow",
@@ -205,7 +205,7 @@ describe("useWorkStrip（ワークフロースクリプトの中の手順）", (
     ).toBe("背景で 架空の流れ")
   })
 
-  it("台本の agent でない agent_id の手順では2行目が替わらない", () => {
+  it("ワークフロースクリプトの agent でない agent_id の手順では2行目が替わらない", () => {
     expect(
       activityAfter(
         tasksChanged(WORKFLOW),
@@ -237,7 +237,7 @@ describe("useWorkStrip（ワークフロースクリプトの中の手順）", (
     ).toBe("背景で · 考えている")
   })
 
-  it("台本の写しが届く前の手順は捨てる", () => {
+  it("ワークフロースクリプトの写しが届く前の手順は捨てる", () => {
     expect(
       activityAfter(
         tasksChanged(WORKFLOW),

@@ -129,7 +129,7 @@ export function buildQuerySeedOptions(options: SessionDriverOptions): QuerySeedO
  * 1つのツールに当たった matcher のフックは並んで走り、どれかの `deny` が勝つ。
  *
  * - ワークフロースクリプトの手順（matcher なし）: サブエージェントの中の呼び出しなら `agent_id` を添えた `workflow-step-started` を `onEvent` へ流す。入力は要約に使う欄だけに絞る。
- *   台本の agent かは畳み込みが `agent_id` で決める
+ *   ワークフロースクリプトの agent かは畳み込みが `agent_id` で決める
  * - 委譲ゲート（読み取りと tsukumo のツール以外）: 外部由来の印を立て、委譲ゲート（`judgeToolAgainstGate`）で拒む。
  *   印は結果のフック（{@link postToolUseHooks}）でも立てる
  * - `mcp__tsukumo__phase_result`: メインの呼び出しを拒む（`judgePhaseResultCaller`）

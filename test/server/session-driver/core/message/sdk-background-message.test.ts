@@ -101,7 +101,7 @@ describe("バックグラウンドタスク（実測で届いた順: background_
       type: "system",
       subtype: "task_progress",
       task_id: "wf-1",
-      description: "架空の台本",
+      description: "架空のワークフロースクリプト",
       usage: { total_tokens: 1, tool_uses: 0, duration_ms: 1 },
       workflow_progress,
       ...extra,
@@ -284,7 +284,7 @@ describe("バックグラウンドタスク（実測で届いた順: background_
       type: "system",
       subtype: "task_started",
       task_id: "wf-1",
-      description: "架空の台本",
+      description: "架空のワークフロースクリプト",
       task_type: taskType,
     })
 
