@@ -28,8 +28,8 @@
 | 要約の口               | 走行合計が 128 KiB を超えたターンの終わりに `/compact` を投げ、`PostCompact` フックで写す（`chat-compact.ts`・`sdk-driver.ts` の `chatSummaryHooks`）                                                          |
 | 索引                   | キャラクターが `index` で1日に何行でも見出しを書き、`recall` が小文字の部分一致で当たった日を新しい順に 8 KiB まで開く（`chat/adapter/chat-archive.ts`）                                                       |
 | 容量の定数             | `src/browser/components/page/conversation/domain/chat-log.ts` に `CHAT_COMPACT_THRESHOLD_BYTES` など4つが別々の `const` で並ぶ                                                                                 |
-| 使い捨ての `query()`   | 日記（`src/server/diary/adapter/sdk-diary.ts`）と訪問の台本（`src/server/visit/adapter/sdk-visit-script.ts`）が `persistSession: false`・`settingSources: []` で使っている                                     |
-| 同じ claude へ渡すこと | `docs/requirements.md` 2.2 は、同じマシンの claude の子プロセスが受ける `query()` を外部送信に数えない（2026-09-25、訪問の台本のとき）                                                                         |
+| 使い捨ての `query()`   | 日記（`src/server/diary/adapter/sdk-diary.ts`）と訪問のスクリプト（`src/server/visit/adapter/sdk-visit-script.ts`）が `persistSession: false`・`settingSources: []` で使っている                               |
+| 同じ claude へ渡すこと | `docs/requirements.md` 2.2 は、同じマシンの claude の子プロセスが受ける `query()` を外部送信に数えない（2026-09-25、訪問のスクリプトのとき）                                                                   |
 | 雑談の消費（実測）     | `~/.tsukumo/token-usage/` の 2026-09-22〜25 の雑談 82 ターンで、1ターンあたり呼び出し 5.4 回・キャッシュ読み出し約 88 万トークン・約 $0.62。1回の呼び出しで読む文脈は平均約 16 万トークン                      |
 
 ## 全体: 4つの層と、引いたときだけ載る2段

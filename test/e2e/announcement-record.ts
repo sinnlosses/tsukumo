@@ -1,8 +1,8 @@
-// 読み上げの領域に挿入された文を、ページの側で控えに積む台本。
+// 読み上げの領域に挿入された文を、ページの側で控えに積むスクリプト。
 
 export const ANNOUNCED_LOG = "__announced"
 
-/** 読み上げの領域へ挿入された文を、ページを開いた時点から控えへ積む台本。 */
+/** 読み上げの領域へ挿入された文を、ページを開いた時点から控えへ積むスクリプト。 */
 export const RECORD_ANNOUNCEMENTS_SCRIPT = `(() => {
   const log = [];
   window.${ANNOUNCED_LOG} = log;

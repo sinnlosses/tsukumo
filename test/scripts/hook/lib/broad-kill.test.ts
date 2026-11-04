@@ -101,7 +101,7 @@ describe("findBroadKillRule", () => {
     ["待受ポートから引いて xargs kill", "lsof -ti tcp:7398 -sTCP:LISTEN | xargs kill"],
     ["変数の pid", "kill $PID"],
     ["pgrep 単独", "pgrep -f node"],
-    ["停止の台本", "node scripts/runtime/stop.ts --port 7398"],
+    ["停止のスクリプト", "node scripts/runtime/stop.ts --port 7398"],
     ["語として書いただけの echo", "echo pkill -f node"],
     ["語として書いただけの grep", 'grep -rn "pkill" docs/workflow.md'],
     ["コミットメッセージの中", 'git commit -m "node の pkill を止める hook"'],

@@ -95,8 +95,8 @@ shared の手続き応答に乗る型や DOM の構造を変える計画には�
 **E2E の足場（`test/e2e/` の `.test.ts` 以外）が export する場面を開く入口は、`test/e2e/task-room.ts` に置く `open…Room` の名前の関数だけにする。** 期待値の持ち主の判定（`scenarioOwners`）は場面名の位置の式を辿れるときだけ辿るので、名前が `ROOM_OPENER` に合わない入口や `task-room.ts` 以外の足場が export する入口を足すと、単体の `test/scripts/shared/e2e-scenario.test.ts`「場面を開く入口」が落ちる。export しない入口とテストファイルの中の局所の入口はこのテストの外で、名前は縛らない（局所の関数は呼び出しの引数と `scenario:` の値から辿る）。
 
 **`*.messages.json` は、サーバとの往復を守る場面だけが比べる。** 残すのは、ブラウザが送るコマンドの中身と数（`session.prompt` の文面・`session.answer`・`session.setModel`・`session.switchSession`・`session.startNewSession`・`session.recordWelcomeGreeting`・`chat.forgetRememberedLine`）か、サーバが決めて返すイベント（`aside` など）を、ほかに比べる場面の無い形で流す場面。
-イベントの列が疑似セッションの台本の写しで、結果が `*.dom.json` に出る場面は比べない。台本に書いた並びは
-台本そのものが差分に出て、イベントの形は `sessionEventSchema`（`src/shared/session/session-event.ts`。台本も
+イベントの列が疑似セッションのシナリオの写しで、結果が `*.dom.json` に出る場面は比べない。シナリオに書いた並びは
+シナリオそのものが差分に出て、イベントの形は `sessionEventSchema`（`src/shared/session/session-event.ts`。シナリオも
 `fake-session.ts` が読むときに通す）と単体テスト（`test/shared/`・`test/server/`）が守る。
 同じコマンドを同じ形で送る場面が2本あれば、比べるのは流れの持ち主の1本だけにする。
 

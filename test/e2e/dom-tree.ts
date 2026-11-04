@@ -1,4 +1,4 @@
-// E2E が判定に使う DOM の木。ページの中で動く台本で構造を写し、落ち着くまで読み直す。
+// E2E が判定に使う DOM の木。ページの中で動くスクリプトで構造を写し、落ち着くまで読み直す。
 // 残すもの・落とすものの正典は `docs/architecture/testing.md`「E2E の成果物と再現」。
 
 import { writeFileSync } from "node:fs"
@@ -47,7 +47,7 @@ export async function settledDom(page: Page, scenario: string, outDir: string): 
 }
 
 /**
- * `options.domRoots` が選んだ名前ごとに、`DOM_ROOT_SELECTORS` の根に当たる要素（文書順）を写す台本。
+ * `options.domRoots` が選んだ名前ごとに、`DOM_ROOT_SELECTORS` の根に当たる要素（文書順）を写すスクリプト。
  * `page` は `document.body` の子、それ以外は当たった要素ごとの `nodeOf` の結果を並べる
  * （当たらない・隠れていれば空の並び）。
  */
@@ -164,7 +164,7 @@ function toLeaves(value: unknown, atPath: string): readonly (readonly [string, s
 }
 
 /**
- * DOM の木を組む台本の共通部分（ページの中で動く）。残すもの・落とすものは
+ * DOM の木を組むスクリプトの共通部分（ページの中で動く）。残すもの・落とすものは
  * `docs/architecture/testing.md`「E2E の成果物と再現」のとおり。文字列で渡すのは `installFixedClock` と
  * 同じ理由（ページの中のコードで、このファイルの型と lint の対象にしない）。`nodeOf(element)` が
  * 1要素を写す（隠れていれば空の並び）、`childrenOf(element)` がその子を並べる。
@@ -253,7 +253,7 @@ const DOM_TREE_HELPERS_SCRIPT = `
   };
 `
 
-/** ページ全体（`document.body` の子）を写す台本。落ち着いたかどうかの判定にも使う（範囲を絞らない）。 */
+/** ページ全体（`document.body` の子）を写すスクリプト。落ち着いたかどうかの判定にも使う（範囲を絞らない）。 */
 const DOM_TREE_SCRIPT = `(() => {
 ${DOM_TREE_HELPERS_SCRIPT}
   return childrenOf(document.body);

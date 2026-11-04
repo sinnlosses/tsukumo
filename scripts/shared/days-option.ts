@@ -1,4 +1,4 @@
-// 集計の台本が受ける唯一の引数 `--days <n>`（直近何日を読むか）。
+// 集計スクリプトが受ける唯一の引数 `--days <n>`（直近何日を読むか）。
 import { parseArgs } from "node:util"
 
 import { positiveIntegerArgument } from "./positive-integer-argument.ts"

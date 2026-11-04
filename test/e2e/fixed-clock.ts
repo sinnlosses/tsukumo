@@ -17,7 +17,7 @@ export const TIME_ZONE = "Asia/Tokyo"
  *
  * `page.clock.install` は `Date.now()` を差し替えるが `Temporal.Now` は差し替えないので、
  * `Temporal.Now.instant()` を `Date.now()` に従わせる（ブラウザで「いま」を読むのは
- * `nowEpochMilliseconds` の1つだけで、そこが呼ぶのはこれだけ）。差し込む台本は
+ * `nowEpochMilliseconds` の1つだけで、そこが呼ぶのはこれだけ）。差し込むスクリプトは
  * 文字列で渡す——ページの中で動くコードで、このファイルの型と lint の対象にしない。
  */
 export async function installFixedClock(page: Page): Promise<void> {

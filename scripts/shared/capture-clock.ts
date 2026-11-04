@@ -1,4 +1,4 @@
-// 偽の時計（`page.clock.install`）を入れたページを、その時計に従わせる初期化台本。
+// 偽の時計（`page.clock.install`）を入れたページを、その時計に従わせる初期化スクリプト。
 
 import type { Page } from "playwright-core"
 
@@ -6,7 +6,7 @@ import type { Page } from "playwright-core"
  * `page.clock.install` のあとに呼び、偽の時計の上でも画面が進むようにする。
  * `Temporal.Now` を `Date.now()` に従わせ（偽の時計は `Temporal.Now` を差し替えない）、
  * `requestAnimationFrame` を本物の描画のフレームでも呼ぶ（{@link ANIMATION_FRAME_FOLLOWS_REAL_FRAMES_SCRIPT}）。
- * rAF の台本は、同じコンテキストで後から開くタブにも効くようコンテキストに入れる（偽の時計もコンテキストに入る）。
+ * rAF を差し替えるスクリプトは、同じコンテキストで後から開くタブにも効くようコンテキストに入れる（偽の時計もコンテキストに入る）。
  */
 export async function followFakeClock(page: Page): Promise<void> {
   await page.addInitScript(TEMPORAL_FOLLOWS_DATE_SCRIPT)
