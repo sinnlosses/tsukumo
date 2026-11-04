@@ -46,6 +46,10 @@
   （縦棒・`line`・`pie` ほかは 320px）。高さは tsukumo が組む設定の最上位 `tsukumo.height` で描く側へ運び、書き手は何も渡さない。
   `emphasis`（省ける。`labels` の部分集合）は題の主語の項目だけを差し色（`--chart-series-1`）にし、ほかを `--ink` の 26% にする。
   `bar`・`pie`・`share` に効き、`arrow`・`slope`・`span`・`line` では無視する。`labels` に無い名前があれば `unknown-emphasis` で差し戻す。
+  `share` だけに、部分ごとの状態の色 `tones`（`labels` と同じ長さの `ok`・`warn`・`ng`・`info`・`none` の並び。省ける）を書ける。
+  `ok`・`warn`・`ng`・`info` は `--state-ok`・`--state-warn`・`--state-ng`・`--state-info`、`none` は `--ink` の 26% で塗る。
+  `ok` の緑と `warn` の黄は2型色覚で見分けにくいので、色だけで意味を渡さず、部分の名前は棒の中か棒の下の行に必ず書く。
+  `tones` を `share` 以外に付けた、長さが `labels` と違う、または `emphasis` と併せたら `chart-tone-range` で差し戻す。
   `line` だけに、目標・上限の基準線 `references`（`{ value, label }` の並び。省ける）と点の注記 `annotations`（`{ label, index, text }` の並び。
   `label` は系列名・`index` は `labels` の 0 始まりの位置・`text` は値と一言。省ける）を書ける。目標は全部同じ値の2本目の系列で書かず `references` で書く
   （2本目の系列は点つきの実線になり、測った系列と同じ重みで見える）。基準線は点の無い点線（`--report-chart-reference`）を描く領域の端から端まで引き、

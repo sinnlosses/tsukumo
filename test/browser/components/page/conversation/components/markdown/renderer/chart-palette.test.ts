@@ -3,9 +3,15 @@ import { describe, expect, it } from "vitest"
 import {
   colorsForDataset,
   emphasisColorsForDataset,
+  tonedColorsForDataset,
 } from "../../../../../../../../src/browser/components/page/conversation/components/markdown/renderer/chart-palette.ts"
 
-const PALETTE = { series: ["#aa0001", "#aa0002"], other: "#000000", muted: "#777777" }
+const PALETTE = {
+  series: ["#aa0001", "#aa0002"],
+  other: "#000000",
+  muted: "#777777",
+  states: { ok: "#00aa01", warn: "#00aa02", ng: "#00aa03", info: "#00aa04" },
+}
 
 describe("colorsForDataset", () => {
   it("系列ごとにパレットの順で配り、使い切ったら other にする", () => {
@@ -24,6 +30,30 @@ describe("colorsForDataset", () => {
 
   it("書き手が色を指定した系列は上書きしない", () => {
     expect(colorsForDataset({ backgroundColor: "red" }, "bar", 0, PALETTE)).toBeUndefined()
+  })
+})
+
+describe("tonedColorsForDataset", () => {
+  const tones = ["ok", "warn", "ng", "info", "none"] as const
+  const colorOf = (index: number): unknown =>
+    tonedColorsForDataset({ data: [20] }, index, PALETTE, tones)?.backgroundColor
+
+  it("系列（部分）ごとに同じ位置の語の状態の色にし、none は muted", () => {
+    expect([0, 1, 2, 3, 4].map(colorOf)).toEqual([
+      "#00aa01",
+      "#00aa02",
+      "#00aa03",
+      "#00aa04",
+      "#777777",
+    ])
+  })
+
+  it("語の無い位置は muted", () => {
+    expect(colorOf(5)).toBe("#777777")
+  })
+
+  it("書き手が色を指定した系列は上書きしない", () => {
+    expect(tonedColorsForDataset({ borderColor: "red" }, 0, PALETTE, tones)).toBeUndefined()
   })
 })
 

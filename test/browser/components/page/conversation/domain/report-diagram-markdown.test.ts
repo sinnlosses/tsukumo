@@ -285,6 +285,22 @@ describe("chartConfigOf", () => {
     },
   )
 
+  it("share の tones は labels の順の色の語として plugin へ渡し、bar の tones は渡さない", () => {
+    const toned = (chartKind: ChartBlock["chartKind"]): ChartBlock => ({
+      ...chartOf(chartKind, [{ name: "架空系列", values: [1, 2, 3] }], false, [
+        "架空A",
+        "架空B",
+        "架空C",
+      ]),
+      tones: ["none", "info", "ok"],
+    })
+
+    expect(JSON.stringify(chartConfigOf(toned("share")))).toContain(
+      '"tsukumo-series":{"tones":["none","info","ok"]}',
+    )
+    expect(JSON.stringify(chartConfigOf(toned("bar")))).not.toContain("tones")
+  })
+
   it("縦棒と share には高さを添えない", () => {
     expect(chartConfigOf(chartOf("bar", one, false))).not.toHaveProperty("tsukumo")
     expect(chartConfigOf(chartOf("share", one, true))).not.toHaveProperty("tsukumo")

@@ -22,6 +22,7 @@ import {
   crowdedNoteCount,
   drawsShape,
   hasBadChartAnnotation,
+  hasBadChartTones,
   hasBadRegion,
   hasShortSeries,
   hasUnknownEmphasis,
@@ -86,6 +87,8 @@ export type BlockViolation =
   | { readonly kind: "unknown-emphasis"; readonly count: number }
   /** `references`・`annotations` を `line` 以外に付けた、または `annotations` の `label` が `series` に無いか `index` が `labels` の外の `chart` の塊がある。`count` は塊の数。 */
   | { readonly kind: "chart-annotation-range"; readonly count: number }
+  /** `tones` を `share` 以外に付けた、長さが `labels` と違う、または `emphasis` と併せた `chart` の塊がある。`count` は塊の数。 */
+  | { readonly kind: "chart-tone-range"; readonly count: number }
   /** `stats` の項目の `series` が1〜2個のものがある塊がある。`count` は塊の数。 */
   | { readonly kind: "short-series"; readonly count: number }
   /** `path` を付けた `code` の塊が、そのファイルの中身と一致しない。`paths` は一致しなかった `path`（重複無し）。 */
@@ -181,6 +184,7 @@ export function detectBlockViolations(
       kind: "chart-annotation-range",
       count: drawn.filter((leaf) => hasBadChartAnnotation(leaf)).length,
     },
+    { kind: "chart-tone-range", count: drawn.filter((leaf) => hasBadChartTones(leaf)).length },
     { kind: "short-series", count: drawn.filter((leaf) => hasShortSeries(leaf)).length },
     {
       kind: "code-mismatch",
@@ -218,6 +222,7 @@ const BLOCK_KINDS: ReadonlySet<string> = new Set<BlockViolation["kind"]>([
   "ragged-chart",
   "unknown-emphasis",
   "chart-annotation-range",
+  "chart-tone-range",
   "short-series",
   "code-mismatch",
   "code-marks-range",
@@ -273,6 +278,8 @@ export function blockViolationMessage(violation: BlockViolation): string {
       return `\`emphasis\` に \`labels\` に無い名前がある \`Chart\` が${violation.count}個ある。\`labels\` にある名前だけにする`
     case "chart-annotation-range":
       return `\`references\`・\`annotations\` を \`line\` 以外に付けた、または \`annotations\` の \`label\` が \`series\` の \`name\` に無いか \`index\` が \`labels\` の外の \`Chart\` が${violation.count}個ある。\`line\` に付け、\`label\` は \`series\` の \`name\`、\`index\` は \`labels\` の数より小さい位置（0 始まり）にする`
+    case "chart-tone-range":
+      return `\`tones\` を \`share\` 以外に付けた、長さが \`labels\` と違う、または \`emphasis\` と併せた \`Chart\` が${violation.count}個ある。\`tones\` は \`share\` だけに \`labels\` と同じ数で書き、\`emphasis\` は空にする`
     case "short-series":
       return `\`Stats\` の \`series\` が1〜2個の項目がある部品が${violation.count}個ある。3つ以上にするか省く`
     case "code-mismatch":

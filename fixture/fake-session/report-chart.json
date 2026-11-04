@@ -254,6 +254,22 @@
               },
               {
                 "kind": "chart",
+                "chartKind": "share",
+                "title": "架空の 11 件のうち完了は 2 件",
+                "labels": ["未着手", "進行中", "レビュー待ち", "完了"],
+                "series": [
+                  {
+                    "name": "架空の件数",
+                    "values": [3, 4, 2, 2]
+                  }
+                ],
+                "horizontal": false,
+                "tones": ["none", "info", "warn", "ok"],
+                "fold": "",
+                "aside": ""
+              },
+              {
+                "kind": "chart",
                 "chartKind": "bar",
                 "title": "架空の3月が最も多い",
                 "labels": ["架空1月", "架空2月", "架空3月", "架空4月"],

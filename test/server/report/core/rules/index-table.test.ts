@@ -533,6 +533,41 @@ describe("reportViolations", () => {
     })
   })
 
+  describe("chart の tones は share だけに labels と同じ数で、emphasis と併せない", () => {
+    type Tone = "ok" | "warn" | "ng" | "info" | "none"
+    const chartOf = (
+      chartKind: "share" | "bar",
+      tones: readonly Tone[],
+      emphasis: readonly string[] = [],
+    ): ReportBlock => ({
+      kind: "chart",
+      title: "",
+      chartKind,
+      labels: ["架空A", "架空B"],
+      series: [{ name: "架空系列", values: [1, 2] }],
+      horizontal: false,
+      emphasis,
+      tones,
+      fold: "",
+      aside: "",
+    })
+
+    it.each([
+      ["bar の tones", chartOf("bar", ["ok", "none"])],
+      ["labels より短い tones", chartOf("share", ["ok"])],
+      ["labels より長い tones", chartOf("share", ["ok", "warn", "info"])],
+      ["emphasis と併せた tones", chartOf("share", ["ok", "none"], ["架空A"])],
+    ])("%s は違反", (_, chart) => {
+      const violations = reportViolations(draft([chart]))
+      expect(violations).toEqual([{ kind: "chart-tone-range", count: 1 }])
+      expect(reportRejectionText(violations)).toContain("`share` だけに")
+    })
+
+    it("share で labels と同じ数なら違反にしない", () => {
+      expect(kinds(draft([chartOf("share", ["info", "ok"])]))).toEqual([])
+    })
+  })
+
   describe("stats の series は3つ以上", () => {
     const EMPTY = { before: "", total: "", better: "", target: "", targetGap: "" } as const
     const statsOf = (series: readonly number[]): ReportBlock => ({

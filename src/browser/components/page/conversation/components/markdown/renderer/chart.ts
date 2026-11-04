@@ -4,11 +4,16 @@
 
 import { z } from "zod"
 
+import {
+  REPORT_CHART_TONES,
+  type ReportChartTone,
+} from "../../../../../../../shared/report/report-block-diagram.ts"
 import { vendorAssetPath } from "../../../../../../../shared/view-server/vendor-asset.ts"
 import { directLabelPlugin } from "./chart-direct-label.ts"
 import {
   colorsForDataset,
   emphasisColorsForDataset,
+  tonedColorsForDataset,
   type ChartPalette,
   type EmphasisAxis,
 } from "./chart-palette.ts"
@@ -21,12 +26,23 @@ const MAX_BAR_THICKNESS = 56
 const BAR_RADIUS = 3
 const MUTED_BAR_PERCENT = 26
 
-const emphasisOptionsSchema = z.object({
+const seriesOptionsSchema = z.object({
   plugins: z.object({
-    "tsukumo-series": z.object({ emphasis: z.array(z.number()) }),
+    "tsukumo-series": z.union([
+      z.object({ emphasis: z.array(z.number()) }),
+      z.object({ tones: z.array(z.enum(REPORT_CHART_TONES)) }),
+    ]),
     "tsukumo-direct-label": z.object({ mode: z.string() }).optional(),
   }),
 })
+
+type SeriesColoring =
+  | {
+      readonly kind: "emphasis"
+      readonly positions: readonly number[]
+      readonly axis: EmphasisAxis
+    }
+  | { readonly kind: "tones"; readonly tones: readonly ReportChartTone[] }
 
 const SERIES_PROPERTIES = [
   "--chart-series-1",
@@ -74,6 +90,12 @@ export function loadChart(element: HTMLElement): Promise<void> {
       series: SERIES_PROPERTIES.map((property) => resolveColor(element, property)),
       other: resolveColor(element, "--chart-series-other"),
       muted: resolveColorMix(element, "--ink", MUTED_BAR_PERCENT),
+      states: {
+        ok: resolveColor(element, "--state-ok"),
+        warn: resolveColor(element, "--state-warn"),
+        ng: resolveColor(element, "--state-ng"),
+        info: resolveColor(element, "--state-info"),
+      },
     } satisfies ChartPalette
     Chart.defaults.plugins.colors.enabled = false
     registerSeriesPlugin(palette)
@@ -95,12 +117,14 @@ function registerSeriesPlugin(palette: ChartPalette): void {
         return
       }
       const current = latestPalette
-      const emphasis = emphasisOf(chart.config.options)
+      const coloring = seriesColoringOf(chart.config.options)
       chart.config.data?.datasets?.forEach((dataset, index) => {
         const colors =
-          emphasis === undefined
+          coloring === undefined
             ? colorsForDataset(dataset, chart.config.type ?? "", index, current)
-            : emphasisColorsForDataset(dataset, index, current, emphasis)
+            : coloring.kind === "tones"
+              ? tonedColorsForDataset(dataset, index, current, coloring.tones)
+              : emphasisColorsForDataset(dataset, index, current, coloring)
         if (colors !== undefined) {
           dataset.backgroundColor = colors.backgroundColor
           dataset.borderColor = colors.borderColor
@@ -110,16 +134,18 @@ function registerSeriesPlugin(palette: ChartPalette): void {
   })
 }
 
-function emphasisOf(
-  options: unknown,
-): { readonly positions: readonly number[]; readonly axis: EmphasisAxis } | undefined {
-  const parsed = emphasisOptionsSchema.safeParse(options)
+function seriesColoringOf(options: unknown): SeriesColoring | undefined {
+  const parsed = seriesOptionsSchema.safeParse(options)
   if (!parsed.success) {
     return undefined
   }
   const { plugins } = parsed.data
-  return {
-    positions: plugins["tsukumo-series"].emphasis,
-    axis: plugins["tsukumo-direct-label"]?.mode === "share" ? "series" : "point",
-  }
+  const series = plugins["tsukumo-series"]
+  return "tones" in series
+    ? { kind: "tones", tones: series.tones }
+    : {
+        kind: "emphasis",
+        positions: series.emphasis,
+        axis: plugins["tsukumo-direct-label"]?.mode === "share" ? "series" : "point",
+      }
 }

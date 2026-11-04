@@ -196,6 +196,16 @@ export function hasBadChartAnnotation(leaf: ReportOutlineLeaf): boolean {
   )
 }
 
+/** 状態の色を share 以外に付けた、長さが labels と違う、または emphasis と併せた Chart か。 */
+export function hasBadChartTones(leaf: ReportOutlineLeaf): boolean {
+  if (leaf.component !== "Chart" || leaf.tones === undefined) return false
+  return (
+    leaf.chartKind !== "share" ||
+    leaf.tones.length !== leaf.labels.length ||
+    leaf.emphasis.length > 0
+  )
+}
+
 export function hasUnknownEmphasis(leaf: ReportOutlineLeaf): boolean {
   return leaf.component === "Chart" && leaf.emphasis.some((name) => !leaf.labels.includes(name))
 }

@@ -1,9 +1,12 @@
 // グラフの系列・データ点に配る色を決める。色の並びは呼び出し側が読んで渡す。
 
+import type { ReportChartTone } from "../../../../../../../shared/report/report-block-diagram.ts"
+
 export type ChartPalette = {
   readonly series: readonly string[]
   readonly other: string
   readonly muted: string
+  readonly states: Readonly<Record<Exclude<ReportChartTone, "none">, string>>
 }
 
 type DatasetColors = {
@@ -63,4 +66,22 @@ export function emphasisColorsForDataset(
       ? colorAt(index)
       : (dataset.data ?? []).map((_, position) => colorAt(position))
   return { backgroundColor: colors, borderColor: colors }
+}
+
+/**
+ * 系列 `index`（share の部分）を、`tones` の同じ位置の状態の色にする。`none` と語の無い位置は `muted`。
+ * 色を持つ系列は `undefined`。
+ */
+export function tonedColorsForDataset(
+  dataset: DatasetShape,
+  index: number,
+  palette: ChartPalette,
+  tones: readonly ReportChartTone[],
+): DatasetColors | undefined {
+  if (dataset.backgroundColor !== undefined || dataset.borderColor !== undefined) {
+    return undefined
+  }
+  const tone = tones[index] ?? "none"
+  const color = tone === "none" ? palette.muted : palette.states[tone]
+  return { backgroundColor: color, borderColor: color }
 }

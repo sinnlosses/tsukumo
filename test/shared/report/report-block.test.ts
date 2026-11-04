@@ -232,6 +232,22 @@ describe("parseReportBlocks", () => {
     expect(parsed("radar")).toHaveLength(0)
   })
 
+  it("chart の tones は5つの色の語を受け、省けば欄が無く、ほかの語は受けない", () => {
+    const share = {
+      kind: "chart",
+      chartKind: "share",
+      labels: ["架空の一", "架空の二"],
+      series: [{ name: "架空の件数", values: [1, 2] }],
+    }
+    const withTones = (tones: readonly string[]) => firstOf({ ...share, tones })
+
+    expect(withTones(["ok", "none"])).toMatchObject({ tones: ["ok", "none"] })
+    expect(withTones(["warn", "ng"])).toMatchObject({ tones: ["warn", "ng"] })
+    expect(withTones(["info", "info"])).toMatchObject({ tones: ["info", "info"] })
+    expect(firstOf(share)).not.toHaveProperty("tones")
+    expect(withTones(["ok", "error"])).toBeUndefined()
+  })
+
   describe("svg の塊", () => {
     const rect = { kind: "rect", x: 10, y: 10, width: 100, height: 40 }
     const line = { kind: "line", x1: 0, y1: 0, x2: 50, y2: 50 }

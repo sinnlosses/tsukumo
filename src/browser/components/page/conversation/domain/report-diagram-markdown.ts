@@ -1,5 +1,6 @@
 // 図の部品（`chart`・`svg`・`mermaid`）の本体の値を組む。Chart.js の設定・SVG の図形の並び・時系列の図の通し番号を持つ（`graph` は `graphSource`）。
 
+import type { ReportChartTone } from "../../../../../shared/report/report-block-diagram.ts"
 import type { ReportBlock } from "../../../../../shared/report/report-block.ts"
 
 type ChartConfig = ChartBody | (ChartBody & { readonly tsukumo: { readonly height: number } })
@@ -62,7 +63,9 @@ type ChartBody = {
 }
 
 type SeriesPlugins = {
-  readonly "tsukumo-series": { readonly emphasis: readonly number[] }
+  readonly "tsukumo-series":
+    | { readonly emphasis: readonly number[] }
+    | { readonly tones: readonly ReportChartTone[] }
 }
 
 type DirectLabelPlugins = {
@@ -419,10 +422,14 @@ function marksPluginsOf(
 /**
  * `emphasis` の項目を、`labels` の何番目かの並びにして描く側の plugin に渡す。
  * 効くのは bar・pie・share だけで、`emphasis` が空ならなにも足さない。
+ * share に `tones` があれば、`emphasis` の代わりに部分ごとの色の語を渡す。
  */
 function seriesPluginsOf(
   block: Extract<ReportBlock, { readonly kind: "chart" }>,
 ): { readonly plugins: SeriesPlugins } | Record<string, never> {
+  if (block.chartKind === "share" && block.tones !== undefined) {
+    return { plugins: { "tsukumo-series": { tones: [...block.tones] } } }
+  }
   const emphasized = ["bar", "pie", "share"].includes(block.chartKind) && block.emphasis.length > 0
   return emphasized
     ? {

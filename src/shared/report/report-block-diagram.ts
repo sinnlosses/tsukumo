@@ -159,6 +159,10 @@ export type ReportGraph = DeepReadonly<z.infer<z.ZodObject<typeof graphFields>>>
 
 const REPORT_CHART_KINDS = ["bar", "line", "pie", "arrow", "slope", "span", "share"] as const
 
+export const REPORT_CHART_TONES = ["ok", "warn", "ng", "info", "none"] as const
+
+export type ReportChartTone = (typeof REPORT_CHART_TONES)[number]
+
 const chartSeriesSchema = z.object({
   name: inlineText,
   values: z.array(z.number()).min(1),
@@ -197,6 +201,11 @@ export const chartBlockSchema = z
       .describe(
         "line だけ。基準線を越えた点などの注記（label は series の name、index は labels の 0 始まりの位置、text は値と一言）",
       ),
+    tones: z
+      .enum(REPORT_CHART_TONES)
+      .array()
+      .optional()
+      .describe("share だけ。labels と同じ長さで部分ごとの状態の色。emphasis とは併せない"),
     fold,
     aside,
   })
