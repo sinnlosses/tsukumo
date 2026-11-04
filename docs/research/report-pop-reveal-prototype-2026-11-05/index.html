@@ -25,12 +25,18 @@
         --pop-ms: 220ms;
         --portrait: 72px;
       }
-      * { box-sizing: border-box; }
+      * {
+        box-sizing: border-box;
+      }
       body {
         margin: 0;
         background: var(--ground);
         color: var(--ink);
-        font: 15px/1.75 "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif;
+        font:
+          15px/1.75 "Hiragino Sans",
+          "Noto Sans JP",
+          system-ui,
+          sans-serif;
       }
       main {
         height: calc(100vh - 64px);
@@ -51,102 +57,259 @@
         font-size: 13px;
         margin-bottom: 12px;
       }
-      .conclusion { font-size: 17px; font-weight: 700; margin: 0 0 8px; }
-      h4 { margin: 20px 0 6px; font-size: 15px; color: var(--ink); }
-      p { margin: 0 0 8px; color: var(--ink-soft); }
-      ul { margin: 0 0 8px; padding-left: 1.3em; color: var(--ink-soft); }
-      table { border-collapse: collapse; width: 100%; margin: 4px 0 10px; font-size: 13px; }
-      th, td { border-bottom: 1px solid var(--rule-soft); padding: 4px 8px; text-align: left; }
-      th { color: var(--ink-quiet); font-weight: 400; }
+      .conclusion {
+        font-size: 17px;
+        font-weight: 700;
+        margin: 0 0 8px;
+      }
+      h4 {
+        margin: 20px 0 6px;
+        font-size: 15px;
+        color: var(--ink);
+      }
+      p {
+        margin: 0 0 8px;
+        color: var(--ink-soft);
+      }
+      ul {
+        margin: 0 0 8px;
+        padding-left: 1.3em;
+        color: var(--ink-soft);
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 4px 0 10px;
+        font-size: 13px;
+      }
+      th,
+      td {
+        border-bottom: 1px solid var(--rule-soft);
+        padding: 4px 8px;
+        text-align: left;
+      }
+      th {
+        color: var(--ink-quiet);
+        font-weight: 400;
+      }
       pre {
-        margin: 4px 0 10px; padding: 10px 12px; border-radius: 8px;
-        background: var(--ground); color: var(--ink-soft); font-size: 12.5px; overflow-x: auto;
+        margin: 4px 0 10px;
+        padding: 10px 12px;
+        border-radius: 8px;
+        background: var(--ground);
+        color: var(--ink-soft);
+        font-size: 12.5px;
+        overflow-x: auto;
       }
       .note {
-        border-left: 3px solid var(--state-warn); padding: 6px 10px; margin: 4px 0 10px;
-        background: color-mix(in srgb, var(--surface), var(--state-warn) 8%); color: var(--ink-soft);
+        border-left: 3px solid var(--state-warn);
+        padding: 6px 10px;
+        margin: 4px 0 10px;
+        background: color-mix(in srgb, var(--surface), var(--state-warn) 8%);
+        color: var(--ink-soft);
       }
       .figure {
-        height: 120px; margin: 4px 0 10px; border-radius: 8px; border: 1px solid var(--rule-soft);
-        display: flex; align-items: center; justify-content: center; gap: 14px; color: var(--ink-quiet);
+        height: 120px;
+        margin: 4px 0 10px;
+        border-radius: 8px;
+        border: 1px solid var(--rule-soft);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        color: var(--ink-quiet);
       }
-      .figure span { padding: 6px 12px; border: 1px solid var(--rule); border-radius: 6px; }
-      .checks { font-size: 13px; color: var(--ink-quiet); margin-bottom: 4px; }
-      .checks b { color: var(--state-ok); font-weight: 400; }
+      .figure span {
+        padding: 6px 12px;
+        border: 1px solid var(--rule);
+        border-radius: 6px;
+      }
+      .checks {
+        font-size: 13px;
+        color: var(--ink-quiet);
+        margin-bottom: 4px;
+      }
+      .checks b {
+        color: var(--state-ok);
+        font-weight: 400;
+      }
 
       /* ポン: 下から持ち上げて出す。少しだけ行き過ぎて戻る。 */
-      .block.popping { animation: pop var(--pop-ms) cubic-bezier(0.2, 0.9, 0.3, 1.25) both; }
+      .block.popping {
+        animation: pop var(--pop-ms) cubic-bezier(0.2, 0.9, 0.3, 1.25) both;
+      }
       @keyframes pop {
-        from { opacity: 0; transform: translateY(8px) scale(0.985); }
-        to { opacity: 1; transform: none; }
+        from {
+          opacity: 0;
+          transform: translateY(8px) scale(0.985);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
       }
 
       /* 次の欄の薄い罫線（待ちのあいだだけ）。 */
-      .slot { position: relative; height: 0; transition: height 160ms ease; }
+      .slot {
+        position: relative;
+        height: 0;
+        transition: height 160ms ease;
+      }
       .slot.ruled {
         height: 3.5em;
         background-image: repeating-linear-gradient(
-          to bottom, transparent 0, transparent calc(1.75em - 1px), var(--rule-quiet) calc(1.75em - 1px), var(--rule-quiet) 1.75em);
+          to bottom,
+          transparent 0,
+          transparent calc(1.75em - 1px),
+          var(--rule-quiet) calc(1.75em - 1px),
+          var(--rule-quiet) 1.75em
+        );
         background-size: 70% 100%;
         background-repeat: no-repeat;
       }
       .slot.ruled::after {
         /* 書いている途中の一画。罫線の上を少しずつ伸びる。 */
-        content: ""; position: absolute; left: 0; top: calc(1.75em - 4px);
-        height: 2px; width: 0; border-radius: 1px;
+        content: "";
+        position: absolute;
+        left: 0;
+        top: calc(1.75em - 4px);
+        height: 2px;
+        width: 0;
+        border-radius: 1px;
         background: color-mix(in srgb, var(--accent) 55%, transparent);
         animation: stroke 1.6s ease-in-out infinite;
       }
       @keyframes stroke {
-        0% { width: 0; opacity: 0.9; }
-        70% { width: 38%; opacity: 0.9; }
-        100% { width: 38%; opacity: 0; }
+        0% {
+          width: 0;
+          opacity: 0.9;
+        }
+        70% {
+          width: 38%;
+          opacity: 0.9;
+        }
+        100% {
+          width: 38%;
+          opacity: 0;
+        }
       }
 
       /* ミニキャラ。位置は JS が top/left を引く。 */
       .mini {
-        position: absolute; width: var(--portrait); height: var(--portrait);
-        transition: top 260ms cubic-bezier(0.3, 0.7, 0.3, 1), left 260ms cubic-bezier(0.3, 0.7, 0.3, 1);
-        pointer-events: none; z-index: 2;
+        position: absolute;
+        width: var(--portrait);
+        height: var(--portrait);
+        transition:
+          top 260ms cubic-bezier(0.3, 0.7, 0.3, 1),
+          left 260ms cubic-bezier(0.3, 0.7, 0.3, 1);
+        pointer-events: none;
+        z-index: 2;
       }
-      .mini img, .mini .fallback {
-        width: 100%; height: 100%; object-fit: cover; object-position: top;
-        border-radius: 50%; border: 2px solid var(--accent);
+      .mini img,
+      .mini .fallback {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: top;
+        border-radius: 50%;
+        border: 2px solid var(--accent);
         background: var(--ground);
       }
-      .mini .fallback { display: flex; align-items: center; justify-content: center; font-size: 28px; }
-      .mini.writing .body { animation: scribble 0.55s ease-in-out infinite alternate; transform-origin: 50% 100%; }
+      .mini .fallback {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+      }
+      .mini.writing .body {
+        animation: scribble 0.55s ease-in-out infinite alternate;
+        transform-origin: 50% 100%;
+      }
       @keyframes scribble {
-        0% { transform: translateX(-4px) rotate(-4deg); }
-        100% { transform: translateX(4px) rotate(4deg); }
+        0% {
+          transform: translateX(-4px) rotate(-4deg);
+        }
+        100% {
+          transform: translateX(4px) rotate(4deg);
+        }
       }
-      .mini.hop .body { animation: hop 260ms ease-out; }
+      .mini.hop .body {
+        animation: hop 260ms ease-out;
+      }
       @keyframes hop {
-        0% { transform: translateY(0); }
-        40% { transform: translateY(-8px); }
-        100% { transform: translateY(0); }
+        0% {
+          transform: translateY(0);
+        }
+        40% {
+          transform: translateY(-8px);
+        }
+        100% {
+          transform: translateY(0);
+        }
       }
-      .mini.resting { transition-duration: 500ms; }
+      .mini.resting {
+        transition-duration: 500ms;
+      }
       .mini .pen {
-        position: absolute; right: -6px; bottom: 4px; font-size: 18px;
+        position: absolute;
+        right: -6px;
+        bottom: 4px;
+        font-size: 18px;
         transition: opacity 200ms;
       }
-      .mini.resting .pen { opacity: 0; }
+      .mini.resting .pen {
+        opacity: 0;
+      }
 
       /* つまみのバー。 */
       .bar {
-        position: fixed; left: 0; right: 0; bottom: 0; height: 64px;
-        display: flex; align-items: center; justify-content: center; gap: 18px; flex-wrap: wrap;
-        background: color-mix(in srgb, var(--ground) 92%, black); border-top: 1px solid var(--rule-soft);
-        font-size: 12.5px; color: var(--ink-soft); padding: 0 12px;
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 64px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 18px;
+        flex-wrap: wrap;
+        background: color-mix(in srgb, var(--ground) 92%, black);
+        border-top: 1px solid var(--rule-soft);
+        font-size: 12.5px;
+        color: var(--ink-soft);
+        padding: 0 12px;
       }
-      .bar label { display: inline-flex; align-items: center; gap: 6px; }
-      .bar input[type="range"] { width: 110px; }
-      .bar output { font-family: ui-monospace, monospace; color: var(--ink); min-width: 4.2em; }
+      .bar label {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .bar input[type="range"] {
+        width: 110px;
+      }
+      .bar output {
+        font-family: ui-monospace, monospace;
+        color: var(--ink);
+        min-width: 4.2em;
+      }
       .bar button {
-        background: var(--accent); color: #2a1a1a; border: 0; border-radius: 999px; padding: 6px 14px; cursor: pointer;
+        background: var(--accent);
+        color: #2a1a1a;
+        border: 0;
+        border-radius: 999px;
+        padding: 6px 14px;
+        cursor: pointer;
       }
-      .state { position: fixed; right: 12px; top: 10px; font: 12px ui-monospace, monospace; color: var(--ink-quiet); text-align: right; }
+      .state {
+        position: fixed;
+        right: 12px;
+        top: 10px;
+        font:
+          12px ui-monospace,
+          monospace;
+        color: var(--ink-quiet);
+        text-align: right;
+      }
     </style>
   </head>
   <body>
@@ -163,10 +326,19 @@
     </main>
     <div class="state" id="state"></div>
     <div class="bar">
-      <label>ポンの長さ <input id="pop" type="range" min="100" max="400" step="20" value="220" /><output id="popOut"></output></label>
-      <label>届く速さ <input id="speed" type="range" min="0.25" max="4" step="0.25" value="1" /><output id="speedOut"></output></label>
+      <label
+        >ポンの長さ <input id="pop" type="range" min="100" max="400" step="20" value="220" /><output
+          id="popOut"
+        ></output
+      ></label>
+      <label
+        >届く速さ <input id="speed" type="range" min="0.25" max="4" step="0.25" value="1" /><output
+          id="speedOut"
+        ></output
+      ></label>
       <label><input id="ruled" type="checkbox" checked /> 待ちの罫線</label>
-      <label>ミニキャラ
+      <label
+        >ミニキャラ
         <select id="place">
           <option value="margin">右の余白</option>
           <option value="head">次の欄の頭</option>
@@ -178,28 +350,63 @@
     <script>
       // 架空のレポート。chars は JSON で届く字数の目安（表・コードは記号が多いので本文より多い）。
       const PARTS = [
-        { chars: 120, html: '<p class="conclusion">次から設定の書き間違いが起動時に分かる。</p><p>読み方は変えていない。</p>' },
-        { chars: 90, html: '<div class="checks"><b>✓</b> 型検査・単体 1362・E2E 90 が通った</div>' },
-        { chars: 40, html: '<h4>書き間違いは起動の前に止まる</h4>' },
-        { chars: 260, html: '<p>これまでは <code>config.toml</code> の鍵を綴り間違えても既定値で黙って動き、作業の途中で初めて気づいていた。読み込みの直後に schema で検査し、知らない鍵があれば行番号つきで止めるようにした。</p>' },
-        { chars: 520, html: '<table><tr><th>鍵</th><th>前</th><th>後</th></tr><tr><td>verfy</td><td>既定値で動く</td><td>3 行目で止まる</td></tr><tr><td>steps</td><td>型を見ない</td><td>配列でなければ止まる</td></tr><tr><td>flow</td><td>なし</td><td>script / skills のみ</td></tr></table>' },
-        { chars: 40, html: '<h4>止める場所は読み込みの1か所だけ</h4>' },
-        { chars: 300, html: '<pre>export function loadConfig(path: string): Config {\n  const raw = parseToml(readFileSync(path, "utf8"))\n  return configSchema.parse(raw)   // ← ここで止まる\n}</pre>' },
-        { chars: 180, html: '<ul><li>呼ぶ側は 4 か所あったが、どれも <code>loadConfig</code> を通る</li><li>テストの fixture の綴りも 2 件直した</li></ul>' },
-        { chars: 400, html: '<div class="figure"><span>読む</span>→<span>検査</span>→<span>止める / 進む</span></div>' },
-        { chars: 150, html: '<div class="note">古い設定ファイルに知らない鍵が残っていると、更新後の初回起動で止まる。</div>' },
-      ];
+        {
+          chars: 120,
+          html: '<p class="conclusion">次から設定の書き間違いが起動時に分かる。</p><p>読み方は変えていない。</p>',
+        },
+        {
+          chars: 90,
+          html: '<div class="checks"><b>✓</b> 型検査・単体 1362・E2E 90 が通った</div>',
+        },
+        { chars: 40, html: "<h4>書き間違いは起動の前に止まる</h4>" },
+        {
+          chars: 260,
+          html: "<p>これまでは <code>config.toml</code> の鍵を綴り間違えても既定値で黙って動き、作業の途中で初めて気づいていた。読み込みの直後に schema で検査し、知らない鍵があれば行番号つきで止めるようにした。</p>",
+        },
+        {
+          chars: 520,
+          html: "<table><tr><th>鍵</th><th>前</th><th>後</th></tr><tr><td>verfy</td><td>既定値で動く</td><td>3 行目で止まる</td></tr><tr><td>steps</td><td>型を見ない</td><td>配列でなければ止まる</td></tr><tr><td>flow</td><td>なし</td><td>script / skills のみ</td></tr></table>",
+        },
+        { chars: 40, html: "<h4>止める場所は読み込みの1か所だけ</h4>" },
+        {
+          chars: 300,
+          html: '<pre>export function loadConfig(path: string): Config {\n  const raw = parseToml(readFileSync(path, "utf8"))\n  return configSchema.parse(raw)   // ← ここで止まる\n}</pre>',
+        },
+        {
+          chars: 180,
+          html: "<ul><li>呼ぶ側は 4 か所あったが、どれも <code>loadConfig</code> を通る</li><li>テストの fixture の綴りも 2 件直した</li></ul>",
+        },
+        {
+          chars: 400,
+          html: '<div class="figure"><span>読む</span>→<span>検査</span>→<span>止める / 進む</span></div>',
+        },
+        {
+          chars: 150,
+          html: '<div class="note">古い設定ファイルに知らない鍵が残っていると、更新後の初回起動で止まる。</div>',
+        },
+      ]
 
-      const $ = (id) => document.getElementById(id);
-      const body = $("body"), slot = $("slot"), mini = $("mini"), turn = $("turn"), scroller = $("scroller");
-      const params = new URLSearchParams(location.search);
-      const portrait = $("portrait");
-      portrait.src = params.get("portrait") ?? "file:///Users/sinnlos/.tsukumo/characters/karakasa/default.png";
-      portrait.onerror = () => { portrait.replaceWith(Object.assign(document.createElement("div"), { className: "fallback", textContent: "☂" })); };
+      const $ = (id) => document.getElementById(id)
+      const body = $("body"),
+        slot = $("slot"),
+        mini = $("mini"),
+        turn = $("turn"),
+        scroller = $("scroller")
+      const params = new URLSearchParams(location.search)
+      const portrait = $("portrait")
+      portrait.src =
+        params.get("portrait") ?? "file:///Users/sinnlos/.tsukumo/characters/karakasa/default.png"
+      portrait.onerror = () => {
+        portrait.replaceWith(
+          Object.assign(document.createElement("div"), { className: "fallback", textContent: "☂" }),
+        )
+      }
 
       // 届く速さの基準: 1秒に 60 字（Claude が書く速さの目安）。倍率で割る。
-      const CHARS_PER_SECOND = 60;
-      let run = 0, startedAt = 0, index = 0;
+      const CHARS_PER_SECOND = 60
+      let run = 0,
+        startedAt = 0,
+        index = 0
 
       function knobs() {
         return {
@@ -207,91 +414,97 @@
           speed: Number($("speed").value),
           ruled: $("ruled").checked,
           place: $("place").value,
-        };
+        }
       }
 
       function showKnobs() {
-        const k = knobs();
-        $("popOut").textContent = `${k.popMs}ms`;
-        $("speedOut").textContent = `×${k.speed}`;
-        document.documentElement.style.setProperty("--pop-ms", `${k.popMs}ms`);
-        placeMini();
+        const k = knobs()
+        $("popOut").textContent = `${k.popMs}ms`
+        $("speedOut").textContent = `×${k.speed}`
+        document.documentElement.style.setProperty("--pop-ms", `${k.popMs}ms`)
+        placeMini()
       }
 
       function placeMini() {
-        const k = knobs();
-        const writing = index < PARTS.length;
-        const size = mini.offsetWidth;
+        const k = knobs()
+        const writing = index < PARTS.length
+        const size = mini.offsetWidth
         if (!writing) {
           // 書き終えたら右下の隅で休む。
-          mini.style.left = `${turn.clientWidth - size - 20}px`;
-          mini.style.top = `${turn.clientHeight - size - 12}px`;
-          return;
+          mini.style.left = `${turn.clientWidth - size - 20}px`
+          mini.style.top = `${turn.clientHeight - size - 12}px`
+          return
         }
-        const slotTop = slot.offsetTop;
+        const slotTop = slot.offsetTop
         if (k.place === "margin") {
-          mini.style.left = `${turn.clientWidth - size - 20}px`;
-          mini.style.top = `${Math.max(slotTop - size * 0.55, 0)}px`;
+          mini.style.left = `${turn.clientWidth - size - 20}px`
+          mini.style.top = `${Math.max(slotTop - size * 0.55, 0)}px`
         } else {
           // 書いたばかりの見出しに被らないよう、本文の左の外側に立って次の欄の頭を指す。
-          mini.style.left = `${-size * 0.6}px`;
-          mini.style.top = `${Math.max(slotTop - size * 0.3, 0)}px`;
+          mini.style.left = `${-size * 0.6}px`
+          mini.style.top = `${Math.max(slotTop - size * 0.3, 0)}px`
         }
       }
 
       function renderState() {
-        const k = knobs();
-        const elapsed = ((performance.now() - startedAt) / 1000).toFixed(1);
+        const k = knobs()
+        const elapsed = ((performance.now() - startedAt) / 1000).toFixed(1)
         $("state").textContent =
-          `部品 ${Math.min(index, PARTS.length)} / ${PARTS.length}\n経過 ${elapsed}s\nポン ${k.popMs}ms・速さ ×${k.speed}\n罫線 ${k.ruled ? "あり" : "なし"}・位置 ${k.place === "margin" ? "右の余白" : "次の欄の頭"}`;
-        $("state").style.whiteSpace = "pre";
+          `部品 ${Math.min(index, PARTS.length)} / ${PARTS.length}\n経過 ${elapsed}s\nポン ${k.popMs}ms・速さ ×${k.speed}\n罫線 ${k.ruled ? "あり" : "なし"}・位置 ${k.place === "margin" ? "右の余白" : "次の欄の頭"}`
+        $("state").style.whiteSpace = "pre"
       }
 
       function setWaiting(waiting) {
-        slot.classList.toggle("ruled", waiting && knobs().ruled);
-        mini.classList.toggle("writing", waiting);
-        mini.classList.toggle("resting", !waiting && index >= PARTS.length);
-        requestAnimationFrame(placeMini);
+        slot.classList.toggle("ruled", waiting && knobs().ruled)
+        mini.classList.toggle("writing", waiting)
+        mini.classList.toggle("resting", !waiting && index >= PARTS.length)
+        requestAnimationFrame(placeMini)
       }
 
       function delayOf(part) {
-        return (part.chars / CHARS_PER_SECOND / knobs().speed) * 1000;
+        return (part.chars / CHARS_PER_SECOND / knobs().speed) * 1000
       }
 
       function pop(part) {
-        const block = document.createElement("div");
-        block.className = "block popping";
-        block.innerHTML = part.html;
-        body.appendChild(block);
-        block.addEventListener("animationend", () => block.classList.remove("popping"), { once: true });
-        mini.classList.remove("hop");
-        void mini.offsetWidth;
-        mini.classList.add("hop");
-        slot.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        const block = document.createElement("div")
+        block.className = "block popping"
+        block.innerHTML = part.html
+        body.appendChild(block)
+        block.addEventListener("animationend", () => block.classList.remove("popping"), {
+          once: true,
+        })
+        mini.classList.remove("hop")
+        void mini.offsetWidth
+        mini.classList.add("hop")
+        slot.scrollIntoView({ block: "nearest", behavior: "smooth" })
       }
 
       async function write() {
-        const mine = ++run;
-        body.innerHTML = "";
-        index = 0;
-        startedAt = performance.now();
-        setWaiting(true);
+        const mine = ++run
+        body.innerHTML = ""
+        index = 0
+        startedAt = performance.now()
+        setWaiting(true)
         while (index < PARTS.length) {
-          await new Promise((resolve) => setTimeout(resolve, delayOf(PARTS[index])));
-          if (mine !== run) return;
-          pop(PARTS[index]);
-          index += 1;
-          setWaiting(index < PARTS.length);
+          await new Promise((resolve) => setTimeout(resolve, delayOf(PARTS[index])))
+          if (mine !== run) return
+          pop(PARTS[index])
+          index += 1
+          setWaiting(index < PARTS.length)
         }
-        setWaiting(false);
+        setWaiting(false)
       }
 
-      for (const id of ["pop", "speed", "ruled", "place"]) $(id).addEventListener("input", () => { showKnobs(); setWaiting(index < PARTS.length); });
-      $("restart").addEventListener("click", write);
-      setInterval(renderState, 100);
-      new ResizeObserver(placeMini).observe(turn);
-      showKnobs();
-      write();
+      for (const id of ["pop", "speed", "ruled", "place"])
+        $(id).addEventListener("input", () => {
+          showKnobs()
+          setWaiting(index < PARTS.length)
+        })
+      $("restart").addEventListener("click", write)
+      setInterval(renderState, 100)
+      new ResizeObserver(placeMini).observe(turn)
+      showKnobs()
+      write()
     </script>
   </body>
 </html>
