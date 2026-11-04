@@ -20,6 +20,12 @@ afterEach(() => {
 
 const REQUEST = requestEvent()
 
+/** チップの語のうち読み上げられる（隠していない）もの。 */
+function chipLabel(chip: Element | null | undefined): string | null | undefined {
+  return chip?.querySelector("[class*='work-strip-chip-labels'] > span:not([aria-hidden])")
+    ?.textContent
+}
+
 function plan(
   current: number,
   phaseSummary = "",
@@ -117,7 +123,7 @@ describe("WorkStrip", () => {
     render(<WorkStrip />)
 
     expect(strip().getAttribute("data-work-strip")).toBe("working")
-    expect(strip().querySelector("[data-result]")?.textContent).toBe("作業中")
+    expect(chipLabel(strip().querySelector("[data-result]"))).toBe("作業中")
     expect(strip().querySelector("p")?.textContent).toContain("再試行中 2/10")
   })
 
@@ -138,7 +144,7 @@ describe("WorkStrip", () => {
     const chip = strip().querySelector("[data-result]")
     expect(strip().getAttribute("data-work-strip")).toBe("working")
     expect(chip?.getAttribute("data-result")).toBe("background")
-    expect(chip?.textContent).toBe("背景で作業中")
+    expect(chipLabel(chip)).toBe("背景で作業中")
     expect(chip?.querySelector("[class*='work-strip-spinner']")).toBeNull()
     expect(chip?.querySelector("[class*='work-strip-dot']")).not.toBeNull()
     const spinning = strip().querySelectorAll("[data-spinning]")
@@ -176,7 +182,7 @@ describe("WorkStrip", () => {
     expect(strip().textContent).toContain("3フェーズすべて済み")
     const chip = strip().querySelector("[data-result]")
     expect(chip?.getAttribute("data-result")).toBe("done")
-    expect(chip?.textContent).toBe("完了")
+    expect(chipLabel(chip)).toBe("完了")
     expect(chip?.querySelector("[aria-hidden]")?.textContent).toBe("")
     expect(strip().querySelector("p")).toBeNull()
   })

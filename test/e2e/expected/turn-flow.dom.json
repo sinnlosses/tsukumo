@@ -322,7 +322,52 @@
                                             "aria-hidden": "true"
                                           }
                                         },
-                                        "完了"
+                                        "完了",
+                                        {
+                                          "tag": "span",
+                                          "attributes": {
+                                            "aria-hidden": "true"
+                                          },
+                                          "children": [
+                                            "答え待ち"
+                                          ]
+                                        },
+                                        {
+                                          "tag": "span",
+                                          "attributes": {
+                                            "aria-hidden": "true"
+                                          },
+                                          "children": [
+                                            "止めた"
+                                          ]
+                                        },
+                                        {
+                                          "tag": "span",
+                                          "attributes": {
+                                            "aria-hidden": "true"
+                                          },
+                                          "children": [
+                                            "失敗"
+                                          ]
+                                        },
+                                        {
+                                          "tag": "span",
+                                          "attributes": {
+                                            "aria-hidden": "true"
+                                          },
+                                          "children": [
+                                            "作業中"
+                                          ]
+                                        },
+                                        {
+                                          "tag": "span",
+                                          "attributes": {
+                                            "aria-hidden": "true"
+                                          },
+                                          "children": [
+                                            "背景で作業中"
+                                          ]
+                                        }
                                       ]
                                     },
                                     "所要 0秒",

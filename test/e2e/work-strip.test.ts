@@ -46,6 +46,29 @@ test.describe("進み具合のプログレスバー", () => {
     await expectReadable(room.page)
   })
 
+  test("状態のチップの語が「作業中」から「背景で作業中」に替わっても、段の丸の並びの左端は動かない", async ({
+    run,
+  }) => {
+    const room = await run.open({
+      scenario: "work-strip-background",
+      scene: "work-strip-background",
+      viewport: "large",
+      domRoots: ["work-strip"],
+    })
+    const strip = stripOf(room.page)
+    const track = strip.locator("ol").first()
+
+    await expect.poll(() => strip.getAttribute("data-work-strip")).toBe("working")
+    await expect.poll(() => phaseStates(strip)).toEqual(["done", "current", "upcoming"])
+    const workingLeft = await leftOf(track)
+
+    await room.waitForEvent("turn-finished")
+    await expect
+      .poll(() => strip.locator("[data-result]").getAttribute("data-result"))
+      .toBe("background")
+    expect(await leftOf(track)).toBe(workingLeft)
+  })
+
   test("1024x768 で許可の答え待ちが届くと、今の段の丸が答え待ちになり、2行目が何を待っているかを言い、札の口は覆われない", async ({
     run,
   }) => {
@@ -111,6 +134,10 @@ async function activityText(strip: Locator): Promise<string> {
 
 async function topOf(locator: Locator): Promise<number> {
   return locator.evaluate((element) => element.getBoundingClientRect().top)
+}
+
+async function leftOf(locator: Locator): Promise<number> {
+  return locator.evaluate((element) => element.getBoundingClientRect().left)
 }
 
 async function scrollMainToBottom(page: Page): Promise<void> {

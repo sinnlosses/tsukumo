@@ -75,13 +75,25 @@ export function PresentationalWorkStrip(props: {
   )
 }
 
-/** 状態のチップ。印は色の点。 */
+/**
+ * 状態のチップ。印は色の点。
+ * 全部の語を同じ格子のセルに重ね、一番長い語の幅を取らせる。見えるのは今の語だけで、ほかは隠して読み上げない。
+ */
 function StateChip(props: { readonly result: WorkStripResult }): ReactElement {
-  const { label } = WORK_STRIP_MARKS[props.result]
   return (
     <span className={styles["work-strip-chip"]} data-result={props.result}>
       <span className={styles["work-strip-dot"]} aria-hidden="true" />
-      <span>{label}</span>
+      <span className={styles["work-strip-chip-labels"]}>
+        {Object.entries(WORK_STRIP_MARKS).map(([result, { label }]) =>
+          result === props.result ? (
+            <span key={result}>{label}</span>
+          ) : (
+            <span key={result} aria-hidden="true" className={styles["work-strip-chip-spare"]}>
+              {label}
+            </span>
+          ),
+        )}
+      </span>
     </span>
   )
 }

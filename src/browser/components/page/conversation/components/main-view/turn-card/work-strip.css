@@ -43,6 +43,16 @@
 .work-strip-chip[data-result="failed"] {
   --work-strip-dot: var(--state-ng);
 }
+.work-strip-chip-labels {
+  display: grid;
+  justify-items: start;
+}
+.work-strip-chip-labels > span {
+  grid-area: 1 / 1;
+}
+.work-strip-chip-spare {
+  visibility: hidden;
+}
 .work-strip-dot {
   flex: none;
   width: 0.5rem;
@@ -239,7 +249,7 @@
   outline-offset: 2px;
 }
 .work-strip-reading {
-  flex: 0 1 auto;
+  flex: 0 0 12rem;
   min-width: 0;
   max-width: 40%;
   overflow: hidden;
