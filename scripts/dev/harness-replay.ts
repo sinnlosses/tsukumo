@@ -1,5 +1,5 @@
 // 凍結したタスクの再試集（test/harness-replay/）の件を、着手前のコミットの一時の作業ツリーで claude に実装させ、
-// 台本（完了条件を見る単体テスト）の通りと、トークン・時間・拒否の回数を集計する入口。
+// 判定コマンド（完了条件を見る単体テスト）の通りと、トークン・時間・拒否の回数を集計する入口。
 // 実際に claude を起こすので、1件ぶんで数百万トークンを使う。一時の作業ツリーと枝は成否にかかわらず消す。
 //
 // 使い方:
@@ -10,9 +10,9 @@ import { readFileSync } from "node:fs"
 import process from "node:process"
 
 import { runClaude } from "../shared/claude-run.ts"
+import { readReplayCase, readReplayTaskText, type ReplayCase } from "../shared/replay-case.ts"
 import { parseReplayOptions } from "../shared/replay-option.ts"
 import { buildReplayPrompt, prependReplayBrief } from "../shared/replay-prompt.ts"
-import { readReplayScript, readReplayTaskText, type ReplayScript } from "../shared/replay-script.ts"
 import { formatReplaySummary, summarizeReplay, type ReplayRun } from "../shared/replay-summary.ts"
 import {
   checkoutCheckFiles,
@@ -34,7 +34,7 @@ if (options === "invalid") {
 const brief = options.brief === undefined ? undefined : readBrief(options.brief)
 
 for (const id of options.tasks) {
-  const script = readReplayScript(ROOT, id)
+  const script = readReplayCase(ROOT, id)
   const taskText = readReplayTaskText(ROOT, id)
   const runs: ReplayRun[] = []
   for (let attempt = 0; attempt < options.k; attempt += 1) {
@@ -54,7 +54,7 @@ function readBrief(path: string): string {
   }
 }
 
-function replayOnce(script: ReplayScript, taskText: string): ReplayRun {
+function replayOnce(script: ReplayCase, taskText: string): ReplayRun {
   const worktree = createReplayWorktree(ROOT, script.id, script.base)
   try {
     linkDependencies(ROOT, worktree)

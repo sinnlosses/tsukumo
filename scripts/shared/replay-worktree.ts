@@ -36,7 +36,7 @@ export function overlayHarness(repositoryRoot: string, worktree: ReplayWorktree)
   }
 }
 
-/** `after` のコミットから、台本のテストを一時の作業ツリーへ取り出す。 */
+/** `after` のコミットから、判定のテストを一時の作業ツリーへ取り出す。 */
 export function checkoutCheckFiles(
   worktree: ReplayWorktree,
   after: string,

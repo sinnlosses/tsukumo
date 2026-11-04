@@ -1,4 +1,4 @@
-// タスクの再試集の1件（test/harness-replay/<ID>/）の台本 replay.json を読んで検査する、という概念1つを持つ。
+// タスクの再試集の1件（test/harness-replay/<ID>/）の replay.json を読んで検査する、という概念1つを持つ。
 import { readFileSync } from "node:fs"
 import { join } from "node:path"
 
@@ -6,7 +6,7 @@ import { z } from "zod"
 
 const REPLAY_DIRECTORY = "test/harness-replay"
 
-const replayScriptSchema = z.object({
+const replayCaseSchema = z.object({
   id: z.string().min(1),
   difficulty: z.enum(["haiku", "sonnet", "opus"]),
   kind: z.string().min(1),
@@ -16,21 +16,21 @@ const replayScriptSchema = z.object({
   command: z
     .array(z.string().min(1))
     .min(2)
-    .refine(([program]) => program === "pnpm", { message: "台本の command は pnpm で始める" }),
+    .refine(([program]) => program === "pnpm", { message: "判定コマンドは pnpm で始める" }),
 })
 
-export type ReplayScript = z.infer<typeof replayScriptSchema>
+export type ReplayCase = z.infer<typeof replayCaseSchema>
 
-/** タスクの再試集の置き場から1件の台本を読む。形が崩れていれば例外を投げる。 */
-export function readReplayScript(repositoryRoot: string, id: string): ReplayScript {
+/** タスクの再試集の置き場から再試の1件を読む。形が崩れていれば例外を投げる。 */
+export function readReplayCase(repositoryRoot: string, id: string): ReplayCase {
   const directory = join(repositoryRoot, REPLAY_DIRECTORY, id)
-  const script = replayScriptSchema.parse(
+  const replayCase = replayCaseSchema.parse(
     JSON.parse(readFileSync(join(directory, "replay.json"), "utf8")),
   )
-  if (script.id !== id) {
-    throw new Error(`${id} の replay.json の id が ${script.id} になっている`)
+  if (replayCase.id !== id) {
+    throw new Error(`${id} の replay.json の id が ${replayCase.id} になっている`)
   }
-  return script
+  return replayCase
 }
 
 /** 課題の本文の写し。claude に渡す依頼の元になる。 */

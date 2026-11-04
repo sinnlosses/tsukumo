@@ -9,7 +9,7 @@ export type ReplayRun = {
 }
 
 export type ReplaySummary = {
-  /** k 回とも台本が通った。 */
+  /** k 回とも判定コマンドが通った。 */
   readonly passAll: boolean
   readonly runs: number
   readonly passedRuns: number

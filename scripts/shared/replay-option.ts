@@ -1,4 +1,4 @@
-// タスクの再試の台本が受ける引数 `--tasks <ID,…> --k <n>`。
+// タスクの再試の開発用スクリプトが受ける引数 `--tasks <ID,…> --k <n>`。
 import { parseArgs } from "node:util"
 
 import { positiveIntegerArgument } from "./positive-integer-argument.ts"
