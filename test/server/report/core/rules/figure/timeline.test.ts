@@ -45,4 +45,23 @@ describe("timelineFaultPositions", () => {
     )
     expect(positions).not.toMatch(/架空|14:/)
   })
+
+  it("after・uncertain の誤りも行の位置で書き、待つ行の名前を出さない", () => {
+    const positions = timelineFaultPositions(
+      timelineFaults([
+        timeline([
+          { name: "架空の甲", start: "14:00", end: "14:10", after: ["架空の無い行"] },
+          {
+            name: "架空の乙",
+            start: "14:10",
+            end: "14:20",
+            uncertain: { until: "14:15", label: "架空の一言" },
+          },
+        ]),
+      ]),
+    )
+
+    expect(positions).toBe("1個目の `timeline` の 1 行目、1個目の `timeline` の 2 行目")
+    expect(positions).not.toMatch(/架空|14:/)
+  })
 })

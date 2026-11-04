@@ -83,7 +83,17 @@ describe("依頼の型の雛形", () => {
     const figure = {
       kind: "timeline",
       title: "架空の経過",
-      rows: [{ name: "甲", lane: "", start: 0, end: 3, extra: [] }],
+      rows: [
+        {
+          name: "甲",
+          lane: "",
+          start: 0,
+          end: 3,
+          extra: [],
+          uncertain: { until: "", label: "" },
+          after: [],
+        },
+      ],
       events: [],
       emphasis: [],
       aside: "",

@@ -192,7 +192,17 @@ const ROWS: readonly (readonly [string, readonly ReportBlock[], readonly DrawnEn
         {
           kind: "timeline",
           title: "",
-          rows: [{ name: "架空", start: "0:00", end: "0:01", extra: [], lane: "" }],
+          rows: [
+            {
+              name: "架空",
+              start: "0:00",
+              end: "0:01",
+              extra: [],
+              uncertain: { until: "", label: "" },
+              after: [],
+              lane: "",
+            },
+          ],
           events: [],
           emphasis: [],
           ...PLAIN,

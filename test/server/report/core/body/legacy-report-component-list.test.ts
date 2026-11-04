@@ -60,7 +60,17 @@ const LEAVES: Readonly<Record<string, unknown>> = {
   timeline: {
     kind: "timeline",
     title: "架空の経過",
-    rows: [{ name: "甲", lane: "", start: 0, end: 3, extra: [] }],
+    rows: [
+      {
+        name: "甲",
+        lane: "",
+        start: 0,
+        end: 3,
+        extra: [],
+        uncertain: { until: "", label: "" },
+        after: [],
+      },
+    ],
   },
   options: {
     kind: "options",

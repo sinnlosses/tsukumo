@@ -16,14 +16,22 @@ export type TimelineFaultReason =
   | "not-ascending"
   | "end-before-start"
   | "unknown-emphasis"
+  | "unknown-after"
+  | "ambiguous-after"
+  | "cyclic-after"
+  | "uncertain-before-end"
 
 export type TimelineFault = { readonly place: TimelinePlace; readonly reason: TimelineFaultReason }
 
-/** 値は軸の上の分。読めない・尺度の割れた値は `undefined`。`end` は一点の行でも `undefined`。 */
+/**
+ * 値は軸の上の分。読めない・尺度の割れた値は `undefined`。
+ * `end` は一点の行でも、`uncertain` は区間を省いた行でも `undefined`。
+ */
 export type TimelineRowReading = {
   readonly start: number | undefined
   readonly end: number | undefined
   readonly extra: readonly (number | undefined)[]
+  readonly uncertain: number | undefined
 }
 
 export type TimelineReading = {
@@ -66,7 +74,7 @@ const MINUTES_PATTERN = /^-?\d+(?:\.\d+)?$/
 /** 塊の時刻を読み、尺度・分の値・誤りを返す。 */
 export function readTimeline(block: ReportTimeline): TimelineReading {
   const scaleKind = [
-    ...block.rows.flatMap((row) => [row.start, row.end, ...row.extra]),
+    ...block.rows.flatMap((row) => [row.start, row.end, ...row.extra, row.uncertain.until]),
     ...block.events.map((event) => event.at),
   ]
     .flatMap((value) => {
@@ -87,12 +95,15 @@ export function readTimeline(block: ReportTimeline): TimelineReading {
     start: valueAt(row.start),
     end: valueAt(row.end),
     extra: row.extra.map(valueAt),
+    uncertain: valueAt(row.uncertain.until),
   }))
   const rows = rowValues.map((values): TimelineRowReading => ({
     start: minutesOf(values.start),
     end: minutesOf(values.end),
     extra: values.extra.map(minutesOf),
+    uncertain: minutesOf(values.uncertain),
   }))
+  const afterReasons = afterFaultsOf(block.rows)
   const rowFaults = block.rows.flatMap((row, index): readonly TimelineFault[] => {
     const values = rowValues[index]
     const reading = rows[index]
@@ -102,7 +113,7 @@ export function readTimeline(block: ReportTimeline): TimelineReading {
       .flatMap((other, at) => (other.lane === row.lane ? [rows[at]?.start] : []))
       .findLast((start) => start !== undefined)
     const reasons: readonly TimelineFaultReason[] = [
-      ...[values.start, values.end, ...values.extra].flatMap(faultsOf),
+      ...[values.start, values.end, ...values.extra, values.uncertain].flatMap(faultsOf),
       ...reasonIf(
         reading.start !== undefined && previousStart !== undefined && reading.start < previousStart,
         "not-ascending",
@@ -112,6 +123,8 @@ export function readTimeline(block: ReportTimeline): TimelineReading {
         "end-before-start",
       ),
       ...reasonIf(!extraAscends(row.end, reading), "not-ascending"),
+      ...reasonIf(!uncertainFollowsEnd(row, reading), "uncertain-before-end"),
+      ...(afterReasons[index] ?? []),
     ]
     return uniqueReasons(reasons).map((reason) => ({
       place: { kind: "row", row: index + 1 },
@@ -231,6 +244,52 @@ function extraAscends(writtenEnd: string | number, reading: TimelineRowReading):
   if (readValue(writtenEnd) === "omitted") return false
   const chain = [reading.end, ...reading.extra].filter((value) => value !== undefined)
   return chain.every((value, index) => index === 0 || value > (chain[index - 1] ?? value))
+}
+
+/** 一点の行に `uncertain` は書けない。`uncertain` は終わり（`extra` の最後）より後。 */
+function uncertainFollowsEnd(
+  row: ReportTimeline["rows"][number],
+  reading: TimelineRowReading,
+): boolean {
+  if (readValue(row.uncertain.until) === "omitted") return true
+  if (readValue(row.end) === "omitted") return false
+  const lastEnd = [reading.end, ...reading.extra].findLast((value) => value !== undefined)
+  if (reading.uncertain === undefined || lastEnd === undefined) return true
+  return reading.uncertain > lastEnd
+}
+
+/** 行ごとの `after` の誤り。循環は名前で1つに決まる行どうしの辺だけで辿る。 */
+function afterFaultsOf(rows: ReportTimeline["rows"]): readonly (readonly TimelineFaultReason[])[] {
+  const indexesByName = Map.groupBy(
+    rows.map((row, index) => ({ name: row.name, index })),
+    ({ name }) => name,
+  )
+  const targetsOf = rows.map((row) =>
+    row.after.flatMap((name) => {
+      const found = indexesByName.get(name) ?? []
+      return found.length === 1 ? found.map(({ index }) => index) : []
+    }),
+  )
+  const reaches = (from: number, goal: number): boolean => {
+    const seen = new Set<number>()
+    const pending = [...(targetsOf[from] ?? [])]
+    for (let next = pending.pop(); next !== undefined; next = pending.pop()) {
+      if (next === goal) return true
+      if (seen.has(next)) continue
+      seen.add(next)
+      pending.push(...(targetsOf[next] ?? []))
+    }
+    return false
+  }
+  return rows.map((row, index) =>
+    uniqueReasons(
+      row.after.flatMap((name): readonly TimelineFaultReason[] => {
+        const count = indexesByName.get(name)?.length ?? 0
+        if (name.trim() === "" || count === 0) return ["unknown-after"]
+        return count > 1 ? ["ambiguous-after"] : []
+      }),
+    ).concat(reasonIf(reaches(index, index), "cyclic-after")),
+  )
 }
 
 function uniqueReasons(reasons: readonly TimelineFaultReason[]): readonly TimelineFaultReason[] {

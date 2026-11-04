@@ -154,7 +154,7 @@ export function figureViolationMessage(violation: FigureViolation): string {
     case "broken-graph":
       return `\`Graph\` の \`source\` に読めない行がある（${graphFaultPositions(violation.faults)}）。1行を \`A -> B: 語\` の形に直す（\`: 語\` は省ける）。囲みは \`[群の名]\` 〜 \`[]\` で、内側を先に \`[]\` で閉じる入れ子は2階層まで（3階層以上と閉じ忘れは読めない）。箱の説明は \`名前 | 一\\n二\` の \`\\n\` で区切って3行まで（空の行も不可）`
     case "broken-timeline":
-      return `\`Timeline\` の時刻に誤りがある（${timelineFaultPositions(violation.faults)}）。時刻は HH:MM・ISO の日時・分の数のどれか1つに揃え（日をまたぐなら ISO）、同じ lane の行は start の昇順、extra は昇順、end は start より後、出来事は at の昇順にし、\`emphasis\` は行の \`name\` と同じ字にする`
+      return `\`Timeline\` の時刻に誤りがある（${timelineFaultPositions(violation.faults)}）。時刻は HH:MM・ISO の日時・分の数のどれか1つに揃え（日をまたぐなら ISO）、同じ lane の行は start の昇順、extra は昇順、end は start より後、出来事は at の昇順にし、\`emphasis\` と \`after\` は行の \`name\` と同じ字にする（\`after\` で待つ行は1つに決まる名前にし、循環させない）。\`uncertain.until\` は終わり（\`extra\` があればその最後）より後にし、一点の行には書かない`
     case "figure-number-mismatch":
       return `\`Plot\` の値とずれた数が本文にある（${figureNumberFaultPositions(violation.faults)}）。単位と丸めを \`Plot\` の値に揃えて、本文の数を直す`
     case "plot-forbidden-form":

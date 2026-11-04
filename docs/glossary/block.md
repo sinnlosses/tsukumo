@@ -33,8 +33,8 @@
   `path`（`image` の画像のファイル）・`caption`（`image` の何が見えるかの1行）・`notes`（`image` の番号つきの説明の並び）・
   `chartKind`（`chart` の種類。`bar` / `line` / `pie` / `arrow` / `slope` / `span` / `share`）・`labels`（`chart` の横軸・扇形・項目・部分の名前）・
   `series`（`chart` の系列。`name` と `values`）・`horizontal`（`chart` の `bar` を横棒にする真偽値）・`emphasis`（`chart` で差し色にする項目の名前の並び。`labels` の部分集合。`svg` の `rect` の `emphasis` とは別。`timeline` では差し色にする行の `name` の並び）・
-  `rows`（`timeline` の行の並び。`name`・`start`・`end`〔省くと一点〕・`extra`・`lane`）・`start` / `end`（`timeline` の行の開始と終了。`HH:MM`・ISO の日時・分の数のどれかで、1つの部品の中で混ぜない）・
-  `extra`（`timeline` の行の `end` より後へ延びた区切りの時刻の昇順の並び）・`lane`（`timeline` の行の役ごとのまとまり）・`events`（`timeline` の出来事の印の並び。`at` と `label`）・`at`（出来事の時刻）/
+  `rows`（`timeline` の行の並び。`name`・`start`・`end`〔省くと一点〕・`extra`・`uncertain`・`after`・`lane`）・`start` / `end`（`timeline` の行の開始と終了。`HH:MM`・ISO の日時・分の数のどれかで、1つの部品の中で混ぜない）・
+  `extra`（`timeline` の行の `end` より後へ延びた区切りの時刻の昇順の並び）・`uncertain`（`timeline` の行の終わり〔`extra` があればその最後〕より後ろに続く、止まりうる区間。終わりの時刻 `until` と一言 `label`）・`after`（`timeline` の行が待つ行の `name` の並び。待たれる行の終わりからこの行の開始へ矢印で描く）・`until`（`uncertain` の区間の終わりの時刻）・`lane`（`timeline` の行の役ごとのまとまり）・`events`（`timeline` の出来事の印の並び。`at` と `label`）・`at`（出来事の時刻）/
   `ReportBlockField`（使われ方の記録で数える欄の名前）
 - **定義**: **セクションの中に並ぶ、種類の決まった本文の1単位**。中身を持つものを内容部品、並びや枠を決めるもの（`Row`・`Card`・`Section`）を配置部品と呼び分け、この項は内容部品（`ReportBlock`）を指す。種類ごとに決まった形で Markdown に組んで
   描く（`reportSectionsMarkdown`）。部品の文字は行頭の部品の記法と `<` を逃がし、インラインの記法

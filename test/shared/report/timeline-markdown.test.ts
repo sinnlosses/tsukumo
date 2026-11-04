@@ -62,3 +62,96 @@ describe("timelineLayoutOf の出来事の段", () => {
     expect(levels).toEqual([0, 1, 2, 3, 4, 5])
   })
 })
+
+describe("timelineLayoutOf の待つ行の矢印と止まりうる区間", () => {
+  const plan = timelineLayoutOf(
+    timelineBlockSchema.parse({
+      kind: "timeline",
+      rows: [
+        { name: "架空の検索の改善", start: "2026-11-04", end: "2026-11-15" },
+        {
+          name: "架空の決済の更新",
+          start: "2026-11-08",
+          end: "2026-11-18",
+          uncertain: { until: "2026-11-22", label: "架空の承認待ち" },
+        },
+        {
+          name: "架空の負荷試験",
+          start: "2026-11-16",
+          end: "2026-11-22",
+          after: ["架空の検索の改善"],
+        },
+        {
+          name: "架空の公開の準備",
+          start: "2026-11-23",
+          end: "2026-11-30",
+          after: ["架空の負荷試験", "架空の決済の更新"],
+        },
+        {
+          name: "架空の公開",
+          start: "2026-12-01",
+          end: "2026-12-03",
+          after: ["架空の公開の準備"],
+        },
+      ],
+    }),
+  )
+  const rows = plan.lanes.flatMap((lane) => lane.rows)
+
+  it("矢印は待たれる行の終わり（止まりうる区間があればその終わり）からこの行の開始へ、間の行と一言の数を持つ", () => {
+    expect(rows.map((row) => row.arrows)).toEqual([
+      [],
+      [],
+      [{ from: 40, to: 43.33, rowSpan: 2, laneSpan: 0, labelSpan: 1 }],
+      [
+        { from: 63.33, to: 66.67, rowSpan: 1, laneSpan: 0, labelSpan: 0 },
+        { from: 63.33, to: 66.67, rowSpan: 2, laneSpan: 0, labelSpan: 1 },
+      ],
+      [{ from: 90, to: 93.33, rowSpan: 1, laneSpan: 0, labelSpan: 0 }],
+    ])
+  })
+
+  it("止まりうる区間は延びた分の後ろの幅と一言で出し、凡例に止まりうる分を足す", () => {
+    const uncertain = rows[1]?.track.kind === "bar" ? rows[1].track.uncertain : undefined
+
+    expect(uncertain?.kind === "shown" && uncertain.label).toBe("架空の承認待ち")
+    expect(uncertain?.kind === "shown" && uncertain.width).toBeCloseTo(13.33)
+    expect(plan.axis.at(-1)?.label).toBe("12/3")
+    expect(plan.legend).toEqual([{ swatch: "uncertain", label: "止まりうる分" }])
+  })
+
+  it("レーンを跨ぐ矢印は見出しの数を数え、待たれる行が下なら負の向きにする", () => {
+    const laned = timelineLayoutOf(
+      timelineBlockSchema.parse({
+        kind: "timeline",
+        rows: [
+          { name: "架空の甲", start: 0, end: 10, lane: "架空の役A", after: ["架空の乙"] },
+          { name: "架空の乙", start: 10, end: 20, lane: "架空の役B", after: ["架空の丙"] },
+          { name: "架空の丙", start: 5, end: 8, lane: "架空の役A" },
+        ],
+      }),
+    )
+
+    expect(laned.lanes.flatMap((lane) => lane.rows.map((row) => [row.name, row.arrows]))).toEqual([
+      ["架空の甲", [{ from: 100, to: 0, rowSpan: -2, laneSpan: -1, labelSpan: 0 }]],
+      ["架空の丙", []],
+      ["架空の乙", [{ from: 40, to: 50, rowSpan: 1, laneSpan: 1, labelSpan: 0 }]],
+    ])
+  })
+
+  it("描かない行・名前が1つに決まらない行からの矢印は出さない", () => {
+    const layout = timelineLayoutOf(
+      timelineBlockSchema.parse({
+        kind: "timeline",
+        rows: [
+          { name: "架空の甲", start: "14時", end: "14:10" },
+          { name: "架空の乙", start: "14:00", end: "14:10" },
+          { name: "架空の乙", start: "14:10", end: "14:20" },
+          { name: "架空の丙", start: "14:20", end: "14:30", after: ["架空の甲", "架空の乙"] },
+        ],
+      }),
+    )
+
+    expect(layout.lanes.flatMap((lane) => lane.rows.flatMap((row) => row.arrows))).toEqual([])
+  })
+})

@@ -16,6 +16,10 @@ export const TIMELINE_MARK_NAMES = [
   "timeline-bar",
   "timeline-bar-emphasis",
   "timeline-extra",
+  "timeline-uncertain",
+  "timeline-uncertain-label",
+  "timeline-arrow",
+  "timeline-arrow-head",
   "timeline-point",
   "timeline-events",
   "timeline-event",
@@ -26,6 +30,7 @@ export const TIMELINE_MARK_NAMES = [
   "timeline-legend-swatch-emphasis",
   "timeline-legend-swatch-plain",
   "timeline-legend-swatch-extra",
+  "timeline-legend-swatch-uncertain",
   "timeline-legend-swatch-point",
   "timeline-legend-swatch-event",
 ] as const
@@ -46,11 +51,30 @@ export type TimelineTrackLayout =
       readonly width: number
       /** 延びた分の幅（%）の並び。 */
       readonly extras: readonly number[]
+      readonly uncertain: TimelineUncertainLayout
     }
+
+/** 延びた分の後ろに続く止まりうる区間。`width` は %。 */
+export type TimelineUncertainLayout =
+  | { readonly kind: "none" }
+  | { readonly kind: "shown"; readonly width: number; readonly label: string }
+
+/**
+ * 待たれる行の終わりから、この行の開始へ入る矢印。`from`・`to` は軸の %。
+ * 縦は待たれる行がこの行より何段上か（下なら負）を、間に挟まる行・レーンの見出し・区間の一言の数で言う。
+ */
+export type TimelineArrowLayout = {
+  readonly from: number
+  readonly to: number
+  readonly rowSpan: number
+  readonly laneSpan: number
+  readonly labelSpan: number
+}
 
 export type TimelineRowLayout = {
   readonly name: string
   readonly track: TimelineTrackLayout
+  readonly arrows: readonly TimelineArrowLayout[]
 }
 
 /** `lane` が空の群は見出しを持たない。 */
@@ -59,7 +83,7 @@ export type TimelineLaneLayout = {
   readonly rows: readonly TimelineRowLayout[]
 }
 
-export type TimelineLegendSwatch = "emphasis" | "plain" | "extra" | "point" | "event"
+export type TimelineLegendSwatch = "emphasis" | "plain" | "extra" | "uncertain" | "point" | "event"
 
 export type TimelineLayout = {
   /** 目盛りの字と、次の目盛りまでの幅（%）。最後の目盛りは 0。 */
@@ -84,7 +108,7 @@ export function timelineLayoutOf(block: ReportTimeline): TimelineLayout {
   const drawn = block.rows.flatMap((row, index) => {
     const values = reading.rows[index]
     const shape = values === undefined ? undefined : rowShapeOf(row.end, values)
-    return shape === undefined ? [] : [{ row, shape }]
+    return shape === undefined ? [] : [{ row, shape, index }]
   })
   const events = block.events.flatMap((event, index) => {
     const at = reading.events[index]
@@ -92,7 +116,7 @@ export function timelineLayoutOf(block: ReportTimeline): TimelineLayout {
   })
   const minutes = [
     ...drawn.flatMap(({ shape }) =>
-      shape.kind === "point" ? [shape.start] : [shape.start, ...shape.ends],
+      shape.kind === "point" ? [shape.start] : [shape.start, ...shape.ends, lastAtOf(shape)],
     ),
     ...events.map(({ at }) => at),
   ]
@@ -105,24 +129,35 @@ export function timelineLayoutOf(block: ReportTimeline): TimelineLayout {
   const percent = (at: number): number => share(at - from)
   const emphasized = new Set(block.emphasis)
 
-  const rowLayout = ({ row, shape }: (typeof drawn)[number]): TimelineRowLayout => ({
-    name: row.name,
-    track:
-      shape.kind === "point"
-        ? {
-            kind: "point",
-            title: written(row.start),
-            emphasized: emphasized.has(row.name),
-            marginLeft: percent(shape.start),
-          }
-        : barLayout(row, shape, emphasized.has(row.name), percent),
+  const laneNames = [...new Set(["", ...drawn.map(({ row }) => row.lane)])]
+  const ordered = laneNames.flatMap((lane) => drawn.filter(({ row }) => row.lane === lane))
+  const arrowsOf = arrowLayoutOf(block, ordered, percent)
+  const rowLayout = (item: DrawnRow, position: number): TimelineRowLayout => {
+    const { row, shape } = item
+    return {
+      name: row.name,
+      track:
+        shape.kind === "point"
+          ? {
+              kind: "point",
+              title: written(row.start),
+              emphasized: emphasized.has(row.name),
+              marginLeft: percent(shape.start),
+            }
+          : barLayout(row, shape, emphasized.has(row.name), percent),
+      arrows: arrowsOf(position),
+    }
+  }
+  const rowLayouts = ordered.map((item, position) => ({
+    lane: item.row.lane,
+    ...rowLayout(item, position),
+  }))
+  const lanes = laneNames.flatMap((lane): readonly TimelineLaneLayout[] => {
+    const rows = rowLayouts.flatMap(({ lane: rowLane, ...layout }) =>
+      rowLane === lane ? [layout] : [],
+    )
+    return rows.length === 0 ? [] : [{ lane, rows }]
   })
-  const lanes = [...new Set(["", ...drawn.map(({ row }) => row.lane)])].flatMap(
-    (lane): readonly TimelineLaneLayout[] => {
-      const rows = drawn.filter(({ row }) => row.lane === lane)
-      return rows.length === 0 ? [] : [{ lane, rows: rows.map(rowLayout) }]
-    },
-  )
   return {
     axis: ticks.map((tick, index) => ({
       label: tick.label,
@@ -190,12 +225,18 @@ type RowShape =
       readonly start: number
       /** 帯の終わりと、延びた分の区切りの並び。延びた分が読めなければ帯の終わりだけ。 */
       readonly ends: readonly [number, ...number[]]
+      /** 止まりうる区間の終わり。読めない・延びた分の最後より後でなければ `none`。 */
+      readonly uncertain:
+        | { readonly kind: "none" }
+        | { readonly kind: "until"; readonly at: number }
     }
 
 type Row = ReportTimeline["rows"][number]
 
+type DrawnRow = { readonly row: Row; readonly shape: RowShape; readonly index: number }
+
 function rowShapeOf(writtenEnd: string | number, values: TimelineRowReading): RowShape | undefined {
-  const { start, end, extra } = values
+  const { start, end, extra, uncertain } = values
   if (start === undefined) return undefined
   if (written(writtenEnd) === "") return { kind: "point", start }
   if (end === undefined || end < start) return undefined
@@ -203,7 +244,23 @@ function rowShapeOf(writtenEnd: string | number, values: TimelineRowReading): Ro
   const ascending =
     extraEnds.length === extra.length &&
     extraEnds.every((value, index) => value > (index === 0 ? end : (extraEnds[index - 1] ?? end)))
-  return { kind: "bar", start, ends: ascending ? [end, ...extraEnds] : [end] }
+  const ends: readonly [number, ...number[]] = ascending ? [end, ...extraEnds] : [end]
+  const lastEnd = ends.at(-1) ?? end
+  return {
+    kind: "bar",
+    start,
+    ends,
+    uncertain:
+      uncertain !== undefined && uncertain > lastEnd
+        ? { kind: "until", at: uncertain }
+        : { kind: "none" },
+  }
+}
+
+/** 行の図形の右端（止まりうる区間があればその終わり）。 */
+function lastAtOf(shape: RowShape): number {
+  if (shape.kind === "point") return shape.start
+  return shape.uncertain.kind === "until" ? shape.uncertain.at : (shape.ends.at(-1) ?? shape.start)
 }
 
 function barLayout(
@@ -213,11 +270,14 @@ function barLayout(
   percent: (at: number) => number,
 ): TimelineTrackLayout {
   const [end, ...extraEnds] = shape.ends
+  const lastEnd = extraEnds.at(-1) ?? end
   const extraText =
     extraEnds.length === 0 ? "" : `（延び ${row.extra.map((value) => written(value)).join("・")}）`
+  const uncertainText =
+    shape.uncertain.kind === "none" ? "" : `（止まりうる 〜${written(row.uncertain.until)}）`
   return {
     kind: "bar",
-    title: `${written(row.start)}–${written(row.end)}${extraText}`,
+    title: `${written(row.start)}–${written(row.end)}${extraText}${uncertainText}`,
     emphasized,
     marginLeft: percent(shape.start),
     width: percent(end) - percent(shape.start),
@@ -225,12 +285,65 @@ function barLayout(
       const previous = index === 0 ? end : (extraEnds[index - 1] ?? end)
       return percent(at) - percent(previous)
     }),
+    uncertain:
+      shape.uncertain.kind === "none"
+        ? { kind: "none" }
+        : {
+            kind: "shown",
+            width: percent(shape.uncertain.at) - percent(lastEnd),
+            label: uncertainLabelOf(row, shape),
+          },
   }
+}
+
+/** 棒の下に置く一言。止まりうる区間を描かない行は空。 */
+function uncertainLabelOf(row: Row, shape: RowShape): string {
+  return shape.kind === "bar" && shape.uncertain.kind === "until" ? row.uncertain.label.trim() : ""
+}
+
+/** 描く順の位置ごとに、その行へ入る矢印を返す関数。名前が1つの行に決まらない `after` と描かない行は飛ばす。 */
+function arrowLayoutOf(
+  block: ReportTimeline,
+  ordered: readonly DrawnRow[],
+  percent: (at: number) => number,
+): (position: number) => readonly TimelineArrowLayout[] {
+  const positionOfIndex = new Map(ordered.map(({ index }, position) => [index, position]))
+  const labeled = ordered.map(({ row, shape }) => uncertainLabelOf(row, shape) !== "")
+  const opensLane = ordered.map(
+    ({ row }, position) => row.lane !== "" && ordered[position - 1]?.row.lane !== row.lane,
+  )
+  return (position) => {
+    const target = ordered[position]
+    if (target === undefined) return []
+    return [...new Set(target.row.after)].flatMap((name): readonly TimelineArrowLayout[] => {
+      const found = block.rows.flatMap((row, index) => (row.name === name ? [index] : []))
+      const [sourceIndex] = found
+      const source = found.length === 1 ? positionOfIndex.get(sourceIndex ?? -1) : undefined
+      const sourceRow = source === undefined ? undefined : ordered[source]
+      if (source === undefined || sourceRow === undefined || source === position) return []
+      const [low, high] = source < position ? [source, position] : [position, source]
+      // 0 - 0 は +0。-count と書くと -0 が style の字に出る
+      const signed = (count: number): number => (source < position ? count : 0 - count)
+      return [
+        {
+          from: percent(lastAtOf(sourceRow.shape)),
+          to: percent(target.shape.start),
+          rowSpan: signed(high - low),
+          laneSpan: signed(countIn(opensLane, low + 1, high + 1)),
+          labelSpan: signed(countIn(labeled, low, high)),
+        },
+      ]
+    })
+  }
+}
+
+function countIn(flags: readonly boolean[], from: number, to: number): number {
+  return flags.slice(from, to).filter(Boolean).length
 }
 
 function legendOf(
   block: ReportTimeline,
-  drawn: readonly { readonly row: Row; readonly shape: RowShape }[],
+  drawn: readonly DrawnRow[],
   hasEvents: boolean,
 ): TimelineLayout["legend"] {
   const emphasized = drawn.some(({ row }) => block.emphasis.includes(row.name))
@@ -245,6 +358,11 @@ function legendOf(
       swatch: "extra",
       label: "延びた分",
       shown: drawn.some(({ shape }) => shape.kind === "bar" && shape.ends.length > 1),
+    },
+    {
+      swatch: "uncertain",
+      label: "止まりうる分",
+      shown: drawn.some(({ shape }) => shape.kind === "bar" && shape.uncertain.kind === "until"),
     },
     { swatch: "point", label: "一点", shown: drawn.some(({ shape }) => shape.kind === "point") },
     { swatch: "event", label: "出来事", shown: hasEvents },

@@ -11,6 +11,11 @@ const timelineRowSchema = z.object({
   start: timeValue,
   end: omittable(timeValue, ""),
   extra: omittable(timeValue.array(), []).describe("end より後へ延びた区切りの時刻"),
+  uncertain: omittable(z.object({ until: timeValue, label: inlineText }), {
+    until: "",
+    label: "",
+  }).describe("終わり（extra の最後）より後ろの止まりうる区間"),
+  after: omittable(inlineText.array(), []).describe("待つ行の name"),
   lane: omittable(inlineText, "").describe("役ごとのまとまりの名前"),
 })
 

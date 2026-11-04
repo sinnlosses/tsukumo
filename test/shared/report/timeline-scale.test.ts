@@ -11,6 +11,8 @@ type Row = {
   readonly start: string | number
   readonly end?: string | number
   readonly extra?: readonly (string | number)[]
+  readonly uncertain?: { readonly until: string | number; readonly label: string }
+  readonly after?: readonly string[]
   readonly lane?: string
 }
 
@@ -119,6 +121,105 @@ describe("readTimeline", () => {
     expect(reasons(timeline([{ start: 0 }], { emphasis: ["架空の無い行"] }))).toEqual([
       [{ kind: "emphasis" }, "unknown-emphasis"],
     ])
+  })
+
+  it("after に行に無い名前・空の名前があれば unknown-after、同じ名前の行が2つ以上なら ambiguous-after", () => {
+    expect(
+      reasons(
+        timeline([
+          { name: "架空の甲", start: 0, end: 10 },
+          { name: "架空の乙", start: 0, end: 10, after: ["架空の無い行"] },
+          { name: "架空の丙", start: 0, end: 10, after: [""] },
+          { name: "架空の甲", start: 20, end: 30 },
+          { name: "架空の丁", start: 30, end: 40, after: ["架空の甲"] },
+          { name: "架空の戊", start: 30, end: 40, after: ["架空の乙"] },
+        ]),
+      ),
+    ).toEqual([
+      [{ kind: "row", row: 2 }, "unknown-after"],
+      [{ kind: "row", row: 3 }, "unknown-after"],
+      [{ kind: "row", row: 5 }, "ambiguous-after"],
+    ])
+  })
+
+  it("after が自分を含めて循環する行それぞれを cyclic-after にし、循環の外から待つ行は誤りにしない", () => {
+    expect(
+      reasons(
+        timeline([
+          { name: "架空の甲", start: 0, end: 10, after: ["架空の丙"] },
+          { name: "架空の乙", start: 10, end: 20, after: ["架空の甲"] },
+          { name: "架空の丙", start: 20, end: 30, after: ["架空の乙"] },
+          { name: "架空の丁", start: 30, end: 40, after: ["架空の丙"] },
+          { name: "架空の戊", start: 40, end: 50, after: ["架空の戊"] },
+        ]),
+      ),
+    ).toEqual([
+      [{ kind: "row", row: 1 }, "cyclic-after"],
+      [{ kind: "row", row: 2 }, "cyclic-after"],
+      [{ kind: "row", row: 3 }, "cyclic-after"],
+      [{ kind: "row", row: 5 }, "cyclic-after"],
+    ])
+  })
+
+  it("待つ行の開始が待たれる行の終わりより前でも誤りにしない", () => {
+    expect(
+      reasons(
+        timeline([
+          { name: "架空の甲", start: 0, end: 30 },
+          { name: "架空の乙", start: 10, end: 40, after: ["架空の甲"] },
+        ]),
+      ),
+    ).toEqual([])
+  })
+
+  it("uncertain は終わり（extra の最後）より後なら読み、前か同じ・一点の行なら uncertain-before-end", () => {
+    const later = readTimeline(
+      timeline([
+        {
+          start: "14:00",
+          end: "14:30",
+          extra: ["14:40"],
+          uncertain: { until: "15:00", label: "" },
+        },
+      ]),
+    )
+    expect(later.faults).toEqual([])
+    expect(later.rows[0]?.uncertain).toBe(900)
+    expect(
+      reasons(
+        timeline([
+          { start: "14:00", end: "14:30", uncertain: { until: "14:30", label: "" } },
+          {
+            start: "14:00",
+            end: "14:30",
+            extra: ["14:50"],
+            uncertain: { until: "14:40", label: "" },
+          },
+          { start: "14:00", uncertain: { until: "14:40", label: "" } },
+        ]),
+      ),
+    ).toEqual([
+      [{ kind: "row", row: 1 }, "uncertain-before-end"],
+      [{ kind: "row", row: 2 }, "uncertain-before-end"],
+      [{ kind: "row", row: 3 }, "uncertain-before-end"],
+    ])
+  })
+
+  it("uncertain の until も読めない値は unreadable、尺度が割れたら mixed-scale、尺度の判別に入る", () => {
+    expect(
+      reasons(
+        timeline([
+          { start: "14:00", end: "14:30", uncertain: { until: "15時", label: "" } },
+          { start: "14:00", end: "14:30", uncertain: { until: 900, label: "" } },
+        ]),
+      ),
+    ).toEqual([
+      [{ kind: "row", row: 1 }, "unreadable"],
+      [{ kind: "row", row: 2 }, "mixed-scale"],
+    ])
+    expect(
+      readTimeline(timeline([{ start: "", uncertain: { until: "2026-11-04", label: "" } }])).scale,
+    ).toBe("iso")
   })
 })
 

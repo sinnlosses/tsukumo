@@ -7,6 +7,7 @@ import type { A2uiReportComponent } from "../../../../../../shared/report/a2ui-r
 import { plainInline } from "../../../../../../shared/report/report-inline-markdown.ts"
 import type { LeafValue } from "../../../../../../shared/report/report-leaf-value.ts"
 import {
+  type TimelineArrowLayout,
   type TimelineRowLayout,
   type TimelineTrackLayout,
   timelineLayoutOf,
@@ -110,11 +111,91 @@ function LaneView(props: {
           </span>
           <span className={figureClassName("timeline-track")}>
             <TrackView track={row.track} />
+            {row.arrows.map((arrow) => (
+              <ArrowView key={String(arrow.rowSpan)} arrow={arrow} />
+            ))}
           </span>
+          {row.track.kind === "bar" &&
+            row.track.uncertain.kind === "shown" &&
+            row.track.uncertain.label !== "" && (
+              <span
+                className={figureClassName("timeline-uncertain-label")}
+                style={{ marginInlineStart: alongAxis(uncertainLeftOf(row.track)) }}
+              >
+                {plainInline(row.track.uncertain.label)}
+              </span>
+            )}
         </div>
       ))}
     </>
   )
+}
+
+/** 矢じりの幅（px）。線は矢じりの後ろで止める。 */
+const ARROW_HEAD_PX = 8
+
+/**
+ * 待たれる行の終わりから、この行の帯の開始へ入る矢印。帯の段の縦の中心どうしを結ぶ。
+ * 線は 0〜100 の箱に引いて伸ばし、矢じりは伸ばさない別の svg に描く。
+ */
+function ArrowView(props: { readonly arrow: TimelineArrowLayout }): ReactElement {
+  const { from, to, rowSpan, laneSpan, labelSpan } = props.arrow
+  const forward = from < to
+  const rise = `(${String(rowSpan)} * var(--timeline-row-height) + ${String(laneSpan)} * var(--timeline-lane-height) + ${String(labelSpan)} * var(--timeline-label-height))`
+  const [sourceX, targetX] = forward ? [0, 100] : [100, 0]
+  const [sourceY, targetY] = rowSpan > 0 ? [0, 100] : [100, 0]
+  const curve = forward
+    ? `C50,${String(sourceY)} 50,${String(targetY)}`
+    : `C${String(sourceX)},50 ${String(targetX)},50`
+  const halfHead = ARROW_HEAD_PX / 2
+  return (
+    <>
+      <svg
+        className={figureClassName("timeline-arrow")}
+        viewBox="0 0 100 100"
+        preserveAspectRatio="none"
+        aria-hidden="true"
+        style={{
+          insetInlineStart: forward
+            ? alongAxis(from)
+            : `calc(${alongAxis(to)} - ${String(halfHead)}px)`,
+          inlineSize: forward
+            ? `max(0px, calc(${alongAxis(to - from)} - ${String(ARROW_HEAD_PX)}px))`
+            : `calc(${alongAxis(from - to)} + ${String(halfHead)}px)`,
+          insetBlockStart: `calc(50% - max(0px, ${rise}))`,
+          blockSize: `max(${rise}, -1 * ${rise})`,
+        }}
+      >
+        <path
+          d={`M${String(sourceX)},${String(sourceY)} ${curve} ${String(targetX)},${String(targetY)}`}
+          vectorEffect="non-scaling-stroke"
+        />
+      </svg>
+      <svg
+        className={figureClassName("timeline-arrow-head")}
+        viewBox={`0 0 ${String(ARROW_HEAD_PX)} ${String(ARROW_HEAD_PX)}`}
+        aria-hidden="true"
+        style={{
+          insetInlineStart: `calc(${alongAxis(to)} - ${String(ARROW_HEAD_PX)}px)`,
+          insetBlockStart: `calc(50% - ${String(halfHead)}px)`,
+        }}
+      >
+        <path
+          d={`M0,0 L${String(ARROW_HEAD_PX)},${String(halfHead)} L0,${String(ARROW_HEAD_PX)} Z`}
+        />
+      </svg>
+    </>
+  )
+}
+
+/** 止まりうる区間の左端（軸の %）。 */
+function uncertainLeftOf(track: Extract<TimelineTrackLayout, { readonly kind: "bar" }>): number {
+  return track.extras.reduce((sum, width) => sum + width, track.marginLeft + track.width)
+}
+
+/** 軸の % を、行の右の余白を除いた幅に対する長さにする。 */
+function alongAxis(value: number): string {
+  return `calc((100% - var(--timeline-end-gutter)) * ${String(value)} / 100)`
 }
 
 function TrackView(props: { readonly track: TimelineTrackLayout }): ReactElement {
@@ -143,6 +224,12 @@ function TrackView(props: { readonly track: TimelineTrackLayout }): ReactElement
           style={{ width: percent(width) }}
         />
       ))}
+      {track.uncertain.kind === "shown" && (
+        <span
+          className={figureClassName("timeline-uncertain")}
+          style={{ width: percent(track.uncertain.width) }}
+        />
+      )}
     </>
   )
 }
