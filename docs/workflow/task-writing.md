@@ -39,8 +39,8 @@
   として DOM に残るので、属性にする（`data-reveal-caption` と同じ）。見た目を付ける印は、語彙と
   `.report-<名前>` の CSS を一緒に足す。属性を足すと期待値のファイルが動き、更新と `tw verify` の
   打ち直しが E2E 全件の所要を増やす。
-- **`report` の説明文または部品（型の定義）を足す計画は、`node scripts/dev/addition-margin.ts` の余白を前提の裏取りの行に書く。**
-  型の定義は `claims` で620字、`region` で220字。余白超えなら上限（`scripts/shared/addition-budget.ts`）を上げる段を入れる。
+- **`report` の部品・欄・説明文を足す計画は、登録の時点で `node scripts/dev/addition-margin.ts` の余白を裏取りの行に書き、`scripts/shared/addition-budget.ts` の上限を上げる段（実装の最初の段に含めてよい）を入れる。**
+  余白超えの条件は付けない（直近の部品追加5件がすべて上限を上げた）。上げ幅の目安は `claims` で620字、`region` で220字。上げずに済んだときは、段の報告に余白の値を書けばよい。
   載る説明はフィールドの `.describe` だけで、部品全体のは `leafComponent` が落とす。道案内はフィールドを名指す。
   ほかの上限は `REPORT_NOTATION_PROMPT`（4600字以下）と `REPORT_TOOL_DESCRIPTION`（2048字未満）で、`prompt/` のテストが持つ。
   既定値・空でない文字列・正の数は `report-block-field.ts` の `omittable`・`nonEmpty`・`positiveNumber` で書く
