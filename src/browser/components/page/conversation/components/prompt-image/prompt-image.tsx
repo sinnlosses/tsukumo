@@ -114,9 +114,10 @@ type PromptImageThumbnailsProps = {
   /**
    * 控えの大きさ。
    * compact は札と同じ高さで揃える（雑談の吹き出しの中）。
-   * full は控えの元の大きさを上限に、比率のまま描く（メインビューの依頼の見出しの下）。
+   * full は控えの元の大きさを上限に、比率のまま描く（メインビューの開いた依頼）。
+   * chip は札の列に並ぶ高さ約 30px の縮小版（メインビューの畳んだ依頼）。
    */
-  readonly size: "compact" | "full"
+  readonly size: "compact" | "full" | "chip"
 }
 
 /**
@@ -136,7 +137,12 @@ export function PromptImageThumbnails(props: PromptImageThumbnailsProps): ReactE
 
   return (
     <>
-      <ul className={styles["prompt-images"]}>
+      <ul
+        className={clsx(
+          styles["prompt-images"],
+          props.size === "chip" && styles["prompt-images-chip"],
+        )}
+      >
         {props.images.map((image, index) => {
           const onZoom = (): void => setZoomedIndex(index)
           return image.kind === "sent" ? (
@@ -187,6 +193,7 @@ function ThumbnailItem(props: ThumbnailItemProps): ReactElement {
           className={clsx(
             styles["prompt-image"],
             props.size === "full" && styles["prompt-image-full"],
+            props.size === "chip" && styles["prompt-image-small"],
           )}
           src={props.src}
           alt={IMAGE_ALT}

@@ -1,33 +1,75 @@
-/* 依頼の1行。値は見本 `docs/history/mockup/report-reading-tool-2026-10-18/reading-tool.html` の `.request`。
-   地も枠も左罫も持たず、字の段は `Text`・`Heading` が持つ。 */
+/* 依頼の塊。値は見本 `docs/history/mockup/request-chips-2026-11-04/request-chips.html` の案C。
+   札の列と、2行までの地の文と「全文」。字の段は `Text`・`Heading` が持つ。 */
 .request-block {
+  position: relative;
   color: var(--ink-quiet);
+}
+/* 見出しの字は目に見えなくてよい。`h2` は読み上げの見出しとして残す。 */
+.request-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.request-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
+}
+.request-chip-group {
+  display: inline-flex;
+  gap: var(--space-sm);
+  min-width: 0;
+}
+.request-chip {
+  min-width: 0;
+  padding: 0 var(--space-sm);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+  color: var(--ink-soft);
+  line-height: 22px;
+}
+.request-chip.is-command {
+  font-family: var(--font-mono);
+}
+.request-chip.is-task {
+  background: var(--surface-accent);
+  color: var(--accent);
+  font-family: var(--font-mono);
+}
+/* 4枚目以降の「+n」。顔は `<Button variant="outline-ground">` が持ち、押すと「全文」を開く。 */
+.request-more-images {
+  line-height: 22px;
 }
 .request-row {
   display: flex;
-  align-items: baseline;
+  align-items: flex-end;
   gap: var(--space-md);
-}
-.request-label {
-  flex: none;
-  line-height: 20px;
 }
 .request-lines {
   flex: 1 1 0;
   min-width: 0;
   margin: 0;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
   line-height: 20px;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
 }
 /* 開いたあとは全行を折り返して出し、長いときはビューポートの 40% で内側に転がす。 */
 .request-lines.is-expanded {
+  display: block;
   max-height: 40vh;
   overflow-y: auto;
-  overflow-wrap: anywhere;
-  text-overflow: clip;
-  white-space: pre-wrap;
+  -webkit-line-clamp: none;
+  line-clamp: none;
 }
 /* 「全文」と「畳む」。顔は `<Button variant="text-accent">` が持つ。 */
 .request-more {

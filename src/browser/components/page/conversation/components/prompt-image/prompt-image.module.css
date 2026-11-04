@@ -41,6 +41,14 @@
   border-radius: var(--radius-md);
   background: var(--surface);
 }
+/* 札の列に並ぶ控え。下の余白は札の列が持つ。 */
+.prompt-images-chip {
+  margin: 0;
+}
+.prompt-image-small {
+  height: 30px;
+  border-radius: var(--radius-sm);
+}
 /* メインビューの控え。
    高さで揃えず、控えの元の大きさ（長辺 320px）を上限に比率のまま描く。
    上限を超えて広げると、控えの画素を引き伸ばしてぼやける。 */

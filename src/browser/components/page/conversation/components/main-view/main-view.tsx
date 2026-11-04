@@ -66,6 +66,7 @@ export function MainView(): ReactElement {
   // 畳んだ結果は姿ごとに1回だけ作られる（昇順。追従を決める `useTurnSelection` と同じものを読む）。
   const turns = useMainViewTurns()
   const content = useMainViewContent((state) => state.content)
+  const tasks = useSession((session) => session.state.tasks)
   const awaitingHello = useSession((session) => session.generation === 0)
   const requestInquiryJump = useInquiryJump((state) => state.requestJump)
   const moment = useSession((session) => conversationMoment(session.state))
@@ -176,7 +177,11 @@ export function MainView(): ReactElement {
                 )}
                 {cardTurn.turn.request !== undefined && (
                   <div className={styles["turn-card-request"]}>
-                    <RequestBlock request={cardTurn.turn.request} key={cardTurn.turn.id} />
+                    <RequestBlock
+                      request={cardTurn.turn.request}
+                      tasks={tasks}
+                      key={cardTurn.turn.id}
+                    />
                   </div>
                 )}
                 <div className={styles["turn-card-body"]}>

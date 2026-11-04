@@ -1,5 +1,5 @@
 import { act, cleanup, fireEvent, screen, within } from "@testing-library/react"
-import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { loadMarkdown } from "../../../../../../../src/browser/components/page/conversation/components/markdown/markdown.tsx"
 import { useInquiryDraft } from "../../../../../../../src/browser/components/page/conversation/stores/inquiry-draft.ts"
@@ -88,17 +88,26 @@ describe("MainView（依頼の全文）", () => {
     return screen.getByRole("heading", { level: 2, name: "依頼" }).closest("section")?.textContent
   }
 
-  it("2行の依頼は、部品に1行目だけ出て、開くボタン「全文」で全行が出る", () => {
+  // jsdom は寸法を測れないので、地の文が2行に収まらず切れていることにする。
+  beforeEach(() => {
+    vi.spyOn(HTMLElement.prototype, "scrollHeight", "get").mockReturnValue(100)
+  })
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it("地の文が切れている依頼は、開くボタン「全文」で開いて「畳む」で戻る", () => {
     renderMainView([
       requestRecord({ text: "架空の依頼の1行目\n1. 起こす", turnId: 0 }),
       detailRecord("本文"),
     ])
 
     expect(requestBlockText()).toContain("架空の依頼の1行目")
-    expect(requestBlockText()).not.toContain("1. 起こす")
+    expect(screen.getByRole("button", { name: "全文" }).getAttribute("aria-expanded")).toBe("false")
 
     press("全文")
     expect(requestBlockText()).toContain("1. 起こす")
+    expect(screen.getByRole("button", { name: "畳む" }).getAttribute("aria-expanded")).toBe("true")
   })
 
   it("別のターンへ移ると、開いた状態は持ち越されない", () => {

@@ -94,12 +94,13 @@ export function threeTurns(): readonly SessionRecord[] {
   ]
 }
 
-/** 見ているターンの依頼の1行目（依頼の全文の最初の行）。 */
-export function title(): string | null | undefined {
+/** 見ているターンの依頼の1行目（地の文の最初の行。切るのは CSS なので、DOM には全行ある）。 */
+export function title(): string | undefined {
   return screen
     .getByRole("heading", { level: 2, name: "依頼" })
     .closest("section")
-    ?.querySelector("p > span")?.textContent
+    ?.querySelector("p > span")
+    ?.textContent.split("\n")[0]
 }
 
 /** やり取りの列を開いたと選んだ状態にする（happy-dom では札の幅が 0 で、選ばなければ畳まれる）。 */

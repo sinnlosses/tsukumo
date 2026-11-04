@@ -1,94 +1,125 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
-import { afterEach, describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { RequestBlock } from "../../../../../../../src/browser/components/page/conversation/components/main-view/request-block.tsx"
+import type {
+  TaskSummaryItem,
+  TaskSummaryResult,
+} from "../../../../../../../src/shared/repository/task-summary.ts"
+import type { MainViewRequest } from "../../../../../../../src/shared/session/main-view-shape.ts"
 
-// 依頼の行はすべて手で書いた架空のもの（実物の会話は使わない）。
+// 依頼とタスクはすべて手で書いた架空のもの（実物の会話は使わない）。
 
 afterEach(() => {
   cleanup()
+  vi.restoreAllMocks()
 })
 
-function renderBlock(lines: readonly string[]): void {
-  render(<RequestBlock request={{ text: lines.join("\n"), images: [] }} />)
+const TASK: TaskSummaryItem = {
+  id: "TK-2100",
+  summary: "架空のタスクの題",
+  status: { kind: "known", status: "todo" },
+  dependencies: [],
+  waitingFor: [],
+  labels: [],
+  difficulty: undefined,
+  loopable: undefined,
+  importance: "normal",
+  urgency: "normal",
+  body: "",
+  location: { kind: "none" },
 }
 
-function shownLines(): readonly string[] {
-  const paragraph = screen.getByRole("heading", { level: 2, name: "依頼" }).nextElementSibling
-  return [...(paragraph?.querySelectorAll(":scope > span > span") ?? [])].map(
-    (line) => line.textContent,
+const KNOWN: TaskSummaryResult = { kind: "known", items: [TASK], omittedClosedCount: 0 }
+const LOADING: TaskSummaryResult = { kind: "loading" }
+
+function image(id: string): MainViewRequest["images"][number] {
+  return { kind: "sent", id, thumbnail: "data:image/png;base64,AAAA" }
+}
+
+function renderBlock(
+  text: string,
+  options: { tasks?: TaskSummaryResult; images?: MainViewRequest["images"] } = {},
+): void {
+  render(
+    <RequestBlock
+      request={{ text, images: options.images ?? [] }}
+      tasks={options.tasks ?? LOADING}
+    />,
   )
 }
 
-/** 1行目が省略されている（scrollWidth が clientWidth を超える）ことにする。 */
-function pretendEllipsized(): () => void {
-  const original = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "scrollWidth")
-  Object.defineProperty(HTMLElement.prototype, "scrollWidth", {
-    configurable: true,
-    get: () => 100,
-  })
-  return () => {
-    if (original === undefined) {
-      Reflect.deleteProperty(HTMLElement.prototype, "scrollWidth")
-    } else {
-      Object.defineProperty(HTMLElement.prototype, "scrollWidth", original)
-    }
-  }
+/** 地の文が2行に収まらず切れていることにする。 */
+function pretendClamped(): void {
+  vi.spyOn(HTMLElement.prototype, "scrollHeight", "get").mockReturnValue(100)
 }
 
 describe("RequestBlock", () => {
-  it("1行に収まる短い依頼は、1行目だけ出して開くボタンを出さない", () => {
-    renderBlock(["架空の短い依頼"])
+  it("コマンドとタスクIDだけの依頼は、3つの札だけを出し、地の文と「全文」は出さない", () => {
+    pretendClamped()
+    renderBlock("/demo-plugin:next-task tk-2100", { tasks: KNOWN })
 
-    expect(shownLines()).toEqual(["架空の短い依頼"])
+    expect(screen.getByText("/next-task")).toBeDefined()
+    expect(screen.getByText("TK-2100")).toBeDefined()
+    expect(screen.getByText("架空のタスクの題")).toBeDefined()
+    expect(document.querySelector("p")).toBeNull()
     expect(screen.queryByRole("button")).toBeNull()
   })
 
-  it("2行以上の依頼は1行目だけ出し、「全文」で全行を開いて「畳む」で畳み直せる", () => {
-    renderBlock(["架空の1行目", "架空の2行目", "架空の3行目"])
+  it("一覧に無いIDと、一覧が届いていないときは、タスクの札を出さない", () => {
+    renderBlock("TK-999 を見て", { tasks: KNOWN })
+    expect(screen.queryByText("架空のタスクの題")).toBeNull()
+    expect(screen.getByText("TK-999 を見て")).toBeDefined()
+    cleanup()
 
-    expect(shownLines()).toEqual(["架空の1行目"])
-    const open = screen.getByRole("button", { name: "全文" })
-    expect(open.getAttribute("aria-expanded")).toBe("false")
+    renderBlock("TK-2100 を見て", { tasks: LOADING })
+    expect(screen.queryByText("架空のタスクの題")).toBeNull()
+    expect(screen.getByText("TK-2100 を見て")).toBeDefined()
+  })
 
-    fireEvent.click(open)
-    expect(shownLines()).toEqual(["架空の1行目", "架空の2行目", "架空の3行目"])
-    const collapse = screen.getByRole("button", { name: "畳む" })
-    expect(collapse.getAttribute("aria-expanded")).toBe("true")
+  it("2行に収まる依頼は「全文」を出さない", () => {
+    renderBlock("架空の短い依頼")
 
-    fireEvent.click(collapse)
-    expect(shownLines()).toEqual(["架空の1行目"])
+    expect(screen.getByText("架空の短い依頼")).toBeDefined()
+    expect(screen.queryByRole("button")).toBeNull()
+  })
+
+  it("3行以上で切れている依頼は、「全文」で元の文面を開き、「畳む」で戻る", () => {
+    pretendClamped()
+    renderBlock("/demo:cmd 架空の1行目\n架空の2行目\n架空の3行目")
+
+    fireEvent.click(screen.getByRole("button", { name: "全文" }))
+    expect(document.querySelector("p")?.textContent).toBe(
+      "/demo:cmd 架空の1行目\n架空の2行目\n架空の3行目",
+    )
+    fireEvent.click(screen.getByRole("button", { name: "畳む" }))
     expect(screen.getByRole("button", { name: "全文" })).toBeDefined()
   })
 
-  it("1行でも省略されているときは開くボタンが出る", () => {
-    const restore = pretendEllipsized()
-    try {
-      renderBlock(["架空の長い1行の依頼"])
+  it("画像は畳んだままで縮小版が見え、「全文」の理由にならない", () => {
+    renderBlock("架空の依頼", { images: [image("a")] })
 
-      expect(screen.getByRole("button", { name: "全文" })).toBeDefined()
-    } finally {
-      restore()
-    }
+    expect(document.querySelectorAll("img")).toHaveLength(1)
+    expect(screen.queryByRole("button", { name: "全文" })).toBeNull()
   })
 
-  it("画像を添えた依頼は、開くと画像が出て、畳んでいる間は出ない", () => {
-    render(
-      <RequestBlock
-        request={{
-          text: "架空の依頼",
-          images: [{ kind: "sent", id: "架空の画像", thumbnail: "data:image/png;base64,AAAA" }],
-        }}
-      />,
-    )
+  it("4枚以上は3枚と「+n」になり、「+n」で開く", () => {
+    renderBlock("架空の依頼", { images: [image("a"), image("b"), image("c"), image("d")] })
 
-    expect(document.querySelector("img")).toBeNull()
-    fireEvent.click(screen.getByRole("button", { name: "全文" }))
-    expect(document.querySelector("img")).not.toBeNull()
+    expect(document.querySelectorAll("img")).toHaveLength(3)
+    fireEvent.click(screen.getByRole("button", { name: "+1" }))
+    expect(document.querySelectorAll("img")).toHaveLength(7)
+    expect(screen.getByRole("button", { name: "畳む" })).toBeDefined()
+  })
+
+  it("ページの h2 はこの塊の1つ", () => {
+    renderBlock("/x 架空の依頼", { tasks: KNOWN })
+
+    expect(screen.getAllByRole("heading", { level: 2 })).toHaveLength(1)
   })
 
   it("狭い画面専用の板を持たない", () => {
-    renderBlock(["架空の1行目", "架空の2行目"])
+    renderBlock("架空の1行目\n架空の2行目")
 
     expect(document.querySelector("dialog")).toBeNull()
   })
