@@ -1,0 +1,537 @@
+<!doctype html>
+<!--
+  PROTOTYPE（使い捨て）: 触れるレポート 第2版。計算は中置の式（独自関数 expr）で書き、Report.defs に名前つきの式を置く。
+  問い: 第1版（{call, args} の入れ子）より書き手が軽く書けて、誤りが減るか。
+  開き方: このファイルをブラウザで開く。部品の一覧は report-v2.js（sonnet の書き手が catalog-v2.md だけを読んで書いたもの）。
+  式は eval せず、ここの小さな構文解析器で読む。
+-->
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <title>PROTOTYPE: 触れるレポート 第2版（式と名前つきの式）</title>
+    <style>
+      :root {
+        --ground: #191720;
+        --surface: #221f2b;
+        --ink: #e8e3ea;
+        --accent: #f2b0a0;
+        --ink-quiet: color-mix(in srgb, var(--ink) 60%, transparent);
+        --ink-soft: color-mix(in srgb, var(--ink) 72%, transparent);
+        --rule-soft: color-mix(in srgb, var(--surface), var(--ink) 12%);
+        --surface-accent: color-mix(in srgb, var(--surface), var(--accent) 12%);
+        --state-ng: #f2a0a0;
+        --series-a: #f2b0a0;
+        --series-b: #9cc1ee;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 24px;
+        background: var(--ground);
+        color: var(--ink);
+        font:
+          15px/1.75 "Hiragino Sans",
+          "Noto Sans JP",
+          system-ui,
+          sans-serif;
+        display: grid;
+        grid-template-columns: minmax(0, 760px) 260px;
+        gap: 20px;
+        justify-content: center;
+      }
+      .report {
+        background: var(--surface);
+        border: 1px solid var(--rule-soft);
+        border-radius: 12px;
+        padding: 20px 28px;
+      }
+      h4 {
+        margin: 18px 0 6px;
+        font-size: 15px;
+      }
+      p {
+        margin: 0 0 10px;
+        color: var(--ink-soft);
+      }
+      .control {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin: 6px 0 10px;
+        padding: 8px 12px;
+        border: 1px solid var(--rule-soft);
+        border-radius: 8px;
+        background: color-mix(in srgb, var(--surface), var(--accent) 5%);
+        font-size: 13px;
+        color: var(--ink-soft);
+      }
+      .control input[type="range"] {
+        flex: 1;
+        accent-color: var(--accent);
+      }
+      .control input[type="checkbox"] {
+        accent-color: var(--accent);
+        width: 16px;
+        height: 16px;
+      }
+      .control output {
+        font-family: ui-monospace, monospace;
+        color: var(--ink);
+        min-width: 3em;
+        text-align: right;
+      }
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 10px;
+        margin: 8px 0 12px;
+      }
+      .stat {
+        border: 1px solid var(--rule-soft);
+        border-radius: 8px;
+        padding: 10px 12px;
+      }
+      .stat .value {
+        font-size: 22px;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+      }
+      .stat .label {
+        font-size: 12px;
+        color: var(--ink-quiet);
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 4px 0 12px;
+        font-size: 13px;
+        font-variant-numeric: tabular-nums;
+      }
+      th,
+      td {
+        border-bottom: 1px solid var(--rule-soft);
+        padding: 4px 8px;
+        text-align: left;
+      }
+      th {
+        color: var(--ink-quiet);
+        font-weight: 400;
+      }
+      tr.emphasis td {
+        background: var(--surface-accent);
+        color: var(--ink);
+      }
+      tr.emphasis td:first-child {
+        box-shadow: inset 3px 0 var(--accent);
+      }
+      figure {
+        margin: 6px 0 12px;
+      }
+      figcaption {
+        font-size: 13px;
+        color: var(--ink-quiet);
+        margin-bottom: 4px;
+      }
+      svg text {
+        fill: var(--ink-quiet);
+        font-size: 11px;
+      }
+      svg text.emphasis {
+        fill: var(--ink);
+        font-weight: 700;
+      }
+      .error {
+        color: var(--state-ng);
+        font:
+          12px ui-monospace,
+          monospace;
+        border: 1px dashed var(--state-ng);
+        padding: 2px 6px;
+        border-radius: 4px;
+      }
+      aside {
+        font:
+          12px/1.6 ui-monospace,
+          monospace;
+        color: var(--ink-quiet);
+        position: sticky;
+        top: 24px;
+        align-self: start;
+      }
+      aside pre {
+        white-space: pre-wrap;
+        background: var(--surface);
+        padding: 10px;
+        border-radius: 8px;
+        color: var(--ink-soft);
+      }
+    </style>
+  </head>
+  <body>
+    <article class="report" id="report-root"></article>
+    <aside>
+      <div>つまみの値と名前つきの式</div>
+      <pre id="model"></pre>
+      <div>評価の誤り</div>
+      <pre id="errors">なし</pre>
+    </aside>
+
+    <script src="./report-v2.js"></script>
+    <script>
+      // 式の字句と構文。eval は使わない。
+      function tokenize(source) {
+        const tokens = []
+        const re =
+          /\s*(?:(\d+(?:\.\d+)?)|("(?:[^"\\]|\\.)*")|([A-Za-z_][\w]*)|(<=|>=|==|!=|&&|\|\||[-+*/%<>!?:(),\[\]]))/y
+        let pos = 0
+        while (pos < source.length) {
+          if (/^\s*$/.test(source.slice(pos))) break
+          re.lastIndex = pos
+          const m = re.exec(source)
+          if (!m) throw new Error(`読めない字: ${source.slice(pos, pos + 8)}`)
+          pos = re.lastIndex
+          if (m[1]) tokens.push({ t: "num", v: Number(m[1]) })
+          else if (m[2]) tokens.push({ t: "str", v: JSON.parse(m[2]) })
+          else if (m[3]) tokens.push({ t: "id", v: m[3] })
+          else tokens.push({ t: "op", v: m[4] })
+        }
+        return tokens
+      }
+
+      function parse(source) {
+        const tokens = tokenize(source)
+        let i = 0
+        const peek = () => tokens[i]
+        const take = (v) => {
+          const tok = tokens[i]
+          if (v !== undefined && (!tok || tok.v !== v)) throw new Error(`「${v}」が要る`)
+          i += 1
+          return tok
+        }
+        const isOp = (...vs) => peek()?.t === "op" && vs.includes(peek().v)
+        function ternary() {
+          const cond = binary(0)
+          if (!isOp("?")) return cond
+          take("?")
+          const a = ternary()
+          take(":")
+          const b = ternary()
+          return { k: "if", cond, a, b }
+        }
+        const LEVELS = [
+          ["||"],
+          ["&&"],
+          ["==", "!="],
+          ["<", "<=", ">", ">="],
+          ["+", "-"],
+          ["*", "/", "%"],
+        ]
+        function binary(level) {
+          if (level === LEVELS.length) return unary()
+          let left = binary(level + 1)
+          while (isOp(...LEVELS[level])) {
+            const op = take().v
+            left = { k: "bin", op, left, right: binary(level + 1) }
+          }
+          return left
+        }
+        function unary() {
+          if (isOp("-", "!")) {
+            const op = take().v
+            return { k: "un", op, x: unary() }
+          }
+          return primary()
+        }
+        function list(close) {
+          const items = []
+          if (!isOp(close)) {
+            items.push(ternary())
+            while (isOp(",")) {
+              take(",")
+              items.push(ternary())
+            }
+          }
+          take(close)
+          return items
+        }
+        function primary() {
+          const tok = take()
+          if (!tok) throw new Error("式が途中で終わった")
+          if (tok.t === "num" || tok.t === "str") return { k: "lit", v: tok.v }
+          if (tok.t === "id") {
+            if (tok.v === "true" || tok.v === "false") return { k: "lit", v: tok.v === "true" }
+            if (isOp("(")) {
+              take("(")
+              return { k: "call", name: tok.v, args: list(")") }
+            }
+            return { k: "name", name: tok.v }
+          }
+          if (tok.v === "(") {
+            const e = ternary()
+            take(")")
+            return e
+          }
+          if (tok.v === "[") return { k: "arr", items: list("]") }
+          throw new Error(`思わない字: ${tok.v}`)
+        }
+        const tree = ternary()
+        if (i < tokens.length) throw new Error(`余った字: ${tokens[i].v}`)
+        return tree
+      }
+
+      const isList = Array.isArray
+      function broadcast(a, b, op) {
+        if (!isList(a) && !isList(b)) return op(a, b)
+        const n = isList(a) ? a.length : b.length
+        return Array.from({ length: n }, (_, j) => op(isList(a) ? a[j] : a, isList(b) ? b[j] : b))
+      }
+      const BIN = {
+        "+": (x, y) => x + y,
+        "-": (x, y) => x - y,
+        "*": (x, y) => x * y,
+        "/": (x, y) => x / y,
+        "%": (x, y) => x % y,
+        "<": (x, y) => x < y,
+        "<=": (x, y) => x <= y,
+        ">": (x, y) => x > y,
+        ">=": (x, y) => x >= y,
+        "==": (x, y) => x === y,
+        "!=": (x, y) => x !== y,
+        "&&": (x, y) => x && y,
+        "||": (x, y) => x || y,
+      }
+      const FUNCS = {
+        range: (from, to) => Array.from({ length: to - from + 1 }, (_, j) => from + j),
+        min: (a, b) => broadcast(a, b, Math.min),
+        max: (a, b) => broadcast(a, b, Math.max),
+        round: (x, d = 0) => broadcast(x, d, (v, dd) => Math.round(v * 10 ** dd) / 10 ** dd),
+        sum: (list) => list.reduce((s, v) => s + Number(v), 0),
+        len: (list) => list.length,
+        minOf: (list) => Math.min(...list),
+        maxOf: (list) => Math.max(...list),
+        argmin: (list) => list.indexOf(Math.min(...list)),
+        argmax: (list) => list.indexOf(Math.max(...list)),
+        at: (list, j) => list[j],
+        zip: (...lists) => lists[0].map((_, j) => lists.map((l) => (isList(l) ? l[j] : l))),
+        text: (list, suffix = "") => list.map((v) => `${fmt(v)}${suffix}`),
+      }
+
+      const components = window.REPORT
+      const byId = new Map(components.map((c) => [c.id, c]))
+      const defs = byId.get("root")?.defs ?? {}
+      const params = {}
+      for (const c of components) {
+        if (c.component === "Slider") params[c.name] = c.initial ?? c.min
+        if (c.component === "CheckBox") params[c.name] = Boolean(c.initial)
+      }
+      let errors = []
+      let cache = new Map()
+
+      function evalTree(node, stack) {
+        switch (node.k) {
+          case "lit":
+            return node.v
+          case "arr":
+            return node.items.map((n) => evalTree(n, stack))
+          case "name":
+            return lookup(node.name, stack)
+          case "un": {
+            const x = evalTree(node.x, stack)
+            return node.op === "-" ? broadcast(x, 0, (v) => -v) : broadcast(x, 0, (v) => !v)
+          }
+          case "bin":
+            return broadcast(evalTree(node.left, stack), evalTree(node.right, stack), BIN[node.op])
+          case "if": {
+            const cond = evalTree(node.cond, stack)
+            if (!isList(cond)) return cond ? evalTree(node.a, stack) : evalTree(node.b, stack)
+            const a = evalTree(node.a, stack)
+            const b = evalTree(node.b, stack)
+            return cond.map((c, j) => (c ? (isList(a) ? a[j] : a) : isList(b) ? b[j] : b))
+          }
+          case "call": {
+            const fn = FUNCS[node.name]
+            if (!fn) throw new Error(`無い関数 ${node.name}`)
+            return fn(...node.args.map((n) => evalTree(n, stack)))
+          }
+        }
+      }
+      function lookup(name, stack) {
+        if (name in params) return params[name]
+        if (!(name in defs)) throw new Error(`無い名前 ${name}`)
+        if (stack.includes(name))
+          throw new Error(`式が自分を読んでいる: ${[...stack, name].join(" → ")}`)
+        if (!cache.has(name)) cache.set(name, evalTree(parse(defs[name]), [...stack, name]))
+        return cache.get(name)
+      }
+      function runExpr(source, where) {
+        try {
+          return evalTree(parse(source), [])
+        } catch (e) {
+          errors.push(`${where}: ${e.message}`)
+          return NaN
+        }
+      }
+
+      function evaluate(value, where) {
+        if (isList(value)) return value.map((v) => evaluate(v, where))
+        if (value === null || typeof value !== "object") return value
+        if (value.call === "expr") return runExpr(value.args?.source ?? "", where)
+        if (value.call === "format") {
+          return String(value.args?.template ?? "").replace(/\$\{([^}]*)\}/g, (_, src) =>
+            fmt(runExpr(src, where)),
+          )
+        }
+        if ("call" in value) {
+          errors.push(`${where}: 無い関数 ${value.call}`)
+          return NaN
+        }
+        return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, evaluate(v, where)]))
+      }
+
+      function fmt(v) {
+        if (typeof v === "number")
+          return Number.isInteger(v) ? String(v) : String(Math.round(v * 10) / 10)
+        if (isList(v)) return v.map(fmt).join(", ")
+        return String(v)
+      }
+      function el(tag, props = {}, children = []) {
+        const node = Object.assign(document.createElement(tag), props)
+        for (const child of [].concat(children)) node.append(child)
+        return node
+      }
+
+      function chartSvg(labels, series, emphasis) {
+        const W = 680,
+          H = 200,
+          P = 32
+        const all = series.flatMap((s) => s.values).filter(Number.isFinite)
+        const top = Math.max(...all, 1) * 1.1
+        const x = (j) => P + (j * (W - P * 2)) / Math.max(labels.length - 1, 1)
+        const y = (v) => H - P - (v / top) * (H - P * 2)
+        const colors = ["var(--series-a)", "var(--series-b)"]
+        let body = `<line x1="${P}" y1="${H - P}" x2="${W - P}" y2="${H - P}" stroke="var(--rule-soft)"/>`
+        if (Number.isInteger(emphasis)) {
+          body += `<line x1="${x(emphasis)}" y1="${P / 2}" x2="${x(emphasis)}" y2="${H - P}" stroke="var(--accent)" stroke-dasharray="3 3" opacity="0.6"/>`
+        }
+        labels.forEach((label, j) => {
+          body += `<text x="${x(j)}" y="${H - 10}" text-anchor="middle" class="${j === emphasis ? "emphasis" : ""}">${label}</text>`
+        })
+        series.forEach((s, si) => {
+          body += `<polyline fill="none" stroke="${colors[si % 2]}" stroke-width="2" points="${s.values.map((v, j) => `${x(j)},${y(v)}`).join(" ")}"/>`
+          s.values.forEach((v, j) => {
+            const on = j === emphasis
+            body += `<circle cx="${x(j)}" cy="${y(v)}" r="${on ? 6 : 3}" fill="${colors[si % 2]}" ${on ? 'stroke="var(--ink)" stroke-width="2"' : ""}/>`
+            body += `<text x="${x(j)}" y="${y(v) - 10}" text-anchor="middle" class="${on ? "emphasis" : ""}">${fmt(v)}</text>`
+          })
+          body += `<text x="${W - P}" y="${14 + si * 14}" text-anchor="end" style="fill:${colors[si % 2]}">${s.name}</text>`
+        })
+        return `<svg viewBox="0 0 ${W} ${H}" width="100%">${body}</svg>`
+      }
+
+      function render() {
+        errors = []
+        cache = new Map()
+        const root = document.getElementById("report-root")
+        const focused = document.activeElement?.closest?.("[data-id]")?.dataset.id
+        root.replaceChildren()
+        for (const id of byId.get("root")?.children ?? []) root.append(renderPart(byId.get(id), id))
+        if (focused) root.querySelector(`[data-id="${focused}"] input`)?.focus()
+        const lines = Object.entries(params).map(([k, v]) => `${k} = ${fmt(v)}`)
+        for (const name of Object.keys(defs)) {
+          try {
+            lines.push(`${name} = ${fmt(lookup(name, []))}`)
+          } catch (e) {
+            lines.push(`${name} = × ${e.message}`)
+          }
+        }
+        document.getElementById("model").textContent = lines.join("\n")
+        document.getElementById("errors").textContent = errors.length ? errors.join("\n") : "なし"
+      }
+
+      function renderPart(c, id) {
+        if (!c) return el("div", { className: "error", textContent: `無い部品 ${id}` })
+        const v = (key) => evaluate(c[key], `${c.id}.${key}`)
+        switch (c.component) {
+          case "Heading":
+            return el("h4", { textContent: fmt(v("text")) })
+          case "Paragraph":
+            return el("p", { textContent: fmt(v("text")) })
+          case "Slider": {
+            const out = el("output", { textContent: fmt(params[c.name]) })
+            const input = el("input", {
+              type: "range",
+              min: c.min,
+              max: c.max,
+              step: c.step ?? 1,
+              value: params[c.name],
+            })
+            input.addEventListener("input", () => {
+              params[c.name] = Number(input.value)
+              render()
+            })
+            const label = el("label", { className: "control" }, [c.label, input, out])
+            label.dataset.id = c.id
+            return label
+          }
+          case "CheckBox": {
+            const input = el("input", { type: "checkbox", checked: Boolean(params[c.name]) })
+            input.addEventListener("change", () => {
+              params[c.name] = input.checked
+              render()
+            })
+            const label = el("label", { className: "control" }, [input, c.label])
+            label.dataset.id = c.id
+            return label
+          }
+          case "Stats":
+            return el(
+              "div",
+              { className: "stats" },
+              (c.items ?? []).map((item, j) =>
+                el("div", { className: "stat" }, [
+                  el("div", {
+                    className: "value",
+                    textContent: fmt(evaluate(item.value, `${c.id}.items[${j}]`)),
+                  }),
+                  el("div", { className: "label", textContent: item.label }),
+                ]),
+              ),
+            )
+          case "Chart": {
+            const labels = v("labels")
+            const series = (c.series ?? []).map((s, j) => ({
+              name: s.name,
+              values: evaluate(s.values, `${c.id}.series[${j}]`),
+            }))
+            const figure = el("figure", {}, [el("figcaption", { textContent: c.title ?? "" })])
+            figure.insertAdjacentHTML("beforeend", chartSvg(labels.map(fmt), series, v("emphasis")))
+            return figure
+          }
+          case "Table": {
+            const emphasis = v("emphasis")
+            return el("table", {}, [
+              el(
+                "tr",
+                {},
+                (c.columns ?? []).map((col) => el("th", { textContent: col })),
+              ),
+              ...v("rows").map((row, j) =>
+                el(
+                  "tr",
+                  { className: j === emphasis ? "emphasis" : "" },
+                  row.map((cell) => el("td", { textContent: fmt(cell) })),
+                ),
+              ),
+            ])
+          }
+          default:
+            return el("div", { className: "error", textContent: `知らない部品 ${c.component}` })
+        }
+      }
+
+      render()
+    </script>
+  </body>
+</html>
