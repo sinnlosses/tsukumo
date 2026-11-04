@@ -52,10 +52,10 @@
 
 dynamic workflows の要点（[workflows](https://code.claude.com/docs/en/workflows.md)、[Agent SDK の Workflow](https://code.claude.com/docs/en/agent-sdk/typescript.md#workflow)、同梱スキル `/workflow-authoring` 2.1.316、`sdk.d.ts` 0.3.312）:
 
-- 決定的な JavaScript の台本がバックグラウンドでサブエージェントを束ねる。関数は `agent()`・`parallel()`・`pipeline()`・`phase()`・`log()`・`args`
+- 決定的な JavaScript のワークフロースクリプトがバックグラウンドでサブエージェントを束ねる。関数は `agent()`・`parallel()`・`pipeline()`・`phase()`・`log()`・`args`
 - `agent()` に `model`・`effort`・`agentType`（カスタムのサブエージェント定義）・`schema`（検証済みの JSON を返させ、失敗は最大5回やり直す）・`isolation: 'worktree'` を渡せる
 - 保存したものは `/<name>`、plugin の `workflows/` に置いたものは `/<plugin>:<name>` で呼べる
-- 台本はファイルにもシェルにも触れない（コマンドを打つのは agent）。`Date.now()`・`Math.random()`・引数なしの `new Date()` は例外になる（再開を壊さないため）
+- ワークフロースクリプトはファイルにもシェルにも触れない（コマンドを打つのは agent）。`Date.now()`・`Math.random()`・引数なしの `new Date()` は例外になる（再開を壊さないため）
 - 実行中に利用者の入力は受けない。同時に動くのは既定 16 体、1回の実行で合計 1,000 体まで
 - 再開は同じセッションの中だけ（`resumeFromRunId`）。失敗した agent より後の agent は、済んでいてもやり直しになる
 - **SDK では使用量の上限で一時停止せず、該当の agent が失敗する**（一時停止して待つのは対話セッションだけ）
@@ -98,36 +98,36 @@ dynamic workflows の要点（[workflows](https://code.claude.com/docs/en/workfl
 
 ◯ は機能として持つ、△ は部品があり自分で組む、× は無い。
 
-| 機能                     | dynamic workflows                     | Archon                        | BMad Loop          | Gas City     | Mastra           | Temporal              |
-| ------------------------ | ------------------------------------- | ----------------------------- | ------------------ | ------------ | ---------------- | --------------------- |
-| 置き場                   | ×                                     | △ Issue と自前の DB           | △ BMAD の盤だけ    | ◯ Beads      | ×                | ×                     |
-| 着手の排他               | ×                                     | ◯ 待ち行列                    | ◯ 唯一の書き手     | ◯            | ×                | ◯ Workflow ID         |
-| 段ごとの委譲・モデル選択 | ◯ `model`・`agentType`                | ◯ ノードごと                  | ◯ 段ごと           | ◯ formula v2 | ◯                | ◯                     |
-| 独立した受け入れ         | ◯ 台本で差し戻しの輪                  | ◯ 観点ごとのレビュー          | ◯ 別文脈のレビュー | △ 設定次第   | △                | ◯ 別の Activity       |
-| 振り返りの学習           | ×                                     | △ 範囲外を issue に           | △ 後回しの台帳     | ×            | ×                | ×                     |
-| 送り出し・関門           | △ 台本はシェルに触れない              | ◯ PR 経由のマージ関門         | ◯ 検証 → コミット  | △            | ◯ suspend        | ◯ Signal・Update      |
-| worktree                 | △ agent 単位の一時 worktree           | ◯ 既定                        | ◯ 任意             | △            | ×                | △                     |
-| 観測                     | △ ラン単位（段は TUI とファイル）     | ◯ Web 画面・費用              | ◯ TUI              | △            | ◯ Studio         | ◯ Web UI              |
-| 再開                     | △ 同じセッション内だけ                | ◯                             | ◯                  | ◯            | ◯                | ◯（ターンはやり直し） |
-| tsukumo の口が届くか     | ◯ tsukumo の SDK セッションの中で動く | × 自分で Claude Code を起こす | × 同               | × 同         | △ 包み直しが要る | × 同                  |
+| 機能                     | dynamic workflows                          | Archon                        | BMad Loop          | Gas City     | Mastra           | Temporal              |
+| ------------------------ | ------------------------------------------ | ----------------------------- | ------------------ | ------------ | ---------------- | --------------------- |
+| 置き場                   | ×                                          | △ Issue と自前の DB           | △ BMAD の盤だけ    | ◯ Beads      | ×                | ×                     |
+| 着手の排他               | ×                                          | ◯ 待ち行列                    | ◯ 唯一の書き手     | ◯            | ×                | ◯ Workflow ID         |
+| 段ごとの委譲・モデル選択 | ◯ `model`・`agentType`                     | ◯ ノードごと                  | ◯ 段ごと           | ◯ formula v2 | ◯                | ◯                     |
+| 独立した受け入れ         | ◯ ワークフロースクリプトで差し戻しの輪     | ◯ 観点ごとのレビュー          | ◯ 別文脈のレビュー | △ 設定次第   | △                | ◯ 別の Activity       |
+| 振り返りの学習           | ×                                          | △ 範囲外を issue に           | △ 後回しの台帳     | ×            | ×                | ×                     |
+| 送り出し・関門           | △ ワークフロースクリプトはシェルに触れない | ◯ PR 経由のマージ関門         | ◯ 検証 → コミット  | △            | ◯ suspend        | ◯ Signal・Update      |
+| worktree                 | △ agent 単位の一時 worktree                | ◯ 既定                        | ◯ 任意             | △            | ×                | △                     |
+| 観測                     | △ ラン単位（段は TUI とファイル）          | ◯ Web 画面・費用              | ◯ TUI              | △            | ◯ Studio         | ◯ Web UI              |
+| 再開                     | △ 同じセッション内だけ                     | ◯                             | ◯                  | ◯            | ◯                | ◯（ターンはやり直し） |
+| tsukumo の口が届くか     | ◯ tsukumo の SDK セッションの中で動く      | × 自分で Claude Code を起こす | × 同               | × 同         | △ 包み直しが要る | × 同                  |
 
 ## 3. 推す形
 
 ### 3.1 何を置き換え、何を残すか
 
-| 部分                                                  | 乗り換えたあと                                                                                          |
-| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| 置き場・同期・着手の排他（`tw claim`）・`/plan-tasks` | 残す                                                                                                    |
-| `/next-task`                                          | 残す。着手の印を立てたあと、保存済みワークフローを呼ぶ                                                  |
-| `task-workflow` と並びの段の4件                       | **保存済みワークフロー1本に置き換える**（plugin の `workflows/` に置き、`tsukumo-workflow` で配る）     |
-| 実装の段の委譲                                        | 台本が段ごとに `agent({ model, schema })` を呼ぶ。モデルは difficulty から台本が決める                  |
-| 受け入れ                                              | 受け入れ役の定義はそのまま `agentType` に渡し、判定は `schema` で受け、差し戻しの回数の上限を台本に書く |
-| 振り返り                                              | 台本の最後の agent にする。ドラフトを積むのは agent が打つ `tw new --draft`                             |
-| 送り出し                                              | 残す。台本はシェルに触れないので、ワークフローの完了の知らせを受けたメインが `tw finish` を打つ         |
-| 関門の hook・計測の `lap-hook`                        | 残す（ワークフローの agent に掛かるかは未確認。6章）                                                    |
-| tsukumo の帯                                          | 契約は変えない。台本の agent が `phase_result` を呼べれば今と同じに進む（未確認。6章）                  |
+| 部分                                                  | 乗り換えたあと                                                                                                             |
+| ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| 置き場・同期・着手の排他（`tw claim`）・`/plan-tasks` | 残す                                                                                                                       |
+| `/next-task`                                          | 残す。着手の印を立てたあと、保存済みワークフローを呼ぶ                                                                     |
+| `task-workflow` と並びの段の4件                       | **保存済みワークフロー1本に置き換える**（plugin の `workflows/` に置き、`tsukumo-workflow` で配る）                        |
+| 実装の段の委譲                                        | ワークフロースクリプトが段ごとに `agent({ model, schema })` を呼ぶ。モデルは difficulty からワークフロースクリプトが決める |
+| 受け入れ                                              | 受け入れ役の定義はそのまま `agentType` に渡し、判定は `schema` で受け、差し戻しの回数の上限をワークフロースクリプトに書く  |
+| 振り返り                                              | ワークフロースクリプトの最後の agent にする。ドラフトを積むのは agent が打つ `tw new --draft`                              |
+| 送り出し                                              | 残す。ワークフロースクリプトはシェルに触れないので、ワークフローの完了の知らせを受けたメインが `tw finish` を打つ          |
+| 関門の hook・計測の `lap-hook`                        | 残す（ワークフローの agent に掛かるかは未確認。6章）                                                                       |
+| tsukumo の帯                                          | 契約は変えない。ワークフロースクリプトの agent が `phase_result` を呼べれば今と同じに進む（未確認。6章）                   |
 
-台本の形の見当（API の名前は同梱スキルと 2.1 の文書から引いた。動かしてはいない）:
+ワークフロースクリプトの形の見当（API の名前は同梱スキルと 2.1 の文書から引いた。動かしてはいない）:
 
 ```js
 export const meta = {
@@ -158,9 +158,9 @@ await agent(`タスク ${taskId} を振り返り、改善候補をドラフト�
 ### 3.2 推す理由
 
 - **実行エンジンが変わらない。** tsukumo は Claude Code を Agent SDK で動かすことに賭けている（`docs/architecture/adr/0008-sdk-instead-of-tui.md`）。dynamic workflows はその SDK のセッションの道具の1つで、hooks・skills・plugins・サブスクリプションの枠をそのまま使う
-- **手順の文章が、決まった制御に置き換わる。** いまのオーケストレーターは段の進め方と差し戻しの回し方を Markdown で指示し、守られないところを hook（`tw handback-guard` など）で止めている。台本ならループと分岐はコードで、モデルの読み違いが入らない
+- **手順の文章が、決まった制御に置き換わる。** いまのオーケストレーターは段の進め方と差し戻しの回し方を Markdown で指示し、守られないところを hook（`tw handback-guard` など）で止めている。ワークフロースクリプトならループと分岐はコードで、モデルの読み違いが入らない
 - **公式が推す型と一致する。** Anthropic の長時間ハーネスの記事は計画役・生成役・評価役の分離と、懐疑的に調整した単独の評価役を勧めている（[harness-design-long-running-apps](https://www.anthropic.com/engineering/harness-design-long-running-apps)、2026-03-24）。dynamic workflows の記事は敵対的な検証・扇状に分けて統合する型を挙げている（[a-harness-for-every-task](https://claude.com/blog/a-harness-for-every-task-dynamic-workflows-in-claude-code)、2026-06-02）
-- **tsukumo のスキル非依存の決まりと合う。** 台本は `tsukumo-plugins` の plugin の中に置け、tsukumo の core は今までどおり契約だけを見る
+- **tsukumo のスキル非依存の決まりと合う。** ワークフロースクリプトは `tsukumo-plugins` の plugin の中に置け、tsukumo の core は今までどおり契約だけを見る
 
 ### 3.3 後で検討すること: 手順を Beads のデータに寄せる
 
@@ -184,15 +184,15 @@ ADR 0008 が払った「Claude Code 専用になる」代償を取り戻す道�
 
 推す形は、次の4つが通ることを前提にしている。どれも文書に明記が無く、実機で確かめる。
 
-1. **ワークフローの agent の道具呼び出しに、PreToolUse・SubagentStart・SubagentStop の hook が掛かるか。** 掛からなければ `tw commit-guard` と `tw lap-hook` が効かず、関門と計測を台本の外（送り出しの前の検査）へ移す必要がある
+1. **ワークフローの agent の道具呼び出しに、PreToolUse・SubagentStart・SubagentStop の hook が掛かるか。** 掛からなければ `tw commit-guard` と `tw lap-hook` が効かず、関門と計測をワークフロースクリプトの外（送り出しの前の検査）へ移す必要がある
    - 実機の結果は `docs/research/workflow-script-trial.md`（`PreToolUse` の関門は掛かる。`lap-hook` は `agentType` を指した agent で書かれる）
 2. **ワークフローの agent から、tsukumo の SDK の中の MCP（`phase_result`・`speak`）を呼べるか。** 呼べなければ帯はワークフローの完了の知らせでしか進まない。段・agent 単位の進捗のイベントは公開されていない（`agentProgressSummaries` の `task_progress` が `local_workflow` で出るかも未確認）
    - 実機の結果は `docs/research/workflow-script-trial.md`（`ToolSearch` で引けば `phase_result` で帯が動く。`speak` も呼べるが新しい事実が無いと差し戻される。完了通知で委譲ゲートは立たない）
 3. **orca の作業ツリーの中で、保存済みワークフローを読めるか。** `projectConfigRoot`（2.1.275 以降）が workflows を本体のチェックアウトから読む。`isolation: 'worktree'` の分岐元も未確認
    - 実機の結果は `docs/research/workflow-script-trial.md`（分岐元は `origin/main`。名前での呼び出しはこのセッションでは未確認）
 4. **1件あたりのトークンと所要が今と比べてどうか。**
-   - 実機の結果は `docs/research/workflow-script-trial.md`「台本版と今の流れの比べた結果」（2件で所要・トークンは基準線の0.88倍以下、差し戻しは台本版が1回多かった。台本版は検証・送り出しを含まない）
-   - 比べ方を決めた経緯: タスクの再試集（`docs/research/harness-strategy.md`「3.3 ハーネスのタスクの再試評価」）は、`tw claim` からの委譲・受け入れ・振り返りの流れそのものを再試せず `claude -p` を1回起こすだけ（`docs/architecture/testing/harness-replay.md`「再試しないもの」）なので、流れの前後は比べられない。再試集の一時の作業ツリーに台本版を載せるか、近い実タスクを両方の流れで送り出すかを決めてから、台本版と今の流れを同じ種類のタスクで流して比べる（この項の初版は「再試集で同じタスクを両方で流す」と書いていたが誤りで、2026-11-01 に直した）
+   - 実機の結果は `docs/research/workflow-script-trial.md`「ワークフロースクリプト版と今の流れの比べた結果」（2件で所要・トークンは基準線の0.88倍以下、差し戻しはワークフロースクリプト版が1回多かった。ワークフロースクリプト版は検証・送り出しを含まない）
+   - 比べ方を決めた経緯: タスクの再試集（`docs/research/harness-strategy.md`「3.3 ハーネスのタスクの再試評価」）は、`tw claim` からの委譲・受け入れ・振り返りの流れそのものを再試せず `claude -p` を1回起こすだけ（`docs/architecture/testing/harness-replay.md`「再試しないもの」）なので、流れの前後は比べられない。再試集の一時の作業ツリーにワークフロースクリプト版を載せるか、近い実タスクを両方の流れで送り出すかを決めてから、ワークフロースクリプト版と今の流れを同じ種類のタスクで流して比べる（この項の初版は「再試集で同じタスクを両方で流す」と書いていたが誤りで、2026-11-01 に直した）
 
 あわせて、利用者のプランで Workflow が有効か（Pro は既定でオフ）と、SDK では使用量の上限で agent が失敗する点への備え（Beads に残した段の位置から再開できること）を確かめる。
 

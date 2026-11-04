@@ -48,7 +48,7 @@ tsukumo はプログレスバーのフェーズの名前を見ず、欄がある
 **委譲先は `phase_result`（MCP ツール。`docs/architecture/workflow-contract/skill-sequence.md`「スキルの契約」）でフェーズの結果を返し、tsukumo は `SubagentHandback` の本文を読まない。** `SubagentHandback` は委譲ゲートを立て、注記を運ぶだけ。
 書式の正典はこの節と `docs/architecture/workflow-contract/skill-sequence.md`「スキルの契約」で、ワークフローの依頼文はこれを参照し、書式を言い直さない。経緯と採らなかった案は `docs/architecture/adr/0024-no-skill-dependency.md`「2026-10-10 の改訂」と `docs/architecture/adr/0030-workflow-as-skill-sequence.md`。
 
-返却でプログレスバーを動かすのは `phase_result` の `finished`・`skipped` だけで、受け付けた呼び出しの時刻と引数で動く（台本の写しで進む道は下の「プログレスバーの進め方」）。
+返却でプログレスバーを動かすのは `phase_result` の `finished`・`skipped` だけで、受け付けた呼び出しの時刻と引数で動く（ワークフロースクリプトの写しで進む道は下の「プログレスバーの進め方」）。
 `phase_result` を呼ばなかった委譲先（古い plugin、計画だけの回）の返却ではプログレスバーは動かない。
 その返却も委譲ゲートは立ち、注記は返却ごとに「委譲先は `phase_result` で結果を返した。」か「委譲先は `phase_result` を呼ばなかったので、返却ではプログレスバーは動いていない（計画だけの回なら正しい）。」と言う。
 「呼んだか」は委譲先ごとに見る。委譲先のメッセージの `parent_tool_use_id` で `phase_result` の呼び出しと返却を対にし、形の合う呼び出しのあとの最初の返却1件だけが「呼んだ」になる。
@@ -76,9 +76,9 @@ tsukumo はプログレスバーのフェーズの名前を見ず、欄がある
   （1本道なら `current` を1つ進め、並列のフェーズの中なら `finishedInGroup` に足す。並列のフェーズの最後に残ったフェーズなら `current` を進めて空にする）
 - 一足飛び（フェーズ `n` が今のフェーズの集合より先）・もう済んだフェーズ・`stopped`・範囲を宣言していない（`pending` を含む）依頼・`count` が範囲のフェーズの数と違う呼び出しはプログレスバーを動かさない。
   ただし `phases` に段の id を渡したワークプランでは、範囲があり `count` が範囲のフェーズの数と同じ `finished`・`skipped` の一足飛び（飛ばし）ともう済んだフェーズ（戻り）を差し戻す（`count` は確定に使わない）
-- **台本の写し（`task_progress` の `workflow_progress`）の `workflow_agent` の `phaseTitle` が `phases` の段の id に一致すると、その agent の段（一致が複数ならいちばん後ろの段）の要素が今の要素より後ろのときだけ、写しの届いた時刻でその要素を今の要素にし、前のフェーズを済ませる。**
+- **ワークフロースクリプトの写し（`task_progress` の `workflow_progress`）の `workflow_agent` の `phaseTitle` が `phases` の段の id に一致すると、その agent の段（一致が複数ならいちばん後ろの段）の要素が今の要素より後ろのときだけ、写しの届いた時刻でその要素を今の要素にし、前のフェーズを済ませる。**
   `phase_result` を待たず、後の群（受け入れ・振り返り）も完了の知らせを待たずに今のフェーズになる。写しで飛び越えたフェーズに飛ばした印は付けず、直前に済んだフェーズをまとめ待ちにする。
-  写しでは戻さない。段の id の無いワークプランと、題が `phase N` に伏せられた写しでは動かない（契約の全体は `docs/architecture/screen-design/work-strip.md` の「台本（ワークフロースクリプト）の流れでは」の項）
+  写しでは戻さない。段の id の無いワークプランと、題が `phase N` に伏せられた写しでは動かない（契約の全体は `docs/architecture/screen-design/work-strip.md` の「ワークフロースクリプトの流れでは」の項）
 - `phase_result` ではプログレスバーを全部済みにしない。最後のフェーズを閉じるのは今までどおり `report` の `workPlanClosing`
 - **`phase_result` の `finished` は、任意の欄 `summary`（フェーズのまとめを1〜2文）を持てる。** `summary` のある `finished` で済んだフェーズは、その文がプログレスバーの中間レポートに出て、メインが同じ位置を渡す `work_plan` は `phaseSummary` を要らない。
   メインが `phaseSummary` を添えても、そのフェーズの中間レポートに出るのは `summary`（フェーズは既に済んでいて、メインの文では出し直さない）。`summary` を持たない `finished` で済んだフェーズは、メインの `work_plan` に `phaseSummary` が要る。
