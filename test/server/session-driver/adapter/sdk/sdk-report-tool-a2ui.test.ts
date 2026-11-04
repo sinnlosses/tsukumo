@@ -91,6 +91,7 @@ function session() {
         reply,
         drawn: events.find((event): event is ReportCalled => event.kind === "report"),
         rejected: events.find((event) => event.kind === "report-rejected"),
+        counted: events.find((event) => event.kind === "report-counted"),
       }
     },
   }
@@ -124,6 +125,40 @@ describe("a2ui の report の受理と差し戻し", () => {
       reasons: ["tool-error", "a2ui-structure"],
       toolErrorFields: [{ field: "components.n.children.n", code: "nested-section" }],
     })
+  })
+
+  it("違反が辿れない部品だけなら差し戻さず、その部品を除いて判定・描画し、捨てたことを記録に残す", async () => {
+    const live = session()
+
+    const { reply, drawn, rejected, counted } = await live.call([
+      ...VALID,
+      paragraph("orphan", "架空の宙に浮いた本文。"),
+    ])
+
+    expect(reply.isError).toBe(false)
+    expect(rejected).toBeUndefined()
+    expect(live.drafts.at(-1)?.components.map((part) => part.id)).toEqual(["root", "sec", "p"])
+    expect(drawn?.components.map((part) => part.id)).toEqual(["root", "sec", "p"])
+    expect(counted).toMatchObject({ reasons: ["a2ui-unreferenced-dropped"] })
+    expect(JSON.stringify(counted)).not.toContain("orphan")
+  })
+
+  it("辿れない部品にほかの構造の違反が混じれば、全部の違反を挙げて差し戻す", async () => {
+    const live = session()
+
+    const { reply, rejected } = await live.call([
+      ...NESTED,
+      paragraph("orphan", "架空の宙に浮いた本文。"),
+    ])
+
+    expect(reply.isError).toBe(true)
+    expect(rejected).toMatchObject({
+      toolErrorFields: [
+        { field: "components.n.children.n", code: "nested-section" },
+        { field: "components.n", code: "unreferenced-component" },
+      ],
+    })
+    expect(live.drafts).toEqual([])
   })
 
   it("書き手の目録に無い BeforeAfter をツール経由で書くと、入力の検査で差し戻し、描かない", async () => {

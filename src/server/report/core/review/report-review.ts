@@ -53,6 +53,7 @@ import {
   a2uiStructureFaultField,
   type A2uiStructureVerdict,
 } from "../rules/structure.ts"
+import { closingSpeech, countedRecord, withoutDroppedParts } from "./report-drawn-event.ts"
 import { isSameReport } from "./same-report.ts"
 import { toolErrorFieldsOf } from "./tool-error-field.ts"
 import type { TurnRejection } from "./turn-rejection.ts"
@@ -69,6 +70,9 @@ export const A2UI_STRUCTURE_REJECTION_REASONS = [
   REPORT_TOOL_ERROR_REASON,
   "a2ui-structure",
 ] as const
+
+/** 辿れない部品だけが違反の呼び出しを、部品を捨てて通したときに、通した呼び出しの記録（`report-counted`）へ残す名前。 */
+const UNREFERENCED_DROPPED_REASON = "a2ui-unreferenced-dropped"
 
 /**
  * handler の判定。`rejected` の `text` はそのまま `report` の戻り値になる。
@@ -95,6 +99,11 @@ export type ReportReview = {
   readonly judge: (report: ReportDraft) => ReportVerdict
   /** `a2ui` の版の handler から、構造の規約の違反があるときだけ `judge` より先に呼ぶ。枠は1ターンに1回。 */
   readonly judgeStructure: (faults: readonly A2uiStructureFault[]) => A2uiStructureVerdict
+  /**
+   * `a2ui` の版の handler から、違反が辿れない部品だけだったときに、捨てて通した部品の ID で呼ぶ（枠は使わない）。
+   * 同じ呼び出しの `pass` が、描く `report` の `components` からその部品を除き、記録（`report-counted`）に {@link UNREFERENCED_DROPPED_REASON} を残す。
+   */
+  readonly noteDroppedParts: (ids: readonly string[]) => void
   /** このターンで「新しい事実が無い」差し戻しをしたか。ターンの頭（`session-info`）で戻る。 */
   readonly nothingNewRejected: () => boolean
   /**
@@ -138,6 +147,8 @@ export function createReportReview(
   let handlerToolErrorFields: readonly ToolErrorField[] = []
   // handler が直前に通した呼び出しが当てはまった、段 `count` の条。同じ呼び出しの `tool-finished` で使い切る。
   let handlerCounted: readonly ReportRejectionReason[] = []
+  // handler が直前に捨てて通した、辿れない部品の ID。同じ呼び出しの `tool-finished` で使い切る。
+  let handlerDroppedIds: readonly string[] = []
   // このターンで出した（描いた）`report`。送り直しの判定にだけ使う。
   let drawn: readonly ReportEvent[] = []
   // 補足メッセージ（`aside`）で始まったターンか。ターンの頭の `session-info` は補足メッセージのターンの頭にも届くので、そこでは戻さない。
@@ -283,6 +294,9 @@ export function createReportReview(
       handlerCounted = []
       return { kind: "rejected", text: a2uiValidationFailedText(faults) }
     },
+    noteDroppedParts: (ids) => {
+      handlerDroppedIds = ids
+    },
     nothingNewRejected: () => rejectedInTurn.has("nothing-new"),
     pass: (event) => {
       switch (event.kind) {
@@ -303,14 +317,20 @@ export function createReportReview(
             return [event]
           }
           held = held.filter((candidate) => candidate !== report)
-          const counted = handlerCounted
+          const dropped = handlerDroppedIds
+          handlerDroppedIds = []
+          const counted: readonly string[] = [
+            ...handlerCounted,
+            ...(dropped.length === 0 ? [] : [UNREFERENCED_DROPPED_REASON]),
+          ]
           handlerCounted = []
           if (event.isError) {
             return [event, rejectionOf(report.argumentChars, report.inheritedFields, event.content)]
           }
-          drawn = [...drawn, report]
+          const kept = withoutDroppedParts(report, dropped)
+          drawn = [...drawn, kept]
           news.markDrawn()
-          return [report, event, ...closingSpeech(report), ...countedRecord(report, counted)]
+          return [kept, event, ...closingSpeech(kept), ...countedRecord(kept, counted)]
         }
         case "request":
         case "turn-started":
@@ -344,26 +364,4 @@ export function createReportReview(
 
 function hasNgCheck(report: ReportDraft): boolean {
   return report.checks.some((check) => check.status === "ng")
-}
-
-/** 描いた `report` が段 `count` の条に当てはまっていたときの記録。当てはまらなければ何も出さない。 */
-function countedRecord(
-  report: ReportEvent,
-  reasons: readonly ReportRejectionReason[],
-): readonly SessionEvent[] {
-  return reasons.length === 0
-    ? []
-    : [
-        {
-          kind: "report-counted",
-          reasons,
-          argumentChars: report.argumentChars,
-          inheritedFields: report.inheritedFields,
-        },
-      ]
-}
-
-/** 描いた `report` の締めのセリフ。`closing` を持たなかったころの呼び出しには無い。 */
-function closingSpeech(report: ReportEvent): readonly SessionEvent[] {
-  return report.closing.kind === "speech" ? [report.closing] : []
 }

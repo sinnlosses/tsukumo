@@ -35,6 +35,8 @@ export type CallReview = {
   readonly judgeReport: (report: ReportDraft) => ReportVerdict
   /** `report` の `a2ui` の版の handler から、構造の規約の違反があるときだけ `judgeReport` より先に呼ぶ（`ReportReview.judgeStructure`）。 */
   readonly judgeReportStructure: (faults: readonly A2uiStructureFault[]) => A2uiStructureVerdict
+  /** `report` の `a2ui` の版の handler から、辿れない部品だけが違反で、その部品を捨てて通すときに呼ぶ（`ReportReview.noteDroppedParts`）。 */
+  readonly noteDroppedParts: (ids: readonly string[]) => void
   /**
    * `report` の handler から、届いた引数を `report` のイベントの形にしたもので呼ぶ。
    * `pass` が描く値を組むのと同じ土台で埋める（`ReportInheritance.fill`）。
@@ -120,6 +122,7 @@ export function createCallReview(): CallReview {
     },
     judgeReport: reportReview.judge,
     judgeReportStructure: reportReview.judgeStructure,
+    noteDroppedParts: reportReview.noteDroppedParts,
     fillReport: reportInheritance.fill,
     judgePhaseMention: (phase) => judgePhaseMention(workPlanReview.delegatedRange(), phase),
     judgeWorkPlan: workPlanReview.judge,

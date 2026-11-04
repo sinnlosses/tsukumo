@@ -31,7 +31,7 @@ import {
 } from "../../../report/core/prompt/report-tool.ts"
 import { hasReportField } from "../../../report/core/review/report-inheritance.ts"
 import { REPORT_CHANGED_FIELDS_ONLY_TEXT } from "../../../report/core/rules/procedure-rejection.ts"
-import { a2uiStructureFaults } from "../../../report/core/rules/structure.ts"
+import { a2uiStructureFaults, unreferencedOnlyIds } from "../../../report/core/rules/structure.ts"
 import type { CallReview } from "../../core/call-review.ts"
 import { reportEvents } from "../../core/message/sdk-report-message.ts"
 import { speechShape } from "./sdk-speech-tool.ts"
@@ -114,6 +114,14 @@ export function reportTool(
     a2uiInputShape(expressions, figurePreference),
     async (input) => {
       const faults = a2uiStructureFaults(input.components)
+      const dropped = unreferencedOnlyIds(input.components, faults)
+      if (dropped.length > 0) {
+        review.noteDroppedParts(dropped)
+        return answer({
+          ...input,
+          components: input.components.filter((part) => !dropped.includes(part.id)),
+        })
+      }
       const structure =
         faults.length === 0 ? { kind: "accepted" as const } : review.judgeReportStructure(faults)
       return structure.kind === "rejected"

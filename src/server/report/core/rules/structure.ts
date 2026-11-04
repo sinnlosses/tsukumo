@@ -144,6 +144,23 @@ export function a2uiStructureFaults(components: readonly unknown[]): readonly A2
   return faults
 }
 
+/**
+ * 違反が `unreferenced-component` だけのとき、その部品の ID を返す。違反が無いか、ほかの違反が混じるときは空。
+ * 辿れない部品は描かれないので、通すときはこの ID の部品を捨てる。
+ */
+export function unreferencedOnlyIds(
+  components: readonly unknown[],
+  faults: readonly A2uiStructureFault[],
+): readonly string[] {
+  if (faults.length === 0 || faults.some((fault) => fault.kind !== "unreferenced-component")) {
+    return []
+  }
+  return faults.flatMap((fault) => {
+    const id = partOf(components[Number(fault.pointer.split("/")[2])]).id
+    return id === undefined ? [] : [id]
+  })
+}
+
 const A2UI_VERSION = "v0.9"
 
 const A2UI_REPORT_SURFACE_ID = "report"

@@ -17,7 +17,7 @@ import { REPORT_SCHEMA_VARIANTS } from "../../../core/schema-variant.ts"
  * 欄を足したら版を上げ、集計は `MIN_FORMAT_VERSION` より古い行を読まない。
  * 集計は版で分母を切らず、欄を記録した行を分母にする。
  */
-export const REPORT_USAGE_FORMAT_VERSION = 25 satisfies number
+export const REPORT_USAGE_FORMAT_VERSION = 26 satisfies number
 
 /** どの駆動で起こしたプロセスの行か（版19から）。`fake` は疑似セッションで、集計は既定で除く。 */
 const reportUsageDriverSchema = z.enum(["sdk", "fake"])
@@ -197,6 +197,7 @@ export type ReportUsageRecord = z.infer<typeof reportUsageRecordSchema>
  * 差し戻した `report` 1回の記録の行。受け付けの行と同じファイルに入り、`kind` の有無で見分ける（受け付けの行に `kind` は無い）。
  * 書いてよいのは時刻・セッションID・差し戻しの種類の名前・引数の字数・引き継いだ欄の名前・型の渡し方だけ。
  * `kind` が `counted` の行は、通した `report` が当たった数えるだけの条の名前を同じ形で持つ（版21から）。差し戻しの集計に混ぜない。
+ * 辿れない部品だけが違反で、その部品を捨てて通した `report` の `counted` の行は、`reasons` に `a2ui-unreferenced-dropped` を持つ（版26から。部品の中身・`id` は持たない）。
  * `nextCall` は `rejected` の行だけが持ち、次の呼び出しの結果。次が来ないまま記録を閉じたときは持たない（版22から）。
  */
 export const reportRejectionRecordSchema = z
