@@ -9,7 +9,7 @@ import { foldInlineMarks } from "../../../../../../shared/report/inline-mark.ts"
 import type { LeafValue } from "../../../../../../shared/report/report-leaf-value.ts"
 import { PAUSE_POINT_CLASS_NAME } from "../../domain/report-pause-point.ts"
 import {
-  BeforeAfterSwap,
+  CompareSwap,
   figureClassName,
   InlineCodeText,
   InlineMarkdown,
@@ -45,7 +45,7 @@ export function ReportLeafFrame(props: ReportLeafFrameProps): ReactElement {
 /**
  * 題の包みごと `details` で畳む枠（図の内容部品・表の葉。畳みの外に欄外注の列が付く）。
  * `fold` が空なら畳まない。
- * `swap` が設定なら題の包みを、並べる・切り替えの口を持つ `BeforeAfterSwap` にする（両側が画像の見比べの部品）。
+ * `swap` が設定なら題の包みを、並べる・切り替えの口を持つ `CompareSwap` にする（両側が画像の見比べの部品）。
  */
 export function FoldedLeafFrame(
   props: ReportLeafFrameProps & { readonly fold: string; readonly swap: false | SwapSettings },
@@ -62,7 +62,7 @@ export function FoldedLeafFrame(
     leafFrameClassNames.captioned,
     props.fit && leafFrameClassNames.captionedFit,
     captionNumber.kind === "table" && leafFrameClassNames.captionedTable,
-    props.swap !== false && figureClassName("before-after-swap"),
+    props.swap !== false && figureClassName("compare-swap"),
   )
   const captioned = (
     <LeafFold fold={props.fold} empty={false}>
@@ -136,9 +136,9 @@ function CaptionedBox(props: {
   readonly children: ReactNode
 }): ReactElement {
   return props.swap !== false ? (
-    <BeforeAfterSwap className={props.className} settings={props.swap}>
+    <CompareSwap className={props.className} settings={props.swap}>
       {props.children}
-    </BeforeAfterSwap>
+    </CompareSwap>
   ) : (
     <div className={props.className}>{props.children}</div>
   )

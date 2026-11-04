@@ -88,13 +88,18 @@ export function outlineLeafBlock(leaf: ReportOutlineLeaf): ReportBlock | undefin
   ])[0]
 }
 
-/** 葉の塊の `kind`。前後（`before-after`）の `Compare` は、写す前と同じに `beforeAfter` と数える。 */
+/** `Compare` の側。ほかの葉は空。 */
+export function comparisonSidesOf(
+  leaf: ReportOutlineLeaf,
+): Extract<ReportOutlineLeaf, { readonly component: "Compare" }>["sides"] {
+  return leaf.component === "Compare" ? leaf.sides : []
+}
+
+/** 葉の塊の `kind`。 */
 export function outlineLeafKind(
   leaf: ReportOutlineLeaf,
 ): (typeof LEAF_COMPONENT_KINDS)[keyof typeof LEAF_COMPONENT_KINDS] {
-  return leaf.component === "Compare" && leaf.relation === "before-after"
-    ? LEAF_COMPONENT_KINDS.BeforeAfter
-    : LEAF_COMPONENT_KINDS[leaf.component]
+  return LEAF_COMPONENT_KINDS[leaf.component]
 }
 
 export function sectionLeaves(outline: ReportOutline): readonly ReportOutlineLeaf[] {

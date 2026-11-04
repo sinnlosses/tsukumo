@@ -4,7 +4,6 @@
 import { isPlainObject } from "remeda"
 
 import type { LEAF_COMPONENT_KINDS } from "../../../../shared/report/a2ui-report-catalog.ts"
-import { comparisonSidesOf } from "../../../../shared/report/before-after-compare.ts"
 import { readGraphSource } from "../../../../shared/report/graph-source.ts"
 import type {
   ReportArgumentChars,
@@ -13,6 +12,7 @@ import type {
 import { tableRowCells } from "../../../../shared/report/report-block-comparison.ts"
 import type { ReportCheck } from "../../../../shared/report/report-check.ts"
 import {
+  comparisonSidesOf,
   drawnLeaves,
   outlineLeafKind,
   type ReportOutlineLeaf,
@@ -97,11 +97,11 @@ export type ReportUsageEntry = ReportVerifyUsage &
     readonly mermaidKinds: readonly string[]
     /** 常に false。旧い記録との互換のために欄を残す。 */
     readonly hasModifiedFiles: boolean
-    /** `beforeAfter` か `image` の塊が1つでもあるか（`figure` を含む）。 */
-    readonly hasBeforeAfterOrImage: boolean
-    /** 段1の図（`image`・`mermaid`・`graph`・`svg`。`beforeAfter` の側と `figure` を含む）が1つでもあるか。 */
+    /** `compare` か `image` の塊が1つでもあるか（`figure` を含む）。 */
+    readonly hasComparisonOrImage: boolean
+    /** 段1の図（`image`・`mermaid`・`graph`・`svg`。`compare` の側と `figure` を含む）が1つでもあるか。 */
     readonly hasFigure: boolean
-    /** このターンにメインが画像のファイルを `Read` したのに `image` の塊（`beforeAfter` の側と `figure` を含む）が無いか。 */
+    /** このターンにメインが画像のファイルを `Read` したのに `image` の塊（`compare` の側と `figure` を含む）が無いか。 */
     readonly readImageWithoutImageBlock: boolean
     /** `text` の塊の本文・`list` の項目の text・表のセルに出た強調の対の数の合計。インラインコードの中は数えない。 */
     readonly emphasisCount: number
@@ -140,7 +140,7 @@ const IMAGE_FILE_EXTENSIONS: readonly string[] = [".png", ".jpg", ".jpeg", ".gif
  * - imageNotes: `image` の `notes`
  * - codeMarks: `code` の `marks`
  * - blockAside: 塊の `aside`
- * - beforeAfterRegion: 見比べの部品（`compare`・`beforeAfter`）の画像の側の `region`
+ * - compareRegion: 見比べの部品（`compare`）の画像の側の `region`
  */
 export const REPORT_BLOCK_FIELDS = [
   "tableChange",
@@ -154,7 +154,7 @@ export const REPORT_BLOCK_FIELDS = [
   "imageNotes",
   "codeMarks",
   "blockAside",
-  "beforeAfterRegion",
+  "compareRegion",
 ] as const satisfies readonly string[]
 
 export type ReportBlockField = (typeof REPORT_BLOCK_FIELDS)[number]
@@ -247,7 +247,7 @@ export function reportUsageEntryOf(
     notations: notationsInSections(outline),
     containedNotations: containedNotationsInSections(outline),
     escapeNotations: escapeNotationsInSections(outline),
-    componentNames: [...new Set(event.components.map(recordedComponentName))],
+    componentNames: [...new Set(event.components.map((part) => part.component))],
     markdownNotationKinds: notationKindsInMarkdowns(
       event.components.flatMap((part) => (part.component === "Markdown" ? [part.markdown] : [])),
     ),
@@ -258,8 +258,8 @@ export function reportUsageEntryOf(
     ],
     mermaidKinds: [...new Set(mermaidSourcesOfLeaves(drawn).map(mermaidKind))],
     hasModifiedFiles: false,
-    hasBeforeAfterOrImage: drawn.some(
-      (leaf) => kindOf(leaf) === "beforeAfter" || leaf.component === "Picture",
+    hasComparisonOrImage: drawn.some(
+      (leaf) => leaf.component === "Compare" || leaf.component === "Picture",
     ),
     hasFigure: drawn.some(
       (leaf) =>
@@ -416,15 +416,6 @@ function kindOf(leaf: ReportOutlineLeaf): ReportLeafKind {
   return outlineLeafKind(leaf)
 }
 
-/** 部品名。前後の `Compare` は、写す前と同じに `BeforeAfter` と数える。 */
-function recordedComponentName(
-  part: Extract<SessionEvent, { readonly kind: "report" }>["components"][number],
-): ReportComponentName {
-  return part.component === "Compare" && part.relation === "before-after"
-    ? "BeforeAfter"
-    : part.component
-}
-
 function kindsOf(leaves: readonly ReportOutlineLeaf[]): readonly ReportLeafKind[] {
   return [...new Set(leaves.map(kindOf))]
 }
@@ -458,7 +449,7 @@ function hasField(leaf: ReportOutlineLeaf, field: ReportBlockField): boolean {
       return leaf.component === "Code" && leaf.marks.length > 0
     case "blockAside":
       return leaf.aside.trim() !== ""
-    case "beforeAfterRegion":
+    case "compareRegion":
       return comparisonSidesOf(leaf).some(
         (side) => side.kind === "image" && side.region !== undefined,
       )

@@ -22,9 +22,12 @@ const SHELVED: ReportImageSource = {
   unshelved: ["/tmp/置けない.png"],
 }
 
-type Block = Extract<ReportBlock, { readonly kind: "beforeAfter" }>
 type ComparePart = Extract<A2uiReportComponent, { readonly component: "Compare" }>
-type Side = Extract<A2uiReportComponent, { readonly component: "BeforeAfter" }>["before"]
+type Side = ComparePart["sides"][number] extends infer Each
+  ? Each extends unknown
+    ? Omit<Each, "heading">
+    : never
+  : never
 
 const IMAGE_BEFORE: Side = { kind: "image", path: "/tmp/前.png" }
 const IMAGE_AFTER: Side = {
@@ -35,14 +38,23 @@ const IMAGE_AFTER: Side = {
 const CODE: Side = { kind: "code", language: "ts", source: "const a = 1\n" }
 
 function pair(before: Side, after: Side) {
-  const fields = { title: "架空の前後", before, after }
-  return {
-    block: { kind: "beforeAfter", ...fields, fold: "", aside: "" } satisfies Block,
-    part: { id: "b1", component: "BeforeAfter", ...fields, fold: "", aside: "" } as const,
+  const part: ComparePart = {
+    id: "b1",
+    component: "Compare",
+    title: "架空の前後",
+    relation: "before-after",
+    sides: [
+      { heading: "", ...before },
+      { heading: "", ...after },
+    ],
+    fold: "",
+    aside: "",
   }
+  const { id: _id, component: _component, ...fields } = part
+  return { block: { kind: "compare", ...fields } satisfies ReportBlock, part }
 }
 
-describe("BeforeAfter の部品", () => {
+describe("Compare の before-after", () => {
   it("両側が画像のときだけ、見せ方を選ぶ口を持つ", () => {
     const both = pair(IMAGE_BEFORE, IMAGE_AFTER)
     const mixed = pair(IMAGE_BEFORE, CODE)
@@ -57,24 +69,6 @@ describe("BeforeAfter の部品", () => {
 
     expect(fresh).toContain('alt="前の画面: 架空の前後"')
     expect(fresh).toContain('alt="後の画面: 架空の前後"')
-  })
-
-  it("Compare の before-after と同じ DOM に描く", () => {
-    const { block, part } = pair(IMAGE_BEFORE, CODE)
-    const compare: ComparePart = {
-      id: "b1",
-      component: "Compare",
-      title: "架空の前後",
-      relation: "before-after",
-      sides: [
-        { heading: "", ...IMAGE_BEFORE },
-        { heading: "", ...CODE },
-      ],
-      fold: "",
-      aside: "",
-    }
-
-    expect(newLeafHtml(block, compare, SHELVED)).toBe(newLeafHtml(block, part, SHELVED))
   })
 })
 

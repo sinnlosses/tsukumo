@@ -24,7 +24,7 @@ export const CAPTIONED_MERMAID_SELECTOR = `${CAPTIONED_SELECTOR} pre.mermaid`
 export const CAPTIONED_FIGURE_SELECTOR = `${CAPTIONED_MERMAID_SELECTOR} svg`
 export const IMAGE_NOTES_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-image-notes_"]`
 /** 前後の部品（`report-before-after` 場面の先頭は画像の前後）と、その中の最初のコード・箇条。 */
-export const BEFORE_AFTER_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-before-after_"]`
+export const BEFORE_AFTER_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-compare-figure_"]`
 export const BEFORE_AFTER_CODE_SELECTOR = `${BEFORE_AFTER_SELECTOR} pre`
 export const BEFORE_AFTER_POINTS_SELECTOR = `${BEFORE_AFTER_SELECTOR} ul`
 

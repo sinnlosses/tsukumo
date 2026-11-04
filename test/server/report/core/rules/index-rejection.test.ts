@@ -207,7 +207,7 @@ describe("reportRejectionText", () => {
       expect(kinds(draft([svg([line], [{ tone: "c", label: "層" }])]))).toEqual([])
     })
 
-    it("beforeAfter の svg の側も数える", () => {
+    it("前後の Compare の svg の側も数える", () => {
       const side = {
         kind: "svg",
         width: 10,
@@ -216,7 +216,17 @@ describe("reportRejectionText", () => {
         legend: [],
       } as const
       const report = draft([
-        { kind: "beforeAfter", title: "", before: side, after: side, fold: "", aside: "" },
+        {
+          kind: "compare",
+          title: "",
+          relation: "before-after",
+          sides: [
+            { heading: "", ...side },
+            { heading: "", ...side },
+          ],
+          fold: "",
+          aside: "",
+        },
       ])
       expect(kinds(report)).toEqual(["broken-svg"])
     })
@@ -317,7 +327,7 @@ describe("reportRejectionText", () => {
       expect(violations).toEqual([{ kind: "figure-contradiction", count: 2, reason: "no-shape" }])
       const rejection = reportRejectionText(violations)
       expect(violationLines(rejection)).toEqual([
-        "- `figure` の reason が `no-shape` なのに、`Section` に流れ・つながり・構造を描く部品（`ItemList` の `flow`・`Compare` の `before-after`・`BeforeAfter`・`Graph`・`Mermaid`・`Svg`）が2個ある。その図を `figure` に置くか、合う reason にする",
+        "- `figure` の reason が `no-shape` なのに、`Section` に流れ・つながり・構造を描く部品（`ItemList` の `flow`・`Compare` の `before-after`・`Graph`・`Mermaid`・`Svg`）が2個ある。その図を `figure` に置くか、合う reason にする",
       ])
     })
 

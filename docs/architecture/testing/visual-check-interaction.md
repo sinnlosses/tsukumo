@@ -74,7 +74,7 @@ tsukumo を空きポートで自分で起こし、配信 URL を待って撮り�
 差し戻しの画は `--until-step 5 --wait-for 'text=流れを図にして出すね'`（本文に図が無く、吹き出しに直して出し直す一言が出る）、
 描画の画は `--until-step 8 --wait-for '[class*="is-final_"]'`（図が描かれる）。
 広いビューポートでは吹き出しが1字ずつ出るので、最後の吹き出しの文では待たず、先に出る吹き出しの文を待つ。
-**`svg` の部品（単独と `beforeAfter` の側）の描画は、場面 `report-svg`**（`--until-step 99 --wait-for '[class*="is-final_"]'`。`beforeAfter` は `--scroll-to '[class*="before-after_"]'`）。
+**`svg` の部品（単独と前後の `compare` の側）の描画は、場面 `report-svg`**（`--until-step 99 --wait-for '[class*="is-final_"]'`。前後の `compare` は `--scroll-to '[class*="compare-figure_"]'`）。
 **`graph` の色の目印（` @a`〜` @e`）・点線のエッジ（`-.>`）・`legend` の描画は、場面 `report-graph-tone`**（`--until-step 99 --wait-for '[class*="is-final_"]'`。群の枠・ノードの枠・エッジの色と凡例の色見本が合っているかを見る）。
 **ノードの多い `graph`（12 ノード・囲み 3 つの LR）の幅の段と TD への差し替えは、場面 `report-graph-wide`**（`--until-step 99 --wait-for '[class*="is-final_"]'`。`--paper-metric` で図の文字の最小 px を数える）。
 **入れ子の囲み（2 階層）と複数行の箱を持つ `graph` は場面 `report-graph-nested`、箱に件数を書いた LR の状態の流れ（戻りのエッジは点線）が横 1 行に収まるかは場面 `report-graph-states`**（どちらも `--until-step 99 --wait-for '[class*="is-final_"]'`。`--paper-metric` で図の文字の最小 px を数える）。

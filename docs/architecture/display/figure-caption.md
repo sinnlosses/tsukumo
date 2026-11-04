@@ -5,7 +5,7 @@
 - **寸法は専用の部品を持たない**（`dimension`〔寸法図〕の部品は直近 28 日で使われた記録が 0 回で外した。寸法は `table` か、
   位置・重なりなら `svg` で書く。旧い記録の `dimension` は読み戻しで知らない種類の部品として落とす）
 - **手で確かめた画面は `image` の部品で画像として見せる**（`path`〔撮ったファイル。絶対か cwd からの
-  相対〕・`caption`〔何が見えるかの1行〕を受け、1つの部品に1枚）。**前後は `compare` の `relation: before-after` で左右に並べる**（旧い `beforeAfter` は読み戻しで写す。`docs/architecture/adr/0047-compare-relation.md`）。
+  相対〕・`caption`〔何が見えるかの1行〕を受け、1つの部品に1枚）。**前後は `compare` の `relation: before-after` で左右に並べる**（旧い `beforeAfter` は受け口で書き換えて読む。`docs/architecture/adr/0047-compare-relation.md`）。
   **`checks` の行とは結ばない**（何を確かめた画像かは `caption` に書く）。
   画像は描いた `report` を受けた時点でサーバが1回読んでメモリの置き場に置き（復元のあとの読み直しは「画像を描く条件」）、
   鍵は `report` の呼び出しの id と部品に書かれたままのパスの組。ブラウザは `/report-image/<toolUseId>/<path>`（起動トークン付き）で

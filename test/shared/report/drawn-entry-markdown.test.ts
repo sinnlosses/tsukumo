@@ -88,13 +88,16 @@ const ROWS: readonly (readonly [string, readonly ReportBlock[], readonly DrawnEn
     ],
     ["image", [{ kind: "image", path: "架空.png", caption: "", notes: [], ...PLAIN }], ["drawn"]],
     [
-      "image の beforeAfter",
+      "image の前後の compare",
       [
         {
-          kind: "beforeAfter",
+          kind: "compare",
           title: "",
-          before: { kind: "image", path: "架空.png" },
-          after: { kind: "points", points: ["架空"] },
+          relation: "before-after",
+          sides: [
+            { heading: "", kind: "image", path: "架空.png" },
+            { heading: "", kind: "points", points: ["架空"] },
+          ],
           ...PLAIN,
         },
       ],

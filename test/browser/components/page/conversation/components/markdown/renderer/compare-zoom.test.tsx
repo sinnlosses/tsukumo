@@ -2,9 +2,9 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import {
-  BeforeAfterZoom,
-  type BeforeAfterZoomImage,
-} from "../../../../../../../../src/browser/components/page/conversation/components/markdown/renderer/before-after-zoom.tsx"
+  CompareZoom,
+  type CompareZoomImage,
+} from "../../../../../../../../src/browser/components/page/conversation/components/markdown/renderer/compare-zoom.tsx"
 
 afterEach(() => {
   cleanup()
@@ -13,7 +13,7 @@ afterEach(() => {
 const BOTH = [
   { side: "before", src: "/架空/before.png", alt: "前の画面", region: undefined },
   { side: "after", src: "/架空/after.png", alt: "後の画面", region: undefined },
-] as const satisfies readonly BeforeAfterZoomImage[]
+] as const satisfies readonly CompareZoomImage[]
 
 const CAPTION = { number: "図 1", text: "架空の配置の前後" }
 
@@ -21,14 +21,14 @@ const BEFORE_AFTER_LABELS = { before: "前", after: "後" } as const
 
 function renderZoom(
   overrides: {
-    readonly images?: readonly BeforeAfterZoomImage[]
+    readonly images?: readonly CompareZoomImage[]
     readonly start?: "before" | "after"
     readonly caption?: { readonly number: string; readonly text: string }
     readonly onClose?: () => void
   } = {},
 ): void {
   render(
-    <BeforeAfterZoom
+    <CompareZoom
       images={overrides.images ?? BOTH}
       start={overrides.start ?? "after"}
       labels={BEFORE_AFTER_LABELS}
@@ -46,7 +46,7 @@ function shownSrc(): string | null {
   return document.querySelector("dialog img")?.getAttribute("src") ?? null
 }
 
-describe("BeforeAfterZoom", () => {
+describe("CompareZoom", () => {
   it("前／後の2つ組・案内・×・キャプションを出し、始めの側を選んでいる", () => {
     renderZoom()
 
@@ -103,7 +103,7 @@ describe("BeforeAfterZoom", () => {
     const { container } = render(
       <div className="detail-block">
         <div className="report-captioned">
-          <BeforeAfterZoom
+          <CompareZoom
             images={BOTH}
             start="after"
             labels={BEFORE_AFTER_LABELS}

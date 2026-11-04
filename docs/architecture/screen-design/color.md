@@ -216,11 +216,11 @@
 縦の線は 1px の `rule-soft` 単色で、丸の下端から次の丸の上端まで。本文は 14px・行間 1.95、段の間は `--space-xl`、左の列は 22px・本文との間は `--space-lg`（狭い幅でもこの形のまま、本文だけが折り返す）。
 画像を出せないカードは高さ 168px・角丸 14px。
 横の列（`flow-row`）の箱は角丸 `radius-md`（8px）・枠 1px（`--report-chunk-rule`、無ければ `rule-soft`）・地 `--surface-raised` で、色は付けない。番号は等幅 12px で箱の中に置き、矢印の字は `report-sequence-ink`。
-レポートの `image` の画像は押すと拡大して見られる（`ImageZoom`、`size="width"`。原寸を上限に面の幅へ合わせ、縦に長ければ面が縦に流れる。カードには入口を付けない）。前後の部品の中の画像は別の面（`BeforeAfterZoom`）で開き、前／後の2つ組は選んだ側を `accent` の枠と `accent` の薄い地、もう一方を `rule` の枠で描く。暗幕は `Dialog` の `deep`。
+レポートの `image` の画像は押すと拡大して見られる（`ImageZoom`、`size="width"`。原寸を上限に面の幅へ合わせ、縦に長ければ面が縦に流れる。カードには入口を付けない）。前後の部品の中の画像は別の面（`CompareZoom`）で開き、前／後の2つ組は選んだ側を `accent` の枠と `accent` の薄い地、もう一方を `rule` の枠で描く。暗幕は `Dialog` の `deep`。
 
 `report-sequence-ink` は `--accent` を `ground` へ少し沈めた値。
 出どころ・分岐のある流れ（`flow-detailed`）は、段を箱で囲まず平らに置く。出どころの行は等幅（`--font-code`）の `--font-label`・`ink-quiet`、分岐は判定の記号のバッジ（地は判定の色の 13%、`Badge` と同じ割合。ok＝✓・warn＝〜・ng＝✕・色の無い分岐＝→）に、`ink-soft` の語を添える。記号は飾りで、読み上げには出さない。
-`cards`・`Compare`・`BeforeAfter` の枠は 1px の `--report-chunk-rule`（無ければ `rule-soft`）・角 `radius-md`（8px）で、前後のラベルは `--font-label`・600・`ink-quiet`。`Picture` の注の番号の丸は枠も字も `ink-soft`。
+`cards`・`Compare` の枠は 1px の `--report-chunk-rule`（無ければ `rule-soft`）・角 `radius-md`（8px）で、前後のラベルは `--font-label`・600・`ink-quiet`。`Picture` の注の番号の丸は枠も字も `ink-soft`。
 
 **レポートの見出しの線は `rule-quiet` で、キャラクターの色を持たない。** 文字は `ink-bright`・地は `surface` / `surface-raised`・
 図表の番号（「図 n」「表 n」）の字は `ink-quiet` で、読む面は中立のまま（13.1 原則1）:

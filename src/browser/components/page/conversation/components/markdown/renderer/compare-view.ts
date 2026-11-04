@@ -6,15 +6,15 @@ import { z } from "zod"
 
 import { localPreference, RAW_STRING_CODEC } from "../../../../../../utils/local-preference.ts"
 
-export type BeforeAfterView = "side" | "switch" | "overlay"
+export type CompareView = "side" | "switch" | "overlay"
 
 const preference = localPreference(
-  "tsukumo-before-after-view:v1",
+  "tsukumo-compare-view:v1",
   z.enum(["side", "switch", "overlay"]),
   "side",
   RAW_STRING_CODEC,
 )
 
-export const loadBeforeAfterView: () => BeforeAfterView = preference.load
+export const loadCompareView: () => CompareView = preference.load
 
-export const saveBeforeAfterView: (view: BeforeAfterView) => void = preference.save
+export const saveCompareView: (view: CompareView) => void = preference.save

@@ -1,41 +1,41 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import {
-  loadBeforeAfterView,
-  saveBeforeAfterView,
-} from "../../../../../../../../src/browser/components/page/conversation/components/markdown/renderer/before-after-view.ts"
+  loadCompareView,
+  saveCompareView,
+} from "../../../../../../../../src/browser/components/page/conversation/components/markdown/renderer/compare-view.ts"
 
-const STORAGE_KEY = "tsukumo-before-after-view:v1"
+const STORAGE_KEY = "tsukumo-compare-view:v1"
 
 afterEach(() => {
   vi.restoreAllMocks()
   localStorage.removeItem(STORAGE_KEY)
 })
 
-describe("loadBeforeAfterView", () => {
+describe("loadCompareView", () => {
   it("何も保存していなければ並べるを返す", () => {
-    expect(loadBeforeAfterView()).toBe("side")
+    expect(loadCompareView()).toBe("side")
   })
 
   it("保存した見せ方を読み戻す", () => {
-    saveBeforeAfterView("switch")
-    expect(loadBeforeAfterView()).toBe("switch")
-    saveBeforeAfterView("overlay")
-    expect(loadBeforeAfterView()).toBe("overlay")
-    saveBeforeAfterView("side")
-    expect(loadBeforeAfterView()).toBe("side")
+    saveCompareView("switch")
+    expect(loadCompareView()).toBe("switch")
+    saveCompareView("overlay")
+    expect(loadCompareView()).toBe("overlay")
+    saveCompareView("side")
+    expect(loadCompareView()).toBe("side")
   })
 
   it("知らない値は並べるへ畳む", () => {
     localStorage.setItem(STORAGE_KEY, "stacked")
-    expect(loadBeforeAfterView()).toBe("side")
+    expect(loadCompareView()).toBe("side")
   })
 
   it("読み出しが投げても並べるを返す", () => {
     vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
       throw new Error("読めない")
     })
-    expect(loadBeforeAfterView()).toBe("side")
+    expect(loadCompareView()).toBe("side")
   })
 
   it("書き込みが投げても例外を出さない", () => {
@@ -43,7 +43,7 @@ describe("loadBeforeAfterView", () => {
       throw new Error("書けない")
     })
     expect(() => {
-      saveBeforeAfterView("switch")
+      saveCompareView("switch")
     }).not.toThrow()
   })
 })

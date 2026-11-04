@@ -3,7 +3,7 @@
 import { isPlainObject } from "remeda"
 import { z } from "zod"
 
-import { beforeAfterSideSchema } from "./report-block-diagram.ts"
+import { compareSideSchema } from "./report-block-diagram.ts"
 import { aside, type DeepReadonly, fold, inlineText, omittable } from "./report-block-field.ts"
 
 export const REPORT_CELL_STATUSES = ["ok", "warn", "ng"] as const
@@ -122,9 +122,9 @@ export const matrixBlockSchema = z
 const COMPARE_RELATIONS = ["versus", "before-after"] as const
 
 // kind の無い側（旧い形）は points として読む
-const compareSideSchema = z.preprocess(
+const headedCompareSideSchema = z.preprocess(
   (side) => (isPlainObject(side) && side.kind === undefined ? { ...side, kind: "points" } : side),
-  beforeAfterSideSchema.and(z.object({ heading: omittable(inlineText, "") })),
+  compareSideSchema.and(z.object({ heading: omittable(inlineText, "") })),
 )
 
 export const compareBlockSchema = z
@@ -132,7 +132,7 @@ export const compareBlockSchema = z
     kind: z.literal("compare"),
     title: inlineText,
     relation: omittable(z.enum(COMPARE_RELATIONS), "versus"),
-    sides: z.array(compareSideSchema).min(2).max(2),
+    sides: z.array(headedCompareSideSchema).min(2).max(2),
     fold,
     aside,
   })

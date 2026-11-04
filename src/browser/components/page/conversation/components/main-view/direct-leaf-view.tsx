@@ -53,7 +53,6 @@ const DIRECT_LEAF_VIEWS: ReadonlyMap<A2uiReportComponent["component"], DirectLea
   ["Timeline", TimelineLeaf],
   ["Graph", GraphLeaf],
   ["Picture", PictureLeaf],
-  ["BeforeAfter", CompareLeaf],
   ["Mermaid", MermaidLeaf],
   ["Chart", ChartLeaf],
   ["Plot", PlotLeaf],

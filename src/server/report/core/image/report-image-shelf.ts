@@ -11,9 +11,11 @@
 
 import { sumBy } from "remeda"
 
-import { comparisonSidesOf } from "../../../../shared/report/before-after-compare.ts"
 import type { ReportImageSize } from "../../../../shared/report/report-image.ts"
-import type { ReportOutlineLeaf } from "../../../../shared/report/report-outline.ts"
+import {
+  comparisonSidesOf,
+  type ReportOutlineLeaf,
+} from "../../../../shared/report/report-outline.ts"
 import type { PromptImageMediaType } from "../../../../shared/session-driver/prompt-image.ts"
 import type { SessionState } from "../../../../shared/session/session-state.ts"
 import { imageSizeOf } from "./image-size.ts"

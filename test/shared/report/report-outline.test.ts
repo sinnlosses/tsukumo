@@ -36,7 +36,7 @@ describe("reportFigureOf", () => {
     expect(reportFigureOf([report({ figure: "f1" }, []), figure])).toEqual({ kind: "mermaid" })
   })
 
-  it("Compare は前後なら今までの beforeAfter、対等なら compare として返す", () => {
+  it("Compare は前後でも対等でも compare として返す", () => {
     const compare = (relation: "versus" | "before-after"): A2uiReportComponent => ({
       id: "f1",
       component: "Compare",
@@ -51,7 +51,7 @@ describe("reportFigureOf", () => {
     })
 
     expect(reportFigureOf([report({ figure: "f1" }, []), compare("before-after")])).toEqual({
-      kind: "beforeAfter",
+      kind: "compare",
     })
     expect(reportFigureOf([report({ figure: "f1" }, []), compare("versus")])).toEqual({
       kind: "compare",

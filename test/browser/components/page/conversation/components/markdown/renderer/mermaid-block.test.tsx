@@ -263,7 +263,7 @@ describe("MermaidBlock の幅の段", () => {
     stubDrawnWidth((_, topDown) => (topDown ? 900 : 300))
     const code = "flowchart LR\n  A9 --> B9"
     const side = document.createElement("div")
-    side.className = "report-before-after-side"
+    side.className = "report-compare-figure-side"
     document.body.append(side)
     const sideView = render(<MermaidBlock code={code} />, { container: side })
     await finishLoading()
@@ -300,7 +300,7 @@ describe("MermaidBlock の幅の段", () => {
   it("前後の部品の側の図にはフェーズを当てない", async () => {
     stubDrawnWidth(() => 300)
     const side = document.createElement("div")
-    side.className = "report-before-after-side"
+    side.className = "report-compare-figure-side"
     document.body.append(side)
     const view = render(<MermaidBlock code={"flowchart LR\n  A6 --> B6"} />, { container: side })
     await finishLoading()

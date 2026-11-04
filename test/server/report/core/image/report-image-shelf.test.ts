@@ -123,24 +123,30 @@ describe("reportImagePaths", () => {
     ])
   })
 
-  it("beforeAfter の画像の側のパスも拾い、ほかの種類の側は拾わない", () => {
+  it("前後の Compare の画像の側のパスも拾い、ほかの種類の側は拾わない", () => {
     const sections: readonly ReportBlockSection[] = [
       {
         heading: "",
         blocks: [
           {
-            kind: "beforeAfter",
+            kind: "compare",
             title: "",
-            before: { kind: "image", path: "架空/before.png" },
-            after: { kind: "image", path: "架空/after.png" },
+            relation: "before-after",
+            sides: [
+              { heading: "", kind: "image", path: "架空/before.png" },
+              { heading: "", kind: "image", path: "架空/after.png" },
+            ],
             fold: "",
             aside: "",
           },
           {
-            kind: "beforeAfter",
+            kind: "compare",
             title: "",
-            before: { kind: "points", points: ["架空の1行"] },
-            after: { kind: "image", path: "" },
+            relation: "before-after",
+            sides: [
+              { heading: "", kind: "points", points: ["架空の1行"] },
+              { heading: "", kind: "image", path: "" },
+            ],
             fold: "",
             aside: "",
           },

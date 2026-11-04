@@ -235,7 +235,7 @@ export const NOTATION_ENTRIES: readonly CatalogEntry[] = [
     homeSetup: { kind: "default" },
     workspaceSetup: { kind: "report-image" },
     prepare: [
-      { kind: "local-storage", key: "tsukumo-before-after-view:v1", value: "overlay" },
+      { kind: "local-storage", key: "tsukumo-compare-view:v1", value: "overlay" },
       { kind: "wait", selector: BEFORE_AFTER_SELECTOR },
       { kind: "scroll", selector: BEFORE_AFTER_SELECTOR },
     ],

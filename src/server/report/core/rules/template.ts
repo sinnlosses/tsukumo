@@ -48,14 +48,14 @@ export function templateViolationMessage(violation: TemplateViolation): string {
 }
 
 const REQUEST_TEMPLATES = {
-  diagnosis: { wantsKeyFigures: true, figures: ["graph", "beforeAfter"] },
+  diagnosis: { wantsKeyFigures: true, figures: ["graph", "compare"] },
   timeline: { wantsKeyFigures: true, figures: ["timeline", "chart"] },
   structure: { wantsKeyFigures: true, figures: ["graph", "image"] },
-  screen: { wantsKeyFigures: false, figures: ["beforeAfter", "image"] },
+  screen: { wantsKeyFigures: false, figures: ["compare", "image"] },
   decision: { wantsKeyFigures: true, figures: ["graph", "plot"] },
   research: { wantsKeyFigures: true, figures: ["chart", "plot"] },
   status: { wantsKeyFigures: true, figures: ["chart", "plot"] },
-  work: { wantsKeyFigures: false, figures: ["beforeAfter", "image", "graph"] },
+  work: { wantsKeyFigures: false, figures: ["compare", "image", "graph"] },
 } as const satisfies Record<ReportGenre, RequestTemplate>
 
 const MIN_KEY_FIGURES = 3

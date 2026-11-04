@@ -13,8 +13,7 @@ type LeafExamples = {
   > & { readonly kind: WriterLeafKinds[C] }
 }
 
-/** 書き手の目録にある内容部品（旧い BeforeAfter は受け口だけ）。 */
-type WriterLeafKinds = Omit<typeof LEAF_COMPONENT_KINDS, "BeforeAfter">
+type WriterLeafKinds = typeof LEAF_COMPONENT_KINDS
 
 const LEAF_BLOCK_EXAMPLES = {
   text: { kind: "text", text: "架空の取り込みは 120 件中 8 件が上限で切れていた。" },
@@ -163,7 +162,7 @@ const LEAF_BLOCK_EXAMPLES = {
 } satisfies LeafExamples
 
 /** 内容部品の例。塊の例から `kind` を除き、`id` と `component` を足す。 */
-const LEAF_EXAMPLES = mapValues(omit(LEAF_COMPONENT_KINDS, ["BeforeAfter"]), (kind, component) => [
+const LEAF_EXAMPLES = mapValues(LEAF_COMPONENT_KINDS, (kind, component) => [
   { id: "p1", component, ...omit(LEAF_BLOCK_EXAMPLES[kind], ["kind"]) },
 ])
 

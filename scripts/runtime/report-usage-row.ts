@@ -27,7 +27,8 @@ const recordShape = {
   unknownBlockCount: z.number(),
   blockFields: z.array(z.string()),
   hasModifiedFiles: z.boolean(),
-  hasBeforeAfterOrImage: z.boolean(),
+  hasBeforeAfterOrImage: z.boolean().optional(),
+  hasComparisonOrImage: z.boolean().optional(),
   forTask: z.boolean(),
   hasFigure: z.boolean(),
   readImageWithoutImageBlock: z.boolean(),
@@ -69,6 +70,18 @@ export const recordSchema = z
   })
   .and(figureFieldSchema)
 export type UsageRecord = z.infer<typeof recordSchema>
+
+/**
+ * 版24までの行にだけある塊の種類と欄の名前。0件でも表に出し、`compare`・`compareRegion` と別の行として数える。
+ * 前後を `compare` と数え始めたのは版25から。
+ */
+export const PAST_BLOCK_KINDS: readonly string[] = ["beforeAfter"]
+export const PAST_BLOCK_FIELDS: readonly string[] = ["beforeAfterRegion"]
+
+/** 前後の塊か画像があるか。版24までは別の名前の欄に持っていた。 */
+export function hasComparisonOrImageOf(record: UsageRecord): boolean {
+  return record.hasComparisonOrImage ?? record.hasBeforeAfterOrImage ?? false
+}
 
 export type KeyFiguresRow = {
   readonly forTask: boolean

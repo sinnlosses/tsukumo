@@ -85,12 +85,14 @@ const FIGURE_BLOCK_KINDS: ReadonlySet<string> = new Set([
   "image",
   "chart",
   "graph",
-  "beforeAfter",
   "timeline",
 ])
 
 function leafWeight(leaf: ReportOutlineLeaf): number {
-  return FIGURE_BLOCK_KINDS.has(outlineLeafKind(leaf)) ? FIGURE_WEIGHT : textLength(leaf)
+  const isFigure =
+    FIGURE_BLOCK_KINDS.has(outlineLeafKind(leaf)) ||
+    (leaf.component === "Compare" && leaf.relation === "before-after")
+  return isFigure ? FIGURE_WEIGHT : textLength(leaf)
 }
 
 /** 葉の中の文字列の長さの合計（`id`・`component` と `style` の値は描かないので数えない）。 */

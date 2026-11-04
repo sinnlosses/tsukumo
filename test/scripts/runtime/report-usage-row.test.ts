@@ -2,6 +2,9 @@ import { describe, expect, it } from "vitest"
 
 import {
   countedSchema,
+  hasComparisonOrImageOf,
+  PAST_BLOCK_FIELDS,
+  PAST_BLOCK_KINDS,
   recordSchema,
   rejectionSchema,
 } from "../../../scripts/runtime/report-usage-row.ts"
@@ -29,7 +32,7 @@ describe("集計が読む記録の形", () => {
     componentNames: ["Section", "Markdown"],
     markdownNotationKinds: ["quote"],
     hasModifiedFiles: false,
-    hasBeforeAfterOrImage: false,
+    hasComparisonOrImage: false,
     forTask: false,
     hasFigure: false,
     readImageWithoutImageBlock: false,
@@ -55,6 +58,23 @@ describe("集計が読む記録の形", () => {
     expect(current.success).toBe(true)
     expect(current.success && current.data.componentNames).toEqual(["Section", "Markdown"])
     expect(old.success).toBe(false)
+  })
+
+  it("版24までの行の旧い欄の名前（hasBeforeAfterOrImage）と塊の種類（beforeAfter）も、別の名前のまま読める", () => {
+    const { hasComparisonOrImage: _renamed, ...rest } = acceptedRow
+    const past = recordSchema.safeParse({
+      v: 24,
+      ...rest,
+      hasBeforeAfterOrImage: true,
+      blockKinds: ["beforeAfter"],
+      blockFields: ["beforeAfterRegion"],
+    })
+
+    expect(past.success).toBe(true)
+    expect(past.success && hasComparisonOrImageOf(past.data)).toBe(true)
+    expect(past.success && past.data.blockKinds).toEqual(["beforeAfter"])
+    expect(PAST_BLOCK_KINDS).toEqual(["beforeAfter"])
+    expect(PAST_BLOCK_FIELDS).toEqual(["beforeAfterRegion"])
   })
 
   it("直後の依頼の行(followed)は、どの形にも当たらず読み飛ばされる", () => {

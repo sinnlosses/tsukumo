@@ -69,8 +69,8 @@ const svgFields = {
   legend: omittable(toneLegendSchema, []),
 }
 
-/** 見比べの側の中身（`BeforeAfter` の側と、`Compare` の側の見出しを除いた欄）。 */
-export const beforeAfterSideSchema = z
+/** 見比べの側の中身（`Compare` の側の見出しを除いた欄）。 */
+export const compareSideSchema = z
   .discriminatedUnion("kind", [
     z.object({ kind: z.literal("svg"), ...svgFields }),
     z.object({ kind: z.literal("mermaid"), source: z.string() }),
@@ -89,21 +89,7 @@ export const beforeAfterSideSchema = z
     }),
     z.object({ kind: z.literal("points"), points: z.array(inlineText).min(1) }),
   ])
-  .meta({ id: "BeforeAfterSide" })
-
-export const beforeAfterBlockSchema = z
-  .object({
-    kind: z.literal("beforeAfter"),
-    title: inlineText,
-    before: beforeAfterSideSchema,
-    after: beforeAfterSideSchema,
-    fold,
-    aside,
-  })
-  .describe(
-    "変更の前と後を左に前・右に後で並べ、間に矢印を置く（画面の撮影・構造の前後）。1行の設定や文言の変更には使わない。ファイル名の箇条書きで変更を説明しない。側ごとに image / code / points / mermaid / svg のどれか（左右で違ってよい）。時間の順の前後は mermaid の側。" +
-      "数の前後は stats の before、行ごとの差分は code の diff",
-  )
+  .meta({ id: "CompareSide" })
 
 export const imageBlockSchema = z
   .object({

@@ -27,94 +27,94 @@
     margin: 0;
     padding-left: var(--space-lg);
   }
-  /* 前後（`report` の `beforeAfter` の塊から tsukumo が組む）。
+  /* 前後（`report` の `Compare` の `before-after` から tsukumo が組む）。
    左に前・右に後の札を同じ幅で並べ、間に矢印を置く。器が狭いときは前を上・後を下に積み、矢印を下向きにする。
    どちらが前かは見出しの文字が言い、矢印は飾り。 */
-  & .report-before-after {
+  & .report-compare-figure {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     gap: var(--space-sm);
     align-items: stretch;
   }
   /* 対等な2つ（`relation` が versus）は矢印を置かず、2つの側を同じ幅で並べる。 */
-  & .report-before-after-versus {
+  & .report-compare-versus {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   @container report-body (max-width: calc(40em + 0.75rem)) {
-    & .report-before-after,
-    & .report-before-after-versus {
+    & .report-compare-figure,
+    & .report-compare-versus {
       grid-template-columns: minmax(0, 1fr);
     }
   }
-  & .report-before-after-side {
+  & .report-compare-figure-side {
     min-width: 0;
     padding: var(--space-sm) var(--space-md) var(--space-md);
     border: 1px solid var(--report-chunk-rule, var(--rule-soft));
     border-radius: var(--radius-md);
     background: var(--surface-raised);
   }
-  & .report-before-after-side > * {
+  & .report-compare-figure-side > * {
     margin-top: 0;
     margin-bottom: 0;
   }
-  & .report-before-after-side > * + * {
+  & .report-compare-figure-side > * + * {
     margin-top: var(--space-sm);
   }
-  & .report-before-after-label {
+  & .report-compare-label {
     font-size: var(--font-label);
     font-weight: 600;
     color: var(--ink-quiet);
   }
-  & .report-before-after-side ul {
+  & .report-compare-figure-side ul {
     padding-left: var(--space-lg);
   }
   /* 側の mermaid の図は側の幅に収める（`mermaid` の class は `MermaidBlock` が素の名前で付ける）。 */
-  & .report-before-after-side pre:global(.mermaid) {
+  & .report-compare-figure-side pre:global(.mermaid) {
     min-width: 0;
   }
-  & .report-before-after-side pre:global(.mermaid) svg {
+  & .report-compare-figure-side pre:global(.mermaid) svg {
     display: block;
     max-width: 100%;
     height: auto;
     margin-inline: auto;
   }
-  & .report-before-after-arrow {
+  & .report-compare-arrow {
     align-self: center;
     font-size: var(--font-heading);
     color: var(--ink-quiet);
   }
   @container report-body (max-width: calc(40em + 0.75rem)) {
-    & .report-before-after-arrow {
+    & .report-compare-arrow {
       justify-self: center;
       rotate: 90deg;
     }
   }
-  /* 両側が画像の前後の包み（`.report-captioned.report-before-after-swap`）。
+  /* 両側が画像の前後の包み（`.report-captioned.report-compare-swap`）。
    上の行の右に「並べる」「切り替え」「重ねる」の押しボタンの組、次に前後の画像、切り替えのときだけ見本の行、最後に題。
    画像は側の箱を持たず、札（前・後）は画像の左上に重ねる。
    切り替えは前と後を同じ枠に重ね、`data-shown` の側だけを見せる。見せない側は `opacity: 0` で場所を取ったまま、見えず、押せず、フォーカスも受けない。
    `transition` は付けない（入れかわりは即時）。 */
-  & .report-captioned.report-before-after-swap {
+  & .report-captioned.report-compare-swap {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: start;
     row-gap: var(--space-md);
   }
-  & .report-captioned.report-before-after-swap > .report-before-after {
+  & .report-captioned.report-compare-swap > .report-compare-figure {
     grid-area: 2 / 1 / 3 / -1;
     gap: var(--space-md);
     align-items: center;
   }
-  & .report-captioned.report-before-after-swap > .report-caption {
+  & .report-captioned.report-compare-swap > .report-caption {
     grid-area: 3 / 1 / 4 / -1;
     justify-self: center;
     margin: 0;
     font-size: var(--font-secondary);
   }
-  & .report-captioned.report-before-after-swap[data-view="switch"] > .report-caption {
+  & .report-captioned.report-compare-swap[data-view="switch"] > .report-caption {
     grid-row: 4;
   }
-  & .report-captioned.report-before-after-swap .report-before-after-swap-views {
+  & .report-captioned.report-compare-swap .report-compare-swap-views {
     grid-area: 1 / 2;
     display: inline-flex;
     gap: var(--space-2xs);
@@ -123,19 +123,19 @@
     border-radius: var(--radius-lg);
     background: var(--ground);
   }
-  & .report-captioned.report-before-after-swap .report-before-after-swap-view {
+  & .report-captioned.report-compare-swap .report-compare-swap-view {
     min-width: 24px;
     min-height: 26px;
     padding: 0 var(--space-md);
     border-radius: var(--radius-md);
   }
-  & .report-captioned.report-before-after-swap .report-before-after-side {
+  & .report-captioned.report-compare-swap .report-compare-figure-side {
     position: relative;
     padding: 0;
     border: 0;
     background: none;
   }
-  & .report-captioned.report-before-after-swap .report-before-after-label {
+  & .report-captioned.report-compare-swap .report-compare-label {
     display: inline-flex;
     align-items: center;
     margin-bottom: var(--space-xs);
@@ -148,41 +148,41 @@
     font-weight: 700;
     color: var(--ink-soft);
   }
-  & .report-captioned.report-before-after-swap .report-before-after-label-after {
+  & .report-captioned.report-compare-swap .report-compare-label-after {
     border-color: transparent;
     background: color-mix(in srgb, var(--accent) 92%, transparent);
     color: var(--ground);
   }
-  & .report-captioned.report-before-after-swap .report-image-zoom {
+  & .report-captioned.report-compare-swap .report-image-zoom {
     width: 100%;
   }
-  & .report-captioned.report-before-after-swap .report-image-zoom img {
+  & .report-captioned.report-compare-swap .report-image-zoom img {
     width: 100%;
     max-height: none;
     border: 1px solid var(--rule-soft);
     border-radius: var(--radius-lg);
   }
   &
-    .report-captioned.report-before-after-swap[data-view="side"]
-    .report-before-after:not(.report-before-after-versus)
-    > .report-before-after-side[data-side="after"]
+    .report-captioned.report-compare-swap[data-view="side"]
+    .report-compare-figure:not(.report-compare-versus)
+    > .report-compare-figure-side[data-side="after"]
     .report-image-zoom
     img {
     border-color: var(--rule);
     box-shadow: var(--shadow-raised);
   }
-  & .report-captioned.report-before-after-swap .report-before-after-arrow {
+  & .report-captioned.report-compare-swap .report-compare-arrow {
     width: 20px;
     text-align: center;
     font-size: var(--font-body);
   }
-  & .report-captioned.report-before-after-swap .report-before-after-swap-thumbs {
+  & .report-captioned.report-compare-swap .report-compare-swap-thumbs {
     grid-area: 3 / 1 / 4 / -1;
     display: flex;
     gap: var(--space-sm);
     justify-content: center;
   }
-  & .report-captioned.report-before-after-swap .report-before-after-swap-thumb {
+  & .report-captioned.report-compare-swap .report-compare-swap-thumb {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -191,7 +191,7 @@
     padding: var(--space-xs);
     border-radius: var(--radius-md);
   }
-  & .report-captioned.report-before-after-swap .report-before-after-swap-thumb img {
+  & .report-captioned.report-compare-swap .report-compare-swap-thumb img {
     display: block;
     width: 120px;
     max-width: none;
@@ -200,23 +200,23 @@
     border: 0;
     border-radius: var(--radius-sm);
   }
-  & .report-captioned.report-before-after-swap[data-view="switch"] > .report-before-after {
+  & .report-captioned.report-compare-swap[data-view="switch"] > .report-compare-figure {
     grid-template-columns: minmax(0, 1fr);
   }
-  & .report-captioned.report-before-after-swap[data-view="switch"] .report-before-after-arrow {
+  & .report-captioned.report-compare-swap[data-view="switch"] .report-compare-arrow {
     display: none;
   }
-  & .report-captioned.report-before-after-swap[data-view="switch"] .report-before-after-side {
+  & .report-captioned.report-compare-swap[data-view="switch"] .report-compare-figure-side {
     grid-area: 1 / 1;
     opacity: 0;
     visibility: hidden;
   }
   &
-    .report-captioned.report-before-after-swap[data-view="switch"][data-shown="before"]
-    .report-before-after-side[data-side="before"],
+    .report-captioned.report-compare-swap[data-view="switch"][data-shown="before"]
+    .report-compare-figure-side[data-side="before"],
   &
-    .report-captioned.report-before-after-swap[data-view="switch"][data-shown="after"]
-    .report-before-after-side[data-side="after"] {
+    .report-captioned.report-compare-swap[data-view="switch"][data-shown="after"]
+    .report-compare-figure-side[data-side="after"] {
     opacity: 1;
     visibility: visible;
   }
@@ -310,7 +310,7 @@
     min-inline-size: 0;
     margin-inline: 0 auto;
   }
-  & .report-captioned:has(> :is(.report-compare, .report-before-after)) {
+  & .report-captioned:has(> :is(.report-compare, .report-compare-figure)) {
     align-items: stretch;
   }
   /* 表の包みは左に置き、題と凡例も左に揃える。番号は中立の色。 */

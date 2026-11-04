@@ -13,6 +13,7 @@ import {
   type ReportBlock,
 } from "../../../../shared/report/report-block.ts"
 import { parseReportBody } from "./body-fence.ts"
+import { compareOfLegacyBlock } from "./legacy-before-after.ts"
 
 const rowBlockSchema = z.object({
   kind: z.literal("row"),
@@ -52,7 +53,13 @@ const looseSectionSchema = z.object({
 })
 
 // 旧い引数にだけ現れる種類（`files` と、塊を並べる `row`・`panel`）も、知らない種類には数えない
-const LEGACY_BLOCK_KINDS: readonly string[] = [...REPORT_BLOCK_KINDS, "files", "row", "panel"]
+const LEGACY_BLOCK_KINDS: readonly string[] = [
+  ...REPORT_BLOCK_KINDS,
+  "beforeAfter",
+  "files",
+  "row",
+  "panel",
+]
 
 const blockKindSchema = z.object({ kind: z.string() })
 
@@ -95,8 +102,9 @@ export function parseLegacyBody(body: string): ParsedLegacySections & {
 }
 
 function parseLegacyBlock(block: unknown): readonly LegacyBlock[] {
-  const arranged = arrangedBlockSchema.safeParse(block)
-  return arranged.success ? [arranged.data] : parseReportBlocks([block])
+  const compared = compareOfLegacyBlock(block)
+  const arranged = arrangedBlockSchema.safeParse(compared)
+  return arranged.success ? [arranged.data] : parseReportBlocks([compared])
 }
 
 function isUnknownKindBlock(block: unknown): boolean {

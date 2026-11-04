@@ -23,12 +23,8 @@ import {
 import { sessionTokenUrl } from "../../../../../../domain/session-token-url.ts"
 import { Button } from "../../../../../ui/button/button.tsx"
 import { ImageZoom, type ImageZoomFallback } from "../../../../../ui/image-zoom/image-zoom.tsx"
-import {
-  type BeforeAfterView,
-  loadBeforeAfterView,
-  saveBeforeAfterView,
-} from "./before-after-view.ts"
-import { BeforeAfterZoom } from "./before-after-zoom.tsx"
+import { type CompareView, loadCompareView, saveCompareView } from "./compare-view.ts"
+import { CompareZoom } from "./compare-zoom.tsx"
 import { RegionFramed } from "./region-frame.tsx"
 import styles from "./report-notation.module.css"
 
@@ -72,14 +68,14 @@ type ImageZoomTarget =
  * 前後の画像の部品の中の画像が、札に替わったことと、読めた画像の `src`・`alt` を塊へ知らせる口と、押したときの拡大の先。
  * 画像がどちらの側かは {@link SwapSideContext} が言い、無ければ `alt` の先頭の字（前の画面・後の画面）で決める。塊の外では何もせず、拡大は画像ごと。
  */
-type BeforeAfterSwapContextValue = {
+type CompareSwapContextValue = {
   readonly reportMissing: () => void
   readonly reportImage: (thumb: SwapThumb) => void
   readonly reportSize: (side: SwapSide, size: NaturalSize) => void
   readonly zoom: ImageZoomTarget
 }
 
-const BeforeAfterSwapContext = createContext<BeforeAfterSwapContextValue>({
+const CompareSwapContext = createContext<CompareSwapContextValue>({
   reportMissing: () => undefined,
   reportImage: () => undefined,
   reportSize: () => undefined,
@@ -108,11 +104,11 @@ const SWAP_VIEW_LABEL = {
   side: "並べる",
   switch: "切り替え",
   overlay: "重ねる",
-} as const satisfies Record<BeforeAfterView, string>
+} as const satisfies Record<CompareView, string>
 
-const SWAP_VIEWS = ["side", "switch", "overlay"] as const satisfies readonly BeforeAfterView[]
+const SWAP_VIEWS = ["side", "switch", "overlay"] as const satisfies readonly CompareView[]
 
-type BeforeAfterSwapProps = {
+type CompareSwapProps = {
   readonly className: string | undefined
   readonly settings: SwapSettings
   readonly children: ReactNode
@@ -124,8 +120,8 @@ type BeforeAfterSwapProps = {
  * 重ねるでは左の上に右を重ね、つまみ（range）の位置から右だけ右の側を見せる。`overlay` が真で、両側の縦横比が揃う（差が 1% 以内）ときだけ選べる。
  * 画像が一枚でも札になったら押しボタンも見本も出さず、並べる形に落とす。
  */
-export function BeforeAfterSwap(props: BeforeAfterSwapProps): ReactElement {
-  const [chosen, setChosen] = useState<BeforeAfterView>(loadBeforeAfterView)
+export function CompareSwap(props: CompareSwapProps): ReactElement {
+  const [chosen, setChosen] = useState<CompareView>(loadCompareView)
   const [shown, setShown] = useState<SwapSide>("before")
   const [missing, setMissing] = useState(false)
   const [thumbs, setThumbs] = useState<readonly SwapThumb[]>([])
@@ -148,9 +144,9 @@ export function BeforeAfterSwap(props: BeforeAfterSwapProps): ReactElement {
     openerRef.current?.focus()
   }
 
-  function chooseView(next: BeforeAfterView): void {
+  function chooseView(next: CompareView): void {
     setChosen(next)
-    saveBeforeAfterView(next)
+    saveCompareView(next)
   }
 
   function toggleShown(event: KeyboardEvent<HTMLDivElement>): void {
@@ -166,7 +162,7 @@ export function BeforeAfterSwap(props: BeforeAfterSwapProps): ReactElement {
   }
 
   return (
-    <BeforeAfterSwapContext
+    <CompareSwapContext
       value={{
         reportMissing: () => setMissing(true),
         reportImage: (thumb) => setThumbs((current) => withThumb(current, thumb)),
@@ -184,11 +180,7 @@ export function BeforeAfterSwap(props: BeforeAfterSwapProps): ReactElement {
       >
         {props.children}
         {!missing && (
-          <div
-            role="group"
-            aria-label="見せ方"
-            className={styles["report-before-after-swap-views"]}
-          >
+          <div role="group" aria-label="見せ方" className={styles["report-compare-swap-views"]}>
             {SWAP_VIEWS.filter((choice) => choice !== "overlay" || overlayable).map((choice) => (
               <Button
                 key={choice}
@@ -197,7 +189,7 @@ export function BeforeAfterSwap(props: BeforeAfterSwapProps): ReactElement {
                 pressed={view === choice ? "on" : "off"}
                 disabled={false}
                 disclosure={{ kind: "none" }}
-                className={styles["report-before-after-swap-view"]}
+                className={styles["report-compare-swap-view"]}
                 onClick={() => chooseView(choice)}
               >
                 {SWAP_VIEW_LABEL[choice]}
@@ -213,12 +205,12 @@ export function BeforeAfterSwap(props: BeforeAfterSwapProps): ReactElement {
             step={1}
             value={position}
             aria-label="前後の境"
-            className={styles["report-before-after-swap-slider"]}
+            className={styles["report-compare-swap-slider"]}
             onChange={(event) => setPosition(event.currentTarget.valueAsNumber)}
           />
         )}
         {switches && (
-          <div className={styles["report-before-after-swap-thumbs"]}>
+          <div className={styles["report-compare-swap-thumbs"]}>
             {SWAP_SIDES.map((side) => {
               const thumb = thumbs.find((candidate) => candidate.side === side)
               return (
@@ -230,7 +222,7 @@ export function BeforeAfterSwap(props: BeforeAfterSwapProps): ReactElement {
                     pressed={shown === side ? "on" : "off"}
                     disabled={false}
                     disclosure={{ kind: "none" }}
-                    className={styles["report-before-after-swap-thumb"]}
+                    className={styles["report-compare-swap-thumb"]}
                     onClick={() => setShown(side)}
                   >
                     <img src={thumb.src} alt="" />
@@ -242,7 +234,7 @@ export function BeforeAfterSwap(props: BeforeAfterSwapProps): ReactElement {
           </div>
         )}
         {zoom !== undefined && thumbs.length > 0 && (
-          <BeforeAfterZoom
+          <CompareZoom
             images={thumbs}
             start={zoom.side}
             labels={props.settings.labels}
@@ -251,14 +243,14 @@ export function BeforeAfterSwap(props: BeforeAfterSwapProps): ReactElement {
           />
         )}
       </div>
-    </BeforeAfterSwapContext>
+    </CompareSwapContext>
   )
 }
 
 export function ReportImage(props: ReportImageProps): ReactElement {
   const [failed, setFailed] = useState(false)
   const [zoomed, setZoomed] = useState(false)
-  const { reportMissing, reportImage, reportSize, zoom } = use(BeforeAfterSwapContext)
+  const { reportMissing, reportImage, reportSize, zoom } = use(CompareSwapContext)
   const sideScope = use(SwapSideContext)
   const imageRef = useRef<HTMLImageElement | null>(null)
   const alt = props.alt ?? ""

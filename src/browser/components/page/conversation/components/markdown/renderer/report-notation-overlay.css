@@ -1,21 +1,21 @@
 .detail-block {
   /* 両側が画像の前後の「重ねる」。前と後を同じ枠に重ね、後は `--overlay-position` から右だけを見せる。
    境の縦線は前の画像のボタンの疑似要素で引き、つまみ（range）は画像の下の行に置く。 */
-  & .report-captioned.report-before-after-swap[data-view="overlay"] > .report-caption {
+  & .report-captioned.report-compare-swap[data-view="overlay"] > .report-caption {
     grid-row: 4;
   }
-  & .report-captioned.report-before-after-swap[data-view="overlay"] > .report-before-after {
+  & .report-captioned.report-compare-swap[data-view="overlay"] > .report-compare-figure {
     grid-template-columns: minmax(0, 1fr);
   }
   &
-    .report-captioned.report-before-after-swap[data-view="overlay"]
-    .report-before-after-side:nth-child(1)
+    .report-captioned.report-compare-swap[data-view="overlay"]
+    .report-compare-figure-side:nth-child(1)
     .report-image-zoom {
     position: relative;
   }
   &
-    .report-captioned.report-before-after-swap[data-view="overlay"]
-    .report-before-after-side:nth-child(1)
+    .report-captioned.report-compare-swap[data-view="overlay"]
+    .report-compare-figure-side:nth-child(1)
     .report-image-zoom::after {
     content: "";
     position: absolute;
@@ -26,31 +26,31 @@
     background: var(--accent);
     pointer-events: none;
   }
-  & .report-captioned.report-before-after-swap[data-view="overlay"] .report-before-after-arrow {
+  & .report-captioned.report-compare-swap[data-view="overlay"] .report-compare-arrow {
     display: none;
   }
-  & .report-captioned.report-before-after-swap[data-view="overlay"] .report-before-after-side {
+  & .report-captioned.report-compare-swap[data-view="overlay"] .report-compare-figure-side {
     grid-area: 1 / 1;
   }
   &
-    .report-captioned.report-before-after-swap[data-view="overlay"]
-    .report-before-after-side:nth-child(3) {
+    .report-captioned.report-compare-swap[data-view="overlay"]
+    .report-compare-figure-side:nth-child(3) {
     clip-path: inset(0 0 0 var(--overlay-position));
   }
   /* 重ねた2枚は同じ枠に入るので、札は画像の上の角に浮かせてどちらの側かを示す。 */
-  & .report-captioned.report-before-after-swap[data-view="overlay"] .report-before-after-label {
+  & .report-captioned.report-compare-swap[data-view="overlay"] .report-compare-label {
     position: absolute;
     inset: 10px auto auto 10px;
     z-index: 1;
     margin-bottom: 0;
   }
   &
-    .report-captioned.report-before-after-swap[data-view="overlay"]
-    .report-before-after-side:nth-child(3)
-    .report-before-after-label {
+    .report-captioned.report-compare-swap[data-view="overlay"]
+    .report-compare-figure-side:nth-child(3)
+    .report-compare-label {
     inset: 10px 10px auto auto;
   }
-  & .report-captioned.report-before-after-swap .report-before-after-swap-slider {
+  & .report-captioned.report-compare-swap .report-compare-swap-slider {
     grid-area: 3 / 1 / 4 / -1;
     width: 100%;
     margin: 0;

@@ -99,7 +99,7 @@ export type BlockViolation =
   | { readonly kind: "region-range"; readonly count: number }
   /**
    * `figure` の `none` の理由が本文と合わない。
-   * `no-shape` なのに `sections` に流れ・つながり・構造を描く塊（`list` の `flow`・前後の `compare`・`beforeAfter`・`graph`・`mermaid`・`svg`）がある（`count` はその塊の数）か、
+   * `no-shape` なのに `sections` に流れ・つながり・構造を描く塊（`list` の `flow`・前後の `compare`・`graph`・`mermaid`・`svg`）がある（`count` はその塊の数）か、
    * `short-answer` なのにセクションが2つ以上ある（`count` はそのセクションの数）。
    */
   | {
@@ -287,10 +287,10 @@ export function blockViolationMessage(violation: BlockViolation): string {
     case "code-marks-range":
       return `\`Code\` の \`marks\` の \`lines\` が読めない形か \`source\` の行数の外にある部品が${violation.count}個ある。\`4-8\` か \`12\` の形で、行数以内に直す`
     case "region-range":
-      return `\`Compare\`・\`BeforeAfter\` の画像の側の \`region\` が画像の外に出る、または \`width\`・\`height\` が 0 以下の部品が${violation.count}個ある。\`left\`・\`top\` は 0 以上、\`left + width\` と \`top + height\` は 100 以下、\`width\`・\`height\` は 0 より大きい%にする`
+      return `\`Compare\` の画像の側の \`region\` が画像の外に出る、または \`width\`・\`height\` が 0 以下の部品が${violation.count}個ある。\`left\`・\`top\` は 0 以上、\`left + width\` と \`top + height\` は 100 以下、\`width\`・\`height\` は 0 より大きい%にする`
     case "figure-contradiction":
       return violation.reason === "no-shape"
-        ? `\`figure\` の reason が \`no-shape\` なのに、\`Section\` に流れ・つながり・構造を描く部品（\`ItemList\` の \`flow\`・\`Compare\` の \`before-after\`・\`BeforeAfter\`・\`Graph\`・\`Mermaid\`・\`Svg\`）が${violation.count}個ある。その図を \`figure\` に置くか、合う reason にする`
+        ? `\`figure\` の reason が \`no-shape\` なのに、\`Section\` に流れ・つながり・構造を描く部品（\`ItemList\` の \`flow\`・\`Compare\` の \`before-after\`・\`Graph\`・\`Mermaid\`・\`Svg\`）が${violation.count}個ある。その図を \`figure\` に置くか、合う reason にする`
         : `\`figure\` の reason が \`short-answer\` なのに、セクションが2つ以上ある。2〜3文で終わる答えでなければ \`figure\` に図を置くか、合う reason にする`
   }
 }

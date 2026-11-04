@@ -78,7 +78,6 @@ describe("a2uiReportInput の見比べの部品", () => {
     }
 
     expect(droppedCount).toBe(0)
-    expect(components.filter((part) => part.component === "BeforeAfter")).toEqual([])
     expect(components.find((part) => part.id === "ba")).toEqual({ id: "ba", ...expected })
     expect(components.find((part) => part.id === "fig")).toEqual({ id: "fig", ...expected })
   })

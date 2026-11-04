@@ -16,25 +16,30 @@ const REGION = { left: 29.6, top: 44.6, width: 40.5, height: 10.6 }
 
 const SHELF = { kind: "shelved", toolUseId: "fictional-report", sizes: [], unshelved: [] } as const
 
-function renderBeforeAfter(regions: {
+function renderComparePair(regions: {
   readonly before?: typeof REGION
   readonly after?: typeof REGION
 }): HTMLElement {
   return renderDirectLeaf(
     {
       id: "b1",
-      component: "BeforeAfter",
+      component: "Compare",
       title: "架空の前後",
-      before: {
-        kind: "image",
-        path: "架空/before.png",
-        ...(regions.before === undefined ? {} : { region: regions.before }),
-      },
-      after: {
-        kind: "image",
-        path: "架空/after.png",
-        ...(regions.after === undefined ? {} : { region: regions.after }),
-      },
+      relation: "before-after",
+      sides: [
+        {
+          heading: "",
+          kind: "image",
+          path: "架空/before.png",
+          ...(regions.before === undefined ? {} : { region: regions.before }),
+        },
+        {
+          heading: "",
+          kind: "image",
+          path: "架空/after.png",
+          ...(regions.after === undefined ? {} : { region: regions.after }),
+        },
+      ],
       fold: "",
       aside: "",
     },
@@ -48,7 +53,7 @@ function frames(root: ParentNode): readonly HTMLElement[] {
 
 describe("前後の画像の変わった場所の枠", () => {
   it("region のある側の画像にだけ、飾りの枠が画像に対する%の位置で出る", () => {
-    const container = renderBeforeAfter({ after: REGION })
+    const container = renderComparePair({ after: REGION })
 
     const found = frames(container)
     expect(found).toHaveLength(1)
@@ -63,7 +68,7 @@ describe("前後の画像の変わった場所の枠", () => {
   })
 
   it("前の側の枠は前の側の画像に出て、region の無い側には出ない", () => {
-    const container = renderBeforeAfter({ before: REGION })
+    const container = renderComparePair({ before: REGION })
 
     const found = frames(container)
     expect(found).toHaveLength(1)
@@ -72,6 +77,6 @@ describe("前後の画像の変わった場所の枠", () => {
   })
 
   it("region が無ければどちらにも枠を出さない", () => {
-    expect(frames(renderBeforeAfter({}))).toHaveLength(0)
+    expect(frames(renderComparePair({}))).toHaveLength(0)
   })
 })

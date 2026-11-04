@@ -3,15 +3,15 @@
 //
 // 会話の内容がここを通る。
 // 断片と切り出した JSON はこのファイルのメモリだけに置き、ログにもファイルにも書かない。
-// 出すのは `a2uiReportComponentSchema` を通った部品だけで、`BeforeAfter` は `Compare` の前後に写す。
+// 出すのは `a2uiReportComponentSchema` を通った部品だけで、旧い `BeforeAfter` は `Compare` の前後に書き換えてから通す。
 
 import { isPlainObject } from "remeda"
 
 import { a2uiReportComponentSchema } from "../../../../shared/report/a2ui-report-catalog.ts"
-import { compareOfBeforeAfter } from "../../../../shared/report/before-after-compare.ts"
 import type { SessionEvent } from "../../../../shared/session/session-event.ts"
 import { REPORT_TOOL_NAME, tsukumoToolFullName } from "../../../core/tsukumo-tool-name.ts"
 import { INITIAL_SPLIT_STATE, splitComponents, type SplitState } from "./a2ui-component-splitter.ts"
+import { compareOfLegacyComponent } from "./legacy-before-after.ts"
 
 /** 開いている `report` の塊 1 つ分（`index` は塊の位置）。 */
 type OpenBlock = { readonly toolUseId: string; readonly split: SplitState }
@@ -77,13 +77,13 @@ export function createReportDraftIntake(): ReportDraftIntake {
       const step = splitComponents(open.split, fragment)
       blocks = new Map([...blocks, [index, { ...open, split: step.state }]])
       return step.components.flatMap((component): readonly SessionEvent[] => {
-        const parsed = a2uiReportComponentSchema.safeParse(component)
+        const parsed = a2uiReportComponentSchema.safeParse(compareOfLegacyComponent(component))
         return parsed.success
           ? [
               {
                 kind: "report-draft-component",
                 toolUseId: open.toolUseId,
-                component: compareOfBeforeAfter(parsed.data),
+                component: parsed.data,
               },
             ]
           : []

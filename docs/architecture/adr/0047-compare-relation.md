@@ -32,13 +32,13 @@
 
 - `reportFigureSchema` に `compareBlockSchema` を入れ、`FIGURE_COMPONENTS` に `Compare` が入る。入れないと、写したあとの旧い `BeforeAfter` の図（`Report.figure`）が構造の検査で図の部品でないと見られる
 - `points` だけの `Compare` も置ける。今の `BeforeAfter` も両側が `points` の形で置けていて、図の部品かどうかは部品の名前（`kind`）で決める仕組みのまま、中身で分けない
-- 図の申告の種類（`reportFigureOf`）と使われ方の記録の塊の種類では、`before-after` の `Compare` を今までの `beforeAfter` と数える。雛形の規則（`REQUEST_TEMPLATES` の `beforeAfter`）と記録の集計が、写す前と同じ判定をするため。`versus` の `Compare` は `compare`
+- 図の申告の種類（`reportFigureOf`）と使われ方の記録の塊の種類では、`Compare` は `relation` にかかわらず `compare` と数える（後始末で改めた。下の「後始末」）
 
 ### 4. 写す場所: 受け口
 
 - `a2uiReportInput`（a2ui の部品の一覧）と `legacyReportComponents`（`sections`・`body` の旧い引数）で写す。続きから復元した再生と疑似セッションも `reportEvents` を通るので、同じ所で写る
 - 部品が閉じるたびの草稿（`draftComponentIntake`）も同じ写しを通す
-- 写しは `src/shared/report/before-after-compare.ts` の1つの関数に置き、ブラウザの葉も `BeforeAfter` の部品が届いたら同じ関数で写して描く（受け口を通らずに描かれる部品が残っても同じ見た目にするため）
+- 写しは `src/server/report/core/body/legacy-before-after.ts` に置く。ブラウザの葉は写さない（後始末で外した。下の「後始末」）
 - 描く側だけで写す案は採らない。サーバの検査（図の規則・`region` の規則）・画像の棚・使われ方の記録が `BeforeAfter` と `Compare` の両方を見続けることになる
 - 構造の検査（`a2uiStructureFaults`）は写す前の生の一覧を見る。`BeforeAfter` は図の部品のままなので、写す前と同じに通る
 
@@ -57,4 +57,10 @@
 ## 残すこと
 
 - 書き手の目録から `BeforeAfter` を外すこと、記法の条・ツールの説明・`docs/architecture/display/` の文書を `Compare` の書き方に揃えることは、この判断のあとに別に行う。それまで書き手は `BeforeAfter` と `Compare` の両方を書ける
-- `BeforeAfter` の型・葉・CSS の名前・規則の分岐を消すのも別に行う
+- `BeforeAfter` の型・葉・CSS の名前・規則の分岐を消すのも別に行う（後始末で済んだ）
+
+## 後始末
+
+- 旧い `BeforeAfter` を読む部分は受け口（`src/server/report/core/body/` の `legacy-before-after.ts`）に閉じた。`shared` と `browser` は `Compare` だけを見る。旧い形は届いた生の値の段階で `Compare` の `before-after` に書き換えてから parse に渡す
+- `BeforeAfter` の名前の型・描画・CSS の class 名・ファイル名を `Compare` の名前に置き換えた。端末ごとの並べ方の好みの鍵も改めたので、好みは 1 回だけ既定に戻る
+- 使われ方の記録は、前後の `Compare` も `compare`・`Compare` と数える（決めたこと 3 の第 3 項の「今までの `beforeAfter` と数える」を改めた。写す前の名前を数え続けると `shared` に旧い名前が残るため）。欄の名前は `hasComparisonOrImage`・`compareRegion` に変え、記録の版を上げた。過去の行の `beforeAfter` 系の名前は書き換えず、集計が別の行として数える

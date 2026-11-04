@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest"
+import type { z } from "zod"
 
 import {
   isMainImageFileRead,
   reportUsageEntryOf,
 } from "../../../../../src/server/report/core/usage/report-usage.ts"
+import type { compareSideSchema } from "../../../../../src/shared/report/report-block-diagram.ts"
 import type { ReportBlock } from "../../../../../src/shared/report/report-block.ts"
 import type { ReportCheck } from "../../../../../src/shared/report/report-check.ts"
 import type { SessionEvent } from "../../../../../src/shared/session/session-event.ts"
@@ -18,11 +20,14 @@ describe("reportUsageEntryOf", () => {
       fold: "",
       aside: "",
     })
-    const beforeAfter: ReportBlock = {
-      kind: "beforeAfter",
+    const compareFigure: ReportBlock = {
+      kind: "compare",
       title: "架空の前後",
-      before: { kind: "points", points: ["前"] },
-      after: { kind: "points", points: ["後"] },
+      relation: "before-after",
+      sides: [
+        { heading: "", kind: "points", points: ["前"] },
+        { heading: "", kind: "points", points: ["後"] },
+      ],
       fold: "",
       aside: "",
     }
@@ -48,7 +53,7 @@ describe("reportUsageEntryOf", () => {
     }[] = [
       { blocks: [files("modified")], task: false, expected: [false, false, false] },
       { blocks: [files("modified")], task: true, expected: [false, false, true] },
-      { blocks: [files("modified"), beforeAfter], task: false, expected: [false, true, false] },
+      { blocks: [files("modified"), compareFigure], task: false, expected: [false, true, false] },
       { blocks: [files("modified"), image], task: true, expected: [false, true, true] },
       { blocks: [files("read")], task: false, expected: [false, false, false] },
       { blocks: [files("read"), image], task: false, expected: [false, true, false] },
@@ -61,7 +66,7 @@ describe("reportUsageEntryOf", () => {
       })
       const entry = reportUsageEntryOf(event, "claude-session-1", 1_000, false)
 
-      expect([entry.hasModifiedFiles, entry.hasBeforeAfterOrImage, entry.forTask]).toEqual(
+      expect([entry.hasModifiedFiles, entry.hasComparisonOrImage, entry.forTask]).toEqual(
         row.expected,
       )
     }
@@ -100,13 +105,21 @@ describe("reportUsageEntryOf", () => {
       ).hasFigure
     const svgShape = { kind: "text", x: 1, y: 1, text: "架空" } as const
     const codeSide = { kind: "code", language: "ts", source: "x" } as const
-    const pointsSide = { kind: "points", points: ["架空の点"] } as const
-    const beforeAfterOf = (
-      before: Extract<ReportBlock, { kind: "beforeAfter" }>["before"],
-      after: Extract<ReportBlock, { kind: "beforeAfter" }>["after"],
-    ): ReportBlock => ({ kind: "beforeAfter", title: "", before, after, fold: "", aside: "" })
+    const pointsSide: z.output<typeof compareSideSchema> = { kind: "points", points: ["架空の点"] }
+    type Side = z.output<typeof compareSideSchema>
+    const compareFigureOf = (before: Side, after: Side): ReportBlock => ({
+      kind: "compare",
+      title: "",
+      relation: "before-after",
+      sides: [
+        { heading: "", ...before },
+        { heading: "", ...after },
+      ],
+      fold: "",
+      aside: "",
+    })
 
-    it("image・mermaid・svg の塊と、beforeAfter の図の側を図として数える", () => {
+    it("image・mermaid・svg の塊と、前後の Compare の図の側を図として数える", () => {
       expect(figureOf({ kind: "text", text: "架空の根拠。", fold: "", aside: "" })).toBe(false)
       expect(
         figureOf({ kind: "mermaid", title: "", source: "sequenceDiagram", fold: "", aside: "" }),
@@ -146,13 +159,13 @@ describe("reportUsageEntryOf", () => {
       ).toBe(true)
       expect(
         figureOf(
-          beforeAfterOf(
+          compareFigureOf(
             { kind: "svg", width: 10, height: 10, shapes: [svgShape], legend: [] },
             codeSide,
           ),
         ),
       ).toBe(true)
-      expect(figureOf(beforeAfterOf(codeSide, pointsSide))).toBe(false)
+      expect(figureOf(compareFigureOf(codeSide, pointsSide))).toBe(false)
     })
   })
 
@@ -173,19 +186,22 @@ describe("reportUsageEntryOf", () => {
       fold: "",
       aside: "",
     }
-    const beforeAfterImage: ReportBlock = {
-      kind: "beforeAfter",
+    const compareFigureImage: ReportBlock = {
+      kind: "compare",
       title: "",
-      before: { kind: "image", path: "/tmp/a.png" },
-      after: { kind: "image", path: "/tmp/b.png" },
+      relation: "before-after",
+      sides: [
+        { heading: "", kind: "image", path: "/tmp/a.png" },
+        { heading: "", kind: "image", path: "/tmp/b.png" },
+      ],
       fold: "",
       aside: "",
     }
 
-    it("読んだのに image が無ければ真、image か beforeAfter の image の側があるか読んでいなければ偽", () => {
+    it("読んだのに image が無ければ真、image か前後の Compare の image の側があるか読んでいなければ偽", () => {
       expect(entryOf([text], true).readImageWithoutImageBlock).toBe(true)
       expect(entryOf([text, image], true).readImageWithoutImageBlock).toBe(false)
-      expect(entryOf([beforeAfterImage], true).readImageWithoutImageBlock).toBe(false)
+      expect(entryOf([compareFigureImage], true).readImageWithoutImageBlock).toBe(false)
       expect(entryOf([text], false).readImageWithoutImageBlock).toBe(false)
     })
   })
@@ -448,7 +464,7 @@ describe("reportUsageEntryOf", () => {
 
       expect(entry.blockKinds).toContain("image")
       expect(entry.hasFigure).toBe(true)
-      expect(entry.hasBeforeAfterOrImage).toBe(true)
+      expect(entry.hasComparisonOrImage).toBe(true)
       expect(entry.readImageWithoutImageBlock).toBe(false)
     })
   })

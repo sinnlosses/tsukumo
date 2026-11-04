@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest"
+import type { z } from "zod"
 
 import {
   isRestatementRequest,
   reportUsageEntryOf,
 } from "../../../../../src/server/report/core/usage/report-usage.ts"
+import type { compareSideSchema } from "../../../../../src/shared/report/report-block-diagram.ts"
 import type {
   ReportBlock,
   ReportBlockSection,
@@ -231,12 +233,15 @@ describe("reportUsageEntryOf", () => {
       aside,
     })
     const region = { left: 10, top: 20, width: 30, height: 40 }
-    type Side = Extract<ReportBlock, { readonly kind: "beforeAfter" }>["before"]
-    const beforeAfter = (before: Side, after: Side): ReportBlock => ({
-      kind: "beforeAfter",
+    type Side = z.output<typeof compareSideSchema>
+    const compareFigure = (before: Side, after: Side): ReportBlock => ({
+      kind: "compare",
       title: "",
-      before,
-      after,
+      relation: "before-after",
+      sides: [
+        { heading: "", ...before },
+        { heading: "", ...after },
+      ],
       fold: "",
       aside: "",
     })
@@ -244,15 +249,15 @@ describe("reportUsageEntryOf", () => {
     const framed = { ...plain, region }
 
     it.each([
-      ["beforeAfterRegion（前の側）", beforeAfter(framed, plain), ["beforeAfterRegion"]],
-      ["beforeAfterRegion（後の側）", beforeAfter(plain, framed), ["beforeAfterRegion"]],
-      ["beforeAfterRegion（region なし）", beforeAfter(plain, plain), []],
+      ["compareRegion（前の側）", compareFigure(framed, plain), ["compareRegion"]],
+      ["compareRegion（後の側）", compareFigure(plain, framed), ["compareRegion"]],
+      ["compareRegion（region なし）", compareFigure(plain, plain), []],
       [
-        "beforeAfterRegion（画像でない側）",
-        beforeAfter({ kind: "points", points: ["架空"] }, plain),
+        "compareRegion（画像でない側）",
+        compareFigure({ kind: "points", points: ["架空"] }, plain),
         [],
       ],
-      ["beforeAfterRegion（単体の image）", image([]), []],
+      ["compareRegion（単体の image）", image([]), []],
     ] as const)("%s の欄", (_, block, expected) => {
       const entry = reportUsageEntryOf(
         reportOfSections([{ heading: "", blocks: [block] }]),
@@ -455,7 +460,7 @@ describe("reportUsageEntryOf", () => {
       listStyles: [],
       mermaidKinds: [],
       hasModifiedFiles: false,
-      hasBeforeAfterOrImage: false,
+      hasComparisonOrImage: false,
       forTask: false,
       hasFigure: false,
       readImageWithoutImageBlock: false,

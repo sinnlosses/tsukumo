@@ -28,7 +28,7 @@ export function reportUsageEntry(
     listStyles: ["bullet"],
     mermaidKinds: [],
     hasModifiedFiles: true,
-    hasBeforeAfterOrImage: false,
+    hasComparisonOrImage: false,
     forTask: true,
     hasFigure: true,
     readImageWithoutImageBlock: false,

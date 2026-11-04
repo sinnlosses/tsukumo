@@ -1,4 +1,4 @@
-// `Compare`（2つを左右に並べて見比べる）を Markdown に戻さず直接描く。写す前の `BeforeAfter` も `Compare` の前後に写して描く。
+// `Compare`（2つを左右に並べて見比べる）を Markdown に戻さず直接描く。
 // 対等（versus）で両側が箇条なら、見出しと箇条の札（Markdown の `compare` と同じ見た目）。
 // ほかは側ごとに画像・コード・箇条・mermaid・svg を並べ、前後（before-after）は札を「前」「後」にして間に矢印を置く。
 // 両側が画像のときだけ見せ方の口を持つ包みにし、「重ねる」は前後でだけ出す。
@@ -7,7 +7,6 @@ import clsx from "clsx"
 import type { ReactElement } from "react"
 
 import type { A2uiReportComponent } from "../../../../../../shared/report/a2ui-report-catalog.ts"
-import { compareOfBeforeAfter } from "../../../../../../shared/report/before-after-compare.ts"
 import type { ReportImageSource } from "../../../../../../shared/report/report-image-markdown.ts"
 import { formatImageRegion } from "../../../../../../shared/report/report-image.ts"
 import { fencedMarkdown } from "../../../../../../shared/report/report-inline-markdown.ts"
@@ -55,7 +54,7 @@ export function CompareLeaf(props: {
   readonly value: LeafValue
   readonly imageSource: ReportImageSource
 }): ReactElement {
-  const part = compareOfBeforeAfter(props.part)
+  const part = props.part
   if (part.component !== "Compare") {
     return <></>
   }
@@ -88,8 +87,8 @@ export function CompareLeaf(props: {
     >
       <div
         className={clsx(
-          figureClassName("before-after"),
-          part.relation === "versus" && figureClassName("before-after-versus"),
+          figureClassName("compare-figure"),
+          part.relation === "versus" && figureClassName("compare-versus"),
         )}
       >
         <SideView
@@ -102,7 +101,7 @@ export function CompareLeaf(props: {
           imageSource={props.imageSource}
         />
         {part.relation === "before-after" && (
-          <div className={figureClassName("before-after-arrow")} aria-hidden="true">
+          <div className={figureClassName("compare-arrow")} aria-hidden="true">
             →
           </div>
         )}
@@ -251,12 +250,12 @@ function SideView(props: {
   readonly imageSource: ReportImageSource
 }): ReactElement {
   const labelClassName = clsx(
-    figureClassName("before-after-label"),
-    props.accent && figureClassName("before-after-label-after"),
+    figureClassName("compare-label"),
+    props.accent && figureClassName("compare-label-after"),
   )
   return (
     <SwapSideContext value={props.position}>
-      <div className={figureClassName("before-after-side")} data-side={props.position}>
+      <div className={figureClassName("compare-figure-side")} data-side={props.position}>
         {props.label !== "" && (
           <div className={labelClassName}>
             <InlineCodeText text={props.label} />

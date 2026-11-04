@@ -54,7 +54,7 @@ export type PaperMetric = {
   readonly stackedBlocks: {
     readonly stats: StackedCount
     readonly compare: StackedCount
-    readonly beforeAfter: StackedCount
+    readonly compareFigure: StackedCount
     readonly options: StackedCount
     readonly files: StackedCount
   }
@@ -168,7 +168,7 @@ export async function measurePaperMetric(page: Page): Promise<PaperMetric> {
         stackedBlocks: {
           stats: stackedOf("report-stats", byChildren),
           compare: stackedOf("report-compare", byChildren),
-          beforeAfter: stackedOf("report-before-after", byChildren),
+          compareFigure: stackedOf("report-compare-figure", byChildren),
           options: stackedOf("report-options", byChildren),
           files: stackedOf("report-files", (block) =>
             Array.from(block.querySelectorAll('[class*="report-file_"]')).some(byChildren),
@@ -264,7 +264,7 @@ export function formatPaperMetric(metric: PaperMetric): readonly string[] {
     ],
     ["縦落ち stats", stackedText(stacked.stats)],
     ["縦落ち compare", stackedText(stacked.compare)],
-    ["縦落ち beforeAfter", stackedText(stacked.beforeAfter)],
+    ["縦落ち compareFigure", stackedText(stacked.compareFigure)],
     ["縦落ち options", stackedText(stacked.options)],
     ["縦落ち files", stackedText(stacked.files)],
   ]

@@ -44,6 +44,8 @@ import {
   type CountedRecord,
   countedSchema,
   isFakeSessionRow,
+  PAST_BLOCK_FIELDS,
+  PAST_BLOCK_KINDS,
   recordSchema,
   rejectionSchema,
   keyFiguresRowOf,
@@ -100,13 +102,18 @@ process.stdout.write(
   }）\n\n`,
 )
 process.stdout.write(
-  table("塊の種類 × レポート数", REPORT_BLOCK_KINDS, records, (record) => record.blockKinds),
+  table(
+    "塊の種類 × レポート数",
+    [...REPORT_BLOCK_KINDS, ...PAST_BLOCK_KINDS],
+    records,
+    (record) => record.blockKinds,
+  ),
 )
 process.stdout.write("\n\n")
 process.stdout.write(
   table(
     `塊の欄 × レポート数（${String(records.length)}件のうち）`,
-    REPORT_BLOCK_FIELDS,
+    [...REPORT_BLOCK_FIELDS, ...PAST_BLOCK_FIELDS],
     records,
     (record) => record.blockFields,
   ),

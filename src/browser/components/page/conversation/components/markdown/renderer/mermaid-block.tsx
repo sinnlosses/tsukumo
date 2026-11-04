@@ -310,7 +310,7 @@ async function fitTopDown(fit: TopDownFit): Promise<void> {
  * 前後の部品の側の図は側の幅に収めるので、段を当てない。
  */
 function placeInMeasure(node: HTMLPreElement): boolean {
-  if (node.closest(".report-before-after-side") !== null) {
+  if (node.closest(".report-compare-figure-side") !== null) {
     return true
   }
   releaseFigureWidth(node)

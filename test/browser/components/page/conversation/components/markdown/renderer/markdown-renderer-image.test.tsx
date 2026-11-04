@@ -143,10 +143,13 @@ describe("Markdown（image の塊の画像）", () => {
       return renderDirectLeaf(
         {
           id: "b1",
-          component: "BeforeAfter",
+          component: "Compare",
           title: "架空の前後",
-          before: { kind: "image", path: "架空/before.png" },
-          after: { kind: "image", path: "架空/after.png" },
+          relation: "before-after",
+          sides: [
+            { heading: "", kind: "image", path: "架空/before.png" },
+            { heading: "", kind: "image", path: "架空/after.png" },
+          ],
           fold: "",
           aside: "",
         },
@@ -157,7 +160,7 @@ describe("Markdown（image の塊の画像）", () => {
 
     function swapRoot(container: HTMLElement): HTMLElement {
       return typedElement(
-        container.querySelector("div.report-before-after-swap"),
+        container.querySelector("div.report-compare-swap"),
         HTMLElement,
         "前後の包み",
       )
@@ -170,7 +173,7 @@ describe("Markdown（image の塊の画像）", () => {
       return typedElement(found ?? null, HTMLElement, name)
     }
 
-    const VIEW_KEY = "tsukumo-before-after-view:v1"
+    const VIEW_KEY = "tsukumo-compare-view:v1"
 
     function zoomButton(container: HTMLElement): HTMLElement {
       return typedElement(
@@ -299,19 +302,15 @@ describe("Markdown（image の塊の画像）", () => {
         return found?.getAttribute("aria-pressed") ?? null
       }
 
-      function beforeAfterDialog(): HTMLElement {
-        return typedElement(
-          document.querySelector("dialog.before-after-zoom"),
-          HTMLElement,
-          "前後の面",
-        )
+      function compareDialog(): HTMLElement {
+        return typedElement(document.querySelector("dialog.compare-zoom"), HTMLElement, "前後の面")
       }
 
       it("押した側から前後の面が開き、塊の題を添える", () => {
         const { container } = renderPair()
 
         fireEvent.click(typedElement(zoomButtons(container)[1] ?? null, HTMLElement, "後の画像"))
-        const dialog = beforeAfterDialog()
+        const dialog = compareDialog()
         expect(pairPressed(dialog, "後")).toBe("true")
         expect(pairPressed(dialog, "前")).toBe("false")
         expect(dialog.textContent).toContain("図 1")
@@ -324,7 +323,7 @@ describe("Markdown（image の塊の画像）", () => {
 
         fireEvent.click(typedElement(zoomButtons(container)[0] ?? null, HTMLElement, "前の画像"))
 
-        expect(pairPressed(beforeAfterDialog(), "前")).toBe("true")
+        expect(pairPressed(compareDialog(), "前")).toBe("true")
       })
 
       it("切り替えでは、見せている側でなく押した画像の側から開く", () => {
@@ -334,7 +333,7 @@ describe("Markdown（image の塊の画像）", () => {
 
         fireEvent.click(typedElement(zoomButtons(container)[0] ?? null, HTMLElement, "前の画像"))
 
-        expect(pairPressed(beforeAfterDialog(), "前")).toBe("true")
+        expect(pairPressed(compareDialog(), "前")).toBe("true")
       })
 
       it("面を閉じると、押した画像のボタンにフォーカスが戻る", () => {
@@ -344,7 +343,7 @@ describe("Markdown（image の塊の画像）", () => {
         fireEvent.click(afterButton)
         fireEvent.click(
           typedElement(
-            [...beforeAfterDialog().querySelectorAll("button")].find(
+            [...compareDialog().querySelectorAll("button")].find(
               (candidate) => candidate.getAttribute("aria-label") === "閉じる",
             ) ?? null,
             HTMLElement,
@@ -352,7 +351,7 @@ describe("Markdown（image の塊の画像）", () => {
           ),
         )
 
-        expect(document.querySelector("dialog.before-after-zoom")).toBeNull()
+        expect(document.querySelector("dialog.compare-zoom")).toBeNull()
         expect(document.activeElement).toBe(afterButton)
       })
 
@@ -363,7 +362,7 @@ describe("Markdown（image の塊の画像）", () => {
         fireEvent.click(typedElement(zoomButtons(container)[0] ?? null, HTMLElement, "読めた画像"))
 
         expect(document.querySelector("dialog.image-zoom")).not.toBeNull()
-        expect(document.querySelector("dialog.before-after-zoom")).toBeNull()
+        expect(document.querySelector("dialog.compare-zoom")).toBeNull()
       })
     })
 
@@ -371,17 +370,20 @@ describe("Markdown（image の塊の画像）", () => {
       const { container } = renderDirectLeaf(
         {
           id: "b1",
-          component: "BeforeAfter",
+          component: "Compare",
           title: "",
-          before: { kind: "image", path: "架空/before.png" },
-          after: { kind: "points", points: ["架空"] },
+          relation: "before-after",
+          sides: [
+            { heading: "", kind: "image", path: "架空/before.png" },
+            { heading: "", kind: "points", points: ["架空"] },
+          ],
           fold: "",
           aside: "",
         },
         SHELF,
       )
 
-      expect(container.querySelector("div.report-before-after-swap")).toBeNull()
+      expect(container.querySelector("div.report-compare-swap")).toBeNull()
       expect(container.querySelector('[role="group"][aria-label="見せ方"]')).toBeNull()
     })
   })

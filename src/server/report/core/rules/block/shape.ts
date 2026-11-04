@@ -2,16 +2,16 @@
 
 import { sumBy } from "remeda"
 
-import { comparisonSidesOf } from "../../../../../shared/report/before-after-compare.ts"
 import {
   type TableCell,
   tableRowCells,
   tableRowDepth,
 } from "../../../../../shared/report/report-block-comparison.ts"
 import { SENTENCE_CELL_LENGTH } from "../../../../../shared/report/report-limit.ts"
-import type {
-  ReportOutline,
-  ReportOutlineLeaf,
+import {
+  comparisonSidesOf,
+  type ReportOutline,
+  type ReportOutlineLeaf,
 } from "../../../../../shared/report/report-outline.ts"
 import { isHeatCell } from "../../../../../shared/report/table-layout.ts"
 import type { CardsFault } from "../block.ts"
@@ -25,7 +25,6 @@ export function drawsShape(leaf: ReportOutlineLeaf): boolean {
       return leaf.style === "flow"
     case "Compare":
       return leaf.relation === "before-after"
-    case "BeforeAfter":
     case "Graph":
     case "Mermaid":
     case "Svg":

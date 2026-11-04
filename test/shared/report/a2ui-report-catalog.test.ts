@@ -18,7 +18,6 @@ const KIND_TO_COMPONENT = {
   table: "Table",
   matrix: "Matrix",
   compare: "Compare",
-  beforeAfter: "BeforeAfter",
   note: "Note",
   stats: "Stats",
   code: "Code",
@@ -91,12 +90,7 @@ function withoutComponent(document: Document, name: string): { components: objec
 
 describe("A2UI のカタログ文書", () => {
   const document = buildReportCatalogDocument()
-  const expected = [
-    "Report",
-    "Section",
-    ...Object.values(KIND_TO_COMPONENT).filter((component) => component !== "BeforeAfter"),
-    ...BASIC_COMPONENTS,
-  ]
+  const expected = ["Report", "Section", ...Object.values(KIND_TO_COMPONENT), ...BASIC_COMPONENTS]
 
   it("書き手に渡す塊の全種類が部品の対応表にある", () => {
     expect(Object.keys(KIND_TO_COMPONENT).toSorted()).toEqual([...REPORT_BLOCK_KINDS].toSorted())
@@ -346,7 +340,6 @@ describe("A2UI のカタログ文書", () => {
         "Graph",
         "Svg",
         "Timeline",
-        "BeforeAfter",
         "Compare",
         "Chart",
         "Stats",

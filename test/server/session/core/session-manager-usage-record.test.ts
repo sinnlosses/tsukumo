@@ -100,7 +100,7 @@ describe("createSessionManager", () => {
           listStyles: [],
           mermaidKinds: [],
           hasModifiedFiles: false,
-          hasBeforeAfterOrImage: false,
+          hasComparisonOrImage: false,
           forTask: false,
           hasFigure: false,
           readImageWithoutImageBlock: false,

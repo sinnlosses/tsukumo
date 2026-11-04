@@ -240,7 +240,6 @@ const DIAGRAM_BLOCK_KINDS: ReadonlySet<string> = new Set([
   "chart",
   "svg",
   "timeline",
-  "beforeAfter",
   "image",
 ])
 
@@ -302,7 +301,11 @@ function readingShapeOf(state: SessionState): ReadingShape {
         : leaves.filter((leaf) => leaf.component === "Table").length / leaves.length,
     hasDiagram:
       outline.figure.length > 0 ||
-      leaves.some((leaf) => DIAGRAM_BLOCK_KINDS.has(LEAF_COMPONENT_KINDS[leaf.component])),
+      leaves.some(
+        (leaf) =>
+          DIAGRAM_BLOCK_KINDS.has(LEAF_COMPONENT_KINDS[leaf.component]) ||
+          (leaf.component === "Compare" && leaf.relation === "before-after"),
+      ),
   }
 }
 

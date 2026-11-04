@@ -152,7 +152,7 @@ function toRecord(entry: ReportUsageEntry, reportSchema: ReportSchemaVariant): R
     listStyles: entry.listStyles,
     mermaidKinds: entry.mermaidKinds,
     hasModifiedFiles: entry.hasModifiedFiles,
-    hasBeforeAfterOrImage: entry.hasBeforeAfterOrImage,
+    hasComparisonOrImage: entry.hasComparisonOrImage,
     forTask: entry.forTask,
     hasFigure: entry.hasFigure,
     readImageWithoutImageBlock: entry.readImageWithoutImageBlock,

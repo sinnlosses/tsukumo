@@ -16,8 +16,8 @@
 行は版を持ち、版ごとに次の数と真偽値を足した（欄の名前と形は `src/server/report/core/usage/report-usage.ts` が持つ）:
 
 - 版4: `files` に `modified` の項目があるか（`hasModifiedFiles`。書き手が `files` を渡せなくなったため、新規は常に false で、型と欄だけ残す）・
-  `beforeAfter` か `image` の部品があるか・`task` を渡した最終レポートか
-- 版5: 段1の図（`image`・`mermaid`・`graph`・`svg`。`beforeAfter` の側を含む）があるか、
+  `beforeAfter` か `image` の部品があるか（版25から `compare` か `image`。欄の名前は `hasComparisonOrImage`）・`task` を渡した最終レポートか
+- 版5: 段1の図（`image`・`mermaid`・`graph`・`svg`。`beforeAfter` の側を含む。版25から `compare` の側）があるか、
   このターンにメインが画像のファイルを `Read` したのに `image` の部品が無かったか（サブエージェントの `Read` は数えない）
 - 版6: `figure` の欄の種類と、`none` のときの理由。部品の種類・欄・段1の図・画像の有無を `figure` の図も含めて数える
 - 版7: 強調の数（インラインコードの中は数えない）と、`graph` のエッジ・ラベルの無いエッジ・ノードの数（複数あれば最大）
@@ -30,7 +30,7 @@
   受け付けも差し戻しも、モデルが書いた生の引数の字数。差し戻しの行は handler の差し戻しだけでなく、結果が `isError` で返った `report` の呼び出しすべてに付く
   （形の検査で落ちた呼び出しは、handler に届かなかったものも、handler で組んだ値が落ちたものも理由が `tool-error`。
   引数が読めなくても字数は数える）
-- 版15: `beforeAfter` の画像の側に `region` が付いた回を、部品の欄 `beforeAfterRegion` で数える（行の形は版14と同じ）
+- 版15: `beforeAfter` の画像の側に `region` が付いた回を、部品の欄 `beforeAfterRegion` で数える（行の形は版14と同じ。版25から `compare` の画像の側を `compareRegion` で数える）
 - 版16: 差し戻しのあとの出し直しで、渡さずに直前の差し戻しから引き継いだ欄の名前（`inheritedFields`）。受け付けと差し戻しの両方の行に入る。
   引数の字数は渡した欄だけを数え、引き継いだ欄の字数は持たない（直前の差し戻しの行の欄ごとの字数から出せる）
 - 版17: どの型の渡し方で `report` を受けたか（`reportSchema`。いまは `a2ui` だけ。旧い行には `json-schema`・`short-type`・`body-fence` が残り、読めたままにする）。受け付けと差し戻しの両方の行に入る

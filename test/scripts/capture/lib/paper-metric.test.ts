@@ -22,7 +22,7 @@ const EMPTY: PaperMetric = {
   stackedBlocks: {
     stats: { total: 0, stacked: 0 },
     compare: { total: 0, stacked: 0 },
-    beforeAfter: { total: 0, stacked: 0 },
+    compareFigure: { total: 0, stacked: 0 },
     options: { total: 0, stacked: 0 },
     files: { total: 0, stacked: 0 },
   },

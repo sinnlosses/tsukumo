@@ -18,7 +18,12 @@ import {
   note,
 } from "../../../../fixture/report-draft-block.ts"
 
-type Side = Extract<ReportOutlineLeaf, { readonly component: "BeforeAfter" }>["before"]
+type Side = {
+  readonly heading: string
+  readonly kind: "mermaid"
+  readonly source: string
+}
+type CompareLeaf = Extract<ReportOutlineLeaf, { readonly component: "Compare" }>
 
 describe("reportViolations", () => {
   describe("mermaid は規約の2種だけ", () => {
@@ -52,22 +57,22 @@ describe("reportViolations", () => {
       expect(kinds(draft([graph]))).toEqual([])
     })
 
-    it("beforeAfter の mermaid の側も数える", () => {
-      const side = (source: string): Side => ({ kind: "mermaid", source })
-      const beforeAfter = (before: Side, after: Side): ReportBlock => ({
-        kind: "beforeAfter",
+    it("前後の Compare の mermaid の側も数える", () => {
+      const side = (source: string): Side => ({ heading: "", kind: "mermaid", source })
+      const compareFigure = (before: Side, after: Side): ReportBlock => ({
+        kind: "compare",
         title: "",
-        before,
-        after,
+        relation: "before-after",
+        sides: [before, after],
         fold: "",
         aside: "",
       })
-      expect(kinds(draft([beforeAfter(side("sequenceDiagram"), side("stateDiagram-v2"))]))).toEqual(
-        [],
-      )
+      expect(
+        kinds(draft([compareFigure(side("sequenceDiagram"), side("stateDiagram-v2"))])),
+      ).toEqual([])
       expect(
         reportViolations(
-          draft([beforeAfter(side("flowchart LR\n  a --> b"), side("sequenceDiagram"))]),
+          draft([compareFigure(side("flowchart LR\n  a --> b"), side("sequenceDiagram"))]),
         ),
       ).toEqual([{ kind: "unknown-mermaid", count: 1 }])
     })
@@ -151,7 +156,7 @@ describe("reportViolations", () => {
     })
 
     it("検査に渡すソースは、単独の塊と側を出現順（前が先）に集める", () => {
-      const side = (source: string): Side => ({ kind: "mermaid", source })
+      const side = (source: string): Side => ({ heading: "", kind: "mermaid", source })
       const single: ReportOutlineLeaf = {
         id: "a",
         component: "Mermaid",
@@ -160,16 +165,16 @@ describe("reportViolations", () => {
         fold: "",
         aside: "",
       }
-      const pair: ReportOutlineLeaf = {
+      const pair: CompareLeaf = {
         id: "b",
-        component: "BeforeAfter",
+        component: "Compare",
         title: "",
-        before: side("B"),
-        after: { kind: "points", points: ["架空"] },
+        relation: "before-after",
+        sides: [side("B"), { heading: "", kind: "points", points: ["架空"] }],
         fold: "",
         aside: "",
       }
-      const both: ReportOutlineLeaf = { ...pair, id: "c", before: side("C"), after: side("D") }
+      const both: CompareLeaf = { ...pair, id: "c", sides: [side("C"), side("D")] }
       expect(mermaidSourcesOfLeaves([single, pair, both])).toEqual(["A", "B", "C", "D"])
     })
 

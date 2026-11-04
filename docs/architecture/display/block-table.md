@@ -56,7 +56,7 @@
   両側の値を揃えるなら `table`（セルの `from` / `to` は1つの値の前後）、3つ以上は `table`、**向きのある変化（前 → 後）は
   `compare` の `relation: before-after`**（`relation` が `versus`〔既定〕なら向きの無い2つ〔案A と案B〕で、側の見出しは書き手が付けるまま）。
   取り違えは差し戻さず、同じ記録で見る
-- **変更の前と後は `compare` の `relation: before-after` で左右に並べる**（`title`・`sides`〔左が前・右が後〕を受ける。旧い `beforeAfter`〔`before`・`after`〕は読み戻しで `compare` に写す。`docs/architecture/adr/0047-compare-relation.md`。
+- **変更の前と後は `compare` の `relation: before-after` で左右に並べる**（`title`・`sides`〔左が前・右が後〕を受ける。旧い `beforeAfter`〔`before`・`after`〕は受け口で `compare` に書き換えて読む。`docs/architecture/adr/0047-compare-relation.md`。
   側はちょうど2つ。3つ以上の並びは `table`）。側は `kind` で判別する合併型で、`image`〔`path`と任意の `region`〕/ `code`〔`language`・
   `source`。`diff` にせずその側の中身をそのまま書く〕/ `points`〔短い1行の並び〕/ `mermaid`〔`source` だけ。
   `sequenceDiagram`・`stateDiagram-v2` で、時間の順の前後に使う。種類の外なら差し戻し、位置は `mermaid` のソースの出現順で言う〕/
@@ -84,7 +84,7 @@
     両側の画像の自然な寸法の縦横比の差が1%以内のときだけ選べる（違うときは押しボタンを出さず、保存値が重ねるでも並べるで描く）。
     選んだ見せ方は `localStorage` に覚え、次もそこから始める（読めない・壊れた値は並べる）。
     ボタンは24px以上の押せる面を持つ。どちらかの画像が「画像を出せない」のカードになったら、押しボタンも見本も出さず並べる形にする
-  - **前後の部品の中の画像を押すと、前後を入れかえて見られる面（`BeforeAfterZoom`）で、押した側から開く**。
+  - **前後の部品の中の画像を押すと、前後を入れかえて見られる面（`CompareZoom`）で、押した側から開く**。
     左上に前／後の2つ組（`aria-pressed`。選んだ側は `accent` の枠と薄い地）、右に案内「← → で前と後 · Esc で閉じる」と ×、
     下に部品の題（「図 N」は等幅。数え方は部品の題と同じ）を中央・13px で置く。← で前、→ で後に替わる（選ぶ動作で、
     2つ組のボタンを押しても同じ）。幅は 960px を上限に画面へ収めて中央に出す。縦に長い画像は面の中で流れ、上の行は残る。
@@ -94,7 +94,7 @@
     出どころは書き手の指定に決め、差分からの検出は採らない。撮影の揺れ〔時計・アニメ〕で誤検出し、画像処理の依存が増えるため）。
     `region` は画像に対する % の `left`・`top`・`width`・`height`。無ければ枠を出さず、欠陥にしない。
     `report` は範囲外（0 未満・100 超・`left + width` か `top + height` が 100 超）と幅・高さ 0 以下を差し戻す
-    （位置の誤りは静かに出るので機械で拾う）。使用の記録（`report-usage`）は、枠が付いた回を部品の欄 `beforeAfterRegion`（版15）で数える。
+    （位置の誤りは静かに出るので機械で拾う）。使用の記録（`report-usage`）は、枠が付いた回を部品の欄 `beforeAfterRegion`（版15）、版25から `compareRegion` で数える。
     枠の見た目は見本どおり（前は `surface` と `ink` の混色の不透明な灰、後は `accent`。2px・角丸 6px・外に 4px の薄い輪）で、大きく見る面でも出す。
     `region` は Markdown の `<img data-change-region="left,top,width,height">` で運び、サニタイザは `img` にだけ許す
     （4領域が名乗る `data-region` とは別の名前にし、`[data-region]` が当たるのは4領域だけという前提を守る）。

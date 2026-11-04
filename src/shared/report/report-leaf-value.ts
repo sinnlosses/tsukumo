@@ -155,7 +155,6 @@ function captionKindOf(block: ReportBlock): CaptionKind | undefined {
   switch (block.kind) {
     case "image":
     case "compare":
-    case "beforeAfter":
     case "mermaid":
     case "graph":
     case "chart":

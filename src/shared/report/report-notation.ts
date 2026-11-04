@@ -23,7 +23,7 @@ export const REPORT_NOTE_KINDS = [
 
 /**
  * `note` 以外の印のうち、tsukumo が組むもの（報告の部品が直接描く DOM と、質問の添え書きで図の部品から組む Markdown が付ける。
- * 表のセルの状態の印と変化・数の棒・`matrix` / `compare` / `beforeAfter`・`image` の説明の並び・図と表の題の包みと題の行・`stats`・
+ * 表のセルの状態の印と変化・数の棒・`matrix` / `compare`・`image` の説明の並び・図と表の題の包みと題の行・`stats`・
  * 名前付きの `list`・`list` の `flow`・`options` / `claims` / `files`・欄外注の列の外枠と欄外注・`row` / `panel` の容れ物）と、
  * 塊にする前にモデルが逃げ道に書いていた `cols` / `card`。モデルには教えない。ラベルは付かず、見た目だけを持つ。
  * 旧い記録の本文に残る印も同じ見た目で描くため、組む側が無くなった名前も残す。
@@ -152,13 +152,13 @@ const REPORT_BLOCK_MARK_NAMES = [
   "compare",
   "compare-side",
   "compare-heading",
-  "before-after",
-  "before-after-side",
-  "before-after-label",
-  "before-after-label-after",
-  "before-after-arrow",
-  "before-after-swap",
-  "before-after-versus",
+  "compare-figure",
+  "compare-figure-side",
+  "compare-label",
+  "compare-label-after",
+  "compare-arrow",
+  "compare-swap",
+  "compare-versus",
   "svg-figure",
   "svg-legend",
   "svg-legend-item",

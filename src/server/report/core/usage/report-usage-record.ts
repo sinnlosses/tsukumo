@@ -17,7 +17,7 @@ import { REPORT_SCHEMA_VARIANTS } from "../../../core/schema-variant.ts"
  * 欄を足したら版を上げ、集計は `MIN_FORMAT_VERSION` より古い行を読まない。
  * 集計は版で分母を切らず、欄を記録した行を分母にする。
  */
-export const REPORT_USAGE_FORMAT_VERSION = 24 satisfies number
+export const REPORT_USAGE_FORMAT_VERSION = 25 satisfies number
 
 /** どの駆動で起こしたプロセスの行か（版19から）。`fake` は疑似セッションで、集計は既定で除く。 */
 const reportUsageDriverSchema = z.enum(["sdk", "fake"])
@@ -119,7 +119,7 @@ const acceptedFields = reportShapeTagUsageSchema.unwrap().extend({
   sessionId: z.string(),
   /** その回に出た塊の種類（重複無し）。 */
   blockKinds: z.array(z.string()).readonly(),
-  /** その回に出た塊の欄（重複無し。版3から。`blockAside` は版12から、`beforeAfterRegion` は版15から）。 */
+  /** その回に出た塊の欄（重複無し。版3から。`blockAside` は版12から、`compareRegion` は版25から）。 */
   blockFields: z.array(z.string()).readonly(),
   /** その回に逃げ道（`markdown` の塊）の外側に出た記法の種類（重複無し）。 */
   notations: z.array(z.string()).readonly(),
@@ -143,11 +143,11 @@ const acceptedFields = reportShapeTagUsageSchema.unwrap().extend({
   brokenFenceCount: z.number(),
   /** 旧い記録では `files` の塊に `modified` の項目があるか。新規は常に false（版4から）。 */
   hasModifiedFiles: z.boolean(),
-  /** `beforeAfter` か `image` の塊が1つでもあるか（版4から）。 */
-  hasBeforeAfterOrImage: z.boolean(),
+  /** `compare` か `image` の塊が1つでもあるか（版4から。版24までは前後の塊だけを数えた別の名前の欄）。 */
+  hasComparisonOrImage: z.boolean(),
   /** `task` を渡した最終レポートか（版4から）。 */
   forTask: z.boolean(),
-  /** 段1の図（`image`・`mermaid`・`graph`・`svg`。`beforeAfter` の側を含む）が1つでもあるか（版5から）。 */
+  /** 段1の図（`image`・`mermaid`・`graph`・`svg`。`compare` の側を含む）が1つでもあるか（版5から）。 */
   hasFigure: z.boolean(),
   /** このターンにメインが画像のファイルを `Read` したのに `image` の塊が無いか（版5から）。 */
   readImageWithoutImageBlock: z.boolean(),

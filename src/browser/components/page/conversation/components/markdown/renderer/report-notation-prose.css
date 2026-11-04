@@ -263,11 +263,11 @@
    `%` を `width` に混ぜない（包みのボタンが中身の幅に縮むので、`%` の幅の画像は読み込み前に幅 0 になる）。器より広いときは `max-width: 100%` が縦横比のまま縮める。
    縦に長い画像は svg と同じく原寸の幅の `--report-figure-min-scale` 倍より小さくせず、高さの上限は包みに移して転がす。
    前後の部品の画像は列の幅いっぱいに描くので除く。`attr()` を解さない描画では `width: auto`（比は保つが、読み込み前は箱を取らない）に戻る。 */
-  & .report-image-zoom:not(.report-before-after-swap .report-image-zoom) {
+  & .report-image-zoom:not(.report-compare-swap .report-image-zoom) {
     max-height: var(--report-figure-max);
     overflow-y: auto;
   }
-  & .report-image-zoom img[width][height]:not(.report-before-after-swap img) {
+  & .report-image-zoom img[width][height]:not(.report-compare-swap img) {
     width: auto;
     width: min(
       attr(width px, 9999px),

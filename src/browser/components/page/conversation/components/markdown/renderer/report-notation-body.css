@@ -59,8 +59,8 @@
 :is(.detail-block, [data-report-region])
   > :is(
     .report-compare,
-    .report-before-after,
-    .report-captioned:has(> :is(.report-compare, .report-before-after)),
+    .report-compare-figure,
+    .report-captioned:has(> :is(.report-compare, .report-compare-figure)),
     .report-captioned:has(tr > :nth-child(7)),
     .table-scroll:has(tr > :nth-child(7)),
     .report-matrix:has(tr > :nth-child(7))

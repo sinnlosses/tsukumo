@@ -15,7 +15,6 @@ import {
   tableBlockSchema,
 } from "./report-block-comparison.ts"
 import {
-  beforeAfterBlockSchema,
   chartBlockSchema,
   graphBlockSchema,
   imageBlockSchema,
@@ -46,7 +45,7 @@ import { reportTaskSchema } from "./report-task.ts"
 import { timelineBlockSchema } from "./timeline-block.ts"
 import { traceBlockSchema } from "./trace-block.ts"
 
-/** 部品名と schema。`LEGACY_LEAF_COMPONENTS` の 1 種と合わせて、`writerBlockBranches` の 22 種と対応する。 */
+/** 部品名と schema。`writerBlockBranches` の 21 種と対応する。 */
 const LEAF_COMPONENTS = {
   Paragraph: leafComponent("Paragraph", textBlockSchema),
   ItemList: leafComponent("ItemList", listBlockSchema),
@@ -86,11 +85,6 @@ const LEAF_COMPONENTS = {
   Markdown: leafComponent("Markdown", markdownBlockSchema),
 } as const
 
-/** 書き手の目録には出さず、旧い transcript の読み戻しだけが受ける内容部品。 */
-const LEGACY_LEAF_COMPONENTS = {
-  BeforeAfter: leafComponent("BeforeAfter", beforeAfterBlockSchema),
-} as const
-
 /** 内容部品名と、写す先の塊の `kind`。 */
 export const LEAF_COMPONENT_KINDS = {
   Paragraph: textBlockSchema.shape.kind.value,
@@ -98,7 +92,6 @@ export const LEAF_COMPONENT_KINDS = {
   Table: tableBlockSchema.shape.kind.value,
   Matrix: matrixBlockSchema.shape.kind.value,
   Compare: compareBlockSchema.shape.kind.value,
-  BeforeAfter: beforeAfterBlockSchema.shape.kind.value,
   Note: noteBlockSchema.shape.kind.value,
   Stats: statsBlockSchema.shape.kind.value,
   Code: codeBlockSchema.shape.kind.value,
@@ -115,10 +108,7 @@ export const LEAF_COMPONENT_KINDS = {
   Picture: imageBlockSchema.shape.kind.value,
   Plot: plotBlockSchema.shape.kind.value,
   Markdown: markdownBlockSchema.shape.kind.value,
-} as const satisfies Record<
-  keyof typeof LEAF_COMPONENTS | keyof typeof LEGACY_LEAF_COMPONENTS,
-  string
->
+} as const satisfies Record<keyof typeof LEAF_COMPONENTS, string>
 
 /** 書き手に渡す塊の `kind`（内容部品の写し先）の一覧。 */
 export const REPORT_BLOCK_KINDS: readonly string[] = Object.values(LEAF_COMPONENT_KINDS)
@@ -138,7 +128,6 @@ export const reportFigureSchema = z.discriminatedUnion("kind", [
   graphBlockSchema,
   svgBlockSchema,
   timelineBlockSchema,
-  beforeAfterBlockSchema,
   compareBlockSchema,
   chartBlockSchema,
   statsBlockSchema,
@@ -229,12 +218,11 @@ export const REPORT_COMPONENT_SCHEMAS = {
   ...BASIC_PART_SCHEMAS,
 } as const
 
-/** 部品 1 つの受理の形（書き手に見える 29 部品と旧い BeforeAfter のどれか）。 */
+/** 部品 1 つの受理の形（書き手に見える 29 部品のどれか）。 */
 export const a2uiReportComponentSchema = z.discriminatedUnion("component", [
   reportComponentSchema,
   sectionComponentSchema,
   ...Object.values(LEAF_COMPONENTS),
-  ...Object.values(LEGACY_LEAF_COMPONENTS),
   ...Object.values(BASIC_PART_SCHEMAS),
 ])
 

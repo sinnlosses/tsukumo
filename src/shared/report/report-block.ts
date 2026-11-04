@@ -12,7 +12,6 @@ import {
   tableBlockSchema,
 } from "./report-block-comparison.ts"
 import {
-  beforeAfterBlockSchema,
   chartBlockSchema,
   graphBlockSchema,
   imageBlockSchema,
@@ -35,7 +34,6 @@ import { timelineBlockSchema } from "./timeline-block.ts"
 import { traceBlockSchema } from "./trace-block.ts"
 
 // ツール定義の中で `retrospective.blocks` の合併に入る塊の、定義上の名前
-const namedBeforeAfter = beforeAfterBlockSchema.meta({ id: "BeforeAfterBlock" })
 const namedStats = statsBlockSchema.meta({ id: "StatsBlock" })
 const namedMermaid = mermaidBlockSchema.meta({ id: "MermaidBlock" })
 const namedGraph = graphBlockSchema.meta({ id: "GraphBlock" })
@@ -51,7 +49,6 @@ const writerBlockBranches = [
   tableBlockSchema,
   matrixBlockSchema,
   compareBlockSchema,
-  namedBeforeAfter,
   noteBlockSchema,
   namedStats,
   codeBlockSchema,

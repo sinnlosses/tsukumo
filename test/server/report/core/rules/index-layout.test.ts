@@ -122,14 +122,27 @@ describe("reportViolations", () => {
     })
   })
 
-  describe("beforeAfter の画像の側の region", () => {
+  describe("前後の Compare の画像の側の region", () => {
     const region = { left: 10, top: 20, width: 30, height: 40 }
     type Region = typeof region
     const withRegion = (before: readonly Region[], after: readonly Region[]): ReportBlock => ({
-      kind: "beforeAfter",
+      kind: "compare",
       title: "架空の前後",
-      before: { kind: "image", path: "架空/before.png", ...before.map((r) => ({ region: r }))[0] },
-      after: { kind: "image", path: "架空/after.png", ...after.map((r) => ({ region: r }))[0] },
+      relation: "before-after",
+      sides: [
+        {
+          heading: "",
+          kind: "image",
+          path: "架空/before.png",
+          ...before.map((r) => ({ region: r }))[0],
+        },
+        {
+          heading: "",
+          kind: "image",
+          path: "架空/after.png",
+          ...after.map((r) => ({ region: r }))[0],
+        },
+      ],
       fold: "",
       aside: "",
     })

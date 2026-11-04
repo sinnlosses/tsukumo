@@ -31,7 +31,7 @@ import { MermaidBlock } from "./renderer/mermaid-block.tsx"
 import { NoteLabel as NoteLabelView } from "./renderer/note-label.tsx"
 import { CodeSpan } from "./renderer/report-code.tsx"
 import {
-  BeforeAfterSwap,
+  CompareSwap,
   ReportImage,
   type SwapSettings,
   SwapSideContext,
@@ -211,13 +211,13 @@ type FigureMarkName =
   | "svg-figure"
   | "svg-legend"
   | "svg-legend-item"
-  | "before-after"
-  | "before-after-side"
-  | "before-after-label"
-  | "before-after-label-after"
-  | "before-after-arrow"
-  | "before-after-swap"
-  | "before-after-versus"
+  | "compare-figure"
+  | "compare-figure-side"
+  | "compare-label"
+  | "compare-label-after"
+  | "compare-arrow"
+  | "compare-swap"
+  | "compare-versus"
   | "image-notes"
   | "image-note-list"
   | "image-note-number"
@@ -278,7 +278,7 @@ export function filesClassName(name: ReportFileMarkName): string | undefined {
 
 export { ZoomableSvgFigure }
 
-export { BeforeAfterSwap, ReportImage, type SwapSettings, SwapSideContext }
+export { CompareSwap, ReportImage, type SwapSettings, SwapSideContext }
 
 export { CodeSpan }
 

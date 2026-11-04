@@ -97,54 +97,65 @@ describe("parseReportBlocks", () => {
     expect(blocks.map((block) => block.aside)).toEqual(["", "架空の出典", "架空の表の出典"])
   })
 
-  it("beforeAfter の塊は前と後の側が画像・コード・箇条のどれかで、左右で種類が違っても受ける", () => {
-    const beforeAfter = {
-      kind: "beforeAfter",
+  it("前後の compare は側が画像・コード・箇条のどれかで、左右で種類が違っても受ける", () => {
+    const compareFigure = {
+      kind: "compare",
       title: "架空の前後",
-      before: { kind: "points", points: ["架空の1行"] },
-      after: { kind: "image", path: "架空/after.png" },
+      relation: "before-after",
+      sides: [
+        { heading: "", kind: "points", points: ["架空の1行"] },
+        { heading: "", kind: "image", path: "架空/after.png" },
+      ],
       fold: "",
       aside: "",
     }
+    const [first, second] = compareFigure.sides
 
-    expect(firstOf(beforeAfter)).toEqual(beforeAfter)
+    expect(firstOf(compareFigure)).toEqual(compareFigure)
     expect(
-      firstOf({ ...beforeAfter, before: { kind: "code", language: "ts", source: "架空" } }),
-    ).toMatchObject({ before: { kind: "code" } })
+      firstOf({
+        ...compareFigure,
+        sides: [{ heading: "", kind: "code", language: "ts", source: "架空" }, second],
+      }),
+    ).toMatchObject({ sides: [{ kind: "code" }, { kind: "image" }] })
     const region = { left: 10, top: 20, width: 30, height: 40 }
-    const withRegion = { ...beforeAfter, after: { kind: "image", path: "架空/after.png", region } }
-    expect(firstOf(withRegion)).toMatchObject({ after: { region } })
+    const withRegion = {
+      ...compareFigure,
+      sides: [first, { heading: "", kind: "image", path: "架空/after.png", region }],
+    }
+    expect(firstOf(withRegion)).toMatchObject({ sides: [{}, { region }] })
     for (const broken of [
-      { ...withRegion, after: { ...withRegion.after, region: { left: 1 } } },
-      { ...beforeAfter, after: undefined },
-      { ...beforeAfter, before: { kind: "points", points: [] } },
-      { ...beforeAfter, before: { kind: "text", text: "架空" } },
+      {
+        ...compareFigure,
+        sides: [first, { heading: "", kind: "image", path: "架空/after.png", region: { left: 1 } }],
+      },
+      { ...compareFigure, sides: [first] },
+      { ...compareFigure, sides: [{ heading: "", kind: "points", points: [] }, second] },
+      { ...compareFigure, sides: [{ heading: "", kind: "text", text: "架空" }, second] },
     ]) {
       expect(firstOf(broken)).toBeUndefined()
     }
   })
 
-  it("beforeAfter の側に mermaid を置け、graph の側は受けない", () => {
+  it("前後の compare の側に mermaid を置け、graph の側は受けない", () => {
     const graph = {
+      heading: "",
       kind: "graph",
       direction: "LR",
       source: "(架空の始点) -> 架空の処理",
     }
-    const beforeAfter = (before: object, after: object) => ({
-      kind: "beforeAfter",
+    const compareFigure = (before: object, after: object) => ({
+      kind: "compare",
       title: "",
-      before,
-      after,
+      relation: "before-after",
+      sides: [before, after],
       fold: "",
       aside: "",
     })
-    const mermaid = { kind: "mermaid", source: "sequenceDiagram\n  A->>B: 架空" }
+    const mermaid = { heading: "", kind: "mermaid", source: "sequenceDiagram\n  A->>B: 架空" }
 
-    expect(firstOf(beforeAfter(mermaid, mermaid))).toMatchObject({
-      before: mermaid,
-      after: mermaid,
-    })
-    expect(firstOf(beforeAfter(graph, mermaid))).toBeUndefined()
+    expect(firstOf(compareFigure(mermaid, mermaid))).toMatchObject({ sides: [mermaid, mermaid] })
+    expect(firstOf(compareFigure(graph, mermaid))).toBeUndefined()
   })
 
   it("compare の塊は側がちょうど2つで箇条があるときだけ受け、kind の無い旧い側は対等な2つの箇条として読む", () => {
@@ -291,11 +302,13 @@ describe("parseReportBlocks", () => {
       ])
     })
 
-    it("beforeAfter の側に置ける", () => {
-      const side = { kind: "svg", width: 200, height: 100, shapes: [textShape] }
+    it("前後の compare の側に置ける", () => {
+      const side = { heading: "", kind: "svg", width: 200, height: 100, shapes: [textShape] }
 
       expect(
-        parseReportBlocks([{ kind: "beforeAfter", title: "t", before: side, after: side }]),
+        parseReportBlocks([
+          { kind: "compare", title: "t", relation: "before-after", sides: [side, side] },
+        ]),
       ).toHaveLength(1)
     })
 
