@@ -124,3 +124,4 @@
 | `docs/architecture/adr/0045-workflow-script-orchestration.md`         | タスクの段の進め方を、plugin の dynamic workflows のワークフロースクリプトに移す                      | 採用                   |
 | `docs/architecture/adr/0046-verification-stages-from-check-record.md` | 作業の記録の「確かめたこと」の段と件数を、検証の控え `.check-record.json` から木の SHA で照らして運ぶ | 採用                   |
 | `docs/architecture/adr/0047-compare-relation.md`                      | 見比べの部品を `Compare` 1つにまとめ、側の中身と `relation` で対等と前後を描き分ける                  | 採用                   |
+| `docs/architecture/adr/0048-report-parameters-and-expressions.md`     | 触れるレポート: つまみの部品と、独自関数 `expr` の中置の式・名前つきの式で値を結ぶ                    | 採用                   |

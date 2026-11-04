@@ -40,7 +40,7 @@
 - **`figure` は ID で結ぶ。** 図は先頭の見出しの無い節として描かれてきた（`sectionsWithFigure`）。`Report.figure` に図の種類の部品（`Graph`・`Mermaid`・`Svg`・`Timeline`・`BeforeAfter`・`Chart`・`Stats`・`Plot`・`Picture`）の ID を置くか、`figureNone` に理由を置く。変換は今の `figure` の欄へそのまま写す。
 - **部品は減らさない。** 19 種を 1 対 1 で写す（ADR 0038 と、部品を減らす案を取り下げた決定）。`files` は書き手に渡していない種類なので写さない。
 - **基本と重なる種類は、型が同じ意味のものだけ基本へ寄せる。** `Row`（横に並べる）・`Column`（縦に積む）・`Card`（子を 1 つ枠に入れる）・`Tabs`（表示の切り替え）・`ChoicePicker`（選択）は意味が tsukumo の欲しいものと同じなので、基本の型のまま取る。基本の `Text`（`variant` で h1〜h5 を選べる）は節の見出しの規約（`Section.heading`）とぶつかり、`List` は子の雛形を繰り返す容器で `list`（項目・`cards` など）と意味が違い、`Image` は URL を取るが `image` は棚に置いたパスを取る。この 3 つは、基本の名前を使うと基本の型と props が食い違うので、tsukumo 固有の名前（`Paragraph`・`ItemList`・`Picture`）にする。名前は推測で、カタログの定義の課題が写しながら直してよい。ただし基本と同じ名前に基本と違う props を付けない。
-- **使わない基本の部品は AI に見せるスキーマから外す。** `Text`・`Image`・`Icon`・`Video`・`AudioPlayer`・`List`・`Modal`・`Divider`・`Button`・`TextField`・`CheckBox`・`Slider`・`DateTimeInput` と基本の関数群（`and`・`or`・`not`・`length`・`format*` など）は載せない。props の動的な値（`DynamicString` など）は、リテラルと `{path}` だけに絞る（関数呼び出しを許さない）。
+- **使わない基本の部品は AI に見せるスキーマから外す。** `Text`・`Image`・`Icon`・`Video`・`AudioPlayer`・`List`・`Modal`・`Divider`・`Button`・`TextField`・`CheckBox`・`Slider`・`DateTimeInput` と基本の関数群（`and`・`or`・`not`・`length`・`format*` など）は載せない。props の動的な値（`DynamicString` など）は、リテラルと `{path}` だけに絞る（関数呼び出しを許さない）。読み手が値を振るつまみ（基本の `Slider`・`CheckBox` とは別の tsukumo 固有の部品）と、tsukumo が実装する関数 `expr`・`format` の呼び出しは、ADR 0048 が決めた部品と props に限って許す。
 - **基本の部品の型の取り方。** `src/shared/` は `@a2ui/*` を読めず、基本の型は zod 3 で書かれている。tsukumo の共有層には自作の 19 種＋根＋節を zod 4 で書き、`z.toJSONSchema` で JSON Schema にする。基本から取る 5 つは、基本カタログの公開物（JSON）の該当部品を `src/shared/` に定数として写し、`test/` で `@a2ui/web_core` の公開物と一致することを確かめる。`dependency-cruiser` の規則は変えない。ブラウザ側は、その JSON を `Catalog.fromJson` で読み、React の実装を足して `Catalog` にする（依存の測定で通った形）。
 
 ### 構造の規約（スキーマで言えない分は tsukumo の検査に残す）
@@ -96,7 +96,7 @@
 ### 論点 7: 操作できる部品
 
 - **最初に作るのは操作できる `Table`**（列の見出しを押して並べ替える・語で絞り込む）。表は `report` の中で最も使われ、並べ替えと絞り込みの需要が分かりやすい（推測。使われ方の記録で確かめていない）。`Table` の props に任意の `sortable`・`filterable` を足す。状態は部品の中に閉じ、書き手は path を書かなくても動く。
-- **操作の状態を置く path は tsukumo が決める。** データモデルの `/view/<componentId>/<キー>`（`sort`・`filter`）。書き手が path を選ばないので衝突しない。開き直したら初期化する（データモデルを復元しない）。状態は `ReportEvent`・transcript・記録に載せない。
+- **操作の状態を置く path は tsukumo が決める。** データモデルの `/view/<componentId>/<キー>`（`sort`・`filter`。つまみの振った値は `value` で、ADR 0048）。書き手が path を選ばないので衝突しない。開き直したら初期化する（データモデルを復元しない）。状態は `ReportEvent`・transcript・記録に載せない。
 - **`Tabs` と `ChoicePicker` との組み合わせ。** `Tabs` は表示の切り替えに使う（子は葉か配置の部品）。基本の `Tabs` は選択中のタブを結ぶ欄を持たないので、選択はその部品の内部の状態で、他の部品から操作しない。`ChoicePicker` は絞り込みの値を選ぶ。`value` を `{path: "/view/<TableのID>/filter"}` に結ぶと、その `Table` が絞られる。`filterable` と `filterColumn` を書き、結んだ `ChoicePicker` が無い `Table` は、その列の値（2〜6 種類のとき）と件数のバッジを自分で出し、押すと同じ path に書く。結んだ `ChoicePicker` があればバッジは出さない。この組み合わせの規約は構造の検査に足す: path が実在する `Table` の ID を指す・`Table` が `filterable`・選択肢の値が表のセルに現れる。基本の関数に絞り込みも並べ替えも無いので、絞る・並べるは `Table` の実装が持つ。
 - **AI が書ける率の測り方（比較の測定に載せる）。** 試作と同じ呼び出し（`claude -p`・カタログの JSON Schema・JSON Lines の出力）で、操作できる部品を求める依頼を 1 題材あたり 12 件ずつ書かせ、(1) 一発で通る率、(2) エラー文を返して直る率、(3) path の整合の違反数を、操作無しの 12 件と並べる。
 - 演出との関係（推測）: 絞り込みは表の行を隠すだけで DOM の根は同じなので、演出のマウント時の DOM を前提にした癖は避けられる見込み。ブラウザ描画の目視で確かめる。
