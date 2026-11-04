@@ -39,12 +39,21 @@ export type TurnBodies = { readonly report: boolean; readonly utterance: boolean
 
 /**
  * メインが `report` の引数を書いている途中か（{@link OpenSdkTurn} の `reportDrafting`）。
- * `components` は引数の中で閉じた部品を届いた順に持つ（同じ `id` は最初のものだけ）。
+ * `components` は引数の中で閉じた部品を届いた順に持つ（同じ呼び出しの中では同じ `id` は最初のものだけ）。
+ *
+ * - `drafting` の `held`: 差し戻された前の草稿の部品。同じ `id` の部品が `components` に届くまで土台として描き続ける
+ * - `held`: 差し戻されて書き直しを待つ草稿。書き直しの `report-drafting` が来るまで部品を描き続ける
  */
 export type ReportDrafting =
   | { readonly kind: "idle" }
   | {
       readonly kind: "drafting"
+      readonly toolUseId: string
+      readonly components: readonly A2uiReportComponent[]
+      readonly held: readonly A2uiReportComponent[]
+    }
+  | {
+      readonly kind: "held"
       readonly toolUseId: string
       readonly components: readonly A2uiReportComponent[]
     }
@@ -175,9 +184,65 @@ export function finishedTurnCountOf(state: SessionState): number {
 /** 書いていた `report` の呼び出しが届いた・終わったなら、書いている途中の印を下ろす。 */
 export function settleReportDrafting(state: SessionState, toolUseId: string): SessionState {
   const drafting = reportDraftingOf(state.sdkTurn)
-  return drafting.kind === "drafting" && drafting.toolUseId === toolUseId
+  return drafting.kind !== "idle" && drafting.toolUseId === toolUseId
     ? withOpenSdkTurn(state, (open) => ({ ...open, reportDrafting: NOT_DRAFTING }))
     : state
+}
+
+/** `report` の引数を書き始める。保留があれば、その部品を土台に持つ。 */
+export function startReportDrafting(state: SessionState, toolUseId: string): SessionState {
+  return withOpenSdkTurn(state, (open) => ({
+    ...open,
+    reportDrafting: {
+      kind: "drafting",
+      toolUseId,
+      components: [],
+      held: draftComponentsOf(open.reportDrafting),
+    },
+  }))
+}
+
+/** 書いている途中の呼び出しに部品を足す。同じ呼び出しの中で同じ `id` が再び届いても、最初のものを残す。 */
+export function addDraftComponent(
+  state: SessionState,
+  toolUseId: string,
+  component: A2uiReportComponent,
+): SessionState {
+  return withOpenSdkTurn(state, (open) => {
+    const drafting = open.reportDrafting
+    return drafting.kind === "drafting" &&
+      drafting.toolUseId === toolUseId &&
+      !drafting.components.some(({ id }) => id === component.id)
+      ? {
+          ...open,
+          reportDrafting: { ...drafting, components: [...drafting.components, component] },
+        }
+      : open
+  })
+}
+
+/** 書いていた `report` が差し戻されたなら、草稿を消さずに保留へ移す。 */
+export function holdReportDrafting(state: SessionState, toolUseId: string): SessionState {
+  const drafting = reportDraftingOf(state.sdkTurn)
+  return drafting.kind === "drafting" && drafting.toolUseId === toolUseId
+    ? withOpenSdkTurn(state, (open) => ({
+        ...open,
+        reportDrafting: { kind: "held", toolUseId, components: draftComponentsOf(drafting) },
+      }))
+    : state
+}
+
+/** 草稿として描く部品。保留の部品を土台に、同じ `id` は書き直しのもので差し替え、新しい `id` は後ろに足す。 */
+export function draftComponentsOf(drafting: ReportDrafting): readonly A2uiReportComponent[] {
+  if (drafting.kind !== "drafting") {
+    return drafting.kind === "held" ? drafting.components : []
+  }
+  const fresh = new Map(drafting.components.map((component) => [component.id, component]))
+  const heldIds = new Set(drafting.held.map((component) => component.id))
+  return [
+    ...drafting.held.map((component) => fresh.get(component.id) ?? component),
+    ...drafting.components.filter((component) => !heldIds.has(component.id)),
+  ]
 }
 
 /** 開いている SDK のターンだけを書き換える。閉じていれば姿をそのまま返す。 */

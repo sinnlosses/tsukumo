@@ -39,6 +39,9 @@ import {
   INITIAL_SPEECH_EXPRESSION,
   recordTurnFailure,
   resumeTurn,
+  addDraftComponent,
+  holdReportDrafting,
+  startReportDrafting,
   settleReportDrafting,
   turnEnding,
   withOpenSdkTurn,
@@ -230,25 +233,9 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
     case "report-counted":
       return state
     case "report-drafting":
-      return withOpenSdkTurn(state, (open) => ({
-        ...open,
-        reportDrafting: { kind: "drafting", toolUseId: event.toolUseId, components: [] },
-      }))
+      return startReportDrafting(state, event.toolUseId)
     case "report-draft-component":
-      return withOpenSdkTurn(state, (open) => {
-        const drafting = open.reportDrafting
-        return drafting.kind === "drafting" &&
-          drafting.toolUseId === event.toolUseId &&
-          !drafting.components.some((component) => component.id === event.component.id)
-          ? {
-              ...open,
-              reportDrafting: {
-                ...drafting,
-                components: [...drafting.components, event.component],
-              },
-            }
-          : open
-      })
+      return addDraftComponent(state, event.toolUseId, event.component)
     case "report":
       // `tool-started` と同じく、届いた位置に積むだけ（吹き出しにも帯の「いまの作業」にも出さない）。
       // フェーズの閉じ方が `finished` なら、閉じたワークプランの記録をその直前に積む。
@@ -317,7 +304,9 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
       return state
     case "tool-finished":
       return finishTool(
-        settleReportDrafting(state, event.toolUseId),
+        event.isError
+          ? holdReportDrafting(state, event.toolUseId)
+          : settleReportDrafting(state, event.toolUseId),
         event.toolUseId,
         event.isError
           ? { kind: "failed", output: clipText(event.content, MAX_TOOL_TEXT_LENGTH) }

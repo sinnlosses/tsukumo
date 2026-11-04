@@ -352,7 +352,7 @@ describe("mainViewTurnsOf（report の草稿）", () => {
     expect(shownReportIds(settled)).toEqual(["toolu_d1"])
   })
 
-  it("差し戻された report の草稿は消え、ステップにも出ない", () => {
+  it("差し戻された report の草稿は保留として出続け、ステップには出ない", () => {
     const states = foldEach([
       requestEvent(),
       drafting("toolu_d1"),
@@ -361,8 +361,27 @@ describe("mainViewTurnsOf（report の草稿）", () => {
       toolFinished("toolu_d1", true),
     ])
 
-    expect(draftsOf(states.at(-1))).toEqual([])
+    expect(draftsOf(states.at(-1))).toEqual([["toolu_d1", STAGED_PARTS.length]])
     expect(shownReportIds(states.at(-1))).toEqual([])
+  })
+
+  it("書き直しが始まっても草稿は一度も空にならず、部品が届くと同じ id が差し替わり、確定でステップに出る", () => {
+    const states = foldEach([
+      requestEvent(),
+      drafting("toolu_d1"),
+      ...STAGED_PARTS.map((_, index) => part("toolu_d1", index)),
+      ...report("toolu_d1"),
+      toolFinished("toolu_d1", true),
+      drafting("toolu_d2"),
+      part("toolu_d2", 0),
+      ...report("toolu_d2"),
+      toolFinished("toolu_d2", false),
+    ])
+    const fromRejection = states.slice(STAGED_PARTS.length)
+
+    expect(fromRejection.every((state) => draftsOf(state).length > 0)).toBe(true)
+    expect(draftsOf(states.at(-1))).toEqual([["toolu_d2", STAGED_PARTS.length]])
+    expect(draftsOf(states.at(-3))).toEqual([["toolu_d2", STAGED_PARTS.length]])
   })
 
   it("次の report を書いているあいだは、伏せた前の report と次の草稿が並び、次が届くと前はステップに出る", () => {

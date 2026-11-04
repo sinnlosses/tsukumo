@@ -3,7 +3,11 @@ import { describe, expect, it } from "vitest"
 import type { SessionEvent } from "../../../src/shared/session/session-event.ts"
 import { applySessionEvent } from "../../../src/shared/session/session-fold.ts"
 import { INITIAL_SESSION_STATE } from "../../../src/shared/session/session-state.ts"
-import { answeringAsideOf, reportDraftingOf } from "../../../src/shared/session/turn-progress.ts"
+import {
+  answeringAsideOf,
+  draftComponentsOf,
+  reportDraftingOf,
+} from "../../../src/shared/session/turn-progress.ts"
 import { reportEvent } from "../../fixture/report-event.ts"
 import { requestEvent } from "../../fixture/session-event.ts"
 import { apply } from "../../fixture/session-state.ts"
@@ -257,6 +261,7 @@ describe("applySessionEvent（report を書いている間）", () => {
       kind: "drafting",
       toolUseId: "toolu_r1",
       components: [],
+      held: [],
     })
     expect(
       reportDraftingOf(apply(REQUEST, DRAFTING, reportEvent({ toolUseId: "toolu_r1" })).sdkTurn),
@@ -308,13 +313,13 @@ describe("applySessionEvent（report を書いている間）", () => {
       ).toEqual([])
     })
 
-    it("report・差し戻しの tool-finished・ターンの終わりで草稿が消える", () => {
+    it("report・差し戻しでない tool-finished・ターンの終わりで草稿が消える", () => {
       const drafted = [REQUEST, DRAFTING, SECTION_A] as const
       const finished: SessionEvent = {
         kind: "tool-finished",
         toolUseId: "toolu_r1",
-        content: "架空の差し戻し",
-        isError: true,
+        content: "架空の完了",
+        isError: false,
       }
       const ended: SessionEvent = { kind: "turn-finished", outcome: { kind: "interrupted" } }
 
@@ -323,6 +328,65 @@ describe("applySessionEvent（report を書いている間）", () => {
       ).toEqual({ kind: "idle" })
       expect(reportDraftingOf(apply(...drafted, finished).sdkTurn)).toEqual({ kind: "idle" })
       expect(reportDraftingOf(apply(...drafted, ended).sdkTurn)).toEqual({ kind: "idle" })
+    })
+
+    describe("差し戻し", () => {
+      const REJECTED: SessionEvent = {
+        kind: "tool-finished",
+        toolUseId: "toolu_r1",
+        content: "架空の差し戻し",
+        isError: true,
+      }
+      const REDRAFTING: SessionEvent = { kind: "report-drafting", toolUseId: "toolu_r2" }
+      const NEW_A: SessionEvent = {
+        kind: "report-draft-component",
+        toolUseId: "toolu_r2",
+        component: { id: "a", component: "Section", heading: "直した見出し", children: ["x"] },
+      }
+      const componentsOf = (state: ReturnType<typeof apply>) =>
+        draftComponentsOf(reportDraftingOf(state.sdkTurn))
+      const headings = (state: ReturnType<typeof apply>) =>
+        componentsOf(state).map((c) => (c.component === "Section" ? c.heading : c.id))
+
+      it("差し戻されても部品を保留として持ち続ける", () => {
+        const state = apply(REQUEST, DRAFTING, SECTION_A, SECTION_B, REJECTED)
+
+        expect(reportDraftingOf(state.sdkTurn).kind).toBe("held")
+        expect(componentsOf(state).map(({ id }) => id)).toEqual(["a", "b"])
+      })
+
+      it("書き直しが始まると保留が土台になり、同じ id だけ差し替わる", () => {
+        const base = [REQUEST, DRAFTING, SECTION_A, SECTION_B, REJECTED, REDRAFTING] as const
+
+        expect(headings(apply(...base))).toEqual(["架空の見出し", "別の見出し"])
+        expect(headings(apply(...base, NEW_A))).toEqual(["直した見出し", "別の見出し"])
+      })
+
+      it("保留に無い id は後ろに足す", () => {
+        const newC: SessionEvent = {
+          kind: "report-draft-component",
+          toolUseId: "toolu_r2",
+          component: { id: "c", component: "Section", heading: "足した見出し", children: ["z"] },
+        }
+
+        expect(
+          componentsOf(apply(REQUEST, DRAFTING, SECTION_A, REJECTED, REDRAFTING, newC)).map(
+            ({ id }) => id,
+          ),
+        ).toEqual(["a", "c"])
+      })
+
+      it("確定版の report・ターンの終わりで保留も下りる", () => {
+        const held = [REQUEST, DRAFTING, SECTION_A, REJECTED] as const
+        const ended: SessionEvent = { kind: "turn-finished", outcome: { kind: "interrupted" } }
+
+        expect(
+          reportDraftingOf(
+            apply(...held, REDRAFTING, reportEvent({ toolUseId: "toolu_r2" })).sdkTurn,
+          ),
+        ).toEqual({ kind: "idle" })
+        expect(reportDraftingOf(apply(...held, ended).sdkTurn)).toEqual({ kind: "idle" })
+      })
     })
   })
 
@@ -347,7 +411,7 @@ describe("applySessionEvent（report を書いている間）", () => {
     expect(state.records.at(-1)).toMatchObject({ kind: "report", workPlanClosing: "stopped" })
   })
 
-  it("差し戻されて report が届かなくても、同じ呼び出しの tool-finished で下りる", () => {
+  it("差し戻されて report が届かなければ、同じ呼び出しの tool-finished で保留に移る", () => {
     const finished = apply(REQUEST, DRAFTING, {
       kind: "tool-finished",
       toolUseId: "toolu_r1",
@@ -355,7 +419,11 @@ describe("applySessionEvent（report を書いている間）", () => {
       isError: true,
     })
 
-    expect(reportDraftingOf(finished.sdkTurn)).toEqual({ kind: "idle" })
+    expect(reportDraftingOf(finished.sdkTurn)).toEqual({
+      kind: "held",
+      toolUseId: "toolu_r1",
+      components: [],
+    })
     // report の結果はツールの記録ではないので、「失敗でびくっ」の材料にもならない。
     expect(finished.lastToolFailureAt).toBeUndefined()
   })

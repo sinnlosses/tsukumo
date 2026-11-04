@@ -13,7 +13,11 @@ import {
   NO_BODY,
 } from "../../../shared/session/main-view-shape.ts"
 import { MAX_SESSION_STATE_TURNS } from "../../../shared/session/session-record.ts"
-import type { ReportDrafting, TurnBodies } from "../../../shared/session/turn-progress.ts"
+import {
+  draftComponentsOf,
+  type ReportDrafting,
+  type TurnBodies,
+} from "../../../shared/session/turn-progress.ts"
 import { mainViewDraftOf } from "./a2ui-draft-view.ts"
 import { finalReportBody, reportDrawsAnything } from "./main-view-report-body.ts"
 import { groupIntoTurns } from "./main-view-step.ts"
@@ -82,12 +86,12 @@ export function withReportDrafting(
   const latest = turns.at(-1)
   if (
     latest === undefined ||
-    drafting.kind !== "drafting" ||
+    drafting.kind === "idle" ||
     latest.drafts.some((draft) => draft.toolUseId === drafting.toolUseId)
   ) {
     return turns
   }
-  const draft = mainViewDraftOf(drafting.toolUseId, drafting.components)
+  const draft = mainViewDraftOf(drafting.toolUseId, draftComponentsOf(drafting))
   return draft === undefined
     ? turns
     : [...turns.slice(0, -1), { ...latest, drafts: [...latest.drafts, draft] }]
