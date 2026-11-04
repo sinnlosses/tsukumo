@@ -323,6 +323,16 @@
     border-top: 1px solid var(--rule);
     color: var(--ink-soft);
   }
+  /* 字下げのある表の1列目。開け閉めの押しボタンと強調の印ごと段の数だけ寄せる。 */
+  & td.report-table-depth-1 {
+    padding-inline-start: 1.5em;
+  }
+  & td.report-table-depth-2 {
+    padding-inline-start: 3em;
+  }
+  & td.report-table-depth-3 {
+    padding-inline-start: 4.5em;
+  }
   /* 表の凡例。題の直下に左揃えで置く。 */
   & .report-captioned > .report-table-status-legend {
     display: flex;

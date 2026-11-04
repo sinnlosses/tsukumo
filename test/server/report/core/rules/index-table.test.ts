@@ -106,6 +106,30 @@ describe("reportViolations", () => {
     })
 
     it.each([
+      ["0→1→2→1→0 の段", [0, 1, 2, 1, 0], undefined, true],
+      ["0→3 の段の飛び", [0, 3, 0, 0, 0], undefined, false],
+      ["最初の行が段 1", [1, 1, 0, 0, 0], undefined, false],
+      ["段のある表に合計", [0, 1, 0, 0, 0], true, false],
+    ] as const)("字下げの段: %s", (_, depths, totals, accepted) => {
+      const table: ReportBlock = {
+        kind: "table",
+        title: "架空の表",
+        columns: ["列", "値"],
+        rows: depths.map((depth) => (depth === 0 ? ["a", "1"] : { cells: ["a", "1"], depth })),
+        rest: "",
+        fold: "",
+        aside: "",
+        heat: { from: 1, to: 1 },
+        totals,
+      }
+      const violations = reportViolations(draft([table]))
+      expect(violations).toEqual(accepted ? [] : [{ kind: "row-depth", count: 1 }])
+      if (!accepted) {
+        expect(reportRejectionText(violations)).toContain("`depth`")
+      }
+    })
+
+    it.each([
       ["列の数と同じ位置", 2, [{ kind: "emphasis-column-range", count: 1 }]],
       ["列の数を超える位置", 5, [{ kind: "emphasis-column-range", count: 1 }]],
       ["最後の列", 1, []],

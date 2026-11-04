@@ -342,6 +342,30 @@ describe("Table の濃淡と合計", () => {
   })
 })
 
+describe("Table の字下げ", () => {
+  it("段のある行の1列目の td にだけ段の印が付き、2列目以降と段 0 の行には付かない", () => {
+    const { container } = renderPart(
+      pair([
+        ["src/", "57,000"],
+        { cells: ["ui/", "31,200"], depth: 1 },
+        { cells: ["components/", "18,600"], depth: 2 },
+        { cells: ["table.tsx", "2,900"], depth: 3 },
+      ]).part,
+    )
+    const depthsOf = (row: Element) =>
+      [...row.querySelectorAll("td")].map(
+        (cell) => /report-table-depth-(\d)/.exec(cell.className)?.[1] ?? "なし",
+      )
+
+    expect([...container.querySelectorAll("tbody tr")].map(depthsOf)).toEqual([
+      ["なし", "なし"],
+      ["1", "なし"],
+      ["2", "なし"],
+      ["3", "なし"],
+    ])
+  })
+})
+
 const PLAIN_VALUE: LeafValue = {
   captionNumber: { kind: "none" },
   tagTones: {},

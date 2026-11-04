@@ -130,6 +130,22 @@ describe("表の行の詳しい中身", () => {
       "row-emphasis-mark",
     )
   })
+
+  it("depth のある行は1列目の字の前に段の数だけ全角の空白を置き、強調の印はその前に付く", () => {
+    const markdown = markdownOf(
+      tableOf([
+        ["a", "1"],
+        { cells: ["b", "2"], depth: 1 },
+        { cells: ["c", "3"], depth: 2, emphasis: true },
+      ]),
+    )
+
+    expect(markdown).toContain("\n| a | ")
+    expect(markdown).toContain("\n| 　b | ")
+    expect(markdown).toContain(
+      '\n| <span class="row-emphasis-mark" aria-hidden="true"></span>　　c | ',
+    )
+  })
 })
 
 describe("reportSectionsMarkdown", () => {

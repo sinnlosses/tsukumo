@@ -75,6 +75,45 @@ describe("visibleRowOrder の並べ替え", () => {
   })
 })
 
+describe("字下げのある表", () => {
+  const treeTable = (): A2uiReportPart<"Table"> => ({
+    ...table([]),
+    columns: ["場所", "行数", "全体に占める割合"],
+    filterColumn: 0,
+    rows: [
+      ["src/", "57,000", "72%"],
+      { cells: ["ui/", "31,200", "39%"], depth: 1 },
+      { cells: ["components/", "18,600", "24%"], depth: 2 },
+      { cells: ["table.tsx", "2,900", "4%"], depth: 3 },
+      { cells: ["server/", "19,400", "25%"], depth: 1 },
+      { cells: ["shared/", "6,300", "8%"], depth: 1 },
+      ["test/", "15,900", "20%"],
+      { cells: ["unit/", "9,800", "12%"], depth: 1 },
+      { cells: ["e2e/", "6,100", "8%"], depth: 1 },
+    ],
+  })
+
+  it("同じ親の子どうしの中だけで並べ、子は部分木ごと親の直下に付く", () => {
+    const part = treeTable()
+
+    expect(visibleRowOrder(part, { column: 1, direction: "asc" }, [])).toEqual([
+      6, 8, 7, 0, 5, 4, 1, 2, 3,
+    ])
+    expect(visibleRowOrder(part, { column: 1, direction: "desc" }, [])).toEqual([
+      0, 1, 2, 3, 4, 5, 6, 7, 8,
+    ])
+  })
+
+  it("絞り込みは合う行の祖先も残す", () => {
+    const part = treeTable()
+
+    expect(filteredRowOrder(part, ["table.tsx"])).toEqual([0, 1, 2, 3])
+    expect(visibleRowOrder(part, { column: 1, direction: "asc" }, ["e2e/", "shared/"])).toEqual([
+      6, 8, 0, 5,
+    ])
+  })
+})
+
 type TableRows = A2uiReportPart<"Table">["rows"]
 
 function badgeTable(

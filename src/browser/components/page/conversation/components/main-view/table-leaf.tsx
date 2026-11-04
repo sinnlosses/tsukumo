@@ -10,6 +10,7 @@ import {
   isEmphasisRow,
   type TableCell,
   tableRowCells,
+  tableRowDepth,
   tableRowDetail,
 } from "../../../../../../shared/report/report-block-comparison.ts"
 import { flatInline } from "../../../../../../shared/report/report-inline-markdown.ts"
@@ -230,6 +231,7 @@ function bodyRows(
     return [
       {
         key: String(index),
+        depth: tableRowDepth(row),
         detail:
           detail === undefined
             ? undefined

@@ -25,6 +25,13 @@ const tableRowSchema = z.union([
     cells: z.array(cellSchema),
     emphasis: z.literal(true).optional(),
     detail: inlineText.optional().describe("セルに入らない行ごとの詳しい中身。開いて読む"),
+    depth: z
+      .number()
+      .int()
+      .min(1)
+      .max(3)
+      .optional()
+      .describe("1列目の字下げの段。親の行の直下に1段深く置く"),
   }),
 ])
 
@@ -41,6 +48,10 @@ export function isEmphasisRow(row: TableRow): boolean {
 
 export function tableRowDetail(row: TableRow): string | undefined {
   return "detail" in row ? row.detail : undefined
+}
+
+export function tableRowDepth(row: TableRow): number {
+  return "depth" in row ? (row.depth ?? 0) : 0
 }
 
 export const tableBlockSchema = z

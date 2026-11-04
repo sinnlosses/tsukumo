@@ -16,6 +16,8 @@ export type LeafTableRow = {
   readonly cells: readonly ReactNode[]
   /** 開け閉めの印を出す行の詳しい中身。`label` は押しボタンの名前に使う行の名前。 */
   readonly detail: { readonly label: string; readonly content: ReactNode } | undefined
+  /** 1列目の字下げの段（0 は寄せない）。 */
+  readonly depth: number
 }
 
 type LeafTableProps = {
@@ -93,7 +95,15 @@ function BodyRow(props: {
     <>
       <tr>
         {row.cells.map((cell, index) => (
-          <td key={`${row.key}-${String(index)}`} {...attributesOf(index)}>
+          <td
+            key={`${row.key}-${String(index)}`}
+            {...attributesOf(index)}
+            className={
+              index === 0 && row.depth > 0
+                ? tableLeafClassNames.tableDepths[row.depth - 1]
+                : undefined
+            }
+          >
             {index === 0 && detail !== undefined && (
               <Button
                 variant="ghost"

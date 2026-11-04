@@ -5,6 +5,7 @@ import type { A2uiReportPart } from "../../../../../../../shared/report/a2ui-rep
 import {
   type TableCell as Cell,
   tableRowCells,
+  tableRowDepth,
 } from "../../../../../../../shared/report/report-block-comparison.ts"
 import {
   NUMERIC_CELL_PATTERN,
@@ -67,24 +68,33 @@ export function hasBoundChoicePicker(
   )
 }
 
-/** 絞り込んだ行を `sort` の順に並べた、元の添字。セルが無い行は昇順で最後。 */
+/**
+ * 絞り込んだ行を `sort` の順に並べた、元の添字。セルが無い行は昇順で最後。
+ * 字下げのある表は同じ親の子どうしの中だけで並べ、子は部分木ごと親の直下に付く。
+ */
 export function visibleRowOrder(
   part: TablePart,
   sort: TableSort,
   filter: readonly string[],
 ): readonly number[] {
   const sign = sort.direction === "asc" ? 1 : -1
-  return keptRows(part, filter)
-    .toSorted((a, b) => {
-      const left = a.cells[sort.column]
-      const right = b.cells[sort.column]
-      const order =
-        left !== undefined && right !== undefined
-          ? compareCells(left, right)
-          : Number(left === undefined) - Number(right === undefined)
-      return order === 0 ? a.index - b.index : order * sign
-    })
-    .map(({ index }) => index)
+  const parents = parentIndexes(part)
+  const kept = keptRows(part, filter)
+  const compare = (a: KeptRow, b: KeptRow): number => {
+    const left = a.cells[sort.column]
+    const right = b.cells[sort.column]
+    const order =
+      left !== undefined && right !== undefined
+        ? compareCells(left, right)
+        : Number(left === undefined) - Number(right === undefined)
+    return order === 0 ? a.index - b.index : order * sign
+  }
+  const subtreeOf = (parent: number): readonly KeptRow[] =>
+    kept
+      .filter(({ index }) => parents[index] === parent)
+      .toSorted(compare)
+      .flatMap((row) => [row, ...subtreeOf(row.index)])
+  return subtreeOf(ROOT).map(({ index }) => index)
 }
 
 /**
@@ -102,14 +112,36 @@ export function visibleTableTotals(part: TablePart, rowOrder: readonly number[])
   })
 }
 
-function keptRows(part: TablePart, filter: readonly string[]) {
-  return part.rows
-    .map((row, index) => ({ index, cells: tableRowCells(row), row }))
-    .filter(
-      ({ row }) =>
-        filter.length === 0 ||
-        tableRowFilterTexts(row, part.filterColumn).some((text) => filter.includes(text)),
-    )
+type KeptRow = { readonly index: number; readonly cells: readonly Cell[] }
+
+/** 選びに合う行と、その祖先（字下げの親をたどった行）を元の順で返す。 */
+function keptRows(part: TablePart, filter: readonly string[]): readonly KeptRow[] {
+  const parents = parentIndexes(part)
+  const matched = part.rows.flatMap((row, index) =>
+    filter.length === 0 ||
+    tableRowFilterTexts(row, part.filterColumn).some((text) => filter.includes(text))
+      ? [index]
+      : [],
+  )
+  const kept = new Set(matched.flatMap((index) => [index, ...ancestorsOf(index, parents)]))
+  return part.rows.flatMap((row, index) =>
+    kept.has(index) ? [{ index, cells: tableRowCells(row) }] : [],
+  )
+}
+
+const ROOT = -1
+
+/** 行ごとの親の添字（前にある、段が1つ浅い最も近い行）。段 0 の行と親の見つからない行は `ROOT`。 */
+function parentIndexes(part: TablePart): readonly number[] {
+  const depths = part.rows.map(tableRowDepth)
+  return depths.map((depth, index) =>
+    depth === 0 ? ROOT : depths.slice(0, index).findLastIndex((other) => other === depth - 1),
+  )
+}
+
+function ancestorsOf(index: number, parents: readonly number[]): readonly number[] {
+  const parent = parents[index] ?? ROOT
+  return parent === ROOT ? [] : [parent, ...ancestorsOf(parent, parents)]
 }
 
 /** 状態のセルは重さの順、数は大きさ、日付は時刻、それ以外は日本語の文字の順。 */

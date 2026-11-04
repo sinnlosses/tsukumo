@@ -6,6 +6,7 @@ import {
   isEmphasisRow,
   type TableCell,
   tableRowCells,
+  tableRowDepth,
   tableRowDetail,
 } from "./report-block-comparison.ts"
 import type { ReportBlock } from "./report-block.ts"
@@ -21,6 +22,8 @@ import { tableCellTexts } from "./table-view.ts"
 
 /** 強調の行の先頭のセルに置く印。地の色は CSS が `tr:has()` で行に当てる。 */
 const EMPHASIS_ROW_MARK = '<span class="row-emphasis-mark" aria-hidden="true"></span>'
+
+const DEPTH_INDENT = "　"
 
 const EMPHASIS_COLUMN_MARK = '<span class="column-emphasis-mark" aria-hidden="true"></span>'
 
@@ -91,7 +94,8 @@ function tableRowMarkdowns(
   return table.rows.map((row) => {
     const cells = tableRowCells(row).map(bodyCellMarkdown)
     const [first = "", ...rest] = cells
-    return markdownRow(isEmphasisRow(row) ? [`${EMPHASIS_ROW_MARK}${first}`, ...rest] : cells)
+    const indented = `${DEPTH_INDENT.repeat(tableRowDepth(row))}${first}`
+    return markdownRow([isEmphasisRow(row) ? `${EMPHASIS_ROW_MARK}${indented}` : indented, ...rest])
   })
 }
 

@@ -141,6 +141,12 @@ export const tableLeafClassNames = {
   heatLegend: notationStyles["report-heat-legend"],
   heatLegendSwatch: notationStyles["report-heat-legend-swatch"],
   tableTotal: notationStyles["report-table-total"],
+  /** 段 1〜3 の順。段 0 の行は付けない。 */
+  tableDepths: [
+    notationStyles["report-table-depth-1"],
+    notationStyles["report-table-depth-2"],
+    notationStyles["report-table-depth-3"],
+  ],
   tableRest: notationStyles["report-table-rest"],
   tableDetailRow: notationStyles["report-table-detail-row"],
   tableStatusLegend: notationStyles["report-table-status-legend"],

@@ -1,0 +1,65 @@
+{
+  "name": "report-table-tree",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "リポジトリの行数を階層で見たい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 1500,
+      "event": {
+        "kind": "report",
+        "toolUseId": "fake-table-tree-1",
+        "components": [
+          {
+            "id": "root",
+            "component": "Report",
+            "conclusion": [
+              "架空の結論: 行数の 72% が src/ にあり、その半分あまりを ui/ が占める。"
+            ],
+            "checks": [],
+            "children": ["s1"],
+            "closing": { "text": "階層で並べたよ！", "expression": "proud" }
+          },
+          {
+            "id": "s1",
+            "component": "Section",
+            "heading": "架空のリポジトリの行数",
+            "children": ["ttree"]
+          },
+          {
+            "id": "ttree",
+            "component": "Table",
+            "title": "リポジトリの行数を階層で並べた",
+            "columns": ["場所", "行数", "全体に占める割合"],
+            "rows": [
+              ["src/", "57,000", "72%"],
+              { "cells": ["ui/", "31,200", "39%"], "depth": 1 },
+              { "cells": ["components/", "18,600", "24%"], "depth": 2 },
+              { "cells": ["table.tsx", "2,900", "4%"], "depth": 3 },
+              { "cells": ["server/", "19,400", "25%"], "depth": 1 },
+              { "cells": ["shared/", "6,300", "8%"], "depth": 1 },
+              ["test/", "15,900", "20%"],
+              { "cells": ["unit/", "9,800", "12%"], "depth": 1 },
+              { "cells": ["e2e/", "6,100", "8%"], "depth": 1 }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "afterMs": 1550,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-table-tree-1",
+        "content": "ok",
+        "isError": false
+      }
+    },
+    { "afterMs": 2300, "event": { "kind": "turn-finished", "outcome": { "kind": "completed" } } }
+  ]
+}

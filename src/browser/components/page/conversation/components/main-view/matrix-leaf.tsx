@@ -73,6 +73,7 @@ function bodyRows(rows: MatrixPart["rows"]): readonly LeafTableRow[] {
       )),
     ],
     detail: undefined,
+    depth: 0,
   }))
 }
 

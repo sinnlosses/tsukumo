@@ -26,6 +26,7 @@ import {
   hasShortSeries,
   hasUnknownEmphasis,
   isBadHeat,
+  isBadRowDepth,
   isEmphasisColumnOutOfRange,
   isRaggedChart,
   isRaggedTable,
@@ -65,6 +66,8 @@ export type BlockViolation =
   | { readonly kind: "emphasis-column-range"; readonly count: number }
   /** `heat` の範囲が列の外か範囲に 0 以上の数でないセルがある、または `totals` に `heat` が無いか範囲に `%` のセルがある `table` がある。`count` は表の数。 */
   | { readonly kind: "heat-range"; readonly count: number }
+  /** 最初の行の `depth` が 0 でないか前の行より2段以上深い行がある、または `depth` のある行と `totals` を持つ `table` がある。`count` は表の数。 */
+  | { readonly kind: "row-depth"; readonly count: number }
   /** 行が2つ以上で、ある列のセルの平均が全角 `SENTENCE_CELL_LENGTH` 字以上の `table` がある（インラインコードとリンクの URL は数えない）。`count` は表の数。 */
   | { readonly kind: "sentence-table"; readonly count: number }
   /** 項目が上限を超える `list` がある。`count` は塊の数。 */
@@ -151,6 +154,7 @@ export function detectBlockViolations(
       count: leaves.filter((leaf) => isEmphasisColumnOutOfRange(leaf)).length,
     },
     { kind: "heat-range", count: leaves.filter((leaf) => isBadHeat(leaf)).length },
+    { kind: "row-depth", count: leaves.filter((leaf) => isBadRowDepth(leaf)).length },
     { kind: "sentence-table", count: leaves.filter((leaf) => isSentenceTable(leaf)).length },
     {
       kind: "long-list",
@@ -206,6 +210,7 @@ const BLOCK_KINDS: ReadonlySet<string> = new Set<BlockViolation["kind"]>([
   "many-emphasis-rows",
   "emphasis-column-range",
   "heat-range",
+  "row-depth",
   "sentence-table",
   "long-list",
   "bad-cards",
@@ -262,6 +267,8 @@ export function blockViolationMessage(violation: BlockViolation): string {
       return `\`emphasisColumn\` が列の数以上の表が${violation.count}個ある。列の数より小さい位置（0 始まり）にする`
     case "heat-range":
       return `\`heat\` の範囲が列の外か範囲に数でないセルがある、または \`totals\` に \`heat\` が無いか範囲に % のセルがある表が${violation.count}個ある。\`heat\` は 0 以上の数だけの列（0 始まり・from ≦ to）に当て、\`totals\` は % でない数の範囲に付ける`
+    case "row-depth":
+      return `\`depth\` が最初の行で 0 でないか前の行より2段以上深い、または \`depth\` と \`totals\` を併せ持つ表が${violation.count}個ある。最初の行は \`depth\` を書かず、子は親の直下に1段深く置き、字下げのある表には \`totals\` を付けない`
     case "unknown-emphasis":
       return `\`emphasis\` に \`labels\` に無い名前がある \`Chart\` が${violation.count}個ある。\`labels\` にある名前だけにする`
     case "chart-annotation-range":

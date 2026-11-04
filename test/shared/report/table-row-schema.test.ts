@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 import {
   isEmphasisRow,
   tableRowCells,
+  tableRowDepth,
   tableRowDetail,
 } from "../../../src/shared/report/report-block-comparison.ts"
 import { namedWriterBlockSchema } from "../../../src/shared/report/report-block.ts"
@@ -27,6 +28,19 @@ describe("table の行の形", () => {
     expect(tableWith({ cells: ["1", "2"], emphasis: true, detail: "詳しい中身" })).toBe(true)
     expect(tableWith({ cells: ["1", "2"], detail: 1 })).toBe(false)
   })
+
+  it("depth は 1〜3 の整数だけ受け、0・4・小数は受けない", () => {
+    expect([1, 2, 3].map((depth) => tableWith({ cells: ["1", "2"], depth }))).toEqual([
+      true,
+      true,
+      true,
+    ])
+    expect([0, 4, 1.5].map((depth) => tableWith({ cells: ["1", "2"], depth }))).toEqual([
+      false,
+      false,
+      false,
+    ])
+  })
 })
 
 describe("行の読み出し", () => {
@@ -47,5 +61,9 @@ describe("行の読み出し", () => {
 
   it("tableRowDetail は detail のある行だけ中身を返す", () => {
     expect(rows.map(tableRowDetail)).toEqual([undefined, undefined, "中身", "中身"])
+  })
+
+  it("tableRowDepth は depth のある行だけその段を返し、ほかは 0", () => {
+    expect([...rows, { cells: ["1", "2"], depth: 2 }].map(tableRowDepth)).toEqual([0, 0, 0, 0, 2])
   })
 })

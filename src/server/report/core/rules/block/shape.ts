@@ -6,6 +6,7 @@ import { comparisonSidesOf } from "../../../../../shared/report/before-after-com
 import {
   type TableCell,
   tableRowCells,
+  tableRowDepth,
 } from "../../../../../shared/report/report-block-comparison.ts"
 import { SENTENCE_CELL_LENGTH } from "../../../../../shared/report/report-limit.ts"
 import type {
@@ -134,6 +135,17 @@ export function isBadHeat(leaf: ReportOutlineLeaf): boolean {
       .slice(heat.from, heat.to + 1)
       .some((cell) => !isHeatCell(cell) || (leaf.totals === true && cell.endsWith("%"))),
   )
+}
+
+/**
+ * 最初の行の段が 0 でない、前の行より2段以上深い行がある、
+ * または段のある行と `totals` を持つ `Table` か。
+ */
+export function isBadRowDepth(leaf: ReportOutlineLeaf): boolean {
+  if (leaf.component !== "Table") return false
+  const depths = leaf.rows.map(tableRowDepth)
+  if (leaf.totals === true && depths.some((depth) => depth > 0)) return true
+  return depths.some((depth, index) => depth > (index === 0 ? 0 : (depths[index - 1] ?? 0) + 1))
 }
 
 /**
