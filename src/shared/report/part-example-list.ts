@@ -41,9 +41,11 @@ const LEAF_BLOCK_EXAMPLES = {
     title: "架空の機能ごとの対応",
     columns: ["手元", "共有"],
     rows: [
-      { name: "書き出し", cells: ["ok", "warn"] },
+      { name: "書き出し", cells: ["ok", { status: "warn", note: "7日まで" }] },
       { name: "読み込み", cells: ["ok", "na"] },
     ],
+    emphasisColumn: 0,
+    footer: [{ name: "月額", cells: ["0円", "500円"] }],
   },
   compare: {
     kind: "compare",

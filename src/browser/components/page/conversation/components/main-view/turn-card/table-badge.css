@@ -9,3 +9,7 @@
   min-inline-size: 1.5rem;
   box-sizing: border-box;
 }
+
+.matrix-emphasis-badge {
+  margin-inline-start: var(--space-xs);
+}

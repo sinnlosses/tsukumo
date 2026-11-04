@@ -106,16 +106,18 @@ export function isRaggedTable(leaf: ReportOutlineLeaf): boolean {
     case "Table":
       return leaf.rows.some((row) => tableRowCells(row).length !== leaf.columns.length)
     case "Matrix":
-      return leaf.rows.some(({ cells }) => cells.length !== leaf.columns.length)
+      return [...leaf.rows, ...(leaf.footer ?? [])].some(
+        ({ cells }) => cells.length !== leaf.columns.length,
+      )
     default:
       return false
   }
 }
 
-/** `emphasisColumn` が列の数以上の `Table` か。 */
+/** `emphasisColumn` が列の数以上の `Table`・`Matrix` か。 */
 export function isEmphasisColumnOutOfRange(leaf: ReportOutlineLeaf): boolean {
   return (
-    leaf.component === "Table" &&
+    (leaf.component === "Table" || leaf.component === "Matrix") &&
     leaf.emphasisColumn !== undefined &&
     leaf.emphasisColumn >= leaf.columns.length
   )

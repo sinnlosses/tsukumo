@@ -189,6 +189,32 @@ describe("A2UI のカタログ文書", () => {
     expect(JSON.stringify(document.components.Table)).toContain("emphasisColumn")
   })
 
+  it("Matrix はセルの補足・emphasisColumn・footer を任意で受け、13字の補足と4行の footer は拒む", () => {
+    const base = {
+      id: "m",
+      component: "Matrix",
+      title: "対応",
+      columns: ["甲", "乙"],
+      rows: [{ name: "a", cells: ["ok", "na"] }],
+    }
+    const schema = REPORT_COMPONENT_SCHEMAS.Matrix
+    const footerRow = { name: "月額", cells: ["0円", "500円"] }
+    const noted = (note: string) => ({
+      ...base,
+      rows: [{ name: "a", cells: ["ok", { status: "warn", note }] }],
+    })
+
+    expect(schema.safeParse(base).success).toBe(true)
+    expect(
+      schema.safeParse({ ...noted("7日まで"), emphasisColumn: 1, footer: [footerRow] }).success,
+    ).toBe(true)
+    expect(schema.safeParse(noted("あ".repeat(13))).success).toBe(false)
+    expect(
+      schema.safeParse({ ...base, footer: Array.from({ length: 4 }, () => footerRow) }).success,
+    ).toBe(false)
+    expect(JSON.stringify(document.components.Matrix)).toContain("footer")
+  })
+
   it("Chart は基準線と注記を任意で受け、目標を references で書くと説明する", () => {
     const base = {
       id: "c",

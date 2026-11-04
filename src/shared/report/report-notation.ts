@@ -119,6 +119,7 @@ const REPORT_BLOCK_MARK_NAMES = [
   "matrix-mark-na",
   "matrix-legend",
   "matrix-legend-item",
+  "matrix-note",
   "stats",
   "stat",
   "stat-before",

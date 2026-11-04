@@ -57,13 +57,13 @@ export type BlockViolation =
   | { readonly kind: "nested-fold"; readonly count: number }
   /** 候補が採る → 検討 → 採らないの順に並んでいない `options` の塊がある。`count` は塊の数。 */
   | { readonly kind: "unordered-options"; readonly count: number }
-  /** 行のセルの数が `columns` と揃わない表がある。`count` は表の数。 */
+  /** 行（`matrix` の `footer` の行を含む）のセルの数が `columns` と揃わない表がある。`count` は表の数。 */
   | { readonly kind: "ragged-table"; readonly count: number }
   /** 行が上限を超えるのに `rest` が空の `table` がある。`count` は表の数。 */
   | { readonly kind: "long-table"; readonly count: number }
   /** 強調の行（`emphasis`）が上限を超える `table` がある。`count` は表の数。 */
   | { readonly kind: "many-emphasis-rows"; readonly count: number }
-  /** `emphasisColumn` が列の数以上の `table` がある。`count` は表の数。 */
+  /** `emphasisColumn` が列の数以上の `table`・`matrix` がある。`count` は表の数。 */
   | { readonly kind: "emphasis-column-range"; readonly count: number }
   /** `heat` の範囲が列の外か範囲に 0 以上の数でないセルがある、または `totals` に `heat` が無いか範囲に `%` のセルがある `table` がある。`count` は表の数。 */
   | { readonly kind: "heat-range"; readonly count: number }
@@ -248,7 +248,7 @@ export function blockViolationMessage(violation: BlockViolation): string {
     case "unordered-options":
       return `候補が採る → 検討 → 採らないの順に並んでいない \`Options\` が${violation.count}個ある。採る候補から順に並べ直す`
     case "ragged-table":
-      return `行のセルの数が \`columns\` と揃わない表（\`Matrix\` を含む）が${violation.count}個ある。セルの数を揃える`
+      return `行のセルの数が \`columns\` と揃わない表（\`Matrix\` とその \`footer\` の行を含む）が${violation.count}個ある。セルの数を揃える`
     case "long-table":
       return `行が${String(MAX_TABLE_ROWS + 1)}以上で \`rest\` が空の表が${violation.count}個ある。上位${String(MAX_TABLE_ROWS)}行までを残し、残りを \`rest\` に書く`
     case "many-emphasis-rows":
@@ -269,7 +269,7 @@ export function blockViolationMessage(violation: BlockViolation): string {
     case "ragged-chart":
       return `\`series\` の \`values\` の数が \`labels\` と揃わない、または \`arrow\`・\`slope\`・\`span\` の \`series\` が前と後（span は始まりと終わり）の2つでない \`Chart\` が${violation.count}個ある。数を揃える`
     case "emphasis-column-range":
-      return `\`emphasisColumn\` が列の数以上の表が${violation.count}個ある。列の数より小さい位置（0 始まり）にする`
+      return `\`emphasisColumn\` が列の数以上の表（\`Matrix\` を含む）が${violation.count}個ある。列の数より小さい位置（0 始まり）にする`
     case "heat-range":
       return `\`heat\` の範囲が列の外か範囲に数でないセルがある、または \`totals\` に \`heat\` が無いか範囲に % のセルがある表が${violation.count}個ある。\`heat\` は 0 以上の数だけの列（0 始まり・from ≦ to）に当て、\`totals\` は % でない数の範囲に付ける`
     case "row-depth":

@@ -33,6 +33,39 @@
         "conclusion": "架空の結論: 対応表の見え方を確かめた。",
         "sections": [
           {
+            "heading": "架空のサービスの見比べ",
+            "blocks": [
+              {
+                "kind": "matrix",
+                "title": "架空の3つのサービスの対応",
+                "columns": ["架空の甲", "架空の乙", "架空の丙"],
+                "rows": [
+                  { "name": "SSO", "cells": ["ok", "ok", "ng"] },
+                  {
+                    "name": "監査ログ",
+                    "cells": [
+                      { "status": "warn", "note": "7日まで" },
+                      "ok",
+                      { "status": "warn", "note": "別料金" }
+                    ]
+                  },
+                  { "name": "API", "cells": ["ok", "ok", "ok"] },
+                  {
+                    "name": "日本語の窓口",
+                    "cells": ["ng", { "status": "warn", "note": "平日のみ" }, "ok"]
+                  }
+                ],
+                "emphasisColumn": 1,
+                "footer": [
+                  { "name": "○ / △ / ×", "cells": ["2 / 1 / 1", "3 / 1 / 0", "2 / 1 / 1"] },
+                  { "name": "月額", "cells": ["¥48,000", "¥62,000", "¥55,000"] }
+                ],
+                "fold": "",
+                "aside": ""
+              }
+            ]
+          },
+          {
             "heading": "架空の大きな格子",
             "blocks": [
               {

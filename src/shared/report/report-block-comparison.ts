@@ -81,23 +81,43 @@ export const tableBlockSchema = z
     aside,
   })
   .describe(
-    "比較・対応・件数。同じ形の項目が2つ以上並んだら表（候補の採否は options、交点が状態だけなら matrix）。行は大きさか重要度の順（1列目のあいうえお順にしない）。単位は見出しに1回だけ書きセルに書かない。セルは語句・数・状態にする（セルの平均が35字以上の列は差し戻し。文の列は label 付きの list か文の部品へ）",
+    "比較・対応・件数。同じ形の項目が2つ以上並んだら表（候補の採否は options、交点が状態の印なら matrix）。行は大きさか重要度の順（1列目のあいうえお順にしない）。単位は見出しに1回だけ書きセルに書かない。セルは語句・数・状態にする（セルの平均が35字以上の列は差し戻し。文の列は label 付きの list か文の部品へ）",
   )
 
 export const REPORT_MATRIX_STATUSES = ["ok", "warn", "ng", "na"] as const
+
+const matrixStatusSchema = z.enum(REPORT_MATRIX_STATUSES)
+
+const matrixCellSchema = z.union([
+  matrixStatusSchema,
+  z.object({ status: matrixStatusSchema, note: inlineText.max(12) }),
+])
+
+export type MatrixCell = DeepReadonly<z.infer<typeof matrixCellSchema>>
 
 export const matrixBlockSchema = z
   .object({
     kind: z.literal("matrix"),
     title: inlineText,
     columns: z.array(inlineText).min(1),
-    rows: z
-      .array(z.object({ name: inlineText, cells: z.array(z.enum(REPORT_MATRIX_STATUSES)) }))
-      .min(1),
+    rows: z.array(z.object({ name: inlineText, cells: z.array(matrixCellSchema) })).min(1),
+    emphasisColumn: z
+      .number()
+      .int()
+      .min(0)
+      .optional()
+      .describe("採った列（0始まり）。見出しに「推奨」"),
+    footer: z
+      .array(z.object({ name: inlineText, cells: z.array(inlineText) }))
+      .max(3)
+      .optional()
+      .describe("末尾の値の行（月額・印の数）"),
     fold,
     aside,
   })
-  .describe("行×列の交点が状態だけの対応表（機能×条件）。交点に文や数が要るなら table")
+  .describe(
+    "行×列の交点が状態の印（短い補足も添えられる）の対応表（機能×条件）。交点に文や数が要るなら table",
+  )
 
 const COMPARE_RELATIONS = ["versus", "before-after"] as const
 

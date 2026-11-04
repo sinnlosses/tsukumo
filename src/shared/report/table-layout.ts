@@ -4,6 +4,7 @@
 import { sum } from "remeda"
 
 import {
+  type MatrixCell,
   REPORT_CELL_STATUSES,
   REPORT_MATRIX_STATUSES,
   type TableCell,
@@ -15,7 +16,15 @@ type TableBlock = Extract<ReportBlock, { readonly kind: "table" }>
 type MatrixBlock = Extract<ReportBlock, { readonly kind: "matrix" }>
 
 type CellStatus = Extract<TableCell, { readonly status: string }>["status"]
-export type MatrixStatus = MatrixBlock["rows"][number]["cells"][number]
+export type MatrixStatus = (typeof REPORT_MATRIX_STATUSES)[number]
+
+/** 対応表のセルの状態と補足（補足の無いセルは空文字）。 */
+export function matrixCellOf(cell: MatrixCell): {
+  readonly status: MatrixStatus
+  readonly note: string
+} {
+  return typeof cell === "string" ? { status: cell, note: "" } : cell
+}
 
 type StatusMark = {
   readonly className: string
@@ -85,7 +94,7 @@ export function tableLayoutOf(table: Pick<TableBlock, "columns" | "rows" | "heat
 /** 対応表の格子に出た状態。凡例の並びで、`REPORT_MATRIX_STATUSES` の順。 */
 export function matrixLegendStatuses(block: Pick<MatrixBlock, "rows">): readonly MatrixStatus[] {
   return REPORT_MATRIX_STATUSES.filter((status) =>
-    block.rows.some(({ cells }) => cells.includes(status)),
+    block.rows.some(({ cells }) => cells.some((cell) => matrixCellOf(cell).status === status)),
   )
 }
 

@@ -36,7 +36,7 @@ import {
   tagToneClassName,
 } from "../markdown/markdown.tsx"
 import { visibleTableTotals } from "./domain/a2ui-table-view.ts"
-import { LeafTable, type LeafTableRow } from "./leaf-table.tsx"
+import { ColumnMarked, LeafTable, type LeafTableRow } from "./leaf-table.tsx"
 import styles from "./main-view.module.css"
 import { FoldedLeafFrame } from "./report-leaf-frame.tsx"
 
@@ -94,7 +94,7 @@ export function TableFigure(props: {
         head={totalled ? [...headCells(part, value), TOTAL_LABEL] : headCells(part, value)}
         aligns={totalled ? [...layout.aligns, "right"] : layout.aligns}
         rows={bodyRows(part, { layout, heat, totals }, value, rowOrder)}
-        foot={totals.kind === "totals" ? footCells(part.columns.length, heat, totals) : []}
+        foot={totals.kind === "totals" ? footRows(part.columns.length, heat, totals) : []}
       />
       {heat.kind === "heat" && <HeatLegend part={part} heat={heat} />}
       {part.rest.trim() !== "" && (
@@ -114,28 +114,14 @@ function headCells(part: TablePart, value: LeafValue): readonly ReactNode[] {
   ))
 }
 
-function ColumnMarked(props: {
-  readonly marked: boolean
-  readonly children: ReactNode
-}): ReactElement {
-  return (
-    <>
-      {props.marked && (
-        <span className={tableLeafClassNames.columnEmphasisMark} aria-hidden="true" />
-      )}
-      {props.children}
-    </>
-  )
-}
-
 const TOTAL_LABEL = "計"
 
 /** 合計の行。`heat` の範囲の列に列の合計、1列目に「計」、最後に総計を置き、ほかの列は空ける。 */
-function footCells(
+function footRows(
   columnCount: number,
   heat: TableHeat,
   totals: Extract<TableTotals, { readonly kind: "totals" }>,
-): readonly ReactNode[] {
+): readonly (readonly ReactNode[])[] {
   if (heat.kind !== "heat") {
     return []
   }
@@ -145,7 +131,7 @@ function footCells(
     }
     return column === 0 ? TOTAL_LABEL : ""
   })
-  return [...cells, <TotalValue key="grand" text={totals.grand} />]
+  return [[...cells, <TotalValue key="grand" text={totals.grand} />]]
 }
 
 function TotalValue(props: { readonly text: string }): ReactElement {

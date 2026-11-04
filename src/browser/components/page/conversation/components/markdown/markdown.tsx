@@ -158,6 +158,7 @@ export const matrixLeafClassNames = {
   matrix: notationStyles["report-matrix"],
   matrixLegend: notationStyles["report-matrix-legend"],
   matrixLegendItem: notationStyles["report-matrix-legend-item"],
+  matrixNote: notationStyles["report-matrix-note"],
 } as const
 
 /** 葉を直接描く見比べの部品が付ける class 名（Markdown の `compare` と同じ見た目）。 */

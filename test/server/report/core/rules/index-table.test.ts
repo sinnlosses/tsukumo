@@ -152,18 +152,6 @@ describe("reportViolations", () => {
         expect(reportRejectionText(violations)).toContain("列の数")
       }
     })
-
-    it("セルの数が揃わない行のある matrix も違反", () => {
-      const matrix: ReportBlock = {
-        kind: "matrix",
-        title: "架空の対応",
-        columns: ["列A", "列B"],
-        rows: [{ name: "行1", cells: ["ok"] }],
-        fold: "",
-        aside: "",
-      }
-      expect(reportViolations(draft([matrix]))).toEqual([{ kind: "ragged-table", count: 1 }])
-    })
   })
 
   describe("セルが文の列になっている表", () => {

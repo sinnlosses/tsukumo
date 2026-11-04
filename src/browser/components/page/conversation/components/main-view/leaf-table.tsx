@@ -24,8 +24,8 @@ type LeafTableProps = {
   readonly head: readonly ReactNode[]
   readonly aligns: readonly LeafTableAlign[]
   readonly rows: readonly LeafTableRow[]
-  /** 本体の 10 行の切りに入らない最後の行（合計の行）。空なら `tfoot` を出さない。 */
-  readonly foot: readonly ReactNode[]
+  /** 本体の 10 行の切りに入らない末尾の行（合計の行・値の行）。空なら `tfoot` を出さない。 */
+  readonly foot: readonly (readonly ReactNode[])[]
 }
 
 /** 左揃えは何も付けない（旧い GFM の表は、右と中央を `style` の `text-align` で出す）。 */
@@ -67,17 +67,34 @@ export function LeafTable(props: LeafTableProps): ReactElement {
         )}
         {props.foot.length > 0 && (
           <tfoot>
-            <tr>
-              {props.foot.map((cell, index) => (
-                <td key={`foot-${String(index)}`} {...attributesOf(index)}>
-                  {cell}
-                </td>
-              ))}
-            </tr>
+            {props.foot.map((cells, rowIndex) => (
+              <tr key={`foot-${String(rowIndex)}`}>
+                {cells.map((cell, index) => (
+                  <td key={`foot-${String(rowIndex)}-${String(index)}`} {...attributesOf(index)}>
+                    {cell}
+                  </td>
+                ))}
+              </tr>
+            ))}
           </tfoot>
         )}
       </table>
     </div>
+  )
+}
+
+/** 強調の列のセルは、地を塗る印を先頭に持つ。 */
+export function ColumnMarked(props: {
+  readonly marked: boolean
+  readonly children: ReactNode
+}): ReactElement {
+  return (
+    <>
+      {props.marked && (
+        <span className={tableLeafClassNames.columnEmphasisMark} aria-hidden="true" />
+      )}
+      {props.children}
+    </>
   )
 }
 

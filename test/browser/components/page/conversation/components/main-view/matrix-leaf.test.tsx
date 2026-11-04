@@ -78,6 +78,45 @@ describe("Matrix の部品", () => {
     expect(container.querySelectorAll("[aria-hidden='true']")).toHaveLength(4)
   })
 
+  it("補足のセルは印の下に補足の字を出し、読み上げの語に補足を括弧で添える", () => {
+    const { container } = renderPart(
+      partOf([{ name: "架空のA", cells: ["ok", { status: "warn", note: "7日まで" }] }]),
+    )
+
+    expect(screen.getByRole("img", { name: "要注意（7日まで）" }).textContent).toBe("！")
+    expect(container.querySelector("[class*='matrix-note']")?.textContent).toBe("7日まで")
+  })
+
+  it("採った列は見出しに「推奨」の札を付け、見出し・セル・末尾の行のその列に印を置く", () => {
+    const { container } = renderPart({
+      ...partOf(ALL_STATUSES),
+      emphasisColumn: 1,
+      footer: [{ name: "月額", cells: ["100円", "200円"] }],
+    })
+    const markedTexts = Array.from(
+      container.querySelectorAll("th, td"),
+      (cell) => cell.querySelector("[class*='column-emphasis-mark']") !== null,
+    )
+
+    expect(container.querySelector("thead [data-tone='accent']")?.textContent).toBe("推奨")
+    expect(markedTexts.filter(Boolean)).toHaveLength(4)
+    expect(Array.from(container.querySelectorAll("tfoot td"), (cell) => cell.textContent)).toEqual([
+      "月額",
+      "100円",
+      "200円",
+    ])
+  })
+
+  it("補足・採った列・末尾の行の無い格子は、札・補足・tfoot を出さない", () => {
+    const { container } = renderPart(partOf(ALL_STATUSES))
+
+    expect(
+      container.querySelectorAll(
+        "[data-tone='accent'], [class*='matrix-note'], [class*='column-emphasis-mark'], tfoot",
+      ),
+    ).toHaveLength(0)
+  })
+
   it("11 行以上の格子は 10 行で切り、「ほか n 件」を押すと全行が出る", () => {
     const { container } = renderPart(partOf(MANY))
 

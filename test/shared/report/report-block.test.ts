@@ -183,6 +183,26 @@ describe("parseReportBlocks", () => {
     expect(firstOf(broken)).toBeUndefined()
   })
 
+  it("matrix はセルの補足・採った列・末尾の値の行を受け、13字の補足は落とす", () => {
+    const matrix = {
+      kind: "matrix",
+      title: "架空の対応",
+      columns: ["列A", "列B"],
+      rows: [{ name: "行1", cells: ["ok", { status: "warn", note: "あ".repeat(12) }] }],
+      emphasisColumn: 1,
+      footer: [{ name: "月額", cells: ["0円", "500円"] }],
+      fold: "",
+      aside: "",
+    }
+    const longNote = {
+      ...matrix,
+      rows: [{ name: "行1", cells: ["ok", { status: "warn", note: "あ".repeat(13) }] }],
+    }
+
+    expect(firstOf(matrix)).toEqual(matrix)
+    expect(firstOf(longNote)).toBeUndefined()
+  })
+
   it("image の塊を受けて省いた notes を空の並びで、fold を空文字で補い、path か caption の無い塊は落とす", () => {
     const image = { kind: "image", path: "架空/after.png", caption: "架空の画面" }
     const annotated = { ...image, notes: ["左上の架空の帯"] }

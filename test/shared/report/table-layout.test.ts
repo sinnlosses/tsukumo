@@ -4,6 +4,7 @@ import type { ReportBlock } from "../../../src/shared/report/report-block.ts"
 import {
   heatLevelOf,
   isHeatPeak,
+  matrixCellOf,
   matrixLegendStatuses,
   tableHeatOf,
   tableLayoutOf,
@@ -219,5 +220,27 @@ describe("matrixLegendStatuses", () => {
     }
 
     expect(matrixLegendStatuses(block)).toEqual(["ok", "ng", "na"])
+  })
+
+  it("補足付きのセルの状態も凡例に出す", () => {
+    const block: MatrixBlock = {
+      kind: "matrix",
+      title: "",
+      columns: ["甲"],
+      rows: [{ name: "架空のA", cells: [{ status: "warn", note: "7日まで" }] }],
+      fold: "",
+      aside: "",
+    }
+
+    expect(matrixLegendStatuses(block)).toEqual(["warn"])
+  })
+})
+
+describe("matrixCellOf", () => {
+  it.each([
+    ["状態だけのセル", "ok", { status: "ok", note: "" }],
+    ["補足付きのセル", { status: "warn", note: "7日まで" }, { status: "warn", note: "7日まで" }],
+  ] as const)("%s から状態と補足を取り出す", (_, cell, expected) => {
+    expect(matrixCellOf(cell)).toEqual(expected)
   })
 })
