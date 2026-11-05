@@ -106,3 +106,59 @@ flowchart TB
 | サイドバー          | `src/browser/components/domain/sidebar/`                                   | `docs/requirements/screen-layout.md` |
 | キャラビュー        | `src/browser/components/page/conversation/components/character-view/`      | `docs/requirements/screen-layout.md` |
 | 入力欄              | `src/browser/components/page/conversation/components/dispatch/`            | `docs/requirements/screen-layout.md` |
+
+## 4. サーバの機能の依存
+
+許された向きの図で、実際の import を数えたものではない。元は `.dependency-cruiser.cjs` の `server-feature-edge:` の規則で、`pnpm run format` が書き直す。
+
+<!-- feature-edge-graph:start -->
+
+```mermaid
+flowchart LR
+  session["session"]
+  system_prompt["system-prompt"]
+  view_server["view-server"]
+  chat["chat"]
+  usage["usage"]
+  session_driver["session-driver"]
+  diary["diary"]
+  achievement["achievement"]
+  subgraph leaves["末端（import しない機能）"]
+    diagnostic["diagnostic"]
+    character_pack["character-pack"]
+    host["host"]
+    repository["repository"]
+    recommendation["recommendation"]
+    checkout["checkout"]
+    welcome_greeting["welcome-greeting"]
+    workflow_setting["workflow-setting"]
+    report["report"]
+    item["item"]
+    work_plan["work-plan"]
+    question["question"]
+  end
+  session --> session_driver
+  session --> chat
+  session --> diary
+  session --> usage
+  session --> diagnostic
+  session --> character_pack
+  session --> report
+  system_prompt --> session_driver
+  system_prompt --> chat
+  system_prompt --> report
+  system_prompt --> work_plan
+  system_prompt --> question
+  view_server --> session
+  chat --> character_pack
+  usage --> session_driver
+  session_driver --> report
+  session_driver --> view_server
+  session_driver --> chat
+  session_driver --> work_plan
+  session_driver --> question
+  diary --> repository
+  achievement --> repository
+```
+
+<!-- feature-edge-graph:end -->

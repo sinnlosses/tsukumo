@@ -3,6 +3,10 @@ import { readFileSync } from "node:fs"
 import { describe, expect, test } from "vitest"
 
 import {
+  buildFeatureEdgeGraph,
+  FEATURE_GRAPH_END,
+  FEATURE_GRAPH_START,
+  rewriteFeatureEdgeGraph,
   buildFeatureEdgeTable,
   readFeatureEdgeTable,
   rewriteFeatureEdgeTable,
@@ -55,6 +59,40 @@ describe("buildFeatureEdgeTable", () => {
     expect(() => buildFeatureEdgeTable([{ name: "server-feature-edge:a", to: {} }])).toThrow(
       "to.pathNot を読めない",
     )
+  })
+})
+
+describe("buildFeatureEdgeGraph", () => {
+  const rules = [rule("a-x", ["b", "c"]), rule("b", []), rule("c", ["b"]), rule("d", [])]
+
+  test("機能を箱、許可を矢印にし、末端は囲みにまとめる", () => {
+    expect(buildFeatureEdgeGraph(rules)).toBe(
+      [
+        "flowchart LR",
+        '  a_x["a-x"]',
+        '  c["c"]',
+        '  subgraph leaves["末端（import しない機能）"]',
+        '    b["b"]',
+        '    d["d"]',
+        "  end",
+        "  a_x --> b",
+        "  a_x --> c",
+        "  c --> b",
+      ].join("\n"),
+    )
+  })
+
+  test("機能の規則が1本も無いと throw する", () => {
+    expect(() => buildFeatureEdgeGraph([{ name: "other", to: {} }])).toThrow("規則が無い")
+  })
+
+  test("印に挟まれた範囲だけをコードブロックに書き直し、印が無ければ変えない", () => {
+    const text = `前\n${FEATURE_GRAPH_START}\n古い\n${FEATURE_GRAPH_END}\n後\n`
+
+    expect(rewriteFeatureEdgeGraph(text, "G")).toBe(
+      `前\n${FEATURE_GRAPH_START}\n\n\`\`\`mermaid\nG\n\`\`\`\n\n${FEATURE_GRAPH_END}\n後\n`,
+    )
+    expect(rewriteFeatureEdgeGraph("本文\n", "G")).toBe("本文\n")
   })
 })
 
