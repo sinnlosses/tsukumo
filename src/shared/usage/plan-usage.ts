@@ -44,7 +44,7 @@ const planUsageWindowSchema = z.object({
   resetsAt: z.union([z.number(), z.undefined()]),
 })
 
-/** 配る形そのもの（{@link PlanUsageReport} と同じ鍵）。 */
+/** 配る形そのもの。 */
 export const planUsageReportSchema = z.discriminatedUnion("kind", [
   z.object({
     kind: z.literal("ready"),
@@ -52,4 +52,4 @@ export const planUsageReportSchema = z.discriminatedUnion("kind", [
   }),
   z.object({ kind: z.literal("unavailable") }),
   z.object({ kind: z.literal("not-applicable") }),
-])
+]) satisfies z.ZodType<PlanUsageReport>

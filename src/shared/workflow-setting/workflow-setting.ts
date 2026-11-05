@@ -154,7 +154,7 @@ const fieldSchema = z.discriminatedUnion("kind", [
   }),
 ])
 
-/** 配る形そのもの（{@link WorkflowSettingView} と同じ鍵）。 */
+/** 配る形そのもの。 */
 export const workflowSettingViewSchema = z.discriminatedUnion("kind", [
   z.object({
     kind: z.literal("available"),
@@ -167,7 +167,7 @@ export const workflowSettingViewSchema = z.discriminatedUnion("kind", [
     reason: z.enum(["tw-missing", "schema-unsupported", "config-missing", "config-unreadable"]),
     detail: z.string(),
   }),
-])
+]) satisfies z.ZodType<WorkflowSettingView>
 
 /** 入口のスキル1つ。`value` は保存して送る名前、`title` は画面に出す名前。 */
 export type WorkflowEntry = {
@@ -180,8 +180,8 @@ export const workflowEntriesSchema = z
   .array(z.object({ value: z.string(), title: z.string() }))
   .readonly()
 
-/** 配る形そのもの（{@link WorkflowSettingChange} と同じ鍵）。 */
+/** 配る形そのもの。 */
 export const workflowSettingChangeSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("view"), view: workflowSettingViewSchema }),
   z.object({ kind: z.literal("failed"), key: z.string(), message: z.string() }),
-])
+]) satisfies z.ZodType<WorkflowSettingChange>

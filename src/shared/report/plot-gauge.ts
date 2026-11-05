@@ -1,5 +1,7 @@
 // 決定表が数直線・bullet を返した `plot` を、描画側が読む入力へ写す。座標・色は持たず、軸と位置は描画側が決める。
 
+import { z } from "zod"
+
 import type { PlotFormResolution } from "./figure-decision.ts"
 import type { ReportPlot } from "./figure-grammar.ts"
 
@@ -31,6 +33,34 @@ type BulletSpec = {
 }
 
 export type GaugeSpec = NumberLineSpec | BulletSpec
+
+/** フェンスの JSON を読む形。 */
+export const gaugeSpecSchema = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("numberLine"),
+    title: z.string(),
+    unit: z.string(),
+    values: z.array(z.number()).min(1),
+  }),
+  z.object({
+    kind: z.literal("bullet"),
+    title: z.string(),
+    unit: z.string(),
+    rows: z
+      .array(
+        z.object({
+          label: z.string(),
+          value: z.number(),
+          target: z.number(),
+          bands: z
+            .array(z.object({ upTo: z.number() }))
+            .min(1)
+            .max(5),
+        }),
+      )
+      .min(1),
+  }),
+]) satisfies z.ZodType<GaugeSpec>
 
 /**
  * 数直線は量の列の値を並べ、列の名前を単位にする。

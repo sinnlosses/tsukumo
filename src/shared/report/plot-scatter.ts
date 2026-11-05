@@ -1,5 +1,7 @@
 // 決定表が散布を返した `plot` を、描画側が読む入力へ写す。座標・色は持たず、軸と位置は描画側が決める。
 
+import { z } from "zod"
+
 import type { PlotFormResolution } from "./figure-decision.ts"
 import type { ReportPlot } from "./figure-grammar.ts"
 import { quantileOf } from "./plot-quantile.ts"
@@ -23,6 +25,17 @@ export type ScatterSpec = {
   readonly yName: string
   readonly points: readonly ScatterPoint[]
 }
+
+/** フェンスの JSON を読む形。 */
+export const scatterSpecSchema = z.object({
+  kind: z.literal("scatter"),
+  title: z.string(),
+  xName: z.string(),
+  yName: z.string(),
+  points: z
+    .array(z.object({ x: z.number(), y: z.number(), label: z.string(), outlier: z.boolean() }))
+    .min(1),
+}) satisfies z.ZodType<ScatterSpec>
 
 /**
  * 先頭の量の列を x、次を y にし、名前の列があれば点の名前にする。

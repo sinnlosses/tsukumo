@@ -76,7 +76,7 @@ const achievementGraduationSchema = z.object({
 
 const achievementMilestoneSchema = z.object({ count: z.number(), taskId: z.string() })
 
-/** 配る形そのもの（{@link DailyAchievement} と同じ鍵）。 */
+/** 配る形そのもの。 */
 export const dailyAchievementSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("unknown") }),
   z.object({
@@ -88,7 +88,7 @@ export const dailyAchievementSchema = z.discriminatedUnion("kind", [
     milestones: z.array(achievementMilestoneSchema).readonly(),
     diary: dailyDiaryStatusSchema,
   }),
-])
+]) satisfies z.ZodType<DailyAchievement>
 
 /** 依頼文の一覧に並べるタスクの上限。 */
 const MAX_LISTED_REQUEST_TASKS = 20

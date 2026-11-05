@@ -84,8 +84,8 @@ export const contextUsageSchema = z.object({
   skills: z.array(contextUsageItemSchema).readonly(),
 })
 
-/** 配る形そのもの（{@link ContextUsageReport} と同じ鍵）。 */
+/** 配る形そのもの。 */
 export const contextUsageReportSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("ready"), usage: contextUsageSchema }),
   z.object({ kind: z.literal("unavailable") }),
-])
+]) satisfies z.ZodType<ContextUsageReport>

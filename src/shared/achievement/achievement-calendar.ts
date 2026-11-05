@@ -32,7 +32,7 @@ const achievementCalendarDaySchema = z.object({
   count: z.number(),
 })
 
-/** 配る形そのもの（{@link AchievementCalendar} と同じ鍵）。 */
+/** 配る形そのもの。 */
 export const achievementCalendarSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("unknown") }),
   z.object({
@@ -41,7 +41,7 @@ export const achievementCalendarSchema = z.discriminatedUnion("kind", [
     days: z.array(achievementCalendarDaySchema).readonly(),
     diaryDates: z.array(z.string()).readonly(),
   }),
-])
+]) satisfies z.ZodType<AchievementCalendar>
 
 /**
  * 暦の範囲。「今日を含む週の月曜から4週前の月曜」〜今日を、日付キーの古い順で返す。

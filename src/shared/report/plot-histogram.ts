@@ -1,5 +1,7 @@
 // 決定表がヒストグラムを返した `plot` を、描画側が読む入力へ写す。階級幅は申告に無いのでここで決める。
 
+import { z } from "zod"
+
 import type { PlotFormResolution } from "./figure-decision.ts"
 import type { ReportPlot } from "./figure-grammar.ts"
 import { quantileOf } from "./plot-quantile.ts"
@@ -22,6 +24,17 @@ export type HistogramSpec = {
   readonly min: number
   readonly max: number
 }
+
+/** フェンスの JSON を読む形。 */
+export const histogramSpecSchema = z.object({
+  kind: z.literal("histogram"),
+  title: z.string(),
+  unit: z.string(),
+  bins: z.array(z.object({ from: z.number(), to: z.number(), count: z.number() })).min(1),
+  median: z.number(),
+  min: z.number(),
+  max: z.number(),
+}) satisfies z.ZodType<HistogramSpec>
 
 /**
  * 量の列を階級に分け、中央値と範囲を添える。

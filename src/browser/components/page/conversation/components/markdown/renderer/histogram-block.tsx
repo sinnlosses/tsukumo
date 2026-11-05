@@ -2,9 +2,11 @@
 // 横の位置は SVG 属性の百分率で置き、字は画面の画素のまま幅に追従する。色は `--accent` の濃淡だけ。
 
 import type { ReactElement } from "react"
-import { z } from "zod"
 
-import type { HistogramSpec } from "../../../../../../../shared/report/plot-histogram.ts"
+import {
+  type HistogramSpec,
+  histogramSpecSchema,
+} from "../../../../../../../shared/report/plot-histogram.ts"
 import { percent } from "./gauge-layout.ts"
 import { histogramLayoutOf } from "./histogram-layout.ts"
 import styles from "./plot-figure.module.css"
@@ -13,16 +15,6 @@ type HistogramBlockProps = {
   /** フェンスの中身（`HistogramSpec` の JSON）。 */
   readonly spec: string
 }
-
-const histogramSchema = z.object({
-  kind: z.literal("histogram"),
-  title: z.string(),
-  unit: z.string(),
-  bins: z.array(z.object({ from: z.number(), to: z.number(), count: z.number() })).min(1),
-  median: z.number(),
-  min: z.number(),
-  max: z.number(),
-}) satisfies z.ZodType<HistogramSpec>
 
 export function HistogramBlock(props: HistogramBlockProps): ReactElement {
   const spec = parseSpec(props.spec)
@@ -90,7 +82,7 @@ export function HistogramBlock(props: HistogramBlockProps): ReactElement {
 
 function parseSpec(source: string): HistogramSpec | undefined {
   try {
-    const parsed = histogramSchema.safeParse(JSON.parse(source))
+    const parsed = histogramSpecSchema.safeParse(JSON.parse(source))
     return parsed.success ? parsed.data : undefined
   } catch {
     return undefined

@@ -71,7 +71,6 @@ export const EMPTY_TOKEN_USAGE_SUMMARY = {
   byTool: [],
 } satisfies TokenUsageSummary
 
-/** 合計の数の並び（{@link TokenUsageTotals} と同じ鍵）。 */
 const tokenUsageTotalsSchema = z.object({
   inputTokens: z.number(),
   outputTokens: z.number(),
@@ -79,9 +78,9 @@ const tokenUsageTotalsSchema = z.object({
   cacheReadInputTokens: z.number(),
   cacheCreationInputTokens: z.number(),
   costUsd: z.number(),
-})
+}) satisfies z.ZodType<TokenUsageTotals>
 
-/** 配る形そのもの（{@link TokenUsageSummary} と同じ鍵）。 */
+/** 配る形そのもの。 */
 export const tokenUsageSummarySchema = z.object({
   trend: z.object({
     unit: z.enum(["day", "hour"]),
@@ -91,4 +90,4 @@ export const tokenUsageSummarySchema = z.object({
   byTool: z
     .array(z.object({ name: z.string(), calls: z.number(), resultBytes: z.number() }))
     .readonly(),
-})
+}) satisfies z.ZodType<TokenUsageSummary>

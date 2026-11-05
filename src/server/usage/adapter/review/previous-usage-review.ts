@@ -36,9 +36,9 @@ const usageReviewFindingsSchema = z.object({
   days: z.number(),
   headline: z.string(),
   proposals: z.array(usageProposalSchema),
-})
+}) satisfies z.ZodType<UsageReviewFindings>
 
-/** ファイルの中身の形（{@link UsageReviewFindings} と同じ鍵に `v` と `reviewedAt` を添えたもの）。 */
+/** ファイルの中身の形（{@link usageReviewFindingsSchema} に `v` と `reviewedAt` を添えたもの）。 */
 const previousUsageReviewFileSchema = z.object({
   v: z.literal(PREVIOUS_USAGE_REVIEW_FORMAT_VERSION),
   reviewedAt: z.number(),

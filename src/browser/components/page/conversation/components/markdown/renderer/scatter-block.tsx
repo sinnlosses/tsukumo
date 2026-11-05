@@ -2,9 +2,11 @@
 // 横の位置は SVG 属性の百分率で置き、字は画面の画素のまま幅に追従する。色は `--accent` の濃淡だけ。
 
 import type { ReactElement } from "react"
-import { z } from "zod"
 
-import type { ScatterSpec } from "../../../../../../../shared/report/plot-scatter.ts"
+import {
+  type ScatterSpec,
+  scatterSpecSchema,
+} from "../../../../../../../shared/report/plot-scatter.ts"
 import { percent } from "./gauge-layout.ts"
 import styles from "./plot-figure.module.css"
 import { scatterLayoutOf } from "./scatter-layout.ts"
@@ -13,16 +15,6 @@ type ScatterBlockProps = {
   /** フェンスの中身（`ScatterSpec` の JSON）。 */
   readonly spec: string
 }
-
-const scatterSchema = z.object({
-  kind: z.literal("scatter"),
-  title: z.string(),
-  xName: z.string(),
-  yName: z.string(),
-  points: z
-    .array(z.object({ x: z.number(), y: z.number(), label: z.string(), outlier: z.boolean() }))
-    .min(1),
-}) satisfies z.ZodType<ScatterSpec>
 
 const DOT_RADIUS = 3.5
 const OUTLIER_RADIUS = 5
@@ -102,7 +94,7 @@ export function ScatterBlock(props: ScatterBlockProps): ReactElement {
 
 function parseSpec(source: string): ScatterSpec | undefined {
   try {
-    const parsed = scatterSchema.safeParse(JSON.parse(source))
+    const parsed = scatterSpecSchema.safeParse(JSON.parse(source))
     return parsed.success ? parsed.data : undefined
   } catch {
     return undefined

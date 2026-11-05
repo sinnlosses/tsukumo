@@ -118,13 +118,6 @@ function summaryPaths(root: string, packName: CharacterPackName): SummaryPaths {
   }
 }
 
-type StoredSummary = {
-  readonly delivered: boolean
-  readonly synopsis: string
-  readonly topics: readonly string[]
-  readonly fold: ChatSummaryFold
-}
-
 const UNKNOWN_FOLD = { kind: "unknown" } as const satisfies ChatSummaryFold
 
 /** 写しが無いところへ印だけを書くときの中身。 */
@@ -139,15 +132,17 @@ const foldSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("unknown") }),
   z.object({ kind: z.literal("none") }),
   z.object({ kind: z.literal("through"), at: z.string().regex(/^\d{4}-\d{2}-\d{2}T/) }),
-])
+]) satisfies z.ZodType<ChatSummaryFold>
 
 const storedSchema = z.object({
   v: z.literal(SUMMARY_FORMAT_VERSION),
   delivered: z.boolean(),
   synopsis: z.string(),
-  topics: z.array(z.string()),
+  topics: z.array(z.string()).readonly(),
   fold: foldSchema,
 })
+
+type StoredSummary = Omit<z.infer<typeof storedSchema>, "v">
 
 function recordOf(stored: StoredSummary | undefined): ChatSummaryRecord | undefined {
   return stored === undefined

@@ -2,9 +2,8 @@
 // 位置は SVG 属性の百分率で置き、字は画面の画素のまま幅に追従する。色は `--accent` の濃淡だけ。
 
 import type { ReactElement } from "react"
-import { z } from "zod"
 
-import type { GaugeSpec } from "../../../../../../../shared/report/plot-gauge.ts"
+import { type GaugeSpec, gaugeSpecSchema } from "../../../../../../../shared/report/plot-gauge.ts"
 import styles from "./gauge-block.module.css"
 import { gaugeLayoutOf, percent } from "./gauge-layout.ts"
 
@@ -12,33 +11,6 @@ type GaugeBlockProps = {
   /** フェンスの中身（`GaugeSpec` の JSON）。 */
   readonly spec: string
 }
-
-const gaugeSchema = z.discriminatedUnion("kind", [
-  z.object({
-    kind: z.literal("numberLine"),
-    title: z.string(),
-    unit: z.string(),
-    values: z.array(z.number()).min(1),
-  }),
-  z.object({
-    kind: z.literal("bullet"),
-    title: z.string(),
-    unit: z.string(),
-    rows: z
-      .array(
-        z.object({
-          label: z.string(),
-          value: z.number(),
-          target: z.number(),
-          bands: z
-            .array(z.object({ upTo: z.number() }))
-            .min(1)
-            .max(5),
-        }),
-      )
-      .min(1),
-  }),
-]) satisfies z.ZodType<GaugeSpec>
 
 const BAND_OPACITY_DARKEST = 0.3
 const BAND_OPACITY_RANGE = 0.18
@@ -153,7 +125,7 @@ export function GaugeBlock(props: GaugeBlockProps): ReactElement {
 
 function parseSpec(source: string): GaugeSpec | undefined {
   try {
-    const parsed = gaugeSchema.safeParse(JSON.parse(source))
+    const parsed = gaugeSpecSchema.safeParse(JSON.parse(source))
     return parsed.success ? parsed.data : undefined
   } catch {
     return undefined
