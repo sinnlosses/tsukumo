@@ -1,6 +1,9 @@
 import { expect, it } from "vitest"
+import { z } from "zod"
 
 import { toSessionEvents } from "../../../../../src/server/session-driver/core/message/sdk-message.ts"
+import { speechEvents } from "../../../../../src/server/session-driver/core/message/sdk-speech-message.ts"
+import { speakInputShape } from "../../../../../src/server/session-driver/core/message/speak-input.ts"
 import {
   assistantMessageWithoutUuid,
   EXPRESSIONS,
@@ -61,6 +64,23 @@ it("キャラクターパックに無い表情名は default に落とす", () =
       speech: { kind: "speech", text: "いくよ！", expression: "default" },
     },
   ])
+})
+
+it("adapter の tool() に渡す shape と同じ schema を通り、phase があっても読める", () => {
+  const input = { text: "いくよ！", expression: "proud", phase: 2 }
+
+  expect(z.object(speakInputShape(EXPRESSIONS)).safeParse(input).success).toBe(true)
+  expect(speechEvents(input, EXPRESSIONS)).toEqual([
+    { kind: "speech", text: "いくよ！", expression: "proud" },
+  ])
+})
+
+it("phase が不正でも、セリフは捨てずに読む", () => {
+  for (const phase of ["2", 1.5]) {
+    expect(speechEvents({ text: "いくよ！", expression: "proud", phase }, EXPRESSIONS)).toEqual([
+      { kind: "speech", text: "いくよ！", expression: "proud" },
+    ])
+  }
 })
 
 it("speak の text が無いときはセリフにしない", () => {

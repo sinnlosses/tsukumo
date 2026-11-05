@@ -55,7 +55,14 @@ export function resolveExpressionLabel(
 export function expressionEnumForSpeak(
   choices: readonly ExpressionChoice[],
 ): [Expression, ...Expression[]] {
-  return ["default", ...expressionNames(choices).filter((name) => name !== "default")]
+  return expressionEnumFromNames(expressionNames(choices))
+}
+
+/** 表情名の並びから zod enum に渡す並びを作る。`default` を必ず先頭に置く。 */
+export function expressionEnumFromNames(
+  names: readonly Expression[],
+): [Expression, ...Expression[]] {
+  return ["default", ...names.filter((name) => name !== "default")]
 }
 
 /**

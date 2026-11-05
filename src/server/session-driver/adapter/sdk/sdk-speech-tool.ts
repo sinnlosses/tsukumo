@@ -1,15 +1,15 @@
 // セリフを受け取る `speak` ツールと、セリフの引数の形。
 
 import { tool } from "@anthropic-ai/claude-agent-sdk"
-import { z } from "zod"
 
 import {
   type ExpressionChoice,
-  expressionEnumForSpeak,
   expressionGuideForSpeak,
+  expressionNames,
 } from "../../../../shared/character-pack/expression-choice.ts"
 import { SPEAK_TOOL_NAME } from "../../../core/tsukumo-tool-name.ts"
 import type { CallReview } from "../../core/call-review.ts"
+import { speakInputShape } from "../../core/message/speak-input.ts"
 import type { SessionMode } from "../../core/session-driver.ts"
 import type { SpeechVerdict } from "../../core/speech-review.ts"
 
@@ -37,8 +37,7 @@ export function speakTool(
     SPEAK_TOOL_DESCRIPTION,
     {
       ...speechShape(expressions),
-      // 0 や負の数も形では通し、範囲の検査の差し戻しで直し方を返す。
-      phase: z.number().int().optional().describe(SPEAK_PHASE_DESCRIPTION),
+      phase: speakInputShape(expressionNames(expressions)).phase.describe(SPEAK_PHASE_DESCRIPTION),
     },
     async ({ phase, text }) => {
       const mention =
@@ -60,10 +59,9 @@ const ACCEPTED_SPEECH = { kind: "accepted" } as const satisfies SpeechVerdict
 
 /** セリフの引数の形（`speak` と `report` の `closing`・`waitingLine` で同じ）。 */
 export function speechShape(expressions: readonly ExpressionChoice[]) {
+  const shape = speakInputShape(expressionNames(expressions))
   return {
-    text: z.string().describe("セリフ。1〜2文の短い一言"),
-    expression: z
-      .enum(expressionEnumForSpeak(expressions))
-      .describe(expressionGuideForSpeak(expressions)),
+    text: shape.text.describe("セリフ。1〜2文の短い一言"),
+    expression: shape.expression.describe(expressionGuideForSpeak(expressions)),
   }
 }
