@@ -3,6 +3,8 @@
 // 読むのは待たずに裏で走らせるので、`report` そのものは遅れない。
 // 控えが無い・読めない・形が違う・段が空・木が合わない・木が取れないときは何も流さない。
 
+import { isPlainObject } from "remeda"
+
 import type {
   VerificationCount,
   VerificationStage,
@@ -51,7 +53,7 @@ export function createReportVerifier(
 /** 控えの本文を読み、`tree` が木と一致したときだけ段を返す。形が違えば空。 */
 function matchingStages(text: string, tree: string): readonly VerificationStage[] {
   const value = parseJson(text)
-  if (!isRecord(value) || value.tree !== tree || !Array.isArray(value.stages)) {
+  if (!isPlainObject(value) || value.tree !== tree || !Array.isArray(value.stages)) {
     return []
   }
   const stages = value.stages.flatMap((stage: unknown): readonly VerificationStage[] => {
@@ -62,7 +64,7 @@ function matchingStages(text: string, tree: string): readonly VerificationStage[
 }
 
 function parseStage(value: unknown): VerificationStage | undefined {
-  if (!isRecord(value) || typeof value.name !== "string") {
+  if (!isPlainObject(value) || typeof value.name !== "string") {
     return undefined
   }
   const result = STAGE_RESULTS.find((candidate): candidate is VerificationStageResult => {
@@ -77,8 +79,4 @@ function countOf(value: unknown): VerificationCount {
   return typeof value === "number" && Number.isFinite(value) && value >= 0
     ? { kind: "counted", tests: value }
     : { kind: "none" }
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value)
 }

@@ -1,5 +1,7 @@
 // 体験の指標 `bodyChars`: 振り返りを除く描く節の、見出しと塊の文字列の値の字数。
 
+import { isPlainObject } from "remeda"
+
 import { drawnReportOf } from "../../../../shared/report/report-drawn-outline.ts"
 import { staticReportComponents } from "../../../../shared/report/report-static-component-list.ts"
 import type { SessionRecord } from "../../../../shared/session/session-record.ts"
@@ -31,7 +33,7 @@ function stringChars(value: unknown): number {
   if (Array.isArray(value)) {
     return value.reduce<number>((sum, item) => sum + stringChars(item), 0)
   }
-  if (typeof value === "object" && value !== null) {
+  if (isPlainObject(value)) {
     return Object.entries(value).reduce(
       (sum, [key, item]) => (key === "kind" ? sum : sum + stringChars(item)),
       0,

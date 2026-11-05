@@ -1,7 +1,7 @@
 // `report` の `a2ui` の変種を AI に書かせる測定の、条件・依頼の文・判定・集計。
 // 外のプロセスを起こさない純粋な部分だけを持つ。
 
-import { sumBy } from "remeda"
+import { isPlainObject, sumBy } from "remeda"
 import { z } from "zod"
 
 import { REPORT_TOOL_NAME } from "../../../src/server/core/tsukumo-tool-name.ts"
@@ -375,7 +375,7 @@ export function extractComponents(text: string): readonly unknown[] | undefined 
 /** 本番の `report` の検査と同じ順で判定する。入力検査（部品ごとの形）が先で、通ったら構造の検査。 */
 function judgeComponents(components: readonly unknown[]): Judgement {
   const sectionCount = components.filter(
-    (component) => isRecord(component) && component["component"] === "Section",
+    (component) => isPlainObject(component) && component["component"] === "Section",
   ).length
   const usedControls = components.some(usesControl)
   const componentNames = usedComponentNames(components)
@@ -499,7 +499,7 @@ function localReferences(node: unknown): readonly string[] {
   if (Array.isArray(node)) {
     return node.flatMap(localReferences)
   }
-  if (!isRecord(node)) {
+  if (!isPlainObject(node)) {
     return []
   }
   return Object.entries(node).flatMap(([key, value]) => {
@@ -511,7 +511,7 @@ function localReferences(node: unknown): readonly string[] {
 }
 
 function usesControl(component: unknown): boolean {
-  if (!isRecord(component)) {
+  if (!isPlainObject(component)) {
     return false
   }
   return (
@@ -535,8 +535,4 @@ function tally(codes: readonly string[]): string {
       .map(([code, rows]) => `${code} ${String(rows.length)}`)
       .join(", ") || "なし"
   )
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value)
 }

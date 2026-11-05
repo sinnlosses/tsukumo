@@ -1,7 +1,7 @@
 // 委譲の返却が届いてからメインが `work_plan` を呼ぶまでのあいだ、メインの作業のツールを拒む判定と、
 // その依頼で最初の `work_plan` を受け付けるまでのあいだ、メインの `Edit`・`Write` を拒む判定。
 
-import { isDeepEqual } from "remeda"
+import { isDeepEqual, isPlainObject } from "remeda"
 import { z } from "zod"
 
 import { phaseElementSchema } from "../../../shared/session/work-plan-phase-id.ts"
@@ -161,8 +161,8 @@ type GivenPhaseIds =
 
 /** 起動の入力の `args.phaseIds` を、平らにした読み順の id にする。`phaseIds` が無ければ undefined。 */
 function givenPhaseIdsOf(toolInput: unknown): GivenPhaseIds | undefined {
-  const args = isRecord(toolInput) ? toolInput.args : undefined
-  if (!isRecord(args) || args.phaseIds === undefined) {
+  const args = isPlainObject(toolInput) ? toolInput.args : undefined
+  if (!isPlainObject(args) || args.phaseIds === undefined) {
     return undefined
   }
   const parsed = phaseIdsArgSchema.safeParse(args.phaseIds)
@@ -174,10 +174,6 @@ function givenPhaseIdsOf(toolInput: unknown): GivenPhaseIds | undefined {
           .map((element) => (typeof element === "string" ? element : element.id)),
       }
     : { kind: "malformed" }
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null
 }
 
 function isAutoMemoryPath(filePath: string): boolean {

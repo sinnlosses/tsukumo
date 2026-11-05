@@ -17,6 +17,8 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 import process from "node:process"
 
+import { isPlainObject } from "remeda"
+
 import { type CheckRecord, EMPTY_CHECK_RECORD, type RecordedStage } from "./check-record.ts"
 
 const RECORD_FILE_NAME = ".check-record.json"
@@ -97,7 +99,7 @@ function git(root: string, args: readonly string[], env: NodeJS.ProcessEnv = pro
 }
 
 function parseRecord(value: unknown): CheckRecord {
-  if (!isRecord(value) || typeof value.tree !== "string" || !Array.isArray(value.stages)) {
+  if (!isPlainObject(value) || typeof value.tree !== "string" || !Array.isArray(value.stages)) {
     return EMPTY_CHECK_RECORD
   }
   const stages = value.stages.flatMap((stage: unknown): readonly RecordedStage[] => {
@@ -109,7 +111,7 @@ function parseRecord(value: unknown): CheckRecord {
 
 function parseStage(value: unknown): RecordedStage | undefined {
   if (
-    !isRecord(value) ||
+    !isPlainObject(value) ||
     typeof value.name !== "string" ||
     !isStringArray(value.args) ||
     !isStringArray(value.retryFiles)
@@ -133,8 +135,4 @@ function parseStage(value: unknown): RecordedStage | undefined {
 
 function isStringArray(value: unknown): value is readonly string[] {
   return Array.isArray(value) && value.every((item) => typeof item === "string")
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value)
 }

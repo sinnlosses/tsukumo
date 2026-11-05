@@ -2,6 +2,8 @@
 
 import { relative } from "node:path"
 
+import { isPlainObject } from "remeda"
+
 import { parseJson } from "../../../src/shared/utils/parse-json.ts"
 
 export type StageOutcome = {
@@ -47,17 +49,17 @@ export function describeFailedStages(outcomes: readonly StageOutcome[]): readonl
  */
 export function parseFailedTests(json: string, root: string): readonly string[] {
   const report = parseJson(json)
-  if (!isRecord(report) || !Array.isArray(report.testResults)) {
+  if (!isPlainObject(report) || !Array.isArray(report.testResults)) {
     return []
   }
   return report.testResults.flatMap((file: unknown): readonly string[] => {
-    if (!isRecord(file) || file.status !== "failed" || typeof file.name !== "string") {
+    if (!isPlainObject(file) || file.status !== "failed" || typeof file.name !== "string") {
       return []
     }
     const path = relative(root, file.name)
     const titles = Array.isArray(file.assertionResults)
       ? file.assertionResults.flatMap((test: unknown): readonly string[] =>
-          isRecord(test) && test.status === "failed" && typeof test.fullName === "string"
+          isPlainObject(test) && test.status === "failed" && typeof test.fullName === "string"
             ? [test.fullName]
             : [],
         )
@@ -72,16 +74,20 @@ export function parseFailedTests(json: string, root: string): readonly string[] 
  */
 export function parsePassedTests(json: string, root: string): readonly string[] {
   const report = parseJson(json)
-  if (!isRecord(report) || !Array.isArray(report.testResults)) {
+  if (!isPlainObject(report) || !Array.isArray(report.testResults)) {
     return []
   }
   return report.testResults.flatMap((file: unknown): readonly string[] => {
-    if (!isRecord(file) || typeof file.name !== "string" || !Array.isArray(file.assertionResults)) {
+    if (
+      !isPlainObject(file) ||
+      typeof file.name !== "string" ||
+      !Array.isArray(file.assertionResults)
+    ) {
       return []
     }
     const path = relative(root, file.name)
     return file.assertionResults.flatMap((test: unknown): readonly string[] =>
-      isRecord(test) && test.status === "passed" && typeof test.fullName === "string"
+      isPlainObject(test) && test.status === "passed" && typeof test.fullName === "string"
         ? [`${path} > ${test.fullName}`]
         : [],
     )
@@ -102,11 +108,11 @@ export type FailedFiles = {
  */
 export function parseFailedFiles(json: string, root: string): FailedFiles {
   const report = parseJson(json)
-  if (!isRecord(report) || !Array.isArray(report.testResults)) {
+  if (!isPlainObject(report) || !Array.isArray(report.testResults)) {
     return { files: [], failedTestCount: 0 }
   }
   const files = report.testResults.flatMap((file: unknown): readonly string[] =>
-    isRecord(file) && file.status === "failed" && typeof file.name === "string"
+    isPlainObject(file) && file.status === "failed" && typeof file.name === "string"
       ? [relative(root, file.name)]
       : [],
   )
@@ -117,8 +123,4 @@ export function parseFailedFiles(json: string, root: string): FailedFiles {
 /** 止められた段は数えない。 */
 function shouldStopRunningStages(finished: readonly StageOutcome[]): boolean {
   return finished.some((outcome) => outcome.status !== 0 && !outcome.stopped)
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value)
 }

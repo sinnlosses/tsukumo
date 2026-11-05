@@ -1,4 +1,4 @@
-import { sumBy } from "remeda"
+import { isPlainObject, sumBy } from "remeda"
 
 import { FIGURE_WEIGHT, SHORT_REPORT_WEIGHT } from "../../../src/browser/domain/reveal/plan.ts"
 import type { FakeSession } from "../../../src/server/session-driver/adapter/fake/fake-session.ts"
@@ -107,7 +107,7 @@ function textLength(value: unknown): number {
   if (Array.isArray(value)) {
     return sumBy(value, textLength)
   }
-  if (typeof value === "object" && value !== null) {
+  if (isPlainObject(value)) {
     return sumBy(
       Object.entries(value).filter(
         ([key]) => key !== "kind" && key !== "style" && key !== "id" && key !== "component",

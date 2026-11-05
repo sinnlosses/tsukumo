@@ -1,5 +1,6 @@
 // `vite` の `parseSync`（oxc）が返す構文木の読み取り。
 
+import { isPlainObject } from "remeda"
 import { parseSync } from "vite"
 
 export type AstNode = object
@@ -32,7 +33,7 @@ export function literalString(node: AstNode | undefined): string | undefined {
 
 export function objectField(node: AstNode | undefined, key: string): AstNode | undefined {
   const value: unknown = node === undefined ? undefined : Reflect.get(node, key)
-  return typeof value === "object" && value !== null ? value : undefined
+  return isPlainObject(value) ? value : undefined
 }
 
 export function stringField(node: AstNode | undefined, key: string): string | undefined {
@@ -42,9 +43,7 @@ export function stringField(node: AstNode | undefined, key: string): string | un
 
 export function arrayField(node: AstNode | undefined, key: string): readonly AstNode[] {
   const value: unknown = node === undefined ? undefined : Reflect.get(node, key)
-  return Array.isArray(value)
-    ? value.filter((item): item is AstNode => typeof item === "object" && item !== null)
-    : []
+  return Array.isArray(value) ? value.filter((item): item is AstNode => isPlainObject(item)) : []
 }
 
 /** `root` とその子孫のノードを、順不同ですべて返す。 */
@@ -56,7 +55,7 @@ export function descendants(root: AstNode): readonly AstNode[] {
     for (const value of Object.values(next) as unknown[]) {
       const items: unknown[] = Array.isArray(value) ? value : [value]
       for (const item of items) {
-        if (typeof item === "object" && item !== null && "type" in item) {
+        if (isPlainObject(item) && "type" in item) {
           pending.push(item)
         }
       }
