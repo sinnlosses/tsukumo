@@ -1,5 +1,6 @@
 // ワークプラン（`work_plan` ツールで受け取る段の並びと今の位置）の形と、引数の検証、並びを平らにした段と今の段を導く決まり。
 
+import { sumBy } from "remeda"
 import { z } from "zod"
 
 import { isBlankText } from "../utils/blank-text.ts"
@@ -252,7 +253,7 @@ export function plannedPhasesOf(
 
 /** 段の数（並びを平らにして数える）。 */
 export function phaseCount(phases: readonly WorkPlanEntry[]): number {
-  return phases.reduce((total, entry) => total + entryNames(entry).length, 0)
+  return sumBy(phases, (entry) => entryNames(entry).length)
 }
 
 /** 済んだ段の数（並びを平らにして数える）。 */

@@ -6,6 +6,8 @@
 // 並べるのは「ポートで待ち受けていて、かつ Orca のタブがある」部屋だけ。タブだけの部屋
 // （プロセスが止まった）・待ち受けだけの部屋（起動トークンが取り戻せない）は落とす。
 
+import { unique } from "remeda"
+
 import type { OrcaTab } from "../../src/server/host/adapter/orca-host.ts"
 import { LAYOUT_PATH } from "../../src/server/view-server/adapter/server.ts"
 import { SESSION_TOKEN_QUERY_NAME } from "../../src/shared/view-server/session-socket.ts"
@@ -62,7 +64,7 @@ export function scanPorts(
     const port = viewTabPort(url)
     return port === undefined ? [] : [port]
   })
-  return [...new Set([...defaultPorts, ...fromTabs])].toSorted((a, b) => a - b)
+  return unique([...defaultPorts, ...fromTabs]).toSorted((a, b) => a - b)
 }
 
 /**

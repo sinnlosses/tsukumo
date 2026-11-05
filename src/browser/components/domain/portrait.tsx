@@ -10,6 +10,7 @@
 
 import clsx from "clsx"
 import type { ReactElement } from "react"
+import { unique } from "remeda"
 
 import type { Expression } from "../../../shared/character-pack/expression.ts"
 import type { PortraitMotion } from "../../domain/portrait-motion.ts"
@@ -44,7 +45,7 @@ export function usePortraitPreload(portraits: Readonly<Record<string, string>> |
     if (portraits === undefined) {
       return undefined
     }
-    const images = [...new Set(Object.values(portraits))].map((url) => {
+    const images = unique(Object.values(portraits)).map((url) => {
       const image = new Image()
       image.src = url
       return image

@@ -1,3 +1,5 @@
+import { unique } from "remeda"
+
 const MAX_EXPRESSION_LENGTH = 200
 export const MAX_EXPRESSION_LIST_LENGTH = 101
 export const MAX_EXPRESSION_DEFS = 20
@@ -243,7 +245,7 @@ export function parseExpression(source: string): ParseResult {
 
 export function collectExpressionReferences(node: ExprNode): ExprReferences {
   const found = collect(node)
-  return { names: [...new Set(found.names)], functions: [...new Set(found.functions)] }
+  return { names: unique(found.names), functions: unique(found.functions) }
 }
 
 function collect(node: ExprNode): { names: readonly string[]; functions: readonly string[] } {

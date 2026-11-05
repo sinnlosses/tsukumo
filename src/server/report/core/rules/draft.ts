@@ -2,6 +2,7 @@ import type { Nodes, Root } from "mdast"
 import remarkCjkFriendly from "remark-cjk-friendly"
 import remarkGfm from "remark-gfm"
 import remarkParse from "remark-parse"
+import { sumBy } from "remeda"
 import { unified } from "unified"
 
 import type { A2uiReportComponent } from "../../../../shared/report/a2ui-report-catalog.ts"
@@ -47,9 +48,8 @@ export function nodesInOrder(node: Nodes): readonly Nodes[] {
 
 /** `text` ノードの字数の合計。インラインコード・リンクの URL・記法の記号は数えない。 */
 export function textLengthOf(markdown: string): number {
-  return nodesInOrder(markdownTreeOf(markdown)).reduce(
-    (total, node) => total + (node.type === "text" ? [...node.value].length : 0),
-    0,
+  return sumBy(nodesInOrder(markdownTreeOf(markdown)), (node) =>
+    node.type === "text" ? [...node.value].length : 0,
   )
 }
 
@@ -78,9 +78,7 @@ const NUMBER_PATTERN = /\d+(?:[.,]\d+)*/g
 
 /** 文中の数（数字の連なり）の数。インラインコードの中は数えない。 */
 export function numberCountOutsideCode(markdown: string): number {
-  return nodesInOrder(markdownTreeOf(markdown)).reduce(
-    (total, node) =>
-      total + (node.type === "text" ? (node.value.match(NUMBER_PATTERN)?.length ?? 0) : 0),
-    0,
+  return sumBy(nodesInOrder(markdownTreeOf(markdown)), (node) =>
+    node.type === "text" ? (node.value.match(NUMBER_PATTERN)?.length ?? 0) : 0,
   )
 }

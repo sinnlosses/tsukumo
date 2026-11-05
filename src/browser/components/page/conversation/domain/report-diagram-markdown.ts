@@ -1,5 +1,7 @@
 // 図の部品（`chart`・`svg`・`mermaid`）の本体の値を組む。Chart.js の設定・SVG の図形の並び・時系列の図の通し番号を持つ（`graph` は `graphSource`）。
 
+import { sumBy } from "remeda"
+
 import type { ReportChartTone } from "../../../../../shared/report/report-block-diagram.ts"
 import type { ReportBlock } from "../../../../../shared/report/report-block.ts"
 
@@ -310,7 +312,7 @@ export function withSequenceAutonumber(source: string): string {
 
 /** 各値を（負を0に丸めた）合計に対する百分率にする。合計が0なら全部0。 */
 function percentagesOf(values: readonly number[]): number[] {
-  const total = values.reduce((sum, value) => sum + Math.max(0, value), 0)
+  const total = sumBy(values, (value) => Math.max(0, value))
   return values.map((value) => (total > 0 ? (Math.max(0, value) / total) * 100 : 0))
 }
 

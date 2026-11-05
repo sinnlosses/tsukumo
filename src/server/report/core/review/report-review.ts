@@ -30,6 +30,8 @@
 // 違反の差し戻し・送り直し・新しい事実の判定のどれでも、サブエージェントの呼び出しがそのターンの1回を使いうる。
 // サブエージェントの `report` はどのみち描かないので、失うのはメインの差し戻しの機会だけ。
 
+import { unique } from "remeda"
+
 import type {
   ReportArgumentChars,
   ReportArgumentField,
@@ -219,7 +221,7 @@ export function createReportReview(
       return {
         kind: "rejected",
         text: reportRejectionText(rejecting),
-        reasons: [...new Set(rejecting.map((violation) => violation.kind))],
+        reasons: unique(rejecting.map((violation) => violation.kind)),
       }
     }
     const verdict = firstRejection()

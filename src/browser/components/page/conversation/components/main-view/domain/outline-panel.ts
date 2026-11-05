@@ -1,7 +1,7 @@
 // やり取りの列の幅と、利用者が選んだ畳み。`localStorage` にこの2つだけ保存する（会話は保存しない）。
 // 読み書きに失敗しても既定へ落ちるだけで、例外は投げない。
 
-import { isPlainObject } from "remeda"
+import { clamp, isPlainObject } from "remeda"
 import { z } from "zod"
 
 import { localPreference } from "../../../../../../utils/local-preference.ts"
@@ -39,7 +39,7 @@ export function isOutlineCollapsed(choice: OutlineCollapseChoice, narrow: boolea
 
 /** `LayoutResizer` の `toValue` にそのまま渡す。比率（0〜1）を可動域つきの px にする。 */
 export function outlineWidthFromRatio(ratio: number, rect: DOMRect): number {
-  return clampOutlineWidthPx(ratio * rect.width)
+  return clamp(ratio * rect.width, { min: OUTLINE_WIDTH_MIN_PX, max: OUTLINE_WIDTH_MAX_PX })
 }
 
 // 幅か畳みのどちらかが不正なら全体を既定に落とす。
@@ -84,8 +84,4 @@ function collapseChoiceOf(
     return legacyCollapsed ? "collapsed" : "unset"
   }
   return undefined
-}
-
-function clampOutlineWidthPx(value: number): number {
-  return Math.min(OUTLINE_WIDTH_MAX_PX, Math.max(OUTLINE_WIDTH_MIN_PX, value))
 }

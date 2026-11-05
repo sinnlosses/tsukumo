@@ -1,6 +1,7 @@
 // HTML 版とレポート版を同じ題材・同じ書き手に書かせる見比べの、依頼の文・判定・疑似セッションの組み立て。
 // 外のプロセスを起こさない純粋な部分だけを持つ。題材はすべて架空のものだけを受ける。
 
+import { unique } from "remeda"
 import { z } from "zod"
 
 import { REPORT_NOTATION_PROMPT } from "../../../src/server/report/core/prompt/report-notation.ts"
@@ -186,7 +187,7 @@ function violationOf(
   return rejecting.length === 0
     ? undefined
     : {
-        codes: [...new Set(rejecting.map((violation) => violation.kind))],
+        codes: unique(rejecting.map((violation) => violation.kind)),
         retryText: reportRejectionText(rejecting),
       }
 }

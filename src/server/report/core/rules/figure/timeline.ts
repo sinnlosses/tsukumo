@@ -1,5 +1,7 @@
 // `timeline` の部品の差し戻しの位置（何個目の部品のどこか）。行の名前・時刻の字は持たない。
 
+import { unique } from "remeda"
+
 import type { ReportTimeline } from "../../../../../shared/report/timeline-block.ts"
 import { readTimeline, type TimelineFault } from "../../../../../shared/report/timeline-scale.ts"
 
@@ -17,7 +19,7 @@ export function timelineFaults(
 
 /** 誤りの位置の並び（「1個目の `timeline` の 3 行目」）。同じ位置は1度だけ書く。 */
 export function timelineFaultPositions(faults: readonly TimelineBlockFault[]): string {
-  return [...new Set(faults.map(positionOf))].join("、")
+  return unique(faults.map(positionOf)).join("、")
 }
 
 function positionOf(fault: TimelineBlockFault): string {

@@ -1,6 +1,6 @@
 // 体験の指標 `bodyChars`: 振り返りを除く描く節の、見出しと塊の文字列の値の字数。
 
-import { isPlainObject } from "remeda"
+import { isPlainObject, sumBy } from "remeda"
 
 import { drawnReportOf } from "../../../../shared/report/report-drawn-outline.ts"
 import { staticReportComponents } from "../../../../shared/report/report-static-component-list.ts"
@@ -15,15 +15,11 @@ export function reportBodyChars(report: ReportRecord): number {
     report.conclusion,
     "whole",
   )
-  return drawn.sections
-    .filter((section) => section.role !== "retrospective")
-    .reduce(
-      (total, section) =>
-        total +
-        section.heading.trim().length +
-        section.entries.reduce((sum, entry) => sum + stringChars(entry.block), 0),
-      0,
-    )
+  return sumBy(
+    drawn.sections.filter((section) => section.role !== "retrospective"),
+    (section) =>
+      section.heading.trim().length + sumBy(section.entries, (entry) => stringChars(entry.block)),
+  )
 }
 
 function stringChars(value: unknown): number {
@@ -34,10 +30,7 @@ function stringChars(value: unknown): number {
     return value.reduce<number>((sum, item) => sum + stringChars(item), 0)
   }
   if (isPlainObject(value)) {
-    return Object.entries(value).reduce(
-      (sum, [key, item]) => (key === "kind" ? sum : sum + stringChars(item)),
-      0,
-    )
+    return sumBy(Object.entries(value), ([key, item]) => (key === "kind" ? 0 : stringChars(item)))
   }
   return 0
 }

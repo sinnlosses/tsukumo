@@ -1,6 +1,8 @@
 // 図の部品（`mermaid`・`svg`・`graph`）の不具合の検出。
 // 位置と字句の名前だけを持ち、書き手のソースの文字は持たない。
 
+import { unique } from "remeda"
+
 import { readGraphSource } from "../../../../../shared/report/graph-source.ts"
 import { REPORT_MERMAID_KINDS } from "../../../../../shared/report/report-block-diagram.ts"
 import {
@@ -65,7 +67,7 @@ export function svgToneFaultsInLeaves(leaves: readonly ReportOutlineLeaf[]): rea
     const used = figure.shapes.flatMap((shape) =>
       (shape.kind === "rect" || shape.kind === "line") && shape.tone !== "none" ? [shape.tone] : [],
     )
-    return [...new Set(used)]
+    return unique(used)
       .filter((tone) => !legended.has(tone))
       .map((tone) => ({ block: figureIndex + 1, tone }))
   })
@@ -103,7 +105,7 @@ export function graphToneFaultsInLeaves(
     const { nodes, edges, groups } = readGraphSource(graph.source)
     const legended = new Set(graph.legend.map((entry) => entry.tone))
     const used = [...nodes, ...edges, ...groups].map(({ tone }) => tone)
-    return [...new Set(used)]
+    return unique(used)
       .filter((tone) => tone !== "none" && !legended.has(tone))
       .map((tone) => ({ block: graphIndex + 1, tone }))
   })

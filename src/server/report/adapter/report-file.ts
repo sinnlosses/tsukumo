@@ -3,6 +3,8 @@
 import { readFile, stat } from "node:fs/promises"
 import { resolve } from "node:path"
 
+import { unique } from "remeda"
+
 import type { ReportOutlineLeaf } from "../../../shared/report/report-outline.ts"
 
 /** 読む上限（これを超えるファイルは読まない）。 */
@@ -16,13 +18,11 @@ export async function readReportBlockFiles(
   cwd: string,
   leaves: readonly ReportOutlineLeaf[],
 ): Promise<ReadonlyMap<string, string>> {
-  const paths = [
-    ...new Set(
-      leaves.flatMap((leaf) =>
-        leaf.component === "Code" && leaf.path.trim() !== "" ? [leaf.path] : [],
-      ),
+  const paths = unique(
+    leaves.flatMap((leaf) =>
+      leaf.component === "Code" && leaf.path.trim() !== "" ? [leaf.path] : [],
     ),
-  ]
+  )
   const entries = await Promise.all(
     paths.map(async (path) => [path, await readOne(cwd, path)] as const),
   )

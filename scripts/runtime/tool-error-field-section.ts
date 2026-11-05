@@ -1,7 +1,7 @@
 // 形の検査で落ちた呼び出し（`tool-error`）の、落ちた欄名の上位。
 // 1回の呼び出しで同じ欄と code が複数出ても1回に数える。欄名は取れた行だけが持つので、分母は取れた行の数。
 
-import { countBy } from "remeda"
+import { countBy, unique } from "remeda"
 
 import type { RejectionRecord } from "./report-usage-row.ts"
 
@@ -11,9 +11,9 @@ export function toolErrorFieldSection(rejections: readonly RejectionRecord[]): s
   const toolErrors = rejections.filter((rejection) => rejection.reasons.includes("tool-error"))
   const withFields = toolErrors.filter((rejection) => (rejection.toolErrorFields ?? []).length > 0)
   const counted = countBy(
-    withFields.flatMap((rejection) => [
-      ...new Set((rejection.toolErrorFields ?? []).map((entry) => `${entry.field}  ${entry.code}`)),
-    ]),
+    withFields.flatMap((rejection) =>
+      unique((rejection.toolErrorFields ?? []).map((entry) => `${entry.field}  ${entry.code}`)),
+    ),
     (key) => key,
   )
   const rows = Object.entries(counted)

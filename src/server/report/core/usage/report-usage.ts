@@ -1,7 +1,7 @@
 // `report` の塊の使われ方の記録1行ぶんの中身。
 // 持つのはそのレポートに出た名前の集合と数だけで、塊の中身・逃げ道の文字は入れない。
 
-import { isPlainObject } from "remeda"
+import { isPlainObject, sumBy, unique } from "remeda"
 
 import type { LEAF_COMPONENT_KINDS } from "../../../../shared/report/a2ui-report-catalog.ts"
 import { readGraphSource } from "../../../../shared/report/graph-source.ts"
@@ -255,7 +255,7 @@ export function reportUsageEntryOf(
     notations: notationsInSections(outline),
     containedNotations: containedNotationsInSections(outline),
     escapeNotations: escapeNotationsInSections(outline),
-    componentNames: [...new Set(event.components.map((part) => part.component))],
+    componentNames: unique(event.components.map((part) => part.component)),
     parameterCount: event.components.filter(
       (part) => part.component === "ParameterSlider" || part.component === "ParameterCheckBox",
     ).length,
@@ -265,10 +265,10 @@ export function reportUsageEntryOf(
     ),
     unknownBlockCount: event.droppedCount,
     brokenFenceCount: event.brokenFenceCount,
-    listStyles: [
-      ...new Set(drawn.flatMap((leaf) => (leaf.component === "ItemList" ? [leaf.style] : []))),
-    ],
-    mermaidKinds: [...new Set(mermaidSourcesOfLeaves(drawn).map(mermaidKind))],
+    listStyles: unique(
+      drawn.flatMap((leaf) => (leaf.component === "ItemList" ? [leaf.style] : [])),
+    ),
+    mermaidKinds: unique(mermaidSourcesOfLeaves(drawn).map(mermaidKind)),
     hasModifiedFiles: false,
     hasComparisonOrImage: drawn.some(
       (leaf) => leaf.component === "Compare" || leaf.component === "Picture",
@@ -279,7 +279,7 @@ export function reportUsageEntryOf(
         comparisonSidesOf(leaf).some((side) => FIGURE_KINDS.includes(side.kind)),
     ),
     readImageWithoutImageBlock: mainReadImageFile && reportImagePaths(drawn).length === 0,
-    emphasisCount: drawn.reduce((total, leaf) => total + emphasisCountOf(leaf), 0),
+    emphasisCount: sumBy(drawn, emphasisCountOf),
     ...graphCountsOf(drawn),
     ...howToVerifyUsageOf(event.checks),
     ...taskUsageOf(event.task),
@@ -355,7 +355,7 @@ function kindOf(leaf: ReportOutlineLeaf): ReportLeafKind {
 }
 
 function kindsOf(leaves: readonly ReportOutlineLeaf[]): readonly ReportLeafKind[] {
-  return [...new Set(leaves.map(kindOf))]
+  return unique(leaves.map(kindOf))
 }
 
 function hasField(leaf: ReportOutlineLeaf, field: ReportBlockField): boolean {

@@ -1,7 +1,7 @@
 // 書く前の手引き（材料の形の宣言と部品の引き方の目安）が部品の選びを変えるかを測る、条件・依頼の文・集計。
 // 外のプロセスを起こさない純粋な部品だけを持つ。
 
-import { isPlainObject, sumBy } from "remeda"
+import { isPlainObject, sumBy, unique } from "remeda"
 
 import { REPORT_PART_CHOICE_GUIDE } from "../../../src/server/report/core/prompt/report-notation.ts"
 import { NEUTRAL_TOPICS, type TopicId } from "./a2ui-trial-topic.ts"
@@ -116,7 +116,7 @@ export function usedComponentNames(components: readonly unknown[]): readonly str
       ? [component["component"]]
       : [],
   )
-  return [...new Set(names)]
+  return unique(names)
 }
 
 /** 手引きごとの、部品の選びの集計の行。部品を使った件数は、出力が配列として読めた件数のうち、その部品を 1 つでも使ったもの。 */

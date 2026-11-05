@@ -1,8 +1,10 @@
 // 折り返し配置の字の幅の見積もりと、見積もりの幅での行の折り方。ブラウザで測らずに座標を決めるための近似。
 
+import { sumBy } from "remeda"
+
 /** 字の幅の見積もり。全角は字の大きさ、半角はその 0.6 倍。 */
 export function textWidth(text: string, fontSize: number): number {
-  return [...text].reduce((sum, char) => sum + charWidth(char, fontSize), 0)
+  return sumBy([...text], (char) => charWidth(char, fontSize))
 }
 
 /** 見積もりの幅で行を折る。半角の語（空白で区切る）は途中で割らない。 */

@@ -5,6 +5,8 @@
 // 1段」を破るものとみなす。既存の該当は書いているファイルごとの件数で凍結し、
 // 新しく足した参照（件数が増えたファイル）だけを落とす。貼り替えて減らしたら、一覧も減らす。
 
+import { unique } from "remeda"
+
 import type { SectionReference } from "./section-reference.ts"
 
 /** 凍結した一覧と食い違ったファイル1つ。 */
@@ -52,7 +54,7 @@ export function findHubReferenceDrifts(
   actual: Readonly<Record<string, number>>,
   frozen: Readonly<Record<string, number>>,
 ): HubReferenceDrift[] {
-  return [...new Set([...Object.keys(actual), ...Object.keys(frozen)])]
+  return unique([...Object.keys(actual), ...Object.keys(frozen)])
     .toSorted()
     .map((sourcePath) => ({
       sourcePath,

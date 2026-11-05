@@ -7,6 +7,8 @@
 import { readdirSync, statSync } from "node:fs"
 import { basename, join } from "node:path"
 
+import { unique } from "remeda"
+
 import {
   type CharacterAssetLocation,
   portraitImageMimeType,
@@ -162,10 +164,10 @@ export function listCharacterPacks(
 
   // 同名は後勝ち。同梱 → ホーム → 起動先の順に並べてあるので、これがそのまま優先順になる。
   const packs = dirs.map(readCharacterPack)
-  const unique = [...new Map(packs.map((pack) => [pack.name, pack] as const)).values()]
+  const lastOfEachName = [...new Map(packs.map((pack) => [pack.name, pack] as const)).values()]
   return [
-    ...unique.filter((pack) => pack.name === LEADING_PACK_NAME),
-    ...unique.filter((pack) => pack.name !== LEADING_PACK_NAME),
+    ...lastOfEachName.filter((pack) => pack.name === LEADING_PACK_NAME),
+    ...lastOfEachName.filter((pack) => pack.name !== LEADING_PACK_NAME),
   ]
 }
 
@@ -271,7 +273,7 @@ function characterPackFileNames(definition: CharacterDefinition | undefined): re
     definition.background?.image,
     definition.diaryFont,
   ].filter(isDefined)
-  return [...new Set(fileNames)]
+  return unique(fileNames)
 }
 
 /**

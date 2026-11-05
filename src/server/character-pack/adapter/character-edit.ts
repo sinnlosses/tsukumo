@@ -13,6 +13,8 @@
 import { copyFileSync, existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs"
 import { basename, join } from "node:path"
 
+import { unique } from "remeda"
+
 import { portraitImageMimeType } from "../../../shared/character-pack/character-asset.ts"
 import {
   type CharacterDefinition,
@@ -323,7 +325,7 @@ function referencedImageFileNames(definition: CharacterDefinition | undefined): 
     definition?.background?.image,
     definition?.face,
   ].filter(isCharacterImageFileName)
-  return [...new Set(names)]
+  return unique(names)
 }
 
 /**

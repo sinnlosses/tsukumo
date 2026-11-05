@@ -4,6 +4,7 @@
 // 足跡に入れるのは種類・開始の時刻・所要・トークンの数・結果の種類だけで、メッセージの文面は読まない。
 // result の形は外から来る値なので、要る欄だけを zod で確かめる。
 
+import { sumBy } from "remeda"
 import { z } from "zod"
 
 import {
@@ -98,12 +99,11 @@ function resultEndingOf(message: unknown): FootprintEnding | undefined {
   const usages = Object.values(parsed.data.modelUsage)
   return {
     outcome: resultOutcomeOf(parsed.data.subtype),
-    inputTokens: usages.reduce(
-      (sum, usage) =>
-        sum + usage.inputTokens + usage.cacheReadInputTokens + usage.cacheCreationInputTokens,
-      0,
+    inputTokens: sumBy(
+      usages,
+      (usage) => usage.inputTokens + usage.cacheReadInputTokens + usage.cacheCreationInputTokens,
     ),
-    outputTokens: usages.reduce((sum, usage) => sum + usage.outputTokens, 0),
+    outputTokens: sumBy(usages, (usage) => usage.outputTokens),
   }
 }
 

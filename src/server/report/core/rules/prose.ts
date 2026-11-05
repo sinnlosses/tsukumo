@@ -1,5 +1,7 @@
 // 文章の検査の家族。違反の型・検出・差し戻し文を持つ。
 
+import { sumBy } from "remeda"
+
 import { MAX_FIRST_SENTENCE, MAX_HEADING } from "../../../../shared/report/report-limit.ts"
 import { type ReportOutline, sectionLeaves } from "../../../../shared/report/report-outline.ts"
 import type { ReportDraft } from "./draft.ts"
@@ -97,7 +99,7 @@ export function detectProseViolations(
     },
     {
       kind: "label-in-item",
-      count: leaves.reduce((total, leaf) => total + labelInItemCount(leaf), 0),
+      count: sumBy(leaves, labelInItemCount),
     },
     {
       kind: "labeled-ordered",

@@ -1,6 +1,8 @@
 // 主ブランチとのマージベースからの差分・未コミットの変更・未追跡のファイルを合わせて
 // 「変えたファイル」の一覧にする、という概念1つを持つ。`git` だけを呼ぶ。
 
+import { unique } from "remeda"
+
 import { queryGit } from "./git-query.ts"
 
 export const PRIMARY_BRANCH = "main"
@@ -16,7 +18,7 @@ export function collectChangedPaths(root: string, primaryBranch: string): string
   const untrackedPaths = splitLines(
     queryGit(root, ["ls-files", "--others", "--exclude-standard"]) ?? "",
   )
-  return [...new Set([...diffPaths, ...untrackedPaths])]
+  return unique([...diffPaths, ...untrackedPaths])
 }
 
 function splitLines(output: string): string[] {

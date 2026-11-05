@@ -1,5 +1,7 @@
 // `timeline` の塊の時刻の読み（尺度の判別・分の値・誤り）と、軸の目盛り。
 
+import { unique } from "remeda"
+
 import type { ReportTimeline } from "./timeline-block.ts"
 
 export type TimelineScale = "clock" | "iso" | "minutes"
@@ -294,7 +296,7 @@ function afterFaultsOf(rows: ReportTimeline["rows"]): readonly (readonly Timelin
 }
 
 function uniqueReasons(reasons: readonly TimelineFaultReason[]): readonly TimelineFaultReason[] {
-  return [...new Set(reasons)]
+  return unique(reasons)
 }
 
 function spanCount(min: number, max: number, interval: number): number {

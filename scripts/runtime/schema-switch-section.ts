@@ -1,7 +1,7 @@
 // `report` の型の渡し方の切り替えの前後で、差し戻しの率・理由・出し直しの重さを並べた節。
 // 読むのは時刻・セッションID・種類・理由の名前・字数だけで、会話の中身を持つ欄は読まない。
 
-import { groupBy } from "remeda"
+import { groupBy, unique } from "remeda"
 import { z } from "zod"
 
 import { percentile } from "./argument-chars-section.ts"
@@ -124,7 +124,7 @@ function summaryLines(stats: Stats): readonly string[] {
 }
 
 function reasonLines(groups: readonly Stats[]): readonly string[] {
-  const names = [...new Set(groups.flatMap((stats) => stats.rejected.flatMap(reasonsOf)))]
+  const names = unique(groups.flatMap((stats) => stats.rejected.flatMap(reasonsOf)))
   const countOf = (stats: Stats, name: string): number =>
     stats.rejected.filter((row) => reasonsOf(row).includes(name)).length
   const rows = names

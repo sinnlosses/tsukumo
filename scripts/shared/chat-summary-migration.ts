@@ -8,6 +8,7 @@
 import { existsSync, mkdirSync, readdirSync, rmSync, statSync } from "node:fs"
 import { join } from "node:path"
 
+import { unique } from "remeda"
 import { z } from "zod"
 
 import { writeFileAtomic } from "../../src/server/adapter/lib/atomic-file.ts"
@@ -114,9 +115,10 @@ export function pruneLeftovers(
   }
 
   add(VISUAL_DIR_NAME, join(home, VISUAL_DIR_NAME), "remove")
-  const packs = [
-    ...new Set([...summaryPackNames(place.summaryRoot), ...archivePackNames(place.archiveRoot)]),
-  ].toSorted()
+  const packs = unique([
+    ...summaryPackNames(place.summaryRoot),
+    ...archivePackNames(place.archiveRoot),
+  ]).toSorted()
   for (const pack of packs) {
     const hasCurrent = readCurrent(place, pack) !== undefined
     const dir = join(place.archiveRoot, pack)
@@ -243,7 +245,7 @@ function summaryPackNames(summaryRoot: string): readonly CharacterPackName[] {
       suffix === undefined ? undefined : parseCharacterPackName(fileName.slice(0, -suffix.length))
     return pack === undefined ? [] : [pack]
   })
-  return [...new Set(names)].toSorted()
+  return unique(names).toSorted()
 }
 
 function archivePackNames(archiveRoot: string): readonly CharacterPackName[] {

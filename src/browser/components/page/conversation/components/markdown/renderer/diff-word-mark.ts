@@ -1,6 +1,7 @@
 // `diff` の1行（hast の並び）の中の、違う語の区間を `<span>` で包む。
 
 import type { Element, ElementContent } from "hast"
+import { sumBy } from "remeda"
 
 import type { CodeLine } from "./code-line.ts"
 import type { TextRange } from "./word-diff.ts"
@@ -88,7 +89,5 @@ function textLength(node: ElementContent): number {
   if (node.type === "text") {
     return node.value.length
   }
-  return node.type === "element"
-    ? node.children.reduce((sum, child) => sum + textLength(child), 0)
-    : 0
+  return node.type === "element" ? sumBy(node.children, textLength) : 0
 }

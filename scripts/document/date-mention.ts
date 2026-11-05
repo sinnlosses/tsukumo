@@ -3,6 +3,8 @@
 //
 // 拾わないのは2つ。日付入りのファイル名（拡張子で終わる語）と、「…」で引いた節名の中の日付。
 
+import { unique } from "remeda"
+
 /** 日付を含む行1件。 */
 export type DateMention = {
   readonly sourcePath: string
@@ -54,7 +56,7 @@ export function findFrozenMismatches(
   frozen: Readonly<Record<string, number>>,
   actual: Readonly<Record<string, number>>,
 ): string[] {
-  const ranges = [...new Set([...Object.keys(frozen), ...Object.keys(actual)])].toSorted()
+  const ranges = unique([...Object.keys(frozen), ...Object.keys(actual)]).toSorted()
   return ranges.flatMap((range) => {
     const frozenCount = frozen[range] ?? 0
     const actualCount = actual[range] ?? 0

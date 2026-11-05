@@ -2,6 +2,7 @@
 //
 // 拾うのは mdast の `image` のノードだけなので、コードフェンス・コードスパン・エスケープの中の記法と生の `<img>` は拾わない。
 
+import { unique } from "remeda"
 import { visit } from "unist-util-visit"
 
 import { isShelvedImageUrl } from "../../../../shared/report/report-image.ts"
@@ -12,19 +13,15 @@ import { markdownTreeOf } from "../rules/draft.ts"
 export function questionImagePaths(
   ask: Pick<QuestionPendingAsk, "questions" | "briefs">,
 ): readonly string[] {
-  return [
-    ...new Set([
-      ...ask.questions
-        .flatMap((question) => question.options)
-        .flatMap((option) =>
-          option.preview === undefined ? [] : previewImagePaths(option.preview),
-        ),
-      ...ask.briefs
-        .flatMap((brief) => brief.options)
-        .flatMap((option) => option.figures)
-        .flatMap((figure) => (figure.kind === "image" && figure.path !== "" ? [figure.path] : [])),
-    ]),
-  ]
+  return unique([
+    ...ask.questions
+      .flatMap((question) => question.options)
+      .flatMap((option) => (option.preview === undefined ? [] : previewImagePaths(option.preview))),
+    ...ask.briefs
+      .flatMap((brief) => brief.options)
+      .flatMap((option) => option.figures)
+      .flatMap((figure) => (figure.kind === "image" && figure.path !== "" ? [figure.path] : [])),
+  ])
 }
 
 type QuestionPendingAsk = Extract<PendingAsk, { readonly kind: "question" }>

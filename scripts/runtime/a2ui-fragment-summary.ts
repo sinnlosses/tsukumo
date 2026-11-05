@@ -1,6 +1,8 @@
 // 断片（`stream_event`）の列を、種類ごとの数・最初と最後の時刻・字数の合計の表にする。
 // 受ける型は字数までで、断片の本文の文字列を持たない。
 
+import { unique } from "remeda"
+
 /** 断片1つの要約。`chars` は `partial_json` か `text` の字数で、無ければ 0。 */
 export type FragmentRow = {
   readonly atMs: number
@@ -11,7 +13,7 @@ export type FragmentRow = {
 }
 
 export function summarizeFragments(rows: readonly FragmentRow[]): string {
-  const kinds = [...new Set(rows.map(fragmentKind))]
+  const kinds = unique(rows.map(fragmentKind))
   const lines = kinds.map((kind) => {
     const same = rows.filter((row) => fragmentKind(row) === kind)
     const times = same.map((row) => row.atMs)

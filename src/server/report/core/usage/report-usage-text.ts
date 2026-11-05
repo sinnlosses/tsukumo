@@ -1,6 +1,8 @@
 // 使われ方の記録が、内容部品の書いた文から数える2つの値（出典の有無・強調の数）。
 // 数えるのは有無と数だけで、文そのものは持ち出さない。
 
+import { sumBy } from "remeda"
+
 import { tableRowCells } from "../../../../shared/report/report-block-comparison.ts"
 import type { ReportOutlineLeaf } from "../../../../shared/report/report-outline.ts"
 
@@ -17,27 +19,18 @@ export function emphasisCountOf(leaf: ReportOutlineLeaf): number {
     case "Paragraph":
       return emphasisCountIn(leaf.text)
     case "ItemList":
-      return leaf.items.reduce(
-        (total, item) => total + emphasisCountIn(item.text) + emphasisCountIn(item.branch),
-        0,
-      )
+      return sumBy(leaf.items, (item) => emphasisCountIn(item.text) + emphasisCountIn(item.branch))
     case "Table":
-      return leaf.rows.reduce(
-        (total, row) =>
-          total +
-          tableRowCells(row).reduce(
-            (rowTotal, cell) =>
-              rowTotal +
-              (typeof cell === "string"
-                ? emphasisCountIn(cell)
-                : "from" in cell
-                  ? emphasisCountIn(cell.from) + emphasisCountIn(cell.to)
-                  : "tag" in cell
-                    ? emphasisCountIn(cell.tag)
-                    : emphasisCountIn(cell.text)),
-            0,
-          ),
-        0,
+      return sumBy(leaf.rows, (row) =>
+        sumBy(tableRowCells(row), (cell) =>
+          typeof cell === "string"
+            ? emphasisCountIn(cell)
+            : "from" in cell
+              ? emphasisCountIn(cell.from) + emphasisCountIn(cell.to)
+              : "tag" in cell
+                ? emphasisCountIn(cell.tag)
+                : emphasisCountIn(cell.text),
+        ),
       )
     default:
       return 0

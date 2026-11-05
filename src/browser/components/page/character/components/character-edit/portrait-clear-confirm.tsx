@@ -5,6 +5,7 @@
 // backdrop は透明にして、画面を暗く覆わずに「外側クリックで閉じる」だけを借りる。
 
 import type { ReactElement } from "react"
+import { clamp } from "remeda"
 
 import { Button } from "../../../../ui/button/button.tsx"
 import { Dialog, type DialogPlacement } from "../../../../ui/dialog/dialog.tsx"
@@ -117,7 +118,7 @@ export function PortraitClearConfirm(props: PortraitClearConfirmProps): ReactEle
  */
 function anchoredPlacement(anchor: DOMRect): DialogPlacement {
   const maxLeft = Math.max(window.innerWidth - CONFIRM_WIDTH - VIEWPORT_MARGIN, VIEWPORT_MARGIN)
-  const left = Math.min(Math.max(anchor.left, VIEWPORT_MARGIN), maxLeft)
+  const left = clamp(anchor.left, { min: VIEWPORT_MARGIN, max: maxLeft })
 
   const below = anchor.top + anchor.height * 0.55
   const fitsBelow = below + ESTIMATED_HEIGHT <= window.innerHeight - VIEWPORT_MARGIN

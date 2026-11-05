@@ -6,6 +6,8 @@
 // 0.7 を下回る値は受け取らずに引き上げる（背景は「出さない」より「薄く出す」ほうが書いた人の意図に近いため）。
 // いまの地と字の色で 0.7 では足りないとき、どこまで引き上げるかは描く側が決める。
 
+import { clamp } from "remeda"
+
 import { maxImageDataUrlLength, parseImageDataUrl } from "../utils/image-data-url.ts"
 
 /**
@@ -98,7 +100,7 @@ function toBackgroundVeil(value: unknown): number {
   if (typeof value !== "number" || !Number.isFinite(value)) {
     return DEFAULT_BACKGROUND_VEIL
   }
-  return Math.min(Math.max(value, MIN_BACKGROUND_VEIL), MAX_BACKGROUND_VEIL)
+  return clamp(value, { min: MIN_BACKGROUND_VEIL, max: MAX_BACKGROUND_VEIL })
 }
 
 /**

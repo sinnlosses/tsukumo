@@ -1,7 +1,7 @@
 // `report` の `a2ui` の変種を AI に書かせる測定の、条件・依頼の文・判定・集計。
 // 外のプロセスを起こさない純粋な部分だけを持つ。
 
-import { isPlainObject, sumBy } from "remeda"
+import { isPlainObject, sumBy, unique } from "remeda"
 import { z } from "zod"
 
 import { REPORT_TOOL_NAME } from "../../../src/server/core/tsukumo-tool-name.ts"
@@ -195,7 +195,7 @@ export function requestedCards(reply: string): readonly string[] {
       return matched?.[1] === undefined ? [] : [matched[1]]
     })
     .filter((name) => name in REPORT_COMPONENT_SCHEMAS)
-  return [...new Set(names)]
+  return unique(names)
 }
 
 /**

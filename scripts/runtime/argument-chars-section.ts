@@ -1,5 +1,7 @@
 // `report` の引数の字数の分布を、受け付けと差し戻しで並べた節。
 
+import { unique } from "remeda"
+
 import type { RejectionRecord, UsageRecord } from "./report-usage-row.ts"
 
 /**
@@ -24,9 +26,9 @@ export function argumentCharsSection(
     rejected.map((row) => row.argumentChars.total),
     0.5,
   )
-  const fieldNames = [
-    ...new Set(accepted.flatMap((record) => Object.keys(record.argumentChars.fields))),
-  ].toSorted()
+  const fieldNames = unique(
+    accepted.flatMap((record) => Object.keys(record.argumentChars.fields)),
+  ).toSorted()
   return [
     `引数の字数（受け付け${String(accepted.length)}件、差し戻し${String(rejected.length)}件。外す基準の対象ではない）:`,
     spreadLine(

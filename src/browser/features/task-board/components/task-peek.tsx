@@ -7,6 +7,7 @@
 
 import { X } from "lucide-react"
 import type { ReactElement } from "react"
+import { clamp } from "remeda"
 
 import type {
   TaskStatus,
@@ -218,7 +219,7 @@ function placeBesideRow(peek: HTMLElement, row: DOMRect, view: Window): void {
   const beside = besideLeft >= VIEWPORT_MARGIN
   const rowMiddle = row.top + row.height / 2
   const lowest = Math.max(VIEWPORT_MARGIN, view.innerHeight - VIEWPORT_MARGIN - height)
-  const top = Math.min(Math.max(rowMiddle - height / 2, VIEWPORT_MARGIN), lowest)
+  const top = clamp(rowMiddle - height / 2, { min: VIEWPORT_MARGIN, max: lowest })
   const tail = Math.min(Math.max(rowMiddle - top, TAIL_MARGIN), height - TAIL_MARGIN)
   peek.style.setProperty("--task-peek-left", `${String(beside ? besideLeft : VIEWPORT_MARGIN)}px`)
   peek.style.setProperty("--task-peek-top", `${String(top)}px`)

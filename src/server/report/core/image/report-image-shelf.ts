@@ -9,7 +9,7 @@
 //   - 持っている画像の合計が `MAX_SHELVED_REPORT_IMAGE_BYTES` を超えたとき（古く置いたものから）
 //   - プロセスの終わり
 
-import { sumBy } from "remeda"
+import { sumBy, unique } from "remeda"
 
 import type { ReportImageSize } from "../../../../shared/report/report-image.ts"
 import {
@@ -70,13 +70,13 @@ export function createReportImageShelf(): ReportImageShelf {
   return {
     shelve: (toolUseId, paths, read) => {
       const images = new Map(
-        [...new Set(paths)].flatMap((path) => {
+        unique(paths).flatMap((path) => {
           const image = read(path)
           return image === undefined ? [] : [[path, image] as const]
         }),
       )
       if (images.size === 0) {
-        return { sizes: [], unshelved: [...new Set(paths)] }
+        return { sizes: [], unshelved: unique(paths) }
       }
       shelved.delete(toolUseId)
       shelved.set(toolUseId, images)
@@ -93,7 +93,7 @@ export function createReportImageShelf(): ReportImageShelf {
         return size.kind === "measured" ? [{ path, width: size.width, height: size.height }] : []
       })
       const measured = new Set(sizes.map((size) => size.path))
-      return { sizes, unshelved: [...new Set(paths)].filter((path) => !measured.has(path)) }
+      return { sizes, unshelved: unique(paths).filter((path) => !measured.has(path)) }
     },
     find: (toolUseId, path) => shelved.get(toolUseId)?.get(path),
     release: (toolUseIds) => {

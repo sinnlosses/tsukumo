@@ -1,5 +1,7 @@
 // 折り返し配置の群の囲み。群が行をまたぐと行ごとに分け、群の外の箱に掛かる囲みは箱ごとに分ける。
 
+import { unique } from "remeda"
+
 import type { GraphSourceReading } from "../../../../../shared/report/graph-source.ts"
 import {
   emptyBox,
@@ -24,9 +26,7 @@ export function framesOf(
   return groups.flatMap((group, groupIndex) => {
     const ground = grounds[groupIndex] ?? 0
     const members = new Set(group.nodes)
-    const rows = [...new Set(group.nodes.map((at) => slots.get(at)?.row ?? 0))].toSorted(
-      (a, b) => a - b,
-    )
+    const rows = unique(group.nodes.map((at) => slots.get(at)?.row ?? 0)).toSorted((a, b) => a - b)
     const pieces = rows.flatMap((row) => {
       const inRow = group.nodes
         .filter((at) => slots.get(at)?.row === row)

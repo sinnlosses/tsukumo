@@ -1,5 +1,7 @@
 // 最終レポートの段ごとの所要時間（1本の帯と一覧）の形と、描く順に並べ終えた値。
 
+import { sum, sumBy } from "remeda"
+
 import { formatElapsed, formatMeasured, type MeasuredTime } from "../utils/elapsed-time.ts"
 import { plainInline } from "./report-inline-markdown.ts"
 
@@ -129,7 +131,7 @@ export function phaseTimesView(rows: readonly PhaseTimeRow[]): PhaseTimesView {
   const knownMilliseconds = intervals.map((duration) =>
     duration.kind === "known" ? duration.milliseconds : 0,
   )
-  const total = knownMilliseconds.reduce((sum, milliseconds) => sum + milliseconds, 0)
+  const total = sum(knownMilliseconds)
   const longest = Math.max(...knownMilliseconds)
   const longestIndex = longest > 0 ? knownMilliseconds.indexOf(longest) : -1
 
@@ -235,7 +237,7 @@ function waterfallLines(
     ]
   }
   const firstBarIndexOfRows = barsOfRows.map((_, index) =>
-    barsOfRows.slice(0, index).reduce((count, rowBars) => count + rowBars.length, 0),
+    sumBy(barsOfRows.slice(0, index), (rowBars) => rowBars.length),
   )
   return rows.flatMap((row, index): readonly PhaseWaterfallLineView[] => {
     const first = firstBarIndexOfRows[index] ?? 0

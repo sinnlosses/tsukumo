@@ -1,6 +1,8 @@
 // 質問の添え書きの、`question_brief` を呼んだ時点の検査と、届いた `AskUserQuestion` との突き合わせ。
 // 理由の文はモデルへ返すだけで、ログにもファイルにも書かない（添え書きの字が入る）。
 
+import { unique } from "remeda"
+
 import type { QuestionBrief } from "../../../shared/session-driver/question-brief.ts"
 import {
   FREE_TEXT_OPTION_LABEL,
@@ -169,7 +171,7 @@ function pairingReasons(questions: readonly Question[], brief: QuestionBrief): r
 }
 
 function duplicateReasons(values: readonly string[], name: string): readonly string[] {
-  const duplicated = [...new Set(values.filter((value, index) => values.indexOf(value) !== index))]
+  const duplicated = unique(values.filter((value, index) => values.indexOf(value) !== index))
   return duplicated.map((value) => `${name}「${value}」が重なっている`)
 }
 

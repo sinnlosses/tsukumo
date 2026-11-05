@@ -1,6 +1,8 @@
 // 文中に置く行内の印 `{{12 → 8}}`（前後の差）・`{{spark: 3 5 4 8}}`（折れ線）・`{{3 / 5}}`（帯）の読み方と、素の文字への畳み。
 // 書式に当たらない `{{` は壊れた印で、畳みも描画もせず字のまま残す。inline code の中は読まない。
 
+import { sumBy } from "remeda"
+
 type InlineMark =
   | { readonly kind: "diff"; readonly from: string; readonly to: string }
   | { readonly kind: "spark"; readonly values: readonly number[] }
@@ -165,5 +167,5 @@ function diffOf(body: string): InlineMark | undefined {
 }
 
 function displayWidth(text: string): number {
-  return [...text].reduce((total, char) => total + ((char.codePointAt(0) ?? 0) > 0x7f ? 2 : 1), 0)
+  return sumBy([...text], (char) => ((char.codePointAt(0) ?? 0) > 0x7f ? 2 : 1))
 }

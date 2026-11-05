@@ -1,6 +1,8 @@
 // セッションの短縮ID。セッションID（UUID）の先頭2字を大文字にし、並べる中で重なったときだけ3字に伸ばす。
 // 3字でも重なるものはそのまま（見分けは見出しと時刻に任せる）。
 
+import { unique } from "remeda"
+
 const SHORT_ID_LENGTH = 2
 const EXTENDED_SHORT_ID_LENGTH = 3
 
@@ -9,11 +11,11 @@ const EXTENDED_SHORT_ID_LENGTH = 3
  * （一覧に無いセッションと重なっても、画面の上では見分ける相手がいない）。
  */
 export function shortSessionIds(sessionIds: readonly string[]): ReadonlyMap<string, string> {
-  const unique = [...new Set(sessionIds)]
+  const distinct = unique(sessionIds)
   return new Map(
-    unique.map((sessionId) => {
+    distinct.map((sessionId) => {
       const short = prefixOf(sessionId, SHORT_ID_LENGTH)
-      const collides = unique.some(
+      const collides = distinct.some(
         (other) => other !== sessionId && prefixOf(other, SHORT_ID_LENGTH) === short,
       )
       return [sessionId, collides ? prefixOf(sessionId, EXTENDED_SHORT_ID_LENGTH) : short]

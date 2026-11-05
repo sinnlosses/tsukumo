@@ -1,5 +1,7 @@
 // 行内の印を置ける場所（結論・`text` の塊・`list` の項目・`table` のセル）にある、書式に当たらない `{{` の数。数だけを持ち、本文の字は持たない。
 
+import { sumBy } from "remeda"
+
 import { brokenInlineMarkCount } from "../../../../../shared/report/inline-mark.ts"
 import {
   drawnLeaves,
@@ -19,7 +21,7 @@ export function brokenInlineMarks(report: InlineMarkSource, outline: ReportOutli
     ...retrospectiveHeadTexts(report),
     ...drawnLeaves(outline).flatMap(markTexts),
   ]
-  return texts.reduce((total, text) => total + brokenInlineMarkCount(text), 0)
+  return sumBy(texts, brokenInlineMarkCount)
 }
 
 /** 振り返りの要約とドラフトの行。塊（`outline.retrospective`）は内容部品として別に読む。 */

@@ -1,5 +1,7 @@
 // `timeline` の塊の本体（時刻の軸・行ごとの帯・延びた分・出来事・凡例）を、位置を % にした値に組む。
 
+import { sumBy, unique } from "remeda"
+
 import type { ReportTimeline } from "./timeline-block.ts"
 import { readTimeline, type TimelineRowReading, timelineTicks } from "./timeline-scale.ts"
 
@@ -129,7 +131,7 @@ export function timelineLayoutOf(block: ReportTimeline): TimelineLayout {
   const percent = (at: number): number => share(at - from)
   const emphasized = new Set(block.emphasis)
 
-  const laneNames = [...new Set(["", ...drawn.map(({ row }) => row.lane)])]
+  const laneNames = unique(["", ...drawn.map(({ row }) => row.lane)])
   const ordered = laneNames.flatMap((lane) => drawn.filter(({ row }) => row.lane === lane))
   const arrowsOf = arrowLayoutOf(block, ordered, percent)
   const rowLayout = (item: DrawnRow, position: number): TimelineRowLayout => {
@@ -185,10 +187,7 @@ const LABEL_GAP_PERCENT = 1
 const TIMELINE_EVENT_REUSED_LEVELS = 4
 
 function labelWidthPercent(label: string): number {
-  const em = [...label].reduce(
-    (sum, char) => sum + (char.charCodeAt(0) < 0x100 ? HALF_WIDTH_RATIO : 1),
-    0,
-  )
+  const em = sumBy([...label], (char) => (char.charCodeAt(0) < 0x100 ? HALF_WIDTH_RATIO : 1))
   return em * LABEL_PERCENT_PER_FULL_WIDTH_CHAR
 }
 
@@ -315,7 +314,7 @@ function arrowLayoutOf(
   return (position) => {
     const target = ordered[position]
     if (target === undefined) return []
-    return [...new Set(target.row.after)].flatMap((name): readonly TimelineArrowLayout[] => {
+    return unique(target.row.after).flatMap((name): readonly TimelineArrowLayout[] => {
       const found = block.rows.flatMap((row, index) => (row.name === name ? [index] : []))
       const [sourceIndex] = found
       const source = found.length === 1 ? positionOfIndex.get(sourceIndex ?? -1) : undefined

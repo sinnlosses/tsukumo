@@ -1,7 +1,7 @@
 // 触れるレポートの式の評価器。構文木を、つまみの値と `defs` で評価する。
 // 誤りは例外で返さず、判別合併型（`Evaluated`）で返す。
 
-import { zip } from "remeda"
+import { sum, zip } from "remeda"
 
 import { andThen, collect, fail, invalid, ok, type Evaluated } from "./report-evaluated.ts"
 import {
@@ -236,10 +236,7 @@ const FUNCTIONS: Readonly<Record<string, FunctionSpec>> = {
   sum: {
     min: 1,
     max: 1,
-    run: (args, site) =>
-      andThen(argAs(args, 0, site, numbersOf), (numbers) =>
-        ok(numbers.reduce((total, value) => total + value, 0)),
-      ),
+    run: (args, site) => andThen(argAs(args, 0, site, numbersOf), (numbers) => ok(sum(numbers))),
   },
   len: {
     min: 1,

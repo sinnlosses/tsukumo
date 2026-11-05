@@ -1,7 +1,7 @@
 // レイアウトの領域の比率（3本の仕切りの位置）。`localStorage` に比率だけ保存する（会話は保存しない）。
 // 読み書きに失敗しても既定へ落ちるだけで、例外は投げない。
 
-import { isPlainObject } from "remeda"
+import { clamp, isPlainObject } from "remeda"
 import { z } from "zod"
 
 import { localPreference } from "../../../../../../utils/local-preference.ts"
@@ -59,7 +59,7 @@ const preference = localPreference(
 
 /** `LayoutResizer` の `toValue` にそのまま渡す。比率（0〜1）を可動域つきの % にする。 */
 export function percentFromRatio(ratio: number): number {
-  return clampPercent(ratio * 100)
+  return clamp(ratio * 100, { min: MIN_PERCENT, max: MAX_PERCENT })
 }
 
 export const loadSplit: () => Split = preference.load
@@ -78,7 +78,3 @@ export function isDefaultSplit(split: Split): boolean {
 }
 
 export const saveSplit: (value: Split) => void = preference.save
-
-function clampPercent(value: number): number {
-  return Math.min(MAX_PERCENT, Math.max(MIN_PERCENT, value))
-}

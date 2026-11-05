@@ -1,5 +1,7 @@
 // 塊の検査の家族。違反の型・検出・差し戻し文を持つ。
 
+import { unique } from "remeda"
+
 import { markFitsLines, sourceLineCount } from "../../../../shared/report/code-mark.ts"
 import { isEmphasisRow } from "../../../../shared/report/report-block-comparison.ts"
 import {
@@ -183,7 +185,7 @@ export function detectBlockViolations(
     {
       kind: "code-mismatch",
       count: mismatchedCodeBlocks.length,
-      paths: [...new Set(mismatchedCodeBlocks.map((leaf) => leaf.path))],
+      paths: unique(mismatchedCodeBlocks.map((leaf) => leaf.path)),
     },
     {
       kind: "code-marks-range",
