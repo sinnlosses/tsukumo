@@ -30,24 +30,27 @@ import {
 } from "./session-record-edit.ts"
 import { MAX_TOOL_TEXT_LENGTH } from "./session-record.ts"
 import type { SessionState } from "./session-state.ts"
-import { originOf, withAcceptedMark, withConfirmedMark } from "./setting-mark.ts"
+import { withAcceptedMark, withConfirmedMark } from "./setting-mark-fold.ts"
+import { originOf } from "./setting-mark.ts"
 import { finishTool, notifyBackgroundEnd } from "./tool-record.ts"
 import {
+  addDraftComponent,
   beginAside,
   beginTurn,
-  clearedSdkTurn,
-  CLOSED_SDK_TURN,
   finishedTurnCountOf,
-  finishTurn,
-  INITIAL_SPEECH_EXPRESSION,
+  holdReportDrafting,
   recordTurnFailure,
   resumeTurn,
-  addDraftComponent,
-  holdReportDrafting,
-  startReportDrafting,
   settleReportDrafting,
-  turnEnding,
+  startReportDrafting,
   withOpenSdkTurn,
+} from "./turn-progress-fold.ts"
+import {
+  clearedSdkTurn,
+  CLOSED_SDK_TURN,
+  finishTurn,
+  INITIAL_SPEECH_EXPRESSION,
+  turnEnding,
 } from "./turn-progress.ts"
 import { workflowItemsOfTasks } from "./workflow-step.ts"
 

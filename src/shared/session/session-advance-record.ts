@@ -6,7 +6,8 @@ import type { SessionEvent } from "./session-event.ts"
 import { workPlanRecords } from "./session-record-edit.ts"
 import type { SessionState } from "./session-state.ts"
 import { runsInBackground } from "./tool-record.ts"
-import { answeringAsideOf, settleReportDrafting, withOpenSdkTurn } from "./turn-progress.ts"
+import { settleReportDrafting, withOpenSdkTurn } from "./turn-progress-fold.ts"
+import { answeringAsideOf } from "./turn-progress.ts"
 
 export function advanceBySpeech(
   state: SessionState,

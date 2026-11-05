@@ -12,6 +12,7 @@ import type { RecordedPromptImage } from "../session-driver/prompt-image.ts"
 import type { QuestionBrief } from "../session-driver/question-brief.ts"
 import type { Question, QuestionAnswer } from "../session-driver/question.ts"
 import type { UsageReviewEvent } from "../usage/usage-review.ts"
+import type { CommandDescription } from "./command-description.ts"
 import type { DelegateEvent } from "./session-event-delegate.ts"
 import type { ReportEvent } from "./session-event-report.ts"
 import type { SettingEvent } from "./session-event-setting.ts"
@@ -20,16 +21,6 @@ import type { SurroundingEvent } from "./session-event-surrounding.ts"
 import type { TurnHealthEvent } from "./session-event-turn-health.ts"
 import type { SessionId } from "./session-id.ts"
 import type { ReportedPermissionMode } from "./session-info.ts"
-
-/**
- * `/` 補完に出すコマンド1件。
- * 説明は SDK 側が持っている（`init` の `slash_commands` は名前だけだが、`supportedCommands()` と `system` の `commands_changed` が名前と説明の組を返す）。
- * 組み込みコマンドも含めて説明が付くので、tsukumo 側に説明の表を持たない。説明が空文字のコマンドは `undefined` に倒す（名前だけ出す）。
- */
-export type CommandDescription = {
-  readonly name: string
-  readonly description: string | undefined
-}
 
 /**
  * tsukumo 内部のイベント。

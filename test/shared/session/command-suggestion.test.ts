@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest"
 
+import type { CommandDescription } from "../../../src/shared/session/command-description.ts"
 import { commandSuggestions } from "../../../src/shared/session/command-suggestion.ts"
-import type { CommandDescription, SessionEvent } from "../../../src/shared/session/session-event.ts"
+import type { SessionEvent } from "../../../src/shared/session/session-event.ts"
 import { applySessionEvent } from "../../../src/shared/session/session-fold.ts"
 import {
   INITIAL_SESSION_STATE,

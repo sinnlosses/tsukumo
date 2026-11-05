@@ -6,7 +6,7 @@
 //
 // 受け取るのは姿まるごとではなくその2つ（入力欄を他のフィールドの変化で描き直さないため）。
 
-import type { CommandDescription } from "./session-event.ts"
+import type { CommandDescription } from "./command-description.ts"
 
 /**
  * 入力欄の `/` 補完に出す候補（名前と、あれば説明）。

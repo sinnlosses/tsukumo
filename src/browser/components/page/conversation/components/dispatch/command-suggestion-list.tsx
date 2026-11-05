@@ -9,7 +9,7 @@ import clsx from "clsx"
 import type { ReactElement } from "react"
 import { prop, sortBy } from "remeda"
 
-import type { CommandDescription } from "../../../../../../shared/session/session-event.ts"
+import type { CommandDescription } from "../../../../../../shared/session/command-description.ts"
 import { Text } from "../../../../ui/text/text.tsx"
 import styles from "./dispatch.module.css"
 
