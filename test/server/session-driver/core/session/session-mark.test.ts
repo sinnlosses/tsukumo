@@ -4,7 +4,7 @@ import {
   readSessionMark,
   sessionTag,
 } from "../../../../../src/server/session-driver/core/session/session-mark.ts"
-import { DEFAULT_VIEW_PORT } from "../../../../../src/server/view-server/core/port-resolution.ts"
+import { DEFAULT_VIEW_PORT } from "../../../../../src/shared/view-server/view-port.ts"
 
 describe("sessionTag", () => {
   it("キャラクターパックごとに違う印を組み立てる（キャラクターごとに別のセッション）", () => {

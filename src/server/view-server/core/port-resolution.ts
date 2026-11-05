@@ -4,13 +4,7 @@
 // listen そのもの（node:http）は adapter 側の責務のまま。
 // ここは「どのポートで試すか」の決定と、その決定に沿って `start` を呼び直すことだけを持つ。
 
-// ビューを配る既定のポート。
-// 固定にしてあるのは、開き直したブラウザタブが同じ URL のまま使えるように（docs/architecture/adr/0017-serve-from-local-http.md）。
-export const DEFAULT_VIEW_PORT = 7327
-
-// ポート番号として読める上限（下限は `0` ＝ OS が空きを選ぶ）。
-// セッションの印の目印もポート番号なので、読み取りの範囲は `Config` と共通にする。
-export const MAX_PORT_NUMBER = 65535
+import { DEFAULT_VIEW_PORT, MAX_PORT_NUMBER } from "../../../shared/view-server/view-port.ts"
 
 // 既定ポートから数えて何個先まで試すか（7327〜7346 の20個）。
 // 複数の tsukumo を手元で並べて動かす程度を想定した目安で、無限には伸ばさない（どのポートで待っているか分からない状態を作らないため、上限を持って諦める）。

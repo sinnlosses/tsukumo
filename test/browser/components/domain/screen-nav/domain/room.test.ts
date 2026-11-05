@@ -1,11 +1,10 @@
 import { describe, expect, it } from "vitest"
 
 import { roomName } from "../../../../../../src/browser/components/domain/screen-nav/domain/room.ts"
-import { DEFAULT_VIEW_PORT } from "../../../../../../src/server/view-server/core/port-resolution.ts"
+import { DEFAULT_VIEW_PORT } from "../../../../../../src/shared/view-server/view-port.ts"
 
 describe("roomName", () => {
-  // 語彙の1つめは既定のポート（`shared` からサーバ側を import できないので値を写してある）。
-  // 写した値がずれたらここで落ちる——ずれると既定で起こした tsukumo が2つめの名前を名乗る。
+  // ずれると既定で起こした tsukumo が2つめの名前を名乗る。
   it("語彙の1つめのポートは、ビューの既定のポートと同じ", () => {
     expect(roomName(DEFAULT_VIEW_PORT)).toBe("空色の間")
   })

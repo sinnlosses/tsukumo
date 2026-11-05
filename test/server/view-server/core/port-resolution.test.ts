@@ -8,7 +8,6 @@ import {
   type ViewServerOptions,
 } from "../../../../src/server/view-server/adapter/server.ts"
 import {
-  DEFAULT_VIEW_PORT,
   resolveViewPort,
   resolveViewPortFallbackBase,
   type ResolvedViewPort,
@@ -20,6 +19,7 @@ import { UNAVAILABLE_SESSION_DIGEST } from "../../../../src/shared/session/sessi
 import { UNAVAILABLE_CONTEXT_USAGE } from "../../../../src/shared/usage/context-usage.ts"
 import { UNAVAILABLE_PLAN_USAGE } from "../../../../src/shared/usage/plan-usage.ts"
 import { EMPTY_TOKEN_USAGE_SUMMARY } from "../../../../src/shared/usage/token-usage-summary.ts"
+import { DEFAULT_VIEW_PORT } from "../../../../src/shared/view-server/view-port.ts"
 import { closeNetServer, listenOnEphemeralPort, portOf } from "../../../fixture/net-server.ts"
 
 /** 配るものの中身はここでは見ない（確かめるのはどのポートで listen したかだけ）。 */

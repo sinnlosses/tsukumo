@@ -4,10 +4,8 @@ import { createServer as createNetServer, type Server as NetServer } from "node:
 import { describe, expect, it } from "vitest"
 
 import { ENV_NAMES } from "../src/server/core/config.ts"
-import {
-  MAX_PORT_NUMBER,
-  VIEW_PORT_FALLBACK_ATTEMPTS,
-} from "../src/server/view-server/core/port-resolution.ts"
+import { VIEW_PORT_FALLBACK_ATTEMPTS } from "../src/server/view-server/core/port-resolution.ts"
+import { MAX_PORT_NUMBER } from "../src/shared/view-server/view-port.ts"
 import { closeNetServer, listenOnEphemeralPort, portOf } from "./fixture/net-server.ts"
 import { runSubprocess, type SubprocessResult } from "./fixture/subprocess.ts"
 

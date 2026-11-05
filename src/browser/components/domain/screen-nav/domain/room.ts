@@ -5,6 +5,8 @@
 //
 // 部屋はキャラクターを入れ替えても変わらない「起こした場所」で、キャラクターの持ち物ではないのでコード側に置く。
 
+import { DEFAULT_VIEW_PORT } from "../../../../../shared/view-server/view-port.ts"
+
 /**
  * 部屋の名前に使う色の名前。
  * 並び順がそのままポートの並び（先頭が {@link FIRST_ROOM_PORT}）で、ポートの繰り上げ（塞がっていたら +1）と同じ向きに進む。
@@ -25,11 +27,8 @@ const ROOM_COLORS = [
   "墨",
 ] satisfies readonly string[]
 
-/**
- * 語彙の1つめが載るポート。`DEFAULT_VIEW_PORT` と同じ値に揃える。
- * `browser` からサーバ側を import できないので写してある（ずれたらテストが落ちる）。
- */
-const FIRST_ROOM_PORT = 7327
+/** 語彙の1つめが載るポート。 */
+const FIRST_ROOM_PORT = DEFAULT_VIEW_PORT
 
 /** 部屋の名前の結び（「空色」＋これ）。 */
 const ROOM_SUFFIX = "の間"

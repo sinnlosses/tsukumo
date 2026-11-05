@@ -11,10 +11,8 @@ import {
 } from "./server/checkout/adapter/checkout-launch.ts"
 import { decideCheckoutDelegation } from "./server/checkout/core/checkout-delegation.ts"
 import { readConfig } from "./server/core/config.ts"
-import {
-  DEFAULT_VIEW_PORT,
-  VIEW_PORT_FALLBACK_ATTEMPTS,
-} from "./server/view-server/core/port-resolution.ts"
+import { VIEW_PORT_FALLBACK_ATTEMPTS } from "./server/view-server/core/port-resolution.ts"
+import { DEFAULT_VIEW_PORT } from "./shared/view-server/view-port.ts"
 
 const USAGE = `tsukumo — キャラクターと一緒に仕事をするためのターミナル環境
 

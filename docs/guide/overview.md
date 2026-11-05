@@ -153,7 +153,6 @@ flowchart LR
   chat --> character_pack
   usage --> session_driver
   session_driver --> report
-  session_driver --> view_server
   session_driver --> chat
   session_driver --> work_plan
   session_driver --> question

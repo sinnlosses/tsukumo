@@ -4,10 +4,8 @@
 
 import { execFileSync } from "node:child_process"
 
-import {
-  DEFAULT_VIEW_PORT,
-  VIEW_PORT_FALLBACK_ATTEMPTS,
-} from "../../src/server/view-server/core/port-resolution.ts"
+import { VIEW_PORT_FALLBACK_ATTEMPTS } from "../../src/server/view-server/core/port-resolution.ts"
+import { DEFAULT_VIEW_PORT } from "../../src/shared/view-server/view-port.ts"
 
 /** ポートで待っている1つのプロセス。 */
 export type Listener = {

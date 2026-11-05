@@ -61,9 +61,7 @@
 - **機能 A が機能 B を import してよいのは、下の表にある組だけ。** 共有モジュールはどの機能からも
   読んでよく、**共有モジュールは機能を読まない**
 - **層ごとに循環させない。** 機能の `core/` どうしのエッジと、機能の `adapter/` どうしのエッジは、それぞれ
-  一方通行（表はその順に並ぶ）。機能の単位で見ると輪が1つある
-  （`view-server` → `session` → `session-driver` → `view-server`）が、1本が
-  `adapter → 別の機能の core` で層のエッジと同じ向きなので、ファイルの単位では輪にならない
+  一方通行（表はその順に並ぶ）
 - **束ねる機能は `session/` の1つ。** `session-manager.ts` は外の世界に触らないので `core` だが、
   各機能の判断（日記・トークン消費・会話のアーカイブ）を読んで1つのセッションに
   まとめる。**外の世界の実装を選んで渡すのは配線（`src/` 直下の `session-start.ts` と `src/wiring/`）**、
@@ -102,7 +100,7 @@
 | `view-server`         | `session`                                                                                                                                                           |
 | `chat`                | `character-pack`                                                                                                                                                    |
 | `usage`               | `session-driver`                                                                                                                                                    |
-| `session-driver`      | `report` `view-server` `chat` `work-plan` `question`                                                                                                                |
+| `session-driver`      | `report` `chat` `work-plan` `question`                                                                                                                              |
 | `diary`               | `repository`                                                                                                                                                        |
 | `achievement`         | `repository`                                                                                                                                                        |
 | そのほか              | —（葉。`diagnostic` `character-pack` `host` `repository` `recommendation` `checkout` `welcome-greeting` `workflow-setting` `report` `item` `work-plan` `question`） |
