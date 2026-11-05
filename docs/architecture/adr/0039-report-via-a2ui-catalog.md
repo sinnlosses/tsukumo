@@ -10,7 +10,7 @@
 
 - 変換の置き場・内部のイベントの形・描画の口を段ごとに決めずに進めると食い違う。いまの経路は、`report` ツール（`src/server/session-driver/adapter/sdk/sdk-report-tool.ts`）が `TSUKUMO_REPORT_SCHEMA`（`src/server/core/schema-variant.ts` の `json-schema`・`short-type`・`body-fence`）で引数の形を切り替え、`reportEvents`（`src/server/session-driver/core/message/sdk-report-message.ts`）が引数を `ReportEvent`（`src/shared/session/session-event-report.ts`）にし、`ReportReview` が差し戻し、`reportRegionsOf`（`src/shared/session/main-view-entry.ts`）が節ごとの Markdown に畳み、`report.tsx` が欄ごとに `Markdown` で描く（ADR 0031）。
 - `reportEvents` は `report` ツールの handler とアシスタントのメッセージの変換の両方から呼ばれ、transcript からの復元（`restored-event.ts`）も同じ変換を通る。変換を 1 か所に置けば、受け口・記録・復元が同じ値を得る。
-- 試作（`docs/research/a2ui-report-prototype-2026-10-28/index.md`）で、4 部品のカタログで節・表・地の文が描け、AI の出力 12 件中 10 件が一発で通り、落ちた 2 件（`version` の書き忘れ・葉の `component` の書き忘れ）はエラー文を返すと直った。子の型はスキーマで縛れず（`ComponentId` は文字列）、構造の規約は自前の検査に残る。
+- 試作（`docs/research/a2ui-report-prototype-2026-10-28/index.md`）で、4 部品のカタログで節・表・地の文が描け、AI の出力 12 件中 10 件が一発で通り、落ちた 2 件（`version` の書き忘れ・内容部品の `component` の書き忘れ）はエラー文を返すと直った。子の型はスキーマで縛れず（`ComponentId` は文字列）、構造の規約は自前の検査に残る。
 - 依存の追加の測定の結果: `@a2ui/react` だけを `.pnpmfile.cjs` の `readPackage` で zod 3.25.76 に紐付け、tsukumo の本体は zod 4.6.5 のまま。カタログは JSON Schema を書いて `Catalog.fromJson`（`@a2ui/web_core/v0_9`）で読ませる形が、tsukumo 側に zod 3 の import も型アサーションも要らず通った（`test/browser/lib/a2ui-catalog.test.tsx`）。配布物は基本カタログを読まない形で +295,524 B、読む形で +454,355 B。`src/shared/` は dependency-cruiser の `shared-packages` 規則で `@a2ui/*` を読めない（zod・`@orpc/contract`・remeda だけ）。
 - 基本カタログ（`@a2ui/web_core` 0.14.0）の部品は `Text`・`Image`・`Icon`・`Video`・`AudioPlayer`・`Row`・`Column`・`List`・`Card`・`Tabs`・`Modal`・`Divider`・`Button`・`TextField`・`CheckBox`・`ChoicePicker`・`Slider`・`DateTimeInput`（`node_modules/@a2ui/web_core/src/v0_9/basic_catalog/components/basic_components.js`）。`Tabs` は `tabs: [{title, child}]` だけで選択中のタブを結ぶ欄を持たない。`ChoicePicker` の `value` は文字列の並びで、データの path に結ぶ。
 
@@ -27,16 +27,16 @@
 
 ### 論点 2: カタログの切り方
 
-**節の外の欄は `Report`（根）の props に残す。葉は `writerBlockBranches` の 19 種を 1 対 1 で写す。基本カタログからは配置と選択の 5 つだけを、基本の名前と型のまま取る。**
+**節の外の欄は `Report`（根）の props に残す。内容部品は `writerBlockBranches` の 19 種を 1 対 1 で写す。基本カタログからは配置と選択の 5 つだけを、基本の名前と型のまま取る。**
 
-| 区分                       | 部品                                                                                                                                                                                                                                                                          | 型の出どころ                                                                                                                                                  |
-| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 根                         | `Report`（`conclusion`・`keyFigures`・`checks`・`task`・`workPlanClosing`・`retrospective`・`favor`・`closing`・`waitingLine`・`title`・`sessionSummary`・`sessionRemaining`・`figure`〔図の部品の ID〕・`figureNone`〔置かない理由〕・`children`〔`Section` の ID の並び〕） | 既存の Zod（`report-check.ts`・`report-block-comparison.ts`・`report-task.ts`・`report-retrospective.ts`・`report-block.ts` の `reportFigureSchema`）を再利用 |
-| 節                         | `Section`（`heading`・`children`）                                                                                                                                                                                                                                            | 既存の `reportSectionSchema`                                                                                                                                  |
-| 葉（tsukumo 固有の 19 種） | `Paragraph`（`text`）・`ItemList`（`list`）・`Table`・`Matrix`・`Compare`・`BeforeAfter`・`Note`・`Stats`・`Code`・`Mermaid`・`Graph`・`Chart`・`Svg`・`Timeline`・`Options`・`Claims`・`Picture`（`image`）・`Plot`・`Markdown`                                              | 既存の Zod（`report-block*.ts`・`figure-grammar.ts`・`timeline-block.ts`）の props と `describe` を再利用。`fold`・`aside` など塊が持つ欄も props として残す  |
-| 基本から取る 5 つ          | `Row`・`Column`・`Card`・`Tabs`・`ChoicePicker`                                                                                                                                                                                                                               | 基本カタログの型をそのまま（props を足さない・名前を変えない）                                                                                                |
+| 区分                             | 部品                                                                                                                                                                                                                                                                          | 型の出どころ                                                                                                                                                  |
+| -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 根                               | `Report`（`conclusion`・`keyFigures`・`checks`・`task`・`workPlanClosing`・`retrospective`・`favor`・`closing`・`waitingLine`・`title`・`sessionSummary`・`sessionRemaining`・`figure`〔図の部品の ID〕・`figureNone`〔置かない理由〕・`children`〔`Section` の ID の並び〕） | 既存の Zod（`report-check.ts`・`report-block-comparison.ts`・`report-task.ts`・`report-retrospective.ts`・`report-block.ts` の `reportFigureSchema`）を再利用 |
+| 節                               | `Section`（`heading`・`children`）                                                                                                                                                                                                                                            | 既存の `reportSectionSchema`                                                                                                                                  |
+| 内容部品（tsukumo 固有の 19 種） | `Paragraph`（`text`）・`ItemList`（`list`）・`Table`・`Matrix`・`Compare`・`BeforeAfter`・`Note`・`Stats`・`Code`・`Mermaid`・`Graph`・`Chart`・`Svg`・`Timeline`・`Options`・`Claims`・`Picture`（`image`）・`Plot`・`Markdown`                                              | 既存の Zod（`report-block*.ts`・`figure-grammar.ts`・`timeline-block.ts`）の props と `describe` を再利用。`fold`・`aside` など塊が持つ欄も props として残す  |
+| 基本から取る 5 つ                | `Row`・`Column`・`Card`・`Tabs`・`ChoicePicker`                                                                                                                                                                                                                               | 基本カタログの型をそのまま（props を足さない・名前を変えない）                                                                                                |
 
-- **`Report` の props に残す理由。** `keyFigures`・`checks`・`retrospective`・`favor` は 1 レポートに 1 つで、置き場が ADR 0031 の欄（頭・振り返り・お願い）に固定されている。部品にすると「どこに置くか」「何個まで置くか」の規約を ID の参照の上にもう 1 本書くことになる。節の中の配置は葉と配置の部品で表せる（`Stats` と `Row` の組み合わせ）。写すのは既存の `ReportEvent` の欄と 1 対 1 なので、変換が単純になる。
+- **`Report` の props に残す理由。** `keyFigures`・`checks`・`retrospective`・`favor` は 1 レポートに 1 つで、置き場が ADR 0031 の欄（頭・振り返り・お願い）に固定されている。部品にすると「どこに置くか」「何個まで置くか」の規約を ID の参照の上にもう 1 本書くことになる。節の中の配置は内容部品と配置の部品で表せる（`Stats` と `Row` の組み合わせ）。写すのは既存の `ReportEvent` の欄と 1 対 1 なので、変換が単純になる。
 - **`figure` は ID で結ぶ。** 図は先頭の見出しの無い節として描かれてきた（`sectionsWithFigure`）。`Report.figure` に図の種類の部品（`Graph`・`Mermaid`・`Svg`・`Timeline`・`BeforeAfter`・`Chart`・`Stats`・`Plot`・`Picture`）の ID を置くか、`figureNone` に理由を置く。変換は今の `figure` の欄へそのまま写す。
 - **部品は減らさない。** 19 種を 1 対 1 で写す（ADR 0038 と、部品を減らす案を取り下げた決定）。`files` は書き手に渡していない種類なので写さない。
 - **基本と重なる種類は、型が同じ意味のものだけ基本へ寄せる。** `Row`（横に並べる）・`Column`（縦に積む）・`Card`（子を 1 つ枠に入れる）・`Tabs`（表示の切り替え）・`ChoicePicker`（選択）は意味が tsukumo の欲しいものと同じなので、基本の型のまま取る。基本の `Text`（`variant` で h1〜h5 を選べる）は節の見出しの規約（`Section.heading`）とぶつかり、`List` は子の雛形を繰り返す容器で `list`（項目・`cards` など）と意味が違い、`Image` は URL を取るが `image` は棚に置いたパスを取る。この 3 つは、基本の名前を使うと基本の型と props が食い違うので、tsukumo 固有の名前（`Paragraph`・`ItemList`・`Picture`）にする。名前は推測で、カタログの定義の課題が写しながら直してよい。ただし基本と同じ名前に基本と違う props を付けない。
@@ -46,7 +46,7 @@
 ### 構造の規約（スキーマで言えない分は tsukumo の検査に残す）
 
 - `root` があり `Report` である。`Report.children` は全部 `Section`。参照先が全部定義されている。どこからも参照されない部品が無い。
-- `Section.children` は葉・`Row`・`Column`・`Card`・`Tabs`・`ChoicePicker`。`Section` の入れ子は不可。配置の部品の入れ子は 3 階層まで、`Row`・`Column`・`Card`・`Tabs` の子は葉か配置の部品（`Report`・`Section` は不可）。題つきの枠を横に並べる形（`Row` → `Card` → `Column`）が 3 階層を要るので、当初の 2 階層から広げた（末尾の「追記（2026-10-28）」の案 A）。
+- `Section.children` は内容部品・`Row`・`Column`・`Card`・`Tabs`・`ChoicePicker`。`Section` の入れ子は不可。配置の部品の入れ子は 3 階層まで、`Row`・`Column`・`Card`・`Tabs` の子は内容部品か配置の部品（`Report`・`Section` は不可）。題つきの枠を横に並べる形（`Row` → `Card` → `Column`）が 3 階層を要るので、当初の 2 階層から広げた（末尾の「追記（2026-10-28）」の案 A）。
 - 見出しと字数の上限など、いま `ReportReview` が持つ体裁の条は変えない。
 
 ### 論点 3: 内部のイベントの形
@@ -54,23 +54,23 @@
 **`ReportEvent` を残し、`reportEvents` が A2UI の部品を `sections` などに変換する。さらに `ReportEvent` に、受けた部品の一覧を運ぶ欄 `components` を 1 つ足す（旧い変種では空）。**
 
 - 後ろの検査（`ReportReview`）・記録（`report-usage-record.ts`）・復元・目次・演出・E2E の手続き応答は、`sections` などの今の欄を読み続ける。変換の置き場は `reportEvents` の 1 か所で、`report` ツールの handler・アシスタントのメッセージの変換・transcript からの復元の 3 経路が同じ値を得る。
-- 配置の部品（`Row`・`Column`・`Card`・`Tabs`・`ChoicePicker`）は、`sections` へは中の葉を並び順に平らに入れる（検査は塊の数と中身を見るので足りる）。配置は `components` だけが持つ。
+- 配置の部品（`Row`・`Column`・`Card`・`Tabs`・`ChoicePicker`）は、`sections` へは中の内容部品を並び順に平らに入れる（検査は塊の数と中身を見るので足りる）。配置は `components` だけが持つ。
 - ブラウザは `components` があればそれで描き（論点 4）、無ければ今の経路（`sections` → Markdown）で描く。旧い変種の記録・今ある transcript は `components` が空で、今のまま描く。
 - 「完全移行」は最終の形で、`ReportEvent.sections` を導出される見え方に格下げして検査を `components` から読む形は、既定を切り替えたあとに別の課題として決める（未決 2）。この ADR が決めるのは、そこへ進むために途中の段で何も壊さない順。
 - 理由: 安全さを先にした。`ReportEvent` を作り替えると、検査 48 条・記録・復元・ブラウザの欄・E2E の型が同時に動く。`components` を足すだけなら、旧い変種のイベントは `components: []` が付く以外変わらない。
 
 ### 論点 4: ブラウザの描き方
 
-**`@a2ui/react` の `A2uiSurface` とカタログの React 実装で描く。葉の実装は、既存の塊 → Markdown の変換（`report-markdown.ts`）を `Markdown` に通して再利用する。操作できる部品と配置の部品だけ React で書く。**
+**`@a2ui/react` の `A2uiSurface` とカタログの React 実装で描く。内容部品の実装は、既存の塊 → Markdown の変換（`report-markdown.ts`）を `Markdown` に通して再利用する。操作できる部品と配置の部品だけ React で書く。**
 
-- 理由: 葉 19 種の描画はフェンス・許可リスト・mermaid・`chart` を `Markdown` が持っていて、React で書き直すと見た目と図表番号・傍注の置き場を二重に持つ。tsukumo のデザインシステムで描くという決定は、既存の描画を使えば満たされる。基本の Lit の実装は読み込まない。
+- 理由: 内容部品 19 種の描画はフェンス・許可リスト・mermaid・`chart` を `Markdown` が持っていて、React で書き直すと見た目と図表番号・傍注の置き場を二重に持つ。tsukumo のデザインシステムで描くという決定は、既存の描画を使えば満たされる。基本の Lit の実装は読み込まない。
 - `Report` の実装は、頭の欄・振り返りの欄・お願いの欄を、今の `reportRegionsOf` が作る欄の Markdown で描き（`Report` の props を `ReportEvent` の欄に戻して使う）、`Section` を `buildChild` で並べる。`Section` の実装は入れ物に `data-report-region="section"` と `data-report-section`（欄の ID）を付け、見出し（`h4`）を作る。
 - **目次・演出・欄の ID が同じに動く条件。**
   - (a) 入れ物の `data-report-region`・`data-report-section` の値と並びが今の欄と同じ（`orderedReportRegions` と同じ並び: 頭・先頭の図の節・節・振り返り・お願い）。
   - (b) `h4`・`h5` の出る位置と数が同じ。
-  - (c) 図表番号と傍注の割り当て（`report-markdown.ts` は節の中の塊の並びから数える）が、`Report` の実装が部品の一覧を順にたどって出した値を React の context に置き、葉の実装が引く形で同じ値になる。
+  - (c) 図表番号と傍注の割り当て（`report-markdown.ts` は節の中の塊の並びから数える）が、`Report` の実装が部品の一覧を順にたどって出した値を React の context に置き、内容部品の実装が引く形で同じ値になる。
   - (d) `use-report-reveal.ts` はマウント時の DOM だけを見る（本文が後から伸びると筆が途中で止まる、という既知の癖）。一覧を一度に渡して 1 度のマウントで完成した DOM にする。段階描画は別の測定（段階描画の測定の課題）に預け、ここでは採らない。
-- (c) の「塊 1 つぶんを Markdown にする関数」は、今は節単位（`reportSectionMarkdowns`）。塊単位に切り出せるかはブラウザ描画の課題が確かめる（未決 3）。切り出せないときは、`Section` の実装が子の葉をまとめて節単位の関数に渡す形に倒す。
+- (c) の「塊 1 つぶんを Markdown にする関数」は、今は節単位（`reportSectionMarkdowns`）。塊単位に切り出せるかはブラウザ描画の課題が確かめる（未決 3）。切り出せないときは、`Section` の実装が子の内容部品をまとめて節単位の関数に渡す形に倒す。
 - 目視で確かめる: 既定の変種と `a2ui` の変種で同じ 9 本を描いて並べる（比較の測定の課題）。
 
 ### 論点 5: 旧い変種と `report_part_card` の行き先と撤去の順
@@ -97,7 +97,7 @@
 
 - **最初に作るのは操作できる `Table`**（列の見出しを押して並べ替える・語で絞り込む）。表は `report` の中で最も使われ、並べ替えと絞り込みの需要が分かりやすい（推測。使われ方の記録で確かめていない）。`Table` の props に任意の `sortable`・`filterable` を足す。状態は部品の中に閉じ、書き手は path を書かなくても動く。
 - **操作の状態を置く path は tsukumo が決める。** データモデルの `/view/<componentId>/<キー>`（`sort`・`filter`。つまみの振った値は `value` で、ADR 0048）。書き手が path を選ばないので衝突しない。開き直したら初期化する（データモデルを復元しない）。状態は `ReportEvent`・transcript・記録に載せない。
-- **`Tabs` と `ChoicePicker` との組み合わせ。** `Tabs` は表示の切り替えに使う（子は葉か配置の部品）。基本の `Tabs` は選択中のタブを結ぶ欄を持たないので、選択はその部品の内部の状態で、他の部品から操作しない。`ChoicePicker` は絞り込みの値を選ぶ。`value` を `{path: "/view/<TableのID>/filter"}` に結ぶと、その `Table` が絞られる。`filterable` と `filterColumn` を書き、結んだ `ChoicePicker` が無い `Table` は、その列の値（2〜6 種類のとき）と件数のバッジを自分で出し、押すと同じ path に書く。結んだ `ChoicePicker` があればバッジは出さない。この組み合わせの規約は構造の検査に足す: path が実在する `Table` の ID を指す・`Table` が `filterable`・選択肢の値が表のセルに現れる。基本の関数に絞り込みも並べ替えも無いので、絞る・並べるは `Table` の実装が持つ。
+- **`Tabs` と `ChoicePicker` との組み合わせ。** `Tabs` は表示の切り替えに使う（子は内容部品か配置の部品）。基本の `Tabs` は選択中のタブを結ぶ欄を持たないので、選択はその部品の内部の状態で、他の部品から操作しない。`ChoicePicker` は絞り込みの値を選ぶ。`value` を `{path: "/view/<TableのID>/filter"}` に結ぶと、その `Table` が絞られる。`filterable` と `filterColumn` を書き、結んだ `ChoicePicker` が無い `Table` は、その列の値（2〜6 種類のとき）と件数のバッジを自分で出し、押すと同じ path に書く。結んだ `ChoicePicker` があればバッジは出さない。この組み合わせの規約は構造の検査に足す: path が実在する `Table` の ID を指す・`Table` が `filterable`・選択肢の値が表のセルに現れる。基本の関数に絞り込みも並べ替えも無いので、絞る・並べるは `Table` の実装が持つ。
 - **AI が書ける率の測り方（比較の測定に載せる）。** 試作と同じ呼び出し（`claude -p`・カタログの JSON Schema・JSON Lines の出力）で、操作できる部品を求める依頼を 1 題材あたり 12 件ずつ書かせ、(1) 一発で通る率、(2) エラー文を返して直る率、(3) path の整合の違反数を、操作無しの 12 件と並べる。
 - 演出との関係（推測）: 絞り込みは表の行を隠すだけで DOM の根は同じなので、演出のマウント時の DOM を前提にした癖は避けられる見込み。ブラウザ描画の目視で確かめる。
 
@@ -123,19 +123,19 @@
 | `createSurface` + `updateComponents` のメッセージを書き手に書かせる | 封筒は書き手が選べる情報を持たず、試作で `version` の書き忘れが 1 件落ちた。書く量を減らすほうが通りやすい（推測。通過率は比較の測定で測る）                             |
 | 部分的な `updateComponents`（差分だけ送る）                         | 差し戻し後の出し直しで、どの部品が置き換わるかを書き手も検査も追う必要が出る。全部書かせる（未決 1 で再訪する）                                                          |
 | `keyFigures`・`checks`・`retrospective`・`favor` を部品にする       | 置き場が欄で固定されている。部品にすると「根の子に何個まで」の規約と ID の参照が増えるだけ                                                                               |
-| 葉を減らす（`Matrix` を `Table` に畳むなど）                        | 部品は減らさない決定（ADR 0038 と、部品を減らす案を取り下げた決定）に反する                                                                                              |
+| 内容部品を減らす（`Matrix` を `Table` に畳むなど）                  | 部品は減らさない決定（ADR 0038 と、部品を減らす案を取り下げた決定）に反する                                                                                              |
 | 基本の `Text`・`List`・`Image` に寄せる                             | `Text` の見出しの `variant` が節の見出しの規約とぶつかり、`List` は繰り返しの雛形で意味が違い、`Image` は URL でパスと違う。基本の名前に違う型を載せると書き手が混同する |
 | 基本の Lit の実装を読み込む                                         | 利用者の決定。配布物が増え、デザインシステムと別の見た目になる                                                                                                           |
 | `@a2ui/*` を `src/shared/` に読ませる（`shared-packages` を緩める） | 共有層を zod 3 の依存から離す線を壊す。共有に zod 4 の定義と JSON を置き、ブラウザが `fromJson` で読む形で足りる                                                         |
 | `ReportEvent` を `components` だけにして検査を先に書き直す          | 検査 48 条・記録・復元・E2E が同時に動く。安全に移るという決定に反する。最終の形として別に決める（未決 2）                                                               |
-| 葉を React で書き直す                                               | 見た目・図表番号・傍注の置き場が二重になる。デザインシステムは既存の描画を使えば満たされる                                                                               |
+| 内容部品を React で書き直す                                         | 見た目・図表番号・傍注の置き場が二重になる。デザインシステムは既存の描画を使えば満たされる                                                                               |
 | 段階描画を最初から採る                                              | `useReportReveal` がマウント時の DOM だけを見る癖があり、Agent SDK が引数の断片を流すかも未測定。段階描画の測定に預ける                                                  |
 
 ## 未決
 
 1. 差し戻し後の出し直しで部品の一覧を引き継ぐか。この ADR は「全部書かせる」とした。差し戻しの記録で出し直しの字数が重いと分かれば再訪する。
 2. （閉じた）検査を `components` から読む形（`ReportEvent.sections` を導出に格下げする）へ進めるか。利用者が進めると決め（2026-10-28）、ADR 0043 が読み先・旧い transcript の復元・外す型・移す順を決めた。
-3. （閉じた）塊 1 つぶんを Markdown にする関数を切り出せるか。利用者が葉を Markdown に戻さず React の部品で直接描くと決め（2026-10-28）、図表番号・表の札の色・傍注は組み立ての段で振って view に葉ごとの値として持たせる形になった。塊（葉）単位で渡せる。論点 4 の「葉の実装は塊 → Markdown の変換を `Markdown` に通して再利用する」は ADR 0042 が置き換える。
+3. （閉じた）塊 1 つぶんを Markdown にする関数を切り出せるか。利用者が内容部品を Markdown に戻さず React の部品で直接描くと決め（2026-10-28）、図表番号・表の札の色・傍注は組み立ての段で振って view に内容部品ごとの値として持たせる形になった。塊（内容部品）単位で渡せる。論点 4 の「内容部品の実装は塊 → Markdown の変換を `Markdown` に通して再利用する」は ADR 0042 が置き換える。
 4. （閉じた）ツール定義に部品の JSON Schema を全部載せるか、名前の列挙だけにして `report_part_card` で引かせるか。各 32 件で測り（全部載せ A・名前の列挙 B・上位 8 部品と `Report`・`Section` だけ載せる混ぜる形 C）、一発の通過率は A 32/32・C 32/32・B 26/32、ツール定義の字数は A 20810・C 10318・B 912 だった（比較の記録の「2026-10-28 載せ方 3 つを各 32 件で測り直した」）。利用者が A のまま維持すると決めた（2026-10-28）。C は半分の字数で通過率が同じだったが、載せない 16 部品を使う題材での引く手間を測っておらず、切り替えの課題は登録しない。部品を足して字数が問題になったら、C を再訪する。
 5. （閉じた）配置の部品の入れ子の上限と、`Card` の中の見出しの置き方。2 階層では P5 の題つきの枠を横に並べられず、利用者が案 A（3 階層）を選んだ（末尾の「追記（2026-10-28）」）。見出しは `Card` → `Column` の先頭の `Paragraph` に置く。
 6. （閉じた）部品名（`Paragraph`・`ItemList`・`Picture` ほか）。今の名前で確定し、基本から `Divider`、自作で `Quote` を足すと利用者が決めた（末尾の「追記（2026-10-28）: カタログの整理と拡充」）。
@@ -156,29 +156,29 @@
 **2 階層では P7 は書けるが、P5 は書けない。** 下の案 A〜C を並べ、利用者が案 A（上限を 3 にする）を選んだ（2026-10-28）。
 
 - 題つきの枠は `Card` の中に見出しの `Paragraph` を置いて表す（論点 6）。`Card` は子を 1 つしか取らない（基本の型の `child` は ID 1 つで必須）ので、題と中身を入れるには `Card` → `Column` → [見出しの `Paragraph`, 中身] が要る。
-- Claude 側の P5 は、候補 3 枚それぞれの中に「候補 n」の札・題・説明・「理由」の枠を持つ。これを横に並べると `Section` → `Row` → `Card` → `Column` → 葉 で、配置の部品が 3 階層になる。
+- Claude 側の P5 は、候補 3 枚それぞれの中に「候補 n」の札・題・説明・「理由」の枠を持つ。これを横に並べると `Section` → `Row` → `Card` → `Column` → 内容部品 で、配置の部品が 3 階層になる。
 - 構造の検査（`a2uiStructureFaults`）に 3 つの形を通した結果:
 
-| 形                             | 結果                                                    |
-| ------------------------------ | ------------------------------------------------------- |
-| `Row` → `Card` → `Column` → 葉 | `deep-layout`（`Card` の `child` が `Column` を指す欄） |
-| `Row` → `Column` → 葉          | 違反なし                                                |
-| `Row` → `Card` → 葉            | 違反なし                                                |
+| 形                                   | 結果                                                    |
+| ------------------------------------ | ------------------------------------------------------- |
+| `Row` → `Card` → `Column` → 内容部品 | `deep-layout`（`Card` の `child` が `Column` を指す欄） |
+| `Row` → `Column` → 内容部品          | 違反なし                                                |
+| `Row` → `Card` → 内容部品            | 違反なし                                                |
 
 - P7 は、数とコマンドの左右を `Section` → `Row` → [`Stats`, `Code`]、1 本の区分の下の表を `Chart`（`share`）と `Table` の並び、題つきの一覧を `Section` → `Card` → `Column` → [見出しの `Paragraph`, `Table`] で書け、どれも 2 階層に収まる。数と説明の文とコマンドを 1 枚の枠に入れる形（`Card` → `Row` → `Column`）は 3 階層になり、収まらない。
 
 広げる案:
 
-| 案                                         | 変える場所                                                                                                             | 影響                                                                                                                                                        |
-| ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| A. 上限を 3 にする                         | `a2ui-structure-fault.ts` の `MAX_LAYOUT_DEPTH`、`report-rejection.ts` の `deep-layout` の文、構造の検査の単体テスト   | どの配置の部品も 1 段深く書ける。`Row` → `Row` → `Row` のような、比べの役に立たない深い並びも通る                                                           |
-| B. `Card` の子の `Column` を深さに数えない | 同じ検査の深さの数え方（参照元が `Card` で参照先が `Column` のときは深さを増やさない）、`deep-layout` の文、単体テスト | 上限 2 のまま、題つきの枠を横に並べる形だけが通る。`Card` は子が 1 つなので、枠の中の列は枠と同じ階層とみなせる。数え方が 1 つ例外を持つ                    |
-| C. 広げない                                | 変えない                                                                                                               | P5 の候補は、枠なしの `Row` → `Column` → [見出しの `Paragraph`, 説明, `Note`] か、枠つきの `Row` → `Card` → 葉 1 つ（中の理由の枠は無くす）で書く。差が残る |
+| 案                                         | 変える場所                                                                                                             | 影響                                                                                                                                                              |
+| ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A. 上限を 3 にする                         | `a2ui-structure-fault.ts` の `MAX_LAYOUT_DEPTH`、`report-rejection.ts` の `deep-layout` の文、構造の検査の単体テスト   | どの配置の部品も 1 段深く書ける。`Row` → `Row` → `Row` のような、比べの役に立たない深い並びも通る                                                                 |
+| B. `Card` の子の `Column` を深さに数えない | 同じ検査の深さの数え方（参照元が `Card` で参照先が `Column` のときは深さを増やさない）、`deep-layout` の文、単体テスト | 上限 2 のまま、題つきの枠を横に並べる形だけが通る。`Card` は子が 1 つなので、枠の中の列は枠と同じ階層とみなせる。数え方が 1 つ例外を持つ                          |
+| C. 広げない                                | 変えない                                                                                                               | P5 の候補は、枠なしの `Row` → `Column` → [見出しの `Paragraph`, 説明, `Note`] か、枠つきの `Row` → `Card` → 内容部品 1 つ（中の理由の枠は無くす）で書く。差が残る |
 
 ### 先に入った `row`・`panel` の扱い
 
 - `sections` の塊の種類 `row`・`panel`（`src/server/report/core/body/legacy-report-section-list.ts` が読む）は、論点 5 の撤去の順どおり、`json-schema` の変種と `sections` の受け口を外すときまで残す。旧い変種の記録と描画が読むため。
-- そのあいだ、横に並べる・枠に入れるは 2 通りで持つ。旧い変種では `row`・`panel` が `sections` の塊として配置ごと持つ。`a2ui` の変種では `Row`・`Card`・`Column` が `components` だけで配置を持ち、`sections` へは中の葉が平らに入る（論点 3）。ブラウザはどちらも同じ class で描くので、見た目は同じになる。
+- そのあいだ、横に並べる・枠に入れるは 2 通りで持つ。旧い変種では `row`・`panel` が `sections` の塊として配置ごと持つ。`a2ui` の変種では `Row`・`Card`・`Column` が `components` だけで配置を持ち、`sections` へは中の内容部品が平らに入る（論点 3）。ブラウザはどちらも同じ class で描くので、見た目は同じになる。
 - 新しい塊の種類は足さない（論点 6）。
 
 ### 9 本の再描画（2026-10-28）
@@ -186,7 +186,7 @@
 - P5・P7 の組み方は、上限を 3 にしたあと疑似セッションの場面 `a2ui-row-card-decision`（候補 3 枚の題つきの枠と、図と表の左右）と `a2ui-row-card-status`（数とコマンドを 1 枚の枠に入れて左右に並べる）で書けた。1440 幅の最初の 1 画面で横に並び、700 幅で縦に積まれる。
 - 比べの 9 本は、旧い変種の引数の中身を変えずに `components` へ写し、既存の塊の隣り合う 2 つを `Row` に、1 つを `Card` に入れて描いた（`files`・`dimension` は書き手に渡していない種類なので `Table` に写した）。どれも構造の違反は 0 件だった。
 - Claude 側との差を 19 件に分けると、部品の組み方の差が 9 件、別の原因が 10 件だった。
-  - 組み方の差 9 件: 頭に数を 3〜4 枚並べる（P2・P6・P9）、結論や変えた・変えていないを枠で横に並べる（P1・P4・P8）、候補と事実を左右に置く（P5）、数とコマンドを 1 枚の枠に入れる・区分の横棒を置く（P7 の 2 件）。どれも `Row`・`Card`・`Column` と既存の葉で書ける形で、書き手が組むかどうかの差。
+  - 組み方の差 9 件: 頭に数を 3〜4 枚並べる（P2・P6・P9）、結論や変えた・変えていないを枠で横に並べる（P1・P4・P8）、候補と事実を左右に置く（P5）、数とコマンドを 1 枚の枠に入れる・区分の横棒を置く（P7 の 2 件）。どれも `Row`・`Card`・`Column` と既存の内容部品で書ける形で、書き手が組むかどうかの差。
   - 別の原因 10 件: 入れ子の構成図（P3）・UI の前後の画（P4）・群ごとの色分けの棒（P6）・表の中の札と差分の横棒（P8）・延びを斜線で見せる時間の流れ（P9）といった図や部品の描き方の差が 5 件、`graph` の色帯の連鎖と字の大きさ（P1・P5）が 2 件、`share` の図の上下の空き（P2）が 1 件、`Row` の半分の幅に入れた `sequenceDiagram` の右が切れる不具合（P9）が 1 件、メインビューの器の高さで最初の 1 画面に本文が約 450px しか入らないこと（9 本共通）が 1 件。
 
 ## 追記（2026-10-28）: カタログの整理と拡充
@@ -205,7 +205,7 @@
 - **ラベル（`badge`）は足さない。** 使用 0 件で、`Table`・`Matrix` のセルの `status` と `Note` の `tone` が印を持つ。記録が溜まって逃げ道への流れが見えたら再訪する。
 - **部品は減らさない。** `Matrix`・`Mermaid`・`Timeline` は使用が 1% 以下だが、ADR 0038 の「部品を減らさず遅延で参照する」を覆さない。
 - **ツール定義の字数。** 載せ方 A のまま、`Divider` で約 250〜350 字、`Quote` で約 350〜600 字伸びる（現行 26 部品の合計 23,163 字の約 3%）。字数が問題になったら未決 4 のとおり C を再訪する。
-- 足す 2 部品の課題は、葉の部品を React で直接描く移行（ADR 0042）の葉ごとの課題のあとに進める。登録した課題の番号は、この規約によりドキュメントに書かない。
+- 足す 2 部品の課題は、内容部品を React で直接描く移行（ADR 0042）の内容部品ごとの課題のあとに進める。登録した課題の番号は、この規約によりドキュメントに書かない。
 
 ## 追記（2026-11-03）: 横に転がす図は字の下限まで縮める
 

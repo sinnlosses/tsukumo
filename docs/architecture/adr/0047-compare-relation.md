@@ -38,7 +38,7 @@
 
 - `a2uiReportInput`（a2ui の部品の一覧）と `legacyReportComponents`（`sections`・`body` の旧い引数）で写す。続きから復元した再生と疑似セッションも `reportEvents` を通るので、同じ所で写る
 - 部品が閉じるたびの草稿（`draftComponentIntake`）も同じ写しを通す
-- 写しは `src/server/report/core/body/legacy-before-after.ts` に置く。ブラウザの葉は写さない（後始末で外した。下の「後始末」）
+- 写しは `src/server/report/core/body/legacy-before-after.ts` に置く。ブラウザの内容部品は写さない（後始末で外した。下の「後始末」）
 - 描く側だけで写す案は採らない。サーバの検査（図の規則・`region` の規則）・画像の棚・使われ方の記録が `BeforeAfter` と `Compare` の両方を見続けることになる
 - 構造の検査（`a2uiStructureFaults`）は写す前の生の一覧を見る。`BeforeAfter` は図の部品のままなので、写す前と同じに通る
 
@@ -57,7 +57,7 @@
 ## 残すこと
 
 - 書き手の目録から `BeforeAfter` を外すこと、記法の条・ツールの説明・`docs/architecture/display/` の文書を `Compare` の書き方に揃えることは、この判断のあとに別に行う。それまで書き手は `BeforeAfter` と `Compare` の両方を書ける
-- `BeforeAfter` の型・葉・CSS の名前・規則の分岐を消すのも別に行う（後始末で済んだ）
+- `BeforeAfter` の型・内容部品・CSS の名前・規則の分岐を消すのも別に行う（後始末で済んだ）
 
 ## 後始末
 
