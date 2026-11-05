@@ -124,7 +124,7 @@ classDiagram
 | キャラクターパック | 立ち絵の素材・表情の対応・人格を1つのディレクトリで束ねた差し替え可能な定義 | `docs/glossary/character.md` | `src/shared/character-pack/character-definition.ts`（`CharacterDefinition`）     |
 | 立ち絵             | キャラビューに出すキャラクターの画像                                        | `docs/glossary/character.md` | `src/shared/character-pack/portrait-image.ts`                                    |
 | 表情               | 立ち絵の差分。切り替わるのは `speak` の `expression` 引数だけ               | `docs/glossary/character.md` | `src/shared/character-pack/expression.ts`（`Expression`）                        |
-| ペルソナ           | キャラクターパックの `persona.md` が持つ人格の本文                          | `docs/glossary/character.md` | `src/shared/character-pack/persona-section.ts`（`personaBody`）                  |
+| ペルソナ           | キャラクターパックの `persona.md` の `## 覚えたこと` の節より前             | `docs/glossary/character.md` | `src/shared/character-pack/persona-section.ts`（`personaBody`）                  |
 | 覚えたこと         | `remember` ツールで書き足した、キャラクター自身についての行                 | `docs/glossary/memory.md`    | `src/shared/character-pack/persona-section.ts`（`REMEMBERED_SECTION_HEADING`）   |
 | セリフ             | 会話のまとまりの表を参照                                                    | `docs/glossary/speech.md`    | `src/shared/session/turn-speech.ts`                                              |
 | 吹き出し           | 会話のまとまりの表を参照                                                    | `docs/glossary/speech.md`    | `src/browser/components/page/conversation/components/character-view/balloon.tsx` |

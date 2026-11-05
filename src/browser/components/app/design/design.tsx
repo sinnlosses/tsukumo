@@ -7,6 +7,7 @@ import { Heading } from "../../ui/heading/heading.tsx"
 import { CATALOG_EXAMPLES } from "./catalog-example.ts"
 import { CatalogGallery } from "./catalog-gallery.tsx"
 import styles from "./design.module.css"
+import { ScreenPartGallery } from "./screen-part-gallery.tsx"
 import { TokenGallery } from "./token-gallery.tsx"
 import { UiGallery } from "./ui-gallery.tsx"
 
@@ -33,6 +34,12 @@ export function Design(): ReactElement {
           カタログの部品
         </Heading>
         <CatalogGallery examples={CATALOG_EXAMPLES} />
+      </section>
+      <section>
+        <Heading level={2} size="heading" tone="ink" weight="bold" className="">
+          画面の部品
+        </Heading>
+        <ScreenPartGallery />
       </section>
     </main>
   )
