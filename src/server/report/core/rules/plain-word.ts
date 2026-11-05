@@ -364,14 +364,10 @@ export const PLAIN_WORDS = [
     meaning: "サーバのメモリの置き場から画像を取り出すこと",
   },
   {
-    spelling: "台本の完了",
-    replacement: "ワークフロースクリプトの完了",
-    meaning: "Claude Code のワークフローのスクリプトが走り終えたこと",
-  },
-  {
-    spelling: "台本の中の委譲先",
-    replacement: "ワークフロースクリプトの中の委譲先",
-    meaning: "Claude Code のワークフローのスクリプトが呼ぶ、委譲先のエージェント",
+    spelling: "台本",
+    replacement: "ワークフロースクリプト",
+    meaning:
+      "Claude Code のワークフローのスクリプト。再現の手順ならシナリオ、合否を決めるコマンドなら判定コマンド、scripts/ なら開発用スクリプト",
   },
   {
     spelling: "目録の1行",

@@ -1,4 +1,4 @@
-// 記録を読む台本の `--days N` を読む。正の整数でなければ stderr に出して終了コード 1 で止める。
+// 記録を読む開発用スクリプトの `--days N` を読む。正の整数でなければ stderr に出して終了コード 1 で止める。
 
 import process from "node:process"
 import { parseArgs } from "node:util"
