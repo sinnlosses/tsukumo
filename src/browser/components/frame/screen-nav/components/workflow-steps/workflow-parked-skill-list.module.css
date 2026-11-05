@@ -1,0 +1,43 @@
+/* 並びに入っていないスキル。点線の札を押すと並びの最後に足す。 */
+.parked {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+.parked-head {
+  margin: 0;
+}
+.parked-hint {
+  margin-left: var(--space-md);
+}
+.parked-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+.parked-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  min-height: 32px;
+  padding: 0 var(--space-md);
+  border-radius: var(--radius-md);
+}
+.parked-chip-title {
+  color: var(--ink);
+  font-size: var(--font-secondary);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+/* 足せる候補が無いことを、点線の行で言う（押せない）。 */
+.parked-empty {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin: 0;
+  padding: var(--space-md) var(--space-lg);
+  border: 1px dashed var(--rule-quiet);
+  border-radius: var(--radius-lg);
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+}

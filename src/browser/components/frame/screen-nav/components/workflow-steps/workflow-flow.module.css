@@ -1,0 +1,34 @@
+/* 流れの帯。札を矢印でつなぎ、入りきらなければ折り返す。 */
+.flow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  border: 1px solid var(--rule-quiet);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--ground) 40%, transparent);
+}
+.flow-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  height: 28px;
+  padding: 0 var(--space-md);
+  border: 1px solid var(--rule-quiet);
+  border-radius: var(--radius-xl);
+  background: var(--surface-raised);
+  color: var(--ink);
+  font-size: var(--font-secondary);
+  font-weight: 700;
+}
+.flow-number {
+  color: var(--ink-quiet);
+  font-family: var(--font-mono);
+  font-size: var(--font-label);
+  font-weight: 400;
+}
+.flow-arrow {
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+}

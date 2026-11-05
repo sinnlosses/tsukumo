@@ -1,0 +1,8 @@
+/* 下の帯。何を変えたかは左に寄せ、「やめる」「保存」を右に置く。 */
+.change {
+  margin: 0 auto 0 0;
+}
+.save-band-button {
+  flex: none;
+  border-radius: var(--radius-md);
+}

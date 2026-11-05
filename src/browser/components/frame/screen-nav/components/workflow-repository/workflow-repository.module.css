@@ -1,0 +1,13 @@
+/* どのリポジトリの設定か。面の名前のすぐ下に置き、欄とは罫線で分ける。 */
+.repository {
+  padding-bottom: var(--space-md);
+  border-bottom: 1px solid var(--rule-quiet);
+}
+.repository-name {
+  margin: 0;
+}
+/* 絶対パスは長いので、面の幅を押し広げずにどこでも折り返す。 */
+.repository-path {
+  margin: var(--space-xs) 0 0;
+  overflow-wrap: anywhere;
+}

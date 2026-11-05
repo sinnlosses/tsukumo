@@ -1,0 +1,17 @@
+/* コマンドの欄。見出しは入力欄の名前を兼ねる。 */
+.command-label {
+  margin: 0;
+  color: var(--ink);
+  font-size: var(--font-subheading);
+  font-weight: 700;
+}
+.command-input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding: var(--space-md);
+  font-family: var(--font-mono);
+}
+.command-hint {
+  margin: 0;
+}
