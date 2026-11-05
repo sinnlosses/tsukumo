@@ -4,7 +4,7 @@
 // 例外を投げない。読めないときは `unavailable` を返す。
 
 import { constants } from "node:fs"
-import { open } from "node:fs/promises"
+import { type FileHandle, open } from "node:fs/promises"
 import { join } from "node:path"
 
 import type {
@@ -59,8 +59,10 @@ type SmallFileContent =
 
 /** 通常のファイルを、上限の大きさまでなら丸ごと読む。リンク・ディレクトリ・開けないものは `unreadable`。 */
 async function readSmallRegularFile(path: string): Promise<SmallFileContent> {
-  const handle = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW).catch(() => undefined)
-  if (handle === undefined) {
+  let handle: FileHandle
+  try {
+    handle = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW)
+  } catch {
     return unavailable("unreadable")
   }
   try {

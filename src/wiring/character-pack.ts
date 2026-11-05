@@ -24,7 +24,7 @@ export function wireCharacterPack(
       deleteCharacter: (remove) => Promise.resolve(character.applyDelete(remove)),
       generateFromPortrait: async (portrait) => {
         if (context.driver.kind === "fake") {
-          return undefined
+          return { kind: "failed" }
         }
         const generated = await generateCharacter(
           (request, signal) =>
@@ -41,8 +41,9 @@ export function wireCharacterPack(
             { feature: "character-pack", place: "generation-failed" },
             new Error("立ち絵から生成できなかった"),
           )
+          return { kind: "failed" }
         }
-        return generated
+        return { kind: "generated", character: generated }
       },
     },
   }

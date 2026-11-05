@@ -17,7 +17,8 @@ import { readdir, readFile, writeFile } from "node:fs/promises"
 import { join } from "node:path"
 
 import { bundledFilePath } from "../../../adapter/bundled-path.ts"
-import { sourceFingerprint } from "./source-fingerprint.ts"
+import { isMissingFileError } from "../../../adapter/lib/missing-file-error.ts"
+import { sourceFingerprint, type SourceFingerprint } from "./source-fingerprint.ts"
 import { runViteBuild } from "./vite-build.ts"
 
 /**
@@ -92,14 +93,14 @@ export function builtUiDir(): string {
  */
 export async function readUiBundle(builtDir: string): Promise<StoredBundleResult> {
   const bundle = await readPair(builtDir)
-  if (bundle === undefined) {
+  if (bundle.kind !== "read") {
     return {
       kind: "missing",
       reason: `${builtDir} にスクリプトと CSS の対が無い（pnpm run build で作る）`,
     }
   }
 
-  return { kind: "ok", bundle, outdated: await isOutdated(builtDir) }
+  return { kind: "ok", bundle: bundle.value, outdated: await isOutdated(builtDir) }
 }
 
 /**
@@ -110,24 +111,29 @@ export async function buildUiBundle(outDir: string): Promise<BundleResult> {
   // 組み立てる前に取る。組み立て中にソースが変わっても、次の起動で古いと分かる。
   const fingerprint = await bundledSourceFingerprint()
   const result = await bundleWithVite(bundledFilePath(...UI_SOURCE_DIR_RELATIVE_PATH), outDir)
-  if (result.kind === "ok" && fingerprint !== undefined) {
-    await writeFile(join(outDir, SOURCE_FINGERPRINT_FILE_NAME), fingerprint)
+  if (result.kind === "ok" && fingerprint.kind === "known") {
+    await writeFile(join(outDir, SOURCE_FINGERPRINT_FILE_NAME), fingerprint.hash)
   }
   return result
 }
 
 /**
- * {@link BUNDLED_SOURCE_DIR_RELATIVE_PATHS} の下の指紋。どれか1つでも読めなければ `undefined`。
+ * {@link BUNDLED_SOURCE_DIR_RELATIVE_PATHS} の下の指紋。どれか1つでも読めなければ `unavailable`。
  * 見るのはそこだけで、依存（`node_modules`）や tsconfig の変化は拾わない。そこまで見るなら
  * 組み立て直すほうが早いので、気づく口として割り切っている。
  */
-export async function bundledSourceFingerprint(): Promise<string | undefined> {
+export async function bundledSourceFingerprint(): Promise<SourceFingerprint> {
   const fingerprints = await Promise.all(
     BUNDLED_SOURCE_DIR_RELATIVE_PATHS.map((segments) =>
       sourceFingerprint(bundledFilePath(...segments), []),
     ),
   )
-  return fingerprints.includes(undefined) ? undefined : fingerprints.join(":")
+  const hashes = fingerprints.flatMap((fingerprint) =>
+    fingerprint.kind === "known" ? [fingerprint.hash] : [],
+  )
+  return hashes.length === fingerprints.length
+    ? { kind: "known", hash: hashes.join(":") }
+    : { kind: "unavailable" }
 }
 
 /**
@@ -141,27 +147,61 @@ async function bundleWithVite(sourceDir: string, outDir: string): Promise<Bundle
   }
 
   const bundle = await readPair(outDir)
-  return bundle === undefined
-    ? { kind: "failed", reason: "vite build がスクリプトと CSS の対を出さなかった" }
-    : { kind: "ok", bundle }
+  return bundle.kind === "read"
+    ? { kind: "ok", bundle: bundle.value }
+    : { kind: "failed", reason: "vite build がスクリプトと CSS の対を出さなかった" }
+}
+
+/** ファイルを読んだ結果。無い（ENOENT）と読めない（それ以外）を分ける。 */
+type Reading<T> =
+  | { readonly kind: "read"; readonly value: T }
+  | { readonly kind: "missing" }
+  | { readonly kind: "unavailable" }
+
+type Unread = Exclude<Reading<never>, { readonly kind: "read" }>
+
+function isUnread<T>(reading: Reading<T>): reading is Reading<T> & Unread {
+  return reading.kind !== "read"
+}
+
+async function attemptRead<T>(read: () => Promise<T>): Promise<Reading<T>> {
+  try {
+    return { kind: "read", value: await read() }
+  } catch (error) {
+    return isMissingFileError(error) ? { kind: "missing" } : { kind: "unavailable" }
+  }
 }
 
 /**
  * 置き場から {@link UI_SCRIPT_FILE_NAME} と {@link STYLE_SHEET_FILE_NAME} を読む。どちらかが
- * 無ければ `undefined`（対で配れないものを「組み上がった」と呼ばない）。置き場そのものが
+ * 無ければ読めた扱いにしない（対で配れないものを「組み上がった」と呼ばない）。置き場そのものが
  * 無いときも同じ。入口以外の `.js` はチャンクとして名前ごと読む。
  */
-async function readPair(dir: string): Promise<UiBundle | undefined> {
+async function readPair(dir: string): Promise<Reading<UiBundle>> {
   const [uiScript, styleSheet, chunks] = await Promise.all([
-    readFile(join(dir, UI_SCRIPT_FILE_NAME), "utf8").catch(() => undefined),
-    readFile(join(dir, STYLE_SHEET_FILE_NAME), "utf8").catch(() => undefined),
+    attemptRead(() => readFile(join(dir, UI_SCRIPT_FILE_NAME), "utf8")),
+    attemptRead(() => readFile(join(dir, STYLE_SHEET_FILE_NAME), "utf8")),
     readChunks(dir),
   ])
-  if (uiScript === undefined || styleSheet === undefined || chunks === undefined) {
-    return undefined
+  if (uiScript.kind !== "read") {
+    return uiScript
+  }
+  if (styleSheet.kind !== "read") {
+    return styleSheet
+  }
+  if (chunks.kind !== "read") {
+    return chunks
   }
 
-  return { uiScript, styleSheet, chunks, etag: bundleEtag(uiScript, styleSheet, chunks) }
+  return {
+    kind: "read",
+    value: {
+      uiScript: uiScript.value,
+      styleSheet: styleSheet.value,
+      chunks: chunks.value,
+      etag: bundleEtag(uiScript.value, styleSheet.value, chunks.value),
+    },
+  }
 }
 
 function bundleEtag(
@@ -176,31 +216,35 @@ function bundleEtag(
   return `"${hash.digest("hex")}"`
 }
 
-/** 置き場の直下にある、入口以外の `.js`（名前 → 中身）。1つでも読めなければ `undefined`。 */
-async function readChunks(dir: string): Promise<ReadonlyMap<string, string> | undefined> {
-  const names = await readdir(dir).catch(() => undefined)
-  if (names === undefined) {
-    return undefined
+/** 置き場の直下にある、入口以外の `.js`（名前 → 中身）。1つでも読めなければ読めた扱いにしない。 */
+async function readChunks(dir: string): Promise<Reading<ReadonlyMap<string, string>>> {
+  const names = await attemptRead(() => readdir(dir))
+  if (names.kind !== "read") {
+    return names
   }
 
-  const chunkNames = names.filter(
+  const chunkNames = names.value.filter(
     (name) => name.endsWith(CHUNK_FILE_EXTENSION) && name !== UI_SCRIPT_FILE_NAME,
   )
   const contents = await Promise.all(
-    chunkNames.map((name) => readFile(join(dir, name), "utf8").catch(() => undefined)),
+    chunkNames.map((name) => attemptRead(() => readFile(join(dir, name), "utf8"))),
   )
+  const unread = contents.find(isUnread)
+  if (unread !== undefined) {
+    return unread
+  }
   const entries = chunkNames.flatMap((name, index) => {
     const content = contents[index]
-    return content === undefined ? [] : [[name, content] as const]
+    return content?.kind === "read" ? [[name, content.value] as const] : []
   })
-  return entries.length === chunkNames.length ? new Map(entries) : undefined
+  return { kind: "read", value: new Map(entries) }
 }
 
 async function isOutdated(builtDir: string): Promise<boolean> {
   const [stored, current] = await Promise.all([
-    readFile(join(builtDir, SOURCE_FINGERPRINT_FILE_NAME), "utf8")
-      .then((text) => text.trim())
-      .catch(() => undefined),
+    attemptRead(async () =>
+      (await readFile(join(builtDir, SOURCE_FINGERPRINT_FILE_NAME), "utf8")).trim(),
+    ),
     bundledSourceFingerprint(),
   ])
   return isBundleOutdated(stored, current)
@@ -215,11 +259,11 @@ async function isOutdated(builtDir: string): Promise<boolean> {
  * （「分からない」を「古い」に寄せると、出どころの怪しい警告が毎回出て読まれなくなる）。
  */
 function isBundleOutdated(
-  storedFingerprint: string | undefined,
-  currentFingerprint: string | undefined,
+  storedFingerprint: Reading<string>,
+  currentFingerprint: SourceFingerprint,
 ): boolean {
-  if (storedFingerprint === undefined) {
+  if (storedFingerprint.kind !== "read") {
     return true
   }
-  return currentFingerprint !== undefined && storedFingerprint !== currentFingerprint
+  return currentFingerprint.kind === "known" && storedFingerprint.value !== currentFingerprint.hash
 }

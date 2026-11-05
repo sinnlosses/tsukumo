@@ -5,6 +5,7 @@
 import { cp, mkdir, mkdtemp, readFile, rm } from "node:fs/promises"
 import { join } from "node:path"
 
+import { isMissingFileError } from "../../adapter/lib/missing-file-error.ts"
 import type {
   CheckRecordSource,
   CheckRecordText,
@@ -57,8 +58,7 @@ async function readWorktreeTree(
     scratch = await mkdtemp(scratchPrefix)
     const index = join(scratch, "index")
     const objects = join(scratch, "objects")
-    // 時刻を保たないと、同じ秒・同じ大きさの書き換えを git が無変更とみなす。index が無い（まだ何も積んでいない）ときは空から始める。
-    await cp(realIndex, index, { preserveTimestamps: true }).catch(() => undefined)
+    await copyIndexIfPresent(realIndex, index)
     await mkdir(objects)
     const scratchEnv = {
       ...env,
@@ -75,6 +75,17 @@ async function readWorktreeTree(
   } finally {
     if (scratch !== undefined) {
       await rm(scratch, { recursive: true, force: true })
+    }
+  }
+}
+
+// 時刻を保たないと、同じ秒・同じ大きさの書き換えを git が無変更とみなす。index が無い（まだ何も積んでいない）ときは空から始める。
+async function copyIndexIfPresent(realIndex: string, index: string): Promise<void> {
+  try {
+    await cp(realIndex, index, { preserveTimestamps: true })
+  } catch (error) {
+    if (!isMissingFileError(error)) {
+      throw error
     }
   }
 }

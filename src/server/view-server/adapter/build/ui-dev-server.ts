@@ -16,7 +16,7 @@ import type { IncomingMessage, Server, ServerResponse } from "node:http"
 
 import { bundledFilePath } from "../../../adapter/bundled-path.ts"
 import { UI_SOURCE_DIR_RELATIVE_PATH } from "./bundle.ts"
-import { sourceFingerprint } from "./source-fingerprint.ts"
+import { sourceFingerprint, type SourceFingerprint } from "./source-fingerprint.ts"
 import { VITE_CONFIG_RELATIVE_PATH } from "./vite-build.ts"
 
 /**
@@ -90,7 +90,7 @@ export async function startUiDevServer(options: UiDevServerOptions): Promise<UiD
             serverSourceFingerprint(),
           ])
           // 指紋が取れなかったときは、止める根拠が無いので当てる。
-          if (atStartup === undefined || now === undefined || atStartup === now) {
+          if (atStartup.kind !== "known" || now.kind !== "known" || atStartup.hash === now.hash) {
             return undefined
           }
           serverSourceChanged = true
@@ -120,6 +120,6 @@ export async function startUiDevServer(options: UiDevServerOptions): Promise<UiD
 }
 
 /** 動いているプロセスが読み込んだサーバ側のソース（`src/` の下で `browser/` 以外）の指紋。 */
-function serverSourceFingerprint(): Promise<string | undefined> {
+function serverSourceFingerprint(): Promise<SourceFingerprint> {
   return sourceFingerprint(bundledFilePath("src"), [UI_SOURCE_DIR_RELATIVE_PATH.at(-1) ?? ""])
 }

@@ -12,6 +12,10 @@ const FAR_FUTURE_SECONDS = 4_000_000_000
 /** 組み立てたときのソースの指紋を置くファイル（`SOURCE_FINGERPRINT_FILE_NAME`）。 */
 const SOURCE_FINGERPRINT_FILE_NAME = "source-fingerprint.txt"
 
+function knownHash(fingerprint: Awaited<ReturnType<typeof bundledSourceFingerprint>>): string {
+  return fingerprint.kind === "known" ? fingerprint.hash : ""
+}
+
 describe("組み立て済みのブラウザ側の鮮度", () => {
   const tempDir = useTempDir("built-ui-freshness")
 
@@ -31,7 +35,7 @@ describe("組み立て済みのブラウザ側の鮮度", () => {
 
   test("いまのソースの指紋なら、成果物の更新時刻が古くても通る", async () => {
     writePair(0)
-    writeFingerprint((await bundledSourceFingerprint()) ?? "", 0)
+    writeFingerprint(knownHash(await bundledSourceFingerprint()), 0)
 
     await expect(assertBuiltUiFresh(tempDir())).resolves.toBeUndefined()
   })

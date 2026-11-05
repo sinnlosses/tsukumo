@@ -13,7 +13,7 @@ describe("sourceFingerprint", () => {
   it("中身が同じなら同じ指紋になる", async () => {
     const root = await sourceTree()
 
-    expect(await sourceFingerprint(root, ["browser"])).toBe(
+    expect(await sourceFingerprint(root, ["browser"])).toEqual(
       await sourceFingerprint(root, ["browser"]),
     )
   })
@@ -24,7 +24,7 @@ describe("sourceFingerprint", () => {
 
     await writeFile(join(root, "shared", "frame.ts"), "export const PROTOCOL_VERSION = 6\n")
 
-    expect(await sourceFingerprint(root, ["browser"])).not.toBe(before)
+    expect(await sourceFingerprint(root, ["browser"])).not.toEqual(before)
   })
 
   it("ファイルが増えても指紋が変わる", async () => {
@@ -33,7 +33,7 @@ describe("sourceFingerprint", () => {
 
     await writeFile(join(root, "shared", "added.ts"), "export {}\n")
 
-    expect(await sourceFingerprint(root, ["browser"])).not.toBe(before)
+    expect(await sourceFingerprint(root, ["browser"])).not.toEqual(before)
   })
 
   it("除いた置き場（browser）のファイルが変わっても、指紋は変わらない", async () => {
@@ -42,13 +42,13 @@ describe("sourceFingerprint", () => {
 
     await writeFile(join(root, "browser", "main.tsx"), "export const edited = true\n")
 
-    expect(await sourceFingerprint(root, ["browser"])).toBe(before)
+    expect(await sourceFingerprint(root, ["browser"])).toEqual(before)
   })
 
-  it("置き場が読めなければ undefined を返す（分からないものを「変わった」と言わない）", async () => {
+  it("置き場が読めなければ unavailable を返す（分からないものを「変わった」と言わない）", async () => {
     const root = join(await sourceTree(), "missing")
 
-    expect(await sourceFingerprint(root, ["browser"])).toBeUndefined()
+    expect(await sourceFingerprint(root, ["browser"])).toEqual({ kind: "unavailable" })
   })
 })
 

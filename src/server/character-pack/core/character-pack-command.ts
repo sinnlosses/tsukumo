@@ -32,10 +32,14 @@ export type CharacterPackCommandPorts = {
   readonly deleteCharacter: (remove: CharacterDelete) => Promise<SessionEvent | undefined>
   /**
    * 立ち絵1枚の data URL から作るダイアログの欄の値を生成して返す。何も書き込まない。
-   * 生成できなかったときは undefined。
+   * 生成できなかったときは `failed`。
    */
-  readonly generateFromPortrait: (portrait: string) => Promise<GeneratedCharacter | undefined>
+  readonly generateFromPortrait: (portrait: string) => Promise<PortraitGeneration>
 }
+
+export type PortraitGeneration =
+  | { readonly kind: "generated"; readonly character: GeneratedCharacter }
+  | { readonly kind: "failed" }
 
 /**
  * `character-pack` が受けるコマンドの表。

@@ -139,7 +139,11 @@ export function createRecordingPorts(
       },
       generateFromPortrait: (portrait) => {
         generations.push(portrait)
-        return Promise.resolve(writeResult === "written" ? GENERATED_CHARACTER : undefined)
+        return Promise.resolve(
+          writeResult === "written"
+            ? { kind: "generated", character: GENERATED_CHARACTER }
+            : { kind: "failed" },
+        )
       },
     },
     item: {

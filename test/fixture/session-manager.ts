@@ -148,7 +148,7 @@ export function createSessionManager(
         editCharacter,
         createCharacter,
         deleteCharacter,
-        generateFromPortrait: () => Promise.resolve(undefined),
+        generateFromPortrait: () => Promise.resolve({ kind: "failed" }),
       },
       item: {
         addItem: () => Promise.resolve(undefined),

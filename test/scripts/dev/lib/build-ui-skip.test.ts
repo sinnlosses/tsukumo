@@ -10,6 +10,10 @@ import { useTempDir } from "../../../fixture/temp-dir.ts"
 /** 組み立てたときのソースの指紋を置くファイル（`SOURCE_FINGERPRINT_FILE_NAME`）。 */
 const SOURCE_FINGERPRINT_FILE_NAME = "source-fingerprint.txt"
 
+function knownHash(fingerprint: Awaited<ReturnType<typeof bundledSourceFingerprint>>): string {
+  return fingerprint.kind === "known" ? fingerprint.hash : ""
+}
+
 describe("入力が同じ組み立ての省略", () => {
   const tempDir = useTempDir("build-ui-skip")
   const builtDir = () => join(tempDir(), "built")
@@ -23,7 +27,7 @@ describe("入力が同じ組み立ての省略", () => {
     }
     writeFileSync(
       join(builtDir(), SOURCE_FINGERPRINT_FILE_NAME),
-      (await bundledSourceFingerprint()) ?? "",
+      knownHash(await bundledSourceFingerprint()),
     )
     for (const name of ["vite.config.ts", "pnpm-lock.yaml", "tsconfig.json"]) {
       writeFileSync(join(root(), name), `${name} 前回`)
