@@ -1,35 +1,27 @@
 // 全画面の外枠（`<Layout>`）。最上部に画面のナビの帯を置き、その下に出している画面を選んで描く。
 //
 // 画面の入れ替えを画面の側に持たせると画面どうしの import になり、構造の検査「browser/ の機能どうしの import」が落とす。
-// だから、すべての画面を知ってよいここで選ぶ。
+// だから、すべての画面を知ってよい画面の登録表（`LAYOUT_SCREENS`）が登録表を作り、ここは表を受けて選ぶだけにする。
 // 描画の失敗は画面ごとの `<ScreenBoundary>` で受け止める。帯は境界の外に置き、壊れた画面からでも別の画面へ移れるようにする。
 
 import { Activity, type ReactElement } from "react"
 
-import { RunSettingGroup } from "../../features/run-setting/components/run-setting-group.tsx"
 import type { Screen } from "../../stores/location-hash.ts"
 import { useScreen } from "../../stores/screen.tsx"
-import type { NavDrawerSlots } from "../domain/screen-nav/components/nav-drawer.tsx"
-import { ScreenNav } from "../domain/screen-nav/screen-nav.tsx"
-import { SidebarTaskPane } from "../domain/sidebar/components/sidebar-task-pane.tsx"
-import { UsagePane } from "../domain/sidebar/components/usage-pane.tsx"
-import { SkipLink } from "../domain/skip-link.tsx"
-import { DiaryNotice } from "../page/achievement/components/diary-notice/diary-notice.tsx"
-import { TurnList } from "../page/conversation/components/main-view/turn-list.tsx"
-import { Conversation } from "../page/conversation/conversation.tsx"
-import { deferredScreen } from "./deferred-screen.tsx"
 import { ScreenBoundary } from "./screen-boundary.tsx"
 
-const Character = deferredScreen(
-  async () => (await import("../page/character/character.tsx")).Character,
-)
-const TokenUsage = deferredScreen(
-  async () => (await import("../page/token-usage/token-usage.tsx")).TokenUsage,
-)
-const Achievement = deferredScreen(
-  async () => (await import("../page/achievement/achievement.tsx")).Achievement,
-)
-const Design = deferredScreen(async () => (await import("./design/design.tsx")).Design)
+/**
+ * 画面の登録表。会話の画面は常にマウントしたまま `Layout` が隠すので、`overlay` には乗らない。
+ * 表の要素は画面の部品そのもので、遅延読み込みの画面は読み込む部品を要素に包んで渡す。
+ */
+export type LayoutScreens = {
+  readonly skipLink: ReactElement
+  /** 画面のナビの帯（狭い画面の引き出しの中身を差し込み済み）。 */
+  readonly nav: ReactElement
+  readonly diaryNotice: ReactElement
+  readonly conversation: ReactElement
+  readonly overlay: Record<Exclude<Screen, "conversation">, ReactElement>
+}
 
 /**
  * 出している画面を選ぶ（`location.hash`）。
@@ -38,48 +30,26 @@ const Design = deferredScreen(async () => (await import("./design/design.tsx")).
  * サーバとの接続は `<Root>` が持つので、会話そのものは隠れている間も進み続ける。
  * `hidden` 属性と違い描画も止まるので、ほかの画面を開いている間の再描画が減る。
  */
-export function Layout(): ReactElement {
+export function Layout(props: { readonly screens: LayoutScreens }): ReactElement {
   const screen = useScreen()
+  const { screens } = props
   return (
     <>
-      {screen === "conversation" && <SkipLink />}
+      {screen === "conversation" && screens.skipLink}
       {/* 画面のナビの帯。どの画面でも最上部に出るので、画面を選ぶ分岐の外に置く。
           会話の画面の `<ConversationLayout>` は、帯が奪う高さを CSS の変数（theme.css）から読んで縮む。 */}
-      <ScreenNav drawer={NAV_DRAWER_SLOTS} />
+      {screens.nav}
       {/* 書き終わりの知らせ。成果の画面でだけ出す。
           ほかの画面へ移っても「×」で消したかどうかを忘れないよう、外さずに `<Activity>` で隠す。 */}
       <Activity mode={screen === "achievement" ? "visible" : "hidden"}>
-        <ScreenBoundary>
-          <DiaryNotice />
-        </ScreenBoundary>
+        <ScreenBoundary>{screens.diaryNotice}</ScreenBoundary>
       </Activity>
       <Activity mode={screen === "conversation" ? "visible" : "hidden"}>
-        <ScreenBoundary>
-          <Conversation />
-        </ScreenBoundary>
+        <ScreenBoundary>{screens.conversation}</ScreenBoundary>
       </Activity>
       {screen !== "conversation" && (
-        <ScreenBoundary key={screen}>{OVERLAY_SCREEN[screen]}</ScreenBoundary>
+        <ScreenBoundary key={screen}>{screens.overlay[screen]}</ScreenBoundary>
       )}
     </>
   )
 }
-
-/**
- * 狭い画面の引き出しに差し込む中身。
- * サイドバーと会話の画面の部品は、帯（枠）からは引けないので、すべてを知ってよいここで渡す。
- */
-const NAV_DRAWER_SLOTS = {
-  runSetting: <RunSettingGroup placement="nav-drawer" />,
-  turns: <TurnList />,
-  tasks: <SidebarTaskPane />,
-  usage: <UsagePane />,
-} satisfies NavDrawerSlots
-
-/** 会話の画面を除いた画面の部品を引く表。会話の画面は常にマウントしたまま {@link Layout} が隠すので、ここには乗らない。 */
-const OVERLAY_SCREEN = {
-  character: <Character />,
-  "token-usage": <TokenUsage />,
-  achievement: <Achievement />,
-  design: <Design />,
-} satisfies Record<Exclude<Screen, "conversation">, ReactElement>

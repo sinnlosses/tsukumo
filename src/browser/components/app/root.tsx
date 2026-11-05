@@ -9,6 +9,7 @@ import { usePortraitPreload } from "../domain/portrait.tsx"
 import { ProtocolMismatch } from "../domain/protocol-mismatch.tsx"
 import { usePackAppearance } from "./hooks/use-pack-appearance.ts"
 import { Layout } from "./layout.tsx"
+import { LAYOUT_SCREENS } from "./screen-registry.tsx"
 
 export function Root(): ReactElement {
   useSessionConnection()
@@ -21,5 +22,5 @@ export function Root(): ReactElement {
   if (protocol === "mismatched") {
     return <ProtocolMismatch />
   }
-  return <Layout />
+  return <Layout screens={LAYOUT_SCREENS} />
 }

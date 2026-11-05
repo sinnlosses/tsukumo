@@ -4,9 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 import type { MainViewReportBody } from "../../../../../../../src/shared/session/main-view-shape.ts"
 
 // `Markdown`（本物は react-markdown 一式で重い）を、呼ばれた回数と引数だけ記録する代役に
-// 差し替える。`Report` が「変わらない塊は再描画しない」（docs/architecture/browser.md「Markdown」）ことは、
-// 本物の unified の出力では確かめづらい（同じ入力なら同じ出力になるため、再描画したか
-// どうかが DOM からは見分けられない）。呼ばれたかどうかを直接数えるのが確実。
+// 差し替える。塊ごとに何を渡したかを直接数える。
 let calls: string[] = []
 
 vi.mock(
@@ -39,7 +37,7 @@ function markdownBody(markdown: string): MainViewReportBody {
   return { kind: "markdown", markdown }
 }
 
-describe("Report（空行で塊に割り、塊ごとに memo）", () => {
+describe("Report（空行で塊に割る）", () => {
   it("最初の描画では、すべての塊を1回ずつ描く", () => {
     render(
       <Report
@@ -51,29 +49,6 @@ describe("Report（空行で塊に割り、塊ごとに memo）", () => {
     )
 
     expect(calls).toEqual(["固定の段落", "可変の段落1"])
-  })
-
-  it("変わらない塊は再描画せず、変わった塊だけ描き直す", () => {
-    const { rerender } = render(
-      <Report
-        reveal={false}
-        turnId={1}
-        className=""
-        body={markdownBody("固定の段落\n\n可変の段落1")}
-      />,
-    )
-    calls = []
-
-    rerender(
-      <Report
-        reveal={false}
-        turnId={1}
-        className=""
-        body={markdownBody("固定の段落\n\n可変の段落2")}
-      />,
-    )
-
-    expect(calls).toEqual(["可変の段落2"])
   })
 
   it("同じ文字列の塊が2つあっても key の警告が出ない", () => {

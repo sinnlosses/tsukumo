@@ -58,7 +58,7 @@ ref コールバック → ラッパー hook。ラッパー hook はどれも `s
 effect の中と、イベントハンドラ・そこで登録した寿命の長いリスナの中
 （`browser/components/ui/layout-resizer/layout-resizer.tsx` の、ドラッグの間だけ生きる `pointermove`）。
 
-**画面を離れるとアンマウントされる部品（`components/app/layout.tsx` の `OVERLAY_SCREEN`）では、一回限りの合図や
+**画面を離れるとアンマウントされる部品（`components/app/screen-registry.tsx` の `LAYOUT_SCREENS.overlay`）では、一回限りの合図や
 「もう見せた」の印を部品の state に持たない。** React の外（モジュールの store）に持つ——
 アンマウントで消える state に印を仕込むと、再訪のたびに初期値へ戻って演出が勝手にやり直しになる。
 
@@ -95,12 +95,6 @@ E2E まで気づけない。読んでよいのは、effect・state の初期化�
 （「外から使うもの → その内部で使うもの」）が守れなくなる**ことがある——巻き上げがあるから
 「使う側より下に置く」が書けるのであって、`const` は宣言より前で使えない。
 
-**例外は `memo` で包むときだけ。** `const <部品名> = memo(<部品名>View)` と書き、中身は
-`function <部品名>View(...)` の関数宣言のまま下に置く（`components/page/conversation/components/main-view/report.tsx` の
-`ReportBlock`）。**`memo(function X() { ... })` の形にしない** — 定義が `const` の右辺に入ると、
-その部品だけ本体が上に来て並び順が逆になる。`memo` 自体をいつ書くかは次の節（「手でメモ化
-しない」）。
-
 この規約は**部品（`ReactElement` を返す関数）とフック**にかかる。JSX を値として持つだけの定数
 （中身が完全に静的な見出し行など）は関数ではないので `const` のまま。
 
@@ -115,11 +109,8 @@ Compiler が最適化を諦める部品（描画中に ref を読み書きする
 `Todo` や `BuildHIR` を名乗るもの）でも落ちるので、書き方を変えて避ける。
 
 残してよいのは、Compiler だけでは足りない理由が具体的にあるときだけで、その理由を
-使う側に1行のコメントで書く。今のところの2つの理由:
+使う側に1行のコメントで書く。今のところの理由は1つ:
 
-- **その部品の描き直し回数を数える単体テストが、Vitest の実行を通る。** Compiler は
-  consumer が `client` の環境にだけ掛かり、Vitest の実行（SSR 相当。
-  `server.transformRequest` を `ssr: true` で呼ぶ）には掛からないので、`memo` を外すとテストの前提が崩れる（`report.tsx` の `ReportBlock`）
 - **oxlint の `react-hooks(exhaustive-deps)` が、依存配列に置いた値の再生成を理由に落ちる。**
   この lint は静的解析で Compiler の自動メモ化を知らないので、`useCallback` を外すと
   lint が落ちる（`chat-view/hooks/use-stick-to-bottom.ts` の `stickToBottom`）

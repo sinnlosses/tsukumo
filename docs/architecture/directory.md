@@ -117,7 +117,7 @@ components/page/<ページ>/
 
 - **部品のディレクトリの外から引いてよいのは `<部品>.tsx` だけ**（例外は `main.tsx` / `app.tsx` /
   `components/app/` とテスト）。ページの部品を画面の外に置くとき（書き終わりの知らせ `DiaryNotice`）は、
-  `components/app/layout.tsx` がその `<部品>.tsx` を直に import する。**`<部品>.tsx` は自分の `components/` と
+  `components/app/screen-registry.tsx` がその `<部品>.tsx` を直に import する。**`<部品>.tsx` は自分の `components/` と
   概念のディレクトリの中を `export … from` で再エクスポートしない**（`hooks/` と `domain/` の型は可）
 - 会話の画面は**1ページ**で、4つの領域のうち、メインビュー・キャラビュー・入力欄（`dispatch/`）は `conversation/components/` の下、サイドバーは `domain/sidebar/` の部品。検査は
   `test/architecture/browser-box.test.ts`（`describe("components/page/ の形", …)`）

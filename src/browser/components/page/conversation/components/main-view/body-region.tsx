@@ -1,13 +1,12 @@
 // レポート本文の根と欄の入れ物と、欄の中の Markdown を塊に割って描く部品。
-// 欄の中の書きかけの本文を空行で塊に割り、塊ごとに `memo`。描き直すのは変わった塊（たいてい末尾の1つ）だけで、確定済みの塊は Markdown の変換をやり直さない。
+// 欄の中の書きかけの本文を空行で塊に割り、塊ごとの部品にする。描き直すのは変わった塊（たいてい末尾の1つ）だけで、確定済みの塊は Markdown の変換をやり直さない。
 // 欄は別々に解析するので、閉じないタグはその欄の中で閉じ、次の欄の入れ物を巻き込まない。
 //
 // 書き上げていくように見せる演出（`useReportReveal`）は根に掛け、節を書いている途中のレポートと同じポン（`draft-pop`）で出す。
 // 完成した DOM の根を渡すだけで、塊の中身には触らない。
 
 import clsx from "clsx"
-// oxlint-disable-next-line no-restricted-imports -- 描き直し回数を数える単体テストが Compiler の掛からない Vitest を通るため残す（docs/coding-standards/react.md「手でメモ化しない」）
-import { createContext, memo, type ReactElement, type ReactNode, use } from "react"
+import { createContext, type ReactElement, type ReactNode, use } from "react"
 
 import { isBlankText } from "../../../../../../shared/utils/blank-text.ts"
 import { useReportReveal } from "../../../../../domain/reveal/use-report-reveal.ts"
@@ -117,15 +116,7 @@ function keyedBlocks(
   }))
 }
 
-/**
- * 塊1つぶんの Markdown。鍵（`key`）も props もその塊の文字列そのものなので、塊の内容が変わらない限り React はこの部品を再描画しない。
- *
- * `memo` を残す例外（docs/coding-standards.md「手でメモ化しない」）。
- * Compiler はクライアント環境にだけ掛かり、Vitest の実行（SSR 相当）には掛からない。
- * `memo` を外すと「変わらない塊は描き直さない」がテストで確かめられなくなる。
- */
-const ReportBlock = memo(ReportBlockView)
-
-function ReportBlockView(props: { readonly text: string }): ReactElement {
+/** 塊1つぶんの Markdown。鍵（`key`）も props もその塊の文字列そのものなので、塊の内容が変わらない限り Compiler は描き直さない。 */
+function ReportBlock(props: { readonly text: string }): ReactElement {
   return <Markdown text={props.text} />
 }

@@ -27,7 +27,7 @@ import { dateKeyOf, parseDateKey, type DateKey } from "../../shared/diary/date-k
 /**
  * 画面の名前とラベルの一覧（唯一の正典）。
  * `Screen` 型・帯のメニューの並び（`SCREEN_NAV_ITEMS`）・hash の `?` より前のパス（{@link pathOf}）は全部ここから導く。
- * 画面を足したら、画面の部品を引く表（`OVERLAY_SCREEN`）にも登録する（忘れると型エラーになる）。
+ * 画面を足したら、画面の部品を引く表（`LAYOUT_SCREENS` の `overlay`）にも登録する（忘れると型エラーになる）。
  */
 const SCREEN_LIST = [
   { screen: "conversation", label: "会話" },
