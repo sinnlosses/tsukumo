@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import type { NumstatOutput } from "../../../../src/server/core/change-count-git.ts"
+import type { NumstatOutput } from "../../../../src/server/repository/core/change-count-git.ts"
 import type { SessionLaunchRequest } from "../../../../src/server/session/core/command-session-port.ts"
 import { applyRestoredEvents } from "../../../../src/server/session/core/event/restored-event.ts"
 import { PROTOCOL_VERSION, type ServerFrame } from "../../../../src/shared/frame.ts"

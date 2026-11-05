@@ -9,14 +9,14 @@ import type { PlanUsageReport } from "../../../shared/usage/plan-usage.ts"
 import type { PreviousUsageReview } from "../../../shared/usage/usage-review.ts"
 import type { ChatArchive } from "../../chat/core/archive/chat-archive-port.ts"
 import type { ChatConsolidationSource } from "../../chat/core/consolidation/chat-consolidation-writer.ts"
-import type { ChangeCountGit } from "../../core/change-count-git.ts"
-import type { CheckRecordSource } from "../../core/check-record-source.ts"
 import type { DiagnosticLog } from "../../diagnostic/core/diagnostic.ts"
 import type {
   ReadReportImage,
   ReportImageShelf,
 } from "../../report/core/image/report-image-shelf.ts"
 import type { ReportUsageLog } from "../../report/core/usage/report-usage.ts"
+import type { ChangeCountGit } from "../../repository/core/change-count-git.ts"
+import type { CheckRecordSource } from "../../repository/core/check-record-source.ts"
 import type { PromptImageShelf } from "../../session-driver/core/prompt-image-shelf.ts"
 import type { SessionDriver } from "../../session-driver/core/session-driver.ts"
 import type { ContextUsageLog } from "../../usage/core/context-usage.ts"

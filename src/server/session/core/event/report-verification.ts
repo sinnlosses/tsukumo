@@ -12,7 +12,7 @@ import type {
 } from "../../../../shared/report/report-verification.ts"
 import type { SessionEvent } from "../../../../shared/session/session-event.ts"
 import { parseJson } from "../../../../shared/utils/parse-json.ts"
-import type { CheckRecordSource } from "../../../core/check-record-source.ts"
+import type { CheckRecordSource } from "../../../repository/core/check-record-source.ts"
 
 export type ReportVerifier = {
   /** 受理されたイベントを1件ずつ見る（復元した再生は渡さない）。 */

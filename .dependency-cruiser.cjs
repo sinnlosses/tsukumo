@@ -2,7 +2,16 @@
 // `scripts/document/feature-edge-table.ts`（`server-feature-edge:` で始まる規則から文書の表を書く）。
 
 const SERVER_FEATURE_IMPORTS = {
-  session: ["session-driver", "chat", "diary", "usage", "diagnostic", "character-pack", "report"],
+  session: [
+    "session-driver",
+    "chat",
+    "diary",
+    "usage",
+    "diagnostic",
+    "character-pack",
+    "report",
+    "repository",
+  ],
   "system-prompt": ["session-driver", "chat", "report", "work-plan", "question"],
   "view-server": ["session"],
   chat: ["character-pack"],

@@ -1,11 +1,6 @@
 // 作業ディレクトリのリポジトリの配線。タスク一覧の見張りと、一覧が届くたびに札を作り直す推薦役を選ぶ。
 
 import { queryStructured } from "../server/adapter/sdk-structured-query.ts"
-import { IDLE_CHANGE_COUNT_GIT } from "../server/core/change-count-git.ts"
-import {
-  type CheckRecordSource,
-  IDLE_CHECK_RECORD_SOURCE,
-} from "../server/core/check-record-source.ts"
 import type { DiagnosticLog } from "../server/diagnostic/core/diagnostic.ts"
 import {
   readRecommendationCache,
@@ -30,6 +25,11 @@ import {
   watchTaskSummary,
   type TaskSummaryOptions,
 } from "../server/repository/adapter/task/task-summary.ts"
+import { IDLE_CHANGE_COUNT_GIT } from "../server/repository/core/change-count-git.ts"
+import {
+  type CheckRecordSource,
+  IDLE_CHECK_RECORD_SOURCE,
+} from "../server/repository/core/check-record-source.ts"
 import type { SessionManagerOptions } from "../server/session/core/session-manager-port.ts"
 import type { SessionEvent } from "../shared/session/session-event.ts"
 import { failureDiagnostic } from "./failure-diagnostic.ts"

@@ -4,7 +4,7 @@ import type {
   CheckRecordSource,
   CheckRecordText,
   WorktreeTree,
-} from "../../../../../src/server/core/check-record-source.ts"
+} from "../../../../../src/server/repository/core/check-record-source.ts"
 import { createReportVerifier } from "../../../../../src/server/session/core/event/report-verification.ts"
 import type { SessionEvent } from "../../../../../src/shared/session/session-event.ts"
 import { reportEvent } from "../../../../fixture/report-event.ts"

@@ -10,7 +10,7 @@ import type {
   CheckRecordSource,
   CheckRecordText,
   WorktreeTree,
-} from "../../core/check-record-source.ts"
+} from "../core/check-record-source.ts"
 import { runGit } from "./git.ts"
 
 const RECORD_FILE_NAME = ".check-record.json"

@@ -5,7 +5,7 @@ import type {
   CommitListOutput,
   GitHead,
   NumstatOutput,
-} from "../../../../../src/server/core/change-count-git.ts"
+} from "../../../../../src/server/repository/core/change-count-git.ts"
 import { createReportChangeCounter } from "../../../../../src/server/session/core/event/report-change-count.ts"
 import type { SessionEvent } from "../../../../../src/shared/session/session-event.ts"
 import { reportEvent } from "../../../../fixture/report-event.ts"

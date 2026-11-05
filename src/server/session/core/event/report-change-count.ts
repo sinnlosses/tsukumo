@@ -15,7 +15,7 @@ import type {
   CommitListOutput,
   GitHead,
   NumstatOutput,
-} from "../../../core/change-count-git.ts"
+} from "../../../repository/core/change-count-git.ts"
 import { foldNameStatus } from "./changed-file-line.ts"
 
 export type ReportChangeCounter = {

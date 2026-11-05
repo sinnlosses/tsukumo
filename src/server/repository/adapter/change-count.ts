@@ -8,7 +8,7 @@ import type {
   GitHead,
   NameStatusOutput,
   NumstatOutput,
-} from "../../core/change-count-git.ts"
+} from "../core/change-count-git.ts"
 import { runGit } from "./git.ts"
 
 export function changeCountGitOf(cwd: string): ChangeCountGit {

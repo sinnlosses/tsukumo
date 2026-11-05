@@ -96,7 +96,7 @@
 
 | 機能（import する側） | 読んでよい機能                                                                                                                                                      |
 | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `session`             | `session-driver` `chat` `diary` `usage` `diagnostic` `character-pack` `report`                                                                                      |
+| `session`             | `session-driver` `chat` `diary` `usage` `diagnostic` `character-pack` `report` `repository`                                                                         |
 | `system-prompt`       | `session-driver` `chat` `report` `work-plan` `question`                                                                                                             |
 | `view-server`         | `session`                                                                                                                                                           |
 | `chat`                | `character-pack`                                                                                                                                                    |

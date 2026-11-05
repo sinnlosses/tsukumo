@@ -144,6 +144,7 @@ flowchart LR
   session --> diagnostic
   session --> character_pack
   session --> report
+  session --> repository
   system_prompt --> session_driver
   system_prompt --> chat
   system_prompt --> report
