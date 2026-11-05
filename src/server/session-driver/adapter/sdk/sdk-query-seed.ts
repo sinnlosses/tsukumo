@@ -10,6 +10,7 @@ import type {
   SyncHookJSONOutput,
 } from "@anthropic-ai/claude-agent-sdk"
 
+import { toolSummaryInput } from "../../../../shared/session-driver/tool-summary-field.ts"
 import {
   type EffortLevel,
   isEffortLevel,
@@ -19,7 +20,6 @@ import {
 import type { SessionEvent } from "../../../../shared/session/session-event.ts"
 import { parseToolUseId } from "../../../../shared/session/tool-use-id.ts"
 import type { LatestWorkPlan } from "../../../../shared/session/work-plan.ts"
-import { toolSummaryInput } from "../../../../shared/utils/tool-summary-field.ts"
 import { bundledFilePath } from "../../../adapter/bundled-path.ts"
 import { tsukumoHomePath } from "../../../adapter/tsukumo-home.ts"
 import type { ToolVerdict } from "../../../core/tool-verdict.ts"

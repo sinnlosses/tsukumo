@@ -33,7 +33,7 @@
 
 1. **import は `utils/` の中と、汎用のライブラリ・実行環境の API だけ**（`shared/` や層の中の他の
    箱への import があるなら `utils/` ではない）
-2. **ファイル名が動詞か、名前の付いた手法**（`string.ts` `format.ts` のような型・種類の名前と `misc.ts` は置けない）
+2. **ファイル名が動詞か、名前の付いた手法か、扱う値の一般名**（`blank-text`・`elapsed-time`・`clock`・`data-url` のように値の種類を指しつつその扱い方だけを持つ名前）。**何でも入る名前**（`string.ts`・`format.ts`・`misc.ts`）は置けない
 3. **別のプロジェクトへ1文字も変えずにコピーして意味が通る**
 
 **`helpers/` と `common/`、ファイル名の `utils.ts` / `helpers.ts` / `common.ts` は作らない**（判定の問いを
@@ -43,5 +43,5 @@
   （「JSONL を1行ずつ読む」）で、読み手が1つの機能だけならその機能の `adapter/lib/`、2つ以上なら共有の
   `server/adapter/lib/`
 - `core/lib/` に入れてよいのは **`node:` を要求しない技術**だけ。`shared/lib/` は**両方の実行環境で動く技術**だけ
-- **`src/browser/utils/` のエッジは `.dependency-cruiser.cjs` が見る**（箱のエッジと歯止め1）。他の層に `utils/` を
-  作るときも、同じ検査を足す。**ライブラリに依存しない小物は、`utils/` を作る前に remeda（`docs/architecture/build.md`）にあるかを見る**
+- **`src/browser/utils/` のエッジは `.dependency-cruiser.cjs` が見る**（箱のエッジと歯止め1）。server と scripts には
+  いま `utils/` が無い。作るときは `.dependency-cruiser.cjs` に `browser-utils-closed` と同じ規則を足してから作る。**ライブラリに依存しない小物は、`utils/` を作る前に remeda（`docs/architecture/build.md`）にあるかを見る**

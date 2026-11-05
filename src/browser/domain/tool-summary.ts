@@ -1,7 +1,7 @@
 // ツール名＋入力を、画面に出してよい1行の要約にする。入力の全文は返さない。
 
+import { toolSummaryField } from "../../shared/session-driver/tool-summary-field.ts"
 import { clipWithEllipsis } from "../../shared/utils/clip-text.ts"
-import { toolSummaryField } from "../../shared/utils/tool-summary-field.ts"
 
 /** ツール入力の要約に出す1行の長さの上限（目安）。 */
 const MAX_TOOL_SUMMARY_LENGTH = 120
