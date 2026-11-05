@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { relativeLuminance } from "../../../src/browser/domain/relative-luminance.ts"
+import { relativeLuminance } from "../../../src/browser/utils/relative-luminance.ts"
 
 describe("relativeLuminance", () => {
   it("黒は 0、白は 1", () => {

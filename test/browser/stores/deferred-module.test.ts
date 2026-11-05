@@ -1,7 +1,7 @@
 import { renderHook, waitFor } from "@testing-library/react"
 import { describe, expect, it, vi } from "vitest"
 
-import { deferredModule } from "../../../src/browser/hooks/deferred-module.ts"
+import { deferredModule } from "../../../src/browser/stores/deferred-module.ts"
 
 type FictionalModule = { readonly name: string }
 

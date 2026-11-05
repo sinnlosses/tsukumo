@@ -12,7 +12,7 @@ import {
   MIN_BACKGROUND_VEIL,
 } from "../../shared/character-pack/character-background.ts"
 import { localPreference } from "../utils/local-preference.ts"
-import { relativeLuminance } from "./relative-luminance.ts"
+import { relativeLuminance } from "../utils/relative-luminance.ts"
 
 export type AppearanceColorKey = "ground" | "surface" | "ink"
 

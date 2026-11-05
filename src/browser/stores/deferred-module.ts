@@ -8,7 +8,7 @@
 
 import { create } from "zustand"
 
-import { useMountEffect } from "./use-mount-effect.ts"
+import { useMountEffect } from "../hooks/use-mount-effect.ts"
 
 type DeferredModuleState<Module> =
   | { readonly kind: "loading" }

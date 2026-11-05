@@ -18,7 +18,7 @@ import {
   type ContextUsageReport,
   UNAVAILABLE_CONTEXT_USAGE,
 } from "../../shared/usage/context-usage.ts"
-import type { Rpc } from "./rpc.ts"
+import type { Rpc } from "../lib/rpc.ts"
 
 export type ContextUsageReportRpc = Rpc["contextUsage"]["report"]
 

@@ -4,7 +4,7 @@
 
 import type { ComponentType, ReactElement } from "react"
 
-import { deferredModule } from "../../hooks/deferred-module.ts"
+import { deferredModule } from "../../stores/deferred-module.ts"
 
 /** `importScreen` は `import()` を1つだけ呼んで、画面の部品を返す関数。 */
 export function deferredScreen(importScreen: () => Promise<ComponentType>): ComponentType {

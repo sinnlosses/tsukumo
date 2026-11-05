@@ -1,6 +1,6 @@
 // レポートの inline code に書かれた色（`#bca0ec` のようなカラーコードと、`ink-quiet` / `--state-memo` のような色のトークン名）を、その色を地にして見せるための判定。
 
-import { relativeLuminance } from "../../../../../../domain/relative-luminance.ts"
+import { relativeLuminance } from "../../../../../../utils/relative-luminance.ts"
 import {
   cachedColorTokenReader,
   type ColorTokenReader,

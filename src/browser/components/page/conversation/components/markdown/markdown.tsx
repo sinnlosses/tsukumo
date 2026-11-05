@@ -11,7 +11,7 @@ import type {
   ReportFileMarkName,
 } from "../../../../../../shared/report/report-notation.ts"
 import type { TIMELINE_MARK_NAMES } from "../../../../../../shared/report/timeline-markdown.ts"
-import { deferredModule } from "../../../../../hooks/deferred-module.ts"
+import { deferredModule } from "../../../../../stores/deferred-module.ts"
 import styles from "./markdown.module.css"
 import type { FenceFigureLanguage } from "./renderer/fence-figure.tsx"
 import { ZoomableSvgFigure } from "./renderer/figure-zoom.tsx"

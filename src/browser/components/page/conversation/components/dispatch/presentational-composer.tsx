@@ -13,9 +13,9 @@ import {
 } from "react"
 
 import { PROMPT_IMAGE_MEDIA_TYPES } from "../../../../../../shared/session-driver/prompt-image.ts"
-import { deferredModule } from "../../../../../hooks/deferred-module.ts"
 import { useExternalSync } from "../../../../../hooks/use-external-sync.ts"
 import { usePhoneWidth } from "../../../../../hooks/use-phone-width.ts"
+import { deferredModule } from "../../../../../stores/deferred-module.ts"
 import { Button } from "../../../../ui/button/button.tsx"
 import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
 import { Text } from "../../../../ui/text/text.tsx"

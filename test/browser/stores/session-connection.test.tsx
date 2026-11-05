@@ -5,7 +5,7 @@
 import { act, cleanup, renderHook } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-import { queryClient } from "../../../src/browser/domain/query-client.ts"
+import { queryClient } from "../../../src/browser/lib/query-client.ts"
 import type { connectSessionSocket } from "../../../src/browser/lib/socket.ts"
 import { rpc } from "../../../src/browser/stores/rpc.ts"
 import { useSession, useSessionConnection } from "../../../src/browser/stores/session.ts"

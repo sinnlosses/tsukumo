@@ -4,7 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query"
 import type { ReactElement } from "react"
 
 import { Root } from "./components/app/root.tsx"
-import { queryClient } from "./domain/query-client.ts"
+import { queryClient } from "./lib/query-client.ts"
 
 export function App(): ReactElement {
   return (

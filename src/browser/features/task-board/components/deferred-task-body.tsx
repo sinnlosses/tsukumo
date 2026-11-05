@@ -7,7 +7,7 @@
 import clsx from "clsx"
 import type { ReactElement } from "react"
 
-import { deferredModule } from "../../../hooks/deferred-module.ts"
+import { deferredModule } from "../../../stores/deferred-module.ts"
 import styles from "./task-body.module.css"
 import type { TaskBodyProps } from "./task-body.tsx"
 
