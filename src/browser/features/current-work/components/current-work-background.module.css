@@ -1,0 +1,20 @@
+/* 背景で動いているもの。見出しと行の形は依頼の手順に揃える。色は `Text` が持つ。 */
+.current-work-background-heading {
+  margin: var(--space-sm) 0 var(--space-xs);
+}
+.current-work-background {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs);
+  margin: 0 0 var(--space-sm);
+  padding: 0;
+  list-style: none;
+}
+.current-work-background-kind {
+  font-family: var(--font-mono);
+}
+/* 回る印は実行中の手順と同じ（`prefers-reduced-motion: reduce` では `theme.css` の全体の規則が止める）。 */
+.current-work-background-mark {
+  display: inline-block;
+  animation: var(--spinner-animation);
+}

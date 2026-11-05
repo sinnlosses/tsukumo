@@ -34,6 +34,8 @@ import {
 } from "../../../../../../domain/turn-elapsed.ts"
 import {
   currentWorkStepGroups,
+  toBackgroundListView,
+  type CurrentWorkBackgroundList,
   type CurrentWorkStepGroup,
 } from "../../../../../../features/current-work/domain/current-work-step.ts"
 import { useNowWhile } from "../../../../../../stores/clock.ts"
@@ -128,6 +130,8 @@ export type WorkStripSteps = {
     | { readonly kind: "open"; readonly landing: StepsLanding }
   readonly onToggle: () => void
   readonly groups: readonly CurrentWorkStepGroup[]
+  /** 実行中の手順と依頼の手順の間に出す「背景で動いているもの」の区画。 */
+  readonly backgroundList: CurrentWorkBackgroundList
 }
 
 /**
@@ -251,6 +255,7 @@ export function useWorkStrip(): WorkStripModel {
     list,
     onToggle: () => toggle(exchange),
     groups: currentWorkStepGroups(turnStepList.steps),
+    backgroundList: toBackgroundListView(backgroundTasks),
   }
   const stripPhases = slotsOf(
     plan,

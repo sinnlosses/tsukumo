@@ -50,7 +50,7 @@ export type CurrentWorkStepGroup = {
   readonly steps: readonly CurrentWorkStep[]
 }
 
-export const BACKGROUND_TASK_KIND_LABEL = {
+const BACKGROUND_TASK_KIND_LABEL = {
   shell: "シェル",
   agent: "サブエージェント",
   workflow: "ワークフロースクリプト",
@@ -110,6 +110,38 @@ export function backgroundSummaryLabel(tasks: readonly BackgroundTask[]): string
   }
   const label = backgroundTaskLabel(newest)
   return tasks.length > 1 ? `${label} ほか${String(tasks.length - 1)}件` : label
+}
+
+type CurrentWorkBackgroundTask = {
+  readonly key: string
+  /** 種類の語（「シェル」「サブエージェント」「ワークフロースクリプト」「その他」）。 */
+  readonly kindLabel: string
+  /** claude が添えた説明。無ければ空（行には種類の語だけが出る）。 */
+  readonly description: string
+}
+
+/** 一覧の「背景で動いているもの」の区画。状態の語に関わらず、動いているものがあれば出す。 */
+export type CurrentWorkBackgroundList =
+  | { readonly kind: "none" }
+  | {
+      readonly kind: "tasks"
+      readonly headingLabel: string
+      readonly tasks: readonly CurrentWorkBackgroundTask[]
+    }
+
+export function toBackgroundListView(tasks: readonly BackgroundTask[]): CurrentWorkBackgroundList {
+  if (tasks.length === 0) {
+    return { kind: "none" }
+  }
+  return {
+    kind: "tasks",
+    headingLabel: `背景で動いているもの（${String(tasks.length)} 件）`,
+    tasks: tasks.map((task) => ({
+      key: task.taskId,
+      kindLabel: BACKGROUND_TASK_KIND_LABEL[task.kind],
+      description: task.description,
+    })),
+  }
 }
 
 /** 画面に出す長さで切り、落とした文字数を添える。 */

@@ -5,6 +5,7 @@
 import clsx from "clsx"
 import type { ReactElement, RefObject } from "react"
 
+import { CurrentWorkBackground } from "../../../../../features/current-work/components/current-work-background.tsx"
 import { CurrentWorkStepGroup } from "../../../../../features/current-work/components/current-work-step-group.tsx"
 import { Button } from "../../../../ui/button/button.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
@@ -69,7 +70,11 @@ export function PresentationalWorkStrip(props: {
       </div>
       {strip.kind === "working" && <ActivityLine activity={strip.activity} />}
       {strip.steps.list.kind === "open" && (
-        <StepsList groups={strip.steps.groups} landing={strip.steps.list.landing} />
+        <StepsList
+          groups={strip.steps.groups}
+          backgroundList={strip.steps.backgroundList}
+          landing={strip.steps.list.landing}
+        />
       )}
     </section>
   )
@@ -101,11 +106,13 @@ function StateChip(props: { readonly result: WorkStripResult }): ReactElement {
 /** 押すと開く依頼の手順の一覧。失敗した手順・段を指して開いたときは、その行・区切りへ連れてくる。 */
 function StepsList(props: {
   readonly groups: WorkStripSteps["groups"]
+  readonly backgroundList: WorkStripSteps["backgroundList"]
   readonly landing: StepsLanding
 }): ReactElement {
   const listRef = useStepsLanding(props.landing)
   return (
     <div ref={listRef} role="region" aria-label="依頼の手順" className={styles["work-strip-steps"]}>
+      <CurrentWorkBackground list={props.backgroundList} />
       {props.groups.map((group) => (
         <CurrentWorkStepGroup key={group.key} group={group} />
       ))}

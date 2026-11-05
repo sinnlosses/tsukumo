@@ -9,10 +9,10 @@ import { Button } from "../../../components/ui/button/button.tsx"
 import { Text } from "../../../components/ui/text/text.tsx"
 import type {
   CurrentWork,
-  CurrentWorkBackgroundTask,
   CurrentWorkPlanPhase,
   CurrentWorkPlanSpan,
 } from "../hooks/use-current-work.ts"
+import { CurrentWorkBackground } from "./current-work-background.tsx"
 import styles from "./current-work-list.module.css"
 import { CurrentWorkStepGroup } from "./current-work-step-group.tsx"
 
@@ -87,24 +87,7 @@ export function CurrentWorkList(props: CurrentWorkListProps): ReactElement {
           </pre>
         </div>
       )}
-      {work.backgroundList.kind === "tasks" && (
-        <>
-          <Text
-            element="p"
-            size="inherit"
-            tone="ink-quiet"
-            weight="inherit"
-            className={styles["current-work-background-heading"]}
-          >
-            {work.backgroundList.headingLabel}
-          </Text>
-          <ul className={styles["current-work-background"]}>
-            {work.backgroundList.tasks.map((task) => (
-              <CurrentWorkBackgroundRow key={task.key} task={task} />
-            ))}
-          </ul>
-        </>
-      )}
+      <CurrentWorkBackground list={work.backgroundList} />
       {work.stepList.kind === "steps" ? (
         <>
           <Text
@@ -182,33 +165,6 @@ function CurrentWorkPlanPhase(props: { readonly phase: CurrentWorkPlanPhase }): 
     >
       <b>{phase.mark}</b>
       {phase.name}
-    </li>
-  )
-}
-
-/**
- * バックグラウンドタスク1件。印は実行中の手順と同じ回る「…」（動いているものの印を2種類にしない）。
- * 種類の語は手順のツール名と同じ等幅の列に置く。
- */
-function CurrentWorkBackgroundRow(props: {
-  readonly task: CurrentWorkBackgroundTask
-}): ReactElement {
-  const { task } = props
-  return (
-    <li>
-      <span className={styles["current-work-background-mark"]} aria-hidden="true">
-        …
-      </span>{" "}
-      <Text
-        element="span"
-        size="inherit"
-        tone="inherit"
-        weight="inherit"
-        className={styles["current-work-background-kind"]}
-      >
-        {task.kindLabel}
-      </Text>
-      {task.description !== "" && ` ${task.description}`}
     </li>
   )
 }

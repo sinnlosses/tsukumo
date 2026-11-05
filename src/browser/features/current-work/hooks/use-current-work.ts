@@ -30,11 +30,12 @@ import { useSession, useTurnRunning } from "../../../stores/session.ts"
 import { useTurnSelection } from "../../../stores/turn-selection.ts"
 import { monthDayLabel } from "../../../utils/month-day-label.ts"
 import {
-  BACKGROUND_TASK_KIND_LABEL,
   backgroundSummaryLabel,
   currentWorkStepGroups,
   currentWorkStepLabel,
+  toBackgroundListView,
   truncateForDisplay,
+  type CurrentWorkBackgroundList,
   type CurrentWorkStepGroup,
 } from "../domain/current-work-step.ts"
 import {
@@ -127,23 +128,6 @@ type CurrentWorkRunningStep =
 type CurrentWorkSummary =
   | { readonly kind: "none" }
   | { readonly kind: "text"; readonly label: string }
-
-export type CurrentWorkBackgroundTask = {
-  readonly key: string
-  /** 種類の語（「シェル」「サブエージェント」「ワークフロースクリプト」「その他」）。 */
-  readonly kindLabel: string
-  /** claude が添えた説明。無ければ空（行には種類の語だけが出る）。 */
-  readonly description: string
-}
-
-/** 一覧の「背景で動いているもの」の区画。状態の語に関わらず、動いているものがあれば出す。 */
-type CurrentWorkBackgroundList =
-  | { readonly kind: "none" }
-  | {
-      readonly kind: "tasks"
-      readonly headingLabel: string
-      readonly tasks: readonly CurrentWorkBackgroundTask[]
-    }
 
 /** 「手順をすべて見る」の口。{@link MAX_COLLAPSED_STEPS} 件以下なら出さない（`fixed`）。 */
 type CurrentWorkToggleAll =
@@ -400,21 +384,6 @@ function toSummaryView(
   return runningStep.kind === "shown"
     ? { kind: "text", label: runningStep.summaryLabel }
     : { kind: "none" }
-}
-
-function toBackgroundListView(tasks: readonly BackgroundTask[]): CurrentWorkBackgroundList {
-  if (tasks.length === 0) {
-    return { kind: "none" }
-  }
-  return {
-    kind: "tasks",
-    headingLabel: `背景で動いているもの（${String(tasks.length)} 件）`,
-    tasks: tasks.map((task) => ({
-      key: task.taskId,
-      kindLabel: BACKGROUND_TASK_KIND_LABEL[task.kind],
-      description: task.description,
-    })),
-  }
 }
 
 function toPendingHintView(

@@ -250,6 +250,40 @@ describe("useWorkStrip（時刻に依るもの）", () => {
   })
 })
 
+describe("useWorkStrip（背景で動いているものの区画）", () => {
+  const backgroundEvent: SessionEvent = {
+    kind: "background-tasks-changed",
+    tasks: [{ taskId: "fictional-task", kind: "shell", description: "架空の常駐" }],
+  }
+
+  it("背景で動くものが1件以上あれば、ターンが走っていても区画を出す", () => {
+    const state = foldTimed([
+      [workRequest, START],
+      [plan, START + 1_000],
+      [backgroundEvent, START + 2_000],
+    ])
+
+    const strip = stripAt(state, START + 5_000)
+
+    expect(strip.kind === "working" && strip.steps.backgroundList).toEqual({
+      kind: "tasks",
+      headingLabel: "背景で動いているもの（1 件）",
+      tasks: [{ key: "fictional-task", kindLabel: "シェル", description: "架空の常駐" }],
+    })
+  })
+
+  it("背景で動くものが0件なら区画を出さない", () => {
+    const state = foldTimed([
+      [workRequest, START],
+      [plan, START + 1_000],
+    ])
+
+    const strip = stripAt(state, START + 5_000)
+
+    expect(strip.kind === "working" && strip.steps.backgroundList).toEqual({ kind: "none" })
+  })
+})
+
 describe("useWorkStrip（並列のフェーズ）", () => {
   const groupedPlan = (current: number, finishedInGroup: readonly string[]): SessionEvent => ({
     kind: "work-plan",
