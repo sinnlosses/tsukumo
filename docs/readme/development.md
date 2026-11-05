@@ -62,6 +62,7 @@
 - [`docs/architecture/chat-mode.md`](../architecture/chat-mode.md) — 雑談モード（遡れる幅、記憶の圧縮と忘却、残す旗、会話のアーカイブ、人格への書き戻し）
 - [`docs/coding-standards.md`](../coding-standards.md) — コーディング規約（**会話内容の扱い**を含む）
 - [`docs/glossary.md`](../glossary.md) — 用語集（日本語表記とコード上の識別子の対応）
+- [`docs/guide.md`](../guide.md) — 人向けの図解（全体の構成図ほか。正典ではない）
 - [`docs/workflow.md`](../workflow.md) — このリポジトリでの進捗管理の上乗せ
 - [`docs/README.md`](../README.md) — docs の索引（知りたいことから読む文書を引く表。`AGENTS.md` からの入口）
 - [`AGENTS.md`](../../AGENTS.md) — Claude Code などのエージェント向けのプロジェクト案内

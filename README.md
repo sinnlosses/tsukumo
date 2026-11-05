@@ -28,12 +28,14 @@
 **「キャラクターと一緒に楽しく仕事をする」ための手段**であって目的ではありません。
 やること・**やらないこと**の正典は [`docs/requirements.md`](./docs/requirements.md) です。
 
-本文は `docs/readme/` の4つの子のファイルにも分けてあります。節の見出しはここに残し、中身は移し先を引きます。
+本文は `docs/readme/` の4つの子にも分けてあります。
 
 - `docs/readme/mechanism.md`: 仕組み、データの流れ、画面レイアウト
 - `docs/readme/troubleshooting.md`: つまずいたとき
 - `docs/readme/configuration.md`: 設定、環境変数、認証、キャラクターの差し替え、会話内容の扱い
 - `docs/readme/development.md`: プロジェクト構成、ドキュメントの一覧
+
+全体像の図は人向けの入口 `docs/guide.md` から。
 
 ## 目次
 

@@ -38,6 +38,7 @@ const PARENT_PATHS = [
   "docs/architecture/workflow-contract.md",
   "docs/coding-standards.md",
   "docs/glossary.md",
+  "docs/guide.md",
   "docs/requirements.md",
   "docs/workflow.md",
 ] as const satisfies readonly string[]
