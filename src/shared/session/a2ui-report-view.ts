@@ -13,6 +13,7 @@ import type { ReportBlock } from "../report/report-block.ts"
 import type { DrawnReport, DrawnSection } from "../report/report-drawn-outline.ts"
 import type { ReportImageSource } from "../report/report-image-markdown.ts"
 import type { LeafValue, ReportLeafLayout } from "../report/report-leaf-value.ts"
+import type { WrittenReportView } from "../report/report-static-component-list.ts"
 import type {
   MainViewA2uiReport,
   MainViewSurfaceEntry,
@@ -28,6 +29,7 @@ import type {
  */
 export function a2uiReportView(
   components: readonly A2uiReportComponent[],
+  written: WrittenReportView,
   drawn: DrawnReport,
   layout: ReportLeafLayout,
   imageSource: ReportImageSource,
@@ -55,6 +57,7 @@ export function a2uiReportView(
   return {
     kind: "surface",
     components,
+    written,
     sections: Object.fromEntries(
       regions.flatMap(({ section, values, regionId }) =>
         section.role === "body" && sectionDrawsAnything(section.section, values)

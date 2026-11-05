@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render } from "@testing-library/react"
+import { act, cleanup, fireEvent, render } from "@testing-library/react"
 import type { ReactElement } from "react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
@@ -28,10 +28,10 @@ function Probe(props: {
   readonly reveal: boolean
   readonly sections: readonly string[]
 }): ReactElement {
-  const rootRef = useReportReveal(props.reveal, TURN_ID, () => {}, POP_CLASS_NAME)
+  const { rootRef, revealing } = useReportReveal(props.reveal, TURN_ID, () => {}, POP_CLASS_NAME)
 
   return (
-    <div data-testid="root" ref={rootRef}>
+    <div data-testid="root" ref={rootRef} data-probe-revealing={String(revealing)}>
       <div data-report-region="head">
         <p className="conclusion">架空の結論</p>
       </div>
@@ -190,6 +190,49 @@ describe("useReportReveal（塊を順にポンで出す配線）", () => {
     unmount()
 
     expect(hidden.style.opacity).toBe("")
+  })
+})
+
+describe("useReportReveal（演出中かの状態）", () => {
+  const revealing = (): string | null => root().getAttribute("data-probe-revealing")
+
+  it("演出の相手でなければ最初から偽", () => {
+    renderProbe(false)
+
+    expect(revealing()).toBe("false")
+  })
+
+  it("出しているあいだは真で、出し切ったら偽", () => {
+    renderProbe(true)
+    expect(revealing()).toBe("true")
+
+    act(() => {
+      vi.advanceTimersByTime(STANDARD_INTERVAL_MS * 2)
+    })
+    expect(revealing()).toBe("false")
+  })
+
+  it("スキップしたら偽", () => {
+    renderProbe(true)
+
+    act(() => {
+      fireEvent.keyDown(window)
+    })
+
+    expect(revealing()).toBe("false")
+  })
+
+  it("速さが「切る」なら演出せず偽", () => {
+    saveRevealSpeed("off")
+    renderProbe(true)
+
+    expect(revealing()).toBe("false")
+  })
+
+  it("短いレポートは演出せず偽", () => {
+    render(<Probe reveal={true} sections={["架空の短い本文。"]} />)
+
+    expect(revealing()).toBe("false")
   })
 })
 

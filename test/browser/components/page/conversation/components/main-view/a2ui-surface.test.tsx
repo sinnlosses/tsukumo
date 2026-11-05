@@ -395,8 +395,8 @@ describe("部品の一覧のある本文（A2UI の面）", () => {
   })
 
   it("部品の一覧が伸びた本文で描き直すと、同じ面のまま増えた葉が出る", () => {
-    const early = mainViewDraftOf("toolu_drafted", STAGED_PARTS.slice(0, 3))?.regions
-    const grown = mainViewDraftOf("toolu_drafted", STAGED_PARTS)?.regions
+    const early = mainViewDraftOf("toolu_drafted", STAGED_PARTS.slice(0, 3), [])?.regions
+    const grown = mainViewDraftOf("toolu_drafted", STAGED_PARTS, [])?.regions
     if (early === undefined || grown === undefined) {
       throw new Error("根のある一覧から草稿が作れなかった")
     }

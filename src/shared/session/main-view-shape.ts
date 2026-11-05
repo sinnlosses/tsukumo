@@ -10,6 +10,7 @@ import type { ReportImageSource } from "../report/report-image-markdown.ts"
 import type { ReportImageSize } from "../report/report-image.ts"
 import type { LeafValue } from "../report/report-leaf-value.ts"
 import type { PhaseTimesView } from "../report/report-phase-time.ts"
+import type { WrittenReportView } from "../report/report-static-component-list.ts"
 import type { ReportTask } from "../report/report-task.ts"
 import type { ReportVerification } from "../report/report-verification.ts"
 import type { RecordedPromptImage } from "../session-driver/prompt-image.ts"
@@ -123,6 +124,7 @@ export type MainViewA2uiReport =
   | {
       readonly kind: "surface"
       readonly components: readonly A2uiReportComponent[]
+      readonly written: WrittenReportView
       readonly sections: Readonly<
         Record<string, { readonly regionId: number; readonly heading: string }>
       >

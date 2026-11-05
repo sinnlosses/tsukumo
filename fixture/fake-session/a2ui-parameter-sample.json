@@ -1,0 +1,139 @@
+{
+  "name": "a2ui-parameter-sample",
+  "steps": [
+    {
+      "afterMs": 0,
+      "event": {
+        "kind": "request",
+        "text": "検証コマンドの worker 数をいくつにするか、振って確かめたい（架空の依頼）",
+        "images": []
+      }
+    },
+    {
+      "afterMs": 1200,
+      "event": { "kind": "turn-finished", "outcome": { "kind": "completed" } }
+    },
+    {
+      "afterMs": 1500,
+      "event": {
+        "kind": "report",
+        "toolUseId": "fake-a2ui-parameter-1",
+        "components": [
+          {
+            "id": "root",
+            "component": "Report",
+            "conclusion": ["架空の結論: 単体テストだけなら worker 6 本がいちばん速い。"],
+            "children": ["s0", "s1", "s2"],
+            "defs": {
+              "ws": "range(1, 8)",
+              "wLabels": "text(ws, \"本\")",
+              "base": "240 + (e2e ? 120 : 0)",
+              "times": "round(base / ws + 6 * ws, 1)",
+              "cur": "base / w + 6 * w",
+              "best": "argmin(times)",
+              "bestW": "at(ws, best)",
+              "bestT": "minOf(times)",
+              "mode": "e2e ? \"E2E を含めると\" : \"単体テストだけなら\""
+            },
+            "closing": { "text": "つまみを振ってみてね！", "expression": "proud" }
+          },
+          {
+            "id": "s0",
+            "component": "Section",
+            "heading": "架空の前提",
+            "children": ["p0"]
+          },
+          {
+            "id": "p0",
+            "component": "Paragraph",
+            "text": "架空の検証コマンドは、単体テストを直列に流すと 240 秒かかり、E2E を足すとさらに 120 秒延びる。worker を増やすとテストは分担されて縮むが、worker を 1 本立ち上げるごとに 6 秒の準備が掛かる。どこで釣り合うかを、worker 数と E2E の有無を振って見比べる。"
+          },
+          {
+            "id": "s1",
+            "component": "Section",
+            "heading": "架空の worker 数の試算",
+            "children": ["p1", "sw", "sc", "st", "ch"]
+          },
+          {
+            "id": "p1",
+            "component": "Paragraph",
+            "text": "所要は 直列の秒数 / w + 6 × w で表せる。worker を増やすと分担で縮むが、1本ごとの立ち上げ 6 秒が足される。w と E2E の有無を動かして確かめられる。"
+          },
+          {
+            "id": "sw",
+            "component": "ParameterSlider",
+            "name": "w",
+            "label": "worker 数",
+            "min": 1,
+            "max": 8,
+            "step": 1,
+            "initial": 4
+          },
+          {
+            "id": "sc",
+            "component": "ParameterCheckBox",
+            "name": "e2e",
+            "label": "E2E を含める（直列に 120 秒を足す）",
+            "initial": false
+          },
+          {
+            "id": "st",
+            "component": "Stats",
+            "items": [
+              {
+                "label": "いまの所要（秒）",
+                "value": { "call": "expr", "args": { "source": "round(cur, 1)" } },
+                "before": { "call": "expr", "args": { "source": "at(times, 0)" } },
+                "better": "down"
+              },
+              {
+                "label": "直列の所要（秒）",
+                "value": { "call": "format", "args": { "template": "${base}" } }
+              },
+              {
+                "label": "いちばん速い w",
+                "value": { "call": "format", "args": { "template": "${bestW} 本" } }
+              }
+            ]
+          },
+          {
+            "id": "ch",
+            "component": "Chart",
+            "chartKind": "bar",
+            "title": "w ごとの所要（秒）",
+            "labels": { "call": "expr", "args": { "source": "wLabels" } },
+            "series": [
+              { "name": "所要（秒）", "values": { "call": "expr", "args": { "source": "times" } } }
+            ],
+            "emphasis": { "call": "expr", "args": { "source": "[at(wLabels, best)]" } }
+          },
+          {
+            "id": "s2",
+            "component": "Section",
+            "heading": "架空の結論",
+            "children": ["p2"]
+          },
+          {
+            "id": "p2",
+            "component": "Paragraph",
+            "text": {
+              "call": "format",
+              "args": {
+                "template": "${mode}、1〜8 本のうち w = ${bestW} が最速で ${bestT} 秒。w = 1 の ${at(times, 0)} 秒より ${at(times, 0) - bestT} 秒縮む。いまの w = ${w} は最速より ${cur - bestT} 秒遅い。"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "afterMs": 1500,
+      "event": {
+        "kind": "tool-finished",
+        "toolUseId": "fake-a2ui-parameter-1",
+        "content": "ok",
+        "isError": false
+      }
+    }
+  ]
+}

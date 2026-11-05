@@ -9,10 +9,10 @@ import { a2uiParts, STAGED_PARTS } from "../../../fixture/a2ui-component.ts"
 import { reportEvent } from "../../../fixture/report-event.ts"
 
 const drawnIds = (components: readonly A2uiReportComponent[]) =>
-  mainViewDraftOf("toolu_draft", components)?.components.map((part) => part.id)
+  mainViewDraftOf("toolu_draft", components, [])?.components.map((part) => part.id)
 
 const markdownLeavesOf = (components: readonly A2uiReportComponent[]) => {
-  const a2ui = mainViewDraftOf("toolu_draft", components)?.regions.a2ui
+  const a2ui = mainViewDraftOf("toolu_draft", components, [])?.regions.a2ui
   return a2ui?.kind === "surface" ? a2ui.markdownLeaves : {}
 }
 
@@ -43,7 +43,7 @@ describe("mainViewDraftOf", () => {
   })
 
   it("根がまだ届いていない一覧は、子が届いていても草稿にしない", () => {
-    expect(mainViewDraftOf("toolu_draft", STAGED_PARTS.slice(1))).toBeUndefined()
+    expect(mainViewDraftOf("toolu_draft", STAGED_PARTS.slice(1), [])).toBeUndefined()
   })
 
   it("根に繋がらない部品と、葉がまだ1つも届いていない節は描かない", () => {
@@ -82,7 +82,7 @@ describe("mainViewDraftOf", () => {
       },
       { id: "m1", component: "Note", tone: "memo", text: "架空の覚え書き。" },
     )
-    const a2ui = mainViewDraftOf("toolu_draft", parts)?.regions.a2ui
+    const a2ui = mainViewDraftOf("toolu_draft", parts, [])?.regions.a2ui
     if (a2ui?.kind !== "surface") throw new Error("面の値が無い")
 
     expect(a2ui.leafValues.t1?.captionNumber).toEqual({ kind: "table", ordinal: 1 })
@@ -91,7 +91,7 @@ describe("mainViewDraftOf", () => {
   })
 
   it("草稿の画像の取り出し元は none（置き場に置いていない本文）", () => {
-    const a2ui = mainViewDraftOf("toolu_draft", STAGED_PARTS)?.regions.a2ui
+    const a2ui = mainViewDraftOf("toolu_draft", STAGED_PARTS, [])?.regions.a2ui
     if (a2ui?.kind !== "surface") throw new Error("面の値が無い")
 
     expect(a2ui.imageSource).toEqual({ kind: "none" })
@@ -133,7 +133,7 @@ describe("mainViewDraftOf", () => {
       ),
     ).find((candidate) => candidate.kind === "report")
     const recorded = entry?.kind === "report" ? entry.regions.a2ui : undefined
-    const drafted = mainViewDraftOf("toolu_draft", parts)?.regions.a2ui
+    const drafted = mainViewDraftOf("toolu_draft", parts, [])?.regions.a2ui
     if (recorded?.kind !== "surface" || drafted?.kind !== "surface") {
       throw new Error("面の値が無い")
     }
@@ -147,7 +147,7 @@ describe("mainViewDraftOf", () => {
   })
 
   it("節の見出しが、面で描く値に載る", () => {
-    const draft = mainViewDraftOf("toolu_draft", STAGED_PARTS)
+    const draft = mainViewDraftOf("toolu_draft", STAGED_PARTS, [])
 
     expect(draft?.regions.sections.map((section) => section.heading)).toEqual([
       "架空の節一",

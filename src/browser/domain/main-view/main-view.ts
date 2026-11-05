@@ -17,6 +17,7 @@ import {
   draftComponentsOf,
   type ReportDrafting,
   type TurnBodies,
+  writtenDraftComponentsOf,
 } from "../../../shared/session/turn-progress.ts"
 import { mainViewDraftOf } from "./a2ui-draft-view.ts"
 import { finalReportBody, reportDrawsAnything } from "./main-view-report-body.ts"
@@ -91,7 +92,11 @@ export function withReportDrafting(
   ) {
     return turns
   }
-  const draft = mainViewDraftOf(drafting.toolUseId, draftComponentsOf(drafting))
+  const draft = mainViewDraftOf(
+    drafting.toolUseId,
+    draftComponentsOf(drafting),
+    writtenDraftComponentsOf(drafting),
+  )
   return draft === undefined
     ? turns
     : [...turns.slice(0, -1), { ...latest, drafts: [...latest.drafts, draft] }]
@@ -177,7 +182,12 @@ function heldReportDrafts(
   ) {
     return []
   }
-  const draft = mainViewDraftOf(held.origin.toolUseId, held.body.report.a2ui.components)
+  const { components, written } = held.body.report.a2ui
+  const draft = mainViewDraftOf(
+    held.origin.toolUseId,
+    components,
+    written.kind === "none" ? [] : written.components,
+  )
   return draft === undefined ? [] : [draft]
 }
 

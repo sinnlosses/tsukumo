@@ -3,12 +3,12 @@
 
 import { isPlainObject } from "remeda"
 
-/** 操作の状態のキー。`ChoicePicker` が結ぶのは `filter` だけ。 */
-type TableViewKey = "sort" | "filter"
+/** 操作の状態のキー。表は `sort`・`filter`（`ChoicePicker` が結ぶのは `filter` だけ）、つまみは `value`。 */
+type PartViewKey = "sort" | "filter" | "value"
 
-/** 表 `tableId` の操作の状態を置くデータモデルの path（`/view/<TableのID>/<キー>`）。 */
-export function tableViewPath(tableId: string, key: TableViewKey): string {
-  return `/view/${tableId}/${key}`
+/** 部品 `partId` の操作の状態を置くデータモデルの path（`/view/<部品のID>/<キー>`）。 */
+export function partViewPath(partId: string, key: PartViewKey): string {
+  return `/view/${partId}/${key}`
 }
 
 const FILTER_PATH = /^\/view\/([^/]+)\/filter$/

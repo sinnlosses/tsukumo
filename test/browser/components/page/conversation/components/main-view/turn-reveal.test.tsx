@@ -224,7 +224,7 @@ describe("Turn（書き上げる演出を掛ける相手）", () => {
   })
 
   it("草稿として描いていた report の確定版には掛けず、草稿そのものにも掛けない", () => {
-    const draft = mainViewDraftOf("toolu_drafted", STAGED_PARTS)
+    const draft = mainViewDraftOf("toolu_drafted", STAGED_PARTS, [])
     if (draft === undefined) {
       throw new Error("根のある一覧から草稿が作れなかった")
     }
@@ -254,7 +254,7 @@ describe("Turn（書き上げる演出を掛ける相手）", () => {
 
   // ターンが閉じると、働くあいだの中身からレポートの中身へ替わり、やり取りの部品が作り直される（入れ替えたばかりの印つき）。
   it("草稿を描いた部品が作り直されたあとも、入れ替えたばかりの確定版に掛けない", () => {
-    const draft = mainViewDraftOf("toolu_drafted", STAGED_PARTS)
+    const draft = mainViewDraftOf("toolu_drafted", STAGED_PARTS, [])
     if (draft === undefined) {
       throw new Error("根のある一覧から草稿が作れなかった")
     }

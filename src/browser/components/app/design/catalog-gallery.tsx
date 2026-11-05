@@ -37,7 +37,7 @@ function CatalogPart(props: {
   readonly name: string
   readonly parts: readonly A2uiReportComponent[]
 }): ReactElement {
-  const draft = mainViewDraftOf(`gallery-${props.name}`, props.parts)
+  const draft = mainViewDraftOf(`gallery-${props.name}`, props.parts, [])
   return (
     <div data-catalog-part={props.name} className={styles["design-catalog-part"]}>
       <Surface

@@ -33,7 +33,7 @@ afterEach(() => {
 })
 
 describe("Turn（report の草稿）", () => {
-  const draft = mainViewDraftOf("toolu_drafted", STAGED_PARTS)
+  const draft = mainViewDraftOf("toolu_drafted", STAGED_PARTS, [])
   if (draft === undefined) {
     throw new Error("根のある一覧から草稿が作れなかった")
   }

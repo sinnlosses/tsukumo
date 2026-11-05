@@ -4,12 +4,12 @@ import {
   tableCellTexts,
   tableIdOfFilterPath,
   tableRowFilterTexts,
-  tableViewPath,
+  partViewPath,
 } from "../../../src/shared/report/table-view.ts"
 
 describe("表の操作の状態の path", () => {
   it("組んだ filter の path から表の ID を読み戻せる", () => {
-    expect(tableIdOfFilterPath(tableViewPath("t1", "filter"))).toBe("t1")
+    expect(tableIdOfFilterPath(partViewPath("t1", "filter"))).toBe("t1")
   })
 
   it.each(["/view/t1/sort", "/view/t1/filter/x", "/other/t1/filter", "/view//filter", 3])(

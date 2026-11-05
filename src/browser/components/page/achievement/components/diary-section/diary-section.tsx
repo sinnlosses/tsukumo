@@ -165,7 +165,7 @@ function WrittenBubble(props: {
   readonly onRevealed: () => void
   readonly revisionId: number
 }): ReactElement {
-  const rootRef = useReportReveal(
+  const { rootRef } = useReportReveal(
     props.reveal,
     props.revisionId,
     props.onRevealed,

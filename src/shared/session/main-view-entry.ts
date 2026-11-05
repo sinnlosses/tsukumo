@@ -5,7 +5,10 @@ import { changedFilesView } from "../report/changed-file-section.ts"
 import { sectionDrawsAnything } from "../report/drawn-entry-markdown.ts"
 import { reportChecksView } from "../report/report-check-view.ts"
 import { phaseTimesView } from "../report/report-phase-time.ts"
-import { staticReportComponents } from "../report/report-static-component-list.ts"
+import {
+  staticReportComponents,
+  writtenReportView,
+} from "../report/report-static-component-list.ts"
 import { NO_REPORT_VERIFICATION } from "../report/report-verification.ts"
 import { isBlankText } from "../utils/blank-text.ts"
 import { a2uiReportView } from "./a2ui-report-view.ts"
@@ -175,6 +178,7 @@ function reportRegionsOf(
     }),
     a2ui: a2uiReportView(
       staticReportComponents(report.components).components,
+      writtenReportView(report.components, "operable"),
       drawn,
       layout,
       imageSource,

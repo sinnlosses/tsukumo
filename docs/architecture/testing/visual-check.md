@@ -83,6 +83,7 @@
 - E2E の文脈（`test/e2e/scenario-open.ts` の `reducedMotion: "reduce"`）では演出が走らない。実ブラウザで比べるときはこの場面を使う。
 - `[data-revealing]` が付かず `--reveal-at` が15秒待って失敗するときの原因は、草稿であることが多い。ターンが開いているあいだに届いた `report` は草稿として描かれ、そのツール呼び出しが記憶されて、確定版には演出が掛からない（`report`・`tool-finished`・`turn-finished` を同じ時刻に置いても同じ）。`prefers-reduced-motion` や偽の時計が原因ではない（この道具のブラウザは動きを減らす設定を持たない）。
 - 疑似セッションで始まらないときは、`turn-finished` を `report` より先に置く（ターンが閉じたあとに届く `report` は草稿にならない）。
+- 触れるレポートのつまみ（`ParameterSlider`・`ParameterCheckBox`）は場面 `a2ui-parameter-sample` で見る。`--reveal-at` で撮るとつまみが `disabled` の画、`--wait-for '[data-report-body]'` のあと `--click 'input[type=checkbox]' --click 'input[type=range]' --press ArrowLeft` で振ると数・文・図と図の強調が描き替わった画になる。
 
 **疑似セッションが返さない手続きの応答の状態（プラン使用量の「該当しない」・取れない）は
 `capture-view.ts --stub-rpc '<手続き>[@<範囲>]=<JSON>'`で撮る。** 手続きは契約の名前をドットでつないだもの

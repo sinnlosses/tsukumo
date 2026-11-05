@@ -50,7 +50,7 @@ function turnOf(
 }
 
 function draftOf(): MainViewDraft {
-  const draft = mainViewDraftOf("toolu_draft", STAGED_PARTS)
+  const draft = mainViewDraftOf("toolu_draft", STAGED_PARTS, [])
   if (draft === undefined) {
     throw new Error("根のある一覧から草稿が作れなかった")
   }

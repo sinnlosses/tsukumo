@@ -36,6 +36,7 @@ import { loadReportCatalogApis } from "./domain/a2ui-catalog-load.ts"
 import { filterBadges, hasBoundChoicePicker } from "./domain/a2ui-table-view.ts"
 import { isPlainHeadingText } from "./domain/plain-heading.ts"
 import { NoteBody } from "./note-leaf.tsx"
+import { liveLeafElement, useReevaluatedLeaves } from "./parameter-knob.tsx"
 import { FavorRegion, HeadRegion } from "./report-head-region.tsx"
 
 type SurfaceView = Extract<MainViewA2uiReport, { readonly kind: "surface" }>
@@ -56,6 +57,8 @@ export function A2uiReport(props: A2uiReportProps): ReactElement {
   const [surface] = useState(() => reportSurfaceOf(props.view.components))
   const parts = a2uiPartsById(props.view.components)
   const { components } = props.view
+  const dataModel = surface.kind === "surface" ? surface.surface.dataModel : undefined
+  const leaves = useReevaluatedLeaves(dataModel, props.view.written)
   useExternalSync(() => {
     if (surface.kind === "surface") {
       addMissingComponents(surface, components)
@@ -65,7 +68,7 @@ export function A2uiReport(props: A2uiReportProps): ReactElement {
     return <FailedReport {...props} error={surface.error} />
   }
   return (
-    <ReportContext value={{ ...props, parts, dataModel: surface.surface.dataModel }}>
+    <ReportContext value={{ ...props, parts, dataModel: surface.surface.dataModel, leaves }}>
       <A2uiSurface surface={surface.surface} />
     </ReportContext>
   )
@@ -94,6 +97,7 @@ const SURFACE_ID = "report"
 type ReportContextValue = A2uiReportProps & {
   readonly parts: ReadonlyMap<string, A2uiReportComponent>
   readonly dataModel: SurfaceModel<ReactComponentImplementation>["dataModel"]
+  readonly leaves: ReturnType<typeof useReevaluatedLeaves>
 }
 
 const ReportContext = createContext<ReportContextValue | undefined>(undefined)
@@ -303,6 +307,10 @@ function PartBody(props: { readonly id: string }): ReactElement {
 function LayoutPart(props: { readonly id: string }): ReactElement {
   const report = useReport()
   const part = report.parts.get(props.id)
+  const live = liveLeafElement(report, props.id)
+  if (live !== undefined) {
+    return live
+  }
   switch (part?.component) {
     case "Row":
       return (
@@ -354,7 +362,7 @@ function LayoutPart(props: { readonly id: string }): ReactElement {
         <></>
       ) : (
         <DirectLeaf
-          part={part}
+          part={report.leaves[part.id]?.component ?? part}
           value={report.view.leafValues[part.id]}
           imageSource={report.view.imageSource}
           view={view}

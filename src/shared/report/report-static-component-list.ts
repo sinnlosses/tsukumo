@@ -1,6 +1,7 @@
 // 書き手が書いた部品の一覧（式・つまみ・`defs` を持つ）を、つまみを初期値に置いて評価した静的な一覧にする。
 // 式はリテラルに、つまみは「label: 初期値」の `Paragraph` に置き換わる。
 // 評価できない部品は静的な一覧に含めず、`id` を返す。
+// 会話の画面が振った値で評価し直すときは、誤りの値を落とさず「—」に倒す。
 
 import { omit } from "remeda"
 
@@ -11,7 +12,14 @@ import {
   type ExprParams,
   type ExprValue,
 } from "./report-expression-evaluate.ts"
-import { componentParts, defsOf, expressionCall, parametersOf } from "./report-expression-slot.ts"
+import {
+  type ComponentPart,
+  componentParts,
+  defsOf,
+  expressionCall,
+  parametersOf,
+  slotsOf,
+} from "./report-expression-slot.ts"
 
 export type StaticReportComponents = {
   readonly components: readonly A2uiReportComponent[]
@@ -19,20 +27,41 @@ export type StaticReportComponents = {
   readonly droppedIds: readonly string[]
 }
 
+/**
+ * 会話の画面が振った値で評価し直すための、書き手のままの一覧とつまみの扱い。
+ * 確定のレポートは `operable`、草稿は `locked`。つまみも式も無い一覧は `none`。
+ */
+export type WrittenReportView =
+  | { readonly kind: "none" }
+  | { readonly kind: "operable" | "locked"; readonly components: readonly A2uiWrittenComponent[] }
+
+/**
+ * 振った値で評価し直した内容部品。
+ * `chart-failed` は `labels`・`series[].values`・`emphasis` に誤りがあり、図の代わりに「—」を描く `Chart`（`labels`・`series`・`emphasis` は空）。
+ */
+export type ReevaluatedLeaf =
+  | { readonly kind: "drawn"; readonly component: A2uiReportComponent }
+  | { readonly kind: "chart-failed"; readonly component: ReportOf<"Chart"> }
+
+/** 誤りの出た値を描く字。 */
+export const FAILED_VALUE_TEXT = "—"
+
 type Resolved<T> = { readonly ok: true; readonly value: T } | { readonly ok: false }
 
 const FAILED = { ok: false } as const
 
 type WrittenOf<Name extends string> = Extract<A2uiWrittenComponent, { component: Name }>
 
+type ReportOf<Name extends string> = Extract<A2uiReportComponent, { component: Name }>
+
 export function staticReportComponents(
   written: readonly A2uiWrittenComponent[],
 ): StaticReportComponents {
   const parts = componentParts(written)
-  const params: ExprParams = Object.fromEntries(
-    parametersOf(parts).map((parameter) => [parameter.name, parameter.initial]),
-  )
-  const evaluator = createExpressionEvaluator({ params, defs: defsOf(parts).entries })
+  const evaluator = createExpressionEvaluator({
+    params: initialParamsOf(parts),
+    defs: defsOf(parts).entries,
+  })
   const components: A2uiReportComponent[] = []
   const droppedIds: string[] = []
   for (const component of written) {
@@ -41,6 +70,86 @@ export function staticReportComponents(
     else droppedIds.push(component.id)
   }
   return { components, droppedIds }
+}
+
+export function writtenReportView(
+  components: readonly A2uiWrittenComponent[],
+  kind: "operable" | "locked",
+): WrittenReportView {
+  const parts = componentParts(components)
+  return parametersOf(parts).length === 0 && slotsOf(parts).length === 0
+    ? { kind: "none" }
+    : { kind, components }
+}
+
+/**
+ * 式を持つ `Stats`・`Paragraph`・`Chart` を、振った値で評価し直して部品の ID で引けるようにする。
+ * `params` に無いつまみは初期値で読む。誤りの値は「—」にし、ほかの部品の評価は続ける。
+ */
+export function reevaluatedReportLeaves(
+  written: readonly A2uiWrittenComponent[],
+  params: ExprParams,
+): Readonly<Record<string, ReevaluatedLeaf>> {
+  const parts = componentParts(written)
+  const evaluator = createExpressionEvaluator({
+    params: { ...initialParamsOf(parts), ...params },
+    defs: defsOf(parts).entries,
+  })
+  return Object.fromEntries(
+    written.flatMap((component) => {
+      if (slotsOf(componentParts([component])).length === 0) return []
+      const leaf = reevaluatedLeaf(component, evaluator)
+      return leaf === undefined ? [] : [[component.id, leaf]]
+    }),
+  )
+}
+
+function initialParamsOf(parts: readonly ComponentPart[]): ExprParams {
+  return Object.fromEntries(
+    parametersOf(parts).map((parameter) => [parameter.name, parameter.initial]),
+  )
+}
+
+function reevaluatedLeaf(
+  component: A2uiWrittenComponent,
+  evaluator: ExpressionEvaluator,
+): ReevaluatedLeaf | undefined {
+  switch (component.component) {
+    case "Paragraph":
+      return {
+        kind: "drawn",
+        component: { ...component, text: orFailedText(resolveText(component.text, evaluator)) },
+      }
+    case "Stats":
+      return {
+        kind: "drawn",
+        component: {
+          ...component,
+          items: component.items.map((item) => ({
+            ...item,
+            value: orFailedText(resolveTextOrNumber(item.value, evaluator)),
+            before: orFailedText(resolveTextOrNumber(item.before, evaluator)),
+            target: orFailedText(resolveTextOrNumber(item.target, evaluator)),
+          })),
+        },
+      }
+    case "Chart": {
+      const title = orFailedText(resolveText(component.title, evaluator))
+      const data = chartData(component, evaluator)
+      return data.ok
+        ? { kind: "drawn", component: { ...component, title, ...data.value } }
+        : {
+            kind: "chart-failed",
+            component: { ...component, title, labels: [], series: [], emphasis: [] },
+          }
+    }
+    default:
+      return undefined
+  }
+}
+
+function orFailedText(resolved: Resolved<string>): string {
+  return resolved.ok ? resolved.value : FAILED_VALUE_TEXT
 }
 
 function staticComponent(
@@ -95,9 +204,19 @@ function staticChart(
   evaluator: ExpressionEvaluator,
 ): Resolved<A2uiReportComponent> {
   const title = resolveText(component.title, evaluator)
+  const data = chartData(component, evaluator)
+  if (!title.ok || !data.ok) return FAILED
+  return { ok: true, value: { ...component, title: title.value, ...data.value } }
+}
+
+/** `Chart` の `labels`・`series`・`emphasis`。長さの違いと `labels` に無い強調は誤り。 */
+function chartData(
+  component: WrittenOf<"Chart">,
+  evaluator: ExpressionEvaluator,
+): Resolved<Pick<ReportOf<"Chart">, "labels" | "series" | "emphasis">> {
   const labels = resolveTexts(component.labels, evaluator)
   const emphasis = resolveTexts(component.emphasis, evaluator)
-  if (!title.ok || !labels.ok || !emphasis.ok) return FAILED
+  if (!labels.ok || !emphasis.ok) return FAILED
   const series = []
   for (const entry of component.series) {
     const values = resolveNumbers(entry.values, evaluator)
@@ -105,16 +224,7 @@ function staticChart(
     series.push({ ...entry, values: values.value })
   }
   if (emphasis.value.some((name) => !labels.value.includes(name))) return FAILED
-  return {
-    ok: true,
-    value: {
-      ...component,
-      title: title.value,
-      labels: labels.value,
-      series,
-      emphasis: emphasis.value,
-    },
-  }
+  return { ok: true, value: { labels: labels.value, series, emphasis: emphasis.value } }
 }
 
 /** 欄の値が式の呼び出しなら評価した値、リテラルなら `undefined`。 */

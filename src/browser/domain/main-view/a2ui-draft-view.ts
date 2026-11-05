@@ -2,7 +2,10 @@
 //
 // 会話の内容がここを通る。ログにもファイルにも書かない。
 
-import type { A2uiReportComponent } from "../../../shared/report/a2ui-report-catalog.ts"
+import type {
+  A2uiReportComponent,
+  A2uiWrittenComponent,
+} from "../../../shared/report/a2ui-report-catalog.ts"
 import {
   A2UI_ROOT_ID,
   a2uiLeafIds,
@@ -12,6 +15,7 @@ import {
 import { sectionDrawsAnything } from "../../../shared/report/drawn-entry-markdown.ts"
 import { drawnReportOf } from "../../../shared/report/report-drawn-outline.ts"
 import { reportLeafLayoutOf } from "../../../shared/report/report-leaf-value.ts"
+import { writtenReportView } from "../../../shared/report/report-static-component-list.ts"
 import { a2uiReportView } from "../../../shared/session/a2ui-report-view.ts"
 import type {
   MainViewDraft,
@@ -35,6 +39,7 @@ const NO_SURFACE_STATUS = {
 export function mainViewDraftOf(
   toolUseId: string,
   components: readonly A2uiReportComponent[],
+  written: readonly A2uiWrittenComponent[],
 ): MainViewDraft | undefined {
   const byId = a2uiPartsById(components)
   const root = byId.get(A2UI_ROOT_ID)
@@ -47,13 +52,18 @@ export function mainViewDraftOf(
       reachable.has(part.id) &&
       (part.component !== "Section" || a2uiLeafIds([part.id], byId).length > 0),
   )
-  return { toolUseId, components: drawn, regions: draftRegions(toolUseId, root, drawn) }
+  return {
+    toolUseId,
+    components: drawn,
+    regions: draftRegions(toolUseId, root, drawn, written),
+  }
 }
 
 function draftRegions(
   toolUseId: string,
   root: Extract<A2uiReportComponent, { readonly component: "Report" }>,
   drawn: readonly A2uiReportComponent[],
+  written: readonly A2uiWrittenComponent[],
 ): MainViewReportRegions {
   const conclusion = (root.conclusion ?? []).join("")
   const drawnReport = drawnReportOf(drawn, conclusion, "body")
@@ -69,6 +79,7 @@ function draftRegions(
     ),
     a2ui: a2uiReportView(
       drawn,
+      writtenReportView(written, "locked"),
       drawnReport,
       layout,
       imageSource,

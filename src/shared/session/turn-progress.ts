@@ -241,6 +241,21 @@ export function draftComponentsOf(drafting: ReportDrafting): readonly A2uiReport
   return staticReportComponents(writtenDraftComponentsOf(drafting)).components
 }
 
+/** 草稿の書いたままの部品。保留の部品を土台に、同じ `id` は書き直しのもので差し替え、新しい `id` は後ろに足す。 */
+export function writtenDraftComponentsOf(
+  drafting: ReportDrafting,
+): readonly A2uiWrittenComponent[] {
+  if (drafting.kind !== "drafting") {
+    return drafting.kind === "held" ? drafting.components : []
+  }
+  const fresh = new Map(drafting.components.map((component) => [component.id, component]))
+  const heldIds = new Set(drafting.held.map((component) => component.id))
+  return [
+    ...drafting.held.map((component) => fresh.get(component.id) ?? component),
+    ...drafting.components.filter((component) => !heldIds.has(component.id)),
+  ]
+}
+
 /** 開いている SDK のターンだけを書き換える。閉じていれば姿をそのまま返す。 */
 export function withOpenSdkTurn(
   state: SessionState,
@@ -272,19 +287,6 @@ export function bodiesOf(sdkTurn: SdkTurn): TurnBodies {
 /** 続きのターンが引き継ぐ始まりの時刻。まだ一度もターンが無ければ `at`。 */
 function runningStartedAt(turn: TurnProgress, at: number): number {
   return turn.kind === "idle" ? at : turn.startedAt
-}
-
-/** 草稿の書いたままの部品。保留の部品を土台に、同じ `id` は書き直しのもので差し替え、新しい `id` は後ろに足す。 */
-function writtenDraftComponentsOf(drafting: ReportDrafting): readonly A2uiWrittenComponent[] {
-  if (drafting.kind !== "drafting") {
-    return drafting.kind === "held" ? drafting.components : []
-  }
-  const fresh = new Map(drafting.components.map((component) => [component.id, component]))
-  const heldIds = new Set(drafting.held.map((component) => component.id))
-  return [
-    ...drafting.held.map((component) => fresh.get(component.id) ?? component),
-    ...drafting.components.filter((component) => !heldIds.has(component.id)),
-  ]
 }
 
 function toTurnFailure(cause: TurnFailureCause, trouble: ApiTrouble): TurnFailure {

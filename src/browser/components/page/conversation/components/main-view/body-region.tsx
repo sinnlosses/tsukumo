@@ -7,7 +7,7 @@
 
 import clsx from "clsx"
 // oxlint-disable-next-line no-restricted-imports -- 描き直し回数を数える単体テストが Compiler の掛からない Vitest を通るため残す（docs/coding-standards/react.md「手でメモ化しない」）
-import { memo, type ReactElement, type ReactNode } from "react"
+import { createContext, memo, type ReactElement, type ReactNode, use } from "react"
 
 import { isBlankText } from "../../../../../../shared/utils/blank-text.ts"
 import { useReportReveal } from "../../../../../domain/reveal/use-report-reveal.ts"
@@ -26,9 +26,16 @@ type ReportFrameProps = {
   readonly children: ReactNode
 }
 
-/** 本文の根（`data-report-body`）。 */
+const RevealingContext = createContext(false)
+
+/** 本文の根（`data-report-body`）。書き上げの演出の最中かを子へ配る。 */
 export function ReportFrame(props: ReportFrameProps): ReactElement {
-  const rootRef = useReportReveal(props.reveal, props.turnId, () => {}, styles["draft-pop"])
+  const { rootRef, revealing } = useReportReveal(
+    props.reveal,
+    props.turnId,
+    () => {},
+    styles["draft-pop"],
+  )
 
   return (
     // `.detail-block` を2つ重ねる。
@@ -39,9 +46,14 @@ export function ReportFrame(props: ReportFrameProps): ReactElement {
       ref={rootRef}
       data-report-body=""
     >
-      {props.children}
+      <RevealingContext value={revealing}>{props.children}</RevealingContext>
     </div>
   )
+}
+
+/** 包んでいる {@link ReportFrame} が書き上げの演出の最中か。外では偽。 */
+export function useReportRevealing(): boolean {
+  return use(RevealingContext)
 }
 
 /** `report` ツールの外の本文（Markdown 1本）。空白だけなら欄を置かない。 */

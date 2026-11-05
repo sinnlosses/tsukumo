@@ -6,7 +6,11 @@ import {
   type A2uiReportComponent,
   type A2uiWrittenComponent,
 } from "../../../src/shared/report/a2ui-report-catalog.ts"
-import { staticReportComponents } from "../../../src/shared/report/report-static-component-list.ts"
+import {
+  reevaluatedReportLeaves,
+  staticReportComponents,
+  writtenReportView,
+} from "../../../src/shared/report/report-static-component-list.ts"
 
 function written(...raw: readonly object[]): readonly A2uiWrittenComponent[] {
   return raw.map((item) => a2uiWrittenComponentSchema.parse(item))
@@ -103,5 +107,67 @@ describe("staticReportComponents", () => {
     ])
     expect(dropped.components).toHaveLength(input.length)
     expect(dropped.droppedIds).toEqual(["z"])
+  })
+})
+
+describe("reevaluatedReportLeaves", () => {
+  const statValues = (leaf: ReturnType<typeof reevaluatedReportLeaves>[string] | undefined) =>
+    leaf?.component.component === "Stats" ? leaf.component.items.map((item) => item.value) : []
+  const format = (template: string) => ({ call: "format", args: { template } })
+  const chart = (values: string, emphasis: string) => ({
+    id: "c",
+    component: "Chart",
+    chartKind: "bar",
+    title: format("n=${n}"),
+    labels: ["a", "b", "c"],
+    series: [{ name: "s", values: expr(values) }],
+    emphasis: expr(emphasis),
+  })
+
+  it("振った値で Stats・Paragraph・Chart の強調が変わる", () => {
+    const input = written(
+      root,
+      slider,
+      { id: "st", component: "Stats", items: [stat(expr("double")), stat("1"), stat("2")] },
+      { id: "p", component: "Paragraph", text: format("件数は ${n}") },
+      chart("[n, 5, 6]", '[at(["a", "b", "c"], argmin([n, 5, 6]))]'),
+    )
+    const leaves = reevaluatedReportLeaves(input, { n: 8 })
+    expect(statValues(leaves.st)).toEqual(["16", "1", "2"])
+    expect(leaves.p).toMatchObject({ kind: "drawn", component: { text: "件数は 8" } })
+    expect(leaves.c).toMatchObject({
+      kind: "drawn",
+      component: { title: "n=8", series: [{ values: [8, 5, 6] }], emphasis: ["b"] },
+    })
+    expect(reevaluatedReportLeaves(input, {}).c).toMatchObject({ component: { emphasis: ["a"] } })
+  })
+
+  it("0 での割り算と範囲の外の at は「—」になり、ほかの部品は評価される", () => {
+    const input = written(
+      slider,
+      { id: "p", component: "Paragraph", text: format("${10 / (n - 5)}") },
+      {
+        id: "st",
+        component: "Stats",
+        items: [stat(expr("at([1, 2], n)")), stat(expr("n * 2")), stat("1")],
+      },
+      chart("[n, 1, 2]", '[at(["a", "b", "c"], n)]'),
+      { id: "plain", component: "Paragraph", text: "式なし" },
+    )
+    const leaves = reevaluatedReportLeaves(input, { n: 5 })
+    expect(leaves.p).toMatchObject({ component: { text: "—" } })
+    expect(statValues(leaves.st)).toEqual(["—", "10", "1"])
+    expect(leaves.c).toMatchObject({ kind: "chart-failed", component: { title: "n=5" } })
+    expect(Object.keys(leaves)).toEqual(["p", "st", "c"])
+  })
+})
+
+describe("writtenReportView", () => {
+  it("つまみも式も無い一覧は none、あれば扱いと一覧を持つ", () => {
+    expect(
+      writtenReportView(written({ id: "t", component: "Paragraph", text: "x" }), "operable"),
+    ).toEqual({ kind: "none" })
+    const input = written(root, slider)
+    expect(writtenReportView(input, "locked")).toEqual({ kind: "locked", components: input })
   })
 })

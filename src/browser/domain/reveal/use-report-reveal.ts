@@ -19,17 +19,19 @@ import { startPop } from "./start-pop.ts"
  * あとから対象でなくなっても（後ろに別のレポートが現れても）始めた演出は最後まで進める（途中で止めると隠れた塊が残る）。
  * `onPlayed` は、マウント時の `reveal` が真だったときに1回だけ呼ぶ（呼び出し元が「もう見せた」を覚える口）。
  * 「書き上げる演出の速さ」もマウント時の値だけを見る（速さを変えても、出している最中の演出は前の速さのまま進み切る）。
+ * `revealing` は塊を出している最中か。マウント時の `reveal` が真なら真で始まり、出し切るか演出しないと決まったら偽になる。
  */
 export function useReportReveal(
   reveal: boolean,
   turnId: number,
   onPlayed: () => void,
   popClassName: string,
-): RefObject<HTMLDivElement | null> {
+): { readonly rootRef: RefObject<HTMLDivElement | null>; readonly revealing: boolean } {
   const rootRef = useRef<HTMLDivElement>(null)
   const played = useEffectEvent(onPlayed)
   const [revealOnMount] = useState(reveal)
   const [revealSpeed] = useState(loadRevealSpeed)
+  const [revealing, setRevealing] = useState(reveal)
   // 同じ本文を二度出さない。
   // `<Activity mode="hidden">` は部品の状態を残したまま効果だけを外すので、戻ってきたときにこの効果がもう一度走る。
   const revealedOnce = useRef(false)
@@ -49,11 +51,16 @@ export function useReportReveal(
       revealSpeed === "off" ||
       prefersReducedMotion((query) => window.matchMedia(query))
     ) {
+      setRevealing(false)
       return undefined
     }
     revealedOnce.current = true
-    return startPop(root, turnId, { intervalMs: popIntervalOf(revealSpeed), popClassName })
+    return startPop(root, turnId, {
+      intervalMs: popIntervalOf(revealSpeed),
+      popClassName,
+      onFinish: () => setRevealing(false),
+    })
   }, [revealOnMount, turnId, revealSpeed, popClassName])
 
-  return rootRef
+  return { rootRef, revealing }
 }

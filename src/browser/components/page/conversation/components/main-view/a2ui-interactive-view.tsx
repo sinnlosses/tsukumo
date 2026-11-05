@@ -1,12 +1,12 @@
 // 操作できる部品（並べ替え・絞り込みのある `Table` と、絞り込みの値を選ぶ `ChoicePicker`）の React 実装。
-// 操作の状態は面のデータモデルの `/view/<TableのID>/<キー>` に置き、イベントにも記録にも載せない。
+// 操作の状態は面のデータモデルの `/view/<部品のID>/<キー>` に置き、イベントにも記録にも載せない。
 
 import type { SurfaceModel } from "@a2ui/web_core/v0_9"
 import { type ReactElement, useSyncExternalStore } from "react"
 
 import type { A2uiReportPart } from "../../../../../../shared/report/a2ui-report-outline.ts"
 import type { LeafValue } from "../../../../../../shared/report/report-leaf-value.ts"
-import { tableViewPath } from "../../../../../../shared/report/table-view.ts"
+import { partViewPath } from "../../../../../../shared/report/table-view.ts"
 import { Button } from "../../../../ui/button/button.tsx"
 import {
   type FilterBadge,
@@ -17,7 +17,7 @@ import {
 import styles from "./main-view.module.css"
 import { TableFigure } from "./table-leaf.tsx"
 
-type DataModel = SurfaceModel<never>["dataModel"]
+export type DataModel = SurfaceModel<never>["dataModel"]
 
 type InteractiveTableProps = {
   readonly dataModel: DataModel
@@ -30,9 +30,9 @@ type InteractiveTableProps = {
 /** 見出しごとの並べ替えの押しボタンと、並べ替え・絞り込みを当てた表。使わない `Table` はここを通らない。 */
 export function InteractiveTable(props: InteractiveTableProps): ReactElement {
   const { dataModel, part, value, badges } = props
-  const sort = useDataPath<TableSort>(dataModel, tableViewPath(part.id, "sort"))
+  const sort = useDataPath<TableSort>(dataModel, partViewPath(part.id, "sort"))
   const filter =
-    useDataPath<readonly string[]>(dataModel, tableViewPath(part.id, "filter")) ?? NO_SELECTION
+    useDataPath<readonly string[]>(dataModel, partViewPath(part.id, "filter")) ?? NO_SELECTION
   const order =
     sort === undefined ? filteredRowOrder(part, filter) : visibleRowOrder(part, sort, filter)
   if (value === undefined) {
@@ -55,7 +55,7 @@ export function InteractiveTable(props: InteractiveTableProps): ReactElement {
                 className={styles["interactive-view-button"]}
                 onClick={() => {
                   dataModel.set(
-                    tableViewPath(part.id, "sort"),
+                    partViewPath(part.id, "sort"),
                     sort === undefined
                       ? { column: index, direction: "asc" }
                       : nextSort(sort, index),
@@ -84,7 +84,7 @@ export function InteractiveTable(props: InteractiveTableProps): ReactElement {
                 className={styles["interactive-view-button"]}
                 onClick={() => {
                   dataModel.set(
-                    tableViewPath(part.id, "filter"),
+                    partViewPath(part.id, "filter"),
                     nextSelection(filter, badge.value, false),
                   )
                 }}
@@ -146,9 +146,7 @@ export function ChoicePicker(props: ChoicePickerProps): ReactElement {
   )
 }
 
-const NO_SELECTION: readonly string[] = []
-
-function useDataPath<Value>(dataModel: DataModel, path: string): Value | undefined {
+export function useDataPath<Value>(dataModel: DataModel, path: string): Value | undefined {
   return useSyncExternalStore(
     (onChange) => {
       const subscription = dataModel.subscribe(path, onChange)
@@ -159,6 +157,8 @@ function useDataPath<Value>(dataModel: DataModel, path: string): Value | undefin
     () => dataModel.get<Value | undefined>(path),
   )
 }
+
+const NO_SELECTION: readonly string[] = []
 
 /** 同じ列を押すたびに 昇順 → 降順 → 並べ替えなし。 */
 function nextSort(current: TableSort, column: number): TableSort | undefined {

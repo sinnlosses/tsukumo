@@ -26,6 +26,8 @@ type PopOptions = {
   readonly intervalMs: number
   /** 出した塊に1回だけ付ける、ポンの animation を持つ class。 */
   readonly popClassName: string
+  /** 出し切ったときに1回だけ呼ぶ。出す塊が無く演出しないときは、その場で呼ぶ。 */
+  readonly onFinish: () => void
 }
 
 /**
@@ -35,6 +37,7 @@ type PopOptions = {
 export function startPop(root: HTMLElement, turnId: number, options: PopOptions): () => void {
   const blocks = isShortReport(root) ? [] : popBlocksOf(root)
   if (blocks.length === 0) {
+    options.onFinish()
     return () => undefined
   }
 
@@ -67,6 +70,7 @@ export function startPop(root: HTMLElement, turnId: number, options: PopOptions)
     for (const name of SKIP_EVENT_NAMES) {
       window.removeEventListener(name, finish, SKIP_LISTENER_OPTIONS)
     }
+    options.onFinish()
   }
 
   const next = (): void => {

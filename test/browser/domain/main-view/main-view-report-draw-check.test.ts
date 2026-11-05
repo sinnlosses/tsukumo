@@ -16,6 +16,7 @@ import { noRootA2ui } from "../../../fixture/main-view-entry.ts"
 const EMPTY_SURFACE: Extract<MainViewA2uiReport, { readonly kind: "surface" }> = {
   kind: "surface",
   components: [],
+  written: { kind: "none" },
   sections: {},
   markdownLeaves: {},
   leafValues: {},
