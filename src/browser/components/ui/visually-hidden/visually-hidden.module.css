@@ -1,0 +1,12 @@
+/* 画面には出さず、読み上げ・クリック・フォーカスの対象には残す。`display: none` にすると読み上げからも `<label>` からも外れる。 */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: calc(-1 * var(--space-2xs));
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

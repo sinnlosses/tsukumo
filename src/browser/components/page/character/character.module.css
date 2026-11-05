@@ -125,15 +125,7 @@
 }
 /* 見えないが読み上げとクリック・フォーカスの対象には残す（`display: none` にすると `<label>` からたどれなくなる）。 */
 .character-card-file {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  padding: 0;
-  border: 0;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
+  composes: visually-hidden from "../../ui/visually-hidden/visually-hidden.module.css";
 }
 .character-swatches-screen {
   display: grid;

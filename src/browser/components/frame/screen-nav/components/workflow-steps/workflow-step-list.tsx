@@ -3,6 +3,7 @@ import { useRef, type ReactElement } from "react"
 
 import { Menu } from "../../../../ui/menu/menu.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
+import { VisuallyHidden } from "../../../../ui/visually-hidden/visually-hidden.tsx"
 import { dropLineSlot } from "../../domain/step-reorder.ts"
 import { useStepGrab } from "../../hooks/use-step-grab.ts"
 import type { ScreenNavWorkflowSettingStepsRow } from "../../hooks/use-workflow-setting.ts"
@@ -119,9 +120,15 @@ export function WorkflowStepList(props: {
           )
         })}
       </ol>
-      <p className={styles["announcer"]} role="status" aria-live="polite">
+      <VisuallyHidden
+        element="p"
+        role="status"
+        aria-live="polite"
+        aria-atomic={undefined}
+        data-live-announcer={undefined}
+      >
         {announcement}
-      </p>
+      </VisuallyHidden>
     </>
   )
 }

@@ -2,22 +2,22 @@
 
 import type { ReactElement } from "react"
 
+import { VisuallyHidden } from "../../../../ui/visually-hidden/visually-hidden.tsx"
 import { useAnnouncement } from "../../stores/announcement.ts"
-import styles from "./live-announcer.module.css"
 
 export function LiveAnnouncer(): ReactElement {
   const batch = useAnnouncement((state) => state.batch)
   return (
-    <div
+    <VisuallyHidden
+      element="div"
       role="status"
       aria-live="polite"
       aria-atomic="false"
       data-live-announcer=""
-      className={styles["live-announcer"]}
     >
       {batch.texts.map((text, index) => (
         <p key={`${String(batch.id)}-${String(index)}`}>{text}</p>
       ))}
-    </div>
+    </VisuallyHidden>
   )
 }

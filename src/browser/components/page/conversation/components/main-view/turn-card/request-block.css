@@ -4,15 +4,6 @@
   position: relative;
   color: var(--ink-quiet);
 }
-/* 見出しの字は目に見えなくてよい。`h2` は読み上げの見出しとして残す。 */
-.request-label {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-}
 .request-chips {
   display: flex;
   flex-wrap: wrap;

@@ -27,6 +27,7 @@ import { Surface } from "../../ui/surface/surface.tsx"
 import { Text } from "../../ui/text/text.tsx"
 import { TypingDots } from "../../ui/typing-dot-list/typing-dot-list.tsx"
 import { VStack } from "../../ui/v-stack/v-stack.tsx"
+import { VisuallyHidden } from "../../ui/visually-hidden/visually-hidden.tsx"
 import styles from "./design.module.css"
 import { Group } from "./ui-gallery-group.tsx"
 
@@ -103,6 +104,20 @@ export function LayoutGroups(): ReactElement {
       </Group>
       <Group title="TypingDots（書いている点）" parts={["typing-dot-list"]}>
         <TypingDots />
+      </Group>
+      <Group title="VisuallyHidden（画面に出さず読み上げにだけ残す）" parts={["visually-hidden"]}>
+        <VisuallyHidden
+          element="p"
+          role="status"
+          aria-live="polite"
+          aria-atomic={undefined}
+          data-live-announcer={undefined}
+        >
+          画面には見えない読み上げの文
+        </VisuallyHidden>
+        <Text element="span" size="secondary" tone="ink-quiet" weight="normal" className="">
+          （この行のほかには何も見えない）
+        </Text>
       </Group>
     </>
   )

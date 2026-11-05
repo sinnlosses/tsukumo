@@ -5,10 +5,7 @@
   margin-bottom: var(--space-sm);
 }
 .usage-table-title {
-  margin: 0;
-  color: var(--usage-ink);
-  font-size: var(--font-subheading);
-  font-weight: normal;
+  composes: token-usage-section-label from "../../token-usage.module.css";
 }
 .usage-table-order {
   color: var(--usage-ink-note);

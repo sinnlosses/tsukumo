@@ -179,7 +179,6 @@ describe("design-token", () => {
 const EXCLUDED_DECLARATION_COUNTS: Readonly<Record<string, number>> = {
   "browser/components/app/screen-boundary.module.css": 1,
   "browser/components/frame/protocol-mismatch.module.css": 1,
-  "browser/components/page/character/character.module.css": 1,
   "browser/components/page/conversation/components/character-view/stage/speech-log.css": 1,
   "browser/components/page/conversation/components/dispatch/dispatch.module.css": 1,
 }
