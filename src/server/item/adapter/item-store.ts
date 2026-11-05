@@ -7,7 +7,7 @@
 import { mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
-import { parseItemImage, type SeatKey } from "../../../shared/item/item.ts"
+import { type ItemId, parseItemImage, type SeatKey } from "../../../shared/item/item.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import { writeFileAtomic } from "../../adapter/lib/atomic-file.ts"
 import { isMissingFileError } from "../../adapter/lib/missing-file-error.ts"
@@ -61,7 +61,7 @@ export function addItemToHome(
 
 /** 一覧から消し、置いていたすべてのパックの席を空ける。`items.json` を先に書き、そのあと画像を消す。 */
 export function removeItemFromHome(
-  id: string,
+  id: ItemId,
   dir: string = tsukumoHomePath("items"),
 ): SessionEvent | undefined {
   const file = writableItemsFile(dir)
@@ -75,7 +75,7 @@ export function removeItemFromHome(
 }
 
 export function setSeatInHome(
-  input: { readonly pack: string; readonly seat: SeatKey; readonly id: string },
+  input: { readonly pack: string; readonly seat: SeatKey; readonly id: ItemId },
   knownPacks: readonly string[],
   dir: string = tsukumoHomePath("items"),
 ): SessionEvent | undefined {

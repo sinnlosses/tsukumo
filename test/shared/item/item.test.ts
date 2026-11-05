@@ -4,7 +4,7 @@ import {
   itemFileName,
   type ItemEntry,
   nextItemId,
-  parseItemId,
+  isItemId,
   parseItemImage,
   parseItemName,
 } from "../../../src/shared/item/item.ts"
@@ -56,10 +56,10 @@ describe("nextItemId", () => {
 
 describe("識別子の門", () => {
   it("id は10進の数字列だけを通す", () => {
-    expect(parseItemId("12")).toBe("12")
-    expect(parseItemId("../1")).toBeUndefined()
-    expect(parseItemId("0")).toBeUndefined()
-    expect(parseItemId("")).toBeUndefined()
+    expect(isItemId("12")).toBe(true)
+    expect(isItemId("../1")).toBe(false)
+    expect(isItemId("0")).toBe(false)
+    expect(isItemId("")).toBe(false)
   })
 
   it("画像のファイル名を組む", () => {

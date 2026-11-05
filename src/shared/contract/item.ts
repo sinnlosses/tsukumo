@@ -7,14 +7,14 @@ import { characterPackNameSchema } from "../character-pack/character.ts"
 import { commandBase } from "../command.ts"
 import {
   MAX_ITEM_DATA_URL_LENGTH,
-  parseItemId,
+  isItemId,
+  isItemName,
   parseItemImage,
-  parseItemName,
   SEAT_KEYS,
 } from "../item/item.ts"
 
-/** 一覧の名前。前後の空白を除いて 1〜20 字（除くのは書き込む側が同じ {@link parseItemName} で行う）。 */
-const itemNameSchema = z.string().refine((value) => parseItemName(value) !== undefined)
+/** 一覧の名前。前後の空白を除いて 1〜20 字（除くのは書き込む側が `parseItemName` で行う）。 */
+const itemNameSchema = z.string().refine(isItemName)
 
 /**
  * 画像1枚の data URL。文字列のまま持ち、ほどくのは書き込む側。
@@ -25,7 +25,7 @@ const itemImageSchema = z
   .max(MAX_ITEM_DATA_URL_LENGTH)
   .refine((value) => parseItemImage(value) !== undefined)
 
-const itemIdSchema = z.string().refine((value) => parseItemId(value) !== undefined)
+const itemIdSchema = z.string().refine(isItemId)
 
 /** 席を置くパックの名前。一覧にあるかは書き込む側が突き合わせる。 */
 const seatPackSchema = characterPackNameSchema

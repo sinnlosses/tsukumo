@@ -7,6 +7,7 @@ import type { PortraitFormat } from "../../../shared/character-pack/portrait-ima
 import {
   itemFileName,
   type ItemEntry,
+  type ItemId,
   MAX_ITEMS,
   nextItemId,
   parseItemName,
@@ -43,7 +44,7 @@ export function addItem(
 }
 
 /** 一覧から消し、そのアイテムを置いていたすべてのパックの席を空ける。一覧に無い id は undefined。 */
-export function removeItem(file: ItemsFile, id: string): ItemRemoved | undefined {
+export function removeItem(file: ItemsFile, id: ItemId): ItemRemoved | undefined {
   const removed = file.items.find((item) => item.id === id)
   if (removed === undefined) {
     return undefined
@@ -65,7 +66,7 @@ export function setSeat(
   file: ItemsFile,
   pack: string,
   seat: SeatKey,
-  id: string,
+  id: ItemId,
   knownPacks: readonly string[],
 ): ItemsFile | undefined {
   if (!knownPacks.includes(pack) || !file.items.some((item) => item.id === id)) {
