@@ -62,6 +62,7 @@ export function toCharacterBackground(value: unknown): CharacterBackground | und
     return undefined
   }
 
+  // oxlint-disable-next-line typescript/consistent-type-assertions -- 配列でない object と確かめた値を、キーで引くために Record として読む（外の JSON を読む1か所）
   const record = value as Record<string, unknown>
   const image = record["image"]
   if (typeof image !== "string" || !isBackgroundFileName(image)) {

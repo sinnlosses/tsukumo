@@ -111,6 +111,7 @@
       // 引いていない禁止と react の禁止が残る。大きさの上限のため、書き直したブロックの message はこのブロックに任せて省く
       "files": ["src/**"],
       "rules": {
+        "typescript/consistent-type-assertions": ["error", { "assertionStyle": "never" }],
         "no-restricted-globals": [
           "error",
           {

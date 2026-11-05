@@ -160,5 +160,5 @@ export function toBrowserErrorName(name: string): BrowserErrorName {
 }
 
 function isBrowserErrorName(value: string): value is BrowserErrorName {
-  return (BROWSER_ERROR_NAMES as readonly string[]).includes(value)
+  return BROWSER_ERROR_NAMES.some((name) => name === value)
 }

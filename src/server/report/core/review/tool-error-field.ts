@@ -1,3 +1,5 @@
+import { z } from "zod"
+
 import type { ToolErrorField } from "../../../../shared/report/tool-error-field.ts"
 
 /** 欄名の数の上限。深い union が 1 回で何十も落ちても記録が膨らまない。 */
@@ -24,32 +26,24 @@ export function toolErrorFieldsOf(content: string): readonly ToolErrorField[] {
   } catch {
     return []
   }
-  if (!Array.isArray(issues)) {
+  const list = issueListSchema.safeParse(issues)
+  if (!list.success) {
     return []
   }
   const fields: ToolErrorField[] = []
-  for (const issue of issues as readonly unknown[]) {
-    const field = fieldOf(issue)
-    if (field !== undefined) {
-      fields.push(field)
+  for (const issue of list.data) {
+    const parsed = issueSchema.safeParse(issue)
+    if (parsed.success) {
+      const names = parsed.data.path.map((step) => (typeof step === "number" ? "n" : step))
+      fields.push({ field: names.join("."), code: parsed.data.code })
     }
   }
   return fields.slice(0, MAX_TOOL_ERROR_FIELDS)
 }
 
-function fieldOf(issue: unknown): ToolErrorField | undefined {
-  if (typeof issue !== "object" || issue === null) {
-    return undefined
-  }
-  const { path, code } = issue as Readonly<Record<string, unknown>>
-  if (!Array.isArray(path) || typeof code !== "string") {
-    return undefined
-  }
-  const names = (path as readonly unknown[]).map((step) =>
-    typeof step === "number" ? "n" : typeof step === "string" ? step : undefined,
-  )
-  if (names.includes(undefined)) {
-    return undefined
-  }
-  return { field: names.join("."), code }
-}
+const issueListSchema = z.array(z.unknown())
+
+const issueSchema = z.object({
+  path: z.array(z.union([z.string(), z.number()])),
+  code: z.string(),
+})

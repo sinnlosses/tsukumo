@@ -26,6 +26,7 @@ export function useEventListener<
   { enabled = true, capture = false }: ListenerOptions = {},
 ): void {
   const onEvent = useEffectEvent((event: Event) => {
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- addEventListener は Event しか渡さず、型パラメータの対応表 EventMapOf を絞り込む手段が無い
     handler(event as EventMapOf<Target>[Type])
   })
   useEffect(() => {

@@ -33,6 +33,10 @@ export function plainWordSpellingsInSpeech(text: string): readonly string[] {
 }
 
 function plainWordSpellingsOfProse(prose: readonly string[]): readonly string[] {
+  const initial: { segments: readonly string[]; spellings: readonly string[] } = {
+    segments: prose,
+    spellings: [],
+  }
   const remaining = PLAIN_WORDS.reduce(
     (state, word) => ({
       segments: state.segments.flatMap((segment) => segment.split(word.spelling)),
@@ -40,7 +44,7 @@ function plainWordSpellingsOfProse(prose: readonly string[]): readonly string[] 
         ? [...state.spellings, word.spelling]
         : state.spellings,
     }),
-    { segments: prose, spellings: [] as readonly string[] },
+    initial,
   )
   return remaining.spellings
 }
