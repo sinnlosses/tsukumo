@@ -33,8 +33,13 @@ const SHARED_FEATURES = [
 type SharedFeature = (typeof SHARED_FEATURES)[number]
 
 // shared/ の直下に置いてよいファイル（docs/architecture.md「shared の機能」の「shared の直下」）。
-// どの機能にも属さないプロトコルの3つだけ。
-const SHARED_ROOT_FILES: ReadonlySet<string> = new Set(["frame.ts", "command.ts", "rpc.ts"])
+// どの機能にも属さないプロトコルの4つだけ。
+const SHARED_ROOT_FILES: ReadonlySet<string> = new Set([
+  "frame.ts",
+  "frame-error-reason.ts",
+  "command.ts",
+  "rpc.ts",
+])
 
 // `shared` の下に置いてよいディレクトリ（直下のファイルのほかに）。`contract/` は機能ごとの契約の
 // 置き場、`lib/` と `utils/` は docs/architecture.md「`lib/` と `utils/` に置く基準」、残りは
@@ -53,7 +58,7 @@ const PENDING_TABLE_GUIDE =
   'browser の読み手が後続で付く新部品は test/architecture/pending-reader-table.ts の PENDING_READERS に { file, missingReader: "browser", reason, removeWhen } の行で足す（読み手が付いたら行を外す）'
 
 describe("shared/ の機能どうしの import", () => {
-  it("shared/ の直下のファイルは frame.ts・command.ts・rpc.ts だけ", () => {
+  it("shared/ の直下のファイルは frame.ts・frame-error-reason.ts・command.ts・rpc.ts だけ", () => {
     const offenders = listSourceFiles(SRC_ROOT).filter(
       (relPath) =>
         relPath.startsWith("shared/") &&

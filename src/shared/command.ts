@@ -6,7 +6,7 @@
 import { type AnyContractProcedure, type InferSchemaOutput, oc } from "@orpc/contract"
 import { z } from "zod"
 
-import { FRAME_ERROR_REASON } from "./frame.ts"
+import { FRAME_ERROR_REASON } from "./frame-error-reason.ts"
 
 /** 断るときに返す定型文（`FRAME_ERROR_REASON` の値のどれか）。 */
 export type CommandRefusalReason = (typeof FRAME_ERROR_REASON)[keyof typeof FRAME_ERROR_REASON]

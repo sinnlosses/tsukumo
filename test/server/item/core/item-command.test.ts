@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import { itemCommands } from "../../../../src/server/item/core/item-command.ts"
-import { FRAME_ERROR_REASON } from "../../../../src/shared/frame.ts"
+import { FRAME_ERROR_REASON } from "../../../../src/shared/frame-error-reason.ts"
 
 describe("itemCommands", () => {
   it("4つの行はどれも write で、断る理由は定型文", () => {

@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest"
 import { CHAT_NUDGE_PROMPT } from "../src/server/chat/core/chat-nudge.ts"
 import type { ShelvedPromptImage } from "../src/server/session-driver/core/prompt-image-shelf.ts"
 import type { PromptRouting } from "../src/shared/contract/session.ts"
-import { FRAME_ERROR_REASON } from "../src/shared/frame.ts"
+import { FRAME_ERROR_REASON } from "../src/shared/frame-error-reason.ts"
 import type { PromptImage } from "../src/shared/session-driver/prompt-image.ts"
 import { createCommandClient } from "./fixture/command-client.ts"
 import {

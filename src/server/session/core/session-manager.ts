@@ -10,7 +10,8 @@
 // 会話の内容がイベントとして通るが、ログにもファイルにも書かない。配る先は購読しているブラウザだけ。
 
 import { swallowedFailureFootprint } from "../../../shared/diagnostic/swallowed-failure.ts"
-import { FRAME_ERROR_REASON, PROTOCOL_VERSION, type ServerFrame } from "../../../shared/frame.ts"
+import { FRAME_ERROR_REASON } from "../../../shared/frame-error-reason.ts"
+import { PROTOCOL_VERSION, type ServerFrame } from "../../../shared/frame.ts"
 import { INITIAL_SESSION_STATE } from "../../../shared/session/session-state.ts"
 import { createChatArchiveOrder } from "../../chat/core/archive/chat-archive-order.ts"
 import type { DispatchResult } from "../../core/command-receiver.ts"

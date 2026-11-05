@@ -3,7 +3,7 @@
 //
 // 一覧（`SessionState.sessions`）は軽いもの（ID・見出し・時刻）だけで、依頼の数・要約・最後のセリフは選んだ1件ぶんだけ取りに行く（`useSessionDigest`）。
 
-import { FRAME_ERROR_REASON } from "../../../../../shared/frame.ts"
+import { FRAME_ERROR_REASON } from "../../../../../shared/frame-error-reason.ts"
 import type { SessionChoice } from "../../../../../shared/session/session-choice.ts"
 import type { SessionId } from "../../../../../shared/session/session-id.ts"
 import { useSessionSwitcherRequest } from "../../../../stores/session-switcher-request.ts"

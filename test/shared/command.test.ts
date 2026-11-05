@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import { COMMAND_ERRORS } from "../../src/shared/command.ts"
-import { FRAME_ERROR_REASON } from "../../src/shared/frame.ts"
+import { FRAME_ERROR_REASON } from "../../src/shared/frame-error-reason.ts"
 
 describe("COMMAND_ERRORS.REFUSED", () => {
   it.each(Object.values(FRAME_ERROR_REASON))("定型文の理由 %s は通す", (reason) => {

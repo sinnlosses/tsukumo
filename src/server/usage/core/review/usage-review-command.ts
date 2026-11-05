@@ -4,7 +4,7 @@ import type {
   UsageProposalKeyInput,
   usageReviewContract,
 } from "../../../../shared/contract/usage-review.ts"
-import { FRAME_ERROR_REASON } from "../../../../shared/frame.ts"
+import { FRAME_ERROR_REASON } from "../../../../shared/frame-error-reason.ts"
 import { BUILTIN_SESSION_DEFAULT } from "../../../../shared/session/session-default.ts"
 import type { SessionEvent } from "../../../../shared/session/session-event.ts"
 import type { SessionState } from "../../../../shared/session/session-state.ts"

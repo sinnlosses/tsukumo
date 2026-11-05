@@ -29,7 +29,7 @@
 
 - **断る条件は契約の `meta` に書く**（行には持たない。二重に持たない）。形は
   `{ chatOnly: false | 理由, idleTurn: false | 理由 }`（`src/shared/command.ts` の `CommandMeta`）で、
-  理由は `FRAME_ERROR_REASON`（`shared/frame.ts`）の値。**条件と理由を同じ所に書く**。断ったときは
+  理由は `FRAME_ERROR_REASON`（`shared/frame-error-reason.ts`）の値。**条件と理由を同じ所に書く**。断ったときは
   理由を添えた `REFUSED` が応答で返り、受け手は呼ばれない
 - **受け手は3種**（`write` / `call` / `session` の判別可能な合併型。`command-receiver.ts`）。`session` の
   受け手は `CommandSession`（`command-session-port.ts`）を受け取り、**`session` の表にだけ書ける**（型が

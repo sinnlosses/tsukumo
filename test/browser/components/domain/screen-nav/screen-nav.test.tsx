@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { ScreenNav } from "../../../../../src/browser/components/domain/screen-nav/screen-nav.tsx"
 import { useNavDrawer } from "../../../../../src/browser/stores/nav-drawer.ts"
-import { FRAME_ERROR_REASON } from "../../../../../src/shared/frame.ts"
+import { FRAME_ERROR_REASON } from "../../../../../src/shared/frame-error-reason.ts"
 import type { StampedPendingAsk } from "../../../../../src/shared/session-driver/pending-ask.ts"
 import { MODEL_ALIASES } from "../../../../../src/shared/session/run-setting-value.ts"
 import type { SessionInfo } from "../../../../../src/shared/session/session-info.ts"
@@ -81,7 +81,7 @@ function closeDrawerDialog(): void {
 }
 
 describe("ScreenNav", () => {
-  // 色だけで伝えないので、いまの画面の口には地と字の濃さを変える class が付く（docs/architecture/screen-design.md「画面のナビゲーション」）。
+  // いまの画面の口には地と字の濃さを変える class が付く（docs/architecture/screen-design.md「画面のナビゲーション」）。
   it("いま出している画面の口に is-active が付く", () => {
     window.location.hash = "#token-usage"
     renderScreenNav()

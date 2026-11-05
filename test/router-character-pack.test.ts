@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { FRAME_ERROR_REASON } from "../src/shared/frame.ts"
+import { FRAME_ERROR_REASON } from "../src/shared/frame-error-reason.ts"
 import { createCommandClient } from "./fixture/command-client.ts"
 import {
   CHAT_MODE_EVENT,

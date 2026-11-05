@@ -19,7 +19,7 @@
 | --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `shared/<機能>/`            | その機能の語彙（型・検証・純粋な導出）と、その機能だけが動かす `SessionState` の欄の畳み方（「SessionState」）                                                                                                                                |
 | `shared/session/`           | `SessionEvent` / `SessionState` / `applySessionEvent` と、**`SessionState` から純粋に導くだけのもの**（`turn-step.ts` `turn-speech.ts` など）。サーバの `session/` と同じく**各機能の語彙を束ねる**ので、ほかの機能を読む向きのエッジが集まる |
-| `shared/` の直下            | **どの機能にも属さないプロトコル**だけ: フレームの封筒（`frame.ts`）・コマンドの共通の形（`command.ts`）・手続きの束（`rpc.ts`）                                                                                                              |
+| `shared/` の直下            | **どの機能にも属さないプロトコル**だけ: フレームの封筒（`frame.ts`）・断る理由の定型文（`frame-error-reason.ts`）・コマンドの共通の形（`command.ts`）・手続きの束（`rpc.ts`）                                                                 |
 | `shared/contract/<名前>.ts` | 手続きの契約。**名前は手続きの名前**（`rpc.ts` の鍵と `<名前>-procedure.ts`）で、機能の名前とは1対1でないので機能のディレクトリへは寄せない                                                                                                   |
 | `shared/utils/` `lib/`      | tsukumo の語彙を名乗らない道具（「`lib/` と `utils/` に置く基準」）                                                                                                                                                                           |
 
@@ -40,7 +40,7 @@
   既定。`diagnostic/diagnostic-record.ts` のように `SessionEvent` を扱う機能の語彙は `session/` を読んでよい）。
   サーバのような「読んでよい機能」の表は持たない（層が1つで、エッジの向きは輪が無いことだけで決まる）
 - **機能のディレクトリは `contract/` と `rpc.ts` を読まない**（契約と束が機能の語彙を読む一方向）。
-  直下の `frame.ts` `command.ts` は機能から読んでよい（断る理由 `FRAME_ERROR_REASON` と、コマンドの
+  直下の `frame-error-reason.ts` `command.ts` は機能から読んでよい（断る理由 `FRAME_ERROR_REASON` と、コマンドの
   断る条件・エラーを持つため。権限・モデル・思考の段の語彙は `session/` が持つ）
 - **機能を足すときは、サーバの機能の一覧に先にあること**。shared の機能の一覧・直下のファイルの一覧・
   機能どうしの輪は `test/architecture/shared-feature.test.ts` が見る

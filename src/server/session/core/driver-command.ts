@@ -6,7 +6,7 @@
 // 依頼の文面が引数として通るが、ログにもファイルにも書かない。
 
 import type { CommandRefusalReason } from "../../../shared/command.ts"
-import { FRAME_ERROR_REASON } from "../../../shared/frame.ts"
+import { FRAME_ERROR_REASON } from "../../../shared/frame-error-reason.ts"
 import { CHAT_NUDGE_PROMPT } from "../../chat/core/chat-nudge.ts"
 import type { DispatchResult } from "../../core/command-receiver.ts"
 import type { SessionDriver } from "../../session-driver/core/session-driver.ts"

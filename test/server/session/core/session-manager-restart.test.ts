@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest"
 
 import type { SessionLaunchRequest } from "../../../../src/server/session/core/command-session-port.ts"
-import { FRAME_ERROR_REASON, type ServerFrame } from "../../../../src/shared/frame.ts"
+import { FRAME_ERROR_REASON } from "../../../../src/shared/frame-error-reason.ts"
+import type { ServerFrame } from "../../../../src/shared/frame.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import { INITIAL_SESSION_STATE } from "../../../../src/shared/session/session-state.ts"
 import { createStubDriver, type StubDriver } from "../../../fixture/session-driver.ts"

@@ -16,11 +16,8 @@ import {
 } from "../../../../../src/server/view-server/adapter/rpc/session-socket.ts"
 import { createStartupToken } from "../../../../../src/server/view-server/adapter/server.ts"
 import type { CommandRefusalReason } from "../../../../../src/shared/command.ts"
-import {
-  FRAME_ERROR_REASON,
-  PROTOCOL_VERSION,
-  type ServerFrame,
-} from "../../../../../src/shared/frame.ts"
+import { FRAME_ERROR_REASON } from "../../../../../src/shared/frame-error-reason.ts"
+import { PROTOCOL_VERSION, type ServerFrame } from "../../../../../src/shared/frame.ts"
 import type { socketContract } from "../../../../../src/shared/rpc.ts"
 import { INITIAL_SESSION_STATE } from "../../../../../src/shared/session/session-state.ts"
 import { SESSION_SOCKET_PATH } from "../../../../../src/shared/view-server/session-socket.ts"

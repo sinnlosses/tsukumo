@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { FRAME_ERROR_REASON } from "../src/shared/frame.ts"
+import { FRAME_ERROR_REASON } from "../src/shared/frame-error-reason.ts"
 import { startRouter } from "./fixture/command-router.ts"
 import { ITEMS_EVENT } from "./fixture/session-event.ts"
 

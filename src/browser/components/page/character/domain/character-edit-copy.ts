@@ -3,7 +3,7 @@
 import { MAX_BACKGROUND_BYTES } from "../../../../../shared/character-pack/character-background.ts"
 import type { CharacterPackRemoval } from "../../../../../shared/character-pack/character.ts"
 import { MAX_PORTRAIT_BYTES } from "../../../../../shared/character-pack/portrait-image.ts"
-import { FRAME_ERROR_REASON } from "../../../../../shared/frame.ts"
+import { FRAME_ERROR_REASON } from "../../../../../shared/frame-error-reason.ts"
 import { MAX_ITEM_NAME_LENGTH, MAX_ITEMS, type SeatKey } from "../../../../../shared/item/item.ts"
 
 /** 背景の行の、いまの状態を表す字（印だけにしない）。 */

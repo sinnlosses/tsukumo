@@ -9,7 +9,7 @@ import {
 import type { CommandInputs } from "../../../shared/command.ts"
 import type { PromptRouting, sessionContract } from "../../../shared/contract/session.ts"
 import type { DateKey } from "../../../shared/diary/date-key.ts"
-import { FRAME_ERROR_REASON } from "../../../shared/frame.ts"
+import { FRAME_ERROR_REASON } from "../../../shared/frame-error-reason.ts"
 import type { ReactionLine } from "../../../shared/recommendation/reaction.ts"
 import { isWelcomeGreetingLine } from "../../../shared/recommendation/welcome-greeting.ts"
 import {

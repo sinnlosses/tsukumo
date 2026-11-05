@@ -7,7 +7,7 @@ import { MAX_CHARACTER_PACK_NAME_LENGTH } from "../character-pack/character.ts"
 import { EXPRESSIONS } from "../character-pack/expression.ts"
 import { commandBase } from "../command.ts"
 import { dateKeySchema } from "../diary/date-key.ts"
-import { FRAME_ERROR_REASON } from "../frame.ts"
+import { FRAME_ERROR_REASON } from "../frame-error-reason.ts"
 import { MAX_SHOWN_WELCOME_GREETING_LENGTH } from "../recommendation/welcome-greeting.ts"
 import { answerSchema } from "../session-driver/pending-ask.ts"
 import {

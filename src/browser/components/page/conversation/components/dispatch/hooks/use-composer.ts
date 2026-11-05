@@ -17,7 +17,7 @@
 import { useRef, useState, type RefObject } from "react"
 
 import type { PromptRouting } from "../../../../../../../shared/contract/session.ts"
-import { FRAME_ERROR_REASON } from "../../../../../../../shared/frame.ts"
+import { FRAME_ERROR_REASON } from "../../../../../../../shared/frame-error-reason.ts"
 import type { SessionId } from "../../../../../../../shared/session/session-id.ts"
 import { useDebouncedCallback } from "../../../../../../hooks/use-debounced-callback.ts"
 import { useExternalSync } from "../../../../../../hooks/use-external-sync.ts"

@@ -3,7 +3,7 @@
 
 import type { CommandInputs } from "../../../shared/command.ts"
 import type { itemContract } from "../../../shared/contract/item.ts"
-import { FRAME_ERROR_REASON } from "../../../shared/frame.ts"
+import { FRAME_ERROR_REASON } from "../../../shared/frame-error-reason.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import type { FeatureCommandTable } from "../../core/command-receiver.ts"
 

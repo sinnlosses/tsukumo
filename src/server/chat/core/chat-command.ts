@@ -1,7 +1,7 @@
 // `chat` が受けるコマンドの表。断る条件は契約 `chatContract` の `meta`。
 
 import type { chatContract } from "../../../shared/contract/chat.ts"
-import { FRAME_ERROR_REASON } from "../../../shared/frame.ts"
+import { FRAME_ERROR_REASON } from "../../../shared/frame-error-reason.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import type { FeatureCommandTable } from "../../core/command-receiver.ts"
 

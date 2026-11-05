@@ -7,7 +7,7 @@ import { useComposerDraft } from "../../../../../../../src/browser/components/pa
 import { useInquiryDraft } from "../../../../../../../src/browser/components/page/conversation/stores/inquiry-draft.ts"
 import { useInquiryJump } from "../../../../../../../src/browser/stores/inquiry-jump.ts"
 import type { CharacterInfo } from "../../../../../../../src/shared/character-pack/character.ts"
-import { FRAME_ERROR_REASON } from "../../../../../../../src/shared/frame.ts"
+import { FRAME_ERROR_REASON } from "../../../../../../../src/shared/frame-error-reason.ts"
 import type { StampedPendingAsk } from "../../../../../../../src/shared/session-driver/pending-ask.ts"
 import {
   INITIAL_SESSION_STATE,

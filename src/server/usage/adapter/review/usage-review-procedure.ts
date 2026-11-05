@@ -4,7 +4,7 @@
 import { implement } from "@orpc/server"
 
 import { usageReviewContract } from "../../../../shared/contract/usage-review.ts"
-import { FRAME_ERROR_REASON } from "../../../../shared/frame.ts"
+import { FRAME_ERROR_REASON } from "../../../../shared/frame-error-reason.ts"
 import { refusedUnlessAccepted } from "../../../adapter/command-refusal.ts"
 import { receiveFeatureCommand } from "../../../core/command-receiver.ts"
 import {

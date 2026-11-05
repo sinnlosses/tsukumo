@@ -7,7 +7,7 @@
 import type { RefCallback, RefObject } from "react"
 import { doNothing } from "remeda"
 
-import { FRAME_ERROR_REASON } from "../../../../../shared/frame.ts"
+import { FRAME_ERROR_REASON } from "../../../../../shared/frame-error-reason.ts"
 import { characterFaceInfo, type CharacterFaceInfo } from "../../../../domain/character-face.ts"
 import { usePopover } from "../../../../hooks/use-popover.ts"
 import { useRestartRefused, useSession } from "../../../../stores/session.ts"

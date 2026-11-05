@@ -5,7 +5,7 @@
 import { implement } from "@orpc/server"
 
 import { characterPackContract } from "../../../shared/contract/character-pack.ts"
-import { FRAME_ERROR_REASON } from "../../../shared/frame.ts"
+import { FRAME_ERROR_REASON } from "../../../shared/frame-error-reason.ts"
 import { refusedUnlessAccepted } from "../../adapter/command-refusal.ts"
 import { type CommandEventSink, receiveFeatureCommand } from "../../core/command-receiver.ts"
 import {

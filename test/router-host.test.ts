@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { FRAME_ERROR_REASON } from "../src/shared/frame.ts"
+import { FRAME_ERROR_REASON } from "../src/shared/frame-error-reason.ts"
 import { REQUEST_EVENT, startRouter } from "./fixture/command-router.ts"
 
 describe("createSocketRouter（host。レポートに書かれたパスを開く）", () => {

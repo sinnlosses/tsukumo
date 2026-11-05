@@ -1,7 +1,7 @@
 // `host` が受けるコマンドの表。
 
 import type { hostContract } from "../../../shared/contract/host.ts"
-import { FRAME_ERROR_REASON } from "../../../shared/frame.ts"
+import { FRAME_ERROR_REASON } from "../../../shared/frame-error-reason.ts"
 import type { FeatureCommandTable } from "../../core/command-receiver.ts"
 
 export type HostCommandPorts = {

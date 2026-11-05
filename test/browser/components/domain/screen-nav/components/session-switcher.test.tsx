@@ -10,7 +10,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { ScreenNav } from "../../../../../../src/browser/components/domain/screen-nav/screen-nav.tsx"
 import { useNavDrawer } from "../../../../../../src/browser/stores/nav-drawer.ts"
-import { FRAME_ERROR_REASON } from "../../../../../../src/shared/frame.ts"
+import { FRAME_ERROR_REASON } from "../../../../../../src/shared/frame-error-reason.ts"
 import type { SessionChoice } from "../../../../../../src/shared/session/session-choice.ts"
 import {
   INITIAL_SESSION_STATE,

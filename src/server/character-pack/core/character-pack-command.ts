@@ -8,7 +8,7 @@ import type {
   CharacterEdit,
   characterPackContract,
 } from "../../../shared/contract/character-pack.ts"
-import { FRAME_ERROR_REASON } from "../../../shared/frame.ts"
+import { FRAME_ERROR_REASON } from "../../../shared/frame-error-reason.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import type { FeatureCommandTable, WriteReceiver } from "../../core/command-receiver.ts"
 

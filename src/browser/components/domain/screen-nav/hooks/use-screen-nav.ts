@@ -9,7 +9,7 @@
 
 import { useRef, type RefObject } from "react"
 
-import { FRAME_ERROR_REASON } from "../../../../../shared/frame.ts"
+import { FRAME_ERROR_REASON } from "../../../../../shared/frame-error-reason.ts"
 import {
   useCurrentWork,
   type CurrentWork,
