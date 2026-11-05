@@ -18,10 +18,8 @@ import {
 import type { CharacterFaceInfo } from "../../../../domain/character-face.ts"
 import { phaseMarkOf } from "../../../../domain/phase-mark.ts"
 import { isTurnCounting, turnElapsedClock } from "../../../../domain/turn-elapsed.ts"
-import type {
-  CurrentWork,
-  CurrentWorkState,
-} from "../../../../features/current-work/hooks/use-current-work.ts"
+import type { CurrentWorkState } from "../../../../features/current-work/domain/current-work-state.ts"
+import type { CurrentWork } from "../../../../features/current-work/hooks/use-current-work.ts"
 import { useNowWhile } from "../../../../stores/clock.ts"
 import { useCurrentTurnSteps } from "../../../../stores/current-turn-step-list.ts"
 import { SCREEN_NAV_ITEMS, type Screen } from "../../../../stores/location-hash.ts"

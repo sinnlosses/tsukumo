@@ -6,7 +6,7 @@ import type {
   InquiryModel,
   InquiryOptionRow,
 } from "../../page/conversation/stores/inquiry-answer.ts"
-import type { ScreenPartExample } from "./screen-part-example.tsx"
+import type { ScreenPartExample } from "./screen-part-example-type.ts"
 
 const noop = (): void => {}
 

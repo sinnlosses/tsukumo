@@ -9,7 +9,7 @@ import { PresentationalSpeechLog } from "../../page/conversation/components/char
 import { PresentationalChatView } from "../../page/conversation/components/chat-view/presentational-chat-view.tsx"
 import type { ClockStamp } from "../../page/conversation/domain/clock-stamp.ts"
 import styles from "./design.module.css"
-import type { ScreenPartExample } from "./screen-part-example.tsx"
+import type { ScreenPartExample } from "./screen-part-example-type.ts"
 
 const noop = (): void => {}
 

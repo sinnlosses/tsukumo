@@ -14,9 +14,9 @@ import {
   type ReportOutlineLeaf,
 } from "../../../../../shared/report/report-outline.ts"
 import { isHeatCell } from "../../../../../shared/report/table-layout.ts"
-import type { CardsFault } from "../block.ts"
 import { textLengthOf } from "../draft.ts"
 import { hasNestedFold } from "../prose/notation.ts"
+import type { CardsFault } from "./cards-fault.ts"
 
 /** 流れ・つながり・構造を描く塊か（`no-shape` と合わない塊）。 */
 export function drawsShape(leaf: ReportOutlineLeaf): boolean {

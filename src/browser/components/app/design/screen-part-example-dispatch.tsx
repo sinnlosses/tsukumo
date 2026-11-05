@@ -8,7 +8,7 @@ import {
   PresentationalPhoneTurnAction,
   PresentationalTurnStatus,
 } from "../../page/conversation/components/dispatch/presentational-turn-status.tsx"
-import type { ScreenPartExample } from "./screen-part-example.tsx"
+import type { ScreenPartExample } from "./screen-part-example-type.ts"
 
 const noop = (): void => {}
 

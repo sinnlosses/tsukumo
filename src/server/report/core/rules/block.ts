@@ -16,6 +16,7 @@ import {
   reportFigureOf,
   sectionLeaves,
 } from "../../../../shared/report/report-outline.ts"
+import type { CardsFault } from "./block/cards-fault.ts"
 import { codeBlockMatchesFile } from "./block/code-match.ts"
 import {
   badCardsIn,
@@ -37,13 +38,6 @@ import {
   noteCount,
 } from "./block/shape.ts"
 import type { ReportDraft } from "./draft.ts"
-
-/** 差し戻す `cards` の塊の、塊の並びでの 1 始まりの位置と項目数。`unlabeled` は `label` の空の項目があること。 */
-export type CardsFault = {
-  readonly position: number
-  readonly itemCount: number
-  readonly unlabeled: boolean
-}
 
 export type BlockViolation =
   /** `note` の塊が3つ以上ある（「1つのレポートに1〜2個まで」）。 */

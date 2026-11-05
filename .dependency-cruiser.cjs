@@ -327,6 +327,7 @@ const outsideWorldRules = [
 
 module.exports = {
   forbidden: [
+    rule("no-circular", {}, { circular: true }),
     ...layerRules,
     ...sharedRules,
     ...serverFeatureRules,

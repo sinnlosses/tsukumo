@@ -29,6 +29,7 @@ import { useInquiryJump } from "../../../stores/inquiry-jump.ts"
 import { navigateTo, useScreen } from "../../../stores/screen.tsx"
 import { useSession, useTurnRunning } from "../../../stores/session.ts"
 import { useTurnSelection } from "../../../stores/turn-selection.ts"
+import type { CurrentWorkState } from "../domain/current-work-state.ts"
 import {
   backgroundSummaryLabel,
   currentWorkStepGroups,
@@ -46,14 +47,6 @@ import {
 
 /** 閉じている間に出す手順の件数（これより多いと「すべて見る」の口が出る）。 */
 const MAX_COLLAPSED_STEPS = 5
-
-/**
- * 状態の語（上ほど強い）。
- * `background` はターンは終わっているがバックグラウンドタスクが動いているとき。
- * `diary` は成果の日記書きで日記を書いているとき（`state.diaryWriting.kind === "writing"`）。
- * 会話のターンと並んで書いているので作業中より弱い（作業中が動いていれば作業中を出す）。
- */
-export type CurrentWorkState = "stopped" | "pending" | "running" | "diary" | "background" | "idle"
 
 const WORK_WORD_LABEL = {
   stopped: "止まっている",

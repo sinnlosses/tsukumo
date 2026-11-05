@@ -11,7 +11,7 @@ import type {
   PortraitCardModel,
 } from "../../page/character/domain/character-edit-model.ts"
 import { Button } from "../../ui/button/button.tsx"
-import type { ScreenPartExample } from "./screen-part-example.tsx"
+import type { ScreenPartExample } from "./screen-part-example-type.ts"
 
 const noop = (): void => {}
 

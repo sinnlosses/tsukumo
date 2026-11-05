@@ -12,7 +12,7 @@ import { PresentationalCurrentStep } from "../../page/conversation/components/ma
 import { PresentationalPhaseList } from "../../page/conversation/components/main-view/presentational-phase-list.tsx"
 import { PresentationalReportOutline } from "../../page/conversation/components/main-view/presentational-report-outline.tsx"
 import { PresentationalWorkStrip } from "../../page/conversation/components/main-view/presentational-work-strip.tsx"
-import type { ScreenPartExample } from "./screen-part-example.tsx"
+import type { ScreenPartExample } from "./screen-part-example-type.ts"
 
 const noop = (): void => {}
 

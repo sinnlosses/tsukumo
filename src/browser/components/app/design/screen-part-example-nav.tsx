@@ -14,7 +14,7 @@ import type {
 import { PresentationalScreenNav } from "../../domain/screen-nav/presentational-screen-nav.tsx"
 import { PresentationalSidebarFooter } from "../../domain/sidebar/components/presentational-sidebar-footer.tsx"
 import type { SidebarFooterView } from "../../domain/sidebar/hooks/use-sidebar-footer.ts"
-import type { ScreenPartExample } from "./screen-part-example.tsx"
+import type { ScreenPartExample } from "./screen-part-example-type.ts"
 
 const noop = (): void => {}
 
