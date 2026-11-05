@@ -36,7 +36,7 @@
   にだけ掛かって svg の要素の class はハッシュ名にならない。印は2つに分ける。
   選ぶためだけの印（CSS の規則を持たない印）は、語彙（`REPORT_NOTATION_NAMES`）に足すと
   「`.report-<名前>` の CSS まで届くか」の検査に落ち、足さなければハッシュ名にならない素の class
-  として DOM に残るので、属性にする（`data-reveal-caption` と同じ）。見た目を付ける印は、語彙と
+  として DOM に残るので、属性にする。見た目を付ける印は、語彙と
   `.report-<名前>` の CSS を一緒に足す。属性を足すと期待値のファイルが動き、更新と `tw verify` の
   打ち直しが E2E 全件の所要を増やす。
 - **`report` の部品・欄・説明文を足す計画は、登録の時点で `node scripts/dev/addition-margin.ts` の余白を裏取りの行に書き、`scripts/shared/addition-budget.ts` の上限を上げる段（実装の最初の段に含めてよい）を入れる。**

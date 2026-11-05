@@ -165,7 +165,12 @@ function WrittenBubble(props: {
   readonly onRevealed: () => void
   readonly revisionId: number
 }): ReactElement {
-  const rootRef = useReportReveal(props.reveal, props.revisionId, props.onRevealed)
+  const rootRef = useReportReveal(
+    props.reveal,
+    props.revisionId,
+    props.onRevealed,
+    styles["achievement-diary-pop"],
+  )
   return (
     <div ref={rootRef} className={styles["achievement-diary-bubble"]}>
       <Text element="p" size="body" tone="ink" weight="inherit" className="">

@@ -1,4 +1,4 @@
-// `Options`（候補の採否）を Markdown に戻さず直接描く。「採る」の行は筆を留める。
+// `Options`（候補の採否）を Markdown に戻さず直接描く。
 
 import clsx from "clsx"
 import type { ReactElement } from "react"
@@ -8,20 +8,19 @@ import type { LeafValue } from "../../../../../../shared/report/report-leaf-valu
 import { Badge } from "../../../../ui/badge/badge.tsx"
 import { InlineCodeText, InlineMarkdown, noteLeafClassNames } from "../markdown/markdown.tsx"
 import styles from "./main-view.module.css"
-import { LeafFold, ReportLeafFrame, ReportPausePoint } from "./report-leaf-frame.tsx"
+import { LeafFold, ReportLeafFrame } from "./report-leaf-frame.tsx"
 
 type OptionsPart = Extract<A2uiReportComponent, { readonly component: "Options" }>
 type Option = OptionsPart["items"][number]
 
 const VERDICTS = {
-  adopt: { className: undefined, mark: "✓", label: "採る", tone: "ok", pauses: true },
-  consider: { className: undefined, mark: "〜", label: "検討", tone: "warn", pauses: false },
+  adopt: { className: undefined, mark: "✓", label: "採る", tone: "ok" },
+  consider: { className: undefined, mark: "〜", label: "検討", tone: "warn" },
   reject: {
     className: noteLeafClassNames.optionReject,
     mark: "–",
     label: "採らない",
     tone: "neutral",
-    pauses: false,
   },
 } as const satisfies Record<
   Option["verdict"],
@@ -30,7 +29,6 @@ const VERDICTS = {
     mark: string
     label: string
     tone: "ok" | "warn" | "neutral"
-    pauses: boolean
   }
 >
 
@@ -64,10 +62,9 @@ export function OptionsLeaf(props: {
 
 function OptionRow(props: { readonly item: Option }): ReactElement {
   const { name, verdict, reason } = props.item
-  const { className, mark, label, tone, pauses } = VERDICTS[verdict]
-  const rowClassName = clsx(noteLeafClassNames.option, className)
-  const row = (
-    <>
+  const { className, mark, label, tone } = VERDICTS[verdict]
+  return (
+    <div className={clsx(noteLeafClassNames.option, className)}>
       <span>
         <Badge tone={tone} shape="square" className={styles["verdict-badge"]}>
           <span aria-hidden="true">{mark}</span>
@@ -87,11 +84,6 @@ function OptionRow(props: { readonly item: Option }): ReactElement {
           </>
         )}
       </span>
-    </>
-  )
-  return pauses ? (
-    <ReportPausePoint className={rowClassName}>{row}</ReportPausePoint>
-  ) : (
-    <div className={rowClassName}>{row}</div>
+    </div>
   )
 }

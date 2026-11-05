@@ -30,11 +30,11 @@ const SHOWN_TURN_ID = 7
 
 const TIP: BrushTip = {
   turnId: SHOWN_TURN_ID,
-  phase: "writing",
+  phase: "drafting",
   x: 320,
   top: 180,
   bottom: 206,
-  stroke: "sweep",
+  arrivedCount: 1,
 }
 
 afterEach(() => {
@@ -75,14 +75,14 @@ describe("<MiniPortrait>（筆先に添うミニ立ち絵）", () => {
     expect(miniImage()).toBeNull()
   })
 
-  it("筆先が配られると出て、筆先の右・行の下端に置かれる", () => {
+  it("筆先が配られると出て、欄の右端・下端に右下を揃えて置かれる", () => {
     renderMiniPortrait(FIXTURE_CHARACTER)
     act(() => {
       publishBrushTip(TIP)
     })
 
     expect(miniImage()?.getAttribute("src")).toBe("/character/mini.png")
-    expect(placement().style.transform).toBe("translate3d(320px, 206px, 0) translateY(-100%)")
+    expect(placement().style.transform).toBe("translate3d(320px, 206px, 0) translate(-100%, -100%)")
   })
 
   it("alt はパックのミニ立ち絵の呼び名を名前に添え、呼び名の無いパックでは「ミニ立ち絵」に落ちる", () => {
@@ -106,22 +106,7 @@ describe("<MiniPortrait>（筆先に添うミニ立ち絵）", () => {
       publishBrushTip({ ...TIP, x: 96, top: 206, bottom: 232 })
     })
 
-    expect(placement().style.transform).toBe("translate3d(96px, 232px, 0) translateY(-100%)")
-  })
-
-  it("斜めの戻りをなぞっているあいだは、追従の間合いを差し替える印が付く", () => {
-    renderMiniPortrait(FIXTURE_CHARACTER)
-    act(() => {
-      publishBrushTip(TIP)
-    })
-
-    expect(placement().className).not.toContain("mini-portrait-returning")
-
-    act(() => {
-      publishBrushTip({ ...TIP, stroke: "return" })
-    })
-
-    expect(placement().className).toContain("mini-portrait-returning")
+    expect(placement().style.transform).toBe("translate3d(96px, 232px, 0) translate(-100%, -100%)")
   })
 
   it("書き終わっても消えず、本文の右下へ寄る（どの行の上にも居座らない）", () => {
@@ -139,17 +124,18 @@ describe("<MiniPortrait>（筆先に添うミニ立ち絵）", () => {
     expect(placement().className).toContain("mini-portrait-resting")
   })
 
-  it("残っているあいだは、降りる動きの間合いに差し替わる", () => {
+  it("残っているあいだは、書いているあいだの間合いから降りる動きの間合いに差し替わる", () => {
     renderMiniPortrait(FIXTURE_CHARACTER)
     act(() => {
-      publishBrushTip({ ...TIP, stroke: "return" })
+      publishBrushTip(TIP)
     })
+    expect(placement().className).toContain("mini-portrait-drafting")
 
     act(() => {
       restBrushTip()
     })
 
-    expect(placement().className).not.toContain("mini-portrait-returning")
+    expect(placement().className).not.toContain("mini-portrait-drafting")
     expect(placement().className).toContain("mini-portrait-resting")
   })
 
@@ -182,7 +168,7 @@ describe("<MiniPortrait>（筆先に添うミニ立ち絵）", () => {
       publishBrushTip({ ...TIP, x: 12, top: 40, bottom: 66 })
     })
 
-    expect(placement().style.transform).toBe("translate3d(12px, 66px, 0) translateY(-100%)")
+    expect(placement().style.transform).toBe("translate3d(12px, 66px, 0) translate(-100%, -100%)")
   })
 
   it("縮小する素材が無いパック（mini も portraits.default も無い）では出ない", () => {

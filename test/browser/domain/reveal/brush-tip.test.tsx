@@ -17,13 +17,13 @@ function readTip(): string {
     }
     // やり取りの番号も読む（筆先はそれを出したやり取りのものでしかない。`BrushTip`）。
     const place = `${String(tip.turnId)}:${String(tip.x)},${String(tip.top)},${String(tip.bottom)}`
-    text = tip.phase === "writing" ? `${place},${tip.stroke}` : `${place},残っている`
+    text = tip.phase === "drafting" ? `${place},書いている` : `${place},残っている`
   })
   stop()
   return text
 }
 
-/** 位置を除いた筆先（どのやり取りのどの画か）を描く。 */
+/** 位置を除いた筆先（どのやり取りのどの種別か）を描く。 */
 function StanceProbe(): string {
   const stance = useBrushStance()
   return stance === undefined ? "筆先なし" : `${String(stance.turnId)}:${stance.motion}`
@@ -40,20 +40,20 @@ describe("筆先（BrushTip）", () => {
   })
 
   it("配られた筆先が読める", () => {
-    publishBrushTip({ turnId: 3, phase: "writing", x: 120, top: 40, bottom: 60, stroke: "sweep" })
+    publishBrushTip({ turnId: 3, phase: "drafting", x: 120, top: 40, bottom: 60, arrivedCount: 1 })
 
-    expect(readTip()).toBe("3:120,40,60,sweep")
+    expect(readTip()).toBe("3:120,40,60,書いている")
   })
 
   it("書き終わると、最後に書いた位置に残る（消えない）", () => {
-    publishBrushTip({ turnId: 3, phase: "writing", x: 120, top: 40, bottom: 60, stroke: "return" })
+    publishBrushTip({ turnId: 3, phase: "drafting", x: 120, top: 40, bottom: 60, arrivedCount: 1 })
 
     restBrushTip()
 
     expect(readTip()).toBe("3:120,40,60,残っている")
   })
 
-  it("一度も書けなかった演出は、前に残した筆先を消さない", () => {
+  it("書いていない演出は、前に残した筆先を消さない", () => {
     publishBrushTip({ turnId: 3, phase: "resting", x: 120, top: 40, bottom: 60 })
 
     restBrushTip()
@@ -64,27 +64,27 @@ describe("筆先（BrushTip）", () => {
   it("次に書き始めると、そちらへ移る", () => {
     publishBrushTip({ turnId: 3, phase: "resting", x: 120, top: 40, bottom: 60 })
 
-    publishBrushTip({ turnId: 3, phase: "writing", x: 8, top: 300, bottom: 320, stroke: "sweep" })
+    publishBrushTip({ turnId: 3, phase: "drafting", x: 8, top: 300, bottom: 320, arrivedCount: 1 })
 
-    expect(readTip()).toBe("3:8,300,320,sweep")
+    expect(readTip()).toBe("3:8,300,320,書いている")
   })
 })
 
 describe("useBrushStance（位置を除いた筆先）", () => {
-  it("どのやり取りのどの画かが読め、書き終わると resting になる", () => {
+  it("どのやり取りのどの種別かが読め、書き終わると resting になる", () => {
     render(<StanceProbe />)
 
     act(() => {
       publishBrushTip({
         turnId: 3,
-        phase: "writing",
+        phase: "drafting",
         x: 120,
         top: 40,
         bottom: 60,
-        stroke: "return",
+        arrivedCount: 1,
       })
     })
-    expect(screen.getByText("3:return")).toBeDefined()
+    expect(screen.getByText("3:drafting")).toBeDefined()
 
     act(() => {
       restBrushTip()

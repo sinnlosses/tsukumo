@@ -17,7 +17,7 @@ import {
 } from "react"
 import { isDeepEqual } from "remeda"
 
-import { REVEAL_PENDING_ATTRIBUTE } from "../../../../../../domain/reveal/paint.ts"
+import { REVEAL_PENDING_ATTRIBUTE } from "../../../../../../domain/reveal/start-pop.ts"
 import { useBeforePaintSync } from "../../../../../../hooks/use-before-paint-sync.ts"
 import { useExternalSync } from "../../../../../../hooks/use-external-sync.ts"
 import { useUnmountEffect } from "../../../../../../hooks/use-mount-effect.ts"
@@ -249,7 +249,7 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
     }
 
     function readHeadings(headedIds: readonly number[]): void {
-      // 筆がまだ届いていない節は並べない。
+      // 演出がまだ出していない節は並べない。
       const items = readableOutlineItems(content, headedIds)
       itemsRef.current = items
       const next = items.map((item): ReportOutlineEntry => ({
@@ -268,7 +268,7 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
 
     readHeadingsRef.current = readHeadings
     readHeadings(latestHeadedIds())
-    // 見出しの増減と、畳みの開閉・筆の到着の印だけを見る。字が伸びるだけの変化では読み直さない。
+    // 見出しの増減と、畳みの開閉・節が出た印だけを見る。字が伸びるだけの変化では読み直さない。
     const observer = new MutationObserver(() => {
       readHeadings(latestHeadedIds())
     })

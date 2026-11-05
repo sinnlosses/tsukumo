@@ -54,6 +54,20 @@
   font-family: var(--font-diary);
   line-height: 2;
 }
+/* 書き上がった段落を、吹き出しの中で少しだけ持ち上げて浮かべる。 */
+.achievement-diary-pop {
+  animation: achievement-diary-pop 320ms ease-out both;
+}
+@keyframes achievement-diary-pop {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
 /* 日記がまだ無い・書いている・書けなかった、どれも点線の枠。 */
 .achievement-diary-bubble-empty {
   padding: var(--space-lg) var(--space-xl);

@@ -1,10 +1,10 @@
-// 筆先（いま本文を書いている筆の先。塊の上をZ字になぞる）を配る。
+// 筆先（いまレポートを書いている場所。次の部品・次の節が出る欄）を配る。ミニ立ち絵はここに立つ。
 //
 // `SessionState` には入れない。サーバから来るものではなく、ブラウザの描画のあいだだけ存在する値だから。
 //
 // 書き上げたあとも筆先は消えない。
 // 書き終わった位置に `resting` として残り、次に書き始めたときだけそちらへ移る。
-// undefined に戻るのは、まだ一度も書いていないときと、測れないフレームだけ。
+// undefined に戻るのは、まだ一度も書いていないときだけ。
 //
 // ただし筆先はやり取り1つに属する（`turnId`）。
 // 座標は本文の入れ物の原点基準なので、次の依頼で本文が入れ替わると、同じ座標の先には違う本文があり、残った筆先が新しい本文の上へ浮く（画面で出た）。
@@ -22,23 +22,11 @@ import { useShallow } from "zustand/react/shallow"
 export const BRUSH_ORIGIN_ATTRIBUTE = "data-brush-origin"
 
 /**
- * いまなぞっている画の種別。Z字のどの画かでミニ立ち絵の追従の間合いが変わる。
- *
- * - `sweep`: 横画。左から右へ文字を出しながら進む
- * - `return`: 斜めの戻り。行末から次の帯の頭へ筆を上げたまま戻る（文字は出さない）
- */
-export type BrushStroke = "sweep" | "return"
-
-/**
  * 筆先の位置。本文の入れ物（{@link BRUSH_ORIGIN_ATTRIBUTE} を付けた要素）の左上が原点で、ビューポート座標ではない。
  * 追従する側はその入れ物の中に `position: absolute` で置く。
  *
  * 原点を本文側に取るのは、書き終わった筆先がそこに残るから。
  * ビューポート基準のまま残すと、本文を転がしたときに関係ない場所へ浮いたまま居座る。
- *
- * `top` / `bottom` はいま書いている帯（Z字の1画）の上端と下端。
- * 帯はトピック（見出しから次の見出しまで）の行を上下に割ったもので、要素をまたいで伸びる。
- * 行が1つしか取れないトピックでは、その上端と下端がそのまま入る。
  */
 type BrushPlace = {
   readonly x: number
@@ -49,9 +37,8 @@ type BrushPlace = {
 /**
  * 筆先。書いている最中と、書き終わってそこに残っているのを1つの印で見分ける。
  *
- * - `writing`: なぞっている最中。`stroke` はどの画かの印で、位置と同じ1つの値の中に持つ（画ごとに別の口で配ると、位置と種別がずれたフレームができる）
- * - `resting`: 書き終わってその場に残っている。位置は帯ではなく最後の行が終わったところ（帯の右端はその帯でいちばん長い行の右なので、短い行で終わる本文では右へ外れる）。次に書き始めるまで消えないので、なぞる画も持たない
- * - `drafting`: 書いている途中のレポートで次の部品を待っている。位置は帯ではなく次の欄（`top` / `bottom` はその上端と下端、`x` はその右端）。`arrivedCount` はそれまでに届いた部品の数で、増えたら追従する側が跳ねる
+ * - `drafting`: 次の部品・次の節が出るのを待っている。位置はその欄（`top` / `bottom` はその上端と下端、`x` はその右端）。`arrivedCount` はそれまでに出た部品・節の数で、増えたら追従する側が跳ねる
+ * - `resting`: 書き終わってその場に残っている。次に書き始めるまで消えない
  */
 export type BrushTip = BrushPlace & {
   /**
@@ -59,19 +46,15 @@ export type BrushTip = BrushPlace & {
    * 別のやり取りが出ているあいだ、座標の先には違う本文があるので、追従する側はここを見て引っ込む。
    */
   readonly turnId: number
-} & (
-    | { readonly phase: "writing"; readonly stroke: BrushStroke }
-    | { readonly phase: "resting" }
-    | { readonly phase: "drafting"; readonly arrivedCount: number }
-  )
+} & ({ readonly phase: "resting" } | { readonly phase: "drafting"; readonly arrivedCount: number })
 
 export function publishBrushTip(next: BrushTip | undefined): void {
   useBrushTipStore.setState({ tip: next })
 }
 
 /**
- * 書いていた筆先を最後に配ったところに残す。演出が終わるときの落とし先で、使うのは本文の末尾が測れなかったときと、書いている途中のレポートが外れたとき。
- * 書いていなければ何もしない（測れないまま終わった演出が、前に残した筆先を消さないようにする）。
+ * 書いていた筆先を最後に配ったところに残す。演出が終わるときの落とし先。
+ * 書いていなければ何もしない（前に残した筆先を消さないようにする）。
  */
 export function restBrushTip(): void {
   const tip = useBrushTipStore.getState().tip
@@ -87,18 +70,18 @@ export function restBrushTip(): void {
   })
 }
 
-/** 追従の間合いを決める画の種別。書き終わって残っているあいだは `resting`、書いている途中のレポートで次の部品を待つあいだは `drafting`。 */
-export type BrushMotion = BrushStroke | "resting" | "drafting"
+/** 追従の間合いを決める種別。書いているあいだは `drafting`、書き終わって残っているあいだは `resting`。 */
+export type BrushMotion = BrushTip["phase"]
 
-/** 筆先のうち、位置を除いたもの。値が変わるのは画が切り替わるときと書き終わりだけ。 */
+/** 筆先のうち、位置を除いたもの。値が変わるのは書き始めと書き終わりだけ。 */
 export type BrushStance = {
   readonly turnId: number
   readonly motion: BrushMotion
 }
 
 /**
- * いまの筆先の、どのやり取りのどの画か（まだ一度も書かれていなければ undefined）。
- * 位置は読まない。位置まで購読すると、筆が進むフレームごとに描き直しになる（位置は {@link subscribeBrushTip}）。
+ * いまの筆先の、どのやり取りのどの種別か（まだ一度も書かれていなければ undefined）。
+ * 位置は読まない。位置まで購読すると、筆先が動くたびに描き直しになる（位置は {@link subscribeBrushTip}）。
  */
 export function useBrushStance(): BrushStance | undefined {
   return useBrushTipStore(
@@ -124,5 +107,5 @@ type BrushTipState = {
 const useBrushTipStore = create<BrushTipState>()(() => ({ tip: undefined }))
 
 function stanceOf(tip: BrushTip): BrushStance {
-  return { turnId: tip.turnId, motion: tip.phase === "writing" ? tip.stroke : tip.phase }
+  return { turnId: tip.turnId, motion: tip.phase }
 }

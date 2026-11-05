@@ -1,35 +1,16 @@
 // レポートを「書き上げていくように見せる」演出の速さを `localStorage` に持つ。
 // 読めない・欠けている値は既定（`standard`）へ畳む。
 //
-// 具体の ms 値（`REVEAL_TIMING`）もここに置く。
-// 演出の計算は渡された `RevealTiming` を使うだけで、値を持たない。
+// 具体の ms 値（`POP_INTERVAL_MS`）もここに置く。
 //
-// `off` は物差しを持たない。
-// 「切る」は演出そのものを走らせない選択で、`useReportReveal` が `revealSpeed === "off"` を見て `startReveal` を呼ばずに済ませる（本文はすぐ全部出て、ミニ立ち絵の筆も出ない）。
-// だから `RevealTiming` の対応表は `standard` / `fast` の2つだけで足りる。
+// `off` は間隔を持たない。
+// 「切る」は演出そのものを走らせない選択で、`useReportReveal` が `revealSpeed === "off"` を見て `startPop` を呼ばずに済ませる（本文はすぐ全部出て、ミニ立ち絵も出ない）。
 
 import { z } from "zod"
 
 import { localPreference, RAW_STRING_CODEC } from "../utils/local-preference.ts"
 
 export type RevealSpeed = "standard" | "fast" | "off"
-
-/** 塊1つぶんの時間を決める物差し。 */
-export type RevealTiming = {
-  /** 文字1つぶんの持ち時間（ms）。筆の速さはこの値で決まる（同じ道を倍の時間で通れば、半分の速さになる）。 */
-  readonly msPerCharacter: number
-  /**
-   * トピック1つに使ってよい時間の下限（ms）。下限が大きいのは、1回のZ字をゆっくり書くため。
-   * 短いトピックでも2画を書き切るので、文字数に素直に比例させると筆が飛んで見える。
-   */
-  readonly minBlockMs: number
-  /**
-   * トピック1つに使ってよい時間の上限（ms）。下限も上限も塊ごとに掛け、レポート全体には掛けない。
-   * 全体に予算を置いて按分すると、長いレポートほど1文字が速くなり、目で追える速さという狙いがレポートの長さで崩れる。
-   * 塊の数で全体が伸びるのは受け入れる（全体の上限は `planReveal` が超えた分を一度に出す形で掛ける）。
-   */
-  readonly maxBlockMs: number
-}
 
 const DEFAULT_REVEAL_SPEED: RevealSpeed = "standard"
 
@@ -47,18 +28,15 @@ const preference = localPreference(
   RAW_STRING_CODEC,
 )
 
-/**
- * `standard` / `fast` の物差し。`fast` は `standard` の半分。
- * `msPerCharacter`・`minBlockMs`・`maxBlockMs` の3つを比で保たないと、短い塊だけ下限に張り付いて速さが変わらなく見える。
- */
-const REVEAL_TIMING = {
-  standard: { msPerCharacter: 40, minBlockMs: 2400, maxBlockMs: 8000 },
-  fast: { msPerCharacter: 20, minBlockMs: 1200, maxBlockMs: 4000 },
-} satisfies Readonly<Record<Exclude<RevealSpeed, "off">, RevealTiming>>
+/** 塊を1つポンと出してから次の塊を出すまでの間隔（ms）。`fast` は `standard` の半分。 */
+const POP_INTERVAL_MS = {
+  standard: 240,
+  fast: 120,
+} satisfies Readonly<Record<Exclude<RevealSpeed, "off">, number>>
 
-/** `off` は物差しを持たないので受け取らない。 */
-export function revealTimingOf(speed: Exclude<RevealSpeed, "off">): RevealTiming {
-  return REVEAL_TIMING[speed]
+/** `off` は間隔を持たないので受け取らない。 */
+export function popIntervalOf(speed: Exclude<RevealSpeed, "off">): number {
+  return POP_INTERVAL_MS[speed]
 }
 
 export const loadRevealSpeed: () => RevealSpeed = preference.load

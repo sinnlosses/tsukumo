@@ -1,4 +1,4 @@
-// 演出の途中の clip-path / opacity を表にする整形が、隠れている・途中・図の opacity を読み分けることを見る。
+// 演出の途中の data-reveal / opacity を表にする整形が、まだ出していない節と印の無い opacity を読み分けることを見る。
 
 import { describe, expect, test } from "vitest"
 
@@ -7,27 +7,20 @@ import {
   type RevealRow,
 } from "../../../../scripts/capture/lib/reveal-snapshot.ts"
 
-const hidden: RevealRow = {
+const pending: RevealRow = {
   index: 0,
   tag: "p",
   name: "paragraph",
-  clipPath: "inset(0px 0px 100%)",
-  opacity: "",
+  reveal: "pending",
+  opacity: "0",
 }
-const partial: RevealRow = {
-  index: 1,
-  tag: "h2",
-  name: "heading",
-  clipPath: "polygon(0px 0px, 588px 0px, 588px 4px, 91px 4px, 91px 26px, 0px 26px)",
-  opacity: "",
-}
-const figure: RevealRow = { index: 2, tag: "div", name: "chart", clipPath: "", opacity: "0.4" }
+const faded: RevealRow = { index: 1, tag: "div", name: "chart", reveal: "", opacity: "0.4" }
 
 describe("formatRevealSnapshot", () => {
   test("先頭の行に指定の時刻と実測の経過、要素の件数を出す", () => {
-    const [header] = formatRevealSnapshot(1500, { nowMs: 4300, seenAtMs: 2800, rows: [hidden] })
+    const [header] = formatRevealSnapshot(1500, { nowMs: 4300, seenAtMs: 2800, rows: [pending] })
     expect(header).toBe(
-      "reveal-at 1500ms（演出の開始から 1500ms）。書いている要素 1件（書き終えた要素は含まない）",
+      "reveal-at 1500ms（演出の開始から 1500ms）。印か opacity を持つ要素 1件（出し終えた要素は含まない）",
     )
   })
 
@@ -36,16 +29,15 @@ describe("formatRevealSnapshot", () => {
     expect(header).toContain("開始時刻は控えられていない")
   })
 
-  test("隠れている要素・途中の polygon・図の opacity を1行ずつ出す", () => {
+  test("まだ出していない節と、印の無い opacity を1行ずつ出す", () => {
     const lines = formatRevealSnapshot(1000, {
       nowMs: 3000,
       seenAtMs: 2000,
-      rows: [hidden, partial, figure],
+      rows: [pending, faded],
     })
     expect(lines.slice(1)).toEqual([
-      "  0 p paragraph: 隠れている",
-      `  1 h2 heading: ${partial.clipPath}`,
-      "  2 div chart: clip-path なし / opacity 0.4",
+      "  0 p paragraph: data-reveal pending / opacity 0",
+      "  1 div chart: data-reveal なし / opacity 0.4",
     ])
   })
 })

@@ -1,10 +1,10 @@
 // 筆先に添うミニ立ち絵。レポートの上に出てよい唯一の立ち絵で、書いている様子を分身として見せる。
 //
 // キャラビューの立ち絵は消さない。こちらは明確に小さくして見分ける（縁取りと暈は `turn-card/mini-portrait.css`）。
-// `<Portrait>` は共有するが、4つの動き（呼吸・待っている間の移動・完了の反応・失敗でびくっ）は渡さない（ここが持つ動きは筆先への追従と、書いている途中のレポートでの書く仕草だけ）。
+// `<Portrait>` は共有するが、4つの動き（呼吸・待っている間の移動・完了の反応・失敗でびくっ）は渡さない（ここが持つ動きは筆先への追従と、書く仕草だけ）。
 //
 // 出る条件は「その筆先が、いま出ているやり取りのものであること」。
-// 筆先を配るのは、いちばん新しいターンの最後の確定レポートの演出と、いちばん新しいターンの書いている途中のレポート（`useDraftPen`）だけで、`prefers-reduced-motion: reduce`・演出の速さ「切る」・過去のターンではどちらも配らないので、ここに同じ判定を書き足さなくても出ない。
+// 筆先を配るのは、いちばん新しいターンの最後の確定レポートを節ごとに出す演出（`startPop`）と、いちばん新しいターンの書いている途中のレポート（`useDraftPen`）だけで、`prefers-reduced-motion: reduce`・演出の速さ「切る」・過去のターンではどちらも配らないので、ここに同じ判定を書き足さなくても出ない。
 //
 // 書き上げたあとも消えない。筆先が `resting` になってその場に留まり、本文と一緒に転がる。
 // 座標が本文の入れ物の原点基準なので、`position: absolute` で置くだけで貼り付く。
@@ -87,29 +87,17 @@ export function MiniPortrait(props: MiniPortraitProps): ReactElement | undefined
   )
 }
 
-/**
- * 追従の間合いを画ごとに変える。横画のあいだは遅れて寄り、斜めの戻りのあいだは筆先に張り付く。
- * 戻りは横画の4〜7倍の速さで動くので、同じ間合いのままでは立ち絵の幅より大きく置いていかれる。
- * 長さは `turn-card/mini-portrait.css` の2つの custom property が持つので、ここは class を選ぶだけにする。
- *
- * 書き終わりに隅へ降りる動き（`resting`）にも、そのための間合いを1つ持たせる。
- * 降りるのは立ち絵の高さぶんの縦移動なので、横画の間合い（0.05s）では落ちたように見える。
- */
+/** 書いているあいだ（次の欄へ滑って移る）と、書き終わりに隅へ降りるあいだで、置き方と間合いを差し替える。 */
 function followClassName(stance: BrushStance): string {
   return clsx(styles["mini-portrait"], motionClassName(stance.motion))
 }
 
-/** 追従の間合いを差し替える印。横画のあいだは素のままなので、そのときだけ undefined。 */
-function motionClassName(motion: BrushMotion): string | undefined {
+function motionClassName(motion: BrushMotion): string {
   switch (motion) {
     case "resting":
       return styles["mini-portrait-resting"]
-    case "return":
-      return styles["mini-portrait-returning"]
     case "drafting":
       return styles["mini-portrait-drafting"]
-    case "sweep":
-      return undefined
   }
 }
 
@@ -140,26 +128,19 @@ function followBrushTip(element: HTMLDivElement): () => void {
 }
 
 /**
- * 筆先の右・帯の下端に立たせる（なぞっている帯と同じ高さで、書き進む先の側）。
+ * 次の欄の右端に右端を、欄の下端に足元を揃える（草稿の待ちの欄の罫線は左の7割だけなので、立つのは右の余白）。
  * 座標は本文の入れ物の原点基準なので、置いた先は本文と一緒に転がる。
+ * 置き方は `left` ではなく `transform` で、次の欄へ移るときは縦横が同時に動くので、飛ばずに滑る。
  *
  * 書き終わって残っているあいだは、本文の右下の隅へ寄る（置くのは `.mini-portrait-resting`）。
  * 隅は本文の末尾に敷いた床（{@link MiniPortrait}）の上なので、どの行にも重ならない。
- *
- * 置き方は `left` ではなく `transform`。
- * CSS の遷移（`transition`）が毎フレーム引き直されるので、横画では少し遅れてばねで寄り、戻りでは（間合いが 0 なので）そのフレームの筆先にそのまま乗る。
- * 行が変わるときも縦横が同時に動くので、飛ばずに滑る。
  */
 function followTransform(tip: BrushTip): string {
   // 止まっているあいだは座標を使わない（右下の隅に付けるのは CSS の側）。
   if (tip.phase === "resting") {
     return "none"
   }
-  // 次の欄では、欄の右端に右端を、欄の下端に足元を揃える（欄の罫線は左の7割だけなので、立つのは右の余白）。
-  if (tip.phase === "drafting") {
-    return `translate3d(${px(tip.x)}, ${px(tip.bottom)}, 0) translate(-100%, -100%)`
-  }
-  return `translate3d(${px(tip.x)}, ${px(tip.bottom)}, 0) translateY(-100%)`
+  return `translate3d(${px(tip.x)}, ${px(tip.bottom)}, 0) translate(-100%, -100%)`
 }
 
 function px(value: number): string {

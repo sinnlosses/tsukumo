@@ -1,10 +1,9 @@
-import { cleanup, fireEvent, render, type RenderResult } from "@testing-library/react"
+import { cleanup, fireEvent, render } from "@testing-library/react"
 import type { ReactElement } from "react"
-import { afterEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { saveRevealSpeed } from "../../../../src/browser/domain/reveal-speed.ts"
 import {
-  BRUSH_ORIGIN_ATTRIBUTE,
   publishBrushTip,
   subscribeBrushTip,
 } from "../../../../src/browser/domain/reveal/brush-tip.ts"
@@ -12,36 +11,49 @@ import { useReportReveal } from "../../../../src/browser/domain/reveal/use-repor
 
 const REVEAL_SPEED_STORAGE_KEY = "tsukumo-reveal-speed:v1"
 
-// 実際に見えている範囲（`clip-path` のポリゴン）はレイアウトの実測に乗るので、DOM だけの
-// ここでは確かめない（`docs/architecture/testing.md`「手で確かめること」。目視で確認する）。
-// ここで守るのは隠す・出し切る・止めるの配線だけ。
+// ポンの見え方（animation）は実ブラウザでしか確かめられないので、ここで守るのは隠す・順に出す・打ち切るの配線だけ。
 
 /** 演出を掛ける相手のやり取り（配る筆先に添う番号。`BrushTip`）。 */
 const TURN_ID = 4
 
-/** 筆で書く節の長さの目安を超える本文（`SHORT_REPORT_WEIGHT` は 200）。 */
-const LONG_TEXT = "架空の本文。".repeat(40)
+const POP_CLASS_NAME = "probe-pop"
 
-function Probe(props: { readonly reveal: boolean; readonly bodyText: string }): ReactElement {
-  const rootRef = useReportReveal(props.reveal, TURN_ID, () => {})
+/** 標準の速さで、塊を1つ出してから次を出すまでの間隔（ms）。 */
+const STANDARD_INTERVAL_MS = 240
+
+/** 節の欄1つの長さ。短いレポートの目安（`SHORT_REPORT_WEIGHT` は 200）を3つで超える。 */
+const SECTION_TEXT = "架空の本文。".repeat(15)
+
+function Probe(props: {
+  readonly reveal: boolean
+  readonly sections: readonly string[]
+}): ReactElement {
+  const rootRef = useReportReveal(props.reveal, TURN_ID, () => {}, POP_CLASS_NAME)
 
   return (
     <div data-testid="root" ref={rootRef}>
       <div data-report-region="head">
         <p className="conclusion">架空の結論</p>
       </div>
-      <div data-report-region="section" data-report-section="0">
-        <p className="body">{props.bodyText}</p>
-        <div className="chart-block">
-          <canvas />
+      {props.sections.map((text, index) => (
+        <div
+          key={text + String(index)}
+          data-report-region="section"
+          data-report-section={String(index)}
+        >
+          <h4>{`架空の節 ${String(index)}`}</h4>
+          <p>{text}</p>
         </div>
+      ))}
+      <div data-report-region="retrospective">
+        <p>架空の振り返り</p>
       </div>
     </div>
   )
 }
 
-function renderProbe(reveal: boolean, bodyText = LONG_TEXT): RenderResult {
-  return render(<Probe reveal={reveal} bodyText={bodyText} />)
+function renderProbe(reveal: boolean, count = 3): void {
+  render(<Probe reveal={reveal} sections={Array(count).fill(SECTION_TEXT)} />)
 }
 
 function root(): HTMLElement {
@@ -52,178 +64,114 @@ function root(): HTMLElement {
   return node
 }
 
-function paragraph(): HTMLElement {
-  const node = root().querySelector("p.body")
+function child(selector: string): HTMLElement {
+  const node = root().querySelector(selector)
   if (!(node instanceof HTMLElement)) {
-    throw new Error("段落が見つからない")
+    throw new Error(`${selector} が見つからない`)
   }
   return node
 }
 
-function conclusion(): HTMLElement {
-  const node = root().querySelector("p.conclusion")
-  if (!(node instanceof HTMLElement)) {
-    throw new Error("結論が見つからない")
-  }
-  return node
+/** 根の直下の子ごとの見え方（隠れている・ポンで出た・素のまま）。頭の欄から順に並ぶ。 */
+function states(): readonly string[] {
+  return [...root().children].map((node) => {
+    if (!(node instanceof HTMLElement)) {
+      return "?"
+    }
+    if (node.style.opacity === "0" && node.getAttribute("data-reveal") === "pending") {
+      return "隠れている"
+    }
+    return node.classList.contains(POP_CLASS_NAME) ? "出た" : "素"
+  })
 }
 
-function figure(): HTMLElement {
-  const node = root().querySelector(".chart-block")
-  if (!(node instanceof HTMLElement)) {
-    throw new Error("図の部品が見つからない")
-  }
-  return node
-}
-
-/** 残った筆先の居場所。書いている最中は区別だけ見る（受け取りは呼んだその場で1回届くので、すぐ外す）。 */
+/** いまの筆先の区別と、筆先を出したやり取り。受け取りは呼んだその場で1回届くので、すぐ外す。 */
 function brushTipText(): string {
   let text = "筆先なし"
   const stop = subscribeBrushTip((tip) => {
-    if (tip === undefined) {
-      return
+    if (tip !== undefined) {
+      text = `${tip.phase}:${String(tip.turnId)}`
     }
-    text =
-      tip.phase === "resting"
-        ? `残っている:${String(tip.turnId)}:${String(tip.x)},${String(tip.top)},${String(tip.bottom)}`
-        : "書いている"
   })
   stop()
   return text
 }
 
-/**
- * 行に見立てた矩形（`left, top, width, height`）。最後だけ短い——書き終わりの筆先を
- * 「帯の右端（いちばん長い行の右）」に置くと、ここで 400 に飛ぶ。
- */
-const LINE_BOXES = [
-  [0, 100, 400, 40],
-  [0, 140, 400, 40],
-  [0, 180, 400, 40],
-  [0, 220, 150, 40],
-] as const
-
-/** 本文の入れ物の矩形。筆先の座標はここの左上が原点になる。 */
-const ORIGIN_BOX = [0, 50, 400, 600] as const
-
-/**
- * happy-dom はレイアウトを持たない（どの矩形も 0）ので、筆先の居場所を見る回だけ測れる値に
- * 差し替える。図の部品（`.chart-block`）は行ではなく box をそのまま1行として測られる
- * （`lineBoxesOf`）ので、文字の行を作らずに行を並べられる。
- */
-function measureBoxes(): () => void {
-  const original = Element.prototype.getBoundingClientRect
-  Element.prototype.getBoundingClientRect = function boxOf(this: Element): DOMRect {
-    const line = LINE_BOXES[Number(this.getAttribute("data-line") ?? "-1")]
-    if (line !== undefined) {
-      return new DOMRect(...line)
-    }
-    if (this.hasAttribute(BRUSH_ORIGIN_ATTRIBUTE)) {
-      return new DOMRect(...ORIGIN_BOX)
-    }
-    return original.call(this)
-  }
-
-  return () => {
-    Element.prototype.getBoundingClientRect = original
-  }
-}
-
-/** 行に見立てた図を並べた本文（`measureBoxes` が矩形を名乗る）。 */
-function LinesProbe(): ReactElement {
-  const rootRef = useReportReveal(true, TURN_ID, () => {})
-
-  return (
-    <div ref={rootRef}>
-      {LINE_BOXES.map((_line, index) => (
-        // oxlint-disable-next-line react/no-array-index-key -- 並びが変わらない固定の矩形
-        <div className="chart-block" data-line={index} key={index}>
-          {/* `measure.ts` の `lineBoxesOf` が図の部品で測るのは入れ物ではなく描かれた
-              `canvas` 自身なので、行に見立てた矩形はこちらにも付ける。 */}
-          <canvas data-line={index} />
-        </div>
-      ))}
-    </div>
-  )
-}
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] })
+})
 
 afterEach(() => {
   cleanup()
+  vi.useRealTimers()
   publishBrushTip(undefined)
   localStorage.removeItem(REVEAL_SPEED_STORAGE_KEY)
 })
 
-describe("useReportReveal（見せる範囲を進める配線）", () => {
+describe("useReportReveal（塊を順にポンで出す配線）", () => {
   it("演出の相手でなければ、何も隠さない", () => {
     renderProbe(false)
 
     expect(root().hasAttribute("data-revealing")).toBe(false)
-    expect(paragraph().style.clipPath).toBe("")
-    expect(figure().style.opacity).toBe("")
+    expect(states()).toEqual(["素", "素", "素", "素", "素"])
   })
 
-  it("演出の相手なら、描画したその場で塊を隠す（文字は clip-path、図は opacity）", () => {
+  it("描画したその場で、頭の欄を除いて隠し、先頭の節だけをポンで出す", () => {
     renderProbe(true)
 
     expect(root().getAttribute("data-revealing")).toBe("yes")
-    expect(paragraph().style.clipPath).toBe("inset(0 0 100% 0)")
-    expect(figure().style.opacity).toBe("0")
+    expect(states()).toEqual(["素", "出た", "隠れている", "隠れている", "隠れている"])
   })
 
-  it("結論は隠さない（筆で書くのは節だけ）", () => {
+  it("間隔ごとに次の節を出し、節の後ろの欄は直前の節と一緒に出て、出し切ったら演出を終える", () => {
     renderProbe(true)
 
-    expect(conclusion().style.clipPath).toBe("")
-    expect(conclusion().hasAttribute("data-reveal")).toBe(false)
-    expect(paragraph().getAttribute("data-reveal")).toBe("pending")
+    vi.advanceTimersByTime(STANDARD_INTERVAL_MS)
+    expect(states()).toEqual(["素", "出た", "出た", "隠れている", "隠れている"])
+
+    vi.advanceTimersByTime(STANDARD_INTERVAL_MS)
+    expect(states()).toEqual(["素", "出た", "出た", "出た", "出た"])
+    expect(root().hasAttribute("data-revealing")).toBe(false)
+  })
+
+  it("「速い」なら間隔は標準の半分", () => {
+    saveRevealSpeed("fast")
+    renderProbe(true)
+
+    vi.advanceTimersByTime(STANDARD_INTERVAL_MS / 2)
+    expect(states()).toEqual(["素", "出た", "出た", "隠れている", "隠れている"])
+  })
+
+  it("節が多くても全体は3秒に収める", () => {
+    renderProbe(true, 30)
+
+    vi.advanceTimersByTime(3000)
+    expect(root().hasAttribute("data-revealing")).toBe(false)
   })
 
   it("節が短いレポートは演出せず、何も隠さない", () => {
-    renderProbe(true, "架空の短い本文。")
+    render(<Probe reveal={true} sections={["架空の短い本文。"]} />)
 
     expect(root().hasAttribute("data-revealing")).toBe(false)
-    expect(paragraph().style.clipPath).toBe("")
+    expect(states()).toEqual(["素", "素", "素"])
   })
 
-  it("キー入力で即座に全部出し、届いていない印も全部外れる", () => {
+  it("キー入力で残りを即座に出し、届いていない印も外れる", () => {
     renderProbe(true)
 
     fireEvent.keyDown(window)
 
     expect(root().hasAttribute("data-revealing")).toBe(false)
-    expect(paragraph().style.clipPath).toBe("")
-    expect(figure().style.opacity).toBe("")
-    expect(paragraph().hasAttribute("data-reveal")).toBe(false)
-    expect(figure().hasAttribute("data-reveal")).toBe(false)
+    expect(states()).toEqual(["素", "出た", "出た", "出た", "出た"])
+    expect(child("[data-report-section='2']").hasAttribute("data-reveal")).toBe(false)
   })
 
-  it("クリック（ポインタを下ろした時点）で即座に全部出す", () => {
+  it("クリック（ポインタを下ろした時点）で残りを即座に出す", () => {
     renderProbe(true)
 
     fireEvent(window, new Event("pointerdown"))
 
     expect(root().hasAttribute("data-revealing")).toBe(false)
-    expect(paragraph().style.clipPath).toBe("")
-  })
-
-  it("打ち切っても、筆先は止まった場所ではなく最後の行の終わりに残る", () => {
-    const restore = measureBoxes()
-    try {
-      render(
-        <div data-brush-origin="">
-          <LinesProbe />
-        </div>,
-      )
-
-      fireEvent.keyDown(window)
-
-      // 最後の行は 220〜260 の右 150。原点が 50 から始まるので、入れ物基準で 150,170,210。
-      // 打ち切った時点では筆は1フレームも進んでいないので、止まった場所に残すなら何も出ない。
-      // 帯の右端に残すなら、最後の行より長い行に引かれて x が 400 になる。
-      expect(brushTipText()).toBe("残っている:4:150,170,210")
-    } finally {
-      restore()
-    }
   })
 
   it("スクロール（ホイール・指）では打ち切らない", () => {
@@ -233,103 +181,54 @@ describe("useReportReveal（見せる範囲を進める配線）", () => {
     fireEvent(window, new Event("touchmove"))
 
     expect(root().getAttribute("data-revealing")).toBe("yes")
-    expect(paragraph().style.clipPath).toBe("inset(0 0 100% 0)")
   })
 
   it("部品が外れたら、隠したままにしない", () => {
-    const { unmount } = renderProbe(true)
-    const hidden = paragraph()
+    const { unmount } = render(<Probe reveal={true} sections={Array(3).fill(SECTION_TEXT)} />)
+    const hidden = child("[data-report-section='2']")
 
     unmount()
 
-    expect(hidden.style.clipPath).toBe("")
+    expect(hidden.style.opacity).toBe("")
   })
 })
 
-/** 100字の節を `count` 個並べた本文（標準の速さで1節 4000ms）。 */
-function SectionsProbe(props: { readonly count: number }): ReactElement {
-  const rootRef = useReportReveal(true, TURN_ID, () => {})
-
-  return (
-    <div data-testid="root" ref={rootRef}>
-      {Array.from({ length: props.count }, (_unused, index) => (
-        <div key={index} data-report-region="section" data-report-section={String(index)}>
-          <p className="section">{"あ".repeat(100)}</p>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-describe("useReportReveal（演出の全体の上限）", () => {
-  afterEach(() => {
-    vi.useRealTimers()
-  })
-
-  function sections(): readonly HTMLElement[] {
-    return [...root().querySelectorAll("p.section")].filter(
-      (node): node is HTMLElement => node instanceof HTMLElement,
+describe("useReportReveal（筆先）", () => {
+  function renderInOrigin(): void {
+    render(
+      <div data-brush-origin="">
+        <Probe reveal={true} sections={Array(3).fill(SECTION_TEXT)} />
+      </div>,
     )
   }
 
-  function startAt(count: number): void {
-    vi.useFakeTimers({ toFake: ["requestAnimationFrame", "cancelAnimationFrame", "performance"] })
-    render(<SectionsProbe count={count} />)
-  }
+  it("出しているあいだは次の節で書いている筆先を配り、出し切ったら休ませる", () => {
+    renderInOrigin()
+    expect(brushTipText()).toBe(`drafting:${String(TURN_ID)}`)
 
-  it("上限の前に書き終わる短いレポートは、その時刻で全部出し、演出を終える", () => {
-    startAt(2)
-
-    vi.advanceTimersByTime(7000)
-    expect(root().hasAttribute("data-revealing")).toBe(true)
-
-    vi.advanceTimersByTime(1100)
-    expect(root().hasAttribute("data-revealing")).toBe(false)
-    expect(sections().map((node) => node.style.clipPath)).toEqual(["", ""])
+    vi.advanceTimersByTime(STANDARD_INTERVAL_MS * 2)
+    expect(brushTipText()).toBe(`resting:${String(TURN_ID)}`)
   })
 
-  it("上限を超える長いレポートは、10秒の手前では後ろが隠れたまま、10秒で残りが一度に出る", () => {
-    startAt(8)
+  it("原点の印が無ければ筆先を配らない", () => {
+    renderProbe(true)
 
-    vi.advanceTimersByTime(9900)
-    expect(root().hasAttribute("data-revealing")).toBe(true)
-    expect(sections().map((node) => node.style.clipPath !== "")).toEqual([
-      false,
-      false,
-      true,
-      true,
-      true,
-      true,
-      true,
-      true,
-    ])
-
-    vi.advanceTimersByTime(200)
-    expect(root().hasAttribute("data-revealing")).toBe(false)
-    expect(sections().map((node) => node.style.clipPath)).toEqual(Array(8).fill(""))
+    expect(brushTipText()).toBe("筆先なし")
   })
 })
 
 describe("useReportReveal（書き上げる演出の速さが「切る」のとき）", () => {
-  it("演出の相手でも、マウント時点で「切る」が保存されていれば何も隠さない", () => {
-    saveRevealSpeed("off")
-
-    renderProbe(true)
-
-    expect(root().hasAttribute("data-revealing")).toBe(false)
-    expect(paragraph().style.clipPath).toBe("")
-    expect(figure().style.opacity).toBe("")
-  })
-
-  it("「切る」のときは筆先も配らない", () => {
+  it("演出の相手でも、マウント時点で「切る」が保存されていれば何も隠さず、筆先も配らない", () => {
     saveRevealSpeed("off")
 
     render(
       <div data-brush-origin="">
-        <Probe reveal={true} bodyText={LONG_TEXT} />
+        <Probe reveal={true} sections={Array(3).fill(SECTION_TEXT)} />
       </div>,
     )
 
+    expect(root().hasAttribute("data-revealing")).toBe(false)
+    expect(states()).toEqual(["素", "素", "素", "素", "素"])
     expect(brushTipText()).toBe("筆先なし")
   })
 })

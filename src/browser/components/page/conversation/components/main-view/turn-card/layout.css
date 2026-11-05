@@ -67,27 +67,13 @@
   background: var(--surface);
   min-width: 0;
 }
-/* 書き上げる演出を飛ばす口。ステップの右上に置き、演出中（本文の根に `data-revealing` が立っているあいだ）だけ出す。
-   字は 12px のままで、押せる面は高さ・幅とも 24px 以上にする。 */
 .main-step {
   position: relative;
 }
-.reveal-skip {
-  display: none;
-  position: absolute;
-  top: 0.25rem;
-  right: 0.5rem;
-  z-index: 1;
-  min-width: 24px;
-  min-height: 24px;
-  padding: 0 var(--space-sm);
-}
-/* `a2ui-react-report` は、部品の一覧で描く本文（`A2uiReport`）の根を包む `display: contents` の入れ物で、本文の根と「全部出す」の口が `.main-step` の孫になる。
-   `.main-step` の子を指す規則は、この入れ物の子も同じに指す。 */
-:is(.main-step, .main-step > a2ui-react-report):has(> [data-revealing]) > .reveal-skip {
-  display: block;
-}
-/* `.detail-block`（レポート本文の入れ物）本体は report-notation.module.css にあり、CSS Modules は class 名をファイルごとにハッシュ化するので、この選択子だけではそちらの `.detail-block` を指せない。
+/* `a2ui-react-report` は、部品の一覧で描く本文（`A2uiReport`）の根を包む `display: contents` の入れ物で、本文の根が `.main-step` の孫になる。
+   `.main-step` の子を指す規則は、この入れ物の子も同じに指す。
+
+   `.detail-block`（レポート本文の入れ物）本体は report-notation.module.css にあり、CSS Modules は class 名をファイルごとにハッシュ化するので、この選択子だけではそちらの `.detail-block` を指せない。
    `Report` が両方のファイルの `.detail-block` を同じ要素に重ねて付ける（このファイルの側はこの選択子のためだけに出てくる綴りで、見た目は持たない）。 */
 :is(.main-step, .main-step > a2ui-react-report) > .detail-block:last-child {
   margin-bottom: 0;
@@ -148,11 +134,6 @@
   /* 本文の入れ物や頭は別のファイルの `display` を持つので、読み込みの順に関わらず勝たせる。 */
   .phone-hidden {
     display: none !important;
-  }
-  /* 本文が隠れているあいだは、飛ばす口だけを残さない。 */
-  :is(.main-step, .main-step > a2ui-react-report):has(> .phone-hidden[data-revealing])
-    > .reveal-skip {
-    display: none;
   }
 }
 

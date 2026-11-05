@@ -7,7 +7,6 @@ import type { ReactElement, ReactNode } from "react"
 
 import { foldInlineMarks } from "../../../../../../shared/report/inline-mark.ts"
 import type { LeafValue } from "../../../../../../shared/report/report-leaf-value.ts"
-import { PAUSE_POINT_CLASS_NAME } from "../../domain/report-pause-point.ts"
 import {
   CompareSwap,
   figureClassName,
@@ -16,10 +15,6 @@ import {
   leafFrameClassNames,
   type SwapSettings,
 } from "../markdown/markdown.tsx"
-
-/** 書き上げる演出（`planReveal`）が題の行・欄外注の列を見分ける印の属性。 */
-const REVEAL_CAPTION_ATTRIBUTE = "data-reveal-caption"
-const REVEAL_GUTTER_ATTRIBUTE = "data-reveal-gutter"
 
 const CAPTION_LABELS = { figure: "図", table: "表" } as const
 
@@ -83,7 +78,7 @@ export function FoldedLeafFrame(
   return (
     <div className={leafFrameClassNames.withGutter}>
       {captioned}
-      <div className={leafFrameClassNames.gutter} {...{ [REVEAL_GUTTER_ATTRIBUTE]: "" }}>
+      <div className={leafFrameClassNames.gutter}>
         {gutterNotes.map((note, index) => (
           <aside key={`${String(index)}:${note.text}`} className={leafFrameClassNames.gutterNote}>
             <p>
@@ -119,17 +114,6 @@ export function LeafFold(props: {
   )
 }
 
-/**
- * 筆を留める印（`report-pause-point`）を付ける入れ物。
- * `className` は葉が持つ class で、印はその要素に足す。
- */
-export function ReportPausePoint(props: {
-  readonly className: string
-  readonly children: ReactNode
-}): ReactElement {
-  return <div className={clsx(props.className, PAUSE_POINT_CLASS_NAME)}>{props.children}</div>
-}
-
 function CaptionedBox(props: {
   readonly className: string
   readonly swap: false | SwapSettings
@@ -146,7 +130,7 @@ function CaptionedBox(props: {
 
 function LeafCaption(props: { readonly label: string; readonly title: string }): ReactElement {
   return (
-    <div className={leafFrameClassNames.caption} {...{ [REVEAL_CAPTION_ATTRIBUTE]: "" }}>
+    <div className={leafFrameClassNames.caption}>
       <span className={leafFrameClassNames.captionNumber}>{props.label}</span>
       {props.title !== "" && (
         <span className={leafFrameClassNames.captionText}>

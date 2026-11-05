@@ -592,16 +592,8 @@
                                                 "data-report-section": "0"
                                               },
                                               "children": [
-                                                {
-                                                  "tag": "div",
-                                                  "attributes": {
-                                                    "data-reveal-caption": ""
-                                                  },
-                                                  "children": [
-                                                    "表 1",
-                                                    "直したファイルと結果（架空の数）"
-                                                  ]
-                                                },
+                                                "表 1",
+                                                "直したファイルと結果（架空の数）",
                                                 {
                                                   "tag": "span",
                                                   "attributes": {
@@ -838,16 +830,8 @@
                                                     }
                                                   ]
                                                 },
-                                                {
-                                                  "tag": "div",
-                                                  "attributes": {
-                                                    "data-reveal-caption": ""
-                                                  },
-                                                  "children": [
-                                                    "表 2",
-                                                    "目盛りの数（架空の数）"
-                                                  ]
-                                                },
+                                                "表 2",
+                                                "目盛りの数（架空の数）",
                                                 {
                                                   "tag": "table",
                                                   "children": [

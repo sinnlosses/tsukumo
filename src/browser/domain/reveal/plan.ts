@@ -1,52 +1,15 @@
-// レポートを「書き上げていくように見せる」演出で、どの塊をいつ出すかを決める（純粋な割り当て。DOM は読むだけで書き換えない）。
-//
-// DOM は完成品のまま置き、見せる範囲だけを進めるので、ここが返すのは「塊ごとの出し始めと出し終わりの時刻」だけになる。
+// レポートを「書き上げていくように見せる」演出で、どの要素をどの順に出すかを決める（DOM は読むだけで書き換えない）。
 //
 // 塊は「トピック」。`report` の節1つが1トピックで、境目は `Report` が節ごとに作る欄の入れ物（`data-report-section`）で知る。
-// 段落や表の1つ1つではない（細かく割ると筆が何度も折り返して落ち着かず、目で追えなくなる）。
-//
-// 塊1つぶんの時間を決める物差し（`RevealTiming`）は呼び出し側から受け取り、ここは値を持たない。
-//
-// トピックの中の要素は、見せ方が2種類ある:
-//
-// - 文字の要素（`text`）: `clip-path` で見せる範囲を進める
-// - 図・グラフの要素（`figure`）: 文字の位置が取れない・取っても意味が無いので `opacity` で出す。mermaid と Chart.js は非同期に描いたあとで中身が入れ替わるので、中身ではなく入れ物の class（`mermaid` / `chart-block`）で見分ける（描き終わる前でも後でも同じ判定になる）
-//
-// 筆を留める時間（`RevealPause`）は塊の書く時間の外に足すので、留めがあっても書く速さは変わらない。
+// 段落や表の1つ1つではない（細かく割ると出る回数が増えて落ち着かず、目で追えなくなる）。
 
 import { sumBy } from "remeda"
 
-import type { RevealTiming } from "../reveal-speed.ts"
-import { clamp } from "./paint.ts"
-
-/** 見せる範囲を進められる要素。`clip-path` と `opacity` を持つもの（レポートの塊は全部これ）。 */
+/** 出す順を決められる要素。`opacity` を持つもの（レポートの塊は全部これ）。 */
 export type RevealElement = HTMLElement | SVGElement
 
-type RevealBlockKind = "text" | "figure"
-
-/** トピックを構成する要素1つ。 */
-export type RevealMember = {
-  readonly element: RevealElement
-  readonly kind: RevealBlockKind
-}
-
-/**
- * 書き終えたところで筆を留める1か所。`atMs` は留めを除いた「書く時間の軸」上の位置
- * （`topicDurationMs` が返す持ち時間のうちどこまで進んだら留めるか）で、実際の時間帯は
- * 塊が並ぶにつれて後ろへずれる（{@link RevealBlock.endMs} に足し込まれる）。
- */
-type RevealPause = {
-  readonly atMs: number
-  readonly durationMs: number
-}
-
-/** 塊（トピック）1つと、それを書いている時間帯（演出を始めてからの経過ミリ秒）。 */
-export type RevealBlock = {
-  readonly members: readonly [RevealMember, ...(readonly RevealMember[])]
-  readonly startMs: number
-  readonly endMs: number
-  readonly pauses: readonly RevealPause[]
-}
+/** ポンで出す塊1つ。根の直下の子を出す順に並べたもの。 */
+export type PopBlock = readonly [RevealElement, ...(readonly RevealElement[])]
 
 /**
  * 図・グラフに与える重み（文字数に換算した値）。
@@ -54,253 +17,45 @@ export type RevealBlock = {
  */
 export const FIGURE_WEIGHT = 100
 
+/**
+ * 出す対象の重み（文字数。図は1つにつき {@link FIGURE_WEIGHT}）の合計がこれに満たないレポートは、演出せずに出す。
+ * 速さの設定には左右されない。
+ */
+export const SHORT_REPORT_WEIGHT = 200
+
 const FIGURE_SELECTOR = ".mermaid, .mermaid-broken, .chart-block, canvas, svg, img"
 
-/** 欄の入れ物（`Report` が付ける `data-report-region`）。中の子に降りて塊を拾う。 */
-const REGION_SELECTOR = "[data-report-region]"
-
-/** 頭の欄（結論と検証結果）。筆の対象にせず、最初から出す。 */
+/** 頭の欄（結論と検証結果）。演出の対象にせず、最初から出す。 */
 const HEAD_REGION_SELECTOR = '[data-report-region="head"]'
 
 /** 節の欄。1つが新しいトピックを始める。 */
 const SECTION_REGION_SELECTOR = "[data-report-section]"
 
-/**
- * 筆で書く対象の重み（文字数。図は {@link FIGURE_WEIGHT}）の合計がこれに満たないレポートは、演出せずに出す。
- * 速さの設定には左右されない。
- */
-export const SHORT_REPORT_WEIGHT = 200
-
-/** 最初から出す要素。節の見出し（`SectionHeading` の `h4`・`SubHeading` の `h5`）と図表の題と欄外注の列。 */
-const UNWRITTEN_SELECTOR = "h4, h5, [data-reveal-caption], [data-reveal-gutter]"
-
-/**
- * 題つきの図表の包みと、塊と欄外注の列の外枠。包みごと隠すと題・欄外注の列も隠れるので、包みは対象にせず中の本体を対象にする。
- * 題の行と欄外注の列の印は `NotationBlock` が足す（語彙の class 名はハッシュ名に置き換わるため）。
- */
-const WRAPPER_SELECTOR = ":has(> [data-reveal-caption]), :has(> [data-reveal-gutter])"
-
-/** 演出の全体の上限（ms）。書く速さの設定に関わらず、超えた分は上限の時刻に一度に出す。 */
-const TOTAL_LIMIT_MS = 10_000
-
-/**
- * 筆を留める対象の印（`PAUSE_POINT_CLASS_NAME` と同じ class 名。`NOTE_CLASSES` の注意・異常と
- * `OPTION_VERDICTS` の「採る」に付く）。記法の語彙に無い名前なので `NotationBlock` の置き換えを
- * 受けず、レンダー後も素の class 名のまま残る。
- */
-const PAUSE_POINT_SELECTOR = ".report-pause-point"
-
-/**
- * 留める長さ（ms）。書く速さの設定（標準 / 速い）に関わらず一定にする
- * （読む速さのつまみではなく、大事な塊を指す強調の間なので、書く速さと連動させない）。
- */
-const PAUSE_MS = 400
-
-/** 筆で書く対象が短く、演出せずに出すレポートか。 */
+/** 出す対象が短く、演出せずに出すレポートか。 */
 export function isShortReport(root: Element): boolean {
-  const weight = sumBy(topicsOf(root).flat(), (element) => memberWeight(memberOf(element)))
-  return weight < SHORT_REPORT_WEIGHT
+  return sumBy(popBlocksOf(root).flat(), weightOf) < SHORT_REPORT_WEIGHT
 }
 
 /**
- * 根の直下の要素をトピックへまとめ、書く順（文書の順）に時間を割り当てる。
- * 1つぶんの時間はそのトピックの大きさで決まる（レポート全体の長さに左右されない）。
- *
- * 塊の間に隙間は空けない（前の塊が終わった時刻が次の塊の始まり）。
- * 全体は {@link TOTAL_LIMIT_MS} までで、上限をまたぐ塊はそこまでに書き切り、その後ろの塊は上限の時刻に一度に出す。
+ * 根の直下の子を、ポンで出す塊へまとめる（出す順は文書の順）。
+ * 頭の欄は入れない（結論と検証結果は最初から出す）。節の欄は新しい塊を始め、ほかの子（振り返り・お願い・Markdown 1本の欄、入れ物でない要素）は直前の塊へ足す。
  */
-export function planReveal(root: Element, timing: RevealTiming): readonly RevealBlock[] {
-  return limitTotal(planUnlimited(root, timing))
-}
-
-/**
- * 塊1つの中の進み具合（0〜1）。書き始めと書き終わりをゆっくり、途中を速くする（3次のイーズインアウト。真ん中の速さは等速の3倍）。
- *
- * ミニ立ち絵が「そこで書いている」ように見えるのは筆が遅いところだけなので、出だしと締めで見せて、読み手が待つだけの真ん中を速く抜ける。
- * 塊の持ち時間は変えないので、レポート全体の長さは変わらない。
- *
- * 留め（{@link RevealPause}）がある塊では、留めている間は書く時間の軸が進まないので、進み具合もその位置で足踏みする。
- */
-export function blockProgress(block: RevealBlock, elapsedMs: number): number {
-  const pauseMs = sumBy(block.pauses, (pause) => pause.durationMs)
-  const contentSpan = block.endMs - block.startMs - pauseMs
-  if (contentSpan <= 0) {
-    return 1
-  }
-
-  const sinceStart = clamp(elapsedMs - block.startMs, 0, block.endMs - block.startMs)
-  const linear = clamp(writeElapsedOf(block.pauses, sinceStart) / contentSpan, 0, 1)
-  return linear < 0.5 ? 4 * linear ** 3 : 1 - (2 - 2 * linear) ** 3 / 2
-}
-
-function planUnlimited(root: Element, timing: RevealTiming): readonly RevealBlock[] {
-  return topicsOf(root)
-    .flatMap(topicMembers)
-    .reduce<{
-      blocks: readonly RevealBlock[]
-      at: number
-    }>(
-      (acc, members) => {
-        const contentMs = topicDurationMs(members, timing)
-        const pauses = pausesOf(members, contentMs)
-        const endMs = acc.at + contentMs + sumBy(pauses, (pause) => pause.durationMs)
-        return {
-          blocks: [...acc.blocks, { members, startMs: acc.at, endMs, pauses }],
-          at: endMs,
-        }
-      },
-      { blocks: [], at: 0 },
-    ).blocks
-}
-
-function limitTotal(blocks: readonly RevealBlock[]): readonly RevealBlock[] {
-  return blocks.map((block) => {
-    if (block.endMs <= TOTAL_LIMIT_MS) {
-      return block
-    }
-    if (block.startMs >= TOTAL_LIMIT_MS) {
-      return { ...block, startMs: TOTAL_LIMIT_MS, endMs: TOTAL_LIMIT_MS, pauses: [] }
-    }
-    return { ...block, endMs: TOTAL_LIMIT_MS, pauses: [] }
-  })
-}
-
-/**
- * 根の直下の子を、筆で書く要素のトピックへまとめる（文書の順）。
- * 頭の欄は飛ばす（結論と検証結果は最初から出す）。節の欄は新しいトピックを始め、ほかの子（振り返り・お願い・Markdown 1本の欄、入れ物でない要素）は直前のトピックへ足す。
- * 節の見出しと題は最初から出すので、対象に入れない。要素の無いトピックも返しうる。
- */
-function topicsOf(root: Element): readonly (readonly RevealElement[])[] {
+export function popBlocksOf(root: Element): readonly PopBlock[] {
   return [...root.children]
     .filter(isRevealElement)
     .filter((child) => !child.matches(HEAD_REGION_SELECTOR))
-    .reduce<readonly (readonly RevealElement[])[]>((topics, child) => {
-      const elements = writtenElementsOf(child)
-      const last = topics.at(-1)
+    .reduce<readonly PopBlock[]>((blocks, child) => {
+      const last = blocks.at(-1)
       return child.matches(SECTION_REGION_SELECTOR) || last === undefined
-        ? [...topics, elements]
-        : [...topics.slice(0, -1), [...last, ...elements]]
+        ? [...blocks, [child]]
+        : [...blocks.slice(0, -1), [...last, child]]
     }, [])
 }
 
-/** 根の直下の子1つの、筆で書く要素。欄の入れ物なら中の子に降りる。 */
-function writtenElementsOf(child: RevealElement): readonly RevealElement[] {
-  const elements = child.matches(REGION_SELECTOR)
-    ? [...child.children].filter(isRevealElement)
-    : [child]
-  return elements.flatMap(unwrapped).filter((element) => !element.matches(UNWRITTEN_SELECTOR))
-}
-
-/** 要素が無ければトピックを作らない。 */
-function topicMembers(
-  elements: readonly RevealElement[],
-): readonly (readonly [RevealMember, ...(readonly RevealMember[])])[] {
-  const [first, ...rest] = elements
-  return first === undefined ? [] : [[memberOf(first), ...rest.map(memberOf)]]
-}
-
-function memberOf(element: RevealElement): RevealMember {
-  return { element, kind: blockKind(element) }
-}
-
-/** 包み（{@link WRAPPER_SELECTOR}）なら中の要素に降りる。欄外注の列の外枠の中の題つきの外枠にも降りる。 */
-function unwrapped(element: RevealElement): readonly RevealElement[] {
-  return element.matches(WRAPPER_SELECTOR)
-    ? [...element.children].filter(isRevealElement).flatMap(unwrapped)
-    : [element]
-}
-
-function topicDurationMs(members: readonly RevealMember[], timing: RevealTiming): number {
-  const weight = sumBy(members, memberWeight)
-  return Math.min(Math.max(weight * timing.msPerCharacter, timing.minBlockMs), timing.maxBlockMs)
-}
-
-/**
- * トピックの中で筆を留める位置を、メンバーの文字数の重み（{@link memberWeight}）に比例して決める。
- * DOM の実測（行の位置）を使わないのは、Z字の帯がトピックにつき2本しか無く、帯の途中の位置を
- * 測っても対象がどちらの帯にあるかしか分からないため。文字数の比例なら対象がトピックの中のどこに
- * あっても一様に決まり、DOM の測り直しも要らない。
- */
-function pausesOf(
-  members: readonly RevealMember[],
-  contentDurationMs: number,
-): readonly RevealPause[] {
-  const totalWeight = sumBy(members, memberWeight)
-  if (totalWeight <= 0) {
-    return []
-  }
-
-  return members.reduce<{ readonly pauses: readonly RevealPause[]; readonly weightBefore: number }>(
-    (acc, member) => {
-      const weight = memberWeight(member)
-      const pauses = pauseTargetsOfMember(member).map((target) => ({
-        atMs:
-          ((acc.weightBefore + targetOffsetWithin(member, target) * weight) / totalWeight) *
-          contentDurationMs,
-        durationMs: PAUSE_MS,
-      }))
-      return { pauses: [...acc.pauses, ...pauses], weightBefore: acc.weightBefore + weight }
-    },
-    { pauses: [], weightBefore: 0 },
-  ).pauses
-}
-
-/** メンバーの中で筆を留める対象。メンバー自身が対象なら1つ（`note` の注意・異常）、そうでなければ中の子（`options` の「採る」の行）を文書の順で拾う。 */
-function pauseTargetsOfMember(member: RevealMember): readonly RevealElement[] {
-  if (member.element.matches(PAUSE_POINT_SELECTOR)) {
-    return [member.element]
-  }
-  return [...member.element.querySelectorAll(PAUSE_POINT_SELECTOR)].filter(isRevealElement)
-}
-
-/**
- * 対象がメンバーの重みのうちどこまで進んだ位置にあるか（0〜1）。
- * 対象がメンバー自身なら末尾（1）。そうでなければ直下の子を文字数で数え、対象を含むところまでの累計を割合にする
- * （`options` の子はカード1枚ずつなので、直下の子だけを見れば足りる）。
- */
-function targetOffsetWithin(member: RevealMember, target: RevealElement): number {
-  if (target === member.element) {
-    return 1
-  }
-
-  const children = [...member.element.children].filter(isRevealElement)
-  const index = children.findIndex((child) => child === target || child.contains(target))
-  const totalChars = sumBy(children, textLength)
-  if (index === -1 || totalChars <= 0) {
-    return 1
-  }
-  return clamp(sumBy(children.slice(0, index + 1), textLength) / totalChars, 0, 1)
-}
-
-/** 留め（{@link RevealPause}）を差し引いた「書く時間の軸」上の経過（ms）。留めている間はその位置で足踏みする。 */
-function writeElapsedOf(pauses: readonly RevealPause[], sinceStart: number): number {
-  return pauses.reduce((remaining, pause) => {
-    if (remaining < pause.atMs) {
-      return remaining
-    }
-    return remaining < pause.atMs + pause.durationMs ? pause.atMs : remaining - pause.durationMs
-  }, sinceStart)
-}
-
-function memberWeight(member: RevealMember): number {
-  // 空の段落で時間が 0 にならないよう、文字の要素の重みは最低 1。
-  return member.kind === "figure" ? FIGURE_WEIGHT : Math.max(1, textLength(member.element))
-}
-
-/**
- * `clip-path` で進めるか、`opacity` で出すか。入れ物の class で見分ける。
- * mermaid は描き終わると `<svg>` に中身が入れ替わり、そこに文字（ラベル）が現れるので、文字の有無だけでは足りない。
- * 文字を1つも持たない要素（画像だけの段落など）も `opacity` で出す。
- */
-function blockKind(element: RevealElement): RevealBlockKind {
-  if (element.matches(FIGURE_SELECTOR) || element.querySelector(FIGURE_SELECTOR) !== null) {
-    return "figure"
-  }
-  return textLength(element) === 0 ? "figure" : "text"
-}
-
-function textLength(element: RevealElement): number {
-  return (element.textContent ?? "").trim().length
+function weightOf(element: RevealElement): number {
+  const figures =
+    (element.matches(FIGURE_SELECTOR) ? 1 : 0) + element.querySelectorAll(FIGURE_SELECTOR).length
+  return (element.textContent ?? "").trim().length + figures * FIGURE_WEIGHT
 }
 
 function isRevealElement(node: Element): node is RevealElement {

@@ -73,8 +73,7 @@ export const NOTATION_ENTRIES: readonly CatalogEntry[] = [
     homeSetup: { kind: "default" },
     workspaceSetup: { kind: "repository" },
     prepare: [{ kind: "scroll", selector: MERMAID_SELECTOR }],
-    // 図はレポートの末尾に近く、演出が終わるまで自動送りに送り位置を戻され続ける（冒頭の
-    // `skipReveal` の説明）。
+    // 図はレポートの末尾に近く、演出が終わるまで見えていない（冒頭の `skipReveal` の説明）。
     skipReveal: true,
     settle: SCENE_END_SETTLE,
   },

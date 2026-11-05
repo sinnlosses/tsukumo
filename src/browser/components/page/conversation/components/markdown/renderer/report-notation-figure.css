@@ -291,7 +291,7 @@
   }
   /* 番号つきの題を持つ図と表の包み（`report` の `image` / `mermaid` / `chart` / `compare` / `table` / `matrix` の塊から tsukumo が組む）。
    図は題が本体の下、表は題が本体の上。
-   `captioned-fit` は入れ物を本体の幅に縮め（書き上げる演出が筆の幅を入れ物の箱で測る）、
+   `captioned-fit` は入れ物を本体の幅に縮め、
    題の行は `contain: inline-size` で入れ物の幅の計算から外れ、入れ物の幅で折り返す。 */
   & .report-captioned {
     display: flex;

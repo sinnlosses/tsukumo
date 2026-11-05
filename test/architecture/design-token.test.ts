@@ -182,5 +182,4 @@ const EXCLUDED_DECLARATION_COUNTS: Readonly<Record<string, number>> = {
   "browser/components/page/character/character.module.css": 1,
   "browser/components/page/conversation/components/character-view/stage/speech-log.css": 1,
   "browser/components/page/conversation/components/dispatch/dispatch.module.css": 1,
-  "browser/components/page/conversation/components/main-view/turn-card/mini-portrait.css": 2,
 }

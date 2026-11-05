@@ -12,7 +12,7 @@
           { "tag": "button", "attributes": { "aria-pressed": "false" }, "children": ["案件"] },
           { "tag": "button", "attributes": { "aria-pressed": "true" }, "children": ["件数"] }
         ] },
-        { "tag": "div", "attributes": { "data-reveal-caption": "" }, "children": ["表 1"] },
+        "表 1",
         { "tag": "table", "children": [
           { "tag": "tbody", "children": [
             { "tag": "tr", "children": [{ "tag": "td", "children": ["架空の案件 あ"] }] },
@@ -22,7 +22,7 @@
       ] },
       { "tag": "div", "attributes": { "data-report-region": "section", "data-report-section": "1" }, "children": [
         { "tag": "h4", "children": ["架空の対照"] },
-        { "tag": "div", "attributes": { "data-reveal-caption": "" }, "children": ["表 2"] },
+        "表 2",
         { "tag": "table" }
       ] }
     ] }

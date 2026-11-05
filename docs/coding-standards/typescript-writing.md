@@ -110,9 +110,8 @@ DOM 要素の instanceof に絞れない、性質の違う `as` が `test/` の�
   キャストなしで済む（`test/server/chat/adapter/chat-archive.test.ts` の `readLines` を
   ジェネリックにした例、`test/architecture/server-feature.test.ts` の `flatMap` のコールバックに戻り値の
   注釈を付けた例など）
-- **構造が合わないだけなら、実際に合う値を作る。** `test/browser/domain/reveal/
-  brush-scroll.test.ts` は `getBoundingClientRect` の戻り値を `{ top, bottom } as unknown as
-  DOMRect` と偽装していたが、`DOMRect` はテスト環境（happy-dom）が持つ
+- **構造が合わないだけなら、実際に合う値を作る。** `getBoundingClientRect` の戻り値を
+  `{ top, bottom } as unknown as DOMRect` と偽装したテストがあったが、`DOMRect` はテスト環境（happy-dom）が持つ
   実物のクラスなので `new DOMRect(0, top, 0, bottom - top)` で本物を作れば済む。`NodeJS.
   ErrnoException` も `new Error(...) as NodeJS.ErrnoException` ではなく
   `Object.assign(new Error(...), { code })` で構造ごと満たせる

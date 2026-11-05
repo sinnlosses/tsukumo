@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { cleanup, render } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import type { MainViewReportBody } from "../../../../../../../src/shared/session/main-view-shape.ts"
@@ -38,43 +38,6 @@ afterEach(() => {
 function markdownBody(markdown: string): MainViewReportBody {
   return { kind: "markdown", markdown }
 }
-
-describe("Report（書き上げる演出を飛ばす口）", () => {
-  it("演出を掛けるレポートには「全部出す」の口を置き、掛けないレポートには置かない", () => {
-    const { rerender } = render(
-      <Report reveal={true} turnId={1} className="" body={markdownBody("段落")} />,
-    )
-    expect(screen.queryByRole("button", { name: "全部出す" })).not.toBeNull()
-
-    rerender(<Report reveal={false} turnId={1} className="" body={markdownBody("段落")} />)
-    expect(screen.queryByRole("button", { name: "全部出す" })).toBeNull()
-  })
-
-  it("本文が phone-hidden のとき、口は本文の兄弟として並ぶ（隠す CSS が `> .phone-hidden[data-revealing]` で口を引ける形）", () => {
-    const text = "架空の本文。".repeat(40)
-    const { container } = render(
-      <Report reveal={true} turnId={1} className="phone-hidden" body={markdownBody(text)} />,
-    )
-
-    const body = container.querySelector("[data-report-body]")
-    expect(body?.classList.contains("phone-hidden")).toBe(true)
-    expect(body?.hasAttribute("data-revealing")).toBe(true)
-    expect(screen.getByRole("button", { name: "全部出す" }).parentElement).toBe(body?.parentElement)
-  })
-
-  it("ボタンを押すと、ウィンドウで聞いている飛ばしの経路に乗って演出が終わる", () => {
-    const text = "架空の本文。".repeat(40)
-    const { container } = render(
-      <Report reveal={true} turnId={1} className="" body={markdownBody(text)} />,
-    )
-    const body = container.querySelector("[data-report-body]")
-    expect(body?.hasAttribute("data-revealing")).toBe(true)
-
-    fireEvent.pointerDown(screen.getByRole("button", { name: "全部出す" }))
-
-    expect(body?.hasAttribute("data-revealing")).toBe(false)
-  })
-})
 
 describe("Report（空行で塊に割り、塊ごとに memo）", () => {
   it("最初の描画では、すべての塊を1回ずつ描く", () => {

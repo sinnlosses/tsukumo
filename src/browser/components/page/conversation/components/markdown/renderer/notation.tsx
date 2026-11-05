@@ -41,12 +41,6 @@ const NOTE_LABELS = REPORT_NOTE_KINDS
 /** 項目数の class（`<名前>-of-<項目数>`）を足す塊。 */
 const COUNTED_BLOCKS = ["stats", "cols"] as const
 
-/** 書き上げる演出（`planReveal`）が題の行を見分ける印の属性。class はハッシュ名になり domain の層から選べない。 */
-const REVEAL_CAPTION_ATTRIBUTE = "data-reveal-caption"
-
-/** 書き上げる演出が欄外注の列（欄外注の並び）を見分ける印の属性。欄外注の列は最初から出す。 */
-const REVEAL_GUTTER_ATTRIBUTE = "data-reveal-gutter"
-
 type NotationBlockProps = JSX.IntrinsicElements["div"] & ExtraProps
 
 /**
@@ -72,16 +66,8 @@ export function NotationBlock(props: NotationBlockProps): ReactElement {
     )
   }
 
-  const isCaption = className !== undefined && classNameTokens(className).includes("caption")
-  const isGutter = className !== undefined && classNameTokens(className).includes("gutter")
-
   return (
-    <div
-      {...rest}
-      {...(isCaption ? { [REVEAL_CAPTION_ATTRIBUTE]: "" } : {})}
-      {...(isGutter ? { [REVEAL_GUTTER_ATTRIBUTE]: "" } : {})}
-      className={resolveNotationClassName(className)}
-    >
+    <div {...rest} className={resolveNotationClassName(className)}>
       {kind !== undefined && <NoteLabel kindName={kind[0]} label={kind[1]} />}
       {children}
     </div>

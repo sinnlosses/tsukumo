@@ -91,20 +91,20 @@ ADR 0025 の改訂の節）。値は `.tw/config.toml` にワークフローが�
 **書き上げる演出の速さは `localStorage` に持つ**（色と同じ並び。保存と読み取りは
 `src/browser/domain/reveal-speed.ts` に集める——歯車（`components/domain/screen-nav/`）とレポートの演出
 （`domain/reveal/use-report-reveal.ts`）の両方が読むので、機能どうしの import を増やさず
-`browser/domain/` へ置く。`docs/architecture.md`「全体構成」）。選択肢は3つ（既定は**標準**）:
+`browser/domain/` へ置く。`docs/architecture.md`「全体構成」）。選択肢は3つ（既定は**標準**）。
+値は、草稿の無い確定版の節を1つポンと出してから次の節を出すまでの間隔:
 
-| 選択肢 | 文字1つあたり  | 塊の下限 | 塊の上限 |
-| ------ | -------------- | -------- | -------- |
-| 標準   | 40ms           | 2400ms   | 8000ms   |
-| 速い   | 20ms           | 1200ms   | 4000ms   |
-| 切る   | （演出しない） | —        | —        |
+| 選択肢 | 節の間隔       |
+| ------ | -------------- |
+| 標準   | 240ms          |
+| 速い   | 120ms          |
+| 切る   | （演出しない） |
 
-- **速いは3つとも標準の半分**。下限・上限を一緒に半分にしないと、短い塊が下限に張り付いた
-  まま「速い」を選んでも速さが変わって見えない（`domain/reveal/plan.ts` の `topicDurationMs` が
-  塊の大きさをこの3値で時間に直す）
+- **速いは標準の半分**。どちらも演出の全体は3秒に収める（節が多いときは間隔を詰める。`domain/reveal/start-pop.ts` の `startPop`）
 - **切ると演出そのものを走らせない**。`domain/reveal/use-report-reveal.ts` の `useReportReveal` が
-  `revealSpeed === "off"` を見て `startReveal` を呼ばずに済ませるので、本文はマウントした時点で
-  すぐ全部出て、筆先に付くミニ立ち絵（13.6 冒頭の表・`docs/requirements.md` 4.3）も出ない
+  `revealSpeed === "off"` を見て `startPop` を呼ばずに済ませるので、本文はマウントした時点で
+  すぐ全部出て、筆先に付くミニ立ち絵（`docs/requirements/portrait-motion.md` 4.3）も出ない。
+  書いている途中のレポート（草稿）も、「切る」ではポンも待ちの罫線も出さない
 - **選び直しても、書いている最中の演出には効かない。** `useReportReveal` は速さも `reveal`
   （書き上げる相手かどうか）と同じく**マウントした時点の値だけ**を読む（`useState` の初期値
   として1回読むだけで、あとから歯車を触っても読み直さない）。次に書き始めたレポートから

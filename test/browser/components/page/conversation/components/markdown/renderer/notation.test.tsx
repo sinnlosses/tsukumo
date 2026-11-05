@@ -3,7 +3,6 @@ import type { Element, ElementContent } from "hast"
 import { afterEach, describe, expect, it } from "vitest"
 
 import {
-  NotationAside,
   NotationBlock,
   NotationInline,
 } from "../../../../../../../../src/browser/components/page/conversation/components/markdown/renderer/notation.tsx"
@@ -58,21 +57,6 @@ describe("NotationBlock（レポートの塊の記法）", () => {
     expect(labelTextClassName("note note-warn")).toBe("report-note-label-warn")
     expect(labelTextClassName("note note-ng")).toBe("report-note-label-ng")
     expect(labelTextClassName("note note-favor")).toBeNull()
-  })
-
-  it("欄外注の列の並び（gutter）にだけ演出の印が付き、外枠（with-gutter）には付かない", () => {
-    const { container } = render(
-      <NotationBlock className="with-gutter">
-        <NotationBlock className="gutter">
-          <NotationAside className="gutter-note">架空の出典</NotationAside>
-        </NotationBlock>
-      </NotationBlock>,
-    )
-
-    expect(
-      [...container.querySelectorAll("[data-reveal-gutter]")].map((element) => element.className),
-    ).toEqual(["report-gutter"])
-    expect(container.querySelector("aside")?.className).toBe("report-gutter-note")
   })
 
   describe("項目数の class（列数を全部か約数か1列にするための印）", () => {

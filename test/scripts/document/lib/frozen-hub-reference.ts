@@ -126,7 +126,7 @@ export const FROZEN_HUB_REFERENCE_COUNTS = {
   "docs/requirements/expression.md": 4,
   "docs/requirements/image-attachment.md": 2,
   "docs/requirements/launch-and-setting.md": 1,
-  "docs/requirements/portrait-motion.md": 3,
+  "docs/requirements/portrait-motion.md": 2,
   "docs/requirements/purpose-and-scope.md": 2,
   "docs/requirements/screen-layout.md": 4,
   "docs/requirements/session-restore-condition.md": 3,

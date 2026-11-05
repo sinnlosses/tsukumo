@@ -6,7 +6,7 @@ import {
   directLeafViewOf,
 } from "../../../../../../../src/browser/components/page/conversation/components/main-view/direct-leaf-view.tsx"
 import { loadMarkdown } from "../../../../../../../src/browser/components/page/conversation/components/markdown/markdown.tsx"
-import { newLeafHtml, renderDirectLeaf } from "../../../../../../fixture/direct-leaf-compare.tsx"
+import { renderDirectLeaf } from "../../../../../../fixture/direct-leaf-compare.tsx"
 
 beforeAll(async () => {
   await loadMarkdown()
@@ -25,20 +25,7 @@ function pair(tone: Tone, text: string) {
   }
 }
 
-function pausePoints(html: string): number {
-  return html.split("report-pause-point").length - 1
-}
-
 describe("Note の部品", () => {
-  it("筆を留める印は warn と ng だけに付く", () => {
-    expect(
-      (["info", "warn", "ng", "ask"] as const).map((tone) => {
-        const { block, part } = pair(tone, "架空")
-        return pausePoints(newLeafHtml(block, part))
-      }),
-    ).toEqual([0, 1, 1, 0])
-  })
-
   it("ラベルの字は本物のテキストノードで出る", () => {
     const labels = (["info", "warn", "ng", "ask"] as const).map((tone) => {
       const { block, part } = pair(tone, "架空")

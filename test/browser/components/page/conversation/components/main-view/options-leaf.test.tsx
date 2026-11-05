@@ -39,12 +39,6 @@ describe("Options の部品", () => {
     expect(container.textContent).toContain("架空の案")
   })
 
-  it("筆を留める印は採るの行の数だけ付く", () => {
-    const fresh = freshHtml("架空の題", ITEMS)
-
-    expect(fresh.split("report-pause-point")).toHaveLength(3)
-  })
-
   it("番号は出さず、判定を記号つきの札で出す", () => {
     const fresh = freshHtml("架空の題", ITEMS)
 

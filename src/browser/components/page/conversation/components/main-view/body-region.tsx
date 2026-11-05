@@ -2,7 +2,7 @@
 // 欄の中の書きかけの本文を空行で塊に割り、塊ごとに `memo`。描き直すのは変わった塊（たいてい末尾の1つ）だけで、確定済みの塊は Markdown の変換をやり直さない。
 // 欄は別々に解析するので、閉じないタグはその欄の中で閉じ、次の欄の入れ物を巻き込まない。
 //
-// 書き上げていくように見せる演出（`useReportReveal`）は根に掛ける。
+// 書き上げていくように見せる演出（`useReportReveal`）は根に掛け、節を書いている途中のレポートと同じポン（`draft-pop`）で出す。
 // 完成した DOM の根を渡すだけで、塊の中身には触らない。
 
 import clsx from "clsx"
@@ -11,7 +11,6 @@ import { memo, type ReactElement, type ReactNode } from "react"
 
 import { isBlankText } from "../../../../../../shared/utils/blank-text.ts"
 import { useReportReveal } from "../../../../../domain/reveal/use-report-reveal.ts"
-import { Button } from "../../../../ui/button/button.tsx"
 import { detailBlockClassName, Markdown } from "../markdown/markdown.tsx"
 import { splitReportBlocks } from "./domain/block-split.ts"
 import styles from "./main-view.module.css"
@@ -27,38 +26,21 @@ type ReportFrameProps = {
   readonly children: ReactNode
 }
 
-/** 本文の根（`data-report-body`）と「全部出す」の口。 */
+/** 本文の根（`data-report-body`）。 */
 export function ReportFrame(props: ReportFrameProps): ReactElement {
-  const rootRef = useReportReveal(props.reveal, props.turnId, () => {})
+  const rootRef = useReportReveal(props.reveal, props.turnId, () => {}, styles["draft-pop"])
 
   return (
-    <>
-      {/* 飛ばす操作そのもの（押す・キー）は `useReportReveal` がウィンドウで聞いているので、押された時点で残りは出ている。
-          口は「飛ばせる」と知らせる顔で、演出中の表示は CSS が `data-revealing` を見て決める。 */}
-      {props.reveal && (
-        <Button
-          variant="ghost"
-          size="action"
-          pressed="none"
-          disabled={false}
-          disclosure={{ kind: "none" }}
-          className={styles["reveal-skip"]}
-          onClick={() => undefined}
-        >
-          全部出す
-        </Button>
-      )}
-      {/* `.detail-block` を2つ重ねる。
-          見た目の本体は report-notation.module.css にあり、ステップの末尾の余白の打ち消し（`.main-step > .detail-block:last-child`）は main-view.module.css にある。
-          CSS Modules は class 名をファイルごとにハッシュ化するので、片方だけでは打ち消しが当たらない。 */}
-      <div
-        className={clsx(detailBlockClassName, styles["detail-block"], props.className)}
-        ref={rootRef}
-        data-report-body=""
-      >
-        {props.children}
-      </div>
-    </>
+    // `.detail-block` を2つ重ねる。
+    // 見た目の本体は report-notation.module.css にあり、ステップの末尾の余白の打ち消し（`.main-step > .detail-block:last-child`）は main-view.module.css にある。
+    // CSS Modules は class 名をファイルごとにハッシュ化するので、片方だけでは打ち消しが当たらない。
+    <div
+      className={clsx(detailBlockClassName, styles["detail-block"], props.className)}
+      ref={rootRef}
+      data-report-body=""
+    >
+      {props.children}
+    </div>
   )
 }
 

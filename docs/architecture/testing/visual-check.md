@@ -42,7 +42,7 @@
 画像そのものを他所へ共有・複製しない。
 
 **検証結果の表（`report-checks`）とレポートの記法の「流れ」（`notation-flow`）も
-`capture-catalog.ts` の件にある。** 書き上げていくように見せる演出中の要素は `clip-path` で
+`capture-catalog.ts` の件にある。** 書き上げていくように見せる演出中の要素は `opacity` で
 隠すだけで DOM には残る（`useReportReveal`）ので、疑似セッションが場面の最後まで流れ切って
 狙った要素が現れるのを待ってから、演出を打ち切って（`skipReveal`）書き上がった状態を撮る。
 `report-checks` は2件目の `report` が届く約7秒後まで検証結果の表が現れないので、
@@ -70,8 +70,7 @@
 **書き上げる途中の画は `capture-view.ts --scene <場面> --reveal-at <ms>`。** 場面の演出が始まった
 （`data-revealing` が現れた）瞬間にブラウザの時計を止め、そこから `<ms>` だけ進めた時点で、
 `settlePage` を挟まずに撮る（`--wait-for` と `--advance` などの操作とは併用できない。`--scene` と一緒にだけ使う）。
-**撮った直後に、本文の領域で書いている要素ごとの `clip-path`（隠れている・途中の polygon）と
-`opacity` を表で出す**ので、自前のプローブを書かずに、画に写った範囲を値でも読める。
+**撮った直後に、本文の領域でまだ出していない要素ごとの `opacity` を表で出す**ので、自前のプローブを書かずに、画に写った範囲を値でも読める。
 表の1行目の「演出の開始から Nms」は実測で、指定との差は数十ms。
 **セクションが短いレポート（描いた文字数と図の重みの合計が約200未満）の場面は演出が始まらず、`--reveal-at` は
 `[data-revealing]` を15秒待って失敗する**（`work-plan-parallel` など）。掛かるかは先に `--list-scenes` の
@@ -79,9 +78,9 @@
 
 **書き上げる演出を実ブラウザで前後比較する手順。**
 
-- 比べる前後で、同じ場面・同じ `--reveal-at` を使う（例: `--scene a2ui-reveal-sample --reveal-at 1000` と `--reveal-at 3000`）。書き途中の要素の数・`clip-path`・横のはみ出し（0px）が前後で並ぶ。
+- 比べる前後で、同じ場面・同じ `--reveal-at` を使う（例: `--scene a2ui-reveal-sample --reveal-at 200` と `--reveal-at 600`）。まだ出していない要素の数・横のはみ出し（0px）が前後で並ぶ。
 - `a2ui-reveal-sample` は、Note の warn・ng と Options の `adopt` を含む `components` の `report` の場面。`turn-finished` を `report` より先に置いてあり、これで草稿にならず演出が掛かる。
-- E2E の文脈（`test/e2e/scenario-open.ts` の `reducedMotion: "reduce"`）では演出が走らない。演出の前後比較を E2E に頼まず、単体の `planReveal` に新旧の DOM を通して比べて代えた回がある。実ブラウザで比べるときはこの場面を使う。
+- E2E の文脈（`test/e2e/scenario-open.ts` の `reducedMotion: "reduce"`）では演出が走らない。実ブラウザで比べるときはこの場面を使う。
 - `[data-revealing]` が付かず `--reveal-at` が15秒待って失敗するときの原因は、草稿であることが多い。ターンが開いているあいだに届いた `report` は草稿として描かれ、そのツール呼び出しが記憶されて、確定版には演出が掛からない（`report`・`tool-finished`・`turn-finished` を同じ時刻に置いても同じ）。`prefers-reduced-motion` や偽の時計が原因ではない（この道具のブラウザは動きを減らす設定を持たない）。
 - 疑似セッションで始まらないときは、`turn-finished` を `report` より先に置く（ターンが閉じたあとに届く `report` は草稿にならない）。
 
