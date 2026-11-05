@@ -14,6 +14,7 @@
     "build": "pnpm run --silent css-types && node scripts/dev/build-ui.ts",
     "css-types": "hcm 'src/**/*.module.css' --outDir dist/css-module-type --logLevel silent --no-cache",
     "grid": "node scripts/capture/open-room-grid.ts",
+    "catalog": "pnpm run --silent build && node scripts/capture/capture-catalog.ts",
     "typecheck": "pnpm run css-types && tsc --noEmit",
     "lint": "oxlint src test scripts vite.config.ts --deny-warnings && depcruise src --config .dependency-cruiser.cjs",
     "lint:fix": "oxlint src test scripts vite.config.ts --fix --deny-warnings",

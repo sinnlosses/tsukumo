@@ -247,16 +247,17 @@ pnpm run start                 # セッションを起こし、ページをホ�
                               #   TSUKUMO_OPEN_VIEW=0 で自動オープンを止める。本物の claude を子プロセスで起こす。
                               #   成果物か vendor/tsukumo-plugins が無ければ前提不足で止まり、ソースの指紋が組み立て時と違えば1行知らせて古いまま配る）
 pnpm run dev                   # pnpm run build のあと、start と同じ経路を Vite の開発サーバつき（--dev）で起こす
-                              #   （src/server/ と src/shared/ を直したときは上げ直しが要る。docs/architecture/build.md）
+                              #   （src/server/・src/shared/ を直したら上げ直す。docs/architecture/build.md）
 node scripts/capture/open-view.ts <URL>  # プロセスは動いたままタブだけ閉じたときに開き直す
-node scripts/capture/capture-view.ts --scene <場面> --paper-metric  # 紙面の物差し（テンプレの手がかり・色相の族・判決の頭の高さ・読む面を超える図・図の文字の最小 px・横並びの縦落ち）を 1440x900 と 1920x1080 で数える
+node scripts/capture/capture-view.ts --scene <場面> --paper-metric  # 紙面の物差し（色相の族・判決の頭の高さ・図の文字の最小 px など）を 1440x900 と 1920x1080 で数える
 pnpm run grid                  # 待ち受けていてタブもある部屋を iframe の格子に並べて Orca に開く。格子のタブが
-                              #   あるあいだ常駐し、再読み込みのたびに並べ直す。タブを閉じると終わる
+                              #   あるあいだ常駐し、再読み込みで並べ直す。タブを閉じると終わる
+pnpm run catalog               # 状態ごとの画面を撮り索引 HTML を書く（--only <名前>・--out・--help。`--` なし）。docs/guide/screen-tour.md
 node scripts/runtime/stop.ts   # 動いている tsukumo を一覧する（--port <n> でそれ1つだけ止める。pkill / killall は
-                              #   hook が拒否する。並べて動かすとどれも `node src/cli.ts` に見えて区別できないため）
-node scripts/runtime/migrate-chat-summary.ts --dry-run  # 旧形のあらすじ（<パック>.md）を新形（<パック>.summary.json）へ移す下見。1回だけ打つ使い捨て。
+                              #   hook が拒否する。どれも `node src/cli.ts` に見えて区別できないため）
+node scripts/runtime/migrate-chat-summary.ts --dry-run  # 旧形のあらすじを新形（<パック>.summary.json）へ移す下見。使い捨て。
                               #   手順: tsukumo を止める → --dry-run → 本番（--dry-run を外す）→ --prune --dry-run → --prune
-                              #   （本番の前に旧形のパックで雑談を起こすと、空の新形が旧形を覆って移せなくなる）
+                              #   （本番の前に旧形のパックで雑談を起こすと、空の新形が覆って移せなくなる）
                               #   （--prune は kept.jsonl・index.jsonl・recalled.jsonl・visual/ と、新形のあるパックの旧形・episode.jsonl を消す。出力は件数と日付だけ）
 node scripts/capture/mockup-font-floor.ts <見本の HTML かディレクトリ>  # 見本の font-size のうち 12px 未満を一覧する（あれば終了コード1）
 node scripts/runtime/experience-metric.ts  # 進行の計測値（依頼から結論まで・答え待ち・立ち直るまでの手数・仕切りを離した比率）を集計する
