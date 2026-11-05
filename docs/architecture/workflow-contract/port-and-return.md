@@ -47,6 +47,7 @@ tsukumo はプログレスバーのフェーズの名前を見ず、欄がある
 
 **委譲先は `phase_result`（MCP ツール。`docs/architecture/workflow-contract/skill-sequence.md`「スキルの契約」）でフェーズの結果を返し、tsukumo は `SubagentHandback` の本文を読まない。** `SubagentHandback` は委譲ゲートを立て、注記を運ぶだけ。
 書式の正典はこの節と `docs/architecture/workflow-contract/skill-sequence.md`「スキルの契約」で、ワークフローの依頼文はこれを参照し、書式を言い直さない。経緯と採らなかった案は `docs/architecture/adr/0024-no-skill-dependency.md`「2026-10-10 の改訂」と `docs/architecture/adr/0030-workflow-as-skill-sequence.md`。
+`phase_result`（と `work_plan`・`report`・`speak`）は tsukumo の会話画面が `query()` に渡すプロセス内の MCP サーバ `tsukumo` にあり、会話画面の中でだけ、メインにも委譲先にも見える。素の `claude` の CLI では存在せず、委譲先は呼べないので自由文の返却で進む（その返却ではプログレスバーは動かない）。根拠は `docs/research/phase-result-unavailable-2026-11-05.md`。`/loop /next-task` は tsukumo の会話画面で回す前提とする。
 
 返却でプログレスバーを動かすのは `phase_result` の `finished`・`skipped` だけで、受け付けた呼び出しの時刻と引数で動く（ワークフロースクリプトの写しで進む道は下の「プログレスバーの進め方」）。
 `phase_result` を呼ばなかった委譲先（古い plugin、計画だけの回）の返却ではプログレスバーは動かない。

@@ -4,9 +4,10 @@
 
 ## 結論
 
-原因は候補 3「今回のセッションが tsukumo の会話画面を経由せず、MCP サーバ自体が繋がっていなかった」に絞れる。
+原因は候補 3「今回のセッションが tsukumo の会話画面を経由せず、MCP サーバ自体が繋がっていなかった」に確定する。
 `phase_result` を持つ MCP サーバ `tsukumo` は、tsukumo の会話画面が Agent SDK の `query()` に渡すプロセス内のサーバで、素の `claude` の CLI には存在しない。委譲先に渡し損ねたのではなく、渡す元がなかった。
-素の CLI の委譲先2種（`no-delegate`・`general-purpose`）では `ToolSearch` で実際に出なかった。ただしメインの実測と、会話画面経由で出ることの確認は、この調査では行えていない（後述）。
+素の CLI の委譲先2種（`no-delegate`・`general-purpose`）とメインでは `ToolSearch` で実際に出なかった。tsukumo の会話画面経由では、委譲先2種のどちらにも `mcp__tsukumo__phase_result` が見えることを 2026-11-05 にメインが実測した（事実 4）。
+素の CLI で `/loop /next-task` を回すと、委譲先は `phase_result` を呼べず、自由文の返却で進む。
 
 ## 事実
 
@@ -25,16 +26,17 @@
    - `general-purpose` の委譲先（受け入れ役。`CLAUDE_CODE_ENTRYPOINT=cli`）: `No matching deferred tools found`。受け入れ役の報告による。
    - メイン（2026-11-05 にメインが自分で打った）: `ToolSearch select:mcp__tsukumo__phase_result` は `No matching deferred tools found`。このセッションのツール一覧にも `mcp__tsukumo__speak`・`work_plan` は無い。委譲先の2種と同じで、素の CLI ではメインにも出ない。
      委譲先の2種は素の CLI で、どちらも出なかった。種別による差は見えない。
+4. tsukumo の会話画面経由で `phase_result` が見えるかを、2026-11-05 にメインが実測した。会話画面から `/next-task` の流れで `tsukumo-workflow:no-delegate` と `general-purpose` の委譲先をそれぞれ読むだけの用事で起こし、`ToolSearch` で `select:mcp__tsukumo__phase_result` を引かせると、どちらの委譲先でも見つかった。`+tsukumo` で引くと `phase_result`・`report`・`report_part_card`・`speak`・`work_plan`・`question_brief` の6件が出た。委譲先の `printenv CLAUDE_CODE_ENTRYPOINT` は両方とも `sdk-ts`（素の CLI の調査では `cli`）。
 
 ## 推測
 
 - 事実 1 から、`mcp__tsukumo__*` が見えるのは tsukumo の会話画面が起こした `query()` の中に限られる。素の `claude` CLI で `/loop /next-task` を回すと、メインにも委譲先にも出ない。報告にある「メインでも `work_plan`・`speak` が無かった」はこれと合う。
-- 会話画面経由なら委譲先に渡るかは未確認。エージェント定義 `no-delegate` は `disallowedTools: Agent` だけで MCP を絞っていないので、定義のせいで外れている可能性は低いが、実測していない。
+- 会話画面経由で委譲先に渡ることは、事実 4 で 2026-11-05 に実測済み（推測のままではない）。エージェント定義 `no-delegate` は `disallowedTools: Agent` だけで MCP を絞っていないことも、事実 4 と合う。
 
 ## 足りない実験
 
-- tsukumo の会話画面から `/next-task` を回し、`no-delegate` と `general-purpose` の委譲先に `ToolSearch` で `mcp__tsukumo__phase_result` を引かせる（候補 1 と 2 を切る実験）。会話画面経由で出れば候補 3 で確定し、出なければ候補 1 か 2。
-- 素の CLI で回したメインの `ToolSearch` で同じ名前を引く（候補 3 の確認。メインは実測済みで出なかった）。
+- 済み。tsukumo の会話画面から `/next-task` を回し、`no-delegate` と `general-purpose` の委譲先に `ToolSearch` で `mcp__tsukumo__phase_result` を引かせた結果は事実 4 にある（2026-11-05 に実測済み）。会話画面経由で出たので候補 3 で確定し、この実験はやり直さない。
+- 素の CLI で回したメインの `ToolSearch` で同じ名前を引く（候補 3 の確認。メインは事実 3 で実測済みで出なかった）。これも済み。
 
 ## 直し方の案
 
