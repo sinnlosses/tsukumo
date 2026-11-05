@@ -1,4 +1,5 @@
 // 迎えの挨拶を1回書く。直近の挨拶を添えて問い合わせ、検査を通れば直近へ書いてから配る。
+// 書けなければ直近の最も古い挨拶を配る。
 
 import type {
   WelcomeRejection,
@@ -48,7 +49,8 @@ const greetingUnwrittenPlace = {
  *
  * 書き始めに `writing` を配る。1回目が失敗・検査落ちで、かつ `signal` も `timeoutMs` の締め切りも
  * まだ来ていなければ、1回目を含めて、書けるまで最大 `WELCOME_GREETING_MAX_ATTEMPTS` 回まで問い合わせる。`signal` が中断していれば（新しい書き手に替わった）
- * 結果に関わらず何も配らない。それ以外で結果が無ければ `unwritten`、あれば `written` を配る。
+ * 結果に関わらず何も配らない。それ以外で書けなければ、直近の最も古い挨拶を表情 `default` の `written` で配る
+ * （直近へは書き戻さない）。直近も無ければ `unwritten` を配る。書ければ `written` を配る。
  */
 export async function greetWelcome(
   ports: WelcomeGreetingWriterPorts,
@@ -78,7 +80,12 @@ export async function greetWelcome(
       greetingUnwrittenPlace[outcome.kind],
       outcome.kind === "failed" ? outcome.error : undefined,
     )
-    ports.emit({ kind: "unwritten" })
+    const oldest = recent.at(-1)
+    ports.emit(
+      oldest === undefined
+        ? { kind: "unwritten" }
+        : { kind: "written", greeting: { ...oldest, expression: "default" } },
+    )
     return
   }
   const greeting = outcome.value

@@ -22,8 +22,8 @@ export type WelcomeGreeting = {
  *
  * - `none`: 書き始める前（または起こし直し・`/clear` の直後でまだ書き始めていない）
  * - `writing`: 書いている途中（吹き出しには「…」を出す）
- * - `written`: 書けた
- * - `unwritten`: 問い合わせ直しも失敗、または60秒の締め切りを過ぎた（挨拶を出さない）
+ * - `written`: 書けた、または書けず直近の挨拶を出す
+ * - `unwritten`: 書けず、直近の挨拶も無い（60秒の締め切りを過ぎた場合も同じ。挨拶を出さない）
  */
 export type WelcomeGreetingState =
   | { readonly kind: "none" }

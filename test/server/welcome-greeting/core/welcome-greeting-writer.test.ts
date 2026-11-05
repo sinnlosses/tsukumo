@@ -106,6 +106,75 @@ describe("greetWelcome", () => {
     expect(emitted).toEqual([{ kind: "writing" }, { kind: "unwritten" }])
   })
 
+  it("4回とも失敗し直近があれば、最も古い直近の挨拶を default の written で配り、書き戻さない", async () => {
+    const recent = [
+      { withCard: "架空の新しい挨拶 {札}", withoutCard: "架空の新しい挨拶" },
+      { withCard: "架空の古い挨拶 {札}", withoutCard: "架空の古い挨拶" },
+    ]
+    const { ports, written, emitted, queries, unwritten } = harness(recent)
+
+    const promise = greetWelcome(ports, MATERIAL, new AbortController().signal, NO_TIMEOUT)
+    await failEach(queries, 4)
+    await promise
+
+    expect(emitted).toEqual([
+      { kind: "writing" },
+      { kind: "written", greeting: { ...recent[1], expression: "default" } },
+    ])
+    expect(written).toEqual([])
+    expect(unwritten.map((entry) => entry.place)).toEqual(["welcome-greeting-failed"])
+  })
+
+  it("検査落ちでも直近があれば最も古い挨拶を配る", async () => {
+    const recent = [
+      { withCard: "架空の新しい挨拶 {札}", withoutCard: "架空の新しい挨拶" },
+      { withCard: "架空の古い挨拶 {札}", withoutCard: "架空の古い挨拶" },
+    ]
+    const { ports, emitted, queries, unwritten } = harness(recent)
+
+    const promise = greetWelcome(ports, MATERIAL, new AbortController().signal, NO_TIMEOUT)
+    for (let index = 0; index < 4; index += 1) {
+      queries[index]?.settle({ ...OUTPUT, withCard: "差し込み口なし" })
+      await flush()
+    }
+    await promise
+
+    expect(emitted).toEqual([
+      { kind: "writing" },
+      { kind: "written", greeting: { ...recent[1], expression: "default" } },
+    ])
+    expect(unwritten.map((entry) => entry.place)).toEqual(["welcome-greeting-rejected"])
+  })
+
+  it("締め切りを過ぎても直近があれば最も古い挨拶を配る", async () => {
+    const recent = [{ withCard: "架空の挨拶 {札}", withoutCard: "架空の挨拶" }]
+    const { ports, written, emitted, unwritten } = harness(recent)
+
+    await greetWelcome(ports, MATERIAL, new AbortController().signal, 10)
+
+    expect(emitted).toEqual([
+      { kind: "writing" },
+      { kind: "written", greeting: { ...recent[0], expression: "default" } },
+    ])
+    expect(written).toEqual([])
+    expect(unwritten.map((entry) => entry.place)).toEqual(["welcome-greeting-timed-out"])
+  })
+
+  it("直近があっても、signal を中断したときは何も配らない", async () => {
+    const { ports, emitted, queries } = harness([
+      { withCard: "架空の挨拶 {札}", withoutCard: "架空の挨拶" },
+    ])
+    const controller = new AbortController()
+
+    const promise = greetWelcome(ports, MATERIAL, controller.signal, NO_TIMEOUT)
+    controller.abort()
+    await promise
+    queries[0]?.fail()
+    await flush()
+
+    expect(emitted).toEqual([{ kind: "writing" }])
+  })
+
   it("外から渡した signal を中断すると、結果に関わらず何も配らない（writing のあとに何も続かない）", async () => {
     const { ports, written, emitted, queries, unwritten } = harness()
     const controller = new AbortController()
