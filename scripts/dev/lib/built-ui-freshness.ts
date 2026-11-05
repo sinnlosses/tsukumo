@@ -5,7 +5,7 @@ import { readUiBundle } from "../../../src/server/view-server/adapter/build/bund
 /** 読めない・古いときは、打つコマンドを添えた `Error` を投げる。黙って組み立て直さない。 */
 export async function assertBuiltUiFresh(builtDir: string): Promise<void> {
   const built = await readUiBundle(builtDir)
-  if (!built.ok) {
+  if (built.kind === "missing") {
     throw new Error(built.reason)
   }
   if (built.outdated) {

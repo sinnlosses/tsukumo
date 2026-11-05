@@ -8,12 +8,14 @@
 // 画面も入力もブラウザのページ側で完結するので、ホストに頼るのは「そのページをどこかに出す」と「レポートに書かれたファイルをホストのエディタで開く」に絞ってある。
 
 /** ホストへの依頼の結果。失敗しても呼び出し側は続行できる。 */
-export type HostResult = { readonly ok: true } | { readonly ok: false; readonly reason: string }
+export type HostResult =
+  | { readonly kind: "ok" }
+  | { readonly kind: "failed"; readonly reason: string }
 
 /** ビューを見せた結果。見せられたときは、そのビューを閉じる手段が付く。 */
 export type ShowViewResult =
-  | { readonly ok: true; readonly close: () => Promise<HostResult> }
-  | { readonly ok: false; readonly reason: string }
+  | { readonly kind: "ok"; readonly close: () => Promise<HostResult> }
+  | { readonly kind: "failed"; readonly reason: string }
 
 export type Host = {
   /**

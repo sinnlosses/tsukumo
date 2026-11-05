@@ -23,7 +23,7 @@ if (await isBuiltUiCurrent(builtUiDir(), REPOSITORY_ROOT)) {
 process.stdout.write("Building UI... ")
 const started = performance.now()
 const result = await buildUiBundle(builtUiDir())
-if (!result.ok) {
+if (result.kind === "failed") {
   process.stdout.write("failed\n")
   process.stderr.write(`ブラウザ側を組み立てられない\n${result.reason}\n`)
   process.exit(1)

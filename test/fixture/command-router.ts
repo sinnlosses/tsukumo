@@ -41,7 +41,7 @@ export const CHAT_MODE_EVENT = { kind: "chat-mode-changed", chat: true } satisfi
 
 export function createFakeSession(
   stub: StubDriver = createStubDriver(),
-  restartResult: DispatchResult = { ok: true },
+  restartResult: DispatchResult = { kind: "ok" },
 ): FakeSession {
   const emitted: SessionEvent[] = []
   const restarts: SessionLaunchRequest[] = []

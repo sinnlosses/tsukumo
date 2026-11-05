@@ -9,8 +9,8 @@ import { bundledFilePath } from "../../adapter/bundled-path.ts"
 import { defaultClaudeConfigDir } from "../../adapter/tsukumo-home.ts"
 
 export type WorkflowPluginReading =
-  | { readonly ok: true }
-  | { readonly ok: false; readonly reason: string }
+  | { readonly kind: "ok" }
+  | { readonly kind: "missing"; readonly reason: string }
 
 export function workflowPluginDir(): string {
   return bundledFilePath("vendor", "tsukumo-plugins")
@@ -47,7 +47,7 @@ export async function readFigurePluginMount(
   pluginDir: string,
   claudeConfigDir: string | undefined,
 ): Promise<FigurePluginMount> {
-  if (!(await readWorkflowPlugin(pluginDir)).ok) {
+  if ((await readWorkflowPlugin(pluginDir)).kind === "missing") {
     return { kind: "absent" }
   }
   const configDir = claudeConfigDir ?? defaultClaudeConfigDir()
@@ -63,9 +63,12 @@ export async function readWorkflowPlugin(pluginDir: string): Promise<WorkflowPlu
   const manifest = join(pluginDir, ".claude-plugin", "plugin.json")
   try {
     await access(manifest)
-    return { ok: true }
+    return { kind: "ok" }
   } catch {
-    return { ok: false, reason: `${manifest} が無い（git submodule update --init で取り込む）` }
+    return {
+      kind: "missing",
+      reason: `${manifest} が無い（git submodule update --init で取り込む）`,
+    }
   }
 }
 

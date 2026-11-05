@@ -43,7 +43,7 @@ export function evaluationFaults(
 
     for (const name of Object.keys(defs.entries)) {
       const result = evaluator.evaluate(name)
-      if (!result.ok && result.error.origin.where === "def") {
+      if (result.kind === "invalid" && result.error.origin.where === "def") {
         add({
           kind: "expression-evaluation",
           pointer: defPointer(defs, result.error.origin.name),
@@ -55,7 +55,7 @@ export function evaluationFaults(
     for (const slot of slots) {
       const result =
         slot.call === "expr" ? evaluator.evaluate(slot.text) : evaluator.format(slot.text)
-      if (!result.ok) {
+      if (result.kind === "invalid") {
         if (result.error.origin.where === "source") {
           add({
             kind: "expression-evaluation",
@@ -141,7 +141,7 @@ function chartFaults(
     }
     const result =
       call.call === "expr" ? evaluator.evaluate(call.text) : evaluator.format(call.text)
-    return result.ok ? result.value : undefined
+    return result.kind === "ok" ? result.value : undefined
   }
   const labels = resolve(props.labels)
   if (!Array.isArray(labels)) return

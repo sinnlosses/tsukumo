@@ -67,14 +67,14 @@ async function main(): Promise<void> {
   const port = await listen(server)
 
   const tabsResult = await listTabs("all")
-  if (tabsResult.ok) {
+  if (tabsResult.kind === "ok") {
     await closePreviousGridTabs(tabsResult.tabs)
   } else {
     process.stderr.write(`前回の格子のタブを探せなかった: ${tabsResult.reason}\n`)
   }
 
   const opened = await openTab(`http://${BIND_HOST}:${String(port)}${roomGridPath(key)}`)
-  if (!opened.ok) {
+  if (opened.kind === "failed") {
     process.stderr.write(`格子のタブを開けなかった: ${opened.reason}\n`)
     process.exit(1)
   }
@@ -127,7 +127,7 @@ async function respond(
       return
     case "grid": {
       const scanned = await scanRooms()
-      if (!scanned.ok) {
+      if (scanned.kind === "failed") {
         writeText(response, 503, `タブ一覧を取得できなかった: ${scanned.reason}\n`)
         return
       }
@@ -154,12 +154,12 @@ function writeText(response: ServerResponse, status: number, body: string): void
  * こなかった部屋だけは、作業ツリーを名指しして起こし直す（最大でおよそ3秒待つ）。
  */
 async function scanRooms(): Promise<
-  | { readonly ok: true; readonly rooms: readonly Room[] }
-  | { readonly ok: false; readonly reason: string }
+  | { readonly kind: "ok"; readonly rooms: readonly Room[] }
+  | { readonly kind: "failed"; readonly reason: string }
 > {
   const tabsResult = await listTabs("all")
-  if (!tabsResult.ok) {
-    return { ok: false, reason: tabsResult.reason }
+  if (tabsResult.kind === "failed") {
+    return { kind: "failed", reason: tabsResult.reason }
   }
 
   const listedUrls = tabsResult.tabs.map((tab) => tab.url)
@@ -170,14 +170,14 @@ async function scanRooms(): Promise<
   const tabUrls = [...listedUrls, ...wokenUrls.flat()]
   const matched = pickRooms(listeners, tabUrls)
 
-  return { ok: true, rooms: matched.map((room) => buildRoom(room.port, room.pid, room.url)) }
+  return { kind: "ok", rooms: matched.map((room) => buildRoom(room.port, room.pid, room.url)) }
 }
 
 /** 前回の格子のタブを、新しいタブを開く前に閉じる。タブを溜めない。 */
 async function closePreviousGridTabs(tabs: readonly OrcaTab[]): Promise<void> {
   for (const tab of previousGridTabs(tabs)) {
     const result = await closeTab(tab.pageId)
-    if (!result.ok) {
+    if (result.kind === "failed") {
       process.stderr.write(`前回の格子のタブを閉じられなかった: ${result.reason}\n`)
     }
   }
@@ -195,11 +195,12 @@ async function watchGridTab(pageId: string): Promise<GridTabObservation> {
   for (;;) {
     await delay(WATCH_INTERVAL_MS)
     const listed = await listTabs({ worktreePath })
-    const observation: GridTabObservation = !listed.ok
-      ? "failed"
-      : listed.tabs.some((tab) => tab.pageId === pageId)
-        ? "present"
-        : "absent"
+    const observation: GridTabObservation =
+      listed.kind === "failed"
+        ? "failed"
+        : listed.tabs.some((tab) => tab.pageId === pageId)
+          ? "present"
+          : "absent"
     const next = observeGridTab(watch, observation)
     if (next.stop) {
       return observation
@@ -221,7 +222,7 @@ async function wakeViewTabUrls(listener: Listener): Promise<readonly string[]> {
   }
   for (let attempt = 0; attempt < WAKE_POLL_ATTEMPTS; attempt += 1) {
     const listed = await listTabs({ worktreePath: cwd })
-    const urls = listed.ok ? listed.tabs.map((tab) => tab.url) : []
+    const urls = listed.kind === "ok" ? listed.tabs.map((tab) => tab.url) : []
     if (pickRooms([listener], urls).length > 0) {
       return urls
     }

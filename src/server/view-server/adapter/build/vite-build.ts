@@ -33,7 +33,7 @@ const FAILURE_REASON_MAX_LINES = 20
 const FAILURE_REASON_MAX_CHARS = 2000
 
 /** `vite build` が失敗したときの結果。理由は `vite build` の出力（会話の中身は通らない）。 */
-export type ViteBuildFailure = { readonly ok: false; readonly reason: string }
+export type ViteBuildFailure = { readonly kind: "failed"; readonly reason: string }
 
 /**
  * `sourceDir` の入口（Vite の設定の `input`）を `vite build` で `outDir` へまとめる。
@@ -61,7 +61,9 @@ export function runViteBuild(
       ],
       { maxBuffer: BUILD_OUTPUT_MAX_BYTES },
       (error, _stdout, stderr) => {
-        resolve(error === null ? undefined : { ok: false, reason: failureReason(error, stderr) })
+        resolve(
+          error === null ? undefined : { kind: "failed", reason: failureReason(error, stderr) },
+        )
       },
     )
   })

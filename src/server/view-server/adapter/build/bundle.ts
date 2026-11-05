@@ -70,16 +70,16 @@ export type UiBundle = {
  * 来た値を混ぜてはならない。
  */
 export type BundleResult =
-  | { readonly ok: true; readonly bundle: UiBundle }
-  | { readonly ok: false; readonly reason: string }
+  | { readonly kind: "ok"; readonly bundle: UiBundle }
+  | { readonly kind: "failed"; readonly reason: string }
 
 /**
  * 置いてある成果物を読んだ結果。読めたときは古いかどうかも一緒に返す。
  * 古さは「配れない理由」ではなく「配るけれど知らせること」なので、失敗の側には寄せない。
  */
 export type StoredBundleResult =
-  | { readonly ok: true; readonly bundle: UiBundle; readonly outdated: boolean }
-  | { readonly ok: false; readonly reason: string }
+  | { readonly kind: "ok"; readonly bundle: UiBundle; readonly outdated: boolean }
+  | { readonly kind: "missing"; readonly reason: string }
 
 /** 成果物の置き場（絶対パス）。起こす場所（cwd）には依存しない。 */
 export function builtUiDir(): string {
@@ -94,12 +94,12 @@ export async function readUiBundle(builtDir: string): Promise<StoredBundleResult
   const bundle = await readPair(builtDir)
   if (bundle === undefined) {
     return {
-      ok: false,
+      kind: "missing",
       reason: `${builtDir} にスクリプトと CSS の対が無い（pnpm run build で作る）`,
     }
   }
 
-  return { ok: true, bundle, outdated: await isOutdated(builtDir) }
+  return { kind: "ok", bundle, outdated: await isOutdated(builtDir) }
 }
 
 /**
@@ -110,7 +110,7 @@ export async function buildUiBundle(outDir: string): Promise<BundleResult> {
   // 組み立てる前に取る。組み立て中にソースが変わっても、次の起動で古いと分かる。
   const fingerprint = await bundledSourceFingerprint()
   const result = await bundleWithVite(bundledFilePath(...UI_SOURCE_DIR_RELATIVE_PATH), outDir)
-  if (result.ok && fingerprint !== undefined) {
+  if (result.kind === "ok" && fingerprint !== undefined) {
     await writeFile(join(outDir, SOURCE_FINGERPRINT_FILE_NAME), fingerprint)
   }
   return result
@@ -142,8 +142,8 @@ async function bundleWithVite(sourceDir: string, outDir: string): Promise<Bundle
 
   const bundle = await readPair(outDir)
   return bundle === undefined
-    ? { ok: false, reason: "vite build がスクリプトと CSS の対を出さなかった" }
-    : { ok: true, bundle }
+    ? { kind: "failed", reason: "vite build がスクリプトと CSS の対を出さなかった" }
+    : { kind: "ok", bundle }
 }
 
 /**

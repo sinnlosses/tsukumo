@@ -28,5 +28,7 @@ const layoutUrl = new URL(LAYOUT_PATH, baseUrl).toString()
 const result = await host.showView(layoutUrl)
 
 process.stdout.write(
-  result.ok ? `開いた: ${layoutUrl}\n` : `開けなかった: ${layoutUrl} — ${result.reason}\n`,
+  result.kind === "ok"
+    ? `開いた: ${layoutUrl}\n`
+    : `開けなかった: ${layoutUrl} — ${result.reason}\n`,
 )

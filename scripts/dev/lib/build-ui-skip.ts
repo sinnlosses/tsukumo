@@ -28,7 +28,7 @@ export async function isBuiltUiCurrent(builtDir: string, root: string): Promise<
     readFile(join(builtDir, BUILD_INPUT_FINGERPRINT_FILE_NAME), "utf8").catch(() => undefined),
     buildInputFingerprint(root),
   ])
-  return built.ok && !built.outdated && source !== undefined && stored === current
+  return built.kind === "ok" && !built.outdated && source !== undefined && stored === current
 }
 
 /** 組み立てが通ったあとに、そのときの入力ファイルの指紋を成果物の隣へ残す。 */

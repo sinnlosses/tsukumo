@@ -21,7 +21,7 @@ function recordingOpen(result: HostResult): {
 
 describe("openTrackedFile", () => {
   it("一覧にあるパスはホストへ1回渡し、開けたら true", async () => {
-    const host = recordingOpen({ ok: true })
+    const host = recordingOpen({ kind: "ok" })
 
     expect(
       await openTrackedFile("docs/architecture/display.md", async () => TRACKED, host.open),
@@ -30,7 +30,7 @@ describe("openTrackedFile", () => {
   })
 
   it("一覧に無いパスではホストを呼ばず false", async () => {
-    const host = recordingOpen({ ok: true })
+    const host = recordingOpen({ kind: "ok" })
 
     expect(await openTrackedFile("/etc/passwd", async () => TRACKED, host.open)).toBe(false)
     expect(await openTrackedFile("--help", async () => TRACKED, host.open)).toBe(false)
@@ -38,7 +38,7 @@ describe("openTrackedFile", () => {
   })
 
   it("ホストが開けなかったら false", async () => {
-    const host = recordingOpen({ ok: false, reason: "orca が無い" })
+    const host = recordingOpen({ kind: "failed", reason: "orca が無い" })
 
     expect(await openTrackedFile("src/cli.ts", async () => TRACKED, host.open)).toBe(false)
     expect(host.calls).toEqual(["src/cli.ts"])

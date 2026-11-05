@@ -35,8 +35,8 @@ describe("runViteBuild", () => {
     expect(await runViteBuild(sourceDir, outDir)).toBeUndefined()
     const read = await readUiBundle(outDir)
 
-    expect(read.ok).toBe(false)
-    expect(read.ok ? "" : read.reason).toContain("対")
+    expect(read.kind).toBe("missing")
+    expect(read.kind === "ok" ? "" : read.reason).toContain("対")
   })
 })
 

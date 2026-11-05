@@ -87,7 +87,7 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
       switch (driver.kind) {
         case "fake":
           return Promise.resolve({
-            ok: true,
+            kind: "ok",
             mount: true,
             mountFigure: false,
             notices: [],
@@ -99,7 +99,7 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
       }
     },
   })
-  if (!built.ok) {
+  if (built.kind === "missing") {
     process.stderr.write(`tsukumo: ブラウザ側の成果物を読めない\n${built.reason}\n`)
     return 1
   }
@@ -116,7 +116,7 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
   for (const notice of workflowPlugin.notices) {
     process.stderr.write(`${notice}\n`)
   }
-  if (!workflowPlugin.ok) {
+  if (workflowPlugin.kind === "unavailable") {
     return 1
   }
   const mountWorkflowPlugin = workflowPlugin.mount
@@ -201,7 +201,7 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
     now: clock,
     devServer: launch.devServer,
   })
-  if (!view.ok) {
+  if (view.kind === "failed") {
     process.stderr.write(`tsukumo: ビューを配れない: ${view.reason}\n`)
     return 1
   }
@@ -290,16 +290,19 @@ type OpenedFakeView =
  */
 async function checkWorkflowPlugin(claudeConfigDir: string | undefined): Promise<
   | {
-      readonly ok: true
+      readonly kind: "ok"
       readonly mount: boolean
       readonly mountFigure: boolean
       readonly notices: readonly string[]
     }
-  | { readonly ok: false; readonly notices: readonly string[] }
+  | { readonly kind: "unavailable"; readonly notices: readonly string[] }
 > {
   const plugin = await readWorkflowPlugin(workflowPluginDir())
-  if (!plugin.ok) {
-    return { ok: false, notices: [`tsukumo: 取り込んだプラグインを読めない\n${plugin.reason}`] }
+  if (plugin.kind === "missing") {
+    return {
+      kind: "unavailable",
+      notices: [`tsukumo: 取り込んだプラグインを読めない\n${plugin.reason}`],
+    }
   }
   const mount = await readWorkflowPluginMount(workflowPluginDir(), claudeConfigDir)
   const figure = await readFigurePluginMount(figurePluginDir(), claudeConfigDir)
@@ -312,7 +315,7 @@ async function checkWorkflowPlugin(claudeConfigDir: string | undefined): Promise
       : []),
   ]
   return {
-    ok: true,
+    kind: "ok",
     mount: mount.kind !== "user-installed",
     mountFigure: figure.kind === "mount",
     notices,
@@ -404,7 +407,7 @@ async function openLayoutView(
   url: string,
 ): Promise<OpenedFakeView> {
   const result = await host.showView(url)
-  if (!result.ok) {
+  if (result.kind === "failed") {
     process.stderr.write(`tsukumo: ビューのタブを開けなかった: ${result.reason}\n`)
     return { tracked: false }
   }

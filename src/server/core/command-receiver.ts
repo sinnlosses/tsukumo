@@ -9,8 +9,8 @@ import type { SessionEvent } from "../../shared/session/session-event.ts"
 
 /** コマンドを受け付けられたか。理由は定型文（`FRAME_ERROR_REASON`）だけを返す。 */
 export type DispatchResult =
-  | { readonly ok: true }
-  | { readonly ok: false; readonly reason: CommandRefusalReason }
+  | { readonly kind: "ok" }
+  | { readonly kind: "invalid" | "failed"; readonly reason: CommandRefusalReason }
 
 /**
  * 書き込みの関数を呼び、返ったイベントを流す行。`undefined` が返ったとき・投げたときは `failure` で断る。
@@ -60,21 +60,21 @@ export async function receiveFeatureCommand<C>(
       try {
         const event = await receiver.receive(input)
         if (event === undefined) {
-          return { ok: false, reason: receiver.failure }
+          return { kind: "invalid", reason: receiver.failure }
         }
         // 書き込みで起こしたイベントは、駆動から届くのと同じ「新しい」もの（復元の再生ではない）。
         sink.generation().emit(event)
-        return { ok: true }
+        return { kind: "ok" }
       } catch {
-        return { ok: false, reason: receiver.failure }
+        return { kind: "failed", reason: receiver.failure }
       }
     case "call":
       try {
         return (await receiver.receive(input))
-          ? { ok: true }
-          : { ok: false, reason: receiver.failure }
+          ? { kind: "ok" }
+          : { kind: "invalid", reason: receiver.failure }
       } catch {
-        return { ok: false, reason: receiver.failure }
+        return { kind: "failed", reason: receiver.failure }
       }
   }
 }

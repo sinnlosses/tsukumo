@@ -123,7 +123,7 @@ describe("startOnResolvedPort（決定的：ダミーの start 関数）", () =>
     })
 
     expect(calls).toBe(1)
-    expect(result.ok).toBe(false)
+    expect(result.kind).toBe("failed")
   })
 
   it("既定指定は EADDRINUSE のあいだ次のポートへずらし、空いた時点で成功する", async () => {
@@ -139,7 +139,7 @@ describe("startOnResolvedPort（決定的：ダミーの start 関数）", () =>
     })
 
     expect(tried).toEqual([20000, 20001, 20002])
-    expect(result).toEqual({ ok: true, server: { port: 20002 }, port: 20002 })
+    expect(result).toEqual({ kind: "ok", server: { port: 20002 }, port: 20002 })
   })
 
   it("EADDRINUSE 以外（EACCES など）はずらさずその場で失敗を返す", async () => {
@@ -153,7 +153,7 @@ describe("startOnResolvedPort（決定的：ダミーの start 関数）", () =>
     })
 
     expect(calls).toBe(1)
-    expect(result.ok).toBe(false)
+    expect(result.kind).toBe("failed")
   })
 
   it("上限まで全部 EADDRINUSE なら、試した範囲を含む理由付きで失敗を返す", async () => {
@@ -166,8 +166,8 @@ describe("startOnResolvedPort（決定的：ダミーの start 関数）", () =>
     })
 
     expect(calls).toBe(VIEW_PORT_FALLBACK_ATTEMPTS)
-    expect(result.ok).toBe(false)
-    if (!result.ok) {
+    expect(result.kind).toBe("failed")
+    if (result.kind === "failed") {
       expect(result.reason).toContain("30000")
       expect(result.reason).toContain(String(30000 + VIEW_PORT_FALLBACK_ATTEMPTS - 1))
     }
@@ -185,8 +185,8 @@ describe("startOnResolvedPort（実際に OS のポートを塞いで確かめ�
         startViewServer(port, emptyViewServerOptions),
       )
 
-      expect(result.ok).toBe(true)
-      if (result.ok) {
+      expect(result.kind).toBe("ok")
+      if (result.kind === "ok") {
         started = result.server
         expect(result.port).toBeGreaterThan(blockedPort)
         expect(started.layoutUrl).toContain(`:${String(result.port)}`)

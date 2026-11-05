@@ -13,7 +13,7 @@ import type { SessionDriver } from "../../session-driver/core/session-driver.ts"
 
 /** 受け付けなかったことを、定型文の理由だけで返す（駆動には触らない）。 */
 export function declined(reason: CommandRefusalReason): Promise<DispatchResult> {
-  return Promise.resolve({ ok: false, reason })
+  return Promise.resolve({ kind: "invalid", reason })
 }
 
 /**
@@ -27,12 +27,12 @@ export async function askDriver(
   try {
     return await ask(await driver)
   } catch {
-    return { ok: false, reason: FRAME_ERROR_REASON.driverFailed }
+    return { kind: "failed", reason: FRAME_ERROR_REASON.driverFailed }
   }
 }
 
 /** 頼めた（結果はイベントで戻ってくる）。 */
-export const ACCEPTED = { ok: true } satisfies DispatchResult
+export const ACCEPTED = { kind: "ok" } satisfies DispatchResult
 
 /**
  * キャラクターから話しかけてもらう。
@@ -41,7 +41,7 @@ export const ACCEPTED = { ok: true } satisfies DispatchResult
 export function nudge(driver: Promise<SessionDriver>): Promise<DispatchResult> {
   return askDriver(driver, (started) => {
     if (started.ended()) {
-      return { ok: false, reason: FRAME_ERROR_REASON.sessionEnded }
+      return { kind: "invalid", reason: FRAME_ERROR_REASON.sessionEnded }
     }
     started.promptWithoutRecord(CHAT_NUDGE_PROMPT)
     return ACCEPTED

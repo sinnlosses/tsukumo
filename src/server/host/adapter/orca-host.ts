@@ -48,56 +48,57 @@ export type { OrcaTab } from "./orca-tab.ts"
 export async function listTabs(
   scope: "all" | { readonly worktreePath: string },
 ): Promise<
-  | { readonly ok: true; readonly tabs: readonly OrcaTab[] }
-  | { readonly ok: false; readonly reason: string }
+  | { readonly kind: "ok"; readonly tabs: readonly OrcaTab[] }
+  | { readonly kind: "failed"; readonly reason: string }
 > {
   const worktree = scope === "all" ? "all" : `path:${scope.worktreePath}`
   const listed = await runOrca(
     ["tab", "list", "--worktree", worktree, "--json"],
     "タブ一覧を取得する",
   )
-  if (!listed.ok) {
-    return { ok: false, reason: listed.reason }
+  if (listed.kind === "failed") {
+    return { kind: "failed", reason: listed.reason }
   }
 
   let parsed: unknown
   try {
     parsed = JSON.parse(listed.stdout)
   } catch {
-    return { ok: false, reason: "タブ一覧の JSON を読めない" }
+    return { kind: "failed", reason: "タブ一覧の JSON を読めない" }
   }
 
-  return { ok: true, tabs: parseOrcaTabList(parsed) }
+  return { kind: "ok", tabs: parseOrcaTabList(parsed) }
 }
 
 /** 新しいタブを開き、そのページIDを返す。 */
 export async function openTab(
   url: string,
 ): Promise<
-  { readonly ok: true; readonly pageId: string } | { readonly ok: false; readonly reason: string }
+  | { readonly kind: "ok"; readonly pageId: string }
+  | { readonly kind: "failed"; readonly reason: string }
 > {
   const created = await runOrca(["tab", "create", "--url", url, "--json"], "タブを開く")
-  if (!created.ok) {
-    return { ok: false, reason: created.reason }
+  if (created.kind === "failed") {
+    return { kind: "failed", reason: created.reason }
   }
 
   const pageId = parseOrcaCreatedPageId(parseJson(created.stdout))
   return pageId === undefined
-    ? { ok: false, reason: "作ったタブのページIDを読めない" }
-    : { ok: true, pageId }
+    ? { kind: "failed", reason: "作ったタブのページIDを読めない" }
+    : { kind: "ok", pageId }
 }
 
 /** ページIDを名指ししてタブを閉じる。 */
 export async function closeTab(pageId: string): Promise<HostResult> {
   const result = await runOrca(["tab", "close", "--page", pageId, "--json"], "タブを閉じる")
-  return result.ok ? { ok: true } : { ok: false, reason: result.reason }
+  return result.kind === "ok" ? { kind: "ok" } : { kind: "failed", reason: result.reason }
 }
 
 async function showView(url: string): Promise<ShowViewResult> {
   const result = await openOrReuseView(url)
-  return result.ok
-    ? { ok: true, close: () => closeTab(result.pageId) }
-    : { ok: false, reason: result.reason }
+  return result.kind === "ok"
+    ? { kind: "ok", close: () => closeTab(result.pageId) }
+    : { kind: "failed", reason: result.reason }
 }
 
 /**
@@ -106,7 +107,8 @@ async function showView(url: string): Promise<ShowViewResult> {
 async function openOrReuseView(
   url: string,
 ): Promise<
-  { readonly ok: true; readonly pageId: string } | { readonly ok: false; readonly reason: string }
+  | { readonly kind: "ok"; readonly pageId: string }
+  | { readonly kind: "failed"; readonly reason: string }
 > {
   const pageId = await findViewPageId(url)
   if (pageId !== undefined) {
@@ -115,7 +117,7 @@ async function openOrReuseView(
       ["goto", "--url", url, "--page", pageId, "--json"],
       "ビューを開き直す",
     )
-    return moved.ok ? { ok: true, pageId } : { ok: false, reason: moved.reason }
+    return moved.kind === "ok" ? { kind: "ok", pageId } : { kind: "failed", reason: moved.reason }
   }
 
   return openTab(url)
@@ -127,7 +129,7 @@ async function openOrReuseView(
  */
 async function openFile(path: string): Promise<HostResult> {
   const opened = await runOrca(["file", "open", path, "--json"], "ファイルを開く")
-  return opened.ok ? { ok: true } : { ok: false, reason: opened.reason }
+  return opened.kind === "ok" ? { kind: "ok" } : { kind: "failed", reason: opened.reason }
 }
 
 /**
@@ -136,7 +138,7 @@ async function openFile(path: string): Promise<HostResult> {
  */
 async function findViewPageId(url: string): Promise<string | undefined> {
   const listed = await runOrca(["tab", "list", "--json"], "タブ一覧を取得する")
-  if (!listed.ok) {
+  if (listed.kind === "failed") {
     return undefined
   }
 
@@ -159,8 +161,8 @@ function viewLocation(url: string): string {
 }
 
 type CommandOutput =
-  | { readonly ok: true; readonly stdout: string }
-  | { readonly ok: false; readonly reason: string }
+  | { readonly kind: "ok"; readonly stdout: string }
+  | { readonly kind: "failed"; readonly reason: string }
 
 /**
  * `orca` を1回呼ぶ。`label` は失敗したときの理由に使う、値を含まない固定の日本語。
@@ -174,11 +176,11 @@ function runOrca(args: readonly string[], label: string): Promise<CommandOutput>
       { encoding: "utf8", timeout: ORCA_COMMAND_TIMEOUT_MS },
       (error, stdout, stderr) => {
         if (error === null) {
-          resolve({ ok: true, stdout })
+          resolve({ kind: "ok", stdout })
           return
         }
 
-        resolve({ ok: false, reason: describeFailure(label, error, stdout, stderr) })
+        resolve({ kind: "failed", reason: describeFailure(label, error, stdout, stderr) })
       },
     )
   })

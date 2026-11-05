@@ -94,7 +94,7 @@ function sourceTexts(slots: readonly Slot[], defs: Defs): readonly ParsedSource[
 
 function parseSource(source: string, pointer: string, label: string): ParsedSource {
   const result = parseExpression(source)
-  if (result.ok) return { faults: [], parsed: [{ pointer, node: result.node, label }] }
+  if (result.kind === "ok") return { faults: [], parsed: [{ pointer, node: result.node, label }] }
   return {
     faults: [
       {

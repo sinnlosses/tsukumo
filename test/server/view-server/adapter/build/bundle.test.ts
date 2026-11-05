@@ -30,15 +30,16 @@ describe("buildUiBundle", () => {
   it("src/browser/ を JS と CSS の1組にまとめ、指定した出し先に置く", () => {
     const result = built
 
-    expect(result.ok).toBe(true)
-    expect(result.ok ? result.bundle.uiScript.length : 0).toBeGreaterThan(0)
-    expect(result.ok ? result.bundle.styleSheet.length : 0).toBeGreaterThan(0)
+    expect(result.kind).toBe("ok")
+    expect(result.kind === "ok" ? result.bundle.uiScript.length : 0).toBeGreaterThan(0)
+    expect(result.kind === "ok" ? result.bundle.styleSheet.length : 0).toBeGreaterThan(0)
   })
 
   it("入口から import() で分けたチャンクを、入口かほかのチャンクが import する名前のまま持つ", () => {
     const result = built
-    const scripts = result.ok ? [result.bundle.uiScript, ...result.bundle.chunks.values()] : []
-    const chunkNames = result.ok ? [...result.bundle.chunks.keys()] : []
+    const scripts =
+      result.kind === "ok" ? [result.bundle.uiScript, ...result.bundle.chunks.values()] : []
+    const chunkNames = result.kind === "ok" ? [...result.bundle.chunks.keys()] : []
 
     expect(chunkNames.length).toBeGreaterThan(0)
     for (const name of chunkNames) {
@@ -52,10 +53,14 @@ describe("buildUiBundle", () => {
     // `layout-grid` は
     // `components/page/conversation/components/conversation-layout/conversation-layout.module.css`
     // の class。組み立てるとハッシュ付きの名前になる。
-    const selector = /\.(_?layout-grid_[\w-]+)/.exec(result.ok ? result.bundle.styleSheet : "")
+    const selector = /\.(_?layout-grid_[\w-]+)/.exec(
+      result.kind === "ok" ? result.bundle.styleSheet : "",
+    )
     const hashedName = selector?.[1] ?? "（CSS に layout-grid の選択子が無い）"
     // minify した JS は文字列をバッククォートで書くことがある（`"` 固定では見つからない）。
-    expect(result.ok ? result.bundle.uiScript : "").toMatch(new RegExp(`["'\`]${hashedName}["'\`]`))
+    expect(result.kind === "ok" ? result.bundle.uiScript : "").toMatch(
+      new RegExp(`["'\`]${hashedName}["'\`]`),
+    )
   })
 })
 
@@ -63,18 +68,22 @@ describe("readUiBundle", () => {
   it("置いてある成果物を、組み立て直さずにそのまま読む", async () => {
     const read = await readUiBundle(builtDir)
 
-    expect(read.ok).toBe(true)
-    expect(read.ok ? read.bundle.uiScript : "").toBe(built.ok ? built.bundle.uiScript : "")
-    expect(read.ok ? read.bundle.styleSheet : "").toBe(built.ok ? built.bundle.styleSheet : "")
-    expect(read.ok ? read.bundle.chunks : new Map()).toEqual(
-      built.ok ? built.bundle.chunks : new Map([["（組み立てに失敗した）", ""]]),
+    expect(read.kind).toBe("ok")
+    expect(read.kind === "ok" ? read.bundle.uiScript : "").toBe(
+      built.kind === "ok" ? built.bundle.uiScript : "",
+    )
+    expect(read.kind === "ok" ? read.bundle.styleSheet : "").toBe(
+      built.kind === "ok" ? built.bundle.styleSheet : "",
+    )
+    expect(read.kind === "ok" ? read.bundle.chunks : new Map()).toEqual(
+      built.kind === "ok" ? built.bundle.chunks : new Map([["（組み立てに失敗した）", ""]]),
     )
   })
 
   it("組み立てた直後は古くないと言う", async () => {
     const read = await readUiBundle(builtDir)
 
-    expect(read.ok ? read.outdated : true).toBe(false)
+    expect(read.kind === "ok" ? read.outdated : true).toBe(false)
   })
 })
 

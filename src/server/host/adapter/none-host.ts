@@ -8,7 +8,7 @@ import type { Host } from "../core/host.ts"
 export function createNoneHost(): Host {
   return {
     showView: () =>
-      Promise.resolve({ ok: false, reason: "ホストが none なので開かない（URL を手で開く）" }),
-    openFile: () => Promise.resolve({ ok: false, reason: "ホストが none なので開かない" }),
+      Promise.resolve({ kind: "failed", reason: "ホストが none なので開かない（URL を手で開く）" }),
+    openFile: () => Promise.resolve({ kind: "failed", reason: "ホストが none なので開かない" }),
   }
 }

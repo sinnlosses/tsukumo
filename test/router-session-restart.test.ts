@@ -96,7 +96,7 @@ describe("createSocketRouter（session）", () => {
 
   it("session.switchSession の起こし直しに失敗したら、占有ファイルを消す", async () => {
     const fake = createFakeSession(undefined, {
-      ok: false,
+      kind: "failed",
       reason: FRAME_ERROR_REASON.driverFailed,
     })
     const recorded = createRecordingPorts(
@@ -205,7 +205,7 @@ describe("createSocketRouter（session）", () => {
 
     it("起こし直しに失敗したら占有ファイルを消す", async () => {
       const fake = createFakeSession(undefined, {
-        ok: false,
+        kind: "failed",
         reason: FRAME_ERROR_REASON.driverFailed,
       })
       const recorded = createRecordingPorts(

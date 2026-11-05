@@ -7,7 +7,7 @@ export async function refusedUnlessAccepted(
   errors: { REFUSED(options: { data: { reason: CommandRefusalReason } }): Error },
 ): Promise<void> {
   const result = await pending
-  if (!result.ok) {
+  if (result.kind !== "ok") {
     throw errors.REFUSED({ data: { reason: result.reason } })
   }
 }

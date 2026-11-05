@@ -21,12 +21,12 @@ export type ExprValue = Scalar | readonly Scalar[]
 export type ExprParams = Readonly<Record<string, number | boolean>>
 
 export type EvalResult =
-  | { readonly ok: true; readonly value: ExprValue }
-  | { readonly ok: false; readonly error: ExprError }
+  | { readonly kind: "ok"; readonly value: ExprValue }
+  | { readonly kind: "invalid"; readonly error: ExprError }
 
 export type FormatResult =
-  | { readonly ok: true; readonly value: string }
-  | { readonly ok: false; readonly error: ExprError }
+  | { readonly kind: "ok"; readonly value: string }
+  | { readonly kind: "invalid"; readonly error: ExprError }
 
 export type ExpressionEvaluator = {
   /** 式 1 つを評価する。`defs` の名前だけを渡せば、その定義を評価する。 */
@@ -74,7 +74,7 @@ export function createExpressionEvaluator(context: {
     }
     const origin: ExprOrigin = { where: "def", name }
     const parsed = parseExpression(source)
-    if (!parsed.ok) throw new EvaluationFailure({ ...parsed.error, origin })
+    if (parsed.kind === "invalid") throw new EvaluationFailure({ ...parsed.error, origin })
     const value = evalNode(parsed.node, { origin, stack: [...run.stack, name] })
     cache.set(name, value)
     return value
@@ -140,11 +140,14 @@ export function createExpressionEvaluator(context: {
 
   const evaluateSource = (source: string): EvalResult => {
     const parsed = parseExpression(source)
-    if (!parsed.ok) return parsed
+    if (parsed.kind === "invalid") return parsed
     try {
-      return { ok: true, value: evalNode(parsed.node, { origin: { where: "source" }, stack: [] }) }
+      return {
+        kind: "ok",
+        value: evalNode(parsed.node, { origin: { where: "source" }, stack: [] }),
+      }
     } catch (thrown) {
-      if (thrown instanceof EvaluationFailure) return { ok: false, error: thrown.detail }
+      if (thrown instanceof EvaluationFailure) return { kind: "invalid", error: thrown.detail }
       throw thrown
     }
   }
@@ -153,15 +156,15 @@ export function createExpressionEvaluator(context: {
     const failure = templateExpressions(template)
       .map((part) => {
         const result = evaluateSource(part.source)
-        return result.ok ? undefined : { ...result.error, at: part.at + result.error.at }
+        return result.kind === "ok" ? undefined : { ...result.error, at: part.at + result.error.at }
       })
       .find((error) => error !== undefined)
-    if (failure !== undefined) return { ok: false, error: failure }
+    if (failure !== undefined) return { kind: "invalid", error: failure }
     const value = template.replace(TEMPLATE_PATTERN, (_, source: string) => {
       const result = evaluateSource(source)
-      return result.ok ? textOf(result.value) : ""
+      return result.kind === "ok" ? textOf(result.value) : ""
     })
-    return { ok: true, value }
+    return { kind: "ok", value }
   }
 
   return { evaluate: evaluateSource, format: formatTemplate }

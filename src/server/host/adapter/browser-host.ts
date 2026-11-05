@@ -23,11 +23,14 @@ export function createBrowserHost(): Host {
 
 async function showView(url: string): Promise<ShowViewResult> {
   const opened = await openTarget(url)
-  return opened.ok
+  return opened.kind === "ok"
     ? {
-        ok: true,
+        kind: "ok",
         close: () =>
-          Promise.resolve({ ok: false, reason: "ブラウザのタブは tsukumo から閉じられない" }),
+          Promise.resolve({
+            kind: "failed",
+            reason: "ブラウザのタブは tsukumo から閉じられない",
+          }),
       }
     : opened
 }
@@ -44,11 +47,11 @@ function openTarget(target: string): Promise<HostResult> {
       { encoding: "utf8", timeout: OPEN_COMMAND_TIMEOUT_MS },
       (error) => {
         if (error === null) {
-          resolve({ ok: true })
+          resolve({ kind: "ok" })
           return
         }
 
-        resolve({ ok: false, reason: describeFailure(error) })
+        resolve({ kind: "failed", reason: describeFailure(error) })
       },
     )
   })

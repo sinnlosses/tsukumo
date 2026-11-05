@@ -16,5 +16,5 @@ export async function openTrackedFile(
     return false
   }
   const result = await open(path)
-  return result.ok
+  return result.kind === "ok"
 }

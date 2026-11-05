@@ -235,7 +235,7 @@ function evaluated(
   const call = expressionCall(value)
   if (call === undefined) return undefined
   const result = call.call === "expr" ? evaluator.evaluate(call.text) : evaluator.format(call.text)
-  return result.ok ? { ok: true, value: result.value } : FAILED
+  return result.kind === "ok" ? { ok: true, value: result.value } : FAILED
 }
 
 function resolveText(value: string | object, evaluator: ExpressionEvaluator): Resolved<string> {

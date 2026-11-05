@@ -63,8 +63,8 @@ export function resolveViewPortFallbackBase(raw: string | undefined): number {
 
 /** `start` が失敗したときの結果。成功時は呼び出し元の型 `T` をそのまま持つ。 */
 export type ViewPortStartResult<T> =
-  | { readonly ok: true; readonly server: T; readonly port: number }
-  | { readonly ok: false; readonly reason: string }
+  | { readonly kind: "ok"; readonly server: T; readonly port: number }
+  | { readonly kind: "failed"; readonly reason: string }
 
 /**
  * 決めたポートで `start` を呼ぶ。
@@ -80,9 +80,9 @@ export async function startOnResolvedPort<T>(
 ): Promise<ViewPortStartResult<T>> {
   if (resolution.kind === "explicit") {
     try {
-      return { ok: true, server: await start(resolution.port), port: resolution.port }
+      return { kind: "ok", server: await start(resolution.port), port: resolution.port }
     } catch (error) {
-      return { ok: false, reason: describeStartError(error) }
+      return { kind: "failed", reason: describeStartError(error) }
     }
   }
 
@@ -90,17 +90,17 @@ export async function startOnResolvedPort<T>(
   const lastPort = firstPort + VIEW_PORT_FALLBACK_ATTEMPTS - 1
   for (let port = firstPort; port <= lastPort; port++) {
     try {
-      return { ok: true, server: await start(port), port }
+      return { kind: "ok", server: await start(port), port }
     } catch (error) {
       if (!isEaddrInUseError(error)) {
-        return { ok: false, reason: describeStartError(error) }
+        return { kind: "failed", reason: describeStartError(error) }
       }
       // EADDRINUSE のときだけ次のポートへ。ループの続きへ進む。
     }
   }
 
   return {
-    ok: false,
+    kind: "failed",
     reason: `${String(firstPort)}〜${String(lastPort)} のポートがすべて塞がっている`,
   }
 }

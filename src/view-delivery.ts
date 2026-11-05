@@ -61,7 +61,7 @@ export type ViewDeliveryOptions = {
 /** 配り始めた結果。失敗は起動時の前提不足なので、理由だけを返して呼び出し側が即時終了する。 */
 export type ViewDeliveryResult =
   | {
-      readonly ok: true
+      readonly kind: "ok"
       /** 利用者が開く URL（起動トークン付き）。タブを開き直すときもこれをそのまま使う。 */
       readonly url: string
       /** 実際に待ち受けているポート。セッションの印の目印（`sessionTag`）がここから決まるので返す。 */
@@ -69,7 +69,7 @@ export type ViewDeliveryResult =
       /** 開いたタブとセッションを繋ぐ（`/ws` の受け口を足し、コマンドの手続きを載せる）。 */
       readonly connect: (session: StartedSession) => void
     }
-  | { readonly ok: false; readonly reason: string }
+  | { readonly kind: "failed"; readonly reason: string }
 
 /**
  * ビューを配り始める。
@@ -111,8 +111,8 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
       onRuntimeError: (error) => reportSwallowedFailure(options, "http-server-error", error),
     }),
   )
-  if (!started.ok) {
-    return { ok: false, reason: started.reason }
+  if (started.kind === "failed") {
+    return { kind: "failed", reason: started.reason }
   }
   const server = started.server
 
@@ -135,7 +135,7 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
   }
 
   return {
-    ok: true,
+    kind: "ok",
     url: `${server.layoutUrl}?t=${token}`,
     port: started.port,
     connect: ({ manager, socketRouter }) => {

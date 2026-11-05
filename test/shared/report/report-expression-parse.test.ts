@@ -8,7 +8,7 @@ import {
 
 const parsed = (source: string): ExprNode => {
   const result = parseExpression(source)
-  if (!result.ok) throw new Error(`読めるはずの式が読めない: ${source}`)
+  if (result.kind === "invalid") throw new Error(`読めるはずの式が読めない: ${source}`)
   return result.node
 }
 
@@ -80,8 +80,8 @@ describe("parseExpression の誤り", () => {
     ["[1 2]", "unexpected-token", 3],
   ])("%s は %s（位置 %i）", (source, kind, at) => {
     const result = parseExpression(source)
-    expect(result.ok).toBe(false)
-    if (!result.ok) {
+    expect(result.kind).toBe("invalid")
+    if (result.kind === "invalid") {
       expect(result.error.kind).toBe(kind)
       expect(result.error.at).toBe(at)
       expect(result.error.reason).not.toBe("")
@@ -89,10 +89,10 @@ describe("parseExpression の誤り", () => {
   })
 
   it("200 字を超える式は読まない", () => {
-    expect(parseExpression("1".repeat(200)).ok).toBe(true)
+    expect(parseExpression("1".repeat(200)).kind).toBe("ok")
     const result = parseExpression("1".repeat(201))
-    expect(result.ok).toBe(false)
-    if (!result.ok) expect(result.error.kind).toBe("too-long")
+    expect(result.kind).toBe("invalid")
+    if (result.kind === "invalid") expect(result.error.kind).toBe("too-long")
   })
 })
 

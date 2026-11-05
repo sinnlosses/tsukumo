@@ -72,7 +72,7 @@ export function sessionCommands(ports: SessionCommandPorts): SessionCommandTable
       receive: (input, session) =>
         askDriver(session.driver(), (started) => {
           if (started.ended()) {
-            return { ok: false, reason: FRAME_ERROR_REASON.sessionEnded }
+            return { kind: "invalid", reason: FRAME_ERROR_REASON.sessionEnded }
           }
           started.prompt(
             input.text,
@@ -89,7 +89,7 @@ export function sessionCommands(ports: SessionCommandPorts): SessionCommandTable
     answer: toDriver((started, input) =>
       started.answer(input.id, input.answer)
         ? ACCEPTED
-        : { ok: false, reason: FRAME_ERROR_REASON.unresolvedAnswer },
+        : { kind: "invalid", reason: FRAME_ERROR_REASON.unresolvedAnswer },
     ),
     setModel: toDriver(async (started, input) => {
       await started.setModel(input.model)
@@ -146,7 +146,7 @@ export function sessionCommands(ports: SessionCommandPorts): SessionCommandTable
           chat: input.chat,
           resume: { by: "id", sessionId: target.sessionId },
         })
-        if (!result.ok) {
+        if (result.kind !== "ok") {
           ports.withdrawSessionClaim()
         }
         return result
@@ -173,7 +173,7 @@ export function sessionCommands(ports: SessionCommandPorts): SessionCommandTable
           chat: session.state().chatMode,
           resume: { by: "id", sessionId },
         })
-        if (!result.ok) {
+        if (result.kind !== "ok") {
           ports.withdrawSessionClaim()
         }
         return result
@@ -289,7 +289,7 @@ async function reflectAchievement(
   if (ports.diary.kind === "dont-write") {
     // 疑似セッション: claude を起こさず、`diary-requested` のすぐ後に `diary-failed` を流す。
     generation.emit({ kind: "diary-failed", date })
-    return { ok: true }
+    return { kind: "ok" }
   }
 
   const request: DiaryWriteRequest = {
@@ -300,7 +300,7 @@ async function reflectAchievement(
   }
   // 待たない（書き手は自分でイベントを流し終える。`reflectAchievement` はここで返す）。
   void ports.diary.write(request, generation.emit, generation.diarySignal)
-  return { ok: true }
+  return { kind: "ok" }
 }
 
 /** `readAchievementDay` が例外を投げても、常駐プロセスは落とさず undefined に畳む。 */

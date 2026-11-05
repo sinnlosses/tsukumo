@@ -25,14 +25,14 @@ describe("readWorkflowPlugin", () => {
     await mkdir(join(dir, ".claude-plugin"))
     await writeFile(join(dir, ".claude-plugin", "plugin.json"), "{}")
 
-    expect(await readWorkflowPlugin(dir)).toEqual({ ok: true })
+    expect(await readWorkflowPlugin(dir)).toEqual({ kind: "ok" })
   })
 
   it("空の置き場は、直し方を添えて読めないと返す", async () => {
     const reading = await readWorkflowPlugin(dir)
 
-    expect(reading.ok).toBe(false)
-    expect(!reading.ok && reading.reason).toContain("git submodule update --init")
+    expect(reading.kind).toBe("missing")
+    expect(reading.kind === "missing" && reading.reason).toContain("git submodule update --init")
   })
 })
 

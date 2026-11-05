@@ -120,7 +120,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       generation = startGeneration(request, "after-hello")
       await generation.driver
       announceGeneration()
-      return { ok: true }
+      return { kind: "ok" }
     } catch (error) {
       // 起こせなくても、組み直した姿（キャラクター・モード）は `hello` で配り、束も止めたままにしない。
       // 止めたままだと、見た目の編集などで積んだイベントが次の起こし直しまで届かなくなる。
@@ -128,7 +128,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
         swallowedFailureFootprint(options.now(), { feature: "session", place: "restart" }, error),
       )
       announceGeneration()
-      return { ok: false, reason: FRAME_ERROR_REASON.driverFailed }
+      return { kind: "failed", reason: FRAME_ERROR_REASON.driverFailed }
     }
   }
 
