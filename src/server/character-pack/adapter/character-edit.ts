@@ -1,14 +1,9 @@
 // 画面から届いたキャラクターの変更（新しいパックを作る・立ち絵と差し色と背景とペルソナを差し替える・パックを消す）をキャラクターパックに書き込む。
 // 書き込んでよい・消してよいのは `~/.tsukumo/characters/<name>/` の下だけ。
 //
-// ディレクトリ名になる名前だけは外から受け取る（新しいパックを作るときの `<name>`）ので、形は境界で見てある。
-// ここは既にある名前とぶつかったら書かないことだけを見る（後勝ちで既存のパックが黙って隠れないため）。
-//
-// ファイル名を外から受け取らない。
-// 立ち絵の名前は表情と形式から、ミニ立ち絵・背景・顔の名前は形式だけから組み立てるので、届いた文字列がパスの一部になる経路がそもそも無い。
-//
-// 書き込む先のパックはコマンドの `pack` で指す（使用中のパックに限らない）。
-// 名前は一覧と突き合わせて引くだけで、パスには使わない（書く先はホームの下の、引けたパックの名前）。
+// 新しいパックの `<name>` だけは外から受け取る。形は境界で見てあり、ここは既にある名前とぶつかったら書かない。
+// ファイル名は外から受け取らない（表情と形式から組み立てる）ので、届いた文字列がパスの一部になる経路が無い。
+// 書き込む先のパックはコマンドの `pack` で指す。名前は一覧と突き合わせて引くだけで、パスには使わない。
 //
 // 書き込む前に、書き込む先のパックをホームへ丸ごと写す（同梱のパックを直さないため）。
 // ホームに既に同じ名前のパックがあるときは写さない（画面から重ねた変更を上書きしてしまわないため）。
@@ -119,6 +114,7 @@ export function editCharacterPack(
     copyPackOnce(pack, dir)
     return applyEdit(dir, edit) ? readCharacterPack(dir) : undefined
   } catch {
+    // 書き換えに失敗したことは undefined で返し、呼び出し側が利用者へ拒否として伝える
     return undefined
   }
 }
@@ -157,6 +153,7 @@ export function createCharacterPack(
     writeFileAtomic(join(dir, CHARACTER_DEFINITION_FILE_NAME), newDefinitionJson(create, fileNames))
     return readCharacterPack(dir)
   } catch {
+    // 作りかけのディレクトリを捨てて、失敗を undefined で返す
     discardDir(dir)
     return undefined
   }
@@ -195,6 +192,7 @@ export function deleteCharacterPack(
     rmSync(join(roots.home, pack.name), { recursive: true })
     return removal
   } catch {
+    // 消せなかったことは undefined で返し、呼び出し側が利用者へ拒否として伝える
     return undefined
   }
 }

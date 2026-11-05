@@ -82,6 +82,7 @@ function isTsukumoPackage(packageJsonPath: string): boolean {
       parsed.name === PACKAGE_NAME
     )
   } catch {
+    // package.json が無い・読めないディレクトリは tsukumo のチェックアウトではない
     return false
   }
 }

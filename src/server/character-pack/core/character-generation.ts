@@ -52,6 +52,7 @@ export async function generateCharacter(
       undefined,
     )
   } catch {
+    // 生成の失敗は undefined で返し、呼び出し側が failed の応答にする
     return undefined
   }
 }

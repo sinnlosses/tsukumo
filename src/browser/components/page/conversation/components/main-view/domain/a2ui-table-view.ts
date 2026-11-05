@@ -177,6 +177,7 @@ function dateTime(text: string): Temporal.PlainDateTime | undefined {
   try {
     return Temporal.PlainDateTime.from(text, { overflow: "reject" })
   } catch {
+    // 日時として読めない文字列は日時の列として扱わない
     return undefined
   }
 }

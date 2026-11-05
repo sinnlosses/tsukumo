@@ -5,6 +5,7 @@ export function readOptionalFile(path: string): string | undefined {
   try {
     return readFileSync(path, "utf8")
   } catch {
+    // 無いこと自体はエラーではない読み取り
     return undefined
   }
 }
@@ -13,6 +14,7 @@ export function readOptionalBinaryFile(path: string): Buffer | undefined {
   try {
     return readFileSync(path)
   } catch {
+    // 無いこと自体はエラーではない読み取り
     return undefined
   }
 }

@@ -95,6 +95,7 @@ function decodedRoutePart(encoded: string): string | undefined {
   try {
     return decodeURIComponent(encoded)
   } catch {
+    // 壊れた `%` の並びは経路の一部として読めない
     return undefined
   }
 }

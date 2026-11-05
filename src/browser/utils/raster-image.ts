@@ -25,6 +25,7 @@ export async function promptReadyDataUrl(dataUrl: string): Promise<string | unde
     context.drawImage(image, 0, 0, width, height)
     return canvas.toDataURL("image/png")
   } catch {
+    // canvas を汚した画像などで書き出せないときは変換なしとして扱う
     return undefined
   }
 }

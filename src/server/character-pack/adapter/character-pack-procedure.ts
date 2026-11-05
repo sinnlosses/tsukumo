@@ -88,6 +88,7 @@ export function characterPackProcedure(ports: CharacterPackCommandPorts) {
       try {
         generation = await ports.generateFromPortrait(input.portrait)
       } catch {
+        // 生成器が投げた失敗も、返ってきた失敗と同じ拒否の応答に畳む
         generation = { kind: "failed" }
       }
       if (generation.kind === "failed") {

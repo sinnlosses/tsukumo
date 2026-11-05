@@ -64,6 +64,7 @@ export async function listTabs(
   try {
     parsed = JSON.parse(listed.stdout)
   } catch {
+    // JSON の読み失敗は、下の kind: "failed" の理由に畳む
     return { kind: "failed", reason: "タブ一覧の JSON を読めない" }
   }
 
@@ -156,6 +157,7 @@ function viewLocation(url: string): string {
     const parsed = new URL(url)
     return `${parsed.origin}${parsed.pathname}`
   } catch {
+    // URL として読めない文字列は、そのまま表示用の場所として返す
     return url
   }
 }

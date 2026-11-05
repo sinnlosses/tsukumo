@@ -54,6 +54,7 @@ export function useItemEdit(): ItemSectionModel | undefined {
                   setAdding({ kind: "closed" })
                 })
                 .catch(() => {
+                  // 拒まれたことは画面の拒否の表示にする
                   setAdding({ kind: "open", rejected: true })
                 })
             })

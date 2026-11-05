@@ -30,6 +30,7 @@ async function readRecordText(cwd: string): Promise<CheckRecordText> {
   try {
     return { kind: "text", text: await readFile(join(cwd, RECORD_FILE_NAME), "utf8") }
   } catch {
+    // 記録ファイルが無い・読めないことは unavailable の応答にする
     return { kind: "unavailable" }
   }
 }
@@ -71,6 +72,7 @@ async function readWorktreeTree(
     const sha = written.kind === "output" ? written.stdout.trim() : ""
     return sha === "" ? { kind: "unknown" } : { kind: "known", sha }
   } catch {
+    // 作業ツリーの指紋が取れないことは unknown の応答にする
     return { kind: "unknown" }
   } finally {
     if (scratch !== undefined) {

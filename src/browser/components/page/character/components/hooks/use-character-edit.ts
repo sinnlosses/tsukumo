@@ -72,6 +72,7 @@ export function useCharacterEdit(): CharacterEditModel {
   const sendImage = (target: ImageTarget, send: () => Promise<unknown>): void => {
     setRejected({ kind: "none" })
     void send().catch(() => {
+      // 拒まれたことは画面の拒否の表示にする
       setRejected({ kind: "rejected", pack, target })
     })
   }

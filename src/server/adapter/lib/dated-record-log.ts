@@ -91,6 +91,7 @@ function statOf(path: string): { mtimeMs: number; size: number } | undefined {
     const { mtimeMs, size } = statSync(path)
     return { mtimeMs, size }
   } catch {
+    // 無い・読めないファイルは「状態が取れない」として扱う（呼び出し側が undefined で分岐する）
     return undefined
   }
 }

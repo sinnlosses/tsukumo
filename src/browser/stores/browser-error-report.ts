@@ -45,6 +45,7 @@ function originOf(file: string): "bundle" | "other" {
       ? "bundle"
       : "other"
   } catch {
+    // URL として読めない発生元は other に分類する
     return "other"
   }
 }

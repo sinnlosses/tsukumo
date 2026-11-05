@@ -32,6 +32,7 @@ function createLockFile(path: string, now: Temporal.Instant): boolean {
     writeFileSync(path, isoWithOffset(now.epochMilliseconds), { flag: "wx" })
     return true
   } catch {
+    // wx で既に錠がある（取れなかった）ことを false で返す
     return false
   }
 }
@@ -41,6 +42,7 @@ function isStaleLock(path: string, staleAfterMs: number, now: Temporal.Instant):
   try {
     return now.epochMilliseconds - statSync(path).mtimeMs > staleAfterMs
   } catch {
+    // 消えた錠は取り直してよい側に倒す
     return true
   }
 }

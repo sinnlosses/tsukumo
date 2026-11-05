@@ -65,6 +65,7 @@ export async function readWorkflowPlugin(pluginDir: string): Promise<WorkflowPlu
     await access(manifest)
     return { kind: "ok" }
   } catch {
+    // manifest が無いことは missing の応答（取り込み方つき）にする
     return {
       kind: "missing",
       reason: `${manifest} が無い（git submodule update --init で取り込む）`,

@@ -38,6 +38,7 @@ export async function sourceFingerprint(
     })
     return { kind: "known", hash: hash.digest("hex") }
   } catch {
+    // ソースが読めないことは unavailable の応答にする
     return { kind: "unavailable" }
   }
 }

@@ -25,6 +25,7 @@ export function readItemAssetPath(rest: string): string | undefined {
     const fileName = decodeURIComponent(rest)
     return fileName === "" ? undefined : fileName
   } catch {
+    // 不正なパーセントエンコードの URL は素材の名前として読めない
     return undefined
   }
 }

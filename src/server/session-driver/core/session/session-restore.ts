@@ -205,6 +205,7 @@ function messageTime(message: unknown): RestoredEvent["time"] {
   try {
     return { kind: "known", at: Temporal.Instant.from(message.timestamp).epochMilliseconds }
   } catch {
+    // 時刻として読めない記録は UNKNOWN_TIME として扱う
     return UNKNOWN_TIME
   }
 }

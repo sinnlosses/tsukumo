@@ -74,6 +74,7 @@ export async function readRestoredEvents(
       readInputLedger(sessionId),
     )
   } catch {
+    // 復元できない会話は、再生するイベントなしとして空に倒す
     return []
   }
 }
@@ -108,6 +109,7 @@ export function createSessionDigestReader(
       }
       return digest
     } catch {
+      // 要約が読めないことは UNAVAILABLE の値で返す
       return UNAVAILABLE_SESSION_DIGEST
     }
   }
@@ -193,6 +195,7 @@ async function readTranscriptStamp(sessionId: SessionId): Promise<TranscriptStam
       ? undefined
       : { lastModified: info.lastModified, fileSize: info.fileSize }
   } catch {
+    // 会話の記録が読めないときは更新の印なしとして扱い、キャッシュを使わない
     return undefined
   }
 }

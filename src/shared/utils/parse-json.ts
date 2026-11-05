@@ -2,6 +2,7 @@ export function parseJson(text: string): unknown {
   try {
     return JSON.parse(text)
   } catch {
+    // JSON として読めない文字列は undefined で返す
     return undefined
   }
 }

@@ -304,6 +304,7 @@ async function readAchievementDaySafely(
   try {
     return await ports.readAchievementDay(date)
   } catch {
+    // 成果が読めない日は成果なしとして扱う
     return undefined
   }
 }

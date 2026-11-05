@@ -68,6 +68,7 @@ function ledgerFileNames(root: string): readonly string[] {
       return id !== undefined && parseSessionId(id) !== undefined
     })
   } catch {
+    // 台帳のディレクトリがまだ無い・読めないときは、台帳が無いものとして空に倒す
     return []
   }
 }

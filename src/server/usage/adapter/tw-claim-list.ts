@@ -45,6 +45,7 @@ export function twClaimsRunner(tw: string, cwd: string): TwClaimsRunner {
           },
         )
       } catch {
+        // tw を起こせないときは、出力なしとして返す
         resolve(undefined)
       }
     })

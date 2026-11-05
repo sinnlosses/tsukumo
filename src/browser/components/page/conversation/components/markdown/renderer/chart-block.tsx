@@ -38,6 +38,7 @@ export function ChartBlock(props: ChartBlockProps): ReactElement {
         chart = new Chart(canvas, omit(JSON.parse(props.spec), ["tsukumo"]))
       })
       .catch(() => {
+        // 読み込み・描画の失敗はグラフの代わりに失敗の表示にする
         if (!cancelled) {
           setFailed(true)
         }

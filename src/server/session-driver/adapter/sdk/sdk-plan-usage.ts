@@ -110,6 +110,7 @@ function parseIsoInstant(iso: string): number | undefined {
   try {
     return Temporal.Instant.from(iso).epochMilliseconds
   } catch {
+    // 時刻として読めない綴りは戻り時刻なしとして扱う
     return undefined
   }
 }

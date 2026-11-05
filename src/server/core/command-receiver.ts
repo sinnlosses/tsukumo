@@ -66,6 +66,7 @@ export async function receiveFeatureCommand<C>(
         sink.generation().emit(event)
         return { kind: "ok" }
       } catch {
+        // 受け手の投げた失敗は、受け手が決めた失敗の応答に畳む
         return { kind: "failed", reason: receiver.failure }
       }
     case "call":
@@ -74,6 +75,7 @@ export async function receiveFeatureCommand<C>(
           ? { kind: "ok" }
           : { kind: "invalid", reason: receiver.failure }
       } catch {
+        // 受け手の投げた失敗は、受け手が決めた失敗の応答に畳む
         return { kind: "failed", reason: receiver.failure }
       }
   }

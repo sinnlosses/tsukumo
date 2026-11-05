@@ -85,6 +85,7 @@ async function readDriverContextUsage(driver: SessionDriver): Promise<ContextUsa
   try {
     return await driver.readContextUsage()
   } catch {
+    // 駆動が読めないことは UNAVAILABLE の値で返す
     return UNAVAILABLE_CONTEXT_USAGE
   }
 }

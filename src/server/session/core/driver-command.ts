@@ -27,6 +27,7 @@ export async function askDriver(
   try {
     return await ask(await driver)
   } catch {
+    // 駆動の失敗は、書く口へ failed の応答で返す（例外は外へ出さない）
     return { kind: "failed", reason: FRAME_ERROR_REASON.driverFailed }
   }
 }

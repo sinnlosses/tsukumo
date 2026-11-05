@@ -128,6 +128,7 @@ export function itemImageRevision(dir: string, imageFile: string): string | unde
     const list = statSync(itemsFilePath(dir)).mtimeMs
     return String(Math.floor(Math.max(image, list)))
   } catch {
+    // どちらかのファイルが読めないときは版を作れない
     return undefined
   }
 }

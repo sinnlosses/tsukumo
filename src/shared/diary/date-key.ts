@@ -16,6 +16,7 @@ export function dateKeyOf(value: string): Temporal.PlainDate | undefined {
   try {
     return Temporal.PlainDate.from(value)
   } catch {
+    // 日付として読めない文字列は undefined で返す
     return undefined
   }
 }

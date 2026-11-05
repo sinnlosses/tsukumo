@@ -63,6 +63,7 @@ async function readSmallRegularFile(path: string): Promise<SmallFileContent> {
   try {
     handle = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW)
   } catch {
+    // リンク・無いファイルなど開けないものは unreadable の応答にする
     return unavailable("unreadable")
   }
   try {
@@ -75,6 +76,7 @@ async function readSmallRegularFile(path: string): Promise<SmallFileContent> {
     }
     return { kind: "read", bytes: await handle.readFile() }
   } catch {
+    // 読み込み中に失敗したファイルは unreadable の応答にする
     return unavailable("unreadable")
   } finally {
     await handle.close()

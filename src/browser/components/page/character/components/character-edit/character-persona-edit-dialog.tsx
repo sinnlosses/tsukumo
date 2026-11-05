@@ -33,7 +33,9 @@ export function CharacterPersonaEditDialog(props: CharacterPersonaEditDialogProp
     void props
       .onSubmit(persona)
       .then(props.onClose)
-      .catch(() => {})
+      .catch(() => {
+        // 拒まれたら閉じずに開いたままにする（失敗の表示は呼び出し側の onSubmit が持つ）
+      })
   }
 
   return (

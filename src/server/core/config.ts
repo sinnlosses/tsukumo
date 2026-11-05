@@ -223,6 +223,7 @@ function parseInstant(value: string | undefined): Temporal.Instant | undefined {
   try {
     return Temporal.Instant.from(trimmed)
   } catch {
+    // 時刻として読めない設定値は未設定と同じに扱う
     return undefined
   }
 }

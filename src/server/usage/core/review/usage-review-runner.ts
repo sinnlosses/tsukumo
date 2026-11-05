@@ -246,6 +246,7 @@ async function runProposal(
     }
     return signal.aborted ? abortedOutcome(interruptSignal) : "succeeded"
   } catch {
+    // 実行中の失敗は、中断と同じ結果に畳む
     return abortedOutcome(interruptSignal)
   }
 }

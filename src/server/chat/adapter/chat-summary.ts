@@ -164,6 +164,7 @@ function store(paths: SummaryPaths, stored: StoredSummary): boolean {
     mkdirSync(paths.root, { recursive: true })
     writeFileAtomic(paths.current, JSON.stringify({ v: SUMMARY_FORMAT_VERSION, ...stored }))
   } catch {
+    // 書けなかったことは戻り値の false で呼び出し側へ返す
     return false
   }
   return true
@@ -174,6 +175,7 @@ function entryNames(dir: string): readonly string[] {
   try {
     return readdirSync(dir)
   } catch {
+    // 読めないディレクトリは空として扱う
     return []
   }
 }

@@ -180,6 +180,7 @@ function parsedJsonOf(stdout: string): unknown {
   try {
     return JSON.parse(stdout)
   } catch {
+    // 読めないことは undefined で返す
     return undefined
   }
 }

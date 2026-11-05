@@ -45,6 +45,7 @@ export function localPreference<Value>(
         const parsed = schema.safeParse(codec.parse(raw))
         return parsed.success ? parsed.data : fallback
       } catch {
+        // 保存先が使えない・壊れた値は既定値に倒す
         return fallback
       }
     },

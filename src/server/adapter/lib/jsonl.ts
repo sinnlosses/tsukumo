@@ -45,6 +45,7 @@ export function appendJsonLines(path: string, records: readonly unknown[]): bool
     appendFileSync(path, endsWithoutNewline(path) ? `\n${lines}` : lines)
     return true
   } catch {
+    // 書けなかったことは戻り値の false で呼び出し側へ返す（例外は外へ出さない約束）
     return false
   }
 }
@@ -96,6 +97,7 @@ export function createJsonLinesAppender(root: string): JsonLinesAppender {
       }
       return { dateKey, stream, failed }
     } catch {
+      // 開けなかったことは undefined で返し、呼び出し側が書き込みの失敗として数える
       return undefined
     }
   }
@@ -154,6 +156,7 @@ export function dateFileNames(dir: string): readonly string[] {
       .filter((name) => DATE_FILE_NAME.test(name))
       .toSorted()
   } catch {
+    // ディレクトリがまだ無い・読めないときは、記録が無いものとして空に倒す
     return []
   }
 }
@@ -207,6 +210,7 @@ function readRawLines(path: string): readonly string[] {
       .split("\n")
       .filter((line) => line !== "")
   } catch {
+    // ファイルがまだ無い・読めないときは、記録が無いものとして空に倒す
     return []
   }
 }

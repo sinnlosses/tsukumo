@@ -30,7 +30,9 @@ export function CopyButton(props: { readonly text: string }): ReactElement {
               setCopied(false)
             }, COPIED_LABEL_DURATION_MS)
           })
-          .catch(() => {})
+          .catch(() => {
+            // クリップボードへ書けなかったときは「コピーした」表示を出さないだけにする
+          })
       }}
     >
       {copied ? (

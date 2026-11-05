@@ -89,6 +89,7 @@ export function createReportDraftIntake(): ReportDraftIntake {
           : []
       })
     } catch {
+      // 読み取りで投げた欄は、受け取れなかったものとして欄ごと外す
       blocks = withoutBlock(blocks, index)
       return []
     }

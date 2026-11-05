@@ -33,6 +33,7 @@ export function readItemAsset(
     const content = readFileSync(join(dir, entry.image))
     return { contentType, content, versioned: version === revision }
   } catch {
+    // 画像ファイルが無い・読めない素材は返せない
     return undefined
   }
 }

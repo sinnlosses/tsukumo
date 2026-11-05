@@ -81,6 +81,7 @@ export function decodeMarks(token: string): readonly CodeMark[] {
         )
       : []
   } catch {
+    // JSON として読めない印の指定は印なしとして扱う
     return []
   }
 }

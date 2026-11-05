@@ -41,6 +41,7 @@ async function readOne(cwd: string, path: string): Promise<string | undefined> {
     const buffer = await readFile(resolved)
     return buffer.includes(0) ? undefined : buffer.toString("utf8")
   } catch {
+    // 読めないファイルは本文なしとして扱う
     return undefined
   }
 }

@@ -219,11 +219,13 @@ function readJsonFile(filePath: string): JsonFileReading {
   try {
     content = readFileSync(filePath, "utf8")
   } catch {
+    // 読めないことは unreadable の応答（理由つき）にする
     return { kind: "unreadable", reason: `ファイルを読めない（${filePath}）` }
   }
   try {
     return { kind: "read", value: JSON.parse(content) }
   } catch {
+    // JSON として読めないことは unreadable の応答（理由つき）にする
     return { kind: "unreadable", reason: `JSON として読めない（${filePath}）` }
   }
 }

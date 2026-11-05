@@ -156,6 +156,7 @@ function parseDiaryContent(content: string): Diary | undefined {
   try {
     return readDiary(JSON.parse(content))
   } catch {
+    // 壊れた既存ファイルは undefined で返し、呼び出し側が扱いを決める
     return undefined
   }
 }
@@ -167,6 +168,7 @@ function writeDiaryFileAtomic(path: string, diary: Diary): boolean {
     writeFileAtomic(path, JSON.stringify(diary))
     return true
   } catch {
+    // 書けなかったことは戻り値の false で呼び出し側へ返す
     return false
   }
 }
@@ -176,6 +178,7 @@ function readDirNames(dir: string): readonly string[] {
   try {
     return readdirSync(dir)
   } catch {
+    // 読めないディレクトリは空として扱う
     return []
   }
 }

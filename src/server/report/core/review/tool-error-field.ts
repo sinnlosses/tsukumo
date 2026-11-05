@@ -24,6 +24,7 @@ export function toolErrorFieldsOf(content: string): readonly ToolErrorField[] {
   try {
     issues = JSON.parse(content.slice(start, end + 1))
   } catch {
+    // JSON として読めない本文からは指摘を取り出せない
     return []
   }
   const list = issueListSchema.safeParse(issues)

@@ -57,6 +57,7 @@ export function createSessionCatalog(options: {
     try {
       return { kind: "read", sessions: readTaggedSessions(await options.read(), options.cwd) }
     } catch {
+      // 一覧が読めないことは unreadable の応答にする
       return { kind: "unreadable" }
     }
   }

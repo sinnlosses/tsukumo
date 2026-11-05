@@ -15,6 +15,7 @@ export async function readFakeBeadsIssues(cwd: string): Promise<BeadsOutcome> {
   try {
     return beadsOutcomeOf(await readFile(join(cwd, FAKE_BEADS_ISSUES_PATH), "utf8"))
   } catch {
+    // 偽の記録ファイルが読めないことは failed の応答にする
     return { kind: "failed" }
   }
 }
@@ -26,6 +27,7 @@ export function createFakeBeadsStampReader(cwd: string): () => Promise<BeadsStam
       await access(join(cwd, FAKE_BEADS_ISSUES_PATH))
       return { kind: "present", stamp: undefined }
     } catch {
+      // 記録ファイルが無いことは missing の応答にする
       return { kind: "missing" }
     }
   }

@@ -79,6 +79,7 @@ export function readReportImageFile(
     const content = new Uint8Array(readFileSync(resolved))
     return matchesFormat(content, format) ? { mediaType: format.mediaType, content } : undefined
   } catch {
+    // 読めない画像ファイルは画像なしとして扱う
     return undefined
   }
 }

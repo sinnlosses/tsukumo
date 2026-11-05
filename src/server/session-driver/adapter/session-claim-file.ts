@@ -85,6 +85,7 @@ async function readClaimFile(path: string): Promise<ClaimFile | undefined> {
     const record = readSessionClaimRecord(JSON.parse(await readFile(path, "utf8")))
     return record === undefined ? undefined : { path, record }
   } catch {
+    // 読めない・壊れた印のファイルは、印なしとして扱う
     return undefined
   }
 }

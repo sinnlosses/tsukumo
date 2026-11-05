@@ -84,6 +84,7 @@ export function localDateTimeEpochMilliseconds(raw: string): number | undefined 
   try {
     return Temporal.PlainDateTime.from(raw).toZonedDateTime(timeZoneId()).epochMilliseconds
   } catch {
+    // 日時として読めない入力は「指定なし」と同じに扱う
     return undefined
   }
 }

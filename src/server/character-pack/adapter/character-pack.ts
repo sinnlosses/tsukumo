@@ -326,6 +326,7 @@ function listPackDirs(root: string): readonly string[] {
   try {
     names = readdirSync(root)
   } catch {
+    // パックの置き場がまだ無いときは、パックが無いものとして空に倒す
     return []
   }
 
@@ -358,6 +359,7 @@ function modifiedAtMs(path: string): number | undefined {
   try {
     return Math.trunc(statSync(path).mtimeMs)
   } catch {
+    // 読めないファイルは更新時刻なしとして扱う
     return undefined
   }
 }
@@ -366,6 +368,7 @@ function hasDefinition(dir: string): boolean {
   try {
     return statSync(join(dir, CHARACTER_DEFINITION_FILE_NAME)).isFile()
   } catch {
+    // 定義ファイルが無い・読めないディレクトリはパックとして数えない
     return false
   }
 }

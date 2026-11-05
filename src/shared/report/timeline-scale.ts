@@ -230,6 +230,7 @@ function readValue(value: string | number): ReadValue | "omitted" | undefined {
       minutes: dateTime.toZonedDateTime("UTC").epochMilliseconds / 60_000,
     }
   } catch {
+    // 日時として読めない値は目盛りにならない
     return undefined
   }
 }

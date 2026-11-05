@@ -85,6 +85,7 @@ function decodeSegment(segment: string): string | undefined {
   try {
     return decodeURIComponent(segment)
   } catch {
+    // 壊れた `%` の並びは区間として読めない
     return undefined
   }
 }

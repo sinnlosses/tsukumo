@@ -173,6 +173,7 @@ export function useCharacterCreate(open: boolean, onClose: () => void): Characte
         portrait,
       })
     } catch {
+      // 生成の失敗は undefined で返し、呼び出し側が失敗の表示にする
       return undefined
     }
   }
@@ -194,6 +195,7 @@ export function useCharacterCreate(open: boolean, onClose: () => void): Characte
         persona,
       })
     } catch {
+      // 作成の失敗は画面の失敗の表示にする
       setFailed(true)
       setSending(false)
       return
