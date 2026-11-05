@@ -8,7 +8,7 @@ import {
   buildReportCatalogDocument,
   FIGURE_COMPONENTS,
   LEAF_COMPONENT_KINDS,
-  REPORT_BLOCK_KINDS,
+  LEAF_COMPONENT_KIND_LIST,
   REPORT_COMPONENT_SCHEMAS,
 } from "../../../src/shared/report/a2ui-report-catalog.ts"
 import { namedWriterBlockSchema } from "../../../src/shared/report/report-block.ts"
@@ -102,7 +102,9 @@ describe("A2UI のカタログ文書", () => {
   ]
 
   it("書き手に渡す塊の全種類が部品の対応表にある", () => {
-    expect(Object.keys(KIND_TO_COMPONENT).toSorted()).toEqual([...REPORT_BLOCK_KINDS].toSorted())
+    expect(Object.keys(KIND_TO_COMPONENT).toSorted()).toEqual(
+      [...LEAF_COMPONENT_KIND_LIST].toSorted(),
+    )
   })
 
   it("根・節・内容部品 21 種・つまみ 2 種・基本 6 部品の 31 部品が全部残る", () => {

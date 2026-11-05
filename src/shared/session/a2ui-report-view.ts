@@ -9,7 +9,7 @@ import {
   sectionDrawsAnything,
   sectionHeadingMarkdown,
 } from "../report/drawn-entry-markdown.ts"
-import type { ReportBlock } from "../report/report-block.ts"
+import type { LeafComponent } from "../report/report-block.ts"
 import type { DrawnReport, DrawnSection } from "../report/report-drawn-outline.ts"
 import type { ReportImageSource } from "../report/report-image-markdown.ts"
 import type { LeafValue, ReportLeafLayout } from "../report/report-leaf-value.ts"
@@ -131,6 +131,6 @@ function leafRegionOf(
 }
 
 /** 字で描く塊（markdown・text）の Markdown。ほかの種類は空文字。 */
-function entryMarkdown(block: ReportBlock, value: LeafValue): string {
+function entryMarkdown(block: LeafComponent, value: LeafValue): string {
   return block.kind === "markdown" || block.kind === "text" ? drawnEntryMarkdown(block, value) : ""
 }

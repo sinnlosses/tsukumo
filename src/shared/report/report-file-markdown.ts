@@ -1,6 +1,6 @@
 // ファイルの変更の種別ごとの札（記号・語・見た目の class）と、札を並べる順。
 
-import type { ReportBlock } from "./report-block.ts"
+import type { LeafComponent } from "./report-block.ts"
 
 /** ファイルの変更の種別 → 札の記号・語・見た目の class（色は `report-notation.module.css` 側が持つ）。 */
 export const FILE_CHANGE_BADGES = {
@@ -9,7 +9,7 @@ export const FILE_CHANGE_BADGES = {
   deleted: { symbol: "-", label: "削除", className: "file-change-deleted" },
   read: { symbol: "·", label: "読んだ", className: "file-change-read" },
 } as const satisfies Record<
-  Extract<ReportBlock, { readonly kind: "files" }>["items"][number]["change"],
+  Extract<LeafComponent, { readonly kind: "files" }>["items"][number]["change"],
   { readonly symbol: string; readonly label: string; readonly className: string }
 >
 

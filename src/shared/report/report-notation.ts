@@ -1,6 +1,6 @@
 // レポートの記法（モデルが書く class 名）の語彙。印の名前の集合の出どころはここだけ。
 //
-// 印は tsukumo が塊から組むもの（`note` の6種と `REPORT_BLOCK_MARK_NAMES`）。
+// 印は tsukumo が塊から組むもの（`note` の6種と `LEAF_COMPONENT_MARK_NAMES`）。
 // 塊にする前の記録ではモデルが書いていたものも含むので、描く側は同じに解決する。
 //
 // claude に教える文面（`REPORT_NOTATION_PROMPT`）はここから組み立てず、手で書く。
@@ -28,7 +28,7 @@ export const REPORT_NOTE_KINDS = [
  * 塊にする前にモデルが逃げ道に書いていた `cols` / `card`。モデルには教えない。ラベルは付かず、見た目だけを持つ。
  * 旧い記録の本文に残る印も同じ見た目で描くため、組む側が無くなった名前も残す。
  */
-const REPORT_BLOCK_MARK_NAMES = [
+const LEAF_COMPONENT_MARK_NAMES = [
   ...TIMELINE_MARK_NAMES,
   "cols",
   "cols-of-2",
@@ -210,14 +210,14 @@ const REPORT_BLOCK_MARK_NAMES = [
 
 /** `files` の塊（ファイルの樹形図と種別の札）の印の名前。 */
 export type ReportFileMarkName = Extract<
-  (typeof REPORT_BLOCK_MARK_NAMES)[number],
+  (typeof LEAF_COMPONENT_MARK_NAMES)[number],
   `file${string}` | "path-glue"
 >
 
 /** 語彙が挙げる印の名前の全体（`note` の6種 + それ以外）。 */
 export const REPORT_NOTATION_NAMES = [
   ...REPORT_NOTE_KINDS.map(([name]) => name),
-  ...REPORT_BLOCK_MARK_NAMES,
+  ...LEAF_COMPONENT_MARK_NAMES,
 ] satisfies readonly string[]
 
 /**

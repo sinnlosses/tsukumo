@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import {
   namedWriterBlockSchema,
-  parseReportBlocks,
+  parseLeafComponents,
 } from "../../../src/shared/report/report-block.ts"
 import { reportRetrospectiveSchema } from "../../../src/shared/report/report-retrospective.ts"
 
@@ -20,6 +20,6 @@ describe("書き手向けの塊の合併", () => {
     expect(reportRetrospectiveSchema.safeParse({ summary: "架空", blocks: [files] }).success).toBe(
       false,
     )
-    expect(parseReportBlocks([files]).map((block) => block.kind)).toEqual(["files"])
+    expect(parseLeafComponents([files]).map((block) => block.kind)).toEqual(["files"])
   })
 })

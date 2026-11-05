@@ -6,7 +6,7 @@ import {
   reportRejectionText,
   reportViolations,
 } from "../../../../../../src/server/report/core/rules/report-violation.ts"
-import type { ReportBlock } from "../../../../../../src/shared/report/report-block.ts"
+import type { LeafComponent } from "../../../../../../src/shared/report/report-block.ts"
 import { reportOutline } from "../../../../../../src/shared/report/report-outline.ts"
 import { draft, markdown, reportDraftText } from "../../../../../fixture/report-draft-block.ts"
 import { reportDraft } from "../../../../../fixture/report-event.ts"
@@ -202,7 +202,7 @@ describe("plainWordSpellingsIn", () => {
   })
 
   it("Quote の文と出典の中は見ない", () => {
-    const quote: ReportBlock = {
+    const quote: LeafComponent = {
       kind: "quote",
       text: "架空の再演の一文。",
       source: "架空の有界な自律の出典",
@@ -213,7 +213,7 @@ describe("plainWordSpellingsIn", () => {
   })
 
   it("descriptionList の名前と値の中の語も見つける", () => {
-    const list: ReportBlock = {
+    const list: LeafComponent = {
       kind: "descriptionList",
       items: [{ term: "架空の再演", description: "架空の有界な自律" }],
       fold: "",
@@ -223,7 +223,7 @@ describe("plainWordSpellingsIn", () => {
   })
 
   it("trace の行の題と補足の中の語は見つけ、出力の中は見ない", () => {
-    const trace: ReportBlock = {
+    const trace: LeafComponent = {
       kind: "trace",
       items: [
         {
@@ -240,7 +240,7 @@ describe("plainWordSpellingsIn", () => {
   })
 
   it("note・markdown・節の見出しの中の語も見つける", () => {
-    const note: ReportBlock = {
+    const note: LeafComponent = {
       kind: "note",
       tone: "info",
       text: "架空の再演の一文。",
@@ -264,7 +264,7 @@ describe("plainWordSpellingsIn", () => {
   })
 
   it("flow の branch の語も見つけ、出どころ（source）は地の文でないので見ない", () => {
-    const flow = (source: string, branch: string): ReportBlock => ({
+    const flow = (source: string, branch: string): LeafComponent => ({
       kind: "list",
       style: "flow",
       items: [{ label: "", text: "架空の段", done: false, source, branch, branchTone: "ng" }],

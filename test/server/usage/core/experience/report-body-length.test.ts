@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import { reportBodyChars } from "../../../../../src/server/usage/core/experience/report-body-length.ts"
-import type { ReportBlock } from "../../../../../src/shared/report/report-block.ts"
+import type { LeafComponent } from "../../../../../src/shared/report/report-block.ts"
 import { applySessionEvent } from "../../../../../src/shared/session/session-fold.ts"
 import { INITIAL_SESSION_STATE } from "../../../../../src/shared/session/session-state.ts"
 import { reportOfDrawn } from "../../../../fixture/report-event.ts"
@@ -14,14 +14,14 @@ function charsOf(drawn: Drawn): number {
   return report === undefined ? -1 : reportBodyChars(report)
 }
 
-const text = (value: string, fold = "", aside = ""): ReportBlock => ({
+const text = (value: string, fold = "", aside = ""): LeafComponent => ({
   kind: "text",
   text: value,
   fold,
   aside,
 })
 
-const table = (rows: readonly (readonly string[])[]): ReportBlock => ({
+const table = (rows: readonly (readonly string[])[]): LeafComponent => ({
   kind: "table",
   title: "題",
   columns: ["列", "値"],

@@ -13,7 +13,7 @@ import type { FigurePreference } from "../../../../shared/session/session-defaul
 import { isToolUseId, type ToolUseId } from "../../../../shared/session/tool-use-id.ts"
 import { WORK_PLAN_CLOSINGS } from "../../../../shared/session/work-plan.ts"
 import { REPORT_TOOL_NAME } from "../../../core/tsukumo-tool-name.ts"
-import { readReportBlockFiles } from "../../../report/adapter/report-file.ts"
+import { readLeafComponentFiles } from "../../../report/adapter/report-file.ts"
 import {
   REPORT_A2UI_COMPONENTS_DESCRIPTION,
   REPORT_CHECKS_DESCRIPTION,
@@ -84,7 +84,7 @@ export function reportTool(
       }
     }
     const { components } = staticReportComponents(report.components)
-    const fileContents = await readReportBlockFiles(cwd, sectionLeaves(reportOutline(components)))
+    const fileContents = await readLeafComponentFiles(cwd, sectionLeaves(reportOutline(components)))
     const verdict = review.judgeReport({
       conclusion: report.conclusion,
       conclusionSentenceChars: report.conclusionSentenceChars,

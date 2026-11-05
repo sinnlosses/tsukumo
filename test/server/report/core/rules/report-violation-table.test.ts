@@ -4,13 +4,13 @@ import {
   reportRejectionText,
   reportViolations,
 } from "../../../../../src/server/report/core/rules/report-violation.ts"
-import type { ReportBlock } from "../../../../../src/shared/report/report-block.ts"
+import type { LeafComponent } from "../../../../../src/shared/report/report-block.ts"
 import { code, draft, kinds } from "../../../../fixture/report-draft-block.ts"
 
 describe("reportViolations", () => {
   describe("表の行の長さは columns と揃える", () => {
     it("セルの数が揃わない行のある表は違反", () => {
-      const table: ReportBlock = {
+      const table: LeafComponent = {
         kind: "table",
         title: "架空の表",
         columns: ["列", "値"],
@@ -23,7 +23,9 @@ describe("reportViolations", () => {
     })
 
     it("強調の行 { cells, emphasis } でもセルの数がずれれば違反で、揃っていれば違反でない", () => {
-      const tableOf = (second: Extract<ReportBlock, { readonly kind: "table" }>["rows"][number]) =>
+      const tableOf = (
+        second: Extract<LeafComponent, { readonly kind: "table" }>["rows"][number],
+      ) =>
         ({
           kind: "table",
           title: "架空の表",
@@ -32,7 +34,7 @@ describe("reportViolations", () => {
           rest: "",
           fold: "",
           aside: "",
-        }) satisfies ReportBlock
+        }) satisfies LeafComponent
       expect(reportViolations(draft([tableOf({ cells: ["b"], emphasis: true })]))).toEqual([
         { kind: "ragged-table", count: 1 },
       ])
@@ -40,7 +42,7 @@ describe("reportViolations", () => {
     })
 
     it("detail だけの行は強調に数えない", () => {
-      const table: ReportBlock = {
+      const table: LeafComponent = {
         kind: "table",
         title: "架空の表",
         columns: ["列", "値"],
@@ -53,7 +55,7 @@ describe("reportViolations", () => {
     })
 
     it("強調の行は3行までで、4行以上は many-emphasis-rows の差し戻しになり文面に上限を載せる", () => {
-      const tableOf = (emphasized: number): ReportBlock => ({
+      const tableOf = (emphasized: number): LeafComponent => ({
         kind: "table",
         title: "架空の表",
         columns: ["列", "値"],
@@ -87,7 +89,7 @@ describe("reportViolations", () => {
       ["濃淡なしの合計", undefined, true, [["a", "1", "2"]], false],
       ["合計の範囲に %", { from: 1, to: 2 }, true, [["a", "1%", "2%"]], false],
     ] as const)("濃淡と合計: %s", (_, heat, totals, rows, accepted) => {
-      const table: ReportBlock = {
+      const table: LeafComponent = {
         kind: "table",
         title: "架空の表",
         columns: ["列", "甲", "乙"],
@@ -111,7 +113,7 @@ describe("reportViolations", () => {
       ["最初の行が段 1", [1, 1, 0, 0, 0], undefined, false],
       ["段のある表に合計", [0, 1, 0, 0, 0], true, false],
     ] as const)("字下げの段: %s", (_, depths, totals, accepted) => {
-      const table: ReportBlock = {
+      const table: LeafComponent = {
         kind: "table",
         title: "架空の表",
         columns: ["列", "値"],
@@ -136,7 +138,7 @@ describe("reportViolations", () => {
       ["先頭の列", 0, []],
       ["欄なし", undefined, []],
     ])("強調する列が %s のとき", (_, emphasisColumn, expected) => {
-      const table: ReportBlock = {
+      const table: LeafComponent = {
         kind: "table",
         title: "架空の表",
         columns: ["列", "値"],
@@ -158,8 +160,8 @@ describe("reportViolations", () => {
     const cells = (length: number) => "あ".repeat(length)
     const tableWith = (
       columns: readonly string[],
-      rows: Extract<ReportBlock, { readonly kind: "table" }>["rows"],
-    ): ReportBlock => ({
+      rows: Extract<LeafComponent, { readonly kind: "table" }>["rows"],
+    ): LeafComponent => ({
       kind: "table",
       title: "架空の表",
       columns,
@@ -168,7 +170,7 @@ describe("reportViolations", () => {
       fold: "",
       aside: "",
     })
-    const twoColumns = (rows: Extract<ReportBlock, { readonly kind: "table" }>["rows"]) =>
+    const twoColumns = (rows: Extract<LeafComponent, { readonly kind: "table" }>["rows"]) =>
       tableWith(["名前", "説明"], rows)
 
     it.each([
@@ -319,7 +321,7 @@ describe("reportViolations", () => {
   })
 
   describe("件数の上限", () => {
-    const tableOf = (rowCount: number, rest = ""): ReportBlock => ({
+    const tableOf = (rowCount: number, rest = ""): LeafComponent => ({
       kind: "table",
       title: "架空の表",
       columns: ["列A", "列B"],
@@ -328,7 +330,7 @@ describe("reportViolations", () => {
       fold: "",
       aside: "",
     })
-    const listOf = (itemCount: number): ReportBlock => ({
+    const listOf = (itemCount: number): LeafComponent => ({
       kind: "list",
       style: "bullet",
       items: Array.from({ length: itemCount }, () => ({
@@ -367,7 +369,7 @@ describe("reportViolations", () => {
     })
 
     it("marks があれば code が長くても違反にしない", () => {
-      const marked: ReportBlock = {
+      const marked: LeafComponent = {
         kind: "code",
         language: "text",
         path: "",
@@ -382,7 +384,7 @@ describe("reportViolations", () => {
 
   describe("chart の series の値の数は labels と揃える", () => {
     it("values の数が labels と揃わない系列があれば違反", () => {
-      const chart: ReportBlock = {
+      const chart: LeafComponent = {
         kind: "chart",
         title: "",
         chartKind: "bar",
@@ -397,7 +399,7 @@ describe("reportViolations", () => {
     })
 
     it("揃っていれば違反にしない", () => {
-      const chart: ReportBlock = {
+      const chart: LeafComponent = {
         kind: "chart",
         title: "",
         chartKind: "bar",
@@ -412,7 +414,7 @@ describe("reportViolations", () => {
     })
 
     it("share は series の数を問わない（値の数が labels と揃えばよい）", () => {
-      const chartOf = (seriesCount: number): ReportBlock => ({
+      const chartOf = (seriesCount: number): LeafComponent => ({
         kind: "chart",
         title: "",
         chartKind: "share",
@@ -433,7 +435,7 @@ describe("reportViolations", () => {
     it.each(["arrow", "slope", "span"] as const)(
       "%s は series が2つでなければ違反",
       (chartKind) => {
-        const chartOf = (seriesCount: number): ReportBlock => ({
+        const chartOf = (seriesCount: number): LeafComponent => ({
           kind: "chart",
           title: "",
           chartKind,
@@ -455,7 +457,7 @@ describe("reportViolations", () => {
   })
 
   describe("chart の emphasis は labels の部分集合", () => {
-    const chartOf = (emphasis: readonly string[]): ReportBlock => ({
+    const chartOf = (emphasis: readonly string[]): LeafComponent => ({
       kind: "chart",
       title: "",
       chartKind: "bar",
@@ -489,7 +491,7 @@ describe("reportViolations", () => {
         readonly index: number
         readonly text: string
       }[],
-    ): ReportBlock => ({
+    ): LeafComponent => ({
       kind: "chart",
       title: "",
       chartKind,
@@ -527,7 +529,7 @@ describe("reportViolations", () => {
       chartKind: "share" | "bar",
       tones: readonly Tone[],
       emphasis: readonly string[] = [],
-    ): ReportBlock => ({
+    ): LeafComponent => ({
       kind: "chart",
       title: "",
       chartKind,
@@ -558,7 +560,7 @@ describe("reportViolations", () => {
 
   describe("stats の series は3つ以上", () => {
     const EMPTY = { before: "", total: "", better: "", target: "", targetGap: "" } as const
-    const statsOf = (series: readonly number[]): ReportBlock => ({
+    const statsOf = (series: readonly number[]): LeafComponent => ({
       kind: "stats",
       items: [
         { ...EMPTY, value: "1", label: "架空A", series },

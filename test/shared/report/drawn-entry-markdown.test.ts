@@ -6,7 +6,7 @@ import {
   sectionDrawsAnything,
 } from "../../../src/shared/report/drawn-entry-markdown.ts"
 import { plotBlockSchema } from "../../../src/shared/report/figure-grammar.ts"
-import type { ReportBlock, ReportBlockSection } from "../../../src/shared/report/report-block.ts"
+import type { LeafComponent, ReportSection } from "../../../src/shared/report/report-block.ts"
 import { reportLeafLayoutOf } from "../../../src/shared/report/report-leaf-value.ts"
 
 type DrawnEntryPresence = ReturnType<typeof drawnEntryPresence>
@@ -14,9 +14,9 @@ type MarkdownEntryBlock = Parameters<typeof drawnEntryMarkdown>[0]
 
 const PLAIN = { fold: "", aside: "" } as const
 
-const memo = (text: string): ReportBlock => ({ kind: "note", tone: "memo", text, ...PLAIN })
-const markdown = (value: string): ReportBlock => ({ kind: "markdown", markdown: value, ...PLAIN })
-const text = (value: string, aside = ""): ReportBlock => ({
+const memo = (text: string): LeafComponent => ({ kind: "note", tone: "memo", text, ...PLAIN })
+const markdown = (value: string): LeafComponent => ({ kind: "markdown", markdown: value, ...PLAIN })
+const text = (value: string, aside = ""): LeafComponent => ({
   kind: "text",
   text: value,
   fold: "",
@@ -24,259 +24,258 @@ const text = (value: string, aside = ""): ReportBlock => ({
 })
 
 /** 節1つの塊の並びと、塊ごとに期待する有無。 */
-const ROWS: readonly (readonly [string, readonly ReportBlock[], readonly DrawnEntryPresence[]])[] =
+const ROWS: readonly (readonly [
+  string,
+  readonly LeafComponent[],
+  readonly DrawnEntryPresence[],
+])[] = [
+  ["空白の text", [text("  ")], ["empty"]],
+  ["text", [text("架空の本文。")], ["drawn"]],
+  ["欄外注のある空白の text", [text(" ", "架空の欄外注")], ["drawn"]],
+  ["空の markdown", [markdown("")], ["empty"]],
+  ["空白だけの markdown", [markdown("  \n")], ["blank"]],
+  ["markdown", [markdown("架空の **本文**")], ["drawn"]],
+  ["memo を寄せた空の markdown", [markdown(""), memo("架空の覚え書き")], ["drawn", "empty"]],
+  ["節の頭の memo", [memo("架空の覚え書き")], ["drawn"]],
+  ["空の memo", [memo(" ")], ["empty"]],
+  ["空白の info", [{ kind: "note", tone: "info", text: " ", ...PLAIN }], ["empty"]],
+  ["warn", [{ kind: "note", tone: "warn", text: "架空の注意", ...PLAIN }], ["drawn"]],
+  ["空白の quote", [{ kind: "quote", text: " ", source: "架空", ...PLAIN }], ["empty"]],
+  ["quote", [{ kind: "quote", text: "架空の引用", source: "", ...PLAIN }], ["drawn"]],
   [
-    ["空白の text", [text("  ")], ["empty"]],
-    ["text", [text("架空の本文。")], ["drawn"]],
-    ["欄外注のある空白の text", [text(" ", "架空の欄外注")], ["drawn"]],
-    ["空の markdown", [markdown("")], ["empty"]],
-    ["空白だけの markdown", [markdown("  \n")], ["blank"]],
-    ["markdown", [markdown("架空の **本文**")], ["drawn"]],
-    ["memo を寄せた空の markdown", [markdown(""), memo("架空の覚え書き")], ["drawn", "empty"]],
-    ["節の頭の memo", [memo("架空の覚え書き")], ["drawn"]],
-    ["空の memo", [memo(" ")], ["empty"]],
-    ["空白の info", [{ kind: "note", tone: "info", text: " ", ...PLAIN }], ["empty"]],
-    ["warn", [{ kind: "note", tone: "warn", text: "架空の注意", ...PLAIN }], ["drawn"]],
-    ["空白の quote", [{ kind: "quote", text: " ", source: "架空", ...PLAIN }], ["empty"]],
-    ["quote", [{ kind: "quote", text: "架空の引用", source: "", ...PLAIN }], ["drawn"]],
+    "descriptionList",
     [
-      "descriptionList",
-      [
-        {
-          kind: "descriptionList",
-          items: [{ term: "架空の名前", description: "架空の値" }],
-          ...PLAIN,
-        },
-      ],
-      ["drawn"],
+      {
+        kind: "descriptionList",
+        items: [{ term: "架空の名前", description: "架空の値" }],
+        ...PLAIN,
+      },
     ],
+    ["drawn"],
+  ],
+  [
+    "trace",
     [
-      "trace",
-      [
-        {
-          kind: "trace",
-          items: [{ title: "架空の手", status: "ok", supplement: "", output: "" }],
-          ...PLAIN,
-        },
-      ],
-      ["drawn"],
+      {
+        kind: "trace",
+        items: [{ title: "架空の手", status: "ok", supplement: "", output: "" }],
+        ...PLAIN,
+      },
     ],
-    ["項目の無い list", [{ kind: "list", style: "bullet", items: [], ...PLAIN }], ["empty"]],
+    ["drawn"],
+  ],
+  ["項目の無い list", [{ kind: "list", style: "bullet", items: [], ...PLAIN }], ["empty"]],
+  [
+    "list",
     [
-      "list",
-      [
-        {
-          kind: "list",
-          style: "bullet",
-          items: [
-            { label: "", text: "架空", done: false, source: "", branch: "", branchTone: "warn" },
-          ],
-          ...PLAIN,
-        },
-      ],
-      ["drawn"],
+      {
+        kind: "list",
+        style: "bullet",
+        items: [
+          { label: "", text: "架空", done: false, source: "", branch: "", branchTone: "warn" },
+        ],
+        ...PLAIN,
+      },
     ],
+    ["drawn"],
+  ],
+  [
+    "行の無い table",
+    [{ kind: "table", title: "", columns: ["架空"], rows: [], rest: "", ...PLAIN }],
+    ["drawn"],
+  ],
+  [
+    "空のセルだけの table",
+    [{ kind: "table", title: "", columns: ["架空"], rows: [[""]], rest: "", ...PLAIN }],
+    ["drawn"],
+  ],
+  ["image", [{ kind: "image", path: "架空.png", caption: "", notes: [], ...PLAIN }], ["drawn"]],
+  [
+    "image の前後の compare",
     [
-      "行の無い table",
-      [{ kind: "table", title: "", columns: ["架空"], rows: [], rest: "", ...PLAIN }],
-      ["drawn"],
+      {
+        kind: "compare",
+        title: "",
+        relation: "before-after",
+        sides: [
+          { heading: "", kind: "image", path: "架空.png" },
+          { heading: "", kind: "points", points: ["架空"] },
+        ],
+        ...PLAIN,
+      },
     ],
+    ["drawn"],
+  ],
+  [
+    "matrix",
     [
-      "空のセルだけの table",
-      [{ kind: "table", title: "", columns: ["架空"], rows: [[""]], rest: "", ...PLAIN }],
-      ["drawn"],
+      {
+        kind: "matrix",
+        title: "",
+        columns: ["架空"],
+        rows: [{ name: "架空", cells: ["ok"] }],
+        ...PLAIN,
+      },
     ],
-    ["image", [{ kind: "image", path: "架空.png", caption: "", notes: [], ...PLAIN }], ["drawn"]],
+    ["drawn"],
+  ],
+  [
+    "compare",
     [
-      "image の前後の compare",
-      [
-        {
-          kind: "compare",
-          title: "",
-          relation: "before-after",
-          sides: [
-            { heading: "", kind: "image", path: "架空.png" },
-            { heading: "", kind: "points", points: ["架空"] },
-          ],
-          ...PLAIN,
-        },
-      ],
-      ["drawn"],
+      {
+        kind: "compare",
+        title: "",
+        relation: "versus",
+        sides: [
+          { kind: "points", heading: "架空A", points: ["架空"] },
+          { kind: "points", heading: "架空B", points: ["架空"] },
+        ],
+        ...PLAIN,
+      },
     ],
+    ["drawn"],
+  ],
+  [
+    "stats",
     [
-      "matrix",
-      [
-        {
-          kind: "matrix",
-          title: "",
-          columns: ["架空"],
-          rows: [{ name: "架空", cells: ["ok"] }],
-          ...PLAIN,
-        },
-      ],
-      ["drawn"],
+      {
+        kind: "stats",
+        items: [
+          {
+            before: "",
+            value: "1",
+            total: "",
+            label: "架空",
+            series: [],
+            better: "",
+            target: "",
+            targetGap: "",
+          },
+        ],
+        ...PLAIN,
+      },
     ],
+    ["drawn"],
+  ],
+  [
+    "options",
     [
-      "compare",
-      [
-        {
-          kind: "compare",
-          title: "",
-          relation: "versus",
-          sides: [
-            { kind: "points", heading: "架空A", points: ["架空"] },
-            { kind: "points", heading: "架空B", points: ["架空"] },
-          ],
-          ...PLAIN,
-        },
-      ],
-      ["drawn"],
+      {
+        kind: "options",
+        title: "",
+        items: [{ name: "架空", verdict: "adopt", reason: "架空" }],
+        ...PLAIN,
+      },
     ],
+    ["drawn"],
+  ],
+  [
+    "claims",
     [
-      "stats",
-      [
-        {
-          kind: "stats",
-          items: [
-            {
-              before: "",
-              value: "1",
-              total: "",
-              label: "架空",
-              series: [],
-              better: "",
-              target: "",
-              targetGap: "",
-            },
-          ],
-          ...PLAIN,
-        },
-      ],
-      ["drawn"],
+      {
+        kind: "claims",
+        items: [{ claim: "架空", certainty: "confirmed", basis: "", howToVerify: "" }],
+        ...PLAIN,
+      },
     ],
+    ["drawn"],
+  ],
+  [
+    "files",
     [
-      "options",
-      [
-        {
-          kind: "options",
-          title: "",
-          items: [{ name: "架空", verdict: "adopt", reason: "架空" }],
-          ...PLAIN,
-        },
-      ],
-      ["drawn"],
+      {
+        kind: "files",
+        title: "",
+        items: [{ path: "a.ts", change: "added", note: "" }],
+        ...PLAIN,
+      },
     ],
+    ["drawn"],
+  ],
+  [
+    "timeline",
     [
-      "claims",
-      [
-        {
-          kind: "claims",
-          items: [{ claim: "架空", certainty: "confirmed", basis: "", howToVerify: "" }],
-          ...PLAIN,
-        },
-      ],
-      ["drawn"],
+      {
+        kind: "timeline",
+        title: "",
+        rows: [
+          {
+            name: "架空",
+            start: "0:00",
+            end: "0:01",
+            extra: [],
+            uncertain: { until: "", label: "" },
+            after: [],
+            lane: "",
+          },
+        ],
+        events: [],
+        emphasis: [],
+        ...PLAIN,
+      },
     ],
+    ["drawn"],
+  ],
+  [
+    "svg",
     [
-      "files",
-      [
-        {
-          kind: "files",
-          title: "",
-          items: [{ path: "a.ts", change: "added", note: "" }],
-          ...PLAIN,
-        },
-      ],
-      ["drawn"],
+      {
+        kind: "svg",
+        title: "",
+        width: 10,
+        height: 10,
+        shapes: [{ kind: "text", x: 1, y: 1, text: "架空" }],
+        legend: [],
+        ...PLAIN,
+      },
     ],
+    ["drawn"],
+  ],
+  [
+    "chart",
     [
-      "timeline",
-      [
-        {
-          kind: "timeline",
-          title: "",
-          rows: [
-            {
-              name: "架空",
-              start: "0:00",
-              end: "0:01",
-              extra: [],
-              uncertain: { until: "", label: "" },
-              after: [],
-              lane: "",
-            },
-          ],
-          events: [],
-          emphasis: [],
-          ...PLAIN,
-        },
-      ],
-      ["drawn"],
+      {
+        kind: "chart",
+        title: "",
+        chartKind: "bar",
+        labels: ["架空"],
+        series: [{ name: "架空", values: [1] }],
+        horizontal: false,
+        emphasis: [],
+        ...PLAIN,
+      },
     ],
+    ["drawn"],
+  ],
+  [
+    "plot",
     [
-      "svg",
-      [
-        {
-          kind: "svg",
-          title: "",
-          width: 10,
-          height: 10,
-          shapes: [{ kind: "text", x: 1, y: 1, text: "架空" }],
-          legend: [],
-          ...PLAIN,
-        },
-      ],
-      ["drawn"],
+      plotBlockSchema.parse({
+        kind: "plot",
+        question: "架空の題",
+        relation: "part",
+        data: [
+          { name: "架空の工程", type: "N", values: ["甲", "乙"] },
+          { name: "架空の件数", type: "Q", values: [1, 2] },
+        ],
+      }),
     ],
-    [
-      "chart",
-      [
-        {
-          kind: "chart",
-          title: "",
-          chartKind: "bar",
-          labels: ["架空"],
-          series: [{ name: "架空", values: [1] }],
-          horizontal: false,
-          emphasis: [],
-          ...PLAIN,
-        },
-      ],
-      ["drawn"],
-    ],
-    [
-      "plot",
-      [
-        plotBlockSchema.parse({
-          kind: "plot",
-          question: "架空の題",
-          relation: "part",
-          data: [
-            { name: "架空の工程", type: "N", values: ["甲", "乙"] },
-            { name: "架空の件数", type: "Q", values: [1, 2] },
-          ],
-        }),
-      ],
-      ["drawn"],
-    ],
-    [
-      "graph",
-      [{ kind: "graph", title: "", direction: "LR", source: "A -> B", legend: [], ...PLAIN }],
-      ["drawn"],
-    ],
-    [
-      "code",
-      [{ kind: "code", language: "", path: "", source: "", marks: [], ...PLAIN }],
-      ["drawn"],
-    ],
-    [
-      "mermaid",
-      [{ kind: "mermaid", title: "", source: "sequenceDiagram\n  A->>B: 架空", ...PLAIN }],
-      ["drawn"],
-    ],
-  ]
+    ["drawn"],
+  ],
+  [
+    "graph",
+    [{ kind: "graph", title: "", direction: "LR", source: "A -> B", legend: [], ...PLAIN }],
+    ["drawn"],
+  ],
+  ["code", [{ kind: "code", language: "", path: "", source: "", marks: [], ...PLAIN }], ["drawn"]],
+  [
+    "mermaid",
+    [{ kind: "mermaid", title: "", source: "sequenceDiagram\n  A->>B: 架空", ...PLAIN }],
+    ["drawn"],
+  ],
+]
 
-function presencesOf(blocks: readonly ReportBlock[]): readonly DrawnEntryPresence[] {
+function presencesOf(blocks: readonly LeafComponent[]): readonly DrawnEntryPresence[] {
   const values = reportLeafLayoutOf([{ heading: "", blocks }]).values[0] ?? []
   return blocks.map((block, index) => {
     const value = values[index]
@@ -294,7 +293,7 @@ describe("drawnEntryPresence", () => {
 })
 
 describe("sectionDrawsAnything", () => {
-  const drawsOf = (section: ReportBlockSection): boolean =>
+  const drawsOf = (section: ReportSection): boolean =>
     sectionDrawsAnything(section, reportLeafLayoutOf([section]).values[0] ?? [])
 
   it("見出しか描くものがある塊があれば真で、空白だけの markdown は数えない", () => {

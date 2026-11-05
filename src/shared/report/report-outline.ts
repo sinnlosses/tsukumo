@@ -17,7 +17,7 @@ import {
   a2uiPartsById,
 } from "./a2ui-report-outline.ts"
 import type { ReportPlot } from "./figure-grammar.ts"
-import { parseReportBlocks, type ReportBlock } from "./report-block.ts"
+import { parseLeafComponents, type LeafComponent } from "./report-block.ts"
 import type { ReportTimeline } from "./timeline-block.ts"
 
 export type ReportOutlineLeaf = Extract<
@@ -82,8 +82,8 @@ export function reportOutline(components: readonly A2uiReportComponent[]): Repor
   }
 }
 
-export function outlineLeafBlock(leaf: ReportOutlineLeaf): ReportBlock | undefined {
-  return parseReportBlocks([
+export function outlineLeafBlock(leaf: ReportOutlineLeaf): LeafComponent | undefined {
+  return parseLeafComponents([
     { kind: LEAF_COMPONENT_KINDS[leaf.component], ...omit(leaf, ["id", "component"]) },
   ])[0]
 }

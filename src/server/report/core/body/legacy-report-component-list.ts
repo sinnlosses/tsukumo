@@ -12,7 +12,7 @@ import {
 } from "../../../../shared/report/a2ui-report-catalog.ts"
 import { A2UI_ROOT_ID } from "../../../../shared/report/a2ui-report-outline.ts"
 import { parseKeyFigures } from "../../../../shared/report/report-block-comparison.ts"
-import type { ReportBlock } from "../../../../shared/report/report-block.ts"
+import type { LeafComponent } from "../../../../shared/report/report-block.ts"
 import { parseReportChecks } from "../../../../shared/report/report-check.ts"
 import { parseReportRetrospective } from "../../../../shared/report/report-retrospective.ts"
 import { compareOfLegacyBlock, compareOfLegacyRetrospective } from "./legacy-before-after.ts"
@@ -177,7 +177,7 @@ function blockParts(id: string, block: LegacyBlock): readonly BlockParts[] {
 }
 
 /** 内容部品の塊 1 つが写る部品。部品の無い種類（`files`）は空。 */
-function leafPart(id: string, block: ReportBlock): readonly Part[] {
+function leafPart(id: string, block: LeafComponent): readonly Part[] {
   const component = COMPONENT_OF_KIND.get(block.kind)
   return component === undefined ? [] : [{ id, component, ...omit(block, ["kind"]) }]
 }

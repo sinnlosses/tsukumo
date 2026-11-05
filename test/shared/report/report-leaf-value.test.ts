@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest"
 
 import { plotBlockSchema } from "../../../src/shared/report/figure-grammar.ts"
-import type { ReportBlock } from "../../../src/shared/report/report-block.ts"
+import type { LeafComponent } from "../../../src/shared/report/report-block.ts"
 import {
   reportLeafLayoutOf,
   type ReportLeafLayout,
 } from "../../../src/shared/report/report-leaf-value.ts"
 import { reportMarkdownText, section } from "../../fixture/report-markdown.ts"
 
-const memo = (text: string, aside = ""): ReportBlock => ({
+const memo = (text: string, aside = ""): LeafComponent => ({
   kind: "note",
   tone: "memo",
   text,
@@ -17,8 +17,8 @@ const memo = (text: string, aside = ""): ReportBlock => ({
 })
 
 const table = (
-  extra: Partial<Extract<ReportBlock, { readonly kind: "table" }>> = {},
-): ReportBlock => ({
+  extra: Partial<Extract<LeafComponent, { readonly kind: "table" }>> = {},
+): LeafComponent => ({
   kind: "table",
   title: "架空の表",
   columns: ["架空の列"],
@@ -29,7 +29,7 @@ const table = (
   ...extra,
 })
 
-const plotOf = (relation: string, data: unknown[], form?: string): ReportBlock =>
+const plotOf = (relation: string, data: unknown[], form?: string): LeafComponent =>
   plotBlockSchema.parse({
     kind: "plot",
     question: "架空の題 3 件",

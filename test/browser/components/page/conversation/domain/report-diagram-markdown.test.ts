@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest"
 
 import { chartConfigOf } from "../../../../../../src/browser/components/page/conversation/domain/report-diagram-markdown.ts"
-import type { ReportBlock } from "../../../../../../src/shared/report/report-block.ts"
+import type { LeafComponent } from "../../../../../../src/shared/report/report-block.ts"
 import { fencedFigureCaptioned, markdownOf } from "../../../../../fixture/report-markdown.ts"
 
-type ChartBlock = Extract<ReportBlock, { readonly kind: "chart" }>
+type ChartBlock = Extract<LeafComponent, { readonly kind: "chart" }>
 
 describe("reportSectionsMarkdown", () => {
   it("sequenceDiagram の mermaid には autonumber を1つだけ足し、既にあるものと別の種類は変えない", () => {

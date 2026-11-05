@@ -1,5 +1,5 @@
 import { mainViewTurns } from "../../src/browser/domain/main-view/main-view.ts"
-import type { ReportBlockSection } from "../../src/shared/report/report-block.ts"
+import type { ReportSection } from "../../src/shared/report/report-block.ts"
 import type { ReportCheck } from "../../src/shared/report/report-check.ts"
 import type { ReportTask } from "../../src/shared/report/report-task.ts"
 import { mainViewEntries } from "../../src/shared/session/main-view-entry.ts"
@@ -37,7 +37,7 @@ export const report = (
     task,
   })
 
-function sectionsOfBody(body: string): readonly ReportBlockSection[] {
+function sectionsOfBody(body: string): readonly ReportSection[] {
   return body.trim() === ""
     ? []
     : [{ heading: "", blocks: [{ kind: "markdown", markdown: body, fold: "", aside: "" }] }]

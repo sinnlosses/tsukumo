@@ -7,7 +7,7 @@ import {
   REPORT_REJECTION_MODES,
   type ReportRejectionModes,
 } from "../../src/server/report/core/rules/rejection-mode.ts"
-import type { ReportBlockSection } from "../../src/shared/report/report-block.ts"
+import type { ReportSection } from "../../src/shared/report/report-block.ts"
 import type { BackgroundTask } from "../../src/shared/session-driver/background-task.ts"
 import type { SessionEvent } from "../../src/shared/session/session-event.ts"
 import type { WorkPlanStanding } from "../../src/shared/session/work-plan.ts"
@@ -29,7 +29,7 @@ export const REJECTION_PHRASE = {
 export const noPlan = (): WorkPlanStanding => ({ kind: "none" })
 
 /** 逃げ道の部品1つの節（中身は架空）。 */
-export const sectionsOf = (markdown: string): readonly ReportBlockSection[] => [
+export const sectionsOf = (markdown: string): readonly ReportSection[] => [
   {
     heading: "",
     blocks: [{ kind: "markdown", markdown, fold: "", aside: "" }],

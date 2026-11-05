@@ -3,7 +3,7 @@
 import { sumBy } from "remeda"
 
 import type { ReportChartTone } from "../../../../../shared/report/report-block-diagram.ts"
-import type { ReportBlock } from "../../../../../shared/report/report-block.ts"
+import type { LeafComponent } from "../../../../../shared/report/report-block.ts"
 
 type ChartConfig = ChartBody | (ChartBody & { readonly tsukumo: { readonly height: number } })
 
@@ -105,7 +105,7 @@ const CHART_FRAME_HEIGHT = 48
  * line の基準線（`references`）と点の注記（`annotations`）も plugin に描かせる。
  */
 export function chartConfigOf(
-  block: Extract<ReportBlock, { readonly kind: "chart" }>,
+  block: Extract<LeafComponent, { readonly kind: "chart" }>,
   annotation: { readonly values: boolean } = { values: false },
 ): ChartConfig {
   if (block.chartKind === "share") {
@@ -224,10 +224,10 @@ type SvgFigure = {
   readonly width: number
   readonly height: number
   readonly shapes: readonly SvgShape[]
-  readonly legend: Extract<ReportBlock, { readonly kind: "svg" }>["legend"]
+  readonly legend: Extract<LeafComponent, { readonly kind: "svg" }>["legend"]
 }
 
-type SvgShape = Extract<ReportBlock, { readonly kind: "svg" }>["shapes"][number]
+type SvgShape = Extract<LeafComponent, { readonly kind: "svg" }>["shapes"][number]
 
 const SVG_ARROW_MARKER_ID = "report-svg-arrow"
 
@@ -409,7 +409,7 @@ function svgText(
 
 /** 基準線と点の注記を、描く側の plugin に渡す。注記の系列は `series` の位置に直し、名指しの外れた注記は描かない。 */
 function marksPluginsOf(
-  block: Extract<ReportBlock, { readonly kind: "chart" }>,
+  block: Extract<LeafComponent, { readonly kind: "chart" }>,
 ): { readonly plugins: MarksPlugins } | Record<string, never> {
   const references = block.references ?? []
   const annotations = (block.annotations ?? []).flatMap(({ label, index, text }) => {
@@ -427,7 +427,7 @@ function marksPluginsOf(
  * share に `tones` があれば、`emphasis` の代わりに部分ごとの色の語を渡す。
  */
 function seriesPluginsOf(
-  block: Extract<ReportBlock, { readonly kind: "chart" }>,
+  block: Extract<LeafComponent, { readonly kind: "chart" }>,
 ): { readonly plugins: SeriesPlugins } | Record<string, never> {
   if (block.chartKind === "share" && block.tones !== undefined) {
     return { plugins: { "tsukumo-series": { tones: [...block.tones] } } }

@@ -1,6 +1,6 @@
 // 面が描くセクションの部品について、描くものがあるかと、面が Markdown の字で受ける塊の字を、塊の値から決める。
 
-import type { ReportBlock, ReportBlockSection } from "./report-block.ts"
+import type { LeafComponent, ReportSection } from "./report-block.ts"
 import { htmlInline, joinParts, markdownInline } from "./report-inline-markdown.ts"
 import type { LeafGutterNote, LeafValue } from "./report-leaf-value.ts"
 
@@ -11,9 +11,9 @@ import type { LeafGutterNote, LeafValue } from "./report-leaf-value.ts"
 type DrawnEntryPresence = "empty" | "blank" | "drawn"
 
 /** `Markdown` の内容部品と、内容部品に由来しない塊の種類。 */
-type MarkdownEntryBlock = Extract<ReportBlock, { readonly kind: "text" | "markdown" }>
+type MarkdownEntryBlock = Extract<LeafComponent, { readonly kind: "text" | "markdown" }>
 
-export function drawnEntryPresence(block: ReportBlock, value: LeafValue): DrawnEntryPresence {
+export function drawnEntryPresence(block: LeafComponent, value: LeafValue): DrawnEntryPresence {
   if (value.mergedIntoPrevious) {
     return "empty"
   }
@@ -42,7 +42,7 @@ export function sectionHeadingMarkdown(heading: string): string {
 
 /** 見出しか、描くものがある塊が1つでもあるか。`values` はセクションの部品と同じ並び。 */
 export function sectionDrawsAnything(
-  section: ReportBlockSection,
+  section: ReportSection,
   values: readonly LeafValue[],
 ): boolean {
   return (

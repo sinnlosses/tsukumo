@@ -80,7 +80,7 @@ export type ReportUsageEntry = ReportVerifyUsage &
     /** その回に出た塊の種類（`figure` の図を含む。重複無し）。 */
     readonly blockKinds: readonly ReportLeafKind[]
     /** その回に出た塊の欄（`figure` の図を含む。重複無し）。 */
-    readonly blockFields: readonly ReportBlockField[]
+    readonly blockFields: readonly LeafComponentField[]
     /** その回に逃げ道（`markdown` の塊）の外側に出た記法の種類（重複無し）。 */
     readonly notations: readonly MarkdownNotation[]
     /** その回に逃げ道の HTML の容れ物の中に出た記法の種類（重複無し）。 */
@@ -149,7 +149,7 @@ const IMAGE_FILE_EXTENSIONS: readonly string[] = [".png", ".jpg", ".jpeg", ".gif
  * - blockAside: 塊の `aside`
  * - compareRegion: 見比べの部品（`compare`）の画像の側の `region`
  */
-export const REPORT_BLOCK_FIELDS = [
+export const LEAF_COMPONENT_FIELDS = [
   "tableChange",
   "tableRest",
   "statsBefore",
@@ -164,7 +164,7 @@ export const REPORT_BLOCK_FIELDS = [
   "compareRegion",
 ] as const satisfies readonly string[]
 
-export type ReportBlockField = (typeof REPORT_BLOCK_FIELDS)[number]
+export type LeafComponentField = (typeof LEAF_COMPONENT_FIELDS)[number]
 
 /**
  * 条に当たった `report` 1回の記録。種類の名前だけで、本文も差し戻しの文面も持たない。
@@ -251,7 +251,9 @@ export function reportUsageEntryOf(
       forbiddenShapeBlocks: [],
     },
     blockKinds: kindsOf(drawn),
-    blockFields: REPORT_BLOCK_FIELDS.filter((field) => drawn.some((leaf) => hasField(leaf, field))),
+    blockFields: LEAF_COMPONENT_FIELDS.filter((field) =>
+      drawn.some((leaf) => hasField(leaf, field)),
+    ),
     notations: notationsInSections(outline),
     containedNotations: containedNotationsInSections(outline),
     escapeNotations: escapeNotationsInSections(outline),
@@ -354,7 +356,7 @@ function kindsOf(leaves: readonly ReportOutlineLeaf[]): readonly ReportLeafKind[
   return unique(leaves.map(kindOf))
 }
 
-function hasField(leaf: ReportOutlineLeaf, field: ReportBlockField): boolean {
+function hasField(leaf: ReportOutlineLeaf, field: LeafComponentField): boolean {
   switch (field) {
     case "tableChange":
       return (

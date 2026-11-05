@@ -9,7 +9,7 @@ import {
   tableRowDepth,
   tableRowDetail,
 } from "./report-block-comparison.ts"
-import type { ReportBlock } from "./report-block.ts"
+import type { LeafComponent } from "./report-block.ts"
 import { captionedMarkdown } from "./report-caption.ts"
 import { htmlInlineWithCode, joinParts, markdownInline } from "./report-inline-markdown.ts"
 import {
@@ -34,7 +34,7 @@ const TAG_TONE_NONE = "tag-none"
 export type TagTones = ReadonlyMap<string, string>
 
 /** レポート全体の表の `tag` の字を、出現順に色へ割り当てる（同じ字は表をまたいでも同じ色）。 */
-export function tagTonesOf(blocks: readonly ReportBlock[]): TagTones {
+export function tagTonesOf(blocks: readonly LeafComponent[]): TagTones {
   const tags = blocks
     .flatMap((block) => (block.kind === "table" ? block.rows.flatMap(tableRowCells) : []))
     .flatMap((cell) => (typeof cell === "object" && "tag" in cell ? [cell.tag] : []))
@@ -47,7 +47,7 @@ export function tagTonesOf(blocks: readonly ReportBlock[]): TagTones {
 }
 
 export function tableMarkdown(
-  table: Extract<ReportBlock, { readonly kind: "table" }>,
+  table: Extract<LeafComponent, { readonly kind: "table" }>,
   ordinal: number,
   tagTones: TagTones,
 ): string {
@@ -79,7 +79,7 @@ export function tableMarkdown(
 
 /** 表のデータ行ごとの Markdown。並びは `table.rows` と同じ。 */
 function tableRowMarkdowns(
-  table: Extract<ReportBlock, { readonly kind: "table" }>,
+  table: Extract<LeafComponent, { readonly kind: "table" }>,
   tagTones: TagTones,
 ): readonly string[] {
   const { bars, statusColumns } = tableLayoutOf(table)
@@ -99,7 +99,9 @@ function tableRowMarkdowns(
   })
 }
 
-function tableRowDetailsMarkdown(table: Extract<ReportBlock, { readonly kind: "table" }>): string {
+function tableRowDetailsMarkdown(
+  table: Extract<LeafComponent, { readonly kind: "table" }>,
+): string {
   return table.rows
     .flatMap((row) => {
       const detail = tableRowDetail(row)

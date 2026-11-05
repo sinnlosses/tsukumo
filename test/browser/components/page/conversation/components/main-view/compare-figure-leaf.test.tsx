@@ -3,7 +3,7 @@ import { afterEach, beforeAll, describe, expect, it } from "vitest"
 
 import { loadMarkdown } from "../../../../../../../src/browser/components/page/conversation/components/markdown/markdown.tsx"
 import type { A2uiReportComponent } from "../../../../../../../src/shared/report/a2ui-report-catalog.ts"
-import type { ReportBlock } from "../../../../../../../src/shared/report/report-block.ts"
+import type { LeafComponent } from "../../../../../../../src/shared/report/report-block.ts"
 import type { ReportImageSource } from "../../../../../../../src/shared/report/report-image-markdown.ts"
 import { newLeafHtml } from "../../../../../../fixture/direct-leaf-compare.tsx"
 
@@ -51,7 +51,7 @@ function pair(before: Side, after: Side) {
     aside: "",
   }
   const { id: _id, component: _component, ...fields } = part
-  return { block: { kind: "compare", ...fields } satisfies ReportBlock, part }
+  return { block: { kind: "compare", ...fields } satisfies LeafComponent, part }
 }
 
 describe("Compare の before-after", () => {
@@ -87,7 +87,7 @@ describe("Compare の対等な2つ（versus）", () => {
       aside: "",
     }
     const { id: _id, component: _component, ...fields } = part
-    return { block: { kind: "compare", ...fields } satisfies ReportBlock, part }
+    return { block: { kind: "compare", ...fields } satisfies LeafComponent, part }
   }
 
   it("側の見出しが札になり、矢印も「前」「後」の札も描かない", () => {

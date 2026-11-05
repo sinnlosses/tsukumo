@@ -1,6 +1,6 @@
 // 画像の部品（`image`）を HTML に組む。画像の取り出し元と `src` 属性もここが持つ。
 
-import type { ReportBlock } from "./report-block.ts"
+import type { LeafComponent } from "./report-block.ts"
 import { captionedMarkdown } from "./report-caption.ts"
 import { reportImagePath, type ReportImageSize } from "./report-image.ts"
 import { htmlAttribute, htmlInlineWithCode } from "./report-inline-markdown.ts"
@@ -25,7 +25,7 @@ export type ReportImageSource =
  * `notes` があれば、画像の横に1始まりの番号を振った説明の並びを置き、包みは縮めない。
  */
 export function imageMarkdown(
-  block: Extract<ReportBlock, { readonly kind: "image" }>,
+  block: Extract<LeafComponent, { readonly kind: "image" }>,
   imageSource: ReportImageSource,
   ordinal: number,
 ): string {

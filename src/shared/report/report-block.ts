@@ -1,4 +1,4 @@
-// `report` の内容部品の塊の合併と、その検証。
+// `report` の内容部品の合併と、その検証。
 
 import { z } from "zod"
 
@@ -33,7 +33,7 @@ import {
 import { timelineBlockSchema } from "./timeline-block.ts"
 import { traceBlockSchema } from "./trace-block.ts"
 
-// ツール定義の中で `retrospective.blocks` の合併に入る塊の、定義上の名前
+// ツール定義の中で `retrospective.blocks` の合併に入る部品の、定義上の名前
 const namedStats = statsBlockSchema.meta({ id: "StatsBlock" })
 const namedMermaid = mermaidBlockSchema.meta({ id: "MermaidBlock" })
 const namedGraph = graphBlockSchema.meta({ id: "GraphBlock" })
@@ -69,32 +69,32 @@ const writerBlockBranches = [
 
 const writerBlockSchema = z.discriminatedUnion("kind", writerBlockBranches)
 
-// 読み戻し用。書き手には渡さない `files` の塊（旧い記録に残る）も通す
-const reportBlockSchema = z.discriminatedUnion("kind", [...writerBlockBranches, filesBlockSchema])
+// 読み戻し用。書き手には渡さない `files` の部品（旧い記録に残る）も通す
+const leafComponentSchema = z.discriminatedUnion("kind", [...writerBlockBranches, filesBlockSchema])
 
-export type ReportBlock = DeepReadonly<z.infer<typeof reportBlockSchema>>
+export type LeafComponent = DeepReadonly<z.infer<typeof leafComponentSchema>>
 
-// `retrospective.blocks` の要素になる、書き手向けの塊の合併
-export const namedWriterBlockSchema = writerBlockSchema.meta({ id: "ReportBlock" })
+// `retrospective.blocks` の要素になる、書き手向けの部品の合併
+export const namedWriterBlockSchema = writerBlockSchema.meta({ id: "LeafComponent" })
 
-/** 画面に描く節。見出し（空なら描かない）と内容部品の塊の並び。 */
-export type ReportBlockSection = {
+/** 画面に描く節。見出し（空なら描かない）と内容部品の並び。 */
+export type ReportSection = {
   readonly heading: string
-  readonly blocks: readonly ReportBlock[]
+  readonly blocks: readonly LeafComponent[]
 }
 
-/** 塊の配列を1つずつ検証し、崩れた塊と知らない種類の塊は落とす。配列でない値は空。 */
-export function parseReportBlocks(value: unknown): readonly ReportBlock[] {
+/** 部品の配列を1つずつ検証し、崩れた部品と知らない種類の部品は落とす。配列でない値は空。 */
+export function parseLeafComponents(value: unknown): readonly LeafComponent[] {
   const candidates = z.array(z.unknown()).safeParse(value)
   return candidates.success
     ? candidates.data.flatMap((block) => {
-        const parsedBlock = reportBlockSchema.safeParse(block)
+        const parsedBlock = leafComponentSchema.safeParse(block)
         return parsedBlock.success ? [parsedBlock.data] : []
       })
     : []
 }
 
-/** レポートの外（質問の添え書き）で図として使える塊。 */
+/** レポートの外（質問の添え書き）で図として使える部品。 */
 export const figureBlockSchema = z.discriminatedUnion("kind", [
   listBlockSchema,
   tableBlockSchema,

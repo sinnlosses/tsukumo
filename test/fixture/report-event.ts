@@ -11,7 +11,7 @@ import {
   a2uiReportComponentSchema,
   type RecordedReportFigure,
 } from "../../src/shared/report/a2ui-report-catalog.ts"
-import type { ReportBlockSection } from "../../src/shared/report/report-block.ts"
+import type { ReportSection } from "../../src/shared/report/report-block.ts"
 import type { ReportRetrospective } from "../../src/shared/report/report-retrospective.ts"
 import type { ReportCalledEvent } from "../../src/shared/session/session-event.ts"
 import { checkedToolUseId } from "./tool-use-id.ts"
@@ -137,7 +137,7 @@ export function componentsOfSections(
 ): ReportDraft["components"] {
   const hasDrawn =
     figure.kind !== "none" || (retrospective.kind === "recorded" && retrospective.blocks.length > 0)
-  const placeholder: ReportBlockSection = {
+  const placeholder: ReportSection = {
     heading: "",
     blocks: [{ kind: "text", text: "", fold: "", aside: "" }],
   }

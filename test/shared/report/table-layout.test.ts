@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import type { ReportBlock } from "../../../src/shared/report/report-block.ts"
+import type { LeafComponent } from "../../../src/shared/report/report-block.ts"
 import {
   heatLevelOf,
   isHeatPeak,
@@ -11,8 +11,8 @@ import {
   tableTotalsOf,
 } from "../../../src/shared/report/table-layout.ts"
 
-type TableBlock = Extract<ReportBlock, { readonly kind: "table" }>
-type MatrixBlock = Extract<ReportBlock, { readonly kind: "matrix" }>
+type TableBlock = Extract<LeafComponent, { readonly kind: "table" }>
+type MatrixBlock = Extract<LeafComponent, { readonly kind: "matrix" }>
 
 function table(columns: readonly string[], rows: TableBlock["rows"]): TableBlock {
   return { kind: "table", title: "", columns, rows, rest: "", fold: "", aside: "" }

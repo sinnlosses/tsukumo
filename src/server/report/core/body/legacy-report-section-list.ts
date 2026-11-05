@@ -4,13 +4,13 @@
 
 import { z } from "zod"
 
-import { REPORT_BLOCK_KINDS } from "../../../../shared/report/a2ui-report-catalog.ts"
+import { LEAF_COMPONENT_KIND_LIST } from "../../../../shared/report/a2ui-report-catalog.ts"
 import { aside, fold, inlineText, omittable } from "../../../../shared/report/report-block-field.ts"
 import type { DeepReadonly } from "../../../../shared/report/report-block-field.ts"
 import {
   namedWriterBlockSchema,
-  parseReportBlocks,
-  type ReportBlock,
+  parseLeafComponents,
+  type LeafComponent,
 } from "../../../../shared/report/report-block.ts"
 import { parseReportBody } from "./body-fence.ts"
 import { compareOfLegacyBlock } from "./legacy-before-after.ts"
@@ -33,7 +33,7 @@ const panelBlockSchema = z.object({
 const arrangedBlockSchema = z.discriminatedUnion("kind", [rowBlockSchema, panelBlockSchema])
 
 /** 節に置いた塊。内容部品の塊か、内容部品を並べる `row`・`panel`。 */
-export type LegacyBlock = ReportBlock | DeepReadonly<z.infer<typeof arrangedBlockSchema>>
+export type LegacyBlock = LeafComponent | DeepReadonly<z.infer<typeof arrangedBlockSchema>>
 
 export type LegacySection = {
   readonly heading: string
@@ -54,7 +54,7 @@ const looseSectionSchema = z.object({
 
 // 旧い引数にだけ現れる種類（`files` と、塊を並べる `row`・`panel`）も、知らない種類には数えない
 const LEGACY_BLOCK_KINDS: readonly string[] = [
-  ...REPORT_BLOCK_KINDS,
+  ...LEAF_COMPONENT_KIND_LIST,
   "beforeAfter",
   "files",
   "row",
@@ -104,7 +104,7 @@ export function parseLegacyBody(body: string): ParsedLegacySections & {
 function parseLegacyBlock(block: unknown): readonly LegacyBlock[] {
   const compared = compareOfLegacyBlock(block)
   const arranged = arrangedBlockSchema.safeParse(compared)
-  return arranged.success ? [arranged.data] : parseReportBlocks([compared])
+  return arranged.success ? [arranged.data] : parseLeafComponents([compared])
 }
 
 function isUnknownKindBlock(block: unknown): boolean {

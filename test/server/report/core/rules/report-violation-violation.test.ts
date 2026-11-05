@@ -6,10 +6,7 @@ import {
   reportViolations,
 } from "../../../../../src/server/report/core/rules/report-violation.ts"
 import type { TableCell } from "../../../../../src/shared/report/report-block-comparison.ts"
-import type {
-  ReportBlock,
-  ReportBlockSection,
-} from "../../../../../src/shared/report/report-block.ts"
+import type { LeafComponent, ReportSection } from "../../../../../src/shared/report/report-block.ts"
 import {
   draft,
   kinds,
@@ -21,7 +18,7 @@ import {
 
 describe("reportViolations", () => {
   it("規約どおりのレポートには違反が無い", () => {
-    const blocks: readonly ReportBlock[] = [
+    const blocks: readonly LeafComponent[] = [
       reportDraftText("架空の段落の1文目。2文目。3文目。"),
       {
         kind: "table",
@@ -119,7 +116,7 @@ describe("reportViolations", () => {
     const list = (
       items: readonly { label?: string; text: string }[],
       style: "bullet" | "ordered" | "flow" | "cards" = "bullet",
-    ): ReportBlock => ({
+    ): LeafComponent => ({
       kind: "list",
       style,
       items: items.map((item) => ({
@@ -133,7 +130,7 @@ describe("reportViolations", () => {
       fold: "",
       aside: "",
     })
-    const table = (cell: TableCell): ReportBlock => ({
+    const table = (cell: TableCell): LeafComponent => ({
       kind: "table",
       title: "架空の表",
       columns: ["列", "値"],
@@ -151,7 +148,7 @@ describe("reportViolations", () => {
     })
 
     it("行の詳しい中身の A → B も差し戻す", () => {
-      const withDetail = (detail: string): ReportBlock => ({
+      const withDetail = (detail: string): LeafComponent => ({
         kind: "table",
         title: "架空の表",
         columns: ["列", "値"],
@@ -235,7 +232,7 @@ describe("reportViolations", () => {
         branch: "",
         branchTone: "warn" as const,
       }))
-    const cards = (items: ReturnType<typeof cardItems>): ReportBlock => ({
+    const cards = (items: ReturnType<typeof cardItems>): LeafComponent => ({
       kind: "list",
       style: "cards",
       items,
@@ -260,7 +257,7 @@ describe("reportViolations", () => {
     })
 
     it("cards 以外の1項目・5項目の list は cards の差し戻しにならない", () => {
-      const bullets: ReportBlock = {
+      const bullets: LeafComponent = {
         kind: "list",
         style: "bullet",
         items: cardItems(1),
@@ -331,7 +328,7 @@ describe("reportViolations", () => {
 
   describe("セクションが2つ以上なら全部に見出し", () => {
     it("見出しの無いセクションがあれば違反", () => {
-      const sections: readonly ReportBlockSection[] = [
+      const sections: readonly ReportSection[] = [
         { heading: "架空の節", blocks: [reportDraftText("架空の一。")] },
         { heading: " ", blocks: [reportDraftText("架空の二。")] },
       ]

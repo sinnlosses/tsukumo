@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import type { A2uiReportComponent } from "../../../src/shared/report/a2ui-report-catalog.ts"
-import type { ReportBlock } from "../../../src/shared/report/report-block.ts"
+import type { LeafComponent } from "../../../src/shared/report/report-block.ts"
 import { drawnReportOf } from "../../../src/shared/report/report-drawn-outline.ts"
 
 const CONCLUSION = "架空の結論。"
@@ -42,9 +42,9 @@ const section = (
   children: [...children],
 })
 
-const text = (value: string): ReportBlock => ({ kind: "text", text: value, fold: "", aside: "" })
+const text = (value: string): LeafComponent => ({ kind: "text", text: value, fold: "", aside: "" })
 
-const FIGURE_BLOCK: ReportBlock = {
+const FIGURE_BLOCK: LeafComponent = {
   kind: "mermaid",
   title: "架空の図",
   source: "flowchart TD\n  A --> B",

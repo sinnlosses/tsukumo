@@ -4,13 +4,13 @@ import { parseReportFigure } from "../../../src/shared/report/a2ui-report-catalo
 import {
   figureBlockSchema,
   namedWriterBlockSchema,
-  parseReportBlocks,
-  type ReportBlock,
+  parseLeafComponents,
+  type LeafComponent,
 } from "../../../src/shared/report/report-block.ts"
 
-const text = (value: string): ReportBlock => ({ kind: "text", text: value, fold: "", aside: "" })
+const text = (value: string): LeafComponent => ({ kind: "text", text: value, fold: "", aside: "" })
 
-const firstOf = (block: unknown): unknown => parseReportBlocks([block])[0]
+const firstOf = (block: unknown): unknown => parseLeafComponents([block])[0]
 
 describe("stats の個数の説明", () => {
   const item = { before: "", value: "1", label: "架空" }
@@ -25,15 +25,15 @@ describe("stats の個数の説明", () => {
   })
 })
 
-describe("parseReportBlocks", () => {
+describe("parseLeafComponents", () => {
   it("配列でない値は空", () => {
-    expect(parseReportBlocks(undefined)).toEqual([])
-    expect(parseReportBlocks({ kind: "text" })).toEqual([])
+    expect(parseLeafComponents(undefined)).toEqual([])
+    expect(parseLeafComponents({ kind: "text" })).toEqual([])
   })
 
   it("崩れた塊と知らない種類の塊は落とし、残りを順に返す", () => {
     expect(
-      parseReportBlocks([{ kind: "架空の種類" }, text("架空の一。"), { kind: "text" }]),
+      parseLeafComponents([{ kind: "架空の種類" }, text("架空の一。"), { kind: "text" }]),
     ).toEqual([text("架空の一。")])
   })
 
@@ -82,7 +82,7 @@ describe("parseReportBlocks", () => {
   })
 
   it("どの種類の塊も aside は省くと空文字になり、渡せば残る", () => {
-    const blocks = parseReportBlocks([
+    const blocks = parseLeafComponents([
       { kind: "text", text: "架空の本文。" },
       { kind: "note", tone: "memo", text: "架空の覚え書き。", aside: "架空の出典" },
       {
@@ -218,12 +218,12 @@ describe("parseReportBlocks", () => {
     const image = { kind: "image", path: "架空/after.png", caption: "架空の画面" }
     const annotated = { ...image, notes: ["左上の架空の帯"] }
 
-    expect(parseReportBlocks([image, annotated])).toEqual([
+    expect(parseLeafComponents([image, annotated])).toEqual([
       { ...image, notes: [], fold: "", aside: "" },
       { ...annotated, fold: "", aside: "" },
     ])
     expect(
-      parseReportBlocks([
+      parseLeafComponents([
         { kind: "image", caption: "架空" },
         { kind: "image", path: "架空.png" },
       ]),
@@ -239,7 +239,7 @@ describe("parseReportBlocks", () => {
       series: [{ name: "架空の系列", values: [1] }],
     }
 
-    expect(parseReportBlocks([mermaid, chart])).toEqual([
+    expect(parseLeafComponents([mermaid, chart])).toEqual([
       { ...mermaid, title: "", fold: "", aside: "" },
       { ...chart, title: "", horizontal: false, emphasis: [], fold: "", aside: "" },
     ])
@@ -254,7 +254,7 @@ describe("parseReportBlocks", () => {
         { name: "架空の後", values: [2] },
       ],
     }
-    const parsed = (chartKind: string) => parseReportBlocks([{ ...chart, chartKind }])
+    const parsed = (chartKind: string) => parseLeafComponents([{ ...chart, chartKind }])
 
     expect(parsed("arrow")).toHaveLength(1)
     expect(parsed("slope")).toHaveLength(1)
@@ -286,7 +286,7 @@ describe("parseReportBlocks", () => {
     const svg = { kind: "svg", width: 200, height: 100, shapes: [rect, line, textShape] }
 
     it("rect・line・text の3種を読み、省いた label・emphasis・arrow・title・fold を補う", () => {
-      expect(parseReportBlocks([svg])).toEqual([
+      expect(parseLeafComponents([svg])).toEqual([
         {
           ...svg,
           title: "",
@@ -306,7 +306,7 @@ describe("parseReportBlocks", () => {
       const side = { heading: "", kind: "svg", width: 200, height: 100, shapes: [textShape] }
 
       expect(
-        parseReportBlocks([
+        parseLeafComponents([
           { kind: "compare", title: "t", relation: "before-after", sides: [side, side] },
         ]),
       ).toHaveLength(1)
@@ -320,7 +320,7 @@ describe("parseReportBlocks", () => {
         { ...svg, shapes: [{ ...rect, width: -1 }] },
       ]
 
-      expect(parseReportBlocks(broken)).toEqual([])
+      expect(parseLeafComponents(broken)).toEqual([])
     })
   })
 
@@ -330,7 +330,7 @@ describe("parseReportBlocks", () => {
       direction: "TD",
       source: "(架空の始点) -> 架空の処理",
     }
-    const blocksOf = (block: unknown) => parseReportBlocks([block])
+    const blocksOf = (block: unknown) => parseLeafComponents([block])
 
     it("通り、title・fold は空文字で、legend は空の並びで補う", () => {
       expect(blocksOf(graph)).toEqual([{ ...graph, title: "", fold: "", aside: "", legend: [] }])
@@ -368,7 +368,7 @@ describe("parseReportBlocks", () => {
 
   describe("claims の塊", () => {
     const claimsWith = (item: object) => ({ kind: "claims", items: [item] })
-    const blocksOf = (block: unknown) => parseReportBlocks([block])
+    const blocksOf = (block: unknown) => parseLeafComponents([block])
 
     it("確定の項目は根拠と確かめ方を省くと空文字で補って受ける", () => {
       expect(blocksOf(claimsWith({ claim: "架空の主張", certainty: "confirmed" }))).toEqual([

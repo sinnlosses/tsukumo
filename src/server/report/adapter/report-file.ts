@@ -14,7 +14,7 @@ const MAX_REPORT_MATCH_FILE_BYTES = 1024 * 1024
  * `Code` の内容部品で `path` が空でないものを集め、cwd から解いて読む。
  * 読めなかった（無い・ファイルでない・大きすぎる・バイナリ）`path` は戻り値の `Map` に入らない。
  */
-export async function readReportBlockFiles(
+export async function readLeafComponentFiles(
   cwd: string,
   leaves: readonly ReportOutlineLeaf[],
 ): Promise<ReadonlyMap<string, string>> {

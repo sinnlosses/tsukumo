@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest"
 
 import { reportSectionsMarkdown } from "../../../src/browser/components/page/conversation/domain/report-markdown.ts"
-import type { FigureBlock, ReportBlock } from "../../../src/shared/report/report-block.ts"
+import type { FigureBlock, LeafComponent } from "../../../src/shared/report/report-block.ts"
 import { markdownOf, NO_IMAGES, section, tableCaptioned } from "../../fixture/report-markdown.ts"
 
 describe("表の tag と強調の行", () => {
   const tableOf = (
-    rows: Extract<ReportBlock, { readonly kind: "table" }>["rows"],
+    rows: Extract<LeafComponent, { readonly kind: "table" }>["rows"],
     emphasisColumn?: number,
   ): FigureBlock => ({
     kind: "table",
@@ -97,7 +97,7 @@ describe("表の tag と強調の行", () => {
 
 describe("表の行の詳しい中身", () => {
   const tableOf = (
-    rows: Extract<ReportBlock, { readonly kind: "table" }>["rows"],
+    rows: Extract<LeafComponent, { readonly kind: "table" }>["rows"],
   ): FigureBlock => ({
     kind: "table",
     title: "架空の表",

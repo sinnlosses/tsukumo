@@ -2,7 +2,7 @@
 // 描く順は図 → 整形した本文の節 → 振り返り。セクションの部品には、元になった内容部品の ID を添える。
 
 import type { A2uiReportComponent } from "./a2ui-report-catalog.ts"
-import type { ReportBlock, ReportBlockSection } from "./report-block.ts"
+import type { LeafComponent, ReportSection } from "./report-block.ts"
 import {
   outlineLeafBlock,
   type ReportOutlineLeaf,
@@ -18,14 +18,14 @@ export type DrawnScope = "body" | "whole"
 /** セクションの部品1つ。`leafId` が無いのは、内容部品に由来しない塊（振り返りの要約とドラフトの行）。 */
 export type DrawnEntry = {
   readonly leafId: string | undefined
-  readonly block: ReportBlock
+  readonly block: LeafComponent
 }
 
 type DrawnSectionBase = {
   readonly heading: string
   readonly entries: readonly DrawnEntry[]
   /** `entries` の塊を並べた節。組み立ての関数がこの形を受ける。 */
-  readonly section: ReportBlockSection
+  readonly section: ReportSection
 }
 
 /** 本文の節は、元になった根の子の部品の ID を持つ。図・振り返りは持たない。 */
@@ -116,6 +116,6 @@ function bodySection(
   return { role: "body", componentId, heading, entries, section: sectionOf(heading, entries) }
 }
 
-function sectionOf(heading: string, entries: readonly DrawnEntry[]): ReportBlockSection {
+function sectionOf(heading: string, entries: readonly DrawnEntry[]): ReportSection {
   return { heading, blocks: entries.map((entry) => entry.block) }
 }

@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest"
 import { reportViolations } from "../../../../../src/server/report/core/rules/report-violation.ts"
 import { reportUsageEntryOf } from "../../../../../src/server/report/core/usage/report-usage.ts"
 import type { A2uiReportComponent } from "../../../../../src/shared/report/a2ui-report-catalog.ts"
-import type { ReportBlock } from "../../../../../src/shared/report/report-block.ts"
+import type { LeafComponent } from "../../../../../src/shared/report/report-block.ts"
 import { draft, markdown, reportDraftText } from "../../../../fixture/report-draft-block.ts"
 import {
   type LegacySectionInput,
@@ -11,7 +11,7 @@ import {
   reportOfSections,
 } from "../../../../fixture/report-event.ts"
 
-const info = (): ReportBlock => ({
+const info = (): LeafComponent => ({
   kind: "note",
   tone: "info",
   text: "架空の一文。",
@@ -20,14 +20,14 @@ const info = (): ReportBlock => ({
 })
 
 /** 旧い記録の `row`・`panel`。今の型には無いので、組み直しへ渡す生の値で置く。 */
-const row = (blocks: readonly ReportBlock[], fold = "", aside = ""): unknown => ({
+const row = (blocks: readonly LeafComponent[], fold = "", aside = ""): unknown => ({
   kind: "row",
   blocks,
   fold,
   aside,
 })
 
-const panel = (blocks: readonly ReportBlock[], fold = "", aside = ""): unknown => ({
+const panel = (blocks: readonly LeafComponent[], fold = "", aside = ""): unknown => ({
   kind: "panel",
   title: "架空の枠",
   blocks,
@@ -95,7 +95,7 @@ describe("row・panel の中と外で同じ並べ方の判定", () => {
 
   describe("畳みの入れ子", () => {
     it("fold を持つ markdown が details を含めば、row の中でも数える", () => {
-      const nested: ReportBlock = {
+      const nested: LeafComponent = {
         ...markdown("<details>\n\n架空\n\n</details>"),
         fold: "架空の畳み",
       }

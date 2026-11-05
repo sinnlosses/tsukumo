@@ -4,7 +4,7 @@ import {
   createExperienceMetricRecorder,
   type ExperienceMetricEntry,
 } from "../../../../../src/server/usage/core/experience/experience-metric.ts"
-import type { ReportBlockSection } from "../../../../../src/shared/report/report-block.ts"
+import type { ReportSection } from "../../../../../src/shared/report/report-block.ts"
 import type { PendingAsk } from "../../../../../src/shared/session-driver/pending-ask.ts"
 import type { SessionEvent } from "../../../../../src/shared/session/session-event.ts"
 import { applySessionEvent } from "../../../../../src/shared/session/session-fold.ts"
@@ -190,7 +190,7 @@ describe("createExperienceMetricRecorder", () => {
 
   describe("読む時間", () => {
     const BODY_MARK = "架空の本文の目印・赤い靴"
-    const sectionsWithTable: readonly ReportBlockSection[] = [
+    const sectionsWithTable: readonly ReportSection[] = [
       {
         heading: "",
         blocks: [

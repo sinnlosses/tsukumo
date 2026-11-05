@@ -4,8 +4,8 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vite
 import { loadMarkdown } from "../../../../../../../src/browser/components/page/conversation/components/markdown/markdown.tsx"
 import { useInquiryDraft } from "../../../../../../../src/browser/components/page/conversation/stores/inquiry-draft.ts"
 import type {
-  ReportBlock,
-  ReportBlockSection,
+  LeafComponent,
+  ReportSection,
 } from "../../../../../../../src/shared/report/report-block.ts"
 import type { SessionRecord } from "../../../../../../../src/shared/session/session-record.ts"
 import {
@@ -364,13 +364,13 @@ describe("MainView（答えた質問の記録）", () => {
 })
 
 describe("MainView（レポートを欄ごとに描く）", () => {
-  const textBlock = (text: string): ReportBlock => ({ kind: "text", text, fold: "", aside: "" })
-  const regionedReport = (conclusion: string, firstBlock: ReportBlock): SessionRecord => {
+  const textBlock = (text: string): LeafComponent => ({ kind: "text", text, fold: "", aside: "" })
+  const regionedReport = (conclusion: string, firstBlock: LeafComponent): SessionRecord => {
     const base = reportRecord(conclusion)
     if (base.kind !== "report") {
       throw new Error("report の記録ではない")
     }
-    const sections: readonly ReportBlockSection[] = [
+    const sections: readonly ReportSection[] = [
       { heading: "架空の節A", blocks: [firstBlock] },
       { heading: "架空の節B", blocks: [textBlock("架空の本文B。")] },
     ]

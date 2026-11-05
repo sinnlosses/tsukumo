@@ -2,12 +2,12 @@ import { parseConclusion } from "../../src/server/report/core/body/conclusion-se
 import type { ReportDraft } from "../../src/server/report/core/rules/draft.ts"
 import { reportViolations } from "../../src/server/report/core/rules/report-violation.ts"
 import type { RecordedReportFigure } from "../../src/shared/report/a2ui-report-catalog.ts"
-import type { ReportBlock } from "../../src/shared/report/report-block.ts"
+import type { LeafComponent } from "../../src/shared/report/report-block.ts"
 import { type LegacySectionInput, reportDraft } from "./report-event.ts"
 
 /** `conclusion` は文字列なら1要素、配列なら要素の並び。 */
 export const draft = (
-  blocks: readonly ReportBlock[],
+  blocks: readonly LeafComponent[],
   conclusion: string | readonly string[] = "架空の結論。",
   sections: readonly LegacySectionInput[] = [{ heading: "", blocks }],
   figure: RecordedReportFigure = { kind: "none", reason: "unrecorded" },
@@ -19,33 +19,33 @@ export const draft = (
       blocks.length === 0 ? sections.filter((section) => section.blocks.length > 0) : sections,
   })
 
-export const reportDraftText = (value: string, fold = ""): ReportBlock => ({
+export const reportDraftText = (value: string, fold = ""): LeafComponent => ({
   kind: "text",
   text: value,
   fold,
   aside: "",
 })
-export const markdown = (value: string): ReportBlock => ({
+export const markdown = (value: string): LeafComponent => ({
   kind: "markdown",
   markdown: value,
   fold: "",
   aside: "",
 })
-export const mermaid = (source: string): ReportBlock => ({
+export const mermaid = (source: string): LeafComponent => ({
   kind: "mermaid",
   title: "",
   source,
   fold: "",
   aside: "",
 })
-export const note = (): ReportBlock => ({
+export const note = (): LeafComponent => ({
   kind: "note",
   tone: "warn",
   text: "架空の一文。",
   fold: "",
   aside: "",
 })
-export const code = (path: string, source: string, language = "text"): ReportBlock => ({
+export const code = (path: string, source: string, language = "text"): LeafComponent => ({
   kind: "code",
   language,
   path,

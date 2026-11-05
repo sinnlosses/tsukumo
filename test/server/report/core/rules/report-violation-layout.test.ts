@@ -4,10 +4,7 @@ import {
   reportRejectionText,
   reportViolations,
 } from "../../../../../src/server/report/core/rules/report-violation.ts"
-import type {
-  ReportBlock,
-  ReportBlockSection,
-} from "../../../../../src/shared/report/report-block.ts"
+import type { LeafComponent, ReportSection } from "../../../../../src/shared/report/report-block.ts"
 import {
   draft,
   kinds,
@@ -30,7 +27,7 @@ describe("reportViolations", () => {
   })
 
   describe("note は隣接させず、見出しの直後に置かない", () => {
-    const info = (): ReportBlock => ({
+    const info = (): LeafComponent => ({
       kind: "note",
       tone: "info",
       text: "架空の一文。",
@@ -49,29 +46,27 @@ describe("reportViolations", () => {
     })
 
     it("見出しのあるセクションの先頭の note は違反、見出しの無いセクションの先頭は通る", () => {
-      const titled: readonly ReportBlockSection[] = [{ heading: "架空の見出し", blocks: [info()] }]
+      const titled: readonly ReportSection[] = [{ heading: "架空の見出し", blocks: [info()] }]
       expect(kinds(draft([], "架空の結論。", titled))).toEqual(["crowded-notes"])
       expect(kinds(draft([info()]))).toEqual([])
     })
 
     it("warn / ng は隣接も見出しの直後も例外", () => {
-      const ng = (): ReportBlock => ({
+      const ng = (): LeafComponent => ({
         kind: "note",
         tone: "ng",
         text: "架空の一文。",
         fold: "",
         aside: "",
       })
-      const titled: readonly ReportBlockSection[] = [
-        { heading: "架空の見出し", blocks: [ng(), note()] },
-      ]
+      const titled: readonly ReportSection[] = [{ heading: "架空の見出し", blocks: [ng(), note()] }]
       expect(kinds(draft([], "架空の結論。", titled))).toEqual([])
     })
   })
 
   describe("fold と details を入れ子にしない", () => {
     it("fold を持つ markdown の塊が details を含めば違反", () => {
-      const block: ReportBlock = {
+      const block: LeafComponent = {
         kind: "markdown",
         markdown: "<details><summary>架空</summary>\n\n架空の本文\n\n</details>",
         fold: "架空の畳み",
@@ -90,7 +85,7 @@ describe("reportViolations", () => {
     })
 
     it("fold を持つ塊のインラインコードの <details> は details にしない", () => {
-      const block: ReportBlock = {
+      const block: LeafComponent = {
         kind: "markdown",
         markdown: "架空の `<details>` の形。",
         fold: "架空の畳み",
@@ -101,7 +96,7 @@ describe("reportViolations", () => {
   })
 
   describe("候補は採る → 検討 → 採らないの順", () => {
-    const options = (verdicts: readonly ("adopt" | "consider" | "reject")[]): ReportBlock => ({
+    const options = (verdicts: readonly ("adopt" | "consider" | "reject")[]): LeafComponent => ({
       kind: "options",
       title: "架空の比較",
       items: verdicts.map((verdict) => ({ name: "架空", verdict, reason: "架空の理由。" })),
@@ -125,7 +120,7 @@ describe("reportViolations", () => {
   describe("前後の Compare の画像の側の region", () => {
     const region = { left: 10, top: 20, width: 30, height: 40 }
     type Region = typeof region
-    const withRegion = (before: readonly Region[], after: readonly Region[]): ReportBlock => ({
+    const withRegion = (before: readonly Region[], after: readonly Region[]): LeafComponent => ({
       kind: "compare",
       title: "架空の前後",
       relation: "before-after",

@@ -4,7 +4,7 @@
 
 import { plotDrawingOf } from "./plot-drawing.ts"
 import { tableRowCells } from "./report-block-comparison.ts"
-import type { ReportBlock, ReportBlockSection } from "./report-block.ts"
+import type { LeafComponent, ReportSection } from "./report-block.ts"
 import type { CaptionKind } from "./report-caption.ts"
 import { REPORT_NOTE_KINDS } from "./report-notation.ts"
 import { type TagTones, tagTonesOf } from "./report-table-markdown.ts"
@@ -52,7 +52,7 @@ export type ReportLeafLayout = {
   readonly values: readonly (readonly LeafValue[])[]
 }
 
-export function reportLeafLayoutOf(sections: readonly ReportBlockSection[]): ReportLeafLayout {
+export function reportLeafLayoutOf(sections: readonly ReportSection[]): ReportLeafLayout {
   const tagTones = tagTonesOf(sections.flatMap((section) => section.blocks))
   const { perSection } = sections.reduce<{
     readonly perSection: readonly (readonly LeafValue[])[]
@@ -68,7 +68,7 @@ export function reportLeafLayoutOf(sections: readonly ReportBlockSection[]): Rep
 }
 
 function valuesOfBlocks(
-  blocks: readonly ReportBlock[],
+  blocks: readonly LeafComponent[],
   counts: CaptionCounts,
   tagTones: ReadonlyMap<string, string>,
 ): BlocksFold {
@@ -81,7 +81,7 @@ function valuesOfBlocks(
 
 function withLeafValue(
   acc: BlocksFold,
-  block: ReportBlock,
+  block: LeafComponent,
   tagTones: ReadonlyMap<string, string>,
 ): BlocksFold {
   const kind = captionKindOf(block)
@@ -133,7 +133,7 @@ function textNotes(label: string, text: string): readonly LeafGutterNote[] {
 }
 
 function tagTonesUsedBy(
-  block: ReportBlock,
+  block: LeafComponent,
   tagTones: ReadonlyMap<string, string>,
 ): Readonly<Record<string, string>> {
   if (block.kind !== "table") {
@@ -151,7 +151,7 @@ function tagTonesUsedBy(
 }
 
 /** 題に番号を振る塊の分類。`plot` は描く形に合わせる（表に落ちたものは表、グラフは図）。 */
-function captionKindOf(block: ReportBlock): CaptionKind | undefined {
+function captionKindOf(block: LeafComponent): CaptionKind | undefined {
   switch (block.kind) {
     case "image":
     case "compare":

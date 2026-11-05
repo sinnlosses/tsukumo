@@ -4,12 +4,12 @@ import {
   reportRejectionText,
   reportViolations,
 } from "../../../../../../src/server/report/core/rules/report-violation.ts"
-import type { ReportBlock } from "../../../../../../src/shared/report/report-block.ts"
+import type { LeafComponent } from "../../../../../../src/shared/report/report-block.ts"
 import { reportDraft } from "../../../../../fixture/report-event.ts"
 
-const textBlock = (text: string): ReportBlock => ({ kind: "text", text, fold: "", aside: "" })
+const textBlock = (text: string): LeafComponent => ({ kind: "text", text, fold: "", aside: "" })
 
-const listBlock = (label: string, text: string): ReportBlock => ({
+const listBlock = (label: string, text: string): LeafComponent => ({
   kind: "list",
   style: "bullet",
   items: [{ label, text, done: false, source: "", branch: "", branchTone: "warn" }],
@@ -17,7 +17,7 @@ const listBlock = (label: string, text: string): ReportBlock => ({
   aside: "",
 })
 
-const tableBlock = (cell: string): ReportBlock => ({
+const tableBlock = (cell: string): LeafComponent => ({
   kind: "table",
   title: "架空の表",
   columns: ["列", "値"],
@@ -32,7 +32,7 @@ const brokenOf = (report: Parameters<typeof reportDraft>[0]) =>
     (violation) => violation.kind === "broken-inline-mark",
   )
 
-const sectionOf = (...blocks: ReportBlock[]) => ({ heading: "", blocks }) as const
+const sectionOf = (...blocks: LeafComponent[]) => ({ heading: "", blocks }) as const
 
 describe("broken-inline-mark", () => {
   it("結論・text・list の項目・table のセルの壊れた印を数える", () => {
@@ -60,7 +60,7 @@ describe("broken-inline-mark", () => {
   })
 
   it("flow の source・branch の壊れた印も数える", () => {
-    const flow = (source: string, branch: string): ReportBlock => ({
+    const flow = (source: string, branch: string): LeafComponent => ({
       kind: "list",
       style: "flow",
       items: [{ label: "", text: "架空の段", done: false, source, branch, branchTone: "ng" }],

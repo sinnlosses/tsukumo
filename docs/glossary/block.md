@@ -10,9 +10,9 @@
 
 ### セクション
 
-- **英語識別子**: `ReportBlockSection`（`src/shared/report/report-block.ts`。画面に描くセクション）/ `sections`（旧い引数と
+- **英語識別子**: `ReportSection`（`src/shared/report/report-block.ts`。画面に描くセクション）/ `sections`（旧い引数と
   記録の欄）/ `heading`（セクションの見出し）
-- **定義**: **レポートの本文を区切る1段**。見出し（`heading`）と、その下に並ぶ部品の並び（`ReportBlock`）を持つ。
+- **定義**: **レポートの本文を区切る1段**。見出し（`heading`）と、その下に並ぶ部品の並び（`LeafComponent`）を持つ。
   配置は `components` の `Row`・`Card` が持つ。見出しが空のセクションは見出しを描かない
 - **注記**: `report` の引数 `components` の `Section` がこの形に写り、セクションが2つ以上なら全部に見出しを付けさせる（無ければ
   差し戻す）。旧い引数 `sections` や、文字列の `body` だったころの記録は、呼び出しをイベントに変える境目
@@ -22,7 +22,7 @@
 
 ### 部品
 
-- **英語識別子**: `ReportBlock`（`src/shared/report/report-block.ts`）/ `kind`（`text` / `list` /
+- **英語識別子**: `LeafComponent`（`src/shared/report/report-block.ts`）/ `kind`（`text` / `list` /
   `table` / `matrix` / `compare`（`relation` で対等と前後を選ぶ）/ `note` / `stats` / `code` / `mermaid` / `graph`（`source` の1行1エッジの記法で受ける flowchart。行頭の `+ ` / `- ` / `~ ` が足した・消した・変えたの印。ノードだけの行は `名前 | 説明` で説明の1行を足せ、分岐・合流・囲み・点線の無い5ノード以下の一本道はカードの連鎖で描く）/ `chart` / `timeline`（時刻の軸に行ごとの帯・延びた分・出来事を並べる図。延び・出来事・一点の無い区間の長さの比べは `chart` の `span`）/ `svg`（座標つきの図形で書く図）/ `plot`（図の申告。`question`〔読者がその図で決めること。全角60字以内の1文〕・`data`〔列の並び。各列は `name`・`type`〔`N` 名義 / `O` 順序 / `T` 時間 / `Q` 量〕・`values`〕・`relation`〔`compare`・`rank`・`part`・`trend`・`change`・`distribution`・`correlate`・`range` の8語〕と任意の `form`〔形の上書き〕を受け、色・座標は書かせない。形は下の「図の決定表」が決め、形ごとの描き方が入るまでは `data` を表として描く）/ `options` / `claims`（確度つきの主張）/ `image`（画面の画像）/ `markdown`。旧い記録にだけ `row`〔2〜4 個の部品を横に並べる〕と `panel`〔`title` つきの枠〕があり、復元が `Row`・`Card` に組み直す）/ `fold`（畳むときの見出し）/ `aside`（部品の欄外注。下の「欄外注の列」）/
   欄の `from` / `to`（表のセルの前後）・`tag`（表のセルの列挙型のバッジ。同じ字は同じ色）・`emphasis`（表の行の強調。`{ cells, emphasis: true }`で3行まで。超えれば差し戻し）・`detail`（表の行の詳しい中身。`{ cells, detail }` で書き、開け閉めの印で開いて読む）・`depth`（表の行の字下げの段。`{ cells, depth }` で 1〜3 を書き、子を親の直下に1段深く置く）・`before`（`stats` の前の値）・`total`（`stats` の全体の数）・`keyFigures`（`report` の欄。結論の直下に並べる 3〜4 個の数のカードで、項目の形は `stats` の `items` と同じ。部品の欄ではない）・`label`（`list` の項目の名前）・
   `flow`（`list` の `style` の一本道の流れ）・`cards`（`list` の `style` の並列の区画。2〜4項目を横に並べる）・`sides`（`compare` の2つの側。`heading` と `points`）・
@@ -35,8 +35,8 @@
   `series`（`chart` の系列。`name` と `values`）・`horizontal`（`chart` の `bar` を横棒にする真偽値）・`emphasis`（`chart` で差し色にする項目の名前の並び。`labels` の部分集合。`svg` の `rect` の `emphasis` とは別。`timeline` では差し色にする行の `name` の並び）・
   `rows`（`timeline` の行の並び。`name`・`start`・`end`〔省くと一点〕・`extra`・`uncertain`・`after`・`lane`）・`start` / `end`（`timeline` の行の開始と終了。`HH:MM`・ISO の日時・分の数のどれかで、1つの部品の中で混ぜない）・
   `extra`（`timeline` の行の `end` より後へ延びた区切りの時刻の昇順の並び）・`uncertain`（`timeline` の行の終わり〔`extra` があればその最後〕より後ろに続く、止まりうる区間。終わりの時刻 `until` と一言 `label`）・`after`（`timeline` の行が待つ行の `name` の並び。待たれる行の終わりからこの行の開始へ矢印で描く）・`until`（`uncertain` の区間の終わりの時刻）・`lane`（`timeline` の行の役ごとのまとまり）・`events`（`timeline` の出来事の印の並び。`at` と `label`）・`at`（出来事の時刻）/
-  `ReportBlockField`（使われ方の記録で数える欄の名前）
-- **定義**: **セクションの中に並ぶ、種類の決まった本文の1単位**。中身を持つものを内容部品、並びや枠を決めるもの（`Row`・`Card`・`Section`）を配置部品と呼び分け、この項は内容部品（`ReportBlock`）を指す。種類ごとに決まった形で Markdown に組んで
+  `LeafComponentField`（使われ方の記録で数える欄の名前）
+- **定義**: **セクションの中に並ぶ、種類の決まった本文の1単位**。中身を持つものを内容部品、並びや枠を決めるもの（`Row`・`Card`・`Section`）を配置部品と呼び分け、この項は内容部品（`LeafComponent`）を指す。種類ごとに決まった形で Markdown に組んで
   描く（`reportSectionsMarkdown`）。部品の文字は行頭の部品の記法と `<` を逃がし、インラインの記法
   （inline code・太字・リンク）だけが効く。`fold` のある部品は `<details>` に畳む
 - **注記**: **`markdown` の部品が逃げ道**で、中身は逃がさず今の本文と同じ経路で描き、行を落とす整形

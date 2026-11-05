@@ -48,8 +48,8 @@ classDiagram
 | セリフ         | `speak` ツールの `text`。会話のための言葉        | `docs/glossary/speech.md`                           | `src/shared/session/turn-speech.ts`（`Speech`）                                  |
 | 吹き出し       | セリフ1件を囲って見せる表示                      | `docs/glossary/speech.md`                           | `src/browser/components/page/conversation/components/character-view/balloon.tsx` |
 | レポート       | ターンの本文（詳細）を表示単位として呼ぶ名前     | `docs/glossary/detail-and-report.md`                | `src/shared/session/session-event-report.ts`（`ReportEvent`）                    |
-| セクション     | レポートの本文を区切る1段                        | `docs/glossary/block.md`                            | `src/shared/report/report-block.ts`（`ReportBlockSection`）                      |
-| 内容部品       | セクションの中に並ぶ、中身を持つ本文の1単位      | `docs/glossary/block.md`                            | `src/shared/report/report-block.ts`（`ReportBlock`）                             |
+| セクション     | レポートの本文を区切る1段                        | `docs/glossary/block.md`                            | `src/shared/report/report-block.ts`（`ReportSection`）                           |
+| 内容部品       | セクションの中に並ぶ、中身を持つ本文の1単位      | `docs/glossary/block.md`                            | `src/shared/report/report-block.ts`（`LeafComponent`）                           |
 | 配置部品       | 並びや枠を決める部品（`Row`・`Card`・`Section`） | `docs/glossary/block.md`                            | `src/shared/report/a2ui-basic-part-list.ts`                                      |
 | お伺い         | 許可要求と質問を同じ形で出すカード               | `docs/glossary/conversation-phase.md`               | `src/shared/session-driver/pending-ask.ts`（`PendingAsk`）                       |
 | 許可プロンプト | ツールを実行してよいかを利用者に尋ねるもの       | `docs/glossary/turn.md`                             | `src/shared/session-driver/pending-ask.ts`                                       |

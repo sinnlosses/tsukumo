@@ -3,7 +3,7 @@
 
 import type { A2uiReportComponent } from "../report/a2ui-report-catalog.ts"
 import type { ChangedFilesView } from "../report/changed-file-section.ts"
-import type { ReportBlock } from "../report/report-block.ts"
+import type { LeafComponent } from "../report/report-block.ts"
 import type { ReportChangeSummary } from "../report/report-change-summary.ts"
 import type { ReportChecksView } from "../report/report-check-view.ts"
 import type { ReportImageSource } from "../report/report-image-markdown.ts"
@@ -162,7 +162,7 @@ export type MainViewSurfaceStatus = {
   readonly verification: ReportVerification
 }
 
-export type MainViewKeyFigure = Extract<ReportBlock, { readonly kind: "stats" }>["items"][number]
+export type MainViewKeyFigure = Extract<LeafComponent, { readonly kind: "stats" }>["items"][number]
 
 /**
  * 図か振り返りの欄1つを、`DrawnSection` の塊の並びのまま持つ。

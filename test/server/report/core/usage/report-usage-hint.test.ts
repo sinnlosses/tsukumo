@@ -6,7 +6,7 @@ import {
   reportUsageEntryOf,
 } from "../../../../../src/server/report/core/usage/report-usage.ts"
 import type { compareSideSchema } from "../../../../../src/shared/report/report-block-diagram.ts"
-import type { ReportBlock } from "../../../../../src/shared/report/report-block.ts"
+import type { LeafComponent } from "../../../../../src/shared/report/report-block.ts"
 import type { ReportCheck } from "../../../../../src/shared/report/report-check.ts"
 import type { ToolStartedEvent } from "../../../../../src/shared/session/session-event.ts"
 import { reportEvent, reportOfDrawn, reportOfSections } from "../../../../fixture/report-event.ts"
@@ -14,14 +14,14 @@ import { checkedOptionalToolUseId, checkedToolUseId } from "../../../../fixture/
 
 describe("reportUsageEntryOf", () => {
   it("hasModifiedFiles は常に false で、前後図か画像の有無・task の有無を塊の欄とは別の真偽値で持つ", () => {
-    const files = (change: "modified" | "read"): ReportBlock => ({
+    const files = (change: "modified" | "read"): LeafComponent => ({
       kind: "files",
       items: [{ path: "架空/a.ts", change, note: "" }],
       title: "",
       fold: "",
       aside: "",
     })
-    const compareFigure: ReportBlock = {
+    const compareFigure: LeafComponent = {
       kind: "compare",
       title: "架空の前後",
       relation: "before-after",
@@ -32,7 +32,7 @@ describe("reportUsageEntryOf", () => {
       fold: "",
       aside: "",
     }
-    const image: ReportBlock = {
+    const image: LeafComponent = {
       kind: "image",
       path: "架空/after.png",
       caption: "架空の画面",
@@ -48,7 +48,7 @@ describe("reportUsageEntryOf", () => {
       genre: "work",
     } as const
     const table: readonly {
-      readonly blocks: readonly ReportBlock[]
+      readonly blocks: readonly LeafComponent[]
       readonly task: boolean
       readonly expected: readonly [boolean, boolean, boolean]
     }[] = [
@@ -97,7 +97,7 @@ describe("reportUsageEntryOf", () => {
   })
 
   describe("hasFigure", () => {
-    const figureOf = (block: ReportBlock): boolean =>
+    const figureOf = (block: LeafComponent): boolean =>
       reportUsageEntryOf(
         reportOfSections([{ heading: "", blocks: [block] }]),
         "claude-session-1",
@@ -108,7 +108,7 @@ describe("reportUsageEntryOf", () => {
     const codeSide = { kind: "code", language: "ts", source: "x" } as const
     const pointsSide: z.output<typeof compareSideSchema> = { kind: "points", points: ["架空の点"] }
     type Side = z.output<typeof compareSideSchema>
-    const compareFigureOf = (before: Side, after: Side): ReportBlock => ({
+    const compareFigureOf = (before: Side, after: Side): LeafComponent => ({
       kind: "compare",
       title: "",
       relation: "before-after",
@@ -171,15 +171,15 @@ describe("reportUsageEntryOf", () => {
   })
 
   describe("readImageWithoutImageBlock", () => {
-    const entryOf = (blocks: readonly ReportBlock[], mainReadImageFile: boolean) =>
+    const entryOf = (blocks: readonly LeafComponent[], mainReadImageFile: boolean) =>
       reportUsageEntryOf(
         reportOfSections([{ heading: "", blocks }]),
         "claude-session-1",
         1_000,
         mainReadImageFile,
       )
-    const text: ReportBlock = { kind: "text", text: "架空の根拠。", fold: "", aside: "" }
-    const image: ReportBlock = {
+    const text: LeafComponent = { kind: "text", text: "架空の根拠。", fold: "", aside: "" }
+    const image: LeafComponent = {
       kind: "image",
       path: "/tmp/a.png",
       caption: "架空",
@@ -187,7 +187,7 @@ describe("reportUsageEntryOf", () => {
       fold: "",
       aside: "",
     }
-    const compareFigureImage: ReportBlock = {
+    const compareFigureImage: LeafComponent = {
       kind: "compare",
       title: "",
       relation: "before-after",
@@ -208,7 +208,7 @@ describe("reportUsageEntryOf", () => {
   })
 
   describe("強調と graph の数", () => {
-    const entryOf = (blocks: readonly ReportBlock[]) =>
+    const entryOf = (blocks: readonly LeafComponent[]) =>
       reportUsageEntryOf(
         reportOfSections([{ heading: "", blocks }]),
         "claude-session-1",
@@ -258,7 +258,7 @@ describe("reportUsageEntryOf", () => {
     })
 
     it("graph が2つあればエッジとラベルの無いエッジを合計し、ノード数は多いほうにする", () => {
-      const graph = (source: string): ReportBlock => ({
+      const graph = (source: string): LeafComponent => ({
         kind: "graph",
         title: "",
         direction: "TD",

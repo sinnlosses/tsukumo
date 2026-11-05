@@ -6,10 +6,7 @@ import {
   reportRejectionText,
   reportViolations,
 } from "../../../../../src/server/report/core/rules/report-violation.ts"
-import type {
-  ReportBlock,
-  ReportBlockSection,
-} from "../../../../../src/shared/report/report-block.ts"
+import type { LeafComponent, ReportSection } from "../../../../../src/shared/report/report-block.ts"
 import {
   code,
   draft,
@@ -65,9 +62,9 @@ describe("reportRejectionText", () => {
 
   describe("broken-svg", () => {
     const svg = (
-      shapes: Extract<ReportBlock, { kind: "svg" }>["shapes"],
-      legend: Extract<ReportBlock, { kind: "svg" }>["legend"] = [],
-    ): ReportBlock => ({
+      shapes: Extract<LeafComponent, { kind: "svg" }>["shapes"],
+      legend: Extract<LeafComponent, { kind: "svg" }>["legend"] = [],
+    ): LeafComponent => ({
       kind: "svg",
       title: "",
       width: 100,
@@ -148,8 +145,8 @@ describe("reportRejectionText", () => {
     it("legend に無い tone を、何個目の部品のどの tone かだけで言い、legend にあれば通す", () => {
       const toned = (
         tone: "a" | "b",
-        legend: Extract<ReportBlock, { kind: "svg" }>["legend"],
-      ): ReportBlock => svg([{ ...rect(0, 0, 10, 10), label: "架空の秘密", tone }], legend)
+        legend: Extract<LeafComponent, { kind: "svg" }>["legend"],
+      ): LeafComponent => svg([{ ...rect(0, 0, 10, 10), label: "架空の秘密", tone }], legend)
       const report = draft([toned("a", [{ tone: "a", label: "層" }]), toned("b", [])])
       expect(reportViolations(report)).toEqual([
         { kind: "unlegended-svg-tone", count: 1, faults: [{ block: 2, tone: "b" }] },
@@ -164,8 +161,8 @@ describe("reportRejectionText", () => {
     it("graph の色の目印も legend に無ければ、何個目の部品のどの tone かだけで言って差し戻す", () => {
       const graph = (
         source: string,
-        legend: Extract<ReportBlock, { kind: "graph" }>["legend"],
-      ): ReportBlock => ({
+        legend: Extract<LeafComponent, { kind: "graph" }>["legend"],
+      ): LeafComponent => ({
         kind: "graph",
         title: "",
         direction: "TD",
@@ -292,9 +289,9 @@ describe("reportRejectionText", () => {
   describe("figure-contradiction", () => {
     const withReason = (
       reason: "no-shape" | "short-answer",
-      sections: readonly ReportBlockSection[],
+      sections: readonly ReportSection[],
     ): ReportDraft => draft([], "架空の結論。", sections, { kind: "none", reason })
-    const flow: ReportBlock = {
+    const flow: LeafComponent = {
       kind: "list",
       style: "flow",
       items: [
@@ -332,7 +329,7 @@ describe("reportRejectionText", () => {
     })
 
     it("no-shape で bullet の箇条や表しか無ければ違反にしない", () => {
-      const bullet: ReportBlock = { ...flow, style: "bullet" }
+      const bullet: LeafComponent = { ...flow, style: "bullet" }
       expect(kinds(withReason("no-shape", [{ heading: "", blocks: [bullet] }]))).toEqual([])
     })
 
@@ -369,7 +366,7 @@ describe("reportRejectionText", () => {
     })
 
     it("ほかの理由・記録の無い理由・図を置いた回は見ない", () => {
-      const sections: readonly ReportBlockSection[] = [
+      const sections: readonly ReportSection[] = [
         { heading: "架空の節1", blocks: [flow] },
         { heading: "架空の節2", blocks: [flow] },
       ]

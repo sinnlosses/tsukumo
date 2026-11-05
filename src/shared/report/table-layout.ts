@@ -10,10 +10,10 @@ import {
   type TableCell,
   tableRowCells,
 } from "./report-block-comparison.ts"
-import type { ReportBlock } from "./report-block.ts"
+import type { LeafComponent } from "./report-block.ts"
 
-type TableBlock = Extract<ReportBlock, { readonly kind: "table" }>
-type MatrixBlock = Extract<ReportBlock, { readonly kind: "matrix" }>
+type TableBlock = Extract<LeafComponent, { readonly kind: "table" }>
+type MatrixBlock = Extract<LeafComponent, { readonly kind: "matrix" }>
 
 type CellStatus = Extract<TableCell, { readonly status: string }>["status"]
 export type MatrixStatus = (typeof REPORT_MATRIX_STATUSES)[number]

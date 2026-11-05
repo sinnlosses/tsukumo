@@ -4,7 +4,7 @@ import { reportUsageEntryOf } from "../../../src/server/report/core/usage/report
 import { parseReportFigure } from "../../../src/shared/report/a2ui-report-catalog.ts"
 import { plotRows } from "../../../src/shared/report/figure-grammar.ts"
 import { plotDrawingOf } from "../../../src/shared/report/plot-drawing.ts"
-import { parseReportBlocks, type ReportBlock } from "../../../src/shared/report/report-block.ts"
+import { parseLeafComponents, type LeafComponent } from "../../../src/shared/report/report-block.ts"
 import { reportLeafLayoutOf } from "../../../src/shared/report/report-leaf-value.ts"
 import { reportOfSections } from "../../fixture/report-event.ts"
 
@@ -21,9 +21,9 @@ const plot = (overrides: Record<string, unknown> = {}): Record<string, unknown> 
   ...overrides,
 })
 
-const firstBlock = (value: unknown): ReportBlock | undefined => parseReportBlocks([value])[0]
+const firstBlock = (value: unknown): LeafComponent | undefined => parseLeafComponents([value])[0]
 
-const plotIn = (value: unknown): Extract<ReportBlock, { readonly kind: "plot" }> => {
+const plotIn = (value: unknown): Extract<LeafComponent, { readonly kind: "plot" }> => {
   const block = firstBlock(value)
   if (block?.kind !== "plot") throw new Error("plot の塊が受け付けられなかった")
   return block

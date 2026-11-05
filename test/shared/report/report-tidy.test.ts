@@ -1,23 +1,23 @@
 import { describe, expect, it } from "vitest"
 
 import type { A2uiReportComponent } from "../../../src/shared/report/a2ui-report-catalog.ts"
-import type { ReportBlock, ReportBlockSection } from "../../../src/shared/report/report-block.ts"
+import type { LeafComponent, ReportSection } from "../../../src/shared/report/report-block.ts"
 import { outlineLeafBlock, reportOutline } from "../../../src/shared/report/report-outline.ts"
 import { tidyReportOutline } from "../../../src/shared/report/report-tidy.ts"
 
 const CONCLUSION = "架空の結論。"
 
-const markdown = (body: string): ReportBlock => ({
+const markdown = (body: string): LeafComponent => ({
   kind: "markdown",
   markdown: body,
   fold: "",
   aside: "",
 })
-const text = (value: string): ReportBlock => ({ kind: "text", text: value, fold: "", aside: "" })
+const text = (value: string): LeafComponent => ({ kind: "text", text: value, fold: "", aside: "" })
 
 /** 逃げ道の部品1つだけの本文を整形し、残った中身を返す（部品ごと落ちたら空）。 */
 const tidy = (body: string, conclusion = CONCLUSION): string =>
-  tidyReportBlockSections({
+  tidyReportSections({
     conclusion,
     sections: [{ heading: "", blocks: [markdown(body)] }],
   })
@@ -163,11 +163,11 @@ describe("tidyReportOutline（逃げ道の部品）", () => {
 })
 
 describe("tidyReportOutline（塊と節）", () => {
-  const tidySections = (sections: readonly ReportBlockSection[]) =>
-    tidyReportBlockSections({ conclusion: CONCLUSION, sections })
+  const tidySections = (sections: readonly ReportSection[]) =>
+    tidyReportSections({ conclusion: CONCLUSION, sections })
 
   it("本文の冒頭の text の塊が conclusion と同じなら落とし、冒頭でなければ落とさない", () => {
-    const sections: readonly ReportBlockSection[] = [
+    const sections: readonly ReportSection[] = [
       {
         heading: "",
         blocks: [text(` ${CONCLUSION}`), text("架空の根拠。"), text(CONCLUSION)],
@@ -180,7 +180,7 @@ describe("tidyReportOutline（塊と節）", () => {
   })
 
   it("定型だけの text の塊を落とし、定型に中身が続く塊は落とさない", () => {
-    const sections: readonly ReportBlockSection[] = [
+    const sections: readonly ReportSection[] = [
       {
         heading: "",
         blocks: [text("架空の根拠。"), text("以上です。"), text("以上です。架空の補足。")],
@@ -196,14 +196,14 @@ describe("tidyReportOutline（塊と節）", () => {
   })
 
   it("塊の残らない節は見出しごと落とし、ほかの種類の塊はそのまま残す", () => {
-    const note: ReportBlock = {
+    const note: LeafComponent = {
       kind: "note",
       tone: "memo",
       text: "以上です。",
       fold: "",
       aside: "",
     }
-    const sections: readonly ReportBlockSection[] = [
+    const sections: readonly ReportSection[] = [
       {
         heading: "架空の節",
         blocks: [text("以上です。"), markdown("何かあれば言ってください。")],
@@ -215,7 +215,7 @@ describe("tidyReportOutline（塊と節）", () => {
   })
 
   it("落とすものが無ければ中身は引数のまま", () => {
-    const sections: readonly ReportBlockSection[] = [
+    const sections: readonly ReportSection[] = [
       { heading: "架空の節", blocks: [text("架空の根拠。")] },
     ]
 
@@ -224,7 +224,7 @@ describe("tidyReportOutline（塊と節）", () => {
 })
 
 /** 塊の節を `components` に組む（`text` は `Paragraph`、`markdown` は `Markdown`、`note` は `Note`）。 */
-function componentsOf(sections: readonly ReportBlockSection[]): readonly A2uiReportComponent[] {
+function componentsOf(sections: readonly ReportSection[]): readonly A2uiReportComponent[] {
   const leaves = sections.flatMap((section, sectionIndex) =>
     section.blocks.map((block, blockIndex): A2uiReportComponent => {
       const id = `leaf-${String(sectionIndex)}-${String(blockIndex)}`
@@ -262,10 +262,10 @@ function componentsOf(sections: readonly ReportBlockSection[]): readonly A2uiRep
 }
 
 /** 塊の節を内容部品にして整形し、整形後の内容部品を塊の節に戻す。 */
-function tidyReportBlockSections(report: {
+function tidyReportSections(report: {
   readonly conclusion: string
-  readonly sections: readonly ReportBlockSection[]
-}): readonly ReportBlockSection[] {
+  readonly sections: readonly ReportSection[]
+}): readonly ReportSection[] {
   const { outline } = tidyReportOutline({
     conclusion: report.conclusion,
     outline: reportOutline(componentsOf(report.sections)),
@@ -281,7 +281,7 @@ function tidyReportBlockSections(report: {
 
 describe("tidyReportOutline（落とした内容部品の ID）", () => {
   it("落とした内容部品の ID だけが集合に入り、整形で書き換えた内容部品の ID は入らない", () => {
-    const sections: readonly ReportBlockSection[] = [
+    const sections: readonly ReportSection[] = [
       {
         heading: "架空の節",
         blocks: [text("以上です。"), markdown("以上です。\n\n架空の根拠。"), text("架空の本文。")],

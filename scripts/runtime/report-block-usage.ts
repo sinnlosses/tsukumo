@@ -26,9 +26,9 @@ import {
 } from "../../src/server/report/core/rules/prose/notation.ts"
 import { REPORT_VIOLATION_KINDS } from "../../src/server/report/core/rules/report-violation.ts"
 import { REPORT_SHAPE_TAGS } from "../../src/server/report/core/usage/report-usage-record.ts"
-import { REPORT_BLOCK_FIELDS } from "../../src/server/report/core/usage/report-usage.ts"
+import { LEAF_COMPONENT_FIELDS } from "../../src/server/report/core/usage/report-usage.ts"
 import {
-  REPORT_BLOCK_KINDS,
+  LEAF_COMPONENT_KIND_LIST,
   REPORT_FIGURE_NONE_REASONS,
   reportFigureSchema,
 } from "../../src/shared/report/a2ui-report-catalog.ts"
@@ -104,7 +104,7 @@ process.stdout.write(
 process.stdout.write(
   table(
     "塊の種類 × レポート数",
-    [...REPORT_BLOCK_KINDS, ...PAST_BLOCK_KINDS],
+    [...LEAF_COMPONENT_KIND_LIST, ...PAST_BLOCK_KINDS],
     records,
     (record) => record.blockKinds,
   ),
@@ -113,7 +113,7 @@ process.stdout.write("\n\n")
 process.stdout.write(
   table(
     `塊の欄 × レポート数（${String(records.length)}件のうち）`,
-    [...REPORT_BLOCK_FIELDS, ...PAST_BLOCK_FIELDS],
+    [...LEAF_COMPONENT_FIELDS, ...PAST_BLOCK_FIELDS],
     records,
     (record) => record.blockFields,
   ),

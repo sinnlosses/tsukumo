@@ -5,7 +5,7 @@ import {
   reportViolations,
 } from "../../../../../../src/server/report/core/rules/report-violation.ts"
 import { plotBlockSchema } from "../../../../../../src/shared/report/figure-grammar.ts"
-import type { ReportBlock } from "../../../../../../src/shared/report/report-block.ts"
+import type { LeafComponent } from "../../../../../../src/shared/report/report-block.ts"
 import { reportDraft } from "../../../../../fixture/report-event.ts"
 
 /** 架空の工程 5 つの所要。決定表は `part` の行で `bar`（文派は `table`）を返す。 */
@@ -21,7 +21,7 @@ const partPlot = (form: string | undefined) =>
     ...(form === undefined ? {} : { form }),
   })
 
-const sectionOf = (...blocks: ReportBlock[]) => ({ heading: "", blocks }) as const
+const sectionOf = (...blocks: LeafComponent[]) => ({ heading: "", blocks }) as const
 
 const plotFormViolationsOf = (report: Parameters<typeof reportDraft>[0]) =>
   reportViolations(reportDraft(report)).filter(

@@ -5,7 +5,7 @@ import { isPlainObject } from "remeda"
 import { z } from "zod"
 
 import { nonEmpty, omittable } from "./report-block-field.ts"
-import { namedWriterBlockSchema, parseReportBlocks, type ReportBlock } from "./report-block.ts"
+import { namedWriterBlockSchema, parseLeafComponents, type LeafComponent } from "./report-block.ts"
 
 export const reportRetrospectiveSchema = z.object({
   summary: nonEmpty(z.string().trim()).describe("結果を1〜2文で"),
@@ -27,7 +27,7 @@ export type ReportRetrospective =
       readonly kind: "recorded"
       readonly summary: string
       readonly drafts: readonly string[]
-      readonly blocks: readonly ReportBlock[]
+      readonly blocks: readonly LeafComponent[]
     }
 
 const NO_REPORT_RETROSPECTIVE = {
@@ -44,7 +44,7 @@ export function parseReportRetrospective(value: unknown): ReportRetrospective {
   }
   const parsed = looseRetrospectiveSchema.safeParse(value)
   return parsed.success
-    ? { kind: "recorded", ...parsed.data, blocks: parseReportBlocks(parsed.data.blocks) }
+    ? { kind: "recorded", ...parsed.data, blocks: parseLeafComponents(parsed.data.blocks) }
     : NO_REPORT_RETROSPECTIVE
 }
 

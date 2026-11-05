@@ -1,10 +1,10 @@
 import { reportSectionsMarkdown } from "../../src/browser/components/page/conversation/domain/report-markdown.ts"
-import type { FigureBlock, ReportBlock } from "../../src/shared/report/report-block.ts"
+import type { FigureBlock, LeafComponent } from "../../src/shared/report/report-block.ts"
 import type { ReportImageSource } from "../../src/shared/report/report-image-markdown.ts"
 
 export const NO_IMAGES = { kind: "none" } as const satisfies ReportImageSource
 
-export const section = <Block extends ReportBlock>(
+export const section = <Block extends LeafComponent>(
   blocks: readonly Block[],
   heading = "",
 ): { readonly heading: string; readonly blocks: readonly Block[] } => ({
@@ -13,7 +13,7 @@ export const section = <Block extends ReportBlock>(
 })
 export const markdownOf = (block: FigureBlock): string =>
   reportSectionsMarkdown([section([block])], NO_IMAGES)
-export const reportMarkdownText = (value: string): ReportBlock => ({
+export const reportMarkdownText = (value: string): LeafComponent => ({
   kind: "text",
   text: value,
   fold: "",
@@ -41,11 +41,11 @@ export const GRAPH_SHAPE_LEGEND =
     )
     .join("") +
   "</div>"
-type StatItem = Extract<ReportBlock, { readonly kind: "stats" }>["items"][number]
+type StatItem = Extract<LeafComponent, { readonly kind: "stats" }>["items"][number]
 export const graphMarkdown = (
   source: string,
   title = "",
-  legend: Extract<ReportBlock, { readonly kind: "graph" }>["legend"] = [],
+  legend: Extract<LeafComponent, { readonly kind: "graph" }>["legend"] = [],
 ): string =>
   markdownOf({ kind: "graph", title, direction: "LR", legend, source, fold: "", aside: "" })
 export const statItem: StatItem = {

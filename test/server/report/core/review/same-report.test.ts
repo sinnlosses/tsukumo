@@ -4,23 +4,20 @@ import { z } from "zod"
 import { isSameReport } from "../../../../../src/server/report/core/review/same-report.ts"
 import { a2uiReportComponentSchema } from "../../../../../src/shared/report/a2ui-report-catalog.ts"
 import { A2UI_ROOT_ID } from "../../../../../src/shared/report/a2ui-report-outline.ts"
-import type { ReportBlockSection } from "../../../../../src/shared/report/report-block.ts"
+import type { ReportSection } from "../../../../../src/shared/report/report-block.ts"
 import { reportDraft, reportOfDrawn } from "../../../../fixture/report-event.ts"
 
-const sectionsOf = (
-  heading: string,
-  ...texts: readonly string[]
-): readonly ReportBlockSection[] => [
+const sectionsOf = (heading: string, ...texts: readonly string[]): readonly ReportSection[] => [
   {
     heading,
     blocks: texts.map((markdown) => ({ kind: "markdown" as const, markdown, fold: "", aside: "" })),
   },
 ]
 
-const drawnOf = (sections: readonly ReportBlockSection[]) =>
+const drawnOf = (sections: readonly ReportSection[]) =>
   reportOfDrawn({ conclusion: "架空の結論。", sections })
 
-const draftOf = (sections: readonly ReportBlockSection[]) =>
+const draftOf = (sections: readonly ReportSection[]) =>
   reportDraft({ conclusion: "架空の結論。", sections })
 
 describe("isSameReport", () => {

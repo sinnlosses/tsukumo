@@ -4,8 +4,8 @@ import { join } from "node:path"
 
 import { describe, expect, it } from "vitest"
 
-import { readReportBlockFiles } from "../../../../src/server/report/adapter/report-file.ts"
-import type { ReportBlockSection } from "../../../../src/shared/report/report-block.ts"
+import { readLeafComponentFiles } from "../../../../src/server/report/adapter/report-file.ts"
+import type { ReportSection } from "../../../../src/shared/report/report-block.ts"
 import { reportOutline, sectionLeaves } from "../../../../src/shared/report/report-outline.ts"
 import { reportOfSections } from "../../../fixture/report-event.ts"
 import { staticOf } from "../../../fixture/static-component-list.ts"
@@ -13,7 +13,7 @@ import { staticOf } from "../../../fixture/static-component-list.ts"
 const sectionsOf = (paths: readonly string[]) =>
   sectionLeaves(reportOutline(staticOf(reportOfSections(codeSections(paths)).components)))
 
-const codeSections = (paths: readonly string[]): readonly ReportBlockSection[] => [
+const codeSections = (paths: readonly string[]): readonly ReportSection[] => [
   {
     heading: "",
     blocks: paths.map((path) => ({
@@ -28,12 +28,12 @@ const codeSections = (paths: readonly string[]): readonly ReportBlockSection[] =
   },
 ]
 
-describe("readReportBlockFiles", () => {
+describe("readLeafComponentFiles", () => {
   it("読めたファイルの中身を path をキーにして返す", async () => {
     const cwd = mkdtempSync(join(tmpdir(), "tsukumo-report-file-"))
     writeFileSync(join(cwd, "fixture.txt"), "架空の中身")
 
-    const contents = await readReportBlockFiles(cwd, sectionsOf(["fixture.txt"]))
+    const contents = await readLeafComponentFiles(cwd, sectionsOf(["fixture.txt"]))
 
     expect(contents.get("fixture.txt")).toBe("架空の中身")
   })
@@ -41,7 +41,7 @@ describe("readReportBlockFiles", () => {
   it("無い・path が空文字の塊は Map に入らない", async () => {
     const cwd = mkdtempSync(join(tmpdir(), "tsukumo-report-file-"))
 
-    const contents = await readReportBlockFiles(cwd, sectionsOf(["no-such-file.txt", ""]))
+    const contents = await readLeafComponentFiles(cwd, sectionsOf(["no-such-file.txt", ""]))
 
     expect(contents.size).toBe(0)
   })
@@ -50,7 +50,7 @@ describe("readReportBlockFiles", () => {
     const cwd = mkdtempSync(join(tmpdir(), "tsukumo-report-file-"))
     mkdtempSync(join(cwd, "a-dir-"))
 
-    const contents = await readReportBlockFiles(cwd, sectionsOf(["."]))
+    const contents = await readLeafComponentFiles(cwd, sectionsOf(["."]))
 
     expect(contents.size).toBe(0)
   })
@@ -59,7 +59,7 @@ describe("readReportBlockFiles", () => {
     const cwd = mkdtempSync(join(tmpdir(), "tsukumo-report-file-"))
     writeFileSync(join(cwd, "big.txt"), "x".repeat(1024 * 1024 + 1))
 
-    const contents = await readReportBlockFiles(cwd, sectionsOf(["big.txt"]))
+    const contents = await readLeafComponentFiles(cwd, sectionsOf(["big.txt"]))
 
     expect(contents.size).toBe(0)
   })
@@ -68,7 +68,7 @@ describe("readReportBlockFiles", () => {
     const cwd = mkdtempSync(join(tmpdir(), "tsukumo-report-file-"))
     writeFileSync(join(cwd, "binary.bin"), Buffer.from([0, 1, 2]))
 
-    const contents = await readReportBlockFiles(cwd, sectionsOf(["binary.bin"]))
+    const contents = await readLeafComponentFiles(cwd, sectionsOf(["binary.bin"]))
 
     expect(contents.size).toBe(0)
   })

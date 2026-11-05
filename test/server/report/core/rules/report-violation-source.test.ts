@@ -7,7 +7,7 @@ import {
   reportViolations,
 } from "../../../../../src/server/report/core/rules/report-violation.ts"
 import { REPORT_MERMAID_KINDS } from "../../../../../src/shared/report/report-block-diagram.ts"
-import type { ReportBlock } from "../../../../../src/shared/report/report-block.ts"
+import type { LeafComponent } from "../../../../../src/shared/report/report-block.ts"
 import type { ReportOutlineLeaf } from "../../../../../src/shared/report/report-outline.ts"
 import {
   code,
@@ -45,7 +45,7 @@ describe("reportViolations", () => {
           draft([mermaid("flowchart LR\n  a --> b"), mermaid("graph TD\n  a --> b")]),
         ),
       ).toEqual([{ kind: "unknown-mermaid", count: 2 }])
-      const graph: ReportBlock = {
+      const graph: LeafComponent = {
         kind: "graph",
         title: "",
         direction: "TD",
@@ -59,7 +59,7 @@ describe("reportViolations", () => {
 
     it("前後の Compare の mermaid の側も数える", () => {
       const side = (source: string): Side => ({ heading: "", kind: "mermaid", source })
-      const compareFigure = (before: Side, after: Side): ReportBlock => ({
+      const compareFigure = (before: Side, after: Side): LeafComponent => ({
         kind: "compare",
         title: "",
         relation: "before-after",
@@ -99,7 +99,7 @@ describe("reportViolations", () => {
     })
 
     it("graph の source に読めない行があれば broken-graph にし、位置だけで書き手の行は持たない", () => {
-      const graph = (source: string): ReportBlock => ({
+      const graph = (source: string): LeafComponent => ({
         kind: "graph",
         title: "",
         direction: "TD",
@@ -266,7 +266,7 @@ describe("reportViolations", () => {
 
   describe("path 付きの code の塊はファイルと照合する", () => {
     const withFile = (
-      blocks: readonly ReportBlock[],
+      blocks: readonly LeafComponent[],
       fileContents: ReadonlyMap<string, string>,
     ): ReportDraft => ({ ...draft(blocks), fileContents })
 
@@ -301,7 +301,7 @@ describe("reportViolations", () => {
 
     describe("marks の行の範囲", () => {
       const SOURCE = "架空の1行目\n架空の2行目\n架空の3行目\n"
-      const marked = (lines: string, path = ""): ReportBlock => ({
+      const marked = (lines: string, path = ""): LeafComponent => ({
         kind: "code",
         language: "text",
         path,

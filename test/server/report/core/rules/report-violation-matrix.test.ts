@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest"
 
 import { reportViolations } from "../../../../../src/server/report/core/rules/report-violation.ts"
-import type { ReportBlock } from "../../../../../src/shared/report/report-block.ts"
+import type { LeafComponent } from "../../../../../src/shared/report/report-block.ts"
 import { draft } from "../../../../fixture/report-draft-block.ts"
 
 describe("reportViolations の matrix", () => {
   it("セルの数が揃わない行のある matrix は違反", () => {
-    const matrix: ReportBlock = {
+    const matrix: LeafComponent = {
       kind: "matrix",
       title: "架空の対応",
       columns: ["列A", "列B"],
@@ -21,7 +21,7 @@ describe("reportViolations の matrix", () => {
     ["列の数と揃わない", ["0円"], [{ kind: "ragged-table", count: 1 }]],
     ["列の数と揃う", ["0円", "500円"], []],
   ])("末尾の値の行が %s とき", (_, cells, expected) => {
-    const matrix: ReportBlock = {
+    const matrix: LeafComponent = {
       kind: "matrix",
       title: "架空の対応",
       columns: ["列A", "列B"],
@@ -37,7 +37,7 @@ describe("reportViolations の matrix", () => {
     ["列の数と同じ位置", 2, [{ kind: "emphasis-column-range", count: 1 }]],
     ["最後の列", 1, []],
   ])("採った列が %s のとき", (_, emphasisColumn, expected) => {
-    const matrix: ReportBlock = {
+    const matrix: LeafComponent = {
       kind: "matrix",
       title: "架空の対応",
       columns: ["列A", "列B"],

@@ -1,12 +1,12 @@
 // `report` の `body`（Markdown）を、散文の塊と型つきフェンスの塊を本文の順に並べて読む。
 // 読めない型つきフェンスは素のコードブロックに落とし、差し戻さず数える。
 
-import type { ReportBlock } from "../../../../shared/report/report-block.ts"
+import type { LeafComponent } from "../../../../shared/report/report-block.ts"
 import { READER_FENCE_KINDS, readTypedFence } from "./body-fence-reader.ts"
 import { readFigureFence } from "./body-figure-fence.ts"
 
 export type ParsedReportBody = {
-  readonly blocks: readonly ReportBlock[]
+  readonly blocks: readonly LeafComponent[]
   /** 型つきフェンスのうち、読めずに素のコードブロックに落としたものの数。 */
   readonly brokenFenceCount: number
 }
@@ -35,7 +35,7 @@ export function parseReportBody(body: string): ParsedReportBody {
   }
 }
 
-type Entry = { readonly block: ReportBlock; readonly broken: boolean }
+type Entry = { readonly block: LeafComponent; readonly broken: boolean }
 
 function blockOf(segment: Segment): readonly Entry[] {
   if (segment.kind === "prose") {
@@ -66,7 +66,7 @@ function blockOf(segment: Segment): readonly Entry[] {
   ]
 }
 
-function readFence(fence: Extract<Segment, { kind: "fence" }>): ReportBlock | undefined {
+function readFence(fence: Extract<Segment, { kind: "fence" }>): LeafComponent | undefined {
   if (fence.type === "figure") {
     return readFigureFence(fence.content)
   }

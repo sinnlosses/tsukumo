@@ -1,13 +1,13 @@
 // 数のカード（`stats` の項目）の、前の値の色・折れ線の点・割合の帯の幅・目標の達否。
 // Markdown に組む側と React の部品が、同じ決まりを読む。
 
-import type { ReportBlock } from "../../../../../shared/report/report-block.ts"
+import type { LeafComponent } from "../../../../../shared/report/report-block.ts"
 import {
   NUMERIC_CELL_PATTERN,
   numericCellMagnitude,
 } from "../../../../../shared/report/table-layout.ts"
 
-type StatItem = Extract<ReportBlock, { readonly kind: "stats" }>["items"][number]
+type StatItem = Extract<LeafComponent, { readonly kind: "stats" }>["items"][number]
 
 type Point = { readonly x: number; readonly y: number }
 

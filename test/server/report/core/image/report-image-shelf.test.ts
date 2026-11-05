@@ -6,7 +6,7 @@ import {
   releasedImageToolUseIds,
   reportImagePaths,
 } from "../../../../../src/server/report/core/image/report-image-shelf.ts"
-import type { ReportBlockSection } from "../../../../../src/shared/report/report-block.ts"
+import type { ReportSection } from "../../../../../src/shared/report/report-block.ts"
 import { drawnLeaves, reportOutline } from "../../../../../src/shared/report/report-outline.ts"
 import type { StampedPendingAsk } from "../../../../../src/shared/session-driver/pending-ask.ts"
 import type { SessionRecord } from "../../../../../src/shared/session/session-record.ts"
@@ -22,11 +22,11 @@ function fictionalImage(bytes: number): ReportImage {
   return { mediaType: "image/png", content: new Uint8Array(bytes) }
 }
 
-function leavesOf(sections: readonly ReportBlockSection[]) {
+function leavesOf(sections: readonly ReportSection[]) {
   return drawnLeaves(reportOutline(staticOf(reportOfSections(sections).components)))
 }
 
-function imageSections(...paths: readonly string[]): readonly ReportBlockSection[] {
+function imageSections(...paths: readonly string[]): readonly ReportSection[] {
   return [
     {
       heading: "",
@@ -125,7 +125,7 @@ describe("reportImagePaths", () => {
   })
 
   it("前後の Compare の画像の側のパスも拾い、ほかの種類の側は拾わない", () => {
-    const sections: readonly ReportBlockSection[] = [
+    const sections: readonly ReportSection[] = [
       {
         heading: "",
         blocks: [
@@ -159,7 +159,7 @@ describe("reportImagePaths", () => {
   })
 
   it("対等な compare の画像の側のパスも拾い、箇条の側は拾わない", () => {
-    const sections: readonly ReportBlockSection[] = [
+    const sections: readonly ReportSection[] = [
       {
         heading: "",
         blocks: [

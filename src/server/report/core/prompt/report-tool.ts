@@ -109,7 +109,7 @@ export const REPORT_KEY_FIGURES_DESCRIPTION =
 
 /**
  * `report` の任意の `sections` 引数（本文。セクションと部品の並び）の説明。
- * 部品の種類ごとの使いどころは各部品の `describe`（`reportBlockSchema`）が持つので、ここに書かない。
+ * 部品の種類ごとの使いどころは各部品の `describe`（`leafComponentSchema`）が持つので、ここに書かない。
  */
 export const REPORT_SECTIONS_DESCRIPTION =
   "結論のあとの根拠・比較・手順。セクションの並びで、セクションごとに部品を並べる。" +

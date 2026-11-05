@@ -31,7 +31,7 @@
   図を先頭に足したあとのセクションの並びの位置。`report` ツール以外の本文（詳細・フェーズのまとめ）は Markdown 1本の欄にする
 - **注記**: 描く側は欄の Markdown を読まず、面の値（`MainViewReportRegions.a2ui`。頭・お願い・セクション）から描く。描くものがあるかは `reportDrawsAnything`（`src/browser/domain/main-view/main-view-report-body.ts`）が数える。
   形の決めは `docs/architecture/adr/0031-report-body-as-regions.md`
-- **避ける言い方**: ブロック、部品（セクションの中の `ReportBlock` と紛れる）、パート
+- **避ける言い方**: ブロック、部品（セクションの中の `LeafComponent` と紛れる）、パート
 
 ### 最終レポート
 

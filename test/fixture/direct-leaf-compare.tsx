@@ -10,14 +10,14 @@ import {
 import { Markdown } from "../../src/browser/components/page/conversation/components/markdown/renderer/markdown-renderer.tsx"
 import { reportSectionsMarkdown } from "../../src/browser/components/page/conversation/domain/report-markdown.ts"
 import type { A2uiReportComponent } from "../../src/shared/report/a2ui-report-catalog.ts"
-import type { FigureBlock, ReportBlock } from "../../src/shared/report/report-block.ts"
+import type { FigureBlock, LeafComponent } from "../../src/shared/report/report-block.ts"
 import type { ReportImageSource } from "../../src/shared/report/report-image-markdown.ts"
 import { type LeafValue, reportLeafLayoutOf } from "../../src/shared/report/report-leaf-value.ts"
 
 const NO_IMAGES = { kind: "none" } as const
 
 /** 塊1つだけの節。 */
-function sectionOf<Block extends ReportBlock>(block: Block) {
+function sectionOf<Block extends LeafComponent>(block: Block) {
   return [{ heading: "", blocks: [block] }] as const
 }
 
@@ -114,7 +114,7 @@ function renderOld(block: FigureBlock, imageSource: ReportImageSource): Rendered
 }
 
 function renderNew(
-  block: ReportBlock,
+  block: LeafComponent,
   part: A2uiReportComponent,
   imageSource: ReportImageSource,
 ): Rendered {
@@ -166,7 +166,7 @@ export function oldLeafHtml(
 
 /** 新しい描画（部品が直接描く）の `innerHTML`。`part` は `block` と同じ中身の部品。 */
 export function newLeafHtml(
-  block: ReportBlock,
+  block: LeafComponent,
   part: A2uiReportComponent,
   imageSource: ReportImageSource = NO_IMAGES,
 ): string {
@@ -179,6 +179,9 @@ export function oldLeafTextNodes(block: FigureBlock): readonly string[] {
 }
 
 /** 新しい描画の text ノードの字の並び。 */
-export function newLeafTextNodes(block: ReportBlock, part: A2uiReportComponent): readonly string[] {
+export function newLeafTextNodes(
+  block: LeafComponent,
+  part: A2uiReportComponent,
+): readonly string[] {
   return renderNew(block, part, NO_IMAGES).textNodes
 }

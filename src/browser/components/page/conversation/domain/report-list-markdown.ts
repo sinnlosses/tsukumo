@@ -1,12 +1,12 @@
 // 項目の並び（`list`）の塊を Markdown と HTML に組む。
 
-import type { ReportBlock } from "../../../../../shared/report/report-block.ts"
+import type { LeafComponent } from "../../../../../shared/report/report-block.ts"
 import {
   htmlInlineWithCode,
   markdownInline,
 } from "../../../../../shared/report/report-inline-markdown.ts"
 
-type ListBlock = Extract<ReportBlock, { readonly kind: "list" }>
+type ListBlock = Extract<LeafComponent, { readonly kind: "list" }>
 
 /**
  * 名前（`label`）が1つでもある並びは、Markdown の並びのまま名前と説明を `span` に分けて容れ物で包む

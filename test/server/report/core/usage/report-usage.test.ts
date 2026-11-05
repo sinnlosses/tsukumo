@@ -6,10 +6,7 @@ import {
   reportUsageEntryOf,
 } from "../../../../../src/server/report/core/usage/report-usage.ts"
 import type { compareSideSchema } from "../../../../../src/shared/report/report-block-diagram.ts"
-import type {
-  ReportBlock,
-  ReportBlockSection,
-} from "../../../../../src/shared/report/report-block.ts"
+import type { LeafComponent, ReportSection } from "../../../../../src/shared/report/report-block.ts"
 import { reportEvent, reportOfDrawn, reportOfSections } from "../../../../fixture/report-event.ts"
 
 describe("isRestatementRequest", () => {
@@ -30,7 +27,7 @@ describe("isRestatementRequest", () => {
 
 describe("reportUsageEntryOf", () => {
   describe("節の札と、札が許さない塊", () => {
-    const list = (count: number): ReportBlock => ({
+    const list = (count: number): LeafComponent => ({
       kind: "list",
       style: "bullet",
       items: Array.from({ length: count }, () => ({
@@ -44,7 +41,7 @@ describe("reportUsageEntryOf", () => {
       fold: "",
       aside: "",
     })
-    const table = (columns: readonly [string, ...string[]]): ReportBlock => ({
+    const table = (columns: readonly [string, ...string[]]): LeafComponent => ({
       kind: "table",
       title: "",
       columns,
@@ -53,7 +50,7 @@ describe("reportUsageEntryOf", () => {
       fold: "",
       aside: "",
     })
-    const graph: ReportBlock = {
+    const graph: LeafComponent = {
       kind: "graph",
       title: "",
       direction: "TD",
@@ -62,7 +59,7 @@ describe("reportUsageEntryOf", () => {
       fold: "",
       aside: "",
     }
-    const usageOf = (block: ReportBlock) =>
+    const usageOf = (block: LeafComponent) =>
       reportUsageEntryOf(
         reportOfSections([{ heading: "", blocks: [block, block] }]),
         "claude-session-1",
@@ -116,14 +113,14 @@ describe("reportUsageEntryOf", () => {
   })
 
   it("list の style と mermaid の図種は重複を畳んで持つ", () => {
-    const list = (style: "bullet" | "ordered"): ReportBlock => ({
+    const list = (style: "bullet" | "ordered"): LeafComponent => ({
       kind: "list",
       style,
       items: [{ label: "", text: "架空", done: false, source: "", branch: "", branchTone: "warn" }],
       fold: "",
       aside: "",
     })
-    const mermaid = (source: string): ReportBlock => ({
+    const mermaid = (source: string): LeafComponent => ({
       kind: "mermaid",
       title: "",
       source,
@@ -181,8 +178,8 @@ describe("reportUsageEntryOf", () => {
   })
 
   describe("塊の欄", () => {
-    type StatsItem = Extract<ReportBlock, { kind: "stats" }>["items"][number]
-    const stats = (first: Partial<StatsItem>): ReportBlock => {
+    type StatsItem = Extract<LeafComponent, { kind: "stats" }>["items"][number]
+    const stats = (first: Partial<StatsItem>): LeafComponent => {
       const item = (label: string): StatsItem => ({
         before: "",
         value: "1",
@@ -200,7 +197,7 @@ describe("reportUsageEntryOf", () => {
         aside: "",
       }
     }
-    const table = (rest: string): ReportBlock => ({
+    const table = (rest: string): LeafComponent => ({
       kind: "table",
       title: "",
       columns: ["a", "b"],
@@ -209,7 +206,7 @@ describe("reportUsageEntryOf", () => {
       fold: "",
       aside: "",
     })
-    const image = (notes: readonly string[]): ReportBlock => ({
+    const image = (notes: readonly string[]): LeafComponent => ({
       kind: "image",
       path: "架空/after.png",
       caption: "架空の画面",
@@ -217,7 +214,7 @@ describe("reportUsageEntryOf", () => {
       fold: "",
       aside: "",
     })
-    const code = (marks: readonly { lines: string; label: string }[]): ReportBlock => ({
+    const code = (marks: readonly { lines: string; label: string }[]): LeafComponent => ({
       kind: "code",
       language: "ts",
       path: "",
@@ -226,7 +223,7 @@ describe("reportUsageEntryOf", () => {
       fold: "",
       aside: "",
     })
-    const text = (aside: string): ReportBlock => ({
+    const text = (aside: string): LeafComponent => ({
       kind: "text",
       text: "架空の本文。",
       fold: "",
@@ -234,7 +231,7 @@ describe("reportUsageEntryOf", () => {
     })
     const region = { left: 10, top: 20, width: 30, height: 40 }
     type Side = z.output<typeof compareSideSchema>
-    const compareFigure = (before: Side, after: Side): ReportBlock => ({
+    const compareFigure = (before: Side, after: Side): LeafComponent => ({
       kind: "compare",
       title: "",
       relation: "before-after",
@@ -358,13 +355,13 @@ describe("reportUsageEntryOf", () => {
   })
 
   describe("逃げ道（markdown の塊）の記法", () => {
-    const markdown = (body: string): ReportBlock => ({
+    const markdown = (body: string): LeafComponent => ({
       kind: "markdown",
       markdown: body,
       fold: "",
       aside: "",
     })
-    const image: ReportBlock = {
+    const image: LeafComponent = {
       kind: "image",
       path: "架空/after.png",
       caption: "架空の画面",
@@ -506,7 +503,7 @@ describe("reportUsageEntryOf", () => {
 
     expect(entry.componentNames).toEqual(["Paragraph", "Markdown"])
     expect(entry.markdownNotationKinds).toEqual(["quote", "hr", "badge"])
-    const badgeSection: ReportBlockSection = {
+    const badgeSection: ReportSection = {
       heading: "架空",
       blocks: [
         { kind: "markdown", markdown: '<span class="badge">架空</span>', fold: "", aside: "" },

@@ -32,7 +32,7 @@
   使い方は `report_part_card` の `Row`・`Column`・`Card` のカードが持つ。
   見え方は疑似セッションの場面 `row-panel-decision`（候補の比較）と `row-panel-status`（件数と一覧）で撮る。
   旧い `sections` の `row`・`panel` は書き手が書く欄が無く、旧い transcript の復元だけが読む（`src/server/report/core/body/legacy-report-section-list.ts`。ADR 0039「追記（2026-10-28）」）。
-  読んだ `row` は `Row`、`panel` は題を先頭の段落にした `Card` に組み直す。画面に描くセクションの型 `ReportBlockSection` は内容部品だけを持つ
+  読んだ `row` は `Row`、`panel` は題を先頭の段落にした `Card` に組み直す。画面に描くセクションの型 `ReportSection` は内容部品だけを持つ
 - **数の推移・割合は `chart` の部品で見せる**。書き手は種類（`bar` / `line` / `pie` / `arrow` / `slope` / `span` / `share`）・項目・
   系列・横棒かを渡し、Chart.js の設定は tsukumo が組む。色は書き手が指定しない（配色のトークンから入れる）。`pie` は
   先頭の系列だけを描く。前後の差が主役なら `arrow`（項目ごとの前→後の矢印）、2時点の多項目は

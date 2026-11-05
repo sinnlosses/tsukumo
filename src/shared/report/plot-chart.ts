@@ -2,9 +2,9 @@
 
 import type { PlotFormResolution } from "./figure-decision.ts"
 import type { ReportPlot } from "./figure-grammar.ts"
-import type { ReportBlock } from "./report-block.ts"
+import type { LeafComponent } from "./report-block.ts"
 
-type ReportChart = Extract<ReportBlock, { readonly kind: "chart" }>
+type ReportChart = Extract<LeafComponent, { readonly kind: "chart" }>
 
 /** 横棒に切り替える行の数。項目名を縦に並べたほうが読める。 */
 const HORIZONTAL_BAR_ROWS = 4

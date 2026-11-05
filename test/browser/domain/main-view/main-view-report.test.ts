@@ -5,7 +5,7 @@ import { reportHeadedSections } from "../../../../src/browser/domain/main-view/m
 import { mainViewTurns } from "../../../../src/browser/domain/main-view/main-view.ts"
 import type { RecordedReportFigure } from "../../../../src/shared/report/a2ui-report-catalog.ts"
 import type { ChangedFile } from "../../../../src/shared/report/changed-file.ts"
-import type { ReportBlockSection } from "../../../../src/shared/report/report-block.ts"
+import type { ReportSection } from "../../../../src/shared/report/report-block.ts"
 import type { ReportCheck } from "../../../../src/shared/report/report-check.ts"
 import type { ReportTask } from "../../../../src/shared/report/report-task.ts"
 import { mainViewEntries } from "../../../../src/shared/session/main-view-entry.ts"
@@ -381,7 +381,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
   })
 
   it("見出しのあるセクションの欄の ID はセクションの並びの位置で、見出しの無いセクションの位置を飛ばさず、`markdown` 本文は空になる", () => {
-    const section = (heading: string): ReportBlockSection => ({
+    const section = (heading: string): ReportSection => ({
       heading,
       blocks: [{ kind: "text", text: "架空の本文。", fold: "", aside: "" }],
     })
@@ -414,7 +414,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     const checks: readonly ReportCheck[] = [
       { status: "ok", label: "架空の検査", figure: "", command: "", detail: "", howToVerify: "" },
     ]
-    const sections: readonly ReportBlockSection[] = [
+    const sections: readonly ReportSection[] = [
       {
         heading: "",
         blocks: [

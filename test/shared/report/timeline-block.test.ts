@@ -5,7 +5,7 @@ import {
   reportViolations,
 } from "../../../src/server/report/core/rules/report-violation.ts"
 import { parseReportFigure } from "../../../src/shared/report/a2ui-report-catalog.ts"
-import { parseReportBlocks, type ReportBlock } from "../../../src/shared/report/report-block.ts"
+import { parseLeafComponents, type LeafComponent } from "../../../src/shared/report/report-block.ts"
 import { draft } from "../../fixture/report-draft-block.ts"
 
 type Row = { name: string; start: string | number; end?: string | number }
@@ -20,8 +20,8 @@ const timeline = (rows: readonly Row[], emphasis: readonly string[] = []): unkno
   aside: "",
 })
 
-const blockOf = (value: unknown): ReportBlock => {
-  const block = parseReportBlocks([value])[0]
+const blockOf = (value: unknown): LeafComponent => {
+  const block = parseLeafComponents([value])[0]
   if (block === undefined) throw new Error("timeline の塊が受け付けられなかった")
   return block
 }
