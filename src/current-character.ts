@@ -101,7 +101,11 @@ export function createCurrentCharacter(
   onPersonaFailure: PersonaMemoryFailureReport,
 ): CurrentCharacter {
   const defaultPack = readCharacterPack(
-    resolveBundledDir(config.character, cwd, DEFAULT_CHARACTER_DIR_RELATIVE_PATH),
+    resolveBundledDir(
+      config.character.kind === "directory" ? config.character.path : undefined,
+      cwd,
+      DEFAULT_CHARACTER_DIR_RELATIVE_PATH,
+    ),
   )
   const findPacks = (): readonly CharacterPack[] => {
     const found = listCharacterPacks(cwd)
@@ -116,7 +120,7 @@ export function createCurrentCharacter(
     packs.find((pack) => pack.name === defaultPack.name) ?? defaultPack
 
   const initialPack = selectInitialCharacterPack(
-    config.character === undefined
+    config.character.kind === "bundled"
       ? {
           by: "remembered-or-default",
           packs,

@@ -5,9 +5,8 @@ import { readConfig } from "../../../src/server/core/config.ts"
 describe("readConfig", () => {
   it("何も無ければ既定（sdk の駆動・タブを開く・キャラクターは同梱）", () => {
     expect(readConfig({})).toEqual({
-      rawViewPort: undefined,
-      rawViewPortFallbackBase: undefined,
-      character: undefined,
+      viewPort: { kind: "default", port: 7327 },
+      character: { kind: "bundled" },
       openView: true,
       driver: { kind: "sdk" },
       host: "browser",
@@ -57,9 +56,8 @@ describe("readConfig", () => {
     }
 
     expect(readConfig(env)).toEqual({
-      rawViewPort: "7398",
-      rawViewPortFallbackBase: "20000",
-      character: "characters/local",
+      viewPort: { kind: "explicit", port: 7398 },
+      character: { kind: "directory", path: "characters/local" },
       openView: false,
       driver: {
         kind: "fake",

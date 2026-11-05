@@ -36,10 +36,6 @@ import {
   defaultInstanceLocationDir,
   writeInstanceLocation,
 } from "./server/view-server/adapter/instance-location-file.ts"
-import {
-  resolveViewPort,
-  resolveViewPortFallbackBase,
-} from "./server/view-server/core/port-resolution.ts"
 import { startSession } from "./session-start.ts"
 import type { SwallowedFailurePlace } from "./shared/diagnostic/swallowed-failure.ts"
 import { openViewAfterRegisteringExit, readStartupPrerequisites } from "./startup-order.ts"
@@ -67,10 +63,7 @@ export type LaunchOptions = {
  */
 export async function run(config: Config, launch: LaunchOptions): Promise<number> {
   // 起動時に前提（ポート番号として読める）が満たされていないときだけ即時終了する。
-  const portResolution = resolveViewPort(
-    config.rawViewPort,
-    resolveViewPortFallbackBase(config.rawViewPortFallbackBase),
-  )
+  const portResolution = config.viewPort
   if (portResolution.kind === "invalid") {
     process.stderr.write(`tsukumo: ${ENV_NAMES.viewPort.name} がポート番号として読めない\n`)
     return 1

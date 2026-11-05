@@ -2,6 +2,11 @@
 // 値の意味と既定は各名前の doc コメントが正典で、利用者向けの一覧は `docs/readme/configuration.md`「環境変数」。
 // セッションの印（`sessionTag` / `readSessionMark`）は環境変数ではないので、ここには置かない。
 
+import {
+  resolveViewPort,
+  resolveViewPortFallbackBase,
+  type ViewPortResolution,
+} from "../../shared/view-server/view-port.ts"
 import { nonBlankString } from "./non-blank-string.ts"
 import { REPORT_SCHEMA_VARIANTS, type ReportSchemaVariant } from "./schema-variant.ts"
 
@@ -122,13 +127,18 @@ export type ConfigDriver =
  */
 export type HostKind = "orca" | "browser" | "none"
 
+/**
+ * キャラクターパックの指し方。
+ * `bundled` は同梱の既定、`directory` は `TSUKUMO_CHARACTER` で指したディレクトリのパス（空でない・trim 済み。相対は cwd 相対）。
+ */
+export type CharacterSource =
+  | { readonly kind: "bundled" }
+  | { readonly kind: "directory"; readonly path: string }
+
 export type Config = {
-  /** `TSUKUMO_VIEW_PORT` の生の値。既定か明示かの区別とずらす判断は `resolveViewPort` が持つ。 */
-  readonly rawViewPort: string | undefined
-  /** `TSUKUMO_VIEW_PORT_FALLBACK_BASE` の生の値。読み解くのは `resolveViewPortFallbackBase`。 */
-  readonly rawViewPortFallbackBase: string | undefined
-  /** キャラクターの指定（未設定なら undefined ＝ 同梱の既定を使う）。 */
-  readonly character: string | undefined
+  /** `TSUKUMO_VIEW_PORT` と `TSUKUMO_VIEW_PORT_FALLBACK_BASE` を畳んだポートの決定。`invalid` のとき止めるのは呼び出し側。 */
+  readonly viewPort: ViewPortResolution
+  readonly character: CharacterSource
   readonly openView: boolean
   readonly driver: ConfigDriver
   readonly host: HostKind
@@ -163,9 +173,11 @@ export function readConfig(env: Readonly<Record<string, string | undefined>>): C
         }
       : { kind: "sdk" }
   return {
-    rawViewPort: env[ENV_NAMES.viewPort.name],
-    rawViewPortFallbackBase: env[ENV_NAMES.viewPortFallbackBase.name],
-    character: nonBlankString(env[ENV_NAMES.character.name])?.trim(),
+    viewPort: resolveViewPort(
+      env[ENV_NAMES.viewPort.name],
+      resolveViewPortFallbackBase(env[ENV_NAMES.viewPortFallbackBase.name]),
+    ),
+    character: readCharacterSource(env[ENV_NAMES.character.name]),
     openView: env[ENV_NAMES.openView.name]?.trim() !== "0",
     driver,
     host: readHost(env),
@@ -181,6 +193,11 @@ export function readConfig(env: Readonly<Record<string, string | undefined>>): C
       parsePositiveInteger(env[ENV_NAMES.turnStepLimit.name]) ?? DEFAULT_TURN_STEP_LIMIT,
     inheritedEnv: env,
   }
+}
+
+function readCharacterSource(value: string | undefined): CharacterSource {
+  const path = nonBlankString(value)?.trim()
+  return path === undefined ? { kind: "bundled" } : { kind: "directory", path }
 }
 
 function parseToolNames(value: string | undefined): readonly string[] {
