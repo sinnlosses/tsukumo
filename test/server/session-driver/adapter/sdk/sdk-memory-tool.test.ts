@@ -5,7 +5,7 @@ import type {
   PersonaForgetResult,
   PersonaMemory,
   PersonaRememberResult,
-} from "../../../../../src/server/chat/core/memory/chat-memory.ts"
+} from "../../../../../src/server/core/chat-memory.ts"
 import { tsukumoServer } from "../../../../../src/server/session-driver/adapter/sdk/sdk-tool.ts"
 import { createCallReview } from "../../../../../src/server/session-driver/core/call-review.ts"
 import {

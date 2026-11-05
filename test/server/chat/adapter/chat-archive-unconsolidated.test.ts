@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest"
 
 import { createChatArchive } from "../../../../src/server/chat/adapter/chat-archive.ts"
 import type { ChatArchive } from "../../../../src/server/chat/core/archive/chat-archive-port.ts"
-import type { ChatFoldPoint } from "../../../../src/server/chat/core/memory/chat-memory.ts"
+import type { ChatFoldPoint } from "../../../../src/server/core/chat-memory.ts"
 import { characterPackName } from "../../../fixture/character.ts"
 import { useTempDir } from "../../../fixture/temp-dir.ts"
 

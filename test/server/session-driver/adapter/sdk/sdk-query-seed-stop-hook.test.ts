@@ -1,7 +1,7 @@
 import type { HookCallbackMatcher, HookEvent, StopHookInput } from "@anthropic-ai/claude-agent-sdk"
 import { describe, expect, it } from "vitest"
 
-import type { ChatSummary } from "../../../../../src/server/chat/core/memory/chat-memory.ts"
+import type { ChatSummary } from "../../../../../src/server/core/chat-memory.ts"
 import { createReportGate } from "../../../../../src/server/report/core/prompt/report-tool.ts"
 import { stopHooks } from "../../../../../src/server/session-driver/adapter/sdk/sdk-query-seed.ts"
 import type { SessionMode } from "../../../../../src/server/session-driver/core/session-driver.ts"

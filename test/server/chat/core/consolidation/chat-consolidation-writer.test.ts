@@ -11,7 +11,7 @@ import type {
   ChatFoldPoint,
   ChatSummary,
   ChatSummaryFold,
-} from "../../../../../src/server/chat/core/memory/chat-memory.ts"
+} from "../../../../../src/server/core/chat-memory.ts"
 import {
   type StructuredQuery,
   StructuredQueryResultError,

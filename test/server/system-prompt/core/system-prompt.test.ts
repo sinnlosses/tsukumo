@@ -8,7 +8,7 @@ import {
 } from "../../../../src/server/chat/core/archive/chat-memory-prompt.ts"
 import { CHAT_MANNER_PROMPT } from "../../../../src/server/chat/core/chat-manner.ts"
 import { CHAT_MEMORY_BUDGET } from "../../../../src/server/chat/core/memory/chat-memory-budget.ts"
-import type { ChatSummary } from "../../../../src/server/chat/core/memory/chat-memory.ts"
+import type { ChatSummary } from "../../../../src/server/core/chat-memory.ts"
 import { QUESTION_NOTATION_PROMPT } from "../../../../src/server/question/core/question-notation.ts"
 import { REPORT_NOTATION_PROMPT } from "../../../../src/server/report/core/prompt/report-notation.ts"
 import type { SessionMode } from "../../../../src/server/session-driver/core/session-driver.ts"

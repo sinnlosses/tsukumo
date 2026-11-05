@@ -7,7 +7,7 @@ import { createChatSummary, UNAVAILABLE_CHAT_SUMMARY } from "../server/chat/adap
 import { createPersonaMemory, readRememberedLines } from "../server/chat/adapter/persona-memory.ts"
 import type { ReadRecent } from "../server/chat/core/archive/chat-memory-prompt.ts"
 import { readChatTopics } from "../server/chat/core/consolidation/chat-consolidation.ts"
-import type { ChatSummary } from "../server/chat/core/memory/chat-memory.ts"
+import type { ChatSummary } from "../server/core/chat-memory.ts"
 import type { Config } from "../server/core/config.ts"
 import type { DiagnosticLog } from "../server/diagnostic/core/diagnostic.ts"
 import { startFakeSession } from "../server/session-driver/adapter/fake/fake-driver.ts"

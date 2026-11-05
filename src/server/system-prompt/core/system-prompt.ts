@@ -15,7 +15,7 @@ import {
 } from "../../chat/core/archive/chat-memory-prompt.ts"
 import { CHAT_MANNER_PROMPT } from "../../chat/core/chat-manner.ts"
 import { CHAT_MEMORY_BUDGET } from "../../chat/core/memory/chat-memory-budget.ts"
-import type { ChatSummary } from "../../chat/core/memory/chat-memory.ts"
+import type { ChatSummary } from "../../core/chat-memory.ts"
 import { QUESTION_NOTATION_PROMPT } from "../../question/core/question-notation.ts"
 import { REPORT_NOTATION_PROMPT } from "../../report/core/prompt/report-notation.ts"
 import type { SessionMode, SessionStart } from "../../session-driver/core/session-driver.ts"

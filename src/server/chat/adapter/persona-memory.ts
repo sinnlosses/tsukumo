@@ -22,7 +22,7 @@ import {
   isEditableCharacterPack,
   PERSONA_FILE_NAME,
 } from "../../character-pack/adapter/character-pack.ts"
-import type { PersonaMemory } from "../core/memory/chat-memory.ts"
+import type { PersonaMemory } from "../../core/chat-memory.ts"
 import {
   forgetRejection,
   forgetTarget,

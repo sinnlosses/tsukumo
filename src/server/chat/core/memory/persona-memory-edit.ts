@@ -7,7 +7,7 @@ import {
   rememberedSectionStart,
 } from "../../../../shared/character-pack/persona-section.ts"
 import { MAX_REMEMBERED_LINE_LENGTH } from "../../../../shared/chat/persona-memory.ts"
-import type { PersonaForgetResult, PersonaRememberResult } from "./chat-memory.ts"
+import type { PersonaForgetResult, PersonaRememberResult } from "../../../core/chat-memory.ts"
 
 /** 節が持てる行数（超えたらいちばん古い行を落とす）。 */
 const MAX_REMEMBERED_LINES = 20

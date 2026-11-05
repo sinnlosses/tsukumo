@@ -9,7 +9,7 @@
 // 決めるのは「続きから始めないか」「写しの印が未渡しか」という構造だけの条件で、要約の文面も逐語の文面も素通りする。
 // 読み戻した中身で判定する経路は作らない。
 
-import type { ChatSummary } from "../memory/chat-memory.ts"
+import type { ChatSummary } from "../../../core/chat-memory.ts"
 import type {
   ChatArchiveLine,
   ChatArchiveRecentEntry,

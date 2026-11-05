@@ -13,7 +13,7 @@ import {
   type ChatConsolidationOutcome,
   createChatConsolidationWriter,
 } from "../../../../../src/server/chat/core/consolidation/chat-consolidation-writer.ts"
-import type { ChatSummary } from "../../../../../src/server/chat/core/memory/chat-memory.ts"
+import type { ChatSummary } from "../../../../../src/server/core/chat-memory.ts"
 import type { StructuredQuery } from "../../../../../src/server/core/query/structured-query.ts"
 import { characterPackName } from "../../../../fixture/character.ts"
 import { useTempDir } from "../../../../fixture/temp-dir.ts"

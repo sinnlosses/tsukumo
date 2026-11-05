@@ -10,10 +10,7 @@ import {
   workMemoryPromptParts,
 } from "../../../../../src/server/chat/core/archive/chat-memory-prompt.ts"
 import { CHAT_MEMORY_BUDGET } from "../../../../../src/server/chat/core/memory/chat-memory-budget.ts"
-import type {
-  ChatSummary,
-  ChatSummaryRecord,
-} from "../../../../../src/server/chat/core/memory/chat-memory.ts"
+import type { ChatSummary, ChatSummaryRecord } from "../../../../../src/server/core/chat-memory.ts"
 import { characterPackName } from "../../../../fixture/character.ts"
 import { inMemoryChatSummary, NOOP_CHAT_ARCHIVE } from "../../../../fixture/chat.ts"
 

@@ -101,7 +101,7 @@
 | `view-server`         | `session`                                                                                                                                                           |
 | `chat`                | `character-pack`                                                                                                                                                    |
 | `usage`               | `session-driver`                                                                                                                                                    |
-| `session-driver`      | `report` `chat` `work-plan` `question`                                                                                                                              |
+| `session-driver`      | `report` `work-plan` `question`                                                                                                                                     |
 | `diary`               | `repository`                                                                                                                                                        |
 | `achievement`         | `repository`                                                                                                                                                        |
 | そのほか              | —（葉。`diagnostic` `character-pack` `host` `repository` `recommendation` `checkout` `welcome-greeting` `workflow-setting` `report` `item` `work-plan` `question`） |

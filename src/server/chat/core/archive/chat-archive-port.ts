@@ -2,7 +2,7 @@
 
 import type { CharacterPackName } from "../../../../shared/character-pack/character.ts"
 import type { Expression } from "../../../../shared/character-pack/expression.ts"
-import type { ChatFoldPoint } from "../memory/chat-memory.ts"
+import type { ChatFoldPoint } from "../../../core/chat-memory.ts"
 
 /**
  * 雑談と仕事の会話のアーカイブの読み書きの関数。

@@ -7,12 +7,12 @@
 import { z } from "zod"
 
 import { byteLength } from "../../../../shared/utils/byte-length.ts"
+import type { ChatSummary } from "../../../core/chat-memory.ts"
 import { structuredOutputSchema } from "../../../core/query/structured-output-schema.ts"
 import type { StructuredQuery } from "../../../core/query/structured-query.ts"
 import type { ChatUnconsolidatedEntry } from "../archive/chat-archive-port.ts"
 import { chatLineText } from "../archive/chat-memory-prompt.ts"
 import { CHAT_MEMORY_BUDGET } from "../memory/chat-memory-budget.ts"
-import type { ChatSummary } from "../memory/chat-memory.ts"
 
 /** サイドバーの「最近の話題」に出す見出しの件数の上限。 */
 const CHAT_TOPIC_LIMIT = 3

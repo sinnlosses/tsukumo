@@ -34,6 +34,7 @@ import {
 import { isMissingFileError } from "../../adapter/lib/missing-file-error.ts"
 import { isoWithOffset, localDateKey } from "../../adapter/local-time.ts"
 import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
+import type { ChatFoldPoint } from "../../core/chat-memory.ts"
 import type {
   ChatArchive,
   ChatArchiveEntry,
@@ -49,7 +50,6 @@ import {
   type TimedEntry,
 } from "../core/consolidation/chat-unconsolidated-selection.ts"
 import { takeWithinBytes } from "../core/memory/chat-byte-budget.ts"
-import type { ChatFoldPoint } from "../core/memory/chat-memory.ts"
 import { CHAT_IMAGE_DIR_NAME, writeChatImage } from "./chat-archive-image.ts"
 
 const CONSOLIDATION_LOCK_FILE_NAME = "consolidation.lock"
