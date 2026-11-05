@@ -70,6 +70,32 @@
   gap: var(--space-md);
 }
 
+.design-input {
+  min-width: 12rem;
+  padding: var(--space-xs) var(--space-sm);
+}
+
+.design-select {
+  padding: var(--space-xs) var(--space-2xl) var(--space-xs) var(--space-sm);
+}
+
+.design-dialog {
+  max-width: min(24rem, calc(100vw - 2rem));
+  padding: var(--space-md);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-lg);
+  background: var(--surface-raised);
+  color: var(--ink);
+}
+
+.design-skeleton {
+  display: inline-block;
+  width: 8rem;
+  height: 1rem;
+  border-radius: var(--radius-sm);
+  background: var(--rule);
+}
+
 .design-vertical-rule {
   height: 2rem;
 }

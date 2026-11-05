@@ -1,6 +1,6 @@
 // `ui/` の部品を、状態ごとに代表を選んで並べる。
 
-import type { ReactElement, ReactNode } from "react"
+import type { ReactElement } from "react"
 
 import { Badge } from "../../ui/badge/badge.tsx"
 import { Button } from "../../ui/button/button.tsx"
@@ -10,6 +10,10 @@ import { Surface } from "../../ui/surface/surface.tsx"
 import { Text } from "../../ui/text/text.tsx"
 import { VStack } from "../../ui/v-stack/v-stack.tsx"
 import styles from "./design.module.css"
+import { Group } from "./ui-gallery-group.tsx"
+import { InputGroups } from "./ui-gallery-input.tsx"
+import { LayoutGroups } from "./ui-gallery-layout.tsx"
+import { OverlayGroups } from "./ui-gallery-overlay.tsx"
 
 const BADGE_TONES = ["neutral", "ok", "warn", "ng", "accent"] as const
 const BADGE_SHAPES = ["pill", "square"] as const
@@ -29,7 +33,7 @@ export function UiGallery(): ReactElement {
       wrap="nowrap"
       className=""
     >
-      <Group title="Surface（地 × 影）">
+      <Group title="Surface（地 × 影）" parts={["surface"]}>
         {SURFACE_TONES.flatMap((tone) =>
           SURFACE_SHADOWS.map((shadow) => (
             <Surface
@@ -48,7 +52,7 @@ export function UiGallery(): ReactElement {
           )),
         )}
       </Group>
-      <Group title="Badge（色 × 形）">
+      <Group title="Badge（色 × 形）" parts={["badge"]}>
         {BADGE_TONES.flatMap((tone) =>
           BADGE_SHAPES.map((shape) => (
             <Badge key={`${tone}-${shape}`} tone={tone} shape={shape} className="">
@@ -57,7 +61,7 @@ export function UiGallery(): ReactElement {
           )),
         )}
       </Group>
-      <Group title="Divider（濃さ × 向き）">
+      <Group title="Divider（濃さ × 向き）" parts={["divider"]}>
         {DIVIDER_TONES.map((tone) => (
           <div key={tone} className={styles["design-row"]}>
             <Divider tone={tone} orientation="horizontal" className="" />
@@ -72,7 +76,7 @@ export function UiGallery(): ReactElement {
           </div>
         ))}
       </Group>
-      <Group title="Button（種類 × 押せる・押せない）">
+      <Group title="Button（種類 × 押せる・押せない）" parts={["button"]}>
         {BUTTON_VARIANTS.flatMap((variant) =>
           [false, true].map((disabled) => (
             <Button
@@ -91,7 +95,7 @@ export function UiGallery(): ReactElement {
           )),
         )}
       </Group>
-      <Group title="Heading・Text（字の段）">
+      <Group title="Heading・Text（字の段）" parts={["heading", "text"]}>
         <Heading level={3} size="heading" tone="ink" weight="bold" className="">
           見出し
         </Heading>
@@ -105,25 +109,9 @@ export function UiGallery(): ReactElement {
           ラベル
         </Text>
       </Group>
-    </VStack>
-  )
-}
-
-function Group(props: { readonly title: string; readonly children: ReactNode }): ReactElement {
-  return (
-    <VStack
-      element="section"
-      name={{ kind: "label", label: props.title }}
-      gap="sm"
-      align="stretch"
-      justify="start"
-      wrap="nowrap"
-      className=""
-    >
-      <Heading level={3} size="subheading" tone="ink" weight="bold" className="">
-        {props.title}
-      </Heading>
-      <div className={styles["design-row"]}>{props.children}</div>
+      <InputGroups />
+      <OverlayGroups />
+      <LayoutGroups />
     </VStack>
   )
 }
