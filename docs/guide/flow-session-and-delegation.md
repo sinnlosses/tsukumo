@@ -43,13 +43,13 @@ sequenceDiagram
 
 箱と実物
 
-| 箱                   | 実物                                                                                                     | 正典の文書                                                     |
-| -------------------- | -------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
-| ブラウザのタブ       | `src/browser/`                                                                                           | `docs/architecture/runtime-flow.md`「起こし直し」              |
-| コマンド受け口       | `src/server/session/core/session-command.ts`                                                             | `docs/architecture/chat-mode/mode-and-switch.md`「切り替え方」 |
-| セッション管理       | `src/server/session/core/session-manager.ts`（`restart`・`receiveIfCurrent` が世代の番号を比べて捨てる） | `docs/architecture/runtime-flow.md`「起こし直し」              |
-| 起こしの一続き       | `src/server/session/core/session-launch.ts`                                                              | `docs/architecture/session-restore.md`                         |
-| 古い・新しい代の駆動 | `src/server/session-driver/core/session-driver.ts`                                                       | `docs/architecture/session-restore.md`                         |
+| 箱                   | 実物                                                                                                                                      | 正典の文書                                                     |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| ブラウザのタブ       | `src/browser/`                                                                                                                            | `docs/architecture/runtime-flow.md`「起こし直し」              |
+| コマンド受け口       | `src/server/session/core/session-command.ts`                                                                                              | `docs/architecture/chat-mode/mode-and-switch.md`「切り替え方」 |
+| セッション管理       | `src/server/session/core/session-manager.ts`（`restart`）・`session-generation-start.ts`（`receiveIfCurrent` が世代の番号を比べて捨てる） | `docs/architecture/runtime-flow.md`「起こし直し」              |
+| 起こしの一続き       | `src/server/session/core/session-launch.ts`                                                                                               | `docs/architecture/session-restore.md`                         |
+| 古い・新しい代の駆動 | `src/server/session-driver/core/session-driver.ts`                                                                                        | `docs/architecture/session-restore.md`                         |
 
 ## 2. 委譲と返却の関門
 

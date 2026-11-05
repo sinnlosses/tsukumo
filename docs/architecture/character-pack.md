@@ -172,13 +172,14 @@ characters/<name>/
 - **契約の型は `session-driver/core/session-driver.ts`、ファイルに触るのは上の adapter、結ぶのは配線層
   （`src/session-start.ts` と `src/wiring/`）。** 置き場を差し替えられる `root` 引数も同じ手で持つ（テストがホームを
   汚さない）
-- **アーカイブへ書くのは `session/core/event/session-event-record.ts` の `recordSessionEvent`**（`session-manager.ts` の
+- **アーカイブへ書くのは `session/core/event/session-event-record.ts` の `recordSessionEvent`**（`session-generation-start.ts` の
   `receive` がイベント1件ずつ通すときに呼ぶ）。雑談でも仕事でも書き、行にそのときのモードを持たせる。復元の再生は駆動と別の関数
   （`onRestoredEvents`）でまとめて1回で渡し、`session-manager` は駆動から新しく届いたぶんだけを書く。仕事の
   `conclusion` はターンの終わりまで駆動の代の勘定に預ける。読み戻しはセッションを起こすとき1回だけで、配線層が呼ぶ
 - **判断は `chat/core/` の純関数**（載せる判断・定着の指示文と検査・採点。アダプタは読んで渡すだけ）で、
-  **定着の契機（雑談・仕事のターンの終わり・同時に1本）は `session-manager` が持つ**。走っているかどうかの1ビットは
-  駆動の代ではなく `session-manager` 自身が持つ（起こし直しで代だけを作り直しても、同じ行を2本で畳まない）。
+  **定着の契機（雑談・仕事のターンの終わり・同時に1本）は `session/core/` が持つ**（契機を見つけるのは
+  `session-generation-start.ts` の `receive`、1本に絞るのは `session-consolidation.ts`）。走っているかどうかの1ビットは
+  駆動の代ではなく `createSessionConsolidation` が持つ（起こし直しで代だけを作り直しても、同じ行を2本で畳まない）。
   **プロセスをまたいだ1本は錠のファイル**で持つ（形と取り直しは `docs/architecture/chat-mode.md` 4.9
   「ウィンドウから溢れた会話は定着で畳む」）。
   容量の表と採点の係数は `chat` と `system-prompt` が読むので `src/server/chat/core/memory/chat-memory-budget.ts`

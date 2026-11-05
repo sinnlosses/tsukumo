@@ -53,7 +53,7 @@ doc コメントが正典で、機能の数え方・契機・上限は `docs/req
 **イベントを受けて何かを記録するものは、その概念のファイルへ寄せる。** `token-usage.ts` /
 `context-usage.ts` は書き込みの関数の契約と走行中の勘定を、`chat-archive-entry.ts` は「どのイベントを
 アーカイブの1行にするか」を持つ。どちらのモードか・セッションIDが決まったあとかの門は
-`session-event-record.ts` の `recordSessionEvent` が持ち、`session-manager.ts` に残るのは
+`session-event-record.ts` の `recordSessionEvent` が持ち、`session-generation-start.ts` に残るのは
 それを呼ぶ順と、復元した再生では呼ばないこと（再生は記録に数えない）だけ。
 
 **ツールで受け取るものは、同じ形で受ける**（`report`・見直しの2つ・`diary`）:
