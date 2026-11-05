@@ -33,8 +33,8 @@ const NO_SURFACE_STATUS = {
 
 /**
  * 部品の一覧から草稿を作る。根の `Report` が無ければ undefined（根から辿れないので何も描かない）。
- * 描くのは根から辿れる部品だけで、葉がまだ1つも届いていない `Section` も描かない
- * （葉の無い節は欄にならず、節の並びと部品の対応が崩れるため）。
+ * 描くのは根から辿れる部品だけで、内容部品がまだ1つも届いていない `Section` も描かない
+ * （内容部品の無い節は欄にならず、節の並びと部品の対応が崩れるため）。
  */
 export function mainViewDraftOf(
   toolUseId: string,

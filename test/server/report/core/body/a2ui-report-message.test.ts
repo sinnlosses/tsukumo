@@ -19,7 +19,7 @@ const TABLE = {
   rows: [["架空", "1"]],
 }
 
-// 正しい一覧。節 2 つ（1 つ目は `Row` の中に `Card`）、図と振り返りの根拠が葉を参照する。
+// 正しい一覧。節 2 つ（1 つ目は `Row` の中に `Card`）、図と振り返りの根拠が内容部品を参照する。
 const COMPONENTS = [
   {
     id: "root",
@@ -129,7 +129,7 @@ describe("a2uiReportInput の見比べの部品", () => {
 })
 
 describe("a2uiReportInput", () => {
-  it("Report の props を最上位の欄に、Section を節に、配置の部品の中の葉を節へ並び順に写す", () => {
+  it("Report の props を最上位の欄に、Section を節に、配置の部品の中の内容部品を節へ並び順に写す", () => {
     const { input, droppedCount } = a2uiReportInput(COMPONENTS)
 
     expect(droppedCount).toBe(0)
@@ -177,7 +177,7 @@ describe("a2uiReportInput", () => {
     expect(components).toHaveLength(COMPONENTS.length)
   })
 
-  it("入れ子の Section と根の子の葉も、落とさずに節へ写す", () => {
+  it("入れ子の Section と根の子の内容部品も、落とさずに節へ写す", () => {
     const { input } = a2uiReportInput([
       { id: "root", component: "Report", conclusion: ["架空。"], children: ["s", "lone"] },
       { id: "s", component: "Section", heading: "架空の節", children: ["inner", "missing"] },
@@ -252,13 +252,13 @@ describe("a2uiReportInput", () => {
 })
 
 describe("写しの自己テスト", () => {
-  it("入力の葉は全部、組み直した引数の節・図・振り返りの根拠に残る", () => {
+  it("入力の内容部品は全部、組み直した引数の節・図・振り返りの根拠に残る", () => {
     const { input } = a2uiReportInput(COMPONENTS)
 
     expect(missingLeafKinds(COMPONENTS, outputKindsOf(input))).toEqual([])
   })
 
-  it("出力から塊を 1 つ落とすと、落とした葉を欠けとして拾う", () => {
+  it("出力から塊を 1 つ落とすと、落とした内容部品を欠けとして拾う", () => {
     const { input } = a2uiReportInput(COMPONENTS)
     const [first, ...rest] = parseLegacySections(input.sections).sections
     const dropped = [
@@ -320,7 +320,7 @@ function outputKindsOf(fields: Readonly<Record<string, unknown>>): readonly stri
   ]
 }
 
-/** 入力の `root` から参照を辿って集めた葉の kind のうち、出力の塊に無いもの（数で突き合わせる）。 */
+/** 入力の `root` から参照を辿って集めた内容部品の kind のうち、出力の塊に無いもの（数で突き合わせる）。 */
 function missingLeafKinds(
   components: readonly unknown[],
   output: readonly string[],

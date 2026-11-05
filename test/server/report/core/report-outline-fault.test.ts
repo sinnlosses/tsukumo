@@ -6,7 +6,7 @@ import { a2uiReportComponentSchema } from "../../../../src/shared/report/a2ui-re
 import { plotBlockSchema } from "../../../../src/shared/report/figure-grammar.ts"
 import { reportDraft } from "../../../fixture/report-event.ts"
 
-// 部品の一覧（`components`）を直接入力にして、配置の部品の中の葉も同じ検査にかかることを確かめる。
+// 部品の一覧（`components`）を直接入力にして、配置の部品の中の内容部品も同じ検査にかかることを確かめる。
 
 const parts = (...raw: readonly Record<string, unknown>[]) =>
   z.array(a2uiReportComponentSchema).parse(raw)

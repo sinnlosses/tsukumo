@@ -169,7 +169,7 @@ describe("Table の部品", () => {
     expect(["存在しない字"].filter((word) => !text.includes(word))).toEqual(["存在しない字"])
   })
 
-  it("整形で落ちた表（葉の値が無い）は何も描かない", () => {
+  it("整形で落ちた表（内容部品の値が無い）は何も描かない", () => {
     const { part } = pair(SIMPLE)
     const view = directLeafViewOf(part)
     if (view === undefined) {

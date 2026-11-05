@@ -9,7 +9,7 @@ import type { ReportOutlineLeaf } from "../../../shared/report/report-outline.ts
 const MAX_REPORT_MATCH_FILE_BYTES = 1024 * 1024
 
 /**
- * `Code` の葉で `path` が空でないものを集め、cwd から解いて読む。
+ * `Code` の内容部品で `path` が空でないものを集め、cwd から解いて読む。
  * 読めなかった（無い・ファイルでない・大きすぎる・バイナリ）`path` は戻り値の `Map` に入らない。
  */
 export async function readReportBlockFiles(

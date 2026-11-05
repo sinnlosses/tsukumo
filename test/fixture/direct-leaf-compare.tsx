@@ -1,4 +1,4 @@
-// 葉を直接描く部品の出力を、図の部品を質問の添え書きと同じ `reportSectionsMarkdown` で Markdown にして `Markdown` で描いた出力と突き合わせる道具。
+// 内容部品を直接描く部品の出力を、図の部品を質問の添え書きと同じ `reportSectionsMarkdown` で Markdown にして `Markdown` で描いた出力と突き合わせる道具。
 // 空白だけの違い（Markdown の改行の文字）は畳んで比べる。
 
 import { cleanup, render, type RenderResult } from "@testing-library/react"
@@ -131,7 +131,7 @@ function renderNew(
   return readRendered(container)
 }
 
-/** 番号も欄外注も無い葉の値。 */
+/** 番号も欄外注も無い内容部品の値。 */
 export const PLAIN_LEAF_VALUE = {
   captionNumber: { kind: "none" },
   tagTones: {},

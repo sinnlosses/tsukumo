@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import { a2uiStructureFaults } from "../../../../../src/server/report/core/rules/structure.ts"
 
-// 正しい一覧。節 2 つ、`Row` の中に `Card`、図と振り返りの根拠が葉を参照する。
+// 正しい一覧。節 2 つ、`Row` の中に `Card`、図と振り返りの根拠が内容部品を参照する。
 const VALID = [
   {
     id: "root",
@@ -206,7 +206,7 @@ describe("a2uiStructureFaults", () => {
       faults: [{ kind: "unknown-component", pointer: "/components/2/component" }],
     },
     {
-      name: "Report の子が葉",
+      name: "Report の子が内容部品",
       components: [report(["p"]), paragraph("p")],
       faults: [{ kind: "report-child-not-section", pointer: "/components/0/children/0" }],
     },
@@ -318,7 +318,7 @@ describe("a2uiStructureFaults の寄せ先の無い memo", () => {
       faults: [{ kind: "memo-without-owner", pointer: "/components/1/children/0" }],
     },
     {
-      name: "配置の部品の先頭にある memo の Note が節の最初の葉",
+      name: "配置の部品の先頭にある memo の Note が節の最初の内容部品",
       components: [
         report(["s"]),
         section("s", ["r", "p"]),
@@ -342,7 +342,7 @@ describe("a2uiStructureFaults の寄せ先の無い memo", () => {
       components: [report(["s"]), section("s", ["n"]), note("n", "info")],
     },
     {
-      name: "前の節に葉があっても、自分の節の2番目以降にある memo",
+      name: "前の節に内容部品があっても、自分の節の2番目以降にある memo",
       components: [
         report(["s1", "s2"]),
         section("s1", ["p"]),

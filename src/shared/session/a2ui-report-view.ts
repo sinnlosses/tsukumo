@@ -1,5 +1,5 @@
 // `report` の記録が持つ部品の一覧を、A2UI の面で描くための値にする。
-// 節の有無と `Markdown` の葉の字は、描くセクションの部品の値（`drawnReportOf` と `reportLeafLayoutOf`）から決め、部品の ID に当てる。
+// 節の有無と `Markdown` の内容部品の字は、描くセクションの部品の値（`drawnReportOf` と `reportLeafLayoutOf`）から決め、部品の ID に当てる。
 
 import type { A2uiReportComponent } from "../report/a2ui-report-catalog.ts"
 import { A2UI_ROOT_ID, a2uiPartsById } from "../report/a2ui-report-outline.ts"
@@ -22,10 +22,10 @@ import type {
 } from "./main-view-shape.ts"
 
 /**
- * 部品の一覧を、節の欄の ID と `Markdown` の葉ごとの Markdown に当てる。
+ * 部品の一覧を、節の欄の ID と `Markdown` の内容部品ごとの Markdown に当てる。
  * `drawn` は描く節の並び（`drawnReportOf`）で、添字が欄の ID。
  * 根が `Report` でなければ `none`。
- * `layout` は `drawn` の節から導いた値で、`values` を `leafValues` に葉の ID で当てる。
+ * `layout` は `drawn` の節から導いた値で、`values` を `leafValues` に内容部品の ID で当てる。
  */
 export function a2uiReportView(
   components: readonly A2uiReportComponent[],

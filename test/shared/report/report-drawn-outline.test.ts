@@ -111,7 +111,7 @@ describe("drawnReportOf", () => {
     ])
   })
 
-  it("整形で落ちた葉と、葉が残らない節は含めず、落ちた葉の ID を返す", () => {
+  it("整形で落ちた内容部品と、内容部品が残らない節は含めず、落ちた内容部品の ID を返す", () => {
     const drawn = drawnReportOf(WITH_DROPPED, CONCLUSION, "whole")
 
     expect(drawn.sections.map((entry) => [entry.role, entry.componentId])).toEqual([
@@ -132,7 +132,7 @@ describe("drawnReportOf", () => {
     expect(drawnReportOf(WITH_RETROSPECTIVE, CONCLUSION, "body").sections).toHaveLength(1)
   })
 
-  it("振り返りの要約とドラフトの行は葉の ID を持たず、葉は ID を持つ", () => {
+  it("振り返りの要約とドラフトの行は内容部品の ID を持たず、内容部品は ID を持つ", () => {
     const retrospective = drawnReportOf(WITH_RETROSPECTIVE, CONCLUSION, "whole").sections.at(-1)
 
     expect(retrospective?.role).toBe("retrospective")

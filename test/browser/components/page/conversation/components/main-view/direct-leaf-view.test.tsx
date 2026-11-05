@@ -28,7 +28,7 @@ const VALUE: LeafValue = {
 }
 
 describe("directLeafViewOf", () => {
-  it("同梱の一覧は Paragraph を持ち、一覧に無い葉は Markdown の描画に通す", () => {
+  it("同梱の一覧は Paragraph を持ち、一覧に無い内容部品は Markdown の描画に通す", () => {
     expect(directLeafViewOf(PART)).toBeDefined()
     expect(
       directLeafViewOf({ id: "m1", component: "Markdown", markdown: "", fold: "", aside: "" }),
@@ -57,7 +57,7 @@ describe("DirectLeaf", () => {
     expect(container.textContent).toBe("p1")
   })
 
-  it("整形で落ちた葉（値が無い）は何も描かない", () => {
+  it("整形で落ちた内容部品（値が無い）は何も描かない", () => {
     const { container } = render(
       <DirectLeaf
         part={PART}

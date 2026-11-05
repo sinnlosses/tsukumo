@@ -48,10 +48,10 @@ describe("isSameReport", () => {
   })
 
   it.each([
-    ["葉の中身が違う", sectionsOf("架空の見出し", "架空の一つ目。", "別の二つ目。")],
-    ["葉の並びが違う", sectionsOf("架空の見出し", "架空の二つ目。", "架空の一つ目。")],
+    ["内容部品の中身が違う", sectionsOf("架空の見出し", "架空の一つ目。", "別の二つ目。")],
+    ["内容部品の並びが違う", sectionsOf("架空の見出し", "架空の二つ目。", "架空の一つ目。")],
     ["節の見出しが違う", sectionsOf("別の見出し", "架空の一つ目。", "架空の二つ目。")],
-    ["葉が足りない", sectionsOf("架空の見出し", "架空の一つ目。")],
+    ["内容部品が足りない", sectionsOf("架空の見出し", "架空の一つ目。")],
   ])("%s なら違うと判定する", (_name, other) => {
     expect(isSameReport(drawnOf(sections), draftOf(other))).toBe(false)
   })

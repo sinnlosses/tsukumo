@@ -1,4 +1,4 @@
-// 節の並びを畳み込んで、葉ごとの図表番号・表の札の色・欄外注を決める。
+// 節の並びを畳み込んで、内容部品ごとの図表番号・表の札の色・欄外注を決める。
 //
 // 番号は節をまたいで並びの順に通しで数える。
 
@@ -9,7 +9,7 @@ import type { CaptionKind } from "./report-caption.ts"
 import { REPORT_NOTE_KINDS } from "./report-notation.ts"
 import { type TagTones, tagTonesOf } from "./report-table-markdown.ts"
 
-/** 葉の題の番号。題を持たない葉は `none`。 */
+/** 内容部品の題の番号。題を持たない内容部品は `none`。 */
 export type LeafCaptionNumber =
   | { readonly kind: "none" }
   | { readonly kind: CaptionKind; readonly ordinal: number }
@@ -18,10 +18,10 @@ export type LeafCaptionNumber =
 export type LeafGutterNote = { readonly label: string; readonly text: string }
 
 /**
- * 葉1つの値。
- * `tagTones` は表の葉が使う `tag` の字 → 札の色の class（表以外は空）。
- * `gutterNotes` は葉に寄った欄外注（葉の `aside` と、直後の `memo` の `note`）。
- * `mergedIntoPrevious` は直前の葉へ欄外注を寄せた `memo` の葉で、この葉自身は何も描かず `gutterNotes` も空。
+ * 内容部品1つの値。
+ * `tagTones` は表の内容部品が使う `tag` の字 → 札の色の class（表以外は空）。
+ * `gutterNotes` は内容部品に寄った欄外注（内容部品の `aside` と、直後の `memo` の `note`）。
+ * `mergedIntoPrevious` は直前の内容部品へ欄外注を寄せた `memo` の内容部品で、この内容部品自身は何も描かず `gutterNotes` も空。
  */
 export type LeafValue = {
   readonly captionNumber: LeafCaptionNumber
@@ -43,9 +43,9 @@ type BlocksFold = {
 const MEMO_LABEL = new Map(REPORT_NOTE_KINDS).get("note-memo") ?? ""
 
 /**
- * 節の並びから導いた、札の色の割り当て（`tagTones`）と葉ごとの値（`values`）。
+ * 節の並びから導いた、札の色の割り当て（`tagTones`）と内容部品ごとの値（`values`）。
  * `values` は入力の節・塊と同じ並び・同じ長さ。
- * 図と表の番号は題が空でも、`fold` の中でも数える。`memo` の `note` は直前の葉の欄外注へ寄せる。
+ * 図と表の番号は題が空でも、`fold` の中でも数える。`memo` の `note` は直前の内容部品の欄外注へ寄せる。
  */
 export type ReportLeafLayout = {
   readonly tagTones: TagTones

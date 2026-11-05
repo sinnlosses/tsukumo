@@ -119,7 +119,7 @@ describe("Stats の部品", () => {
     expect(cardTextsOf(THREE)).toEqual(["8架空の件数", "0架空の失敗", "12架空の秒"])
   })
 
-  it("整形で落ちた数（葉の値が無い）は何も描かない", () => {
+  it("整形で落ちた数（内容部品の値が無い）は何も描かない", () => {
     const part = partOf(THREE)
     const view = directLeafViewOf(part)
     if (view === undefined) {

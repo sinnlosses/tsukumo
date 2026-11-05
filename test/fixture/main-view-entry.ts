@@ -39,7 +39,7 @@ export const noRootA2ui = (
 })
 
 /**
- * 本文の字を描く順（結論 → `Markdown` の葉 → お願い）につなぎ、空のものを除いたもの。
+ * 本文の字を描く順（結論 → `Markdown` の内容部品 → お願い）につなぎ、空のものを除いたもの。
  * 面の値だけを読み、頭の合図の行・所要時間・節の見出しは含まない。
  */
 export const bodyTextOf = (body: MainViewReportBody) =>

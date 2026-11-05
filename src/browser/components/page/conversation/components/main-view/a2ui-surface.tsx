@@ -1,7 +1,7 @@
 // 部品の一覧（`a2ui` の版）のレポート本文を、`@a2ui/react` の面とカタログの React 実装で描く。
 //
 // 自作の部品の子（`Report.children`・`Section.children`）は、カタログ文書が部品の参照として印を付けていないので `buildChild` で解けない。
-// `buildChild` を使わず、根の `Report` の実装が一覧をたどって節・葉・配置の部品を描く。
+// `buildChild` を使わず、根の `Report` の実装が一覧をたどって節・内容部品・配置の部品を描く。
 // 部品ごとに挟まる `display: contents` の入れ物（`a2ui-react-<部品名>`）を根の1枚だけにし、欄と塊の入れ子を既定の描画と同じにする。
 // 面の最初の描画は読み込み中の札なので、演出の根は `Report` の実装の中に置く（マウントした時点で本文が揃う）。
 
@@ -207,7 +207,7 @@ function ReportRoot(): ReactElement {
   )
 }
 
-/** 図か振り返りの欄の中身。見出しは節と同じ手で描き、塊は並びの順に、葉は面の葉の実装、葉に由来しない塊は Markdown で描く。 */
+/** 図か振り返りの欄の中身。見出しは節と同じ手で描き、塊は並びの順に、内容部品は面の内容部品の実装、内容部品に由来しない塊は Markdown で描く。 */
 function LeafRegionContent(props: {
   readonly region: Extract<MainViewSurfaceLeafRegion, { readonly kind: "leaves" }>
 }): ReactElement {
@@ -290,7 +290,7 @@ function PartView(props: { readonly id: string }): ReactElement {
   return <PartBody id={props.id} />
 }
 
-/** `Markdown` の葉は書き手の Markdown を欄と同じ描画に通し、ほかの部品は配置の部品か直接描く葉として描く。 */
+/** `Markdown` の内容部品は書き手の Markdown を欄と同じ描画に通し、ほかの部品は配置の部品か直接描く内容部品として描く。 */
 function PartBody(props: { readonly id: string }): ReactElement {
   const report = useReport()
   return report.parts.get(props.id)?.component === "Markdown" ? (

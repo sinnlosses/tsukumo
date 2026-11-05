@@ -99,7 +99,7 @@ function leafWeight(leaf: ReportOutlineLeaf): number {
   return isFigure ? FIGURE_WEIGHT : textLength(leaf)
 }
 
-/** 葉の中の文字列の長さの合計（`id`・`component` と `style` の値は描かないので数えない）。 */
+/** 内容部品の中の文字列の長さの合計（`id`・`component` と `style` の値は描かないので数えない）。 */
 function textLength(value: unknown): number {
   if (typeof value === "string") {
     return value.length

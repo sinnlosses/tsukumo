@@ -32,7 +32,7 @@ const panelBlockSchema = z.object({
 
 const arrangedBlockSchema = z.discriminatedUnion("kind", [rowBlockSchema, panelBlockSchema])
 
-/** 節に置いた塊。葉の塊か、葉を並べる `row`・`panel`。 */
+/** 節に置いた塊。内容部品の塊か、内容部品を並べる `row`・`panel`。 */
 export type LegacyBlock = ReportBlock | DeepReadonly<z.infer<typeof arrangedBlockSchema>>
 
 export type LegacySection = {

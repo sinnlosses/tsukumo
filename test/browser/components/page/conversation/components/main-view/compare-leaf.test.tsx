@@ -204,7 +204,7 @@ describe("Compare の部品", () => {
     })
   })
 
-  it("整形で落ちた見比べ（葉の値が無い）は何も描かない", () => {
+  it("整形で落ちた見比べ（内容部品の値が無い）は何も描かない", () => {
     const { part } = pair(SIDES)
     const view = directLeafViewOf(part)
     if (view === undefined) {

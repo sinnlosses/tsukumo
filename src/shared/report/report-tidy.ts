@@ -18,7 +18,7 @@ export type ReportOutlineTidyInput = {
 }
 
 export type TidiedReportOutline = {
-  /** 本文の節だけを整形したもの。落とした葉と、葉の残らない節は除く。図・振り返りはそのまま。 */
+  /** 本文の節だけを整形したもの。落とした内容部品と、内容部品の残らない節は除く。図・振り返りはそのまま。 */
   readonly outline: ReportOutline
   readonly droppedLeafIds: ReadonlySet<string>
 }
@@ -28,11 +28,11 @@ export type TidiedReportOutline = {
  * 中身は引数のまま:
  *
  * - 本文の冒頭で `conclusion` を繰り返しているもの（`conclusion` はすぐ上に描かれるので、同じ文が
- *   2度並ぶだけになる）。最初の葉が `Paragraph` なら葉ごと、逃げ道なら頭の行。
- *   見るのは葉のある最初の節の最初の葉だけ
- * - 前置き・締めの定型だけの `Paragraph` の葉と、逃げ道の中の定型だけの行（{@link BOILERPLATE_LINES} と丸ごと一致するもの）
- * - 逃げ道の中の中身の無い見出し（文字が無いか、次に来るのが同じか浅い見出し・葉の終わり）
- * - 落として葉の残らない節（見出しごと）
+ *   2度並ぶだけになる）。最初の内容部品が `Paragraph` なら内容部品ごと、逃げ道なら頭の行。
+ *   見るのは内容部品のある最初の節の最初の内容部品だけ
+ * - 前置き・締めの定型だけの `Paragraph` の内容部品と、逃げ道の中の定型だけの行（{@link BOILERPLATE_LINES} と丸ごと一致するもの）
+ * - 逃げ道の中の中身の無い見出し（文字が無いか、次に来るのが同じか浅い見出し・内容部品の終わり）
+ * - 落として内容部品の残らない節（見出しごと）
  */
 export function tidyReportOutline(report: ReportOutlineTidyInput): TidiedReportOutline {
   const [first] = report.outline.sections.filter((section) => section.leaves.length > 0)
@@ -58,7 +58,7 @@ export function tidyReportOutline(report: ReportOutlineTidyInput): TidiedReportO
   }
 }
 
-/** 葉1つを整形する。落とすなら undefined。整形が掛かるのは `Paragraph` と `Markdown` だけ。 */
+/** 内容部品1つを整形する。落とすなら undefined。整形が掛かるのは `Paragraph` と `Markdown` だけ。 */
 function tidyLeaf(leaf: ReportOutlineLeaf, conclusion: string): ReportOutlineLeaf | undefined {
   switch (leaf.component) {
     case "Paragraph":

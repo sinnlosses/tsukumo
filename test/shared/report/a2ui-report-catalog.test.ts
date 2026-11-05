@@ -105,7 +105,7 @@ describe("A2UI のカタログ文書", () => {
     expect(Object.keys(KIND_TO_COMPONENT).toSorted()).toEqual([...REPORT_BLOCK_KINDS].toSorted())
   })
 
-  it("根・節・葉 21 種・つまみ 2 種・基本 6 部品の 31 部品が全部残る", () => {
+  it("根・節・内容部品 21 種・つまみ 2 種・基本 6 部品の 31 部品が全部残る", () => {
     expect(expected).toHaveLength(31)
     expect(findMissingComponents(document, expected)).toEqual([])
   })
@@ -341,7 +341,7 @@ describe("A2UI のカタログ文書", () => {
     )
   })
 
-  it("図に置ける葉は figure の塊の種類と同じ", () => {
+  it("図に置ける内容部品は figure の塊の種類と同じ", () => {
     expect(FIGURE_COMPONENTS.toSorted()).toEqual(
       [
         "Picture",

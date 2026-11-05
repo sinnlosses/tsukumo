@@ -1,4 +1,4 @@
-// `report` の `a2ui` の版の部品の一覧を、節と葉の ID の並びにたどる。
+// `report` の `a2ui` の版の部品の一覧を、節と内容部品の ID の並びにたどる。
 
 import { type A2uiReportComponent, LEAF_COMPONENT_KINDS } from "./a2ui-report-catalog.ts"
 
@@ -12,7 +12,7 @@ export type A2uiReportPart<Component extends A2uiReportComponent["component"]> =
 
 /**
  * 根の子 1 つが写る節。`Section` は見出しつきの節、それ以外は見出しの無いセクションになる。
- * `leafIds` は節に並ぶ葉の ID で、`Section` と配置の部品の中へ降りて並び順に平らにしたもの。
+ * `leafIds` は節に並ぶ内容部品の ID で、`Section` と配置の部品の中へ降りて並び順に平らにしたもの。
  */
 export type A2uiOutlineSection =
   | {
@@ -37,8 +37,8 @@ export function a2uiPartsById(
 }
 
 /**
- * 根の子を並び順に節へ写す。辿れない参照は飛ばし、葉の残らない `Section` 以外の子は節にしない。
- * 入れ子の `Section` と配置の部品の中の葉は、外側の節へ並び順に平らに入れる。
+ * 根の子を並び順に節へ写す。辿れない参照は飛ばし、内容部品の残らない `Section` 以外の子は節にしない。
+ * 入れ子の `Section` と配置の部品の中の内容部品は、外側の節へ並び順に平らに入れる。
  */
 export function a2uiOutlineSections(
   root: A2uiReportPart<"Report">,
@@ -57,7 +57,7 @@ export function a2uiOutlineSections(
   })
 }
 
-/** ID の並びの先の葉の ID を並び順に集める。`Section` と配置の部品は中へ降り、根と辿った ID は二度たどらない。 */
+/** ID の並びの先の内容部品の ID を並び順に集める。`Section` と配置の部品は中へ降り、根と辿った ID は二度たどらない。 */
 export function a2uiLeafIds(
   ids: readonly string[],
   byId: ReadonlyMap<string, A2uiReportComponent>,
@@ -78,7 +78,7 @@ export function a2uiReachableIds(
     : new Set()
 }
 
-/** 内容部品なら写す先の塊の `kind`、葉でなければ undefined。 */
+/** 内容部品なら写す先の塊の `kind`、内容部品でなければ undefined。 */
 export function a2uiLeafKind(part: A2uiReportComponent): string | undefined {
   return LEAF_KINDS.get(part.component)
 }
@@ -114,7 +114,7 @@ function reachableFrom(
   }, reached)
 }
 
-/** 部品が子として参照する ID。葉と `ChoicePicker`・`Divider` は持たない。 */
+/** 部品が子として参照する ID。内容部品と `ChoicePicker`・`Divider` は持たない。 */
 function childIdsOf(part: A2uiReportComponent): readonly string[] {
   switch (part.component) {
     case "Section":

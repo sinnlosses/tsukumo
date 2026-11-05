@@ -10,7 +10,7 @@ export function a2uiParts(...inputs: readonly unknown[]): readonly A2uiReportCom
   return inputs.map((input) => a2uiReportComponentSchema.parse(input))
 }
 
-/** 根 → 節2つ → 葉3つの、届く順に並べた一覧。 */
+/** 根 → 節2つ → 内容部品3つの、届く順に並べた一覧。 */
 export const STAGED_PARTS = a2uiParts(
   {
     id: "root",

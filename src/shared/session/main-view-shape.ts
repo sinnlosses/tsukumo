@@ -107,12 +107,12 @@ export type MainViewReportRegions = {
 /**
  * 部品の一覧で描く本文の値。`none` は根の `Report` が無い記録で、節は無く、頭とお願いだけを持つ（描くのは頭とお願いだけ）。
  * `sections` は根の子の部品の ID から、その子が写った節の欄の ID と見出しの行（`## …`。見出しの無いセクションは空文字）。整形で塊の残らない子は持たない。
- * `markdownLeaves` は `Markdown` の内容部品の ID から、その葉の Markdown（欄外注と畳みを包んだもの。整形で落ちた葉は空文字）。
- * 書き手の生 HTML を通す葉だけが文字列で描かれ、ほかの葉は持たない。
- * `leafValues` は内容部品の ID から、その葉の図表番号・表の札の色・寄せられた欄外注（{@link LeafValue}）。
- * 節の葉に加えて `Report.figure` の葉と振り返りの内容部品も持ち、整形で落ちた葉は持たない。
+ * `markdownLeaves` は `Markdown` の内容部品の ID から、その内容部品の Markdown（欄外注と畳みを包んだもの。整形で落ちた内容部品は空文字）。
+ * 書き手の生 HTML を通す内容部品だけが文字列で描かれ、ほかの内容部品は持たない。
+ * `leafValues` は内容部品の ID から、その内容部品の図表番号・表の札の色・寄せられた欄外注（{@link LeafValue}）。
+ * 節の内容部品に加えて `Report.figure` の内容部品と振り返りの内容部品も持ち、整形で落ちた内容部品は持たない。
  * `figure` と `retrospective` は、部品の木に節の入れ物が無い図と振り返りの欄（{@link MainViewSurfaceLeafRegion}）。欄が無ければ `none`。
- * `imageSource` は画像の葉が `src` を作る取り出し元（置き場に置いていない本文は `none`）。
+ * `imageSource` は画像の内容部品が `src` を作る取り出し元（置き場に置いていない本文は `none`）。
  * `favor` はお願いの本文（無ければ空文字）と、合図の行の印が飛ぶ先の `id`。
  */
 export type MainViewA2uiReport =
@@ -167,7 +167,7 @@ export type MainViewKeyFigure = Extract<ReportBlock, { readonly kind: "stats" }>
 /**
  * 図か振り返りの欄1つを、`DrawnSection` の塊の並びのまま持つ。
  * `regionId` は節の欄の ID（図は先頭の 0）。`heading` は見出しの行（`## …`。見出しの無い欄は空文字）、`headingText` は見出しの字。
- * `entries` は描く塊を順に並べたもの。葉に由来する塊は部品の ID（描くのは面の葉の実装）、由来しない塊（振り返りの要約とドラフトの行）は Markdown。
+ * `entries` は描く塊を順に並べたもの。内容部品に由来する塊は部品の ID（描くのは面の内容部品の実装）、由来しない塊（振り返りの要約とドラフトの行）は Markdown。
  */
 export type MainViewSurfaceLeafRegion =
   | { readonly kind: "none" }

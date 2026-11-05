@@ -45,7 +45,7 @@ const COMPONENT_OF_KIND: ReadonlyMap<string, string> = new Map(
 
 /**
  * 旧い引数を部品の一覧に組み直す。`sections` があればそれを、無ければ `body`（Markdown）を、今の読みで塊にして写す。
- * 節は `Section`、葉は同名の部品（旧い `beforeAfter` は読む前に `Compare` の前後に書き換える）、`row` は `Row`、`panel` は `Card` と `Column`（題は先頭の `Paragraph`）、
+ * 節は `Section`、内容部品は同名の部品（旧い `beforeAfter` は読む前に `Compare` の前後に書き換える）、`row` は `Row`、`panel` は `Card` と `Column`（題は先頭の `Paragraph`）、
  * `figure` は `Report.figure` と `figureNone`、振り返りの部品は `Report.retrospective.blocks` に写す。部品の ID は並びの位置から振る。
  * 失うのは `shapeTag`・`files` の塊・知らない種類で落とした塊・`row`/`panel` の `fold`/`aside`。
  * 節が1つも残らない引数は、`Report.children` を空にできないので undefined。
@@ -176,7 +176,7 @@ function blockParts(id: string, block: LegacyBlock): readonly BlockParts[] {
   return leafPart(id, block).map((part) => ({ id, parts: [part] }))
 }
 
-/** 葉の塊 1 つが写る部品。部品の無い種類（`files`）は空。 */
+/** 内容部品の塊 1 つが写る部品。部品の無い種類（`files`）は空。 */
 function leafPart(id: string, block: ReportBlock): readonly Part[] {
   const component = COMPONENT_OF_KIND.get(block.kind)
   return component === undefined ? [] : [{ id, component, ...omit(block, ["kind"]) }]

@@ -1,5 +1,5 @@
-// 面の葉のうち、Markdown に戻さず部品が直接描くものの一覧。
-// 一覧に無い葉は、これまでどおり葉の Markdown を欄の描画に通す。
+// 面の内容部品のうち、Markdown に戻さず部品が直接描くものの一覧。
+// 一覧に無い内容部品は、これまでどおり内容部品の Markdown を欄の描画に通す。
 
 import type { ReactElement } from "react"
 
@@ -59,7 +59,7 @@ const DIRECT_LEAF_VIEWS: ReadonlyMap<A2uiReportComponent["component"], DirectLea
   ["Code", CodeLeaf],
 ])
 
-/** 葉を直接描く部品。無ければ undefined（Markdown の描画に通す葉）。 */
+/** 内容部品を直接描く部品。無ければ undefined（Markdown の描画に通す内容部品）。 */
 export function directLeafViewOf(
   part: A2uiReportComponent,
   views: ReadonlyMap<A2uiReportComponent["component"], DirectLeafView> = DIRECT_LEAF_VIEWS,
@@ -67,7 +67,7 @@ export function directLeafViewOf(
   return views.get(part.component)
 }
 
-/** 直接描く葉1つ。整形で落ちた葉は値を持たず、何も描かない。 */
+/** 直接描く内容部品1つ。整形で落ちた内容部品は値を持たず、何も描かない。 */
 export function DirectLeaf(props: {
   readonly part: A2uiReportComponent
   readonly value: LeafValue | undefined

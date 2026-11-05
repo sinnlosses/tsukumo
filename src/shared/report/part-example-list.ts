@@ -166,7 +166,7 @@ const LEAF_EXAMPLES = mapValues(LEAF_COMPONENT_KINDS, (kind, component) => [
   { id: "p1", component, ...omit(LEAF_BLOCK_EXAMPLES[kind], ["kind"]) },
 ])
 
-/** 部品の名前ごとの `components` の例。根と節と配置の部品は、子の ID が例の中で閉じるように葉を添える。 */
+/** 部品の名前ごとの `components` の例。根と節と配置の部品は、子の ID が例の中で閉じるように内容部品を添える。 */
 export const PART_EXAMPLES = {
   ...LEAF_EXAMPLES,
   Report: [

@@ -96,7 +96,7 @@ type Outcome = "first-pass" | "fixed" | "unfixed"
 
 const COMPONENT_PURPOSES = {
   Report: "根。結論・検証結果・締めのセリフなど報告全体の欄を持つ。id は root",
-  Section: "節。見出しと、葉か配置の部品の id の並び",
+  Section: "節。見出しと、内容部品か配置の部品の id の並び",
   Paragraph: "地の文",
   ItemList: "箇条書き",
   Table: "表。並べ替え・絞り込みの欄を持てる",

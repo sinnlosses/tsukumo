@@ -300,7 +300,7 @@ describe("頭とお願い（A2UI の面）", () => {
 })
 
 describe("部品の一覧のある本文（A2UI の面）", () => {
-  it("配置の部品の無い一覧は、面の入れ物を 1 枚だけ挟んで葉を描く", () => {
+  it("配置の部品の無い一覧は、面の入れ物を 1 枚だけ挟んで内容部品を描く", () => {
     const body = regionsOf({ components: PARTS })
     expect(body.a2ui.kind).toBe("surface")
 
@@ -321,7 +321,7 @@ describe("部品の一覧のある本文（A2UI の面）", () => {
     expect(container.querySelector("[data-report-body]")?.hasAttribute("data-revealing")).toBe(true)
   })
 
-  it("Row は節の欄の中に子の数だけ区画を並べ、Card は枠で包み、前後の葉は欄の塊のまま", () => {
+  it("Row は節の欄の中に子の数だけ区画を並べ、Card は枠で包み、前後の内容部品は欄の塊のまま", () => {
     const body = regionsOf({ components: ROW_PARTS })
     const { container } = render(<Report reveal={false} turnId={1} className="" body={body} />)
 
@@ -394,7 +394,7 @@ describe("部品の一覧のある本文（A2UI の面）", () => {
     expect(container.querySelector("[data-report-section]")).toBeNull()
   })
 
-  it("部品の一覧が伸びた本文で描き直すと、同じ面のまま増えた葉が出る", () => {
+  it("部品の一覧が伸びた本文で描き直すと、同じ面のまま増えた内容部品が出る", () => {
     const early = mainViewDraftOf("toolu_drafted", STAGED_PARTS.slice(0, 3), [])?.regions
     const grown = mainViewDraftOf("toolu_drafted", STAGED_PARTS, [])?.regions
     if (early === undefined || grown === undefined) {

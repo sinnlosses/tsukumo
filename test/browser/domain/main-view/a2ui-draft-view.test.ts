@@ -46,7 +46,7 @@ describe("mainViewDraftOf", () => {
     expect(mainViewDraftOf("toolu_draft", STAGED_PARTS.slice(1), [])).toBeUndefined()
   })
 
-  it("根に繋がらない部品と、葉がまだ1つも届いていない節は描かない", () => {
+  it("根に繋がらない部品と、内容部品がまだ1つも届いていない節は描かない", () => {
     const arrived = [
       ...STAGED_PARTS.slice(0, 2),
       ...a2uiParts({ id: "orphan", component: "Paragraph", text: "架空の迷子の段落" }),
@@ -97,7 +97,7 @@ describe("mainViewDraftOf", () => {
     expect(a2ui.imageSource).toEqual({ kind: "none" })
   })
 
-  it("Markdown の葉の Markdown が、面で描く値に載る", () => {
+  it("Markdown の内容部品の Markdown が、面で描く値に載る", () => {
     const parts = a2uiParts(
       { id: "root", component: "Report", conclusion: ["架空の結論。"], children: ["s1"] },
       { id: "s1", component: "Section", heading: "架空の節", children: ["m1", "p1"] },

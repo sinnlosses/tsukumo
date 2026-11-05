@@ -1,5 +1,5 @@
 // `components` から、規約の検査が読む節・図・振り返りの内容部品を取り出す。
-// 葉は `a2uiLeafIds` と同じ平らな並びで、配置の部品（Row・Column・Card・Tabs）の中の葉も外側の節へ並び順に入る。
+// 内容部品は `a2uiLeafIds` と同じ平らな並びで、配置の部品（Row・Column・Card・Tabs）の中の内容部品も外側の節へ並び順に入る。
 
 import { omit } from "remeda"
 
@@ -44,7 +44,7 @@ export type ReportOutlineSection =
 
 export type ReportOutline = {
   readonly sections: readonly ReportOutlineSection[]
-  /** `Report.figure` の葉。無ければ空、あれば 1 つ。 */
+  /** `Report.figure` の内容部品。無ければ空、あれば 1 つ。 */
   readonly figure: readonly ReportOutlineLeaf[]
   readonly retrospective: readonly ReportOutlineLeaf[]
 }
@@ -88,14 +88,14 @@ export function outlineLeafBlock(leaf: ReportOutlineLeaf): ReportBlock | undefin
   ])[0]
 }
 
-/** `Compare` の側。ほかの葉は空。 */
+/** `Compare` の側。ほかの内容部品は空。 */
 export function comparisonSidesOf(
   leaf: ReportOutlineLeaf,
 ): Extract<ReportOutlineLeaf, { readonly component: "Compare" }>["sides"] {
   return leaf.component === "Compare" ? leaf.sides : []
 }
 
-/** 葉の塊の `kind`。 */
+/** 内容部品の塊の `kind`。 */
 export function outlineLeafKind(
   leaf: ReportOutlineLeaf,
 ): (typeof LEAF_COMPONENT_KINDS)[keyof typeof LEAF_COMPONENT_KINDS] {
@@ -106,19 +106,19 @@ export function sectionLeaves(outline: ReportOutline): readonly ReportOutlineLea
   return outline.sections.flatMap((section) => section.leaves)
 }
 
-/** 画面に描く葉の並び（図 → 本文の節 → 振り返り）。 */
+/** 画面に描く内容部品の並び（図 → 本文の節 → 振り返り）。 */
 export function drawnLeaves(outline: ReportOutline): readonly ReportOutlineLeaf[] {
   return [...outline.figure, ...sectionLeaves(outline), ...outline.retrospective]
 }
 
-/** 葉のうち `Plot` を、`ReportPlot` の形（`kind` つき）にして並び順に返す。 */
+/** 内容部品のうち `Plot` を、`ReportPlot` の形（`kind` つき）にして並び順に返す。 */
 export function plotsOfLeaves(leaves: readonly ReportOutlineLeaf[]): readonly ReportPlot[] {
   return leaves.flatMap((leaf): readonly ReportPlot[] =>
     leaf.component === "Plot" ? [{ kind: "plot", ...leaf }] : [],
   )
 }
 
-/** `Report.retrospective` の要約と積んだドラフト（葉の `blocks` は含めない）。欄が無ければ空。 */
+/** `Report.retrospective` の要約と積んだドラフト（内容部品の `blocks` は含めない）。欄が無ければ空。 */
 export function reportRetrospectiveHeadOf(components: readonly A2uiReportComponent[]): {
   readonly summary: string
   readonly drafts: readonly string[]
@@ -129,7 +129,7 @@ export function reportRetrospectiveHeadOf(components: readonly A2uiReportCompone
     : { summary: "", drafts: [] }
 }
 
-/** 葉のうち `Timeline` を、`ReportTimeline` の形（`kind` つき）にして並び順に返す。 */
+/** 内容部品のうち `Timeline` を、`ReportTimeline` の形（`kind` つき）にして並び順に返す。 */
 export function timelinesOfLeaves(leaves: readonly ReportOutlineLeaf[]): readonly ReportTimeline[] {
   return leaves.flatMap((leaf): readonly ReportTimeline[] =>
     leaf.component === "Timeline" ? [{ kind: "timeline", ...leaf }] : [],
@@ -170,7 +170,7 @@ function isPlacedFigureKind(kind: string): kind is PlacedFigureKind {
   return PLACED_FIGURE_KINDS.has(kind)
 }
 
-/** `Report.figure` に置けない部品の葉は、スキーマが先に落とすのでここへは来ない。 */
+/** `Report.figure` に置けない部品の内容部品は、スキーマが先に落とすのでここへは来ない。 */
 function figureOfLeaf(leaf: ReportOutlineLeaf): ReportFigureDeclaration {
   const kind = outlineLeafKind(leaf)
   return isPlacedFigureKind(kind) ? { kind } : UNRECORDED_FIGURE

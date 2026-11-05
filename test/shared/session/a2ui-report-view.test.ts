@@ -62,7 +62,7 @@ describe("a2ui の版の記録の本文", () => {
     expect(reportHeadedSections(withoutComponents)).toEqual([])
   })
 
-  it("markdownLeaves は Markdown の葉だけを持ち、欄外注と畳みを包んだ Markdown を当てる", () => {
+  it("markdownLeaves は Markdown の内容部品だけを持ち、欄外注と畳みを包んだ Markdown を当てる", () => {
     const reported = reportOf({ components: MARKDOWN_PARTS })
     const { a2ui } = regionsOf(reported)
     if (a2ui.kind !== "surface") throw new Error("面の値が無い")
@@ -73,7 +73,7 @@ describe("a2ui の版の記録の本文", () => {
     expect(a2ui.markdownLeaves.m2).toContain("架空の欄外注")
   })
 
-  it("整形で落ちた Markdown の葉は空文字で、ほかの葉は持たない", () => {
+  it("整形で落ちた Markdown の内容部品は空文字で、ほかの内容部品は持たない", () => {
     const reported = reportOf({
       components: MARKDOWN_PARTS.map((part) =>
         part.id === "m1" ? { ...part, markdown: "以上です" } : part,
@@ -144,7 +144,7 @@ describe("a2ui の版の記録の本文", () => {
     })
   })
 
-  it("figure と retrospective は塊の並びを持ち、葉に由来しない塊は Markdown、欄が無ければ none", () => {
+  it("figure と retrospective は塊の並びを持ち、内容部品に由来しない塊は Markdown、欄が無ければ none", () => {
     const parts = [
       {
         id: "root",
@@ -198,10 +198,10 @@ describe("a2ui の版の記録の本文", () => {
     expect(a2ui.sections.s1?.regionId).toBe(0)
   })
 
-  it("葉の無い Section があっても、その節を飛ばして面ができる", () => {
+  it("内容部品の無い Section があっても、その節を飛ばして面ができる", () => {
     const parts = [
       { id: "root", component: "Report", conclusion: ["架空の結論。"], children: ["s0", "s1"] },
-      { id: "s0", component: "Section", heading: "葉の無い節", children: ["gone"] },
+      { id: "s0", component: "Section", heading: "内容部品の無い節", children: ["gone"] },
       { id: "s1", component: "Section", heading: "架空の節", children: ["p1"] },
       { id: "p1", component: "Paragraph", text: "架空の段落。" },
     ]

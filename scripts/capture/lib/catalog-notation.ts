@@ -142,7 +142,7 @@ export const NOTATION_ENTRIES: readonly CatalogEntry[] = [
   {
     name: "a2ui-external-leaves",
     scene: "a2ui-external-leaves",
-    label: "外部の描画に頼る葉（Mermaid・Chart・Plot・Code）を A2UI の面で描く",
+    label: "外部の描画に頼る内容部品（Mermaid・Chart・Plot・Code）を A2UI の面で描く",
     homeSetup: { kind: "default" },
     workspaceSetup: { kind: "repository" },
     prepare: [],

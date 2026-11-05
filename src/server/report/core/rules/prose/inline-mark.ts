@@ -22,7 +22,7 @@ export function brokenInlineMarks(report: InlineMarkSource, outline: ReportOutli
   return texts.reduce((total, text) => total + brokenInlineMarkCount(text), 0)
 }
 
-/** 振り返りの要約とドラフトの行。塊（`outline.retrospective`）は葉として別に読む。 */
+/** 振り返りの要約とドラフトの行。塊（`outline.retrospective`）は内容部品として別に読む。 */
 function retrospectiveHeadTexts(report: InlineMarkSource): readonly string[] {
   const { summary, drafts } = reportRetrospectiveHeadOf(report.components)
   return [summary, ...(drafts.length === 0 ? [] : [retrospectiveDraftsLine(drafts)])]

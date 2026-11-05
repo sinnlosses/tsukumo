@@ -355,7 +355,7 @@
     align-items: center;
     gap: var(--space-xs);
   }
-  /* 旧い Markdown の表の凡例の見本（葉の表は `Badge` で出すので使わない）。 */
+  /* 旧い Markdown の表の凡例の見本（内容部品の表は `Badge` で出すので使わない）。 */
   & .report-table-status-legend-swatch {
     width: 0.75rem;
     height: 0.75rem;

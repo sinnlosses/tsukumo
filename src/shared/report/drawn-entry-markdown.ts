@@ -10,7 +10,7 @@ import type { LeafGutterNote, LeafValue } from "./report-leaf-value.ts"
  */
 type DrawnEntryPresence = "empty" | "blank" | "drawn"
 
-/** `Markdown` の葉と、葉に由来しない塊の種類。 */
+/** `Markdown` の内容部品と、内容部品に由来しない塊の種類。 */
 type MarkdownEntryBlock = Extract<ReportBlock, { readonly kind: "text" | "markdown" }>
 
 export function drawnEntryPresence(block: ReportBlock, value: LeafValue): DrawnEntryPresence {
@@ -54,7 +54,7 @@ export function sectionDrawsAnything(
   )
 }
 
-/** `Markdown` の葉と葉に由来しない塊の字。前の包みへ寄せた塊は空文字。 */
+/** `Markdown` の内容部品と内容部品に由来しない塊の字。前の包みへ寄せた塊は空文字。 */
 export function drawnEntryMarkdown(block: MarkdownEntryBlock, value: LeafValue): string {
   if (value.mergedIntoPrevious) {
     return ""

@@ -261,7 +261,7 @@ function componentsOf(sections: readonly ReportBlockSection[]): readonly A2uiRep
   ]
 }
 
-/** 塊の節を葉にして整形し、整形後の葉を塊の節に戻す。 */
+/** 塊の節を内容部品にして整形し、整形後の内容部品を塊の節に戻す。 */
 function tidyReportBlockSections(report: {
   readonly conclusion: string
   readonly sections: readonly ReportBlockSection[]
@@ -279,8 +279,8 @@ function tidyReportBlockSections(report: {
   }))
 }
 
-describe("tidyReportOutline（落とした葉の ID）", () => {
-  it("落とした葉の ID だけが集合に入り、整形で書き換えた葉の ID は入らない", () => {
+describe("tidyReportOutline（落とした内容部品の ID）", () => {
+  it("落とした内容部品の ID だけが集合に入り、整形で書き換えた内容部品の ID は入らない", () => {
     const sections: readonly ReportBlockSection[] = [
       {
         heading: "架空の節",

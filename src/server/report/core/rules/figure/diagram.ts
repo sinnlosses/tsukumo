@@ -10,7 +10,7 @@ import {
 
 const MERMAID_KINDS: ReadonlySet<string> = new Set(REPORT_MERMAID_KINDS)
 
-/** `Mermaid` の葉のソース。葉の出現順に並び、見比べの部品は左の側が先。 */
+/** `Mermaid` の内容部品のソース。内容部品の出現順に並び、見比べの部品は左の側が先。 */
 export function mermaidSourcesOfLeaves(leaves: readonly ReportOutlineLeaf[]): readonly string[] {
   return leaves.flatMap((leaf) =>
     leaf.component === "Mermaid"

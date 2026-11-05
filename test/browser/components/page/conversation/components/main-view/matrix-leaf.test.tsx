@@ -125,7 +125,7 @@ describe("Matrix の部品", () => {
     expect(container.querySelectorAll("tbody tr")).toHaveLength(12)
   })
 
-  it("整形で落ちた格子（葉の値が無い）は何も描かない", () => {
+  it("整形で落ちた格子（内容部品の値が無い）は何も描かない", () => {
     const part = partOf(ALL_STATUSES)
     const view = directLeafViewOf(part)
     if (view === undefined) {

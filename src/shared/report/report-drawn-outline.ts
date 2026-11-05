@@ -1,5 +1,5 @@
 // `components` から、画面に描く節の並びを導く。記録にもイベントにも持たず、描くたびに導く。
-// 描く順は図 → 整形した本文の節 → 振り返り。セクションの部品には、元になった葉の ID を添える。
+// 描く順は図 → 整形した本文の節 → 振り返り。セクションの部品には、元になった内容部品の ID を添える。
 
 import type { A2uiReportComponent } from "./a2ui-report-catalog.ts"
 import type { ReportBlock, ReportBlockSection } from "./report-block.ts"
@@ -15,7 +15,7 @@ import { tidyReportOutline } from "./report-tidy.ts"
 /** `body` は本文の節だけ、`whole` は図と振り返りも描く。 */
 export type DrawnScope = "body" | "whole"
 
-/** セクションの部品1つ。`leafId` が無いのは、葉に由来しない塊（振り返りの要約とドラフトの行）。 */
+/** セクションの部品1つ。`leafId` が無いのは、内容部品に由来しない塊（振り返りの要約とドラフトの行）。 */
 export type DrawnEntry = {
   readonly leafId: string | undefined
   readonly block: ReportBlock
@@ -38,7 +38,7 @@ export type DrawnSection =
 
 export type DrawnReport = {
   readonly sections: readonly DrawnSection[]
-  /** 整形で落ちた葉の ID。 */
+  /** 整形で落ちた内容部品の ID。 */
   readonly droppedLeafIds: ReadonlySet<string>
 }
 

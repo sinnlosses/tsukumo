@@ -125,7 +125,7 @@ describe("legacyReportComponents", () => {
     })
   })
 
-  it("葉の塊は同名の部品（beforeAfter は Compare）に写り、fold と aside も残る", () => {
+  it("内容部品の塊は同名の部品（beforeAfter は Compare）に写り、fold と aside も残る", () => {
     const entries = Object.entries(LEAVES)
     expect(entries.map(([kind]) => kind).toSorted()).toEqual(
       [...Object.values(LEAF_COMPONENT_KINDS), "beforeAfter"].toSorted(),

@@ -60,7 +60,7 @@ const VERDICT_ORDER = {
 
 type OptionsLeaf = Extract<ReportOutlineLeaf, { readonly component: "Options" }>
 
-/** 葉の平らな並び（配置の部品の中の葉も外側の節へ入る）で、`Note` の直後か見出しの直後にある `Note` の数。 */
+/** 内容部品の平らな並び（配置の部品の中の内容部品も外側の節へ入る）で、`Note` の直後か見出しの直後にある `Note` の数。 */
 export function crowdedNoteCount(outline: ReportOutline): number {
   return sumBy(outline.sections, (section) =>
     crowdedNotesIn(section.leaves, section.kind === "section" && section.heading.trim() !== ""),

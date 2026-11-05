@@ -1,5 +1,5 @@
 // `report` の部品を A2UI のカタログの部品（`component` の判別子と `id` を持つ props）として定義する。
-// 葉の props と説明は既存の塊の zod を使い回す。
+// 内容部品の props と説明は既存の塊の zod を使い回す。
 
 import { mapValues, omit } from "remeda"
 import { z } from "zod"
@@ -129,7 +129,7 @@ export const REPORT_FIGURE_NONE_REASONS = [
   "no-material",
 ] as const
 
-/** 図の内容部品（レポートの図1つか、置かない理由）。図の内容部品は節の同じ種類の葉と同じ形。 */
+/** 図の内容部品（レポートの図1つか、置かない理由）。図の内容部品は節の同じ種類の内容部品と同じ形。 */
 export const reportFigureSchema = z.discriminatedUnion("kind", [
   imageBlockSchema,
   mermaidBlockSchema,
@@ -170,7 +170,7 @@ export const FIGURE_COMPONENTS: readonly string[] = Object.entries(LEAF_COMPONEN
 
 const speechSchema = z.object({ text: z.string(), expression: z.string() })
 
-/** 節。`children` は葉と配置の部品の ID。 */
+/** 節。`children` は内容部品と配置の部品の ID。 */
 const sectionComponentSchema = z.object({
   id: z.string(),
   component: z.literal("Section"),
@@ -233,7 +233,7 @@ const OWN_COMPONENT_SCHEMAS = {
   ParameterCheckBox: parameterCheckBoxSchema,
 } as const
 
-/** 部品名と書き手が書く形。根・節・葉 21 種・つまみ 2 種・基本 6 部品の 31。 */
+/** 部品名と書き手が書く形。根・節・内容部品 21 種・つまみ 2 種・基本 6 部品の 31。 */
 export const REPORT_COMPONENT_SCHEMAS = {
   ...OWN_COMPONENT_SCHEMAS,
   ...BASIC_PART_SCHEMAS,

@@ -1,4 +1,4 @@
-// `report` の葉の塊の合併と、その検証。
+// `report` の内容部品の塊の合併と、その検証。
 
 import { z } from "zod"
 
@@ -77,7 +77,7 @@ export type ReportBlock = DeepReadonly<z.infer<typeof reportBlockSchema>>
 // `retrospective.blocks` の要素になる、書き手向けの塊の合併
 export const namedWriterBlockSchema = writerBlockSchema.meta({ id: "ReportBlock" })
 
-/** 画面に描く節。見出し（空なら描かない）と葉の塊の並び。 */
+/** 画面に描く節。見出し（空なら描かない）と内容部品の塊の並び。 */
 export type ReportBlockSection = {
   readonly heading: string
   readonly blocks: readonly ReportBlock[]

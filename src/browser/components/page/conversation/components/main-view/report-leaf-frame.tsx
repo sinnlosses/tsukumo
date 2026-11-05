@@ -1,4 +1,4 @@
-// 葉を直接描く部品が共通で使う枠（題・番号・欄外注の外枠）。
+// 内容部品を直接描く部品が共通で使う枠（題・番号・欄外注の外枠）。
 // 欄（`[data-report-region]`）の直接の子として、旧い Markdown の描画と同じ class の要素を返す。包みの要素は足さない。
 // 図表番号と欄外注は組み立ての段が振った値（`LeafValue`）を描くだけで、数えない。
 
@@ -19,9 +19,9 @@ import {
 const CAPTION_LABELS = { figure: "図", table: "表" } as const
 
 type ReportLeafFrameProps = {
-  /** 葉の図表番号と欄外注。 */
+  /** 内容部品の図表番号と欄外注。 */
   readonly value: Pick<LeafValue, "captionNumber" | "gutterNotes">
-  /** 題の字。空なら番号だけを描く。番号の無い葉では描かない。 */
+  /** 題の字。空なら番号だけを描く。番号の無い内容部品では描かない。 */
   readonly title: string
   /** 本体の幅に題の包みを縮めるか（本体が親の幅を取らない塊）。 */
   readonly fit: boolean
@@ -30,15 +30,15 @@ type ReportLeafFrameProps = {
 }
 
 /**
- * 題つきの外枠（番号のある葉）と、欄外注の列を持つ包み（欄外注のある葉）。
- * 表は題が本体の上、図は本体の下。どちらも無い葉は本体をそのまま返す。
+ * 題つきの外枠（番号のある内容部品）と、欄外注の列を持つ包み（欄外注のある内容部品）。
+ * 表は題が本体の上、図は本体の下。どちらも無い内容部品は本体をそのまま返す。
  */
 export function ReportLeafFrame(props: ReportLeafFrameProps): ReactElement {
   return <FoldedLeafFrame {...props} fold="" swap={false} />
 }
 
 /**
- * 題の包みごと `details` で畳む枠（図の内容部品・表の葉。畳みの外に欄外注の列が付く）。
+ * 題の包みごと `details` で畳む枠（図の内容部品・表の内容部品。畳みの外に欄外注の列が付く）。
  * `fold` が空なら畳まない。
  * `swap` が設定なら題の包みを、並べる・切り替えの口を持つ `CompareSwap` にする（両側が画像の見比べの部品）。
  */

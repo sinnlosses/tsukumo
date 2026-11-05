@@ -197,8 +197,8 @@ const ROOT_ID = "root"
 type LeafReference = { readonly pointer: string; readonly target: number }
 
 /**
- * 節の中で最初に描かれる葉（配置の部品の中へ降りて並び順に数える）への参照と、その部品の位置。
- * 葉の前に寄せ先が無いので、これが `memo` の `Note` だと欄外注の寄せ先が無い。
+ * 節の中で最初に描かれる内容部品（配置の部品の中へ降りて並び順に数える）への参照と、その部品の位置。
+ * 内容部品の前に寄せ先が無いので、これが `memo` の `Note` だと欄外注の寄せ先が無い。
  */
 function firstLeafReference(
   section: ReturnType<typeof partOf>,

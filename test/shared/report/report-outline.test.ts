@@ -82,7 +82,7 @@ describe("reportOutline", () => {
     expect(reportOutline([note("n1")])).toEqual({ sections: [], figure: [], retrospective: [] })
   })
 
-  it("節ごとに葉を並び順で返す", () => {
+  it("節ごとに内容部品を並び順で返す", () => {
     const outline = reportOutline([
       report({}, ["s1", "s2"]),
       { id: "s1", component: "Section", heading: "架空の見出し", children: ["p1", "n1"] },
@@ -97,7 +97,7 @@ describe("reportOutline", () => {
     expect(idsOf(outline.sections[1]?.leaves ?? [])).toEqual(["p2"])
   })
 
-  it("配置の部品の入れ子の中の葉は、外側の節へ並び順に平らに入る", () => {
+  it("配置の部品の入れ子の中の内容部品は、外側の節へ並び順に平らに入る", () => {
     const outline = reportOutline([
       report({}, ["s1"]),
       { id: "s1", component: "Section", heading: "架空の見出し", children: ["p1", "row", "p2"] },
@@ -112,7 +112,7 @@ describe("reportOutline", () => {
     expect(idsOf(outline.sections[0]?.leaves ?? [])).toEqual(["p1", "n1", "n2", "p2"])
   })
 
-  it("Section でない根の子は、葉が残るときだけ見出しの無いセクションになる", () => {
+  it("Section でない根の子は、内容部品が残るときだけ見出しの無いセクションになる", () => {
     const outline = reportOutline([
       report({}, ["row", "empty"]),
       { id: "row", component: "Row", children: ["n1"] },
@@ -125,7 +125,7 @@ describe("reportOutline", () => {
     expect(idsOf(outline.sections[0]?.leaves ?? [])).toEqual(["n1"])
   })
 
-  it("figure と retrospective.blocks の葉を欄ごとに返す", () => {
+  it("figure と retrospective.blocks の内容部品を欄ごとに返す", () => {
     const outline = reportOutline([
       report(
         {

@@ -1,5 +1,5 @@
 // `Table`（表）を Markdown に戻さず直接描く。
-// 列の揃え・数の棒・状態の凡例・濃淡の段は全行から決め、札の色は葉の値から受ける。数えない。
+// 列の揃え・数の棒・状態の凡例・濃淡の段は全行から決め、札の色は内容部品の値から受ける。数えない。
 
 import clsx from "clsx"
 import { Fragment, type ReactElement, type ReactNode } from "react"

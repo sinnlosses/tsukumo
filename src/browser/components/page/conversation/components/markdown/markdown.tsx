@@ -50,7 +50,7 @@ export const arrangedBlockClassNames = {
   panel: notationStyles["report-block-panel"],
 } as const
 
-/** 葉を直接描く部品が題・番号・欄外注の外枠に付ける class 名（Markdown の `captioned`・`caption`・`with-gutter`・`gutter` などと同じ見た目）。 */
+/** 内容部品を直接描く部品が題・番号・欄外注の外枠に付ける class 名（Markdown の `captioned`・`caption`・`with-gutter`・`gutter` などと同じ見た目）。 */
 export const leafFrameClassNames = {
   captioned: notationStyles["report-captioned"],
   captionedFit: notationStyles["report-captioned-fit"],
@@ -64,7 +64,7 @@ export const leafFrameClassNames = {
   gutterNoteLabel: notationStyles["report-gutter-note-label"],
 } as const
 
-/** 葉を直接描く文字系の部品（一覧・主張）が付ける class 名（Markdown の `labeled-list`・`flow`・`cards`・`claims` などと同じ見た目）。 */
+/** 内容部品を直接描く文字系の部品（一覧・主張）が付ける class 名（Markdown の `labeled-list`・`flow`・`cards`・`claims` などと同じ見た目）。 */
 export const textLeafClassNames = {
   conclusion: notationStyles["report-conclusion"],
   conclusionLead: notationStyles["report-conclusion-lead"],
@@ -100,7 +100,7 @@ export const textLeafClassNames = {
   claimField: notationStyles["report-claim-field"],
 } as const
 
-/** 葉を直接描く注記・候補の部品が付ける class 名（Markdown の `note`・`options` などと同じ見た目）。 */
+/** 内容部品を直接描く注記・候補の部品が付ける class 名（Markdown の `note`・`options` などと同じ見た目）。 */
 export const noteLeafClassNames = {
   note: notationStyles["report-note"],
   noteWarn: notationStyles["report-note-warn"],
@@ -115,7 +115,7 @@ export const noteLeafClassNames = {
   optionReason: notationStyles["report-option-reason"],
 } as const
 
-/** 葉を直接描く表の部品が付ける class 名（Markdown の表・セルの印・凡例と同じ見た目）。 */
+/** 内容部品を直接描く表の部品が付ける class 名（Markdown の表・セルの印・凡例と同じ見た目）。 */
 export const tableLeafClassNames = {
   tableScroll: notationStyles["table-scroll"],
   cellNumeric: notationStyles["report-cell-numeric"],
@@ -153,7 +153,7 @@ export const tableLeafClassNames = {
   tableStatusLegendItem: notationStyles["report-table-status-legend-item"],
 } as const
 
-/** 葉を直接描く対応表の部品が付ける class 名（Markdown の `matrix`・`matrix-mark-*`・凡例と同じ見た目）。 */
+/** 内容部品を直接描く対応表の部品が付ける class 名（Markdown の `matrix`・`matrix-mark-*`・凡例と同じ見た目）。 */
 export const matrixLeafClassNames = {
   matrix: notationStyles["report-matrix"],
   matrixLegend: notationStyles["report-matrix-legend"],
@@ -161,7 +161,7 @@ export const matrixLeafClassNames = {
   matrixNote: notationStyles["report-matrix-note"],
 } as const
 
-/** 葉を直接描く見比べの部品が付ける class 名（Markdown の `compare` と同じ見た目）。 */
+/** 内容部品を直接描く見比べの部品が付ける class 名（Markdown の `compare` と同じ見た目）。 */
 export const compareLeafClassNames = {
   compare: notationStyles["report-compare"],
   compareSide: notationStyles["report-compare-side"],
@@ -172,7 +172,7 @@ export const compareLeafClassNames = {
   codeLegendAfter: notationStyles["report-compare-code-legend-after"],
 } as const
 
-/** 葉を直接描く数の部品が付ける class 名（Markdown の `stats`・`stat` と同じ見た目）。 */
+/** 内容部品を直接描く数の部品が付ける class 名（Markdown の `stats`・`stat` と同じ見た目）。 */
 export const statsLeafClassNames = {
   stats: notationStyles["report-stats"],
   keyFigures: notationStyles["report-key-figures"],
