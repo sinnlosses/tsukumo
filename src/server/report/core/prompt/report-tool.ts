@@ -11,6 +11,17 @@ import { MAX_SESSION_SUMMARY_LENGTH } from "../../../../shared/session/session-d
 import type { SessionEvent } from "../../../../shared/session/session-event.ts"
 import { REPORT_CALL_EXAMPLES_TEXT } from "./call-example.ts"
 
+/** 触れるレポート（つまみと式）の書き方。ツールの説明に載せる分量はここで抑える。 */
+const REPORT_PARAMETER_GUIDE =
+  "触れるレポート: 読み手が前提の値を振って結果の変わり方を比べたい問い（どの値がよいか・しきい値で何が変わるか・条件を足すとどうなるか）のときだけ、" +
+  "ParameterSlider（name・label・min・max・step・initial）か ParameterCheckBox（name・label・initial）を置く。つまみは4個まで。結論の文は初期値のまま読めるように書く。\n" +
+  '値はリテラル、{call:"expr",args:{source:式}}、{call:"format",args:{template:"…${式}…"}} のどれか。式を結べるのは Paragraph.text・Stats の value/before/target・Chart の title/labels/values/emphasis だけ。\n' +
+  '式: つまみの name と Report.defs（名前→式の文字列）の名前、数・"文字"・true/false・[1,2]、+ - * / %、比較、&& || !、条件 ? A : B（並びとの演算は要素ごと）。' +
+  "関数: range(a,b) min max round(x,d) fixed(x,d) sum len minOf maxOf argmin argmax at(list,i) text(list,suffix)。\n" +
+  "数を文字にすると整数はそのまま、それ以外は小数1桁。桁を変えるなら fixed(x, 桁)。" +
+  "文を条件で切り替えるときは defs の式に文字を返させ、${…} の中は名前か短い式だけにする。" +
+  "差の向きは引き算で書かず、Stats の before と value を結んで better で言う。\n"
+
 /**
  * モデルに見せる `report` ツールの説明。記法の条はここに書かず、規約の節を1行で指す。
  * MCP ツールの説明文は既定で 2048 字までしか渡らず、規約の全文は入らない。
@@ -21,6 +32,7 @@ export const REPORT_TOOL_DESCRIPTION =
   "差し戻されたあとの呼び出しで省いた Report の欄は、同じターンで直前に差し戻した呼び出しの値を引き継ぐ。" +
   "書き方は「レポートの記法（tsukumo）」の節に従う。" +
   "本文は日本語で書く（識別子・パス・コマンド・コードは英語のままでよい）。\n" +
+  REPORT_PARAMETER_GUIDE +
   REPORT_CALL_EXAMPLES_TEXT
 
 /**

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 import { z } from "zod"
 
 import { partCardOf } from "../../../../../src/server/report/core/prompt/part-card.ts"
+import { a2uiStructureFaults } from "../../../../../src/server/report/core/rules/structure.ts"
 import { REPORT_COMPONENT_SCHEMAS } from "../../../../../src/shared/report/a2ui-report-catalog.ts"
 import { descriptionsIn } from "../../../../fixture/json-schema-description.ts"
 
@@ -57,6 +58,23 @@ describe("partCardOf", () => {
 
   it("引ける名前は 31 部品", () => {
     expect(NAMES).toHaveLength(31)
+  })
+
+  it.each(["ParameterSlider", "ParameterCheckBox", "Stats", "Paragraph", "Chart"])(
+    "%s のカードに、式を結ぶ例が載り、構造の検査に通る",
+    (name) => {
+      const text = cardText(name)
+      const heading = text.split("\n").findIndex((line) => line.startsWith("式を結ぶ例"))
+      const parts = z.array(z.unknown()).parse(JSON.parse(text.split("\n")[heading + 1] ?? ""))
+
+      expect(heading).toBeGreaterThan(0)
+      expect(JSON.stringify(parts)).toMatch(/"call":"(expr|format)"/)
+      expect(a2uiStructureFaults(parts)).toEqual([])
+    },
+  )
+
+  it("式を結ぶ例の無い部品のカードに、式の例の節は載らない", () => {
+    expect(cardText("Table")).not.toContain("式を結ぶ例")
   })
 
   it("Trace のカードに、状態と出力の欄と例が載る", () => {
