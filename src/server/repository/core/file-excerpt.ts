@@ -6,6 +6,7 @@ import {
   MAX_EXCERPT_LINE_LENGTH,
   MAX_EXCERPT_LINES,
 } from "../../../shared/repository/file-excerpt.ts"
+import { clipText } from "../../../shared/utils/clip-text.ts"
 
 /** 1行を指したときに添える前後の行数。 */
 const CONTEXT_LINES_AROUND_LINE = 3
@@ -50,9 +51,12 @@ function splitLines(text: string): readonly string[] {
 
 function truncateLine(line: string): { readonly text: string; readonly truncated: boolean } {
   // コードポイントは UTF-16 で2単位までなので、上限の2倍の単位を切れば上限のコードポイントは割らずに残る。
-  const head = Array.from(line.slice(0, MAX_EXCERPT_LINE_LENGTH * 2))
+  const { head, omittedLength } = clipText(
+    line.slice(0, MAX_EXCERPT_LINE_LENGTH * 2),
+    MAX_EXCERPT_LINE_LENGTH,
+  )
   return {
-    text: head.slice(0, MAX_EXCERPT_LINE_LENGTH).join(""),
-    truncated: head.length > MAX_EXCERPT_LINE_LENGTH || line.length > MAX_EXCERPT_LINE_LENGTH * 2,
+    text: head,
+    truncated: omittedLength > 0 || line.length > MAX_EXCERPT_LINE_LENGTH * 2,
   }
 }

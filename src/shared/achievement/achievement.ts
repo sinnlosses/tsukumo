@@ -10,6 +10,7 @@ import {
   type DateKey,
 } from "../diary/date-key.ts"
 import { dailyDiaryStatusSchema, type DailyDiaryStatus } from "../diary/diary.ts"
+import { monthDayLabel } from "../utils/month-day-label.ts"
 
 /**
  * 見る日の選び方（成果の手続きの入力）。
@@ -187,8 +188,7 @@ function achievementRequestDayPhrase(date: DateKey, today: DateKey): string {
   if (date === previousDateKey(today)) {
     return "昨日"
   }
-  const parsed = Temporal.PlainDate.from(date)
-  return `${String(parsed.month)}月${String(parsed.day)}日`
+  return monthDayLabel(Temporal.PlainDate.from(date))
 }
 
 /** 「- <ID> summary」の並び。20件を超えたら「ほか n 件」の1行に畳む。 */

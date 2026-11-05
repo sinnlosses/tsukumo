@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { monthDayLabel } from "../../../src/browser/utils/month-day-label.ts"
+import { monthDayLabel } from "../../../src/shared/utils/month-day-label.ts"
 
 describe("monthDayLabel", () => {
   it("「9月23日」の形で、年と曜日は付けない", () => {

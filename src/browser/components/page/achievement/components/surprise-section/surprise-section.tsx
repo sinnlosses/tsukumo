@@ -6,7 +6,7 @@ import type {
   AchievementGraduation,
   AchievementMilestone,
 } from "../../../../../../shared/achievement/achievement.ts"
-import { monthDayLabel } from "../../../../../utils/month-day-label.ts"
+import { monthDayLabel } from "../../../../../../shared/utils/month-day-label.ts"
 import { Heading } from "../../../../ui/heading/heading.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import { VStack } from "../../../../ui/v-stack/v-stack.tsx"

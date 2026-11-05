@@ -8,6 +8,7 @@ import {
   type MainViewStepBody,
   type MainViewTurn,
 } from "../../../../../../../shared/session/main-view-shape.ts"
+import { formatMinutesSeconds } from "../../../../../../../shared/utils/elapsed-time.ts"
 import { doneMarkOf } from "../../../../../../domain/phase-mark.ts"
 
 type TextBody = Extract<MainViewStepBody, { readonly kind: "text" }>
@@ -78,6 +79,5 @@ function durationOf(phase: MainViewPhaseLabel): string {
   if (phase.kind !== "phase" || phase.duration.kind !== "known") {
     return ""
   }
-  const seconds = Math.round(phase.duration.milliseconds / 1000)
-  return `${String(Math.floor(seconds / 60))}:${String(seconds % 60).padStart(2, "0")}`
+  return formatMinutesSeconds(Math.round(phase.duration.milliseconds / 1000))
 }

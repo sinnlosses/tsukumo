@@ -11,8 +11,8 @@ import {
   type LampLevel,
 } from "../../../../../shared/achievement/achievement-calendar.ts"
 import { dateKeyOfPlainDate, type DateKey } from "../../../../../shared/diary/date-key.ts"
+import { monthDayLabel } from "../../../../../shared/utils/month-day-label.ts"
 import { rpc } from "../../../../stores/rpc.ts"
-import { monthDayLabel } from "../../../../utils/month-day-label.ts"
 import { LAMP_LABEL } from "../domain/lamp-label.ts"
 
 const REFETCH_INTERVAL_MS = 60_000

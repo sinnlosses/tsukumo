@@ -19,6 +19,7 @@ import {
   plannedPhaseNumber,
 } from "../../../../shared/session/work-plan-phase-number.ts"
 import { currentPhaseOf, plannedPhasesOf } from "../../../../shared/session/work-plan.ts"
+import { monthDayLabel } from "../../../../shared/utils/month-day-label.ts"
 import { phaseMarkOf } from "../../../domain/phase-mark.ts"
 import { DEFAULT_CHARACTER_NAME } from "../../../domain/portrait-appearance.ts"
 import { toolInputText } from "../../../domain/tool-summary.ts"
@@ -28,7 +29,6 @@ import { useInquiryJump } from "../../../stores/inquiry-jump.ts"
 import { navigateTo, useScreen } from "../../../stores/screen.tsx"
 import { useSession, useTurnRunning } from "../../../stores/session.ts"
 import { useTurnSelection } from "../../../stores/turn-selection.ts"
-import { monthDayLabel } from "../../../utils/month-day-label.ts"
 import {
   backgroundSummaryLabel,
   currentWorkStepGroups,

@@ -1,6 +1,7 @@
 // 数直線と bullet の入力から、軸の範囲と各印の位置（0〜1 の割合）を決める。座標は書き手から受け取らない。
 
 import type { GaugeSpec } from "../../../../../../../shared/report/plot-gauge.ts"
+import { clipText, clipWithEllipsis } from "../../../../../../../shared/utils/clip-text.ts"
 
 /** 軸の両端に空ける割合。端の印と字が枠から切れないようにする。 */
 const EDGE = 0.04
@@ -139,8 +140,9 @@ export function valueText(value: number): string {
 }
 
 export function truncated(label: string): string {
-  const letters = [...label]
-  return letters.length <= LABEL_MAX ? label : `${letters.slice(0, LABEL_MAX - 1).join("")}…`
+  return clipText(label, LABEL_MAX).omittedLength === 0
+    ? label
+    : clipWithEllipsis(label, LABEL_MAX - 1)
 }
 
 /** 値の最小〜最大を含む範囲。`includeZero` なら 0 を含める。1 点・同じ値だけでも幅を持たせる。 */

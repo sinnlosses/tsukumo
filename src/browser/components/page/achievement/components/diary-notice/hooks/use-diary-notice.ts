@@ -11,9 +11,9 @@
 
 import { useState } from "react"
 
+import { monthDayLabel } from "../../../../../../../shared/utils/month-day-label.ts"
 import { selectAchievementDate } from "../../../../../../stores/screen.tsx"
 import { useSession } from "../../../../../../stores/session.ts"
-import { monthDayLabel } from "../../../../../../utils/month-day-label.ts"
 import { requestDiaryBookOpen } from "../../../hooks/use-diary-book-open-request.ts"
 
 type DiaryNoticeView =

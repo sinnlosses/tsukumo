@@ -11,6 +11,7 @@ import clsx from "clsx"
 import { useRef, useState } from "react"
 import type { KeyboardEvent, ReactElement } from "react"
 
+import { formatMinutesSeconds } from "../../../../../../shared/utils/elapsed-time.ts"
 import { truncateForDisplay } from "../../../../../features/current-work/domain/current-work-step.ts"
 import { usePhoneWidth } from "../../../../../hooks/use-phone-width.ts"
 import { useNowWhile } from "../../../../../stores/clock.ts"
@@ -422,8 +423,7 @@ function InquiryFace(props: {
 /** 待っている時間を「0:42」の形にする（分は 60 を超えても繰り上げない）。 */
 function waitedText(elapsedMs: number): string {
   const seconds = Math.max(0, Math.floor(elapsedMs / 1000))
-  const minutes = Math.floor(seconds / 60)
-  return `${String(minutes)}:${String(seconds % 60).padStart(2, "0")}`
+  return formatMinutesSeconds(seconds)
 }
 
 function imageSourceOf(inquiry: Exclude<InquiryModel, { readonly kind: "none" }>): ShelvedSource {

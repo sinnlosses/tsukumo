@@ -5,7 +5,7 @@ import {
   type AchievementTask,
 } from "../../../../../shared/achievement/achievement.ts"
 import type { DiaryWriting } from "../../../../../shared/diary/diary.ts"
-import { monthDayLabel } from "../../../../utils/month-day-label.ts"
+import { monthDayLabel } from "../../../../../shared/utils/month-day-label.ts"
 import { EMPTY_DAY_REASON } from "./review-note.ts"
 
 /** 振り返りのボタンを押せるか。 */
