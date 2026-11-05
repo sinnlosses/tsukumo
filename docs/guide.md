@@ -10,8 +10,9 @@
 
 1. `README.md`
 2. `docs/guide/overview.md` の全体図（プロセス・層・画面の領域）
-3. `docs/guide/flow-conversation.md` の会話の基本の流れ（起動・依頼・許可と質問・差し戻し）
-4. `docs/guide/flow-session-and-delegation.md` のセッションの起こし直しと委譲の流れ
+3. `docs/guide/domain-map.md` の用語の関係図（会話・作業・キャラクターの主な語）
+4. `docs/guide/flow-conversation.md` の会話の基本の流れ（起動・依頼・許可と質問・差し戻し）
+5. `docs/guide/flow-session-and-delegation.md` のセッションの起こし直しと委譲の流れ
 
 以降の図解は、後続のタスクが1行ずつ足す。
 
@@ -21,6 +22,7 @@
 
 | ファイル                                    | 説明                                                                                                           |
 | ------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `docs/guide/domain-map.md`                  | 会話・作業・キャラクターの3つのまとまりについて、主な用語どうしの関係を図で持つ。                              |
 | `docs/guide/flow-conversation.md`           | 起動・依頼1件・許可と質問・`report` の差し戻しの4本の流れをシーケンス図で持つ。                                |
 | `docs/guide/flow-session-and-delegation.md` | セッションの起こし直し・タスクの委譲と返却の関門・ワークプランのフェーズの状態を、シーケンス図と状態図で持つ。 |
 | `docs/guide/overview.md`                    | プロセス・層・画面の領域の全体図を持つ。                                                                       |
