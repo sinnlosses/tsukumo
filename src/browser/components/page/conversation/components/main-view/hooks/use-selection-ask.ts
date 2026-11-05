@@ -22,7 +22,7 @@ export function useSelectionAsk(): SelectionAskView {
   const requestFocus = useComposerFocus((state) => state.requestFocus)
 
   function show(): void {
-    setSelection(reportSelectionOf(document.getSelection()))
+    setSelection(reportSelectionOf(document.getSelection() ?? undefined))
   }
   function hide(): void {
     setSelection(undefined)
@@ -46,7 +46,7 @@ export function useSelectionAsk(): SelectionAskView {
     }
   })
   useEventListener(document, "selectionchange", () => {
-    if (reportSelectionOf(document.getSelection()) === undefined) {
+    if (reportSelectionOf(document.getSelection() ?? undefined) === undefined) {
       hide()
     }
   })

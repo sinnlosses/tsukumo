@@ -36,6 +36,6 @@ describe("isScrolledToEnd", () => {
     expect(isScrolledToEnd({ scrollTop: 400, clientHeight: 300, scrollHeight: 1000 })).toBe(false)
     expect(isScrolledToEnd({ scrollTop: 0, clientHeight: 300, scrollHeight: 1000 })).toBe(false)
     expect(isScrolledToEnd({ scrollTop: 0, clientHeight: 300, scrollHeight: 300 })).toBe(false)
-    expect(isScrolledToEnd(null)).toBe(false)
+    expect(isScrolledToEnd(undefined)).toBe(false)
   })
 })

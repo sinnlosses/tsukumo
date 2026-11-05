@@ -201,7 +201,7 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
       const passed = readHeadingIndexOf(
         passedAtTop,
         items.map((item) => item.level),
-        isScrolledToEnd(scrollerOfContent),
+        isScrolledToEnd(scrollerOfContent ?? undefined),
       )
       readAt(Math.max(passed, 0), passed >= 0)
     }
@@ -214,8 +214,12 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
       if (sameHeadings && !checkLine) {
         return
       }
-      const line = activeLineOf(content, navRef.current, scrollerOfContent)
-      const rootMargin = bandRootMargin(line, scrollerOfContent)
+      const line = activeLineOf(
+        content,
+        navRef.current ?? undefined,
+        scrollerOfContent ?? undefined,
+      )
+      const rootMargin = bandRootMargin(line, scrollerOfContent ?? undefined)
       const bandKey = `${String(Math.round(line))}:${rootMargin}`
       if (sameHeadings && bandKey === observedBand) {
         return

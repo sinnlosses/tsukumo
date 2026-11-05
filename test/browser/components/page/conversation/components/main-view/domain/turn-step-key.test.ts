@@ -14,7 +14,7 @@ function keyEvent(overrides: Partial<TurnStepKeyEvent>): TurnStepKeyEvent {
     ctrlKey: false,
     altKey: false,
     isComposing: false,
-    target: null,
+    target: undefined,
     ...overrides,
   }
 }

@@ -76,7 +76,11 @@ describe("CommandSuggestions", () => {
       />,
     )
 
-    fireEvent.mouseDown(screen.getAllByRole("listitem")[1]!)
+    const secondItem = screen.getAllByRole("listitem").at(1)
+    if (secondItem === undefined) {
+      throw new Error("2つ目の候補が無い")
+    }
+    fireEvent.mouseDown(secondItem)
 
     expect(calls).toEqual([1])
   })

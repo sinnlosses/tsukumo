@@ -141,6 +141,6 @@ describe("拒否文", () => {
   })
 
   test("対象に無い拡張子の手順は出さない", () => {
-    expect(formatTokenLimitRefusal([oversized[0]!])).not.toContain("*.module.css")
+    expect(formatTokenLimitRefusal(oversized.slice(0, 1))).not.toContain("*.module.css")
   })
 })

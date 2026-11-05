@@ -46,6 +46,8 @@ const SIDES: PointsSide[] = [
   { kind: "points", heading: "架空の案B", points: ["架空の別の点"] },
 ]
 
+const [FIRST_SIDE = { kind: "points", heading: "", points: [] }] = SIDES
+
 const MANY_POINTS: PointsSide[] = [
   {
     kind: "points",
@@ -98,7 +100,7 @@ describe("Compare の部品", () => {
     ["題つき", SIDES, { title: "架空の `b.ts` の見比べ" }],
     [
       "見出しの inline code",
-      [{ kind: "points", heading: "`x`", points: ["架空"] }, SIDES[1] ?? SIDES[0]!],
+      [{ kind: "points", heading: "`x`", points: ["架空"] }, SIDES[1] ?? FIRST_SIDE],
       {},
     ],
     ["fold", SIDES, { fold: "架空の畳み" }],
@@ -106,7 +108,7 @@ describe("Compare の部品", () => {
     ["箇条が 12 項目の側", MANY_POINTS, {}],
     [
       "太字の記号は効かせず字のまま",
-      [{ kind: "points", heading: "**A**", points: ["**x**"] }, SIDES[1] ?? SIDES[0]!],
+      [{ kind: "points", heading: "**A**", points: ["**x**"] }, SIDES[1] ?? FIRST_SIDE],
       {},
     ],
   ])("%s は旧い描き方と同じ DOM", (_, sides, fields) => {

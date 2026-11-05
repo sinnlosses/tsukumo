@@ -55,6 +55,7 @@
       { "prefer": "type-imports", "fixStyle": "inline-type-imports" }
     ],
     "typescript/no-explicit-any": "error",
+    "typescript/no-non-null-assertion": "error",
     "typescript/no-import-type-side-effects": "error",
     "unicorn/no-array-sort": "error",
     "unicorn/no-array-reverse": "error",
@@ -217,31 +218,13 @@
           "error",
           {
             "paths": [
-              {
-                "name": "react",
-                "importNames": ["useMemo", "useCallback", "memo"],
-                "message": "手でメモ化しない。React Compiler に任せる（docs/coding-standards/react.md「手でメモ化しない」）"
-              },
-              {
-                "name": "@anthropic-ai/claude-agent-sdk",
-                "message": "SDK を import するのは機能の adapter/ 直下（または adapter/sdk/）と共有の箱 server/adapter/ 直下の sdk- で始まるファイルだけ（docs/architecture/code-placement.md）"
-              }
+              { "name": "react", "importNames": ["useMemo", "useCallback", "memo"] },
+              { "name": "@anthropic-ai/claude-agent-sdk" }
             ],
             "patterns": [
-              {
-                "group": ["node:process", "process"],
-                "importNames": ["env", "cwd"],
-                "message": "env・cwd を読むのは cli.ts と tsukumo-home.ts だけ（docs/coding-standards/error-input-and-absent-value.md「外部の入力を読む場所を1つにする」）"
-              },
-              {
-                "group": ["node:os", "os"],
-                "message": "node:os を import するのは server/adapter/tsukumo-home.ts だけ"
-              },
-              {
-                "group": ["**/tsukumo-home.ts"],
-                "importNames": ["tsukumoHomeDir"],
-                "message": "~/.tsukumo の下の置き場は tsukumoHomePath(キー) で引く。ホームの根を直に読まない"
-              },
+              { "group": ["node:process", "process"], "importNames": ["env", "cwd"] },
+              { "group": ["node:os", "os"] },
+              { "group": ["**/tsukumo-home.ts"], "importNames": ["tsukumoHomeDir"] },
               {
                 "group": [
                   "node:http",
@@ -257,8 +240,7 @@
                   "node:dgram",
                   "dgram"
                 ],
-                "allowTypeImports": true,
-                "message": "ネットワークのモジュールを読み込むのは server/view-server/adapter/server.ts だけ"
+                "allowTypeImports": true
               }
             ]
           }
@@ -490,7 +472,14 @@
       }
     },
     {
-      "files": ["scripts/**", "src/shared/**", "src/server/core/**", "src/server/*/core/**"],
+      "files": [
+        "scripts/**",
+        "src/shared/**",
+        "src/server/core/**",
+        "src/server/*/core/**",
+        "src/browser/**/domain/**",
+        "src/browser/utils/**"
+      ],
       "rules": {
         "typescript/no-restricted-types": [
           "error",
@@ -500,6 +489,16 @@
             }
           }
         ]
+      }
+    },
+    {
+      // 外の型が null を要求する口。React の RefObject<X | null> と lezer の SyntaxNode.parent（SyntaxNode | null）
+      "files": [
+        "src/browser/domain/reveal/use-report-reveal.ts",
+        "src/browser/components/page/conversation/components/dispatch/domain/markdown-newline-continuation.ts"
+      ],
+      "rules": {
+        "typescript/no-restricted-types": "off"
       }
     }
   ]

@@ -208,11 +208,15 @@ describe("UsageReviewCard（結果）", () => {
   it("主ボタンで依頼が1回送られ、「見送る」でコマンドが1回送られる", () => {
     let primaryCalled = 0
     let dismissCalled = 0
+    const firstProposal = FIXTURE_PROPOSALS.at(0)
+    if (firstProposal === undefined) {
+      throw new Error("提案のフィクスチャが空")
+    }
     const review: UseUsageReviewResult = {
       ...resultReview,
       proposals: [
         {
-          ...FIXTURE_PROPOSALS[0]!,
+          ...firstProposal,
           onPrimary: () => (primaryCalled += 1),
           onDismiss: () => (dismissCalled += 1),
         },

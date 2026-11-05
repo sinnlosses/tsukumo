@@ -17,14 +17,16 @@ export function readHeadingIndexOf(
 
 /** 転がる器が、転がせるのに端まで転がしきっているか（1px の誤差を許す）。 */
 export function isScrolledToEnd(
-  scroller: {
-    readonly scrollTop: number
-    readonly clientHeight: number
-    readonly scrollHeight: number
-  } | null,
+  scroller:
+    | {
+        readonly scrollTop: number
+        readonly clientHeight: number
+        readonly scrollHeight: number
+      }
+    | undefined,
 ): boolean {
   return (
-    scroller !== null &&
+    scroller !== undefined &&
     scroller.scrollHeight > scroller.clientHeight &&
     scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - 1
   )

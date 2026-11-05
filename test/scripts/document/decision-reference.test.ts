@@ -50,8 +50,12 @@ describe("findStrayDecisionReferences", () => {
   it("見出しに無い句は食い違いになる", () => {
     const references = findDecisionReferences("sample.md", `前\n${DECISION}「存在しない節」`)
     const found = findStrayDecisionReferences(references, HEADINGS)
+    const [first] = found
     expect(found).toHaveLength(1)
-    expect(formatStrayDecisionReference(found[0]!)).toContain("sample.md:2")
+    if (first === undefined) {
+      throw new Error("食い違いが見つからない")
+    }
+    expect(formatStrayDecisionReference(first)).toContain("sample.md:2")
   })
 
   it("decision.md 以外を引く参照は拾わない", () => {

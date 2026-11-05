@@ -10,8 +10,8 @@ export type ReportSelection = {
 }
 
 /** 折りたたまれておらず、空白だけでもなく、全体がレポートの本文の中にある選択だけを返す。 */
-export function reportSelectionOf(selection: Selection | null): ReportSelection | undefined {
-  if (selection === null || selection.isCollapsed || selection.rangeCount === 0) {
+export function reportSelectionOf(selection: Selection | undefined): ReportSelection | undefined {
+  if (selection === undefined || selection.isCollapsed || selection.rangeCount === 0) {
     return undefined
   }
   const range = selection.getRangeAt(0)

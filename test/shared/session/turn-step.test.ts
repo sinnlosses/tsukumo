@@ -30,6 +30,15 @@ function turnSteps(list: ReturnType<typeof currentTurnSteps>): readonly TurnStep
   return list.steps
 }
 
+/** `turnSteps` の先頭の手順（無ければ分かるように投げる）。 */
+function firstStep(list: ReturnType<typeof currentTurnSteps>): TurnStep {
+  const step = turnSteps(list)[0]
+  if (step === undefined) {
+    throw new Error("手順が1つも無い")
+  }
+  return step
+}
+
 describe("currentTurnSteps（依頼の手順を最後の依頼から導く）", () => {
   it("依頼が一度も無ければ no-request を返す（「まだ依頼が無い」）", () => {
     expect(currentTurnSteps([], false)).toEqual({ kind: "no-request" })
@@ -151,7 +160,7 @@ describe("toolDuration（所要時間。tool-started / tool-finished の at か�
       false,
     )
 
-    expect(toolDuration(turnSteps(list)[0]!)).toEqual({ kind: "known", milliseconds: 3_500 })
+    expect(toolDuration(firstStep(list))).toEqual({ kind: "known", milliseconds: 3_500 })
   })
 
   it("背景で走らせた Bash は、済みでも知らせを待つあいだは unknown、届いたら開始から知らせまで", () => {
@@ -182,7 +191,7 @@ describe("toolDuration（所要時間。tool-started / tool-finished の at か�
       false,
     )
 
-    expect(toolDuration(turnSteps(list)[0]!)).toEqual({ kind: "unknown" })
+    expect(toolDuration(firstStep(list))).toEqual({ kind: "unknown" })
   })
 
   it("復元した手順（開始・終了が restored）は unknown（replay の速さを所要時間に見せない）", () => {
@@ -197,7 +206,7 @@ describe("toolDuration（所要時間。tool-started / tool-finished の at か�
       false,
     )
 
-    expect(toolDuration(turnSteps(list)[0]!)).toEqual({ kind: "unknown" })
+    expect(toolDuration(firstStep(list))).toEqual({ kind: "unknown" })
   })
 
   it("transcript から時刻を戻した手順（recovered）は元の時刻の差になる", () => {
@@ -212,7 +221,7 @@ describe("toolDuration（所要時間。tool-started / tool-finished の at か�
       false,
     )
 
-    expect(toolDuration(turnSteps(list)[0]!)).toEqual({ kind: "known", milliseconds: 3_500 })
+    expect(toolDuration(firstStep(list))).toEqual({ kind: "known", milliseconds: 3_500 })
   })
 })
 

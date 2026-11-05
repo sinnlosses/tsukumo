@@ -179,7 +179,11 @@ describe("taskList", () => {
   })
 
   it("ドラフトで絞ると他の行は消える", () => {
-    const draft: TaskSummaryItem = { ...TASKS[0]!, id: "X-009", status: taskStatusOfWord("draft") }
+    const firstTask = TASKS.at(0)
+    if (firstTask === undefined) {
+      throw new Error("タスクのフィクスチャが空")
+    }
+    const draft: TaskSummaryItem = { ...firstTask, id: "X-009", status: taskStatusOfWord("draft") }
     render(<TaskList tasks={known([...TASKS, draft])} selectedStatus="draft" />)
 
     expect(screen.getAllByRole("listitem")).toHaveLength(1)

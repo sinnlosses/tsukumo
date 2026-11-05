@@ -17,14 +17,14 @@ export function topOf(element: Element): number {
  */
 export function activeLineOf(
   content: HTMLElement,
-  nav: HTMLElement | null,
-  scroller: Element | null,
+  nav: HTMLElement | undefined,
+  scroller: Element | undefined,
 ): number {
   const headHeight = Number.parseFloat(
     getComputedStyle(content).getPropertyValue("--turn-card-head-height"),
   )
   const reference =
-    nav !== null && nav.getBoundingClientRect().height > 0 ? nav : (scroller ?? content)
+    nav !== undefined && nav.getBoundingClientRect().height > 0 ? nav : (scroller ?? content)
   return (
     reference.getBoundingClientRect().top +
     (Number.isFinite(headHeight) ? headHeight : 0) +
@@ -40,9 +40,9 @@ const BAND_REACH_PX = 1_000_000
  * 帯と交わる見出しは、上端が `line` 以上に上にある（転がる器の外へ転がり去った見出しも含む）。
  * 根は転がる器（無ければ画面）で、根の上へ大きく広げ、下端を `line` まで縮める。
  */
-export function bandRootMargin(line: number, scroller: Element | null): string {
+export function bandRootMargin(line: number, scroller: Element | undefined): string {
   const rootBottom =
-    scroller === null
+    scroller === undefined
       ? document.documentElement.clientHeight
       : scroller.getBoundingClientRect().bottom
   return `${String(BAND_REACH_PX)}px 0px ${String(Math.round(line - rootBottom))}px 0px`

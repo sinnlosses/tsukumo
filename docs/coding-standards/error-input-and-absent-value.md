@@ -184,5 +184,6 @@ readonly turn:
 `undefined` に畳む**。「無い」の表し方が2つあると、チェックが `== null` か `=== undefined` かで
 揺れ、どちらが起きうるのかを呼び出し側が毎回確かめることになる。この判断を境界の1箇所に寄せる。
 
-`scripts/`・`src/shared/`・`src/server/` の `core` の型位置の `null`（型・インターフェース・関数の引数と戻り値・
+`scripts/`・`src/shared/`・`src/server/` の `core`・`src/browser/` の `domain` と `utils` の型位置の `null`（型・インターフェース・関数の引数と戻り値・
 変数の型注釈・クラスのメンバの型）は、`.oxlintrc.json` の `typescript/no-restricted-types` が機械で見る。
+外の型が null を要求する口（React の `RefObject<X | null>`、lezer の `SyntaxNode | null`）だけは、そのファイルを除外する。除外は5件までにする。

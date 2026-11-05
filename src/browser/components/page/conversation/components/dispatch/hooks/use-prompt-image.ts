@@ -62,7 +62,7 @@ export function usePromptImage(args: UsePromptImageArgs): PromptImageModel {
       setImages((current) => current.filter((_, at) => at !== index))
     },
     onPaste: (event) => {
-      const files = promptImageFiles(event.clipboardData)
+      const files = promptImageFiles(event.clipboardData ?? undefined)
       if (files.length === 0) {
         return
       }
@@ -72,12 +72,12 @@ export function usePromptImage(args: UsePromptImageArgs): PromptImageModel {
     },
     onDragOver: (event) => {
       // ファイルを掴んできたときだけ落とせるようにする（文字のドラッグは入力欄のサーフェスの既定の振る舞いのまま）。
-      if (carriesFiles(event.dataTransfer)) {
+      if (carriesFiles(event.dataTransfer ?? undefined)) {
         event.preventDefault()
       }
     },
     onDrop: (event) => {
-      const files = promptImageFiles(event.dataTransfer)
+      const files = promptImageFiles(event.dataTransfer ?? undefined)
       if (files.length === 0) {
         return
       }
@@ -88,7 +88,7 @@ export function usePromptImage(args: UsePromptImageArgs): PromptImageModel {
       imageInputRef.current?.click()
     },
     onImagesChosen: (event) => {
-      attachFiles(chosenPromptImageFiles(event.target.files))
+      attachFiles(chosenPromptImageFiles(event.target.files ?? undefined))
       // 同じファイルを続けて選び直しても `change` が届くように、選んだものを空に戻す（札のほうは state が持っている）。
       event.target.value = ""
       args.focusSurface()

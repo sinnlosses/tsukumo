@@ -56,7 +56,7 @@ export function useWelcome(): WelcomeModel {
       ctrlKey: event.ctrlKey,
       altKey: event.altKey,
       isComposing: event.isComposing,
-      target: event.target,
+      target: event.target ?? undefined,
     })
     if (key === undefined) {
       return

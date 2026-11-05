@@ -12,7 +12,7 @@ function press(key: string, rest: Partial<WelcomeKeyEvent> = {}): WelcomeKeyEven
     ctrlKey: false,
     altKey: false,
     isComposing: false,
-    target: null,
+    target: undefined,
     ...rest,
   }
 }

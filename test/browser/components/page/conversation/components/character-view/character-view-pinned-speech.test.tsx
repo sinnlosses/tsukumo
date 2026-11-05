@@ -55,12 +55,15 @@ describe("CharacterView（吹き出しを押すと遡る。docs/architecture/scr
 
     const olderBalloon = document.querySelector("[data-latest='false']")
     expect(olderBalloon?.textContent).toBe("1つ目のセリフ")
-    fireEvent.click(olderBalloon!)
+    if (olderBalloon === null) {
+      throw new Error("古い吹き出しが無い")
+    }
+    fireEvent.click(olderBalloon)
 
     expect(document.querySelector(".portrait")?.getAttribute("data-expression")).toBe("default")
-    expect(olderBalloon?.getAttribute("aria-pressed")).toBe("true")
+    expect(olderBalloon.getAttribute("aria-pressed")).toBe("true")
 
-    fireEvent.click(olderBalloon!)
+    fireEvent.click(olderBalloon)
     expect(document.querySelector(".portrait")?.getAttribute("data-expression")).toBe("proud")
   })
 
@@ -95,7 +98,10 @@ describe("CharacterView（吹き出しを押すと遡る。docs/architecture/scr
     const olderBalloon = [...document.querySelectorAll("[data-interactive='true']")].find(
       (balloon) => balloon.textContent === "1つ目のセリフ",
     )
-    fireEvent.click(olderBalloon!)
+    if (olderBalloon === undefined) {
+      throw new Error("古い吹き出しが無い")
+    }
+    fireEvent.click(olderBalloon)
 
     expect(document.querySelector(".portrait")?.getAttribute("data-expression")).toBe("default")
   })
