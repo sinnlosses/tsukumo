@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
-import { FRAME_ERROR_REASON } from "../src/shared/frame-error-reason.ts"
-import { createCommandClient } from "./fixture/command-client.ts"
+import { FRAME_ERROR_REASON } from "../../src/shared/frame-error-reason.ts"
+import { createCommandClient } from "../fixture/command-client.ts"
 import {
   CHAT_MODE_EVENT,
   createFakeSession,
@@ -10,8 +10,8 @@ import {
   NO_DIARY_WRITER,
   REQUEST_EVENT,
   startRouter,
-} from "./fixture/command-router.ts"
-import { CHARACTER_EVENT } from "./fixture/session-event.ts"
+} from "../fixture/command-router.ts"
+import { CHARACTER_EVENT } from "../fixture/session-event.ts"
 
 /** 生成に渡す立ち絵（中身は見ないので最小の png の data URL）。 */
 const PORTRAIT_PNG_DATA_URL = "data:image/png;base64,AAAA"

@@ -11,9 +11,10 @@
 ### ディレクトリ
 
 ```
-src/                          配線（composition root）。cli.ts（入口）・main.ts（起動の段取り）・
-                              router.ts（全機能の手続きを束ねる）ほか、起動と接続を進める数ファイル
-  wiring/<機能>.ts            セッションの配線を機能ごとに組み立てる（上の「サーバの機能と、機能どうしのエッジ」）
+src/                          直下は入口だけ。cli.ts（入口）・main.ts（起動の段取りを並べるだけ）
+  wiring/                     配線（composition root）。起動の前提・共有の入れ物・ビューの配信・セッションの起動・終了の登録
+    <機能>.ts                 セッションの配線を機能ごとに組み立てる（上の「サーバの機能と、機能どうしのエッジ」）
+    router.ts                 全機能の手続きを束ねる。機能の組み立てとは別の性質だが配線なので wiring/ の直下に置く
   types/                      どの層にも属さない ambient 宣言（import されない *.d.ts）だけを置く
   shared/                     契約・イベント・状態・reducer・zod スキーマ（両側が読む語彙）。直下はプロトコルだけ
     <機能>/                   機能の語彙。名前はサーバの機能と同じ（上の「shared の機能」）
@@ -46,7 +47,7 @@ Beads アダプタ（`server/**/adapter/` の Beads を読むファイル）が�
 `readFakeBeadsIssues`）と短い見回りの間隔に差し替える（E2E の足場が課題を置く。課題のファイルがあれば `.beads` があるものとして扱う）。
 見張りの `watchTaskSummary` の読み元（`task-beads-source.ts`）は、変化の印を読む呼び出し（`createBeadsStampReader` の `bd where`）で
 `.beads` の有無を知り、無ければ `bd list` を打たずに `no-beads` を返す。この印の読み手は成果のキャッシュ
-（`closed-issue.ts`）と共有する1つで、`main.ts` が作って配線が両方に渡す（同時の読みは1回に束ねられる）。
+（`closed-issue.ts`）と共有する1つで、`assembleStartup` が作って両方に渡す（同時の読みは1回に束ねられる）。
 成果は Beads の閉じた課題だけで数える（`server/achievement/adapter/closed-issue.ts`。
 `.beads` が無ければ成果ごと `unknown`。`docs/requirements.md` 4.11 の「数えられない・読めないとき」）。
 前回知らせたものと同じ結果は知らせない。前回の初めは画面の初期値と同じ `loading`（最初の見回りの結果がまだ届いていない）なので、

@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest"
 
-import { openViewAfterRegisteringExit, readStartupPrerequisites } from "../src/startup-order.ts"
+import {
+  openViewAfterRegisteringExit,
+  readStartupPrerequisites,
+} from "../../src/wiring/startup-order.ts"
 
 describe("openViewAfterRegisteringExit", () => {
   it("ビューを開く前に終了のハンドラを1度だけ登録する", async () => {

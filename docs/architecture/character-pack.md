@@ -119,7 +119,7 @@ characters/<name>/
 パックの場所が `<ホームの置き場>/<名前>` そのものであるときだけ消す**（同名は後ろが勝つので、起動先の
 `local`・一覧の外・同梱だけのパックはここで外れる。シンボリックリンクなら消えるのはリンクだけ）。
 消したあとに何が起きるかの判定は `characterPackRemoval` 1つが持ち、画面に配る値と消す側が断る判断の
-両方がそこを通る。パックの外にある会話の記録（「会話の記録の置き場」）を一緒に消すのは配線層（`src/current-character.ts`）で、
+両方がそこを通る。パックの外にある会話の記録（「会話の記録の置き場」）を一緒に消すのは配線層（`src/wiring/current-character.ts`）で、
 記録が消せなくてもパックを消したことは取り消さない。
 
 ### パックの一覧と素材の URL
@@ -129,7 +129,7 @@ characters/<name>/
 理由を推し量らない。**ペルソナ（`personaBody`。`## 覚えたこと` の節より前）も1件に載せて配り**、
 保存後は `event()` の流し直しで画面の本文が変わる。
 
-**一覧を配り直す契機は `character-changed` を組むたび**（`src/current-character.ts` の `event`）。
+**一覧を配り直す契機は `character-changed` を組むたび**（`src/wiring/current-character.ts` の `event`）。
 パックの集まりを変える手続きはどれも「書いたら `event()` を返す」だけで一覧が配り直される（手続きごとに
 読み直しを呼ぶ形にしない。1つ呼び忘れると古い一覧が黙って配られる）。素材を配るときに突き合わせる
 一覧も、最後に `event()` で読んだものを使う。
@@ -170,7 +170,7 @@ characters/<name>/
   `CharacterPackName` だけをパスに組む。日付のファイルとほかのファイルは**名前で見分ける**（ウィンドウの側は `YYYY-MM-DD.jsonl` にだけ
   当たる正規表現でファイルを選ぶ）
 - **契約の型は `session-driver/core/session-driver.ts`、ファイルに触るのは上の adapter、結ぶのは配線層
-  （`src/session-start.ts` と `src/wiring/`）。** 置き場を差し替えられる `root` 引数も同じ手で持つ（テストがホームを
+  （`src/wiring/`）。** 置き場を差し替えられる `root` 引数も同じ手で持つ（テストがホームを
   汚さない）
 - **アーカイブへ書くのは `session/core/event/session-event-record.ts` の `recordSessionEvent`**（`session-generation-start.ts` の
   `receive` がイベント1件ずつ通すときに呼ぶ）。雑談でも仕事でも書き、行にそのときのモードを持たせる。復元の再生は駆動と別の関数

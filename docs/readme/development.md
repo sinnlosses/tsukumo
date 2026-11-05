@@ -24,13 +24,13 @@
 │   │   └── adapter/        #   どの機能にも属さない共有の境界
 │   ├── browser/            # ブラウザ。React の部品、unified の Markdown 変換、CSS
 │   ├── cli.ts              # エントリポイント。引数・環境変数の読み出し・終了コードだけ
-│   ├── main.ts             # 起動の段取り（前提チェック → キャラクター → 配信 → セッション）
-│   ├── router.ts           # 全機能の手続き（oRPC）を束ねる
-│   ├── current-character.ts  # いま出しているパックと選択肢の持ち主
-│   ├── view-delivery.ts    # ビューの配信（起動トークン・組み立てたもの・開いているタブ）
-│   ├── session-start.ts    # セッションを1つ起こす（機能ごとの組み立てを結ぶ）
-│   └── wiring/             # 機能ごとの組み立て
-│                           #   ※ src/ 直下と wiring/ は配線層。全層を import してよい唯一の場所
+│   ├── main.ts             # 起動の段取り（前提チェック → 組み立て → 配信とセッション → 終了の登録と開く）を並べるだけ
+│   └── wiring/             # 配線。機能ごとの組み立てと、起動の各段の中身
+│       ├── router.ts       #   全機能の手続き（oRPC）を束ねる
+│       ├── current-character.ts  # いま出しているパックと選択肢の持ち主
+│       ├── view-delivery.ts      # ビューの配信（起動トークン・組み立てたもの・開いているタブ）
+│       └── session-start.ts      # セッションを1つ起こす（機能ごとの組み立てを結ぶ）
+│                           #   ※ src/ 直下の入口と wiring/ は配線層。全層を import してよい唯一の場所
 ├── test/                   # テスト（src/ と同じディレクトリ構成 ＋ 層の検査の architecture/）
 ├── characters/             # キャラクターパックと素材（tsukumo-spirit が既定、local/ は .gitignore）
 ├── plugin/                 # セッションに載せる同梱の Claude Code プラグイン（token-usage-diet）

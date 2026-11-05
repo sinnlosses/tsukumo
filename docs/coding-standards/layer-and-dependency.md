@@ -21,7 +21,7 @@
 二重に書かず `docs/architecture.md`「層と依存の向き」を正典とする**（`src/browser/` の箱の表と
 同じ扱い）。ここには、その表だけでは読み取れない決まりを書く。
 
-`src/` 直下（`cli.ts` / `main.ts` と起動の段取り）と `src/wiring/` は配線なので全部を import してよい。**`core` と `browser` は互いを import しない。**
+`src/` 直下の入口（`cli.ts` / `main.ts`）と `src/wiring/` は配線なので全部を import してよい。**`core` と `browser` は互いを import しない。**
 **`core → adapter` も禁止**で、`core` は `node:` / `@anthropic-ai/*` / `ws` を import しない
 （外の世界へ出る道が無い）。両者を結ぶのは `src/` 直下と `src/wiring/` だけ。`adapter` は**1ファイル = 1つの境界**で、
 インターフェースは切らない（実装が2つあるもの — 駆動とホスト — だけ契約の型を `core` に置く）。

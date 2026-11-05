@@ -30,13 +30,13 @@ sequenceDiagram
 
 箱と実物
 
-| 箱             | 実物                                                                                      | 正典の文書                                  |
-| -------------- | ----------------------------------------------------------------------------------------- | ------------------------------------------- |
-| cli            | `src/cli.ts`                                                                              | `docs/architecture/runtime-flow.md`「起動」 |
-| main           | `src/main.ts`、`src/startup-order.ts`、`src/current-character.ts`、`src/session-start.ts` | `docs/architecture/runtime-flow.md`「起動」 |
-| ビューサーバ   | `src/view-delivery.ts`、`src/server/view-server/adapter/server.ts`                        | `docs/architecture/runtime-flow.md`「起動」 |
-| セッション管理 | `src/server/session/core/session-manager.ts`、`src/server/session/core/session-launch.ts` | `docs/architecture/runtime-flow.md`「起動」 |
-| ブラウザのタブ | `src/browser/`                                                                            | `docs/architecture/runtime-flow.md`「接続」 |
+| 箱             | 実物                                                                                                           | 正典の文書                                  |
+| -------------- | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| cli            | `src/cli.ts`                                                                                                   | `docs/architecture/runtime-flow.md`「起動」 |
+| main           | `src/main.ts`、`src/wiring/startup-order.ts`、`src/wiring/current-character.ts`、`src/wiring/session-start.ts` | `docs/architecture/runtime-flow.md`「起動」 |
+| ビューサーバ   | `src/wiring/view-delivery.ts`、`src/server/view-server/adapter/server.ts`                                      | `docs/architecture/runtime-flow.md`「起動」 |
+| セッション管理 | `src/server/session/core/session-manager.ts`、`src/server/session/core/session-launch.ts`                      | `docs/architecture/runtime-flow.md`「起動」 |
+| ブラウザのタブ | `src/browser/`                                                                                                 | `docs/architecture/runtime-flow.md`「接続」 |
 
 ## 2. 依頼1件
 

@@ -2,12 +2,12 @@
 // 切り替えと画面からの編集で入れ替わるので、可変なのはこのファイルの中だけにする。
 // 呼ぶ側は「いま出しているもの」を関数越しに引くだけで、いつ入れ替わったかを知らなくてよい。
 
-import { resolveBundledDir } from "./server/adapter/bundled-path.ts"
+import { resolveBundledDir } from "../server/adapter/bundled-path.ts"
 import {
   createCharacterPack,
   deleteCharacterPack,
   editCharacterPack,
-} from "./server/character-pack/adapter/character-edit.ts"
+} from "../server/character-pack/adapter/character-edit.ts"
 import {
   type CharacterPack,
   characterChangedEvent,
@@ -16,30 +16,30 @@ import {
   readCharacterAsset,
   readCharacterPack,
   type ServedCharacterAssetFile,
-} from "./server/character-pack/adapter/character-pack.ts"
+} from "../server/character-pack/adapter/character-pack.ts"
 import {
   type CharacterSelection,
   selectCharacterPack,
   selectInitialCharacterPack,
-} from "./server/character-pack/core/character-selection.ts"
-import { discardChatArchive } from "./server/chat/adapter/chat-archive.ts"
-import { discardChatSummary } from "./server/chat/adapter/chat-summary.ts"
+} from "../server/character-pack/core/character-selection.ts"
+import { discardChatArchive } from "../server/chat/adapter/chat-archive.ts"
+import { discardChatSummary } from "../server/chat/adapter/chat-summary.ts"
 import {
   forgetRememberedLineFromScreen,
   type PersonaMemoryFailureReport,
-} from "./server/chat/adapter/persona-memory.ts"
-import type { Config } from "./server/core/config.ts"
+} from "../server/chat/adapter/persona-memory.ts"
+import type { Config } from "../server/core/config.ts"
 import {
   readRememberedCharacter,
   writeRememberedCharacter,
-} from "./server/session/adapter/remembered-default.ts"
-import type { CharacterAssetLocation } from "./shared/character-pack/character-asset.ts"
+} from "../server/session/adapter/remembered-default.ts"
+import type { CharacterAssetLocation } from "../shared/character-pack/character-asset.ts"
 import type {
   CharacterCreate,
   CharacterDelete,
   CharacterEdit,
-} from "./shared/contract/character-pack.ts"
-import type { SessionEvent } from "./shared/session/session-event.ts"
+} from "../shared/contract/character-pack.ts"
+import type { SessionEvent } from "../shared/session/session-event.ts"
 
 /** いま出しているキャラクターパックへの窓口。持っているパックそのものは外へ出さない。 */
 export type CurrentCharacter = {

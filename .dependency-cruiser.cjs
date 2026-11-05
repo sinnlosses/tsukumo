@@ -206,7 +206,7 @@ const layerRules = [
   ),
   rule(
     "orpc-server-reader",
-    { path: "^src/", pathNot: "^src/server/[^/]+/adapter/|^src/[^/]+\\.ts$" },
+    { path: "^src/", pathNot: "^src/server/[^/]+/adapter/|^src/wiring/router\\.ts$" },
     { path: packagePath(["@orpc/server"]) },
   ),
 ]

@@ -15,7 +15,7 @@
 **「どのコマンドをどの機能が受け、どの条件で断るか」を、契約と機能の側の表から辿れるようにする。**
 画面からのコマンドは `/ws`、読み取りは HTTP の `/rpc` の oRPC の手続き（比較は `docs/research/server-procedure-proposal.md`）。
 
-**辿り方**: `src/router.ts` で名前を探す → `shared/contract/<機能>.ts`（形と断る条件の `meta`）→
+**辿り方**: `src/wiring/router.ts` で名前を探す → `shared/contract/<機能>.ts`（形と断る条件の `meta`）→
 `<機能>/adapter/<機能>-procedure.ts`（委ね先）→ `<機能>/core/`（コマンドなら `<機能>-command.ts` の
 行）。**どのコマンドでも同じ4段**。
 
@@ -64,7 +64,7 @@
 | エッジ                                | 許す場所                                                                                                                      |
 | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
 | `shared` → 外部                       | `zod` と `@orpc/contract`（`@orpc/server`・`node:` は読まない）。手続きより前から読んでいる `remeda` も可                     |
-| `@orpc/server` を import してよい場所 | 機能の `adapter/`（`view-server/adapter/` を含む）と配線（`src/router.ts`）だけ。**`core` と共有モジュールは禁止**            |
+| `@orpc/server` を import してよい場所 | 機能の `adapter/`（`view-server/adapter/` を含む）と配線（`src/wiring/router.ts`）だけ。**`core` と共有モジュールは禁止**     |
 | `browser` → 外部                      | `@orpc/client`（`/rpc` は `@orpc/client/fetch`、`/ws` は `@orpc/client/websocket`）と `@orpc/tanstack-query`                  |
-| `src/router.ts`（配線）               | すべての機能の `<機能>-procedure.ts` と、関数の型のための `<機能>-command.ts`。配線なので**機能どうしのエッジの表は増えない** |
+| `src/wiring/router.ts`（配線）        | すべての機能の `<機能>-procedure.ts` と、関数の型のための `<機能>-command.ts`。配線なので**機能どうしのエッジの表は増えない** |
 | 機能どうしのエッジ                    | 上の表のまま（受け手が別の機能の判断を要るようになったら、今と同じく表に足す）                                                |

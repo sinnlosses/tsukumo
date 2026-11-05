@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest"
 
-import { createRpcRouter } from "../../../../src/router.ts"
 import type { ViewUi } from "../../../../src/server/view-server/adapter/server-port.ts"
 import {
   startViewServer,
@@ -17,6 +16,7 @@ import { UNAVAILABLE_CONTEXT_USAGE } from "../../../../src/shared/usage/context-
 import { UNAVAILABLE_PLAN_USAGE } from "../../../../src/shared/usage/plan-usage.ts"
 import { EMPTY_TOKEN_USAGE_SUMMARY } from "../../../../src/shared/usage/token-usage-summary.ts"
 import type { ResolvedViewPort } from "../../../../src/shared/view-server/view-port.ts"
+import { createRpcRouter } from "../../../../src/wiring/router.ts"
 import { closeNetServer, listenOnEphemeralPort, portOf } from "../../../fixture/net-server.ts"
 
 /** 配るものの中身はここでは見ない（確かめるのはどのポートで listen したかだけ）。 */

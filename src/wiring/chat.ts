@@ -1,6 +1,5 @@
 // 雑談の配線。ターンの終わりの定着と、「覚えていること」から1行消すコマンドの中身を選ぶ。
 
-import type { CurrentCharacter } from "../current-character.ts"
 import { queryStructured } from "../server/adapter/sdk-structured-query.ts"
 import { chatConsolidationLockPath } from "../server/chat/adapter/chat-archive.ts"
 import { createChatSummary } from "../server/chat/adapter/chat-summary.ts"
@@ -11,6 +10,7 @@ import {
   createChatConsolidationWriter,
 } from "../server/chat/core/consolidation/chat-consolidation-writer.ts"
 import type { SessionManagerOptions } from "../server/session/core/session-manager-port.ts"
+import type { CurrentCharacter } from "./current-character.ts"
 import type { WiringContext } from "./wiring-context.ts"
 
 export function wireChat(

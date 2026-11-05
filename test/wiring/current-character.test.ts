@@ -5,11 +5,11 @@ import { join } from "node:path"
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-import { createCurrentCharacter } from "../src/current-character.ts"
-import { bundledFilePath } from "../src/server/adapter/bundled-path.ts"
-import { DEFAULT_CHARACTER_DIR_RELATIVE_PATH } from "../src/server/character-pack/adapter/character-pack.ts"
-import { ENV_NAMES, readConfig } from "../src/server/core/config.ts"
-import { useTempDir } from "./fixture/temp-dir.ts"
+import { bundledFilePath } from "../../src/server/adapter/bundled-path.ts"
+import { DEFAULT_CHARACTER_DIR_RELATIVE_PATH } from "../../src/server/character-pack/adapter/character-pack.ts"
+import { ENV_NAMES, readConfig } from "../../src/server/core/config.ts"
+import { createCurrentCharacter } from "../../src/wiring/current-character.ts"
+import { useTempDir } from "../fixture/temp-dir.ts"
 
 const HOME_COPY_LABEL = "ホームの写しの精霊"
 const HOME_COPY_PERSONA = "# 写し\n\n語尾に「なのじゃ」と付ける。"

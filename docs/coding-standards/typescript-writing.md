@@ -200,7 +200,7 @@ class 名を手で組むと、条件で落とす class を空文字に畳む三�
 はイミュータブルで、日付の計算・タイムゾーン付きの時刻・ISO 8601 の文字列化を1つの体系で
 扱える。**時刻の数（`shared` を通る値）はこれまでどおりエポックミリ秒の数のまま持つ**
 （`Temporal.Instant` そのものを `shared` に出さない）。数を作る場所はサーバが
-`src/session-start.ts` の `now`、ブラウザが `src/browser/utils/clock.ts` の
+`src/server/adapter/local-time.ts` の `createServerClock`、ブラウザが `src/browser/utils/clock.ts` の
 `nowEpochMilliseconds()`。数を読み書き可能な日時に戻すときは
 `Temporal.Instant.fromEpochMilliseconds(...)` を使う（`src/server/adapter/local-time.ts`）。
 

@@ -4,8 +4,8 @@
 import { createRouterClient, ORPCError } from "@orpc/server"
 import { isPlainObject } from "remeda"
 
-import { type CommandRouterPorts, createSocketRouter } from "../../src/router.ts"
 import type { CommandSession } from "../../src/server/session/core/command-session-port.ts"
+import { type CommandRouterPorts, createSocketRouter } from "../../src/wiring/router.ts"
 
 /** 手続きの照合に使う架空の起動トークンとオリジン（照合そのものは `isConnectionGranted` のテストが見る）。 */
 const TEST_TOKEN = "架空のトークン"

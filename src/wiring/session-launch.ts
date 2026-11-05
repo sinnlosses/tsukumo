@@ -2,7 +2,6 @@
 // どの駆動で起こすか（本物の SDK か疑似セッションの fake driver か）と、切り替え先の一覧をどこから読むかをここで決める。
 // 起こす順序そのものは `createSessionLaunch` に任せる（起動時も起こし直しも同じ関数を通る）。
 
-import type { CurrentCharacter } from "../current-character.ts"
 import type { CharacterPack } from "../server/character-pack/adapter/character-pack.ts"
 import { createChatSummary, UNAVAILABLE_CHAT_SUMMARY } from "../server/chat/adapter/chat-summary.ts"
 import { createPersonaMemory, readRememberedLines } from "../server/chat/adapter/persona-memory.ts"
@@ -54,7 +53,9 @@ import type { SwallowedFailurePlace } from "../shared/diagnostic/swallowed-failu
 import type { SessionDefault } from "../shared/session/session-default.ts"
 import type { RestoredEvent, SessionEvent } from "../shared/session/session-event.ts"
 import type { SessionId } from "../shared/session/session-id.ts"
+import type { CurrentCharacter } from "./current-character.ts"
 import { failureDiagnostic } from "./failure-diagnostic.ts"
+import type { SessionPlugins } from "./startup-prerequisite.ts"
 import type { WiringContext } from "./wiring-context.ts"
 
 export function wireSessionLaunch(options: {
@@ -69,12 +70,7 @@ export function wireSessionLaunch(options: {
    * 同じディレクトリで2つめを起こすとポートがずれ、目印も分かれるので、互いのセッションを取り合わない。
    */
   readonly viewPort: number
-  /** 取り込んだ tsukumo-plugins をセッションに載せるか。 */
-  readonly mountWorkflowPlugin: boolean
-  /** 取り込んだ図のプラグインをセッションに載せるか。 */
-  readonly mountFigurePlugin: boolean
-  /** ワークフローの `tw` のパス。 */
-  readonly workflowTw: string
+  readonly plugins: SessionPlugins
   /** 最初のタブが繋がったら解ける約束。fake driver は疑似セッションをここから流し始める。本物の駆動は待たない。 */
   readonly firstViewer: Promise<void>
   /**
@@ -138,9 +134,7 @@ export function wireSessionLaunch(options: {
             claudeConfigDir: config.claudeConfigDir,
             disallowedTools: config.disallowedTools,
             turnStepLimit: config.turnStepLimit,
-            mountWorkflowPlugin: options.mountWorkflowPlugin,
-            mountFigurePlugin: options.mountFigurePlugin,
-            workflowTw: options.workflowTw,
+            ...options.plugins,
             firstViewer: options.firstViewer,
             viewPort,
             onSessionMarked: (sessionId, tag) => sessionCatalog.noteMarked(sessionId, tag),

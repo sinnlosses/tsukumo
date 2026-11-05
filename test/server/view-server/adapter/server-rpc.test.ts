@@ -2,7 +2,6 @@ import { createORPCClient, ORPCError } from "@orpc/client"
 import { RPCLink } from "@orpc/client/fetch"
 import { afterEach, describe, expect, it } from "vitest"
 
-import type { RpcRouterPorts } from "../../../../src/router.ts"
 import type { ViewServer } from "../../../../src/server/view-server/adapter/server.ts"
 import type { AchievementCalendar } from "../../../../src/shared/achievement/achievement-calendar.ts"
 import type {
@@ -16,6 +15,7 @@ import {
   type TokenUsageDays,
   type TokenUsageSummary,
 } from "../../../../src/shared/usage/token-usage-summary.ts"
+import type { RpcRouterPorts } from "../../../../src/wiring/router.ts"
 import { readyContextUsage } from "../../../fixture/context-usage.ts"
 import { dateKey } from "../../../fixture/date-key.ts"
 import {

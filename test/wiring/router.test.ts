@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest"
 
-import { CHAT_NUDGE_PROMPT } from "../src/server/chat/core/chat-nudge.ts"
-import type { ShelvedPromptImage } from "../src/server/session-driver/core/prompt-image-shelf.ts"
-import type { PromptRouting } from "../src/shared/contract/session.ts"
-import { FRAME_ERROR_REASON } from "../src/shared/frame-error-reason.ts"
-import type { PromptImage } from "../src/shared/session-driver/prompt-image.ts"
-import { createCommandClient } from "./fixture/command-client.ts"
+import { CHAT_NUDGE_PROMPT } from "../../src/server/chat/core/chat-nudge.ts"
+import type { ShelvedPromptImage } from "../../src/server/session-driver/core/prompt-image-shelf.ts"
+import type { PromptRouting } from "../../src/shared/contract/session.ts"
+import { FRAME_ERROR_REASON } from "../../src/shared/frame-error-reason.ts"
+import type { PromptImage } from "../../src/shared/session-driver/prompt-image.ts"
+import { createCommandClient } from "../fixture/command-client.ts"
 import {
   CHAT_MODE_EVENT,
   createFakeSession,
@@ -13,8 +13,8 @@ import {
   NO_DIARY_WRITER,
   REQUEST_EVENT,
   startRouter,
-} from "./fixture/command-router.ts"
-import { createStubDriver } from "./fixture/session-driver.ts"
+} from "../fixture/command-router.ts"
+import { createStubDriver } from "../fixture/session-driver.ts"
 
 describe("createSocketRouter（session）", () => {
   // 帯のドロップダウンはセッション限り（`docs/architecture/screen-design.md`「設定の置き場所」）。既定は書き換わらない。

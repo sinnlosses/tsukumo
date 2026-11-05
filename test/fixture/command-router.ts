@@ -1,6 +1,5 @@
 // コマンドの受け手（`createSocketRouter`）のテストが共有する、偽のセッションと受け手の口。
 
-import type { CommandRouterPorts } from "../../src/router.ts"
 import type { DispatchResult } from "../../src/server/core/command-receiver.ts"
 import type { DiaryWriterSource } from "../../src/server/diary/core/diary-writer.ts"
 import { createPromptImageShelf } from "../../src/server/session-driver/core/prompt-image-shelf.ts"
@@ -20,6 +19,7 @@ import type { SessionEvent } from "../../src/shared/session/session-event.ts"
 import { applySessionEvent } from "../../src/shared/session/session-fold.ts"
 import { INITIAL_SESSION_STATE, type SessionState } from "../../src/shared/session/session-state.ts"
 import { usageProposalKey } from "../../src/shared/usage/usage-review.ts"
+import type { CommandRouterPorts } from "../../src/wiring/router.ts"
 import { createCommandClient } from "./command-client.ts"
 import { createStubDriver, type StubDriver } from "./session-driver.ts"
 import { CHARACTER_EVENT, ITEMS_EVENT, requestEvent } from "./session-event.ts"

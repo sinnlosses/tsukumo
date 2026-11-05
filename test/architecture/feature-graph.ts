@@ -48,8 +48,8 @@ export type ServerFeatureEdge = {
 }
 
 /**
- * `src/` 相対パスから層を決める。`src/` 直下のファイルは配線層（`cli.ts` と `main.ts`、
- * そこから呼ばれる起動の段取り。`core` と `adapter` を結べるのはここだけ）、`shared/` と
+ * `src/` 相対パスから層を決める。`src/` 直下の入口（`cli.ts` と `main.ts`）と `wiring/` は配線層
+ * （`core` と `adapter` を結べるのはここだけ）、`shared/` と
  * `browser/` は先頭ディレクトリ、サーバ側は置き場（`serverPlaceOf`）の層で決まる。
  * `types/` の `*.d.ts` はどの層にも属さない ambient 宣言で、何も import しない。
  */

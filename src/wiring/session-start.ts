@@ -1,33 +1,34 @@
 // セッションを1つ起こす配線。
-// 機能ごとの組み立て（`src/wiring/`）を並べ、`createSessionManager` と `createSocketRouter` へ結ぶ。
+// 機能ごとの組み立て（`wire<機能>`）を並べ、`createSessionManager` と `createSocketRouter` へ結ぶ。
 
 import { basename, dirname } from "node:path"
 
+import type { Config } from "../server/core/config.ts"
+import type { Host } from "../server/host/core/host.ts"
+import { readReportImageFile } from "../server/report/adapter/report-image-file.ts"
+import type { ReportImageShelf } from "../server/report/core/image/report-image-shelf.ts"
+import { runGit } from "../server/repository/adapter/git.ts"
+import type { PromptImageShelf } from "../server/session-driver/core/prompt-image-shelf.ts"
+import { EVENT_BATCH_INTERVAL_MS } from "../server/session/core/event/event-batch.ts"
+import type { SessionManager } from "../server/session/core/session-manager-port.ts"
+import { createSessionManager } from "../server/session/core/session-manager.ts"
+import type { SocketRouter } from "../server/view-server/adapter/rpc/session-socket.ts"
+import type { WorkflowSettingProcedurePorts } from "../server/workflow-setting/adapter/workflow-setting-procedure.ts"
+import type { wireAchievement } from "./achievement.ts"
+import { wireCharacterPack } from "./character-pack.ts"
+import { wireChat } from "./chat.ts"
 import type { CurrentCharacter } from "./current-character.ts"
+import { wireDiagnostic } from "./diagnostic.ts"
+import { wireDiary } from "./diary.ts"
+import { wireHost } from "./host.ts"
+import { wireItem } from "./item.ts"
+import type { wireRepository } from "./repository.ts"
 import { createSocketRouter } from "./router.ts"
-import type { Config } from "./server/core/config.ts"
-import type { Host } from "./server/host/core/host.ts"
-import { readReportImageFile } from "./server/report/adapter/report-image-file.ts"
-import type { ReportImageShelf } from "./server/report/core/image/report-image-shelf.ts"
-import { runGit } from "./server/repository/adapter/git.ts"
-import type { PromptImageShelf } from "./server/session-driver/core/prompt-image-shelf.ts"
-import { EVENT_BATCH_INTERVAL_MS } from "./server/session/core/event/event-batch.ts"
-import type { SessionManager } from "./server/session/core/session-manager-port.ts"
-import { createSessionManager } from "./server/session/core/session-manager.ts"
-import type { SocketRouter } from "./server/view-server/adapter/rpc/session-socket.ts"
-import type { WorkflowSettingProcedurePorts } from "./server/workflow-setting/adapter/workflow-setting-procedure.ts"
-import type { wireAchievement } from "./wiring/achievement.ts"
-import { wireCharacterPack } from "./wiring/character-pack.ts"
-import { wireChat } from "./wiring/chat.ts"
-import { wireDiagnostic } from "./wiring/diagnostic.ts"
-import { wireDiary } from "./wiring/diary.ts"
-import { wireHost } from "./wiring/host.ts"
-import { wireItem } from "./wiring/item.ts"
-import type { wireRepository } from "./wiring/repository.ts"
-import { wireSessionLaunch } from "./wiring/session-launch.ts"
-import { type WiredUsageLogs, wireUsageReview } from "./wiring/usage.ts"
-import { wireWelcomeGreeting } from "./wiring/welcome-greeting.ts"
-import type { WiringContext } from "./wiring/wiring-context.ts"
+import { wireSessionLaunch } from "./session-launch.ts"
+import type { SessionPlugins } from "./startup-prerequisite.ts"
+import { type WiredUsageLogs, wireUsageReview } from "./usage.ts"
+import { wireWelcomeGreeting } from "./welcome-greeting.ts"
+import type { WiringContext } from "./wiring-context.ts"
 
 export type SessionStartOptions = {
   readonly config: Config
@@ -46,12 +47,7 @@ export type SessionStartOptions = {
   readonly viewPort: number
   /** レポートのパスを開くホスト。 */
   readonly host: Host
-  /** 取り込んだ tsukumo-plugins をセッションに載せるか。利用者が同じものを入れていれば載せない。 */
-  readonly mountWorkflowPlugin: boolean
-  /** 取り込んだ図のプラグインをセッションに載せるか。利用者が同じスキルを入れていれば載せない。 */
-  readonly mountFigurePlugin: boolean
-  /** ワークフローの `tw` のパス（`chooseTw`）。hook の `lap-hook`・`ask-guard` を起こす。 */
-  readonly workflowTw: string
+  readonly plugins: SessionPlugins
   /** ワークフローの設定を書く口（`wireWorkflowSetting`）。 */
   readonly workflowSetting: Pick<WorkflowSettingProcedurePorts, "changeWorkflowSetting">
 }
@@ -78,7 +74,7 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
 
   const diary = wireDiary(context)
   const welcomeGreeting = wireWelcomeGreeting(context, diagnosticLog)
-  const usageReview = wireUsageReview(context, options.mountWorkflowPlugin)
+  const usageReview = wireUsageReview(context, options.plugins.mountWorkflowPlugin)
   const item = wireItem(context)
   const launch = wireSessionLaunch({
     context,
@@ -86,9 +82,7 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
     character,
     itemsEvent: item.itemsEvent,
     viewPort: options.viewPort,
-    mountWorkflowPlugin: options.mountWorkflowPlugin,
-    mountFigurePlugin: options.mountFigurePlugin,
-    workflowTw: options.workflowTw,
+    plugins: options.plugins,
     firstViewer: firstViewer.promise,
     diagnosticLog,
     onLaunch: (seed, onEvent, restored) => {

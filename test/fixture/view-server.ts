@@ -1,6 +1,5 @@
 // 会話は流さない（配るのはページ・同梱物・立ち絵と、架空のファイル一覧だけ）。
 
-import { createRpcRouter, type RpcRouterPorts } from "../../src/router.ts"
 import type {
   FindReportImage,
   ServeCharacterAsset,
@@ -16,6 +15,7 @@ import { UNAVAILABLE_SESSION_DIGEST } from "../../src/shared/session/session-dig
 import { UNAVAILABLE_CONTEXT_USAGE } from "../../src/shared/usage/context-usage.ts"
 import { UNAVAILABLE_PLAN_USAGE } from "../../src/shared/usage/plan-usage.ts"
 import { EMPTY_TOKEN_USAGE_SUMMARY } from "../../src/shared/usage/token-usage-summary.ts"
+import { createRpcRouter, type RpcRouterPorts } from "../../src/wiring/router.ts"
 
 export const TOKEN = createStartupToken()
 

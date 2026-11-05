@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
 
-import { createRpcRouter } from "../../../../src/router.ts"
 import { startViewServer } from "../../../../src/server/view-server/adapter/server.ts"
+import { createRpcRouter } from "../../../../src/wiring/router.ts"
 import {
   closeRunningView,
   EMPTY_RPC_PORTS,

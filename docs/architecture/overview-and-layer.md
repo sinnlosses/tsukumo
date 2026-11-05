@@ -69,7 +69,7 @@ shared（語彙・イベント・状態・reducer・zod スキーマ）は brows
 | `server/core`    | サーバ側の純粋な判断。セッション管理・駆動の契約・イベントの検証・ポートの決定・設定の解釈。**`server/<機能>/core/` と、共有の `server/core/`**        | `shared` / `core`                                       | サーバ（Node）   |
 | `server/adapter` | 外の世界に触る場所。SDK・WebSocket・HTTP・ホスト・ファイル・子プロセス・fake driver。**`server/<機能>/adapter/` と、共有の `server/adapter/`**         | `shared` / `core` / `adapter`                           | サーバ（Node）   |
 | `browser`        | React の部品・hooks・CSS・Markdown の変換                                                                                                              | `shared`（React などの npm は可）                       | ブラウザ         |
-| `src/` 直下      | 配線（composition root。`cli.ts` / `main.ts` と起動の段取り。機能ごとの組み立ての `src/wiring/` を含む）                                               | すべて                                                  | サーバ           |
+| `src/` 直下      | 配線（composition root。入口の `cli.ts` / `main.ts` と、起動の段取りと機能ごとの組み立ての `src/wiring/`）                                             | すべて                                                  | サーバ           |
 
 - **`core` と `browser` は互いを import しない。** 両者が知っているのは `shared` だけ
 - **`core → adapter` は禁止。** エッジは `adapter ──▶ core ──▶ shared ◀── browser` の一方通行で、

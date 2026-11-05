@@ -65,14 +65,14 @@
   `.dependency-cruiser.cjs` の `no-circular` が拒む
 - **束ねる機能は `session/` の1つ。** `session-manager.ts` は外の世界に触らないので `core` だが、
   各機能の判断（日記・トークン消費・会話のアーカイブ）を読んで1つのセッションに
-  まとめる。**外の世界の実装を選んで渡すのは配線（`src/` 直下の `session-start.ts` と `src/wiring/`）**、
+  まとめる。**外の世界の実装を選んで渡すのは配線（`src/wiring/`）**、
   渡されたものを使って順序と状態を持つのが `session/`、という境目
 - **セッションの配線は機能ごとに組み立てる。** `src/wiring/<機能>.ts` の `wire<機能>` が、その機能の
   「`createSessionManager` へ渡す関数の組」（`manager`）と「`createSocketRouter` へ渡す関数の組」（`commands`、
   `session` の関数の一部なら `sessionCommands`）を返し、`startSession` はそれを spread で結ぶだけにする。
-  `/rpc` の読む関数を持つ機能は `rpc` も返し、`src/view-delivery.ts` はそれを spread で結ぶだけにする
+  `/rpc` の読む関数を持つ機能は `rpc` も返し、`src/wiring/view-delivery.ts` はそれを spread で結ぶだけにする
   （セッションが繋がってから本物になる読む関数だけは、配信が「取れない」から差し替える形で持つ）。
-  `WiringContext` は `src/main.ts` が作り、`startViewDelivery` と `startSession` の両側の組み立てに渡す。
+  `WiringContext` は `src/wiring/startup-assembly.ts` の `assembleStartup` が作り、`startViewDelivery` と `startSession` の両側の組み立てに渡す。
   機能を足すときに触るのは、その機能の組み立てと、結ぶ行だけ。関数の揃いは結ぶ側の型検査が見る。
   2つ以上の組み立てが読む値（作業先・時計・引き継ぐ環境・疑似セッション・会話のアーカイブ）だけを
   `WiringContext`（`src/wiring/wiring-context.ts`）にまとめて渡し、1つの組み立てしか

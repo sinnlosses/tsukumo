@@ -1,12 +1,15 @@
 import { describe, expect, it } from "vitest"
 
-import type { DiaryWriteRequest, DiaryWriterSource } from "../src/server/diary/core/diary-writer.ts"
-import type { DailyAchievement } from "../src/shared/achievement/achievement.ts"
-import { FRAME_ERROR_REASON } from "../src/shared/frame-error-reason.ts"
-import type { SessionEvent } from "../src/shared/session/session-event.ts"
-import { characterChangedEvent } from "./fixture/character.ts"
-import { REQUEST_EVENT, startRouter } from "./fixture/command-router.ts"
-import { dateKey } from "./fixture/date-key.ts"
+import type {
+  DiaryWriteRequest,
+  DiaryWriterSource,
+} from "../../src/server/diary/core/diary-writer.ts"
+import type { DailyAchievement } from "../../src/shared/achievement/achievement.ts"
+import { FRAME_ERROR_REASON } from "../../src/shared/frame-error-reason.ts"
+import type { SessionEvent } from "../../src/shared/session/session-event.ts"
+import { characterChangedEvent } from "../fixture/character.ts"
+import { REQUEST_EVENT, startRouter } from "../fixture/command-router.ts"
+import { dateKey } from "../fixture/date-key.ts"
 
 describe("createSocketRouter（session）", () => {
   describe("成果の日記書き（session.reflectAchievement。`docs/requirements.md`「日記」）", () => {
