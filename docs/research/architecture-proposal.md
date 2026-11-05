@@ -2,6 +2,8 @@
 
 状態: 採用
 
+> 実施済み。いまの構成は `docs/architecture/directory.md` が正典。以下の旧構成の記述は経緯として残す。
+
 **この文書は提案であって正典ではない。** 採用したら正典（`docs/design.md` 2章・`docs/architecture.md` 原則2/3・`docs/coding-standards.md`
 「層と依存の向き」・`docs/glossary.md`）へ反映し、この文書は経緯として `docs/research/` に残す。
 
