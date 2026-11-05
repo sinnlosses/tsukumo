@@ -17,8 +17,8 @@ import { MAX_TOOL_TEXT_LENGTH } from "../../../../shared/session/session-record.
 import { parseWorkPlan } from "../../../../shared/session/work-plan.ts"
 import { isBlankText } from "../../../../shared/utils/blank-text.ts"
 import { clipText, clipWithEllipsis } from "../../../../shared/utils/clip-text.ts"
+import { nonBlankString } from "../../../../shared/utils/non-blank-string.ts"
 import { optionalString } from "../../../../shared/utils/optional-string.ts"
-import { nonBlankString } from "../../../core/non-blank-string.ts"
 import {
   PHASE_RESULT_TOOL_NAME,
   REPORT_TOOL_NAME,

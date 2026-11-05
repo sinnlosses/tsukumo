@@ -9,6 +9,8 @@ import type { Link, Nodes } from "mdast"
 import { findAndReplace } from "mdast-util-find-and-replace"
 import { visit } from "unist-util-visit"
 
+import { escapeRegExp } from "../../../../shared/utils/escape-regexp.ts"
+
 /** 本文中の ID を指すリンクの URL に付ける印（実際のナビゲーションはしない目印）。 */
 const TASK_LINK_SCHEME = "task:"
 
@@ -56,10 +58,6 @@ function taskIdPattern(knownIds: ReadonlySet<string>): RegExp | undefined {
     .map(escapeRegExp)
     .join("|")
   return new RegExp(`(?<!\\w)(?:${alternatives})(?!\\w)`, "g")
-}
-
-function escapeRegExp(text: string): string {
-  return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
 }
 
 function taskLinkUrl(id: string): string {

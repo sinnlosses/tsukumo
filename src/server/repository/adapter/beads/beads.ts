@@ -18,7 +18,7 @@ import {
   TASK_LOOPABLES,
   TASK_URGENCIES,
 } from "../../../../shared/repository/task-summary.ts"
-import { nonBlankString } from "../../../core/non-blank-string.ts"
+import { nonBlankString } from "../../../../shared/utils/non-blank-string.ts"
 import { GIT_TIMEOUT_MS, MAX_OUTPUT_BYTES } from "../git.ts"
 import type { BeadsIssue, BeadsIssuesReader, BeadsOutcome } from "./beads-port.ts"
 import { memoizeByStamp } from "./beads-stamp-memo.ts"

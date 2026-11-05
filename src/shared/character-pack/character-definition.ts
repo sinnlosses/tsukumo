@@ -7,6 +7,7 @@
 
 import { fromKeys, isPlainObject } from "remeda"
 
+import { nonBlankString } from "../utils/non-blank-string.ts"
 import { optionalString } from "../utils/optional-string.ts"
 import { parseJson } from "../utils/parse-json.ts"
 import { type CharacterBackground, toCharacterBackground } from "./character-background.ts"
@@ -239,10 +240,6 @@ function toExpressionLabels(source: unknown): Readonly<Record<Expression, string
 function toPortraits(source: unknown): Readonly<Record<Expression, string | undefined>> {
   const record = isPlainObject(source) ? source : {}
   return fromKeys(EXPRESSIONS, (expression) => stringField(record, expression))
-}
-
-function nonBlankString(value: unknown): string | undefined {
-  return typeof value === "string" && value.trim() !== "" ? value : undefined
 }
 
 function stringField(record: Readonly<Record<string, unknown>>, key: string): string | undefined {

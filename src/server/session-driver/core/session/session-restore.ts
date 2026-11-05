@@ -10,7 +10,7 @@ import type { Expression } from "../../../../shared/character-pack/expression.ts
 import { parsePromptImage } from "../../../../shared/session-driver/prompt-image.ts"
 import type { TurnOutcome } from "../../../../shared/session-driver/turn-failure.ts"
 import type { RestoredEvent, SessionEvent } from "../../../../shared/session/session-event.ts"
-import { nonBlankString } from "../../../core/non-blank-string.ts"
+import { nonBlankString } from "../../../../shared/utils/non-blank-string.ts"
 import { asideTextOf } from "../aside-prompt.ts"
 import { createCallReview } from "../call-review.ts"
 import { toSessionEvents } from "../message/sdk-message.ts"

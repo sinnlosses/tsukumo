@@ -19,6 +19,12 @@ export const PENDING_READERS: readonly PendingReader[] = [
     reason: "草稿の組み立てが読まなくなり、server の引数の字数の数え直しだけが読む",
     removeWhen: "旧い引数の形への組み直しをやめる（ADR 0043 の順 8）",
   },
+  {
+    file: "src/shared/utils/byte-length.ts",
+    missingReader: "browser",
+    reason: "UTF-8 のバイト数の物差しは server の4か所だけが読み、browser に読み手がまだ無い",
+    removeWhen: "browser が UTF-8 のバイト数を数える場面を持つ、または server 専用の置き場に戻す",
+  },
 ]
 
 /** `"production"` の行から、`<パス>#<名前>` と理由の対応を作る。 */

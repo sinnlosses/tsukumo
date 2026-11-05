@@ -2,12 +2,12 @@
 // 値の意味と既定は各名前の doc コメントが正典で、利用者向けの一覧は `docs/readme/configuration.md`「環境変数」。
 // セッションの印（`sessionTag` / `readSessionMark`）は環境変数ではないので、ここには置かない。
 
+import { nonBlankString } from "../../shared/utils/non-blank-string.ts"
 import {
   resolveViewPort,
   resolveViewPortFallbackBase,
   type ViewPortResolution,
 } from "../../shared/view-server/view-port.ts"
-import { nonBlankString } from "./non-blank-string.ts"
 import { REPORT_SCHEMA_VARIANTS, type ReportSchemaVariant } from "./schema-variant.ts"
 
 /**

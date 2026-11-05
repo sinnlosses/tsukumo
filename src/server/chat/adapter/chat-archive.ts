@@ -23,6 +23,7 @@ import {
   parseCharacterPackName,
 } from "../../../shared/character-pack/character.ts"
 import type { Expression } from "../../../shared/character-pack/expression.ts"
+import { byteLength } from "../../../shared/utils/byte-length.ts"
 import {
   appendJsonLine,
   dateFileNames,
@@ -33,7 +34,6 @@ import {
 import { isMissingFileError } from "../../adapter/lib/missing-file-error.ts"
 import { isoWithOffset, localDateKey } from "../../adapter/local-time.ts"
 import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
-import { byteLength } from "../../core/byte-length.ts"
 import type {
   ChatArchive,
   ChatArchiveEntry,

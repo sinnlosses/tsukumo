@@ -22,7 +22,7 @@ import type {
   TurnUsageBreakdown,
   TurnUsageScope,
 } from "../../../shared/usage/token-usage.ts"
-import { byteLength } from "../../core/byte-length.ts"
+import { byteLength } from "../../../shared/utils/byte-length.ts"
 
 /** トークン消費の読み書きの関数。書けなくても例外を投げず、受け付けたかどうかは返さない。 */
 export type TokenUsageLog = {
