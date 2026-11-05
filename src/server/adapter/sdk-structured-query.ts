@@ -17,6 +17,9 @@ import { type StructuredQuery, StructuredQueryResultError } from "../core/query/
 import type { ThrowawayQueryRecorder } from "../core/query/throwaway-query.ts"
 import { abortControllerFor, recordedMessages } from "./sdk-throwaway-query.ts"
 
+/** 出力の形に合わせ直すターンの分を見込んだ上限。 */
+const STRUCTURED_QUERY_MAX_TURNS = 3
+
 /** 子プロセスを起こす場所と環境変数（会話のセッションと同じものを引き継ぐ）と、足跡を残す先。 */
 export type StructuredQueryProcess = {
   readonly cwd: string
@@ -46,7 +49,7 @@ export async function queryStructured(
       mcpServers: {},
       strictMcpConfig: true,
       settingSources: [],
-      maxTurns: 1,
+      maxTurns: STRUCTURED_QUERY_MAX_TURNS,
       persistSession: false,
       thinking: { type: "disabled" },
       outputFormat: { type: "json_schema", schema: { ...request.schema } },
