@@ -33,7 +33,7 @@ describe("createDatedRecordLog", () => {
     log.append("2026-10-01", [{ seq: 1 }])
     log.append("2026-10-02", [{ seq: 2 }])
     log.append("2026-10-03", [{ seq: 3 }])
-    await log.close()
+    await log.lifecycle.close()
 
     expect(log.readRange(EVERYTHING)).toEqual([{ seq: 1 }, { seq: 2 }, { seq: 3 }])
     expect(log.readRange({ startDate: "2026-10-02", endDate: "2026-10-02" })).toEqual([{ seq: 2 }])
@@ -72,7 +72,7 @@ describe("createDatedRecordLog", () => {
       touch("2026-10-01.jsonl")
       touch("2026-10-04.jsonl")
 
-      create(3).pruneExpired("2026-10-04")
+      create(3).lifecycle.pruneExpired("2026-10-04")
 
       expect(existsSync(join(root(), "2026-09-30.jsonl"))).toBe(false)
       expect(existsSync(join(root(), "2026-10-01.jsonl"))).toBe(true)
@@ -85,7 +85,7 @@ describe("createDatedRecordLog", () => {
       touch("2020-01-01.txt")
       utimesSync(join(root(), "notes.jsonl"), 0, 0)
 
-      create(3).pruneExpired("2026-10-04")
+      create(3).lifecycle.pruneExpired("2026-10-04")
 
       expect(existsSync(join(root(), "2020-01-01.jsonl"))).toBe(false)
       expect(existsSync(join(root(), "notes.jsonl"))).toBe(true)
@@ -95,14 +95,14 @@ describe("createDatedRecordLog", () => {
     it("保持の日数が無ければ何も消さない", () => {
       touch("2020-01-01.jsonl")
 
-      create(undefined).pruneExpired("2026-10-04")
+      create(undefined).lifecycle.pruneExpired("2026-10-04")
 
       expect(existsSync(join(root(), "2020-01-01.jsonl"))).toBe(true)
     })
 
     it("置き場が無くても投げない", () => {
       expect(() => {
-        create(3).pruneExpired("2026-10-04")
+        create(3).lifecycle.pruneExpired("2026-10-04")
       }).not.toThrow()
     })
   })

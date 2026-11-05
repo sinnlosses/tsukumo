@@ -12,7 +12,11 @@ import {
   type DiagnosticRecord,
   diagnosticRecordSchema,
 } from "../../../shared/diagnostic/diagnostic-record.ts"
-import { createDatedRecordLog, type DatedRecordLog } from "../../adapter/lib/dated-record-log.ts"
+import {
+  createDatedRecordLog,
+  type DatedRecordLifecycle,
+  type DatedRecordLog,
+} from "../../adapter/lib/dated-record-log.ts"
 import { localDateKey } from "../../adapter/local-time.ts"
 import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
 import type { DiagnosticLog, DiagnosticRange } from "../core/diagnostic.ts"
@@ -31,7 +35,7 @@ export function diagnosticDir(): string {
  */
 export function createDiagnosticLog(
   root: string = diagnosticDir(),
-): DiagnosticLog & Pick<DatedRecordLog<DiagnosticRecord>, "flush" | "close" | "pruneExpired"> {
+): DiagnosticLog & DatedRecordLifecycle {
   const log = createDatedRecordLog(
     {
       schema: diagnosticRecordSchema,
@@ -46,9 +50,7 @@ export function createDiagnosticLog(
         log.append(date, dated.map(toRecord))
       }
     },
-    flush: log.flush,
-    close: log.close,
-    pruneExpired: log.pruneExpired,
+    ...log.lifecycle,
     readRange: (range) => readEntriesInRange(log, range),
   }
 }

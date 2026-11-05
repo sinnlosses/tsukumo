@@ -10,7 +10,10 @@
 //
 // 書けなくても例外を投げない。
 
-import { createDatedRecordLog, type DatedRecordLog } from "../../adapter/lib/dated-record-log.ts"
+import {
+  createDatedRecordLog,
+  type DatedRecordLifecycle,
+} from "../../adapter/lib/dated-record-log.ts"
 import { isoWithOffset, localDateKey } from "../../adapter/local-time.ts"
 import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
 import {
@@ -33,7 +36,7 @@ export function contextUsageDir(): string {
  */
 export function createContextUsageLog(
   root: string = contextUsageDir(),
-): ContextUsageLog & Pick<DatedRecordLog<ContextUsageRecord>, "flush" | "close" | "pruneExpired"> {
+): ContextUsageLog & DatedRecordLifecycle {
   const log = createDatedRecordLog(
     {
       schema: contextUsageRecordSchema,
@@ -45,9 +48,7 @@ export function createContextUsageLog(
     append: (entry) => {
       log.append(localDateKey(entry.at), [toRecord(entry)])
     },
-    flush: log.flush,
-    close: log.close,
-    pruneExpired: log.pruneExpired,
+    ...log.lifecycle,
   }
 }
 

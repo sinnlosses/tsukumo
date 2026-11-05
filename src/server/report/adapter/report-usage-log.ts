@@ -1,13 +1,15 @@
 // `report` の塊の使われ方の記録を `~/.tsukumo/report-usage/<YYYY-MM-DD>.jsonl` に書く。
 // 読むのは tsukumo の外の集計スクリプトだけなので、読み口は持たない。
 
-import { createDatedRecordLog, type DatedRecordLog } from "../../adapter/lib/dated-record-log.ts"
+import {
+  createDatedRecordLog,
+  type DatedRecordLifecycle,
+} from "../../adapter/lib/dated-record-log.ts"
 import { isoWithOffset, localDateKey } from "../../adapter/local-time.ts"
 import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
 import {
   REPORT_SCHEMA,
   REPORT_USAGE_FORMAT_VERSION,
-  type ReportFollowUpRecord,
   reportFollowUpRecordSchema,
   type ReportRejectionRecord,
   reportRejectionRecordSchema,
@@ -36,11 +38,7 @@ const RECORDED_DRIVER = "sdk" satisfies ReportUsageDriver
  */
 export function createReportUsageLog(
   root: string = reportUsageDir(),
-): ReportUsageLog &
-  Pick<
-    DatedRecordLog<ReportUsageRecord | ReportRejectionRecord | ReportFollowUpRecord>,
-    "flush" | "close" | "pruneExpired"
-  > {
+): ReportUsageLog & DatedRecordLifecycle {
   const log = createDatedRecordLog(
     {
       schema: reportUsageRecordSchema
@@ -98,15 +96,15 @@ export function createReportUsageLog(
         },
       ])
     },
+    ...log.lifecycle,
     flush: () => {
       settleAll()
-      return log.flush()
+      return log.lifecycle.flush()
     },
     close: () => {
       settleAll()
-      return log.close()
+      return log.lifecycle.close()
     },
-    pruneExpired: log.pruneExpired,
   }
 }
 

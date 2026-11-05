@@ -29,13 +29,18 @@ export type DatedRecordRange = {
   readonly endDate: string | undefined
 }
 
-export type DatedRecordLog<R> = Pick<JsonLinesAppender, "append" | "flush" | "close"> & {
+/** 包む側のログがそのまま公開する、後始末と期限切れの削除の口。 */
+export type DatedRecordLifecycle = Pick<JsonLinesAppender, "flush" | "close"> & {
+  /** 今日（`YYYY-MM-DD`）から数えて保持の日数を過ぎた日付のファイルを消す。 */
+  readonly pruneExpired: (today: string) => void
+}
+
+export type DatedRecordLog<R> = Pick<JsonLinesAppender, "append"> & {
+  readonly lifecycle: DatedRecordLifecycle
   /** 置き場のパス。 */
   readonly dir: string
   /** 範囲に入る日付のファイルだけを開き、古い→新しい順に検証済みの行を返す。 */
   readonly readRange: (range: DatedRecordRange) => readonly R[]
-  /** 今日（`YYYY-MM-DD`）から数えて保持の日数を過ぎた日付のファイルを消す。 */
-  readonly pruneExpired: (today: string) => void
 }
 
 /** 読んだファイルの検証済みの行。`(mtime, size)` が変わらない間は開き直さない。 */
@@ -51,20 +56,19 @@ export function createDatedRecordLog<R>(
 ): DatedRecordLog<R> {
   const appender = createJsonLinesAppender(dir)
   const cache: ReadCache<R> = new Map()
+  const pruneExpired = (today: string): void => {
+    if (options.retentionDays !== undefined) {
+      pruneOlderThan(dir, today, options.retentionDays)
+    }
+  }
   return {
     dir,
     append: appender.append,
-    flush: appender.flush,
-    close: appender.close,
+    lifecycle: { flush: appender.flush, close: appender.close, pruneExpired },
     readRange: (range) =>
       dateFileNamesBetween(dir, range.startDate, range.endDate).flatMap((name) =>
         readCached(join(dir, name), options.schema, cache),
       ),
-    pruneExpired: (today) => {
-      if (options.retentionDays !== undefined) {
-        pruneOlderThan(dir, today, options.retentionDays)
-      }
-    },
   }
 }
 

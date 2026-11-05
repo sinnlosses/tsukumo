@@ -248,5 +248,3 @@ export const reportFollowUpRecordSchema = z
     restated: z.boolean(),
   })
   .readonly()
-
-export type ReportFollowUpRecord = z.infer<typeof reportFollowUpRecordSchema>

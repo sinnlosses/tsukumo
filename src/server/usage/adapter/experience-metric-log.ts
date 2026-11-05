@@ -9,7 +9,10 @@ import {
   type ExperienceMetricRecord,
   experienceMetricRecordSchema,
 } from "../../../shared/usage/experience-metric-record.ts"
-import { createDatedRecordLog, type DatedRecordLog } from "../../adapter/lib/dated-record-log.ts"
+import {
+  createDatedRecordLog,
+  type DatedRecordLifecycle,
+} from "../../adapter/lib/dated-record-log.ts"
 import { isoWithOffset, localDateKey } from "../../adapter/local-time.ts"
 import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
 import type {
@@ -30,8 +33,7 @@ export function experienceMetricDir(): string {
  */
 export function createExperienceMetricLog(
   root: string = experienceMetricDir(),
-): ExperienceMetricLog &
-  Pick<DatedRecordLog<ExperienceMetricRecord>, "flush" | "close" | "pruneExpired"> {
+): ExperienceMetricLog & DatedRecordLifecycle {
   const log = createDatedRecordLog(
     {
       schema: experienceMetricRecordSchema,
@@ -43,9 +45,7 @@ export function createExperienceMetricLog(
     append: (entry) => {
       log.append(localDateKey(entry.at), [toRecord(entry)])
     },
-    flush: log.flush,
-    close: log.close,
-    pruneExpired: log.pruneExpired,
+    ...log.lifecycle,
     readRange: (period) => log.readRange(period).map(fromRecord),
   }
 }

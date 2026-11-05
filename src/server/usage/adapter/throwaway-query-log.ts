@@ -4,7 +4,10 @@
 //
 // 書けなくても例外を投げない。
 
-import { createDatedRecordLog, type DatedRecordLog } from "../../adapter/lib/dated-record-log.ts"
+import {
+  createDatedRecordLog,
+  type DatedRecordLifecycle,
+} from "../../adapter/lib/dated-record-log.ts"
 import { isoWithOffset, localDateKey } from "../../adapter/local-time.ts"
 import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
 import {
@@ -23,10 +26,7 @@ const THROWAWAY_QUERY_RETENTION_DAYS = 90
  */
 export function createThrowawayQueryLog(
   root: string = tsukumoHomePath("throwawayQuery"),
-): { readonly record: ThrowawayQueryRecorder } & Pick<
-  DatedRecordLog<ThrowawayQueryRecord>,
-  "flush" | "close" | "pruneExpired"
-> {
+): { readonly record: ThrowawayQueryRecorder } & DatedRecordLifecycle {
   const log = createDatedRecordLog(
     { schema: throwawayQueryRecordSchema, retentionDays: THROWAWAY_QUERY_RETENTION_DAYS },
     root,
@@ -35,9 +35,7 @@ export function createThrowawayQueryLog(
     record: (footprint) => {
       log.append(localDateKey(footprint.startedAt), [toRecord(footprint)])
     },
-    flush: log.flush,
-    close: log.close,
-    pruneExpired: log.pruneExpired,
+    ...log.lifecycle,
   }
 }
 

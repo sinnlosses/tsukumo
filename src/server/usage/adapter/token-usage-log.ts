@@ -18,7 +18,10 @@ import {
   type TokenUsageRecord,
   tokenUsageRecordSchema,
 } from "../../../shared/usage/token-usage.ts"
-import { createDatedRecordLog, type DatedRecordLog } from "../../adapter/lib/dated-record-log.ts"
+import {
+  createDatedRecordLog,
+  type DatedRecordLifecycle,
+} from "../../adapter/lib/dated-record-log.ts"
 import { isoWithOffset, localDateKey } from "../../adapter/local-time.ts"
 import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
 import type { TokenUsageEntry, TokenUsageLog } from "../core/token-usage.ts"
@@ -31,7 +34,7 @@ import type { OpenTaskReader } from "./tw-claim-list.ts"
 export function createTokenUsageLog(
   openTask: OpenTaskReader,
   root: string = tokenUsageDir(),
-): TokenUsageLog & Pick<DatedRecordLog<TokenUsageRecord>, "flush" | "close" | "pruneExpired"> {
+): TokenUsageLog & DatedRecordLifecycle {
   const log = createDatedRecordLog(
     { schema: tokenUsageRecordSchema, retentionDays: undefined },
     root,
@@ -41,9 +44,7 @@ export function createTokenUsageLog(
       log.append(localDateKey(entry.at), [toRecord(entry, openTask)])
     },
     prefetchOpenTask: openTask.prefetch,
-    flush: log.flush,
-    close: log.close,
-    pruneExpired: log.pruneExpired,
+    ...log.lifecycle,
     readRange: (period) => log.readRange(period),
   }
 }
