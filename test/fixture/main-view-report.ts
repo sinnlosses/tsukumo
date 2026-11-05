@@ -10,6 +10,7 @@ import type { TurnBodies } from "../../src/shared/session/turn-progress.ts"
 import { reportOf } from "./main-view-entry.ts"
 import { reportOfDrawn } from "./report-event.ts"
 import { requestEvent } from "./session-event.ts"
+import { checkedToolUseId } from "./tool-use-id.ts"
 
 export const fold = (events: readonly SessionEvent[]) =>
   events.reduce((current, event) => applySessionEvent(current, event, 0), INITIAL_SESSION_STATE)
@@ -45,12 +46,12 @@ function sectionsOfBody(body: string): readonly ReportBlockSection[] {
 export const toolRun = (id: string): readonly SessionEvent[] => [
   {
     kind: "tool-started",
-    toolUseId: id,
+    toolUseId: checkedToolUseId(id),
     name: "Edit",
     input: { file_path: "/tmp/dummy/a.ts" },
     parentToolUseId: undefined,
   },
-  { kind: "tool-finished", toolUseId: id, content: "ok", isError: false },
+  { kind: "tool-finished", toolUseId: checkedToolUseId(id), content: "ok", isError: false },
 ]
 export const finished: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
 export const shownReports = (turn: ReturnType<typeof turnOf>) =>

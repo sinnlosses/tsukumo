@@ -11,6 +11,7 @@ import { INITIAL_SESSION_STATE } from "../../../../src/shared/session/session-st
 import type { ModelTokenUsage, TurnUsageScope } from "../../../../src/shared/usage/token-usage.ts"
 import { requestEvent } from "../../../fixture/session-event.ts"
 import { checkedSessionId } from "../../../fixture/session-id.ts"
+import { checkedOptionalToolUseId, checkedToolUseId } from "../../../fixture/tool-use-id.ts"
 
 function usage(model: string, input: number, output: number, cost: number): ModelTokenUsage {
   return {
@@ -95,15 +96,15 @@ describe("createTokenUsageRecorder の増分", () => {
 function toolStarted(toolUseId: string, name: string, parentToolUseId?: string): SessionEvent {
   return {
     kind: "tool-started",
-    toolUseId,
+    toolUseId: checkedToolUseId(toolUseId),
     name,
     input: { 架空の引数: "架空の値" },
-    parentToolUseId,
+    parentToolUseId: checkedOptionalToolUseId(parentToolUseId),
   }
 }
 
 function toolFinished(toolUseId: string, content: string): SessionEvent {
-  return { kind: "tool-finished", toolUseId, content, isError: false }
+  return { kind: "tool-finished", toolUseId: checkedToolUseId(toolUseId), content, isError: false }
 }
 
 function stepUsage(
@@ -295,12 +296,12 @@ describe("createTokenUsageRecorder の speak だけの応答の数", () => {
   const speech: SessionEvent = { kind: "speech", text: "架空のセリフ", expression: "default" }
   const speakCalled = (toolUseId: string): SessionEvent => ({
     kind: "speak-called",
-    toolUseId,
+    toolUseId: checkedToolUseId(toolUseId),
     speech,
   })
   const speakRejected = (toolUseId: string): SessionEvent => ({
     kind: "tool-finished",
-    toolUseId,
+    toolUseId: checkedToolUseId(toolUseId),
     content: "差し戻し",
     isError: true,
   })
@@ -364,11 +365,15 @@ describe("createTokenUsageRecorder の speak だけの応答の数", () => {
 describe("createTokenUsageRecorder の進みの差し込みの印", () => {
   const nudged: SessionEvent = { kind: "progress-nudged" }
   const speech: SessionEvent = { kind: "speech", text: "架空のセリフ", expression: "default" }
-  const mainSpeakCalled: SessionEvent = { kind: "speak-called", toolUseId: "s-1", speech }
+  const mainSpeakCalled: SessionEvent = {
+    kind: "speak-called",
+    toolUseId: checkedToolUseId("s-1"),
+    speech,
+  }
   const mainSpeakFinished = toolFinished("s-1", "ok")
   const mainSpeakRejected: SessionEvent = {
     kind: "tool-finished",
-    toolUseId: "s-1",
+    toolUseId: checkedToolUseId("s-1"),
     content: "差し戻し",
     isError: true,
   }

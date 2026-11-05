@@ -16,6 +16,7 @@ import {
   toolRecord,
   workPlanRecord,
 } from "../../../fixture/session-record.ts"
+import { checkedToolUseId } from "../../../fixture/tool-use-id.ts"
 import { typedElement } from "../../../typed-element.ts"
 import { putState } from "../../session-store.ts"
 
@@ -392,14 +393,14 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
       requestEvent(),
       {
         kind: "tool-started",
-        toolUseId: "toolu_1",
+        toolUseId: checkedToolUseId("toolu_1"),
         name: "Bash",
         input: { command: "架空のコマンド" },
         parentToolUseId: undefined,
       },
       {
         kind: "tool-finished",
-        toolUseId: "toolu_1",
+        toolUseId: checkedToolUseId("toolu_1"),
         content: "架".repeat(8005),
         isError: true,
       },

@@ -10,6 +10,7 @@ import {
   type SessionState,
 } from "../../../../../../../src/shared/session/session-state.ts"
 import { requestEvent } from "../../../../../../fixture/session-event.ts"
+import { checkedToolUseId } from "../../../../../../fixture/tool-use-id.ts"
 import { putSession } from "../../../../../session-store.ts"
 
 afterEach(() => {
@@ -51,7 +52,7 @@ function plan(
 function bashStarted(id: string): SessionEvent {
   return {
     kind: "tool-started",
-    toolUseId: id,
+    toolUseId: checkedToolUseId(id),
     name: "Bash",
     input: { command: `架空のコマンド ${id}` },
     parentToolUseId: undefined,
@@ -59,7 +60,12 @@ function bashStarted(id: string): SessionEvent {
 }
 
 function bashFinished(id: string): SessionEvent {
-  return { kind: "tool-finished", toolUseId: id, content: "架空の結果", isError: false }
+  return {
+    kind: "tool-finished",
+    toolUseId: checkedToolUseId(id),
+    content: "架空の結果",
+    isError: false,
+  }
 }
 
 function stateAfter(events: readonly SessionEvent[]): SessionState {

@@ -2,6 +2,7 @@
 
 import type { BackgroundTask } from "../session-driver/background-task.ts"
 import type { DelegateReturn } from "./delegate-return.ts"
+import type { ToolUseId } from "./tool-use-id.ts"
 import type { WorkPlan } from "./work-plan.ts"
 import type { WorkflowProgress } from "./workflow-step.ts"
 
@@ -17,7 +18,7 @@ export type DelegateEvent =
    */
   | {
       readonly kind: "work-plan-called"
-      readonly toolUseId: string
+      readonly toolUseId: ToolUseId
       readonly plan: WorkPlan
     }
   /**
@@ -28,13 +29,13 @@ export type DelegateEvent =
    * 委譲先が形の合う `phase_result` を呼んだ。サーバの中だけで流れる。
    * `CallReview.pass` が受け、同じ `delegate` の次の返却に `phase_result` が伴った印にする（畳み込み・ブラウザには届かない）。
    */
-  | { readonly kind: "phase-result-called"; readonly delegate: string }
+  | { readonly kind: "phase-result-called"; readonly delegate: ToolUseId }
   /**
    * 委譲先の返却（`SubagentHandback`）が届いた。本文は読まず、届いた事実だけを運ぶ。サーバの中だけで流れる。
    * `CallReview.pass` が受け、委譲ゲートと注記だけを立てて捨てる（畳み込み・ブラウザには届かない）。
    * `delegate` は返した委譲先で、同じ委譲先の `phase-result-called` と対にする。
    */
-  | { readonly kind: "delegate-handed-back"; readonly delegate: string }
+  | { readonly kind: "delegate-handed-back"; readonly delegate: ToolUseId }
   /**
    * ワークフロースクリプト（`Workflow`）の走り出し（SDK の `system` / `task_started` のうち `task_type` が `local_workflow` のもの）。サーバの中だけで流れる。
    * `CallReview.pass` が `taskId` を覚え、同じ `taskId` の `task-notified` と対にしてワークフロースクリプトの完了を見分ける（畳み込み・ブラウザには届かない）。
@@ -54,7 +55,7 @@ export type DelegateEvent =
   | {
       readonly kind: "workflow-step-started"
       readonly agentId: string
-      readonly toolUseId: string
+      readonly toolUseId: ToolUseId
       readonly name: string
       readonly input: Readonly<Record<string, string>>
     }
@@ -65,7 +66,7 @@ export type DelegateEvent =
   | {
       readonly kind: "workflow-step-finished"
       readonly agentId: string
-      readonly toolUseId: string
+      readonly toolUseId: ToolUseId
     }
   /**
    * ワークフロースクリプトの段と agent の写しが届いた（SDK の `system` / `task_progress` の `workflow_progress`）。
@@ -74,18 +75,18 @@ export type DelegateEvent =
   | { readonly kind: "workflow-progress"; readonly progress: WorkflowProgress }
   | {
       readonly kind: "tool-started"
-      readonly toolUseId: string
+      readonly toolUseId: ToolUseId
       readonly name: string
       readonly input: unknown
       /**
        * サブエージェントの中で動いたときの、起こした側の Agent ツールの `toolUseId`。
        * トップレベルのターンでは undefined（SDK メッセージの `parent_tool_use_id` が `null`）。
        */
-      readonly parentToolUseId: string | undefined
+      readonly parentToolUseId: ToolUseId | undefined
     }
   | {
       readonly kind: "tool-finished"
-      readonly toolUseId: string
+      readonly toolUseId: ToolUseId
       readonly content: string
       readonly isError: boolean
     }
@@ -94,7 +95,7 @@ export type DelegateEvent =
    * 完了・失敗・停止を区別しない。
    * 前景のツールでも数秒を越えると届く（実測）ので、効かせるかは畳み込みが記録の側で決める。
    */
-  | { readonly kind: "background-tool-finished"; readonly toolUseId: string }
+  | { readonly kind: "background-tool-finished"; readonly toolUseId: ToolUseId }
   /**
    * バックグラウンドタスクの進みの1行が届いた（SDK の `system` / `task_progress` の `summary`）。
    * `summary` は委譲先の会話から作られた字なので、畳み込み・記録・ログに写さない。

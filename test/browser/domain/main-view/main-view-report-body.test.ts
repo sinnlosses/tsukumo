@@ -32,6 +32,7 @@ import {
 } from "../../../fixture/main-view-report.ts"
 import { reportEvent } from "../../../fixture/report-event.ts"
 import { requestEvent } from "../../../fixture/session-event.ts"
+import { checkedToolUseId } from "../../../fixture/tool-use-id.ts"
 
 /** 段ごとの所要時間も振り返りもお願いも無い `report` の欄。 */
 const regionsOf = (
@@ -94,14 +95,14 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
   it("command と完全一致した同じやり取りの最後の Bash の所要時間を、行に添える", () => {
     const bashStarted = (id: string, command: string): SessionEvent => ({
       kind: "tool-started",
-      toolUseId: id,
+      toolUseId: checkedToolUseId(id),
       name: "Bash",
       input: { command },
       parentToolUseId: undefined,
     })
     const bashFinished = (id: string): SessionEvent => ({
       kind: "tool-finished",
-      toolUseId: id,
+      toolUseId: checkedToolUseId(id),
       content: "ok",
       isError: false,
     })
@@ -151,14 +152,14 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
   it("run_in_background の Bash は完了の知らせまでの時間を添え、知らせが届かなければ空にする", () => {
     const backgroundStarted = (id: string, command: string): SessionEvent => ({
       kind: "tool-started",
-      toolUseId: id,
+      toolUseId: checkedToolUseId(id),
       name: "Bash",
       input: { command, run_in_background: true },
       parentToolUseId: undefined,
     })
     const accepted = (id: string): SessionEvent => ({
       kind: "tool-finished",
-      toolUseId: id,
+      toolUseId: checkedToolUseId(id),
       content: "架空の受付",
       isError: false,
     })
@@ -168,7 +169,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
       [accepted("toolu_b1"), 1_300],
       [backgroundStarted("toolu_b2", "架空の別の検査"), 2_000],
       [accepted("toolu_b2"), 2_300],
-      [{ kind: "background-tool-finished", toolUseId: "toolu_b1" }, 63_000],
+      [{ kind: "background-tool-finished", toolUseId: checkedToolUseId("toolu_b1") }, 63_000],
       [
         report("架空の結論。", "", "", [
           {

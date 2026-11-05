@@ -8,9 +8,13 @@ import {
 import { createWorkPlanReview } from "../../../../src/server/work-plan/core/work-plan-review.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import type { LatestWorkPlan } from "../../../../src/shared/session/work-plan.ts"
+import { checkedToolUseId } from "../../../fixture/tool-use-id.ts"
 import { handedBack, REQUEST, SUMMARY } from "../../../fixture/work-plan-review.ts"
 
-const resultCalled = (delegate: string): SessionEvent => ({ kind: "phase-result-called", delegate })
+const resultCalled = (delegate: string): SessionEvent => ({
+  kind: "phase-result-called",
+  delegate: checkedToolUseId(delegate),
+})
 
 describe("WorkPlanReview の委譲の返却", () => {
   const FOUR = ["架空の計画", "架空の実装A", "架空の実装B", "架空の受け入れ"]
@@ -287,10 +291,11 @@ describe("WorkPlanReview の phase_result", () => {
     if (verdict.kind !== "accepted") {
       return verdict.kind
     }
-    review.pass({ kind: "work-plan-called", toolUseId: "toolu_w", plan: verdict.plan })
+    const toolUseId = checkedToolUseId("toolu_w")
+    review.pass({ kind: "work-plan-called", toolUseId, plan: verdict.plan })
     const [event] = review.pass({
       kind: "tool-finished",
-      toolUseId: "toolu_w",
+      toolUseId,
       content: "ok",
       isError: false,
     })

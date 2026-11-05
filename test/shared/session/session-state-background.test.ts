@@ -9,6 +9,7 @@ import {
   type SessionState,
 } from "../../../src/shared/session/session-state.ts"
 import { apply } from "../../fixture/session-state.ts"
+import { checkedToolUseId } from "../../fixture/tool-use-id.ts"
 
 describe("applySessionEvent（バックグラウンドタスク）", () => {
   const SHELL_TASK = {
@@ -30,20 +31,20 @@ describe("applySessionEvent（バックグラウンドタスク）", () => {
 describe("applySessionEvent（背景で走らせた Bash の終わり）", () => {
   const bashStarted = (toolUseId: string, input: unknown): SessionEvent => ({
     kind: "tool-started",
-    toolUseId,
+    toolUseId: checkedToolUseId(toolUseId),
     name: "Bash",
     input,
     parentToolUseId: undefined,
   })
   const accepted = (toolUseId: string): SessionEvent => ({
     kind: "tool-finished",
-    toolUseId,
+    toolUseId: checkedToolUseId(toolUseId),
     content: "架空の受付",
     isError: false,
   })
   const notified = (toolUseId: string): SessionEvent => ({
     kind: "background-tool-finished",
-    toolUseId,
+    toolUseId: checkedToolUseId(toolUseId),
   })
   const applyAt = (...stamped: readonly (readonly [SessionEvent, number])[]): SessionState =>
     stamped.reduce(

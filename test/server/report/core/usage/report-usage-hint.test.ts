@@ -10,6 +10,7 @@ import type { ReportBlock } from "../../../../../src/shared/report/report-block.
 import type { ReportCheck } from "../../../../../src/shared/report/report-check.ts"
 import type { SessionEvent } from "../../../../../src/shared/session/session-event.ts"
 import { reportEvent, reportOfDrawn, reportOfSections } from "../../../../fixture/report-event.ts"
+import { checkedOptionalToolUseId, checkedToolUseId } from "../../../../fixture/tool-use-id.ts"
 
 describe("reportUsageEntryOf", () => {
   it("hasModifiedFiles は常に false で、前後図か画像の有無・task の有無を塊の欄とは別の真偽値で持つ", () => {
@@ -477,10 +478,10 @@ describe("isMainImageFileRead", () => {
     parentToolUseId: string | undefined = undefined,
   ): Extract<SessionEvent, { readonly kind: "tool-started" }> => ({
     kind: "tool-started",
-    toolUseId: "toolu_1",
+    toolUseId: checkedToolUseId("toolu_1"),
     name,
     input,
-    parentToolUseId,
+    parentToolUseId: checkedOptionalToolUseId(parentToolUseId),
   })
 
   it("メインの Read で、拡張子が画像（png・jpg・jpeg・gif・webp）のどれかなら真（大文字小文字は問わない）", () => {

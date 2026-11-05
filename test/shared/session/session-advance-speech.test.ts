@@ -6,6 +6,7 @@ import { applySessionEvent } from "../../../src/shared/session/session-fold.ts"
 import { INITIAL_SESSION_STATE } from "../../../src/shared/session/session-state.ts"
 import { requestEvent } from "../../fixture/session-event.ts"
 import { apply } from "../../fixture/session-state.ts"
+import { checkedToolUseId } from "../../fixture/tool-use-id.ts"
 
 describe("applySessionEvent", () => {
   it("書きかけの本文をつなぎ、完成した本文が来たら置き換える（二重に積まない）", () => {
@@ -207,7 +208,7 @@ describe("applySessionEvent", () => {
       spoken,
       {
         kind: "tool-started",
-        toolUseId: "toolu_1",
+        toolUseId: checkedToolUseId("toolu_1"),
         name: "Read",
         input: {},
         parentToolUseId: undefined,
@@ -219,7 +220,12 @@ describe("applySessionEvent", () => {
 
     const finished = applySessionEvent(
       running,
-      { kind: "tool-finished", toolUseId: "toolu_1", content: "ダミーの結果", isError: false },
+      {
+        kind: "tool-finished",
+        toolUseId: checkedToolUseId("toolu_1"),
+        content: "ダミーの結果",
+        isError: false,
+      },
       60_000,
     )
 

@@ -9,6 +9,7 @@ import type { SessionEvent } from "../../../src/shared/session/session-event.ts"
 import { applySessionEvent } from "../../../src/shared/session/session-fold.ts"
 import { INITIAL_SESSION_STATE } from "../../../src/shared/session/session-state.ts"
 import { staticOf } from "../../fixture/static-component-list.ts"
+import { checkedToolUseId } from "../../fixture/tool-use-id.ts"
 
 type ReportEvent = Extract<SessionEvent, { readonly kind: "report" }>
 
@@ -248,7 +249,7 @@ const MARKDOWN_PARTS = [
 ]
 
 function reportOf(input: Readonly<Record<string, unknown>>): ReportEvent {
-  const [event] = reportEvents("toolu_fictional", input, [])
+  const [event] = reportEvents(checkedToolUseId("toolu_fictional"), input, [])
   if (event?.kind !== "report") throw new Error("report にならなかった")
   return event
 }

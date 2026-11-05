@@ -6,6 +6,7 @@ import {
 } from "../../../../src/server/session-driver/core/call-review.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import { requestEvent } from "../../../fixture/session-event.ts"
+import { checkedToolUseId } from "../../../fixture/tool-use-id.ts"
 
 type SpeechEvent = Extract<SessionEvent, { kind: "speech" }>
 
@@ -13,18 +14,18 @@ const speech = (text: string): SpeechEvent => ({ kind: "speech", text, expressio
 const SPEAK_DRAWN: SessionEvent = { kind: "speak-drawn" }
 const speakCalled = (toolUseId: string, text: string): SessionEvent => ({
   kind: "speak-called",
-  toolUseId,
+  toolUseId: checkedToolUseId(toolUseId),
   speech: speech(text),
 })
 const finished = (toolUseId: string): SessionEvent => ({
   kind: "tool-finished",
-  toolUseId,
+  toolUseId: checkedToolUseId(toolUseId),
   content: "ok",
   isError: false,
 })
 const toolStarted = (toolUseId: string): SessionEvent => ({
   kind: "tool-started",
-  toolUseId,
+  toolUseId: checkedToolUseId(toolUseId),
   name: "Bash",
   input: {},
   parentToolUseId: undefined,

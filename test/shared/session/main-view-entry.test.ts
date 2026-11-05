@@ -22,6 +22,7 @@ import {
 } from "../../fixture/main-view-entry.ts"
 import { reportEvent } from "../../fixture/report-event.ts"
 import { requestEvent } from "../../fixture/session-event.ts"
+import { checkedToolUseId } from "../../fixture/tool-use-id.ts"
 
 describe("mainViewEntries（記録ごとの結果の持ち回し）", () => {
   type Timed = readonly [SessionEvent, number]
@@ -41,14 +42,14 @@ describe("mainViewEntries（記録ごとの結果の持ち回し）", () => {
   })
   const bashStarted = (id: string, command: string): SessionEvent => ({
     kind: "tool-started",
-    toolUseId: id,
+    toolUseId: checkedToolUseId(id),
     name: "Bash",
     input: { command },
     parentToolUseId: undefined,
   })
   const bashFinished = (id: string): SessionEvent => ({
     kind: "tool-finished",
-    toolUseId: id,
+    toolUseId: checkedToolUseId(id),
     content: "ok",
     isError: false,
   })

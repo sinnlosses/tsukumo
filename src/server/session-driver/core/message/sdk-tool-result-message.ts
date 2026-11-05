@@ -7,6 +7,7 @@
 import { isPlainObject } from "remeda"
 
 import type { SessionEvent } from "../../../../shared/session/session-event.ts"
+import { parseToolUseId } from "../../../../shared/session/tool-use-id.ts"
 
 export function toolResultEvents(message: unknown): readonly SessionEvent[] {
   if (!isPlainObject(message) || !Array.isArray(message.content)) {
@@ -17,18 +18,18 @@ export function toolResultEvents(message: unknown): readonly SessionEvent[] {
 }
 
 function toolResultBlockEvents(block: unknown): readonly SessionEvent[] {
-  if (
-    !isPlainObject(block) ||
-    block.type !== "tool_result" ||
-    typeof block.tool_use_id !== "string"
-  ) {
+  if (!isPlainObject(block) || block.type !== "tool_result") {
+    return []
+  }
+  const toolUseId = parseToolUseId(block.tool_use_id)
+  if (toolUseId === undefined) {
     return []
   }
 
   return [
     {
       kind: "tool-finished",
-      toolUseId: block.tool_use_id,
+      toolUseId,
       content: toolResultContentText(block.content),
       isError: block.is_error === true,
     },

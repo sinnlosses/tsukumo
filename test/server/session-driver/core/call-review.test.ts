@@ -4,17 +4,13 @@ import type { ReportDraft } from "../../../../src/server/report/core/rules/draft
 import {
   type CallReview,
   createCallReview,
-  passRelayedEvents,
 } from "../../../../src/server/session-driver/core/call-review.ts"
-import {
-  PHASE_RESULT_MISSING_HANDBACK_LINE,
-  RESULT_CALLED_HANDBACK_LINE,
-} from "../../../../src/server/work-plan/core/band-position.ts"
 import type { BackgroundTask } from "../../../../src/shared/session-driver/background-task.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import { reportDraft, reportEvent } from "../../../fixture/report-event.ts"
 import { FINISHED, REJECTION_PHRASE, SESSION_INFO } from "../../../fixture/report-review.ts"
 import { requestEvent } from "../../../fixture/session-event.ts"
+import { checkedOptionalToolUseId, checkedToolUseId } from "../../../fixture/tool-use-id.ts"
 import { next } from "../../../fixture/work-plan-draft.ts"
 
 type SpeechEvent = Extract<SessionEvent, { kind: "speech" }>
@@ -32,21 +28,21 @@ const speechOf = (text: string): SpeechEvent => ({ kind: "speech", text, express
 const SPEAK_DRAWN: SessionEvent = { kind: "speak-drawn" }
 const speakCalled = (toolUseId: string, text: string): SessionEvent => ({
   kind: "speak-called",
-  toolUseId,
+  toolUseId: checkedToolUseId(toolUseId),
   speech: speechOf(text),
 })
 const finished = (toolUseId: string, isError: boolean): SessionEvent => ({
   kind: "tool-finished",
-  toolUseId,
+  toolUseId: checkedToolUseId(toolUseId),
   content: isError ? "架空の差し戻し" : "ok",
   isError,
 })
 const toolStarted = (toolUseId: string, parentToolUseId?: string): SessionEvent => ({
   kind: "tool-started",
-  toolUseId,
+  toolUseId: checkedToolUseId(toolUseId),
   name: "Bash",
   input: {},
-  parentToolUseId,
+  parentToolUseId: checkedOptionalToolUseId(parentToolUseId),
 })
 const backgroundTask = (taskId: string, kind: BackgroundTask["kind"]): BackgroundTask => ({
   taskId,
@@ -86,7 +82,7 @@ const planInput = (current: number) => ({
 })
 const planCalled = (toolUseId: string, current: number): SessionEvent => ({
   kind: "work-plan-called",
-  toolUseId,
+  toolUseId: checkedToolUseId(toolUseId),
   plan: next(PHASES, current, current > 0 ? "架空のまとめ。" : ""),
 })
 const planOf = (current: number): SessionEvent => {
@@ -519,48 +515,5 @@ describe("CallReview の新しい事実の数え方の差", () => {
 
     expect(isSpeechRejected(review)).toBe(false)
     expect(isReportRejectedForNothingNew(review, OTHER)).toBe(true)
-  })
-})
-
-describe("passRelayedEvents", () => {
-  const RETURNED: SessionEvent = { kind: "delegate-handed-back", delegate: "toolu_delegate" }
-
-  it("委譲先のメッセージからは返却だけを差し戻しに通し、委譲ゲートの印と注記がそれで立つ", () => {
-    const review = createCallReview()
-    review.pass(REQUEST)
-    review.judgeWorkPlan({
-      phases: ["架空の計画", "架空の実装A", "架空の受け入れ"],
-      current: 1,
-      phaseSummary: "架空のまとめ。",
-      delegatedRange: { first: 1, count: 1 },
-    })
-    const report = reportEvent({})
-
-    expect(passRelayedEvents(review, [report, RETURNED], false)).toEqual([report])
-    expect(review.gateRaised()).toBe(true)
-    expect(review.takeHandbackNote()).toContain(PHASE_RESULT_MISSING_HANDBACK_LINE)
-  })
-
-  it("委譲先の phase-result-called も差し戻しに通して捨て、同じ委譲先の次の返却には phase_result が伴ったと注記する", () => {
-    const review = createCallReview()
-    review.pass(REQUEST)
-    review.judgeWorkPlan({
-      phases: ["架空の計画", "架空の実装A", "架空の実装B", "架空の受け入れ"],
-      current: 1,
-      phaseSummary: "架空のまとめ。",
-      delegatedRange: { first: 1, count: 2 },
-    })
-    const called: SessionEvent = { kind: "phase-result-called", delegate: "toolu_delegate" }
-
-    expect(passRelayedEvents(review, [called, RETURNED], false)).toEqual([])
-    expect(review.gateRaised()).toBe(true)
-    expect(review.bandPosition()).toContain("本 1/2")
-    expect(review.takeHandbackNote()).toContain(RESULT_CALLED_HANDBACK_LINE)
-  })
-
-  it("メインのメッセージのイベントはすべて差し戻しに通す（report は結果まで預かる）", () => {
-    const review = createCallReview()
-
-    expect(passRelayedEvents(review, [reportEvent({})], true)).toEqual([])
   })
 })

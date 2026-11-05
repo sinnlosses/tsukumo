@@ -4,6 +4,7 @@
 import { isPlainObject } from "remeda"
 
 import type { SessionEvent } from "../../../../shared/session/session-event.ts"
+import type { ToolUseId } from "../../../../shared/session/tool-use-id.ts"
 import type { ModelTokenUsage } from "../../../../shared/usage/token-usage.ts"
 
 /**
@@ -18,7 +19,7 @@ import type { ModelTokenUsage } from "../../../../shared/usage/token-usage.ts"
  */
 export function stepUsageEvents(
   message: unknown,
-  parentToolUseId: string | undefined,
+  parentToolUseId: ToolUseId | undefined,
 ): readonly SessionEvent[] {
   if (!isPlainObject(message) || typeof message.id !== "string" || message.id === "") {
     return []

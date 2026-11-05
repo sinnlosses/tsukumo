@@ -17,6 +17,7 @@ import {
   type PermissionMode,
 } from "../../../../shared/session/run-setting-value.ts"
 import type { SessionEvent } from "../../../../shared/session/session-event.ts"
+import { parseToolUseId } from "../../../../shared/session/tool-use-id.ts"
 import type { LatestWorkPlan } from "../../../../shared/session/work-plan.ts"
 import { toolSummaryInput } from "../../../../shared/utils/tool-summary-field.ts"
 import { bundledFilePath } from "../../../adapter/bundled-path.ts"
@@ -157,11 +158,15 @@ export function preToolUseHooks(
       {
         hooks: [
           async (input) => {
-            if (input.hook_event_name === "PreToolUse" && input.agent_id !== undefined) {
+            if (input.hook_event_name !== "PreToolUse" || input.agent_id === undefined) {
+              return {}
+            }
+            const toolUseId = parseToolUseId(input.tool_use_id)
+            if (toolUseId !== undefined) {
               onEvent({
                 kind: "workflow-step-started",
                 agentId: input.agent_id,
-                toolUseId: input.tool_use_id,
+                toolUseId,
                 name: input.tool_name,
                 input: toolSummaryInput(input.tool_name, input.tool_input),
               })
@@ -297,11 +302,12 @@ export function postToolUseHooks(
     if (!inSubagent) {
       confirmedSettingEvents(input).forEach(onEvent)
     }
-    if (input.agent_id !== undefined) {
+    const toolUseId = parseToolUseId(input.tool_use_id)
+    if (input.agent_id !== undefined && toolUseId !== undefined) {
       onEvent({
         kind: "workflow-step-finished",
         agentId: input.agent_id,
-        toolUseId: input.tool_use_id,
+        toolUseId,
       })
     }
     if (toolMs === undefined) {

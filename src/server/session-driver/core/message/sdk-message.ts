@@ -14,6 +14,7 @@ import type { SessionEvent } from "../../../../shared/session/session-event.ts"
 import { parseSessionId, type SessionId } from "../../../../shared/session/session-id.ts"
 import { foldPermissionMode } from "../../../../shared/session/session-info.ts"
 import { MAX_TOOL_TEXT_LENGTH } from "../../../../shared/session/session-record.ts"
+import { parseToolUseId, type ToolUseId } from "../../../../shared/session/tool-use-id.ts"
 import { parseWorkPlan } from "../../../../shared/session/work-plan.ts"
 import { isBlankText } from "../../../../shared/utils/blank-text.ts"
 import { clipText, clipWithEllipsis } from "../../../../shared/utils/clip-text.ts"
@@ -108,10 +109,11 @@ export function toSessionEvents(
         return backgroundTaskEvents(message.tasks)
       }
       if (message.subtype === "task_notification") {
+        const toolUseId = parseToolUseId(message.tool_use_id)
         return [
-          ...(typeof message.tool_use_id === "string"
-            ? [{ kind: "background-tool-finished", toolUseId: message.tool_use_id } as const]
-            : []),
+          ...(toolUseId === undefined
+            ? []
+            : [{ kind: "background-tool-finished", toolUseId } as const]),
           ...(typeof message.task_id === "string"
             ? [{ kind: "task-notified", taskId: message.task_id } as const]
             : []),
@@ -131,8 +133,8 @@ export function toSessionEvents(
       return message.subtype === "compact_boundary" ? [{ kind: "compact-boundary" }] : []
     case "stream_event":
       return [
-        ...partialUtteranceEvents(message.event, optionalString(message.parent_tool_use_id)),
-        ...reportDraftingEvents(message.event, optionalString(message.parent_tool_use_id)),
+        ...partialUtteranceEvents(message.event, parseToolUseId(message.parent_tool_use_id)),
+        ...reportDraftingEvents(message.event, parseToolUseId(message.parent_tool_use_id)),
       ]
     case "assistant":
       return assistantMessageEvents(message, expressions)
@@ -144,7 +146,7 @@ export function toSessionEvents(
       // サブエージェント（Task ツール）の中の `result` が `parent_tool_use_id` 付きで届いたら無視する。
       // ターンの終わりとして扱うと、Claude Code のターンが終わっていないのに `turn-finished` が挟まり、ターンが `finished` に落ちる。
       // SDK が実際にこの形で流すかは未確認（`assistant` の `tool_use` と同じ形のはずという保険）。
-      return optionalString(message.parent_tool_use_id) === undefined
+      return parseToolUseId(message.parent_tool_use_id) === undefined
         ? [
             ...tokenUsageEvents(message.modelUsage),
             { kind: "turn-finished", outcome: turnOutcome(message, interruptSent) },
@@ -160,7 +162,7 @@ export function toSessionEvents(
 
 /** サブエージェントの中から届いたメッセージか（`parent_tool_use_id` が文字列）。 */
 export function isSubagentMessage(message: unknown): boolean {
-  return isPlainObject(message) && optionalString(message.parent_tool_use_id) !== undefined
+  return isPlainObject(message) && parseToolUseId(message.parent_tool_use_id) !== undefined
 }
 
 /** メッセージが運んだ `session_id`。セッションの ID の綴りでなければ undefined。 */
@@ -203,7 +205,7 @@ function sessionInfoEvents(message: Readonly<Record<string, unknown>>): readonly
 /** メインの `assistant` メッセージの `message.model`（応答したモデル）を、見届けたモデルにする。 */
 function modelConfirmedEvents(
   message: unknown,
-  parentToolUseId: string | undefined,
+  parentToolUseId: ToolUseId | undefined,
 ): readonly SessionEvent[] {
   if (parentToolUseId !== undefined || !isPlainObject(message)) {
     return []
@@ -222,7 +224,7 @@ function assistantMessageEvents(
   message: Readonly<Record<string, unknown>>,
   expressions: readonly Expression[],
 ): readonly SessionEvent[] {
-  const parentToolUseId = optionalString(message.parent_tool_use_id)
+  const parentToolUseId = parseToolUseId(message.parent_tool_use_id)
   return [
     ...assistantEvents(message.message, expressions, parentToolUseId),
     ...stepUsageEvents(message.message, parentToolUseId),
@@ -251,7 +253,7 @@ function modelChangeEvents(localCommandRun: unknown): readonly SessionEvent[] {
 function assistantEvents(
   message: unknown,
   expressions: readonly Expression[],
-  parentToolUseId: string | undefined,
+  parentToolUseId: ToolUseId | undefined,
 ): readonly SessionEvent[] {
   if (!isPlainObject(message) || !Array.isArray(message.content)) {
     return []
@@ -265,7 +267,7 @@ function assistantEvents(
 function assistantBlockEvents(
   block: unknown,
   expressions: readonly Expression[],
-  parentToolUseId: string | undefined,
+  parentToolUseId: ToolUseId | undefined,
 ): readonly SessionEvent[] {
   if (!isPlainObject(block)) {
     return []
@@ -285,33 +287,34 @@ function assistantBlockEvents(
     return []
   }
 
+  const toolUseId = parseToolUseId(block.id)
+
   if (block.name === speakToolFullName()) {
     const speeches = speechEvents(block.input, expressions)
-    const toolUseId = block.id
-    return parentToolUseId === undefined && typeof toolUseId === "string"
+    return parentToolUseId === undefined && toolUseId !== undefined
       ? speeches.map((speech): SessionEvent => ({ kind: "speak-called", toolUseId, speech }))
       : speeches
   }
 
   if (block.name === tsukumoToolFullName(REPORT_TOOL_NAME)) {
-    if (parentToolUseId !== undefined || typeof block.id !== "string") {
+    if (parentToolUseId !== undefined || toolUseId === undefined) {
       return []
     }
-    const reports = reportEvents(block.id, block.input, expressions)
+    const reports = reportEvents(toolUseId, block.input, expressions)
     return reports.length > 0
       ? reports
       : [
           {
             kind: "report-malformed",
-            toolUseId: block.id,
+            toolUseId,
             argumentChars: reportArgumentCharsOf(block.input),
           },
         ]
   }
 
   if (block.name === tsukumoToolFullName(WORK_PLAN_TOOL_NAME)) {
-    return parentToolUseId === undefined && typeof block.id === "string"
-      ? workPlanEvents(block.id, block.input)
+    return parentToolUseId === undefined && toolUseId !== undefined
+      ? workPlanEvents(toolUseId, block.input)
       : []
   }
 
@@ -329,17 +332,17 @@ function assistantBlockEvents(
     return [{ kind: "delegate-handed-back", delegate: parentToolUseId }]
   }
 
-  return typeof block.id === "string"
-    ? [
+  return toolUseId === undefined
+    ? []
+    : [
         {
           kind: "tool-started",
-          toolUseId: block.id,
+          toolUseId,
           name: block.name,
           input: clipInputStrings(block.input),
           parentToolUseId,
         },
       ]
-    : []
 }
 
 /**
@@ -364,7 +367,7 @@ function clipInputStrings(value: unknown): unknown {
 /** 委譲先が返却を渡すツールの名前。メインの query に `parent_tool_use_id` 付きで流れる。 */
 const SUBAGENT_HANDBACK_TOOL_NAME = "SubagentHandback"
 
-function workPlanEvents(toolUseId: string, input: unknown): readonly SessionEvent[] {
+function workPlanEvents(toolUseId: ToolUseId, input: unknown): readonly SessionEvent[] {
   const plan = parseWorkPlan(input)
   return plan === undefined ? [] : [{ kind: "work-plan-called", toolUseId, plan }]
 }

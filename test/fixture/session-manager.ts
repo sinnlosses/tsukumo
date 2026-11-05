@@ -20,6 +20,7 @@ import { NOOP_CHAT_ARCHIVE } from "./chat.ts"
 import { createCommandClient } from "./command-client.ts"
 import { createStubDriver } from "./session-driver.ts"
 import { CHARACTER_EVENT, requestEvent } from "./session-event.ts"
+import { checkedToolUseId } from "./tool-use-id.ts"
 
 const BATCH_MS = 5
 
@@ -202,12 +203,17 @@ export const RESTORED_REPLAY: readonly SessionEvent[] = [
   requestEvent("前のセッションの架空の依頼"),
   {
     kind: "tool-started",
-    toolUseId: "t-restored",
+    toolUseId: checkedToolUseId("t-restored"),
     name: "Read",
     input: { file_path: "/tmp/dummy.txt" },
     parentToolUseId: undefined,
   },
-  { kind: "tool-finished", toolUseId: "t-restored", content: "架空の結果", isError: false },
+  {
+    kind: "tool-finished",
+    toolUseId: checkedToolUseId("t-restored"),
+    content: "架空の結果",
+    isError: false,
+  },
   { kind: "speech", text: "前のセッションの架空のセリフ", expression: "proud" },
   { kind: "turn-finished", outcome: { kind: "completed" } },
 ]

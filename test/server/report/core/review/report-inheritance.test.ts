@@ -6,12 +6,13 @@ import type { SessionEvent } from "../../../../../src/shared/session/session-eve
 import { reportEvent } from "../../../../fixture/report-event.ts"
 import { requestEvent } from "../../../../fixture/session-event.ts"
 import { checkedSessionId } from "../../../../fixture/session-id.ts"
+import { checkedToolUseId } from "../../../../fixture/tool-use-id.ts"
 
 type ReportCalled = Extract<SessionEvent, { kind: "report" }>
 
 const finished = (toolUseId: string, isError: boolean): SessionEvent => ({
   kind: "tool-finished",
-  toolUseId,
+  toolUseId: checkedToolUseId(toolUseId),
   content: isError ? "架空の差し戻し" : "ok",
   isError,
 })

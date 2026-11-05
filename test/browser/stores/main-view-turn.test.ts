@@ -17,6 +17,7 @@ import { reportDraftingOf } from "../../../src/shared/session/turn-progress.ts"
 import { STAGED_PARTS } from "../../fixture/a2ui-component.ts"
 import { reportEvent } from "../../fixture/report-event.ts"
 import { requestEvent } from "../../fixture/session-event.ts"
+import { checkedToolUseId } from "../../fixture/tool-use-id.ts"
 
 const FIXTURE_STATE: SessionState = {
   ...INITIAL_SESSION_STATE,
@@ -273,7 +274,10 @@ describe("mainViewTurnsOf（続きのターンを2回以上含む並びを1件�
 // 部品の一覧の `report` は、書いている途中から草稿として描く。
 // `report` は `tool-finished` まで預かられ、届いたあとも確定するまでステップに出ないので、そのあいだも草稿が残る。
 describe("mainViewTurnsOf（report の草稿）", () => {
-  const drafting = (toolUseId: string): SessionEvent => ({ kind: "report-drafting", toolUseId })
+  const drafting = (toolUseId: string): SessionEvent => ({
+    kind: "report-drafting",
+    toolUseId: checkedToolUseId(toolUseId),
+  })
   const part = (toolUseId: string, index: number): SessionEvent => {
     const component = STAGED_PARTS[index]
     if (component === undefined) {
@@ -282,10 +286,10 @@ describe("mainViewTurnsOf（report の草稿）", () => {
     return { kind: "report-draft-component", toolUseId, component }
   }
   const report = (toolUseId: string): readonly SessionEvent[] =>
-    reportEvents(toolUseId, { components: STAGED_PARTS }, [])
+    reportEvents(checkedToolUseId(toolUseId), { components: STAGED_PARTS }, [])
   const toolFinished = (toolUseId: string, isError: boolean): SessionEvent => ({
     kind: "tool-finished",
-    toolUseId,
+    toolUseId: checkedToolUseId(toolUseId),
     content: "",
     isError,
   })
@@ -439,7 +443,7 @@ describe("mainViewTurnsOf（変わらないターンとステップの参照）"
         asked,
         {
           kind: "tool-started",
-          toolUseId: "toolu_t1",
+          toolUseId: checkedToolUseId("toolu_t1"),
           name: "Read",
           input: { file_path: "/tmp/dummy.ts" },
           parentToolUseId: undefined,

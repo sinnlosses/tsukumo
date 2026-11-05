@@ -9,6 +9,7 @@ import {
 } from "../../../../shared/session-driver/api-trouble.ts"
 import type { RateLimit, RateLimitBucket } from "../../../../shared/session-driver/rate-limit.ts"
 import type { SessionEvent } from "../../../../shared/session/session-event.ts"
+import type { ToolUseId } from "../../../../shared/session/tool-use-id.ts"
 
 /**
  * `assistant` の `error` を `api-error` にする。
@@ -17,7 +18,7 @@ import type { SessionEvent } from "../../../../shared/session/session-event.ts"
  */
 export function apiErrorEvents(
   error: unknown,
-  parentToolUseId: string | undefined,
+  parentToolUseId: ToolUseId | undefined,
 ): readonly SessionEvent[] {
   return parentToolUseId === undefined && typeof error === "string"
     ? [{ kind: "api-error", error: toApiErrorKind(error) }]

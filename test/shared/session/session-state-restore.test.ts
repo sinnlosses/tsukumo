@@ -8,6 +8,7 @@ import {
   type SessionState,
 } from "../../../src/shared/session/session-state.ts"
 import { requestEvent } from "../../fixture/session-event.ts"
+import { checkedToolUseId } from "../../fixture/tool-use-id.ts"
 
 describe("applySessionEvent（答え待ちの届いた時刻）", () => {
   const permission = (
@@ -66,14 +67,14 @@ describe("applyRestoredEvents（transcript の時刻）", () => {
   const request = requestEvent()
   const bashStarted: SessionEvent = {
     kind: "tool-started",
-    toolUseId: "toolu_1",
+    toolUseId: checkedToolUseId("toolu_1"),
     name: "Bash",
     input: { command: "架空の検査" },
     parentToolUseId: undefined,
   }
   const finished: SessionEvent = {
     kind: "tool-finished",
-    toolUseId: "toolu_1",
+    toolUseId: checkedToolUseId("toolu_1"),
     content: "架空の結果",
     isError: false,
   }

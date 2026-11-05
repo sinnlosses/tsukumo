@@ -6,6 +6,7 @@ import { createToolHookClock } from "../../../../../src/server/session-driver/co
 import type { SessionEvent } from "../../../../../src/shared/session/session-event.ts"
 import { requestEvent } from "../../../../fixture/session-event.ts"
 import { matcherHits, preTable, runPreToolUse } from "../../../../fixture/tool-use-hook-table.ts"
+import { checkedToolUseId } from "../../../../fixture/tool-use-id.ts"
 
 describe("preToolUseHooks（matcher で当てるツールを分ける）", () => {
   const entries = () =>
@@ -107,7 +108,7 @@ describe("preToolUseHooks（Agent を背景に固定し、委譲ゲートで作�
     }
     review.pass(requestEvent())
     review.judgeWorkPlan(plan)
-    review.pass({ kind: "delegate-handed-back", delegate: "toolu_delegate" })
+    review.pass({ kind: "delegate-handed-back", delegate: checkedToolUseId("toolu_delegate") })
 
     expect(
       await runPreToolUse("Bash", {}, undefined, {

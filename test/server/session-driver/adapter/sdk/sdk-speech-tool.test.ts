@@ -19,6 +19,7 @@ import {
   workServer,
 } from "../../../../fixture/sdk-tool.ts"
 import { requestEvent } from "../../../../fixture/session-event.ts"
+import { checkedToolUseId } from "../../../../fixture/tool-use-id.ts"
 
 describe("speak の差し戻し", () => {
   it("仕事のときは、描いたセリフのあとに新しい事実の無い speak を差し戻しの一文で返す", async () => {
@@ -56,10 +57,15 @@ function spokenReview(): CallReview {
   const review = createCallReview()
   review.pass({
     kind: "speak-called",
-    toolUseId: "toolu_speak_1",
+    toolUseId: checkedToolUseId("toolu_speak_1"),
     speech: { kind: "speech", text: "架空のセリフ", expression: "default" },
   })
-  review.pass({ kind: "tool-finished", toolUseId: "toolu_speak_1", content: "ok", isError: false })
+  review.pass({
+    kind: "tool-finished",
+    toolUseId: checkedToolUseId("toolu_speak_1"),
+    content: "ok",
+    isError: false,
+  })
   return review
 }
 

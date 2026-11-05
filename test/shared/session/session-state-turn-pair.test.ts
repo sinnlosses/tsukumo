@@ -8,6 +8,7 @@ import {
 } from "../../../src/shared/session/session-state.ts"
 import { reportEvent } from "../../fixture/report-event.ts"
 import { requestEvent } from "../../fixture/session-event.ts"
+import { checkedToolUseId } from "../../fixture/tool-use-id.ts"
 
 const TURN_FINISHED: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
 const SESSION_ENDED: SessionEvent = { kind: "session-ended", reason: "架空の終わり" }
@@ -16,7 +17,7 @@ const BACKGROUND_STARTED: SessionEvent = {
   kind: "background-tasks-changed",
   tasks: [{ taskId: "fictional-task", kind: "agent", description: "架空の委譲" }],
 }
-const DRAFTING: SessionEvent = { kind: "report-drafting", toolUseId: "toolu_r1" }
+const DRAFTING: SessionEvent = { kind: "report-drafting", toolUseId: checkedToolUseId("toolu_r1") }
 
 describe("SessionState の turn と sdkTurn の組", () => {
   it.each<[string, readonly SessionEvent[]]>([
@@ -27,7 +28,7 @@ describe("SessionState の turn と sdkTurn の組", () => {
         requestEvent(),
         { kind: "utterance", text: "架空の本文" },
         DRAFTING,
-        reportEvent({ toolUseId: "toolu_r1" }),
+        reportEvent({ toolUseId: checkedToolUseId("toolu_r1") }),
         TURN_FINISHED,
         TURN_FINISHED,
       ],
@@ -60,7 +61,12 @@ describe("SessionState の turn と sdkTurn の組", () => {
         TURN_FINISHED,
         { kind: "utterance", text: "架空の遅れた本文" },
         DRAFTING,
-        { kind: "tool-finished", toolUseId: "toolu_r1", isError: false, content: "" },
+        {
+          kind: "tool-finished",
+          toolUseId: checkedToolUseId("toolu_r1"),
+          isError: false,
+          content: "",
+        },
       ],
     ],
   ])("%s: sdkTurn が開いているのは turn が running のときだけ", (_label, events) => {

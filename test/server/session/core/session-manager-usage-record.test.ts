@@ -12,6 +12,7 @@ import { createStubDriver } from "../../../fixture/session-driver.ts"
 import { requestEvent } from "../../../fixture/session-event.ts"
 import { collector, launchWith, sessionInfo } from "../../../fixture/session-manager-record.ts"
 import { createSessionManager, waitForBatch } from "../../../fixture/session-manager.ts"
+import { checkedOptionalToolUseId, checkedToolUseId } from "../../../fixture/tool-use-id.ts"
 
 /** 差し戻した `report` の引数の字数（架空の値）。 */
 const ARGUMENT_CHARS = { total: 120, fields: { conclusion: 30 } } as const
@@ -136,10 +137,10 @@ describe("createSessionManager", () => {
         ])
       const readStarted = (parentToolUseId: string | undefined): SessionEvent => ({
         kind: "tool-started",
-        toolUseId: "toolu_read",
+        toolUseId: checkedToolUseId("toolu_read"),
         name: "Read",
         input: { file_path: "/tmp/fictional.png" },
-        parentToolUseId,
+        parentToolUseId: checkedOptionalToolUseId(parentToolUseId),
       })
 
       it("メインが画像を Read したターンの report は真で、turn-finished のあとのターンは偽に戻る", async () => {

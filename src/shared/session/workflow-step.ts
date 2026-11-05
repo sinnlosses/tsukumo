@@ -1,6 +1,7 @@
 // ワークフロースクリプトごとの、いちばん新しく始まった手順（`WorkflowStep`）と、SDK が運ぶ段と agent の写し（`WorkflowProgress`）。
 
 import type { BackgroundTask } from "../session-driver/background-task.ts"
+import type { ToolUseId } from "./tool-use-id.ts"
 
 /**
  * ワークフロースクリプト1本の中で、いちばん新しく始まった手順。
@@ -9,7 +10,7 @@ import type { BackgroundTask } from "../session-driver/background-task.ts"
 export type WorkflowStep = {
   readonly taskId: string
   readonly agentId: string
-  readonly toolUseId: string
+  readonly toolUseId: ToolUseId
   readonly name: string
   readonly input: Readonly<Record<string, string>>
   /** 手順が始まった時刻（エポックミリ秒。畳み込みの `at`）。 */

@@ -10,6 +10,7 @@ import { reportOutline, sectionLeaves } from "../../../../shared/report/report-o
 import { staticReportComponents } from "../../../../shared/report/report-static-component-list.ts"
 import type { ReportTask } from "../../../../shared/report/report-task.ts"
 import type { FigurePreference } from "../../../../shared/session/session-default.ts"
+import { isToolUseId, type ToolUseId } from "../../../../shared/session/tool-use-id.ts"
 import { WORK_PLAN_CLOSINGS } from "../../../../shared/session/work-plan.ts"
 import { REPORT_TOOL_NAME } from "../../../core/tsukumo-tool-name.ts"
 import { readReportBlockFiles } from "../../../report/adapter/report-file.ts"
@@ -69,7 +70,7 @@ export function reportTool(
 ) {
   const expressionNames = expressions.map((choice) => choice.name)
   const answer = async (input: unknown) => {
-    const called = reportEvents(HANDLER_TOOL_USE_ID, input, expressionNames).find(
+    const called = reportEvents(handlerToolUseId(), input, expressionNames).find(
       (event) => event.kind === "report",
     )
     const report = called === undefined ? undefined : review.fillReport(called)
@@ -149,7 +150,13 @@ function requiredFieldsOf(report: { readonly task: ReportTask }): readonly Repor
 }
 
 /** handler で組む `report` のイベントの id。土台で埋めるだけで、預かりの突き合わせには使わない。 */
-const HANDLER_TOOL_USE_ID = "report-handler"
+function handlerToolUseId(): ToolUseId {
+  const id = "report-handler"
+  if (!isToolUseId(id)) {
+    throw new Error(`handler の呼び出しの ID が綴りの規則に通らない: ${id}`)
+  }
+  return id
+}
 
 /** 省けない欄が組んだ値に無いときの戻り値。欄の名前だけを載せ、モデルが書いた本文は写さない。 */
 function missingFieldsText(missing: readonly ReportArgumentField[]): string {

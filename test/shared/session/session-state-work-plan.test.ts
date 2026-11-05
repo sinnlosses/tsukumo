@@ -13,6 +13,7 @@ import type { WorkPlan, WorkPlanClosing } from "../../../src/shared/session/work
 import { reportEvent } from "../../fixture/report-event.ts"
 import { requestEvent } from "../../fixture/session-event.ts"
 import { apply } from "../../fixture/session-state.ts"
+import { checkedToolUseId } from "../../fixture/tool-use-id.ts"
 
 describe("applySessionEvent（委譲とワークプラン）", () => {
   const request = requestEvent()
@@ -40,17 +41,17 @@ describe("applySessionEvent（委譲とワークプラン）", () => {
       mainPlan(1, "架空のまとめ。"),
       {
         kind: "tool-started",
-        toolUseId: "toolu_send",
+        toolUseId: checkedToolUseId("toolu_send"),
         name: "SendMessage",
         input: { to: "main", message: "状況 | 2/3 | 架空" },
-        parentToolUseId: "toolu_sub",
+        parentToolUseId: checkedToolUseId("toolu_sub"),
       },
       {
         kind: "tool-started",
-        toolUseId: "toolu_handback",
+        toolUseId: checkedToolUseId("toolu_handback"),
         name: "SubagentHandback",
         input: { message: "段 2/2 | 架空の返却。" },
-        parentToolUseId: "toolu_sub",
+        parentToolUseId: checkedToolUseId("toolu_sub"),
       },
       { kind: "background-tasks-changed", tasks: [] },
     )

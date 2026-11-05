@@ -17,6 +17,7 @@ import { reportEvents } from "../../../src/server/session-driver/core/message/sd
 import { EXPRESSIONS } from "../../../src/shared/character-pack/expression.ts"
 import { buildReportCatalogDocument } from "../../../src/shared/report/a2ui-report-catalog.ts"
 import { staticReportComponents } from "../../../src/shared/report/report-static-component-list.ts"
+import { isToolUseId, type ToolUseId } from "../../../src/shared/session/tool-use-id.ts"
 import { A2UI_STRUCTURE_RULES } from "./a2ui-structure-rule.ts"
 import { extractComponents, judgeOutput } from "./a2ui-write-trial.ts"
 
@@ -156,7 +157,7 @@ const REQUIRED_FIELDS = ["conclusion", "closing", "sessionRemaining"] as const
 function violationOf(
   components: readonly unknown[],
 ): { readonly codes: readonly string[]; readonly retryText: string } | undefined {
-  const report = reportEvents("html-comparison", { components }, EXPRESSIONS).find(
+  const report = reportEvents(comparisonToolUseId(), { components }, EXPRESSIONS).find(
     (event) => event.kind === "report",
   )
   if (report === undefined) {
@@ -188,4 +189,12 @@ function violationOf(
         codes: [...new Set(rejecting.map((violation) => violation.kind))],
         retryText: reportRejectionText(rejecting),
       }
+}
+
+function comparisonToolUseId(): ToolUseId {
+  const id = "html-comparison"
+  if (!isToolUseId(id)) {
+    throw new Error(`見比べの呼び出しの ID が綴りの規則に通らない: ${id}`)
+  }
+  return id
 }

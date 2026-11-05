@@ -9,6 +9,7 @@ import {
   type SessionState,
 } from "../../../../../../../src/shared/session/session-state.ts"
 import { requestEvent } from "../../../../../../fixture/session-event.ts"
+import { checkedToolUseId } from "../../../../../../fixture/tool-use-id.ts"
 import { putSession } from "../../../../../session-store.ts"
 
 afterEach(() => {
@@ -46,7 +47,7 @@ describe("CurrentStep", () => {
         plan(1),
         {
           kind: "tool-started",
-          toolUseId: "toolu_1",
+          toolUseId: checkedToolUseId("toolu_1"),
           name: "Bash",
           input: { command: "架空のコマンド" },
           parentToolUseId: undefined,

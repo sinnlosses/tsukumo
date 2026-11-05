@@ -13,6 +13,7 @@ import { parseReportChecks } from "../../../../shared/report/report-check.ts"
 import { parseReportTask, type ReportTask } from "../../../../shared/report/report-task.ts"
 import type { SessionRemaining } from "../../../../shared/session/session-digest.ts"
 import type { SessionEvent } from "../../../../shared/session/session-event.ts"
+import type { ToolUseId } from "../../../../shared/session/tool-use-id.ts"
 import { parseWorkPlanClosing } from "../../../../shared/session/work-plan.ts"
 import { nonBlankString } from "../../../../shared/utils/non-blank-string.ts"
 import { optionalString } from "../../../../shared/utils/optional-string.ts"
@@ -43,7 +44,7 @@ import { speechEvents } from "./sdk-speech-message.ts"
  * そのときの `argumentChars` は生の引数で数え、組み直せない引数（節が残らない）は組み直さずに取り出す。
  */
 export function reportEvents(
-  toolUseId: string,
+  toolUseId: ToolUseId,
   input: unknown,
   expressions: readonly Expression[],
 ): readonly SessionEvent[] {

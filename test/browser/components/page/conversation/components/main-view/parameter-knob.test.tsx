@@ -11,6 +11,7 @@ import { mainViewEntries } from "../../../../../../../src/shared/session/main-vi
 import type { MainViewReportRegions } from "../../../../../../../src/shared/session/main-view-shape.ts"
 import { applySessionEvent } from "../../../../../../../src/shared/session/session-fold.ts"
 import { INITIAL_SESSION_STATE } from "../../../../../../../src/shared/session/session-state.ts"
+import { checkedToolUseId } from "../../../../../../fixture/tool-use-id.ts"
 
 // `Markdown` 一式は重いので、塊の文字列と図の設定をそのまま出す代役に差し替える。
 vi.mock(
@@ -94,7 +95,7 @@ const PARTS = [
 ]
 
 function regionsOf(components: readonly unknown[]): MainViewReportRegions {
-  const [event] = reportEvents("toolu_fictional", { components }, [])
+  const [event] = reportEvents(checkedToolUseId("toolu_fictional"), { components }, [])
   if (event?.kind !== "report") throw new Error("report にならなかった")
   const entry = mainViewEntries(applySessionEvent(INITIAL_SESSION_STATE, event, 0)).find(
     (candidate) => candidate.kind === "report",

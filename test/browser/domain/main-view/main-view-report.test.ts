@@ -31,6 +31,7 @@ import {
 } from "../../../fixture/main-view-report.ts"
 import { reportOfDrawn } from "../../../fixture/report-event.ts"
 import { requestEvent } from "../../../fixture/session-event.ts"
+import { checkedToolUseId } from "../../../fixture/tool-use-id.ts"
 
 describe("mainViewTurns（締めの speak → レポートで終える並び）", () => {
   // 締めの `speak` のあとに本文で終える並びを、SDK から届くイベントの形で流す。締めの `speak` は
@@ -44,12 +45,17 @@ describe("mainViewTurns（締めの speak → レポートで終える並び）"
   const editRun = (toolUseId: string): readonly SessionEvent[] => [
     {
       kind: "tool-started",
-      toolUseId,
+      toolUseId: checkedToolUseId(toolUseId),
       name: "Edit",
       input: { file_path: "src/a.ts" },
       parentToolUseId: undefined,
     },
-    { kind: "tool-finished", toolUseId, content: "ok", isError: false },
+    {
+      kind: "tool-finished",
+      toolUseId: checkedToolUseId(toolUseId),
+      content: "ok",
+      isError: false,
+    },
   ]
 
   /** 架空のやり取りを1ターン流し終えたときのメインビュー（確定したやり取りとして描く）。 */

@@ -1,6 +1,7 @@
 // セッションの出来事（`SessionEvent`）のうち、`speak` ツールの呼び出しに関するものの型。
 
 import type { Expression } from "../character-pack/expression.ts"
+import type { ToolUseId } from "./tool-use-id.ts"
 
 /** `speak` ツールの呼び出し。セリフと表情。 */
 export type SpeechEvent = {
@@ -15,7 +16,7 @@ export type SpeechEvent = {
  */
 export type SpeakCalledEvent = {
   readonly kind: "speak-called"
-  readonly toolUseId: string
+  readonly toolUseId: ToolUseId
   readonly speech: SpeechEvent
 }
 

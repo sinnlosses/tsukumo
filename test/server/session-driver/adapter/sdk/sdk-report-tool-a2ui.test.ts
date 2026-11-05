@@ -25,6 +25,7 @@ import {
   workServer,
 } from "../../../../fixture/sdk-tool.ts"
 import { staticOf } from "../../../../fixture/static-component-list.ts"
+import { checkedToolUseId } from "../../../../fixture/tool-use-id.ts"
 
 type ReportCalled = Extract<SessionEvent, { kind: "report" }>
 
@@ -83,7 +84,7 @@ function session() {
       const reply = await callTool(workServer([], [], review, [], WORK_MODE), "report", input)
       const after = review.pass({
         kind: "tool-finished",
-        toolUseId,
+        toolUseId: checkedToolUseId(toolUseId),
         content: reply.text,
         isError: reply.isError,
       })

@@ -1,13 +1,15 @@
 import { describe, expect, it } from "vitest"
 
 import { createCallReview } from "../../../../src/server/session-driver/core/call-review.ts"
+import { checkedToolUseId } from "../../../fixture/tool-use-id.ts"
 
 describe("形の検査で落ちた report の記録", () => {
   const chars = { total: 40, fields: { sections: 12 } }
   const rejectionOf = (content: string) => {
     const review = createCallReview()
-    review.pass({ kind: "report-malformed", toolUseId: "toolu_m", argumentChars: chars })
-    return review.pass({ kind: "tool-finished", toolUseId: "toolu_m", content, isError: true })[1]
+    const toolUseId = checkedToolUseId("toolu_m")
+    review.pass({ kind: "report-malformed", toolUseId, argumentChars: chars })
+    return review.pass({ kind: "tool-finished", toolUseId, content, isError: true })[1]
   }
 
   it("結果の本文に zod の issues があれば、欄名（添字は n）と code だけを残し、message と値は残さない", () => {

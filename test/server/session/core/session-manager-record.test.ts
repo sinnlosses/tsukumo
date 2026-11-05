@@ -26,6 +26,7 @@ import {
   RESTORED_REPLAY,
   waitForBatch,
 } from "../../../fixture/session-manager.ts"
+import { checkedToolUseId } from "../../../fixture/tool-use-id.ts"
 
 describe("createSessionManager", () => {
   describe("仕切りを離した記録", () => {
@@ -203,20 +204,30 @@ describe("createSessionManager", () => {
       stub.emit(SESSION_INFO)
       stub.emit({
         kind: "tool-started",
-        toolUseId: "t-1",
+        toolUseId: checkedToolUseId("t-1"),
         name: "Bash",
         input: { command: "架空のコマンド" },
         parentToolUseId: undefined,
       })
-      stub.emit({ kind: "tool-finished", toolUseId: "t-1", content: "12345", isError: false })
+      stub.emit({
+        kind: "tool-finished",
+        toolUseId: checkedToolUseId("t-1"),
+        content: "12345",
+        isError: false,
+      })
       stub.emit({
         kind: "tool-started",
-        toolUseId: "t-2",
+        toolUseId: checkedToolUseId("t-2"),
         name: "Bash",
         input: { command: "架空のコマンド" },
         parentToolUseId: undefined,
       })
-      stub.emit({ kind: "tool-finished", toolUseId: "t-2", content: "123", isError: false })
+      stub.emit({
+        kind: "tool-finished",
+        toolUseId: checkedToolUseId("t-2"),
+        content: "123",
+        isError: false,
+      })
       stub.emit({ kind: "step-usage", messageId: "msg-1", scope: "main", usage: STEP_USAGE })
       stub.emit({ kind: "token-usage", cumulative: cumulative(100, 20, 0.5) })
       stub.emit({ kind: "turn-finished", outcome: { kind: "completed" } })
@@ -235,12 +246,17 @@ describe("createSessionManager", () => {
       stub.emit(SESSION_INFO)
       stub.emit({
         kind: "tool-started",
-        toolUseId: "t-1",
+        toolUseId: checkedToolUseId("t-1"),
         name: "Bash",
         input: {},
         parentToolUseId: undefined,
       })
-      stub.emit({ kind: "tool-finished", toolUseId: "t-1", content: "12345", isError: false })
+      stub.emit({
+        kind: "tool-finished",
+        toolUseId: checkedToolUseId("t-1"),
+        content: "12345",
+        isError: false,
+      })
       stub.emit({ kind: "token-usage", cumulative: cumulative(100, 20, 0.5) })
       stub.emit({ kind: "turn-finished", outcome: { kind: "completed" } })
       stub.emit({ kind: "token-usage", cumulative: cumulative(200, 40, 1) })
@@ -271,14 +287,14 @@ describe("createSessionManager", () => {
       stub.emit(requestEvent(secrets[0] ?? ""))
       stub.emit({
         kind: "tool-started",
-        toolUseId: "t-1",
+        toolUseId: checkedToolUseId("t-1"),
         name: "Bash",
         input: { command: secrets[2] },
         parentToolUseId: undefined,
       })
       stub.emit({
         kind: "tool-finished",
-        toolUseId: "t-1",
+        toolUseId: checkedToolUseId("t-1"),
         content: secrets[3] ?? "",
         isError: false,
       })

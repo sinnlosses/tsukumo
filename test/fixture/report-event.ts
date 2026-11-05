@@ -14,6 +14,7 @@ import {
 import type { ReportBlockSection } from "../../src/shared/report/report-block.ts"
 import type { ReportRetrospective } from "../../src/shared/report/report-retrospective.ts"
 import type { SessionEvent } from "../../src/shared/session/session-event.ts"
+import { checkedToolUseId } from "./tool-use-id.ts"
 
 /** 旧い引数の節。`row`・`panel` のような今は型に無い塊も、旧い記録の読み戻しの検査のために置ける。 */
 export type LegacySectionInput = {
@@ -21,14 +22,20 @@ export type LegacySectionInput = {
   readonly blocks: readonly unknown[]
 }
 
+/** `reportEvent` に渡す欄。`toolUseId` だけは素の文字列で受ける。 */
+export type ReportEventInput = Partial<
+  Omit<Extract<SessionEvent, { readonly kind: "report" }>, "kind" | "toolUseId">
+> & { readonly toolUseId?: string }
+
 /** `report` ツールの呼び出し1件。 */
 export function reportEvent(
-  overrides: Partial<Omit<Extract<SessionEvent, { readonly kind: "report" }>, "kind">> = {},
+  input: ReportEventInput = {},
 ): Extract<SessionEvent, { readonly kind: "report" }> {
+  const { toolUseId, ...overrides } = input
   const conclusion = overrides.conclusion ?? "架空の結論"
   return {
     kind: "report",
-    toolUseId: "fictional-report",
+    toolUseId: checkedToolUseId(toolUseId ?? "fictional-report"),
     argumentChars: { total: 0, fields: {} },
     inheritedFields: [],
     conclusion,
@@ -72,9 +79,7 @@ export function reportOfSections(
  * 節・図・振り返り（塊つき）を渡す `report` ツールの呼び出し1件。`components` はそれらから本番と同じ組み直しで作る。
  */
 export function reportOfDrawn(
-  overrides: Partial<
-    Omit<Extract<SessionEvent, { readonly kind: "report" }>, "kind" | "components">
-  > & {
+  overrides: Omit<ReportEventInput, "components"> & {
     readonly sections?: readonly LegacySectionInput[]
     readonly figure?: RecordedReportFigure
     readonly retrospective?: ReportRetrospective

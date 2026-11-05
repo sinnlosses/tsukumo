@@ -2,13 +2,14 @@ import { describe, expect, it } from "vitest"
 
 import { createStepWatch } from "../../../../src/server/session-driver/core/step-watch.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
+import { checkedOptionalToolUseId, checkedToolUseId } from "../../../fixture/tool-use-id.ts"
 
 const tool = (parentToolUseId?: string): SessionEvent => ({
   kind: "tool-started",
-  toolUseId: "toolu_a",
+  toolUseId: checkedToolUseId("toolu_a"),
   name: "Read",
   input: {},
-  parentToolUseId,
+  parentToolUseId: checkedOptionalToolUseId(parentToolUseId),
 })
 const turnFinished: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
 

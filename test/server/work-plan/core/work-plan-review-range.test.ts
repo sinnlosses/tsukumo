@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 import { createWorkPlanReview } from "../../../../src/server/work-plan/core/work-plan-review.ts"
 import { answerWorkPlanCall } from "../../../../src/server/work-plan/core/work-plan-tool.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
+import { checkedToolUseId } from "../../../fixture/tool-use-id.ts"
 import { REQUEST, SUMMARY } from "../../../fixture/work-plan-review.ts"
 
 describe("WorkPlanReview の委譲先のフェーズの範囲の確定", () => {
@@ -26,10 +27,11 @@ describe("WorkPlanReview の委譲先のフェーズの範囲の確定", () => {
     content = "ok",
   ) => {
     const plan = acceptedPlan(review, input)
-    review.pass({ kind: "work-plan-called", toolUseId: "toolu_e", plan })
+    const toolUseId = checkedToolUseId("toolu_e")
+    review.pass({ kind: "work-plan-called", toolUseId, plan })
     const [event] = review.pass({
       kind: "tool-finished",
-      toolUseId: "toolu_e",
+      toolUseId,
       content,
       isError: false,
     })
@@ -129,7 +131,7 @@ describe("WorkPlanReview の委譲先のフェーズの範囲の確定", () => {
       REQUEST,
       {
         kind: "work-plan-called",
-        toolUseId: "toolu_r",
+        toolUseId: checkedToolUseId("toolu_r"),
         plan: {
           phases: FOUR,
           current: 1,
@@ -141,7 +143,12 @@ describe("WorkPlanReview の委譲先のフェーズの範囲の確定", () => {
           phaseIds: [],
         },
       },
-      { kind: "tool-finished", toolUseId: "toolu_r", content: answered.text, isError: false },
+      {
+        kind: "tool-finished",
+        toolUseId: checkedToolUseId("toolu_r"),
+        content: answered.text,
+        isError: false,
+      },
     ]
     const out = recorded.flatMap((event) => restored.pass(event))
 
@@ -154,7 +161,7 @@ describe("WorkPlanReview の委譲先のフェーズの範囲の確定", () => {
       REQUEST,
       {
         kind: "work-plan-called",
-        toolUseId: "toolu_o",
+        toolUseId: checkedToolUseId("toolu_o"),
         plan: {
           phases: FOUR,
           current: 1,
@@ -166,7 +173,12 @@ describe("WorkPlanReview の委譲先のフェーズの範囲の確定", () => {
           phaseIds: [],
         },
       },
-      { kind: "tool-finished", toolUseId: "toolu_o", content: "ok", isError: false },
+      {
+        kind: "tool-finished",
+        toolUseId: checkedToolUseId("toolu_o"),
+        content: "ok",
+        isError: false,
+      },
     ]
     const out = recorded.flatMap((event) => review.pass(event))
 

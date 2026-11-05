@@ -7,6 +7,7 @@ import {
 } from "../../../../../src/server/session-driver/core/call-review.ts"
 import { PHASE_RESULT_MISSING_HANDBACK_LINE } from "../../../../../src/server/work-plan/core/band-position.ts"
 import { requestEvent } from "../../../../fixture/session-event.ts"
+import { checkedToolUseId } from "../../../../fixture/tool-use-id.ts"
 
 describe("handbackNoteHooks（返却を運ぶ入力に注記を添える）", () => {
   const HANDBACK_PROMPT =
@@ -48,7 +49,7 @@ describe("handbackNoteHooks（返却を運ぶ入力に注記を添える）", ()
 
   const startedReview = () => {
     const review = plannedReview()
-    review.pass({ kind: "delegate-handed-back", delegate: "toolu_delegate" })
+    review.pass({ kind: "delegate-handed-back", delegate: checkedToolUseId("toolu_delegate") })
     return review
   }
 

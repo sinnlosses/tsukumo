@@ -10,6 +10,7 @@ import {
   type WorkPlanStanding,
 } from "../../../../src/shared/session/work-plan.ts"
 import { reportEvent } from "../../../fixture/report-event.ts"
+import { checkedToolUseId } from "../../../fixture/tool-use-id.ts"
 import { handedBack, REQUEST, SUMMARY } from "../../../fixture/work-plan-review.ts"
 import { WORK_PLAN_SCENES } from "../../../fixture/work-plan-scene.ts"
 
@@ -35,7 +36,7 @@ const inputOf = (current: number) => {
 
 const DELEGATED: SessionEvent = {
   kind: "tool-started",
-  toolUseId: "toolu_agent",
+  toolUseId: checkedToolUseId("toolu_agent"),
   name: "Agent",
   input: { prompt: "架空の委譲。", run_in_background: true },
   parentToolUseId: undefined,

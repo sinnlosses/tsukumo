@@ -7,6 +7,7 @@
 import { isPlainObject } from "remeda"
 
 import type { SessionEvent } from "../../../../shared/session/session-event.ts"
+import { parseToolUseId, type ToolUseId } from "../../../../shared/session/tool-use-id.ts"
 import { REPORT_TOOL_NAME, tsukumoToolFullName } from "../../../core/tsukumo-tool-name.ts"
 
 /**
@@ -16,7 +17,7 @@ import { REPORT_TOOL_NAME, tsukumoToolFullName } from "../../../core/tsukumo-too
  */
 export function partialUtteranceEvents(
   event: unknown,
-  parentToolUseId: string | undefined,
+  parentToolUseId: ToolUseId | undefined,
 ): readonly SessionEvent[] {
   if (
     parentToolUseId !== undefined ||
@@ -41,7 +42,7 @@ export function partialUtteranceEvents(
  */
 export function reportDraftingEvents(
   event: unknown,
-  parentToolUseId: string | undefined,
+  parentToolUseId: ToolUseId | undefined,
 ): readonly SessionEvent[] {
   if (
     parentToolUseId !== undefined ||
@@ -53,9 +54,10 @@ export function reportDraftingEvents(
   }
 
   const block = event.content_block
+  const toolUseId = parseToolUseId(block.id)
   return block.type === "tool_use" &&
     block.name === tsukumoToolFullName(REPORT_TOOL_NAME) &&
-    typeof block.id === "string"
-    ? [{ kind: "report-drafting", toolUseId: block.id }]
+    toolUseId !== undefined
+    ? [{ kind: "report-drafting", toolUseId }]
     : []
 }

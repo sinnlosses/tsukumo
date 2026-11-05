@@ -25,6 +25,7 @@ import {
   type TestReview,
   VALID,
 } from "../../../../fixture/report-review.ts"
+import { checkedToolUseId } from "../../../../fixture/tool-use-id.ts"
 
 /** handler に届いた引数を、呼び出しをイベントに変える側と同じ形のイベントにする。 */
 const reportOfDraft = (
@@ -41,7 +42,7 @@ const reportOfDraft = (
   })
 const finished = (toolUseId: string, isError: boolean): SessionEvent => ({
   kind: "tool-finished",
-  toolUseId,
+  toolUseId: checkedToolUseId(toolUseId),
   content: isError ? "架空の差し戻し" : "ok",
   isError,
 })

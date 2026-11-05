@@ -8,6 +8,7 @@ import { reportDrawnPieces } from "../../../src/shared/session/report-drawn-mark
 import type { SessionEvent } from "../../../src/shared/session/session-event.ts"
 import { applySessionEvent } from "../../../src/shared/session/session-fold.ts"
 import { INITIAL_SESSION_STATE } from "../../../src/shared/session/session-state.ts"
+import { checkedToolUseId } from "../../fixture/tool-use-id.ts"
 
 type ReportEvent = Extract<SessionEvent, { readonly kind: "report" }>
 
@@ -30,7 +31,7 @@ const COMPONENTS = [
 ]
 
 function reportOf(): ReportEvent {
-  const [event] = reportEvents("toolu_fictional", { components: COMPONENTS }, [])
+  const [event] = reportEvents(checkedToolUseId("toolu_fictional"), { components: COMPONENTS }, [])
   if (event?.kind !== "report") throw new Error("report にならなかった")
   return event
 }

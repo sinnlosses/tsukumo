@@ -11,6 +11,7 @@ import type { VerificationStage } from "../report/report-verification.ts"
 import type { ToolErrorField } from "../report/tool-error-field.ts"
 import type { SessionRemaining } from "./session-digest.ts"
 import type { SpeechEvent } from "./session-event-speech.ts"
+import type { ToolUseId } from "./tool-use-id.ts"
 import type { WorkPlanClosing } from "./work-plan.ts"
 
 /**
@@ -28,7 +29,7 @@ export type ReportEvent =
    * メインが `report` ツールの引数を書き始めた（`includePartialMessages` の断片で、呼び出しの塊が開いた合図）。
    * 立ち絵の「書いている」の材料で、同じ `toolUseId` の `report` か `tool-finished` が届くまで続く。中身（引数の断片）は運ばない。
    */
-  | { readonly kind: "report-drafting"; readonly toolUseId: string }
+  | { readonly kind: "report-drafting"; readonly toolUseId: ToolUseId }
   /**
    * 書いている途中の `report`（`a2ui` の版）の引数で、部品が 1 つ閉じた。部品 1 つにつき 1 イベント。
    * `component` は駆動が形を検査し終えたもの。同じ `toolUseId` の草稿が開いているときだけ畳み込みが積む。
@@ -60,7 +61,7 @@ export type ReportEvent =
    */
   | {
       readonly kind: "report"
-      readonly toolUseId: string
+      readonly toolUseId: ToolUseId
       readonly argumentChars: ReportArgumentChars
       readonly inheritedFields: readonly ReportArgumentField[]
       readonly conclusion: string
@@ -89,7 +90,7 @@ export type ReportEvent =
    */
   | {
       readonly kind: "report-malformed"
-      readonly toolUseId: string
+      readonly toolUseId: ToolUseId
       readonly argumentChars: ReportArgumentChars
     }
   /**

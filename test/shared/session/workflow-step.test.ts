@@ -6,6 +6,7 @@ import { applySessionEvent } from "../../../src/shared/session/session-fold.ts"
 import { INITIAL_SESSION_STATE } from "../../../src/shared/session/session-state.ts"
 import type { WorkflowProgress } from "../../../src/shared/session/workflow-step.ts"
 import { apply } from "../../fixture/session-state.ts"
+import { checkedToolUseId } from "../../fixture/tool-use-id.ts"
 
 const WORKFLOW_1 = {
   taskId: "wf-1",
@@ -47,14 +48,14 @@ const stepStarted = (
 ): SessionEvent => ({
   kind: "workflow-step-started",
   agentId,
-  toolUseId,
+  toolUseId: checkedToolUseId(toolUseId),
   name,
   input: { command: "架空のコマンド" },
 })
 const stepFinished = (agentId: string, toolUseId: string): SessionEvent => ({
   kind: "workflow-step-finished",
   agentId,
-  toolUseId,
+  toolUseId: checkedToolUseId(toolUseId),
 })
 const agentStateOf = (
   taskId: string,

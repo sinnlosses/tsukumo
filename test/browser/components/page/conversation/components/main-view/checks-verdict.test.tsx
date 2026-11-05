@@ -9,6 +9,7 @@ import type { MainViewReportRegions } from "../../../../../../../src/shared/sess
 import { applySessionEvent } from "../../../../../../../src/shared/session/session-fold.ts"
 import { INITIAL_SESSION_STATE } from "../../../../../../../src/shared/session/session-state.ts"
 import { normalized, textNodesOf } from "../../../../../../fixture/direct-leaf-compare.tsx"
+import { checkedToolUseId } from "../../../../../../fixture/tool-use-id.ts"
 
 beforeAll(async () => {
   await loadMarkdown()
@@ -43,7 +44,7 @@ const MIXED = [
 
 function regionsOf(checks: readonly unknown[], favor: string): MainViewReportRegions {
   const [event] = reportEvents(
-    "toolu_fictional",
+    checkedToolUseId("toolu_fictional"),
     {
       components: [
         {

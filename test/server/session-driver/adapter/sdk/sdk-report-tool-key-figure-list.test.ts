@@ -16,6 +16,7 @@ import {
   WAITING_LINE,
   workServer,
 } from "../../../../fixture/sdk-tool.ts"
+import { checkedToolUseId } from "../../../../fixture/tool-use-id.ts"
 
 type ReportCalled = Extract<SessionEvent, { kind: "report" }>
 
@@ -110,7 +111,7 @@ describe("report の keyFigures のイベントへの変換と引き継ぎ", () 
       const reply = await callTool(workServer([], [], review), "report", input)
       const after = review.pass({
         kind: "tool-finished",
-        toolUseId: id,
+        toolUseId: checkedToolUseId(id),
         content: reply.text,
         isError: reply.isError,
       })

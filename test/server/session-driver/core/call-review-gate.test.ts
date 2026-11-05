@@ -6,6 +6,7 @@ import {
 } from "../../../../src/server/session-driver/core/call-review.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import { requestEvent } from "../../../fixture/session-event.ts"
+import { checkedToolUseId } from "../../../fixture/tool-use-id.ts"
 
 const REQUEST = requestEvent()
 
@@ -20,7 +21,7 @@ describe("CallReview の委譲ゲートの印", () => {
   })
   const handback = (): SessionEvent => ({
     kind: "delegate-handed-back",
-    delegate: "toolu_delegate",
+    delegate: checkedToolUseId("toolu_delegate"),
   })
   const started = (): CallReview => {
     const review = createCallReview()

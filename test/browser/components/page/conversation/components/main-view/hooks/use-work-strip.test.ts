@@ -9,6 +9,7 @@ import {
 } from "../../../../../../../../src/browser/stores/reading-section.ts"
 import type { SessionEvent } from "../../../../../../../../src/shared/session/session-event.ts"
 import { requestEvent } from "../../../../../../../fixture/session-event.ts"
+import { checkedToolUseId } from "../../../../../../../fixture/tool-use-id.ts"
 import {
   foldTimed,
   plan,
@@ -26,7 +27,7 @@ afterEach(() => {
 function bashStarted(id: string): SessionEvent {
   return {
     kind: "tool-started",
-    toolUseId: id,
+    toolUseId: checkedToolUseId(id),
     name: "Bash",
     input: { command: "架空のコマンド" },
     parentToolUseId: undefined,

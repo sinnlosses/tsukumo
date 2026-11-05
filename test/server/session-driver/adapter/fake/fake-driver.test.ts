@@ -22,6 +22,7 @@ import {
 import { reportEvent } from "../../../../fixture/report-event.ts"
 import { requestEvent } from "../../../../fixture/session-event.ts"
 import { checkedSessionId } from "../../../../fixture/session-id.ts"
+import { checkedToolUseId } from "../../../../fixture/tool-use-id.ts"
 
 describe("startFakeSession", () => {
   it.each([
@@ -336,7 +337,12 @@ describe("startFakeSession", () => {
         argumentChars: expect.objectContaining({ total: expect.any(Number) }),
       })
     const finished = (toolUseId: string, isError: boolean) =>
-      ({ kind: "tool-finished", toolUseId, content: "架空の結果", isError }) as const
+      ({
+        kind: "tool-finished",
+        toolUseId: checkedToolUseId(toolUseId),
+        content: "架空の結果",
+        isError,
+      }) as const
     const sink = collect()
     const driver = startOnScene(
       sessionOfOnly(
@@ -415,7 +421,7 @@ describe("startFakeSession", () => {
                 waitForAnswer: false,
                 event: {
                   kind: "tool-finished",
-                  toolUseId: "fake-r1",
+                  toolUseId: checkedToolUseId("fake-r1"),
                   content: "ok",
                   isError: false,
                 },

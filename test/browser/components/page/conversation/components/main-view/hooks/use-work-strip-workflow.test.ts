@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 
 import type { BackgroundTask } from "../../../../../../../../src/shared/session-driver/background-task.ts"
 import type { SessionEvent } from "../../../../../../../../src/shared/session/session-event.ts"
+import { checkedToolUseId } from "../../../../../../../fixture/tool-use-id.ts"
 import {
   foldTimed,
   plan,
@@ -52,14 +53,14 @@ const stepStarted = (
 ): SessionEvent => ({
   kind: "workflow-step-started",
   agentId,
-  toolUseId: `tu-${name}`,
+  toolUseId: checkedToolUseId(`tu-${name}`),
   name,
   input,
 })
 const stepFinished = (name: string, agentId = "agent-1"): SessionEvent => ({
   kind: "workflow-step-finished",
   agentId,
-  toolUseId: `tu-${name}`,
+  toolUseId: checkedToolUseId(`tu-${name}`),
 })
 const completed: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
 
@@ -168,12 +169,17 @@ describe("useWorkStrip（ワークフロースクリプトの中の手順）", (
     const nestedRead: readonly SessionEvent[] = [
       {
         kind: "tool-started",
-        toolUseId: "nested-1",
+        toolUseId: checkedToolUseId("nested-1"),
         name: "Read",
         input: { file_path: "/架空/a.ts" },
-        parentToolUseId: "parent-1",
+        parentToolUseId: checkedToolUseId("parent-1"),
       },
-      { kind: "tool-finished", toolUseId: "nested-1", content: "架空の結果", isError: false },
+      {
+        kind: "tool-finished",
+        toolUseId: checkedToolUseId("nested-1"),
+        content: "架空の結果",
+        isError: false,
+      },
     ]
     const bash = stepStarted("Bash", { command: "架空のコマンド" })
     const head = [tasksChanged(WORKFLOW, agentTask), WORKFLOW_PROGRESS]
@@ -226,12 +232,17 @@ describe("useWorkStrip（ワークフロースクリプトの中の手順）", (
         },
         {
           kind: "tool-started",
-          toolUseId: "nested-1",
+          toolUseId: checkedToolUseId("nested-1"),
           name: "Read",
           input: { file_path: "/架空/a.ts" },
-          parentToolUseId: "parent-1",
+          parentToolUseId: checkedToolUseId("parent-1"),
         },
-        { kind: "tool-finished", toolUseId: "nested-1", content: "架空の結果", isError: false },
+        {
+          kind: "tool-finished",
+          toolUseId: checkedToolUseId("nested-1"),
+          content: "架空の結果",
+          isError: false,
+        },
         completed,
       ),
     ).toBe("背景で · 考えている")

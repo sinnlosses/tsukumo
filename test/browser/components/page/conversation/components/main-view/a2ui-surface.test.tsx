@@ -10,6 +10,7 @@ import type { MainViewReportRegions } from "../../../../../../../src/shared/sess
 import { applySessionEvent } from "../../../../../../../src/shared/session/session-fold.ts"
 import { INITIAL_SESSION_STATE } from "../../../../../../../src/shared/session/session-state.ts"
 import { STAGED_PARTS } from "../../../../../../fixture/a2ui-component.ts"
+import { checkedToolUseId } from "../../../../../../fixture/tool-use-id.ts"
 
 // `Markdown`（本物は react-markdown 一式で重い）を、渡された塊の文字列をそのまま出す代役に差し替える。
 // 2つの描き方が同じ塊を同じ入れ子で渡すかは、代役の DOM の一致で確かめられる。
@@ -423,7 +424,7 @@ function rejectedPart(): A2uiReportComponent {
 }
 
 function regionsOf(input: Readonly<Record<string, unknown>>): MainViewReportRegions {
-  const [event] = reportEvents("toolu_fictional", input, [])
+  const [event] = reportEvents(checkedToolUseId("toolu_fictional"), input, [])
   if (event?.kind !== "report") throw new Error("report にならなかった")
   const entry = mainViewEntries(applySessionEvent(INITIAL_SESSION_STATE, event, 0)).find(
     (candidate) => candidate.kind === "report",

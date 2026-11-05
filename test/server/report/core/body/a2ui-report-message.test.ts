@@ -6,6 +6,7 @@ import { reportEvents } from "../../../../../src/server/session-driver/core/mess
 import { parseReportFigure } from "../../../../../src/shared/report/a2ui-report-catalog.ts"
 import { parseReportRetrospective } from "../../../../../src/shared/report/report-retrospective.ts"
 import type { SessionEvent } from "../../../../../src/shared/session/session-event.ts"
+import { checkedToolUseId } from "../../../../fixture/tool-use-id.ts"
 
 type ReportCalled = Extract<SessionEvent, { readonly kind: "report" }>
 
@@ -109,7 +110,7 @@ describe("a2uiReportInput の見比べの部品", () => {
 
   it("旧い引数の beforeAfter の塊も Compare の before-after に写る", () => {
     const [event] = reportEvents(
-      "toolu_1",
+      checkedToolUseId("toolu_1"),
       {
         conclusion: "架空の結論。",
         sections: [{ heading: "", blocks: [{ kind: "beforeAfter", ...beforeAfter }] }],
@@ -289,16 +290,18 @@ describe("reportEvents の a2ui の版", () => {
   })
 
   it("components が空の配列なら旧い版の引数として読む", () => {
-    const [report] = reportEvents("toolu_a2ui", { conclusion: ["架空の結論。"], components: [] }, [
-      "default",
-    ])
+    const [report] = reportEvents(
+      checkedToolUseId("toolu_a2ui"),
+      { conclusion: ["架空の結論。"], components: [] },
+      ["default"],
+    )
 
     expect(report).toMatchObject({ kind: "report", conclusion: "架空の結論。", components: [] })
   })
 })
 
 function reportOf(components: readonly unknown[]): ReportCalled {
-  const report = reportEvents("toolu_a2ui", { components }, ["default"]).find(
+  const report = reportEvents(checkedToolUseId("toolu_a2ui"), { components }, ["default"]).find(
     (event): event is ReportCalled => event.kind === "report",
   )
   if (report === undefined) {

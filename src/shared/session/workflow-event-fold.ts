@@ -3,6 +3,7 @@
 import type { BackgroundTask } from "../session-driver/background-task.ts"
 import type { SessionEvent } from "./session-event.ts"
 import type { SessionState } from "./session-state.ts"
+import type { ToolUseId } from "./tool-use-id.ts"
 import type { WorkflowProgress, WorkflowStep } from "./workflow-step.ts"
 
 /** ワークフロースクリプトの手順・写しに関する出来事1件を畳み、変わる欄だけを返す。 */
@@ -85,7 +86,7 @@ function withWorkflowStep(
  */
 function finishWorkflowStep(
   steps: readonly WorkflowStep[],
-  toolUseId: string,
+  toolUseId: ToolUseId,
 ): readonly WorkflowStep[] {
   return steps.some((step) => step.toolUseId === toolUseId && step.running)
     ? steps.map((step) => (step.toolUseId === toolUseId ? { ...step, running: false } : step))

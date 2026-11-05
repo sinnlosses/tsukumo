@@ -11,6 +11,7 @@ import { dateKey } from "../../fixture/date-key.ts"
 import { requestEvent } from "../../fixture/session-event.ts"
 import { checkedSessionId } from "../../fixture/session-id.ts"
 import { apply } from "../../fixture/session-state.ts"
+import { checkedToolUseId } from "../../fixture/tool-use-id.ts"
 
 describe("applySessionEvent（最近の話題）", () => {
   it("chat-topics-changed で丸ごと置き換わる（継ぎ足さない）", () => {
@@ -173,7 +174,7 @@ describe("applySessionEvent（API の不調と失敗）", () => {
       },
       {
         kind: "tool-started",
-        toolUseId: "toolu_1",
+        toolUseId: checkedToolUseId("toolu_1"),
         name: "Read",
         input: {},
         parentToolUseId: undefined,

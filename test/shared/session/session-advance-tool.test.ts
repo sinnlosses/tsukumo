@@ -5,12 +5,13 @@ import { applySessionEvent } from "../../../src/shared/session/session-fold.ts"
 import { MAX_TOOL_TEXT_LENGTH } from "../../../src/shared/session/session-record.ts"
 import { INITIAL_SESSION_STATE } from "../../../src/shared/session/session-state.ts"
 import { apply } from "../../fixture/session-state.ts"
+import { checkedToolUseId } from "../../fixture/tool-use-id.ts"
 
 describe("applySessionEvent", () => {
   it("結果が届くまでのツールの記録は running", () => {
     const view = apply({
       kind: "tool-started",
-      toolUseId: "toolu_1",
+      toolUseId: checkedToolUseId("toolu_1"),
       name: "Read",
       input: {},
       parentToolUseId: undefined,
@@ -19,7 +20,7 @@ describe("applySessionEvent", () => {
     expect(view.records).toEqual([
       {
         kind: "tool",
-        toolUseId: "toolu_1",
+        toolUseId: checkedToolUseId("toolu_1"),
         name: "Read",
         input: {},
         nested: false,
@@ -34,12 +35,17 @@ describe("applySessionEvent", () => {
     const view = apply(
       {
         kind: "tool-started",
-        toolUseId: "toolu_1",
+        toolUseId: checkedToolUseId("toolu_1"),
         name: "Read",
         input: { path: "/tmp/a" },
         parentToolUseId: undefined,
       },
-      { kind: "tool-finished", toolUseId: "toolu_1", content: "ダミーの結果", isError: true },
+      {
+        kind: "tool-finished",
+        toolUseId: checkedToolUseId("toolu_1"),
+        content: "ダミーの結果",
+        isError: true,
+      },
     )
 
     // ツールの記録そのものは `toolUseId` / `nested` を持つ（サイドバー用途と
@@ -47,7 +53,7 @@ describe("applySessionEvent", () => {
     expect(view.records).toEqual([
       {
         kind: "tool",
-        toolUseId: "toolu_1",
+        toolUseId: checkedToolUseId("toolu_1"),
         name: "Read",
         input: { path: "/tmp/a" },
         nested: false,
@@ -80,14 +86,14 @@ describe("applySessionEvent", () => {
     const view = apply(
       {
         kind: "tool-started",
-        toolUseId: "toolu_1",
+        toolUseId: checkedToolUseId("toolu_1"),
         name: "Bash",
         input: {},
         parentToolUseId: undefined,
       },
       {
         kind: "tool-finished",
-        toolUseId: "toolu_1",
+        toolUseId: checkedToolUseId("toolu_1"),
         content: "架".repeat(MAX_TOOL_TEXT_LENGTH + 5),
         isError: true,
       },
@@ -107,14 +113,14 @@ describe("applySessionEvent", () => {
     const view = apply(
       {
         kind: "tool-started",
-        toolUseId: "toolu_1",
+        toolUseId: checkedToolUseId("toolu_1"),
         name: "Read",
         input: {},
         parentToolUseId: undefined,
       },
       {
         kind: "tool-finished",
-        toolUseId: "toolu_1",
+        toolUseId: checkedToolUseId("toolu_1"),
         content: "架".repeat(MAX_TOOL_TEXT_LENGTH + 5),
         isError: false,
       },
@@ -127,7 +133,7 @@ describe("applySessionEvent", () => {
   it("対応する tool_use が無い結果は、失敗でも記録に足さず lastToolFailureAt も打たない", () => {
     const view = apply({
       kind: "tool-finished",
-      toolUseId: "toolu_unknown",
+      toolUseId: checkedToolUseId("toolu_unknown"),
       content: "ダミーの結果",
       isError: true,
     })
@@ -143,7 +149,7 @@ describe("applySessionEvent", () => {
       INITIAL_SESSION_STATE,
       {
         kind: "tool-started",
-        toolUseId: "toolu_1",
+        toolUseId: checkedToolUseId("toolu_1"),
         name: "Read",
         input: {},
         parentToolUseId: undefined,
@@ -152,7 +158,12 @@ describe("applySessionEvent", () => {
     )
     const failed = applySessionEvent(
       started,
-      { kind: "tool-finished", toolUseId: "toolu_1", content: "失敗した", isError: true },
+      {
+        kind: "tool-finished",
+        toolUseId: checkedToolUseId("toolu_1"),
+        content: "失敗した",
+        isError: true,
+      },
       400,
     )
 

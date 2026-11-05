@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 import { REPORT_REJECTION_MODES } from "../../../../../src/server/report/core/rules/rejection-mode.ts"
 import { reportDraft, reportEvent } from "../../../../fixture/report-event.ts"
 import { createReportReview, noPlan } from "../../../../fixture/report-review.ts"
+import { checkedToolUseId } from "../../../../fixture/tool-use-id.ts"
 
 const COUNTED_REASONS = [
   "long-first-sentence",
@@ -53,7 +54,7 @@ describe("本番の表で数えるだけの条", () => {
     )
     const passed = review.pass({
       kind: "tool-finished",
-      toolUseId: "toolu_c1",
+      toolUseId: checkedToolUseId("toolu_c1"),
       content: "ok",
       isError: false,
     })
