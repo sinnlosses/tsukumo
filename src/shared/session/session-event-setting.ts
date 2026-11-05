@@ -1,6 +1,6 @@
 // セッションの出来事（`SessionEvent`）のうち、モデル・effort・許可モードの設定に関するものの型。
 
-import type { EffortLevel, PermissionMode } from "../command.ts"
+import type { EffortLevel, PermissionMode } from "./run-setting-value.ts"
 
 /**
  * SDK のモデル一覧（`supportedModels()`）1件のうち、effort に関わる部分だけを写したもの。

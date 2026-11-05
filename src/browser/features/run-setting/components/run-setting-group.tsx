@@ -5,7 +5,7 @@
 import clsx from "clsx"
 import { useId, type ReactElement } from "react"
 
-import { isModelAlias } from "../../../../shared/command.ts"
+import { isModelAlias } from "../../../../shared/session/run-setting-value.ts"
 import { permissionModeValue } from "../../../../shared/session/session-info.ts"
 import { EFFORT_PLACEHOLDER_VALUE, effortLabel } from "../../../domain/effort-label.ts"
 import { modelLabel } from "../../../domain/model-label.ts"

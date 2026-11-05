@@ -5,10 +5,14 @@
 // 既定のモデル・effort・許可モードは、ブラウザと同じ畳み先の `BUILTIN_SESSION_DEFAULT` が持つ。ここに置かない。
 
 import type { ExpressionChoice } from "../../../shared/character-pack/expression-choice.ts"
-import type { EffortLevel, ModelAlias, PermissionMode } from "../../../shared/command.ts"
 import type { PromptDelayFootprint } from "../../../shared/diagnostic/diagnostic-record.ts"
 import type { SwallowedFailurePlace } from "../../../shared/diagnostic/swallowed-failure.ts"
 import type { Answer, PendingAsk } from "../../../shared/session-driver/pending-ask.ts"
+import type {
+  EffortLevel,
+  ModelAlias,
+  PermissionMode,
+} from "../../../shared/session/run-setting-value.ts"
 import type { FigurePreference } from "../../../shared/session/session-default.ts"
 import type { SessionDigest } from "../../../shared/session/session-digest.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"

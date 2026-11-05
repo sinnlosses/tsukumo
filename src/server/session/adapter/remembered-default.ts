@@ -11,7 +11,7 @@
 
 import { z } from "zod"
 
-import { EFFORT_LEVELS, MODEL_ALIASES } from "../../../shared/command.ts"
+import { EFFORT_LEVELS, MODEL_ALIASES } from "../../../shared/session/run-setting-value.ts"
 import {
   BUILTIN_SESSION_DEFAULT,
   FIGURE_PREFERENCES,

@@ -5,8 +5,8 @@
 // 疑似セッションは手で書いた架空の会話だけで、実物の transcript は使わない。
 
 import type { Expression } from "../../../../shared/character-pack/expression.ts"
-import type { EffortLevel, PermissionMode } from "../../../../shared/command.ts"
 import type { Answer, PendingAsk } from "../../../../shared/session-driver/pending-ask.ts"
+import type { EffortLevel, PermissionMode } from "../../../../shared/session/run-setting-value.ts"
 import type { SessionDefault } from "../../../../shared/session/session-default.ts"
 import { UNAVAILABLE_SESSION_DIGEST } from "../../../../shared/session/session-digest.ts"
 import type { SessionEvent } from "../../../../shared/session/session-event.ts"

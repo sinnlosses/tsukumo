@@ -3,9 +3,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { ScreenNav } from "../../../../../src/browser/components/domain/screen-nav/screen-nav.tsx"
 import { useNavDrawer } from "../../../../../src/browser/stores/nav-drawer.ts"
-import { MODEL_ALIASES } from "../../../../../src/shared/command.ts"
 import { FRAME_ERROR_REASON } from "../../../../../src/shared/frame.ts"
 import type { StampedPendingAsk } from "../../../../../src/shared/session-driver/pending-ask.ts"
+import { MODEL_ALIASES } from "../../../../../src/shared/session/run-setting-value.ts"
 import type { SessionInfo } from "../../../../../src/shared/session/session-info.ts"
 import {
   INITIAL_SESSION_STATE,
@@ -483,7 +483,6 @@ describe("ScreenNav", () => {
       expect(optionValues.toSorted()).toEqual(MODEL_ALIASES.toSorted())
     })
 
-    // 帯の操作子が送るコマンドは、いままでサイドバーの <select> が送っていたものと同じ。
     it("モデルを変更すると session.setModel を送る", () => {
       const calls: unknown[] = []
       renderScreenNav({ model: "claude-sonnet-5" }, (command) => {

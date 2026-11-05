@@ -5,7 +5,7 @@ import {
   permissionModeChoices,
   permissionModeLabel,
 } from "../../../src/browser/domain/permission-mode-label.ts"
-import { PERMISSION_MODES } from "../../../src/shared/command.ts"
+import { PERMISSION_MODES } from "../../../src/shared/session/run-setting-value.ts"
 import {
   foldPermissionMode,
   type ReportedPermissionMode,

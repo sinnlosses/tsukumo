@@ -1,6 +1,6 @@
 // `init` と `sessions-changed` がどこまで届いたかを表す型。
 
-import { isPermissionMode, type PermissionMode } from "../command.ts"
+import { isPermissionMode, type PermissionMode } from "./run-setting-value.ts"
 import type { SessionId } from "./session-id.ts"
 
 /**

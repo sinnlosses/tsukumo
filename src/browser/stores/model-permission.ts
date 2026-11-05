@@ -5,7 +5,11 @@
 
 import { useState } from "react"
 
-import { isEffortLevel, isModelAlias, isPermissionMode } from "../../shared/command.ts"
+import {
+  isEffortLevel,
+  isModelAlias,
+  isPermissionMode,
+} from "../../shared/session/run-setting-value.ts"
 import type { ModelEffortSupport } from "../../shared/session/session-event-setting.ts"
 import type { ReportedPermissionMode } from "../../shared/session/session-info.ts"
 import type { SettingMark } from "../../shared/session/setting-mark.ts"

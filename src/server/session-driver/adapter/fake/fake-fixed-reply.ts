@@ -1,7 +1,7 @@
 // fake driver が claude の代わりに固定で返す値。
 // 会話の内容ではないので疑似セッションの JSON には持たせず、ここに直接書く。
 
-import type { EffortLevel } from "../../../../shared/command.ts"
+import type { EffortLevel } from "../../../../shared/session/run-setting-value.ts"
 import type { ModelEffortSupport } from "../../../../shared/session/session-event-setting.ts"
 import type { ContextUsage } from "../../../../shared/usage/context-usage.ts"
 import type { PlanUsage } from "../../../../shared/usage/plan-usage.ts"

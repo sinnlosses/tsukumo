@@ -2,7 +2,6 @@
 // 時刻は畳み込みの中で時計を読まず、イベントに打たれた `at`（エポックミリ秒）を受け取る（サーバとブラウザの状態が同じになるように、時刻はイベントの発生側が決める）。
 
 import type { CharacterInfo } from "../character-pack/character.ts"
-import { isModelAlias } from "../command.ts"
 import { applyDiaryEvent, type DiaryEvent } from "../diary/diary.ts"
 import { applyTaskSummaryChange } from "../repository/task-summary-change.ts"
 import type { PendingAsk, StampedPendingAsk } from "../session-driver/pending-ask.ts"
@@ -10,6 +9,7 @@ import { applyUsageReviewEvent, type UsageReviewEvent } from "../usage/usage-rev
 import { isBlankText } from "../utils/blank-text.ts"
 import { clipText } from "../utils/clip-text.ts"
 import { commandCandidates } from "./command-suggestion.ts"
+import { isModelAlias } from "./run-setting-value.ts"
 import {
   advanceByQuestionAnswered,
   advanceByReport,

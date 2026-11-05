@@ -4,8 +4,8 @@
 // effort だけ「まだ届いていない値」を見た目上の既定へ倒さない。
 // 値が届くまでを「対応するモデルだが、まだ分からない」という独立した状態として持つ（`EffortSelect` の `unknown`）。
 
-import type { EffortLevel } from "../../shared/command.ts"
 import { findModelSupport } from "../../shared/session/model-name.ts"
+import type { EffortLevel } from "../../shared/session/run-setting-value.ts"
 import type { ModelEffortSupport } from "../../shared/session/session-event-setting.ts"
 
 /** effort の値と、画面に出すラベル。値そのものは SDK の語彙で、人が選ぶ言葉に言い換えていない。 */

@@ -40,8 +40,8 @@
   既定。`diagnostic/diagnostic-record.ts` のように `SessionEvent` を扱う機能の語彙は `session/` を読んでよい）。
   サーバのような「読んでよい機能」の表は持たない（層が1つで、エッジの向きは輪が無いことだけで決まる）
 - **機能のディレクトリは `contract/` と `rpc.ts` を読まない**（契約と束が機能の語彙を読む一方向）。
-  直下の `frame.ts` `command.ts` は機能から読んでよい（断る理由 `FRAME_ERROR_REASON` と、権限・モデル・
-  思考の段の語彙を持つため）
+  直下の `frame.ts` `command.ts` は機能から読んでよい（断る理由 `FRAME_ERROR_REASON` と、コマンドの
+  断る条件・エラーを持つため。権限・モデル・思考の段の語彙は `session/` が持つ）
 - **機能を足すときは、サーバの機能の一覧に先にあること**。shared の機能の一覧・直下のファイルの一覧・
   機能どうしの輪は `test/architecture/shared-feature.test.ts` が見る
 

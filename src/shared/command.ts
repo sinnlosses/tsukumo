@@ -1,50 +1,12 @@
 // コマンド（ブラウザからサーバへの書き込みの手続き）の共通の語彙。
 // 手続きごとの形（入力と断る条件）は機能ごとの契約が持ち、ここは全部の契約が使うものだけを置く。
-// 断る条件の `meta` の形・断ったときのエラー・モデルや許可モードの値の一覧がそれにあたる。
+// 断る条件の `meta` の形・断ったときのエラーがそれにあたる。
+// 実行設定の値の語彙（許可モード・モデル・effort）は `session/` が持つ。
 
 import { type AnyContractProcedure, type InferSchemaOutput, oc } from "@orpc/contract"
 import { z } from "zod"
 
 import { FRAME_ERROR_REASON } from "./frame.ts"
-
-/** 許可モードの値の全体。SDK の `PermissionMode` と同じ値に揃える（テストが型で守る）。 */
-export const PERMISSION_MODES = [
-  "default",
-  "acceptEdits",
-  "auto",
-  "plan",
-  "bypassPermissions",
-] as const
-
-export type PermissionMode = (typeof PERMISSION_MODES)[number]
-
-/**
- * `setModel` に渡すモデルのエイリアス。Claude Code はこの4語を受け付ける（実測）。
- * フルネーム（`claude-opus-4-1` のような値）は渡さない。
- */
-export const MODEL_ALIASES = ["opus", "sonnet", "haiku", "fable"] as const
-
-export type ModelAlias = (typeof MODEL_ALIASES)[number]
-
-/** effort の段。SDK の `EffortLevel` と同じ5語（実測）。 */
-export const EFFORT_LEVELS = ["low", "medium", "high", "xhigh", "max"] as const
-
-export type EffortLevel = (typeof EFFORT_LEVELS)[number]
-
-/** 外から届いた文字列が {@link PERMISSION_MODES} のいずれかかどうかを検証する。 */
-export function isPermissionMode(value: string): value is PermissionMode {
-  return PERMISSION_MODES.some((mode) => mode === value)
-}
-
-/** 外から届いた文字列が {@link MODEL_ALIASES} のいずれかかどうかを検証する。 */
-export function isModelAlias(value: string): value is ModelAlias {
-  return MODEL_ALIASES.some((alias) => alias === value)
-}
-
-/** 外から届いた文字列が {@link EFFORT_LEVELS} のいずれかかどうかを検証する。 */
-export function isEffortLevel(value: string): value is EffortLevel {
-  return EFFORT_LEVELS.some((level) => level === value)
-}
 
 /** 断るときに返す定型文（`FRAME_ERROR_REASON` の値のどれか）。 */
 export type CommandRefusalReason = (typeof FRAME_ERROR_REASON)[keyof typeof FRAME_ERROR_REASON]

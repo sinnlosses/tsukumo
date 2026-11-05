@@ -17,7 +17,7 @@ import {
 } from "lucide-react"
 import type { ReactElement } from "react"
 
-import type { EffortLevel, PermissionMode } from "../../../../shared/command.ts"
+import type { EffortLevel, PermissionMode } from "../../../../shared/session/run-setting-value.ts"
 import type { ModelEffortSupport } from "../../../../shared/session/session-event-setting.ts"
 import {
   EFFORT_LABELS,

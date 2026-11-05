@@ -10,11 +10,11 @@ import {
   generatedCharacterSchema,
 } from "../../../shared/character-pack/generated-character.ts"
 import { MAX_PERSONA_BODY_LENGTH } from "../../../shared/character-pack/persona-section.ts"
-import type { ModelAlias } from "../../../shared/command.ts"
 import {
   parsePromptImage,
   type PromptImageSource,
 } from "../../../shared/session-driver/prompt-image.ts"
+import type { ModelAlias } from "../../../shared/session/run-setting-value.ts"
 import { structuredOutputSchema } from "../../core/query/structured-output-schema.ts"
 import { runWithDeadline, type StructuredQuery } from "../../core/query/structured-query.ts"
 

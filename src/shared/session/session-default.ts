@@ -4,7 +4,7 @@
 // 許可モードの値の一覧そのものは `PERMISSION_MODES` が持ち、ここが持つのは「既定として選べるのはどれか」という別の問いへの答えだけ。
 // effort は除外する値が無いので、`EFFORT_LEVELS` をそのまま選べる段の全体として使う。
 
-import type { EffortLevel, ModelAlias, PermissionMode } from "../command.ts"
+import type { EffortLevel, ModelAlias, PermissionMode } from "./run-setting-value.ts"
 
 /**
  * 既定に選べる許可モード。「全部許す」（`bypassPermissions`）は入らない。

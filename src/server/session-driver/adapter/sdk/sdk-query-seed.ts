@@ -15,7 +15,7 @@ import {
   isEffortLevel,
   isPermissionMode,
   type PermissionMode,
-} from "../../../../shared/command.ts"
+} from "../../../../shared/session/run-setting-value.ts"
 import type { SessionEvent } from "../../../../shared/session/session-event.ts"
 import type { LatestWorkPlan } from "../../../../shared/session/work-plan.ts"
 import { toolSummaryInput } from "../../../../shared/utils/tool-summary-field.ts"

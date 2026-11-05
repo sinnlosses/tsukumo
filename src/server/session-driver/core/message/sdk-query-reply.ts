@@ -3,7 +3,7 @@
 
 import { isPlainObject } from "remeda"
 
-import { type EffortLevel, isEffortLevel } from "../../../../shared/command.ts"
+import { type EffortLevel, isEffortLevel } from "../../../../shared/session/run-setting-value.ts"
 import type { ModelEffortSupport } from "../../../../shared/session/session-event-setting.ts"
 import type { CommandDescription } from "../../../../shared/session/session-event.ts"
 import { optionalString } from "../../../../shared/utils/optional-string.ts"

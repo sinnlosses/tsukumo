@@ -148,7 +148,7 @@
 - `images` は**原寸と控えの対**（`PromptImage`。`src/shared/session-driver/prompt-image.ts` が正典）。値そのものは
   `docs/requirements.md` 4.10 が正典。**1枚も無いのが普通**なので、field ごと省いた形も受け取って空に
   畳む。WebSocket の `maxPayload` は原寸が上限まで全部通る大きさにしてある
-- `PermissionMode` と `ModelAlias` の値の一覧は **`shared`（`src/shared/command.ts`）に1つだけ
+- `PermissionMode` と `ModelAlias` の値の一覧は **`shared`（`src/shared/session/run-setting-value.ts`）に1つだけ
   置く**。SDK の型との一致は `core` 側のテストで守る
 
 ### ServerFrame

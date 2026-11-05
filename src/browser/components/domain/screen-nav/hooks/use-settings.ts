@@ -9,7 +9,11 @@
 
 import { useRef, useState, type RefObject } from "react"
 
-import { isEffortLevel, isModelAlias, type ModelAlias } from "../../../../../shared/command.ts"
+import {
+  isEffortLevel,
+  isModelAlias,
+  type ModelAlias,
+} from "../../../../../shared/session/run-setting-value.ts"
 import {
   isFigurePreference,
   isSessionDefaultPermissionMode,
