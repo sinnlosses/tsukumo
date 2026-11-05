@@ -1,9 +1,9 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
-import { TaskRefreshButton } from "../../../../../src/browser/features/task-board/components/task-refresh-button.tsx"
-import { queryClientWrapper } from "../../../query-client.tsx"
-import { rpcOutput, stubRpcFetch, type RpcFetchStub } from "../../../rpc-fetch-stub.ts"
+import { TaskRefreshButton } from "../../../../src/browser/features/task-board/task-refresh-button.tsx"
+import { queryClientWrapper } from "../../query-client.tsx"
+import { rpcOutput, stubRpcFetch, type RpcFetchStub } from "../../rpc-fetch-stub.ts"
 
 let stub: RpcFetchStub | undefined
 

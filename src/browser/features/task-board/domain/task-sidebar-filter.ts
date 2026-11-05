@@ -2,7 +2,7 @@
 // 並びは変えず、`orderTasksForSidebar` の前段として出す・出さないだけをここで決める。
 
 import { hasTaskStatus, type TaskSummaryItem } from "../../../../shared/repository/task-summary.ts"
-import type { TaskListFilterStatus } from "./task-list-count.ts"
+import type { TaskListFilterStatus } from "../task-list-count.ts"
 
 /** 選んだ状態のタスクだけを残す。「すべて」のときは全件をそのまま返す。 */
 export function filterTasksForSidebar(

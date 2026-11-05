@@ -13,7 +13,7 @@ import { FRAME_ERROR_REASON } from "../../../../../shared/frame-error-reason.ts"
 import {
   useCurrentWork,
   type CurrentWork,
-} from "../../../../features/current-work/hooks/use-current-work.ts"
+} from "../../../../features/current-work/use-current-work.ts"
 import { usePhoneWidth } from "../../../../hooks/use-phone-width.ts"
 import { SCREEN_NAV_ITEMS, type NavScreen, type Screen } from "../../../../stores/location-hash.ts"
 import {

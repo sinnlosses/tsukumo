@@ -12,7 +12,7 @@ import { useRef, useState } from "react"
 import type { KeyboardEvent, ReactElement } from "react"
 
 import { formatMinutesSeconds } from "../../../../../../shared/utils/elapsed-time.ts"
-import { truncateForDisplay } from "../../../../../features/current-work/domain/current-work-step.ts"
+import { truncateForDisplay } from "../../../../../features/current-work/current-work-step.ts"
 import { usePhoneWidth } from "../../../../../hooks/use-phone-width.ts"
 import { useNowWhile } from "../../../../../stores/clock.ts"
 import { useInquiryJump } from "../../../../../stores/inquiry-jump.ts"

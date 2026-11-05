@@ -4,7 +4,7 @@ import clsx from "clsx"
 import type { ReactElement, ReactNode } from "react"
 
 import { codeSpanParts } from "../../../../../domain/code-span.ts"
-import { TaskSummaryText } from "../../../../../features/task-board/components/task-summary-text.tsx"
+import { TaskSummaryText } from "../../../../../features/task-board/task-summary-text.tsx"
 import { CharacterFace } from "../../../../frame/character-face.tsx"
 import { Button } from "../../../../ui/button/button.tsx"
 import { Heading } from "../../../../ui/heading/heading.tsx"

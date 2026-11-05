@@ -4,9 +4,9 @@
 import clsx from "clsx"
 import type { ReactElement } from "react"
 
-import { Button } from "../../../components/ui/button/button.tsx"
-import { RefreshIcon } from "../../../components/ui/icon/icon.tsx"
-import { useRefreshTasks } from "../hooks/use-refresh-task-list.ts"
+import { Button } from "../../components/ui/button/button.tsx"
+import { RefreshIcon } from "../../components/ui/icon/icon.tsx"
+import { useRefreshTasks } from "./hooks/use-refresh-task-list.ts"
 import styles from "./task-refresh-button.module.css"
 
 const LABEL = "最新化"

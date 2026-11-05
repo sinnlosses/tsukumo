@@ -3,7 +3,7 @@
 import type { DateKey } from "../../../../shared/diary/date-key.ts"
 import type { DiaryWriting } from "../../../../shared/diary/diary.ts"
 import type { PendingAsk } from "../../../../shared/session-driver/pending-ask.ts"
-import type { CurrentWorkState } from "../domain/current-work-state.ts"
+import type { CurrentWorkState } from "../current-work-state.ts"
 
 type PendingQuestion = Extract<PendingAsk, { readonly kind: "question" }>
 

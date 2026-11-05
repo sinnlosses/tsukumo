@@ -17,21 +17,21 @@ import {
 } from "lucide-react"
 import type { ReactElement } from "react"
 
-import type { EffortLevel, PermissionMode } from "../../../../shared/session/run-setting-value.ts"
-import type { ModelEffortSupport } from "../../../../shared/session/session-event-setting.ts"
+import type { EffortLevel, PermissionMode } from "../../../shared/session/run-setting-value.ts"
+import type { ModelEffortSupport } from "../../../shared/session/session-event-setting.ts"
 import {
   EFFORT_LABELS,
   EFFORT_PLACEHOLDER_VALUE,
   effortLabel,
   modelEffortNote,
   type EffortSelect,
-} from "../../../domain/effort-label.ts"
-import { MODEL_LABELS, modelDescription } from "../../../domain/model-label.ts"
+} from "../../domain/effort-label.ts"
+import { MODEL_LABELS, modelDescription } from "../../domain/model-label.ts"
 import {
   BYPASS_PERMISSIONS_NOTICE,
   PERMISSION_MODE_LABELS,
   permissionModeShieldFill,
-} from "../../../domain/permission-mode-label.ts"
+} from "../../domain/permission-mode-label.ts"
 import styles from "./run-setting-option.module.css"
 import selectStyles from "./run-setting-select.module.css"
 import type { RunSettingSelectOption } from "./run-setting-select.tsx"

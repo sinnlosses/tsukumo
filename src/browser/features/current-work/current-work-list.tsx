@@ -5,16 +5,12 @@
 import clsx from "clsx"
 import type { ReactElement } from "react"
 
-import { Button } from "../../../components/ui/button/button.tsx"
-import { Text } from "../../../components/ui/text/text.tsx"
-import type {
-  CurrentWork,
-  CurrentWorkPlanPhase,
-  CurrentWorkPlanSpan,
-} from "../hooks/use-current-work.ts"
+import { Button } from "../../components/ui/button/button.tsx"
+import { Text } from "../../components/ui/text/text.tsx"
 import { CurrentWorkBackground } from "./current-work-background.tsx"
 import styles from "./current-work-list.module.css"
 import { CurrentWorkStepGroup } from "./current-work-step-group.tsx"
+import type { CurrentWork, CurrentWorkPlanPhase, CurrentWorkPlanSpan } from "./use-current-work.ts"
 
 type CurrentWorkListProps = {
   /** 開くボタンの `aria-controls` が指す id。 */

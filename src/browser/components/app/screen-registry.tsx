@@ -1,7 +1,7 @@
 // 本番の画面の登録表。実物の画面の部品はここで import し、`<Layout>` へ渡す。
 // 画面どうしの import を避けるため、すべての画面を知ってよいこのディレクトリが持つ。
 
-import { RunSettingGroup } from "../../features/run-setting/components/run-setting-group.tsx"
+import { RunSettingGroup } from "../../features/run-setting/run-setting-group.tsx"
 import { ScreenNav } from "../frame/screen-nav/screen-nav.tsx"
 import { SidebarTaskPane } from "../frame/sidebar/components/sidebar-task-pane.tsx"
 import { UsagePane } from "../frame/sidebar/components/usage-pane.tsx"

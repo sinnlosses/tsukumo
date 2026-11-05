@@ -63,7 +63,7 @@ const ALLOWED_COUNTS: Readonly<Record<string, number>> = {
   "test/browser/components/ui/text/text.test.tsx": 1,
   "test/browser/features/current-work/current-work-detail.test.tsx": 17,
   "test/browser/features/current-work/current-work.test.tsx": 18,
-  "test/browser/features/run-setting/components/run-setting-group.test.tsx": 1,
+  "test/browser/features/run-setting/run-setting-group.test.tsx": 1,
   "test/browser/features/task-board/task-board.test.tsx": 2,
   "test/browser/features/task-board/task-list.test.tsx": 1,
   "test/browser/features/task-board/task-run.test.tsx": 2,

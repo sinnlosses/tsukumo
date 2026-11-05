@@ -11,7 +11,7 @@ import clsx from "clsx"
 import { Check, ChevronDown } from "lucide-react"
 import type { ReactElement, ReactNode } from "react"
 
-import type { SettingDot } from "../../../stores/model-permission.ts"
+import type { SettingDot } from "../../stores/model-permission.ts"
 import styles from "./run-setting-select.module.css"
 
 export type RunSettingSelectOption = {

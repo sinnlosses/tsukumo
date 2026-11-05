@@ -5,12 +5,12 @@
 import clsx from "clsx"
 import type { ReactElement } from "react"
 
-import { Text } from "../../../components/ui/text/text.tsx"
+import { Text } from "../../components/ui/text/text.tsx"
+import styles from "./current-work-step-group.module.css"
 import type {
   CurrentWorkStep,
   CurrentWorkStepGroup as CurrentWorkStepGroupView,
-} from "../domain/current-work-step.ts"
-import styles from "./current-work-step-group.module.css"
+} from "./current-work-step.ts"
 
 /** 段で区切った手順のまとまり。段の小見出しがあれば手順の上に置く。 */
 export function CurrentWorkStepGroup(props: {

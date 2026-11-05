@@ -11,13 +11,13 @@
 
 import { useState, type ReactElement } from "react"
 
-import { TaskCountChipList } from "../../../../features/task-board/components/task-count-chip-list.tsx"
-import { TaskRefreshButton } from "../../../../features/task-board/components/task-refresh-button.tsx"
+import { TaskCountChipList } from "../../../../features/task-board/task-count-chip-list.tsx"
 import {
   taskListCounts,
   type TaskListFilterStatus,
-} from "../../../../features/task-board/domain/task-list-count.ts"
+} from "../../../../features/task-board/task-list-count.ts"
 import { TaskList } from "../../../../features/task-board/task-list.tsx"
+import { TaskRefreshButton } from "../../../../features/task-board/task-refresh-button.tsx"
 import { useSession } from "../../../../stores/session.ts"
 import { useTaskBoardRequest } from "../../../../stores/task-board-request.ts"
 import { SidebarSection } from "./section.tsx"

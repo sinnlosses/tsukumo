@@ -4,8 +4,8 @@
 
 import type { ReactElement } from "react"
 
-import type { TaskListCountItem, TaskListFilterStatus } from "../domain/task-list-count.ts"
 import styles from "./task-count-chip-list.module.css"
+import type { TaskListCountItem, TaskListFilterStatus } from "./task-list-count.ts"
 
 export function TaskCountChipList(props: {
   readonly counts: readonly TaskListCountItem[]

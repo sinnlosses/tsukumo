@@ -4,10 +4,10 @@
 
 import { useId, type ReactElement } from "react"
 
-import { Text } from "../../../components/ui/text/text.tsx"
-import type { CurrentWork } from "../hooks/use-current-work.ts"
+import { Text } from "../../components/ui/text/text.tsx"
 import { CurrentWorkList } from "./current-work-list.tsx"
 import styles from "./current-work-pill.module.css"
+import type { CurrentWork } from "./use-current-work.ts"
 
 type CurrentWorkPillProps = {
   readonly work: CurrentWork

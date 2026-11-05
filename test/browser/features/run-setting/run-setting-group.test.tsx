@@ -1,12 +1,12 @@
 import { act, cleanup, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
-import { RunSettingGroup } from "../../../../../src/browser/features/run-setting/components/run-setting-group.tsx"
-import { nowEpochMilliseconds } from "../../../../../src/browser/utils/clock.ts"
-import { INITIAL_SESSION_STATE } from "../../../../../src/shared/session/session-state.ts"
-import type { SettingMark, SettingMarks } from "../../../../../src/shared/session/setting-mark.ts"
-import { checkedSessionId } from "../../../../fixture/session-id.ts"
-import { putSession, putState } from "../../../session-store.ts"
+import { RunSettingGroup } from "../../../../src/browser/features/run-setting/run-setting-group.tsx"
+import { nowEpochMilliseconds } from "../../../../src/browser/utils/clock.ts"
+import { INITIAL_SESSION_STATE } from "../../../../src/shared/session/session-state.ts"
+import type { SettingMark, SettingMarks } from "../../../../src/shared/session/setting-mark.ts"
+import { checkedSessionId } from "../../../fixture/session-id.ts"
+import { putSession, putState } from "../../session-store.ts"
 
 afterEach(() => {
   cleanup()

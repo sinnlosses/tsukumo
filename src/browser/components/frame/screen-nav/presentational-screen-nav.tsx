@@ -12,7 +12,7 @@
 
 import type { ReactElement } from "react"
 
-import { CurrentWorkPill } from "../../../features/current-work/components/current-work-pill.tsx"
+import { CurrentWorkPill } from "../../../features/current-work/current-work-pill.tsx"
 import { NavDrawer, NavDrawerToggle, type NavDrawerSlots } from "./components/nav-drawer.tsx"
 import { PhoneHead } from "./components/phone-head.tsx"
 import { ScreenNavCharacterPicker } from "./components/screen-nav-character-picker.tsx"

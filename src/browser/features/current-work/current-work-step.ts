@@ -3,21 +3,18 @@
 import type {
   BackgroundTask,
   BackgroundTaskKind,
-} from "../../../../shared/session-driver/background-task.ts"
-import { MAX_TOOL_TEXT_LENGTH } from "../../../../shared/session/session-record.ts"
+} from "../../../shared/session-driver/background-task.ts"
+import { MAX_TOOL_TEXT_LENGTH } from "../../../shared/session/session-record.ts"
 import {
   toolDuration,
   type TurnStep,
   type TurnStepStatus,
-} from "../../../../shared/session/turn-step.ts"
-import {
-  PHASE_SPAN_NAMES,
-  phasePosition,
-} from "../../../../shared/session/work-plan-phase-number.ts"
-import type { WorkPhase } from "../../../../shared/session/work-plan.ts"
-import { clipText, type ClippedText } from "../../../../shared/utils/clip-text.ts"
-import { formatElapsed } from "../../../../shared/utils/elapsed-time.ts"
-import { summarizeToolInput } from "../../../domain/tool-summary.ts"
+} from "../../../shared/session/turn-step.ts"
+import { PHASE_SPAN_NAMES, phasePosition } from "../../../shared/session/work-plan-phase-number.ts"
+import type { WorkPhase } from "../../../shared/session/work-plan.ts"
+import { clipText, type ClippedText } from "../../../shared/utils/clip-text.ts"
+import { formatElapsed } from "../../../shared/utils/elapsed-time.ts"
+import { summarizeToolInput } from "../../domain/tool-summary.ts"
 
 export type CurrentWorkStep = {
   readonly key: string

@@ -2,7 +2,7 @@
 
 import { Fragment, type ReactElement } from "react"
 
-import type { CodeSpanPart } from "../../../domain/code-span.ts"
+import type { CodeSpanPart } from "../../domain/code-span.ts"
 import styles from "./task-summary-text.module.css"
 
 export function TaskSummaryText(props: { readonly parts: readonly CodeSpanPart[] }): ReactElement {

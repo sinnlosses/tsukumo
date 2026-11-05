@@ -1,6 +1,6 @@
 // サイドバーの「タスク一覧」区画の見出し下に出す件数のチップの文言。
 
-import { hasTaskStatus, type TaskSummaryItem } from "../../../../shared/repository/task-summary.ts"
+import { hasTaskStatus, type TaskSummaryItem } from "../../../shared/repository/task-summary.ts"
 
 export type TaskListCountItem = {
   readonly status: "all" | "open" | "draft" | "done"

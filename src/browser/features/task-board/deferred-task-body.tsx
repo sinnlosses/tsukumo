@@ -7,11 +7,11 @@
 import clsx from "clsx"
 import type { ReactElement } from "react"
 
-import { deferredModule } from "../../../stores/deferred-module.ts"
-import styles from "./task-body.module.css"
-import type { TaskBodyProps } from "./task-body.tsx"
+import { deferredModule } from "../../stores/deferred-module.ts"
+import styles from "./components/task-body.module.css"
+import type { TaskBodyProps } from "./components/task-body.tsx"
 
-const taskBodyRenderer = deferredModule(() => import("./task-body.tsx"))
+const taskBodyRenderer = deferredModule(() => import("./components/task-body.tsx"))
 
 /** 描画一式を読み込む。何度呼んでも読み込みは1回で、済めば待っている部品が描き直る。 */
 export const loadTaskBody = taskBodyRenderer.load

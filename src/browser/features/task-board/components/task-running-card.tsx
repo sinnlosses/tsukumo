@@ -10,9 +10,9 @@ import type { TaskSummaryItem } from "../../../../shared/repository/task-summary
 import { Text } from "../../../components/ui/text/text.tsx"
 import { codeSpanParts } from "../../../domain/code-span.ts"
 import taskBoardStyles from "../task-board.module.css"
+import { TaskSummaryText } from "../task-summary-text.tsx"
 import type { TaskItemPeek } from "./task-item.tsx"
 import styles from "./task-running-card.module.css"
-import { TaskSummaryText } from "./task-summary-text.tsx"
 
 export function TaskRunningCard(props: {
   readonly task: TaskSummaryItem

@@ -9,9 +9,9 @@ import type { ReactElement, ReactNode } from "react"
 import { hasTaskStatus, type TaskSummaryItem } from "../../../../shared/repository/task-summary.ts"
 import { codeSpanParts } from "../../../domain/code-span.ts"
 import taskBoardStyles from "../task-board.module.css"
+import { TaskSummaryText } from "../task-summary-text.tsx"
 import styles from "./task-item.module.css"
 import { TaskMark } from "./task-mark.tsx"
-import { TaskSummaryText } from "./task-summary-text.tsx"
 
 export function TaskItem(props: {
   readonly task: TaskSummaryItem

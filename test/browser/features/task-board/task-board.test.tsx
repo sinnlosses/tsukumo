@@ -2,7 +2,7 @@ import { cleanup, fireEvent, render, screen, within } from "@testing-library/rea
 import type { ReactElement } from "react"
 import { afterEach, beforeAll, describe, expect, it } from "vitest"
 
-import { loadTaskBody } from "../../../../src/browser/features/task-board/components/deferred-task-body.tsx"
+import { loadTaskBody } from "../../../../src/browser/features/task-board/deferred-task-body.tsx"
 import { TaskBoard } from "../../../../src/browser/features/task-board/task-board.tsx"
 import type { TaskBoardRequest } from "../../../../src/browser/stores/task-board-request.ts"
 import type {

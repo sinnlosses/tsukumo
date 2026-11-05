@@ -4,8 +4,8 @@ import { X } from "lucide-react"
 import type { ReactElement } from "react"
 
 import { Button } from "../../../components/ui/button/button.tsx"
+import { TaskRefreshButton } from "../task-refresh-button.tsx"
 import styles from "./task-board-head.module.css"
-import { TaskRefreshButton } from "./task-refresh-button.tsx"
 
 export function TaskBoardHead(props: { readonly onClose: () => void }): ReactElement {
   return (

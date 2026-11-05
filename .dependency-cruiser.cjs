@@ -284,6 +284,13 @@ const browserFeatureRules = [
       { path: underAny(otherThan(placed, allBrowserFeatures)) },
     ),
   ),
+  ...BROWSER_PLACED_FEATURES.map((placed) =>
+    rule(
+      `browser-feature-public-surface:${placed.replace("features/", "")}`,
+      { path: `^src/browser/(?!${placed}/)` },
+      { path: `^src/browser/${placed}/[^/]+/` },
+    ),
+  ),
   rule(
     "browser-feature-unknown",
     { path: "^src/" },

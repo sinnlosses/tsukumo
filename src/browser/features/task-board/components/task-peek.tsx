@@ -16,14 +16,14 @@ import type {
 } from "../../../../shared/repository/task-summary.ts"
 import { Button } from "../../../components/ui/button/button.tsx"
 import { codeSpanParts } from "../../../domain/code-span.ts"
+import { TaskBody } from "../deferred-task-body.tsx"
 import type { TaskRunConfirmOutcome } from "../domain/task-run-confirm-outcome.ts"
 import type { SingleTaskRequest } from "../domain/task-run-prompt.ts"
 import type { TaskPeekConfirm } from "../hooks/use-task-peek.ts"
-import { TaskBody } from "./deferred-task-body.tsx"
+import { TaskSummaryText } from "../task-summary-text.tsx"
 import { TaskMark } from "./task-mark.tsx"
 import styles from "./task-peek.module.css"
 import { TaskRunConfirm } from "./task-run-confirm.tsx"
-import { TaskSummaryText } from "./task-summary-text.tsx"
 
 /** プレビューの下端の頼みの口。`available` は「これを始める」（頼めるタスクだけ）、`draft` は「却下する」「計画する」。 */
 export type TaskPeekRun =

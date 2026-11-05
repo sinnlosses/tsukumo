@@ -5,8 +5,8 @@
 import clsx from "clsx"
 import type { ReactElement, RefObject } from "react"
 
-import { CurrentWorkBackground } from "../../../../../features/current-work/components/current-work-background.tsx"
-import { CurrentWorkStepGroup } from "../../../../../features/current-work/components/current-work-step-group.tsx"
+import { CurrentWorkBackground } from "../../../../../features/current-work/current-work-background.tsx"
+import { CurrentWorkStepGroup } from "../../../../../features/current-work/current-work-step-group.tsx"
 import { Button } from "../../../../ui/button/button.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import { WORK_STRIP_MARKS, type WorkStripResult } from "../../domain/turn-result-mark.ts"

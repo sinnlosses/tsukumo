@@ -2,9 +2,9 @@
 
 import type { ReactElement } from "react"
 
-import { Text } from "../../../components/ui/text/text.tsx"
-import type { CurrentWorkBackgroundList } from "../domain/current-work-step.ts"
+import { Text } from "../../components/ui/text/text.tsx"
 import styles from "./current-work-background.module.css"
+import type { CurrentWorkBackgroundList } from "./current-work-step.ts"
 
 export function CurrentWorkBackground(props: {
   readonly list: CurrentWorkBackgroundList

@@ -4,8 +4,8 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
-import { RunSettingSelect } from "../../../../../src/browser/features/run-setting/components/run-setting-select.tsx"
-import { typedElement } from "../../../../typed-element.ts"
+import { RunSettingSelect } from "../../../../src/browser/features/run-setting/run-setting-select.tsx"
+import { typedElement } from "../../../typed-element.ts"
 
 afterEach(() => {
   cleanup()

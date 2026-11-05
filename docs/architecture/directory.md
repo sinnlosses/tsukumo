@@ -119,5 +119,8 @@ components/page/<ページ>/
   `components/app/` とテスト）。ページの部品を画面の外に置くとき（書き終わりの知らせ `DiaryNotice`）は、
   `components/app/screen-registry.tsx` がその `<部品>.tsx` を直に import する。**`<部品>.tsx` は自分の `components/` と
   概念のディレクトリの中を `export … from` で再エクスポートしない**（`hooks/` と `domain/` の型は可）
+- **置かれる機能の外から引いてよいのは `features/<機能>/` の直下のファイルだけ**（公開面。明示の一覧は持たず、
+  ディレクトリの位置で決まる）。外から引かれる中のファイルは機能の直下へ上げる。検査は `.dependency-cruiser.cjs` の
+  `browser-feature-public-surface:*`（`test/` からの import は対象外）
 - 会話の画面は**1ページ**で、4つの領域のうち、メインビュー・キャラビュー・入力欄（`dispatch/`）は `conversation/components/` の下、サイドバーは `frame/sidebar/` の部品。検査は
   `test/architecture/browser-box.test.ts`（`describe("components/page/ の形", …)`）

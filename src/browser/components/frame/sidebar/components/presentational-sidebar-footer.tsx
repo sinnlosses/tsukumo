@@ -3,7 +3,7 @@
 
 import type { ReactElement } from "react"
 
-import { RunSettingGroup } from "../../../../features/run-setting/components/run-setting-group.tsx"
+import { RunSettingGroup } from "../../../../features/run-setting/run-setting-group.tsx"
 import type { SidebarFooterView } from "../hooks/use-sidebar-footer.ts"
 import { ContextUsageGauge } from "./context-usage-gauge.tsx"
 import { ContextUsageRow } from "./context-usage-row.tsx"

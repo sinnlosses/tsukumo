@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest"
 
-import { taskListCounts } from "../../../../../src/browser/features/task-board/domain/task-list-count.ts"
-import type { TaskSummaryItem } from "../../../../../src/shared/repository/task-summary.ts"
-import { taskStatusOfWord } from "../../../../fixture/session-state.ts"
+import { taskListCounts } from "../../../../src/browser/features/task-board/task-list-count.ts"
+import type { TaskSummaryItem } from "../../../../src/shared/repository/task-summary.ts"
+import { taskStatusOfWord } from "../../../fixture/session-state.ts"
 
 // フィクスチャはすべて手で書いた架空のタスク（実物のタスクファイルは使わない）。
 

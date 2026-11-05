@@ -2,18 +2,18 @@ import { renderHook } from "@testing-library/react"
 import { createRef } from "react"
 import { afterEach, describe, expect, it } from "vitest"
 
-import { useCurrentWork } from "../../../../../src/browser/features/current-work/hooks/use-current-work.ts"
-import type { BackgroundTask } from "../../../../../src/shared/session-driver/background-task.ts"
-import type { StampedPendingAsk } from "../../../../../src/shared/session-driver/pending-ask.ts"
-import type { Question } from "../../../../../src/shared/session-driver/question.ts"
+import { useCurrentWork } from "../../../../src/browser/features/current-work/use-current-work.ts"
+import type { BackgroundTask } from "../../../../src/shared/session-driver/background-task.ts"
+import type { StampedPendingAsk } from "../../../../src/shared/session-driver/pending-ask.ts"
+import type { Question } from "../../../../src/shared/session-driver/question.ts"
 import {
   INITIAL_SESSION_STATE,
   type SessionState,
-} from "../../../../../src/shared/session/session-state.ts"
-import { characterInfo } from "../../../../fixture/character.ts"
-import { dateKey } from "../../../../fixture/date-key.ts"
-import { requestRecord, toolRecord, workPlanRecord } from "../../../../fixture/session-record.ts"
-import { putSession } from "../../../session-store.ts"
+} from "../../../../src/shared/session/session-state.ts"
+import { characterInfo } from "../../../fixture/character.ts"
+import { dateKey } from "../../../fixture/date-key.ts"
+import { requestRecord, toolRecord, workPlanRecord } from "../../../fixture/session-record.ts"
+import { putSession } from "../../session-store.ts"
 
 afterEach(() => {
   window.location.hash = ""

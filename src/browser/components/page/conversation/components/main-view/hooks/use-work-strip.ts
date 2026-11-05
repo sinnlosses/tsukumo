@@ -37,7 +37,7 @@ import {
   toBackgroundListView,
   type CurrentWorkBackgroundList,
   type CurrentWorkStepGroup,
-} from "../../../../../../features/current-work/domain/current-work-step.ts"
+} from "../../../../../../features/current-work/current-work-step.ts"
 import { useNowWhile } from "../../../../../../stores/clock.ts"
 import { useCurrentTurnSteps } from "../../../../../../stores/current-turn-step-list.ts"
 import { useMainViewTurns } from "../../../../../../stores/main-view-turn.ts"

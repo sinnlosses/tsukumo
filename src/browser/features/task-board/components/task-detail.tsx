@@ -10,17 +10,17 @@ import type { ReactElement } from "react"
 import { Button } from "../../../components/ui/button/button.tsx"
 import { HStack } from "../../../components/ui/h-stack/h-stack.tsx"
 import { Text } from "../../../components/ui/text/text.tsx"
+import { TaskBody } from "../deferred-task-body.tsx"
 import type {
   TaskBoardBreadcrumb,
   TaskBoardDetail,
   TaskDependencyCard,
 } from "../domain/task-board-view.ts"
 import taskBoardStyles from "../task-board.module.css"
-import { TaskBody } from "./deferred-task-body.tsx"
+import { TaskSummaryText } from "../task-summary-text.tsx"
 import { TaskAttribute } from "./task-attribute.tsx"
 import styles from "./task-detail.module.css"
 import { TaskState } from "./task-state.tsx"
-import { TaskSummaryText } from "./task-summary-text.tsx"
 
 export function TaskDetail(props: {
   readonly detail: TaskBoardDetail

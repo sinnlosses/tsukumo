@@ -22,7 +22,7 @@ import type {
 } from "../../../../../../../shared/session/workflow-step.ts"
 import { formatElapsed } from "../../../../../../../shared/utils/elapsed-time.ts"
 import { summarizeToolInput } from "../../../../../../domain/tool-summary.ts"
-import { backgroundSummaryLabel } from "../../../../../../features/current-work/domain/current-work-step.ts"
+import { backgroundSummaryLabel } from "../../../../../../features/current-work/current-work-step.ts"
 import { apiRetryNotice } from "../../../domain/api-error-label.ts"
 import { isSlashClear } from "../../../domain/slash-clear.ts"
 

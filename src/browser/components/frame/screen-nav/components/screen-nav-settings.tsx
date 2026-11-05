@@ -14,11 +14,11 @@ import {
   effortSelectOptions,
   modelSelectOptions,
   permissionModeSelectOptions,
-} from "../../../../features/run-setting/components/run-setting-option.tsx"
+} from "../../../../features/run-setting/run-setting-option.tsx"
 import {
   RunSettingSelect,
   type RunSettingSelectOption,
-} from "../../../../features/run-setting/components/run-setting-select.tsx"
+} from "../../../../features/run-setting/run-setting-select.tsx"
 import { HStack } from "../../../ui/h-stack/h-stack.tsx"
 import { Text } from "../../../ui/text/text.tsx"
 import { useLaunchSkillOptions } from "../hooks/use-launch-skill-setting.ts"

@@ -86,3 +86,6 @@
   タスク見出し行のタスクID）にもあり、狭い画面ではタスク一覧が引き出しの中に入るので、開いているかは store
   （`stores/task-board-request.ts`）が持ち、`<dialog>` は会話の画面に1つだけ置く
   （`conversation/components/requested-task-board/`）
+- **置かれる機能の公開面は `features/<機能>/` の直下のファイルだけ。** 機能の外（枠・画面・`components/app/`・`main.tsx`）は
+  `components/`・`hooks/`・`domain/` などの子ディレクトリを引かない（`.dependency-cruiser.cjs` の
+  `browser-feature-public-surface:*` が落とす）。外から引かれる中のファイルは機能の直下へ上げる

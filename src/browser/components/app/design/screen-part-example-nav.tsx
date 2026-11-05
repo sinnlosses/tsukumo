@@ -4,7 +4,7 @@
 import { createRef } from "react"
 
 import { parseSessionId } from "../../../../shared/session/session-id.ts"
-import type { CurrentWork } from "../../../features/current-work/hooks/use-current-work.ts"
+import type { CurrentWork } from "../../../features/current-work/use-current-work.ts"
 import type { ModelPermissionControl } from "../../../stores/model-permission.ts"
 import type {
   ScreenNavGate,

@@ -24,7 +24,6 @@ import { TaskLegend } from "./components/task-legend.tsx"
 import { TaskPeek, type TaskPeekRun } from "./components/task-peek.tsx"
 import { TaskRunningCard } from "./components/task-running-card.tsx"
 import { TaskSkeleton } from "./components/task-skeleton.tsx"
-import { taskListFilterLabel, type TaskListFilterStatus } from "./domain/task-list-count.ts"
 import { isTaskRequestable } from "./domain/task-run-prompt.ts"
 import { filterTasksForSidebar } from "./domain/task-sidebar-filter.ts"
 import { orderTasksForSidebar, type TaskSidebarOrder } from "./domain/task-sidebar-order.ts"
@@ -36,6 +35,7 @@ import {
   type TaskPeekControl,
 } from "./hooks/use-task-peek.ts"
 import styles from "./task-board.module.css"
+import { taskListFilterLabel, type TaskListFilterStatus } from "./task-list-count.ts"
 
 type TaskListProps = {
   readonly tasks: TaskSummaryResult

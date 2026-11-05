@@ -9,27 +9,27 @@
 
 import { useState, type RefCallback, type RefObject } from "react"
 
-import { plainDateOfDateKey } from "../../../../shared/diary/date-key.ts"
-import type { BackgroundTask } from "../../../../shared/session-driver/background-task.ts"
-import { reportDraftingOf, type ReportDrafting } from "../../../../shared/session/turn-progress.ts"
-import type { TurnStep, TurnStepList } from "../../../../shared/session/turn-step.ts"
+import { plainDateOfDateKey } from "../../../shared/diary/date-key.ts"
+import type { BackgroundTask } from "../../../shared/session-driver/background-task.ts"
+import { reportDraftingOf, type ReportDrafting } from "../../../shared/session/turn-progress.ts"
+import type { TurnStep, TurnStepList } from "../../../shared/session/turn-step.ts"
 import {
   phaseLabel,
   PHASE_SPAN_NAMES,
   plannedPhaseNumber,
-} from "../../../../shared/session/work-plan-phase-number.ts"
-import { currentPhaseOf, plannedPhasesOf } from "../../../../shared/session/work-plan.ts"
-import { monthDayLabel } from "../../../../shared/utils/month-day-label.ts"
-import { phaseMarkOf } from "../../../domain/phase-mark.ts"
-import { DEFAULT_CHARACTER_NAME } from "../../../domain/portrait-appearance.ts"
-import { toolInputText } from "../../../domain/tool-summary.ts"
-import { usePopover } from "../../../hooks/use-popover.ts"
-import { useCurrentTurnSteps } from "../../../stores/current-turn-step-list.ts"
-import { useInquiryJump } from "../../../stores/inquiry-jump.ts"
-import { navigateTo, useScreen } from "../../../stores/screen.tsx"
-import { useSession, useTurnRunning } from "../../../stores/session.ts"
-import { useTurnSelection } from "../../../stores/turn-selection.ts"
-import type { CurrentWorkState } from "../domain/current-work-state.ts"
+} from "../../../shared/session/work-plan-phase-number.ts"
+import { currentPhaseOf, plannedPhasesOf } from "../../../shared/session/work-plan.ts"
+import { monthDayLabel } from "../../../shared/utils/month-day-label.ts"
+import { phaseMarkOf } from "../../domain/phase-mark.ts"
+import { DEFAULT_CHARACTER_NAME } from "../../domain/portrait-appearance.ts"
+import { toolInputText } from "../../domain/tool-summary.ts"
+import { usePopover } from "../../hooks/use-popover.ts"
+import { useCurrentTurnSteps } from "../../stores/current-turn-step-list.ts"
+import { useInquiryJump } from "../../stores/inquiry-jump.ts"
+import { navigateTo, useScreen } from "../../stores/screen.tsx"
+import { useSession, useTurnRunning } from "../../stores/session.ts"
+import { useTurnSelection } from "../../stores/turn-selection.ts"
+import type { CurrentWorkState } from "./current-work-state.ts"
 import {
   backgroundSummaryLabel,
   currentWorkStepGroups,
@@ -38,12 +38,12 @@ import {
   truncateForDisplay,
   type CurrentWorkBackgroundList,
   type CurrentWorkStepGroup,
-} from "../domain/current-work-step.ts"
+} from "./current-work-step.ts"
 import {
   questionSummaryLabel,
   summaryLeadOf,
   type SummaryLead,
-} from "./current-work-summary-lead.ts"
+} from "./hooks/current-work-summary-lead.ts"
 
 /** 閉じている間に出す手順の件数（これより多いと「すべて見る」の口が出る）。 */
 const MAX_COLLAPSED_STEPS = 5
