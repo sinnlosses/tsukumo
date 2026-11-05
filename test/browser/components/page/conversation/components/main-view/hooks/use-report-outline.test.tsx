@@ -7,7 +7,10 @@ import {
   type ReportOutlineProps,
 } from "../../../../../../../../src/browser/components/page/conversation/components/main-view/hooks/use-report-outline.ts"
 import { detailBlockClassName } from "../../../../../../../../src/browser/components/page/conversation/components/markdown/markdown.tsx"
-import { useReadingSection } from "../../../../../../../../src/browser/stores/reading-section.ts"
+import {
+  readingSectionOf,
+  useReadingSection,
+} from "../../../../../../../../src/browser/stores/reading-section.ts"
 
 const OUTLINE_PANEL_STORAGE_KEY = "tsukumo-outline-panel:v1"
 
@@ -399,16 +402,13 @@ function placeHeadings(tops: readonly number[]): void {
 }
 
 function section(): unknown {
-  return useReadingSection.getState().section
+  return readingSectionOf(useReadingSection.getState())
 }
 
 function moveHeading(step: "older" | "newer"): void {
-  const { mover } = useReadingSection.getState()
-  if (mover.kind === "ready") {
-    act(() => {
-      mover.move(step)
-    })
-  }
+  act(() => {
+    useReadingSection.getState().move(step)
+  })
 }
 
 describe("useReportOutline（見出しの観測）", () => {
@@ -576,7 +576,7 @@ describe("useReportOutline（読んでいる節と節の移動）", () => {
 
     unmount()
 
-    expect(useReadingSection.getState().mover).toEqual({ kind: "none" })
+    expect(useReadingSection.getState().headings).toEqual([])
     expect(useReadingSection.getState().outlineCollapsed).toBe(false)
   })
 })

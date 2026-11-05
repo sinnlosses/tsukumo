@@ -3,15 +3,7 @@ import { describe, expect, it } from "vitest"
 import {
   isScrolledToEnd,
   readHeadingIndexOf,
-  readingSectionOf,
 } from "../../../../../../../../src/browser/components/page/conversation/components/main-view/domain/reading-section.ts"
-
-const ENTRIES = [
-  { level: "section", text: "変わったこと" },
-  { level: "sub", text: "小さな点" },
-  { level: "section", text: "確かめたこと" },
-  { level: "sub", text: "撮り直し" },
-] as const
 
 describe("readHeadingIndexOf", () => {
   const LEVELS = ["section", "sub", "section", "sub"] as const
@@ -45,31 +37,5 @@ describe("isScrolledToEnd", () => {
     expect(isScrolledToEnd({ scrollTop: 0, clientHeight: 300, scrollHeight: 1000 })).toBe(false)
     expect(isScrolledToEnd({ scrollTop: 0, clientHeight: 300, scrollHeight: 300 })).toBe(false)
     expect(isScrolledToEnd(null)).toBe(false)
-  })
-})
-
-describe("readingSectionOf", () => {
-  it("位置にいちばん近い手前の `##` を返す", () => {
-    expect(readingSectionOf(ENTRIES, 0, true)).toEqual({ kind: "shown", text: "変わったこと" })
-    expect(readingSectionOf(ENTRIES, 2, true)).toEqual({ kind: "shown", text: "確かめたこと" })
-  })
-
-  it("`###` の途中にいても親の `##` を返す", () => {
-    expect(readingSectionOf(ENTRIES, 1, true)).toEqual({ kind: "shown", text: "変わったこと" })
-    expect(readingSectionOf(ENTRIES, 3, true)).toEqual({ kind: "shown", text: "確かめたこと" })
-  })
-
-  it("まだ見出しを通っていなければ出さない", () => {
-    expect(readingSectionOf(ENTRIES, 0, false)).toEqual({ kind: "none" })
-  })
-
-  it("手前に `##` が無ければ出さない", () => {
-    expect(readingSectionOf([{ level: "sub", text: "先頭の小節" }], 0, true)).toEqual({
-      kind: "none",
-    })
-  })
-
-  it("見出しが無ければ出さない", () => {
-    expect(readingSectionOf([], 0, true)).toEqual({ kind: "none" })
   })
 })

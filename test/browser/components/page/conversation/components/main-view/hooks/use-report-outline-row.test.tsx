@@ -126,12 +126,9 @@ function placeHeadings(tops: readonly [number, number]): void {
 }
 
 function moveHeading(step: "older" | "newer"): void {
-  const { mover } = useReadingSection.getState()
-  if (mover.kind === "ready") {
-    act(() => {
-      mover.move(step)
-    })
-  }
+  act(() => {
+    useReadingSection.getState().move(step)
+  })
 }
 
 beforeEach(() => {

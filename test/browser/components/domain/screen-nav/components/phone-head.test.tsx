@@ -83,7 +83,7 @@ describe("PhoneHead（幅）", () => {
 
 describe("PhoneHead（読んでいる節）", () => {
   afterEach(() => {
-    useReadingSection.setState({ section: { kind: "none" }, outlineCollapsed: false })
+    useReadingSection.getState().clear()
   })
 
   const RUNNING = {
@@ -92,7 +92,11 @@ describe("PhoneHead（読んでいる節）", () => {
   } as const satisfies Partial<SessionState>
 
   it("節があれば状態の語の並びに「いま: <節>」を出す", () => {
-    useReadingSection.setState({ section: { kind: "shown", text: "確かめたこと" } })
+    useReadingSection.setState({
+      headings: [{ level: "section", text: "確かめたこと" }],
+      activeIndex: 0,
+      reached: true,
+    })
 
     const head = renderHead(RUNNING)
 

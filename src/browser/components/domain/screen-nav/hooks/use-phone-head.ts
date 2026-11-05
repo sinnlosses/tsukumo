@@ -25,7 +25,11 @@ import type {
 import { useNowWhile } from "../../../../stores/clock.ts"
 import { useCurrentTurnSteps } from "../../../../stores/current-turn-step-list.ts"
 import { SCREEN_NAV_ITEMS, type Screen } from "../../../../stores/location-hash.ts"
-import { readingLabelOf, useReadingSection } from "../../../../stores/reading-section.ts"
+import {
+  readingLabelOf,
+  readingSectionOf,
+  useReadingSection,
+} from "../../../../stores/reading-section.ts"
 import { useSession } from "../../../../stores/session.ts"
 
 /** 1行目の左。会話の画面は顔、ほかの画面は会話へ戻る口（画面の名前は題が運ぶ）。 */
@@ -113,7 +117,7 @@ export function usePhoneHead(source: PhoneHeadSource): PhoneHead {
   const chatMode = useSession((session) => session.state.chatMode)
   const counting = isTurnCounting(turn, backgroundTaskCount)
   const now = useNowWhile(counting)
-  const readingLabel = useReadingSection((state) => readingLabelOf(state.section))
+  const readingLabel = useReadingSection((state) => readingLabelOf(readingSectionOf(state)))
   const { work } = source
 
   const status: PhoneHeadStatus = {

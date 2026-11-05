@@ -41,7 +41,11 @@ import {
 import { useNowWhile } from "../../../../../../stores/clock.ts"
 import { useCurrentTurnSteps } from "../../../../../../stores/current-turn-step-list.ts"
 import { useMainViewTurns } from "../../../../../../stores/main-view-turn.ts"
-import { readingLabelOf, useReadingSection } from "../../../../../../stores/reading-section.ts"
+import {
+  readingLabelOf,
+  readingSectionOf,
+  useReadingSection,
+} from "../../../../../../stores/reading-section.ts"
 import { useSession } from "../../../../../../stores/session.ts"
 import { type PhaseRecap, phaseRecapsOf } from "../../../domain/phase-recap.ts"
 import type { WorkStripResult } from "../../../domain/turn-result-mark.ts"
@@ -227,7 +231,7 @@ export function useWorkStrip(): WorkStripModel {
   const now = useNowWhile(shown && isTurnCounting(turn, backgroundTasks.length))
   const planned = plan.kind === "planned" ? plannedPhasesOf(plan) : []
   const readingLabel = useReadingSection((state) =>
-    state.outlineCollapsed ? readingLabelOf(state.section) : "",
+    state.outlineCollapsed ? readingLabelOf(readingSectionOf(state)) : "",
   )
   const popover = usePhasePopover(
     shown && turnStepList.kind === "turn"

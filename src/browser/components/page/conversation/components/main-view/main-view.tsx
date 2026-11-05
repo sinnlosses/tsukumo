@@ -101,6 +101,7 @@ export function MainView(): ReactElement {
       ? view.card
       : undefined
   const outlineTurns = useReportOutlineTurns()
+  const moveHeading = useReadingSection((state) => state.move)
 
   function onKeyDown(event: KeyboardEvent<HTMLElement>): void {
     const keyEvent = {
@@ -113,11 +114,9 @@ export function MainView(): ReactElement {
     }
     const headingStep = headingStepOf(keyEvent)
     if (headingStep !== undefined) {
-      // 登録のたびに値が替わるので、購読せずに押した時点で読む。
-      const { mover } = useReadingSection.getState()
-      if (cardTurn !== undefined && mover.kind === "ready") {
+      if (cardTurn !== undefined) {
         event.preventDefault()
-        mover.move(headingStep)
+        moveHeading(headingStep)
       }
       return
     }

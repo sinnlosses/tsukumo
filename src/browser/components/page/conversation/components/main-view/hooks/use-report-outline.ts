@@ -15,13 +15,14 @@ import {
   type KeyboardEvent,
   type RefObject,
 } from "react"
-import { isDeepEqual } from "remeda"
 
 import { REVEAL_PENDING_ATTRIBUTE } from "../../../../../../domain/reveal/start-pop.ts"
 import { useBeforePaintSync } from "../../../../../../hooks/use-before-paint-sync.ts"
-import { useExternalSync } from "../../../../../../hooks/use-external-sync.ts"
-import { useUnmountEffect } from "../../../../../../hooks/use-mount-effect.ts"
-import { useReadingSection, type HeadingStep } from "../../../../../../stores/reading-section.ts"
+import { useMountEffect } from "../../../../../../hooks/use-mount-effect.ts"
+import {
+  useReadingSection,
+  type ReportOutlineEntry,
+} from "../../../../../../stores/reading-section.ts"
 import type { TurnResult } from "../../../domain/turn-result.ts"
 import type { HeadNotice, HeadNoticeAction } from "../domain/head-notice.ts"
 import {
@@ -39,15 +40,9 @@ import {
 } from "../domain/outline-panel.ts"
 import { outlineReportHeadOf } from "../domain/outline-report-head.ts"
 import type { OutlineReport } from "../domain/outline-report-row.ts"
-import { isScrolledToEnd, readHeadingIndexOf, readingSectionOf } from "../domain/reading-section.ts"
+import { isScrolledToEnd, readHeadingIndexOf } from "../domain/reading-section.ts"
 import { readableOutlineItems, type OutlineItem } from "../domain/report-heading.ts"
 import { subscribeScrollFrame } from "./scroll-frame.ts"
-
-/** 見出し1つ。`section` は `##`、`sub` は `###`。 */
-export type ReportOutlineEntry = {
-  readonly level: "section" | "sub"
-  readonly text: string
-}
 
 /** 上の段に並べるやり取り1件。 */
 type ReportOutlineTurn = {
@@ -145,9 +140,14 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
   const readHeadingsRef = useRef<(headedIds: readonly number[]) => void>(() => undefined)
   const pinnedRef = useRef<{ readonly index: number; readonly top: number } | undefined>(undefined)
 
-  const [entries, setEntries] = useState<readonly ReportOutlineEntry[]>([])
-  const [activeIndex, setActiveIndex] = useState(0)
-  const [reached, setReached] = useState(false)
+  const entries = useReadingSection((state) => state.headings)
+  const activeIndex = useReadingSection((state) => state.activeIndex)
+  const reached = useReadingSection((state) => state.reached)
+  const showHeadings = useReadingSection((state) => state.showHeadings)
+  const readAt = useReadingSection((state) => state.readAt)
+  const jumpTo = useReadingSection((state) => state.jumpTo)
+  const setOutlineCollapsed = useReadingSection((state) => state.setOutlineCollapsed)
+  const clear = useReadingSection((state) => state.clear)
   const [panel, setPanel] = useState<OutlinePanel>(loadOutlinePanel)
   const [narrow, setNarrow] = useState(false)
   const collapsed = isOutlineCollapsed(panel.collapse, narrow)
@@ -192,8 +192,7 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
       if (pinned !== undefined) {
         const heading = items[pinned.index]?.element
         if (heading !== undefined && Math.abs(topOf(heading) - pinned.top) <= PIN_TOLERANCE_PX) {
-          setActiveIndex(pinned.index)
-          setReached(true)
+          readAt(pinned.index, true)
           return
         }
         pinnedRef.current = undefined
@@ -204,8 +203,7 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
         items.map((item) => item.level),
         isScrolledToEnd(scrollerOfContent),
       )
-      setActiveIndex(Math.max(passed, 0))
-      setReached(passed >= 0)
+      readAt(Math.max(passed, 0), passed >= 0)
     }
 
     function observeHeadings(checkLine: boolean): void {
@@ -252,11 +250,9 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
       // 演出がまだ出していない節は並べない。
       const items = readableOutlineItems(content, headedIds)
       itemsRef.current = items
-      const next = items.map((item): ReportOutlineEntry => ({
-        level: item.level,
-        text: item.text,
-      }))
-      setEntries((previous) => (isDeepEqual(previous, next) ? previous : next))
+      showHeadings(
+        items.map((item): ReportOutlineEntry => ({ level: item.level, text: item.text })),
+      )
       observeHeadings(false)
       updateActive()
     }
@@ -291,7 +287,7 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
       headingObserver?.disconnect()
       unsubscribeScroll()
     }
-  }, [])
+  }, [readAt, showHeadings])
 
   // 札の幅（DOM の寸法）を購読する。
   // 最初の1回は描く前に測る。
@@ -313,15 +309,21 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
 
   const visible = props.turns.length >= 1
 
-  function selectHeading(index: number): void {
-    const heading = itemsRef.current[index]?.element
-    heading?.scrollIntoView({ block: "start" })
-    if (heading !== undefined) {
+  // 見出しへ移れと頼まれたら、その見出しへ転がして固定する。
+  useMountEffect(() =>
+    useReadingSection.subscribe((state, previous) => {
+      if (state.jump === previous.jump || state.jump.kind === "none") {
+        return
+      }
+      const { index } = state.jump
+      const heading = itemsRef.current[index]?.element
+      if (heading === undefined) {
+        return
+      }
+      heading.scrollIntoView({ block: "start" })
       pinnedRef.current = { index, top: topOf(heading) }
-    }
-    setActiveIndex(index)
-    setReached(true)
-  }
+    }),
+  )
 
   const activeReport =
     props.turns.find((turn) => turn.id === props.activeTurnId)?.report ??
@@ -336,33 +338,20 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
       block: "start",
     })
     pinnedRef.current = undefined
-    setActiveIndex(0)
-    setReached(false)
+    readAt(0, false)
   }
 
-  const section = readingSectionOf(entries, activeIndex, reached)
-  const publish = useReadingSection((state) => state.publish)
-  const setMover = useReadingSection((state) => state.setMover)
   useBeforePaintSync(() => {
-    publish(section, collapsed)
-  }, [publish, section, collapsed])
-  useUnmountEffect(() => {
-    publish({ kind: "none" }, false)
-    setMover({ kind: "none" })
-  })
-  useExternalSync(() => {
-    setMover({
-      kind: "ready",
-      move: (step: HeadingStep) => {
-        // まだ1つも通り過ぎていないときの「後ろ」は最初の見出し。
-        const from = reached ? activeIndex : -1
-        const next = from + (step === "older" ? -1 : 1)
-        if (next >= 0 && next < itemsRef.current.length) {
-          selectHeading(next)
-        }
-      },
-    })
-  }, [reached, activeIndex, setMover])
+    setOutlineCollapsed(collapsed)
+  }, [setOutlineCollapsed, collapsed])
+  // 中身の種類が替わって列が作り直されると、新しい列が見出しを書いたあとに古い列の passive な後始末が走る。
+  // 描く前の段の後始末なら新しい列の書き込みより先に走るので、こちらで消す。
+  useBeforePaintSync(
+    () => () => {
+      clear()
+    },
+    [clear],
+  )
 
   // 見ているやり取りの行を、列の中の転がり（DOM）で見える位置へ寄せる。
   // `scrollIntoView` は転がる祖先の本文まで動かすので、列の `scrollTop` だけを動かす。
@@ -420,7 +409,7 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
         focusRow(event.key === "ArrowDown" ? 1 : -1)
       }
     },
-    onSelect: selectHeading,
+    onSelect: jumpTo,
     collapsed,
     onToggleCollapse: () => {
       commitPanel((current) => ({ ...current, collapse: collapsed ? "open" : "collapsed" }))

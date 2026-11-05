@@ -379,14 +379,23 @@ describe("useWorkStrip（`/clear` の依頼）", () => {
 
 describe("useWorkStrip（読んでいる節）", () => {
   afterEach(() => {
-    useReadingSection.setState({ section: { kind: "none" }, outlineCollapsed: false })
+    useReadingSection.getState().clear()
   })
 
   function readingLabelWith(
     section: ReadingSection,
     outlineCollapsed: boolean,
   ): string | undefined {
-    useReadingSection.setState({ section, outlineCollapsed })
+    useReadingSection.setState(
+      section.kind === "shown"
+        ? {
+            headings: [{ level: "section", text: section.text }],
+            activeIndex: 0,
+            reached: true,
+            outlineCollapsed,
+          }
+        : { headings: [], activeIndex: 0, reached: false, outlineCollapsed },
+    )
     const state = foldTimed([[workRequest, START]])
     const strip = stripAt(state, START + 5_000)
     return strip.kind === "none" ? undefined : strip.readingLabel
