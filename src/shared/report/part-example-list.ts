@@ -241,4 +241,37 @@ export const PART_EXAMPLES = {
       value: { path: "/view/tbl1/filter" },
     },
   ],
+  ParameterSlider: [
+    { id: "s1", component: "Section", heading: "架空の上限", children: ["w1", "p1"] },
+    {
+      id: "w1",
+      component: "ParameterSlider",
+      name: "limit",
+      label: "架空の上限",
+      min: 20,
+      max: 120,
+      step: 20,
+      initial: 60,
+    },
+    {
+      id: "p1",
+      component: "Paragraph",
+      text: { call: "format", args: { template: "上限 ${limit} 件で読み込む。" } },
+    },
+  ],
+  ParameterCheckBox: [
+    { id: "s1", component: "Section", heading: "架空の条件", children: ["w1", "p1"] },
+    {
+      id: "w1",
+      component: "ParameterCheckBox",
+      name: "strict",
+      label: "架空の厳しい検査を含める",
+      initial: false,
+    },
+    {
+      id: "p1",
+      component: "Paragraph",
+      text: { call: "expr", args: { source: 'strict ? "厳しい検査を含める。" : "含めない。"' } },
+    },
+  ],
 } satisfies Record<keyof typeof REPORT_COMPONENT_SCHEMAS, readonly unknown[]>

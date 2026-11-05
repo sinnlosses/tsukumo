@@ -5,6 +5,7 @@ import {
   a2uiReportComponentSchema,
 } from "../../../../shared/report/a2ui-report-catalog.ts"
 import { PART_EXAMPLES } from "../../../../shared/report/part-example-list.ts"
+import { PARAMETER_COMPONENT_NAMES } from "../../../../shared/report/report-expression-block.ts"
 
 const GALLERY_SECTION_ID = "gallery-section"
 
@@ -12,13 +13,16 @@ const GALLERY_SECTION_ID = "gallery-section"
  * 部品の名前ごとの、受理の形にした例。
  * 根の `Report` を持つ例はそのまま、根の無い例は `Report`（`root`）→ `Section` で包む。
  * 先頭が `Section` の例は、その `Section` を根の子にする。
+ * つまみの部品は静的な一覧に載らないので、まだ並べない。
  */
 export const CATALOG_EXAMPLES: Readonly<Record<string, readonly A2uiReportComponent[]>> =
   Object.fromEntries(
-    Object.entries(PART_EXAMPLES).map(([name, parts]) => [
-      name,
-      wrapped(parts.map((part) => a2uiReportComponentSchema.parse(part))),
-    ]),
+    Object.entries(PART_EXAMPLES)
+      .filter(([name]) => !PARAMETER_COMPONENT_NAMES.includes(name))
+      .map(([name, parts]) => [
+        name,
+        wrapped(parts.map((part) => a2uiReportComponentSchema.parse(part))),
+      ]),
   )
 
 function wrapped(parts: readonly A2uiReportComponent[]): readonly A2uiReportComponent[] {

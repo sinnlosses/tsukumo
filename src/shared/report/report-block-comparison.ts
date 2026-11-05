@@ -166,7 +166,7 @@ export const pointsCompareBlockSchema = z
     sides: block.sides.map((side) => ({ kind: "points" as const, ...side })),
   }))
 
-const statItemsSchema = z
+export const statItemsSchema = z
   .array(
     z.object({
       before: omittable(z.string(), ""),

@@ -34,6 +34,14 @@ import {
 } from "./report-block-prose.ts"
 import { reportCheckSchema } from "./report-check.ts"
 import {
+  parameterCheckBoxSchema,
+  parameterSliderSchema,
+  reportDefsSchema,
+  writtenChartBlockSchema,
+  writtenStatsBlockSchema,
+  writtenTextBlockSchema,
+} from "./report-expression-block.ts"
+import {
   FIRST_SENTENCE_TARGET,
   FIRST_SENTENCE_TARGET_COMMAS,
   MAX_CONCLUSION_SENTENCES,
@@ -206,19 +214,36 @@ const reportComponentSchema = z.object({
   waitingLine: speechSchema.optional(),
 })
 
-const OWN_COMPONENT_SCHEMAS = {
-  Report: reportComponentSchema,
-  Section: sectionComponentSchema,
+/** 書き手が書く根。静的な一覧の根に、名前つきの式 `defs` を足した形。 */
+const writtenReportComponentSchema = reportComponentSchema.extend({ defs: reportDefsSchema })
+
+/** 書き手が書く内容部品。式を結べる 3 部品だけ、静的な一覧の形と違う。 */
+const WRITTEN_LEAF_COMPONENTS = {
   ...LEAF_COMPONENTS,
+  Paragraph: leafComponent("Paragraph", writtenTextBlockSchema),
+  Stats: leafComponent("Stats", writtenStatsBlockSchema),
+  Chart: leafComponent("Chart", writtenChartBlockSchema),
 } as const
 
-/** 部品名と受理の形。根・節・葉 21 種・基本 6 部品の 29。 */
+const OWN_COMPONENT_SCHEMAS = {
+  Report: writtenReportComponentSchema,
+  Section: sectionComponentSchema,
+  ...WRITTEN_LEAF_COMPONENTS,
+  ParameterSlider: parameterSliderSchema,
+  ParameterCheckBox: parameterCheckBoxSchema,
+} as const
+
+/** 部品名と書き手が書く形。根・節・葉 21 種・つまみ 2 種・基本 6 部品の 31。 */
 export const REPORT_COMPONENT_SCHEMAS = {
   ...OWN_COMPONENT_SCHEMAS,
   ...BASIC_PART_SCHEMAS,
 } as const
 
-/** 部品 1 つの受理の形（書き手に見える 29 部品のどれか）。 */
+/**
+ * 静的な一覧（式を初期値で評価した後）の部品 1 つの受理の形。
+ * 式もつまみも持たず、塊の形は今のまま（29 部品のどれか）。
+ * 受け口で静的にする前の、書き手が書いた形は {@link REPORT_COMPONENT_SCHEMAS}。
+ */
 export const a2uiReportComponentSchema = z.discriminatedUnion("component", [
   reportComponentSchema,
   sectionComponentSchema,

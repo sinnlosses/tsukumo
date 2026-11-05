@@ -1,4 +1,5 @@
 import { REPORT_COMPONENT_SCHEMAS } from "../../src/shared/report/a2ui-report-catalog.ts"
+import { PARAMETER_COMPONENT_NAMES } from "../../src/shared/report/report-expression-block.ts"
 import { expect, test } from "./room-fixture.ts"
 
 // 見本帳（`#design`）を開くと、カタログの全部品が本文として並ぶこと
@@ -23,12 +24,13 @@ test.describe("見本帳", () => {
 
     const parts = page.locator("[data-catalog-part]")
     await parts.first().waitFor()
-    expect(await parts.count()).toBe(Object.keys(REPORT_COMPONENT_SCHEMAS).length)
+    const galleryCount = Object.keys(REPORT_COMPONENT_SCHEMAS).filter(
+      (name) => !PARAMETER_COMPONENT_NAMES.includes(name),
+    ).length
+    expect(await parts.count()).toBe(galleryCount)
     await page.waitForFunction(
       () => document.querySelectorAll("[data-catalog-part] [aria-busy]").length === 0,
     )
-    expect(await page.locator("[data-catalog-part] [data-report-body]").count()).toBe(
-      Object.keys(REPORT_COMPONENT_SCHEMAS).length,
-    )
+    expect(await page.locator("[data-catalog-part] [data-report-body]").count()).toBe(galleryCount)
   })
 })

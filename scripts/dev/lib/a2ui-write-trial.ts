@@ -124,6 +124,8 @@ const COMPONENT_PURPOSES = {
   Tabs: "子を切り替えて見せる配置",
   Divider: "節の部品の間に引く区切り線",
   ChoicePicker: "選択肢。Table の絞り込みと path で結ぶ",
+  ParameterSlider: "読み手が振る数のつまみ。式から name で読む",
+  ParameterCheckBox: "読み手が切り替える真偽のつまみ。式から name で読む",
 } as const satisfies Record<keyof typeof REPORT_COMPONENT_SCHEMAS, string>
 
 export function trialConditions(): readonly TrialCondition[] {

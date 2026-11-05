@@ -1,8 +1,10 @@
 import { keys } from "remeda"
 import { describe, expect, it } from "vitest"
+import type { z } from "zod"
 
 import { BASIC_PART_SCHEMAS, BASIC_PARTS } from "../../../src/shared/report/a2ui-basic-part-list.ts"
 import {
+  a2uiReportComponentSchema,
   buildReportCatalogDocument,
   FIGURE_COMPONENTS,
   LEAF_COMPONENT_KINDS,
@@ -90,14 +92,21 @@ function withoutComponent(document: Document, name: string): { components: objec
 
 describe("A2UI のカタログ文書", () => {
   const document = buildReportCatalogDocument()
-  const expected = ["Report", "Section", ...Object.values(KIND_TO_COMPONENT), ...BASIC_COMPONENTS]
+  const expected = [
+    "Report",
+    "Section",
+    ...Object.values(KIND_TO_COMPONENT),
+    "ParameterSlider",
+    "ParameterCheckBox",
+    ...BASIC_COMPONENTS,
+  ]
 
   it("書き手に渡す塊の全種類が部品の対応表にある", () => {
     expect(Object.keys(KIND_TO_COMPONENT).toSorted()).toEqual([...REPORT_BLOCK_KINDS].toSorted())
   })
 
-  it("根・節・葉 21 種・基本 6 部品の 29 部品が全部残る", () => {
-    expect(expected).toHaveLength(29)
+  it("根・節・葉 21 種・つまみ 2 種・基本 6 部品の 31 部品が全部残る", () => {
+    expect(expected).toHaveLength(31)
     expect(findMissingComponents(document, expected)).toEqual([])
   })
 
@@ -250,7 +259,7 @@ describe("A2UI のカタログ文書", () => {
     expect(leaf).not.toContain('"kind"')
   })
 
-  it("受理の形の表は文書と同じ 29 部品を持つ", () => {
+  it("受理の形の表は文書と同じ 31 部品を持つ", () => {
     expect(Object.keys(REPORT_COMPONENT_SCHEMAS).toSorted()).toEqual(expected.toSorted())
   })
 
@@ -371,5 +380,133 @@ describe("A2UI のカタログ文書", () => {
     for (const closing of WORK_PLAN_CLOSINGS) {
       expect(report).toContain(`"${closing}"`)
     }
+  })
+})
+
+describe("触れるレポートの部品", () => {
+  const S = REPORT_COMPONENT_SCHEMAS
+  const expr = (source: string) => ({ call: "expr", args: { source } })
+  const format = (template: string) => ({ call: "format", args: { template } })
+  const stat = (extra: object) => ({ value: "1", label: "架空", ...extra })
+  const stats = (item: object) => ({
+    id: "s",
+    component: "Stats",
+    items: [stat(item), stat({}), stat({})],
+  })
+  const chart = (extra: object) => ({
+    id: "c",
+    component: "Chart",
+    chartKind: "bar",
+    labels: ["a", "b"],
+    series: [{ name: "n", values: [1, 2] }],
+    ...extra,
+  })
+  const accepts = (schema: z.ZodType, value: unknown) => schema.safeParse(value).success
+
+  it("ParameterSlider は name・label・min・max・step・initial で通り、name の形と欠けは拒む", () => {
+    const slider = {
+      id: "w",
+      component: "ParameterSlider",
+      name: "limit",
+      label: "上限",
+      min: 0,
+      max: 10,
+      step: 1,
+      initial: 5,
+    }
+
+    expect(accepts(S.ParameterSlider, slider)).toBe(true)
+    expect(accepts(S.ParameterSlider, { ...slider, name: "1limit" })).toBe(false)
+    expect(accepts(S.ParameterSlider, { ...slider, name: "a-b" })).toBe(false)
+    expect(accepts(S.ParameterSlider, { ...slider, step: undefined })).toBe(false)
+  })
+
+  it("ParameterCheckBox は name・label・initial で通り、initial が真偽でなければ拒む", () => {
+    const box = {
+      id: "w",
+      component: "ParameterCheckBox",
+      name: "strict",
+      label: "厳しく",
+      initial: true,
+    }
+
+    expect(accepts(S.ParameterCheckBox, box)).toBe(true)
+    expect(accepts(S.ParameterCheckBox, { ...box, initial: 1 })).toBe(false)
+  })
+
+  it("Report.defs は名前 → 式の文字列で、省いてよい", () => {
+    const report = { id: "root", component: "Report", children: ["s1"] }
+
+    expect(accepts(S.Report, report)).toBe(true)
+    expect(accepts(S.Report, { ...report, defs: { total: "a + b" } })).toBe(true)
+    expect(accepts(S.Report, { ...report, defs: { total: 1 } })).toBe(false)
+  })
+
+  it("Paragraph.text は expr・format を受け、call が別の関数なら拒む", () => {
+    const paragraph = (text: unknown) => ({ id: "p", component: "Paragraph", text })
+
+    expect(accepts(S.Paragraph, paragraph(expr("a")))).toBe(true)
+    expect(accepts(S.Paragraph, paragraph(format("${a} 件")))).toBe(true)
+    expect(accepts(S.Paragraph, paragraph({ call: "formatNumber", args: { source: "a" } }))).toBe(
+      false,
+    )
+  })
+
+  it("Stats は value・before・target だけ式を受け、label などはリテラルだけ", () => {
+    expect(
+      accepts(S.Stats, stats({ value: expr("a"), before: expr("b"), target: format("${c}") })),
+    ).toBe(true)
+    expect(accepts(S.Stats, stats({ label: expr("a") }))).toBe(false)
+    expect(accepts(S.Stats, stats({ total: expr("a") }))).toBe(false)
+    expect(accepts(S.Stats, stats({ targetGap: expr("a") }))).toBe(false)
+  })
+
+  it("Chart は title・labels・series[].values・emphasis だけ式を受け、ほかはリテラルだけ", () => {
+    expect(
+      accepts(
+        S.Chart,
+        chart({
+          title: format("${a}"),
+          labels: expr("b"),
+          series: [{ name: "n", values: expr("c") }],
+          emphasis: expr("d"),
+        }),
+      ),
+    ).toBe(true)
+    expect(accepts(S.Chart, chart({ horizontal: expr("a") }))).toBe(false)
+    expect(accepts(S.Chart, chart({ series: [{ name: expr("a"), values: [1] }] }))).toBe(false)
+    expect(accepts(S.Chart, chart({ annotations: expr("a") }))).toBe(false)
+  })
+
+  it("結べる props を持たない部品は式を受けない", () => {
+    expect(accepts(S.Note, { id: "n", component: "Note", tone: "warn", text: expr("a") })).toBe(
+      false,
+    )
+  })
+
+  it("静的な一覧の形（a2uiReportComponentSchema）は式を受けず、つまみを持たない", () => {
+    expect(
+      accepts(a2uiReportComponentSchema, { id: "p", component: "Paragraph", text: expr("a") }),
+    ).toBe(false)
+    expect(
+      accepts(a2uiReportComponentSchema, {
+        id: "w",
+        component: "ParameterCheckBox",
+        name: "x",
+        label: "x",
+        initial: true,
+      }),
+    ).toBe(false)
+    expect(
+      accepts(a2uiReportComponentSchema, { id: "p", component: "Paragraph", text: "架空" }),
+    ).toBe(true)
+  })
+
+  it("式の値の形は 1 か所の定義を参照する", () => {
+    const refs =
+      JSON.stringify(buildReportCatalogDocument().components).split("ExpressionValue").length - 1
+
+    expect(refs).toBeGreaterThan(5)
+    expect(JSON.stringify(buildReportCatalogDocument().components)).not.toContain('"template"')
   })
 })
