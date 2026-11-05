@@ -63,6 +63,7 @@ describe("planStages", () => {
   const SETUP_FILES = [
     "test/tsukumo-home-setup.ts",
     "test/beads-template-setup.ts",
+    "test/architecture/source-table-setup.ts",
     "test/dom-setup.ts",
   ]
 

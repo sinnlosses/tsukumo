@@ -1,5 +1,3 @@
-import { readFileSync } from "node:fs"
-
 import { describe, expect, it } from "vitest"
 
 import { REPOSITORY_SCAN_TIMEOUT_MS } from "../fixture/repository-scan-timeout.ts"
@@ -15,6 +13,7 @@ import {
 import {
   featureReadersOf,
   listSourceFiles,
+  readSourceFile,
   relativeImportSpecifiers,
   resolveRelativeImport,
   SRC_ROOT,
@@ -156,26 +155,24 @@ function serverFeatureEdges(): readonly ServerFeatureEdge[] {
       if (from.kind !== "feature") {
         return []
       }
-      return relativeImportSpecifiers(readFileSync(`${SRC_ROOT}/${fromPath}`, "utf8")).flatMap(
-        (specifier) => {
-          const toPath = resolveRelativeImport(fromPath, specifier)
-          if (!toPath.startsWith("server/")) {
-            return []
-          }
-          const to = serverPlaceOf(toPath)
-          return to.kind === "feature" && to.feature !== from.feature
-            ? [
-                {
-                  fromPath,
-                  fromFeature: from.feature,
-                  fromLayer: from.layer,
-                  toPath,
-                  toFeature: to.feature,
-                  toLayer: to.layer,
-                },
-              ]
-            : []
-        },
-      )
+      return relativeImportSpecifiers(readSourceFile(fromPath)).flatMap((specifier) => {
+        const toPath = resolveRelativeImport(fromPath, specifier)
+        if (!toPath.startsWith("server/")) {
+          return []
+        }
+        const to = serverPlaceOf(toPath)
+        return to.kind === "feature" && to.feature !== from.feature
+          ? [
+              {
+                fromPath,
+                fromFeature: from.feature,
+                fromLayer: from.layer,
+                toPath,
+                toFeature: to.feature,
+                toLayer: to.layer,
+              },
+            ]
+          : []
+      })
     })
 }

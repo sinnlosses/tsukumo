@@ -2,10 +2,22 @@ import { readFileSync } from "node:fs"
 
 import { describe, expect, it } from "vitest"
 
-import { arrayField, descendants, objectField, stringField } from "../../scripts/shared/ast-node.ts"
+import {
+  arrayField,
+  descendants,
+  objectField,
+  stringField,
+  type AstNode,
+} from "../../scripts/shared/ast-node.ts"
 import { REPOSITORY_ROOT } from "../../scripts/shared/repository-root.ts"
 import { TSUKUMO_HOME_PLACES } from "../../src/server/adapter/tsukumo-home.ts"
-import { importSpecifiers, listSourceFiles, parseSourceProgram, SRC_ROOT } from "./source-file.ts"
+import {
+  importSpecifiers,
+  listSourceFiles,
+  parseSourceProgram,
+  readSourceFile,
+  SRC_ROOT,
+} from "./source-file.ts"
 
 // ここから、`.oxlintrc.json` の `no-restricted-*` では表せない検査。
 
@@ -21,20 +33,16 @@ import { importSpecifiers, listSourceFiles, parseSourceProgram, SRC_ROOT } from 
 describe("子プロセスを起こす箇所", () => {
   it("`orca` コマンドを呼ぶのは orca-host.ts だけ、`open` コマンドを呼ぶのは browser-host.ts だけ", () => {
     const spawning = listSourceFiles(SRC_ROOT).filter((relPath) =>
-      importSpecifiers(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8")).some(
+      importSpecifiers(readSourceFile(relPath)).some(
         (specifier) => specifier === "node:child_process" || specifier === "child_process",
       ),
     )
 
+    expect(spawning.filter((relPath) => /["']orca["']/.test(readSourceFile(relPath)))).toEqual([
+      "server/host/adapter/orca-host.ts",
+    ])
     expect(
-      spawning.filter((relPath) =>
-        /["']orca["']/.test(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8")),
-      ),
-    ).toEqual(["server/host/adapter/orca-host.ts"])
-    expect(
-      spawning.filter((relPath) =>
-        /OPEN_COMMAND\s*=\s*["']open["']/.test(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8")),
-      ),
+      spawning.filter((relPath) => /OPEN_COMMAND\s*=\s*["']open["']/.test(readSourceFile(relPath))),
     ).toEqual(["server/host/adapter/browser-host.ts"])
   })
 })
@@ -109,14 +117,17 @@ const SPAWN_FUNCTIONS = new Set([
 
 describe("起こす外部コマンドの一覧", () => {
   const files = [
-    ...listSourceFiles(SRC_ROOT).map((relPath) => `src/${relPath}`),
+    ...listSourceFiles(SRC_ROOT).map((relPath) => ({
+      file: `src/${relPath}`,
+      content: readSourceFile(relPath),
+    })),
     ...listSourceFiles(`${REPOSITORY_ROOT}/scripts`, `${REPOSITORY_ROOT}/scripts`, [".ts"]).map(
-      (relPath) => `scripts/${relPath}`,
+      (relPath) => ({
+        file: `scripts/${relPath}`,
+        content: readFileSync(`${REPOSITORY_ROOT}/scripts/${relPath}`, "utf8"),
+      }),
     ),
-  ].map((file) => ({
-    file,
-    use: spawnUse(file, readFileSync(`${REPOSITORY_ROOT}/${file}`, "utf8")),
-  }))
+  ].map(({ file, content }) => ({ file, use: spawnUse(file, content) }))
   const knownCommands: readonly string[] = [...ALLOWED_COMMANDS, ...UNAPPROVED_EXISTING_COMMANDS]
 
   it("文字列で決まる第1引数は `ALLOWED_COMMANDS` か `UNAPPROVED_EXISTING_COMMANDS` にある", () => {
@@ -276,15 +287,14 @@ describe("ネットワークの口", () => {
   it("`listen` の宛先は `BIND_HOST` だけ", () => {
     const listens = listSourceFiles(SRC_ROOT).map((relPath) => ({
       relPath,
-      misbound: listenWithoutBindHost(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8")),
+      misbound: importFactsOf(relPath).listenWithoutBindHost,
     }))
 
     expect(listens.filter((entry) => entry.misbound).map((entry) => entry.relPath)).toEqual([])
     expect(
       listens.some(
         (entry) =>
-          entry.relPath === NETWORK_SERVER_FILE &&
-          /\.listen\(/.test(readFileSync(`${SRC_ROOT}/${entry.relPath}`, "utf8")),
+          entry.relPath === NETWORK_SERVER_FILE && /\.listen\(/.test(readSourceFile(entry.relPath)),
       ),
     ).toBe(true)
   })
@@ -316,8 +326,8 @@ function duplicatedValues(values: readonly string[]): readonly string[] {
 // 別名（`import p from "node:process"`）や名前空間の import を通すと禁止が素通りするので、名前を縛る。
 describe("process の import", () => {
   it("`process` は `process` という名前で import する", () => {
-    const offenders = listSourceFiles(SRC_ROOT).filter((relPath) =>
-      importsProcessUnderOtherName(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8")),
+    const offenders = listSourceFiles(SRC_ROOT).filter(
+      (relPath) => importFactsOf(relPath).importsProcessUnderOtherName,
     )
 
     expect(offenders).toEqual([])
@@ -335,17 +345,18 @@ describe("process の import", () => {
 })
 
 function importsProcessUnderOtherName(content: string): boolean {
-  return descendants(parseSourceProgram(content)).some(
-    (node) =>
-      stringField(node, "type") === "ImportDeclaration" &&
-      ["node:process", "process"].includes(
-        stringField(objectField(node, "source"), "value") ?? "",
-      ) &&
-      arrayField(node, "specifiers").some(
-        (specifier) =>
-          stringField(specifier, "type") !== "ImportSpecifier" &&
-          stringField(objectField(specifier, "local"), "name") !== "process",
-      ),
+  return descendants(parseSourceProgram(content)).some(isProcessImportUnderOtherName)
+}
+
+function isProcessImportUnderOtherName(node: AstNode): boolean {
+  return (
+    stringField(node, "type") === "ImportDeclaration" &&
+    ["node:process", "process"].includes(stringField(objectField(node, "source"), "value") ?? "") &&
+    arrayField(node, "specifiers").some(
+      (specifier) =>
+        stringField(specifier, "type") !== "ImportSpecifier" &&
+        stringField(objectField(specifier, "local"), "name") !== "process",
+    )
   )
 }
 
@@ -362,8 +373,8 @@ const WRITE_FILE_SYNC_ALLOWED = [
 
 describe("ファイルの書き出し", () => {
   it("`writeFileSync` を取り込むのは atomic-file.ts と許可リストのファイルだけ", () => {
-    const importing = listSourceFiles(SRC_ROOT).filter((relPath) =>
-      importsWriteFileSync(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8")),
+    const importing = listSourceFiles(SRC_ROOT).filter(
+      (relPath) => importFactsOf(relPath).importsWriteFileSync,
     )
 
     expect(importing.filter((relPath) => !WRITE_FILE_SYNC_ALLOWED.includes(relPath))).toEqual([])
@@ -371,7 +382,7 @@ describe("ファイルの書き出し", () => {
 
   it("許可リストのファイルは、いまも `writeFileSync` を取り込んでいる", () => {
     const stale = WRITE_FILE_SYNC_ALLOWED.filter(
-      (relPath) => !importsWriteFileSync(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8")),
+      (relPath) => !importFactsOf(relPath).importsWriteFileSync,
     )
 
     expect(stale).toEqual([])
@@ -391,34 +402,61 @@ describe("ファイルの書き出し", () => {
 
 /** `node:fs` から `writeFileSync` を取り込むか。名前空間・default は呼び先を追えないので取り込むとみなす。 */
 function importsWriteFileSync(content: string): boolean {
-  return descendants(parseSourceProgram(content)).some(
-    (node) =>
-      stringField(node, "type") === "ImportDeclaration" &&
-      ["node:fs", "fs"].includes(stringField(objectField(node, "source"), "value") ?? "") &&
-      arrayField(node, "specifiers").some(
-        (specifier) =>
-          stringField(specifier, "type") !== "ImportSpecifier" ||
-          stringField(objectField(specifier, "imported"), "name") === "writeFileSync",
-      ),
+  return descendants(parseSourceProgram(content)).some(isWriteFileSyncImport)
+}
+
+function isWriteFileSyncImport(node: AstNode): boolean {
+  return (
+    stringField(node, "type") === "ImportDeclaration" &&
+    ["node:fs", "fs"].includes(stringField(objectField(node, "source"), "value") ?? "") &&
+    arrayField(node, "specifiers").some(
+      (specifier) =>
+        stringField(specifier, "type") !== "ImportSpecifier" ||
+        stringField(objectField(specifier, "imported"), "name") === "writeFileSync",
+    )
   )
 }
 
 /** 第2引数が識別子 `BIND_HOST` でない `.listen(…)` の呼び出しがあるか。 */
 function listenWithoutBindHost(content: string): boolean {
-  return descendants(parseSourceProgram(content)).some((node) => {
-    if (stringField(node, "type") !== "CallExpression") {
-      return false
-    }
-    const callee = objectField(node, "callee")
-    if (
-      stringField(callee, "type") !== "MemberExpression" ||
-      stringField(objectField(callee, "property"), "name") !== "listen"
-    ) {
-      return false
-    }
-    const host = arrayField(node, "arguments")[1]
-    return !(
-      stringField(host, "type") === "Identifier" && stringField(host, "name") === "BIND_HOST"
-    )
-  })
+  return descendants(parseSourceProgram(content)).some(isListenWithoutBindHost)
+}
+
+function isListenWithoutBindHost(node: AstNode): boolean {
+  if (stringField(node, "type") !== "CallExpression") {
+    return false
+  }
+  const callee = objectField(node, "callee")
+  if (
+    stringField(callee, "type") !== "MemberExpression" ||
+    stringField(objectField(callee, "property"), "name") !== "listen"
+  ) {
+    return false
+  }
+  const host = arrayField(node, "arguments")[1]
+  return !(stringField(host, "type") === "Identifier" && stringField(host, "name") === "BIND_HOST")
+}
+
+type ImportFacts = {
+  readonly listenWithoutBindHost: boolean
+  readonly importsProcessUnderOtherName: boolean
+  readonly importsWriteFileSync: boolean
+}
+
+// `src/` からの相対パスをキーにする。
+const IMPORT_FACTS = new Map<string, ImportFacts>()
+
+function importFactsOf(relPath: string): ImportFacts {
+  const cached = IMPORT_FACTS.get(relPath)
+  if (cached !== undefined) {
+    return cached
+  }
+  const nodes = descendants(parseSourceProgram(readSourceFile(relPath)))
+  const facts = {
+    listenWithoutBindHost: nodes.some(isListenWithoutBindHost),
+    importsProcessUnderOtherName: nodes.some(isProcessImportUnderOtherName),
+    importsWriteFileSync: nodes.some(isWriteFileSyncImport),
+  }
+  IMPORT_FACTS.set(relPath, facts)
+  return facts
 }

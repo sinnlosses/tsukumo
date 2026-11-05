@@ -1,11 +1,10 @@
-import { readFileSync } from "node:fs"
-
 import { describe, expect, it } from "vitest"
 
 import { findFeatureCycle, type ServerFeature } from "./feature-graph.ts"
 import { PENDING_READERS, pendingBrowserReaderFiles } from "./pending-reader-table.ts"
 import {
   listSourceFiles,
+  readSourceFile,
   relativeImportSpecifiers,
   resolveRelativeImport,
   SRC_ROOT,
@@ -128,7 +127,7 @@ function sharedFilesReachableFrom(fromPrefix: string): ReadonlySet<string> {
   const reached = new Set<string>()
   const queue = listSourceFiles(SRC_ROOT).filter((relPath) => relPath.startsWith(fromPrefix))
   for (let next = queue.pop(); next !== undefined; next = queue.pop()) {
-    for (const specifier of relativeImportSpecifiers(readFileSync(`${SRC_ROOT}/${next}`, "utf8"))) {
+    for (const specifier of relativeImportSpecifiers(readSourceFile(next))) {
       const toPath = resolveRelativeImport(next, specifier)
       if (toPath.startsWith("shared/") && !reached.has(toPath)) {
         reached.add(toPath)
@@ -160,15 +159,13 @@ function sharedFeatureEdges(): readonly {
       if (fromFeature === undefined) {
         return []
       }
-      return relativeImportSpecifiers(readFileSync(`${SRC_ROOT}/${fromPath}`, "utf8")).flatMap(
-        (specifier) => {
-          const toPath = resolveRelativeImport(fromPath, specifier)
-          const toFeature = sharedFeatureOf(toPath)
-          return toFeature !== undefined && toFeature !== fromFeature
-            ? [{ fromFeature, toFeature }]
-            : []
-        },
-      )
+      return relativeImportSpecifiers(readSourceFile(fromPath)).flatMap((specifier) => {
+        const toPath = resolveRelativeImport(fromPath, specifier)
+        const toFeature = sharedFeatureOf(toPath)
+        return toFeature !== undefined && toFeature !== fromFeature
+          ? [{ fromFeature, toFeature }]
+          : []
+      })
     })
 }
 

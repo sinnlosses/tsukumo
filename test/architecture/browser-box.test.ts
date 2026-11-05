@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, readFileSync } from "node:fs"
+import { existsSync, readdirSync } from "node:fs"
 
 import { describe, expect, it } from "vitest"
 
@@ -6,6 +6,7 @@ import { REPOSITORY_SCAN_TIMEOUT_MS } from "../fixture/repository-scan-timeout.t
 import {
   featureReadersOf,
   listSourceFiles,
+  readSourceFile,
   relativeImportSpecifiers,
   resolveRelativeImport,
   SRC_ROOT,
@@ -309,7 +310,7 @@ const ENTRY_FILES: ReadonlySet<string> = new Set(["browser/main.tsx", "browser/a
 function componentBoundaryViolations(): readonly string[] {
   const files = listSourceFiles(SRC_ROOT).filter((relPath) => relPath.startsWith("browser/"))
   const edges = files.flatMap((relPath) =>
-    relativeImportSpecifiers(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8")).map((specifier) => ({
+    relativeImportSpecifiers(readSourceFile(relPath)).map((specifier) => ({
       fromPath: relPath,
       toPath: resolveRelativeImport(relPath, specifier),
     })),
@@ -346,7 +347,7 @@ function componentReexportViolations(): readonly string[] {
       `${componentRelPath}/components/`,
       ...[...PAGE_CONCEPT_DIRECTORIES].map((concept) => `${componentRelPath}/${concept}/`),
     ]
-    const content = readFileSync(`${SRC_ROOT}/${entryRelPath}`, "utf8")
+    const content = readSourceFile(entryRelPath)
     return [
       ...content.matchAll(
         /export\s+(?:type\s+)?(?:\{[^}]*\}|\*(?:\s+as\s+\w+)?)\s+from\s+["'](\.[^"']+)["']/g,

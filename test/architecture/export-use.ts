@@ -12,7 +12,7 @@ import {
 } from "../../scripts/shared/ast-node.ts"
 import { exportedSymbols } from "../../scripts/shared/export-symbol.ts"
 import { REPOSITORY_ROOT } from "../../scripts/shared/repository-root.ts"
-import { listSourceFiles, parseSourceProgram } from "./source-file.ts"
+import { listSourceFiles, parseSourceProgram, readSourceFile, SRC_ROOT } from "./source-file.ts"
 
 export const CONFIG_FILES = ["vite.config.ts", "vitest.config.ts", "playwright.config.ts"] as const
 
@@ -59,15 +59,16 @@ export function readExportUse(sources: ReadonlyMap<string, string>): ExportUse {
 }
 
 export function readRepositorySources(): ReadonlyMap<string, string> {
-  const paths = [
+  const fromDisk = (path: string) =>
+    [path, readFileSync(`${REPOSITORY_ROOT}/${path}`, "utf8")] as const
+  return new Map([
     ...listSourceFiles(`${REPOSITORY_ROOT}/scripts`, `${REPOSITORY_ROOT}/scripts`, [".ts"]).map(
-      (path) => `scripts/${path}`,
+      (path) => fromDisk(`scripts/${path}`),
     ),
-    ...listSourceFiles(`${REPOSITORY_ROOT}/src`).map((path) => `src/${path}`),
-    ...listSourceFiles(`${REPOSITORY_ROOT}/test`).map((path) => `test/${path}`),
-    ...CONFIG_FILES,
-  ]
-  return new Map(paths.map((path) => [path, readFileSync(`${REPOSITORY_ROOT}/${path}`, "utf8")]))
+    ...listSourceFiles(SRC_ROOT).map((path) => [`src/${path}`, readSourceFile(path)] as const),
+    ...listSourceFiles(`${REPOSITORY_ROOT}/test`).map((path) => fromDisk(`test/${path}`)),
+    ...CONFIG_FILES.map(fromDisk),
+  ])
 }
 
 /**
