@@ -10,6 +10,8 @@ import {
 } from "../../../../shared/report/a2ui-report-catalog.ts"
 import { tableIdOfFilterPath, tableRowFilterTexts } from "../../../../shared/report/table-view.ts"
 import type { ToolErrorField } from "../../../../shared/report/tool-error-field.ts"
+import type { A2uiExpressionFault } from "./expression-slot.ts"
+import { expressionFaults } from "./expression-structure.ts"
 
 export type A2uiStructureFaultKind =
   | "unknown-component"
@@ -28,11 +30,16 @@ export type A2uiStructureFaultKind =
   | "filter-target-not-filterable"
   | "filter-option-not-in-cells"
 
-/** 違反 1 つ。`pointer` は引数の根からの JSON Pointer（`/components/2/children/0`）。 */
-export type A2uiStructureFault = {
-  readonly kind: A2uiStructureFaultKind
-  readonly pointer: string
-}
+/**
+ * 違反 1 つ。`pointer` は引数の根からの JSON Pointer（`/components/2/children/0`）。
+ * 式まわりの違反は理由の文を `reason` に持つ。
+ */
+export type A2uiStructureFault =
+  | {
+      readonly kind: A2uiStructureFaultKind
+      readonly pointer: string
+    }
+  | A2uiExpressionFault
 
 /** 構造の規約の判定。`rejected` の `text` はそのまま `report` の戻り値になる。 */
 export type A2uiStructureVerdict =
@@ -53,7 +60,8 @@ export function a2uiStructureFaultField(fault: A2uiStructureFault): ToolErrorFie
 
 /**
  * 違反 1 つを A2UI の `VALIDATION_FAILED` のエラーのメッセージ 1 行（JSON）にする。
- * 理由は種類ごとの固定の文だけを載せ、書き手の ID・文面は写さない。
+ * 理由は種類ごとの固定の文を載せ、書き手の ID・文面は写さない。
+ * 式まわりの違反だけは、式の名前と位置を入れた理由を載せる。
  */
 export function a2uiStructureFaultMessage(fault: A2uiStructureFault): string {
   return JSON.stringify({
@@ -62,7 +70,7 @@ export function a2uiStructureFaultMessage(fault: A2uiStructureFault): string {
       code: "VALIDATION_FAILED",
       surfaceId: A2UI_REPORT_SURFACE_ID,
       path: fault.pointer,
-      message: A2UI_STRUCTURE_FAULT_REASONS[fault.kind],
+      message: "reason" in fault ? fault.reason : A2UI_STRUCTURE_FAULT_REASONS[fault.kind],
     },
   })
 }
@@ -140,7 +148,7 @@ export function a2uiStructureFaults(components: readonly unknown[]): readonly A2
       faults.push({ kind: "unreferenced-component", pointer: `/components/${String(index)}` })
     }
   })
-  faults.push(...filterBindingFaults(parts, indexById))
+  faults.push(...filterBindingFaults(parts, indexById), ...expressionFaults(components))
   return faults
 }
 
