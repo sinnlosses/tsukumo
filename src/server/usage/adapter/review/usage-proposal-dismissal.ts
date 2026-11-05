@@ -6,14 +6,13 @@
 
 import { z } from "zod"
 
-import { readJsonFile, writeJsonFile } from "../../../adapter/lib/json-file.ts"
+import { versionedJsonFile } from "../../../adapter/lib/json-file.ts"
 import { tsukumoHomePath } from "../../../adapter/tsukumo-home.ts"
 
 /** ファイルの形の版。形を変えたら上げる。 */
 const DISMISSED_USAGE_PROPOSAL_FORMAT_VERSION = 1 satisfies number
 
-const dismissedUsageProposalFileSchema = z.object({
-  v: z.literal(DISMISSED_USAGE_PROPOSAL_FORMAT_VERSION),
+const dismissedUsageProposalSchema = z.object({
   keys: z.array(z.string()),
 })
 
@@ -25,8 +24,7 @@ const dismissedUsageProposalFileSchema = z.object({
 export function readDismissedUsageProposalKeys(
   path: string = dismissedUsageProposalPath(),
 ): readonly string[] {
-  const parsed = dismissedUsageProposalFileSchema.safeParse(readJsonFile(path))
-  return parsed.success ? parsed.data.keys : []
+  return dismissedUsageProposalFile(path).read()?.keys ?? []
 }
 
 /**
@@ -41,9 +39,14 @@ export function writeDismissedUsageProposalKey(
   if (existing.includes(key)) {
     return
   }
-  writeJsonFile(path, {
-    v: DISMISSED_USAGE_PROPOSAL_FORMAT_VERSION,
-    keys: [...existing, key],
+  dismissedUsageProposalFile(path).write({ keys: [...existing, key] })
+}
+
+function dismissedUsageProposalFile(path: string) {
+  return versionedJsonFile({
+    version: DISMISSED_USAGE_PROPOSAL_FORMAT_VERSION,
+    schema: dismissedUsageProposalSchema,
+    path,
   })
 }
 

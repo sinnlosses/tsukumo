@@ -11,7 +11,7 @@ import {
   TASK_STATUSES,
   type TaskSummaryItem,
 } from "../../../../shared/repository/task-summary.ts"
-import { readJsonFile, writeJsonFile } from "../../../adapter/lib/json-file.ts"
+import { versionedJsonFile } from "../../../adapter/lib/json-file.ts"
 import { tsukumoHomePath } from "../../../adapter/tsukumo-home.ts"
 
 /** ファイルの形の版。形を変えたら上げ、古いファイルと見分ける。 */
@@ -47,8 +47,7 @@ const taskSummaryItemSchema = z.object({
   location: taskLocationSchema,
 })
 
-const taskSummaryMemoryFileSchema = z.object({
-  v: z.literal(TASK_SUMMARY_MEMORY_FORMAT_VERSION),
+const taskSummaryMemorySchema = z.object({
   entries: z.array(z.object({ cwd: z.string(), items: z.array(taskSummaryItemSchema) })),
 })
 
@@ -70,19 +69,27 @@ export function writeTaskSummaryMemory(
 ): void {
   const others = readEntries(path).filter((entry) => entry.cwd !== cwd)
   const entries = [{ cwd, items }, ...others].slice(0, TASK_SUMMARY_MEMORY_LIMIT)
-  writeJsonFile(path, { v: TASK_SUMMARY_MEMORY_FORMAT_VERSION, entries })
+  taskSummaryMemoryFile(path).write({ entries })
 }
 
 function taskSummaryMemoryPath(): string {
   return tsukumoHomePath("taskSummary")
 }
 
+function taskSummaryMemoryFile(path: string) {
+  return versionedJsonFile({
+    version: TASK_SUMMARY_MEMORY_FORMAT_VERSION,
+    schema: taskSummaryMemorySchema,
+    path,
+  })
+}
+
 function readEntries(path: string): readonly MemoryEntry[] {
-  const parsed = taskSummaryMemoryFileSchema.safeParse(readJsonFile(path))
-  if (!parsed.success) {
+  const stored = taskSummaryMemoryFile(path).read()
+  if (stored === undefined) {
     return []
   }
-  return parsed.data.entries.map((entry) => ({
+  return stored.entries.map((entry) => ({
     cwd: entry.cwd,
     items: entry.items.map(
       (item) =>

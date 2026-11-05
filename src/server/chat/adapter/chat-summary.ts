@@ -10,14 +10,13 @@
 //
 // 書けなくても例外を投げない（書く口は書けたかどうかを返す）。
 
-import { mkdirSync, readdirSync, rmSync } from "node:fs"
+import { readdirSync, rmSync } from "node:fs"
 import { join } from "node:path"
 
 import { z } from "zod"
 
 import type { CharacterPackName } from "../../../shared/character-pack/character.ts"
-import { writeFileAtomic } from "../../adapter/lib/atomic-file.ts"
-import { readJsonFile } from "../../adapter/lib/json-file.ts"
+import { versionedJsonFile } from "../../adapter/lib/json-file.ts"
 import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
 import type { ChatSummary, ChatSummaryFold, ChatSummaryRecord } from "../../core/chat-memory.ts"
 import { truncatedSummary } from "../core/consolidation/chat-summary-truncation.ts"
@@ -107,13 +106,11 @@ function chatSummaryDir(): string {
 const TEMP_SUFFIX = /^[0-9a-f]{12}\.tmp$/
 
 type SummaryPaths = {
-  readonly root: string
   readonly current: string
 }
 
 function summaryPaths(root: string, packName: CharacterPackName): SummaryPaths {
   return {
-    root,
     current: join(root, `${packName}${SUMMARY_FILE_SUFFIX}`),
   }
 }
@@ -135,14 +132,13 @@ const foldSchema = z.discriminatedUnion("kind", [
 ]) satisfies z.ZodType<ChatSummaryFold>
 
 const storedSchema = z.object({
-  v: z.literal(SUMMARY_FORMAT_VERSION),
   delivered: z.boolean(),
   synopsis: z.string(),
   topics: z.array(z.string()).readonly(),
   fold: foldSchema,
 })
 
-type StoredSummary = Omit<z.infer<typeof storedSchema>, "v">
+type StoredSummary = z.infer<typeof storedSchema>
 
 function recordOf(stored: StoredSummary | undefined): ChatSummaryRecord | undefined {
   return stored === undefined
@@ -150,24 +146,20 @@ function recordOf(stored: StoredSummary | undefined): ChatSummaryRecord | undefi
     : { summary: stored.synopsis, delivered: stored.delivered }
 }
 
+function storedFile(paths: SummaryPaths) {
+  return versionedJsonFile({
+    version: SUMMARY_FORMAT_VERSION,
+    schema: storedSchema,
+    path: paths.current,
+  })
+}
+
 function readStored(paths: SummaryPaths): StoredSummary | undefined {
-  const parsed = storedSchema.safeParse(readJsonFile(paths.current))
-  if (!parsed.success) {
-    return undefined
-  }
-  const { delivered, synopsis, topics, fold } = parsed.data
-  return { delivered, synopsis, topics, fold }
+  return storedFile(paths).read()
 }
 
 function store(paths: SummaryPaths, stored: StoredSummary): boolean {
-  try {
-    mkdirSync(paths.root, { recursive: true })
-    writeFileAtomic(paths.current, JSON.stringify({ v: SUMMARY_FORMAT_VERSION, ...stored }))
-  } catch {
-    // 書けなかったことは戻り値の false で呼び出し側へ返す
-    return false
-  }
-  return true
+  return storedFile(paths).write(stored)
 }
 
 /** ディレクトリの中の名前（読めなければ空）。 */

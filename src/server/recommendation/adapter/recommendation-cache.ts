@@ -4,7 +4,7 @@
 import { z } from "zod"
 
 import type { RecommendationCard } from "../../../shared/recommendation/recommendation-card.ts"
-import { readJsonFile, writeJsonFile } from "../../adapter/lib/json-file.ts"
+import { versionedJsonFile } from "../../adapter/lib/json-file.ts"
 import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
 import type { RecommendationCacheEntry } from "../core/recommender.ts"
 
@@ -16,8 +16,7 @@ const recommendationCardSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("task"), taskId: z.string(), reason: z.string() }),
 ]) satisfies z.ZodType<RecommendationCard>
 
-const recommendationCacheFileSchema = z.object({
-  v: z.literal(RECOMMENDATION_CACHE_FORMAT_VERSION),
+const recommendationCacheSchema = z.object({
   entries: z.array(z.object({ key: z.string(), cards: z.array(recommendationCardSchema) })),
 })
 
@@ -25,8 +24,7 @@ const recommendationCacheFileSchema = z.object({
 export function readRecommendationCache(
   path: string = recommendationCachePath(),
 ): readonly RecommendationCacheEntry[] {
-  const parsed = recommendationCacheFileSchema.safeParse(readJsonFile(path))
-  return parsed.success ? parsed.data.entries : []
+  return recommendationCacheFile(path).read()?.entries ?? []
 }
 
 /** 組を丸ごと書く。失敗しても例外を投げない。 */
@@ -34,7 +32,15 @@ export function writeRecommendationCache(
   entries: readonly RecommendationCacheEntry[],
   path: string = recommendationCachePath(),
 ): void {
-  writeJsonFile(path, { v: RECOMMENDATION_CACHE_FORMAT_VERSION, entries })
+  recommendationCacheFile(path).write({ entries })
+}
+
+function recommendationCacheFile(path: string) {
+  return versionedJsonFile({
+    version: RECOMMENDATION_CACHE_FORMAT_VERSION,
+    schema: recommendationCacheSchema,
+    path,
+  })
 }
 
 function recommendationCachePath(): string {

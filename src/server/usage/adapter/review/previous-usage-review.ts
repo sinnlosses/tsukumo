@@ -16,7 +16,7 @@ import {
   USAGE_PROPOSAL_KINDS,
   type UsageReviewFindings,
 } from "../../../../shared/usage/usage-review.ts"
-import { readJsonFile, writeJsonFile } from "../../../adapter/lib/json-file.ts"
+import { versionedJsonFile } from "../../../adapter/lib/json-file.ts"
 import { tsukumoHomePath } from "../../../adapter/tsukumo-home.ts"
 
 /** ファイルの形の版。形を変えたら上げ、古いファイルと見分ける。 */
@@ -38,9 +38,8 @@ const usageReviewFindingsSchema = z.object({
   proposals: z.array(usageProposalSchema),
 }) satisfies z.ZodType<UsageReviewFindings>
 
-/** ファイルの中身の形（{@link usageReviewFindingsSchema} に `v` と `reviewedAt` を添えたもの）。 */
-const previousUsageReviewFileSchema = z.object({
-  v: z.literal(PREVIOUS_USAGE_REVIEW_FORMAT_VERSION),
+/** ファイルの本文の形（{@link usageReviewFindingsSchema} に `reviewedAt` を添えたもの）。 */
+const previousUsageReviewSchema = z.object({
   reviewedAt: z.number(),
   findings: usageReviewFindingsSchema,
 })
@@ -54,10 +53,10 @@ const previousUsageReviewFileSchema = z.object({
 export function readPreviousUsageReview(
   path: string = previousUsageReviewPath(),
 ): PreviousUsageReview {
-  const parsed = previousUsageReviewFileSchema.safeParse(readJsonFile(path))
-  return parsed.success
-    ? { kind: "found", reviewedAt: parsed.data.reviewedAt, findings: parsed.data.findings }
-    : { kind: "none" }
+  const stored = previousUsageReviewFile(path).read()
+  return stored === undefined
+    ? { kind: "none" }
+    : { kind: "found", reviewedAt: stored.reviewedAt, findings: stored.findings }
 }
 
 /** 結果を書く。直前の1回だけを持つので、丸ごと置き換える（履歴は残さない）。失敗しても例外を投げない。 */
@@ -66,7 +65,15 @@ export function writePreviousUsageReview(
   findings: UsageReviewFindings,
   path: string = previousUsageReviewPath(),
 ): void {
-  writeJsonFile(path, { v: PREVIOUS_USAGE_REVIEW_FORMAT_VERSION, reviewedAt, findings })
+  previousUsageReviewFile(path).write({ reviewedAt, findings })
+}
+
+function previousUsageReviewFile(path: string) {
+  return versionedJsonFile({
+    version: PREVIOUS_USAGE_REVIEW_FORMAT_VERSION,
+    schema: previousUsageReviewSchema,
+    path,
+  })
 }
 
 /** 書き込んでよいのはこの1ファイルだけ。 */

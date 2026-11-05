@@ -5,15 +5,14 @@ import { basename, join } from "node:path"
 
 import { z } from "zod"
 
-import { readJsonFile, writeJsonFile } from "../../adapter/lib/json-file.ts"
+import { versionedJsonFile } from "../../adapter/lib/json-file.ts"
 import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
 import type { WelcomeGreetingText } from "../core/welcome-greeting.ts"
 
 /** ファイルの形の版。形を変えたら上げ、古いファイルと見分ける。 */
 const WELCOME_GREETING_FORMAT_VERSION = 1 satisfies number
 
-const welcomeGreetingFileSchema = z.object({
-  v: z.literal(WELCOME_GREETING_FORMAT_VERSION),
+const welcomeGreetingSchema = z.object({
   recent: z.array(z.object({ withCard: z.string(), withoutCard: z.string() })),
 })
 
@@ -25,8 +24,7 @@ export function readRecentWelcomeGreetings(
   if (!isPlainFileName(characterName)) {
     return []
   }
-  const parsed = welcomeGreetingFileSchema.safeParse(readJsonFile(path))
-  return parsed.success ? parsed.data.recent : []
+  return welcomeGreetingFile(path).read()?.recent ?? []
 }
 
 /** 直近の挨拶を丸ごと書く。失敗しても例外を投げない。名前が不正なときは何もしない。 */
@@ -38,7 +36,15 @@ export function writeRecentWelcomeGreetings(
   if (!isPlainFileName(characterName)) {
     return
   }
-  writeJsonFile(path, { v: WELCOME_GREETING_FORMAT_VERSION, recent })
+  welcomeGreetingFile(path).write({ recent })
+}
+
+function welcomeGreetingFile(path: string) {
+  return versionedJsonFile({
+    version: WELCOME_GREETING_FORMAT_VERSION,
+    schema: welcomeGreetingSchema,
+    path,
+  })
 }
 
 function welcomeGreetingMemoryPath(characterName: string): string {
