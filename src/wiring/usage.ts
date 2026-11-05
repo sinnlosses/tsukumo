@@ -7,7 +7,6 @@
 
 import { todayLocalDateKey } from "../server/adapter/local-time.ts"
 import type { CharacterPack } from "../server/character-pack/adapter/character-pack.ts"
-import type { Config } from "../server/core/config.ts"
 import { createDiagnosticLog } from "../server/diagnostic/adapter/diagnostic-log.ts"
 import { createReportUsageLog } from "../server/report/adapter/report-usage-log.ts"
 import { readBeadsWorkspace } from "../server/repository/adapter/beads/beads.ts"
@@ -70,7 +69,6 @@ export type WiredUsageLogs = UsageLogs & {
 }
 
 export type UsageLogOptions = {
-  readonly reportSchema: Config["reportSchema"]
   /** token-usage の行に結ぶ、着手中のタスクを読む口。 */
   readonly openTask: OpenTaskReader
 }
@@ -80,7 +78,7 @@ export function wireUsageLogs(
   options: UsageLogOptions,
 ): WiredUsageLogs {
   const logs: UsageLogs = {
-    ...switchedLogs(context.driver, options.reportSchema),
+    ...switchedLogs(context.driver),
     tokenUsage: createTokenUsageLog(options.openTask),
     diagnostic: createDiagnosticLog(),
   }
@@ -160,13 +158,10 @@ export function wireUsageReview(
   }
 }
 
-function switchedLogs(
-  driver: WiringContext["driver"],
-  reportSchema: Config["reportSchema"],
-): DriverSwitchedLogs {
+function switchedLogs(driver: WiringContext["driver"]): DriverSwitchedLogs {
   switch (driver.kind) {
     case "sdk":
-      return realLogs(reportSchema)
+      return realLogs()
     case "fake":
       return silentLogs()
     default:
@@ -178,11 +173,11 @@ function done(): Promise<void> {
   return Promise.resolve()
 }
 
-function realLogs(reportSchema: Config["reportSchema"]): DriverSwitchedLogs {
+function realLogs(): DriverSwitchedLogs {
   return {
     context: createContextUsageLog(),
     experienceMetric: createExperienceMetricLog(),
-    report: createReportUsageLog(reportSchema),
+    report: createReportUsageLog(),
     throwawayQuery: createThrowawayQueryLog(),
   }
 }

@@ -131,10 +131,7 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
   // 置き場（`~/.tsukumo/` の下）を知っているところを増やさない。
   const usageLogs = wireUsageLogs(
     { driver },
-    {
-      reportSchema: config.reportSchema,
-      openTask: createOpenTaskReader(twClaimsRunner(workflowTw, launch.cwd)),
-    },
+    { openTask: createOpenTaskReader(twClaimsRunner(workflowTw, launch.cwd)) },
   )
   const { diagnostic: diagnosticLog, tokenUsage: tokenUsageLog } = usageLogs
   const clock = createServerClock(config.fixedClock)

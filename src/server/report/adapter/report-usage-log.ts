@@ -4,8 +4,8 @@
 import { createDatedRecordLog, type DatedRecordLog } from "../../adapter/lib/dated-record-log.ts"
 import { isoWithOffset, localDateKey } from "../../adapter/local-time.ts"
 import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
-import type { ReportSchemaVariant } from "../../core/schema-variant.ts"
 import {
+  REPORT_SCHEMA,
   REPORT_USAGE_FORMAT_VERSION,
   type ReportFollowUpRecord,
   reportFollowUpRecordSchema,
@@ -32,11 +32,9 @@ export function reportUsageDir(): string {
 const RECORDED_DRIVER = "sdk" satisfies ReportUsageDriver
 
 /**
- * `reportSchema` はこのプロセスが `report` の塊の型をどう渡しているか（`Config.reportSchema`）で、全部の行に書く。
  * `root` はテストがホームを汚さないために差し替える。
  */
 export function createReportUsageLog(
-  reportSchema: ReportSchemaVariant,
   root: string = reportUsageDir(),
 ): ReportUsageLog &
   Pick<
@@ -55,7 +53,7 @@ export function createReportUsageLog(
   // 差し戻しの行は次の呼び出しが分かるまで書かず、セッションごとに1件だけ待たせる。閉じるときは次が無いまま書く。
   const pending = new Map<string, ReportRejectionEntry>()
   const writeRejection = (entry: ReportRejectionEntry, nextCall: ReportNextCall | undefined) => {
-    log.append(localDateKey(entry.at), [toRejectionRecord(entry, reportSchema, nextCall)])
+    log.append(localDateKey(entry.at), [toRejectionRecord(entry, nextCall)])
   }
   const settle = (sessionId: string, nextCall: ReportNextCall | undefined) => {
     const waiting = pending.get(sessionId)
@@ -75,7 +73,7 @@ export function createReportUsageLog(
     append: (entry) => {
       settle(entry.sessionId, nextCallOfAccepted(entry))
       awaitingFollowUp.add(entry.sessionId)
-      log.append(localDateKey(entry.at), [toRecord(entry, reportSchema)])
+      log.append(localDateKey(entry.at), [toRecord(entry)])
     },
     appendRejection: (entry) => {
       if (entry.mode === "count") {
@@ -114,7 +112,6 @@ export function createReportUsageLog(
 
 function toRejectionRecord(
   entry: ReportRejectionEntry,
-  reportSchema: ReportSchemaVariant,
   nextCall: ReportNextCall | undefined,
 ): ReportRejectionRecord {
   return {
@@ -126,13 +123,13 @@ function toRejectionRecord(
     reasons: entry.reasons,
     argumentChars: entry.argumentChars,
     inheritedFields: entry.inheritedFields,
-    reportSchema,
+    reportSchema: REPORT_SCHEMA,
     ...(nextCall === undefined ? {} : { nextCall }),
     ...(entry.toolErrorFields.length === 0 ? {} : { toolErrorFields: entry.toolErrorFields }),
   }
 }
 
-function toRecord(entry: ReportUsageEntry, reportSchema: ReportSchemaVariant): ReportUsageRecord {
+function toRecord(entry: ReportUsageEntry): ReportUsageRecord {
   return {
     v: REPORT_USAGE_FORMAT_VERSION,
     at: isoWithOffset(entry.at),
@@ -173,6 +170,6 @@ function toRecord(entry: ReportUsageEntry, reportSchema: ReportSchemaVariant): R
     conclusionNumbersWithoutKeyFigures: entry.conclusionNumbersWithoutKeyFigures,
     argumentChars: entry.argumentChars,
     inheritedFields: entry.inheritedFields,
-    reportSchema,
+    reportSchema: REPORT_SCHEMA,
   }
 }

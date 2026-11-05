@@ -10,7 +10,6 @@ import {
 import { REPORT_ARGUMENT_FIELDS } from "../../../../shared/report/report-argument-size.ts"
 import { REPORT_GENRES, reportTaskSchema } from "../../../../shared/report/report-task.ts"
 import { toolErrorFieldSchema } from "../../../../shared/report/tool-error-field.ts"
-import { REPORT_SCHEMA_VARIANTS } from "../../../core/schema-variant.ts"
 
 /**
  * 行の形の版。形か数え方を変えたら上げ、古い行と見分ける。
@@ -36,12 +35,10 @@ const argumentCharsSchema = z
 const inheritedFieldsSchema = z.array(z.enum(REPORT_ARGUMENT_FIELDS)).readonly()
 
 /** どの型の渡し方で受けたか（版17から）。旧い渡し方の記録も読めたまま残す。書くのは `a2ui` だけ。 */
-const PAST_REPORT_SCHEMA_VARIANTS = [
-  "json-schema",
-  "short-type",
-  "body-fence",
-  ...REPORT_SCHEMA_VARIANTS,
-] as const
+const PAST_REPORT_SCHEMA_VARIANTS = ["json-schema", "short-type", "body-fence", "a2ui"] as const
+
+/** 使用量の記録の行へ書く、いまの渡し方。 */
+export const REPORT_SCHEMA = "a2ui" as const satisfies (typeof PAST_REPORT_SCHEMA_VARIANTS)[number]
 
 const reportSchemaVariantSchema = z.enum(PAST_REPORT_SCHEMA_VARIANTS)
 

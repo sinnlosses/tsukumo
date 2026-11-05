@@ -20,12 +20,12 @@ import type { RPCHandler } from "@orpc/server/fetch"
 import { isPlainObject } from "remeda"
 
 import { CHARACTER_ASSET_PATH_PREFIX } from "../../../shared/character-pack/character-asset.ts"
+import { ITEM_ASSET_PATH_PREFIX } from "../../../shared/item/item-asset.ts"
 import { REPORT_IMAGE_PATH_PREFIX } from "../../../shared/report/report-image.ts"
 import { RPC_PATH } from "../../../shared/rpc.ts"
 import { PROMPT_IMAGE_PATH_PREFIX } from "../../../shared/session-driver/prompt-image.ts"
 import { SESSION_TOKEN_QUERY_NAME } from "../../../shared/view-server/session-socket.ts"
 import { VENDOR_PATH_PREFIX } from "../../../shared/view-server/vendor-asset.ts"
-import { ITEM_ASSET_PATH_PREFIX } from "../../core/item-asset.ts"
 import { createRpcHandler, serveRpc } from "./rpc-bridge.ts"
 import type { RpcContext } from "./rpc/rpc-guard.ts"
 import type {

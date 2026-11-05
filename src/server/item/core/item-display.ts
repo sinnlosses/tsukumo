@@ -2,8 +2,8 @@
 
 import { fromKeys } from "remeda"
 
+import { itemAssetPath } from "../../../shared/item/item-asset.ts"
 import { type ItemInfo, type ItemSeatMap, SEAT_KEYS } from "../../../shared/item/item.ts"
-import { itemAssetPath } from "../../core/item-asset.ts"
 import type { ItemsFile } from "./items-file.ts"
 
 export type ShownItems = {

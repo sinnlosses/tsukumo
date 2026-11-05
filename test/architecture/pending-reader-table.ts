@@ -25,6 +25,14 @@ export const PENDING_READERS: readonly PendingReader[] = [
     reason: "UTF-8 のバイト数の物差しは server の4か所だけが読み、browser に読み手がまだ無い",
     removeWhen: "browser が UTF-8 のバイト数を数える場面を持つ、または server 専用の置き場に戻す",
   },
+  {
+    file: "src/shared/item/item-asset.ts",
+    missingReader: "browser",
+    reason:
+      "アイテムの素材の URL の作り方・読み方は server の3か所だけが読み、browser に読み手がまだ無い",
+    removeWhen:
+      "browser がアイテムの素材の URL を組む・読む場面を持つ、または server 専用の置き場に戻す",
+  },
 ]
 
 /** `"production"` の行から、`<パス>#<名前>` と理由の対応を作る。 */

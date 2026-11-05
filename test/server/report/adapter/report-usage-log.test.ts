@@ -43,7 +43,7 @@ describe("createReportUsageLog の直後の依頼", () => {
     ({ at: at(9, minute), sessionId: "claude-session-1", restated }) as const
 
   it("受け付けた report のあとの依頼は、真偽だけの followed の行になる", async () => {
-    const log = createReportUsageLog("a2ui", root())
+    const log = createReportUsageLog(root())
     log.append(entry(at(9, 0)))
     log.appendFollowUp(followUp(true, 5))
     await log.flush()
@@ -61,7 +61,7 @@ describe("createReportUsageLog の直後の依頼", () => {
   })
 
   it("report が先に無い依頼と、同じ report への2度目の依頼は書かない", async () => {
-    const log = createReportUsageLog("a2ui", root())
+    const log = createReportUsageLog(root())
     log.appendFollowUp(followUp(false, 1))
     log.append(entry(at(9, 2)))
     log.appendFollowUp(followUp(false, 3))
@@ -74,7 +74,7 @@ describe("createReportUsageLog の直後の依頼", () => {
 
 describe("createReportUsageLog", () => {
   it("日付ごとのファイルに1行ずつ追記する", async () => {
-    const log = createReportUsageLog("a2ui", root())
+    const log = createReportUsageLog(root())
 
     log.append(entry(at(9, 0), "claude-session-1"))
     log.append(entry(at(23, 30), "claude-session-2"))
@@ -87,7 +87,7 @@ describe("createReportUsageLog", () => {
   })
 
   it("1行の鍵は版・日時・セッションID・figure の種類と理由・節の札と許さない塊の数・塊の種類と欄・逃げ道の記法（外・容れ物の中・塊の無いもの）・知らない種類の数で、日時は ISO 8601（オフセット付き）", async () => {
-    const log = createReportUsageLog("a2ui", root())
+    const log = createReportUsageLog(root())
 
     log.append(entry(at(9, 0)))
     await log.flush()
@@ -179,7 +179,7 @@ describe("createReportUsageLog", () => {
   })
 
   it("渡された件の欄は、図と節の札の欄を平らに広げたうえで、入れ子の中まで全部行に残る", async () => {
-    const log = createReportUsageLog("a2ui", root())
+    const log = createReportUsageLog(root())
     const { figure, shapeTags, ...rest } = entry(at(9, 0))
 
     log.append(entry(at(9, 0)))
@@ -191,7 +191,7 @@ describe("createReportUsageLog", () => {
   })
 
   it("差し戻しの件の欄は全部行に残る", async () => {
-    const log = createReportUsageLog("a2ui", root())
+    const log = createReportUsageLog(root())
     const rejection = {
       mode: "reject",
       at: at(9, 5),
@@ -224,7 +224,7 @@ describe("createReportUsageLog", () => {
       }) as const
 
     it("差し戻しのあとに受け付けた呼び出しが来ると、差し戻しの行に空の理由と次の字数が付く", async () => {
-      const log = createReportUsageLog("a2ui", root())
+      const log = createReportUsageLog(root())
 
       log.appendRejection(rejection(["resend"], 5))
       log.append({ ...entry(at(9, 6)), argumentChars: { total: 300, fields: {} } })
@@ -237,7 +237,7 @@ describe("createReportUsageLog", () => {
     })
 
     it("同じ理由で2回差し戻されると、1回目の行には2回目の理由が付き、2回目の行には次が付かない", async () => {
-      const log = createReportUsageLog("a2ui", root())
+      const log = createReportUsageLog(root())
 
       log.appendRejection(rejection(["resend"], 5))
       log.appendRejection({
@@ -252,7 +252,7 @@ describe("createReportUsageLog", () => {
     })
 
     it("別のセッションの呼び出しは、待っている差し戻しの次に数えない", async () => {
-      const log = createReportUsageLog("a2ui", root())
+      const log = createReportUsageLog(root())
 
       log.appendRejection(rejection(["resend"], 5))
       log.append(entry(at(9, 6), "claude-session-2"))
@@ -266,7 +266,7 @@ describe("createReportUsageLog", () => {
   })
 
   it("数えるだけの条の件は、差し戻しの行と同じ形の counted の行になる", async () => {
-    const log = createReportUsageLog("a2ui", root())
+    const log = createReportUsageLog(root())
 
     log.appendRejection({
       mode: "count",
@@ -285,7 +285,7 @@ describe("createReportUsageLog", () => {
   })
 
   it("保持の日数が無いので、掃除しても古い日付のファイルは消えない", async () => {
-    const log = createReportUsageLog("a2ui", root())
+    const log = createReportUsageLog(root())
     log.append(entry(at(9, 0)))
     await log.flush()
 
@@ -295,7 +295,7 @@ describe("createReportUsageLog", () => {
   })
 
   it("figure に図を置いた行は figureKind だけを持ち、noneReason を持たない", async () => {
-    const log = createReportUsageLog("a2ui", root())
+    const log = createReportUsageLog(root())
 
     log.append(entry(at(9, 0), "claude-session-1", { figureKind: "graph" }))
     await log.flush()
@@ -306,7 +306,7 @@ describe("createReportUsageLog", () => {
   })
 
   it("差し戻しの行は同じ日付ファイルに入り、鍵は版・種類・日時・セッションID・差し戻しの名前・引数の字数・引き継いだ欄の名前・型の渡し方だけ", async () => {
-    const log = createReportUsageLog("a2ui", root())
+    const log = createReportUsageLog(root())
 
     log.appendRejection({
       mode: "reject",
@@ -343,7 +343,7 @@ describe("createReportUsageLog", () => {
   })
 
   it("形の検査で落ちた欄があれば、差し戻しの行に欄名と code だけを書く", async () => {
-    const log = createReportUsageLog("a2ui", root())
+    const log = createReportUsageLog(root())
 
     log.appendRejection({
       mode: "reject",
@@ -363,7 +363,7 @@ describe("createReportUsageLog", () => {
   })
 
   it("a2ui で起こした記録は、受け付けと差し戻しの両方の行にそれを書く", async () => {
-    const log = createReportUsageLog("a2ui", root())
+    const log = createReportUsageLog(root())
 
     log.append(entry(at(9, 0)))
     log.appendRejection({
@@ -386,7 +386,7 @@ describe("createReportUsageLog", () => {
   it.each(["json-schema", "short-type", "body-fence"])(
     "旧い型の渡し方（%s）で書かれた記録の行も読める",
     async (past) => {
-      const log = createReportUsageLog("a2ui", root())
+      const log = createReportUsageLog(root())
       log.append(entry(at(9, 0)))
       await log.flush()
       const [line] = readLines("2026-09-22.jsonl")

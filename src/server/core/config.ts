@@ -8,7 +8,6 @@ import {
   resolveViewPortFallbackBase,
   type ViewPortResolution,
 } from "../../shared/view-server/view-port.ts"
-import { REPORT_SCHEMA_VARIANTS, type ReportSchemaVariant } from "./schema-variant.ts"
 
 /**
  * tsukumo が読む環境変数の名前の全部。`audience` が `user` の名前は `docs/readme/configuration.md` に載せる。
@@ -66,10 +65,6 @@ export const ENV_NAMES = {
    * 読むのは {@link readConfig} ではなく `tsukumoHomeDir`（配線層から配る道が無い）。
    */
   home: { name: "TSUKUMO_HOME", audience: "user" },
-  /**
-   * `report` の入力の渡し方（`a2ui` だけ。A2UI の部品の一覧 `components` で受ける）。ほかの値は `a2ui` に倒す。
-   */
-  reportSchema: { name: "TSUKUMO_REPORT_SCHEMA", audience: "test" },
   /**
    * 仕事の会話の `query()` の `disallowedTools` に渡すツール名（カンマ区切り。既定は `DEFAULT_DISALLOWED_TOOLS`）。
    * 渡した名前は組み込みツールの定義ごと文脈から消える。`none` を渡すと何も外さない。
@@ -148,7 +143,6 @@ export type Config = {
   readonly claudeConfigDir: string | undefined
   /** 凍らせる瞬間。未設定・読めない値なら undefined ＝ 本物の時計。 */
   readonly fixedClock: Temporal.Instant | undefined
-  readonly reportSchema: ReportSchemaVariant
   readonly disallowedTools: readonly string[]
   readonly turnStepLimit: number
   /**
@@ -184,10 +178,6 @@ export function readConfig(env: Readonly<Record<string, string | undefined>>): C
     twCommand: nonBlankString(env[ENV_NAMES.tw.name])?.trim(),
     claudeConfigDir: nonBlankString(env[CLAUDE_CONFIG_DIR_ENV_NAME])?.trim(),
     fixedClock: parseInstant(env[ENV_NAMES.fixedClock.name]),
-    reportSchema:
-      REPORT_SCHEMA_VARIANTS.find(
-        (variant) => variant === env[ENV_NAMES.reportSchema.name]?.trim(),
-      ) ?? "a2ui",
     disallowedTools: parseToolNames(env[ENV_NAMES.disallowedTools.name]),
     turnStepLimit:
       parsePositiveInteger(env[ENV_NAMES.turnStepLimit.name]) ?? DEFAULT_TURN_STEP_LIMIT,

@@ -13,7 +13,6 @@ describe("readConfig", () => {
       twCommand: undefined,
       claudeConfigDir: undefined,
       fixedClock: undefined,
-      reportSchema: "a2ui",
       disallowedTools: ["NotebookEdit", "Artifact", "ArtifactComments", "ArtifactData"],
       turnStepLimit: 200,
       inheritedEnv: {},
@@ -50,7 +49,6 @@ describe("readConfig", () => {
       TSUKUMO_FAKE_SESSION: " /somewhere/session.json ",
       TSUKUMO_TW: " /somewhere/fake-tw ",
       CLAUDE_CONFIG_DIR: " /somewhere/claude ",
-      TSUKUMO_REPORT_SCHEMA: " short-type ",
       TSUKUMO_DISALLOWED_TOOLS: " NotebookEdit, Artifact ",
       TSUKUMO_TURN_STEP_LIMIT: " 50 ",
     }
@@ -69,7 +67,6 @@ describe("readConfig", () => {
       twCommand: "/somewhere/fake-tw",
       claudeConfigDir: "/somewhere/claude",
       fixedClock: undefined,
-      reportSchema: "a2ui",
       disallowedTools: ["NotebookEdit", "Artifact"],
       turnStepLimit: 50,
       // 子プロセスへ引き継ぐ分は、読んだ環境をそのまま持つ
@@ -120,11 +117,4 @@ describe("readConfig", () => {
     expect(readConfig({ TSUKUMO_TURN_STEP_LIMIT: "0" }).turnStepLimit).toBe(200)
     expect(readConfig({ TSUKUMO_TURN_STEP_LIMIT: "たくさん" }).turnStepLimit).toBe(200)
   })
-
-  it.each([undefined, "json-schema", "short-type", "body-fence", " a2ui ", "json"])(
-    "report の入力の渡し方は、渡した値（%j）にかかわらず a2ui になる",
-    (value) => {
-      expect(readConfig({ TSUKUMO_REPORT_SCHEMA: value }).reportSchema).toBe("a2ui")
-    },
-  )
 })
