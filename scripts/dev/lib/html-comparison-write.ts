@@ -16,6 +16,7 @@ import { REPORT_REJECTION_MODES } from "../../../src/server/report/core/rules/re
 import { reportEvents } from "../../../src/server/session-driver/core/message/sdk-report-message.ts"
 import { EXPRESSIONS } from "../../../src/shared/character-pack/expression.ts"
 import { buildReportCatalogDocument } from "../../../src/shared/report/a2ui-report-catalog.ts"
+import { staticReportComponents } from "../../../src/shared/report/report-static-component-list.ts"
 import { A2UI_STRUCTURE_RULES } from "./a2ui-structure-rule.ts"
 import { extractComponents, judgeOutput } from "./a2ui-write-trial.ts"
 
@@ -174,7 +175,7 @@ function violationOf(
     conclusion: report.conclusion,
     conclusionSentenceChars: report.conclusionSentenceChars,
     keyFigures: report.keyFigures,
-    components: report.components,
+    components: staticReportComponents(report.components).components,
     favor: report.favor,
     checks: report.checks,
     fileContents: new Map(),

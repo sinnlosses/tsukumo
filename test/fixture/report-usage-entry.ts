@@ -22,6 +22,8 @@ export function reportUsageEntry(
     containedNotations: [],
     escapeNotations: [],
     componentNames: ["Table", "Markdown"],
+    parameterCount: 0,
+    expressionPropCount: 0,
     markdownNotationKinds: ["quote"],
     unknownBlockCount: 0,
     brokenFenceCount: 0,

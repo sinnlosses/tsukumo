@@ -9,6 +9,7 @@ import {
   EXPRESSIONS,
 } from "../../../../fixture/sdk-assistant-message.ts"
 import { REPORT_TOOL_FULL_NAME } from "../../../../fixture/sdk-message.ts"
+import { staticOf } from "../../../../fixture/static-component-list.ts"
 
 describe("toSessionEvents（report ツール）", () => {
   it("メインの report の呼び出しはレポートにする（ツールの開始にはしない。文字列の body は逃げ道の部品1つのセクションに畳む）", () => {
@@ -179,7 +180,7 @@ describe("toSessionEvents（report ツール）", () => {
         ]),
         EXPRESSIONS,
       )
-      return event?.kind === "report" ? reportFigureOf(event.components) : undefined
+      return event?.kind === "report" ? reportFigureOf(staticOf(event.components)) : undefined
     })
 
     const unrecorded = { kind: "none", reason: "unrecorded" }
@@ -296,7 +297,7 @@ describe("toSessionEvents（report ツール）", () => {
     const [event] = toSessionEvents(message, EXPRESSIONS)
     expect(
       event?.kind === "report" &&
-        reportOutline(event.components).sections.map((section) =>
+        reportOutline(staticOf(event.components)).sections.map((section) =>
           section.leaves.map((leaf) => leaf.component),
         ),
     ).toEqual([["Paragraph", "Code"]])
@@ -325,7 +326,7 @@ describe("toSessionEvents（report ツール）", () => {
     })
     expect(
       event?.kind === "report" &&
-        reportOutline(event.components).sections[0]?.leaves.map((leaf) => leaf.component),
+        reportOutline(staticOf(event.components)).sections[0]?.leaves.map((leaf) => leaf.component),
     ).toEqual(["Markdown", "Graph", "Code"])
   })
 

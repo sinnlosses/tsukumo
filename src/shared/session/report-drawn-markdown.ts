@@ -4,6 +4,7 @@ import type { DrawnReport } from "../report/report-drawn-outline.ts"
 import { drawnReportOf } from "../report/report-drawn-outline.ts"
 import type { ReportImageSource } from "../report/report-image-markdown.ts"
 import { type ReportLeafLayout, reportLeafLayoutOf } from "../report/report-leaf-value.ts"
+import { staticReportComponents } from "../report/report-static-component-list.ts"
 import type { SessionRecord } from "./session-record.ts"
 
 type ReportRecord = Extract<SessionRecord, { readonly kind: "report" }>
@@ -15,7 +16,11 @@ export type ReportDrawnPieces = {
 }
 
 export function reportDrawnPieces(report: ReportRecord): ReportDrawnPieces {
-  const drawn = drawnReportOf(report.components, report.conclusion, "whole")
+  const drawn = drawnReportOf(
+    staticReportComponents(report.components).components,
+    report.conclusion,
+    "whole",
+  )
   const layout = reportLeafLayoutOf(drawn.sections.map((section) => section.section))
   const imageSource = {
     kind: "shelved",

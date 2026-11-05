@@ -3,6 +3,7 @@
 import { isDeepEqual, omit } from "remeda"
 
 import { reportFigureOf, reportOutline } from "../../../../shared/report/report-outline.ts"
+import { staticReportComponents } from "../../../../shared/report/report-static-component-list.ts"
 import type { SessionEvent } from "../../../../shared/session/session-event.ts"
 import type { ReportDraft } from "../rules/draft.ts"
 
@@ -14,10 +15,11 @@ export function isSameReport(
   drawn: Extract<SessionEvent, { readonly kind: "report" }>,
   draft: ReportDraft,
 ): boolean {
+  const drawnComponents = staticReportComponents(drawn.components).components
   return (
     drawn.conclusion.trim() === draft.conclusion.trim() &&
-    isDeepEqual(figureContents(drawn.components), figureContents(draft.components)) &&
-    isDeepEqual(sectionContents(drawn.components), sectionContents(draft.components)) &&
+    isDeepEqual(figureContents(drawnComponents), figureContents(draft.components)) &&
+    isDeepEqual(sectionContents(drawnComponents), sectionContents(draft.components)) &&
     drawn.favor.trim() === draft.favor.trim() &&
     isDeepEqual(drawn.checks, draft.checks)
   )

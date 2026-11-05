@@ -60,6 +60,12 @@ describe("集計が読む記録の形", () => {
     expect(old.success).toBe(false)
   })
 
+  it("つまみと式の数の欄が無い行は 0 と読む", () => {
+    const old = recordSchema.safeParse({ v: 26, ...acceptedRow })
+
+    expect(old.success && [old.data.parameterCount, old.data.expressionPropCount]).toEqual([0, 0])
+  })
+
   it("版24までの行の旧い欄の名前（hasBeforeAfterOrImage）と塊の種類（beforeAfter）も、別の名前のまま読める", () => {
     const { hasComparisonOrImage: _renamed, ...rest } = acceptedRow
     const past = recordSchema.safeParse({

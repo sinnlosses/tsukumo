@@ -1,9 +1,7 @@
 // `ReportReview` の単体テストが共有する、手で書いた架空の下書き・イベントと、新しい事実の帳面を手で動かせる `ReportReview`。
 
-import {
-  createReportReview as createReviewWithNews,
-  type ReportReview,
-} from "../../src/server/report/core/review/report-review.ts"
+import type { ReportReview } from "../../src/server/report/core/review/report-review-type.ts"
+import { createReportReview as createReviewWithNews } from "../../src/server/report/core/review/report-review.ts"
 import type { ReportDraft } from "../../src/server/report/core/rules/draft.ts"
 import {
   REPORT_REJECTION_MODES,

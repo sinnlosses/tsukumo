@@ -7,6 +7,7 @@ import type { ExpressionChoice } from "../../../../shared/character-pack/express
 import { REPORT_COMPONENT_SCHEMAS } from "../../../../shared/report/a2ui-report-catalog.ts"
 import type { ReportArgumentField } from "../../../../shared/report/report-argument-size.ts"
 import { reportOutline, sectionLeaves } from "../../../../shared/report/report-outline.ts"
+import { staticReportComponents } from "../../../../shared/report/report-static-component-list.ts"
 import type { ReportTask } from "../../../../shared/report/report-task.ts"
 import type { FigurePreference } from "../../../../shared/session/session-default.ts"
 import { WORK_PLAN_CLOSINGS } from "../../../../shared/session/work-plan.ts"
@@ -81,15 +82,13 @@ export function reportTool(
         isError: true,
       }
     }
-    const fileContents = await readReportBlockFiles(
-      cwd,
-      sectionLeaves(reportOutline(report.components)),
-    )
+    const { components } = staticReportComponents(report.components)
+    const fileContents = await readReportBlockFiles(cwd, sectionLeaves(reportOutline(components)))
     const verdict = review.judgeReport({
       conclusion: report.conclusion,
       conclusionSentenceChars: report.conclusionSentenceChars,
       keyFigures: report.keyFigures,
-      components: report.components,
+      components,
       favor: report.favor,
       checks: report.checks,
       fileContents,

@@ -2,7 +2,7 @@
 
 import type { Expression } from "../character-pack/expression.ts"
 import type { ReactionKind } from "../recommendation/reaction.ts"
-import type { A2uiReportComponent } from "../report/a2ui-report-catalog.ts"
+import type { A2uiWrittenComponent } from "../report/a2ui-report-catalog.ts"
 import type { KeyFigures } from "../report/report-block-comparison.ts"
 import type { ReportChangeSummary } from "../report/report-change-summary.ts"
 import type { ReportCheck } from "../report/report-check.ts"
@@ -133,8 +133,8 @@ export type SessionRecord =
       readonly imageSizes: readonly ReportImageSize[]
       /** サーバが置き場に置けなかった・寸法を測れなかった画像のパス。描く側は最初から「出せない」の札にする。復元では置き直したときに埋まる。 */
       readonly unshelvedImages: readonly string[]
-      /** `a2ui` の版で受け付けた部品の一覧（旧い版では空）。 */
-      readonly components: readonly A2uiReportComponent[]
+      /** `a2ui` の版で受け付けた、書き手が書いたままの部品の一覧（旧い版では空）。 */
+      readonly components: readonly A2uiWrittenComponent[]
       /** 受け付けた時刻。最後の段の所要時間を閉じる端になる。 */
       readonly time: RecordTime
     }

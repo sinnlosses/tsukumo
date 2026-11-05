@@ -13,6 +13,7 @@ import {
   reportOutline,
   sectionLeaves,
 } from "../../../src/shared/report/report-outline.ts"
+import { staticReportComponents } from "../../../src/shared/report/report-static-component-list.ts"
 
 /** `table` の塊のうち、状態のセル（`{ status, text }`）を1つでも持つものに付ける印。 */
 const TABLE_WITH_STATUS = "table(status)"
@@ -40,7 +41,9 @@ export function sceneBlockKinds(session: FakeSession): ReadonlyMap<string, reado
       if (report === undefined || report.kind !== "report") {
         continue
       }
-      for (const leaf of sectionLeaves(reportOutline(report.components))) {
+      for (const leaf of sectionLeaves(
+        reportOutline(staticReportComponents(report.components).components),
+      )) {
         kinds.add(leafKindLabel(leaf))
       }
       if (report.checks.length > 0) {
@@ -68,7 +71,8 @@ export function revealForecast(session: FakeSession): ReadonlyMap<string, Reveal
       if (report === undefined || report.kind !== "report") {
         return []
       }
-      return [sumBy(sectionLeaves(reportOutline(report.components)), leafWeight)]
+      const { components } = staticReportComponents(report.components)
+      return [sumBy(sectionLeaves(reportOutline(components)), leafWeight)]
     })
     result.set(
       scene.name,

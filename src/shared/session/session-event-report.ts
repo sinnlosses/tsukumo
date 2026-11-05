@@ -1,6 +1,6 @@
 // セッションの出来事（`SessionEvent`）のうち、`report` ツールの呼び出しに関するものの型。
 
-import type { A2uiReportComponent } from "../report/a2ui-report-catalog.ts"
+import type { A2uiWrittenComponent } from "../report/a2ui-report-catalog.ts"
 import type { ReportArgumentChars, ReportArgumentField } from "../report/report-argument-size.ts"
 import type { KeyFigures } from "../report/report-block-comparison.ts"
 import type { ReportChangeCount } from "../report/report-change-summary.ts"
@@ -36,7 +36,7 @@ export type ReportEvent =
   | {
       readonly kind: "report-draft-component"
       readonly toolUseId: string
-      readonly component: A2uiReportComponent
+      readonly component: A2uiWrittenComponent
     }
   /**
    * `report` ツールの呼び出し。メインが呼んだものだけが届く（サブエージェントの呼び出しは変換で捨てる）。
@@ -45,7 +45,7 @@ export type ReportEvent =
    * `toolUseId` は呼び出しの id で、差し戻しが同じ呼び出しの `tool-finished` と突き合わせるのに使う。
    * `closing`（締めのセリフ）は描いたあとに差し戻しが `speech` として出すもので、画面の状態はこの欄を読まない。
    * `waitingLine`（待ちの一言）は記録に写り、依頼を待つ間に `shownReaction` が出す。
-   * `droppedCount` は部品の形に合わず境界で落とした部品の数（旧い版の呼び出しでは知らない種類で落とした塊の数）で、画面の状態は読まない。
+   * `droppedCount` は部品の形に合わず境界で落とした部品と、式を評価できず静的な一覧から外した部品（`components` には書いたまま残る）の数（旧い版の呼び出しでは知らない種類で落とした塊の数）で、画面の状態は読まない。
    * `brokenFenceCount` は `body` の型つきフェンスのうち読めずに素のコードブロックへ落とした数で、画面の状態は読まない。
    * `sessionSummary` はセッション全体の要約で、書かれていなければ undefined。レポートには描かず、切り替え画面が transcript から読み戻す。
    * `sessionRemaining`（残っていること）も同じく描かず、切り替え画面と始め方の一覧の「前回の続き」が transcript から読み戻す。
@@ -78,7 +78,8 @@ export type ReportEvent =
       readonly title: string | undefined
       readonly sessionSummary: string | undefined
       readonly sessionRemaining: SessionRemaining
-      readonly components: readonly A2uiReportComponent[]
+      /** 書き手が書いたままの部品の一覧（式・つまみ・`defs` を持つ）。初期値で評価した静的な一覧は `staticReportComponents` が作る。 */
+      readonly components: readonly A2uiWrittenComponent[]
       readonly imageSizes: readonly ReportImageSize[]
       readonly unshelvedImages: readonly string[]
     }

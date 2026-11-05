@@ -13,7 +13,6 @@ import {
   type ExprError,
   type ExprNode,
 } from "../../../../shared/report/report-expression-parse.ts"
-import { evaluationFaults } from "./expression-evaluation-fault.ts"
 import {
   componentParts,
   defPointer,
@@ -25,7 +24,8 @@ import {
   type A2uiExpressionFaultKind,
   type Defs,
   type Slot,
-} from "./expression-slot.ts"
+} from "../../../../shared/report/report-expression-slot.ts"
+import { evaluationFaults } from "./expression-evaluation-fault.ts"
 import { parameterFaults, unusedParameterFaults } from "./parameter-fault.ts"
 
 type SourceText = { readonly pointer: string; readonly node: ExprNode; readonly label: string }

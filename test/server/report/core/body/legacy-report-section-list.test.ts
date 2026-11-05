@@ -9,6 +9,7 @@ import { reportViolations } from "../../../../../src/server/report/core/rules/in
 import { drawnLeaves, reportOutline } from "../../../../../src/shared/report/report-outline.ts"
 import { draft } from "../../../../fixture/report-draft-block.ts"
 import { reportOfSections } from "../../../../fixture/report-event.ts"
+import { staticOf } from "../../../../fixture/static-component-list.ts"
 
 const text = (value: string): unknown => ({ kind: "text", text: value })
 const row = (blocks: readonly unknown[]): unknown => ({ kind: "row", blocks })
@@ -173,7 +174,7 @@ describe("row・panel の子への検査", () => {
     ])
 
     expect(
-      reportImagePaths(drawnLeaves(reportOutline(reportOfSections(sections).components))),
+      reportImagePaths(drawnLeaves(reportOutline(staticOf(reportOfSections(sections).components)))),
     ).toEqual(["架空/画面.png"])
   })
 })

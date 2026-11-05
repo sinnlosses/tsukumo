@@ -5,6 +5,7 @@
 
 import { LEAF_COMPONENT_KINDS } from "../../../../shared/report/a2ui-report-catalog.ts"
 import { reportOutline, sectionLeaves } from "../../../../shared/report/report-outline.ts"
+import { staticReportComponents } from "../../../../shared/report/report-static-component-list.ts"
 import {
   type ConversationMoment,
   conversationMoment,
@@ -291,7 +292,7 @@ function readingShapeOf(state: SessionState): ReadingShape {
   if (report === undefined) {
     return { bodyChars: 0, tableRate: 0, hasDiagram: false }
   }
-  const outline = reportOutline(report.components)
+  const outline = reportOutline(staticReportComponents(report.components).components)
   const leaves = sectionLeaves(outline)
   return {
     bodyChars: reportBodyChars(report),

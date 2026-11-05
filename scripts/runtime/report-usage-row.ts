@@ -65,6 +65,8 @@ export const recordSchema = z
     driver: z.enum(["sdk", "fake"]),
     componentNames: z.array(z.string()),
     markdownNotationKinds: z.array(z.string()),
+    parameterCount: z.number().default(0),
+    expressionPropCount: z.number().default(0),
     hasKeyFigures: z.boolean().optional(),
     conclusionNumbersWithoutKeyFigures: z.boolean().optional(),
   })

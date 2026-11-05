@@ -1,6 +1,7 @@
 // 駆動から届いたイベントが指す画像（`report` の画像の部品と、積まれた質問の preview）を置き場へ置く。
 
 import { drawnLeaves, reportOutline } from "../../../../shared/report/report-outline.ts"
+import { staticReportComponents } from "../../../../shared/report/report-static-component-list.ts"
 import type { SessionEvent } from "../../../../shared/session/session-event.ts"
 import type { SessionState } from "../../../../shared/session/session-state.ts"
 import { questionImagePaths } from "../../../report/core/image/question-image-path.ts"
@@ -26,7 +27,9 @@ export function shelveEventImages(
   if (event.kind === "report") {
     const { sizes, unshelved } = options.reportImageShelf.shelve(
       event.toolUseId,
-      reportImagePaths(drawnLeaves(reportOutline(event.components))),
+      reportImagePaths(
+        drawnLeaves(reportOutline(staticReportComponents(event.components).components)),
+      ),
       read,
     )
     return { ...event, imageSizes: sizes, unshelvedImages: unshelved }

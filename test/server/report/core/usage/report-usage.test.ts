@@ -454,6 +454,8 @@ describe("reportUsageEntryOf", () => {
       containedNotations: [],
       escapeNotations: [],
       componentNames: [],
+      parameterCount: 0,
+      expressionPropCount: 0,
       markdownNotationKinds: [],
       unknownBlockCount: 2,
       brokenFenceCount: 0,

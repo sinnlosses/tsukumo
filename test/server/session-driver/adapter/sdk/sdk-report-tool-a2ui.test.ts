@@ -24,6 +24,7 @@ import {
   WORK_MODE,
   workServer,
 } from "../../../../fixture/sdk-tool.ts"
+import { staticOf } from "../../../../fixture/static-component-list.ts"
 
 type ReportCalled = Extract<SessionEvent, { kind: "report" }>
 
@@ -104,10 +105,37 @@ describe("a2ui の report の受理と差し戻し", () => {
     const { reply, drawn } = await live.call(VALID)
 
     expect(reply).toEqual({ text: "架空の結論。", isError: false, endsTurn: true })
-    expect(reportOutline(drawn?.components ?? []).sections).toMatchObject([
+    expect(reportOutline(staticOf(drawn?.components ?? [])).sections).toMatchObject([
       { heading: "架空の節", leaves: [{ component: "Paragraph", text: "架空の本文。" }] },
     ])
     expect(drawn?.components).toHaveLength(VALID.length)
+  })
+
+  it("式を持つ一覧は、判定には初期値で評価した静的な一覧を渡し、イベントには書いたままの一覧を載せる", async () => {
+    const live = session()
+    const written = { call: "format", args: { template: "合計 ${n * 2} 件" } }
+
+    const { reply, drawn } = await live.call([
+      ROOT,
+      { id: "sec", component: "Section", heading: "架空の節", children: ["p", "sl"] },
+      { id: "p", component: "Paragraph", text: written },
+      {
+        id: "sl",
+        component: "ParameterSlider",
+        name: "n",
+        label: "件数",
+        min: 0,
+        max: 10,
+        step: 1,
+        initial: 3,
+      },
+    ])
+
+    expect(reply.isError).toBe(false)
+    expect(live.drafts[0]?.components.find((part) => part.id === "p")).toMatchObject({
+      text: "合計 6 件",
+    })
+    expect(drawn?.components.find((part) => part.id === "p")).toMatchObject({ text: written })
   })
 
   it("Section の入れ子は判定より先に VALIDATION_FAILED と JSON Pointer で差し戻し、記録の理由と欄に残す", async () => {
@@ -216,7 +244,7 @@ describe("a2ui の report の受理と差し戻し", () => {
         leaves: [{ component: "Paragraph", text: "架空の直した本文。" }],
       },
     ])
-    expect(reportOutline(resent.drawn?.components ?? []).sections).toMatchObject([
+    expect(reportOutline(staticOf(resent.drawn?.components ?? [])).sections).toMatchObject([
       { heading: "架空の直した節" },
     ])
   })

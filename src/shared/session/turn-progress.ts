@@ -1,7 +1,8 @@
 // ターンの始まり・続き・終わりが、進み具合と SDK ターンごとの持ち物（`SessionState` の `turn` など）をどう変えるか。
 
 import type { Expression } from "../character-pack/expression.ts"
-import type { A2uiReportComponent } from "../report/a2ui-report-catalog.ts"
+import type { A2uiReportComponent, A2uiWrittenComponent } from "../report/a2ui-report-catalog.ts"
+import { staticReportComponents } from "../report/report-static-component-list.ts"
 import type { ApiTrouble } from "../session-driver/api-trouble.ts"
 import type {
   TurnEnding,
@@ -49,13 +50,13 @@ export type ReportDrafting =
   | {
       readonly kind: "drafting"
       readonly toolUseId: string
-      readonly components: readonly A2uiReportComponent[]
-      readonly held: readonly A2uiReportComponent[]
+      readonly components: readonly A2uiWrittenComponent[]
+      readonly held: readonly A2uiWrittenComponent[]
     }
   | {
       readonly kind: "held"
       readonly toolUseId: string
-      readonly components: readonly A2uiReportComponent[]
+      readonly components: readonly A2uiWrittenComponent[]
     }
 
 /**
@@ -197,7 +198,7 @@ export function startReportDrafting(state: SessionState, toolUseId: string): Ses
       kind: "drafting",
       toolUseId,
       components: [],
-      held: draftComponentsOf(open.reportDrafting),
+      held: writtenDraftComponentsOf(open.reportDrafting),
     },
   }))
 }
@@ -206,7 +207,7 @@ export function startReportDrafting(state: SessionState, toolUseId: string): Ses
 export function addDraftComponent(
   state: SessionState,
   toolUseId: string,
-  component: A2uiReportComponent,
+  component: A2uiWrittenComponent,
 ): SessionState {
   return withOpenSdkTurn(state, (open) => {
     const drafting = open.reportDrafting
@@ -227,22 +228,17 @@ export function holdReportDrafting(state: SessionState, toolUseId: string): Sess
   return drafting.kind === "drafting" && drafting.toolUseId === toolUseId
     ? withOpenSdkTurn(state, (open) => ({
         ...open,
-        reportDrafting: { kind: "held", toolUseId, components: draftComponentsOf(drafting) },
+        reportDrafting: { kind: "held", toolUseId, components: writtenDraftComponentsOf(drafting) },
       }))
     : state
 }
 
-/** 草稿として描く部品。保留の部品を土台に、同じ `id` は書き直しのもので差し替え、新しい `id` は後ろに足す。 */
+/**
+ * 草稿として描く部品。書いたままの部品（{@link writtenDraftComponentsOf}）を初期値で評価した静的な一覧にする。
+ * 評価できない部品（まだ届いていない `defs` の名前を読む部品など）は出さず、あとの部品で評価できるようになった更新で出る。
+ */
 export function draftComponentsOf(drafting: ReportDrafting): readonly A2uiReportComponent[] {
-  if (drafting.kind !== "drafting") {
-    return drafting.kind === "held" ? drafting.components : []
-  }
-  const fresh = new Map(drafting.components.map((component) => [component.id, component]))
-  const heldIds = new Set(drafting.held.map((component) => component.id))
-  return [
-    ...drafting.held.map((component) => fresh.get(component.id) ?? component),
-    ...drafting.components.filter((component) => !heldIds.has(component.id)),
-  ]
+  return staticReportComponents(writtenDraftComponentsOf(drafting)).components
 }
 
 /** 開いている SDK のターンだけを書き換える。閉じていれば姿をそのまま返す。 */
@@ -276,6 +272,19 @@ export function bodiesOf(sdkTurn: SdkTurn): TurnBodies {
 /** 続きのターンが引き継ぐ始まりの時刻。まだ一度もターンが無ければ `at`。 */
 function runningStartedAt(turn: TurnProgress, at: number): number {
   return turn.kind === "idle" ? at : turn.startedAt
+}
+
+/** 草稿の書いたままの部品。保留の部品を土台に、同じ `id` は書き直しのもので差し替え、新しい `id` は後ろに足す。 */
+function writtenDraftComponentsOf(drafting: ReportDrafting): readonly A2uiWrittenComponent[] {
+  if (drafting.kind !== "drafting") {
+    return drafting.kind === "held" ? drafting.components : []
+  }
+  const fresh = new Map(drafting.components.map((component) => [component.id, component]))
+  const heldIds = new Set(drafting.held.map((component) => component.id))
+  return [
+    ...drafting.held.map((component) => fresh.get(component.id) ?? component),
+    ...drafting.components.filter((component) => !heldIds.has(component.id)),
+  ]
 }
 
 function toTurnFailure(cause: TurnFailureCause, trouble: ApiTrouble): TurnFailure {

@@ -17,7 +17,7 @@ import { REPORT_SCHEMA_VARIANTS } from "../../../core/schema-variant.ts"
  * 欄を足したら版を上げ、集計は `MIN_FORMAT_VERSION` より古い行を読まない。
  * 集計は版で分母を切らず、欄を記録した行を分母にする。
  */
-export const REPORT_USAGE_FORMAT_VERSION = 26 satisfies number
+export const REPORT_USAGE_FORMAT_VERSION = 27 satisfies number
 
 /** どの駆動で起こしたプロセスの行か（版19から）。`fake` は疑似セッションで、集計は既定で除く。 */
 const reportUsageDriverSchema = z.enum(["sdk", "fake"])
@@ -133,11 +133,15 @@ const acceptedFields = reportShapeTagUsageSchema.unwrap().extend({
   mermaidKinds: z.array(z.string()).readonly(),
   /** その回に使った `a2ui` の部品の名前（重複無し。`a2ui` 以外の渡し方では空。版24から）。 */
   componentNames: z.array(z.string()).readonly(),
+  /** その回に置いたつまみの数（版27から。欄の無い行は 0 と読む）。 */
+  parameterCount: z.number(),
+  /** その回の式を値に持つ props の数（版27から。欄の無い行は 0 と読む）。 */
+  expressionPropCount: z.number(),
   /** その回の `Markdown` の部品の中身に出た記法の種類（重複無し。容れ物の内外を問わない。版24から）。 */
   markdownNotationKinds: z.array(z.string()).readonly(),
   /** どの駆動で起こしたプロセスの行か（版19から）。 */
   driver: reportUsageDriverSchema,
-  /** 知らない種類で境界で落とした塊の数。 */
+  /** 知らない種類で境界で落とした塊と、式を評価できず静的な一覧から外した部品の数。 */
   unknownBlockCount: z.number(),
   /** `body` の型つきフェンスのうち、読めずに素のコードブロックへ落としたものの数（版23から）。 */
   brokenFenceCount: z.number(),

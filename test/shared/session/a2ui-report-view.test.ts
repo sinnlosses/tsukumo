@@ -8,6 +8,7 @@ import type { MainViewReportRegions } from "../../../src/shared/session/main-vie
 import type { SessionEvent } from "../../../src/shared/session/session-event.ts"
 import { applySessionEvent } from "../../../src/shared/session/session-fold.ts"
 import { INITIAL_SESSION_STATE } from "../../../src/shared/session/session-state.ts"
+import { staticOf } from "../../fixture/static-component-list.ts"
 
 type ReportEvent = Extract<SessionEvent, { readonly kind: "report" }>
 
@@ -188,7 +189,7 @@ describe("a2ui の版の記録の本文", () => {
     )
     const withoutFigure = reportOf({ components: parts })
     const { a2ui } = regionsOf(withoutFigure)
-    expect(reportFigureOf(withoutFigure.components)).toEqual({
+    expect(reportFigureOf(staticOf(withoutFigure.components))).toEqual({
       kind: "none",
       reason: "short-answer",
     })

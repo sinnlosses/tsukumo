@@ -110,6 +110,8 @@ describe("createReportUsageLog", () => {
       "containedNotations",
       "escapeNotations",
       "componentNames",
+      "parameterCount",
+      "expressionPropCount",
       "markdownNotationKinds",
       "unknownBlockCount",
       "brokenFenceCount",

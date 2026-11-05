@@ -19,7 +19,7 @@ import {
   type Parameter,
   type Shape,
   type Slot,
-} from "./expression-slot.ts"
+} from "../../../../shared/report/report-expression-slot.ts"
 
 type Config = { readonly params: ExprParams; readonly label: string }
 

@@ -11,6 +11,7 @@ import type {
 } from "../../../../shared/report/report-argument-size.ts"
 import { tableRowCells } from "../../../../shared/report/report-block-comparison.ts"
 import type { ReportCheck } from "../../../../shared/report/report-check.ts"
+import { componentParts, slotsOf } from "../../../../shared/report/report-expression-slot.ts"
 import {
   comparisonSidesOf,
   drawnLeaves,
@@ -20,6 +21,7 @@ import {
   reportOutline,
   sectionLeaves,
 } from "../../../../shared/report/report-outline.ts"
+import { staticReportComponents } from "../../../../shared/report/report-static-component-list.ts"
 import type { ReportGenre, ReportTaskOutcome } from "../../../../shared/report/report-task.ts"
 import type { ToolErrorField } from "../../../../shared/report/tool-error-field.ts"
 import type { SessionEvent } from "../../../../shared/session/session-event.ts"
@@ -36,6 +38,7 @@ import {
 } from "../rules/prose/notation.ts"
 import type { ReportRejectionMode } from "../rules/rejection-mode.ts"
 import type { ReportFigureUsage, ReportShapeTagUsage } from "./report-usage-record.ts"
+import { emphasisCountOf, hasSourceReference } from "./report-usage-text.ts"
 
 type ReportLeafKind = (typeof LEAF_COMPONENT_KINDS)[keyof typeof LEAF_COMPONENT_KINDS]
 
@@ -86,6 +89,10 @@ export type ReportUsageEntry = ReportVerifyUsage &
     readonly escapeNotations: readonly EscapeNotation[]
     /** その回に使った `a2ui` の部品の名前（重複無し）。 */
     readonly componentNames: readonly ReportComponentName[]
+    /** その回に置いたつまみ（`ParameterSlider`・`ParameterCheckBox`）の数。書き手が書いたままの一覧で数える。 */
+    readonly parameterCount: number
+    /** その回の式（`expr`・`format` の呼び出し）を値に持つ props の数。書き手が書いたままの一覧で数える。 */
+    readonly expressionPropCount: number
     /** その回の `Markdown` の部品の中身に出た記法の種類（重複無し）。 */
     readonly markdownNotationKinds: readonly string[]
     readonly unknownBlockCount: number
@@ -225,10 +232,11 @@ export function reportUsageEntryOf(
   at: number,
   mainReadImageFile: boolean,
 ): ReportUsageEntry {
-  const outline = reportOutline(event.components)
+  const { components } = staticReportComponents(event.components)
+  const outline = reportOutline(components)
   const drawn = drawnLeaves(outline)
   const own = sectionLeaves(outline)
-  const figure = reportFigureOf(event.components)
+  const figure = reportFigureOf(components)
   return {
     at,
     sessionId,
@@ -248,6 +256,10 @@ export function reportUsageEntryOf(
     containedNotations: containedNotationsInSections(outline),
     escapeNotations: escapeNotationsInSections(outline),
     componentNames: [...new Set(event.components.map((part) => part.component))],
+    parameterCount: event.components.filter(
+      (part) => part.component === "ParameterSlider" || part.component === "ParameterCheckBox",
+    ).length,
+    expressionPropCount: slotsOf(componentParts(event.components)).length,
     markdownNotationKinds: notationKindsInMarkdowns(
       event.components.flatMap((part) => (part.component === "Markdown" ? [part.markdown] : [])),
     ),
@@ -292,80 +304,6 @@ export function isMainImageFileRead(
   }
   const path = event.input.file_path.toLowerCase()
   return IMAGE_FILE_EXTENSIONS.some((extension) => path.endsWith(extension))
-}
-
-const SOURCE_REFERENCE = /https?:\/\/\S|[\w./-]+\.\w+:\d+/
-
-function hasSourceReference(leaf: ReportOutlineLeaf): boolean {
-  return leaf.component === "Code"
-    ? leaf.path.trim() !== ""
-    : writtenTextsOf(leaf).some((text) => SOURCE_REFERENCE.test(text))
-}
-
-function writtenTextsOf(leaf: ReportOutlineLeaf): readonly string[] {
-  switch (leaf.component) {
-    case "Paragraph":
-    case "Note":
-      return [leaf.text]
-    case "ItemList":
-      return leaf.items.map((item) => item.text)
-    case "Table":
-      return leaf.rows.flatMap((row) =>
-        tableRowCells(row).flatMap((cell) =>
-          typeof cell === "string"
-            ? [cell]
-            : "from" in cell
-              ? [cell.from, cell.to]
-              : "tag" in cell
-                ? [cell.tag]
-                : [cell.text],
-        ),
-      )
-    case "Markdown":
-      return [leaf.markdown]
-    default:
-      return []
-  }
-}
-
-const INLINE_CODE = /(`+)[\s\S]*?\1/g
-
-const EMPHASIS_PAIR = /\*\*[\s\S]+?\*\*/g
-
-function emphasisCountIn(text: string): number {
-  return text.replace(INLINE_CODE, "").match(EMPHASIS_PAIR)?.length ?? 0
-}
-
-function emphasisCountOf(leaf: ReportOutlineLeaf): number {
-  switch (leaf.component) {
-    case "Paragraph":
-      return emphasisCountIn(leaf.text)
-    case "ItemList":
-      return leaf.items.reduce(
-        (total, item) => total + emphasisCountIn(item.text) + emphasisCountIn(item.branch),
-        0,
-      )
-    case "Table":
-      return leaf.rows.reduce(
-        (total, row) =>
-          total +
-          tableRowCells(row).reduce(
-            (rowTotal, cell) =>
-              rowTotal +
-              (typeof cell === "string"
-                ? emphasisCountIn(cell)
-                : "from" in cell
-                  ? emphasisCountIn(cell.from) + emphasisCountIn(cell.to)
-                  : "tag" in cell
-                    ? emphasisCountIn(cell.tag)
-                    : emphasisCountIn(cell.text)),
-            0,
-          ),
-        0,
-      )
-    default:
-      return 0
-  }
 }
 
 function graphCountsOf(

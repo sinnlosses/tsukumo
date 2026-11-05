@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import { createReportDraftIntake } from "../../../../../src/server/report/core/body/draft-component-intake.ts"
-import { a2uiReportComponentSchema } from "../../../../../src/shared/report/a2ui-report-catalog.ts"
+import { a2uiWrittenComponentSchema } from "../../../../../src/shared/report/a2ui-report-catalog.ts"
 import type { SessionEvent } from "../../../../../src/shared/session/session-event.ts"
 
 const REPORT_NAME = "mcp__tsukumo__report"
@@ -40,7 +40,7 @@ function expected(components: readonly unknown[]): readonly SessionEvent[] {
   return components.map((component) => ({
     kind: "report-draft-component",
     toolUseId: "toolu_r1",
-    component: a2uiReportComponentSchema.parse(component),
+    component: a2uiWrittenComponentSchema.parse(component),
   }))
 }
 

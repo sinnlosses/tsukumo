@@ -146,6 +146,8 @@ function toRecord(entry: ReportUsageEntry, reportSchema: ReportSchemaVariant): R
     containedNotations: entry.containedNotations,
     escapeNotations: entry.escapeNotations,
     componentNames: entry.componentNames,
+    parameterCount: entry.parameterCount,
+    expressionPropCount: entry.expressionPropCount,
     markdownNotationKinds: entry.markdownNotationKinds,
     unknownBlockCount: entry.unknownBlockCount,
     brokenFenceCount: entry.brokenFenceCount,

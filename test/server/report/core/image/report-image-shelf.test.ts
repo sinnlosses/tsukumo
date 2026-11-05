@@ -15,6 +15,7 @@ import type { SessionRecord } from "../../../../../src/shared/session/session-re
 const SHELF_LIMIT_BYTES = 64 * 1024 * 1024
 import { reportOfSections } from "../../../../fixture/report-event.ts"
 import { reportRecord, requestRecord } from "../../../../fixture/session-record.ts"
+import { staticOf } from "../../../../fixture/static-component-list.ts"
 
 // 画像は架空のバイト列（実物の画像は使わない）。
 function fictionalImage(bytes: number): ReportImage {
@@ -22,7 +23,7 @@ function fictionalImage(bytes: number): ReportImage {
 }
 
 function leavesOf(sections: readonly ReportBlockSection[]) {
-  return drawnLeaves(reportOutline(reportOfSections(sections).components))
+  return drawnLeaves(reportOutline(staticOf(reportOfSections(sections).components)))
 }
 
 function imageSections(...paths: readonly string[]): readonly ReportBlockSection[] {

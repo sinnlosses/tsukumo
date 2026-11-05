@@ -253,6 +253,21 @@ export const a2uiReportComponentSchema = z.discriminatedUnion("component", [
 
 export type A2uiReportComponent = z.infer<typeof a2uiReportComponentSchema>
 
+/**
+ * 書き手が書いた部品 1 つの受理の形（式・つまみ・`defs` を持つ）。
+ * 初期値で評価した静的な一覧にする前の形で、{@link a2uiReportComponentSchema} はその後の形。
+ */
+export const a2uiWrittenComponentSchema = z.discriminatedUnion("component", [
+  writtenReportComponentSchema,
+  sectionComponentSchema,
+  ...Object.values(WRITTEN_LEAF_COMPONENTS),
+  parameterSliderSchema,
+  parameterCheckBoxSchema,
+  ...Object.values(BASIC_PART_SCHEMAS),
+])
+
+export type A2uiWrittenComponent = z.infer<typeof a2uiWrittenComponentSchema>
+
 const CATALOG_ID = "https://tsukumo.example/catalogs/report/v1"
 
 /** AI に渡し、`Catalog.fromJson` に読ませるカタログ文書（自作分は zod から出し、基本の 6 部品は定数）。 */

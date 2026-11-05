@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest"
 import type {
   ReportReview,
   ReportVerdict,
-} from "../../../../../src/server/report/core/review/report-review.ts"
+} from "../../../../../src/server/report/core/review/report-review-type.ts"
 import type { ReportDraft } from "../../../../../src/server/report/core/rules/draft.ts"
 import { reportRejectionText } from "../../../../../src/server/report/core/rules/index.ts"
 import { reportViolations } from "../../../../../src/server/report/core/rules/index.ts"

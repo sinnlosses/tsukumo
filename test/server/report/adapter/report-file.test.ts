@@ -8,9 +8,10 @@ import { readReportBlockFiles } from "../../../../src/server/report/adapter/repo
 import type { ReportBlockSection } from "../../../../src/shared/report/report-block.ts"
 import { reportOutline, sectionLeaves } from "../../../../src/shared/report/report-outline.ts"
 import { reportOfSections } from "../../../fixture/report-event.ts"
+import { staticOf } from "../../../fixture/static-component-list.ts"
 
 const sectionsOf = (paths: readonly string[]) =>
-  sectionLeaves(reportOutline(reportOfSections(codeSections(paths)).components))
+  sectionLeaves(reportOutline(staticOf(reportOfSections(codeSections(paths)).components)))
 
 const codeSections = (paths: readonly string[]): readonly ReportBlockSection[] => [
   {

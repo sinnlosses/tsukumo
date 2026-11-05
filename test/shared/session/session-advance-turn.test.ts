@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 
+import { a2uiWrittenComponentSchema } from "../../../src/shared/report/a2ui-report-catalog.ts"
 import type { SessionEvent } from "../../../src/shared/session/session-event.ts"
 import { applySessionEvent } from "../../../src/shared/session/session-fold.ts"
 import { INITIAL_SESSION_STATE } from "../../../src/shared/session/session-state.ts"
@@ -287,6 +288,60 @@ describe("applySessionEvent（report を書いている間）", () => {
     it("届くたびに草稿が届いた順に伸びる", () => {
       expect(componentIds(apply(REQUEST, DRAFTING, SECTION_A))).toEqual(["a"])
       expect(componentIds(apply(REQUEST, DRAFTING, SECTION_A, SECTION_B))).toEqual(["a", "b"])
+    })
+
+    describe("式を持つ部品", () => {
+      const draftOf = (component: unknown): SessionEvent => ({
+        kind: "report-draft-component",
+        toolUseId: "toolu_r1",
+        component: a2uiWrittenComponentSchema.parse(component),
+      })
+      const SLIDER = draftOf({
+        id: "sl",
+        component: "ParameterSlider",
+        name: "n",
+        label: "件数",
+        min: 0,
+        max: 10,
+        step: 1,
+        initial: 3,
+      })
+      const FORMATTED = draftOf({
+        id: "p",
+        component: "Paragraph",
+        text: { call: "format", args: { template: "合計 ${n * 2} 件" } },
+      })
+      const textsOf = (state: ReturnType<typeof apply>) =>
+        draftComponentsOf(reportDraftingOf(state.sdkTurn)).map((part) =>
+          part.component === "Paragraph" ? part.text : part.id,
+        )
+
+      it("評価できる部品は初期値で出て、評価できない部品は出ない", () => {
+        expect(textsOf(apply(REQUEST, DRAFTING, FORMATTED))).toEqual([])
+        expect(textsOf(apply(REQUEST, DRAFTING, SLIDER))).toEqual(["件数: 3"])
+      })
+
+      it("読む名前のつまみがあとから届くと、次の更新で出る", () => {
+        expect(textsOf(apply(REQUEST, DRAFTING, FORMATTED, SLIDER))).toEqual([
+          "合計 6 件",
+          "件数: 3",
+        ])
+      })
+
+      it("差し戻された前の草稿の部品も、同じに静的になる", () => {
+        const rejected: SessionEvent = {
+          kind: "tool-finished",
+          toolUseId: "toolu_r1",
+          content: "架空の差し戻し",
+          isError: true,
+        }
+        const redrafting: SessionEvent = { kind: "report-drafting", toolUseId: "toolu_r2" }
+
+        expect(textsOf(apply(REQUEST, DRAFTING, SLIDER, FORMATTED, rejected, redrafting))).toEqual([
+          "件数: 3",
+          "合計 6 件",
+        ])
+      })
     })
 
     it("同じ id の再送では増えず、最初のものが残る", () => {

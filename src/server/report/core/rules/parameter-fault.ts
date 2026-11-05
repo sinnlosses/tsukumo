@@ -11,7 +11,7 @@ import {
   type A2uiExpressionFault,
   type Defs,
   type Parameter,
-} from "./expression-slot.ts"
+} from "../../../../shared/report/report-expression-slot.ts"
 
 const MAX_PARAMETERS = 4
 const MAX_SLIDER_STEPS = 101

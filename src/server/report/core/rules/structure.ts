@@ -8,9 +8,9 @@ import {
   LEAF_COMPONENT_KINDS,
   REPORT_COMPONENT_SCHEMAS,
 } from "../../../../shared/report/a2ui-report-catalog.ts"
+import type { A2uiExpressionFault } from "../../../../shared/report/report-expression-slot.ts"
 import { tableIdOfFilterPath, tableRowFilterTexts } from "../../../../shared/report/table-view.ts"
 import type { ToolErrorField } from "../../../../shared/report/tool-error-field.ts"
-import type { A2uiExpressionFault } from "./expression-slot.ts"
 import { expressionFaults } from "./expression-structure.ts"
 
 export type A2uiStructureFaultKind =
