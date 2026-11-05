@@ -24,7 +24,7 @@ import { parseJson } from "../../../shared/utils/parse-json.ts"
 import { isMissingFileError } from "./missing-file-error.ts"
 
 /** 日付だけで積むファイルの名前（`YYYY-MM-DD.jsonl`）。これ以外のファイルは対象にしない。 */
-const DATE_FILE_NAME = /^\d{4}-\d{2}-\d{2}\.jsonl$/
+export const DATE_FILE_NAME = /^\d{4}-\d{2}-\d{2}\.jsonl$/
 
 /** 1行を追記する。ディレクトリが無ければ作る。失敗したその回は諦めて次へ進む。書けたら true。 */
 export function appendJsonLine(path: string, record: unknown): boolean {

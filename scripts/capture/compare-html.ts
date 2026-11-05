@@ -16,6 +16,7 @@ import process from "node:process"
 import { pathToFileURL } from "node:url"
 import { parseArgs, promisify } from "node:util"
 
+import { parseDateKey } from "../../src/shared/diary/date-key.ts"
 import { positiveIntegerArgument } from "../shared/positive-integer-argument.ts"
 import { REPOSITORY_ROOT } from "../shared/repository-root.ts"
 import { MAIN_REGION_SELECTOR } from "./lib/capture-page.ts"
@@ -182,7 +183,7 @@ function readArguments(argv: readonly string[]): Arguments | undefined {
       values.scene === undefined ||
       values.topic === undefined ||
       values.date === undefined ||
-      !/^\d{4}-\d{2}-\d{2}$/u.test(values.date)
+      parseDateKey(values.date) === undefined
     ) {
       return undefined
     }

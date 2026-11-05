@@ -4,11 +4,10 @@
 import { useId, type ReactElement } from "react"
 
 import {
-  isSessionDefaultPermissionMode,
+  SESSION_DEFAULT_PERMISSION_MODES,
   type FigurePreference,
 } from "../../../../../shared/session/session-default.ts"
 import { EFFORT_PLACEHOLDER_VALUE } from "../../../../domain/effort-label.ts"
-import { PERMISSION_MODE_LABELS } from "../../../../domain/permission-mode-label.ts"
 import { REVEAL_SPEED_LABELS } from "../../../../domain/reveal-speed.ts"
 import {
   RunSettingName,
@@ -29,11 +28,6 @@ import styles from "./screen-nav-settings.module.css"
 export type ScreenNavSettingsProps = {
   readonly settings: ScreenNavSettings
 }
-
-/** 既定の吊り下げのカードに出す許可モード。「全部許す」は既定には選べないので落とす（帯の吊り下げのカードからはその都度選べる）。 */
-const SESSION_DEFAULT_PERMISSION_MODES = PERMISSION_MODE_LABELS.map(([value]) => value).filter(
-  isSessionDefaultPermissionMode,
-)
 
 const REVEAL_SPEED_OPTIONS = REVEAL_SPEED_LABELS.map(([value, label]): RunSettingSelectOption => ({
   value,

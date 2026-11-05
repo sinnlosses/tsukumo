@@ -5,21 +5,29 @@
 import { mkdirSync, rmSync } from "node:fs"
 import { join } from "node:path"
 
+import { z } from "zod"
+
 import { writeFileAtomic } from "../../adapter/lib/atomic-file.ts"
 import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
 
 /** 所在のファイルの権限（利用者だけが読み書きできる）。 */
 const INSTANCE_LOCATION_FILE_MODE = 0o600
 
+/** 所在のファイルの形。 */
+export const instanceLocationSchema = z.object({
+  pid: z.number().int().positive(),
+  port: z.number().int().min(0).max(65535),
+  url: z.string(),
+  cwd: z.string(),
+  /** 起動時の `git rev-parse HEAD`。読めなければ欠く（書かれない）ので、欠けも `undefined` の値で持つ。 */
+  head: z
+    .string()
+    .optional()
+    .transform((head) => head),
+})
+
 /** 動いている tsukumo の所在。 */
-export type InstanceLocation = {
-  readonly pid: number
-  readonly port: number
-  readonly url: string
-  readonly cwd: string
-  /** 起動時の `git rev-parse HEAD`。読めなければ欠く（書かれない）。 */
-  readonly head: string | undefined
-}
+export type InstanceLocation = Readonly<z.infer<typeof instanceLocationSchema>>
 
 /** 所在のファイルの置き場（ホームの下）。 */
 export function defaultInstanceLocationDir(): string {

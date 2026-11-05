@@ -4,8 +4,9 @@
 import { readdirSync, readFileSync, renameSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
+import { DATE_FILE_NAME } from "../../src/server/adapter/lib/jsonl.ts"
+
 const FAKE_SESSION_ID = "fake-session"
-const DATE_FILE_NAME = /^\d{4}-\d{2}-\d{2}\.jsonl$/
 
 export type PurgeCount = {
   readonly removed: number

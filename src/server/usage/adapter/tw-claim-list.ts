@@ -27,7 +27,8 @@ export type TwClaimsRunner = () => Promise<string | undefined>
 const CLAIMS_TTL_MS = 10_000
 const TW_CLAIMS_TIMEOUT_MS = 5000
 
-const claimsSchema = z.object({
+/** `tw status --claims` の出力（1行 JSON）の形。 */
+export const claimsSchema = z.object({
   claims: z.array(z.object({ task: z.string(), stage: z.string().nullable() })),
 })
 

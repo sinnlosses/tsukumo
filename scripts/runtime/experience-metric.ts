@@ -29,6 +29,7 @@ import {
   type Spread,
   summarizeExperienceMetric,
 } from "../../src/server/usage/core/experience/experience-metric-summary.ts"
+import { dateKeySchema } from "../../src/shared/diary/date-key.ts"
 import {
   SPLIT_DIVIDERS,
   type SplitDivider,
@@ -45,10 +46,7 @@ const FAKE_SESSION_ID = "fake-session"
 
 const optionsSchema = z.object({
   days: positiveIntegerArgument.default(DEFAULT_DAYS),
-  split: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/)
-    .optional(),
+  split: dateKeySchema.optional(),
 })
 
 const RANGE_LABEL = {
