@@ -1,0 +1,59 @@
+/* 書いている途中のレポート（草稿）の見せ方。 */
+
+/* ポン: 届いた塊を下から持ち上げて出す。少しだけ行き過ぎて戻る。 */
+.draft-pop {
+  animation: draft-pop 220ms cubic-bezier(0.2, 0.9, 0.3, 1.25) both;
+}
+@keyframes draft-pop {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* 次の部品を待つあいだの欄。2行分の薄い罫線を引き、左端から短い差し色の線が伸びては消える。 */
+.draft-slot {
+  position: relative;
+  height: 3.5em;
+  margin-top: var(--space-md);
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent calc(1.75em - 1px),
+    var(--rule-quiet) calc(1.75em - 1px),
+    var(--rule-quiet) 1.75em
+  );
+  background-size: 70% 100%;
+  background-repeat: no-repeat;
+}
+/* 伸びる線は幅ではなく scaleX で伸ばす（毎フレームの再レイアウトを起こさない）。 */
+.draft-slot::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: calc(1.75em - 4px);
+  width: 38%;
+  height: 2px;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--accent) 55%, transparent);
+  transform-origin: left center;
+  animation: draft-stroke 1.6s ease-in-out infinite;
+}
+@keyframes draft-stroke {
+  0% {
+    transform: scaleX(0);
+    opacity: 0.9;
+  }
+  70% {
+    transform: scaleX(1);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scaleX(1);
+    opacity: 0;
+  }
+}

@@ -10,6 +10,7 @@ import type { ReportTask } from "../../../../../../shared/report/report-task.ts"
 import {
   isInterimStep,
   type MainViewAction,
+  type MainViewDraft,
   type MainViewStep,
   type MainViewStepBody,
   type MainViewTurn,
@@ -27,6 +28,8 @@ import { revealStepIdOf } from "./domain/draft-reveal.ts"
 import { REPORT_STEP_ATTRIBUTE } from "./domain/outline-report-head.ts"
 import { REPORT_DRAFT_ATTRIBUTE } from "./domain/report-heading.ts"
 import { arrangeTurn, progressFoldSummary, type ProgressEntry } from "./domain/turn-arrangement.ts"
+import { DRAFT_SLOT_ATTRIBUTE, useDraftPen } from "./hooks/use-draft-pen.ts"
+import { useDraftPop } from "./hooks/use-draft-pop.ts"
 import styles from "./main-view.module.css"
 import { QuestionRecord } from "./question-record.tsx"
 import { ReportHead, type ReportLabel } from "./report-head.tsx"
@@ -127,14 +130,13 @@ export function Turn(props: TurnProps): ReactElement {
             </>
           )}
           {/* `key` を `toolUseId` にするので、書いている途中の部品から記録の部品へ移っても面を作り直さない。 */}
-          {turn.drafts.map((draft) => (
-            <section
+          {turn.drafts.map((draft, index) => (
+            <DraftReport
+              draft={draft}
+              turnId={turn.id}
+              waiting={index === turn.drafts.length - 1}
               key={`draft:${draft.toolUseId}`}
-              className={clsx(styles["main-step"], styles["is-interim"])}
-              {...{ [REPORT_DRAFT_ATTRIBUTE]: "" }}
-            >
-              <Report body={draft.regions} reveal={false} turnId={turn.id} className="" />
-            </section>
+            />
           ))}
           {arrangement.kind === "arrival" && arrangement.asides.length > 0 && (
             <AsideThread asides={arrangement.asides} newest={props.newest} />
@@ -142,6 +144,41 @@ export function Turn(props: TurnProps): ReactElement {
         </VStack>
       )}
     </div>
+  )
+}
+
+type DraftReportProps = {
+  readonly draft: MainViewDraft
+  readonly turnId: number
+  /** 次の部品を待っている草稿か（いちばん後ろの草稿）。待つあいだは末尾に罫線の欄を出す。 */
+  readonly waiting: boolean
+}
+
+/** 書いている途中のレポート。届いた塊をポンと出し（`useDraftPop`）、待つあいだはミニ立ち絵を次の欄に立たせる（`useDraftPen`）。 */
+function DraftReport(props: DraftReportProps): ReactElement {
+  const { draft } = props
+  const { ref, motion } = useDraftPop(draft.components, styles["draft-pop"])
+  const slotShown = motion && props.waiting
+  useDraftPen(
+    ref,
+    slotShown ? { kind: "on", turnId: props.turnId } : { kind: "off" },
+    draft.components.length,
+  )
+  return (
+    <section
+      ref={ref}
+      className={clsx(styles["main-step"], styles["is-interim"])}
+      {...{ [REPORT_DRAFT_ATTRIBUTE]: "" }}
+    >
+      <Report body={draft.regions} reveal={false} turnId={props.turnId} className="" />
+      {slotShown && (
+        <div
+          className={styles["draft-slot"]}
+          aria-hidden="true"
+          {...{ [DRAFT_SLOT_ATTRIBUTE]: "" }}
+        />
+      )}
+    </section>
   )
 }
 

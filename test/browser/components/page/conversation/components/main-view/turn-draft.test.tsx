@@ -3,8 +3,10 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { REPORT_STEP_ATTRIBUTE } from "../../../../../../../src/browser/components/page/conversation/components/main-view/domain/outline-report-head.ts"
 import { REPORT_DRAFT_ATTRIBUTE } from "../../../../../../../src/browser/components/page/conversation/components/main-view/domain/report-heading.ts"
+import { DRAFT_SLOT_ATTRIBUTE } from "../../../../../../../src/browser/components/page/conversation/components/main-view/hooks/use-draft-pen.ts"
 import { useDraftedReports } from "../../../../../../../src/browser/components/page/conversation/stores/drafted-report.ts"
 import { mainViewDraftOf } from "../../../../../../../src/browser/domain/main-view/a2ui-draft-view.ts"
+import { saveRevealSpeed } from "../../../../../../../src/browser/domain/reveal-speed.ts"
 import type { MainViewReportBody } from "../../../../../../../src/shared/session/main-view-shape.ts"
 import { INITIAL_SESSION_STATE } from "../../../../../../../src/shared/session/session-state.ts"
 import { STAGED_PARTS } from "../../../../../../fixture/a2ui-component.ts"
@@ -54,6 +56,23 @@ describe("Turn（report の草稿）", () => {
     expect(sections[1]?.hasAttribute(REPORT_DRAFT_ATTRIBUTE)).toBe(true)
     expect(sections[1]?.hasAttribute(REPORT_STEP_ATTRIBUTE)).toBe(false)
     expect(sections[1]?.textContent).toContain("架空の結論。")
+  })
+
+  it("次の部品を待つあいだは草稿の末尾に罫線の欄を出し、演出の速さが「切る」では出さない", () => {
+    putSession(INITIAL_SESSION_STATE)
+    const { container, unmount } = render(
+      <Turn turn={{ ...turn([]), drafts: [draft] }} newest freshReport={false} />,
+    )
+    expect(
+      container.querySelector(`[${REPORT_DRAFT_ATTRIBUTE}] > [${DRAFT_SLOT_ATTRIBUTE}]`),
+    ).not.toBeNull()
+    unmount()
+
+    saveRevealSpeed("off")
+    const off = render(<Turn turn={{ ...turn([]), drafts: [draft] }} newest freshReport={false} />)
+    localStorage.removeItem("tsukumo-reveal-speed:v1")
+
+    expect(off.container.querySelector(`[${DRAFT_SLOT_ATTRIBUTE}]`)).toBeNull()
   })
 
   it("ステップがまだ無くても草稿は描き、草稿が外れると面も消える", () => {

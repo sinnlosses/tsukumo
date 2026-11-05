@@ -77,6 +77,43 @@
     transform: translateY(-100%);
   }
 }
+/* 書いている途中のレポートで次の欄に立っているあいだ。
+   部品が届いて次の欄へ移るときは、横画の追従より長い間合いで滑る。 */
+.mini-portrait-drafting {
+  transition: transform var(--motion-base) cubic-bezier(0.3, 0.7, 0.3, 1);
+}
+/* 書く仕草の入れ物。立ち絵の高さいっぱいで、足元を軸に揺らす。 */
+.mini-portrait-pose {
+  height: 100%;
+  transform-origin: 50% 100%;
+}
+/* 待つあいだは左右に揺れて書く仕草をする。 */
+.mini-portrait-drafting .mini-portrait-pose {
+  animation: mini-portrait-scribble 0.55s ease-in-out infinite alternate;
+}
+@keyframes mini-portrait-scribble {
+  from {
+    transform: translateX(-4px) rotate(-4deg);
+  }
+  to {
+    transform: translateX(4px) rotate(4deg);
+  }
+}
+/* 部品が届いた瞬間に小さく跳ねる。揺れより後ろに置いて上書きする。 */
+.mini-portrait-drafting .mini-portrait-pose.mini-portrait-hop {
+  animation: mini-portrait-hop 260ms ease-out;
+}
+@keyframes mini-portrait-hop {
+  0% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-8px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
 /* 立ち絵は入れ物の高さいっぱい（幅は画の縦横比なり）。
 
    不透明でも小ささは変えず、姿を地・文字の両方から際立たせる（`--mini-portrait-opacity` を 1 にしたあとも縁取りは残す）。

@@ -1,10 +1,10 @@
 // 筆先に添うミニ立ち絵。レポートの上に出てよい唯一の立ち絵で、書いている様子を分身として見せる。
 //
 // キャラビューの立ち絵は消さない。こちらは明確に小さくして見分ける（縁取りと暈は `turn-card/mini-portrait.css`）。
-// `<Portrait>` は共有するが、4つの動き（呼吸・待っている間の移動・完了の反応・失敗でびくっ）は渡さない（ここが持つ動きは筆先への追従だけ）。
+// `<Portrait>` は共有するが、4つの動き（呼吸・待っている間の移動・完了の反応・失敗でびくっ）は渡さない（ここが持つ動きは筆先への追従と、書いている途中のレポートでの書く仕草だけ）。
 //
 // 出る条件は「その筆先が、いま出ているやり取りのものであること」。
-// 演出が掛かるのはいちばん新しいターンの最後の確定レポートが現れたときだけで、`prefers-reduced-motion: reduce` と過去のターンでは演出自体が走らないので、ここに同じ判定を書き足さなくても出ない。
+// 筆先を配るのは、いちばん新しいターンの最後の確定レポートの演出と、いちばん新しいターンの書いている途中のレポート（`useDraftPen`）だけで、`prefers-reduced-motion: reduce`・演出の速さ「切る」・過去のターンではどちらも配らないので、ここに同じ判定を書き足さなくても出ない。
 //
 // 書き上げたあとも消えない。筆先が `resting` になってその場に留まり、本文と一緒に転がる。
 // 座標が本文の入れ物の原点基準なので、`position: absolute` で置くだけで貼り付く。
@@ -29,6 +29,7 @@ import {
   type BrushTip,
 } from "../../../../../domain/reveal/brush-tip.ts"
 import { useSession } from "../../../../../stores/session.ts"
+import { playClassOnce } from "../../../../../utils/play-class-once.ts"
 import { Portrait } from "../../../../domain/portrait.tsx"
 import styles from "./main-view.module.css"
 
@@ -71,13 +72,16 @@ export function MiniPortrait(props: MiniPortraitProps): ReactElement | undefined
     <div className={styles["mini-portrait-floor"]}>
       {/* 位置は描画を通さず、筆先を購読して直に書く（描き直すのは出入りと間合いの class が変わるときだけ）。 */}
       <div className={followClassName(stance)} ref={followBrushTip}>
-        <Portrait
-          url={url}
-          altText={altText}
-          expression={MINI_EXPRESSION}
-          motion={undefined}
-          className={styles["mini-portrait-body"]}
-        />
+        {/* 書く仕草（揺れ・跳ね）を持つ入れ物。追従の位置（外の入れ物の transform）と別の要素にしないと、仕草が位置を上書きする。 */}
+        <div className={styles["mini-portrait-pose"]}>
+          <Portrait
+            url={url}
+            altText={altText}
+            expression={MINI_EXPRESSION}
+            motion={undefined}
+            className={styles["mini-portrait-body"]}
+          />
+        </div>
       </div>
     </div>
   )
@@ -97,21 +101,41 @@ function followClassName(stance: BrushStance): string {
 
 /** 追従の間合いを差し替える印。横画のあいだは素のままなので、そのときだけ undefined。 */
 function motionClassName(motion: BrushMotion): string | undefined {
-  if (motion === "resting") {
-    return styles["mini-portrait-resting"]
+  switch (motion) {
+    case "resting":
+      return styles["mini-portrait-resting"]
+    case "return":
+      return styles["mini-portrait-returning"]
+    case "drafting":
+      return styles["mini-portrait-drafting"]
+    case "sweep":
+      return undefined
   }
-  return motion === "return" ? styles["mini-portrait-returning"] : undefined
 }
 
 /**
  * 立ち絵の入れ物に付ける ref。筆先が変わるたびに置き方（{@link followTransform}）を書き、外れたら受け取りをやめる。
  * 間合いの class の切り替えは描き直しで、位置はここで入るが、どちらも同じ筆先の配りから同じフレームのうちに入る。
+ * 書いている途中のレポートで部品が届いたら（`arrivedCount` が増えたら）、仕草の入れ物を1回跳ねさせる。
  */
 function followBrushTip(element: HTMLDivElement): () => void {
+  let arrivedCount: number | undefined = undefined
   return subscribeBrushTip((tip) => {
-    if (tip !== undefined) {
-      element.style.transform = followTransform(tip)
+    if (tip === undefined) {
+      return
     }
+    element.style.transform = followTransform(tip)
+    const nextCount = tip.phase === "drafting" ? tip.arrivedCount : undefined
+    const pose = element.firstElementChild
+    if (
+      pose !== null &&
+      arrivedCount !== undefined &&
+      nextCount !== undefined &&
+      nextCount > arrivedCount
+    ) {
+      playClassOnce(pose, styles["mini-portrait-hop"])
+    }
+    arrivedCount = nextCount
   })
 }
 
@@ -130,6 +154,10 @@ function followTransform(tip: BrushTip): string {
   // 止まっているあいだは座標を使わない（右下の隅に付けるのは CSS の側）。
   if (tip.phase === "resting") {
     return "none"
+  }
+  // 次の欄では、欄の右端に右端を、欄の下端に足元を揃える（欄の罫線は左の7割だけなので、立つのは右の余白）。
+  if (tip.phase === "drafting") {
+    return `translate3d(${px(tip.x)}, ${px(tip.bottom)}, 0) translate(-100%, -100%)`
   }
   return `translate3d(${px(tip.x)}, ${px(tip.bottom)}, 0) translateY(-100%)`
 }

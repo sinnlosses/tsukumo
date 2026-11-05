@@ -51,6 +51,7 @@ type BrushPlace = {
  *
  * - `writing`: なぞっている最中。`stroke` はどの画かの印で、位置と同じ1つの値の中に持つ（画ごとに別の口で配ると、位置と種別がずれたフレームができる）
  * - `resting`: 書き終わってその場に残っている。位置は帯ではなく最後の行が終わったところ（帯の右端はその帯でいちばん長い行の右なので、短い行で終わる本文では右へ外れる）。次に書き始めるまで消えないので、なぞる画も持たない
+ * - `drafting`: 書いている途中のレポートで次の部品を待っている。位置は帯ではなく次の欄（`top` / `bottom` はその上端と下端、`x` はその右端）。`arrivedCount` はそれまでに届いた部品の数で、増えたら追従する側が跳ねる
  */
 export type BrushTip = BrushPlace & {
   /**
@@ -58,14 +59,18 @@ export type BrushTip = BrushPlace & {
    * 別のやり取りが出ているあいだ、座標の先には違う本文があるので、追従する側はここを見て引っ込む。
    */
   readonly turnId: number
-} & ({ readonly phase: "writing"; readonly stroke: BrushStroke } | { readonly phase: "resting" })
+} & (
+    | { readonly phase: "writing"; readonly stroke: BrushStroke }
+    | { readonly phase: "resting" }
+    | { readonly phase: "drafting"; readonly arrivedCount: number }
+  )
 
 export function publishBrushTip(next: BrushTip | undefined): void {
   useBrushTipStore.setState({ tip: next })
 }
 
 /**
- * 書いていた筆先を最後に配ったところに残す。演出が終わるときの落とし先で、使うのは本文の末尾が測れなかったときだけ。
+ * 書いていた筆先を最後に配ったところに残す。演出が終わるときの落とし先で、使うのは本文の末尾が測れなかったときと、書いている途中のレポートが外れたとき。
  * 書いていなければ何もしない（測れないまま終わった演出が、前に残した筆先を消さないようにする）。
  */
 export function restBrushTip(): void {
@@ -82,8 +87,8 @@ export function restBrushTip(): void {
   })
 }
 
-/** 追従の間合いを決める画の種別。書き終わって残っているあいだは `resting`。 */
-export type BrushMotion = BrushStroke | "resting"
+/** 追従の間合いを決める画の種別。書き終わって残っているあいだは `resting`、書いている途中のレポートで次の部品を待つあいだは `drafting`。 */
+export type BrushMotion = BrushStroke | "resting" | "drafting"
 
 /** 筆先のうち、位置を除いたもの。値が変わるのは画が切り替わるときと書き終わりだけ。 */
 export type BrushStance = {
@@ -119,5 +124,5 @@ type BrushTipState = {
 const useBrushTipStore = create<BrushTipState>()(() => ({ tip: undefined }))
 
 function stanceOf(tip: BrushTip): BrushStance {
-  return { turnId: tip.turnId, motion: tip.phase === "resting" ? "resting" : tip.stroke }
+  return { turnId: tip.turnId, motion: tip.phase === "writing" ? tip.stroke : tip.phase }
 }

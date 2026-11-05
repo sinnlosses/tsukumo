@@ -61,7 +61,7 @@ function miniImage(): HTMLElement | null {
 /** 置き方を持つ入れ物（`position: absolute` の `transform` に筆先の座標が入る）。 */
 function placement(): HTMLElement {
   const image = miniImage()
-  const node = image?.parentElement?.parentElement
+  const node = image?.closest(".mini-portrait")
   if (!(node instanceof HTMLElement)) {
     throw new Error("ミニ立ち絵の入れ物が見つからない")
   }
