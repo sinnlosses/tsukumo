@@ -4,6 +4,7 @@
 import type { ReactElement } from "react"
 
 import { type GaugeSpec, gaugeSpecSchema } from "../../../../../../../shared/report/plot-gauge.ts"
+import { parseJsonWith } from "../../../../../../../shared/utils/parse-json.ts"
 import styles from "./gauge-block.module.css"
 import { gaugeLayoutOf, percent } from "./gauge-layout.ts"
 
@@ -124,10 +125,5 @@ export function GaugeBlock(props: GaugeBlockProps): ReactElement {
 }
 
 function parseSpec(source: string): GaugeSpec | undefined {
-  try {
-    const parsed = gaugeSpecSchema.safeParse(JSON.parse(source))
-    return parsed.success ? parsed.data : undefined
-  } catch {
-    return undefined
-  }
+  return parseJsonWith(gaugeSpecSchema, source)
 }

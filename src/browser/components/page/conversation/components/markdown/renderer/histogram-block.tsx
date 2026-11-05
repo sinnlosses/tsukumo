@@ -7,6 +7,7 @@ import {
   type HistogramSpec,
   histogramSpecSchema,
 } from "../../../../../../../shared/report/plot-histogram.ts"
+import { parseJsonWith } from "../../../../../../../shared/utils/parse-json.ts"
 import { percent } from "./gauge-layout.ts"
 import { histogramLayoutOf } from "./histogram-layout.ts"
 import styles from "./plot-figure.module.css"
@@ -81,10 +82,5 @@ export function HistogramBlock(props: HistogramBlockProps): ReactElement {
 }
 
 function parseSpec(source: string): HistogramSpec | undefined {
-  try {
-    const parsed = histogramSpecSchema.safeParse(JSON.parse(source))
-    return parsed.success ? parsed.data : undefined
-  } catch {
-    return undefined
-  }
+  return parseJsonWith(histogramSpecSchema, source)
 }

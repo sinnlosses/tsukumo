@@ -1,5 +1,6 @@
 // `--stub-rpc` の値を読み、手続きの応答を差し替える範囲の判定を行う。
 
+import { parseJson } from "../../../src/shared/utils/parse-json.ts"
 import { positiveIntegerArgument } from "../../shared/positive-integer-argument.ts"
 
 /** 呼び出しの何回目か（1から数える）の閉区間。 */
@@ -28,10 +29,10 @@ export function readRpcStub(value: string): RpcStub | undefined {
   const atIndex = target.indexOf("@")
   const procedure = atIndex < 0 ? target : target.slice(0, atIndex)
   if (procedure === "") return undefined
-  if (atIndex < 0) return { procedure, range: undefined, body: body.value }
+  if (atIndex < 0) return { procedure, range: undefined, body }
 
   const range = readRange(target.slice(atIndex + 1))
-  return range === undefined ? undefined : { procedure, range, body: body.value }
+  return range === undefined ? undefined : { procedure, range, body }
 }
 
 const PROCEDURE_PATTERN = /^[A-Za-z][A-Za-z0-9]*(?:\.[A-Za-z][A-Za-z0-9]*)*$/
@@ -49,14 +50,6 @@ export function isStubbedCall(range: StubRange, callNumber: number): boolean {
 /** 手続き名（`a.b.c`）を `/rpc/` 以降の URL の道筋（`a/b/c`）に直す。 */
 export function rpcPathOf(procedure: string): string {
   return procedure.replaceAll(".", "/")
-}
-
-function parseJson(text: string): { readonly value: unknown } | undefined {
-  try {
-    return { value: JSON.parse(text) }
-  } catch {
-    return undefined
-  }
 }
 
 function readRange(text: string): StubRange | undefined {

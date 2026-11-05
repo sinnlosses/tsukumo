@@ -8,6 +8,7 @@ import process from "node:process"
 import { z } from "zod"
 
 import type { InstanceLocation } from "../../src/server/view-server/adapter/instance-location-file.ts"
+import { parseJsonWith } from "../../src/shared/utils/parse-json.ts"
 
 const instanceLocationSchema = z.object({
   pid: z.number().int().positive(),
@@ -23,8 +24,7 @@ const instanceLocationSchema = z.object({
 /** 所在のファイルを1つ読む。読めない・形が違うときは undefined。 */
 export function readInstanceLocation(path: string): InstanceLocation | undefined {
   try {
-    const parsed = instanceLocationSchema.safeParse(JSON.parse(readFileSync(path, "utf8")))
-    return parsed.success ? parsed.data : undefined
+    return parseJsonWith(instanceLocationSchema, readFileSync(path, "utf8"))
   } catch {
     return undefined
   }

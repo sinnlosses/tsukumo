@@ -7,6 +7,7 @@ import {
   type ScatterSpec,
   scatterSpecSchema,
 } from "../../../../../../../shared/report/plot-scatter.ts"
+import { parseJsonWith } from "../../../../../../../shared/utils/parse-json.ts"
 import { percent } from "./gauge-layout.ts"
 import styles from "./plot-figure.module.css"
 import { scatterLayoutOf } from "./scatter-layout.ts"
@@ -93,10 +94,5 @@ export function ScatterBlock(props: ScatterBlockProps): ReactElement {
 }
 
 function parseSpec(source: string): ScatterSpec | undefined {
-  try {
-    const parsed = scatterSpecSchema.safeParse(JSON.parse(source))
-    return parsed.success ? parsed.data : undefined
-  } catch {
-    return undefined
-  }
+  return parseJsonWith(scatterSpecSchema, source)
 }

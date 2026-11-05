@@ -6,6 +6,7 @@ import { useState, type ReactElement, type RefCallback } from "react"
 import { omit } from "remeda"
 import { z } from "zod"
 
+import { parseJsonWith } from "../../../../../../../shared/utils/parse-json.ts"
 import { mergeRefs } from "../../../domain/merge-ref.ts"
 import { useSeenOnce } from "../hooks/use-seen-once.ts"
 import { loadChart } from "./chart.ts"
@@ -59,10 +60,5 @@ export function ChartBlock(props: ChartBlockProps): ReactElement {
 }
 
 function heightOf(spec: string): number | undefined {
-  try {
-    const parsed = heightFieldSchema.safeParse(JSON.parse(spec))
-    return parsed.success ? parsed.data.tsukumo.height : undefined
-  } catch {
-    return undefined
-  }
+  return parseJsonWith(heightFieldSchema, spec)?.tsukumo.height
 }

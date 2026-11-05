@@ -8,6 +8,7 @@ import { parseArgs } from "node:util"
 
 import { z } from "zod"
 
+import { parseJsonWith } from "../../src/shared/utils/parse-json.ts"
 import { REPOSITORY_ROOT as ROOT } from "../shared/repository-root.ts"
 import { expandTemplate, replaceAll } from "./lib/rewrite-text.ts"
 
@@ -92,8 +93,7 @@ function expandFiles(template: string, valuesFile: string, out: string, overwrit
 }
 
 function parseEntries(json: string): readonly Record<string, string>[] {
-  const parsed = ENTRIES.safeParse(JSON.parse(json))
-  return parsed.success ? parsed.data : fail("--values は {名前: 文字列} の配列のJSONにする")
+  return parseJsonWith(ENTRIES, json) ?? fail("--values は {名前: 文字列} の配列のJSONにする")
 }
 
 function insideRepository(path: string): string {

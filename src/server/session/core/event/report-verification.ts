@@ -9,6 +9,7 @@ import type {
   VerificationStageResult,
 } from "../../../../shared/report/report-verification.ts"
 import type { SessionEvent } from "../../../../shared/session/session-event.ts"
+import { parseJson } from "../../../../shared/utils/parse-json.ts"
 import type { CheckRecordSource } from "../../../core/check-record-source.ts"
 
 export type ReportVerifier = {
@@ -76,14 +77,6 @@ function countOf(value: unknown): VerificationCount {
   return typeof value === "number" && Number.isFinite(value) && value >= 0
     ? { kind: "counted", tests: value }
     : { kind: "none" }
-}
-
-function parseJson(text: string): unknown {
-  try {
-    return JSON.parse(text)
-  } catch {
-    return undefined
-  }
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

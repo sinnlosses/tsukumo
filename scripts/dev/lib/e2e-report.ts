@@ -2,6 +2,8 @@
 
 import { resolve } from "node:path"
 
+import { parseJson } from "../../../src/shared/utils/parse-json.ts"
+
 type AssertionResult = {
   readonly status: "passed" | "failed" | "skipped"
   readonly fullName: string
@@ -24,7 +26,7 @@ export function foldE2eReport(playwrightJson: string | undefined): string {
 }
 
 function foldPlaywright(json: string | undefined): readonly FileResult[] {
-  const report = parseJson(json)
+  const report = json === undefined ? undefined : parseJson(json)
   if (!isRecord(report) || !Array.isArray(report.suites)) {
     return []
   }
@@ -84,17 +86,6 @@ function testDirectoryOf(report: Record<string, unknown>): string {
     return project.testDir
   }
   return typeof config.rootDir === "string" ? config.rootDir : ""
-}
-
-function parseJson(text: string | undefined): unknown {
-  if (text === undefined) {
-    return undefined
-  }
-  try {
-    return JSON.parse(text)
-  } catch {
-    return undefined
-  }
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

@@ -2,6 +2,8 @@
 
 import { relative } from "node:path"
 
+import { parseJson } from "../../../src/shared/utils/parse-json.ts"
+
 export type StageOutcome = {
   readonly name: string
   readonly status: number
@@ -115,14 +117,6 @@ export function parseFailedFiles(json: string, root: string): FailedFiles {
 /** 止められた段は数えない。 */
 function shouldStopRunningStages(finished: readonly StageOutcome[]): boolean {
   return finished.some((outcome) => outcome.status !== 0 && !outcome.stopped)
-}
-
-function parseJson(text: string): unknown {
-  try {
-    return JSON.parse(text)
-  } catch {
-    return undefined
-  }
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

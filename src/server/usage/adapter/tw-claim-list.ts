@@ -8,6 +8,8 @@ import { execFile } from "node:child_process"
 
 import { z } from "zod"
 
+import { parseJsonWith } from "../../../shared/utils/parse-json.ts"
+
 /** 着手中のタスクと、その最後の段（無ければ `undefined`）。 */
 export type OpenTask = { readonly taskId: string; readonly stage: string | undefined }
 
@@ -74,13 +76,8 @@ function parseOpenTask(output: string | undefined): OpenTask | undefined {
   if (output === undefined) {
     return undefined
   }
-  try {
-    const parsed = claimsSchema.safeParse(JSON.parse(output))
-    const [claim, ...rest] = parsed.success ? parsed.data.claims : []
-    return claim === undefined || rest.length > 0
-      ? undefined
-      : { taskId: claim.task, stage: claim.stage ?? undefined }
-  } catch {
-    return undefined
-  }
+  const [claim, ...rest] = parseJsonWith(claimsSchema, output)?.claims ?? []
+  return claim === undefined || rest.length > 0
+    ? undefined
+    : { taskId: claim.task, stage: claim.stage ?? undefined }
 }

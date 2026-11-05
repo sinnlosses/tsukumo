@@ -2,18 +2,16 @@
 
 import { z } from "zod"
 
+import { parseJsonWith } from "../../src/shared/utils/parse-json.ts"
+
 export type OpenClaimReading = "claimed" | "none" | "unreadable"
 
 const claimsSchema = z.object({ claims: z.array(z.object({ task: z.string() })) })
 
 export function readOpenClaim(output: string): OpenClaimReading {
-  try {
-    const parsed = claimsSchema.safeParse(JSON.parse(output))
-    if (!parsed.success) {
-      return "unreadable"
-    }
-    return parsed.data.claims.length > 0 ? "claimed" : "none"
-  } catch {
+  const parsed = parseJsonWith(claimsSchema, output)
+  if (parsed === undefined) {
     return "unreadable"
   }
+  return parsed.claims.length > 0 ? "claimed" : "none"
 }

@@ -3,6 +3,7 @@
 
 import { z } from "zod"
 
+import { parseJsonWith } from "../../../shared/utils/parse-json.ts"
 import {
   workflowEntriesSchema,
   type WorkflowEntry,
@@ -150,7 +151,7 @@ export async function readWorkflowEntries(port: TwConfigPort): Promise<readonly 
   if (outcome.kind === "missing" || outcome.exitCode !== 0) {
     return []
   }
-  const parsed = parseJsonAs(entriesOutputSchema, outcome.stdout)
+  const parsed = parseJsonWith(entriesOutputSchema, outcome.stdout)
   return parsed === undefined ? [] : parsed.entries
 }
 
@@ -180,23 +181,12 @@ function parseConfigSchema(
   if (outcome.exitCode !== 0) {
     return undefined
   }
-  return parseJsonAs(configSchemaSchema, outcome.stdout)
+  return parseJsonWith(configSchemaSchema, outcome.stdout)
 }
 
 function stepsOf(raw: unknown, fallback: readonly string[]): readonly string[] {
   const parsed = z.array(z.string()).safeParse(raw)
   return parsed.success ? parsed.data : fallback
-}
-
-function parseJsonAs<T>(schema: z.ZodType<T>, text: string): T | undefined {
-  let json: unknown
-  try {
-    json = JSON.parse(text)
-  } catch {
-    return undefined
-  }
-  const parsed = schema.safeParse(json)
-  return parsed.success ? parsed.data : undefined
 }
 
 function exitReasonOf(exitCode: number): string {
@@ -223,7 +213,7 @@ function foldConfig(
   if (outcome.exitCode !== 0) {
     return unavailable(place, "config-unreadable", exitReasonOf(outcome.exitCode))
   }
-  const config = parseJsonAs(configOutputSchema, outcome.stdout)
+  const config = parseJsonWith(configOutputSchema, outcome.stdout)
   if (config === undefined) {
     return unavailable(place, "config-unreadable", "tw config --json の出力が JSON として読めない")
   }
