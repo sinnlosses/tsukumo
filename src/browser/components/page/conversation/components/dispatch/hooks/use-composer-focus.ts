@@ -47,7 +47,11 @@ export function blurOnEscape(event: ComposerKey, surface: ComposerSurface | null
 
 /** メインビューを読んでいる・重なる面が開いている・別の入力欄に打っているあいだは、フォーカスを奪わない。 */
 function holdsFocusElsewhere(): boolean {
-  return isFocusWithinMainView() || isOverlayOpen() || isTypingElement(document.activeElement)
+  return (
+    isFocusWithinMainView(document.activeElement) ||
+    isOverlayOpen() ||
+    isTypingElement(document.activeElement)
+  )
 }
 
 function isTypingElement(element: Element | null): boolean {

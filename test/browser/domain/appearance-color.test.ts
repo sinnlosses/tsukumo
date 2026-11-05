@@ -1,15 +1,17 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import {
-  applyAppearanceColorOverride,
   changeAppearanceColor,
   DEFAULT_APPEARANCE_COLOR_OVERRIDE,
   loadAppearanceColorOverride,
-  readCurrentColor,
   saveAppearanceColorOverride,
   type AppearanceColorOverride,
   type HexColor,
 } from "../../../src/browser/domain/appearance-color.ts"
+import {
+  applyAppearanceColorOverride,
+  readCurrentColor,
+} from "../../../src/browser/stores/appearance-color-root.ts"
 import {
   MAX_BACKGROUND_VEIL,
   MIN_BACKGROUND_VEIL,

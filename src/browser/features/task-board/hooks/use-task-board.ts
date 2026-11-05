@@ -92,6 +92,10 @@ export function useTaskBoard(
       setConfirming({ kind: "task", taskId, request: taskRequest })
     },
     onJump: jumpTo,
+    onCopy: (id) => {
+      // 書けなかったとき（ウィンドウにフォーカスが無いなど）は何もしない。押し直せば済む。
+      void navigator.clipboard.writeText(id).catch(() => {})
+    },
     breadcrumb:
       chosen.kind === "jumped"
         ? { kind: "some", previousId: chosen.previousId, onBack: goBack }

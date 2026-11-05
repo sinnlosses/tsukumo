@@ -1,6 +1,6 @@
 // 使う人が変えられる3色（`ground` / `surface` / `ink`）を `localStorage` に持つ。
 // 既定値は `theme.css` の `:root` にしかないので、ここでは「上書きしない」を `undefined` で表し、JS 側に既定の16進を持たない。
-// 上書きが無いときの実際の色は `readCurrentColor` が `getComputedStyle(document.documentElement)` から読む。
+// 上書きが無いときの実際の色は、`:root` のトークンを読む側（`appearance-color-root`）が計算済みスタイルから読む。
 //
 // `localStorage` から読み戻す値・`<input type="color">` が渡す値のどちらも、型を確定させるのはここだけ。
 
@@ -44,7 +44,11 @@ const TOKEN_NAME = {
   surface: "--surface",
   ink: "--ink",
 } as const satisfies Record<AppearanceColorKey, string>
-const ACCENT_TOKEN_NAME = "--accent"
+const APPEARANCE_COLOR_KEYS = [
+  "ground",
+  "surface",
+  "ink",
+] as const satisfies readonly AppearanceColorKey[]
 /**
  * 背景の覆いの不透明度の下限を渡す先。
  * 読むのは `conversation-layout.module.css` の `.layout-ground` 1箇所で、パックが書いた `veil` とこの下限の大きいほうが効く。
@@ -74,40 +78,40 @@ export const loadAppearanceColorOverride: () => AppearanceColorOverride = prefer
 
 export const saveAppearanceColorOverride: (value: AppearanceColorOverride) => void = preference.save
 
+/** `:root` に差す1つのトークン。`value` が `undefined` なら差さずに外す（既定に戻す）。 */
+export type RootTokenWrite = {
+  readonly name: string
+  readonly value: string | undefined
+}
+
+/** 3色を `:root` のトークンへ差す内容。`undefined` は「上書きしない」＝ 既定に戻す。 */
+export function appearanceTokenWrites(value: AppearanceColorOverride): readonly RootTokenWrite[] {
+  return APPEARANCE_COLOR_KEYS.map((key) => ({ name: TOKEN_NAME[key], value: value[key] }))
+}
+
 /**
- * `document.documentElement` に反映する。`undefined` は「上書きしない」＝ 既定に戻す。
- *
- * 背景の覆いの下限（{@link backgroundVeilFloor}）も一緒に差し直す。
+ * 背景の覆いの下限を `:root` に差す内容。`shown` は3色を差したあとの、いま見えている `ground` と `ink`。
  * 下限はいまの `ground` と `ink` から決まるので、色を変えるたびに計算し直さないと、字を変えたあとに背景の上の本文が読めなくなる。
  */
-export function applyAppearanceColorOverride(value: AppearanceColorOverride): void {
-  setOrRemoveToken("ground", value.ground)
-  setOrRemoveToken("surface", value.surface)
-  setOrRemoveToken("ink", value.ink)
-  const ground = parseHexColor(readCurrentColor("ground"))
-  const ink = parseHexColor(readCurrentColor("ink"))
-  if (ground === undefined || ink === undefined) {
-    document.documentElement.style.removeProperty(BACKGROUND_VEIL_FLOOR_TOKEN_NAME)
-    return
+export function backgroundVeilFloorWrite(shown: ShownColors): RootTokenWrite {
+  const ground = parseHexColor(shown.ground)
+  const ink = parseHexColor(shown.ink)
+  return {
+    name: BACKGROUND_VEIL_FLOOR_TOKEN_NAME,
+    value:
+      ground === undefined || ink === undefined
+        ? undefined
+        : String(backgroundVeilFloor(ground, ink)),
   }
-  document.documentElement.style.setProperty(
-    BACKGROUND_VEIL_FLOOR_TOKEN_NAME,
-    String(backgroundVeilFloor(ground, ink)),
-  )
 }
 
-/** 今その色に見えている16進値。上書き中ならその値、無ければ `:root` の既定値。 */
-export function readCurrentColor(key: AppearanceColorKey): string {
-  return readToken(TOKEN_NAME[key])
+/** 今その色に見えている16進値を読むトークンの名前。 */
+export function appearanceTokenName(key: AppearanceColorKey): string {
+  return TOKEN_NAME[key]
 }
 
-/**
- * 今のキャラクターの色（`--accent`）。差し色が定義に無いパックの `<input type="color">` の初期値に使う。
- * パックが差した値、無ければ `theme.css` の `:root` の既定値が返る。
- */
-export function readAccentColor(): string {
-  return readToken(ACCENT_TOKEN_NAME)
-}
+/** 今のキャラクターの色のトークン。差し色が定義に無いパックの `<input type="color">` の初期値に使う。 */
+export const ACCENT_TOKEN_NAME = "--accent"
 
 /**
  * 1色を変えようとした結果。受け取らなかったときは理由を持つので、画面は黙って元の色に戻すのではなく、なぜ効かなかったかを出せる。
@@ -118,7 +122,7 @@ export type AppearanceColorChange =
   | { readonly kind: "invalid-color" }
   | { readonly kind: "low-contrast"; readonly key: "ground" | "ink" }
 
-/** 変えようとした色の相手側として比べる、今その色に見えている `ground` と `ink`（{@link readCurrentColor} の値）。 */
+/** 変えようとした色の相手側として比べる、今その色に見えている `ground` と `ink`。 */
 export type ShownColors = {
   readonly ground: string
   readonly ink: string
@@ -179,21 +183,9 @@ function backgroundVeilFloor(ground: HexColor, ink: HexColor): number {
   return MAX_BACKGROUND_VEIL
 }
 
-function readToken(name: string): string {
-  return getComputedStyle(document.documentElement).getPropertyValue(name).trim()
-}
-
 function parseHexColor(value: unknown): HexColor | undefined {
   const parsed = hexColorSchema.safeParse(value)
   return parsed.success ? parsed.data : undefined
-}
-
-function setOrRemoveToken(key: AppearanceColorKey, value: HexColor | undefined): void {
-  if (value === undefined) {
-    document.documentElement.style.removeProperty(TOKEN_NAME[key])
-  } else {
-    document.documentElement.style.setProperty(TOKEN_NAME[key], value)
-  }
 }
 
 /** WCAG 2.1 のコントラスト比（1〜21）。 */

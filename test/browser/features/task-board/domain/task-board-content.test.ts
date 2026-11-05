@@ -100,6 +100,7 @@ describe("boardContent", () => {
     filter: "all",
     run: () => {},
     onJump: () => {},
+    onCopy: () => {},
     breadcrumb: { kind: "none" },
     sort: { choices: {}, reasons: {} },
     onSortChoose: () => {},

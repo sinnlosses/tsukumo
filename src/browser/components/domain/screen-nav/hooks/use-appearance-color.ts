@@ -15,17 +15,19 @@
 import { useState } from "react"
 
 import {
-  applyAppearanceColorOverride,
   changeAppearanceColor,
   DEFAULT_APPEARANCE_COLOR_OVERRIDE,
   loadAppearanceColorOverride,
-  readCurrentColor,
   saveAppearanceColorOverride,
   type AppearanceColorChange,
   type AppearanceColorKey,
   type AppearanceColorOverride,
 } from "../../../../domain/appearance-color.ts"
 import { useDebouncedCallback } from "../../../../hooks/use-debounced-callback.ts"
+import {
+  applyAppearanceColorOverride,
+  readCurrentColor,
+} from "../../../../stores/appearance-color-root.ts"
 
 export type ScreenNavSettingsColor = {
   readonly key: AppearanceColorKey

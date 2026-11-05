@@ -46,6 +46,7 @@ type BoardContentInput = {
   readonly filter: TaskBoardFilter
   readonly run: (taskId: string, request: SingleTaskRequest) => void
   readonly onJump: (id: string) => void
+  readonly onCopy: (id: string) => void
   readonly breadcrumb: TaskBoardBreadcrumb
   readonly sort: DraftSortState
   readonly onSortChoose: (id: string, choice: DraftSortChoice) => void
@@ -186,8 +187,7 @@ function selectionOf(
     },
     breadcrumb: input.breadcrumb,
     onCopy: () => {
-      // 書けなかったとき（ウィンドウにフォーカスが無いなど）は何もしない。押し直せば済む。
-      void navigator.clipboard.writeText(task.id).catch(() => {})
+      input.onCopy(task.id)
     },
     onJump: input.onJump,
     opener: openerOf(task.location),

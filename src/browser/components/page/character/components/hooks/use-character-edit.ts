@@ -18,7 +18,7 @@ import { useState } from "react"
 import type { AccentTarget } from "../../../../../../shared/character-pack/character-definition.ts"
 import { resolveExpressionLabel } from "../../../../../../shared/character-pack/expression-choice.ts"
 import type { Expression } from "../../../../../../shared/character-pack/expression.ts"
-import { readAccentColor } from "../../../../../domain/appearance-color.ts"
+import { readAccentColor } from "../../../../../stores/appearance-color-root.ts"
 import { useRestartRefused, useSession } from "../../../../../stores/session.ts"
 import type { AccentSwatchModel } from "../../domain/accent-swatch-model.ts"
 import {

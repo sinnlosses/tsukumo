@@ -9,11 +9,9 @@ import { createRoot } from "react-dom/client"
 
 import { App } from "./app.tsx"
 import { loadMarkdown } from "./components/page/conversation/components/markdown/markdown.tsx"
-import {
-  applyAppearanceColorOverride,
-  loadAppearanceColorOverride,
-} from "./domain/appearance-color.ts"
+import { loadAppearanceColorOverride } from "./domain/appearance-color.ts"
 import { loadTaskBody } from "./features/task-board/components/deferred-task-body.tsx"
+import { applyAppearanceColorOverride } from "./stores/appearance-color-root.ts"
 import { reportBrowserError } from "./stores/browser-error-report.ts"
 // ページ全体の下地（トークン・body・リンク）。グローバルな CSS はこれだけ。
 import "./styles/theme.css"
