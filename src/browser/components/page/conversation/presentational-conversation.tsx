@@ -31,8 +31,10 @@ export function PresentationalConversation(props: PresentationalConversationProp
         character={<CharacterView />}
         dispatch={<Dispatch />}
         inquiry={!props.chatMode && <PendingAskCard />}
-        railBadge={!props.chatMode && <TaskDoingCount />}
-        railTools={<RunSettingGroup placement="rail" />}
+        rail={{
+          badge: !props.chatMode && <TaskDoingCount />,
+          tools: <RunSettingGroup placement="rail" />,
+        }}
         collapseCharacter={props.chatMode}
         mainAsGround={props.chatMode}
       />

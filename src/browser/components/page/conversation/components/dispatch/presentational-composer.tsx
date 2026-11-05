@@ -36,31 +36,25 @@ type PresentationalComposerProps = ComposerModel
 
 /**
  * props はここだけ分解して受ける。
- * ref を持つ入れ物を `props.surfaceRef` の形で描画中に読むと、lint の `react(refs)` が落ちるため。
+ * ref を持つ入れ物を `props.input.surfaceRef` の形で描画中に読むと、lint の `react(refs)` が落ちるため。
  */
 export function PresentationalComposer({
-  surfaceRef,
-  mode,
-  onToggleMode,
-  imageInputRef,
-  placeholder,
-  label,
+  input: { surfaceRef, placeholder, label, draft, onChange, onKeyDown },
+  modeSwitch: { mode, onToggle: onToggleMode },
+  suggestion: { suggestions, selectedIndex, onSelect: onSelectSuggestion },
+  promptImage: {
+    imageInputRef,
+    images,
+    onRemoveImage,
+    onPaste,
+    onDragOver,
+    onDrop,
+    onPickImages,
+    onImagesChosen,
+  },
   band,
   answering,
-  draft,
-  images,
-  suggestions,
-  selectedIndex,
-  onRemoveImage,
-  onSelectSuggestion,
-  onChange,
-  onKeyDown,
-  onPaste,
-  onDragOver,
-  onDrop,
   onSubmit,
-  onPickImages,
-  onImagesChosen,
   onInsertTrigger,
   newSession,
 }: PresentationalComposerProps): ReactElement {

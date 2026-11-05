@@ -57,29 +57,37 @@ type ComposerBand =
 
 /**
  * `<Composer>` が画面に出す形。
- * 画像まわりは `PromptImageModel` のまま（`reset` は container の中だけで使うので外へは出さない）。
  */
-export type ComposerModel = Omit<PromptImageModel, "reset"> & {
-  /** 入力欄のサーフェス。確定・送信のあとにフォーカスを戻し、キャレットを置き直す。 */
-  readonly surfaceRef: RefObject<ComposerSurface | null>
-  readonly mode: ComposerMode
-  /** 面を `<textarea>` とマークダウンエディタの間で切り替える。下書きはそのまま引き継ぐ。 */
-  readonly onToggleMode: () => void
-  readonly placeholder: string
-  /** 入力欄の名前（読み上げに伝わる。プレースホルダは名前の代わりにならない）。 */
-  readonly label: string
+export type ComposerModel = {
+  /** 入力欄の面（`<textarea>` かマークダウンエディタ）に渡すもの。 */
+  readonly input: {
+    /** 入力欄のサーフェス。確定・送信のあとにフォーカスを戻し、キャレットを置き直す。 */
+    readonly surfaceRef: RefObject<ComposerSurface | null>
+    readonly placeholder: string
+    /** 入力欄の名前（読み上げに伝わる。プレースホルダは名前の代わりにならない）。 */
+    readonly label: string
+    readonly draft: Draft
+    readonly onChange: (draft: Draft) => void
+    /** 処理した（面の既定の振る舞いへ流さない）なら true。 */
+    readonly onKeyDown: (event: ComposerKey) => boolean
+  }
+  readonly modeSwitch: {
+    readonly mode: ComposerMode
+    /** 面を `<textarea>` とマークダウンエディタの間で切り替える。下書きはそのまま引き継ぐ。 */
+    readonly onToggle: () => void
+  }
+  readonly suggestion: {
+    readonly suggestions: ActiveSuggestions
+    /** 候補の中で選んでいる位置（候補の件数に収めたもの）。 */
+    readonly selectedIndex: number
+    readonly onSelect: (index: number) => void
+  }
+  /** 画像まわりは `PromptImageModel` のまま（`reset` は container の中だけで使うので外へは出さない）。 */
+  readonly promptImage: Omit<PromptImageModel, "reset">
   /** `<textarea>` の上の帯（質問に答えている間だけ出る）。 */
   readonly band: ComposerBand
   /** 質問に答えている間か（枠を `--state-warn` にし、送るボタンの字を変える）。 */
   readonly answering: boolean
-  readonly draft: Draft
-  readonly suggestions: ActiveSuggestions
-  /** 候補の中で選んでいる位置（候補の件数に収めたもの）。 */
-  readonly selectedIndex: number
-  readonly onSelectSuggestion: (index: number) => void
-  readonly onChange: (draft: Draft) => void
-  /** 処理した（面の既定の振る舞いへ流さない）なら true。 */
-  readonly onKeyDown: (event: ComposerKey) => boolean
   readonly onSubmit: (event: { readonly preventDefault: () => void }) => void
   /** `/` / `@` のボタン。キャレットの位置にその文字を打ち、入力欄へフォーカスを戻す。 */
   readonly onInsertTrigger: (trigger: CompletionTrigger) => void
@@ -223,53 +231,61 @@ export function useComposer(): ComposerModel {
   }
 
   return {
-    ...promptImage,
-    surfaceRef,
-    mode,
-    onToggleMode: () => {
-      // 打たずに動かしたキャレットは下書きに入っていないので、いまの面から読んで次の面へ渡す。
-      setDraft({ text: draft.text, caret: surfaceRef.current?.caret() ?? draft.caret })
-      const next = mode === "plain" ? "markdown" : "plain"
-      setMode(next)
-      saveComposerMode(next)
+    input: {
+      surfaceRef,
+      placeholder:
+        inquiry.kind === "question"
+          ? answerPlaceholder(phone)
+          : composerPlaceholder(requestSubject),
+      label: inquiry.kind === "question" ? ANSWER_LABEL : REQUEST_LABEL,
+      draft,
+      onChange: (changed) => {
+        setDraft(changed)
+        if (sessionId !== undefined) {
+          saveDraftLater(sessionId, changed)
+        }
+        suggestion.reset()
+      },
+      onKeyDown: (event) => {
+        const composing = isComposingEvent(event)
+
+        if (!composing && suggestion.onKeyDown(event)) {
+          return true
+        }
+
+        if (!composing && blurOnEscape(event, surfaceRef.current)) {
+          return true
+        }
+
+        if (event.key !== "Enter" || composing || !event.metaKey) {
+          return false
+        }
+        event.preventDefault()
+        // 質問に答えている間はターンが進行中でも送れる（答えを待っているのは SDK のほう）。
+        if (!turnInProgress || inquiry.kind === "question") {
+          submit(event.shiftKey ? "new-request" : "aside-when-background")
+        }
+        return true
+      },
     },
-    placeholder:
-      inquiry.kind === "question" ? answerPlaceholder(phone) : composerPlaceholder(requestSubject),
-    label: inquiry.kind === "question" ? ANSWER_LABEL : REQUEST_LABEL,
+    modeSwitch: {
+      mode,
+      onToggle: () => {
+        // 打たずに動かしたキャレットは下書きに入っていないので、いまの面から読んで次の面へ渡す。
+        setDraft({ text: draft.text, caret: surfaceRef.current?.caret() ?? draft.caret })
+        const next = mode === "plain" ? "markdown" : "plain"
+        setMode(next)
+        saveComposerMode(next)
+      },
+    },
+    suggestion: {
+      suggestions: suggestion.suggestions,
+      selectedIndex: suggestion.selectedIndex,
+      onSelect: suggestion.onSelect,
+    },
+    promptImage,
     band: composerBand(),
     answering: inquiry.kind === "question",
-    draft,
-    suggestions: suggestion.suggestions,
-    selectedIndex: suggestion.selectedIndex,
-    onSelectSuggestion: suggestion.onSelect,
-    onChange: (changed) => {
-      setDraft(changed)
-      if (sessionId !== undefined) {
-        saveDraftLater(sessionId, changed)
-      }
-      suggestion.reset()
-    },
-    onKeyDown: (event) => {
-      const composing = isComposingEvent(event)
-
-      if (!composing && suggestion.onKeyDown(event)) {
-        return true
-      }
-
-      if (!composing && blurOnEscape(event, surfaceRef.current)) {
-        return true
-      }
-
-      if (event.key !== "Enter" || composing || !event.metaKey) {
-        return false
-      }
-      event.preventDefault()
-      // 質問に答えている間はターンが進行中でも送れる（答えを待っているのは SDK のほう）。
-      if (!turnInProgress || inquiry.kind === "question") {
-        submit(event.shiftKey ? "new-request" : "aside-when-background")
-      }
-      return true
-    },
     onSubmit: (event) => {
       event.preventDefault()
       if (turnInProgress && inquiry.kind !== "question") {

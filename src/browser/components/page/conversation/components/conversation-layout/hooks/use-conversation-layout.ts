@@ -22,32 +22,35 @@ import { DEFAULT_SPLIT, isDefaultSplit, loadSplit, saveSplit, type Split } from 
 // 柱を出す中くらいのビューポート幅の `@media` と同じ字にする。
 const RAIL_TIER_QUERY = "(min-width: 761px) and (max-width: 1100px)"
 
+/** 仕切り1本ぶん。`ref` と `style` は、その仕切りが比率を動かす領域の入れ物と、確定済みの比率の `style`。 */
+export type Splitter = {
+  readonly ref: RefObject<HTMLDivElement | null>
+  readonly style: CSSProperties
+  readonly onChange: (percent: number) => void
+  readonly onCommit: (percent: number) => void
+}
+
 export type UseConversationLayoutResult = {
-  readonly gridRef: RefObject<HTMLDivElement | null>
-  readonly rowTopRef: RefObject<HTMLDivElement | null>
-  readonly rowBottomRef: RefObject<HTMLDivElement | null>
-  /** 上段と下段の高さの比（畳んでいる間は雑談用の比に切り替わる）。 */
-  readonly gridStyle: CSSProperties
-  /** メインビューとサイドバーの幅の比。 */
-  readonly rowTopStyle: CSSProperties
-  /** キャラビューと入力欄の幅の比。 */
-  readonly rowBottomStyle: CSSProperties
-  readonly onTopLeftChange: (percent: number) => void
-  readonly onTopLeftCommit: (percent: number) => void
-  readonly onRowTopChange: (percent: number) => void
-  readonly onRowTopCommit: (percent: number) => void
-  readonly onBottomLeftChange: (percent: number) => void
-  readonly onBottomLeftCommit: (percent: number) => void
-  readonly onReset: () => void
-  /** 3本の比率と雑談の上下比が既定と1つでも違うか。「比率を既定に戻す」ピルを出すかの判定に使う。 */
-  readonly isSplitChanged: boolean
-  /** 柱とサイドバーを包む要素。この外を押すと、柱から開いたサイドバーが閉じる。 */
-  readonly sideRef: RefObject<HTMLDivElement | null>
-  readonly sidebarId: string
-  /** 中くらいのビューポート幅で、柱からサイドバーを重ねて開いているか。 */
-  readonly sidebarOpen: boolean
-  readonly onToggleSidebar: () => void
-  readonly sidebarToggleRef: RefCallback<HTMLButtonElement>
+  readonly splitters: {
+    /** メインビューとサイドバーの幅の比。 */
+    readonly topLeft: Splitter
+    /** 上段と下段の高さの比（畳んでいる間は雑談用の比に切り替わる）。 */
+    readonly rowTop: Splitter
+    /** キャラビューと入力欄の幅の比。 */
+    readonly bottomLeft: Splitter
+    readonly onReset: () => void
+    /** 3本の比率と雑談の上下比が既定と1つでも違うか。「比率を既定に戻す」ピルを出すかの判定に使う。 */
+    readonly isChanged: boolean
+  }
+  readonly sidebarDisclosure: {
+    /** 柱とサイドバーを包む要素。この外を押すと、柱から開いたサイドバーが閉じる。 */
+    readonly rootRef: RefObject<HTMLDivElement | null>
+    readonly id: string
+    /** 中くらいのビューポート幅で、柱からサイドバーを重ねて開いているか。 */
+    readonly open: boolean
+    readonly onToggle: () => void
+    readonly toggleRef: RefCallback<HTMLButtonElement>
+  }
 }
 
 /**
@@ -89,46 +92,56 @@ export function useConversationLayout(collapseCharacter: boolean): UseConversati
   const rowTopPercent = collapseCharacter ? (split.collapsedRowTop ?? split.rowTop) : split.rowTop
 
   return {
-    gridRef,
-    rowTopRef,
-    rowBottomRef,
-    gridStyle: fractionStyle(rowTopKey, rowTopPercent),
-    rowTopStyle: fractionStyle("topLeft", split.topLeft),
-    rowBottomStyle: fractionStyle("bottomLeft", split.bottomLeft),
-    onTopLeftChange: (percent) => {
-      writeFraction(rowTopRef.current, "topLeft", percent)
+    splitters: {
+      topLeft: {
+        ref: rowTopRef,
+        style: fractionStyle("topLeft", split.topLeft),
+        onChange: (percent) => {
+          writeFraction(rowTopRef.current, "topLeft", percent)
+        },
+        onCommit: (percent) => {
+          reportSplitRelease("topLeft", percent, split.topLeft)
+          commitSplit((current) => ({ ...current, topLeft: percent }))
+        },
+      },
+      rowTop: {
+        ref: gridRef,
+        style: fractionStyle(rowTopKey, rowTopPercent),
+        onChange: (percent) => {
+          writeFraction(gridRef.current, rowTopKey, percent)
+        },
+        onCommit: (percent) => {
+          reportSplitRelease("rowTop", percent, rowTopPercent)
+          commitSplit((current) =>
+            collapseCharacter
+              ? { ...current, collapsedRowTop: percent }
+              : { ...current, rowTop: percent },
+          )
+        },
+      },
+      bottomLeft: {
+        ref: rowBottomRef,
+        style: fractionStyle("bottomLeft", split.bottomLeft),
+        onChange: (percent) => {
+          writeFraction(rowBottomRef.current, "bottomLeft", percent)
+        },
+        onCommit: (percent) => {
+          reportSplitRelease("bottomLeft", percent, split.bottomLeft)
+          commitSplit((current) => ({ ...current, bottomLeft: percent }))
+        },
+      },
+      onReset: () => {
+        commitSplit(() => DEFAULT_SPLIT)
+      },
+      isChanged: !isDefaultSplit(split),
     },
-    onTopLeftCommit: (percent) => {
-      reportSplitRelease("topLeft", percent, split.topLeft)
-      commitSplit((current) => ({ ...current, topLeft: percent }))
+    sidebarDisclosure: {
+      rootRef: sideRef,
+      id: sidebarId,
+      open: sidebarOpen,
+      onToggle: sidebar.onToggle,
+      toggleRef: sidebar.toggleRef,
     },
-    onRowTopChange: (percent) => {
-      writeFraction(gridRef.current, rowTopKey, percent)
-    },
-    onRowTopCommit: (percent) => {
-      reportSplitRelease("rowTop", percent, rowTopPercent)
-      commitSplit((current) =>
-        collapseCharacter
-          ? { ...current, collapsedRowTop: percent }
-          : { ...current, rowTop: percent },
-      )
-    },
-    onBottomLeftChange: (percent) => {
-      writeFraction(rowBottomRef.current, "bottomLeft", percent)
-    },
-    onBottomLeftCommit: (percent) => {
-      reportSplitRelease("bottomLeft", percent, split.bottomLeft)
-      commitSplit((current) => ({ ...current, bottomLeft: percent }))
-    },
-    onReset: () => {
-      commitSplit(() => DEFAULT_SPLIT)
-    },
-    isSplitChanged: !isDefaultSplit(split),
-    sideRef,
-    sidebarId,
-    sidebarOpen,
-    onToggleSidebar: sidebar.onToggle,
-    sidebarToggleRef: sidebar.toggleRef,
   }
 }
 

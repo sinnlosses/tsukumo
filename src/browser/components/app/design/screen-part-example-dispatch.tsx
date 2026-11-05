@@ -13,28 +13,29 @@ import type { ScreenPartExample } from "./screen-part-example.tsx"
 const noop = (): void => {}
 
 const COMPOSER: ComposerModel = {
-  surfaceRef: createRef(),
-  imageInputRef: createRef(),
-  mode: "plain",
-  onToggleMode: noop,
-  placeholder: "依頼を書く",
-  label: "依頼の入力欄",
+  input: {
+    surfaceRef: createRef(),
+    placeholder: "依頼を書く",
+    label: "依頼の入力欄",
+    draft: { text: "READMEの手順を見直して", caret: 12 },
+    onChange: noop,
+    onKeyDown: () => false,
+  },
+  modeSwitch: { mode: "plain", onToggle: noop },
+  suggestion: { suggestions: { kind: "none" }, selectedIndex: 0, onSelect: noop },
+  promptImage: {
+    imageInputRef: createRef(),
+    images: [],
+    onRemoveImage: noop,
+    onPaste: noop,
+    onDragOver: noop,
+    onDrop: noop,
+    onPickImages: noop,
+    onImagesChosen: noop,
+  },
   band: { kind: "none" },
   answering: false,
-  draft: { text: "READMEの手順を見直して", caret: 12 },
-  images: [],
-  suggestions: { kind: "none" },
-  selectedIndex: 0,
-  onRemoveImage: noop,
-  onSelectSuggestion: noop,
-  onChange: noop,
-  onKeyDown: () => false,
-  onPaste: noop,
-  onDragOver: noop,
-  onDrop: noop,
   onSubmit: noop,
-  onPickImages: noop,
-  onImagesChosen: noop,
   onInsertTrigger: noop,
   newSession: { disabled: false, title: "新しいやり取りを始める", onStart: noop },
 }
@@ -49,18 +50,21 @@ export const DISPATCH_EXAMPLES: readonly ScreenPartExample[] = [
         <PresentationalComposer
           {...COMPOSER}
           answering
-          draft={{ text: "", caret: 0 }}
+          input={{ ...COMPOSER.input, draft: { text: "", caret: 0 } }}
           band={{ kind: "inquiry", text: "答え待ちの質問があります", onJump: noop }}
         />
         <PresentationalComposer
           {...COMPOSER}
-          draft={{ text: "/co", caret: 3 }}
-          suggestions={{
-            kind: "command",
-            matches: [
-              { name: "compact", description: "会話を要約して縮める" },
-              { name: "config", description: "設定を開く" },
-            ],
+          input={{ ...COMPOSER.input, draft: { text: "/co", caret: 3 } }}
+          suggestion={{
+            ...COMPOSER.suggestion,
+            suggestions: {
+              kind: "command",
+              matches: [
+                { name: "compact", description: "会話を要約して縮める" },
+                { name: "config", description: "設定を開く" },
+              ],
+            },
           }}
         />
         <PresentationalComposer

@@ -66,7 +66,7 @@ function type(
   caret = value.length,
 ): void {
   act(() => {
-    result.current.onChange({ text: value, caret })
+    result.current.input.onChange({ text: value, caret })
   })
 }
 
@@ -100,7 +100,7 @@ function press(
   pressed: PressedKey,
 ): PressedKey {
   act(() => {
-    result.current.onKeyDown(pressed)
+    result.current.input.onKeyDown(pressed)
   })
   return pressed
 }
@@ -120,10 +120,12 @@ describe("useComposer のプレースホルダ", () => {
         editable: false,
       }),
     })
-    expect(named.result.current.placeholder.startsWith("架空の名前 への依頼を書く")).toBe(true)
+    expect(named.result.current.input.placeholder.startsWith("架空の名前 への依頼を書く")).toBe(
+      true,
+    )
 
     const unnamed = renderUseComposer()
-    expect(unnamed.result.current.placeholder.startsWith("依頼を書く")).toBe(true)
+    expect(unnamed.result.current.input.placeholder.startsWith("依頼を書く")).toBe(true)
   })
 })
 
@@ -136,8 +138,8 @@ describe("useComposer の `/` 補完", () => {
 
     expect(press(result, key("Tab")).prevented()).toBe(true)
 
-    expect(result.current.draft.text).toBe("/unclear ")
-    expect(result.current.suggestions.kind).toBe("none")
+    expect(result.current.input.draft.text).toBe("/unclear ")
+    expect(result.current.suggestion.suggestions.kind).toBe("none")
     expect(calls).toEqual([])
   })
 
@@ -146,10 +148,10 @@ describe("useComposer の `/` 補完", () => {
     type(result, "/cl")
 
     press(result, key("Escape"))
-    expect(result.current.suggestions.kind).toBe("none")
+    expect(result.current.suggestion.suggestions.kind).toBe("none")
 
     type(result, "/c")
-    expect(result.current.suggestions.kind).toBe("command")
+    expect(result.current.suggestion.suggestions.kind).toBe("command")
   })
 })
 
@@ -158,7 +160,7 @@ describe("useComposer の Escape（フォーカスを外す）", () => {
     readonly current: ReturnType<typeof useComposer>
   }): () => number {
     let blurred = 0
-    result.current.surfaceRef.current = {
+    result.current.input.surfaceRef.current = {
       focus: () => {},
       blur: () => {
         blurred += 1
@@ -175,7 +177,7 @@ describe("useComposer の Escape（フォーカスを外す）", () => {
     type(result, "架空の依頼")
 
     act(() => {
-      expect(result.current.onKeyDown(key("Escape"))).toBe(true)
+      expect(result.current.input.onKeyDown(key("Escape"))).toBe(true)
     })
 
     expect(blurredCount()).toBe(1)
@@ -221,7 +223,7 @@ describe("useComposer の送信", () => {
         routing: "aside-when-background",
       },
     ])
-    expect(result.current.draft.text).toBe("")
+    expect(result.current.input.draft.text).toBe("")
   })
 
   it("Command+Shift+Enter は新しい依頼として送り、フォームの送信は Command+Enter と同じ送り方", () => {
@@ -279,7 +281,7 @@ describe("useComposer の送信", () => {
 
     expect(submitPrevented).toBe(true)
     expect(calls).toEqual([])
-    expect(result.current.draft.text).toBe("架空の依頼")
+    expect(result.current.input.draft.text).toBe("架空の依頼")
   })
 
   it("接続が切れている間は Command+Enter もフォームの送信も送らず、下書きと添付画像を残す", () => {
@@ -296,7 +298,7 @@ describe("useComposer の送信", () => {
     })
 
     expect(calls).toEqual([])
-    expect(result.current.draft.text).toBe("架空の依頼")
+    expect(result.current.input.draft.text).toBe("架空の依頼")
     expect(result.current.band.kind).toBe("disconnected")
   })
 
@@ -313,7 +315,7 @@ describe("useComposer の送信", () => {
     })
 
     expect(calls).toEqual([])
-    expect(result.current.draft.text).toBe("架空の依頼")
+    expect(result.current.input.draft.text).toBe("架空の依頼")
     const band = result.current.band
     expect(band.kind).toBe("ended")
     expect(band.kind === "ended" && band.text).toContain("架空の理由")
@@ -370,12 +372,12 @@ describe("useComposer の打ちかけの保存", () => {
     act(() => {
       putState(identified("b"))
     })
-    expect(result.current.draft.text).toBe("")
+    expect(result.current.input.draft.text).toBe("")
 
     act(() => {
       putState(identified("a"))
     })
-    expect(result.current.draft.text).toBe("Aの打ちかけ")
+    expect(result.current.input.draft.text).toBe("Aの打ちかけ")
   })
 
   it("新しいセッション（A から未確定を経て B）でも A の打ちかけは B に残らない", () => {
@@ -388,12 +390,12 @@ describe("useComposer の打ちかけの保存", () => {
     act(() => {
       putState(identified("b"))
     })
-    expect(result.current.draft.text).toBe("")
+    expect(result.current.input.draft.text).toBe("")
 
     act(() => {
       putState(identified("a"))
     })
-    expect(result.current.draft.text).toBe("Aの打ちかけ")
+    expect(result.current.input.draft.text).toBe("Aの打ちかけ")
   })
 
   it("A から未確定に変わると入力欄を空にして A の打ちかけを A に保ち、A に戻ると戻る", () => {
@@ -403,13 +405,13 @@ describe("useComposer の打ちかけの保存", () => {
     act(() => {
       putState(startingState)
     })
-    expect(result.current.draft.text).toBe("")
+    expect(result.current.input.draft.text).toBe("")
     expect(savedText("a")).toBe("Aの打ちかけ")
 
     act(() => {
       putState(identified("a"))
     })
-    expect(result.current.draft.text).toBe("Aの打ちかけ")
+    expect(result.current.input.draft.text).toBe("Aの打ちかけ")
   })
 
   it("未確定のあいだに打った字は A に保たれず、決まった B のものになる", () => {
@@ -423,7 +425,7 @@ describe("useComposer の打ちかけの保存", () => {
     act(() => {
       putState(identified("b"))
     })
-    expect(result.current.draft.text).toBe("Bのための字")
+    expect(result.current.input.draft.text).toBe("Bのための字")
     expect(savedText("a")).toBe("Aの打ちかけ")
   })
 
@@ -439,7 +441,7 @@ describe("useComposer の打ちかけの保存", () => {
       putState(identified("b"))
     })
 
-    expect(result.current.draft.text).toBe("")
+    expect(result.current.input.draft.text).toBe("")
     expect(savedText("a")).toBe("Aの打ちかけ")
   })
 
@@ -449,7 +451,7 @@ describe("useComposer の打ちかけの保存", () => {
     act(() => {
       putState(identified("a"))
     })
-    expect(result.current.draft).toEqual({ text: "保存済み", caret: 2 })
+    expect(result.current.input.draft).toEqual({ text: "保存済み", caret: 2 })
   })
 
   it("最初にセッションが決まったとき、入力欄に字があれば触らない", () => {
@@ -459,6 +461,6 @@ describe("useComposer の打ちかけの保存", () => {
     act(() => {
       putState(identified("a"))
     })
-    expect(result.current.draft.text).toBe("いま打った字")
+    expect(result.current.input.draft.text).toBe("いま打った字")
   })
 })

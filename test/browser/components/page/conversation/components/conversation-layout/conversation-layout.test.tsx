@@ -20,8 +20,7 @@ function renderLayout(collapseCharacter = false, mainAsGround = collapseCharacte
       character="character"
       dispatch="dispatch"
       inquiry="inquiry"
-      railBadge="railBadge"
-      railTools="railTools"
+      rail={{ badge: "railBadge", tools: "railTools" }}
       collapseCharacter={collapseCharacter}
       mainAsGround={mainAsGround}
     />,

@@ -30,9 +30,9 @@ describe("useConversationLayout", () => {
 
     const { result } = renderHook(() => useConversationLayout(false))
 
-    expect(result.current.gridStyle["--layout-row-top"]).toBe("40fr")
-    expect(result.current.rowTopStyle["--layout-top-left"]).toBe("20fr")
-    expect(result.current.rowBottomStyle["--layout-bottom-left"]).toBe("70fr")
+    expect(result.current.splitters.rowTop.style["--layout-row-top"]).toBe("40fr")
+    expect(result.current.splitters.topLeft.style["--layout-top-left"]).toBe("20fr")
+    expect(result.current.splitters.bottomLeft.style["--layout-bottom-left"]).toBe("70fr")
   })
 
   it("畳んでいて雑談用の比率がまだ無いときは、gridStyle が仕事の比率で組み立つ", () => {
@@ -40,8 +40,8 @@ describe("useConversationLayout", () => {
 
     const { result } = renderHook(() => useConversationLayout(true))
 
-    expect(result.current.gridStyle["--layout-row-top"]).toBe("35fr")
-    expect(result.current.gridStyle["--layout-row-bottom"]).toBe("65fr")
+    expect(result.current.splitters.rowTop.style["--layout-row-top"]).toBe("35fr")
+    expect(result.current.splitters.rowTop.style["--layout-row-bottom"]).toBe("65fr")
   })
 
   it("仕切りを離すたびに1回だけ、離した比率と動かす前の比率を体験の記録へ送る（動かしている途中は送らない）", async () => {
@@ -53,20 +53,20 @@ describe("useConversationLayout", () => {
     const { result } = renderHook(() => useConversationLayout(false))
 
     act(() => {
-      result.current.onTopLeftChange(25)
-      result.current.onTopLeftChange(30)
+      result.current.splitters.topLeft.onChange(25)
+      result.current.splitters.topLeft.onChange(30)
     })
     await flush()
     expect(sent).toEqual([])
 
     act(() => {
-      result.current.onTopLeftCommit(30)
+      result.current.splitters.topLeft.onCommit(30)
     })
     act(() => {
-      result.current.onRowTopCommit(50)
+      result.current.splitters.rowTop.onCommit(50)
     })
     act(() => {
-      result.current.onBottomLeftCommit(60)
+      result.current.splitters.bottomLeft.onCommit(60)
     })
     await flush()
 

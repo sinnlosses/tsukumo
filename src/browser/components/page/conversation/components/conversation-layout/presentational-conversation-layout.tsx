@@ -26,10 +26,12 @@ type PresentationalConversationLayoutProps = UseConversationLayoutResult & {
   readonly dispatch: ReactNode
   /** 狭い画面で顔と吹き出しと入力欄のあいだに固定する、答え待ちのカード。 */
   readonly inquiry: ReactNode
-  /** 中くらいのビューポート幅の柱の、開くボタンの中に置くもの。 */
-  readonly railBadge: ReactNode
-  /** 中くらいのビューポート幅の柱の、開くボタンの下に並べるもの。 */
-  readonly railTools: ReactNode
+  readonly rail: {
+    /** 中くらいのビューポート幅の柱の、開くボタンの中に置くもの。 */
+    readonly badge: ReactNode
+    /** 中くらいのビューポート幅の柱の、開くボタンの下に並べるもの。 */
+    readonly tools: ReactNode
+  }
   /** キャラビューの領域を畳み、下段を入力欄だけにするか。立ち絵が上段へ移ったとき（雑談モード）に使う。 */
   readonly collapseCharacter: boolean
   /** メインの領域を、枠を持つウィジェットではなく地そのものとして描くか（枠と角丸を外し、背景があればそこへ敷く）。 */
@@ -43,35 +45,39 @@ const RESET_SPLIT_LABEL = "比率を既定に戻す"
 
 /**
  * props はここだけ分解して受ける。
- * ref を持つ入れ物を `props.gridRef` の形で描画中に読むと、lint の `react(refs)` が落ちるため。
+ * ref を持つ入れ物を `props.splitters.rowTop.ref` の形で描画中に読むと、lint の `react(refs)` が落ちるため。
  */
 export function PresentationalConversationLayout({
-  gridRef,
-  rowTopRef,
-  rowBottomRef,
-  gridStyle,
-  rowTopStyle,
-  rowBottomStyle,
-  onTopLeftChange,
-  onTopLeftCommit,
-  onRowTopChange,
-  onRowTopCommit,
-  onBottomLeftChange,
-  onBottomLeftCommit,
-  onReset,
-  isSplitChanged,
-  sideRef,
-  sidebarId,
-  sidebarOpen,
-  onToggleSidebar,
-  sidebarToggleRef,
+  splitters: {
+    topLeft: {
+      ref: rowTopRef,
+      style: rowTopStyle,
+      onChange: onTopLeftChange,
+      onCommit: onTopLeftCommit,
+    },
+    rowTop: { ref: gridRef, style: gridStyle, onChange: onRowTopChange, onCommit: onRowTopCommit },
+    bottomLeft: {
+      ref: rowBottomRef,
+      style: rowBottomStyle,
+      onChange: onBottomLeftChange,
+      onCommit: onBottomLeftCommit,
+    },
+    onReset,
+    isChanged: isSplitChanged,
+  },
+  sidebarDisclosure: {
+    rootRef: sideRef,
+    id: sidebarId,
+    open: sidebarOpen,
+    onToggle: onToggleSidebar,
+    toggleRef: sidebarToggleRef,
+  },
   main,
   sidebar,
   character,
   dispatch,
   inquiry,
-  railBadge,
-  railTools,
+  rail: { badge: railBadge, tools: railTools },
   collapseCharacter,
   mainAsGround,
 }: PresentationalConversationLayoutProps): ReactElement {
