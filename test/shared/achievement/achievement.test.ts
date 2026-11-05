@@ -26,7 +26,7 @@ describe("previousDateKey / nextDateKey", () => {
 describe("resolveAchievementDateKey", () => {
   const TODAY = dateKey("2026-09-24")
 
-  const chosen = (date: string) => ({ kind: "chosen", date }) as const
+  const chosen = (date: string) => ({ kind: "chosen", date: dateKey(date) }) as const
 
   it("選んだ正しい日付キーはそのまま", () => {
     expect(resolveAchievementDateKey(chosen("2026-09-20"), TODAY)).toBe("2026-09-20")
@@ -36,10 +36,8 @@ describe("resolveAchievementDateKey", () => {
     expect(resolveAchievementDateKey(chosen(TODAY), TODAY)).toBe(TODAY)
   })
 
-  it("今日を選んだ・読めない・今日より先のときは今日に倒す", () => {
+  it("今日を選んだ・今日より先のときは今日に倒す", () => {
     expect(resolveAchievementDateKey({ kind: "today" }, TODAY)).toBe(TODAY)
-    expect(resolveAchievementDateKey(chosen("あした"), TODAY)).toBe(TODAY)
-    expect(resolveAchievementDateKey(chosen("2026/09/20"), TODAY)).toBe(TODAY)
     expect(resolveAchievementDateKey(chosen("2026-09-25"), TODAY)).toBe(TODAY)
   })
 })

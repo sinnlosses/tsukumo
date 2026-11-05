@@ -2,7 +2,7 @@
 
 import { z } from "zod"
 
-/** 実在する日の `YYYY-MM-DD`。作れるのは {@link parseDateKey} と {@link dateKeySchema} だけ。 */
+/** 実在する日の `YYYY-MM-DD`。作れるのは {@link parseDateKey}・{@link dateKeySchema}・{@link dateKeyOfPlainDate} だけ。 */
 export type DateKey = string & { readonly __brand: "DateKey" }
 
 export function parseDateKey(value: string): DateKey | undefined {
@@ -23,6 +23,15 @@ export function dateKeyOf(value: string): Temporal.PlainDate | undefined {
 /** 日付キーの日。作り手が実在の日だけを通すので、変換は投げない。 */
 export function plainDateOfDateKey(date: DateKey): Temporal.PlainDate {
   return Temporal.PlainDate.from(date)
+}
+
+/** {@link plainDateOfDateKey} の逆。{@link Temporal.PlainDate} は実在の日だけなので、4桁の年の範囲を外れた日だけ投げる。 */
+export function dateKeyOfPlainDate(date: Temporal.PlainDate): DateKey {
+  const text = date.toString()
+  if (!hasDateKeyShape(text)) {
+    throw new Error(`4桁の年の範囲を外れた日は日付キーにできない: ${text}`)
+  }
+  return text
 }
 
 function hasDateKeyShape(value: string): value is DateKey {

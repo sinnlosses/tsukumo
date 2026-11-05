@@ -22,6 +22,8 @@
 
 import { useSyncExternalStore } from "react"
 
+import { dateKeyOf, parseDateKey, type DateKey } from "../../shared/diary/date-key.ts"
+
 /**
  * 画面の名前とラベルの一覧（唯一の正典）。
  * `Screen` 型・帯のメニューの並び（`SCREEN_NAV_ITEMS`）・hash の `?` より前のパス（{@link pathOf}）は全部ここから導く。
@@ -71,7 +73,7 @@ export type PackSelection =
  */
 export type AchievementDateSelection =
   | { readonly kind: "today" }
-  | { readonly kind: "chosen"; readonly date: string }
+  | { readonly kind: "chosen"; readonly date: DateKey }
 
 type HashRoute = {
   readonly screen: Screen
@@ -171,9 +173,10 @@ function packOf(value: string | null): PackSelection {
 }
 
 /**
- * 空の `date` は「今日」に畳む（見た日の日付キーは空にならない）。
- * 形の検証はしない（読めない形はサーバの応答が今日に倒すので、ここで畳むと2箇所で同じ判定を持つことになる）。
+ * `date` を日付キーに正規化する（`YYYYMMDD` や時刻つきの表記も `YYYY-MM-DD` に直す）。
+ * 無い・読めない値は「今日」に畳む。
  */
 function achievementDateOf(value: string | null): AchievementDateSelection {
-  return value === null || value === "" ? TODAY : { kind: "chosen", date: value }
+  const date = parseDateKey(dateKeyOf(value ?? "")?.toString() ?? "")
+  return date === undefined ? TODAY : { kind: "chosen", date }
 }

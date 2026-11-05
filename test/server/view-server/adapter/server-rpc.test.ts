@@ -256,7 +256,7 @@ describe("startViewServer", () => {
       const calendar: AchievementCalendar = {
         kind: "known",
         today: dateKey("2026-09-25"),
-        days: [{ date: "2026-09-25", count: 3 }],
+        days: [{ date: dateKey("2026-09-25"), count: 3 }],
         diaryDates: [],
       }
       const server = await startViewWithRpc({

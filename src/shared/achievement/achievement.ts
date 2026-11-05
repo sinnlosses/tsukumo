@@ -3,17 +3,22 @@
 
 import { z } from "zod"
 
-import { dateKeyOf, dateKeySchema, parseDateKey, type DateKey } from "../diary/date-key.ts"
+import {
+  dateKeyOfPlainDate,
+  dateKeySchema,
+  plainDateOfDateKey,
+  type DateKey,
+} from "../diary/date-key.ts"
 import { dailyDiaryStatusSchema, type DailyDiaryStatus } from "../diary/diary.ts"
 
 /**
  * 見る日の選び方（成果の手続きの入力）。
  * ブラウザは時計を読まないので「今日」を日付では送らない（`today`）。
- * `chosen` の `date` は `YYYY-MM-DD` のつもりの生の文字列で、読めない・今日より先なら今日に倒す（{@link resolveAchievementDateKey}）。
+ * `chosen` の `date` は実在の日の `YYYY-MM-DD`（読めない値は入口で今日に倒し、契約は `DateKey` でない値を拒む）。今日より先なら今日に倒す（{@link resolveAchievementDateKey}）。
  */
 export const achievementDaySelectionSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("today") }),
-  z.object({ kind: z.literal("chosen"), date: z.string() }),
+  z.object({ kind: z.literal("chosen"), date: dateKeySchema }),
 ])
 
 export type AchievementDaySelection = z.infer<typeof achievementDaySelectionSchema>
@@ -135,18 +140,18 @@ export function achievementReflectionRequestText(params: {
 }
 
 /** 前の日の日付キー（`Temporal.PlainDate` の引き算。時計は読まない）。 */
-export function previousDateKey(dateKey: DateKey): string {
-  return Temporal.PlainDate.from(dateKey).subtract({ days: 1 }).toString()
+export function previousDateKey(dateKey: DateKey): DateKey {
+  return dateKeyOfPlainDate(plainDateOfDateKey(dateKey).subtract({ days: 1 }))
 }
 
 /** 次の日の日付キー（`Temporal.PlainDate` の足し算。時計は読まない）。 */
-export function nextDateKey(dateKey: DateKey): string {
-  return Temporal.PlainDate.from(dateKey).add({ days: 1 }).toString()
+export function nextDateKey(dateKey: DateKey): DateKey {
+  return dateKeyOfPlainDate(plainDateOfDateKey(dateKey).add({ days: 1 }))
 }
 
 /**
  * 見る日を日付キーに決める。
- * 今日を選んだ・`YYYY-MM-DD` に読めない・`today` より先のときは `today` に倒す（呼ぶ側が書き間違えても画面は出る）。
+ * 今日を選んだ・`today` より先のときは `today` に倒す（呼ぶ側が書き間違えても画面は出る）。
  * 「今日」を決めるのは呼ぶ側（サーバのローカル時刻）で、ここは比べるだけ。
  */
 export function resolveAchievementDateKey(
@@ -156,11 +161,7 @@ export function resolveAchievementDateKey(
   if (selection.kind === "today") {
     return today
   }
-  const date = parseDateKey(dateKeyOf(selection.date)?.toString() ?? "")
-  if (date === undefined) {
-    return today
-  }
-  return date > today ? today : date
+  return selection.date > today ? today : selection.date
 }
 
 /** 「小さな驚き:」の下に並べる行（卒業→節目の順）。該当が無ければ空。 */

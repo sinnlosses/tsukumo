@@ -5,6 +5,7 @@ import {
   readHashRoute,
   SCREEN_NAV_ITEMS,
 } from "../../../src/browser/stores/location-hash.ts"
+import { dateKey } from "../../fixture/date-key.ts"
 
 type HashRoute = ReturnType<typeof readHashRoute>
 
@@ -69,10 +70,17 @@ describe("readHashRoute", () => {
       route({
         screen: "achievement",
         turn: 2,
-        achievementDate: { kind: "chosen", date: "2026-09-20" },
+        achievementDate: { kind: "chosen", date: dateKey("2026-09-20") },
       }),
     )
     expect(readHash("#achievement?date=")).toEqual(route({ screen: "achievement" }))
+    expect(readHash("#achievement?date=20260920")).toEqual(
+      route({
+        screen: "achievement",
+        achievementDate: { kind: "chosen", date: dateKey("2026-09-20") },
+      }),
+    )
+    expect(readHash("#achievement?date=あした")).toEqual(route({ screen: "achievement" }))
     expect(readHash("#character?date=2026-09-20")).toEqual(route({ screen: "character" }))
   })
 })
@@ -99,7 +107,7 @@ describe("formatHash", () => {
 
   // `#achievement/<日付>` にせず `date` に持つのは、`pack` と同じく画面の上に乗る付随情報だから。
   it("見ている日は date に書き、成果の画面以外では落とす", () => {
-    const chosen = { kind: "chosen", date: "2026-09-20" } as const
+    const chosen = { kind: "chosen", date: dateKey("2026-09-20") } as const
     expect(formatHash(route({ screen: "achievement", turn: 3, achievementDate: chosen }))).toBe(
       "#achievement?date=2026-09-20&turn=3",
     )

@@ -5,6 +5,7 @@ import {
   requestDiaryBookOpen,
   useDiaryBookOpenRequest,
 } from "../../../../../../src/browser/components/page/achievement/hooks/use-diary-book-open-request.ts"
+import { dateKey } from "../../../../../fixture/date-key.ts"
 
 /**
  * 画面をまたいで見開きを開く一回限りの合図。この起動のあいだ持ち続ける
@@ -20,13 +21,13 @@ describe("useDiaryBookOpenRequest", () => {
     const { result } = renderHook(() => useDiaryBookOpenRequest())
 
     act(() => {
-      requestDiaryBookOpen("2026-09-21")
+      requestDiaryBookOpen(dateKey("2026-09-21"))
     })
     const first = result.current
     expect(first?.date).toBe("2026-09-21")
 
     act(() => {
-      requestDiaryBookOpen("2026-09-22")
+      requestDiaryBookOpen(dateKey("2026-09-22"))
     })
     const second = result.current
     expect(second?.date).toBe("2026-09-22")

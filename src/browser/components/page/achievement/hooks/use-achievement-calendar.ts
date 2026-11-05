@@ -10,6 +10,7 @@ import {
   type AchievementCalendar,
   type LampLevel,
 } from "../../../../../shared/achievement/achievement-calendar.ts"
+import { dateKeyOfPlainDate, type DateKey } from "../../../../../shared/diary/date-key.ts"
 import { rpc } from "../../../../stores/rpc.ts"
 import { monthDayLabel } from "../../../../utils/month-day-label.ts"
 import { LAMP_LABEL } from "../domain/lamp-label.ts"
@@ -22,7 +23,7 @@ export type CalendarCell =
   | {
       readonly kind: "day"
       readonly key: string
-      readonly date: string
+      readonly date: DateKey
       readonly dateLabel: string
       readonly level: LampLevel
       readonly hasDiary: boolean
@@ -78,7 +79,7 @@ export function useAchievementCalendar(): AchievementCalendarView {
 
 function cellsOf(
   calendar: Extract<AchievementCalendar, { readonly kind: "known" }>,
-  dateKeys: readonly string[],
+  dateKeys: readonly DateKey[],
 ): readonly CalendarCell[] {
   const dayOf = new Map(calendar.days.map((day) => [day.date, day] as const))
   const diaryDates = new Set(calendar.diaryDates)
@@ -116,9 +117,9 @@ function cellDateLabel(date: string, index: number): string {
  * 開始日は `achievementCalendarDateKeys` と揃えて「今日を含む週の月曜から4週前の月曜」にする。
  * そちらは今日より後を返さないので、表示の枠を埋める残りの曜日はここで別に数える。
  */
-function fullCalendarDateKeys(today: string): readonly string[] {
+function fullCalendarDateKeys(today: DateKey): readonly DateKey[] {
   const todayDate = Temporal.PlainDate.from(today)
   const mondayOfThisWeek = todayDate.subtract({ days: todayDate.dayOfWeek - 1 })
   const start = mondayOfThisWeek.subtract({ weeks: 4 })
-  return Array.from({ length: 35 }, (_, index) => start.add({ days: index }).toString())
+  return Array.from({ length: 35 }, (_, index) => dateKeyOfPlainDate(start.add({ days: index })))
 }

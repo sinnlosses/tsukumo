@@ -6,6 +6,7 @@ import type {
   DiaryBookModel,
   DiaryBookPage,
 } from "../../../../../../../src/browser/components/page/achievement/hooks/use-diary-book.ts"
+import { dateKey } from "../../../../../../fixture/date-key.ts"
 
 /**
  * 見開きの見た目だけを測る（`useDiaryBook` は素通し）。フィクスチャは架空の日記・タスク
@@ -22,7 +23,7 @@ const NO_PORTRAIT = { portraitUrl: undefined, accent: undefined, altText: "架�
 
 const WRITTEN_PAGE: DiaryBookPage = {
   kind: "ready",
-  date: "2026-09-16",
+  date: dateKey("2026-09-16"),
   kanjiDate: "九月十六日",
   weekday: "水曜日",
   lampLevel: "bright",
@@ -49,7 +50,7 @@ const WRITTEN_PAGE: DiaryBookPage = {
 
 const BLANK_PAGE: DiaryBookPage = {
   kind: "ready",
-  date: "2026-09-23",
+  date: dateKey("2026-09-23"),
   kanjiDate: "九月二十三日",
   weekday: "水曜日",
   lampLevel: "bright",
@@ -76,8 +77,8 @@ function openModel(overrides: Partial<DiaryBookModel> = {}): DiaryBookModel {
     openNote: "灯りの暦から開きました",
     dialogLabel: "九月十六日の日記",
     page: WRITTEN_PAGE,
-    previous: { date: "2026-08-30", label: "8月30日" },
-    next: { date: "2026-09-24", label: "9月24日" },
+    previous: { date: dateKey("2026-08-30"), label: "8月30日" },
+    next: { date: dateKey("2026-09-24"), label: "9月24日" },
     toc: { open: false, months: [] },
     onOpenFromDiarySection: NOOP,
     onPrevious: NOOP,
@@ -223,8 +224,14 @@ describe("DiaryBook", () => {
         toc: {
           open: true,
           months: [
-            { heading: "2026年9月", days: [{ date: "2026-09-16", label: "9月16日（水）" }] },
-            { heading: "2026年8月", days: [{ date: "2026-08-20", label: "8月20日（木）" }] },
+            {
+              heading: "2026年9月",
+              days: [{ date: dateKey("2026-09-16"), label: "9月16日（水）" }],
+            },
+            {
+              heading: "2026年8月",
+              days: [{ date: dateKey("2026-08-20"), label: "8月20日（木）" }],
+            },
           ],
         },
         onSelectTocDate: (date) => selected.push(date),

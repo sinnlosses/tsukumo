@@ -23,6 +23,7 @@ import type {
   CharacterInfo,
   CharacterPackEntry,
 } from "../../../../../shared/character-pack/character.ts"
+import type { DateKey } from "../../../../../shared/diary/date-key.ts"
 import type { Diary, DiaryWriting } from "../../../../../shared/diary/diary.ts"
 import type { PortraitAppearance } from "../../../../domain/portrait-appearance.ts"
 import { rpc } from "../../../../stores/rpc.ts"
@@ -54,7 +55,7 @@ type BookState =
   | {
       readonly kind: "open"
       readonly source: DiaryBookOpenSource
-      readonly date: string
+      readonly date: DateKey
       readonly tocOpen: boolean
     }
 
@@ -100,7 +101,7 @@ export type DiaryBookPage =
   | { readonly kind: "failed" }
   | {
       readonly kind: "ready"
-      readonly date: string
+      readonly date: DateKey
       readonly kanjiDate: string
       readonly weekday: string
       readonly lampLevel: LampLevel
@@ -113,7 +114,7 @@ export type DiaryBookPage =
       readonly portrait: PortraitAppearance
     }
 
-type DiaryBookTocDay = { readonly date: string; readonly label: string }
+type DiaryBookTocDay = { readonly date: DateKey; readonly label: string }
 export type DiaryBookTocMonth = {
   readonly heading: string
   readonly days: readonly DiaryBookTocDay[]
@@ -124,15 +125,15 @@ export type DiaryBookModel = {
   readonly openNote: string
   readonly dialogLabel: string
   readonly page: DiaryBookPage
-  readonly previous: { readonly date: string; readonly label: string } | undefined
-  readonly next: { readonly date: string; readonly label: string } | undefined
+  readonly previous: { readonly date: DateKey; readonly label: string } | undefined
+  readonly next: { readonly date: DateKey; readonly label: string } | undefined
   readonly toc: { readonly open: boolean; readonly months: readonly DiaryBookTocMonth[] }
   /** 日記の区画の「日記帳で読む」から、いま見ている日で開く。日が分からなければ何もしない。 */
   readonly onOpenFromDiarySection: () => void
   readonly onPrevious: () => void
   readonly onNext: () => void
   readonly onToggleToc: () => void
-  readonly onSelectTocDate: (date: string) => void
+  readonly onSelectTocDate: (date: DateKey) => void
   readonly onClose: () => void
 }
 
@@ -142,7 +143,7 @@ export function useDiaryBook(params: {
   /** `useAchievement` の `daySwitch` をそのまま渡す（見ている日をここで取り出す）。 */
   readonly daySwitch: AchievementDaySwitch
   /** 見ている日を切り替える（`useAchievement` の `onSelectDate` をそのまま渡す）。 */
-  readonly onDateSelected: (date: string) => void
+  readonly onDateSelected: (date: DateKey) => void
 }): DiaryBookModel {
   const diaryDates = params.calendar.kind === "known" ? params.calendar.diaryDates : []
   const viewedDate = params.daySwitch.kind === "known" ? params.daySwitch.date : undefined
@@ -252,13 +253,13 @@ export function useDiaryBook(params: {
 }
 
 function pageOf(
-  date: string,
+  date: DateKey,
   data: DailyAchievement,
   isError: boolean,
   character: CharacterInfo | undefined,
   characterPacks: readonly CharacterPackEntry[],
   diaryWriting: DiaryWriting,
-  onDateSelected: (date: string) => void,
+  onDateSelected: (date: DateKey) => void,
   dispatch: SessionDispatch,
   onClose: () => void,
 ): DiaryBookPage {
@@ -324,8 +325,8 @@ function paragraphsOf(diary: Diary): readonly DiaryBookParagraph[] {
 function blankReviewOf(
   doneTasks: readonly AchievementTask[],
   diaryWriting: DiaryWriting,
-  date: string,
-  onDateSelected: (date: string) => void,
+  date: DateKey,
+  onDateSelected: (date: DateKey) => void,
   dispatch: SessionDispatch,
   onClose: () => void,
 ): AchievementReviewButton {
@@ -377,27 +378,27 @@ function badgesOf(
 }
 
 /** 日付より前で最も近い日記のある日。 */
-function closestBefore(dates: readonly string[], date: string): string | undefined {
+function closestBefore(dates: readonly DateKey[], date: DateKey): DateKey | undefined {
   return dates
     .filter((candidate) => candidate < date)
-    .reduce<string | undefined>(
+    .reduce<DateKey | undefined>(
       (max, candidate) => (max === undefined || candidate > max ? candidate : max),
       undefined,
     )
 }
 
 /** 日付より後で最も近い日記のある日。 */
-function closestAfter(dates: readonly string[], date: string): string | undefined {
+function closestAfter(dates: readonly DateKey[], date: DateKey): DateKey | undefined {
   return dates
     .filter((candidate) => candidate > date)
-    .reduce<string | undefined>(
+    .reduce<DateKey | undefined>(
       (min, candidate) => (min === undefined || candidate < min ? candidate : min),
       undefined,
     )
 }
 
 /** 月ごとに畳む（新しい順のまま。同じ月が連続する前提で `diaryDates` を1回なめるだけ）。 */
-function tocMonthsOf(diaryDates: readonly string[]): readonly DiaryBookTocMonth[] {
+function tocMonthsOf(diaryDates: readonly DateKey[]): readonly DiaryBookTocMonth[] {
   return diaryDates.reduce<readonly DiaryBookTocMonth[]>((months, date) => {
     const heading = monthHeadingOf(date)
     const day: DiaryBookTocDay = { date, label: dayLabel(Temporal.PlainDate.from(date)) }

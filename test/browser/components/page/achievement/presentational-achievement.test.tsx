@@ -131,7 +131,7 @@ describe("PresentationalAchievement", () => {
           kind: "written",
           diary: {
             version: 1,
-            date: "2026-09-24",
+            date: dateKey("2026-09-24"),
             paragraphs: [
               {
                 writtenAt: "2026-09-24T21:40:00+09:00",

@@ -12,7 +12,7 @@ import { basename, dirname, join } from "node:path"
 
 import { identity, sortBy } from "remeda"
 
-import type { DateKey } from "../../../shared/diary/date-key.ts"
+import { parseDateKey, type DateKey } from "../../../shared/diary/date-key.ts"
 import {
   DIARY_VERSION,
   readDiary,
@@ -113,7 +113,7 @@ export async function readDiaryDay(
 export async function listDiaryDates(
   cwd: string,
   root: string = tsukumoHomePath("diary"),
-): Promise<readonly string[]> {
+): Promise<readonly DateKey[]> {
   const repositoryId = await repositoryDiaryId(cwd)
   if (repositoryId === undefined) {
     return []
@@ -121,8 +121,8 @@ export async function listDiaryDates(
 
   const entries = readDirNames(join(root, repositoryId))
   const dates = entries.flatMap((name) => {
-    const match = DIARY_FILE_NAME_PATTERN.exec(name)
-    return match?.[1] === undefined ? [] : [match[1]]
+    const date = parseDateKey(DIARY_FILE_NAME_PATTERN.exec(name)?.[1] ?? "")
+    return date === undefined ? [] : [date]
   })
   return sortBy(dates, [identity(), "desc"])
 }

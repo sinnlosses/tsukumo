@@ -5,11 +5,13 @@
 
 import { create } from "zustand"
 
+import type { DateKey } from "../../../../../shared/diary/date-key.ts"
+
 /** 「この日を開いて」の1回ぶん。`token` は呼ぶたびに増え、同じ日への2回目の要求も見分けられる。 */
-type DiaryBookOpenRequest = { readonly date: string; readonly token: number }
+type DiaryBookOpenRequest = { readonly date: DateKey; readonly token: number }
 
 /** 見開きに「この日を開いて」と頼む。 */
-export function requestDiaryBookOpen(date: string): void {
+export function requestDiaryBookOpen(date: DateKey): void {
   useDiaryBookOpenRequestStore.setState((state) => ({
     request: { date, token: (state.request?.token ?? 0) + 1 },
   }))

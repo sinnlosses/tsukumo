@@ -66,7 +66,12 @@ const CALENDAR: AchievementCalendarView = {
   kind: "known",
   today: dateKey("2026-09-24"),
   days: [],
-  diaryDates: ["2026-09-24", "2026-09-16", "2026-08-30", "2026-08-20"],
+  diaryDates: [
+    dateKey("2026-09-24"),
+    dateKey("2026-09-16"),
+    dateKey("2026-08-30"),
+    dateKey("2026-08-20"),
+  ],
   cells: [],
   rangeLabel: "",
 }
@@ -75,7 +80,7 @@ const EMPTY_CALENDAR: AchievementCalendarView = { kind: "loading" }
 
 const WRITTEN_DIARY: Diary = {
   version: 1,
-  date: "2026-09-16",
+  date: dateKey("2026-09-16"),
   paragraphs: [
     {
       writtenAt: "2026-09-16T21:40:00+09:00",
@@ -433,7 +438,7 @@ describe("useDiaryBook（前後の送りと目次）", () => {
     ])
 
     act(() => {
-      result.current.onSelectTocDate("2026-08-20")
+      result.current.onSelectTocDate(dateKey("2026-08-20"))
     })
     expect(result.current.toc.open).toBe(false)
   })
@@ -479,7 +484,7 @@ describe("useDiaryBook（書き終わりの知らせから開く）", () => {
     expect(result.current.open).toBe(false)
 
     act(() => {
-      requestDiaryBookOpen("2026-09-16")
+      requestDiaryBookOpen(dateKey("2026-09-16"))
     })
 
     expect(result.current.open).toBe(true)
@@ -489,7 +494,7 @@ describe("useDiaryBook（書き終わりの知らせから開く）", () => {
   it("知らせの合図をマウント時に拾って開く", async () => {
     stubFetch(() => rpcOutput(WRITTEN_DAY))
     act(() => {
-      requestDiaryBookOpen("2026-09-16")
+      requestDiaryBookOpen(dateKey("2026-09-16"))
     })
 
     const { result } = renderHook(
@@ -512,7 +517,7 @@ describe("useDiaryBook（書き終わりの知らせから開く）", () => {
   it("拾った合図は、画面を開き直しても（マウントし直しても）もう一度は開かない", () => {
     stubFetch(() => rpcOutput(WRITTEN_DAY))
     act(() => {
-      requestDiaryBookOpen("2026-09-16")
+      requestDiaryBookOpen(dateKey("2026-09-16"))
     })
     const first = renderHook(
       () =>

@@ -12,6 +12,7 @@
 // キャラクター画面で選んでいるパック（`#character?pack=<名前>`）と、成果の画面で見ている日（`#achievement?date=<日付>`）も hash に持つ。
 // 前後の日の計算は呼ぶ側が持ち、ここは hash の読み書きだけ。
 
+import type { DateKey } from "../../shared/diary/date-key.ts"
 import {
   readHashRoute,
   useHashRoute,
@@ -80,7 +81,7 @@ export function useAchievementDateSelection(): AchievementDateSelection {
 }
 
 /** 成果の画面でその日を見る（hash の `date` を書き換える）。 */
-export function selectAchievementDate(date: string): void {
+export function selectAchievementDate(date: DateKey): void {
   writeHashRoute({
     ...readHashRoute(),
     screen: "achievement",

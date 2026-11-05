@@ -11,7 +11,7 @@ import { dateKey } from "../../fixture/date-key.ts"
 
 const FIXTURE_DIARY = {
   version: DIARY_VERSION,
-  date: "2026-09-23",
+  date: dateKey("2026-09-23"),
   paragraphs: [
     {
       writtenAt: "2026-09-23T21:00:00+09:00",

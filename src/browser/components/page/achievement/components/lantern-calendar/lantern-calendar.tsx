@@ -3,6 +3,7 @@
 import type { ReactElement } from "react"
 import { keys } from "remeda"
 
+import type { DateKey } from "../../../../../../shared/diary/date-key.ts"
 import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
 import { Heading } from "../../../../ui/heading/heading.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
@@ -26,7 +27,7 @@ type LanternCalendarProps = {
   readonly calendar: AchievementCalendarView
   /** 見ている日（枠を `--accent` にする。まだ分からなければ `undefined`）。 */
   readonly viewedDate: string | undefined
-  readonly onSelectDate: (date: string) => void
+  readonly onSelectDate: (date: DateKey) => void
 }
 
 export function LanternCalendar(props: LanternCalendarProps): ReactElement {
@@ -122,7 +123,7 @@ type GridProps = {
   readonly cells: readonly CalendarCell[]
   readonly rangeLabel: string
   readonly viewedDate: string | undefined
-  readonly onSelectDate: (date: string) => void
+  readonly onSelectDate: (date: DateKey) => void
 }
 
 function Grid(props: GridProps): ReactElement {
@@ -175,7 +176,7 @@ function Grid(props: GridProps): ReactElement {
 type DayCellProps = {
   readonly cell: Extract<CalendarCell, { readonly kind: "day" }>
   readonly isViewed: boolean
-  readonly onSelectDate: (date: string) => void
+  readonly onSelectDate: (date: DateKey) => void
 }
 
 function DayCell(props: DayCellProps): ReactElement {

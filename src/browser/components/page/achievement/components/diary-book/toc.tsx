@@ -1,5 +1,6 @@
 import type { ReactElement } from "react"
 
+import type { DateKey } from "../../../../../../shared/diary/date-key.ts"
 import { Heading } from "../../../../ui/heading/heading.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import type { DiaryBookTocMonth } from "../../hooks/use-diary-book.ts"
@@ -8,7 +9,7 @@ import { TOC_LABEL } from "./domain/toc-label.ts"
 
 export function Toc(props: {
   readonly months: readonly DiaryBookTocMonth[]
-  readonly onSelect: (date: string) => void
+  readonly onSelect: (date: DateKey) => void
 }): ReactElement {
   return (
     <div className={styles["diary-book-toc"]} role="dialog" aria-label={TOC_LABEL}>

@@ -3,7 +3,7 @@
 
 import { z } from "zod"
 
-import type { DateKey } from "./date-key.ts"
+import { dateKeySchema, type DateKey } from "./date-key.ts"
 
 /** 保存の形の版。読めた版はこれだけで、違えば「読めなかった」に倒す（読み手の {@link readDiary}）。 */
 export const DIARY_VERSION = 1
@@ -33,7 +33,7 @@ export type DiaryParagraph = {
 /** ある1日ぶんの日記。同じ日に2回振り返ると段落が末尾に足され、しおりは新しいほうに差し替わる。 */
 export type Diary = {
   readonly version: typeof DIARY_VERSION
-  readonly date: string
+  readonly date: DateKey
   /** 書いた順。1つ以上。 */
   readonly paragraphs: readonly DiaryParagraph[]
   readonly bookmark: DiaryBookmark
@@ -92,7 +92,7 @@ const diaryParagraphSchema = z.object({
 
 const diarySchema = z.object({
   version: z.literal(DIARY_VERSION),
-  date: z.string(),
+  date: dateKeySchema,
   paragraphs: z.array(diaryParagraphSchema).min(1).readonly(),
   bookmark: diaryBookmarkSchema,
 })

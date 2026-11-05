@@ -129,7 +129,7 @@ export type UseAchievementResult = {
   readonly onNextDay: () => void
   readonly onToday: () => void
   /** 見ている日を切り替える口。 */
-  readonly onSelectDate: (date: string) => void
+  readonly onSelectDate: (date: DateKey) => void
   readonly review: AchievementReviewButton
   readonly writing: AchievementWriting
   /** 日記の区画の立ち絵と名前。 */
@@ -216,7 +216,7 @@ export function useAchievement(): UseAchievementResult {
     onToday: () => {
       selectAchievementToday()
     },
-    onSelectDate: (date: string) => {
+    onSelectDate: (date: DateKey) => {
       selectAchievementDate(date)
     },
     review: reviewButtonOf(view, daySwitch, diaryWriting, character, dispatch),

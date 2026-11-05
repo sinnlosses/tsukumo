@@ -28,8 +28,8 @@ function stubFetch(reply: () => RpcStubReply): void {
 const KNOWN: AchievementCalendar = {
   kind: "known",
   today: dateKey("2026-09-24"),
-  days: [{ date: "2026-09-24", count: 5 }],
-  diaryDates: ["2026-09-24"],
+  days: [{ date: dateKey("2026-09-24"), count: 5 }],
+  diaryDates: [dateKey("2026-09-24")],
 }
 
 describe("useAchievementCalendar", () => {
