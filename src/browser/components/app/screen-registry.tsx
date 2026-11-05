@@ -2,10 +2,10 @@
 // 画面どうしの import を避けるため、すべての画面を知ってよいこのディレクトリが持つ。
 
 import { RunSettingGroup } from "../../features/run-setting/components/run-setting-group.tsx"
-import { ScreenNav } from "../domain/screen-nav/screen-nav.tsx"
-import { SidebarTaskPane } from "../domain/sidebar/components/sidebar-task-pane.tsx"
-import { UsagePane } from "../domain/sidebar/components/usage-pane.tsx"
-import { SkipLink } from "../domain/skip-link.tsx"
+import { ScreenNav } from "../frame/screen-nav/screen-nav.tsx"
+import { SidebarTaskPane } from "../frame/sidebar/components/sidebar-task-pane.tsx"
+import { UsagePane } from "../frame/sidebar/components/usage-pane.tsx"
+import { SkipLink } from "../frame/skip-link.tsx"
 import { DiaryNotice } from "../page/achievement/components/diary-notice/diary-notice.tsx"
 import { TurnList } from "../page/conversation/components/main-view/turn-list.tsx"
 import { Conversation } from "../page/conversation/conversation.tsx"

@@ -11,7 +11,7 @@
 import clsx from "clsx"
 import { type DragEvent, type ReactElement, useRef, useState } from "react"
 
-import { Portrait } from "../../../../domain/portrait.tsx"
+import { Portrait } from "../../../../frame/portrait.tsx"
 import { Button } from "../../../../ui/button/button.tsx"
 import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
 import { PlusIcon, TrashIcon, UploadIcon } from "../../../../ui/icon/icon.tsx"

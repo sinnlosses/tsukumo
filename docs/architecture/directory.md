@@ -59,7 +59,7 @@ Beads アダプタ（`server/**/adapter/` の Beads を読むファイル）が�
 （始め方の一覧のカードとおすすめは `loading` も `unknown` と同じ扱いで出さない）。
 
 **ファイル名は概念で、単数形**（原則5）。`helpers/` と `common/` は作らない。**ディレクトリ名に単数形の
-縛りは無く**、`src/browser/` の置き場所のディレクトリ（`components/`（とその下の `page/` `domain/` `ui/`）
+縛りは無く**、`src/browser/` の置き場所のディレクトリ（`components/`（とその下の `page/` `frame/` `ui/`）
 `features/` `hooks/` `domain/` `lib/` `utils/` `stores/` `styles/` `types/`）は bullet-proof-react の名前を
 そのまま採る（`components/` の下の3つは利用者の Next.js の雛形の名前）。機能・領域の名前は用語集の語に、
 画面の名前は `stores/location-hash.ts` の `Screen` の値に合わせる。**画面の部品は `components/page/` に置く。**
@@ -107,7 +107,7 @@ components/page/<ページ>/
   | ページの直下（対・`hooks/`・`domain/`）を1つでも含む | ページの `hooks/` / `domain/` / `stores/`（状態）/ `components/<部品>/`                                       |
   | `components/` の下の2つ以上の部品（直下は含まない）  | フックは `components/hooks/`、語彙はページの `domain/`、状態はページの `stores/`、部品は `components/<部品>/` |
   | `components/<部品>/` の中だけ（その部品と子部品）    | その部品の中の `hooks/` / `domain/`、子部品は部品のディレクトリに平らに                                       |
-  | 2つ以上のページ・枠                                  | ページの外（部品なら `components/domain/`、フックは `browser/hooks/`、それ以外は `browser/domain/`）          |
+  | 2つ以上のページ・枠                                  | ページの外（部品なら `components/frame/`、フックは `browser/hooks/`、それ以外は `browser/domain/`）           |
 
   **深さの上限は `src/browser/` から6段**（ファイルの置かれたディレクトリまでのディレクトリの数）。
   子部品は親の部品のディレクトリに平らに並べ、`components/` の入れ子を作らない。検査は
@@ -119,5 +119,5 @@ components/page/<ページ>/
   `components/app/` とテスト）。ページの部品を画面の外に置くとき（書き終わりの知らせ `DiaryNotice`）は、
   `components/app/screen-registry.tsx` がその `<部品>.tsx` を直に import する。**`<部品>.tsx` は自分の `components/` と
   概念のディレクトリの中を `export … from` で再エクスポートしない**（`hooks/` と `domain/` の型は可）
-- 会話の画面は**1ページ**で、4つの領域のうち、メインビュー・キャラビュー・入力欄（`dispatch/`）は `conversation/components/` の下、サイドバーは `domain/sidebar/` の部品。検査は
+- 会話の画面は**1ページ**で、4つの領域のうち、メインビュー・キャラビュー・入力欄（`dispatch/`）は `conversation/components/` の下、サイドバーは `frame/sidebar/` の部品。検査は
   `test/architecture/browser-box.test.ts`（`describe("components/page/ の形", …)`）

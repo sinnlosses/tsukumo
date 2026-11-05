@@ -17,7 +17,7 @@ import { createServer, type IncomingMessage, type ServerResponse, type Server } 
 import { basename } from "node:path"
 import process from "node:process"
 
-import { roomName } from "../../src/browser/components/domain/screen-nav/domain/room.ts"
+import { roomName } from "../../src/browser/components/frame/screen-nav/domain/room.ts"
 import {
   closeTab,
   listTabs,

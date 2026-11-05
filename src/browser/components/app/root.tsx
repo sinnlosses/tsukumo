@@ -5,8 +5,8 @@
 import type { ReactElement } from "react"
 
 import { useSession, useSessionConnection } from "../../stores/session.ts"
-import { usePortraitPreload } from "../domain/portrait.tsx"
-import { ProtocolMismatch } from "../domain/protocol-mismatch.tsx"
+import { usePortraitPreload } from "../frame/portrait.tsx"
+import { ProtocolMismatch } from "../frame/protocol-mismatch.tsx"
 import { usePackAppearance } from "./hooks/use-pack-appearance.ts"
 import { Layout } from "./layout.tsx"
 import { LAYOUT_SCREENS } from "./screen-registry.tsx"

@@ -5,7 +5,7 @@ import {
   Portrait,
   type PortraitProps,
   usePortraitPreload,
-} from "../../../../src/browser/components/domain/portrait.tsx"
+} from "../../../../src/browser/components/frame/portrait.tsx"
 import { typedElement } from "../../../typed-element.ts"
 
 afterEach(() => {

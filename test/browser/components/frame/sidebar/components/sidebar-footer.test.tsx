@@ -2,7 +2,7 @@ import { QueryClientProvider } from "@tanstack/react-query"
 import { act, cleanup, render, screen, waitFor } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
-import { SidebarFooter } from "../../../../../../src/browser/components/domain/sidebar/components/sidebar-footer.tsx"
+import { SidebarFooter } from "../../../../../../src/browser/components/frame/sidebar/components/sidebar-footer.tsx"
 import { readyContextUsage } from "../../../../../fixture/context-usage.ts"
 import { readyPlanUsage } from "../../../../../fixture/plan-usage.ts"
 import { createTestQueryClient } from "../../../../query-client.tsx"

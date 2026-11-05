@@ -5,7 +5,7 @@ import type { ReactElement, ReactNode } from "react"
 
 import { codeSpanParts } from "../../../../../domain/code-span.ts"
 import { TaskSummaryText } from "../../../../../features/task-board/components/task-summary-text.tsx"
-import { CharacterFace } from "../../../../domain/character-face.tsx"
+import { CharacterFace } from "../../../../frame/character-face.tsx"
 import { Button } from "../../../../ui/button/button.tsx"
 import { Heading } from "../../../../ui/heading/heading.tsx"
 import { ArrowRightIcon, HistoryIcon, ListIcon, PencilIcon } from "../../../../ui/icon/icon.tsx"

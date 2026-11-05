@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { shortSessionIds } from "../../../../../../src/browser/components/domain/screen-nav/domain/session-short-id.ts"
+import { shortSessionIds } from "../../../../../../src/browser/components/frame/screen-nav/domain/session-short-id.ts"
 
 // ID はすべて作り物（UUID の形だけ借りる）。
 

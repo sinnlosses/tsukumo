@@ -6,7 +6,7 @@
 
 import type { ReactElement } from "react"
 
-import { CharacterFace } from "../../../../domain/character-face.tsx"
+import { CharacterFace } from "../../../../frame/character-face.tsx"
 import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
 import { ChatLog } from "./chat-log.tsx"
 import styles from "./chat-view.module.css"

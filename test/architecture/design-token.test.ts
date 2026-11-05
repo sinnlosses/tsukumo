@@ -178,7 +178,7 @@ describe("design-token", () => {
 /** 置き換えの課題が済むまで通す、ファイルごとの直書きの宣言の件数。減る向きにだけ動かす。 */
 const EXCLUDED_DECLARATION_COUNTS: Readonly<Record<string, number>> = {
   "browser/components/app/screen-boundary.module.css": 1,
-  "browser/components/domain/protocol-mismatch.module.css": 1,
+  "browser/components/frame/protocol-mismatch.module.css": 1,
   "browser/components/page/character/character.module.css": 1,
   "browser/components/page/conversation/components/character-view/stage/speech-log.css": 1,
   "browser/components/page/conversation/components/dispatch/dispatch.module.css": 1,

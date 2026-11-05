@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
-import { ScreenNav } from "../../../../../src/browser/components/domain/screen-nav/screen-nav.tsx"
+import { ScreenNav } from "../../../../../src/browser/components/frame/screen-nav/screen-nav.tsx"
 import { loadLaunchSkill, saveLaunchSkill } from "../../../../../src/browser/domain/launch-skill.ts"
 import { INITIAL_SESSION_STATE } from "../../../../../src/shared/session/session-state.ts"
 import { typedElement } from "../../../../typed-element.ts"

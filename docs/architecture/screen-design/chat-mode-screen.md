@@ -91,7 +91,7 @@
     **操作子は増えるどころか1つ減る** — 字の操作子が消え、**この画面で唯一ずっと同じ場所に
     居るもの**が受けるようになる。妖をつつくという動作自体が説明を要らなくするので、常設の字も
     要らない（13.1 原則2）
-  - **押せることを持たせるのは雑談の側で、`components/domain/portrait.tsx` ではない。** 立ち絵は
+  - **押せることを持たせるのは雑談の側で、`components/frame/portrait.tsx` ではない。** 立ち絵は
     キャラビューとキャラクター画面も使う共有部品なので、**仕事のときの立ち絵は押せないまま**に
     する。**包むのは `<button>`** — セリフの行と違って立ち絵には選ぶ文字が無いので、
     `role="button"` ＋ 自前のキーの受けが要らず、**キーボードで押せる道はブラウザが最初から
@@ -132,5 +132,5 @@
 **起こし直しの代は新しい `hello` を配るまで束を配らず**（`server/session/core/session-manager.ts`。その間の
 姿は `hello` に入る）、**`hello` は続きの履歴を流し終えてから配る**（`server/session/core/session-launch.ts`。
 表情が既定から続きの表情へもう一度飛ばない）。移った先の立ち絵が読み込み待ちで空かないよう、
-**表情の数だけ先に読んでおく**（`components/domain/portrait.tsx` の `usePortraitPreload`）。新しくマウント
+**表情の数だけ先に読んでおく**（`components/frame/portrait.tsx` の `usePortraitPreload`）。新しくマウント
 された立ち絵の入り（`portrait-fade-in`）はほかの場面と同じに残す。

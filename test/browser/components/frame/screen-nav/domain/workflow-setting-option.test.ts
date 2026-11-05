@@ -4,7 +4,7 @@ import {
   isWorkflowCommandSaveable,
   workflowSettingChoiceOptions,
   workflowSettingSteps,
-} from "../../../../../../src/browser/components/domain/screen-nav/domain/workflow-setting-option.ts"
+} from "../../../../../../src/browser/components/frame/screen-nav/domain/workflow-setting-option.ts"
 import type {
   WorkflowSettingChoiceField,
   WorkflowSettingField,

@@ -1,6 +1,6 @@
 import { useRef, type ReactElement } from "react"
 
-import { Portrait } from "../../../../domain/portrait.tsx"
+import { Portrait } from "../../../../frame/portrait.tsx"
 import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import type { DiaryBookPage } from "../../hooks/use-diary-book.ts"

@@ -10,10 +10,10 @@ import type {
   ScreenNavGate,
   ScreenNavParts,
   ScreenNavView,
-} from "../../domain/screen-nav/hooks/use-screen-nav.ts"
-import { PresentationalScreenNav } from "../../domain/screen-nav/presentational-screen-nav.tsx"
-import { PresentationalSidebarFooter } from "../../domain/sidebar/components/presentational-sidebar-footer.tsx"
-import type { SidebarFooterView } from "../../domain/sidebar/hooks/use-sidebar-footer.ts"
+} from "../../frame/screen-nav/hooks/use-screen-nav.ts"
+import { PresentationalScreenNav } from "../../frame/screen-nav/presentational-screen-nav.tsx"
+import { PresentationalSidebarFooter } from "../../frame/sidebar/components/presentational-sidebar-footer.tsx"
+import type { SidebarFooterView } from "../../frame/sidebar/hooks/use-sidebar-footer.ts"
 import type { ScreenPartExample } from "./screen-part-example-type.ts"
 
 const noop = (): void => {}
@@ -205,7 +205,7 @@ const FOOTER: SidebarFooterView = {
 export const NAV_EXAMPLES: readonly ScreenPartExample[] = [
   {
     frame: "bar",
-    path: "domain/screen-nav/presentational-screen-nav.tsx",
+    path: "frame/screen-nav/presentational-screen-nav.tsx",
     render: () => (
       <PresentationalScreenNav
         {...NAV}
@@ -215,7 +215,7 @@ export const NAV_EXAMPLES: readonly ScreenPartExample[] = [
   },
   {
     frame: "popup",
-    path: "domain/sidebar/components/presentational-sidebar-footer.tsx",
+    path: "frame/sidebar/components/presentational-sidebar-footer.tsx",
     render: () => (
       <>
         <PresentationalSidebarFooter {...FOOTER} />

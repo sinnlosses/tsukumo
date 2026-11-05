@@ -1,7 +1,7 @@
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
-import { SkipLink } from "../../../../src/browser/components/domain/skip-link.tsx"
+import { SkipLink } from "../../../../src/browser/components/frame/skip-link.tsx"
 import { useComposerFocus } from "../../../../src/browser/stores/composer-focus.ts"
 
 afterEach(() => {

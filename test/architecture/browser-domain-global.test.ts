@@ -12,7 +12,7 @@ import { astAllChildren, astNumber } from "./ast-node.ts"
 import { listSourceFiles, parseSourceProgram, SRC_ROOT } from "./source-file.ts"
 
 const RESTRICTED_GLOBALS = new Set(["document", "window", "navigator", "localStorage"])
-const FRAME_PREFIX = "browser/components/domain/"
+const FRAME_PREFIX = "browser/components/frame/"
 
 // DOM の測定だけを目的とする、または保存の窓口を引数で受けられない関数。ファイルごとに1行の理由を付ける。
 const EXEMPT_FILES = new Map<string, string>([

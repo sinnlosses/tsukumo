@@ -1,7 +1,7 @@
 import { cleanup, render, screen, within } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
-import { ProtocolMismatch } from "../../../../src/browser/components/domain/protocol-mismatch.tsx"
+import { ProtocolMismatch } from "../../../../src/browser/components/frame/protocol-mismatch.tsx"
 
 afterEach(() => {
   cleanup()

@@ -30,7 +30,7 @@ import {
 } from "../../../../../domain/reveal/brush-tip.ts"
 import { useSession } from "../../../../../stores/session.ts"
 import { playClassOnce } from "../../../../../utils/play-class-once.ts"
-import { Portrait } from "../../../../domain/portrait.tsx"
+import { Portrait } from "../../../../frame/portrait.tsx"
 import styles from "./main-view.module.css"
 
 /** ミニ立ち絵の表情。表情では変わらない1件なので、`<Portrait>` に渡す表情も `default` で固定する。 */

@@ -2,7 +2,7 @@
 
 import { render } from "@testing-library/react"
 
-import { ScreenNav } from "../../src/browser/components/domain/screen-nav/screen-nav.tsx"
+import { ScreenNav } from "../../src/browser/components/frame/screen-nav/screen-nav.tsx"
 import { INITIAL_SESSION_STATE, type SessionState } from "../../src/shared/session/session-state.ts"
 import { EMPTY_NAV_DRAWER_SLOTS } from "../browser/nav-drawer-slot.tsx"
 import { queryClientWrapper } from "../browser/query-client.tsx"

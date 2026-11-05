@@ -120,7 +120,7 @@ DOM 要素の instanceof に絞れない、性質の違う `as` が `test/` の�
   （`any` を経由する `Record<string, unknown>` への二段キャストの代わり）
 - **それでも構造的に合わないものだけ、`// oxlint-disable-next-line
   typescript/consistent-type-assertions` を理由のコメントと1組で残す。** `test/browser/
-  components/domain/portrait.test.tsx` の `fetch` のスタブ（`fetch` の実装のうち使う分しか
+  components/frame/portrait.test.tsx` の `fetch` のスタブ（`fetch` の実装のうち使う分しか
   持たない代役を差し込む。**構造的に合わない代役を許容するのが目的そのもの**なので、annotation
   にも実物の構築にも逃げられない）が唯一の例外
 

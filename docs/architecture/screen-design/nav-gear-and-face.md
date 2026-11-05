@@ -110,7 +110,7 @@
   （`docs/architecture/character-pack.md`「画面から作るときの置き場と受け取り方」）。受け付ける形式・大きさの上限は立ち絵と同じ（`.svg` / `.png` /
   `.gif`）——写真が主な素材の背景よりも、立ち絵と同じ「キャラクターの絵」という素材の性質に
   近いため
-- **部品は `browser/components/domain/character-face.tsx` へ上げて共有する**（帯とサイドバー〔雑談の
+- **部品は `browser/components/frame/character-face.tsx` へ上げて共有する**（帯とサイドバー〔雑談の
   プロフィール〕・キャラクター画面は互いに import しない領域どうしなので、機能をまたいで読む部品は
   `components/` に置く。`docs/architecture.md`「機能の中を分ける」）。大きさと丸の地は置く側の `className` が決め、
   部品自体は領域の見た目を持たない

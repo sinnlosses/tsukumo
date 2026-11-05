@@ -7,8 +7,8 @@
 import type { ReactElement } from "react"
 
 import { RunSettingGroup } from "../../../features/run-setting/components/run-setting-group.tsx"
-import { TaskDoingCount } from "../../domain/sidebar/components/task-doing-count.tsx"
-import { Sidebar } from "../../domain/sidebar/sidebar.tsx"
+import { TaskDoingCount } from "../../frame/sidebar/components/task-doing-count.tsx"
+import { Sidebar } from "../../frame/sidebar/sidebar.tsx"
 import { CharacterView } from "./components/character-view/character-view.tsx"
 import { ChatView } from "./components/chat-view/chat-view.tsx"
 import { ConversationLayout } from "./components/conversation-layout/conversation-layout.tsx"

@@ -6,7 +6,7 @@ import {
   nextStepGrab,
   reorderSteps,
   type StepGrab,
-} from "../../../../../../src/browser/components/domain/screen-nav/domain/step-reorder.ts"
+} from "../../../../../../src/browser/components/frame/screen-nav/domain/step-reorder.ts"
 
 const STEPS = ["a", "b", "c", "d"]
 

@@ -89,7 +89,7 @@ ADR 0025 の改訂の節）。値は `.tw/config.toml` にワークフローが�
 - **`TSUKUMO_HOME` を分ければ既定も分かれる**（ホームごと差し替わるため。`TSUKUMO_HOME` の doc コメント）
 
 **書き上げる演出の速さは `localStorage` に持つ**（色と同じ並び。保存と読み取りは
-`src/browser/domain/reveal-speed.ts` に集める——歯車（`components/domain/screen-nav/`）とレポートの演出
+`src/browser/domain/reveal-speed.ts` に集める——歯車（`components/frame/screen-nav/`）とレポートの演出
 （`domain/reveal/use-report-reveal.ts`）の両方が読むので、機能どうしの import を増やさず
 `browser/domain/` へ置く。`docs/architecture.md`「全体構成」）。選択肢は3つ（既定は**標準**）。
 値は、草稿の無い確定版の節を1つポンと出してから次の節を出すまでの間隔:

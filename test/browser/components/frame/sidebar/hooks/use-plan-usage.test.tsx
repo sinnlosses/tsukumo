@@ -1,7 +1,7 @@
 import { act, cleanup, renderHook } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
-import { usePlanUsage } from "../../../../../../src/browser/components/domain/sidebar/hooks/use-plan-usage.ts"
+import { usePlanUsage } from "../../../../../../src/browser/components/frame/sidebar/hooks/use-plan-usage.ts"
 import type { PlanUsageReport } from "../../../../../../src/shared/usage/plan-usage.ts"
 import { notApplicablePlanUsage, readyPlanUsage } from "../../../../../fixture/plan-usage.ts"
 import { createTestQueryClient, queryClientWrapper } from "../../../../query-client.tsx"

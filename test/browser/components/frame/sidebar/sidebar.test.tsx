@@ -3,9 +3,9 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import type { ReactElement } from "react"
 import { afterEach, describe, expect, it } from "vitest"
 
-import { SidebarTaskPane } from "../../../../../src/browser/components/domain/sidebar/components/sidebar-task-pane.tsx"
-import { UsagePane } from "../../../../../src/browser/components/domain/sidebar/components/usage-pane.tsx"
-import { Sidebar } from "../../../../../src/browser/components/domain/sidebar/sidebar.tsx"
+import { SidebarTaskPane } from "../../../../../src/browser/components/frame/sidebar/components/sidebar-task-pane.tsx"
+import { UsagePane } from "../../../../../src/browser/components/frame/sidebar/components/usage-pane.tsx"
+import { Sidebar } from "../../../../../src/browser/components/frame/sidebar/sidebar.tsx"
 import type { TaskSummaryItem } from "../../../../../src/shared/repository/task-summary.ts"
 import {
   INITIAL_SESSION_STATE,

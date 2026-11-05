@@ -41,7 +41,7 @@ flowchart TB
 | ------------------------ | --------------------------------------------------------------------- | ----------------------------------------- |
 | メインビュー             | `src/browser/components/page/conversation/components/main-view/`      | `docs/requirements/screen-layout.md`      |
 | キャラビュー             | `src/browser/components/page/conversation/components/character-view/` | `docs/requirements/screen-layout.md`      |
-| サイドバー               | `src/browser/components/domain/sidebar/`                              | `docs/requirements/screen-layout.md`      |
+| サイドバー               | `src/browser/components/frame/sidebar/`                               | `docs/requirements/screen-layout.md`      |
 | 入力欄                   | `src/browser/components/page/conversation/components/dispatch/`       | `docs/requirements/screen-layout.md`      |
 | ビューサーバ             | `src/server/view-server/`                                             | `docs/architecture/runtime-flow.md`       |
 | セッションドライバ       | `src/server/session-driver/`                                          | `docs/architecture/runtime-flow.md`       |
@@ -103,7 +103,7 @@ flowchart TB
 | ------------------- | -------------------------------------------------------------------------- | ------------------------------------ |
 | conversation-layout | `src/browser/components/page/conversation/components/conversation-layout/` | `docs/requirements/screen-layout.md` |
 | メインビュー        | `src/browser/components/page/conversation/components/main-view/`           | `docs/requirements/screen-layout.md` |
-| サイドバー          | `src/browser/components/domain/sidebar/`                                   | `docs/requirements/screen-layout.md` |
+| サイドバー          | `src/browser/components/frame/sidebar/`                                    | `docs/requirements/screen-layout.md` |
 | キャラビュー        | `src/browser/components/page/conversation/components/character-view/`      | `docs/requirements/screen-layout.md` |
 | 入力欄              | `src/browser/components/page/conversation/components/dispatch/`            | `docs/requirements/screen-layout.md` |
 

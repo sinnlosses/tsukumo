@@ -3,7 +3,7 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
-import { PersonaMemorySection } from "../../../../../../src/browser/components/domain/sidebar/components/persona-memory-section.tsx"
+import { PersonaMemorySection } from "../../../../../../src/browser/components/frame/sidebar/components/persona-memory-section.tsx"
 import {
   INITIAL_SESSION_STATE,
   type SessionState,

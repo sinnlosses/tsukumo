@@ -10,14 +10,14 @@ export const E2E_REGION_ROOTS = {
   chat: ["src/browser/components/page/conversation/components/chat-view/chat-view.tsx"],
   dispatch: ["src/browser/components/page/conversation/components/dispatch/dispatch.tsx"],
   sidebar: [
-    "src/browser/components/domain/sidebar/sidebar.tsx",
+    "src/browser/components/frame/sidebar/sidebar.tsx",
     "src/browser/features/run-setting/components/run-setting-group.tsx",
-    "src/browser/components/domain/sidebar/components/task-doing-count.tsx",
+    "src/browser/components/frame/sidebar/components/task-doing-count.tsx",
   ],
   "task-board": [
     "src/browser/components/page/conversation/components/requested-task-board/requested-task-board.tsx",
   ],
-  "screen-nav": ["src/browser/components/domain/screen-nav/screen-nav.tsx"],
+  "screen-nav": ["src/browser/components/frame/screen-nav/screen-nav.tsx"],
   // 会話の画面を開いたままでも、隠した `<Activity>` の中や画面の切り替えで DOM に入りうる。
   "other-screens": [
     "src/browser/components/page/achievement/achievement.tsx",

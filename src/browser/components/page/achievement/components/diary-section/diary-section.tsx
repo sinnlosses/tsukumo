@@ -6,7 +6,7 @@ import type { ReactElement } from "react"
 
 import { DIARY_STAGES, type DiaryStage } from "../../../../../../shared/diary/diary.ts"
 import { useReportReveal } from "../../../../../domain/reveal/use-report-reveal.ts"
-import { Portrait } from "../../../../domain/portrait.tsx"
+import { Portrait } from "../../../../frame/portrait.tsx"
 import { Button } from "../../../../ui/button/button.tsx"
 import { Heading } from "../../../../ui/heading/heading.tsx"
 import { Text } from "../../../../ui/text/text.tsx"

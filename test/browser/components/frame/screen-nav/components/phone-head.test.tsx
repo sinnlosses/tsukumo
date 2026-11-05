@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-import { ScreenNav } from "../../../../../../src/browser/components/domain/screen-nav/screen-nav.tsx"
+import { ScreenNav } from "../../../../../../src/browser/components/frame/screen-nav/screen-nav.tsx"
 import { useReadingSection } from "../../../../../../src/browser/stores/reading-section.ts"
 import type { StampedPendingAsk } from "../../../../../../src/shared/session-driver/pending-ask.ts"
 import {

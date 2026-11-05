@@ -15,7 +15,7 @@ import {
 // 画面を組み立てる部品のまとまり（`docs/architecture.md`「領域の機能と、置かれる機能」）の一覧。
 // まとまりどうしのエッジは `.dependency-cruiser.cjs` が見て、ここは一覧に無いディレクトリを `throw` で落とす。
 //
-// - 枠（`BROWSER_FRAMES`）: 全画面で共有する枠（`components/domain/<枠>/`）。差し込み口は
+// - 枠（`BROWSER_FRAMES`）: 全画面で共有する枠（`components/frame/<枠>/`）。差し込み口は
 //   props で受け、画面を知らない。枠どうしは import しない
 // - 画面（`BROWSER_SCREENS`）: 1つの画面 = 1つのページ（`components/page/<画面>/`）。`components/app/layout.tsx` が
 //   出す画面を選ぶ。画面どうしは import しない。会話の画面は `<Sidebar>` を
@@ -23,18 +23,18 @@ import {
 // - 置かれる機能（`BROWSER_PLACED_FEATURES`）: 自分の置き場所を持たず、枠か画面の中に
 //   置いてもらう。どのまとまりも import しない（葉）ので、枠・画面から引いても輪にならない
 //
-// 一覧は `browser/` からの相対パスで引く（枠と画面は `components/domain/<枠>/` と
+// 一覧は `browser/` からの相対パスで引く（枠と画面は `components/frame/<枠>/` と
 // `components/page/<画面>/` に分かれているので、名前だけでは引けない）。
 //
-// `browser/components/`（`app/` `page/` `domain/` `ui/` の4段。一覧のパスに無いディレクトリ）・
+// `browser/components/`（`app/` `page/` `frame/` `ui/` の4段。一覧のパスに無いディレクトリ）・
 // `browser/lib/` `browser/stores/` `browser/styles/` と `browser/main.tsx` / `browser/app.tsx` は誰から引いてもよい
 // 共有部分なので、ここでは見ない。一覧に無いディレクトリが `features/` の直下・
-// `components/domain/` の直下（サブディレクトリがあるとき）・`components/page/` の下に
+// `components/frame/` の直下（サブディレクトリがあるとき）・`components/page/` の下に
 // あれば `throw` する（足し忘れが「検査の対象外」として黙って通るのを防ぐ）。
 //
 // 会話の画面の4つの領域（`main-view` など）は `conversation/components/` の下の部品なので、
 // 画面 `components/page/conversation` の一部として扱われる。
-const BROWSER_FRAMES = ["components/domain/screen-nav", "components/domain/sidebar"] as const
+const BROWSER_FRAMES = ["components/frame/screen-nav", "components/frame/sidebar"] as const
 const BROWSER_SCREENS = [
   "components/page/conversation",
   "components/page/character",
@@ -54,15 +54,15 @@ type BrowserFeature = {
 
 // 機能をまたぐ箱に、1つの機能しか読まないファイルが残っていないことを見る
 // （`docs/architecture/browser-box.md`「上げる引き金は「2つ目の読み手が出たとき」」。引き金は逆にも引き、
-// 読み手が1つに戻ったものはその機能の中へ下ろす）。`components/domain/` の直下にも
+// 読み手が1つに戻ったものはその機能の中へ下ろす）。`components/frame/` の直下にも
 // 同じ基準を掛ける（docs/architecture/browser-box.md「引き金は逆にも引く」）。`components/ui/` は汎用の部品の置き場で、
 // 読み手の数を問わないので対象外（docs/architecture/browser.md「読み手の数は問わない」）。
 //
 // 読み手が機能の外にも居るものは対象外（下ろす先の機能が無いので、ここに残るのが正しい）。
 // `components/ui/<部品>/` は1つの読み手として数える。
 //
-// `components/domain/` は直下のファイルだけを対象にする（サブディレクトリは全画面で共有する
-// 枠（領域）で、1つの領域だけが読むのが正しい形。docs/architecture/browser-box.md「`components/domain/` の直下のファイルは
+// `components/frame/` は直下のファイルだけを対象にする（サブディレクトリは全画面で共有する
+// 枠（領域）で、1つの領域だけが読むのが正しい形。docs/architecture/browser-box.md「`components/frame/` の直下のファイルは
 // 領域ではなく共有の部品」）。
 const SHARED_BROWSER_BOXES = ["lib", "domain", "stores", "hooks"] as const
 
@@ -73,12 +73,12 @@ const KEPT_SHARED_FILES = {
 
 describe("browser/ の機能をまたぐ箱", () => {
   it(
-    "browser/lib/・domain/・stores/・hooks/・components/domain/ 直下に、1つの機能だけが読むファイルは無い",
+    "browser/lib/・domain/・stores/・hooks/・components/frame/ 直下に、1つの機能だけが読むファイルは無い",
     () => {
       const files = listSourceFiles(SRC_ROOT).filter(
         (relPath) =>
           SHARED_BROWSER_BOXES.some((box) => relPath.startsWith(`browser/${box}/`)) ||
-          isDirectBrowserComponentsDomainFile(relPath),
+          isDirectBrowserComponentsFrameFile(relPath),
       )
       expect(files.length).toBeGreaterThan(0)
 
@@ -371,21 +371,21 @@ function uiPartOf(relPath: string): string | undefined {
     : undefined
 }
 
-/** `browser/components/domain/` の直下（サブディレクトリの中ではない）ファイルか。 */
-function isDirectBrowserComponentsDomainFile(relPath: string): boolean {
+/** `browser/components/frame/` の直下（サブディレクトリの中ではない）ファイルか。 */
+function isDirectBrowserComponentsFrameFile(relPath: string): boolean {
   const segments = relPath.split("/")
   return (
     segments.length === 4 &&
     segments[0] === "browser" &&
     segments[1] === "components" &&
-    segments[2] === "domain"
+    segments[2] === "frame"
   )
 }
 
 /**
  * `browser/` 相対パスから、枠・画面・置かれる機能のどれかを返す。`BROWSER_FRAMES` / `BROWSER_SCREENS` /
  * `BROWSER_PLACED_FEATURES` のどれかのパスの下にあれば一致したものを返し、共有部分（`browser/lib/` など）は
- * `undefined`。一覧に無いディレクトリが `features/` の直下・`components/domain/` の直下（サブディレクトリが
+ * `undefined`。一覧に無いディレクトリが `features/` の直下・`components/frame/` の直下（サブディレクトリが
  * あるとき）・`components/page/` の下にあれば `throw`（新しい枠・画面・機能を足したら、
  * 3つの一覧のどれかに足す）。
  */
@@ -410,11 +410,11 @@ function browserFeatureOf(relPath: string): BrowserFeature | undefined {
 
   const segments = path.split("/")
   const isUnlistedFeatureDir = segments[0] === "features" && segments.length >= 2
-  const isUnlistedComponentsDomainDir =
-    segments[0] === "components" && segments[1] === "domain" && segments.length >= 4
+  const isUnlistedComponentsFrameDir =
+    segments[0] === "components" && segments[1] === "frame" && segments.length >= 4
   const isUnlistedComponentsPageDir =
     segments[0] === "components" && segments[1] === "page" && segments.length >= 3
-  if (isUnlistedFeatureDir || isUnlistedComponentsDomainDir || isUnlistedComponentsPageDir) {
+  if (isUnlistedFeatureDir || isUnlistedComponentsFrameDir || isUnlistedComponentsPageDir) {
     throw new Error(
       `src/${relPath} の機能の種類を判定できない（BROWSER_FRAMES か BROWSER_SCREENS か BROWSER_PLACED_FEATURES に足す）`,
     )

@@ -130,7 +130,7 @@
   理由を `title` に出す。`editable: false` のパックでも席は選べる（席はパックの中に書かない）
 - **760px 以下では一覧を詳しい設定の上に積む**（格子と差し色の列数は詳しい設定の幅を見る
   `@container` が決めるので、狭い画面用に別の規則は足していない）
-- **`<Portrait>` は `components/domain/portrait.tsx`**（2つ目の読み手。`docs/architecture.md`「全体構成」）。並びでの大きさは
+- **`<Portrait>` は `components/frame/portrait.tsx`**（2つ目の読み手。`docs/architecture.md`「全体構成」）。並びでの大きさは
   `portrait-card.module.css` が決め、`className` で渡す（キャラビュー側の割合指定は
   `.character-region` の変数が無いので効かない。`docs/architecture/browser.md`「CSS」）
 - **「このキャラクターを消す」帯は、詳しい設定の最下部・背景の節の下**（見本

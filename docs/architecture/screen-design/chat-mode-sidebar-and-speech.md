@@ -28,7 +28,7 @@
 └────────────────────────────────┘
 ```
 
-1. **プロフィール**（`components/domain/sidebar/components/profile-card.tsx`）: 顔（13.9「顔」と同じ素材・丸・
+1. **プロフィール**（`components/frame/sidebar/components/profile-card.tsx`）: 顔（13.9「顔」と同じ素材・丸・
    差し色の輪で、大きさだけ 64px）・名前（パックの `name`）・**自己紹介文**
    （`character.json` の新しい欄 `tagline`。検証は `src/shared/character-pack/character-definition.ts`。
    **無いパックは名前だけ**で、空の行を置かない。キャラクターの切り替えはカードに置かず、帯の顔から開く選択メニューが持つ）。領域の左右と上の縁まで
@@ -58,7 +58,7 @@
 **別の領域の機能**だからで、サイドバーは1つの領域の中で段の並びが変わるだけ。`<Layout>` に渡す
 旗も増えない。
 
-**どの機能に置くか: `components/domain/sidebar/components/` の中**（`profile-card.tsx` / `recent-topic-section.tsx` /
+**どの機能に置くか: `components/frame/sidebar/components/` の中**（`profile-card.tsx` / `recent-topic-section.tsx` /
 `persona-memory-section.tsx`）。雑談の側（`components/page/conversation/components/chat-view/`）に置くと、下端の帯を読むために
 領域の機能どうしの import が要る（`docs/architecture.md`「全体構成」）。中身を入れたあと、話題や覚えたことがタスクの
 `task-board` のようにサイドバーの外でも使う語彙になったら、そのとき「置かれる機能」に切り出す。

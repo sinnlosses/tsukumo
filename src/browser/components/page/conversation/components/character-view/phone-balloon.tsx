@@ -7,7 +7,7 @@
 import type { ReactElement } from "react"
 
 import type { CharacterFaceInfo } from "../../../../../domain/character-face.ts"
-import { CharacterFace } from "../../../../domain/character-face.tsx"
+import { CharacterFace } from "../../../../frame/character-face.tsx"
 import styles from "./character-view.module.css"
 import type { PhoneBalloonLine } from "./hooks/use-character-view.ts"
 

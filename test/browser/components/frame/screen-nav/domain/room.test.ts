@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { roomName } from "../../../../../../src/browser/components/domain/screen-nav/domain/room.ts"
+import { roomName } from "../../../../../../src/browser/components/frame/screen-nav/domain/room.ts"
 import { DEFAULT_VIEW_PORT } from "../../../../../../src/shared/view-server/view-port.ts"
 
 describe("roomName", () => {

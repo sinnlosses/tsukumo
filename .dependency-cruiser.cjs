@@ -80,7 +80,7 @@ const SERVER_CHILD_IMPORTS = {
   },
 }
 
-const BROWSER_FRAMES = ["components/domain/screen-nav", "components/domain/sidebar"]
+const BROWSER_FRAMES = ["components/frame/screen-nav", "components/frame/sidebar"]
 const BROWSER_SCREENS = [
   "components/page/conversation",
   "components/page/character",
@@ -98,7 +98,7 @@ const BROWSER_BOX_PATHS = {
   features: "^src/browser/features/",
   "components/app": "^src/browser/components/app/",
   "components/page": "^src/browser/components/page/",
-  "components/domain": "^src/browser/components/domain/",
+  "components/frame": "^src/browser/components/frame/",
   "components/ui": "^src/browser/components/ui/",
   hooks: "^src/browser/hooks/",
   domain: "^src/browser/domain/",
@@ -111,7 +111,7 @@ const ALLOWED_BROWSER_BOX_IMPORTS = {
   "components/app": [
     "components/app",
     "components/page",
-    "components/domain",
+    "components/frame",
     "components/ui",
     "features",
     "hooks",
@@ -122,7 +122,7 @@ const ALLOWED_BROWSER_BOX_IMPORTS = {
   ],
   "components/page": [
     "components/page",
-    "components/domain",
+    "components/frame",
     "components/ui",
     "features",
     "hooks",
@@ -131,8 +131,8 @@ const ALLOWED_BROWSER_BOX_IMPORTS = {
     "utils",
     "stores",
   ],
-  "components/domain": [
-    "components/domain",
+  "components/frame": [
+    "components/frame",
     "components/ui",
     "features",
     "hooks",
@@ -288,7 +288,7 @@ const browserFeatureRules = [
     "browser-feature-unknown",
     { path: "^src/" },
     {
-      path: "^src/browser/(?:features/[^/]+|components/domain/[^/]+/|components/page/[^/]+)",
+      path: "^src/browser/(?:features/[^/]+|components/frame/[^/]+/|components/page/[^/]+)",
       pathNot: underAny(allBrowserFeatures),
     },
   ),

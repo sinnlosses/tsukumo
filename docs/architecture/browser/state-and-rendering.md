@@ -96,7 +96,7 @@ react-markdown
   `finished` の `ending`）。びくっのあとに跳ねると失敗を喜んで見える。**表情は変えない**（表情の源は
   `speak` だけ。`docs/requirements.md` 4.3）——動きは矩形の位置だけなのでこの原則に触れない
 - **`<Portrait>` の動きは領域の外へ出さない。** **レポートの上に出てよいのはミニ立ち絵だけ**
-  （`docs/requirements.md` 4.3）で、メインビュー側の別の部品が矩形を描く `components/domain/portrait.tsx` を
+  （`docs/requirements.md` 4.3）で、メインビュー側の別の部品が矩形を描く `components/frame/portrait.tsx` を
   共有する（「1枚の矩形しか動かさない」原則は崩れない）
 - `prefers-reduced-motion: reduce` を尊重する（`src/browser/styles/theme.css`）
 - 動きは CSS の `@keyframes` と `transform` で足りる。**`<canvas>` もアニメーションの

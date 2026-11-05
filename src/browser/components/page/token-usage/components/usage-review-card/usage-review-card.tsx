@@ -10,7 +10,7 @@ import type {
   UsageProposalImpact,
   UsageProposalRunOutcome,
 } from "../../../../../../shared/usage/usage-review.ts"
-import { CharacterFace } from "../../../../domain/character-face.tsx"
+import { CharacterFace } from "../../../../frame/character-face.tsx"
 import { Button } from "../../../../ui/button/button.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import { VStack } from "../../../../ui/v-stack/v-stack.tsx"

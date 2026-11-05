@@ -4,7 +4,7 @@
 import { cleanup, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
-import { ProfileCard } from "../../../../../../src/browser/components/domain/sidebar/components/profile-card.tsx"
+import { ProfileCard } from "../../../../../../src/browser/components/frame/sidebar/components/profile-card.tsx"
 import {
   INITIAL_SESSION_STATE,
   type SessionState,

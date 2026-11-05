@@ -62,7 +62,7 @@ import するので、食い違うと入口を別のモジュールとして読�
 だけ**を領域・機能・ページの1枚（`<領域>/<領域>.module.css`・`features/<機能>/<機能>.module.css`・
 `<ページ>.module.css`）に置く。部品が平たく並ぶ `components/`（`features/<機能>/components/` など）でも、
 部品の `.tsx` の隣に同じ名前で置く（container / presenter の対は対の名前）。自分の見た目を持つ共有部品も
-隣に置く（`components/domain/portrait.module.css`）。**グローバルなのは `styles/theme.css`（`fade-in`）と `ui/spinner/spinner.css`（`spinner-turn`）だけ**で、
+隣に置く（`components/frame/portrait.module.css`）。**グローバルなのは `styles/theme.css`（`fade-in`）と `ui/spinner/spinner.css`（`spinner-turn`）だけ**で、
 `theme.css` はトークン（`:root`）・`body`・フォーカスの輪・`prefers-reduced-motion`・リンクを持つ。共有する `@keyframes` は CSS Modules が名前を付け替えるので、名前ごと `var()`（`--fade-in-name`・`--spinner-animation`）で渡す。
 **16進の色を書いてよいのもそこだけ**（`docs/architecture/screen-design.md` 13.2）。同居に移した理由は `docs/history/decision.md`
 「design.md 6.6 CSS（機能と同居させる形に移した理由）」。
@@ -88,7 +88,7 @@ class 名は用語集の語（`balloon` / `portrait` / `work-strip` など）を
 ことに見合う困りごとが無い）。
 
 **機能をまたいで見た目が要るときは className を渡す**（CSS の選択子で他の機能の class を
-指さない）。`<Portrait>` が例で、立ち絵そのものの中身と動きは `components/domain/portrait.module.css`、
+指さない）。`<Portrait>` が例で、立ち絵そのものの中身と動きは `components/frame/portrait.module.css`、
 **どこにどれだけの大きさで置くか**は呼び出し側が `className` で足す。打ち消しは**親の class から**書いて
 （`.character-layout .portrait`）、読み込み順ではなく詳細度で勝たせる。
 

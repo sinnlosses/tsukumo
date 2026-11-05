@@ -1,7 +1,7 @@
 import { cleanup, render } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
-import { TaskDoingCount } from "../../../../../../src/browser/components/domain/sidebar/components/task-doing-count.tsx"
+import { TaskDoingCount } from "../../../../../../src/browser/components/frame/sidebar/components/task-doing-count.tsx"
 import type {
   TaskSummaryItem,
   TaskSummaryResult,

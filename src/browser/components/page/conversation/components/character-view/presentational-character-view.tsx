@@ -8,7 +8,7 @@
 
 import type { ReactElement } from "react"
 
-import { Portrait } from "../../../../domain/portrait.tsx"
+import { Portrait } from "../../../../frame/portrait.tsx"
 import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
 import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
 import { BalloonTrack } from "./balloon-track.tsx"

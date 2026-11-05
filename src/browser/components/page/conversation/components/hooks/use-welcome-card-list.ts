@@ -2,7 +2,7 @@
 
 import { conversationMoment } from "../../../../../../shared/session/conversation-moment.ts"
 import { useSession } from "../../../../../stores/session.ts"
-import { useSessionDigest } from "../../../../domain/screen-nav/hooks/use-session-digest.ts"
+import { useSessionDigest } from "../../../../frame/screen-nav/hooks/use-session-digest.ts"
 import {
   hasOtherSession,
   previousSessionOf,

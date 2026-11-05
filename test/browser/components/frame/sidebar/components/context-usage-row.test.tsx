@@ -3,7 +3,7 @@ import { cleanup, render, screen } from "@testing-library/react"
 import type { ReactElement } from "react"
 import { afterEach, describe, expect, it } from "vitest"
 
-import { ContextUsageRow } from "../../../../../../src/browser/components/domain/sidebar/components/context-usage-row.tsx"
+import { ContextUsageRow } from "../../../../../../src/browser/components/frame/sidebar/components/context-usage-row.tsx"
 import { useContextUsage } from "../../../../../../src/browser/domain/context-usage.ts"
 import { rpc } from "../../../../../../src/browser/stores/rpc.ts"
 import { INITIAL_SESSION_STATE } from "../../../../../../src/shared/session/session-state.ts"
