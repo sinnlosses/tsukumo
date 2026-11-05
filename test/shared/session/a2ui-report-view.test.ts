@@ -5,13 +5,11 @@ import { reportEvents } from "../../../src/server/session-driver/core/message/sd
 import { reportFigureOf } from "../../../src/shared/report/report-outline.ts"
 import { mainViewEntries } from "../../../src/shared/session/main-view-entry.ts"
 import type { MainViewReportRegions } from "../../../src/shared/session/main-view-shape.ts"
-import type { SessionEvent } from "../../../src/shared/session/session-event.ts"
+import type { ReportCalledEvent } from "../../../src/shared/session/session-event.ts"
 import { applySessionEvent } from "../../../src/shared/session/session-fold.ts"
 import { INITIAL_SESSION_STATE } from "../../../src/shared/session/session-state.ts"
 import { staticOf } from "../../fixture/static-component-list.ts"
 import { checkedToolUseId } from "../../fixture/tool-use-id.ts"
-
-type ReportEvent = Extract<SessionEvent, { readonly kind: "report" }>
 
 const PARTS = [
   {
@@ -248,13 +246,13 @@ const MARKDOWN_PARTS = [
   },
 ]
 
-function reportOf(input: Readonly<Record<string, unknown>>): ReportEvent {
+function reportOf(input: Readonly<Record<string, unknown>>): ReportCalledEvent {
   const [event] = reportEvents(checkedToolUseId("toolu_fictional"), input, [])
   if (event?.kind !== "report") throw new Error("report にならなかった")
   return event
 }
 
-function regionsOf(event: ReportEvent): MainViewReportRegions {
+function regionsOf(event: ReportCalledEvent): MainViewReportRegions {
   const entry = mainViewEntries(applySessionEvent(INITIAL_SESSION_STATE, event, 0)).find(
     (candidate) => candidate.kind === "report",
   )

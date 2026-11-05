@@ -24,7 +24,10 @@ import {
 import { staticReportComponents } from "../../../../shared/report/report-static-component-list.ts"
 import type { ReportGenre, ReportTaskOutcome } from "../../../../shared/report/report-task.ts"
 import type { ToolErrorField } from "../../../../shared/report/tool-error-field.ts"
-import type { SessionEvent } from "../../../../shared/session/session-event.ts"
+import type {
+  ReportCalledEvent,
+  ToolStartedEvent,
+} from "../../../../shared/session/session-event.ts"
 import { reportImagePaths } from "../image/report-image-shelf.ts"
 import { numberCountOutsideCode } from "../rules/draft.ts"
 import { mermaidKind, mermaidSourcesOfLeaves } from "../rules/figure/diagram.ts"
@@ -42,10 +45,7 @@ import { emphasisCountOf, hasSourceReference } from "./report-usage-text.ts"
 
 type ReportLeafKind = (typeof LEAF_COMPONENT_KINDS)[keyof typeof LEAF_COMPONENT_KINDS]
 
-type ReportComponentName = Extract<
-  SessionEvent,
-  { readonly kind: "report" }
->["components"][number]["component"]
+type ReportComponentName = ReportCalledEvent["components"][number]["component"]
 
 type ReportListStyle = Extract<ReportOutlineLeaf, { readonly component: "ItemList" }>["style"]
 
@@ -227,7 +227,7 @@ export type ReportUsageLog = {
 
 /** 描いた（差し戻されなかった）`report` から、記録1行ぶんの中身を作る。`mainReadImageFile` は、このターンにメインが画像のファイルを `Read` したか。 */
 export function reportUsageEntryOf(
-  event: Extract<SessionEvent, { readonly kind: "report" }>,
+  event: ReportCalledEvent,
   sessionId: string,
   at: number,
   mainReadImageFile: boolean,
@@ -293,9 +293,7 @@ export function reportUsageEntryOf(
 }
 
 /** メインが画像のファイルを `Read` した呼び出しか。パスは返さない。 */
-export function isMainImageFileRead(
-  event: Extract<SessionEvent, { readonly kind: "tool-started" }>,
-): boolean {
+export function isMainImageFileRead(event: ToolStartedEvent): boolean {
   if (event.name !== "Read" || event.parentToolUseId !== undefined) {
     return false
   }
@@ -331,9 +329,7 @@ function howToVerifyUsageOf(checks: readonly ReportCheck[]): ReportVerifyUsage {
       }
 }
 
-function taskUsageOf(
-  task: Extract<SessionEvent, { readonly kind: "report" }>["task"],
-): ReportTaskUsage {
+function taskUsageOf(task: ReportCalledEvent["task"]): ReportTaskUsage {
   return task.kind === "task"
     ? { forTask: true, taskGenre: task.genre, taskOutcome: task.outcome }
     : { forTask: false, taskGenre: "none", taskOutcome: "none" }

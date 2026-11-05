@@ -2,18 +2,15 @@
 
 import { NO_REPORT_CHANGE_SUMMARY } from "../report/report-change-summary.ts"
 import { NO_REPORT_VERIFICATION } from "../report/report-verification.ts"
-import type { SessionEvent } from "./session-event.ts"
+import type { SpeechEvent } from "./session-event-speech.ts"
+import type { ReportCalledEvent, SessionEventOfKind, ToolStartedEvent } from "./session-event.ts"
 import { workPlanRecords } from "./session-record-edit.ts"
 import type { SessionState } from "./session-state.ts"
 import { runsInBackground } from "./tool-record.ts"
 import { settleReportDrafting, withOpenSdkTurn } from "./turn-progress-fold.ts"
 import { answeringAsideOf } from "./turn-progress.ts"
 
-export function advanceBySpeech(
-  state: SessionState,
-  event: Extract<SessionEvent, { readonly kind: "speech" }>,
-  at: number,
-): SessionState {
+export function advanceBySpeech(state: SessionState, event: SpeechEvent, at: number): SessionState {
   return {
     ...state,
     // 記録は積みっぱなし（`speeches` と違ってターンの境目で捨てない）。過去のターンの吹き出しと表情をここから引き直す。
@@ -43,7 +40,7 @@ export function advanceBySpeech(
  */
 export function advanceByReport(
   state: SessionState,
-  event: Extract<SessionEvent, { readonly kind: "report" }>,
+  event: ReportCalledEvent,
   at: number,
 ): SessionState {
   return {
@@ -77,7 +74,7 @@ export function advanceByReport(
 
 export function advanceByToolStarted(
   state: SessionState,
-  event: Extract<SessionEvent, { readonly kind: "tool-started" }>,
+  event: ToolStartedEvent,
   at: number,
 ): SessionState {
   return {
@@ -106,7 +103,7 @@ export function advanceByToolStarted(
  */
 export function advanceByQuestionAnswered(
   state: SessionState,
-  event: Extract<SessionEvent, { readonly kind: "question-answered" }>,
+  event: SessionEventOfKind<"question-answered">,
 ): SessionState {
   return {
     ...state,

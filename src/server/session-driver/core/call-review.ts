@@ -9,7 +9,7 @@
 // 何を新しい事実に数えるかの差は `NEWS_SUBJECTS_BY_EVENT` で宣言する。
 
 import type { BackgroundTask } from "../../../shared/session-driver/background-task.ts"
-import type { SessionEvent } from "../../../shared/session/session-event.ts"
+import type { ReportCalledEvent, SessionEvent } from "../../../shared/session/session-event.ts"
 import type { LatestWorkPlan } from "../../../shared/session/work-plan.ts"
 import { createReportInheritance } from "../../report/core/review/report-inheritance.ts"
 import type { ReportVerdict } from "../../report/core/review/report-review-type.ts"
@@ -43,7 +43,7 @@ export type CallReview = {
    * `pass` が描く値を組むのと同じ土台で埋める（`ReportInheritance.fill`）。
    * 土台は `pass` に流れたイベントだけで動くので、直前の呼び出しの結果がここより先に `pass` を通っていることを当てにしている。
    */
-  readonly fillReport: (report: ReportCalled) => ReportCalled
+  readonly fillReport: (report: ReportCalledEvent) => ReportCalledEvent
   /** `speak` の handler から、`phase` を渡したときだけ呼ぶ。範囲があるあいだ、範囲の外の段の番号なら差し戻す。 */
   readonly judgePhaseMention: (phase: number) => PhaseMentionVerdict
   /** `work_plan` の handler から、届いた引数のままで呼ぶ。 */
@@ -74,8 +74,6 @@ export type CallReview = {
   /** バックグラウンドタスクが種類を問わず1件でも動いているか。 */
   readonly backgroundRunning: () => boolean
 }
-
-type ReportCalled = Extract<SessionEvent, { readonly kind: "report" }>
 
 type NewsSubject = "speak" | "report"
 

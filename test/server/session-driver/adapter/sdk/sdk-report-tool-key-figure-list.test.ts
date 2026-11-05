@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest"
 
 import { createCallReview } from "../../../../../src/server/session-driver/core/call-review.ts"
 import { toSessionEvents } from "../../../../../src/server/session-driver/core/message/sdk-message.ts"
-import type { SessionEvent } from "../../../../../src/shared/session/session-event.ts"
+import type { ReportCalledEvent } from "../../../../../src/shared/session/session-event.ts"
 import { callReport, reportInput } from "../../../../fixture/a2ui-report.ts"
 import { callTool } from "../../../../fixture/mcp-server.ts"
 import { assistantMessage, REPORT_TOOL_FULL_NAME } from "../../../../fixture/sdk-message.ts"
@@ -17,8 +17,6 @@ import {
   workServer,
 } from "../../../../fixture/sdk-tool.ts"
 import { checkedToolUseId } from "../../../../fixture/tool-use-id.ts"
-
-type ReportCalled = Extract<SessionEvent, { kind: "report" }>
 
 const COMPLETE = {
   conclusion: ["架空の結論"],
@@ -115,7 +113,9 @@ describe("report の keyFigures のイベントへの変換と引き継ぎ", () 
         content: reply.text,
         isError: reply.isError,
       })
-      return [...before, ...after].find((event): event is ReportCalled => event.kind === "report")
+      return [...before, ...after].find(
+        (event): event is ReportCalledEvent => event.kind === "report",
+      )
     }
 
     // conclusion が3要素以上だと差し戻される

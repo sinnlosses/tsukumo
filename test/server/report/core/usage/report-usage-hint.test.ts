@@ -8,7 +8,7 @@ import {
 import type { compareSideSchema } from "../../../../../src/shared/report/report-block-diagram.ts"
 import type { ReportBlock } from "../../../../../src/shared/report/report-block.ts"
 import type { ReportCheck } from "../../../../../src/shared/report/report-check.ts"
-import type { SessionEvent } from "../../../../../src/shared/session/session-event.ts"
+import type { ToolStartedEvent } from "../../../../../src/shared/session/session-event.ts"
 import { reportEvent, reportOfDrawn, reportOfSections } from "../../../../fixture/report-event.ts"
 import { checkedOptionalToolUseId, checkedToolUseId } from "../../../../fixture/tool-use-id.ts"
 
@@ -476,7 +476,7 @@ describe("isMainImageFileRead", () => {
     name: string,
     input: unknown,
     parentToolUseId: string | undefined = undefined,
-  ): Extract<SessionEvent, { readonly kind: "tool-started" }> => ({
+  ): ToolStartedEvent => ({
     kind: "tool-started",
     toolUseId: checkedToolUseId("toolu_1"),
     name,

@@ -13,7 +13,7 @@ import {
 } from "../../src/shared/report/a2ui-report-catalog.ts"
 import type { ReportBlockSection } from "../../src/shared/report/report-block.ts"
 import type { ReportRetrospective } from "../../src/shared/report/report-retrospective.ts"
-import type { SessionEvent } from "../../src/shared/session/session-event.ts"
+import type { ReportCalledEvent } from "../../src/shared/session/session-event.ts"
 import { checkedToolUseId } from "./tool-use-id.ts"
 
 /** 旧い引数の節。`row`・`panel` のような今は型に無い塊も、旧い記録の読み戻しの検査のために置ける。 */
@@ -23,14 +23,12 @@ export type LegacySectionInput = {
 }
 
 /** `reportEvent` に渡す欄。`toolUseId` だけは素の文字列で受ける。 */
-export type ReportEventInput = Partial<
-  Omit<Extract<SessionEvent, { readonly kind: "report" }>, "kind" | "toolUseId">
-> & { readonly toolUseId?: string }
+export type ReportEventInput = Partial<Omit<ReportCalledEvent, "kind" | "toolUseId">> & {
+  readonly toolUseId?: string
+}
 
 /** `report` ツールの呼び出し1件。 */
-export function reportEvent(
-  input: ReportEventInput = {},
-): Extract<SessionEvent, { readonly kind: "report" }> {
+export function reportEvent(input: ReportEventInput = {}): ReportCalledEvent {
   const { toolUseId, ...overrides } = input
   const conclusion = overrides.conclusion ?? "架空の結論"
   return {
@@ -64,7 +62,7 @@ export function reportEvent(
 export function reportOfSections(
   sections: readonly LegacySectionInput[],
   droppedCount = 0,
-): Extract<SessionEvent, { readonly kind: "report" }> {
+): ReportCalledEvent {
   return reportEvent({
     droppedCount,
     components: componentsOfSections(
@@ -84,7 +82,7 @@ export function reportOfDrawn(
     readonly figure?: RecordedReportFigure
     readonly retrospective?: ReportRetrospective
   },
-): Extract<SessionEvent, { readonly kind: "report" }> {
+): ReportCalledEvent {
   const { sections, figure, retrospective, ...rest } = overrides
   return reportEvent({
     ...rest,

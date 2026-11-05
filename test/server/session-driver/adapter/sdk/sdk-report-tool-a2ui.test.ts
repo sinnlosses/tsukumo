@@ -12,7 +12,7 @@ import {
 import { toSessionEvents } from "../../../../../src/server/session-driver/core/message/sdk-message.ts"
 import { REPORT_COMPONENT_SCHEMAS } from "../../../../../src/shared/report/a2ui-report-catalog.ts"
 import { reportOutline } from "../../../../../src/shared/report/report-outline.ts"
-import type { SessionEvent } from "../../../../../src/shared/session/session-event.ts"
+import type { ReportCalledEvent } from "../../../../../src/shared/session/session-event.ts"
 import { callTool, mcpRequest } from "../../../../fixture/mcp-server.ts"
 import { assistantMessage, REPORT_TOOL_FULL_NAME } from "../../../../fixture/sdk-message.ts"
 import {
@@ -26,8 +26,6 @@ import {
 } from "../../../../fixture/sdk-tool.ts"
 import { staticOf } from "../../../../fixture/static-component-list.ts"
 import { checkedToolUseId } from "../../../../fixture/tool-use-id.ts"
-
-type ReportCalled = Extract<SessionEvent, { kind: "report" }>
 
 const ROOT = {
   id: "root",
@@ -91,7 +89,7 @@ function session() {
       const events = [...before, ...after]
       return {
         reply,
-        drawn: events.find((event): event is ReportCalled => event.kind === "report"),
+        drawn: events.find((event): event is ReportCalledEvent => event.kind === "report"),
         rejected: events.find((event) => event.kind === "report-rejected"),
         counted: events.find((event) => event.kind === "report-counted"),
       }

@@ -150,6 +150,19 @@ export type SessionEvent =
   /** 振り返りの進みを動かすイベント。 */
   | DiaryEvent
 
+/** {@link SessionEvent} から種類 `K` の1つだけを取り出した型。名前つきの別名が無い種類を、1か所で使うときに使う。 */
+export type SessionEventOfKind<K extends SessionEvent["kind"]> = Extract<
+  SessionEvent,
+  { readonly kind: K }
+>
+
+export type SessionInfoEvent = SessionEventOfKind<"session-info">
+
+/** 種類 `report` の1つだけ（メインが `report` ツールを呼んだ）。report まわりのイベント全体の合併型は `ReportEvent`。 */
+export type ReportCalledEvent = SessionEventOfKind<"report">
+
+export type ToolStartedEvent = SessionEventOfKind<"tool-started">
+
 /** 時刻を打ったイベント1件。時刻はイベントの発生側（サーバ）が決める（ブラウザ側で読んだ時計を畳み込みに渡さない）。 */
 export type StampedEvent = {
   readonly at: number

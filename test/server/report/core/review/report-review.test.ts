@@ -13,7 +13,10 @@ import {
 import { reportRejectionText } from "../../../../../src/server/report/core/rules/report-violation.ts"
 import { reportViolations } from "../../../../../src/server/report/core/rules/report-violation.ts"
 import type { BackgroundTask } from "../../../../../src/shared/session-driver/background-task.ts"
-import type { SessionEvent } from "../../../../../src/shared/session/session-event.ts"
+import type {
+  ReportCalledEvent,
+  SessionEvent,
+} from "../../../../../src/shared/session/session-event.ts"
 import { reportDraft, reportEvent } from "../../../../fixture/report-event.ts"
 import {
   createReportReview,
@@ -28,10 +31,7 @@ import {
 import { checkedToolUseId } from "../../../../fixture/tool-use-id.ts"
 
 /** handler に届いた引数を、呼び出しをイベントに変える側と同じ形のイベントにする。 */
-const reportOfDraft = (
-  toolUseId: string,
-  draft: ReportDraft,
-): Extract<SessionEvent, { kind: "report" }> =>
+const reportOfDraft = (toolUseId: string, draft: ReportDraft): ReportCalledEvent =>
   reportEvent({
     toolUseId,
     conclusion: draft.conclusion,

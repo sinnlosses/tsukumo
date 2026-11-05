@@ -8,9 +8,7 @@ import {
   REPORT_ARGUMENT_FIELDS,
   type ReportArgumentField,
 } from "../../../../shared/report/report-argument-size.ts"
-import type { SessionEvent } from "../../../../shared/session/session-event.ts"
-
-type ReportEvent = Extract<SessionEvent, { readonly kind: "report" }>
+import type { ReportCalledEvent, SessionEvent } from "../../../../shared/session/session-event.ts"
 
 export type ReportInheritance = {
   /**
@@ -30,16 +28,16 @@ export type ReportInheritance = {
    * その名前を `inheritedFields` に入れる。
    * 空の値（`favor: ""`・`checks: []`）を渡した欄は渡した欄なので、引き継がずに上書きになる。
    */
-  readonly fill: (report: ReportEvent) => ReportEvent
+  readonly fill: (report: ReportCalledEvent) => ReportCalledEvent
 }
 
 /** {@link ReportInheritance} を1つ作る。動いているセッション1つ、または組み直す transcript 1本に1つ。 */
 export function createReportInheritance(): ReportInheritance {
-  let base: ReportEvent | undefined
+  let base: ReportCalledEvent | undefined
   // 結果（`tool-finished`）をまだ受け取っていない `report`（埋めたあとの姿）。
-  let held: readonly ReportEvent[] = []
+  let held: readonly ReportCalledEvent[] = []
 
-  const fill = (report: ReportEvent): ReportEvent =>
+  const fill = (report: ReportCalledEvent): ReportCalledEvent =>
     base === undefined ? report : inherited(report, base)
 
   return {
@@ -74,7 +72,7 @@ export function createReportInheritance(): ReportInheritance {
 }
 
 /** その欄を、渡したか引き継いだか。 */
-export function hasReportField(report: ReportEvent, field: ReportArgumentField): boolean {
+export function hasReportField(report: ReportCalledEvent, field: ReportArgumentField): boolean {
   return report.argumentChars.fields[field] !== undefined || report.inheritedFields.includes(field)
 }
 
@@ -91,7 +89,7 @@ const REPORT_INHERITANCE_BOUNDARIES: ReadonlySet<SessionEvent["kind"]> = new Set
 /** 本文を渡す欄。図も本文と一緒に `components` に載るので、どれか1つを渡したら、ほかは引き継がない。 */
 const BODY_FIELDS = ["sections", "body", "figure"] as const satisfies readonly ReportArgumentField[]
 
-function inherited(event: ReportEvent, base: ReportEvent): ReportEvent {
+function inherited(event: ReportCalledEvent, base: ReportCalledEvent): ReportCalledEvent {
   const passedBody = BODY_FIELDS.some((field) => event.argumentChars.fields[field] !== undefined)
   const fields = new Set(
     REPORT_ARGUMENT_FIELDS.filter(
@@ -101,7 +99,7 @@ function inherited(event: ReportEvent, base: ReportEvent): ReportEvent {
         !(passedBody && BODY_FIELDS.some((bodyField) => bodyField === field)),
     ),
   )
-  const from = (field: ReportArgumentField): ReportEvent => (fields.has(field) ? base : event)
+  const from = (field: ReportArgumentField): ReportCalledEvent => (fields.has(field) ? base : event)
   const fromBody = BODY_FIELDS.some((field) => fields.has(field)) ? base : event
   return {
     ...event,

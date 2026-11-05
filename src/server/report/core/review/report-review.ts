@@ -37,7 +37,11 @@ import type {
   ReportArgumentField,
 } from "../../../../shared/report/report-argument-size.ts"
 import type { ToolErrorField } from "../../../../shared/report/tool-error-field.ts"
-import type { SessionEvent } from "../../../../shared/session/session-event.ts"
+import type {
+  ReportCalledEvent,
+  SessionEvent,
+  SessionEventOfKind,
+} from "../../../../shared/session/session-event.ts"
 import type { WorkPlanStanding } from "../../../../shared/session/work-plan.ts"
 import type { ReportDraft } from "../rules/draft.ts"
 import {
@@ -76,8 +80,6 @@ export const A2UI_STRUCTURE_REJECTION_REASONS = [
 /** 辿れない部品だけが違反の呼び出しを、部品を捨てて通したときに、通した呼び出しの記録（`report-counted`）へ残す名前。 */
 const UNREFERENCED_DROPPED_REASON = "a2ui-unreferenced-dropped"
 
-type ReportEvent = Extract<SessionEvent, { readonly kind: "report" }>
-
 /**
  * {@link ReportReview} を1つ作る。セッション1つに1つ（ターンの区切りを `pass` で見ている）。
  * ターンの頭は `session-info`（SDK のターンの頭に毎回届く）と `turn-finished`。
@@ -90,9 +92,9 @@ export function createReportReview(
   modes: ReportRejectionModes,
 ): ReportReview {
   let rejectedInTurn: ReadonlySet<TurnRejection> = new Set()
-  let held: readonly ReportEvent[] = []
+  let held: readonly ReportCalledEvent[] = []
   // 引数が読めず（`conclusion` の形が不正）レポートにならなかった呼び出し。結果が届いたら差し戻しの記録にだけ使う。
-  let malformed: readonly Extract<SessionEvent, { readonly kind: "report-malformed" }>[] = []
+  let malformed: readonly SessionEventOfKind<"report-malformed">[] = []
   // handler が直前に差し戻した理由。同じ呼び出しの `tool-finished` で使い切る。
   let handlerReasons: readonly string[] | undefined
   // handler が直前に差し戻した呼び出しの、記録に残す落ちた欄。`handlerReasons` と一緒に使い切る。
@@ -102,7 +104,7 @@ export function createReportReview(
   // handler が直前に捨てて通した、辿れない部品の ID。同じ呼び出しの `tool-finished` で使い切る。
   let handlerDroppedIds: readonly string[] = []
   // このターンで出した（描いた）`report`。送り直しの判定にだけ使う。
-  let drawn: readonly ReportEvent[] = []
+  let drawn: readonly ReportCalledEvent[] = []
   // 補足メッセージ（`aside`）で始まったターンか。ターンの頭の `session-info` は補足メッセージのターンの頭にも届くので、そこでは戻さない。
   let asideTurn = false
 

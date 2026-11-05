@@ -2,13 +2,14 @@ import { describe, expect, it } from "vitest"
 
 import { createReportInheritance } from "../../../../../src/server/report/core/review/report-inheritance.ts"
 import type { ReportArgumentField } from "../../../../../src/shared/report/report-argument-size.ts"
-import type { SessionEvent } from "../../../../../src/shared/session/session-event.ts"
+import type {
+  ReportCalledEvent,
+  SessionEvent,
+} from "../../../../../src/shared/session/session-event.ts"
 import { reportEvent } from "../../../../fixture/report-event.ts"
 import { requestEvent } from "../../../../fixture/session-event.ts"
 import { checkedSessionId } from "../../../../fixture/session-id.ts"
 import { checkedToolUseId } from "../../../../fixture/tool-use-id.ts"
-
-type ReportCalled = Extract<SessionEvent, { kind: "report" }>
 
 const finished = (toolUseId: string, isError: boolean): SessionEvent => ({
   kind: "tool-finished",
@@ -21,8 +22,8 @@ const finished = (toolUseId: string, isError: boolean): SessionEvent => ({
 const called = (
   toolUseId: string,
   passed: readonly ReportArgumentField[],
-  values: Partial<Omit<ReportCalled, "kind">> = {},
-): ReportCalled =>
+  values: Partial<Omit<ReportCalledEvent, "kind">> = {},
+): ReportCalledEvent =>
   reportEvent({
     toolUseId,
     argumentChars: { total: 10, fields: Object.fromEntries(passed.map((field) => [field, 1])) },
@@ -114,10 +115,10 @@ describe("ReportInheritance", () => {
   describe("本文の欄（sections・body・figure）", () => {
     const COMPONENTS = [
       { id: "p", component: "Paragraph", text: "架空の文。", fold: "", aside: "" },
-    ] as const satisfies ReportCalled["components"]
+    ] as const satisfies ReportCalledEvent["components"]
     const rejectedWith = (
       field: "sections" | "body" | "figure",
-      values: Partial<Omit<ReportCalled, "kind">>,
+      values: Partial<Omit<ReportCalledEvent, "kind">>,
     ): ReturnType<typeof createReportInheritance> => {
       const inheritance = createReportInheritance()
       inheritance.pass(called("toolu_r1", [field], values))

@@ -6,15 +6,16 @@ import {
   createCallReview,
 } from "../../../../src/server/session-driver/core/call-review.ts"
 import type { BackgroundTask } from "../../../../src/shared/session-driver/background-task.ts"
-import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
+import type { SpeechEvent } from "../../../../src/shared/session/session-event-speech.ts"
+import type {
+  ReportCalledEvent,
+  SessionEvent,
+} from "../../../../src/shared/session/session-event.ts"
 import { reportDraft, reportEvent } from "../../../fixture/report-event.ts"
 import { FINISHED, REJECTION_PHRASE, SESSION_INFO } from "../../../fixture/report-review.ts"
 import { requestEvent } from "../../../fixture/session-event.ts"
 import { checkedOptionalToolUseId, checkedToolUseId } from "../../../fixture/tool-use-id.ts"
 import { next } from "../../../fixture/work-plan-draft.ts"
-
-type SpeechEvent = Extract<SessionEvent, { kind: "speech" }>
-type ReportCalled = Extract<SessionEvent, { kind: "report" }>
 
 const REQUEST = requestEvent()
 const TURN_STARTED: SessionEvent = { kind: "turn-started" }
@@ -63,8 +64,8 @@ const ARGUMENT_CHARS = reportEvent().argumentChars
 const reportOfDraft = (
   toolUseId: string,
   draft: ReportDraft,
-  closing: ReportCalled["closing"] = NO_CLOSING,
-): ReportCalled =>
+  closing: ReportCalledEvent["closing"] = NO_CLOSING,
+): ReportCalledEvent =>
   reportEvent({
     toolUseId,
     conclusion: draft.conclusion,

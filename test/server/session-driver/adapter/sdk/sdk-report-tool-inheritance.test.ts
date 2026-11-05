@@ -9,7 +9,7 @@ import {
   createCallReview,
 } from "../../../../../src/server/session-driver/core/call-review.ts"
 import { toSessionEvents } from "../../../../../src/server/session-driver/core/message/sdk-message.ts"
-import type { SessionEvent } from "../../../../../src/shared/session/session-event.ts"
+import type { ReportCalledEvent } from "../../../../../src/shared/session/session-event.ts"
 import { reportInput } from "../../../../fixture/a2ui-report.ts"
 import { callTool } from "../../../../fixture/mcp-server.ts"
 import { REJECTION_PHRASE } from "../../../../fixture/report-review.ts"
@@ -23,8 +23,6 @@ import {
   workServer,
 } from "../../../../fixture/sdk-tool.ts"
 import { checkedToolUseId } from "../../../../fixture/tool-use-id.ts"
-
-type ReportCalled = Extract<SessionEvent, { kind: "report" }>
 
 const COMPLETE = {
   conclusion: ["架空の結論"],
@@ -81,7 +79,7 @@ function session() {
         isError: reply.isError,
       })
       const drawn = [...before, ...after].find(
-        (event): event is ReportCalled => event.kind === "report",
+        (event): event is ReportCalledEvent => event.kind === "report",
       )
       return { reply, drawn }
     },
@@ -89,7 +87,7 @@ function session() {
 }
 
 /** 判定に渡った下書きと、描いた `report` が同じ値か。 */
-function expectJudgedAsDrawn(draft: ReportDraft | undefined, drawn: ReportCalled | undefined) {
+function expectJudgedAsDrawn(draft: ReportDraft | undefined, drawn: ReportCalledEvent | undefined) {
   expect(drawn).toBeDefined()
   expect(draft).toMatchObject({
     conclusion: drawn?.conclusion,

@@ -9,7 +9,7 @@ import type { Answer, PendingAsk } from "../../../../shared/session-driver/pendi
 import type { EffortLevel, PermissionMode } from "../../../../shared/session/run-setting-value.ts"
 import type { SessionDefault } from "../../../../shared/session/session-default.ts"
 import { UNAVAILABLE_SESSION_DIGEST } from "../../../../shared/session/session-digest.ts"
-import type { SessionEvent } from "../../../../shared/session/session-event.ts"
+import type { SessionEvent, SessionInfoEvent } from "../../../../shared/session/session-event.ts"
 import { isSessionId, type SessionId } from "../../../../shared/session/session-id.ts"
 import { createCallReview } from "../../core/call-review.ts"
 import { reportEvents } from "../../core/message/sdk-report-message.ts"
@@ -280,7 +280,7 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
  * `model` / `permissionMode` がここで `| undefined` なのは、SDK の `init` をそのまま写す境界だから（`docs/coding-standards.md`「「無いかもしれない」値」の例外1）。
  * 値そのものは `emit` が載せ替えるので、この土台が持つのは「無い」のまま。
  */
-function sessionInfo(): Omit<Extract<SessionEvent, { kind: "session-info" }>, "kind"> {
+function sessionInfo(): Omit<SessionInfoEvent, "kind"> {
   return {
     sessionId: fakeSessionId(),
     model: undefined,
@@ -300,7 +300,4 @@ function fakeSessionId(): SessionId {
   return id
 }
 
-type SessionInfoNames = Pick<
-  Extract<SessionEvent, { kind: "session-info" }>,
-  "skillNames" | "agentNames"
->
+type SessionInfoNames = Pick<SessionInfoEvent, "skillNames" | "agentNames">

@@ -4,11 +4,10 @@ import {
   type CallReview,
   createCallReview,
 } from "../../../../src/server/session-driver/core/call-review.ts"
+import type { SpeechEvent } from "../../../../src/shared/session/session-event-speech.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import { requestEvent } from "../../../fixture/session-event.ts"
 import { checkedToolUseId } from "../../../fixture/tool-use-id.ts"
-
-type SpeechEvent = Extract<SessionEvent, { kind: "speech" }>
 
 const speech = (text: string): SpeechEvent => ({ kind: "speech", text, expression: "default" })
 const SPEAK_DRAWN: SessionEvent = { kind: "speak-drawn" }

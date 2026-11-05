@@ -5,12 +5,10 @@ import { reportEvents } from "../../../src/server/session-driver/core/message/sd
 import { applyRestoredEvents } from "../../../src/server/session/core/event/restored-event.ts"
 import { mainViewEntries } from "../../../src/shared/session/main-view-entry.ts"
 import { reportDrawnPieces } from "../../../src/shared/session/report-drawn-markdown.ts"
-import type { SessionEvent } from "../../../src/shared/session/session-event.ts"
+import type { ReportCalledEvent } from "../../../src/shared/session/session-event.ts"
 import { applySessionEvent } from "../../../src/shared/session/session-fold.ts"
 import { INITIAL_SESSION_STATE } from "../../../src/shared/session/session-state.ts"
 import { checkedToolUseId } from "../../fixture/tool-use-id.ts"
-
-type ReportEvent = Extract<SessionEvent, { readonly kind: "report" }>
 
 const WRITTEN_TEXT = { call: "format", args: { template: "合計 ${n * 2} 件" } }
 
@@ -30,13 +28,13 @@ const COMPONENTS = [
   },
 ]
 
-function reportOf(): ReportEvent {
+function reportOf(): ReportCalledEvent {
   const [event] = reportEvents(checkedToolUseId("toolu_fictional"), { components: COMPONENTS }, [])
   if (event?.kind !== "report") throw new Error("report にならなかった")
   return event
 }
 
-function recordOf(event: ReportEvent) {
+function recordOf(event: ReportCalledEvent) {
   const record = applySessionEvent(INITIAL_SESSION_STATE, event, 0).records.find(
     (candidate) => candidate.kind === "report",
   )

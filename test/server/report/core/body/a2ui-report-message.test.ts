@@ -5,10 +5,8 @@ import { parseLegacySections } from "../../../../../src/server/report/core/body/
 import { reportEvents } from "../../../../../src/server/session-driver/core/message/sdk-report-message.ts"
 import { parseReportFigure } from "../../../../../src/shared/report/a2ui-report-catalog.ts"
 import { parseReportRetrospective } from "../../../../../src/shared/report/report-retrospective.ts"
-import type { SessionEvent } from "../../../../../src/shared/session/session-event.ts"
+import type { ReportCalledEvent } from "../../../../../src/shared/session/session-event.ts"
 import { checkedToolUseId } from "../../../../fixture/tool-use-id.ts"
-
-type ReportCalled = Extract<SessionEvent, { readonly kind: "report" }>
 
 const paragraph = (id: string, text: string) => ({ id, component: "Paragraph", text })
 
@@ -300,9 +298,9 @@ describe("reportEvents の a2ui の版", () => {
   })
 })
 
-function reportOf(components: readonly unknown[]): ReportCalled {
+function reportOf(components: readonly unknown[]): ReportCalledEvent {
   const report = reportEvents(checkedToolUseId("toolu_a2ui"), { components }, ["default"]).find(
-    (event): event is ReportCalled => event.kind === "report",
+    (event): event is ReportCalledEvent => event.kind === "report",
   )
   if (report === undefined) {
     throw new Error("report にならなかった")

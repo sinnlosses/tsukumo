@@ -2,14 +2,14 @@
 // 引数は外部由来の値なので、unknown で受けて検証する。
 
 import type { Expression } from "../../../../shared/character-pack/expression.ts"
-import type { SessionEvent } from "../../../../shared/session/session-event.ts"
+import type { SpeechEvent } from "../../../../shared/session/session-event-speech.ts"
 import { SPEAK_TOOL_NAME, tsukumoToolFullName } from "../../../core/tsukumo-tool-name.ts"
 import { speakInputSchema } from "./speak-input.ts"
 
 export function speechEvents(
   input: unknown,
   expressions: readonly Expression[],
-): readonly Extract<SessionEvent, { readonly kind: "speech" }>[] {
+): readonly SpeechEvent[] {
   const parsed = speakInputSchema(expressions).safeParse(input)
   if (!parsed.success) {
     return []
