@@ -39,7 +39,7 @@
 
 ### 失敗の載せ先
 
-契約の違反（バグ）を例外で表すとき、常駐プロセスを落とさない規約（`docs/coding-standards/error-input-and-absent-value.md`「エラーハンドリング」）に従う。起動時の前提不足だけが即時終了で、動作中は描画の境界（`ScreenBoundary` など）が受け止める。内側の関数に `try`/`catch` を散らして表明を握りつぶさない。
+契約の違反（バグ）を例外で表すとき、常駐プロセスを落とさない規約（`docs/coding-standards/error-input-and-absent-value.md`「エラーハンドリング」）に従う。起動時の前提不足だけが即時終了で、動作中は描画の境界（`ScreenBoundary` など）が受け止める。内側の関数に `try`/`catch` を散らして表明を握りつぶさない。例外にしない失敗の戻り値の形と、port の失敗を畳む場所は `docs/coding-standards/error-input-and-absent-value.md`「失敗を返す戻り値」。
 
 ## 副作用を隔離し、純粋関数を保つ
 
