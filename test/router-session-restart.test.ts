@@ -70,15 +70,15 @@ describe("createSocketRouter（session）", () => {
     ])
   })
 
-  it("セッションの ID の綴りでない session.switchSession は、予約せず新規で起こし直す", async () => {
+  it("セッションの ID の綴りでない session.switchSession は契約で断り、予約も起こし直しもしない", async () => {
     const { commands, restarts, reserved } = startRouter()
 
-    expect(await commands.session.switchSession({ sessionId: "../other-session" })).toEqual({
-      ok: true,
-    })
+    await expect(commands.session.switchSession({ sessionId: "../other-session" })).rejects.toThrow(
+      "Input validation failed",
+    )
 
     expect(reserved).toEqual([])
-    expect(restarts).toEqual([{ selection: { by: "current" }, chat: false, resume: { by: "new" } }])
+    expect(restarts).toEqual([])
   })
 
   it("別のウィンドウが占有ファイルに書いているセッションへの session.switchSession は定型文の理由で断り、起こし直さない", async () => {

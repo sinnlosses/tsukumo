@@ -106,8 +106,8 @@ describe("コマンドの契約の入力（受け付ける形）", () => {
   })
 
   it("session.switchSession を受け付ける", () => {
-    expect(parseInput("session.switchSession", { sessionId: "s-架空" })).toEqual({
-      sessionId: "s-架空",
+    expect(parseInput("session.switchSession", { sessionId: "s-fictional" })).toEqual({
+      sessionId: "s-fictional",
     })
   })
 
@@ -237,6 +237,7 @@ describe("コマンドの契約の入力（落とす形）", () => {
     ],
     ["switchSession の空のID", "session.switchSession", { sessionId: "" }],
     ["switchSession のIDが無い", "session.switchSession", {}],
+    ["switchSession のIDがパスを遡る綴り", "session.switchSession", { sessionId: "../s-1" }],
     ...[
       "../escape",
       "..",

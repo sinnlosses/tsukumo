@@ -8,6 +8,7 @@ import { applySessionEvent } from "../../../src/shared/session/session-fold.ts"
 import { INITIAL_SESSION_STATE } from "../../../src/shared/session/session-state.ts"
 import { characterChangedEvent, characterInfo, shownPortraits } from "../../fixture/character.ts"
 import { requestEvent } from "../../fixture/session-event.ts"
+import { checkedSessionId } from "../../fixture/session-id.ts"
 import { apply, runningSession, sessionIdOf } from "../../fixture/session-state.ts"
 
 /** 架空のキャラクターパックが決まったところ。 */
@@ -26,7 +27,7 @@ describe("applySessionEvent", () => {
       CHARACTER_FIXTURE,
       {
         kind: "session-info",
-        sessionId: "session-dummy",
+        sessionId: checkedSessionId("session-dummy"),
         model: "claude-opus-5",
         permissionMode: "auto",
         slashCommands: ["clear"],
@@ -116,7 +117,7 @@ describe("applySessionEvent", () => {
     const sessions = [
       {
         viewPort: 7328,
-        sessionId: "s-架空-2",
+        sessionId: checkedSessionId("s-fictional-2"),
         lastModified: 2_000,
         startedAt: 1_500,
         heading: "架空の見出しその2",
@@ -125,7 +126,7 @@ describe("applySessionEvent", () => {
       },
       {
         viewPort: 7327,
-        sessionId: "s-架空-1",
+        sessionId: checkedSessionId("s-fictional-1"),
         lastModified: 1_000,
         startedAt: 500,
         heading: "架空の見出しその1",
@@ -133,18 +134,22 @@ describe("applySessionEvent", () => {
         inCurrentWorktree: true,
       },
     ]
-    const listed = apply({ kind: "sessions-changed", sessions, current: "s-架空-1" })
+    const listed = apply({
+      kind: "sessions-changed",
+      sessions,
+      current: checkedSessionId("s-fictional-1"),
+    })
     expect(listed.sessions).toEqual(sessions)
     // `init` を待たずに居場所が決まる（続きから始めたときだけ）。`model` / `permissionMode`
     // はまだなので `identified`（`sessionId` だけ）に留まる。
     expect(listed.session.kind).toBe("identified")
-    expect(sessionIdOf(listed)).toBe("s-架空-1")
+    expect(sessionIdOf(listed)).toBe("s-fictional-1")
   })
 
   it("sessions-changed が running のときに来たら、sessionId だけ差し替えて permissionMode は引き継ぐ（model は session と無関係にそのまま残る）", () => {
     const withInit = apply({
       kind: "session-info",
-      sessionId: "s-架空-旧",
+      sessionId: checkedSessionId("s-fictional-old"),
       model: "claude-opus-5",
       permissionMode: "auto",
       slashCommands: [],
@@ -160,7 +165,7 @@ describe("applySessionEvent", () => {
         sessions: [
           {
             viewPort: 7327,
-            sessionId: "s-架空-新",
+            sessionId: checkedSessionId("s-fictional-new"),
             lastModified: 0,
             startedAt: 0,
             heading: "架空の見出し",
@@ -168,12 +173,12 @@ describe("applySessionEvent", () => {
             inCurrentWorktree: true,
           },
         ],
-        current: "s-架空-新",
+        current: checkedSessionId("s-fictional-new"),
       },
       0,
     )
 
-    expect(runningSession(listed).sessionId).toBe("s-架空-新")
+    expect(runningSession(listed).sessionId).toBe("s-fictional-new")
     expect(runningSession(listed).permissionMode).toBe("auto")
     expect(listed.model).toBe("claude-opus-5")
   })
@@ -182,7 +187,7 @@ describe("applySessionEvent", () => {
     // model / permissionMode の片方だけ届いても sessionId だけの identified に畳む。
     const withId = apply({
       kind: "session-info",
-      sessionId: "s-架空-init",
+      sessionId: checkedSessionId("s-fictional-init"),
       model: "claude-opus-5",
       permissionMode: undefined,
       slashCommands: [],
@@ -197,7 +202,7 @@ describe("applySessionEvent", () => {
       { kind: "sessions-changed", sessions: [], current: undefined },
       0,
     )
-    expect(sessionIdOf(listed)).toBe("s-架空-init")
+    expect(sessionIdOf(listed)).toBe("s-fictional-init")
   })
 
   it("character-changed でキャラクターパックの姿を持ち、届くまでは undefined", () => {

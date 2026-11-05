@@ -5,6 +5,7 @@ import { RunSettingGroup } from "../../../../../src/browser/features/run-setting
 import { nowEpochMilliseconds } from "../../../../../src/browser/utils/clock.ts"
 import { INITIAL_SESSION_STATE } from "../../../../../src/shared/session/session-state.ts"
 import type { SettingMark, SettingMarks } from "../../../../../src/shared/session/setting-mark.ts"
+import { checkedSessionId } from "../../../../fixture/session-id.ts"
 import { putSession, putState } from "../../../session-store.ts"
 
 afterEach(() => {
@@ -106,7 +107,7 @@ describe("RunSettingGroup（知らない許可モード）", () => {
       ...INITIAL_SESSION_STATE,
       session: {
         kind: "running",
-        sessionId: "s-fixture",
+        sessionId: checkedSessionId("s-fixture"),
         permissionMode: { kind: "unknown", raw: "dontAsk" },
       },
     })

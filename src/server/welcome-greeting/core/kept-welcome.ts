@@ -4,11 +4,12 @@
 import type { WrittenReactionsState } from "../../../shared/recommendation/reaction.ts"
 import type { WelcomeGreeting } from "../../../shared/recommendation/welcome-greeting.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
+import type { SessionId } from "../../../shared/session/session-id.ts"
 
 /** 代の起こし方（`SessionStart` と同じ形）。 */
 export type WelcomeLaunchStart =
   | { readonly kind: "new" }
-  | { readonly kind: "resume"; readonly sessionId: string }
+  | { readonly kind: "resume"; readonly sessionId: SessionId }
 
 /** 書き手が流す出来事。 */
 export type WelcomeWritingEvent = Extract<
@@ -41,10 +42,10 @@ type KeptWelcome = {
 }
 
 export function createWelcomeKeeper(): WelcomeKeeper {
-  const kept = new Map<string, KeptWelcome>()
+  const kept = new Map<SessionId, KeptWelcome>()
   return {
     noteLaunched: (start, emit) => {
-      let sessionId: string | undefined = start.kind === "resume" ? start.sessionId : undefined
+      let sessionId: SessionId | undefined = start.kind === "resume" ? start.sessionId : undefined
       let greeting: WelcomeGreeting | undefined = undefined
       let reactions: WrittenReactionsState = { kind: "none" }
       const keep = (): void => {

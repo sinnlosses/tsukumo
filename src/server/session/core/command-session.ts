@@ -8,7 +8,6 @@ import {
   type FeatureReceiver,
   receiveFeatureCommand,
 } from "../../core/command-receiver.ts"
-import { parseSessionId } from "../../session-driver/core/session-id.ts"
 import type {
   CommandSession,
   RememberedSession,
@@ -60,11 +59,7 @@ export function rememberedModeSessions(
   if (request.chat === state.chatMode || state.session.kind === "starting") {
     return modeSessions
   }
-  const sessionId = parseSessionId(state.session.sessionId)
-  if (sessionId === undefined) {
-    return modeSessions
-  }
-  const remembered = { kind: "remembered", sessionId } as const
+  const remembered = { kind: "remembered", sessionId: state.session.sessionId } as const
   return state.chatMode
     ? { ...modeSessions, chat: remembered }
     : { ...modeSessions, work: remembered }

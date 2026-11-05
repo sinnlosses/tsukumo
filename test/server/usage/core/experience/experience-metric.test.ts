@@ -14,13 +14,14 @@ import {
 } from "../../../../../src/shared/session/session-state.ts"
 import { reportOfDrawn } from "../../../../fixture/report-event.ts"
 import { requestEvent } from "../../../../fixture/session-event.ts"
+import { checkedSessionId } from "../../../../fixture/session-id.ts"
 
 /** 依頼の文面に入れる目印。記録の行に出てはいけない。 */
 const REQUEST_MARK = "架空の依頼の目印・青い傘"
 
 const SESSION_INFO: SessionEvent = {
   kind: "session-info",
-  sessionId: "claude-session-1",
+  sessionId: checkedSessionId("claude-session-1"),
   model: undefined,
   permissionMode: undefined,
   slashCommands: [],

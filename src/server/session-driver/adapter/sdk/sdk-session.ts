@@ -21,8 +21,8 @@ import {
   UNAVAILABLE_SESSION_DIGEST,
 } from "../../../../shared/session/session-digest.ts"
 import type { RestoredEvent } from "../../../../shared/session/session-event.ts"
+import type { SessionId } from "../../../../shared/session/session-id.ts"
 import type { SessionDriverOptions } from "../../core/session-driver.ts"
-import type { SessionId } from "../../core/session-id.ts"
 import {
   createSessionDigestCache,
   type TranscriptStamp,

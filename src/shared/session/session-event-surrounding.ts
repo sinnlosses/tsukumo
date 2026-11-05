@@ -8,6 +8,7 @@ import type { WelcomeGreetingState } from "../recommendation/welcome-greeting.ts
 import type { TaskSummaryChange } from "../repository/task-summary-change.ts"
 import type { SessionChoice } from "./session-choice.ts"
 import type { SessionDefault } from "./session-default.ts"
+import type { SessionId } from "./session-id.ts"
 
 export type SurroundingEvent =
   /**
@@ -68,7 +69,7 @@ export type SurroundingEvent =
        * いま起こしたセッションのID（続きから始めなかったときは undefined ＝ 新規）。
        * `session-info` を待たずに「どれを出しているか」を言えるのはこの経路だけ（`init` は最初の依頼を送るまで届かない）。
        */
-      readonly current: string | undefined
+      readonly current: SessionId | undefined
     }
   /**
    * 雑談モードに入っている／出ている。駆動を起こしたときと、`session.setChatMode` で起こし直したときの1回ずつ流れる。

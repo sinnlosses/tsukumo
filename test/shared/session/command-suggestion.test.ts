@@ -7,6 +7,7 @@ import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../src/shared/session/session-state.ts"
+import { checkedSessionId } from "../../fixture/session-id.ts"
 
 // 候補は時刻に依らないので、畳み込みは固定の 0 で流す。
 function apply(...events: readonly SessionEvent[]): SessionState {
@@ -21,7 +22,7 @@ function suggestionsOf(state: SessionState): readonly CommandDescription[] {
 describe("commandSuggestions", () => {
   const info: SessionEvent = {
     kind: "session-info",
-    sessionId: "s-1",
+    sessionId: checkedSessionId("s-1"),
     model: undefined,
     permissionMode: undefined,
     slashCommands: ["clear", "model", "doctor"],

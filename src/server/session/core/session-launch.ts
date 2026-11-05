@@ -10,13 +10,13 @@ import { swallowedFailureFootprint } from "../../../shared/diagnostic/swallowed-
 import type { SessionChoice } from "../../../shared/session/session-choice.ts"
 import type { SessionDefault } from "../../../shared/session/session-default.ts"
 import type { RestoredEvent, SessionEvent } from "../../../shared/session/session-event.ts"
+import type { SessionId } from "../../../shared/session/session-id.ts"
 import type {
   CharacterSelection,
   NamedCharacterPack,
 } from "../../character-pack/core/character-selection.ts"
 import type { DiagnosticLog } from "../../diagnostic/core/diagnostic.ts"
 import type { SessionDriver, SessionStart } from "../../session-driver/core/session-driver.ts"
-import type { SessionId } from "../../session-driver/core/session-id.ts"
 import type { SessionCatalogRefresh } from "../../session-driver/core/session/session-catalog.ts"
 import type { SessionLaunchRequest, SessionResume } from "./command-session-port.ts"
 

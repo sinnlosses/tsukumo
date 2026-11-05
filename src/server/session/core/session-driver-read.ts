@@ -3,12 +3,12 @@
 
 import { swallowedFailureFootprint } from "../../../shared/diagnostic/swallowed-failure.ts"
 import { UNAVAILABLE_SESSION_DIGEST } from "../../../shared/session/session-digest.ts"
+import type { SessionId } from "../../../shared/session/session-id.ts"
 import type { SessionState } from "../../../shared/session/session-state.ts"
 import { UNAVAILABLE_CONTEXT_USAGE } from "../../../shared/usage/context-usage.ts"
 import { UNAVAILABLE_PLAN_USAGE } from "../../../shared/usage/plan-usage.ts"
 import type { DiagnosticBuffer } from "../../diagnostic/core/diagnostic.ts"
 import type { SessionDriver } from "../../session-driver/core/session-driver.ts"
-import type { SessionId } from "../../session-driver/core/session-id.ts"
 import type { SessionManager } from "./session-manager-port.ts"
 
 type DriverReadPorts = {

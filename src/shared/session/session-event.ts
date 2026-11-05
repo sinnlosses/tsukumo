@@ -18,6 +18,7 @@ import type { SettingEvent } from "./session-event-setting.ts"
 import type { SpeakCalledEvent, SpeakDrawnEvent, SpeechEvent } from "./session-event-speech.ts"
 import type { SurroundingEvent } from "./session-event-surrounding.ts"
 import type { TurnHealthEvent } from "./session-event-turn-health.ts"
+import type { SessionId } from "./session-id.ts"
 import type { ReportedPermissionMode } from "./session-info.ts"
 
 /**
@@ -42,7 +43,7 @@ export type SessionEvent =
    */
   | {
       readonly kind: "session-info"
-      readonly sessionId: string
+      readonly sessionId: SessionId
       readonly model: string | undefined
       readonly permissionMode: ReportedPermissionMode | undefined
       readonly slashCommands: readonly string[]

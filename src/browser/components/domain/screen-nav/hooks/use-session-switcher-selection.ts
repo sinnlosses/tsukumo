@@ -6,6 +6,7 @@
 
 import { useState, type KeyboardEvent } from "react"
 
+import type { SessionId } from "../../../../../shared/session/session-id.ts"
 import { useSessionDigest, type SessionDigestView } from "./use-session-digest.ts"
 import type { SessionSwitcherRow } from "./use-session-switcher.ts"
 
@@ -17,18 +18,18 @@ type SessionSwitcherSelection = {
   /** 選んでいる行。絞った結果が0件なら無い。 */
   readonly selected: SessionSwitcherRow | undefined
   readonly digest: SessionDigestView
-  readonly onSelect: (sessionId: string) => void
+  readonly onSelect: (sessionId: SessionId) => void
   /** 探す欄のキー操作（↑↓ か Ctrl+P / Ctrl+N で選び、Enter で切り替える。Esc は `<dialog>` が閉じる）。 */
   readonly onKeyDown: (event: KeyboardEvent<HTMLInputElement>) => void
 }
 
 export function useSessionSwitcherSelection(
   allRows: readonly SessionSwitcherRow[],
-  onSwitch: (sessionId: string) => void,
+  onSwitch: (sessionId: SessionId) => void,
 ): SessionSwitcherSelection {
   const [query, setQuery] = useState("")
   // 開いた直後は、いま出しているもの以外でいちばん新しい行を選ぶ（切り替えたい先はふつうそちら）。
-  const [selectedId, setSelectedId] = useState<string | undefined>(
+  const [selectedId, setSelectedId] = useState<SessionId | undefined>(
     () => (allRows.find((row) => !row.current && !row.occupiedElsewhere) ?? allRows[0])?.sessionId,
   )
 

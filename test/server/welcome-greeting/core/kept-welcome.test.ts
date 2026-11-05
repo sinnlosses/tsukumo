@@ -8,8 +8,13 @@ import {
 import type { WrittenReactions } from "../../../../src/shared/recommendation/reaction.ts"
 import type { WelcomeGreeting } from "../../../../src/shared/recommendation/welcome-greeting.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
+import type { SessionId } from "../../../../src/shared/session/session-id.ts"
+import { checkedSessionId } from "../../../fixture/session-id.ts"
 
 // すべて手で書いた架空の挨拶と反応の行。
+
+const S1 = checkedSessionId("s1")
+const S2 = checkedSessionId("s2")
 
 const GREETING = {
   withCard: "架空の挨拶、{札} から",
@@ -42,11 +47,11 @@ describe("createWelcomeKeeper", () => {
     const keeper = createWelcomeKeeper()
     const first = keeper.noteLaunched({ kind: "new" }, ignore)
     first.emit({ kind: "welcome-greeting-changed", state: { kind: "writing" } })
-    first.observe(sessionInfo("s1"))
+    first.observe(sessionInfo(S1))
     first.emit(GREETING_WRITTEN)
     first.emit(REACTIONS_WRITTEN)
 
-    const back = recorded(keeper, "s1")
+    const back = recorded(keeper, S1)
 
     expect(back.replay()).toBe(true)
     expect(back.events).toEqual([GREETING_WRITTEN, REACTIONS_WRITTEN])
@@ -66,11 +71,11 @@ describe("createWelcomeKeeper", () => {
 
   it("雑談へ切り替えたあとに書き終えた挨拶も、戻る代で流し直す", () => {
     const keeper = createWelcomeKeeper()
-    const first = keeper.noteLaunched({ kind: "resume", sessionId: "s1" }, ignore)
+    const first = keeper.noteLaunched({ kind: "resume", sessionId: S1 }, ignore)
     keeper.noteLaunched({ kind: "new" }, ignore)
     first.emit(GREETING_WRITTEN)
 
-    const back = recorded(keeper, "s1")
+    const back = recorded(keeper, S1)
 
     expect(back.replay()).toBe(true)
     expect(back.events).toEqual([GREETING_WRITTEN])
@@ -78,15 +83,15 @@ describe("createWelcomeKeeper", () => {
 
   it("/clear のあとは覚えた挨拶を外し、書き直した挨拶が書けたらそれを流し直す", () => {
     const keeper = createWelcomeKeeper()
-    const first = keeper.noteLaunched({ kind: "resume", sessionId: "s1" }, ignore)
+    const first = keeper.noteLaunched({ kind: "resume", sessionId: S1 }, ignore)
     first.emit(GREETING_WRITTEN)
     first.emit(REACTIONS_WRITTEN)
     first.observe({ kind: "conversation-cleared" })
 
-    expect(recorded(keeper, "s1").replay()).toBe(false)
+    expect(recorded(keeper, S1).replay()).toBe(false)
 
     first.emit(greetingWritten(REWRITTEN))
-    const back = recorded(keeper, "s1")
+    const back = recorded(keeper, S1)
     back.replay()
 
     expect(back.events).toEqual([greetingWritten(REWRITTEN), REACTIONS_WRITTEN])
@@ -94,17 +99,17 @@ describe("createWelcomeKeeper", () => {
 
   it("覚えていないセッション・新しく始める代・書けなかった挨拶では流し直さない", () => {
     const keeper = createWelcomeKeeper()
-    const unwritten = keeper.noteLaunched({ kind: "resume", sessionId: "s2" }, ignore)
+    const unwritten = keeper.noteLaunched({ kind: "resume", sessionId: S2 }, ignore)
     unwritten.emit({ kind: "welcome-greeting-changed", state: { kind: "unwritten" } })
     unwritten.emit(REACTIONS_WRITTEN)
-    keeper.noteLaunched({ kind: "resume", sessionId: "s1" }, ignore).emit(GREETING_WRITTEN)
+    keeper.noteLaunched({ kind: "resume", sessionId: S1 }, ignore).emit(GREETING_WRITTEN)
 
-    const restartedProcess = recorded(createWelcomeKeeper(), "s1")
+    const restartedProcess = recorded(createWelcomeKeeper(), S1)
     const received: WelcomeWritingEvent[] = []
     const fresh = keeper.noteLaunched({ kind: "new" }, (event) => {
       received.push(event)
     })
-    const notWritten = recorded(keeper, "s2")
+    const notWritten = recorded(keeper, S2)
 
     expect(restartedProcess.replay()).toBe(false)
     expect(fresh.replay()).toBe(false)
@@ -116,7 +121,7 @@ describe("createWelcomeKeeper", () => {
 /** 続きから `sessionId` へ戻る代を起こし、その代で受け取る関数に流れた出来事を `events` に貯める。 */
 function recorded(
   keeper: WelcomeKeeper,
-  sessionId: string,
+  sessionId: SessionId,
 ): { readonly replay: () => boolean; readonly events: readonly WelcomeWritingEvent[] } {
   const events: WelcomeWritingEvent[] = []
   const launch = keeper.noteLaunched({ kind: "resume", sessionId }, (event) => {
@@ -129,7 +134,7 @@ function greetingWritten(greeting: WelcomeGreeting): WelcomeWritingEvent {
   return { kind: "welcome-greeting-changed", state: { kind: "written", greeting } }
 }
 
-function sessionInfo(sessionId: string): SessionEvent {
+function sessionInfo(sessionId: SessionId): SessionEvent {
   return {
     kind: "session-info",
     sessionId,

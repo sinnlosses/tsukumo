@@ -5,6 +5,7 @@ import type { ReportArgumentField } from "../../../../../src/shared/report/repor
 import type { SessionEvent } from "../../../../../src/shared/session/session-event.ts"
 import { reportEvent } from "../../../../fixture/report-event.ts"
 import { requestEvent } from "../../../../fixture/session-event.ts"
+import { checkedSessionId } from "../../../../fixture/session-id.ts"
 
 type ReportCalled = Extract<SessionEvent, { kind: "report" }>
 
@@ -204,7 +205,7 @@ describe("ReportInheritance", () => {
     "受け付けた（isError でない）結果": finished("toolu_r2", false),
     "ターンの頭（session-info）": {
       kind: "session-info",
-      sessionId: "架空のセッション",
+      sessionId: checkedSessionId("fictional-session"),
       model: undefined,
       permissionMode: undefined,
       slashCommands: [],

@@ -6,7 +6,7 @@ import { UNAVAILABLE_SESSION_DIGEST } from "../../../../src/shared/session/sessi
 import { FAKE_SESSION_DIGEST } from "../../../fixture/session-driver.ts"
 
 describe("sessionDigest の手続き", () => {
-  it("セッションの ID の綴りなら口へ渡し、綴りでなければ口を呼ばずに「読めない」を返す", async () => {
+  it("セッションの ID の綴りなら口へ渡し、綴りでなければ口を呼ばずに契約で断る", async () => {
     const asked: string[] = []
     const client = createRouterClient(
       sessionDigestProcedure({
@@ -18,9 +18,19 @@ describe("sessionDigest の手続き", () => {
     )
 
     expect(await client.read({ sessionId: "listed-session" })).toEqual(FAKE_SESSION_DIGEST)
-    expect(await client.read({ sessionId: "../listed-session" })).toEqual(
-      UNAVAILABLE_SESSION_DIGEST,
+    await expect(client.read({ sessionId: "../listed-session" })).rejects.toThrow(
+      "Input validation failed",
     )
     expect(asked).toEqual(["listed-session"])
+  })
+
+  it("口が投げたら「読めない」を返す", async () => {
+    const client = createRouterClient(
+      sessionDigestProcedure({
+        readSessionDigest: () => Promise.reject(new Error("架空の読み失敗")),
+      }),
+    )
+
+    expect(await client.read({ sessionId: "listed-session" })).toEqual(UNAVAILABLE_SESSION_DIGEST)
   })
 })

@@ -7,12 +7,10 @@
 import { oc } from "@orpc/contract"
 import { z } from "zod"
 
-import { MAX_SESSION_ID_LENGTH } from "../session/session-choice.ts"
 import { sessionDigestSchema } from "../session/session-digest.ts"
+import { sessionIdSchema } from "../session/session-id.ts"
 
 export const sessionDigestContract = {
   /** セッション1件の中身。読めなかった・一覧に無いIDは `unavailable`（失敗のエラーにはしない）。 */
-  read: oc
-    .input(z.object({ sessionId: z.string().min(1).max(MAX_SESSION_ID_LENGTH) }))
-    .output(sessionDigestSchema),
+  read: oc.input(z.object({ sessionId: sessionIdSchema })).output(sessionDigestSchema),
 }

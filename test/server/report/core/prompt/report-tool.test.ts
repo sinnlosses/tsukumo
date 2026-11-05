@@ -11,6 +11,7 @@ import {
 } from "../../../../../src/shared/report/a2ui-report-catalog.ts"
 import type { SessionEvent } from "../../../../../src/shared/session/session-event.ts"
 import { reportEvent } from "../../../../fixture/report-event.ts"
+import { checkedSessionId } from "../../../../fixture/session-id.ts"
 
 describe("REPORT_TOOL_DESCRIPTION", () => {
   it("MCP ツールの説明文の既定の上限（2048字）に収まり、記法は規約の節を指すだけ", () => {
@@ -57,7 +58,7 @@ describe("reportFigureDescription", () => {
 
 const INIT: SessionEvent = {
   kind: "session-info",
-  sessionId: "fake-session",
+  sessionId: checkedSessionId("fake-session"),
   model: "opus",
   permissionMode: "auto",
   slashCommands: [],

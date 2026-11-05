@@ -61,7 +61,7 @@ describe("createSessionManager", () => {
       sessions: [
         {
           viewPort: 7327,
-          sessionId: "fake-listed",
+          sessionId: checkedSessionId("fake-listed"),
           lastModified: 2_000,
           startedAt: 1_000,
           heading: "架空の見出し",
@@ -69,7 +69,7 @@ describe("createSessionManager", () => {
           inCurrentWorktree: true,
         },
       ],
-      current: "fake-current",
+      current: checkedSessionId("fake-current"),
     })
 
     expect(await manager.readSessionDigest(checkedSessionId("fake-listed"))).toEqual(
@@ -166,7 +166,7 @@ describe("createSessionManager", () => {
       manager.subscribe((frame) => frames.push(frame))
       stub.emit({
         kind: "session-info",
-        sessionId: "fake-session",
+        sessionId: checkedSessionId("fake-session"),
         model: "fake-model-a",
         permissionMode: "default",
         slashCommands: [],
@@ -312,7 +312,7 @@ describe("createSessionManager", () => {
         })
         launches[index]?.stub.emit({
           kind: "session-info",
-          sessionId,
+          sessionId: checkedSessionId(sessionId),
           model: undefined,
           permissionMode: undefined,
           slashCommands: [],
@@ -346,7 +346,7 @@ describe("createSessionManager", () => {
       await manager.commands.session.setChatMode({ chat: true })
       identify(1, "chat-session")
       await manager.commands.session.setChatMode({ chat: false })
-      identify(2, "架空の仕事の続き")
+      identify(2, "work-session-resumed")
 
       await manager.commands.session.setChatMode({ chat: true })
 
@@ -363,7 +363,7 @@ describe("createSessionManager", () => {
       expect(launches[2]?.request.resume).toEqual({ by: "new" })
 
       // 仕事(パックA) → 雑談 → 切り替え(パックB) → 仕事: Aの仕事は戻さない
-      identify(2, "架空の別の雑談")
+      identify(2, "other-pack-chat-session")
       await manager.commands.session.setChatMode({ chat: false })
       expect(launches[3]?.request.resume).toEqual({ by: "new" })
     })
@@ -374,7 +374,7 @@ describe("createSessionManager", () => {
       await manager.commands.session.switchCharacter({ name: "fictional" })
       identify(1, "other-pack-work-session")
       await manager.commands.session.setChatMode({ chat: true })
-      identify(2, "架空の別パックの雑談")
+      identify(2, "other-pack-chat-session")
 
       await manager.commands.session.setChatMode({ chat: false })
 

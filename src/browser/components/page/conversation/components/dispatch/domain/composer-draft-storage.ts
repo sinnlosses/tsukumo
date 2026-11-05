@@ -6,15 +6,16 @@
 
 import { z } from "zod"
 
+import { isSessionId, type SessionId } from "../../../../../../../shared/session/session-id.ts"
 import { localPreference } from "../../../../../../utils/local-preference.ts"
 import { EMPTY_DRAFT, type Draft } from "../../../stores/composer-draft.ts"
 
 const MAX_DRAFT_SESSIONS = 10
 
-type StoredDraft = Draft & { readonly sessionId: string }
+type StoredDraft = Draft & { readonly sessionId: SessionId }
 
 /** 空の文面は保存せず、あれば消す。 */
-export function saveSessionDraft(sessionId: string, draft: Draft): void {
+export function saveSessionDraft(sessionId: SessionId, draft: Draft): void {
   if (draft.text === "") {
     clearSessionDraft(sessionId)
     return
@@ -25,7 +26,7 @@ export function saveSessionDraft(sessionId: string, draft: Draft): void {
   )
 }
 
-export function clearSessionDraft(sessionId: string): void {
+export function clearSessionDraft(sessionId: SessionId): void {
   const all = readAll()
   const rest = all.filter((stored) => stored.sessionId !== sessionId)
   if (rest.length !== all.length) {
@@ -41,8 +42,8 @@ export function clearSessionDraft(sessionId: string): void {
  * - 切り替え: `next` の保存済み(無ければ空)に入れ替える
  */
 export function draftOnSessionChange(
-  previous: string | undefined,
-  next: string | undefined,
+  previous: SessionId | undefined,
+  next: SessionId | undefined,
   current: Draft,
 ): Draft | undefined {
   if (previous !== undefined) {
@@ -64,7 +65,7 @@ const preference = localPreference(
   [],
 )
 
-function loadSessionDraft(sessionId: string): Draft | undefined {
+function loadSessionDraft(sessionId: SessionId): Draft | undefined {
   const found = readAll().find((stored) => stored.sessionId === sessionId)
   return found === undefined ? undefined : { text: found.text, caret: found.caret }
 }
@@ -79,6 +80,7 @@ function isStoredDraft(value: unknown): value is StoredDraft {
     value !== null &&
     "sessionId" in value &&
     typeof value.sessionId === "string" &&
+    isSessionId(value.sessionId) &&
     "text" in value &&
     typeof value.text === "string" &&
     value.text !== "" &&

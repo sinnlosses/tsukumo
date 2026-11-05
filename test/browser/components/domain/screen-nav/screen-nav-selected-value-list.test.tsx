@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it } from "vitest"
 
 import { ScreenNav } from "../../../../../src/browser/components/domain/screen-nav/screen-nav.tsx"
 import { INITIAL_SESSION_STATE } from "../../../../../src/shared/session/session-state.ts"
+import { checkedSessionId } from "../../../../fixture/session-id.ts"
 import { typedElement } from "../../../../typed-element.ts"
 import { MARKED_NAV_DRAWER_SLOTS } from "../../../nav-drawer-slot.tsx"
 import { queryClientWrapper } from "../../../query-client.tsx"
@@ -29,7 +30,11 @@ describe("ScreenNav の選択中の値", () => {
             effortLevels: ["low"],
           },
         ],
-        session: { kind: "running", sessionId: "s-fixture", permissionMode: "plan" },
+        session: {
+          kind: "running",
+          sessionId: checkedSessionId("s-fixture"),
+          permissionMode: "plan",
+        },
       },
       () => {},
     )
@@ -51,7 +56,7 @@ describe("ScreenNav の選択中の値", () => {
         ...INITIAL_SESSION_STATE,
         session: {
           kind: "running",
-          sessionId: "s-fixture",
+          sessionId: checkedSessionId("s-fixture"),
           permissionMode: { kind: "unknown", raw: "dontAsk" },
         },
       },

@@ -11,6 +11,7 @@ import { isPlainObject, mapValues } from "remeda"
 import type { Expression } from "../../../../shared/character-pack/expression.ts"
 import { reportArgumentCharsOf } from "../../../../shared/report/report-argument-size.ts"
 import type { SessionEvent } from "../../../../shared/session/session-event.ts"
+import { parseSessionId, type SessionId } from "../../../../shared/session/session-id.ts"
 import { foldPermissionMode } from "../../../../shared/session/session-info.ts"
 import { MAX_TOOL_TEXT_LENGTH } from "../../../../shared/session/session-record.ts"
 import { parseWorkPlan } from "../../../../shared/session/work-plan.ts"
@@ -162,8 +163,16 @@ export function isSubagentMessage(message: unknown): boolean {
   return isPlainObject(message) && optionalString(message.parent_tool_use_id) !== undefined
 }
 
+/** メッセージが運んだ `session_id`。セッションの ID の綴りでなければ undefined。 */
+export function messageSessionId(message: unknown): SessionId | undefined {
+  return isPlainObject(message) && typeof message.session_id === "string"
+    ? parseSessionId(message.session_id)
+    : undefined
+}
+
 function sessionInfoEvents(message: Readonly<Record<string, unknown>>): readonly SessionEvent[] {
-  if (typeof message.session_id !== "string") {
+  const sessionId = messageSessionId(message)
+  if (sessionId === undefined) {
     return []
   }
 
@@ -174,7 +183,7 @@ function sessionInfoEvents(message: Readonly<Record<string, unknown>>): readonly
   return [
     {
       kind: "session-info",
-      sessionId: message.session_id,
+      sessionId,
       model,
       permissionMode,
       slashCommands: stringArray(message.slash_commands),

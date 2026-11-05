@@ -5,8 +5,8 @@
 import { isPlainObject } from "remeda"
 
 import type { SessionEvent } from "../../../../shared/session/session-event.ts"
+import { isSessionId, type SessionId } from "../../../../shared/session/session-id.ts"
 import type { SessionStart } from "../session-driver.ts"
-import { parseSessionId, type SessionId } from "../session-id.ts"
 
 /** 起こす直前に選んだIDを占有ファイルに書けたか（`reserved`）、別のウィンドウが使っていたか（`occupied`）。 */
 export type SessionReservation = "reserved" | "occupied"
@@ -67,10 +67,7 @@ export function createSessionClaim(store: SessionClaimStore): SessionClaim {
           return
         }
         if (event.kind === "session-info") {
-          const sessionId = parseSessionId(event.sessionId)
-          if (sessionId === undefined) {
-            return
-          }
+          const { sessionId } = event
           const next = [sessionId]
           hold([...held.filter((id) => !own.includes(id) && id !== sessionId), ...next])
           own = next
@@ -108,7 +105,7 @@ export function readSessionClaimRecord(value: unknown): SessionClaimRecord | und
     return undefined
   }
   const { pid } = value
-  const sessionIds = parseSessionIds(value.sessionIds)
+  const sessionIds = checkedSessionIds(value.sessionIds)
   return typeof pid === "number" && Number.isSafeInteger(pid) && pid > 0 && sessionIds !== undefined
     ? { pid, sessionIds }
     : undefined
@@ -118,13 +115,12 @@ function sameIds(left: readonly SessionId[], right: readonly SessionId[]): boole
   return left.length === right.length && left.every((id, index) => right[index] === id)
 }
 
-function parseSessionIds(value: unknown): readonly SessionId[] | undefined {
+function checkedSessionIds(value: unknown): readonly SessionId[] | undefined {
   if (!Array.isArray(value)) {
     return undefined
   }
-  const parsed = value.flatMap((id: unknown) => {
-    const checked = typeof id === "string" ? parseSessionId(id) : undefined
-    return checked === undefined ? [] : [checked]
-  })
+  const parsed = value.filter(
+    (id: unknown): id is SessionId => typeof id === "string" && isSessionId(id),
+  )
   return parsed.length === value.length ? parsed : undefined
 }

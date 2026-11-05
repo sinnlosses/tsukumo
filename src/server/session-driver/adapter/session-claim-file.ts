@@ -6,9 +6,9 @@ import { readdir, readFile } from "node:fs/promises"
 import { join } from "node:path"
 import process from "node:process"
 
+import type { SessionId } from "../../../shared/session/session-id.ts"
 import { writeFileAtomic } from "../../adapter/lib/atomic-file.ts"
 import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
-import type { SessionId } from "../core/session-id.ts"
 import {
   readSessionClaimRecord,
   type SessionClaimRecord,

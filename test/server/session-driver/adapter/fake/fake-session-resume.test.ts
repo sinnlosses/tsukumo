@@ -26,7 +26,7 @@ function session(): FakeSession {
     ],
     pastSessions: [
       {
-        sessionId: "past-1",
+        sessionId: checkedSessionId("past-1"),
         messages: [
           userMessage("架空の依頼"),
           assistantMessage([

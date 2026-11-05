@@ -8,6 +8,7 @@ import { Search } from "lucide-react"
 import { useId, type ReactElement } from "react"
 
 import { summaryParagraphs } from "../../../../../shared/session/session-digest.ts"
+import type { SessionId } from "../../../../../shared/session/session-id.ts"
 import type { CharacterFaceInfo } from "../../../../domain/character-face.ts"
 import { Button } from "../../../ui/button/button.tsx"
 import { Dialog } from "../../../ui/dialog/dialog.tsx"
@@ -279,7 +280,7 @@ type SessionSwitcherDetailProps = {
   readonly character: CharacterFaceInfo
   readonly blocked: boolean
   readonly blockedTitle: string | undefined
-  readonly onSwitch: (sessionId: string) => void
+  readonly onSwitch: (sessionId: SessionId) => void
 }
 
 function SessionSwitcherDetail(props: SessionSwitcherDetailProps): ReactElement {

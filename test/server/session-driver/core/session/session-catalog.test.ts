@@ -38,11 +38,7 @@ function sessionRecord(overrides: Readonly<Record<string, unknown>>): unknown {
 }
 
 /** 一覧に出る行1件の期待。既定はいまの作業ツリーの、既定のポートの行。 */
-function choiceOf(
-  sessionId: string,
-  lastModified: number,
-  overrides: Partial<SessionChoice> = {},
-): SessionChoice {
+function choiceOf(sessionId: string, lastModified: number, overrides: Partial<SessionChoice> = {}) {
   return {
     viewPort: DEFAULT_VIEW_PORT,
     sessionId,

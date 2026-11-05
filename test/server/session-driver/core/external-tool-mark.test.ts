@@ -4,10 +4,11 @@ import { createExternalToolMark } from "../../../../src/server/session-driver/co
 import { withSelfStartedTurns } from "../../../../src/server/session-driver/core/self-started-turn.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import { requestEvent } from "../../../fixture/session-event.ts"
+import { checkedSessionId } from "../../../fixture/session-id.ts"
 
 const INIT: SessionEvent = {
   kind: "session-info",
-  sessionId: "fake-session",
+  sessionId: checkedSessionId("fake-session"),
   model: "opus",
   permissionMode: "auto",
   slashCommands: [],

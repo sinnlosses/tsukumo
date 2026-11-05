@@ -13,6 +13,7 @@ import type {
   TaskSummaryResult,
 } from "../../../../../../src/shared/repository/task-summary.ts"
 import type { SessionChoice } from "../../../../../../src/shared/session/session-choice.ts"
+import { checkedSessionId } from "../../../../../fixture/session-id.ts"
 import { knownTaskSummary, taskStatusOfWord } from "../../../../../fixture/session-state.ts"
 
 function choice(
@@ -22,7 +23,7 @@ function choice(
 ): SessionChoice {
   return {
     viewPort: 1,
-    sessionId,
+    sessionId: checkedSessionId(sessionId),
     lastModified: 0,
     startedAt: 0,
     heading,

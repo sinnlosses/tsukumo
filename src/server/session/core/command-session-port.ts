@@ -2,11 +2,11 @@
 // 型だけで、`session/core` の他のファイルは読まない。
 
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
+import type { SessionId } from "../../../shared/session/session-id.ts"
 import type { SessionState } from "../../../shared/session/session-state.ts"
 import type { CharacterSelection } from "../../character-pack/core/character-selection.ts"
 import type { DispatchResult } from "../../core/command-receiver.ts"
 import type { SessionDriver } from "../../session-driver/core/session-driver.ts"
-import type { SessionId } from "../../session-driver/core/session-id.ts"
 
 /**
  * いまの代に固定した口。

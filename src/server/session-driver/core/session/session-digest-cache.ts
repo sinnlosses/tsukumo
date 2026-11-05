@@ -2,7 +2,7 @@
 // 覚えるのは中身（`known`）だけで、読めなかった回は残さない。
 
 import type { SessionDigest } from "../../../../shared/session/session-digest.ts"
-import type { SessionId } from "../session-id.ts"
+import type { SessionId } from "../../../../shared/session/session-id.ts"
 
 /** transcript のファイルが変わったかを見分ける印。 */
 export type TranscriptStamp = {

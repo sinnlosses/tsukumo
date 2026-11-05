@@ -8,7 +8,7 @@ import {
   MAX_SESSION_CHOICES,
   type SessionChoice,
 } from "../../../../shared/session/session-choice.ts"
-import type { SessionId } from "../session-id.ts"
+import { parseSessionId, type SessionId } from "../../../../shared/session/session-id.ts"
 import { readSessionMark } from "./session-mark.ts"
 
 /** 印の付いたセッション1件（目印まで揃えた印と、目印を除いた印つき）。 */
@@ -65,7 +65,7 @@ export function createSessionCatalog(options: {
     reading.kind === "read" ? reading.sessions : [],
   )
   // セッションごとに最新の印だけを持つ。読み直した一覧に載った印は捨てる。
-  let marks: ReadonlyMap<string, Marked> = new Map()
+  let marks: ReadonlyMap<SessionId, Marked> = new Map()
   let refreshCount = 0
 
   const current = async (): Promise<readonly TaggedSession[]> => {
@@ -114,9 +114,9 @@ export function worktreeNameOf(cwd: unknown, gitBranch: unknown): string | undef
 
 /** 一覧にまだ載っていない印だけを残す。載っているとは、同じ ID で同じ印・最終更新が印を付けた時刻以降のこと。 */
 function unreflectedMarks<Marked extends { readonly tag: string; readonly at: number }>(
-  marks: ReadonlyMap<string, Marked>,
+  marks: ReadonlyMap<SessionId, Marked>,
   sessions: readonly TaggedSession[],
-): ReadonlyMap<string, Marked> {
+): ReadonlyMap<SessionId, Marked> {
   const listed = new Map(sessions.map((session) => [session.sessionId, session]))
   return new Map(
     [...marks].filter(([sessionId, marked]) => {
@@ -216,13 +216,13 @@ function taggedSession(value: unknown, cwd: string): readonly TaggedSession[] {
   }
 
   const mark = readSessionMark(value.tag)
-  const sessionId = value.sessionId
+  const sessionId =
+    typeof value.sessionId === "string" ? parseSessionId(value.sessionId) : undefined
   const lastModified = value.lastModified
   const worktree = worktreeNameOf(value.cwd, value.gitBranch)
   return mark !== undefined &&
     worktree !== undefined &&
-    typeof sessionId === "string" &&
-    sessionId !== "" &&
+    sessionId !== undefined &&
     typeof lastModified === "number" &&
     Number.isFinite(lastModified)
     ? [

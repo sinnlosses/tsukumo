@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest"
 
-import type { SessionId } from "../../../../../src/server/session-driver/core/session-id.ts"
 import {
   createSessionClaim,
   readSessionClaimRecord,
   type SessionClaimStore,
 } from "../../../../../src/server/session-driver/core/session/session-claim.ts"
 import type { SessionEvent } from "../../../../../src/shared/session/session-event.ts"
+import type { SessionId } from "../../../../../src/shared/session/session-id.ts"
 import { checkedSessionId } from "../../../../fixture/session-id.ts"
 
 const SESSION_A = checkedSessionId("session-a")
@@ -35,7 +35,7 @@ const ENDED: SessionEvent = { kind: "session-ended", reason: "架空の終わり
 function sessionInfo(sessionId: string): SessionEvent {
   return {
     kind: "session-info",
-    sessionId,
+    sessionId: checkedSessionId(sessionId),
     model: undefined,
     permissionMode: undefined,
     slashCommands: [],
@@ -68,16 +68,6 @@ describe("createSessionClaim", () => {
     observe(ENDED)
 
     expect(written).toEqual([["session-a"], ["session-b"], []])
-  })
-
-  it("session-info のIDがセッションの ID の綴りでなければ、占有ファイルを書き替えない", () => {
-    const { store, written } = fakeStore()
-    const claim = createSessionClaim(store)
-    const observe = claim.noteLaunched({ kind: "resume", sessionId: SESSION_A })
-
-    observe(sessionInfo("../session-b"))
-
-    expect(written).toEqual([["session-a"]])
   })
 
   it("あとの代を起こしたあとは、前の代の session-ended・session-info が届いても占有ファイルを変えない", () => {

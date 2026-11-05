@@ -12,6 +12,7 @@ import type { BackgroundTask } from "../../src/shared/session-driver/background-
 import type { SessionEvent } from "../../src/shared/session/session-event.ts"
 import type { WorkPlanStanding } from "../../src/shared/session/work-plan.ts"
 import { reportDraft } from "./report-event.ts"
+import { checkedSessionId } from "./session-id.ts"
 
 /** `report` の差し戻しの固定の文面を見分ける句。 */
 export const REJECTION_PHRASE = {
@@ -43,7 +44,7 @@ export const INVALID: ReportDraft = reportDraft({
 
 export const SESSION_INFO: SessionEvent = {
   kind: "session-info",
-  sessionId: "架空のセッション",
+  sessionId: checkedSessionId("fictional-session"),
   model: undefined,
   permissionMode: undefined,
   slashCommands: [],

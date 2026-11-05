@@ -3,6 +3,7 @@
 
 import { createRef } from "react"
 
+import { parseSessionId } from "../../../../shared/session/session-id.ts"
 import type { CurrentWork } from "../../../features/current-work/hooks/use-current-work.ts"
 import type { ModelPermissionControl } from "../../../stores/model-permission.ts"
 import type {
@@ -26,6 +27,8 @@ const FACE_IMAGE =
   )
 
 const FACE = { url: FACE_IMAGE, alt: "さくら" }
+
+const SAMPLE_SESSION_ID = parseSessionId("00000000-0000")
 
 function gate(
   label: string,
@@ -93,12 +96,15 @@ const PARTS: ScreenNavParts = {
   },
   sessionTag: {
     title: { kind: "project", project: "sample-project", room: "仕事部屋" },
-    identity: {
-      kind: "known",
-      sessionId: "00000000-0000",
-      shortId: "0000",
-      startedLabel: "1/1 10:00〜",
-    },
+    identity:
+      SAMPLE_SESSION_ID === undefined
+        ? { kind: "unknown" }
+        : {
+            kind: "known",
+            sessionId: SAMPLE_SESSION_ID,
+            shortId: "0000",
+            startedLabel: "1/1 10:00〜",
+          },
     open: false,
     onOpen: noop,
   },

@@ -5,6 +5,7 @@
 
 import { FRAME_ERROR_REASON } from "../../../../../shared/frame.ts"
 import type { SessionChoice } from "../../../../../shared/session/session-choice.ts"
+import type { SessionId } from "../../../../../shared/session/session-id.ts"
 import { useSessionSwitcherRequest } from "../../../../stores/session-switcher-request.ts"
 import { isRefusedFor, useRestartRefused, useSession } from "../../../../stores/session.ts"
 import {
@@ -26,7 +27,7 @@ export const SESSION_SWITCHER_GROUP_LABELS = {
 } as const satisfies Record<SessionSwitcherGroup, string>
 
 export type SessionSwitcherRow = {
-  readonly sessionId: string
+  readonly sessionId: SessionId
   readonly shortId: string
   /** SDK の見出し。無ければ {@link NO_HEADING_LABEL}。 */
   readonly heading: string
@@ -46,7 +47,7 @@ export type SessionSwitcherRow = {
 export type ScreenNavSessionIdentity =
   | {
       readonly kind: "known"
-      readonly sessionId: string
+      readonly sessionId: SessionId
       readonly shortId: string
       /** 一覧に載っていれば始まった時刻（`9/27 09:12〜`）。載っていなければ空。 */
       readonly startedLabel: string
@@ -73,7 +74,7 @@ export type ScreenNavSessionSwitcher = {
   readonly blocked: boolean
   /** `blocked` のときだけ理由を持つ。 */
   readonly blockedTitle: string | undefined
-  readonly onSwitch: (sessionId: string) => void
+  readonly onSwitch: (sessionId: SessionId) => void
   readonly onStartNew: () => void
 }
 

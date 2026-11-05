@@ -12,6 +12,7 @@ import {
   type SessionState,
 } from "../../../../../src/shared/session/session-state.ts"
 import { characterInfo, characterPackEntry } from "../../../../fixture/character.ts"
+import { checkedSessionId } from "../../../../fixture/session-id.ts"
 import { knownTaskSummary, taskStatusOfWord } from "../../../../fixture/session-state.ts"
 import { createTestQueryClient } from "../../../query-client.tsx"
 import { rpcError, stubRpcFetch, type RpcFetchStub } from "../../../rpc-fetch-stub.ts"
@@ -130,7 +131,7 @@ function chipTask(id: string, status: string): TaskSummaryItem {
 
 const RUNNING_SESSION: SessionState["session"] = {
   kind: "running",
-  sessionId: "s-fixture",
+  sessionId: checkedSessionId("s-fixture"),
   permissionMode: "default",
 }
 
@@ -146,7 +147,7 @@ const CHAT_STATE: Partial<SessionState> = {
   sessions: [
     {
       viewPort: 7327,
-      sessionId: "s-fixture",
+      sessionId: checkedSessionId("s-fixture"),
       heading: "架空の見出し",
       lastModified: 0,
       startedAt: 0,

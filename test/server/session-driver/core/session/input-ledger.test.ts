@@ -31,14 +31,11 @@ describe("createInputLedgerIntake", () => {
       intake.finishTurn(result({ user_message_uuids: [REQUEST, ASIDE] }), {
         kind: "interrupted",
       }),
-    ).toEqual({
-      sessionId: SESSION,
-      lines: [
-        { kind: "input", uuid: REQUEST, input: "request" },
-        { kind: "input", uuid: ASIDE, input: "aside" },
-        { kind: "turn-end", uuids: [REQUEST, ASIDE, ASSISTANT], outcome: { kind: "interrupted" } },
-      ],
-    })
+    ).toEqual([
+      { kind: "input", uuid: REQUEST, input: "request" },
+      { kind: "input", uuid: ASIDE, input: "aside" },
+      { kind: "turn-end", uuids: [REQUEST, ASIDE, ASSISTANT], outcome: { kind: "interrupted" } },
+    ])
   })
 
   it("入力の uuid を持たない自発のターンは、最後のメインの assistant の uuid だけで結ぶ", () => {
@@ -51,7 +48,7 @@ describe("createInputLedgerIntake", () => {
       message: { content: [] },
     })
 
-    expect(intake.finishTurn(result({}), { kind: "completed" })?.lines).toEqual([
+    expect(intake.finishTurn(result({}), { kind: "completed" })).toEqual([
       { kind: "turn-end", uuids: [ASSISTANT], outcome: { kind: "completed" } },
     ])
   })
@@ -67,7 +64,7 @@ describe("createInputLedgerIntake", () => {
       cause: { kind: "max-turns" },
     })
 
-    expect(next?.lines).toEqual([
+    expect(next).toEqual([
       { kind: "input", uuid: ASIDE, input: "aside" },
       {
         kind: "turn-end",
@@ -77,16 +74,11 @@ describe("createInputLedgerIntake", () => {
     ])
   })
 
-  it("セッションの ID の綴りでない・鍵が1つも無いときは何も書かない", () => {
+  it("鍵が1つも無いときは行を作らない", () => {
     const intake = createInputLedgerIntake()
     intake.noteSent(REQUEST, "request")
 
-    expect(
-      intake.finishTurn(result({ session_id: "../架空", user_message_uuid: REQUEST }), {
-        kind: "completed",
-      }),
-    ).toBeUndefined()
-    expect(intake.finishTurn(result({}), { kind: "completed" })).toBeUndefined()
+    expect(intake.finishTurn(result({}), { kind: "completed" })).toEqual([])
   })
 })
 

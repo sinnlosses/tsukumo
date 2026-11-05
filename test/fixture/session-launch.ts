@@ -19,7 +19,7 @@ const SWITCHED: Pack = { name: "kagami" }
 export const CHOICES = [
   {
     viewPort: 7328,
-    sessionId: "other-session",
+    sessionId: checkedSessionId("other-session"),
     lastModified: 2_000,
     startedAt: 1_500,
     heading: "架空の見出しその1",
@@ -28,7 +28,7 @@ export const CHOICES = [
   },
   {
     viewPort: 7327,
-    sessionId: "prev-work-session",
+    sessionId: checkedSessionId("prev-work-session"),
     lastModified: 1_000,
     startedAt: 500,
     heading: "架空の見出しその2",

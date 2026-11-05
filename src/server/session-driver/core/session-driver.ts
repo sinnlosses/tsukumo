@@ -12,11 +12,11 @@ import type { Answer, PendingAsk } from "../../../shared/session-driver/pending-
 import type { FigurePreference } from "../../../shared/session/session-default.ts"
 import type { SessionDigest } from "../../../shared/session/session-digest.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
+import type { SessionId } from "../../../shared/session/session-id.ts"
 import type { ContextUsageReport } from "../../../shared/usage/context-usage.ts"
 import type { PlanUsageReport } from "../../../shared/usage/plan-usage.ts"
 import type { ChatSummary, PersonaMemory } from "../../chat/core/memory/chat-memory.ts"
 import type { ShelvedPromptImage } from "./prompt-image-shelf.ts"
-import type { SessionId } from "./session-id.ts"
 import type { ToolHookDurationLap } from "./tool-hook-clock.ts"
 
 /** このセッションが仕事か雑談か。 */

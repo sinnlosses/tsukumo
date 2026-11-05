@@ -26,7 +26,6 @@ import {
   defaultSessionClaimPlace,
 } from "../server/session-driver/adapter/session-claim-file.ts"
 import type { SessionDriver, SessionMode } from "../server/session-driver/core/session-driver.ts"
-import type { SessionId } from "../server/session-driver/core/session-id.ts"
 import {
   createSessionCatalog,
   type SessionCatalog,
@@ -54,6 +53,7 @@ import type { DiagnosticEntry } from "../shared/diagnostic/diagnostic-record.ts"
 import type { SwallowedFailurePlace } from "../shared/diagnostic/swallowed-failure.ts"
 import type { SessionDefault } from "../shared/session/session-default.ts"
 import type { RestoredEvent, SessionEvent } from "../shared/session/session-event.ts"
+import type { SessionId } from "../shared/session/session-id.ts"
 import { failureDiagnostic } from "./failure-diagnostic.ts"
 import type { WiringContext } from "./wiring-context.ts"
 

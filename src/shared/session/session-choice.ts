@@ -3,6 +3,8 @@
 // transcript を読まないと出せないもの（依頼の数・要約）は `SessionDigest` の側。
 // `heading` は SDK 自身が作った表示用の題で、`127.0.0.1` のページに出すだけ（ログ・ファイル・外部へは出さない）。
 
+import type { SessionId } from "./session-id.ts"
+
 /**
  * 画面に並べる切り替え先の上限。
  * 同じリポジトリで作業を続けるほど印の付いたセッションは際限なく増える（実測: このリポジトリで120件）ので、新しいほうから切って渡す。
@@ -16,12 +18,6 @@ export const MAX_SESSION_CHOICES = 10
  */
 export const MAX_SESSION_HEADING_LENGTH = 24
 
-/**
- * 画面から選び直せるセッションのIDの上限。
- * UUID を通せる素朴な上限であって、形の検査ではない（知らないIDは起こす側が新規に倒すので、ここで形まで縛らない）。
- */
-export const MAX_SESSION_ID_LENGTH = 200
-
 /** 切り替え先のセッション1件。claude 自身の transcript の一覧から、印を読んで作る。 */
 export type SessionChoice = {
   /**
@@ -30,7 +26,7 @@ export type SessionChoice = {
    */
   readonly viewPort: number
   /** claude 側のセッションのID（続きから始めるときに `resume` へ渡す値）。 */
-  readonly sessionId: string
+  readonly sessionId: SessionId
   /** transcript の最終更新時刻（エポックミリ秒）。新しい順に並んで届く。 */
   readonly lastModified: number
   /**

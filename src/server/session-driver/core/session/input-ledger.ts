@@ -6,7 +6,7 @@ import { isPlainObject } from "remeda"
 import { z } from "zod"
 
 import type { TurnOutcome } from "../../../../shared/session-driver/turn-failure.ts"
-import { parseSessionId, type SessionId } from "../session-id.ts"
+import type { SessionId } from "../../../../shared/session/session-id.ts"
 
 /** 控えに残す入力の種類。 */
 export type LedgeredInputKind = "request" | "aside" | "progress-nudge"
@@ -93,8 +93,8 @@ export type InputLedgerIntake = {
   readonly noteSent: (uuid: string, kind: LedgeredInputKind) => void
   /** メインのメッセージを見せる（ターンの最後のメインの `assistant` の uuid を覚える）。 */
   readonly observe: (message: unknown) => void
-  /** `result` と、それを畳んだ終わり方から控えの行を作る。書けるものが無ければ undefined。 */
-  readonly finishTurn: (result: unknown, outcome: TurnOutcome) => InputLedgerEntry | undefined
+  /** `result` と、それを畳んだ終わり方から控えの行を作る。ターンに結べる鍵が無ければ空。 */
+  readonly finishTurn: (result: unknown, outcome: TurnOutcome) => readonly InputLedgerLine[]
 }
 
 /** {@link InputLedgerIntake} を1つ作る。 */
@@ -125,11 +125,7 @@ export function createInputLedgerIntake(): InputLedgerIntake {
         return kind === undefined ? [] : [{ kind: "input", uuid, input: kind }]
       })
       pending = new Map([...pending].filter(([uuid]) => !consumed.includes(uuid)))
-      const sessionId = sessionIdOf(result)
-      if (sessionId === undefined || keys.length === 0) {
-        return undefined
-      }
-      return { sessionId, lines: [...inputs, { kind: "turn-end", uuids: [...keys], outcome }] }
+      return keys.length === 0 ? [] : [...inputs, { kind: "turn-end", uuids: [...keys], outcome }]
     },
   }
 }
@@ -143,10 +139,4 @@ function consumedInputUuids(result: unknown): readonly string[] {
     return result.user_message_uuids.filter((uuid): uuid is string => typeof uuid === "string")
   }
   return typeof result.user_message_uuid === "string" ? [result.user_message_uuid] : []
-}
-
-function sessionIdOf(result: unknown): SessionId | undefined {
-  return isPlainObject(result) && typeof result.session_id === "string"
-    ? parseSessionId(result.session_id)
-    : undefined
 }

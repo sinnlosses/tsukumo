@@ -4,9 +4,9 @@
 import { oc } from "@orpc/contract"
 import { z } from "zod"
 
-import { MAX_SESSION_ID_LENGTH } from "../session/session-choice.ts"
+import { sessionIdSchema } from "../session/session-id.ts"
 
 export const sessionClaimContract = {
   /** ほかの tsukumo がいま開いているセッションのID。読めなかったときは空。 */
-  occupied: oc.output(z.array(z.string().min(1).max(MAX_SESSION_ID_LENGTH))),
+  occupied: oc.output(z.array(sessionIdSchema)),
 }

@@ -17,8 +17,8 @@ import {
   parsePromptImage,
   parsePromptImageThumbnail,
 } from "../session-driver/prompt-image.ts"
-import { MAX_SESSION_ID_LENGTH } from "../session/session-choice.ts"
 import { FIGURE_PREFERENCES, SESSION_DEFAULT_PERMISSION_MODES } from "../session/session-default.ts"
+import { sessionIdSchema } from "../session/session-id.ts"
 
 /**
  * 送った言葉をどう扱うか。
@@ -113,7 +113,7 @@ export const sessionContract = {
   /**
    * 続きから始めるセッションを画面から選び直す。
    * 駆動の起こし直しで、変わるのは「どの transcript の続きから始めるか」だけ（キャラクターも雑談かどうかも、いま出しているまま）。
-   * ここで見るのは長さだけ。綴りは受け手が確かめ、綴りの通らないIDも知らないIDも新規に倒す。
+   * 綴りの通らないIDは契約で断り、知らないIDは受け手が新規に倒す。
    */
   switchSession: commandBase
     .meta({
@@ -121,7 +121,7 @@ export const sessionContract = {
       idleTurn: FRAME_ERROR_REASON.sessionSwitchDuringTurn,
       restarts: true,
     })
-    .input(z.object({ sessionId: z.string().min(1).max(MAX_SESSION_ID_LENGTH) })),
+    .input(z.object({ sessionId: sessionIdSchema })),
   /**
    * 新しいセッションを起こす（切り替え画面の「＋ 新しいセッション」）。
    * 駆動の起こし直しで、キャラクターも雑談かどうかもいま出しているまま、続きを探さずに新規で起こす。

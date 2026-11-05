@@ -156,7 +156,11 @@ describe("createSessionManager", () => {
         },
         launchSession: (onEvent) => {
           stub.attach(onEvent)
-          onEvent({ kind: "sessions-changed", sessions: [], current: "fake-current" })
+          onEvent({
+            kind: "sessions-changed",
+            sessions: [],
+            current: checkedSessionId("fake-current"),
+          })
           return Promise.resolve(failingDriver)
         },
       })

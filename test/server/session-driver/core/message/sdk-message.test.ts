@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import {
   isSubagentMessage,
+  messageSessionId,
   toSessionEvents,
 } from "../../../../../src/server/session-driver/core/message/sdk-message.ts"
 import { MAX_TOOL_TEXT_LENGTH } from "../../../../../src/shared/session/session-record.ts"
@@ -463,6 +464,17 @@ describe("toSessionEvents", () => {
       toSessionEvents({ type: "assistant", message: { content: "文字列" } }, EXPRESSIONS),
     ).toEqual([])
     expect(toSessionEvents({ type: "system", subtype: "init" }, EXPRESSIONS)).toEqual([])
+    expect(
+      toSessionEvents({ type: "system", subtype: "init", session_id: "../s" }, EXPRESSIONS),
+    ).toEqual([])
+  })
+})
+
+describe("messageSessionId", () => {
+  it("セッションの ID の綴りの session_id だけを読む", () => {
+    expect(messageSessionId({ type: "result", session_id: "session-dummy" })).toBe("session-dummy")
+    expect(messageSessionId({ type: "result", session_id: "../s" })).toBeUndefined()
+    expect(messageSessionId({ type: "result" })).toBeUndefined()
   })
 })
 

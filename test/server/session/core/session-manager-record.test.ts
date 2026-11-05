@@ -434,16 +434,7 @@ describe("createSessionManager", () => {
     })
     await waitForBatch()
 
-    stub.emit({
-      kind: "session-info",
-      sessionId: "claude-session-1",
-      model: "opus",
-      permissionMode: "auto",
-      slashCommands: [],
-      terminalSlashCommands: [],
-      skillNames: [],
-      agentNames: [],
-    })
+    stub.emit(sessionInfo("claude-session-1"))
     await waitForBatch()
     const before = written.length
 

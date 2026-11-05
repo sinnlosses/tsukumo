@@ -5,6 +5,7 @@ import { useWelcomeCards } from "../../../../../../../src/browser/components/pag
 import type { SessionChoice } from "../../../../../../../src/shared/session/session-choice.ts"
 import { INITIAL_SESSION_STATE } from "../../../../../../../src/shared/session/session-state.ts"
 import { setPageUrl } from "../../../../../../dom-setup.ts"
+import { checkedSessionId } from "../../../../../../fixture/session-id.ts"
 import { queryClientWrapper } from "../../../../../query-client.tsx"
 import { rpcOutput, stubRpcFetch, type RpcFetchStub } from "../../../../../rpc-fetch-stub.ts"
 import { putSession } from "../../../../../session-store.ts"
@@ -20,7 +21,7 @@ afterEach(() => {
 function session(sessionId: string, heading: string): SessionChoice {
   return {
     viewPort: 7327,
-    sessionId,
+    sessionId: checkedSessionId(sessionId),
     lastModified: 2000,
     startedAt: 1000,
     heading,
@@ -43,7 +44,7 @@ describe("useWelcomeCards", () => {
     )
     putSession({
       ...INITIAL_SESSION_STATE,
-      session: { kind: "identified", sessionId: "fa000000-0000" },
+      session: { kind: "identified", sessionId: checkedSessionId("fa000000-0000") },
       sessions: [
         session("fa000000-0000", "架空のいまの作業"),
         session("7b000000-0000", "架空の題"),
@@ -64,7 +65,7 @@ describe("useWelcomeCards", () => {
     fetchStub = stubRpcFetch(() => rpcOutput({ kind: "unavailable" }))
     putSession({
       ...INITIAL_SESSION_STATE,
-      session: { kind: "identified", sessionId: "fa000000-0000" },
+      session: { kind: "identified", sessionId: checkedSessionId("fa000000-0000") },
       sessions: [
         session("fa000000-0000", "架空のいまの作業"),
         session("7b000000-0000", "架空の題"),

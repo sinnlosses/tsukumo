@@ -1,12 +1,13 @@
 import { describe, expect, it } from "vitest"
 
 import type { SessionEvent } from "../../../src/shared/session/session-event.ts"
+import { checkedSessionId } from "../../fixture/session-id.ts"
 import { apply } from "../../fixture/session-state.ts"
 
 describe("モデルの設定の見届け", () => {
   const RUNNING: SessionEvent = {
     kind: "session-info",
-    sessionId: "s1",
+    sessionId: checkedSessionId("s1"),
     model: "claude-opus-5",
     permissionMode: "default",
     slashCommands: [],

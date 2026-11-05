@@ -4,9 +4,9 @@
 import { readdirSync, rmSync, statSync } from "node:fs"
 import { join } from "node:path"
 
+import { parseSessionId, type SessionId } from "../../../shared/session/session-id.ts"
 import { appendJsonLines, readValidLines } from "../../adapter/lib/jsonl.ts"
 import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
-import { parseSessionId, type SessionId } from "../core/session-id.ts"
 import {
   EMPTY_INPUT_LEDGER,
   type InputLedger,

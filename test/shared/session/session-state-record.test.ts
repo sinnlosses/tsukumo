@@ -9,6 +9,7 @@ import {
 } from "../../../src/shared/session/session-state.ts"
 import { dateKey } from "../../fixture/date-key.ts"
 import { requestEvent } from "../../fixture/session-event.ts"
+import { checkedSessionId } from "../../fixture/session-id.ts"
 import { apply } from "../../fixture/session-state.ts"
 
 describe("applySessionEvent（最近の話題）", () => {
@@ -311,7 +312,7 @@ describe("applySessionEvent（API の不調と失敗）", () => {
 describe("設定の点の元（settingMarks）", () => {
   const RUNNING: SessionEvent = {
     kind: "session-info",
-    sessionId: "s1",
+    sessionId: checkedSessionId("s1"),
     model: "claude-opus-5",
     permissionMode: "default",
     slashCommands: [],

@@ -121,7 +121,7 @@ describe("startFakeSession", () => {
             waitForAnswer: false,
             event: {
               kind: "session-info",
-              sessionId: "fake-session",
+              sessionId: checkedSessionId("fake-session"),
               model: undefined,
               permissionMode: undefined,
               slashCommands: [],

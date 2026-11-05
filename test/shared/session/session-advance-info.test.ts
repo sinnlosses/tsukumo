@@ -2,13 +2,16 @@ import { describe, expect, it } from "vitest"
 
 import { applySessionEvent } from "../../../src/shared/session/session-fold.ts"
 import { INITIAL_SESSION_STATE } from "../../../src/shared/session/session-state.ts"
+import { checkedSessionId } from "../../fixture/session-id.ts"
 import { apply, runningSession } from "../../fixture/session-state.ts"
+
+const SESSION_ID = checkedSessionId("s-1")
 
 describe("applySessionEvent", () => {
   it("知らない許可モードの init は unknown のまま running に運ぶ", () => {
     const view = apply({
       kind: "session-info",
-      sessionId: "s-1",
+      sessionId: SESSION_ID,
       model: undefined,
       permissionMode: { kind: "unknown", raw: "dontAsk" },
       slashCommands: [],
@@ -24,7 +27,7 @@ describe("applySessionEvent", () => {
     const view = apply(
       {
         kind: "session-info",
-        sessionId: "s-1",
+        sessionId: SESSION_ID,
         model: "claude-opus-5",
         permissionMode: "auto",
         slashCommands: ["clear"],
@@ -34,7 +37,7 @@ describe("applySessionEvent", () => {
       },
       {
         kind: "session-info",
-        sessionId: "s-1",
+        sessionId: SESSION_ID,
         model: "claude-opus-5",
         permissionMode: "default",
         slashCommands: ["clear", "model", "doctor"],
@@ -52,7 +55,7 @@ describe("applySessionEvent", () => {
     const view = apply(
       {
         kind: "session-info",
-        sessionId: "s-1",
+        sessionId: SESSION_ID,
         model: undefined,
         permissionMode: undefined,
         slashCommands: [],
@@ -62,7 +65,7 @@ describe("applySessionEvent", () => {
       },
       {
         kind: "session-info",
-        sessionId: "s-1",
+        sessionId: SESSION_ID,
         model: undefined,
         permissionMode: undefined,
         slashCommands: [],
@@ -80,7 +83,7 @@ describe("applySessionEvent", () => {
     const view = apply(
       {
         kind: "session-info",
-        sessionId: "s-1",
+        sessionId: SESSION_ID,
         model: "claude-sonnet-5",
         permissionMode: "auto",
         slashCommands: [],
@@ -98,7 +101,7 @@ describe("applySessionEvent", () => {
     const view = apply(
       {
         kind: "session-info",
-        sessionId: "s-1",
+        sessionId: SESSION_ID,
         model: "claude-sonnet-5",
         permissionMode: "auto",
         slashCommands: [],
@@ -177,7 +180,7 @@ describe("applySessionEvent", () => {
   it("model-changed は identified（permissionMode がまだ）でも model を更新し、session は動かさない", () => {
     const identified = apply({
       kind: "session-info",
-      sessionId: "s-架空-identified",
+      sessionId: checkedSessionId("s-fictional-identified"),
       model: undefined,
       permissionMode: undefined,
       slashCommands: [],

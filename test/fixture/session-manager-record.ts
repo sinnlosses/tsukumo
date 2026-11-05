@@ -2,11 +2,12 @@ import type { SessionDriver } from "../../src/server/session-driver/core/session
 import type { SessionManagerOptions } from "../../src/server/session/core/session-manager-port.ts"
 import type { SessionEvent } from "../../src/shared/session/session-event.ts"
 import type { createStubDriver } from "./session-driver.ts"
+import { checkedSessionId } from "./session-id.ts"
 
 export function sessionInfo(sessionId: string): SessionEvent {
   return {
     kind: "session-info",
-    sessionId,
+    sessionId: checkedSessionId(sessionId),
     model: "opus",
     permissionMode: "auto",
     slashCommands: [],

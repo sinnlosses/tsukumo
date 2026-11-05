@@ -1,5 +1,6 @@
 // `effectsOfEvent` が決めたやることを、駆動の持ち物に対して実行する。
 
+import { messageSessionId } from "../../core/message/sdk-message.ts"
 import type { SessionDriverOptions } from "../../core/session-driver.ts"
 import type { EventEffect } from "../../core/session/event-effect.ts"
 import type { InputLedgerIntake } from "../../core/session/input-ledger.ts"
@@ -23,9 +24,10 @@ export function runEventEffect(
   const { options, ledgerIntake, titleIntake, titleWriter } = target
   switch (effect.kind) {
     case "append-input-ledger": {
-      const ledgerEntry = ledgerIntake.finishTurn(message, effect.outcome)
-      if (ledgerEntry !== undefined) {
-        appendInputLedger(ledgerEntry)
+      const lines = ledgerIntake.finishTurn(message, effect.outcome)
+      const sessionId = messageSessionId(message)
+      if (sessionId !== undefined && lines.length > 0) {
+        appendInputLedger({ sessionId, lines })
       }
       break
     }

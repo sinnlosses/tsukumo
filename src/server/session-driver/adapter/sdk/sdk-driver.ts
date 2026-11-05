@@ -13,6 +13,7 @@ import { type PermissionResult, query } from "@anthropic-ai/claude-agent-sdk"
 
 import { expressionNames as toExpressionNames } from "../../../../shared/character-pack/expression-choice.ts"
 import type { SessionEvent } from "../../../../shared/session/session-event.ts"
+import type { SessionId } from "../../../../shared/session/session-id.ts"
 import { TSUKUMO_MCP_SERVER_NAME } from "../../../core/tsukumo-tool-name.ts"
 import {
   createReportDraftIntake,
@@ -41,7 +42,6 @@ import type {
   SessionDriverOptions,
   SessionFailurePlace,
 } from "../../core/session-driver.ts"
-import { parseSessionId, type SessionId } from "../../core/session-id.ts"
 import { effectsOfEvent } from "../../core/session/event-effect.ts"
 import { createInputLedgerIntake, type InputLedgerIntake } from "../../core/session/input-ledger.ts"
 import { createSessionEnding } from "../../core/session/session-ending.ts"
@@ -406,7 +406,7 @@ async function relayMessages(
           reportGate.observe(event)
         }
         if (event.kind === "session-info") {
-          sessionId = parseSessionId(event.sessionId)
+          sessionId = event.sessionId
         }
         interruptMark.observe(event)
         for (const effect of effectsOfEvent(event, fromMain, options.mode, sessionId)) {

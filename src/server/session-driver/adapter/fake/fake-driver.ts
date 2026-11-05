@@ -10,6 +10,7 @@ import type { Answer, PendingAsk } from "../../../../shared/session-driver/pendi
 import type { SessionDefault } from "../../../../shared/session/session-default.ts"
 import { UNAVAILABLE_SESSION_DIGEST } from "../../../../shared/session/session-digest.ts"
 import type { SessionEvent } from "../../../../shared/session/session-event.ts"
+import { isSessionId, type SessionId } from "../../../../shared/session/session-id.ts"
 import { createCallReview } from "../../core/call-review.ts"
 import { reportEvents } from "../../core/message/sdk-report-message.ts"
 import { recordedPromptImages } from "../../core/prompt-image-shelf.ts"
@@ -281,7 +282,7 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
  */
 function sessionInfo(): Omit<Extract<SessionEvent, { kind: "session-info" }>, "kind"> {
   return {
-    sessionId: "fake-session",
+    sessionId: fakeSessionId(),
     model: undefined,
     permissionMode: undefined,
     slashCommands: [],
@@ -289,6 +290,14 @@ function sessionInfo(): Omit<Extract<SessionEvent, { kind: "session-info" }>, "k
     skillNames: [],
     agentNames: [],
   }
+}
+
+function fakeSessionId(): SessionId {
+  const id = "fake-session"
+  if (!isSessionId(id)) {
+    throw new Error(`疑似の駆動のセッションの ID が綴りの規則に通らない: ${id}`)
+  }
+  return id
 }
 
 type SessionInfoNames = Pick<

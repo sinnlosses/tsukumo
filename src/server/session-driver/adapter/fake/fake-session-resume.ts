@@ -3,7 +3,7 @@
 
 import type { Expression } from "../../../../shared/character-pack/expression.ts"
 import type { RestoredEvent } from "../../../../shared/session/session-event.ts"
-import type { SessionId } from "../../core/session-id.ts"
+import type { SessionId } from "../../../../shared/session/session-id.ts"
 import { EMPTY_INPUT_LEDGER } from "../../core/session/input-ledger.ts"
 import { worktreeNameOf, type SessionCatalog } from "../../core/session/session-catalog.ts"
 import { readSessionMark } from "../../core/session/session-mark.ts"

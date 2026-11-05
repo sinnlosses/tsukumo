@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { parseSessionId } from "../../../../src/server/session-driver/core/session-id.ts"
+import { parseSessionId } from "../../../src/shared/session/session-id.ts"
 
 describe("parseSessionId", () => {
   it("小文字の UUID の綴りを通し、大文字・パスを遡る綴り・空は通さない", () => {

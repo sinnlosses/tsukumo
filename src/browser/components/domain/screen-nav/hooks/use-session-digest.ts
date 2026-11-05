@@ -6,6 +6,7 @@
 import { skipToken, useQuery } from "@tanstack/react-query"
 
 import type { SessionDigest } from "../../../../../shared/session/session-digest.ts"
+import type { SessionId } from "../../../../../shared/session/session-id.ts"
 import { rpc } from "../../../../stores/rpc.ts"
 
 const DIGEST_STALE_MS = 30_000
@@ -16,7 +17,7 @@ export type SessionDigestView = { readonly kind: "loading" } | SessionDigest
 /** 取りに行く相手。`none` のあいだは取りに行かない。 */
 export type SessionDigestTarget =
   | { readonly kind: "none" }
-  | { readonly kind: "session"; readonly sessionId: string }
+  | { readonly kind: "session"; readonly sessionId: SessionId }
 
 export function useSessionDigest(target: SessionDigestTarget): SessionDigestView {
   const query = useQuery(

@@ -13,6 +13,7 @@ import {
 } from "../../../../../src/shared/session/session-state.ts"
 import { setPageUrl } from "../../../../dom-setup.ts"
 import { characterInfo, characterPackEntry } from "../../../../fixture/character.ts"
+import { checkedSessionId } from "../../../../fixture/session-id.ts"
 import { typedElement } from "../../../../typed-element.ts"
 import { MARKED_NAV_DRAWER_SLOTS } from "../../../nav-drawer-slot.tsx"
 import { stubPhoneWidth } from "../../../phone-width.ts"
@@ -45,13 +46,13 @@ afterEach(() => {
 })
 
 /**
- * `init` が届いたあと（`running`）の架空の土台。`permissionMode` だけ変えて使う。`model` は
- * ここに無い（`SessionState.model` は `session` と独立なので、`renderScreenNav` の第一引数に
- * 直接渡す）。既定値は見た目上の既定（`PERMISSION_MODE_FALLBACK`）に合わせてある。
+ * `init` が届いたあと（`running`）の架空の土台。`permissionMode` だけ変えて使う。
+ * `model` は `session` と独立なので `renderScreenNav` の第一引数に渡す。
+ * 既定値は `PERMISSION_MODE_FALLBACK` と同じ。
  */
 const RUNNING_SESSION: Extract<SessionInfo, { kind: "running" }> = {
   kind: "running",
-  sessionId: "s-fixture",
+  sessionId: checkedSessionId("s-fixture"),
   permissionMode: "auto",
 }
 

@@ -10,6 +10,7 @@ import { applySessionEvent } from "../../../../src/shared/session/session-fold.t
 import { INITIAL_SESSION_STATE } from "../../../../src/shared/session/session-state.ts"
 import type { ModelTokenUsage, TurnUsageScope } from "../../../../src/shared/usage/token-usage.ts"
 import { requestEvent } from "../../../fixture/session-event.ts"
+import { checkedSessionId } from "../../../fixture/session-id.ts"
 
 function usage(model: string, input: number, output: number, cost: number): ModelTokenUsage {
   return {
@@ -128,7 +129,7 @@ const STARTED_STATE = applySessionEvent(
   INITIAL_SESSION_STATE,
   {
     kind: "session-info",
-    sessionId: "架空のセッション",
+    sessionId: checkedSessionId("fictional-session"),
     model: undefined,
     permissionMode: undefined,
     slashCommands: [],

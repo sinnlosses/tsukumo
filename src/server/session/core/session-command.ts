@@ -18,6 +18,7 @@ import {
 } from "../../../shared/session/session-default.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import { isWelcomeGreetingRecorded } from "../../../shared/session/session-fold.ts"
+import type { SessionId } from "../../../shared/session/session-id.ts"
 import type { SessionState } from "../../../shared/session/session-state.ts"
 import { greetingOnShow } from "../../../shared/session/shown-reaction.ts"
 import type { DispatchResult } from "../../core/command-receiver.ts"
@@ -25,7 +26,6 @@ import type { DiaryDayTask } from "../../diary/core/diary-tool.ts"
 import type { DiaryWriteRequest, DiaryWriterSource } from "../../diary/core/diary-writer.ts"
 import type { PromptImageShelf } from "../../session-driver/core/prompt-image-shelf.ts"
 import type { PromptOpening, SessionDriver } from "../../session-driver/core/session-driver.ts"
-import { parseSessionId, type SessionId } from "../../session-driver/core/session-id.ts"
 import type { SessionReservation } from "../../session-driver/core/session/session-claim.ts"
 import type { CommandSession } from "./command-session-port.ts"
 import type { CommandReceiver, SessionReceiver } from "./command-session.ts"
@@ -157,14 +157,7 @@ export function sessionCommands(ports: SessionCommandPorts): SessionCommandTable
     switchSession: {
       kind: "session",
       receive: async (input, session) => {
-        const sessionId = parseSessionId(input.sessionId)
-        if (sessionId === undefined) {
-          return session.restart({
-            selection: { by: "current" },
-            chat: session.state().chatMode,
-            resume: { by: "new" },
-          })
-        }
+        const { sessionId } = input
         if ((await ports.reserveSession(sessionId)) === "occupied") {
           return declined(FRAME_ERROR_REASON.sessionOccupied)
         }

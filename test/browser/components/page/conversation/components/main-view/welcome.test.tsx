@@ -9,6 +9,7 @@ import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../../../../../src/shared/session/session-state.ts"
+import { checkedSessionId } from "../../../../../../fixture/session-id.ts"
 import { createTestQueryClient } from "../../../../../query-client.tsx"
 import { type CommandSpy, putSession } from "../../../../../session-store.ts"
 
@@ -38,7 +39,7 @@ const FILLED: Partial<SessionState> = {
   sessions: [
     {
       viewPort: 1,
-      sessionId: "fake-previous",
+      sessionId: checkedSessionId("fake-previous"),
       lastModified: 0,
       startedAt: 0,
       heading: "架空の前のやり取り",

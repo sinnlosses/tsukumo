@@ -12,6 +12,7 @@ import {
   sessionDigestSchema,
 } from "../../../../shared/session/session-digest.ts"
 import { type SessionEvent, sessionEventSchema } from "../../../../shared/session/session-event.ts"
+import { type SessionId, sessionIdSchema } from "../../../../shared/session/session-id.ts"
 
 /** 既定の疑似セッションの索引。tsukumo 自身の場所から解く（cwd に依存させない）。 */
 const DEFAULT_SESSION_URL = new URL(
@@ -48,7 +49,7 @@ const fakeSessionSceneSchema = z
 
 /** 続きとして読み込める過去の transcript。`messages` は SDK が transcript に残す形の架空のメッセージ列。 */
 const fakePastSessionSchema = z.object({
-  sessionId: z.string().min(1),
+  sessionId: sessionIdSchema,
   messages: z.array(z.unknown()),
 })
 
@@ -96,7 +97,7 @@ export type FakeSessionScene = {
 }
 
 export type FakePastSession = {
-  readonly sessionId: string
+  readonly sessionId: SessionId
   readonly messages: readonly unknown[]
 }
 

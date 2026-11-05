@@ -13,24 +13,13 @@ import {
 import type { BackgroundTask } from "../../../../src/shared/session-driver/background-task.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import { reportDraft, reportEvent } from "../../../fixture/report-event.ts"
-import { REJECTION_PHRASE } from "../../../fixture/report-review.ts"
+import { FINISHED, REJECTION_PHRASE, SESSION_INFO } from "../../../fixture/report-review.ts"
 import { requestEvent } from "../../../fixture/session-event.ts"
 import { next } from "../../../fixture/work-plan-draft.ts"
 
 type SpeechEvent = Extract<SessionEvent, { kind: "speech" }>
 type ReportCalled = Extract<SessionEvent, { kind: "report" }>
 
-const SESSION_INFO: SessionEvent = {
-  kind: "session-info",
-  sessionId: "架空のセッション",
-  model: undefined,
-  permissionMode: undefined,
-  slashCommands: [],
-  terminalSlashCommands: [],
-  skillNames: [],
-  agentNames: [],
-}
-const FINISHED: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
 const REQUEST = requestEvent()
 const TURN_STARTED: SessionEvent = { kind: "turn-started" }
 const ASIDE: SessionEvent = { kind: "aside", text: "架空の問い", images: [] }

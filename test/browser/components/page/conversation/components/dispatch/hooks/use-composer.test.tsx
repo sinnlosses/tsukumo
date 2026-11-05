@@ -18,6 +18,7 @@ import {
   type SessionState,
 } from "../../../../../../../../src/shared/session/session-state.ts"
 import { characterInfo } from "../../../../../../../fixture/character.ts"
+import { checkedSessionId } from "../../../../../../../fixture/session-id.ts"
 import { queryClientWrapper } from "../../../../../../query-client.tsx"
 import {
   type CommandSpy,
@@ -106,7 +107,7 @@ function press(
 
 /** `sessionId` に保存してある打ちかけの文面（無ければ空文字）。画面を開いた直後に空の入力欄へ戻る下書きで読む。 */
 function savedText(sessionId: string): string {
-  return draftOnSessionChange(undefined, sessionId, EMPTY_DRAFT)?.text ?? ""
+  return draftOnSessionChange(undefined, checkedSessionId(sessionId), EMPTY_DRAFT)?.text ?? ""
 }
 
 describe("useComposer のプレースホルダ", () => {
@@ -359,7 +360,7 @@ describe("useComposer の送信", () => {
 
 describe("useComposer の打ちかけの保存", () => {
   const identified = (sessionId: string): SessionState =>
-    stateWith({ session: { kind: "identified", sessionId } })
+    stateWith({ session: { kind: "identified", sessionId: checkedSessionId(sessionId) } })
   const startingState = stateWith({ session: { kind: "starting" } })
 
   it("A から B へ変わると A の打ちかけを A に保ち、入力欄を B の下書き（無ければ空）にする", () => {
@@ -443,7 +444,7 @@ describe("useComposer の打ちかけの保存", () => {
   })
 
   it("最初にセッションが決まったとき、入力欄が空なら保存済みを戻す", () => {
-    saveSessionDraft("a", { text: "保存済み", caret: 2 })
+    saveSessionDraft(checkedSessionId("a"), { text: "保存済み", caret: 2 })
     const { result } = renderUseComposer(startingState)
     act(() => {
       putState(identified("a"))
@@ -452,7 +453,7 @@ describe("useComposer の打ちかけの保存", () => {
   })
 
   it("最初にセッションが決まったとき、入力欄に字があれば触らない", () => {
-    saveSessionDraft("a", { text: "保存済み", caret: 2 })
+    saveSessionDraft(checkedSessionId("a"), { text: "保存済み", caret: 2 })
     const { result } = renderUseComposer(startingState)
     type(result, "いま打った字")
     act(() => {

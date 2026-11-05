@@ -17,6 +17,7 @@ import {
   type SessionState,
 } from "../../../../../../src/shared/session/session-state.ts"
 import { setPageUrl } from "../../../../../dom-setup.ts"
+import { checkedSessionId } from "../../../../../fixture/session-id.ts"
 import { EMPTY_NAV_DRAWER_SLOTS } from "../../../../nav-drawer-slot.tsx"
 import { stubPhoneWidth } from "../../../../phone-width.ts"
 import { createTestQueryClient } from "../../../../query-client.tsx"
@@ -45,7 +46,7 @@ function session(sessionId: string, heading: string, ageMs: number): SessionChoi
   const lastModified = Temporal.Now.instant().epochMilliseconds - ageMs
   return {
     viewPort: 7327,
-    sessionId,
+    sessionId: checkedSessionId(sessionId),
     lastModified,
     startedAt: lastModified - HOUR_MS,
     heading,
@@ -84,7 +85,7 @@ function renderNav(
   putSession(
     {
       ...INITIAL_SESSION_STATE,
-      session: { kind: "identified", sessionId: "fa000000-0000" },
+      session: { kind: "identified", sessionId: checkedSessionId("fa000000-0000") },
       sessions: SESSIONS,
       ...state,
     },
