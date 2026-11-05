@@ -1,9 +1,11 @@
 import { expect, test, VIEWPORTS } from "./room-fixture.ts"
+import { nextAnimationFrame } from "./scenario-wait.ts"
 
 // report → メインビュー（docs/architecture/testing.md「E2E のシナリオの一覧」）。
 // `report` ツールの呼び出しがメインビューの Markdown へどう出るかを、疑似セッションの場面で確かめる:
 // `notation`（記法の一覧）、`report-chart`（グラフの塊。ベンダのスクリプトが描く）、
 // `long-report-quick`（やり取りの列。札の幅で畳む）、
+// `a2ui-parameter-sample`（つまみを振ると数・文・図の強調が変わり、開き直すと初期値に戻る）、
 // `turn-outline`（やり取りの列の上の段のやり取りと結果の印）、
 // `reading-position`（別のやり取りへ移って戻ると読んでいた見出しの位置から見える）。
 
@@ -49,6 +51,59 @@ test.describe("report → メインビュー", () => {
     await room.page.getByRole("button", { name: "乙", exact: true }).click()
     await room.page.getByRole("button", { name: "件数", exact: true }).click()
     await room.settleAndMatchPicked(ELAPSED_MS)
+  })
+
+  test("触れるレポートは、つまみを振ると数・文・図の強調が変わり、開き直すと初期値に戻る", async ({
+    run,
+  }) => {
+    const room = await run.open({
+      scenario: "a2ui-parameter",
+      scene: "a2ui-parameter-sample",
+      viewport: "wide",
+      domRoots: ["main"],
+    })
+
+    await room.waitForEvent("turn-finished")
+    const slider = room.page.getByRole("slider", { name: "worker 数" })
+    const check = room.page.getByRole("checkbox", { name: /E2E を含める/ })
+    const body = room.page.locator("[data-report-body]").filter({ visible: true })
+    await expect(slider).toBeEnabled()
+    await expect(body).toContainText("いまの w = 4 は最速より 8 秒遅い")
+    await expect(body).toContainText("84")
+    // 強調の位置は、図へ渡った設定の `tsukumo-series` から読む（塗り分けは目視の領分）。
+    const emphasizedBars = async (): Promise<unknown> => {
+      // 描画のフレームが回らないと交差の通知が届かず、図が読み込まれない。
+      await nextAnimationFrame(room.page)
+      return room.page.evaluate(() => {
+        const canvas = [...document.querySelectorAll("canvas")].find((c) => c.offsetParent !== null)
+        const getChart: unknown = Reflect.get(Reflect.get(globalThis, "Chart") ?? {}, "getChart")
+        if (canvas === undefined || typeof getChart !== "function") {
+          return undefined
+        }
+        return getChart(canvas)?.config.options.plugins["tsukumo-series"].emphasis
+      })
+    }
+    await body.locator("canvas").scrollIntoViewIfNeeded()
+    await room.page.clock.runFor(1000)
+    await expect.poll(emphasizedBars).toEqual([5])
+
+    await slider.fill("2")
+    await expect(body).toContainText("いまの w = 2 は最速より 56 秒遅い")
+    await expect(body).toContainText("132")
+    await expect.poll(emphasizedBars).toEqual([5])
+
+    await check.check()
+    await expect(body).toContainText("E2E を含めると")
+    await expect(body).toContainText("360")
+    await expect.poll(emphasizedBars).toEqual([7])
+
+    await room.page.reload({ waitUntil: "domcontentloaded" })
+    await expect(slider).toHaveValue("4")
+    await expect(check).not.toBeChecked()
+    await expect(body).toContainText("いまの w = 4 は最速より 8 秒遅い")
+    await body.locator("canvas").scrollIntoViewIfNeeded()
+    await room.page.clock.runFor(1000)
+    await expect.poll(emphasizedBars).toEqual([5])
   })
 
   test("chart の塊が種類ごとにグラフとして描かれる", async ({ run }) => {
