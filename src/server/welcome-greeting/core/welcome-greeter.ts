@@ -12,6 +12,7 @@ import {
 } from "./welcome-greeting-writer.ts"
 import {
   WELCOME_GREETING_HEDGE_MS,
+  WELCOME_GREETING_MAX_ATTEMPTS,
   WELCOME_GREETING_TIMEOUT_MS,
   type WelcomeGreetingMaterial,
 } from "./welcome-greeting.ts"
@@ -76,6 +77,7 @@ async function writeReactions(
     new AbortController().signal,
     timeoutMs,
     WELCOME_GREETING_HEDGE_MS,
+    WELCOME_GREETING_MAX_ATTEMPTS,
   )
   if (outcome.kind === "aborted") {
     return

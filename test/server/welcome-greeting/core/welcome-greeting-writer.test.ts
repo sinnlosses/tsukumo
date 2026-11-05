@@ -12,6 +12,15 @@ import {
 
 const NO_TIMEOUT = 60_000
 
+/** 起こされた順に `count` 回、1回ずつ失敗させる（前の回が落ちてから次の回が起きるのを待つ）。 */
+async function failEach(queries: readonly { readonly fail: () => void }[], count: number) {
+  for (let index = 0; index < count; index += 1) {
+    expect(queries).toHaveLength(index + 1)
+    queries[index]?.fail()
+    await flush()
+  }
+}
+
 describe("greetWelcome", () => {
   it("検査を通れば、直近の先頭へ挨拶の2文だけを書いてから written を配る", async () => {
     const old = Array.from({ length: WELCOME_GREETING_RECENT_LIMIT }, (_, index) => ({
@@ -54,14 +63,11 @@ describe("greetWelcome", () => {
     expect(written).toHaveLength(1)
   })
 
-  it("問い合わせ直しも失敗したら、unwritten を配る", async () => {
+  it("問い合わせ直しも4回とも失敗したら、unwritten を配る", async () => {
     const { ports, written, emitted, queries, unwritten } = harness()
 
     const promise = greetWelcome(ports, MATERIAL, new AbortController().signal, NO_TIMEOUT)
-    queries[0]?.fail()
-    await flush()
-    expect(queries).toHaveLength(2)
-    queries[1]?.fail()
+    await failEach(queries, 4)
     await promise
 
     expect(emitted).toEqual([{ kind: "writing" }, { kind: "unwritten" }])
@@ -70,14 +76,15 @@ describe("greetWelcome", () => {
     expect(unwritten[0]?.error).toBeInstanceOf(Error)
   })
 
-  it("検査に落ちたときも問い合わせ直し、2回とも落ちれば unwritten を配る", async () => {
+  it("検査に落ちたときも問い合わせ直し、4回とも落ちれば unwritten を配る", async () => {
     const { ports, emitted, queries, unwritten } = harness()
 
     const promise = greetWelcome(ports, MATERIAL, new AbortController().signal, NO_TIMEOUT)
-    queries[0]?.settle({ ...OUTPUT, withCard: "差し込み口なし" })
-    await flush()
-    expect(queries).toHaveLength(2)
-    queries[1]?.settle({ ...OUTPUT, withCard: "差し込み口なし" })
+    for (let index = 0; index < 4; index += 1) {
+      expect(queries).toHaveLength(index + 1)
+      queries[index]?.settle({ ...OUTPUT, withCard: "差し込み口なし" })
+      await flush()
+    }
     await promise
 
     expect(emitted).toEqual([{ kind: "writing" }, { kind: "unwritten" }])
@@ -159,17 +166,56 @@ describe("greetWelcome の足跡", () => {
     ])
   })
 
-  it("2回とも問い合わせが失敗したら failed で知らせる", async () => {
+  it("4回とも問い合わせが失敗したら failed で知らせる", async () => {
     const { ports, queries, reported } = harness()
 
     const promise = greetWelcome(ports, MATERIAL, new AbortController().signal, NO_TIMEOUT)
-    queries[0]?.fail()
-    await flush()
-    queries[1]?.fail()
+    await failEach(queries, 4)
     await promise
 
     expect(reported.map((footprint) => footprint.outcome)).toEqual(["failed"])
-    expect(reported[0]?.attempts.map((attempt) => attempt.result)).toEqual(["failed", "failed"])
+    expect(reported[0]?.attempts.map((attempt) => attempt.result)).toEqual([
+      "failed",
+      "failed",
+      "failed",
+      "failed",
+    ])
+  })
+
+  it("2回とも落ちて3回目で書ければ written で、起こした3回を知らせる", async () => {
+    const { ports, queries, reported } = harness()
+
+    const promise = greetWelcome(ports, MATERIAL, new AbortController().signal, NO_TIMEOUT)
+    await failEach(queries, 2)
+    expect(queries).toHaveLength(3)
+    queries[2]?.settle(OUTPUT)
+    await promise
+
+    expect(reported.map((footprint) => footprint.outcome)).toEqual(["written"])
+    expect(reported[0]?.attempts.map((attempt) => attempt.result)).toEqual([
+      "failed",
+      "failed",
+      "written",
+    ])
+  })
+
+  it("締め切りが来たら、次の回を起こさない", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] })
+    try {
+      const { ports, queries, reported } = harness()
+
+      const promise = greetWelcome(ports, MATERIAL, new AbortController().signal, 1000)
+      queries[0]?.fail()
+      await vi.advanceTimersByTimeAsync(0)
+      expect(queries).toHaveLength(2)
+      await vi.advanceTimersByTimeAsync(1000)
+      await promise
+
+      expect(queries).toHaveLength(2)
+      expect(reported.map((footprint) => footprint.outcome)).toEqual(["timed-out"])
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it("1回目が5秒経っても返らなければ2回目を並べ、2回目が先に書けたら1回目を中断して使う", async () => {

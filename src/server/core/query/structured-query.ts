@@ -1,5 +1,5 @@
 // 出力の形（JSON Schema）つきの使い捨ての問い合わせ1回に渡すものと、
-// 締め切りの中で1回走らせる手順・最大2回走らせて先に書けたほうを使う手順。
+// 締め切りの中で1回走らせる手順・書けるまで上限の回数まで走らせる手順（初めの2回は並べて先に書けたほうを使う）。
 // 答えの検査は呼ぶ側が渡し、足跡に要る所要と各回の結果も一緒に返す。
 
 import type { PromptImageSource } from "../../../shared/session-driver/prompt-image.ts"
@@ -95,9 +95,11 @@ export function runWithDeadline<T>(
 }
 
 /**
+ * 最大 `maxAttempts` 回まで、書けるまで問い合わせる。
  * 1回目が書けずに終われば、すぐ2回目を起こす。1回目が `hedgeAfterMs` 経っても返らないときは、
  * 1回目を止めずに2回目を並べて起こし、先に書けたほうを使う（負けたほうは中断し、結果を待たない）。
- * `signal` も `timeoutMs` の締め切りも来ていれば、2回目は起こさない。
+ * 3回目以降は、前の回が書けずに終わってから1回ずつ起こす。
+ * `signal` も `timeoutMs` の締め切りも来ていれば、次の回は起こさない。
  * 締め切りが来て問い合わせが reject した回は `timed-out`。
  */
 export async function runRetriedQuery<T, R>(
@@ -107,6 +109,7 @@ export async function runRetriedQuery<T, R>(
   signal: AbortSignal,
   timeoutMs: number,
   hedgeAfterMs: number,
+  maxAttempts: number,
 ): Promise<RetriedQueryOutcome<T, R>> {
   const startedAt = ports.now()
   const deadline = AbortSignal.timeout(timeoutMs)
@@ -143,7 +146,7 @@ export async function runRetriedQuery<T, R>(
     }
   }
 
-  const raced = await raceAttempts(launch, bounded, hedgeAfterMs)
+  const raced = await raceAttempts(launch, bounded, hedgeAfterMs, maxAttempts)
 
   if (signal.aborted) {
     return { kind: "aborted" }
@@ -168,6 +171,23 @@ export async function runRetriedQuery<T, R>(
 }
 
 async function raceAttempts<T, R>(
+  launch: () => RunningAttempt<T, R>,
+  bounded: AbortSignal,
+  hedgeAfterMs: number,
+  maxAttempts: number,
+): Promise<RacedAttempts<T, R>> {
+  const paired = await racePair(launch, bounded, hedgeAfterMs)
+  const all = [...paired.all]
+  let used = paired.used
+  while (used.kind !== "written" && !bounded.aborted && all.length < maxAttempts) {
+    used = await launch().promise
+    all.push(used)
+  }
+  return { all, used }
+}
+
+/** 1回目と2回目（並べる組）。 */
+async function racePair<T, R>(
   launch: () => RunningAttempt<T, R>,
   bounded: AbortSignal,
   hedgeAfterMs: number,

@@ -75,6 +75,7 @@ describe("runRetriedQuery", () => {
         new AbortController().signal,
         60_000,
         5000,
+        2,
       )
       const settled = outcome.catch((error: unknown) => error)
       await vi.advanceTimersByTimeAsync(5000)

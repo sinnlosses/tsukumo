@@ -30,6 +30,9 @@ export const WELCOME_GREETING_TIMEOUT_MS = 60_000
 /** 1回目がこの時間（ミリ秒）経っても返らないときに、2回目を並べて起こす。 */
 export const WELCOME_GREETING_HEDGE_MS = 5_000
 
+/** 書けるまで問い合わせる最大の回数。並べて起こすのは1回目と2回目だけ。 */
+export const WELCOME_GREETING_MAX_ATTEMPTS = 4
+
 /** 直近の挨拶として覚えて渡す件数。 */
 export const WELCOME_GREETING_RECENT_LIMIT = 5
 

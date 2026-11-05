@@ -46,10 +46,10 @@ describe("createWelcomeGreeter", () => {
 
     createWelcomeGreeter(ports).start(MATERIAL)
     queries[1]?.settle(REACTIONS)
-    queries[0]?.fail()
-    await flush()
-    queries.filter(isGreetingQuery)[1]?.fail()
-    await flush()
+    for (let index = 0; index < 4; index += 1) {
+      queries.filter(isGreetingQuery)[index]?.fail()
+      await flush()
+    }
 
     expect(emitted).toEqual([{ kind: "writing" }, { kind: "unwritten" }])
     expect(reactions).toEqual([REACTIONS])
@@ -59,15 +59,17 @@ describe("createWelcomeGreeter", () => {
     ])
   })
 
-  it("反応の行が2回とも書けなければ配らず、反応の場所で知らせる", async () => {
+  it("反応の行が4回とも書けなければ配らず、反応の場所で知らせる", async () => {
     const { ports, queries, emitted, reactions, unwritten } = harness()
 
     createWelcomeGreeter(ports).start(MATERIAL)
     queries[0]?.settle(OUTPUT)
     queries[1]?.settle({ ...REACTIONS, idle: { text: "", expression: "default" } })
     await flush()
-    queries.filter((query) => !isGreetingQuery(query))[1]?.settle({})
-    await flush()
+    for (let index = 1; index < 4; index += 1) {
+      queries.filter((query) => !isGreetingQuery(query))[index]?.settle({})
+      await flush()
+    }
 
     expect(emitted).toEqual([{ kind: "writing" }, { kind: "written", greeting: OUTPUT }])
     expect(reactions).toEqual([])

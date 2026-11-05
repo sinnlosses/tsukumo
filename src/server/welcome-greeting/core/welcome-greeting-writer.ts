@@ -14,6 +14,7 @@ import {
 import {
   parseWelcomeGreeting,
   WELCOME_GREETING_HEDGE_MS,
+  WELCOME_GREETING_MAX_ATTEMPTS,
   WELCOME_GREETING_RECENT_LIMIT,
   welcomeGreetingQuery,
   type WelcomeGreetingMaterial,
@@ -46,7 +47,7 @@ const greetingUnwrittenPlace = {
  * 直近の挨拶を添えて問い合わせ、検査を通れば直近の先頭へ書いてから配る。
  *
  * 書き始めに `writing` を配る。1回目が失敗・検査落ちで、かつ `signal` も `timeoutMs` の締め切りも
- * まだ来ていなければ1回だけ問い合わせ直す。`signal` が中断していれば（新しい書き手に替わった）
+ * まだ来ていなければ、1回目を含めて、書けるまで最大 `WELCOME_GREETING_MAX_ATTEMPTS` 回まで問い合わせる。`signal` が中断していれば（新しい書き手に替わった）
  * 結果に関わらず何も配らない。それ以外で結果が無ければ `unwritten`、あれば `written` を配る。
  */
 export async function greetWelcome(
@@ -66,6 +67,7 @@ export async function greetWelcome(
     signal,
     timeoutMs,
     WELCOME_GREETING_HEDGE_MS,
+    WELCOME_GREETING_MAX_ATTEMPTS,
   )
   if (outcome.kind === "aborted") {
     return
