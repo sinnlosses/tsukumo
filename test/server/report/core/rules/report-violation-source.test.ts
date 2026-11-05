@@ -5,7 +5,7 @@ import { mermaidSourcesOfLeaves } from "../../../../../src/server/report/core/ru
 import {
   reportRejectionText,
   reportViolations,
-} from "../../../../../src/server/report/core/rules/index.ts"
+} from "../../../../../src/server/report/core/rules/report-violation.ts"
 import { REPORT_MERMAID_KINDS } from "../../../../../src/shared/report/report-block-diagram.ts"
 import type { ReportBlock } from "../../../../../src/shared/report/report-block.ts"
 import type { ReportOutlineLeaf } from "../../../../../src/shared/report/report-outline.ts"

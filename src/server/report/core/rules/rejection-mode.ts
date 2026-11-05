@@ -1,7 +1,7 @@
 // `report` の差し戻しの条の名前と、条ごとの段（差し戻すか、数えるだけか）。
 
-import type { ReportViolation } from "./index.ts"
 import type { ProcedureRejection } from "./procedure-rejection.ts"
+import type { ReportViolation } from "./report-violation.ts"
 
 export type ReportRejectionReason = ProcedureRejection | ReportViolation["kind"]
 

@@ -5,7 +5,7 @@ import {
   parseLegacySections,
 } from "../../../../../src/server/report/core/body/legacy-report-section-list.ts"
 import { reportImagePaths } from "../../../../../src/server/report/core/image/report-image-shelf.ts"
-import { reportViolations } from "../../../../../src/server/report/core/rules/index.ts"
+import { reportViolations } from "../../../../../src/server/report/core/rules/report-violation.ts"
 import { drawnLeaves, reportOutline } from "../../../../../src/shared/report/report-outline.ts"
 import { draft } from "../../../../fixture/report-draft-block.ts"
 import { reportOfSections } from "../../../../fixture/report-event.ts"

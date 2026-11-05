@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { reportViolations } from "../../../../../src/server/report/core/rules/index.ts"
+import { reportViolations } from "../../../../../src/server/report/core/rules/report-violation.ts"
 import type { ReportBlock } from "../../../../../src/shared/report/report-block.ts"
 import { draft } from "../../../../fixture/report-draft-block.ts"
 

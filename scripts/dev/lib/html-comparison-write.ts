@@ -8,11 +8,11 @@ import {
   REPORT_A2UI_COMPONENTS_DESCRIPTION,
   REPORT_TOOL_DESCRIPTION,
 } from "../../../src/server/report/core/prompt/report-tool.ts"
+import { REPORT_REJECTION_MODES } from "../../../src/server/report/core/rules/rejection-mode.ts"
 import {
   reportRejectionText,
   reportViolations,
-} from "../../../src/server/report/core/rules/index.ts"
-import { REPORT_REJECTION_MODES } from "../../../src/server/report/core/rules/rejection-mode.ts"
+} from "../../../src/server/report/core/rules/report-violation.ts"
 import { reportEvents } from "../../../src/server/session-driver/core/message/sdk-report-message.ts"
 import { EXPRESSIONS } from "../../../src/shared/character-pack/expression.ts"
 import { buildReportCatalogDocument } from "../../../src/shared/report/a2ui-report-catalog.ts"

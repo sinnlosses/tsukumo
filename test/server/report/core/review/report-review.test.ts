@@ -5,13 +5,13 @@ import type {
   ReportVerdict,
 } from "../../../../../src/server/report/core/review/report-review-type.ts"
 import type { ReportDraft } from "../../../../../src/server/report/core/rules/draft.ts"
-import { reportRejectionText } from "../../../../../src/server/report/core/rules/index.ts"
-import { reportViolations } from "../../../../../src/server/report/core/rules/index.ts"
 import {
   REPORT_REJECTION_MODES,
   type ReportRejectionModes,
   type ReportRejectionReason,
 } from "../../../../../src/server/report/core/rules/rejection-mode.ts"
+import { reportRejectionText } from "../../../../../src/server/report/core/rules/report-violation.ts"
+import { reportViolations } from "../../../../../src/server/report/core/rules/report-violation.ts"
 import type { BackgroundTask } from "../../../../../src/shared/session-driver/background-task.ts"
 import type { SessionEvent } from "../../../../../src/shared/session/session-event.ts"
 import { reportDraft, reportEvent } from "../../../../fixture/report-event.ts"

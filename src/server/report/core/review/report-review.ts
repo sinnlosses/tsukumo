@@ -38,7 +38,6 @@ import type { ToolErrorField } from "../../../../shared/report/tool-error-field.
 import type { SessionEvent } from "../../../../shared/session/session-event.ts"
 import type { WorkPlanStanding } from "../../../../shared/session/work-plan.ts"
 import type { ReportDraft } from "../rules/draft.ts"
-import { a2uiValidationFailedText, reportRejectionText, reportViolations } from "../rules/index.ts"
 import {
   REPORT_FINISHED_WITH_NG_REJECTION_TEXT,
   REPORT_NOTHING_NEW_REJECTION_TEXT,
@@ -47,6 +46,11 @@ import {
   reportBackgroundRunningRejectionText,
 } from "../rules/procedure-rejection.ts"
 import type { ReportRejectionModes, ReportRejectionReason } from "../rules/rejection-mode.ts"
+import {
+  a2uiValidationFailedText,
+  reportRejectionText,
+  reportViolations,
+} from "../rules/report-violation.ts"
 import { a2uiStructureFaultField } from "../rules/structure.ts"
 import { closingSpeech, countedRecord, withoutDroppedParts } from "./report-drawn-event.ts"
 import type { ReportNews, ReportReview, ReportVerdict } from "./report-review-type.ts"

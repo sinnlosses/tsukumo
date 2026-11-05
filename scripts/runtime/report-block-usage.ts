@@ -19,12 +19,12 @@ import { groupBy } from "remeda"
 import { dateFileNames, readJsonLines } from "../../src/server/adapter/lib/jsonl.ts"
 import { reportUsageDir } from "../../src/server/report/adapter/report-usage-log.ts"
 import { A2UI_STRUCTURE_REJECTION_REASONS } from "../../src/server/report/core/review/report-review.ts"
-import { REPORT_VIOLATION_KINDS } from "../../src/server/report/core/rules/index.ts"
 import { REPORT_PROCEDURE_REJECTIONS } from "../../src/server/report/core/rules/procedure-rejection.ts"
 import {
   ESCAPE_NOTATIONS,
   MARKDOWN_NOTATIONS,
 } from "../../src/server/report/core/rules/prose/notation.ts"
+import { REPORT_VIOLATION_KINDS } from "../../src/server/report/core/rules/report-violation.ts"
 import { REPORT_SHAPE_TAGS } from "../../src/server/report/core/usage/report-usage-record.ts"
 import { REPORT_BLOCK_FIELDS } from "../../src/server/report/core/usage/report-usage.ts"
 import {

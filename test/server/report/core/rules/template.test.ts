@@ -4,7 +4,7 @@ import type { ReportDraft } from "../../../../../src/server/report/core/rules/dr
 import {
   reportRejectionText,
   reportViolations,
-} from "../../../../../src/server/report/core/rules/index.ts"
+} from "../../../../../src/server/report/core/rules/report-violation.ts"
 import type { ReportGenre } from "../../../../../src/shared/report/report-task.ts"
 import { type ReportDraftInput, reportDraft } from "../../../../fixture/report-event.ts"
 

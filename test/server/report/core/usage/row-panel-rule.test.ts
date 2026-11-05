@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { reportViolations } from "../../../../../src/server/report/core/rules/index.ts"
+import { reportViolations } from "../../../../../src/server/report/core/rules/report-violation.ts"
 import { reportUsageEntryOf } from "../../../../../src/server/report/core/usage/report-usage.ts"
 import type { A2uiReportComponent } from "../../../../../src/shared/report/a2ui-report-catalog.ts"
 import type { ReportBlock } from "../../../../../src/shared/report/report-block.ts"

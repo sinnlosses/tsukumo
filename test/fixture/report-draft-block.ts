@@ -1,6 +1,6 @@
 import { parseConclusion } from "../../src/server/report/core/body/conclusion-sentence.ts"
 import type { ReportDraft } from "../../src/server/report/core/rules/draft.ts"
-import { reportViolations } from "../../src/server/report/core/rules/index.ts"
+import { reportViolations } from "../../src/server/report/core/rules/report-violation.ts"
 import type { RecordedReportFigure } from "../../src/shared/report/a2ui-report-catalog.ts"
 import type { ReportBlock } from "../../src/shared/report/report-block.ts"
 import { type LegacySectionInput, reportDraft } from "./report-event.ts"

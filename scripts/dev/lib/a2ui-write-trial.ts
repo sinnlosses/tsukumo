@@ -7,7 +7,7 @@ import { z } from "zod"
 import { REPORT_TOOL_NAME } from "../../../src/server/core/tsukumo-tool-name.ts"
 import { PART_CARD_TOOL_DESCRIPTION } from "../../../src/server/report/core/prompt/part-card.ts"
 import { REPORT_A2UI_COMPONENTS_DESCRIPTION } from "../../../src/server/report/core/prompt/report-tool.ts"
-import { a2uiValidationFailedText } from "../../../src/server/report/core/rules/index.ts"
+import { a2uiValidationFailedText } from "../../../src/server/report/core/rules/report-violation.ts"
 import { a2uiStructureFaults } from "../../../src/server/report/core/rules/structure.ts"
 import {
   a2uiReportComponentSchema,

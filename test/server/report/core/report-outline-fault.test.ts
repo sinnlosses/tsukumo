@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 import { z } from "zod"
 
-import { reportViolations } from "../../../../src/server/report/core/rules/index.ts"
+import { reportViolations } from "../../../../src/server/report/core/rules/report-violation.ts"
 import { a2uiReportComponentSchema } from "../../../../src/shared/report/a2ui-report-catalog.ts"
 import { plotBlockSchema } from "../../../../src/shared/report/figure-grammar.ts"
 import { reportDraft } from "../../../fixture/report-event.ts"

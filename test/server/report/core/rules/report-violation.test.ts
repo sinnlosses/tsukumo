@@ -4,11 +4,11 @@ import { isBlockViolation } from "../../../../../src/server/report/core/rules/bl
 import { isCheckViolation } from "../../../../../src/server/report/core/rules/check.ts"
 import type { ReportDraft } from "../../../../../src/server/report/core/rules/draft.ts"
 import { isFigureViolation } from "../../../../../src/server/report/core/rules/figure.ts"
+import { isProseViolation } from "../../../../../src/server/report/core/rules/prose.ts"
 import {
   REPORT_VIOLATION_KINDS,
   reportViolations,
-} from "../../../../../src/server/report/core/rules/index.ts"
-import { isProseViolation } from "../../../../../src/server/report/core/rules/prose.ts"
+} from "../../../../../src/server/report/core/rules/report-violation.ts"
 import { isTemplateViolation } from "../../../../../src/server/report/core/rules/template.ts"
 import {
   draft,

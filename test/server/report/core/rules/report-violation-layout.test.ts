@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest"
 import {
   reportRejectionText,
   reportViolations,
-} from "../../../../../src/server/report/core/rules/index.ts"
+} from "../../../../../src/server/report/core/rules/report-violation.ts"
 import type {
   ReportBlock,
   ReportBlockSection,
