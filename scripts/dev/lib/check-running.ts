@@ -3,9 +3,7 @@
 
 import { mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
-import process from "node:process"
 
-import { hasErrorCode } from "../../../src/server/core/utils/error-code.ts"
 import { readGitCommonDirectory } from "../../shared/git-query.ts"
 
 const DIRECTORY_NAME = "check-running"
@@ -41,14 +39,4 @@ export function countRunning(directory: string, isAlive: (pid: number) => boolea
     }
   }
   return count
-}
-
-/** シグナル 0 は届くかどうかだけを見る。別の利用者のプロセス（`EPERM`）も生きている。 */
-export function isProcessAlive(pid: number): boolean {
-  try {
-    process.kill(pid, 0)
-    return true
-  } catch (error) {
-    return hasErrorCode(error, "EPERM")
-  }
 }

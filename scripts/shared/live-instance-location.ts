@@ -3,9 +3,8 @@
 
 import { readdirSync, readFileSync } from "node:fs"
 import { join } from "node:path"
-import process from "node:process"
 
-import { hasErrorCode } from "../../src/server/core/utils/error-code.ts"
+import { isProcessAlive } from "../../src/server/session-driver/adapter/process-alive.ts"
 import {
   instanceLocationSchema,
   type InstanceLocation,
@@ -25,7 +24,7 @@ export function readInstanceLocation(path: string): InstanceLocation | undefined
 export function readLiveInstanceLocations(dir: string): readonly InstanceLocation[] {
   return listFileNames(dir)
     .flatMap((name) => readInstanceLocation(join(dir, name)) ?? [])
-    .filter((location) => isAlive(location.pid))
+    .filter((location) => isProcessAlive(location.pid))
 }
 
 function listFileNames(dir: string): readonly string[] {
@@ -33,15 +32,5 @@ function listFileNames(dir: string): readonly string[] {
     return readdirSync(dir).filter((name) => /^\d+\.json$/u.test(name))
   } catch {
     return []
-  }
-}
-
-/** シグナル 0 は届くかどうかだけを見る。別の利用者のプロセス（`EPERM`）も生きている。 */
-function isAlive(pid: number): boolean {
-  try {
-    process.kill(pid, 0)
-    return true
-  } catch (error) {
-    return hasErrorCode(error, "EPERM")
   }
 }

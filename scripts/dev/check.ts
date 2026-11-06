@@ -28,6 +28,7 @@ import { join } from "node:path"
 import process from "node:process"
 import { parseArgs } from "node:util"
 
+import { isProcessAlive } from "../../src/server/session-driver/adapter/process-alive.ts"
 import { collectChangedPaths, PRIMARY_BRANCH } from "../shared/changed-path-repository.ts"
 import { planE2eRun } from "../shared/e2e-selection-repository.ts"
 import { REPOSITORY_ROOT as ROOT } from "../shared/repository-root.ts"
@@ -55,12 +56,7 @@ import {
   planRerun,
   type StageRunResult,
 } from "./lib/check-record.ts"
-import {
-  countRunning,
-  isProcessAlive,
-  registerRunning,
-  runningDirectory,
-} from "./lib/check-running.ts"
+import { countRunning, registerRunning, runningDirectory } from "./lib/check-running.ts"
 import { e2eStage, FULL_STAGE_NAMES, planStages, type Stage } from "./lib/check-stage.ts"
 import {
   DEFAULT_EXCLUSION_OPTIONS,

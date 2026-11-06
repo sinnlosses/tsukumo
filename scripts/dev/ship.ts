@@ -15,12 +15,12 @@ import process from "node:process"
 import { parseArgs } from "node:util"
 
 import { errorMessage } from "../../src/browser/utils/error-message.ts"
+import { isProcessAlive } from "../../src/server/session-driver/adapter/process-alive.ts"
 import { collectChangedPaths, PRIMARY_BRANCH } from "../shared/changed-path-repository.ts"
 import { runAcceptor } from "../shared/claude-run.ts"
 import { queryGit, readGitCommonDirectory } from "../shared/git-query.ts"
 import { readOpenClaim } from "../shared/open-claim.ts"
 import { REPOSITORY_ROOT } from "../shared/repository-root.ts"
-import { isProcessAlive } from "./lib/check-running.ts"
 import {
   isWorktreeClean,
   resolveWorktreePathOfBranch,

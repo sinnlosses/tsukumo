@@ -16,6 +16,7 @@ import { parseArgs } from "node:util"
 
 import { z } from "zod"
 
+import { isProcessAlive } from "../../src/server/session-driver/adapter/process-alive.ts"
 import { VIEW_PORT_FALLBACK_ATTEMPTS } from "../../src/server/view-server/core/port-resolution.ts"
 import { DEFAULT_VIEW_PORT } from "../../src/shared/view-server/view-port.ts"
 import { delay } from "../shared/delay.ts"
@@ -96,7 +97,7 @@ async function stopOne(target: number): Promise<void> {
   }
 
   await delay(TERMINATION_GRACE_MS)
-  if (isAlive(listener.pid)) {
+  if (isProcessAlive(listener.pid)) {
     process.stdout.write(
       `まだ生きている: ${String(listener.pid)}（SIGTERM を受けて片付け中かもしれない。` +
         `残るようなら kill -9 ${String(listener.pid)}）\n`,
@@ -121,15 +122,5 @@ function parsePortOption(args: readonly string[]): number | "none" | "invalid" {
     return parsed.success ? parsed.data : "invalid"
   } catch {
     return "invalid"
-  }
-}
-
-/** シグナル 0 は「送らずに届くかどうかだけ確かめる」（プロセスの生死を見る常套手段）。 */
-function isAlive(pid: number): boolean {
-  try {
-    process.kill(pid, 0)
-    return true
-  } catch {
-    return false
   }
 }

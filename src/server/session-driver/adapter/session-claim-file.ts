@@ -1,5 +1,5 @@
 // セッションの占有ファイルを `$TSUKUMO_HOME/session-claim/<pid>.json` に書き置き、ほかの tsukumo の占有ファイルを読む。
-// 占有ファイルが生きているかは、そのプロセスが生きているか（`process.kill(pid, 0)`）だけで決める。
+// 占有ファイルが生きているかは、そのプロセスが生きているか（`isProcessAlive`）だけで決める。
 
 import { mkdirSync, rmSync } from "node:fs"
 import { readdir, readFile } from "node:fs/promises"
@@ -9,12 +9,12 @@ import process from "node:process"
 import type { SessionId } from "../../../shared/session/session-id.ts"
 import { writeFileAtomic } from "../../adapter/lib/atomic-file.ts"
 import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
-import { hasErrorCode } from "../../core/utils/error-code.ts"
 import {
   readSessionClaimRecord,
   type SessionClaimRecord,
   type SessionClaimStore,
 } from "../core/session/session-claim.ts"
+import { isProcessAlive } from "./process-alive.ts"
 
 /** 占有ファイルの名前（`<pid>.json`）。 */
 const CLAIM_FILE_NAME = /^\d+\.json$/u
@@ -57,7 +57,7 @@ export function defaultSessionClaimPlace(): SessionClaimPlace {
 
 /**
  * 生きているほかのプロセスが占有ファイルに書いたセッションのID。
- * もういないプロセスの占有ファイルは消して捨て、別の利用者のプロセス（`EPERM`）の占有ファイルも捨てる。
+ * もういないプロセスの占有ファイルは消して捨てる。別の利用者のプロセス（`EPERM`）の占有ファイルは生きている占有として数え、消さない。
  * 置き場が無い・読めないときは空。
  */
 export async function readOccupiedSessionIds(
@@ -93,15 +93,11 @@ async function readClaimFile(path: string): Promise<ClaimFile | undefined> {
 
 /** そのプロセスが生きているか。もういなければ占有ファイルを消す。 */
 function isAlive(claim: ClaimFile): boolean {
-  try {
-    process.kill(claim.record.pid, 0)
+  if (isProcessAlive(claim.record.pid)) {
     return true
-  } catch (error) {
-    if (hasErrorCode(error, "ESRCH")) {
-      removeStaleClaim(claim.path)
-    }
-    return false
   }
+  removeStaleClaim(claim.path)
+  return false
 }
 
 /** 消せなくても読むのは止めない（次に読む側がまた消しにくる）。 */

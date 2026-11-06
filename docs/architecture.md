@@ -103,7 +103,7 @@
 | `docs/architecture/adr/0023-local-diagnostic-log.md`                            | 不具合の経緯は手元の1本の JSONL に、決まった語だけで残す                                              | 採用                   |
 | `docs/architecture/adr/0024-no-skill-dependency.md`                             | tsukumo はワークフローの契約だけを定め、特定のスキルに依存しない                                      | 採用                   |
 | `docs/architecture/adr/0025-no-project-settings.md`                             | プロジェクトの設定を無くし、Beads を前提にする                                                        | 採用                   |
-| `docs/architecture/adr/0026-session-claim-file.md`                              | 使用中のセッションは占有ファイルとプロセスの生存で知る                                                | 採用                   |
+| `docs/architecture/adr/0026-session-claim-file.md`                              | 使用中のセッションは占有ファイルとプロセスの生存で知る                                                | 置き換え済み（→ 0050） |
 | `docs/architecture/adr/0027-markdown-component-entry.md`                        | 会話の画面の Markdown を部品に上げるときは、遅延読み込みの口を入口にする                              | 採用                   |
 | `docs/architecture/adr/0028-report-block-priority.md`                           | レポートの塊は、内容の形で並べた1本の梯子を上から試して選ぶ                                           | 置き換え済み（→ 0038） |
 | `docs/architecture/adr/0029-usage-review-own-query.md`                          | トークン消費の見直しは、会話とは別の使い捨ての `query()` で走らせる                                   | 採用                   |
@@ -127,3 +127,4 @@
 | `docs/architecture/adr/0047-compare-relation.md`                                | 見比べの部品を `Compare` 1つにまとめ、側の中身と `relation` で対等と前後を描き分ける                  | 採用                   |
 | `docs/architecture/adr/0048-report-parameters-and-expressions.md`               | 触れるレポート: つまみの部品と、独自関数 `expr` の中置の式・名前つきの式で値を結ぶ                    | 採用                   |
 | `docs/architecture/adr/0049-sdk-tool-boundary-and-shared-drawing-vocabulary.md` | SDK の道具の境界と、ブラウザだけが読むように見える shared の描画の語彙の置き場                        | 提案                   |
+| `docs/architecture/adr/0050-eperm-is-alive.md`                                  | 別の利用者のプロセス（`EPERM`）は生きている扱いに揃え、生死の判定を1つにする                          | 採用                   |

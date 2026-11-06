@@ -86,10 +86,10 @@ describe("readOccupiedSessionIds", () => {
     expect(existsSync(path)).toBe(false)
   })
 
-  it("別の利用者のプロセス（pid 1）の占有ファイルは使用中にせず、ファイルも消さない", async () => {
+  it("別の利用者のプロセス（pid 1）の占有ファイルは生きている占有として使用中にし、ファイルも消さない", async () => {
     const path = putClaim(1, { pid: 1, sessionIds: ["session-a"] })
 
-    expect(await readOccupiedSessionIds(place())).toEqual([])
+    expect(await readOccupiedSessionIds(place())).toEqual(["session-a"])
     expect(existsSync(path)).toBe(true)
   })
 
