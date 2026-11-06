@@ -63,6 +63,7 @@ export function defaultSessionClaimPlace(): SessionClaimPlace {
 export async function readOccupiedSessionIds(
   place: SessionClaimPlace,
 ): Promise<readonly SessionId[]> {
+  // 置き場がまだ無い・読めないのは、占有が無いのと同じ
   const names = await readdir(place.dir).catch(() => [])
   const records = await Promise.all(
     names

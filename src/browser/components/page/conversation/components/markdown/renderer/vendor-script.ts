@@ -8,6 +8,7 @@ const loaded = new Map<string, Promise<void>>()
 /** 手すきになったら `src` を読み込み始める。読み込みだけで、中身を使うのは呼んだ側。失敗は使うときに拾う。 */
 export function preloadVendorScript(src: string): void {
   const start = (): void => {
+    // 先読みの失敗は無視してよい。使うときに読み込み直して拾う
     loadVendorScript(src).catch(() => undefined)
   }
   if (typeof requestIdleCallback === "function") {

@@ -64,6 +64,7 @@ export function createOpenTaskReader(run: TwClaimsRunner): OpenTaskReader {
       }
       running = true
       run()
+        // tw が無い・失敗したときは、着手中のタスクが無いものとして扱う
         .catch(() => undefined)
         .then((output) => {
           cached = { readAt: now, task: parseOpenTask(output) }

@@ -36,6 +36,15 @@ describe("足跡も理由も無い握りつぶし", () => {
     expect(silentCatchLines("p.then(f)\n  .catch(() => {\n    g()\n  })")).toEqual([2])
   })
 
+  it("`undefined`・`null`・`[]` を返すだけの `.catch` を拾う", () => {
+    expect(silentCatchLines("p.catch(() => undefined)")).toEqual([1])
+    expect(silentCatchLines("p.catch(() => null)")).toEqual([1])
+    expect(silentCatchLines("p.catch(() => [])")).toEqual([1])
+    expect(silentCatchLines("p.catch((): string[] => [])")).toEqual([1])
+    expect(silentCatchLines("// 理由\np.catch(() => undefined)")).toEqual([])
+    expect(silentCatchLines("p.catch(() => [1])")).toEqual([])
+  })
+
   it("文字列・正規表現の中の `//` と、直前の別の文の行末コメントは理由と見なさない", () => {
     expect(silentCatchLines('try { f() } catch { g("http://x") }')).toEqual([1])
     expect(silentCatchLines("try { f() } catch {\n  g(/\\/\\//)\n}")).toEqual([1])
@@ -69,7 +78,7 @@ function silentCatchLines(content: string): readonly number[] {
   })
 }
 
-/** 束縛なしの `catch` か、引数なしの関数（本文がブロック）を渡す `.catch` なら、その本文と開始位置。 */
+/** 束縛なしの `catch` か、引数なしの関数（本文がブロック、または `undefined`・`null`・`[]` の式）を渡す `.catch` なら、その本文と開始位置。 */
 function swallowingBody(node: AstNode): { body: AstNode; start: number } | undefined {
   const type = stringField(node, "type")
   if (type === "CatchClause" && objectField(node, "param") === undefined) {
@@ -91,11 +100,23 @@ function swallowingBody(node: AstNode): { body: AstNode; start: number } | undef
     body === undefined ||
     !isFunction ||
     arrayField(handler, "params").length !== 0 ||
-    stringField(body, "type") !== "BlockStatement"
+    !(stringField(body, "type") === "BlockStatement" || isAbsentValueExpression(body))
   ) {
     return undefined
   }
   return { body, start: astNumber(handler, "start") ?? 0 }
+}
+
+/** 失敗の代わりに「無い」を返すだけの式（`undefined`・`null`・`[]`）。名前の付いた値は含めない。 */
+function isAbsentValueExpression(node: AstNode): boolean {
+  const type = stringField(node, "type")
+  if (type === "Identifier") {
+    return stringField(node, "name") === "undefined"
+  }
+  if (type === "Literal") {
+    return stringField(node, "raw") === "null"
+  }
+  return type === "ArrayExpression" && arrayField(node, "elements").length === 0
 }
 
 function calleeName(call: AstNode): string | undefined {

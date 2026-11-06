@@ -99,5 +99,6 @@ async function readNames(baseDir: string): Promise<string[]> {
 }
 
 function readEntries(baseDir: string, kind: "skills" | "agents"): Promise<Dirent[]> {
+  // ディレクトリが無いプラグインは、その種類を1つも持たない
   return readdir(join(baseDir, kind), { withFileTypes: true }).catch(() => [])
 }

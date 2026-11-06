@@ -85,6 +85,7 @@ export const useSession = create<SessionStoreState>()((set, get) => {
     dispatch: createORPCClient({
       call: (path, input, options) =>
         (socket?.commandLink.call(path, input, options) ?? Promise.resolve(undefined)).catch(
+          // 断られた・切れたときは黙って捨てる契約
           () => undefined,
         ),
     }),

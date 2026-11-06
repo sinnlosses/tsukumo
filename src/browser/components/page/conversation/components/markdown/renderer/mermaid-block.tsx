@@ -411,6 +411,7 @@ function innerWidthOf(node: HTMLPreElement): number {
  */
 function drawInTurn(draw: () => Promise<void>): Promise<unknown> {
   const turn = drawing.then(draw)
+  // 失敗は呼び出し側へ返す `turn` が伝える。鎖は切らない
   drawing = turn.catch(() => undefined)
   return turn
 }
