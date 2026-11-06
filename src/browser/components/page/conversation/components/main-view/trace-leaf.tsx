@@ -17,7 +17,7 @@ const STATUS_MARKS = {
   notStarted: { mark: "○", label: "未着手", className: styles["trace-row-not-started"] },
 } as const satisfies Record<
   TraceItem["status"],
-  { readonly mark: string; readonly label: string; readonly className: string | undefined }
+  { readonly mark: string; readonly label: string; readonly className?: string }
 >
 
 export function TraceLeaf(props: {

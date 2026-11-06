@@ -20,7 +20,7 @@ import { EXPRESSIONS, type Expression, type RemovableExpression } from "./expres
  * 読まないキー（古い版が書いたものなど）は無視する。
  */
 export type CharacterDefinition = {
-  readonly name: string | undefined
+  readonly name?: string
   /**
    * 表情名 → 日本語ラベル（`speak` の説明と立ち絵の alt に出る）。
    * 定義に無い表情は `expressionChoices` が表情名そのものをラベルにする。
@@ -30,51 +30,51 @@ export type CharacterDefinition = {
    * キャラクターの色。画面全体（吹き出し・選ばれたタブ・フォーカスの輪など）に効く。
    * 無ければ画面側の既定値に落ちる。
    */
-  readonly accent: string | undefined
+  readonly accent?: string
   /**
    * 雑談中だけ効くキャラクターの色。`accent` と同じ枠を、モードに応じて差し替えるだけ。
    * 任意で、無いパックは雑談中も `accent` のまま。
    */
-  readonly chatAccent: string | undefined
+  readonly chatAccent?: string
   readonly portraits: Readonly<Record<Expression, string | undefined>>
   /**
    * ミニ立ち絵の素材のファイル名（レポートの筆先に添う1体）。
    * 任意で、無いパックは `portraits.default` の縮小に落ちる。
    * 表情では変わらないので `portraits` とは別の1件で持つ。
    */
-  readonly mini: string | undefined
+  readonly mini?: string
   /**
    * 帯の左端に出す顔の素材のファイル名。表情では変わらない1枚で、正方形を勧める。
    * 任意で、無ければ帯には何も出さない（`mini` や `portraits` からのフォールバックはしない）。
    */
-  readonly face: string | undefined
+  readonly face?: string
   /**
    * 自己紹介文。雑談中のサイドバーのプロフィールで、名前の下に1行添える。
    * 任意で、無いパックは名前だけになる。空白だけの値は無いのと同じに畳む（札に空の行が出ないように）。
    */
-  readonly tagline: string | undefined
+  readonly tagline?: string
   /**
    * キャラクターが利用者を呼ぶ言葉。セリフのログで依頼の区切りの頭に付く。
    * 任意で、無いパックは呼び名を付けない。空白だけの値は無いのと同じに畳む。
    */
-  readonly userCall: string | undefined
+  readonly userCall?: string
   /**
    * ミニ立ち絵をキャラクターの世界で何と呼ぶか。ミニ立ち絵の alt に出る。
    * 任意で、無いパックは画面側の中立な呼び名に落ちる。空白だけの値は無いのと同じに畳む。
    */
-  readonly miniCall: string | undefined
+  readonly miniCall?: string
   /**
    * キャラビューに敷く背景。素材のファイル名と覆いの不透明度の組で、無ければ背景そのものが出ない（既定の絵には落ちない）。
    * 読めない値は {@link toCharacterBackground} が undefined か帯の中の値に畳む。
    */
-  readonly background: CharacterBackground | undefined
+  readonly background?: CharacterBackground
   /**
    * 日記の本文に効かせる書体のファイル名。任意で、無いパックは `--font-serif`（端末の明朝体）のまま。
    * パックに同梱した書体ファイル（`woff2` / `woff` / `ttf` / `otf`）だけを指せる。
    * 読めない・パックの外を指す値は {@link isDiaryFontFileName} が undefined に畳む。
    * 効くのは成果の画面の日記の吹き出しと日記帳の見開きの本文だけ（レポートやセリフの吹き出しの書体は変えない）。
    */
-  readonly diaryFont: string | undefined
+  readonly diaryFont?: string
 }
 
 /**
@@ -136,7 +136,7 @@ export function definitionWithAccent(
  * `chatAccent` を消した JSON を返す（画面の「仕事と同じにする」）。
  * `accent` を消す口は無い（`accent` が無いと吹き出しなど画面全体の色が既定値へ落ちてしまうため）。
  */
-export function definitionWithoutChatAccent(content: string | undefined): string {
+export function definitionWithoutChatAccent(content?: string): string {
   return editedTopLevelDefinitionJson(content, "chatAccent", undefined)
 }
 
@@ -176,7 +176,7 @@ export function definitionWithFace(content: string | undefined, fileName: string
 }
 
 /** 顔を消した JSON を返す（消すと帯・一覧・名乗りの丸には何も出なくなる。点線の丸に戻る）。 */
-export function definitionWithoutFace(content: string | undefined): string {
+export function definitionWithoutFace(content?: string): string {
   return editedTopLevelDefinitionJson(content, "face", undefined)
 }
 
@@ -186,7 +186,7 @@ export function definitionWithMini(content: string | undefined, fileName: string
 }
 
 /** ミニ立ち絵を外した JSON を返す（外すと表示は `portraits.default` の縮小に落ちる）。 */
-export function definitionWithoutMini(content: string | undefined): string {
+export function definitionWithoutMini(content?: string): string {
   return editedTopLevelDefinitionJson(content, "mini", undefined)
 }
 
@@ -202,7 +202,7 @@ export function definitionWithBackground(content: string | undefined, fileName: 
  * 背景を消した JSON を返す。
  * 消すのは素材の指定だけで、`veil` は残る（もう一度差したときにその人が書いた濃さが戻る。素材が無ければ背景は出ない）。
  */
-export function definitionWithoutBackground(content: string | undefined): string {
+export function definitionWithoutBackground(content?: string): string {
   return editedDefinitionJson(content, "background", "image", undefined)
 }
 
@@ -255,7 +255,7 @@ function editedDefinitionJson(
   content: string | undefined,
   group: "portraits" | "background",
   key: string,
-  value: string | undefined,
+  value?: string,
 ): string {
   const source = parsedDefinitionRecord(content)
   const edited = { ...asRecord(source[group]), [key]: value }
@@ -266,13 +266,13 @@ function editedDefinitionJson(
 function editedTopLevelDefinitionJson(
   content: string | undefined,
   key: "accent" | "chatAccent" | "name" | "tagline" | "face" | "mini",
-  value: string | undefined,
+  value?: string,
 ): string {
   const source = parsedDefinitionRecord(content)
   return `${JSON.stringify({ ...source, [key]: value }, undefined, 2)}\n`
 }
 
-function parsedDefinitionRecord(content: string | undefined): Readonly<Record<string, unknown>> {
+function parsedDefinitionRecord(content?: string): Readonly<Record<string, unknown>> {
   return asRecord(content === undefined ? undefined : parseJson(content))
 }
 

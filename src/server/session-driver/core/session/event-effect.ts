@@ -22,7 +22,7 @@ export function effectsOfEvent(
   event: SessionEvent,
   fromMain: boolean,
   mode: SessionMode,
-  sessionId: SessionId | undefined,
+  sessionId?: SessionId,
 ): readonly EventEffect[] {
   if (event.kind === "turn-finished") {
     return [

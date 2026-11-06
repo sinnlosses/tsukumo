@@ -83,7 +83,7 @@ export type UseTokenUsageResult = {
   readonly periodChoices: readonly PeriodChoiceView[]
   readonly report: TokenUsageReport
   /** プラン。まだ届いていない・取れなかったときは undefined。 */
-  readonly plan: string | undefined
+  readonly plan?: string
 }
 
 export function useTokenUsage(): UseTokenUsageResult {

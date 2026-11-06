@@ -23,7 +23,7 @@ export type SceneEventTarget = {
 export function sceneEndTarget(
   session: FakeSession,
   scene: string,
-  until: number | undefined,
+  until?: number,
 ): SceneEventTarget | undefined {
   const steps = countedSteps(session, scene, until)
   const last = steps.at(-1)
@@ -158,7 +158,7 @@ export function watchSceneEvents(page: WatchedPage): SceneEventWatch {
 function countedSteps(
   session: FakeSession,
   scene: string,
-  until: number | undefined,
+  until?: number,
 ): readonly FakeSessionStep[] {
   return startupSteps(session, scene, until).filter((step) => step.afterMs > 0)
 }

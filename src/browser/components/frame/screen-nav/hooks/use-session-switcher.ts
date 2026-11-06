@@ -73,7 +73,7 @@ export type ScreenNavSessionSwitcher = {
   /** `restartRefused` の間は切り替えも新しいセッションも送らない（起こし直しなので）。 */
   readonly blocked: boolean
   /** `blocked` のときだけ理由を持つ。 */
-  readonly blockedTitle: string | undefined
+  readonly blockedTitle?: string
   readonly onSwitch: (sessionId: SessionId) => void
   readonly onStartNew: () => void
 }

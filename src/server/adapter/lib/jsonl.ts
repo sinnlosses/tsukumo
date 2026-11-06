@@ -164,8 +164,8 @@ export function dateFileNames(dir: string): readonly string[] {
 /** {@link dateFileNames} のうち、日付が `fromDate` 以上 `toDate` 以下のものを古い順に返す（`undefined` の側は絞らない）。 */
 export function dateFileNamesBetween(
   dir: string,
-  fromDate: string | undefined,
-  toDate: string | undefined,
+  fromDate?: string,
+  toDate?: string,
 ): readonly string[] {
   return dateFileNames(dir).filter((name) => {
     const date = name.slice(0, 10)

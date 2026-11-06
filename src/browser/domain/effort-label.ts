@@ -74,7 +74,7 @@ export type EffortSelect =
 export function resolveEffortSelect(
   model: string,
   support: readonly ModelEffortSupport[],
-  effort: EffortLevel | undefined,
+  effort?: EffortLevel,
 ): EffortSelect {
   const entry = findModelSupport(support, model)
   if (entry === undefined) {

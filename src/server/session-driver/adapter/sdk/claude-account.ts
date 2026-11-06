@@ -25,7 +25,7 @@ const UNKNOWN_TIER = {
 } satisfies ClaudeAccountTier
 
 /** 設定ディレクトリの控えから契約の段を読む。無いときは `~` の控えで、そのときだけ `userHomeDir()` を読む。 */
-export function readClaudeAccountTier(configDir: string | undefined): ClaudeAccountTier {
+export function readClaudeAccountTier(configDir?: string): ClaudeAccountTier {
   const parsed = readJsonFile(join(configDir ?? userHomeDir(), ACCOUNT_FILE_NAME))
   if (!isPlainObject(parsed) || !isPlainObject(parsed.oauthAccount)) {
     return UNKNOWN_TIER

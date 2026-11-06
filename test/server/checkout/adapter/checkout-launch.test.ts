@@ -14,7 +14,7 @@ const CLI = new URL("../../../../src/cli.ts", import.meta.url).pathname
 
 const dir = useTempDir("checkout")
 
-function writeCheckout(root: string, name: string, entryBody: string | undefined): void {
+function writeCheckout(root: string, name: string, entryBody?: string): void {
   mkdirSync(join(root, "bin"), { recursive: true })
   writeFileSync(join(root, "package.json"), JSON.stringify({ name }))
   if (entryBody !== undefined) {

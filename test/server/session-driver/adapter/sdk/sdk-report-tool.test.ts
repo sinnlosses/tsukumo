@@ -202,7 +202,7 @@ describe("report でターンを閉じる", () => {
   })
 
   it("図を置かない理由は決まった名前だけで、図の部品1つか理由つきの図なしでも通る", async () => {
-    const withFigure = (figure: { readonly kind: string } | undefined) => ({
+    const withFigure = (figure?: { readonly kind: string }) => ({
       ...COMPLETE,
       figure,
     })

@@ -111,7 +111,7 @@ function isExporter(path: string): boolean {
 
 type ImportUse = { readonly target: string; readonly names: readonly string[] | "all" }
 
-function declaredNames(declaration: AstNode | undefined): readonly string[] {
+function declaredNames(declaration?: AstNode): readonly string[] {
   if (stringField(declaration, "type") === "VariableDeclaration") {
     return arrayField(declaration, "declarations").flatMap(
       (declarator) => stringField(objectField(declarator, "id"), "name") ?? [],
@@ -120,7 +120,7 @@ function declaredNames(declaration: AstNode | undefined): readonly string[] {
   return [stringField(objectField(declaration, "id"), "name") ?? []].flat()
 }
 
-function symbolName(node: AstNode | undefined): string {
+function symbolName(node?: AstNode): string {
   return stringField(node, "name") ?? stringField(node, "value") ?? ""
 }
 

@@ -122,7 +122,7 @@ export function useRepositoryFileLink(): RepositoryFileLink {
 type RepositoryFileLinkTargetProps = {
   /** 開くパスと指した行（{@link repositoryFileTarget} の戻り値）。 */
   readonly target: RepositoryFileTarget
-  readonly title: string | undefined
+  readonly title?: string
   readonly className: string
   readonly children: ReactNode
 }

@@ -170,7 +170,7 @@ function isExpectCall(node: AstNode): boolean {
   )
 }
 
-function propertyName(callee: AstNode | undefined): string | undefined {
+function propertyName(callee?: AstNode): string | undefined {
   return stringField(callee, "type") === "MemberExpression"
     ? stringField(objectField(callee, "property"), "name")
     : undefined

@@ -22,11 +22,11 @@ export type SessionDigest =
       /** 利用者が送った依頼の数。 */
       readonly requestCount: number
       /** 最後に通った `report` の `sessionSummary`。書かれていなければ undefined。 */
-      readonly summary: string | undefined
+      readonly summary?: string
       /** 最後に通った `report` の残っていること。無ければ undefined。 */
-      readonly remaining: string | undefined
+      readonly remaining?: string
       /** 最後のセリフ（`speak` か `report` の締め）。1つも無ければ undefined。 */
-      readonly lastLine: string | undefined
+      readonly lastLine?: string
     }
   /** 読めなかった・一覧に無いIDを頼まれた。 */
   | { readonly kind: "unavailable" }

@@ -84,7 +84,7 @@ function stepsThroughQuietPoint(steps: readonly FakeSessionStep[]): readonly Fak
 }
 
 /** 次の手が答えを待つ手（`waitForAnswer`）なら、答えが届くまで来ないので間合いは無限大。 */
-function gapToNext(step: FakeSessionStep, next: FakeSessionStep | undefined): number {
+function gapToNext(step: FakeSessionStep, next?: FakeSessionStep): number {
   if (next === undefined || next.waitForAnswer) {
     return Infinity
   }

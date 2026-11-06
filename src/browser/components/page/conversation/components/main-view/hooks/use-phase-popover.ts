@@ -15,7 +15,7 @@ export type PhasePopoverScope =
 
 export type PhasePopover = {
   /** 開いている丸の `key`。閉じていれば `undefined`。 */
-  readonly openKey: string | undefined
+  readonly openKey?: string
   /** 同じ丸なら閉じ、違う丸なら開き替える。 */
   readonly toggle: (key: string) => void
   /** フォーカスは動かさずに閉じる。 */

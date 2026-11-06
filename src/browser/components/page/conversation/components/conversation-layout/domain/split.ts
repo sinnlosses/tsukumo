@@ -15,7 +15,7 @@ export type Split = {
    * まだ一度も動かしていない間は `undefined` で、読む側が `rowTop` に落とす。
    * `rowTop` の値をここへコピーして持たせない（焼き付けると、あとから仕事の比率を変えたときに雑談側が追随しなくなる）。
    */
-  readonly collapsedRowTop: number | undefined
+  readonly collapsedRowTop?: number
 }
 
 // 下段の左右は半々。
@@ -51,7 +51,7 @@ const preference = localPreference(
       rowTop: percent,
       topLeft: percent,
       bottomLeft: percent,
-      collapsedRowTop: z.union([percent, z.undefined()]).catch(undefined),
+      collapsedRowTop: percent.optional().catch(undefined),
     }),
   ),
   DEFAULT_SPLIT,

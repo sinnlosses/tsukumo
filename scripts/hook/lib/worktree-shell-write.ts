@@ -22,7 +22,7 @@ const REFUSAL = `作業ツリー（CLAUDE_PROJECT_DIR）の中のファイルを
 /** 作業ツリーへのシェルでの書き込みなら拒否を返す。記録の hook 名は集計の継続のため `deny-sed-in-place` のまま。 */
 export function findWorktreeShellWriteDenial(
   call: BashHookCall,
-  workRoot: string | undefined,
+  workRoot?: string,
 ): BashDenial | undefined {
   const rule = findDeniedBashRule(call.command, call.cwd, workRoot)
   return rule === undefined ? undefined : { hook: "deny-sed-in-place", rule, refusal: REFUSAL }

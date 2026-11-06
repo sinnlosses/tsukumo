@@ -63,7 +63,7 @@ function ClaimRow(props: { readonly item: ClaimsPart["items"][number] }): ReactE
 }
 
 function ClaimField(props: {
-  readonly className: string | undefined
+  readonly className?: string
   readonly name: string
   readonly text: string
 }): ReactElement {

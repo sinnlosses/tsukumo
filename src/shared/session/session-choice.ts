@@ -38,7 +38,7 @@ export type SessionChoice = {
    * 行の見出し（SDK の `summary`。`customTitle` → 自動要約 → 最初の依頼、の順に決まる）。
    * 外来の値なので境界で検証し、文字列でない・空なら無いものとして畳む。
    */
-  readonly heading: string | undefined
+  readonly heading?: string
   /**
    * 作業ツリーの名前（SDK の `cwd` の末尾のディレクトリ名。`cwd` が無ければ `gitBranch`）。
    * 外来の値なので境界で検証し、どちらも取れない行は一覧に載せない。

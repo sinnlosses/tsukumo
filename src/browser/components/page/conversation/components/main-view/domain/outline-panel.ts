@@ -17,7 +17,7 @@ export type OutlinePanel = {
    * ユーザーがドラッグで決めた幅（px）。
    * まだ一度も動かしていない間は `undefined` で、CSS の既定（`clamp(10rem, 22cqw, 15rem)`）に任せる。
    */
-  readonly widthPx: number | undefined
+  readonly widthPx?: number
   readonly collapse: OutlineCollapseChoice
 }
 
@@ -54,10 +54,7 @@ const preference = localPreference(
           }
         : stored,
     z.object({
-      widthPx: z.union([
-        z.number().min(OUTLINE_WIDTH_MIN_PX).max(OUTLINE_WIDTH_MAX_PX),
-        z.undefined(),
-      ]),
+      widthPx: z.number().min(OUTLINE_WIDTH_MIN_PX).max(OUTLINE_WIDTH_MAX_PX).optional(),
       collapse: z.enum(COLLAPSE_CHOICES),
     }),
   ),

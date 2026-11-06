@@ -9,7 +9,7 @@ import type { LeafComponent } from "../../../../../../src/shared/report/report-b
 import { reportDraft } from "../../../../../fixture/report-event.ts"
 
 /** 架空の工程 5 つの所要。決定表は `part` の行で `bar`（文派は `table`）を返す。 */
-const partPlot = (form: string | undefined) =>
+const partPlot = (form?: string) =>
   plotBlockSchema.parse({
     kind: "plot",
     question: "架空の工程のどれが所要の大半か",

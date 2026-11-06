@@ -33,7 +33,7 @@ export function runningSession(
 }
 
 /** 語から {@link TaskSummaryStatus} を作る。語彙の外の語は `other`、語が無ければ `none`。 */
-export function taskStatusOfWord(word: string | undefined): TaskSummaryStatus {
+export function taskStatusOfWord(word?: string): TaskSummaryStatus {
   if (word === undefined) {
     return { kind: "none" }
   }

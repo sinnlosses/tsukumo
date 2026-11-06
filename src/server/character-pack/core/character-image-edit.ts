@@ -69,16 +69,16 @@ export type ImageEdit<Image extends { readonly base64: string; readonly format: 
       /** ほどいた画像から書き込み先のファイル名を組み立てる。 */
       readonly fileName: (image: Image) => string
       /** 書き換える前の、いまの定義が指しているファイル名。 */
-      readonly previousFileName: (content: string | undefined) => string | undefined
+      readonly previousFileName: (content?: string) => string | undefined
       /** 定義にファイル名を書き込む。 */
       readonly withImage: (content: string | undefined, fileName: string) => string
     }
   | {
       readonly kind: "clear"
       /** 書き換える前の、いまの定義が指しているファイル名。 */
-      readonly previousFileName: (content: string | undefined) => string | undefined
+      readonly previousFileName: (content?: string) => string | undefined
       /** 定義から参照を外す。 */
-      readonly withoutImage: (content: string | undefined) => string
+      readonly withoutImage: (content?: string) => string
     }
 
 /** 立ち絵の差し替え（表情ごとに書き込み先とファイル名が変わる）。 */
@@ -176,16 +176,16 @@ function portraitFileNameOf(
 }
 
 /** 書き換える前の背景のファイル名（定義が無い・背景が無いときは undefined）。 */
-function backgroundFileNameOf(content: string | undefined): string | undefined {
+function backgroundFileNameOf(content?: string): string | undefined {
   return content === undefined ? undefined : parseCharacterDefinition(content)?.background?.image
 }
 
 /** 書き換える前の顔のファイル名（定義が無い・顔が無いときは undefined）。 */
-function faceFileNameOf(content: string | undefined): string | undefined {
+function faceFileNameOf(content?: string): string | undefined {
   return content === undefined ? undefined : parseCharacterDefinition(content)?.face
 }
 
 /** 書き換える前のミニ立ち絵のファイル名（定義が無い・`mini` が無いときは undefined）。 */
-function miniFileNameOf(content: string | undefined): string | undefined {
+function miniFileNameOf(content?: string): string | undefined {
   return content === undefined ? undefined : parseCharacterDefinition(content)?.mini
 }

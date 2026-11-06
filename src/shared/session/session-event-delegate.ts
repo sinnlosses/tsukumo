@@ -83,7 +83,7 @@ export type DelegateEvent =
        * サブエージェントの中で動いたときの、起こした側の Agent ツールの `toolUseId`。
        * トップレベルのターンでは undefined（SDK メッセージの `parent_tool_use_id` が `null`）。
        */
-      readonly parentToolUseId: ToolUseId | undefined
+      readonly parentToolUseId?: ToolUseId
     }
   | {
       readonly kind: "tool-finished"

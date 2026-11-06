@@ -35,7 +35,7 @@ function startViewWithRpc(rpcPorts: Partial<RpcRouterPorts>): Promise<ViewServer
 }
 
 /** ブラウザと同じ型付きの client（起動トークンを `?t=` に載せる。無ければ付けない）。 */
-function rpcClientOf(server: ViewServer, token: string | undefined): RpcClient {
+function rpcClientOf(server: ViewServer, token?: string): RpcClient {
   const url = new URL(`${viewOrigin(server)}${RPC_PATH}`)
   if (token !== undefined) {
     url.searchParams.set("t", token)

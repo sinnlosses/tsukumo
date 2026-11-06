@@ -6,8 +6,8 @@ export type VersionCapture =
   | {
       readonly kind: "captured"
       readonly image: string
-      readonly overflow: number | undefined
-      readonly length: number | undefined
+      readonly overflow?: number
+      readonly length?: number
     }
   | { readonly kind: "failed"; readonly reason: string }
 
@@ -16,7 +16,7 @@ export type WidthComparison = {
   readonly report: VersionCapture
   readonly html: VersionCapture
   /** レポート版の `--paper-metric` の表。撮れなかったときは undefined。 */
-  readonly paperMetric: string | undefined
+  readonly paperMetric?: string
 }
 
 export type ComparisonDraftInput = {
@@ -24,7 +24,7 @@ export type ComparisonDraftInput = {
   readonly date: string
   readonly htmlPath: string
   readonly scene: string
-  readonly session: string | undefined
+  readonly session?: string
   readonly widths: readonly WidthComparison[]
 }
 

@@ -54,7 +54,7 @@ export function createAchievementCache(
     | undefined = undefined
   let lastDone: readonly DoneTask[] | undefined = undefined
 
-  async function readAndRemember(stamp: string | undefined): Promise<AchievementBeadsRead> {
+  async function readAndRemember(stamp?: string): Promise<AchievementBeadsRead> {
     const result = await readDoneTasks(cwd, stamp)
     if (typeof result !== "string") {
       lastDone = result
@@ -161,10 +161,7 @@ export function readAchievementCalendar(
 }
 
 /** `.beads` が見つかったあとに全件の読み（一覧と共有）から閉じた課題を取り出す。落ちても時間切れでも `unavailable`。 */
-async function readDoneTasks(
-  cwd: string,
-  stamp: string | undefined,
-): Promise<AchievementBeadsRead> {
+async function readDoneTasks(cwd: string, stamp?: string): Promise<AchievementBeadsRead> {
   const beads = await readBeadsIssues(cwd, stamp)
   return beads.kind === "issues" ? doneTasksOfBeadsIssues(beads.issues) : "unavailable"
 }

@@ -47,7 +47,7 @@ type Arguments = {
   readonly scene: string
   readonly topic: string
   readonly date: string
-  readonly session: string | undefined
+  readonly session?: string
   readonly widths: readonly number[]
   readonly height: number
   readonly outDir: string

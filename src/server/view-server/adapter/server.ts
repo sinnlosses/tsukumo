@@ -274,7 +274,7 @@ function matchesRoute(match: RouteMatch, path: string): boolean {
   return match.kind === "exact" ? path === match.path : path.startsWith(match.prefix)
 }
 
-function findRoute(path: string, method: string | undefined): ViewRoute | undefined {
+function findRoute(path: string, method?: string): ViewRoute | undefined {
   return ROUTES.find(
     (route) =>
       matchesRoute(route.match, path) && (route.method === "ANY" || route.method === method),

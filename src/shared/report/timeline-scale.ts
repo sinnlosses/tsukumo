@@ -30,10 +30,10 @@ export type TimelineFault = { readonly place: TimelinePlace; readonly reason: Ti
  * `end` は一点の行でも、`uncertain` は区間を省いた行でも `undefined`。
  */
 export type TimelineRowReading = {
-  readonly start: number | undefined
-  readonly end: number | undefined
+  readonly start?: number
+  readonly end?: number
   readonly extra: readonly (number | undefined)[]
-  readonly uncertain: number | undefined
+  readonly uncertain?: number
 }
 
 export type TimelineReading = {

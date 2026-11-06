@@ -78,7 +78,7 @@ export type SessionState = {
    * いま動いているモデル。`session` の外に置く（{@link SessionInfo} を参照）。
    * まだどちらの口からも届いていなければ undefined（`init` 前に何を出すかは読む側が見た目上の既定へ畳む）。
    */
-  readonly model: string | undefined
+  readonly model?: string
   /**
    * モデルごとの effort の対応（{@link ModelEffortSupport}）。帯の effort のドロップダウンが、いまのモデルで選べる段を絞るのに読む。
    * 源は `model-effort-support` だけ。まだ届いていなければ空で、読む側は「対応するかどうか分からない」に畳む。
@@ -89,7 +89,7 @@ export type SessionState = {
    *
    * まだ届いていなければ undefined（見た目上の既定へは畳まない）。
    */
-  readonly effort: EffortLevel | undefined
+  readonly effort?: EffortLevel
   /** モデル・effort・許可モードの設定の点の元（{@link SettingMarks}）。 */
   readonly settingMarks: SettingMarks
   /**
@@ -107,7 +107,7 @@ export type SessionState = {
    */
   readonly commandDescriptions: readonly CommandDescription[]
   /** セッションが終わった理由。動いている間は undefined。 */
-  readonly endedReason: string | undefined
+  readonly endedReason?: string
   /** ターンの進み具合（{@link TurnProgress}）。始まった時刻・終わった時刻もここが持つ。 */
   readonly turn: TurnProgress
   /**
@@ -148,7 +148,7 @@ export type SessionState = {
    * キャラビューが立ち絵を取りに行く先（`character-changed` が届くまでは undefined）。
    * 素材そのものは持たない（`portraits` の値は `/character/<pack>/<file>` の URL）。
    */
-  readonly character: CharacterInfo | undefined
+  readonly character?: CharacterInfo
   /**
    * キャラクターパックの一覧。使用中以外のパックも姿ごと持つ。
    * `character-changed` と一緒に届く。まだ届いていないときは空。
@@ -175,7 +175,7 @@ export type SessionState = {
    * 立ち絵の「失敗でびくっ」の判定にだけ使う。
    * 次のターンが始まっても戻さない（期間が過ぎれば判定の側で自然に「今は失敗直後ではない」に戻る）。
    */
-  readonly lastToolFailureAt: number | undefined
+  readonly lastToolFailureAt?: number
   /**
    * 雑談モードに入っているか。入っている間はレポートを出さず、メインビューが立ち絵と会話のログになる。
    * 源は `chat-mode-changed` だけ。切り替えは駆動の起こし直しなので、起こし直したあとにサーバから流れ直す（起こし直しで状態が初期値へ戻るため）。
@@ -207,7 +207,7 @@ export type SessionState = {
    * 契約プラン。トークン消費の画面の題の右の札に出す。源は `plan` だけ。
    * まだ届いていない・取れなかったのどちらも同じ undefined（画面は区別しないので、型でも分けない）。
    */
-  readonly plan: string | undefined
+  readonly plan?: string
   /**
    * いま背景で動いているタスク。ターンの進み具合（{@link turn}）とは独立で、ターンが終わっても動いている間はここに残る。
    * 源は `background-tasks-changed` だけで、届くたびに丸ごと置き換える。

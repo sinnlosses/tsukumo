@@ -5,7 +5,7 @@ const STAGE_COUNT = 2
 const SHARE_OF_CORES = 0.4
 
 /** 検証全体の worker の予算。`override` が正の整数なら、それを使う。 */
-export function workerBudget(cores: number, override: string | undefined): number {
+export function workerBudget(cores: number, override?: string): number {
   const given = Number(override)
   if (override !== undefined && Number.isInteger(given) && given > 0) {
     return given

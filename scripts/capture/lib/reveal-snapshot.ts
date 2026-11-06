@@ -34,7 +34,7 @@ export type RevealSnapshot = {
   /** 読んだ時点の `performance.now()`。 */
   readonly nowMs: number
   /** 演出の開始を見つけた時点の `performance.now()`。見つけていなければ undefined。 */
-  readonly seenAtMs: number | undefined
+  readonly seenAtMs?: number
   readonly rows: readonly RevealRow[]
 }
 

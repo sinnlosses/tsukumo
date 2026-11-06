@@ -11,7 +11,7 @@ import { z } from "zod"
 import { parseJsonWith } from "../../../shared/utils/parse-json.ts"
 
 /** 着手中のタスクと、その最後の段（無ければ `undefined`）。 */
-export type OpenTask = { readonly taskId: string; readonly stage: string | undefined }
+export type OpenTask = { readonly taskId: string; readonly stage?: string }
 
 /** 着手中のタスクの読み手。 */
 export type OpenTaskReader = {
@@ -53,7 +53,7 @@ export function twClaimsRunner(tw: string, cwd: string): TwClaimsRunner {
 }
 
 export function createOpenTaskReader(run: TwClaimsRunner): OpenTaskReader {
-  let cached: { readonly readAt: number; readonly task: OpenTask | undefined } | undefined
+  let cached: { readonly readAt: number; readonly task?: OpenTask } | undefined
   let running = false
   const isFresh = (now: number): boolean =>
     cached !== undefined && now >= cached.readAt && now - cached.readAt < CLAIMS_TTL_MS
@@ -74,7 +74,7 @@ export function createOpenTaskReader(run: TwClaimsRunner): OpenTaskReader {
   }
 }
 
-function parseOpenTask(output: string | undefined): OpenTask | undefined {
+function parseOpenTask(output?: string): OpenTask | undefined {
   if (output === undefined) {
     return undefined
   }

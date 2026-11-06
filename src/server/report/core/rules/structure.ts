@@ -232,7 +232,7 @@ function firstLeafReference(
   return search(section, sectionIndex)
 }
 
-function isMemoNote(part: ReturnType<typeof partOf> | undefined): boolean {
+function isMemoNote(part?: ReturnType<typeof partOf>): boolean {
   return part?.component === "Note" && part.props.tone === "memo"
 }
 
@@ -295,7 +295,7 @@ const MAX_LAYOUT_DEPTH = 3
 /** 参照の欄の種類。`layout` は配置の部品の子。 */
 type Slot = "report-child" | "figure" | "retrospective" | "section-child" | "layout"
 
-type Part = { readonly id: string | undefined; readonly component: string | undefined }
+type Part = { readonly id?: string; readonly component?: string }
 
 type Reference = { readonly slot: Slot; readonly id: string; readonly pointer: string }
 

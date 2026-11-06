@@ -324,7 +324,7 @@ const PHASE_NAME_SEPARATOR = "・"
 export function settleDelegatedRange(
   call: WorkPlanCall,
   inherited: DelegatedRange,
-  returnedCount: number | undefined,
+  returnedCount?: number,
 ): WorkPlan | undefined {
   const { plan, firstOmitted } = call
   const given = plan.delegatedRange

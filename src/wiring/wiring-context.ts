@@ -11,9 +11,9 @@ export type WiringDriver =
       readonly kind: "fake"
       readonly session: FakeSession
       /** 名指しする場面。未設定なら undefined ＝ 依頼を受けるまで `opening` だけ。 */
-      readonly scene: string | undefined
+      readonly scene?: string
       /** `scene` の手を流す個数の上限。undefined ＝ 全部流す。 */
-      readonly sceneUntil: number | undefined
+      readonly sceneUntil?: number
     }
 
 export type WiringContext = {

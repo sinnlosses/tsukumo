@@ -29,7 +29,7 @@ export type ResolvedViewPort = Exclude<ViewPortResolution, { readonly kind: "inv
  * `TSUKUMO_VIEW_PORT` を明示したとき＝`explicit` の結果には効かない。起点をずらす対象は「既定のときだけずらす」既定の帯そのものだから。
  */
 export function resolveViewPort(
-  rawPort: string | undefined,
+  rawPort?: string,
   defaultPort: number = DEFAULT_VIEW_PORT,
 ): ViewPortResolution {
   const trimmed = rawPort?.trim()
@@ -49,7 +49,7 @@ export function resolveViewPort(
  * `TSUKUMO_VIEW_PORT_FALLBACK_BASE` の生の値を、既定ポートの起点として読む。
  * 読めない・未設定な値は {@link DEFAULT_VIEW_PORT} に倒し、起動を止めない（既定の帯そのものを差し替えるだけの小さな上書きのため）。
  */
-export function resolveViewPortFallbackBase(raw: string | undefined): number {
+export function resolveViewPortFallbackBase(raw?: string): number {
   const resolved = resolveViewPort(raw)
   return resolved.kind === "explicit" ? resolved.port : DEFAULT_VIEW_PORT
 }

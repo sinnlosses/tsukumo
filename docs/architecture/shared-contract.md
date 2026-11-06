@@ -105,7 +105,7 @@
 
 - **形は判別可能な合併型**（`RecordTime`）: `stamped` は起きた時刻が分かり、`recovered` は前のセッションを
   組み直したが transcript の `timestamp` から時刻を戻せたもの、`restored` は時刻が分からないもの
-  （`at: number | undefined` にしない）。時刻を読む側は `recordTimeAt` で `stamped` と `recovered` を同じに読む
+  （`at?: number` にしない）。時刻を読む側は `recordTimeAt` で `stamped` と `recovered` を同じに読む
 - **時刻を打つのはサーバ**（イベントの `at` をそのまま写す）。畳み込みの中で時計は読まない（「SessionEvent」）
 - **ほかの種類には足さない**（雑談のログが拾わないうえ、記録を作る場所すべてに時刻の出どころが要る）
 - **復元した記録の時刻は transcript の `timestamp` から戻す**（`getSessionMessages` が型に無い

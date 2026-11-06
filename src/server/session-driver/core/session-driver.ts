@@ -81,7 +81,7 @@ export type SessionDriverOptions = {
    */
   readonly inheritedEnv: Readonly<Record<string, string | undefined>>
   /** Claude Code の設定ディレクトリ（`Config.claudeConfigDir`）。契約の控えを読む場所で、無ければ `~`。 */
-  readonly claudeConfigDir: string | undefined
+  readonly claudeConfigDir?: string
   /** 取り込んだ tsukumo-plugins を `plugins` に載せるか（利用者が同じスキルとエージェントを入れていれば載せない）。 */
   readonly mountWorkflowPlugin: boolean
   /** 取り込んだ図のプラグイン（`plugins/tsukumo-figure`）を `plugins` に載せるか。`mountWorkflowPlugin` とは独立。 */
@@ -168,7 +168,7 @@ export type SessionDriver = {
    */
   readonly readSessionDigest: (sessionId: SessionId) => Promise<SessionDigest>
   /** モデルを切り替える。 */
-  readonly setModel: (model: string | undefined) => Promise<void>
+  readonly setModel: (model?: string) => Promise<void>
   /**
    * effort を切り替える。受け付けられたら、その値を `effort-changed` で流す。
    */

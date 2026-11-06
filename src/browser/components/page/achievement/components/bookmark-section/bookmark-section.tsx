@@ -8,7 +8,7 @@ import styles from "./bookmark-section.module.css"
 
 type BookmarkSectionProps = {
   /** 日記が無い日は `undefined`。 */
-  readonly bookmark: DiaryBookmark | undefined
+  readonly bookmark?: DiaryBookmark
   /** 書いたパックの名前（見出しの「<名前>が選んだ」に使う）。 */
   readonly writerName: string
 }

@@ -10,7 +10,7 @@ export type SceneSessionReading =
   | { readonly kind: "unreadable"; readonly message: string }
 
 /** `sessionPath` が undefined なら同梱のファイルを読む。読めなければ、どのファイルかを添えた理由を返す。 */
-export function readSceneSession(sessionPath: string | undefined): SceneSessionReading {
+export function readSceneSession(sessionPath?: string): SceneSessionReading {
   const reading = readFakeSession(sessionPath)
   return reading.kind === "read"
     ? reading

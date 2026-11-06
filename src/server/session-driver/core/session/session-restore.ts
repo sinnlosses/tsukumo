@@ -93,7 +93,7 @@ export function restoredMessageEvents(
 }
 
 /** 組み直しの途中の出来事1件。`turn` は元のメッセージの uuid で控えから引いたターン。 */
-type RestoringStep = RestoredEvent & { readonly turn: LedgeredTurn | undefined }
+type RestoringStep = RestoredEvent & { readonly turn?: LedgeredTurn }
 
 /**
  * ターンの境目に `turn-finished` を挟む。

@@ -16,7 +16,7 @@ import { shrinkToThumbnail } from "../../../domain/prompt-image-thumbnail.ts"
  * 落ちてきた・貼られたものから、依頼に添えられる画像のファイルだけを拾う（`.svg` や PDF やフォルダは混ざらない）。
  * 受け取るものが無い（undefined）ときは空。
  */
-export function promptImageFiles(transfer: DataTransfer | undefined): readonly File[] {
+export function promptImageFiles(transfer?: DataTransfer): readonly File[] {
   return transfer === undefined
     ? []
     : [...transfer.files].filter((file) => isPromptImageMediaType(file.type))
@@ -26,7 +26,7 @@ export function promptImageFiles(transfer: DataTransfer | undefined): readonly F
  * ファイルを選ぶウィンドウ（`<input type="file">`）で選ばれたものから、依頼に添えられる画像だけを拾う。
  * 何も選ばなかった（undefined）ときは空。
  */
-export function chosenPromptImageFiles(files: FileList | undefined): readonly File[] {
+export function chosenPromptImageFiles(files?: FileList): readonly File[] {
   return files === undefined ? [] : [...files].filter((file) => isPromptImageMediaType(file.type))
 }
 
@@ -34,7 +34,7 @@ export function chosenPromptImageFiles(files: FileList | undefined): readonly Fi
  * 掴んで持ってきているものがファイルか。
  * `dragover` の時点では中身（`files`）がまだ読めないので、ここだけは種類の並び（`types`）で見る（受け取れるかどうかは落ちたあとに {@link promptImageFiles} が決める）。
  */
-export function carriesFiles(transfer: DataTransfer | undefined): boolean {
+export function carriesFiles(transfer?: DataTransfer): boolean {
   return transfer !== undefined && [...transfer.types].includes("Files")
 }
 

@@ -32,7 +32,7 @@ export function frameProcedure() {
  */
 async function* framesOf(
   subscribe: SubscribeFrames,
-  signal: AbortSignal | undefined,
+  signal?: AbortSignal,
 ): AsyncGenerator<ServerFrame> {
   const buffered: ServerFrame[] = []
   // 次のフレーム（か中断）を待っている読み手を起こす関数。待っていない間は空。

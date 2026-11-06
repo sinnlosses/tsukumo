@@ -5,5 +5,5 @@
  */
 export type CommandDescription = {
   readonly name: string
-  readonly description: string | undefined
+  readonly description?: string
 }

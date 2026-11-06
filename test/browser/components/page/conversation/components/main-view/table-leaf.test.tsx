@@ -297,8 +297,7 @@ describe("Table の濃淡と合計", () => {
     heat: { from: 1, to: 3 },
     totals: true,
   }
-  const levelOf = (cell: Element | undefined) =>
-    /report-heat-(\d)/.exec(cell?.innerHTML ?? "")?.[1] ?? "なし"
+  const levelOf = (cell?: Element) => /report-heat-(\d)/.exec(cell?.innerHTML ?? "")?.[1] ?? "なし"
 
   it("範囲のセルに段の印を置き、最大のセルにだけ山の印を置き、棒は出さない", () => {
     const { container } = renderPart(WEEK)

@@ -10,9 +10,9 @@ export type FakeTsukumoOptions = {
   readonly entry: string
   readonly cwd: string
   /** 起こした直後に流す疑似セッションの場面。 */
-  readonly scene: string | undefined
+  readonly scene?: string
   /** 疑似セッションのファイル（`TSUKUMO_FAKE_SESSION`）。undefined なら同梱のファイル。 */
-  readonly session: string | undefined
+  readonly session?: string
   /** 0 なら空きポート。 */
   readonly port: number
   /** `TSUKUMO_HOME` に渡すホーム。所在のファイルもその下に書かれる。 */

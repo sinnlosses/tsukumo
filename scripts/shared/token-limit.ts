@@ -18,7 +18,7 @@ const EXEMPT_PATH_PATTERNS = [
 export type StagedChange = {
   readonly path: string
   /** HEAD でのバイト数。新規は `undefined`。名前変更・コピーは元のパスの HEAD のバイト数。 */
-  readonly headBytes: number | undefined
+  readonly headBytes?: number
   readonly stagedBytes: number
   readonly binary: boolean
 }

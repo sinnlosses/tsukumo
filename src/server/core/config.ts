@@ -108,11 +108,11 @@ export type ConfigDriver =
   | {
       readonly kind: "fake"
       /** 疑似セッションのファイルのパス。未設定・空なら undefined ＝ 同梱のファイル。 */
-      readonly sessionPath: string | undefined
+      readonly sessionPath?: string
       /** 名指しする場面。未設定なら undefined ＝ 依頼を受けるまで `opening` だけ。 */
-      readonly scene: string | undefined
+      readonly scene?: string
       /** `scene` の手を流す個数の上限。未設定・正の整数でない値なら undefined ＝ 全部流す。 */
-      readonly sceneUntil: number | undefined
+      readonly sceneUntil?: number
     }
 
 /**
@@ -138,11 +138,11 @@ export type Config = {
   readonly driver: ConfigDriver
   readonly host: HostKind
   /** `TSUKUMO_TW` の値（未設定・空なら undefined ＝ 既定の `tw`）。 */
-  readonly twCommand: string | undefined
+  readonly twCommand?: string
   /** `CLAUDE_CONFIG_DIR` の値（未設定・空なら undefined ＝ `~`）。 */
-  readonly claudeConfigDir: string | undefined
+  readonly claudeConfigDir?: string
   /** 凍らせる瞬間。未設定・読めない値なら undefined ＝ 本物の時計。 */
-  readonly fixedClock: Temporal.Instant | undefined
+  readonly fixedClock?: Temporal.Instant
   readonly disallowedTools: readonly string[]
   readonly turnStepLimit: number
   /**
@@ -185,12 +185,12 @@ export function readConfig(env: Readonly<Record<string, string | undefined>>): C
   }
 }
 
-function readCharacterSource(value: string | undefined): CharacterSource {
+function readCharacterSource(value?: string): CharacterSource {
   const path = nonBlankString(value)?.trim()
   return path === undefined ? { kind: "bundled" } : { kind: "directory", path }
 }
 
-function parseToolNames(value: string | undefined): readonly string[] {
+function parseToolNames(value?: string): readonly string[] {
   const trimmed = nonBlankString(value)?.trim()
   if (trimmed === undefined) {
     return DEFAULT_DISALLOWED_TOOLS
@@ -213,7 +213,7 @@ function readHost(env: Readonly<Record<string, string | undefined>>): HostKind {
   return env[TERM_PROGRAM_ENV_NAME]?.trim() === ORCA_TERM_PROGRAM ? "orca" : "browser"
 }
 
-function parsePositiveInteger(value: string | undefined): number | undefined {
+function parsePositiveInteger(value?: string): number | undefined {
   const trimmed = nonBlankString(value)?.trim()
   if (trimmed === undefined || !/^\d+$/.test(trimmed)) {
     return undefined
@@ -222,7 +222,7 @@ function parsePositiveInteger(value: string | undefined): number | undefined {
   return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : undefined
 }
 
-function parseInstant(value: string | undefined): Temporal.Instant | undefined {
+function parseInstant(value?: string): Temporal.Instant | undefined {
   const trimmed = nonBlankString(value)?.trim()
   if (trimmed === undefined) {
     return undefined

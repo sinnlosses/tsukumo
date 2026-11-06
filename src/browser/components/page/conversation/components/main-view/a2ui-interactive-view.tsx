@@ -23,7 +23,7 @@ type InteractiveTableProps = {
   readonly dataModel: DataModel
   readonly part: A2uiReportPart<"Table">
   /** 内容部品の図表番号・札の色・欄外注。整形で落ちた表は値を持たず、何も描かない。 */
-  readonly value: LeafValue | undefined
+  readonly value?: LeafValue
   readonly badges: readonly FilterBadge[]
 }
 

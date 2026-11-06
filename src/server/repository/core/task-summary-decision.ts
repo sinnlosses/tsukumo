@@ -12,7 +12,7 @@ export type TaskSummaryPollState = {
   /** 読んだ結果として最後に知らせたもの。覚えた一覧を知らせても `loading` のまま。 */
   readonly notified: TaskSummaryResult
   /** 覚えていた一覧を先に知らせたとき、その結果。読んだ結果で置き換わったら無くす。 */
-  readonly shownFromMemory: TaskSummaryResult | undefined
+  readonly shownFromMemory?: TaskSummaryResult
   readonly failureStreak: number
 }
 
@@ -28,7 +28,7 @@ export type TaskSourceRead =
 export type TaskSummaryPollDecision = {
   readonly state: TaskSummaryPollState
   /** 知らせる結果。知らせないときは無い。`known` なら覚えにも書く。 */
-  readonly deliver: TaskSummaryResult | undefined
+  readonly deliver?: TaskSummaryResult
 }
 
 export function decideTaskSummaryPoll(

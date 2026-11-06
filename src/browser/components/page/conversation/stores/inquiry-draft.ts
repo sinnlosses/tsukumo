@@ -17,7 +17,7 @@ export type DraftAnswer = {
 
 type InquiryDraftState = {
   /** どの答え待ち（`PendingAsk.id`）に対して組み立てている答えか。まだ何も触っていなければ undefined。 */
-  readonly draft: { readonly pendingId: string; readonly answer: DraftAnswer } | undefined
+  readonly draft?: { readonly pendingId: string; readonly answer: DraftAnswer }
 }
 
 export const useInquiryDraft = create<InquiryDraftState>()(() => ({ draft: undefined }))

@@ -17,7 +17,7 @@ describe("createWaitingLineAlarm", () => {
    */
   function alarm(): {
     readonly rings: () => number
-    readonly set: (dueAt: number | undefined) => void
+    readonly set: (dueAt?: number) => void
     readonly advance: (ms: number) => void
     readonly lag: (ms: number) => void
   } {

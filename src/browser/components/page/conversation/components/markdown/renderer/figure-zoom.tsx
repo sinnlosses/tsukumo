@@ -85,7 +85,7 @@ export function SvgZoom(props: SvgZoomProps): ReactElement {
 }
 
 type ZoomableSvgFigureProps = {
-  readonly className: string | undefined
+  readonly className?: string
   readonly children: ReactNode
 }
 

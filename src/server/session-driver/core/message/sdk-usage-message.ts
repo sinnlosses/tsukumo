@@ -19,7 +19,7 @@ import type { ModelTokenUsage } from "../../../../shared/usage/token-usage.ts"
  */
 export function stepUsageEvents(
   message: unknown,
-  parentToolUseId: ToolUseId | undefined,
+  parentToolUseId?: ToolUseId,
 ): readonly SessionEvent[] {
   if (!isPlainObject(message) || typeof message.id !== "string" || message.id === "") {
     return []

@@ -63,7 +63,7 @@ export type CharacterViewSpeech = {
   /** 印を付ける行（= 立ち絵が従っている行）か。 */
   readonly selected: boolean
   /** 押すと遡る先。特定できなければ undefined（文面だけ出して押しても何もしない）。 */
-  readonly target: SpeechTarget | undefined
+  readonly target?: SpeechTarget
 }
 
 /** 吹き出しの最新に出す反応。`writing` は迎えの挨拶を書いている途中で、「…」を出す。 */
@@ -81,7 +81,7 @@ export type BalloonReaction =
 /** `<CharacterView>` が画面に出す形。presenter はこれをそのまま部品へ渡すだけ。 */
 export type CharacterViewModel = {
   /** 立ち絵の素材 URL。character が届いていなければ `undefined`（吹き出しだけで成立させる）。 */
-  readonly portraitUrl: string | undefined
+  readonly portraitUrl?: string
   readonly altText: string
   readonly expression: Expression
   readonly motion: PortraitMotion
@@ -90,9 +90,9 @@ export type CharacterViewModel = {
   /** 吹き出しの最新に出す反応。過去のターンを見ているあいだは出さない。 */
   readonly reaction: BalloonReaction
   /** 最新の吹き出しに添える話し手の名前。キャラクターが届いていない・名前が無ければ `undefined`。 */
-  readonly speakerName: string | undefined
+  readonly speakerName?: string
   /** セリフのログへ渡す、いま留めている行（`<SpeechLog>` と印・表情の状態を共有する）。 */
-  readonly pinnedSpeech: PinnedSpeech | undefined
+  readonly pinnedSpeech?: PinnedSpeech
   /** セリフのログの行を押したとき（`<SpeechLog>` から呼ぶ。吹き出しと同じ状態を動かす）。 */
   readonly onToggleSpeech: (turnId: number, index: number) => void
   /** セリフのログが開いているか。開くボタンは「ログ」と狭い画面の吹き出しの2つ。 */
@@ -320,7 +320,7 @@ function pastTurnSpeech(
 function useCharacterClock(
   turn: PortraitMotionInput["turn"],
   lastToolFailureAt: PortraitMotionInput["lastToolFailureAt"],
-  waitingDueAt: number | undefined,
+  waitingDueAt?: number,
 ): number {
   const [now, setNow] = useState(() => nowEpochMilliseconds())
 

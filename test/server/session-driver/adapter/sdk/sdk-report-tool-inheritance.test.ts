@@ -87,7 +87,7 @@ function session() {
 }
 
 /** 判定に渡った下書きと、描いた `report` が同じ値か。 */
-function expectJudgedAsDrawn(draft: ReportDraft | undefined, drawn: ReportCalledEvent | undefined) {
+function expectJudgedAsDrawn(draft?: ReportDraft, drawn?: ReportCalledEvent) {
   expect(drawn).toBeDefined()
   expect(draft).toMatchObject({
     conclusion: drawn?.conclusion,

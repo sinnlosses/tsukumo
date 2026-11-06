@@ -12,7 +12,7 @@ import { reportSelectionOf, type ReportSelection } from "../domain/selection-ran
 const SELECTION_ASK_ATTRIBUTE = "data-selection-ask"
 
 type SelectionAskView = {
-  readonly selection: ReportSelection | undefined
+  readonly selection?: ReportSelection
   readonly onAsk: () => void
 }
 

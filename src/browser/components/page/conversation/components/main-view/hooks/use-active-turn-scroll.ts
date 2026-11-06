@@ -109,7 +109,7 @@ function isSameTarget(a: ShownTarget, b: ShownTarget): boolean {
 type ShownPosition = {
   readonly generation: number
   readonly turnId: number
-  readonly position: ReadingPosition | undefined
+  readonly position?: ReadingPosition
 }
 
 function measure(

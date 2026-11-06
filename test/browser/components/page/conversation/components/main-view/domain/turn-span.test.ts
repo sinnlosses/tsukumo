@@ -21,7 +21,7 @@ function at(offsetSeconds: number): { readonly kind: "stamped"; readonly at: num
   return { kind: "stamped", at: STARTED_AT + offsetSeconds * 1000 }
 }
 
-function labelOf(span: TurnSpan | undefined): string {
+function labelOf(span?: TurnSpan): string {
   return span === undefined ? "（無い）" : turnSpanLabel(span, "UTC")
 }
 

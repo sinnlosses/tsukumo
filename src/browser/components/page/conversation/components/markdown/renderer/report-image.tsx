@@ -45,7 +45,7 @@ type SwapThumb = {
   readonly side: SwapSide
   readonly src: string
   readonly alt: string
-  readonly region: ImageRegion | undefined
+  readonly region?: ImageRegion
 }
 
 type NaturalSize = { readonly width: number; readonly height: number }
@@ -61,7 +61,7 @@ type ImageZoomTarget =
   | { readonly kind: "own" }
   | {
       readonly kind: "swap"
-      readonly open: (side: SwapSide, opener: HTMLElement | undefined) => void
+      readonly open: (side: SwapSide, opener?: HTMLElement) => void
     }
 
 /**
@@ -109,7 +109,7 @@ const SWAP_VIEW_LABEL = {
 const SWAP_VIEWS = ["side", "switch", "overlay"] as const satisfies readonly CompareView[]
 
 type CompareSwapProps = {
-  readonly className: string | undefined
+  readonly className?: string
   readonly settings: SwapSettings
   readonly children: ReactNode
 }
@@ -134,7 +134,7 @@ export function CompareSwap(props: CompareSwapProps): ReactElement {
   const view = chosen === "overlay" && !overlayable ? "side" : chosen
   const switches = view === "switch" && !missing
 
-  function openZoom(side: SwapSide, opener: HTMLElement | undefined): void {
+  function openZoom(side: SwapSide, opener?: HTMLElement): void {
     openerRef.current = opener
     setZoom({ side, caption: readCaption(rootRef.current) })
   }
@@ -356,7 +356,7 @@ function readCaption(root: HTMLElement | null): SwapZoom["caption"] {
   }
 }
 
-function sameRatio(a: NaturalSize | undefined, b: NaturalSize | undefined): boolean {
+function sameRatio(a?: NaturalSize, b?: NaturalSize): boolean {
   if (a === undefined || b === undefined || a.height === 0 || b.height === 0) {
     return false
   }
@@ -377,7 +377,7 @@ function withThumb(thumbs: readonly SwapThumb[], next: SwapThumb): readonly Swap
   return [...thumbs.filter((thumb) => thumb.side !== next.side), next]
 }
 
-function sameRegion(a: ImageRegion | undefined, b: ImageRegion | undefined): boolean {
+function sameRegion(a?: ImageRegion, b?: ImageRegion): boolean {
   return (
     a === b ||
     (a !== undefined &&

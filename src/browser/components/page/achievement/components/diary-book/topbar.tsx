@@ -14,8 +14,8 @@ const NEXT_LABEL = "次の日"
 
 export function Topbar(props: {
   readonly openNote: string
-  readonly previous: { readonly label: string } | undefined
-  readonly next: { readonly label: string } | undefined
+  readonly previous?: { readonly label: string }
+  readonly next?: { readonly label: string }
   readonly onPrevious: () => void
   readonly onNext: () => void
   readonly onToggleToc: () => void

@@ -103,7 +103,7 @@ describe("Markdown（レポートのパスを押して Orca のエディタで�
     expect(button.textContent).toBe("c-d.ts")
     const folder = container.querySelector("div[class*='file-folder']")
     expect(folder?.textContent).toBe("src/a-b/")
-    const emptySpans = (root: Element | null | undefined) =>
+    const emptySpans = (root?: Element | null) =>
       [...(root?.querySelectorAll("span") ?? [])].filter((span) => span.childNodes.length === 0)
     expect(emptySpans(button)).toHaveLength(1)
     expect(emptySpans(folder)).toHaveLength(1)

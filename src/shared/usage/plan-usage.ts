@@ -10,9 +10,9 @@ import { z } from "zod"
  */
 export type PlanUsageWindow = {
   /** 使用率（0〜100の百分率。SDK の説明どおり）。 */
-  readonly utilization: number | undefined
+  readonly utilization?: number
   /** 戻る時刻（エポックミリ秒。SDK は ISO 8601 の文字列で送る）。 */
-  readonly resetsAt: number | undefined
+  readonly resetsAt?: number
 }
 
 /** 5時間枠と7日間枠。 */
@@ -37,11 +37,9 @@ export const UNAVAILABLE_PLAN_USAGE = { kind: "unavailable" } satisfies PlanUsag
 /** claude.ai の契約でないときの結果（API キーなど）。再読み込みしても変わらない。 */
 export const NOT_APPLICABLE_PLAN_USAGE = { kind: "not-applicable" } satisfies PlanUsageReport
 
-// `.optional()` だとキー自体が無いことまで許し、`z.infer` の型でも鍵が `?:` になる。
-// 値そのものが `undefined` を取れる合併にして、鍵は必ずある形にする。
 const planUsageWindowSchema = z.object({
-  utilization: z.union([z.number(), z.undefined()]),
-  resetsAt: z.union([z.number(), z.undefined()]),
+  utilization: z.number().optional(),
+  resetsAt: z.number().optional(),
 })
 
 /** 配る形そのもの。 */

@@ -7,7 +7,7 @@ export type SeatPickModel = {
   readonly seat: SeatKey
   /** 札の字（「左上」「キャラの左下」「キャラの右下」）。 */
   readonly label: string
-  readonly current: ItemInfo | undefined
+  readonly current?: ItemInfo
   /** 選択メニューの選択肢（一覧）。先頭の「置かない」は部品が足す。 */
   readonly options: readonly ItemInfo[]
   /** 空文字は「置かない」。 */
@@ -54,7 +54,7 @@ export type ItemSectionModel = {
   readonly add: {
     readonly disabled: boolean
     /** 押せない理由。 */
-    readonly title: string | undefined
+    readonly title?: string
     readonly onOpen: () => void
   }
   readonly addDialog: ItemAddDialogModel

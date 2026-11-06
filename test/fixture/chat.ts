@@ -18,7 +18,7 @@ export const NOOP_CHAT_ARCHIVE = {
 } satisfies ChatArchive
 
 /** 読むと `record` を返し続け、書き込みは捨てる `ChatSummary`。 */
-export function fixedChatSummary(record: ChatSummaryRecord | undefined): ChatSummary {
+export function fixedChatSummary(record?: ChatSummaryRecord): ChatSummary {
   return {
     read: () => record,
     readTopics: () => [],
@@ -30,7 +30,7 @@ export function fixedChatSummary(record: ChatSummaryRecord | undefined): ChatSum
 }
 
 /** 書き込み（印は変えない）と届けた印をメモリ上の写しへ反映する `ChatSummary`。 */
-export function inMemoryChatSummary(initial: ChatSummaryRecord | undefined): ChatSummary {
+export function inMemoryChatSummary(initial?: ChatSummaryRecord): ChatSummary {
   let record = initial
   let topics: readonly string[] = []
   let fold: ChatSummaryFold = { kind: "unknown" }

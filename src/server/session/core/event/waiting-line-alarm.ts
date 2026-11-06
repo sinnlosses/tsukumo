@@ -6,7 +6,7 @@ export type WaitingLineAlarm = {
    * 畳んだあとの姿の、待ちの一言を出す時刻を渡す。前と同じなら何もしない（鳴ったあとも鳴らし直さない）。
    * 変われば立て直し、undefined なら止める。過ぎた時刻ならすぐ鳴らす。
    */
-  readonly set: (dueAt: number | undefined) => void
+  readonly set: (dueAt?: number) => void
   readonly cancel: () => void
 }
 

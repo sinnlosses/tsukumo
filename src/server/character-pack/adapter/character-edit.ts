@@ -292,7 +292,7 @@ function applyImageEdit<Image extends { readonly base64: string; readonly format
  * 差し替え・消去で参照が外れた素材のファイルを消す（書いた先のディレクトリの中の、定義のどこからも参照されていない画像だけ）。
  * 形式を変えて差し替えたときに古い拡張子のファイルが残り続けるのを防ぐ。消せなくてもそのまま続ける。
  */
-function removeUnreferencedImage(dir: string, fileName: string | undefined): void {
+function removeUnreferencedImage(dir: string, fileName?: string): void {
   if (fileName === undefined || !isCharacterImageFileName(fileName)) {
     return
   }
@@ -318,7 +318,7 @@ function withinImageFileLimit(dir: string, fileName: string): boolean {
  * 定義が指している素材のファイル名（立ち絵・ミニ立ち絵・背景・顔。重複なし・ディレクトリを跨がないものだけ）。
  * 写す先と消してよいものの両方がこの一覧で決まる。
  */
-function referencedImageFileNames(definition: CharacterDefinition | undefined): readonly string[] {
+function referencedImageFileNames(definition?: CharacterDefinition): readonly string[] {
   const names = [
     ...Object.values(definition?.portraits ?? {}),
     definition?.mini,
@@ -332,7 +332,7 @@ function referencedImageFileNames(definition: CharacterDefinition | undefined): 
  * キャラクターの素材として扱ってよいファイル名か。
  * 定義ファイルに書かれた名前も外部由来なので、ディレクトリを跨ぐ名前（`../foo`）はここで落とす（写す・消すのがホームの1階層に閉じる）。
  */
-function isCharacterImageFileName(name: string | undefined): name is string {
+function isCharacterImageFileName(name?: string): name is string {
   return name !== undefined && basename(name) === name && portraitImageMimeType(name) !== undefined
 }
 

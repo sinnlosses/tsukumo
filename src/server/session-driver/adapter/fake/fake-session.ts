@@ -92,7 +92,7 @@ export type FakeSessionStep = {
 export type FakeSessionScene = {
   readonly name: string
   /** この場面を名指しして起こしたとき、続きとして読み込む過去の transcript の `sessionId`。 */
-  readonly resume: string | undefined
+  readonly resume?: string
   readonly steps: readonly FakeSessionStep[]
 }
 
@@ -178,8 +178,8 @@ export function readFakeSession(
  */
 export function startupSteps(
   session: FakeSession,
-  scene: string | undefined,
-  sceneUntil: number | undefined,
+  scene?: string,
+  sceneUntil?: number,
 ): readonly FakeSessionStep[] {
   const namedScene = session.turns.find((candidate) => candidate.name === scene)
   const openingSpanMs = session.opening.reduce((span, step) => Math.max(span, step.afterMs), 0)

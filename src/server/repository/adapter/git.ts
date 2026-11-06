@@ -20,7 +20,7 @@ export type GitOutcome =
 export function runGit(
   cwd: string,
   args: readonly string[],
-  env: Readonly<Record<string, string | undefined>> | undefined = undefined,
+  env?: Readonly<Record<string, string | undefined>>,
 ): Promise<GitOutcome> {
   return new Promise((resolve) => {
     execFile(

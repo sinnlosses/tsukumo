@@ -9,7 +9,7 @@
  * サーバの時計（いまのエポックミリ秒を返す関数）。サーバで「いま」を読むのはここだけ（検査が縛る）。
  * `fixed`（`TSUKUMO_FIXED_CLOCK`）があれば、その瞬間で止まった進まない時計を返す。
  */
-export function createServerClock(fixed: Temporal.Instant | undefined): () => number {
+export function createServerClock(fixed?: Temporal.Instant): () => number {
   if (fixed !== undefined) {
     const frozen = fixed.epochMilliseconds
     return () => frozen

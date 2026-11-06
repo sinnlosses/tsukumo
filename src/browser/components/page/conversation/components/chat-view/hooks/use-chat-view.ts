@@ -57,7 +57,7 @@ export type ChatRow =
 /** `<ChatView>` が画面に出す形。presenter はこれをそのまま部品へ渡すだけ。 */
 export type ChatViewModel = {
   /** 立ち絵の素材 URL。character が届いていなければ `undefined`（立ち絵を出さない）。 */
-  readonly portraitUrl: string | undefined
+  readonly portraitUrl?: string
   /** 出ている絵をそのまま説明する（行を押して遡れば、その行の表情の名前になる）。 */
   readonly altText: string
   readonly expression: Expression

@@ -49,7 +49,7 @@ export function CodeSpan(props: {
   readonly text: string
   readonly path: string
   readonly checksSwatch: boolean
-  readonly className: string | undefined
+  readonly className?: string
   readonly attributes: JSX.IntrinsicElements["code"] & {
     readonly [name: `data-${string}`]: string
   }

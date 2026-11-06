@@ -39,7 +39,7 @@ export type ReportJudgement =
       readonly stage: RejectionStage
       readonly codes: readonly string[]
       readonly retryText: string
-      readonly components: readonly unknown[] | undefined
+      readonly components?: readonly unknown[]
     }
 
 export type RejectionStage = "schema" | "structure" | "violation"

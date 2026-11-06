@@ -43,7 +43,7 @@ export type DiarySubmission = {
   readonly body: string
   readonly expression: Expression
   /** 省略できる（終えたタスクが無い日だけ）。 */
-  readonly bookmark: { readonly taskId: string; readonly reason: string } | undefined
+  readonly bookmark?: { readonly taskId: string; readonly reason: string }
 }
 
 /** handler の判定。`rejected` の `text` はそのまま `diary` の戻り値になる。 */

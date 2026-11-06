@@ -33,8 +33,8 @@ type TaskFixture = {
   readonly description: string
   readonly acceptance: string
   readonly notes: string
-  readonly difficulty: TaskDifficulty | undefined
-  readonly loopable: TaskLoopable | undefined
+  readonly difficulty?: TaskDifficulty
+  readonly loopable?: TaskLoopable
 }
 
 /** 本文を指定しないタスクの本文（`## 目的・背景` の中身）。 */

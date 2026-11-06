@@ -6,7 +6,7 @@ import process from "node:process"
 import { errorMessage } from "../../../src/browser/utils/error-message.ts"
 import { replayEnvironment } from "../../shared/claude-environment.ts"
 
-export type Writer = { readonly model: string; readonly effort: string | undefined }
+export type Writer = { readonly model: string; readonly effort?: string }
 
 const CLAUDE_TIMEOUT_MS = 600_000
 const MAX_OUTPUT_BYTES = 16 * 1024 * 1024

@@ -139,7 +139,7 @@ function inDocumentOrder(nodes: readonly DomNode[], start: number): readonly Ord
 /** 失敗の行に出す節の長さの上限。 */
 const DESCRIBED_NODE_LENGTH_LIMIT = 120
 
-function describeNode(node: DomNode | undefined): string {
+function describeNode(node?: DomNode): string {
   const text = JSON.stringify(node) ?? "(無し)"
   return text.length > DESCRIBED_NODE_LENGTH_LIMIT
     ? `${text.slice(0, DESCRIBED_NODE_LENGTH_LIMIT)}…`

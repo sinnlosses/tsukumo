@@ -25,7 +25,7 @@ const VERDICTS = {
 } as const satisfies Record<
   Option["verdict"],
   {
-    className: string | undefined
+    className?: string
     mark: string
     label: string
     tone: "ok" | "warn" | "neutral"

@@ -76,8 +76,8 @@ export type ReportEvent =
       readonly waitingLine: ReportWaitingLine
       readonly droppedCount: number
       readonly brokenFenceCount: number
-      readonly title: string | undefined
-      readonly sessionSummary: string | undefined
+      readonly title?: string
+      readonly sessionSummary?: string
       readonly sessionRemaining: SessionRemaining
       /** 書き手が書いたままの部品の一覧（式・つまみ・`defs` を持つ）。初期値で評価した静的な一覧は `staticReportComponents` が作る。 */
       readonly components: readonly A2uiWrittenComponent[]

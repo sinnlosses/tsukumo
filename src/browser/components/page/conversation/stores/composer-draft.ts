@@ -23,7 +23,7 @@ export type Draft = {
 type ComposerDraftState = {
   readonly draft: Draft
   /** 命令の届け先の入力欄。入力欄が描かれていないあいだは無い。 */
-  readonly surface: ComposerSurface | undefined
+  readonly surface?: ComposerSurface
   /** 届け先の入力欄を登録する。返す関数は、いま登録されているのが自分のときだけ外す。 */
   readonly attachSurface: (surface: ComposerSurface) => () => void
   /** 入力欄で打った結果を写す。store だけを書く口で、面へは命令しない。 */

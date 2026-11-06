@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  arrayField,
   descendants,
   objectField,
   stringField,
@@ -31,130 +32,157 @@ describe("定数の Record の型注釈", () => {
   })
 })
 
-const OPTIONAL_MEMBER_TYPES: ReadonlySet<string> = new Set([
-  "TSPropertySignature",
+const PROPERTY_TYPES: ReadonlySet<string> = new Set(["TSPropertySignature", "PropertyDefinition"])
+const FUNCTION_TYPES: ReadonlySet<string> = new Set([
+  "FunctionDeclaration",
+  "FunctionExpression",
+  "ArrowFunctionExpression",
+  "TSDeclareFunction",
+  "TSEmptyBodyFunctionExpression",
+  "TSFunctionType",
+  "TSConstructorType",
   "TSMethodSignature",
-  "PropertyDefinition",
-  "MethodDefinition",
-])
-const OPTIONAL_PARAMETER_TYPES: ReadonlySet<string> = new Set([
-  "Identifier",
-  "ObjectPattern",
-  "ArrayPattern",
+  "TSCallSignatureDeclaration",
+  "TSConstructSignatureDeclaration",
 ])
 
-const ALLOWED_OPTIONAL_PROPERTIES = {
-  // 引数ごと `= {}` で省略できる中身で、既定値がある（例外5）
-  "src/browser/components/page/achievement/components/bell/bell.tsx": ["size"],
-  // react-markdown の `components.img` が受ける props の型（属性を持たないことがある）に合わせる。必須にすると代入できない
-  "src/browser/components/page/conversation/components/markdown/renderer/report-image.tsx": [
-    "data-change-region",
-  ],
-  // Chart.js のデータセットの形の再掲（外来の型）
-  "src/browser/components/page/conversation/components/markdown/renderer/chart-palette.ts": [
-    "type",
-    "data",
-    "backgroundColor",
-    "borderColor",
-  ],
-} satisfies Readonly<Record<string, readonly string[]>>
+describe("プロパティと引数の `| undefined`", () => {
+  it("src / test / scripts の *.ts / *.tsx（*.d.ts を除く）で、プロパティと引数の型の最上位の合併に `undefined` を書かない（`名前?: 型` で書く。docs/coding-standards.md「「無いかもしれない」値」）", () => {
+    expect(explicitUndefinedSites().join("\n")).toBe("")
+  })
 
-// ui の部品の DOM 属性に素通しする props（例外6）
-const ALLOWED_OPTIONAL_RULES = [
-  {
-    pathPrefix: "src/browser/components/ui/",
-    name: /^(aria([A-Z]|-)|title$|ref$|placeholder$|maxLength$|disabled$|style$)/,
-  },
-] as const satisfies readonly { readonly pathPrefix: string; readonly name: RegExp }[]
+  it("プロパティと引数の最上位の `undefined` だけを拾い、後ろに必須の引数が続く引数と、戻り値・変数・型引数・入れ子の `undefined` は拾わない", () => {
+    const source = [
+      "type Shape = {",
+      "  readonly flagged: string | undefined",
+      "  readonly alsoFlagged?: string | undefined",
+      "  readonly parenthesized: (string | number) | (undefined)",
+      "  readonly optional?: string",
+      "  readonly nested: Record<string, string | undefined>",
+      "}",
+      "class Holder {",
+      "  private field: number | undefined",
+      "}",
+      "function first(flaggedParam: string | undefined): string | undefined {",
+      "  const local: string | undefined = flaggedParam",
+      "  return local",
+      "}",
+      "function second(keptParam: string | undefined, required: string, defaulted: number | undefined = undefined): void {}",
+      "const third = (arrowParam: string | undefined, tail?: number, ...rest: string[]) => [arrowParam, tail, rest]",
+      "function fourth(chained: string | undefined, next: number | undefined): void {}",
+      "type Callback = (typedParam: number | undefined) => void",
+      "const state = useState<string | undefined>(undefined)",
+    ].join("\n")
 
-function isAllowedOptional(path: string, name: string): boolean {
-  return (
-    allowedOptionalProperties().includes(`${path}:${name}`) ||
-    ALLOWED_OPTIONAL_RULES.some((rule) => path.startsWith(rule.pathPrefix) && rule.name.test(name))
-  )
-}
-
-describe("オプショナルプロパティ", () => {
-  it("src の *.ts / *.tsx（*.d.ts を除く）で、型のプロパティ（引用符つきのキーも）と引数を `名前?: 型` と書くのは許可の一覧と規則に当たる箇所だけ（docs/coding-standards.md「「無いかもしれない」値」）", () => {
-    const offenders = optionalProperties().filter(
-      (found) => !isAllowedOptional(pathOf(found), nameOf(found)),
+    expect(explicitUndefinedNamesIn(parseSourceProgram(source, "source.ts"))).toEqual(
+      [
+        "flagged",
+        "alsoFlagged",
+        "parenthesized",
+        "field",
+        "flaggedParam",
+        "defaulted",
+        "arrowParam",
+        "chained",
+        "next",
+        "typedParam",
+      ].toSorted(),
     )
-
-    expect(offenders.join("\n")).toBe("")
-  })
-
-  it("許可の一覧の項目と規則が、実物にまだ `名前?: 型` として残っている", () => {
-    const found = optionalProperties()
-    const foundSet = new Set(found)
-    const staleEntries = allowedOptionalProperties().filter((entry) => !foundSet.has(entry))
-    const staleRules = ALLOWED_OPTIONAL_RULES.filter(
-      (rule) =>
-        !found.some(
-          (entry) => pathOf(entry).startsWith(rule.pathPrefix) && rule.name.test(nameOf(entry)),
-        ),
-    ).map((rule) => `${rule.pathPrefix}:${rule.name.source}`)
-
-    expect([...staleEntries, ...staleRules].join("\n")).toBe("")
-  })
-
-  it("規則は ui の中の aria*・title・ref・placeholder・maxLength・disabled・style だけを許し、ui の外の同名と ui の中のそれ以外は許さない", () => {
-    const ui = "src/browser/components/ui/button/button.tsx"
-    const outside = "src/browser/components/page/x/x.tsx"
-    expect([
-      isAllowedOptional(ui, "ariaLabel"),
-      isAllowedOptional(ui, "aria-label"),
-      isAllowedOptional(ui, "title"),
-      isAllowedOptional(ui, "ref"),
-      isAllowedOptional(ui, "placeholder"),
-      isAllowedOptional(ui, "maxLength"),
-      isAllowedOptional(ui, "disabled"),
-      isAllowedOptional(ui, "style"),
-      isAllowedOptional(outside, "ariaLabel"),
-      isAllowedOptional(outside, "placeholder"),
-      isAllowedOptional(outside, "disabled"),
-      isAllowedOptional(ui, "hint"),
-      isAllowedOptional(ui, "titleText"),
-    ]).toEqual([true, true, true, true, true, true, true, true, false, false, false, false, false])
   })
 })
 
-function pathOf(entry: string): string {
-  return entry.slice(0, entry.lastIndexOf(":"))
-}
-
-function nameOf(entry: string): string {
-  return entry.slice(entry.lastIndexOf(":") + 1)
-}
-
-function allowedOptionalProperties(): readonly string[] {
-  return Object.entries<readonly string[]>(ALLOWED_OPTIONAL_PROPERTIES).flatMap(([path, names]) =>
-    names.map((name) => `${path}:${name}`),
-  )
-}
-
-function optionalProperties(): readonly string[] {
+function explicitUndefinedSites(): readonly string[] {
   return lintedFiles(TYPESCRIPT_EXTENSIONS)
-    .filter(({ path }) => path.startsWith("src/") && !path.endsWith(".d.ts"))
-    .flatMap(({ path, lines }) =>
-      optionalNamesIn(parseSourceProgram(lines.join("\n"), path)).map((name) => `${path}:${name}`),
-    )
+    .filter(({ path }) => !path.endsWith(".d.ts"))
+    .flatMap(({ path, lines }) => {
+      const source = lines.join("\n")
+      return explicitUndefinedIn(parseSourceProgram(source, path)).map(
+        ({ name, start }) => `${path}:${source.slice(0, start).split("\n").length}: ${name}`,
+      )
+    })
 }
 
-function optionalNamesIn(program: AstNode): readonly string[] {
+function explicitUndefinedNamesIn(program: AstNode): readonly string[] {
+  return explicitUndefinedIn(program)
+    .map(({ name }) => name)
+    .toSorted()
+}
+
+function explicitUndefinedIn(
+  program: AstNode,
+): readonly { readonly name: string; readonly start: number }[] {
   return descendants(program).flatMap((node) => {
-    if (Reflect.get(node, "optional") !== true) {
-      return []
-    }
     const type = stringField(node, "type")
-    if (type !== undefined && OPTIONAL_MEMBER_TYPES.has(type)) {
-      const key = objectField(node, "key")
-      return stringField(key, "name") ?? stringField(key, "value") ?? []
+    if (type !== undefined && PROPERTY_TYPES.has(type)) {
+      return hasTopLevelUndefined(annotationOf(node))
+        ? [{ name: propertyNameOf(node), start: startOf(node) }]
+        : []
     }
-    if (type !== undefined && OPTIONAL_PARAMETER_TYPES.has(type)) {
-      return objectField(node, "typeAnnotation") === undefined
-        ? []
-        : (stringField(node, "name") ?? "(分割代入)")
+    if (type !== undefined && FUNCTION_TYPES.has(type)) {
+      return replaceableParameters(arrayField(node, "params")).map((parameter) => ({
+        name: stringField(parameter, "name") ?? "(分割代入)",
+        start: startOf(parameter),
+      }))
     }
     return []
   })
+}
+
+// 後ろに必須の引数が続く引数は `?:` にすると TS1016 になるので、`T | undefined` のまま通す。
+// 後ろの `T | undefined` の引数も一緒に `?:` にできるなら、それは必須に数えない。
+function replaceableParameters(params: readonly AstNode[]): readonly AstNode[] {
+  return params.reduceRight<{
+    readonly replaceable: readonly AstNode[]
+    readonly tailIsOptional: boolean
+  }>(
+    ({ replaceable, tailIsOptional }, raw) => {
+      const parameter = objectField(raw, "parameter") ?? raw
+      const kind = stringField(parameter, "type")
+      const target =
+        kind === "AssignmentPattern" ? (objectField(parameter, "left") ?? parameter) : parameter
+      const skippable =
+        kind === "AssignmentPattern" ||
+        kind === "RestElement" ||
+        Reflect.get(target, "optional") === true
+      if (hasTopLevelUndefined(annotationOf(target)) && (skippable || tailIsOptional)) {
+        return { replaceable: [...replaceable, target], tailIsOptional }
+      }
+      return { replaceable, tailIsOptional: tailIsOptional && skippable }
+    },
+    { replaceable: [], tailIsOptional: true },
+  ).replaceable
+}
+
+function hasTopLevelUndefined(typeNode?: AstNode): boolean {
+  const type = stringField(typeNode, "type")
+  if (type === "TSParenthesizedType") {
+    return hasTopLevelUndefined(objectField(typeNode, "typeAnnotation"))
+  }
+  return (
+    type === "TSUnionType" &&
+    arrayField(typeNode, "types").some(
+      (member) => stringField(unparenthesized(member), "type") === "TSUndefinedKeyword",
+    )
+  )
+}
+
+function unparenthesized(typeNode: AstNode): AstNode {
+  const inner = objectField(typeNode, "typeAnnotation")
+  return stringField(typeNode, "type") === "TSParenthesizedType" && inner !== undefined
+    ? unparenthesized(inner)
+    : typeNode
+}
+
+function annotationOf(node: AstNode): AstNode | undefined {
+  return objectField(objectField(node, "typeAnnotation"), "typeAnnotation")
+}
+
+function propertyNameOf(node: AstNode): string {
+  const key = objectField(node, "key")
+  return stringField(key, "name") ?? stringField(key, "value") ?? "(計算されたキー)"
+}
+
+function startOf(node: AstNode): number {
+  const start: unknown = Reflect.get(node, "start")
+  return typeof start === "number" ? start : 0
 }

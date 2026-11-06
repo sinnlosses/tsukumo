@@ -24,11 +24,11 @@ type SidebarSectionProps = {
   readonly title: string
   /** 区画ごとの高さの取り方を足す class 名。 */
   readonly extraClass: string
-  readonly action: SidebarSectionAction | undefined
+  readonly action?: SidebarSectionAction
   /** 見出しの右端で `action` の左に並べる部品。無ければ `undefined`。 */
-  readonly headerExtra: ReactNode | undefined
+  readonly headerExtra?: ReactNode
   /** 見出しの下に続けて止める行（タスク一覧の絞り込みのチップ）。無ければ何も足さない。 */
-  readonly filters: ReactNode | undefined
+  readonly filters?: ReactNode
   readonly children: ReactNode
 }
 

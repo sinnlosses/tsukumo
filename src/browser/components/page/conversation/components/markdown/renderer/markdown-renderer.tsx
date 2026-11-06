@@ -162,7 +162,7 @@ export type CodeFenceProps = {
   readonly marks: readonly CodeMark[]
   readonly source: string
   /** 前後の見比べの片側の行の並び。見比べでない塊は `undefined`。 */
-  readonly lineDiff: SideLineDiff | undefined
+  readonly lineDiff?: SideLineDiff
 }
 
 /**
@@ -213,7 +213,7 @@ export function InlineMarkdown(props: MarkdownProps): ReactElement {
 function ReportMarkdown(props: {
   readonly text: string
   readonly remarkPlugins: NonNullable<Options["remarkPlugins"]>
-  readonly cache: HastCache | undefined
+  readonly cache?: HastCache
 }): ReactElement {
   const cached = props.cache?.get(props.text)
   if (cached !== undefined) {

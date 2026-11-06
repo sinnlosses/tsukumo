@@ -140,7 +140,7 @@ const storedSchema = z.object({
 
 type StoredSummary = z.infer<typeof storedSchema>
 
-function recordOf(stored: StoredSummary | undefined): ChatSummaryRecord | undefined {
+function recordOf(stored?: StoredSummary): ChatSummaryRecord | undefined {
   return stored === undefined
     ? undefined
     : { summary: stored.synopsis, delivered: stored.delivered }

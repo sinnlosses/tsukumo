@@ -44,7 +44,7 @@ export const readBeadsIssues: BeadsIssuesReader = memoizeByStamp(listAllBeadsIss
 /** `.beads` が見つからなければ `missing`。あれば課題の変化の印（取れないときは `undefined`）。 */
 export type BeadsStamp =
   | { readonly kind: "missing" }
-  | { readonly kind: "present"; readonly stamp: string | undefined }
+  | { readonly kind: "present"; readonly stamp?: string }
 
 /**
  * `.beads` の有無と課題の変化の印（{@link readBeadsStampOf}）を読む関数を作る。

@@ -4,8 +4,8 @@ export type StableOutcome =
   | { readonly stable: true }
   | {
       readonly stable: false
-      readonly before: Buffer | undefined
-      readonly last: Buffer | undefined
+      readonly before?: Buffer
+      readonly last?: Buffer
     }
 
 /**

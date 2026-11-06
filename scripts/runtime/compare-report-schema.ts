@@ -32,7 +32,7 @@ const variantOf = (raw: unknown): string | undefined => {
 }
 
 const root = reportUsageDir()
-const readBetween = (from: string | undefined, to: string | undefined): readonly unknown[] =>
+const readBetween = (from?: string, to?: string): readonly unknown[] =>
   dateFileNamesBetween(root, from, to).flatMap((name) => readJsonLines(`${root}/${name}`))
 
 const today = Temporal.Now.plainDateISO()

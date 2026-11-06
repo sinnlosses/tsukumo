@@ -383,7 +383,7 @@ describe("editCharacterPack（背景・顔・ミニ立ち絵）", () => {
       clear: { kind: "clearBackground", pack: TSUKUMO } satisfies CharacterEdit,
       oldFile: "background.webp",
       newFile: "background.png",
-      imageOf: (definition: CharacterDefinition | undefined) => definition?.background?.image,
+      imageOf: (definition?: CharacterDefinition) => definition?.background?.image,
     },
     {
       name: "顔",
@@ -392,7 +392,7 @@ describe("editCharacterPack（背景・顔・ミニ立ち絵）", () => {
       clear: { kind: "clearFace", pack: TSUKUMO } satisfies CharacterEdit,
       oldFile: "face.svg",
       newFile: "face.png",
-      imageOf: (definition: CharacterDefinition | undefined) => definition?.face,
+      imageOf: (definition?: CharacterDefinition) => definition?.face,
     },
     {
       name: "ミニ立ち絵",
@@ -401,7 +401,7 @@ describe("editCharacterPack（背景・顔・ミニ立ち絵）", () => {
       clear: { kind: "clearMini", pack: TSUKUMO } satisfies CharacterEdit,
       oldFile: "mini.svg",
       newFile: "mini.png",
-      imageOf: (definition: CharacterDefinition | undefined) => definition?.mini,
+      imageOf: (definition?: CharacterDefinition) => definition?.mini,
     },
   ])("editCharacterPack（$name の差し替えと消去）", (row) => {
     /** 顔・背景（veil）・ミニ立ち絵・差し色・呼び名をすべて持つパックを置く。 */
@@ -430,7 +430,7 @@ describe("editCharacterPack（背景・顔・ミニ立ち絵）", () => {
       edited: ReturnType<typeof editCharacterPack>,
       original: ReturnType<typeof readCharacterPack>,
     ): void {
-      const withoutChanged = (definition: CharacterDefinition | undefined) =>
+      const withoutChanged = (definition?: CharacterDefinition) =>
         definition === undefined ? undefined : omit(definition, [row.key])
       expect(edited?.definition).toBeDefined()
       expect(withoutChanged(edited?.definition)).toEqual(withoutChanged(original.definition))

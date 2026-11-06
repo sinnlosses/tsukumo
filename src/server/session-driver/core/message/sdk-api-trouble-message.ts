@@ -18,7 +18,7 @@ import type { ToolUseId } from "../../../../shared/session/tool-use-id.ts"
  */
 export function apiErrorEvents(
   error: unknown,
-  parentToolUseId: ToolUseId | undefined,
+  parentToolUseId?: ToolUseId,
 ): readonly SessionEvent[] {
   return parentToolUseId === undefined && typeof error === "string"
     ? [{ kind: "api-error", error: toApiErrorKind(error) }]

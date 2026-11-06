@@ -28,7 +28,7 @@ function Seat({
   item,
 }: {
   readonly seat: SeatKey
-  readonly item: ItemInfo | undefined
+  readonly item?: ItemInfo
 }): ReactElement | undefined {
   if (item === undefined) {
     return undefined

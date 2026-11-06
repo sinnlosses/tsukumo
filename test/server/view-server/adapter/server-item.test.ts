@@ -9,9 +9,9 @@ import {
 
 afterEach(closeRunningView)
 
-const asked: { fileName: string; version: string | undefined }[] = []
+const asked: { fileName: string; version?: string }[] = []
 
-function serve(fileName: string, version: string | undefined) {
+function serve(fileName: string, version?: string) {
   asked.push({ fileName, version })
   return fileName === "1.svg"
     ? {

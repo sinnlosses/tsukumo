@@ -9,11 +9,11 @@ export type Source =
   | {
       readonly kind: "scene"
       readonly scene: string
-      readonly until: number | undefined
+      readonly until?: number
       /** `--cwd` で渡されたか、場面に合う作業場所を呼ぶ側が決めるか。 */
       readonly launch: SceneLaunch
       /** `--session` で渡された疑似セッションのファイル。無ければ undefined（同梱のファイル）。 */
-      readonly session: string | undefined
+      readonly session?: string
     }
 
 export type SceneLaunch =
@@ -25,11 +25,11 @@ export type SceneLaunch =
  * 両方・どちらも無いとき、場面の無い `--until-step`・`--cwd`・`--session` は undefined。
  */
 export function sourceOf(
-  url: string | undefined,
-  scene: string | undefined,
-  untilStep: number | undefined,
-  cwd: string | undefined,
-  session: string | undefined,
+  url?: string,
+  scene?: string,
+  untilStep?: number,
+  cwd?: string,
+  session?: string,
 ): Source | undefined {
   if (
     url !== undefined &&

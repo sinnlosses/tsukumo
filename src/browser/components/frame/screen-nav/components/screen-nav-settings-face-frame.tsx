@@ -10,7 +10,7 @@ import gearStyles from "./screen-nav-settings.module.css"
 export function ScreenNavSettingsFaceFrame(props: {
   readonly title: string
   readonly children: ReactNode
-  readonly foot: ReactNode | undefined
+  readonly foot?: ReactNode
 }): ReactElement {
   return (
     <>

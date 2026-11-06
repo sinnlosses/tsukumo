@@ -32,7 +32,7 @@ export type SectionReference = {
   /** 引いている先（`docs/architecture/display.md` / `AGENTS.md` の形）。 */
   readonly targetPath: string
   /** 句の前に書かれた節番号（`4.9` / `7`）。番号の無い参照、`原則4` は `undefined`。 */
-  readonly section: string | undefined
+  readonly section?: string
   /** 「」の中身（行をまたいでいたら、継続行のコメント記号と字下げを除いて繋いだもの）。 */
   readonly phrase: string
 }
@@ -267,7 +267,7 @@ function findClosingBracket(text: string): number | undefined {
   const found = characters.reduce<{
     readonly depth: number
     readonly offset: number
-    readonly at: number | undefined
+    readonly at?: number
   }>(
     (state, character) => {
       if (state.at !== undefined) {

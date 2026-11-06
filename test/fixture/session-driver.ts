@@ -65,7 +65,7 @@ export function createStubDriver(): StubDriver {
         calls.push(`readSessionDigest:${sessionId}`)
         return Promise.resolve(FAKE_SESSION_DIGEST)
       },
-      setModel: (model: string | undefined) => {
+      setModel: (model?: string) => {
         calls.push(`setModel:${model ?? ""}`)
         return Promise.resolve()
       },

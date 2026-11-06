@@ -29,6 +29,6 @@ export type SettingMarks = Readonly<Record<SettingName, SettingMark>>
 
 export const NO_SETTING_MARK = { kind: "none" } satisfies SettingMark
 
-export function originOf(value: string | undefined): SettingOrigin {
+export function originOf(value?: string): SettingOrigin {
   return value === undefined ? { kind: "unknown" } : { kind: "known", value }
 }

@@ -11,7 +11,7 @@ export type WelcomeKeyEvent = {
   readonly ctrlKey: boolean
   readonly altKey: boolean
   readonly isComposing: boolean
-  readonly target: EventTarget | undefined
+  readonly target?: EventTarget
 }
 
 const EDITABLE = "input, textarea, select, [contenteditable]"

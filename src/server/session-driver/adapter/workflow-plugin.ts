@@ -27,7 +27,7 @@ export type WorkflowPluginMount =
 
 export async function readWorkflowPluginMount(
   pluginDir: string,
-  claudeConfigDir: string | undefined,
+  claudeConfigDir?: string,
 ): Promise<WorkflowPluginMount> {
   const configDir = claudeConfigDir ?? defaultClaudeConfigDir()
   return classifyWorkflowPluginMount(await readNames(pluginDir), await readNames(configDir))
@@ -45,7 +45,7 @@ export type FigurePluginMount =
 
 export async function readFigurePluginMount(
   pluginDir: string,
-  claudeConfigDir: string | undefined,
+  claudeConfigDir?: string,
 ): Promise<FigurePluginMount> {
   if ((await readWorkflowPlugin(pluginDir)).kind === "missing") {
     return { kind: "absent" }

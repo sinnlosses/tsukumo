@@ -153,7 +153,7 @@ afterEach(async () => {
   })
 })
 
-function socketUrl(origin: string, token: string | undefined): string {
+function socketUrl(origin: string, token?: string): string {
   const base = origin.replace("http://", "ws://")
   return token === undefined
     ? `${base}${SESSION_SOCKET_PATH}`

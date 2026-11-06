@@ -64,7 +64,7 @@ describe("createTaskBeadsSource", () => {
   })
 
   describe("印が動かないときの読み直し", () => {
-    function startWithStamp(stamp: string | undefined) {
+    function startWithStamp(stamp?: string) {
       let now = 0
       const stamps: (string | undefined)[] = []
       const source = createTaskBeadsSource("/repo", {

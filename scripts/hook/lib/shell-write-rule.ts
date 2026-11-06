@@ -108,8 +108,8 @@ type PythonScript = { readonly text: string; readonly foreign: boolean }
 /** 当たった規則のキー。当たらなければ `undefined`。`cwd` は入力の作業ディレクトリ、`workRoot` は作業ツリーの根。 */
 export function findDeniedBashRule(
   command: string,
-  cwd: string | undefined,
-  workRoot: string | undefined,
+  cwd?: string,
+  workRoot?: string,
 ): string | undefined {
   return (
     findDeniedCommandRule(command, workRoot, readPythonScripts(command, cwd, workRoot)) ??
@@ -259,7 +259,7 @@ function xargsInPlaceRule(args: readonly ShellWord[]): string | undefined {
 function copiesIntoWorkTree(
   args: readonly ShellWord[],
   locate: (word: ShellWord) => Location,
-  directory: string | undefined,
+  directory?: string,
 ): readonly Location[] {
   const flagAt = args.findIndex((word) => word.text === "-t")
   const option = args.find((word) => word.text.startsWith(TARGET_DIRECTORY_OPTION))
@@ -292,7 +292,7 @@ function isBinaryFile(word: ShellWord): boolean {
 }
 
 /** 末尾が `/` か、`cd` を追って解いたパスが実在するディレクトリか。 */
-function isDirectory(word: ShellWord, directory: string | undefined): boolean {
+function isDirectory(word: ShellWord, directory?: string): boolean {
   if (word.expanded) {
     return false
   }
@@ -324,7 +324,7 @@ function nodeCodes(
   args: readonly ShellWord[],
   simple: SimpleCommand,
   locate: (word: ShellWord) => Location,
-  directory: string | undefined,
+  directory?: string,
 ): readonly string[] {
   let index = 0
   while (index < args.length) {
@@ -350,7 +350,7 @@ function nodeCodes(
   return [...simple.stdinTexts, ...simple.inputs.flatMap((word) => readScriptAt(word, directory))]
 }
 
-function readScriptAt(word: ShellWord, directory: string | undefined): readonly string[] {
+function readScriptAt(word: ShellWord, directory?: string): readonly string[] {
   if (word.expanded) {
     return []
   }
@@ -359,7 +359,7 @@ function readScriptAt(word: ShellWord, directory: string | undefined): readonly 
 }
 
 /** 単純コマンドを実行したあとの作業ディレクトリ。決まらなければ `undefined`。 */
-function directoryAfter(simple: SimpleCommand, directory: string | undefined): string | undefined {
+function directoryAfter(simple: SimpleCommand, directory?: string): string | undefined {
   const name = simple.argv[0]?.text
   if (name === "popd") {
     return undefined
@@ -378,10 +378,7 @@ function directoryAfter(simple: SimpleCommand, directory: string | undefined): s
 }
 
 /** 単純コマンドが `cd` 系なら決まらない、そうでなければ変わらない作業ディレクトリ。 */
-function directoryAfterUnsure(
-  simple: SimpleCommand,
-  directory: string | undefined,
-): string | undefined {
+function directoryAfterUnsure(simple: SimpleCommand, directory?: string): string | undefined {
   return ["cd", "pushd", "popd"].includes(simple.argv[0]?.text ?? "") ? undefined : directory
 }
 
@@ -409,16 +406,12 @@ function startDirectory(cwd: string, workRoot: string): string {
 }
 
 /** Python のコードが、書き込み先を作業ツリーの外のリテラルと読めない書き込みを持つか。 */
-function isDeniedPythonCode(code: string, workRoot: string | undefined): boolean {
+function isDeniedPythonCode(code: string, workRoot?: string): boolean {
   return PYTHON_OTHER_WRITE.test(code) || hasUnsafeWrite(code, PYTHON_OPEN_WRITES, workRoot)
 }
 
 /** コードの中の書き込みの呼び出しのうち、書き込み先が作業ツリーの外のリテラルと読めないものがあるか。 */
-function hasUnsafeWrite(
-  code: string,
-  patterns: readonly RegExp[],
-  workRoot: string | undefined,
-): boolean {
+function hasUnsafeWrite(code: string, patterns: readonly RegExp[], workRoot?: string): boolean {
   return patterns.some((pattern) =>
     [...code.matchAll(pattern)].some(
       (match) => !isLiteralOutsideWorkTree(match[1] ?? "", workRoot),
@@ -427,7 +420,7 @@ function hasUnsafeWrite(
 }
 
 /** 書き込みの呼び出しの書き込み先が、作業ツリーの外を指す絶対パスの文字列リテラルか。 */
-function isLiteralOutsideWorkTree(target: string, workRoot: string | undefined): boolean {
+function isLiteralOutsideWorkTree(target: string, workRoot?: string): boolean {
   const path = PLAIN_STRING_LITERAL.exec(target.trim())?.[2]
   if (path === undefined || workRoot === undefined) {
     return false
@@ -446,8 +439,8 @@ function isOutside(path: string, workRoot: string): boolean {
 /** コマンドが走らせる `python3 <path>.py` のうち、読めるファイルの中身。読めないものは含めない。 */
 function readPythonScripts(
   command: string,
-  cwd: string | undefined,
-  workRoot: string | undefined,
+  cwd?: string,
+  workRoot?: string,
 ): readonly PythonScript[] {
   const runDirectories =
     workRoot === undefined
@@ -503,12 +496,12 @@ function scriptRunDirectories(
   return directories
 }
 
-function readScriptFile(path: string, cwd: string | undefined): string | undefined {
+function readScriptFile(path: string, cwd?: string): string | undefined {
   const absolute = absoluteScriptPath(path, cwd)
   return absolute === undefined ? undefined : readTextFile(absolute)
 }
 
-function absoluteScriptPath(path: string, cwd: string | undefined): string | undefined {
+function absoluteScriptPath(path: string, cwd?: string): string | undefined {
   if (isAbsolute(path)) {
     return path
   }

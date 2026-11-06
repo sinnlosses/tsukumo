@@ -70,7 +70,7 @@ export function directLeafViewOf(
 /** 直接描く内容部品1つ。整形で落ちた内容部品は値を持たず、何も描かない。 */
 export function DirectLeaf(props: {
   readonly part: A2uiReportComponent
-  readonly value: LeafValue | undefined
+  readonly value?: LeafValue
   readonly imageSource: ReportImageSource
   readonly view: DirectLeafView
 }): ReactElement {

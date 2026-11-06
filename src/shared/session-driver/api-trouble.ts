@@ -33,7 +33,7 @@ export type ApiRetry = {
   readonly attempt: number
   readonly maxRetries: number
   readonly retryDelayMs: number
-  readonly errorStatus: number | undefined
+  readonly errorStatus?: number
   readonly error: ApiErrorKind
 }
 

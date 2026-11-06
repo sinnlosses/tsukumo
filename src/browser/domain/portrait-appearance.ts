@@ -8,7 +8,7 @@ export const DEFAULT_CHARACTER_NAME = "キャラクター"
 
 export type PortraitAppearance = {
   /** 立ち絵の素材 URL。character が届いていなければ undefined（吹き出しだけで成立させる）。 */
-  readonly portraitUrl: string | undefined
+  readonly portraitUrl?: string
   readonly altText: string
 }
 

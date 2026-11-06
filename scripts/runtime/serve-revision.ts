@@ -76,7 +76,7 @@ const USAGE = `使い方: node scripts/runtime/serve-revision.ts <コミット> 
 type Options = {
   readonly commit: string
   readonly port: number
-  readonly scene: string | undefined
+  readonly scene?: string
 }
 
 /** 取り出したコミットの置き場。ツリーとホームを分けて持つ。 */

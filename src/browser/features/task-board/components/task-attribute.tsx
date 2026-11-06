@@ -21,8 +21,8 @@ const DIFFICULTY_DOTS = [1, 2, 3] as const
 
 /** 一覧の行の属性。難しさは点3つのうち段の数だけ塗り、`loopable` が `Y` のときだけループのアイコンを添える。字は出さない。 */
 export function TaskRowAttributes(props: {
-  readonly difficulty: TaskDifficulty | undefined
-  readonly loopable: TaskLoopable | undefined
+  readonly difficulty?: TaskDifficulty
+  readonly loopable?: TaskLoopable
 }): ReactElement {
   const difficulty = props.difficulty
   return (

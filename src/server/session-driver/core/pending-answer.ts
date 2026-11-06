@@ -34,7 +34,7 @@ export type AskRequest = {
   readonly id: string
   readonly toolName: string
   readonly input: Readonly<Record<string, unknown>>
-  readonly signal: AbortSignal | undefined
+  readonly signal?: AbortSignal
 }
 
 /**

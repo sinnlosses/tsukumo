@@ -12,7 +12,7 @@ export function TaskBoardFilterBar(props: {
   readonly chips: readonly TaskBoardFilterChip[]
   readonly listId: string
   /** 選んでいる行の DOM の id。行が無ければ `undefined`。 */
-  readonly activeOptionId: string | undefined
+  readonly activeOptionId?: string
   readonly onQueryChange: (query: string) => void
   readonly onFilter: (filter: TaskBoardFilter) => void
 }): ReactElement {

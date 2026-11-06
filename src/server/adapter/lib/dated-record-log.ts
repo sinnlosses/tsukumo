@@ -20,13 +20,13 @@ export type DatedRecordLogOptions<R> = {
   /** 行の形。書く形と読める形の両方を表す。 */
   readonly schema: z.ZodType<R>
   /** 日付ファイルを残す日数。`undefined` は消さない。 */
-  readonly retentionDays: number | undefined
+  readonly retentionDays?: number
 }
 
 /** 読む日付の範囲（`YYYY-MM-DD`。`undefined` の側は絞らない）。 */
 export type DatedRecordRange = {
-  readonly startDate: string | undefined
-  readonly endDate: string | undefined
+  readonly startDate?: string
+  readonly endDate?: string
 }
 
 /** 包む側のログがそのまま公開する、後始末と期限切れの削除の口。 */

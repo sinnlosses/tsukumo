@@ -71,7 +71,7 @@ const LEGACY_REMAINING_PREFIX = "残り"
  */
 function splitLegacyRemaining(summary: string): {
   readonly summary: string
-  readonly remaining: string | undefined
+  readonly remaining?: string
 } {
   const paragraphs = summaryParagraphs(summary)
   const found = paragraphs.find((line) => line.startsWith(LEGACY_REMAINING_PREFIX))
@@ -88,7 +88,7 @@ function splitLegacyRemaining(summary: string): {
   }
 }
 
-function clipped(text: string | undefined): string | undefined {
+function clipped(text?: string): string | undefined {
   const trimmed = text?.trim()
   return trimmed === undefined || trimmed === ""
     ? undefined
@@ -100,10 +100,10 @@ type HeldCall = Extract<SessionEvent, { readonly kind: "report" | "speak-called"
 /** 畳んでいる途中の姿。`held` は結果（`tool-finished`）をまだ受け取っていない `report` と `speak` の呼び出し。 */
 type DigestFold = {
   readonly requestCount: number
-  readonly summary: string | undefined
+  readonly summary?: string
   /** 最後に取り込んだ `report` の残り。`report` がまだ無ければ `none`。 */
   readonly remaining: SessionRemaining
-  readonly lastLine: string | undefined
+  readonly lastLine?: string
   /** 通った `report` の結論の1文目。古い順で、直近 {@link RECENT_CONCLUSION_COUNT} 件。 */
   readonly conclusions: readonly string[]
   readonly held: readonly HeldCall[]

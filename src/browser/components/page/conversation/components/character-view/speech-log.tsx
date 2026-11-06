@@ -14,9 +14,9 @@ type SpeechLogProps = {
    */
   readonly portrait: ReactNode
   /** 最新の吹き出しに添える話し手の名前。キャラビューの最新の吹き出しと同じもの。 */
-  readonly speakerName: string | undefined
+  readonly speakerName?: string
   /** いま留めている行（キャラビューと状態を共有する）。何も留めていなければ undefined。 */
-  readonly pinnedSpeech: PinnedSpeech | undefined
+  readonly pinnedSpeech?: PinnedSpeech
   /** ログの行を押したとき。キャラビューの吹き出しと同じ状態を動かす。 */
   readonly onToggleSpeech: (turnId: number, index: number) => void
   readonly open: boolean

@@ -20,7 +20,7 @@ export type RecordedStage = {
   /** 落ちたテストの `<ファイル> > <テスト名>`。次の回で通ったら flaky として台帳に残す。 */
   readonly failedTests: readonly string[]
   /** その木で通ったテストの全数。数えない段・絞って通した段・落ちた段は undefined（JSON には書かない）。 */
-  readonly count: number | undefined
+  readonly count?: number
 }
 
 export type CheckRecord = {

@@ -4,9 +4,9 @@
 
 export type ConnectionCredentials = {
   /** 要求の `?t=`。無ければ undefined。 */
-  readonly presentedToken: string | undefined
+  readonly presentedToken?: string
   /** 要求の `Origin` ヘッダ。無ければ undefined。 */
-  readonly requestOrigin: string | undefined
+  readonly requestOrigin?: string
   readonly startupToken: string
   /** 自分のオリジン（`http://127.0.0.1:<port>`）。 */
   readonly serverOrigin: string

@@ -79,7 +79,7 @@ function ratioPercent(mark: { readonly part: string; readonly whole: string }): 
 function span(
   name: keyof typeof MARK_CLASS_NAMES,
   children: ElementContent[],
-  style: string | undefined = undefined,
+  style?: string,
 ): Element {
   return {
     type: "element",

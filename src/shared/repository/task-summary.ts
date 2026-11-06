@@ -49,8 +49,8 @@ export type TaskSummaryItem = {
   readonly waitingFor: readonly string[]
   /** ラベル（Beads の `labels` の字のまま）。無い課題では空。属性（下の2欄）とは別。 */
   readonly labels: readonly string[]
-  readonly difficulty: TaskDifficulty | undefined
-  readonly loopable: TaskLoopable | undefined
+  readonly difficulty?: TaskDifficulty
+  readonly loopable?: TaskLoopable
   /** 重要度。読み元に無い・語彙の外は `normal`。 */
   readonly importance: TaskImportance
   /** 緊急度。読み元に無い・語彙の外は `normal`。 */

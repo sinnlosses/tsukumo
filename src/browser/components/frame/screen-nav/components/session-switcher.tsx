@@ -279,7 +279,7 @@ type SessionSwitcherDetailProps = {
   readonly digest: SessionDigestView
   readonly character: CharacterFaceInfo
   readonly blocked: boolean
-  readonly blockedTitle: string | undefined
+  readonly blockedTitle?: string
   readonly onSwitch: (sessionId: SessionId) => void
 }
 

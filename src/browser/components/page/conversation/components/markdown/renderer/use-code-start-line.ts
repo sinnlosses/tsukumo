@@ -7,10 +7,10 @@ import { useState } from "react"
 import { useExternalSync } from "../../../../../../hooks/use-external-sync.ts"
 import { useRepositoryFileLink } from "../../repository-link/repository-link.tsx"
 
-type Answer = { readonly key: string; readonly startLine: number | undefined }
+type Answer = { readonly key: string; readonly startLine?: number }
 
 export function useCodeStartLine(block: {
-  readonly path: string | undefined
+  readonly path?: string
   readonly language: string
   readonly source: string
 }): number | undefined {

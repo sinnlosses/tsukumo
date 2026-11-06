@@ -27,9 +27,9 @@ export type PortraitProps = {
    * 動かさない置き方もあるので `undefined` を許す。
    * そのときは `data-motion` が付かず、`portrait.module.css` の動きの規則はどれも当たらない。
    */
-  readonly motion: PortraitMotion | undefined
+  readonly motion?: PortraitMotion
   /** 置き方（余白・高さ・幅の上限）を足す class 名。足すものが無ければ `undefined`。 */
-  readonly className: string | undefined
+  readonly className?: string
 }
 
 /**
@@ -40,7 +40,7 @@ export type PortraitProps = {
  * `Image` に読ませ、キャラクターが変わるまで参照を持ち続ける。
  * `/character/<pack>/<file>` は `no-store` で配るので、参照が切れた絵はブラウザが読み直すことがある。
  */
-export function usePortraitPreload(portraits: Readonly<Record<string, string>> | undefined): void {
+export function usePortraitPreload(portraits?: Readonly<Record<string, string>>): void {
   useExternalSync(() => {
     if (portraits === undefined) {
       return undefined

@@ -21,14 +21,14 @@ export type TurnLine = Speech & { readonly source: "speak" | "reaction" }
 export type TurnSpeech = {
   readonly id: number
   /** そのターンの依頼の文面。依頼より前に届いたセリフのまとまりは依頼を持たないので undefined。 */
-  readonly request: string | undefined
+  readonly request?: string
   /**
    * そのターンのセリフと、吹き出しに出し始めた反応（古い→新しいの順）。1件も無いターンは空配列。
    * 表情ごと持つのは、セリフを押して立ち絵を遡らせるため。
    */
   readonly speeches: readonly TurnLine[]
   /** `speeches` の最後の1件の表情（そのターンで最後に出していた顔）。1件も無ければ undefined。 */
-  readonly expression: Expression | undefined
+  readonly expression?: Expression
 }
 
 /**

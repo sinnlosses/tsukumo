@@ -350,7 +350,7 @@ type BufferedResult = StageOutcome &
     readonly output: string
     readonly lockTimedOut: boolean
     /** JSON レポートを読めた段の、選ばれたテストの数。 */
-    readonly selectedTestCount: number | undefined
+    readonly selectedTestCount?: number
   }
 
 function runBuffered(stage: Stage, control: StopControl): Promise<BufferedResult> {

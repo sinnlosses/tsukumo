@@ -60,7 +60,7 @@ const PLAN_MISSING_REASON =
 export function judgeEditAgainstMissingPlan(
   toolName: string,
   inSubagent: boolean,
-  filePath: string | undefined,
+  filePath?: string,
 ): ToolVerdict {
   if (
     inSubagent ||

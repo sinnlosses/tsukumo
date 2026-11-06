@@ -35,7 +35,7 @@ afterEach(() => {
 
 const REFETCH_KEY = 0
 
-function renderRow(report: ContextUsageReport | undefined): void {
+function renderRow(report?: ContextUsageReport): void {
   putSession(INITIAL_SESSION_STATE)
   const client = createTestQueryClient()
   if (report !== undefined) {

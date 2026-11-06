@@ -11,7 +11,7 @@ export type PortraitMotionInput = {
   /** ターンの進み具合。「待っている間の移動」と「完了の反応」の両方をここから決める。 */
   readonly turn: TurnProgress
   /** 直近でツールが失敗した時刻。まだ一度も失敗していなければ undefined。 */
-  readonly lastToolFailureAt: number | undefined
+  readonly lastToolFailureAt?: number
   /**
    * メインがいま `report` の引数を書いているか（`SessionState.sdkTurn` の `reportDrafting` が `drafting`）。
    * `report` の外に書く本文（背景の委譲を待つ一言など）は画面に出ないので、「書いている」の材料にしない。

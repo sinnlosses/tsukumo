@@ -21,17 +21,17 @@ export type CharacterInfo = {
    * `session.switchCharacter` の鍵で、素材の URL の `<pack>` の区間もこれ。
    */
   readonly pack: string
-  readonly name: string | undefined
+  readonly name?: string
   /** {@link CharacterDefinition.accent} をそのまま持つ。ブラウザ側は `--accent` に流す。 */
-  readonly accent: string | undefined
+  readonly accent?: string
   /** {@link CharacterDefinition.chatAccent} をそのまま持つ。雑談中だけ `--accent` に流す（{@link effectiveAccent}）。 */
-  readonly chatAccent: string | undefined
+  readonly chatAccent?: string
   readonly expressions: readonly ExpressionChoice[]
   /**
    * 表情 → 立ち絵の URL。`default` に畳み済みの全域な表で、読む側は表を引くだけでよい（立ち絵の無い表情には `default` の絵が入っている）。
    * `default` すら無いパックでは undefined（立ち絵そのものが出ない）。
    */
-  readonly portraits: Readonly<Record<Expression, string>> | undefined
+  readonly portraits?: Readonly<Record<Expression, string>>
   /**
    * 立ち絵を定義に自分で持っている表情（`EXPRESSIONS` の順）。
    * `portraits` は畳んだあとの表で「この表情だけ無い」が読めないので、それが要るキャラクター画面（まだ入れていない枠・消す口）のためにここで持つ。
@@ -43,7 +43,7 @@ export type CharacterInfo = {
    * 定義に `mini` が無ければ `portraits.default` に落として持つので、読む側は「あるかどうか」だけを見れば足りる（縮小するのは画面側）。
    * `default` も無いパックでは undefined（ミニ立ち絵そのものが出ない）。
    */
-  readonly mini: string | undefined
+  readonly mini?: string
   /**
    * 定義に `mini` を自分で持つか。
    * `mini` は `portraits.default` に落ちた後の URL で「持つか」が読めないので、それが要るキャラクター画面（縮図を出すか空の枠か）のためにここで持つ。
@@ -53,23 +53,23 @@ export type CharacterInfo = {
    * 帯の左端に出す顔の URL（`/character/<pack>/<file>`）。表情では変わらない1枚。
    * 定義に `face` が無いパックでは undefined で、`portraits.default` へのフォールバックはしない（帯に何も出さない）。
    */
-  readonly face: string | undefined
+  readonly face?: string
   /** {@link CharacterDefinition.tagline}（自己紹介文）をそのまま持つ。無いパックでは undefined（名前だけ）。 */
-  readonly tagline: string | undefined
+  readonly tagline?: string
   /** {@link CharacterDefinition.userCall}（利用者の呼び名）をそのまま持つ。無いパックでは undefined。 */
-  readonly userCall: string | undefined
+  readonly userCall?: string
   /** {@link CharacterDefinition.miniCall}（ミニ立ち絵の呼び名）をそのまま持つ。無いパックでは undefined。 */
-  readonly miniCall: string | undefined
+  readonly miniCall?: string
   /**
    * キャラビューに敷く背景。`image` は `/character/<pack>/<file>` の URL（立ち絵と同じ経路・同じ取り直しの印）。
    * 無ければ背景は出ない（`ground` の上に立ち絵が直接立つ）。
    */
-  readonly background: CharacterBackground | undefined
+  readonly background?: CharacterBackground
   /**
    * 日記の本文に効かせる書体の URL（`/character/<pack>/<file>`）。
    * 定義に `diaryFont` が無いパックでは undefined（`--font-serif` のまま）。
    */
-  readonly diaryFont: string | undefined
+  readonly diaryFont?: string
   /**
    * 立ち絵と差し色を画面から変えられるか。
    * 変えた結果の書き込み先は `~/.tsukumo/characters/<name>/` の1箇所だけで、そこに書いた版が探索の順で起動先の `characters/local` に負けるパックだけが false になる（書いても次の起動で読まれないので、画面から口を出さない）。
@@ -138,9 +138,7 @@ export function parseCharacterPackName(value: string): CharacterPackName | undef
 }
 
 /** いま出しているキャラクターのパックの名前。まだ決まっていない・名前として通らないときは undefined。 */
-export function shownCharacterPackName(
-  character: CharacterInfo | undefined,
-): CharacterPackName | undefined {
+export function shownCharacterPackName(character?: CharacterInfo): CharacterPackName | undefined {
   return character === undefined ? undefined : parseCharacterPackName(character.pack)
 }
 
@@ -148,11 +146,11 @@ export const characterPackNameSchema = z.string().refine(hasPackNameShape)
 
 /** {@link toCharacterInfo} に渡すもの。パックそのもの（`adapter` の型）はここでは知らない。 */
 export type CharacterInfoSource = {
-  readonly definition: CharacterDefinition | undefined
+  readonly definition?: CharacterDefinition
   /** `characters/<name>` のディレクトリ名。素材の URL の `<pack>` の区間にもなる。 */
   readonly pack: string
   /** 素材の版（素材の URL に付ける取り直しの印 `?v=`。無ければ付けない）。 */
-  readonly revision: string | undefined
+  readonly revision?: string
   readonly editable: boolean
 }
 

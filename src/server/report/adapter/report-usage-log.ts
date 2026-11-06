@@ -50,10 +50,10 @@ export function createReportUsageLog(
   )
   // 差し戻しの行は次の呼び出しが分かるまで書かず、セッションごとに1件だけ待たせる。閉じるときは次が無いまま書く。
   const pending = new Map<string, ReportRejectionEntry>()
-  const writeRejection = (entry: ReportRejectionEntry, nextCall: ReportNextCall | undefined) => {
+  const writeRejection = (entry: ReportRejectionEntry, nextCall?: ReportNextCall) => {
     log.append(localDateKey(entry.at), [toRejectionRecord(entry, nextCall)])
   }
-  const settle = (sessionId: string, nextCall: ReportNextCall | undefined) => {
+  const settle = (sessionId: string, nextCall?: ReportNextCall) => {
     const waiting = pending.get(sessionId)
     if (waiting !== undefined) {
       pending.delete(sessionId)
@@ -110,7 +110,7 @@ export function createReportUsageLog(
 
 function toRejectionRecord(
   entry: ReportRejectionEntry,
-  nextCall: ReportNextCall | undefined,
+  nextCall?: ReportNextCall,
 ): ReportRejectionRecord {
   return {
     v: REPORT_USAGE_FORMAT_VERSION,

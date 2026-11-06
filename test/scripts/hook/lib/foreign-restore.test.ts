@@ -7,7 +7,7 @@ import type { WorktreeProbe } from "../../../../scripts/hook/lib/foreign-restore
 import { readHookMode } from "../../../../scripts/hook/lib/hook-mode.ts"
 import { bashCall } from "../../../fixture/bash-hook-call.ts"
 
-function probe(uncommitted: boolean | undefined, claimed: boolean | undefined): WorktreeProbe {
+function probe(uncommitted?: boolean, claimed?: boolean): WorktreeProbe {
   return { hasUncommittedChanges: () => uncommitted, hasOwnClaim: () => claimed }
 }
 

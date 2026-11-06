@@ -16,11 +16,7 @@ import type { SessionChoice } from "../../../../../../src/shared/session/session
 import { checkedSessionId } from "../../../../../fixture/session-id.ts"
 import { knownTaskSummary, taskStatusOfWord } from "../../../../../fixture/session-state.ts"
 
-function choice(
-  sessionId: string,
-  heading: string | undefined,
-  inCurrentWorktree = true,
-): SessionChoice {
+function choice(sessionId: string, heading?: string, inCurrentWorktree = true): SessionChoice {
   return {
     viewPort: 1,
     sessionId: checkedSessionId(sessionId),

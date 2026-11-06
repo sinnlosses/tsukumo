@@ -22,7 +22,7 @@ export function tableIdOfFilterPath(path: unknown): string | undefined {
  * 行の絞り込みに使う文字。`column` があればその列のセルだけ、なければ全列のセル。
  * 行は、セルの並びか、強調の行（`cells` を持つ）。
  */
-export function tableRowFilterTexts(row: unknown, column: number | undefined): readonly string[] {
+export function tableRowFilterTexts(row: unknown, column?: number): readonly string[] {
   const cells: unknown = isPlainObject(row) ? row.cells : row
   if (!Array.isArray(cells)) {
     return []

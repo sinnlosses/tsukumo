@@ -31,7 +31,7 @@ type PresentationalSpeechLogProps = SpeechLogModel & {
   /** キャラビューに立っている立ち絵（素材が無ければ何も描かない）。床に同じものを立たせる。 */
   readonly portrait: ReactNode
   /** 最新の吹き出しに添える話し手の名前（キャラビューの最新の吹き出しと同じ）。 */
-  readonly speakerName: string | undefined
+  readonly speakerName?: string
 }
 
 export function PresentationalSpeechLog({
@@ -141,8 +141,8 @@ export function PresentationalSpeechLog({
 /** 並びの1行。依頼の区切りは横罫で挟んだ1行、セリフは吹き出し1つ。 */
 function SpeechLogRow(props: {
   readonly entry: SpeechLogEntry
-  readonly speakerName: string | undefined
-  readonly userCall: string | undefined
+  readonly speakerName?: string
+  readonly userCall?: string
   readonly onToggleSpeech: (turnId: number, index: number) => void
 }): ReactElement {
   const { entry } = props

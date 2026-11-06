@@ -53,7 +53,7 @@ function isExport(statement: AstNode): boolean {
   return type === "ExportNamedDeclaration" || type === "ExportDefaultDeclaration"
 }
 
-function functionsIn(declaration: AstNode | undefined): readonly string[] {
+function functionsIn(declaration?: AstNode): readonly string[] {
   switch (stringField(declaration, "type")) {
     case "FunctionDeclaration":
       return [stringField(objectField(declaration, "id"), "name") ?? "default"]

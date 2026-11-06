@@ -11,7 +11,7 @@ import { isPlainObject } from "remeda"
 export type QuestionOption = {
   readonly label: string
   readonly description: string
-  readonly preview: string | undefined
+  readonly preview?: string
 }
 
 export type Question = {

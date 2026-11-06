@@ -6,7 +6,7 @@ import { positiveIntegerArgument } from "./positive-integer-argument.ts"
 export type ReplayOptions = {
   readonly tasks: readonly string[]
   readonly k: number
-  readonly brief: string | undefined
+  readonly brief?: string
 }
 
 /** コマンドラインから `--tasks`・`--k`・`--brief` を読む。`--tasks` は必須、`--k` の既定は2、`--brief` は省ける。崩れていれば `"invalid"`。 */

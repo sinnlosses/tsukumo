@@ -88,7 +88,7 @@ function restrictedGlobalUses(fileName: string, source: string): readonly number
   const declared = new Set<string>()
   const references: { readonly name: string; readonly line: number }[] = []
 
-  const collectPattern = (node: AstNode | undefined): void => {
+  const collectPattern = (node?: AstNode): void => {
     if (node === undefined) {
       return
     }
@@ -101,7 +101,7 @@ function restrictedGlobalUses(fileName: string, source: string): readonly number
     }
   }
 
-  const visit = (node: AstNode, parent: AstNode | undefined): void => {
+  const visit = (node: AstNode, parent?: AstNode): void => {
     const type = stringField(node, "type")
     if (type === "VariableDeclarator") {
       collectPattern(objectField(node, "id"))

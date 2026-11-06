@@ -34,7 +34,7 @@ export async function expectBlockGapsOnGrid(page: Page): Promise<void> {
     const blocks = [...body.children]
     return blocks.slice(1).map((block, index) => {
       const previous = blocks[index]
-      const label = (element: Element | undefined): string =>
+      const label = (element?: Element): string =>
         element === undefined ? "" : `${element.tagName.toLowerCase()}`
       return {
         between: `${index}:${label(previous)} → ${index + 1}:${label(block)}`,

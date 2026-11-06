@@ -21,7 +21,7 @@ export type CharacterProfileModel = {
         readonly kind: "shown"
         readonly disabled: boolean
         /** 押せない理由（`title`。React の `title` がそのまま undefined を受けるので畳まない）。 */
-        readonly title: string | undefined
+        readonly title?: string
         readonly onSwitch: () => void
       }
   /** 「名前と自己紹介文を設定する」（鉛筆のボタン）。変えられないパックでは出さない。 */
@@ -133,7 +133,7 @@ export type CharacterDeleteBandModel =
       readonly face: { readonly kind: "absent" } | { readonly kind: "shown"; readonly url: string }
       /** 使用中は押せない（切り替えてから消す）。 */
       readonly disabled: boolean
-      readonly title: string | undefined
+      readonly title?: string
       readonly onSubmit: () => void
     }
 

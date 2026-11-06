@@ -27,14 +27,14 @@ export function CodeLines(props: {
   readonly lines: readonly CodeLine[]
   readonly marks: readonly CodeMark[]
   /** shell の塊の行ごとの種別。分けない塊は `undefined`。 */
-  readonly kinds: readonly ShellLineKind[] | undefined
+  readonly kinds?: readonly ShellLineKind[]
   /** `diff` の対の行の、違う語の区間。 */
   readonly wordRanges: DiffWordRanges
   readonly diff: boolean
   /** 1 行目がファイルの何行目か。分かるときだけ行番号の列を出す。 */
-  readonly startLine: number | undefined
+  readonly startLine?: number
   /** 前後の見比べの片側の行の並び。見比べでない塊は `undefined`。 */
-  readonly lineDiff: SideLineDiff | undefined
+  readonly lineDiff?: SideLineDiff
 }): ReactElement {
   const [opened, setOpened] = useState<readonly number[]>([])
   const folds = foldedRanges(props.lines.length, props.marks)
@@ -137,13 +137,13 @@ function CodeLineRow(props: {
   readonly line: CodeLine
   readonly number: number
   /** ファイルの何行目か。行番号の列を出さないときは `undefined`。 */
-  readonly fileLine: number | undefined
+  readonly fileLine?: number
   readonly marks: readonly CodeMark[]
-  readonly label: string | undefined
-  readonly kind: ShellLineKind | undefined
-  readonly wordRange: DiffLineWords | undefined
+  readonly label?: string
+  readonly kind?: ShellLineKind
+  readonly wordRange?: DiffLineWords
   /** 前後の見比べの行の印。印の無い行と見比べでない塊は `undefined`。 */
-  readonly compare: CompareLineMark | undefined
+  readonly compare?: CompareLineMark
 }): ReactElement {
   const marked = props.marks.some((mark) => {
     const range = readMarkLines(mark.lines)

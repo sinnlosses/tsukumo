@@ -39,7 +39,7 @@ const PACK_NAME = characterPackName("fictional-pack")
 const LIMITS: ChatReadbackLimits = { recentBytes: CHAT_MEMORY_BUDGET.recentBytes }
 
 /** メモリ上の `ChatSummary`（テスト用）。届けた印を付けた回数も数える。 */
-function fakeChatSummary(initial: ChatSummaryRecord | undefined): ChatSummary & {
+function fakeChatSummary(initial?: ChatSummaryRecord): ChatSummary & {
   readonly markDeliveredCalls: () => number
 } {
   const summary = inMemoryChatSummary(initial)
@@ -87,7 +87,7 @@ function take(
   })
 }
 
-function partBody(part: string | undefined): string {
+function partBody(part?: string): string {
   return (part ?? "").split("\n\n").at(-1) ?? ""
 }
 

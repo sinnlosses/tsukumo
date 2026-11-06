@@ -167,7 +167,7 @@ export function useAchievement(): UseAchievementResult {
     gcTime: Infinity,
     // 日を切り替えた直後は、前の日の中身を薄く残したまま新しい日を待つ。
     // 新しく開いた日には無関係な値なので、呼ぶ側は `isFetching` と組んで使う。
-    placeholderData: (previous: DailyAchievement | undefined) => previous,
+    placeholderData: (previous?: DailyAchievement) => previous,
     refetchInterval: (current: Query<DailyAchievement>) =>
       current.state.data !== undefined && isViewingToday(current.state.data)
         ? TODAY_REFETCH_INTERVAL_MS

@@ -69,7 +69,7 @@ function nullBranchLines(source: string): readonly number[] {
 
 // 子の式から、三項・`&&` / `||` / `??`・括弧の中をたどり、片方の枝が null の三項を集める。
 // 中の JSX の要素には入らない（その子は呼ぶ側が別に見る）。
-function nullBranchConditionals(expression: AstNode | undefined): readonly AstNode[] {
+function nullBranchConditionals(expression?: AstNode): readonly AstNode[] {
   if (expression === undefined) {
     return []
   }
@@ -95,7 +95,7 @@ function nullBranchConditionals(expression: AstNode | undefined): readonly AstNo
   }
 }
 
-function isEmptyBranch(node: object | undefined): boolean {
+function isEmptyBranch(node?: object): boolean {
   return (
     (stringField(node, "type") === "Literal" && stringField(node, "raw") === "null") ||
     (stringField(node, "type") === "Identifier" && stringField(node, "name") === "undefined")

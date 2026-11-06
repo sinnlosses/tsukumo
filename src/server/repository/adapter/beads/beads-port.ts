@@ -21,9 +21,9 @@ export type BeadsIssue = {
   readonly blockedBy: readonly string[]
   readonly labels: readonly string[]
   /** metadata の `difficulty`。無い・表に無い値は `undefined`。 */
-  readonly difficulty: TaskDifficulty | undefined
+  readonly difficulty?: TaskDifficulty
   /** metadata の `loopable`。無い・表に無い値は `undefined`。 */
-  readonly loopable: TaskLoopable | undefined
+  readonly loopable?: TaskLoopable
   /** metadata の `importance`。無い・表に無い値は `normal`。 */
   readonly importance: TaskImportance
   /** metadata の `urgency`。無い・表に無い値は `normal`。 */
@@ -31,11 +31,11 @@ export type BeadsIssue = {
   /** metadata の `draft` が `"Y"`（エージェントが積んだドラフトの印）。それ以外・無いときは偽。 */
   readonly draft: boolean
   readonly createdAtEpochMilliseconds: number
-  readonly closedAtEpochMilliseconds: number | undefined
+  readonly closedAtEpochMilliseconds?: number
   readonly description: string
   readonly acceptanceCriteria: string
   readonly notes: string
-  readonly externalRef: string | undefined
+  readonly externalRef?: string
 }
 
 /** `bd` 1回の結果。タイムアウトだけを分けるのは、その回を諦めるか「不明」にするかが呼び出し側で変わるため。 */
@@ -45,4 +45,4 @@ export type BeadsOutcome =
   | { readonly kind: "timed-out" }
 
 /** `cwd` の課題を読む。`stamp` は呼ぶ側が先に読んだ課題の変化の印で、取れないときは `undefined`。 */
-export type BeadsIssuesReader = (cwd: string, stamp: string | undefined) => Promise<BeadsOutcome>
+export type BeadsIssuesReader = (cwd: string, stamp?: string) => Promise<BeadsOutcome>

@@ -111,7 +111,7 @@ describe("staticReportComponents", () => {
 })
 
 describe("reevaluatedReportLeaves", () => {
-  const statValues = (leaf: ReturnType<typeof reevaluatedReportLeaves>[string] | undefined) =>
+  const statValues = (leaf?: ReturnType<typeof reevaluatedReportLeaves>[string]) =>
     leaf?.component.component === "Stats" ? leaf.component.items.map((item) => item.value) : []
   const format = (template: string) => ({ call: "format", args: { template } })
   const chart = (values: string, emphasis: string) => ({

@@ -13,7 +13,7 @@ type RegionFramedProps = {
   readonly region: ImageRegion
   readonly side: RegionFrameSide
   readonly children: ReactNode
-  readonly hostClassName: string | undefined
+  readonly hostClassName?: string
 }
 
 export function RegionFramed(props: RegionFramedProps): ReactElement {

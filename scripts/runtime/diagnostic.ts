@@ -105,7 +105,7 @@ function parseTimeOption(raw: string | undefined, fallback: number): number | "i
 }
 
 /** `--generation <n>` の値を読む。無ければ絞らない、崩れていれば `"invalid"`。 */
-function parseGenerationOption(raw: string | undefined): GenerationFilter | "invalid" {
+function parseGenerationOption(raw?: string): GenerationFilter | "invalid" {
   if (raw === undefined) {
     return { kind: "all" }
   }

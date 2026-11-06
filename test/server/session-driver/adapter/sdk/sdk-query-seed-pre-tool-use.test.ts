@@ -263,8 +263,8 @@ describe("preToolUseHooks（ワークフロースクリプトの中の手順を�
   const eventsOf = async (
     toolName: string,
     input: unknown,
-    agentId: string | undefined,
-    agentType: string | undefined,
+    agentId?: string,
+    agentType?: string,
   ): Promise<readonly SessionEvent[]> => {
     const events: SessionEvent[] = []
     await runPreToolUse(

@@ -29,5 +29,5 @@ export type RateLimit =
   | {
       readonly kind: "rejected"
       readonly bucket: RateLimitBucket
-      readonly resetsAt: number | undefined
+      readonly resetsAt?: number
     }

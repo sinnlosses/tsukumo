@@ -17,7 +17,7 @@ export function parseProgram(fromPath: string, source: string): AstNode | undefi
 }
 
 /** 文字列リテラル、または式を含まないテンプレートリテラルの値。それ以外は `undefined`。 */
-export function literalString(node: AstNode | undefined): string | undefined {
+export function literalString(node?: AstNode): string | undefined {
   if (stringField(node, "type") === "Literal") {
     return stringField(node, "value")
   }

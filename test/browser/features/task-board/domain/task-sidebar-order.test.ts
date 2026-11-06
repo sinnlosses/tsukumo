@@ -6,7 +6,7 @@ import { taskStatusOfWord } from "../../../../fixture/session-state.ts"
 
 // フィクスチャはすべて手で書いた架空のタスク（実物のタスクファイルは使わない）。
 
-function taskOf(id: string, status: string | undefined): TaskSummaryItem {
+function taskOf(id: string, status?: string): TaskSummaryItem {
   return {
     id,
     summary: `${id} の要約`,

@@ -10,7 +10,7 @@ import { clipText } from "../../../../shared/utils/clip-text.ts"
 
 /** 見出しを書くかどうかの判断に要る状態。tsukumo が最後に書いた題と、`/clear` の合図をまだ消費していないかを持ち回る。 */
 export type SessionTitleState = {
-  readonly lastWritten: string | undefined
+  readonly lastWritten?: string
   /**
    * `/clear` の通知を受けてから、まだ {@link decideSessionTitle} を呼んでいない。
    * Claude Code は `/clear` のたびに前のセッションの題を新しいセッションへ書き写すので、次の判断だけは現在値を tsukumo が最後に書いたものとみなす。
@@ -48,7 +48,7 @@ export type SessionTitleAction =
 export function decideSessionTitle(
   state: SessionTitleState,
   candidate: string,
-  currentTitle: string | undefined,
+  currentTitle?: string,
 ): SessionTitleAction {
   const title = truncateTitle(candidate)
   if (title === currentTitle) {

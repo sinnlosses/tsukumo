@@ -30,12 +30,12 @@ export type FakeDriverOptions = {
    * 起こした直後に `opening` へ続けて流す場面の名前（`TSUKUMO_FAKE_SCENE`）。依頼を送らずに特定の状態を出すための口。
    * 名前が疑似セッションに無ければ `opening` だけを流す。
    */
-  readonly scene: string | undefined
+  readonly scene?: string
   /**
    * `scene` の手を先頭から何個まで流すか（`TSUKUMO_FAKE_SCENE_UNTIL`）。場面の途中の画を撮るための口。
    * `undefined` なら全部流す。`opening` と、依頼で流れる次の場面には効かない。
    */
-  readonly sceneUntil: number | undefined
+  readonly sceneUntil?: number
   /**
    * このセッションを起こした既定（モデル・許可モード）。
    * 疑似セッションが流す `session-info` にもこの値を載せる。

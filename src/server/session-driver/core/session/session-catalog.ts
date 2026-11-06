@@ -150,7 +150,7 @@ function readTaggedSessions(sessions: unknown, cwd: string): readonly TaggedSess
 function withSessionMark(
   sessions: readonly TaggedSession[],
   marked: { readonly sessionId: SessionId; readonly tag: string; readonly at: number },
-  worktree: string | undefined,
+  worktree?: string,
 ): readonly TaggedSession[] {
   const mark = readSessionMark(marked.tag)
   if (mark === undefined) {

@@ -27,9 +27,9 @@ import type { SubscribeFrames } from "./frame-procedure.ts"
  */
 export type RpcContext = {
   /** 要求の `?t=`。無ければ undefined。 */
-  readonly presentedToken: string | undefined
+  readonly presentedToken?: string
   /** 要求の `Origin` ヘッダ。無ければ undefined。 */
-  readonly requestOrigin: string | undefined
+  readonly requestOrigin?: string
   /** 起動トークン（`createStartupToken`）。 */
   readonly startupToken: string
   /** 自分のオリジン（`http://127.0.0.1:<port>`）。 */

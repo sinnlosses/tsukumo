@@ -69,7 +69,7 @@ type SessionStoreState = {
   readonly receive: (frame: ServerFrame) => void
   readonly setConnection: (status: ConnectionStatus) => void
   /** いま繋がっている接続を持たせる（切れたら undefined）。`dispatch` の送り先。 */
-  readonly attachSocket: (socket: CommandSocket | undefined) => void
+  readonly attachSocket: (socket?: CommandSocket) => void
 }
 
 export const useSession = create<SessionStoreState>()((set, get) => {

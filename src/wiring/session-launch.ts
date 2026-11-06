@@ -198,7 +198,7 @@ function chooseSessionCatalog(context: WiringContext): SessionCatalog {
 function startDriver(options: {
   readonly seed: SessionLaunchSeed<CharacterPack>
   readonly context: WiringContext
-  readonly claudeConfigDir: string | undefined
+  readonly claudeConfigDir?: string
   readonly mountWorkflowPlugin: boolean
   readonly mountFigurePlugin: boolean
   readonly workflowTw: string

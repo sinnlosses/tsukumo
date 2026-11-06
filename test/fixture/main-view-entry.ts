@@ -54,16 +54,16 @@ export const bodyTextOf = (body: MainViewReportBody) =>
     .filter((text) => !isBlankText(text))
     .join("\n\n")
 /** 本文を持つステップなら {@link bodyTextOf}。持たなければ（ステップが無ければ）undefined。 */
-export const reportOf = (step: MainViewStep | undefined) =>
+export const reportOf = (step?: MainViewStep) =>
   step?.body.kind === "text" ? bodyTextOf(step.body.report) : undefined
-export const firstLineOf = (step: MainViewStep | undefined) =>
+export const firstLineOf = (step?: MainViewStep) =>
   step?.body.kind === "text" ? step.body.firstLine : undefined
 /** 頭の合図の行で、通った項目の所要時間の字（測れなければ空文字）。 */
-export const passedTimesOf = (head: MainViewSurfaceHead | undefined): readonly string[] =>
+export const passedTimesOf = (head?: MainViewSurfaceHead): readonly string[] =>
   head?.checks.kind === "checks" ? head.checks.passed.map((row) => row.time) : []
 
 /** 頭の段ごとの所要時間（最終のときの頭）の、計の字と一覧の段の行（`番号 名前`・所要の字・割合の字）。 */
-export const phaseTimesOf = (head: MainViewSurfaceHead | undefined) => {
+export const phaseTimesOf = (head?: MainViewSurfaceHead) => {
   const times = head?.finalStatus.phaseTimes
   const rowText = (row: PhaseListRowView): readonly string[] => [
     row.label.kind === "plain" ? row.label.text : `${row.label.num} ${row.label.name}`,
@@ -83,7 +83,7 @@ export const phaseTimesOf = (head: MainViewSurfaceHead | undefined) => {
 }
 
 /** 本文が `report` ツールの面なら、その頭の値。 */
-export const headOf = (body: MainViewReportBody | undefined): MainViewSurfaceHead | undefined =>
+export const headOf = (body?: MainViewReportBody): MainViewSurfaceHead | undefined =>
   body === undefined || body.kind === "markdown" ? undefined : body.a2ui.head
 
 export const request = (text: string, turnId = 0): MainViewEntry => ({

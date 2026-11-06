@@ -306,7 +306,7 @@ export type MainViewRequest = {
  */
 export type MainViewTurn = {
   readonly id: number
-  readonly request: MainViewRequest | undefined
+  readonly request?: MainViewRequest
   readonly steps: readonly MainViewStep[]
   /**
    * このやり取りに中間レポートが1つ以上あるか（`markFinalReport`）。

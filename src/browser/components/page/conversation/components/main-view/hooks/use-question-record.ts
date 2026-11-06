@@ -66,7 +66,7 @@ export type QuestionRecordQuestionModel = {
   readonly previews: readonly QuestionRecordPreviewRow[]
   readonly previewsOpened: boolean
   readonly onTogglePreviews: (event: ToggleEvent<HTMLDetailsElement>) => void
-  readonly brief: QuestionRecordBriefModel | undefined
+  readonly brief?: QuestionRecordBriefModel
 }
 
 export type QuestionRecordModel = {

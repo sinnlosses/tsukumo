@@ -17,12 +17,12 @@ export type LaunchedScene = { readonly url: string; readonly close: () => void }
 export async function launchFakeScene(options: {
   readonly cwd: string
   readonly scene: string
-  readonly home: string | undefined
+  readonly home?: string
   /** 疑似セッションのファイル。undefined なら同梱のファイル。 */
-  readonly session: string | undefined
+  readonly session?: string
   readonly extraEnv: Readonly<Record<string, string>>
   /** 組み立て済みのブラウザ側の置き場。undefined なら `dist/browser/`。 */
-  readonly builtDir: string | undefined
+  readonly builtDir?: string
 }): Promise<LaunchedScene> {
   await assertBuiltUiFresh(options.builtDir ?? builtUiDir())
   const home = options.home ?? tsukumoHomeDir()

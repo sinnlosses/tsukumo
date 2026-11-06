@@ -89,7 +89,7 @@ export type DiaryBookBookmark =
 type DiaryBookParagraph = {
   readonly key: string
   readonly body: string
-  readonly timeLabel: string | undefined
+  readonly timeLabel?: string
 }
 
 type DiaryBookRight =
@@ -125,8 +125,8 @@ export type DiaryBookModel = {
   readonly openNote: string
   readonly dialogLabel: string
   readonly page: DiaryBookPage
-  readonly previous: { readonly date: DateKey; readonly label: string } | undefined
-  readonly next: { readonly date: DateKey; readonly label: string } | undefined
+  readonly previous?: { readonly date: DateKey; readonly label: string }
+  readonly next?: { readonly date: DateKey; readonly label: string }
   readonly toc: { readonly open: boolean; readonly months: readonly DiaryBookTocMonth[] }
   /** 日記の区画の「日記帳で読む」から、いま見ている日で開く。日が分からなければ何もしない。 */
   readonly onOpenFromDiarySection: () => void

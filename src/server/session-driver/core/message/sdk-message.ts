@@ -200,7 +200,7 @@ function sessionInfoEvents(message: Readonly<Record<string, unknown>>): readonly
 /** メインの `assistant` メッセージの `message.model`（応答したモデル）を、見届けたモデルにする。 */
 function modelConfirmedEvents(
   message: unknown,
-  parentToolUseId: ToolUseId | undefined,
+  parentToolUseId?: ToolUseId,
 ): readonly SessionEvent[] {
   if (parentToolUseId !== undefined || !isPlainObject(message)) {
     return []
@@ -248,7 +248,7 @@ function modelChangeEvents(localCommandRun: unknown): readonly SessionEvent[] {
 function assistantEvents(
   message: unknown,
   expressions: readonly Expression[],
-  parentToolUseId: ToolUseId | undefined,
+  parentToolUseId?: ToolUseId,
 ): readonly SessionEvent[] {
   if (!isPlainObject(message) || !Array.isArray(message.content)) {
     return []
@@ -262,7 +262,7 @@ function assistantEvents(
 function assistantBlockEvents(
   block: unknown,
   expressions: readonly Expression[],
-  parentToolUseId: ToolUseId | undefined,
+  parentToolUseId?: ToolUseId,
 ): readonly SessionEvent[] {
   if (!isPlainObject(block)) {
     return []

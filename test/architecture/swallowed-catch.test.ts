@@ -108,7 +108,7 @@ function calleeName(call: AstNode): string | undefined {
     : undefined
 }
 
-function hasFootprint(body: AstNode | undefined): boolean {
+function hasFootprint(body?: AstNode): boolean {
   return (
     body !== undefined &&
     descendants(body).some(

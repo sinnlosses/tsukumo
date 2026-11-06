@@ -17,7 +17,7 @@ afterEach(() => {
   stub = undefined
 })
 
-function Probe(props: { readonly path: string | undefined }) {
+function Probe(props: { readonly path?: string }) {
   const line = useCodeStartLine({ path: props.path, language: "ts", source: "架空の行" })
   return <output>{line === undefined ? "なし" : String(line)}</output>
 }

@@ -171,13 +171,13 @@ type ArchiveRecord = {
   readonly at: string
   readonly pack: string
   readonly mode: "chat" | "work"
-  readonly project: string | undefined
+  readonly project?: string
   readonly kind: "request" | "speech" | "conclusion"
   readonly speaker: "user" | "character"
   readonly text: string
-  readonly expression: Expression | undefined
-  readonly images: number | undefined
-  readonly imageFiles: readonly string[] | undefined
+  readonly expression?: Expression
+  readonly images?: number
+  readonly imageFiles?: readonly string[]
 }
 
 /**

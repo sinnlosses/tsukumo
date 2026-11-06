@@ -91,10 +91,7 @@ function toPlanUsage(value: unknown): PlanUsageReport {
 
 /** 1つの枠を写す。`null` / 無い / 読めない戻る時刻は `undefined`（外の世界の「無い」をそのまま写す）。 */
 function toWindow(
-  window:
-    | { readonly utilization: number | null; readonly resets_at: string | null }
-    | null
-    | undefined,
+  window?: { readonly utilization: number | null; readonly resets_at: string | null } | null,
 ): PlanUsageWindow {
   if (window === null || window === undefined) {
     return { utilization: undefined, resetsAt: undefined }

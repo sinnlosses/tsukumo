@@ -9,7 +9,7 @@ export type RanStage = {
   readonly status: number
   readonly stopped: boolean
   readonly lockTimedOut: boolean
-  readonly selectedTestCount: number | undefined
+  readonly selectedTestCount?: number
 }
 
 /** E2E の入口が全件の門で止まるときの終了コード。 */

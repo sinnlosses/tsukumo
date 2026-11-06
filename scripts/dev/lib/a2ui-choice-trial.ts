@@ -49,7 +49,7 @@ export type ChoiceResult = {
   readonly firstFaults: readonly unknown[]
   readonly componentNames: readonly string[]
   // 最初の出力の字数。生の出力が残っていない結果は undefined
-  readonly firstChars: number | undefined
+  readonly firstChars?: number
 }
 
 export type ChoiceRow = {

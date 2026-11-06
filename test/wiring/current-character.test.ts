@@ -41,8 +41,8 @@ function writeHomeCopy(): void {
 }
 
 function startedPack(environment: Record<string, string>): {
-  readonly label: string | undefined
-  readonly personaBody: string | undefined
+  readonly label?: string
+  readonly personaBody?: string
 } {
   const current = createCurrentCharacter(readConfig(environment), dir(), () => {})
   current.choose({ by: "initial" })

@@ -107,7 +107,7 @@ function isRefineCall(node: AstNode): boolean {
   )
 }
 
-function callbackExpression(callback: AstNode | undefined): AstNode | undefined {
+function callbackExpression(callback?: AstNode): AstNode | undefined {
   if (stringField(callback, "type") !== "ArrowFunctionExpression") {
     return undefined
   }

@@ -12,11 +12,7 @@ export const CHARACTER_ASSET_PATH_PREFIX = "/character/"
  * 画面から立ち絵を差し替えるとファイル名が同じまま中身だけが変わるので、素材の版（更新時刻）を混ぜる。
  * 配る側はこの値を見ない（`?` 以降を落としてから配信ファイルを決める）。無ければ付けない。
  */
-export function characterAssetPath(
-  pack: string,
-  fileName: string,
-  revision: string | undefined,
-): string {
+export function characterAssetPath(pack: string, fileName: string, revision?: string): string {
   const path = `${CHARACTER_ASSET_PATH_PREFIX}${encodeURIComponent(pack)}/${encodeURIComponent(fileName)}`
   return revision === undefined ? path : `${path}?v=${encodeURIComponent(revision)}`
 }

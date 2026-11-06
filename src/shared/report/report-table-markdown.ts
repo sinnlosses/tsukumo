@@ -111,7 +111,7 @@ function tableRowDetailsMarkdown(
     .join("\n")
 }
 
-function columnMarked(cell: string, index: number, emphasisColumn: number | undefined): string {
+function columnMarked(cell: string, index: number, emphasisColumn?: number): string {
   return index === emphasisColumn ? `${EMPHASIS_COLUMN_MARK}${cell}` : cell
 }
 

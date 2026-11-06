@@ -46,8 +46,8 @@ const sessionDefaultStateSchema = z.object({
  * 畳むのは読む関数の出口で、ここから外へは `| undefined` のまま出ない。
  */
 type RememberedState = {
-  readonly character: string | undefined
-  readonly sessionDefault: SessionDefault | undefined
+  readonly character?: string
+  readonly sessionDefault?: SessionDefault
 }
 
 /**

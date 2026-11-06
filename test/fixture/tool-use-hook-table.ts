@@ -45,7 +45,7 @@ export type PreToolUseSetup = {
   readonly bandPosition: () => string
   readonly externalToolMark: ExternalToolMark
   readonly rewriteBash: (command: string) => Promise<string | undefined>
-  readonly planMissing: (() => boolean) | undefined
+  readonly planMissing?: () => boolean
   readonly hookClock: ToolHookClock
   readonly onEvent: (event: SessionEvent) => void
   readonly latestPlan: () => LatestWorkPlan

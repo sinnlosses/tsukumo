@@ -7,7 +7,7 @@ export const ITEM_ASSET_PATH_PREFIX = "/item/"
  * `/item/<file>?v=<版>` の URL。ファイル名は1つの区間としてエンコードする。
  * `revision` は取り直させるためだけの問い合わせ文字列で、無ければ付けない。
  */
-export function itemAssetPath(fileName: string, revision: string | undefined): string {
+export function itemAssetPath(fileName: string, revision?: string): string {
   const path = `${ITEM_ASSET_PATH_PREFIX}${encodeURIComponent(fileName)}`
   return revision === undefined ? path : `${path}?v=${encodeURIComponent(revision)}`
 }

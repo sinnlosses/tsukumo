@@ -59,7 +59,7 @@ export type ScreenNavGate = {
    * `disabled` のときだけ理由を持つ。
    * `aria-disabled` の要素はブラウザ既定のツールチップに頼れないので、`title` に定型文を出す。
    */
-  readonly title: string | undefined
+  readonly title?: string
   /** 押したとき。同じモードの口・モードを持たない口では何も送らない。 */
   readonly onGo: () => void
 }
@@ -94,7 +94,7 @@ type NavDrawerTabView = {
 type NavDrawerNewSession = {
   readonly disabled: boolean
   /** `disabled` のときだけ理由を持つ。 */
-  readonly title: string | undefined
+  readonly title?: string
   readonly onStart: () => void
 }
 
@@ -127,7 +127,7 @@ export type ScreenNavView = {
   readonly switcher: ScreenNavSessionSwitcher
   readonly drawer: NavDrawerView
   /** 狭い画面の頭の材料。広い画面では頭を描かないので `undefined`。 */
-  readonly headSource: PhoneHeadSource | undefined
+  readonly headSource?: PhoneHeadSource
   /** 帯の外側を押したかを見るための入れ物（キャラクターの選択メニューなどを閉じる判定に使う）。 */
   readonly ref: RefObject<HTMLElement | null>
 }

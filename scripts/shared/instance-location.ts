@@ -7,8 +7,8 @@ import { findListener, type Listener } from "./port-listener.ts"
 
 /** 動いている tsukumo。所在を書かない古いプロセスは `cwd`・`startHead` が無い。 */
 export type RunningTsukumo = Listener & {
-  readonly cwd: string | undefined
-  readonly startHead: string | undefined
+  readonly cwd?: string
+  readonly startHead?: string
 }
 
 const SHORT_HEAD_LENGTH = 7

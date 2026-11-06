@@ -86,7 +86,7 @@ const FIXTURE_REPORT: ReadyReport = {
 }
 
 type RenderOptions = {
-  readonly plan: string | undefined
+  readonly plan?: string
   readonly days: TokenUsageDays
   readonly report: TokenUsageReport
   readonly onDaysChange: (days: TokenUsageDays) => void

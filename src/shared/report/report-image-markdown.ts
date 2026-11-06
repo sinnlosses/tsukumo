@@ -52,8 +52,8 @@ export function reportImageProps(
   imageSource: ReportImageSource,
   path: string,
 ): {
-  readonly src: string | undefined
-  readonly size: { readonly width: number; readonly height: number } | undefined
+  readonly src?: string
+  readonly size?: { readonly width: number; readonly height: number }
 } {
   if (imageSource.kind === "none" || imageSource.unshelved.includes(path)) {
     return { src: undefined, size: undefined }

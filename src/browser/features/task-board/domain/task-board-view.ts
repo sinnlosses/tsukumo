@@ -49,8 +49,8 @@ export type TaskBoardRow = {
   readonly optionId: string
   readonly summary: readonly CodeSpanPart[]
   readonly state: TaskStateView
-  readonly difficulty: TaskDifficulty | undefined
-  readonly loopable: TaskLoopable | undefined
+  readonly difficulty?: TaskDifficulty
+  readonly loopable?: TaskLoopable
   readonly selected: boolean
   /** 絞り込み・検索には当たらないが、飛んだ先として一時的に出している行なら真。 */
   readonly outOfFilter: boolean
@@ -89,8 +89,8 @@ export type TaskBoardDetail = {
   readonly state: TaskStateView
   /** ラベル（Beads の `labels` の字のまま）。無ければ空。 */
   readonly labels: readonly string[]
-  readonly difficulty: TaskDifficulty | undefined
-  readonly loopable: TaskLoopable | undefined
+  readonly difficulty?: TaskDifficulty
+  readonly loopable?: TaskLoopable
   readonly location: TaskLocation
   readonly dependencies: readonly TaskDependencyCard[]
   /** いまの一覧のうち、このタスクを依存に持つもの。 */
@@ -142,7 +142,7 @@ export type TaskBoardContent =
       readonly omittedClosedCount: number
       readonly sortBand: TaskBoardSortBand
       /** 選んでいる行の `optionId`。行が無ければ `undefined`（`aria-activedescendant` を付けない）。 */
-      readonly activeOptionId: string | undefined
+      readonly activeOptionId?: string
       readonly selection: TaskBoardSelection
       /** いまの一覧に載っている ID（絞り込み・検索より前の全体）。本文中の ID の自動リンクが照らす先。 */
       readonly knownIds: ReadonlySet<string>

@@ -15,7 +15,7 @@ export type LeafTableRow = {
   readonly key: string
   readonly cells: readonly ReactNode[]
   /** 開け閉めの印を出す行の詳しい中身。`label` は押しボタンの名前に使う行の名前。 */
-  readonly detail: { readonly label: string; readonly content: ReactNode } | undefined
+  readonly detail?: { readonly label: string; readonly content: ReactNode }
   /** 1列目の字下げの段（0 は寄せない）。 */
   readonly depth: number
 }

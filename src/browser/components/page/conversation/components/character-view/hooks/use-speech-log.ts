@@ -79,7 +79,7 @@ export type SpeechLogModel = {
    * 依頼の区切りの頭に付ける、キャラクターが利用者を呼ぶ言葉（`character.json` の `userCall`）。
    * 呼び名を持たないパックでは `undefined`（区切りは「」だけになる）。
    */
-  readonly userCall: string | undefined
+  readonly userCall?: string
   /** セリフの行を押したとき（行の `target` を渡して呼ぶ）。 */
   readonly onToggleSpeech: (turnId: number, index: number) => void
 }

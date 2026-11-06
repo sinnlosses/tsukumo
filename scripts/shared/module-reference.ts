@@ -92,6 +92,6 @@ function isImportMetaGlob(callee: AstNode): boolean {
   return name === "glob" || name === "globEager"
 }
 
-function isString(value: string | undefined): value is string {
+function isString(value?: string): value is string {
   return value !== undefined
 }

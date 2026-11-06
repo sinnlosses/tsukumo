@@ -72,7 +72,7 @@ export function PictureImage(props: {
   readonly path: string
   readonly alt: string
   /** 変わった場所の枠を運ぶ `data-change-region` の値。 */
-  readonly region: string | undefined
+  readonly region?: string
 }): ReactElement {
   const { src, size } = reportImageProps(props.imageSource, props.path)
   return (

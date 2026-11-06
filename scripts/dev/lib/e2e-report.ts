@@ -17,7 +17,7 @@ type FileResult = {
   readonly assertionResults: readonly AssertionResult[]
 }
 
-export function foldE2eReport(playwrightJson: string | undefined): string {
+export function foldE2eReport(playwrightJson?: string): string {
   const playwright = foldPlaywright(playwrightJson)
   const assertions = playwright.flatMap((file) => file.assertionResults)
   return JSON.stringify({
@@ -27,7 +27,7 @@ export function foldE2eReport(playwrightJson: string | undefined): string {
   })
 }
 
-function foldPlaywright(json: string | undefined): readonly FileResult[] {
+function foldPlaywright(json?: string): readonly FileResult[] {
   const report = json === undefined ? undefined : parseJson(json)
   if (!isPlainObject(report) || !Array.isArray(report.suites)) {
     return []

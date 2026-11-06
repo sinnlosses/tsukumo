@@ -308,13 +308,13 @@ describe("mainViewTurnsOf（report の草稿）", () => {
         [],
       )
   }
-  const draftsOf = (state: SessionState | undefined) =>
+  const draftsOf = (state?: SessionState) =>
     state === undefined
       ? []
       : (mainViewTurnsOf(state)
           .at(-1)
           ?.drafts.map((draft) => [draft.toolUseId, draft.components.length]) ?? [])
-  const shownReportIds = (state: SessionState | undefined) =>
+  const shownReportIds = (state?: SessionState) =>
     state === undefined
       ? []
       : (mainViewTurnsOf(state)

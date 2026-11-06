@@ -584,7 +584,7 @@ describe("readCharacterAsset", () => {
   it("`?v=` がそのパックの今の版と一致したときだけ versioned", () => {
     const { current, other } = writeTwoPacks()
     const location = { pack: "other", fileName: "other.svg" }
-    const versionedFor = (version: string | undefined): boolean | undefined =>
+    const versionedFor = (version?: string): boolean | undefined =>
       readCharacterAsset(current, [current, other], location, version)?.versioned
 
     expect(versionedFor(other.revision)).toBe(true)

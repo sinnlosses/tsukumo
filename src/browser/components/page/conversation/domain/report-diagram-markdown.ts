@@ -259,7 +259,7 @@ export type SvgPrimitive =
       readonly width: number
       readonly height: number
       readonly emphasis: boolean
-      readonly tone: SvgTone | undefined
+      readonly tone?: SvgTone
     }
   | {
       readonly kind: "line"
@@ -269,7 +269,7 @@ export type SvgPrimitive =
       readonly y2: number
       readonly arrow: boolean
       readonly dashed: boolean
-      readonly tone: SvgTone | undefined
+      readonly tone?: SvgTone
     }
   | {
       readonly kind: "text"

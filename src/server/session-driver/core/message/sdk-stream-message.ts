@@ -17,7 +17,7 @@ import { REPORT_TOOL_NAME, tsukumoToolFullName } from "../../../core/tsukumo-too
  */
 export function partialUtteranceEvents(
   event: unknown,
-  parentToolUseId: ToolUseId | undefined,
+  parentToolUseId?: ToolUseId,
 ): readonly SessionEvent[] {
   if (
     parentToolUseId !== undefined ||
@@ -42,7 +42,7 @@ export function partialUtteranceEvents(
  */
 export function reportDraftingEvents(
   event: unknown,
-  parentToolUseId: ToolUseId | undefined,
+  parentToolUseId?: ToolUseId,
 ): readonly SessionEvent[] {
   if (
     parentToolUseId !== undefined ||

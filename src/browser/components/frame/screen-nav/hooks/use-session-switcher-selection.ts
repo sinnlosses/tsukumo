@@ -16,7 +16,7 @@ type SessionSwitcherSelection = {
   /** 探す欄で絞ったあとの行（並びは一覧のまま）。 */
   readonly rows: readonly SessionSwitcherRow[]
   /** 選んでいる行。絞った結果が0件なら無い。 */
-  readonly selected: SessionSwitcherRow | undefined
+  readonly selected?: SessionSwitcherRow
   readonly digest: SessionDigestView
   readonly onSelect: (sessionId: SessionId) => void
   /** 探す欄のキー操作（↑↓ か Ctrl+P / Ctrl+N で選び、Enter で切り替える。Esc は `<dialog>` が閉じる）。 */

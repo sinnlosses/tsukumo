@@ -9,7 +9,7 @@ export type LastBeadsRead = { readonly stamp: string; readonly at: number }
  */
 export type BeadsRereadDecision<Last extends LastBeadsRead> =
   | { readonly kind: "reuse"; readonly last: Last }
-  | { readonly kind: "reread"; readonly readStamp: string | undefined }
+  | { readonly kind: "reread"; readonly readStamp?: string }
 
 /** `isWithinInterval` は、前回から経った時間が読み直しの間隔内かを答える。 */
 export function reuseOrReread<Last extends LastBeadsRead>(

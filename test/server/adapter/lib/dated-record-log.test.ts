@@ -16,7 +16,7 @@ function root(): string {
   return join(dir(), "records")
 }
 
-function create(retentionDays: number | undefined = undefined) {
+function create(retentionDays?: number) {
   return createDatedRecordLog({ schema, retentionDays }, root())
 }
 

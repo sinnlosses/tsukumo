@@ -8,7 +8,7 @@ import { spawn } from "node:child_process"
 
 export type SubprocessResult = {
   /** 終了コード。シグナルで終わったときは `undefined`。 */
-  readonly exitCode: number | undefined
+  readonly exitCode?: number
   readonly stdout: string
   readonly stderr: string
 }

@@ -46,7 +46,7 @@ export type WorkActivity = {
 
 type WorkActivitySource = {
   readonly turnStepList: Extract<TurnStepList, { readonly kind: "turn" }>
-  readonly firstPending: StampedPendingAsk | undefined
+  readonly firstPending?: StampedPendingAsk
   readonly reportDrafting: ReportDrafting
   readonly backgroundTasks: readonly BackgroundTask[]
   readonly workflowSteps: readonly WorkflowStep[]

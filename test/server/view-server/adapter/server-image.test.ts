@@ -24,7 +24,7 @@ describe("startViewServer", () => {
     const SHELVED_BYTES = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x01, 0x02, 0x03])
     const SHELVED_DATA_URL = `data:image/png;base64,${SHELVED_BYTES.toString("base64")}`
 
-    function promptImageUrl(server: ViewServer, id: string, token: string | undefined): string {
+    function promptImageUrl(server: ViewServer, id: string, token?: string): string {
       const path = `${viewOrigin(server)}${promptImagePath(id)}`
       return token === undefined ? path : `${path}?t=${token}`
     }
@@ -92,7 +92,7 @@ describe("startViewServer", () => {
     const SHELVED_PATH = "架空/after.png"
     const SHELVED_BYTES = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x01, 0x02, 0x03])
 
-    function reportImageUrl(server: ViewServer, path: string, token: string | undefined): string {
+    function reportImageUrl(server: ViewServer, path: string, token?: string): string {
       const url = `${viewOrigin(server)}${reportImagePath(SHELVED_TOOL_USE_ID, path)}`
       return token === undefined ? url : `${url}?t=${token}`
     }

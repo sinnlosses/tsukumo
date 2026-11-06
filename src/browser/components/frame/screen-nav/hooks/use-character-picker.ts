@@ -28,7 +28,7 @@ export type ScreenNavCharacterPicker = {
   readonly options: readonly CharacterPickerOption[]
   /** `restartRefused` の間は選べない（起こし直しなので）。 */
   readonly blocked: boolean
-  readonly blockedTitle: string | undefined
+  readonly blockedTitle?: string
   readonly onToggle: () => void
   /** フォーカスは動かさずに閉じる（引き出しを閉じたときに、中で開いていた選択メニューを残さない）。 */
   readonly close: () => void

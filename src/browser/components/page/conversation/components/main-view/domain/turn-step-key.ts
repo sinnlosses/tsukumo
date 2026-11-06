@@ -8,7 +8,7 @@ export type TurnStepKeyEvent = {
   readonly ctrlKey: boolean
   readonly altKey: boolean
   readonly isComposing: boolean
-  readonly target: EventTarget | undefined
+  readonly target?: EventTarget
 }
 
 const STEP_KEYS = { "[": "older", "]": "newer" } as const satisfies Record<string, TurnStep>

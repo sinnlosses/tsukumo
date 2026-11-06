@@ -64,17 +64,17 @@ export type CharacterPack = {
   /** ディレクトリ名（`session.switchCharacter` の鍵）。 */
   readonly name: string
   readonly dir: string
-  readonly definition: CharacterDefinition | undefined
+  readonly definition?: CharacterDefinition
   /**
    * 人格（`persona.md` の全文）。無いパックでも起動する。
    * そのときの `systemPrompt` の append は tsukumo 側の規約（セリフの間合い・レポートの記法）だけになる。
    */
-  readonly persona: string | undefined
+  readonly persona?: string
   /**
    * 素材の版（定義と素材のファイルの更新時刻のうち、いちばん新しいもの）。
    * 素材の URL の `?v=` に混ぜて、差し替えた素材をブラウザに取り直させるためだけにある。読めなければ undefined。
    */
-  readonly revision: string | undefined
+  readonly revision?: string
 }
 
 /**
@@ -215,7 +215,7 @@ export function readCharacterAsset(
   current: CharacterPack,
   packs: readonly CharacterPack[],
   location: CharacterAssetLocation,
-  version: string | undefined,
+  version?: string,
 ): ServedCharacterAssetFile | undefined {
   const pack = findCharacterPack(current, packs, location.pack)
   const file = pack === undefined ? undefined : readCharacterPackFile(pack, location.fileName)
@@ -261,7 +261,7 @@ function readCharacterPackFile(
  * `character.json` の `portraits` `mini` `face` `background` `diaryFont` に載っているファイル名の一覧（重複なし）。
  * 顔もミニ立ち絵も背景も日記の書体も同じ経路（`/character/<pack>/<file>`）で配るので、ここに入れないと 404 になる。
  */
-function characterPackFileNames(definition: CharacterDefinition | undefined): readonly string[] {
+function characterPackFileNames(definition?: CharacterDefinition): readonly string[] {
   if (definition === undefined) {
     return []
   }
@@ -315,7 +315,7 @@ function characterAssetContentType(fileName: string): string | undefined {
   return portraitImageMimeType(fileName) ?? diaryFontMimeType(fileName)
 }
 
-function isDefined<T>(value: T | undefined): value is T {
+function isDefined<T>(value?: T): value is T {
   return value !== undefined
 }
 
@@ -348,10 +348,7 @@ function localPackDir(cwd: string): string {
  * 配る素材の一部が入っていないと、そのファイルだけ差し替えても版が変わらず、長期にキャッシュされた古い中身が出続ける。
  * 1つも読めなければ undefined。
  */
-function readPackRevision(
-  dir: string,
-  definition: CharacterDefinition | undefined,
-): string | undefined {
+function readPackRevision(dir: string, definition?: CharacterDefinition): string | undefined {
   const fileNames = [CHARACTER_DEFINITION_FILE_NAME, ...characterPackFileNames(definition)]
   const times = fileNames.map((name) => modifiedAtMs(join(dir, name))).filter(isDefined)
   return times.length === 0 ? undefined : String(Math.max(...times))

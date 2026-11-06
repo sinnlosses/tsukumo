@@ -25,7 +25,7 @@ const fakeIntake = vi.hoisted(
   (): {
     workspace: "found" | "missing"
     failed: boolean
-    stamp: string | undefined
+    stamp?: string
     listCalls: number
     issues: readonly unknown[]
   } => ({ workspace: "found", failed: false, stamp: undefined, listCalls: 0, issues: [] }),

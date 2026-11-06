@@ -141,7 +141,7 @@ function withItemCountClass(className: string, node: Element): string {
 }
 
 /** class 名を1つずつ見て、知っているものだけ tsukumo の class 名に置き換える（並びは変えない）。 */
-function resolveNotationClassName(className: string | undefined): string | undefined {
+function resolveNotationClassName(className?: string): string | undefined {
   if (className === undefined) {
     return undefined
   }

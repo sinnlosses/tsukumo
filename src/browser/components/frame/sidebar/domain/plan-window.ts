@@ -12,11 +12,11 @@ const WARN_THRESHOLD_PERCENTAGE = 80
 export type PlanUsageState =
   | { readonly kind: "pending" }
   | { readonly kind: "ready"; readonly usage: PlanUsage; readonly takenAt: number }
-  | { readonly kind: "unavailable"; readonly takenAt: number | undefined }
+  | { readonly kind: "unavailable"; readonly takenAt?: number }
 
 export type WindowDisplay = {
-  readonly utilization: number | undefined
-  readonly resetsAt: number | undefined
+  readonly utilization?: number
+  readonly resetsAt?: number
 }
 
 /** 描く2つの枠。取れないときは `undefined`（一言に置き換える）。 */

@@ -121,7 +121,7 @@ export async function checkStartupPrerequisites(
  * 読めないとき、と一部だけのときは、理由を stderr に1行出す（揃っていて載せないのは通常の状態なので黙る）。
  * 図のプラグインは任意で、取り込みに無いときは黙って載せず、利用者が入れているときだけ知らせる。
  */
-async function checkWorkflowPlugin(claudeConfigDir: string | undefined): Promise<
+async function checkWorkflowPlugin(claudeConfigDir?: string): Promise<
   | {
       readonly kind: "ok"
       readonly mount: boolean

@@ -15,7 +15,7 @@ describe("DiagnosticRecord", () => {
   it("任意の文字列を受ける欄があれば、その名前を拾う", () => {
     type Leaky =
       | { readonly flow: "a"; readonly message: string }
-      | { readonly flow: "b"; readonly name: string | undefined }
+      | { readonly flow: "b"; readonly name?: string }
     expectTypeOf<FreeTextKey<Leaky>>().toEqualTypeOf<"message" | "name">()
   })
 })

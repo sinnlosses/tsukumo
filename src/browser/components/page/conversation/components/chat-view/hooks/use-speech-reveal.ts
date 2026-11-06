@@ -92,7 +92,7 @@ export function useRevealedChatLog(entries: readonly ChatLogEntry[]): RevealedCh
 
 /** {@link advanceReveal} の結果。`gated` は次のセリフが `openAt`（エポックミリ秒）まで足止めされている。 */
 type Advanced =
-  | { readonly kind: "open"; readonly count: number; readonly lastRevealAt: number | undefined }
+  | { readonly kind: "open"; readonly count: number; readonly lastRevealAt?: number }
   | {
       readonly kind: "gated"
       readonly count: number

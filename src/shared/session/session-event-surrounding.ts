@@ -69,7 +69,7 @@ export type SurroundingEvent =
        * いま起こしたセッションのID（続きから始めなかったときは undefined ＝ 新規）。
        * `session-info` を待たずに「どれを出しているか」を言えるのはこの経路だけ（`init` は最初の依頼を送るまで届かない）。
        */
-      readonly current: SessionId | undefined
+      readonly current?: SessionId
     }
   /**
    * 雑談モードに入っている／出ている。駆動を起こしたときと、`session.setChatMode` で起こし直したときの1回ずつ流れる。

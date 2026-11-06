@@ -48,7 +48,7 @@ export type BrushTip = BrushPlace & {
   readonly turnId: number
 } & ({ readonly phase: "resting" } | { readonly phase: "drafting"; readonly arrivedCount: number })
 
-export function publishBrushTip(next: BrushTip | undefined): void {
+export function publishBrushTip(next?: BrushTip): void {
   useBrushTipStore.setState({ tip: next })
 }
 
@@ -93,7 +93,7 @@ export function useBrushStance(): BrushStance | undefined {
  * 筆先を、React の描画を通さずに受け取る。呼んだその場でいまの筆先を1回渡し、以後は変わるたびに渡す。
  * 戻り値を呼ぶと受け取りをやめる。
  */
-export function subscribeBrushTip(listener: (tip: BrushTip | undefined) => void): () => void {
+export function subscribeBrushTip(listener: (tip?: BrushTip) => void): () => void {
   listener(useBrushTipStore.getState().tip)
   return useBrushTipStore.subscribe((state) => {
     listener(state.tip)
@@ -101,7 +101,7 @@ export function subscribeBrushTip(listener: (tip: BrushTip | undefined) => void)
 }
 
 type BrushTipState = {
-  readonly tip: BrushTip | undefined
+  readonly tip?: BrushTip
 }
 
 const useBrushTipStore = create<BrushTipState>()(() => ({ tip: undefined }))

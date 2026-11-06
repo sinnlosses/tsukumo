@@ -17,7 +17,7 @@ export type RequestChipTask = {
 
 export type RequestChips = {
   /** 先頭の slash コマンド（`/next-task`）。名前空間（`plugin:`）は落とす。無ければ undefined。 */
-  readonly command: string | undefined
+  readonly command?: string
   readonly tasks: readonly RequestChipTask[]
   /** 札に起こした字を抜いた残り。空のときは空文字列。 */
   readonly prose: string
@@ -26,7 +26,7 @@ export type RequestChips = {
 const LEADING_COMMAND = /^\s*\/(\S+)/
 const WORD = /[A-Za-z0-9_]+(?:[-.][A-Za-z0-9_]+)*/g
 
-export function requestChips(text: string, tasks: TaskSummaryResult | undefined): RequestChips {
+export function requestChips(text: string, tasks?: TaskSummaryResult): RequestChips {
   let lines = turnRequestLines({ text, images: [] })
 
   let command: string | undefined

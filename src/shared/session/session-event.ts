@@ -35,8 +35,8 @@ export type SessionEvent =
   | {
       readonly kind: "session-info"
       readonly sessionId: SessionId
-      readonly model: string | undefined
-      readonly permissionMode: ReportedPermissionMode | undefined
+      readonly model?: string
+      readonly permissionMode?: ReportedPermissionMode
       readonly slashCommands: readonly string[]
       /**
        * `slash_commands` のうち、端末専用（UX が端末に結び付く。`doctor` / `color` / `reload-plugins` など）のもの。入力欄の補完からは除く。

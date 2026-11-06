@@ -138,7 +138,7 @@ function diffDomTrees(previous: unknown, current: unknown): readonly string[] {
     )
 }
 
-function truncateForDiff(value: string | undefined): string {
+function truncateForDiff(value?: string): string {
   if (value === undefined) {
     return "(無し)"
   }

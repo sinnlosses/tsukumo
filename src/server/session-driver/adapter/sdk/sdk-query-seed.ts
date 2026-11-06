@@ -75,7 +75,7 @@ export type QuerySeedOptions = {
    * `SessionDriverOptions.start` を `query()` 自身の語彙（`resume?: string`）へ畳んだ値で、外の世界（SDK）の形をそのまま写す。
    * `docs/coding-standards.md`「「無いかもしれない」値」の例外1。
    */
-  readonly resume: string | undefined
+  readonly resume?: string
   /**
    * ターンの最後の応答が空だと Claude Code が差し込む催促（`[Your previous response had no visible output. ...]`）への返事が、指定なしだと日本語の依頼でも英語に滑るための保険。
    * 値は固定で、キャラクターパックや利用者から変える口は作らない。
@@ -295,7 +295,7 @@ export function postToolUseHooks(
   const observe = (
     input: BaseHookInput & { readonly tool_name: string; readonly tool_use_id: string },
     hook: ToolHookDurationLap["hook"],
-    toolMs: number | undefined,
+    toolMs?: number,
   ): void => {
     externalToolMark.observeTool(input.tool_name)
     const inSubagent = isInSubagent(input)

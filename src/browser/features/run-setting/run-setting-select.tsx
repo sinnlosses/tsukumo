@@ -39,7 +39,7 @@ type RunSettingSelectProps = {
   readonly layout: "list" | "row"
   /** `icon` は絵だけの口、`field` は絵・いまの名前・開閉の矢印を並べた口（設定の欄）。 */
   readonly mouth: "icon" | "field"
-  readonly title: string | undefined
+  readonly title?: string
   /** 口の右肩の点。字は持たず、意味は `title` が言う。 */
   readonly dot: SettingDot
   readonly onChange: (value: string) => void

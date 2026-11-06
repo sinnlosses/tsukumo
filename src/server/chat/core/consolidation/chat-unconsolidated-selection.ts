@@ -19,8 +19,8 @@ export type TimedEntry = {
  */
 export function entriesUntilWindow(
   all: readonly TimedEntry[],
-  afterAt: string | undefined,
-  windowStartAt: string | undefined,
+  afterAt?: string,
+  windowStartAt?: string,
 ): readonly TimedEntry[] {
   const selected: TimedEntry[] = []
   for (const timed of all) {

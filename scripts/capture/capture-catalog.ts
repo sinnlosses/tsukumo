@@ -81,7 +81,7 @@ const USAGE = `使い方: node scripts/capture/capture-catalog.ts [オプショ�
 
 type Options = {
   readonly outDir: string
-  readonly only: string | undefined
+  readonly only?: string
 }
 
 async function main(argv: readonly string[]): Promise<number> {

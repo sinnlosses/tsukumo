@@ -6,9 +6,9 @@ export type RevealSource = {
   /** 今回（いちばん新しい）のやり取りか。 */
   readonly newest: boolean
   /** 最終レポートのステップ。無ければ undefined。 */
-  readonly finalStep: MainViewStep | undefined
+  readonly finalStep?: MainViewStep
   /** やり取りを出し始めた時点の最終レポートのステップの id。演出の対象から外す。 */
-  readonly stepIdAtMount: number | undefined
+  readonly stepIdAtMount?: number
   /** このやり取りで草稿として描いた `report` の呼び出しの ID。 */
   readonly draftedToolUseIds: ReadonlySet<string>
 }

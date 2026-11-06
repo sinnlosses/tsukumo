@@ -67,7 +67,7 @@ async function main(argv: readonly string[]): Promise<number> {
 }
 
 /** 場面ごとの塊の一覧を出す。何も起こさない。戻り値は終了コード。 */
-function printSceneCatalog(sessionPath: string | undefined): number {
+function printSceneCatalog(sessionPath?: string): number {
   const reading = readSceneSession(sessionPath)
   if (reading.kind === "unreadable") {
     process.stderr.write(`${reading.message}\n`)

@@ -47,8 +47,8 @@ export type Room = {
   readonly port: number
   readonly name: string
   readonly url: string
-  readonly worktree: string | undefined
-  readonly branch: string | undefined
+  readonly worktree?: string
+  readonly branch?: string
 }
 
 /**

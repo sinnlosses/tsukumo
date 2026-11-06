@@ -15,11 +15,7 @@ export function topOf(element: Element): number {
  * 見出しを「読んでいる」とみなす線の画面上の位置（px）。見出しの上端がこの線以上に上なら読み終えた側。
  * 基準は一覧の上端。狭い画面では列が出ず（高さ 0）一覧の上端は基準にならないので、読む面の上端を使う。
  */
-export function activeLineOf(
-  content: HTMLElement,
-  nav: HTMLElement | undefined,
-  scroller: Element | undefined,
-): number {
+export function activeLineOf(content: HTMLElement, nav?: HTMLElement, scroller?: Element): number {
   const headHeight = Number.parseFloat(
     getComputedStyle(content).getPropertyValue("--turn-card-head-height"),
   )
@@ -40,7 +36,7 @@ const BAND_REACH_PX = 1_000_000
  * 帯と交わる見出しは、上端が `line` 以上に上にある（転がる器の外へ転がり去った見出しも含む）。
  * 根は転がる器（無ければ画面）で、根の上へ大きく広げ、下端を `line` まで縮める。
  */
-export function bandRootMargin(line: number, scroller: Element | undefined): string {
+export function bandRootMargin(line: number, scroller?: Element): string {
   const rootBottom =
     scroller === undefined
       ? document.documentElement.clientHeight

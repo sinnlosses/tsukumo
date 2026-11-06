@@ -51,7 +51,7 @@ export function marksToken(marks: readonly CodeMark[]): string {
 /** info の meta から末尾の `marks=` の語を切り離す。`rest` は残り（前後の空白を落とす）。 */
 export function splitMarksToken(meta: string): {
   readonly rest: string
-  readonly marks: string | undefined
+  readonly marks?: string
 } {
   const trimmed = meta.trim()
   const index = trimmed.search(/(?:^|\s)marks=\S*$/)

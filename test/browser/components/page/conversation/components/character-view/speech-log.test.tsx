@@ -17,10 +17,7 @@ function renderSpeechLog(records: readonly SessionRecord[]): void {
   renderSpeechLogWithCall(records, "きみ")
 }
 
-function renderSpeechLogWithCall(
-  records: readonly SessionRecord[],
-  userCall: string | undefined,
-): void {
+function renderSpeechLogWithCall(records: readonly SessionRecord[], userCall?: string): void {
   putSession({
     ...INITIAL_SESSION_STATE,
     records,

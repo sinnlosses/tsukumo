@@ -86,7 +86,7 @@ export type CurrentCharacter = {
    */
   readonly serveAsset: (
     location: CharacterAssetLocation,
-    version: string | undefined,
+    version?: string,
   ) => ServedCharacterAssetFile | undefined
 }
 

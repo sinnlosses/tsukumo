@@ -9,6 +9,6 @@ export function checkedToolUseId(value: string): ToolUseId {
 }
 
 /** 無い（undefined）はそのまま返し、ある文字列は {@link checkedToolUseId} で検査済みの型にする。 */
-export function checkedOptionalToolUseId(value: string | undefined): ToolUseId | undefined {
+export function checkedOptionalToolUseId(value?: string): ToolUseId | undefined {
   return value === undefined ? undefined : checkedToolUseId(value)
 }

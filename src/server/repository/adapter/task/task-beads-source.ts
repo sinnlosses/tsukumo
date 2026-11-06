@@ -20,7 +20,7 @@ export type TaskBeadsSourcePorts = {
 }
 
 /** 前回 `bd list` を読めたときの印と、読み始めた時刻。 */
-type LastRead = { readonly stamp: string | undefined; readonly at: number }
+type LastRead = { readonly stamp?: string; readonly at: number }
 
 export function createTaskBeadsSource(cwd: string, ports: TaskBeadsSourcePorts): TaskSource {
   let lastRead: LastRead | undefined = undefined

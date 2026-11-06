@@ -23,7 +23,7 @@ afterEach(() => {
 const REQUEST = requestEvent()
 
 /** チップの語のうち読み上げられる（隠していない）もの。 */
-function chipLabel(chip: Element | null | undefined): string | null | undefined {
+function chipLabel(chip?: Element | null): string | null | undefined {
   return chip?.querySelector("[class*='work-strip-chip-labels'] > span:not([aria-hidden])")
     ?.textContent
 }

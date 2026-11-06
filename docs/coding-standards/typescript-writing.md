@@ -78,7 +78,7 @@ prototype を持つものを見るときだけ `isObjectType` で、`code` の�
 `parse…(value: string): … | undefined` の1つと、契約の入力に使う型述語（`value is …`）つきの
 `refine` だけで、`as` では作らない。パスを組む関数はその型だけを受け、通らない値は境界で
 `undefined` に畳んで内側へ運ばない。通らないときに「何もしない」を残すなら、配線の1か所で
-検査して、何もしない実装（`UNAVAILABLE_CHAT_SUMMARY` など）を渡し、core の引数に `| undefined` を
+検査して、何もしない実装（`UNAVAILABLE_CHAT_SUMMARY` など）を渡し、core の引数に「無い」を
 持ち込まない。テストでは `test/fixture/` の作り手（`parse…` を通し、
 `undefined` なら throw する）で値を作る。例は `CharacterPackName`・`ItemId`・`DateKey`。
 

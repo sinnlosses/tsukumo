@@ -5,10 +5,10 @@ export type E2eArgument =
       readonly kind: "run"
       /** `.test.ts` で終わる位置引数。空なら全件。 */
       readonly files: readonly string[]
-      readonly bail: number | undefined
-      readonly maxWorkers: number | undefined
+      readonly bail?: number
+      readonly maxWorkers?: number
       readonly reporters: readonly string[]
-      readonly jsonOutputFile: string | undefined
+      readonly jsonOutputFile?: string
     }
   | { readonly kind: "unknown"; readonly arguments: readonly string[] }
 

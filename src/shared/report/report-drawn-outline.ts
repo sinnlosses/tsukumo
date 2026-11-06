@@ -17,7 +17,7 @@ export type DrawnScope = "body" | "whole"
 
 /** セクションの部品1つ。`leafId` が無いのは、内容部品に由来しない塊（振り返りの要約とドラフトの行）。 */
 export type DrawnEntry = {
-  readonly leafId: string | undefined
+  readonly leafId?: string
   readonly block: LeafComponent
 }
 

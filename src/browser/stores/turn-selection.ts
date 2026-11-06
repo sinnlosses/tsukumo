@@ -18,9 +18,9 @@ type TurnSelectionValue = {
    * いま見ているターンの通し番号（`mainViewTurns` が振るもの）。
    * hash が指すターンが集計期間に無ければ今回に戻る。ターンが1つも無ければ undefined。
    */
-  readonly activeTurnId: number | undefined
+  readonly activeTurnId?: number
   /** 今回（いちばん新しい）のターンの通し番号。ターンが1つも無ければ undefined。 */
-  readonly newestTurnId: number | undefined
+  readonly newestTurnId?: number
   readonly selectTurn: (turnId: number) => void
 }
 

@@ -10,7 +10,7 @@ import type { RpcClient } from "../../shared/rpc.ts"
 export type RpcEnvironment = {
   /** 手続きの絶対 URL（起動トークン付き）。 */
   readonly resolveUrl: () => string
-  readonly fetch: (request: Request, init: RequestInit | undefined) => Promise<Response>
+  readonly fetch: (request: Request, init?: RequestInit) => Promise<Response>
 }
 
 /** 手続きごとの `queryOptions` / `key` を持つ口。 */

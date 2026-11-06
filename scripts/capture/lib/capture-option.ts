@@ -60,9 +60,7 @@ export const USAGE = `使い方:
   --full                ページ全体を撮る（既定はビューポートに収まる範囲だけ）
 `
 
-export type Options =
-  | { readonly kind: "list-scenes"; readonly session: string | undefined }
-  | CaptureOptions
+export type Options = { readonly kind: "list-scenes"; readonly session?: string } | CaptureOptions
 
 export type CaptureOptions = {
   readonly kind: "capture"
@@ -72,11 +70,11 @@ export type CaptureOptions = {
   readonly height: number
   readonly measures: readonly string[]
   readonly textLengths: readonly string[]
-  readonly waitFor: string | undefined
-  readonly scrollTo: string | undefined
+  readonly waitFor?: string
+  readonly scrollTo?: string
   readonly preparations: readonly Preparation[]
-  readonly clock: number | undefined
-  readonly revealAt: number | undefined
+  readonly clock?: number
+  readonly revealAt?: number
   readonly stubs: readonly RpcStub[]
   readonly heldProcedures: readonly string[]
   readonly holdStream: boolean

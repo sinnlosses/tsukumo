@@ -12,7 +12,7 @@ export type StubRange = {
 /** `procedure` は契約の名前をドットでつないだもの。`range` が無いときは全部の呼び出し。 */
 export type RpcStub = {
   readonly procedure: string
-  readonly range: StubRange | undefined
+  readonly range?: StubRange
   readonly body: unknown
 }
 

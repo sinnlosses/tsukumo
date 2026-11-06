@@ -31,7 +31,7 @@ type BalloonInteraction =
       readonly kind: "toggleable"
       readonly selected: boolean
       /** 押したときに遡る先。特定できないセリフは undefined で、押しても何もしない。 */
-      readonly target: SpeechTarget | undefined
+      readonly target?: SpeechTarget
       readonly onToggleSpeech: (turnId: number, index: number) => void
     }
 
@@ -41,7 +41,7 @@ type BalloonProps = {
   /** 並びの中でいちばん新しいセリフか（`data-latest` に出し、CSS が最新の見た目を当てる）。 */
   readonly latest: boolean
   /** 本文の上に添える話し手の名前。添えないなら undefined。 */
-  readonly speaker: string | undefined
+  readonly speaker?: string
   /** 話し手の名前の隣に添える時刻。名前を添えないときは出さない。 */
   readonly time: ClockStamp
   readonly interaction: BalloonInteraction

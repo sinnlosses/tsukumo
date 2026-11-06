@@ -5,7 +5,7 @@ import { readField, readString, safeParse } from "./hook-json.ts"
 /** Bash ツールの hook の入力のうち、入口が見るところ。 */
 export type BashHookCall = {
   readonly command: string
-  readonly cwd: string | undefined
+  readonly cwd?: string
   readonly runsInBackground: boolean
   readonly fromSubagent: boolean
 }

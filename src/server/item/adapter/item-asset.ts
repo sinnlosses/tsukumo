@@ -18,7 +18,7 @@ export type ServedItemAsset = {
 /** 載っていない・読めない・ディスクに無いは undefined。 */
 export function readItemAsset(
   fileName: string,
-  version: string | undefined,
+  version?: string,
   dir: string = tsukumoHomePath("items"),
 ): ServedItemAsset | undefined {
   const state = readItemsFile(dir)

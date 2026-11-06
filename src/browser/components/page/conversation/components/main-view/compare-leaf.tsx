@@ -245,7 +245,7 @@ function SideView(props: {
   readonly accent: boolean
   readonly content: CompareSide
   /** 前後の両側が code のときの、この側の行の並び。 */
-  readonly lineDiff: SideLineDiff | undefined
+  readonly lineDiff?: SideLineDiff
   readonly title: string
   readonly imageSource: ReportImageSource
 }): ReactElement {
@@ -275,7 +275,7 @@ function SideView(props: {
 
 function SideContent(props: {
   readonly content: CompareSide
-  readonly lineDiff: SideLineDiff | undefined
+  readonly lineDiff?: SideLineDiff
   readonly imageLabel: string
   readonly title: string
   readonly imageSource: ReportImageSource

@@ -9,10 +9,10 @@ type VisuallyHiddenElement = "div" | "p" | "span"
 export type VisuallyHiddenProps = {
   readonly element: VisuallyHiddenElement
   /** 読み上げの領域にするなら `"status"`。 */
-  readonly role: "status" | undefined
-  readonly "aria-live": "polite" | undefined
-  readonly "aria-atomic": "true" | "false" | undefined
-  readonly "data-live-announcer": string | undefined
+  readonly role?: "status"
+  readonly "aria-live"?: "polite"
+  readonly "aria-atomic"?: "true" | "false"
+  readonly "data-live-announcer"?: string
   readonly children: ReactNode
 }
 

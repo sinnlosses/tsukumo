@@ -60,7 +60,7 @@ export type TokenUsageEntry = {
   /** ターンの中の内訳（{@link turnUsageBreakdown} の戻り値）。 */
   readonly breakdown: TurnUsageBreakdown
   /** 進みの差し込みで始まったターンだけ値を持つ（`TokenUsageRecord.progressNudge`）。 */
-  readonly progressNudge: ProgressNudgeMark | undefined
+  readonly progressNudge?: ProgressNudgeMark
   /** メインの assistant メッセージのうち、描かれた `speak` だけを呼んだものの数（{@link speakOnlySteps}）。 */
   readonly speakOnlySteps: number
 }
@@ -81,7 +81,7 @@ type TurnUsageTally = {
   /** 差し込みで始まったターンか、始まったあとに `speak` が出たか。 */
   readonly progressNudge: "none" | "nudged" | "spoke"
   /** 直近のメインの `step-usage` の `messageId`。描かれた `speak` がどのメッセージのものかを決める。 */
-  readonly lastMainMessageId: string | undefined
+  readonly lastMainMessageId?: string
   /** 直近のメインの `step-usage` のあとに、メインの `tool-started` が来たか。次のメインの `step-usage` がそのメッセージの持ち物にする。 */
   readonly toolStartedSinceStep: boolean
   /** 別のツールの呼び出しを持つメインのメッセージの `messageId`。 */

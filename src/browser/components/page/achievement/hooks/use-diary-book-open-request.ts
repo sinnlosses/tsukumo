@@ -37,7 +37,7 @@ export function takeDiaryBookOpenRequest(
 }
 
 type DiaryBookOpenRequestState = {
-  readonly request: DiaryBookOpenRequest | undefined
+  readonly request?: DiaryBookOpenRequest
 }
 
 const useDiaryBookOpenRequestStore = create<DiaryBookOpenRequestState>()(() => ({

@@ -41,7 +41,7 @@ export type InquiryOptionRow = {
   readonly text: string
   readonly recommended: boolean
   readonly description: string
-  readonly preview: string | undefined
+  readonly preview?: string
   readonly selected: boolean
   /** 選ぶとあとで戻せないか（添え書きが無ければ false）。 */
   readonly irreversible: boolean
@@ -103,7 +103,7 @@ export type InquiryModel =
   | (InquiryCommon & {
       readonly kind: "question"
       readonly header: string
-      readonly brief: InquiryBrief | undefined
+      readonly brief?: InquiryBrief
       readonly imageSizes: readonly ReportImageSize[]
       readonly unshelvedImages: readonly string[]
       readonly text: string
@@ -359,7 +359,7 @@ function questionModel(
   }
 }
 
-function focusedLabelOf(label: string | undefined): InquiryFocusedLabel {
+function focusedLabelOf(label?: string): InquiryFocusedLabel {
   return label === undefined ? { kind: "none" } : { kind: "option", label }
 }
 

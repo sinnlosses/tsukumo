@@ -13,19 +13,16 @@
  */
 export type ClaudeAccountTier = {
   /** 段（`claude_max` / `claude_pro` など）。 */
-  readonly organizationType: string | undefined
+  readonly organizationType?: string
   /** 枠（`default_claude_max_20x` など。段に倍率が付く）。 */
-  readonly rateLimitTier: string | undefined
+  readonly rateLimitTier?: string
 }
 
 /**
  * 画面に出すプランの名前。
  * 控え → SDK の順に見て、どちらからも決まらなければ何も返さない（画面は札を出さない）。
  */
-export function planName(
-  tier: ClaudeAccountTier,
-  subscriptionType: string | undefined,
-): string | undefined {
+export function planName(tier: ClaudeAccountTier, subscriptionType?: string): string | undefined {
   return tierName(tier) ?? blankToUndefined(subscriptionType)
 }
 
@@ -47,7 +44,7 @@ function gradeName(grade: string): string {
   return `${grade.slice(0, 1).toUpperCase()}${grade.slice(1)}`
 }
 
-function blankToUndefined(value: string | undefined): string | undefined {
+function blankToUndefined(value?: string): string | undefined {
   return value === undefined || value.trim() === "" ? undefined : value
 }
 

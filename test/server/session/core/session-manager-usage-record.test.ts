@@ -135,7 +135,7 @@ describe("createSessionManager", () => {
             blocks: [{ kind: "text", text: "架空の根拠。", fold: "", aside: "" }],
           },
         ])
-      const readStarted = (parentToolUseId: string | undefined): SessionEvent => ({
+      const readStarted = (parentToolUseId?: string): SessionEvent => ({
         kind: "tool-started",
         toolUseId: checkedToolUseId("toolu_read"),
         name: "Read",

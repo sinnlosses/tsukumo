@@ -31,7 +31,7 @@ type CharacterAssetFile = {
  */
 export type ServeCharacterAsset = (
   location: CharacterAssetLocation,
-  version: string | undefined,
+  version?: string,
 ) => CharacterAssetFile | undefined
 
 /** `/item/<file>` を1件配るために要るもの。中身はアイテムの置き場を読むアダプタが決める。 */
@@ -46,10 +46,7 @@ type ItemAssetFile = {
  * `/item/<file>` の1件を配ってよい形にする。`version` は要求の `?v=`（無ければ undefined）。
  * 一覧に載っていない・ディスクに無いときは undefined（呼び出し側が404にする）。
  */
-export type ServeItemAsset = (
-  fileName: string,
-  version: string | undefined,
-) => ItemAssetFile | undefined
+export type ServeItemAsset = (fileName: string, version?: string) => ItemAssetFile | undefined
 
 /**
  * 置き場から、id が指す原寸の data URL を引く。

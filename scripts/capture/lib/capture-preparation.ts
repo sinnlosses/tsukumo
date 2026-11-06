@@ -174,7 +174,7 @@ export const PREPARATION_OPTIONS = {
 
 /** `parseArgs` の `tokens` のうち、準備の読みが見る形。 */
 export type ArgumentToken =
-  | { readonly kind: "option"; readonly name: string; readonly value: string | undefined }
+  | { readonly kind: "option"; readonly name: string; readonly value?: string }
   | { readonly kind: "positional"; readonly value: string }
   | { readonly kind: "option-terminator" }
 

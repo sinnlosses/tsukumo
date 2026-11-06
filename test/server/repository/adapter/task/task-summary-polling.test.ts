@@ -52,11 +52,11 @@ type FakePortsOptions = {
   /** 印の読みが最初の1回だけ例外を投げる。 */
   readonly stampThrowsFirst: boolean
   /** 前回覚えた一覧。`undefined` は覚えていない。 */
-  readonly remembered: readonly TaskSummaryItem[] | undefined
+  readonly remembered?: readonly TaskSummaryItem[]
   /** `bd list` の結果。 */
   readonly outcome: BeadsOutcome
   /** 指すと、`bd list` の呼び出しごとに順に返す（尽きたら最後を返し続ける）。`outcome` より優先。 */
-  readonly outcomes: readonly BeadsOutcome[] | undefined
+  readonly outcomes?: readonly BeadsOutcome[]
   /** 覚える口へ書かれた一覧（呼ぶ側が置いた入れ物へ足される）。 */
   readonly writes: (readonly TaskSummaryItem[])[]
 }
@@ -130,7 +130,7 @@ describe("watchTaskSummary（偽の口と時計）", () => {
       changes,
       failures,
       writes,
-      setStamp: (next: string | undefined) => {
+      setStamp: (next?: string) => {
         stamp = next
       },
       count: (name: string) => calls.filter((call) => call === name).length,

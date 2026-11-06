@@ -21,7 +21,7 @@ export type CompareZoomImage = {
   readonly side: CompareZoomSide
   readonly src: string
   readonly alt: string
-  readonly region: ImageRegion | undefined
+  readonly region?: ImageRegion
 }
 
 type CompareZoomProps = {

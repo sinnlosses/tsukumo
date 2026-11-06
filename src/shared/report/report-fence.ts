@@ -7,7 +7,7 @@ const FENCE_OPEN = /^ {0,3}(`{3,}|~{3,})/
  * 行ごとに、フェンスに属するか（開き・中身・閉じのどれか）。閉じの無いフェンスは末尾まで続く。
  */
 export function fencedLineFlags(lines: readonly string[]): readonly boolean[] {
-  const initial: { readonly flags: readonly boolean[]; readonly marker: string | undefined } = {
+  const initial: { readonly flags: readonly boolean[]; readonly marker?: string } = {
     flags: [],
     marker: undefined,
   }

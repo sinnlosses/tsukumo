@@ -93,7 +93,7 @@ class FakeIntersectionObserver {
   live = true
   readonly callback: ObserverCallback
 
-  readonly options: IntersectionObserverInit | undefined
+  readonly options?: IntersectionObserverInit
 
   constructor(callback: ObserverCallback, options?: IntersectionObserverInit) {
     this.callback = callback

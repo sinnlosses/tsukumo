@@ -25,9 +25,9 @@ const hexColorSchema = z
 export type HexColor = z.infer<typeof hexColorSchema>
 
 export type AppearanceColorOverride = {
-  readonly ground: HexColor | undefined
-  readonly surface: HexColor | undefined
-  readonly ink: HexColor | undefined
+  readonly ground?: HexColor
+  readonly surface?: HexColor
+  readonly ink?: HexColor
 }
 
 export const DEFAULT_APPEARANCE_COLOR_OVERRIDE: AppearanceColorOverride = {
@@ -56,7 +56,7 @@ const APPEARANCE_COLOR_KEYS = [
 const BACKGROUND_VEIL_FLOOR_TOKEN_NAME = "--character-background-veil-floor"
 
 // 3色は項ごとに畳む（1色が壊れていても他の色は生かす）。キーが欠けた項は `undefined` として項の schema に渡す。
-const hexColorOrUndefined = z.union([hexColorSchema, z.undefined()]).catch(undefined)
+const hexColorOrUndefined = hexColorSchema.optional().catch(undefined)
 
 const preference = localPreference(
   "tsukumo-appearance-color:v1",
@@ -81,7 +81,7 @@ export const saveAppearanceColorOverride: (value: AppearanceColorOverride) => vo
 /** `:root` に差す1つのトークン。`value` が `undefined` なら差さずに外す（既定に戻す）。 */
 export type RootTokenWrite = {
   readonly name: string
-  readonly value: string | undefined
+  readonly value?: string
 }
 
 /** 3色を `:root` のトークンへ差す内容。`undefined` は「上書きしない」＝ 既定に戻す。 */

@@ -116,7 +116,7 @@ export function startOnScene(
   session: FakeSession,
   onEvent: (event: SessionEvent) => void,
   scene: string,
-  sceneUntil: number | undefined,
+  sceneUntil?: number,
 ): SessionDriver {
   return startFakeSession({
     session,

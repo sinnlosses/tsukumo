@@ -17,9 +17,7 @@ export type ExpressionChoice = {
  * - `default` は定義に無くても必ず含む（未知の表情の落とし先なので、これが無いと受け付けられる名前が1つも無くなる）
  * - ラベルが定義に無ければ表情名そのものをラベルにする（既定の日本語をコードに持たない）
  */
-export function expressionChoices(
-  definition: CharacterDefinition | undefined,
-): readonly ExpressionChoice[] {
+export function expressionChoices(definition?: CharacterDefinition): readonly ExpressionChoice[] {
   if (definition === undefined) {
     return [{ name: "default", label: "default" }]
   }

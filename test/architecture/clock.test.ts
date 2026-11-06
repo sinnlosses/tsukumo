@@ -157,11 +157,7 @@ function isDeferredContext(ancestors: readonly AstNode[]): boolean {
   })
 }
 
-function isDeferredFunctionSlot(
-  fn: AstNode,
-  parent: AstNode,
-  grandParent: AstNode | undefined,
-): boolean {
+function isDeferredFunctionSlot(fn: AstNode, parent: AstNode, grandParent?: AstNode): boolean {
   const parentType = stringField(parent, "type")
   if (parentType === "CallExpression") {
     return isDeferredArgument(fn, parent)
@@ -178,7 +174,7 @@ function isDeferredFunctionSlot(
   return false
 }
 
-function isDeferredCallArgument(node: AstNode, parent: AstNode | undefined): boolean {
+function isDeferredCallArgument(node: AstNode, parent?: AstNode): boolean {
   return (
     parent !== undefined &&
     stringField(parent, "type") === "CallExpression" &&
@@ -237,9 +233,9 @@ describe("サーバで Temporal.Now を読む箇所", () => {
 function temporalNowReads(
   fileName: string,
   source: string,
-): readonly { readonly owner: string | undefined; readonly line: number }[] {
-  const reads: { owner: string | undefined; line: number }[] = []
-  const visit = (node: AstNode, owner: string | undefined): void => {
+): readonly { readonly owner?: string; readonly line: number }[] {
+  const reads: { owner?: string; line: number }[] = []
+  const visit = (node: AstNode, owner?: string): void => {
     const type = stringField(node, "type")
     const nextOwner =
       type === "FunctionDeclaration" ? stringField(objectField(node, "id"), "name") : owner

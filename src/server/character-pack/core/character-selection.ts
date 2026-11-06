@@ -51,7 +51,7 @@ export function selectInitialCharacterPack<Pack extends NamedCharacterPack>(
 export function selectCharacterPack<Pack extends NamedCharacterPack>(
   packs: readonly Pack[],
   fallback: Pack,
-  name: string | undefined,
+  name?: string,
 ): Pack {
   return packs.find((pack) => pack.name === name) ?? fallback
 }

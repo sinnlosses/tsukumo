@@ -26,7 +26,7 @@ const PLACEHOLDER_RANGE_LABEL = " "
 type LanternCalendarProps = {
   readonly calendar: AchievementCalendarView
   /** 見ている日（枠を `--accent` にする。まだ分からなければ `undefined`）。 */
-  readonly viewedDate: string | undefined
+  readonly viewedDate?: string
   readonly onSelectDate: (date: DateKey) => void
 }
 
@@ -122,7 +122,7 @@ function Legend(): ReactElement {
 type GridProps = {
   readonly cells: readonly CalendarCell[]
   readonly rangeLabel: string
-  readonly viewedDate: string | undefined
+  readonly viewedDate?: string
   readonly onSelectDate: (date: DateKey) => void
 }
 

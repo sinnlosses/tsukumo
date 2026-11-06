@@ -26,7 +26,7 @@ export type FoldText = {
   readonly x: number
   readonly y: number
   readonly fontSize: number
-  readonly anchor: "start" | "middle" | "end" | undefined
+  readonly anchor?: "start" | "middle" | "end"
   readonly sub: boolean
   readonly text: string
 }
@@ -40,7 +40,7 @@ export type FoldFrameDrawing = {
   readonly look:
     | { readonly kind: "tone"; readonly tone: MarkedTone }
     | { readonly kind: "ground"; readonly ground: number }
-  readonly title: FoldText | undefined
+  readonly title?: FoldText
 }
 
 export type FoldBoxDrawing = {
@@ -54,8 +54,8 @@ export type FoldBoxDrawing = {
         readonly rx: number
       }
     | { readonly kind: "polygon"; readonly points: string }
-  readonly tone: MarkedTone | undefined
-  readonly change: MarkedChange | undefined
+  readonly tone?: MarkedTone
+  readonly change?: MarkedChange
   /** 名前の行、続けて説明の行。 */
   readonly texts: readonly FoldText[]
 }
@@ -63,8 +63,8 @@ export type FoldBoxDrawing = {
 export type FoldPathDrawing = {
   readonly points: string
   readonly returns: boolean
-  readonly tone: MarkedTone | undefined
-  readonly change: MarkedChange | undefined
+  readonly tone?: MarkedTone
+  readonly change?: MarkedChange
   readonly dashed: boolean
   readonly labels: readonly FoldText[]
 }

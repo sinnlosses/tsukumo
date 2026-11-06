@@ -24,7 +24,7 @@ type BalloonTrackProps = {
    * 最新の吹き出しに添える話し手の名前（キャラクターの名前）。キャラクターが届いていない・名前が
    * 無いときは undefined で、名前を出さない。
    */
-  readonly speakerName: string | undefined
+  readonly speakerName?: string
   /** 吹き出しを押したとき（セリフごとの `target` を渡して呼ぶ）。 */
   readonly onToggleSpeech: (turnId: number, index: number) => void
 }

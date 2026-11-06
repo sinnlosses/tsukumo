@@ -6,7 +6,7 @@ import type { ShellWord } from "./shell-command.ts"
 const GIT_VALUE_OPTIONS: ReadonlySet<string> = new Set(["-C", "-c", "--git-dir", "--work-tree"])
 
 export function splitGitArguments(words: readonly ShellWord[]): {
-  readonly subcommand: string | undefined
+  readonly subcommand?: string
   readonly args: readonly string[]
 } {
   const texts = words.map((word) => word.text)

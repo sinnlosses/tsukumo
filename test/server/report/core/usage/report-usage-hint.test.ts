@@ -472,11 +472,7 @@ describe("reportUsageEntryOf", () => {
 })
 
 describe("isMainImageFileRead", () => {
-  const started = (
-    name: string,
-    input: unknown,
-    parentToolUseId: string | undefined = undefined,
-  ): ToolStartedEvent => ({
+  const started = (name: string, input: unknown, parentToolUseId?: string): ToolStartedEvent => ({
     kind: "tool-started",
     toolUseId: checkedToolUseId("toolu_1"),
     name,
