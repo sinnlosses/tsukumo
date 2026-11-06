@@ -418,11 +418,28 @@
 | `server/report/core/rules/structure.ts` | `placementFault` | 引数   | 1   | 251 | 入口で畳む | 1              |
 | `server/report/core/rules/structure.ts` | `isContainer`    | 引数   | 1   | 282 | 入口で畳む | 2              |
 
-### `src/shared/session`（消せる 1 件）
+### `src/shared/session`（引数・プロパティは消し済み、残り 16 件は本物）
 
-| ファイル                             | 対象           | 置き場 | 件  | 行  | 消し方     | 呼び出し側の数 |
-| ------------------------------------ | -------------- | ------ | --- | --- | ---------- | -------------- |
-| `shared/session/a2ui-report-view.ts` | `leafRegionOf` | 引数   | 1   | 89  | 入口で畳む | 2              |
+2026-11-06 の実物: 引数・プロパティの `| undefined` は消え、戻り値の 10 件（`grep -rn "| undefined" src/shared/session`、上限の表の `"src/shared/session": 10` と一致）と `SessionState` の `?:` 6 欄が残る。呼ぶ側のファイルを読んで、16 件とも本物とした。`SessionState` の 6 欄は、別々のイベントが別々に立て、同時に `undefined` になる組が無いので合併型には分けられない（`endedReason` は `session-ended` が立てるが、終わりの局面は `turn` が持つ）。
+
+| ファイル                               | 対象                             | 判定 | 呼ぶ側の読んだファイル                                                                                                                      | 理由                                               |
+| -------------------------------------- | -------------------------------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| `shared/session/session-id.ts:20`      | `parseSessionId`                 | R1   | `screen-part-example-nav.tsx`・`input-ledger-file.ts`・`sdk-message.ts`・`session-catalog.ts`                                               | 解析の失敗。呼び手がそれぞれ分岐する               |
+| `shared/session/tool-use-id.ts:11`     | `parseToolUseId`                 | R1   | `sdk-stream-message.ts`・`sdk-background-message.ts`・`sdk-tool-result-message.ts`・`sdk-query-seed.ts`・`sdk-message.ts`                   | 解析の失敗                                         |
+| `shared/session/work-plan.ts:194`      | `parseWorkPlan`                  | R1   | `sdk-message.ts`・`sdk-work-tool.ts`・`session-event-delegate.ts`・`work-plan.ts`                                                           | 検査を通らない引数の失敗                           |
+| `shared/session/work-plan.ts:202`      | `parseWorkPlanCall`              | R1   | `work-plan-review.ts`                                                                                                                       | 同上。差し戻しに使う                               |
+| `shared/session/work-plan.ts:328`      | `settleDelegatedRange`           | R4   | `work-plan-review.ts`                                                                                                                       | 範囲を確定できない状態を呼び手が別扱いする         |
+| `shared/session/session-record.ts:76`  | `recordTimeAt`                   | R1   | `phase-duration.ts`・`turn-step.ts`・`turn-span.ts`・`clock-stamp.ts`・`chat-log.ts`・`work-activity.ts`                                    | 時刻が未確定の記録の読み取り。呼び手が `??` で畳む |
+| `shared/session/shown-reaction.ts:80`  | `waitingLineDueAt`               | R1   | `report-tool.ts`・`waiting-line-alarm.ts`・`session-generation-start.ts`・`session-event-surrounding.ts`・`session-fold.ts`                 | 待ちの一言を出さない状態                           |
+| `shared/session/model-name.ts:27`      | `findModelSupport`               | R1   | `effort-label.ts`                                                                                                                           | 探索の失敗                                         |
+| `shared/session/work-plan-fold.ts:103` | `reportedPhaseOf`                | R1   | `work-plan-fold.ts`                                                                                                                         | 段の探索の失敗。「当たらない」で分岐する           |
+| `shared/session/shown-reaction.ts:106` | `recordedReaction`               | R1   | `shown-reaction.ts`                                                                                                                         | 記録の探索の失敗。`??` で導出に落とす              |
+| `shared/session/session-state.ts:81`   | `SessionState.model`             | R1   | `sdk-driver.ts`・`setting-mark-fold.ts`・`session-advance.ts`・`model-permission.ts`・`use-settings.ts`                                     | 選ばれる前の状態。立てるイベントが別               |
+| `shared/session/session-state.ts:92`   | `SessionState.effort`            | R1   | `session-generation.ts`・`session-advance.ts`・`model-permission.ts`                                                                        | 同上                                               |
+| `shared/session/session-state.ts:110`  | `SessionState.endedReason`       | R1   | `conversation-moment.ts`・`session-advance.ts`・`use-current-work.ts`・`current-turn-step-list.ts`・`use-turn-status.ts`・`use-composer.ts` | `session-ended` だけが立てる                       |
+| `shared/session/session-state.ts:151`  | `SessionState.character`         | R1   | `event-judgement.ts`・`session-event-record.ts`・`remembered-default.ts`・`shown-reaction.ts`・`use-current-work.ts`・`use-diary-book.ts`   | キャラ選択前の状態                                 |
+| `shared/session/session-state.ts:178`  | `SessionState.lastToolFailureAt` | R1   | `tool-record.ts`・`use-character-view.ts`・`portrait-motion.ts`                                                                             | 失敗が無い状態                                     |
+| `shared/session/session-state.ts:210`  | `SessionState.plan`              | R1   | `session-advance.ts`・`use-token-usage.ts`                                                                                                  | 計画が出る前の状態                                 |
 
 ### `scripts/document`（消せる 1 件）
 
