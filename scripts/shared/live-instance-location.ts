@@ -5,6 +5,7 @@ import { readdirSync, readFileSync } from "node:fs"
 import { join } from "node:path"
 import process from "node:process"
 
+import { hasErrorCode } from "../../src/server/core/utils/error-code.ts"
 import {
   instanceLocationSchema,
   type InstanceLocation,
@@ -41,6 +42,6 @@ function isAlive(pid: number): boolean {
     process.kill(pid, 0)
     return true
   } catch (error) {
-    return error instanceof Error && "code" in error && error.code === "EPERM"
+    return hasErrorCode(error, "EPERM")
   }
 }

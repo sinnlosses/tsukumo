@@ -4,6 +4,7 @@ import process from "node:process"
 
 import type { Page } from "playwright-core"
 
+import { errorMessage } from "../../../src/browser/utils/error-message.ts"
 import { MAIN_REGION_SELECTOR, SKIP_REVEAL_KEY, settlePage } from "./capture-page.ts"
 import type { WindowSize } from "./capture-size.ts"
 import { formatPaperMetric, measurePaperMetric } from "./paper-metric.ts"
@@ -29,7 +30,7 @@ export async function printPaperMetrics(
         `紙面の物差し ${String(viewport.width)}x${String(viewport.height)}\n${rows.join("\n")}\n`,
       )
     } catch (error) {
-      process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`)
+      process.stderr.write(`${errorMessage(error)}\n`)
       return 1
     }
   }

@@ -44,6 +44,7 @@ import { parseArgs } from "node:util"
 import { expect } from "@playwright/test"
 import { type Browser, chromium, type Page } from "playwright-core"
 
+import { errorMessage } from "../../src/browser/utils/error-message.ts"
 import {
   type FakeSession,
   readFakeSession,
@@ -111,9 +112,7 @@ async function main(argv: readonly string[]): Promise<number> {
       shots.push(...(await captureEntry(browser, entry, options.outDir, reading.session)))
     }
   } catch (error) {
-    process.stderr.write(
-      `撮れなかった: ${error instanceof Error ? error.message : String(error)}\n`,
-    )
+    process.stderr.write(`撮れなかった: ${errorMessage(error)}\n`)
     return 1
   } finally {
     await browser.close()
@@ -164,9 +163,7 @@ async function captureEntry(
         fakeSession,
         waitsForScene: plan.waits,
       }).catch((error: unknown) => {
-        throw new Error(
-          `${entry.name}（${size.name}）: ${error instanceof Error ? error.message : String(error)}`,
-        )
+        throw new Error(`${entry.name}（${size.name}）: ${errorMessage(error)}`)
       })
       process.stdout.write(`撮った: ${file}\n`)
       shots.push({ entry, size, file })

@@ -11,6 +11,7 @@ import {
 } from "node:fs"
 import { join } from "node:path"
 
+import { hasErrorCode } from "../../../src/server/core/utils/error-code.ts"
 import type { ShipPlanResult } from "./ship-plan.ts"
 import type { ShipReviewOutcome } from "./ship-review.ts"
 
@@ -212,7 +213,7 @@ function writeExclusively(path: string, text: string): boolean {
     writeFileSync(path, text, { flag: "wx" })
     return true
   } catch (error) {
-    if (error instanceof Error && "code" in error && error.code === "EEXIST") {
+    if (hasErrorCode(error, "EEXIST")) {
       return false
     }
     throw error

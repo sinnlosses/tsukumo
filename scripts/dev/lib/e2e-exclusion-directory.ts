@@ -5,6 +5,7 @@ import { mkdirSync, rmSync, statSync } from "node:fs"
 import { join } from "node:path"
 import process from "node:process"
 
+import { hasErrorCode } from "../../../src/server/core/utils/error-code.ts"
 import { readGitCommonDirectory } from "../../shared/git-query.ts"
 
 const DIRECTORY_NAME = "e2e-full-lock"
@@ -83,7 +84,7 @@ function tryCreate(directory: string): boolean {
     mkdirSync(directory)
     return true
   } catch (error) {
-    if (isErrnoCode(error, "EEXIST")) {
+    if (hasErrorCode(error, "EEXIST")) {
       return false
     }
     throw error
@@ -96,7 +97,7 @@ function removeIfStale(directory: string, staleMs: number): boolean {
   try {
     modifiedAt = statSync(directory).mtimeMs
   } catch (error) {
-    if (isErrnoCode(error, "ENOENT")) {
+    if (hasErrorCode(error, "ENOENT")) {
       return true
     }
     throw error
@@ -110,8 +111,4 @@ function removeIfStale(directory: string, staleMs: number): boolean {
 
 function nowMs(): number {
   return Temporal.Now.instant().epochMilliseconds
-}
-
-function isErrnoCode(error: unknown, code: string): boolean {
-  return error instanceof Error && "code" in error && error.code === code
 }

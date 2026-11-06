@@ -3,6 +3,7 @@
 import { execFile } from "node:child_process"
 import process from "node:process"
 
+import { errorMessage } from "../../../src/browser/utils/error-message.ts"
 import { replayEnvironment } from "../../shared/claude-environment.ts"
 
 export type Writer = { readonly model: string; readonly effort: string | undefined }
@@ -66,7 +67,7 @@ export async function runWriterPool<T extends { readonly id: string }>(
       try {
         await work(next)
       } catch (error) {
-        failure = `${next.id}: ${error instanceof Error ? error.message : String(error)}`
+        failure = `${next.id}: ${errorMessage(error)}`
       }
     }
   }

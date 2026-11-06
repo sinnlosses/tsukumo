@@ -9,6 +9,7 @@ import process from "node:process"
 import type { SessionId } from "../../../shared/session/session-id.ts"
 import { writeFileAtomic } from "../../adapter/lib/atomic-file.ts"
 import { tsukumoHomePath } from "../../adapter/tsukumo-home.ts"
+import { hasErrorCode } from "../../core/utils/error-code.ts"
 import {
   readSessionClaimRecord,
   type SessionClaimRecord,
@@ -96,7 +97,7 @@ function isAlive(claim: ClaimFile): boolean {
     process.kill(claim.record.pid, 0)
     return true
   } catch (error) {
-    if (isErrorCode(error, "ESRCH")) {
+    if (hasErrorCode(error, "ESRCH")) {
       removeStaleClaim(claim.path)
     }
     return false
@@ -110,8 +111,4 @@ function removeStaleClaim(path: string): void {
   } catch {
     // 消せなかった占有ファイルも、生きていないので数えない。
   }
-}
-
-function isErrorCode(error: unknown, code: string): boolean {
-  return error instanceof Error && "code" in error && error.code === code
 }

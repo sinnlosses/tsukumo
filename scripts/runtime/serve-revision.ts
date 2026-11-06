@@ -39,6 +39,7 @@ import { parseArgs } from "node:util"
 
 import { z } from "zod"
 
+import { errorMessage } from "../../src/browser/utils/error-message.ts"
 import { spawnFakeTsukumo, waitForViewUrl } from "../shared/fake-tsukumo-process.ts"
 import { positiveIntegerArgument } from "../shared/positive-integer-argument.ts"
 import { REPOSITORY_ROOT } from "../shared/repository-root.ts"
@@ -119,7 +120,7 @@ async function main(argv: readonly string[]): Promise<number> {
   try {
     url = await waitForViewUrl(session, revision.homeDir, LAUNCH_TIMEOUT_MS)
   } catch (error) {
-    process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`)
+    process.stderr.write(`${errorMessage(error)}\n`)
     session.kill("SIGTERM")
     return 1
   }

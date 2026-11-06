@@ -15,6 +15,7 @@ import { isObjectType, sum } from "remeda"
 import { vendorAssetPath } from "../../../../../../../shared/view-server/vendor-asset.ts"
 import { useExternalSync } from "../../../../../../hooks/use-external-sync.ts"
 import { useMountEffect } from "../../../../../../hooks/use-mount-effect.ts"
+import { errorMessage } from "../../../../../../utils/error-message.ts"
 import { Text } from "../../../../../ui/text/text.tsx"
 import { mergeRefs } from "../../../domain/merge-ref.ts"
 import { useSeenOnce } from "../hooks/use-seen-once.ts"
@@ -426,5 +427,5 @@ function mermaidErrorText(reason: unknown): string {
       return str
     }
   }
-  return reason instanceof Error ? reason.message : String(reason)
+  return errorMessage(reason)
 }

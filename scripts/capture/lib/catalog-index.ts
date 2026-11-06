@@ -2,8 +2,8 @@
 
 import path from "node:path"
 
+import { escapeHtml } from "../../../src/shared/utils/escape-html.ts"
 import type { CatalogEntry, CatalogSize } from "./catalog-entry.ts"
-import { escapeHtml } from "./html-escape.ts"
 
 export type Shot = {
   readonly entry: CatalogEntry

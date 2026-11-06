@@ -16,6 +16,7 @@ import process from "node:process"
 import { pathToFileURL } from "node:url"
 import { parseArgs, promisify } from "node:util"
 
+import { errorMessage } from "../../src/browser/utils/error-message.ts"
 import { parseDateKey } from "../../src/shared/diary/date-key.ts"
 import { positiveIntegerArgument } from "../shared/positive-integer-argument.ts"
 import { REPOSITORY_ROOT } from "../shared/repository-root.ts"
@@ -137,7 +138,7 @@ async function runCapture(args: readonly string[]): Promise<CaptureRun> {
     const firstLine = stderr.split("\n").find((line) => line.trim() !== "")
     return {
       kind: "failed",
-      reason: firstLine ?? (error instanceof Error ? error.message : String(error)),
+      reason: firstLine ?? errorMessage(error),
     }
   }
 }

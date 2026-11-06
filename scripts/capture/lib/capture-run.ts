@@ -4,6 +4,7 @@ import process from "node:process"
 
 import { chromium, type Page } from "playwright-core"
 
+import { errorMessage } from "../../../src/browser/utils/error-message.ts"
 import { followFakeClock } from "../../shared/capture-clock.ts"
 import type { CaptureOptions } from "./capture-option.ts"
 import {
@@ -87,10 +88,7 @@ export async function capture(
     }
     const settleFailure = await (
       options.revealAt === undefined ? settlePage(page) : revealPageAt(page, options.revealAt)
-    ).then(
-      () => undefined,
-      (error: unknown) => (error instanceof Error ? error.message : String(error)),
-    )
+    ).then(() => undefined, errorMessage)
     if (settleFailure !== undefined) {
       process.stderr.write(`${settleFailure}\n`)
       return 1
@@ -123,10 +121,7 @@ export async function capture(
         await page.clock.runFor(SCROLL_ADVANCE_MS)
       }
       if (options.revealAt === undefined) {
-        const scrollSettleFailure = await settlePage(page).then(
-          () => undefined,
-          (error: unknown) => (error instanceof Error ? error.message : String(error)),
-        )
+        const scrollSettleFailure = await settlePage(page).then(() => undefined, errorMessage)
         if (scrollSettleFailure !== undefined) {
           process.stderr.write(`${scrollSettleFailure}\n`)
           return 1
@@ -196,7 +191,7 @@ async function waitForSceneEnd(
     await watch.waitFor(target, { scene: source.scene, timeoutMs })
     return undefined
   } catch (error) {
-    return error instanceof Error ? error.message : String(error)
+    return errorMessage(error)
   }
 }
 

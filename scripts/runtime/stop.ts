@@ -18,6 +18,7 @@ import { z } from "zod"
 
 import { VIEW_PORT_FALLBACK_ATTEMPTS } from "../../src/server/view-server/core/port-resolution.ts"
 import { DEFAULT_VIEW_PORT } from "../../src/shared/view-server/view-port.ts"
+import { delay } from "../shared/delay.ts"
 import { queryGit } from "../shared/git-query.ts"
 import {
   describeFreshness,
@@ -131,10 +132,4 @@ function isAlive(pid: number): boolean {
   } catch {
     return false
   }
-}
-
-function delay(ms: number): Promise<void> {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms)
-  })
 }

@@ -6,6 +6,7 @@ import { join } from "node:path"
 
 import { z } from "zod"
 
+import { errorMessage } from "../../../src/browser/utils/error-message.ts"
 import { structuredOutputSchema } from "../../../src/server/core/query/structured-output-schema.ts"
 
 const REVIEWED_PATH_PREFIXES = ["src/", "scripts/", "test/"] as const satisfies readonly string[]
@@ -77,7 +78,7 @@ export function reviewDiff(deps: ShipReviewDeps): ShipReviewOutcome {
   try {
     verdict = readVerdict(deps.runAcceptor())
   } catch (error) {
-    return { kind: "unavailable", reason: error instanceof Error ? error.message : String(error) }
+    return { kind: "unavailable", reason: errorMessage(error) }
   }
 
   switch (verdict.kind) {

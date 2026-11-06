@@ -65,6 +65,7 @@ const SERVER_CHILD_IMPORTS = {
   },
   core: {
     query: [],
+    utils: [],
   },
   "usage/core": {
     experience: [],
@@ -251,6 +252,11 @@ const serverFeatureRules = [
         },
       ),
     ),
+  ),
+  rule(
+    "server-core-utils-closed",
+    { path: "^src/server/core/utils/" },
+    { pathNot: `^src/server/core/utils/|${packagePath(["remeda"])}` },
   ),
   rule(
     "server-shared-box-no-feature",

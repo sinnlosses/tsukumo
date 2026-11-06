@@ -18,6 +18,7 @@ import { basename } from "node:path"
 import process from "node:process"
 
 import { roomName } from "../../src/browser/components/frame/screen-nav/domain/room.ts"
+import { errorMessage } from "../../src/browser/utils/error-message.ts"
 import {
   closeTab,
   listTabs,
@@ -25,6 +26,7 @@ import {
   type OrcaTab,
 } from "../../src/server/host/adapter/orca-host.ts"
 import { createStartupToken } from "../../src/server/view-server/adapter/server.ts"
+import { delay } from "../shared/delay.ts"
 import { findRunningTsukumo } from "../shared/instance-location.ts"
 import { candidatePorts, run, type Listener } from "../shared/port-listener.ts"
 import {
@@ -57,7 +59,7 @@ async function main(): Promise<void> {
   const server = createServer((request, response) => {
     // 読み込み1回の失敗で常駐プロセスを落とさない。受け止めるのはここ1箇所。
     respond(request, response, key).catch((error: unknown) => {
-      const message = error instanceof Error ? error.message : String(error)
+      const message = errorMessage(error)
       process.stderr.write(`格子を組み立てられなかった: ${message}\n`)
       if (!response.headersSent) {
         writeText(response, 500, "格子を組み立てられなかった\n")
@@ -254,10 +256,4 @@ function processCwd(pid: number): string | undefined {
 function gitBranch(cwd: string): string | undefined {
   const branch = run("git", ["-C", cwd, "branch", "--show-current"]).trim()
   return branch === "" ? undefined : branch
-}
-
-function delay(ms: number): Promise<void> {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms)
-  })
 }

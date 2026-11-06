@@ -14,6 +14,7 @@ import path from "node:path"
 import process from "node:process"
 import { parseArgs } from "node:util"
 
+import { errorMessage } from "../../src/browser/utils/error-message.ts"
 import { collectChangedPaths, PRIMARY_BRANCH } from "../shared/changed-path-repository.ts"
 import { runAcceptor } from "../shared/claude-run.ts"
 import { queryGit, readGitCommonDirectory } from "../shared/git-query.ts"
@@ -160,7 +161,7 @@ function shipQueuedBranch(branch: string): ShippedEntry {
   } catch (error) {
     return {
       outcome: "worktree-missing",
-      reason: error instanceof Error ? error.message : String(error),
+      reason: errorMessage(error),
       verify: "not-run",
     }
   }

@@ -43,5 +43,6 @@
   （「JSONL を1行ずつ読む」）で、読み手が1つの機能だけならその機能の `adapter/lib/`、2つ以上なら共有の
   `server/adapter/lib/`
 - `core/lib/` に入れてよいのは **`node:` を要求しない技術**だけ。`shared/lib/` は**両方の実行環境で動く技術**だけ
-- **`src/browser/utils/` のエッジは `.dependency-cruiser.cjs` が見る**（箱のエッジと歯止め1）。server と scripts には
-  いま `utils/` が無い。作るときは `.dependency-cruiser.cjs` に `browser-utils-closed` と同じ規則を足してから作る。**ライブラリに依存しない小物は、`utils/` を作る前に remeda（`docs/architecture/build.md`）にあるかを見る**
+- **`src/browser/utils/` のエッジは `.dependency-cruiser.cjs` が見る**（箱のエッジと歯止め1）。server には
+  `server/core/utils/` があり、エッジは `server-core-utils-closed` が見る。scripts にはいま `utils/` が無い。
+  作るときは `.dependency-cruiser.cjs` に `browser-utils-closed` と同じ規則を足してから作る。**ライブラリに依存しない小物は、`utils/` を作る前に remeda（`docs/architecture/build.md`）にあるかを見る**

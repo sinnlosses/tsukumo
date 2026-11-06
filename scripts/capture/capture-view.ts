@@ -32,6 +32,7 @@ import { statSync } from "node:fs"
 import path from "node:path"
 import process from "node:process"
 
+import { errorMessage } from "../../src/browser/utils/error-message.ts"
 import { REPOSITORY_ROOT } from "../shared/repository-root.ts"
 import { parseOptions, USAGE } from "./lib/capture-option.ts"
 import { capture } from "./lib/capture-run.ts"
@@ -132,7 +133,7 @@ async function openSource(source: Source, outDir: string): Promise<OpenedSource 
     })
     return { url: launched.url, close: launched.close, skipReveal: imageEntry?.skipReveal === true }
   } catch (error) {
-    process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`)
+    process.stderr.write(`${errorMessage(error)}\n`)
     return undefined
   }
 }

@@ -5,6 +5,7 @@
 // ここは「どのポートで試すか」の決定と、その決定に沿って `start` を呼び直すことだけを持つ。
 
 import type { ResolvedViewPort } from "../../../shared/view-server/view-port.ts"
+import { hasErrorCode } from "../../core/utils/error-code.ts"
 
 // 既定ポートから数えて何個先まで試すか（7327〜7346 の20個）。
 // 複数の tsukumo を手元で並べて動かす程度を想定した目安で、無限には伸ばさない（どのポートで待っているか分からない状態を作らないため、上限を持って諦める）。
@@ -41,7 +42,7 @@ export async function startOnResolvedPort<T>(
     try {
       return { kind: "ok", server: await start(port), port }
     } catch (error) {
-      if (!isEaddrInUseError(error)) {
+      if (!hasErrorCode(error, "EADDRINUSE")) {
         return { kind: "failed", reason: describeStartError(error) }
       }
       // EADDRINUSE のときだけ次のポートへ。ループの続きへ進む。
@@ -52,12 +53,6 @@ export async function startOnResolvedPort<T>(
     kind: "failed",
     reason: `${String(firstPort)}〜${String(lastPort)} のポートがすべて塞がっている`,
   }
-}
-
-// listen の失敗を種類で分ける。
-// Node の listen エラーは Error に `code` が生えた形で届くので、`in` で存在を確かめてから読む。
-function isEaddrInUseError(error: unknown): boolean {
-  return error instanceof Error && "code" in error && error.code === "EADDRINUSE"
 }
 
 function describeStartError(error: unknown): string {

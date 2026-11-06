@@ -5,6 +5,7 @@ import { mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 import process from "node:process"
 
+import { hasErrorCode } from "../../../src/server/core/utils/error-code.ts"
 import { readGitCommonDirectory } from "../../shared/git-query.ts"
 
 const DIRECTORY_NAME = "check-running"
@@ -48,6 +49,6 @@ export function isProcessAlive(pid: number): boolean {
     process.kill(pid, 0)
     return true
   } catch (error) {
-    return error instanceof Error && "code" in error && error.code === "EPERM"
+    return hasErrorCode(error, "EPERM")
   }
 }

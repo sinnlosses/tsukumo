@@ -3,6 +3,7 @@
 // Markdown に埋める文字は行頭の塊の記法と `<` を逃がして改行を畳み、許すのはインラインの記法（inline code・太字・リンク）だけにする。
 // HTML に埋める文字は HTML として逃がし、Markdown の記法は効かせない。ただし `htmlInlineWithCode` は inline code だけ `code` 要素にする。
 
+import { escapeHtml } from "../utils/escape-html.ts"
 import { foldInlineMarks } from "./inline-mark.ts"
 
 /** inline code（開きと同じ数のバッククォートで閉じる）。中の文字は逃がさない。 */
@@ -27,9 +28,9 @@ export function plainInline(text: string): string {
   return foldInlineMarks(text).replace(/\s+/g, " ").trim()
 }
 
-/** 二重引用符で囲む HTML 属性の値に埋める1行の文字。`htmlInline` に加えて `"` も逃がす。 */
+/** 二重引用符で囲む HTML 属性の値に埋める1行の文字。`htmlInline` が `"` も逃がすのでそのまま使える。 */
 export function htmlAttribute(text: string): string {
-  return htmlInline(text).replaceAll('"', "&quot;")
+  return htmlInline(text)
 }
 
 /**
@@ -100,10 +101,6 @@ export function htmlInlineSegments(text: string): readonly HtmlInlineSegment[] {
   return [...segments, { kind: "text" as const, value: flat.slice(last) }].filter(
     (segment) => segment.kind === "code" || segment.value !== "",
   )
-}
-
-function escapeHtml(text: string): string {
-  return text.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")
 }
 
 /** inline code の中身。CommonMark に合わせ、両端に空白があれば1つずつ落とす。 */
