@@ -55,19 +55,3 @@ export function formatStageLines(
     ...(bailed.includes(stage.name) ? [`STAGE\t${stage.name}\tbailed`] : []),
   ])
 }
-
-/**
- * vitest の JSON レポーターの出力から、選ばれたテストの総数（`numTotalTests`）を読む。
- * 読めない・形が違う JSON は `undefined`。
- */
-export function parseSelectedTestCount(json: string): number | undefined {
-  try {
-    const report: unknown = JSON.parse(json)
-    if (typeof report !== "object" || report === null || !("numTotalTests" in report)) {
-      return undefined
-    }
-    return typeof report.numTotalTests === "number" ? report.numTotalTests : undefined
-  } catch {
-    return undefined
-  }
-}

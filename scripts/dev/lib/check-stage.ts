@@ -27,7 +27,7 @@ const TOKEN_LIMIT_STAGE: Stage = { name: "token-limit", args: [], heavy: false }
 
 /** `files` は流す E2E のファイル（空なら全件）。 */
 export function e2eStage(files: readonly string[]): Stage {
-  return { name: "test:e2e", args: [...files, `--bail=${E2E_BAIL_COUNT}`], heavy: true }
+  return { name: "test:e2e", args: [...files, `--max-failures=${E2E_BAIL_COUNT}`], heavy: true }
 }
 
 /** 文書だけの変更で打つ文書の検査。 */

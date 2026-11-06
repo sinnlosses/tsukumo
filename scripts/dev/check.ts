@@ -14,7 +14,7 @@
 // 同じ木での打ち直しは、根の `.check-record.json` の控えから、前回通った段を1回だけ飛ばし、
 // E2E は前回落ちたファイルだけを流す（判定は `planRerun`）。
 // 前回落ちて今回通ったテストは、根の `flaky-ledger.jsonl` に1件1行で足す。
-// `--bail` が発火した段は、STAGE 行の次に `STAGE<TAB><段名><TAB>bailed` の行を出す。
+// `--max-failures` が発火した段は、STAGE 行の次に `STAGE<TAB><段名><TAB>bailed` の行を出す。
 //
 // 使い方:
 //   node scripts/dev/check.ts         # 変えたファイルを見て、E2E を選び、文書だけなら文書の検査だけにする
@@ -38,8 +38,10 @@ import {
   parseFailedFiles,
   parseFailedTests,
   parsePassedTests,
+  parseSelectedTestCount,
   pickStagesToStop,
   type StageOutcome,
+  type TestRunner,
 } from "./lib/check-failure.ts"
 import {
   appendFlakyLedger,
@@ -68,7 +70,6 @@ import { readExpectedDiffLines } from "./lib/expected-diff-repository.ts"
 import { formatExpectedDiffLine } from "./lib/expected-diff.ts"
 import {
   formatStageLines,
-  parseSelectedTestCount,
   type NamedVerdict,
   ranStageVerdict,
   withDroppedStages,
@@ -312,14 +313,14 @@ type StageReport = Pick<
 >
 
 /** 段が書いた JSON レポートを読んで消す。無ければ空。 */
-function readReport(reportPath: string): StageReport {
+function readReport(reportPath: string, runner: TestRunner): StageReport {
   try {
     const json = readFileSync(reportPath, "utf8")
     return {
-      failedTests: parseFailedTests(json, ROOT),
-      passedTests: parsePassedTests(json, ROOT),
-      failed: parseFailedFiles(json, ROOT),
-      selectedTestCount: parseSelectedTestCount(json),
+      failedTests: parseFailedTests(json, ROOT, runner),
+      passedTests: parsePassedTests(json, ROOT, runner),
+      failed: parseFailedFiles(json, ROOT, runner),
+      selectedTestCount: parseSelectedTestCount(json, runner),
     }
   } catch {
     return {
@@ -359,14 +360,22 @@ function runBuffered(stage: Stage, control: StopControl): Promise<BufferedResult
     tmpdir(),
     `tsukumo-check-${process.pid}-${stage.name.replace(":", "-")}.json`,
   )
-  const reporterArgs = ["--reporter=default", "--reporter=json", `--outputFile.json=${reportPath}`]
+  const isE2e = stage.name === "test:e2e"
+  const heavyArgs = isE2e
+    ? [`--workers=${stageWorkers}`, "--reporter=list,json"]
+    : [
+        `--maxWorkers=${stageWorkers}`,
+        "--reporter=default",
+        "--reporter=json",
+        `--outputFile.json=${reportPath}`,
+      ]
   return new Promise((resolve) => {
-    const stageArgs = stage.heavy
-      ? [...stage.args, `--maxWorkers=${stageWorkers}`, ...reporterArgs]
-      : stage.args
+    const stageArgs = stage.heavy ? [...stage.args, ...heavyArgs] : stage.args
     const child = spawn("pnpm", ["run", stage.name, ...stageArgs], {
       cwd: ROOT,
-      env: stage.name === "test:e2e" ? { ...process.env, ...E2E_FULL_ENVIRONMENT } : process.env,
+      env: isE2e
+        ? { ...process.env, ...E2E_FULL_ENVIRONMENT, PLAYWRIGHT_JSON_OUTPUT_FILE: reportPath }
+        : process.env,
       stdio: ["ignore", "pipe", "pipe"],
     })
     control.attach(child)
@@ -380,7 +389,7 @@ function runBuffered(stage: Stage, control: StopControl): Promise<BufferedResult
         status,
         stopped: status !== 0 && control.isStopRequested(),
         lockTimedOut: false,
-        ...readReport(reportPath),
+        ...readReport(reportPath, isE2e ? "playwright" : "vitest"),
         output: Buffer.concat(chunks).toString("utf8"),
       })
     })

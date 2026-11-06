@@ -7,6 +7,7 @@ import {
   parseFailedFiles,
   parseFailedTests,
   parsePassedTests,
+  parseSelectedTestCount,
   pickStagesToStop,
   type StageOutcome,
 } from "../../../../scripts/dev/lib/check-failure.ts"
@@ -102,24 +103,24 @@ describe("parseFailedTests", () => {
         ],
       },
     ])
-    expect(parseFailedTests(json, "/repo")).toEqual(["test/a.test.ts > a ng"])
+    expect(parseFailedTests(json, "/repo", "vitest")).toEqual(["test/a.test.ts > a ng"])
   })
 
   test("全部通ったときは空", () => {
     const json = report([{ name: "/repo/test/a.test.ts", status: "passed", assertionResults: [] }])
-    expect(parseFailedTests(json, "/repo")).toEqual([])
+    expect(parseFailedTests(json, "/repo", "vitest")).toEqual([])
   })
 
   test("落ちたファイルに落ちたテストが無いときはファイル名だけ", () => {
     const json = report([{ name: "/repo/test/a.test.ts", status: "failed", assertionResults: [] }])
-    expect(parseFailedTests(json, "/repo")).toEqual(["test/a.test.ts"])
+    expect(parseFailedTests(json, "/repo", "vitest")).toEqual(["test/a.test.ts"])
   })
 
   test("読めない・形が違う JSON は空", () => {
-    expect(parseFailedTests("", "/repo")).toEqual([])
-    expect(parseFailedTests("{", "/repo")).toEqual([])
-    expect(parseFailedTests("[]", "/repo")).toEqual([])
-    expect(parseFailedTests('{"testResults":3}', "/repo")).toEqual([])
+    expect(parseFailedTests("", "/repo", "vitest")).toEqual([])
+    expect(parseFailedTests("{", "/repo", "vitest")).toEqual([])
+    expect(parseFailedTests("[]", "/repo", "vitest")).toEqual([])
+    expect(parseFailedTests('{"testResults":3}', "/repo", "vitest")).toEqual([])
   })
 })
 
@@ -137,8 +138,8 @@ describe("parsePassedTests", () => {
         },
       ],
     })
-    expect(parsePassedTests(json, "/repo")).toEqual(["test/a.test.ts > a ok"])
-    expect(parsePassedTests("{", "/repo")).toEqual([])
+    expect(parsePassedTests(json, "/repo", "vitest")).toEqual(["test/a.test.ts > a ok"])
+    expect(parsePassedTests("{", "/repo", "vitest")).toEqual([])
   })
 })
 
@@ -158,13 +159,71 @@ describe("parseFailedFiles", () => {
         { name: "/repo/test/e2e/b.test.ts", status: "passed", assertionResults: [] },
       ],
     })
-    expect(parseFailedFiles(json, "/repo")).toEqual({
+    expect(parseFailedFiles(json, "/repo", "vitest")).toEqual({
       files: ["test/e2e/a.test.ts"],
       failedTestCount: 1,
     })
   })
 
   test("読めない JSON は空の列と 0", () => {
-    expect(parseFailedFiles("{", "/repo")).toEqual({ files: [], failedTestCount: 0 })
+    expect(parseFailedFiles("{", "/repo", "vitest")).toEqual({ files: [], failedTestCount: 0 })
+  })
+})
+
+describe("Playwright の JSON を直接読む", () => {
+  const json = JSON.stringify({
+    config: { projects: [{ testDir: "/repo/test/e2e" }] },
+    stats: { expected: 2, unexpected: 1, flaky: 0, skipped: 1 },
+    suites: [
+      {
+        title: "a.test.ts",
+        file: "a.test.ts",
+        specs: [{ title: "直下", tests: [{ status: "expected" }] }],
+        suites: [
+          {
+            title: "外",
+            specs: [{ title: "飛ばす", tests: [{ status: "skipped" }] }],
+            suites: [
+              {
+                title: "内",
+                specs: [
+                  { title: "通る", tests: [{ status: "expected" }] },
+                  { title: "落ちる", tests: [{ status: "unexpected" }] },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  })
+
+  test("入れ子の題を空白でつなぎ、落ちたテストと通ったテストを `<ファイル> > <題>` にする", () => {
+    expect(parseFailedTests(json, "/repo", "playwright")).toEqual([
+      "test/e2e/a.test.ts > 外 内 落ちる",
+    ])
+    expect(parsePassedTests(json, "/repo", "playwright")).toEqual([
+      "test/e2e/a.test.ts > 直下",
+      "test/e2e/a.test.ts > 外 内 通る",
+    ])
+  })
+
+  test("落ちたファイルと数を stats から読む", () => {
+    expect(parseFailedFiles(json, "/repo", "playwright")).toEqual({
+      files: ["test/e2e/a.test.ts"],
+      failedTestCount: 1,
+    })
+  })
+
+  test("選ばれた総数は stats の合計、vitest は numTotalTests", () => {
+    expect(parseSelectedTestCount(json, "playwright")).toBe(4)
+    expect(parseSelectedTestCount(JSON.stringify({ numTotalTests: 7 }), "vitest")).toBe(7)
+  })
+
+  test("読めない・形が違う JSON は空と undefined", () => {
+    expect(parseFailedTests("{", "/repo", "playwright")).toEqual([])
+    expect(parseFailedFiles("{}", "/repo", "playwright")).toEqual({ files: [], failedTestCount: 0 })
+    expect(parseSelectedTestCount("not json", "playwright")).toBeUndefined()
+    expect(parseSelectedTestCount("{}", "vitest")).toBeUndefined()
   })
 })

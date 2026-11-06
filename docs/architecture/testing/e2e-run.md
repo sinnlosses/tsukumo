@@ -16,8 +16,8 @@
   （`channel: "chrome"`）は使わない。起こすたびにデータ保護キーチェーンへ鍵（`com.google.Chrome.unexportable-keys`）を
   2〜5件足し、複数の tsukumo が回すと secd が高負荷になる**。**新しい外部コマンドは足さない**
 - **入口 `scripts/dev/e2e.ts` は組み立てのあと `playwright test` を起こす。**
-  `check` が渡す引数（`--bail`・`--maxWorkers`・`--reporter`・`--outputFile.json`）は入口が Playwright の旗に写し（知らない旗は終了コード 2）、
-  Playwright の JSON を vitest の JSON の形に畳んで同じパスへ書くので（`scripts/dev/lib/e2e-argument.ts`・`e2e-report.ts`）、`check` と `tw verify` の読み方は変わらない。
+  `check` は E2E の段に Playwright 本来の旗（`--workers`・`--max-failures`・`--reporter=list,json`）を渡し、JSON の出力先は環境変数 `PLAYWRIGHT_JSON_OUTPUT_FILE` で渡す。
+  入口は引数を Playwright へそのまま渡し、`scripts/dev/lib/check-failure.ts` が Playwright の JSON（`suites`・`stats`）を直接読む。
   `playwright.config.ts` は選び方の足場の根（`HARNESS_ROOTS`）に入っているため、変えると `check` の E2E は全件になる
 - **置き場所は `test/e2e/<シナリオ>.test.ts`**（1ファイル = 1つの機能のまとまり。E2E は1つのファイルの
   振る舞いではないので、`src/` の写しの構成には従わない）
@@ -36,7 +36,7 @@
   引数なしの `check` が選ぶ少数の E2E は排他制御を占有しない。
   **並べた段のどれかが落ちたら、まだ走っている段へ `SIGTERM` を送って止める**（自分が起こした子の pid だけ。
   落ちると分かっている段の待ちを延ばさないため。最後の行に「落ちた段」と「止めた段」を分けて出す）。
-  **E2E の段には `--bail=3` を付ける**（揺れる E2E が整理されるまでの値）。撮り直し（`test:e2e:update`）には付けない。
+  **E2E の段には `--max-failures=3` を付ける**（揺れる E2E が整理されるまでの値）。撮り直し（`test:e2e:update`）には付けない。
   **ファイルを渡さない `pnpm run test:e2e` は全件なので、環境変数 `TSUKUMO_E2E_FULL=1` が無ければ終了コード 2 で止める**
   （入口は `scripts/dev/e2e.ts`。`check` と `test:e2e:update` が立てて通す。1本だけ流すときは
   `pnpm run test:e2e test/e2e/<ファイル>.test.ts` と書き、`--` を前に置かない。置くと絞り込みが効かず全件になる）。
@@ -50,7 +50,7 @@
   環境変数やグローバルを書き換えるテストは、自分で戻す。
   **`check` は重い段を起こす前に、共有の git dir の `check-running/` へ自分の pid の印を置き
   （`scripts/dev/lib/check-running.ts`。終了・`SIGTERM`・`SIGINT` で消し、死んだ pid の印は数えるときに消す）、
-  走っている検証の本数で worker の予算を割って、単体と E2E の段に `--maxWorkers=<n>` を同じ数ずつ渡す**
+  走っている検証の本数で worker の予算を割って、単体に `--maxWorkers=<n>`、E2E に `--workers=<n>` を同じ数ずつ渡す**
   （`scripts/dev/lib/worker-budget.ts`。予算は 1 本のときの合計 `2 × max(1, round(コア数 × 0.40))`（`maxWorkers: "40%"` が 1 本のときに配る数と同じ。10 コアで 8）、
   環境変数 `TSUKUMO_CHECK_WORKER_BUDGET`（正の整数。例: `TSUKUMO_CHECK_WORKER_BUDGET=4 pnpm run check`）で上書きして下げられる。1 本あたりは `floor(予算 / 本数 / 2)`、最小 1。
   並列は止めない。途中から増えた検証は、その時点の本数で自分の分を決め、走っている検証の worker は変えない。
@@ -82,12 +82,12 @@
     **E2E のファイルを足したら表に足す**（載っていないと単体テストが落ちる）
   - 期待値を撮り直す `pnpm run test:e2e:update` も既定は同じ選び方で、`--full` で全件、ファイルを渡せばそのファイルだけ
 - **同じ木で `pnpm run check` を打ち直すと（`--full` も）、前回通った段を1回だけ飛ばし、E2E は前回落ちたファイルだけを流す**
-  （控えはリポジトリの根の `.check-record.json`。鍵は作業ツリーの木と段の引数で、飛ばした次の回は流す。`--bail=3` が発火した回は、打ち切られたファイルも「通った」と記録されるので絞らない）
+  （控えはリポジトリの根の `.check-record.json`。鍵は作業ツリーの木と段の引数で、飛ばした次の回は流す。`--max-failures=3` が発火した回は、打ち切られたファイルも「通った」と記録されるので絞らない）
 - **flaky の台帳**: 同じ木の打ち直しで、前回落ちたテストが今回通ると、リポジトリの根の `flaky-ledger.jsonl`
   （`.gitignore` 対象、追記のみ）に1件1行の JSON `{at, tree, stage, test}` で足す。`test` は `<ファイル> > <テスト名>`。
   数えるには `jq -r .test flaky-ledger.jsonl | sort | uniq -c | sort -rn | head`。台帳に載ることは「打ち直したら通った」であって
   成功ではなく、同じテストが繰り返し載るなら直す候補
-- **bail の印**: `--bail=3` が発火した回は、`STAGE` 行の次に `STAGE<TAB>test:e2e<TAB>bailed` の行を出す（全件は見ていない印）。
+- **bail の印**: `--max-failures=3` が発火した回は、`STAGE` 行の次に `STAGE<TAB>test:e2e<TAB>bailed` の行を出す（全件は見ていない印）。
   `tw verify` の読み手は4値以外の行を読み飛ばすので、段の値は変わらない
 - **ファイル単位の `pnpm run test:e2e <ファイル>` は、組み立てのあとに `tsc --noEmit` を通す**
   （E2E の本体は実ブラウザの中で動くので、型の誤りは実行時に現れず、`tw verify` の型検査まで見つからない。
@@ -153,7 +153,7 @@ Apple M4（10 コア）、ほかのセッションの負荷あり（1 分の平�
 
 E2E 全件（37 ファイル・87 テスト、2 回とも全件通過）を 2 回続けて測った。
 Apple M4（10 コア）。測る前に共有の git dir の `e2e-full-lock` を `mkdir` で占有し（`check --full` と同じ排他）、`check-running/` が空で 1 分の平均負荷が 6 未満になるのを待ってから打ち、終わるたびに解放した。
-条件は `TSUKUMO_E2E_FULL=1 pnpm run test:e2e`（`check` 経由でなく、`--bail` なし）で、`workers: "40%"`。壁時計は組み立て（`pnpm run build`）を含む。
+条件は `TSUKUMO_E2E_FULL=1 pnpm run test:e2e`（`check` 経由でなく、`--max-failures` なし）で、`workers: "40%"`。壁時計は組み立て（`pnpm run build`）を含む。
 
 | 回  | 壁時計 | Playwright の表示の所要 | 開始前の 1 分の平均負荷 | 終了直後の 1 分の平均負荷 |
 | --- | ------ | ----------------------- | ----------------------- | ------------------------- |

@@ -24,11 +24,11 @@ describe("judgeE2eFull", () => {
 
   test(".test.ts のファイルを渡した実行は通す", () => {
     expect(judgeE2eFull(["test/e2e/a.test.ts"], undefined).kind).toBe("pass")
-    expect(judgeE2eFull(["test/e2e/a.test.ts", "--bail=3"], undefined).kind).toBe("pass")
+    expect(judgeE2eFull(["test/e2e/a.test.ts", "--max-failures=3"], undefined).kind).toBe("pass")
   })
 
   test("ファイルが無くてもフラグだけの引数は止める", () => {
-    expect(judgeE2eFull(["--bail=3"], undefined).kind).toBe("deny")
+    expect(judgeE2eFull(["--max-failures=3"], undefined).kind).toBe("deny")
   })
 
   test("TSUKUMO_E2E_FULL=1 なら全件でも通す。1以外は通さない", () => {

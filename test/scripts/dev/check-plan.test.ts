@@ -51,8 +51,11 @@ describe("isDocumentOnlyChange", () => {
 
 describe("E2E の bail", () => {
   test("check の E2E の段は bail を持ち、渡したファイルを前に置く", () => {
-    expect(e2eStage([]).args).toEqual(["--bail=3"])
-    expect(e2eStage(["test/e2e/a.test.ts"]).args).toEqual(["test/e2e/a.test.ts", "--bail=3"])
+    expect(e2eStage([]).args).toEqual(["--max-failures=3"])
+    expect(e2eStage(["test/e2e/a.test.ts"]).args).toEqual([
+      "test/e2e/a.test.ts",
+      "--max-failures=3",
+    ])
   })
 })
 

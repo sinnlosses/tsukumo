@@ -5,7 +5,6 @@ import { describe, expect, test } from "vitest"
 import { e2eStage, FULL_STAGE_NAMES, planStages } from "../../../../scripts/dev/lib/check-stage.ts"
 import {
   formatStageLines,
-  parseSelectedTestCount,
   ranStageVerdict,
   type RanStage,
   withDroppedStages,
@@ -127,18 +126,5 @@ describe("formatStageLines", () => {
         ["test:e2e"],
       ),
     ).toEqual(["STAGE\ttest\tpass", "STAGE\ttest:e2e\tfail", "STAGE\ttest:e2e\tbailed"])
-  })
-})
-
-describe("parseSelectedTestCount", () => {
-  test("numTotalTests を返す", () => {
-    expect(parseSelectedTestCount(JSON.stringify({ numTotalTests: 0 }))).toBe(0)
-    expect(parseSelectedTestCount(JSON.stringify({ numTotalTests: 7 }))).toBe(7)
-  })
-
-  test("読めない・形が違う JSON は undefined", () => {
-    expect(parseSelectedTestCount("not json")).toBeUndefined()
-    expect(parseSelectedTestCount("null")).toBeUndefined()
-    expect(parseSelectedTestCount("{}")).toBeUndefined()
   })
 })

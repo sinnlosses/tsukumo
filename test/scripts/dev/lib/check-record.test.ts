@@ -110,7 +110,7 @@ describe("planRerun と nextRecord", () => {
     ])
     const second = planRerun(STAGES, first, TREE)
     expect(runStages(second)).toEqual([
-      { name: "test:e2e", args: ["test/e2e/b.test.ts", "--bail=3"], heavy: true },
+      { name: "test:e2e", args: ["test/e2e/b.test.ts", "--max-failures=3"], heavy: true },
     ])
     expect(second.notices).toEqual([
       "同じ木で前回通った段を飛ばす（次の回は流す）: typecheck, lint, format:check, test",

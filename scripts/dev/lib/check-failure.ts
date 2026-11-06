@@ -1,6 +1,6 @@
 // `pnpm run check` の重い段の結果から、落ちた段と落ちたテストを名指しする行を組み立てる。
 
-import { relative } from "node:path"
+import { relative, resolve } from "node:path"
 
 import { isPlainObject } from "remeda"
 
@@ -13,6 +13,16 @@ export type StageOutcome = {
   readonly failedTests: readonly string[]
   /** 別の段が落ちたため、走っている途中で止めた段。 */
   readonly stopped: boolean
+}
+
+/** JSON レポートを書いたランナー。単体の段は vitest、E2E の段は Playwright。 */
+export type TestRunner = "vitest" | "playwright"
+
+export type FailedFiles = {
+  /** 落ちたファイルのルートからの相対パス。 */
+  readonly files: readonly string[]
+  /** 落ちたテストの数。`--max-failures` が発火したかをこの数で見る。 */
+  readonly failedTestCount: number
 }
 
 /**
@@ -43,81 +53,185 @@ export function describeFailedStages(outcomes: readonly StageOutcome[]): readonl
 }
 
 /**
- * vitest の JSON レポーターの出力から、落ちたテストを `<ルートからの相対ファイル> > <テスト名>` の列にする。
+ * JSON レポートから、落ちたテストを `<ルートからの相対ファイル> > <テスト名>` の列にする。
  * 落ちたファイルに落ちたテストが無いとき（読み込みの失敗など）はファイル名だけの1行。
  * 読めない・形が違う JSON は空の列。
  */
-export function parseFailedTests(json: string, root: string): readonly string[] {
-  const report = parseJson(json)
-  if (!isPlainObject(report) || !Array.isArray(report.testResults)) {
-    return []
+export function parseFailedTests(
+  json: string,
+  root: string,
+  runner: TestRunner,
+): readonly string[] {
+  return readReport(json, root, runner)
+    .files.filter((file) => file.failed)
+    .flatMap((file) => {
+      const titles = file.tests.filter((test) => test.status === "failed")
+      return titles.length === 0
+        ? [file.path]
+        : titles.map((test) => `${file.path} > ${test.title}`)
+    })
+}
+
+/**
+ * JSON レポートから、通ったテストを `parseFailedTests` と同じ
+ * `<ルートからの相対ファイル> > <テスト名>` の列にする。読めない・形が違う JSON は空の列。
+ */
+export function parsePassedTests(
+  json: string,
+  root: string,
+  runner: TestRunner,
+): readonly string[] {
+  return readReport(json, root, runner).files.flatMap((file) =>
+    file.tests
+      .filter((test) => test.status === "passed")
+      .map((test) => `${file.path} > ${test.title}`),
+  )
+}
+
+/**
+ * JSON レポートから、落ちたファイルと落ちたテストの数を読む。
+ * 打ち切られたファイルは落ちたファイルには入らない。
+ * 読めない・形が違う JSON は空の列と 0。
+ */
+export function parseFailedFiles(json: string, root: string, runner: TestRunner): FailedFiles {
+  const report = readReport(json, root, runner)
+  return {
+    files: report.files.filter((file) => file.failed).map((file) => file.path),
+    failedTestCount: report.failedTestCount,
   }
-  return report.testResults.flatMap((file: unknown): readonly string[] => {
-    if (!isPlainObject(file) || file.status !== "failed" || typeof file.name !== "string") {
+}
+
+/**
+ * JSON レポートから、選ばれたテストの総数を読む。
+ * 読めない・形が違う JSON は `undefined`。
+ */
+export function parseSelectedTestCount(json: string, runner: TestRunner): number | undefined {
+  const report = parseJson(json)
+  if (!isPlainObject(report)) {
+    return undefined
+  }
+  if (runner === "vitest") {
+    return typeof report.numTotalTests === "number" ? report.numTotalTests : undefined
+  }
+  const stats = report.stats
+  if (!isPlainObject(stats)) {
+    return undefined
+  }
+  const counts = [stats.expected, stats.unexpected, stats.flaky, stats.skipped]
+  return counts.every((count) => typeof count === "number")
+    ? counts.reduce((sum: number, count) => sum + Number(count), 0)
+    : undefined
+}
+
+type ReadTest = { readonly title: string; readonly status: "passed" | "failed" | "other" }
+
+type ReadFile = {
+  readonly path: string
+  readonly failed: boolean
+  readonly tests: readonly ReadTest[]
+}
+
+type ReadReport = { readonly files: readonly ReadFile[]; readonly failedTestCount: number }
+
+const EMPTY_REPORT = { files: [], failedTestCount: 0 } as const satisfies ReadReport
+
+/** 読めない・形が違う JSON は空のレポート。 */
+function readReport(json: string, root: string, runner: TestRunner): ReadReport {
+  const report = parseJson(json)
+  if (!isPlainObject(report)) {
+    return EMPTY_REPORT
+  }
+  return runner === "vitest" ? readVitest(report, root) : readPlaywright(report, root)
+}
+
+function readVitest(report: Record<string, unknown>, root: string): ReadReport {
+  if (!Array.isArray(report.testResults)) {
+    return EMPTY_REPORT
+  }
+  const files = report.testResults.flatMap((file: unknown): readonly ReadFile[] => {
+    if (!isPlainObject(file) || typeof file.name !== "string") {
       return []
     }
-    const path = relative(root, file.name)
-    const titles = Array.isArray(file.assertionResults)
-      ? file.assertionResults.flatMap((test: unknown): readonly string[] =>
-          isPlainObject(test) && test.status === "failed" && typeof test.fullName === "string"
-            ? [test.fullName]
+    const tests = Array.isArray(file.assertionResults)
+      ? file.assertionResults.flatMap((test: unknown): readonly ReadTest[] =>
+          isPlainObject(test) && typeof test.fullName === "string"
+            ? [{ title: test.fullName, status: vitestStatus(test.status) }]
             : [],
         )
       : []
-    return titles.length === 0 ? [path] : titles.map((title) => `${path} > ${title}`)
+    return [{ path: relative(root, file.name), failed: file.status === "failed", tests }]
   })
-}
-
-/**
- * vitest の JSON レポーターの出力から、通ったテストを `parseFailedTests` と同じ
- * `<ルートからの相対ファイル> > <テスト名>` の列にする。読めない・形が違う JSON は空の列。
- */
-export function parsePassedTests(json: string, root: string): readonly string[] {
-  const report = parseJson(json)
-  if (!isPlainObject(report) || !Array.isArray(report.testResults)) {
-    return []
-  }
-  return report.testResults.flatMap((file: unknown): readonly string[] => {
-    if (
-      !isPlainObject(file) ||
-      typeof file.name !== "string" ||
-      !Array.isArray(file.assertionResults)
-    ) {
-      return []
-    }
-    const path = relative(root, file.name)
-    return file.assertionResults.flatMap((test: unknown): readonly string[] =>
-      isPlainObject(test) && test.status === "passed" && typeof test.fullName === "string"
-        ? [`${path} > ${test.fullName}`]
-        : [],
-    )
-  })
-}
-
-export type FailedFiles = {
-  /** 落ちたファイルのルートからの相対パス。 */
-  readonly files: readonly string[]
-  /** レポートの `numFailedTests`。`--bail` が発火したかをこの数で見る。 */
-  readonly failedTestCount: number
-}
-
-/**
- * vitest の JSON レポーターの出力から、落ちたファイルと落ちたテストの数を読む。
- * bail で打ち切られたファイルは `passed` と書かれるので、落ちたファイルには入らない。
- * 読めない・形が違う JSON は空の列と 0。
- */
-export function parseFailedFiles(json: string, root: string): FailedFiles {
-  const report = parseJson(json)
-  if (!isPlainObject(report) || !Array.isArray(report.testResults)) {
-    return { files: [], failedTestCount: 0 }
-  }
-  const files = report.testResults.flatMap((file: unknown): readonly string[] =>
-    isPlainObject(file) && file.status === "failed" && typeof file.name === "string"
-      ? [relative(root, file.name)]
-      : [],
-  )
   const failedTestCount = typeof report.numFailedTests === "number" ? report.numFailedTests : 0
   return { files, failedTestCount }
+}
+
+function vitestStatus(status: unknown): ReadTest["status"] {
+  return status === "passed" || status === "failed" ? status : "other"
+}
+
+function readPlaywright(report: Record<string, unknown>, root: string): ReadReport {
+  if (!Array.isArray(report.suites)) {
+    return EMPTY_REPORT
+  }
+  const testDir = testDirectoryOf(report)
+  const files = report.suites.flatMap((suite: unknown): readonly ReadFile[] => {
+    if (!isPlainObject(suite) || typeof suite.file !== "string") {
+      return []
+    }
+    const tests = collectTests(suite, [])
+    return [
+      {
+        path: relative(root, resolve(testDir, suite.file)),
+        failed: tests.some((test) => test.status === "failed"),
+        tests,
+      },
+    ]
+  })
+  const stats = isPlainObject(report.stats) ? report.stats : {}
+  const failedTestCount = typeof stats.unexpected === "number" ? stats.unexpected : 0
+  return { files, failedTestCount }
+}
+
+/** `describe` の題を空白でつないだ題にする（ファイルの層の題は含めない）。 */
+function collectTests(
+  suite: Record<string, unknown>,
+  titles: readonly string[],
+): readonly ReadTest[] {
+  const specs = Array.isArray(suite.specs) ? suite.specs : []
+  const children = Array.isArray(suite.suites) ? suite.suites : []
+  return [
+    ...specs.flatMap((spec: unknown): readonly ReadTest[] =>
+      isPlainObject(spec) && typeof spec.title === "string"
+        ? [{ title: [...titles, spec.title].join(" "), status: playwrightStatus(spec) }]
+        : [],
+    ),
+    ...children.flatMap((child: unknown): readonly ReadTest[] =>
+      isPlainObject(child) && typeof child.title === "string"
+        ? collectTests(child, [...titles, child.title])
+        : [],
+    ),
+  ]
+}
+
+function playwrightStatus(spec: Record<string, unknown>): ReadTest["status"] {
+  const tests = Array.isArray(spec.tests) ? spec.tests : []
+  const statuses = tests.map((test: unknown) => (isPlainObject(test) ? test.status : undefined))
+  if (statuses.includes("unexpected")) {
+    return "failed"
+  }
+  return statuses.length > 0 && statuses.every((status) => status === "skipped")
+    ? "other"
+    : "passed"
+}
+
+/** Playwright の `file` は `testDir` からの相対。 */
+function testDirectoryOf(report: Record<string, unknown>): string {
+  const config = isPlainObject(report.config) ? report.config : {}
+  const project = Array.isArray(config.projects) ? config.projects[0] : undefined
+  if (isPlainObject(project) && typeof project.testDir === "string") {
+    return project.testDir
+  }
+  return typeof config.rootDir === "string" ? config.rootDir : ""
 }
 
 /** 止められた段は数えない。 */

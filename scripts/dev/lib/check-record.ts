@@ -63,7 +63,7 @@ export type StageRunResult = {
 /** 同じ木で前回落ちて今回通ったテスト。台帳の1行になる。 */
 export type FlakyTest = { readonly stage: string; readonly test: string }
 
-/** `--bail` が発火した回は、全件を見ていない。 */
+/** `--max-failures` が発火した回は、全件を見ていない。 */
 export function isBailed(result: Pick<StageRunResult, "name" | "failed">): boolean {
   return result.name === "test:e2e" && result.failed.failedTestCount >= E2E_BAIL_COUNT
 }
