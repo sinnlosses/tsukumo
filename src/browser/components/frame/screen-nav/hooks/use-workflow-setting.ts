@@ -140,7 +140,10 @@ type SetFailure =
 
 type FieldWrite = { readonly key: string; readonly value: string }
 
-type SaveOutcome = { readonly kind: "saved" } | Extract<WorkflowSettingChange, { kind: "failed" }>
+type SaveOutcome =
+  | { readonly kind: "saved" }
+  | { readonly kind: "unsent" }
+  | Extract<WorkflowSettingChange, { kind: "failed" }>
 
 const UNREACHABLE_MESSAGE = "ワークフローの設定を読めなかった（サーバに届かない）。"
 const SEND_FAILED_MESSAGE = "書けなかった（サーバに届かない）。"
@@ -158,7 +161,11 @@ export function useWorkflowSetting(): ScreenNavWorkflowSetting {
   const mutation = useMutation({
     mutationFn: async (writes: readonly FieldWrite[]): Promise<SaveOutcome> => {
       for (const write of writes) {
-        const result = await dispatchAwaited.workflowSetting.set(write)
+        const sent = await dispatchAwaited((client) => client.workflowSetting.set(write))
+        if (sent.kind !== "ok") {
+          return { kind: "unsent" }
+        }
+        const result = sent.value
         if (result.kind === "failed") {
           return result
         }
@@ -166,20 +173,21 @@ export function useWorkflowSetting(): ScreenNavWorkflowSetting {
       }
       return { kind: "saved" }
     },
-    onSuccess: (result) => {
+    onSuccess: (result, writes) => {
       if (result.kind === "failed") {
         setFailure({ kind: "shown", key: result.key, message: result.message })
+        return
+      }
+      if (result.kind === "unsent") {
+        const key = writes[0]?.key
+        if (key !== undefined) {
+          setFailure({ kind: "shown", key, message: SEND_FAILED_MESSAGE })
+        }
         return
       }
       setDrafts(new Map())
       setTextDrafts(new Map())
       setFailure({ kind: "none" })
-    },
-    onError: (_error, writes) => {
-      const key = writes[0]?.key
-      if (key !== undefined) {
-        setFailure({ kind: "shown", key, message: SEND_FAILED_MESSAGE })
-      }
     },
   })
 

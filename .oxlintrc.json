@@ -165,6 +165,11 @@
               {
                 "name": "@anthropic-ai/claude-agent-sdk",
                 "message": "SDK を import するのは機能の adapter/ 直下（または adapter/sdk/）と共有の箱 server/adapter/ 直下の sdk- で始まるファイルだけ（docs/architecture/code-placement.md）"
+              },
+              {
+                "name": "@orpc/client",
+                "importNames": ["ORPCError"],
+                "message": "コマンドの失敗は browser/stores/session.ts の dispatchAwaited が kind に畳んで返す。ORPCError を読むのはそこだけ（docs/coding-standards/error-input-and-absent-value.md「失敗を返す戻り値」）"
               }
             ],
             "patterns": [
@@ -183,20 +188,7 @@
                 "message": "~/.tsukumo の下の置き場は tsukumoHomePath(キー) で引く。ホームの根を直に読まない"
               },
               {
-                "group": [
-                  "node:http",
-                  "http",
-                  "node:https",
-                  "https",
-                  "node:http2",
-                  "http2",
-                  "node:net",
-                  "net",
-                  "node:tls",
-                  "tls",
-                  "node:dgram",
-                  "dgram"
-                ],
+                "group": ["{node:,}{http,https,http2,net,tls,dgram}"],
                 "allowTypeImports": true,
                 "message": "ネットワークのモジュールを読み込むのは server/view-server/adapter/server.ts だけ"
               }
@@ -219,6 +211,35 @@
           {
             "paths": [
               { "name": "react", "importNames": ["useMemo", "useCallback", "memo"] },
+              { "name": "@anthropic-ai/claude-agent-sdk" },
+              { "name": "@orpc/client", "importNames": ["ORPCError"] }
+            ],
+            "patterns": [
+              { "group": ["node:process", "process"], "importNames": ["env", "cwd"] },
+              { "group": ["node:os", "os"] },
+              { "group": ["**/tsukumo-home.ts"], "importNames": ["tsukumoHomeDir"] },
+              {
+                "group": ["{node:,}{http,https,http2,net,tls,dgram}"],
+                "allowTypeImports": true
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      // ORPCError を許す（コマンドの失敗を kind に畳む1か所）。`src/**` のブロックから ORPCError の項だけ引く
+      "files": ["src/browser/stores/session.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              { "name": "react", "importNames": ["useMemo", "useCallback", "memo"] },
+              {
+                "name": "react",
+                "importNames": ["useEffect", "useLayoutEffect", "useInsertionEffect"]
+              },
               { "name": "@anthropic-ai/claude-agent-sdk" }
             ],
             "patterns": [
@@ -226,20 +247,7 @@
               { "group": ["node:os", "os"] },
               { "group": ["**/tsukumo-home.ts"], "importNames": ["tsukumoHomeDir"] },
               {
-                "group": [
-                  "node:http",
-                  "http",
-                  "node:https",
-                  "https",
-                  "node:http2",
-                  "http2",
-                  "node:net",
-                  "net",
-                  "node:tls",
-                  "tls",
-                  "node:dgram",
-                  "dgram"
-                ],
+                "group": ["{node:,}{http,https,http2,net,tls,dgram}"],
                 "allowTypeImports": true
               }
             ]
@@ -270,20 +278,7 @@
             "patterns": [
               { "group": ["node:process", "process"], "importNames": ["cwd"] },
               {
-                "group": [
-                  "node:http",
-                  "http",
-                  "node:https",
-                  "https",
-                  "node:http2",
-                  "http2",
-                  "node:net",
-                  "net",
-                  "node:tls",
-                  "tls",
-                  "node:dgram",
-                  "dgram"
-                ],
+                "group": ["{node:,}{http,https,http2,net,tls,dgram}"],
                 "allowTypeImports": true
               }
             ]
@@ -309,20 +304,7 @@
               { "group": ["node:os", "os"] },
               { "group": ["**/tsukumo-home.ts"], "importNames": ["tsukumoHomeDir"] },
               {
-                "group": [
-                  "node:http",
-                  "http",
-                  "node:https",
-                  "https",
-                  "node:http2",
-                  "http2",
-                  "node:net",
-                  "net",
-                  "node:tls",
-                  "tls",
-                  "node:dgram",
-                  "dgram"
-                ],
+                "group": ["{node:,}{http,https,http2,net,tls,dgram}"],
                 "allowTypeImports": true
               }
             ]
@@ -373,20 +355,7 @@
               { "group": ["node:os", "os"] },
               { "group": ["**/tsukumo-home.ts"], "importNames": ["tsukumoHomeDir"] },
               {
-                "group": [
-                  "node:http",
-                  "http",
-                  "node:https",
-                  "https",
-                  "node:http2",
-                  "http2",
-                  "node:net",
-                  "net",
-                  "node:tls",
-                  "tls",
-                  "node:dgram",
-                  "dgram"
-                ],
+                "group": ["{node:,}{http,https,http2,net,tls,dgram}"],
                 "allowTypeImports": true
               }
             ]

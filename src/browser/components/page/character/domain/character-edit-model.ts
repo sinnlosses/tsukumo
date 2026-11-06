@@ -31,6 +31,8 @@ export type CharacterProfileModel = {
   readonly editPersona: CharacterPersonaEditModel
 }
 
+export type PersonaSubmitResult = { readonly kind: "saved" } | { readonly kind: "kept" }
+
 /**
  * ペルソナを変えるダイアログの下書きの種。
  * 空文字も渡す（本文を空にする）。`## 覚えたこと` の節は画面に出さず、書く側が残す。
@@ -40,8 +42,8 @@ export type CharacterPersonaEditModel =
   | {
       readonly kind: "shown"
       readonly persona: string
-      /** サーバが書き終えて一覧を流し直すまで解決しない。断られたら reject する。 */
-      readonly onSubmit: (persona: string) => Promise<unknown>
+      /** サーバが書き終えて一覧を流し直すまで解決しない。断られたら `kept`（ダイアログは開いたまま）。 */
+      readonly onSubmit: (persona: string) => Promise<PersonaSubmitResult>
     }
 
 /**

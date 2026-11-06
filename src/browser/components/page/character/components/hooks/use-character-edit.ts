@@ -19,6 +19,7 @@ import type { AccentTarget } from "../../../../../../shared/character-pack/chara
 import type { CharacterPackName } from "../../../../../../shared/character-pack/character-pack-name.ts"
 import { resolveExpressionLabel } from "../../../../../../shared/character-pack/expression-choice.ts"
 import type { Expression } from "../../../../../../shared/character-pack/expression.ts"
+import type { CommandClient } from "../../../../../../shared/rpc.ts"
 import { readAccentColor } from "../../../../../stores/appearance-color-root.ts"
 import { useRestartRefused, useSession } from "../../../../../stores/session.ts"
 import type { AccentSwatchModel } from "../../domain/accent-swatch-model.ts"
@@ -70,19 +71,28 @@ export function useCharacterEdit(): CharacterEditModel {
   const heldScreen = screenAccent.heldOf(pack)
 
   const disabled = !character.editable
-  const sendImage = (target: ImageTarget, send: () => Promise<unknown>): void => {
+  const sendImageAndWait = async (
+    target: ImageTarget,
+    send: (client: CommandClient) => Promise<unknown>,
+  ): Promise<void> => {
     setRejected({ kind: "none" })
-    void send().catch(() => {
-      // 拒まれたことは画面の拒否の表示にする
+    const result = await dispatchAwaited(send)
+    if (result.kind !== "ok") {
       setRejected({ kind: "rejected", pack, target })
-    })
+    }
+  }
+  const sendImage = (
+    target: ImageTarget,
+    send: (client: CommandClient) => Promise<unknown>,
+  ): void => {
+    void sendImageAndWait(target, send)
   }
   const rejectedTarget = rejectedTargetIn(rejected, pack)
 
   const cards = portraitCards(character, {
     pick: (expression, image) => {
-      sendImage({ kind: "portrait", expression }, () =>
-        dispatchAwaited.characterPack.setPortrait({ pack, expression, image }),
+      sendImage({ kind: "portrait", expression }, (client) =>
+        client.characterPack.setPortrait({ pack, expression, image }),
       )
     },
     clear: (expression) => {
@@ -135,7 +145,7 @@ export function useCharacterEdit(): CharacterEditModel {
         : { kind: "none" },
     onPick: (input) => {
       void readPicked(input, (image) => {
-        sendImage({ kind: "face" }, () => dispatchAwaited.characterPack.setFace({ pack, image }))
+        sendImage({ kind: "face" }, (client) => client.characterPack.setFace({ pack, image }))
       })
     },
     onClear: () => {
@@ -159,7 +169,7 @@ export function useCharacterEdit(): CharacterEditModel {
         : { kind: "none" },
     onPick: (input) => {
       void readPicked(input, (image) => {
-        sendImage({ kind: "mini" }, () => dispatchAwaited.characterPack.setMini({ pack, image }))
+        sendImage({ kind: "mini" }, (client) => client.characterPack.setMini({ pack, image }))
       })
     },
     onClear: () => {
@@ -182,8 +192,8 @@ export function useCharacterEdit(): CharacterEditModel {
         : { kind: "none" },
     onPick: (input) => {
       void readPicked(input, (image) => {
-        sendImage({ kind: "background" }, () =>
-          dispatchAwaited.characterPack.setBackground({ pack, image }),
+        sendImage({ kind: "background" }, (client) =>
+          client.characterPack.setBackground({ pack, image }),
         )
       })
     },
@@ -233,7 +243,12 @@ export function useCharacterEdit(): CharacterEditModel {
       : {
           kind: "shown",
           persona: selected.personaBody,
-          onSubmit: (persona) => dispatchAwaited.characterPack.setPersona({ pack, persona }),
+          onSubmit: async (persona) => {
+            const result = await dispatchAwaited((client) =>
+              client.characterPack.setPersona({ pack, persona }),
+            )
+            return result.kind === "ok" ? { kind: "saved" } : { kind: "kept" }
+          },
         },
   }
 

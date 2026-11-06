@@ -6,7 +6,7 @@ import { createORPCClient, ORPCError } from "@orpc/client"
 import { isPlainObject } from "remeda"
 import { create } from "zustand"
 
-import type { CommandRefusalReason } from "../../shared/command.ts"
+import { type CommandRefusalReason, isCommandRefusalReason } from "../../shared/command.ts"
 import { PROTOCOL_VERSION, type ServerFrame } from "../../shared/frame.ts"
 import type { CommandClient } from "../../shared/rpc.ts"
 import type { StampedEvent } from "../../shared/session/session-event.ts"
@@ -35,10 +35,20 @@ import { rpc } from "./rpc.ts"
 export type SessionDispatch = CommandClient
 
 /**
- * 手続きの結果を待つ呼び出し専用の送り口。型は {@link SessionDispatch} と同じ。
- * 断られたとき（契約の `REFUSED`）・接続が切れたとき・繋がっていないときは握りつぶさず reject する。
+ * 手続きの結果を待つ呼び出しの結果。例外にせず `kind` で返す。
+ * `invalid` は契約の `REFUSED`（理由つき）、`failed` は接続が切れた・繋がっていない・そのほかの失敗。
  */
-type AwaitedDispatch = CommandClient
+export type CommandResult<T> =
+  | { readonly kind: "ok"; readonly value: T }
+  | { readonly kind: "invalid"; readonly reason: CommandRefusalReason }
+  | { readonly kind: "failed" }
+
+/**
+ * 手続きの結果を待つ呼び出し専用の送り口。`call` に渡る client は {@link SessionDispatch} と同じ型で、
+ * `await dispatchAwaited((client) => client.session.switchSession({ sessionId }))` のように呼ぶ。
+ * 投げず、断られたこと・切れたことも {@link CommandResult} で返す。
+ */
+type AwaitedDispatch = <T>(call: (client: CommandClient) => Promise<T>) => Promise<CommandResult<T>>
 
 /** コマンドの送り先。`connectSessionSocket` の接続がそのまま満たす（閉じるのは store の関心ではない）。 */
 type CommandSocket = {
@@ -75,6 +85,13 @@ type SessionStoreState = {
 export const useSession = create<SessionStoreState>()((set, get) => {
   // 繋ぎ直しで入れ替わるが、`dispatch` の参照は変えたくないので閉包に持つ。
   let socket: CommandSocket | undefined = undefined
+  // 断られた・切れたときに投げる client。`dispatchAwaited` が結果に畳む。
+  const awaitedClient: CommandClient = createORPCClient({
+    call: (path, input, options) =>
+      socket === undefined
+        ? Promise.reject(new Error("サーバに繋がっていない"))
+        : socket.commandLink.call(path, input, options),
+  })
   return {
     state: INITIAL_SESSION_STATE,
     connection: "connecting",
@@ -89,12 +106,13 @@ export const useSession = create<SessionStoreState>()((set, get) => {
           () => undefined,
         ),
     }),
-    dispatchAwaited: createORPCClient({
-      call: (path, input, options) =>
-        socket === undefined
-          ? Promise.reject(new Error("サーバに繋がっていない"))
-          : socket.commandLink.call(path, input, options),
-    }),
+    dispatchAwaited: async (call) => {
+      try {
+        return { kind: "ok", value: await call(awaitedClient) }
+      } catch (error) {
+        return resultOfFailure(error)
+      }
+    },
     receive: (frame) => {
       const current = get()
       if (frame.type === "hello" && frame.protocolVersion !== PROTOCOL_VERSION) {
@@ -185,14 +203,16 @@ export function useSessionConnection(): void {
   })
 }
 
-/** `dispatchAwaited` の失敗が、その理由で断られたもの（契約の `REFUSED`）か。 */
-export function isRefusedFor(error: unknown, reason: CommandRefusalReason): boolean {
-  return (
+function resultOfFailure(error: unknown): CommandResult<never> {
+  if (
     error instanceof ORPCError &&
     error.code === "REFUSED" &&
     isPlainObject(error.data) &&
-    error.data.reason === reason
-  )
+    isCommandRefusalReason(error.data.reason)
+  ) {
+    return { kind: "invalid", reason: error.data.reason }
+  }
+  return { kind: "failed" }
 }
 
 type FrameBatch = {

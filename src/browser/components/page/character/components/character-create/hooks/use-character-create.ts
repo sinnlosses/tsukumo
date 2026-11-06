@@ -178,14 +178,10 @@ export function useCharacterCreate(open: boolean, onClose: () => void): Characte
       return undefined
     }
     setGenerationStage("write")
-    try {
-      return await dispatchAwaited.characterPack.generateFromPortrait({
-        portrait,
-      })
-    } catch {
-      // 生成の失敗は undefined で返し、呼び出し側が失敗の表示にする
-      return undefined
-    }
+    const result = await dispatchAwaited((client) =>
+      client.characterPack.generateFromPortrait({ portrait }),
+    )
+    return result.kind === "ok" ? result.value : undefined
   }
 
   async function create(): Promise<void> {
@@ -194,17 +190,17 @@ export function useCharacterCreate(open: boolean, onClose: () => void): Characte
     }
 
     setSubmit({ kind: "sending" })
-    try {
-      await dispatchAwaited.characterPack.create({
+    const created = await dispatchAwaited((client) =>
+      client.characterPack.create({
         id,
         name,
         portraits: { default: portraitImage },
         accent,
         chatAccent,
         persona,
-      })
-    } catch {
-      // 作成の失敗は画面の失敗の表示にする
+      }),
+    )
+    if (created.kind !== "ok") {
       setSubmit({ kind: "failed" })
       return
     }

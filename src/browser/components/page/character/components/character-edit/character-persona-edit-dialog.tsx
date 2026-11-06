@@ -13,6 +13,7 @@ import { Heading } from "../../../../ui/heading/heading.tsx"
 import { TextField } from "../../../../ui/text-field/text-field.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import styles from "../../character.module.css"
+import type { PersonaSubmitResult } from "../../domain/character-edit-model.ts"
 
 const PERSONA_HINT =
   "口調や性格を書く。保存した人格が効くのは次に起こすセッションから。雑談で覚えたことはここには出ない"
@@ -21,7 +22,7 @@ type CharacterPersonaEditDialogProps = {
   /** 開いた時点の本文。 */
   readonly persona: string
   /** 「保存する」を押したとき。返りを待ち、書き終えてから閉じる（断られたら開いたまま）。 */
-  readonly onSubmit: (persona: string) => Promise<unknown>
+  readonly onSubmit: (persona: string) => Promise<PersonaSubmitResult>
   /** 「やめる」・Esc・外側のクリックのいずれでも呼ばれる。 */
   readonly onClose: () => void
 }
@@ -29,13 +30,15 @@ type CharacterPersonaEditDialogProps = {
 export function CharacterPersonaEditDialog(props: CharacterPersonaEditDialogProps): ReactElement {
   const [persona, setPersona] = useState(props.persona)
 
+  async function save(): Promise<void> {
+    const result = await props.onSubmit(persona)
+    if (result.kind === "saved") {
+      props.onClose()
+    }
+  }
+
   function submit(): void {
-    void props
-      .onSubmit(persona)
-      .then(props.onClose)
-      .catch(() => {
-        // 拒まれたら閉じずに開いたままにする（失敗の表示は呼び出し側の onSubmit が持つ）
-      })
+    void save()
   }
 
   return (

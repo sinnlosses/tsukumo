@@ -11,7 +11,7 @@ import { FRAME_ERROR_REASON } from "./frame-error-reason.ts"
 /** 断るときに返す定型文（`FRAME_ERROR_REASON` の値のどれか）。 */
 export type CommandRefusalReason = (typeof FRAME_ERROR_REASON)[keyof typeof FRAME_ERROR_REASON]
 
-function isCommandRefusalReason(value: unknown): value is CommandRefusalReason {
+export function isCommandRefusalReason(value: unknown): value is CommandRefusalReason {
   return Object.values(FRAME_ERROR_REASON).some((reason) => reason === value)
 }
 

@@ -1,17 +1,47 @@
 import { ORPCError } from "@orpc/client"
-import { describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it } from "vitest"
 
-import { isRefusedFor } from "../../../src/browser/stores/session.ts"
+import { useSession } from "../../../src/browser/stores/session.ts"
 import { FRAME_ERROR_REASON } from "../../../src/shared/frame-error-reason.ts"
 
-describe("isRefusedFor", () => {
-  const refused = new ORPCError("REFUSED", {
-    data: { reason: FRAME_ERROR_REASON.sessionOccupied },
+afterEach(() => {
+  useSession.getState().attachSocket(undefined)
+})
+
+describe("dispatchAwaited", () => {
+  function attach(call: () => Promise<unknown>): void {
+    useSession.getState().attachSocket({ commandLink: { call } })
+  }
+
+  it("成功は ok と手続きの戻り値で返る", async () => {
+    attach(() => Promise.resolve({ ok: true }))
+
+    const result = await useSession
+      .getState()
+      .dispatchAwaited((client) => client.session.switchSession({ sessionId: "架空" }))
+
+    expect(result.kind).toBe("ok")
   })
 
-  it("同じ理由で断られたときだけ真", () => {
-    expect(isRefusedFor(refused, FRAME_ERROR_REASON.sessionOccupied)).toBe(true)
-    expect(isRefusedFor(refused, FRAME_ERROR_REASON.sessionEnded)).toBe(false)
-    expect(isRefusedFor(new Error("REFUSED"), FRAME_ERROR_REASON.sessionOccupied)).toBe(false)
+  it("契約の REFUSED は invalid と理由で返り、投げない", async () => {
+    attach(() =>
+      Promise.reject(
+        new ORPCError("REFUSED", { data: { reason: FRAME_ERROR_REASON.sessionOccupied } }),
+      ),
+    )
+
+    const result = await useSession
+      .getState()
+      .dispatchAwaited((client) => client.session.switchSession({ sessionId: "架空" }))
+
+    expect(result).toEqual({ kind: "invalid", reason: FRAME_ERROR_REASON.sessionOccupied })
+  })
+
+  it("繋がっていないときは failed で返り、投げない", async () => {
+    const result = await useSession
+      .getState()
+      .dispatchAwaited((client) => client.session.switchSession({ sessionId: "架空" }))
+
+    expect(result).toEqual({ kind: "failed" })
   })
 })

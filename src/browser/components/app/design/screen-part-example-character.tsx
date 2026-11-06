@@ -60,7 +60,11 @@ const EDIT: CharacterEditModel = {
     note: { kind: "none" },
     switchTo: { kind: "hidden" },
     editProfile: { kind: "shown", name: "さくら", tagline: "のんびり屋の相棒", onSubmit: noop },
-    editPersona: { kind: "shown", persona: "穏やかに話す。", onSubmit: () => Promise.resolve() },
+    editPersona: {
+      kind: "shown",
+      persona: "穏やかに話す。",
+      onSubmit: () => Promise.resolve({ kind: "saved" }),
+    },
   },
   disabled: false,
   cards: [

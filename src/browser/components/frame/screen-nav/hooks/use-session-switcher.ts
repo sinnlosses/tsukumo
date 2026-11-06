@@ -7,7 +7,7 @@ import { FRAME_ERROR_REASON } from "../../../../../shared/frame-error-reason.ts"
 import type { SessionChoice } from "../../../../../shared/session/session-choice.ts"
 import type { SessionId } from "../../../../../shared/session/session-id.ts"
 import { useSessionSwitcherRequest } from "../../../../stores/session-switcher-request.ts"
-import { isRefusedFor, useRestartRefused, useSession } from "../../../../stores/session.ts"
+import { useRestartRefused, useSession } from "../../../../stores/session.ts"
 import {
   clockTime,
   localTimeZoneId,
@@ -97,6 +97,12 @@ export function useSessionSwitcher(room: string, project: string): SessionSwitch
   const open = useSessionSwitcherRequest((state) => state.open)
   const openSwitcher = useSessionSwitcherRequest((state) => state.openSwitcher)
   const openedAt = useSessionSwitcherRequest((state) => state.openedAt)
+  const onSwitchAnswered = async (sessionId: string): Promise<void> => {
+    const result = await dispatchAwaited((client) => client.session.switchSession({ sessionId }))
+    if (result.kind === "invalid" && result.reason === FRAME_ERROR_REASON.sessionOccupied) {
+      openSwitcher(nowEpochMilliseconds())
+    }
+  }
   const onOpen = (): void => {
     openSwitcher(nowEpochMilliseconds())
   }
@@ -156,11 +162,7 @@ export function useSessionSwitcher(room: string, project: string): SessionSwitch
         }
         // 開いたあとで別のウィンドウが開いたセッションは、サーバが起こす直前に断る。
         // 開き直すと使用中を聞き直すので、その行が使用中で出る。ほかの失敗は画面に出さない。
-        dispatchAwaited.session.switchSession({ sessionId }).catch((error: unknown) => {
-          if (isRefusedFor(error, FRAME_ERROR_REASON.sessionOccupied)) {
-            openSwitcher(nowEpochMilliseconds())
-          }
-        })
+        void onSwitchAnswered(sessionId)
       },
       onStartNew: () => {
         if (restartRefused) {

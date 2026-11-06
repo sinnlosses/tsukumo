@@ -34,6 +34,11 @@ export function useItemEdit(): ItemSectionModel | undefined {
     return undefined
   }
 
+  const addItem = async (name: string, image: string): Promise<void> => {
+    const result = await dispatchAwaited((client) => client.item.add({ name, image }))
+    setAdding(result.kind === "ok" ? { kind: "closed" } : { kind: "open", rejected: true })
+  }
+
   const pack = selected.character.pack
   const seatMap = itemSeats[pack]
 
@@ -48,15 +53,7 @@ export function useItemEdit(): ItemSectionModel | undefined {
           onSubmit: (name, file) => {
             setAdding({ kind: "open", rejected: false })
             void readFile(file, (image) => {
-              dispatchAwaited.item
-                .add({ name, image })
-                .then(() => {
-                  setAdding({ kind: "closed" })
-                })
-                .catch(() => {
-                  // 拒まれたことは画面の拒否の表示にする
-                  setAdding({ kind: "open", rejected: true })
-                })
+              void addItem(name, image)
             })
           },
           onClose: () => {
