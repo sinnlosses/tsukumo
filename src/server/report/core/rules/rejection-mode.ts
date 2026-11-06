@@ -23,6 +23,7 @@ export const REPORT_REJECTION_MODES = {
   "finished-but-stopped": "reject",
   "finished-with-ng": "reject",
   "background-running": "reject",
+  "unrun-check-command": "count",
   "long-conclusion": "reject",
   "unknown-mermaid": "reject",
   "too-many-notes": "reject",

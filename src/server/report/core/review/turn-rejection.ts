@@ -9,4 +9,5 @@ export type TurnRejection =
   | "closing"
   | "finished-with-ng"
   | "background-running"
+  | "unrun-check-command"
   | "a2ui-structure"

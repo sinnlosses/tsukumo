@@ -36,18 +36,21 @@ import type {
   ReportArgumentChars,
   ReportArgumentField,
 } from "../../../../shared/report/report-argument-size.ts"
+import type { ReportCheck } from "../../../../shared/report/report-check.ts"
 import type { ToolErrorField } from "../../../../shared/report/tool-error-field.ts"
 import type {
   ReportCalledEvent,
   SessionEvent,
   SessionEventOfKind,
 } from "../../../../shared/session/session-event.ts"
+import { bashCommandOf } from "../../../../shared/session/turn-step.ts"
 import type { WorkPlanStanding } from "../../../../shared/session/work-plan.ts"
 import type { ReportDraft } from "../rules/draft.ts"
 import {
   REPORT_FINISHED_WITH_NG_REJECTION_TEXT,
   REPORT_NOTHING_NEW_REJECTION_TEXT,
   REPORT_RESEND_REJECTION_TEXT,
+  REPORT_UNRUN_CHECK_COMMAND_REJECTION_TEXT,
   REPORT_UNANSWERED_WORK_PLAN_REJECTION_TEXT,
   reportBackgroundRunningRejectionText,
 } from "../rules/procedure-rejection.ts"
@@ -107,6 +110,8 @@ export function createReportReview(
   let drawn: readonly ReportCalledEvent[] = []
   // 補足メッセージ（`aside`）で始まったターンか。ターンの頭の `session-info` は補足メッセージのターンの頭にも届くので、そこでは戻さない。
   let asideTurn = false
+  // このターンにメインが打った Bash のコマンド（`checks` の `command` との突き合わせにだけ使う）。
+  let bashCommandsInTurn: readonly string[] = []
 
   /** `isError` で返った呼び出しの記録。判定の差し戻しなら理由の名前、判定まで届かなかった呼び出しは `tool-error`。 */
   const rejectionOf = (
@@ -125,6 +130,7 @@ export function createReportReview(
   const startTurn = (): void => {
     rejectedInTurn = new Set()
     drawn = []
+    bashCommandsInTurn = []
   }
 
   const markRejected = (rejection: TurnRejection): void => {
@@ -206,6 +212,16 @@ export function createReportReview(
       if (backgroundRunning.kind === "rejected") {
         return backgroundRunning
       }
+      const unrunCheck = report.checks.some((check) => isUnrunOkCheck(check, bashCommandsInTurn))
+        ? settle(
+            "unrun-check-command",
+            "unrun-check-command",
+            REPORT_UNRUN_CHECK_COMMAND_REJECTION_TEXT,
+          )
+        : accepted
+      if (unrunCheck.kind === "rejected") {
+        return unrunCheck
+      }
       const violations = reportViolations(report)
       const rejecting = violations.filter((violation) => modes[violation.kind] === "reject")
       counted = [
@@ -286,6 +302,11 @@ export function createReportReview(
           news.markDrawn()
           return [kept, event, ...closingSpeech(kept), ...countedRecord(kept, counted)]
         }
+        case "tool-started":
+          if (event.name === "Bash") {
+            bashCommandsInTurn = [...bashCommandsInTurn, bashCommandOf(event.input)]
+          }
+          return [event]
         case "request":
         case "turn-started":
           asideTurn = false
@@ -314,6 +335,12 @@ export function createReportReview(
   }
 
   return review
+}
+
+function isUnrunOkCheck(check: ReportCheck, bashCommands: readonly string[]): boolean {
+  return (
+    check.status === "ok" && check.command.trim() !== "" && !bashCommands.includes(check.command)
+  )
 }
 
 function hasNgCheck(report: ReportDraft): boolean {

@@ -16,6 +16,7 @@ export const REPORT_PROCEDURE_REJECTIONS = [
   "finished-but-stopped",
   "finished-with-ng",
   "background-running",
+  "unrun-check-command",
 ] as const satisfies readonly string[]
 
 export type ProcedureRejection = (typeof REPORT_PROCEDURE_REJECTIONS)[number]
@@ -66,6 +67,13 @@ export const REPORT_FINISHED_BUT_STOPPED_REJECTION_TEXT =
 export const REPORT_FINISHED_WITH_NG_REJECTION_TEXT =
   "`task.outcome` が `finished` なのに、`checks` に `ng` の行がある。" +
   "落ちた確認を直して `ok` にしてから `finished` で呼び直すか、直せないなら outcome を `stopped` か `awaiting-answer` にして呼び直すこと。" +
+  REPORT_CHANGED_FIELDS_ONLY_TEXT +
+  "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。"
+
+/** `checks` の `ok` の行の `command` が、このターンに打った Bash に無い `report` を差し戻すときの戻り値。 */
+export const REPORT_UNRUN_CHECK_COMMAND_REJECTION_TEXT =
+  "`checks` の `ok` の行の `command` に、このターンに打っていないコマンドがある。" +
+  "打ったコマンドを打った文字列のまま書くか、コマンドでない確認なら `command` を空文字にして呼び直すこと。" +
   REPORT_CHANGED_FIELDS_ONLY_TEXT +
   "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。"
 
