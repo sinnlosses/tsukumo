@@ -88,13 +88,13 @@ describe("characterChangedEvent", () => {
     })
   })
 
-  it("定義が無くても、立ち絵なしの形で流せる", () => {
+  it("定義が無くても、立ち絵なしでパック名を名前にして流せる", () => {
     const pack = readPackAt(dir())
     const event = characterChangedEvent(pack, [], dir())
 
     expect(event).toMatchObject({
       kind: "character-changed",
-      name: undefined,
+      name: basename(dir()),
       expressions: [{ name: "default", label: "default" }],
     })
   })
@@ -201,7 +201,7 @@ describe("characterChangedEvent の一覧（packs）", () => {
         editable: true,
         removal: "delete",
       },
-      // 起動先の characters/local は画面から変えられない（ホームに書いても次の起動で負ける）。
+      // 起動先の characters/local は画面から変えられない。
       {
         name: "local",
         label: "架空の同居人",
@@ -228,7 +228,7 @@ describe("characterChangedEvent の一覧（packs）", () => {
         : undefined,
     ).toEqual([
       { name: "spirit", inUse: false, removal: "revert-to-bundled" },
-      // 使用中を押せなくするのは画面（inUse を見る）。消すと何が起きるかは使用中でも同じ。
+      // 使用中を押せなくするのは画面。消すと何が起きるかは使用中でも同じ。
       { name: "from-screen", inUse: true, removal: "delete" },
       { name: "local", inUse: false, removal: "none" },
     ])

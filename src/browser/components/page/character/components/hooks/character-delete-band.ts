@@ -19,7 +19,7 @@ export function deleteBandOf(
   dispatch: SessionDispatch,
 ): CharacterDeleteBandModel {
   const copy = DELETE_COPY[removal]
-  const name = character.name ?? character.pack
+  const name = character.name
   return {
     kind: "shown",
     pack: character.pack,

@@ -203,8 +203,7 @@
 | `browser/domain/character-face.ts`                                                           | `characterFaceInfo`            | 引数       | 11  | R4   |
 | `browser/domain/effort-label.ts`                                                             | `resolveEffortSelect`          | 引数       | 77  | R4   |
 | `browser/domain/portrait-appearance.ts`                                                      | `portraitAppearance`           | 引数       | 20  | R4   |
-| `shared/character-pack/character.ts`                                                         | `shownCharacterPackName`       | 引数       | 142 | R4   |
-| `shared/character-pack/character.ts`                                                         | `effectiveAccent`              | 引数       | 196 | R4   |
+| `shared/character-pack/character.ts`                                                         | `effectiveAccent`              | 引数       | 174 | R4   |
 | `shared/character-pack/expression-choice.ts`                                                 | `expressionChoices`            | 引数       | 21  | R2   |
 | `shared/session/work-plan.ts`                                                                | `settleDelegatedRange`         | 引数       | 309 | R4   |
 | `current-character.ts`                                                                       | `serveAsset`                   | 引数       | 89  | R2   |
@@ -400,6 +399,14 @@
 | ------------------------------------ | ------------------- | ------ | --- | --- | ---------- | -------------- |
 | `shared/character-pack/character.ts` | `backgroundWithUrl` | 引数   | 1   | 207 | 入口で畳む | 1              |
 | `shared/character-pack/character.ts` | `portraitUrls`      | 引数   | 1   | 220 | 入口で畳む | 1              |
+
+`CharacterInfo` の既定値を持つ欄の仕分け（`toCharacterInfo` で畳むか）。
+
+| 欄       | 読み手の場所                                                                                  | 無いときの既定                                         | 畳めるか | 理由                                                                                                                        |
+| -------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------ | -------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `name`   | `use-character-edit.ts`・`character-delete-band.ts`・`mini-portrait.tsx`                      | `pack`                                                 | 畳んだ   | 落とし先を `pack`（一覧の `label` と同じ落とし先）に決められた。`toCharacterInfo` で `string` にし、読み手の補いを消した    |
+| `name`   | `portrait-appearance.ts`・`use-current-work.ts`・`use-achievement.ts`・`diary-writer.ts` ほか | `DEFAULT_CHARACTER_NAME`（`character` 自体が無いとき） | 残る     | 定義が届く前は `character` が無く畳み先が無い（R4）。`character` が有る名前の無いパックは `pack` の名前に変わる             |
+| `accent` | `use-character-edit.ts`（`accentFallback`）・`use-pack-appearance.ts`                         | CSS の `--accent`                                      | 畳めない | 落とし先は CSS の `--accent` で、色をコードに書かない規約により畳み先が無い。無いことが `--accent` を外す意味を持つ（本物） |
 
 ### `src/browser/features`（消せる 4 件）
 

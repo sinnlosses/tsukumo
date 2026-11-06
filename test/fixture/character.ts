@@ -45,6 +45,7 @@ export function characterInfo(overrides: Partial<CharacterInfo> = {}): Character
   return {
     pack: characterPackName("fictional"),
     name: "架空の精霊",
+    definedName: "架空の精霊",
     accent: undefined,
     chatAccent: undefined,
     expressions: [{ name: "default", label: "通常" }],

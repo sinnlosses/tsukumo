@@ -63,7 +63,7 @@ export function MiniPortrait(props: MiniPortraitProps): ReactElement | undefined
 
   // 読み上げ上もキャラビューの立ち絵と見分けが付くようにする（同じ姿がもう1体居るため）。
   const call = character.miniCall ?? MINI_CALL_FALLBACK
-  const altText = character.name === undefined ? call : `${character.name}の${call}`
+  const altText = `${character.name}の${call}`
 
   return (
     // 本文の末尾に敷く床。書き終わって本文の下へ降りた立ち絵の立つ場所。

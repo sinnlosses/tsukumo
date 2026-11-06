@@ -180,7 +180,7 @@ describe("toCharacterInfo", () => {
     })
 
     expect(info.pack).toBe("fictional")
-    expect(info.name).toBeUndefined()
+    expect(info.name).toBe("fictional")
     expect(info.accent).toBeUndefined()
     expect(info.expressions).toEqual([{ name: "default", label: "default" }])
     expect(info.portraits).toBeUndefined()

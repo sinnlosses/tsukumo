@@ -21,7 +21,10 @@ export type CharacterInfo = {
    * `session.switchCharacter` の鍵で、素材の URL の `<pack>` の区間もこれ。
    */
   readonly pack: CharacterPackName
-  readonly name?: string
+  /** 画面に出す名前。定義に `name` が無いパックでは {@link pack} に落として持つ。 */
+  readonly name: string
+  /** 定義の `name` そのまま。無いパックでは持たない。名前を編集する種にはこちらを使い、補った {@link name} を書き戻さない。 */
+  readonly definedName?: string
   /** {@link CharacterDefinition.accent} をそのまま持つ。ブラウザ側は `--accent` に流す。 */
   readonly accent?: string
   /** {@link CharacterDefinition.chatAccent} をそのまま持つ。雑談中だけ `--accent` に流す（{@link effectiveAccent}）。 */
@@ -143,7 +146,8 @@ export function toCharacterInfo(source: CharacterInfoSource): CharacterInfo {
   const portraits = definition === undefined ? undefined : portraitUrls(definition, assetUrl)
   return {
     pack: source.pack,
-    name: definition?.name,
+    name: definition?.name ?? source.pack,
+    definedName: definition?.name,
     accent: definition?.accent,
     chatAccent: definition?.chatAccent,
     expressions: expressionChoices(definition),

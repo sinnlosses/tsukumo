@@ -198,7 +198,7 @@ export function useCharacterEdit(): CharacterEditModel {
       : deleteBandOf(selected.removal, character, selected.inUse, dispatch)
 
   const profile: CharacterProfileModel = {
-    name: character.name ?? pack,
+    name: character.name,
     id: pack,
     face:
       character.face === undefined ? { kind: "absent" } : { kind: "shown", url: character.face },
@@ -222,7 +222,7 @@ export function useCharacterEdit(): CharacterEditModel {
       ? { kind: "hidden" }
       : {
           kind: "shown",
-          name: character.name ?? "",
+          name: character.definedName ?? "",
           tagline: character.tagline ?? "",
           onSubmit: (name, tagline) => {
             dispatch.characterPack.setProfile({ pack, name, tagline })
