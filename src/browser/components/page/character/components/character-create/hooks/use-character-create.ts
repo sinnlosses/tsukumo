@@ -57,6 +57,11 @@ type CreateIdNoteModel =
   | { readonly kind: "hint"; readonly text: string }
   | { readonly kind: "invalid" | "taken" | "failed"; readonly text: string }
 
+type SubmitState =
+  | { readonly kind: "idle" }
+  | { readonly kind: "sending" }
+  | { readonly kind: "failed" }
+
 type GenerationStage = (typeof GENERATION_STAGES)[number]["stage"]
 
 /** 生成中の段の並び。済んだ段・いまの段・まだの段を `state` で言う。 */
@@ -117,8 +122,12 @@ export function useCharacterCreate(open: boolean, onClose: () => void): Characte
   const [chatAccent, setChatAccent] = useState(readAccentColor)
   const [persona, setPersona] = useState("")
   const [portraitTooLarge, setPortraitTooLarge] = useState(false)
-  const [sending, setSending] = useState(false)
-  const [failed, setFailed] = useState(false)
+  const [submit, setSubmit] = useState<SubmitState>({ kind: "idle" })
+  const sending = submit.kind === "sending"
+  const failed = submit.kind === "failed"
+  const clearFailed = (): void => {
+    setSubmit((current) => (current.kind === "failed" ? { kind: "idle" } : current))
+  }
   const [generationStage, setGenerationStage] = useState<GenerationStage | undefined>(undefined)
   const generating = generationStage !== undefined
   const [generationFailed, setGenerationFailed] = useState(false)
@@ -158,7 +167,7 @@ export function useCharacterCreate(open: boolean, onClose: () => void): Characte
     setAccent(generated.accent)
     setChatAccent(generated.chatAccent)
     setPersona(generated.persona)
-    setFailed(false)
+    clearFailed()
   }
 
   /** 立ち絵を送って生成した欄の値を受け取る。直せない・断られた・切れたときは undefined。 */
@@ -183,8 +192,7 @@ export function useCharacterCreate(open: boolean, onClose: () => void): Characte
       return
     }
 
-    setSending(true)
-    setFailed(false)
+    setSubmit({ kind: "sending" })
     try {
       await dispatchAwaited.characterPack.create({
         id,
@@ -196,8 +204,7 @@ export function useCharacterCreate(open: boolean, onClose: () => void): Characte
       })
     } catch {
       // 作成の失敗は画面の失敗の表示にする
-      setFailed(true)
-      setSending(false)
+      setSubmit({ kind: "failed" })
       return
     }
     selectPack(id)
@@ -221,7 +228,7 @@ export function useCharacterCreate(open: boolean, onClose: () => void): Characte
       id,
       onIdChange: (next) => {
         setId(next)
-        setFailed(false)
+        clearFailed()
       },
       idNote,
       portrait: {

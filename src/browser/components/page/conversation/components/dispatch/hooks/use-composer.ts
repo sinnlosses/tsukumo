@@ -20,18 +20,14 @@ import type { PromptRouting } from "../../../../../../../shared/contract/session
 import { FRAME_ERROR_REASON } from "../../../../../../../shared/frame-error-reason.ts"
 import type { SessionId } from "../../../../../../../shared/session/session-id.ts"
 import { useDebouncedCallback } from "../../../../../../hooks/use-debounced-callback.ts"
-import { useExternalSync } from "../../../../../../hooks/use-external-sync.ts"
 import { usePhoneWidth } from "../../../../../../hooks/use-phone-width.ts"
 import { useInquiryJump } from "../../../../../../stores/inquiry-jump.ts"
 import { useRestartRefused, useSession, useTurnRunning } from "../../../../../../stores/session.ts"
+import { clearSessionDraft, saveSessionDraft } from "../../../domain/composer-draft-storage.ts"
 import { isClearWithArgs } from "../../../domain/slash-clear.ts"
+import "../../../stores/composer-draft-session.ts"
 import { EMPTY_DRAFT, useComposerDraft, type Draft } from "../../../stores/composer-draft.ts"
 import { useInquiryAnswer } from "../../../stores/inquiry-answer.ts"
-import {
-  clearSessionDraft,
-  draftOnSessionChange,
-  saveSessionDraft,
-} from "../domain/composer-draft-storage.ts"
 import { loadComposerMode, saveComposerMode, type ComposerMode } from "../domain/composer-mode.ts"
 import type { ComposerKey, ComposerSurface } from "../domain/composer-surface.ts"
 import { blurOnEscape, useComposerFocusTiming } from "./use-composer-focus.ts"
@@ -131,21 +127,6 @@ export function useComposer(): ComposerModel {
   const saveDraftLater = useDebouncedCallback((id: SessionId, stopped: Draft) => {
     saveSessionDraft(id, stopped)
   }, DRAFT_SAVE_DELAY_MS)
-
-  const shownSessionId = useRef<SessionId | undefined>(undefined)
-  // sessionId は React の外（フレームの受信）で変わり、差し替え先は zustand の下書きと localStorage。
-  // `key` で作り直しても zustand の下書きは残り、描画中に store を書くと他部品の描画中の更新になるので同期として書く。
-  useExternalSync(() => {
-    const previous = shownSessionId.current
-    if (sessionId === previous) {
-      return
-    }
-    shownSessionId.current = sessionId
-    const shown = draftOnSessionChange(previous, sessionId, useComposerDraft.getState().draft)
-    if (shown !== undefined) {
-      replaceDraft(shown)
-    }
-  }, [sessionId, replaceDraft])
 
   const suggestion = useSuggestion({
     draft,

@@ -6,9 +6,9 @@
 
 import { z } from "zod"
 
-import { isSessionId, type SessionId } from "../../../../../../../shared/session/session-id.ts"
-import { localPreference } from "../../../../../../utils/local-preference.ts"
-import { EMPTY_DRAFT, type Draft } from "../../../stores/composer-draft.ts"
+import { isSessionId, type SessionId } from "../../../../../shared/session/session-id.ts"
+import { localPreference } from "../../../../utils/local-preference.ts"
+import { EMPTY_DRAFT, type Draft } from "../stores/composer-draft.ts"
 
 const MAX_DRAFT_SESSIONS = 10
 

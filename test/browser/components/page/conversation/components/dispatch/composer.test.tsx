@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { Composer } from "../../../../../../../src/browser/components/page/conversation/components/dispatch/composer.tsx"
-import { saveSessionDraft } from "../../../../../../../src/browser/components/page/conversation/components/dispatch/domain/composer-draft-storage.ts"
+import { saveSessionDraft } from "../../../../../../../src/browser/components/page/conversation/domain/composer-draft-storage.ts"
 import { useComposerDraft } from "../../../../../../../src/browser/components/page/conversation/stores/composer-draft.ts"
 import { useInquiryDraft } from "../../../../../../../src/browser/components/page/conversation/stores/inquiry-draft.ts"
 import { useInquiryJump } from "../../../../../../../src/browser/stores/inquiry-jump.ts"

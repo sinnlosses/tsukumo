@@ -1,12 +1,12 @@
 import { act, cleanup, renderHook } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
+import type { ComposerKey } from "../../../../../../../../src/browser/components/page/conversation/components/dispatch/domain/composer-surface.ts"
+import { useComposer } from "../../../../../../../../src/browser/components/page/conversation/components/dispatch/hooks/use-composer.ts"
 import {
   draftOnSessionChange,
   saveSessionDraft,
-} from "../../../../../../../../src/browser/components/page/conversation/components/dispatch/domain/composer-draft-storage.ts"
-import type { ComposerKey } from "../../../../../../../../src/browser/components/page/conversation/components/dispatch/domain/composer-surface.ts"
-import { useComposer } from "../../../../../../../../src/browser/components/page/conversation/components/dispatch/hooks/use-composer.ts"
+} from "../../../../../../../../src/browser/components/page/conversation/domain/composer-draft-storage.ts"
 import {
   EMPTY_DRAFT,
   useComposerDraft,

@@ -12,6 +12,8 @@ import type { TaskBoardFilter } from "../domain/task-board-view.ts"
 
 /** 検索の文字・絞り込みのバッジ・選んでいる行と、詳細を押して切り替えた回数。閉じると `focusSignal` 以外を初めに戻す。 */
 type BoardState = {
+  /** 直近に受けた呼び出し側の頼み。props が差し替わったかを、描画中に `===` で見るために持つ。 */
+  readonly request: TaskBoardRequest
   readonly query: string
   readonly filter: TaskBoardFilter
   readonly chosen: ChosenRow
@@ -54,6 +56,7 @@ type BoardAction =
 
 export function initialBoardState(request: TaskBoardRequest): BoardState {
   return {
+    request,
     query: "",
     filter: "all",
     chosen: chosenOnOpen(request),
@@ -66,9 +69,10 @@ export function initialBoardState(request: TaskBoardRequest): BoardState {
 export function boardReducer(state: BoardState, action: BoardAction): BoardState {
   switch (action.kind) {
     case "open":
-      return { ...state, chosen: chosenOnOpen(action.request) }
+      return { ...state, request: action.request, chosen: chosenOnOpen(action.request) }
     case "close":
       return {
+        request: state.request,
         query: "",
         filter: "all",
         chosen: { kind: "first" },

@@ -32,9 +32,7 @@ export function useTaskBoard(
 ): TaskBoardView {
   const open = request.kind === "open"
   const [state, send] = useReducer(boardReducer, request, initialBoardState)
-  const [requestShown, setRequestShown] = useState(request)
-  if (request !== requestShown) {
-    setRequestShown(request)
+  if (request !== state.request) {
     send({ kind: "open", request })
   }
   const [confirming, setConfirming] = useState<TaskRunTarget | undefined>(undefined)

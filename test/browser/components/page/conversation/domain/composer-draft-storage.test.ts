@@ -4,13 +4,13 @@ import {
   clearSessionDraft,
   draftOnSessionChange,
   saveSessionDraft,
-} from "../../../../../../../../src/browser/components/page/conversation/components/dispatch/domain/composer-draft-storage.ts"
+} from "../../../../../../src/browser/components/page/conversation/domain/composer-draft-storage.ts"
 import {
   EMPTY_DRAFT,
   type Draft,
-} from "../../../../../../../../src/browser/components/page/conversation/stores/composer-draft.ts"
-import type { SessionId } from "../../../../../../../../src/shared/session/session-id.ts"
-import { checkedSessionId } from "../../../../../../../fixture/session-id.ts"
+} from "../../../../../../src/browser/components/page/conversation/stores/composer-draft.ts"
+import type { SessionId } from "../../../../../../src/shared/session/session-id.ts"
+import { checkedSessionId } from "../../../../../fixture/session-id.ts"
 
 const STORAGE_KEY = "tsukumo-composer-draft:v1"
 
