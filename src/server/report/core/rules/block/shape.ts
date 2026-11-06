@@ -182,15 +182,21 @@ export function isRaggedChart(leaf: ReportOutlineLeaf): boolean {
   )
 }
 
+const ANNOTATABLE_CHART_KINDS: readonly string[] = ["line", "bar", "share", "arrow"]
+
 /**
- * 基準線・注記を line 以外に付けた、または注記の系列名が series に無いか位置が labels の外の Chart か。
+ * 基準線を line 以外に付けた、注記を line・bar・share・arrow 以外に付けた、
+ * または注記の系列名が series（share は先頭だけ）に無いか位置が labels の外の Chart か。
  */
 export function hasBadChartAnnotation(leaf: ReportOutlineLeaf): boolean {
   if (leaf.component !== "Chart") return false
   const references = leaf.references ?? []
   const annotations = leaf.annotations ?? []
-  if (leaf.chartKind !== "line") return references.length > 0 || annotations.length > 0
-  const seriesNames = leaf.series.map((series) => series.name)
+  if (leaf.chartKind !== "line" && references.length > 0) return true
+  if (!ANNOTATABLE_CHART_KINDS.includes(leaf.chartKind)) return annotations.length > 0
+  const seriesNames = (leaf.chartKind === "share" ? leaf.series.slice(0, 1) : leaf.series).map(
+    (series) => series.name,
+  )
   return annotations.some(
     (annotation) =>
       !seriesNames.includes(annotation.label) || annotation.index >= leaf.labels.length,

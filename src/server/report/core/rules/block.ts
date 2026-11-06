@@ -81,7 +81,7 @@ export type BlockViolation =
   | { readonly kind: "ragged-chart"; readonly count: number }
   /** `emphasis` に `labels` に無い名前がある `chart` の塊がある。`count` は塊の数。 */
   | { readonly kind: "unknown-emphasis"; readonly count: number }
-  /** `references`・`annotations` を `line` 以外に付けた、または `annotations` の `label` が `series` に無いか `index` が `labels` の外の `chart` の塊がある。`count` は塊の数。 */
+  /** `references` を `line` 以外に、`annotations` を `line`・`bar`・`share`・`arrow` 以外に付けた、または `annotations` の `label` が `series` に無いか `index` が `labels` の外の `chart` の塊がある。`count` は塊の数。 */
   | { readonly kind: "chart-annotation-range"; readonly count: number }
   /** `tones` を `share` 以外に付けた、長さが `labels` と違う、または `emphasis` と併せた `chart` の塊がある。`count` は塊の数。 */
   | { readonly kind: "chart-tone-range"; readonly count: number }
@@ -273,7 +273,7 @@ export function blockViolationMessage(violation: BlockViolation): string {
     case "unknown-emphasis":
       return `\`emphasis\` に \`labels\` に無い名前がある \`Chart\` が${violation.count}個ある。\`labels\` にある名前だけにする`
     case "chart-annotation-range":
-      return `\`references\`・\`annotations\` を \`line\` 以外に付けた、または \`annotations\` の \`label\` が \`series\` の \`name\` に無いか \`index\` が \`labels\` の外の \`Chart\` が${violation.count}個ある。\`line\` に付け、\`label\` は \`series\` の \`name\`、\`index\` は \`labels\` の数より小さい位置（0 始まり）にする`
+      return `\`references\` を \`line\` 以外に付けた、\`annotations\` を \`line\`・\`bar\`・\`share\`・\`arrow\` 以外に付けた、または \`annotations\` の \`label\` が \`series\` の \`name\`（\`share\` は先頭の系列だけ）に無いか \`index\` が \`labels\` の外の \`Chart\` が${violation.count}個ある。\`references\` は \`line\` に、\`annotations\` は \`line\`・\`bar\`・\`share\`・\`arrow\` に付け、\`label\` は \`series\` の \`name\`、\`index\` は \`labels\` の数より小さい位置（0 始まり）にする`
     case "chart-tone-range":
       return `\`tones\` を \`share\` 以外に付けた、長さが \`labels\` と違う、または \`emphasis\` と併せた \`Chart\` が${violation.count}個ある。\`tones\` は \`share\` だけに \`labels\` と同じ数で書き、\`emphasis\` は空にする`
     case "short-series":

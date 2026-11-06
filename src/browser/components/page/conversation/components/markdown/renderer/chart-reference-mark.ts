@@ -4,6 +4,7 @@
 import { z } from "zod"
 
 import type { ChartMarks } from "../../../domain/report-diagram-markdown.ts"
+import { directLabelOptionOf } from "./chart-direct-label-option.ts"
 import { LABEL_OFFSET } from "./chart-label-layout.ts"
 import { resolveColor } from "./theme-color.ts"
 
@@ -77,35 +78,128 @@ export function drawReferences(
   ctx.restore()
 }
 
-/**
- * 名指した点に輪の印を付け、注記の字を点の下に書く。
- * 字は、点が描く領域の右半分なら点の左へ、左半分なら右へ伸ばし、下に収まらなければ点の上に書く。
- */
+/** share に注記があるとき、描く領域の上に空けておく高さ（輪の半径＋字の1行）。 */
+export function annotationHeadroom(chart: ChartInstance): number {
+  return chartMarksOf(chart).annotations.length === 0
+    ? 0
+    : RING_RADIUS + NOTE_GAP + NOTE_LINE_HEIGHT
+}
+
+/** 名指した点・棒・部分に輪の印を付け、注記の字を `notePlacesOf` の置き場に書く。 */
 export function drawAnnotations(chart: ChartInstance): void {
-  const { ctx, chartArea } = chart
+  const { ctx } = chart
   const color = resolveColor(chart.canvas, "--state-ng")
-  const middle = (chartArea.left + chartArea.right) / 2
   ctx.save()
   ctx.strokeStyle = color
   ctx.fillStyle = color
   ctx.lineWidth = RING_WIDTH
   chartMarksOf(chart).annotations.forEach(({ series, index, text }) => {
-    const point = chart.getDatasetMeta(series).data[index]
-    if (point === undefined || !chart.isDatasetVisible(series)) {
-      return
-    }
-    ctx.beginPath()
-    ctx.arc(point.x, point.y, RING_RADIUS, 0, Math.PI * 2)
-    ctx.stroke()
-    const toLeft = point.x > middle
-    const below = point.y + NOTE_GAP + NOTE_LINE_HEIGHT <= chartArea.bottom
-    ctx.textAlign = toLeft ? "right" : "left"
-    ctx.textBaseline = below ? "top" : "bottom"
-    ctx.fillText(
-      text,
-      point.x + (toLeft ? -NOTE_GAP : NOTE_GAP),
-      point.y + (below ? NOTE_GAP : -NOTE_GAP),
-    )
+    notePlacesOf(chart, series, index, ctx.measureText(text).width).forEach((place) => {
+      ctx.beginPath()
+      ctx.arc(place.ring.x, place.ring.y, RING_RADIUS, 0, Math.PI * 2)
+      ctx.stroke()
+      ctx.textAlign = place.align
+      ctx.textBaseline = place.baseline
+      ctx.fillText(text, place.text.x, place.text.y)
+    })
   })
   ctx.restore()
+}
+
+type NotePlace = {
+  readonly ring: { readonly x: number; readonly y: number }
+  readonly text: { readonly x: number; readonly y: number }
+  readonly align: CanvasTextAlign
+  readonly baseline: CanvasTextBaseline
+}
+
+/**
+ * 輪と字の置き場所（名指しが外れて描けなければ空）。折れ線は点の下（収まらなければ上）で、点が右半分なら左へ・左半分なら右へ伸ばす。
+ * 縦棒は輪を棒の頭の内側に置いて字を棒の右隣（収まらなければ左隣）へ、横棒は輪を棒の端の内側に置いて字を棒の下の隙間へ、
+ * share は輪を部分の上辺に置いて字をその上へ、arrow は輪を前か後の端に置いて字を線の下へ書く。
+ * 棒の頭・端の外には値の字があるので、輪はそこへ出さない。
+ */
+function notePlacesOf(
+  chart: ChartInstance,
+  series: number,
+  index: number,
+  textWidth: number,
+): readonly NotePlace[] {
+  const { chartArea } = chart
+  const middle = (chartArea.left + chartArea.right) / 2
+  const inset = RING_RADIUS + RING_WIDTH
+  const mode = directLabelOptionOf(chart)?.mode
+  if (mode === "arrow") {
+    const bar = chart.getDatasetMeta(0).data[index]
+    const pair: unknown = chart.data.datasets[0]?.data[index]
+    const pairScale = chart.scales["x"]
+    const value = Array.isArray(pair) ? pair[series] : undefined
+    if (bar === undefined || pairScale === undefined || typeof value !== "number") {
+      return []
+    }
+    return [belowPoint(pairScale.getPixelForValue(value), bar.y, middle, chartArea.bottom)]
+  }
+  const bar = chart.getDatasetMeta(series).data[index]
+  if (bar === undefined || !chart.isDatasetVisible(series)) {
+    return []
+  }
+  if (chart.config.type !== "bar") {
+    return [belowPoint(bar.x, bar.y, middle, chartArea.bottom)]
+  }
+  const horizontal = chart.options.indexAxis === "y"
+  const scale = chart.scales["x"]
+  if (mode === "share" && scale !== undefined) {
+    const before = chart.data.datasets
+      .slice(0, series)
+      .reduce((sum, { data }) => sum + (typeof data[0] === "number" ? data[0] : 0), 0)
+    const center = (scale.getPixelForValue(before) + bar.x) / 2
+    const top = bar.y - bar.height / 2
+    return [
+      {
+        ring: { x: center, y: top },
+        text: {
+          x: Math.min(
+            Math.max(center, chartArea.left + textWidth / 2),
+            chartArea.right - textWidth / 2,
+          ),
+          y: top - RING_RADIUS - 2,
+        },
+        align: "center",
+        baseline: "bottom",
+      },
+    ]
+  }
+  if (horizontal) {
+    return [
+      {
+        ring: { x: bar.x - inset, y: bar.y },
+        text: { x: bar.x, y: bar.y + bar.height / 2 + 2 },
+        align: "right",
+        baseline: "top",
+      },
+    ]
+  }
+  const fitsRight = bar.x + bar.width / 2 + NOTE_GAP + textWidth <= chartArea.right
+  return [
+    {
+      ring: { x: bar.x, y: bar.y + inset },
+      text: {
+        x: bar.x + (fitsRight ? 1 : -1) * (bar.width / 2 + NOTE_GAP),
+        y: bar.y + inset,
+      },
+      align: fitsRight ? "left" : "right",
+      baseline: "middle",
+    },
+  ]
+}
+
+function belowPoint(x: number, y: number, middle: number, bottom: number): NotePlace {
+  const toLeft = x > middle
+  const below = y + NOTE_GAP + NOTE_LINE_HEIGHT <= bottom
+  return {
+    ring: { x, y },
+    text: { x: x + (toLeft ? -NOTE_GAP : NOTE_GAP), y: y + (below ? NOTE_GAP : -NOTE_GAP) },
+    align: toLeft ? "right" : "left",
+    baseline: below ? "top" : "bottom",
+  }
 }

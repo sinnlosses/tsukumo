@@ -77,7 +77,10 @@ type DirectLabelPlugins = {
   }
 }
 
-/** `series` は `datasets` の位置。 */
+/**
+ * `series` は `datasets` の位置。ただし share は部分ごとの dataset の位置（`index` は 0）、
+ * arrow は1本の浮き棒の前（0）か後（1）の端を指す。
+ */
 export type ChartMarks = {
   readonly references: readonly { readonly value: number; readonly label: string }[]
   readonly annotations: readonly {
@@ -129,6 +132,7 @@ export function chartConfigOf(
         plugins: {
           "tsukumo-direct-label": { mode: "share", names: [] },
           ...seriesPluginsOf(block).plugins,
+          ...marksPluginsOf(block).plugins,
         },
       },
     }
@@ -140,7 +144,10 @@ export function chartConfigOf(
       before?.values[index] ?? 0,
       after?.values[index] ?? 0,
     ]
-    const plugins = { "tsukumo-direct-label": { mode: block.chartKind, names } }
+    const plugins = {
+      "tsukumo-direct-label": { mode: block.chartKind, names },
+      ...(block.chartKind === "arrow" ? marksPluginsOf(block).plugins : {}),
+    }
     return block.chartKind === "arrow" || block.chartKind === "span"
       ? {
           type: "bar",
@@ -181,7 +188,7 @@ export function chartConfigOf(
       options: {
         indexAxis: "y",
         scales: { y: { ticks: { autoSkip: false } } },
-        ...seriesPluginsOf(block),
+        ...seriesAndMarksOf(block),
       },
       tsukumo: {
         height: Math.max(
@@ -217,7 +224,11 @@ export function chartConfigOf(
       },
     }
   }
-  return { type: block.chartKind, data, options: { ...seriesPluginsOf(block) } }
+  return {
+    type: block.chartKind,
+    data,
+    options: { ...seriesAndMarksOf(block) },
+  }
 }
 
 type SvgFigure = {
@@ -414,7 +425,15 @@ function marksPluginsOf(
   const references = block.references ?? []
   const annotations = (block.annotations ?? []).flatMap(({ label, index, text }) => {
     const series = block.series.findIndex(({ name }) => name === label)
-    return series < 0 || index >= block.labels.length ? [] : [{ series, index, text }]
+    if (series < 0 || index >= block.labels.length) {
+      return []
+    }
+    switch (block.chartKind) {
+      case "share":
+        return series === 0 ? [{ series: index, index: 0, text }] : []
+      default:
+        return [{ series, index, text }]
+    }
   })
   return references.length === 0 && annotations.length === 0
     ? {}
@@ -444,4 +463,11 @@ function seriesPluginsOf(
         },
       }
     : {}
+}
+
+function seriesAndMarksOf(
+  block: Extract<LeafComponent, { readonly kind: "chart" }>,
+): { readonly plugins: SeriesPlugins & Partial<MarksPlugins> } | Record<string, never> {
+  const plugins = { ...seriesPluginsOf(block).plugins, ...marksPluginsOf(block).plugins }
+  return Object.keys(plugins).length === 0 ? {} : { plugins }
 }

@@ -3,6 +3,7 @@
 // 折れ線の基準線と点の注記も、系列名の札と重ならないよう同じ plugin で描く。
 
 import { SHARE_BAR_THICKNESS } from "../../../domain/report-diagram-markdown.ts"
+import { DIRECT_LABEL_PLUGIN_ID, directLabelOptionOf } from "./chart-direct-label-option.ts"
 import {
   ARROW_HEAD,
   arrowPadding,
@@ -29,10 +30,13 @@ import {
   measuredWidth,
   widestText,
 } from "./chart-line-end.ts"
-import { chartMarksOf, drawAnnotations, widenToReferences } from "./chart-reference-mark.ts"
+import {
+  annotationHeadroom,
+  chartMarksOf,
+  drawAnnotations,
+  widenToReferences,
+} from "./chart-reference-mark.ts"
 import { resolveColor } from "./theme-color.ts"
-
-const DIRECT_LABEL_PLUGIN_ID = "tsukumo-direct-label"
 
 const BAR_VALUE_WEIGHT = 600
 const PIE_SIDE_PADDING = 90
@@ -43,18 +47,13 @@ const SHARE_ROW_HEIGHT = 18
 const SHARE_ROW_GAP = 8
 const SHARE_BAR_MARGIN = 12
 
-type DirectLabelOption = {
-  readonly mode: "arrow" | "slope" | "span" | "share" | "values"
-  readonly names: readonly string[]
-}
-
 export const directLabelPlugin = {
   id: DIRECT_LABEL_PLUGIN_ID,
   beforeLayout: (chart: ChartInstance): void => {
     const padding = paddingFor(chart)
     chart.options.layout.padding = padding
-    if (directLabelOptionOf(chart.options.plugins[DIRECT_LABEL_PLUGIN_ID])?.mode === "share") {
-      fitShareHeight(chart, padding.bottom)
+    if (directLabelOptionOf(chart)?.mode === "share") {
+      fitShareHeight(chart, padding.top + padding.bottom)
     }
   },
   afterDataLimits: (
@@ -68,7 +67,7 @@ export const directLabelPlugin = {
     ctx.save()
     ctx.fillStyle = Chart.defaults.color
     ctx.font = labelFont()
-    const option = directLabelOptionOf(chart.options.plugins[DIRECT_LABEL_PLUGIN_ID])
+    const option = directLabelOptionOf(chart)
     if (option?.mode === "arrow") {
       drawArrows(chart, option.names)
     } else if (option?.mode === "span") {
@@ -81,10 +80,10 @@ export const directLabelPlugin = {
       drawPie(chart, option?.mode === "values")
     } else if (chart.config.type === "line") {
       drawLineEnds(chart, option?.mode === "values")
-      drawAnnotations(chart)
     } else if (chart.config.type === "bar") {
       drawBarEnds(chart)
     }
+    drawAnnotations(chart)
     ctx.restore()
   },
 }
@@ -98,7 +97,7 @@ function fitShareHeight(chart: ChartInstance, labelPadding: number): void {
 
 function paddingFor(chart: ChartInstance): Padding {
   const none = { left: 0, right: 0, top: 0, bottom: 0 }
-  const option = directLabelOptionOf(chart.options.plugins[DIRECT_LABEL_PLUGIN_ID])
+  const option = directLabelOptionOf(chart)
   if (option?.mode === "arrow") {
     const { left, right } = arrowExtent(chart, ARROW_HEAD)
     return { ...none, left, right, top: NAME_ROW_PADDING }
@@ -109,7 +108,11 @@ function paddingFor(chart: ChartInstance): Padding {
   }
   if (option?.mode === "share") {
     const rows = shareRows(chart).reduce((most, { row }) => Math.max(most, row + 1), 0)
-    return { ...none, bottom: rows === 0 ? 0 : SHARE_ROW_GAP + rows * SHARE_ROW_HEIGHT }
+    return {
+      ...none,
+      top: annotationHeadroom(chart),
+      bottom: rows === 0 ? 0 : SHARE_ROW_GAP + rows * SHARE_ROW_HEIGHT,
+    }
   }
   if (option?.mode === "slope") {
     return { ...none, left: SLOPE_SIDE_PADDING, right: SLOPE_SIDE_PADDING }
@@ -181,25 +184,6 @@ function shareRows(
     text: parts[index]?.text ?? "",
     color: chart.data.datasets[index]?.backgroundColor,
   }))
-}
-
-function directLabelOptionOf(value: unknown): DirectLabelOption | undefined {
-  if (typeof value !== "object" || value === null || !("mode" in value) || !("names" in value)) {
-    return undefined
-  }
-  const { mode, names } = value
-  if (
-    (mode !== "arrow" &&
-      mode !== "slope" &&
-      mode !== "span" &&
-      mode !== "share" &&
-      mode !== "values") ||
-    !Array.isArray(names) ||
-    !names.every((name): name is string => typeof name === "string")
-  ) {
-    return undefined
-  }
-  return { mode, names }
 }
 
 // 幅が `maxWidth` を超えるときは、字を詰めて収める。

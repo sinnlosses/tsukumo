@@ -138,6 +138,8 @@ declare global {
         readonly x: number
         readonly y: number
         readonly height: number
+        /** 縦棒の太さ。棒以外では読まない。 */
+        readonly width: number
         readonly startAngle: number
         readonly endAngle: number
         readonly outerRadius: number

@@ -189,7 +189,7 @@ export const chartBlockSchema = z
       )
       .optional()
       .describe(
-        "line だけ。基準線を越えた点などの注記（label は series の name、index は labels の 0 始まりの位置、text は値と一言）",
+        "line・bar・share・arrow。目立たせる1点の注記（label は series の name、index は labels の 0 始まりの位置、text は一言。share の label は先頭の系列、arrow の矢じり側は後の系列の名前）",
       ),
     tones: z
       .enum(REPORT_CHART_TONES)

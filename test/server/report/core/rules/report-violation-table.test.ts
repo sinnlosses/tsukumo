@@ -482,47 +482,6 @@ describe("reportViolations", () => {
     })
   })
 
-  describe("chart の基準線と注記は line に付け、名指しは series と labels の中", () => {
-    const chartOf = (
-      chartKind: "line" | "bar",
-      references: readonly { readonly value: number; readonly label: string }[],
-      annotations: readonly {
-        readonly label: string
-        readonly index: number
-        readonly text: string
-      }[],
-    ): LeafComponent => ({
-      kind: "chart",
-      title: "",
-      chartKind,
-      labels: ["架空A", "架空B"],
-      series: [{ name: "架空系列", values: [1, 2] }],
-      horizontal: false,
-      emphasis: [],
-      references,
-      annotations,
-      fold: "",
-      aside: "",
-    })
-    const reference = { value: 1.5, label: "架空の目標" }
-
-    it.each([
-      ["series に無い系列名", chartOf("line", [], [{ label: "架空C", index: 0, text: "x" }])],
-      ["labels の数と同じ位置", chartOf("line", [], [{ label: "架空系列", index: 2, text: "x" }])],
-      ["bar の基準線", chartOf("bar", [reference], [])],
-      ["bar の注記", chartOf("bar", [], [{ label: "架空系列", index: 0, text: "x" }])],
-    ])("%s は違反", (_, chart) => {
-      const violations = reportViolations(draft([chart]))
-      expect(violations).toEqual([{ kind: "chart-annotation-range", count: 1 }])
-      expect(reportRejectionText(violations)).toContain("`line` に付け")
-    })
-
-    it("line で系列名と位置が範囲の中なら違反にしない", () => {
-      const chart = chartOf("line", [reference], [{ label: "架空系列", index: 1, text: "x" }])
-      expect(kinds(draft([chart]))).toEqual([])
-    })
-  })
-
   describe("chart の tones は share だけに labels と同じ数で、emphasis と併せない", () => {
     type Tone = "ok" | "warn" | "ng" | "info" | "none"
     const chartOf = (

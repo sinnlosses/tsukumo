@@ -50,12 +50,13 @@
   `ok`・`warn`・`ng`・`info` は `--state-ok`・`--state-warn`・`--state-ng`・`--state-info`、`none` は `--ink` の 26% で塗る。
   `ok` の緑と `warn` の黄は2型色覚で見分けにくいので、色だけで意味を渡さず、部分の名前は棒の中か棒の下の行に必ず書く。
   `tones` を `share` 以外に付けた、長さが `labels` と違う、または `emphasis` と併せたら `chart-tone-range` で差し戻す。
-  `line` だけに、目標・上限の基準線 `references`（`{ value, label }` の並び。省ける）と点の注記 `annotations`（`{ label, index, text }` の並び。
-  `label` は系列名・`index` は `labels` の 0 始まりの位置・`text` は値と一言。省ける）を書ける。目標は全部同じ値の2本目の系列で書かず `references` で書く
+  `line` だけに、目標・上限の基準線 `references`（`{ value, label }` の並び。省ける）を書ける。点の注記 `annotations`（`{ label, index, text }` の並び。
+  `label` は系列名・`index` は `labels` の 0 始まりの位置・`text` は値と一言。省ける）は `line`・`bar`・`share`・`arrow` に書ける
+  （`share` は `label` が先頭の系列の名前で `index` が部分の位置、`arrow` は `label` が前か後の系列の名前で、輪は `label` の系列が指す端に描く。前の系列なら前の端、後の系列なら後の端）。目標は全部同じ値の2本目の系列で書かず `references` で書く
   （2本目の系列は点つきの実線になり、測った系列と同じ重みで見える）。基準線は点の無い点線（`--report-chart-reference`）を描く領域の端から端まで引き、
   右端の外に名前を書く。値の軸は基準線の値が入るまで広げる。基準線があれば系列が1つでも線端に系列名を書き、基準線の名前と重なれば縦に離す。
   注記は名指した点に輪の印を付け、字を点の下（下に収まらなければ上）に、点が描く領域の右半分なら左へ・左半分なら右へ伸ばして書く（印と字は `--state-ng`）。
-  基準線・注記を `line` 以外に付けた、または注記の系列名が無いか位置が `labels` の外なら `chart-annotation-range` で差し戻す。
+  基準線を `line` 以外に、注記を `line`・`bar`・`share`・`arrow` 以外に付けた、または注記の系列名が無い（`share` は先頭の系列以外）か位置が `labels` の外なら `chart-annotation-range` で差し戻す。
   図の囲い（`.captioned`）が 63em の段なので、`share` を含むグラフは読む面が広ければ 63em まで広がる（狭ければ 100%）
   表の数の列に付く横棒（`block-table.md`「表の描き方は型から決め、書き手は何も選ばない」）と役割が重なるので、数が3つ以上並ぶ表を
   `chart` へ差し戻す検査は足さない（正確な値を読ませたい場面は表のままでよい）

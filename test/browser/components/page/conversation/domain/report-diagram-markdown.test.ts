@@ -337,5 +337,37 @@ describe("chartConfigOf", () => {
     it("基準線も注記も無ければ何も足さない", () => {
       expect(chartConfigOf(chartOf("line", one, false)).options).toEqual({})
     })
+
+    const marksOf = (block: ChartBlock) => {
+      return JSON.parse(JSON.stringify(chartConfigOf(block).options)).plugins["tsukumo-chart-marks"]
+    }
+
+    it.each([false, true])("bar（horizontal: %s）の注記は line と同じ位置に写す", (horizontal) => {
+      const block = {
+        ...chartOf("bar", two, horizontal),
+        annotations: [{ label: "架空系列2", index: 1, text: "架空の注記" }],
+      }
+      expect(marksOf(block)).toEqual({
+        references: [],
+        annotations: [{ series: 1, index: 1, text: "架空の注記" }],
+      })
+    })
+
+    it("share の注記は部分の位置を datasets の位置に、arrow の注記は前か後の端に写す", () => {
+      const annotations = [{ label: "架空の前", index: 1, text: "架空の注記" }]
+      expect(marksOf({ ...chartOf("share", pair, true), annotations })).toEqual({
+        references: [],
+        annotations: [{ series: 1, index: 0, text: "架空の注記" }],
+      })
+      expect(marksOf({ ...chartOf("arrow", pair, true), annotations })).toEqual({
+        references: [],
+        annotations: [{ series: 0, index: 1, text: "架空の注記" }],
+      })
+      const afterEnd = [{ label: "架空の後", index: 1, text: "架空の注記" }]
+      expect(marksOf({ ...chartOf("arrow", pair, true), annotations: afterEnd })).toEqual({
+        references: [],
+        annotations: [{ series: 1, index: 1, text: "架空の注記" }],
+      })
+    })
   })
 })
