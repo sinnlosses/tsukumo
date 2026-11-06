@@ -160,6 +160,10 @@
 `ast-node.ts` の4関数（`literalString`・`objectField`・`stringField`・`arrayField`）は、どれも畳まず合併型にもしない R2 で、`parseSync` が返す型の無い構文木を `Reflect.get` で読む入口。引数の `undefined` は「前の読みでその欄が無かった」の1つの意味しか持たず、それを鎖の次の読みへ運ぶのがこの関数の役目。
 引数を `AstNode` に狭めて型検査を打つと、`stringField` 106 件（14 ファイル）・`objectField` 21 件（11 ファイル）・`arrayField` 8 件（8 ファイル）・`literalString` 4 件（2 ファイル）が落ちる。落ちた行はどれも `objectField(…)` の戻り値・`arrayField(…)[0]`・分割代入の要素を渡す鎖の途中で、呼び出し側は「欄が無い」と「その型でない」を同じに扱う（例 `module-reference.ts` の `literalString(objectField(node, "source")) ?? DYNAMIC`）。畳むと各所に同じ `=== undefined` の分岐を複製するだけになる。
 合併型（見つかった・無い）にしても「無い」以外の状態は増えない。`test/` の 10 ファイル（規約のテスト 9 と `e2e-scenario.test.ts`）も同じ鎖で構文木を読む。
+`src/server/report` の 30 件と `src/server/work-plan` の 7 件は、引数の `| undefined` が `judgeImplementerStop` の `agentPhaseTitle` だけで、フックの入口で畳んで消した（写しに無い agent はフックが `{}` を返す）。残りは戻り値と変数で、どれも本物。
+残る 37 件（report 30・work-plan 7）は、下の表の `server/report/…`・`server/work-plan/…` の行に1件ずつ載せた。戻り値は R1（探索・解析の失敗を返す）、局所の `let` は R4、`workflowAgentPhase` は R2（ワークフロースクリプトの写しに無いという外の値）。
+`work-plan-review.ts` の `returnedCount`・`confirmedRange`、`report-review.ts` の `handlerReasons`、`report-inheritance.ts` の `base` は、局所の `let` で「まだ決まっていない」が1つの意味しか持たない R4。
+`?? ""` は、正規表現の群・`split` の添字の `noUncheckedIndexedAccess` 由来と、`conclusionFirstSentence` の「要素なしなら空の文字列」という値としての `""` を据え置き、`figure` の `question` は番兵だったので、スキーマの検査に任せて消した。`claims` の `basis`・`howToVerify`（`claimNotes`、`body-fence-reader.ts:169・171`）と `readCode` の `path`（同 `:145`）は、いまは `=== undefined ? "" : …` の三項演算子の形で、空の文字列を「無い」の印にする書き方が残っている。`?? ""` の grep には掛からず、どのタスクにも載っていない。`grep -rn '?? ""' src/server/report src/server/work-plan` が返すのは 13 行で、上の据え置きの理由に当たるものと `work-plan-gate.ts:110` の表示用の文字列である。
 
 | ファイル                                                                                     | 対象                           | 置き場     | 行  | 理由 |
 | -------------------------------------------------------------------------------------------- | ------------------------------ | ---------- | --- | ---- |
@@ -221,6 +225,43 @@
 | `scripts/shared/ast-node.ts`                                                                 | `literalString`                | 引数       | 19  | R2   |
 | `scripts/shared/ast-node.ts`                                                                 | `objectField`                  | 引数       | 33  | R2   |
 | `scripts/shared/ast-node.ts`                                                                 | `stringField`                  | 引数       | 38  | R2   |
+| `server/report/core/body/body-fence-reader.ts`                                               | `readTypedFence`               | 戻り値     | 60  | R1   |
+| `server/report/core/body/body-fence-reader.ts`                                               | `readTable`                    | 戻り値     | 96  | R1   |
+| `server/report/core/body/body-fence-reader.ts`                                               | `readCode`                     | 戻り値     | 132 | R1   |
+| `server/report/core/body/body-fence-reader.ts`                                               | `readClaims`                   | 戻り値     | 148 | R1   |
+| `server/report/core/body/body-fence-reader.ts`                                               | `readImage`                    | 戻り値     | 175 | R1   |
+| `server/report/core/body/body-fence.ts`                                                      | `readFence`                    | 戻り値     | 69  | R1   |
+| `server/report/core/body/body-fence.ts`                                                      | `openingOf`                    | 戻り値     | 112 | R1   |
+| `server/report/core/body/body-figure-fence.ts`                                               | `readFigureFence`              | 戻り値     | 16  | R1   |
+| `server/report/core/body/body-figure-fence.ts`                                               | `declaredKeyTypeOf`            | 戻り値     | 63  | R1   |
+| `server/report/core/body/body-figure-fence.ts`                                               | `columnsOf`                    | 戻り値     | 77  | R1   |
+| `server/report/core/body/body-figure-fence.ts`                                               | `toNumber`                     | 戻り値     | 109 | R1   |
+| `server/report/core/body/conclusion-sentence.ts`                                             | `parseConclusion`              | 戻り値     | 16  | R1   |
+| `server/report/core/body/conclusion-sentence.ts`                                             | `conclusionSentences`          | 戻り値     | 28  | R1   |
+| `server/report/core/body/legacy-report-component-list.ts`                                    | `legacyReportComponents`       | 戻り値     | 55  | R1   |
+| `server/report/core/image/report-image-shelf.ts`                                             | `ReadReportImagePath`          | 戻り値     | 35  | R1   |
+| `server/report/core/image/report-image-shelf.ts`                                             | `ReadReportImage`              | 戻り値     | 41  | R1   |
+| `server/report/core/image/report-image-shelf.ts`                                             | `find`                         | 戻り値     | 61  | R1   |
+| `server/report/core/review/report-review.ts`                                                 | `handlerReasons`               | 変数       | 99  | R4   |
+| `server/report/core/review/report-inheritance.ts`                                            | `base`                         | 変数       | 36  | R4   |
+| `server/report/core/rules/report-violation.ts`                                               | `line`                         | 戻り値     | 146 | R1   |
+| `server/report/core/rules/expression-evaluation-fault.ts`                                    | `shapeProblem`                 | 戻り値     | 103 | R1   |
+| `server/report/core/rules/expression-evaluation-fault.ts`                                    | `shapeProblem` の `list`       | 変数       | 104 | R4   |
+| `server/report/core/rules/expression-evaluation-fault.ts`                                    | `resolve`                      | 戻り値     | 137 | R1   |
+| `server/report/core/rules/structure.ts`                                                      | `firstLeafReference`           | 戻り値     | 208 | R1   |
+| `server/report/core/rules/structure.ts`                                                      | `search`                       | 戻り値     | 213 | R1   |
+| `server/report/core/rules/structure.ts`                                                      | `placementFault`               | 戻り値     | 370 | R1   |
+| `server/report/core/rules/parameter-fault.ts`                                                | `nameProblem`                  | 戻り値     | 76  | R1   |
+| `server/report/core/rules/block/code-match.ts`                                               | `codeBlockStartLine`           | 戻り値     | 32  | R1   |
+| `server/report/adapter/report-file.ts`                                                       | `readOne`                      | 戻り値     | 34  | R1   |
+| `server/report/adapter/report-image-file.ts`                                                 | `readReportImageFile`          | 戻り値     | 65  | R1   |
+| `server/work-plan/core/phase-result.ts`                                                      | `parsePhaseResult`             | 戻り値     | 71  | R1   |
+| `server/work-plan/core/band-position.ts`                                                     | `delegatedRangeFromAnswer`     | 戻り値     | 46  | R1   |
+| `server/work-plan/core/work-plan-gate.ts`                                                    | `givenPhaseIdsOf`              | 戻り値     | 158 | R1   |
+| `server/work-plan/core/work-plan-review.ts`                                                  | `workflowAgentPhase`           | 戻り値     | 92  | R2   |
+| `server/work-plan/core/work-plan-review.ts`                                                  | `returnedCount`                | 変数       | 120 | R4   |
+| `server/work-plan/core/work-plan-review.ts`                                                  | `confirmedRange`               | 変数       | 122 | R4   |
+| `server/work-plan/core/work-plan-review.ts`                                                  | `judgeSkipMarks`               | 戻り値     | 153 | R1   |
 | `scripts/shared/ast-node.ts`                                                                 | `arrayField`                   | 引数       | 43  | R2   |
 
 ## 消せるもの

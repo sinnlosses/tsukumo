@@ -131,9 +131,8 @@ describe("judgeImplementerStop", () => {
     }
   })
 
-  it("実装の範囲の外の agent と、写しに無い agent は止めない", () => {
+  it("実装の範囲の外の agent は止めない", () => {
     expect(judgeImplementerStop("accept", plan, false).kind).toBe("allow")
-    expect(judgeImplementerStop(undefined, plan, false).kind).toBe("allow")
   })
 })
 

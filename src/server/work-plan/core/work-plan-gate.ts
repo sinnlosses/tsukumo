@@ -78,22 +78,17 @@ export type ImplementerStopVerdict =
 
 /**
  * ワークフロースクリプトの agent が終わろうとするときに、実装の範囲の最後の段の id まで `phase_result` の申告が届いているかを、受け付け済みのワークプランで照らす。
- * `agentPhaseTitle` はワークフロースクリプトの写しでその agent がいる段の題（段の id）で、写しに無ければ undefined。
+ * `agentPhaseTitle` はワークフロースクリプトの写しでその agent がいる段の題（段の id）。写しに無い agent は呼ぶ側が止めずに通す。
  * 届いていなければ、残りの段の id を添えて止める。
- * 写しに無い agent、段の id を持たないワークプラン、委譲の範囲が確定していないワークプラン、実装の範囲の外の agent は止めない。
+ * 段の id を持たないワークプラン、委譲の範囲が確定していないワークプラン、実装の範囲の外の agent は止めない。
  * 一度止められたあと（`stopHookActive`）の終わりも通す。実装の段の題で走っても `phase_result` を呼ばない agent（計画の判定など）と、`stopped` で止めた実装役を止め続けないため。
  */
 export function judgeImplementerStop(
-  agentPhaseTitle: string | undefined,
+  agentPhaseTitle: string,
   plan: LatestWorkPlan,
   stopHookActive: boolean,
 ): ImplementerStopVerdict {
-  if (
-    stopHookActive ||
-    agentPhaseTitle === undefined ||
-    plan.kind !== "planned" ||
-    plan.delegatedRange.kind !== "range"
-  ) {
+  if (stopHookActive || plan.kind !== "planned" || plan.delegatedRange.kind !== "range") {
     return { kind: "allow" }
   }
   const { first, count } = plan.delegatedRange

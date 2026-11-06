@@ -35,7 +35,7 @@ export function readFigureFence(content: string): ReportPlot | undefined {
   }
   const parsed = plotBlockSchema.safeParse({
     kind: "plot",
-    question: header.question ?? "",
+    question: header.question,
     relation: header.relation,
     ...(header.form === undefined ? {} : { form: header.form }),
     data: columns,

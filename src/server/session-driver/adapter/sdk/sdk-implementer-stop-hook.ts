@@ -20,8 +20,12 @@ export function implementerStopHooks(
             if (input.hook_event_name !== "SubagentStop") {
               return {}
             }
+            const agentPhaseTitle = review.workflowAgentPhase(input.agent_id)
+            if (agentPhaseTitle === undefined) {
+              return {}
+            }
             const verdict = judgeImplementerStop(
-              review.workflowAgentPhase(input.agent_id),
+              agentPhaseTitle,
               review.latestPlan(),
               input.stop_hook_active,
             )

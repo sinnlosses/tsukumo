@@ -116,7 +116,7 @@ const UNDEFINED_UNION_CEILING = {
   "src/shared/session": 10,
   "scripts/document": 10,
   "src/browser/domain": 8,
-  "src/server/work-plan": 8,
+  "src/server/work-plan": 7,
   "src/browser/stores": 7,
   "src/server/achievement": 6,
   "src/shared/session-driver": 6,
