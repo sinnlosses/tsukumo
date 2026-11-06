@@ -9,7 +9,7 @@ import type { AchievementDaySelection } from "../../../shared/achievement/achiev
 import { achievementContract } from "../../../shared/contract/achievement.ts"
 import type { ReadAchievementCalendarResult, ReadAchievementResult } from "./closed-issue.ts"
 
-/** この機能の手続きが使う関数（中身は配線が渡す）。 */
+/** この機能の手続きが使う関数（中身は配線が渡す）。失敗は投げずに `unavailable` で返す。 */
 export type AchievementProcedurePorts = {
   /**
    * 1日ぶんの成果（`readAchievement` と日記を束ねたもの）。
@@ -26,14 +26,14 @@ export function achievementProcedure(ports: AchievementProcedurePorts) {
   const procedure = implement(achievementContract)
   return procedure.router({
     day: procedure.day.handler(async ({ input, errors }) => {
-      const result = await ports.readAchievementDay(input).catch(() => UNAVAILABLE)
+      const result = await ports.readAchievementDay(input)
       if (result.kind === "unavailable") {
         throw errors.UNAVAILABLE()
       }
       return result.achievement
     }),
     calendar: procedure.calendar.handler(async ({ errors }) => {
-      const result = await ports.readAchievementCalendar().catch(() => UNAVAILABLE)
+      const result = await ports.readAchievementCalendar()
       if (result.kind === "unavailable") {
         throw errors.UNAVAILABLE()
       }
@@ -41,5 +41,3 @@ export function achievementProcedure(ports: AchievementProcedurePorts) {
     }),
   })
 }
-
-const UNAVAILABLE = { kind: "unavailable" } as const

@@ -11,7 +11,6 @@ import { type CommandEventSink, receiveFeatureCommand } from "../../core/command
 import {
   type CharacterPackCommandPorts,
   characterPackCommands,
-  type PortraitGeneration,
 } from "../core/character-pack-command.ts"
 
 export function characterPackProcedure(ports: CharacterPackCommandPorts) {
@@ -84,13 +83,7 @@ export function characterPackProcedure(ports: CharacterPackCommandPorts) {
       refusedUnlessAccepted(receiveFeatureCommand(table.delete, input, context.session), errors),
     ),
     generateFromPortrait: procedure.generateFromPortrait.handler(async ({ input, errors }) => {
-      let generation: PortraitGeneration
-      try {
-        generation = await ports.generateFromPortrait(input.portrait)
-      } catch {
-        // 生成器が投げた失敗も、返ってきた失敗と同じ拒否の応答に畳む
-        generation = { kind: "failed" }
-      }
+      const generation = await ports.generateFromPortrait(input.portrait)
       if (generation.kind === "failed") {
         throw errors.REFUSED({
           data: { reason: FRAME_ERROR_REASON.characterGenerationFailed },

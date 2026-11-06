@@ -61,7 +61,14 @@ const SWALLOWED_FAILURE_PLACES = {
     "welcome-reactions-rejected",
     "welcome-reactions-timed-out",
   ],
-  repository: ["task-summary-poll"],
+  repository: [
+    "task-summary-poll",
+    "list-files",
+    "read-file-excerpt",
+    "read-code-block-start",
+    "refresh-tasks",
+  ],
+  achievement: ["read-day", "read-calendar"],
   "character-pack": ["generation-failed"],
   process: ["unhandled-rejection", "uncaught-exception"],
 } as const satisfies Record<string, readonly string[]>

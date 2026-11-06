@@ -31,8 +31,18 @@ import {
   IDLE_CHECK_RECORD_SOURCE,
 } from "../server/repository/core/check-record-source.ts"
 import type { SessionManagerOptions } from "../server/session/core/session-manager-port.ts"
+import {
+  type CodeBlockStartRequest,
+  UNKNOWN_CODE_BLOCK_START,
+} from "../shared/repository/code-block-start.ts"
+import {
+  type FileExcerptRequest,
+  UNREADABLE_FILE_EXCERPT,
+} from "../shared/repository/file-excerpt.ts"
+import { EMPTY_REPOSITORY_FILE_LIST } from "../shared/repository/repository-file-list.ts"
 import type { SessionEvent } from "../shared/session/session-event.ts"
 import { failureDiagnostic } from "./failure-diagnostic.ts"
+import { foldPortFailure } from "./fold-port-failure.ts"
 import type { WiringContext } from "./wiring-context.ts"
 
 /** 疑似セッションの推薦役。claude を起こさないので、何も配らない。 */
@@ -52,22 +62,39 @@ export function wireRepository(
     "watchTasks" | "changeCountGit" | "checkRecordSource"
   >
 } {
+  const reportFailure = failureDiagnostic(diagnosticLog, context.now)
   return {
+    // 読みが投げた回は足跡を残して、読めなかったときの値に畳む（候補が出ない・抜き書きや行番号が出ないだけで画面は続く）。
     rpc: {
-      listRepositoryFiles: () => listRepositoryFiles(context.cwd),
-      readFileExcerpt: (request) =>
-        readFileExcerpt(
-          context.cwd,
-          request,
-          async () => (await listRepositoryFiles(context.cwd)).paths,
-        ),
-      readCodeBlockStart: (request) =>
-        readCodeBlockStart(
-          context.cwd,
-          request,
-          async () => (await listRepositoryFiles(context.cwd)).paths,
-          codeBlockStartLine,
-        ),
+      listRepositoryFiles: foldPortFailure(
+        reportFailure,
+        { feature: "repository", place: "list-files" },
+        EMPTY_REPOSITORY_FILE_LIST,
+        () => listRepositoryFiles(context.cwd),
+      ),
+      readFileExcerpt: foldPortFailure(
+        reportFailure,
+        { feature: "repository", place: "read-file-excerpt" },
+        UNREADABLE_FILE_EXCERPT,
+        (request: FileExcerptRequest) =>
+          readFileExcerpt(
+            context.cwd,
+            request,
+            async () => (await listRepositoryFiles(context.cwd)).paths,
+          ),
+      ),
+      readCodeBlockStart: foldPortFailure(
+        reportFailure,
+        { feature: "repository", place: "read-code-block-start" },
+        UNKNOWN_CODE_BLOCK_START,
+        (request: CodeBlockStartRequest) =>
+          readCodeBlockStart(
+            context.cwd,
+            request,
+            async () => (await listRepositoryFiles(context.cwd)).paths,
+            codeBlockStartLine,
+          ),
+      ),
       projectName: () => projectNameOf(context.cwd),
     },
     manager: {
@@ -75,7 +102,6 @@ export function wireRepository(
       checkRecordSource: checkRecordSourceOfContext(context),
       watchTasks: (onEvent) => {
         const recommender = startRecommender(context, diagnosticLog, onEvent)
-        const reportFailure = failureDiagnostic(diagnosticLog, context.now)
         const watcher = watchTaskSummary(
           context.cwd,
           (result, change) => {
@@ -89,7 +115,12 @@ export function wireRepository(
         )
         return {
           setWatching: watcher.setWatching,
-          refresh: watcher.refresh,
+          refresh: foldPortFailure(
+            reportFailure,
+            { feature: "repository", place: "refresh-tasks" },
+            undefined,
+            watcher.refresh,
+          ),
           close: () => {
             recommender.close()
             return watcher.close()

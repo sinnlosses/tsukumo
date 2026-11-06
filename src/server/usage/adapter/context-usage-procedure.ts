@@ -4,10 +4,7 @@
 import { implement } from "@orpc/server"
 
 import { contextUsageContract } from "../../../shared/contract/context-usage.ts"
-import {
-  type ContextUsageReport,
-  UNAVAILABLE_CONTEXT_USAGE,
-} from "../../../shared/usage/context-usage.ts"
+import type { ContextUsageReport } from "../../../shared/usage/context-usage.ts"
 
 /** この機能の手続きが使う関数（中身は配線が渡す）。 */
 export type ContextUsageProcedurePorts = {
@@ -19,8 +16,6 @@ export function contextUsageProcedure(ports: ContextUsageProcedurePorts) {
   const procedure = implement(contextUsageContract)
   return procedure.router({
     // 取れなかった回は「取れない」をそのまま配り、失敗のエラーにはしない。
-    report: procedure.report.handler(() =>
-      ports.readContextUsage().catch(() => UNAVAILABLE_CONTEXT_USAGE),
-    ),
+    report: procedure.report.handler(() => ports.readContextUsage()),
   })
 }

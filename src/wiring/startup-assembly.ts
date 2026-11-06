@@ -95,7 +95,7 @@ export function assembleStartup(
     chatArchive: createChatArchive(),
     throwawayQuery: usageLogs.throwawayQuery.record,
   }
-  const achievement = wireAchievement(context, achievementCache)
+  const achievement = wireAchievement(context, achievementCache, usageLogs.diagnostic)
   const repository = wireRepository(context, usageLogs.diagnostic, readBeadsStamp)
   const tokenUsage = wireTokenUsage(context, usageLogs.tokenUsage)
   const sessionClaim = wireSessionClaim()

@@ -2,7 +2,6 @@ import { createRouterClient } from "@orpc/server"
 import { describe, expect, it } from "vitest"
 
 import { sessionDigestProcedure } from "../../../../src/server/session/adapter/session-digest-procedure.ts"
-import { UNAVAILABLE_SESSION_DIGEST } from "../../../../src/shared/session/session-digest.ts"
 import { FAKE_SESSION_DIGEST } from "../../../fixture/session-driver.ts"
 
 describe("sessionDigest の手続き", () => {
@@ -22,15 +21,5 @@ describe("sessionDigest の手続き", () => {
       "Input validation failed",
     )
     expect(asked).toEqual(["listed-session"])
-  })
-
-  it("口が投げたら「読めない」を返す", async () => {
-    const client = createRouterClient(
-      sessionDigestProcedure({
-        readSessionDigest: () => Promise.reject(new Error("架空の読み失敗")),
-      }),
-    )
-
-    expect(await client.read({ sessionId: "listed-session" })).toEqual(UNAVAILABLE_SESSION_DIGEST)
   })
 })

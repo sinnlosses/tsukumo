@@ -74,7 +74,7 @@ async function rpcErrorOf(
 
 describe("startViewServer", () => {
   describe("/rpc（読み取りの手続き）", () => {
-    it("repository.listFiles は、候補のパスを並びで返す。一覧を作れなかった回は空", async () => {
+    it("repository.listFiles は、候補のパスを並びで返す", async () => {
       const found = await startViewWithRpc({
         listRepositoryFiles: () =>
           Promise.resolve({ paths: ["src/cli.ts", "docs/architecture.md"], omittedCount: 3 }),
@@ -84,17 +84,9 @@ describe("startViewServer", () => {
         omittedCount: 3,
       })
       await found.close()
-
-      const failed = await startViewWithRpc({
-        listRepositoryFiles: () => Promise.reject(new Error("架空の失敗")),
-      })
-      expect(await rpcClientOf(failed, TOKEN).repository.listFiles()).toEqual({
-        paths: [],
-        omittedCount: 0,
-      })
     })
 
-    it("repository.fileExcerpt は、行の範囲を口へ渡して抜き書きを返す。口が失敗した回は unreadable", async () => {
+    it("repository.fileExcerpt は、行の範囲を口へ渡して抜き書きを返す", async () => {
       const requests: unknown[] = []
       const lines = {
         kind: "lines",
@@ -115,18 +107,9 @@ describe("startViewServer", () => {
       ).rejects.toThrow("Input validation failed")
       expect(requests).toHaveLength(1)
       await found.close()
-
-      const failed = await startViewWithRpc({
-        readFileExcerpt: () => Promise.reject(new Error("架空の失敗")),
-      })
-      expect(await rpcClientOf(failed, TOKEN).repository.fileExcerpt(request)).toEqual({
-        kind: "unavailable",
-        reason: "unreadable",
-      })
-      await failed.close()
     })
 
-    it("repository.codeBlockStart は、塊を口へ渡して頭の行を返す。口が失敗した回は unknown", async () => {
+    it("repository.codeBlockStart は、塊を口へ渡して頭の行を返す", async () => {
       const requests: unknown[] = []
       const found = await startViewWithRpc({
         readCodeBlockStart: (request) => {
@@ -146,14 +129,6 @@ describe("startViewServer", () => {
       ).rejects.toThrow("Input validation failed")
       expect(requests).toHaveLength(1)
       await found.close()
-
-      const failed = await startViewWithRpc({
-        readCodeBlockStart: () => Promise.reject(new Error("架空の失敗")),
-      })
-      expect(await rpcClientOf(failed, TOKEN).repository.codeBlockStart(request)).toEqual({
-        kind: "unknown",
-      })
-      await failed.close()
     })
 
     it("repository.projectName は、渡された名前を返す", async () => {
@@ -211,18 +186,11 @@ describe("startViewServer", () => {
       expect(asked).toBe(0)
     })
 
-    it("contextUsage.report は、内訳を返す。問い合わせが失敗した回は「取れない」", async () => {
+    it("contextUsage.report は、内訳を返す", async () => {
       const report = readyContextUsage()
       const ready = await startViewWithRpc({ readContextUsage: () => Promise.resolve(report) })
       expect(await rpcClientOf(ready, TOKEN).contextUsage.report()).toEqual(report)
       await ready.close()
-
-      const failed = await startViewWithRpc({
-        readContextUsage: () => Promise.reject(new Error("架空の失敗")),
-      })
-      expect(await rpcClientOf(failed, TOKEN).contextUsage.report()).toEqual(
-        UNAVAILABLE_CONTEXT_USAGE,
-      )
     })
 
     it("achievement.day は、見る日の選び方をそのまま読み取り側へ渡し、成果を返す", async () => {
@@ -269,7 +237,7 @@ describe("startViewServer", () => {
     it("achievement は、bd の呼び出しが一時的に失敗したときは 503 の UNAVAILABLE（部分的な数を出さない）", async () => {
       const server = await startViewWithRpc({
         readAchievementDay: () => Promise.resolve({ kind: "unavailable" }),
-        readAchievementCalendar: () => Promise.reject(new Error("架空の失敗")),
+        readAchievementCalendar: () => Promise.resolve({ kind: "unavailable" }),
       })
       const client = rpcClientOf(server, TOKEN)
 

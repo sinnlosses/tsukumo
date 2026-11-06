@@ -4,22 +4,14 @@
 import { implement } from "@orpc/server"
 
 import { repositoryContract } from "../../../shared/contract/repository.ts"
-import {
-  type CodeBlockStart,
-  type CodeBlockStartRequest,
-  UNKNOWN_CODE_BLOCK_START,
+import type {
+  CodeBlockStart,
+  CodeBlockStartRequest,
 } from "../../../shared/repository/code-block-start.ts"
-import {
-  type FileExcerpt,
-  type FileExcerptRequest,
-  UNREADABLE_FILE_EXCERPT,
-} from "../../../shared/repository/file-excerpt.ts"
-import {
-  EMPTY_REPOSITORY_FILE_LIST,
-  type RepositoryFileList,
-} from "../../../shared/repository/repository-file-list.ts"
+import type { FileExcerpt, FileExcerptRequest } from "../../../shared/repository/file-excerpt.ts"
+import type { RepositoryFileList } from "../../../shared/repository/repository-file-list.ts"
 
-/** この機能の手続きが使う関数（中身は配線が渡す）。 */
+/** この機能の手続きが使う関数（中身は配線が渡す）。読みの失敗は投げずに、読めなかったときの値で返す。 */
 export type RepositoryProcedurePorts = {
   /** git 管理下のファイルのパス（作業ディレクトリからの相対）と、上限で落とした件数。git 管理下でない・`git` が無いときはパスが空。 */
   readonly listRepositoryFiles: () => Promise<RepositoryFileList>
@@ -36,20 +28,12 @@ export type RepositoryProcedurePorts = {
 export function repositoryProcedure(ports: RepositoryProcedurePorts) {
   const procedure = implement(repositoryContract)
   return procedure.router({
-    // 一覧を作れなかった回は空の並びを配る（候補が出ない・パスが押せないだけで、画面は続く）。
-    listFiles: procedure.listFiles.handler(() =>
-      ports.listRepositoryFiles().catch(() => EMPTY_REPOSITORY_FILE_LIST),
-    ),
-    // 読めなかった回は抜き書きが出ないだけで、手続きは落とさない。
-    fileExcerpt: procedure.fileExcerpt.handler(({ input }) =>
-      ports.readFileExcerpt(input).catch(() => UNREADABLE_FILE_EXCERPT),
-    ),
-    // 読めなかった回は行番号が出ないだけで、手続きは落とさない。
+    listFiles: procedure.listFiles.handler(() => ports.listRepositoryFiles()),
+    fileExcerpt: procedure.fileExcerpt.handler(({ input }) => ports.readFileExcerpt(input)),
     codeBlockStart: procedure.codeBlockStart.handler(({ input }) =>
-      ports.readCodeBlockStart(input).catch(() => UNKNOWN_CODE_BLOCK_START),
+      ports.readCodeBlockStart(input),
     ),
     projectName: procedure.projectName.handler(() => ports.projectName()),
-    // 読めない回は一覧の「不明」が伝えるので、手続きは落とさない。
-    refreshTasks: procedure.refreshTasks.handler(() => ports.refreshTasks().catch(() => {})),
+    refreshTasks: procedure.refreshTasks.handler(() => ports.refreshTasks()),
   })
 }

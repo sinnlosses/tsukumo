@@ -3,7 +3,7 @@
 import { implement } from "@orpc/server"
 
 import { planUsageContract } from "../../../shared/contract/plan-usage.ts"
-import { type PlanUsageReport, UNAVAILABLE_PLAN_USAGE } from "../../../shared/usage/plan-usage.ts"
+import type { PlanUsageReport } from "../../../shared/usage/plan-usage.ts"
 
 /** この機能の手続きが使う関数（中身は配線が渡す）。 */
 export type PlanUsageProcedurePorts = {
@@ -15,8 +15,6 @@ export function planUsageProcedure(ports: PlanUsageProcedurePorts) {
   const procedure = implement(planUsageContract)
   return procedure.router({
     // 取れなかった回は「取れない」をそのまま配り、失敗のエラーにはしない。
-    report: procedure.report.handler(() =>
-      ports.readPlanUsage().catch(() => UNAVAILABLE_PLAN_USAGE),
-    ),
+    report: procedure.report.handler(() => ports.readPlanUsage()),
   })
 }

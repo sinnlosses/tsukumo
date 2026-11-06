@@ -5,10 +5,7 @@
 import { implement } from "@orpc/server"
 
 import { sessionDigestContract } from "../../../shared/contract/session-digest.ts"
-import {
-  type SessionDigest,
-  UNAVAILABLE_SESSION_DIGEST,
-} from "../../../shared/session/session-digest.ts"
+import type { SessionDigest } from "../../../shared/session/session-digest.ts"
 import type { SessionId } from "../../../shared/session/session-id.ts"
 
 /** この機能の手続きが使う関数（中身は配線が渡す）。 */
@@ -21,8 +18,6 @@ export function sessionDigestProcedure(ports: SessionDigestProcedurePorts) {
   const procedure = implement(sessionDigestContract)
   return procedure.router({
     // 読めなかった回は「読めない」をそのまま配る（画面は右の欄を空にするだけ。失敗のエラーにはしない）。
-    read: procedure.read.handler(({ input }) =>
-      ports.readSessionDigest(input.sessionId).catch(() => UNAVAILABLE_SESSION_DIGEST),
-    ),
+    read: procedure.read.handler(({ input }) => ports.readSessionDigest(input.sessionId)),
   })
 }
